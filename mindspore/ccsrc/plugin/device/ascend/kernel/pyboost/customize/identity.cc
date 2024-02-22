@@ -62,13 +62,12 @@ void IdentityCustomizeCallWithoutContigous(const std::shared_ptr<OpRunner> &op, 
            ->Init(prim::kPrimIdentity, input_kernel_tensors, output_kernel_tensors)) {
       MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#Initialize acl kernel op[Identity] failed.";
     }
-    identity_kernel->CreateAclConverter();
+    identity_kernel->RefreshAclConverter(input_kernel_tensors);
     identity_kernel->SetDeviceInfo({input_x_address->format()}, {launch_device_address->format()},
                                    {input_x_address->type_id()}, {launch_device_address->type_id()});
 
     identity_kernel->PackageInput(kIndex0, input_x_address->format(), &input_shape);
     identity_kernel->PackageOutput(kIndex0, output_shape);
-    identity_kernel->SetNeedConvertHostTensor(true);
 
     if (identity_kernel->Resize(input_kernel_tensors, output_kernel_tensors) != KRET_OK) {
       MS_LOG(EXCEPTION) << "Kernel identity resize failed";
@@ -120,13 +119,12 @@ void IdentityCustomizeCall(const std::shared_ptr<OpRunner> &op, const TensorPtr 
            ->Init(prim::kPrimIdentity, input_kernel_tensors, output_kernel_tensors)) {
       MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#Initialize acl kernel op[Identity] failed.";
     }
-    identity_kernel->CreateAclConverter();
+    identity_kernel->RefreshAclConverter(input_kernel_tensors);
     identity_kernel->SetDeviceInfo({input_x_address->format()}, {output_address->format()},
                                    {input_x_address->type_id()}, {output_address->type_id()});
 
     identity_kernel->PackageInput(kIndex0, input_x_address->format(), &input_shape);
     identity_kernel->PackageOutput(kIndex0, output_shape);
-    identity_kernel->SetNeedConvertHostTensor(true);
 
     if (identity_kernel->Resize(input_kernel_tensors, output_kernel_tensors) != KRET_OK) {
       MS_LOG(EXCEPTION) << "Kernel identity resize failed";

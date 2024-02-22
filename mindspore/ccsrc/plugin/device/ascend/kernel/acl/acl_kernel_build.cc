@@ -61,19 +61,6 @@ KernelModPtr AclOpBuild(const std::shared_ptr<AnfNode> &anf_node) {
     return kernel_mod_ptr;
   }
 
-  std::string format = transform::AclHelper::GetFormatFromAttr(kernel_mod_ptr->primitive());
-  if (format.empty()) {
-    format = kernel_mod_ptr->GetFormatFromInput(input_kernel_tensors);
-  }
-  for (size_t i = 0; i < common::AnfAlgo::GetInputTensorNum(cnode); ++i) {
-    auto shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, i);
-    kernel_mod_ptr->PackageInput(i, format, &shape);
-  }
-  for (size_t i = 0; i < AnfAlgo::GetOutputTensorNum(cnode); ++i) {
-    const auto &shape = common::AnfAlgo::GetOutputInferShape(cnode, i);
-    kernel_mod_ptr->PackageOutput(i, shape);
-  }
-  kernel_mod_ptr->SetNeedConvertHostTensor(true);
   if (kernel::CheckResizeCondition(cnode)) {
     kernel_mod_ptr->SetDynamic(false);
     kernel_mod_ptr->Resize(input_kernel_tensors, output_kernel_tensors);
