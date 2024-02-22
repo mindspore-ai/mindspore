@@ -23,28 +23,24 @@ namespace mindspore {
 namespace ops {
 BaseShapePtr CeilFuncImpl::InferShape(const PrimitivePtr &primitive,
                                       const std::vector<AbstractBasePtr> &input_args) const {
-  MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kGreaterEqual, 1, prim_name);
   const int64_t max_dim = 8;
-  MS_EXCEPTION_IF_NULL(input_args[kIndex0]);
   auto x_shape = input_args[kIndex0]->GetShape();
   MS_EXCEPTION_IF_NULL(x_shape);
-  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape);
+  auto in_shape = x_shape->GetShapeVector();
   (void)CheckAndConvertUtils::CheckInteger("The dimension of Ceil input", SizeToLong(in_shape.size()), kLessEqual,
                                            max_dim, prim_name);
   return x_shape->Clone();
 }
 
 TypePtr CeilFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
-  MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, 1, prim_name);
-  MS_EXCEPTION_IF_NULL(input_args[kIndex0]);
   auto x_type = input_args[kIndex0]->GetType();
   MS_EXCEPTION_IF_NULL(x_type);
-  // Valid types: kFloat16, kFloat32.
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
+  // Valid types: kFloat16, kFloat32, kFloat64, kBFloat16.
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kBFloat16};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", x_type, valid_types, prim_name);
   return x_type->Clone();
 }
