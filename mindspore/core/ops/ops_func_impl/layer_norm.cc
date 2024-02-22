@@ -49,7 +49,11 @@ ShapeVector CalLayerNormMeanAndVarShape(int64_t begin_norm_axis, const ShapeVect
   auto mean_var_shape_value = input_shape;
   const size_t input_rank = input_shape.size();
   if (begin_norm_axis == -1) {
-    mean_var_shape_value[input_rank - 1] = 1;
+    if (common::GetEnv("MS_ENABLE_INTERNAL_KERNELS") != "off") {
+      mean_var_shape_value = {input_shape[input_rank - 1]};
+    } else {
+      mean_var_shape_value[input_rank - 1] = 1;
+    }
   } else {
     for (size_t i = LongToSize(begin_norm_axis); i < input_rank; i++) {
       mean_var_shape_value[i] = 1;
