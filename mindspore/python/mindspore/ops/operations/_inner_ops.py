@@ -1008,7 +1008,7 @@ class Centralization(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (Tensor) - The input tensor. The data type mast be float16 or float32.
-        - **axis** (Union[Int, Tuple(Int), List(Int)]) - The dimensions to reduce. Default: (), reduce all dimensions.
+        - **axis** (Union[int, Tuple(int), List(int)]) - The dimensions to reduce. Default: (), reduce all dimensions.
           Only constant value is allowed. Must be in the range [-rank(input_x), rank(input_x)).
 
     Outputs:
