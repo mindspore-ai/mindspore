@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_ACTOR_KERNEL_LAUNCH_ACTOR_H_
-#define MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_ACTOR_KERNEL_LAUNCH_ACTOR_H_
+#ifndef MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_ACTOR_KERNEL_ASYNC_LAUNCH_ACTOR_H_
+#define MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_ACTOR_KERNEL_ASYNC_LAUNCH_ACTOR_H_
 
 #include <vector>
 #include <memory>
@@ -29,13 +29,14 @@ namespace mindspore {
 namespace runtime {
 class KernelActor;
 
-class BACKEND_EXPORT KernelLaunchActor : public ActorBase {
+class BACKEND_EXPORT KernelAsyncLaunchActor : public ActorBase {
  public:
-  static std::shared_ptr<KernelLaunchActor> &GetInstance() {
-    static std::shared_ptr<KernelLaunchActor> instance = std::shared_ptr<KernelLaunchActor>(new KernelLaunchActor());
+  static std::shared_ptr<KernelAsyncLaunchActor> &GetInstance() {
+    static std::shared_ptr<KernelAsyncLaunchActor> instance =
+      std::shared_ptr<KernelAsyncLaunchActor>(new KernelAsyncLaunchActor());
     return instance;
   }
-  ~KernelLaunchActor() override = default;
+  ~KernelAsyncLaunchActor() override = default;
 
   void LaunchKernel(OpContext<DeviceTensor> *const context, KernelActor *kernel_actor);
 
@@ -43,18 +44,11 @@ class BACKEND_EXPORT KernelLaunchActor : public ActorBase {
 
   Future<bool> OnTaskFinish();
 
-  bool enable_async_launch() const { return enable_async_launch_; }
-  bool set_enable_async_launch(bool enable_async_launch) { return enable_async_launch_ = enable_async_launch; }
-
  private:
-  KernelLaunchActor() : ActorBase("KernelLaunchActor") {}
-  DISABLE_COPY_AND_ASSIGN(KernelLaunchActor);
-
-  bool enable_async_launch_{false};
-  uint64_t start_time_{0};
-  bool is_first_step_{true};
+  KernelAsyncLaunchActor() : ActorBase("KernelAsyncLaunchActor") {}
+  DISABLE_COPY_AND_ASSIGN(KernelAsyncLaunchActor);
 };
 }  // namespace runtime
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_ACTOR_KERNEL_LAUNCH_ACTOR_H_
+#endif  // MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_ACTOR_KERNEL_ASYNC_LAUNCH_ACTOR_H_

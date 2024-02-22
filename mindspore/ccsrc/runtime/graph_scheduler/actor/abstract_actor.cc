@@ -24,14 +24,14 @@ void AbstractActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<
   MS_EXCEPTION_IF_NULL(input_data);
   MS_EXCEPTION_IF_NULL(input_data->data_);
   // The unused data may be invalid ptr.
-  if (!input_data->data_->IsPtrValid() && !TEST_FLAG(input_data->data_->flag(), device::kDeviceAddressFlagNotUsed)) {
+  if (!ActorDispatcher::enable_async_launch_kernel() && !input_data->data_->IsPtrValid() &&
+      !TEST_FLAG(input_data->data_->flag(), device::kDeviceAddressFlagNotUsed)) {
     MS_LOG(EXCEPTION) << "The input_data does not have a valid ptr of actor:" << GetAID().Name()
                       << " with index:" << input_data->index_ << ", flag:" << input_data->data_->flag()
                       << " device address:" << input_data->data_ << " ref count:" << input_data->data_->ref_count()
                       << " dynamic ref count:" << input_data->data_->dynamic_ref_count()
                       << " origin ref count:" << input_data->data_->original_ref_count();
   }
-  MS_EXCEPTION_IF_NULL(context);
   auto &sequential_num = context->sequential_num_;
   (void)input_op_datas_[sequential_num].emplace_back(input_data);
 
@@ -51,7 +51,6 @@ void AbstractActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<
 }
 
 void AbstractActor::RunOpControl(AID *const input_control, OpContext<DeviceTensor> *const context) {
-  MS_EXCEPTION_IF_NULL(context);
   auto &sequential_num = context->sequential_num_;
   (void)input_op_controls_[sequential_num].emplace_back(input_control);
 
@@ -120,6 +119,12 @@ void AbstractActor::FetchInputByTensorStore(
     auto device_tensor = DeviceTensorStore::GetInstance()
                            .Fetch(device_tensor_store_key.second.get(), device_contexts_[0]->GetDeviceType())
                            .get();
+    if (device_tensor == nullptr) {
+      std::string error_info =
+        GetAID().Name() + " get device tensor store failed: " + device_tensor_store_key.second->DebugString() +
+        ", device type:" + std::to_string(static_cast<int>(device_contexts_[0]->GetDeviceType()));
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+    }
     if ((*input_device_tensors)[device_tensor_store_key.first] != device_tensor) {
       (*input_device_tensors)[device_tensor_store_key.first] = device_tensor;
       (*memory_free_tensors)[device_tensor_store_key.first] = device_tensor;
@@ -196,6 +201,7 @@ void AbstractActor::SendOutputData(
       // Send batch output data. As the data need update, so all data must be collected completely before sending.
       if (TEST_FLAG(output_data.second, kOutputDataFlagBetweenFusion)) {
         const auto &to_actor = FetchSubActorInFusionActor(to_op_id.Name());
+        MS_EXCEPTION_IF_NULL(to_actor);
         ActorDispatcher::SendSync(to_actor, &AbstractActor::RunBatchOpData, &((*batch_output_data)[to_op_id.Name()]),
                                   context);
       } else {
@@ -209,6 +215,7 @@ void AbstractActor::SendOutputData(
       (void)to_stack_data_.emplace_back(std::move(to_stack_data));
       if (TEST_FLAG(output_data.second, kOutputDataFlagBetweenFusion)) {
         const auto &to_actor = FetchSubActorInFusionActor(to_op_id.Name());
+        MS_EXCEPTION_IF_NULL(to_actor);
         ActorDispatcher::SendSync(to_actor, &OpActor::RunOpData, to_stack_data_.back().get(), context);
       } else {
         ActorDispatcher::Send(to_op_id, &OpActor::RunOpData, to_stack_data_.back().get(), context);
@@ -217,6 +224,9 @@ void AbstractActor::SendOutputData(
       // The batch output data only send when the output flag is kOutputDataFlagLastBatch.
       if (TEST_FLAG(output_data.second, kOutputDataFlagBetweenFusion)) {
         const auto &to_actor = FetchSubActorInFusionActor(to_op_id.Name());
+        if (to_actor == nullptr) {
+          MS_LOG(EXCEPTION) << "Failed to fetch to actor:" << to_op_id << " in actor:" << GetAID();
+        }
         ActorDispatcher::SendSync(to_actor, &OpActor::RunOpData, output_data.first.get(), context);
       } else {
         ActorDispatcher::Send(to_op_id, &OpActor::RunOpData, output_data.first.get(), context);

@@ -45,6 +45,7 @@ void KernelActor::Init() {
   if (device_contexts_.size() != device::kDeviceContextsNumOne) {
     MS_LOG(EXCEPTION) << "The device contexts number is wrong.";
   }
+  MS_EXCEPTION_IF_NULL(device_contexts_[0]);
 
   // Set the number of actor running dependent messages.
   running_dependent_msg_num_ = SizeToInt(input_datas_num_ + input_controls_num_);
@@ -61,6 +62,9 @@ void KernelActor::Init() {
   }
   is_dynamic_type_ = common::AnfAlgo::IsAnyTypeOutput(kernel_);
   has_dynamic_ = is_dynamic_shape_ || is_dynamic_type_ || is_dynamic_value_;
+
+  // Check whether the kernel has input node which is a computed depend kernel.
+  has_computed_depend_input_ = AnfAlgo::HasComputedDependInputNode(kernel_);
   launch_ignored_inputs_ = kernel_mod_->GetLaunchIgnoredInputAddressIdx();
 
   stream_ = device_contexts_[0]->device_res_manager_->GetStream(kernel_info_->stream_id());
@@ -153,6 +157,10 @@ void KernelActor::InitOutputInfo() {
     MS_LOG(EXCEPTION) << "The somas is not enable for: " << GetAID().Name();
   }
 
+  if (IsSomasEnable(somas_info_)) {
+    MS_EXCEPTION_IF_CHECK_FAIL((output_device_tensors_.size() >= somas_outputs.size()), "The output num is wrong.");
+  }
+
   for (auto &external_reference_tensor : external_reference_tensors_) {
     (void)memory_free_list_.emplace_back(external_reference_tensor);
   }
@@ -190,251 +198,87 @@ void KernelActor::InitWorkspaceInfo() {
   if (workspace_need_somas && (!IsSomasEnable(somas_info_))) {
     MS_LOG(EXCEPTION) << "The somas is not enable for: " << GetAID().Name();
   }
-}
 
-void KernelActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<DeviceTensor> *const context) {
-  MS_EXCEPTION_IF_NULL(input_data);
-  MS_EXCEPTION_IF_NULL(input_data->data_);
-  auto &sequential_num = context->sequential_num_;
-  (void)input_op_datas_[sequential_num].emplace_back(input_data);
-  if (CheckRunningCondition(context)) {
-    try {
-      Run(context);
-    } catch (const std::exception &e) {
-      MsException::Instance().SetException();
-      std::string error_info =
-        "#umsg#Kernel error:#umsg#run kernel[" + kernel_->fullname_with_scope() + "] failed, exception: " + e.what();
-      SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*context), error_info);
-    }
-  }
-}
-
-void KernelActor::RunOpControl(AID *const input_control, OpContext<DeviceTensor> *const context) {
-  auto &sequential_num = context->sequential_num_;
-  (void)input_op_controls_[sequential_num].emplace_back(input_control);
-
-  if (CheckRunningCondition(context)) {
-    try {
-      Run(context);
-    } catch (const std::exception &e) {
-      MsException::Instance().SetException();
-      std::string error_info =
-        "#umsg#Kernel error:#umsg#run kernel[" + kernel_->fullname_with_scope() + "] failed, exception: " + e.what();
-      SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*context), error_info);
-    }
+  if (IsSomasEnable(somas_info_)) {
+    MS_EXCEPTION_IF_CHECK_FAIL((workspace_device_tensors_.size() >= somas_workspace.size()),
+                               "The output num is wrong.");
   }
 }
 
 void KernelActor::Run(OpContext<DeviceTensor> *const context) {
-  // 1. FetchInputDeviceTensor
-  // Collect the inputs from input data.
-  const auto &data_iter = input_op_datas_.find(context->sequential_num_);
-  if (data_iter != input_op_datas_.end()) {
-    for (auto &input_data : data_iter->second) {
-      size_t input_index = IntToSize(input_data->index_);
+  try {
+    FetchInputDeviceTensor(context);
 
-      // Update the input device tensor.
-      if (input_device_tensors_[input_index] != input_data->data_) {
-        input_device_tensors_[input_index] = input_data->data_;
-        memory_free_list_[input_index] = input_data->data_;
-      }
-
-      // Update the input kernel tensor.
-      const auto &kernel_tensor = input_device_tensors_[input_index]->kernel_tensor();
-      if (input_kernel_tensors_[input_index] != kernel_tensor.get()) {
-        input_kernel_tensors_[input_index] = kernel_tensor.get();
-        if (is_dynamic_shape_) {
-          input_kernel_tensors_for_infer_[input_index] = kernel_tensor;
-        }
-      }
-      CopyInputDeviceTensor(input_data, context);
-    }
-  }
-  // Collect the inputs from device tensor store.
-  FetchInputByTensorStore(&input_device_tensors_, &input_kernel_tensors_, &input_kernel_tensors_for_infer_,
-                          &memory_free_list_, context);
-
-  // 2. Infer shape and resize for dynamic shape case.
-  if (has_dynamic_) {
-    InferAndResize();
-    FetchOutputDeviceTensor(context);
-    FetchWorkspaceDeviceTensor();
-  } else {
-    FetchOutputDeviceTensor(context);
-  }
-
-  // 3. Set the memory address for the tensors which use the somas.
-  if (IsSomasEnable(somas_info_)) {
-    // Set the memory address for the output tensors which use the somas.
-    const auto &somas_outputs = kernel_info_->somas_output_result();
-    for (size_t i = 0; i < somas_outputs.size(); ++i) {
-      if (somas_outputs[i].second > 0) {
-        auto device_ptr = GetSomasDevicePtr(somas_outputs[i].first);
-        if (somas_graph_output_indexes_.count(i) && (output_device_tensors_[i]->GetPtr() != nullptr)) {
-          MS_LOG(ERROR) << GetAID().Name() << " does not free address for graph output index: " << i;
-          device_contexts_[0]->device_res_manager_->FreeMemory(output_device_tensors_[i]);
-        }
-        output_device_tensors_[i]->set_ptr(device_ptr);
-      }
-    }
-
-    // Set the memory address for the workspace tensors which use the somas.
-    const auto &somas_workspace = kernel_info_->somas_workspace_result();
-    for (size_t i = 0; i < somas_workspace.size(); ++i) {
-      if (somas_workspace[i].second > 0) {
-        auto device_ptr = GetSomasDevicePtr(somas_workspace[i].first);
-        // In this scenario, the Init function can ensure that the pointer of the relevant operation is not
-        // nullptr. In order to perform performance, the pointer validity is not checked here.
-        workspace_device_tensors_[i]->set_ptr(device_ptr);
-      }
-    }
-  }
-
-  if (enable_async_launch_) {
-    Async(kernel_launch_aid_, &KernelLaunchActor::LaunchKernel, context, this);
-  } else {
-    // 4. Allocate the memory address for other tensors which don't use the somas.
-    if (!memory_alloc_list_.empty()) {
-      if (device_contexts_[0]->device_res_manager_->swap_manager() != nullptr) {
-        device_contexts_[0]->device_res_manager_->swap_manager()->SetSwappableBeforeMemAllocate(input_device_tensors_,
-                                                                                                output_device_tensors_);
-        MS_EXCEPTION_IF_NULL(kernel_info_);
-        for (const auto &out_in : kernel_info_->out_in_ref_map()) {
-          MS_EXCEPTION_IF_NULL(input_device_tensors_[out_in.second]);
-          const auto &ptr = input_device_tensors_[out_in.second]->GetValidPtr(kDefaultStreamIndex);
-          if (ptr == nullptr || output_device_tensors_[out_in.first] == nullptr ||
-              output_device_tensors_[out_in.first]->GetPtr() != nullptr) {
-            continue;
-          }
-          // Pointer in DeviceAddress which is reference output may not be updated to the same as the reference input
-          // which is swapped out.
-          MS_LOG(DEBUG) << "Set device ptr of " << out_in.first << "th ref output the same as input " << out_in.second
-                        << ": " << ptr;
-          output_device_tensors_[out_in.first]->set_ptr(ptr);
-        }
-      }
-
-      MemoryManagerActor::GetInstance()->AllocateMemory(&memory_alloc_list_, device_contexts_[0], context, GetAID());
-    }
-
-    if (IsRunningFailed(context)) {
+    if (ActorDispatcher::enable_runtime_multi_pipeline()) {
+      RunWithMultiPipeline(context);
       return;
     }
 
-    // 5. PreLaunchKernel
-    for (size_t i = 0; i < input_device_tensors_.size(); ++i) {
-      launch_info_.inputs_[i]->addr = input_device_tensors_[i]->GetValidPtr(kernel_info_->stream_id());
-      launch_info_.inputs_[i]->size = input_device_tensors_[i]->GetSize();
+    device_contexts_[0]->device_res_manager_->BindDeviceToCurrentThread(false);
+    if (has_dynamic_) {
+      // Infer shape and resize for dynamic shape case.
+      InferAndResize();
+      FetchOutputDeviceTensor(context);
+      FetchWorkspaceDeviceTensor();
+    } else {
+      FetchOutputDeviceTensor(context);
     }
 
-    for (size_t i = 0; i < output_device_tensors_.size(); ++i) {
-      launch_info_.outputs_[i]->addr = output_device_tensors_[i]->GetValidPtr(kernel_info_->stream_id());
-      launch_info_.outputs_[i]->size = output_device_tensors_[i]->GetSize();
+    // Set the memory address for the tensors which use the somas.
+    SetSomasMemory(context);
+
+    if (ActorDispatcher::enable_async_launch_kernel()) {
+      RunWithAsyncLaunchKernel(context);
+      return;
     }
 
-    for (size_t i = 0; i < workspace_device_tensors_.size(); ++i) {
-      launch_info_.workspaces_[i]->addr = workspace_device_tensors_[i]->GetValidPtr(kernel_info_->stream_id());
-      launch_info_.workspaces_[i]->size = workspace_device_tensors_[i]->GetSize();
+    if (!memory_alloc_list_.empty()) {
+      // Allocate the memory address for other tensors which don't use the somas.
+      SendMemoryAllocReq(context);
     }
-
-    // 6. LaunchKernel
-    bool skip_launch =
-      (RecoveryContext::GetInstance()->enable_recovery() && CollectiveManager::instance()->need_reinit()) ||
-      IsSkippedLaunch(kernel_, nullptr);
-    if (!skip_launch) {
-      if (!LaunchKernel(context)) {
-        MS_LOG(EXCEPTION) << "#umsg#Kernel error:#umsg#Launch kernel failed: " + kernel_->fullname_with_scope();
-      }
-    }
-
-    if (debug_aid_ != nullptr) {
-      ActorDispatcher::SendSync(*debug_aid_, &DebugActor::Debug, kernel_, &launch_info_, device_contexts_[0], context,
-                                &GetAID());
-    }
-
-    // 7. PostLaunchKernel
-    LaunchCallback(context);
+    OnMemoryAllocFinish(context);
+  } catch (const std::exception &e) {
+    MsException::Instance().SetException();
+    std::string error_info =
+      "#umsg#Kernel error:#umsg#run kernel[" + kernel_->fullname_with_scope() + "] failed, exception: " + e.what();
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*context), error_info);
   }
-
-  // Update output shape and size for computed depend ops on dynamic shape case.
-  if (is_dynamic_shape_ && kernel_mod_->IsNeedUpdateOutputShapeAndSize()) {
-    KernelLaunchActor::GetInstance()->Wait();
-    kernel_mod_->UpdateOutputShapeAndSize(input_kernel_tensors_, output_kernel_tensors_);
-  }
-
-  if (kernel_mod_->need_user_data()) {
-    for_each(output_device_tensors_.begin(), output_device_tensors_.end(),
-             [](auto &device_tensor) { device_tensor->set_need_sync_user_data(true); });
-  }
-
-  if (!enable_async_launch_) {
-    if ((modifiable_ref_input_indexes_.size() != 0) || (modifiable_ref_output_indexes_.size() != 0)) {
-      RefreshDeviceTensorCopyStore(context);
-    }
-
-    // Free memory.
-    if (memory_free_list_.size() > 0) {
-      if (device_contexts_[0]->device_res_manager_->swap_manager() != nullptr) {
-        device_contexts_[0]->device_res_manager_->swap_manager()->SetSwappableBeforeMemFree(
-          input_device_tensors_, output_device_tensors_, kernel_info_);
-      }
-
-      MemoryManagerActor::GetInstance()->FreeMemory(&memory_free_list_, device_contexts_[0], context, GetAID());
-
-      // Free the address that is the temp store for kernel input copy.
-      for (auto &copy_input_device_tensor : copy_input_device_tensors_) {
-        if ((copy_input_device_tensor != nullptr) && (copy_input_device_tensor->GetPtr() != nullptr)) {
-          device_contexts_[0]->device_res_manager_->FreeMemory(copy_input_device_tensor.get());
-        }
-      }
-    }
-  }
-
-  EraseInput(context);
-
-  SendOutput(context);
 }
 
-void KernelActor::LaunchKernelWithMemManage(OpContext<DeviceTensor> *const context) {
-  // 1. Allocate memory.
-  if (!memory_alloc_list_.empty()) {
-    MemoryManagerActor::GetInstance()->AllocateMemory(&memory_alloc_list_, device_contexts_[0], context, GetAID());
-  }
+void KernelActor::RunWithMultiPipeline(OpContext<DeviceTensor> *const context) {
+  // Set the memory address for the tensors which use the somas.
+  SetSomasMemory(context);
+  PushRunTaskToPipeline(context);
 
   if (IsRunningFailed(context)) {
     return;
   }
 
-  // 2. Launch Kernel
-  bool skip_launch =
-    (RecoveryContext::GetInstance()->enable_recovery() && CollectiveManager::instance()->need_reinit()) ||
-    IsSkippedLaunch(kernel_, nullptr);
-  if (!skip_launch) {
-    if (!LaunchKernel(context)) {
-      MS_LOG(EXCEPTION) << "#umsg#Kernel error:#umsg#Launch kernel failed: " + kernel_->fullname_with_scope();
-    }
+  // PostLaunchKernel
+  if (kernel_mod_->need_user_data()) {
+    for_each(output_device_tensors_.begin(), output_device_tensors_.end(),
+             [](auto &device_tensor) { device_tensor->set_need_sync_user_data(true); });
   }
 
-  if ((modifiable_ref_input_indexes_.size() != 0) || (modifiable_ref_output_indexes_.size() != 0)) {
-    RefreshDeviceTensorCopyStore(context);
+  EraseInput(context);
+  SendOutput(context);
+}
+
+void KernelActor::RunWithAsyncLaunchKernel(OpContext<DeviceTensor> *const context) {
+  Async(kernel_async_launch_aid_, &KernelAsyncLaunchActor::LaunchKernel, context, this);
+
+  if (IsRunningFailed(context)) {
+    return;
   }
 
-  // 3. Free memory.
-  if (memory_free_list_.size() > 0) {
-    if (device_contexts_[0]->device_res_manager_->swap_manager() != nullptr) {
-      device_contexts_[0]->device_res_manager_->swap_manager()->SetSwappableBeforeMemFree(
-        input_device_tensors_, output_device_tensors_, kernel_info_);
-    }
-
-    MemoryManagerActor::GetInstance()->FreeMemory(&memory_free_list_, device_contexts_[0], context, GetAID());
-
-    // Free the address that is the temp store for kernel input copy.
-    for (auto &copy_input_device_tensor : copy_input_device_tensors_) {
-      if ((copy_input_device_tensor != nullptr) && (copy_input_device_tensor->GetPtr() != nullptr)) {
-        device_contexts_[0]->device_res_manager_->FreeMemory(copy_input_device_tensor.get());
-      }
-    }
+  // PostLaunchKernel
+  if (kernel_mod_->need_user_data()) {
+    for_each(output_device_tensors_.begin(), output_device_tensors_.end(),
+             [](auto &device_tensor) { device_tensor->set_need_sync_user_data(true); });
   }
+
+  EraseInput(context);
+  SendOutput(context);
 }
 
 void KernelActor::FetchWorkspaceDeviceTensor() {
@@ -461,6 +305,9 @@ void KernelActor::FetchWorkspaceDeviceTensor() {
         device_contexts_[0]->device_context_key().device_name_, device_contexts_[0]->device_context_key().device_id_);
       kernel_tensor->set_stream_id(kernel_info_->stream_id());
       auto device_address = device_contexts_[0]->device_res_manager_->CreateDeviceAddress(kernel_tensor);
+      MS_EXCEPTION_IF_NULL(device_address);
+      MS_LOG(DEBUG) << "Create addr for node:" << common::AnfAlgo::GetNodeDebugString(kernel_)
+                    << " addr:" << device_address;
       AnfAlgo::SetWorkspaceAddr(device_address, i, kernel_.get());  // set to kernel_info
       (void)workspace_device_tensors_.emplace_back(device_address.get());
       (void)launch_info_.workspaces_.emplace_back(std::make_shared<Address>());
@@ -477,6 +324,39 @@ void KernelActor::FetchWorkspaceDeviceTensor() {
   workspace_kernel_tensors_.resize(workspace_device_tensors_.size());
   for (size_t i = 0; i < workspace_sizes.size(); ++i) {
     workspace_kernel_tensors_[i] = workspace_device_tensors_[i]->kernel_tensor().get();
+  }
+}
+
+void KernelActor::SetSomasMemory(OpContext<DeviceTensor> *const context) const {
+  if (!IsSomasEnable(somas_info_)) {
+    return;
+  }
+
+  // Set the memory address for the output tensors which use the somas.
+  const auto &somas_outputs = kernel_info_->somas_output_result();
+  for (size_t i = 0; i < somas_outputs.size(); ++i) {
+    if (somas_outputs[i].second > 0) {
+      auto device_ptr = GetSomasDevicePtr(somas_outputs[i].first);
+      // In this scenario, the Init function can ensure that the pointer of the relevant operation is not nullptr.
+      // In order to perform performance, the pointer validity is not checked here.
+      // Check the graph output address need free.
+      if (somas_graph_output_indexes_.count(i) && (output_device_tensors_[i]->GetPtr() != nullptr)) {
+        MS_LOG(ERROR) << GetAID().Name() << " does not free address for graph output index: " << i;
+        device_contexts_[0]->device_res_manager_->FreeMemory(output_device_tensors_[i]);
+      }
+      output_device_tensors_[i]->set_ptr(device_ptr);
+    }
+  }
+
+  // Set the memory address for the workspace tensors which use the somas.
+  const auto &somas_workspace = kernel_info_->somas_workspace_result();
+  for (size_t i = 0; i < somas_workspace.size(); ++i) {
+    if (somas_workspace[i].second > 0) {
+      auto device_ptr = GetSomasDevicePtr(somas_workspace[i].first);
+      // In this scenario, the Init function can ensure that the pointer of the relevant operation is not nullptr.
+      // In order to perform performance, the pointer validity is not checked here.
+      workspace_device_tensors_[i]->set_ptr(device_ptr);
+    }
   }
 }
 
@@ -502,13 +382,75 @@ void *KernelActor::GetSomasDevicePtr(size_t offset) const {
   return AddressOffset(real_base_address, real_offset);
 }
 
+void KernelActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const context) {
+  if (device_contexts_[0]->device_res_manager_->swap_manager() != nullptr) {
+    device_contexts_[0]->device_res_manager_->swap_manager()->SetSwappableBeforeMemAllocate(input_device_tensors_,
+                                                                                            output_device_tensors_);
+    MS_EXCEPTION_IF_NULL(kernel_info_);
+    for (const auto &out_in : kernel_info_->out_in_ref_map()) {
+      MS_EXCEPTION_IF_NULL(input_device_tensors_[out_in.second]);
+      const auto &ptr = input_device_tensors_[out_in.second]->GetValidPtr(kDefaultStreamIndex);
+      if (ptr == nullptr || output_device_tensors_[out_in.first] == nullptr ||
+          output_device_tensors_[out_in.first]->GetPtr() != nullptr) {
+        continue;
+      }
+      // Pointer in DeviceAddress which is reference output may not be updated to the same as the reference input
+      // which is swapped out.
+      MS_LOG(DEBUG) << "Set device ptr of " << out_in.first << "th ref output the same as input " << out_in.second
+                    << ": " << ptr;
+      output_device_tensors_[out_in.first]->set_ptr(ptr);
+    }
+  }
+
+  MemoryManagerActor::GetInstance()->AllocateMemory(&memory_alloc_list_, device_contexts_[0], context, GetAID());
+}
+
+void KernelActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {
+  if (device_contexts_[0]->device_res_manager_->swap_manager() != nullptr) {
+    device_contexts_[0]->device_res_manager_->swap_manager()->SetSwappableBeforeMemFree(
+      input_device_tensors_, output_device_tensors_, kernel_info_);
+  }
+  MemoryManagerActor::GetInstance()->FreeMemory(&memory_free_list_, device_contexts_[0], context, GetAID());
+
+  // Free the address that is the temp store for kernel input copy.
+  for (auto &copy_input_device_tensor : copy_input_device_tensors_) {
+    if ((copy_input_device_tensor != nullptr) && (copy_input_device_tensor->GetPtr() != nullptr)) {
+      device_contexts_[0]->device_res_manager_->FreeMemory(copy_input_device_tensor.get());
+    }
+  }
+}
+
+void KernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
+  if (IsRunningFailed(context)) {
+    return;
+  }
+  PreLaunchKernel(context);
+
+  bool skip_launch = CollectiveManager::instance()->need_reinit() || IsSkippedLaunch(kernel_, nullptr);
+  if (!skip_launch && !LaunchKernel(context)) {
+    MS_LOG(EXCEPTION) << "#umsg#Kernel error:#umsg#Launch kernel failed: " + kernel_->fullname_with_scope();
+  }
+
+  // Debug actor is blocked, must wait debug actor callback message to process continue.
+  if (debug_aid_ != nullptr) {
+    ActorDispatcher::SendSync(*debug_aid_, &DebugActor::Debug, kernel_, &launch_info_, device_contexts_[0], context,
+                              &GetAID());
+  }
+
+  PostLaunchKernel(context);
+}
+
 void KernelActor::CopyInputDeviceTensor(const OpData<DeviceTensor> *input_data,
                                         OpContext<DeviceTensor> *const context) {
   size_t input_data_index = IntToSize(input_data->index_);
+  // The ignored input address that is not used in the kernel launch and no need copy.
   if (!launch_ignored_inputs_.empty() && (std::find(launch_ignored_inputs_.begin(), launch_ignored_inputs_.end(),
                                                     input_data_index) != launch_ignored_inputs_.end())) {
     MS_LOG(DEBUG) << GetAID().Name() << " ignore the input address for input index: " << input_data_index;
     return;
+  }
+  if (input_data_index >= real_input_data_infos_.size()) {
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, *context, "The input index is of range.");
   }
   auto &real_input_info = real_input_data_infos_[input_data_index];
   if ((input_data->data_->GetDeviceType() == device_contexts_[0]->GetDeviceType()) &&
@@ -516,6 +458,7 @@ void KernelActor::CopyInputDeviceTensor(const OpData<DeviceTensor> *input_data,
     return;
   }
 
+  WaitRuntimePipelineFinish();
   if (inputs_continuous_memory_) {
     std::string error_info = GetAID().Name() + " inputs must be continuous memory and can't be copied for index " +
                              std::to_string(input_data_index);
@@ -591,6 +534,12 @@ void KernelActor::CopyInputDeviceTensor(const OpData<DeviceTensor> *input_data,
 void KernelActor::UpdateInputDeviceTensor(const OpData<DeviceTensor> *input_data,
                                           OpContext<DeviceTensor> *const context) {
   size_t input_index = IntToSize(input_data->index_);
+  if (input_index >= input_device_tensors_.size()) {
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(
+      strategy_, (*context),
+      "The input index:" + std::to_string(input_index) + " is out of vector size:" +
+        std::to_string(input_device_tensors_.size()) + " for kernel:" + kernel_->fullname_with_scope());
+  }
 
   // Update the input device tensor.
   if (input_device_tensors_[input_index] != input_data->data_) {
@@ -608,9 +557,31 @@ void KernelActor::UpdateInputDeviceTensor(const OpData<DeviceTensor> *input_data
   }
 }
 
-void KernelActor::FetchOutputDeviceTensor(OpContext<DeviceTensor> *const) {
+void KernelActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *const context) {
+  // Collect the inputs from input data.
+  const auto &data_iter = input_op_datas_.find(context->sequential_num_);
+  if (data_iter != input_op_datas_.end()) {
+    for (auto &input_data : data_iter->second) {
+      UpdateInputDeviceTensor(input_data, context);
+      CopyInputDeviceTensor(input_data, context);
+    }
+  }
+
+  // Collect the inputs from device tensor store.
+  FetchInputByTensorStore(&input_device_tensors_, &input_kernel_tensors_, &input_kernel_tensors_for_infer_,
+                          &memory_free_list_, context);
+}
+
+void KernelActor::FetchOutputDeviceTensor(OpContext<DeviceTensor> *const context) {
   auto &output_addresses = kernel_info_->output_address_list();
   const auto &output_size_list = kernel_mod_->GetOutputSizeList();
+
+  // May exist in the kernel which does not support the dynamic shape.
+  if (output_addresses.size() != output_size_list.size()) {
+    std::string error_info = "The outputs number(" + std::to_string(output_size_list.size()) + ") is wrong, " +
+                             GetAID().Name() + " may not support the dynamic shape, please check.";
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*context), error_info);
+  }
 
   // Update the size of output device tensor.
   for (size_t i = 0; i < output_addresses.size(); ++i) {
@@ -618,6 +589,95 @@ void KernelActor::FetchOutputDeviceTensor(OpContext<DeviceTensor> *const) {
       continue;
     }
     output_addresses[i]->SetSize(output_size_list[i]);
+  }
+}
+
+void KernelActor::PreLaunchKernel(OpContext<DeviceTensor> *) {
+  for (size_t i = 0; i < input_device_tensors_.size(); ++i) {
+    launch_info_.inputs_[i]->addr = input_device_tensors_[i]->GetValidPtr(kernel_info_->stream_id());
+    launch_info_.inputs_[i]->size = input_device_tensors_[i]->GetSize();
+  }
+
+  for (size_t i = 0; i < output_device_tensors_.size(); ++i) {
+    launch_info_.outputs_[i]->addr = output_device_tensors_[i]->GetValidPtr(kernel_info_->stream_id());
+    launch_info_.outputs_[i]->size = output_device_tensors_[i]->GetSize();
+  }
+
+  for (size_t i = 0; i < workspace_device_tensors_.size(); ++i) {
+    launch_info_.workspaces_[i]->addr = workspace_device_tensors_[i]->GetValidPtr(kernel_info_->stream_id());
+    launch_info_.workspaces_[i]->size = workspace_device_tensors_[i]->GetSize();
+  }
+}
+
+void KernelActor::PushRunTaskToPipeline(OpContext<DeviceTensor> *const context) {
+  if (has_dynamic_) {
+    if (is_dynamic_value_ || has_computed_depend_input_) {
+      MS_LOG(DEBUG) << "Begin wait runtime pipeline for kernel: " << kernel_->fullname_with_scope();
+      WaitRuntimePipelineFinish();
+      MS_LOG(DEBUG) << "End wait runtime pipeline for kernel: " << kernel_->fullname_with_scope();
+    }
+  }
+
+  // Note: dynamic value or static shape also need push task into infer actor to make sure correct kernel execution
+  // order.
+  Async(kernel_async_infer_aid_, &KernelAsyncInferActor::InferShape, context, this);
+}
+
+void KernelActor::ExecuteInferShapeTask(OpContext<DeviceTensor> *const context) {
+  ProfilerRecorder profiler(ProfilerModule::kKernel, ProfilerEvent::kKernelInfer, GetAID().Name());
+  if (is_dynamic_type_) {
+    InferShapeAndType();
+  } else if (is_dynamic_shape_) {
+    InferShape();
+  }
+
+  Async(kernel_async_resize_aid_, &KernelAsyncResizeActor::ResizeKernelMod, context, this);
+}
+
+void KernelActor::ExecuteResizeKernelModTask(OpContext<DeviceTensor> *const context) {
+  ProfilerRecorder profiler(ProfilerModule::kKernel, ProfilerEvent::kKernelResize, GetAID().Name());
+  if (has_dynamic_) {
+    device_contexts_[0]->device_res_manager_->BindDeviceToCurrentThread(false);
+    ResizeKernelMod();
+
+    FetchOutputDeviceTensor(context);
+    FetchWorkspaceDeviceTensor();
+  } else {
+    FetchOutputDeviceTensor(context);
+  }
+
+  Async(kernel_async_launch_aid_, &KernelAsyncLaunchActor::LaunchKernel, context, this);
+}
+
+void KernelActor::ExecuteLaunchKernelTask(OpContext<DeviceTensor> *const context) {
+  // 1. Allocate memory.
+  if (!memory_alloc_list_.empty()) {
+    SendMemoryAllocReq(context);
+  }
+
+  if (IsRunningFailed(context)) {
+    MS_LOG(INFO) << "Run failed and early stop launch kernel.";
+    return;
+  }
+
+  // 2. Launch kernel if need.
+  device_contexts_[0]->device_res_manager_->BindDeviceToCurrentThread(false);
+  bool skip_launch = CollectiveManager::instance()->need_reinit() || IsSkippedLaunch(kernel_, nullptr);
+  if (!skip_launch && !LaunchKernel(context)) {
+    MS_LOG(EXCEPTION) << "#umsg#Kernel error:#umsg#Launch kernel failed: " + kernel_->fullname_with_scope();
+  }
+
+  if (is_dynamic_shape_ && kernel_mod_->IsNeedUpdateOutputShapeAndSize()) {
+    kernel_mod_->UpdateOutputShapeAndSize(input_kernel_tensors_, output_kernel_tensors_);
+  }
+
+  if ((modifiable_ref_input_indexes_.size() != 0) || (modifiable_ref_output_indexes_.size() != 0)) {
+    RefreshDeviceTensorCopyStore(context);
+  }
+
+  // 3. Free memory.
+  if (memory_free_list_.size() > 0) {
+    SendMemoryFreeReq(context);
   }
 }
 
@@ -635,6 +695,11 @@ void KernelActor::InferAndResize() {
       ResizeKernelMod();
     } else if (is_dynamic_value_) {
       ProfilerRecorder profiler(ProfilerModule::kKernel, ProfilerEvent::kKernelResize, GetAID().Name());
+      if (ActorDispatcher::enable_async_launch_kernel()) {
+        MS_LOG(DEBUG) << "Begin wait runtime pipeline for dynamic value kernel.";
+        WaitRuntimePipelineFinish();
+        MS_LOG(DEBUG) << "End wait runtime pipeline for dynamic value kernel.";
+      }
       ResizeKernelMod();
     }
 
@@ -665,9 +730,9 @@ void KernelActor::InferShape() {
                 << ", inputs: " << input_kernel_tensors_for_infer_;
   // 1. Infer operator's output's Shape.
   auto base_shape = opt::dynamic_shape::InferShape(kernel_mod_->primitive(), input_kernel_tensors_for_infer_);
+  MS_EXCEPTION_IF_NULL(base_shape);
   MS_LOG(DEBUG) << "End InferShape for kernel: " << kernel_->fullname_with_scope()
                 << ", shape: " << base_shape->ToString();
-  MS_EXCEPTION_IF_NULL(base_shape);
 
   // 2. Update shape of output kernel tensor.
   opt::dynamic_shape::UpdateKernelTensorShape(base_shape, output_kernel_tensors_);
@@ -677,7 +742,8 @@ void KernelActor::ResizeKernelMod() {
   MS_LOG(DEBUG) << "Begin Resize kernel mod for kernel: " << kernel_->fullname_with_scope();
   int ret = kernel_mod_->Resize(input_kernel_tensors_, output_kernel_tensors_);
   MS_LOG(DEBUG) << "End Resize kernel mod for kernel: " << kernel_->fullname_with_scope()
-                << ", the output size list: " << kernel_mod_->GetOutputSizeList();
+                << ", the output size list: " << kernel_mod_->GetOutputSizeList()
+                << ", workspace size list: " << kernel_mod_->GetWorkspaceSizeList();
   if (ret != kernel::KRET_OK) {
     MS_LOG(EXCEPTION) << "Resize failed for kernel: " << kernel_->fullname_with_scope();
   }
@@ -686,6 +752,8 @@ void KernelActor::ResizeKernelMod() {
 bool KernelActor::LaunchKernel(OpContext<DeviceTensor> *const) {
   // Check the skipped launch condition.
   if (is_launch_skipped_) {
+    MS_EXCEPTION_IF_CHECK_FAIL((launch_info_.inputs_.size() >= 1), "The inputs size is wrong.");
+    MS_EXCEPTION_IF_CHECK_FAIL((launch_info_.outputs_.size() == 1), "The outputs size is wrong.");
     if (launch_info_.inputs_[0]->addr == launch_info_.outputs_[0]->addr) {
       return true;
     } else {
@@ -694,9 +762,8 @@ bool KernelActor::LaunchKernel(OpContext<DeviceTensor> *const) {
     }
   }
 
-  auto ret = device_contexts_[0]->GetKernelExecutor(false)->LaunchKernel(
+  return device_contexts_[0]->GetKernelExecutor(false)->LaunchKernel(
     kernel_, input_kernel_tensors_, workspace_kernel_tensors_, output_kernel_tensors_, kernel_mod_, stream_);
-  return ret;
 }
 
 void KernelActor::LaunchCallback(OpContext<DeviceTensor> *const context) {
@@ -765,6 +832,37 @@ void KernelActor::LaunchCallback(OpContext<DeviceTensor> *const context) {
     MS_LOG(DEBUG) << "End launch callback of actor: " << GetAID().Name() << ", id : " << actor_id() << ", ret : " << ret
                   << ".";
   }
+}
+
+void KernelActor::PostLaunchKernel(OpContext<DeviceTensor> *const context) {
+  // Execute kernel actor callbacks.
+  LaunchCallback(context);
+
+  if (is_dynamic_shape_ && kernel_mod_->IsNeedUpdateOutputShapeAndSize()) {
+    kernel_mod_->UpdateOutputShapeAndSize(input_kernel_tensors_, output_kernel_tensors_);
+  }
+
+  if (kernel_mod_->need_user_data()) {
+    for_each(output_device_tensors_.begin(), output_device_tensors_.end(),
+             [](auto &device_tensor) { device_tensor->set_need_sync_user_data(true); });
+  }
+
+  if ((modifiable_ref_input_indexes_.size() != 0) || (modifiable_ref_output_indexes_.size() != 0)) {
+    RefreshDeviceTensorCopyStore(context);
+  }
+
+  // The input is invalid and needs to be erased when finish kernel launch.
+  EraseInput(context);
+
+  // Note that SendMemoryFreeReq must be in front of SendOutput, because SendOutput will trigger SendMemoryAllocReq
+  // of the next actor and the actor is asynchronous execution. So it is necessary to ensure that SendMemoryFreeReq
+  // of the current actor is in front of SendMemoryAllocReq of the next actor. One is to reuse the memory more
+  // fully, the other is to ensure the execution order and avoid the illegal memory timing problem.
+  if (memory_free_list_.size() > 0) {
+    SendMemoryFreeReq(context);
+  }
+
+  SendOutput(context);
 }
 
 void KernelActor::RefreshDeviceTensorCopyStore(OpContext<DeviceTensor> *const context) {

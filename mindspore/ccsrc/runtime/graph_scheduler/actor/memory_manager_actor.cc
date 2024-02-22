@@ -45,9 +45,18 @@ void MemoryManagerActor::AllocateMemory(const std::vector<DeviceTensor *> *alloc
       device::DynamicMemAllocatorDebugInfo::SetDebugInfo(from_aid.Name(), device::AllocatorType::kKernelOutput);
       if (!device_context->device_res_manager_->AllocateMemory(device_tensor)) {
         SetOpContextMemoryAllocFail(from_aid.Name(), device_context, device_tensor->GetSize(), op_context);
+        return;
       }
     } catch (const std::exception &e) {
       SetOpContextMemoryAllocFail(from_aid.Name(), device_context, device_tensor->GetSize(), op_context);
+      return;
+    }
+
+    if (common::IsNeedProfileMemory()) {
+      auto output_address = reinterpret_cast<std::uintptr_t>(device_tensor);
+      MS_LOG(WARNING) << "Need Profile Memory, alloc type: MemoryManagerActor, device address class ptr: "
+                      << output_address << ", device address size: " << device_tensor->GetSize()
+                      << ", device address addr: " << device_tensor->GetPtr();
     }
   }
 }

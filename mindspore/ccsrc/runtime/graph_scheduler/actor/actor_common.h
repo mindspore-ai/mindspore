@@ -234,6 +234,13 @@ class ActorDispatcher {
   static bool is_memory_free_sync() { return is_memory_free_sync_; }
   static void set_is_memory_free_sync(bool is_memory_free_sync) { is_memory_free_sync_ = is_memory_free_sync; }
 
+  static void set_enable_runtime_multi_pipeline(bool enable_runtime_multi_pipeline) {
+    enable_runtime_multi_pipeline_ = enable_runtime_multi_pipeline;
+  }
+  static bool enable_runtime_multi_pipeline() { return enable_runtime_multi_pipeline_; }
+
+  static bool enable_async_launch_kernel() { return enable_async_launch_kernel_; }
+
   // The first five executions are for warm-up, the next five executions are statistics of multi thread execution time,
   // and the next next five executions are statistics of single thread execution time. The first 30 step which do search
   // if there are cpu kernels.
@@ -258,6 +265,9 @@ class ActorDispatcher {
   // The memory manager actor will not send and recv message if true.
   static bool is_memory_allocation_sync_;
   static bool is_memory_free_sync_;
+
+  static bool enable_runtime_multi_pipeline_;
+  static bool enable_async_launch_kernel_;
 };
 
 bool IsRunningFailed(const OpContext<DeviceTensor> *context);
@@ -299,7 +309,14 @@ bool IsSkippedLaunch(const CNodePtr &kernel, const KernelGraphPtr &kernel_graph)
 
 // Whether enable asynchronously infer shape and resize kernel mod by KernelInferActor and KernelResizeActor.
 bool EnableAsyncInfer();
-bool EnableAsyncLaunch();
+
+// Whether enable async launch kernel or infer->resize->launch pipeline.
+// Set ture will enable async launch, and also enable infer->resize->launch pipeline if actor set contains dynamic shape
+// kernel.
+bool EnableRuntimePipeline();
+// If enable async launch kernel, wait all kernels launch task finish.
+// If enable infer->resize->launch pipeline, also wait all infer, resize and launch task finish.
+void WaitRuntimePipelineFinish();
 
 // Copy data from src_device_tensor to dst_device_tensor.
 bool Copy(const DeviceTensor *dst_device_tensor, const DeviceTensor *src_device_tensor);

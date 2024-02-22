@@ -14,27 +14,28 @@
  * limitations under the License.
  */
 
-#include "runtime/graph_scheduler/actor/kernel_launch_actor.h"
+#include "runtime/graph_scheduler/actor/kernel_async_infer_actor.h"
 #include "runtime/graph_scheduler/actor/kernel_actor.h"
 
 namespace mindspore {
 namespace runtime {
-void KernelLaunchActor::LaunchKernel(OpContext<DeviceTensor> *const context, KernelActor *kernel_actor) {
+void KernelAsyncInferActor::InferShape(OpContext<DeviceTensor> *const context, KernelActor *kernel_actor) {
   try {
-    kernel_actor->LaunchKernelWithMemManage(context);
+    kernel_actor->ExecuteInferShapeTask(context);
   } catch (const std::exception &e) {
     MsException::Instance().SetException();
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(GraphExecutionStrategy::kPipeline, (*context), e.what());
   }
 }
 
-void KernelLaunchActor::Wait() {
-  if (enable_async_launch_) {
-    Future<bool> f = Async(this->GetAID(), &KernelLaunchActor::OnTaskFinish);
-    f.Wait();
-  }
+void KernelAsyncInferActor::Wait() {
+  MS_LOG(DEBUG) << "Begin wait kernel infer finish";
+  ProfilerRecorder profiler(ProfilerModule::kRuntime, ProfilerEvent::kWaitKernelsInferFinish, GetAID().Name());
+  Future<bool> f = Async(this->GetAID(), &KernelAsyncInferActor::OnTaskFinish);
+  f.Wait();
+  MS_LOG(DEBUG) << "End wait kernel infer finish";
 }
 
-Future<bool> KernelLaunchActor::OnTaskFinish() { return Future<bool>(true); }
+Future<bool> KernelAsyncInferActor::OnTaskFinish() { return Future<bool>(true); }
 }  // namespace runtime
 }  // namespace mindspore

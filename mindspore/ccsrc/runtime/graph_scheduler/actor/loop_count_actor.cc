@@ -22,7 +22,6 @@
 #include "runtime/graph_scheduler/actor/recorder_actor.h"
 #include "runtime/graph_scheduler/actor/debug_actor.h"
 #include "runtime/graph_scheduler/actor/control_flow/entrance_actor.h"
-#include "runtime/graph_scheduler/actor/kernel_launch_actor.h"
 #include "mindrt/include/async/async.h"
 #include "utils/log_adapter.h"
 #include "runtime/device/stream_synchronizer.h"
@@ -70,7 +69,7 @@ void LoopCountActor::IncreaseLoopCount(OpContext<DeviceTensor> *const context) {
   if ((strategy_ == GraphExecutionStrategy::kPipeline) && is_need_sync_stream_) {
     ProfilerRecorder profiler(ProfilerModule::kKernel, ProfilerEvent::kStreamSync, GetAID().Name());
     std::set<const DeviceContext *> sync_stream_device_contexts;
-    KernelLaunchActor::GetInstance()->Wait();
+    WaitRuntimePipelineFinish();
     for (auto &device_context : device_contexts_) {
       MS_EXCEPTION_IF_NULL(device_context);
       if ((sync_stream_device_contexts.count(device_context) == 0) &&

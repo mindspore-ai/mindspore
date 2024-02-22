@@ -17,7 +17,6 @@
 #include "plugin/device/ascend/hal/device/ascend_device_synchronizer.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 #include "include/common/utils/utils.h"
-#include "include/backend/device_synchronizer_utils.h"
 #include "acl/acl_rt.h"
 #include "utils/log_adapter.h"
 
@@ -42,7 +41,6 @@ bool AscendDeviceSynchronizer::SyncDeviceToHost(void *host_ptr, void *device_ptr
     MS_LOG(WARNING) << "Bind device to current thread failed.";
   }
 
-  runtime::WaitRuntimeFinishLaunch();
   auto ret = aclrtMemcpyAsync(host_ptr, size, device_ptr, size, ACL_MEMCPY_DEVICE_TO_HOST, stream);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Call aclrtMemcpyAsync device to host failed, the error num[" << ret << "]";
@@ -74,7 +72,6 @@ bool AscendDeviceSynchronizer::SyncHostToDevice(void *device_ptr, void *host_ptr
     MS_LOG(WARNING) << "Bind device to current thread failed.";
   }
 
-  runtime::WaitRuntimeFinishLaunch();
   auto ret = aclrtMemcpyAsync(device_ptr, size, host_ptr, size, ACL_MEMCPY_HOST_TO_DEVICE, stream);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Call aclrtMemcpyAsync device to host failed, the error num[" << ret << "]";
