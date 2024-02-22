@@ -2928,7 +2928,7 @@ StopTraceReason GraphBuilder::HandleCall(int depth) {
   stop_reason = BuildSubGraph(call_node, depth, callable_info, subgraph);
   CollectInlineInfo(call_node, depth);
 
-  if (call_node->GetSubGraph() && call_node->GetInlineReason() == InlineReason::kInline) {
+  if (!trace_flag() && call_node->GetSubGraph() && call_node->GetInlineReason() == InlineReason::kInline) {
     MS_EXCEPTION_IF_NULL(call_node->GetSubGraph()->GetRetVal());
     seek(0) = call_node->GetSubGraph()->GetRetVal();
   }
