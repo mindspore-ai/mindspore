@@ -138,6 +138,7 @@ REG_FALLBACK_BUILDER("Dense").SetBody(BODYFUNC(ib) {
     w = ib->Reshape(w, reshape_shapes[kIndex1]);
   }
   auto ret = ib->MatMul(x, w, false, true);
+  ret = ib->Cast(ret, x->dtype());
   if (has_bias) {
     auto b = ib->GetInput(kIndex2);
     ret = ib->Add(ret, b);
