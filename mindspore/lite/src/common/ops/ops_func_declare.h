@@ -96,7 +96,6 @@
 #include "ops/squared_difference.h"
 #include "ops/stack.h"
 #include "ops/strided_slice.h"
-#include "ops/sub.h"
 #include "ops/switch.h"
 #include "ops/tan.h"
 #include "ops/tanh.h"

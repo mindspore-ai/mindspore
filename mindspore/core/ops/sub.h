@@ -13,34 +13,3 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#ifndef MINDSPORE_CORE_OPS_SUB_H_
-#define MINDSPORE_CORE_OPS_SUB_H_
-#include <memory>
-#include <string>
-#include <vector>
-
-#include "mindapi/base/types.h"
-#include "ops/base_operator.h"
-
-namespace mindspore {
-namespace ops {
-constexpr auto kNameSub = "Sub";
-/// \brief Subtracts the second input tensor from the first input tensor element-wise.
-/// Refer to Python API @ref mindspore.ops.Sub for more details.
-class MIND_API Sub : public BaseOperator {
- public:
-  MIND_API_BASE_MEMBER(Sub);
-  /// \brief Constructor.
-  Sub() : BaseOperator(kNameSub) { InitIOName({"x", "y"}, {"output"}); }
-  explicit Sub(const std::string k_name) : BaseOperator(k_name) { InitIOName({"x", "y"}, {"output"}); }
-  /// \brief Init.
-  void Init() const {}
-};
-
-MIND_API abstract::AbstractBasePtr SubInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                            const std::vector<abstract::AbstractBasePtr> &input_args);
-}  // namespace ops
-}  // namespace mindspore
-
-#endif  // MINDSPORE_CORE_OPS_SUB_H_

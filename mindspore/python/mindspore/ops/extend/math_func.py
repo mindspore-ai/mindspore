@@ -20,6 +20,8 @@ Math Operators with better performance
 """
 
 from mindspore.ops import auto_generate as P
+from mindspore.ops.auto_generate.gen_ops_prim import add_ext_op, sub_ext_op
+
 
 # define Primitive global variables
 
@@ -71,4 +73,132 @@ def baddbmm(input, batch1, batch2, beta=1, alpha=1):
     return P.baddbmm(input, batch1, batch2, beta, alpha)
 
 
-__all__ = ['baddbmm']
+def add(input, other, alpha=1):
+    r"""
+    Adds scaled other value to input Tensor.
+
+    .. math::
+
+        out_{i} = input_{i} + alpha \times other_{i}
+
+    Note:
+        - When the two inputs have different shapes,
+          they must be able to broadcast to a common shape.
+        - The two inputs and alpha cannot be bool type at the same time,
+          [True, Tensor(True, bool\_), Tensor(np.array([True]), bool\_)] are all considered bool type.
+        - The two inputs and alpha comply with the implicit type conversion rules to make the data types
+          consistent.
+        - Alpha is a scaling factor applied to `other`.
+
+    Args:
+        input (Union[Tensor, number.Number, bool]): The first input is a number.Number or
+            a bool or a tensor whose data type is
+            `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
+            `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
+        other (Union[Tensor, number.Number, bool]): The second input, is a number.Number or
+            a bool or a tensor whose data type is
+            `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
+            `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
+        alpha (number.Number): A scaling factor applied to `other`.
+
+    Returns:
+        Tensor, the shape is the same as the one of the input `input`, `other` after broadcasting,
+        and the data type is the one with higher precision or higher digits among the two inputs and alpha.
+
+    Raises:
+        TypeError: If `input`, `other`, or `alpha` is not one of the following: Tensor, number.Number, bool.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> from mindspore.ops.extend import sub
+        >>> # case 1: x, y and alpha are all Tensor.
+        >>> x = Tensor(np.array([1, 2, 3]).astype(np.float32))
+        >>> y = Tensor(np.array([4, 5, 6]).astype(np.float32))
+        >>> alpha = Tensor(2.0, mindspore.float32)
+        >>> output = add(x, y, alpha)
+        >>> print(output)
+        [9. 12. 15.]
+        >>> # case 2: x is a scalar, y is a Tensor and alpha is a scalar
+        >>> x = Tensor(1, mindspore.int32)
+        >>> y = Tensor(np.array([4, 5, 6]).astype(np.float32))
+        >>> alpha = 0.5
+        >>> output = add(x, y, alpha)
+        >>> print(output)
+        [3. 3.5 4.]
+        >>> # the data type of x is int32, the data type of y is float32,
+        >>> # alpha is a float, and the output is the data format of higher precision float32.
+        >>> print(output.dtype)
+        Float32
+    """
+    return add_ext_op(input, other, alpha)
+
+
+def sub(input, other, alpha=1):
+    r"""
+    Subtracts scaled other value from input Tensor.
+
+    .. math::
+
+        out_{i} = input_{i} - alpha \times other_{i}
+
+    Note:
+        - When the two inputs have different shapes,
+          they must be able to broadcast to a common shape.
+        - The two inputs and alpha cannot be bool type at the same time,
+          [True, Tensor(True, bool\_), Tensor(np.array([True]), bool\_)] are all considered bool type.
+        - The two inputs and alpha comply with the implicit type conversion rules to make the data types
+          consistent.
+        - Alpha is a scaling factor applied to `other`.
+
+    Args:
+        input (Union[Tensor, number.Number, bool]): The first input is a number.Number or
+            a bool or a tensor whose data type is
+            `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
+            `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
+        other (Union[Tensor, number.Number, bool]): The second input, is a number.Number or
+            a bool or a tensor whose data type is
+            `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
+            `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
+        alpha (number.Number): A scaling factor applied to `other`.
+
+    Returns:
+        Tensor, the shape is the same as the one of the input `input`, `other` after broadcasting,
+        and the data type is the one with higher precision or higher digits among the two inputs and alpha.
+
+    Raises:
+        TypeError: If `input`, `other`, or `alpha` is not one of the following: Tensor, number.Number, bool.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> from mindspore.ops.extend import sub
+        >>> # case 1: x, y and alpha are all Tensor.
+        >>> x = Tensor(np.array([4, 5, 6]).astype(np.float32))
+        >>> y = Tensor(np.array([1, 2, 3]).astype(np.float32))
+        >>> alpha = Tensor(2.0, mindspore.float32)
+        >>> output = sub(x, y, alpha)
+        >>> print(output)
+        [2. 1. 0.]
+        >>> # case 2: x is a Tensor, y is a scalar and alpha is a scalar
+        >>> x = Tensor(np.array([4, 5, 6]).astype(np.float32))
+        >>> y = Tensor(1, mindspore.int32)
+        >>> alpha = 0.5
+        >>> output = sub(x, y, alpha)
+        >>> print(output)
+        [3.5 4.5 5.5]
+        >>> # the data type of x is float32, the data type of y is int32,
+        >>> # alpha is a float, and the output is the data format of higher precision float32.
+        >>> print(output.dtype)
+        Float32
+    """
+    return sub_ext_op(input, other, alpha)
+
+
+__all__ = ['baddbmm', 'add', 'sub']

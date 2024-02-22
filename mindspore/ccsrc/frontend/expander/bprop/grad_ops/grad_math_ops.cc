@@ -482,6 +482,44 @@ REG_BPROP_BUILDER("Add").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
   return BinopGradCommon(ib, x, y, dout, dout);
 });
 
+REG_BPROP_BUILDER("AddExt").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto y = ib->GetInput(kIndex1);
+  auto alpha = ib->GetInput(kIndex2);
+  auto alpha_tensor = ib->ScalarToTensor(alpha);
+  auto dout = ib->GetInput(kIndex4);
+  std::vector<NodePtr> ret = BinopGradCommon(ib, x, y, dout, dout);
+  ret.emplace_back(alpha);
+
+  if (ib->GetDtypeId(x) == kNumberTypeComplex64) {
+    alpha_tensor = ib->Cast(alpha_tensor, kNumberTypeComplex64);
+  } else if (ib->GetDtypeId(x) == kNumberTypeComplex128) {
+    alpha_tensor = ib->Cast(alpha_tensor, kNumberTypeComplex128);
+  }
+
+  ret[1] = ib->Mul(ret[1], alpha_tensor);
+  return ret;
+});
+
+REG_BPROP_BUILDER("SubExt").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto y = ib->GetInput(kIndex1);
+  auto alpha = ib->GetInput(kIndex2);
+  auto alpha_tensor = ib->ScalarToTensor(alpha);
+  auto dout = ib->GetInput(kIndex4);
+  std::vector<NodePtr> ret = BinopGradCommon(ib, x, y, dout, ib->Emit(kNegOpName, {dout}));
+  ret.emplace_back(alpha);
+
+  if (ib->GetDtypeId(x) == kNumberTypeComplex64) {
+    alpha_tensor = ib->Cast(alpha_tensor, kNumberTypeComplex64);
+  } else if (ib->GetDtypeId(x) == kNumberTypeComplex128) {
+    alpha_tensor = ib->Cast(alpha_tensor, kNumberTypeComplex128);
+  }
+
+  ret[1] = ib->Mul(ret[1], alpha_tensor);
+  return ret;
+});
+
 REG_BPROP_BUILDER("Mul").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);

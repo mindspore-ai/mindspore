@@ -34,7 +34,9 @@ from . import (
 
 from .array_func import gather, max, min
 from .math_func import (
-    baddbmm
+    baddbmm,
+    add,
+    sub
 )
 
 __all__ = []

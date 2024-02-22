@@ -34,6 +34,22 @@ int ElementOptAdd(const float *in0, const float *in1, float *out, int size, bool
   return NNACL_OK;
 }
 
+int ElementOptAddExt(const float *in0, const float *in1, const float alpha, float *out, int size, bool first_scalar) {
+  int index = 0;
+  if (first_scalar) {
+    SIMD_RUN_NO_SCALAR(ElementOptAddExtNum0, index, in0, in1, alpha, out, size);
+    for (; index < size; index++) {
+      out[index] = in0[0] + in1[index] * alpha;
+    }
+  } else {
+    SIMD_RUN_NO_SCALAR(ElementOptAddExtNum1, index, in0, in1, alpha, out, size);
+    for (; index < size; index++) {
+      out[index] = in0[index] + in1[0] * alpha;
+    }
+  }
+  return NNACL_OK;
+}
+
 int ElementOptAddInt(const int32_t *in0, const int32_t *in1, int32_t *out, int size, bool first_scalar) {
   int index = 0;
   if (first_scalar) {
@@ -94,6 +110,16 @@ int ElementAdd(const float *in0, const float *in1, float *out, int size) {
   SIMD_RUN_NO_SCALAR(ElementAdd, index, in0, in1, out, size);
   for (; index < size; index++) {
     out[index] = in0[index] + in1[index];
+  }
+  return NNACL_OK;
+}
+
+int ElementAddExt(const float *in0, const float *in1, const float alpha, float *out, int size) {
+  int index = 0;
+
+  SIMD_RUN_NO_SCALAR(ElementAddExt, index, in0, in1, alpha, out, size);
+  for (; index < size; index++) {
+    out[index] = in0[index] + in1[index] * alpha;
   }
   return NNACL_OK;
 }
