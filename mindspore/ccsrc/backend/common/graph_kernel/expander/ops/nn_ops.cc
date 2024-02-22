@@ -13,7 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <algorithm>
 #include "backend/common/graph_kernel/expander/base/ir_builder.h"
+#include "backend/common/graph_kernel/expander/base/utils.h"
+#include "kernel/common_utils.h"
 
 namespace mindspore::graphkernel::expander {
 REG_EXPANDER_FUNC("Sigmoid").SetBody(BODYFUNC(ib) {
@@ -69,5 +72,113 @@ REG_EXPANDER_FUNC("ApplyMomentum").SetBody(BODYFUNC(ib) {
 
   auto result = {assign1, assign2};
   return result;
+});
+
+REG_EXPANDER_FUNC("Adam").SetBody(BODYFUNC(ib) {
+  // Check Inputs and Attrs
+  if (!CheckAttrs(ib, {"use_nesterov"})) {
+    return {};
+  }
+  const auto &var = ib->input(0);
+  if (var->GetDtype() != TypeIdToType(kNumberTypeFloat32) && var->GetDtype() != TypeIdToType(kNumberTypeFloat16)) {
+    MS_LOG(INFO) << "In Adam, var's dtype must be float16 or float32, but got " << var->GetDtype()->ToString();
+    return {};
+  }
+  // Expand
+  const auto &m = ib->input(1);
+  const auto &v = ib->input(2);
+  const auto &beta1_power = ib->input(3);
+  const auto &beta2_power = ib->input(4);
+  const auto &lr = ib->input(5);
+  const auto &beta1 = ib->input(6);
+  const auto &beta2 = ib->input(7);
+  const auto &epsilon = ib->input(8);
+  const auto &grad = ib->input(9);
+
+  // calc m_new : m_new = beta1 * m + (1 - beta1) * grad
+  auto m_b = ib->Mul(beta1, m);
+  auto const_one = ib->Tensor(1.0, var->GetDtype());
+  auto m1_beta1 = ib->Sub(const_one, beta1);
+  auto m_g = ib->Mul(m1_beta1, grad);
+  auto m_new = ib->Add(m_b, m_g);
+
+  // calc v_new: v_new = beta2 * v + (1 - beta2) * grad * grad
+  auto v_b = ib->Mul(beta2, v);
+  auto m1_beta2 = ib->Sub(const_one, beta2);
+  auto grad_mul = ib->Mul(grad, grad);
+  auto v_g = ib->Mul(m1_beta2, grad_mul);
+  auto v_new = ib->Add(v_b, v_g);
+
+  // calc lr_t: lr_t = lr * sqrt(1 - beta2_power) / (1 - beta1_power);
+  auto m1_beta2_power = ib->Sub(const_one, beta2_power);
+  auto m1_beta2_power_sqrt = ib->Sqrt(m1_beta2_power);
+  auto m1_beta1_power = ib->Sub(const_one, beta1_power);
+  auto power_div = ib->Div(m1_beta2_power_sqrt, m1_beta1_power);
+  auto lr_t = ib->Mul(lr, power_div);
+
+  // if use_nesterov: var_new <- var - lr_t * (m_new * beta1 + (1 - beta1) * grad) / (epsilon + sqrt(v_new))
+  // if not use_nesterov: var_new <- var - lr_t * m_new / (epsilon + sqrt(v_new))
+  auto v_new_sqrt = ib->Sqrt(v_new);
+  auto v_new_sqrt_e = ib->Add(epsilon, v_new_sqrt);
+  auto lr_t_div = ib->Div(lr_t, v_new_sqrt_e);
+  NodePtr var_sub;
+  if (GetValue<bool>(ib->attr("use_nesterov"))) {
+    auto m_new_mul = ib->Mul(m_new, beta1);
+    auto m_new_mul_add = ib->Add(m_new_mul, m_g);
+    var_sub = ib->Mul(lr_t_div, m_new_mul_add);
+  } else {
+    var_sub = ib->Mul(lr_t_div, m_new);
+  }
+
+  auto var_new = ib->Sub(var, var_sub);
+  auto var_result = ib->Assign(var, var_new);
+  auto m_result = ib->Assign(m, m_new);
+  auto v_result = ib->Assign(v, v_new);
+  NodePtrList result = {var_result, m_result, v_result};
+  return result;
+});
+
+REG_EXPANDER_FUNC("DropoutGrad").SetBody(BODYFUNC(ib) {
+  // Check Inputs and Attrs
+  if (!CheckAllFormatsSame(ib) || !CheckAttrs(ib, {"keep_prob"})) {
+    return {};
+  }
+  // Expand
+  const auto &input_dy = ib->input(0);
+  const auto &input_mask = ib->input(1);
+  auto keep_prob = GetValue<float>(ib->attr("keep_prob"));
+  auto r_keep_prob = ib->Tensor(1.0f / keep_prob, input_dy->GetDtype());
+  auto result = ib->Mul(input_dy, r_keep_prob);
+  result = ib->Mul(result, input_mask);
+  return {result};
+});
+
+REG_EXPANDER_FUNC("BiasAdd").SetBody(BODYFUNC(ib) {
+  // Check Inputs
+  auto it = std::find_if(ib->inputs().cbegin(), ib->inputs().cend(), [](auto &input) {
+    return input->GetDtype() != TypeIdToType(kNumberTypeFloat32) &&
+           input->GetDtype() != TypeIdToType(kNumberTypeFloat16);
+  });
+  if (it != std::end(ib->inputs())) {
+    MS_LOG(INFO) << "In BiasAdd, input's dtype must be float16 or float32, But input's type is " << (*it)->GetDtype();
+    return {};
+  }
+  // Expand
+  auto input_x = ib->input(0);
+  auto input_y = ib->input(1);
+  if (input_x->GetFormat() == kOpFormat_NCHW) {
+    auto target_shape = ExpandDimsInferShape(input_y->GetShape(), {1, 2});
+    input_y = ib->Reshape(input_y, target_shape);
+  } else if (input_x->GetFormat() == kOpFormat_DEFAULT) {
+    auto data_format = GetValue<std::string>(ib->attr("data_format"));
+    size_t channel_idx = (data_format == kOpFormat_NHWC) ? input_x->GetShape().size() - 1 : 1;
+    std::vector<int64_t> axis((input_x->GetShape().size() - channel_idx) - 1, -1);
+    if (!axis.empty()) {
+      auto target_shape = ExpandDimsInferShape(input_y->GetShape(), axis);
+      input_y = ib->Reshape(input_y, target_shape);
+    }
+  }
+  auto result = ib->Add(input_x, input_y);
+  return {result};
 });
 }  // namespace mindspore::graphkernel::expander

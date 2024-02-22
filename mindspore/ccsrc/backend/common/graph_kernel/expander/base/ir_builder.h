@@ -17,6 +17,7 @@
 #define MINDSPORE_CCSRC_BACKEND_COMMON_GRAPH_KERNEL_EXPANDER_BASE_IR_BUILDER_H_
 
 #include <string>
+#include <vector>
 #include <functional>
 #include <memory>
 #include "utils/hash_map.h"
@@ -39,6 +40,9 @@ class IrBuilder {
     processor_ = processor;
   }
   virtual NodePtrList Expand() = 0;
+
+  /// \brief build a Tensor node from shape
+  NodePtr Tensor(std::vector<int64_t> input) const { return e->EmitValue(std::make_shared<tensor::Tensor>(input)); }
 
   /// \brief build a Tensor node from imm data
   template <typename T>
@@ -86,6 +90,10 @@ class IrBuilder {
   inline NodePtr Cast(const NodePtr &node, const NodePtr &dst_type) const {
     return e->Emit(MetaOp::Cast, {node, dst_type});
   }
+  inline NodePtr Cast(const NodePtr &node, const TypePtr &dst_type) const { return Cast(node, dst_type->type_id()); }
+  inline NodePtr Cast(const NodePtr &node, TypeId dst_type) const {
+    return Cast(node, Value(static_cast<int64_t>(dst_type)));
+  }
   inline NodePtr Concat(const NodePtrList &inputs, const NodePtr &axis) const {
     NodePtrList new_inputs(inputs.cbegin(), inputs.cend());
     new_inputs.push_back(axis);
@@ -130,9 +138,13 @@ class IrBuilder {
   inline NodePtr ReduceSum(const NodePtr &node, const NodePtr &axis, const NodePtr &keepdims) const {
     return e->Emit(MetaOp::ReduceSum, {node, axis, keepdims, Value(false)});
   }
+  inline NodePtr ReduceSum(const NodePtr &node, const ShapeVector &axis, bool keepdims) const {
+    return ReduceSum(node, Tensor(axis), Value(keepdims));
+  }
   inline NodePtr Reshape(const NodePtr &node, const NodePtr &shape) const {
     return e->Emit(MetaOp::Reshape, {node, shape});
   }
+  inline NodePtr Reshape(const NodePtr &node, const ShapeVector &shape) const { return Reshape(node, Tensor(shape)); }
   inline NodePtr Rsqrt(const NodePtr &node) const { return e->Emit(MetaOp::Rsqrt, {node}); }
   inline NodePtr Reciprocal(const NodePtr &node) const { return e->Emit(MetaOp::Reciprocal, {node}); }
   inline NodePtr Select(const NodePtr &cond, const NodePtr &true_case, const NodePtr &false_case) const {
@@ -195,15 +207,17 @@ class IrBuilder {
 class DefaultIrBuilder : public IrBuilder {
  public:
   using ExpandFunc = std::function<NodePtrList(const DefaultIrBuilder *)>;
-  explicit DefaultIrBuilder(const ExpandFunc &func) : func_(func) {}
+  explicit DefaultIrBuilder(const ExpandFunc &func, const std::string &name) : func_(func), name_(name) {}
   ~DefaultIrBuilder() override = default;
 
   NodePtrList Expand() override { return func_(this); }
 
   const EmitterPtr &emitter() const { return e; }
+  const std::string &name() const { return name_; }
 
  protected:
   ExpandFunc func_;
+  std::string name_;  // name of op
 };
 
 class IrBuilderRegistry {
@@ -221,7 +235,7 @@ class IrBuilderRegistry {
     explicit RegHelper(const std::string &name) : name_(name) {}
     RegHelper &SetBody(const DefaultIrBuilder::ExpandFunc &func) {
       IrBuilderRegistry::Instance().Reg(
-        name_, [func]() { return std::unique_ptr<IrBuilder>(static_cast<IrBuilder *>(new DefaultIrBuilder(func))); });
+        name_, [func, name = this->name_]() { return std::make_unique<DefaultIrBuilder>(func, name); });
       return *this;
     }
 

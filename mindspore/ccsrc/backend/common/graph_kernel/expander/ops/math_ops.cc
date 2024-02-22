@@ -14,8 +14,67 @@
  * limitations under the License.
  */
 #include "backend/common/graph_kernel/expander/base/ir_builder.h"
+#include "backend/common/graph_kernel/expander/base/utils.h"
 
 namespace mindspore::graphkernel::expander {
+REG_EXPANDER_FUNC("AddN").SetBody(BODYFUNC(ib) {
+  if (!CheckAllFormatsSame(ib)) {
+    return {};
+  }
+  // Check Inputs
+  constexpr size_t min_inputs = 2;
+  if (ib->inputs().size() < min_inputs) {
+    MS_LOG(INFO) << "For 'AddN', the inputs num should be greater than 1, but got " << ib->inputs().size();
+    return {};
+  }
+
+  auto result = ib->input(0);
+  for (size_t i = 1; i < ib->inputs().size(); ++i) {
+    result = ib->Add(result, ib->input(i));
+  }
+  return {result};
+});
+
+REG_EXPANDER_FUNC("EqualCount").SetBody(BODYFUNC(ib) {
+  // Check inputs
+  auto it = std::find_if(std::begin(ib->inputs()), std::end(ib->inputs()), [](const NodePtr &input) {
+    return input->GetDtype() != TypeIdToType(kNumberTypeFloat32) &&
+           input->GetDtype() != TypeIdToType(kNumberTypeFloat16) && input->GetDtype() != TypeIdToType(kNumberTypeInt32);
+  });
+  if (it != std::end(ib->inputs())) {
+    MS_LOG(INFO) << "In EqualCount, input's dtype must be float16 or float32 or int32, But input's type is "
+                 << (*it)->GetDtype()->ToString();
+    return {};
+  }
+  const auto &input_x = ib->input(0);
+  const auto &input_y = ib->input(1);
+  if (input_x->GetDtype() != input_y->GetDtype()) {
+    MS_LOG(INFO) << "In EqualCount, the inputs data type should be same, But input_x's type is " << input_x->GetDtype()
+                 << " input_y's type is " << input_y->GetDtype();
+    return {};
+  }
+  if (input_x->GetShape() != input_y->GetShape()) {
+    MS_LOG(INFO) << "In EqualCount, the inputs data shape should be same, But input_x's shape is "
+                 << input_x->GetShape() << " input_y's shape is " << input_y->GetShape();
+    return {};
+  }
+  // Expand
+  auto dtype = input_x->GetDtype();
+  auto eql_val = ib->Equal(input_x, input_y);
+  auto cast_val = ib->Cast(eql_val, kNumberTypeFloat32);
+  auto shape_size = input_x->GetShape().size();
+  std::vector<int64_t> axis(shape_size);
+  for (size_t i = 0; i < shape_size; ++i) {
+    axis[i] = SizeToLong(i);
+  }
+  auto result = ib->ReduceSum(cast_val, axis, false);
+  result = ib->Reshape(result, ib->Tensor({1}));
+  if (result->GetDtype() != dtype) {
+    result = ib->Cast(result, dtype->type_id());
+  }
+  return {result};
+});
+
 REG_EXPANDER_FUNC("Tanh").SetBody(BODYFUNC(ib) {
   auto result = ib->Tanh(ib->input(kIndex0));
   return {result};
