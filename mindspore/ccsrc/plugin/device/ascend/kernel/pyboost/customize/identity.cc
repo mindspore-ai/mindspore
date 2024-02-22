@@ -26,6 +26,14 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
+void FillHostInfoForAclOp(const tensor::TensorPtr &tensor) {
+  MS_EXCEPTION_IF_NULL(tensor);
+  auto address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
+  if (!address->kernel_tensor()->host_info_exist()) {
+    address->kernel_tensor()->SetHostInfo(std::make_shared<abstract::TensorShape>(tensor->shape()),
+                                          std::make_shared<TensorType>(tensor->Dtype()), nullptr);
+  }
+}
 
 void IdentityCustomizeCallWithoutContigous(const std::shared_ptr<OpRunner> &op, const TensorPtr &x_tensor) {
   // Async
@@ -104,15 +112,6 @@ void IdentityCustomizeCall(const std::shared_ptr<OpRunner> &op, const TensorPtr 
     auto identity_kernel = std::make_shared<kernel::AclKernelMod>();
     auto input_x_address = std::dynamic_pointer_cast<device::DeviceAddress>(x_tensor->device_address());
     auto output_address = std::dynamic_pointer_cast<device::DeviceAddress>(outputs[0]->device_address());
-
-    if (!input_x_address->kernel_tensor()->host_info_exist()) {
-      input_x_address->kernel_tensor()->SetHostInfo(std::make_shared<abstract::TensorShape>(x_tensor->shape()),
-                                                    std::make_shared<TensorType>(x_tensor->Dtype()), nullptr);
-    }
-    if (!output_address->kernel_tensor()->host_info_exist()) {
-      output_address->kernel_tensor()->SetHostInfo(std::make_shared<abstract::TensorShape>(output_shape),
-                                                   std::make_shared<TensorType>(outputs[0]->Dtype()), nullptr);
-    }
     auto input_kernel_tensors = {input_x_address->kernel_tensor().get()};
     auto output_kernel_tensors = {output_address->kernel_tensor().get()};
 
@@ -148,6 +147,8 @@ tensor::TensorPtr IdentityAscendCustomize(const std::shared_ptr<OpRunner> &op, c
 
   PyBoostUtils::PrepareOpInputs(op->device_context(), x_tensor);
   PyBoostUtils::PrepareOpOutputs(op->device_context(), op->outputs());
+  FillHostInfoForAclOp(x_tensor);
+  FillHostInfoForAclOp(op->output(0));
 
   if (x_tensor->is_contiguous()) {
     MS_LOG(DEBUG) << "Run Identity input contiguous";
