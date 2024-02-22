@@ -294,7 +294,7 @@ def test_resnet_50_8p():
     res0 = q.get()
     assert 0.97 <= res0 <= 1.07, f"Loss start should in [7.25, 7.35], but got {res0}"
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 def test_mobilenetv3_small_1p():
