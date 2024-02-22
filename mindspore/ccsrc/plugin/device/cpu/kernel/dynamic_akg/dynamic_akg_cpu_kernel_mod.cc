@@ -129,12 +129,6 @@ DynamicAkgCpuKernelMod::DynamicAkgCpuKernelMod(const KernelPackPtr &kernel_pack)
   }
 }
 
-bool DynamicAkgCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
-                                  const std::vector<KernelTensor *> &outputs) {
-  MS_LOG(INFO) << "input is dynamic or not: " << is_dynamic_;
-  return true;
-}
-
 int DynamicAkgCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
                                    const std::vector<KernelTensor *> &outputs) {
   MS_LOG(DEBUG) << "Start resize for DynamicAkgCpuKernelMod.";

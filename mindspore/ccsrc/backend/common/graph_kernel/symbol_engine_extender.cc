@@ -32,9 +32,9 @@
 #include "include/common/symbol_engine/symbol_engine_impl.h"
 #include "backend/common/graph_kernel/adapter/symbol_engine_builder.h"
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
+#include "include/backend/anf_runtime_algorithm.h"
 
 namespace mindspore::graphkernel {
-
 bool IsBeginOp(const AnfNodePtr &node, const SymbolEnginePtr &main_engine) {
   if (main_engine->IsDependShape(node) && common::AnfAlgo::IsDynamicShape(node) &&
       !common::AnfAlgo::IsDynamicRankNode(node)) {
@@ -149,7 +149,7 @@ bool ExtendNode(const AnfNodePtr &node, const SymbolEnginePtr &main_engine, cons
     auto new_cnode = ReplaceNodesWithGraphKernelFuncGraph(main_fg, fg, inputs, outputs);
     auto fuse_op_name = GkUtils::ExtractGraphKernelName(nodes, "", "extended");
     fg->set_attr(kAttrKernelPacketNode, MakeValue(fuse_op_name));
-    new_cnode->AddAttr(kAttrKernelPacketNode, MakeValue(true));
+    new_cnode->AddAttr(kAttrToPrim, MakeValue(prim::kPrimKernelPacket->name()));
     return true;
   }
   return false;
@@ -195,18 +195,21 @@ bool ConvertCallToPrim::Run(const FuncGraphPtr &func_graph) {
   auto todos = TopoSort(func_graph->output());
   for (auto node : todos) {
     auto cnode = node->cast<CNodePtr>();
-    if (cnode == nullptr || !cnode->HasAttr(fg_name_)) {
+    if (cnode == nullptr || !cnode->HasAttr(kAttrToPrim)) {
       continue;
     }
     auto sub_fg = GetCNodeFuncGraph(node);
     if (sub_fg != nullptr) {
-      MS_LOG(DEBUG) << "ConvertCallToPrim: find a " << fg_name_ << " node: " << cnode->fullname_with_scope();
       AnfNodePtrList new_inputs = node->cast<CNodePtr>()->inputs();
-      auto new_prim = std::make_shared<Primitive>(prim_name_, sub_fg->attrs());
+      auto new_prim = std::make_shared<Primitive>(GetValue<std::string>(cnode->GetAttr(kAttrToPrim)), sub_fg->attrs());
       new_inputs[0] = NewValueNode(new_prim);
       new_prim->AddAttr(kAttrFuncGraph, sub_fg);
       auto newnode = func_graph->NewCNode(new_inputs);
       newnode->CloneCNodeInfo(cnode);
+      auto kernel_mod = AnfAlgo::GetKernelMod(cnode);
+      if (kernel_mod != nullptr) {
+        kernel_mod->Init(new_prim, {}, {});
+      }
       mng->Replace(node, newnode);
       changed = true;
     }

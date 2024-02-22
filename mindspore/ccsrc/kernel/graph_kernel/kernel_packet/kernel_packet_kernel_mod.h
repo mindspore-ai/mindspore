@@ -27,8 +27,6 @@
 #include "kernel/framework_utils.h"
 
 namespace mindspore {
-constexpr auto kAttrKernelPacketNode = "kernel_packet_node";
-
 namespace kernel {
 using MemcpyAsyncFunc = std::function<bool(void *, const void *, size_t, void *)>;
 class KernelPacketInner;
@@ -64,9 +62,7 @@ class BACKEND_EXPORT KernelPacketKernelMod : public KernelMod, public KernelPack
   explicit KernelPacketKernelMod(const MemcpyAsyncFunc &memcpy_async) : memcpy_async_(memcpy_async) {}
   ~KernelPacketKernelMod() override = default;
 
-  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
-    return true;
-  }
+  bool Init(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &) override { return true; }
 
   int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 

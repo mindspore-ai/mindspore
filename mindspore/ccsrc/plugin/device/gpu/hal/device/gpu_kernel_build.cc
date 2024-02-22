@@ -102,7 +102,7 @@ void CreateGPUKernel(const std::vector<CNodePtr> &kernels) {
   std::vector<CNodePtr> kernel_packet_nodes;
   for (auto kernel : kernels) {
     MS_EXCEPTION_IF_NULL(kernel);
-    if (kernel->HasAttr(kAttrKernelPacketNode)) {
+    if (IsPrimitiveCNode(kernel, prim::kPrimKernelPacket)) {
       kernel_packet_nodes.push_back(kernel);
       kernel = kernel::GetKernelPacketRealNode(kernel);
     }
