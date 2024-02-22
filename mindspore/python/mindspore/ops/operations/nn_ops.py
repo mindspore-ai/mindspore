@@ -9040,8 +9040,7 @@ class Pdist(Primitive):
         p (float, optional): The order of norm distance, :math:`p∈[0, ∞)`. Default: ``2.0`` .
 
     Inputs:
-        - **x** (Tensor) - Input tensor of shape :math:`(*B, N, M)`. :math:`*B` is batch size,
-          one-dim or multi-dim. Supported dtypes: float16, float32 or float64.
+        - **x** (Tensor) - Input tensor. Supported dtypes: float16, float32 or float64.
 
     Outputs:
         Tensor, has the same dtype as `x`.
