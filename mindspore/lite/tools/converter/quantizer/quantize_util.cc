@@ -57,6 +57,8 @@ constexpr size_t kGatherAxisIndex = 3;
 constexpr int kDefaultThreadNum = 4;
 constexpr size_t kEncMaxLen = 16;
 constexpr size_t kModelSizeLimit = static_cast<size_t>(2) * 1024 * 1024 * 1024;
+constexpr int kFakeQuantMinIndex = 1;
+constexpr int kFakeQuantMaxIndex = 2;
 }  // namespace
 
 int GetQuantType(const CNodePtr &cnode, quant::QuantType *quant_type) {
@@ -1249,6 +1251,59 @@ std::vector<std::vector<int64_t>> ExtractStrategy(const ValuePtr &stra) {
   }
 
   return strategy;
+}
+
+std::vector<schema::QuantParamT> CalQuantParamWithMinMax(const tensor::TensorPtr &min_value,
+                                                         const tensor::TensorPtr &max_value, bool symmetric) {
+  std::vector<schema::QuantParamT> quant_params;
+  // Ascend fake quant transform support PerLayer && PerChannel quant param
+  if (min_value->ElementsNum() != max_value->ElementsNum()) {
+    MS_LOG(ERROR) << "min value size not equal max value size";
+    return {};
+  }
+  int size = min_value->ElementsNum();
+  auto min_data = reinterpret_cast<float *>(min_value->data_c());
+  auto max_data = reinterpret_cast<float *>(max_value->data_c());
+  for (int i = 0; i < size; i++) {
+    float real_min = *(min_data + i);
+    float real_max = *(max_data + i);
+    schema::QuantParamT quant_param;
+    int bit_num = k8Bit;
+
+    MS_LOG(DEBUG) << "min: " << real_min << " max: " << real_max << " bit_num: " << bit_num << " symmetric"
+                  << symmetric;
+    auto ret = CalQuantizationParams(&quant_param, real_min, real_max, bit_num, symmetric);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Failed to calculate quant params";
+      return {};
+    }
+    MS_LOG(INFO) << "quant param scale: " << quant_param.scale << " zp: " << quant_param.zeroPoint;
+    quant_params.push_back(quant_param);
+  }
+  return quant_params;
+}
+
+std::vector<schema::QuantParamT> GetQuantParamWithFakeQuantNode(const CNodePtr &fake_quant_node, bool symmetric) {
+  tensor::TensorPtr min_value;
+  tensor::TensorPtr max_value;
+  auto min_input = fake_quant_node->input(kFakeQuantMinIndex + kPrimOffset);
+  if (utils::isa<ParameterPtr>(min_input) && min_input->cast<ParameterPtr>()->has_default() &&
+      min_input->cast<ParameterPtr>()->default_param() != nullptr) {
+    min_value = min_input->cast<ParameterPtr>()->default_param()->cast<tensor::TensorPtr>();
+  } else {
+    MS_LOG(ERROR) << "Quant param get min value failed";
+    return {};
+  }
+  auto max_input = fake_quant_node->input(kFakeQuantMaxIndex + kPrimOffset);
+  if (utils::isa<ParameterPtr>(max_input) && max_input->cast<ParameterPtr>()->has_default() &&
+      max_input->cast<ParameterPtr>()->default_param() != nullptr) {
+    max_value = max_input->cast<ParameterPtr>()->default_param()->cast<tensor::TensorPtr>();
+  } else {
+    MS_LOG(ERROR) << "Quant param get max value failed";
+    return {};
+  }
+  auto quant_params = CalQuantParamWithMinMax(min_value, max_value, symmetric);
+  return quant_params;
 }
 
 }  // namespace mindspore::lite::quant
