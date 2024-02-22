@@ -545,10 +545,10 @@ bool GraphBuilder::DoWith(const Instr &instr) {
   auto newInstr = Instr(instr.bci(), CALL_FUNCTION, 0);
   newInstr.set_line(instr.line());
   if (!DoCall(newInstr)) {
-    MS_LOG(ERROR) << "funtion '__enter__' runs failed here, it should be successful!";
+    MS_LOG(ERROR) << "function '__enter__' runs failed here, it should be successful!";
     return false;
   }
-  PushStack(TryBlock{SETUP_FINALLY, instr.extra_jump()->bci(), instr.bci(), True});
+  PushStack(TryBlock{SETUP_WITH, instr.extra_jump()->bci(), instr.bci(), false});
   cur_bci_++;
   return true;
 }
@@ -563,8 +563,24 @@ bool GraphBuilder::DoException(const Instr &instr) {
       return true;
     }
     case SETUP_FINALLY: {
-      // TODO: implement try_exception
-      return false;
+      /*
+        ByteCode like this in python3.9
+        0 SETUP_FINALLY    xxx
+        1 SETUP_FINALLY    xxx
+        the first SETUP_FINALLY points to finally block, the second points to exception block
+      */
+      if (graph_->Config().GetBoolConfig(GraphJitConfig::kSkipException)) {
+        graph_->StopTraceAt(cur_bci_, StopTraceReason::kStopTraceSkip_Exception);
+        return false;
+      }
+      if (StackSize() == 0 || GetTryBlockStacks().back().type != SETUP_FINALLY) {
+        PushStack(TryBlock{SETUP_FINALLY, instr.extra_jump()->bci(), instr.bci(), true});
+      } else {
+        assert(StackSize() > 0 || GetTryBlockStacks().back().type == SETUP_FINALLY);
+        PushStack(TryBlock{SETUP_FINALLY, instr.extra_jump()->bci(), instr.bci(), false});
+      }
+      cur_bci_++;
+      return true;
     }
 #if (PY_MAJOR_VERSION == 3) && (PY_MINOR_VERSION == 7)
     case WITH_CLEANUP_START: {
@@ -574,7 +590,7 @@ bool GraphBuilder::DoException(const Instr &instr) {
         return false;
       }
       if (exit_func->GetName() != "__exit__") {
-        MS_LOG(ERROR) << "it should call funtion '__exit__' here!";
+        MS_LOG(ERROR) << "it should call function '__exit__' here!";
         return false;
       }
       // run exit func
@@ -583,7 +599,7 @@ bool GraphBuilder::DoException(const Instr &instr) {
       auto newInstr = Instr(instr.bci(), CALL_FUNCTION, 3);
       newInstr.set_line(instr.line());
       if (!DoCall(newInstr)) {
-        MS_LOG(ERROR) << "funtion '__exit__' runs failed here, it should be successful!";
+        MS_LOG(ERROR) << "function '__exit__' runs failed here, it should be successful!";
         return false;
       }
       push(exc);
@@ -600,7 +616,9 @@ bool GraphBuilder::DoException(const Instr &instr) {
       return true;
     }
     case SETUP_EXCEPT: {
-      break;
+      PushStack(TryBlock{SETUP_EXCEPT, instr.extra_jump()->bci(), instr.bci(), false});
+      cur_bci_++;
+      return true;
     }
 #endif
     default:
