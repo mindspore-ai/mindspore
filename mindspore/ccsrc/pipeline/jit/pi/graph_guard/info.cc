@@ -108,6 +108,11 @@ InfoPack &InfoPack::operator<<(uint64_t v) {
   return *this;
 }
 
+InfoPack &InfoPack::operator<<(size_t v) {
+  APPEND_SCALAR_PACK(v);
+  return *this;
+}
+
 InfoPack &InfoPack::operator<<(float v) {
   APPEND_SCALAR_PACK(v);
   return *this;
@@ -131,7 +136,7 @@ InfoPack &InfoPack::operator<<(void *v) {
 }
 
 InfoPack &InfoPack::operator<<(PyObject *v) {
-  info_ += std::to_string(v != nullptr ? 1 : 0) + SEP_FLAG;  
+  info_ += std::to_string(v != nullptr ? 1 : 0) + SEP_FLAG;
   if (v != nullptr) {
     info_ += std::to_string(CalcString(std::string(py::str(v)))) + SEP_FLAG;
   }
@@ -215,6 +220,11 @@ InfoPack &InfoPack::operator<<(const std::vector<uint64_t> &v) {
   return *this;
 }
 
+InfoPack &InfoPack::operator<<(const std::vector<size_t> &v) {
+  APPEND_ARRAY_PACK(v);
+  return *this;
+}
+
 InfoPack &InfoPack::operator<<(const std::vector<float> &v) {
   APPEND_ARRAY(v);
   return *this;
@@ -269,9 +279,9 @@ InfoPack &InfoPack::operator<<(const std::vector<void *> &v) {
 InfoPack &InfoPack::operator<<(const std::vector<PyObject *> &v) {
   info_ += ARRAY_BEGIN_FLAG;
   for (auto p : v) {
-    info_ += std::to_string(p != nullptr ? 1 : 0) + SEP_FLAG;  
+    info_ += std::to_string(p != nullptr ? 1 : 0) + SEP_FLAG;
     if (p != nullptr) {
-        info_ += std::to_string(CalcString(std::string(py::str(p)))) + SEP_FLAG;
+      info_ += std::to_string(CalcString(std::string(py::str(p)))) + SEP_FLAG;
     }
   }
   if (info_.rfind(SEP_FLAG) == info_.size() - 1) {
@@ -279,7 +289,7 @@ InfoPack &InfoPack::operator<<(const std::vector<PyObject *> &v) {
   }
   info_ += ARRAY_END_FLAG;
   info_ += SEP_FLAG;
-  return *this;  
+  return *this;
 }
 
 InfoPack &InfoPack::operator<<(const InfoPack &v) {

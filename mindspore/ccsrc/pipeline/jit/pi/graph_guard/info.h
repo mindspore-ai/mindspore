@@ -50,6 +50,7 @@ class InfoPack {
   InfoPack &operator<<(uint32_t v);
   InfoPack &operator<<(int64_t v);
   InfoPack &operator<<(uint64_t v);
+  InfoPack &operator<<(size_t v);
   InfoPack &operator<<(float v);
   InfoPack &operator<<(double v);
   InfoPack &operator<<(bool v);
@@ -65,6 +66,7 @@ class InfoPack {
   InfoPack &operator<<(const std::vector<uint32_t> &v);
   InfoPack &operator<<(const std::vector<int64_t> &v);
   InfoPack &operator<<(const std::vector<uint64_t> &v);
+  InfoPack &operator<<(const std::vector<size_t> &v);
   InfoPack &operator<<(const std::vector<float> &v);
   InfoPack &operator<<(const std::vector<double> &v);
   InfoPack &operator<<(const std::vector<bool> &v);
