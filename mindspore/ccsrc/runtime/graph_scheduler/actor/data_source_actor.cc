@@ -86,7 +86,6 @@ void DeviceQueueDataSourceActor::Init() {
   MS_EXCEPTION_IF_NULL(kernel_info_);
   const auto &output_addresses = kernel_info_->output_address_list();
   for (size_t i = 0; i < output_addresses.size(); ++i) {
-    (void)launch_info_.outputs_.emplace_back(std::make_shared<Address>());
     (void)output_kernel_tensors_.emplace_back(output_addresses[i]->kernel_tensor().get());
   }
 
@@ -157,14 +156,14 @@ void DeviceQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *co
 
   // Construct outputs of data kernel launching.
   auto &device_tensors = buffers_.back();
-  if (launch_info_.outputs_.size() != device_tensors.size()) {
+  if (output_kernel_tensors_.size() != device_tensors.size()) {
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The outputs number is not equal to the device tensors number.");
   }
   for (size_t i = 0; i < device_tensors.size(); ++i) {
-    MS_EXCEPTION_IF_NULL(launch_info_.outputs_[i]);
+    MS_EXCEPTION_IF_NULL(output_kernel_tensors_[i]);
     MS_EXCEPTION_IF_NULL(device_tensors[i]);
-    launch_info_.outputs_[i]->addr = device_tensors[i]->GetMutablePtr();
-    launch_info_.outputs_[i]->size = device_tensors[i]->GetSize();
+    output_kernel_tensors_[i]->set_device_ptr(device_tensors[i]->GetMutablePtr());
+    output_kernel_tensors_[i]->set_size(device_tensors[i]->GetSize());
   }
 
   // Copy data from device queue by data kernel launching.
@@ -196,7 +195,9 @@ void DeviceQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *co
 }
 
 void DeviceQueueDataSourceActor::SendDebugReq(OpContext<DeviceTensor> *const context) {
-  ActorDispatcher::SendSync(*debug_aid_, &DebugActor::Debug, data_kernel_, &launch_info_, device_contexts_[0], context,
+  KernelLaunchInfo launch_info;
+  launch_info.outputs_ = output_kernel_tensors_;
+  ActorDispatcher::SendSync(*debug_aid_, &DebugActor::Debug, data_kernel_, &launch_info, device_contexts_[0], context,
                             &GetAID());
   OnDebugFinish(context);
 }
@@ -205,7 +206,8 @@ void DeviceQueueDataSourceActor::SendRecorderInfo(OpContext<DeviceTensor> *const
   if (recorder_aid_ != nullptr && (!device_contexts_.empty())) {
     MS_EXCEPTION_IF_NULL(data_kernel_);
     ActorDispatcher::Send(*recorder_aid_, &RecorderActor::RecordInfo, data_kernel_->fullname_with_scope(),
-                          &launch_info_, device_contexts_[0], context);
+                          &input_kernel_tensors_, &output_kernel_tensors_, &workspace_kernel_tensors_,
+                          device_contexts_[0], context);
   }
 }
 

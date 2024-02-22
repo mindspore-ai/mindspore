@@ -36,7 +36,7 @@ namespace runtime {
 using mindspore::device::DeviceContext;
 using mindspore::device::KernelInfo;
 using mindspore::kernel::Address;
-using mindspore::kernel::KernelLaunchAddr;
+using mindspore::kernel::KernelLaunchInfo;
 using mindspore::kernel::KernelMod;
 using mindspore::kernel::KernelTensor;
 using mindspore::kernel::KernelTensorPtr;
@@ -134,8 +134,6 @@ class KernelActor : public DebugAwareActor {
   bool enable_async_infer_;
   KernelInfo *kernel_info_;
   KernelMod *kernel_mod_;
-  // The kernel launch info is fetched by the device tensors.
-  KernelLaunchAddr launch_info_;
 
   // The device tensors for launch.
   std::vector<DeviceTensor *> input_device_tensors_;

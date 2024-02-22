@@ -14,28 +14,31 @@
  * limitations under the License.
  */
 #include "debug/rdr/mem_address_recorder.h"
+#include <vector>
 #include <fstream>
 #include <sstream>
 #include <utility>
-#include "kernel/kernel.h"
 #include "include/common/debug/rdr/recorder_manager.h"
 #include "mindspore/core/utils/file_utils.h"
 
 namespace mindspore {
 namespace {
-std::string MemInfo2String(const std::string &label, const kernel::AddressPtrList &info) {
+std::string MemInfo2String(const std::string &label, const std::vector<kernel::KernelTensor *> &info) {
   std::ostringstream ss;
   ss << label << " " << info.size() << std::endl;
   for (size_t i = 0; i < info.size(); i++) {
     if (info[i] != nullptr) {
-      ss << "&" << info[i]->addr << " #" << info[i]->size << std::endl;
+      ss << "&" << info[i]->device_ptr() << " #" << info[i]->size() << std::endl;
     }
   }
   return ss.str();
 }
 }  // namespace
 
-void MemAddressRecorder::SaveMemInfo(const std::string &op_name, const kernel::KernelLaunchAddr &mem_info) {
+void MemAddressRecorder::SaveMemInfo(const std::string &op_name,
+                                     const std::vector<KernelTensor *> &input_kernel_tensors,
+                                     const std::vector<KernelTensor *> &output_kernel_tensors,
+                                     const std::vector<KernelTensor *> &workspace_kernel_tensors) {
   std::lock_guard<std::mutex> lock(mtx_);
   if (!printed_) {
     MS_LOG(INFO) << "RDR update mem info.";
@@ -47,9 +50,9 @@ void MemAddressRecorder::SaveMemInfo(const std::string &op_name, const kernel::K
   }
   op_names_.insert(op_name);
   mem_info_stream_ << op_name << std::endl;
-  mem_info_stream_ << MemInfo2String("kernel_inputs", mem_info.inputs_);
-  mem_info_stream_ << MemInfo2String("kernel_workspaces", mem_info.workspaces_);
-  mem_info_stream_ << MemInfo2String("kernel_outputs", mem_info.outputs_);
+  mem_info_stream_ << MemInfo2String("kernel_inputs", input_kernel_tensors);
+  mem_info_stream_ << MemInfo2String("kernel_workspaces", workspace_kernel_tensors);
+  mem_info_stream_ << MemInfo2String("kernel_outputs", output_kernel_tensors);
   mem_info_stream_ << std::endl;
 }
 
@@ -93,7 +96,9 @@ bool RecordMemAddressInfo(const SubModuleId module, const std::string &name) {
 }
 
 bool UpdateMemAddress(const SubModuleId module, const std::string &name, const std::string &op_name,
-                      const kernel::KernelLaunchAddr &mem_info) {
+                      const std::vector<KernelTensor *> &input_kernel_tensors,
+                      const std::vector<KernelTensor *> &output_kernel_tensors,
+                      const std::vector<KernelTensor *> &workspace_kernel_tensors) {
   if (!mindspore::RecorderManager::Instance().RdrEnable()) {
     return false;
   }
@@ -102,7 +107,7 @@ bool UpdateMemAddress(const SubModuleId module, const std::string &name, const s
   bool ans = false;
   if (recorder != nullptr) {
     auto mem_recorder = std::dynamic_pointer_cast<MemAddressRecorder>(recorder);
-    mem_recorder->SaveMemInfo(op_name, mem_info);
+    mem_recorder->SaveMemInfo(op_name, input_kernel_tensors, output_kernel_tensors, workspace_kernel_tensors);
     ans = true;
   }
   return ans;
