@@ -118,6 +118,8 @@ std::vector<PrimitivePtr> GraphKernelExpanderCloud::GetExpanderOps() {
     {kAscendDevice, OpLevel_0, prim::kFusedMulAdd},
     {kAscendDevice, OpLevel_0, prim::kPrimSigmoid},
     {kAscendDevice, OpLevel_0, prim::kPrimSigmoidGrad},
+    {kAscendDevice, OpLevel_0, prim::kPrimReLU},
+    {kAscendDevice, OpLevel_0, prim::kPrimReluGrad},
     {kAscendDevice, OpLevel_1, prim::kPrimAssignAdd},
     {kAscendDevice, OpLevel_1, prim::kPrimExpandDims},
     {kAscendDevice, OpLevel_1, prim::kLambApplyOptimizerAssign},

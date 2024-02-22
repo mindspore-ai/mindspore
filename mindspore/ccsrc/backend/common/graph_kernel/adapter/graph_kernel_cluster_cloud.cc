@@ -210,7 +210,7 @@ std::vector<PrimitivePtr> StaticShapeCluster::GetClusterOps() {
     {kAscendDevice, OpLevel_0, prim::kPrimLogicalOr},    {kAscendDevice, OpLevel_0, prim::kPrimLogicalNot},
     {kAscendDevice, OpLevel_0, prim::kPrimSelect},       {kAscendDevice, OpLevel_0, prim::kPrimAssign},
     {kAscendDevice, OpLevel_1, prim::kPrimReshape},      {kAscendDevice, OpLevel_1, prim::kPrimTranspose},
-    {kAscendDevice, OpLevel_0, prim::kPrimReduceSum},
+    {kAscendDevice, OpLevel_0, prim::kPrimReduceSum},    {kAscendDevice, OpLevel_0, prim::kPrimIsFinite},
   };
   const auto &flags = GraphKernelFlags::GetInstance();
   auto ops_with_level = GraphKernelFlags::GetInstance().kernel_generator == "DVM"
