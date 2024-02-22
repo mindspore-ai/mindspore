@@ -203,6 +203,9 @@ inline aclTensor *ConvertType(mindspore::kernel::KernelTensor *tensor) {
   if (aclCreateTensor == nullptr) {
     return nullptr;
   }
+  if (tensor == nullptr || tensor->type_id() == kMetaTypeNone) {
+    return nullptr;
+  }
 
   auto acl_data_type = AclConverter::ConvertType(tensor->dtype_id());
   auto shape = tensor->GetShapeVector();
