@@ -1448,7 +1448,7 @@ class Heaviside(Primitive):
             0, & \text { if x }<0 \\
             \text { values, } & \text { if x }==0 \\
             1, & \text { if x }>0
-            \end{array}\right.
+            \end{array}\right
 
     .. warning::
         This is an experimental API that is subject to change or deletion.
@@ -2731,7 +2731,7 @@ class SquareSumAll(Primitive):
     .. math::
         \left\{\begin{matrix}out_{x} = {\textstyle \sum_{0}^{N}} (x_{i})^2
         \\out_{y} = {\textstyle \sum_{0}^{N}} (y_{i})^2
-        \end{matrix}\right.
+        \end{matrix}\right
 
     Note:
         SquareSumAll only supports float16 and float32 data type.

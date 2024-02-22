@@ -3956,7 +3956,7 @@ def heaviside(input, values):
             0, & \text { if input }<0 \\
             \text { values, } & \text { if input }=0 \\
             1, & \text { if input }>0
-            \end{array}\right.
+            \end{array}\right
 
     Args:
         input (Tensor): The input tensor. With real number data type.
