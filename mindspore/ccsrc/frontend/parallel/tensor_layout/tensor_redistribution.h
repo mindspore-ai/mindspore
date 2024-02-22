@@ -19,8 +19,8 @@
 
 #include <vector>
 #include <map>
+#include <string>
 #include "ir/value.h"
-#include "frontend/parallel/ops_info/operator_info.h"
 #include "frontend/parallel/status.h"
 #include "frontend/parallel/tensor_layout/construct_operator.h"
 #include "frontend/parallel/tensor_layout/redistribution_operator_infer.h"
@@ -45,6 +45,12 @@ class TensorRedistribution {
         keep_reshape_(keep_reshape) {
     this->is_inited_ = false;
   }
+
+  void SetPreAndNextCNode(const CNodePtr &pre_cnode, const CNodePtr &next_cnode) {
+    this->pre_cnode_ = pre_cnode;
+    this->next_cnode_ = next_cnode;
+  }
+
   Status Init(const TensorLayout &from, const TensorLayout &to, const RankList &dev_list);
   ~TensorRedistribution() = default;
   RedistributionOpListPtr InferTensorRedistributionOperatorList(bool is_cost_model = false);
@@ -111,6 +117,8 @@ class TensorRedistribution {
   bool construct_op_flag_;
   bool keep_reshape_;
   bool expand_able_ = true;
+  CNodePtr pre_cnode_;
+  CNodePtr next_cnode_;
 };
 }  // namespace parallel
 }  // namespace mindspore

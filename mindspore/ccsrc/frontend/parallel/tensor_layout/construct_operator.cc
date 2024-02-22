@@ -19,6 +19,7 @@
 #include <functional>
 #include <numeric>
 #include <algorithm>
+#include "frontend/parallel/ops_info/ops_utils.h"
 #include "include/common/utils/parallel_context.h"
 
 namespace mindspore {

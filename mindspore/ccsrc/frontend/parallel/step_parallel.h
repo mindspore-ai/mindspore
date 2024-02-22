@@ -28,7 +28,7 @@
 #include "utils/hash_map.h"
 #include "frontend/optimizer/opt.h"
 #include "frontend/parallel/strategy.h"
-#include "frontend/parallel/tensor_layout/tensor_redistribution.h"
+#include "frontend/parallel/ops_info/operator_info.h"
 #include "pipeline/jit/ps/pipeline.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "frontend/parallel/auto_parallel/operator_costmodel.h"
@@ -46,9 +46,6 @@ struct LossNodeInfo {
   int64_t dout_index = 0;  // now don't support the sens is a tuple
   CNodePtr loss_node = nullptr;
 };
-
-std::vector<AnfNodePtr> CreateInput(const Operator &op, const AnfNodePtr &node, const std::string &instance_name,
-                                    const TensorRedistribution &tensor_redistribution = TensorRedistribution());
 
 void ForwardCommunication(OperatorVector forward_op, const CNodePtr &node);
 

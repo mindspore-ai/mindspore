@@ -199,7 +199,7 @@ static CNodePtr InsertMakeTuple(const AnfNodePtr &prev, uint64_t num, const Func
 
 static void InsertRedistribution(const RedistributionOpListPtr &redistribution_oplist_ptr, const CNodePtr &node,
                                  const FuncGraphPtr &func_graph, int64_t pos, const CNodePtr &pre_node,
-                                 const TensorRedistribution &tensor_redistribution) {
+                                 const TensorRedistributionPtr &tensor_redistribution) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(pre_node);
   MS_EXCEPTION_IF_NULL(func_graph);
@@ -284,7 +284,7 @@ TensorLayout GetTensorInLayout(const AnfNodePtr &pre_node, int get_item_index) {
 }
 
 static void Redistribution(const std::pair<AnfNodePtr, int64_t> &node_pair, const AnfNodePtr &pre_node,
-                           TensorRedistribution tensor_redistribution, int get_item_index) {
+                           int get_item_index) {
   MS_LOG(DEBUG) << "Do Redistribution for " << node_pair.first->fullname_with_scope();
   auto next_cnode = node_pair.first->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(next_cnode);
@@ -314,6 +314,7 @@ static void Redistribution(const std::pair<AnfNodePtr, int64_t> &node_pair, cons
   MS_EXCEPTION_IF_NULL(next_distribute_operator);
   MS_LOG(DEBUG) << "Redistribution for pre_node: " << pre_cnode->DebugString()
                 << " next_node: " << next_cnode->DebugString();
+  auto tensor_redistribution = next_distribute_operator->CreateTensorRedistribution();
 
   // extract tensor layout in and out
   if (distribute_operator->outputs_tensor_info().empty()) {
@@ -335,32 +336,31 @@ static void Redistribution(const std::pair<AnfNodePtr, int64_t> &node_pair, cons
   if (IsPrimitiveCNode(pre_node, prim::kPrimReceive)) {
     tensorlayout_in = *(pre_node->user_data<TensorLayout>());
   }
-  if (tensor_redistribution.Init(tensorlayout_in, tensorlayout_out, dev_list) == FAILED) {
+  if (tensor_redistribution->Init(tensorlayout_in, tensorlayout_out, dev_list) == FAILED) {
     MS_LOG(ERROR) << "Redistribution: pre_node " << pre_cnode->DebugString() << " next_node "
                   << next_cnode->DebugString();
     DumpGraph(func_graph, "redistribution_error");
     MS_LOG(EXCEPTION) << "Failure:tensor_redistribution init failed";
   }
-  RedistributionOpListPtr redistribution_oplist_ptr = tensor_redistribution.InferTensorRedistributionOperatorList();
+  RedistributionOpListPtr redistribution_oplist_ptr = tensor_redistribution->InferTensorRedistributionOperatorList();
   if (redistribution_oplist_ptr == nullptr) {
     MS_LOG(INTERNAL_EXCEPTION) << "Infer tensor redistribution failed.";
   }
   redistribution_oplist_ptr = TensorTransform::GetInstance()->OptimizeTensorRedistributionOperatorList(
-    redistribution_oplist_ptr, tensor_redistribution.input_shape());
+    redistribution_oplist_ptr, tensor_redistribution->input_shape());
   if (redistribution_oplist_ptr == nullptr) {
     MS_LOG(EXCEPTION) << "Failure:InferTensorRedistribution failed";
   }
   MS_LOG(DEBUG) << "Redistribution size " << redistribution_oplist_ptr->first.size();
   if (!redistribution_oplist_ptr->first.empty()) {
-    tensor_redistribution.CreateAssembledDynamicMapping(&redistribution_oplist_ptr, func_graph, pre_cnode);
+    tensor_redistribution->CreateAssembledDynamicMapping(&redistribution_oplist_ptr, func_graph, pre_cnode);
     // insert node before next node
     InsertRedistribution(redistribution_oplist_ptr, next_cnode, func_graph, node_pair.second, pre_cnode,
                          tensor_redistribution);
   }
 }
 
-static void StepRedistribution(const CNodePtr &cnode, const TensorRedistribution &tensor_redistribution,
-                               const NodeUsersMap &node_users_map) {
+static void StepRedistribution(const CNodePtr &cnode, const NodeUsersMap &node_users_map) {
   MS_LOG(DEBUG) << "Do StepRedistribution for " << cnode->fullname_with_scope();
   MS_EXCEPTION_IF_NULL(cnode->func_graph());
   FuncGraphManagerPtr manager = cnode->func_graph()->manager();
@@ -390,7 +390,7 @@ static void StepRedistribution(const CNodePtr &cnode, const TensorRedistribution
       MS_LOG(DEBUG) << "===========Do Redistribution start============" << std::endl
                     << pre_node->fullname_with_scope() << "->" << next_node.first.first->fullname_with_scope() << "("
                     << next_node.first.second << ")";
-      Redistribution(next_node.first, pre_node, tensor_redistribution, next_node.second);
+      Redistribution(next_node.first, pre_node, next_node.second);
       MS_LOG(DEBUG) << "===========Do Redistribution end  ============" << std::endl;
     }
     for (const auto &next_node : next_nodes) {
@@ -2032,7 +2032,7 @@ static void SplitSens(const CNodePtr &grad_sens_node, const TensorLayout &loss_g
       auto sens_tensor_cnode = sens_tensor_node->cast<CNodePtr>();
       auto func_graph = grad_sens_node->func_graph();
       MS_EXCEPTION_IF_NULL(func_graph);
-      TensorRedistribution tensor_redistribution;
+      TensorRedistributionPtr tensor_redistribution = std::make_shared<TensorRedistribution>();
       InsertRedistribution(op_list_ptr, grad_sens_node, func_graph, 1, sens_tensor_cnode, tensor_redistribution);
       return;
     }
@@ -2160,7 +2160,6 @@ static void ParallelCommunication(const FuncGraphPtr &root, const std::vector<An
                                   const FuncGraphManagerPtr &manager) {
   MS_EXCEPTION_IF_NULL(root);
   MS_EXCEPTION_IF_NULL(manager);
-  TensorRedistribution tensor_redistribution;
 
   std::vector<std::pair<CNodePtr, LossNodeInfo>> sens_loss_pairs = GetSensLossPairs(root);
   auto has_backward = HasBackward(root);
@@ -2179,7 +2178,7 @@ static void ParallelCommunication(const FuncGraphPtr &root, const std::vector<An
     if (node->isa<CNode>()) {
       auto cnode = node->cast<CNodePtr>();
       if (IsValueNode<FuncGraph>(cnode->input(0))) {
-        StepRedistribution(cnode, tensor_redistribution, node_users_map);
+        StepRedistribution(cnode, node_users_map);
         continue;
       }
       // the make_tuple is parallel care node, but it may have not operator info
@@ -2200,7 +2199,7 @@ static void ParallelCommunication(const FuncGraphPtr &root, const std::vector<An
         }
 
         // insert redistribution ops
-        StepRedistribution(cnode, tensor_redistribution, node_users_map);
+        StepRedistribution(cnode, node_users_map);
       }
       // insert backward ops
       if (!IsControlFlowNode(cnode) && (has_backward || IsPynativeParallel())) {

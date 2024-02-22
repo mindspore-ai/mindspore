@@ -39,7 +39,7 @@
 #include "include/common/utils/parallel_context.h"
 #include "frontend/parallel/step_parallel_utils.h"
 #include "pipeline/jit/ps/parse/resolve.h"
-#include "frontend/parallel/step_parallel.h"
+#include "frontend/parallel/graph_util/graph_utils.h"
 #include "utils/tensor_construct_utils.h"
 #include "utils/ms_utils_secure.h"
 

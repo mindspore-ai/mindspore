@@ -26,16 +26,15 @@
 #include "frontend/parallel/ops_info/operator_info.h"
 
 namespace mindspore::parallel {
-std::set<FuncGraphPtr> FindForwardGraphByRootNodes(const AnfNodeSet &root_all_nodes);
+std::set<FuncGraphPtr> FindForwardGraphByRootNodes(const std::vector<AnfNodePtr> &root_all_nodes);
 AnfNodePtr GetAccuGrad(const std::vector<AnfNodePtr> &parameters, const std::string &weight_name);
 std::vector<AnfNodePtr> CreateInput(const Operator &op, const AnfNodePtr &node, const std::string &instance_name,
-                                    const TensorRedistribution &tensor_redistribution);
+                                    const TensorRedistributionPtr &tensor_redistribution = nullptr);
 std::vector<AnfNodePtr> CreateMirrorInput(const FuncGraphPtr &root, const Operator &op, const AnfNodePtr &node,
                                           const std::string &instance_name, const std::string &weight_name);
 void InsertNode(const Operator &op, const CNodePtr &node, size_t index, const AnfNodePtr &pre_node,
                 const FuncGraphPtr &func_graph, const std::string &instance_name, const std::string &param_name = "",
-                const FuncGraphPtr &root = nullptr,
-                const TensorRedistribution &tensor_redistribution = TensorRedistribution());
+                const FuncGraphPtr &root = nullptr, const TensorRedistributionPtr &tensor_redistribution = nullptr);
 }  // namespace mindspore::parallel
 
 #endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_GRAPH_UTIL_GRAPH_UTILS_H_

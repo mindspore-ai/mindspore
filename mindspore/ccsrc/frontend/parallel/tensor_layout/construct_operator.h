@@ -22,7 +22,7 @@
 #include <vector>
 
 #include "ir/value.h"
-#include "frontend/parallel/ops_info/operator_info.h"
+#include "frontend/parallel/auto_parallel/costmodel.h"
 #include "frontend/parallel/status.h"
 
 namespace mindspore {

@@ -17,7 +17,6 @@
 #include <vector>
 #include <string>
 #include "frontend/parallel/graph_util/graph_utils.h"
-#include "include/common/utils/anfalgo.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "frontend/parallel/step_parallel_utils.h"
 #include "frontend/parallel/parameter_manager.h"
@@ -26,9 +25,10 @@
 #include "frontend/parallel/tensor_layout/prime_generator.h"
 #include "mindspore/core/ir/primitive.h"
 #include "mindspore/core/ir/func_graph.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore::parallel {
-std::set<FuncGraphPtr> FindForwardGraphByRootNodes(const AnfNodeSet &root_all_nodes) {
+std::set<FuncGraphPtr> FindForwardGraphByRootNodes(const std::vector<AnfNodePtr> &root_all_nodes) {
   // J->CNode->Graph
   std::set<FuncGraphPtr> graph_set;
   for (auto &node : root_all_nodes) {
@@ -126,21 +126,22 @@ std::vector<AnfNodePtr> CreateMirrorInput(const FuncGraphPtr &root, const Operat
 }
 
 std::vector<AnfNodePtr> CreateInput(const Operator &op, const AnfNodePtr &node, const std::string &instance_name,
-                                    const TensorRedistribution &tensor_redistribution) {
+                                    const TensorRedistributionPtr &tensor_redistribution) {
   MS_EXCEPTION_IF_NULL(node);
   OperatorArgs arg_forward = op.second;
   OperatorParams params = arg_forward.second;
 
   std::vector<AnfNodePtr> new_node_input = {node};
   if (!params.empty()) {
-    if (tensor_redistribution.IsInited() && tensor_redistribution.IsAssembledStaticShape() && (op.first == RESHAPE)) {
+    if (tensor_redistribution != nullptr && tensor_redistribution->IsInited() &&
+        tensor_redistribution->IsAssembledStaticShape() && (op.first == RESHAPE)) {
       // TODO(liuchongming74): liuchongming74, Add input mapping to arg_forward.
       //  Should call `CreateInputsAccordingToAttrAndDynamicDimsMapping` here.
       // TODO(liuchongming74): liuchongming74, Traverse the second input of the reshape,
       //  and insert TupleGetItem to replace fake constant value.
       // AssembledDynamicDimsMapping is alias of std::map<int64_t, AnfNodePtr>.
       // Pair of AssembledDynamicDimsMapping is (fake_prime_dim_value, created_tuple_get_item_cnode).
-      AssembledDynamicDimsMapping dyn_dims_mapping = tensor_redistribution.GetDynamicDimsMapping();
+      AssembledDynamicDimsMapping dyn_dims_mapping = tensor_redistribution->GetDynamicDimsMapping();
       MS_LOG(DEBUG) << "Insert TupleGetItem to replace fake constant value.";
       // 1. replace constant value by TupleGetItem.
       // 2. create MakeTuple to assemble TupleGetItem and constant value.
@@ -187,7 +188,7 @@ std::vector<AnfNodePtr> CreateInput(const Operator &op, const AnfNodePtr &node, 
 
 void InsertNode(const Operator &op, const CNodePtr &node, size_t index, const AnfNodePtr &pre_node,
                 const FuncGraphPtr &func_graph, const std::string &instance_name, const std::string &param_name,
-                const FuncGraphPtr &root, const TensorRedistribution &tensor_redistribution) {
+                const FuncGraphPtr &root, const TensorRedistributionPtr &tensor_redistribution) {
   // insert new node before the node
   FuncGraphManagerPtr manager = func_graph->manager();
   MS_EXCEPTION_IF_NULL(manager);

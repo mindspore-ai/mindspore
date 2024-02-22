@@ -21,6 +21,7 @@
 #include <utility>
 #include <string>
 #include "frontend/parallel/status.h"
+#include "frontend/parallel/ops_info/ops_utils.h"
 #include "frontend/parallel/tensor_layout/shape_util.h"
 
 namespace mindspore {

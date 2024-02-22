@@ -26,6 +26,7 @@
 #include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/step_parallel_utils.h"
+#include "frontend/parallel/graph_util/graph_utils.h"
 #include "frontend/parallel/tensor_layout/tensor_transform.h"
 #include "frontend/parallel/auto_parallel/graph_costmodel.h"
 #include "include/common/utils/convert_utils.h"
@@ -357,8 +358,9 @@ Status ReshapeInfo::ComputeReplaceOp() {
       return SUCCESS;
     }
     RankList dev_list = stage_device_list();
-    TensorRedistribution tensor_redistribution(!is_generating_costs_, true);
-    if (tensor_redistribution.Init(input_layout_, output_layout_, dev_list) == FAILED) {
+    // TensorRedistribution tensor_redistribution(!is_generating_costs_, true);
+    TensorRedistributionPtr tensor_redistribution = this->CreateTensorRedistribution(!is_generating_costs_, true);
+    if (tensor_redistribution->Init(input_layout_, output_layout_, dev_list) == FAILED) {
       if (is_generating_costs_) {
         MS_LOG(DEBUG) << name_ << ": tensor_redistribution init failed.";
       } else {
@@ -369,10 +371,10 @@ Status ReshapeInfo::ComputeReplaceOp() {
     MS_LOG(DEBUG) << name_ << ": input " << input_layout_.ToString();
     MS_LOG(DEBUG) << name_ << ": output " << output_layout_.ToString();
     MS_LOG(DEBUG) << name_ << ": dev_list " << dev_list.size();
-    RedistributionOpListPtr redistribution_oplist_ptr = tensor_redistribution.InferTensorRedistributionOperatorList();
+    RedistributionOpListPtr redistribution_oplist_ptr = tensor_redistribution->InferTensorRedistributionOperatorList();
     if (!is_generating_costs_) {
       redistribution_oplist_ptr = TensorTransform::GetInstance()->OptimizeTensorRedistributionOperatorList(
-        redistribution_oplist_ptr, tensor_redistribution.input_shape());
+        redistribution_oplist_ptr, tensor_redistribution->input_shape());
     }
     if (redistribution_oplist_ptr == nullptr) {
       if (is_generating_costs_) {

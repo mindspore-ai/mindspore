@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2023 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "frontend/parallel/strategy.h"
 #include "frontend/parallel/tensor_layout/tensor_info.h"
+#include "frontend/parallel/tensor_layout/tensor_redistribution.h"
 #include "utils/log_adapter.h"
 #include "ops/op_utils.h"
 
@@ -50,6 +51,7 @@ using TensorLayouts = std::vector<TensorLayout>;
 using different_type = std::vector<int64_t>::difference_type;
 using PrimitiveAttrs = mindspore::HashMap<std::string, ValuePtr>;
 using ReplaceGraphPtr = std::shared_ptr<std::pair<std::vector<std::pair<AnfNodePtr, int64_t>>, AnfNodePtr>>;
+using TensorRedistributionPtr = std::shared_ptr<TensorRedistribution>;
 
 #define FILTER_LOG(x) (x) ? void(0) : MS_LOG(ERROR)
 
@@ -233,12 +235,27 @@ class OperatorInfo {
   bool repeated_num_in_dev_matrix_right() const { return repeated_num_in_dev_matrix_right_; }
   void set_repeated_num_in_dev_matrix_right(bool is_right) { repeated_num_in_dev_matrix_right_ = is_right; }
 
+  TensorRedistributionPtr CreateTensorRedistribution(bool construct_op_flag = true, bool keep_reshape = false) {
+    if (this->tensor_redistribution_ != nullptr) {
+      MS_LOG(WARNING) << "TensorRedistribution re-created.";
+    }
+    this->tensor_redistribution_ = std::make_shared<TensorRedistribution>(construct_op_flag, keep_reshape);
+    return this->tensor_redistribution_;
+  }
+
+  void SetTensorRedistribution(const TensorRedistributionPtr &tensor_redistribution) {
+    this->tensor_redistribution_ = tensor_redistribution;
+  }
+
+  TensorRedistributionPtr tensor_redistribution() { return this->tensor_redistribution_; }
+
   // Key for user data.
   constexpr static char key[] = "OpInfo";
 
  protected:
   // needed by rec_parser
   std::string type_;
+  TensorRedistributionPtr tensor_redistribution_;
   bool is_last_node_ = false;
   virtual Status CheckStrategy(const StrategyPtr &strategy) = 0;
   virtual Status InferTensorMap() = 0;
