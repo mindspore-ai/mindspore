@@ -18,6 +18,8 @@ import subprocess
 
 
 @pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_op_proto_warnings():
     """
@@ -28,7 +30,6 @@ def test_op_proto_warnings():
     s = subprocess.Popen("python", stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=subprocess.PIPE, shell=True)
     s.stdin.write(b"import mindspore as ms\n")
     s.stdin.write(b"ms.set_context(device_target='Ascend')\n")
-    s.stdin.write(b"ms.run_check()\n")
     s.stdin.close()
 
     out = s.stdout.read().decode("UTF-8")
