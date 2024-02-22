@@ -22,23 +22,25 @@ namespace mindspore {
 namespace kernel {
 bool SeqToSeqCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
                                   const std::vector<KernelTensor *> &outputs) {
-  if (inputs.size() != 1 || outputs.size() != 1) {
+  if (inputs.size() != outputs.size()) {
     MS_LOG(EXCEPTION)
       << "For '" << kernel_name_
       << "', dynamic length inputs and outputs address list size must be equal to 1, but got inputs address list size: "
       << inputs.size() << ", outputs address list size: " << outputs.size();
   }
-  MS_EXCEPTION_IF_NULL(inputs[0]);
-  MS_EXCEPTION_IF_NULL(outputs[0]);
-  auto input_size = inputs[0]->size();
-  auto output_size = outputs[0]->size();
-  if (input_size != output_size) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the size of input[0]: {" << input_size
-                      << "} is not equal to the size of output[0]: {" << output_size << "}";
-  }
-  auto ret = memcpy_s(outputs[0]->device_ptr(), output_size, inputs[0]->device_ptr(), input_size);
-  if (ret != EOK) {
-    MS_LOG(EXCEPTION) << "memcpy_s failed, ret = " << ret;
+  for (size_t i = 0; i < inputs.size(); ++i) {
+    MS_EXCEPTION_IF_NULL(inputs[i]);
+    MS_EXCEPTION_IF_NULL(outputs[i]);
+    auto input_size = inputs[i]->size();
+    auto output_size = outputs[i]->size();
+    if (input_size != output_size) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the size of input[0]: {" << input_size
+                        << "} is not equal to the size of output[0]: {" << output_size << "}";
+    }
+    auto ret = memcpy_s(outputs[i]->device_ptr(), output_size, inputs[i]->device_ptr(), input_size);
+    if (ret != EOK) {
+      MS_LOG(EXCEPTION) << "memcpy_s failed, ret = " << ret;
+    }
   }
   return true;
 }

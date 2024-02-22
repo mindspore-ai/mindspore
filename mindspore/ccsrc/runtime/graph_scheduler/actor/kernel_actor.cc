@@ -622,7 +622,9 @@ bool KernelActor::LaunchKernel(OpContext<DeviceTensor> *const) {
   // Check the skipped launch condition.
   if (is_launch_skipped_) {
     MS_EXCEPTION_IF_CHECK_FAIL((input_device_tensors_.size() >= 1), "The inputs size is wrong.");
-    MS_EXCEPTION_IF_CHECK_FAIL((output_device_tensors_.size() == 1), "The outputs size is wrong.");
+    MS_EXCEPTION_IF_CHECK_FAIL((output_device_tensors_.size() >= 1), "The outputs size is wrong.");
+    MS_EXCEPTION_IF_NULL(input_device_tensors_[0]);
+    MS_EXCEPTION_IF_NULL(output_device_tensors_[0]);
     if (input_device_tensors_[0]->GetPtr() == output_device_tensors_[0]->GetPtr()) {
       return true;
     } else {

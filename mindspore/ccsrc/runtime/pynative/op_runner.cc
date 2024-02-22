@@ -309,7 +309,6 @@ bool MallocForKernelInput(const std::shared_ptr<OpRuntimeInfo> &runtime_info,
     auto input_address = runtime_info->GetInputDeviceAddress(i);
     MS_EXCEPTION_IF_NULL(kernel_mod);
     MS_EXCEPTION_IF_NULL(input_address);
-    kernel_mod->set_input_user_data(input_address->user_data().get(), i);
     if (TEST_FLAG(input_address->flag(), device::kDeviceAddressFlagIgnoreDevicePtr)) {
       MS_LOG(DEBUG) << "Node " << node->DebugString() << " input[" << i << "] with address " << input_address
                     << " has flag ignore device address, so skip malloc device address";
@@ -342,7 +341,6 @@ bool MallocForKernelOutput(const std::shared_ptr<OpRuntimeInfo> &runtime_info, c
   for (size_t i = 0; i < output_size; ++i) {
     auto device_address = runtime_info->GetOutputDeviceAddress(i);
     MS_EXCEPTION_IF_NULL(device_address);
-    kernel_mod->set_output_user_data(device_address->user_data().get(), i);
     // For example, we need to call cudnnGetRNNTrainingReserveSize to get real output size in LstmGpuKernelMod!
     if (kernel_out_size_list[i] != device_address->GetSize() &&
         AnfAlgo::GetOutputFormat(node, i) == device_address->format()) {
