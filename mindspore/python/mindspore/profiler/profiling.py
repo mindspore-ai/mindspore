@@ -304,22 +304,23 @@ def _ascend_graph_msprof_analyse(source_path, flag):
     Ascend graph model msprof data analyse.
 
     Returns:
-        list[obj]: The list is : df_op_summary, df_op_statistic, df_step_trace
+        list[obj]: The list is : df_op_summary, df_op_statistic, df_step_trace, df_step_trace_model
     """
     df_op_summary = []
     df_op_statistic = []
     df_step_trace = []
+    df_step_trace_model = []
     try:
         if flag:
             msprof_analyser = AscendMsprofDataGenerator(os.path.join(source_path, 'summary'))
         else:
             msprof_analyser = AscendMsprofDataGeneratorOld(os.path.join(source_path, 'summary'))
-        df_op_summary, df_op_statistic, df_step_trace = msprof_analyser.parse()
+        df_op_summary, df_op_statistic, df_step_trace, df_step_trace_model = msprof_analyser.parse()
     except ProfilerException as err:
         logger.warning(err.message)
     finally:
         pass
-    return df_op_summary, df_op_statistic, df_step_trace
+    return df_op_summary, df_op_statistic, df_step_trace, df_step_trace_model
 
 
 class Profiler:
@@ -1349,7 +1350,7 @@ class Profiler:
                 logger.warning('Current driver package not support all export mode, use single export mode, '
                                'this may lead to performance degradation. Suggest upgrading the driver package.')
             ProfilerInfo.set_export_flag(flag)
-            op_summary, op_statistic, steptrace = _ascend_graph_msprof_analyse(source_path, flag)
+            op_summary, op_statistic, steptrace, steptrace_model = _ascend_graph_msprof_analyse(source_path, flag)
             kernels = self._ascend_timeline_analyse(op_summary, steptrace, source_path, flag)
             launch_ops = self._get_kernel_op_map(op_summary, kernels)
             self._ascend_op_analyse(op_summary, op_statistic, self._dynamic_status, launch_ops)
@@ -1357,6 +1358,8 @@ class Profiler:
             points = self._ascend_fpbp_analyse(op_summary, steptrace)
             if len(graph_ids) == 1:
                 self._ascend_step_trace_analyse(steptrace)
+            else:
+                self._ascend_step_trace_analyse(steptrace_model)
             if self._dynamic_status:
                 self._ascend_dynamic_net_analyse(op_summary)
             self._ascend_flops_analyse(op_summary, launch_ops)

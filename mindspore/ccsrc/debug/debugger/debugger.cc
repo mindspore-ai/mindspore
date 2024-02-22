@@ -43,6 +43,7 @@
 #include "debug/debugger/grpc_client.h"
 #include "debug/debug_services.h"
 #include "runtime/device/ms_device_shape_transfer.h"
+#include "include/backend/debug/profiler/profiling.h"
 
 using debugger::Chunk;
 using debugger::EventReply;
@@ -269,13 +270,22 @@ bool Debugger::CheckDebuggerPartialMemoryEnabled() const {
   return false;
 }
 
+bool Debugger::CheckProfilerInit() const {
+  if (profiler::Profiler::GetInstance(kAscendDevice) == nullptr) {
+    return false;
+  }
+  return profiler::Profiler::GetInstance(kAscendDevice)->IsInitialized();
+}
+
 /*
  * Feature group: Dump, Online debugger.
  * Target device group: Ascend, GPU.
  * Runtime category: Old runtime, MindRT
  * Description: Returns true if online debugger or dump is enabled.
  */
-bool Debugger::DebuggerBackendEnabled() const { return CheckDebuggerDumpEnabled() || CheckDebuggerEnabled(); }
+bool Debugger::DebuggerBackendEnabled() const {
+  return CheckProfilerInit() || CheckDebuggerDumpEnabled() || CheckDebuggerEnabled();
+}
 
 void Debugger::Reset() {
   // access lock for public method

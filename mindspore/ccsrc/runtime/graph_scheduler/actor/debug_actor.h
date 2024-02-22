@@ -50,6 +50,10 @@ class DebugActor : public ActorBase {
   void DebugForGraph(const KernelGraphPtr &graph, const DeviceContext *device_context,
                      OpContext<DeviceTensor> *const op_context, const AID *from_aid);
 
+  void AscendStepStart(const std::vector<KernelGraphPtr> &graphs, std::vector<DeviceContext *> device_contexts);
+
+  void AscendStepEnd();
+
   // The debug on step begin.
   void DebugOnStepBegin(const std::vector<KernelGraphPtr> &graphs,
                         const std::vector<AnfNodePtr> &origin_parameters_order,
@@ -58,13 +62,16 @@ class DebugActor : public ActorBase {
 
   // The debug on step end.
   void DebugOnStepEnd(OpContext<DeviceTensor> *const op_context, const AID *from_aid, int total_running_count_);
-  static inline uint64_t current_step{0};
+  static inline uint64_t current_step{1};
 
  private:
   // class members
   uint32_t exec_order_ = 0;
   int step_count = 0;
   int dump_flag = 0;
+
+  bool profile_started_ = false;
+  DeviceContext *device_ctx_ = nullptr;
 
   // Support multi-thread.
   std::mutex debug_mutex_;
