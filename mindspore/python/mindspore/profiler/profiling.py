@@ -604,7 +604,7 @@ class Profiler:
                 return message
         return op_info
 
-    def analyse(self, offline_path=None, pretty=False):
+    def analyse(self, offline_path=None, pretty=False, step_list=None):
         """
         Collect and analyze training performance data, support calls during and after training. The example shows above.
 
@@ -615,7 +615,12 @@ class Profiler:
             pretty (bool, optional): Whether to pretty json files. Default: ``False``.
         """
         self._pretty_json = pretty
-        self._analyse(offline_path=offline_path)
+        model_iteration_dict = {}
+        if isinstance(step_list, list) and step_list:
+            for step in step_list:
+                if isinstance(step, int) and step >= 0:
+                    model_iteration_dict.setdefault(4294967295, []).append(step)
+        self._analyse(offline_path=offline_path, model_iteration_dict=model_iteration_dict)
 
     def _analyse(self, offline_path=None, model_iteration_dict=None):
         """
