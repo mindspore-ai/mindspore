@@ -21,7 +21,7 @@
 
 namespace mindspore::graphkernel::expanders {
 namespace {
-constexpr double csv_value = 0.044715;
+constexpr double csv_value = 0.044714998453855515;
 // gelu(x) = 0.5 * x *(1 + Erf(x/sqrt(2)))
 // gelu(x) = 0.5 * x *(1 + tanh(y)), y = sqrt(2/pi)*(x + 0.044715*x*x*x)
 // Since in AKG or Ascend, there is no basic instruction for tanh, it is formed by combining basic instructions.
@@ -35,7 +35,7 @@ constexpr double csv_value = 0.044715;
 // performance.
 NodePtr GeLUByTanh(const inner::GraphBuilder &gb, const NodePtr &input_x, const TypeId dtype) {
   // np.sqrt(2/np.pi)
-  constexpr double csv_value_sqrt_two_div_pi = 0.7978845608028564;
+  constexpr double csv_value_sqrt_two_div_pi = 0.7978845608028654;
 
   // cal y
   auto mul_0 = gb.Mul(input_x, input_x);
@@ -53,25 +53,32 @@ NodePtr GeLUByTanh(const inner::GraphBuilder &gb, const NodePtr &input_x, const 
   auto tanh_y_add_one = gb.Add(tanh_y, const_one);
   auto mul_x = gb.Mul(input_x, tanh_y_add_one);
   auto result = gb.Mul(mul_x, const_half);
+
   return result;
 }
 
-NodePtr GeLUAscend(const inner::GraphBuilder &gb, const NodePtr &input_x, const TypeId dtype) {
+NodePtr GeLUAscend(const inner::GraphBuilder &gb, const NodePtr &input, const TypeId dtype) {
   // -np.sqrt(8/np.pi)
-  constexpr double csv_value_sqrt_eight_div_pi = -0.7978845608028564 * 2;
-
+  constexpr double csv_value_sqrt_eight_div_pi = -1.5957691216057308;
+  auto input_x = input;
+  if (dtype != kNumberTypeFloat32) {
+    input_x = gb.Cast(input_x, kNumberTypeFloat32);
+  }
   auto mul_0 = gb.Mul(input_x, input_x);
   auto pow_0 = gb.Mul(mul_0, input_x);
-  auto const_csvalue = gb.Tensor(csv_value, dtype);
+  auto const_csvalue = gb.Tensor(csv_value, kNumberTypeFloat32);
   auto mul_1 = gb.Mul(pow_0, const_csvalue);
   auto tanh_res = gb.Add(input_x, mul_1);
-  auto const_csvalue_sqrt_eight_div_pi = gb.Tensor(csv_value_sqrt_eight_div_pi, dtype);
+  auto const_csvalue_sqrt_eight_div_pi = gb.Tensor(csv_value_sqrt_eight_div_pi, kNumberTypeFloat32);
   auto y = gb.Mul(tanh_res, const_csvalue_sqrt_eight_div_pi);
 
   auto exp_0 = gb.Exp(y);
-  auto const_one = gb.Tensor(1, dtype);
+  auto const_one = gb.Tensor(1, kNumberTypeFloat32);
   auto add_0 = gb.Add(exp_0, const_one);
   auto result = gb.Div(input_x, add_0);
+  if (dtype != kNumberTypeFloat32) {
+    result = gb.Cast(result, dtype);
+  }
   return result;
 }
 }  // namespace
@@ -82,8 +89,7 @@ class GeLU : public OpDesc {
 
  protected:
   NodePtrList Expand(const NodePtrList &inputs) override {
-    auto device_target = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-    if (device_target == kAscendDevice) {
+    if (processor_ == "aicore") {
       return {GeLUAscend(gb, inputs[0], inputs[0]->type)};
     } else {
       return {GeLUByTanh(gb, inputs[0], inputs[0]->type)};
