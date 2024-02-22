@@ -278,6 +278,12 @@ static bool CheckValueValid(AObject *obj) {
   if (obj->GetType() == AObject::kTypeTensor) {
     AbstractTensor *tensor = static_cast<AbstractTensor *>(obj);
     return tensor->IsStubTensor() || CheckTensorDataInitialized(obj->GetPyObject());
+  } else if (obj->GetType() == AObject::kTypeTraceNode) {
+    auto py_obj = obj->GetPyObject();
+    if (!py::isinstance<tensor::Tensor>(py_obj)) {
+      return true;
+    }
+    return py_obj.cast<tensor::TensorPtr>()->data().const_data() != nullptr;
   } else {
     return true;
   }
