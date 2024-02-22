@@ -71,13 +71,13 @@ class AscendEnvChecker(metaclass=ABCMeta):
 
         if self.env_ld_lib_path is None:
             logging.warning("Env LD_LIBRARY_PATH is not set(needed by Mindspore Lite-Ascend). "
-                            "Please set the ASCEND_OPP_PATH properly. "
+                            "Please set the LD_LIBRARY_PATH properly. "
                             "For details, refer to the installation guidelines: https://www.mindspore.cn/install")
             return False
         if re.search(ld_lib_keyword, self.env_ld_lib_path) is None:
             logging.warning("Found no ascend runtime lib path(needed by Mindspore Lite-Ascend). "
                             "Please check whether the env LD_LIBRARY_PATH is set properly, "
-                            "for example: LD_LIBRARY_PATH=\"${ASCEND_CUSTOM_PATH}/latest/lib64\". "
+                            "for example: LD_LIBRARY_PATH=\"${ASCEND_CUSTOM_PATH}/latest/lib64:${LD_LIBRARY_PATH}\". "
                             "For details, refer to the installation guidelines: https://www.mindspore.cn/install")
             return False
 
