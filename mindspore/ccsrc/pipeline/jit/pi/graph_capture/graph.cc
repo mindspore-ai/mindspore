@@ -341,6 +341,14 @@ std::string Graph::ToString(int depth) const {
   return s.str();
 }
 
+void DumpUnsupportedByteCodeInfo(std::stringstream &s, int op, int arg) {
+  if (op == SETUP_WITH || op == SETUP_FINALLY) {
+    s << Utils::GetOpName(op) << " " << arg << " is skipped in break_graph or a exception happened.\n";
+  } else {
+    s << Utils::GetOpName(op) << " " << arg << " is not support.\n";
+  }
+}
+
 std::string Graph::DumpBreakInfo() const {
   if (GetStopTraceBci() == -1) {
     return std::string();
@@ -357,11 +365,7 @@ std::string Graph::DumpBreakInfo() const {
     // break at unsupported bytecode
     int op = instrs[break_bci]->op();
     int arg = instrs[break_bci]->arg();
-    if (op == SETUP_WITH) {
-      s << Utils::GetOpName(op) << " " << arg << " is skipped in break_graph or a exception happened.\n";
-    } else {
-      s << Utils::GetOpName(op) << " " << arg << " is not support.\n";
-    }
+    DumpUnsupportedByteCodeInfo(s, op, arg);
     switch (op) {
       case POP_JUMP_IF_FALSE:
       case POP_JUMP_IF_TRUE:
