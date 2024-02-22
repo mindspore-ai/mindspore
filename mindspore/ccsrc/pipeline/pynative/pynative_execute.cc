@@ -90,6 +90,7 @@ void SetCallbackForInputTensor(const FrontendOpRunInfoPtr &op_run_info) {
 }  // namespace
 
 void PyNativeExecutor::StoreAsyncStatus(const FrontendOpRunInfoPtr &op_run_info) const {
+  // Pure function running or cell not set mix precision
   op_run_info->async_status.disable_mix_precision =
     (forward_executor()->IsFirstCell() || forward_executor()->CellNotSetMixedPrecision(op_run_info));
   op_run_info->async_status.is_jit_compiling = forward_executor()->is_jit_compiling();
