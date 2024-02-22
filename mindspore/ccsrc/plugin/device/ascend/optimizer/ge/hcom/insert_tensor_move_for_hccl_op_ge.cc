@@ -32,6 +32,33 @@ namespace {
 // insert tensormove for some cnode even if not a Ref cnode
 const std::set<std::string> kNeedInsertTensorMoveOpSet = {kLambNextMVOpName, kLambNextMVWithDecayOpName,
                                                           kLambUpdateWithLROpName, kGetNextOpName};
+static const PrimitiveSet virtual_prims = {prim::kPrimStateSetItem, prim::kPrimTupleGetItem,
+                                           prim::kPrimReturn,       prim::kPrimPartial,
+                                           prim::kPrimUpdateState,  prim::kPrimDynamicLossScale};
+
+bool IsCareNode(const AnfNodePtr &node, const FuncGraphManagerPtr &manager, size_t idx) {
+  if (!IsPrimitiveCNode(node)) {
+    return true;
+  }
+  auto cnode = node->cast<CNodePtr>();
+  if (IsOneOfPrimitive(cnode->input(kAnfPrimitiveIndex), virtual_prims)) {
+    return false;
+  }
+  if (IsPrimitiveCNode(cnode, prim::kPrimDepend) || IsPrimitiveCNode(cnode, prim::kPrimLoad) ||
+      IsPrimitiveCNode(cnode, prim::kPrimMakeTuple)) {
+    if (idx == kIndex2 && IsPrimitiveCNode(cnode, prim::kPrimDepend)) {
+      return false;
+    }
+    auto node_users = manager->node_users()[cnode];
+    for (const auto &node_pair : node_users) {
+      if (IsCareNode(node_pair.first, manager, node_pair.second)) {
+        return true;
+      }
+      return false;
+    }
+  }
+  return true;
+}
 
 // NodeUsersMap, for node B input i use node A, it will be one item in map with key: A, and value: (B, i)
 bool IsNodeOutPutUsedByOtherRealKernel(const FuncGraphPtr &graph, const AnfNodePtr &input, size_t input_idx,
@@ -52,7 +79,7 @@ bool IsNodeOutPutUsedByOtherRealKernel(const FuncGraphPtr &graph, const AnfNodeP
     auto node = node_pair.first;
     auto idx = node_pair.second;
     MS_EXCEPTION_IF_NULL(node);
-    if (AnfUtils::IsRealKernel(node) && (node != cur_node || idx != SizeToInt(input_idx))) {
+    if (IsCareNode(node, manager, size_t(idx)) && (node != cur_node || idx != SizeToInt(input_idx))) {
       MS_LOG(INFO) << "This node only used other real kernel: " << node->fullname_with_scope();
       return true;
     }
