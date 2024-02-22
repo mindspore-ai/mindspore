@@ -316,15 +316,17 @@ REG_ADPT_DESC(ArgMax, kNameArgmax, CUST_ADPT_DESC(ArgMax));
 
 // ArgMaxWithValue
 INPUT_MAP(ArgMaxWithValue) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(ArgMaxWithValue) = {{"axis", ATTR_DESC(dimension, AnyTraits<int64_t>())},
-                             {"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>())}};
+INPUT_ATTR_MAP(ArgMaxWithValue) = {{kIndex2, ATTR_DESC(dimension, AnyTraits<int64_t>())},
+                                   {kIndex3, ATTR_DESC(keep_dims, AnyTraits<bool>())}};
+ATTR_MAP(ArgMaxWithValue) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(ArgMaxWithValue) = {{0, OUTPUT_DESC(indice)}, {1, OUTPUT_DESC(values)}};
 REG_ADPT_DESC(ArgMaxWithValue, kNameArgMaxWithValue, ADPT_DESC(ArgMaxWithValue))
 
 // ArgMinWithValue
 INPUT_MAP(ArgMinWithValue) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(ArgMinWithValue) = {{"axis", ATTR_DESC(dimension, AnyTraits<int64_t>())},
-                             {"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>())}};
+INPUT_ATTR_MAP(ArgMinWithValue) = {{kIndex2, ATTR_DESC(dimension, AnyTraits<int64_t>())},
+                                   {kIndex3, ATTR_DESC(keep_dims, AnyTraits<bool>())}};
+ATTR_MAP(ArgMinWithValue) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(ArgMinWithValue) = {{0, OUTPUT_DESC(indice)}, {1, OUTPUT_DESC(values)}};
 REG_ADPT_DESC(ArgMinWithValue, kNameArgMinWithValue, ADPT_DESC(ArgMinWithValue))
 

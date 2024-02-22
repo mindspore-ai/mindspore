@@ -72,6 +72,7 @@ class ArgMaxWithValueInfo : public ReduceMethod {
   Status InferTensorMap() override;
   Status InferTensorInfo() override;
   Status InferAsLossDivisor() override;
+  Status GetAttrs() override;
 };
 
 class ArgMinWithValueInfo : public ArgMaxWithValueInfo {

@@ -17,6 +17,7 @@
 #include "backend/common/expander/fallback/fallback_irbuilder.h"
 #include "include/common/utils/utils.h"
 #include "utils/shape_utils.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace expander {
@@ -193,6 +194,31 @@ REG_FALLBACK_BUILDER("SoftmaxBackward").SetBody(BODYFUNC(ib) {
   auto dx = ib->Mul(out, ib->Sub(dout, ib->ReduceSum(ib->Mul(out, dout), ShapeVector{-1}, true)));
   dx = ib->Transpose(dx, reverse_axis);
   return {dx};
+});
+
+// It is just a temporary modification. If the attributes of the `TensorScatterElements`
+// operator are changed to input, the `Scatter` operator can be directly replaced with `TensorScatterElements`.
+REG_FALLBACK_BUILDER("Scatter").SetBody(BODYFUNC(ib) {
+  auto input = ib->GetInput(kIndex0);
+  auto dim = ib->GetInput(kIndex1);
+  auto index = ib->GetInput(kIndex2);
+  auto src = ib->GetInput(kIndex3);
+  auto reduce = ib->GetInput(kIndex4);
+  auto dim_val = dim->BuildValue();
+  auto reduce_val = reduce->BuildValue();
+  if (!ops::IsValueKnown(dim_val) || !ops::IsValueKnown(reduce_val)) {
+    MS_EXCEPTION(ValueError) << "For `TensorScatterElements` op, the `dim` and `reduce` must currently be a constant!";
+  }
+  std::unordered_map<int64_t, std::string> reduce_val_string{{0, "none"}, {1, "add"}};
+  auto reduce_val_int = GetValue<int64_t>(reduce_val);
+  const auto iter = reduce_val_string.find(reduce_val_int);
+  if (iter == reduce_val_string.end()) {
+    MS_EXCEPTION(ValueError) << "For `Scatter` op, fail to convert `reduce` val `" << reduce_val_int << "` to string!";
+  }
+  auto reduce_string = iter->second;
+  auto out = ib->Emit("TensorScatterElements", {input, index, src},
+                      {{"reduction", MakeValue<string>(reduce_string)}, {"axis", dim_val}});
+  return {out};
 });
 }  // namespace expander
 }  // namespace mindspore
