@@ -1476,31 +1476,6 @@ py::object MakeCodeFromCodeGen(const GraphBuilderPtr &builder, const GraphAnalyz
   GraphAnalyzer::CapturedInfo info = analyzer->GetCaptureInfo();
   auto cg = CodeBreakGenerator::Creator(builder, graph->GetCodeObj());
   if (builder->trace_flag()) {
-    if (analyzer->NeedInterpret()) {
-      std::vector<ValueNode *> new_capture_locals;
-      const auto &traced_nodes = graph->GetTracedNodes();
-      auto break_bci = graph->GetStopTraceBci();
-      for (const auto &node : traced_nodes) {
-        if (node->bci() >= break_bci) {
-          break;
-        }
-        new_capture_locals.push_back(node);
-      }
-      info.captured_locals.order = new_capture_locals;
-      // Collect inputs for break capture graph.
-      auto &values = info.captured_locals.values;
-      auto &inputs = info.captured_locals.inputs;
-      for (ValueNode *i : info.captured_locals.order) {
-        for (auto input : i->getInputs()) {
-          if (values.find(input) != values.end() || IsNonLocalValue(input)) {
-            continue;
-          }
-          inputs.insert(input);
-        }
-      }
-    } else {
-      info.captured_locals.order = graph->GetTracedNodes();
-    }
     auto mind_builder = std::dynamic_pointer_cast<MindGraphBuilder>(builder);
     auto mind_fg_builder = mind_builder->FGBuilder();
     MS_EXCEPTION_IF_NULL(mind_fg_builder);
