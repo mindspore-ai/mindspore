@@ -131,7 +131,11 @@ bool TensorStatDump::DumpTensorStatsToFile(const std::string &dump_path, const s
   csv.WriteToCsv(io_);
   csv.WriteToCsv(slot_);
   csv.WriteToCsv(stat.data_size);
-  csv.WriteToCsv(TypeIdToString(data_type_, true));
+  if (data_type_ != mindspore::TypeId::kTypeUnknown) {
+    csv.WriteToCsv(TypeIdToString(data_type_, true));
+  } else {
+    csv.WriteToCsv(type);
+  }
   csv.WriteToCsv(shape.str());
   if (stat.count == stat.nan_count + stat.neg_inf_count + stat.pos_inf_count) {
     csv.WriteToCsv(std::string("null"));
