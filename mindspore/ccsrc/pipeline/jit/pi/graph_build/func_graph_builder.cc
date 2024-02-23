@@ -571,6 +571,14 @@ void FuncGraphBuilder::RemoveOutput(const py::object &output_obj) {
 }
 
 py::object FuncGraphBuilder::ConvertFunction(const py::object &obj) {
+  auto tp = reinterpret_cast<PyTypeObject *>(obj.ptr());
+  static const std::set<PyTypeObject *> unsupported_convert_function_type = {
+    &PyRange_Type,
+    &PyZip_Type,
+  };
+  if (tp != nullptr && unsupported_convert_function_type.find(tp) != unsupported_convert_function_type.end()) {
+    return py::object();
+  }
   auto dict = python_adapter::GetPyObjAttr(python_adapter::GetPyModule("mindspore._extends.parse.resources"),
                                            "convert_object_map");
   auto callable_obj_ptr = PyDict_GetItem(dict.ptr(), obj.ptr());
