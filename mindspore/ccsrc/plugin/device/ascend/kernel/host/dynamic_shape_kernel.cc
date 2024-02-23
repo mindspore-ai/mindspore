@@ -18,8 +18,8 @@
 #include "include/backend/anf_runtime_algorithm.h"
 #include "utils/trace_base.h"
 #include "runtime/device/kernel_runtime_manager.h"
-#include "runtime/mem.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
+#include "acl/acl_rt.h"
 
 namespace mindspore {
 namespace kernel {
