@@ -141,5 +141,18 @@ bool InternalKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const 
   impl_->Launch();
   return true;
 }
+
+std::vector<size_t> InternalKernelMod::GetLaunchIgnoredInputAddressIdx() const {
+  static const mindspore::HashMap<std::string, std::vector<size_t>> launch_ignored_input_addr_op_to_idx = {
+    {kReshapeOpName, {kIndex1}}, {kStridedSliceOpName, {kIndex1, kIndex2, kIndex3}}};
+
+  const auto &iter = launch_ignored_input_addr_op_to_idx.find(kernel_name_);
+  if (iter != launch_ignored_input_addr_op_to_idx.end()) {
+    return iter->second;
+  } else {
+    return {};
+  }
+}
+
 }  // namespace kernel
 }  // namespace mindspore
