@@ -1204,13 +1204,12 @@ Status AdjustGamma(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor>
       }
       *output = input;
     } else {
-      std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
+      RETURN_IF_NOT_OK(Tensor::CreateFromTensor(input, output));
+      std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(*output);
       if (!input_cv->mat().data) {
         RETURN_STATUS_UNEXPECTED("[Internal ERROR] AdjustGamma: load image failed.");
       }
       cv::Mat input_img = input_cv->mat();
-      std::shared_ptr<CVTensor> output_cv;
-      RETURN_IF_NOT_OK(CVTensor::CreateEmpty(input_cv->shape(), input_cv->type(), &output_cv));
       uchar LUT[256] = {};
       auto kMaxPixelValueFloat = static_cast<float>(kMaxBitValue);
       for (int i = 0; i <= kMaxBitValue; i++) {
@@ -1234,8 +1233,7 @@ Status AdjustGamma(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor>
           (*it)[2] = LUT[(*it)[2]];
         }
       }
-      output_cv->mat() = input_img * 1;
-      *output = std::static_pointer_cast<Tensor>(output_cv);
+      *output = std::static_pointer_cast<Tensor>(input_cv);
     }
   } catch (const cv::Exception &e) {
     RETURN_STATUS_UNEXPECTED("AdjustGamma: " + std::string(e.what()));
@@ -1581,7 +1579,8 @@ Status CutOut(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
               int32_t box_width, int32_t num_patches, bool bounded, bool random_color, std::mt19937 *rnd,
               std::vector<uint8_t> fill_colors, bool is_hwc) {
   try {
-    std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
+    RETURN_IF_NOT_OK(Tensor::CreateFromTensor(input, output));
+    std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(*output);
     RETURN_IF_NOT_OK(ValidateCutOutImage(input_cv, is_hwc, box_height, box_width));
     uint32_t channel_index = is_hwc ? kChannelIndexHWC : kChannelIndexCHW;
     uint32_t height_index = is_hwc ? 0 : 1;
@@ -1642,7 +1641,7 @@ Status CutOut(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
       }
     }
 
-    *output = std::static_pointer_cast<Tensor>(input);
+    *output = std::static_pointer_cast<Tensor>(input_cv);
     return Status::OK();
   } catch (const cv::Exception &e) {
     RETURN_STATUS_UNEXPECTED("CutOut: " + std::string(e.what()));
@@ -1665,7 +1664,8 @@ Status Erase(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outp
         ", image width: " + std::to_string(image_w));
     }
 
-    std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
+    RETURN_IF_NOT_OK(Tensor::CreateFromTensor(input, output));
+    std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(*output);
     cv::Mat input_img = input_cv->mat();
 
     int32_t h_start = top;
@@ -1686,9 +1686,7 @@ Status Erase(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outp
     cv::Scalar fill_color = cv::Scalar(fill_r, fill_g, fill_b);
     (void)input_img(idx).setTo(fill_color);
 
-    std::shared_ptr<CVTensor> output_cv;
-    RETURN_IF_NOT_OK(CVTensor::CreateFromMat(input_img, input_cv->Rank(), &output_cv));
-    *output = std::static_pointer_cast<Tensor>(output_cv);
+    *output = std::static_pointer_cast<Tensor>(input_cv);
     return Status::OK();
   } catch (const cv::Exception &e) {
     RETURN_STATUS_UNEXPECTED("Erase: " + std::string(e.what()));
@@ -1770,7 +1768,8 @@ Status Perspective(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor>
 Status RandomLighting(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float rnd_r, float rnd_g,
                       float rnd_b) {
   try {
-    std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
+    RETURN_IF_NOT_OK(Tensor::CreateFromTensor(input, output));
+    std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(*output);
     cv::Mat input_img = input_cv->mat();
 
     if (!input_cv->mat().data) {
@@ -1808,10 +1807,7 @@ Status RandomLighting(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tens
       }
     }
 
-    std::shared_ptr<CVTensor> output_cv;
-    RETURN_IF_NOT_OK(CVTensor::CreateFromMat(input_img, input_cv->Rank(), &output_cv));
-
-    *output = std::static_pointer_cast<Tensor>(output_cv);
+    *output = std::static_pointer_cast<Tensor>(input_cv);
     return Status::OK();
   } catch (const cv::Exception &e) {
     RETURN_STATUS_UNEXPECTED("RandomLighting: " + std::string(e.what()));
