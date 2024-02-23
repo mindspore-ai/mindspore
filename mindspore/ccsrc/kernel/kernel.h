@@ -755,9 +755,6 @@ class BACKEND_EXPORT KernelMod {
 
   virtual void set_is_monad(bool is_monad) { MS_LOG(EXCEPTION) << "Call the method which doesn't implement"; }
 
-  // User data is the extra dat-a required when the kernel is launched, It will be set before launch by runtime.
-  virtual void set_input_user_data(UserData *user_data, size_t input_index) {}
-  virtual void set_output_user_data(UserData *user_data, size_t output_index) {}
   // If output of kernel has a user_data, it needs to return true, and the framework will create user_data for it.
   virtual bool need_user_data() const { return false; }
 
