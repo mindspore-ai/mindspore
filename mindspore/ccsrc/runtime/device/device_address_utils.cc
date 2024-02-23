@@ -1077,6 +1077,24 @@ void DeviceAddressUtils::CreateOutputTensorAddress(DeviceContext *device_context
   }
 }
 
+device::DeviceAddressPtr DeviceAddressUtils::CreateDeviceAddress(DeviceContext *device_context,
+                                                                 const tensor::TensorPtr &tensor,
+                                                                 const ShapeVector &real_shape,
+                                                                 const size_t &stream_id) {
+  MS_EXCEPTION_IF_NULL(device_context);
+  MS_EXCEPTION_IF_NULL(tensor);
+  auto tensor_size = GetTypeByte(TypeIdToType(tensor->data_type())) * SizeOf(real_shape);
+  const auto &device_format = GetFormatByTensorShape(device_context, tensor->shape());
+  auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
+    nullptr, tensor_size, device_format, tensor->data_type(), real_shape,
+    device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+  kernel_tensor->set_stream_id(stream_id);
+  device::DeviceAddressPtr device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
+  MS_LOG(DEBUG) << "Create tensor device address " << device_address << "Shape: " << tensor->shape()
+                << ", Type: " << tensor->data_type();
+  return device_address;
+}
+
 void DeviceAddressUtils::MallocForOutputs(DeviceContext *device_context,
                                           const std::vector<tensor::TensorPtr> &outputs) {
   for (const auto &output : outputs) {
