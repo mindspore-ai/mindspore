@@ -86,6 +86,7 @@ struct CallbackThread {
 };
 using CallbackThreadPtr = std::shared_ptr<CallbackThread>;
 
+void InitializeAcl();
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

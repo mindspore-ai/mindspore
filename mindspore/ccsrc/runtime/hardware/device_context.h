@@ -230,6 +230,8 @@ class BACKEND_EXPORT DeviceResManager {
   // Get currently using stream id.
   virtual size_t GetCurrentStreamId() const { return kSizeZero; }
 
+  virtual void *GetStream() const { return nullptr; };
+
   // Destroy a stream bound to the input parameter "stream_id".
   virtual bool DestroyStream(size_t stream_id) const { return false; }
 
