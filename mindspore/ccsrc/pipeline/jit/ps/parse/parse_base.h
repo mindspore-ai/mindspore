@@ -255,6 +255,8 @@ FuncGraphPtr ParsePythonCode(const py::object &obj,
                              const std::string &python_mod_get_parse_method = PYTHON_MOD_GET_PARSE_METHOD,
                              const ValuePtrList &args_value_list = {});
 ValuePtr GetArgDefaultValue(const std::string &prim_name, const std::string &arg_name);
+AnfNodePtr TransPropertyToFunc(const FuncGraphPtr &fg, const AnfNodePtr &node, const py::object &property_net_obj,
+                               std::string attr_str);
 }  // namespace parse
 }  // namespace mindspore
 
