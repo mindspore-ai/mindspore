@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "plugin/device/ascend/kernel/opapi/aclnn/argmin_with_value_aclnn_kernel.h"
+#include "plugin/device/ascend/kernel/opapi/aclnn/arg_with_value_aclnn_kernel.h"
 #include <algorithm>
 #include <vector>
 #include <map>
@@ -28,26 +28,23 @@
 namespace mindspore {
 namespace kernel {
 
-void ArgMinWithValueAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
-                                             const std::vector<KernelTensor *> &outputs) {
-  auto axis = transform::ConvertKernelTensor<int64_t>(inputs[kIndex1]);
-  auto keep_dims = transform::ConvertKernelTensor<bool>(inputs[kIndex2]);
-
-  auto return_value = GEN_EXECUTOR(op_type_, inputs[kIndex0], axis, keep_dims, outputs[kIndex1], outputs[kIndex0]);
-  UpdateWorkspace(return_value);
+void ArgWithValueAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
+  axis_ = transform::ConvertKernelTensor<int64_t>(inputs[kIndex1]);
+  keep_dims_ = transform::ConvertKernelTensor<bool>(inputs[kIndex2]);
+  GetWorkspaceForResize(inputs[kIndex0], axis_, keep_dims_, outputs[kIndex1], outputs[kIndex0]);
 }
 
-bool ArgMinWithValueAscend::Launch(const std::vector<KernelTensor *> &inputs,
-                                   const std::vector<KernelTensor *> &workspace,
-                                   const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
+bool ArgWithValueAscend::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                                const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
-  auto axis = transform::ConvertKernelTensor<int64_t>(inputs[kIndex1]);
-  auto keep_dims = transform::ConvertKernelTensor<bool>(inputs[kIndex2]);
-
-  ParseGenExecutor(GEN_EXECUTOR(op_type_, inputs[kIndex0], axis, keep_dims, outputs[kIndex1], outputs[kIndex0]));
+  ParseGenExecutor(
+    GEN_EXECUTOR_BOOST(op_type_, hash_id_, inputs[kIndex0], axis_, keep_dims_, outputs[kIndex1], outputs[kIndex0]));
   RunOp(stream_ptr, workspace);
   return true;
 }
+
+MS_ACLNN_KERNEL_FACTORY_REG(ArgMaxWithValue, ArgMaxWithValueAscend);
 MS_ACLNN_KERNEL_FACTORY_REG(ArgMinWithValue, ArgMinWithValueAscend);
 }  // namespace kernel
 }  // namespace mindspore

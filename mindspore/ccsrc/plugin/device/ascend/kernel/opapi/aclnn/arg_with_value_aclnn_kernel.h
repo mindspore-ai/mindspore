@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_ARGMAX_WITH_VALUE_ACLNN_KERNEL_MOD_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_ARGMAX_WITH_VALUE_ACLNN_KERNEL_MOD_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_OPAPI_ACLNN_ARG_WITH_VALUE_ACLNN_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_OPAPI_ACLNN_ARG_WITH_VALUE_ACLNN_KERNEL_H_
 
 #include <vector>
 #include <utility>
+#include <string>
 #include "ops/base_operator.h"
 #include "plugin/device/ascend/kernel/opapi/aclnn_kernel_mod.h"
 #include "transform/acl_ir/acl_convert.h"
@@ -25,15 +26,33 @@
 namespace mindspore {
 namespace kernel {
 
-class ArgMaxWithValueAscend : public AclnnKernelMod {
+class ArgWithValueAscend : public AclnnKernelMod {
  public:
-  ArgMaxWithValueAscend() : AclnnKernelMod(std::move("aclnnMaxDim")) {}
-  ~ArgMaxWithValueAscend() = default;
+  explicit ArgWithValueAscend(std::string &&op_type) : AclnnKernelMod(std::move(op_type)) {}
+  ~ArgWithValueAscend() = default;
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
               const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
   void GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+
+ private:
+  DEFINE_GET_WORKSPACE_FOR_RESIZE()
+
+  int64_t axis_;
+  bool keep_dims_;
+};
+
+class ArgMaxWithValueAscend : public ArgWithValueAscend {
+ public:
+  ArgMaxWithValueAscend() : ArgWithValueAscend("aclnnMaxDim") {}
+  ~ArgMaxWithValueAscend() = default;
+};
+
+class ArgMinWithValueAscend : public ArgWithValueAscend {
+ public:
+  ArgMinWithValueAscend() : ArgWithValueAscend("aclnnMinDim") {}
+  ~ArgMinWithValueAscend() = default;
 };
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_ARGMAX_WITH_VALUE_ACLNN_KERNEL_MOD_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_OPAPI_ACLNN_ARG_WITH_VALUE_ACLNN_KERNEL_H_
