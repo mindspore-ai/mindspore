@@ -831,6 +831,7 @@ REGISTER(CumminInfo);
 REGISTER(CumProdInfo);
 REGISTER(EluInfo);
 REGISTER(ReLUInfo);
+REGISTER(SiLUInfo);
 REGISTER(identityInfo);
 REGISTER(RepeatElementsInfo);
 REGISTER(ReLU6Info);
