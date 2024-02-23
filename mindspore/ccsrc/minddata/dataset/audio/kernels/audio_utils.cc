@@ -443,19 +443,19 @@ Status RandomMaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr
 
 Status MaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t mask_width,
                      int32_t mask_start, float mask_value, int32_t axis) {
+  RETURN_IF_NOT_OK(Tensor::CreateFromTensor(input, output));
   if (mask_width == 0) {
-    *output = input;
     return Status::OK();
   }
   if (axis != 2 && axis != 1) {
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(
       "MaskAlongAxis: invalid parameter, 'axis' can only be 1 for Frequency Masking or 2 for Time Masking.");
   }
-  TensorShape input_shape = input->shape();
-  // squeeze input
+  TensorShape input_shape = (*output)->shape();
+  // squeeze output
   TensorShape squeeze_shape =
     TensorShape({input_shape.NumOfElements() / input_shape[-2] / input_shape[-1], input_shape[-2], input_shape[-1]});
-  RETURN_IF_NOT_OK(input->Reshape(squeeze_shape));
+  RETURN_IF_NOT_OK((*output)->Reshape(squeeze_shape));
 
   int check_dim_ind = (axis == 1) ? -2 : -1;
   CHECK_FAIL_RETURN_SYNTAX_ERROR(mask_start >= 0 && mask_start <= input_shape[check_dim_ind],
@@ -470,16 +470,16 @@ Status MaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
       std::to_string(mask_start) + ", 'mask_width' " + std::to_string(mask_width) + " and length " +
       std::to_string(input_shape[check_dim_ind]));
 
-  size_t cell_size = input->type().SizeInBytes();
+  size_t cell_size = (*output)->type().SizeInBytes();
 
   if (axis == 1) {
     // freq
-    for (auto ind = 0; ind < input->Size() / input_shape[-2] * mask_width; ind++) {
+    for (auto ind = 0; ind < (*output)->Size() / input_shape[-2] * mask_width; ind++) {
       int block_num = ind / (mask_width * input_shape[-1]);
       auto start_pos = ind % (mask_width * input_shape[-1]) + mask_start * input_shape[-1] +
                        input_shape[-1] * input_shape[-2] * block_num;
-      auto start_mem_pos = const_cast<uchar *>(input->GetBuffer() + start_pos * cell_size);
-      if (input->type() != DataType::DE_FLOAT64) {
+      auto start_mem_pos = const_cast<uchar *>((*output)->GetBuffer() + start_pos * cell_size);
+      if ((*output)->type() != DataType::DE_FLOAT64) {
         // tensor float 32
         auto mask_val = static_cast<float>(mask_value);
         auto ret_code = memcpy_s(start_mem_pos, cell_size, &mask_val, cell_size);
@@ -495,11 +495,11 @@ Status MaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
     }
   } else {
     // time
-    for (int ind = 0; ind < input->Size() / input_shape[-1] * mask_width; ind++) {
+    for (int ind = 0; ind < (*output)->Size() / input_shape[-1] * mask_width; ind++) {
       int row_num = ind / mask_width;
       auto start_pos = ind % mask_width + mask_start + input_shape[-1] * row_num;
-      auto start_mem_pos = const_cast<uchar *>(input->GetBuffer() + start_pos * cell_size);
-      if (input->type() != DataType::DE_FLOAT64) {
+      auto start_mem_pos = const_cast<uchar *>((*output)->GetBuffer() + start_pos * cell_size);
+      if ((*output)->type() != DataType::DE_FLOAT64) {
         // tensor float 32
         auto mask_val = static_cast<float>(mask_value);
         auto ret_code = memcpy_s(start_mem_pos, cell_size, &mask_val, cell_size);
@@ -514,9 +514,8 @@ Status MaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
       }
     }
   }
-  // unsqueeze input
-  RETURN_IF_NOT_OK(input->Reshape(input_shape));
-  *output = input;
+  // unsqueeze output
+  RETURN_IF_NOT_OK((*output)->Reshape(input_shape));
   return Status::OK();
 }
 
@@ -2028,13 +2027,14 @@ template <typename T>
 Status GriffinLimImpl(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t n_fft,
                       int32_t n_iter, int32_t win_length, int32_t hop_length, WindowType window_type, float power,
                       float momentum, int32_t length, bool rand_init, std::mt19937 *rnd) {
+  RETURN_IF_NOT_OK(Tensor::CreateFromTensor(input, output));
   // pack
-  TensorShape shape = input->shape();
-  TensorShape new_shape({input->Size() / shape[-1] / shape[-2], shape[-2], shape[-1]});
-  RETURN_IF_NOT_OK(input->Reshape(new_shape));
+  TensorShape shape = (*output)->shape();
+  TensorShape new_shape({(*output)->Size() / shape[-1] / shape[-2], shape[-2], shape[-1]});
+  RETURN_IF_NOT_OK((*output)->Reshape(new_shape));
   // power
   CHECK_FAIL_RETURN_UNEXPECTED(power != 0, "GriffinLim: power can not be zero.");
-  for (auto itr = input->begin<T>(); itr != input->end<T>(); itr++) {
+  for (auto itr = (*output)->begin<T>(); itr != (*output)->end<T>(); itr++) {
     *itr = pow(*itr, 1 / power);
   }
   // window
@@ -2059,7 +2059,7 @@ Status GriffinLimImpl(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tens
     }
     // slice and squeeze the first dim
     std::shared_ptr<Tensor> spec_tensor_slice;
-    RETURN_IF_NOT_OK(input->Slice(
+    RETURN_IF_NOT_OK((*output)->Slice(
       &spec_tensor_slice,
       std::vector<SliceOption>({SliceOption(std::vector<dsize_t>{dim}), SliceOption(true), SliceOption(true)})));
     TensorShape new_slice_shape({shape[-2], shape[-1]});
