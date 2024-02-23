@@ -2624,6 +2624,9 @@ py::object GraphBuilder::ResolveCallable(CallNode *call_node, StopTraceReason *s
 }
 
 void GraphBuilder::ResolveClosure(const py::object &func_info, ValueNode *callable_node, FrameStates *frame) {
+  if (func_info.ptr() == nullptr) {
+    MS_LOG(INTERNAL_EXCEPTION) << "When resolving closure, get func_info failed.";
+  }
   PyCodeObject *co = reinterpret_cast<PyCodeObject *>(PyFunction_GET_CODE(func_info.ptr()));
   PyObject *closure = PyFunction_GET_CLOSURE(func_info.ptr());
 
