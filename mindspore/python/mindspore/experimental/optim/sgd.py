@@ -20,16 +20,16 @@ from mindspore.common.tensor import Tensor
 import mindspore.common.dtype as mstype
 from mindspore import _checkparam as Validator
 from mindspore.experimental.optim.optimizer import Optimizer
+from mindspore import jit
 
 _sgd_opt = C.MultitypeFuncGraph("sgd_opt")
 
 
-@_sgd_opt.register("Function", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor",)
+@_sgd_opt.register("Function", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor")
 def _tensor_run_opt_ext(opt, momentum, learning_rate, gradient, weight, accum, stat):
     """Apply sgd optimizer to the weight parameter using Tensor."""
-    success = True
-    success = F.depend(success, opt(weight, gradient, learning_rate, accum, momentum, stat))
-    return success
+    opt(weight, gradient, learning_rate, accum, momentum, stat)
+    return True
 
 
 class SGD(Optimizer):
@@ -104,6 +104,7 @@ class SGD(Optimizer):
         ...     optimizer(grads)
         ...     return loss
     """
+
     def __init__(self, params, lr, momentum=0, dampening=0, weight_decay=0.0, nesterov=False, *,
                  maximize=False):
         Validator.check_value_type("lr", lr, [float, int, Tensor], self.cls_name)
@@ -130,18 +131,26 @@ class SGD(Optimizer):
         self.stat = self.parameters.clone(prefix="stat", init='ones')
         self.op_cast = P.Cast()
 
+    @jit
+    def implementation(self, momentum, lr, group_id, gradients, maximize, dampening, weight_decay, nesterov):
+        """Extract the common computing part for acceleration"""
+        start_id = self.group_start_id[group_id]
+        end_id = self.group_start_id[group_id + 1]
+        momentum = self.op_cast(momentum, mstype.float32)
+        opt = P.SGD(dampening, weight_decay, nesterov)
+        grads = tuple([grad if not maximize else F.neg(grad) for grad in gradients[start_id: end_id]])
+        self.hyper_map(F.partial(_sgd_opt, opt, momentum, lr), grads,
+                       self.parameters[start_id: end_id], self.accum[start_id: end_id],
+                       self.stat[start_id: end_id])
+        return True
+
     def construct(self, gradients):
         for group_id, group in enumerate(self.param_groups):
-            opt = P.SGD(group.get("dampening"), group.get("weight_decay"), group.get("nesterov"))
             lr = self.lrs[group_id]
             if isinstance(group.get("lr"), float):
                 lr = self.op_cast(group.get("lr"), mstype.float32)
-            maximize = group.get("maximize")
-            momentum = self.op_cast(group.get("momentum"), mstype.float32)
-            start_id = self.group_start_id[group_id]
-            end_id = self.group_start_id[group_id+1]
-            grads = tuple([grad if not maximize else F.neg(grad) for grad in gradients[start_id: end_id]])
-            self.hyper_map(F.partial(_sgd_opt, opt, momentum, lr), grads,
-                           self.parameters[start_id: end_id], self.accum[start_id: end_id],
-                           self.stat[start_id: end_id])
+
+            self.implementation(group.get("momentum"), lr, group_id, gradients, group.get("maximize"),
+                                group.get("dampening"),
+                                group.get("weight_decay"), group.get("nesterov"))
         return True
