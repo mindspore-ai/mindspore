@@ -93,7 +93,6 @@ int AnfTransformForGe::RunGeFusionPass(const FuncGraphPtr &old_graph, const std:
     MS_LOG(INFO) << "using all fusion";
     EnableFlashAttentionFusion(&fusions);
     EnableKVCacheFusion(&fusions);
-    EnableMatMulAllReduceFusion(&fusions);
     EnableFlashAttentionAntiquantFusion(&fusions);
     // MatMulAllReduce has performance degradation in incremental inference scenarios,
     // and is not controlled by "All" temporarily.
