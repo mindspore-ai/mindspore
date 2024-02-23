@@ -30,6 +30,8 @@ constexpr auto kTripletMarginLossOpName = "TripletMarginLoss";
 
 constexpr auto kLayerNormOpName = "LayerNorm";
 constexpr auto kLayerNormGradOpName = "LayerNormGrad";
+constexpr auto kLayerNormV3OpName = "LayerNormV3";
+constexpr auto kLayerNormGradV3OpName = "LayerNormGradV3";
 constexpr auto kPadV3OpName = "PadV3";
 constexpr auto kPadV3GradOpName = "PadV3Grad";
 constexpr auto kMirrorPadGradOpName = "MirrorPadGrad";
