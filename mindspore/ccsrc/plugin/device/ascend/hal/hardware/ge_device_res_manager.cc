@@ -60,6 +60,10 @@ void GeDeviceResManager::SetCPUMemManager() {
   if (is_use_cpu_memory_) {
     return;
   }
+  if (mem_manager_ != nullptr) {
+    mem_manager_->Finalize();
+    mem_manager_ = nullptr;
+  }
   runtime_instance_ = nullptr;
   mem_manager_ = std::make_shared<cpu::CPUMemoryManager>();
   MS_EXCEPTION_IF_NULL(mem_manager_);
