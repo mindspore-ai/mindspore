@@ -61,8 +61,7 @@ from mindspore._c_expression import Tensor as Tensor_
 from mindspore.ops._utils.utils import ms_arrange
 
 from mindspore.ops.auto_generate import cat, range, scatter_nd, deepcopy, masked_fill, diagonal, expand_dims, \
-    nonzero, reverse, transpose, unsorted_segment_sum, diag, gather, gather_d, gather_nd, reshape, select,    \
-    broadcast_to
+    nonzero, reverse, transpose, unsorted_segment_sum, diag, gather, gather_d, gather_nd, reshape, broadcast_to
 from mindspore.ops.operations.manually_defined import tile, rank, scalar_cast
 
 arg_max_with_value_ = ArgMaxWithValue()
@@ -1585,6 +1584,101 @@ def _calc_broadcast_shape(cond_shape, x_shape, y_shape):
         i = i + 1
     converted_shape.reverse()
     return tuple(converted_shape)
+
+
+def select(cond, x, y):
+    r"""
+    The conditional tensor determines whether the corresponding element in the output must be
+    selected from `x` (if true) or `y` (if false) based on the value of each element.
+
+    It can be defined as:
+
+    .. math::
+        out_i = \begin{cases}
+        x_i, & \text{if } cond_i \\
+        y_i, & \text{otherwise}
+        \end{cases}
+
+    Args:
+        cond (Tensor[bool]): The condition tensor, decides which element is chosen.
+          The shape is :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
+        x (Union[Tensor, int, float]): The first Tensor or number to be selected.
+          If x is a Tensor, the shape is or can be broadcadt to :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
+          If x is an int or a float, it will be cast to the type of int32 or float32,
+          and broadcast to the same shape as y. One of x and y must be a Tensor.
+        y (Union[Tensor, int, float]): The second Tensor or number to be selected.
+          If y is a Tensor, The shape is or can be broadcadt to :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
+          If y is an int or a float, it will be cast to the type of int32 or float32,
+          and broadcast to the same shape as x. One of x and y must be a Tensor.
+
+    Returns:
+        Tensor, has the same shape as `cond`.
+
+    Raises:
+        TypeError: If `x` or `y` is not a Tensor, int or float.
+        ValueError: The shapes of inputs can not be broadcast.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
+        >>> # 1) Both inputs are Tensor
+        >>>
+        >>> cond = Tensor([True, False])
+        >>> x = Tensor([2,3], mindspore.float32)
+        >>> y = Tensor([1,2], mindspore.float32)
+        >>> output = ops.select(cond, x, y)
+        >>> print(output)
+        [2. 2.]
+        >>> # 2) y is a float
+        >>> cond = Tensor([True, False])
+        >>> x = Tensor([2,3], mindspore.float32)
+        >>> y = 2.0
+        >>> output = ops.select(cond, x, y)
+        >>> print(output)
+        [2. 2.]
+    """
+    is_x_scalar = isinstance(x, (int, float))
+    is_y_scalar = isinstance(y, (int, float))
+    is_x_tensor = isinstance(x, Tensor)
+    is_y_tensor = isinstance(y, Tensor)
+    is_cond_tensor = isinstance(cond, Tensor)
+    _check_select_type(is_cond_tensor, is_x_scalar, is_y_scalar, is_x_tensor, is_y_tensor)
+    input_x = x
+    input_y = y
+    if is_x_scalar:
+        _check_select_shape_match(y.shape, cond.shape, "y")
+        _check_select_type_match(x, y.dtype, "x", "y")
+        input_x = zeros_like_(y) + x
+        if isinstance(x, int):
+            input_x = cast_(input_x, mstype.int32)
+        else:
+            input_x = cast_(input_x, mstype.float32)
+
+    if is_y_scalar:
+        _check_select_shape_match(x.shape, cond.shape, "x")
+        _check_select_type_match(y, x.dtype, "y", "x")
+        input_y = zeros_like_(x) + y
+        if isinstance(y, int):
+            input_y = cast_(input_y, mstype.int32)
+        else:
+            input_y = cast_(input_y, mstype.float32)
+
+    if is_x_tensor and is_y_tensor and is_cond_tensor:
+        x_shape = ops.shape(x)
+        y_shape = ops.shape(y)
+        cond_shape = ops.shape(cond)
+        all_constant = ops.isconstant(cond_shape) and ops.isconstant(x_shape) and ops.isconstant(y_shape)
+        if all_constant and not _check_select_shape_same(cond_shape, x_shape, y_shape):
+            broadcast_shape = _calc_broadcast_shape(cond_shape, x_shape, y_shape)
+            new_cond = ops.broadcast_to(cond, broadcast_shape)
+            new_x = ops.broadcast_to(x, broadcast_shape)
+            new_y = ops.broadcast_to(y, broadcast_shape)
+            return tensor_select_(new_cond, new_x, new_y)
+
+    return tensor_select_(cond, input_x, input_y)
 
 
 def strided_slice(input_x,
