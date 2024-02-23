@@ -43,7 +43,7 @@ using ShapeValidFunc = std::function<bool(size_t, const ShapeVector &)>;
 
 class COMMON_EXPORT Emitter {
  public:
-  Emitter(const ExpanderInferPtr &infer, const ScopePtr &scope = nullptr) : infer_(infer), scope_(scope) {}
+  explicit Emitter(const ExpanderInferPtr &infer, const ScopePtr &scope = nullptr) : infer_(infer), scope_(scope) {}
   virtual ~Emitter() = default;
 
   /// \brief Emit a primitive CNode

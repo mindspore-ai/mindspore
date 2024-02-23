@@ -797,10 +797,9 @@ void FuncGrad::PruningGradGraph(const TensorPtrList &weights, const GradAttr &gr
     if (variable->is_leaf()) {
       continue;
     }
-    bool is_need_grad = false;
-    for (const auto &edge : variable->func_node()->next_edges()) {
-      is_need_grad = is_need_grad || edge.variable->is_need_grad();
-    }
+    bool is_need_grad =
+      std::any_of(variable->func_node()->next_edges().begin(), variable->func_node()->next_edges().end(),
+                  [](const auto &edge) { return edge.variable->is_need_grad(); });
     if (!is_need_grad) {
       variable->set_is_need_grad(false);
     }

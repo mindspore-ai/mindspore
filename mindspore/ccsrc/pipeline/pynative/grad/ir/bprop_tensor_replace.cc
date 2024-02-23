@@ -15,6 +15,7 @@
  */
 
 #include "pipeline/pynative/grad/ir/bprop_tensor_replace.h"
+#include <memory>
 #include "pipeline/pynative/pynative_utils.h"
 #include "include/backend/device_address.h"
 
