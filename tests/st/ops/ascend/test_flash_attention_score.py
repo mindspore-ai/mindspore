@@ -53,7 +53,7 @@ def generate_inputs(B, N1, N2, S1, S2, D, input_layout, dtype):
         value = Tensor(np.ones((B, N2, S2, D)), dtype=dtype)
     else:
         raise ValueError(f"input_layout is invalid.")
-    real_shift = Tensor(np.ones((B, N1, S1, S2)), dtype=dtype)
+    real_shift = None
     drop_mask = Tensor(np.ones((B, N1, S1, S2 // 8)), dtype=mstype.uint8)
     attn_mask = Tensor(np.ones((B, 1, S1, S2)), dtype=mstype.uint8)
     prefix = None
@@ -83,7 +83,7 @@ def test_flash_attention_score_fwd_bwd(input_layout):
     padding_mask = None
     net_with_grad = Grad(FlashAttentionScoreCell(N1, input_layout))
 
-    dq, dk, dv, _, _, _ = net_with_grad(query, key, value, real_shift, drop_mask, padding_mask, attn_mask, prefix)
+    dq, dk, dv, _, _ = net_with_grad(query, key, value, real_shift, drop_mask, padding_mask, attn_mask, prefix)
 
     assert dq.shape == query.shape
     assert dk.shape == key.shape
