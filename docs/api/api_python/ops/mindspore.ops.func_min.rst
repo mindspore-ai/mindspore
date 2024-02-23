@@ -13,7 +13,7 @@ mindspore.ops.min
         - 如果有多个最小值，则取第一个最小值的索引。
 
     参数：
-        - **input** (Tensor) - 输入任意维度的Tensor。不支持复数类型。
+        - **input** (Tensor) - 输入任意维度的Tensor。不支持complex类型。
         - **axis** (int) - 指定计算维度。默认值： ``None`` 。
         - **keepdims** (bool) - 表示是否减少维度，如果为 ``True`` ，输出将与输入保持相同的维度；如果为 ``False`` ，输出将减少维度。默认值： ``False`` 。
 

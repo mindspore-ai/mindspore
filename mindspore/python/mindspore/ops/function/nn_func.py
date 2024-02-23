@@ -4421,7 +4421,7 @@ def grid_sample(input, grid, mode='bilinear', padding_mode='zeros', align_corner
 
         padding_mode (str): An optional string specifying the pad method. The optional values are "zeros", "border" or
             "reflection". Default: ``'zeros'`` .
-        align_corners (bool): An optional bool. If set to `True`, the extrema (-1 and 1) are considered as referring to
+        align_corners (bool): If set to `True`, the extrema (-1 and 1) are considered as referring to
             the center points of the input’s corner pixels. If set to `False`, they are instead considered as referring
             to the corner points of the input’s corner pixels, making the sampling more resolution agnostic. Default:
             ``False`` .
