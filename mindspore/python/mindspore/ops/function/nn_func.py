@@ -3107,9 +3107,7 @@ def pdist(input, p=2.0):
     r"""
     Calculates the distance between every pair of row vectors in
     the input using the p-norm. If the input `input` is a 2D Tensor with shape :math:`(N, M)`,
-    the `output` must be a 1D Tensor with shape :math:`(N * (N - 1) / 2,)`. If `input` has batch
-    dimension with shape :math:`(*B, N, M)`, then the `output` must be a Tensor with
-    shape :math:`(*B, N * (N - 1) / 2)`.
+    the `output` must be a 1D Tensor with shape :math:`(N * (N - 1) / 2,)`.
 
     .. math::
         y[n] = \sqrt[p]{{\mid x_{i} - x_{j} \mid}^p}
@@ -3117,8 +3115,7 @@ def pdist(input, p=2.0):
     where :math:`x_{i}, x_{j}` are two different row vectors in the input.
 
     Args:
-        input (Tensor): Input tensor of shape :math:`(*B, N, M)`. :math:`*B` is batch size, one-dim or multi-dim.
-            dtype: float16, float32 or float64.
+        input (Tensor): Input tensor. dtype: float16, float32 or float64.
         p (float): The order of norm distance, :math:`p∈[0, ∞)`. Default: ``2.0`` .
 
     Returns:
