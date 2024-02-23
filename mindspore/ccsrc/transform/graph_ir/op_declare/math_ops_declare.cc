@@ -269,7 +269,8 @@ REG_ADPT_DESC(Bincount, kNameBincount, ADPT_DESC(Bincount));
 
 // CholeskyInverse
 CUST_INPUT_MAP(CholeskyInverse) = {{1, INPUT_DESC(x)}};
-CUST_ATTR_MAP(CholeskyInverse) = {{"upper", ATTR_DESC(upper, AnyTraits<bool>())}};
+CUST_INPUT_ATTR_MAP(CholeskyInverse) = {{2, ATTR_DESC(upper, AnyTraits<bool>())}};
+CUST_ATTR_MAP(CholeskyInverse) = EMPTY_ATTR_MAP;
 CUST_OUTPUT_MAP(CholeskyInverse) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(CholeskyInverse, prim::kPrimCholeskyInverse->name(), CUST_ADPT_DESC(CholeskyInverse));
 

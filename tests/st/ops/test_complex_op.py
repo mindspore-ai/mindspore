@@ -16,8 +16,10 @@
 import numpy as np
 import pytest
 import torch
+from mindspore import dtype as mstype
 import mindspore.ops.operations as P
 from mindspore import Tensor
+from mindspore import context
 from mindspore.nn import Cell
 from mindspore import ops
 from mindspore.ops import Complex as ComplexOp
@@ -47,6 +49,26 @@ def complex_compare(complex1, complex2):
     imag1 = imag_op(Tensor(complex1)).asnumpy()
     imag2 = np.imag(complex2)
     return np.allclose(real1, real2, rtol=5e-03, atol=5e-03) and np.allclose(imag1, imag2, rtol=5e-03, atol=5e-03)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.parametrize("context_mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_complex_basic(context_mode):
+    """
+    Feature: complex basic Operation.
+    Description: Test complex basic Operation.
+    Expectation: the result match given one.
+    """
+    context.set_context(mode=context_mode)
+    real = Tensor([1.], mstype.float64)
+    imag = Tensor([1.], mstype.float64)
+    net = Complex()
+    out = net(real, imag)
+    expected = np.array([1.+1j], np.complex128)
+    assert expected == out.asnumpy()
 
 
 @pytest.mark.level1
