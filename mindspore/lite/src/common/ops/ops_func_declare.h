@@ -22,7 +22,6 @@
 #include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/adam.h"
 #include "ops/adder.h"
-#include "ops/addn.h"
 #include "ops/all.h"
 #include "ops/apply_momentum.h"
 #include "ops/assert.h"

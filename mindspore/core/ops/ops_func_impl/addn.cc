@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-#include "ops/addn.h"
+#include "ops/ops_func_impl/addn.h"
+
 #include <map>
 #include <memory>
 #include <set>
@@ -63,8 +64,10 @@ bool AddNDynShapeJoin(ShapeVector *shape1, const ShapeVector *shape2) {
   }
   return true;
 }
+}  // namespace
 
-abstract::ShapePtr AddNInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+BaseShapePtr AddNFuncImpl::InferShape(const PrimitivePtr &primitive,
+                                      const std::vector<AbstractBasePtr> &input_args) const {
   const auto &prim_name = primitive->name();
   AbstractBasePtrList elements = input_args;
   // If called from the backend, the input_args[0] is a KernelTensor, not AbstractSequence
@@ -99,7 +102,7 @@ abstract::ShapePtr AddNInferShape(const PrimitivePtr &primitive, const std::vect
   return std::make_shared<abstract::Shape>(output_shape);
 }
 
-TypePtr AddNInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr AddNFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
   MS_EXCEPTION_IF_NULL(primitive);
   const auto &prim_name = primitive->name();
   AbstractBasePtrList elements = input_args;
@@ -121,36 +124,16 @@ TypePtr AddNInferType(const PrimitivePtr &primitive, const std::vector<AbstractB
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim_name);
   return elements[0]->GetType()->Clone();
 }
-}  // namespace
 
-MIND_API_OPERATOR_IMPL(AddN, BaseOperator);
-AbstractBasePtr AddNInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                          const std::vector<AbstractBasePtr> &input_args) {
+AbstractBasePtr AddNFuncImpl::AddNInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                        const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, 1, prim_name);
-  auto infer_type = AddNInferType(primitive, input_args);
-  auto infer_shape = AddNInferShape(primitive, input_args);
+  auto infer_type = InferType(primitive, input_args);
+  auto infer_shape = InferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 
-// AG means auto generated
-class MIND_API AGAddNInfer : public abstract::OpInferBase {
- public:
-  BaseShapePtr InferShape(const PrimitivePtr &primitive,
-                          const std::vector<AbstractBasePtr> &input_args) const override {
-    return AddNInferShape(primitive, input_args);
-  }
-
-  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    return AddNInferType(primitive, input_args);
-  }
-  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
-                                    const std::vector<AbstractBasePtr> &input_args) const override {
-    return AddNInfer(engine, primitive, input_args);
-  }
-};
-
-REGISTER_PRIMITIVE_OP_INFER_IMPL(AddN, prim::kPrimAddN, AGAddNInfer, false);
 }  // namespace ops
 }  // namespace mindspore
