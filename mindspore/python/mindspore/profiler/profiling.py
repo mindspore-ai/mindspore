@@ -21,6 +21,7 @@ import json
 import glob
 import subprocess
 import csv
+import socket
 from enum import Enum
 from typing import List
 import numpy as np
@@ -1241,10 +1242,6 @@ class Profiler:
         """Analyse communicate info"""
         if not self._profile_communication:
             return
-        if self._profile_communication and context.get_context("mode") == context.PYNATIVE_MODE:
-            logger.warning("[Profiler]The parameter profile_communication is not supported on Ascend "
-                           "PyNative mode currently.")
-            return
 
         try:
             logger.info("Profiling: analyzing the communicate and communicate_matrix profiler info.")
@@ -1705,7 +1702,6 @@ class Profiler:
         if self._rank_id:
             ascend_ms_path = f"rank-{self._rank_id}_{time_stamp}_ascend_ms"
         else:
-            import socket
             ascend_ms_path = f"{socket.gethostname()}--{os.getpid()}_{time_stamp}_ascend_ms"
 
         self._output_path = os.path.join(self._output_path, "profiler")
