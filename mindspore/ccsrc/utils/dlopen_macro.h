@@ -74,4 +74,15 @@ static T DlsymWithCast(void *handle, const char *symbol_name) {
 }
 
 #define DlsymFuncObj(func_name, plugin_handle) DlsymWithCast<func_name##FunPtr>(plugin_handle, k##func_name##Name);
+
+template <class T>
+static T DlsymAscend(void *handle, const char *symbol_name) {
+  T symbol = reinterpret_cast<T>(reinterpret_cast<intptr_t>(dlsym(handle, symbol_name)));
+  if (symbol == nullptr) {
+    MS_LOG(WARNING) << "Dynamically load symbol " << symbol_name << " failed, result = " << GetDlErrorMsg();
+  }
+  return symbol;
+}
+
+#define DlsymAscendFuncObj(func_name, plugin_handle) DlsymAscend<func_name##FunPtr>(plugin_handle, k##func_name##Name);
 #endif  // MINDSPORE_CCSRC_UTILS_DLOPEN_MACRO_H

@@ -56,6 +56,9 @@
 
 #include "transform/acl_ir/op_api_exec.h"
 #include "kernel/framework_utils.h"
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
+
 using std::vector;
 constexpr uint32_t kProfilingMaxTaskIdInStream = 65531;
 constexpr uint32_t kDefaultHcclExecTimeout = 1800;
@@ -629,7 +632,7 @@ void AscendKernelRuntime::SetRtDevice(uint32_t device_id) {
   }
 
   uint32_t device_count = 0;
-  auto ret = aclrtGetDeviceCount(&device_count);
+  auto ret = CALL_ASCEND_API(aclrtGetDeviceCount, &device_count);
   if (ret != ACL_ERROR_NONE) {
     MS_EXCEPTION(DeviceProcessError) << "Call rtGetDeviceCount, ret[" << static_cast<int>(ret) << "]";
   }

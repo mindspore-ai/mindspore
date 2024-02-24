@@ -19,10 +19,12 @@
 #include "acl/acl.h"
 #include "acl/acl_rt.h"
 #include "utils/log_adapter.h"
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace mindspore::device::ascend {
 AscendEvent::AscendEvent() {
-  auto ret = aclrtCreateEvent(&event_);
+  auto ret = CALL_ASCEND_API(aclrtCreateEvent, &event_);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "aclrtCreateEvent failed, ret:" << ret;
     event_ = nullptr;

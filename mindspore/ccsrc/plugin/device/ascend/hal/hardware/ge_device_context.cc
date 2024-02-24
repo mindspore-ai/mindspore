@@ -39,6 +39,8 @@
 #include "mindspore/core/utils/file_utils.h"
 #include "plugin/device/ascend/hal/device/dump/ascend_dump.h"
 #include "acl/acl_base.h"
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace mindspore {
 namespace device {
@@ -160,7 +162,7 @@ void GeDeviceContext::Initialize() {
                          : aclrtFloatOverflowMode::ACL_RT_OVERFLOW_MODE_INFNAN;
     auto overflow_mode = (is_sat) ? kSaturationMode : kINFNANMode;
     MS_LOG(INFO) << "The current overflow detection mode is " << overflow_mode << ".";
-    auto ret = aclrtSetDeviceSatMode(mode);
+    auto ret = CALL_ASCEND_API(aclrtSetDeviceSatMode, mode);
     if (ret != ACL_SUCCESS) {
       MS_LOG(EXCEPTION) << "Set " << overflow_mode << " mode failed.";
     }
@@ -512,7 +514,7 @@ DeprecatedInterface *GeDeviceContext::GetDeprecatedInterface() {
 
 uint32_t GeDeviceContext::GetDeviceCount() {
   uint32_t device_count = 0;
-  auto ret = aclrtGetDeviceCount(&device_count);
+  auto ret = CALL_ASCEND_API(aclrtGetDeviceCount, &device_count);
   if (ret != ACL_ERROR_NONE) {
     MS_EXCEPTION(DeviceProcessError) << "Call rtGetDeviceCount, ret[" << static_cast<int>(ret) << "]";
   }
@@ -531,7 +533,7 @@ AscendDeviceProperties GeDeviceContext::GetDeviceProperties(uint32_t) {
   device_properties.name = (name == nullptr) ? "" : name;
 
   size_t free_size{0}, total_size{0};
-  auto ret = aclrtGetMemInfo(ACL_HBM_MEM, &free_size, &total_size);
+  auto ret = CALL_ASCEND_API(aclrtGetMemInfo, ACL_HBM_MEM, &free_size, &total_size);
   if (ret != ACL_SUCCESS) {
     MS_LOG(WARNING) << "Failed get memory info for current device. Error number: " << ret;
   }
@@ -602,6 +604,7 @@ void PybindAscendStatelessFunc(py::module *m) {
         << "MB, free_memory=" << p.free_memory / (1024 * 1024) << "MB)";
       return s.str();
     });
+  transform::LoadAscendApiSymbols();
   (void)m->def("ascend_get_device_count", &GeDeviceContext::GetDeviceCount, "Get Ascend device count.");
   (void)m->def("ascend_get_device_name", &GeDeviceContext::GetDeviceName,
                "Get Ascend device name of specified device id.");

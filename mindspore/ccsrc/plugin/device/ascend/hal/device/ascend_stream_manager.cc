@@ -24,6 +24,8 @@
 #include "acl/error_codes/rt_error_codes.h"
 #include "acl/acl_rt.h"
 #include "plugin/device/ascend/hal/device/ascend_gmem_adapter.h"
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace mindspore {
 namespace device {
@@ -184,7 +186,7 @@ void AscendStreamMng::CreateStreamWithFlags(size_t *stream_id, uint32_t flags, i
 
 aclrtEvent AscendStreamMng::ApplyRtEvent() {
   aclrtEvent rt_event = nullptr;
-  auto ret = aclrtCreateEvent(&rt_event);
+  auto ret = CALL_ASCEND_API(aclrtCreateEvent, &rt_event);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "aclrtCreateEvent failed, ret:" << ret;
   }
@@ -249,7 +251,7 @@ bool AscendStreamMng::SyncStream(size_t stream_id) const {
 
 bool AscendStreamMng::SyncStream(aclrtStream stream) const {
   MS_EXCEPTION_IF_NULL(stream);
-  auto RET = aclrtSynchronizeStreamWithTimeout(stream, -1);
+  auto RET = CALL_ASCEND_API(aclrtSynchronizeStreamWithTimeout, stream, -1);
   if (RET != ACL_ERROR_NONE && RET != ACL_ERROR_RT_AICORE_OVER_FLOW) {  // o for switch stream
     MS_LOG(ERROR) << "Call runtime aclrtSynchronizeStreamWithTimeout error.";
     return false;

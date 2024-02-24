@@ -24,6 +24,8 @@
 #include "utils/convert_utils_base.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "plugin/device/ascend/hal/device/ascend_gmem_adapter.h"
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace mindspore {
 namespace device {
@@ -51,7 +53,7 @@ bool AscendMemAdapter::Initialize() {
     return true;
   }
 
-  auto ret = aclrtGetMemInfo(ACL_HBM_MEM, &device_hbm_free_size_, &device_hbm_total_size_);
+  auto ret = CALL_ASCEND_API(aclrtGetMemInfo, ACL_HBM_MEM, &device_hbm_free_size_, &device_hbm_total_size_);
   if (ret != ACL_ERROR_NONE || device_hbm_total_size_ == 0) {
     MS_LOG(EXCEPTION) << "Internal Error: Get Device HBM memory size failed, ret = " << ret
                       << ", total HBM size :" << device_hbm_total_size_;
@@ -283,7 +285,7 @@ uint8_t *AscendMemAdapter::MallocFromRts(size_t size) const {
       unsigned int device_id = context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
       size_t free = 0;
       size_t total = 0;
-      (void)aclrtGetMemInfo(ACL_HBM_MEM, &free, &total);
+      (void)CALL_ASCEND_API(aclrtGetMemInfo, ACL_HBM_MEM, &free, &total);
       MS_LOG(EXCEPTION) << "#umsg#Framework Error Message:#umsg#Malloc device memory failed, size[" << size << "], ret["
                         << ret << "], "
                         << "Device " << device_id << " Available HBM size:" << total << " free size:" << free

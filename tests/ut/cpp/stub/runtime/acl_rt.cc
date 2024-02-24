@@ -206,3 +206,5 @@ ACL_FUNC_VISIBILITY aclError aclrtStreamQuery(aclrtStream stream, aclrtStreamSta
 ACL_FUNC_VISIBILITY aclError aclrtQueryEventStatus(aclrtEvent event, aclrtEventRecordedStatus *status) {
   return ACL_SUCCESS;
 }
+
+ACL_FUNC_VISIBILITY const char *aclrtGetSocName() { return "910"; }

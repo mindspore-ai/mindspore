@@ -37,6 +37,8 @@
 #include "plugin/device/ascend/hal/device/ascend_memory_manager.h"
 #include "include/backend/data_queue/data_queue_mgr.h"
 #include "external/graph/types.h"
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -449,7 +451,7 @@ void AicpuOpKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "AclrtMemcpyAsync output shape failed. Op name: " << node_scope_name_;
   }
-  ret = aclrtSynchronizeStreamWithTimeout(stream_, -1);
+  ret = CALL_ASCEND_API(aclrtSynchronizeStreamWithTimeout, stream_, -1);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Call runtime aclrtSynchronizeStreamWithTimeout failed. Op name: " << node_scope_name_;
   }
