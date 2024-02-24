@@ -92,9 +92,11 @@ const AnfNodePtr AdamWeightDecayUnifyMindIR::Process(const FuncGraphPtr &func_gr
   auto num_one = CreateValueNode(func_graph, 1.0);
   // 1 - beta1
   auto beta1_sub = CreateSubCNode(func_graph, num_one, input_list[kIndex5]);
+  beta1_sub->set_scope(node->scope());
   input_list.push_back(beta1_sub);
   // 1 - beta2
   auto beta2_sub = CreateSubCNode(func_graph, num_one, input_list[kIndex6]);
+  beta2_sub->set_scope(node->scope());
   input_list.push_back(beta2_sub);
   // Cast
   auto ori_param = input_list[kIndex1];
@@ -110,13 +112,21 @@ const AnfNodePtr AdamWeightDecayUnifyMindIR::Process(const FuncGraphPtr &func_gr
   }
 
   // Create New AdamApplyOneWithDecay with three outputs.
+  return CreateAdamApplyOneWithDecay(func_graph, node, ori_param, input_list, new_node_inputs);
+}
+
+const AnfNodePtr AdamWeightDecayUnifyMindIR::CreateAdamApplyOneWithDecay(const FuncGraphPtr &func_graph,
+                                                                         const AnfNodePtr &node,
+                                                                         const AnfNodePtr &ori_param,
+                                                                         const AnfNodePtrList &input_list,
+                                                                         const AnfNodePtrList &new_node_inputs) const {
   auto new_cnode = NewCNode(new_node_inputs, func_graph);
   MS_EXCEPTION_IF_NULL(new_cnode);
   new_cnode->set_scope(node->scope());
   AbstractBasePtrList new_node_abstract_list;
   new_node_abstract_list.push_back(input_list[kIndex3]->abstract());
   new_node_abstract_list.push_back(input_list[kIndex2]->abstract());
-  new_node_abstract_list.push_back(param_fp32->abstract());
+  new_node_abstract_list.push_back(input_list[kIndex1]->abstract());
   auto abstract_tuple = std::make_shared<abstract::AbstractTuple>(new_node_abstract_list);
   new_cnode->set_abstract(abstract_tuple);
   std::vector<AnfNodePtr> new_cnode_outputs;
@@ -132,7 +142,9 @@ const AnfNodePtr AdamWeightDecayUnifyMindIR::Process(const FuncGraphPtr &func_gr
   auto assign_param = CreateAssignCNode(func_graph, ori_param, update_param);
   auto assign_m = CreateAssignCNode(func_graph, input_list[kIndex2], new_cnode_outputs[kIndex1]);
   auto assign_v = CreateAssignCNode(func_graph, input_list[kIndex3], new_cnode_outputs[kIndex0]);
-  return CreateMakeTupleNode(func_graph, std::vector<AnfNodePtr>{assign_param, assign_m, assign_v});
+  auto make_tuple = CreateMakeTupleNode(func_graph, std::vector<AnfNodePtr>{assign_param, assign_m, assign_v});
+  make_tuple->set_scope(node->scope());
+  return make_tuple;
 }
 }  // namespace opt
 }  // namespace mindspore

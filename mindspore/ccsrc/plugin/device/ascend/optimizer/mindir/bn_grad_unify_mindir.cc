@@ -47,8 +47,8 @@ AnfNodePtr BuildBatchNormGrad(const PatternMap &m, const AnfNodePtr &new_node) {
   CheckCNodeInputSize(bn_grad_node, kBNGradInputNum);
   auto new_bn_grad = new_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(new_bn_grad);
-  MS_EXCEPTION_IF_NULL(new_bn_grad);
   new_bn_grad->set_scope(bn_grad_node->scope());
+  new_bn_grad->set_fullname_with_scope(bn_grad_node->fullname_with_scope());
   auto types = {common::AnfAlgo::GetOutputInferDataType(bn_grad_node, 0UL),
                 common::AnfAlgo::GetOutputInferDataType(bn_grad_node, 1UL),
                 common::AnfAlgo::GetOutputInferDataType(bn_grad_node, 2UL),

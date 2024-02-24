@@ -347,35 +347,47 @@ const AnfNodePtr ClipByNormFission::Process(const FuncGraphPtr &func_graph, cons
   auto x_type_id = common::AnfAlgo::GetPrevNodeOutputInferDataType(clip_by_norm, 0);
   // Create `op1 = square(x)` op
   auto square = CreateSquareNode(func_graph, inp_x, shape_vec, x_type_id);
+  square->set_scope(node->scope());
   // Create `op2 = reduce_sum(op1)` op
   auto reduce_sum = CreateReduceSumNode(func_graph, square, clip_by_norm, shape_vec, x_type_id);
+  reduce_sum->set_scope(node->scope());
   ShapeVector reduce_sum_output_shape = GetOutputInferShape(reduce_sum);
   // Create `op3 = cast(op2)` to float32 data type
   auto reduce_sum_cast = CreateCastNode(func_graph, reduce_sum, reduce_sum_output_shape, x_type_id, dst_type_id);
+  reduce_sum_cast->set_scope(node->scope());
   // Create `op4 = greater(op3, zeros)` op
-  MS_EXCEPTION_IF_NULL(prim::kPrimZerosLike);
   auto zeros_node =
-    CreateConstantNode(func_graph, reduce_sum_cast, reduce_sum_output_shape, dst_type_id, prim::kPrimZerosLike->name());
+    CreateConstantNode(func_graph, reduce_sum_cast, reduce_sum_output_shape, dst_type_id, ops::kNameZerosLike);
+  zeros_node->set_scope(node->scope());
   auto greater = CreateGreaterNode(func_graph, reduce_sum_cast, zeros_node, reduce_sum_output_shape);
+  greater->set_scope(node->scope());
   // Create `op5 = select(op4, op3, Ones)` op
-  MS_EXCEPTION_IF_NULL(prim::kPrimOnesLike);
   auto ones_node =
-    CreateConstantNode(func_graph, reduce_sum_cast, reduce_sum_output_shape, dst_type_id, prim::kPrimOnesLike->name());
+    CreateConstantNode(func_graph, reduce_sum_cast, reduce_sum_output_shape, dst_type_id, ops::kNameOnesLike);
+  ones_node->set_scope(node->scope());
   auto safe_reduce_sum_cast =
     CreateSelectNode(func_graph, greater, reduce_sum_cast, ones_node, reduce_sum_output_shape, dst_type_id);
+  safe_reduce_sum_cast->set_scope(node->scope());
   // Create `op6 = sqrt(op5)` op
   auto sqrt = CreateSqrtNode(func_graph, safe_reduce_sum_cast, dst_type_id);
+  sqrt->set_scope(node->scope());
   // Create `op7 = select(op4, op6, op3)` op
   auto safe_sqrt = CreateSelectNode(func_graph, greater, sqrt, reduce_sum_cast, reduce_sum_output_shape, dst_type_id);
+  safe_sqrt->set_scope(node->scope());
   // Create 'op8 = x * clip_norm' op
   auto inp_x_cast = CreateCastNode(func_graph, inp_x, shape_vec, x_type_id, dst_type_id);
+  inp_x_cast->set_scope(node->scope());
   auto clip_norm_cast = CreateCastNode(func_graph, inp_clip_norm, GetOutputInferShape(inp_clip_norm),
                                        common::AnfAlgo::GetOutputInferDataType(inp_clip_norm, 0), dst_type_id);
+  clip_norm_cast->set_scope(node->scope());
   auto mul = CreateMulNode(func_graph, inp_x_cast, clip_norm_cast, shape_vec, dst_type_id);
+  mul->set_scope(node->scope());
   // Create `op9 = max(op8, op7)` op
   auto max = CreateMaxNode(func_graph, clip_norm_cast, safe_sqrt, dst_type_id);
+  max->set_scope(node->scope());
   // Create 'op10 = op8 / op9' op
   auto div = CreateDivNode(func_graph, mul, max, shape_vec, dst_type_id);
+  div->set_scope(node->scope());
   return div;
 }
 }  // namespace opt

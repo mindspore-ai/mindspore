@@ -114,6 +114,8 @@ const AnfNodePtr TransDependValueToInt32::Process(const FuncGraphPtr &func_graph
     (void)new_inputs.emplace_back(new_value_node);
   }
   auto new_node = kernel_graph->NewCNodeWithInfos(new_inputs, cnode);
+  new_node->set_scope(node->scope());
+  new_node->set_fullname_with_scope(node->fullname_with_scope());
   new_node->set_abstract(cnode->abstract());
   new_node->set_inputs(new_inputs);
   return new_node;

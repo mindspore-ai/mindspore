@@ -282,6 +282,7 @@ const AnfNodePtr LambFissionGe::Process(const FuncGraphPtr &graph, const AnfNode
 
     // For multiple load scenarios, MakeTuple needs to be executed as the input parameter of UpdateState
     auto make_tuple_node = CreateMakeTupleNode(graph, std::vector<AnfNodePtr>{param_node, global_step_node});
+    make_tuple_node->set_scope(lamb_cnode->scope());
 
     // graph mode need umonad and update-state function to keep order
     update_state_load_node =

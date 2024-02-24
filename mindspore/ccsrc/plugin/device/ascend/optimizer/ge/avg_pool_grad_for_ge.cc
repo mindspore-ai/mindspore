@@ -45,7 +45,7 @@ const AnfNodePtr AvgPoolGradForGE::Process(const FuncGraphPtr &graph, const AnfN
   auto input_x_shape = input_x->Shape();
   AnfNodePtr shape_node = nullptr;
   if (input_x_shape->IsDynamic()) {
-    shape_node = CreateTensorShapeNode(graph, input_x);
+    shape_node = CreateTensorShapeNode(graph, input_x, node);
   } else {
     auto shape_vector = input_x_shape->cast<abstract::ShapePtr>()->shape();
     std::vector<int32_t> value_node_data;
@@ -63,14 +63,18 @@ const AnfNodePtr AvgPoolGradForGE::Process(const FuncGraphPtr &graph, const AnfN
   auto new_node = kernel_graph->NewCNodeWithInfos(new_inputs, avg_pool_grad_node);
   new_node->set_abstract(avg_pool_grad_node->abstract());
   new_node->set_inputs(new_inputs);
+  new_node->set_scope(avg_pool_grad_node->scope());
+  new_node->set_fullname_with_scope(avg_pool_grad_node->fullname_with_scope());
   return new_node;
 }
 
-CNodePtr AvgPoolGradForGE::CreateTensorShapeNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const {
+CNodePtr AvgPoolGradForGE::CreateTensorShapeNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+                                                 const AnfNodePtr &grad_node) const {
   auto prim = std::make_shared<Primitive>(kTensorShapeOpName);
   MS_EXCEPTION_IF_NULL(prim);
   AnfNodePtrList inputs = {NewValueNode(prim), node};
   CNodePtr tensor_shape_node = func_graph->NewCNode(inputs);
+  tensor_shape_node->set_scope(grad_node->scope());
   MS_EXCEPTION_IF_NULL(tensor_shape_node);
   auto abs = InferAbstract(prim, {node});
   MS_EXCEPTION_IF_NULL(abs);

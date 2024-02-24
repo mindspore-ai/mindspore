@@ -50,6 +50,7 @@ AnfNodePtr ConvertTupleInputToMakeTuple(const FuncGraphPtr &graph, const AnfNode
   }
   auto make_tuple = kernel_graph->TransTupleToMakeTuple(tuple_anf);
   MS_EXCEPTION_IF_NULL(make_tuple);
+  make_tuple->set_scope(tuple_anf->scope());
   kernel_graph->InsertTupleParameterToMakeTupleMap(tuple_anf, make_tuple);
   // replace graph inputs if input is a parameter
   kernel_graph->ReplaceGraphInput(tuple_anf, make_tuple);

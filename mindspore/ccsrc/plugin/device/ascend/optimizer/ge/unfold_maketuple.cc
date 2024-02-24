@@ -158,12 +158,14 @@ void ProcessSucceedTupleGetItem(const FuncGraphPtr &func_graph, const AnfNodePtr
       auto new_idx_node = NewValueNode(real_idx);
       tuplegetitem_node_inputs.push_back(new_idx_node);
       AnfNodePtr unfold_tuplegetitem_node = func_graph->NewCNode(tuplegetitem_node_inputs);
+      unfold_tuplegetitem_node->set_scope(node->scope());
       unfold_tuplegetitem_node->set_abstract(real_node->abstract());
       make_tuple_abstract.push_back(real_node->abstract());
       unfold_tuplegetitem_nodes.push_back(unfold_tuplegetitem_node);
     }
     AnfNodePtr new_maketuple_node = func_graph->NewCNode(unfold_tuplegetitem_nodes);
     new_maketuple_node->set_abstract(std::make_shared<abstract::AbstractTuple>(make_tuple_abstract));
+    new_maketuple_node->set_scope(node->scope());
     ReplaceNodeWithNewMakeTupleNode(func_graph, tuplegetitem_node, new_maketuple_node);
   } else {
     if (tuplegetitem_cnode->input(kRealInputNodeIndexInTupleGetItem) != node) {
@@ -179,8 +181,7 @@ void ProcessSucceedTupleGetItem(const FuncGraphPtr &func_graph, const AnfNodePtr
     if (iter == unfold_nodes_index.end()) {
       MS_LOG(EXCEPTION) << "Node: " << real_node->fullname_with_scope() << " cannot be found in unfold_nodes_index.";
     }
-    int64_t real_idx = iter->second;
-    auto new_idx_node = NewValueNode(real_idx);
+    auto new_idx_node = NewValueNode(iter->second);
     tuplegetitem_cnode->set_input(kRealInputNodeIndexInTupleGetItem, unfold_maketuple_node);
     tuplegetitem_cnode->set_input(kInputNodeOutputIndexInTupleGetItem, new_idx_node);
   }
@@ -201,6 +202,7 @@ AnfNodePtr ProcessSucceedNodes(const FuncGraphPtr &func_graph, const AnfNodePtr 
     unfold_maketuple_abs.push_back(abs);
   }
   auto unfold_maketuple_node = func_graph->NewCNode(unfold_maketuple_inputs);
+  unfold_maketuple_node->set_scope(node->scope());
   unfold_maketuple_node->set_abstract(std::make_shared<abstract::AbstractTuple>(unfold_maketuple_abs));
 
   FuncGraphManagerPtr manager = func_graph->manager();

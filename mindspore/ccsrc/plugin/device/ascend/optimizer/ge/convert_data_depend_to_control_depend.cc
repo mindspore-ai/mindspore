@@ -63,6 +63,7 @@ const AnfNodePtr ConvertDataDependToControlDepend::Process(const FuncGraphPtr &f
                                           cnode->input(1)};
   auto depend_node = NewCNode(depend_input, func_graph);
   MS_EXCEPTION_IF_NULL(depend_node);
+  depend_node->set_scope(node->scope());
   MS_LOG(INFO) << "Replace depend: " << node->fullname_with_scope()
                << " by new node: " << depend_node->fullname_with_scope();
   depend_node->set_abstract(value_node->abstract());

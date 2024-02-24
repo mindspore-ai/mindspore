@@ -22,7 +22,7 @@ namespace mindspore {
 namespace opt {
 class ProcessCallInline : public PatternProcessPass {
  public:
-  explicit ProcessCallInline(bool multi_graph = true) : PatternProcessPass("process call inline", multi_graph) {}
+  explicit ProcessCallInline(bool multi_graph = true) : PatternProcessPass("process_call_inline", multi_graph) {}
   ~ProcessCallInline() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &) const override;

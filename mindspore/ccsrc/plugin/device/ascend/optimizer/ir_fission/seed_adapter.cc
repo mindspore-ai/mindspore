@@ -114,7 +114,7 @@ const BaseRef SeedAdapter::DefinePattern() const {
   return VectorRef({V, Xs});
 }
 
-// This pass in ordr to convert attr seed to value node
+// This pass in order to convert attr seed to value node
 // exp: DropoutGenMask
 //     |input0   |input1                   |input0     |input1     |s0      |s1
 //  DropoutGenMask(seed0/seed1)      --->    DropoutGenMask(seed0/seed1)
