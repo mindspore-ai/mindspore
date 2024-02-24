@@ -23,8 +23,6 @@ import mindspore.ops.operations as P
 from mindspore import Tensor
 from mindspore.ops.functional import vmap
 
-context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_cpu
@@ -35,6 +33,8 @@ def test_im2col_vmap():
     Description: Test vmap for im2col
     Expectation: Consistent with the assertion
     """
+    context.set_context(mode=context.GRAPH_MODE)
+
     def cal_im2col(x):
         return P.Im2Col(ksizes=3,
                         strides=1,
@@ -71,14 +71,17 @@ class NetIm2Col(nn.Cell):
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_im2col_cpu_dynamic_shape():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_im2col_dynamic_shape(mode):
     """
-    Feature: test Im2Col op in cpu.
+    Feature: test Im2Col op.
     Description: test the ops in dynamic shape.
     Expectation: expect correct shape result.
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+    context.set_context(mode=mode)
     net = NetIm2Col()
 
     x_dyn = Tensor(shape=[None, 32, 9, 9], dtype=mindspore.float32)
