@@ -267,10 +267,6 @@ void PyBoostUtils::GetKernelTensor(DeviceContext *device_context, const abstract
   (void)device_address_list->emplace_back(device_address);
   const auto &kernel_tensor = device_address->kernel_tensor();
   (void)kernel_tensor_list->emplace_back(kernel_tensor.get());
-  if (!kernel_tensor->host_info_exist()) {
-    kernel_tensor->SetHostInfo(std::make_shared<abstract::TensorShape>(tensor->shape()),
-                               std::make_shared<TensorType>(tensor->Dtype()), nullptr);
-  }
 }
 
 void PyBoostUtils::GetKernelTensor(DeviceContext *device_context, const abstract::AbstractBasePtr &input_abs,
