@@ -336,7 +336,7 @@ class Profiler:
         output_path (str, optional): Output data path. Default: ``"./data"`` .
         op_time (bool, optional): (Ascend/GPU) Whether to collect operators performance data. Default value: ``True``.
         profile_communication (bool, optional): (Ascend only) Whether to collect communication performance data in
-            a multi devices training,collect when True. Setting this parameter has no effect during single device
+            a multi devices training,collect when True. Setting this parameter has no effect during single card
             training. When using this parameter, `op_time` must be set to ``True`` . Default: ``False`` .
         profile_memory (bool, optional): (Ascend only) Whether to collect tensor memory data, collect when ``True`` .
             When using this parameter, `op_time` must be set to True. Default: ``False`` .
