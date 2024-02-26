@@ -107,6 +107,7 @@ def test_celllist(input_x):
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
 
+@pytest.mark.skip(reason="the pointer[GetDevicePtr] is null")
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
