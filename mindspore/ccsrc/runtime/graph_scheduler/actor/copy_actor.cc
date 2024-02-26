@@ -90,6 +90,7 @@ void CopyActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
   }
 
   {
+    WaitRuntimePipelineFinish();
     ProfilerRecorder profiler(ProfilerModule::kRuntime, ProfilerEvent::kCopyData, GetAID().Name());
     if (!Copy(output_device_tensor_[0], input_device_tensor_[0])) {
       std::string error_info = "Copy device tensor failed: " + GetAID().Name();
@@ -151,6 +152,7 @@ void CopyActor::FetchDeviceTensor(OpContext<DeviceTensor> *const context) {
     output_device_tensor_[0] = output_.get();
   }
 
+  WaitRuntimePipelineFinish();
   if (is_need_update_output_size_ && (input_device_tensor_[0]->GetSize() != output_device_tensor_[0]->GetSize())) {
     MS_LOG(DEBUG) << GetAID().Name() << " update output size from " << output_device_tensor_[0]->GetSize() << " to "
                   << input_device_tensor_[0]->GetSize();

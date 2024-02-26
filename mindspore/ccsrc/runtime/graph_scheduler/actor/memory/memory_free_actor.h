@@ -51,6 +51,7 @@ class MemoryFreeActor : public MemoryAwareActor {
 
  protected:
   void Run(OpContext<DeviceTensor> *const context) override {
+    WaitRuntimePipelineFinish();
     ProcessSomasCrossStreamMemorySynchronization(context);
     PostRun(context);
   }

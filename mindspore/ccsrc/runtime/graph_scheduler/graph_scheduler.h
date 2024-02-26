@@ -266,6 +266,8 @@ class BACKEND_EXPORT GraphScheduler {
   std::vector<int> numa_cpus_;
 
   bool init_{false};
+
+  bool multi_pipeline_actors_spawned_{false};
 };
 }  // namespace runtime
 }  // namespace mindspore

@@ -253,7 +253,9 @@ void OutputActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<De
 
 TensorPtr OutputActor::CreateOutputTensor(const AnfNodePtr &output_node, size_t output_index, size_t output_position) {
   MS_EXCEPTION_IF_NULL(output_node);
-
+  if (ActorDispatcher::enable_runtime_multi_pipeline()) {
+    runtime::WaitRuntimePipelineFinish();
+  }
   const auto &output_kernel_tensor = AnfAlgo::GetOutputKernelTensor(output_node, output_index);
   MS_EXCEPTION_IF_NULL(output_kernel_tensor);
   MS_LOG(DEBUG) << "Create output tensor, output node: " << output_node->fullname_with_scope()
