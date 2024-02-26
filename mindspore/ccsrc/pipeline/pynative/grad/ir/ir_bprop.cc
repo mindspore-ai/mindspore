@@ -487,7 +487,7 @@ FuncGraphPtr IrBprop::GetBpropGraphFromExpander(const GradParamPtr &grad_param) 
   auto current_ad_param = ad_param_;
   ad_param_ = std::make_shared<AdParam>();
   ad_param_->tape_->debug_info()->set_name("ad_graph");
-
+  bprop_graph_run_by_single_op_ = bprop_graph_run_by_single_op_ || grad_param->use_dynamic_shape_process;
   GradGraphByExpander(grad_param);
 
   if (ad_param_->last_node_ != nullptr) {
@@ -703,7 +703,6 @@ void IrBprop::GradCNode(const PrimitivePtr &prim, const CNodePtr &cnode, const G
                         const ValuePtrList &inputs_value, AnfNodePtrList *cnode_inputs) {
   MS_EXCEPTION_IF_NULL(prim);
   MS_EXCEPTION_IF_NULL(cnode);
-  MS_EXCEPTION_IF_NULL(grad_param);
   bool jit_by_value = grad_param->is_jit_graph && grad_by_value_;
   if (IsPrimitiveEquals(prim, prim::kPrimMakeTuple) || IsPrimitiveEquals(prim, prim::kPrimMakeList)) {
     (void)BuildKNodeForMakeTuple(cnode);
@@ -714,6 +713,13 @@ void IrBprop::GradCNode(const PrimitivePtr &prim, const CNodePtr &cnode, const G
   }
   MS_EXCEPTION_IF_NULL(cnode_inputs);
   auto k_node = GetKnode(prim, cnode, *cnode_inputs, jit_by_value);
+  if (bprop_graph_run_by_single_op_ && !IsPrimitiveCNode(cnode, prim::kPrimMakeTuple) &&
+      std::any_of(cnode->inputs().begin() + 1, cnode->inputs().end(), [](const AnfNodePtr &node) {
+        MS_EXCEPTION_IF_NULL(node->abstract());
+        return node->abstract()->isa<abstract::AbstractSequence>();
+      })) {
+    k_node->cast<CNodePtr>()->AddAttr(kAttrIsPyboostTupleInput, MakeValue(true));
+  }
   MS_LOG(DEBUG) << "Build knode " << k_node->DebugString();
   // Set out
   auto out = PyNativeAlgo::Common::CreatOutputTensorValueByAbstract(cnode->abstract());

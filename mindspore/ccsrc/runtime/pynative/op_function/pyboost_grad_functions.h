@@ -45,7 +45,7 @@ class PyBoostOpExecute {
   void COMMON_EXPORT RunPyBoostCall(OpRunnerInfo *op_runner_info, VectorRef *op_outputs);
 
   // Clear backend for fork process.
-  void COMMON_EXPORT ClearBackend() { backend_ = nullptr; }
+  void ClearBackend() { backend_ = nullptr; }
 
  private:
   // Run op by single op graph

@@ -50,14 +50,11 @@ REG_BPROP_BUILDER("ScalarMod").SetBody(BODYFUNC(ib) {
   auto y = ib->GetInput(kIndex1);
   auto out = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex3);
-  NodePtr dy;
-  if (y->need_compute_grad_out()) {
-    auto dx = ib->ScalarDiv(dout, y);
-    dy = ib->ScalarNeg(ib->ScalarMul(dx, ib->ScalarFloorDiv(x, y)));
-  } else {
-    dy = ib->OutZeros(y);
-  }
-  return {dout, dy};
+  NodePtr dx = x->need_compute_grad_out() ? dout : ib->OutZeros(x);
+  NodePtr dy = y->need_compute_grad_out()
+                 ? ib->ScalarNeg(ib->ScalarMul(ib->ScalarDiv(dout, y), ib->ScalarFloorDiv(x, y)))
+                 : ib->OutZeros(y);
+  return {dx, dy};
 });
 
 REG_BPROP_BUILDER("ScalarFloorDiv").SetBody(ReturnZeros);

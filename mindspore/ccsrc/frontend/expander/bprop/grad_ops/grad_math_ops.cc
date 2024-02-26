@@ -596,7 +596,7 @@ REG_BPROP_BUILDER("Div").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
   bool is_complex = (x_dtype_id == kNumberTypeComplex64 || x_dtype_id == kNumberTypeComplex128);
   if (is_complex) {
     result[kIndex0] = ib->Conj(result[kIndex0]);
-    result[kIndex1] = x->need_compute_grad_out() ? ib->Conj(result[kIndex1]) : ib->OutZeros(y);
+    result[kIndex1] = y->need_compute_grad_out() ? ib->Conj(result[kIndex1]) : ib->OutZeros(y);
   }
   return result;
 });
