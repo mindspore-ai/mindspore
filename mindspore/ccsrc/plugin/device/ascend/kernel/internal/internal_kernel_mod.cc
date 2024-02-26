@@ -100,10 +100,16 @@ int InternalKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const s
       return KRET_RESIZE_FAILED;
     }
   }
+  std::vector<internal::DIMS> input_shapes(inputs_.size()), output_shapes;
   for (auto iter = inputsIdxMap_.begin(); iter != inputsIdxMap_.end(); iter++) {
     InternalKernelUtils::ToInternalTensor(inputs_[iter->second], inputs[iter->first]);
+    input_shapes[iter->second] = inputs_[iter->second]->desc.dims;
   }
   impl_->SetInputs(inputs_);
+
+  if (op_type_ == "MatMul") {
+    ret = impl_->InferShape(input_shapes, output_shapes);
+  }
 
   for (auto iter = outputsIdxMap_.begin(); iter != outputsIdxMap_.end(); iter++) {
     InternalKernelUtils::ToInternalTensor(outputs_[iter->second], outputs[iter->first]);
@@ -138,8 +144,8 @@ bool InternalKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const 
     InternalKernelUtils::ToInternalTensor(outputs_[iter->second], outputs[iter->first]);
   }
   impl_->SetOutputs(outputs_);
-  impl_->Launch();
-  return true;
+  auto ret = impl_->Launch();
+  return (ret == 0);
 }
 }  // namespace kernel
 }  // namespace mindspore
