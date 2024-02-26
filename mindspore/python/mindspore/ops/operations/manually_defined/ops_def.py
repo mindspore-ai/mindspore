@@ -929,7 +929,7 @@ class Tile(Primitive):
     Refer to :func:`mindspore.ops.tile` for more details.
 
     Inputs:
-        - **input** (Tensor) - 1-D or higher dimensional Tensor. Set the shape of input tensor as
+        - **input** (Tensor) - The tensor whose elements need to be repeated. Set the shape of input tensor as
           :math:`(x_1, x_2, ..., x_S)` .
         - **dims** (tuple[int]) - The parameter that specifies the number of replications,
           the parameter type is tuple, and the data type is int, i.e., :math:`(y_1, y_2, ..., y_S)`.
@@ -1018,7 +1018,7 @@ def tile(input, dims):
     are replicated `dims[i]` times along the i'th dimension.
 
     Args:
-        input (Tensor): 1-D or higher dimensional Tensor. Set the shape of input tensor as
+        input (Tensor): The tensor whose elements need to be repeated. Set the shape of input tensor as
             :math:`(x_1, x_2, ..., x_S)` .
 
         dims (tuple[int]): The parameter that specifies the number of replications,
