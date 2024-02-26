@@ -568,7 +568,6 @@ std::tuple<bool, std::string, ExceptionType> SelectKernelInfoWithMsg(const Kerne
     enable_internal = false;
   }
 
-  std::string op_name = common::AnfAlgo::GetCNodeName(node);
   std::string disable_name_list = common::GetEnv("MS_DISABLE_INTERNAL_KERNELS_LIST");
   std::vector<std::string> op_name_vec = stringSplit(disable_name_list, ',');
   for (auto name : op_name_vec) {

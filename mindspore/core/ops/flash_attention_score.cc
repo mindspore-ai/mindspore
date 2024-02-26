@@ -117,10 +117,8 @@ abstract::TupleShapePtr FlashAttentionScoreInferShape(const PrimitivePtr &primit
   auto q_head_num = GetValue<int64_t>(primitive->GetAttr(kAttrHeadNum));
   int64_t kv_seq_len;
   int64_t kv_head_num;
-  auto query_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(
-    input_args[kFlashAttentionScoreInputQueryIndex]->BuildShape())[kShape];
-  auto key_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(
-    input_args[kFlashAttentionScoreInputKeyIndex]->BuildShape())[kShape];
+  auto query_shape = input_args[kFlashAttentionScoreInputQueryIndex]->GetShape()->GetShapeVector();
+  auto key_shape = input_args[kFlashAttentionScoreInputKeyIndex]->GetShape()->GetShapeVector();
   if (input_layout == kInputFlashAttentionScoreLayoutBSH) {
     if (query_shape.size() != kInputFlashAttentionScoreQueryBSHRank || key_shape.size() != query_shape.size()) {
       MS_LOG(EXCEPTION) << op_name << ": The rank of 'query' and 'key' must be "
