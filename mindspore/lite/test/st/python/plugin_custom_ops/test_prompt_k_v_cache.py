@@ -22,7 +22,7 @@ import mindspore.nn as nn
 import mindspore.ops as ops
 from mindspore import Tensor, context
 from mindspore.train.serialization import export
-from mindspore.ops.auto_generate.gen_inner_ops_def import PromptKVCache
+from mindspore.ops.auto_generate import PromptKVCache
 
 b = 40
 h = 4
