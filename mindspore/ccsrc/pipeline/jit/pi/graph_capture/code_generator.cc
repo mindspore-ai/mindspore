@@ -1070,10 +1070,15 @@ py::object MindCodeBreakGenerator::MakeCopyCode(const std::string &co_name, int 
   std::string phase =
     py::cast<std::string>(co_->co_filename) + "_" + std::to_string(co_->co_firstlineno) + "_" + co_name;
   const auto &parameters = func_graph->parameters();
-  py::tuple args(parameters.size());
+  py::tuple args(parameters.size() - func_graph->fv_param_count());
   for (size_t i = 0; i < parameters.size(); ++i) {
-    phase += "_" + parameters[i]->abstract()->ToString();
-    args[i] = *(parameters[i]->user_data<py::object>("pi_jit_py_obj"));
+    auto para = parameters[i]->cast<ParameterPtr>();
+    MS_EXCEPTION_IF_NULL(para);
+    if (para->has_default()) {
+      continue;
+    }
+    phase += "_" + para->abstract()->ToString();
+    args[i] = *(para->user_data<py::object>("pi_jit_py_obj"));
   }
   phase += ".pi_jit";
   MindCompiler::CompileInfo compile_info{co_name, co_argcount, co_kwonlyargcount, co_flags};
