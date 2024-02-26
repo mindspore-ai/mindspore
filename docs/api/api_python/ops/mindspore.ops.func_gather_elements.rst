@@ -28,5 +28,5 @@ mindspore.ops.gather_elements
     异常：
         - **TypeError** - `dim` 或 `index` 的数据类型既不是int32，也不是int64。
         - **ValueError** - `input` 和 `index` 的维度长度不一致。
-        - **ValueError** - `input` 和 `index` 除 `dim` 维外的维度不一致。
+        - **ValueError** - 除 `dim` 维外，`input` 的维度值小于 `index` 的维度值。
         - **ValueError** - `dim` 的值不在合理范围内。

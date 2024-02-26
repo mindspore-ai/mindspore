@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2023 Huawei Technologies Co., Ltd
+ * Copyright 2020-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 #include <string>
 #include <algorithm>
+#include <functional>
 
 #include "plugin/device/gpu/kernel/arrays/gatherd_gpu_kernel.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
@@ -39,7 +40,10 @@ bool GatherDGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs
   auto output_addr = reinterpret_cast<T *>(outputs.at(kIndex0)->device_ptr());
   auto cuda_stream = reinterpret_cast<cudaStream_t>(stream_ptr);
 
-  auto status = GatherD(input_addr, index_addr, output_addr, dims_[0], dims_[1], dims_[kIndex2], dims_[kIndex3],
+  auto out_size =
+    static_cast<size_t>(std::accumulate(index_shapes_.begin(), index_shapes_.end(), 1, std::multiplies<int64_t>()));
+
+  auto status = GatherD(input_addr, index_addr, output_addr, dims_[0], dims_[1], dims_[2], dims_[3], dims_[4], out_size,
                         cuda_stream, GET_CTX_DEVICE_ID);
   CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
@@ -80,21 +84,28 @@ bool GatherDGpuKernelMod::SetDimParam(int64_t dim_value) {
     dim_value += x_rank;
   }
 
-  size_t dim_before_axis = 1;
+  size_t dim_before_axis_index = 1;
   for (size_t i = 0; i < LongToSize(dim_value); i++) {
-    dim_before_axis *= output_shapes_[i];
+    dim_before_axis_index *= index_shapes_[i];
   }
   size_t dim_at_axis_input = input_shapes_[LongToSize(dim_value)];
-  size_t dim_at_axis_output = output_shapes_[LongToSize(dim_value)];
-  size_t dim_after_axis = 1;
-  for (size_t i = LongToSize(dim_value) + 1; i < output_shapes_.size(); i++) {
-    dim_after_axis *= output_shapes_[i];
+  size_t dim_at_axis_index = index_shapes_[LongToSize(dim_value)];
+  size_t dim_after_axis_index = 1;
+  for (size_t i = LongToSize(dim_value) + 1; i < index_shapes_.size(); i++) {
+    dim_after_axis_index *= index_shapes_[i];
   }
 
-  dims_[0] = dim_before_axis;
-  dims_[1] = dim_at_axis_input;
-  dims_[kIndex2] = dim_at_axis_output;
-  dims_[kIndex3] = dim_after_axis;
+  size_t dim_after_axis_input = 1;
+  for (size_t i = LongToSize(dim_value) + 1; i < input_shapes_.size(); i++) {
+    dim_after_axis_input *= input_shapes_[i];
+  }
+
+  dims_[kIndex0] = dim_before_axis_index;
+  dims_[kIndex1] = dim_at_axis_index;
+  dims_[kIndex2] = dim_after_axis_index;
+  dims_[kIndex3] = dim_at_axis_input;
+  dims_[kIndex4] = dim_after_axis_input;
+
   return true;
 }
 
@@ -133,10 +144,16 @@ int GatherDGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const
     return KRET_OK;
   }
 
-  int64_t dim_value = inputs[kIndex1]->GetValueWithCheck<int64_t>();
-  if (!SetDimParam(dim_value)) {
-    return KRET_RESIZE_FAILED;
+  if (input_shapes_.empty()) {
+    input_shapes_ = ShapeVector{1};
   }
+
+  if (index_shapes_.empty()) {
+    index_shapes_ = ShapeVector{1};
+  }
+
+  auto dim = inputs[kIndex1]->GetValueWithCheck<int64_t>();
+  SetDimParam(dim);
 
   return KRET_OK;
 }

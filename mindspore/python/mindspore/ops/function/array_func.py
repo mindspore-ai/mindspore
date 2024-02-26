@@ -3053,7 +3053,7 @@ def gather_elements(input, dim, index):
     Raises:
         TypeError: If dtype of `dim` or `index` is neither int32 nor int64.
         ValueError: If length of shape of `input` is not equal to length of shape of `index`.
-        ValueError: If the size of the dimension except `dim` is not equal between `input` and `index`.
+        ValueError: If the size of the dimension except `dim` in `input` is less than size in `index`.
         ValueError: If the value of `dim` is not in the expected range.
 
     Supported Platforms:

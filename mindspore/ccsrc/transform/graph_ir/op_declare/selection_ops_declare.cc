@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -130,10 +130,11 @@ OUTPUT_MAP(GatherNd) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(GatherNd, kNameGatherNd, ADPT_DESC(GatherNd))
 
 // GatherD
-INPUT_MAP(GatherD) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(dim)}, {3, INPUT_DESC(index)}};
-ATTR_MAP(GatherD) = EMPTY_ATTR_MAP;
-OUTPUT_MAP(GatherD) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(GatherD, kNameGatherD, ADPT_DESC(GatherD))
+INPUT_MAP(GatherElements) = {{1, INPUT_DESC(x)}, {3, INPUT_DESC(index)}};
+ATTR_MAP(GatherElements) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(GatherElements) = {{2, ATTR_DESC(dim, AnyTraits<int64_t>())}};
+OUTPUT_MAP(GatherElements) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(GatherD, kNameGatherD, ADPT_DESC(GatherElements))
 
 // RangeV2
 INPUT_MAP(Range) = {{1, INPUT_DESC(start)}, {2, INPUT_DESC(limit)}, {3, INPUT_DESC(delta)}};

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2023 Huawei Technologies Co., Ltd
+ * Copyright 2021-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,27 +36,22 @@ const uint32_t kOutputNum = 1;
 const uint32_t kInputNum = 3;
 const char *kGatherDGradV2 = "GatherDGradV2";
 constexpr auto kDim = "dim";
-constexpr auto kAddressSize = 4;
 constexpr auto kDim0 = 0;
 constexpr auto kDim1 = 1;
 constexpr auto kDim2 = 2;
-constexpr auto kDim3 = 3;
 
 template <typename T, typename S>
-static uint32_t GatherGrad(const T *index, const S *grad, S *output, int64_t dim_before_axis, int64_t dim_at_axis_index,
-                           int64_t dim_at_axis_output, int64_t dim_after_axis, CpuKernelContext &ctx) {
-  if (dim_after_axis == 0) {
-    AICPU_LOGE("dim_after_axis cannot be 0.");
-    return KERNEL_STATUS_INNER_ERROR;
-  }
-  int64_t number = dim_before_axis * dim_at_axis_index * dim_after_axis;
+static uint32_t GatherGrad(const T *index, const S *grad, S *output, int64_t dim,
+                           const std::vector<int64_t> &index_shape, const std::vector<int64_t> &output_shape,
+                           CpuKernelContext &ctx) {
+  int64_t number = std::accumulate(index_shape.begin(), index_shape.end(), 1, std::multiplies<int64_t>());
   bool status = false;
+  auto rank = index_shape.size();
+  auto dim_size = static_cast<size_t>(dim);
   auto shard_gather_grad = [&](size_t start, size_t end) {
-    int64_t dim_input = dim_at_axis_index * dim_after_axis;
-    int64_t dim_output = dim_at_axis_output * dim_after_axis;
     for (size_t id = start; id < end; ++id) {
       T j_read = index[id];
-      auto max_index = static_cast<T>(dim_at_axis_output);
+      auto max_index = static_cast<T>(output_shape[dim_size]);
       if (j_read >= max_index || j_read < -max_index) {
         AICPU_LOGE("The value of 'dim' should be in [%d %d), but got %d", -max_index, max_index, j_read);
         AtomicAdd<bool>(&status, true);
@@ -68,9 +63,18 @@ static uint32_t GatherGrad(const T *index, const S *grad, S *output, int64_t dim
 
       int64_t signed_id = SizeToInt(id);
       int64_t signed_j_read = static_cast<int64_t>(j_read);
-      int64_t read_id =
-        signed_id / dim_input * dim_output + signed_j_read * dim_after_axis + signed_id % dim_after_axis;
-      AtomicAdd<S>(output + read_id, grad[id]);
+      int64_t accumulate_offset = 1;
+      int64_t out_accumulate_offset = 1;
+      int64_t offset = 0;
+      for (size_t i = rank; i > 0; i--) {
+        auto real_i = i - 1;
+        auto tmp = real_i == dim_size ? signed_j_read : (signed_id / accumulate_offset) % index_shape[real_i];
+        accumulate_offset *= index_shape[real_i];
+        offset += tmp * out_accumulate_offset;
+        out_accumulate_offset *= output_shape[real_i];
+      }
+
+      AtomicAdd<S>(output + offset, grad[id]);
     }
   };
 
@@ -104,13 +108,9 @@ uint32_t GatherDGradV2Kernel::GatherDGradV2Task(CpuKernelContext &ctx) {
     return KERNEL_STATUS_INNER_ERROR;
   }
 
-  int64_t dim_before_axis =
-    std::accumulate(output_shape_.begin(), output_shape_.begin() + dim_, 1, std::multiplies<int64_t>());
-  int64_t dim_at_axis_grad = grad_shape_[LongToSize(dim_)];
-  int64_t dim_at_axis_output = output_shape_[LongToSize(dim_)];
-  int64_t dim_after_axis =
-    std::accumulate(output_shape_.begin() + dim_ + 1, output_shape_.end(), 1, std::multiplies<int64_t>());
-  int64_t output_size = dim_before_axis * dim_at_axis_output * dim_after_axis * sizeof(S);
+  auto output_size =
+    static_cast<size_t>(std::accumulate(output_shape_.begin(), output_shape_.end(), 1, std::multiplies<int64_t>())) *
+    sizeof(S);
   uint8_t *data = reinterpret_cast<uint8_t *>(output);
   if (data == nullptr) {
     AICPU_LOGE("For '%s', the output is nullptr.");
@@ -120,7 +120,8 @@ uint32_t GatherDGradV2Kernel::GatherDGradV2Task(CpuKernelContext &ctx) {
     AICPU_LOGE("For '%s', failed to init output.", kGatherDGradV2);
     return KERNEL_STATUS_INNER_ERROR;
   }
-  return GatherGrad(index, grad, output, dim_before_axis, dim_at_axis_grad, dim_at_axis_output, dim_after_axis, ctx);
+
+  return GatherGrad(index, grad, output, dim_, index_shape_, output_shape_, ctx);
 }
 
 uint32_t GatherDGradV2Kernel::ParseKernelParam(CpuKernelContext &ctx) {
@@ -137,6 +138,14 @@ uint32_t GatherDGradV2Kernel::ParseKernelParam(CpuKernelContext &ctx) {
   auto grad_tensor = ctx.Input(kDim2);
   grad_type_ = grad_tensor->GetDataType();
   grad_shape_ = grad_tensor->GetTensorShape()->GetDimSizes();
+
+  if (index_shape_.empty()) {
+    index_shape_ = std::vector<int64_t>({1});
+  }
+  if (grad_shape_.empty()) {
+    grad_shape_ = std::vector<int64_t>({1});
+  }
+
   if (index_shape_ != grad_shape_) {
     AICPU_LOGE("the shape of index and grad should be same!");
     return KERNEL_STATUS_PARAM_INVALID;
@@ -145,6 +154,9 @@ uint32_t GatherDGradV2Kernel::ParseKernelParam(CpuKernelContext &ctx) {
   // output
   auto output_tensor = ctx.Output(kDim0);
   output_shape_ = output_tensor->GetTensorShape()->GetDimSizes();
+  if (output_shape_.empty()) {
+    output_shape_ = std::vector<int64_t>({1});
+  }
   if (output_shape_ != input_shape_) {
     AICPU_LOGE("the shape of input and output should be same!");
     return KERNEL_STATUS_PARAM_INVALID;

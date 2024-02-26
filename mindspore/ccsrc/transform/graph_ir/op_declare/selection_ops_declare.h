@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,8 +36,8 @@ DECLARE_OP_USE_OUTPUT(ScatterNonAliasingAdd)
 DECLARE_OP_ADAPTER(GatherNd)
 DECLARE_OP_USE_OUTPUT(GatherNd)
 
-DECLARE_OP_ADAPTER(GatherD)
-DECLARE_OP_USE_OUTPUT(GatherD)
+DECLARE_OP_ADAPTER(GatherElements)
+DECLARE_OP_USE_OUTPUT(GatherElements)
 
 DECLARE_OP_ADAPTER(TopK)
 DECLARE_OP_USE_OUTPUT(TopK)
