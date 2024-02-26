@@ -144,8 +144,7 @@ using AdParamPtr = std::shared_ptr<AdParam>;
 class AutoGradCellImpl {
  public:
   AutoGradCellImpl(const std::vector<ValuePtr> &input_param_values, const AbstractBasePtrList &abs_list,
-                   size_t op_num_in_bprop_graph, const AsyncHqueuePtr &assist_queue, bool enable_async,
-                   bool grad_by_value);
+                   size_t op_num_in_bprop_graph, const AsyncHqueuePtr &assist_queue, bool grad_by_value);
   ~AutoGradCellImpl() = default;
   // Reverse connect bprop of op
   bool KPynativeOp(const GradParamPtr &grad_param);
@@ -184,8 +183,6 @@ class AutoGradCellImpl {
   CNodePtr ConstructBpropGraphInput(const GradParamPtr &grad_param, const AnfNodePtr &dout,
                                     const VariableAdjointPtr &variable_adjoint, bool is_custom_prim);
   // Back propagate for one node;
-  void UpdateNextEdgesAsync(const VariableAdjointPtr &variable, const std::vector<CNodePtr> &dins,
-                            const GradParamPtr &grad_param);
   void UpdateNextEdges(const VariableAdjointPtr &variable, const std::vector<CNodePtr> &dins,
                        const ValuePtrList &input_value, const abstract::AbstractBasePtrList &abs, bool grad_by_value);
   void UpdateNextEdge(const FunctionNodePtr &fn, const AnfNodePtr &din, const ValuePtr &input_arg,
@@ -252,7 +249,6 @@ class AutoGradCellImpl {
   bool grad_by_value_{false};
   bool need_do_manager_replace_{false};
   AsyncHqueuePtr assist_queue_{nullptr};
-  bool enable_async_{false};
   std::string device_target_;
 };
 using AutoGradCellImplPtr = std::shared_ptr<AutoGradCellImpl>;
