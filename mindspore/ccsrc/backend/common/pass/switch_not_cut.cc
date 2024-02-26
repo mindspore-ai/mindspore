@@ -32,6 +32,10 @@ bool SwitchNotCut::Run(const FuncGraphPtr &func_graph) {
     // only support ge backend
     return false;
   }
+  static const auto is_enable_switch_inline = (common::GetEnv("MS_ENABLE_SWITCH_INLINE") == "1");
+  if (!is_enable_switch_inline) {
+    return false;
+  }
   MS_EXCEPTION_IF_NULL(func_graph);
   AnfNodePtr return_node = func_graph->get_return();
   MS_EXCEPTION_IF_NULL(return_node);
