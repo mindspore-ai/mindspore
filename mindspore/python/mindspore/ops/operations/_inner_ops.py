@@ -2101,7 +2101,8 @@ class MixedPrecisionCast(Primitive):
 
     def __call__(self, dst_dtype, x):
         def cast_inner(data):
-            if isinstance(data, Tensor) and data.dtype in (mstype.float16, mstype.float32, mstype.float64):
+            if isinstance(data, Tensor) and data.dtype in (mstype.float16, mstype.float32,
+                                                           mstype.float64, mstype.bfloat16):
                 return self.cast(data, dst_dtype)
             return data
 
