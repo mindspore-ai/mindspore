@@ -23,6 +23,7 @@
 #include "include/common/utils/anfalgo.h"
 #include "mindspore/core/ops/framework_ops.h"
 #include "utils/anf_utils.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace opt {
@@ -33,6 +34,11 @@ const BaseRef ProcessPartialInline::DefinePattern() const {
 
 const AnfNodePtr ProcessPartialInline::Process(const FuncGraphPtr &graph, const AnfNodePtr &node,
                                                const EquivPtr &) const {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (!context->IsKByKExecutorMode()) {
+    return nullptr;
+  }
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
