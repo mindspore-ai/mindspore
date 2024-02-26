@@ -859,12 +859,8 @@ void MindRTBackend::RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_i
           MS_LOG(DEBUG) << "Run " << primitive->name() << " by pyboost";
           graph_compiler_->GetSingleOpInputTensors(kernel, op_output_map, parameter_index, inputs[graph_index], true,
                                                    &input_info);
-          kernel::pyboost::OpRunnerInfo op_runner_info{.prim = primitive,
-                                                       .device_target = device_target,
-                                                       .inputs = input_info.input_values,
-                                                       .inputs_abs = input_info.input_abs,
-                                                       .inputs_mask = {},
-                                                       .output_abs = kernel->abstract()};
+          kernel::pyboost::OpRunnerInfo op_runner_info{
+            primitive, device_target, input_info.input_values, input_info.input_abs, {}, kernel->abstract()};
           runtime::PyBoostOpExecute::GetInstance().RunPyBoostCall(&op_runner_info, &op_outputs);
         } else {
           MS_LOG(DEBUG) << "Run " << primitive->name() << " by single op graph";

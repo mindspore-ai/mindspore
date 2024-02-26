@@ -126,12 +126,7 @@ NodePtr FuncBuilder::EmitOp(const PrimitivePtr &prim, const NodePtrList &inputs)
   MS_LOG(DEBUG) << "Get input abs size " << input_abs.size() << ", "
                 << DebugInput<abstract::AbstractBasePtr>(input_abs);
   VectorRef outputs;
-  kernel::pyboost::OpRunnerInfo op_runner_info{.prim = prim,
-                                               .device_target = device_target_,
-                                               .inputs = op_inputs,
-                                               .inputs_abs = input_abs,
-                                               .inputs_mask = input_mask,
-                                               .output_abs = nullptr};
+  kernel::pyboost::OpRunnerInfo op_runner_info{prim, device_target_, op_inputs, input_abs, input_mask, nullptr};
   runtime::PyBoostOpExecute::GetInstance().Execute(&op_runner_info, &outputs);
   auto real_outputs = common::AnfAlgo::TransformVectorRefToMultiValue(outputs);
   MS_LOG(DEBUG) << "Get output value size " << real_outputs.size() << ", " << DebugInput<ValuePtr>(real_outputs);
