@@ -75,20 +75,6 @@ def test_fallback_sum_with_x_tensor_n_default():
     assert out.asnumpy() == 6
 
 
-def test_fallback_sum_with_x_tensor_n_default_2():
-    """
-    Feature: JIT Fallback
-    Description: Test sum() in graph mode with input x tensor and input n default.
-    Expectation: No exception.
-    """
-    @jit
-    def foo():
-        x = sum(Tensor([[1, 1], [2, 2]]))
-        return x
-    out = foo()
-    assert np.allclose(out.asnumpy(), np.array([3, 3]))
-
-
 def test_fallback_sum_with_x_numpy_array_n_default_2():
     """
     Feature: JIT Fallback

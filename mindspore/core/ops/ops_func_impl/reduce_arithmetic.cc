@@ -86,5 +86,68 @@ BaseShapePtr ReduceInferShape(const PrimitivePtr &primitive, const std::vector<A
   }
   return std::make_shared<abstract::Shape>(out_shape);
 }
+
+BaseShapePtr ReduceExtandInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  auto keep_dims_value = input_args[kInputIndex2]->GetValue();
+  auto keep_dims_opt = GetScalarValue<bool>(keep_dims_value);
+  if (MS_UNLIKELY(!keep_dims_opt.has_value())) {
+    return std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
+  }
+  auto keep_dims = keep_dims_opt.value();
+  auto x_shape = input_args[kInputIndex0]->GetShape()->GetShapeVector();
+
+  // If axis is None
+  if (input_args[kInputIndex1]->GetType()->isa<TypeNone>()) {
+    return keep_dims
+             ? std::make_shared<abstract::Shape>(IsDynamicRank(x_shape) ? x_shape : ShapeVector(x_shape.size(), 1))
+             : std::make_shared<abstract::Shape>(ShapeVector({}));
+  }
+
+  auto axis_array_opt = GetArrayValue<int64_t>(input_args[kInputIndex1]);
+  if (axis_array_opt.has_value()) {
+    // If axis is empty tuple and keep_dims is False, return a zero-dimensional Tensor
+    if (axis_array_opt->size() == 0 && !keep_dims) {
+      return std::make_shared<abstract::Shape>(ShapeVector({}));
+    }
+  }
+
+  if (IsDynamicRank(x_shape)) {
+    return std::make_shared<abstract::Shape>(x_shape);
+  }
+  if (!axis_array_opt.has_value()) {
+    // axis is dynamic.
+    return keep_dims ? std::make_shared<abstract::Shape>(ShapeVector(x_shape.size(), -1))
+                     : std::make_shared<abstract::Shape>(ShapeVector({abstract::Shape::kShapeRankAny}));
+  }
+
+  auto x_shape_size = x_shape.size();
+  auto axis_array = axis_array_opt.value();
+  // All values of the axis are known.
+  if (!axis_array.HasUnknownValue()) {
+    std::vector<int64_t> axis_vec = axis_array.ToVector();
+    std::vector<int64_t> real_axis_vec;
+    (void)std::transform(
+      axis_vec.begin(), axis_vec.end(), std::back_inserter(real_axis_vec),
+      [&x_shape_size, &primitive](const int64_t &axis) { return CalRealAixs(axis, x_shape_size, primitive); });
+    auto out_shape = ReduceFuncCalShapeInferImpl(primitive, x_shape, real_axis_vec, keep_dims);
+    return std::make_shared<abstract::Shape>(out_shape);
+  }
+
+  // If the axis has unknown value, the reduction position will be any of the input dimensions.
+  if (!keep_dims) {
+    MS_CHECK_VALUE(x_shape.size() >= axis_array_opt->size(),
+                   CheckAndConvertUtils::FormatCheckInRangeMsg("axis size", axis_array_opt->size(), kIncludeLeft,
+                                                               {0, x_shape.size()}, primitive));
+    return std::make_shared<abstract::Shape>(ShapeVector(x_shape.size() - axis_array_opt->size(), -1));
+  }
+  auto out_shape = ShapeVector(x_shape.size(), -1);
+  for (size_t i = 0; i < axis_array.size(); ++i) {
+    if (!axis_array.IsValueUnknown(i)) {
+      auto axis = CalRealAixs(axis_array[i], x_shape_size, primitive);
+      out_shape[axis] = 1;
+    }
+  }
+  return std::make_shared<abstract::Shape>(out_shape);
+}
 }  // namespace ops
 }  // namespace mindspore

@@ -71,7 +71,7 @@ itemsize_map = {mstype.bool_: 1, mstype.int8: 1, mstype.uint8: 1,
 nan_tensor = Tensor(float('nan'), dtype=mstype.float32)
 
 
-def mean(x, axis=None, keep_dims=False):
+def mean(x, axis=None, keep_dims=False, dtype=None):
     """
     Reduces a dimension of a tensor by averaging all elements in the dimension.
 
@@ -79,6 +79,7 @@ def mean(x, axis=None, keep_dims=False):
         axis (Union[None, int, tuple(int), list(int)]): Dimensions of reduction,
             when axis is None or empty tuple, reduce all dimensions. Default: ().
         keep_dims (bool): Whether to keep the reduced dimensions. Default: False.
+        dtype (:class:`mindspore.dtype`): The desired data type of returned Tensor. Default: ``None``.
 
     Returns:
         Tensor, has the same data type as input tensor.
@@ -94,7 +95,7 @@ def mean(x, axis=None, keep_dims=False):
         >>> print(output)
         2.0
     """
-    return F.mean(x, axis, keep_dims)
+    return F.mean(x, axis, keep_dims, dtype)
 
 
 def ndimension(x):

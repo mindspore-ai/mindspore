@@ -187,3 +187,22 @@ def test_fallback_sum_with_x_unsupported_operand_type_error_2():
     with pytest.raises(TypeError) as ex:
         foo()
     assert "unsupported operand type" in str(ex.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_sum_with_x_tensor_n_default_2():
+    """
+    Feature: JIT Fallback
+    Description: Test sum() in graph mode with input x tensor and input n default.
+    Expectation: No exception.
+    """
+    @jit
+    def foo():
+        x = sum(Tensor([[1, 1], [2, 2]]))
+        return x
+    out = foo()
+    assert np.allclose(out.asnumpy(), np.array([3, 3]))

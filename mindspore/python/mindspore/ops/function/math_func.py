@@ -41,7 +41,7 @@ from mindspore.ops.auto_generate import (minimum, maximum, mul, sin, sinc, sinh,
                                          matrix_exp, sqrt, rsqrt, square, trace, nextafter, abs, acos, acosh, angle,
                                          asin, asinh, atan, atan2, atanh, ceil, equal, erf, erfc, erfinv, exp, expm1,
                                          floor, floor_divide, floor_mod, gcd, greater, greater_equal, less, less_equal,
-                                         log, log1p, neg, not_equal, pow, round, isfinite, argmax)
+                                         log, log1p, neg, not_equal, pow, round, isfinite, argmax, mean, sum_ext)
 from mindspore.nn import layer
 from mindspore._checkparam import check_is_number
 from mindspore import _checkparam as validator
@@ -6675,88 +6675,6 @@ def amax(input, axis=None, keepdims=False, *, initial=None, where=None):
     return _get_cache_prim(P.ReduceMax)(keepdims)(input, axis)
 
 
-def mean(x, axis=None, keep_dims=False):
-    r"""
-    Reduces all dimension of a tensor by averaging all elements in the dimension, by default.
-    And reduce a dimension of `x` along the specified `axis`. `keep_dims`
-    determines whether the dimensions of the output and input are the same.
-
-    Args:
-        x (Tensor[Number]): The input tensor. The dtype of the tensor to be reduced is number.
-          :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
-        axis (Union[int, tuple(int), list(int), Tensor]): The dimensions to reduce. Default: ``None`` , reduce all
-            dimensions. Only constant value is allowed. Assume the rank of `x` is r, and the value range is [-r,r).
-        keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
-                          If false, don't keep these dimensions. Default: ``False`` .
-
-    Returns:
-        Tensor, has the same data type as input tensor.
-
-        - If `axis` is None, and `keep_dims` is False,
-          the output is a 0-D tensor representing the product of all elements in the input tensor.
-        - If `axis` is int, set as 1, and `keep_dims` is False,
-          the shape of output is :math:`(x_0, x_2, ..., x_R)`.
-        - If `axis` is tuple(int), set as (1, 2), and `keep_dims` is ``False`` ,
-          the shape of output is :math:`(x_0, x_3, ..., x_R)`.
-
-    Raises:
-        TypeError: If `x` is not a Tensor.
-        TypeError: If `axis` is not one of the following: int, tuple, list or Tensor.
-        TypeError: If `keep_dims` is not a bool.
-        ValueError: If `axis` is out of range.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
-        >>> output = ops.mean(x, 1, keep_dims=True)
-        >>> result = output.shape
-        >>> print(result)
-        (3, 1, 5, 6)
-        >>> # case 1: Reduces a dimension by averaging all elements in the dimension.
-        >>> x = Tensor(np.array([[[2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2]],
-        ... [[4, 4, 4, 4, 4, 4], [5, 5, 5, 5, 5, 5], [6, 6, 6, 6, 6, 6]],
-        ... [[6, 6, 6, 6, 6, 6], [8, 8, 8, 8, 8, 8], [10, 10, 10, 10, 10, 10]]]),
-        ... mindspore.float32)
-        >>> output = ops.mean(x)
-        >>> print(output)
-        5.0
-        >>> print(output.shape)
-        ()
-        >>> # case 2: Reduces a dimension along the axis 0
-        >>> output = ops.mean(x, 0, True)
-        >>> print(output)
-        [[[4. 4. 4. 4. 4. 4.]
-          [5. 5. 5. 5. 5. 5.]
-          [6. 6. 6. 6. 6. 6.]]]
-        >>> # case 3: Reduces a dimension along the axis 1
-        >>> output = ops.mean(x, 1, True)
-        >>> print(output)
-        [[[2. 2. 2. 2. 2. 2.]]
-         [[5. 5. 5. 5. 5. 5.]]
-         [[8. 8. 8. 8. 8. 8.]]]
-        >>> # case 4: Reduces a dimension along the axis 2
-        >>> output = ops.mean(x, 2, True)
-        >>> print(output)
-        [[[ 2.]
-          [ 2.]
-          [ 2.]]
-         [[ 4.]
-          [ 5.]
-          [ 6.]]
-         [[ 6.]
-          [ 8.]
-          [10.]]]
-    """
-    if axis is None:
-        axis = ()
-    return _get_cache_prim(P.ReduceMean)(keep_dims)(x, axis)
-
-
 def prod(input, axis=None, keep_dims=False):
     r"""
     Reduces a dimension of a tensor by multiplying all elements in the dimension, by default. And also can
@@ -10068,23 +9986,7 @@ def sum(input, dim=None, keepdim=False, *, dtype=None):
          [48.]
          [54.]]]
     """
-    if not isinstance(input, Tensor):
-        raise TypeError(f"For 'sum', 'input' must be Tensor, but got{type(input)}")
-    if dim is not None and not isinstance(dim, (int, tuple, list)):
-        raise TypeError(f"For 'sum', 'dim' must be int, tuple(int), list(int) or None, but got {type(dim)}")
-    if not isinstance(keepdim, bool):
-        raise TypeError(f"For 'sum', 'keepdim' must be bool, but got {type(keepdim)}")
-
-    if input.dtype == mstype.bool_:
-        input = input.astype(mstype.int64)
-    if dtype is not None:
-        input = input.astype(dtype)
-    reduce_sum = _get_cache_prim(P.ReduceSum)(keep_dims=keepdim)
-    if dim is not None:
-        out = reduce_sum(input, dim)
-    else:
-        out = reduce_sum(input)
-    return out
+    return sum_ext(input, dim, keepdim, dtype)
 
 
 def tanhshrink(input):

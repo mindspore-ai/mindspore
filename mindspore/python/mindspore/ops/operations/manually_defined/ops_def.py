@@ -1245,6 +1245,35 @@ def _infer_value_for_Reduce(input_x, axis, keep_dims, prim_name):
     return value
 
 
+def _infer_value_for_ReduceExtand(input_x, axis, keep_dims, dtype, prim_name):
+    """Infer value for Common ReduceExtand op."""
+    value = None
+    if input_x is not None:
+        prim_map = {
+            'MeanExt': np.mean,
+            'SumExt': np.sum,
+        }
+        np_reduce_extand_func = prim_map.get(prim_name, None)
+
+        if np_reduce_extand_func is not None:
+            value = input_x.asnumpy()
+            if isinstance(axis, int):
+                pass
+            elif axis:
+                axis = tuple(set(axis))
+            else:
+                axis = tuple(range(len(value.shape)))
+            if dtype is not None:
+                np_dtype = mstype.dtype_to_nptype(typing.type_id_to_type(dtype))
+                value = np_reduce_extand_func(value, axis, dtype=np_dtype, keepdims=keep_dims)
+            else:
+                value = np_reduce_extand_func(value, axis, keepdims=keep_dims)
+
+            value = np.array(value)
+            value = Tensor(value)
+    return value
+
+
 def infer_value_for_Cast(x, dst_type_enum):
     """Infer value for Cast op."""
     if x is None:
@@ -1299,6 +1328,16 @@ def infer_value_for_ReduceAll(input_x, axis, keep_dims):
 def infer_value_for_ReduceAny(input_x, axis, keep_dims):
     """Infer value for ReduceAny op."""
     return _infer_value_for_Reduce(input_x, axis, keep_dims, 'ReduceAny')
+
+
+def infer_value_for_MeanExt(input_x, axis, keep_dims, dtype):
+    """Infer value for MeanExt op."""
+    return _infer_value_for_ReduceExtand(input_x, axis, keep_dims, dtype, 'MeanExt')
+
+
+def infer_value_for_SumExt(input_x, axis, keep_dims, dtype):
+    """Infer value for SumExt op."""
+    return _infer_value_for_ReduceExtand(input_x, axis, keep_dims, dtype, 'SumExt')
 
 
 def infer_value_for_Diag(input_x):

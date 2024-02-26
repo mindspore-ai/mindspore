@@ -13,18 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "ops/ops_func_impl/mean.h"
-#include "ops/op_utils.h"
+
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_MEAN_EXT_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_MEAN_EXT_H_
+
+#include <vector>
+#include "ops/ops_func_impl/op_func_impl.h"
 
 namespace mindspore {
 namespace ops {
-BaseShapePtr MeanFuncImpl::InferShape(const PrimitivePtr &primitive,
-                                      const std::vector<AbstractBasePtr> &input_args) const {
-  return ReduceExtInferShape(primitive, input_args);
-}
-
-TypePtr MeanFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
-  return ReduceExtInferType(primitive, input_args);
-}
+class MIND_API MeanExtFuncImpl : public OpFuncImpl {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+};
 }  // namespace ops
 }  // namespace mindspore
+
+#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_MEAN_EXT_H_
