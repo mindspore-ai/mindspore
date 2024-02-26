@@ -52,6 +52,7 @@ const AnfNodePtr StandardNormalFusionProcess(const FuncGraphPtr &, const AnfNode
 const AnfNodePtr UniformRealDtypeGe(const FuncGraphPtr &, const AnfNodePtr &);
 const AnfNodePtr TensorShapeAddDtype(const FuncGraphPtr &, const AnfNodePtr &);
 const AnfNodePtr HShrinkModifyLambd(const FuncGraphPtr &, const AnfNodePtr &);
+const AnfNodePtr ExtractVolumePatchesFormatTranspose(const FuncGraphPtr &, const AnfNodePtr &);
 
 using AddAttrToNodeImpl = const AnfNodePtr (*)(const FuncGraphPtr &, const AnfNodePtr &);
 

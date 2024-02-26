@@ -51,7 +51,6 @@ FuncGraphPtr BpropMetaFuncGraph::GenerateFuncGraph(const abstract::AbstractBaseP
 
 static const std::unordered_set<std::string> g_blacklist = {"SparseGatherV2",
                                                             "EmbeddingLookup",
-                                                            "ExtractVolumePatches",
                                                             "AffineGrid",
                                                             "ScatterAddWithAxis",
                                                             "Expand",

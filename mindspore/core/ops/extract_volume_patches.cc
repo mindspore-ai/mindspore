@@ -43,15 +43,9 @@
 namespace mindspore {
 namespace ops {
 namespace {
-constexpr size_t kIdx1 = 1;
-constexpr size_t kIdx2 = 2;
-constexpr size_t kIdx3 = 3;
-constexpr size_t kIdx4 = 4;
 abstract::ShapePtr ExtractVolumePatchesInferShape(const PrimitivePtr &primitive,
                                                   const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  const int d = 2;
-  const int w = 4;
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, 1, primitive->name());
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
@@ -60,6 +54,17 @@ abstract::ShapePtr ExtractVolumePatchesInferShape(const PrimitivePtr &primitive,
   auto x_shape = x_shape_map[kShape];
   if (IsDynamicRank(x_shape)) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>{-1, -1, -1, -1, -1});
+  }
+  size_t n_idx = 0;
+  size_t c_idx = 1;
+  size_t d_idx = 2;
+  size_t h_idx = 3;
+  size_t w_idx = 4;
+  if (primitive->HasAttr(kFormat) && GetValue<std::string>(primitive->GetAttr(kFormat)) == kOpFormat_NDHWC) {
+    c_idx = 4;
+    d_idx = 1;
+    h_idx = 2;
+    w_idx = 3;
   }
   constexpr int64_t shape_size = 5;
   (void)CheckAndConvertUtils::CheckInteger("input shape", SizeToLong(x_shape.size()), kEqual, shape_size,
@@ -79,32 +84,30 @@ abstract::ShapePtr ExtractVolumePatchesInferShape(const PrimitivePtr &primitive,
   }
   std::vector<int64_t> y_shape(shape_size);
   int64_t padding_needed = 0;
-  y_shape[0] = x_shape[0];
-  y_shape[1] = x_shape[1] == abstract::Shape::kShapeDimAny
-                 ? abstract::Shape::kShapeDimAny
-                 : x_shape[kIdx1] * kernel_size[kIdx2] * kernel_size[kIdx3] * kernel_size[kIdx4];
+  y_shape[n_idx] = x_shape[n_idx];
+  y_shape[c_idx] = x_shape[c_idx] == abstract::Shape::kShapeDimAny
+                     ? abstract::Shape::kShapeDimAny
+                     : x_shape[c_idx] * kernel_size[d_idx] * kernel_size[h_idx] * kernel_size[w_idx];
   if (padding == "VALID") {
-    for (int i = d; i <= w; ++i) {
-      y_shape[IntToSize(i)] = x_shape[IntToSize(i)] == abstract::Shape::kShapeDimAny
-                                ? abstract::Shape::kShapeDimAny
-                                : 1 + (x_shape[IntToSize(i)] - kernel_size[IntToSize(i)]) / strides[IntToSize(i)];
-      if (y_shape[IntToSize(i)] == abstract::Shape::kShapeDimAny) {
+    for (size_t i = d_idx; i <= w_idx; ++i) {
+      y_shape[i] = x_shape[i] == abstract::Shape::kShapeDimAny ? abstract::Shape::kShapeDimAny
+                                                               : 1 + (x_shape[i] - kernel_size[i]) / strides[i];
+      if (y_shape[i] == abstract::Shape::kShapeDimAny) {
         continue;
       }
       (void)CheckAndConvertUtils::CheckInteger(
         "padding = VALID, input[" + std::to_string(i) + "] - kernel_size[" + std::to_string(i) + "]",
-        x_shape[IntToSize(i)] - kernel_size[IntToSize(i)], kGreaterEqual, 0, primitive->name());
+        x_shape[i] - kernel_size[i], kGreaterEqual, 0, primitive->name());
     }
   } else {
-    for (int i = d; i <= w; ++i) {
-      y_shape[IntToSize(i)] = x_shape[IntToSize(i)] == abstract::Shape::kShapeDimAny
-                                ? abstract::Shape::kShapeDimAny
-                                : (x_shape[IntToSize(i)] + strides[IntToSize(i)] - 1) / strides[IntToSize(i)];
-      if (y_shape[IntToSize(i)] == abstract::Shape::kShapeDimAny) {
+    for (size_t i = d_idx; i <= w_idx; ++i) {
+      y_shape[i] = x_shape[i] == abstract::Shape::kShapeDimAny ? abstract::Shape::kShapeDimAny
+                                                               : (x_shape[i] + strides[i] - 1) / strides[i];
+      if (y_shape[i] == abstract::Shape::kShapeDimAny) {
         continue;
       }
-      int64_t output_size = y_shape[IntToSize(i)];
-      padding_needed = (output_size - 1) * strides[IntToSize(i)] + kernel_size[IntToSize(i)] - x_shape[IntToSize(i)];
+      int64_t output_size = y_shape[i];
+      padding_needed = (output_size - 1) * strides[i] + kernel_size[i] - x_shape[i];
       (void)CheckAndConvertUtils::CheckInteger("padding = ((input[" + std::to_string(i) + "] + strides[" +
                                                  std::to_string(i) + "] - 1) / strides[" + std::to_string(i) +
                                                  "]) - 1) * strides[" + std::to_string(i) + "] + kernel_size[" +
@@ -115,10 +118,10 @@ abstract::ShapePtr ExtractVolumePatchesInferShape(const PrimitivePtr &primitive,
   if (IsDynamic(y_shape)) {
     return std::make_shared<abstract::Shape>(y_shape);
   }
-  if (y_shape[kIdx3] != 1 || y_shape[kIdx4] != 1) {
+  if (y_shape[h_idx] != 1 || y_shape[w_idx] != 1) {
     (void)CheckAndConvertUtils::CheckInteger("input_w + pad_l + pad_r - kernel_w - stride_w",
-                                             x_shape[4] + padding_needed - kernel_size[4] - strides[4], kGreaterEqual,
-                                             0, primitive->name());
+                                             x_shape[w_idx] + padding_needed - kernel_size[w_idx] - strides[w_idx],
+                                             kGreaterEqual, 0, primitive->name());
   }
   return std::make_shared<abstract::Shape>(y_shape);
 }
