@@ -59,6 +59,17 @@ __global__ void BinaryWithBroadcastKernel(BinaryFunc<OP, In0_t, In1_t, Out_t> fu
   }
 }
 
+template <BinaryOpType OP, typename In0_t, typename In1_t, typename In2_t, typename Out_t>
+__global__ void BinaryExtWithBroadcastKernel(BinaryExtFunc<OP, In0_t, In1_t, In2_t, Out_t> func, size_t dim_size,
+                                             size_t out_num, BinaryBroadcastStrideInfo strides, In0_t *in0, In1_t *in1,
+                                             In2_t *alpha, Out_t *out) {
+  In2_t alpha_scalar = alpha[0];
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < out_num; pos += blockDim.x * gridDim.x) {
+    Vec<size_t, 2> in_pos = CalInPosByOutPos(pos, dim_size, strides);
+    out[pos] = func(in0[in_pos.data[0]], in1[in_pos.data[1]], alpha_scalar);
+  }
+}
+
 template <BinaryOpType OP, typename In0_t, typename In1_t, typename Out_t>
 __global__ void BinaryWithoutBroadcastIn0Scalar(BinaryFunc<OP, In0_t, In1_t, Out_t> func, size_t out_num, In0_t *in0,
                                                 In1_t *in1, Out_t *out) {
@@ -77,11 +88,40 @@ __global__ void BinaryWithoutBroadcastIn1Scalar(BinaryFunc<OP, In0_t, In1_t, Out
   }
 }
 
+template <BinaryOpType OP, typename In0_t, typename In1_t, typename In2_t, typename Out_t>
+__global__ void BinaryExtWithoutBroadcastIn0Scalar(BinaryExtFunc<OP, In0_t, In1_t, In2_t, Out_t> func, size_t out_num,
+                                                   In0_t *in0, In1_t *in1, In2_t *alpha, Out_t *out) {
+  In0_t in0_scalar = in0[0];
+  In2_t alpha_scalar = alpha[0];
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < out_num; pos += blockDim.x * gridDim.x) {
+    out[pos] = func(in0_scalar, in1[pos], alpha_scalar);
+  }
+}
+
+template <BinaryOpType OP, typename In0_t, typename In1_t, typename In2_t, typename Out_t>
+__global__ void BinaryExtWithoutBroadcastIn1Scalar(BinaryExtFunc<OP, In0_t, In1_t, In2_t, Out_t> func, size_t out_num,
+                                                   In0_t *in0, In1_t *in1, In2_t *alpha, Out_t *out) {
+  In1_t in1_scalar = in1[0];
+  In2_t alpha_scalar = alpha[0];
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < out_num; pos += blockDim.x * gridDim.x) {
+    out[pos] = func(in0[pos], in1_scalar, alpha_scalar);
+  }
+}
+
 template <BinaryOpType OP, typename In0_t, typename In1_t, typename Out_t>
 __global__ void BinaryWithoutBroadcastNoScalar(BinaryFunc<OP, In0_t, In1_t, Out_t> func, size_t out_num, In0_t *in0,
                                                In1_t *in1, Out_t *out) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < out_num; pos += blockDim.x * gridDim.x) {
     out[pos] = func(in0[pos], in1[pos]);
+  }
+}
+
+template <BinaryOpType OP, typename In0_t, typename In1_t, typename In2_t, typename Out_t>
+__global__ void BinaryExtWithoutBroadcastNoScalar(BinaryExtFunc<OP, In0_t, In1_t, In2_t, Out_t> func, size_t out_num,
+                                                  In0_t *in0, In1_t *in1, In2_t *alpha, Out_t *out) {
+  In2_t alpha_scalar = alpha[0];
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < out_num; pos += blockDim.x * gridDim.x) {
+    out[pos] = func(in0[pos], in1[pos], alpha_scalar);
   }
 }
 
@@ -96,6 +136,20 @@ cudaError_t BinaryWithBroadcast(BinaryFunc<OP, In0_t, In1_t, Out_t> func, size_t
   BinaryWithBroadcastKernel<OP, In0_t, In1_t, Out_t>
     <<<CUDA_BLOCKS_CAL(device_id, out_num, thread_num), thread_num, 0, cuda_stream>>>(func, dim_size, out_num, strides,
                                                                                       in0, in1, out);
+  return GetCudaStatus();
+}
+
+template <BinaryOpType OP, typename In0_t, typename In1_t, typename In2_t, typename Out_t>
+cudaError_t BinaryExtWithBroadcast(BinaryExtFunc<OP, In0_t, In1_t, In2_t, Out_t> func, size_t out_num,
+                                   const std::vector<int64_t> &in0_shape, const std::vector<int64_t> &in1_shape,
+                                   const std::vector<int64_t> &out_shape, In0_t *in0, In1_t *in1, In2_t *alpha,
+                                   Out_t *out, size_t device_id, cudaStream_t cuda_stream) {
+  const size_t dim_size = out_shape.size();
+  BinaryBroadcastStrideInfo strides = BinaryBroadcastCalStride(dim_size, in0_shape, in1_shape, out_shape);
+  size_t thread_num = out_num > kThreadsPerBlock ? kThreadsPerBlock : out_num;
+  BinaryExtWithBroadcastKernel<OP, In0_t, In1_t, In2_t, Out_t>
+    <<<CUDA_BLOCKS_CAL(device_id, out_num, thread_num), thread_num, 0, cuda_stream>>>(func, dim_size, out_num, strides,
+                                                                                      in0, in1, alpha, out);
   return GetCudaStatus();
 }
 
@@ -116,6 +170,28 @@ cudaError_t BinaryWithoutBroadcast(BinaryFunc<OP, In0_t, In1_t, Out_t> func, Sca
     } else {
       cuda::elementwise::Binary(func, out_num, out, in0, in1, cuda_stream);
     }
+  }
+  return GetCudaStatus();
+}
+
+template <BinaryOpType OP, typename In0_t, typename In1_t, typename In2_t, typename Out_t>
+cudaError_t BinaryExtWithoutBroadcast(BinaryExtFunc<OP, In0_t, In1_t, In2_t, Out_t> func, ScalarOption scalar_option,
+                                      size_t out_num, Out_t *out, In0_t *in0, In1_t *in1, In2_t *alpha,
+                                      size_t device_id, cudaStream_t cuda_stream) {
+  size_t thread_num = out_num > kThreadsPerBlock ? kThreadsPerBlock : out_num;
+
+  if (scalar_option == ScalarOption::In0Scalar) {
+    BinaryExtWithoutBroadcastIn0Scalar<OP, In0_t, In1_t, In2_t, Out_t>
+      <<<CUDA_BLOCKS_CAL(device_id, out_num, thread_num), thread_num, 0, cuda_stream>>>(func, out_num, in0, in1, alpha,
+                                                                                        out);
+  } else if (scalar_option == ScalarOption::In1Scalar) {
+    BinaryExtWithoutBroadcastIn1Scalar<OP, In0_t, In1_t, In2_t, Out_t>
+      <<<CUDA_BLOCKS_CAL(device_id, out_num, thread_num), thread_num, 0, cuda_stream>>>(func, out_num, in0, in1, alpha,
+                                                                                        out);
+  } else {
+      BinaryExtWithoutBroadcastNoScalar<OP, In0_t, In1_t, In2_t, Out_t>
+        <<<CUDA_BLOCKS_CAL(device_id, out_num, thread_num), thread_num, 0, cuda_stream>>>(func, out_num, in0, in1,
+                                                                                          alpha, out);
   }
   return GetCudaStatus();
 }
@@ -143,6 +219,32 @@ cudaError_t BinaryOpWithBroadcastCudaFunc(const bool is_broadcast, const std::ve
     }
     return BinaryWithoutBroadcast<OP, In0_t, In1_t, Out_t>(func, scalar_option, out_num, out, in0, in1, device_id,
                                                            cuda_stream);
+  }
+}
+
+template <enum BinaryOpType OP, typename In0_t, typename In1_t, typename In2_t, typename Out_t>
+cudaError_t BinaryExtOpWithBroadcastCudaFunc(const bool is_broadcast, const std::vector<int64_t> &in0_shape,
+                                             const std::vector<int64_t> &in1_shape,
+                                             const std::vector<int64_t> &out_shape, In0_t *in0, In1_t *in1,
+                                             In2_t *alpha, Out_t *out, size_t device_id, cudaStream_t cuda_stream) {
+  BinaryExtFunc<OP, In0_t, In1_t, In2_t, Out_t> func;
+  size_t out_num = 1;
+  for (auto val : out_shape) {
+    out_num *= val;
+  }
+  if (is_broadcast) {
+    return BinaryExtWithBroadcast<OP, In0_t, In1_t, In2_t, Out_t>(func, out_num, in0_shape, in1_shape, out_shape, in0,
+                                                                  in1, alpha, out, device_id, cuda_stream);
+  } else {
+    ScalarOption scalar_option = ScalarOption::NoScalar;
+    if (in0_shape.size() == 1 && in0_shape[0] == 1) {
+      scalar_option = ScalarOption::In0Scalar;
+    }
+    if (in1_shape.size() == 1 && in1_shape[0] == 1) {
+      scalar_option = ScalarOption::In1Scalar;
+    }
+    return BinaryExtWithoutBroadcast<OP, In0_t, In1_t, In2_t, Out_t>(func, scalar_option, out_num, out, in0, in1, alpha,
+                                                                     device_id, cuda_stream);
   }
 }
 
@@ -277,4 +379,31 @@ cudaError_t BinaryOpWithBroadcastCudaFunc(const bool is_broadcast, const std::ve
     const bool is_broadcast, const std::vector<int64_t> &in0_shape, const std::vector<int64_t> &in1_shape,     \
     const std::vector<int64_t> &out_shape, uint64_t *input0, uint64_t *input1, bool *output, size_t device_id, \
     cudaStream_t cuda_stream)
+
+#define REGISTER_BINARY_OP_CUDA_FUNC_TYPE_EXT_TEMPLATE(op, IN_TYPE, ALPHA_TYPE)                                     \
+  template CUDA_LIB_EXPORT cudaError_t BinaryExtOpWithBroadcastCudaFunc<op, IN_TYPE, IN_TYPE, ALPHA_TYPE, IN_TYPE>( \
+    const bool is_broadcast, const std::vector<int64_t> &in0_shape, const std::vector<int64_t> &in1_shape,          \
+    const std::vector<int64_t> &out_shape, IN_TYPE *in0, IN_TYPE *in1, ALPHA_TYPE *alpha, IN_TYPE *out,             \
+    size_t device_id, cudaStream_t cuda_stream);
+
+#define REGISTER_BINARY_OP_CUDA_FUNC_TYPE_EXT(op)                       \
+  REGISTER_BINARY_OP_CUDA_FUNC_TYPE_EXT_TEMPLATE(op, bool, int64_t)     \
+  REGISTER_BINARY_OP_CUDA_FUNC_TYPE_EXT_TEMPLATE(op, uint8_t, int64_t)  \
+  REGISTER_BINARY_OP_CUDA_FUNC_TYPE_EXT_TEMPLATE(op, uint16_t, int64_t) \
+  REGISTER_BINARY_OP_CUDA_FUNC_TYPE_EXT_TEMPLATE(op, uint32_t, int64_t) \
+  REGISTER_BINARY_OP_CUDA_FUNC_TYPE_EXT_TEMPLATE(op, uint64_t, int64_t) \
+  REGISTER_BINARY_OP_CUDA_FUNC_TYPE_EXT_TEMPLATE(op, int8_t, int64_t)   \
+  REGISTER_BINARY_OP_CUDA_FUNC_TYPE_EXT_TEMPLATE(op, int16_t, int64_t)  \
+  REGISTER_BINARY_OP_CUDA_FUNC_TYPE_EXT_TEMPLATE(op, int32_t, int64_t)  \
+  REGISTER_BINARY_OP_CUDA_FUNC_TYPE_EXT_TEMPLATE(op, int64_t, int64_t)  \
+  REGISTER_BINARY_OP_CUDA_FUNC_TYPE_EXT_TEMPLATE(op, half, float)       \
+  REGISTER_BINARY_OP_CUDA_FUNC_TYPE_EXT_TEMPLATE(op, float, float)      \
+  REGISTER_BINARY_OP_CUDA_FUNC_TYPE_EXT_TEMPLATE(op, double, float) \
+  REGISTER_BINARY_OP_CUDA_FUNC_TYPE_EXT_TEMPLATE(op, half, int64_t)       \
+  REGISTER_BINARY_OP_CUDA_FUNC_TYPE_EXT_TEMPLATE(op, float, int64_t)      \
+  REGISTER_BINARY_OP_CUDA_FUNC_TYPE_EXT_TEMPLATE(op, double, int64_t) \
+  REGISTER_BINARY_OP_CUDA_FUNC_TYPE_EXT_TEMPLATE(op, Complex<float>, int64_t)       \
+  REGISTER_BINARY_OP_CUDA_FUNC_TYPE_EXT_TEMPLATE(op, Complex<double>, int64_t)      \
+  REGISTER_BINARY_OP_CUDA_FUNC_TYPE_EXT_TEMPLATE(op, Complex<float>, float)       \
+  REGISTER_BINARY_OP_CUDA_FUNC_TYPE_EXT_TEMPLATE(op, Complex<double>, float)
 #endif

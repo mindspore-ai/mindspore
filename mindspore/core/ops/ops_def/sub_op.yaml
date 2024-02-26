@@ -1,14 +1,14 @@
-#operator add
-add:
+#operator sub
+sub:
   args:
-    input:
+    x:
       dtype: tensor
       type_cast: number
-    other:
+    y:
       dtype: tensor
       type_cast: number
   args_signature:
-    dtype_group: (input, other)
+    dtype_group: (x, y)
   returns:
     output:
       dtype: tensor

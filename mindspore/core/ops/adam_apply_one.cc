@@ -34,11 +34,12 @@
 #include "utils/log_adapter.h"
 #include "ops/op_utils.h"
 #include "ops/ops_func_impl/mul.h"
-#include "ops/sub.h"
 #include "ops/ops_func_impl/real_div.h"
 #include "ops/ops_func_impl/add.h"
+#include "ops/ops_func_impl/sub.h"
 #include "ops/ops_func_impl/sqrt.h"
 #include "ops/nn_optimizer_ops.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {
@@ -48,6 +49,13 @@ auto AddInfer = [](const abstract::AnalysisEnginePtr &, const PrimitivePtr &prim
                    const AbstractBasePtrList &input_args) {
   auto add_op = AddFuncImpl();
   return abstract::MakeAbstract(add_op.InferShape(primitive, input_args), add_op.InferType(primitive, input_args));
+};
+
+// Apply ops will have a refractor and sub_infer is just a temp modify
+auto SubInfer = [](const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                   const AbstractBasePtrList &input_args) {
+  auto sub_op = AddFuncImpl();
+  return abstract::MakeAbstract(sub_op.InferShape(primitive, input_args), sub_op.InferType(primitive, input_args));
 };
 
 auto SqrtInfer = [](const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

@@ -425,6 +425,14 @@ inline aclScalar *ConvertType(const ScalarPtr &value) {
     converter.ConvertValue(value, AttrDeclType<float>(), &acl_scalar);
   } else if (value->isa<Int32Imm>()) {
     converter.ConvertValue(value, AttrDeclType<int32_t>(), &acl_scalar);
+  } else if (value->isa<Int8Imm>()) {
+    converter.ConvertValue(value, AttrDeclType<int8_t>(), &acl_scalar);
+  } else if (value->isa<Int16Imm>()) {
+    converter.ConvertValue(value, AttrDeclType<int16_t>(), &acl_scalar);
+  } else if (value->isa<UInt8Imm>()) {
+    converter.ConvertValue(value, AttrDeclType<uint8_t>(), &acl_scalar);
+  } else if (value->isa<FP64Imm>()) {
+    converter.ConvertValue(value, AttrDeclType<double>(), &acl_scalar);
   } else {
     MS_LOG(EXCEPTION) << "Currently not support value: " << value->ToString();
   }
@@ -581,6 +589,10 @@ void ReleaseConvertTypes(const Tuple &t) {
     }                                                                       \
     case kNumberTypeBool: {                                                 \
       out = std::make_shared<BoolImm>(static_cast<bool>(num));              \
+      break;                                                                \
+    }                                                                       \
+    case kNumberTypeUInt8: {                                                \
+      out = std::make_shared<UInt8Imm>(static_cast<uint8_t>(num));          \
       break;                                                                \
     }                                                                       \
     default: {                                                              \
