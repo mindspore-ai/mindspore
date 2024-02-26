@@ -23,11 +23,16 @@
 #include "ir/value.h"
 #include "ops/sequence_ops.h"
 #include "pipeline/jit/ps/parse/parse_base.h"
+#include "pipeline/jit/ps/parse/parse.h"
 
 namespace mindspore {
 class FuncGraphBuilder {
  public:
-  FuncGraphBuilder() : graph_(std::make_shared<FuncGraph>()) {}
+  explicit FuncGraphBuilder(bool is_top = false) : graph_(std::make_shared<FuncGraph>()) {
+    if (is_top) {
+      parse::Parser::UpdateTopFuncGraph(graph_);
+    }
+  }
   virtual ~FuncGraphBuilder() { py_obj_to_node_.clear(); }
 
   /// \brief Add an input parameter to the graph.
@@ -66,7 +71,7 @@ class FuncGraphBuilder {
   /// \param[in] output_obj The output python object.
   ///
   /// \return Return true if the output object can be used as the output of the graph.
-  bool AddOutput(const py::object &output_obj, bool add_repeat=true);
+  bool AddOutput(const py::object &output_obj, bool add_repeat = true);
 
   /// \brief Remove an output node of the graph.
   ///
@@ -123,6 +128,8 @@ class FuncGraphBuilder {
   static bool CheckCallable(const ValuePtr &value, const AbstractBasePtr &abs);
 
   static bool CheckGraphOutput(const AbstractBasePtr &abs);
+
+  AnfNodePtr ConvertInputObjToNode(const py::object &input_obj);
 
   py::object AddFgCallNode(const FuncGraphPtr &fg, const std::vector<py::object> &inputs_obj);
 

@@ -185,6 +185,22 @@ py::object FuncGraphBuilder::ConvertToPyObj(const AbstractBasePtr &abs) {
   return ConvertToPythonTensor(py_obj);
 }
 
+AnfNodePtr FuncGraphBuilder::ConvertInputObjToNode(const py::object &input_obj) {
+  if (py::hasattr(input_obj, "__parameter__") && py::isinstance<tensor::MetaTensor>(input_obj)) {
+    // Add the fv parameter and set its abstract.
+    return parse::ResolveParameterObj(graph_, input_obj);
+  }
+  auto val = ConvertPyObjToValue(input_obj);
+  if (val == nullptr) {
+    MS_LOG(ERROR) << "The input object " << py::str(input_obj) << " convert to value failed.";
+    return nullptr;
+  }
+  // Constant value input scene, the object should be converted to value node.
+  auto node = NewValueNode(val);
+  node->set_abstract(val->ToAbstract());
+  return node;
+}
+
 AbstractBasePtr FuncGraphBuilder::EvalValue(const ValuePtr &value, const AbstractBasePtrList &inputs_abs_list) {
   if (value == nullptr) {
     return nullptr;
@@ -247,6 +263,9 @@ py::object FuncGraphBuilder::AddInput(const py::object &obj) {
   }
   auto para = graph_->add_parameter();
   para->set_abstract(abs);
+  if (parse::Parser::GetTopFuncGraph() == graph_) {
+    para->set_is_top_graph_param(true);
+  }
   (void)py_obj_to_node_.emplace(obj.ptr(), para);
   para->set_user_data(kPiJitPyObjKey, std::make_shared<py::object>(obj));
   return obj;
@@ -276,22 +295,22 @@ bool FuncGraphBuilder::GetInputNodesAndAbstracts(const ValuePtr &callable_value,
 
   (void)input_node_list->emplace_back(NewValueNode(callable_value));
   for (const auto &input_obj : inputs_obj) {
+    if (input_obj.ptr() == nullptr) {
+      MS_LOG(ERROR) << "The input python object of " << callable_value->ToString() << ", is NULL";
+      return false;
+    }
     auto iter = py_obj_to_node_.find(input_obj.ptr());
     if (iter == py_obj_to_node_.end()) {
-      auto val = ConvertPyObjToValue(input_obj);
-      if (val == nullptr) {
-        MS_LOG(ERROR) << "The input object " << py::str(input_obj) << " convert to value failed.";
+      auto node = ConvertInputObjToNode(input_obj);
+      if (node == nullptr) {
+        MS_LOG(ERROR) << "Convert input python object " << py::str(input_obj) << " to anf node failed.";
         return false;
       }
-      // Constant value input scene, the object should be converted to value node.
-      auto node = NewValueNode(val);
-      auto abs = val->ToAbstract();
-      node->set_abstract(abs);
       node->set_user_data(kPiJitPyObjKey, std::make_shared<py::object>(input_obj));
       (void)py_obj_to_node_.emplace(input_obj.ptr(), node);
       (void)input_node_list->emplace_back(node);
-      (void)input_abs_list->emplace_back(abs);
-      MS_LOG(DEBUG) << "Add constant python input " << py::str(input_obj) << " with node " << node->DebugString();
+      (void)input_abs_list->emplace_back(node->abstract());
+      MS_LOG(DEBUG) << "Add python input " << py::str(input_obj) << " with new node " << node->DebugString();
     } else {
       (void)input_node_list->emplace_back(iter->second);
       (void)input_abs_list->emplace_back(iter->second->abstract());
@@ -328,7 +347,7 @@ py::object FuncGraphBuilder::TryToAddNode(const ValuePtr &callable_value, const 
     return py::object();
   }
 
-  auto new_node = graph_->NewCNode(input_node_list);
+  auto new_node = graph_->NewCNodeInOrder(input_node_list);
   // Return the converted python object.
   py::object output_py_obj;
   if (abs->isa<abstract::FuncGraphAbstractClosure>()) {
@@ -438,7 +457,7 @@ FuncGraphPtr FuncGraphBuilder::graph() {
   AbstractBasePtrList abstract_list;
   (void)std::transform(output_nodes_.begin() + 1, output_nodes_.end(), std::back_inserter(abstract_list),
                        [](const AnfNodePtr &node) -> AbstractBasePtr { return node->abstract(); });
-  auto output_node = graph_->NewCNode(output_nodes_);
+  auto output_node = graph_->NewCNodeInOrder(output_nodes_);
   auto fg_output_abs = std::make_shared<abstract::AbstractTuple>(abstract_list);
   output_node->set_abstract(fg_output_abs);
 
@@ -471,15 +490,12 @@ py::object FuncGraphBuilder::AddFgCallNode(const FuncGraphPtr &fg, const vector<
   for (const auto &input_obj : inputs_obj) {
     auto iter = py_obj_to_node_.find(input_obj.ptr());
     if (iter == py_obj_to_node_.end()) {
-      auto val = ConvertPyObjToValue(input_obj);
-      if (val == nullptr) {
-        MS_LOG(ERROR) << "The input object " << py::str(input_obj) << " convert to value failed.";
+      auto node = ConvertInputObjToNode(input_obj);
+      if (node == nullptr) {
+        MS_LOG(ERROR) << "Convert input python object " << py::str(input_obj) << " to anf node failed.";
         return py::object();
       }
-      // Constant value input scene, the object should be converted to value node.
-      auto node = NewValueNode(val);
-      auto abs = val->ToAbstract();
-      node->set_abstract(abs);
+      node->set_user_data(kPiJitPyObjKey, std::make_shared<py::object>(input_obj));
       (void)py_obj_to_node_.emplace(input_obj.ptr(), node);
       (void)input_node_list.emplace_back(node);
       MS_LOG(DEBUG) << "Add constant python input " << py::str(input_obj) << " with node " << node->DebugString();
@@ -488,7 +504,7 @@ py::object FuncGraphBuilder::AddFgCallNode(const FuncGraphPtr &fg, const vector<
     }
   }
 
-  auto new_node = graph_->NewCNode(input_node_list);
+  auto new_node = graph_->NewCNodeInOrder(input_node_list);
   auto fg_output = fg->output();
   MS_EXCEPTION_IF_NULL(fg_output);
   auto fg_output_abs = fg_output->abstract();
