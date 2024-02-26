@@ -78,7 +78,7 @@ class BACKEND_EXPORT KernelRuntime {
 
   virtual void ClearGraphRuntimeResource(uint32_t graph_id);
   virtual bool SyncStream() = 0;
-  virtual bool MemcpyAsync(void *dst, const void *src, uint64_t size, int32_t kind) = 0;
+  virtual bool MemcpyAsync(void *dst, const void *src, uint64_t size, int32_t kind, void *stream) = 0;
   virtual void ClearGlobalIdleMem() {}
   virtual void CreateContext() {}
   virtual void SetContext() {}

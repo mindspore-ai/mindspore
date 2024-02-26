@@ -1,0 +1,16 @@
+#operator select
+select:
+    args:
+        cond:
+            dtype: tensor
+        x:
+            dtype: tensor
+        y:
+            dtype: tensor
+    args_signature:
+        dtype_group: (x, y)
+    returns:
+        output:
+            dtype: tensor
+    function:
+        disable: True

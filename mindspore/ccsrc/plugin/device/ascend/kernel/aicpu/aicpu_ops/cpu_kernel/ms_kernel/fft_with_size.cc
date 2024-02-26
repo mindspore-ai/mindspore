@@ -58,7 +58,7 @@ uint32_t FFTWithSizeCpuKernel::Compute(CpuKernelContext &ctx) {
   AttrValue *attr2 = ctx.GetAttr("inverse");
   bool inverse = attr2->GetBool();
   AttrValue *attr = ctx.GetAttr("signal_sizes");
-  std::vector<int64_t> checked_signal_size = attr->GetListInt();
+  std::vector<int64_t> checked_signal_size = attr ? attr->GetListInt() : std::vector<int64_t>();
   AttrValue *attr3 = ctx.GetAttr("norm");
   std::string normalized = attr3->GetString();
   AttrValue *attr4 = ctx.GetAttr("onesided");

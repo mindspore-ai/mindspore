@@ -602,30 +602,45 @@ void TrainSession::CompileEvalOutputs() {
   eval_output_tensor_map_.clear();
   eval_output_tensor_names_.clear();
   for (auto kernel : this->train_kernels_) {
-    if (IsLossKernel(kernel) && !(IsGradKernel(kernel))) {
-      for (auto in_kernel : kernel->in_kernels()) {
-        if (IsLossKernel(in_kernel) || IsGradKernel(in_kernel)) continue;
-        bool is_loss = false;
-        for (auto in_in_kernel : in_kernel->in_kernels()) {
-          if (IsLossKernel(in_in_kernel)) is_loss = true;
+    if (!IsLossKernel(kernel) || IsGradKernel(kernel)) {
+      continue;
+    }
+    // if LossKernel and not GradKernel, deal with outputs
+    for (auto in_kernel : kernel->in_kernels()) {
+      bool is_loss = IsLossInKernel(in_kernel);
+      if (is_loss) {
+        continue;
+      }
+      // insert if not already in
+      auto out_tensors = TSFindTensors(in_kernel, kernel);
+      if (eval_output_node_map_.find(in_kernel->name()) != eval_output_node_map_.end()) {
+        auto exist_out_tensors = eval_output_node_map_[in_kernel->name()];
+        auto kernel_all_out_tensors = in_kernel->out_tensors();
+        eval_output_node_map_[in_kernel->name()] = {};
+        for (auto tensor : kernel_all_out_tensors) {
+          if (std::find(out_tensors.begin(), out_tensors.end(), tensor) != out_tensors.end() ||
+              std::find(exist_out_tensors.begin(), exist_out_tensors.end(), tensor) != exist_out_tensors.end()) {
+            eval_output_node_map_[in_kernel->name()].emplace_back(tensor);
+          }
         }
-        if (is_loss) continue;
-        // insert if not already in
-        if (eval_output_node_map_.find(in_kernel->name()) == eval_output_node_map_.end()) {
-          auto *ms_tensor = in_kernel->out_tensors().at(0);
-          if (ms_tensor != nullptr) {
-            ms_tensor->set_init_ref_count(ms_tensor->init_ref_count() + 1);
-            eval_output_node_map_[in_kernel->name()].emplace_back(ms_tensor);
-            auto index = TSFindTensor(tensors_, ms_tensor);
-            if (index != tensors_.size()) {
-              if (!ms_tensor->tensor_name().empty()) {
-                eval_output_tensor_map_.insert(std::make_pair(ms_tensor->tensor_name(), ms_tensor));
-                eval_output_tensor_names_.emplace_back(ms_tensor->tensor_name());
-              } else {
-                eval_output_tensor_map_.insert(std::make_pair(std::to_string(index), ms_tensor));
-                eval_output_tensor_names_.emplace_back(std::to_string(index));
-              }
-            }
+      } else {
+        eval_output_node_map_[in_kernel->name()] = out_tensors;
+      }
+      for (auto out_tensor : out_tensors) {
+        auto index = TSFindTensor(tensors_, out_tensor);
+        if (std::find(eval_output_tensor_names_.begin(), eval_output_tensor_names_.end(), out_tensor->tensor_name()) !=
+              eval_output_tensor_names_.end() ||
+            std::find(eval_output_tensor_names_.begin(), eval_output_tensor_names_.end(), std::to_string(index)) !=
+              eval_output_tensor_names_.end()) {
+          continue;
+        }
+        if (index != tensors_.size()) {
+          if (!out_tensor->tensor_name().empty()) {
+            eval_output_tensor_map_.insert(std::make_pair(out_tensor->tensor_name(), out_tensor));
+            eval_output_tensor_names_.emplace_back(out_tensor->tensor_name());
+          } else {
+            eval_output_tensor_map_.insert(std::make_pair(std::to_string(index), out_tensor));
+            eval_output_tensor_names_.emplace_back(std::to_string(index));
           }
         }
       }
@@ -1051,6 +1066,18 @@ int TrainSession::OptimizerStep() {
   return RET_OK;
 }
 
+bool TrainSession::IsLossInKernel(const kernel::KernelExec *kernel) const {
+  if (IsLossKernel(kernel) || IsGradKernel(kernel)) {
+    return true;
+  }
+  for (auto in_kernel : kernel->in_kernels()) {
+    if (IsLossKernel(in_kernel)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 bool TrainSession::IsLossKernel(const kernel::KernelExec *kernel) const {
   bool isLoss = false;
   for (auto &s : cfg_.loss_name_) {
@@ -1298,16 +1325,14 @@ int TrainSession::ExportWeightsCollaborateWithMicro(const std::string &file_name
   MS_CHECK_FALSE_MSG(format != FT_FLATBUFFERS, RET_ERROR, "File name cannot be empty");
   MS_CHECK_FALSE_MSG(model_type != mindspore::lite::MT_INFERENCE, RET_ERROR,
                      "Currently, can only export inference-model's weights.");
-  int status = Eval();
-  TRAIN_SESSION_CHECK_FALSE_MSG(status != RET_OK, status, "Eval failed");
 
   TrainExport texport(file_name);
-  status = texport.ExportInit(model_.get()->graph_.name_, model_.get()->graph_.version_);
+  auto status = texport.ExportInit(model_.get()->graph_.name_, model_.get()->graph_.version_);
   TRAIN_SESSION_CHECK_FALSE_MSG(status != RET_OK, status, "Fail to init export");
   // Find and prepare a list of kernels which are const folded
   MS_CHECK_TRUE_MSG(FindConstFoldedKernels() == RET_OK, RET_ERROR, "FindConstFoldedKernels failed.");
   status = texport.ExportNet(const_fold_kernels_, tensors_, const_output_tensors_, eval_output_tensor_names_,
-                             model_.get(), QT_NONE);
+                             model_.get(), QT_DEFAULT);
   TRAIN_SESSION_CHECK_FALSE_MSG(status != RET_OK, status, "Fail to export Network.");
   status = texport.TrainModelDrop();
   TRAIN_SESSION_CHECK_FALSE_MSG(status != RET_OK, status, "TrainModelDrop failed.");

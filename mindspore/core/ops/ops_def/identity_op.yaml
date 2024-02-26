@@ -9,5 +9,7 @@ identity:
   function:
     name: deepcopy
   dispatch:
-    enable: False
+    enable: True
     Ascend: IdentityAscend
+    CPU: IdentityCPU
+    GPU: IdentityGPU

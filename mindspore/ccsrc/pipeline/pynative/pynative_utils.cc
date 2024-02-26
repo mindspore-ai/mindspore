@@ -1386,6 +1386,18 @@ void PyBoost::UpdateOpRunInfo(const kernel::pyboost::OpPtr &op, const vector<Val
   }
 }
 
+void PyBoost::DataSyncForGraph(const kernel::pyboost::OpPtr &op) {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode) {
+    // If execution mode is Graph Mode in MsContext, the tensor will be the input of graph which will execute in Graph
+    // Mode, if the graph contain no CNode after optimization, the tensor need sync to host.
+    for (const auto &output : op->outputs()) {
+      output->data_sync(true);
+    }
+  }
+}
+
 PrimitivePtr PyBoost::ConvertPrimitive(const py::object &obj) {
   const auto &adapter = obj.cast<PrimitivePyAdapterPtr>();
   MS_EXCEPTION_IF_NULL(adapter);

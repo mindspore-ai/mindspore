@@ -23,6 +23,7 @@
 namespace ge {
 
 ONE_IN_ONE_OUT_INFER(CheckNumerics, x, y);
+ONE_IN_ONE_OUT_INFER(MatrixBandPart, x, output);
 
 // ----------------Expand Begin-------------------
 template <typename T>
@@ -357,6 +358,25 @@ IMPLEMT_COMMON_INFERFUNC(HammingWindowInferShape) {
 CUST_COMMON_INFER_FUNC_REG(HammingWindow, HammingWindowInferShape);
 // ----------------HammingWindow End---------------------
 
+// ----------------Padding Begin-------------------
+CUST_IMPLEMT_INFERFUNC(Padding, PaddingInferShape) {
+  int64_t pad_dim_size{0};
+  RETURN_IF_FAILURE(op.GetAttr("pad_dim_size", pad_dim_size));
+  auto x_desc = op.GetInputDescByName("x");
+  auto x_dtype = x_desc.GetDataType();
+  auto x_shape = x_desc.GetShape().GetDims();
+  RETURN_IF_FALSE(x_shape.size() > 0, op, "Input can't be scalar.");
+  x_shape.back() = pad_dim_size;
+
+  auto out_desc = op.GetOutputDescByName("y");
+  out_desc.SetDataType(x_dtype);
+  out_desc.SetShape(Shape(x_shape));
+
+  return op.UpdateOutputDesc("y", out_desc);
+}
+CUST_INFER_FUNC_REG(Padding, PaddingInferShape);
+// ----------------MvlgammaGrad END---------------------
+
 // ----------------Mvlgamma Begin-------------------
 CUST_IMPLEMT_INFERFUNC(Mvlgamma, MvlgammaInferShape) {
   const char *op_name = "Mvlgamma";
@@ -542,4 +562,60 @@ IMPLEMT_INFERFUNC(UnravelIndex, UnravelIndexInfer) {
 
 INFER_FUNC_REG(UnravelIndex, UnravelIndexInfer);
 // ----------------UnravelIndex END-----------------------
+
+// ----------------AffineGrid-----------------------
+template <typename T>
+void CalcOutputShape(const Tensor &output_size_tensor, int64_t theta_second_dim, vector<int64_t> &output_shape) {
+  auto size_data = reinterpret_cast<const T *>(output_size_tensor.GetData());
+  int64_t temp = 1;
+  for (int i = 0; i < theta_second_dim; i++) {
+    temp = static_cast<int64_t>(size_data[i + 2]);
+    output_shape.push_back(temp);
+  }
+}
+
+CUST_IMPLEMT_INFERFUNC(AffineGrid, AffineGridInfer) {
+  int64_t theta_second_dim = op.GetInputDesc(0).GetShape().GetDim(1);
+
+  vector<int64_t> output_shape;
+  int64_t batch_dim = op.GetInputDesc(0).GetShape().GetDim(0);
+  output_shape.push_back(batch_dim);
+
+  Tensor output_size_tensor;
+  SetOpInferDepends(op, {"output_size"});
+  TensorDesc output_desc = op.GetOutputDescByName("output");
+  if (op.GetInputConstData("output_size", output_size_tensor) == GRAPH_SUCCESS) {
+    auto size_type = op.GetInputDesc(1).GetDataType();
+    if (size_type == DT_INT32) {
+      CalcOutputShape<int32_t>(output_size_tensor, theta_second_dim, output_shape);
+    } else {
+      CalcOutputShape<int64_t>(output_size_tensor, theta_second_dim, output_shape);
+    }
+  } else {
+    int64_t temp = -1;
+    for (int i = 0; i < theta_second_dim; i++) {
+      output_shape.push_back(temp);
+    }
+  }
+  output_shape.push_back(theta_second_dim);
+
+  auto theta_dtype = op.GetInputDesc(0).GetDataType();
+
+  TensorDesc theta_desc = op.GetInputDescByName("theta");
+  theta_desc.SetFormat(ge::FORMAT_ND);
+  (void)op.UpdateInputDesc("theta", theta_desc);
+
+  TensorDesc outsize_desc = op.GetInputDescByName("output_size");
+  outsize_desc.SetFormat(ge::FORMAT_ND);
+  (void)op.UpdateInputDesc("output_size", outsize_desc);
+
+  output_desc.SetShape(ge::Shape(output_shape));
+  output_desc.SetDataType(theta_dtype);
+  output_desc.SetOriginFormat(ge::FORMAT_ND);
+  output_desc.SetFormat(ge::FORMAT_ND);
+  return op.UpdateOutputDesc("output", output_desc);
+}
+
+CUST_INFER_FUNC_REG(AffineGrid, AffineGridInfer);
+// ----------------AffineGrid END-----------------------
 }  // namespace ge

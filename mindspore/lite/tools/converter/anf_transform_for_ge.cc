@@ -47,6 +47,7 @@
 #include "tools/optimizer/graph/make_list_pass.h"
 #include "tools/optimizer/graph/kvcache_quant_pass.h"
 #include "tools/optimizer/fusion/flash_attention_antiquant_fusion.h"
+#include "tools/optimizer/graph/concat_op_pass.h"
 
 namespace mindspore::lite {
 void EnableKVCacheFusion(std::vector<opt::PassPtr> *fusions) {
@@ -92,7 +93,6 @@ int AnfTransformForGe::RunGeFusionPass(const FuncGraphPtr &old_graph, const std:
     MS_LOG(INFO) << "using all fusion";
     EnableFlashAttentionFusion(&fusions);
     EnableKVCacheFusion(&fusions);
-    EnableMatMulAllReduceFusion(&fusions);
     EnableFlashAttentionAntiquantFusion(&fusions);
     // MatMulAllReduce has performance degradation in incremental inference scenarios,
     // and is not controlled by "All" temporarily.
@@ -113,7 +113,8 @@ int AnfTransformForGe::RunGeFusionPass(const FuncGraphPtr &old_graph, const std:
   if (param->chip_name == "910b") {
     fusions.push_back(std::make_shared<opt::KVCacheQuantPass>());
   }
-
+  // concat_op_pass must be executed after kvcache pass, because some pass will create concat node
+  fusions.push_back(std::make_shared<opt::ConcatOpPass>());
   for (size_t index = 0; index < fusions.size(); index++) {
     auto pass_ptr = fusions.at(index);
     MS_CHECK_TRUE_RET(pass_ptr != nullptr, RET_ERROR);

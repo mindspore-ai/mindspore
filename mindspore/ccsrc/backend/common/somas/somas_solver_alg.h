@@ -165,7 +165,7 @@ class FootPrint : public std::enable_shared_from_this<FootPrint> {
   void Destroy();
   const size_t getOffset() const { return m_offset_; }
   void setOffset(const size_t &offset) { m_offset_ = offset; }
-  bool findOffset(const std::vector<DynamicBitSet> *constraints, const BlockTensor &block, size_t *offset);
+  bool findOffset(const std::vector<VectorBitSet> *constraints, const BlockTensor &block, size_t *offset);
   bool findFirst(vector<Interval> *interval_v, const BlockTensor &block, size_t *offset);
   size_t Result();
   void printStats();
@@ -188,7 +188,7 @@ class FastHeuristic {
   void setAlignment(const size_t &a) { m_alignment_ = a; }
   void Destroy();
   bool Eval(vector<BlockTensor> *block_tensors_v, const std::shared_ptr<FootPrint> &foot_print,
-            const std::vector<DynamicBitSet> *pConstraints);
+            const std::vector<VectorBitSet> *pConstraints);
 
  private:
   size_t m_alignment_;

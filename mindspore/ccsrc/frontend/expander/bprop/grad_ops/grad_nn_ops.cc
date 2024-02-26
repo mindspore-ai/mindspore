@@ -457,12 +457,15 @@ REG_BPROP_BUILDER("LRN").SetBody(BODYFUNC(ib) {
 });
 
 REG_BPROP_BUILDER("Dropout").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
+  auto keep_prob = ib->GetInput(kIndex1);
+  auto seed0 = ib->GetInput(kIndex2);
+  auto seed1 = ib->GetInput(kIndex3);
   auto out = ib->GetInput(kIndex4);
   auto dout = ib->GetInput(kIndex5);
   auto mask = ib->TupleGetItem(out, 1);
   auto dy = ib->TupleGetItem(dout, 0);
   auto dx = ib->Emit(kDropoutGradOpName, {dy, mask}, {{"keep_prob", ib->GetInput(kIndex1)->BuildValue()}});
-  return {dx};
+  return {dx, ib->OutZeros(keep_prob), ib->OutZeros(seed0), ib->OutZeros(seed1)};
 });
 
 REG_BPROP_BUILDER("BinaryCrossEntropy").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
@@ -639,6 +642,29 @@ REG_BPROP_BUILDER("LayerNorm").SetUnusedInputs({i2, i5}).SetBody(BODYFUNC(ib) {
   attrs.push_back(std::make_pair("epsilon", epsilon->BuildValue()));
   auto result = ib->Emit("LayerNormGrad",
                          {x, ib->TupleGetItem(dout, 0), ib->TupleGetItem(out, 2), ib->TupleGetItem(out, 1), gamma,
+                          begin_norm_axis, begin_params_axis},
+                         attrs);
+  auto d_x = ib->TupleGetItem(result, 0);
+  auto d_gamma = ib->TupleGetItem(result, 1);
+  auto d_beta = ib->TupleGetItem(result, 2);
+  auto grad_begin_norm_axis = ib->OutZeros(begin_norm_axis);
+  auto grad_begin_params_axis = ib->OutZeros(begin_params_axis);
+  auto grad_epsilon = ib->OutZeros(epsilon);
+  return {d_x, d_gamma, d_beta, grad_begin_norm_axis, grad_begin_params_axis, grad_epsilon};
+});
+
+REG_BPROP_BUILDER("LayerNormV3").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto gamma = ib->GetInput(kIndex1);
+  auto begin_norm_axis = ib->GetInput(kIndex3);
+  auto begin_params_axis = ib->GetInput(kIndex4);
+  auto epsilon = ib->GetInput(kIndex5);
+  auto out = ib->GetInput(kIndex6);
+  auto dout = ib->GetInput(kIndex7);
+  DAttr attrs;
+  attrs.push_back(std::make_pair("epsilon", epsilon->BuildValue()));
+  auto result = ib->Emit("LayerNormGradV3",
+                         {ib->TupleGetItem(dout, 0), x, ib->TupleGetItem(out, 2), ib->TupleGetItem(out, 1), gamma,
                           begin_norm_axis, begin_params_axis},
                          attrs);
   auto d_x = ib->TupleGetItem(result, 0);
@@ -2053,21 +2079,21 @@ REG_BPROP_BUILDER("FlashAttentionScore").SetBody((BODYFUNC(ib) {
   auto query = ib->GetInput(kIndex0);
   auto key = ib->GetInput(kIndex1);
   auto value = ib->GetInput(kIndex2);
-  auto attn_mask = ib->GetInput(kIndex3);
+  auto pse_shift = ib->GetInput(kIndex3);
   auto drop_mask = ib->GetInput(kIndex4);
-  auto pse_shift = ib->GetInput(kIndex5);
-  auto padding_mask = ib->GetInput(kIndex6);
+  auto padding_mask = ib->GetInput(kIndex5);
+  auto attn_mask = ib->GetInput(kIndex6);
   auto prefix = ib->GetInput(kIndex7);
   auto out = ib->GetInput(kIndex8);
-  auto attention_out = ib->TupleGetItem(out, kIndex0);
-  auto softmax_max = ib->TupleGetItem(out, kIndex1);
-  auto softmax_sum = ib->TupleGetItem(out, kIndex2);
-  auto softmax_out = ib->EmitValue(kNone);
+  auto softmax_max = ib->TupleGetItem(out, kIndex0);
+  auto softmax_sum = ib->TupleGetItem(out, kIndex1);
+  auto softmax_out = ib->TupleGetItem(out, kIndex2);
+  auto attention_out = ib->TupleGetItem(out, kIndex3);
   auto dout = ib->GetInput(kIndex9);
-  auto d_attention_out = ib->TupleGetItem(dout, kIndex0);
+  auto d_attention_out = ib->TupleGetItem(dout, kIndex3);
   auto grad = ib->Emit("FlashAttentionScoreGrad",
-                       {query, key, value, attn_mask, attention_out, softmax_max, softmax_sum, d_attention_out,
-                        drop_mask, pse_shift, padding_mask, softmax_out, prefix},
+                       {query, key, value, d_attention_out, pse_shift, drop_mask, padding_mask, attn_mask, softmax_max,
+                        softmax_sum, softmax_out, attention_out, prefix},
                        {
                          {"head_num", ib->GetAttr("head_num")},
                          {"keep_prob", ib->GetAttr("keep_prob")},
@@ -2081,12 +2107,12 @@ REG_BPROP_BUILDER("FlashAttentionScore").SetBody((BODYFUNC(ib) {
   auto g_query = ib->TupleGetItem(grad, kIndex0);
   auto g_key = ib->TupleGetItem(grad, kIndex1);
   auto g_value = ib->TupleGetItem(grad, kIndex2);
-  auto g_attn_mask = ib->ZerosLike(attn_mask);
+  auto g_pse_shift = ib->TupleGetItem(grad, kIndex3);
   auto g_drop_mask = ib->ZerosLike(drop_mask);
-  auto g_pse_shift = ib->ZerosLike(pse_shift);
   auto g_padding_mask = ib->ZerosLike(padding_mask);
+  auto g_attn_mask = ib->ZerosLike(attn_mask);
   auto g_prefix = ib->ZerosLike(prefix);
-  return {g_query, g_key, g_value, g_attn_mask, g_drop_mask, g_pse_shift, g_padding_mask, g_prefix};
+  return {g_query, g_key, g_value, g_pse_shift, g_drop_mask, g_padding_mask, g_attn_mask, g_prefix};
 }));
 
 REG_BPROP_BUILDER("RmsNorm").SetBody((BODYFUNC(ib) {

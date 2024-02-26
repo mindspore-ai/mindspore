@@ -425,6 +425,7 @@ Status OperatorInfo::InferTensorInfo() {
     }
     TensorInfo input_tensor_info(input_layout);
     inputs_tensor_info_.push_back(input_tensor_info);
+    ++real_input_index;
   }
 
   for (size_t i = 0; i < outputs_tensor_map_.size(); ++i) {
@@ -976,7 +977,7 @@ Status OperatorInfo::InitForCostModelWithAutoRepeatCalc(const StrategyPtr &in_st
       MS_LOG(ERROR) << name_ << ": The output strategy is invalid";
       return FAILED;
     }
-    out_strategy_ = out_strategy;
+    set_out_strategy(out_strategy);
 
     if (InferDevMatrixShape() != SUCCESS) {
       MS_LOG(ERROR) << name_ << ": InferDevMatrixShape failed.";

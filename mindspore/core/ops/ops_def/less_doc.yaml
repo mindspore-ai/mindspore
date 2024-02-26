@@ -11,6 +11,9 @@ less:
     Returns:
         Tensor, the shape is the same as the one after broadcasting,and the data type is bool.
 
+    Raises:
+        TypeError: If `input` and `other` is not one of the following: Tensor, Number, bool.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 

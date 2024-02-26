@@ -28,6 +28,7 @@ from mindspore.ops.operations._grad_ops import MaskedSelectGrad
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.operations.array_ops import Fills, UniqueConsecutive, Col2Im, NonZero, IndexFill, \
     TensorScatterElements
+from mindspore.ops.auto_generate.gen_ops_def import GatherExt
 from mindspore.ops.operations.random_ops import RandomPoisson
 from mindspore.ops.operations._inner_ops import DynamicBroadcastTo
 from mindspore.ops.primitive import Primitive
@@ -108,28 +109,23 @@ def get_argmin_vmap_rule(prim, axis_size):
 @vmap_rules_getters.register(P.ArgMinWithValue)
 def get_arg_min_max_with_value_vmap_rule(prim, axis_size):
     """VmapRule for `ArgMaxWithValue` and `ArgMinWithValue` operations."""
-    if isinstance(prim, str):
-        axis = -1
-        keep_dims = False
-    else:
-        axis = prim.axis
-        keep_dims = prim.keep_dims
-
     cum_fun_map = {
         "ArgMaxWithValue": P.ArgMaxWithValue,
         "ArgMinWithValue": P.ArgMinWithValue,
     }
     prim_class = cum_fun_map.get(prim.name)
 
-    def vmap_rule(x_bdim):
+    def vmap_rule(x_bdim, axis_bdim, keep_dims_bdim):
         is_all_none, result = vmap_general_preprocess(prim, x_bdim)
         if is_all_none:
             return result
         var, x_dim = x_bdim
+        axis_data, _ = axis_bdim
+        keep_dims_data, _ = keep_dims_bdim
         x_ndim = ops.rank(var)
-        batch_axis = _get_reduce_batch_axis(axis, x_dim, x_ndim)
-        index, out = prim_class(batch_axis, keep_dims)(var)
-        out_dim = _get_reduce_out_dim(x_dim, batch_axis, keep_dims)
+        batch_axis = _get_reduce_batch_axis(axis_data, x_dim, x_ndim)
+        index, out = prim_class(batch_axis, keep_dims_data)(var)
+        out_dim = _get_reduce_out_dim(x_dim, batch_axis, keep_dims_data)
         return (index, out_dim), (out, out_dim)
 
     return vmap_rule
@@ -1665,6 +1661,29 @@ def get_gather_vmap_rule(prim, axis_size):
         output = prim(x, indices, axis, batch_dims)
 
         return output, axis
+
+    return vmap_rule
+
+
+@vmap_rules_getters.register(GatherExt)
+def get_gather_ext_vmap_rule(prim, axis_size):
+    """VmapRule for `GatherExt` operation. """
+
+    prim_name = prim.name
+    def vmap_rule(input_bdim, dim_bdim, index_bdim):
+        input, input_axis = input_bdim
+        index, _ = index_bdim
+        dim, dim_dim = dim_bdim
+
+        if dim_dim is not None:
+            _raise_value_error("The source dim of `dim` in {} must be None, but got {}.".format(prim_name, dim_dim))
+
+        if dim < input_axis:
+            new_dim = dim
+        else:
+            new_dim = dim + 1
+        output = prim(input, new_dim, index)
+        return output, 0
 
     return vmap_rule
 

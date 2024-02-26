@@ -221,6 +221,26 @@ std::vector<size_t> ExtractInputElementLength(const CNodePtr &node, std::vector<
   return inputs_type_len;
 }
 
+std::vector<AnfNodePtr> extra_input_for_ifa(CNodePtr node, std::vector<AnfNodePtr> node_input) {
+  ValueNodePtr anf_node = node->input(0)->cast<ValueNodePtr>();
+  if (!anf_node) {
+    return node_input;
+  }
+  PrimitivePtr prim = anf_node->value()->cast<PrimitivePtr>();
+  if (!prim) {
+    return node_input;
+  }
+  if (prim->name() != INCRE_FLASH_ATTENTION) {
+    return node_input;
+  }
+  for (size_t input_index = 1; input_index < node_input.size(); input_index++) {
+    if (node_input[input_index] != nullptr && IsMakeSequence(node_input[input_index])) {
+      node_input[input_index] = node_input[input_index]->cast<CNodePtr>()->inputs()[1];
+    }
+  }
+  return node_input;
+}
+
 std::vector<size_t> ExtractInputTypeLengthByNode(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   std::vector<size_t> inputs_type_len;
@@ -250,6 +270,7 @@ std::vector<size_t> ExtractInputTypeLengthByNode(const CNodePtr &node) {
     node_inputs = node_inputs[1]->cast<CNodePtr>()->inputs();
   }
 
+  node_inputs = extra_input_for_ifa(node, node_inputs);
   return ExtractInputElementLength(node, node_inputs);
 }
 

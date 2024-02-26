@@ -40,8 +40,6 @@ from mindspore.ops.operations.array_ops import (
     MatrixSetDiagV3,
     Fills,
     Col2Im,
-    ArgMaxWithValue,
-    ArgMinWithValue,
     ScatterNdMax,
     ScatterNdMul,
     IndexFill,
@@ -51,7 +49,9 @@ from mindspore.ops.operations.array_ops import (
     Lstsq,
     Mvlgamma,
     Tril,
-    Argmax
+    Argmax,
+    ArgMaxWithValue,
+    ArgMinWithValue
 )
 from mindspore.ops.operations.array_ops import TensorScatterElements
 from mindspore.common import Tensor
@@ -64,7 +64,7 @@ from mindspore.ops.auto_generate import cat, range, scatter_nd, deepcopy, masked
     nonzero, reverse, transpose, unsorted_segment_sum, diag, gather, gather_d, gather_nd, reshape, broadcast_to
 from mindspore.ops.operations.manually_defined import tile, rank, scalar_cast
 
-arg_max_with_value_ = P.ArgMaxWithValue()
+arg_max_with_value_ = ArgMaxWithValue()
 batch_to_space_nd_v2_ = P.BatchToSpaceNDV2()
 cast_ = P.Cast()
 diag_ = P.Diag()
@@ -590,8 +590,8 @@ def one_hot(indices, depth, on_value=1, off_value=0, axis=-1):
 
     Note:
         If the input `indices` has rank `N`, the output will have rank `N+1`.
-        The new axis is created at dimension `axis`. On Ascend, if `on_value` is Int64 dtype, `indices` must be
-        Int64 dtype, and the value for `on_value` and `off_value` can only be 1 and 0.
+        The new axis is created at dimension `axis`. On Ascend, if `on_value` is int64 dtype, `indices` must be
+        int64 dtype, and the value for `on_value` and `off_value` can only be 1 and 0.
 
     Args:
         indices(Tensor): A tensor of indices. Tensor of shape :math:`(X_0, \ldots, X_n)`.
@@ -5325,7 +5325,7 @@ def max(input, axis=None, keepdims=False, *, initial=None, where=None):  # pylin
         tensor.
 
         - values (Tensor) - The maximum value of input tensor, with the same shape as index, and same dtype as x.
-        - index (Tensor) - The index for the maximum value of the input tensor, with dtype int32. If `keepdims`
+        - index (Tensor) - The index for the maximum value of the input tensor, with dtype int64. If `keepdims`
           is true, the shape of output tensors is :math:`(input_1, input_2, ..., input_{axis-1}, 1, input_{axis+1},
           ..., input_N)` . Otherwise, the shape is :math:`(input_1, input_2, ..., input_{axis-1}, input_{axis+1},
           ..., input_N)` .
@@ -5354,15 +5354,15 @@ def max(input, axis=None, keepdims=False, *, initial=None, where=None):  # pylin
         [[3.2 0.4 0.4 2.9 4. ]] [[1 1 0 1 1]]
     """
     if not input.shape:
-        return (input, Tensor(0, dtype=mstype.int32))
+        return (input, Tensor(0, dtype=mstype.int64))
     if axis is None:
-        return (reduce_max_(input), Tensor(0, dtype=mstype.int32))
+        return (reduce_max_(input), Tensor(0, dtype=mstype.int64))
     if initial is not None and not isinstance(initial, numbers.Number):
         raise TypeError(f"For 'max', 'initial' must be a scalar, but got {type(initial)}")
     if axis is not None and not isinstance(axis, int):
         raise TypeError(f"For 'max', 'axis' must be int, but got {type(axis)}")
     input = _init_and_select_elem(input, initial, where, ops.maximum)
-    argmax_with_value_op = ArgMaxWithValue(axis, keepdims)
+    argmax_with_value_op = _get_cache_prim(ArgMaxWithValue)(axis, keepdims)
     indices, values = argmax_with_value_op(input)
     return values, indices
 
@@ -5470,16 +5470,16 @@ def min(input, axis=None, keepdims=False, *, initial=None, where=None):  # pylin
         0.0 0
     """
     if not input.shape:
-        return (input, Tensor(0, dtype=mstype.int32))
+        return (input, Tensor(0, dtype=mstype.int64))
     if axis is None:
-        return (reduce_min_(input), Tensor(0, dtype=mstype.int32))
+        return (reduce_min_(input), Tensor(0, dtype=mstype.int64))
     if initial is not None and not isinstance(initial, numbers.Number):
         raise TypeError(f"For 'min', 'initial' must be a scalar, but got {type(initial)}")
     if axis is not None and not isinstance(axis, int):
         raise TypeError(f"For 'min', 'axis' must be int, but got {type(axis)}")
     input = _init_and_select_elem(input, initial, where, ops.minimum)
-    argmin_with_value_ = ArgMinWithValue(axis=axis, keep_dims=keepdims)
-    indices, values = argmin_with_value_(input)
+    argmin_with_value_op = _get_cache_prim(ArgMinWithValue)(axis, keepdims)
+    indices, values = argmin_with_value_op(input)
     return values, indices
 
 
@@ -5537,8 +5537,8 @@ def aminmax(input, *, axis=0, keepdims=False):
             output0 = ops.reshape(output0, [1] * input.ndim)
             output1 = ops.reshape(output1, [1] * input.ndim)
         return output0, output1
-    argmin_with_value_op = _get_cache_prim(P.ArgMinWithValue)(axis, keepdims)
-    argmax_with_value_op = _get_cache_prim(P.ArgMaxWithValue)(axis, keepdims)
+    argmin_with_value_op = _get_cache_prim(ArgMinWithValue)(axis, keepdims)
+    argmax_with_value_op = _get_cache_prim(ArgMaxWithValue)(axis, keepdims)
     _, output0 = argmin_with_value_op(input)
     _, output1 = argmax_with_value_op(input)
     if keepdims is True and input.ndim == 0:

@@ -38,7 +38,7 @@ TypePtr IsFiniteFuncImpl::InferType(const PrimitivePtr &primitive,
                                                  kUInt32, kUInt64, kFloat16, kFloat32, kFloat64, kBFloat16};
 
   auto input_type = input_args[kInputIndex0]->GetType();
-  const auto prim_name = primitive->name();
+  const auto &prim_name = primitive->name();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_type, number_types, prim_name);
   return std::make_shared<TensorType>(kBool);
 }

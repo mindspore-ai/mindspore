@@ -24,6 +24,7 @@
 #include "ir/dtype/type.h"
 #include "utils/shape_utils.h"
 #include "ir/tensor_storage_info.h"
+#include "ir/tensor_data.h"
 
 using std::string;
 
@@ -42,6 +43,12 @@ class DeviceSync {
                                 const std::string &format) const = 0;
   virtual bool SyncHostToDevice(const ShapeVector &shape, size_t size, TypeId type, const void *host_ptr) const {
     return SyncHostToDevice(shape, size, type, host_ptr, "DefaultFormat");
+  }
+
+  virtual bool SyncHostToDevice(const ShapeVector &shape, size_t size, TypeId type, const std::string &format,
+                                const tensor::TensorDataPtr &tensor_data) const {
+    MS_EXCEPTION_IF_NULL(tensor_data);
+    return SyncHostToDevice(shape, size, type, tensor_data->data(), format);
   }
 
   virtual void *GetMutablePtr() const = 0;

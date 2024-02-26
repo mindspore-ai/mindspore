@@ -1127,7 +1127,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         Tensor's offset in the underlying storage in terms of the number of storage elements.
 
         Returns:
-            Int, tensor's offset in the underlying storage in terms of number of storage elements.
+            int, tensor's offset in the underlying storage in terms of number of storage elements.
 
         Examples:
             >>> import mindspore as ms

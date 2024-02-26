@@ -1080,7 +1080,7 @@ cudaDeviceProp GPUDeviceContext::GetDeviceProperties(uint32_t device_id) {
   return GPUdeviceInfo::GetInstance(device_id)->properties();
 }
 
-std::string GPUDeviceContext::GetArchList() { return STRINGIZE(CUDA_ARCH_LIST); }
+std::string GPUDeviceContext::GetArchList() { return STRING_COMPILE_OPT(CUDA_ARCH_LIST); }
 
 std::shared_ptr<void> GPUDeviceResManager::AllocateHostMemory(size_t size) const {
   void *ptr;

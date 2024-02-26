@@ -316,15 +316,17 @@ REG_ADPT_DESC(ArgMax, kNameArgmax, CUST_ADPT_DESC(ArgMax));
 
 // ArgMaxWithValue
 INPUT_MAP(ArgMaxWithValue) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(ArgMaxWithValue) = {{"axis", ATTR_DESC(dimension, AnyTraits<int64_t>())},
-                             {"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>())}};
+INPUT_ATTR_MAP(ArgMaxWithValue) = {{kIndex2, ATTR_DESC(dimension, AnyTraits<int64_t>())},
+                                   {kIndex3, ATTR_DESC(keep_dims, AnyTraits<bool>())}};
+ATTR_MAP(ArgMaxWithValue) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(ArgMaxWithValue) = {{0, OUTPUT_DESC(indice)}, {1, OUTPUT_DESC(values)}};
 REG_ADPT_DESC(ArgMaxWithValue, kNameArgMaxWithValue, ADPT_DESC(ArgMaxWithValue))
 
 // ArgMinWithValue
 INPUT_MAP(ArgMinWithValue) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(ArgMinWithValue) = {{"axis", ATTR_DESC(dimension, AnyTraits<int64_t>())},
-                             {"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>())}};
+INPUT_ATTR_MAP(ArgMinWithValue) = {{kIndex2, ATTR_DESC(dimension, AnyTraits<int64_t>())},
+                                   {kIndex3, ATTR_DESC(keep_dims, AnyTraits<bool>())}};
+ATTR_MAP(ArgMinWithValue) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(ArgMinWithValue) = {{0, OUTPUT_DESC(indice)}, {1, OUTPUT_DESC(values)}};
 REG_ADPT_DESC(ArgMinWithValue, kNameArgMinWithValue, ADPT_DESC(ArgMinWithValue))
 
@@ -769,4 +771,16 @@ INPUT_MAP(AdamApplyOneWithDecay) = {{1, INPUT_DESC(input0)},  {2, INPUT_DESC(inp
 ATTR_MAP(AdamApplyOneWithDecay) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(AdamApplyOneWithDecay) = {{0, OUTPUT_DESC(output0)}, {1, OUTPUT_DESC(output1)}, {2, OUTPUT_DESC(output2)}};
 REG_ADPT_DESC(AdamApplyOneWithDecay, kAdamApplyOneWithDecayOpName, ADPT_DESC(AdamApplyOneWithDecay))
+
+// LogicalXor
+CUST_INPUT_MAP(LogicalXor) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(y)}};
+CUST_ATTR_MAP(LogicalXor) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(LogicalXor) = {{0, OUTPUT_DESC(output)}};
+REG_ADPT_DESC(LogicalXor, kNameLogicalXor, CUST_ADPT_DESC(LogicalXor));
+
+// BesselI0
+CUST_INPUT_MAP(BesselI0) = {{1, INPUT_DESC(x)}};
+CUST_ATTR_MAP(BesselI0) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(BesselI0) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(BesselI0, prim::kPrimBesselI0->name(), CUST_ADPT_DESC(BesselI0));
 }  // namespace mindspore::transform

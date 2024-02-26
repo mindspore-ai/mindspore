@@ -481,9 +481,10 @@ class _Context:
 
     def set_mempool_block_size(self, mempool_block_size):
         """Set the block size of memory pool."""
-        if _get_mode() == GRAPH_MODE:
+        is_force_kbk = os.getenv("GRAPH_OP_RUN")
+        if _get_mode() == GRAPH_MODE and is_force_kbk != "1":
             logger.warning("Graph mode doesn't support to set parameter 'mempool_block_size' of context currently, "
-                           "you can use context.set_context to set pynative mode.")
+                           "you can use context.set_context to set pynative mode or set env GRAPH_OP_RUN=1.")
             return
         if not Validator.check_str_by_regular(mempool_block_size, _RE_PATTERN):
             raise ValueError("For 'context.set_context', the argument 'mempool_block_size' should be in "
@@ -685,6 +686,7 @@ class _Context:
                             "enable_task_opt": ms_ctx_param.enable_task_opt,
                             "enable_grad_comm_opt": ms_ctx_param.enable_grad_comm_opt,
                             "interleaved_matmul_comm": ms_ctx_param.interleaved_matmul_comm,
+                            "enable_opt_shard_comm_opt": ms_ctx_param.enable_opt_shard_comm_opt,
                             "interleaved_layernorm_comm": ms_ctx_param.interleaved_layernorm_comm}
             with open(speedup_config_real_path, 'r') as f:
                 speedup_config = json.load(f)
@@ -759,6 +761,7 @@ def set_auto_parallel_context(**kwargs):
     enable_parallel_optimizer    strategy_ckpt_save_file
     parallel_optimizer_config    dataset_strategy
     enable_alltoall              pipeline_stages
+               \                 pipeline_result_broadcast
                \                 auto_parallel_search_mode
                \                 comm_fusion
                \                 strategy_ckpt_config
@@ -1170,7 +1173,7 @@ def set_context(**kwargs):
             and max_device_memory. 'max_device_memory' should be set before the program runs.
         variable_memory_max_size (str): This parameter is deprecated, and will be removed in a future version.
             Please use parameter 'max_device_memory' instead.
-        mempool_block_size (str): Set the size of the memory pool block in PyNative mode for devices.
+        mempool_block_size (str): Set the size of the memory pool block in PyNative mode or GRAPH_OP_RUN=1 for devices.
             The format is "xxGB". Default: ``"1GB"`` . Minimum size is "1G". The actual used memory block size is the
             minimum of the available memory of the device and mempool_block_size.
         op_timeout (int): Set the maximum duration of executing an operator in seconds.

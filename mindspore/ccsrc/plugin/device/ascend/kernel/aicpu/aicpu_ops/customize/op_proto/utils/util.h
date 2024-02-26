@@ -95,6 +95,21 @@ const std::string ATTR_NAME_OP_INFER_DEPENDS = "_op_infer_depends";
 #define CUST_ONE_IN_ONE_OUT_INFER(name, input, output) ONE_IN_ONE_OUT_INFER(Cust##name, input, output)
 #define CUST_TWO_IN_ONE_OUT_INFER(name, input1, input2, output) TWO_IN_ONE_OUT_INFER(Cust##name, input1, input2, output)
 
+#define RETURN_IF_FAILURE(expr)    \
+  do {                             \
+    if ((expr) != GRAPH_SUCCESS) { \
+      return GRAPH_FAILED;         \
+    }                              \
+  } while (0)
+
+#define RETURN_IF_FALSE(expr, op, log_text...)   \
+  do {                                           \
+    if (!(expr)) {                               \
+      OP_LOGE(TbeGetName(op).c_str(), log_text); \
+      return GRAPH_FAILED;                       \
+    }                                            \
+  } while (0)
+
 namespace ge {
 // enum type and string type mapping
 const std::map<ge::DataType, std::string> DTYPE_STR_MAP{

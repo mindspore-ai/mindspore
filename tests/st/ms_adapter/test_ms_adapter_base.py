@@ -242,3 +242,20 @@ def test_adpater_tensor_size_2():
 
     out_size = func()
     assert out_size == (3,)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_tensor_create_instance_2():
+    """
+    Feature: MSAdapter
+    Description: Test isinstance syntax
+    Expectation: No exception
+    """
+    @ms.jit
+    def func(x):
+        return Tensor(x+1, dtype=ms.int32)
+
+    out = func(Tensor([1]))
+    assert out == 2

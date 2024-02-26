@@ -72,6 +72,7 @@ class ArgMaxWithValueInfo : public ReduceMethod {
   Status InferTensorMap() override;
   Status InferTensorInfo() override;
   Status InferAsLossDivisor() override;
+  Status GetAttrs() override;
 };
 
 class ArgMinWithValueInfo : public ArgMaxWithValueInfo {
@@ -93,6 +94,7 @@ class ArgmaxInfo : public ReduceMethod {
     reduce_method_ = REDUCE_OP_MAX;
   }
 
+  std::shared_ptr<Strategies> GenerateBatchStrategies() override;
   ~ArgmaxInfo() override = default;
 
  protected:

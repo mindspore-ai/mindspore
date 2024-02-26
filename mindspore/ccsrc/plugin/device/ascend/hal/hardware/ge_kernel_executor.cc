@@ -153,6 +153,7 @@ void InlineSubGraph(const KernelGraphPtr &graph) {
   }
 #endif
   auto kernel_cnodes = graph->execution_order();
+  AnfNodePtr last_call = nullptr;
   for (auto &kernel_cnode : kernel_cnodes) {
     MS_EXCEPTION_IF_NULL(kernel_cnode);
     if (common::AnfAlgo::CheckPrimitiveType(kernel_cnode, prim::kPrimCallInline)) {
@@ -165,11 +166,44 @@ void InlineSubGraph(const KernelGraphPtr &graph) {
       auto mng = main_graph->manager();
       auto kernel_info = dynamic_cast<device::KernelInfo *>(kernel_cnode->kernel_info());
       MS_EXCEPTION_IF_NULL(kernel_info);
-      AnfNodePtrList inp(kernel_cnode->inputs().begin() + 1, kernel_cnode->inputs().end());
+      AnfNodePtrList inp;
+      auto &call_input = kernel_cnode->inputs();
+      // let operators on different subgraphs will not be executed interleavedly
+      for (size_t i = 1; i < call_input.size(); i++) {
+        if (last_call != nullptr) {
+          auto depend = graph->NewCNode({NewValueNode(prim::kPrimDepend), call_input[i], last_call});
+          MS_EXCEPTION_IF_NULL(depend);
+          depend->set_abstract(call_input[i]->abstract());
+          inp.push_back(depend);
+        } else {
+          inp.push_back(call_input[i]);
+        }
+      }
       const auto &ref_map = sub_graph->GetRefMap();
       auto out = session::KernelGraphMgr::DoInline(sub_graph, main_graph, inp, kernel_cnode->input(0)->scope(),
                                                    kernel_info->graph_id(), ref_map, graph);
       (void)mng->Replace(kernel_cnode, out);
+      // Inline graph boundary: MakeTuple---->Depend---->Tensormove
+      // Avoid long link times at runtime
+      auto value_node = graph->NewValueNode(MakeValue(std::make_shared<tensor::Tensor>(1)));
+      MS_EXCEPTION_IF_NULL(value_node);
+      auto depend = graph->NewCNode({NewValueNode(prim::kPrimDepend), value_node, out});
+      MS_EXCEPTION_IF_NULL(depend);
+      depend->set_abstract(value_node->abstract());
+      auto tensor_move = graph->NewCNode({NewValueNode(prim::kPrimTensorMove), depend});
+      MS_EXCEPTION_IF_NULL(tensor_move);
+      tensor_move->set_abstract(value_node->abstract());
+      common::AnfAlgo::SetNodeAttr(kAttrKernelGraphBoundary, MakeValue(sub_graph), tensor_move);
+
+      // select kernel
+      auto [select_res, msg, etype] = device::ascend::SelectKernelInfoWithMsg(graph, tensor_move);
+      if (!select_res) {
+        MS_LOG(INFO) << "node is " << tensor_move->fullname_with_scope() << " should backoff";
+        std::pair<std::string, ExceptionType> failure_info = std::make_pair(msg, etype);
+        device::ascend::HandleKernelSelectFailure(graph, tensor_move, failure_info);
+      }
+
+      last_call = tensor_move;
     }
   }
   GEGraphOptimization::GetInstance().OptimizeACLGraphAfterInline(graph);
@@ -186,11 +220,7 @@ void GeKernelExecutor::Initialize() {
   if (initialized_) {
     return;
   }
-  auto ret = aclInit(nullptr);
-  if (ret != ACL_ERROR_NONE) {
-    MS_LOG(WARNING) << "Call aclInit failed. Error flag is " << ret;
-  }
-  MS_LOG(INFO) << "Call aclInit successfully.";
+  InitializeAcl();
   MS_EXCEPTION_IF_NULL(device_context_);
   res_manager_ = device_context_->device_res_manager_.get();
   MS_EXCEPTION_IF_NULL(res_manager_);
@@ -413,8 +443,6 @@ bool GeKernelExecutor::MemoryCopyAsync(const CNodePtr &node, const vector<Kernel
 bool GeKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<KernelTensor *> &inputs,
                                     const vector<KernelTensor *> &workspace, const vector<KernelTensor *> &outputs,
                                     KernelMod *kernel_mod, void *stream) const {
-  (void)res_manager_->BindDeviceToCurrentThread(false);
-
   profiler::ascend::ProfilingFrameworkData::RecordLaunchGETaskBegin(kernel);
   // launch kernel
   uint64_t start_time = 0;

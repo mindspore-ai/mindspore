@@ -472,12 +472,12 @@ AnfNodePtr FindGradAccuParameter(const std::vector<AnfNodePtr> &parameters, cons
 
 // If the graph likes the followings:
 // 1. MicroStepAllGather->MirrorMicro->load, we need to visit the param after the load
-std::vector<std::pair<AnfNodePtr, int>> FindNextNode(const std::pair<AnfNodePtr, int> &node_ptr,
-                                                     const NodeUsersMap &node_users_map) {
+std::vector<std::pair<AnfNodePtr, int>> FindNextNode(
+  const std::pair<AnfNodePtr, int> &node_ptr, const NodeUsersMap &node_users_map,
+  const std::set<string> &check_list = {prim::kPrimMirrorMicroStep->name(), prim::kPrimMicroStepAllGather->name(),
+                                        prim::kPrimLoad->name()}) {
   std::vector<std::pair<AnfNodePtr, int>> to_be_visited_set;
-  if (!IsSomePrimitiveList(
-        node_ptr.first->cast<CNodePtr>(),
-        {prim::kPrimMirrorMicroStep->name(), prim::kPrimMicroStepAllGather->name(), prim::kPrimLoad->name()})) {
+  if (!IsSomePrimitiveList(node_ptr.first->cast<CNodePtr>(), check_list)) {
     (void)to_be_visited_set.emplace_back(node_ptr);
     return to_be_visited_set;
   }
@@ -489,9 +489,7 @@ std::vector<std::pair<AnfNodePtr, int>> FindNextNode(const std::pair<AnfNodePtr,
   while (visited.size() >= 1) {
     auto node = visited.front();
     visited.pop();
-    if (!IsSomePrimitiveList(
-          node.first->cast<CNodePtr>(),
-          {prim::kPrimMirrorMicroStep->name(), prim::kPrimMicroStepAllGather->name(), prim::kPrimLoad->name()})) {
+    if (!IsSomePrimitiveList(node.first->cast<CNodePtr>(), check_list)) {
       (void)to_be_visited_set.emplace_back(node);
     } else {
       auto next_node_set = node_users_map.at(node.first);
@@ -510,7 +508,10 @@ std::set<std::pair<AnfNodePtr, int>> FuncNodeUsersSet(const AnfNodePtr &paramete
   auto node_users = node_users_map[parameter];
   std::set<std::pair<AnfNodePtr, int>> all_node_users;
   for (auto &n_pair : node_users) {
-    auto users_skip_virtual_nodes = FindNextNode(n_pair, node_users_map);
+    auto users_skip_virtual_nodes =
+      FindNextNode(n_pair, node_users_map,
+                   {prim::kPrimMirrorMicroStep->name(), prim::kPrimMicroStepAllGather->name(), prim::kPrimLoad->name(),
+                    prim::kPrimCast->name()});
     for (const auto &node_pair : users_skip_virtual_nodes) {
       auto func_node_users = FuncGraphNodeUsers(node_pair);
       if (func_node_users.empty()) {
@@ -518,7 +519,7 @@ std::set<std::pair<AnfNodePtr, int>> FuncNodeUsersSet(const AnfNodePtr &paramete
         continue;
       }
       for (const auto &func_node_user : func_node_users) {
-        all_node_users.insert(func_node_user);
+        (void)all_node_users.insert(func_node_user);
       }
     }
   }
@@ -960,6 +961,8 @@ void ParameterStartNode(const std::vector<AnfNodePtr> &all_nodes, const FuncGrap
     if (prim && prim->HasAttr(PARAMETER_START)) {
       auto micro = Micro(cnode, &node_users_map, 0);
       MS_EXCEPTION_IF_NULL(micro);
+      auto new_prim = prim->Clone();
+      manager->SetEdge(cnode, 0, NewValueNode(new_prim));
       cnode->AddPrimalAttr(MICRO, micro);
       cnode->AddPrimalAttr(PARAMETER_START, micro);
       int64_t seg = 0;

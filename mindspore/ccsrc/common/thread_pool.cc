@@ -63,8 +63,83 @@ void ThreadPool::SyncRunLoop(const std::shared_ptr<ThreadContext> &context) {
     context->task = nullptr;
   }
 }
+#ifdef _WIN32
+bool ThreadPool::SetAffinity() const { return false; }
+#elif defined(BIND_CORE)
+bool ThreadPool::SetAffinity(const pthread_t &thread_id, cpu_set_t *cpu_set) {
+  if (cpu_set == nullptr) {
+    return false;
+  }
+#ifdef __ANDROID__
+#if __ANDROID_API__ >= 21
+  THREAD_INFO("thread: %d, mask: %lu", pthread_gettid_np(thread_id), cpu_set->__bits[0]);
+  int ret = sched_setaffinity(pthread_gettid_np(thread_id), sizeof(cpu_set_t), cpu_set);
+  if (ret != THREAD_OK) {
+    THREAD_ERROR("bind thread %d to cpu failed. ERROR %d", pthread_gettid_np(thread_id), ret);
+    return false;
+  }
+  return true;
+#endif
+#else
+#if defined(__APPLE__)
+  THREAD_ERROR("not bind thread to apple's cpu.");
+  return false;
+#else
+  int ret = pthread_setaffinity_np(thread_id, sizeof(cpu_set_t), cpu_set);
+  if (ret != THREAD_OK) {
+    THREAD_ERROR("set thread: %lu to cpu failed", thread_id);
+    return false;
+  }
+  return true;
+#endif  // __APPLE__
+#endif  // __ANDROID__
+  return false;
+}
+#endif  // __BIND_CORE__
 
-bool ThreadPool::SyncRun(const std::vector<Task> &tasks) {
+bool ThreadPool::FreeScheduleThreads(const std::vector<int> &core_list) {
+  if (core_list.empty()) {
+    return false;
+  }
+#ifdef _WIN32
+  return false;
+#elif defined(BIND_CORE)
+  for (const auto &sync_run_thread : sync_run_threads_) {
+    cpu_set_t mask;
+    CPU_ZERO(&mask);
+    for (auto core_id : core_list) {
+      CPU_SET(core_id, &mask);
+    }
+    if (!SetAffinity(sync_run_thread->native_handle(), &mask)) {
+      return false;
+    }
+  }
+  return true;
+#endif  // BIND_CORE
+  return false;
+}
+
+bool ThreadPool::SetCpuAffinity(const std::vector<int> &core_list) {
+  if (core_list.empty()) {
+    return false;
+  }
+#ifdef _WIN32
+  return false;
+#elif defined(BIND_CORE)
+  for (size_t i = 0; i < sync_run_threads_.size(); i++) {
+    cpu_set_t mask;
+    CPU_ZERO(&mask);
+    CPU_SET(core_list[i % core_list.size()], &mask);
+    if (!SetAffinity(sync_run_threads_[i]->native_handle(), &mask)) {
+      return false;
+    }
+  }
+  return true;
+#endif  // BIND_CORE
+  return false;
+}
+
+bool ThreadPool::SyncRun(const std::vector<Task> &tasks, const std::vector<int> &core_list) {
   if (tasks.empty()) {
     return true;
   }
@@ -89,6 +164,12 @@ bool ThreadPool::SyncRun(const std::vector<Task> &tasks) {
   }
   if (contexts_.empty()) {
     return true;
+  }
+  auto set_affinity_ret = SetCpuAffinity(core_list);
+  if (set_affinity_ret) {
+    MS_LOG(INFO) << "Set cpu affinity success.";
+  } else {
+    MS_LOG(DEBUG) << "Set cpu affinity failed.";
   }
   size_t used_thread_num = contexts_.size();
   if (task_num < used_thread_num) {
@@ -115,6 +196,12 @@ bool ThreadPool::SyncRun(const std::vector<Task> &tasks) {
     if (running) {
       std::this_thread::yield();
     }
+  }
+  auto free_schedule_threads_ret = FreeScheduleThreads(core_list);
+  if (free_schedule_threads_ret) {
+    MS_LOG(INFO) << "Free schedule threads success.";
+  } else {
+    MS_LOG(DEBUG) << "Free schedule threads failed.";
   }
   return true;
 }

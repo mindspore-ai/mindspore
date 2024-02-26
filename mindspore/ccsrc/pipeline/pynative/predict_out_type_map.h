@@ -165,10 +165,12 @@ inline static PredictOutTypeMap out_type_prediction = {{"ActsULQ", kTupleTensor4
                                                        {"LambNextMVWithDecay", kTupleTensor4},
                                                        {"LambNextRight", kTupleTensor2},
                                                        {"LayerNorm", kTupleTensor3},
+                                                       {"LayerNormV3", kTupleTensor3},
                                                        {"LayerNormExt", kTupleTensor3},
                                                        {"LayerNormBetaGammaBackprop", kTupleTensor2},
                                                        {"LayerNormBetaGammaBackpropV2", kTupleTensor2},
                                                        {"LayerNormGrad", kTupleTensor3},
+                                                       {"LayerNormGradV3", kTupleTensor3},
                                                        {"LayerNormGradGrad", kTupleTensor3},
                                                        {"LayerNormXBackpropV2", kTupleTensor2},
                                                        {"LinearSumAssignment", kTupleTensor2},
@@ -290,8 +292,8 @@ inline static PredictOutTypeMap out_type_prediction = {{"ActsULQ", kTupleTensor4
                                                        {"ScalarLt", kTypeNone},
                                                        {"sequence_len", kTypeNone},
                                                        {"tuple_setitem", kTypeNone},
-                                                       {"FlashAttentionScore", kTupleTensor3},
-                                                       {"FlashAttentionScoreGrad", kTupleTensor3},
+                                                       {"FlashAttentionScore", kTupleTensor4},
+                                                       {"FlashAttentionScoreGrad", kTupleTensor4},
                                                        {"SplitTensor", kTypeAny},
                                                        {"SplitWithSize", kTypeAny}};
 

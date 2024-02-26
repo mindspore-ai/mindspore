@@ -54,7 +54,14 @@ class FlashAttentionFusion : public MultiplePatternProcessPass {
   CNodePtr CreatePromptFlashAttentionCnodeForBNSD(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                                   const AnfNodePtr &q, const AnfNodePtr &k, const AnfNodePtr &v,
                                                   const AnfNodePtr &atten_mask, int64_t num_heads, int64_t next_token,
-                                                  float scale_value, int64_t num_key_value_heads = 1) const;
+                                                  float scale_value, int64_t num_key_value_heads = 1,
+                                                  int64_t inner_precise = 1) const;
+
+  CNodePtr CreatePromptFlashAttentionCnodeForBNSDWithPse(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+                                                         const AnfNodePtr &q, const AnfNodePtr &k, const AnfNodePtr &v,
+                                                         const AnfNodePtr &atten_mask, const AnfNodePtr &pse,
+                                                         int64_t num_heads, int64_t next_token, float scale_value,
+                                                         int64_t num_key_value_heads = 1) const;
 
   CNodePtr CreatePromptFlashAttentionCnodeForBSH(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                                  const AnfNodePtr &q, const AnfNodePtr &k, const AnfNodePtr &v,
@@ -67,6 +74,8 @@ class FlashAttentionFusion : public MultiplePatternProcessPass {
                                                  int64_t num_key_value_heads) const;
   CNodePtr CreateFlashAttentionNodeForMsSD21(const std::string &pattern_name, const FuncGraphPtr &func_graph,
                                              const AnfNodePtr &node, const EquivPtr &equiv) const;
+  CNodePtr CreateFlashAttentionNodeForMsSDPseShift(const std::string &pattern_name, const FuncGraphPtr &func_graph,
+                                                   const AnfNodePtr &node, const EquivPtr &equiv) const;
   CNodePtr CreateFlashAttentionNodeForMsSDXL(const std::string &pattern_name, const FuncGraphPtr &func_graph,
                                              const AnfNodePtr &node, const EquivPtr &equiv) const;
   CNodePtr CreateFlashAttentionNodeForVideoComposer(const std::string &pattern_name, const FuncGraphPtr &func_graph,
@@ -92,7 +101,10 @@ class FlashAttentionFusion : public MultiplePatternProcessPass {
   float GetScaleValueForDynamicShape(const AnfNodePtr &mul_const_input) const;
   CNodePtr CreateFAForSD15(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const AnfNodePtr &q_trans,
                            const AnfNodePtr &k_trans, const AnfNodePtr &v_trans, int64_t num_head, int64_t next_token,
-                           float scale_value) const;
+                           float scale_value, int64_t inner_precise = 1) const;
+  CNodePtr CreateFAWithPadAndPse(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const AnfNodePtr &q_trans,
+                                 const AnfNodePtr &k_trans, const AnfNodePtr &v_trans, const AnfNodePtr &pse,
+                                 int64_t num_head, int64_t next_token, float scale_value) const;
   CNodePtr CreateGQACNodeForBNSD(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const CNodePtr &matmul_1,
                                  const CNodePtr &matmul_2, const CNodePtr &attention_mask_mul) const;
   CNodePtr CreateFAForBNSDWithAttenMask(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
@@ -104,6 +116,22 @@ class FlashAttentionFusion : public MultiplePatternProcessPass {
                                          const CNodePtr &attention_mask_mul) const;
 
   const VectorRef DefineFlashAttentionPatternForMsSD21() const;
+
+  /*
+   * --------------------------------------------------
+   *  Pattern PseShift:                               |
+   *   trans input[1] is reshape[input[K]] -> trans   |
+   *  matmul input[1] is reshape[input[Q]] -> matmul  |
+   *                                          mul     |
+   *                                          add     |
+   *                                          softMax |
+   *                                          cast    |
+   * matmul input[2] is reshape[input[V]] ->  matmul  |
+   *                                          reshape |
+   * --------------------------------------------------
+   */
+  const VectorRef DefineFlashAttentionPatternForMsSDPseShift() const;
+
   const VectorRef DefineFlashAttentionPatternForVideoComposer() const;
   const VectorRef DefineFlashAttentionPatternForMsSDXL() const;
   const VectorRef DefineFlashAttentionPatternForSDBNSD() const;

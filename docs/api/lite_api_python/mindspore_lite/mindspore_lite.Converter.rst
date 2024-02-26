@@ -216,7 +216,7 @@ mindspore_lite.Converter
     .. py:method:: weight_fp16
         :property:
 
-        获取模型是否保存为Float16数据类型的状态。
+        获取模型是否保存为float16数据类型的状态。
 
         返回：
-            bool，模型是否保存为Float16数据类型。若 ``True`` ，则在转换时，会将模型中Float32的常量Tensor保存成Float16数据类型，压缩生成的模型尺寸。之后根据 `Context.CPU` 的 `precision_mode` 参数决定输入的数据类型执行推理。 `weight_fp16` 的优先级很低，如果开启了量化，那么对于已经量化的权重， `weight_fp16` 不会再次生效。 `weight_fp16` 仅对Float32数据类型中的常量Tensor有效。
+            bool，模型是否保存为float16数据类型。若 ``True`` ，则在转换时，会将模型中float32的常量Tensor保存成float16数据类型，压缩生成的模型尺寸。之后根据 `Context.CPU` 的 `precision_mode` 参数决定输入的数据类型执行推理。 `weight_fp16` 的优先级很低，如果开启了量化，那么对于已经量化的权重， `weight_fp16` 不会再次生效。 `weight_fp16` 仅对float32数据类型中的常量Tensor有效。

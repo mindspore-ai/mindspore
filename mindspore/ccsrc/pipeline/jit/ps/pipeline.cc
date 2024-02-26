@@ -1608,6 +1608,10 @@ void GraphExecutorPy::GeFirstInitParams() {
 #endif
 
 py::object GraphExecutorPy::RunInner(const py::tuple &args, const py::object &phase_obj) {
+  if (common::GetEnv(kSimulationLevel) == kSimulationLevelCompileGraph) {
+    py::int_ ret = 0;
+    return ret;
+  }
   // Init for dynamic-obfuscated model infer
   (void)mindspore::kernel::CustomizedOpaquePredicate::GetInstance().init_calling_count();
   // Mindspore debugger notify main thread to exit after one step, and will not run next step
@@ -2305,7 +2309,6 @@ void ClearResPart1() {
   mindspore::RDR::Snapshot();
   mindspore::RDR::ResetRecorder();
 #endif
-  session::ExecutorManager::Instance().Clear();
   runtime::GraphScheduler::GetInstance().Clear();
   runtime::ProfilerAnalyzer::GetInstance().Clear();
 
@@ -2366,6 +2369,7 @@ void ClearResPart2() {
   MS_LOG(INFO) << "End clear ConfigManager.";
 #endif
 
+  session::ExecutorManager::Instance().Clear();
   // for GE, HcclCommDestroy should after RemoveGraph in ClearGraphWrapper
   (void)distributed::collective::CollectiveManager::instance()->Finalize();
 

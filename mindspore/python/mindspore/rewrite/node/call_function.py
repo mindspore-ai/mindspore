@@ -16,6 +16,7 @@
 import ast
 from .node import Node
 from .node_manager import NodeManager
+from .control_flow import ControlFlow
 from ..api.scoped_value import ScopedValue
 from ..api.node_type import NodeType
 from ..ast_helpers import AstModifier
@@ -25,7 +26,7 @@ class CallFunction(Node, NodeManager):
     """CallFunction is used for class internal function."""
     def __init__(self, targets: [ScopedValue], func_name: ScopedValue, args: [ScopedValue],
                  kwargs: {str: ScopedValue}, node_name: str, ast_node: ast.AST, ast_functiondef: ast.FunctionDef,
-                 stree, instance):
+                 stree, func_obj: bool, is_method: bool):
         """
         Constructor of CallFunction.
 
@@ -40,20 +41,28 @@ class CallFunction(Node, NodeManager):
             ast_functiondef (ast.FunctionDef): An instance of ast.FunctionDef represents corresponding function
                 definition in ast.
             stree (SymbolTree): Symbol tree used to get node_namer.
-            instance: Object in network corresponding to this node.
+            func_obj (object): Object in network corresponding to this node.
+            is_method (bool): If function is method of current network.
         """
         if isinstance(func_name, str):
             func_name = ScopedValue.create_naming_value(func_name)
-        Node.__init__(self, NodeType.CallFunction, ast_node, targets, func_name, args, kwargs, node_name, instance)
-        NodeManager.__init__(self, stree.get_node_namer())
-        NodeManager.set_ast_functiondef(self, ast_functiondef)
+        Node.__init__(self, NodeType.CallFunction, ast_node, targets, func_name, args, kwargs, node_name, func_obj)
+        NodeManager.__init__(self)
+        if stree:
+            NodeManager.set_manager_node_namer(self, stree.get_node_namer())
         NodeManager.set_manager_name(self, func_name.value)
+        NodeManager.set_manager_ast(self, ast_functiondef)
+        self._is_method = is_method
 
     def erase_node(self, node):
         """Erase node from CallFunction."""
         NodeManager.erase_node(self, node)
         # erase asts
-        ret = AstModifier.erase_ast_from_function(self.get_ast_functiondef(), node.get_ast())
+        if isinstance(node, ControlFlow):
+            ret = AstModifier.earse_ast_of_control_flow(self.get_manager_ast().body,
+                                                        node.get_ast(), node.is_orelse)
+        else:
+            ret = AstModifier.erase_ast_from_function(self.get_manager_ast(), node.get_ast())
         if not ret:
             raise ValueError(f"erase node failed, node {node.get_name()} not in function ast tree.")
 
@@ -69,11 +78,18 @@ class CallFunction(Node, NodeManager):
         """
         NodeManager.insert_node(self, new_node, base_node, before_node)
         if insert_to_ast:
+            if not self._is_method and new_node.get_node_type() in (NodeType.CallCell, NodeType.CallPrimitive):
+                raise TypeError(f"Cannot insert {new_node.get_node_type()} node '{new_node.get_name()}' into "
+                                f"no-method function '{self.get_name()}'.")
             stree = self.get_belong_symbol_tree()
-            stree.insert_to_ast_while_insert_node(new_node, base_node, before_node, self)
+            stree.insert_to_ast_while_insert_node(new_node, base_node, before_node)
 
     def set_belong_symbol_tree(self, symbol_tree):
         """Set the symbol tree to which node belongs."""
         self._belong_tree = symbol_tree
         for node in self.nodes():
             node.set_belong_symbol_tree(symbol_tree)
+
+    def is_method(self):
+        """Indicate if function of current node is method of class"""
+        return self._is_method

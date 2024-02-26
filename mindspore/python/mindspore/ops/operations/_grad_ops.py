@@ -3158,10 +3158,10 @@ class FlashAttentionScoreGrad(Primitive):
         validator.check_value_type('input_layout', input_layout, [str], self.name)
         if input_layout not in ["BSH", "BNSD"]:
             raise ValueError(f"Attribute 'input_layout' must be either 'BSH' or 'BNSD', but got {input_layout}")
-        self.init_prim_io_names(inputs=['query', 'key', 'value', 'attn_mask', 'attention_in', 'softmax_max',
-                                        'softmax_sum', 'dy', 'drop_mask', 'real_shift', "padding_mask", 'softmax_out',
+        self.init_prim_io_names(inputs=['query', 'key', 'value', 'dy', 'pse_shift', 'drop_mask', "padding_mask",
+                                        'attn_mask', 'softmax_max', 'softmax_sum', 'softmax_out', 'attention_in',
                                         'prefix'],
-                                outputs=['dq', 'dk', 'dv'])
+                                outputs=['dq', 'dk', 'dv', 'dpse'])
 
 class RmsNormGrad(Primitive):
     r"""
@@ -3178,4 +3178,3 @@ class RmsNormGrad(Primitive):
         """Initialize RmsNormGrad."""
         self.init_prim_io_names(inputs=["dy", "x", "rstd", "gamma"],
                                 outputs=["dx", "dgamma"])
-        

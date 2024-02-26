@@ -1,6 +1,6 @@
 is_finite:
     description: |
-        Determines which elements are finite for each position.
+        Determine which elements are finite for each position.
 
         Args:
           - **x** (Tensor) - The input tensor.

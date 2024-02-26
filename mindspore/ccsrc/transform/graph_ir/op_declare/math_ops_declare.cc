@@ -408,4 +408,62 @@ CUST_ATTR_MAP(Polar) = EMPTY_ATTR_MAP;
 CUST_OUTPUT_MAP(Polar) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Polar, prim::kPrimPolar->name(), CUST_ADPT_DESC(Polar));
 
+// TriuIndices
+CUST_INPUT_MAP(TriuIndices) = EMPTY_INPUT_MAP;
+CUST_ATTR_MAP(TriuIndices) = {{"row", ATTR_DESC(row, AnyTraits<int64_t>())},
+                              {"col", ATTR_DESC(col, AnyTraits<int64_t>())},
+                              {"offset", ATTR_DESC(offset, AnyTraits<int64_t>())},
+                              {"dtype", ATTR_DESC(dtype, AnyTraits<GEType>())}};
+CUST_OUTPUT_MAP(TriuIndices) = {{0, OUTPUT_DESC(output)}};
+REG_ADPT_DESC(TriuIndices, prim::kPrimTriuIndices->name(), CUST_ADPT_DESC(TriuIndices));
+
+// Digamma
+INPUT_MAP(Digamma) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(Digamma) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Digamma) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Digamma, prim::kPrimDigamma->name(), ADPT_DESC(Digamma));
+
+// TrilIndices
+CUST_INPUT_MAP(TrilIndices) = EMPTY_INPUT_MAP;
+CUST_ATTR_MAP(TrilIndices) = {{"row", ATTR_DESC(row, AnyTraits<int64_t>())},
+                              {"col", ATTR_DESC(col, AnyTraits<int64_t>())},
+                              {"offset", ATTR_DESC(offset, AnyTraits<int64_t>())},
+                              {"dtype", ATTR_DESC(dtype, AnyTraits<GEType>())}};
+CUST_OUTPUT_MAP(TrilIndices) = {{0, OUTPUT_DESC(output)}};
+REG_ADPT_DESC(TrilIndices, prim::kPrimTrilIndices->name(), CUST_ADPT_DESC(TrilIndices));
+
+// Angle
+INPUT_MAP(Angle) = {{1, INPUT_DESC(input)}};
+ATTR_MAP(Angle) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Angle) = {{0, OUTPUT_DESC(output)}};
+REG_ADPT_DESC(Angle, prim::kPrimAngle->name(), ADPT_DESC(Angle));
+
+// Polygamma
+CUST_INPUT_MAP(Polygamma) = {{1, INPUT_DESC(a)}, {2, INPUT_DESC(x)}};
+CUST_ATTR_MAP(Polygamma) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(Polygamma) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Polygamma, prim::kPrimPolygamma->name(), CUST_ADPT_DESC(Polygamma));
+
+// Igammac
+INPUT_MAP(Igammac) = {{1, INPUT_DESC(a)}, {2, INPUT_DESC(x)}};
+ATTR_MAP(Igammac) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Igammac) = {{0, OUTPUT_DESC(z)}};
+REG_ADPT_DESC(Igammac, prim::kPrimIgammac->name(), ADPT_DESC(Igammac));
+
+// FFTWithSize
+static const std::vector<std::string> norm_strings = {"backward", "forward", "ortho"};
+CUST_INPUT_MAP(FFTWithSize) = {{1, INPUT_DESC(x)}};
+CUST_INPUT_ATTR_MAP(FFTWithSize) = {
+  {2, ATTR_DESC(signal_ndim, AnyTraits<int64_t>())}, {3, ATTR_DESC(inverse, AnyTraits<bool>())},
+  {4, ATTR_DESC(real, AnyTraits<bool>())},           {5, ATTR_DESC(norm, AnyTraits<GEEnumToStr>(), norm_strings)},
+  {6, ATTR_DESC(onesided, AnyTraits<bool>())},       {7, ATTR_DESC(signal_sizes, AnyTraits<std::vector<int64_t>>())}};
+CUST_ATTR_MAP(FFTWithSize) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(FFTWithSize) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(FFTWithSize, kNameFFTWithSize, CUST_ADPT_DESC(FFTWithSize));
+
+// IgammaGradA
+INPUT_MAP(IgammaGradA) = {{1, INPUT_DESC(a)}, {2, INPUT_DESC(x)}};
+ATTR_MAP(IgammaGradA) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(IgammaGradA) = {{0, OUTPUT_DESC(z)}};
+REG_ADPT_DESC(IgammaGradA, prim::kPrimIgammaGradA->name(), ADPT_DESC(IgammaGradA));
 }  // namespace mindspore::transform

@@ -13,3 +13,5 @@ greater:
         output:
             dtype: tensor
             type_cast: bool
+    dispatch:
+        enable: True

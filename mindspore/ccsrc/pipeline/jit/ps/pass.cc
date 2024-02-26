@@ -51,6 +51,7 @@
 #include "frontend/parallel/pass/micro_interleaved_order_control.h"
 #include "frontend/parallel/pass/full_micro_interleaved_order_control.h"
 #include "frontend/parallel/pass/assign_add_opt.h"
+#include "frontend/parallel/pass/merge_cast_opt.h"
 #include "frontend/parallel/pass/comp_comm_scheduling.h"
 #include "frontend/parallel/pass/overlap_opt_shard_in_pipeline.h"
 #include "frontend/parallel/pass/slice_activation_in_cell_share_recompute.h"
@@ -59,6 +60,7 @@
 #include "frontend/parallel/pass/overlap_gradmatmul_and_gradallreduce.h"
 #include "frontend/parallel/pass/split_matmul_comm_elementwise_fp.h"
 #include "frontend/parallel/pass/split_layernorm_comm_fp.h"
+#include "frontend/parallel/pipeline_transformer/pipeline_transformer.h"
 #include "frontend/optimizer/recompute.h"
 #include "frontend/optimizer/irpass/recompute.h"
 #include "frontend/optimizer/slice_activation_in_recompute.h"
@@ -322,7 +324,10 @@ void AddParallelRenormalize(OptPassGroupMap *map_a) {
     auto parallel_end_opt =
       find_if(map_a->begin(), map_a->end(), [](auto opt_pair) { return opt_pair.first == "meta_fg_expand"; });
     if (parallel_end_opt != map_a->end()) {
-      (void)map_a->insert(parallel_end_opt, {"parallel_renormalize", opt::OptPassConfig::Renormalize()});
+      opt::irpass::OptimizeIRPassLib irpass;
+      opt::OptPassConfig cast_eliminate_pass = opt::OptPassConfig({irpass.cast_eliminate_});
+      auto iter = map_a->insert(parallel_end_opt, {"cast_eliminate", cast_eliminate_pass});
+      (void)map_a->insert(iter, {"parallel_renormalize", opt::OptPassConfig::Renormalize()});
     }
   }
 }
@@ -475,6 +480,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
                          {"cell_reuse_recompute_pass", opt::OptPassConfig(opt::irpass::AddRecomputeNodes)},
                          {"cell_reuse_handle_not_recompute_node_pass", cell_reuse_handle_not_recompute_node_pass},
                          {"meta_fg_expand", opt::OptPassConfig(opt::irpass::ExpandMetaFg())},
+                         {"receive_attached", opt::OptPassConfig(parallel::IsolatedNodeAttach)},
                          {"after_resolve", after_resolve_pass},
                          {"a_after_grad", a_after_grad},
                          {"renormalize", opt::OptPassConfig::Renormalize()},
@@ -565,7 +571,8 @@ OptPassGroupMap GetOptPassesB(const opt::irpass::OptimizeIRPassLib &irpass) {
                                                irpass.environ_get_depend_swap_,
                                                irpass.environ_add_const_eliminate_,
                                                irpass.value_based_eliminate_,
-                                               irpass.parallel_virtual_node_},
+                                               irpass.parallel_virtual_node_,
+                                               irpass.const_output_eliminate_},
                                               false, true);
   opt::OptPassConfig b_2 = opt::OptPassConfig({
     irpass.row_tensor_eliminate_,
@@ -758,6 +765,12 @@ bool LabelFineGrainedInterleavedIndexPass(const ResourcePtr &resource) {
 bool AssignAddOpt(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   parallel::AssignAddOpt(resource->func_graph());
+  return true;
+}
+
+bool MergeCastOpt(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  parallel::MergeCastOpt(resource->func_graph());
   return true;
 }
 
@@ -1093,9 +1106,10 @@ std::vector<PassItem> kVmPasses = {{"py_interpret_to_execute", PyInterpretToExec
                                    {"environ_conv", EnvironConversionPass},
                                    {"label_micro_interleaved_index", LabelMicroInterleavedIndexPass},
                                    {"label_fine_grained_interleaved_index", LabelFineGrainedInterleavedIndexPass},
-                                   {"assign_add_opt", AssignAddOpt},
+                                   {"merge_cast_opt", MergeCastOpt},
                                    {"slice_recompute_activation", SliceRecomputeActivationPass},
                                    {"micro_interleaved_order_control", MicroInterLeavedOrderControlPass},
+                                   {"assign_add_opt", AssignAddOpt},
                                    {"full_micro_interleaved_order_control", FullMicroInterLeavedOrderControlPass},
                                    {"comp_comm_scheduling", CompCommSchedulingPass},
                                    {"reorder_send_recv_between_fp_bp", ReorderSendRecvBetweenFpBpPass},

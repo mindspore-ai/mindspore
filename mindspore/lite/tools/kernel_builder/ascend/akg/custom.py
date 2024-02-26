@@ -60,6 +60,14 @@ def copy_shape(shape):
         res.append(s)
     return res
 
+# InfoGlobalConfig is used to store global configuration for info files.
+# It can be accessed or modified internally in custom.py using InfoGlobalConfig.xxx.
+
+
+class InfoGlobalConfig:
+    # whether enable akg cce lib
+    enable_cce_lib = False
+
 
 class OpInfer:
     """Base infer class, used to provide supported formats and data type of each op and update each of"""
@@ -318,6 +326,9 @@ class MatMul(OpInfer):
 
     def supported_format(self):
         input_num = len(self.input_desc)
+        if InfoGlobalConfig.enable_cce_lib and input_num == 2:
+            # MatMul cce only support ND
+            return ["ND,ND,ND"]
         if input_num == 2:
             return ["FRACTAL_NZ,FRACTAL_NZ,FRACTAL_NZ"]
         if input_num == 3:
@@ -562,6 +573,41 @@ class Tile(OpInfer):
         self.output_desc[0][ORI_SHAPE] = out_shape
 
 
+class PagedAttention(OpInfer):
+    """PagedAttention"""
+
+    def supported_format(self):
+        return ["ND,ND,ND,ND,ND,ND"]
+
+    def infer_shape(self):
+        """PagedAttention op keeps ND format, so the output shape will not be changed"""
+        self.output_desc[0]["shape"] = self.output_desc[0]["ori_shape"]
+
+    def infer_ori_shape(self):
+        self.output_desc[0]["ori_shape"] = self.input_desc[0]["ori_shape"]
+
+
+class ReshapeAndCache(OpInfer):
+    """ReshapeAndCache"""
+
+    def supported_format(self):
+        return ["ND,ND,ND,ND,ND,ND"]
+
+    def infer_shape(self):
+        """ReshapeAndCache op keeps ND format, so the output shape will not be changed"""
+        self.output_desc[0]["shape"] = self.output_desc[0]["ori_shape"]
+
+    def infer_ori_shape(self):
+        self.output_desc[0]["ori_shape"] = self.input_desc[0]["ori_shape"]
+
+
+class PagedAttentionMask(PagedAttention):
+    """PagedAttentionMask"""
+
+    def supported_format(self):
+        return ["ND,ND,ND,ND,ND,ND,ND"]
+
+
 # Ge will convert dtype bool to int8, and ReLU will be expand to Greater op in expander,
 # and the dtype of Greater op is bool, which is incompatible with bool.
 # As a result akg will rise error when parsing Greater op with dtype int8.
@@ -603,6 +649,9 @@ prims = {
     "ReduceMax": Reduce,
     "ReduceMin": Reduce,
     "Cast": Cast,
+    "PagedAttention": PagedAttention,
+    "PagedAttentionMask": PagedAttentionMask,
+    "ReshapeAndCache": ReshapeAndCache,
 }
 
 
@@ -734,6 +783,8 @@ def update_akg_info(args, info_path, kernel_name=None):
         update_global_input_desc(desc, args)
         # cache global input
         cache_input_tensors(tensor_desc, desc.get(INPUT_DESC))
+        # Update info global config
+        InfoGlobalConfig.enable_cce_lib = desc.get("enable_cce_lib")
 
         # Update op_desc
         for _, op_desc in enumerate(desc[OP_DESC]):

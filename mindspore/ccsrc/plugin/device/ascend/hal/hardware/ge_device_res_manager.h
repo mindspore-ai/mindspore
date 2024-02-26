@@ -76,9 +76,8 @@ class GeDeviceResManager : public DeviceResManager {
   }
 
   void ResetStreamAndCtx() override;
-  void SetDeviceIdToCurrentThread() const override;
   bool BindDeviceToCurrentThread(bool force_bind) const override;
-  void *GetStream() const {
+  void *GetStream() const override {
     MS_EXCEPTION_IF_NULL(runtime_instance_);
     return runtime_instance_->compute_stream();
   }

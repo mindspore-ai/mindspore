@@ -105,3 +105,7 @@ def adapter_sum(*data):
     else:
         out = sum_fn(*data)
     return out
+
+
+def create_adapter_tensor(*data, dtype=None, inner=False, cast_tensor=False):
+    return adapter_Tensor(*data, dtype=dtype, inner=inner, cast_tensor=cast_tensor) # @jit.typing: () -> tensor_type[{dtype}]

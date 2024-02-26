@@ -19,8 +19,8 @@ mindspore_lite.Context
             .. code-block::
 
                 [execution_plan]
-                [op_name1]=data_type:float16（名字为op_name1的算子设置数据类型为Float16）
-                [op_name2]=data_type:float32（名字为op_name2的算子设置数据类型为Float32）
+                [op_name1]=data_type:float16（名字为op_name1的算子设置数据类型为float16）
+                [op_name2]=data_type:float32（名字为op_name2的算子设置数据类型为float32）
 
           - **用法2** - 在使用GPU推理时，进行TensorRT设置，配置文件内容及说明如下：
 

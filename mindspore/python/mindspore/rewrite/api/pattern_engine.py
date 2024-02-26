@@ -24,7 +24,6 @@ from mindspore import _checkparam as Validator
 from .node_type import NodeType
 from .node import Node
 from .symbol_tree import SymbolTree
-from .tree_node_helper import TreeNodeHelper
 
 
 class PatternNode:
@@ -363,7 +362,7 @@ class PatternEngine:
             if cur_node in visited:
                 continue
             if cur_node.get_node_type() == NodeType.Tree:
-                subtree = TreeNodeHelper.get_sub_tree(cur_node)
+                subtree = cur_node.get_sub_tree()
                 self.apply(subtree)
                 visited.append(cur_node)
                 queue.extend(cur_node.get_users())

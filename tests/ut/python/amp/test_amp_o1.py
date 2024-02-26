@@ -16,13 +16,14 @@
 import mindspore as ms
 from mindspore.train import amp
 from mindspore import nn, ops
+import numpy as np
 
 class NetWithBranch(nn.Cell):
     def __init__(self):
         super().__init__()
-        self.conv = nn.Conv2d(1, 6, 5, pad_mode='valid')
+        self.conv = nn.Conv2d(1, 6, 2, pad_mode='valid')
         self.relu = ops.ReLU()
-        self.bn = nn.BatchNorm2d(1)
+        self.bn = nn.BatchNorm2d(6)
 
     def construct(self, x):
         x = self.conv(x)
@@ -39,30 +40,45 @@ def test_net_with_branch():
     Expectation: Success.
     """
     network = NetWithBranch()
+    x = ms.Tensor(np.ones([1, 1, 4, 4]), ms.float32)
+    y = network(x)
+    # enable parse mindspore cells
+    ms.rewrite.common.namespace._ms_cells_to_subtree = True # pylint:disable=protected-access
     stree = ms.rewrite.SymbolTree.create(network)
-    amp._insert_cast_operator_white_list(stree, amp.AMP_WHITE_LIST, ms.float16) # pylint:disable=protected-access
+    amp._insert_cast_for_operators(stree, ms.float16, False, white_list=amp.AMP_WHITE_LIST) # pylint:disable=protected-access
     amp._remove_duplicated_cast(stree, ms.float16) # pylint:disable=protected-access
     codes = stree.get_code()
-    assert codes.count("x = self.outcast_conv(x, mindspore.float32)") == 1
-    assert codes.count("x_1 = self.incast_relu0(x, mindspore.float16)") == 1
-    assert codes.count("y1 = self.relu(x_1)") == 1
-    assert codes.count("y1 = self.outcast_relu(y1, mindspore.float32)") == 1
+    assert codes.count("x = amp_cast(x, mindspore.float16)") == 1, codes
+    assert codes.count("weight_var = amp_cast(self.weight, mindspore.float16)") == 1, codes
+    assert codes.count("output = self.conv2d(x, weight_var)") == 1, codes
+    assert codes.count("output = amp_cast(output, mindspore.float32)") == 2, codes
+    assert codes.count("output_var = amp_cast(output, mindspore.float16)") == 1, codes
+    assert codes.count("bias_var = amp_cast(self.bias, mindspore.float16)") == 1, codes
+    assert codes.count("output = self.bias_add(output_var, bias_var)") == 1, codes
+    assert codes.count("x_var = amp_cast(x, mindspore.float16)") == 1, codes
+    assert codes.count("y1 = self.relu(x_var)") == 1, codes
+    assert codes.count("y1 = amp_cast(y1, mindspore.float32)") == 1, codes
+    new_net = stree.get_network()
+    # disable parse mindspore cells
+    ms.rewrite.common.namespace._ms_cells_to_subtree = False # pylint:disable=protected-access
+    y1 = new_net(x)
+    assert np.allclose(y.asnumpy(), y1.asnumpy(), 0.001, 0.001)
 
 
 class NetWithIf(nn.Cell):
     def __init__(self):
         super().__init__()
-        self.conv1 = nn.Conv2d(1, 6, 5, pad_mode='valid')
-        self.conv2 = nn.Conv2d(1, 6, 5, pad_mode='valid')
-        self.conv3 = nn.Conv2d(1, 6, 5, pad_mode='valid')
-        self.conv4 = nn.Conv2d(1, 6, 5, pad_mode='valid')
-        self.conv5 = nn.Conv2d(1, 6, 5, pad_mode='valid')
+        self.conv1 = nn.Conv2d(1, 1, 2, pad_mode='valid')
+        self.conv2 = nn.Conv2d(1, 1, 2, pad_mode='valid')
+        self.conv3 = nn.Conv2d(1, 1, 2, pad_mode='valid')
+        self.conv4 = nn.Conv2d(1, 1, 2, pad_mode='valid')
+        self.conv5 = nn.Conv2d(1, 1, 2, pad_mode='valid')
         self.relu = ops.ReLU()
         self.bn = nn.BatchNorm2d(1)
 
     def construct(self, x):
         x = self.conv1(x)
-        if self.relu(x):
+        if self.relu(x) is not None:
             x = self.conv2(x)
             x = self.bn(x)
         else:
@@ -79,26 +95,36 @@ def test_net_with_if():
     Expectation: Success.
     """
     network = NetWithIf()
+    x = ms.Tensor(np.ones([1, 1, 4, 4]), ms.float32)
+    y = network(x)
+    # enable parse mindspore cells
+    ms.rewrite.common.namespace._ms_cells_to_subtree = True # pylint:disable=protected-access
     stree = ms.rewrite.SymbolTree.create(network)
-    amp._insert_cast_operator_white_list(stree, amp.AMP_WHITE_LIST, ms.float16) # pylint:disable=protected-access
+    amp._insert_cast_for_operators(stree, ms.float16, False, white_list=amp.AMP_WHITE_LIST) # pylint:disable=protected-access
     amp._remove_duplicated_cast(stree, ms.float16) # pylint:disable=protected-access
     codes = stree.get_code()
-    assert codes.count("x = self.outcast_conv1(x, mindspore.float32)") == 1
-    assert codes.count("x_1 = self.incast_relu0(x, mindspore.float16)") == 1
-    assert codes.count("relu_var = self.relu(x_1)") == 1
-    assert codes.count("relu_var = self.outcast_relu(relu_var, mindspore.float32)") == 1
-    assert codes.count("if relu_var:") == 1
-    assert codes.count("x = self.outcast_conv2(x, mindspore.float32)") == 1
-    assert codes.count("x = self.outcast_conv3(x, mindspore.float32)") == 0
-    assert codes.count("x = self.outcast_conv4(x, mindspore.float32)") == 1
-    assert codes.count("x = self.outcast_conv5(x, mindspore.float32)") == 1
+    assert codes.count("x = amp_cast(x, mindspore.float16)") == 5, codes
+    assert codes.count("weight_var = amp_cast(self.weight, mindspore.float16)") == 5, codes
+    assert codes.count("output = self.conv2d(x, weight_var)") == 5, codes
+    assert codes.count("output = amp_cast(output, mindspore.float32)") == 10, codes
+    assert codes.count("output_var = amp_cast(output, mindspore.float16)") == 5, codes
+    assert codes.count("bias_var = amp_cast(self.bias, mindspore.float16)") == 5, codes
+    assert codes.count("output = self.bias_add(output_var, bias_var)") == 5, codes
+    assert codes.count("x_var = amp_cast(x, mindspore.float16)") == 1, codes
+    assert codes.count("relu_var = self.relu(x_var)") == 1, codes
+    assert codes.count("relu_var = amp_cast(relu_var, mindspore.float32)") == 1, codes
+    new_net = stree.get_network()
+    # disable parse mindspore cells
+    ms.rewrite.common.namespace._ms_cells_to_subtree = False # pylint:disable=protected-access
+    y1 = new_net(x)
+    assert np.allclose(y.asnumpy(), y1.asnumpy(), 0.001, 0.001)
 
 
 class NetWithClassFunction(nn.Cell):
     def __init__(self):
         super().__init__()
-        self.conv1 = nn.Conv2d(1, 6, 5, pad_mode='valid')
-        self.conv2 = nn.Conv2d(1, 6, 5, pad_mode='valid')
+        self.conv1 = nn.Conv2d(1, 1, 2, pad_mode='valid')
+        self.conv2 = nn.Conv2d(1, 1, 2, pad_mode='valid')
         self.relu = ops.ReLU()
         self.bn = nn.BatchNorm2d(1)
 
@@ -120,11 +146,27 @@ def test_net_with_class_function():
     Description: Network has class function, check whether casts are inserted correctly.
     Expectation: Success.
     """
+    ms.set_context(mode=ms.GRAPH_MODE, save_graphs=True, save_graphs_path="./graphs")
     network = NetWithClassFunction()
+    x = ms.Tensor(np.ones([1, 1, 4, 4]), ms.float32)
+    y = network(x)
+    # enable parse mindspore cells
+    ms.rewrite.common.namespace._ms_cells_to_subtree = True # pylint:disable=protected-access
     stree = ms.rewrite.SymbolTree.create(network)
-    amp._insert_cast_operator_white_list(stree, amp.AMP_WHITE_LIST, ms.float16) # pylint:disable=protected-access
+    amp._insert_cast_for_operators(stree, ms.float16, False, white_list=amp.AMP_WHITE_LIST) # pylint:disable=protected-access
     amp._remove_duplicated_cast(stree, ms.float16) # pylint:disable=protected-access
     codes = stree.get_code()
-    assert codes.count("x = self.outcast_conv1(x, mindspore.float32)") == 1
-    assert codes.count("x = self.outcast_conv2(x, mindspore.float32)") == 0
-    assert codes.count("x = self.outcast_relu(x, mindspore.float32)") == 1
+    assert codes.count("x = amp_cast(x, mindspore.float16)") == 3, codes
+    assert codes.count("weight_var = amp_cast(self.weight, mindspore.float16)") == 2, codes
+    assert codes.count("output = self.conv2d(x, weight_var)") == 2, codes
+    assert codes.count("output = amp_cast(output, mindspore.float32)") == 4, codes
+    assert codes.count("output_var = amp_cast(output, mindspore.float16)") == 2, codes
+    assert codes.count("bias_var = amp_cast(self.bias, mindspore.float16)") == 2, codes
+    assert codes.count("output = self.bias_add(output_var, bias_var)") == 2, codes
+    assert codes.count("x = self.relu(x)") == 1, codes
+    assert codes.count("x = amp_cast(x, mindspore.float32)") == 1, codes
+    new_net = stree.get_network()
+    # disable parse mindspore cells
+    ms.rewrite.common.namespace._ms_cells_to_subtree = False # pylint:disable=protected-access
+    y1 = new_net(x)
+    assert np.allclose(y.asnumpy(), y1.asnumpy(), 0.001, 0.001)

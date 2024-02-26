@@ -127,7 +127,7 @@ def clip_by_value(x, clip_value_min=None, clip_value_max=None):
             clip\_value\_max & \text{ if } x_i\ge  clip\_value\_max \\
             x_i & \text{ if } clip\_value\_min \lt x_i \lt clip\_value\_max \\
             clip\_value\_min & \text{ if } x_i \le clip\_value\_min \\
-        \end{array}\right.
+        \end{array}\right
 
     Note:
         - `clip_value_min` and `clip_value_max` cannot be None at the same time;
@@ -234,7 +234,7 @@ def clamp(input, min=None, max=None):
             max & \text{ if } input_i\ge max \\
             input_i & \text{ if } min \lt input_i \lt max \\
             min & \text{ if } input_i \le min \\
-        \end{array}\right.
+        \end{array}\right
 
     Note:
         - `min` and `max` cannot be None at the same time;

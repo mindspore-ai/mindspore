@@ -1670,20 +1670,33 @@ AnfNodePtr Parser::ParseCall(const FunctionBlockPtr &block, const py::object &no
   ParseArgsInCall(block, args, &args_context);
   ParseKeywordsInCall(block, node, &args_context);
 
-  auto is_class_tensor = call_function_node->user_data<bool>(kClassTensorType);
-  if (is_class_tensor != nullptr && *is_class_tensor) {
-    // Convert Tensor(...) to functional tensor(...) to use annotation to get type.
-    auto call_debug_info = call_function_node->debug_info();
-    MS_EXCEPTION_IF_NULL(call_debug_info);
-    auto call_location = call_debug_info->location();
+  // If the expression is to create Tensor(including adapter tensor) without jit annotation,
+  // using functional api to create corresponding tensor since the functional api has jit annotation.
+  auto class_tensor_object = call_function_node->user_data<py::object>(kClassTensorObject);
+  ClassInstanceType class_tensor_type = CLASS_INSTANCE_TYPE_INVALID;
+  if (class_tensor_object != nullptr) {
+    auto call_location = GetLocation(node);
     MS_EXCEPTION_IF_NULL(call_location);
     const auto &comments = call_location->comments();
     if (comments.empty()) {
-      const std::string tensor_func_str = "__ms_tensor_func__";
-      auto new_call_function_node = block->MakeResolveSymbol(tensor_func_str);
-      MS_LOG(INFO) << "Convert Tensor call node " << call_function_node->DebugString()
-                   << " to functional tensor call node " << new_call_function_node->DebugString();
-      return GenerateAnfNodeForCall(block, new_call_function_node, args_context);
+      class_tensor_type = ClassInstanceType(
+        ast_->CallParserObjMethod(PYTHON_PARSE_GET_CLASS_TENSOR_TYPE, *class_tensor_object).cast<int32_t>());
+      AnfNodePtr new_call_function_node = nullptr;
+      if (class_tensor_type == CLASS_INSTANCE_TYPE_TENSOR) {
+        constexpr auto tensor_func_str = "__ms_tensor_func__";
+        new_call_function_node = block->MakeResolveSymbol(tensor_func_str);
+      } else if (class_tensor_type == CLASS_INSTANCE_TYPE_ADAPTER_TENSOR) {
+        constexpr auto adapter_convert_function = "get_adapter_convert_function";
+        py::object generate_func = ast_->CallParserObjMethod(adapter_convert_function, *class_tensor_object);
+        if (!py::isinstance<py::none>(generate_func)) {
+          new_call_function_node = NewValueNode(ParsePythonCode(generate_func));
+        }
+      }
+      if (new_call_function_node != nullptr) {
+        MS_LOG(INFO) << "Convert Tensor call node " << call_function_node->DebugString()
+                     << " to functional tensor call node " << new_call_function_node->DebugString();
+        return GenerateAnfNodeForCall(block, new_call_function_node, args_context);
+      }
     }
   }
 
@@ -1715,6 +1728,10 @@ AnfNodePtr Parser::ParseCall(const FunctionBlockPtr &block, const py::object &no
         call_cnode->set_interpret_internal_type(true);
       }
     }
+  }
+  if (class_tensor_type == CLASS_INSTANCE_TYPE_ADAPTER_TENSOR) {
+    MS_LOG(DEBUG) << "Current adapter tensor node: " << call_cnode->DebugString();
+    call_cnode->set_user_data<bool>(fallback::kAdapterTensor, std::make_shared<bool>(true));
   }
   return call_cnode;
 }
@@ -1860,6 +1877,13 @@ AnfNodePtr Parser::ParseMsTensor(const FunctionBlockPtr &block, const py::object
         AnfNodePtr interpret_node = MakeInterpretNode(block, value_node, script_text);
         interpret_node->set_interpret(true);
         interpret_node->set_interpret_internal_type(true);
+        if (module_str.find("module 'mindtorch") != std::string::npos ||
+            module_str.find("module 'msadapter") != std::string::npos) {
+          const py::tuple &info = ast()->CallParserObjMethod(PYTHON_PARSE_GET_NAMESPACE_SYMBOL, "Tensor");
+          constexpr size_t value_index = 2;
+          interpret_node->set_user_data<py::object>(kClassTensorObject,
+                                                    std::make_shared<py::object>(info[value_index]));
+        }
         return interpret_node;
       }
     }
@@ -1927,6 +1951,23 @@ AnfNodePtr Parser::MakeGetAttrWithInterpret(const std::string &obj_name, const s
   return ret_node;
 }
 
+AnfNodePtr TransPropertyToFunc(const FuncGraphPtr &fg, const AnfNodePtr &node, const py::object &property_net_obj,
+                               std::string attr_str) {
+  py::object property_func = py::none();
+  try {
+    property_func = property_net_obj.attr("__class__").attr(py::str(attr_str));
+  } catch (const std::exception &e) {
+    MS_LOG(ERROR) << property_net_obj << " has no attribute " << attr_str;
+  }
+  py::object property_func_fget = property_func.attr(py::str("fget"));
+  auto inner_fg = ParsePythonCode(property_func_fget);
+  std::vector<AnfNodePtr> new_inputs = {NewValueNode(inner_fg)};
+  new_inputs.push_back(node);
+  AnfNodePtr call_func_node = fg->NewCNodeInOrder(new_inputs);
+  MS_LOG(DEBUG) << "call_func_node:" << call_func_node->DebugString();
+  return call_func_node;
+}
+
 // Process call attributes of class type define, eg: x.y()
 AnfNodePtr Parser::ParseAttribute(const FunctionBlockPtr &block, const py::object &node) {
   MS_LOG(DEBUG) << "Process ast Attribute";
@@ -1956,8 +1997,9 @@ AnfNodePtr Parser::ParseAttribute(const FunctionBlockPtr &block, const py::objec
     bool is_property =
       (python_adapter::CallPyModFn(mod, PYTHON_PARSE_CHECK_ATTR_IS_PROPERTY, ast()->obj(), attr_str)).cast<bool>();
     if (is_property) {
-      MS_LOG(INFO) << "The property decorator is not supported in graph mode.\n"
-                      "You can remove the property decorator and call the function as a method.\n";
+      py::object property_net_obj = ast()->obj();
+      AnfNodePtr value_node = ParseExprNode(block, value_body);
+      return TransPropertyToFunc(cur_fg, value_node, property_net_obj, attr_str);
     }
     obj_name = "self";
     getattr_obj = ast()->obj();

@@ -40,6 +40,15 @@ REG_CUST_OP(Dropout2D)
   .REQUIRED_ATTR(keep_prob, Float)
   .CUST_OP_END_FACTORY_REG(Dropout2D)
 
+REG_CUST_OP(Dropout3D)
+  .INPUT(x, TensorType({DT_BOOL, DT_DOUBLE, DT_FLOAT, DT_FLOAT16, DT_INT16, DT_INT32, DT_INT64, DT_INT8,
+                        DT_UINT16, DT_UINT32, DT_UINT64, DT_UINT8}))
+  .OUTPUT(y, TensorType({DT_BOOL, DT_DOUBLE, DT_FLOAT, DT_FLOAT16, DT_INT16, DT_INT32, DT_INT64, DT_INT8,
+                         DT_UINT16, DT_UINT32, DT_UINT64, DT_UINT8}))
+  .OUTPUT(mask, TensorType({DT_BOOL}))
+  .REQUIRED_ATTR(keep_prob, Float)
+  .CUST_OP_END_FACTORY_REG(Dropout3D)
+
 REG_CUST_OP(Randperm)
   .INPUT(n, TensorType({DT_INT32, DT_INT64}))
   .OUTPUT(output, TensorType({DT_INT8, DT_INT16, DT_INT32, DT_INT64,

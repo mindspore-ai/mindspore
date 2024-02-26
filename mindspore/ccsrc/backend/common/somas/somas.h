@@ -44,20 +44,10 @@ struct EventPair {
   CNodePtr recv_;
 };
 
-union DestinationUnion {
-  size_t id;
-  size_t index;
-  DestinationUnion() : index(0) {}
-};
-
 struct TensorConflictInfo {
   size_t tensor_id;
   size_t src_node_id;
-  size_t destination_num;
-  DestinationUnion l;
-  DestinationUnion r;
-  TensorConflictInfo(size_t tensor_id, size_t src_node_id)
-      : tensor_id(tensor_id), src_node_id(src_node_id), destination_num(0) {}
+  TensorConflictInfo(size_t tensor_id, size_t src_node_id) : tensor_id(tensor_id), src_node_id(src_node_id) {}
 };
 
 struct Block {
@@ -122,7 +112,7 @@ class BACKEND_EXPORT Somas {
   std::map<std::string, UnReuseType> un_reuse_node_name_;
   // end
 
-  std::vector<DynamicBitSet> reuse_matrix_;
+  std::vector<VectorBitSet> reuse_matrix_;
   // hash id
   std::string hash_id_;
 
@@ -181,23 +171,12 @@ class BACKEND_EXPORT Somas {
   static bool NodeSort(const SomasNodePtr &node1, const SomasNodePtr &node2);
   void ComputeConflictMatrix();
   void ComputeBasicMatrix();
-  static void ComputeOneTensorConflicts(const std::shared_ptr<SomasTensor> &target_tensor,
+  static void ComputeOneTensorConflicts(const TensorConflictInfo &target_tensor,
                                         const std::vector<TensorConflictInfo> &tensor_conflict_info,
-                                        const std::vector<size_t> &destination_node_list,
                                         const vector<DynamicBitSet> &nodes_dependency,
-                                        std::vector<DynamicBitSet> *tensor_relation);
-  void ComputeMultiTensorConflicts(const std::vector<SomasTensorPtr> &target_tensors_list,
-                                   const std::vector<TensorConflictInfo> &tensor_conflict_info,
-                                   const std::vector<size_t> &destination_node_list,
-                                   const vector<DynamicBitSet> &nodes_dependency,
-                                   std::vector<DynamicBitSet> *tensor_relation) const;
+                                        std::vector<VectorBitSet> *tensor_relation);
   void UpdateTensorDestinations();
   void UpdateUnionTensorsConflict();
-  static void BuildConflictInfo(const std::shared_ptr<SomasTensor> &tensor, TensorConflictInfo *tensor_conflict_info,
-                                std::vector<size_t> *destination_node_list);
-  static bool CheckIsDependency(const TensorConflictInfo &tensor_conflict_info, const size_t &src_node_id,
-                                const vector<DynamicBitSet> &nodes_dependency,
-                                const std::vector<size_t> &destination_node_list);
   void ProcessSemiLifeLongTensor();
 
   // solver
@@ -217,6 +196,7 @@ class BACKEND_EXPORT Somas {
   std::string Offline() const;
   void DumpOfflineIR(const string &filename) const;
   size_t CalcLowerBound() const;
+  void UpdateTensorPeak(const std::vector<SomasTensorPtr> &peak_tensors) const;
   void GenGraphStatisticInfo();
   void DumpParameters(std::ostringstream &oss) const;
   void DumpTensors(std::ostringstream &oss) const;

@@ -19,6 +19,7 @@ from mindspore.ops import functional as F, composite as C, operations as P
 import mindspore.common.dtype as mstype
 from mindspore.experimental.optim.optimizer import Optimizer, check_not_less_than, check_not_less_than_without_equal
 from mindspore import _checkparam as validator
+from mindspore import jit
 
 _adadelta_opt = C.MultitypeFuncGraph("adadelta_opt")
 
@@ -69,9 +70,9 @@ class Adadelta(Optimizer):
             parameter groups.
         lr (Union[int, float, Tensor], optional): learning rate. Default: ``1.0``.
         rho (float, optional): coefficient used for computing a running average
-            of squared gradients. Default: ``0.9``.
+            of squared gradients. :math:`\rho` in the formula above. Default: ``0.9``.
         eps (float, optional): term added to the denominator to improve
-            numerical stability. Default: ``1e-6``.
+            numerical stability. :math:`\epsilon` in the formula above. Default: ``1e-6``.
         weight_decay (float, optional): weight decay (L2 penalty). Default: ``0.``.
 
     Keyword Args:
@@ -110,6 +111,7 @@ class Adadelta(Optimizer):
         ...     optimizer(grads)
         ...     return loss
     """
+
     def __init__(self, params, lr=1.0, rho=0.9, eps=1e-6, weight_decay=0.0, *, maximize=False):
         check_not_less_than_without_equal(lr, "lr", self.cls_name)
         check_not_less_than_without_equal(eps, "eps", self.cls_name)
@@ -130,20 +132,30 @@ class Adadelta(Optimizer):
         self.opt = P.ApplyAdadelta()
         self.op_cast = P.Cast()
 
+    @jit
+    def implementation(self, lr, rho, eps, maximize, weight_decay, start_id, end_id, gradients):
+        """Extract the common computing part for acceleration"""
+        params = self.parameters[start_id: end_id]
+        grads = tuple([grad if not maximize else F.neg(grad) for grad in gradients[start_id: end_id]])
+        grads = self._decay_weight(weight_decay, params, grads)
+        accum = self.accum[start_id: end_id]
+        accum_update = self.accum_update[start_id: end_id]
+        self.hyper_map(F.partial(_adadelta_opt, self.opt, rho, eps, lr),
+                       params, accum, accum_update, grads)
+        return True
+
     def construct(self, gradients):
         for group_id, group in enumerate(self.param_groups):
             lr = self.lrs[group_id]
             if isinstance(group.get("lr"), float):
                 lr = self.op_cast(group.get("lr"), mstype.float32)
             maximize = group.get("maximize")
+            rho = group["rho"]
+            eps = group["eps"]
 
             start_id = self.group_start_id[group_id]
-            end_id = self.group_start_id[group_id+1]
-            params = self.parameters[start_id: end_id]
-            grads = tuple([grad if not maximize else F.neg(grad) for grad in gradients[start_id: end_id]])
-            grads = self._decay_weight(group["weight_decay"], params, grads)
-            accum = self.accum[start_id: end_id]
-            accum_update = self.accum_update[start_id: end_id]
-            self.hyper_map(F.partial(_adadelta_opt, self.opt, group["rho"], group["eps"], lr),
-                           params, accum, accum_update, grads)
+            end_id = self.group_start_id[group_id + 1]
+            weight_decay = group["weight_decay"]
+            self.implementation(lr, rho, eps, maximize, weight_decay, start_id, end_id, gradients)
+
         return True

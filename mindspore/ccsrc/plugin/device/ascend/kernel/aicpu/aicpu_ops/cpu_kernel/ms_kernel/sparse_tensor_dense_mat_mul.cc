@@ -151,8 +151,6 @@ uint32_t SparseTensorDenseMatMulCpuKernel::RegularCalculate(const CpuKernelConte
   if (adjoint_b->GetBool()) {
     std::swap(x2_row, x2_col);
   }
-  auto same_dim = (adjoint_b->GetBool()) ? x2_row : x2_col;
-  auto y_dims = y_shape->GetDimSize(0);
   uint64_t pairs = x1_indices_shape->GetDimSize(0);
   IndicesType *x1_indices_data = reinterpret_cast<IndicesType *>(x1_indices->GetData());
   for (uint64_t i = 0; i < pairs; i++) {
@@ -162,9 +160,9 @@ uint32_t SparseTensorDenseMatMulCpuKernel::RegularCalculate(const CpuKernelConte
     if (adjoint_a->GetBool()) {
       std::swap(row, col);
     }
-    KERNEL_CHECK_FALSE(row < static_cast<uint64_t>(y_dims) && col < static_cast<uint64_t>(same_dim),
+    KERNEL_CHECK_FALSE(row < static_cast<uint64_t>(x1_row) && col < static_cast<uint64_t>(x1_col),
                        KERNEL_STATUS_PARAM_INVALID,
-                       "For 'SparseTensorDenseMatmul', the indices including out of bounds index '");
+                       "For 'SparseTensorDenseMatmul', the indice [%lu, %lu] is out of bounds.", row, col);
     if (x2_col < COL_SHED) {
       for (uint64_t j = 0; j < x2_col; j++) {
         uint64_t idx = adjoint_b->GetBool() ? (j * x2_row + col) : (col * x2_col + j);

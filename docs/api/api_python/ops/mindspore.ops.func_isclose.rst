@@ -6,7 +6,7 @@ mindspore.ops.isclose
     返回一个布尔型Tensor，表示 `input` 的每个元素与 `other` 的对应元素在给定容忍度内是否“接近”。其中“接近”的数学公式为：
 
     .. math::
-        ∣input−other∣  ≤  atol + rtol × ∣other∣
+        |input-other| ≤  atol + rtol × |other|
 
     参数：
         - **input** (Tensor) - 对比的第一个输入，支持的类型有float32，float16，int32。

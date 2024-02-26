@@ -61,6 +61,8 @@ class BACKEND_EXPORT SomasTensor {
   LifeLongType lifelong_value_;
 
   bool contiguous_;
+  bool is_peak_;
+  size_t can_reuse_peak_mem_;
 
   lifetime_t lifetime_;
   TensorType type_;
@@ -83,7 +85,6 @@ class BACKEND_EXPORT SomasTensor {
   size_t GetSourceStreamId() const { return source_stream_id_; }
   const size_t &GetOriginalSize() const { return original_size_; }
   const size_t &GetAlignedSize() const { return aligned_size_; }
-  const size_t &GetNumConstraints() const { return num_constraints_; }
   bool IsLifelong() const { return lifelong_value_ == kLifeLongGraphAll; }
   bool IsOutputOnly() const { return type_ == kOutputOnly; }
   size_t GetOffset() const { return offset_; }
@@ -98,7 +99,6 @@ class BACKEND_EXPORT SomasTensor {
     }
   }
   SomasSolverTensorDescPtr GetSolverTensorDesc();
-  size_t num_constraints_{0};
 
  private:
   const size_t id_{0};

@@ -148,6 +148,7 @@ class SortInfo : public Softmax {
  protected:
   Status InferTensorMap() override;
   Status InferAsLossDivisor() override;
+  Status GetAttrs() override;
 };
 
 class ReverseV2Info : public Softmax {
@@ -227,6 +228,14 @@ class ReLUInfo : public ActivationOther {
            const PrimitiveAttrs &attrs)
       : ActivationOther(name, inputs_shape, outputs_shape, attrs, std::make_shared<ReLUCost>()) {}
   ~ReLUInfo() override = default;
+};
+
+class SiLUInfo : public ActivationOther {
+ public:
+  SiLUInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+           const PrimitiveAttrs &attrs)
+      : ActivationOther(name, inputs_shape, outputs_shape, attrs, std::make_shared<SiLUCost>()) {}
+  ~SiLUInfo() override = default;
 };
 
 class identityInfo : public ActivationOther {
