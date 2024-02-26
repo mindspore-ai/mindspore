@@ -179,6 +179,8 @@ class GruGradWeightGpuKernelMod : public NativeGpuKernelMod {
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreateRNNDescriptor(&rnn_desc_), "create rnn_desc failed");
   }
   void InitSizeLists() {
+    output_size_list_.clear();
+    workspace_size_list_.clear();
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnDropoutGetStatesSize(handle_, &state_size_),
                                         "get dropout states size failed");
 

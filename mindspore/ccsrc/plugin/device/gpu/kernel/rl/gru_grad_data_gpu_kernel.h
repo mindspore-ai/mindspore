@@ -222,6 +222,8 @@ class GruGradDataGpuKernelMod : public NativeGpuKernelMod {
   }
 
   void InitSizeLists() {
+    output_size_list_.clear();
+    workspace_size_list_.clear();
     size_t h_size = 0;
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnGetTensorSizeInBytes(hx_desc_, &h_size), "get h size failed");
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnDropoutGetStatesSize(handle_, &state_size_),
