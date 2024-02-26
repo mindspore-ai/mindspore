@@ -76,7 +76,10 @@ static STATUS AdapteNodeWithDynamicInput(const CNodePtr &cnode) {
   cnode->set_inputs(new_inputs);
   // add kAttrDynInputSizes for multi-input operator.
   int64_t input_num = tuple_node->size() - 1;
-  prim->AddAttr(kAttrDynInputSizes, MakeValue(std::vector<int64_t>{input_num, -1}));
+  auto dst_prim = prim->Clone();
+  dst_prim->AddAttr(kAttrDynInputSizes, MakeValue(std::vector<int64_t>{input_num, -1}));
+  ValueNodePtr value_node = cnode->input(0)->cast<ValueNodePtr>();
+  value_node->set_value(dst_prim);
   return lite::RET_OK;
 }
 
