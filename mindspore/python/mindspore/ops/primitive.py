@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -271,6 +271,24 @@ class Primitive(Primitive_):
             >>> add = ops.Add()
             >>> print(add.shard(((1, 1), (1, 1))))
             Prim[Add]<in_strategy=((1, 1), (1, 1)), out_strategy=None>
+            >>> # using layout
+            >>> from mindspore import Layout
+            >>> layout = Layout((2, 2, 2), ("dp", "sp", "mp"))
+            >>> layout_tuple = (layout("dp", "sp"), layout("sp", "mp"))
+            >>> from mindspore import ops
+            >>> matmul = ops.MatMul()
+            >>> print(matmul.shard(layout_tuple))
+            Prim[MatMul]<in_layout=({'device_matrix': (2, 2, 2), 'tensor_map': (2, 1)},
+            {'device_matrix': (2, 2, 2), 'tensor_map': (1, 0)})>
+            >>> # using layout with None
+            >>> from mindspore import Layout
+            >>> layout = Layout((2, 2, 2), ("dp", "sp", "mp"))
+            >>> layout_tuple = (layout("dp", "sp"), layout("sp", "None")) # "None" means the axis would not be split
+            >>> from mindspore import ops
+            >>> matmul = ops.MatMul()
+            >>> print(matmul.shard(layout_tuple))
+            Prim[MatMul]<in_layout=({'device_matrix': (2, 2, 2), 'tensor_map': (2, 1)},
+            {'device_matrix': (2, 2, 2), 'tensor_map': (1, -1)})>
         """
         in_is_layout = None
         out_is_layout = None

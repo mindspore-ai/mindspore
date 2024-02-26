@@ -280,10 +280,12 @@ py::dict GetParameterLayoutFromGraph(const FuncGraphPtr &graph) {
       int64_t field_size = tensor_layout->get_field_size();
       bool uniform_split = tensor_layout->uniform_split();
       const std::string &opt_shard_group = tensor_layout->opt_shard_group();
-
       auto [is_pipeline_shared, is_send, peer_rank, sr_tag] = GetSharedParameterInfo(para);
+      const auto &before_full_shape = tensor_layout->tensor_shape_before().array();
+      const auto &after_slice_shape = tensor_layout->slice_shape().array();
       py::tuple layout = py::make_tuple(device_arrangement, tensor_map, slice_shape, field_size, uniform_split,
-                                        opt_shard_group, is_pipeline_shared, is_send, peer_rank, sr_tag);
+                                        opt_shard_group, before_full_shape, after_slice_shape,
+                                        is_pipeline_shared, is_send, peer_rank, sr_tag);
       for (auto &name : names) {
         dict[py::str(name)] = layout;
       }
@@ -305,13 +307,16 @@ py::dict GetParameterLayoutFromResource(const pipeline::ResourcePtr &resource) {
     const auto &slice_shape = layout->get_slice_shape();
     int64_t field_size = layout->get_field_size();
     bool uniform_split = layout->get_uniform_split();
+    std::vector<int64_t> before_full_shape;
+    std::vector<int64_t> after_slice_shape;
     const std::string &opt_shard_group = layout->get_opt_shard_group();
     bool is_pipeline_shared = layout->pipeline_shared();
     bool is_send = layout->is_send();
     int64_t peer_rank = layout->peer_rank();
     int64_t sr_tag = layout->sr_tag();
     py::tuple layout_tuple = py::make_tuple(device_arrangement, tensor_map, slice_shape, field_size, uniform_split,
-                                            opt_shard_group, is_pipeline_shared, is_send, peer_rank, sr_tag);
+                                            opt_shard_group, before_full_shape, after_slice_shape,
+                                            is_pipeline_shared, is_send, peer_rank, sr_tag);
     dict[py::str(name)] = layout_tuple;
   }
   return dict;

@@ -94,8 +94,8 @@ def test_layout_extend_base():
     Expectation: compile success
     """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
-    layout = Layout(2, 2, 2)
-    layout1 = (layout(2, 1), layout(1, 0))
+    layout = Layout((2, 2, 2), ("dp", "sp", "mp"))
+    layout1 = (layout("dp", "sp"), layout("sp", "mp"))
     net = Net(w, layout1)
     phase = compile_net(net, x)
     validator = ParallelValidator(net, phase)
@@ -109,9 +109,9 @@ def test_layout_extend_base_reduce_scatter():
     Expectation: compile success, forward reduce_scatter
     """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
-    layout = Layout(2, 2, 2)
-    layout1 = (layout(2, 1), layout(1, 0))
-    out_layout = (layout((2, 1), 0),)
+    layout = Layout((2, 2, 2), ("dp", "sp", "mp"))
+    layout1 = (layout("dp", "sp"), layout("sp", "mp"))
+    out_layout = (layout(("dp", "sp"), "mp"),)
     net = Net(w, layout1, out_layout)
     phase = compile_net(net, x)
     validator = ParallelValidator(net, phase)
@@ -125,8 +125,8 @@ def test_layout_extend_batch_multi_shard():
     Expectation: compile success
     """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
-    layout = Layout(2, 2, 2, 2)
-    layout1 = (layout((3, 0), 2), layout(2, 1))
+    layout = Layout((2, 2, 2, 2), ("dp", "sp", "vp", "mp"))
+    layout1 = (layout(("dp", "mp"), "sp"), layout("sp", "vp"))
     net = Net(w, layout1)
     phase = compile_net(net, x)
     validator = ParallelValidator(net, phase)
@@ -139,26 +139,10 @@ def test_layout_extend_batch_multi_shard_reduce_scatter():
     Expectation: compile success
     """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
-    layout = Layout(2, 2, 2, 2)
-    layout1 = (layout((3, 0), 2), layout(2, 1))
-    out_layout = (layout((3, 0, 2), 1),)
+    layout = Layout((2, 2, 2, 2), ("dp", "sp", "vp", "mp"))
+    layout1 = (layout(("dp", "mp"), "sp"), layout("sp", "vp"))
+    out_layout = (layout(("dp", "mp", "sp"), "vp"),)
     net = Net(w, layout1, out_layout)
-    phase = compile_net(net, x)
-    validator = ParallelValidator(net, phase)
-    assert validator.check_parameter_shape('w1', [512, 512])
-    assert validator.check_node_inputs_has('ReduceScatter-0', ['MatMul'])
-
-def test_layout_extend_batch_multi_shard_reduce_scatter_net1():
-    """
-    Feature: test layout extend
-    Description: dev_num is 16, batch dim multi shard.
-    Expectation: compile success
-    """
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
-    layout = Layout(2, 2, 2, 2)
-    layout1 = (layout((3, 0), 2), layout(2, 1))
-    out_layout = (layout((3, 0, 2), 1),)
-    net = Net1(w, layout1, out_layout)
     phase = compile_net(net, x)
     validator = ParallelValidator(net, phase)
     assert validator.check_parameter_shape('w1', [512, 512])
@@ -171,8 +155,8 @@ def test_layout_extend_reduce_axis_multi_shard():
     Expectation: compile success
     """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
-    layout = Layout(2, 2, 2, 2)
-    layout1 = (layout(3, (2, 0)), layout((2, 0), 1))
+    layout = Layout((2, 2, 2, 2), ("dp", "sp", "vp", "mp"))
+    layout1 = (layout("dp", ("sp", "mp")), layout(("sp", "mp"), "vp"))
     net = Net(w, layout1)
     phase = compile_net(net, x)
     validator = ParallelValidator(net, phase)
@@ -185,9 +169,9 @@ def test_layout_extend_reduce_axis_multi_shard_reduce_scatter():
     Expectation: compile success
     """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
-    layout = Layout(2, 2, 2, 2)
-    layout1 = (layout(3, (2, 0)), layout((2, 0), 1))
-    out_layout = (layout((3, 2, 0), 1),)
+    layout = Layout((2, 2, 2, 2), ("dp", "sp", "vp", "mp"))
+    layout1 = (layout("dp", ("sp", "mp")), layout(("sp", "mp"), "vp"))
+    out_layout = (layout(("dp", "sp", "mp"), "vp"),)
     net = GradWrap(NetWithLoss(Net(w, layout1, out_layout)))
     phase = compile_net(net, x)
     validator = ParallelValidator(net, phase)
@@ -202,9 +186,9 @@ def test_layout_extend_reduce_axis_multi_shard_reduce_scatter_opt_shard():
     """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0,
                                       enable_parallel_optimizer=True)
-    layout = Layout(2, 2, 2, 2)
-    layout1 = (layout(3, (2, 0)), layout((2, 0), 1))
-    out_layout = (layout((3, 2, 0), 1),)
+    layout = Layout((2, 2, 2, 2), ("dp", "sp", "vp", "mp"))
+    layout1 = (layout("dp", ("sp", "mp")), layout(("sp", "mp"), "vp"))
+    out_layout = (layout(("dp", "sp", "mp"), "vp"),)
     net = GradWrap(NetWithLoss(Net(w, layout1, out_layout)))
     phase = compile_net(net, x)
     validator = ParallelValidator(net, phase)
@@ -222,13 +206,77 @@ def test_layout_extend_reduce_axis_multi_shard_reduce_scatter_opt_shard_not_full
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=32, global_rank=0,
                                       enable_parallel_optimizer=True,
                                       parallel_optimizer_config={"optimizer_weight_shard_size": 2})
-    layout = Layout(4, 2, 2, 2)
-    layout1 = (layout(3, (2, 0)), layout((2, 0), 1))
-    out_layout = (layout((3, 2, 0), 1),)
+    layout = Layout((4, 2, 2, 2), ("dp", "sp", "vp", "mp"))
+    layout1 = (layout("dp", ("sp", "mp")), layout(("sp", "mp"), "vp"))
+    out_layout = (layout(("dp", "sp", "mp"), "vp"),)
     net = GradWrap(NetWithLoss(Net(w, layout1, out_layout)))
     phase = compile_net(net, x)
     validator = ParallelValidator(net, phase)
     context.reset_auto_parallel_context()
     assert validator.check_parameter_layout('network.network.w',
                                             ([4, 2, 2, 2], [2, 0, 1], [256, 512], 0, True, '2-16557109384257890687'))
+    assert validator.check_node_inputs_has('ReduceScatter-0', ['MatMul'])
+
+def test_layout_extend_reduce_axis_multi_shard_reduce_scatter_including_dev1():
+    """
+    Feature: test layout extend
+    Description: dev_num is 8, reduce dim multi shard.
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    layout = Layout((2, 2, 2, 1), ("dp", "sp", "vp", "mp"))
+    layout1 = (layout("dp", ("sp", "mp")), layout(("sp", "mp"), "vp"))
+    out_layout = (layout(("dp", "sp", "mp"), "vp"),)
+    net = GradWrap(NetWithLoss(Net(w, layout1, out_layout)))
+    phase = compile_net(net, x)
+    validator = ParallelValidator(net, phase)
+    assert validator.check_parameter_shape('network.network.w', [512, 512])
+    assert validator.check_node_inputs_has('ReduceScatter-0', ['MatMul'])
+
+def test_layout_extend_reduce_axis_multi_shard_reduce_scatter_including_axis_none():
+    """
+    Feature: test layout extend
+    Description: dev_num is 8, reduce dim multi shard.
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    layout = Layout((2, 2, 2), ("dp", "sp", "mp"))
+    layout1 = (layout("dp", ("sp", "mp")), layout(("sp", "mp"), "None"))
+    out_layout = (layout(("dp", "sp", "mp"), "None"),)
+    net = GradWrap(NetWithLoss(Net(w, layout1, out_layout)))
+    phase = compile_net(net, x)
+    validator = ParallelValidator(net, phase)
+    assert validator.check_parameter_shape('network.network.w', [256, 1024])
+    assert validator.check_node_inputs_has('ReduceScatter-0', ['MatMul'])
+
+def test_layout_extend_reduce_axis_multi_shard_reduce_scatter_including_reduce_axis_none():
+    """
+    Feature: test layout extend
+    Description: dev_num is 8, reduce dim multi shard with None.
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    layout = Layout((2, 2, 2), ("dp", "sp", "mp"))
+    layout1 = (layout("dp", ("sp", "None")), layout(("sp", "None"), "mp"))
+    out_layout = (layout(("dp", "sp", "None"), "mp"),)
+    net = GradWrap(NetWithLoss(Net(w, layout1, out_layout)))
+    phase = compile_net(net, x)
+    validator = ParallelValidator(net, phase)
+    assert validator.check_parameter_shape('network.network.w', [512, 512])
+    assert validator.check_node_inputs_has('ReduceScatter-0', ['MatMul'])
+
+def test_layout_extend_reduce_axis_multi_shard_reduce_scatter_including_reduce_axis_none_and_not_full():
+    """
+    Feature: test layout extend
+    Description: dev_num is 8, reduce dim multi shard with None, and not shard full.
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    layout = Layout((2, 2, 2), ("dp", "sp", "mp"))
+    layout1 = (layout("dp", ("sp", "None")), layout(("sp", "None"), "None"))
+    out_layout = (layout(("dp", "sp", "None"), "None"),)
+    net = GradWrap(NetWithLoss(Net(w, layout1, out_layout)))
+    phase = compile_net(net, x)
+    validator = ParallelValidator(net, phase)
+    assert validator.check_parameter_shape('network.network.w', [512, 1024])
     assert validator.check_node_inputs_has('ReduceScatter-0', ['MatMul'])

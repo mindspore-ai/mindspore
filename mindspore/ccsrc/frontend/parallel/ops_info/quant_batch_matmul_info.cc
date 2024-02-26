@@ -106,11 +106,6 @@ Shape QuantBatchMatmulInfo::GetCommonShape(const Dimensions &x1_strategy, const 
 }
 
 Status QuantBatchMatmulInfo::GetAttrs() {
-  if (attrs_.size() < MATMUL_ATTRS_SIZE) {
-    MS_LOG(ERROR) << name_ << ": The size of attrs small than 2, got " << attrs_.size();
-    return FAILED;
-  }
-
   ValuePtr transpose_a_ptr = input_value_.at(kQbmmInputTransposeX1);
   if (transpose_a_ptr != nullptr) {
     transpose_a_ = GetValue<bool>(transpose_a_ptr);

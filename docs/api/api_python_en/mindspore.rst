@@ -202,6 +202,7 @@ Parallel
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.Layout
     mindspore.shard
 
 JIT

@@ -22,6 +22,7 @@
 #include <numeric>
 #include <utility>
 #include <vector>
+#include <set>
 
 #include "frontend/parallel/status.h"
 #include "utils/log_adapter.h"
@@ -99,6 +100,31 @@ Status DeviceMatrix::GetDevicesAlongDim(const uint64_t &dim, RankList *devices) 
   }
   MS_LOG(ERROR) << "Can't find groups for rank" << rank_ << " in device list!";
   return Status::FAILED;
+}
+
+Status DeviceMatrix::GetDevicesAlongMultiDim(const std::vector<int64_t> &dims, RankList *devices) {
+  std::set<int64_t> repeated_rank_set;
+  for (const auto &dim : dims) {
+    if (dim != -1) {
+      auto r_dim = LongToUlong(dim);
+      if (repeated_rank_set.empty()) {
+        DeviceMatrix dev_matrix(rank_, dev_list_, dev_shape_);
+        RankList cur_dim_reduce_list;
+        dev_matrix.GetDevicesAlongDim(r_dim, &cur_dim_reduce_list);
+        repeated_rank_set.insert(cur_dim_reduce_list.begin(), cur_dim_reduce_list.end());
+      } else {
+        auto repeated_rank_set_cpy = repeated_rank_set;
+        for (const auto &rank : repeated_rank_set_cpy) {
+          DeviceMatrix dev_matrix(rank, dev_list_, dev_shape_);
+          RankList dim_reduce_list;
+          dev_matrix.GetDevicesAlongDim(r_dim, &dim_reduce_list);
+          repeated_rank_set.insert(dim_reduce_list.begin(), dim_reduce_list.end());
+        }
+      }
+    }
+  }
+  std::copy(repeated_rank_set.begin(), repeated_rank_set.end(), std::back_inserter(*devices));
+  return SUCCESS;
 }
 
 Shape ConvertRankToCoordinate(int64_t rank, const Shape &dev_shape) {

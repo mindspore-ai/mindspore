@@ -21,17 +21,71 @@ from mindspore._c_expression import Shard_
 
 
 class Layout():
-    """Parallel Layout"""
+    """
+    Parallel layout describes the detailed sharding information.
 
-    def __init__(self, *device_shape):
-        self._device_shape = device_shape
+    Note:
+        It is valid only in semi auto parallel or auto parallel mode.
+
+    Args:
+        device_matrix (tuple): Describe the shape of devices arrangement, its element type is int.
+        alias_name (tuple): The alias name for each axis of device_matrix, its length shoits element type is string.
+
+    Examples:
+        >>> from mindspore import Layout
+        >>> layout = Layout((2, 2, 2), ("dp", "sp", "mp"))
+        >>> layout0 = layout("dp", "mp")
+        >>> print(layout0.to_dict())
+        {"device_matrix": (2, 2, 2), "tensor_map": (2, 0)}
+    """
+
+    def __init__(self, device_matrix, alias_name):
+        if not isinstance(device_matrix, tuple):
+            raise TypeError(f'device_shape must be tuple type, but got:{type(device_matrix)}')
+        if not isinstance(alias_name, tuple):
+            raise TypeError(f'alias_name must be tuple type, but got:{type(alias_name)}')
+        if len(device_matrix) != len(alias_name):
+            raise ValueError(f'device_matrix length should be equal to alias_name length')
+        for in_ele in device_matrix:
+            if not isinstance(in_ele, int):
+                raise TypeError(f'The element of device_matrix must be int type, but got:{type(in_ele)}')
+        for in_ele in alias_name:
+            if not isinstance(in_ele, str):
+                raise TypeError(f'The element of alias_name must be str type, but got:{type(in_ele)}')
+            if in_ele == "None":
+                raise ValueError(f"The element of alias_name can not set 'None', because 'None' means no sharding.")
+        if len(set(alias_name)) != len(alias_name):
+            raise ValueError(f'Each element of alias_name {alias_name} should be different')
+        self._device_shape = device_matrix
+        self._alias_name = alias_name
         self._tensor_map = None
 
     def __call__(self, *tensor_map):
-        self._tensor_map = tensor_map
+        self._tensor_map = ()
+        for ele in tensor_map:
+            if isinstance(ele, tuple):
+                map = ()
+                for item in ele:
+                    if item == "None":
+                        map += (-1,)
+                        continue
+                    if item not in self._alias_name:
+                        raise ValueError(f'The axis {item} is not found in {self._alias_name}')
+                    map += (len(self._alias_name) - 1 - self._alias_name.index(item),)
+                self._tensor_map += (map,)
+                continue
+            if ele == "None":
+                self._tensor_map += (-1,)
+                continue
+            if ele not in self._alias_name:
+                raise ValueError(f'The axis {ele} is not found in {self._alias_name}')
+            self._tensor_map += (len(self._alias_name) - 1 - self._alias_name.index(ele),)
         return copy.deepcopy(self)
 
     def to_dict(self):
+        """
+        Transform layout to a dictionary.
+        """
         if self._device_shape is None:
             raise ValueError("The device_shape of layout is None")
         if self._tensor_map is None:
