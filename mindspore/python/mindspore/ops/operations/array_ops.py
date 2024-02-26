@@ -5655,64 +5655,13 @@ class TensorScatterElements(Primitive):
 
 
 class ExtractVolumePatches(Primitive):
-    r"""
-    Extract patches from input and put them in the "depth" output dimension.
-    "depth" dimension is the second dim of output.
-
-    .. warning::
-        This is an experimental API that is subject to change or deletion.
-
-    Args:
-        kernel_size (Union[int, tuple[int], list[int]]): A list of ints which's length is 3 or 5.
-            The size of the sliding window for each dimension of input. Must be: :math:`[1, 1, k_d, k_h, k_w]` or
-            :math:`[k_d, k_h, k_w]`. If :math:`k_d = k_h = k_w`, you can enter an integer.
-        strides (Union[int, tuple[int], list[int]]): A list of ints which's length is 3 or 5.
-            How far the centers of two consecutive patches are in input. Must be: :math:`[1, 1, s_d, s_h, s_w]` or
-            :math:`[s_d, s_h, s_w]`. If :math:`s_d = s_h = s_w`, you can enter an integer.
-        padding (str): A string from: ``"SAME"`` , ``"VALID"`` . The type of padding algorithm to use.
-
-    Inputs:
-        - **input_x** (Tensor) - A Tensor. 5-D Tensor with shape :math:`(x_n, x_c, x_d, x_h, x_w)`.
-
-    Outputs:
-        Tensor, has the same type as input.
-        If padding is "VALID", the shape is :math:`(x_n, k_d * k_h * k_w * x_c, 1 + (x_d - k_d) / s_d,
-        1 + (x_h - k_h) / s_h, 1 + (x_w - k_w) / s_w)`; if padding is "SAME", the shape is :math:`(
-        x_n, k_d * k_h * k_w * x_c, (x_d + s_d - 1) / s_d, (x_h + s_h - 1) / s_h, (x_w + s_w - 1) / s_w)`.
-
-    Raises:
-        TypeError: If kernel_size or strides is not a list, a tuple or an int.
-        TypeError: If input_x is not a tensor.
-        TypeError: If padding is not str.
-        ValueError: If the length of kernel_size is neither 3 nor 5 and kernel_size is not an integer.
-        ValueError: If the length of strides is neither 3 nor 5 and strides is not an integer.
-        ValueError: If padding is neither ``"VALID"`` nor ``"SAME"`` .
-        ValueError: If elements of kernel_size or strides are not positive integer.
-        ValueError: If input_x is not a tensor in dimension 5.
-        ValueError: If input_x's shape has zero.
-        ValueError: If one of kernel_size or strides' first two numbers is not 1.
-        ValueError: If padding = "VALID" and :math:`input\_x - kernel\_size` is less than 0 in d, h or w dimension.
-        ValueError: If padding = "SAME" and :math:`padding\_needed = ((input\_x + strides - 1) / strides - 1) *
-                    strides + kernel\_size - input\_x` is less than 0 in d, h or w dimension.
-        ValueError: If x_h is not 1 or x_w is not 1 and :math:`x_w + padding\_needed - k_w - s_w` is less than 0.
-        ValueError: If :math:`x_d * x_h * x_w` is greater than 2048.
+    """
+    `ops.ExtractVolumePatches` is deprecated from version 2.3 and will be removed in a future version.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> from mindspore import dtype as mstype
-        >>> kernel_size = (1, 1, 2, 2, 2)
-        >>> strides = (1, 1, 1, 1, 1)
-        >>> padding = "VALID"
-        >>> input_x = ops.Reshape()(Tensor(np.arange(1, 28), mstype.float16), (1, 1, 3, 3, 3))
-        >>> output_y = ops.ExtractVolumePatches(kernel_size, strides, padding)(input_x)
-        >>> print(output_y.shape)
-        (1, 8, 2, 2, 2)
+        Deprecated
     """
-
+    @deprecated("2.3", "ops.ExtractVolumePatches", False)
     @prim_attr_register
     def __init__(self, kernel_size, strides, padding):
         validator.check_value_type("kernel_size", kernel_size, (int, list, tuple), self.name)
