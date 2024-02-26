@@ -17,6 +17,7 @@
 #include "pipeline/jit/ps/static_analysis/async_eval_result.h"
 #include "pipeline/jit/ps/debug/trace.h"
 #include "utils/symbolic.h"
+#include "utils/compile_config.h"
 #include "include/common/debug/common.h"
 #include "pipeline/jit/ps/base.h"
 #include "include/common/utils/utils.h"
@@ -403,7 +404,7 @@ std::string ArgsToString(const AbstractBasePtrList &args_abs_list) {
   return buffer.str();
 }
 bool enable_waiting_branch_eval() {
-  static const bool enable_waiting_branch_eval = common::GetEnv("MS_DEV_NOT_WAIT_BRANCH_EVAL") != "1";
+  static const bool enable_waiting_branch_eval = common::GetCompileConfig("NOT_WAIT_BRANCH_EVAL") != "1";
   return enable_waiting_branch_eval;
 }
 }  // namespace abstract

@@ -23,6 +23,7 @@
 #include "utils/label.h"
 #include "utils/hash_map.h"
 #include "utils/symbolic.h"
+#include "utils/compile_config.h"
 #include "ir/primitive.h"
 #include "ir/func_graph.h"
 #include "ir/graph_utils.h"
@@ -1213,7 +1214,7 @@ DumpConfig GetDumpConfig() {
   }
   parsed = true;
   // Start parse config.
-  std::string str(common::GetEnv("MS_DEV_DUMP_IR_CONFIG"));
+  std::string str(common::GetCompileConfig("DUMP_IR_CONFIG"));
   auto constexpr max_string_len = 100;
   if (str.size() > max_string_len) {
     MS_LOG(WARNING) << "Dump ir config length exceed max length: " << max_string_len;

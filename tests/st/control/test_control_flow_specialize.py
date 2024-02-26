@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """ test_control_flow_specialize """
-import os
 from tests.st.control.cases_register import case_register
 import numpy as np
 from mindspore.nn import Cell
@@ -21,6 +20,7 @@ from mindspore.common import Tensor, dtype, Parameter
 from mindspore.ops import operations as P
 from mindspore import jit, context
 import mindspore.ops.functional as F
+from mindspore._extends.parse import compile_config
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -269,7 +269,7 @@ def test_renormalization_join_fail_in_second_grad_recur_eval():
     y = np.array([5], np.int32)
     grad_foo = F.grad(renorm_join_fail, grad_position=(0, 1))
     grad_foo_2nd = F.grad(grad_foo)
-    os.environ['MS_DEV_RECURSIVE_EVAL'] = '1'
+    compile_config.RECURSIVE_EVAL = 1
     output = grad_foo_2nd(Tensor(x), Tensor(y))
     assert output[0].asnumpy() == np.array([0], np.int32)
-    os.environ['MS_DEV_RECURSIVE_EVAL'] = ''
+    compile_config.RECURSIVE_EVAL = ''

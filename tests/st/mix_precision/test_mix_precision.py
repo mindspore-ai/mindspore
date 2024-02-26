@@ -28,6 +28,7 @@ from mindspore import Tensor
 from mindspore import context
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
 from mindspore.train import Model
+from mindspore._extends.parse import compile_config
 from utils import FakeData
 from utils import allclose_nparray
 from utils import FakeDataInitMode
@@ -339,9 +340,9 @@ def test_all_subgraph_mix_precision():
 
     # graph mode
     context.set_context(mode=context.GRAPH_MODE)
-    os.environ['MS_DEV_AMP_ENABLE_ALL_FG'] = '1'
+    compile_config.AMP_ENABLE_ALL_FG = 1
     out_graph = mix_net(x)
-    os.environ['MS_DEV_AMP_ENABLE_ALL_FG'] = ''
+    compile_config.AMP_ENABLE_ALL_FG = ''
 
     # pynative mode
     context.set_context(mode=context.PYNATIVE_MODE)

@@ -17,6 +17,7 @@
 #include "pipeline/jit/ps/static_analysis/stack_frame.h"
 #include "pipeline/jit/ps/debug/trace.h"
 #include "pipeline/jit/ps/static_analysis/async_eval_result.h"
+#include "utils/compile_config.h"
 
 namespace mindspore {
 namespace abstract {
@@ -166,7 +167,7 @@ StackFramePtr StackFrame::Jump(const AnalysisEnginePtr &engine) {
       MS_LOG(DEBUG) << "No need to jump as found result from cache for node_config: " << call_node_conf->ToString()
                     << ", result: " << abstract->ToString();
 
-      static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") != "0");
+      static const auto enable_eliminate_unused_element = (common::GetCompileConfig("ENABLE_DDE") != "0");
       if (enable_eliminate_unused_element) {
         const auto &abs_func_graph = maybe_func->cast<AbstractFunctionPtr>();
         SynchronizeSequenceElementsUseFlagsForFuncGraphArgs(engine, current_context_->func_graph(), cnode,

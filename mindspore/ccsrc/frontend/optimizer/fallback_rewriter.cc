@@ -49,6 +49,7 @@
 #include "pipeline/jit/ps/parse/resolve.h"
 #include "utils/hash_map.h"
 #include "utils/anf_utils.h"
+#include "utils/compile_config.h"
 #include "utils/check_convert_utils.h"
 #include "utils/tensor_construct_utils.h"
 
@@ -1370,7 +1371,7 @@ class AfterOptARewriter : public BaseRewriter {
     if (!allow_fallback_runtime) {
       return nullptr;
     }
-    static const auto allow_inplace_ops = common::GetEnv("MS_DEV_FALLBACK_SUPPORT_LIST_DICT_INPLACE") == "1";
+    static const auto allow_inplace_ops = common::GetCompileConfig("FALLBACK_SUPPORT_LIST_DICT_INPLACE") == "1";
     if (!allow_inplace_ops) {
       return nullptr;
     }

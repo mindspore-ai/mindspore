@@ -57,6 +57,7 @@
 #include "utils/ms_context.h"
 #include "utils/ms_utils.h"
 #include "utils/phase.h"
+#include "utils/compile_config.h"
 #include "backend/graph_compiler/transform.h"
 #include "load_mindir/infer_mindir.h"
 #include "include/backend/debug/data_dump/dump_json_parser.h"
@@ -261,7 +262,7 @@ abstract::AnalysisResult AbstractAnalyze(const abstract::AnalysisEnginePtr &engi
     auto manager = engine->func_graph_manager();
     MS_EXCEPTION_IF_NULL(manager);
     engine->Clear();
-    static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") != "0");
+    static const auto enable_eliminate_unused_element = (common::GetCompileConfig("ENABLE_DDE") != "0");
     for (auto &node : manager->all_nodes()) {
       MS_EXCEPTION_IF_NULL(node);
       // Handle previous inferred value for CNode if is loaded from MindIR
@@ -730,7 +731,7 @@ bool UsedByVmap(const FuncGraphPtr &func_graph) {
 }
 
 bool PreCConvAction(const ResourcePtr &resource) {
-  static const bool enable_pre_lift = (common::GetEnv("MS_DEV_PRE_LIFT") == "1");
+  static const bool enable_pre_lift = (common::GetCompileConfig("PRE_LIFT") == "1");
   if (!enable_pre_lift) {
     return true;
   }
@@ -1681,14 +1682,14 @@ static std::vector<ActionItem> CommonPipeline(bool trace_flag) {
     (void)actions.emplace_back(std::make_pair(kParse, ParseAction));
 
     // Resolve the python func
-    static auto boost_parse = common::GetEnv("MS_DEV_GREED_PARSE");
+    static auto boost_parse = common::GetCompileConfig("GREED_PARSE");
     if (boost_parse != "1") {
       (void)actions.emplace_back(std::make_pair(kSymbolResolve, SymbolResolveAction));
     }
 
     // Notice: Temporary solution, to be implemented using Python Rewriter in the future.
     // Set mixed Precision flag in subgraph.
-    static bool enable_set_mixed_precision_flag = (common::GetEnv("MS_DEV_AMP_ENABLE_ALL_FG") == "1");
+    static bool enable_set_mixed_precision_flag = (common::GetCompileConfig("AMP_ENABLE_ALL_FG") == "1");
     if (enable_set_mixed_precision_flag) {
       (void)actions.emplace_back(std::make_pair(kSetMixedPrecisionFlag, SetMixedPrecisionAction));
     }

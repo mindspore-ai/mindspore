@@ -18,18 +18,19 @@
 
 #include <vector>
 #include "utils/info.h"
+#include "utils/compile_config.h"
 
 namespace {
 using mindspore::DebugInfoPtr;
 using mindspore::TraceInfoPtr;
 using mindspore::trace::TraceLabelType;
 
-static const TraceLabelType global_trace_type = (mindspore::common::GetEnv("MS_DEV_TRACE_LABEL_WITH_UNIQUE_ID") == "1")
-                                                  ? TraceLabelType::kWithUniqueId
-                                                  : TraceLabelType::kShortSymbol;
+static const TraceLabelType global_trace_type =
+  (mindspore::common::GetCompileConfig("TRACE_LABEL_WITH_UNIQUE_ID") == "1") ? TraceLabelType::kWithUniqueId
+                                                                             : TraceLabelType::kShortSymbol;
 
 TraceLabelType GetCurrentTraceLabelType() {
-  if (mindspore::common::GetEnv("MS_DEV_TRACE_LABEL_WITH_UNIQUE_ID") == "1") {
+  if (mindspore::common::GetCompileConfig("TRACE_LABEL_WITH_UNIQUE_ID") == "1") {
     return TraceLabelType::kWithUniqueId;
   }
   return TraceLabelType::kShortSymbol;

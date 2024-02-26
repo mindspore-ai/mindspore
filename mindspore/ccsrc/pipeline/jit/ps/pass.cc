@@ -71,6 +71,7 @@
 #include "frontend/optimizer/comm_op_reuse_tag.h"
 #include "frontend/optimizer/py_interpret_to_execute.h"
 #include "utils/log_adapter.h"
+#include "utils/compile_config.h"
 #include "pipeline/jit/ps/pipeline_split.h"
 #include "pipeline/pynative/pynative_execute.h"
 #include "pipeline/jit/ps/static_analysis/auto_monad.h"
@@ -436,7 +437,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
   opt::OptPassConfig virtual_dataset = opt::OptPassConfig({irpass.virtual_dataset_eliminate_});
   opt::OptPassConfig after_resolve_pass = opt::OptPassConfig({irpass.replace_old_param_});
   // Disable after_resolve_pass if Pre-Lift is enabled.
-  static const bool enable_pre_lift = (common::GetEnv("MS_DEV_PRE_LIFT") == "1");
+  static const bool enable_pre_lift = (common::GetCompileConfig("PRE_LIFT") == "1");
   if (enable_pre_lift) {
     after_resolve_pass.set_disabled(true);
   }
