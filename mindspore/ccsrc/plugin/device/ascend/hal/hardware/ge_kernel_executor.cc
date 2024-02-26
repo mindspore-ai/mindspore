@@ -34,6 +34,7 @@
 #include "plugin/device/ascend/kernel/hccl/hccl_kernel_build.h"
 #include "plugin/device/ascend/kernel/pyboost/customize/customize_copy.h"
 #include "plugin/device/ascend/kernel/internal/internal_kernel_build.h"
+#include "include/backend/debug/profiler/profiling.h"
 
 #ifndef ENABLE_SECURITY
 #include "include/backend/debug/data_dump/dump_json_parser.h"
@@ -51,6 +52,7 @@
 #include "include/backend/debug/data_dump/overflow_dumper.h"
 #include "include/backend/debug/profiler/profiling.h"
 #include "plugin/device/ascend/hal/profiler/profiling_framework_data.h"
+#include "plugin/device/ascend/hal/device/profiling/profiling_utils.h"
 #include "utils/anf_utils.h"
 #endif
 
@@ -456,11 +458,21 @@ bool GeKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<KernelT
       return false;
     }
   } else {
+    auto ascend_profiler = profiler::Profiler::GetInstance(kAscendDevice);
+    MS_EXCEPTION_IF_NULL(ascend_profiler);
+    auto enable_profiler_flag = ascend_profiler->GetEnableFlag();
+    if (enable_profiler_flag) {
+      ProfilingUtils::InitReportNode(kernel, true);
+      ProfilingUtils::RecordLaunchTaskBegin(kernel->fullname_with_scope(), true);
+    }
     MS_LOG(DEBUG) << "Begin launch kernel: " << kernel->fullname_with_scope();
     MS_EXCEPTION_IF_NULL(kernel_mod);
     MS_EXCEPTION_IF_NULL(stream);
     bool ret = kernel_mod->Launch(inputs, workspace, outputs, stream);
     MS_LOG(DEBUG) << "End launch kernel: " << kernel->fullname_with_scope();
+    if (enable_profiler_flag) {
+      ProfilingUtils::ReportTask(kernel->fullname_with_scope(), true);
+    }
     if (!ret) {
       MS_LOG(ERROR) << "Launch kernel failed, kernel full name: " << kernel->fullname_with_scope();
       res_manager_->ResetStreamAndCtx();
