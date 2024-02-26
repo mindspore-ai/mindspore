@@ -27,14 +27,14 @@ import mindspore.ops.operations.nn_ops as P
 context.set_context(mode=context.GRAPH_MODE)
 
 
-def generate_inputs(dims, optinal_inputs, input_layout='BSH'):
+def generate_inputs(dims, optinal_inputs, input_layout='BSH', sparse_mode=0):
     B, N, S, D = dims
     has_atten_mask, has_actual_seq_lengths, has_actual_seq_lengths_kv, has_pse_shift, has_deq_scale1, \
     has_quant_scale1, has_deq_scale2, has_quant_scale2, has_quant_offset2 = optinal_inputs
     attn_mask = None
     pse_shift = None
-    actual_seq_lengths = np.ones((B,), dtype=np.int64) if has_actual_seq_lengths else None
-    actual_seq_lengths_kv = np.ones((B,), dtype=np.int64) if has_actual_seq_lengths_kv else None
+    actual_seq_lengths = Tensor(np.ones((B,), dtype=np.int64)) if has_actual_seq_lengths else None
+    actual_seq_lengths_kv = Tensor(np.ones((B,), dtype=np.int64)) if has_actual_seq_lengths_kv else None
     deq_scale1 = Tensor(1, dtype=mindspore.uint64) if has_deq_scale1 else None
     quant_scale1 = Tensor(1, dtype=mindspore.uint64) if has_quant_scale1 else None
     deq_scale2 = Tensor(1, dtype=mindspore.uint64) if has_deq_scale2 else None
@@ -48,7 +48,8 @@ def generate_inputs(dims, optinal_inputs, input_layout='BSH'):
         key = Tensor(np.ones((B, S, H), dtype=np.float16))
         value = Tensor(np.ones((B, S, H), dtype=np.float16))
         if has_atten_mask:
-            attn_mask = Tensor(np.ones((B, 1, S, S)), dtype=mindspore.float16)
+            attn_mask = Tensor(np.ones((B, 1, S, S)), dtype=mindspore.float16) if sparse_mode == 0 else Tensor(
+                np.ones((1, 1, 2048, 2048)), dtype=mindspore.float16)
         if has_pse_shift:
             pse_shift = Tensor(np.zeros((B, 1, S, S)), dtype=mindspore.float16)
         ret_inputs = (query, key, value, attn_mask, actual_seq_lengths, actual_seq_lengths_kv, pse_shift,
@@ -58,7 +59,8 @@ def generate_inputs(dims, optinal_inputs, input_layout='BSH'):
         key = Tensor(np.ones((B, N, S, D), dtype=np.float16))
         value = Tensor(np.ones((B, N, S, D), dtype=np.float16))
         if has_atten_mask:
-            attn_mask = Tensor(np.ones((B, 1, S, S)), dtype=mindspore.float16)
+            attn_mask = Tensor(np.ones((B, 1, S, S)), dtype=mindspore.float16) if sparse_mode == 0 else Tensor(
+                np.ones((1, 1, 2048, 2048)), dtype=mindspore.float16)
         if has_pse_shift:
             pse_shift = Tensor(np.zeros((B, 1, S, S)), dtype=mindspore.float16)
         ret_inputs = (query, key, value, attn_mask, actual_seq_lengths, actual_seq_lengths_kv, pse_shift,
@@ -68,7 +70,7 @@ def generate_inputs(dims, optinal_inputs, input_layout='BSH'):
     return ret_inputs
 
 
-def generate_strategy(dp, mp, optinal_inputs, input_layout='BSH'):
+def generate_strategy(dp, mp, optinal_inputs, input_layout='BSH', sparse_mode=0):
     has_atten_mask, has_actual_seq_lengths, has_actual_seq_lengths_kv, has_pse_shift, has_deq_scale1, \
     has_quant_scale1, has_deq_scale2, has_quant_scale2, has_quant_offset2 = optinal_inputs
     if dp is None or mp is None:
@@ -76,7 +78,7 @@ def generate_strategy(dp, mp, optinal_inputs, input_layout='BSH'):
     if input_layout == 'BSH':
         stra = ((dp, 1, mp), (dp, 1, mp), (dp, 1, mp))
         if has_atten_mask:
-            stra += ((dp, 1, 1, 1),)
+            stra += ((dp, 1, 1, 1),) if sparse_mode == 0 else ((1, 1, 1, 1),)
         if has_actual_seq_lengths:
             stra += ((dp,),)
         if has_actual_seq_lengths_kv:
@@ -86,7 +88,7 @@ def generate_strategy(dp, mp, optinal_inputs, input_layout='BSH'):
     if input_layout == 'BNSD':
         stra = ((dp, mp, 1, 1), (dp, mp, 1, 1), (dp, mp, 1, 1))
         if has_atten_mask:
-            stra += ((dp, 1, 1, 1),)
+            stra += ((dp, 1, 1, 1),) if sparse_mode == 0 else ((1, 1, 1, 1),)
         if has_actual_seq_lengths:
             stra += ((dp,),)
         if has_actual_seq_lengths_kv:
@@ -206,3 +208,23 @@ def test_prompt_flash_attention_strategy_error(input_layout):
         inputs = generate_inputs(dims, optinal_inputs, input_layout=input_layout)
         compile_net(net, *inputs)
     context.reset_auto_parallel_context()
+
+@pytest.mark.parametrize('input_layout', ['BSH', 'BNSD'])
+@pytest.mark.parametrize('strategys', [(4, 2), (2, 2)])
+def test_prompt_flash_attention_semi_auto_parallel_sparsemode2(input_layout, strategys):
+    """
+    Feature: test PromptFlashAttention semi parallel
+    Description: semi parallel
+    Expectation: compile success
+    """
+    set_auto_parallel_context(device_num=8, global_rank=0, dataset_strategy="full_batch")
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    B, N, S, D = 8, 16, 1024, 128
+    dp = strategys[0]
+    mp = strategys[1]
+    optinal_inputs = [True, True, True, False, False, False, False, False, False]
+    dims = [B, N, S, D]
+    inputs = generate_inputs(dims, optinal_inputs, input_layout=input_layout, sparse_mode=2)
+    strategies = generate_strategy(dp, mp, optinal_inputs, input_layout=input_layout, sparse_mode=2)
+    net = Net(N, input_layout=input_layout, strategy=strategies, sparse_mode=2)
+    compile_net(net, *inputs)

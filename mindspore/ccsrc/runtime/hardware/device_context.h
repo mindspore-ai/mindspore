@@ -150,7 +150,6 @@ class BACKEND_EXPORT DeviceResManager {
   // Destroy device resource manager and release device resource.
   virtual void Destroy() {}
 
-  virtual void SetDeviceIdToCurrentThread() const {}
   // Bind device to current thread to gain device control privileges
   // If force_bind is true, bind context to current thread every time;
   // Otherwise, only bind context to current thread for the first time.
@@ -230,6 +229,8 @@ class BACKEND_EXPORT DeviceResManager {
 
   // Get currently using stream id.
   virtual size_t GetCurrentStreamId() const { return kSizeZero; }
+
+  virtual void *GetStream() const { return nullptr; };
 
   // Destroy a stream bound to the input parameter "stream_id".
   virtual bool DestroyStream(size_t stream_id) const { return false; }

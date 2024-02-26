@@ -298,7 +298,7 @@ def trace(fn):
         return pack_func(*args, **kwargs)
     logger.warning("The trace feature is not supported in r2.3")
     if "MS_DEV_ENABLE_TRACE" in os.environ and os.environ["MS_DEV_ENABLE_TRACE"] == "on":
-        trace_wrap.pack_fn = fn
+        _trace_wrap.pack_fn = fn
         _trace_wrap.is_method = None
         return _trace_wrap
     return fn

@@ -27,15 +27,17 @@ class ValueType(Enum):
       and container-type of ValueType.
     """
 
-    # base type
+    # constant type
     ConstantValue = 0
     # container type
     TupleValue = 20
     ListValue = 21
     DictValue = 22
-    # other type
+    # variable type
     NamingValue = 40
     CustomObjValue = 41
+    # unsupported type
+    UnsupportedValue = 50
 
 
 class ScopedValue:
@@ -85,13 +87,12 @@ class ScopedValue:
             return cls(ValueType.TupleValue, "",
                        tuple(cls.create_variable_value(single_value) for single_value in value))
         if isinstance(value, list):
-            return cls(ValueType.ListValue, "", list(cls.create_variable_value(single_value) for single_value in value))
+            return cls(ValueType.ListValue, "",
+                       list(cls.create_variable_value(single_value) for single_value in value))
         if isinstance(value, dict):
-            for key, _ in value.items():
-                if not isinstance(key, str):
-                    raise TypeError("key should be str, got: ", type(key))
             return cls(ValueType.DictValue, "",
-                       dict((key, cls.create_variable_value(single_value)) for key, single_value in value.items()))
+                       dict((cls.create_variable_value(key),
+                             cls.create_variable_value(single_value)) for key, single_value in value.items()))
         return cls(ValueType.CustomObjValue, "", value)
 
     @classmethod
@@ -135,9 +136,9 @@ class ScopedValue:
             An list of instance of `ScopedValue`.
 
         Raises:
-            RuntimeError: If the length of names is not equal to the length of scopes when scopes are not None.
             TypeError: If `names` is not `list` or `tuple` and name in `names` is not `str`.
             TypeError: If `scopes` is not `list` or `tuple` and scope in `scopes` is not `str`.
+            ValueError: If the length of names is not equal to the length of scopes when scopes are not None.
 
         Examples:
             >>> from mindspore.rewrite import ScopedValue
@@ -149,7 +150,7 @@ class ScopedValue:
         if scopes is not None:
             Validator.check_element_type_of_iterable("scopes", scopes, [str], "ScopedValue")
             if len(names) != len(scopes):
-                raise RuntimeError("Length of names should be equal to length of scopes")
+                raise ValueError("Length of names should be equal to length of scopes")
         result = []
         for index, name in enumerate(names):
             if scopes is not None:

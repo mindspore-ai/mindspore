@@ -82,6 +82,7 @@ class RecStrategyPropagator {
   size_t PropagateFromOutputs();
 
   void GenerateNoStraList();
+  void ExtraShardMatmulOnBatchDim();
 
   void GenerateStrategyV1();
   void GenerateStrategyV3();

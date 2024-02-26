@@ -8,6 +8,10 @@ ceil:
         Returns:
             Tensor, has the same shape as `x`.
 
+        Raises:
+            TypeError: If `input` is not a Tensor.
+            TypeError: If dtype of `input` is not float16 or float32.
+
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
 

@@ -230,8 +230,7 @@ void LoadKernelData(Debugger *debugger, const CNodePtr &kernel,
 #endif
 }  // namespace
 
-bool GPUKernelRuntime::MemcpyAsync(void *dst, const void *src, uint64_t size, int32_t kind) {
-  auto &stream = GPUDeviceManager::GetInstance().default_stream();
+bool GPUKernelRuntime::MemcpyAsync(void *dst, const void *src, uint64_t size, int32_t kind, void *stream) {
   MS_EXCEPTION_IF_NULL(stream);
   auto ret = GPUDeviceManager::GetInstance().CopyHostMemToDeviceAsync(dst, src, size, stream);
   if (!ret) {
@@ -806,11 +805,9 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, bo
       return false;
     }
 #ifdef ENABLE_DUMP_IR
-    kernel::KernelLaunchInfo mem_info = {kernel_inputs, kernel_workspaces, kernel_outputs};
     std::string op_name = kernel->fullname_with_scope();
-    kernel::KernelLaunchAddr mem_addr_info;
-    kernel::ConvertLaunchInfoToAddr(mem_info, &mem_addr_info);
-    (void)mindspore::RDR::UpdateMemAddress(SubModuleId::SM_KERNEL, name, op_name, mem_addr_info);
+    (void)mindspore::RDR::UpdateMemAddress(SubModuleId::SM_KERNEL, name, op_name, kernel_inputs, kernel_outputs,
+                                           kernel_workspaces);
 #endif
     if (!mock) {
       LaunchKernelWithoutMock(graph, kernel, kernel_inputs, kernel_workspaces, kernel_outputs, profiling);

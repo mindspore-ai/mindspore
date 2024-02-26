@@ -25,7 +25,6 @@
 #include "plugin/device/ascend/hal/device/ascend_device_address.h"
 #include "utils/ms_context.h"
 #include "acl/acl_rt.h"
-#include "runtime/mem.h"
 #include "plugin/device/ascend/hal/hardware/ascend_collective_comm_lib.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 #include "include/backend/anf_runtime_algorithm.h"
@@ -122,7 +121,6 @@ AscendKernelRuntime::~AscendKernelRuntime() {
 }
 
 void AscendKernelRuntime::SetContext() {
-  ErrorManagerAdapter::BindToCurrentThread();
   if (rt_context_ == nullptr) {
     return;
   }
@@ -595,21 +593,17 @@ bool AscendKernelRuntime::SyncStream() {
   return true;
 }
 
-bool AscendKernelRuntime::MemcpyAsync(void *dst, const void *src, uint64_t size, int32_t kind) {
+bool AscendKernelRuntime::MemcpyAsync(void *dst, const void *src, uint64_t size, int32_t kind, void *stream) {
   SetContextForce();
   if (size == 0) {
     MS_LOG(DEBUG) << "rtMemcpyAsync size is 0, copy kind:" << kind;
     return true;
   }
-  if (stream_ == nullptr) {
-    MS_LOG(ERROR) << "MemcpyAsync failed. stream_ is nullptr";
+  if (stream == nullptr) {
+    MS_LOG(ERROR) << "MemcpyAsync failed. stream is nullptr";
     return false;
   }
 
-  auto copy_kind = static_cast<rtMemcpyKind_t>(kind);
-  if (copy_kind != RT_MEMCPY_HOST_TO_DEVICE_EX && copy_kind != RT_MEMCPY_DEVICE_TO_DEVICE) {
-    MS_LOG(EXCEPTION) << "Memory copy async not support cache host buffer in kind: " << kind;
-  }
   if (dst == nullptr) {
     MS_LOG(ERROR) << "rtMemcpyAsync dst ptr is null, copy kind:" << kind;
     return false;
@@ -619,8 +613,8 @@ bool AscendKernelRuntime::MemcpyAsync(void *dst, const void *src, uint64_t size,
     return false;
   }
   // cppcheck-suppress unreadVariable
-  auto lock = device::KernelRuntime::LockRuntime(stream_);
-  if (ACL_ERROR_NONE != rtMemcpyAsync(dst, size, src, size, static_cast<rtMemcpyKind_t>(kind), stream_)) {
+  auto lock = device::KernelRuntime::LockRuntime(stream);
+  if (ACL_ERROR_NONE != aclrtMemcpyAsync(dst, size, src, size, static_cast<aclrtMemcpyKind>(kind), stream)) {
     MS_LOG(ERROR) << "Call runtime rtMemcpyAsync error.";
     return false;
   }

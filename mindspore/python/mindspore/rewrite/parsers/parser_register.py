@@ -15,7 +15,7 @@
 """Parser register."""
 from typing import Optional
 
-from .parser import Parser
+from . import Parser
 
 
 class ParserRegister:

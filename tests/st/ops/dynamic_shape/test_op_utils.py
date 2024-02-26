@@ -20,7 +20,7 @@ import os
 
 import numpy as np
 from mindspore import Tensor, context, nn, ops
-from mindspore.common import mutable
+from mindspore.common import mutable, JitConfig
 
 
 IR_LEVEL = 2
@@ -30,6 +30,7 @@ BOOL = 2
 TUPLE = 3
 LIST = 4
 
+JIT_CONFIG = None
 
 class HelpNet(nn.Cell):
     def __init__(self, prim):
@@ -188,11 +189,14 @@ def get_nontensor_dynamic_type_list(nontensor_dynamic_type):
 def run_in_dynamic_env(prim, inputs, dump_ir, ir_path, dynamic_type, grad):
     """set dynamic env before execute"""
     out_actual = None
+    global JIT_CONFIG
     with get_env(dynamic_type) as _:
         if dump_ir:
             context.set_context(save_graphs=IR_LEVEL, save_graphs_path=ir_path)
 
         dynamic_net = create_net(prim, grad)
+        if JIT_CONFIG:
+            dynamic_net.set_jit_config(JIT_CONFIG)
         out_actual = dynamic_net(*inputs)
 
     return out_actual
@@ -289,6 +293,7 @@ def run_with_dynamic_resize(prim, inputs_seq, dump_ir, ir_path, expect_resize):
     """test resize"""
     print("Start testing with [Resize]...")
     out_actual = None
+    global JIT_CONFIG
     if dump_ir:
         context.set_context(save_graphs=IR_LEVEL, save_graphs_path=ir_path)
 
@@ -299,6 +304,8 @@ def run_with_dynamic_resize(prim, inputs_seq, dump_ir, ir_path, expect_resize):
     run_inputs = convert_sequence_of_tensor_to_mutable(run_inputs)
 
     dynamic_net = HelpNet(prim)
+    if JIT_CONFIG:
+        dynamic_net.set_jit_config(JIT_CONFIG)
     dynamic_net.set_inputs(*compile_inputs)
     dynamic_net(*run_inputs)
 
@@ -430,7 +437,8 @@ def create_net(prim, grad):
 
 
 def TEST_OP(op, inputs_seq, tensor_dynamic_type='BOTH', nontensor_dynamic_type='BOTH',
-            mode=context.GRAPH_MODE, target=None, grad=True, dump_ir=False, custom_flag='', test_resize=True):
+            mode=context.GRAPH_MODE, target=None, grad=True, dump_ir=False, custom_flag='',
+            test_resize=True, jit_level=None):
     """
     This function creates several dynamic cases by converting Tensor/tuple/list/scalar inputs to dynamic shape to test the correctness of the op's InferShape
     and Resize. Both Primitive and Functional API are supported.
@@ -464,6 +472,7 @@ def TEST_OP(op, inputs_seq, tensor_dynamic_type='BOTH', nontensor_dynamic_type='
         - **custom_flag** (str) - Some log and ir path is distinguished by Primitive's name. Default ''.
           `custom_flag` can be used to distinguish the calling of TEST_OP with the same Primitive
         - **test_resize** (bool) - whether to test the Resize function. Default True.
+        - ***jit_level* (str) - set JitConfig for function or Cell. Default None.
 
     Outputs:
         None
@@ -491,6 +500,9 @@ def TEST_OP(op, inputs_seq, tensor_dynamic_type='BOTH', nontensor_dynamic_type='
     if custom_flag != '':
         prefix_name += '_' + custom_flag
 
+    global JIT_CONFIG
+    JIT_CONFIG = JitConfig(jit_level) if jit_level else None
+
     test_cast_name = f"{str(op)} custom_flag:[{custom_flag}]"
     print("******************************Begin test for " + test_cast_name + "******************************")
 
@@ -509,6 +521,8 @@ def TEST_OP(op, inputs_seq, tensor_dynamic_type='BOTH', nontensor_dynamic_type='
         context.set_context(save_graphs=IR_LEVEL, save_graphs_path=ir_path)
 
     static_net = create_net(op, grad)
+    if JIT_CONFIG:
+        static_net.set_jit_config(JIT_CONFIG)
     out_expect = static_net(*inputs_seq[0])
     print("End")
 
@@ -520,6 +534,8 @@ def TEST_OP(op, inputs_seq, tensor_dynamic_type='BOTH', nontensor_dynamic_type='
             context.set_context(save_graphs=IR_LEVEL, save_graphs_path=ir_path)
 
         static_net_second = create_net(op, grad)
+        if JIT_CONFIG:
+            static_net_second.set_jit_config(JIT_CONFIG)
         out_expect_second = static_net_second(*inputs_seq[1])
         print("End")
 

@@ -47,7 +47,6 @@ function(__install_white_list_ops)
     install(FILES
             ${TOP_DIR}/mindspore/core/ops/nn_op_name.h
             ${TOP_DIR}/mindspore/core/ops/adam.h
-            ${TOP_DIR}/mindspore/core/ops/addn.h
             ${TOP_DIR}/mindspore/core/ops/all.h
             ${TOP_DIR}/mindspore/core/ops/apply_momentum.h
             ${TOP_DIR}/mindspore/core/ops/assert.h
@@ -66,7 +65,6 @@ function(__install_white_list_ops)
             ${TOP_DIR}/mindspore/core/ops/depend.h
             ${TOP_DIR}/mindspore/core/ops/depth_to_space.h
             ${TOP_DIR}/mindspore/core/ops/detection_post_process.h
-            ${TOP_DIR}/mindspore/core/ops/dropout.h
             ${TOP_DIR}/mindspore/core/ops/eltwise.h
             ${TOP_DIR}/mindspore/core/ops/fake_quant_with_min_max_vars.h
             ${TOP_DIR}/mindspore/core/ops/fake_quant_with_min_max_vars_per_channel.h
@@ -116,7 +114,6 @@ function(__install_white_list_ops)
             ${TOP_DIR}/mindspore/core/ops/unsqueeze.h
             ${TOP_DIR}/mindspore/core/ops/unstack.h
             ${TOP_DIR}/mindspore/core/ops/where.h
-            ${TOP_DIR}/mindspore/core/ops/select.h
             ${TOP_DIR}/mindspore/core/ops/scatter_nd_update.h
             ${TOP_DIR}/mindspore/core/ops/gru.h
             ${TOP_DIR}/mindspore/core/ops/invert_permutation.h

@@ -47,13 +47,13 @@ class DynCreator {
     return fac;
   }
   // register
-  void Register(std::string name, CreatFn func) { (void)Function_map_.insert(std::make_pair(name, func)); }
+  void Register(std::string name, CreatFn func) { (void)function_map_.insert(std::make_pair(name, func)); }
   // creator
   OperatorInfoPtr Create(const std::string &name, const Shapes &shape_in, const Shapes &shape_out,
                          const PrimitiveAttrs &attrs, size_t count) {
     std::string op_name = name + std::to_string(count);
-    const auto iter = Function_map_.find(name);
-    if (iter == Function_map_.end()) {
+    const auto iter = function_map_.find(name);
+    if (iter == function_map_.end()) {
       MS_LOG(INFO) << name << " is not register yet";
       return nullptr;
     }
@@ -62,7 +62,7 @@ class DynCreator {
 
  private:
   DynCreator() = default;
-  std::map<std::string, CreatFn> Function_map_;
+  std::map<std::string, CreatFn> function_map_;
 };
 
 class RegisterAction {

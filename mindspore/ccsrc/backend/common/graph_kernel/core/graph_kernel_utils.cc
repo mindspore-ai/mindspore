@@ -440,4 +440,15 @@ AnfNodePtrList GkUtils::GetGraphKernelNodes(const FuncGraphPtr &func_graph) {
   (void)std::copy_if(todos.cbegin(), todos.cend(), std::back_inserter(node_list), AnfUtils::IsGraphKernel);
   return node_list;
 }
+
+bool GkUtils::UseAkgCceLib(const AnfNodePtr &node) {
+  if (node->isa<CNode>()) {
+    auto cnode = dyn_cast_ptr<CNode>(node);
+    if (cnode == nullptr) {
+      return false;
+    }
+    return cnode->HasAttr("use_akg_cce");
+  }
+  return false;
+}
 }  // namespace mindspore::graphkernel

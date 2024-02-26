@@ -70,6 +70,8 @@ RESOLVE_TYPE_INVALID = 0xFF             # Resolve invalid.
 CLASS_INSTANCE_TYPE_CELL = 0            # Class instance type is Cell
 CLASS_INSTANCE_TYPE_PRIMITIVE = 1       # Class instance type is Primitive
 CLASS_INSTANCE_TYPE_NUMPY_ARRAY = 2     # Class instance type is Numpy Array
+CLASS_INSTANCE_TYPE_TENSOR = 3          # Class instance type is Tensor
+CLASS_INSTANCE_TYPE_ADAPTER_TENSOR = 4  # Class instance type is Adapter Tensor
 CLASS_INSTANCE_TYPE_INVALID = 0xFF
 
 # Ast main type
@@ -179,8 +181,10 @@ def check_attr_is_property(obj, attr_name):
     logger.debug(f"attr_name:{attr_name}")
     logger.debug(f"obj.__class__.__dict__.keys():{obj.__class__.__dict__.keys()}")
     if attr_name in obj.__class__.__dict__.keys() and isinstance(obj.__class__.__dict__[attr_name], property):
-        logger.debug(f'The attribute {attr_name} is decorated by @property.')
-        return True
+        attr_obj = obj.__class__.__dict__[attr_name]
+        if (hasattr(attr_obj, 'fget')) and hasattr(attr_obj.fget, '__code__'):
+            logger.debug(f'The attribute {attr_name} is decorated by @property.')
+            return True
     return False
 
 
@@ -1103,17 +1107,31 @@ class Parser:
         return unsupported
 
     @staticmethod
-    def is_tensor_class_type(value):
+    def get_tensor_class_type(value):
         """To check if is class Tensor type"""
-        return value == Tensor
+        if value == Tensor:
+            return CLASS_INSTANCE_TYPE_TENSOR
+        if issubclass(value, ms_adapter_registry.tensor):
+            return CLASS_INSTANCE_TYPE_ADAPTER_TENSOR
+        return CLASS_INSTANCE_TYPE_INVALID
+
+    @staticmethod
+    def get_adapter_convert_function(class_object):
+        """Get convert function for adapter tensor"""
+        class_object_name = class_object.__name__
+        if class_object_name in ms_adapter_registry.convert_adapter_tensor_map:
+            return ms_adapter_registry.convert_adapter_tensor_map[class_object_name]
+        return None
 
     @staticmethod
     def is_unsupported_internal_type(value):
         """To check if not supported internal type, such as Tensor"""
+        if not inspect.isclass(value):
+            return False
         if value == Tensor:
             logger.debug(f"Found unsupported internal type: '{value}'.")
             return True
-        if ms_adapter_registry.is_registered and value == ms_adapter_registry.tensor:
+        if ms_adapter_registry.is_registered and issubclass(value, ms_adapter_registry.tensor):
             return True
         return False
 

@@ -18,7 +18,6 @@
 #include <vector>
 #include <string>
 #include <map>
-#include "common/util/error_manager/error_manager.h"
 #include "utils/dlopen_macro.h"
 #include "acl/error_codes/rt_error_codes.h"
 #include "acl/acl.h"
@@ -98,12 +97,13 @@ const std::map<uint32_t, std::string> error_msg = {
 };
 
 constexpr auto kUnknowErrorString = "Unknown error occurred";
+
+bool g_acl_initialized = false;
+std::mutex g_acl_init_mutex;
 }  // namespace
 
-error_message::Context ErrorManagerAdapter::context_;
 std::mutex ErrorManagerAdapter::initialized_mutex_;
 bool ErrorManagerAdapter::initialized_ = false;
-std::vector<std::string> ErrorManagerAdapter::traceback_;
 
 bool ErrorManagerAdapter::Init() {
   std::unique_lock<std::mutex> lock(initialized_mutex_);
@@ -111,27 +111,14 @@ bool ErrorManagerAdapter::Init() {
     MS_LOG(DEBUG) << "Ascend error manager has been initialized.";
     return true;
   }
-  const auto error_manager_init_ret = ErrorManager::GetInstance().Init();
-  if (error_manager_init_ret != 0) {
-    MS_LOG(WARNING) << "Init ascend error manager failed, some ascend error log may be left out.";
-    return false;
-  }
-  ErrorManager::GetInstance().GenWorkStreamIdDefault();
-  context_ = ErrorManager::GetInstance().GetErrorManagerContext();
-  MS_LOG(DEBUG) << "Initialize ascend error manager successfully. Work stream id: " << context_.work_stream_id;
-  initialized_ = true;
   LogWriter::SetMessageHandler(&MessageHandler);
+  initialized_ = true;
   return true;
 }
 
-void ErrorManagerAdapter::BindToCurrentThread() {
-  if (initialized_) {
-    ErrorManager::GetInstance().SetErrorContext(context_);
-  }
-}
-
 std::string ErrorManagerAdapter::GetErrorMessage(bool add_title) {
-  const string &error_message = ErrorManager::GetInstance().GetErrorMessage();
+  const char *message = aclGetRecentErrMsg();
+  const string error_message = message == nullptr ? "" : message;
   if (error_message.empty() || error_message.find(kUnknowErrorString) != string::npos) {
     return "";
   }
@@ -142,28 +129,10 @@ std::string ErrorManagerAdapter::GetErrorMessage(bool add_title) {
   return error_message;
 }
 
-std::string ErrorManagerAdapter::GetWarningMessage(bool add_title) {
-  const string &warning_message = ErrorManager::GetInstance().GetWarningMessage();
-  if (warning_message.empty()) {
-    return "";
-  }
-  if (add_title) {
-    return "#umsg#Ascend Warning Message:#umsg#" + warning_message;
-  }
-  return warning_message;
-}
-
 void ErrorManagerAdapter::MessageHandler(std::ostringstream *oss) {
   const auto &error_message = GetErrorMessage(true);
   if (!error_message.empty()) {
-    (void)traceback_.emplace_back(error_message);
-  }
-  const auto &warning_message = GetWarningMessage(true);
-  if (!warning_message.empty()) {
-    (void)traceback_.emplace_back(warning_message);
-  }
-  for (const auto &message : traceback_) {
-    *oss << message;
+    *oss << error_message;
   }
 }
 
@@ -206,6 +175,20 @@ void *callback_thread_func(void *data) {
   MS_LOG(INFO) << "Exit callback thread loop.";
 #endif
   return data;
+}
+
+void InitializeAcl() {
+  std::lock_guard<std::mutex> lock(g_acl_init_mutex);
+  if (g_acl_initialized) {
+    return;
+  }
+
+  if (aclInit(nullptr) != ACL_ERROR_NONE) {
+    MS_LOG(WARNING) << "Call aclInit failed, acl data dump function will be unusable.";
+  } else {
+    MS_LOG(INFO) << "Call aclInit successfully";
+  }
+  g_acl_initialized = true;
 }
 }  // namespace ascend
 }  // namespace device

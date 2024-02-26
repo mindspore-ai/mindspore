@@ -30,7 +30,8 @@
 #ifdef _WIN32
 #define BIND_CORE
 #endif
-#ifdef __linux__
+// Lite not support bind core.
+#if !defined(BUILD_LITE) && defined(__linux__)
 #define BIND_CORE
 #endif
 

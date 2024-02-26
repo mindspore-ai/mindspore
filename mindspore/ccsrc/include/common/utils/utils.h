@@ -315,6 +315,7 @@ constexpr auto kAttrKernelBackoffWithFailureInfo = "kernel_backoff_with_failure_
 constexpr auto kAttrKernelBackoffWithFailureType = "kernel_backoff_with_failure_type";
 constexpr auto kAttrKernelGraph = "kernel_graph";
 constexpr auto kAttrPreKernelGraph = "pre_kernel_graph";
+constexpr auto kAttrKernelGraphBoundary = "kernel_graph_boundary";
 constexpr auto kAttrNeedInline = "need_inline";
 constexpr auto kAttrOriFusionName = "ori_fusion_name";
 constexpr auto kAttrDynamicLenName = "is_dynamic_len";
@@ -359,6 +360,7 @@ constexpr const char kAttrNodeWithoutOutput[] = "node_without_output";
 constexpr char kAttrInputLayout[] = "input_layout";
 constexpr char kAttrKeepProb[] = "keep_prob";
 constexpr char kAttrHeadNum[] = "head_num";
+constexpr char kAttrSparseMode[] = "sparse_mode";
 
 // FuncGraph Flags
 constexpr auto kFlagIsPynativeBpropGraph = "is_pynative_bprop_graph";
@@ -405,6 +407,17 @@ constexpr auto kChannelNameNpuLog = "_npu_log";
 // env key
 constexpr auto kCompilerCacheEnable = "MS_COMPILER_CACHE_ENABLE";
 constexpr auto kCompilerCachePath = "MS_COMPILER_CACHE_PATH";
+constexpr auto kSimulationLevel = "MS_SIMULATION_LEVEL";
+constexpr auto kSimulationLevelCompileGraph = "0";
+constexpr auto kSimulationLevelCompileKernel = "1";
+
+// comm
+constexpr auto kHCCLWorldGroup = "hccl_world_group";
+constexpr auto kNCCLWorldGroup = "nccl_world_group";
+constexpr auto kEnvRankSize = "RANK_SIZE";
+constexpr auto kEnvRankId = "RANK_ID";
+constexpr auto kEnvLocalRankSize = "LOCAL_RANK_SIZE";
+constexpr auto kEnvLocalRankId = "LOCAL_RANK_ID";
 
 // some size
 const size_t kShape4dDims = 4;
@@ -529,7 +542,7 @@ constexpr auto kSliceStop = "stop";
 constexpr auto kSliceStep = "step";
 
 // graph parse
-constexpr auto kClassTensorType = "class_tensor_type";
+constexpr auto kClassTensorObject = "class_tensor_object";
 
 // graph type
 constexpr auto kFuncGraphTypeName = "FuncGraph";
@@ -698,7 +711,7 @@ static inline uint64_t GetCurrentUSec() {
 #define TEST_FLAG(value, flag) (((value) & (flag)) == (flag))
 #define CLEAR_FLAG(value, flag) ((value) = ((value) & (~(flag))))
 
-#define _STRINGIZE(x) #x
-#define STRINGIZE(x) _STRINGIZE(x)
+#define _STRING_COMPILE_OPT(x) #x
+#define STRING_COMPILE_OPT(x) _STRING_COMPILE_OPT(x)
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_INCLUDE_COMMON_UTILS_UTILS_H_

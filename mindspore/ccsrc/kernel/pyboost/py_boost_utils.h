@@ -34,6 +34,7 @@ using AddressInfoPair = std::pair<std::vector<kernel::KernelTensor *>, device::D
 class BACKEND_EXPORT PyBoostUtils {
  public:
   static DeviceContext *GetDeviceContext(const std::string &device_type);
+  static void ChildAfterFork();
   static AbstractBasePtr InferByOpDef(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_abs);
   static void DispatchRun(const std::shared_ptr<runtime::PyBoostDeviceTask> &task);
 

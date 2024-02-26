@@ -33,6 +33,7 @@
 #include "debug/data_dump/data_dumper.h"
 #include "include/common/debug/common.h"
 #include "utils/file_utils.h"
+#include "include/backend/debug/profiler/profiling.h"
 
 namespace mindspore {
 namespace runtime {
@@ -67,8 +68,8 @@ void DebugActor::ACLDump(uint32_t device_id) {
  * Description: Load and read data for the given node if needed. Dump the node if dump is enabled and free the loaded
  * memory after the dump (for GPU and ascend kernel-by-kernel).
  */
-void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchAddr *launch_info_,
-                       const DeviceContext *device_context, OpContext<DeviceTensor> *const op_context, const AID *) {
+void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchInfo *launch_info, const DeviceContext *device_context,
+                       OpContext<DeviceTensor> *const op_context, const AID *) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(op_context);
@@ -102,7 +103,7 @@ void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchAddr *launch_in
       debugger->SetCurNode(kernel_name);
       bool read_data = CheckReadData(cnode);
       if (read_data) {
-        ReadDataAndDump(cnode, launch_info_, exec_order_, device_context);
+        ReadDataAndDump(cnode, launch_info, exec_order_, device_context);
       }
     }
     exec_order_ += 1;
@@ -138,6 +139,47 @@ void DebugActor::DebugForGraph(const KernelGraphPtr &graph, const DeviceContext 
 }
 
 /*
+ * Feature group: ascend step start timestamp
+ * Target device group: Ascend.
+ * Description: Add step start timestamp when profiler is started.
+ */
+void DebugActor::AscendStepStart(const std::vector<KernelGraphPtr> &graphs,
+                                 std::vector<DeviceContext *> device_contexts) {
+  if (profiler::Profiler::GetInstance(kAscendDevice) == nullptr || graphs.empty()) {
+    return;
+  }
+  if (profiler::Profiler::GetInstance(kAscendDevice)->GetEnableFlag() && !graphs[0]->IsDatasetGraph()) {
+    profile_started_ = false;
+    for (size_t i = 0; i < graphs.size(); ++i) {
+      MS_EXCEPTION_IF_NULL(graphs[i]);
+      MS_EXCEPTION_IF_NULL(device_contexts[i]);
+      if (device_contexts[i]->GetDeviceType() == device::DeviceType::kAscend && !profile_started_) {
+        device_ctx_ = device_contexts[i];
+        device_ctx_->device_res_manager_->BindDeviceToCurrentThread(false);
+        profiler::Profiler::GetInstance(kAscendDevice)
+          ->StepStart(current_step++, device_contexts[i]->device_res_manager_->GetStream());
+        profile_started_ = true;
+      }
+    }
+  }
+}
+
+/*
+ * Feature group: ascend step end timestamp
+ * Target device group: Ascend.
+ * Description: Add step end timestamp when profiler is end.
+ */
+void DebugActor::AscendStepEnd() {
+  if (profiler::Profiler::GetInstance(kAscendDevice) != nullptr &&
+      profiler::Profiler::GetInstance(kAscendDevice)->GetEnableFlag() && profile_started_) {
+    MS_EXCEPTION_IF_NULL(device_ctx_);
+    device_ctx_->device_res_manager_->BindDeviceToCurrentThread(false);
+    profiler::Profiler::GetInstance(kAscendDevice)->StepStop();
+    profile_started_ = false;
+  }
+}
+
+/*
  * Feature group: Dump, Online debugger.
  * Target device group: Ascend, GPU.
  * Runtime category: MindRT.
@@ -156,6 +198,7 @@ void DebugActor::DebugOnStepBegin(const std::vector<KernelGraphPtr> &graphs,
     ACLDump(device_id);
   }
   if (backend == "ge") {
+    AscendStepStart(graphs, device_contexts);
     MS_LOG(INFO) << "On GE backend, debug_actor is not supported.";
     return;
   }
@@ -219,6 +262,7 @@ void DebugActor::DebugOnStepEnd(OpContext<DeviceTensor> *const op_context, const
     dump_flag = 0;
   }
   if (backend == "ge") {
+    AscendStepEnd();
     MS_LOG(INFO) << "On GE backend, debug_actor is not supported.";
     return;
   }

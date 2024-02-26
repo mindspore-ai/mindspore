@@ -4,12 +4,6 @@
 
 This example illustrates the various usages of APIs available in the [mindspore.rewrite](https://www.mindspore.cn/docs/en/master/api_python/mindspore.rewrite.html) module.
 
-For a complete ReWrite example, refer to
-[rewrite_example.py](https://gitee.com/mindspore/mindspore/blob/master/docs/api/api_python_en/rewrite_example.py) .
-The main functions of the sample code include: how to create a SymbolTree through the network, and how to insert, delete,
-and replace the nodes in the SymbolTree. It also includes the modification of the subnet and node replacement through pattern
-matching.
-
 ## Function Introduction
 
 ReWrite module uses SymbolTree to record the forward computation of a network, where each code statement of the
@@ -90,14 +84,13 @@ stree.print_node_tabulate()
 The results are as follows:
 
 ``` log
-================================================================================
+[MyNetOpt]
 node type          name     codes              arg providers          target users
 -----------------  -------  -----------------  ---------------------  ----------------------
 NodeType.Input     input_x  x                  []                     [[0, [('dense', 0)]]]
 NodeType.CallCell  dense    x = self.dense(x)  [[0, ('input_x', 0)]]  [[0, [('relu', 0)]]]
 NodeType.CallCell  relu     x = self.relu(x)   [[0, ('dense', 0)]]    [[0, [('return', 0)]]]
 NodeType.Output    return   return x           [[0, ('relu', 0)]]     []
-==================================================================================
 ```
 
 It can be seen that each statement in the network's forward computation process is converted to a node, where the name
@@ -130,15 +123,14 @@ stree.print_node_tabulate()
 The results are as follows:
 
 ``` log
-================================================================================
-node type          name        codes                     arg providers             target users
------------------  ----------  ------------------------  ------------------------  --------------------------
-NodeType.Input     input_x     x                         []                        [[0, [('dense', 0)]]]
-NodeType.CallCell  dense       dense = self.dense(x)     [[0, ('input_x', 0)]]     [[0, [('binop_mult', 1)]]]
-NodeType.MathOps   binop_mult  mult_var = (0.5 * dense)  [[1, ('dense', 0)]]       [[0, [('relu', 0)]]]
-NodeType.CallCell  relu        x = self.relu(mult_var)   [[0, ('binop_mult', 0)]]  [[0, [('return', 0)]]]
-NodeType.Output    return      return x                  [[0, ('relu', 0)]]        []
-==================================================================================
+[MyNet_2Opt]
+node type          name        codes                         arg providers             target users
+-----------------  ----------  ----------------------------  ------------------------  --------------------------
+NodeType.Input     input_x     x                             []                        [[0, [('dense', 0)]]]
+NodeType.CallCell  dense       dense_var = self.dense(x)     [[0, ('input_x', 0)]]     [[0, [('binop_mult', 1)]]]
+NodeType.MathOps   binop_mult  mult_var = (0.5 * dense_var)  [[1, ('dense', 0)]]       [[0, [('relu', 0)]]]
+NodeType.CallCell  relu        x = self.relu(mult_var)       [[0, ('binop_mult', 0)]]  [[0, [('return', 0)]]]
+NodeType.Output    return      return x                      [[0, ('relu', 0)]]        []
 ```
 
 It can be seen that the dense, multiplication, and relu operations written on the same line during forward computing are
@@ -171,7 +163,7 @@ In this example, the process for inserting a node is as follows:
 The results are as follows:
 
 ``` log
-================================================================================
+[MyNetOpt]
 node type          name      codes                 arg providers           target users
 -----------------  --------  --------------------  ----------------------  ------------------------
 NodeType.Input     input_x   x                     []                      [[0, [('dense', 0)]]]
@@ -179,7 +171,6 @@ NodeType.CallCell  dense     x = self.dense(x)     [[0, ('input_x', 0)]]   [[0, 
 NodeType.CallCell  new_relu  x = self.new_relu(x)  [[0, ('dense', 0)]]     [[0, [('relu', 0)]]]
 NodeType.CallCell  relu      x = self.relu(x)      [[0, ('new_relu', 0)]]  [[0, [('return', 0)]]]
 NodeType.Output    return    return x              [[0, ('relu', 0)]]      []
-==================================================================================
 ```
 
 It can be seen that the new new_relu node is inserted between the dense node and the relu node, and the topology of
@@ -224,7 +215,7 @@ and the input of old relu node is changed to the output of new node.
 The results are as follows:
 
 ``` log
-================================================================================
+[MyNetOpt]
 node type          name      codes                   arg providers           target users
 -----------------  --------  ----------------------  ----------------------  ------------------------
 NodeType.Input     input_x   x                       []                      [[0, [('dense', 0)]]]
@@ -232,7 +223,6 @@ NodeType.CallCell  dense     x = self.dense(x)       [[0, ('input_x', 0)]]   [[0
 NodeType.CallCell  new_relu  x_1 = self.new_relu(x)  [[0, ('dense', 0)]]     [[0, [('relu', 0)]]]
 NodeType.CallCell  relu      x = self.relu(x_1)      [[0, ('new_relu', 0)]]  [[0, [('return', 0)]]]
 NodeType.Output    return    return x                [[0, ('relu', 0)]]      []
-==================================================================================
 ```
 
 It can be seen that the output variable name of new node is an unnamed name ``x_1`` , and the old relu node uses ``x_1`` as input.
@@ -263,13 +253,12 @@ stree.print_node_tabulate()
 The results are as follows:
 
 ``` log
-================================================================================
+[MyNetOpt]
 node type          name     codes              arg providers          target users
 -----------------  -------  -----------------  ---------------------  ----------------------
 NodeType.Input     input_x  x                  []                     [[0, [('dense', 0)]]]
 NodeType.CallCell  dense    x = self.dense(x)  [[0, ('input_x', 0)]]  [[0, [('return', 0)]]]
 NodeType.Output    return   return x           [[0, ('dense', 0)]]    []
-==================================================================================
 ```
 
 It can be seen that because the output of dense node and the output of relu node have the same name, after deleting
@@ -313,13 +302,12 @@ The specific parameter name modification strategy depends on the actual scenario
 The results are as follows:
 
 ``` log
-================================================================================
+[MyNet_3Opt]
 node type          name     codes              arg providers          target users
 -----------------  -------  -----------------  ---------------------  ----------------------
 NodeType.Input     input_x  x                  []                     [[0, [('dense', 0)]]]
 NodeType.CallCell  dense    y = self.dense(x)  [[0, ('input_x', 0)]]  [[0, [('return', 0)]]]
 NodeType.Output    return   return y           [[0, ('dense', 0)]]    []
-==================================================================================
 ```
 
 It can be seen that after deleting the relu node, the value of the last return node is updated from ``z`` to ``y`` .
@@ -344,14 +332,13 @@ stree.print_node_tabulate()
 This example replaces relu node in the original network with new_relu node. The results are as follows:
 
 ``` log
-================================================================================
+[MyNetOpt]
 node type          name      codes                 arg providers           target users
 -----------------  --------  --------------------  ----------------------  ------------------------
 NodeType.Input     input_x   x                     []                      [[0, [('dense', 0)]]]
 NodeType.CallCell  dense     x = self.dense(x)     [[0, ('input_x', 0)]]   [[0, [('new_relu', 0)]]]
 NodeType.CallCell  new_relu  x = self.new_relu(x)  [[0, ('dense', 0)]]     [[0, [('return', 0)]]]
 NodeType.Output    return    return x              [[0, ('new_relu', 0)]]  []
-==================================================================================
 ```
 
 If the output name of the new node and the replaced node are inconsistent, we need to pay attention
@@ -382,15 +369,14 @@ The example replaces relu node with two new nodes, where the output of first nod
 return node. The results are as follows:
 
 ``` log
-================================================================================
-node type          name        codes                    arg providers           target users
------------------  ----------  -----------------------  ----------------------  -------------------------------------------
-NodeType.Input     input_x     x                        []                      [[0, [('dense', 0)]]]
-NodeType.CallCell  dense       x = self.dense(x)        [[0, ('input_x', 0)]]   [[0, [('new_relu', 0), ('new_relu_1', 0)]]]
-NodeType.CallCell  new_relu    y1 = self.new_relu(x)    [[0, ('dense', 0)]]     [[0, [('return', 0)]]]
-NodeType.CallCell  new_relu_1  y2 = self.new_relu_1(x)  [[0, ('dense', 0)]]     []
-NodeType.Output    return      return y1                [[0, ('new_relu', 0)]]  []
-==================================================================================
+[MyNetOpt]
+node type          name        codes                    arg providers             target users
+-----------------  ----------  -----------------------  ------------------------  ---------------------------------------------
+NodeType.Input     input_x     x                        []                        [[0, [('dense', 0)]]]
+NodeType.CallCell  dense       x = self.dense(x)        [[0, ('input_x', 0)]]     [[0, [('new_relu_1', 0), ('new_relu_2', 0)]]]
+NodeType.CallCell  new_relu_1  y1 = self.new_relu_1(x)  [[0, ('dense', 0)]]       [[0, [('return', 0)]]]
+NodeType.CallCell  new_relu_2  y2 = self.new_relu_2(x)  [[0, ('dense', 0)]]       []
+NodeType.Output    return      return y1                [[0, ('new_relu_1', 0)]]  []
 ```
 
 It can be seen that the relu node was successfully replaced with two new nodes, and the return value was also

@@ -63,12 +63,12 @@ const AnfNodePtr InsertLoadForAllGather::Process(const FuncGraphPtr &graph, cons
     MS_LOG(DEBUG) << "Node users size not greater than 1, node: " << node->fullname_with_scope();
     return nullptr;
   }
-  std::vector<AnfNodePtr> inputs = {NewValueNode(prim::kPrimLoad), node};
+  std::vector<AnfNodePtr> inputs = {NewValueNode(prim::kPrimTensorMove), node};
   auto load = this->NewCNode(inputs, graph);
   MS_EXCEPTION_IF_NULL(load);
   load->set_abstract(node->abstract());
   load->set_scope(node->scope());
-  MS_LOG(DEBUG) << "Insert Load for AllGather, Load node: " << load->fullname_with_scope()
+  MS_LOG(DEBUG) << "Insert TensorMove for AllGather, Load node: " << load->fullname_with_scope()
                 << ", AllGather node: " << node->fullname_with_scope();
   return load;
 }

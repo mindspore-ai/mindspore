@@ -34,7 +34,7 @@ namespace {
 transform::aclIntArray *GetAdaptedMultiples(KernelTensor *x_tensor, KernelTensor *multiples_tensor) {
   auto x_shape = x_tensor->GetShape()->GetShapeVector();
   if (MS_UNLIKELY(IsDynamicRank(x_shape))) {
-    MS_LOG(EXCEPTION) << "In Launch, the tensor's shape should not be dynamic rank!";
+    MS_LOG(EXCEPTION) << "For 'Tile', the tensor's shape should not be dynamic rank in launch stage!";
   }
   auto x_dim = LongToSize(x_shape.size());
   auto multiples_vector = multiples_tensor->GetValueWithCheck<std::vector<int64_t>>();
@@ -50,8 +50,7 @@ transform::aclIntArray *GetAdaptedMultiples(KernelTensor *x_tensor, KernelTensor
 void TileAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                   const std::vector<KernelTensor *> &outputs) {
   auto dims = GetAdaptedMultiples(inputs[kIndex0], inputs[kIndex1]);
-  auto return_value = GEN_EXECUTOR(op_type_, inputs[kIndex0], dims, outputs[kIndex0]);
-  UpdateWorkspace(return_value);
+  GetWorkspaceForResize(inputs[kIndex0], dims, outputs[kIndex0]);
 }
 
 bool TileAscend::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,

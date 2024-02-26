@@ -372,6 +372,8 @@ def {func_name}({', '.join(arg for arg in func_args)}):
     return {operator_name}_op({', '.join(arg_name for arg_name in prim_call_args)})\n"""
 
         if not prim_init_args:
+            if _auto_generate_class_disabled(operator_data):
+                gen_py += f"""\n{operator_name}_op={class_name}()"""
             function_code = f"""\n
 def {func_name}({', '.join(arg for arg in func_args)}):
     r\"\"\"
@@ -388,7 +390,7 @@ def {func_name}({', '.join(arg for arg in func_args)}):
     r\"\"\"
     {description}
     \"\"\"
-    return {operator_name}_impl({', '.join(arg_name for arg_name in prim_call_args)})\n"""
+    return {operator_name}_impl({', '.join(arg_name for arg_name, _ in args.items())})\n"""
         gen_py += function_code
 
     return gen_py
@@ -812,7 +814,6 @@ from mindspore.ops.auto_generate.gen_arg_dtype_cast import type_it
 from mindspore.ops.auto_generate.gen_arg_handler import *
 from mindspore._c_expression import OpDtype
 from mindspore.common._stub_tensor import _convert_stub
-from mindspore.ops.operations.manually_defined.ops_def import Cast
 """
 
 
@@ -822,6 +823,7 @@ ops_py_def_header = f"""
 from .gen_ops_prim import *
 from .gen_inner_ops_prim import *
 from .pyboost_inner_prim import *
+from mindspore.ops.operations.manually_defined.ops_def import *
 from mindspore.ops._primitive_cache import _get_cache_prim
 """
 

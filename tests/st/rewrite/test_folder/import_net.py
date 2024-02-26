@@ -35,10 +35,10 @@ def run_net_with_import(mode):
     y0 = net(Tensor(1))
     stree = SymbolTree.create(net)
     codes = stree.get_code()
-    assert codes.count("class NetOpt(BaseNet, NoCellNet, NetWithClassVar):") == 1
-    assert codes.count("class NoCellNet():") == 1
-    assert codes.count("class BaseNet(nn.Cell):") == 1
-    assert codes.count("class NetWithClassVar():") == 1
+    assert codes.count("class NetOpt(Net, BaseNetOpt, NoCellNetOpt, NetWithClassVarOpt):") == 1
+    assert codes.count("class NoCellNetOpt(NoCellNet):") == 1
+    assert codes.count("class BaseNetOpt(BaseNet, nn.Cell):") == 1
+    assert codes.count("class NetWithClassVarOpt(NetWithClassVar):") == 1
     assert codes.count("var1 = Tensor(1.0)") == 0
     assert codes.count("var2 = external_func") == 0
     assert codes.count("var3 = external_func2") == 0

@@ -37,6 +37,7 @@ namespace mindspore {
 struct LLMEngineModelInfo {
   std::string name;
   tensor::TensorPtr om_data = nullptr;
+  std::vector<std::string> input_names;
   std::vector<ShapeVector> input_shapes;
   std::vector<TypeId> input_dtypes;
   std::vector<ShapeVector> ref_input_shapes;
@@ -47,26 +48,35 @@ struct LLMEngineModelInfo {
 
 class LLMEnginePluginBase {
  public:
-  LLMEnginePluginBase() = default;
+  LLMEnginePluginBase(LLMRole role, uint64_t cluster_id, const std::string &batch_mode)
+      : role_(role), cluster_id_(cluster_id), batch_mode_(batch_mode) {}
   virtual ~LLMEnginePluginBase() = default;
-  virtual Status Init(const std::vector<LLMEngineModelInfo> &model_infos, LLMRole role, uint64_t cluster_id,
-                      const std::map<std::string, std::string> &options, const std::string &batch_mode,
-                      const LLMEngineModelInfo &postprocess_model) = 0;
-  virtual void Finalize() = 0;
-  virtual Status Predict(const LLMReq &req, const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) = 0;
-  virtual Status Predict(const std::vector<LLMReq> &req, const std::vector<MSTensor> &inputs,
-                         std::vector<MSTensor> *outputs) = 0;
-  virtual Status CompleteRequest(const LLMReq &req) = 0;
-  virtual LLMEngineStatus FetchStatus() = 0;
-  virtual Status PreloadPromptPrefix(const LLMReq &req, const std::vector<MSTensor> &inputs) = 0;
-  virtual Status ReleasePromptPrefix(const LLMReq &req) = 0;
-  virtual Status PullKV(const LLMReq &req) = 0;
-  virtual Status MergeKV(const LLMReq &req, uint32_t batch_index) = 0;
 
+  virtual Status AddModel(const std::vector<LLMEngineModelInfo> &model_infos,
+                          const std::map<std::string, std::string> &options,
+                          const LLMEngineModelInfo &postprocess_model, uint64_t *model_id) = 0;
+  virtual Status Init(const std::map<std::string, std::string> &options) = 0;
+  virtual void Finalize() = 0;
+  virtual Status Predict(const LLMReq &req, const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
+                         uint64_t model_id) = 0;
+  virtual Status Predict(const std::vector<LLMReq> &req, const std::vector<MSTensor> &inputs,
+                         std::vector<MSTensor> *outputs, uint64_t model_id) = 0;
+  virtual Status CompleteRequest(const LLMReq &req) = 0;
+  virtual Status PreloadPromptPrefix(const LLMReq &req, const std::vector<MSTensor> &inputs, uint64_t model_id) = 0;
+  virtual Status ReleasePromptPrefix(const LLMReq &req, uint64_t model_id) = 0;
+  virtual Status PullKV(const LLMReq &req, uint64_t model_id) = 0;
+  virtual Status MergeKV(const LLMReq &req, uint32_t batch_index, uint32_t batch_id, uint64_t model_id) = 0;
+
+  virtual LLMEngineStatus FetchStatus() = 0;
   virtual Status LinkClusters(const std::vector<LLMClusterInfo> &, std::vector<Status> *rets, int32_t timeout) = 0;
   virtual Status UnlinkClusters(const std::vector<LLMClusterInfo> &, std::vector<Status> *rets, int32_t timeout) = 0;
+
+ protected:
+  LLMRole role_ = kLLMRolePrompt;
+  uint64_t cluster_id_ = 0;
+  std::string batch_mode_;
 };
 
-extern "C" MS_API LLMEnginePluginBase *CreateLLMEnginePlugin();
+extern "C" MS_API LLMEnginePluginBase *CreateLLMEnginePlugin(LLMRole, uint64_t, const std::string &);
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_LLM_ENGINE_PLUGIN_H_

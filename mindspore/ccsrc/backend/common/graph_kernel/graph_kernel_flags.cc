@@ -360,6 +360,10 @@ void GraphKernelFlags::RegisterFlags(std::map<std::string, std::string> *flag_ma
   reg.AddFlag("disable_simplify_exprs", &disable_simplify_exprs);
   reg.AddFlag("enable_pass", &enable_pass);
   reg.AddFlag("disable_pass", &disable_pass);
+  reg.AddFlag("enable_cce_lib", &enable_cce_lib);
+  reg.AddFlag("enable_cce_lib_ops", &enable_cce_lib_ops);
+  reg.AddFlag("enable_cce_lib_ops_only", &enable_cce_lib_ops_only);
+  reg.AddFlag("disable_cce_lib_ops", &disable_cce_lib_ops);
 
 #ifndef MSLITE_ENABLE_GRAPH_KERNEL
   if (is_ascend && flag_map->find("kernel_generator") == flag_map->end()) {
@@ -416,6 +420,10 @@ std::string GraphKernelFlags::DumpAllFlags() const {
   json["disable_simplify_exprs"] = disable_simplify_exprs;
   json["enable_pass"] = enable_pass;
   json["disable_pass"] = disable_pass;
+  json["enable_cce_lib"] = enable_cce_lib;
+  json["enable_cce_lib_ops"] = enable_cce_lib_ops_only;
+  json["enable_cce_lib_ops_only"] = enable_cce_lib_ops_only;
+  json["disable_cce_lib_ops"] = disable_cce_lib_ops;
 
   return json.dump();
 }

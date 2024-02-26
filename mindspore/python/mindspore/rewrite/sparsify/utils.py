@@ -22,7 +22,7 @@ from typing import NamedTuple, Any, Optional, Callable, Union
 
 import mindspore
 from mindspore import ops, Tensor, CSRTensor, COOTensor
-from mindspore.rewrite.namespace import get_functional
+from mindspore.rewrite.common.namespace import get_functional
 
 
 class ArgType(Enum):

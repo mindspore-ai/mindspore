@@ -16,13 +16,16 @@
 
 #include "plugin/device/cpu/kernel/sequence/real_make_tuple_cpu_kernel.h"
 #include <algorithm>
+#include <cstdint>
 #include <utility>
 #include <complex>
+#include "mindapi/base/type_id.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "include/common/thread_pool.h"
 namespace mindspore {
 namespace kernel {
 namespace {
+using complex64 = std::complex<float>;
 constexpr size_t kOutputNum = 1;
 }  // namespace
 
@@ -92,9 +95,50 @@ std::vector<std::pair<KernelAttr, RealMakeTupleCpuKernelMod::RealMakeTupleFunc>>
     &RealMakeTupleCpuKernelMod::LaunchKernel<int64_t>},
    {KernelAttr()
       .AddAllSameAttr(true)
+      .AddInputAttr(kObjectTypeNumber, kNumberTypeUInt8)
+      .AddOutputAttr(kObjectTypeTuple, kNumberTypeUInt8),
+    &RealMakeTupleCpuKernelMod::LaunchKernel<uint8_t>},
+   {KernelAttr()
+      .AddAllSameAttr(true)
+      .AddInputAttr(kObjectTypeNumber, kNumberTypeInt8)
+      .AddOutputAttr(kObjectTypeTuple, kNumberTypeInt8),
+    &RealMakeTupleCpuKernelMod::LaunchKernel<int8_t>},
+   {KernelAttr()
+      .AddAllSameAttr(true)
+      .AddInputAttr(kObjectTypeNumber, kNumberTypeInt16)
+      .AddOutputAttr(kObjectTypeTuple, kNumberTypeInt16),
+    &RealMakeTupleCpuKernelMod::LaunchKernel<int16_t>},
+   {KernelAttr()
+      .AddAllSameAttr(true)
+      .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat16)
+      .AddOutputAttr(kObjectTypeTuple, kNumberTypeFloat16),
+    &RealMakeTupleCpuKernelMod::LaunchKernel<float16>},
+   {KernelAttr()
+      .AddAllSameAttr(true)
+      .AddInputAttr(kObjectTypeNumber, kNumberTypeComplex64)
+      .AddOutputAttr(kObjectTypeTuple, kNumberTypeComplex64),
+    &RealMakeTupleCpuKernelMod::LaunchKernel<complex64>},
+   {KernelAttr()
+      .AddAllSameAttr(true)
       .AddInputAttr(kNumberTypeFloat32)
       .AddOutputAttr(kObjectTypeTuple, kNumberTypeFloat32),
     &RealMakeTupleCpuKernelMod::LaunchKernel<float>},
+   {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kObjectTypeTuple, kNumberTypeUInt8),
+    &RealMakeTupleCpuKernelMod::LaunchKernel<uint8_t>},
+   {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kObjectTypeTuple, kNumberTypeInt8),
+    &RealMakeTupleCpuKernelMod::LaunchKernel<int8_t>},
+   {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kObjectTypeTuple, kNumberTypeInt16),
+    &RealMakeTupleCpuKernelMod::LaunchKernel<int16_t>},
+   {KernelAttr()
+      .AddAllSameAttr(true)
+      .AddInputAttr(kNumberTypeFloat16)
+      .AddOutputAttr(kObjectTypeTuple, kNumberTypeFloat16),
+    &RealMakeTupleCpuKernelMod::LaunchKernel<float16>},
+   {KernelAttr()
+      .AddAllSameAttr(true)
+      .AddInputAttr(kNumberTypeComplex64)
+      .AddOutputAttr(kObjectTypeTuple, kNumberTypeComplex64),
+    &RealMakeTupleCpuKernelMod::LaunchKernel<complex64>},
    {KernelAttr()
       .AddAllSameAttr(true)
       .AddInputAttr(kNumberTypeFloat64)

@@ -204,4 +204,15 @@ CUST_OUTPUT_MAP(LogUniformCandidateSampler) = {{0, OUTPUT_DESC(sampled_candidate
                                                {2, OUTPUT_DESC(sampled_expected_count)}};
 REG_ADPT_DESC(LogUniformCandidateSampler, kNameLogUniformCandidateSampler, CUST_ADPT_DESC(LogUniformCandidateSampler));
 
+// Dropout3D
+CUST_INPUT_MAP(Dropout3D) = {{1, INPUT_DESC(x)}};
+CUST_ATTR_MAP(Dropout3D) = {{"keep_prob", ATTR_DESC(keep_prob, AnyTraits<float>())}};
+CUST_OUTPUT_MAP(Dropout3D) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(mask)}};
+REG_ADPT_DESC(Dropout3D, kNameDropout3D, CUST_ADPT_DESC(Dropout3D));
+
+// ShuffleChannel
+INPUT_MAP(ShuffleChannel) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(ShuffleChannel) = {{"group", ATTR_DESC(group, AnyTraits<int64_t>())}};
+OUTPUT_MAP(ShuffleChannel) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(ShuffleChannel, kNameChannelShuffle, ADPT_DESC(ShuffleChannel));
 }  // namespace mindspore::transform

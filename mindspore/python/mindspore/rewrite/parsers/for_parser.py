@@ -13,116 +13,49 @@
 # limitations under the License.
 # ============================================================================
 """ Parse ast.For node """
-import sys
 import ast
 
-from mindspore.rewrite.api.scoped_value import ScopedValue, ValueType
-from mindspore.rewrite.ast_helpers.ast_modifier import AstModifier
-from mindspore import log as logger
-from mindspore import nn
+from . import Parser, ParserRegister, reg_parser
+from ..node import NodeManager, ControlFlow
 from ..symbol_tree import SymbolTree
-from .parser import Parser
-from .parser_register import reg_parser
-from ..common.event import Event
-from ..node.node_manager import NodeManager
-
-if sys.version_info >= (3, 9):
-    import ast as astunparse # pylint: disable=reimported, ungrouped-imports
-else:
-    import astunparse
-
-EVAL_WHITE_LIST = ("self.", "range(", "zip(", "enumerate(", "reversed(")
+from ..ast_helpers import AstConverter, AstFlattener
 
 
 class ForParser(Parser):
     """ Class that implements parsing ast.For nodes """
 
-    @staticmethod
-    def modify_init_ast(stree, i, obj, iter_var_name):
-        """Modify the ast node in init function."""
-        target = f"{iter_var_name.strip()}{str(i)}"
-        setattr(stree.get_origin_network(), target, obj)
-        stree.get_origin_network().insert_child_to_cell(target, obj)
-        AstModifier.insert_assign_to_function(stree.get_init_func_ast(),
-                                              targets=[ScopedValue(ValueType.NamingValue, "self", target)],
-                                              expr=ScopedValue(ValueType.NamingValue, "", "getattr"),
-                                              args=[ScopedValue(ValueType.NamingValue, "", "obj"),
-                                                    ScopedValue(ValueType.ConstantValue, "", target)])
-
-    @staticmethod
-    def modify_construct_ast(stree, ast_node, old_name, new_name):
-        """Modify the ast node in construct function."""
-        node_str: str = astunparse.unparse(ast_node)
-        node_str = node_str.replace(old_name+'(', new_name+'(')
-        module_node = ast.parse(node_str)
-        new_node = module_node.body[0]
-        return new_node
-
     def target(self):
+        """Parse target type"""
         return ast.For
 
     def process(self, stree: SymbolTree, node: ast.For, node_manager: NodeManager):
         """ Process ast.For node """
-        if isinstance(node.target, ast.Name):
-            targets = node.target.id
-        if isinstance(node.iter, ast.Str) or (isinstance(node.iter, ast.Constant) and
-                                              isinstance(node.iter.val, str)):
-            # Ast.For which has iter with type of str is converted to python node to avoid instruction injection
-            stree.try_append_python_node(node, node)
-            return
-        iter_code = astunparse.unparse(node.iter)
-        if not iter_code.startswith(EVAL_WHITE_LIST):
-            logger.info(
-                f"For MindSpore Rewrtie, illegal iteration condition for For node, it must start with{EVAL_WHITE_LIST}")
-            return
-        if "self" in iter_code:
-            iter_code = iter_code.replace("self", "stree.get_origin_network()")
-        try:
-            iter_obj = eval(iter_code)
-        except (NameError, TypeError) as e:
-            _info = f"For MindSpore Rewrtie, when eval '{iter_code}' by using JIT Fallback feature, " \
-                         f"an error occurred: {str(e)}"
-            logger.info(_info)
-            stree.try_append_python_node(node, node, node_manager)
-            return
-
-        iter_var_name = iter_code.split(".")[-1]
-        ast_functiondef = node_manager.get_ast_functiondef()
-        if not ast_functiondef:
-            logger.info(f"ast_functiondef is None in node_manager {node_manager.get_manager_name()} "
-                        "when parsing 'for' statement.")
-            stree.try_append_python_node(node, node, node_manager)
-            return
-        index = ast_functiondef.body.index(node) + 1
-        if isinstance(iter_obj, (list, nn.CellList)):
-            for obj in iter_obj:
-                if not isinstance(obj, nn.Cell):
-                    stree.try_append_python_node(node, node, node_manager)
-                    return
-            for i, obj in enumerate(iter_obj):
-                ForParser.modify_init_ast(stree, i, obj, iter_var_name)
-                for body in node.body:
-                    new_func_name = f"self.{iter_var_name.strip()}{str(i)}".strip()
-                    new_node = ForParser.modify_construct_ast(stree, body, targets, new_func_name)
-                    ast_functiondef.body.insert(index, new_node)
-                    index += 1
-            # Expand "for" statement and replace the body with Pass
-            for body in node.body[:]:
-                node.body.remove(body)
-            node.body.append(ast.Pass())
-
-            if stree.get_ori_cls_name() == "SequentialCell":
-                stree.on_change(Event.CodeChangeEvent)
-            return
-        if isinstance(iter_obj, range):
-            logger.info("For MindSpore Rewrite, range not support.")
-        elif isinstance(iter_obj, zip):
-            logger.info("For MindSpore Rewrite, zip not support.")
-        elif isinstance(iter_obj, enumerate):
-            logger.info("For MindSpore Rewrite, enumerate not support.")
-        else:
-            logger.info(f"For MindSpore Rewrite, not supported type: {type(iter_obj).__name__}")
-        stree.try_append_python_node(node, node, node_manager)
-        return
+        # expand codes in ast.for
+        ast_for = AstFlattener().transform_control_flow(node, stree)
+        # parse ast codes of for branch into ControlFlow Node
+        args = [AstConverter.create_scopedvalue(node.iter)]
+        for_node = ControlFlow("for_node", ast_for, False, args, stree)
+        for_node.loop_vars = AstConverter.get_ast_target_elems(node.target, True)
+        stree.append_origin_field(for_node, node_manager)
+        for_node.set_node_manager(node_manager)
+        for body in ast_for.body:
+            parser: Parser = ParserRegister.instance().get_parser(type(body))
+            if parser is None:
+                stree.append_python_node(ast_for, body, node_manager=for_node)
+            else:
+                parser.process(stree, body, node_manager=for_node)
+        # parse ast codes of else branch into ControlFlow Node
+        if ast_for.orelse:
+            for_else_node = ControlFlow("for_else_node", ast_for, True, args, stree)
+            for_else_node.loop_vars = AstConverter.get_ast_target_elems(node.target, True)
+            stree.append_origin_field(for_else_node, node_manager)
+            for body in ast_for.orelse:
+                parser: Parser = ParserRegister.instance().get_parser(type(body))
+                if parser is None:
+                    stree.append_python_node(ast_for, body, node_manager=for_else_node)
+                else:
+                    parser.process(stree, body, node_manager=for_else_node)
+            for_else_node.set_body_node(for_node)
+            for_node.set_orelse_node(for_else_node)
 
 g_for_parser = reg_parser(ForParser())

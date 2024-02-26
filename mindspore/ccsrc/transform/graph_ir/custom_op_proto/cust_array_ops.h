@@ -58,6 +58,13 @@ REG_CUST_OP(GatherDGradV2)
                               DT_FLOAT16, DT_FLOAT, DT_DOUBLE}))
   .CUST_OP_END_FACTORY_REG(GatherDGradV2)
 
+REG_CUST_OP(AffineGrid)
+  .INPUT(theta, TensorType({DT_FLOAT, DT_FLOAT16}))
+  .INPUT(output_size, TensorType({DT_INT32, DT_INT64}))
+  .OUTPUT(output, TensorType({DT_FLOAT, DT_FLOAT16}))
+  .REQUIRED_ATTR(align_corners, Bool)
+  .CUST_OP_END_FACTORY_REG(AffineGrid)
+
 REG_CUST_OP(AffineGridGrad)
   .INPUT(y_grad, TensorType({DT_FLOAT, DT_FLOAT16}))
   .INPUT(x_size, TensorType({DT_INT32, DT_INT64}))
@@ -76,7 +83,7 @@ REG_CUST_OP(HammingWindow)
 REG_CUST_OP(IndexFill)
   .INPUT(x, TensorType({DT_DOUBLE, DT_FLOAT, DT_FLOAT16, DT_INT16, DT_INT32, DT_INT64, DT_INT8, DT_UINT16,
                         DT_UINT32, DT_UINT64, DT_UINT8}))
-  .INPUT(dim, TensorType({DT_INT32}))
+  .INPUT(dim, TensorType({DT_INT64, DT_INT32}))
   .INPUT(indices, TensorType({DT_INT32}))
   .INPUT(value, TensorType({DT_DOUBLE, DT_FLOAT, DT_FLOAT16, DT_INT16, DT_INT32, DT_INT64, DT_INT8, DT_UINT16,
                             DT_UINT32, DT_UINT64, DT_UINT8}))
@@ -129,5 +136,13 @@ REG_CUST_OP(Coalesce)
   .OUTPUT(y_values, TensorType({DT_DOUBLE, DT_FLOAT, DT_FLOAT16}))
   .OUTPUT(y_shape, TensorType({DT_INT64}))
   .CUST_OP_END_FACTORY_REG(Coalesce)
+
+REG_CUST_OP(Padding)
+  .INPUT(x, TensorType({DT_BOOL, DT_DOUBLE, DT_FLOAT, DT_FLOAT16, DT_INT16, DT_INT32, DT_INT64, DT_INT8, DT_UINT16,
+                        DT_UINT32, DT_UINT64, DT_UINT8}))
+  .OUTPUT(y, TensorType({DT_BOOL, DT_DOUBLE, DT_FLOAT, DT_FLOAT16, DT_INT16, DT_INT32, DT_INT64, DT_INT8, DT_UINT16,
+                         DT_UINT32, DT_UINT64, DT_UINT8}))
+  .REQUIRED_ATTR(pad_dim_size, Int)
+  .CUST_OP_END_FACTORY_REG(Padding)
 }  // namespace ge
 #endif  // MINDSPORE_CCSRC_GRAPH_IR_CUSTOM_OP_PROTO_CUST_ARRAY_OPS_H_

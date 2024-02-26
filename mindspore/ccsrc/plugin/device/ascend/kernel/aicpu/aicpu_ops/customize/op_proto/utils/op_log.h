@@ -23,8 +23,8 @@
 
 #include <string>
 #include <type_traits>
+#include <cinttypes>
 #include "graph/operator.h"
-#include "common/util/error_manager/error_manager.h"
 
 #define LOG_CPP
 #if !defined(__ANDROID__) && !defined(ANDROID)

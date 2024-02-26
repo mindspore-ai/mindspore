@@ -340,7 +340,9 @@ bool CheckNeedQuant(const std::shared_ptr<ConverterPara> &param, const FuncGraph
   for (auto &cnode : func_graph->GetOrderedCnodes()) {
     auto op_name = cnode->fullname_with_scope();
     auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
-    CHECK_NULL_RETURN(primitive);
+    if (primitive == nullptr) {
+      return false;
+    }
     for (const auto &type : fake_quant_types) {
       if (opt::CheckPrimitiveType(cnode, type)) {
         return true;

@@ -40,7 +40,7 @@
 #include "backend/common/graph_kernel/value_graph_binder.h"
 #include "backend/common/graph_kernel/parallel_fusion.h"
 #include "backend/common/graph_kernel/optimize_assign.h"
-#include "backend/common/graph_kernel/split_umonad.h"
+#include "backend/common/graph_kernel/core/split_umonad.h"
 #include "backend/common/graph_kernel/reorder_ops.h"
 #include "backend/common/graph_kernel/core/update_state_formatter.h"
 #include "backend/common/graph_kernel/axis_normalizer.h"

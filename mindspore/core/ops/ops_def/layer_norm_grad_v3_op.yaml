@@ -1,0 +1,30 @@
+#operator layer_norm_grad_v3
+layer_norm_grad_v3:
+  args:
+    x:
+      dtype: tensor
+    dy:
+      dtype: tensor
+    variance:
+      dtype: tensor
+    mean:
+      dtype: tensor
+    gamma:
+      dtype: tensor
+    begin_norm_axis:
+      dtype: int
+      default: 1
+      prim_init: True
+    begin_params_axis:
+      dtype: int
+      default: 1
+      prim_init: True
+  returns:
+    pd_x:
+      dtype: tensor
+    pd_gamma:
+      dtype: tensor
+    pd_beta:
+      dtype: tensor
+  function:
+    disable: True

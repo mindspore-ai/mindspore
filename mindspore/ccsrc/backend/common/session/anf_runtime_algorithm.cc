@@ -142,7 +142,10 @@ tensor::TensorPtr GetForwardOutputTensor(const AnfNodePtr &node) {
     if (value->isa<tensor::Tensor>()) {
       auto tensor = value->cast<tensor::TensorPtr>();
       MS_EXCEPTION_IF_NULL(tensor);
-      if (tensor->is_forward_output()) {
+      // If output used as sens, output will create(clone) a fake tensor with device address is nullptr for memory
+      // usage. It has is_forward_output flag, which will be used for tensor input mask, and affect single op graph
+      // cache.
+      if (tensor->is_forward_output() && tensor->device_address() != nullptr) {
         return tensor;
       }
     }

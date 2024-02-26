@@ -479,8 +479,8 @@ class SparseToDenseV2(Primitive):
         Tensor, converted from sparse tensor. The dtype is same as `values`, and the shape is `output_shape`.
 
     Raises:
-        TypeError: If the dtype of `indices` is neither Int32 nor Int64.
-        TypeError: If the dtype of `outputshape` is neither Int32 nor Int64.
+        TypeError: If the dtype of `indices` is neither int32 nor int64.
+        TypeError: If the dtype of `outputshape` is neither int32 nor int64.
         ValueError: If the shape of `output_shape`, shape of `indices`,
             shape of `default_value` and shape of `values` don't meet the parameter description.
         ValueError: If each Element of `output_shape` is not > 0.
@@ -2382,8 +2382,8 @@ class SparseCountSparseOutput(Primitive):
     Args:
         binary_output (bool) - If ``False`` , output the number of occurrences of each value,
                                if ``True`` output 1 for orresponding values. Default: ``False`` .
-        minlength(Scalar) - Int type minimum value to count, Default: ``-1`` .
-        maxlength(Scalar) - Int type maximum value to count, Default: ``-1`` .
+        minlength(Scalar) - int type minimum value to count, Default: ``-1`` .
+        maxlength(Scalar) - int type maximum value to count, Default: ``-1`` .
 
     Inputs:
         - **indices** (Tensor) - Tensor representing the position of the element in the sparse

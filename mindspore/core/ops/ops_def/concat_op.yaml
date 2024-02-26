@@ -9,9 +9,10 @@ concat:
             default: 0
             prim_init: True
     returns:
-        output:
+        out:
             dtype: tensor
-    dispatch:
-      enable: False
     function:
         name: cat
+    dispatch:
+        enable: True
+        CPU: ConcatCpu

@@ -113,11 +113,13 @@ bool HcclKernel::Init(const std::vector<KernelTensor *> &inputs, const std::vect
   if (!HcomUtil::GetHcomAttr<std::string>(primitive_, kAttrGroup, &group_)) {
     return false;
   }
-  // pynative with ranktable also need hccl_comm
-  comm_ = AscendCollectiveCommLib::GetInstance().HcclCommunicator(group_);
-  if (common::UseHostCollective() && !hccl::HcclAdapter::GetInstance().UseHcclCM()) {
-    MS_EXCEPTION_IF_NULL(comm_);
-    primitive_->set_attr(kAttrComm, MakeValue<int64_t>(reinterpret_cast<int64_t>(comm_)));
+  if (!common::IsNeedProfileMemory()) {
+    // pynative with ranktable also need hccl_comm
+    comm_ = AscendCollectiveCommLib::GetInstance().HcclCommunicator(group_);
+    if (common::UseHostCollective() && !hccl::HcclAdapter::GetInstance().UseHcclCM()) {
+      MS_EXCEPTION_IF_NULL(comm_);
+      primitive_->set_attr(kAttrComm, MakeValue<int64_t>(reinterpret_cast<int64_t>(comm_)));
+    }
   }
   CalLoopSize();
 

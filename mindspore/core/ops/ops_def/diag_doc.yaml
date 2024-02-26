@@ -2,6 +2,10 @@ diag:
     description: |
         Constructs a diagonal tensor with a given diagonal values.
 
+        Assume `input` has dimensions :math:`(D_1,... D_k)` , the output is a tensor of
+        rank 2k with dimensions :math:`(D_1,..., D_k, D_1,..., D_k)` where:
+        :math:`output[i_1,..., i_k, i_1,..., i_k] = input[i_1,..., i_k]` and 0 everywhere else.
+
         .. warning::
             This is an experimental API that is subject to change or deletion.
 
@@ -13,7 +17,7 @@ diag:
         
         Raises:
             TypeError: If `input` is not a Tensor.
-            TypeError: If rank of `input` less than 1.
+            ValueError: If rank of `input` less than 1.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``

@@ -39,7 +39,7 @@ inline size_t NormalizeAxis(int64_t axis, size_t rank) {
 }
 
 inline std::pair<ShapeVector, int64_t> CheckShapesValid(const ShapeArray &shapes, const PrimitivePtr &primitive) {
-  // 1. Only one dim different: kShapeDimAny is considered as same.
+  // 1. Only one axis different: kShapeDimAny is considered as same.
   // 2. all elements' rank should be same.
 
   int64_t diff_idx = kUnknownDiffIdx;
@@ -61,10 +61,9 @@ inline std::pair<ShapeVector, int64_t> CheckShapesValid(const ShapeArray &shapes
                    CheckAndConvertUtils::FormatCommMsg(
                      "For primitive[", primitive->name(),
                      "], all elements should not be zero rank, but got zero rank in position ", i, "!"));
-    MS_CHECK_VALUE(
-      output_shape.size() == shape.size(),
-      CheckAndConvertUtils::FormatCommMsg("For primitive[", primitive->name(), "], element size must be same(",
-                                          output_shape, " vs ", shape, ")!"));
+    MS_CHECK_VALUE(output_shape.size() == shape.size(),
+                   CheckAndConvertUtils::FormatCommMsg("For primitive[", primitive->name(),
+                                                       "], element rank must be same(shapes are ", shapes, ")!"));
     for (size_t j = 0; j < output_shape.size(); ++j) {
       if (output_shape[j] == abstract::TensorShape::kShapeDimAny) {
         output_shape[j] = shape[j];
@@ -74,7 +73,7 @@ inline std::pair<ShapeVector, int64_t> CheckShapesValid(const ShapeArray &shapes
           diff_idx = new_diff_idx;
         } else if (diff_idx != new_diff_idx) {
           MS_EXCEPTION(ValueError) << "For primitive[" << primitive->name()
-                                   << "] only support one dim different, bug got more than one(shapes is " << shapes
+                                   << "] only support one axis different, bug got more than one(shapes is " << shapes
                                    << ")!";
         }
       }
@@ -129,8 +128,9 @@ inline ShapeVector CheckAndCalOutputShapeInTupleCase(const ShapeArray &shapes, s
     axis = NormalizeAxis(axis_temp, output_shape.size());
     if (MS_UNLIKELY(diff_idx != kUnknownDiffIdx && axis != LongToSize(diff_idx))) {
       MS_EXCEPTION(ValueError) << "For primitive[" << primitive->name()
-                               << "], the only different dim should be same with the axis, but got "
-                               << LongToSize(diff_idx) << " and " << axis << "!";
+                               << "], the only different axis should be same with the axis, but got different axis "
+                               << LongToSize(diff_idx) << " when axis is " << axis << "(all input shapes are " << shapes
+                               << ")!";
     }
   }
 
@@ -198,6 +198,7 @@ TypePtr ConcatFuncImpl::InferType(const PrimitivePtr &primitive, const std::vect
     (void)types.emplace(element, elements[i]);
   }
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types_with_complex_and_bool, primitive->name());
+  MS_EXCEPTION_IF_NULL(elements[0]);
   return elements[0]->Clone();
 }
 }  // namespace mindspore::ops

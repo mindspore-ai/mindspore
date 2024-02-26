@@ -354,4 +354,16 @@ CUST_INPUT_MAP(Coalesce) = {{1, INPUT_DESC(x_indices)}, {2, INPUT_DESC(x_values)
 CUST_ATTR_MAP(Coalesce) = EMPTY_ATTR_MAP;
 CUST_OUTPUT_MAP(Coalesce) = {{0, OUTPUT_DESC(y_indices)}, {1, OUTPUT_DESC(y_values)}, {2, OUTPUT_DESC(y_shape)}};
 REG_ADPT_DESC(Coalesce, prim::kPrimCoalesce->name(), CUST_ADPT_DESC(Coalesce))
+
+// Padding
+CUST_INPUT_MAP(Padding) = {{1, INPUT_DESC(x)}};
+CUST_ATTR_MAP(Padding) = {{"pad_dim_size", ATTR_DESC(pad_dim_size, AnyTraits<int64_t>())}};
+CUST_OUTPUT_MAP(Padding) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Padding, prim::kPrimPadding->name(), CUST_ADPT_DESC(Padding));
+
+// MatrixBandPart
+INPUT_MAP(MatrixBandPart) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(num_lower)}, {3, INPUT_DESC(num_upper)}};
+ATTR_MAP(MatrixBandPart) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(MatrixBandPart) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(MatrixBandPart, prim::kPrimMatrixBandPart->name(), ADPT_DESC(MatrixBandPart));
 }  // namespace mindspore::transform

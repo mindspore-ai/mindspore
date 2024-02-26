@@ -77,7 +77,6 @@ bool KVCacheMgrConcatFusion::Run(const FuncGraphPtr &func_graph) {
       func_graph->set_manager(manager);
     }
     MS_CHECK_TRUE_RET(manager != nullptr, false);
-    kv_cache_cnode->set_input(kInputIndexThree, first_concat_cnode);
 
     (void)manager->Replace(concat_cnode, first_concat_cnode);
   }

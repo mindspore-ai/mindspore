@@ -219,11 +219,14 @@ class AscendMsprofDataGeneratorOld:
 class AscendMsprofDataGenerator:
     """Generate ascend data from files."""
 
+    _mindspore_model_id = 4294967295
+
     def __init__(self, source_path):
         self.source_path = source_path
         self.op_summary = None
         self.op_statistic = None
         self.steptrace = []
+        self.steptrace_model = []
 
         self.op_summary_type = [
             ('Model ID', int),
@@ -280,7 +283,11 @@ class AscendMsprofDataGenerator:
 
         self._read_steptrace()
 
-        return self.op_summary, self.op_statistic, self.steptrace
+        self.steptrace_model = self.steptrace[self.steptrace['Model ID'] == self._mindspore_model_id]
+
+        self.steptrace = self.steptrace[self.steptrace['Model ID'] != self._mindspore_model_id]
+
+        return self.op_summary, self.op_statistic, self.steptrace, self.steptrace_model
 
     def _read_op_summary(self):
         """read op summary to memory"""

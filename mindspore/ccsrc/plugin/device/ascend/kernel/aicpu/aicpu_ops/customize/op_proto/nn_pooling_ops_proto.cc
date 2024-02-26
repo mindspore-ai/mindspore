@@ -5,6 +5,9 @@
  */
 
 #include "op_proto/inc/nn_pooling_ops.h"
+#include <utility>
+#include <vector>
+#include <unordered_map>
 #include "custom_op_proto/cust_nn_ops.h"
 #include "register/op_impl_registry.h"
 #include "utils/util.h"
@@ -601,4 +604,597 @@ IMPLEMT_INFERFUNC(NthElement, NthElementInfer) {
 
 INFER_FUNC_REG(NthElement, NthElementInfer);
 //-------------------NthElement END---------------------
+
+//-------------------MaxUnpool2d---------------------
+graphStatus MaxUnpool2dVerify(const Operator &op, std::vector<int64_t> &ksize, std::vector<int64_t> &strides,
+                              std::vector<int64_t> &pads, std::string &format) {
+  RETURN_IF_FAILURE(op.GetAttr("ksize", ksize));
+  RETURN_IF_FAILURE(op.GetAttr("strides", strides));
+  RETURN_IF_FAILURE(op.GetAttr("pads", pads));
+  RETURN_IF_FAILURE(op.GetAttr("data_format", format));
+  if (format != "NCHW" && format != "NHWC") {
+    OP_LOGE(TbeGetName(op).c_str(), "Format '%s' not supported.", format.c_str());
+    return GRAPH_FAILED;
+  }
+  std::unordered_map<std::string, std::vector<int64_t> &> m{
+    {"ksize", ksize},
+    {"strides", pads},
+    {"pads", pads},
+  };
+  for (const auto &[name, vec] : m) {
+    if (vec.size() != 4) {
+      OP_LOGE(TbeGetName(op).c_str(), "'%s' has invalid size [%zu]. Should be 4.", name.c_str(), vec.size());
+      return GRAPH_FAILED;
+    }
+  }
+  return GRAPH_SUCCESS;
+}
+
+CUST_IMPLEMT_INFERFUNC(MaxUnpool2D, MaxUnpool2DInfer) {
+  std::vector<int64_t> ksize;
+  std::vector<int64_t> strides;
+  std::vector<int64_t> pads;
+  std::vector<int64_t> output_shape;
+  std::string format;
+  RETURN_IF_FAILURE(MaxUnpool2dVerify(op, ksize, strides, pads, format));
+
+  auto x_desc = op.GetInputDescByName("x");
+  auto x_shape = x_desc.GetShape().GetDims();
+  auto y_desc = op.GetOutputDescByName("y");
+  y_desc.SetDataType(x_desc.GetDataType());
+
+  constexpr size_t kOutputRank = 4;
+  if (op.GetAttr("output_shape", output_shape) == GRAPH_SUCCESS && output_shape.size() == kOutputRank) {
+    y_desc.SetShape(Shape(output_shape));
+  } else if (!IsUnknown(x_shape)) {
+    auto [h_idx, w_idx] = format == "NCHW" ? std::make_pair(2, 3) : std::make_pair(1, 2);
+    auto &h = x_shape[h_idx];
+    auto &w = x_shape[w_idx];
+    h = (h - 1) * strides[h_idx] - 2 * pads[h_idx] + ksize[h_idx];
+    w = (w - 1) * strides[w_idx] - 2 * pads[w_idx] + ksize[w_idx];
+    y_desc.SetShape(Shape(x_shape));
+  } else {
+    y_desc.SetShape(Shape({UNKNOWN_DIM, UNKNOWN_DIM, UNKNOWN_DIM, UNKNOWN_DIM}));
+  }
+  return op.UpdateOutputDesc("y", y_desc);
+}
+
+CUST_INFER_FUNC_REG(MaxUnpool2D, MaxUnpool2DInfer);
+//-------------------MaxUnpool2D END---------------------
+
+//-------------------MaxUnpool3D---------------------
+graphStatus MaxUnpool3dVerify(const Operator &op, std::vector<int64_t> &ksize, std::vector<int64_t> &strides,
+                              std::vector<int64_t> &pads, std::string &format) {
+  RETURN_IF_FAILURE(op.GetAttr("ksize", ksize));
+  RETURN_IF_FAILURE(op.GetAttr("strides", strides));
+  RETURN_IF_FAILURE(op.GetAttr("pads", pads));
+  RETURN_IF_FAILURE(op.GetAttr("data_format", format));
+  if (format != "NCDHW" && format != "NDHWC") {
+    OP_LOGE(TbeGetName(op).c_str(), "Format '%s' not supported.", format.c_str());
+    return GRAPH_FAILED;
+  }
+  std::unordered_map<std::string, std::vector<int64_t> &> m{
+    {"ksize", ksize},
+    {"strides", pads},
+    {"pads", pads},
+  };
+  for (const auto &[name, vec] : m) {
+    if (vec.size() != 5) {
+      OP_LOGE(TbeGetName(op).c_str(), "'%s' has invalid size [%zu]. Should be 1 or 3.", name.c_str(), vec.size());
+      return GRAPH_FAILED;
+    }
+  }
+  return GRAPH_SUCCESS;
+}
+
+CUST_IMPLEMT_INFERFUNC(MaxUnpool3D, MaxUnpool3DInfer) {
+  std::vector<int64_t> ksize;
+  std::vector<int64_t> strides;
+  std::vector<int64_t> pads;
+  std::vector<int64_t> output_shape;
+  std::string format;
+  RETURN_IF_FAILURE(MaxUnpool3dVerify(op, ksize, strides, pads, format));
+
+  auto x_desc = op.GetInputDescByName("x");
+  auto x_shape = x_desc.GetShape().GetDims();
+  auto y_desc = op.GetOutputDescByName("y");
+  y_desc.SetDataType(x_desc.GetDataType());
+
+  constexpr size_t kOutputRank = 5;
+  if (op.GetAttr("output_shape", output_shape) == GRAPH_SUCCESS && output_shape.size() == kOutputRank) {
+    y_desc.SetShape(Shape(output_shape));
+  } else if (!IsUnknown(x_shape)) {
+    auto [d_idx, h_idx, w_idx] = format == "NCDHW" ? std::make_tuple(2, 3, 4) : std::make_tuple(1, 2, 3);
+    auto &d = x_shape[d_idx];
+    auto &h = x_shape[h_idx];
+    auto &w = x_shape[w_idx];
+    d = (d - 1) * strides[d_idx] - 2 * pads[d_idx] + ksize[d_idx];
+    h = (h - 1) * strides[h_idx] - 2 * pads[h_idx] + ksize[h_idx];
+    w = (w - 1) * strides[w_idx] - 2 * pads[w_idx] + ksize[w_idx];
+    y_desc.SetShape(Shape(x_shape));
+  } else {
+    y_desc.SetShape(Shape({UNKNOWN_DIM, UNKNOWN_DIM, UNKNOWN_DIM, UNKNOWN_DIM, UNKNOWN_DIM}));
+  }
+  return op.UpdateOutputDesc("y", y_desc);
+}
+
+CUST_INFER_FUNC_REG(MaxUnpool3D, MaxUnpool3DInfer);
+//-------------------MaxUnpool3D END---------------------
+
+// -----------------FractionalMaxPool3DWithFixedKsize start----------------
+IMPLEMT_COMMON_INFERFUNC(FractionalMaxPool3DWithFixedKsizeInferShape) {
+  const size_t DIM_SIZE1 = 1;
+  const size_t DIM_SIZE3 = 3;
+  const size_t DIM_SIZE4 = 4;
+  const size_t DIM_SIZE5 = 5;
+  TensorDesc input_desc = op.GetInputDescByName("x");
+  TensorDesc random_samples_desc = op.GetInputDescByName("random_samples");
+  TensorDesc out_desc = op.GetOutputDescByName("y");
+  TensorDesc argmax_desc = op.GetOutputDescByName("argmax");
+  Format input_format = input_desc.GetFormat();
+  DataType input_type = input_desc.GetDataType();
+  DataType argmax_dtype = argmax_desc.GetDataType();
+
+  std::vector<int64_t> input_shape = input_desc.GetShape().GetDims();
+  auto input_dims = input_shape.size();
+  if ((input_dims != DIM_SIZE4) && (input_dims != DIM_SIZE5)) {
+    OP_LOGE(TbeGetName(op).c_str(), "length of x should be 4 or 5!");
+    return GRAPH_FAILED;
+  }
+  std::vector<int64_t> outputshapeList;
+  if (GRAPH_SUCCESS != op.GetAttr("output_shape", outputshapeList)) {
+    std::string err_msg = GetInputInvalidErrMsg("output_shape");
+    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op).c_str(), err_msg);
+    return GRAPH_FAILED;
+  }
+
+  if ((outputshapeList.size() != DIM_SIZE1) && (outputshapeList.size() != DIM_SIZE3)) {
+    string excepted_size = ConcatString(DIM_SIZE1, " or ", DIM_SIZE3);
+    std::string err_msg = GetAttrSizeErrMsg("outputshapeList", ConcatString(outputshapeList.size()), excepted_size);
+    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op).c_str(), err_msg);
+    return GRAPH_FAILED;
+  }
+  if (outputshapeList.size() == DIM_SIZE1) {
+    for (int64_t i = 0; i < 3; i++) {
+      outputshapeList[i] = outputshapeList[0];
+    }
+  }
+
+  std::vector<int64_t> ksizeList;
+  if (GRAPH_SUCCESS != op.GetAttr("ksize", ksizeList)) {
+    std::string err_msg = GetInputInvalidErrMsg("ksize");
+    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op).c_str(), err_msg);
+    return GRAPH_FAILED;
+  }
+
+  if ((ksizeList.size() != DIM_SIZE1) && (ksizeList.size() != DIM_SIZE3)) {
+    string excepted_size = ConcatString(DIM_SIZE1, " or ", DIM_SIZE3);
+    std::string err_msg = GetAttrSizeErrMsg("ksizeList", ConcatString(ksizeList.size()), excepted_size);
+    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op).c_str(), err_msg);
+    return GRAPH_FAILED;
+  }
+
+  if (ksizeList.size() == DIM_SIZE1) {
+    for (int64_t i = 0; i < 3; i++) {
+      ksizeList[i] = ksizeList[0];
+    }
+  }
+
+  std::string data_format;
+  if (GRAPH_SUCCESS != op.GetAttr("data_format", data_format)) {
+    std::string err_msg = GetInputInvalidErrMsg("data_format");
+    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op).c_str(), err_msg);
+    return GRAPH_FAILED;
+  }
+  if (data_format != "NDHWC" && data_format != "NCDHW") {
+    string expected_format_list = ConcatString("NDHWC, NCDHW");
+    std::string err_msg = GetInputFormatNotSupportErrMsg("data_format", expected_format_list, data_format);
+    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op).c_str(), err_msg);
+    return GRAPH_FAILED;
+  }
+
+  // set data type
+  out_desc.SetDataType(input_type);
+  if (op.UpdateOutputDesc("y", out_desc) != GRAPH_SUCCESS) {
+    AICPU_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op).c_str(), std::string("update output[y] desc failed."));
+    return GRAPH_FAILED;
+  }
+
+  if (argmax_dtype == DT_UNDEFINED) {
+    argmax_desc.SetDataType(DT_INT64);
+  }
+  argmax_desc.SetDataType(argmax_dtype);
+  if (op.UpdateOutputDesc("argmax", argmax_desc) != GRAPH_SUCCESS) {
+    AICPU_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op).c_str(), std::string("update output[argmax] desc failed."));
+    return GRAPH_FAILED;
+  }
+
+  // set  shape
+  if ((input_format == FORMAT_NCDHW && data_format != "NCDHW") ||
+      (input_format == FORMAT_NDHWC && data_format != "NDHWC")) {
+    string expected_format = ConcatString("Format of input must be same with data_format! input_format:", input_format,
+                                          ", data_format:", data_format);
+    std::string err_msg = OtherErrMsg(expected_format);
+    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op).c_str(), err_msg);
+    return GRAPH_FAILED;
+  }
+  std::vector<int64_t> output_size;
+  int64_t n_dim = 0;
+  int64_t c_dim = 0;
+  int64_t outputT = outputshapeList[0];
+  int64_t outputH = outputshapeList[1];
+  int64_t outputW = outputshapeList[2];
+
+  if (input_dims == 4) {
+    if (data_format == "NCDHW") {
+      c_dim = input_desc.GetShape().GetDim(0);
+      output_size.push_back(c_dim);
+      output_size.push_back(outputT);
+      output_size.push_back(outputH);
+      output_size.push_back(outputW);
+    } else {
+      c_dim = input_desc.GetShape().GetDim(3);
+      output_size.push_back(outputT);
+      output_size.push_back(outputH);
+      output_size.push_back(outputW);
+      output_size.push_back(c_dim);
+    }
+  } else {
+    if (data_format == "NCDHW") {
+      n_dim = input_desc.GetShape().GetDim(0);
+      c_dim = input_desc.GetShape().GetDim(1);
+      output_size.push_back(n_dim);
+      output_size.push_back(c_dim);
+      output_size.push_back(outputT);
+      output_size.push_back(outputH);
+      output_size.push_back(outputW);
+    } else {
+      n_dim = input_desc.GetShape().GetDim(0);
+      c_dim = input_desc.GetShape().GetDim(4);
+      output_size.push_back(n_dim);
+      output_size.push_back(outputT);
+      output_size.push_back(outputH);
+      output_size.push_back(outputW);
+      output_size.push_back(c_dim);
+    }
+  }
+  out_desc.SetFormat(input_format);
+  argmax_desc.SetFormat(ge::FORMAT_ND);
+
+  out_desc.SetShape(ge::Shape(output_size));
+  if (op.UpdateOutputDesc("y", out_desc) != GRAPH_SUCCESS) {
+    OP_LOGE(TbeGetName(op).c_str(), "Fail to update output y!");
+    return GRAPH_FAILED;
+  }
+  argmax_desc.SetShape(ge::Shape(output_size));
+  if (op.UpdateOutputDesc("argmax", argmax_desc) != GRAPH_SUCCESS) {
+    OP_LOGE(TbeGetName(op).c_str(), "Fail to update output argmax!");
+    return GRAPH_FAILED;
+  }
+
+  return GRAPH_SUCCESS;
+}
+
+CUST_IMPLEMT_VERIFIER(FractionalMaxPool3DWithFixedKsize, FractionalMaxPool3DWithFixedKsizeVerify) {
+  return GRAPH_SUCCESS;
+}
+
+CUST_COMMON_INFER_FUNC_REG(FractionalMaxPool3DWithFixedKsize, FractionalMaxPool3DWithFixedKsizeInferShape);
+CUST_VERIFY_FUNC_REG(FractionalMaxPool3DWithFixedKsize, FractionalMaxPool3DWithFixedKsizeVerify);
+// -----------------FractionalMaxPool3DWithFixedKsize end----------------
+
+// -----------------FractionalMaxPool3DGradWithFixedKsize start----------------
+IMPLEMT_COMMON_INFERFUNC(FractionalMaxPool3DGradWithFixedKsizeInferShape) {
+  const size_t DIM_SIZE4 = 4;
+  const size_t DIM_SIZE5 = 5;
+  TensorDesc origin_input_desc = op.GetInputDescByName("origin_input");
+  TensorDesc out_backprop_desc = op.GetInputDescByName("out_backprop");
+  TensorDesc argmax_desc = op.GetInputDescByName("argmax");
+  TensorDesc out_desc = op.GetOutputDescByName("y");
+  Format input_format = origin_input_desc.GetFormat();
+  DataType out_backprop_type = out_backprop_desc.GetDataType();
+
+  std::vector<int64_t> origin_input_shape = origin_input_desc.GetShape().GetDims();
+  std::vector<int64_t> out_backprop_shape = out_backprop_desc.GetShape().GetDims();
+  std::vector<int64_t> argmax_shape = argmax_desc.GetShape().GetDims();
+  auto origin_input_dims = origin_input_shape.size();
+  auto out_backprop_dims = out_backprop_shape.size();
+  auto argmax_dims = argmax_shape.size();
+
+  if ((origin_input_dims != DIM_SIZE4) && (origin_input_dims != DIM_SIZE5)) {
+    OP_LOGE(TbeGetName(op).c_str(), "length of origin_input should be 4 or 5!");
+    return GRAPH_FAILED;
+  }
+  if ((out_backprop_dims != DIM_SIZE4) && (out_backprop_dims != DIM_SIZE5)) {
+    OP_LOGE(TbeGetName(op).c_str(), "length of out_backprop should be 4 or 5!");
+    return GRAPH_FAILED;
+  }
+  if ((argmax_dims != DIM_SIZE4) && (argmax_dims != DIM_SIZE5)) {
+    OP_LOGE(TbeGetName(op).c_str(), "length of argmax should be 4 or 5!");
+    return GRAPH_FAILED;
+  }
+
+  std::string data_format;
+  if (GRAPH_SUCCESS != op.GetAttr("data_format", data_format)) {
+    std::string err_msg = GetInputInvalidErrMsg("data_format");
+    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op).c_str(), err_msg);
+    return GRAPH_FAILED;
+  }
+  if (data_format != "NDHWC" && data_format != "NCDHW") {
+    string expected_format_list = ConcatString("NDHWC, NCDHW");
+    std::string err_msg = GetInputFormatNotSupportErrMsg("data_format", expected_format_list, data_format);
+    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op).c_str(), err_msg);
+    return GRAPH_FAILED;
+  }
+
+  // set data type
+  out_desc.SetDataType(out_backprop_type);
+  if (op.UpdateOutputDesc("y", out_desc) != GRAPH_SUCCESS) {
+    AICPU_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op).c_str(), std::string("update output[y] desc failed."));
+    return GRAPH_FAILED;
+  }
+
+  // set  shape
+  if ((input_format == FORMAT_NCDHW && data_format != "NCDHW") ||
+      (input_format == FORMAT_NDHWC && data_format != "NDHWC")) {
+    string expected_format = ConcatString("Format of input must be same with data_format! input_format:", input_format,
+                                          ", data_format:", data_format);
+    std::string err_msg = OtherErrMsg(expected_format);
+    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op).c_str(), err_msg);
+    return GRAPH_FAILED;
+  }
+  std::vector<int64_t> output_size;
+  int64_t n_dim = 0;
+  int64_t c_dim = 0;
+  int64_t d_dim = 0;
+  int64_t h_dim = 0;
+  int64_t w_dim = 0;
+
+  if (origin_input_dims == 4) {
+    if (data_format == "NCDHW") {
+      c_dim = origin_input_desc.GetShape().GetDim(0);
+      d_dim = origin_input_desc.GetShape().GetDim(1);
+      h_dim = origin_input_desc.GetShape().GetDim(2);
+      w_dim = origin_input_desc.GetShape().GetDim(3);
+      output_size.push_back(c_dim);
+      output_size.push_back(d_dim);
+      output_size.push_back(h_dim);
+      output_size.push_back(w_dim);
+    } else {
+      d_dim = origin_input_desc.GetShape().GetDim(0);
+      h_dim = origin_input_desc.GetShape().GetDim(1);
+      w_dim = origin_input_desc.GetShape().GetDim(2);
+      c_dim = origin_input_desc.GetShape().GetDim(3);
+      output_size.push_back(d_dim);
+      output_size.push_back(h_dim);
+      output_size.push_back(w_dim);
+      output_size.push_back(c_dim);
+    }
+  } else {
+    if (data_format == "NCDHW") {
+      n_dim = origin_input_desc.GetShape().GetDim(0);
+      c_dim = origin_input_desc.GetShape().GetDim(1);
+      d_dim = origin_input_desc.GetShape().GetDim(2);
+      h_dim = origin_input_desc.GetShape().GetDim(3);
+      w_dim = origin_input_desc.GetShape().GetDim(4);
+      output_size.push_back(n_dim);
+      output_size.push_back(c_dim);
+      output_size.push_back(d_dim);
+      output_size.push_back(h_dim);
+      output_size.push_back(w_dim);
+    } else {
+      n_dim = origin_input_desc.GetShape().GetDim(0);
+      d_dim = origin_input_desc.GetShape().GetDim(1);
+      h_dim = origin_input_desc.GetShape().GetDim(2);
+      w_dim = origin_input_desc.GetShape().GetDim(3);
+      c_dim = origin_input_desc.GetShape().GetDim(4);
+      output_size.push_back(n_dim);
+      output_size.push_back(d_dim);
+      output_size.push_back(h_dim);
+      output_size.push_back(w_dim);
+      output_size.push_back(c_dim);
+    }
+  }
+  out_desc.SetShape(ge::Shape(output_size));
+  out_desc.SetFormat(input_format);
+
+  if (op.UpdateOutputDesc("y", out_desc) != GRAPH_SUCCESS) {
+    OP_LOGE(TbeGetName(op).c_str(), "Fail to update output y!");
+    return GRAPH_FAILED;
+  }
+  return GRAPH_SUCCESS;
+}
+
+CUST_IMPLEMT_VERIFIER(FractionalMaxPool3DGradWithFixedKsize, FractionalMaxPool3DGradWithFixedKsizeVerify) {
+  return GRAPH_SUCCESS;
+}
+
+CUST_COMMON_INFER_FUNC_REG(FractionalMaxPool3DGradWithFixedKsize, FractionalMaxPool3DGradWithFixedKsizeInferShape);
+CUST_VERIFY_FUNC_REG(FractionalMaxPool3DGradWithFixedKsize, FractionalMaxPool3DGradWithFixedKsizeVerify);
+// -----------------FractionalMaxPool3DGradWithFixedKsize end----------------
+
+static bool CheckListEmpty(const std::string &opName, const std::vector<int64_t> &list, const std::string &attrName) {
+  if (list.empty()) {
+    OP_LOGE(opName.c_str(), "the %s is empty !", attrName.c_str());
+    return false;
+  }
+  return true;
+}
+
+static std::vector<int64_t> GetAttrValue(const ge::Operator &op, const std::string &key_name) {
+  std::vector<int64_t> list;
+  AscendString op_name;
+  CHECK(op.GetName(op_name) != GRAPH_SUCCESS, OP_LOGE("", "failed to get op_name"), return list);
+  if (ge::GRAPH_SUCCESS != op.GetAttr(key_name.c_str(), list)) {
+    CUBE_INNER_ERR_REPORT(op_name.GetString(), "GetOpAttr ConstValue failed!");
+  }
+
+  return list;
+}
+// ---------------------MaxUnpool2DGrad---------------------
+CUST_IMPLEMT_VERIFIER(MaxUnpool2DGrad, MaxUnpool2DGradVerify) {
+  if (!CheckTwoInputDtypeSame(op, "x", "grads")) {
+    return GRAPH_FAILED;
+  }
+  std::string data_format;
+  if (ge::GRAPH_SUCCESS == op.GetAttr("data_format", data_format)) {
+    if (data_format != "NCHW" && data_format != "NHWC") {
+      string expected_format_list = ConcatString("NCHW, NHWC");
+      std::string err_msg = GetInputFormatNotSupportErrMsg("data_format", expected_format_list, data_format);
+      VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op).c_str(), err_msg);
+      return GRAPH_FAILED;
+    }
+  }
+  std::vector<int64_t> ksize;
+  ksize = GetAttrValue(op, "ksize");
+  std::vector<int64_t> strides;
+  strides = GetAttrValue(op, "strides");
+  std::vector<int64_t> pads;
+  pads = GetAttrValue(op, "pads");
+
+  if (!CheckListEmpty(TbeGetName(op).c_str(), ksize, "ksize") ||
+      !CheckListEmpty(TbeGetName(op).c_str(), strides, "strides") ||
+      !CheckListEmpty(TbeGetName(op).c_str(), pads, "pads")) {
+    std::string err_msg = OtherErrMsg("The ksize or strides or pads is empty!");
+    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op).c_str(), err_msg);
+    return GRAPH_FAILED;
+  }
+  if (ksize.size() != 4 || strides.size() != 4 || pads.size() != 4) {
+    string excepted_size = ConcatString("4");
+    std::string err_msg =
+      GetAttrSizeErrMsg("ksize.size or strides.size or pads.size", std::to_string(ksize.size()), excepted_size);
+    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op).c_str(), err_msg);
+    return GRAPH_FAILED;
+  }
+  if (data_format == "NCHW" &&
+      (ksize[0] != 1 || ksize[1] != 1 || strides[0] != 1 || strides[1] != 1 || pads[0] != 1 || pads[1] != 1)) {
+    string wrong_value =
+      ConcatString(ksize[0], " and ", ksize[1], "and", strides[0], "and", strides[1], "and", pads[0], "and", pads[1]);
+    std::string err_msg = GetAttrValueErrMsg(
+      "ksize[0] and ksize[1] and strides[0] and strides[1] and pads[0] and pads[1]", wrong_value, ConcatString("1"));
+    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op).c_str(), err_msg);
+    return GRAPH_FAILED;
+  }
+  if (data_format == "NHWC" &&
+      (ksize[0] != 1 || ksize[3] != 1 || strides[0] != 1 || strides[3] != 1 || pads[0] != 1 || pads[3] != 1)) {
+    string wrong_value =
+      ConcatString(ksize[0], " and ", ksize[3], "and", strides[0], "and", strides[3], "and", pads[0], "and", pads[3]);
+    std::string err_msg = GetAttrValueErrMsg(
+      "ksize[0] and ksize[3] and strides[0] and strides[3] and pads[0] and pads[3]", wrong_value, ConcatString("1"));
+    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op).c_str(), err_msg);
+    return GRAPH_FAILED;
+  }
+  return GRAPH_SUCCESS;
+}
+
+CUST_IMPLEMT_INFERFUNC(MaxUnpool2DGrad, MaxUnpool2DGradInferShape) {
+  auto input_tensor_desc = op.GetInputDescByName("x");
+  auto input_shape = input_tensor_desc.GetShape();
+  std::string data_format;
+  if (ge::GRAPH_SUCCESS == op.GetAttr("data_format", data_format)) {
+    if (data_format != "NCHW" && data_format != "NHWC") {
+      string expected_format_list = ConcatString("NCHW, NHWC");
+      std::string err_msg = GetInputFormatNotSupportErrMsg("data_format", expected_format_list, data_format);
+      VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op).c_str(), err_msg);
+      return GRAPH_FAILED;
+    }
+  }
+  TensorDesc td = op.GetOutputDescByName("y");
+  DataType input_dtype = input_tensor_desc.GetDataType();
+  td.SetShape(input_shape);
+  td.SetDataType(input_dtype);
+  if (op.UpdateOutputDesc("y", td) != GRAPH_SUCCESS) {
+    OP_LOGE(TbeGetName(op).c_str(), "UpdateOutputDesc run failed. Check whether the names of outputs are matched.");
+    return GRAPH_FAILED;
+  }
+  return GRAPH_SUCCESS;
+}
+
+CUST_INFER_FUNC_REG(MaxUnpool2DGrad, MaxUnpool2DGradInferShape);
+CUST_VERIFY_FUNC_REG(MaxUnpool2DGrad, MaxUnpool2DGradVerify);
+// ---------------------MaxUnpool2DGrad---------------------
+
+// ---------------------MaxUnpool3DGrad---------------------
+CUST_IMPLEMT_VERIFIER(MaxUnpool3DGrad, MaxUnpool3DGradVerify) {
+  if (!CheckTwoInputDtypeSame(op, "x", "grads")) {
+    return GRAPH_FAILED;
+  }
+  std::string data_format;
+  if (ge::GRAPH_SUCCESS == op.GetAttr("data_format", data_format)) {
+    if (data_format != "NCDHW" && data_format != "NDHWC") {
+      string expected_format_list = ConcatString("NCDHW, NDHWC");
+      std::string err_msg = GetInputFormatNotSupportErrMsg("data_format", expected_format_list, data_format);
+      VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op).c_str(), err_msg);
+      return GRAPH_FAILED;
+    }
+  }
+  std::vector<int64_t> ksize;
+  ksize = GetAttrValue(op, "ksize");
+  std::vector<int64_t> strides;
+  strides = GetAttrValue(op, "strides");
+  std::vector<int64_t> pads;
+  pads = GetAttrValue(op, "pads");
+
+  if (!CheckListEmpty(TbeGetName(op).c_str(), ksize, "ksize") ||
+      !CheckListEmpty(TbeGetName(op).c_str(), strides, "strides") ||
+      !CheckListEmpty(TbeGetName(op).c_str(), pads, "pads")) {
+    std::string err_msg = OtherErrMsg("The ksize or strides or pads is empty!");
+    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op).c_str(), err_msg);
+    return GRAPH_FAILED;
+  }
+  if (ksize.size() != 5 || strides.size() != 5 || pads.size() != 5) {
+    string excepted_size = ConcatString("5");
+    std::string err_msg =
+      GetAttrSizeErrMsg("ksize.size or strides.size or pads.size", std::to_string(ksize.size()), excepted_size);
+    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op).c_str(), err_msg);
+    return GRAPH_FAILED;
+  }
+  if (data_format == "NCDHW" &&
+      (ksize[0] != 1 || ksize[1] != 1 || strides[0] != 1 || strides[1] != 1 || pads[0] != 1 || pads[1] != 1)) {
+    string wrong_value =
+      ConcatString(ksize[0], " and ", ksize[1], "and", strides[0], "and", strides[1], "and", pads[0], "and", pads[1]);
+    std::string err_msg = GetAttrValueErrMsg(
+      "ksize[0] and ksize[1] and strides[0] and strides[1] and pads[0] and pads[1]", wrong_value, ConcatString("1"));
+    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op).c_str(), err_msg);
+    return GRAPH_FAILED;
+  }
+  if (data_format == "NDHWC" &&
+      (ksize[0] != 1 || ksize[4] != 1 || strides[0] != 1 || strides[4] != 1 || pads[0] != 1 || pads[4] != 1)) {
+    string wrong_value =
+      ConcatString(ksize[0], " and ", ksize[4], "and", strides[0], "and", strides[4], "and", pads[0], "and", pads[4]);
+    std::string err_msg = GetAttrValueErrMsg(
+      "ksize[0] and ksize[4] and strides[0] and strides[4] and pads[0] and pads[4]", wrong_value, ConcatString("1"));
+    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op).c_str(), err_msg);
+    return GRAPH_FAILED;
+  }
+  return GRAPH_SUCCESS;
+}
+
+CUST_IMPLEMT_INFERFUNC(MaxUnpool3DGrad, MaxUnpool3DGradInferShape) {
+  auto input_tensor_desc = op.GetInputDescByName("x");
+  auto input_shape = input_tensor_desc.GetShape();
+  std::string data_format;
+  if (ge::GRAPH_SUCCESS == op.GetAttr("data_format", data_format)) {
+    if (data_format != "NCDHW" && data_format != "NDHWC") {
+      string expected_format_list = ConcatString("NCDHW, NDHWC");
+      std::string err_msg = GetInputFormatNotSupportErrMsg("data_format", expected_format_list, data_format);
+      VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op).c_str(), err_msg);
+      return GRAPH_FAILED;
+    }
+  }
+
+  TensorDesc td = op.GetOutputDescByName("y");
+  DataType input_dtype = input_tensor_desc.GetDataType();
+  td.SetShape(input_shape);
+  td.SetDataType(input_dtype);
+  if (op.UpdateOutputDesc("y", td) != GRAPH_SUCCESS) {
+    OP_LOGE(TbeGetName(op).c_str(), "UpdateOutputDesc run failed. Check whether the names of outputs are matched.");
+    return GRAPH_FAILED;
+  }
+  return GRAPH_SUCCESS;
+}
+
+CUST_INFER_FUNC_REG(MaxUnpool3DGrad, MaxUnpool3DGradInferShape);
+CUST_VERIFY_FUNC_REG(MaxUnpool3DGrad, MaxUnpool3DGradVerify);
+// ---------------------MaxUnpool3DGrad---------------------
 }  // namespace ge

@@ -95,7 +95,7 @@ def create_symbol_tree():
                                              [ScopedValue.create_naming_value("x")],
                                              {}, "relu3")
     stree.append_origin_field(relu3_node)
-    node_return = Node.create_output_node(ast_return, ["x"])
+    node_return = Node.create_output_node(ast_return, [ScopedValue.create_naming_value("x")])
     stree.append_origin_field(node_return)
     return stree, bn_node, relu1_node, relu2_node
 
@@ -180,7 +180,7 @@ def test_insert_node_before_input():
                                        [ScopedValue.create_naming_value('x'),
                                         ScopedValue.create_variable_value(input1)], {},
                                        'new_conv')
-    input_node = stree.get_inputs()[0]
+    input_node = stree.get_input_nodes()[0]
     failed = False
     try:
         stree.insert_node(node, input_node, True)
@@ -544,13 +544,72 @@ def test_nodes():
     net = MyNet()
     stree = SymbolTreeApi.create(net)
     assert len(list(stree.nodes())) == 5
-    assert len(list(stree.nodes(True))) == 26
+    assert len(list(stree.nodes(True))) == 44
     sub_tree = SymbolTreeApi(stree.get_node("sub_net").get_handler().symbol_tree)
     assert len(list(sub_tree.nodes())) == 5
-    assert len(list(sub_tree.nodes(True))) == 17
+    assert len(list(sub_tree.nodes(True))) == 29
     sub_sub_tree = SymbolTreeApi(sub_tree.get_node("subsubnet").get_handler().symbol_tree)
     assert len(list(sub_sub_tree.nodes())) == 5
-    assert len(list(sub_sub_tree.nodes(True))) == 8
+    assert len(list(sub_sub_tree.nodes(True))) == 14
+
+
+def external_function(x):
+    x = ops.abs(x)
+    return x
+
+
+class SubSubNet1(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.relu = nn.ReLU()
+        self.abs = ops.Abs()
+
+    def construct(self, x):
+        x = self.relu(x)
+        x = external_function(x)
+        x = self.subsubnet_internal_func(x)
+        return x
+
+    def subsubnet_internal_func(self, x):
+        x = self.abs(x)
+        return x
+
+
+class SubNet1(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.subsubnet = SubSubNet1()
+        self.abs = ops.Abs()
+        self.relu = nn.ReLU()
+
+    def construct(self, x):
+        x = self.relu(x)
+        x = external_function(x)
+        x = self.subnet_internal_func(x)
+        return x
+
+    def subnet_internal_func(self, x):
+        x = self.abs(x)
+        x = self.subsubnet(x)
+        return x
+
+
+class MyNet1(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.relu = nn.ReLU()
+        self.sub_net = SubNet1()
+        self.abs = ops.Abs()
+
+    def construct(self, x):
+        x = self.relu(x)
+        x = external_function(x)
+        x = self.internal_func(x)
+        return x
+
+    def internal_func(self, x):
+        x = self.sub_net(self.abs(x))
+        return x
 
 def test_print_node_tabulate():
     """
@@ -565,38 +624,66 @@ def test_print_node_tabulate():
         def flush(self):
             self.content = ""
 
-    net = MyNet()
+    net = MyNet1()
     stree = SymbolTreeApi.create(net)
     try:
         from tabulate import tabulate # pylint: disable=unused-import,reportMissingModuleSource
     except ImportError:
         # tabulate is not installed
         return
-
     # tabulate is installed
     redirecter = PrintRedirect()
     sys_stdout = sys.stdout
     sys.stdout = redirecter
     stree.print_node_tabulate(False)
     sys.stdout = sys_stdout
-    assert redirecter.content.count("NodeType.Input         input_x        x                          "
-                                    "[]                           [[0, [('relu', 0)]]]") == 1
-    assert redirecter.content.count("NodeType.CallCell      relu           x = self.relu(x)           "
-                                    "[[0, ('input_x', 0)]]        [[0, [('external_func', 0)]]]") == 1
-    assert redirecter.content.count("NodeType.CallFunction  external_func  x = external_func(x)       "
-                                    "[[0, ('relu', 0)]]           [[0, [('internal_func', 0)]]]") == 1
-    assert redirecter.content.count("NodeType.CallFunction  internal_func  x = self.internal_func(x)  "
-                                    "[[0, ('external_func', 0)]]  [[0, [('return_1', 0)]]]") == 1
-    assert redirecter.content.count("NodeType.Output        return_1       return x                   "
-                                    "[[0, ('internal_func', 0)]]  []") == 1
+    assert redirecter.content.count("NodeType.Input         input_x            x                          "
+                                    "[]                               [[0, [('relu', 0)]]]") == 1
+    assert redirecter.content.count("NodeType.CallCell      relu               x = self.relu(x)           "
+                                    "[[0, ('input_x', 0)]]            [[0, [('external_function', 0)]]]") == 1
+    assert redirecter.content.count("NodeType.CallFunction  external_function  x = external_function(x)   "
+                                    "[[0, ('relu', 0)]]               [[0, [('internal_func', 0)]]]") == 1
+    assert redirecter.content.count("NodeType.CallFunction  internal_func      x = self.internal_func(x)  "
+                                    "[[0, ('external_function', 0)]]  [[0, [('return_3', 0)]]]") == 1
+    assert redirecter.content.count("NodeType.Output        return_3           return x                   "
+                                    "[[0, ('internal_func', 0)]]      []") == 1
     redirecter = PrintRedirect()
     sys_stdout = sys.stdout
     sys.stdout = redirecter
     stree.print_node_tabulate(True)
     sys.stdout = sys_stdout
-    assert redirecter.content.count("NodeType.CallFunction  subnet_internal_func  x = self.subnet_internal_func"
-                                    "(x)  [[0, ('external_func', 0)]]         [[0, [('return_1', 0)]]]") == 1
-    assert redirecter.content.count("NodeType.Tree           subsubnet  x = self.subsubnet(x)  [[0, ('abs', 0)]"
-                                    "]        [[0, [('return', 0)]]]") == 1
+    assert redirecter.content.count("NodeType.CallFunction  external_function_1   x = external_function_1(x)        "
+                                    "[[0, ('relu', 0)]]                  [[0, [('subnet_internal_func', 0)]]]") == 1
+    assert redirecter.content.count("NodeType.Tree           subsubnet  x = self.subsubnet(x)  [[0, ('abs', 0)"
+                                    "]]        [[0, [('return_2', 0)]]]")
     assert redirecter.content.count("NodeType.CallFunction  subsubnet_internal_func  x = self.subsubnet_internal_func"
-                                    "(x)  [[0, ('external_func', 0)]]            [[0, [('return_1', 0)]]]") == 1
+                                    "(x)  [[0, ('external_function_2', 0)]]      [[0, [('return_3', 0)]]]") == 1
+
+
+class SubNet2(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.relu = nn.ReLU()
+    def construct(self, x):
+        x = self.relu(x)
+        return x
+class Net2(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.subnet = SubNet2()
+    def construct(self, x):
+        x = self.subnet(x)
+        return x
+
+def test_get_sub_tree():
+    """
+    Feature: Python api get_sub_tree of Node of Rewrite.
+    Description: Call get_sub_tree from Node.
+    Expectation: Success.
+    """
+    net = Net2()
+    stree = SymbolTreeApi.create(net)
+    node = stree.get_node("subnet")
+    substree = node.get_sub_tree()
+    assert isinstance(substree, SymbolTreeApi)
+    assert isinstance(substree.get_handler().get_origin_network(), SubNet2)

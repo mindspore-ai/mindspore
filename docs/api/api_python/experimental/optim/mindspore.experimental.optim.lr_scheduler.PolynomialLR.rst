@@ -9,7 +9,8 @@ mindspore.experimental.optim.lr_scheduler.PolynomialLR
 
     .. math::
         \begin{split}
-        &factor = (\frac{1.0 - \frac{last\_epoch}{total\_iters}}{1.0 - \frac{last\_epoch - 1.0}{total\_iters}})^{power}\\
+        &factor = (\frac{1.0 - \frac{last\_epoch}{total\_iters}}{1.0 - \frac{last\_epoch - 1.0}{total\_iters}})
+        ^{power}\\
         &lr = lr \times factor
         \end{split}
 

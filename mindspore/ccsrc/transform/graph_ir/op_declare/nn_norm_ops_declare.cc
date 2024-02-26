@@ -116,6 +116,23 @@ ATTR_MAP(LayerNormGrad) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(LayerNormGrad) = {{0, OUTPUT_DESC(pd_x)}, {1, OUTPUT_DESC(pd_gamma)}, {2, OUTPUT_DESC(pd_beta)}};
 REG_ADPT_DESC(LayerNormGrad, prim::kPrimLayerNormGrad->name(), ADPT_DESC(LayerNormGrad))
 
+// LayerNormV3
+INPUT_MAP(LayerNormV3) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(gamma)}, {3, INPUT_DESC(beta)}};
+ATTR_MAP(LayerNormV3) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(LayerNormV3) = {{4, ATTR_DESC(begin_norm_axis, AnyTraits<int64_t>())},
+                               {5, ATTR_DESC(begin_params_axis, AnyTraits<int64_t>())},
+                               {6, ATTR_DESC(epsilon, AnyTraits<float>())}};
+
+OUTPUT_MAP(LayerNormV3) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(mean)}, {2, OUTPUT_DESC(rstd)}};
+REG_ADPT_DESC(LayerNormV3, prim::kPrimLayerNormV3->name(), ADPT_DESC(LayerNormV3))
+
+// LayerNormGradV3
+INPUT_MAP(LayerNormGradV3) = {
+  {1, INPUT_DESC(dy)}, {2, INPUT_DESC(x)}, {3, INPUT_DESC(rstd)}, {4, INPUT_DESC(mean)}, {5, INPUT_DESC(gamma)}};
+ATTR_MAP(LayerNormGradV3) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(LayerNormGradV3) = {{0, OUTPUT_DESC(pd_x)}, {1, OUTPUT_DESC(pd_gamma)}, {2, OUTPUT_DESC(pd_beta)}};
+REG_ADPT_DESC(LayerNormGradV3, prim::kPrimLayerNormGradV3->name(), ADPT_DESC(LayerNormGradV3))
+
 // LayerNormGradGrad
 CUST_INPUT_MAP(LayerNormGradGrad) = {{1, INPUT_DESC(x)},
                                      {2, INPUT_DESC(dy)},
@@ -289,6 +306,8 @@ ATTR_MAP(SparseSoftmaxCrossEntropyWithLogits) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(SparseSoftmaxCrossEntropyWithLogits) = {{0, OUTPUT_DESC(loss)}, {1, OUTPUT_DESC(backprop)}};
 REG_ADPT_DESC(SparseSoftmaxCrossEntropyWithLogits, prim::kPrimSparseSoftmaxCrossEntropyWithLogits->name(),
               ADPT_DESC(SparseSoftmaxCrossEntropyWithLogits))
+REG_ADPT_DESC(SparseSoftmaxCrossEntropyWithLogitsV2, prim::kPrimSparseSoftmaxCrossEntropyWithLogitsV2->name(),
+              ADPT_DESC(SparseSoftmaxCrossEntropyWithLogits))
 
 // MultiMarginLossGrad
 CUST_INPUT_MAP(MultiMarginLossGrad) = {
@@ -322,4 +341,18 @@ OUTPUT_MAP(RmsNormGrad) = {
 };
 REG_ADPT_DESC(RmsNormGrad, prim::kPrimRmsNormGrad->name(), ADPT_DESC(RmsNormGrad))
 
+// MultilabelMarginLossGrad
+CUST_INPUT_MAP(MultilabelMarginLossGrad) = {
+  {1, INPUT_DESC(y_grad)}, {2, INPUT_DESC(x)}, {3, INPUT_DESC(target)}, {4, INPUT_DESC(is_target)}};
+CUST_ATTR_MAP(MultilabelMarginLossGrad) = {{"reduction", ATTR_DESC(reduction, AnyTraits<std::string>())}};
+CUST_OUTPUT_MAP(MultilabelMarginLossGrad) = {{0, OUTPUT_DESC(x_grad)}};
+REG_ADPT_DESC(MultilabelMarginLossGrad, prim::kPrimMultilabelMarginLossGrad->name(),
+              CUST_ADPT_DESC(MultilabelMarginLossGrad));
+
+// RNNTLoss
+INPUT_MAP(RNNTLoss) = {
+  {1, INPUT_DESC(acts)}, {2, INPUT_DESC(labels)}, {3, INPUT_DESC(input_lengths)}, {4, INPUT_DESC(label_lengths)}};
+ATTR_MAP(RNNTLoss) = {{"blank_label", ATTR_DESC(blank_label, AnyTraits<int64_t>())}};
+OUTPUT_MAP(RNNTLoss) = {{0, OUTPUT_DESC(costs)}, {1, OUTPUT_DESC(grads)}};
+REG_ADPT_DESC(RNNTLoss, prim::kPrimRNNTLoss->name(), ADPT_DESC(RNNTLoss))
 }  // namespace mindspore::transform

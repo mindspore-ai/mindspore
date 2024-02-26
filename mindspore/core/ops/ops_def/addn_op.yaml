@@ -1,0 +1,11 @@
+#operator addn
+addn:
+    args:
+        x:
+            dtype: tuple[tensor]
+            type_cast: list[tensor]
+    returns:
+        output:
+            dtype: tensor
+    class:
+        name: AddN

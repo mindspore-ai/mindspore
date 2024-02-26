@@ -34,7 +34,8 @@ using std::vector;
 
 namespace mindspore {
 namespace somas {
-constexpr char const *sortingNames[6] = {"size(>), index(<)",
+constexpr char const *sortingNames[7] = {"size(>), index(<)",
+                                         "can_reuse_mem(<), size(>), index(>)",
                                          "size(>), index(>)",
                                          "size(>), constraints(<), index(<)",
                                          "size(>), constraints(<), index(>)",
@@ -48,6 +49,7 @@ enum Status { FAILED, SUCCESS };
 enum AlgorithmType { kManyObjects = 0, kSingleObject, kNumAlgorithmTypes };
 enum SortingType {
   kGreaterSizeSmallerIndex = 0,
+  kSmallerReusePeakMemGreaterSizeSmallerIndex,
 #ifdef SOMAS_DEBUG
   kGreaterSizeGreaterIndex,
   kGreaterSizeSmallerConstraintsSmallerIndex,
@@ -74,8 +76,6 @@ struct BestInfo {
 };
 
 class DynamicBitSet {
-  const size_t bit_width_ = 64;
-
   inline size_t GetIndex(size_t index) const { return index / bit_width_; }
 
   inline uint64_t GetBitMask(size_t index) const {
@@ -84,17 +84,19 @@ class DynamicBitSet {
 
   inline void Reset(uint64_t val) {
     bit_.clear();
-    for (size_t i = 0; i < bit_size_; i++) {
-      bit_.push_back(val);
-    }
+    bit_.assign(bit_size_, val);
   }
 
  public:
+  static constexpr size_t bit_width_ = 64;
   size_t bit_size_;
   std::vector<uint64_t> bit_;
   explicit DynamicBitSet(size_t count) : bit_size_((count + bit_width_ - 1) / bit_width_) { Reset(0x0); }
 
   ~DynamicBitSet() = default;
+
+  DynamicBitSet(const DynamicBitSet &) = default;
+  DynamicBitSet &operator=(const DynamicBitSet &) = default;
 
   void SetBitTrue(size_t index, bool log = false) {
     if (log) {
@@ -138,6 +140,32 @@ class DynamicBitSet {
       (*a).bit_[i] |= (*b).bit_[i];
     }
   }
+
+  friend void And(DynamicBitSet *a, DynamicBitSet *b) {
+    for (size_t i = 0; i < (*a).bit_size_; i++) {
+      (*a).bit_[i] &= (*b).bit_[i];
+    }
+  }
+};
+
+class VectorBitSet {
+ public:
+  explicit VectorBitSet(size_t count) : bit_(count, false), bit_size_(count) {}
+  ~VectorBitSet() = default;
+
+  VectorBitSet(const VectorBitSet &) = default;
+  VectorBitSet &operator=(const VectorBitSet &) = default;
+
+  void SetBitTrue(size_t index) { bit_[index] = true; }
+
+  void SetBitFalse(size_t index) { bit_[index] = false; }
+
+  void SetBit(size_t index, bool value) { bit_[index] = value; }
+
+  bool IsBitTrue(size_t index) const { return bit_[index]; }
+
+  std::vector<bool> bit_;
+  size_t bit_size_;
 };
 
 struct SomasSolverTensorDesc {
@@ -145,7 +173,7 @@ struct SomasSolverTensorDesc {
   size_t size_;
   size_t offset_;
   bool lifelong_;
-  size_t constraints_;
+  size_t can_reuse_peak_mem_;
   using SomasSolverTensorDescPtr = std::shared_ptr<SomasSolverTensorDesc>;
   SomasSolverTensorDescPtr right_;
   SomasSolverTensorDescPtr left_;
@@ -158,17 +186,17 @@ struct SomasSolverTensorDesc {
         size_(size),
         offset_(offset),
         lifelong_(blifelong),
-        constraints_(0),
+        can_reuse_peak_mem_(0),
         right_(nullptr),
         left_(nullptr),
         blocked_(false) {}
 
-  void Update(size_t index, size_t size, size_t offset, bool blifelong, size_t constraints) {
+  void Update(size_t index, size_t size, size_t offset, size_t can_reuse_peak_mem, bool blifelong) {
     index_ = index;
     size_ = size;
     offset_ = offset;
     lifelong_ = blifelong;
-    constraints_ = constraints;
+    can_reuse_peak_mem_ = can_reuse_peak_mem;
   }
 
   friend std::ostream &operator<<(std::ostream &out, const SomasSolverTensorDescPtr n) {
@@ -193,14 +221,15 @@ class SomasSolverPre {
   size_t GetMaxOffset() const { return max_offset_; }
 
   Status Solving(const session::KernelGraph &graph, TensorsDescMap *ptensors,
-                 const std::vector<DynamicBitSet> *pConstraints, const vector<vector<size_t>> &continuous_v,
+                 const std::vector<VectorBitSet> *pConstraints, const vector<vector<size_t>> &continuous_v,
+                 const std::vector<int> &core_list,
                  bool bVerifySolution,  // true -> Check continuous and non overlapping constraints solution
                  bool ball = true,      // true -> run full set of heuristics, false -> run single heuristic specified
                  SortingType sorting = kGreaterSizeSmallerIndex, FittingType fitting = kBest,
                  AlgorithmType algorithm = kManyObjects);
 
   void Log(const session::KernelGraph &graph, const TensorsDescMap &tensors,
-           const std::vector<DynamicBitSet> *pConstraints, const vector<vector<size_t>> &continuous_v) const;
+           const std::vector<VectorBitSet> *pConstraints, const vector<vector<size_t>> &continuous_v) const;
 
   Status CheckTensors(const TensorsDescMap *pTensors, uint32_t index1, uint32_t index2) const;
   Status AddContiguousInfoInMap(const vector<vector<size_t>> &continuous_v, TensorsDescMap *pTensors) const;
@@ -213,7 +242,7 @@ class SomasSolverPre {
                       const vector<vector<size_t>> &continuous_v) const;
   void SolverOutputLog(const session::KernelGraph &graph, const TensorsDescMap &tensors) const;
   vector<TensorsDescMap> CreateTensorsMaps(const TensorsDescMap &tensors, size_t total_sol) const;
-  void TensorRelationLog(const std::vector<DynamicBitSet> *pConstraints, const session::KernelGraph &graph) const;
+  void TensorRelationLog(const std::vector<VectorBitSet> *pConstraints, const session::KernelGraph &graph) const;
 };
 using SomasSolverPrePtr = std::shared_ptr<SomasSolverPre>;
 }  // namespace somas

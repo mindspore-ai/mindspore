@@ -25,7 +25,6 @@
 #include <set>
 #include <vector>
 
-#include "common/util/error_manager/error_manager.h"
 #include "include/backend/kernel_graph.h"
 
 namespace mindspore {
@@ -51,17 +50,13 @@ class ErrorManagerAdapter {
   ~ErrorManagerAdapter() = default;
   static bool Init();
   static std::string GetErrorMessage(bool add_title = false);
-  static std::string GetWarningMessage(bool add_title = false);
-  static void BindToCurrentThread();
 
  private:
   static void MessageHandler(std::ostringstream *oss);
 
  private:
-  static error_message::Context context_;
   static std::mutex initialized_mutex_;
   static bool initialized_;
-  static std::vector<std::string> traceback_;
 };
 
 std::string GetAscendPath();
@@ -91,6 +86,7 @@ struct CallbackThread {
 };
 using CallbackThreadPtr = std::shared_ptr<CallbackThread>;
 
+void InitializeAcl();
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

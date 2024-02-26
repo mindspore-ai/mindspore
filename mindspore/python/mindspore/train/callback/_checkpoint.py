@@ -207,7 +207,7 @@ class CheckpointConfig:
         Get the value of steps to save checkpoint.
 
         Returns:
-            Int, steps to save checkpoint.
+            int, steps to save checkpoint.
         """
         return self._save_checkpoint_steps
 
@@ -216,7 +216,7 @@ class CheckpointConfig:
         """Get the value of _save_checkpoint_seconds.
 
         Returns:
-            Int, seconds to save the checkpoint file.
+            int, seconds to save the checkpoint file.
         """
         return self._save_checkpoint_seconds
 
@@ -226,7 +226,7 @@ class CheckpointConfig:
         Get the value of maximum number of checkpoint files can be saved.
 
         Returns:
-            Int, Maximum number of checkpoint files can be saved.
+            int, Maximum number of checkpoint files can be saved.
         """
         return self._keep_checkpoint_max
 
@@ -246,7 +246,7 @@ class CheckpointConfig:
         Get the value of whether to merge and save the split Tensor in the automatic parallel scenario.
 
         Returns:
-            Bool, whether to merge and save the split Tensor in the automatic parallel scenario.
+            bool, whether to merge and save the split Tensor in the automatic parallel scenario.
         """
         return self._integrated_save
 
@@ -256,7 +256,7 @@ class CheckpointConfig:
         Get the value of whether asynchronous execution saves the checkpoint to a file.
 
         Returns:
-            Bool, whether asynchronous execution saves the checkpoint to a file.
+            bool, whether asynchronous execution saves the checkpoint to a file.
         """
         return self._async_save
 
@@ -296,7 +296,7 @@ class CheckpointConfig:
         Get the value of information dict saved to checkpoint file.
 
         Returns:
-            Dict, the information saved to checkpoint file.
+            dict, the information saved to checkpoint file.
         """
         return self._append_dict
 
@@ -306,7 +306,7 @@ class CheckpointConfig:
         Get the value of whether to save map Parameter incrementally.
 
         Returns:
-            Bool, whether to save map Parameter incrementally.
+            bool, whether to save map Parameter incrementally.
         """
         return self._map_param_inc
 
@@ -315,7 +315,7 @@ class CheckpointConfig:
         Get the policy of checkpoint.
 
         Returns:
-            Dict, the information of checkpoint policy.
+            dict, the information of checkpoint policy.
         """
         checkpoint_policy = {'save_checkpoint_steps': self.save_checkpoint_steps,
                              'save_checkpoint_seconds': self.save_checkpoint_seconds,

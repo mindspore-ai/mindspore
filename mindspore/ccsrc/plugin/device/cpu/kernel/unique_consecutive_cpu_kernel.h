@@ -44,6 +44,10 @@ class UniqueConsecutiveCpuKernelMod : public NativeCpuKernelMod,
 
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
+  bool IsNeedUpdateOutputShapeAndSize() override { return true; }
+  void UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                const std::vector<KernelTensor *> &outputs) override;
+
  private:
   template <typename T1, typename T2>
   bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs, const std::vector<KernelTensor *> &,

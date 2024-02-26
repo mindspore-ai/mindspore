@@ -31,6 +31,17 @@
 #include "utils/log_adapter.h"
 #include "include/common/visible.h"
 
+#ifdef PARALLEL_INFERENCE
+#define BIND_CORE
+#endif
+#ifdef __ANDROID__
+#define BIND_CORE
+#include <sched.h>
+#endif
+#ifdef __linux__
+#define BIND_CORE
+#endif
+
 namespace mindspore {
 namespace common {
 enum Status { FAIL = -1, SUCCESS = 0 };
@@ -53,7 +64,7 @@ class COMMON_EXPORT ThreadPool {
   ThreadPool(const ThreadPool &) = delete;
   ThreadPool &operator=(const ThreadPool &) = delete;
   static ThreadPool &GetInstance();
-  bool SyncRun(const std::vector<Task> &tasks);
+  bool SyncRun(const std::vector<Task> &tasks, const std::vector<int> &core_list = {});
   size_t GetSyncRunThreadNum() const { return max_thread_num_; }
   void ClearThreadPool();
   void ChildAfterFork();
@@ -61,6 +72,13 @@ class COMMON_EXPORT ThreadPool {
  private:
   ThreadPool();
   void SyncRunLoop(const std::shared_ptr<ThreadContext> &context);
+  bool SetCpuAffinity(const std::vector<int> &core_list);
+  bool FreeScheduleThreads(const std::vector<int> &core_list);
+#ifdef _WIN32
+  bool ThreadPool::SetAffinity() const;
+#elif defined(BIND_CORE)
+  bool SetAffinity(const pthread_t &thread_id, cpu_set_t *cpu_set);
+#endif
 
   size_t max_thread_num_{1};
   std::mutex pool_mtx_;

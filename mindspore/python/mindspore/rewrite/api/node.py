@@ -114,8 +114,7 @@ class Node:
     def create_call_function(function: FunctionType, targets: List[Union[ScopedValue, str]],
                              args: List[ScopedValue] = None, kwargs: Dict[str, ScopedValue] = None) -> 'Node':
         """
-        Create a node that corresponds to a function call. The `function` object is saved into network, and used via
-        getting object from `self.` .
+        Create a node that corresponds to a function call.
 
         Args:
             function (FunctionType): The function to be called.
@@ -153,7 +152,7 @@ class Node:
             >>> print(new_node.get_node_type())
             NodeType.CallFunction
         """
-        Validator.check_value_type("function", function, [FunctionType, type], "create_call_function")
+        Validator.check_value_type("function", function, [FunctionType, type, type(abs)], "create_call_function")
         Validator.check_element_type_of_iterable("targets", targets, [ScopedValue, str], "create_call_function")
         if args is not None:
             Validator.check_element_type_of_iterable("args", args, [ScopedValue], "create_call_function")
@@ -163,7 +162,7 @@ class Node:
 
     @staticmethod
     def create_input(param_name: str, default: Optional[ScopedValue] = None) -> 'Node':
-    # pylint: disable=missing-function-docstring
+        # pylint: disable=missing-function-docstring
         Validator.check_value_type("param_name", param_name, [str], "Node")
         if default is not None:
             Validator.check_value_type("default", default, [ScopedValue], "Node")
@@ -210,15 +209,7 @@ class Node:
             >>> print([user.get_name() for user in users])
             ['relu']
         """
-        belong_symbol_tree: SymbolTreeImpl = self._node.get_belong_symbol_tree()
-        if belong_symbol_tree is None:
-            return []
-        unique_results = []
-        for node_user in belong_symbol_tree.get_node_users(self._node):
-            node = node_user[0]
-            if node not in unique_results:
-                unique_results.append(node)
-        return [Node(node_impl) for node_impl in unique_results]
+        return [Node(node_impl) for node_impl in self._node.get_users()]
 
     def set_arg(self, index: int, arg: Union[ScopedValue, str]):
         """
@@ -263,7 +254,6 @@ class Node:
                 which means use first output of `src_node` as new input.
 
         Raises:
-            RuntimeError: If `src_node` is not belong to current `SymbolTree`.
             TypeError: If `arg_idx` is not a `int` number.
             ValueError: If `arg_idx` is out of range.
             TypeError: If `src_node` is not a `Node` instance.
@@ -416,7 +406,82 @@ class Node:
             return None
         return SymbolTree(stree_impl)
 
+    def get_sub_tree(self) -> 'SymbolTree':
+        """
+        Get the sub symbol tree stored in node with type of `NodeType.Tree` .
+        See :class:`mindspore.rewrite.NodeType` for details on node types.
+
+        Returns:
+            SymbolTree stored in Tree node.
+
+        Raises:
+            TypeError: If current node is not type of `NodeType.Tree` .
+            AttributeError: If no symbol tree is stored in Tree node.
+
+        Examples:
+        >>> import mindspore.nn as nn
+        >>> from mindspore.rewrite import SymbolTree
+        >>>
+        >>> class SubNet(nn.Cell):
+        >>>     def __init__(self):
+        >>>         super().__init__()
+        >>>         self.relu = nn.ReLU()
+        >>>
+        >>>     def construct(self, x):
+        >>>         x = self.relu(x)
+        >>>         return x
+        >>>
+        >>> class Net(nn.Cell):
+        >>>     def __init__(self):
+        >>>         super().__init__()
+        >>>         self.subnet = SubNet()
+        >>>
+        >>>     def construct(self, x):
+        >>>         x = self.subnet(x)
+        >>>         return x
+        >>>
+        >>> net = Net()
+        >>> stree = SymbolTree.create(net)
+        >>> node = stree.get_node("subnet")
+        >>> print(type(node.get_sub_tree()))
+        <class 'mindspore.rewrite.api.symbol_tree.SymbolTree'>
+        """
+        if self.get_node_type() != NodeType.Tree:
+            raise TypeError("For get_sub_tree, the type of node should be 'NodeType.Tree', "
+                            f"but got {self.get_node_type()}")
+        subtree: SymbolTreeImpl = self.get_handler().symbol_tree
+        if subtree is None:
+            raise AttributeError(
+                f"For get_sub_tree, no symbol tree is stroed in node {self.get_name()}.")
+        from .symbol_tree import SymbolTree
+        return SymbolTree(subtree)
+
     def get_kwargs(self) -> {str: ScopedValue}:
+        """
+        Get keyword arguments of current node.
+
+        Returns:
+            A dict of keyword arguments, where key is of type str, and value is of type ``ScopedValue`` .
+
+        Examples:
+            >>> from mindspore.rewrite import SymbolTree
+            >>> from mindspore import nn
+            >>>
+            >>> class ReLUNet(nn.Cell):
+            >>>     def __init__(self):
+            >>>         super().__init__()
+            >>>         self.relu = nn.ReLU()
+            >>>
+            >>>     def construct(self, input):
+            >>>         output = self.relu(x=input)
+            >>>         return output
+            >>>
+            >>> net = ReLUNet()
+            >>> stree = SymbolTree.create(net)
+            >>> node = stree.get_node("relu")
+            >>> print(node.get_kwargs())
+            {'x': input}
+        """
         return self._node.get_kwargs()
 
     def set_attribute(self, key: str, value):
@@ -429,3 +494,23 @@ class Node:
     def get_attribute(self, key: str):
         Validator.check_value_type("key", key, [str], "Node attribute")
         return self._node.get_attribute(key)
+
+    # pylint: disable=missing-docstring
+    def get_arg_providers(self) -> dict:
+        arg_providers = {}
+        for arg_idx, providers in self._node.get_arg_providers().items():
+            arg_providers[arg_idx] = (Node(providers[0]), providers[1])
+        return arg_providers
+
+    # pylint: disable=missing-docstring
+    def get_target_users(self, index=-1) -> Union[dict, list]:
+        Validator.check_value_type("index", index, [int], "get_target_users")
+        if index == -1:
+            target_users = {}
+            for target_idx, users in self._node.get_target_users().items():
+                target_users[target_idx] = [(Node(user[0]), user[1]) for user in users]
+            return target_users
+        target_users = []
+        for users in self._node.get_target_users(index):
+            target_users.append((Node(users[0]), users[1]))
+        return target_users

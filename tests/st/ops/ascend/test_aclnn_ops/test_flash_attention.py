@@ -20,23 +20,39 @@ import pytest
 import mindspore.nn as nn
 import mindspore.common.dtype as mstype
 from mindspore import Tensor, context
-from mindspore.nn.layer.flash_attention import FlashAttention
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops import composite as C
+from mindspore.ops.operations.nn_ops import FlashAttentionScore
 
 grad = C.GradOperation(get_all=True)
 
 class FlashAttentionNet(nn.Cell):
     def __init__(self, num_heads, head_dim, dropout_rate=0.0, prev_tockens=65536, next_tockens=65536):
         super(FlashAttentionNet, self).__init__()
-        self.flash_attention = FlashAttention(head_dim, num_heads, dropout_rate, prev_tockens, next_tockens,
-                                              high_precision=True)
+        self.keep_prob = 1.0 - dropout_rate
+        self.flash_attention = FlashAttentionScore(head_num=num_heads, pre_tokens=prev_tockens,
+                                                   next_tokens=next_tockens,
+                                                   keep_prob=self.keep_prob,
+                                                   scale_value=1.0 / math.sqrt(head_dim),
+                                                   inner_precise=0,
+                                                   input_layout="BNSD")
         self.transpose_key = P.Transpose()
 
+        if self.keep_prob < 1.0:
+            self.keep_prob_tensor = Tensor(self.keep_prob, dtype=mstype.float16)
+            self.drop_gen_mask = P.DropoutGenMask()
+
     def construct(self, query, key, value, attention_mask):
+        bsz, head_num, seq_len, _ = query.shape
         key = self.transpose_key(key, (0, 1, 3, 2))
-        attention = self.flash_attention(query, key, value, attention_mask)
+        if self.keep_prob < 1.0:
+            drop_mask = F.reshape(self.drop_gen_mask((bsz, head_num, seq_len, seq_len), self.keep_prob_tensor),
+                                  ((bsz, head_num, seq_len, seq_len // 8)))
+        else:
+            drop_mask = None
+        attention_mask = F.reshape(attention_mask, (bsz, 1, seq_len, seq_len))
+        _, _, _, attention = self.flash_attention(query, key, value, None, drop_mask, None, attention_mask, None)
         return attention
 
 class FlashAttentionGradNet(nn.Cell):

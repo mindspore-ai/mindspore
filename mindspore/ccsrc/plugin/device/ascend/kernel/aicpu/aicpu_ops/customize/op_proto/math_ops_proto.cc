@@ -4,6 +4,7 @@
  * limitations under the License.
  */
 #include "custom_op_proto/cust_math_ops.h"
+#include <unordered_map>
 #include "op_proto/inc/math_ops.h"
 #include "op_proto/inc/ragged_math_ops.h"
 #include "register/op_impl_registry.h"
@@ -14,6 +15,33 @@
 namespace ge {
 
 ONE_IN_ONE_OUT_INFER(Conj, input, output);
+ONE_IN_ONE_OUT_INFER(Digamma, x, y);
+CUST_ONE_IN_ONE_OUT_INFER(Polygamma, x, y);
+TWO_IN_ONE_OUT_INFER(Igamma, a, x, z);
+TWO_IN_ONE_OUT_INFER(Igammac, a, x, z);
+
+// ----------------Angle-------------------
+IMPLEMT_INFERFUNC(Angle, AngleInfer) {
+  TensorDesc x_desc = op.GetInputDescByName("input");
+  DataType x_type = x_desc.GetDataType();
+  DataType out_type;
+  switch (x_type) {
+    case DT_COMPLEX64:
+      out_type = DT_FLOAT;
+      break;
+    case DT_COMPLEX128:
+      out_type = DT_DOUBLE;
+      break;
+    default:
+      OP_LOGE(TbeGetName(op).c_str(), "Invalid input dtype: %s", DTypeStr(x_type).c_str());
+      return GRAPH_FAILED;
+  }
+  x_desc.SetDataType(out_type);
+  return op.UpdateOutputDesc("output", x_desc);
+}
+
+INFER_FUNC_REG(Angle, AngleInfer);
+// ----------------Angle End-------------------
 
 // ----------------ComplexAbs-------------------
 IMPLEMT_INFERFUNC(ComplexAbs, ComplexAbsInfer) {
@@ -407,4 +435,116 @@ CUST_IMPLEMT_INFERFUNC(Correlate, CorrelateInfer) {
 }
 CUST_INFER_FUNC_REG(Correlate, CorrelateInfer);
 // ----------------Correlate END-------------------
+
+// ----------------FFTWithSize-------------------
+graphStatus FFTWithSizeInferType(const Operator &op, TensorDesc &y_desc, DataType input_type, bool real, bool inverse) {
+  enum class FFTType { RFFT, FFT, IRFFT };
+  const static std::unordered_map<DataType, DataType> kRfftTypes{
+    {DT_FLOAT, DT_COMPLEX64}, {DT_DOUBLE, DT_COMPLEX128}, {DT_UINT8, DT_COMPLEX64}, {DT_INT8, DT_COMPLEX64},
+    {DT_INT16, DT_COMPLEX64}, {DT_INT32, DT_COMPLEX64},   {DT_INT64, DT_COMPLEX64}, {DT_BOOL, DT_COMPLEX64}};
+  const static std::unordered_map<DataType, DataType> kFftTypes{{DT_COMPLEX64, DT_COMPLEX64},
+                                                                {DT_COMPLEX128, DT_COMPLEX128}};
+  const static std::unordered_map<DataType, DataType> kIrfftTypes{{DT_COMPLEX64, DT_FLOAT}, {DT_COMPLEX128, DT_DOUBLE}};
+  const static std::unordered_map<FFTType, std::unordered_map<DataType, DataType>> kTypeMap{
+    {FFTType::RFFT, kRfftTypes}, {FFTType::FFT, kFftTypes}, {FFTType::IRFFT, kIrfftTypes}};
+  FFTType fft_type;
+  if (real) {
+    if (!inverse) {
+      fft_type = FFTType::RFFT;
+    } else {
+      fft_type = FFTType::IRFFT;
+    }
+  } else {
+    fft_type = FFTType::FFT;
+  }
+  auto &type_map = kTypeMap.at(fft_type);
+  if (type_map.find(input_type) == type_map.end()) {
+    OP_LOGE(TbeGetName(op), "Infer data type failed.");
+    return GRAPH_FAILED;
+  }
+  auto out_type = type_map.at(input_type);
+  y_desc.SetDataType(out_type);
+  return GRAPH_SUCCESS;
+}
+
+CUST_IMPLEMT_INFERFUNC(FFTWithSize, FFTWithSizeInfer) {
+  auto x_desc = op.GetInputDescByName("x");
+  auto x_shape = x_desc.GetShape().GetDims();
+  auto x_type = x_desc.GetDataType();
+  auto y_shape = x_shape;
+
+  int64_t signal_ndim;
+  bool inverse;
+  bool real;
+  bool onesided;
+  std::vector<int64_t> signal_sizes;
+  RETURN_IF_FAILURE(op.GetAttr("inverse", inverse));
+  RETURN_IF_FAILURE(op.GetAttr("signal_ndim", signal_ndim));
+  RETURN_IF_FAILURE(op.GetAttr("onesided", onesided));
+  RETURN_IF_FAILURE(op.GetAttr("real", real));
+  // acl would fail to set attr if signal_sizes is empty
+  if (op.GetAttr("signal_sizes", signal_sizes) == GRAPH_FAILED) {
+    signal_sizes = {};
+  }
+
+  constexpr int64_t kDimNum = 2;
+  if (!real && !onesided) {
+    if (!inverse) {
+      y_shape.back() = x_shape.back() / kDimNum + 1;
+    } else {
+      if (signal_sizes.size() == 0) {
+        y_shape.back() = (x_shape.back() - 1) * kDimNum;
+      } else {
+        y_shape.back() = signal_sizes.back();
+      }
+    }
+  }
+
+  auto y_desc = op.GetOutputDescByName("y");
+  y_desc.SetShape(Shape(y_shape));
+  FFTWithSizeInferType(op, y_desc, x_type, real, inverse);
+  return op.UpdateOutputDesc("y", y_desc);
+}
+
+CUST_INFER_FUNC_REG(FFTWithSize, FFTWithSizeInfer);
+// ----------------ReduceOp END-------------------
+
+// ----------------Trilindices-------------------
+// ----------------Triuindices-------------------
+IMPLEMT_COMMON_INFERFUNC(TriluIndicesInfer) {
+  int64_t row;
+  int64_t col;
+  int64_t offset;
+  DataType dtype;
+  RETURN_IF_FAILURE(op.GetAttr("row", row));
+  RETURN_IF_FAILURE(op.GetAttr("col", col));
+  RETURN_IF_FAILURE(op.GetAttr("offset", offset));
+  RETURN_IF_FAILURE(op.GetAttr("dtype", dtype));
+  int64_t tril_size{0};
+  if (row != 0 && col != 0) {
+    auto m_first_row = offset > 0 ? std::min<int64_t>(col, 1 + offset) : row + offset > 0;
+    auto m_last_row = std::max<int64_t>(0, std::min<int64_t>(col, row + offset));
+    auto n_row_all = std::max<int64_t>(0, std::min<int64_t>(row, row + offset));
+    auto n_row_trapezoid = (m_last_row - m_first_row + 1);
+    tril_size = (m_first_row + m_last_row) * n_row_trapezoid >> 1;
+    auto diff_row = n_row_all - n_row_trapezoid;
+    if (diff_row > 0) {
+      tril_size += diff_row * col;
+    }
+  }
+  auto output_desc = op.GetOutputDescByName("output");
+  if (TbeGetName(op).find("TrilIndices") != std::string::npos) {
+    output_desc.SetShape(Shape({2, tril_size}));
+  } else {  // TriuIndices
+    auto triu_size = row * col - tril_size;
+    output_desc.SetShape(Shape({2, triu_size}));
+  }
+  output_desc.SetDataType(dtype);
+  return op.UpdateOutputDesc("output", output_desc);
+}
+
+CUST_COMMON_INFER_FUNC_REG(TrilIndices, TriluIndicesInfer);
+CUST_COMMON_INFER_FUNC_REG(TriuIndices, TriluIndicesInfer);
+// ----------------Trilindices End-------------------
+// ----------------Triuindices End-------------------
 }  // namespace ge

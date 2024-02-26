@@ -60,6 +60,10 @@ void GeDeviceResManager::SetCPUMemManager() {
   if (is_use_cpu_memory_) {
     return;
   }
+  if (mem_manager_ != nullptr) {
+    mem_manager_->Finalize();
+    mem_manager_ = nullptr;
+  }
   runtime_instance_ = nullptr;
   mem_manager_ = std::make_shared<cpu::CPUMemoryManager>();
   MS_EXCEPTION_IF_NULL(mem_manager_);
@@ -226,7 +230,7 @@ void GeDeviceResManager::CreateSessionAndGraphRunner() {
   transform::SetGraphRunner(graph_runner);
 }
 
-void GeDeviceResManager::SetDeviceIdToCurrentThread() const {
+bool GeDeviceResManager::BindDeviceToCurrentThread(bool force_bind) const {
   static thread_local std::once_flag is_set;
   std::call_once(is_set, []() {
     auto ms_context = MsContext::GetInstance();
@@ -237,9 +241,7 @@ void GeDeviceResManager::SetDeviceIdToCurrentThread() const {
       MS_LOG(EXCEPTION) << "Device " << device_id << " call aclrtSetDevice failed, ret:" << static_cast<int>(ret);
     }
   });
-}
 
-bool GeDeviceResManager::BindDeviceToCurrentThread(bool force_bind) const {
   if (runtime_instance_ != nullptr) {
     if (force_bind) {
       runtime_instance_->SetContextForce();

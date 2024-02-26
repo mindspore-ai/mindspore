@@ -94,6 +94,8 @@ def test_matmul_tensor_api_modes(mode):
 
 
 @pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_matmul_dtypes():
     """
@@ -110,7 +112,7 @@ def test_matmul_dtypes():
     x_np.shape = m, k
     y_np.shape = k, n
     matmul = Net()
-    valid_dtypes = (mstype.uint8, mstype.int32, mstype.int64, mstype.float16, mstype.float32)
+    valid_dtypes = (mstype.int8, mstype.int32, mstype.float16, mstype.float32)
     all_dtypes = mstype.all_types
     for dtype in all_dtypes:
         # bfloat16 is not supported yet
@@ -119,7 +121,11 @@ def test_matmul_dtypes():
         x_ms = Tensor(x_np).astype(dtype)
         y_ms = Tensor(y_np).astype(dtype)
         if dtype in valid_dtypes:
-            matmul(x_ms, y_ms)
+            out = matmul(x_ms, y_ms)
+            if x_ms.dtype == mstype.int8:
+                assert out.dtype == mstype.int32
+            else:
+                assert out.dtype == x_ms.dtype
         else:
-            with pytest.raises(TypeError):
+            with pytest.raises((RuntimeError, TypeError)):
                 matmul(x_ms, y_ms)

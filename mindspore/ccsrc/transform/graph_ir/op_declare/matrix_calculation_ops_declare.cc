@@ -314,4 +314,12 @@ ATTR_MAP(SwinAttentionScore) = {{"keep_prob", ATTR_DESC(keep_prob, AnyTraits<flo
                                 {"softmax_axes", ATTR_DESC(softmax_axes, AnyTraits<std::vector<int64_t>>())}};
 OUTPUT_MAP(SwinAttentionScore) = {{0, OUTPUT_DESC(attention_score)}, {1, OUTPUT_DESC(softmax)}};
 REG_ADPT_DESC(SwinAttentionScore, kNameSwinAttentionScore, ADPT_DESC(SwinAttentionScore));
+
+// SparseTensorDenseMatMul
+INPUT_MAP(SparseTensorDenseMatMul) = {
+  {1, INPUT_DESC(x1_indices)}, {2, INPUT_DESC(x1_values)}, {3, INPUT_DESC(x1_shape)}, {4, INPUT_DESC(x2)}};
+ATTR_MAP(SparseTensorDenseMatMul) = {{"adjoint_a", ATTR_DESC(adjoint_a, AnyTraits<bool>())},
+                                     {"adjoint_b", ATTR_DESC(adjoint_b, AnyTraits<bool>())}};
+OUTPUT_MAP(SparseTensorDenseMatMul) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(SparseTensorDenseMatMul, kNameSparseTensorDenseMatmul, ADPT_DESC(SparseTensorDenseMatMul));
 }  // namespace mindspore::transform

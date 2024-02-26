@@ -17,9 +17,8 @@
 from mindspore import nn
 from mindspore.ops import operations as P
 
-from mindspore.rewrite import SymbolTree, NodeType, TreeNodeHelper, Node, ScopedValue, PatternEngine, Replacement, \
+from mindspore.rewrite import SymbolTree, NodeType, Node, ScopedValue, PatternEngine, Replacement, \
     PatternNode
-from mindspore.rewrite.node import CellContainer
 
 
 def _conv3x3(in_channel, out_channel, stride=1):
@@ -166,7 +165,7 @@ def test_cellcontainer_insert_ok():
         if node.get_node_type() == NodeType.CellContainer:
             for n in node.get_handler().node_list:
                 if n.get_node_type() == NodeType.Tree:
-                    _insert_conv(TreeNodeHelper.get_sub_tree(Node(n)))
+                    _insert_conv(Node(n).get_sub_tree())
                     break
     new_net = stree.get_network()
     cell_container = getattr(new_net, "layer1")
@@ -194,7 +193,7 @@ def test_cellcontainer_insert_to_subtree():
         if node.get_node_type() == NodeType.CellContainer:
             for n in node.get_handler().node_list:
                 if n.get_node_type() == NodeType.Tree:
-                    _insert_conv(TreeNodeHelper.get_sub_tree(Node(n)))
+                    _insert_conv(Node(n).get_sub_tree())
                     break
     new_net = stree.get_network()
     cell_container = getattr(new_net, "layer1")
@@ -331,7 +330,7 @@ def test_cellcontainer_replace_in_subtree():
         if node.get_node_type() == NodeType.CellContainer:
             for n in node.get_handler().node_list:
                 if n.get_node_type() == NodeType.Tree:
-                    _replace_bn(TreeNodeHelper.get_sub_tree(Node(n)))
+                    _replace_bn(Node(n).get_sub_tree())
                     break
 
     cell_container = stree.get_node("layer1").get_handler().node_list[0].symbol_tree
@@ -409,21 +408,3 @@ def test_cellcontainer_pattern():
     assert isinstance(getattr(cell_container, "3"), nn.MaxPool2d)
     assert isinstance(getattr(cell_container, "4"), nn.ReLU)
     assert isinstance(getattr(cell_container, "6"), nn.BiDense)
-
-
-def test_cellcontainer_first_node_inputs():
-    """
-    Feature: create CellContainer Node.
-    Description: nodes in cellcontainer has inputs.
-    Expectation: success.
-    """
-    net = ResNetSimple()
-    stree = SymbolTree.create(net)
-    for node in stree.nodes():
-        if node.get_node_type() == NodeType.CellContainer and node.get_name() == "layer1":
-            for n in node.get_handler().nodes():
-                inputs = n.get_inputs()
-                assert inputs
-                node_manager = n.get_node_manager()
-                assert node_manager
-                assert isinstance(node_manager, CellContainer)

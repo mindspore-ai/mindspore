@@ -11,8 +11,6 @@ masked_fill:
     returns:
         output:
             dtype: tensor
-            inplace: input_x
     dispatch:
-        enable: False
-
-
+        enable: True
+        Ascend: MaskedFillAscend

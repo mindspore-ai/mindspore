@@ -22,9 +22,9 @@ from mindspore import ops, nn
 from mindspore.common.tensor import Tensor
 from mindspore import log as logger
 from mindspore import load_checkpoint, save_checkpoint
-from mindspore.rewrite import SymbolTree, Node, NodeType, TreeNodeHelper, ScopedValue
-from mindspore.rewrite.parsers.class_def_parser import ClassDefParser
-from mindspore.rewrite.parsers.class_def_parser import ModuleParser
+from mindspore.rewrite import SymbolTree, Node, NodeType, ScopedValue
+from mindspore.rewrite.parsers import ClassDefParser
+from mindspore.rewrite.parsers import ModuleParser
 
 OBF_RATIOS_LENGTH = 1
 MAX_OBF_RATIOS_NUM = 50
@@ -476,22 +476,12 @@ def _obfuscate_network(model, path_list, target_list, data_parallel_num=1, **kwa
                         _insert_mul(stree, node, OBF_RATIOS_INSERT_INDEX)
                         OBF_RATIOS_INSERT_INDEX += 1
 
-    def _update_subnet(stree: SymbolTree, substree: SymbolTree, subnode: Node):
+    def _update_subnet(substree: SymbolTree, subnode: Node):
         """update the network once the subnet is obfuscated"""
-        new_net = substree.get_network()
         input_y_node = substree.get_node("input_y_obf")
         if input_y_node is None:
             return
-        arg_list = subnode.get_args().copy()
-        kwargs_list = list(subnode.get_kwargs().values())
-        arg_list.extend(kwargs_list)
-        v: str = input_y_node.get_targets()[0].value
-        arg_obf: ScopedValue = ScopedValue.create_naming_value("y_obf=" + v)
-        arg_list.append(arg_obf)
-        target_list = subnode.get_targets().copy()
-        name = subnode.get_name()
-        new_node = subnode.create_call_cell(cell=new_net, targets=target_list, args=arg_list, name=name)
-        stree.replace(subnode, [new_node])
+        subnode.get_handler().append_kwarg({"y_obf": input_y_node.get_targets()[0]})
 
     def _traverse(stree, i=0):
         """traverse and obfuscate the original network"""
@@ -500,11 +490,11 @@ def _obfuscate_network(model, path_list, target_list, data_parallel_num=1, **kwa
         for node in stree.nodes():
             node_name = node.get_name()
             if node.get_node_type() == NodeType.Tree and node_name.startswith(path_list[i]):
-                sub_stree = TreeNodeHelper.get_sub_tree(node)
+                sub_stree = node.get_sub_tree()
                 _traverse(sub_stree, i + 1)
                 _insert_input(sub_stree, arg_name='y_obf')
                 _insert_mul_by_name(sub_stree, after_name_list=target_list[i + 1])
-                _update_subnet(stree, sub_stree, node)
+                _update_subnet(sub_stree, node)
 
     def _register_denied_func_decorators(fn):
         """set the function decorators which should be denied for parse"""
