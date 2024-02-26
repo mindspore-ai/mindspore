@@ -550,27 +550,34 @@ Status MatMul::InferOutputTensorInfo() {
 Status MatMul::InferForwardCommunicationByLayout() {
   forward_op_.clear();
   auto input_layout0 = inputs_tensor_info_[kIndex0].tensor_layout();
-
   size_t axis0 = input_layout0.tensor_shape_before().array().size() - 1;
   if (transpose_a_) {
     axis0 -= 1;
   }
-  auto dev_mat = input_layout0.device_arrangement_origin();
   auto axis_tensor_map = input_layout0.tensor_map_before()[axis0];
   int64_t axis_shard = 1;
+  std::vector<int64_t> r_dim_vector;
   for (const auto &dim : axis_tensor_map) {
-    if (dim != -1) {
-      int64_t divisor = dev_mat.GetDimByReverseIdx(LongToUlong(dim));
-      axis_shard *= divisor;
+    if (dim == -1) {
+      continue;
     }
+    int64_t divisor = input_layout0.device_arrangement_origin().GetDimByReverseIdx(LongToUlong(dim));
+    axis_shard *= divisor;
+    auto r_dim = SizeToLong(input_layout0.device_arrangement_origin().array().size() - 1) - dim;
+    r_dim_vector.push_back(r_dim);
   }
   // Relevant dimension is not split and all reduce is not required,
   if (axis_shard == MIN_SLICE_NUM) {
     MS_LOG(INFO) << name_ << ": Forward communication is not required.";
     return SUCCESS;
   }
-
-  auto repeated_rank_list = output_infer_tensor_layout_.InferRepeatedGroup();
+  RankList repeated_rank_list;
+  auto device_matrix = DeviceMatrix(g_device_manager->global_rank(), g_device_manager->GetDeviceListInThisStage(),
+                                    input_layout0.device_arrangement_origin().array());
+  if (device_matrix.GetDevicesAlongMultiDim(r_dim_vector, &repeated_rank_list) != SUCCESS) {
+    MS_LOG(ERROR) << name_ << ": Infer Forward communication by multi axis failed.";
+    return FAILED;
+  }
   if (repeated_rank_list.size() == 1) {
     MS_LOG(INFO) << name_ << ": Forward communication is not required.";
     return SUCCESS;
@@ -583,13 +590,13 @@ Status MatMul::InferForwardCommunicationByLayout() {
                   << ", the full_name of node is: " << cnode_->fullname_with_scope();
     return FAILED;
   }
+
   Operator op;
   if (forward_reduce_scatter_) {
     op = CreateReduceScatterOp(REDUCE_OP_SUM, forward_group.name());
   } else {
     op = CreateAllReduceOp(REDUCE_OP_SUM, forward_group.name());
   }
-
   forward_op_.push_back(op);
   MS_LOG(INFO) << name_ << ": The group name of forward communication is " << forward_group.name();
   return SUCCESS;

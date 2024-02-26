@@ -82,6 +82,11 @@ def compile_net_no_bias(net, x, y):
 
 
 def test_no_grad():
+    """
+    Feature: test no grad
+    Description: dev_num is 8, test no grad.
+    Expectation: compile success
+    """
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
@@ -107,6 +112,11 @@ def test_no_grad():
 
 
 def test_grad_sens_parameter_type():
+    """
+    Feature: test grad sens parameter
+    Description: dev_num is 8, test grad sens parameter.
+    Expectation: compile success
+    """
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
@@ -142,6 +152,11 @@ def test_grad_sens_parameter_type():
 
 
 def test_grad_sens_tensor_type():
+    """
+    Feature: test grad sens tensor type
+    Description: dev_num is 8, test grad sens tensor type.
+    Expectation: compile success
+    """
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
@@ -167,6 +182,11 @@ def test_grad_sens_tensor_type():
 
 
 def test_grad_sens_scalar_broadcast():
+    """
+    Feature: test grad sens scalar broadcast
+    Description: dev_num is 8, test grad sens scalar broadcast.
+    Expectation: compile success
+    """
     class Net(nn.Cell):
         def __init__(self, strategy0, strategy1):
             super().__init__()

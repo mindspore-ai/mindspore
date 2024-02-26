@@ -126,14 +126,20 @@ Status TensorLayout::InitFromExtendVector(const Shape &device_arrangement, const
     return FAILED;
   }
 
+  size_t not_none_count = 0;
   for (size_t i = 0; i < tensor_map.size(); ++i) {
     for (size_t j = 0; j < tensor_map[i].size(); ++j) {
       extended_tensor_map.push_back(tensor_map[i][j]);
+      if (tensor_map[i][j] > 0) {
+        ++not_none_count;
+      }
     }
   }
-  if (extended_tensor_map.size() > device_arrangement.size()) {
+
+  if (not_none_count > device_arrangement.size()) {
     MS_LOG(ERROR) << "The device_matrix " << device_arrangement
-                  << " length dose not greater equal than the extended_tensor_map " << extended_tensor_map;
+                  << " length dose not greater equal than the not None size of extended_tensor_map "
+                  << extended_tensor_map;
     return FAILED;
   }
   tensor_shape_before_.Init(tensor_shape);
@@ -431,7 +437,7 @@ Arrangement TensorLayout::base_slice_shape() const {
     int64_t axis_shard = 1;
     for (const auto &dim : dim_map) {
       if (dim != -1) {
-        int64_t divisor = device_arrangement_.GetDimByReverseIdx(LongToUlong(dim));
+        int64_t divisor = device_arrangement_origin_.GetDimByReverseIdx(LongToUlong(dim));
         axis_shard *= divisor;
       }
     }

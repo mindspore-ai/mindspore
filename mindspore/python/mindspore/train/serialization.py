@@ -1451,6 +1451,11 @@ def _save_graph(network, file_name):
             os.chmod(file_name, stat.S_IRUSR | stat.S_IWUSR)
             f.write(graph_pb)
 
+def _reshape_tensor(tensor, dst_shape):
+    """reshape tensor to dst shape"""
+    np_tensor = tensor.asnumpy()
+    np_tensor = np_tensor.reshape(dst_shape)
+    return Tensor(np_tensor, tensor.dtype)
 
 def _get_merged_param_data(net, parameter_layout_dict, param_name, param_data, integrated_save):
     """
@@ -1465,7 +1470,7 @@ def _get_merged_param_data(net, parameter_layout_dict, param_name, param_data, i
         Tensor, the combined tensor which with the whole data value.
     """
     layout = parameter_layout_dict[param_name]
-    if len(layout) < 6:
+    if len(layout) < 8:
         logger.info("The layout dict does not contain the key %s", param_name)
         return param_data
 
@@ -1473,6 +1478,13 @@ def _get_merged_param_data(net, parameter_layout_dict, param_name, param_data, i
     tensor_map = layout[1]
     uniform_split = layout[4]
     opt_shard_group = layout[5]
+    before_reshape_slice_shape = layout[2]
+    before_reshape_full_shape = layout[6]
+    after_reshape_slice_shape = layout[7]
+    do_reshape = False
+    if before_reshape_full_shape and after_reshape_slice_shape\
+            and after_reshape_slice_shape != before_reshape_slice_shape:
+        do_reshape = True
 
     allgather_net = None
     mp_weight = False
@@ -1494,17 +1506,22 @@ def _get_merged_param_data(net, parameter_layout_dict, param_name, param_data, i
             # while any dim is not equal to -1, means param is split and needs to be merged
             # pipeline parallel need to be supported here later
             if mp_weight:
-                allgather_net = get_allgather_cell(opt_shard_group, bool(opt_shard_group))
+                allgather_net = get_allgather_cell(opt_shard_group, bool(opt_shard_group), do_reshape,
+                                                   tuple(after_reshape_slice_shape))
                 object.__setattr__(allgather_net, "keep_input_unchanged", True)
             elif opt_shard_group:
-                allgather_net = get_allgather_cell(opt_shard_group, False)
+                allgather_net = get_allgather_cell(opt_shard_group, False, do_reshape,
+                                                   tuple(after_reshape_slice_shape))
         elif opt_shard_group and context.get_auto_parallel_context("optimizer_weight_shard_aggregated_save"):
-            allgather_net = get_allgather_cell(opt_shard_group, False)
+            allgather_net = get_allgather_cell(opt_shard_group, False, do_reshape,
+                                               tuple(after_reshape_slice_shape))
         net.parallel_parameter_merge_net_dict[param_name] = allgather_net
     if allgather_net:
         param_data = allgather_net(param_data)
     if mp_weight and integrated_save:
         param_data = _reshape_param_data(param_data, dev_mat, tensor_map)
+        if do_reshape:
+            param_data = _reshape_tensor(param_data, before_reshape_full_shape)
     return param_data
 
 
