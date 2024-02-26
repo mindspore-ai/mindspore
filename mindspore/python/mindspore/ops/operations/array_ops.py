@@ -44,7 +44,7 @@ from ..auto_generate import (ExpandDims, Reshape, TensorShape, Transpose, Gather
                              CumSum, CumProd, Cummax, Cummin, Argmin, Concat, UnsortedSegmentSum, ScalarToTensor,
                              BroadcastTo, Select)
 from .manually_defined import Rank, Shape, Tile, Cast
-
+from ..auto_generate import ArgMaxWithValue, ArgMinWithValue
 
 class _ScatterOp(PrimitiveWithInfer):
     """
@@ -1283,6 +1283,8 @@ class FillV2(PrimitiveWithCheck):
     def infer_value(self, dims, x):
         if x is None or dims is None or isinstance(dims, (Tensor, Tensor_)):
             return None
+        if isinstance(dims, (tuple, list)) and None in dims:
+            return None
         if 0 in dims:
             init_func = Zero()
             init_func.__enable_zero_dim__ = True
@@ -1559,135 +1561,6 @@ class ArgminV2(Primitive):
         args = [x, axis]
         output = _run_op(self, self.name, args)
         return output
-
-
-class ArgMaxWithValue(Primitive):
-    """
-    Calculates the maximum value along with the given axis for the input tensor, and returns the maximum values and
-    indices.
-
-    Note:
-        In auto_parallel and semi_auto_parallel mode, the first output index can not be used.
-
-    .. warning::
-        - If there are multiple maximum values, the index of the first maximum value is used.
-        - The value range of "axis" is [-dims, dims - 1]. "dims" is the dimension length of "x".
-
-    Also see :func:`mindspore.ops.max`.
-
-    Args:
-        axis (int): The dimension to reduce. Default: ``0`` .
-        keep_dims (bool): Whether to reduce dimension, if ``True`` , the output will keep same dimension with the
-                          input, the output will reduce dimension if ``false`` . Default: ``False`` .
-
-    Inputs:
-        - **x** (Tensor) - The input tensor, can be any dimension. Set the shape of input tensor as
-          :math:`(x_1, x_2, ..., x_N)`. Supported dtypes: float16, float32 and float64.
-
-    Outputs:
-        tuple (Tensor), tuple of 2 tensors, containing the corresponding index and the maximum value of the input
-        tensor.
-
-        - **index** (Tensor) - The index for the maximum value of the input tensor, with dtype int32. If `keep_dims`
-          is ``True`` , the shape of output tensors is :math:`(x_1, x_2, ..., x_{axis-1}, 1, x_{axis+1}, ..., x_N)`.
-          Otherwise, the shape is :math:`(x_1, x_2, ..., x_{axis-1}, x_{axis+1}, ..., x_N)` .
-        - **values** (Tensor) - The maximum value of input tensor, with the same shape as index, and same dtype as x.
-
-    Raises:
-        TypeError: If `x` is not Tensor with dtype float16, float32 or float64.
-        TypeError: If `keep_dims` is not a bool.
-        TypeError: If `axis` is not an int.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input_x = Tensor(np.array([0.0, 0.4, 0.6, 0.7, 0.1]), mindspore.float32)
-        >>> index, output = ops.ArgMaxWithValue()(input_x)
-        >>> print(index, output)
-        3 0.7
-        >>> index, output = ops.ArgMaxWithValue(keep_dims=True)(input_x)
-        >>> print(index, output)
-        [3] [0.7]
-    """
-
-    @prim_attr_register
-    def __init__(self, axis=0, keep_dims=False):
-        """Initialize ArgMaxWithValue"""
-        self.init_prim_io_names(inputs=['x'], outputs=['index', 'values'])
-        validator.check_value_type("axis", axis, [int], self.name)
-        validator.check_value_type('keep_dims', keep_dims, [bool], self.name)
-        self.axis = axis
-        self.keep_dims = keep_dims
-        self.add_prim_attr('dimension', self.axis)
-
-
-class ArgMinWithValue(Primitive):
-    """
-    Calculates the minimum value along with the given axis for the input tensor, and returns the minimum values and
-    indices.
-
-    Note:
-        In auto_parallel and semi_auto_parallel mode, the first output index can not be used.
-
-    .. warning::
-        - If there are multiple minimum values, the index of the first minimum value is used.
-        - The value range of "axis" is [-dims, dims - 1]. "dims" is the dimension length of "x".
-
-    Also see :func:`mindspore.ops.min`.
-
-    Args:
-        axis (int): The dimension to reduce. Default: ``0`` .
-        keep_dims (bool): Whether to reduce dimension, if ``True`` the output will keep the same dimension as the
-                          input, the output will reduce dimension if ``false`` . Default: ``False`` .
-
-    Inputs:
-        - **x** (Tensor) - The input tensor, can be any dimension. Set the shape of input tensor as
-          :math:`(x_1, x_2, ..., x_N)` .Complex tensor is not supported.
-
-    Outputs:
-        tuple (Tensor), tuple of 2 tensors, containing the corresponding index and the minimum value of the input
-        tensor.
-
-        - **index** (Tensor) - The index for the minimum value of the input tensor, with dtype int32. If `keep_dims`
-          is ``True`` , the shape of output tensors is :math:`(x_1, x_2, ..., x_{axis-1}, 1, x_{axis+1}, ..., x_N)`.
-          Otherwise, the shape is :math:`(x_1, x_2, ..., x_{axis-1}, x_{axis+1}, ..., x_N)` .
-        - **values** (Tensor) - The minimum value of input tensor, with the same
-          shape as `index`, and same dtype as `x`.
-
-    Raises:
-        TypeError: If `x` is not Tensor.
-        TypeError: If `keep_dims` is not a bool.
-        TypeError: If `axis` is not an int.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.array([0.0, 0.4, 0.6, 0.7, 0.1]), mindspore.float32)
-        >>> index, output = ops.ArgMinWithValue()(x)
-        >>> print(index, output)
-        0 0.0
-        >>> index, output = ops.ArgMinWithValue(keep_dims=True)(x)
-        >>> print(index, output)
-        [0] [0.0]
-    """
-
-    @prim_attr_register
-    def __init__(self, axis=0, keep_dims=False):
-        """Initialize ArgMinWithValue"""
-        self.init_prim_io_names(inputs=['x'], outputs=['index', 'values'])
-        validator.check_value_type("axis", axis, [int], self.name)
-        validator.check_value_type('keep_dims', keep_dims, [bool], self.name)
-        self.axis = axis
-        self.keep_dims = keep_dims
-        self.add_prim_attr('dimension', self.axis)
 
 
 class UnsortedSegmentMin(PrimitiveWithCheck):
@@ -6915,7 +6788,7 @@ class TopK(Primitive):
 
     .. math::
 
-        values.shape = indices.shape = input.shape[:-1] + [k].
+        values.shape = indices.shape = input.shape[:-1] + [k]
 
     If the two compared elements are the same, the one with the smaller index value is returned first.
 

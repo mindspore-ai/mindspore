@@ -20,6 +20,7 @@ from mindspore.common import Tensor, Parameter
 import mindspore.common.dtype as mstype
 from mindspore import _checkparam as validator
 from mindspore.experimental.optim.optimizer import Optimizer, check_not_less_than, check_not_less_than_without_equal
+from mindspore import jit
 
 _radam_opt = C.MultitypeFuncGraph("radam_opt")
 
@@ -28,29 +29,23 @@ op_sqrt = P.Sqrt()
 op_cast = P.Cast()
 
 
-@_radam_opt.register("Number", "Number", "Number", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor")
-def _tensor_run_opt(beta1, beta2, eps, step, lr, param, grad, exp_avg, exp_avg_sq):
+@_radam_opt.register("Number", "Number", "Number", "Tensor", "Number", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor",
+                     "Tensor", "Tensor")
+def _tensor_run_opt(beta1, beta2, eps, lr, rho_inf, rho_t, bias_correction1, bias_correction2, param, grad, exp_avg,
+                    exp_avg_sq):
     """Apply radam optimizer to the weight parameter."""
 
-    bias_correction1 = 1 - op_pow(beta1, step)
-    bias_correction2 = 1 - op_pow(beta2, step)
-
-    F.assign(exp_avg, exp_avg * beta1 + grad * (1-beta1))
-    F.assign(exp_avg_sq, exp_avg_sq * beta2 + grad * grad * (1-beta2))
+    F.assign(exp_avg, exp_avg * beta1 + grad * (1 - beta1))
+    F.assign(exp_avg_sq, exp_avg_sq * beta2 + grad * grad * (1 - beta2))
     bias_corrected_exp_avg = exp_avg / bias_correction1
-    rho_inf = 2 / (1 - beta2) - 1
-    beta2_pow = op_pow(beta2, step)
-    right = 2 * step * beta2_pow / bias_correction2
-
-    rho_t = rho_inf - right
 
     if rho_t > 5.0:
         rect = op_sqrt((rho_t - 4) * (rho_t - 2) * rho_inf / ((rho_inf - 4) * (rho_inf - 2) * rho_t))
         exp_avg_sq_sqrt = op_sqrt(exp_avg_sq) + eps
         adaptive_lr = op_sqrt(bias_correction2) / exp_avg_sq_sqrt
-        F.assign(param, param-bias_corrected_exp_avg * lr * adaptive_lr * rect)
+        F.assign(param, param - bias_corrected_exp_avg * lr * adaptive_lr * rect)
     else:
-        F.assign(param, param-bias_corrected_exp_avg * lr)
+        F.assign(param, param - bias_corrected_exp_avg * lr)
 
     return True
 
@@ -138,6 +133,7 @@ class RAdam(Optimizer):
         ...     optimizer(grads)
         ...     return loss
     """
+
     def __init__(self, params, lr=1e-3, betas=(0.9, 0.999), eps=1e-8, weight_decay=0.0):
         check_not_less_than_without_equal(lr, "lr", self.cls_name)
         check_not_less_than(weight_decay, "weight_decay", self.cls_name)
@@ -158,6 +154,28 @@ class RAdam(Optimizer):
         self.increase_tensor = Tensor(1, mstype.int32)
         self.assignadd = P.AssignAdd()
 
+    @jit
+    def implementation(self, lr, beta1, beta2, weight_decay, eps, start_id, end_id, gradients):
+        """Extract the common computing part for acceleration"""
+        params = self.parameters[start_id: end_id]
+        grads = gradients[start_id: end_id]
+        grads = self._decay_weight(weight_decay, params, grads)
+        exp_avg = self.exp_avg[start_id: end_id]
+        exp_avg_sq = self.exp_avg_sq[start_id: end_id]
+
+        bias_correction1 = 1 - op_pow(beta1, self.step_t.value())
+        bias_correction2 = 1 - op_pow(beta2, self.step_t.value())
+
+        rho_inf = 2 / (1 - beta2) - 1
+        beta2_pow = op_pow(beta2, self.step_t.value())
+        right = 2 * self.step_t.value() * beta2_pow / bias_correction2
+
+        rho_t = rho_inf - right
+
+        self.hyper_map(F.partial(_radam_opt, beta1, beta2, eps, lr, rho_inf, rho_t, bias_correction1, bias_correction2),
+                       params, grads, exp_avg, exp_avg_sq)
+        return True
+
     def construct(self, gradients):
         self.assignadd(self.step_t, self.increase_tensor)
         for group_id, group in enumerate(self.param_groups):
@@ -169,12 +187,8 @@ class RAdam(Optimizer):
             beta1, beta2 = group["betas"]
             start_id = self.group_start_id[group_id]
             end_id = self.group_start_id[group_id + 1]
-            params = self.parameters[start_id: end_id]
-            grads = gradients[start_id: end_id]
-            grads = self._decay_weight(group["weight_decay"], params, grads)
-            exp_avg = self.exp_avg[start_id: end_id]
-            exp_avg_sq = self.exp_avg_sq[start_id: end_id]
-            self.hyper_map(F.partial(_radam_opt, beta1, beta2, group["eps"], self.step_t.value(), lr),
-                           params, grads, exp_avg, exp_avg_sq)
+            weight_decay = group["weight_decay"]
+            eps = group["eps"]
+            self.implementation(lr, beta1, beta2, weight_decay, eps, start_id, end_id, gradients)
 
         return True

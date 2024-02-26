@@ -761,6 +761,7 @@ def set_auto_parallel_context(**kwargs):
     enable_parallel_optimizer    strategy_ckpt_save_file
     parallel_optimizer_config    dataset_strategy
     enable_alltoall              pipeline_stages
+               \                 pipeline_result_broadcast
                \                 auto_parallel_search_mode
                \                 comm_fusion
                \                 strategy_ckpt_config

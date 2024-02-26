@@ -457,12 +457,15 @@ REG_BPROP_BUILDER("LRN").SetBody(BODYFUNC(ib) {
 });
 
 REG_BPROP_BUILDER("Dropout").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
+  auto keep_prob = ib->GetInput(kIndex1);
+  auto seed0 = ib->GetInput(kIndex2);
+  auto seed1 = ib->GetInput(kIndex3);
   auto out = ib->GetInput(kIndex4);
   auto dout = ib->GetInput(kIndex5);
   auto mask = ib->TupleGetItem(out, 1);
   auto dy = ib->TupleGetItem(dout, 0);
   auto dx = ib->Emit(kDropoutGradOpName, {dy, mask}, {{"keep_prob", ib->GetInput(kIndex1)->BuildValue()}});
-  return {dx};
+  return {dx, ib->OutZeros(keep_prob), ib->OutZeros(seed0), ib->OutZeros(seed1)};
 });
 
 REG_BPROP_BUILDER("BinaryCrossEntropy").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
@@ -639,6 +642,29 @@ REG_BPROP_BUILDER("LayerNorm").SetUnusedInputs({i2, i5}).SetBody(BODYFUNC(ib) {
   attrs.push_back(std::make_pair("epsilon", epsilon->BuildValue()));
   auto result = ib->Emit("LayerNormGrad",
                          {x, ib->TupleGetItem(dout, 0), ib->TupleGetItem(out, 2), ib->TupleGetItem(out, 1), gamma,
+                          begin_norm_axis, begin_params_axis},
+                         attrs);
+  auto d_x = ib->TupleGetItem(result, 0);
+  auto d_gamma = ib->TupleGetItem(result, 1);
+  auto d_beta = ib->TupleGetItem(result, 2);
+  auto grad_begin_norm_axis = ib->OutZeros(begin_norm_axis);
+  auto grad_begin_params_axis = ib->OutZeros(begin_params_axis);
+  auto grad_epsilon = ib->OutZeros(epsilon);
+  return {d_x, d_gamma, d_beta, grad_begin_norm_axis, grad_begin_params_axis, grad_epsilon};
+});
+
+REG_BPROP_BUILDER("LayerNormV3").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto gamma = ib->GetInput(kIndex1);
+  auto begin_norm_axis = ib->GetInput(kIndex3);
+  auto begin_params_axis = ib->GetInput(kIndex4);
+  auto epsilon = ib->GetInput(kIndex5);
+  auto out = ib->GetInput(kIndex6);
+  auto dout = ib->GetInput(kIndex7);
+  DAttr attrs;
+  attrs.push_back(std::make_pair("epsilon", epsilon->BuildValue()));
+  auto result = ib->Emit("LayerNormGradV3",
+                         {ib->TupleGetItem(dout, 0), x, ib->TupleGetItem(out, 2), ib->TupleGetItem(out, 1), gamma,
                           begin_norm_axis, begin_params_axis},
                          attrs);
   auto d_x = ib->TupleGetItem(result, 0);

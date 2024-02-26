@@ -390,7 +390,8 @@ void StridedSliceInfo::ChangeCNodeBegin() {
   }
   auto begin_new_value = MakeValue(begin_new);
   auto new_begin_value_node = std::make_shared<ValueNode>(begin_new_value);
-  cnode_->set_input(STRIDE_SLICE_CNODE_BEGIN_INDEX, new_begin_value_node);
+  auto manager = cnode_->func_graph()->manager();
+  manager->SetEdge(cnode_, STRIDE_SLICE_CNODE_BEGIN_INDEX, new_begin_value_node);
 }
 
 void StridedSliceInfo::ChangeCNodeEnd() {
@@ -405,7 +406,8 @@ void StridedSliceInfo::ChangeCNodeEnd() {
   }
   auto end_new_value = MakeValue(end_new);
   auto new_end_value_node = std::make_shared<ValueNode>(end_new_value);
-  cnode_->set_input(STRIDE_SLICE_CNODE_END_INDEX, new_end_value_node);
+  auto manager = cnode_->func_graph()->manager();
+  manager->SetEdge(cnode_, STRIDE_SLICE_CNODE_END_INDEX, new_end_value_node);
 }
 
 Status StridedSliceInfo::InferMirrorOps() {
@@ -461,7 +463,8 @@ void StridedSliceInfo::ChangeMakeTupleConstant(const CNodePtr &cnode, size_t mak
       int64_t replace_value = GetValue<int64_t>(value_node) / shard_size[i];
       auto replace_value_ptr = MakeValue(replace_value);
       auto replace_value_node = std::make_shared<ValueNode>(replace_value_ptr);
-      make_tuple_cnode->set_input(i + 1, replace_value_node);
+      auto manager = make_tuple->func_graph()->manager();
+      manager->SetEdge(make_tuple, i + 1, replace_value_node);
     }
   }
 }

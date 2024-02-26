@@ -686,14 +686,76 @@ AnfNodePtrList InsertTypeTransformOp::ProcessTupleToTupleUnfold(const FuncGraphP
     KernelBuildInfoPtr build_info = AnfAlgo::GetSelectKernelBuildInfo(node);
     MS_EXCEPTION_IF_NULL(build_info);
     if (build_info->op_type() == kernel::OpType::SKIP) {
-      MS_LOG(INFO) << "Node " << node->fullname_with_scope() << " skip TupleToTupleUnfold type matching.";
-      *new_prim = false;
-      return {input};
+      return ProcessTupleToTupleUnfoldForSkipOp(func_graph, input, node, new_prim);
     }
     MS_LOG(EXCEPTION) << "Tuple to TupleUnfold pattern should have TupleGetItem as user node, but got "
                       << node->fullname_with_scope() << ", " << node->DebugString();
   }
+  return ProcessTupleToTupleUnfoldForTupleGetItem(func_graph, input, node, new_prim);
+}
 
+AnfNodePtrList InsertTypeTransformOp::ProcessTupleToTupleUnfoldForSkipOp(const FuncGraphPtr &func_graph,
+                                                                         const AnfNodePtr &input, const CNodePtr &node,
+                                                                         bool *new_prim) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(input);
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(new_prim);
+  if (input->abstract() != nullptr && input->abstract()->isa<abstract::AbstractSequence>()) {
+    const auto &seq_abs = input->abstract()->cast<abstract::AbstractSequencePtr>();
+    MS_EXCEPTION_IF_NULL(seq_abs);
+    if (!seq_abs->dynamic_len()) {
+      AnfNodePtrList new_inputs;
+      for (const auto &node_input : node->inputs()) {
+        if (node_input != input) {
+          continue;
+        }
+        for (size_t i = 0; i < seq_abs->size(); ++i) {
+          CNodePtr get_item = CreatTupleGetItemNode(func_graph, input, i);
+          MS_EXCEPTION_IF_NULL(get_item);
+          auto kernel_info = std::make_shared<device::KernelInfo>();
+          MS_EXCEPTION_IF_NULL(kernel_info);
+          get_item->set_kernel_info(kernel_info);
+          auto builder = std::make_shared<KernelBuildInfoBuilder>();
+          MS_EXCEPTION_IF_NULL(builder);
+          AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), get_item.get());
+          KernelBuildInfoPtr build_info = AnfAlgo::GetSelectKernelBuildInfo(get_item);
+          MS_EXCEPTION_IF_NULL(build_info);
+          build_info->SetInputsFormat({AnfAlgo::GetOutputFormat(input, 0), kOpFormat_DEFAULT});
+          build_info->SetInputsDeviceType({AnfAlgo::GetOutputDeviceDataType(input, 0), TypeId::kNumberTypeInt64});
+          build_info->SetOutputsFormat({AnfAlgo::GetOutputFormat(input, 0)});
+          build_info->SetOutputsDeviceType({AnfAlgo::GetOutputDeviceDataType(input, 0)});
+          build_info->SetInputsKernelObjectType({KernelObjectType::TUPLE_UNFOLD, KernelObjectType::SCALAR});
+          build_info->SetOutputsKernelObjectType({KernelObjectType::TENSOR});
+          bool new_get_item_prim = false;
+          auto new_get_item_inputs =
+            ProcessTupleToTupleUnfoldForTupleGetItem(func_graph, input, get_item, &new_get_item_prim);
+          new_get_item_inputs.emplace_back(get_item->input(2));
+          auto new_get_item = CreateNewNode(func_graph, new_get_item_inputs, get_item);
+          MS_LOG(DEBUG) << "Create new node " << new_get_item->fullname_with_scope() << " "
+                        << new_get_item->DebugString(2) << " to replace " << get_item->fullname_with_scope() << " "
+                        << get_item->DebugString(2)
+                        << " build info:" << AnfAlgo::GetSelectKernelBuildInfo(new_get_item)->ToString();
+          new_inputs.emplace_back(new_get_item);
+        }
+      }
+      return new_inputs;
+    }
+  } else {
+    MS_LOG(WARNING) << "Invalid input:" << input->DebugString() << " for node:" << node->DebugString();
+  }
+  MS_LOG(INFO) << "Node " << node->fullname_with_scope() << " skip TupleToTupleUnfold type matching.";
+  *new_prim = false;
+  return {input};
+}
+
+AnfNodePtrList InsertTypeTransformOp::ProcessTupleToTupleUnfoldForTupleGetItem(const FuncGraphPtr &func_graph,
+                                                                               const AnfNodePtr &input,
+                                                                               const CNodePtr &node, bool *new_prim) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(input);
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(new_prim);
   auto prim = NewValueNode(prim::kPrimRealTupleGetItem);
   MS_EXCEPTION_IF_NULL(prim);
   // Use original inputs except the primitive.

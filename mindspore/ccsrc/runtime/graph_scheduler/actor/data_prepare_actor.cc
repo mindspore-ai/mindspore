@@ -159,8 +159,8 @@ void SyncTensorData(const TensorPtr &host_tensor, const DeviceTensorPtr &device_
     if (taken_over_by_swap_manager) {
       device_tensor->SetStorageInfo(GetStorageInfo(real_host_tensor, device_tensor, device_context));
     } else if (!device_tensor->SyncHostToDevice(host_shape, host_tensor_size, host_tensor_type,
-                                                real_host_tensor->data_c(),
-                                                real_host_tensor->device_info().host_format_)) {
+                                                real_host_tensor->device_info().host_format_,
+                                                real_host_tensor->data_ptr())) {
       std::string error_info = "SyncHostToDevice failed, node name: " + node->fullname_with_scope() +
                                ", host tensor size: " + std::to_string(host_tensor_size) +
                                ", host tensor type: " + std::to_string(static_cast<int>(host_tensor_type)) +
@@ -929,8 +929,8 @@ void DataPrepareActor::PrepareDataForControlValueNode(const KernelWithIndex &nod
   auto host_tensor_size = LongToSize(tensor->data().nbytes());
   auto host_tensor_type = tensor->data_type();
   auto shape = tensor->shape();
-  if (!device_tensor->SyncHostToDevice(shape, host_tensor_size, host_tensor_type, tensor->data_c(),
-                                       tensor->device_info().host_format_)) {
+  if (!device_tensor->SyncHostToDevice(shape, host_tensor_size, host_tensor_type, tensor->device_info().host_format_,
+                                       tensor->data_ptr())) {
     std::string error_info = "Sync host to device failed for node:" + node->DebugString();
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
   }
@@ -976,7 +976,10 @@ void DataPrepareActor::PrepareDataForStringValue(const ValueNodePtr &node, size_
   auto value = GetValue<std::string>(node_value);
   size_t tensor_size = value.size();
   ShapeVector shape = {1, SizeToLong(tensor_size)};
-  if (!device_tensor->SyncHostToDevice(shape, tensor_size, kObjectTypeString, value.data())) {
+  // account '\0' to string size, keep consistent with method `CreateDeviceAddressForScalarAndString` defined in
+  // `device_address_utils.cc`
+  size_t string_tensor_size = tensor_size + 1;
+  if (!device_tensor->SyncHostToDevice(shape, string_tensor_size, kObjectTypeString, value.data())) {
     std::string error_info = "SyncHostToDevice failed, node name: " + node->fullname_with_scope();
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(real_strategy_, (*context), error_info);
   }

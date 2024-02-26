@@ -10,10 +10,10 @@ mindspore.ops.floor_divide
     .. math::
         out_{i} = \text{floor}( \frac{input_i}{other_i})
 
+    其中 :math:`floor` 表示Floor算子，有关更多详细信息，请参阅 :class:`mindspore.ops.Floor` 算子。
+
     .. warning::
         这是一个实验性API，后续可能修改或删除。
-
-    其中 :math:`floor` 表示Floor算子，有关更多详细信息，请参阅 :class:`mindspore.ops.Floor` 算子。
 
     参数：
         - **input** (Union[Tensor, Number, bool]) - 第一个输入，为数值型，或bool，或数据类型为数值型或bool的Tensor。

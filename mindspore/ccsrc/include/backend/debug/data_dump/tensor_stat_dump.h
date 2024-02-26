@@ -51,7 +51,7 @@ class BACKEND_EXPORT TensorStatDump {
   std::string io_;
   size_t slot_;
   size_t tensor_loader_slot_;
-  mindspore::TypeId data_type_;
+  mindspore::TypeId data_type_{mindspore::TypeId::kTypeUnknown};
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_MINDSPORE_CCSRC_DEBUG_DATA_DUMP_TENSOR_STAT_DUMP_H_

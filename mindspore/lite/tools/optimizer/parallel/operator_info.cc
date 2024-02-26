@@ -19,7 +19,6 @@
 #include <algorithm>
 #include "tools/optimizer/parallel/split_strategy.h"
 #include "ops/auto_generate/gen_lite_ops.h"
-#include "ops/addn.h"
 #include "ops/tuple_get_item.h"
 #include "include/common/utils/utils.h"
 #include "include/errorcode.h"

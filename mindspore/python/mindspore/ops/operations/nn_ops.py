@@ -9040,8 +9040,7 @@ class Pdist(Primitive):
         p (float, optional): The order of norm distance, :math:`p∈[0, ∞)`. Default: ``2.0`` .
 
     Inputs:
-        - **x** (Tensor) - Input tensor of shape :math:`(*B, N, M)`. :math:`*B` is batch size,
-          one-dim or multi-dim. Supported dtypes: float16, float32 or float64.
+        - **x** (Tensor) - Input tensor. Supported dtypes: float16, float32 or float64.
 
     Outputs:
         Tensor, has the same dtype as `x`.
@@ -10014,7 +10013,6 @@ class IncreFlashAttention(Primitive):
     def __init__(self, num_heads, input_layout="BSH", scale_value=1.0, num_key_value_heads=0, block_size=0,
                  inner_precise=1):
         """Initialize IncreFlashAttention."""
-        super().__init__("IncreFlashAttention")
         validator.check_value_type('num_heads', num_heads, [int], self.name)
         validator.check_value_type('input_layout', input_layout, [str], self.name)
         validator.check_value_type('scale_value', scale_value, [float], self.name)

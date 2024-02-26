@@ -7,7 +7,7 @@ mindspore.nn.probability.bijector.Softplus
     此Bijector对应的映射函数为：
 
     .. math::
-        Y = g(x) = \frac{\log(1 + e ^ {kX})}{k}
+        Y = \frac{\log(1 + e ^ {kX})}{k}
 
     其中k是锐度因子。
 

@@ -14,292 +14,144 @@
  * limitations under the License.
  */
 #include "extendrt/cxx_api/llm_engine/llm_engine.h"
-#include <set>
 #include "mindspore/lite/src/extendrt/cxx_api/dlutils.h"
 #include "mindspore/lite/src/extendrt/cxx_api/file_utils.h"
-#include "mindspore/core/load_mindir/load_model.h"
-#include "extendrt/cxx_api/llm_engine/llm_engine_plugin.h"
 #include "mindspore/lite/src/common/common.h"
-#include "mindspore/lite/tools/common/custom_ascend_utils.h"
-#include "mindspore/lite/src/extendrt/utils/func_graph_utils.h"
+#include "mindspore/lite/src/extendrt/cxx_api/llm_engine/llm_engine_impl.h"
 
 namespace mindspore {
-namespace {
-constexpr auto kLLMEnginePluginSoName = "libllm_engine_plugin.so";
-constexpr auto kLLMEngineCreatePluginFuncName = "CreateLLMEnginePlugin";
+LLMEngine::LLMEngine(LLMRole role, uint64_t cluster_id, const VecChar &batch_mode) {
+  impl_ = std::make_shared<LLMEngineImpl>(role, cluster_id, CharToString(batch_mode));
+}
 
-Status GetModelInfo(const FuncGraphPtr &func_graph, LLMEngineModelInfo *model_info) {
-  if (func_graph == nullptr || model_info == nullptr) {
-    return kLiteNullptr;
-  }
-  std::map<std::string, ValuePtr> attr_map;
-  std::vector<std::pair<std::string, tensor::TensorPtr>> ref_datas;
-  auto ret =
-    CustomAscendUtils::ParseCustomFuncGraph(func_graph, &model_info->om_data, &model_info->name, &attr_map, &ref_datas);
-  if (!ret) {
-    MS_LOG(ERROR) << "Failed to parse custom func graph";
+Status LLMEngine::AddModelInner(mindspore::LLMModel *llm_model, const std::vector<VecChar> &model_paths_c,
+                                const std::map<VecChar, VecChar> &options_c, const VecChar &postprocess_model_path_c) {
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "LLMEngine impl is nullptr";
     return kLiteError;
   }
-  for (auto &item : func_graph->get_inputs()) {
-    auto shape = FuncGraphUtils::GetTensorShape({item, 0});
-    auto type_id = FuncGraphUtils::GetTensorDataType({item, 0});
-    model_info->input_shapes.push_back(shape);
-    model_info->input_dtypes.push_back(static_cast<TypeId>(type_id));
-  }
-  for (auto &item : ref_datas) {
-    auto &tensor = item.second;
-    model_info->ref_input_shapes.push_back(tensor->shape_c());
-    model_info->ref_input_dtypes.push_back(static_cast<TypeId>(tensor->data_type()));
-  }
-  auto get_string_attr = [&attr_map](const std::string &attr_name, std::string *val) {
-    auto attr_it = attr_map.find(attr_name);
-    if (attr_it == attr_map.end()) {
-      MS_LOG(ERROR) << "Failed to attr " << attr_name;
-      return false;
-    }
-    auto &attr_val = attr_it->second;
-    if (!attr_val->isa<StringImm>()) {
-      MS_LOG(ERROR) << "Failed to attr " << attr_name << ", attr type is " << attr_val->type_name();
-      return false;
-    }
-    *val = GetValue<std::string>(attr_it->second);
-    MS_LOG(INFO) << "Get graph attr " << attr_name << " " << *val;
-    return true;
-  };
-  if (!get_string_attr(lite::kNameAttrWeightDir, &model_info->weight_dir)) {
+  if (llm_model == nullptr || llm_model->impl_ == nullptr) {
+    MS_LOG(ERROR) << "Failed to add model, input argument llm_model is nullptr";
     return kLiteError;
   }
-  std::vector<AnfWithOutIndex> outputs;
-  if (!FuncGraphUtils::GetFuncGraphOutputs(func_graph, &outputs)) {
-    MS_LOG(ERROR) << "Failed to get func graph outputs";
-    return kLiteError;
+  auto model_paths = VectorCharToString(model_paths_c);
+  auto options = MapVectorCharToString(options_c);
+  auto postprocess_model_path = CharToString(postprocess_model_path_c);
+  uint64_t model_id = -1;
+  auto status = impl_->AddModel(model_paths, options, postprocess_model_path, &model_id);
+  if (status != kSuccess) {
+    return status;
   }
-  model_info->output_count = outputs.size();
+  llm_model->impl_->SetModelId(model_id);
+  llm_model->impl_->SetLLMEngine(impl_);
   return kSuccess;
 }
 
-FuncGraphPtr LoadMindIR(const std::string &model_path) {
-  if (model_path.empty()) {
-    MS_LOG(ERROR) << "Model path cannot be empty";
-    return nullptr;
-  }
-  auto buffer = ReadFile(model_path);
-  if (buffer.Data() == nullptr || buffer.DataSize() == 0) {
-    MS_LOG(ERROR) << "Failed to read buffer from model file: " << model_path;
-    return nullptr;
-  }
-  std::string weight_path = "./";
-  if (model_path.find("/") != std::string::npos) {
-    weight_path = model_path.substr(0, model_path.rfind("/"));
-  }
-  MindIRLoader mindir_loader(true, nullptr, 0, kDecModeAesGcm, false);
-  auto func_graph = mindir_loader.LoadMindIR(buffer.Data(), buffer.DataSize(), weight_path);
-  if (func_graph == nullptr) {
-    MS_LOG(ERROR) << "Failed to load MindIR model, please check the validity of the model: " << weight_path;
-    return nullptr;
-  }
-  return func_graph;
-}
-
-Status LoadAndGetModelInfo(const std::string &model_path, LLMEngineModelInfo *model_info_ptr) {
-  auto func_graph = LoadMindIR(model_path);
-  if (func_graph == nullptr) {
-    MS_LOG(ERROR) << "Failed to load mindir " << model_path;
+Status LLMEngine::InitInner(const std::map<VecChar, VecChar> &options) {
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "LLMEngine impl is nullptr";
     return kLiteError;
   }
-  LLMEngineModelInfo &model_info = *model_info_ptr;
-  if (GetModelInfo(func_graph, &model_info) != kSuccess) {
-    MS_LOG(ERROR) << "Failed to ge graph info, mindir " << model_path;
-    return kLiteError;
-  }
-  // relative weight path
-  if (!model_info.weight_dir.empty() && model_info.weight_dir[0] != '/') {
-    if (model_path.find("/") != std::string::npos) {
-      model_info.weight_dir = model_path.substr(0, model_path.rfind("/") + 1) + model_info.weight_dir;
-      MS_LOG(INFO) << "Update " << model_path << " weight dir to " << model_info.weight_dir;
-    }
-  }
-  return kSuccess;
-}
-}  // namespace
-
-typedef LLMEnginePluginBase *(*CreateLLMEnginePluginFunc)();
-
-class LLEnginePluginLoader {
- public:
-  static LLEnginePluginLoader &Instance() {
-    static LLEnginePluginLoader instance;
-    return instance;
-  }
-  std::shared_ptr<LLMEnginePluginBase> CreatePlugin();
-
- private:
-  void *handle_ = nullptr;
-  CreateLLMEnginePluginFunc create_plugin_func_ = nullptr;
-  bool Register();
-};
-
-bool LLEnginePluginLoader::Register() {
-  if (create_plugin_func_ != nullptr) {
-    return kSuccess;
-  }
-  std::string plugin_path;
-  auto ret = DLSoPath({"libmindspore-lite.so", "_c_lite"}, kLLMEnginePluginSoName, &plugin_path);
-  if (ret != kSuccess) {
-    MS_LOG(ERROR) << "Get real path of " << kLLMEnginePluginSoName << " failed.";
-    return false;
-  }
-  MS_LOG(INFO) << "Find LLMEngine plugin so success, path = " << plugin_path;
-  void *function = nullptr;
-  ret = DLSoOpen(plugin_path, kLLMEngineCreatePluginFuncName, &handle_, &function);
-  if (ret != kSuccess) {
-    MS_LOG(ERROR) << "DLSoOpen failed, so path: " << plugin_path << ", err: " << ret.ToString();
-    return false;
-  }
-  create_plugin_func_ = reinterpret_cast<CreateLLMEnginePluginFunc>(function);
-  if (create_plugin_func_ == nullptr) {
-    MS_LOG(ERROR) << "Cast " << kLLMEngineCreatePluginFuncName << " failed.";
-    return false;
-  }
-  MS_LOG(INFO) << "Register LLMEngine plugin success.";
-  return true;
-}
-
-std::shared_ptr<LLMEnginePluginBase> LLEnginePluginLoader::CreatePlugin() {
-  if (!Register()) {
-    MS_LOG(ERROR) << "Failed to register " << kLLMEnginePluginSoName;
-    return nullptr;
-  }
-  if (create_plugin_func_ == nullptr) {
-    MS_LOG(ERROR) << "Create plugin func is nullptr";
-    return nullptr;
-  }
-  return std::shared_ptr<LLMEnginePluginBase>(create_plugin_func_());
-}
-
-LLMEngine::LLMEngine() { plugin_ = LLEnginePluginLoader::Instance().CreatePlugin(); }
-
-Status LLMEngine::Init(const std::vector<std::string> &model_paths, LLMRole role, uint64_t cluster_id,
-                       const std::map<std::string, std::string> &options, const std::string &batch_mode,
-                       const std::string &postprocess_model_path) {
-  if (plugin_ == nullptr) {
-    MS_LOG(ERROR) << "LLMEngine plugin has not been created";
-    return kLiteError;
-  }
-  std::vector<LLMEngineModelInfo> infos;
-  std::set<std::string> names;
-  for (auto &model_path : model_paths) {
-    LLMEngineModelInfo model_info;
-    if (LoadAndGetModelInfo(model_path, &model_info) != kSuccess) {
-      MS_LOG(ERROR) << "Failed to ge graph info, mindir " << model_path;
-      return kLiteError;
-    }
-    infos.push_back(model_info);
-    names.emplace(model_info.name);
-  }
-  if (names.size() != infos.size()) {
-    for (size_t i = 0; i < infos.size(); i++) {
-      infos[i].name += "_U" + std::to_string(i);  // make unique name
-    }
-  }
-  LLMEngineModelInfo postprocess_model_info;
-  if (!postprocess_model_path.empty()) {
-    if (LoadAndGetModelInfo(postprocess_model_path, &postprocess_model_info) != kSuccess) {
-      MS_LOG(ERROR) << "Failed to ge graph info, mindir " << postprocess_model_path;
-      return kLiteError;
-    }
-  }
-  return plugin_->Init(infos, role, cluster_id, options, batch_mode, postprocess_model_info);
+  return impl_->Init(MapVectorCharToString(options));
 }
 
 void LLMEngine::Finalize() {
-  if (plugin_ == nullptr) {
-    MS_LOG(INFO) << "LLMEngine plugin has not been created";
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "LLMEngine impl is nullptr";
     return;
   }
-  plugin_->Finalize();
-}
-
-Status LLMEngine::Predict(const LLMReq &req, const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) {
-  if (plugin_ == nullptr) {
-    MS_LOG(ERROR) << "LLMEngine plugin has not been created";
-    return kLiteError;
-  }
-  return plugin_->Predict(req, inputs, outputs);
-}
-
-Status LLMEngine::Predict(const std::vector<LLMReq> &req, const std::vector<MSTensor> &inputs,
-                          std::vector<MSTensor> *outputs) {
-  if (plugin_ == nullptr) {
-    MS_LOG(ERROR) << "LLMEngine plugin has not been created";
-    return kLiteError;
-  }
-  return plugin_->Predict(req, inputs, outputs);
-}
-
-Status LLMEngine::CompleteRequest(const LLMReq &req) {
-  if (plugin_ == nullptr) {
-    MS_LOG(ERROR) << "LLMEngine plugin has not been created";
-    return kLiteError;
-  }
-  return plugin_->CompleteRequest(req);
-}
-
-LLMEngineStatus LLMEngine::FetchStatus() {
-  if (plugin_ == nullptr) {
-    MS_LOG(ERROR) << "LLMEngine plugin has not been created";
-    return LLMEngineStatus();
-  }
-  return plugin_->FetchStatus();
-}
-
-Status LLMEngine::PreloadPromptPrefix(const LLMReq &req, const std::vector<MSTensor> &inputs) {
-  if (plugin_ == nullptr) {
-    MS_LOG(ERROR) << "LLMEngine plugin has not been created";
-    return kLiteError;
-  }
-  return plugin_->PreloadPromptPrefix(req, inputs);
-}
-
-Status LLMEngine::ReleasePromptPrefix(const LLMReq &req) {
-  if (plugin_ == nullptr) {
-    MS_LOG(ERROR) << "LLMEngine plugin has not been created";
-    return kLiteError;
-  }
-  return plugin_->ReleasePromptPrefix(req);
-}
-
-Status LLMEngine::PullKV(const LLMReq &req) {
-  if (plugin_ == nullptr) {
-    MS_LOG(ERROR) << "LLMEngine plugin has not been created";
-    return kLiteError;
-  }
-  return plugin_->PullKV(req);
-}
-
-Status LLMEngine::MergeKV(const LLMReq &req, uint32_t batch_index) {
-  if (plugin_ == nullptr) {
-    MS_LOG(ERROR) << "LLMEngine plugin has not been created";
-    return kLiteError;
-  }
-  return plugin_->MergeKV(req, batch_index);
+  impl_->Finalize();
 }
 
 Status LLMEngine::LinkClusters(const std::vector<LLMClusterInfo> &clusters, std::vector<Status> *rets,
                                int32_t timeout) {
-  if (plugin_ == nullptr) {
-    MS_LOG(ERROR) << "LLMEngine plugin has not been created";
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "LLMEngine impl is nullptr";
     return kLiteError;
   }
-  return plugin_->LinkClusters(clusters, rets, timeout);
+  return impl_->LinkClusters(clusters, rets, timeout);
 }
 
 Status LLMEngine::UnlinkClusters(const std::vector<LLMClusterInfo> &clusters, std::vector<Status> *rets,
                                  int32_t timeout) {
-  if (plugin_ == nullptr) {
-    MS_LOG(ERROR) << "LLMEngine plugin has not been created";
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "LLMEngine impl is nullptr";
     return kLiteError;
   }
-  return plugin_->UnlinkClusters(clusters, rets, timeout);
+  return impl_->UnlinkClusters(clusters, rets, timeout);
+}
+
+LLMEngineStatus LLMEngine::FetchStatus() {
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "LLMEngine impl is nullptr";
+    return LLMEngineStatus();
+  }
+  return impl_->FetchStatus();
+}
+
+Status LLMEngine::CompleteRequest(const LLMReq &req) {
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "LLMEngine impl is nullptr";
+    return kLiteError;
+  }
+  return impl_->CompleteRequest(req);
+}
+
+LLMModel::LLMModel() { impl_ = std::make_shared<LLMModelImpl>(); }
+
+Status LLMModel::Predict(const LLMReq &req, const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) {
+  if (impl_ == nullptr || impl_->GetLLMEngine() == nullptr) {
+    MS_LOG(ERROR) << "LLMEngine impl is nullptr";
+    return kLiteError;
+  }
+  return impl_->GetLLMEngine()->Predict(req, inputs, outputs, impl_->GetModelId());
+}
+
+Status LLMModel::Predict(const std::vector<LLMReq> &req, const std::vector<MSTensor> &inputs,
+                         std::vector<MSTensor> *outputs) {
+  if (impl_ == nullptr || impl_->GetLLMEngine() == nullptr) {
+    MS_LOG(ERROR) << "LLMEngine impl is nullptr";
+    return kLiteError;
+  }
+  return impl_->GetLLMEngine()->Predict(req, inputs, outputs, impl_->GetModelId());
+}
+Status LLMModel::PreloadPromptPrefix(const LLMReq &req, const std::vector<MSTensor> &inputs) {
+  if (impl_ == nullptr || impl_->GetLLMEngine() == nullptr) {
+    MS_LOG(ERROR) << "LLMEngine impl is nullptr";
+    return kLiteError;
+  }
+  return impl_->GetLLMEngine()->PreloadPromptPrefix(req, inputs, impl_->GetModelId());
+}
+
+Status LLMModel::ReleasePromptPrefix(const LLMReq &req) {
+  if (impl_ == nullptr || impl_->GetLLMEngine() == nullptr) {
+    MS_LOG(ERROR) << "LLMEngine impl is nullptr";
+    return kLiteError;
+  }
+  return impl_->GetLLMEngine()->ReleasePromptPrefix(req, impl_->GetModelId());
+}
+
+Status LLMModel::PullKV(const LLMReq &req) {
+  if (impl_ == nullptr || impl_->GetLLMEngine() == nullptr) {
+    MS_LOG(ERROR) << "LLMEngine impl is nullptr";
+    return kLiteError;
+  }
+  return impl_->GetLLMEngine()->PullKV(req, impl_->GetModelId());
+}
+
+Status LLMModel::MergeKV(const LLMReq &req, uint32_t batch_index, uint32_t batch_id) {
+  if (impl_ == nullptr || impl_->GetLLMEngine() == nullptr) {
+    MS_LOG(ERROR) << "LLMEngine impl is nullptr";
+    return kLiteError;
+  }
+  return impl_->GetLLMEngine()->MergeKV(req, batch_index, batch_id, impl_->GetModelId());
+}
+
+std::vector<LLMTensorInfo> LLMModel::GetInputInfos() {
+  if (impl_ == nullptr || impl_->GetLLMEngine() == nullptr) {
+    MS_LOG(ERROR) << "LLMEngine impl is nullptr";
+    return {};
+  }
+  return impl_->GetLLMEngine()->GetInputInfos(impl_->GetModelId());
 }
 }  // namespace mindspore

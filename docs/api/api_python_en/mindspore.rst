@@ -46,7 +46,7 @@ DataType
 
   * **Numeric Type**
 
-    Currently, MindSpore supports ``Int`` type, ``Uint`` type, ``Float`` type and ``Complex`` type.
+    Currently, MindSpore supports ``int`` type, ``uint`` type, ``float`` type and ``complex`` type.
     The following table lists the details.
 
     ==============================================   =============================

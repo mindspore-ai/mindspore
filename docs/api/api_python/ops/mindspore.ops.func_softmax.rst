@@ -11,7 +11,7 @@ mindspore.ops.softmax
     其中 :math:`N` 代表Tensor的长度。
 
     参数：
-        - **input** (Tensor) - Softmax的输入，shape为 :math:`(N, *)` ，其中 :math:`*` 为任意额外维度。
+        - **input** (Tensor) - Softmax的输入，shape为 :math:`(N, *)` ，其中 :math:`*` 为任意额外维度。支持float16和float32。
         - **axis** (int，可选) - 指定Softmax操作的轴。默认值： ``-1`` 。
 
     关键字参数：

@@ -30,7 +30,7 @@ class Exponential(Distribution):
     and the probability density function:
 
     .. math::
-        f(x, \lambda) = \lambda \exp(-\lambda x),
+        f(x, \lambda) = \lambda \exp(-\lambda x)
 
     where :math:`\lambda` is the rate of the distribution.
 

@@ -35,8 +35,6 @@
 #define google mindspore_private
 #include "glog/logging.h"
 #undef google
-#else
-#include "toolchain/slog.h"
 #endif
 
 #undef SM_DEBUG

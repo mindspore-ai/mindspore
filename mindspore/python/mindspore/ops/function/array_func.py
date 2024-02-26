@@ -40,8 +40,6 @@ from mindspore.ops.operations.array_ops import (
     MatrixSetDiagV3,
     Fills,
     Col2Im,
-    ArgMaxWithValue,
-    ArgMinWithValue,
     ScatterNdMax,
     ScatterNdMul,
     IndexFill,
@@ -51,7 +49,9 @@ from mindspore.ops.operations.array_ops import (
     Lstsq,
     Mvlgamma,
     Tril,
-    Argmax
+    Argmax,
+    ArgMaxWithValue,
+    ArgMinWithValue
 )
 from mindspore.ops.operations.array_ops import TensorScatterElements
 from mindspore.common import Tensor
@@ -61,11 +61,10 @@ from mindspore._c_expression import Tensor as Tensor_
 from mindspore.ops._utils.utils import ms_arrange
 
 from mindspore.ops.auto_generate import cat, range, scatter_nd, deepcopy, masked_fill, diagonal, expand_dims, \
-    nonzero, reverse, transpose, unsorted_segment_sum, diag, gather, gather_d, gather_nd, reshape, select,    \
-    broadcast_to
+    nonzero, reverse, transpose, unsorted_segment_sum, diag, gather, gather_d, gather_nd, reshape, broadcast_to
 from mindspore.ops.operations.manually_defined import tile, rank, scalar_cast
 
-arg_max_with_value_ = P.ArgMaxWithValue()
+arg_max_with_value_ = ArgMaxWithValue()
 batch_to_space_nd_v2_ = P.BatchToSpaceNDV2()
 cast_ = P.Cast()
 diag_ = P.Diag()
@@ -591,8 +590,8 @@ def one_hot(indices, depth, on_value=1, off_value=0, axis=-1):
 
     Note:
         If the input `indices` has rank `N`, the output will have rank `N+1`.
-        The new axis is created at dimension `axis`. On Ascend, if `on_value` is Int64 dtype, `indices` must be
-        Int64 dtype, and the value for `on_value` and `off_value` can only be 1 and 0.
+        The new axis is created at dimension `axis`. On Ascend, if `on_value` is int64 dtype, `indices` must be
+        int64 dtype, and the value for `on_value` and `off_value` can only be 1 and 0.
 
     Args:
         indices(Tensor): A tensor of indices. Tensor of shape :math:`(X_0, \ldots, X_n)`.
@@ -1585,6 +1584,101 @@ def _calc_broadcast_shape(cond_shape, x_shape, y_shape):
         i = i + 1
     converted_shape.reverse()
     return tuple(converted_shape)
+
+
+def select(cond, x, y):
+    r"""
+    The conditional tensor determines whether the corresponding element in the output must be
+    selected from `x` (if true) or `y` (if false) based on the value of each element.
+
+    It can be defined as:
+
+    .. math::
+        out_i = \begin{cases}
+        x_i, & \text{if } cond_i \\
+        y_i, & \text{otherwise}
+        \end{cases}
+
+    Args:
+        cond (Tensor[bool]): The condition tensor, decides which element is chosen.
+          The shape is :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
+        x (Union[Tensor, int, float]): The first Tensor or number to be selected.
+          If x is a Tensor, the shape is or can be broadcadt to :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
+          If x is an int or a float, it will be cast to the type of int32 or float32,
+          and broadcast to the same shape as y. One of x and y must be a Tensor.
+        y (Union[Tensor, int, float]): The second Tensor or number to be selected.
+          If y is a Tensor, The shape is or can be broadcadt to :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
+          If y is an int or a float, it will be cast to the type of int32 or float32,
+          and broadcast to the same shape as x. One of x and y must be a Tensor.
+
+    Returns:
+        Tensor, has the same shape as `cond`.
+
+    Raises:
+        TypeError: If `x` or `y` is not a Tensor, int or float.
+        ValueError: The shapes of inputs can not be broadcast.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
+        >>> # 1) Both inputs are Tensor
+        >>>
+        >>> cond = Tensor([True, False])
+        >>> x = Tensor([2,3], mindspore.float32)
+        >>> y = Tensor([1,2], mindspore.float32)
+        >>> output = ops.select(cond, x, y)
+        >>> print(output)
+        [2. 2.]
+        >>> # 2) y is a float
+        >>> cond = Tensor([True, False])
+        >>> x = Tensor([2,3], mindspore.float32)
+        >>> y = 2.0
+        >>> output = ops.select(cond, x, y)
+        >>> print(output)
+        [2. 2.]
+    """
+    is_x_scalar = isinstance(x, (int, float))
+    is_y_scalar = isinstance(y, (int, float))
+    is_x_tensor = isinstance(x, Tensor)
+    is_y_tensor = isinstance(y, Tensor)
+    is_cond_tensor = isinstance(cond, Tensor)
+    _check_select_type(is_cond_tensor, is_x_scalar, is_y_scalar, is_x_tensor, is_y_tensor)
+    input_x = x
+    input_y = y
+    if is_x_scalar:
+        _check_select_shape_match(y.shape, cond.shape, "y")
+        _check_select_type_match(x, y.dtype, "x", "y")
+        input_x = zeros_like_(y) + x
+        if isinstance(x, int):
+            input_x = cast_(input_x, mstype.int32)
+        else:
+            input_x = cast_(input_x, mstype.float32)
+
+    if is_y_scalar:
+        _check_select_shape_match(x.shape, cond.shape, "x")
+        _check_select_type_match(y, x.dtype, "y", "x")
+        input_y = zeros_like_(x) + y
+        if isinstance(y, int):
+            input_y = cast_(input_y, mstype.int32)
+        else:
+            input_y = cast_(input_y, mstype.float32)
+
+    if is_x_tensor and is_y_tensor and is_cond_tensor:
+        x_shape = ops.shape(x)
+        y_shape = ops.shape(y)
+        cond_shape = ops.shape(cond)
+        all_constant = ops.isconstant(cond_shape) and ops.isconstant(x_shape) and ops.isconstant(y_shape)
+        if all_constant and not _check_select_shape_same(cond_shape, x_shape, y_shape):
+            broadcast_shape = _calc_broadcast_shape(cond_shape, x_shape, y_shape)
+            new_cond = ops.broadcast_to(cond, broadcast_shape)
+            new_x = ops.broadcast_to(x, broadcast_shape)
+            new_y = ops.broadcast_to(y, broadcast_shape)
+            return tensor_select_(new_cond, new_x, new_y)
+
+    return tensor_select_(cond, input_x, input_y)
 
 
 def strided_slice(input_x,
@@ -5231,7 +5325,7 @@ def max(input, axis=None, keepdims=False, *, initial=None, where=None):  # pylin
         tensor.
 
         - values (Tensor) - The maximum value of input tensor, with the same shape as index, and same dtype as x.
-        - index (Tensor) - The index for the maximum value of the input tensor, with dtype int32. If `keepdims`
+        - index (Tensor) - The index for the maximum value of the input tensor, with dtype int64. If `keepdims`
           is true, the shape of output tensors is :math:`(input_1, input_2, ..., input_{axis-1}, 1, input_{axis+1},
           ..., input_N)` . Otherwise, the shape is :math:`(input_1, input_2, ..., input_{axis-1}, input_{axis+1},
           ..., input_N)` .
@@ -5260,15 +5354,15 @@ def max(input, axis=None, keepdims=False, *, initial=None, where=None):  # pylin
         [[3.2 0.4 0.4 2.9 4. ]] [[1 1 0 1 1]]
     """
     if not input.shape:
-        return (input, Tensor(0, dtype=mstype.int32))
+        return (input, Tensor(0, dtype=mstype.int64))
     if axis is None:
-        return (reduce_max_(input), Tensor(0, dtype=mstype.int32))
+        return (reduce_max_(input), Tensor(0, dtype=mstype.int64))
     if initial is not None and not isinstance(initial, numbers.Number):
         raise TypeError(f"For 'max', 'initial' must be a scalar, but got {type(initial)}")
     if axis is not None and not isinstance(axis, int):
         raise TypeError(f"For 'max', 'axis' must be int, but got {type(axis)}")
     input = _init_and_select_elem(input, initial, where, ops.maximum)
-    argmax_with_value_op = ArgMaxWithValue(axis, keepdims)
+    argmax_with_value_op = _get_cache_prim(ArgMaxWithValue)(axis, keepdims)
     indices, values = argmax_with_value_op(input)
     return values, indices
 
@@ -5376,16 +5470,16 @@ def min(input, axis=None, keepdims=False, *, initial=None, where=None):  # pylin
         0.0 0
     """
     if not input.shape:
-        return (input, Tensor(0, dtype=mstype.int32))
+        return (input, Tensor(0, dtype=mstype.int64))
     if axis is None:
-        return (reduce_min_(input), Tensor(0, dtype=mstype.int32))
+        return (reduce_min_(input), Tensor(0, dtype=mstype.int64))
     if initial is not None and not isinstance(initial, numbers.Number):
         raise TypeError(f"For 'min', 'initial' must be a scalar, but got {type(initial)}")
     if axis is not None and not isinstance(axis, int):
         raise TypeError(f"For 'min', 'axis' must be int, but got {type(axis)}")
     input = _init_and_select_elem(input, initial, where, ops.minimum)
-    argmin_with_value_ = ArgMinWithValue(axis=axis, keep_dims=keepdims)
-    indices, values = argmin_with_value_(input)
+    argmin_with_value_op = _get_cache_prim(ArgMinWithValue)(axis, keepdims)
+    indices, values = argmin_with_value_op(input)
     return values, indices
 
 
@@ -5443,8 +5537,8 @@ def aminmax(input, *, axis=0, keepdims=False):
             output0 = ops.reshape(output0, [1] * input.ndim)
             output1 = ops.reshape(output1, [1] * input.ndim)
         return output0, output1
-    argmin_with_value_op = _get_cache_prim(P.ArgMinWithValue)(axis, keepdims)
-    argmax_with_value_op = _get_cache_prim(P.ArgMaxWithValue)(axis, keepdims)
+    argmin_with_value_op = _get_cache_prim(ArgMinWithValue)(axis, keepdims)
+    argmax_with_value_op = _get_cache_prim(ArgMaxWithValue)(axis, keepdims)
     _, output0 = argmin_with_value_op(input)
     _, output1 = argmax_with_value_op(input)
     if keepdims is True and input.ndim == 0:

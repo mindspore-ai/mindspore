@@ -19,7 +19,7 @@ import numpy as np
 import pytest
 
 import mindspore as ms
-from mindspore import ops
+from mindspore import ops, nn, Tensor
 import mindspore.ops.functional as F
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
 from tests.st.utils import test_utils
@@ -299,3 +299,33 @@ def test_concat_backward_dyn_seq(mode, dyn_mode):
     expect_grad2 = (np.ones(shape2).astype(np.float32),) * num2
     for out, expect in zip(grad2, expect_grad2):
         assert np.allclose(out.asnumpy(), expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_concat_with_input_complex64(mode):
+    """
+    Feature: Test Concat with input of complex64 type.
+    Description: Test Concat with input of complex64 type.
+    Expectation: Expect correct shape result.
+    """
+    class Net(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.concat = ops.Concat()
+
+        def construct(self, *inputs):
+            return self.concat(inputs)
+
+    ms.set_context(mode=mode)
+
+    input_x1 = Tensor(np.array([[0, 1], [2, 1]]).astype(np.complex64))
+    input_x2 = Tensor(np.array([[3, 2], [2, 5]]).astype(np.complex64))
+
+    net = Net()
+    out = net(input_x1, input_x2)
+    expect_out = np.array([[0, 1], [2, 1], [3, 2], [2, 5]]).astype(np.complex64)
+    assert np.allclose(out.asnumpy(), expect_out)

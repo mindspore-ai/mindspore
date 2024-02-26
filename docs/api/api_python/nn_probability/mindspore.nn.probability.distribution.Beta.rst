@@ -7,7 +7,7 @@ mindspore.nn.probability.distribution.Beta
     连续随机分布，取值范围为 :math:`[0, 1]` ，概率密度函数为
 
     .. math::
-        f(x, \alpha, \beta) = x^\alpha (1-x)^{\beta - 1} / B(\alpha, \beta).
+        f(x, \alpha, \beta) = x^\alpha (1-x)^{\beta - 1} / B(\alpha, \beta)
 
     其中 :math:`B` 为 Beta 函数。
 

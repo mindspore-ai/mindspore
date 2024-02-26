@@ -407,6 +407,17 @@ constexpr auto kChannelNameNpuLog = "_npu_log";
 // env key
 constexpr auto kCompilerCacheEnable = "MS_COMPILER_CACHE_ENABLE";
 constexpr auto kCompilerCachePath = "MS_COMPILER_CACHE_PATH";
+constexpr auto kSimulationLevel = "MS_SIMULATION_LEVEL";
+constexpr auto kSimulationLevelCompileGraph = "0";
+constexpr auto kSimulationLevelCompileKernel = "1";
+
+// comm
+constexpr auto kHCCLWorldGroup = "hccl_world_group";
+constexpr auto kNCCLWorldGroup = "nccl_world_group";
+constexpr auto kEnvRankSize = "RANK_SIZE";
+constexpr auto kEnvRankId = "RANK_ID";
+constexpr auto kEnvLocalRankSize = "LOCAL_RANK_SIZE";
+constexpr auto kEnvLocalRankId = "LOCAL_RANK_ID";
 
 // some size
 const size_t kShape4dDims = 4;
@@ -700,7 +711,7 @@ static inline uint64_t GetCurrentUSec() {
 #define TEST_FLAG(value, flag) (((value) & (flag)) == (flag))
 #define CLEAR_FLAG(value, flag) ((value) = ((value) & (~(flag))))
 
-#define _STRINGIZE(x) #x
-#define STRINGIZE(x) _STRINGIZE(x)
+#define _STRING_COMPILE_OPT(x) #x
+#define STRING_COMPILE_OPT(x) _STRING_COMPILE_OPT(x)
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_INCLUDE_COMMON_UTILS_UTILS_H_

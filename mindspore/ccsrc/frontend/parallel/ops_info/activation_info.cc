@@ -772,6 +772,51 @@ Status SortInfo::InferAsLossDivisor() {
   return SUCCESS;
 }
 
+Status SortInfo::GetAttrs() {
+  auto iter = attrs_.find(AXIS);
+  if (iter != attrs_.end()) {
+    MS_EXCEPTION_IF_NULL(iter->second);
+    if (iter->second->isa<Int64Imm>()) {  // the axis is a number
+      int64_t axis_element = iter->second->cast<Int64ImmPtr>()->value();
+      axis_.push_back(axis_element);
+      MS_LOG(INFO) << name_ << " : The axis is int64_t, value is " << axis_element;
+    } else if (iter->second->isa<ValueTuple>()) {  // the axis is a tuple
+      ValueTuplePtr value_tuple = iter->second->cast<ValueTuplePtr>();
+      if (value_tuple == nullptr) {
+        MS_LOG(ERROR) << name_ << " : The value_tuple is nullptr.";
+        return FAILED;
+      }
+      std::vector<ValuePtr> value_vector = value_tuple->value();
+      (void)std::transform(value_vector.begin(), value_vector.end(), std::back_inserter(axis_),
+                           [](const ValuePtr &value) { return static_cast<int64_t>(GetValue<int64_t>(value)); });
+      if (axis_.empty()) {
+        MS_LOG(ERROR) << name_ << " : The axis tuple is empty.";
+        return FAILED;
+      }
+      MS_LOG(INFO) << name_ << " : The axis is tuple, value is " << ListToString(axis_);
+    } else {
+      MS_LOG(ERROR) << name_ << " : The value of axis is not int64_t or tuple int64_t.";
+      return FAILED;
+    }
+  }
+
+  if ((inputs_shape_.size() != ACTIVATION_INPUTS_SIZE)) {
+    MS_LOG(ERROR) << name_ << " : Inputs shape size or outputs shape size is wrong.";
+    return FAILED;
+  }
+
+  // for example: tensor dimension is 4, then axis range [-4, 3]
+  int64_t dim = SizeToLong(inputs_shape_.at(0).size());
+  auto it =
+    std::find_if(axis_.begin(), axis_.end(), [dim](int64_t element) { return ((element >= dim) || (element < -dim)); });
+  if (it != axis_.end()) {
+    MS_LOG(ERROR) << name_ << " : The axis(" << *it << ") is out of range[" << (-dim) << ", " << (dim - 1) << "].";
+    return FAILED;
+  }
+
+  return SUCCESS;
+}
+
 REGISTER(ActivationInfo);
 REGISTER(GeLUInfo);
 REGISTER(FastGeLUInfo);
@@ -786,6 +831,7 @@ REGISTER(CumminInfo);
 REGISTER(CumProdInfo);
 REGISTER(EluInfo);
 REGISTER(ReLUInfo);
+REGISTER(SiLUInfo);
 REGISTER(identityInfo);
 REGISTER(RepeatElementsInfo);
 REGISTER(ReLU6Info);

@@ -31,9 +31,9 @@ class Beta(Distribution):
     A Beta distributio is a continuous distribution with the range :math:`[0, 1]` and the probability density function:
 
     .. math::
-        f(x, \alpha, \beta) = x^\alpha (1-x)^{\beta - 1} / B(\alpha, \beta),
+        f(x, \alpha, \beta) = x^\alpha (1-x)^{\beta - 1} / B(\alpha, \beta)
 
-    where :math:`B` is the Beta function.
+    Where :math:`B` is the Beta function.
 
     Args:
         concentration1 (int, float, list, numpy.ndarray, Tensor): The concentration1,

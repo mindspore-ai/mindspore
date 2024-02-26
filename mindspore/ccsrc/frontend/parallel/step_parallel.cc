@@ -665,6 +665,9 @@ static void StepSplitTensor(const AnfNodePtr &node, const FuncGraphManagerPtr &m
       continue;
     }
     if (IsParallelCareNode(use_cnode)) {
+      if (IsPrimitiveCNode(use_cnode, prim::kPrimReceive)) {
+        continue;
+      }
       if (IsValueNode<ValueList>(node) || IsValueNode<ValueTuple>(node)) {
         SplitTensorList(node, use_cnode, node_pair.second);
       } else {
@@ -1585,7 +1588,7 @@ void SetVirtualDatasetStrategy(const CNodePtr &node) {
       Dimensions input_strategy;
       input_strategy.push_back(dev_num);
       if (shape_list[0][i][0] > 0 && shape_list[0][i][0] % dev_num != 0) {
-        MS_LOG(EXCEPTION) << "the shapes of dataset is " << shape_list[0]
+        MS_LOG(EXCEPTION) << "The shapes of dataset is " << shape_list[0]
                           << ", the batch dim can not be evenly div by dev_num " << dev_num;
       }
       for (size_t j = 1; j < shape_list[0][i].size(); j++) {
@@ -1610,10 +1613,7 @@ static bool CheckExtractInformation(const CNodePtr &cnode) {
     return false;
   }
 
-  if (!IsParallelCareNode(cnode)) {
-    return false;
-  }
-  return true;
+  return IsParallelCareNode(cnode);
 }
 
 static void ExtractStrategyAndInit(const CNodePtr &cnode, const PrimitivePtr &prim, const OperatorInfoPtr &op_info) {
@@ -2198,7 +2198,7 @@ static void StepReplace(const std::vector<AnfNodePtr> &all_nodes) {
   }
 }
 
-static std::set<FuncGraphPtr> FindForwardGraphByRootNodes(const AnfNodeSet &root_all_nodes) {
+static std::set<FuncGraphPtr> FindForwardGraphByRootNodes(const std::vector<AnfNodePtr> &root_all_nodes) {
   // J->CNode->Graph
   std::set<FuncGraphPtr> graph_set;
   for (auto &node : root_all_nodes) {
@@ -2477,12 +2477,16 @@ static void SetForwardFlag(const AnfNodeSet &all_nodes) {
 
 std::set<FuncGraphPtr> ForwardGraph(const FuncGraphPtr &root) {
   MS_EXCEPTION_IF_NULL(root);
-  const auto &all_nodes = root->nodes();
+  auto ret = root->get_return();
+  MS_EXCEPTION_IF_NULL(ret);
+  auto all_nodes = DeepScopedGraphSearch(ret);
+  std::reverse(all_nodes.begin(), all_nodes.end());
   std::set<FuncGraphPtr> graph_set = FindForwardGraphByRootNodes(all_nodes);
   return graph_set;
 }
 
-static std::vector<AnfNodePtr> FindRootForwardCNode(const FuncGraphPtr &graph, const AnfNodeSet &all_nodes) {
+static std::vector<AnfNodePtr> FindRootForwardCNode(const FuncGraphPtr &graph,
+                                                    const std::vector<AnfNodePtr> &all_nodes) {
   MS_EXCEPTION_IF_NULL(graph);
   std::vector<AnfNodePtr> root_forward_nodes;
   auto loss_cnode = FindLossCNode(graph).loss_node;
@@ -2584,7 +2588,10 @@ static void HandleRootReshapeAndSaveStrategy(const std::vector<AnfNodePtr> &all_
 
 void MarkForwardCNode(const FuncGraphPtr &root) {
   MS_EXCEPTION_IF_NULL(root);
-  auto all_nodes = root->nodes();
+  auto ret = root->get_return();
+  MS_EXCEPTION_IF_NULL(ret);
+  auto all_nodes = DeepScopedGraphSearch(ret);
+  std::reverse(all_nodes.begin(), all_nodes.end());
   auto graph_set = FindForwardGraphByRootNodes(all_nodes);
 
   if (graph_set.empty()) {
@@ -2608,6 +2615,39 @@ void MarkForwardCNode(const FuncGraphPtr &root) {
       SetForwardFlag(root_forward_nodes);
     }
   }
+}
+
+OperatorInfoPtr set_make_list_for_ifa(CNodePtr make_list, const CNodePtr &next_node) {
+  ValueNodePtr anf_node = next_node->input(0)->cast<ValueNodePtr>();
+  if (!anf_node) {
+    return nullptr;
+  }
+  PrimitivePtr prim = anf_node->value()->cast<PrimitivePtr>();
+  if (!prim) {
+    return nullptr;
+  }
+  if (prim->name() != INCRE_FLASH_ATTENTION) {
+    return nullptr;
+  }
+
+  int kv_index = 1;
+  OperatorInfoPtr operator_make_list = CreateOperatorInfo(make_list);
+  auto make_list_prim = GetValueNode<PrimitivePtr>(make_list->input(0));
+  if (make_list_prim->HasAttr(STAND_ALONE)) {
+    (void)make_list_prim->DelAttr(STAND_ALONE);
+  }
+  OperatorInfoPtr next_operator = next_node->user_data<OperatorInfo>();
+  StrategyPtr next_node_strategy = next_operator->strategy();
+  Strategies key_value_strategies;
+  Dimensions key_value_dim = next_node_strategy->GetInputDim().at(kv_index);
+  key_value_strategies.push_back(key_value_dim);
+  auto make_list_stage = next_node_strategy->GetInputStage();
+  auto make_list_new_in_stra = NewStrategy(make_list_stage, key_value_strategies);
+  operator_make_list->set_strategy(make_list_new_in_stra);
+
+  std::vector<TensorInfo> kv_in_tensor_info(1, next_operator->inputs_tensor_info()[kv_index]);
+  operator_make_list->set_inputs_tensor_info(kv_in_tensor_info);
+  return operator_make_list;
 }
 
 static void HandleForwardMakeTupleAndMakeList(const std::vector<AnfNodePtr> &all_nodes) {
@@ -2636,7 +2676,10 @@ static void HandleForwardMakeTupleAndMakeList(const std::vector<AnfNodePtr> &all
       continue;
     }
 
-    OperatorInfoPtr op_info = GetDistributeOperator(make_tuple_list_next_cnode);
+    OperatorInfoPtr op_info = set_make_list_for_ifa(cnode, make_tuple_list_next_cnode);
+    if (op_info == nullptr) {
+      op_info = GetDistributeOperator(make_tuple_list_next_cnode);
+    }
     MS_EXCEPTION_IF_NULL(op_info);
     cnode->set_user_data<OperatorInfo>(op_info);
   }
@@ -3107,7 +3150,7 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
   // set the shape for optimizer's clone tensor
   SetClonedTensorShapeForOptimizer(root);
 
-  HandleAdaFactorOpt(root);
+  HandleCameAndAdaFactorOpt(root, all_nodes, manager);
 
   InsertUniformRealForTaggedNodes(manager, all_nodes);
 

@@ -37,8 +37,7 @@ std::pair<std::vector<KernelTensor *>, int64_t> GetConcatRealInputs(const std::v
 void ConcatAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                     const std::vector<KernelTensor *> &outputs) {
   auto [tensor, axis] = GetConcatRealInputs(inputs);
-  auto return_value = GEN_EXECUTOR(op_type_, tensor, axis, outputs[kIndex0]);
-  UpdateWorkspace(return_value);
+  GetWorkspaceForResize(tensor, axis, outputs[kIndex0]);
 }
 
 bool ConcatAscend::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,

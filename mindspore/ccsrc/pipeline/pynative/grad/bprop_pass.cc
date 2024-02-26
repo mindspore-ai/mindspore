@@ -529,6 +529,10 @@ CNodePtr PyNativePassForward::ConvertConstInputToAttr(const CNodePtr &cnode, boo
     MS_LOG(DEBUG) << "Get cnode not primitive " << cnode->DebugString();
     return cnode;
   }
+  // Pyboost op no need convert input to attr
+  if (runtime::PyBoostOpExecute::GetInstance().IsPyBoostOpRegistered(prim->name())) {
+    return cnode;
+  }
   auto TraverseCNode = [this, is_dynamic_shape](const CNodePtr &cnode) {
     for (size_t i = 1; i < cnode->size(); ++i) {
       // Avoiding infinite loops

@@ -220,11 +220,7 @@ void GeKernelExecutor::Initialize() {
   if (initialized_) {
     return;
   }
-  auto ret = aclInit(nullptr);
-  if (ret != ACL_ERROR_NONE) {
-    MS_LOG(WARNING) << "Call aclInit failed. Error flag is " << ret;
-  }
-  MS_LOG(INFO) << "Call aclInit successfully.";
+  InitializeAcl();
   MS_EXCEPTION_IF_NULL(device_context_);
   res_manager_ = device_context_->device_res_manager_.get();
   MS_EXCEPTION_IF_NULL(res_manager_);
@@ -447,8 +443,6 @@ bool GeKernelExecutor::MemoryCopyAsync(const CNodePtr &node, const vector<Kernel
 bool GeKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<KernelTensor *> &inputs,
                                     const vector<KernelTensor *> &workspace, const vector<KernelTensor *> &outputs,
                                     KernelMod *kernel_mod, void *stream) const {
-  (void)res_manager_->BindDeviceToCurrentThread(false);
-
   profiler::ascend::ProfilingFrameworkData::RecordLaunchGETaskBegin(kernel);
   // launch kernel
   uint64_t start_time = 0;

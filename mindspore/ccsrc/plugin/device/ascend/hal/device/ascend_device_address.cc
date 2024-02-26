@@ -19,12 +19,9 @@
 #include <unordered_map>
 #include <utility>
 #include <set>
-#include "acl/acl_rt.h"
 #include "graph/def_types.h"
-#include "runtime/mem.h"
 #include "pybind_api/gil_scoped_long_running.h"
 #include "runtime/device/kernel_runtime_manager.h"
-#include "runtime/device/kernel_runtime.h"
 #include "runtime/device/memory_manager.h"
 #include "runtime/device/convert_tensor_utils.h"
 #include "plugin/device/ascend/hal/device/ascend_event.h"
@@ -82,7 +79,86 @@ bool IsOpNeedTransFormat(const std::string &format) {
   return op_need_trans_format.find(format) != op_need_trans_format.end();
 }
 
-void SyncMemory(void *dst, const void *src, uint64_t size, aclrtMemcpyKind kind) {
+void AscendDeviceAddress::SyncHostMemoryToDeviceWithCopySrc(void *dst, const void *src, uint64_t size,
+                                                            aclrtMemcpyKind kind,
+                                                            KernelRuntime *runtime_instance) const {
+  MS_EXCEPTION_IF_NULL(runtime_instance);
+
+  MS_LOG(DEBUG) << "Begin, size:" << size;
+  std::shared_ptr<uint8_t[]> buffer(new (std::nothrow) uint8_t[size]);
+  MS_EXCEPTION_IF_NULL(buffer);
+  auto ret_code = memcpy_s(buffer.get(), size, src, size);
+  // Return ERANGE when the copy size is larger than SECUREC_MEM_MAX_LEN.
+  if (ret_code == ERANGE) {
+    ConvertSameType(buffer.get(), src, size, type_id());
+  }
+
+  const auto stream = AscendStreamMng::GetInstance().GetStream(0);
+  auto ret = runtime_instance->MemcpyAsync(dst, buffer.get(), size, static_cast<int32_t>(kind), stream);
+  if (!ret) {
+    MS_LOG(EXCEPTION) << "MemcpyAsync failed!";
+  }
+
+  device::CallbackFunc callback_func = [buffer]() {
+    // Clear buffer automatically.
+    MS_LOG(DEBUG) << "callback_func exec, buffer cnt:" << buffer.use_count();
+  };
+  auto device_context = GetDeviceContext();
+  MS_EXCEPTION_IF_NULL(device_context);
+  auto callback_ret = device_context->GetKernelExecutor(false)->LaunchCallback(callback_func, 0);
+  if (!callback_ret) {
+    MS_LOG(EXCEPTION) << "LaunchCallback failed";
+  }
+}
+
+void AscendDeviceAddress::SyncHostMemoryToDeviceForTensorFromNumpy(void *dst, const void *src, uint64_t size,
+                                                                   aclrtMemcpyKind kind,
+                                                                   KernelRuntime *runtime_instance) const {
+  MS_EXCEPTION_IF_NULL(runtime_instance);
+  MS_LOG(DEBUG) << "Begin, size:" << size;
+
+  runtime_instance->SetContextForce();
+  // Memcpy needs to be synchronized firstm, if tensor data is from numpy.
+  const auto stream = AscendStreamMng::GetInstance().GetStream(0);
+  // cppcheck-suppress unreadVariable
+  auto lock = device::KernelRuntime::LockRuntime(stream);
+  if (!AscendStreamMng::GetInstance().SyncStream(stream)) {
+    MS_EXCEPTION(DeviceProcessError) << "Sync stream error!";
+  }
+
+  auto ret_rt_memcpy = aclrtMemcpy(dst, size, src, size, kind);
+  MS_LOG(DEBUG) << "tensor is_from_numpy, sync it first";
+  if (ret_rt_memcpy != ACL_ERROR_NONE) {
+    MS_EXCEPTION(DeviceProcessError) << "aclrtMemcpy failed";
+  }
+}
+
+void AscendDeviceAddress::SyncHostMemoryToDeviceWithTensorData(void *dst, const void *src, uint64_t size,
+                                                               aclrtMemcpyKind kind,
+                                                               const tensor::TensorDataPtr &tensor_data,
+                                                               KernelRuntime *runtime_instance) const {
+  MS_EXCEPTION_IF_NULL(runtime_instance);
+
+  MS_LOG(DEBUG) << "Begin, size:" << size;
+  const auto stream = AscendStreamMng::GetInstance().GetStream(0);
+  auto ret = runtime_instance->MemcpyAsync(dst, src, size, static_cast<int32_t>(kind), stream);
+  if (!ret) {
+    MS_LOG(EXCEPTION) << "MemcpyAsync failed!";
+  }
+  device::CallbackFunc callback_func = [tensor_data]() {
+    // Clear tensor_data automatically.
+    MS_LOG(DEBUG) << "callback_func exec, tensor_data cnt:" << tensor_data.use_count();
+  };
+  auto device_context = GetDeviceContext();
+  MS_EXCEPTION_IF_NULL(device_context);
+  auto callback_ret = device_context->GetKernelExecutor(false)->LaunchCallback(callback_func, 0);
+  if (!callback_ret) {
+    MS_LOG(EXCEPTION) << "LaunchCallback failed";
+  }
+}
+
+void AscendDeviceAddress::SyncMemory(void *dst, const void *src, uint64_t size, aclrtMemcpyKind kind,
+                                     const tensor::TensorDataPtr &tensor_data) const {
   if (size == 0) {
     return;
   }
@@ -111,49 +187,34 @@ void SyncMemory(void *dst, const void *src, uint64_t size, aclrtMemcpyKind kind)
       MS_EXCEPTION(DeviceProcessError) << "aclrtMemcpy failed";
     }
   } else {
-    auto ret = runtime_instance->MemcpyAsync(dst, src, size, static_cast<int32_t>(RT_MEMCPY_HOST_TO_DEVICE_EX));
-    if (!ret) {
-      MS_EXCEPTION(DeviceProcessError) << "MemcpyAsync failed";
+    if (tensor_data == nullptr) {
+      // tensor_data is nullptr. Need to copy host first, then dispatch callbacks.
+      SyncHostMemoryToDeviceWithCopySrc(dst, src, size, kind, runtime_instance);
+      return;
+    }
+    if (tensor_data->is_from_numpy()) {
+      SyncHostMemoryToDeviceForTensorFromNumpy(dst, src, size, kind, runtime_instance);
+    } else {
+      SyncHostMemoryToDeviceWithTensorData(dst, src, size, kind, tensor_data, runtime_instance);
     }
   }
 }
 
-bool FloatToHalfAndSyncHostToDevice(void *dst, size_t dst_size, const void *src, size_t src_size) {
-  auto elem_num = src_size / kFloatBytes;
-  if (elem_num != (dst_size / kFloat16Bytes)) {
-    MS_INTERNAL_EXCEPTION(ArgumentError) << "FloatToHalf failed. size not match src_size[" << src_size << "], dst_size["
-                                         << dst_size << "]";
-  }
-  std::vector<float16> half_data(elem_num);
-  FloatToHalf(half_data.data(), src, elem_num);
-  SyncMemory(dst, half_data.data(), dst_size, ACL_MEMCPY_HOST_TO_DEVICE);
-  return true;
-}
-
-bool Float64ToFloatAndSyncHostToDevice(void *dst, size_t dst_size, const void *src, size_t src_size) {
+bool AscendDeviceAddress::Float64ToFloatAndSyncHostToDevice(void *dst, size_t dst_size, const void *src,
+                                                            size_t src_size,
+                                                            const tensor::TensorDataPtr &tensor_data) const {
   if (src_size / kFloat64Bytes != dst_size / kFloatBytes) {
     MS_INTERNAL_EXCEPTION(ArgumentError) << "src_size[" << src_size << "], dst_size[" << dst_size << "]";
   }
   size_t elem_num = dst_size / sizeof(float);
   auto host_tmp = std::vector<float>(elem_num);
   DoubleToFloat(host_tmp.data(), src, elem_num);
-  SyncMemory(dst, host_tmp.data(), dst_size, ACL_MEMCPY_HOST_TO_DEVICE);
+  SyncMemory(dst, host_tmp.data(), dst_size, ACL_MEMCPY_HOST_TO_DEVICE, tensor_data);
   return true;
 }
 
-bool SyncDeviceToHostAndHalfToFloat(void *dst, size_t dst_size, const void *src, size_t src_size) {
-  auto elem_num = src_size / kFloat16Bytes;
-  if (elem_num != (dst_size / kFloatBytes)) {
-    MS_INTERNAL_EXCEPTION(ArgumentError) << "HalfToFloat failed. size not match src_size[" << src_size << "], dst_size["
-                                         << dst_size << "]";
-  }
-  std::vector<float16> half_data(elem_num);
-  SyncMemory(half_data.data(), src, src_size, ACL_MEMCPY_DEVICE_TO_HOST);
-  HalfToFloat(dst, half_data.data(), elem_num);
-  return true;
-}
-
-bool SyncDeviceToHostAndFloatToFloat64(void *dst, size_t dst_size, const void *src, size_t src_size) {
+bool AscendDeviceAddress::SyncDeviceToHostAndFloatToFloat64(void *dst, size_t dst_size, const void *src,
+                                                            size_t src_size) const {
   if (src_size / kFloatBytes != dst_size / kFloat64Bytes) {
     MS_INTERNAL_EXCEPTION(ArgumentError) << "src_size[" << src_size << "], dst_size[" << dst_size << "]";
   }
@@ -326,7 +387,7 @@ bool AscendDeviceAddress::SyncHostToDevice(size_t size, const void *host_ptr) co
   if (!MoveToDevice(false)) {
     MS_LOG(WARNING) << "Move data to device failed, check previous log for details.";
   }
-  CopyHostToDevice(host_ptr, size);
+  CopyHostToDevice(host_ptr, size, nullptr);
   return true;
 }
 
@@ -521,8 +582,9 @@ bool AscendDeviceAddress::SyncDeviceToHostAndConvertFormat(const ShapeVector &sh
   return sync_ok;
 }
 
-bool AscendDeviceAddress::SyncHostToDevice(const ShapeVector &shape, size_t size, mindspore::TypeId type,
-                                           const void *host_ptr, const std::string &format) const {
+bool AscendDeviceAddress::SyncHostToDeviceImpl(const ShapeVector &shape, size_t size, mindspore::TypeId type,
+                                               const void *host_ptr, const std::string &format,
+                                               const tensor::TensorDataPtr &tensor_data) const {
   MS_LOG(DEBUG) << "SyncHostToDevice, Device(format:" << DeviceAddress::format()
                 << ", type_id:" << TypeIdLabel(type_id()) << ", size:" << GetSize() << "), Host(format:" << format
                 << ", type_id:" << TypeIdLabel(type) << ", size:" << size << ")";
@@ -541,10 +603,10 @@ bool AscendDeviceAddress::SyncHostToDevice(const ShapeVector &shape, size_t size
   std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
   if (basic_format.find(DeviceAddress::format()) != basic_format.end() || DeviceAddress::format() == format) {
     if (type_id() == type) {
-      CopyHostToDevice(host_ptr, size);
+      CopyHostToDevice(host_ptr, size, tensor_data);
       sync_ok = true;
     } else if (type_id() == kNumberTypeFloat32 && type == kNumberTypeFloat64) {
-      sync_ok = Float64ToFloatAndSyncHostToDevice(GetDevicePtr(), GetSize(), host_ptr, size);
+      sync_ok = Float64ToFloatAndSyncHostToDevice(GetDevicePtr(), GetSize(), host_ptr, size, tensor_data);
     } else {
       auto shape_size = abstract::ShapeSize(host_shape);
       const trans::TypeIdArgs type_args{host_ptr, shape_size, type, type_id(), size};
@@ -554,11 +616,11 @@ bool AscendDeviceAddress::SyncHostToDevice(const ShapeVector &shape, size_t size
         MS_LOG(ERROR) << "Trans data type failed.";
         return false;
       }
-      CopyHostToDevice(host_tmp.data(), GetSize());
+      CopyHostToDevice(host_tmp.data(), GetSize(), tensor_data);
     }
   } else {
     if (IsOpNeedTransFormat(DeviceAddress::format())) {
-      sync_ok = ConvertFormatAndSyncHostToDevice(shape, size, type, host_ptr);
+      sync_ok = ConvertFormatAndSyncHostToDevice(shape, size, type, host_ptr, tensor_data);
     } else {
       MS_LOG(INFO) << "Can not find format transfer function for :" << DeviceAddress::format();
     }
@@ -569,6 +631,17 @@ bool AscendDeviceAddress::SyncHostToDevice(const ShapeVector &shape, size_t size
     return false;
   }
   return sync_ok;
+}
+
+bool AscendDeviceAddress::SyncHostToDevice(const ShapeVector &shape, size_t size, mindspore::TypeId type,
+                                           const void *host_ptr, const std::string &format) const {
+  return SyncHostToDeviceImpl(shape, size, type, host_ptr, format);
+}
+
+bool AscendDeviceAddress::SyncHostToDevice(const ShapeVector &shape, size_t size, TypeId type,
+                                           const std::string &format, const tensor::TensorDataPtr &tensor_data) const {
+  MS_EXCEPTION_IF_NULL(tensor_data);
+  return SyncHostToDeviceImpl(shape, size, type, tensor_data->data(), format, tensor_data);
 }
 
 bool AscendDeviceAddress::SyncDeviceToDeviceWithDiffFormatType(const DeviceSync *src_device_addr) const {
@@ -678,10 +751,12 @@ bool AscendDeviceAddress::AsyncDeviceToDevice(const ShapeVector & /* shape */, s
   MS_EXCEPTION_IF_NULL(runtime_instance);
   bool ret;
   if (mem_offloaded()) {
-    ret = runtime_instance->MemcpyAsync(offload_ptr_, src_ptr, size, static_cast<int32_t>(RT_MEMCPY_DEVICE_TO_HOST));
+    ret = runtime_instance->MemcpyAsync(offload_ptr_, src_ptr, size, static_cast<int32_t>(ACL_MEMCPY_DEVICE_TO_HOST),
+                                        runtime_instance->compute_stream());
   } else {
     ret =
-      runtime_instance->MemcpyAsync(GetDevicePtr(), src_ptr, size, static_cast<int32_t>(RT_MEMCPY_DEVICE_TO_DEVICE));
+      runtime_instance->MemcpyAsync(GetDevicePtr(), src_ptr, size, static_cast<int32_t>(ACL_MEMCPY_DEVICE_TO_DEVICE),
+                                    runtime_instance->compute_stream());
   }
   if (!ret) {
     MS_LOG(ERROR) << "MemcpyAsync failed!";
@@ -731,7 +806,8 @@ bool AscendDeviceAddress::AsyncDeviceToHost(const ShapeVector & /* shape */, siz
 }
 
 bool AscendDeviceAddress::ConvertFormatAndSyncHostToDevice(const ShapeVector &shape, size_t size,
-                                                           mindspore::TypeId type, const void *host_ptr) const {
+                                                           mindspore::TypeId type, const void *host_ptr,
+                                                           const tensor::TensorDataPtr &tensor_data) const {
   bool sync_ok = false;
   MS_LOG(DEBUG) << "ConvertFormatAndSyncHostToDevice, Device(format:" << format()
                 << ", type_id:" << TypeIdLabel(type_id()) << ", size:" << GetSize()
@@ -767,7 +843,7 @@ bool AscendDeviceAddress::ConvertFormatAndSyncHostToDevice(const ShapeVector &sh
       MS_LOG(ERROR) << "Trans format failed.";
       return false;
     }
-    CopyHostToDevice(dst_tmp.data(), GetSize());
+    CopyHostToDevice(dst_tmp.data(), GetSize(), tensor_data);
   } else {
     const trans::FormatArgs format_args{host_ptr,   GetSize(),    kOpFormat_NCHW, format(),
                                         host_shape, device_shape, type_id()};
@@ -777,7 +853,7 @@ bool AscendDeviceAddress::ConvertFormatAndSyncHostToDevice(const ShapeVector &sh
       MS_LOG(ERROR) << "Trans format failed.";
       return false;
     }
-    CopyHostToDevice(host_tmp.data(), GetSize());
+    CopyHostToDevice(host_tmp.data(), GetSize(), tensor_data);
   }
   return sync_ok;
 }
@@ -813,22 +889,29 @@ void AscendDeviceAddress::CopyDeviceToHost(void *dst, uint64_t size) const {
   }
 }
 
-void AscendDeviceAddress::CopyHostToDevice(const void *src, uint64_t size) const {
+void AscendDeviceAddress::CopyHostToDevice(const void *src, uint64_t size,
+                                           const tensor::TensorDataPtr &tensor_data) const {
   MS_EXCEPTION_IF_NULL(src);
   if (mem_offloaded()) {
     MS_EXCEPTION_IF_NULL(offload_ptr_);
-    SyncMemory(offload_ptr_, src, size, ACL_MEMCPY_HOST_TO_HOST);
+    SyncMemory(offload_ptr_, src, size, ACL_MEMCPY_HOST_TO_HOST, tensor_data);
   } else {
     MS_EXCEPTION_IF_NULL(GetDevicePtr());
     if (type_id() == kObjectTypeString) {
-      ge::StringHead head{.addr = sizeof(ge::StringHead), static_cast<int64_t>(size)};
+      // NOTE: For string type, ge::StringHead.len does not include '\0', since kernel_tensor allocated size including
+      // '\0', see method `CreateDeviceAddressForScalarAndString` defined in `device_address_utils.cc`, and method
+      // `PrepareDataForStringValue` defined in `device_address_utils.cc`, so here pass `size - 1` to `head.len`.
+      ge::StringHead head{.addr = sizeof(ge::StringHead), .len = static_cast<int64_t>(size) - 1};
       // sync string head info from device to host
-      SyncMemory(GetDevicePtr(), &head, sizeof(ge::StringHead), ACL_MEMCPY_HOST_TO_DEVICE);
+      SyncMemory(GetDevicePtr(), &head, sizeof(ge::StringHead), ACL_MEMCPY_HOST_TO_DEVICE, nullptr);
       // sync string body (real contents) from device to host
       SyncMemory(static_cast<void *>(static_cast<char *>(GetDevicePtr()) + sizeof(ge::StringHead)), src, size,
-                 ACL_MEMCPY_HOST_TO_DEVICE);
+                 ACL_MEMCPY_HOST_TO_DEVICE, tensor_data);
+      MS_LOG(DEBUG) << "Copy string info to device, ge::StringHead.len=" << head.len
+                    << ", text=" << std::string(static_cast<const char *>(src), head.len)
+                    << ", device_addr=" << GetDevicePtr();
     } else {
-      SyncMemory(GetDevicePtr(), src, size, ACL_MEMCPY_HOST_TO_DEVICE);
+      SyncMemory(GetDevicePtr(), src, size, ACL_MEMCPY_HOST_TO_DEVICE, tensor_data);
     }
   }
 }

@@ -21,6 +21,7 @@ import mindspore.common.dtype as mstype
 from mindspore import _checkparam as validator
 from mindspore.experimental.optim.optimizer import Optimizer, check_not_less_than_without_equal
 from mindspore import ops
+from mindspore import jit
 
 _rprop_opt = C.MultitypeFuncGraph("rprop_opt")
 
@@ -42,18 +43,20 @@ def _tensor_run_opt(etaminus, etaplus, step_size_min, step_size_max, step, lr, p
         step_size_value = step_size.value()
 
     sign = op_sign(gradient * prev)
-    sign = op_select(sign > 0, op_fill(sign.shape, etaplus), sign)
-    sign = op_select(sign < 0, op_fill(sign.shape, etaminus), sign)
-    sign = op_select(sign == 0, op_fill(sign.shape, op_cast(1., mstype.float32)), sign)
+
+    sign[sign.gt(0)] = etaplus
+    sign[sign.lt(0)] = etaminus
+    sign[sign.eq(0)] = 1
 
     step_size_clip = ops.clip_by_value(step_size_value * sign, step_size_min, step_size_max)
+    op_assign(step_size, step_size_clip)
 
     gradient_update = op_select(sign == etaminus, op_fill(sign.shape, op_cast(0., mstype.float32)), gradient)
+
+    op_assign(prev, gradient_update)
     next_param = param - op_sign(gradient_update) * step_size_clip
 
-    op_assign(param, op_cast(next_param, param.dtype))
-    op_assign(prev, op_cast(gradient_update, prev.dtype))
-    op_assign(step_size, op_cast(step_size_clip, step_size.dtype))
+    op_assign(param, next_param)
 
     return True
 
@@ -130,6 +133,21 @@ class Rprop(Optimizer):
         self.increase_tensor = Tensor(1, mstype.int32)
         self.op_cast = P.Cast()
 
+    @jit
+    def implementation(self, etaminus, etaplus, group_id, lr, gradients, maximize, step_size_min, step_size_max):
+        """Extract the common computing part for acceleration"""
+        etaminus, etaplus = op_cast(etaminus, mstype.float32), op_cast(etaplus, mstype.float32)
+        start_id = self.group_start_id[group_id]
+        end_id = self.group_start_id[group_id + 1]
+
+        params = self.parameters[start_id: end_id]
+        grads = tuple([grad if not maximize else F.neg(grad) for grad in gradients[start_id: end_id]])
+        prev = self.prev[start_id: end_id]
+        step_size = self.step_size[start_id: end_id]
+        self.hyper_map(F.partial(_rprop_opt, etaminus, etaplus, step_size_min, step_size_max, self.step_t, lr),
+                       params, prev, step_size, grads)
+        return True
+
     def construct(self, gradients):
         op_assignadd(self.step_t, self.increase_tensor)
         for group_id, group in enumerate(self.param_groups):
@@ -139,16 +157,8 @@ class Rprop(Optimizer):
             maximize = group.get("maximize")
 
             etaminus, etaplus = group["etas"]
-            etaminus, etaplus = op_cast(etaminus, mstype.float32), op_cast(etaplus, mstype.float32)
             step_size_min, step_size_max = group["step_sizes"]
 
-            start_id = self.group_start_id[group_id]
-            end_id = self.group_start_id[group_id + 1]
+            self.implementation(etaminus, etaplus, group_id, lr, gradients, maximize, step_size_min, step_size_max)
 
-            params = self.parameters[start_id: end_id]
-            grads = tuple([grad if not maximize else F.neg(grad) for grad in gradients[start_id: end_id]])
-            prev = self.prev[start_id: end_id]
-            step_size = self.step_size[start_id: end_id]
-            self.hyper_map(F.partial(_rprop_opt, etaminus, etaplus, step_size_min, step_size_max, self.step_t, lr),
-                           params, prev, step_size, grads)
         return True
