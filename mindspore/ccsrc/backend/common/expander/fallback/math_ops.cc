@@ -17,9 +17,14 @@
 #include "backend/common/expander/fallback/fallback_irbuilder.h"
 #include "include/common/utils/utils.h"
 #include "utils/shape_utils.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace expander {
+namespace {
+const std::set<TypeId> kIntergralSet = {kNumberTypeBool, kNumberTypeUInt8, kNumberTypeInt8, kNumberTypeInt16,
+                                        kNumberTypeInt32};
+}  // namespace
 REG_FALLBACK_BUILDER("AddExt").SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);
@@ -34,6 +39,60 @@ REG_FALLBACK_BUILDER("SubExt").SetBody(BODYFUNC(ib) {
   auto alpha = ib->GetInput(kIndex2);
   auto alpha_tensor = ib->Cast(ib->ScalarToTensor(alpha, x->dtype()), y->dtype());
   return {x - y * alpha_tensor};
+});
+
+REG_FALLBACK_BUILDER("MeanExt").SetBody(BODYFUNC(ib) {
+  auto input = ib->GetInput(kIndex0);
+  auto axis = ib->GetInput(kIndex1);
+  auto keep_dims = ib->GetInput(kIndex2);
+  auto dtype = ib->GetInput(kIndex3);
+
+  auto dtype_type = dtype->abstract()->BuildType();
+  MS_EXCEPTION_IF_NULL(dtype_type);
+  // cppcheck-suppress *
+  if (!dtype_type->isa<TypeNone>()) {
+    auto dtype_opt = ops::GetScalarValue<int64_t>(dtype->BuildValue());
+    MS_CHECK_VALUE(dtype_opt.has_value(), "For 'MeanExt', dtype must have valid value.");
+    input = ib->Cast(input, TypeIdToType(static_cast<TypeId>(dtype_opt.value())));
+  }
+
+  auto axis_type = axis->abstract()->BuildType();
+  MS_EXCEPTION_IF_NULL(axis_type);
+  if (axis_type->isa<TypeNone>()) {
+    axis = ib->Value<std::vector<int64_t>>({});
+  }
+
+  auto out = ib->Emit("ReduceMean", {input, axis, keep_dims});
+  return {out};
+});
+
+REG_FALLBACK_BUILDER("SumExt").SetBody(BODYFUNC(ib) {
+  auto input = ib->GetInput(kIndex0);
+  auto axis = ib->GetInput(kIndex1);
+  auto keep_dims = ib->GetInput(kIndex2);
+  auto dtype = ib->GetInput(kIndex3);
+
+  auto dtype_type = dtype->abstract()->BuildType();
+  MS_EXCEPTION_IF_NULL(dtype_type);
+  if (!dtype_type->isa<TypeNone>()) {
+    auto dtype_opt = ops::GetScalarValue<int64_t>(dtype->BuildValue());
+    MS_CHECK_VALUE(dtype_opt.has_value(), "For 'SumExt', dtype must have valid value.");
+    input = ib->Cast(input, TypeIdToType(static_cast<TypeId>(dtype_opt.value())));
+  } else {
+    auto input_type = input->dtype()->type_id();
+    if (kIntergralSet.find(input_type) != kIntergralSet.end()) {
+      input = ib->Cast(input, kInt64);
+    }
+  }
+
+  auto axis_type = axis->abstract()->BuildType();
+  MS_EXCEPTION_IF_NULL(axis_type);
+  if (axis_type->isa<TypeNone>()) {
+    axis = ib->Value<std::vector<int64_t>>({});
+  }
+
+  auto out = ib->Emit("ReduceSum", {input, axis, keep_dims, ib->Value<bool>(false)});
+  return {out};
 });
 }  // namespace expander
 }  // namespace mindspore

@@ -17,6 +17,8 @@
 #include "plugin/device/ascend/optimizer/mindir/reduce_axis_update.h"
 #include <vector>
 #include <memory>
+#include <set>
+#include <string>
 #include "mindspore/core/ops/math_ops.h"
 #include "include/common/utils/anfalgo.h"
 
@@ -61,7 +63,8 @@ bool ReduceAxisUpdate::IsReduce(const BaseRef &ref) {
     if (IsPrimitive(node, prim::kPrimReduceMin) || IsPrimitive(node, prim::kPrimReduceMax) ||
         IsPrimitive(node, prim::kPrimReduceMean) || IsPrimitive(node, prim::kPrimReduceSum) ||
         IsPrimitive(node, prim::kPrimReduceProd) || IsPrimitive(node, prim::kPrimReduceAll) ||
-        IsPrimitive(node, prim::kPrimReduceAny)) {
+        IsPrimitive(node, prim::kPrimReduceAny) || IsPrimitive(node, prim::kPrimMeanExt) ||
+        IsPrimitive(node, prim::kPrimSumExt)) {
       return true;
     }
   }
@@ -88,6 +91,15 @@ bool ReduceAxisUpdate::IsAxisEmpty(const ValueNodePtr &axis_node) const {
   }
 
   return false;
+}
+
+bool ReduceAxisUpdate::IsAxisNone(const AnfNodePtr &cnode, const ValueNodePtr &axis_node) const {
+  static std::set<std::string> op_name_support_none = {prim::kPrimMeanExt->name(), prim::kPrimSumExt->name()};
+  auto cnode_name = common::AnfAlgo::GetCNodeName(cnode);
+  if (op_name_support_none.find(cnode_name) == op_name_support_none.end()) {
+    return false;
+  }
+  return axis_node->value()->isa<None>();
 }
 
 bool ReduceAxisUpdate::IsInputScalar(const AnfNodePtr &x_node) const {
@@ -146,6 +158,12 @@ bool ReduceAxisUpdate::CheckMatchedDAG(const PatternMap &, const FuncGraphPtr &g
     return false;
   }
 
+  // If input is dynamic rank, expand axis will get wrong result.
+  if (IsDynamicRank(common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0))) {
+    MS_LOG(INFO) << "The input rank of dimension of " << node->DebugString() << " is unknown.";
+    return false;
+  }
+
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
 
@@ -165,8 +183,10 @@ bool ReduceAxisUpdate::CheckMatchedDAG(const PatternMap &, const FuncGraphPtr &g
   MS_LOG(INFO) << "Axis input is " << input_axis->DebugString() << ".";
 
   auto axis_value_node = input_axis->cast<ValueNodePtr>();
-  if (axis_value_node == nullptr || (!IsAxisEmpty(axis_value_node) && !IsInputScalar(input_x))) {
-    MS_LOG(INFO) << "Axis input of node " << node->fullname_with_scope() << " is not value node or axis is not empty.";
+  if (axis_value_node == nullptr ||
+      (!(IsAxisEmpty(axis_value_node) || IsAxisNone(cnode, axis_value_node)) && !IsInputScalar(input_x))) {
+    MS_LOG(INFO) << "Axis input of node " << node->fullname_with_scope()
+                 << " is not value node or axis is not empty or none.";
     return false;
   } else {
     MS_LOG(INFO) << "Axis of node " << node->fullname_with_scope() << " is empty.";

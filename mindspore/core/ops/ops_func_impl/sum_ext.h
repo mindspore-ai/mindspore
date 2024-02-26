@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_MEAN_H_
-#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_MEAN_H_
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_SUM_EXT_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_SUM_EXT_H_
 
 #include <memory>
 #include <vector>
@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace ops {
-class MIND_API MeanFuncImpl : public OpFuncImpl {
+class MIND_API SumExtFuncImpl : public OpFuncImpl {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
@@ -32,4 +32,4 @@ class MIND_API MeanFuncImpl : public OpFuncImpl {
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_MEAN_H_
+#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_SUM_EXT_H_
