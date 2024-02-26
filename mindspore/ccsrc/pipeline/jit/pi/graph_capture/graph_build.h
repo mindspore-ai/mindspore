@@ -39,7 +39,7 @@ struct TryBlock {
   bool withOrException; /*record this block is in with block or try_exception block*/
 };
 
-bool CheckSupportCreateInstance(CallNode* call_node);
+bool CheckSupportCreateInstance(CallNode *call_node);
 class GraphBuilder {
  public:
   static const char *ID___self__;
@@ -280,7 +280,7 @@ class MindGraphBuilder : public GraphBuilder {
     auto location = std::make_shared<Location>(py::cast<std::string>(f->f_code->co_filename), f->f_code->co_firstlineno,
                                                0, f->f_code->co_firstlineno, 0, "", std::move(comments));
     TraceGuard trace_guard(location);
-    fg_builder_ = std::make_shared<FuncGraphBuilder>();
+    fg_builder_ = std::make_shared<FuncGraphBuilder>(true);
     fg_builder_->SetGraphName(py::cast<std::string>(f->f_code->co_name) + "_" +
                               std::to_string(f->f_code->co_firstlineno));
   }
