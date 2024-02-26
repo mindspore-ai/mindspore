@@ -565,6 +565,20 @@ AnfNodePtr ResolveCellWithAttr(const FuncGraphManagerPtr &manager, const py::obj
   MS_EXCEPTION_IF_NULL(attr);
   MS_EXCEPTION_IF_NULL(manager);
   MS_LOG(DEBUG) << "obj: " << py::str(obj) << ", attr: " << attr->ToString();
+  if (IsValueNode<StringImm>(attr)) {
+    const auto &attr_name = GetValue<std::string>(GetValueNode(attr));
+    py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
+    bool is_property =
+      (python_adapter::CallPyModFn(mod, parse::PYTHON_PARSE_CHECK_ATTR_IS_PROPERTY, obj, attr_name)).cast<bool>();
+    if (is_property) {
+      auto get_attr_cnode = get_attr_node->cast<CNodePtr>();
+      AnfNodePtr node = get_attr_cnode->input(1);
+      auto cur_func = get_attr_node->func_graph();
+      auto call_func_node = parse::TransPropertyToFunc(cur_func, node, obj, attr_name);
+      MS_LOG(DEBUG) << "call_func_node:" << call_func_node->DebugString();
+      return call_func_node;
+    }
+  }
   TraceGuard trace_guard(std::make_shared<TraceResolve>(get_attr_node->debug_info()));
   if (!data_converter::IsCellInstance(obj)) {
     AnfNodePtr resolved_node = ResolveObjectAndAddToManager(manager, obj, resolve_node);
@@ -575,18 +589,6 @@ AnfNodePtr ResolveCellWithAttr(const FuncGraphManagerPtr &manager, const py::obj
     res_node->set_debug_info(get_attr_node->debug_info());
     cur_func->ReplaceInOrder(get_attr_node, res_node);
     return res_node;
-  }
-
-  if (IsValueNode<StringImm>(attr)) {
-    const auto &attr_name = GetValue<std::string>(GetValueNode(attr));
-    py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
-    bool is_property =
-      (python_adapter::CallPyModFn(mod, parse::PYTHON_PARSE_CHECK_ATTR_IS_PROPERTY, obj, attr_name)).cast<bool>();
-    MS_LOG(DEBUG) << "is_property: " << is_property;
-    if (is_property) {
-      MS_LOG(INFO) << "The property decorator is not supported in graph mode.\n"
-                      "You can remove the property decorator and call the function as a method.\n";
-    }
   }
 
   constexpr auto tensors_queue_attr = "__is_tensors_queue__";

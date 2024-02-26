@@ -181,8 +181,10 @@ def check_attr_is_property(obj, attr_name):
     logger.debug(f"attr_name:{attr_name}")
     logger.debug(f"obj.__class__.__dict__.keys():{obj.__class__.__dict__.keys()}")
     if attr_name in obj.__class__.__dict__.keys() and isinstance(obj.__class__.__dict__[attr_name], property):
-        logger.debug(f'The attribute {attr_name} is decorated by @property.')
-        return True
+        attr_obj = obj.__class__.__dict__[attr_name]
+        if (hasattr(attr_obj, 'fget')) and hasattr(attr_obj.fget, '__code__'):
+            logger.debug(f'The attribute {attr_name} is decorated by @property.')
+            return True
     return False
 
 
