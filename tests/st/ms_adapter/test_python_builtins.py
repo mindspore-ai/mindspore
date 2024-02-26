@@ -21,7 +21,7 @@ import tests.st.ms_adapter as adapter
 ms.set_context(mode=ms.GRAPH_MODE)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_abs():
@@ -55,7 +55,7 @@ def test_round():
     assert type(func(adapter.Tensor([1.55]))) is adapter.Tensor
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_map():
@@ -99,7 +99,7 @@ def test_filter():
     assert type(out[0]) is adapter.Tensor
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_partial():
@@ -120,7 +120,7 @@ def test_partial():
     assert type(out) is adapter.Tensor
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_zip():
@@ -140,7 +140,7 @@ def test_zip():
     assert type(out[0][1]) is adapter.Tensor
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_enumerate():
@@ -159,7 +159,7 @@ def test_enumerate():
     assert type(out[0][1]) is adapter.Tensor
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_isinstance():
@@ -180,7 +180,7 @@ def test_isinstance():
     assert a and b
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_max():
@@ -201,7 +201,7 @@ def test_max():
     assert type(out[1]) is adapter.Tensor
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_min():
@@ -222,7 +222,7 @@ def test_min():
     assert type(out[1]) is adapter.Tensor
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_sum():
@@ -243,7 +243,7 @@ def test_sum():
     assert type(out[1]) is adapter.Tensor
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_getattr():
@@ -260,7 +260,7 @@ def test_getattr():
     assert func(x) == 10
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_hasattr():
@@ -279,7 +279,7 @@ def test_hasattr():
     assert out[0] and not out[1]
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_iter():
@@ -297,7 +297,7 @@ def test_iter():
     assert type(out) is adapter.Tensor
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_next():
@@ -317,7 +317,7 @@ def test_next():
     assert type(out[1]) is adapter.Tensor
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_print():
@@ -334,7 +334,7 @@ def test_print():
     func(adapter.Tensor([1, 2, 3]))
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_tuple():
@@ -375,7 +375,7 @@ def test_list():
     assert type(out[2]) is adapter.Tensor
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_bool():
