@@ -577,7 +577,7 @@ REG_BPROP_BUILDER("Sub").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
   if (y->need_compute_grad_out()) {
     dy = ib->Emit(kNegOpName, {dout});
   }
-  return BinopGradCommon(ib, x, y, dout, dy);
+  return BinopGradCommon(ib, x, y, dx, dy);
 });
 
 REG_BPROP_BUILDER("Div").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
@@ -858,17 +858,17 @@ REG_BPROP_BUILDER("Pow").SetBody(BODYFUNC(ib) {
   if (x_dtype_id == kNumberTypeComplex64 || x_dtype_id == kNumberTypeComplex128) {
     MS_EXCEPTION(TypeError) << "For 'Pow', gradient not support for complex type currently.";
   }
-  NodePtrList grad_outputs{ib->input_size(), nullptr};
+  NodePtr dx = nullptr;
+  NodePtr grad_power = nullptr;
   if (x->need_compute_grad_out()) {
-    grad_outputs[kIndex0] =
-      ib->Mul((ib->Mul(power, (ib->Pow(x, ib->Sub(power, ib->Tensor(1.0, ib->GetDtype(x))))))), dout);
+    dx = ib->Mul((ib->Mul(power, (ib->Pow(x, ib->Sub(power, ib->Tensor(1.0, ib->GetDtype(x))))))), dout);
   }
   if (power->need_compute_grad_out()) {
     x = ib->Select(ib->Less(x, ib->Tensor(0, ib->GetDtype(x))), ib->Fill(1.0, ib->Shape(x), ib->GetDtype(x)->type_id()),
                    x);
-    grad_outputs[kIndex1] = ib->Mul((ib->Mul(out, (ib->Log(x)))), dout);
+    grad_power = ib->Mul((ib->Mul(out, (ib->Log(x)))), dout);
   }
-  return {BinopGradCommon(ib, x, power, grad_outputs[kIndex0], grad_outputs[kIndex1])};
+  return {BinopGradCommon(ib, x, power, dx, grad_power)};
 });
 
 REG_BPROP_BUILDER("Exp").SetBody(BODYFUNC(ib) {

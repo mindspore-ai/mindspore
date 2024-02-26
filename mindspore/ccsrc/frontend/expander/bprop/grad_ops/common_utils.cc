@@ -309,10 +309,14 @@ NodePtrList BinopGradCommon(BpropBuilder *ib, const NodePtr &x, const NodePtr &y
   if (dx != nullptr) {
     reduce[kIndex0] =
       StaticBinopGradCommon(ib, reduce[kIndex0], shape, broadcast_shape, shift, kIndex0, &is_x_shape_dynamic);
+  } else {
+    reduce[kIndex0] = ib->OutZeros(x);
   }
   if (dy != nullptr) {
     reduce[kIndex1] =
       StaticBinopGradCommon(ib, reduce[kIndex1], shape, broadcast_shape, shift, kIndex1, &is_y_shape_dynamic);
+  } else {
+    reduce[kIndex1] = ib->OutZeros(y);
   }
   if (is_x_shape_dynamic || is_y_shape_dynamic) {
     return DynBinopGradCommon(ib, x, y, dx, dy, shift);

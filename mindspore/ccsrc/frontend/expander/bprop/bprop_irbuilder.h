@@ -112,14 +112,12 @@ class COMMON_EXPORT BpropBuilder : public Emitter {
   std::string GetInstanceName() const { return instance_name_; }
   NodePtr TanhGrad(const NodePtr &y, const NodePtr &dy) { return Emit("TanhGrad", {y, dy}); }
   virtual NodePtr OutZeros(const NodePtr &node) { return ZerosLike(node); }
-  size_t input_size() const { return input_size_; }
 
  protected:
   std::string name_;
   std::string instance_name_;
   const NodePtrList *inputs_ptr_{nullptr};
   const mindspore::HashMap<std::string, ValuePtr> *attrs_ptr_{nullptr};
-  size_t input_size_;
 };
 
 class IrBuilder : public BpropBuilder {

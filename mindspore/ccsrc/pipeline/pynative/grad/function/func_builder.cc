@@ -253,7 +253,6 @@ void FuncBuilder::SetInputs(std::string instance_name, const std::vector<NodePtr
   instance_name_ = std::move(instance_name);
   inputs_ptr_ = inputs;
   attrs_ptr_ = attrs_ptr;
-  input_size_ = inputs->size() - kSizeTwo;
 }
 
 NodePtrList FuncBuilder::FlattenNode(const NodePtr &input) {
