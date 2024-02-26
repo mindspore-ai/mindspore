@@ -683,8 +683,7 @@ Operator CreateScalarMulOp(int64_t scalar) {
   OperatorAttrs operator_attrs;
   OperatorParams operator_param;
   constexpr size_t parameter_pos = 2;
-  mindspore::tensor::TensorPtr tensor_ptr = std::make_shared<mindspore::tensor::Tensor>(scalar);
-  ValuePtr scale_value = MakeValue(tensor_ptr);
+  ValuePtr scale_value = MakeValue(std::make_shared<Int64Imm>(scalar));
   (void)operator_param.emplace_back(std::make_pair(std::make_pair(Y, scale_value), parameter_pos));
   OperatorArgs operator_arg = std::make_pair(operator_attrs, operator_param);
 
