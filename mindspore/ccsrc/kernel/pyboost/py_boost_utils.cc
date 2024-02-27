@@ -198,7 +198,7 @@ void PyBoostUtils::CreateOutputTensor(DeviceContext *device_context, const tenso
   output_device_address->set_pointer_ref_count(input_device_address->pointer_ref_count());
   output_tensor->set_device_address(output_device_address);
   (void)outputs->emplace_back(output_tensor);
-  MS_LOG(DEBUG) << "Create output tensor " << output_tensor->ToString();
+  MS_LOG(DEBUG) << "Create output tensor " << output_tensor->ToString() << " with " << storage_info->ToString();
 }
 
 AbstractBasePtr PyBoostUtils::InferByOpDef(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_abs) {
