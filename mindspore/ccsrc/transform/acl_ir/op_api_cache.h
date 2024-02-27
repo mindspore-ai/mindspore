@@ -136,9 +136,9 @@ bool HitCache(const char *aclnn_api, aclOpExecutor **executor, uint64_t *workspa
 }
 
 template <typename... Args>
-uint64_t CalcOpApiHash(const Args &... args) {
+uint64_t CalcOpApiHash(const std::string &arg, const Args &... args) {
   g_hash_offset = 0;
-  GatherInfo(args...);
+  GatherInfo(arg, args...);
   return calc_hash_id();
 }
 

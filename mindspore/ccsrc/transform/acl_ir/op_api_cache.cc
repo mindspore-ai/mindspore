@@ -23,7 +23,7 @@ thread_local int g_hash_offset = 0;
 typedef void (*AddTensorAddrToCachedList)(void *addr);
 
 void GatherInfo(mindspore::kernel::KernelTensor *tensor) {
-  if (tensor == nullptr) {
+  if (tensor == nullptr || tensor->type_id() == kMetaTypeNone) {
     return;
   }
 
@@ -195,7 +195,7 @@ void GatherInfo(const std::optional<string> &s) {
 void GatherInfo() {}
 
 void RefreshAddr(mindspore::kernel::KernelTensor *tensor) {
-  if (tensor == nullptr) {
+  if (tensor == nullptr || tensor->type_id() == kMetaTypeNone) {
     return;
   }
 

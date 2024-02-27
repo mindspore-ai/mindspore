@@ -43,7 +43,7 @@ using AclUtil = transform::AclUtil;
 #define DEFINE_GET_WORKSPACE_FOR_RESIZE()                                  \
   template <typename... Args>                                              \
   void GetWorkspaceForResize(const Args &... args) {                       \
-    hash_id_ = transform::CalcOpApiHash(args...);                          \
+    hash_id_ = transform::CalcOpApiHash(op_type_, args...);                \
     if (cache_hash_.count(hash_id_) == 0) {                                \
       auto return_value = GEN_EXECUTOR_CUST(op_type_, args...);            \
       UpdateWorkspace(return_value);                                       \
@@ -188,7 +188,7 @@ using AclnnKernelModPtrList = std::vector<AclnnKernelModPtr>;
       const auto &res_tuple = this->GetKernelTuple<N>(inputs, outputs);                                       \
       std::apply(                                                                                             \
         [this](const auto &... args) {                                                                        \
-          hash_id_ = transform::CalcOpApiHash(args...);                                                       \
+          hash_id_ = transform::CalcOpApiHash(op_type_, args...);                                             \
           if (cache_hash_.count(hash_id_) == 0) {                                                             \
             auto return_value = GEN_EXECUTOR_CUST(op_type_, args...);                                         \
             UpdateWorkspace(return_value);                                                                    \
