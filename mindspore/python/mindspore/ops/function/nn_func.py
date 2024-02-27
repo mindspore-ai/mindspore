@@ -3613,7 +3613,7 @@ def nll_loss(inputs, target, weight=None, ignore_index=-100, reduction='mean', l
         \ell(x, t)=\left\{\begin{array}{ll}
         \sum_{n=1}^{N} \frac{1}{\sum_{n=1}^{N} w_{t n}} l_{n}, & \text { if reduction }=\text { 'mean', } \\
         \sum_{n=1}^{N} l_{n}, & \text { if reduction }=\text { 'sum' }
-        \end{array}\right
+        \end{array}\right.
 
     Args:
         inputs (Tensor): :math:`(N, C)` where `C = number of classes` or :math:`(N, C, H, W)`
