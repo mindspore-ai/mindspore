@@ -119,6 +119,10 @@ bool ShouldAddNewPrimalOutput(const AnfNodePtr &node, bool recompute_cell) {
   return !IsGradNode(node) || recompute_cell;
 }
 
+bool IsForwardDepend(const AnfNodePtr &node) {
+  return IsPrimitiveCNode(node, prim::kPrimDepend) && !node->cast_ptr<CNode>()->HasAttr(kRecomputeInsert);
+}
+
 bool AddNewPrimalNode(const FuncGraphManagerPtr &manager, const FuncGraphPtr &fg, const AnfNodePtr &origin_primal,
                       const AnfNodePtr &new_primal, bool recompute_cell,
                       std::unordered_map<AnfNodePtr, AnfNodePtr> *origin_to_new_primal) {
@@ -136,8 +140,8 @@ bool AddNewPrimalNode(const FuncGraphManagerPtr &manager, const FuncGraphPtr &fg
         AddNewPrimalNode(manager, fg, user, new_primal_getitem, recompute_cell, origin_to_new_primal) || changed;
       continue;
     }
-    if (IsPrimitiveCNode(user, prim::kPrimDepend) && ShouldAddNewPrimalOutput(user, recompute_cell)) {
-      // Make new depend node to get corresponding output.
+    if (IsForwardDepend(user) && ShouldAddNewPrimalOutput(user, recompute_cell)) {
+      // Make new depend node in forward to get corresponding output.
       auto new_depend = fg->NewCNode(user->cast_ptr<CNode>()->inputs());
       new_depend->set_input(IntToSize(node_and_idx.second), new_primal);
       changed = AddNewPrimalNode(manager, fg, user, new_depend, recompute_cell, origin_to_new_primal) || changed;
