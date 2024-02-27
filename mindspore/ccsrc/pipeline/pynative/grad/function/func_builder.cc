@@ -32,10 +32,15 @@
 namespace mindspore::pynative::autograd {
 namespace {
 template <typename T>
-std::string DebugInput(std::vector<T> items) {
+std::string PrintDebugInfo(std::vector<T> items, const std::string &info_header = "") {
   static constexpr size_t end_char_size = 2;
   std::ostringstream buf;
+  buf << info_header;
   for (size_t i = 0; i < items.size(); ++i) {
+    if (items[i] == nullptr) {
+      MS_LOG(DEBUG) << "The " << i << "'th item is nullptr!";
+      continue;
+    }
     if (items[i]->template isa<tensor::Tensor>()) {
       auto tensor = items[i]->template cast<tensor::TensorPtr>();
       auto grad = std::make_shared<tensor::Tensor>(*tensor);
@@ -123,16 +128,17 @@ NodePtr FuncBuilder::EmitOp(const PrimitivePtr &prim, const NodePtrList &inputs)
     (void)input_abs.emplace_back(abs);
     (void)input_mask.emplace_back(input->input_type());
   }
-  MS_LOG(DEBUG) << "Get input value size " << op_inputs.size() << ", " << DebugInput<ValuePtr>(op_inputs);
-  MS_LOG(DEBUG) << "Get input abs size " << input_abs.size() << ", "
-                << DebugInput<abstract::AbstractBasePtr>(input_abs);
+  MS_LOG(DEBUG) << "Get input value size " << op_inputs.size() << ", "
+                << PyNativeAlgo::Common::PrintDebugInfo(op_inputs);
+  MS_LOG(DEBUG) << "Get input abs size " << input_abs.size() << ", " << PyNativeAlgo::Common::PrintDebugInfo(input_abs);
   VectorRef outputs;
   kernel::pyboost::OpRunnerInfo op_runner_info{prim, device_target_, op_inputs, input_abs, input_mask, nullptr};
   runtime::PyBoostOpExecute::GetInstance().Execute(&op_runner_info, &outputs);
   auto real_outputs = common::AnfAlgo::TransformVectorRefToMultiValue(outputs);
-  MS_LOG(DEBUG) << "Get output value size " << real_outputs.size() << ", " << DebugInput<ValuePtr>(real_outputs);
+  MS_LOG(DEBUG) << "Get output value size " << real_outputs.size() << ", "
+                << PyNativeAlgo::Common::PrintDebugInfo(real_outputs);
   ValuePtr value_result;
-  if (real_outputs.size() != 1) {
+  if (real_outputs.size() != kSizeOne) {
     value_result = std::make_shared<ValueTuple>(std::move(real_outputs));
   } else {
     value_result = real_outputs[kIndex0];
@@ -248,7 +254,7 @@ NodePtrList FuncBuilder::FlattenNode(const NodePtr &input) {
   NodePtrList flattenNodes;
   flattenNodes.reserve(value_seq.size());
   for (size_t i = 0; i < value_seq.size(); ++i) {
-    auto value = value_seq[i];
+    auto &value = value_seq[i];
     (void)flattenNodes.emplace_back(NewFuncNode(value, value_abs->elements()[i], input->input_type()));
   }
   return flattenNodes;

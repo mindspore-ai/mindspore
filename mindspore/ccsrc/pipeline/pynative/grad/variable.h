@@ -105,6 +105,10 @@ class BackwardNode {
   ///
   /// \return output size
   size_t output_size() const { return output_size_; }
+  /// \brief Release resource
+  ///
+  /// \return void
+  virtual void Release() {}
 
  protected:
   std::vector<Edge> next_edges_;
@@ -229,6 +233,13 @@ class Variable {
   ///
   /// \return debug info.
   virtual std::string ToString() const { return {}; }
+  /// \brief Release input and output tensors
+  ///
+  /// \return void
+  void Release() {
+    MS_EXCEPTION_IF_NULL(func_node_);
+    func_node_->Release();
+  }
 
  private:
   // If node has not bprop, we record its prim name

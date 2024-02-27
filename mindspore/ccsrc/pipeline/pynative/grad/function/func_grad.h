@@ -52,8 +52,9 @@ class FuncBackwardNode : public BackwardNode {
   ~FuncBackwardNode() override = default;
   TensorPtrList CallBackward(const TensorPtrList &grads) override;
   NodePtrList PreProcess(const TensorPtrList &dout, FuncBuilder *emitter);
-  const expander::bprop::BpropBuilderFunc &func() { return func_; }
+  const expander::bprop::BpropBuilderFunc &grad_func() { return func_; }
   void set_attrs(const mindspore::HashMap<std::string, ValuePtr> &attrs) { attrs_ = attrs; }
+  void Release() override;
 
  private:
   mindspore::HashMap<std::string, ValuePtr> attrs_;
@@ -70,6 +71,7 @@ class HookBackwardNode : public BackwardNode {
   HookBackwardNode(const string &name, PrimitivePyPtr prim, VectorRef &&args, size_t output_size)
       : BackwardNode(name, output_size), prim_(std::move(prim)), args_(args) {}
   TensorPtrList CallBackward(const TensorPtrList &grads) override;
+  void Release() override;
 
  private:
   PrimitivePyPtr prim_;

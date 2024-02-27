@@ -93,6 +93,29 @@ struct Common {
   static ValuePtr ConvertToContiguousValue(const ValuePtr &v, bool requires_grad);
   static size_t GetValueSize(const ValuePtr &v);
   static tensor::TensorPtr ConvertToContiguousTensor(const tensor::TensorPtr &tensor);
+  template <typename T>
+  static std::string PrintDebugInfo(std::vector<T> items, const std::string &info_header = "") {
+    static constexpr size_t end_char_size = 2;
+    std::ostringstream buf;
+    buf << info_header;
+    for (size_t i = 0; i < items.size(); ++i) {
+      if (items[i] == nullptr) {
+        MS_LOG(DEBUG) << "The " << i << "'th item is nullptr!";
+        continue;
+      }
+      if (items[i]->template isa<tensor::Tensor>()) {
+        auto tensor = items[i]->template cast<tensor::TensorPtr>();
+        auto grad = std::make_shared<tensor::Tensor>(*tensor);
+        grad->data_sync();
+        buf << i << "th: "
+            << "ptr " << items[i].get() << ", " << grad->ToStringRepr() << ", ";
+      } else {
+        buf << i << "th: "
+            << "ptr " << items[i].get() << ", " << items[i]->ToString() << ", ";
+      }
+    }
+    return buf.str().erase(buf.str().size() - end_char_size);
+  }
 };
 
 // Parser python

@@ -42,15 +42,12 @@ TensorPtr Add(const TensorPtr &input, const TensorPtr &other, const FuncBuilderP
   return result;
 }
 
-std::vector<TensorPtr> Add(const std::vector<TensorPtr> &inputs, const TensorPtr &other, size_t input_index,
-                           const FuncBuilderPtr &func_impl) {
-  if (input_index >= inputs.size()) {
+void Add(const TensorPtr &other, size_t input_index, const FuncBuilderPtr &func_impl, std::vector<TensorPtr> *inputs) {
+  if (input_index >= inputs->size()) {
     MS_LOG(EXCEPTION) << "The input index should less than inputs size";
   }
 
-  std::vector<TensorPtr> outputs(inputs);
-  outputs[input_index] = Add(inputs[input_index], other, func_impl);
-  return outputs;
+  (*inputs)[input_index] = Add(inputs->at(input_index), other, func_impl);
 }
 
 std::vector<TensorPtr> PaddingGradientInput(const tensor::TensorPtr &grad, size_t output_size, size_t input_index) {
@@ -142,20 +139,6 @@ ValuePtr GenerateEmptyTupleValue() {
   return std::make_shared<ValueTuple>(tuple_list);
 }
 
-std::string PrintGradients(const tensor::TensorPtrList &gradients) {
-  for (size_t i = 0; i < gradients.size(); ++i) {
-    const auto &grad = gradients[i];
-    if (grad == nullptr) {
-      MS_LOG(DEBUG) << "The " << i << "'th gradient is nullptr!";
-      continue;
-    }
-    auto tensor = std::make_shared<tensor::Tensor>(*grad);
-    tensor->data_sync();
-    MS_LOG(DEBUG) << "The " << i << "'th tensor " << tensor->id() << ", gradient: " << grad->ToStringRepr();
-  }
-  return "";
-}
-
 void SetFlattenTensorGradMetaData(const ValuePtrList &flatten_outs, const VariablePtr &variable) {
   for (size_t i = 0; i < flatten_outs.size(); ++i) {
     if (flatten_outs[i]->isa<tensor::Tensor>()) {
@@ -205,8 +188,10 @@ TensorPtrList FuncBackwardNode::CallBackward(const TensorPtrList &gradients_in) 
   auto ir_builder = FuncBuilder(name_, device_target, nullptr);
   auto inputs = PreProcess(gradients_in, &ir_builder);
   ir_builder.SetInputs(name(), &inputs, &attrs_);
-  const std::vector<NodePtr> cal_grads_node = func()(&ir_builder);
+  const std::vector<NodePtr> cal_grads_node = grad_func()(&ir_builder);
   ValuePtrList cal_grads_values;
+  cal_grads_values.reserve(cal_grads_node.size());
+  // Binary op grad result may be nulllptr, we need convert to kNone.
   std::transform(cal_grads_node.begin(), cal_grads_node.end(), std::back_inserter(cal_grads_values),
                  [](const NodePtr &node) -> ValuePtr {
                    if (node == nullptr) {
@@ -246,6 +231,11 @@ NodePtrList FuncBackwardNode::PreProcess(const TensorPtrList &dout, FuncBuilder 
   return node_inputs;
 }
 
+void FuncBackwardNode::Release() {
+  op_inputs_.clear();
+  op_output_ = nullptr;
+}
+
 TensorPtrList HookBackwardNode::CallBackward(const TensorPtrList &grads) {
   MS_LOG(DEBUG) << "Begin HookBackwardNode CallBackward ";
   auto gradient = TensorToValue(grads);
@@ -264,6 +254,8 @@ TensorPtrList HookBackwardNode::CallBackward(const TensorPtrList &grads) {
   MS_LOG(DEBUG) << "End HookBackwardNode CallBackward";
   return gradient_tensors;
 }
+
+void HookBackwardNode::Release() { args_.clear(); }
 
 TensorPtrList GraphBackwardNode::CallBackward(const TensorPtrList &grads) {
   MS_LOG(DEBUG) << "Begin GraphBackwardNode CallBackward ";
@@ -325,7 +317,7 @@ FuncGrad::FuncGrad(const ValuePtrList &input_param_values, size_t op_num_in_bpro
     } else {
       variable->set_is_need_grad(false);
     }
-    variable_set_.insert(variable);
+    (void)variable_set_.insert(variable);
     (void)cell_inputs_.emplace_back(input_param_value, variable);
   }
   device_target_ = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
@@ -362,7 +354,7 @@ bool FuncGrad::KPynativeOp(const GradParamPtr &grad_param) {
     variable->set_fake_prim_name(prim->name());
   }
 
-  variable_set_.insert(variable);
+  (void)variable_set_.insert(variable);
   SetFlattenTensorGradMetaData(PyNativeAlgo::DataConvert::FlattenTensorSeqInValue(grad_param->op_grad_info->out_value),
                                variable);
   MS_LOG(DEBUG) << "End update next edge for " << variable->ToString();
@@ -391,7 +383,7 @@ void FuncGrad::BuildForwardLastNode(const ValuePtr &sens_gradient) {
   if (root_gradients_.empty()) {
     sens_variable->set_is_need_grad(false);
   }
-  variable_set_.insert(sens_variable);
+  (void)variable_set_.insert(sens_variable);
   last_variable_ = sens_variable;
 }
 
@@ -403,7 +395,7 @@ bool FuncGrad::KPynativeWithFProp(const GradParamPtr &grad_param) {
   }
   auto fn = BuildGraphBackwardNode(grad_param);
   auto variable = std::make_shared<FuncVariable>(fn, false);
-  variable_set_.insert(variable);
+  (void)variable_set_.insert(variable);
   SetFlattenTensorGradMetaData(PyNativeAlgo::DataConvert::FlattenTensorSeqInValue(grad_param->op_grad_info->out_value),
                                variable);
   return true;
@@ -458,11 +450,9 @@ void FuncGrad::BackPropagate() {
       MS_LOG(EXCEPTION) << "Fn not has gradient";
     }
     const TensorPtrList &gradient_in = input_buffer[fn.get()];
-    MS_LOG(DEBUG) << "Begin print gradient in: ";
-    MS_LOG(DEBUG) << PrintGradients(gradient_in);
+    MS_LOG(DEBUG) << PyNativeAlgo::Common::PrintDebugInfo(gradient_in, "Begin print gradient in: ");
     TensorPtrList gradient_out = fn->CallBackward(gradient_in);
-    MS_LOG(DEBUG) << "Begin print gradient out: ";
-    MS_LOG(DEBUG) << PrintGradients(gradient_out);
+    MS_LOG(DEBUG) << PyNativeAlgo::Common::PrintDebugInfo(gradient_out, "Begin print gradient out: ");
     if (gradient_out.size() != fn->next_edges().size()) {
       MS_LOG(EXCEPTION) << "Fn gradient size should be same as next edges size";
     }
@@ -477,8 +467,7 @@ void FuncGrad::BackPropagate() {
         continue;
       }
       if (input_buffer.find(last_fn.get()) != input_buffer.end()) {
-        auto &tmp_grads = input_buffer[last_fn.get()];
-        input_buffer[last_fn.get()] = Add(tmp_grads, last_gradient, next_edge.input_index, func_impl_);
+        Add(last_gradient, next_edge.input_index, func_impl_, &input_buffer[last_fn.get()]);
       } else {
         input_buffer[last_fn.get()] =
           PaddingGradientInput(last_gradient, last_fn->output_size(), next_edge.input_index);
@@ -495,6 +484,7 @@ void FuncGrad::BackPropagate() {
       variable->set_grad(grad_tensor[0]);
     }
     input_buffer.erase(fn.get());
+    variable->Release();
   }
   MS_LOG(DEBUG) << "End BackPropagate";
 }
@@ -522,7 +512,7 @@ void FuncGrad::ConstructParameterNodes(const ValuePtrList &inputs) {
         auto fn = std::make_shared<BackwardNode>("parameter");
         auto variable = std::make_shared<FuncVariable>(fn, true);
         auto_grad_meta_data->set_variable(variable);
-        variable_set_.insert(variable);
+        (void)variable_set_.insert(variable);
         weights_used_in_graph_.emplace_back(tensor);
       }
     }

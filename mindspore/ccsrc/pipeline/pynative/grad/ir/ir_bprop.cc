@@ -546,6 +546,7 @@ FuncGraphPtr IrBprop::GetBpropGraphFromExpander(const GradParamPtr &grad_param) 
 
   // Plant dout tuple
   PlantFuncGradBpropGraphDout(grad_param, ad_graph);
+
   // Save ad graph in cache
   if (grad_param->is_jit_graph || !grad_param->use_dynamic_shape_process) {
     pass_grad_graph_[grad_param->graph_cache_key] = BasicClone(ad_graph);

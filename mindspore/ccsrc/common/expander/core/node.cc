@@ -93,12 +93,7 @@ std::vector<TypePtr> Node::dtypes() {
   return result;
 }
 
-std::string Node::ToString() const {
-  if (value_ != nullptr) {
-    return value_->ToString();
-  }
-  return "";
-}
+std::string Node::ToString() const { return value_ != nullptr ? value_->ToString() : ""; }
 
 InputType IrNode::input_type() {
   if (anf_node_->isa<ValueNode>()) {
@@ -141,7 +136,10 @@ TypePtr IrNode::GetType() {
   return type;
 }
 
-std::string IrNode::ToString() const { return anf_node_->ToString(); }
+std::string IrNode::ToString() const {
+  MS_EXCEPTION_IF_NULL(anf_node_);
+  return anf_node_->ToString();
+}
 
 void IrNode::set_debug_info(const std::string &debug_info) {
   auto primitive = GetCNodePrimitive(anf_node_);
