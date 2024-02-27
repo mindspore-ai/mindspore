@@ -765,7 +765,8 @@ def delete_residual_files(work_path, all_op_names, code_generate_path_list):
                 judge_file = file.replace("_", "")
                 if judge_file.startswith(clean_name):
                     file_path = os.path.join(code_generate_path, file)
-                    os.remove(file_path)
+                    if os.path.exists(file_path):
+                        os.remove(file_path)
 
 def generate_pyboost_op_cpp_code(work_path, yaml_data):
     """
