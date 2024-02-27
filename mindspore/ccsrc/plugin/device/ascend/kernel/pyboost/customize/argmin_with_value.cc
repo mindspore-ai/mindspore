@@ -43,7 +43,6 @@ std::tuple<tensor::TensorPtr, tensor::TensorPtr> ArgMinWithValueAscendCustomize(
 
   // Async
   PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor, axis_imm, keep_dims_imm]() {
-    const std::string op_name = "ArgMinWithValue";
     MS_LOG(DEBUG) << "Run device task ArgMinWithValue end";
     auto device_context = op->device_context();
     const auto &outputs = op->outputs();
