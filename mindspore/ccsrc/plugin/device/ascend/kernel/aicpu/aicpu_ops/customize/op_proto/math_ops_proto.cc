@@ -547,4 +547,17 @@ CUST_COMMON_INFER_FUNC_REG(TrilIndices, TriluIndicesInfer);
 CUST_COMMON_INFER_FUNC_REG(TriuIndices, TriluIndicesInfer);
 // ----------------Trilindices End-------------------
 // ----------------Triuindices End-------------------
+
+// -----------------------CholeskyInverse---------------------
+IMPLEMT_COMMON_INFERFUNC(CholeskyInverseInferShape) {
+  TensorDesc out_desc = op.GetInputDescByName("x");
+  if (op.UpdateOutputDesc("y", out_desc) != GRAPH_SUCCESS) {
+    return GRAPH_FAILED;
+  }
+  return GRAPH_SUCCESS;
+}
+
+CUST_COMMON_INFER_FUNC_REG(CholeskyInverse, CholeskyInverseInferShape);
+
+// -----------------------CholeskyInverse END---------------------
 }  // namespace ge

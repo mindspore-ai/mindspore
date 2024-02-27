@@ -315,6 +315,7 @@ IMPLEMT_COMMON_INFERFUNC(OneHotInferShape) {
     }
     output_desc.SetShapeRange(input_range);
   }
+  output_desc.SetShape(output_shape);
   op.UpdateOutputDesc("y", output_desc);
 
   return GRAPH_SUCCESS;
@@ -580,7 +581,7 @@ COMMON_INFER_FUNC_REG(Slice, SliceInferShape);
 // ----------------SearchSorted-------------------
 IMPLEMT_COMMON_INFERFUNC(SearchSortedInferShape) {
   TensorDesc output_desc = op.GetOutputDescByName("out");
-  output_desc.SetShape(op.GetInputDescByName("value").GetShape());
+  output_desc.SetShape(op.GetInputDescByName("values").GetShape());
   DataType dtype;
   RETURN_IF_FAILURE(op.GetAttr("dtype", dtype));
   output_desc.SetDataType(dtype);
