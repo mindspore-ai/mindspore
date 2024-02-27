@@ -986,7 +986,7 @@ DfGraphConvertor &DfGraphConvertor::ConvertAllNode() {
     // Ref mode need build all node(cnode && parameter).
     for (auto &p : anf_graph_->parameters()) {
       if (std::find(nodes.begin(), nodes.end(), p) == nodes.end()) {
-        MS_LOG(INFO) << "Parameter " << p->DebugString() << " cannot found in toposort lists.";
+        MS_LOG(INFO) << "Parameter " << p->DebugString() << " can not found in topo sort lists.";
         nodes.emplace_back(p);
       }
     }
@@ -2671,7 +2671,7 @@ void DfGraphConvertor::SetDynamicInputBeforeNormalInput(const OpAdapterPtr &adpt
   MS_EXCEPTION_IF_NULL(dyn_input_sizes);
   if (dyn_input_sizes->empty()) {
     *dyn_input_sizes = std::vector<int64_t>(ge_input_size, -1);
-    for (const auto iter : dyn_input_map) {
+    for (const auto &iter : dyn_input_map) {
       dyn_input_sizes->at(iter.first - kIndex1) = 1;
     }
   }
