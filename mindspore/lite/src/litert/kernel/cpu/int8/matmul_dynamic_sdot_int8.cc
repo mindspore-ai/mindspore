@@ -60,7 +60,7 @@ int MatMulDynamicSdotInt8Kernel::MatMulDynamicArm64SdotPre(int task_id) {
   }
 
   auto current_a_pack = pack_a_ptr_ + row_current_stride * param_->deep_align_;
-  int weight_zp = quant_param_->filter_zp_[0];
+  int weight_zp = (quant_param_->filter_zp_ + b_quant_offset_)[0];
   if (param_->a_transpose_) {
     auto current_src_a = batch_input_ptr_ + row_current_stride;
     if (weight_zp == 0) {
@@ -90,7 +90,7 @@ void MatMulDynamicSdotInt8Kernel::ComputeMultiScaleAhead(std::vector<float> *mul
       scales[0] = quant_param_->input_scale_[0] * quant_param_->filter_scale_[0];
     } else {
       scales.resize(UP_ROUND(col_num, col_tile_));
-      float *filter_scales = quant_param_->filter_scale_ + col_start;
+      float *filter_scales = quant_param_->filter_scale_ + b_quant_offset_ + col_start;
       for (size_t i = 0; i < col_num; ++i) {
         scales[i] = quant_param_->input_scale_[0] * filter_scales[i];
       }
@@ -98,7 +98,7 @@ void MatMulDynamicSdotInt8Kernel::ComputeMultiScaleAhead(std::vector<float> *mul
   } else if (!filter_per_channel_) {
     scales.resize(param_->row_align_);
     for (int i = 0; i < param_->row_; ++i) {
-      scales[i] = quant_param_->input_scale_[i] * quant_param_->filter_scale_[0];
+      scales[i] = (quant_param_->input_scale_ + a_quant_offset_)[i] * quant_param_->filter_scale_[0];
     }
   }
 }
@@ -107,8 +107,8 @@ void MatMulDynamicSdotInt8Kernel::ComputeMultiScaleChannelByChannel(std::vector<
                                                                     size_t row_num, int col_start, size_t col_num) {
   auto &scales = *multi_scale;
   scales.resize(row_tile_ * col_tile_, 0);
-  float *in_scales = quant_param_->input_scale_ + row_start;
-  float *filter_scales = quant_param_->filter_scale_ + col_start;
+  float *in_scales = quant_param_->input_scale_ + a_quant_offset_ + row_start;
+  float *filter_scales = quant_param_->filter_scale_ + b_quant_offset_ + col_start;
   for (size_t i = 0; i < row_num; ++i) {
     for (size_t j = 0; j < col_num; ++j) {
       scales[i * col_tile_ + j] = in_scales[i] * filter_scales[j];
@@ -169,14 +169,16 @@ int MatMulDynamicSdotInt8Kernel::MatMulDynamicArm64SdotImpl(int task_id) {
       if (!enable_fp16_) {
         dynamic_matmul_compute_fp32(a_ptr, b_ptr, reinterpret_cast<float *>(out_ptr), param_->deep_align_,
                                     multi_scale.data() + multi_scale_offset, reinterpret_cast<float *>(bias), row, col,
-                                    out_stride, input_sums_ptr, weight_sums_ptr, quant_param_->input_zp_[0],
-                                    quant_param_->filter_zp_[0] * param_->deep_, act_type, mode);
+                                    out_stride, input_sums_ptr, weight_sums_ptr,
+                                    (quant_param_->input_zp_ + a_quant_offset_)[0],
+                                    (quant_param_->filter_zp_ + b_quant_offset_)[0] * param_->deep_, act_type, mode);
       } else {
 #ifdef ENABLE_FP16
         dynamic_matmul_compute_fp16(a_ptr, b_ptr, reinterpret_cast<float16_t *>(out_ptr), param_->deep_align_,
                                     multi_scale.data() + multi_scale_offset, reinterpret_cast<float16_t *>(bias), row,
-                                    col, out_stride, input_sums_ptr, weight_sums_ptr, quant_param_->input_zp_[0],
-                                    quant_param_->filter_zp_[0] * param_->deep_, act_type, mode);
+                                    col, out_stride, input_sums_ptr, weight_sums_ptr,
+                                    (quant_param_->input_zp_ + a_quant_offset_)[0],
+                                    (quant_param_->filter_zp_ + b_quant_offset_)[0] * param_->deep_, act_type, mode);
 #endif
       }
     }
@@ -224,6 +226,14 @@ int MatMulDynamicSdotInt8Kernel::MatMulDynamicRunArm64Sdot() {
   size_t data_type_size = enable_fp16_ ? sizeof(uint16_t) : sizeof(float);
   for (int i = 0; i < param_->batch; i++) {
     batch_input_ptr_ = a_ptr + a_offset_[i] * param_->row_ * param_->deep_;
+    a_quant_offset_ = 0;
+    if (input_per_batch_channel_) {
+      a_quant_offset_ = a_offset_[i] * param_->row_;
+    }
+    b_quant_offset_ = 0;
+    if (filter_per_batch_channel_) {
+      b_quant_offset_ = b_offset_[i] * param_->col_;
+    }
     auto ret = ParallelLaunch(this->ms_context_, Arm64SdotPreRun, this, op_parameter_->thread_num_);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Arm64SdotPreRun error: [" << ret << "]";

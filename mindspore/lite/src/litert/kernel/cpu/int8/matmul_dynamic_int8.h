@@ -30,14 +30,11 @@ class MatmulDynamicInt8CPUKernel : public MatmulDynamicBaseInt8CPUKernel {
   }
   ~MatmulDynamicInt8CPUKernel() override = default;
   int Run() override;
-
- public:
   int RunImpl(int task_id);
 
  private:
   void InitParameter() override;
 
- private:
   PackFunc a_pack_func_{nullptr};
 };
 }  // namespace mindspore::kernel
