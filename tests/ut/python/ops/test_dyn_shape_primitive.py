@@ -1,4 +1,4 @@
-# Copyright 2023 Huawei Technologies Co., Ltd
+# Copyright 2023-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,14 +16,10 @@
 import math
 import pytest
 import numpy as np
-from tests.st.utils import test_utils
 
 import mindspore as ms
 from mindspore import nn, mutable
 from mindspore.ops import auto_generate as ops
-
-
-ms.set_context(jit_syntax_level=ms.STRICT)
 
 
 class AvgPoolNet(nn.Cell):
@@ -41,58 +37,37 @@ class AvgPoolCreateInstanceNet(nn.Cell):
         return op(x)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@test_utils.run_test_with_On
 def test_avg_pool():
     """
     Feature: DynamicShape.
     Description: Test AvgPool with dynamic shape.
     Expectation: No exception.
     """
-    ms.set_context(precompile_only=True, mode=ms.GRAPH_MODE)
+    ms.set_context(mode=ms.GRAPH_MODE, jit_syntax_level=ms.STRICT)
     x = ms.Tensor(np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4), ms.float32)
-    net = AvgPoolNet()
-    out = net(x)
+    AvgPoolNet()(x)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@test_utils.run_test_with_On
 def test_avg_pool_create_instance_const_args():
     """
     Feature: DynamicShape.
     Description: Create AvgPool instance with constant arguaments.
     Expectation: No exception.
     """
-    ms.set_context(precompile_only=True, mode=ms.GRAPH_MODE)
+    ms.set_context(mode=ms.GRAPH_MODE, jit_syntax_level=ms.STRICT)
     x = ms.Tensor(np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4), ms.float32)
-    net = AvgPoolCreateInstanceNet()
-    out = net(x, 1, 1, "VALID", "NCHW")
+    AvgPoolCreateInstanceNet()(x, 1, 1, "VALID", "NCHW")
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@test_utils.run_test_with_On
 def test_avg_pool_create_instance_var_args():
     """
     Feature: DynamicShape.
     Description: Create AvgPool instance with variable arguaments.
     Expectation: No exception.
     """
-    ms.set_context(precompile_only=True, mode=ms.GRAPH_MODE)
+    ms.set_context(mode=ms.GRAPH_MODE, jit_syntax_level=ms.STRICT)
     x = ms.Tensor(np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4), ms.float32)
-    net = AvgPoolCreateInstanceNet()
-    out = net(x, mutable(1), mutable(1), "VALID", "NCHW")
+    AvgPoolCreateInstanceNet()(x, mutable(1), mutable(1), "VALID", "NCHW")
 
 
 class PowNet(nn.Cell):
@@ -109,38 +84,24 @@ class PowCreateInstanceNet(nn.Cell):
         return ops.Pow()(x, y)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@test_utils.run_test_with_On
 def test_pow_type_cast():
     """
     Feature: DynamicShape.
     Description: Test type conversion for pow.
     Expectation: No exception.
     """
-    ms.set_context(precompile_only=True, mode=ms.GRAPH_MODE)
-    net = PowNet()
-    out = net(1, 2)
+    ms.set_context(mode=ms.GRAPH_MODE, jit_syntax_level=ms.STRICT)
+    PowNet()(1, 2)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@test_utils.run_test_with_On
 def test_pow_create_instance_type_cast():
     """
     Feature: DynamicShape.
     Description: Test type conversion for pow.
     Expectation: No exception.
     """
-    ms.set_context(precompile_only=True, mode=ms.GRAPH_MODE)
-    net = PowCreateInstanceNet()
-    out = net(1.0, 2)
+    ms.set_context(mode=ms.GRAPH_MODE, jit_syntax_level=ms.STRICT)
+    PowCreateInstanceNet()(1.0, 2)
 
 
 class LSTM(nn.Cell):
@@ -195,16 +156,13 @@ class LSTMWeightBias():
         return w_ih_list, w_hh_list, b_ih_list, b_hh_list
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
 def test_lstm_ops():
     """
     Feature: DynamicShape.
     Description: LSTM with input (3, 32, 32)
     Expectation: No exception.
     """
-    ms.set_context(precompile_only=True, mode=ms.GRAPH_MODE)
+    ms.set_context(mode=ms.GRAPH_MODE, jit_syntax_level=ms.STRICT)
     input_s = 32
     hidden_s = 16
     has_bias = True
@@ -225,15 +183,9 @@ def test_lstm_ops():
     net.lstm.w_hh_list = w_hh_list
     net.lstm.b_ih_list = b_ih_list
     net.lstm.b_hh_list = b_hh_list
-    out = net(input_ms, h0, c0)
+    net(input_ms, h0, c0)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@test_utils.run_test_with_On
 def test_op_with_default_init_args():
     """
     Feature: DynamicShape.
@@ -244,16 +196,12 @@ def test_op_with_default_init_args():
     def func(x, size):
         return ops.ResizeNearestNeighbor(size)(x)
 
-    ms.set_context(precompile_only=True, mode=ms.GRAPH_MODE)
+    ms.set_context(mode=ms.GRAPH_MODE, jit_syntax_level=ms.STRICT)
     x = ms.Tensor(np.array([[[[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]]]), ms.float32)
     size = ms.mutable((2, 2))
     func(x, size)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
 def test_add_two_scalar():
     """
     Feature: DynamicShape.
@@ -264,14 +212,46 @@ def test_add_two_scalar():
     def func(x, y):
         return ops.add(x, y)
 
-    ms.set_context(precompile_only=False, mode=ms.GRAPH_MODE)
-    assert func(2.5, 1) == 3.5
+    ms.set_context(mode=ms.GRAPH_MODE, jit_syntax_level=ms.STRICT)
+    func(2.5, 1)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
+def test_primitive_init_keyword_argument():
+    """
+    Feature: DynamicShape.
+    Description: Test keyword argument.
+    Expectation: No exception.
+    """
+    @ms.jit
+    def func(x, arg):
+        return ops.AvgPool(arg, pad_mode="VALID", strides=arg)(x)
+
+    ms.set_context(mode=ms.GRAPH_MODE, jit_syntax_level=ms.STRICT)
+    x = ms.Tensor(np.random.rand(10, 36, 12, 12).astype(np.float32))
+    func(x, 1)
+    func(x, ms.mutable(1))
+
+
+def test_primitive_call_keyword_argument():
+    """
+    Feature: DynamicShape.
+    Description: Test keyword argument.
+    Expectation: Raise TypeError.
+    """
+    @ms.jit
+    def func(x, axis):
+        return ops.Softmax(axis)(x=x)
+
+    ms.set_context(mode=ms.GRAPH_MODE, jit_syntax_level=ms.STRICT)
+    x = ms.Tensor(np.random.rand(10, 36, 12, 12).astype(np.float32))
+    with pytest.raises(TypeError) as info1:
+        func(x, (-1,))
+    assert "only positional arguments as inputs are supported" in str(info1.value)
+    with pytest.raises(TypeError) as info2:
+        func(x, ms.mutable((-1,)))
+    assert "only positional arguments as inputs are supported" in str(info2.value)
+
+
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_acos_unsupported_input_type(mode):
     """
@@ -283,16 +263,12 @@ def test_acos_unsupported_input_type(mode):
         def construct(self, x):
             return ops.acos(x)
 
-    ms.set_context(precompile_only=False, mode=mode)
+    ms.set_context(mode=mode, jit_syntax_level=ms.STRICT)
     with pytest.raises(TypeError) as info:
         ACos()("str")
     assert "Failed calling ACos with \"ACos()(input=string)\"" in str(info.value)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_diagonal_unsupported_input_type(mode):
     """
@@ -304,7 +280,7 @@ def test_diagonal_unsupported_input_type(mode):
         def construct(self, x, offset, dim1, dim2):
             return ops.diagonal(x, offset, dim1, dim2)
 
-    ms.set_context(precompile_only=False, mode=mode)
+    ms.set_context(mode=mode, jit_syntax_level=ms.STRICT)
     with pytest.raises(TypeError) as info:
         Diagonal()(1.0, 1, 1, -3)
     assert "Failed calling Diagonal with \"Diagonal(offset=int, dim1=int, dim2=int)(input=float)\"" in str(info.value)
