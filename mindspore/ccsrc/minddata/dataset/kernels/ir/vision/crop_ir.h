@@ -34,7 +34,8 @@ constexpr char kCropOperation[] = "Crop";
 
 class CropOperation : public TensorOperation {
  public:
-  CropOperation(const std::vector<int32_t> &coordinates, const std::vector<int32_t> &size);
+  CropOperation(const std::vector<int32_t> &coordinates, const std::vector<int32_t> &size,
+                const std::string &device_target = "CPU");
 
   ~CropOperation() override;
 
@@ -48,9 +49,12 @@ class CropOperation : public TensorOperation {
 
   static Status from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation);
 
+  MapTargetDevice Type() override;
+
  private:
   std::vector<int32_t> coordinates_;
   std::vector<int32_t> size_;
+  std::string device_target_;
 };
 }  // namespace vision
 }  // namespace dataset

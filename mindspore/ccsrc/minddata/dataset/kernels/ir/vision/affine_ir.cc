@@ -16,6 +16,9 @@
 #include "minddata/dataset/kernels/ir/vision/affine_ir.h"
 
 #include "minddata/dataset/kernels/image/affine_op.h"
+#if !defined(BUILD_LITE) && defined(ENABLE_D)
+#include "minddata/dataset/kernels/image/dvpp/ascend910b/dvpp_affine_op.h"
+#endif
 #include "minddata/dataset/kernels/ir/validators.h"
 #include "minddata/dataset/util/validators.h"
 
@@ -24,13 +27,14 @@ namespace dataset {
 namespace vision {
 AffineOperation::AffineOperation(float_t degrees, const std::vector<float> &translation, float scale,
                                  const std::vector<float> &shear, InterpolationMode interpolation,
-                                 const std::vector<uint8_t> &fill_value)
+                                 const std::vector<uint8_t> &fill_value, const std::string &device_target)
     : degrees_(degrees),
       translation_(translation),
       scale_(scale),
       shear_(shear),
       interpolation_(interpolation),
-      fill_value_(fill_value) {}
+      fill_value_(fill_value),
+      device_target_(device_target) {}
 
 AffineOperation::~AffineOperation() = default;
 
@@ -63,14 +67,30 @@ Status AffineOperation::ValidateParams() {
     std::string err_msg = "Affine: Invalid InterpolationMode, check input value of enum.";
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
+  // device target
+  if (device_target_ != "CPU" && device_target_ != "Ascend") {
+    std::string err_msg = "Affine: Invalid device target. It's not CPU or Ascend.";
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
 
   return Status::OK();
 }
 
 std::shared_ptr<TensorOp> AffineOperation::Build() {
-  std::shared_ptr<AffineOp> tensor_op =
-    std::make_shared<AffineOp>(degrees_, translation_, scale_, shear_, interpolation_, fill_value_);
-  return tensor_op;
+  if (device_target_ == "CPU") {
+    std::shared_ptr<AffineOp> tensor_op =
+      std::make_shared<AffineOp>(degrees_, translation_, scale_, shear_, interpolation_, fill_value_);
+    return tensor_op;
+#if !defined(BUILD_LITE) && defined(ENABLE_D)
+  } else if (device_target_ == "Ascend") {
+    std::shared_ptr<DvppAffineOp> dvpp_tensor_op =
+      std::make_shared<DvppAffineOp>(degrees_, translation_, scale_, shear_, interpolation_, fill_value_);
+    return dvpp_tensor_op;
+#endif
+  } else {
+    MS_LOG(ERROR) << "Affine: Invalid device target. It's not CPU or Ascend.";
+    return nullptr;
+  }
 }
 
 Status AffineOperation::to_json(nlohmann::json *out_json) {
@@ -82,6 +102,7 @@ Status AffineOperation::to_json(nlohmann::json *out_json) {
   args["shear"] = shear_;
   args["resample"] = interpolation_;
   args["fill_value"] = fill_value_;
+  args["device_target"] = device_target_;
   *out_json = args;
   return Status::OK();
 }
@@ -94,14 +115,28 @@ Status AffineOperation::from_json(nlohmann::json op_params, std::shared_ptr<Tens
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "shear", kAffineOperation));
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "resample", kAffineOperation));
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "fill_value", kAffineOperation));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "device_target", kAffineOperation));
   float_t degrees = op_params["degrees"];
   std::vector<float> translation = op_params["translate"];
   float scale = op_params["scale"];
   std::vector<float> shear = op_params["shear"];
   auto interpolation = static_cast<InterpolationMode>(op_params["resample"]);
   std::vector<uint8_t> fill_value = op_params["fill_value"];
-  *operation = std::make_shared<vision::AffineOperation>(degrees, translation, scale, shear, interpolation, fill_value);
+  std::string device_target = op_params["device_target"];
+  *operation = std::make_shared<vision::AffineOperation>(degrees, translation, scale, shear, interpolation, fill_value,
+                                                         device_target);
   return Status::OK();
+}
+
+MapTargetDevice AffineOperation::Type() {
+  if (device_target_ == "CPU") {
+    return MapTargetDevice::kCpu;
+  } else if (device_target_ == "Ascend") {
+    return MapTargetDevice::kAscend910B;
+  } else {
+    MS_LOG(ERROR) << "Affine: Invalid device target. It's not CPU or Ascend.";
+    return MapTargetDevice::kInvalid;
+  }
 }
 }  // namespace vision
 }  // namespace dataset

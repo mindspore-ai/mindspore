@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_ASCEND910B_DVPP_PERSPECTIVE_H_
-#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_ASCEND910B_DVPP_PERSPECTIVE_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_ASCEND910B_DVPP_HORIZONTAL_FLIP_OP_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_ASCEND910B_DVPP_HORIZONTAL_FLIP_OP_H_
 
 #include <memory>
 #include <string>
@@ -26,26 +26,23 @@
 
 namespace mindspore {
 namespace dataset {
-class DvppPerspectiveOp : public TensorOp {
+class DvppHorizontalFlipOp : public TensorOp {
  public:
-  DvppPerspectiveOp(const std::vector<std::vector<int32_t>> &start_points,
-                    const std::vector<std::vector<int32_t>> &end_points, InterpolationMode interpolation)
-      : start_points_(start_points), end_points_(end_points), interpolation_(interpolation) {}
+  DvppHorizontalFlipOp() = default;
 
-  ~DvppPerspectiveOp() override = default;
+  ~DvppHorizontalFlipOp() override = default;
 
   Status Compute(const std::shared_ptr<DeviceTensorAscend910B> &input,
                  std::shared_ptr<DeviceTensorAscend910B> *output) override;
 
-  std::string Name() const override { return kDvppPerspectiveOp; }
+  Status OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) override;
+
+  Status OutputType(const std::vector<DataType> &inputs, std::vector<DataType> &outputs) override;
+
+  std::string Name() const override { return kDvppHorizontalFlipOp; }
 
   bool IsDvppOp() override { return true; }
-
- protected:
-  std::vector<std::vector<int32_t>> start_points_;
-  std::vector<std::vector<int32_t>> end_points_;
-  InterpolationMode interpolation_;
 };
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_ASCEND910B_DVPP_PERSPECTIVE_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_ASCEND910B_DVPP_HORIZONTAL_FLIP_OP_H_

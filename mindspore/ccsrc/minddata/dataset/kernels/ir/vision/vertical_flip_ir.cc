@@ -19,7 +19,7 @@
 #include "minddata/dataset/kernels/image/vertical_flip_op.h"
 #endif
 #if !defined(BUILD_LITE) && defined(ENABLE_D)
-#include "minddata/dataset/kernels/image/dvpp/ascend910b/dvpp_vertical_flip.h"
+#include "minddata/dataset/kernels/image/dvpp/ascend910b/dvpp_vertical_flip_op.h"
 #endif
 #include "minddata/dataset/kernels/ir/validators.h"
 #include "minddata/dataset/util/validators.h"

@@ -159,9 +159,9 @@ PYBIND_REGISTER(AffineOperation, 1, ([](const py::module *m) {
                     *m, "AffineOperation")
                     .def(py::init([](float degrees, const std::vector<float> &translation, float scale,
                                      const std::vector<float> &shear, InterpolationMode interpolation,
-                                     const std::vector<uint8_t> &fill_value) {
+                                     const std::vector<uint8_t> &fill_value, const std::string &device_target) {
                       auto affine = std::make_shared<vision::AffineOperation>(degrees, translation, scale, shear,
-                                                                              interpolation, fill_value);
+                                                                              interpolation, fill_value, device_target);
                       THROW_IF_ERROR(affine->ValidateParams());
                       return affine;
                     }));
@@ -227,11 +227,12 @@ PYBIND_REGISTER(
 PYBIND_REGISTER(CropOperation, 1, ([](const py::module *m) {
                   (void)py::class_<vision::CropOperation, TensorOperation, std::shared_ptr<vision::CropOperation>>(
                     *m, "CropOperation", "Tensor operation to crop images")
-                    .def(py::init([](std::vector<int32_t> coordinates, const std::vector<int32_t> &size) {
+                    .def(py::init([](std::vector<int32_t> coordinates, const std::vector<int32_t> &size,
+                                     const std::string &device_target) {
                       // In Python API, the order of coordinates is first top then left, which is different from
                       // those in CropOperation. So we need to swap the coordinates.
                       std::swap(coordinates[0], coordinates[1]);
-                      auto crop = std::make_shared<vision::CropOperation>(coordinates, size);
+                      auto crop = std::make_shared<vision::CropOperation>(coordinates, size, device_target);
                       THROW_IF_ERROR(crop->ValidateParams());
                       return crop;
                     }));
@@ -311,11 +312,12 @@ PYBIND_REGISTER(
   GaussianBlurOperation, 1, ([](const py::module *m) {
     (void)py::class_<vision::GaussianBlurOperation, TensorOperation, std::shared_ptr<vision::GaussianBlurOperation>>(
       *m, "GaussianBlurOperation")
-      .def(py::init([](const std::vector<int32_t> &kernel_size, const std::vector<float> &sigma) {
-        auto gaussian_blur = std::make_shared<vision::GaussianBlurOperation>(kernel_size, sigma);
-        THROW_IF_ERROR(gaussian_blur->ValidateParams());
-        return gaussian_blur;
-      }));
+      .def(py::init(
+        [](const std::vector<int32_t> &kernel_size, const std::vector<float> &sigma, const std::string &device_target) {
+          auto gaussian_blur = std::make_shared<vision::GaussianBlurOperation>(kernel_size, sigma, device_target);
+          THROW_IF_ERROR(gaussian_blur->ValidateParams());
+          return gaussian_blur;
+        }));
   }));
 
 PYBIND_REGISTER(GetImageNumChannels, 1, ([](py::module *m) {
@@ -407,8 +409,9 @@ PYBIND_REGISTER(PadOperation, 1, ([](const py::module *m) {
                   (void)py::class_<vision::PadOperation, TensorOperation, std::shared_ptr<vision::PadOperation>>(
                     *m, "PadOperation")
                     .def(py::init([](const std::vector<int32_t> &padding, const std::vector<uint8_t> &fill_value,
-                                     BorderType padding_mode) {
-                      auto pad = std::make_shared<vision::PadOperation>(padding, fill_value, padding_mode);
+                                     BorderType padding_mode, const std::string &device_target) {
+                      auto pad =
+                        std::make_shared<vision::PadOperation>(padding, fill_value, padding_mode, device_target);
                       THROW_IF_ERROR(pad->ValidateParams());
                       return pad;
                     }));

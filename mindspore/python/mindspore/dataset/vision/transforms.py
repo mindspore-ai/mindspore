@@ -612,9 +612,42 @@ class Affine(ImageTensorOperation):
         self.fill_value = fill_value
         self.implementation = Implementation.C
 
+    @check_device_target
+    def device(self, device_target="CPU"):
+        """
+        Set the device for the current operator execution.
+
+        Args:
+            device_target (str, optional): The operator will be executed on this device. Currently supports
+                ``CPU`` and ``Ascend`` . Default: ``CPU`` .
+
+        Raises:
+            TypeError: If `device_target` is not of type str.
+            ValueError: If `device_target` is not within the valid set of ['CPU', 'Ascend'].
+
+        Supported Platforms:
+            ``CPU`` ``Ascend``
+
+        Examples:
+            >>> import mindspore.dataset as ds
+            >>> import mindspore.dataset.vision as vision
+            >>>
+            >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
+            >>> decode_op = vision.Decode()
+            >>> affine_op = vision.Affine(degrees=15, translate=[0.2, 0.2], scale=1.1, shear=[1, 1]).device("Ascend")
+            >>> transforms_list = [decode_op, affine_op]
+            >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list, input_columns=["image"])
+
+        Tutorial Examples:
+            - `Illustration of vision transforms
+              <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
+        """
+        self.device_target = device_target
+        return self
+
     def parse(self):
         return cde.AffineOperation(self.degrees, self.translate, self.scale_, self.shear,
-                                   Inter.to_c_type(self.resample), self.fill_value)
+                                   Inter.to_c_type(self.resample), self.fill_value, self.device_target)
 
 
 class AutoAugment(ImageTensorOperation):
@@ -991,8 +1024,41 @@ class Crop(ImageTensorOperation):
         self.size = size
         self.implementation = Implementation.C
 
+    @check_device_target
+    def device(self, device_target="CPU"):
+        """
+        Set the device for the current operator execution.
+
+        Args:
+            device_target (str, optional): The operator will be executed on this device. Currently supports
+                ``CPU`` and ``Ascend`` . Default: ``CPU`` .
+
+        Raises:
+            TypeError: If `device_target` is not of type str.
+            ValueError: If `device_target` is not within the valid set of ['CPU', 'Ascend'].
+
+        Supported Platforms:
+            ``CPU`` ``Ascend``
+
+        Examples:
+            >>> import mindspore.dataset as ds
+            >>> import mindspore.dataset.vision as vision
+            >>>
+            >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
+            >>> decode_op = vision.Decode()
+            >>> crop_op = vision.Crop((0, 0), (100, 75)).device("Ascend")
+            >>> transforms_list = [decode_op, crop_op]
+            >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list, input_columns=["image"])
+
+        Tutorial Examples:
+            - `Illustration of vision transforms
+              <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
+        """
+        self.device_target = device_target
+        return self
+
     def parse(self):
-        return cde.CropOperation(self.coordinates, self.size)
+        return cde.CropOperation(self.coordinates, self.size, self.device_target)
 
 
 class CutMixBatch(ImageTensorOperation):
@@ -1434,8 +1500,41 @@ class GaussianBlur(ImageTensorOperation):
         self.sigma = sigma
         self.implementation = Implementation.C
 
+    @check_device_target
+    def device(self, device_target="CPU"):
+        """
+        Set the device for the current operator execution.
+
+        Args:
+            device_target (str, optional): The operator will be executed on this device. Currently supports
+                ``CPU`` and ``Ascend`` . Default: ``CPU`` .
+
+        Raises:
+            TypeError: If `device_target` is not of type str.
+            ValueError: If `device_target` is not within the valid set of ['CPU', 'Ascend'].
+
+        Supported Platforms:
+            ``CPU`` ``Ascend``
+
+        Examples:
+            >>> import mindspore.dataset as ds
+            >>> import mindspore.dataset.vision as vision
+            >>>
+            >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
+            >>> decode_op = vision.Decode()
+            >>> blur_op = vision.GaussianBlur(3, 3).device("Ascend")
+            >>> transforms_list = [decode_op, blur_op]
+            >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list, input_columns=["image"])
+
+        Tutorial Examples:
+            - `Illustration of vision transforms
+              <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
+        """
+        self.device_target = device_target
+        return self
+
     def parse(self):
-        return cde.GaussianBlurOperation(self.kernel_size, self.sigma)
+        return cde.GaussianBlurOperation(self.kernel_size, self.sigma, self.device_target)
 
 
 class Grayscale(PyTensorOperation):
@@ -2109,8 +2208,41 @@ class Pad(ImageTensorOperation, PyTensorOperation):
         self.random = False
         self.padding_mode = padding_mode
 
+    @check_device_target
+    def device(self, device_target="CPU"):
+        """
+        Set the device for the current operator execution.
+
+        Args:
+            device_target (str, optional): The operator will be executed on this device. Currently supports
+                ``CPU`` and ``Ascend`` . Default: ``CPU`` .
+
+        Raises:
+            TypeError: If `device_target` is not of type str.
+            ValueError: If `device_target` is not within the valid set of ['CPU', 'Ascend'].
+
+        Supported Platforms:
+            ``CPU`` ``Ascend``
+
+        Examples:
+            >>> import mindspore.dataset as ds
+            >>> import mindspore.dataset.vision as vision
+            >>>
+            >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
+            >>> decode_op = vision.Decode()
+            >>> pad_op = vision.Pad([100, 100, 100, 100]).device("Ascend")
+            >>> transforms_list = [decode_op, pad_op]
+            >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list, input_columns=["image"])
+
+        Tutorial Examples:
+            - `Illustration of vision transforms
+              <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
+        """
+        self.device_target = device_target
+        return self
+
     def parse(self):
-        return cde.PadOperation(self.padding, self.fill_value, Border.to_c_type(self.padding_mode))
+        return cde.PadOperation(self.padding, self.fill_value, Border.to_c_type(self.padding_mode), self.device_target)
 
     def _execute_py(self, img):
         """

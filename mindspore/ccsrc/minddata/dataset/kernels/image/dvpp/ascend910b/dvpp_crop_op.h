@@ -13,24 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_ASCEND910B_DVPP_HORIZONTAL_FLIP_H_
-#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_ASCEND910B_DVPP_HORIZONTAL_FLIP_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_ASCEND910B_DVPP_CROP_OP_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_ASCEND910B_DVPP_CROP_OP_H_
 
 #include <memory>
-#include <string>
 #include <vector>
+#include <string>
 
+#include "minddata/dataset/core/device_tensor_ascend910b.h"
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/kernels/tensor_op.h"
-#include "minddata/dataset/util/status.h"
 
 namespace mindspore {
 namespace dataset {
-class DvppHorizontalFlipOp : public TensorOp {
+class DvppCropOp : public TensorOp {
  public:
-  DvppHorizontalFlipOp() = default;
+  DvppCropOp(int32_t top, int32_t left, int32_t height, int32_t width)
+      : top_(top), left_(left), height_(height), width_(width) {}
 
-  ~DvppHorizontalFlipOp() override = default;
+  ~DvppCropOp() override = default;
 
   Status Compute(const std::shared_ptr<DeviceTensorAscend910B> &input,
                  std::shared_ptr<DeviceTensorAscend910B> *output) override;
@@ -39,10 +40,17 @@ class DvppHorizontalFlipOp : public TensorOp {
 
   Status OutputType(const std::vector<DataType> &inputs, std::vector<DataType> &outputs) override;
 
-  std::string Name() const override { return kDvppHorizontalFlipOp; }
+  std::string Name() const override { return kDvppCropOp; }
 
   bool IsDvppOp() override { return true; }
+
+ private:
+  int32_t top_;
+  int32_t left_;
+  int32_t height_;
+  int32_t width_;
 };
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_ASCEND910B_DVPP_HORIZONTAL_FLIP_H_
+
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_ASCEND910B_DVPP_CROP_H_

@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-#include "minddata/dataset/kernels/image/dvpp/ascend910b/dvpp_vertical_flip.h"
+#include "minddata/dataset/kernels/image/dvpp/ascend910b/dvpp_adjust_hue_op.h"
 
 #ifndef ENABLE_ANDROID
-#include "minddata/dataset/kernels/image/image_utils.h"
 #include "minddata/dataset/kernels/image/dvpp/acl_adapter.h"
+#include "minddata/dataset/kernels/image/dvpp/utils/dvpp_image_utils.h"
 #include "minddata/dataset/kernels/image/dvpp/utils/ErrorCode.h"
+#include "minddata/dataset/kernels/image/image_utils.h"
 #else
 #include "minddata/dataset/kernels/image/lite_image_utils.h"
 #endif
@@ -27,31 +28,40 @@
 
 namespace mindspore {
 namespace dataset {
-Status DvppVerticalFlipOp::Compute(const std::shared_ptr<DeviceTensorAscend910B> &input,
-                                   std::shared_ptr<DeviceTensorAscend910B> *output) {
+constexpr int64_t h_lb = 4;     // height lower bound
+constexpr int64_t h_ub = 8192;  // height upper bound
+constexpr int64_t w_lb = 6;     // width lower bound
+constexpr int64_t w_ub = 4096;  // width upper bound
+
+Status DvppAdjustHueOp::Compute(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                                std::shared_ptr<DeviceTensorAscend910B> *output) {
   IO_CHECK(input, output);
   // check the input tensor shape
-  const auto kNHWCImageRank = 4;
   if (input->GetShape().Rank() != kNHWCImageRank) {
-    RETURN_STATUS_UNEXPECTED("DvppVerticalFlip: invalid input shape, only support NHWC input, got rank: " +
+    RETURN_STATUS_UNEXPECTED("DvppAdjustHue: invalid input shape, only support NHWC input, got rank: " +
                              std::to_string(input->GetShape().Rank()));
   }
 
-  APP_ERROR ret = AclAdapter::GetInstance().DvppVerticalFlip(input, output);
+  // Dvpp Limit
+  int64_t input_h = input->GetShape()[kHeightIndexNHWC];
+  int64_t input_w = input->GetShape()[kWidthIndexNHWC];
+  RETURN_IF_NOT_OK(CheckDvppLimit(input_h, input_w, h_lb, w_lb, h_ub, w_ub, kDvppAdjustHueOp));
+
+  APP_ERROR ret = AclAdapter::GetInstance().DvppAdjustHue(input, output, factor_);
   if (ret != APP_ERR_OK) {
-    std::string error = "DvppVerticalFlip: Error in dvpp processing: " + std::to_string(ret);
+    std::string error = "DvppAdjustHue: Error in dvpp processing: " + std::to_string(ret);
     RETURN_STATUS_UNEXPECTED(error);
   }
 
   return Status::OK();
 }
 
-Status DvppVerticalFlipOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) {
+Status DvppAdjustHueOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) {
   RETURN_IF_NOT_OK(TensorOp::OutputShape(inputs, outputs));
   return Status::OK();
 }
 
-Status DvppVerticalFlipOp::OutputType(const std::vector<DataType> &inputs, std::vector<DataType> &outputs) {
+Status DvppAdjustHueOp::OutputType(const std::vector<DataType> &inputs, std::vector<DataType> &outputs) {
   RETURN_IF_NOT_OK(TensorOp::OutputType(inputs, outputs));
   return Status::OK();
 }

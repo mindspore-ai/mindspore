@@ -13,36 +13,40 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_ASCEND910B_DVPP_VERTICAL_FLIP_H_
-#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_ASCEND910B_DVPP_VERTICAL_FLIP_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_ASCEND910B_DVPP_GAUSSIAN_BLUR_OP_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_ASCEND910B_DVPP_GAUSSIAN_BLUR_OP_H_
 
 #include <memory>
-#include <string>
 #include <vector>
+#include <string>
 
+#include "minddata/dataset/core/device_tensor_ascend910b.h"
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/kernels/tensor_op.h"
-#include "minddata/dataset/util/status.h"
 
 namespace mindspore {
 namespace dataset {
-class DvppVerticalFlipOp : public TensorOp {
+class DvppGaussianBlurOp : public TensorOp {
  public:
-  DvppVerticalFlipOp() = default;
+  DvppGaussianBlurOp(int32_t kernel_x, int32_t kernel_y, float sigma_x, float sigma_y)
+      : kernel_x_(kernel_x), kernel_y_(kernel_y), sigma_x_(sigma_x), sigma_y_(sigma_y) {}
 
-  ~DvppVerticalFlipOp() override = default;
+  ~DvppGaussianBlurOp() override = default;
 
   Status Compute(const std::shared_ptr<DeviceTensorAscend910B> &input,
                  std::shared_ptr<DeviceTensorAscend910B> *output) override;
 
-  Status OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) override;
-
-  Status OutputType(const std::vector<DataType> &inputs, std::vector<DataType> &outputs) override;
-
-  std::string Name() const override { return kDvppVerticalFlipOp; }
+  std::string Name() const override { return kDvppGaussianBlurOp; }
 
   bool IsDvppOp() override { return true; }
+
+ private:
+  int32_t kernel_x_;
+  int32_t kernel_y_;
+  float sigma_x_;
+  float sigma_y_;
 };
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_ASCEND910B_DVPP_VERTICAL_FLIP_H_
+
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_ASCEND910B_DVPP_GAUSSIAN_BLUR_OP_H_
