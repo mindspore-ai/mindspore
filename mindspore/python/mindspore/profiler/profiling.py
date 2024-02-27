@@ -306,21 +306,24 @@ def _ascend_graph_msprof_analyse(source_path, flag):
     Returns:
         list[obj]: The list is : df_op_summary, df_op_statistic, df_step_trace, df_step_trace_model
     """
-    df_op_summary = []
-    df_op_statistic = []
-    df_step_trace = []
-    df_step_trace_model = []
+    res = ([], [], [], [])
     try:
         if flag:
             msprof_analyser = AscendMsprofDataGenerator(os.path.join(source_path, 'summary'))
+            df_op_summary, df_op_statistic, df_step_trace, df_step_trace_model = msprof_analyser.parse()
+            res = (df_op_summary, df_op_statistic, df_step_trace, df_step_trace_model)
         else:
             msprof_analyser = AscendMsprofDataGeneratorOld(os.path.join(source_path, 'summary'))
-        df_op_summary, df_op_statistic, df_step_trace, df_step_trace_model = msprof_analyser.parse()
+            df_op_summary, df_op_statistic, df_step_trace = msprof_analyser.parse()
+            res = (df_op_summary, df_op_statistic, df_step_trace, [])
+
+        return res
+
     except ProfilerException as err:
         logger.warning(err.message)
     finally:
         pass
-    return df_op_summary, df_op_statistic, df_step_trace, df_step_trace_model
+    return res
 
 
 class Profiler:
