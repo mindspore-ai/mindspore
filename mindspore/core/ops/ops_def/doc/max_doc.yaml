@@ -1,0 +1,6 @@
+# primitive and functional interfaces are internal interfaces and users use it by ops.extend.max
+max:
+  description: |
+    Calculates the maximum value of the input tensor.
+
+    Also see :func:`mindspore.ops.extend.max`.

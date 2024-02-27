@@ -267,9 +267,10 @@ void UpdateDeviceAddressByRefInputNode(const std::vector<KernelGraphPtr> &graphs
       // address can be modified. And need set `ref_count` to `SIZE_MAX` for avoiding clean. So only support the
       // persistent device tensor.
       if (!IsPersistentDeviceTensor(input_pair.first)) {
-        MS_LOG(EXCEPTION) << "The input parameter: " << input_pair.first->fullname_with_scope()
-                          << " isn't the ref parameter which used by the ref node: "
-                          << output_pair.first->fullname_with_scope();
+        MS_LOG(INFO) << "The input parameter: " << input_pair.first->fullname_with_scope()
+                     << " isn't the ref parameter which used by the ref node: "
+                     << output_pair.first->fullname_with_scope();
+        continue;
       }
 
       MS_LOG(INFO) << "Update the ptr of ref node: " << output_pair.first->fullname_with_scope()

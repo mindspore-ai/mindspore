@@ -281,5 +281,28 @@ REG_FALLBACK_BUILDER("SumExt").SetBody(BODYFUNC(ib) {
   auto out = ib->Emit("ReduceSum", {input, axis, keep_dims, ib->Value<bool>(false)});
   return {out};
 });
+
+NodePtr BuilderForMaxorMin(FallbackIRBuilder *ib, const std::string &emit_op) {
+  auto input = ib->GetInput(kIndex0);
+  // empty axis: all dimensions will be reduced
+  std::vector<int64_t> axis;
+  auto input_shape = input->shape();
+  // The GE backend may be used under static shape and the empty axis needs to be expanded to represent
+  // that all dimensions will be reduced.
+  if (!IsDynamic(input_shape)) {
+    auto input_shape_len = SizeToLong(input_shape.size());
+    for (int64_t i = 0; i < input_shape_len; ++i) {
+      axis.push_back(i);
+    }
+  }
+  auto axis_value = ib->Value(axis);
+  auto keep_dims = ib->Value(false);
+  auto out = ib->Emit(emit_op, {input, axis_value, keep_dims});
+  return out;
+}
+
+REG_FALLBACK_BUILDER("Max").SetBody(BODYFUNC(ib) { return {BuilderForMaxorMin(ib, "ReduceMax")}; });
+
+REG_FALLBACK_BUILDER("Min").SetBody(BODYFUNC(ib) { return {BuilderForMaxorMin(ib, "ReduceMin")}; });
 }  // namespace expander
 }  // namespace mindspore
