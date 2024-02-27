@@ -36,7 +36,9 @@ Status BoundingBoxAugmentOp::Compute(const TensorRow &input, TensorRow *output) 
   uint32_t num_of_boxes = input[1]->shape()[0];
   std::shared_ptr<Tensor> crop_out;
   std::shared_ptr<Tensor> res_out;
-  std::shared_ptr<CVTensor> input_restore = CVTensor::AsCVTensor(input[0]);
+  std::shared_ptr<Tensor> input_image;
+  RETURN_IF_NOT_OK(Tensor::CreateFromTensor(input[0], &input_image));
+  std::shared_ptr<CVTensor> input_restore = CVTensor::AsCVTensor(input_image);
   for (uint32_t i = 0; i < num_of_boxes; i++) {
     // using a uniform distribution to ensure op happens with probability ratio_
     if (uniform_(random_generator_) < ratio_) {
