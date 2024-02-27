@@ -862,6 +862,7 @@ void MindRTBackend::RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_i
           runtime::PyBoostOpExecute::GetInstance().RunPyBoostCall(primitive, device_target, input_info.input_values,
                                                                   &op_outputs);
         } else {
+          MS_LOG(DEBUG) << "Run " << primitive->name() << " by single op graph";
           session::BackendOpRunInfoPtr op_run_info;
           graph_compiler_->GetSingleOpInputTensors(kernel, op_output_map, parameter_index, inputs[graph_index], false,
                                                    &input_info);
