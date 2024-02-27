@@ -3952,11 +3952,11 @@ def heaviside(input, values):
     Computes the Heaviside step function for each element in input.
 
     .. math::
-            \text { heaviside }(\text { input, values })=\left\{\begin{array}{ll}
-            0, & \text { if input }<0 \\
-            \text { values, } & \text { if input }=0 \\
-            1, & \text { if input }>0
-            \end{array}\right
+        \text { heaviside }(\text { input, values })=\left\{\begin{array}{ll}
+        0, & \text { if input }<0 \\
+        \text { values, } & \text { if input }=0 \\
+        1, & \text { if input }>0
+        \end{array}\right.
 
     Args:
         input (Tensor): The input tensor. With real number data type.

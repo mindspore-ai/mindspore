@@ -265,14 +265,14 @@ class TransformerEncoderLayer(Cell):
         dtype (:class:`mindspore.dtype`): Data type of Parameter. Default: ``mstype.float32`` .
 
     Inputs:
-        - **src** (Tensor): the sequence to the encoder layer. For unbatched input, the shape is
+        - **src** (Tensor) - the sequence to the encoder layer. For unbatched input, the shape is
           :math:`(S, E)` ; otherwise if `batch_first=False` , the shape is :math:`(S, N, E)` and if
           `batch_first=True` , the shape is :math:`(N, S, E)`, where :math:`(S)` is the source sequence
           length, :math:`(N)` is the batch number and :math:`(E)` is the feature number.
           Supported types: float16, float32, float64.
-        - **src_mask** (Tensor, optional): the mask for the src sequence. The shape is :math:`(S, S)`
+        - **src_mask** (Tensor, optional) - the mask for the src sequence. The shape is :math:`(S, S)`
           or :math:`(N*nhead, S, S)`. Supported types: float16, float32, float64, bool. Default: ``None``.
-        - **src_key_padding_mask** (Tensor, optional): the mask for the src keys per batch. The shape is
+        - **src_key_padding_mask** (Tensor, optional) - the mask for the src keys per batch. The shape is
           :math:`(S)` for unbatched input, otherwise :math:`(N, S)` . Supported types: float16, float32,
           float64, bool. Default: ``None``.
 
@@ -406,20 +406,20 @@ class TransformerDecoderLayer(Cell):
         dtype (:class:`mindspore.dtype`): Data type of Parameter. Default: ``mstype.float32`` .
 
     Inputs:
-        - **tgt** (Tensor): The sequence to the decoder layer. For unbatched input, the shape is
+        - **tgt** (Tensor) - The sequence to the decoder layer. For unbatched input, the shape is
           :math:`(T, E)` ; otherwise if `batch_first=False` , the shape is :math:`(T, N, E)` and if
           `batch_first=True` , the shape is :math:`(N, T, E)`, where :math:`(T)` is the target sequence
           length. Supported types: float16, float32, float64.
-        - **memory** (Tensor): The sequence from the last layer of the encoder. Supported types: float16,
+        - **memory** (Tensor) - The sequence from the last layer of the encoder. Supported types: float16,
           float32, float64.
-        - **tgt_mask** (Tensor, optional): The mask of the tgt sequence. The shape is :math:`(T, T)`
+        - **tgt_mask** (Tensor, optional) - The mask of the tgt sequence. The shape is :math:`(T, T)`
           or :math:`(N*nhead, T, T)`. Supported types: float16, float32, float64, bool. Default: ``None``.
-        - **memory_mask** (Tensor, optional): The mask of the memory sequence. The shape is
+        - **memory_mask** (Tensor, optional) - The mask of the memory sequence. The shape is
           :math:`(T, S)` . Supported types: float16, float32, float64, bool. Default: ``None``.
-        - **tgt_key_padding_mask** (Tensor, optional): The mask of the tgt keys per batch. The shape is
+        - **tgt_key_padding_mask** (Tensor, optional) - The mask of the tgt keys per batch. The shape is
           :math:`(T)` for unbatched input, otherwise :math:`(N, S)` . Supported types: float16, float32,
           float64, bool. Default: ``None``.
-        - **memory_key_padding_mask** (Tensor, optional): The mask of the memory keys per batch. The shape
+        - **memory_key_padding_mask** (Tensor, optional) - The mask of the memory keys per batch. The shape
           is :math:`(S)` for unbatched input, otherwise :math:`(N, S)` . Supported types: float16, float32,
           float64, bool. Default: ``None``.
 
@@ -550,15 +550,15 @@ class TransformerEncoder(Cell):
         norm (Cell, optional): The layer normalization module. Default: ``None``.
 
     Inputs:
-        - **src** (Tensor): The sequence to the encoder. For unbatched input, the shape is
+        - **src** (Tensor) - The sequence to the encoder. For unbatched input, the shape is
           :math:`(S, E)` ; otherwise if `batch_first=False` in :class:`mindspore.nn.TransformerEncoderLayer`,
           the shape is :math:`(S, N, E)` and if `batch_first=True` , the shape is :math:`(N, S, E)`,
           where :math:`(S)` is the source sequence length, :math:`(N)` is the batch number and :math:`(E)` is
           the feature number. Supported types: float16, float32, float64.
-        - **src_mask** (Tensor, optional): The mask of the src sequence. The shape is :math:`(S, S)`
+        - **src_mask** (Tensor, optional) - The mask of the src sequence. The shape is :math:`(S, S)`
           or :math:`(N*nhead, S, S)` , where `nhead` is the arguent in :class:`mindspore.nn.TransformerEncoderLayer`.
           Supported types: float16, float32, float64, bool. Default: ``None``.
-        - **src_key_padding_mask** (Tensor, optional): the mask of the src keys per batch. The shape is
+        - **src_key_padding_mask** (Tensor, optional) - the mask of the src keys per batch. The shape is
           :math:`(S)` for unbatched input, otherwise :math:`(N, S)` . Supported types: float16, float32,
           float64, bool.  Default: ``None``.
 
@@ -620,20 +620,20 @@ class TransformerDecoder(Cell):
         norm (Cell, optional): The layer normalization module. Default: ``None``.
 
     Inputs:
-        - **tgt** (Tensor): The sequence to the decoder. For unbatched input, the shape is
+        - **tgt** (Tensor) - The sequence to the decoder. For unbatched input, the shape is
           :math:`(T, E)` ; otherwise if `batch_first=False` in :class:`mindspore.nn.TransformerDecoderLayer`,
           the shape is :math:`(T, N, E)` and if `batch_first=True` , the shape is :math:`(N, T, E)`,
           where :math:`(T)` is the target sequence length. Supported types: float16, float32, float64.
-        - **memory** (Tensor): The sequence from the last layer of the encoder. Supported types: float16,
+        - **memory** (Tensor) - The sequence from the last layer of the encoder. Supported types: float16,
           float32, float64.
-        - **tgt_mask** (Tensor, optional): the mask of the tgt sequence. The shape is :math:`(T, T)`
+        - **tgt_mask** (Tensor, optional) - the mask of the tgt sequence. The shape is :math:`(T, T)`
           or :math:`(N*nhead, T, T)` , where `nhead` is the arguent in:class:`mindspore.nn.TransformerDecoderLayer`.
           Supported types: float16, float32, float64, bool. Default: ``None``.
-        - **memory_mask** (Tensor, optional): the mask of the memory sequence. The shape is
+        - **memory_mask** (Tensor, optional) - the mask of the memory sequence. The shape is
           :math:`(T, S)` . Supported types: float16, float32, float64, bool. Default: ``None``.
-        - **tgt_key_padding_mask** (Tensor, optional): the mask of the tgt keys per batch. Supported
+        - **tgt_key_padding_mask** (Tensor, optional) - the mask of the tgt keys per batch. Supported
           types: float16, float32, float64, bool. Default: ``None``.
-        - **memory_key_padding_mask** (Tensor, optional): the mask of the memory keys per batch. The shape
+        - **memory_key_padding_mask** (Tensor, optional) - the mask of the memory keys per batch. The shape
           is :math:`(S)` for unbatched input, otherwise :math:`(N, S)` . Supported types: float16, float32,
           float64, bool. Default: ``None``.
 
@@ -710,28 +710,28 @@ class Transformer(Cell):
         dtype (:class:`mindspore.dtype`): Data type of Parameter. Default: ``mstype.float32`` .
 
     Inputs:
-        - **src** (Tensor): The source sequence to the encoder. For unbatched input, the shape is
+        - **src** (Tensor) - The source sequence to the encoder. For unbatched input, the shape is
           :math:`(S, E)` ; otherwise if `batch_first=False` , the shape is :math:`(S, N, E)` and if
           `batch_first=True` , the shape is :math:`(N, S, E)`, where :math:`(S)` is the source sequence
           length, :math:`(N)` is the batch number and :math:`(E)` is the feature number. Supported
           types: float16, float32, float64.
-        - **tgt** (Tensor): The target sequence to the decoder. For unbatched input, the shape is
+        - **tgt** (Tensor) - The target sequence to the decoder. For unbatched input, the shape is
           :math:`(T, E)` ; otherwise if `batch_first=False` , the shape is :math:`(T, N, E)` and if
           `batch_first=True` , the shape is :math:`(N, T, E)`, where :math:`(T)` is the target sequence
           length. Supported types: float16, float32, float64.
-        - **src_mask** (Tensor, optional): The mask of the src sequence. The shape is :math:`(S, S)`
+        - **src_mask** (Tensor, optional) - The mask of the src sequence. The shape is :math:`(S, S)`
           or :math:`(N*nhead, S, S)`. Supported types: float16, float32, float64, bool. Default: ``None``.
-        - **tgt_mask** (Tensor, optional): The mask of the tgt sequence. The shape is :math:`(T, T)`
+        - **tgt_mask** (Tensor, optional) - The mask of the tgt sequence. The shape is :math:`(T, T)`
           or :math:`(N*nhead, T, T)`. Supported types: float16, float32, float64, bool. Default: ``None``.
-        - **memory_mask** (Tensor, optional): The additive mask of the encoder output. The shape is
+        - **memory_mask** (Tensor, optional) - The additive mask of the encoder output. The shape is
           :math:`(T, S)` . Supported types: float16, float32, float64, bool. Default: ``None``.
-        - **src_key_padding_mask** (Tensor, optional): The mask of src keys per batch. The shape is
+        - **src_key_padding_mask** (Tensor, optional) - The mask of src keys per batch. The shape is
           :math:`(S)` for unbatched input, otherwise :math:`(N, S)` . Supported types: float16, float32,
           float64, bool. Default: ``None``.
-        - **tgt_key_padding_mask** (Tensor, optional): The mask of tgt keys per batch. The shape is
+        - **tgt_key_padding_mask** (Tensor, optional) - The mask of tgt keys per batch. The shape is
           :math:`(T)` for unbatched input, otherwise :math:`(N, S)` . Supported types: float16, float32,
           float64, bool. Default: ``None``.
-        - **memory_key_padding_mask** (Tensor, optional): The mask of memory keys per batch. The shape
+        - **memory_key_padding_mask** (Tensor, optional) - The mask of memory keys per batch. The shape
           is :math:`(S)` for unbatched input, otherwise :math:`(N, S)` . Supported types: float16,
           float32, float64, bool. Default: ``None``.
 

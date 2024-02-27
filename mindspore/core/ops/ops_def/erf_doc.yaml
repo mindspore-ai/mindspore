@@ -8,8 +8,7 @@ erf:
 
     Args:
         input (Tensor): The input tensor of Gaussian error function. :math:`x` in the following formula.
-        
-        Supported dtypes: 
+            Supported dtypes: 
 
             - Ascend: float16, float32.
             - GPU/CPU: float16, float32, float64.

@@ -10,8 +10,7 @@ erfinv:
 
     Args:
         input (Tensor): The input tensor to compute with.
-
-        Supported dtypes: 
+            Supported dtypes: 
 
             - Ascend: float16, float32.
             - GPU/CPU: float16, float32, float64.
