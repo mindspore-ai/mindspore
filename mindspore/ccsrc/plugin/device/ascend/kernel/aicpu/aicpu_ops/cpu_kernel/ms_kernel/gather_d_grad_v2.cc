@@ -26,6 +26,7 @@
 #include "utils/kernel_util.h"
 #include "cpu_kernel_utils.h"
 #include "Eigen/Core"
+#include "base/bfloat16.h"
 #include "mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/common/atomic_op.h"
 #include "mindspore/core/utils/ms_utils_secure.h"
 
@@ -170,6 +171,7 @@ uint32_t GatherDGradV2Kernel::Compute(CpuKernelContext &ctx) {
   calls[DT_INT32][DT_UINT32] = std::bind(&GatherDGradV2Kernel::GatherDGradV2Task<int32_t, uint32_t>, this, _1);
   calls[DT_INT32][DT_UINT64] = std::bind(&GatherDGradV2Kernel::GatherDGradV2Task<int32_t, uint64_t>, this, _1);
   calls[DT_INT32][DT_BOOL] = std::bind(&GatherDGradV2Kernel::GatherDGradV2Task<int32_t, bool>, this, _1);
+  calls[DT_INT32][DT_BFLOAT16] = std::bind(&GatherDGradV2Kernel::GatherDGradV2Task<int32_t, bfloat16>, this, _1);
   // index int64
   calls[DT_INT64][DT_INT8] = std::bind(&GatherDGradV2Kernel::GatherDGradV2Task<int64_t, int8_t>, this, _1);
   calls[DT_INT64][DT_INT16] = std::bind(&GatherDGradV2Kernel::GatherDGradV2Task<int64_t, int16_t>, this, _1);
@@ -183,6 +185,7 @@ uint32_t GatherDGradV2Kernel::Compute(CpuKernelContext &ctx) {
   calls[DT_INT64][DT_UINT32] = std::bind(&GatherDGradV2Kernel::GatherDGradV2Task<int64_t, uint32_t>, this, _1);
   calls[DT_INT64][DT_UINT64] = std::bind(&GatherDGradV2Kernel::GatherDGradV2Task<int64_t, uint64_t>, this, _1);
   calls[DT_INT64][DT_BOOL] = std::bind(&GatherDGradV2Kernel::GatherDGradV2Task<int64_t, bool>, this, _1);
+  calls[DT_INT64][DT_BFLOAT16] = std::bind(&GatherDGradV2Kernel::GatherDGradV2Task<int64_t, bfloat16>, this, _1);
 
   if (calls.find(index_type_) == calls.end()) {
     AICPU_LOGE("GatherDGradV2 op don't support index tensor types: %s", typeid(index_type_).name());
