@@ -239,6 +239,9 @@ class ActorDispatcher {
   }
   static bool enable_runtime_multi_pipeline() { return enable_runtime_multi_pipeline_; }
 
+  static void set_enable_async_launch_kernel(bool enable_async_launch_kernel) {
+    enable_async_launch_kernel_ = enable_async_launch_kernel;
+  }
   static bool enable_async_launch_kernel() { return enable_async_launch_kernel_; }
 
   // The first five executions are for warm-up, the next five executions are statistics of multi thread execution time,

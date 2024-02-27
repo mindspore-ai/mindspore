@@ -227,6 +227,9 @@ class BACKEND_EXPORT GraphScheduler {
   // Refresh the context and thread pool before run model.
   void RefreshContextAndThreadPool(ActorSet *const actor_set, ActorThreadPool *const thread_pool);
 
+  // Spawn kernel async infer/resize/launch kernel in run graph phase if need.
+  void SpawnMultiPipelineActor(ActorSet *const actor_set);
+
   // The global maps, only be cleared in the deconstruction.
   mindspore::HashMap<ActorInfo, ActorSetPtr> actors_;
 
@@ -262,12 +265,12 @@ class BACKEND_EXPORT GraphScheduler {
   bool execution_order_running_{false};
   // numa library handle
   std::shared_ptr<void> numa_handle_{};
-  size_t defalut_actor_thread_num_{1};
+  size_t default_actor_thread_num_{1};
   std::vector<int> numa_cpus_;
 
   bool init_{false};
-
-  bool multi_pipeline_actors_spawned_{false};
+  bool already_spawn_kernel_async_launch_actor_{false};
+  bool already_spawn_kernel_async_infer_resize_actor_{false};
 };
 }  // namespace runtime
 }  // namespace mindspore
