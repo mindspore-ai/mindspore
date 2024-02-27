@@ -61,9 +61,6 @@ FuncGraphPtr FuncGraphBuilder::BuildFuncGraph(const ir::FunctionNodePtr &func, c
   auto builder = std::make_shared<FuncGraphBuilder>(func, args, kwargs);
   parse::Parser::UpdateTopFuncGraph(builder->func_graph_);
   auto func_graph = GetValueNode<FuncGraphPtr>(builder->Mutate(func)->cast<MindNodePtr>()->GetAnfNode());
-  // clean up the relationship between the func_graph and manager
-  // prevent unused node in the func_graph from being deleted when manager is destroyed.
-  func_graph->manager()->Clear();
   return func_graph;
 }
 
@@ -140,13 +137,6 @@ ir::NodePtr FuncGraphBuilder::Mutate_(const ir::FunctionNodePtr &node) {
   func_graph_->set_kwonlyargs_count(node->GetKwOnlyArgsCnt());
   func_graph_->set_has_kwarg(node->HasKwArg());
   func_graph_->debug_info()->set_name(node->GetName());
-  if (func_graph_->manager() == nullptr) {
-    if (func_graph_mgr_ == nullptr) {
-      func_graph_mgr_ = Manage(func_graph_, true);
-    } else {
-      func_graph_mgr_->AddFuncGraph(func_graph_);
-    }
-  }
   // used for create sub function
   node->Sort();
   auto first_if_node = std::find_if(node->GetNodes().begin(), node->GetNodes().end(),

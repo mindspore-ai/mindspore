@@ -411,7 +411,7 @@ const AnfNodePtr CNode::input(size_t i) const {
   }
   auto res = weak_inputs_.at(i).lock();
   if (res == nullptr) {
-    MS_LOG(INTERNAL_EXCEPTION) << "The input[" << i << "] is released, cnode: " << DebugString();
+    MS_LOG(ERROR) << "The input[" << i << "] is released, cnode: " << DebugString();
   }
   return res;
 }
@@ -711,6 +711,13 @@ ValueNode::ValueNode(const ValuePtr &value) : value_(value) {
   if (value->ContainsValueAny()) {
     MS_LOG(EXCEPTION) << "Value of value node cannot be ValueAny. Value: " << value->ToString();
   }
+#ifdef DEBUG
+  // Check if the func graph is release too early.
+  const auto &fg = dyn_cast<FuncGraph>(value);
+  if (fg != nullptr && fg->get_return() == nullptr) {
+    MS_LOG(WARNING) << fg->ToString() << "(ptr: " << fg << ") maybe released early, or not set return yet."
+  }
+#endif
 }
 
 ValueNode::ValueNode(const ValuePtr &value, NodeDebugInfoPtr &&debug_info)
@@ -719,6 +726,13 @@ ValueNode::ValueNode(const ValuePtr &value, NodeDebugInfoPtr &&debug_info)
   if (value->ContainsValueAny()) {
     MS_LOG(EXCEPTION) << "Value of value node cannot be ValueAny. Value: " << value->ToString();
   }
+#ifdef DEBUG
+  // Check if the func graph is release too early.
+  const auto &fg = dyn_cast<FuncGraph>(value);
+  if (fg != nullptr && fg->get_return() == nullptr) {
+    MS_LOG(WARNING) << fg->ToString() << "(ptr: " << fg << ") maybe released early, or not set return yet."
+  }
+#endif
 }
 
 void ValueNode::set_func_graph(const FuncGraphPtr &) {
@@ -791,7 +805,9 @@ bool IsPrimitiveCNode(const AnfNodePtr &node, const PrimitivePtr &value) {
   if (cnode == nullptr || cnode->size() == 0) {
     return false;
   }
-  auto prim = GetValuePtr<Primitive>(cnode->input(0));
+  const auto &input = cnode->input(0);
+  MS_EXCEPTION_IF_NULL(input);
+  auto prim = GetValuePtr<Primitive>(input);
   if (prim == nullptr) {
     return false;
   }

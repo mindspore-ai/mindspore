@@ -1459,15 +1459,8 @@ class SideEffectFinder {
     auto &used_func_graphs = func_graph->func_graphs_used_total();
     for (auto iter = used_func_graphs.crbegin(); iter != used_func_graphs.crend(); ++iter) {
       auto used_func_graph = *iter;
-      // Get SCC that this graph belongs to.
-      auto used_func_graph_scc = GetScc(used_func_graph);
-      if (used_func_graph_scc == nullptr) {
-        MS_LOG(INTERNAL_EXCEPTION) << "Scc should not be null, func_graph: " << used_func_graph->ToString();
-      }
-      for (auto &scc_fg : *used_func_graph_scc) {
-        MS_EXCEPTION_IF_NULL(scc_fg);
-        (void)ObtainEffectInfoForFuncGraph(scc_fg);
-      }
+      MS_EXCEPTION_IF_NULL(used_func_graph);
+      (void)ObtainEffectInfoForFuncGraph(used_func_graph);
     }
     ObtainEffectInfoForFuncGraph(func_graph);
   }

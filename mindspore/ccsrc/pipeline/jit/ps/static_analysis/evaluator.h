@@ -298,6 +298,7 @@ class MetaFuncGraphEvaluator : public BaseFuncGraphEvaluator {
  private:
   MetaFuncGraphPtr meta_func_graph_;
   FuncGraphCacheMap func_graph_cache_;
+  FuncGraphPtr generated_func_graph_{nullptr};
   ScopePtr scope_;
 };
 
