@@ -7576,14 +7576,14 @@ def _check_logits_shape(logits):
         raise ValueError("For gumbel_softmax, the 0-D input is not supported.")
 
 
-def gumbel_softmax(logits, tau=1, hard=False, dim=-1):
+def gumbel_softmax(logits, tau=1.0, hard=False, dim=-1):
     r"""
     Returns the samples from the Gumbel-Softmax distribution and optionally discretizes. If `hard = True`, the returned
     samples will be one-hot, otherwise it will be probability distributions that sum to 1 across `dim`.
 
     Args:
         logits (Tensor): Unnormalized log probabilities. The data type must be float16 or float32.
-        tau (float): The scalar temperature, which is a positive number. Default: ``1`` .
+        tau (float): The scalar temperature, which is a positive number. Default: ``1.0`` .
         hard (bool): if `True`, the returned samples will be discretized as one-hot vectors, but will be differentiated
           as if it is the soft sample in autograd. Default: ``False`` .
         dim (int): Dim for softmax to compute. Default: ``-1`` .
