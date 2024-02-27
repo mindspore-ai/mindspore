@@ -245,7 +245,7 @@ GVAR_DEF(PrimitivePtr, kPrimSelfAdjointEig, std::make_shared<Primitive>("SelfAdj
 GVAR_DEF(PrimitivePtr, kPrimOrmqr, std::make_shared<Primitive>("Ormqr"));
 GVAR_DEF(PrimitivePtr, kPrimRoll, std::make_shared<Primitive>(kRollOpName));
 GVAR_DEF(PrimitivePtr, kPrimEps, std::make_shared<Primitive>(kEpsOpName));
-GVAR_DEF(PrimitivePtr, kPrimSilentCheckV2, std::make_shared<Primitive>("SilentCheckV2"));
+GVAR_DEF(PrimitivePtr, kPrimSilentCheck, std::make_shared<Primitive>("SilentCheck"));
 }  // namespace prim
 }  // namespace mindspore
 
