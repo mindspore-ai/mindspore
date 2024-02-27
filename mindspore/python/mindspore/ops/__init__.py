@@ -35,6 +35,7 @@ from mindspore.ops.composite import *
 from mindspore.ops.operations import *
 from mindspore.ops.function import *
 from mindspore.ops.functional import *
+from mindspore.ops.silent_check import _silent_check
 
 __primitive__ = [
     "prim_attr_register", "prim_arg_register", "Primitive", "PrimitiveWithInfer", "PrimitiveWithCheck", "signature"
@@ -50,3 +51,4 @@ __all__.extend(operations.__all__)
 __all__.extend(functional.__all__)
 __all__.extend(function.__all__)
 __all__.extend(auto_generate.__all__)
+_silent_check()

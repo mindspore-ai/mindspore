@@ -18,3 +18,4 @@ from mindspore.experimental.map_parameter import MapParameter
 
 # Symbols from experimental module.
 __all__ = ["MapParameter"]
+

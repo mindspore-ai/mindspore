@@ -3106,12 +3106,12 @@ static void BroadcastLastResult(const FuncGraphPtr &root, const FuncGraphManager
 }
 
 static void HandleSilentCheck(const FuncGraphPtr &root, const FuncGraphManagerPtr &mng) {
-  auto env = common::GetEnv(NPU_DETECT);
+  auto env = common::GetEnv(NPU_ASD_ENABLE);
   if (env != "1") {
     return;
   }
   auto sdc = std::make_shared<SilentCheck>(root, mng);
-  sdc->GetLossScaleAndGlobalStep();
+  sdc->GetLossScale();
   sdc->ModifySilentCheckOps();
 }
 

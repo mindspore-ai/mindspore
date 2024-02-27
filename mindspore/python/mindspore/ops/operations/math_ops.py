@@ -135,9 +135,9 @@ class _MathBinaryOp(_BinaryOp):
         real_shape = [dim if cmp_dim > 0 else cmp_dim for dim, cmp_dim in zip(shape_value, cmp_shape)]
         return tuple(real_shape)
 
-class SilentCheckV2(Primitive):
+class SilentCheck(Primitive):
     """
-    Implement SilentCheckV2 on `pre_val`, `min_val`, `max_val`, `result` and
+    Implement SilentCheck on `pre_val`, `min_val`, `max_val`, `result` and
     update them inplace with given parameters.
 
     Args:
@@ -153,14 +153,15 @@ class SilentCheckV2(Primitive):
 
     Inputs:
         - **val** (Tensor) - Tensor with dtype float32.
+        - **input_grad** (Parameter) - Tensor with dtype float32.
         - **pre_val** (Parameter) - Input Parameter with dtype float32.
         - **min_val** (Parameter) - Input Parameter with dtype float32.
         - **max_val** (Parameter) - Input Parameter with dtype float32.
-        - **n_step** (Tensor) - Tensor with dtype int32.
-        - **result** (Parameter) - Input Parameter with dtype int32.
+        - **val_counter** (Parameter) - Input Parameter with dtype int32.
 
     Outputs:
-        Tuple of 4 Tensors, the updated parameters.
+        Tuple of 5 Tensors, the updated parameters.
+        - **input_grad** (Tensor) - Tensor with dtype float32.
         - **pre_val** (Tensor) - Tensor with dtype float32.
         - **min_val** (Tensor) - Tensor with dtype float32.
         - **max_val** (Tensor) - Tensor with dtype float32.
@@ -168,9 +169,8 @@ class SilentCheckV2(Primitive):
 
     Raises:
         TypeError: If `val` is not Tensor with dtype float32.
-        TypeError: If `n_step` is not Tensor with dtype int32.
         TypeError: If `result` is not Tensor with dtype int32.
-        TypeError: If `pre_val`, `min_val`, `max_val` are not all Parameter type with dtype float32.
+        TypeError: If `pre_val`, `min_val`, `max_val`, `input_grad` are not all Parameter type with dtype float32.
         TypeError: If `c_thresh_l1` or `c_coeff_l1` is not a float number.
         TypeError: If `c_min_steps` is not an int number.
 
@@ -178,14 +178,14 @@ class SilentCheckV2(Primitive):
         ``Ascend``
 
     Examples:
-        >>> from mindspore.ops.operations.math_ops import SilentCheckV2
-        >>> silent_check = SilentCheckV2()
+        >>> from mindspore.ops.operations.math_ops import SilentCheck
+        >>> silent_check = SilentCheck()
         xxx
     """
 
     @prim_attr_register
     def __init__(self, c_min_steps, c_thresh_l1, c_coeff_l1, c_thresh_l2, c_coeff_l2):
-        """Initialize SilentCheckV2."""
+        """Initialize SilentCheck."""
         validator.check_value_type("c_min_steps", c_min_steps, [int], self.name)
         validator.check_value_type("c_thresh_l1", c_thresh_l1, [float], self.name)
         validator.check_value_type("c_coeff_l1", c_coeff_l1, [float], self.name)

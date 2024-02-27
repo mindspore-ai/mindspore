@@ -24,13 +24,13 @@
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameSilentCheckV2 = "SilentCheckV2";
-/// \brief SilentCheckV2 defined the SilentCheckV2 operator prototype.
-class MIND_API SilentCheckV2 : public BaseOperator {
+constexpr auto kNameSilentCheck = "SilentCheck";
+/// \brief SilentCheck defined the SilentCheck operator prototype.
+class MIND_API SilentCheck : public BaseOperator {
  public:
-  MIND_API_BASE_MEMBER(SilentCheckV2);
+  MIND_API_BASE_MEMBER(SilentCheck);
   /// \brief Constructor.
-  SilentCheckV2() : BaseOperator(kNameSilentCheckV2) {}
+  SilentCheck() : BaseOperator(kNameSilentCheck) {}
 
   void Init(const int64_t c_min_steps, const float c_thresh_l1, const float c_coeff_l1, const float c_thresh_l2,
             const float c_coeff_l2);
