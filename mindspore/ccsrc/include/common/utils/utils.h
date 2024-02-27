@@ -612,6 +612,7 @@ constexpr auto kGeCache = "ge_cache";
 constexpr auto kGeGraphKey = "ge.graph_key";
 constexpr auto kGeGraphCompilerCacheDir = "ge.graph_compiler_cache_dir";
 
+constexpr auto kRecomputeInsert = "recompute_insert";
 constexpr auto kNcclWorldGroup = "nccl_world_group";
 constexpr auto kHcclWorldGroup = "hccl_world_group";
 constexpr auto kSyncBnGroup = "sync_bn_group";
