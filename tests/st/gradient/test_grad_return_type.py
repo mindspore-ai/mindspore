@@ -1018,7 +1018,7 @@ def test_grad_int_position_and_multiple_params(mode):
     check_grad_result(out, expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
@@ -1245,7 +1245,7 @@ def test_grad_none_position_and_multiple_params(mode):
     check_grad_result(out, expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
