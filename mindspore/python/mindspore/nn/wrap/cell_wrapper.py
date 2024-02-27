@@ -16,19 +16,17 @@
 """Cell_wrapper."""
 from __future__ import absolute_import
 from __future__ import division
-import os
 
 from types import FunctionType, MethodType
 
 from mindspore import log as logger
 from mindspore.parallel._utils import _get_device_num, _get_gradients_mean,\
-    _get_parallel_mode, _get_enable_parallel_optimizer, _is_pynative_parallel, _get_global_rank
+    _get_parallel_mode, _get_enable_parallel_optimizer, _is_pynative_parallel
 from mindspore.context import ParallelMode
 from mindspore import _checkparam as validator
 from mindspore import ops, nn
 from mindspore.common import dtype as mstype
 from mindspore.common.parameter import Parameter, ParameterTuple
-from mindspore.common.tensor import Tensor
 from mindspore.ops.primitive import _primexpr
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
@@ -393,7 +391,6 @@ class TrainOneStepCell(Cell):
         self.return_grad = return_grad
         if return_grad:
             self.weights_name = [i.name for i in self.optimizer.parameters]
-        self._init_silent_detect()
         self.reducer_flag = False
         self.grad_reducer = nn.Identity()
         self.parallel_mode = _get_parallel_mode()
@@ -416,100 +413,33 @@ class TrainOneStepCell(Cell):
             self.grad_reducer = DistributedGradReducer(self.weights, self.mean, self.degree, group=group)
         self._get_attr_from_cell(network)
 
-    def _init_silent_detect(self):
-        """
-        Init silent detect.
-        """
-        self._enable_npu_silent_detect = os.environ.get('NPU_DETECT') == "1"
-
-        if not self._enable_npu_silent_detect:
-            self._silent_check_list = []
-            return
-
-        self._silent_allreduce = P.AllReduce()
-        parallel_mode = _get_parallel_mode()
-        self._is_distributed = (parallel_mode != ParallelMode.STAND_ALONE)
-        self._rank_id = _get_global_rank()
-
-        self._silent_check_list = self._get_silent_check_result_list()
-
-    def _reset_silent_check_result(self):
-        """
-        Reset silent check result.
-
-        Since the detection operator is inserted in backward, the result needs to be passed in as a parameter.
-        Therefore, the results need to be reset after a fault is detected.
-        """
-        for param in self._silent_check_list:
-            F.assign(param, Tensor(0, mstype.int32))
-
     def construct(self, *inputs):
         if not self.sense_flag:
             return self._no_sens_impl(*inputs)
         loss = self.network(*inputs)
         sens = F.fill(loss.dtype, loss.shape, self.sens)
         grads = self.grad(self.network, self.weights)(*inputs, sens)
-        self._get_silent_check_status()
         grads = self.grad_reducer(grads)
         loss = F.depend(loss, self.optimizer(grads))
         if self.return_grad:
-            return loss, self._get_grad_name(grads)
+            grad_with_param_name = {}
+            for index, value in enumerate(grads):
+                grad_with_param_name[self.weights_name[index]] = value
+            return loss, grad_with_param_name
         return loss
 
     def _no_sens_impl(self, *inputs):
         """construct implementation when the 'sens' parameter is passed in."""
         loss = self.network(*inputs)
         grads = self.grad_no_sens(self.network, self.weights)(*inputs)
-        self._get_silent_check_status()
         grads = self.grad_reducer(grads)
         loss = F.depend(loss, self.optimizer(grads))
         if self.return_grad:
-            return loss, self._get_grad_name(grads)
+            grad_with_param_name = {}
+            for index, value in enumerate(grads):
+                grad_with_param_name[self.weights_name[index]] = value
+            return loss, grad_with_param_name
         return loss
-
-    def _get_silent_check_result_list(self):
-        """
-        Get silent check result list.
-        """
-        _sdc_result_list = []
-        for _, cell in self.network.cells_and_names():
-            if hasattr(cell, '_sdc_result'):
-                sdc_result = getattr(cell, '_sdc_result')
-                _sdc_result_list.append(sdc_result)
-        return ParameterTuple(_sdc_result_list)
-
-    def _get_silent_check_status(self):
-        """
-        Get silent check status.
-        """
-        status = Tensor(False, mstype.bool_)
-        if not self._enable_npu_silent_detect:
-            return status
-        if not self._silent_check_list:
-            status = Tensor(False, mstype.bool_)
-        else:
-            result = ops.concat([res.unsqueeze(0) for res in self._silent_check_list])
-            if result.equal(0).all():
-                status = Tensor(False, mstype.bool_)
-            elif result.greater(1).any():
-                status = Tensor(True, mstype.bool_)
-                print(f"NPUCheckEvent:AICore Numerical error happen, retValue=2, globalrank={self._rank_id}.")
-                self._reset_silent_check_result()
-            else:
-                status = Tensor(False, mstype.bool_)
-                print(f"NPUCheckEvent:AICore Numerical warning happen, retValue=1, globalrank={self._rank_id}.")
-                self._reset_silent_check_result()
-
-        return status
-
-    def _get_grad_name(self, grads):
-        """
-        Get grad with name.
-        """
-        grad_with_param_name = {}
-        for index, value in enumerate(grads):
-            grad_with_param_name[self.weights_name[index]] = value
-        return grad_with_param_name
 
 
 class GetNextSingleOp(Cell):
