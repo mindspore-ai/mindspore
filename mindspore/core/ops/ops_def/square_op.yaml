@@ -7,6 +7,6 @@ square:
         output: 
             dtype: tensor
     dispatch:
-        enable: False
+        enable: True
         Ascend: SquareAscend
 
