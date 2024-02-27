@@ -182,6 +182,9 @@ class GruGradWeightGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreateRNNDescriptor(&rnn_desc_), "create rnn_desc failed");
   }
   void InitSizeLists() override {
+    input_size_list_.clear();
+    output_size_list_.clear();
+    workspace_size_list_.clear();
     size_t x_size = IntToSize(seq_len_ * batch_size_ * input_size_) * sizeof(T);
 
     size_t h_size = 0;

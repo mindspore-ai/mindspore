@@ -227,6 +227,9 @@ class GruGradDataGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   }
 
   void InitSizeLists() override {
+    input_size_list_.clear();
+    output_size_list_.clear();
+    workspace_size_list_.clear();
     size_t y_size = IntToSize(seq_len_ * batch_size_ * hidden_size_ * (bidirectional_ ? 2 : 1)) * sizeof(T);
 
     size_t h_size = 0;
