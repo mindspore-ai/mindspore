@@ -279,6 +279,7 @@ def _auto_mixed_precision_rewrite(network, dtype, *, white_list=None, black_list
     # disable rewrite configs
     ms.rewrite.parsers.assign_parser.AssignParser._share_one_implementation = False
     ms.rewrite.common.namespace._ms_cells_to_subtree = False
+    ms.rewrite.common.config.clear_caches()
     return new_net
 
 

@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,7 +13,12 @@
 # limitations under the License.
 # ============================================================================
 """
-`common` package of MindSpore Rewrite package.
-Define some common instruments.
+MindSpore rewrite configurations.
 """
-from . import config
+
+def clear_caches():
+    """clear rewrite caches"""
+    from ..parsers import AssignParser
+    AssignParser._cached_trees = {} # pylint: disable=protected-access
+    AssignParser._cached_functions = {} # pylint: disable=protected-access
+    AssignParser._cached_cell_containers = {} # pylint: disable=protected-access
