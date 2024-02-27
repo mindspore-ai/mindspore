@@ -57,7 +57,7 @@ class AssignParser(Parser):
     # Keys are ids of the instance object
     _cached_trees: Dict[int, SymbolTree] = {}
     _cached_functions: Dict[int, Node] = {}
-    _cahced_cell_containers: Dict[int, Node] = {}
+    _cached_cell_containers: Dict[int, Node] = {}
 
     def __init__(self):
         super().__init__()
@@ -406,7 +406,7 @@ class AssignParser(Parser):
     def cell_container_process(self, func_name: str, node_name: str, container_obj: object):
         """ parse cell container object."""
         # create unparsable node if container is already parsed when sharing one implementation
-        if AssignParser._share_one_implementation and id(container_obj) in AssignParser._cahced_cell_containers:
+        if AssignParser._share_one_implementation and id(container_obj) in AssignParser._cached_cell_containers:
             cell_container = Node.create_call_buildin_op(container_obj, self.ast_assign, self.targets,
                                                          func_name, self.args, self.kwargs, node_name)
             return cell_container
@@ -441,7 +441,7 @@ class AssignParser(Parser):
             cell_container.append(sub_node, False)
         # save the node if container is firstly parsed when sharing one implementation
         if AssignParser._share_one_implementation:
-            AssignParser._cahced_cell_containers[id(container_obj)] = cell_container
+            AssignParser._cached_cell_containers[id(container_obj)] = cell_container
         return cell_container
 
     def process_cell(self, func_scope_name: ScopedValue, node_name: str, cell_inst: Cell):
