@@ -12,40 +12,40 @@ select:
             y_i, & \text{otherwise}
             \end{cases}
 
-        Args:
-          cond (Tensor[bool]): The condition tensor, decides which element is chosen.
-              The shape is :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
-          x (Union[Tensor, int, float]): The first Tensor or number to be selected.
-              If x is a Tensor, the shape is or can be broadcadt to :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
-              If x is an int or a float, it will be cast to the type of int32 or float32,
-              and broadcast to the same shape as y. One of x and y must be a Tensor.
-          y (Union[Tensor, int, float]): The second Tensor or number to be selected.
-              If y is a Tensor, The shape is or can be broadcadt to :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
-              If y is an int or a float, it will be cast to the type of int32 or float32,
-              and broadcast to the same shape as x. One of x and y must be a Tensor.
+        Inputs:
+          - **cond** (Tensor[bool]): The condition tensor, decides which element is chosen.
+            The shape is :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
+          - **x** (Tensor): The first Tensor to be selected.
+            The shape is :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
+          - **y** (Tensor): The second Tensor to be selected.
+            The shape is :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
 
-        Returns:
+        Outputs:
             Tensor, has the same shape as `cond`.
+
+        Raises:
+            TypeError: If x or y is not a Tensor.
+            ValueError: The shape of inputs are different.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
-
+        
         Examples:
             >>> import mindspore
             >>> from mindspore import Tensor, ops
             >>> # 1) Both inputs are Tensor
-            >>>
+            >>> select = ops.Select()
             >>> cond = Tensor([True, False])
             >>> x = Tensor([2,3], mindspore.float32)
             >>> y = Tensor([1,2], mindspore.float32)
-            >>> output = ops.select(cond, x, y)
+            >>> output = select(cond, x, y)
             >>> print(output)
             [2. 2.]
             >>> # 2) y is a float
             >>> cond = Tensor([True, False])
             >>> x = Tensor([2,3], mindspore.float32)
             >>> y = 2.0
-            >>> output = ops.select(cond, x, y)
+            >>> output = select(cond, x, y)
             >>> print(output)
             [2. 2.]
             
