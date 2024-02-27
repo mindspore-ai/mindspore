@@ -514,6 +514,20 @@ std::pair<bool, KernelAttr> PyBoostUtils::SelectKernel(const std::vector<Abstrac
     << "or refer to 'mindspore.ops' at https://www.mindspore.cn to query the operator support list.";
 }
 
+std::optional<tensor::TensorPtr> PyBoostUtils::CastTensor(const std::optional<tensor::TensorPtr> &tensor,
+                                                          const TypeId &type_id, const std::string &device_target) {
+  if (!tensor.has_value()) {
+    return tensor;
+  }
+  if (tensor.value()->Dtype()->type_id() == type_id) {
+    return tensor;
+  }
+  auto type_id64 = std::make_shared<Int64Imm>(static_cast<int64_t>(type_id));
+  const auto &cast_op = CREATE_PYBOOST_OP(Cast, device_target);
+  cast_op->set_primitive(prim::kPrimCast);
+  return cast_op->Call(tensor.value(), type_id64);
+}
+
 tensor::TensorPtr PyBoostUtils::CastTensor(const tensor::TensorPtr &tensor, const TypeId &type_id,
                                            const std::string &device_target) {
   if (tensor->Dtype()->type_id() == type_id) {

@@ -23,15 +23,15 @@ mindspore.ops.clamp
         - `input`，`min` 和 `max` 的数据类型需支持隐式类型转换，且不能为布尔型。
 
     参数：
-        - **input** (Union(Tensor, list[Tensor], tuple[Tensor])) - `clamp` 的输入，类型为Tensor、Tensor的列表或元组。支持任意维度的Tensor。
+        - **input** (Tensor) - `clamp` 的输入，类型为Tensor。支持任意维度的Tensor。
         - **min** (Union(Tensor, float, int)，可选) - 指定最小值。默认值为 ``None`` 。
         - **max** (Union(Tensor, float, int)，可选) - 指定最大值。默认值为 ``None`` 。
 
     返回：
-        Tensor、Tensor的列表或元组，表示裁剪后的Tensor。其shape和数据类型和 `input` 相同。
+        Tensor，表示裁剪后的Tensor。其shape和数据类型和 `input` 相同。
 
     异常：
         - **ValueError** - 如果 `min` 和 `max` 都为None。
-        - **TypeError** - 如果 `input` 的数据类型不在Tensor、list[Tensor]或tuple[Tensor]中。
+        - **TypeError** - 如果 `input` 的数据类型不是Tensor。
         - **TypeError** - 如果 `min` 的数据类型不为None、Tensor、float或int。
         - **TypeError** - 如果 `max` 的数据类型不为None、Tensor、float或int。

@@ -276,5 +276,61 @@ REG_FALLBACK_BUILDER("Zeros").SetBody(BODYFUNC(ib) {
   auto out = ib->Emit("FillV2", {size, value});
   return {out};
 });
+
+REG_FALLBACK_BUILDER("ClampTensor").SetBody(BODYFUNC(ib) {
+  // clamp equation: output = minimum(maximum(x, min), max)
+  auto x = ib->GetInput(kIndex0);
+  auto min = ib->GetInput(kIndex1);
+  auto max = ib->GetInput(kIndex2);
+
+  auto min_type_none = ib->GetDtype(min)->isa<TypeNone>();
+  auto max_type_none = ib->GetDtype(max)->isa<TypeNone>();
+
+  auto output = x;
+  if (!min_type_none) {
+    if (ib->GetDtype(x)->type_id() != ib->GetDtype(min)->type_id()) {
+      min = ib->Cast(min, ib->GetDtype(x)->type_id());
+    }
+    output = ib->Maximum(output, min);
+  }
+
+  if (!max_type_none) {
+    if (ib->GetDtype(x)->type_id() != ib->GetDtype(max)->type_id()) {
+      max = ib->Cast(max, ib->GetDtype(x)->type_id());
+    }
+    output = ib->Minimum(output, max);
+  }
+
+  return {output};
+});
+
+REG_FALLBACK_BUILDER("ClampScalar").SetBody(BODYFUNC(ib) {
+  // clamp equation: output = minimum(maximum(x, min), max)
+  auto x = ib->GetInput(kIndex0);
+  auto min = ib->GetInput(kIndex1);
+  auto max = ib->GetInput(kIndex2);
+
+  auto min_type_none = ib->GetDtype(min)->isa<TypeNone>();
+  auto max_type_none = ib->GetDtype(max)->isa<TypeNone>();
+
+  auto output = x;
+  if (!min_type_none) {
+    min = ib->ScalarToTensor(min, ib->GetDtype(min));
+    if (ib->GetDtype(x)->type_id() != ib->GetDtype(min)->type_id()) {
+      min = ib->Cast(min, ib->GetDtype(x)->type_id());
+    }
+    output = ib->Maximum(output, min);
+  }
+
+  if (!max_type_none) {
+    max = ib->ScalarToTensor(max, ib->GetDtype(max));
+    if (ib->GetDtype(x)->type_id() != ib->GetDtype(max)->type_id()) {
+      max = ib->Cast(max, ib->GetDtype(x)->type_id());
+    }
+    output = ib->Minimum(output, max);
+  }
+
+  return {output};
+});
 }  // namespace expander
 }  // namespace mindspore
