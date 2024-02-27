@@ -44,65 +44,6 @@
 #include "tools/converter/quantizer/smooth_quant.h"
 
 namespace mindspore::lite::quant {
-namespace {
-constexpr int kMinIndex = 1;
-constexpr int kMaxIndex = 2;
-}  // namespace
-
-std::vector<schema::QuantParamT> AscendDistributeFakeQuantTransform::CalQuantParam(const tensor::TensorPtr &min_value,
-                                                                                   const tensor::TensorPtr &max_value,
-                                                                                   bool symmetric) {
-  std::vector<schema::QuantParamT> quant_params;
-  // Ascend fake quant transform support PerLayer && PerChannel quant param
-  if (min_value->ElementsNum() != max_value->ElementsNum()) {
-    MS_LOG(ERROR) << "min value size not equal max value size";
-    return {};
-  }
-  int size = min_value->ElementsNum();
-  auto min_data = reinterpret_cast<float *>(min_value->data_c());
-  auto max_data = reinterpret_cast<float *>(max_value->data_c());
-  for (int i = 0; i < size; i++) {
-    float real_min = *(min_data + i);
-    float real_max = *(max_data + i);
-    schema::QuantParamT quant_param;
-    int bit_num = k8Bit;
-
-    MS_LOG(DEBUG) << "min: " << real_min << " max: " << real_max << " bit_num: " << bit_num << " symmetric"
-                  << symmetric;
-    auto ret = CalQuantizationParams(&quant_param, real_min, real_max, bit_num, symmetric);
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "Failed to calculate quant params";
-      return {};
-    }
-    quant_params.push_back(quant_param);
-  }
-  return quant_params;
-}
-
-std::vector<schema::QuantParamT> AscendDistributeFakeQuantTransform::GetQuantParamWithFakeQuantNode(
-  const CNodePtr &fake_quant_node, bool symmetric) {
-  tensor::TensorPtr min_value;
-  tensor::TensorPtr max_value;
-  auto min_input = fake_quant_node->input(kMinIndex + kPrimOffset);
-  if (utils::isa<ParameterPtr>(min_input) && min_input->cast<ParameterPtr>()->has_default() &&
-      min_input->cast<ParameterPtr>()->default_param() != nullptr) {
-    min_value = min_input->cast<ParameterPtr>()->default_param()->cast<tensor::TensorPtr>();
-  } else {
-    MS_LOG(ERROR) << "Quant param get min value failed";
-    return {};
-  }
-  auto max_input = fake_quant_node->input(kMaxIndex + kPrimOffset);
-  if (utils::isa<ParameterPtr>(max_input) && max_input->cast<ParameterPtr>()->has_default() &&
-      max_input->cast<ParameterPtr>()->default_param() != nullptr) {
-    max_value = max_input->cast<ParameterPtr>()->default_param()->cast<tensor::TensorPtr>();
-  } else {
-    MS_LOG(ERROR) << "Quant param get max value failed";
-    return {};
-  }
-  auto quant_params = CalQuantParam(min_value, max_value, symmetric);
-  return quant_params;
-}
-
 int AscendDistributeFakeQuantTransform::RemoveWeightRedundantNode(const FuncGraphPtr &func_graph,
                                                                   const CNodePtr &cnode) {
   auto manager = func_graph->manager();
@@ -136,8 +77,6 @@ int AscendDistributeFakeQuantTransform::FetchWeightQuantParamFromFakeQuant(const
   const std::set<PrimitivePtr> fake_quant_types = {prim::kPrimFakeQuantPerLayer, prim::kPrimFakeQuantPerChannel};
   auto manager = func_graph->manager();
   CHECK_NULL_RETURN(manager);
-  auto quant_node_pass = QuantNodePass(func_graph);
-  auto weight_quantizer = WeightQuantizer(param_);
   auto ret = RET_NO_CHANGE;
   for (auto &cnode : func_graph->GetOrderedCnodes()) {
     auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
@@ -246,7 +185,7 @@ int AscendDistributeFakeQuantTransform::SetWeightQuantParam(const FuncGraphPtr &
     }
 
     const std::set<PrimitivePtr> support_weight_quant_types = {prim::kPrimMatMul, prim::kPrimBatchMatMul,
-                                                               prim::kPrimGather, prim::kPrimFFN};
+                                                               prim::kPrimGather};
     for (auto &node_user : node_users) {
       auto follow_cnode = node_user.first->cast<CNodePtr>();
       if (!CheckNodeInSet(follow_cnode, support_weight_quant_types)) {
@@ -511,6 +450,10 @@ int AscendDistributeFakeQuantTransform::DoSingleGraphAscendDistributeFakeQuantTr
   }
 
   ret = FetchWeightQuantParamFromFakeQuant(func_graph);
+  if (ret == RET_ERROR) {
+    MS_LOG(ERROR) << " Fetch weight quant param from FQ node failed.";
+    return ret;
+  }
   if (ret == RET_OK) {
     ret = MatMulWeightTranspose(func_graph);
     if (ret != RET_OK) {
@@ -532,9 +475,6 @@ int AscendDistributeFakeQuantTransform::DoSingleGraphAscendDistributeFakeQuantTr
       MS_LOG(ERROR) << "Static weight quantization info failed.";
       return RET_ERROR;
     }
-  } else {
-    MS_LOG(ERROR) << " Fetch weight quant param from FQ node failed.";
-    return ret;
   }
 
   MS_LOG(INFO) << "Start smooth quant.";
