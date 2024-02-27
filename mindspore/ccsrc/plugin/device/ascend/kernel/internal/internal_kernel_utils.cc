@@ -72,7 +72,12 @@ internal::TensorDType InternalKernelUtils::ToInternalDType(TypeId type) {
 void InternalKernelUtils::ToInternalTensor(internal::Tensor *internal_tensor, const KernelTensor *kernel_tensor) {
   internal_tensor->desc.format = ToInternalFormat(kernel_tensor->format());
   internal_tensor->desc.dtype = ToInternalDType(kernel_tensor->dtype_id());
-  internal_tensor->desc.dims = internal::VecToSVec<int64_t>(kernel_tensor->GetShapeVector());
+  if (kernel_tensor->GetShapeVector().size() == 0) {
+    internal_tensor->desc.dims = {1};
+  } else {
+    internal_tensor->desc.dims = internal::VecToSVec<int64_t>(kernel_tensor->GetShapeVector());
+  }
+  
   internal_tensor->data = kernel_tensor->device_ptr();
 }
 
