@@ -32,6 +32,7 @@
 #include "backend/common/graph_kernel/core/graph_kernel_callback.h"
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
 #include "backend/common/graph_kernel/core/value_depend_op_utils.h"
+#include "backend/common/graph_kernel/graph_kernel_helper.h"
 
 namespace mindspore::graphkernel {
 namespace {
@@ -66,6 +67,26 @@ bool HasSpecialFormat(const AnfNodePtr &node) {
   }
   return false;
 }
+
+bool DvmSliceSupported(const AnfNodePtr &node, TypeId node_output_type) {
+  if (common::AnfAlgo::IsDynamicRankNode(node) || GetShape(node).size() > 3) {
+    return false;
+  }
+  if (IsPrimitiveCNode(node, prim::kPrimStridedSlice)) {
+    auto cnode = node->cast<CNodePtr>();
+    auto step_node = cnode->input(kIndex4)->cast<ValueNodePtr>();
+    if (step_node == nullptr) {
+      return false;
+    }
+    auto step_vector = GetValue<std::vector<int64_t>>(step_node->value());
+    if (std::any_of(step_vector.begin(), step_vector.end(), [](int i) { return i != 1; })) {
+      return false;
+    }
+  }
+  return (node_output_type == kNumberTypeFloat16 || node_output_type == kNumberTypeFloat32 ||
+          node_output_type == kNumberTypeInt32);
+}
+
 bool DvmSupported(const AnfNodePtr &node) {
   auto cb = Callback::Instance();
   MS_EXCEPTION_IF_NULL(cb);
@@ -98,23 +119,23 @@ bool DvmSupported(const AnfNodePtr &node) {
   if (std::any_of(compare_ops.begin(), compare_ops.end(),
                   [&node](const PrimitivePtr &prim) { return IsPrimitiveCNode(node, prim); })) {
     auto node_input_type = cb->GetInputType(node, 0);
-    return (node_input_type == kNumberTypeFloat16 || node_input_type == kNumberTypeFloat32);
-  }
-  // logical op
-  static std::vector<PrimitivePtr> logical_ops{prim::kPrimLogicalAnd, prim::kPrimLogicalOr, prim::kPrimLogicalNot,
-                                               prim::kPrimLogicalXor};
-  if (std::any_of(logical_ops.begin(), logical_ops.end(),
-                  [&node](const PrimitivePtr &prim) { return IsPrimitiveCNode(node, prim); })) {
-    return (node_output_type == kNumberTypeBool);
+    return (node_input_type == kNumberTypeFloat16 || node_input_type == kNumberTypeFloat32 ||
+            node_input_type == kNumberTypeInt32);
   }
   // int op
-  static std::vector<PrimitivePtr> int_ops{prim::kPrimAdd,     prim::kPrimSub,        prim::kPrimMul,
-                                           prim::kPrimMaximum, prim::kPrimMinimum,    prim::kPrimNeg,
-                                           prim::kPrimAssign,  prim::kPrimBroadcastTo};
+  static std::vector<PrimitivePtr> int_ops{
+    prim::kPrimAdd, prim::kPrimSub, prim::kPrimMul,    prim::kPrimMaximum, prim::kPrimMinimum,
+    prim::kPrimNeg, prim::kPrimAbs, prim::kPrimSelect, prim::kPrimAssign,  prim::kPrimBroadcastTo};
   if (node_output_type == kNumberTypeInt32 &&
       std::any_of(int_ops.begin(), int_ops.end(),
                   [&node](const PrimitivePtr &prim) { return IsPrimitiveCNode(node, prim); })) {
     return true;
+  }
+  // slice op
+  static std::vector<PrimitivePtr> slice_ops{prim::kPrimSlice, prim::kPrimStridedSlice};
+  if (std::any_of(slice_ops.begin(), slice_ops.end(),
+                  [&node](const PrimitivePtr &prim) { return IsPrimitiveCNode(node, prim); })) {
+    return DvmSliceSupported(node, node_output_type);
   }
   // other op
   return (node_output_type == kNumberTypeFloat16 || node_output_type == kNumberTypeFloat32);
