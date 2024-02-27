@@ -265,20 +265,6 @@ void AclStreamAssign::InsertEvents(const NotNull<KernelGraphPtr> &kernel_graph, 
   } else {
     process_iter->second.push_back(recv_cnode);
   }
-
-  if (parallel_cnode == node_before_send) {
-    kernel_graph->InsertSendRecvPairForParallelOpOutputs(parallel_cnode, std::make_pair(send_cnode, recv_cnode));
-    MS_LOG(INFO) << "Generate send/recv for parallel op " << parallel_cnode->fullname_with_scope() << "'s output."
-                 << "Send node " << send_cnode->fullname_with_scope() << " after "
-                 << node_before_send->fullname_with_scope() << ", recv node " << recv_cnode->fullname_with_scope()
-                 << " before " << node_after_recv->fullname_with_scope();
-  } else {
-    kernel_graph->InsertSendRecvPairForParallelOpInputs(parallel_cnode, std::make_pair(send_cnode, recv_cnode));
-    MS_LOG(INFO) << "Generate send/recv for parallel op " << parallel_cnode->fullname_with_scope() << "'s input."
-                 << "Send node " << send_cnode->fullname_with_scope() << " after "
-                 << node_before_send->fullname_with_scope() << ", recv node " << recv_cnode->fullname_with_scope()
-                 << " before " << node_after_recv->fullname_with_scope();
-  }
 }
 
 void AclStreamAssign::GenEventsForParallelOp(const NotNull<KernelGraphPtr> &kernel_graph,
