@@ -59,17 +59,20 @@ class AscendCommunicationGenerator:
 
     @staticmethod
     def combine_size_distribution(op_dict: dict, total_dict: dict):
+        """combine size distribution"""
         for size, size_info in op_dict.items():
             total_dict[size][0] += size_info[0]
             total_dict[size][1] += size_info[1]
 
     @staticmethod
     def compute_ratio(dividend: float, divisor: float):
+        """compute ratio"""
         if abs(divisor) < 1e-15:
             return 0
         return round(dividend / divisor, 4)
 
     def parse(self) -> None:
+        """parse"""
         self.generate_communication()
         self.generate_matrix()
 
@@ -89,6 +92,7 @@ class AscendCommunicationGenerator:
             self.output_communication[step] = self.get_communication_ops_dict(step_info.get("comm_ops"))
 
     def generate_matrix(self):
+        """generate matrix"""
         communication_file = os.path.join(self.root_path, self.COMMUNICATION_MATRIX)
         with open(communication_file) as file:
             matrix_data = json.load(file)
@@ -100,6 +104,7 @@ class AscendCommunicationGenerator:
             self.output_matrix_data[step] = self.get_matrix_ops_dict(comm_matrix_data)
 
     def split_comm_op_by_step(self, communication_data: dict):
+        """split comm op by step"""
         if len(self.step_list) == 1:
             self.step_list[0]["comm_ops"] = communication_data
         for communication_op, communication_op_info in communication_data.items():
@@ -141,6 +146,7 @@ class AscendCommunicationGenerator:
         return matrix_data_by_step
 
     def get_communication_ops_dict(self, op_data: dict) -> dict:
+        """get communication ops dict"""
         comm_op_dict = self.split_communication_p2p_ops(op_data)
         self.compute_total_info(comm_op_dict[self.P2P])
         self.compute_total_info(comm_op_dict[self.COLLECTIVE])
@@ -157,15 +163,10 @@ class AscendCommunicationGenerator:
             bandwidth = self.compute_ratio(t_size, t_time)
 
             link = new_comm_op_name[2]
-            new_comm_op_name_top1 = f'{new_comm_op_name[0]}-top1@{new_comm_op_name[1]}'
-            new_comm_op_name_middle = f'{new_comm_op_name[0]}-middle@{new_comm_op_name[1]}'
-            new_comm_op_name_bottom1 = f'{new_comm_op_name[0]}-bottom1@{new_comm_op_name[1]}'
-            new_comm_op_name_bottom2 = f'{new_comm_op_name[0]}-bottom2@{new_comm_op_name[1]}'
-            new_comm_op_name_bottom3 = f'{new_comm_op_name[0]}-bottom3@{new_comm_op_name[1]}'
-            new_comm_op_name_total = f'{new_comm_op_name[0]}-total@{new_comm_op_name[1]}'
-            comm_op_dict[new_comm_op_name_top1].update({link: data[0]})
-            comm_op_dict[new_comm_op_name_middle].update({link: data[len(data) // 2]})
-            comm_op_dict[new_comm_op_name_bottom1].update({link: data[-1]})
+
+            comm_op_dict[f'{new_comm_op_name[0]}-top1@{new_comm_op_name[1]}'].update({link: data[0]})
+            comm_op_dict[f'{new_comm_op_name[0]}-middle@{new_comm_op_name[1]}'].update({link: data[len(data) // 2]})
+            comm_op_dict[f'{new_comm_op_name[0]}-bottom1@{new_comm_op_name[1]}'].update({link: data[-1]})
             index2 = -2
             index3 = -3
             if len(data) == 1:
@@ -173,9 +174,9 @@ class AscendCommunicationGenerator:
                 index3 = -1
             elif len(data) == 2:
                 index3 = -2
-            comm_op_dict[new_comm_op_name_bottom2].update({link: data[index2]})
-            comm_op_dict[new_comm_op_name_bottom3].update({link: data[index3]})
-            comm_op_dict[new_comm_op_name_total].update({link: {
+            comm_op_dict[f'{new_comm_op_name[0]}-bottom2@{new_comm_op_name[1]}'].update({link: data[index2]})
+            comm_op_dict[f'{new_comm_op_name[0]}-bottom3@{new_comm_op_name[1]}'].update({link: data[index3]})
+            comm_op_dict[f'{new_comm_op_name[0]}-total@{new_comm_op_name[1]}'].update({link: {
                 self.TRANSPORT_TYPE: t_type,
                 self.TRANSIT_SIZE_MB: t_size,
                 self.TRANSIT_TIME_MS: t_time,
@@ -219,6 +220,7 @@ class AscendCommunicationGenerator:
         return comm_op_dict
 
     def is_step_list_empty(self):
+        """is step list empty"""
         for step_info in self.step_list:
             if step_info.get("comm_ops"):
                 return False
@@ -246,6 +248,7 @@ class AscendCommunicationGenerator:
         }
 
     def combine_time_info(self, com_info_dict: dict, total_time_info_dict: dict):
+        """combine time info"""
         ratio_list = [self.WAIT_TIME_RATIO, self.SYNCHRONIZATION_TIME_RATIO]
         for time_info in com_info_dict:
             if time_info not in ratio_list and time_info != self.START_TIMESTAMP:
@@ -271,6 +274,7 @@ class AscendCommunicationGenerator:
                     self.combine_size_distribution(value, total_bandwidth_info_dict[transport_type][bandwidth_msg])
 
     def compute_time_ratio(self, total_time_info_dict: dict):
+        """compute time ratio"""
         total_time_info_dict[self.WAIT_TIME_RATIO] = \
             self.compute_ratio(total_time_info_dict.get(self.WAIT_TIME_MS, 0),
                                total_time_info_dict.get(self.WAIT_TIME_MS, 0) +
@@ -281,6 +285,7 @@ class AscendCommunicationGenerator:
                                total_time_info_dict.get(self.SYNCHRONIZATION_TIME_MS, 0))
 
     def compute_bandwidth_ratio(self, total_bandwidth_info_dict: dict):
+        """compute bandwidth ratio"""
         for _, bandwidth_dict in total_bandwidth_info_dict.items():
             self.compute_ratio(bandwidth_dict.get(self.TRANSIT_SIZE_MB, 0), bandwidth_dict.get(self.TRANSIT_TIME_MS, 0))
 
