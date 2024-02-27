@@ -80,6 +80,9 @@ const char *calib_source = R"RAW(/**
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
+#ifdef ENABLE_FP16
+#include <arm_neon.h>
+#endif
 
 #define kToleranceVal 0.0001f
 #define kMaxOutput 5
@@ -196,6 +199,22 @@ int CompareOutputs(MSTensorHandleArray outputs, CalibTensor **calib_tensors, int
         }
         break;
       }
+#ifdef ENABLE_FP16
+      case kMSDataTypeNumberTypeFloat16: {
+        float16_t *float16_output = (float16_t *)output->data;
+        for (size_t j = 0; j < elements; ++j) {
+          if (isnan(float16_output[j]) || isinf(float16_output[j]) || isnan(calib[i].data_[j]) ||
+              isinf(calib[i].data_[j])) {
+            printf("error, output data is nan or inf\n");
+            return kMSStatusLiteError;
+          }
+          dot += float16_output[j] * calib[i].data_[j];
+          normx += float16_output[j] * float16_output[j];
+          normy += calib[i].data_[j] * calib[i].data_[j];
+        }
+        break;
+      }
+#endif
       case kMSDataTypeNumberTypeInt8: {
         int8_t *int_output = (int8_t *)output->data;
         for (size_t j = 0; j < elements; ++j) {

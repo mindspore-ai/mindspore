@@ -32,7 +32,6 @@ void CodeMSModelCalcWorkspaceSize(std::ofstream &ofs, const std::unique_ptr<Code
 void CodeCortexCalcWorkspaceSize(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx);
 void CodeMSModelSetWorkspace(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx, const Configurator &config);
 void CodeCortexSetWorkspace(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx);
-void CodeMSTensorHandleArrayDestroyState(std::ofstream &ofs, const Configurator &config);
 void CodeMSModelCreateDefault(std::ofstream &ofs);
 void CodeMSModelCreate(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx, const Configurator &config);
 void CodeMSModelBuildState(std::ofstream &ofs);
@@ -62,5 +61,13 @@ void CodeFreeResourceImplement(std::ofstream &ofs, const std::unique_ptr<CoderCo
                                const Configurator &config);
 
 void CodeExecuteState(std::ofstream &ofs, const int model_index);
+
+void CodeMSModelResizeInit(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx, const Configurator &config);
+void CodeMSModelResize(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx, const Configurator &config);
+void CodeRealDimImplement(std::ofstream &ofs, const Configurator &config,
+                          const std::map<std::string, std::vector<int>> &symbol_to_indexes,
+                          const std::map<std::string, std::string> &user_to_inner,
+                          std::map<std::string, std::string> *inner_to_outer);
+void CodeResetImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx, const Configurator &config);
 }  // namespace mindspore::lite::micro
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_GENERATOR_COMPONENT_COMMON_COMPONENT_H_

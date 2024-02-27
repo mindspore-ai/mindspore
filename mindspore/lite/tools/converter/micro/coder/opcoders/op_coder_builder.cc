@@ -35,7 +35,7 @@ std::unique_ptr<OperatorCoder> OpCoderBuilder::build(int schema_version) {
     }
     coder_key = CoderKey(target_, data_type_, schema::PrimitiveType_Custom, custom_type->str());
   }
-  CoderCreatorFunc creator_func = OpCoderFactory::GetInstance()->FindOpCoder(coder_key);
+  CoderCreatorFunc creator_func = OpCoderFactory::GetInstance()->FindOpCoder(coder_key, dynamic_);
   if (creator_func == nullptr) {
     MS_LOG(ERROR) << "caught unsupported layer: " << node_->name_;
     return nullptr;
@@ -122,6 +122,11 @@ OpCoderBuilder &OpCoderBuilder::support_parallel(bool parallel) {
 
 OpCoderBuilder &OpCoderBuilder::is_builtin_custom(bool builtin_custom) {
   builtin_custom_ = builtin_custom;
+  return *this;
+}
+
+OpCoderBuilder &OpCoderBuilder::is_dynamic(bool dynamic) {
+  dynamic_ = dynamic;
   return *this;
 }
 

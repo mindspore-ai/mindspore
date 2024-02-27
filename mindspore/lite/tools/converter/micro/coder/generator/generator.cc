@@ -46,6 +46,7 @@ typedef struct {
   MSTensorHandleArray inputs;
   MSTensorHandleArray outputs;
   ModelBuild build;
+  ModelResize resize;
   ModelSetWorkspace set_work_space;
   ModelCalcWorkspaceSize calc_work_space;
   FreeResource free_resource;
@@ -57,6 +58,13 @@ typedef void (*ModelSetWorkspace)(MSModelHandle model, void *workspace, size_t w
 
 const char calc_workspace_state[] = R"RAW(
 typedef size_t (*ModelCalcWorkspaceSize)(MSModelHandle model);
+)RAW";
+
+const char model_resize[] = R"RAW(
+typedef MSStatus (*ModelResize)(MSModelHandle model,
+                                const MSTensorHandleArray inputs,
+                                MSShapeInfo *shape_infos,
+                                size_t shape_info_num);
 )RAW";
 
 int WriteContentToFile(const std::string &file, const std::string &content) {
@@ -311,6 +319,7 @@ int Generator::CodeCommonModelFile() {
   CodeFreeResourceState(hofs);
   hofs << set_workspace_state;
   hofs << calc_workspace_state;
+  hofs << model_resize;
   hofs << micro_model_define_source;
   if (config_->code_mode() == CodeMode::Inference) {
     hofs << "  ModelPredict predict;\n";
@@ -340,7 +349,7 @@ int Generator::CodeCommonModelFile() {
   if (config_->support_parallel()) {
     cofs << "#include \"" << kThreadWrapper << "\"\n";
   }
-  if (config_->target() != kCortex_M) {
+  if (config_->target() != kCortex_M && !config_->dynamic_shape()) {
     cofs << "#include \"src/allocator.h\"\n";
   }
   CodeMSModelCalcWorkspaceSize(cofs, ctx_, *config_);
@@ -386,7 +395,7 @@ int Generator::CodeMSModelImplement() {
   ofs << "#include \"c_api/model_c.h\"\n";
   ofs << "#include \"src/model.h\"\n";
   ofs << "#include \"src/model" << ctx_->GetCurModelIndex() << "/" << net_inc_hfile_ << "\"\n";
-  if (config_->target() != kCortex_M) {
+  if (config_->target() != kCortex_M && !config_->dynamic_shape()) {
     ofs << "#include \"src/allocator.h\"\n";
   }
   if (config_->support_parallel()) {
@@ -401,6 +410,8 @@ int Generator::CodeMSModelImplement() {
   }
   ofs << "MSStatus MSModelBuild" << ctx_->GetCurModelIndex() << "(MSModelHandle model, const void *model_data,\n"
       << "                       size_t data_size, const MSContextHandle model_context);\n";
+  ofs << "MSStatus MSModelResize" << ctx_->GetCurModelIndex() << "(MSModelHandle model, \n"
+      << "                       const MSTensorHandleArray inputs, MSShapeInfo *shape_infos, size_t shape_info_num);\n";
   if (config_->code_mode() == CodeMode::Inference) {
     ofs << "MSStatus MSModelPredict" << ctx_->GetCurModelIndex()
         << "(MSModelHandle model, const MSTensorHandleArray inputs,\n"
@@ -416,6 +427,7 @@ int Generator::CodeMSModelImplement() {
     ofs << "MSStatus MSModelExportWeight" << ctx_->GetCurModelIndex()
         << "(MSModelHandle model, const char *export_path);\n";
   }
+  ofs << "void Reset" << ctx_->GetCurModelIndex() << "();\n";
   ofs << "void MSModelSetWorkspace" << ctx_->GetCurModelIndex()
       << "(MSModelHandle model, void *workspace, size_t workspace_size);\n";
   ofs << "size_t MSModelCalcWorkspaceSize" << ctx_->GetCurModelIndex() << "(MSModelHandle model);\n";
@@ -423,7 +435,8 @@ int Generator::CodeMSModelImplement() {
       << "                             .train_mode = false,\n"
       << "                             .inputs = {" << ctx_->graph_inputs().size() << ", NULL},\n"
       << "                             .outputs = {" << ctx_->graph_outputs().size() << ", NULL},\n"
-      << "                             .build = MSModelBuild" << ctx_->GetCurModelIndex() << ",\n";
+      << "                             .build = MSModelBuild" << ctx_->GetCurModelIndex() << ",\n"
+      << "                             .resize = MSModelResize" << ctx_->GetCurModelIndex() << ",\n";
   if (config_->code_mode() == CodeMode::Inference) {
     ofs << "                             .predict = MSModelPredict" << ctx_->GetCurModelIndex() << ",\n";
   } else {
@@ -439,11 +452,16 @@ int Generator::CodeMSModelImplement() {
     ofs << "                             .set_work_space = NULL,\n"
         << "                             .calc_work_space = NULL,\n";
   }
-  ofs << "                             .free_resource = FreeResource" << ctx_->GetCurModelIndex() << "};\n";
+  ofs << "                             .free_resource = Reset" << ctx_->GetCurModelIndex() << "};\n";
   ofs << "MSModelHandle model" << ctx_->GetCurModelIndex() << " = &gModel" << ctx_->GetCurModelIndex() << ";\n\n";
-
+  auto &dynamic_symbols = config_->dynamic_symbols();
+  for (size_t i = 0; i < dynamic_symbols.size(); ++i) {
+    ofs << "static int store" << ctx_->GetCurModelIndex() << "_" << i << " = -1;\n";
+  }
+  CodeResetImplement(ofs, ctx_, *config_);
   CodeMSModelCreate(ofs, ctx_, *config_);
   CodeMSModelBuild(ofs, ctx_->GetCurModelIndex(), weight_size_, *config_);
+  CodeMSModelResize(ofs, ctx_, *config_);
   CodeCopyOutputsImplement(ofs, ctx_);
   if (config_->target() == kCortex_M) {
     CodeCortexCalcWorkspaceSize(ofs, ctx_);
@@ -483,6 +501,8 @@ int Generator::CodeWeightFile() {
   if (config_->target() != kCortex_M) {
     cofs << "unsigned char *" << ctx_->buffer_name() << " = 0; \n";
     cofs << "unsigned char *" << ctx_->weight_name() << " = 0; \n";
+    cofs << "int *" << kShapePrefixName << " = 0; \n";
+    cofs << "int *" << kOffsetPrefixName << " = 0; \n";
     std::string net_file = model_dir_ + "net" + std::to_string(ctx_->GetCurModelIndex()) + ".bin";
     SaveDataToNet(ctx_, net_file, config_->keep_original_weight(), &weight_size_);
   } else {
@@ -598,8 +618,10 @@ int Generator::CreateCommonFiles() {
   MS_CHECK_RET_CODE(CodeStaticContent(), "code static content failed.");
   MS_CHECK_RET_CODE(CodeModelHandleHFile(), "code model_handle h file failed.");
   MS_CHECK_RET_CODE(CodeCommonModelFile(), "code common model file failed.");
+  if (!config_->dynamic_shape()) {
+    MS_CHECK_RET_CODE(CodeAllocatorFile(), "code allocator file failed.");
+  }
   MS_CHECK_RET_CODE(CodeRegKernelHFile(), "code registered kernel header file failed.");
-  MS_CHECK_RET_CODE(CodeAllocatorFile(), "code allocator file failed.");
   MS_CHECK_RET_CODE(CodeSourceCMakeFile(), "code net cmake file failed.");
   return RET_OK;
 }
