@@ -20,16 +20,13 @@
 
 namespace mindspore {
 namespace parallel {
-void SilentCheck::GetLossScaleAndGlobalStep() {
+void SilentCheck::GetLossScale() {
   MS_EXCEPTION_IF_NULL(root_);
   auto parameters = root_->parameters();
   for (const auto &param : parameters) {
     auto param_ptr = param->cast<ParameterPtr>();
     MS_EXCEPTION_IF_NULL(param_ptr);
     auto name = param_ptr->name();
-    if (name == GLOBAL_STEP) {
-      global_step_ = param;
-    }
     if (name == LOSS_SCALE) {
       loss_scale_ = param;
     }
@@ -47,8 +44,6 @@ void SilentCheck::ModifySilentCheckOps() {
       continue;
     }
     auto cnode = node->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(global_step_);
-    mng_->SetEdge(cnode, GLOBAL_STEP_INDEX, global_step_);
     if (loss_scale_ != nullptr) {
       mng_->SetEdge(cnode, LOSS_SCALE_INDEX, loss_scale_);
     }

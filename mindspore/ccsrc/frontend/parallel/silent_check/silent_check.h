@@ -22,23 +22,20 @@
 
 namespace mindspore {
 namespace parallel {
-constexpr char GLOBAL_STEP[] = "global_step";
-constexpr char NPU_DETECT[] = "NPU_DETECT";
+constexpr char NPU_ASD_ENABLE[] = "NPU_ASD_ENABLE";
 constexpr char LOSS_SCALE[] = "loss_scale";
-constexpr size_t GLOBAL_STEP_INDEX = 5;
-constexpr size_t LOSS_SCALE_INDEX = 7;
+constexpr size_t LOSS_SCALE_INDEX = 6;
 class SilentCheck {
  public:
   SilentCheck(const FuncGraphPtr &root, const FuncGraphManagerPtr &mng) : root_(root), mng_(mng) {}
   virtual ~SilentCheck() = default;
-  void GetLossScaleAndGlobalStep();
+  void GetLossScale();
   void ModifySilentCheckOps();
 
  private:
   FuncGraphPtr root_ = nullptr;
   FuncGraphManagerPtr mng_ = nullptr;
   AnfNodePtr loss_scale_ = nullptr;
-  AnfNodePtr global_step_ = nullptr;
 };
 }  // namespace parallel
 }  // namespace mindspore
