@@ -34,3 +34,5 @@ Array Functions
     :template: classtemplate.rst
 
     mindspore.ops.extend.gather
+    mindspore.ops.extend.max
+    mindspore.ops.extend.min

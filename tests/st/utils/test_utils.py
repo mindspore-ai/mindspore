@@ -64,7 +64,7 @@ def compare(output, expect):
             rtol, atol = 1e-4, 1e-4
         else:
             rtol, atol = 1e-3, 1e-3
-        if not np.allclose(output.asnumpy(), expect, rtol, atol):
+        if not np.allclose(output.asnumpy(), expect, rtol, atol, equal_nan=True):
             raise ValueError(f"compare failed \n output: {output.asnumpy()}\n expect: {expect}")
 
 

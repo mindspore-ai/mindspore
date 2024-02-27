@@ -61,7 +61,7 @@ from mindspore.ops._utils.utils import ms_arrange
 
 from mindspore.ops.auto_generate import cat, range, scatter_nd, deepcopy, masked_fill, diagonal, expand_dims, \
     nonzero, flip, transpose, unsorted_segment_sum, diag, gather, gather_d, gather_nd, reshape, broadcast_to, \
-    strided_slice, ones, zeros
+    strided_slice, ones, zeros, max_, min_
 from mindspore.ops.operations.manually_defined import tile, rank, scalar_cast
 
 arg_max_with_value_ = ArgMaxWithValue()
@@ -5109,7 +5109,7 @@ def max(input, axis=None, keepdims=False, *, initial=None, where=None):  # pylin
     if not input.shape:
         return (input, Tensor(0, dtype=mstype.int64))
     if axis is None:
-        return (reduce_max_(input), Tensor(0, dtype=mstype.int64))
+        return (max_(input), Tensor(0, dtype=mstype.int64))
     if initial is not None and not isinstance(initial, numbers.Number):
         raise TypeError(f"For 'max', 'initial' must be a scalar, but got {type(initial)}")
     if axis is not None and not isinstance(axis, int):
@@ -5180,7 +5180,7 @@ def min(input, axis=None, keepdims=False, *, initial=None, where=None):  # pylin
     if not input.shape:
         return (input, Tensor(0, dtype=mstype.int64))
     if axis is None:
-        return (reduce_min_(input), Tensor(0, dtype=mstype.int64))
+        return (min_(input), Tensor(0, dtype=mstype.int64))
     if initial is not None and not isinstance(initial, numbers.Number):
         raise TypeError(f"For 'min', 'initial' must be a scalar, but got {type(initial)}")
     if axis is not None and not isinstance(axis, int):

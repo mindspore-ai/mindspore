@@ -1,0 +1,6 @@
+# primitive and functional interfaces are internal interfaces and users use it by ops.extend.min
+min:
+  description: |
+    Calculates the minimum value of the input tensor.
+
+    Also see :func:`mindspore.ops.extend.min`.
