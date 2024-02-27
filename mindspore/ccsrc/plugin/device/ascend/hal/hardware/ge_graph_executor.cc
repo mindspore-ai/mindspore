@@ -1210,7 +1210,8 @@ bool GeGraphExecutor::RunGraphRefMode(const FuncGraphPtr &graph, const std::vect
   std::vector<GeTensor> ge_inputs = GenerateInputGeTensor(kg);
   std::vector<GeTensor> ge_outputs = GenerateOutputGeTensor(kg);
 
-  if (IsMemoryPoolRecycle()) {
+  bool is_dynamic_shape = kg->is_dynamic_shape();
+  if (IsMemoryPoolRecycle() && !is_dynamic_shape) {
     auto max_static_memory_size = ResManager()->GetMaxUsedMemorySize();
     auto iter = feature_memorys.find(graph_name);
     if (iter == feature_memorys.end()) {
@@ -1244,7 +1245,6 @@ bool GeGraphExecutor::RunGraphRefMode(const FuncGraphPtr &graph, const std::vect
       MS_LOG(EXCEPTION) << "Exec graph failed";
     }
   }
-  bool is_dynamic_shape = kg->is_dynamic_shape();
   if (is_dynamic_shape) {
     auto sync_ret = ResManager()->SyncStream();
     if (!sync_ret) {

@@ -1337,7 +1337,7 @@ void SetRunMode(const FuncGraphPtr &func_graph, compile::Backend *backend_ptr, s
   }
 
   // GRAPH | Dynamic Scalar : Dynamic scalar ops in graph.
-  if (IsNeedBackoffGraph(func_graph)) {
+  if (IsNeedBackoffGraph(func_graph) && !IsDynamicShapeGraph(func_graph)) {
     if (kbk_reason != nullptr) {
       *kbk_reason = "Run graph mode with kernel by kernel because graph exist dynamic scalar ops.";
       MS_LOG(INFO) << *kbk_reason;

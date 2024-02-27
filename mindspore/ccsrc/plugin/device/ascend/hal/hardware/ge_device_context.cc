@@ -38,6 +38,7 @@
 #include "include/common/utils/compile_cache_context.h"
 #include "mindspore/core/utils/file_utils.h"
 #include "plugin/device/ascend/hal/device/dump/ascend_dump.h"
+#include "plugin/device/ascend/optimizer/ge_backend_optimization.h"
 #include "acl/acl_base.h"
 
 namespace mindspore {
@@ -68,8 +69,6 @@ bool GeDeviceContext::PartitionGraph(const FuncGraphPtr &func_graph) const {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   if (IsDynamicShapeFuncGraph(func_graph)) {
-    return false;
-    /*
     // dynamic shape default kernel be kernel before ge support
     if (GetRunMode(func_graph) == RunMode::kKernelMode) {
       return true;
@@ -118,7 +117,6 @@ bool GeDeviceContext::PartitionGraph(const FuncGraphPtr &func_graph) const {
       context_ptr->set_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK, false);
     }
     return all_support;
-    */
   }
   return context_ptr->get_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK);
 }
@@ -127,6 +125,10 @@ RunMode GeDeviceContext::GetRunMode(const FuncGraphPtr &func_graph) const {
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   if (IsDynamicShapeFuncGraph(func_graph)) {
+    if (common::GetEnv("GRAPH_OP_RUN") == "0") {
+      MS_LOG(INFO) << "dynamic shape default RunMode::kGraphMode";
+      return RunMode::kGraphMode;
+    }
     MS_LOG(INFO) << "dynamic shape default RunMode::kKernelMode";
     return RunMode::kKernelMode;
   }

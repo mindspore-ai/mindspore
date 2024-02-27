@@ -139,7 +139,7 @@ CNodePtr MakeTupleUnifyMindIR::CreateScalarToTensor(const FuncGraphPtr &func_gra
   auto prim = NewValueNode(std::make_shared<Primitive>(kScalarToTensorOpName));
   MS_EXCEPTION_IF_NULL(prim);
   auto data_type = common::AnfAlgo::GetOutputInferDataType(node, 0);
-  auto type_id_value_node = AnfAlgo::CreateTypeIdValueNodeToGraph(func_graph, data_type);
+  auto type_id_value_node = AnfAlgo::CreateTypeIdValueNodeToFuncGraph(func_graph, data_type);
   AnfNodePtrList inputs = {prim, node, type_id_value_node};
   CNodePtr scalar_to_tensor = func_graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(scalar_to_tensor);
