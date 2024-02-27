@@ -17,6 +17,8 @@
 #include "kernel/pyboost/customize/op_common.h"
 #include "kernel/pyboost/pyboost_utils.h"
 #include "mindspore/core/ops/framework_ops.h"
+#include "kernel/pyboost/auto_generate/maximum.h"
+#include "kernel/pyboost/auto_generate/minimum.h"
 
 namespace mindspore {
 namespace kernel {
@@ -101,6 +103,87 @@ tensor::TensorPtr ContiguousTensorOpProcess(const std::shared_ptr<OpRunner> &op,
     return output_tensor;
   }
   return nullptr;
+}
+
+tensor::TensorPtr ClampTensorCustomizeCall(const std::shared_ptr<OpRunner> &op, const TensorPtr &x_tensor,
+                                           const std::optional<TensorPtr> &min, const std::optional<TensorPtr> &max,
+                                           const std::string &device_target) {
+  MS_LOG(DEBUG) << "Call ClampTensor start";
+  if (!min.has_value() && !max.has_value()) {
+    MS_EXCEPTION(ValueError) << "For Clamp, at least one of 'min' or 'max' must not be None.";
+  }
+  auto device_context = op->device_context();
+
+  std::vector<AbstractBasePtr> input_abs = {x_tensor->ToAbstract()};
+  OpPtr final_node = nullptr;
+
+  TensorPtr output = x_tensor;
+  if (min.has_value()) {
+    input_abs.emplace_back(min.value()->ToAbstract());
+    auto min_tensor = PyBoostUtils::CastTensor(min.value(), x_tensor->Dtype()->type_id(), device_target);
+    const auto &maximum = CREATE_PYBOOST_OP(Maximum, device_context->device_context_key_.device_name_);
+    output = maximum->Call(output, min_tensor);
+    final_node = maximum;
+  } else {
+    input_abs.emplace_back(std::make_shared<abstract::AbstractNone>());
+  }
+  if (max.has_value()) {
+    input_abs.emplace_back(max.value()->ToAbstract());
+    auto max_tensor = PyBoostUtils::CastTensor(max.value(), x_tensor->Dtype()->type_id(), device_target);
+    const auto &minimum = CREATE_PYBOOST_OP(Minimum, device_context->device_context_key_.device_name_);
+    output = minimum->Call(output, max_tensor);
+    final_node = minimum;
+  } else {
+    input_abs.emplace_back(std::make_shared<abstract::AbstractNone>());
+  }
+
+  op->set_input_abs(input_abs);
+  op->set_output_abs(final_node->output_abs());
+  op->set_outputs({output});
+  MS_LOG(DEBUG) << "Call ClampTensor end";
+  return output;
+}
+
+tensor::TensorPtr ClampScalarCustomizeCall(const std::shared_ptr<OpRunner> &op, const TensorPtr &x_tensor,
+                                           const std::optional<ScalarPtr> &min, const std::optional<ScalarPtr> &max,
+                                           const std::string &device_target) {
+  MS_LOG(DEBUG) << "Call ClampScalar start";
+  if (!min.has_value() && !max.has_value()) {
+    MS_EXCEPTION(ValueError) << "For Clamp, at least one of 'min' or 'max' must not be None.";
+  }
+  auto device_context = op->device_context();
+
+  std::vector<AbstractBasePtr> input_abs = {x_tensor->ToAbstract()};
+  OpPtr final_node = nullptr;
+
+  TensorPtr output = x_tensor;
+  if (min.has_value()) {
+    input_abs.emplace_back(min.value()->ToAbstract());
+    auto min_tensor = ScalarToTensor(min.value());
+    min_tensor = PyBoostUtils::CastTensor(min_tensor, x_tensor->Dtype()->type_id(), device_target);
+    const auto &maximum = CREATE_PYBOOST_OP(Maximum, device_context->device_context_key_.device_name_);
+    output = maximum->Call(output, min_tensor);
+    final_node = maximum;
+  } else {
+    input_abs.emplace_back(std::make_shared<abstract::AbstractNone>());
+  }
+  if (max.has_value()) {
+    input_abs.emplace_back(max.value()->ToAbstract());
+    auto max_tensor = ScalarToTensor(max.value());
+    max_tensor = PyBoostUtils::CastTensor(max_tensor, x_tensor->Dtype()->type_id(), device_target);
+    const auto &minimum = CREATE_PYBOOST_OP(Minimum, device_context->device_context_key_.device_name_);
+    output = minimum->Call(output, max_tensor);
+    final_node = minimum;
+  } else {
+    input_abs.emplace_back(std::make_shared<abstract::AbstractNone>());
+  }
+
+  op->set_input_abs(input_abs);
+  op->set_output_abs(final_node->output_abs());
+  op->set_outputs({output});
+
+  MS_LOG(DEBUG) << "Call ClampScalar end";
+  return output;
 }
 }  // namespace pyboost
 }  // namespace kernel

@@ -212,6 +212,8 @@ class BACKEND_EXPORT PyBoostUtils {
     auto output_abs = TransformValueSimpleInfoToAbstract(*output_value_simple_info);
     return SelectKernel(input_abs, output_abs, device_context, op_name);
   }
+  static std::optional<tensor::TensorPtr> CastTensor(const std::optional<tensor::TensorPtr> &tensor,
+                                                     const TypeId &type_id, const std::string &device_target);
   static tensor::TensorPtr CastTensor(const tensor::TensorPtr &tensor, const TypeId &type_id,
                                       const std::string &device_target);
   static std::vector<tensor::TensorPtr> CastTensor(const std::vector<tensor::TensorPtr> &tensors,

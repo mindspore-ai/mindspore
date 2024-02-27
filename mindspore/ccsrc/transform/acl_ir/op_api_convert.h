@@ -419,7 +419,10 @@ inline aclTensorList *ConvertType(const std::vector<mindspore::kernel::KernelTen
 }
 
 inline aclScalar *ConvertType(const ScalarPtr &value) {
-  MS_EXCEPTION_IF_NULL(value);
+  if (value == nullptr) {
+    // for None
+    return nullptr;
+  }
   aclScalar *acl_scalar;
   static OpApiTensorConverter converter;
   if (value->isa<BoolImm>()) {
@@ -448,6 +451,13 @@ inline aclScalar *ConvertType(const ScalarPtr &value) {
   return acl_scalar;
 }
 
+inline aclScalar *ConvertType(const std::optional<ScalarPtr> &value) {
+  if (value.has_value()) {
+    return ConvertType(value.value());
+  }
+  return nullptr;
+}
+
 inline aclDataType ConvertType(TypeId type_id) { return AclConverter::ConvertType(type_id); }
 
 inline aclDataType ConvertType(const TypePtr &type) { return AclConverter::ConvertType(type->type_id()); }
@@ -473,8 +483,48 @@ T ConvertKernelTensor(mindspore::kernel::KernelTensor *tensor) {
 template <>
 inline ScalarPtr ConvertKernelTensor<ScalarPtr>(mindspore::kernel::KernelTensor *tensor) {
   MS_EXCEPTION_IF_NULL(tensor);
+  if (tensor->dtype_id() == kMetaTypeNone) {
+    // for None
+    return nullptr;
+  }
   auto value_ptr = tensor->GetValueTrack();
-  if (!value_ptr || !value_ptr->isa<Scalar>()) {
+
+  if (value_ptr == nullptr) {
+    if (tensor->dtype_id() == kNumberTypeBool) {
+      auto value = tensor->GetValueWithCheck<bool>();
+      value_ptr = std::make_shared<BoolImm>(value);
+    } else if (tensor->dtype_id() == kNumberTypeInt64) {
+      auto value = tensor->GetValueWithCheck<int64_t>();
+      value_ptr = std::make_shared<Int64Imm>(value);
+    } else if (tensor->dtype_id() == kNumberTypeDouble || tensor->dtype_id() == kNumberTypeFloat64) {
+      auto value = tensor->GetValueWithCheck<double>();
+      value_ptr = std::make_shared<FP64Imm>(value);
+    } else if (tensor->dtype_id() == kNumberTypeFloat32) {
+      auto value = tensor->GetValueWithCheck<float>();
+      value_ptr = std::make_shared<FP32Imm>(value);
+    } else if (tensor->dtype_id() == kNumberTypeInt32) {
+      auto value = tensor->GetValueWithCheck<int32_t>();
+      value_ptr = std::make_shared<Int32Imm>(value);
+    } else if (tensor->dtype_id() == kNumberTypeInt8) {
+      auto value = tensor->GetValueWithCheck<int8_t>();
+      value_ptr = std::make_shared<Int8Imm>(value);
+    } else if (tensor->dtype_id() == kNumberTypeInt16) {
+      auto value = tensor->GetValueWithCheck<int16_t>();
+      value_ptr = std::make_shared<Int16Imm>(value);
+    } else if (tensor->dtype_id() == kNumberTypeUInt8) {
+      auto value = tensor->GetValueWithCheck<uint8_t>();
+      value_ptr = std::make_shared<UInt8Imm>(value);
+    } else if (tensor->dtype_id() == kNumberTypeBFloat16) {
+      auto value = tensor->GetValueWithCheck<bfloat16>();
+      value_ptr = std::make_shared<BF16Imm>(value);
+    } else {
+      MS_LOG(EXCEPTION) << "Currently not support value type: " << tensor->dtype_id();
+    }
+  }
+
+  MS_EXCEPTION_IF_NULL(value_ptr);
+
+  if (!value_ptr->isa<Scalar>()) {
     MS_LOG(EXCEPTION) << "Current tensor's must be a scalar, please check!";
   }
   auto scalar_ptr = value_ptr->cast<ScalarPtr>();

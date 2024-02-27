@@ -209,11 +209,16 @@ void KernelTensor::SetShape(const abstract::BaseShapePtr &shape) {
     case kObjectTypeTensorType: {
       // The shape type check will affect the performance. The following check will be deleted after the framework is
       // stable.
-      if (!shape_->isa<abstract::TensorShape>()) {
-        MS_LOG(EXCEPTION) << "Expected TensorShape for SetShape, but got: " << shape_->type_name() << ", "
-                          << shape_->ToString();
+      if (shape_->isa<abstract::NoShape>()) {
+        host_info_->shape_vector_ = {};
+      } else {
+        if (!shape_->isa<abstract::TensorShape>()) {
+          MS_LOG(EXCEPTION) << "Expected TensorShape for SetShape, but got: " << shape_->type_name() << ", "
+                            << shape_->ToString();
+        }
+        host_info_->shape_vector_ = shape_->GetShapeVector();
       }
-      host_info_->shape_vector_ = shape_->GetShapeVector();
+
       break;
     }
 

@@ -25,6 +25,7 @@ from mindspore.common import dtype as mstype
 from mindspore.ops.primitive import _primexpr
 from mindspore.ops._primitive_cache import _get_cache_prim
 from mindspore import _checkparam as Validator
+from mindspore.ops.auto_generate import clamp_tensor, clamp_scalar
 
 __all__ = [
     'clip_by_value',
@@ -242,18 +243,17 @@ def clamp(input, min=None, max=None):
         - The data type of `input`, `min` and `max` should support implicit type conversion and cannot be bool type.
 
     Args:
-          input (Union(Tensor, list[Tensor], tuple[Tensor])): Input data, which type is Tensor or a list or tuple of
-            Tensor. Tensors of arbitrary dimensions are supported.
+          input (Tensor): Input data, which type is Tensor. Tensors of arbitrary dimensions are supported.
           min (Union(Tensor, float, int), optional): The minimum value. Default: ``None`` .
           max (Union(Tensor, float, int), optional): The maximum value. Default: ``None`` .
 
     Returns:
-          Union(Tensor, tuple[Tensor], list[Tensor]), a clipped Tensor or a tuple or a list of clipped Tensor.
+          Union(Tensor), a clipped Tensor.
           The data type and shape are the same as input.
 
     Raises:
           ValueError: If both `min` and `max` are None.
-          TypeError: If the type of `input` is not in Tensor or list[Tensor] or tuple[Tensor].
+          TypeError: If the type of `input` is not in Tensor.
           TypeError: If the type of `min` is not in None, Tensor, float or int.
           TypeError: If the type of `max` is not in None, Tensor, float or int.
 
@@ -272,21 +272,10 @@ def clamp(input, min=None, max=None):
         >>> print(output)
         [[ 5. 20.  5.  7.]
          [ 5. 11.  6. 20.]]
-        >>> # case 2: the data type of input is list[Tensor]
-        >>> min_value = 5
-        >>> max_value = 20
-        >>> input_x = Tensor(np.array([[1., 25., 5., 7.], [4., 11., 6., 21.]]), mindspore.float32)
-        >>> input_y = Tensor(np.array([[1., 25., 5., 7.], [4., 11., 6., 21.]]), mindspore.float32)
-        >>> output = ops.clamp([input_x,input_y], min_value, max_value)
-        >>> for out in output:
-        ...     print(out)
-        [[ 5. 20.  5.  7.]
-         [ 5. 11.  6. 20.]]
-        [[ 5. 20.  5.  7.]
-         [ 5. 11.  6. 20.]]
     """
-    return clip_by_value(input, min, max)
-
+    if isinstance(min, Tensor) or isinstance(max, Tensor):
+        return clamp_tensor(input, min, max)
+    return clamp_scalar(input, min, max)
 
 def clip(input, min=None, max=None):
     r"""

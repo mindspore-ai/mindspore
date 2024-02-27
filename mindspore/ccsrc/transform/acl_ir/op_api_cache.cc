@@ -24,6 +24,7 @@ typedef void (*AddTensorAddrToCachedList)(void *addr);
 
 void GatherInfo(mindspore::kernel::KernelTensor *tensor) {
   if (tensor == nullptr || tensor->type_id() == kMetaTypeNone) {
+    MemcpyToBuf("None", 5);
     return;
   }
 
@@ -135,7 +136,10 @@ void GatherInfo(const std::vector<TensorPtr> &tensors) {
 }
 
 void GatherInfo(const ScalarPtr &scalar) {
-  MS_EXCEPTION_IF_NULL(scalar);
+  if (scalar == nullptr) {
+    MemcpyToBuf("None", 5);
+    return;
+  }
   // "s" for scalar
   MemcpyToBuf("s", 1);
   if (scalar->isa<BoolImm>()) {
