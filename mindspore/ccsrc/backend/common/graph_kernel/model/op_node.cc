@@ -733,6 +733,19 @@ void ArgReduceOp::RectifyAbstract(const PrimitivePtr &prim, AbstractBasePtrList 
   (void)abs_list->emplace_back(prim->GetAttr("output_type")->ToAbstract());
 }
 
+void PagedAttentionOp::RectifyAbstract(const PrimitivePtr &prim, AbstractBasePtrList *abs_list) {
+  constexpr size_t PA_INPUT_NUM = 5;
+  constexpr size_t PA_MASK_INPUT_NUM = 6;
+  if (abs_list->size() == PA_INPUT_NUM || abs_list->size() == PA_MASK_INPUT_NUM) {
+    CHECK_ATTR(prim->attrs(), "head_num");
+    (void)abs_list->emplace_back(prim->GetAttr("head_num")->ToAbstract());
+    CHECK_ATTR(prim->attrs(), "scale_value");
+    (void)abs_list->emplace_back(prim->GetAttr("scale_value")->ToAbstract());
+    CHECK_ATTR(prim->attrs(), "kv_head_num");
+    (void)abs_list->emplace_back(prim->GetAttr("kv_head_num")->ToAbstract());
+  }
+}
+
 std::vector<size_t> CompactShape(const ShapeVector &origin, int64_t axis) {
   std::vector<size_t> new_shape;
   size_t accu = 1;
