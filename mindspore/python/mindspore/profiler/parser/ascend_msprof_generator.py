@@ -18,6 +18,7 @@ import fnmatch
 import os
 
 import numpy as np
+from mindspore import log as logger
 
 
 class AscendMsprofDataGeneratorOld:
@@ -127,11 +128,14 @@ class AscendMsprofDataGeneratorOld:
                     self.op_summary_name = self.op_summary_basis_name
                 self.op_summary_name['Iteration ID'] = {'index': -1, 'dtype': ('Iteration ID', object)}
                 for row in reader:
-                    row = [row[index.get('index')] for index in self.op_summary_name.values()]
-                    row[self.op_summary_name['Iteration ID']['index']] = iteration
-                    row = ['0' if i == 'N/A' else i for i in row]
-                    row += ['0.000']  # Add one column for Task Start Time(us)
-                    op_summary.append(tuple(row))
+                    try:
+                        row = [row[index.get('index')] for index in self.op_summary_name.values()]
+                        row[self.op_summary_name['Iteration ID']['index']] = iteration
+                        row = ['0' if i == 'N/A' else i for i in row]
+                        row += ['0.000']  # Add one column for Task Start Time(us)
+                        op_summary.append(tuple(row))
+                    except IndexError:
+                        logger.warning(f"Fail to read{file}. Will ignore this file and continue reading")
 
         type_value = [value['dtype'] for value in self.op_summary_name.values()]
         type_value += [('Task Start Time(us)', object)]
@@ -140,7 +144,7 @@ class AscendMsprofDataGeneratorOld:
         for i in range(0, len(op_summary)):
             if len(op_summary[i]) < len(op_summary_dt):
                 new_raw = [j for j in op_summary[i]]
-                new_raw.extenx([0 for _ in range(len(op_summary_dt) - len(op_summary[i]))])
+                new_raw.extend([0 for _ in range(len(op_summary_dt) - len(op_summary[i]))])
                 op_summary[i] = tuple(new_raw)
 
         self.op_summary = np.array(op_summary, dtype=op_summary_dt)
