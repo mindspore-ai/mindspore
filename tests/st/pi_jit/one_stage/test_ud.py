@@ -119,7 +119,7 @@ def test_break_in_subgraph_2():
     Description: Test one stage basic operation.
     Expectation: No exception.
     """
-    @jit(mode="PIJit",jit_config=cfg)
+    @jit(mode="PIJit", jit_config=cfg)
     def out(x, y):
         m = x + y
         n = inner(x, y)
@@ -143,7 +143,7 @@ def test_break_in_subgraph_3():
     Description: Test one stage basic operation.
     Expectation: No exception.
     """
-    @jit(mode="PIJit",jit_config=cfg)
+    @jit(mode="PIJit", jit_config=cfg)
     def out(x, y):
         m = x + y
         n = inner(x, y)
@@ -156,3 +156,47 @@ def test_break_in_subgraph_3():
 
     ret = out(Tensor([1]), Tensor([2]))
     assert np.allclose(ret.asnumpy(), 5.5524473)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_break_with_control_flow():
+    """
+    Feature: One stage basic operation.
+    Description: Test one stage basic operation.
+    Expectation: No exception.
+    """
+    @jit(mode="PIJit", jit_config=cfg)
+    def out():
+        x = np.array([3, 2])
+        if x[0] > 1:
+            x += 3
+        return x
+
+    ret = out()
+    assert np.all(ret == np.array([6, 5]))
+
+
+@pytest.mark.skip(reason="Random error occurs when run whole files")
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_break_with_control_flow_2():
+    """
+    Feature: One stage basic operation.
+    Description: Test one stage basic operation.
+    Expectation: No exception.
+    """
+    @jit(mode="PIJit", jit_config=cfg)
+    def out(a):
+        a = a + 1
+        x = np.array([3, 2])
+        if x[0] > 1:
+            x += 3
+        return x, a
+
+    ret = out(Tensor([1, 2, 3]))
+    assert len(ret) == 2
+    assert np.all(ret[0] == np.array([6, 5]))
+    assert np.all(ret[1].asnumpy() == np.array([2, 3, 4]))
