@@ -1373,6 +1373,10 @@ class Profiler:
 
     def _ascend_graph_start(self):
         """Ascend graph mode start profiling."""
+        op_range_file = os.path.join(self._framework_path, "op_range_" + str(self._rank_id))
+        if os.path.exists(op_range_file):
+            os.remove(op_range_file)
+            logger.info("Clear old op range filer.")
         self._ascend_profiler.start()
 
     def _gpu_analyse(self):
@@ -1592,10 +1596,10 @@ class Profiler:
                 self._rank_id = prof_rank_id
                 self._start_time = int(job_start_time)
             else:
-                if self._dev_id != prof_device_id:
+                if self._dev_id != prof_device_id and self._rank_id != prof_rank_id:
                     logger.debug("Find profiling find job path %s, but not current training device id. "
-                                 "Current training device id %s, but job path device id: %s, "
-                                 "profiler will ignore this job dir.", job_dir, self._dev_id, prof_device_id)
+                                 "Current training rank id %s, but job path rank id: %s, "
+                                 "profiler will ignore this job dir.", job_dir, self._rank_id, prof_rank_id)
                     continue
 
                 if int(job_start_time) < self._start_time:
@@ -1724,9 +1728,6 @@ class Profiler:
         if not os.path.exists(self._framework_path):
             os.makedirs(self._framework_path, exist_ok=True)
             os.chmod(self._framework_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
-        elif os.path.exists(os.path.join(self._framework_path, "op_range_" + str(self._rank_id))):
-            os.remove(os.path.join(self._framework_path, "op_range_" + str(self._rank_id)))
-            logger.info("Clear old op range filer.")
 
         if not os.path.exists(self._ascend_ms_path):
             os.makedirs(self._ascend_ms_path, exist_ok=True)
