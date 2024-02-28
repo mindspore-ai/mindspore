@@ -102,6 +102,9 @@ static int GetOpcodeMaxStackEffect(int op, int arg, bool jump) {
   if (op == NOP || op == EXTENDED_ARG) {
     return 0;
   }
+  if (op == END_FINALLY) {
+    return -1;
+  }
 #else
   off = PyCompile_OpcodeStackEffectWithJump(op, arg, jump ? 1 : -1);
 #endif
@@ -1397,8 +1400,20 @@ static int FindTryBlockEnd(int start, const CFG *cfg) {
   while (res < list.size() && list[res]->op() != RERAISE) {
     res = list[res + 2]->extra_jump()->bci();
   }
-  int normally_finally_block_start = res + 1;
-  return FindFinallyBlockEnd(reraise_finally_block_start, normally_finally_block_start, cfg);
+  /*
+    In the current situation:
+      try：
+        ...
+      else:
+        ...
+      finally:
+        ...
+      this codes have a else block, wo should find byteCode 'POP_BLOCK'
+  */
+  while (res < list.size() && list[res]->op() != POP_BLOCK) {
+    res++;
+  }
+  return FindFinallyBlockEnd(reraise_finally_block_start, res, cfg);
 }
 
 static bool FindBlock(int start_bci, const CFG *cfg, int *end_bci, int *stack_effect) {

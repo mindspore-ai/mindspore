@@ -32,14 +32,14 @@ using GraphBuilderPtr = std::shared_ptr<GraphBuilder>;
 using MindGraphBuilderPtr = std::shared_ptr<MindGraphBuilder>;
 
 struct TryBlock {
-  int type;       /*what kind of block this is*/
+  int type;       /*what kind of block this is (SETUP_SETUP, SETUP_FINALLY, SETUP_EXCEPT)*/
   int bci;        /*where to jump to find handler*/
   int checkpoint; /*the handler to be rolled back*/
   // int level;   /* value stack level to pop toe*/
-  bool withOrException; /*record this block is in with block or try_exception block*/
+  bool IsFinallyBlock; /*record current block is in exception block or finally block*/
 };
 
-bool CheckSupportCreateInstance(CallNode* call_node);
+bool CheckSupportCreateInstance(CallNode *call_node);
 class GraphBuilder {
  public:
   static const char *ID___self__;

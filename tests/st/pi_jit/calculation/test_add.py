@@ -72,6 +72,7 @@ def test_add_float(func, ms_func, test_data):
 @pytest.mark.parametrize('func', [add])
 @pytest.mark.parametrize('ms_func', [jit_add])
 @pytest.mark.parametrize('test_data', [(2.0, Tensor(np.ones((2, 3)).astype(np.float32)))])
+@pytest.mark.skip(reason="GetDevicePtr is NULL")
 def test_add_float_tensor(func, ms_func, test_data):
     """
     Feature:

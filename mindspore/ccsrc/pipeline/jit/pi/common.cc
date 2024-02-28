@@ -476,17 +476,19 @@ static bool GraphCapture(JitCompileResults *jcr) {
 
   if (g->StackSize() > 0) {
     auto block = g->PeekStack(0);
-    auto flag = block.withOrException;
-    if (flag) {
-      // something happend in with syntax
+    auto type = block.type;
+    if (type == SETUP_WITH || type == SETUP_FINALLY
+#if (PY_MAJOR_VERSION == 3) && (PY_MINOR_VERSION == 7)
+        || type == SETUP_EXCEPT
+#endif
+    ) {
+      // something happened in with syntax
       jcr->code->SetGuard(std::make_shared<OptGuard>());
       jcr->conf->SetBool<GraphJitConfig::kSkipException>(Py_True);
       bool code_change = GraphCapture(jcr);
       g->GetTryBlockStacks().clear();
       jcr->conf->SetBool<GraphJitConfig::kSkipException>(Py_False);
       return code_change;
-    } else {
-      // TODO : deal with try_exception in exception syntax
     }
   }
 
