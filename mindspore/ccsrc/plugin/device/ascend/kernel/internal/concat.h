@@ -13,29 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_INTERNAL_KERNEL_ELEWISE_BINARY_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_INTERNAL_KERNEL_ELEWISE_BINARY_H_
-#include <string>
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_INTERNAL_KERNEL_CONCAT_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_INTERNAL_KERNEL_CONCAT_H_
 #include <vector>
-#include <utility>
-
 #include "plugin/device/ascend/kernel/internal/internal_kernel_mod.h"
-
 namespace mindspore {
 namespace kernel {
-class ElewiseBinary : public InternalKernelMod {
+class InternalConcat : public InternalKernelMod {
  public:
-  explicit ElewiseBinary(std::string &&op_type) : InternalKernelMod(std::move(op_type)) {}
-  ~ElewiseBinary() = default;
+  InternalConcat() : InternalKernelMod("Concat") {}
+  ~InternalConcat() = default;
 
  protected:
-  virtual void SetComputeType(internal::OpParamPtr param_ptr) = 0;
   internal::OpParamPtr CreateOpParam(const std::vector<KernelTensor *> &inputs,
                                      const std::vector<KernelTensor *> &outputs);
   void SetInOutIdx();
   uint64_t GenTilingCacheKey(const std::vector<KernelTensor *> &inputs,
                              const std::vector<KernelTensor *> &outputs) override;
+
+ private:
+  int concatDim_{0};
 };
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_INTERNAL_KERNEL_ELEWISE_BINARY_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_INTERNAL_KERNEL_CONCAT_H_
