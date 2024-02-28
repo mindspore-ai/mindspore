@@ -54,7 +54,7 @@ void CustomizeCopyAscend(device::DeviceContext *device_context, const device::De
     fill_kernel_info(input_kernel_tensor);
     fill_kernel_info(output_kernel_tensor);
     const auto &input_storage_info = input_kernel_tensor->tensor_storage_info();
-    const auto &output_storage_info = input_kernel_tensor->tensor_storage_info();
+    const auto &output_storage_info = output_kernel_tensor->tensor_storage_info();
     MS_LOG(DEBUG) << "Input_storage_info:" << (input_storage_info == nullptr ? "" : input_storage_info->ToString())
                   << ", output_storage_info:" << (output_storage_info == nullptr ? "" : output_storage_info->ToString())
                   << ", input address size:" << input_kernel_tensor->size()
