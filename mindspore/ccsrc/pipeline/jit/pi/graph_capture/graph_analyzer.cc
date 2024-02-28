@@ -418,6 +418,7 @@ void MindGraphAnalyzer::Analyze() {
       }
       AddToEscaped(traced_node);
     }
+    graph_->StopTraceAt(origin_stop_bci, StopTraceReason::kStopTraceDataDependsOnGraphOut);
     need_interpret_ = true;
     GetCaptureInfo().captured_locals.order.clear();
     GetCaptureInfo().captured_locals.values.clear();
