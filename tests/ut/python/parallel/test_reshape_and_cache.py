@@ -16,7 +16,7 @@ import numpy as np
 import mindspore as ms
 from mindspore.nn import Cell
 from mindspore import context, Tensor, Parameter
-from mindspore.ops.auto_generate.gen_inner_ops_def import ReshapeAndCache
+from mindspore.ops.auto_generate import ReshapeAndCache
 from parallel.utils.utils import ParallelValidator, compile_net
 import pytest
 

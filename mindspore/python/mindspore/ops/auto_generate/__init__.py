@@ -22,12 +22,10 @@ A collection of operators to build neural networks or to compute functions.
 from . import gen_ops_def, gen_arg_handler, gen_arg_dtype_cast
 
 from .gen_ops_prim import *
-from .gen_inner_ops_prim import *
 from .gen_ops_def import *
 from .gen_arg_handler import *
 from .gen_arg_dtype_cast import *
 from ..operations.manually_defined.ops_def import *
-from .gen_inner_ops_def import *
 
 
 __all__ = []
