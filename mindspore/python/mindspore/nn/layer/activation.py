@@ -668,7 +668,7 @@ class SiLU(Cell):
         :align: center
 
     Inputs:
-        - **input** (Tensor) - `input` is `x` in the preceding formula.
+        - **input** (Tensor) - `input` is :math:`x` in the preceding formula.
           Input with the data type float16 or float32.
 
     Outputs:
@@ -998,7 +998,7 @@ class Sigmoid(Cell):
         :align: center
 
     Inputs:
-        - **input** (Tensor) - `input` is `x` in the preceding formula. Tensor of any dimension,
+        - **input** (Tensor) - `input` is :math:`x` in the preceding formula. Tensor of any dimension,
           the data type is float16, float32, float64, complex64 or complex128.
 
     Outputs:

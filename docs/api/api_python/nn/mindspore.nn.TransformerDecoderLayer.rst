@@ -22,7 +22,7 @@ mindspore.nn.TransformerDecoderLayer
         - **tgt_mask** (Tensor, 可选) - 目标序列的掩码矩阵。shape是 :math:`(T, T)` 或 :math:`(N*nhead, T, T)` 。数据类型：float16、float32、float64或者bool。默认值：``None``。
         - **memory_mask** (Tensor, 可选) - memory序列的掩码矩阵。shape是 :math:`(T, S)` 。数据类型：float16、float32、float64或者bool。默认值：``None``。
         - **tgt_key_padding_mask** (Tensor, 可选) - 目标序列Key矩阵的掩码矩阵。shape是 :math:`(T)` 。数据类型：float16、float32、float64或者bool。默认值：``None``
-        - **memory_key_padding_mask** (Tensor, 可选) - memory序列Key矩阵的掩码矩阵∂。hape是 :math:`(S)` 。数据类型：float16、float32、float64或者bool。默认值：``None``。
+        - **memory_key_padding_mask** (Tensor, 可选) - memory序列Key矩阵的掩码矩阵∂。shape是 :math:`(S)` 。数据类型：float16、float32、float64或者bool。默认值：``None``。
 
     输出：
         Tensor。Tensor的shape和dtype与 `tgt` 一致。

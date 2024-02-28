@@ -15,7 +15,7 @@
     输入：
         - **input_x** (Tensor) - TensorScatterUpdate的输入，任意维度的Tensor。其数据类型为数值型。 `input_x` 的维度必须不小于indices.shape[-1]。其shape为 :math:`(N, *)` ，其中 :math:`*` 为任意数量的额外维度。
         - **indices** (Tensor) - `input_x` 执行scatter操作的目标索引，数据类型为int32或int64，rank必须大于等于2。
-        - **update** (Tensor) - 指定与 `input_x` 做更新操作的Tensor，其数据类型与 `input_x` 相同。并且shape应等于 :math:`indices.shape[:-1]+input\_x.shape[indices.shape[-1]:]`。
+        - **update** (Tensor) - 指定与 `input_x` 做更新操作的Tensor，其数据类型与 `input_x` 相同。并且 :math:`update.shape = indices.shape[:-1]+input\_x.shape[indices.shape[-1]:]` 。
 
     输出：
         Tensor，shape和数据类型与输入 `input_x` 相同。

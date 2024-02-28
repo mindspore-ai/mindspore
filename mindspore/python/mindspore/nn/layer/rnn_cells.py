@@ -178,7 +178,7 @@ class RNNCell(RNNCellBase):
     Args:
         input_size (int): Number of features of input.
         hidden_size (int):  Number of features of hidden layer.
-        has_bias (bool): Whether the cell has bias `b_ih` and `b_hh`. Default: ``True`` .
+        has_bias (bool): Whether the cell has bias :math:`b_ih` and :math:`b_hh`. Default: ``True`` .
         nonlinearity (str): The non-linearity to use. Can be either ``"tanh"`` or ``"relu"`` .
             Default: ``"tanh"`` .
         dtype (:class:`mindspore.dtype`): Dtype of Parameters. Default: ``mstype.float32`` .

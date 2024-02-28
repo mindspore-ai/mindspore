@@ -26,9 +26,9 @@ mindspore.nn.Transformer
         - **src_mask** (Tensor, 可选) - 源序列的掩码矩阵。shape是 :math:`(S, S)` 或 :math:`(N*nhead, S, S)` 。数据类型：float16、float32、float64或者bool。默认值：``None``。
         - **tgt_mask** (Tensor, 可选) - 目标序列的掩码矩阵。shape是 :math:`(T, T)` 或 :math:`(N*nhead, T, T)` 。数据类型：float16、float32、float64或者bool。默认值：``None``。
         - **memory_mask** (Tensor, 可选) - memory序列的掩码矩阵。shape是 :math:`(T, S)` 。数据类型：float16、float32、float64或者bool。默认值：``None``。
-        - **src_key_padding_mask** (Tensor, 可选) - 源序列Key矩阵的掩码矩阵。shape是 :math:`(S)` 。数据类型：float16、float32、float64或者bool。默认值：``None``。
-        - **tgt_key_padding_mask** (Tensor, 可选) - 目标序列Key矩阵的掩码矩阵。shape是 :math:`(T)` 。数据类型：float16、float32、float64或者bool。默认值：``None``。
-        - **memory_key_padding_mask** (Tensor, 可选) - memory序列Key矩阵的掩码矩阵。shape是 :math:`(S)` 。数据类型：float16、float32、float64或者bool。默认值：``None``。
+        - **src_key_padding_mask** (Tensor, 可选) - 源序列Key矩阵的掩码矩阵。如果目标序列没有batch，shape是 :math:`(S)` ，否则shape为 :math:`(N, S)` 。数据类型：float16、float32、float64或者bool。默认值：``None``。
+        - **tgt_key_padding_mask** (Tensor, 可选) - 目标序列Key矩阵的掩码矩阵。如果目标序列没有batch，shape是 :math:`(T)` ，否则shape为 :math:`(N, S)` 。数据类型：float16、float32、float64或者bool。默认值：``None``。
+        - **memory_key_padding_mask** (Tensor, 可选) - memory序列Key矩阵的掩码矩阵。如果目标序列没有batch，shape是 :math:`(S)` ，否则shape为 :math:`(N, S)` 。数据类型：float16、float32、float64或者bool。默认值：``None``。
 
     输出：
         Tensor。如果源序列没有batch，shape是 :math:`(T, E)` ；否则如果 `batch_first=False` ，则shape为 :math:`(T, N, E)` ，如果 `batch_first=True` ，则shape为 :math:`(N, T, E)`。 

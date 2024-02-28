@@ -637,7 +637,7 @@ class COOTensor(COOTensor_):
 
 
 class CSRTensor(CSRTensor_):
-    """
+    r"""
     Constructs a sparse tensor in CSR (Compressed Sparse Row) format, with specified
     values indicated by `values` and row and column positions indicated by `indptr`
     and `indices`.
@@ -673,7 +673,7 @@ class CSRTensor(CSRTensor_):
         shape (tuple(int)): An integer tuple of shape :math:`(ndims)`, and `shape[0]` must equal to `M - 1`,
             which all equal to number of rows of the CSRTensor. Default: ``None``.
         csr_tensor (CSRTensor): A CSRTensor object.  Values' feature dimension should match with
-            CSRTensor's feature dimension :math:`(values.shape[1:] == csr_tensor.shape[2:])` . Default: ``None``.
+            CSRTensor's feature dimension :math:`(values.shape[1:] == csr\_tensor.shape[2:])` . Default: ``None``.
 
     Outputs:
         CSRTensor, with shape defined by `shape`, and dtype inferred from `value`.

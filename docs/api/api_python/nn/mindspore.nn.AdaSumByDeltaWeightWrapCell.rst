@@ -12,7 +12,8 @@ mindspore.nn.AdaSumByDeltaWeightWrapCell
     .. math::
         \begin{array}{ll}
           w_{t+1}=w_{t} - \alpha \cdot Adasum(g_{1}, g_{2})  \\
-          w_{t+1}=w_{t} - \alpha \cdot [(1 - \frac{g_2^{T}\cdot g_1}{2\cdot \left \| g_1 \right \|^2 })\cdot g_1 +  (1 - \frac{g_1^{T}\cdot g_2}{2\cdot \left \| g_2 \right \|^2 })\cdot g_2]  \\
+          w_{t+1}=w_{t} - \alpha \cdot [(1 - \frac{g_2^{T}\cdot g_1}{2\cdot \left \| g_1 \right \|^2 })\cdot g_1 + (1 -
+          \frac{g_1^{T}\cdot g_2}{2\cdot \left \| g_2 \right \|^2 })\cdot g_2]  \\
         \end{array}
 
     在本实现中， :math:`g` 代表优化器更新前后的权重的变化量，下标代表数据并行维度下不同的设备。

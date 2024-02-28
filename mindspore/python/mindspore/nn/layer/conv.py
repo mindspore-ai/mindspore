@@ -157,21 +157,25 @@ class Conv2d(_Conv):
     , :math:`weight` is the convolution kernel value and :math:`X` represents the input feature map.
 
     Here are the indices' meanings:
-    - :math:`i` corresponds to the batch number, ranging from 0 to N-1, where N is the batch size of the input.
+    - :math:`i` corresponds to the batch number, the range is :math:`[0, N-1]`,
+      where :math:`N` is the batch size of the input.
 
-    - :math:`j` corresponds to the output channel, ranging from 0 to C_{out}-1, where C_{out} is the number of
+    - :math:`j` corresponds to the output channel, the range is :math:`[0, C_{out}-1]`,
+      where :math:`C_{out}` is the number of
       output channels, which is also equal to the number of kernels.
 
-    - :math:`k` corresponds to the input channel, ranging from 0 to C_{in}-1, where C_{in} is the number of
+    - :math:`k` corresponds to the input channel, the range is :math:`[0, C_{in}-1]`,
+      where :math:`C_{in}` is the number of
       input channels, which is also equal to the number of channels in the convolutional kernels.
 
-    Therefore, in the above formula, :math:`{bias}(C_{out_j})` represents the bias of the :math:`j`-th
-    output channel, :math:`{weight}(C_{out_j}, k)` represents the slice of the :math:`j`-th convolutional
+    Therefore, in the above formula, :math:`{bias}(C_{\text{out}_j})` represents the bias of the :math:`j`-th
+    output channel, :math:`{weight}(C_{\text{out}_j}, k)` represents the slice of the :math:`j`-th convolutional
     kernel in the :math:`k`-th channel, and :math:`{X}(N_i, k)` represents the slice of the :math:`k`-th input
     channel in the :math:`i`-th batch of the input feature map.
 
-    The shape of the convolutional kernel is given by :math:`(kernel\_size[0], kernel\_size[1])`,
-    where :math:`kernel\_size[0]` and :math:`kernel\_size[1]` are the height and width of the kernel, respectively.
+    The shape of the convolutional kernel is given by :math:`(\text{kernel_size[0]},\text{kernel_size[1]})`,
+    where :math:`\text{kernel_size[0]}`
+    and :math:`\text{kernel_size[1]}` are the height and width of the kernel, respectively.
     If we consider the input and output channels as well as the `group` parameter, the complete kernel shape
     will be :math:`(C_{out}, C_{in} / \text{group}, \text{kernel_size[0]}, \text{kernel_size[1]})`,
     where `group` is the number of groups dividing `x`'s input channel when applying group convolution.
@@ -382,21 +386,24 @@ class Conv1d(_Conv):
     , :math:`weight` is the convolution kernel value and :math:`X` represents the input feature map.
 
     Here are the indices' meanings:
-    - :math:`i` corresponds to the batch number, ranging from 0 to N-1, where N is the batch size of the input.
+    - :math:`i` corresponds to the batch number, the range is :math:`[0, N-1]`,
+      where :math:`N` is the batch size of the input.
 
-    - :math:`j` corresponds to the output channel, ranging from 0 to C_{out}-1, where C_{out} is the number of
+    - :math:`j` corresponds to the output channel, the range is :math:`[0, C_{out}-1]`,
+      where :math:`C_{out}` is the number of
       output channels, which is also equal to the number of kernels.
 
-    - :math:`k` corresponds to the input channel, ranging from 0 to C_{in}-1, where C_{in} is the number of
+    - :math:`k` corresponds to the input channel, the range is :math:`[0, C_{in}-1]`,
+      where :math:`C_{in}` is the number of
       input channels, which is also equal to the number of channels in the convolutional kernels.
 
-    Therefore, in the above formula, :math:`{bias}(C_{out_j})` represents the bias of the :math:`j`-th
-    output channel, :math:`{weight}(C_{out_j}, k)` represents the slice of the :math:`j`-th convolutional
+    Therefore, in the above formula, :math:`{bias}(C_{\text{out}_j})` represents the bias of the :math:`j`-th
+    output channel, :math:`{weight}(C_{\text{out}_j}, k)` represents the slice of the :math:`j`-th convolutional
     kernel in the :math:`k`-th channel, and :math:`{X}(N_i, k)` represents the slice of the :math:`k`-th input
     channel in the :math:`i`-th batch of the input feature map.
 
-    The shape of the convolutional kernel is given by :math:`(kernel\_size)`,
-    where :math:`kernel\_size` is the width of the kernel.
+    The shape of the convolutional kernel is given by :math:`(\text{kernel_size})`,
+    where :math:`\text{kernel_size}` is the width of the kernel.
     If we consider the input and output channels as well as the `group` parameter, the complete kernel shape
     will be :math:`(C_{out}, C_{in} / \text{group}, \text{kernel_size})`,
     where `group` is the number of groups dividing `x`'s input channel when applying group convolution.
@@ -581,7 +588,7 @@ class Conv3d(_Conv):
 
     Applies a 3D convolution over an input tensor which is typically of shape
     :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})`, where :math:`N` is batch size, :math:`C` is channel number,
-    :math:`D` is feature depth, :math:`H` is feature height, :math:`W` is feature width.
+    :math:`D, H, W` are the depth, height and width of the feature map, respectively.
 
     The output is calculated based on formula:
 
@@ -595,12 +602,15 @@ class Conv3d(_Conv):
     , :math:`weight` is the convolution kernel value and :math:`X` represents the input feature map.
 
     Here are the indices' meanings:
-    - :math:`i` corresponds to the batch number, ranging from 0 to N-1, where N is the batch size of the input.
+    - :math:`i` corresponds to the batch number, the range is :math:`[0, N-1]`,
+      where :math:`N` is the batch size of the input.
 
-    - :math:`j` corresponds to the output channel, ranging from 0 to C_{out}-1, where C_{out} is the number of
+    - :math:`j` corresponds to the output channel, the range is :math:`[0, C_{out}-1]`,
+      where :math:`C_{out}` is the number of
       output channels, which is also equal to the number of kernels.
 
-    - :math:`k` corresponds to the input channel, ranging from 0 to C_{in}-1, where C_{in} is the number of
+    - :math:`k` corresponds to the input channel, the range is :math:`[0, C_{in}-1]`,
+      where :math:`C_{in}` is the number of
       input channels, which is also equal to the number of channels in the convolutional kernels.
 
     Therefore, in the above formula, :math:`{bias}(C_{out_j})` represents the bias of the :math:`j`-th
@@ -610,7 +620,7 @@ class Conv3d(_Conv):
 
     The shape of the convolutional kernel is given by
     :math:`(\text{kernel_size[0]}, \text{kernel_size[1]}, \text{kernel_size[2]})`
-    where :math:`kernel\_size[0]` , :math:`kernel\_size[1]` and :math:`kernel\_size[2]` are the depth,
+    where :math:`\text{kernel_size[0]}` , :math:`\text{kernel_size[1]}` and :math:`\text{kernel_size[2]}` are the depth,
     height and width of the kernel, respectively.
     If we consider the input and output channels as well as the `group` parameter, the complete kernel shape
     will be :math:`(C_{out}, C_{in} / \text{group}, \text{kernel_size[0]},
