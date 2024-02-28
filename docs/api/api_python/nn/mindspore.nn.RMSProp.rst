@@ -60,7 +60,7 @@ mindspore.nn.RMSProp
           .. include:: mindspore.nn.optim_arg_dynamic_lr.rst
 
         - **decay** (float) - 衰减率。必须大于等于0。默认值： ``0.9`` 。
-        - **momentum** (float) - float类型的超参数，表示移动平均的动量（momentum）。必须大于等于0。默认值： ``0.0`` 。
+        - **momentum** (float) - Float类型的超参数，表示移动平均的动量（momentum）。必须大于等于0。默认值： ``0.0`` 。
         - **epsilon** (float) - 将添加到分母中，以提高数值稳定性。取值大于0。默认值： ``1e-10`` 。
         - **use_locking** (bool) - 是否对参数更新加锁保护。默认值： ``False`` 。
         - **centered** (bool) - 如果为True，则梯度将通过梯度的估计方差进行归一。默认值： ``False`` 。

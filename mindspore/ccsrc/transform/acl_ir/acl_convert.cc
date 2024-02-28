@@ -666,10 +666,6 @@ void AclConverter::ConvertInputToAclAttr(const std::vector<KernelTensor *> &inpu
     }
     MS_EXCEPTION_IF_NULL(inputs[ms_real_idx]);
     ValuePtr attr_value = inputs[ms_real_idx]->GetValue();
-    if (attr_value->isa<None>()) {
-      MS_LOG(DEBUG) << "Input " << ms_real_idx << " of operator " << kernel_name << " is None, ignore it.";
-      continue;
-    }
     info->GetGeAttrValueByMsInputValue(input_idx + 1, &attr_value);
 
     AttrConverter attr_coverter;

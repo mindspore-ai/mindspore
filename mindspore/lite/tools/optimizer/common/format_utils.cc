@@ -25,6 +25,7 @@
 #include "ops/nn_op_name.h"
 #include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/adam.h"
+#include "ops/addn.h"
 #include "ops/apply_momentum.h"
 #include "ops/batch_to_space.h"
 #include "ops/crop.h"

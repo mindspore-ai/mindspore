@@ -570,12 +570,12 @@ class MultiFieldEmbeddingLookup(EmbeddingLookup):
           this interface. Type is Int32, Int64.
         - **input_values** (Tensor) - The shape of tensor is :math:`(batch\_size, seq\_length)`.
           Specifies the weights of elements of the input_indices. The lookout vector will multiply with
-          the input_values. Type is float32.
+          the input_values. Type is Float32.
         - **field_ids** (Tensor)  - The shape of tensor is :math:`(batch\_size, seq\_length)`.
           Specifies the field id of elements of the input_indices. Type is Int32.
 
     Outputs:
-        Tensor, the shape of tensor is :math:`(batch\_size, field\_size, embedding\_size)`. Type is float32.
+        Tensor, the shape of tensor is :math:`(batch\_size, field\_size, embedding\_size)`. Type is Float32.
 
     Raises:
         TypeError: If `vocab_size` or `embedding_size` or `field_size` is not an int.

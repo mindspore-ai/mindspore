@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "src/common/ops/operator_populate/operator_populate_register.h"
+#include "ops/addn.h"
 #include "ops/depend.h"
 #include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/switch_layer.h"

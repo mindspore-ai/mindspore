@@ -26,7 +26,6 @@
 #include "utils/anf_utils.h"
 #include "utils/check_convert_utils.h"
 #include "utils/ms_context.h"
-#include "ops/op_utils.h"
 
 namespace mindspore::expander::bprop {
 NodePtrList ReturnZeros(BpropIRBuilder *ib) {
@@ -492,24 +491,84 @@ NodePtr MinOrMaxGrad(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &axis, 
   return indicators / num_selected * grad;
 }
 
-NodePtr ArgminOrArgmaxGrad(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &axis, const NodePtr &keep_dims,
+class ArgminOrArgmaxShapeCalc : public ShapeCalcFunctor {
+ public:
+  // cppcheck-suppress unknownMacro
+  DECLARE_SHAPE_CALC("ShapeCalc_ArgminOrArgmax", ArgminOrArgmaxShapeCalc)
+  explicit ArgminOrArgmaxShapeCalc(int64_t axis) : ShapeCalcFunctor("ShapeCalc_ArgminOrArgmax"), axis_(axis) {}
+  ValuePtr ToValue() const override { return MakeValue(axis_); }
+  void FromValue(const ValuePtr &value) override { axis_ = GetValue<int64_t>(value); }
+  ShapeArray Calc(const ShapeArray &inputs) const override {
+    auto indices_expand_rank = inputs.at(0).size();
+    auto x_shape = inputs.at(1);
+    std::vector<int64_t> broad_shape(indices_expand_rank, 1);
+    auto x = LongToSize(axis_ + SizeToLong(indices_expand_rank));
+    auto depth = x_shape[x];
+    broad_shape[x] = depth;
+    return {broad_shape, {depth}};
+  }
+  std::vector<int64_t> Infer(const ShapeArray &inputs, const HashSet<size_t> &) const override {
+    int64_t x_rank = IsDynamicRank(inputs.at(0)) ? -1 : static_cast<int64_t>(inputs.at(0).size());
+    return {x_rank, 1};
+  }
+
+ protected:
+  int64_t axis_{0};
+};
+REG_FUNCTOR("ShapeCalc_ArgminOrArgmax", ArgminOrArgmaxShapeCalc);
+
+NodePtr ArgminOrArgmaxGrad(BpropIRBuilder *ib, const NodePtr &x, const int64_t &axis, const bool &keep_dims,
                            const NodePtr &out, const NodePtr &dout, const bool is_max) {
-  auto keep_dims_value = keep_dims->BuildValue();
-  if (!ops::IsValueKnown(keep_dims_value)) {
-    MS_LOG_EXCEPTION
-      << "For bprop of `ArgminWithValue` or `ArgMaxWithValue` op, keep_dims must currently be a constant";
+  auto x_shape = ib->GetShape(x);
+  int64_t x_axis = axis;
+  if (!IsDynamicRank(x_shape)) {
+    x_axis = CheckRange(axis, SizeToLong(x_shape.size()));
+  } else if (axis < 0) {
+    MS_LOG_EXCEPTION << "For ArgminOrArgmaxGrad, when axis is negative,"
+                     << "input_x is currently not supported as a dynamic rank.";
   }
-  NodePtr dout_value = ib->TupleGetItem(dout, 1);
-  NodePtr indices = ib->TupleGetItem(out, 0);
-  auto keep_dims_bool = GetValue<bool>(keep_dims_value);
-  if (!keep_dims_bool) {
-    indices = ib->Emit("ExpandDims", {indices, axis});
-    dout_value = ib->Emit("ExpandDims", {dout_value, axis});
+  NodePtr dout_expand;
+  NodePtr new_out = out;
+  if (keep_dims) {
+    dout_expand = ib->TupleGetItem(dout, 1);
+    if (is_max) {
+      new_out = ib->Emit("ArgMaxWithValue", {x}, {{"axis", MakeValue(axis)}, {"keep_dims", MakeValue(false)}});
+    } else {
+      new_out = ib->Emit("ArgMinWithValue", {x}, {{"axis", MakeValue(axis)}, {"keep_dims", MakeValue(false)}});
+    }
+  } else {
+    dout_expand = ib->Emit("ExpandDims", {ib->TupleGetItem(dout, 1), ib->Value<int64_t>(x_axis)});
   }
-  NodePtr dx_zeros = ib->ZerosLike(x);
-  constexpr int reduce_value = 0;
-  auto dx = ib->Emit("Scatter", {dx_zeros, axis, indices, dout_value, ib->Value<int64_t>(reduce_value)});
-  return dx;
+  auto type_x = ib->GetDtype(x);
+  auto on_value = ib->Tensor(1, type_x);
+  auto off_value = ib->Tensor(0, type_x);
+  auto out_0 = ib->TupleGetItem(new_out, 0);
+  NodePtr depth = ib->Value<int64_t>(1);
+  if (!x_shape.empty()) {
+    depth = ib->TupleGetItem(ib->Shape(x), LongToSize(x_axis));
+  }
+  if (x_axis >= 0) {
+    auto onehot_axis = x_axis;
+    auto out_shape = ib->GetShape(out_0);
+    if (!IsDynamic(out_shape) && onehot_axis >= SizeToLong(out_shape.size())) {
+      onehot_axis = -1;
+    }
+    auto dx = dout_expand * ib->Emit("OneHot", {out_0, depth, on_value, off_value, ib->Value<int64_t>(onehot_axis)});
+    if (x_shape.empty()) {
+      dx = ib->Emit("Squeeze", {dx});
+    }
+    return dx;
+  } else {
+    auto indices_expand = ib->ExpandDims(out_0, x_axis);
+    auto res = ib->ShapeCalc(std::make_shared<ArgminOrArgmaxShapeCalc>(x_axis), {indices_expand, x});
+    auto broad_shape = res[0];
+    depth = res[1];
+    auto depth_range = ib->Range(ib->TupleGetItem(depth, 0));
+    auto depth_broad = ib->Reshape(depth_range, broad_shape);
+    auto one_hot_bool = ib->Equal(indices_expand, depth_broad);
+    auto one_hot_res = ib->Cast(one_hot_bool, type_x);
+    return dout_expand * one_hot_res;
+  }
 }
 
 TypeId PromoteBinaryDtype(TypeId t1, TypeId t2) {

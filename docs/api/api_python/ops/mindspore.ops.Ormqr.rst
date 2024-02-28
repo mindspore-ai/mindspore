@@ -6,10 +6,10 @@ mindspore.ops.Ormqr
     计算一个普通矩阵与Householder矩阵的乘积。计算维度为(m, n)的矩阵C（由 `other` 给出）和一个矩阵Q的乘积，
     其中Q由Householder反射系数(`x`, `tau`)表示，通常由 :func:`mindspore.ops.geqrf` 计算生成。
 
-    更多细节请参考 :func:`mindspore.ops.ormqr` 。
-
     .. warning::
         这是一个实验性API，后续可能修改或删除。
+
+    更多细节请参考 :func:`mindspore.ops.ormqr` 。
 
     参数：
         - **left** (bool, 可选) - 决定了矩阵乘积运算的顺序。如果 `left` 为 ``True`` ，计算顺序为op(Q) \* `other` ，否则，计算顺序为 `other` \* op(Q)。默认值： ``True`` 。

@@ -2120,33 +2120,6 @@ EvalResultPtr GetEvaluatedValueForBuiltinTypeAttrOrMethod(const AnalysisEnginePt
   return StaticGetterInferred(converted_value, data_conf, out_conf, require_type);
 }
 
-EvalResultPtr TransPropertyToFunc(const AnfNodeConfigPtr &out_conf, py::object property_net_obj,
-                                  std::string item_name) {
-  py::object property_func = py::none();
-  try {
-    property_func = property_net_obj.attr("__class__").attr(py::str(item_name));
-  } catch (const std::exception &e) {
-    MS_LOG(ERROR) << property_net_obj << " has no attribute " << item_name;
-  }
-  py::object property_func_fget = property_func.attr(py::str("fget"));
-  auto inner_fg = parse::ParsePythonCode(property_func_fget);
-  auto eng = out_conf->engine();
-  MS_EXCEPTION_IF_NULL(eng);
-  AddToManager(eng, inner_fg);
-  auto node = out_conf->node();
-  auto cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  FuncGraphPtr func_graph = node->func_graph();
-  MS_EXCEPTION_IF_NULL(func_graph);
-  const auto &inputs = cnode->inputs();
-  std::vector<AnfNodePtr> new_inputs = {NewValueNode(inner_fg)};
-  new_inputs.push_back(inputs[1]);
-  CNodePtr new_cnode = func_graph->NewCNode(new_inputs);
-  MS_LOG(DEBUG) << "new_cnode:" << new_cnode->DebugString();
-  auto fn_conf = eng->MakeConfig(new_cnode, out_conf->context(), out_conf->func_graph());
-  return eng->ForwardConfig(out_conf, fn_conf);
-}
-
 EvalResultPtr GetClassAttrFromPyObject(const py::object &cls_obj, const std::string &cls_name,
                                        const AbstractBasePtrList &args_abs_list, const AnfNodeConfigPtr &out_conf) {
   py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
@@ -2157,11 +2130,8 @@ EvalResultPtr GetClassAttrFromPyObject(const py::object &cls_obj, const std::str
   bool is_property =
     (python_adapter::CallPyModFn(mod, parse::PYTHON_PARSE_CHECK_ATTR_IS_PROPERTY, cls_obj, attr_name)).cast<bool>();
   if (is_property) {
-    ValuePtr item_value = item_arg->BuildValue();
-    MS_EXCEPTION_IF_NULL(item_value);
-    const auto &item_str = item_value->cast_ptr<StringImm>();
-    const std::string &item_name = item_str->value();
-    return TransPropertyToFunc(out_conf, cls_obj, item_name);
+    MS_LOG(INFO) << "The property decorator is not supported in graph mode.\n"
+                    "You can remove the property decorator and call the function as a method.\n";
   }
   py::object ns_obj = python_adapter::CallPyModFn(mod, parse::PYTHON_MOD_GET_MEMBER_NAMESPACE_SYMBOL, cls_obj);
   auto ns = std::make_shared<parse::NameSpace>(parse::RESOLVE_NAMESPACE_NAME_CLASS_MEMBER, ns_obj);

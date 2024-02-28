@@ -44,7 +44,7 @@ MindSpore的ReWrite模块为用户提供了基于自定义规则，对网络的�
     .. py:method:: mindspore.rewrite.Node.create_call_function(function: FunctionType, targets: List[Union[ScopedValue, str]], args: List[ScopedValue] = None, kwargs: Dict[str, ScopedValue] = None)
         :staticmethod:
 
-        通过该接口可以根据一个函数调用创建一个Node实例。
+        通过该接口可以根据一个函数调用创建一个Node实例。 `function` 对象会被保存在网络里，然后通过 `self.` 方法来调用这个函数对象。
 
         参数：
             - **function** (FunctionType) - 被调用的函数定义。
@@ -300,7 +300,7 @@ MindSpore的ReWrite模块为用户提供了基于自定义规则，对网络的�
         如果网络的前向计算过程里调用了以下类型的语句，rewrite会将该语句所对应的内部语句进行解析，并生成对应节点：
 
         - :class:`mindspore.nn.SequentialCell`
-        - 函数调用（不包括Python内置函数和三方库函数）
+        - 类内函数
         - 控制流语句，如 `if` 语句
 
         .. note::
@@ -312,8 +312,10 @@ MindSpore的ReWrite模块为用户提供了基于自定义规则，对网络的�
         当前rewrite模块存在以下语法限制：
 
         - 仅支持类型为 :class:`mindspore.nn.Cell` 的网络作为rewrite模块的输入。
-        - 暂不支持对单行控制流语法（如单行if-else、单行for循环等）进行解析。
+        - 暂不支持对存在多个输出值的赋值语句进行解析。
+        - 暂不支持对循环语句进行解析。
         - 暂不支持对装饰器语法进行解析。
+        - 暂不支持对类变量语法进行解析。如果类变量使用了外部数据，可能导致rewrite后的网络出现数据缺失。
         - 暂不支持对局部类和内嵌类进行解析，即类的定义需要放在最外层。
         - 暂不支持对闭包语法进行解析，即类外函数的定义需要放在最外层。
         - 暂不支持对lambda表达式语法进行解析。

@@ -109,23 +109,28 @@ def get_argmin_vmap_rule(prim, axis_size):
 @vmap_rules_getters.register(P.ArgMinWithValue)
 def get_arg_min_max_with_value_vmap_rule(prim, axis_size):
     """VmapRule for `ArgMaxWithValue` and `ArgMinWithValue` operations."""
+    if isinstance(prim, str):
+        axis = -1
+        keep_dims = False
+    else:
+        axis = prim.axis
+        keep_dims = prim.keep_dims
+
     cum_fun_map = {
         "ArgMaxWithValue": P.ArgMaxWithValue,
         "ArgMinWithValue": P.ArgMinWithValue,
     }
     prim_class = cum_fun_map.get(prim.name)
 
-    def vmap_rule(x_bdim, axis_bdim, keep_dims_bdim):
+    def vmap_rule(x_bdim):
         is_all_none, result = vmap_general_preprocess(prim, x_bdim)
         if is_all_none:
             return result
         var, x_dim = x_bdim
-        axis_data, _ = axis_bdim
-        keep_dims_data, _ = keep_dims_bdim
         x_ndim = ops.rank(var)
-        batch_axis = _get_reduce_batch_axis(axis_data, x_dim, x_ndim)
-        index, out = prim_class(batch_axis, keep_dims_data)(var)
-        out_dim = _get_reduce_out_dim(x_dim, batch_axis, keep_dims_data)
+        batch_axis = _get_reduce_batch_axis(axis, x_dim, x_ndim)
+        index, out = prim_class(batch_axis, keep_dims)(var)
+        out_dim = _get_reduce_out_dim(x_dim, batch_axis, keep_dims)
         return (index, out_dim), (out, out_dim)
 
     return vmap_rule

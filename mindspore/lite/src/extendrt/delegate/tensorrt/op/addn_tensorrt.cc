@@ -17,7 +17,7 @@
 #include "src/extendrt/delegate/tensorrt/op/addn_tensorrt.h"
 #include <numeric>
 #include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
-#include "ops/auto_generate/gen_lite_ops.h"
+#include "ops/addn.h"
 
 namespace mindspore::lite {
 int AddNTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,

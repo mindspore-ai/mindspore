@@ -873,19 +873,9 @@ void DeviceAddressUtils::CreateInputTensorAddress(const DeviceContext *device_co
 
   const auto &format = GetFormatByTensorShape(device_context, tensor->shape());
   auto tensor_size = LongToSize(tensor->data().nbytes());
-  kernel::KernelTensorPtr kernel_tensor;
-  if (device_context->GetDeviceType() == device::DeviceType::kAscend) {
-    // Not transmitting host shape information under Ascend for better performance.
-    kernel_tensor = std::make_shared<kernel::KernelTensor>(
-      nullptr, tensor_size, format, tensor->data_type(), tensor->shape(),
-      device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
-  } else {
-    kernel_tensor = std::make_shared<kernel::KernelTensor>(
-      std::make_shared<abstract::TensorShape>(tensor->shape()), std::make_shared<TensorType>(tensor->Dtype()), nullptr,
-      nullptr, tensor_size, kernel::GetFormatFromEnumToStr(format), tensor->data_type(), tensor->shape(),
-      device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
-  }
-  MS_EXCEPTION_IF_NULL(kernel_tensor);
+  auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
+    nullptr, tensor_size, format, tensor->data_type(), tensor->shape(),
+    device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
   MS_LOG(INFO) << "Create kernel tensor without setting stream id.";
   device::DeviceAddressPtr device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
   MS_EXCEPTION_IF_NULL(device_address);
@@ -908,8 +898,8 @@ void DeviceAddressUtils::MallocForInput(const DeviceContext *device_context, con
     MS_LOG(EXCEPTION) << "Allocate memory failed";
   }
   auto tensor_size = LongToSize(tensor->data().nbytes());
-  if (!device_address->SyncHostToDevice(tensor->shape(), tensor_size, tensor->data_type(), device_address->format(),
-                                        tensor->data_ptr())) {
+  if (!device_address->SyncHostToDevice(tensor->shape(), tensor_size, tensor->data_type(), tensor->data_c(),
+                                        device_address->format())) {
     MS_LOG(EXCEPTION) << "SyncHostToDevice failed";
   }
 }
@@ -958,9 +948,8 @@ device::DeviceAddressPtr DeviceAddressUtils::CreateInputAddress(const DeviceCont
   const auto &tensor_size = LongToSize(tensor->data().nbytes());
   const auto &format = GetFormatByTensorShape(device_context, tensor->shape());
   auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
-    shape, type, nullptr, nullptr, tensor_size, kernel::GetFormatFromEnumToStr(format), tensor->data_type(),
-    tensor->shape(), device_context->device_context_key().device_name_,
-    device_context->device_context_key().device_id_);
+    nullptr, tensor_size, format, tensor->data_type(), tensor->shape(),
+    device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
   MS_LOG(INFO) << "Create kernel tensor without setting stream id.";
   device::DeviceAddressPtr device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
   MS_EXCEPTION_IF_NULL(device_address);
@@ -970,8 +959,8 @@ device::DeviceAddressPtr DeviceAddressUtils::CreateInputAddress(const DeviceCont
   if (!device_context->device_res_manager_->AllocateMemory(device_address.get())) {
     MS_LOG(EXCEPTION) << "Allocate memory failed";
   }
-  if (!device_address->SyncHostToDevice(tensor->shape(), tensor_size, tensor->data_type(),
-                                        kernel::GetFormatFromEnumToStr(format), tensor->data_ptr())) {
+  if (!device_address->SyncHostToDevice(tensor->shape(), tensor_size, tensor->data_type(), tensor->data_c(),
+                                        kernel::GetFormatFromEnumToStr(format))) {
     MS_LOG(EXCEPTION) << "SyncHostToDevice failed";
   }
   MS_LOG(DEBUG) << "Create input tensor device address " << device_address << " for " << index
@@ -1076,44 +1065,16 @@ void DeviceAddressUtils::CreateOutputTensorAddress(DeviceContext *device_context
     auto tensor = outputs[i];
     MS_EXCEPTION_IF_NULL(tensor);
     auto tensor_size = LongToSize(tensor->data().nbytes());
-    const auto &format = GetFormatByTensorShape(device_context, tensor->shape());
-    kernel::KernelTensorPtr kernel_tensor;
-    if (device_context->GetDeviceType() == device::DeviceType::kAscend) {
-      // Not transmitting host shape information under Ascend for better performance.
-      kernel_tensor = std::make_shared<kernel::KernelTensor>(
-        nullptr, tensor_size, format, tensor->data_type(), tensor->shape(),
-        device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
-    } else {
-      kernel_tensor = std::make_shared<kernel::KernelTensor>(
-        std::make_shared<abstract::TensorShape>(tensor->shape()), std::make_shared<TensorType>(tensor->Dtype()),
-        nullptr, nullptr, tensor_size, kernel::GetFormatFromEnumToStr(format), tensor->data_type(), tensor->shape(),
-        device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
-    }
-    MS_EXCEPTION_IF_NULL(kernel_tensor);
+    const auto &device_format = GetFormatByTensorShape(device_context, tensor->shape());
+    auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
+      nullptr, tensor_size, device_format, tensor->data_type(), tensor->shape(),
+      device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
     MS_LOG(INFO) << "Create kernel tensor without setting stream id.";
     device::DeviceAddressPtr device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
     tensor->set_device_address(device_address);
     MS_LOG(DEBUG) << "Create output tensor device address " << device_address << " for " << i
                   << "th input, Shape: " << tensor->shape() << ", Type: " << tensor->data_type();
   }
-}
-
-device::DeviceAddressPtr DeviceAddressUtils::CreateDeviceAddress(DeviceContext *device_context,
-                                                                 const tensor::TensorPtr &tensor,
-                                                                 const ShapeVector &real_shape,
-                                                                 const size_t &stream_id) {
-  MS_EXCEPTION_IF_NULL(device_context);
-  MS_EXCEPTION_IF_NULL(tensor);
-  auto tensor_size = GetTypeByte(TypeIdToType(tensor->data_type())) * SizeOf(real_shape);
-  const auto &device_format = GetFormatByTensorShape(device_context, tensor->shape());
-  auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
-    nullptr, tensor_size, device_format, tensor->data_type(), real_shape,
-    device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
-  kernel_tensor->set_stream_id(stream_id);
-  device::DeviceAddressPtr device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
-  MS_LOG(DEBUG) << "Create tensor device address " << device_address << "Shape: " << tensor->shape()
-                << ", Type: " << tensor->data_type();
-  return device_address;
 }
 
 void DeviceAddressUtils::MallocForOutputs(DeviceContext *device_context,

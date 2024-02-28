@@ -49,7 +49,6 @@ std::vector<AnyTypeKernelActorPtr> AnyTypeGraphScheduler::Build(const GraphCompi
     auto actor_name = graph->ToString() + kAnyTypeKernelActorNameSuffix;
     auto any_type_kernel_actor =
       std::make_shared<AnyTypeKernelActor>(actor_name, graph, device_context, memory_manager_aid, debug_id, nullptr);
-    MS_EXCEPTION_IF_NULL(any_type_kernel_actor);
     any_type_kernel_actor->compile_func_ = graph_compiler_info.compile_func_;
     any_type_kernel_actor->transform_func_ = [this, &graph_compiler_info](const KernelGraphPtr &model_graph,
                                                                           const KernelGraphPtr &real_graph,
@@ -69,6 +68,7 @@ std::vector<AnyTypeKernelActorPtr> AnyTypeGraphScheduler::Build(const GraphCompi
         }
       }
     };
+    MS_EXCEPTION_IF_NULL(any_type_kernel_actor);
     InsertActor(any_type_kernel_actor.get());
     (void)any_type_kernel_actors.emplace_back(any_type_kernel_actor);
   }
@@ -386,8 +386,7 @@ void PrepareDataForValueNode(const AnfNodePtr &node, const DeviceContext *const 
       MS_LOG(EXCEPTION) << "Invalid value:" << value->ToString();
     }
 
-    if (!device_tensor->SyncHostToDevice(tensor->shape(), tensor->Size(), tensor->data_type(), kOpFormat_DEFAULT,
-                                         tensor->data_ptr())) {
+    if (!device_tensor->SyncHostToDevice(tensor->shape(), tensor->Size(), tensor->data_type(), tensor->data_c())) {
       MS_LOG(EXCEPTION) << "Failed to sync data for value node:" << node->DebugString();
     }
     MS_LOG(DEBUG) << "Device address:" << device_tensor << " ptr:" << device_tensor->GetPtr()

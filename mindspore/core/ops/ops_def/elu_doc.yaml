@@ -11,7 +11,7 @@ elu:
         \begin{array}{align}
             \alpha(e^{x}  - 1) & \text{if } x \le 0\\
             x & \text{if } x \gt 0\\
-        \end{array}\right
+        \end{array}\right.
 
     Where :math:`x` is the element of input Tensor `input_x`, :math:`\alpha` is param `alpha`,
     it determines the smoothness of ELU.

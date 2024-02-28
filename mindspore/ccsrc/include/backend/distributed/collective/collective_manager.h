@@ -98,9 +98,6 @@ class BACKEND_EXPORT CollectiveManager {
   // Return collective manager is initialized.
   bool initialized() const { return inited_.load(); }
 
-  // Init Dummy communication lib
-  bool InitializeDummyCommLib();
-
  private:
   CollectiveManager();
 
@@ -143,9 +140,6 @@ class BACKEND_EXPORT CollectiveManager {
 
   // alias of host_comm_lib_instance_ and device_comm_lib_instance_ to avoid condition branch.
   CollectiveCommunicationLib *comm_lib_instance_;
-
-  // Dummy collective communication for single device compile
-  std::shared_ptr<CollectiveCommunicationLib> dummy_comm_lib_instance_;
 
   // The global rank id of this process. Normally this range is 0 to `total process number - 1`.
   uint32_t global_rank_id_;

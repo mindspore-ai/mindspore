@@ -7,14 +7,12 @@ reshape:
 
         Args:
             input (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-            shape (Union[tuple[int], list[int], Tensor[int]]): If `shape` is a tuple or list, its elements should be
-                integers, and only constant value is allowed. i.e., :math:`(y_1, y_2, ..., y_S)`. If `shape` is a Tensor,
-                data type should be int32 or int64, and only one-dimensional tensor is supported.
+            shape (Union[tuple[int], list[int], Tensor[int]]): Constructed by multiple
+                integers, i.e., :math:`(y_1, y_2, ..., y_S)`. Only constant value is allowed.
+                Compatible with support for list and Tensor type inputs, but not recommended for use.
 
         Returns:
-            Tensor, If the given `shape` does not contain -1, the `shape` of tensor is :math:`(y_1, y_2, ..., y_S)`.
-            If the k-th position in the given `shape` is -1, the `shape` of tensor is :math:`(y_1, ..., y_{k-1},
-            \frac{\prod_{i=1}^{R}x_{i}}{y_1\times ...\times y_{k-1}\times y_{k+1}\times...\times y_S} , y_{k+1}, ..., y_S)`
+            Tensor, the shape of tensor is :math:`(y_1, y_2, ..., y_S)`.
 
         Raises:
             ValueError: The given 'shape' contains more than one -1.
@@ -23,7 +21,7 @@ reshape:
                 'shape' is not equal to the product of the input's 'shape',
                 :math:`\prod_{i=1}^{R}x_{i}\ne \prod_{i=1}^{S}y_{i}`, (Namely, it does not match the input's array size).
                 And for scenarios where the given 'shape' contains -1, the product of elements other than -1 of the given
-                `shape` is an aliquant part of the product of the input's 'shape' :math:`\prod_{i=1}^{R}x_{i}`.
+                'shape' cannot be divided by the product of the input's 'shape' :math:`\prod_{i=1}^{R}x_{i}`.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``

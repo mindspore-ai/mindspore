@@ -3297,12 +3297,7 @@ void DfGraphConvertor::ConvertTopK(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto value_ptr = node->input(kIndex2)->cast<ValueNodePtr>();
   if (value_ptr == nullptr) {
-    // input is not const valuenode, cannot convert to int32, throw exception when input k is int64 since cann
-    // has precision problem, can be deleted after cann support int64 for input k
-    if (common::AnfAlgo::GetPrevNodeOutputInferDataType(node, kIndex1) == kNumberTypeInt64) {
-      MS_LOG(EXCEPTION) << "Op TopK(" << node->fullname_with_scope() << ")'s second input k is an int64 mutable "
-                        << "tensor/scalar, which is not supported in ascend, please use int32.";
-    }
+    // input is not const valuenode, return
     return;
   }
   MS_LOG(INFO) << "Convert TopK second input's type from int64 to int32.";

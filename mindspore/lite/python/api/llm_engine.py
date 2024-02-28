@@ -21,9 +21,8 @@ import threading
 from enum import Enum
 from typing import Union, List, Tuple, Dict
 from mindspore_lite._checkparam import check_isinstance
-from mindspore_lite.tensor import Tensor, data_type_cxx_py_map, DataType
+from mindspore_lite.tensor import Tensor
 from mindspore_lite.lib._c_lite_wrapper import LLMEngine_, LLMReq_, LLMRole_, StatusCode, LLMClusterInfo_
-from mindspore_lite.model import set_env
 
 __all__ = ['LLMReq', 'LLMEngineStatus', 'LLMRole', 'LLMEngine']
 
@@ -180,8 +179,8 @@ class LLMClusterInfo:
         remote_cluster_id (int): Cluster id of remote LLMEngine object.
 
     Raises:
-        TypeError: `remote_role` is not a LLMRole.
-        TypeError: `remote_cluster_id` is not an int.
+        TypeError: `role` is not a LLMRole.
+        TypeError: `cluster_id` is not an int.
 
     Examples:
         >>> import mindspore_lite as mslite
@@ -292,13 +291,6 @@ class LLMClusterInfo:
             raise ValueError(f"address port should in range [0,65535], but got {port}")
         if isinstance(ip, str):
             try:
-                if "." not in ip:   # format ("[0-9]+", xxx)
-                    ip = int(ip)
-                    return ip, port
-            except ValueError:
-                raise ValueError(
-                    f"address must be in format of ('xxx.xxx.xxx.xxx', xxx) or (xxx, xxx), but got {address}")
-            try:
                 import socket
                 ip = socket.inet_aton(ip)
                 ip = int.from_bytes(ip, byteorder=sys.byteorder)
@@ -308,35 +300,20 @@ class LLMClusterInfo:
         return ip, port
 
 
-def _handle_llm_status(status, func_name, other_info):
-    """Handle LLM error code"""
-    status_code = status.StatusCode()
-    if status_code == StatusCode.kLiteLLMWaitProcessTimeOut:
-        raise LLMWaitProcessTimeOut(f"{func_name} failed: Waiting for processing timeout, {other_info}")
-    if status_code == StatusCode.kLiteLLMKVCacheNotExist:
-        raise LLMKVCacheNotExist(f"{func_name} failed: KV Cache not exist, {other_info}.")
-    if status_code == StatusCode.kLiteLLMRepeatRequest:
-        raise LLMRepeatRequest(f"{func_name} failed: Repeat request, {other_info}.")
-    if status_code == StatusCode.kLiteLLMRequestAlreadyCompleted:
-        raise LLMRequestAlreadyCompleted(f"{func_name} failed: Request has already completed, {other_info}.")
-    if status_code == StatusCode.kLiteLLMEngineFinalized:
-        raise LLMEngineFinalized(f"{func_name} failed: LLMEngine has finalized, {other_info}.")
-    if status_code == StatusCode.kLiteParamInvalid:
-        raise LLMParamInvalid(f"{func_name} failed: Parameters invalid, {other_info}.")
-    if status_code != StatusCode.kSuccess:
-        raise RuntimeError(f"{func_name} failed, {other_info}.")
-
-
-def _llm_req_str(llm_req):
-    return "{" + f"llm_req: {llm_req.req_id}, prompt_cluster_id: {llm_req.prompt_cluster_id}, " \
-                 f"decoder_cluster_id: {llm_req.decoder_cluster_id}, prefix_id: {llm_req.prefix_id}, " \
-                 f"prompt_length: {llm_req.prompt_length}" + "}"
-
-
-class LLMModel:
+class LLMEngine:
     """
-    The `LLMModel` class defines one model of MindSpore Lite's LLMEngine, used to schedule and execute inference
-    request. LLMModel object should be created from LLMEngine.add_model.
+    The `LLMEngine` class defines a MindSpore Lite's LLMEngine, used to load and manage Large Language Mode,
+    and schedule and execute inference request.
+
+    Args:
+        role (LLMRole): Role of this LLMEngine object.
+        cluster_id (int): Cluster id of this LLMEngine object.
+        batch_mode (str): Controls whether the request batching is "auto" formed by the framework or "manual"ly
+            by the user. Option is "auto" or "manual", default "auto".
+
+    Raises:
+        TypeError: `role` is not a LLMRole.
+        TypeError: `cluster_id` is not an int.
 
     Examples:
         >>> import mindspore_lite as mslite
@@ -344,18 +321,119 @@ class LLMModel:
         >>> llm_engine = mslite.LLMEngine(mslite.LLMRole.Prompt, cluster_id)
         >>> model_paths = [os.path.join(model_dir, f"device_${rank}") for rank in range(4)]
         >>> options = {}
-        >>> llm_model = llm_engine.add_mode(model_paths, options)  # return LLMModel object
-        >>> llm_engine.init()
+        >>> llm_engine.init(model_paths, options)
         >>> llm_req = mslite.LLMReq(llm_engine.cluster_id, mslite.LLMReq.next_req_id(), prompt_length=1024)
         >>> inputs = [mslite.Tensor(np_input) for np_input in np_inputs]
-        >>> outputs = llm_model.predit(llm_req, inputs)
+        >>> outputs = llm_req.predit(inputs)
         >>> for output in outputs:
         >>>    print(f"output is {output.get_data_to_numpy()}")
-        >>> llm_engine.complete(llm_req)
+        >>> llm_req.complete()
     """
-    def __init__(self, model_obj, batch_mode):
-        self.model_ = model_obj  # inited by LLMEngine
+
+    def __init__(self, role: LLMRole, cluster_id: int, batch_mode="auto"):
+        check_isinstance("role", role, LLMRole)
+        check_isinstance("cluster_id", cluster_id, int)
+        check_isinstance("batch_mode", batch_mode, str)
+        if batch_mode != "auto" and batch_mode != "manual":
+            raise RuntimeError(f"batch_mode should be str \"auto\" or \"manual\", but got {batch_mode}")
+        if role != LLMRole.Decoder and batch_mode != "auto":
+            raise RuntimeError(f"batch_mode should be \"auto\" when role is not Decoder, but got {batch_mode}")
+        self.role_ = role
+        self.cluster_id_ = cluster_id
+        self.engine_ = None
         self.batch_mode_ = batch_mode
+
+    @property
+    def cluster_id(self):
+        """Get cluster id set to this LLMEngine object"""
+        return self.cluster_id_
+
+    @property
+    def role(self):
+        """Get LLM role set to this LLMEngine object"""
+        return self.role_
+
+    @property
+    def batch_mode(self):
+        """Get batch mode of this LLMEngine object"""
+        return self.batch_mode_
+
+    def init(self, model_paths: Union[Tuple[str], List[str]], options: Dict[str, str],
+             postprocess_model_path=None):
+        """
+        Init LLMEngine.
+
+        Args:
+            model_paths (Union[Tuple[str], List[str]]): List or tuple of model path.
+            options (Dict[str, str]): Other init options of this LLMEngine object.
+            postprocess_model_path (Union[str, None]): Postprocess model path, default None.
+
+        Raises:
+            TypeError: `model_paths` is not a list and tuple.
+            TypeError: `model_paths` is a list or tuple, but the elements are not str.
+            TypeError: `options` is not a dict.
+            RuntimeError: init LLMEngine failed.
+        """
+        if not isinstance(model_paths, (list, tuple)):
+            raise TypeError(f"model_paths must be tuple/list of str, but got item {type(model_paths)}.")
+        for i, model_path in enumerate(model_paths):
+            if not isinstance(model_path, str):
+                raise TypeError(f"model_paths element must be str, but got {type(model_path)} at index {i}.")
+            if not os.path.exists(model_path):
+                raise RuntimeError(f"Failed to init LLMEngine, model path {model_path} at index {i} does not exist!")
+        check_isinstance("options", options, dict)
+        if postprocess_model_path is not None:
+            if not isinstance(postprocess_model_path, str):
+                raise TypeError(
+                    f"postprocess_model_path must be None or str, but got item {type(postprocess_model_path)}.")
+        else:
+            postprocess_model_path = ""
+
+        self.engine_ = LLMEngine_()
+        role_inner = LLMRole_.Prompt if self.role == LLMRole.Prompt else LLMRole_.Decoder
+        ret = self.engine_.init(model_paths, role_inner, self.cluster_id, options, self.batch_mode,
+                                postprocess_model_path)
+        status_code = ret.StatusCode()
+        if status_code == StatusCode.kLiteParamInvalid:
+            raise LLMParamInvalid("Parameters invalid")
+        if not ret.IsOk():
+            role_str = 'Prompt' if self.role == LLMRole.Prompt else 'Decoder'
+            raise RuntimeError(f"Failed to init LLMEngine, model paths {model_paths}, role {role_str},"
+                               f" cluster id {self.cluster_id}, options {options}")
+
+    def finalize(self):
+        """
+        Finalize LLMEngine.
+        """
+        if not self.engine_:
+            print(f"LLMEngine is not inited or init failed", flush=True)
+            return
+        self.engine_.finalize()
+
+    @staticmethod
+    def _handle_llm_status(status, func_name, other_info):
+        """Handle LLM error code"""
+        status_code = status.StatusCode()
+        if status_code == StatusCode.kLiteLLMWaitProcessTimeOut:
+            raise LLMWaitProcessTimeOut(f"{func_name} failed: Waiting for processing timeout, {other_info}")
+        if status_code == StatusCode.kLiteLLMKVCacheNotExist:
+            raise LLMKVCacheNotExist(f"{func_name} failed: KV Cache not exist, {other_info}.")
+        if status_code == StatusCode.kLiteLLMRepeatRequest:
+            raise LLMRepeatRequest(f"{func_name} failed: Repeat request, {other_info}.")
+        if status_code == StatusCode.kLiteLLMRequestAlreadyCompleted:
+            raise LLMRequestAlreadyCompleted(f"{func_name} failed: Request has already completed, {other_info}.")
+        if status_code == StatusCode.kLiteLLMEngineFinalized:
+            raise LLMEngineFinalized(f"{func_name} failed: LLMEngine has finalized, {other_info}.")
+        if status_code == StatusCode.kLiteParamInvalid:
+            raise LLMParamInvalid(f"{func_name} failed: Parameters invalid, {other_info}.")
+        if status_code != StatusCode.kSuccess:
+            raise RuntimeError(f"{func_name} failed, {other_info}.")
+
+    @staticmethod
+    def _llm_req_str(llm_req):
+        return "{" + f"llm_req: {llm_req.req_id}, prompt_cluster_id: {llm_req.prompt_cluster_id}, " \
+                     f"decoder_cluster_id: {llm_req.decoder_cluster_id}, prefix_id: {llm_req.prefix_id}, " \
+                     f"prompt_length: {llm_req.prompt_length}" + "}"
 
     def predict(self, llm_req: Union[LLMReq, List[LLMReq], Tuple[LLMReq]], inputs: Union[Tuple[Tensor], List[Tensor]]):
         """
@@ -383,13 +461,13 @@ class LLMModel:
             LLMEngineFinalized: LLMEngine has finalized.
             LLMParamInvalid: Parameters invalid.
         """
-        if not self.model_:
+        if not self.engine_:
             raise RuntimeError(f"LLMEngine is not inited or init failed")
         if not isinstance(inputs, (tuple, list)):
             raise TypeError(f"inputs must be list/tuple of Tensor, but got {type(inputs)}.")
         if not isinstance(llm_req, (list, tuple, LLMReq)):
             raise TypeError(f"llm_req must be instance of LLMReq or list/tuple of LLMReq, but got {type(llm_req)}.")
-        if self.batch_mode_ == "manual":
+        if self.batch_mode == "manual":
             if not isinstance(llm_req, (list, tuple)):
                 raise TypeError(f"llm_req must be list/tuple of LLMReq when batch_mode is \"manual\","
                                 f" but got {type(llm_req)}.")
@@ -407,25 +485,40 @@ class LLMModel:
                 raise TypeError(f"inputs element must be Tensor, but got {type(element)} at index {i}.")
             # pylint: disable=protected-access
             _inputs.append(element._tensor)
-        # pylint: disable=protected-access
-        if self.batch_mode_ == "manual":
+        if self.batch_mode == "manual":
             llm_req_list = [item.llm_request_ for item in llm_req]
-            outputs, status = self.model_.predict_batch(llm_req_list, _inputs)
+            outputs, status = self.engine_.predict_batch(llm_req_list, _inputs)
         else:
-            outputs, status = self.model_.predict(llm_req.llm_request_, _inputs)
+            outputs, status = self.engine_.predict(llm_req.llm_request_, _inputs)
 
         if isinstance(llm_req, LLMReq):
-            req_infos = _llm_req_str(llm_req)
+            req_infos = LLMEngine._llm_req_str(llm_req)
         else:
-            req_infos = [_llm_req_str(llm) for llm in llm_req]
+            req_infos = [LLMEngine._llm_req_str(llm) for llm in llm_req]
 
         input_infos = [(item.shape, item.dtype) for item in inputs]
         info = f"llm_req {req_infos}, inputs {input_infos}"
-        _handle_llm_status(status, "predict", info)
+        LLMEngine._handle_llm_status(status, "predict", info)
         if not outputs:
             raise RuntimeError(f"predict failed, {info}.")
         predict_outputs = [Tensor(output) for output in outputs]
         return predict_outputs
+
+    def complete_request(self, llm_req: LLMReq):
+        """
+        Complete inference request.
+
+        Args:
+            llm_req (LLMReq): Request of LLMEngine.
+
+        Raises:
+            TypeError: `llm_req` is not a LLMReq.
+            RuntimeError: this LLMEngine object has not been inited.
+        """
+        if not self.engine_:
+            raise RuntimeError(f"LLMEngine is not inited or init failed")
+        check_isinstance("llm_req", llm_req, LLMReq)
+        self.engine_.complete_request(llm_req.llm_request_)
 
     def pull_kv(self, llm_req: LLMReq):
         """
@@ -444,22 +537,19 @@ class LLMModel:
                 by calling method LLMEngine.complete_request.
             LLMParamInvalid: Parameters invalid.
         """
-        if not self.model_:
+        if not self.engine_:
             raise RuntimeError(f"LLMEngine is not inited or init failed")
-        if self.batch_mode_ != "manual":
+        if self.batch_mode != "manual":
             raise RuntimeError(f"LLMEngine.pull_kv is only support when batch_mode is \"manual\"")
         check_isinstance("llm_req", llm_req, LLMReq)
-        # pylint: disable=protected-access
-        status = self.model_.pull_kv(llm_req.llm_request_)
-        _handle_llm_status(status, "pull_kv", "llm_req " + _llm_req_str(llm_req))
+        status = self.engine_.pull_kv(llm_req.llm_request_)
+        LLMEngine._handle_llm_status(status, "pull_kv", "llm_req " + LLMEngine._llm_req_str(llm_req))
 
-    def merge_kv(self, llm_req: LLMReq, batch_index: int, batch_id: int = 0):
+    def merge_kv(self, llm_req: LLMReq, batch_index: int):
         """
         For Decoder LLMEngine, merge KVCache of LLMReq specified by `llm_req.req_id` into `batch_index` slot.
         Args:
             llm_req (LLMReq): Request of LLMEngine.
-            batch_index (int): Request batch index.
-            batch_id (int): Request pipline index for ping pong pipeline.
 
         Raises:
             TypeError: `llm_req` is not a LLMReq.
@@ -467,15 +557,29 @@ class LLMModel:
             RuntimeError: Failed to merge KVCache.
             LLMParamInvalid: Parameters invalid.
         """
-        if not self.model_:
+        if not self.engine_:
             raise RuntimeError(f"LLMEngine is not inited or init failed")
-        if self.batch_mode_ != "manual":
+        if self.batch_mode != "manual":
             raise RuntimeError(f"LLMEngine.pull_kv is only support when batch_mode is \"manual\"")
         check_isinstance("llm_req", llm_req, LLMReq)
         check_isinstance("batch_index", batch_index, int)
-        # pylint: disable=protected-access
-        status = self.model_.merge_kv(llm_req.llm_request_, batch_index, batch_id)
-        _handle_llm_status(status, "merge_kv", "llm_req " + _llm_req_str(llm_req))
+        status = self.engine_.merge_kv(llm_req.llm_request_, batch_index)
+        LLMEngine._handle_llm_status(status, "merge_kv", "llm_req " + LLMEngine._llm_req_str(llm_req))
+
+    def fetch_status(self):
+        """
+        Get LLMEngine status.
+
+        Returns:
+            LLMEngineStatus, LLMEngine status.
+
+        Raises:
+            RuntimeError: this LLMEngine object has not been inited.
+        """
+        if not self.engine_:
+            raise RuntimeError(f"LLMEngine is not inited or init failed")
+        status = self.engine_.fetch_status()
+        return LLMEngineStatus(status)
 
     def preload_prompt_prefix(self, llm_req: LLMReq, inputs: Union[Tuple[Tensor], List[Tensor]]):
         """
@@ -493,7 +597,7 @@ class LLMModel:
             RuntimeError: this LLMEngine object has not been inited.
             LLMParamInvalid: Parameters invalid.
         """
-        if not self.model_:
+        if not self.engine_:
             raise RuntimeError(f"LLMEngine is not inited or init failed")
         if not isinstance(inputs, (tuple, list)):
             raise TypeError(f"inputs must be list/tuple of Tensor, but got {type(inputs)}.")
@@ -504,9 +608,8 @@ class LLMModel:
                 raise TypeError(f"inputs element must be Tensor, but got {type(element)} at index {i}.")
             # pylint: disable=protected-access
             _inputs.append(element._tensor)
-        # pylint: disable=protected-access
-        ret = self.model_.preload_prompt_prefix(llm_req.llm_request_, _inputs)
-        _handle_llm_status(ret, "preload_prompt_prefix", "llm_req " + _llm_req_str(llm_req))
+        ret = self.engine_.preload_prompt_prefix(llm_req.llm_request_, _inputs)
+        LLMEngine._handle_llm_status(ret, "preload_prompt_prefix", "llm_req " + LLMEngine._llm_req_str(llm_req))
 
     def release_prompt_prefix(self, llm_req: LLMReq):
         """
@@ -520,199 +623,11 @@ class LLMModel:
             RuntimeError: this LLMEngine object has not been inited.
             LLMParamInvalid: Parameters invalid.
         """
-        if not self.model_:
+        if not self.engine_:
             raise RuntimeError(f"LLMEngine is not inited or init failed")
         check_isinstance("llm_req", llm_req, LLMReq)
-        # pylint: disable=protected-access
-        ret = self.model_.release_prompt_prefix(llm_req.llm_request_)
-        _handle_llm_status(ret, "release_prompt_prefix", "llm_req " + _llm_req_str(llm_req))
-
-    @property
-    def input_infos(self):
-        """Get input infos of this LLMModel. return format is (input0_info, input1_info), and every input_info is a
-        dict likes {"name": "input_name", "shape": (xx,xx,xx), "dtype": mindspore_lite.DataType}
-        """
-        input_infos = self.model_.get_input_infos()
-        input_infos_ret = []
-        for item in input_infos:
-            if item.dtype in data_type_cxx_py_map:
-                dtype = data_type_cxx_py_map.get(item.dtype)
-            else:
-                dtype = DataType.UNKNOWN
-            input_infos_ret.append({"name": item.name, "shape": item.shape, "dtype": dtype})
-        return tuple(input_infos_ret)
-
-
-class LLMEngine:
-    """
-    The `LLMEngine` class defines a MindSpore Lite's LLMEngine, used to load and manage Large Language Mode,
-    and schedule and execute inference request.
-
-    Args:
-        role (LLMRole): Role of this LLMEngine object.
-        cluster_id (int): Cluster id of this LLMEngine object.
-        batch_mode (str): Controls whether the request batching is "auto" formed by the framework or "manual"ly
-            by the user. Option is "auto" or "manual", default "auto".
-
-    Raises:
-        TypeError: `role` is not a LLMRole.
-        TypeError: `cluster_id` is not an int.
-
-    Examples:
-        >>> import mindspore_lite as mslite
-        >>> cluster_id = 1
-        >>> llm_engine = mslite.LLMEngine(mslite.LLMRole.Prompt, cluster_id)
-        >>> model_paths = [os.path.join(model_dir, f"device_${rank}") for rank in range(4)]
-        >>> options = {}
-        >>> llm_model = llm_engine.add_mode(model_paths, options)  # return LLMModel object
-        >>> llm_engine.init()
-        >>> llm_req = mslite.LLMReq(llm_engine.cluster_id, mslite.LLMReq.next_req_id(), prompt_length=1024)
-        >>> inputs = [mslite.Tensor(np_input) for np_input in np_inputs]
-        >>> outputs = llm_model.predit(llm_req, inputs)
-        >>> for output in outputs:
-        >>>    print(f"output is {output.get_data_to_numpy()}")
-        >>> llm_engine.complete(llm_req)
-    """
-
-    def __init__(self, role: LLMRole, cluster_id: int, batch_mode="auto"):
-        check_isinstance("role", role, LLMRole)
-        check_isinstance("cluster_id", cluster_id, int)
-        check_isinstance("batch_mode", batch_mode, str)
-        if batch_mode != "auto" and batch_mode != "manual":
-            raise RuntimeError(f"batch_mode should be str \"auto\" or \"manual\", but got {batch_mode}")
-        self.role_ = role
-        self.cluster_id_ = cluster_id
-        self.batch_mode_ = batch_mode
-        self.models_ = []
-        self.inited_ = False
-        role_inner = LLMRole_.Prompt if self.role == LLMRole.Prompt else LLMRole_.Decoder
-        self.engine_ = LLMEngine_(role_inner, self.cluster_id, self.batch_mode)
-
-    @property
-    def cluster_id(self):
-        """Get cluster id set to this LLMEngine object"""
-        return self.cluster_id_
-
-    @property
-    def role(self):
-        """Get LLM role set to this LLMEngine object"""
-        return self.role_
-
-    @property
-    def batch_mode(self):
-        """Get batch mode of this LLMEngine object"""
-        return self.batch_mode_
-
-    def add_model(self, model_paths: Union[Tuple[str], List[str]], options: Dict[str, str],
-                  postprocess_model_path=None) -> LLMModel:
-        """
-        Add model to LLMEngine.
-
-        Args:
-            model_paths (Union[Tuple[str], List[str]]): List or tuple of model path.
-            options (Dict[str, str]): Other init options of this LLMEngine object.
-            postprocess_model_path (Union[str, None]): Postprocess model path, default None.
-
-        Raises:
-            TypeError: `model_paths` is not a list and tuple.
-            TypeError: `model_paths` is a list or tuple, but the elements are not str.
-            TypeError: `options` is not a dict.
-            RuntimeError: add model failed.
-        """
-        if self.inited_:
-            raise RuntimeError(f"Cannot add model for LLMEngine: LLMEngine has been inited")
-        if not isinstance(model_paths, (list, tuple)):
-            raise TypeError(f"model_paths must be tuple/list of str, but got item {type(model_paths)}.")
-        for i, model_path in enumerate(model_paths):
-            if not isinstance(model_path, str):
-                raise TypeError(f"model_paths element must be str, but got {type(model_path)} at index {i}.")
-            if not os.path.exists(model_path):
-                raise RuntimeError(f"Failed to init LLMEngine, model path {model_path} at index {i} does not exist!")
-        check_isinstance("options", options, dict)
-        if postprocess_model_path is not None:
-            if not isinstance(postprocess_model_path, str):
-                raise TypeError(
-                    f"postprocess_model_path must be None or str, but got item {type(postprocess_model_path)}.")
-        else:
-            postprocess_model_path = ""
-
-        ret, llm_model_inner = self.engine_.add_model(model_paths, options, postprocess_model_path)
-        status_code = ret.StatusCode()
-        if status_code == StatusCode.kLiteParamInvalid:
-            raise LLMParamInvalid("Parameters invalid")
-        if not ret.IsOk():
-            role_str = 'Prompt' if self.role == LLMRole.Prompt else 'Decoder'
-            raise RuntimeError(
-                f"Failed to add_model, model paths {model_paths}, options {options}, postprocess path"
-                f" {postprocess_model_path}, role {role_str}, cluster id {self.cluster_id}")
-        llm_model = LLMModel(llm_model_inner, self.batch_mode_)
-        self.models_.append(llm_model)
-        return llm_model
-
-    @set_env
-    def init(self, options: Dict[str, str]):
-        """
-        Init LLMEngine.
-
-        Args:
-            options (Dict[str, str]): init options of this LLMEngine object.
-
-        Raises:
-            TypeError: `options` is not a dict.
-            RuntimeError: init LLMEngine failed.
-        """
-        check_isinstance("options", options, dict)
-        if self.inited_:
-            raise RuntimeError(f"LLMEngine has been inited")
-        ret = self.engine_.init(options)
-        status_code = ret.StatusCode()
-        if status_code == StatusCode.kLiteParamInvalid:
-            raise LLMParamInvalid("Parameters invalid")
-        if not ret.IsOk():
-            role_str = 'Prompt' if self.role == LLMRole.Prompt else 'Decoder'
-            raise RuntimeError(f"Failed to init LLMEngine, role {role_str}, cluster id {self.cluster_id},"
-                               f" options {options}")
-        self.inited_ = True
-
-    def complete_request(self, llm_req: LLMReq):
-        """
-        Complete inference request.
-
-        Args:
-            llm_req (LLMReq): Request of LLMEngine.
-
-        Raises:
-            TypeError: `llm_req` is not a LLMReq.
-            RuntimeError: this LLMEngine object has not been inited.
-        """
-        if not self.inited_:
-            raise RuntimeError(f"LLMEngine is not inited or init failed")
-        check_isinstance("llm_req", llm_req, LLMReq)
-        self.engine_.complete_request(llm_req.llm_request_)
-
-    def finalize(self):
-        """
-        Finalize LLMEngine.
-        """
-        if not self.inited_:
-            print(f"LLMEngine is not inited or init failed", flush=True)
-            return
-        self.engine_.finalize()
-
-    def fetch_status(self):
-        """
-        Get LLMEngine status.
-
-        Returns:
-            LLMEngineStatus, LLMEngine status.
-
-        Raises:
-            RuntimeError: this LLMEngine object has not been inited.
-        """
-        if not self.inited_:
-            raise RuntimeError(f"LLMEngine is not inited or init failed")
-        status = self.engine_.fetch_status()
-        return LLMEngineStatus(status)
+        ret = self.engine_.release_prompt_prefix(llm_req.llm_request_)
+        LLMEngine._handle_llm_status(ret, "release_prompt_prefix", "llm_req " + LLMEngine._llm_req_str(llm_req))
 
     def link_clusters(self, clusters: Union[List[LLMClusterInfo], Tuple[LLMClusterInfo]], timeout=-1):
         """
@@ -748,7 +663,7 @@ class LLMEngine:
             >>>        if not ret_item.IsOk():
             >>>            # do something
         """
-        if not self.inited_:
+        if not self.engine_:
             raise RuntimeError(f"LLMEngine is not inited or init failed")
         if not isinstance(clusters, (tuple, list)):
             raise TypeError(f"clusters must be list/tuple of LLMClusterInfo, but got {type(clusters)}.")
@@ -798,7 +713,7 @@ class LLMEngine:
             >>>        if not ret_item.IsOk():
             >>>            # do something
         """
-        if not self.inited_:
+        if not self.engine_:
             raise RuntimeError(f"LLMEngine is not inited or init failed")
         if not isinstance(clusters, (tuple, list)):
             raise TypeError(f"clusters must be list/tuple of LLMClusterInfo, but got {type(clusters)}.")

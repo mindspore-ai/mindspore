@@ -57,7 +57,6 @@ set(MSLIB_INFER_SRC
     ${CMAKE_CURRENT_SOURCE_DIR}/model_pool/model_parallel_runner_impl.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/model_pool/resource_manager.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/llm_engine/llm_engine.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/llm_engine/llm_engine_impl.cc
     ${API_MS_INFER_SRC}
     ${API_ACL_SRC}
     ${API_OPS_SRC}

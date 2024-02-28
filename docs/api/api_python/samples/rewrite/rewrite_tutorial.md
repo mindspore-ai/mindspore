@@ -4,6 +4,11 @@
 
 此指南展示了[mindspore.rewrite](https://mindspore.cn/docs/zh-CN/master/api_python/mindspore.rewrite.html)模块中API的各种用法。
 
+ReWrite完整示例请参考
+ [rewrite_example.py](https://gitee.com/mindspore/mindspore/blob/master/docs/api/api_python/rewrite_example.py) 。
+该样例代码的主要功能包括：怎么通过网络创建SymbolTree，并且对SymbolTree中的节点进行插入、删除、替换等操作，
+其中还包含了对子网络的修改和通过模式匹配进行节点替换。
+
 ## 功能介绍
 
 ReWrite模块使用SymbolTree记录一个网络的前向计算过程，其中计算过程的每条代码语句会被展开，并以节点的形式存储在SymbolTree中。

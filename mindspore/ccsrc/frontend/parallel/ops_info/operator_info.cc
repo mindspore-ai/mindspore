@@ -977,7 +977,7 @@ Status OperatorInfo::InitForCostModelWithAutoRepeatCalc(const StrategyPtr &in_st
       MS_LOG(ERROR) << name_ << ": The output strategy is invalid";
       return FAILED;
     }
-    set_out_strategy(out_strategy);
+    out_strategy_ = out_strategy;
 
     if (InferDevMatrixShape() != SUCCESS) {
       MS_LOG(ERROR) << name_ << ": InferDevMatrixShape failed.";

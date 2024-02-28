@@ -9,7 +9,7 @@ mindspore.Tensor.stride
         - **dim** (int) - 指定的维度。
 
     返回：
-        int，返回在指定维度下，从一个元素调到下一个元素所必需的步长。
+        Int，返回在指定维度下，从一个元素调到下一个元素所必需的步长。
 
     异常：
         - **TypeError** - `dim` 不是int。

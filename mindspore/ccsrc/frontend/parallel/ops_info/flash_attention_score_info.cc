@@ -143,7 +143,7 @@ void SetGenMaskShape(const CNodePtr &cnode, const Shape &input_slice_shape) {
   }
   ValuePtr new_shape = MakeValue(input_slice_shape);
   AnfNodePtr val = NewValueNode(new_shape);
-  manager->SetEdge(dropout_gen_mask_cnode, kIndex1, val);
+  dropout_gen_mask_cnode->set_input(kIndex1, val);
 }
 }  // namespace
 
@@ -477,8 +477,7 @@ void FlashAttentionScoreInfo::ReplaceNodeInputOrAttrs() {
     auto clone_prim = prim->Clone();
     MS_EXCEPTION_IF_NULL(clone_prim);
     clone_prim->set_attr(kAttrHeadNum, MakeValue(head_num_ / n1_split_num_));
-    auto manager = cnode->func_graph()->manager();
-    manager->SetEdge(cnode, 0, NewValueNode(clone_prim)->cast<AnfNodePtr>());
+    cnode->set_input(0, NewValueNode(clone_prim)->cast<AnfNodePtr>());
 
     // If DropoutGenMask -> Reshape -> FlashAttentionScore, replace its.
     auto reshape_node = cnode->input(ops::kFlashAttentionScoreInputDropMaskIndex + 1);
@@ -491,7 +490,7 @@ void FlashAttentionScoreInfo::ReplaceNodeInputOrAttrs() {
     Shape input_slice_shape = inputs_tensor_info_[ops::kFlashAttentionScoreInputDropMaskIndex].slice_shape();
     ValuePtr new_shape = MakeValue(input_slice_shape);
     AnfNodePtr val = NewValueNode(new_shape);
-    manager->SetEdge(reshape_cnode, kIndex2, val);
+    reshape_cnode->set_input(kIndex2, val);
 
     std::vector<Operator> replace_op = GetDropoutGenMaskReplaceOp(reshape_cnode);
     if (replace_op.empty()) {

@@ -13,7 +13,7 @@
     对于多维矩阵，计算每行中最大的 `k` 个元素（沿最后一个维度的相应向量），因此：
 
     .. math::
-        values.shape = indices.shape = input.shape[:-1] + [k]
+        values.shape = indices.shape = input.shape[:-1] + [k].
 
     如果两个比较的元素相同，则优先返回索引值较小的元素。
 

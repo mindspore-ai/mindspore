@@ -798,7 +798,7 @@ class LSTM(_RNNBase):
         input_size (int): Number of features of input.
         hidden_size (int):  Number of features of hidden layer.
         num_layers (int): Number of layers of stacked LSTM . Default: ``1`` .
-        has_bias (bool): Whether the cell has bias :math:`b_{ih}` and :math:`b_{fh}`. Default: ``True`` .
+        has_bias (bool): Whether the cell has bias :math:`b_{ih}` and :math:`b_{hh}`. Default: ``True`` .
         batch_first (bool): Specifies whether the first dimension of input `x` is batch_size. Default: ``False`` .
         dropout (float, int): If not 0, append `Dropout` layer on the outputs of each
             LSTM layer except the last layer. Default ``0`` . The range of dropout is [0.0, 1.0).

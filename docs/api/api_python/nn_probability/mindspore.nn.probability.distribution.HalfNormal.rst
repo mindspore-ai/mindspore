@@ -7,7 +7,7 @@ mindspore.nn.probability.distribution.HalfNormal
     连续随机分布，取值范围为 :math:`[\mu, \inf)` ，概率密度函数为
 
     .. math:: 
-        f(x, \mu, \sigma) = 1 / \sigma\sqrt{2\pi} \exp(-(x - \mu)^2 / 2\sigma^2).
+        f(x; \mu, \sigma) = 1 / \sigma\sqrt{2\pi} \exp(-(x - \mu)^2 / 2\sigma^2).
 
     其中 :math:`\mu, \sigma` 为分别为半正态分布的期望与标准差。
 

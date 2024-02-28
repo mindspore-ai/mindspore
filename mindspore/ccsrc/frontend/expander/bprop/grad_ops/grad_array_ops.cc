@@ -26,7 +26,6 @@
 #include "include/common/utils/utils.h"
 #include "ir/functor.h"
 #include "utils/check_convert_utils.h"
-#include "utils/ms_context.h"
 
 namespace mindspore::expander::bprop {
 namespace {
@@ -1908,92 +1907,84 @@ REG_BPROP_BUILDER("ExtractVolumePatches").SetUnusedInputs({i0, i1}).SetBody(BODY
 });
 
 REG_BPROP_BUILDER("AffineGrid").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
-  auto device_target = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-  if (device_target == "GPU") {
-    auto align_corners = GetValue<bool>(ib->GetAttr("align_corners"));
-    auto output_size = GetIntList(ib->GetInput(kIndex1));
-    auto dout = ib->GetInput(kIndex3);
-    auto start = ib->Tensor(-1, kFloat32);
-    auto stop = ib->Tensor(1, kFloat32);
-    auto zero = ib->Tensor(0, kFloat32);
-    constexpr int64_t c0 = 0;
-    constexpr int64_t c1 = 1;
-    constexpr int64_t c2 = 2;
-    constexpr int64_t c3 = 3;
-    constexpr int64_t c4 = 4;
-    ShapeVector perm1{c1, c0};
-    ShapeVector perm2{c0, c2, c1};
-    if (output_size.size() == kDim5) {
-      const auto n_value = output_size[kIndex0];
-      const auto d_value = output_size[kIndex2];
-      const auto h_value = output_size[kIndex3];
-      const auto w_value = output_size[kIndex4];
-      auto vecx = (w_value != 1) ? ib->LinSpace(start, stop, ib->Value(w_value)) : zero;
-      auto vecy = (h_value != 1) ? ib->LinSpace(start, stop, ib->Value(h_value)) : zero;
-      auto vecz = (d_value != 1) ? ib->LinSpace(start, stop, ib->Value(d_value)) : zero;
-      if (!align_corners) {
-        vecx = (vecx * ib->Tensor(w_value - 1, kFloat32)) / ib->Tensor(w_value, kFloat32);
-        vecy = (vecy * ib->Tensor(h_value - 1, kFloat32)) / ib->Tensor(h_value, kFloat32);
-        vecz = (vecz * ib->Tensor(d_value - 1, kFloat32)) / ib->Tensor(d_value, kFloat32);
-      }
-      auto out = (h_value * d_value != 1) ? ib->Tile(vecx, {h_value * d_value, 1}) : vecx;
-      auto one = ib->Reshape(out, {h_value * w_value * d_value, 1});
-      out = (w_value == 1) ? ib->ExpandDims(vecy, 0) : ib->Tile(vecy, {w_value, 1});
-      out = ib->Transpose(out, perm1);
-      if (d_value != 1) {
-        out = ib->Tile(out, {d_value, 1});
-      }
-      auto two = ib->Reshape(out, {h_value * w_value * d_value, 1});
-      out = (w_value * h_value != 1) ? ib->Tile(vecz, {w_value * h_value, 1}) : ib->ExpandDims(vecz, 0);
-      out = ib->Transpose(out, perm1);
-      auto tre = ib->Reshape(out, {h_value * w_value * d_value, 1});
-      auto fou = ib->OnesLike(tre);
-      auto output = ib->Concat({one, two, tre, fou}, 1);
-      output = ib->Transpose(output, perm1);
-      if (n_value != 1) {
-        output = ib->Tile(output, {n_value, 1});
-      }
-      output = ib->Reshape(output, {n_value, c4, h_value * w_value * d_value});
-      dout = ib->Reshape(dout, {n_value, d_value * h_value * w_value, c3});
-      dout = ib->Cast(dout, kFloat32);
-      auto dtheta = ib->BatchMatMul(output, dout);
-      dtheta = ib->Transpose(dtheta, perm2);
-      return {dtheta, tre};
-    } else if (output_size.size() == kDim4) {
-      auto x_shape = ib->GetShape(dout);
-      const auto n_value = x_shape[kIndex0];
-      const auto h_value = x_shape[kIndex1];
-      const auto w_value = x_shape[kIndex2];
-      auto vecx = (w_value != 1) ? ib->LinSpace(start, stop, ib->Value(w_value)) : zero;
-      auto vecy = (h_value != 1) ? ib->LinSpace(start, stop, ib->Value(h_value)) : zero;
-      if (!align_corners) {
-        vecx = (vecx * ib->Tensor(w_value - 1, kFloat32)) / ib->Tensor(w_value, kFloat32);
-        vecy = (vecy * ib->Tensor(h_value - 1, kFloat32)) / ib->Tensor(h_value, kFloat32);
-      }
-      auto out = (h_value != 1) ? ib->Tile(vecx, {h_value, 1}) : vecx;
-      auto one = ib->Reshape(out, {h_value * w_value, 1});
-      out = (w_value == 1) ? ib->ExpandDims(vecy, 0) : ib->Tile(vecy, {w_value, 1});
-      out = ib->Transpose(out, perm1);
-      auto two = ib->Reshape(out, {h_value * w_value, 1});
-      auto tre = ib->OnesLike(two);
-      auto output = ib->Concat({one, two, tre}, 1);
-      output = ib->Transpose(output, perm1);
-      output = ib->Tile(output, {n_value, 1});
-      output = ib->Reshape(output, {n_value, c3, h_value * w_value});
-      dout = ib->Reshape(dout, {n_value, h_value * w_value, c2});
-      dout = ib->Cast(dout, kFloat32);
-      auto dtheta = ib->BatchMatMul(output, dout);
-      dtheta = ib->Transpose(dtheta, perm2);
-      return {dtheta, tre};
+  auto align_corners = GetValue<bool>(ib->GetAttr("align_corners"));
+  auto output_size = GetIntList(ib->GetInput(kIndex1));
+  auto dout = ib->GetInput(kIndex3);
+  auto start = ib->Tensor(-1, kFloat32);
+  auto stop = ib->Tensor(1, kFloat32);
+  auto zero = ib->Tensor(0, kFloat32);
+  constexpr int64_t c0 = 0;
+  constexpr int64_t c1 = 1;
+  constexpr int64_t c2 = 2;
+  constexpr int64_t c3 = 3;
+  constexpr int64_t c4 = 4;
+  ShapeVector perm1{c1, c0};
+  ShapeVector perm2{c0, c2, c1};
+  if (output_size.size() == kDim5) {
+    const auto n_value = output_size[kIndex0];
+    const auto d_value = output_size[kIndex2];
+    const auto h_value = output_size[kIndex3];
+    const auto w_value = output_size[kIndex4];
+    auto vecx = (w_value != 1) ? ib->LinSpace(start, stop, ib->Value(w_value)) : zero;
+    auto vecy = (h_value != 1) ? ib->LinSpace(start, stop, ib->Value(h_value)) : zero;
+    auto vecz = (d_value != 1) ? ib->LinSpace(start, stop, ib->Value(d_value)) : zero;
+    if (!align_corners) {
+      vecx = (vecx * ib->Tensor(w_value - 1, kFloat32)) / ib->Tensor(w_value, kFloat32);
+      vecy = (vecy * ib->Tensor(h_value - 1, kFloat32)) / ib->Tensor(h_value, kFloat32);
+      vecz = (vecz * ib->Tensor(d_value - 1, kFloat32)) / ib->Tensor(d_value, kFloat32);
     }
-    MS_LOG(EXCEPTION) << "For op[" << ib->name() << "], the length of output_size should be 4 or 5, but got "
-                      << output_size.size();
-  } else {
-    auto output_size = ib->GetInput(kIndex1);
-    auto dout = ib->GetInput(kIndex3);
-    auto dx = ib->Emit("AffineGridGrad", {dout, output_size}, {{"align_corners", ib->GetAttr("align_corners")}});
-    return {dx, ib->OutZeros(output_size)};
+    auto out = (h_value * d_value != 1) ? ib->Tile(vecx, {h_value * d_value, 1}) : vecx;
+    auto one = ib->Reshape(out, {h_value * w_value * d_value, 1});
+    out = (w_value == 1) ? ib->ExpandDims(vecy, 0) : ib->Tile(vecy, {w_value, 1});
+    out = ib->Transpose(out, perm1);
+    if (d_value != 1) {
+      out = ib->Tile(out, {d_value, 1});
+    }
+    auto two = ib->Reshape(out, {h_value * w_value * d_value, 1});
+    out = (w_value * h_value != 1) ? ib->Tile(vecz, {w_value * h_value, 1}) : ib->ExpandDims(vecz, 0);
+    out = ib->Transpose(out, perm1);
+    auto tre = ib->Reshape(out, {h_value * w_value * d_value, 1});
+    auto fou = ib->OnesLike(tre);
+    auto output = ib->Concat({one, two, tre, fou}, 1);
+    output = ib->Transpose(output, perm1);
+    if (n_value != 1) {
+      output = ib->Tile(output, {n_value, 1});
+    }
+    output = ib->Reshape(output, {n_value, c4, h_value * w_value * d_value});
+    dout = ib->Reshape(dout, {n_value, d_value * h_value * w_value, c3});
+    dout = ib->Cast(dout, kFloat32);
+    auto dtheta = ib->BatchMatMul(output, dout);
+    dtheta = ib->Transpose(dtheta, perm2);
+    return {dtheta, tre};
+  } else if (output_size.size() == kDim4) {
+    auto x_shape = ib->GetShape(dout);
+    const auto n_value = x_shape[kIndex0];
+    const auto h_value = x_shape[kIndex1];
+    const auto w_value = x_shape[kIndex2];
+    auto vecx = (w_value != 1) ? ib->LinSpace(start, stop, ib->Value(w_value)) : zero;
+    auto vecy = (h_value != 1) ? ib->LinSpace(start, stop, ib->Value(h_value)) : zero;
+    if (!align_corners) {
+      vecx = (vecx * ib->Tensor(w_value - 1, kFloat32)) / ib->Tensor(w_value, kFloat32);
+      vecy = (vecy * ib->Tensor(h_value - 1, kFloat32)) / ib->Tensor(h_value, kFloat32);
+    }
+    auto out = (h_value != 1) ? ib->Tile(vecx, {h_value, 1}) : vecx;
+    auto one = ib->Reshape(out, {h_value * w_value, 1});
+    out = (w_value == 1) ? ib->ExpandDims(vecy, 0) : ib->Tile(vecy, {w_value, 1});
+    out = ib->Transpose(out, perm1);
+    auto two = ib->Reshape(out, {h_value * w_value, 1});
+    auto tre = ib->OnesLike(two);
+    auto output = ib->Concat({one, two, tre}, 1);
+    output = ib->Transpose(output, perm1);
+    output = ib->Tile(output, {n_value, 1});
+    output = ib->Reshape(output, {n_value, c3, h_value * w_value});
+    dout = ib->Reshape(dout, {n_value, h_value * w_value, c2});
+    dout = ib->Cast(dout, kFloat32);
+    auto dtheta = ib->BatchMatMul(output, dout);
+    dtheta = ib->Transpose(dtheta, perm2);
+    return {dtheta, tre};
   }
+  MS_LOG(EXCEPTION) << "For op[" << ib->name() << "], the length of output_size should be 4 or 5, but got "
+                    << output_size.size();
 });
 
 REG_BPROP_BUILDER("SegmentMax").SetBody(SegmentMinOrMaxGrad);

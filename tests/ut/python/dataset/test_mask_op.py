@@ -23,7 +23,7 @@ import mindspore.dataset as ds
 import mindspore.dataset.transforms as ops
 
 mstype_to_np_type = {
-    mstype.bool_: np.bool_,
+    mstype.bool_: np.bool,
     mstype.int8: np.int8,
     mstype.uint8: np.uint8,
     mstype.int16: np.int16,
@@ -35,7 +35,7 @@ mstype_to_np_type = {
     mstype.float16: np.float16,
     mstype.float32: np.float32,
     mstype.float64: np.float64,
-    mstype.string: np.str_
+    mstype.string: np.str
 }
 
 

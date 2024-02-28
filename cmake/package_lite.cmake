@@ -47,6 +47,7 @@ function(__install_white_list_ops)
     install(FILES
             ${TOP_DIR}/mindspore/core/ops/nn_op_name.h
             ${TOP_DIR}/mindspore/core/ops/adam.h
+            ${TOP_DIR}/mindspore/core/ops/addn.h
             ${TOP_DIR}/mindspore/core/ops/all.h
             ${TOP_DIR}/mindspore/core/ops/apply_momentum.h
             ${TOP_DIR}/mindspore/core/ops/assert.h

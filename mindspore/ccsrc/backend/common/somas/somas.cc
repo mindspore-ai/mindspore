@@ -1291,7 +1291,7 @@ std::vector<int> InnerGetCoreList() {
   if (numa_handle) {
     (void)LoadNumaCpuInfo(numa_handle.get(), rank_id + 1, &core_list);
   } else {
-    MS_LOG(INFO) << "Load numa library failed.";
+    MS_LOG(EXCEPTION) << "Load numa library failed.";
   }
   std::ostringstream oss;
   for (auto core_id : core_list) {

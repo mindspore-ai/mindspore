@@ -192,10 +192,8 @@ inline bool IsNeedMemoryStatistic() {
 
 inline bool IsNeedProfileMemory() {
   static const char kLaunchSkippedEnv[] = "MS_KERNEL_LAUNCH_SKIP";
-  static const char kSimulationLevel[] = "MS_SIMULATION_LEVEL";
   static const auto launch_skipped = GetEnv(kLaunchSkippedEnv);
-  static const auto simulation_level = common::GetEnv(kSimulationLevel);
-  static const bool skip_launch = (launch_skipped == "all" || launch_skipped == "ALL" || !simulation_level.empty());
+  static const bool skip_launch = (launch_skipped == "all" || launch_skipped == "ALL");
   return skip_launch && IsNeedMemoryStatistic();
 }
 

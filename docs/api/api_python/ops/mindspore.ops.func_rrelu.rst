@@ -11,7 +11,7 @@ mindspore.ops.rrelu
         \text{rrelu}(input_{ji}) = \begin{cases}input_{ji}, &\text{if } input_{ji} \geq 0; \cr
         {\alpha_{ji}} * input_{ji}, &\text{otherwise.}\end{cases}
 
-    其中，:math:`\alpha_{ji}` ~ :math:`U(l, u)`, :math:`l \le u` 。
+    其中，:math:`\alpha_{ji}` ~ :math:`U(l, u)`, :math:`l \le u`.
 
     更多细节详见 `Empirical Evaluation of Rectified Activations in Convolution Network <https://arxiv.org/pdf/1505.00853.pdf>`_。
 

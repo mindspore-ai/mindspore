@@ -7,7 +7,7 @@ mindspore.nn.probability.distribution.Uniform
     连续随机分布，取值范围为 :math:`[a, b]` ，概率密度函数为
 
     .. math:: 
-        f(x, a, b) = 1 / (b - a)
+        f(x, a, b) = 1 / (b - a).
 
     其中 :math:`a, b` 为分别为均匀分布的下界和上界。
 

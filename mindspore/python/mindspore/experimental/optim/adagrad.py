@@ -19,7 +19,6 @@ from mindspore.ops import functional as F, composite as C, operations as P
 from mindspore.common import Tensor, Parameter
 import mindspore.common.dtype as mstype
 from mindspore.experimental.optim.optimizer import Optimizer, check_not_less_than, check_not_less_than_without_equal
-from mindspore import jit
 
 _adagrad_opt = C.MultitypeFuncGraph("adagrad_opt")
 
@@ -109,7 +108,6 @@ class Adagrad(Optimizer):
         ...     optimizer(grads)
         ...     return loss
     """
-
     def __init__(self, params, lr=1e-2, lr_decay=0.0, weight_decay=0.0, initial_accumulator_value=0.0,
                  eps=1e-10, *, maximize=False):
         check_not_less_than_without_equal(lr, "lr", self.cls_name)
@@ -135,34 +133,24 @@ class Adagrad(Optimizer):
         self.assignadd = P.AssignAdd()
         self.assign = P.Assign()
 
-    @jit
-    def implementation(self, eps, lr, lr_decay, maximize, weight_decay, start_id, end_id, gradients):
-        """Extract the common computing part for acceleration"""
-        opt = P.ApplyAdagradV2(epsilon=eps, update_slots=True)
-        decay_lr = lr / (1 + self.step_t * lr_decay)
-        params = self.parameters[start_id: end_id]
-        grads = tuple([grad if not maximize else F.neg(grad) for grad in gradients[start_id: end_id]])
-        grads = self._decay_weight(weight_decay, params, grads)
-        accum = self.accum[start_id: end_id]
-        self.hyper_map(F.partial(_adagrad_opt, opt, decay_lr), params, accum, grads)
-        return True
-
     def construct(self, gradients):
         for group_id, group in enumerate(self.param_groups):
+            opt = P.ApplyAdagradV2(epsilon=group["eps"], update_slots=True)
 
             lr = self.lrs[group_id]
             if isinstance(group.get("lr"), float):
                 lr = self.op_cast(group.get("lr"), mstype.float32)
 
-            lr_decay = group["lr_decay"]
+            decay_lr = lr / (1 + self.step_t * group["lr_decay"])
             maximize = group.get("maximize")
-            weight_decay = group["weight_decay"]
-            eps = group["eps"]
 
             start_id = self.group_start_id[group_id]
-            end_id = self.group_start_id[group_id + 1]
-            self.implementation(eps, lr, lr_decay, maximize, weight_decay, start_id, end_id, gradients)
-
+            end_id = self.group_start_id[group_id+1]
+            params = self.parameters[start_id: end_id]
+            grads = tuple([grad if not maximize else F.neg(grad) for grad in gradients[start_id: end_id]])
+            grads = self._decay_weight(group["weight_decay"], params, grads)
+            accum = self.accum[start_id: end_id]
+            self.hyper_map(F.partial(_adagrad_opt, opt, decay_lr), params, accum, grads)
         self.assignadd(self.step_t, self.increase_tensor)
 
         return True

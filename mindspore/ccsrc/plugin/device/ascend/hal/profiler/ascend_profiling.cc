@@ -26,7 +26,6 @@
 #include "plugin/device/ascend/hal/profiler/profiling_framework_data.h"
 #include "runtime/hardware/device_context_manager.h"
 #include "acl/acl_rt.h"
-#include "acl/acl.h"
 
 using mindspore::device::ascend::ErrorManagerAdapter;
 using mindspore::profiler::ascend::MemoryProfiling;
@@ -36,9 +35,6 @@ namespace profiler {
 namespace ascend {
 namespace {
 PROFILER_REG(kAscendDevice, AscendProfiler);
-
-constexpr auto kAclProfStepStartTag = 60000;
-constexpr auto kAclProfStepEndTag = 60001;
 }  // namespace
 
 std::map<std::string, aclprofAicoreMetrics> kAicMetrics{{"ArithmeticUtilization", ACL_AICORE_ARITHMETIC_UTILIZATION},
@@ -61,7 +57,6 @@ void AscendProfiler::StepProfilingEnable(const bool enable_flag) {
 }
 
 void AscendProfiler::Init(const std::string &profiling_path, uint32_t device_id, const std::string &profiling_options) {
-  mindspore::device::ascend::InitializeAcl();
   MS_LOG(INFO) << "Begin to init profiling and call aclprofInit function.";
   profiling_options_ = profiling_options;
   profile_data_path_ = profiling_path;
@@ -199,33 +194,6 @@ void AscendProfiler::Stop() {
   MemoryProfiling::GetInstance().StopMemoryProfiling();
 
   StepProfilingEnable(false);
-}
-
-struct aclprofStepInfoInner {
-  bool startFlag;
-  bool endFlag;
-  uint64_t indexId;
-};
-
-void AscendProfiler::StepStart(uint64_t step_id, void *stream) {
-  acl_stream_ = static_cast<aclrtStream>(stream);
-  acl_prof_step_info_ = aclprofCreateStepInfo();
-  aclprofStepInfoInner *ptr_info = reinterpret_cast<aclprofStepInfoInner *>(acl_prof_step_info_);
-  ptr_info->indexId = step_id;
-  if (aclprofGetStepTimestamp(acl_prof_step_info_, (aclprofStepTag)kAclProfStepStartTag, acl_stream_) != ACL_SUCCESS) {
-    MS_LOG(WARNING) << "Failed to call aclprofGetStepTimestamp with tag " << kAclProfStepStartTag << ".";
-  }
-}
-
-void AscendProfiler::StepStop() {
-  if (aclprofGetStepTimestamp(acl_prof_step_info_, (aclprofStepTag)kAclProfStepEndTag, acl_stream_) != ACL_SUCCESS) {
-    MS_LOG(WARNING) << "Failed to call aclprofGetStepTimestamp with tag " << kAclProfStepEndTag << ".";
-  }
-  if (acl_prof_step_info_ != nullptr) {
-    aclprofDestroyStepInfo(acl_prof_step_info_);
-    acl_prof_step_info_ = nullptr;
-  }
-  acl_stream_ = nullptr;
 }
 
 void AscendProfiler::Finalize() {

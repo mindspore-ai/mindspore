@@ -154,10 +154,10 @@
               .. code-block::
 
                   [ascend_context]
-                  rank_table_file=[path_a]（存储rank table文件的初始路径）
+                  rank_table_file=[path_a](storage initial path of the rank table file)
                   [execution_plan]
-                  [op_name1]=data_type:float16（名字为op_name1的算子设置数据类型为float16）
-                  [op_name2]=data_type:float32（名字为op_name2的算子设置数据类型为float32）
+                  [op_name1]=data_type:float16（名字为op_name1的算子设置数据类型为Float16）
+                  [op_name2]=data_type:float32（名字为op_name2的算子设置数据类型为Float32）
 
               当只配置config_path的方式如下：
 

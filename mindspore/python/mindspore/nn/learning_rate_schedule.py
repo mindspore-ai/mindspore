@@ -83,7 +83,7 @@ class ExponentialDecayLR(LearningRateSchedule):
         is_stair (bool): If true, learning rate is decayed once every `decay_steps` time. Default: ``False`` .
 
     Inputs:
-        - **global_step** (Tensor) - The current step number. :math:`current\_step` in the above formula.
+        - **global_step** (Tensor) - The current step number.
 
     Outputs:
         Tensor. The learning rate value for the current step with shape :math:`()`.
@@ -332,13 +332,12 @@ class CosineDecayLR(LearningRateSchedule):
         self.math_pi = math.pi
         self.delta = 0.5 * (max_lr - min_lr)
         self.cos = P.Cos()
-        self.sin = P.Sin()
         self.min = P.Minimum()
         self.cast = P.Cast()
 
     def construct(self, global_step):
         p = self.cast(self.min(global_step, self.decay_steps), mstype.float32)
-        return self.min_lr + self.delta * (1.0 + self.sin(self.math_pi * (p / self.decay_steps + 0.5)))
+        return self.min_lr + self.delta * (1.0 + self.cos(self.math_pi * p / self.decay_steps))
 
 
 class PolynomialDecayLR(LearningRateSchedule):

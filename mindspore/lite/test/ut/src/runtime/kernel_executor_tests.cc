@@ -27,6 +27,7 @@
 #include "ops/pad.h"
 #include "ops/strided_slice.h"
 #include "ops/base_operator.h"
+#include "ops/addn.h"
 
 namespace mindspore {
 class KernelExecutorTest : public mindspore::CommonTest {

@@ -185,9 +185,9 @@ class OperatorInfo {
   void SetIsStrategyCostExactTrue() { is_strategy_cost_exact_ = true; }
   void ClearStrategyCost() { strategy_cost_.clear(); }
   void CheckSelectedStrategy(const StrategyPtr &s_strategy);
-  Status InitSelectedStrategy(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy) {
+  Status InitSelectedStrategy(const StrategyPtr &s_strategy) {
     set_auto_parallel(false);
-    return Init(in_strategy, out_strategy);
+    return Init(s_strategy, nullptr);
   }
   void set_input_value(const std::vector<ValuePtr> &input_value) { input_value_ = input_value; }
   const std::vector<ValuePtr> &input_value() const { return input_value_; }
@@ -202,7 +202,6 @@ class OperatorInfo {
   void SetNotAlive() { is_alive_ = false; }
   StrategyPtr strategy() const { return strategy_; }
   StrategyPtr out_strategy() const { return out_strategy_; }
-  void set_out_strategy(const StrategyPtr &strategy) { out_strategy_ = strategy; }
   void set_strategy(const StrategyPtr &strategy) { strategy_ = strategy; }
   void set_refkey_parameter_name(std::string p_name) { refkey_parameter_name_ = std::move(p_name); }
   const std::string &refkey_parameter_name() const { return refkey_parameter_name_; }

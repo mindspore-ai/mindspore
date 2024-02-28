@@ -25,6 +25,7 @@
 #include <sys/mman.h>
 #include <cstdlib>
 #include <string>
+#include "toolchain/slog.h"
 #include "runtime/rt_error_codes.h"
 #endif
 #include "utils/log_adapter.h"

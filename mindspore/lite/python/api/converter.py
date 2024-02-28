@@ -621,30 +621,30 @@ class Converter:
     @property
     def weight_fp16(self):
         """
-        Get the status whether the model will be saved as the float16 data type.
+        Get the status whether the model will be saved as the Float16 data type.
 
         Returns:
-            bool, whether the model will be saved as the float16 data type. If it is ``True``, the const Tensor of the
-            float32 in the model will be saved as the float16 data type during Converter, and the generated model
+            bool, whether the model will be saved as the Float16 data type. If it is ``True``, the const Tensor of the
+            Float32 in the model will be saved as the Float16 data type during Converter, and the generated model
             size will be compressed. Then, according to `Context.CPU` 's `precision_mode` parameter determines the
             inputs' data type to perform inference. The priority of `weight_fp16` is very low. For example, if
             quantization is enabled, for the weight of the quantized, `weight_fp16` will not take effect again.
-            `weight_fp16` only effective for the const Tensor in float32 data type.
+            `weight_fp16` only effective for the const Tensor in Float32 data type.
         """
         return self._converter.get_weight_fp16()
 
     @weight_fp16.setter
     def weight_fp16(self, weight_fp16):
         """
-        Set whether the model will be saved as the float16 data type.
+        Set whether the model will be saved as the Float16 data type.
 
         Args:
-            weight_fp16 (bool): If it is True, the const Tensor of the float32 in the model will be saved as the float16
+            weight_fp16 (bool): If it is True, the const Tensor of the Float32 in the model will be saved as the Float16
                 data type during Converter, and the generated model size will be compressed. Then, according to
                 `Context.CPU` 's `precision_mode` parameter determines the inputs' data type to perform inference. The
                 priority of `weight_fp16` is very low. For example, if quantization is enabled, for the weight of the
                 quantized, `weight_fp16` will not take effect again. `weight_fp16` only effective for the const Tensor
-                in float32 data type.
+                in Float32 data type.
 
         Raises:
             TypeError: `weight_fp16` is not a bool.

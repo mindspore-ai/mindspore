@@ -7,7 +7,7 @@ mindspore.nn.probability.distribution.Gumbel
     连续随机分布，取值范围为所有实数 ，概率密度函数为
 
     .. math:: 
-        f(x, a, b) = 1 / b \exp(\exp(-(x - a) / b) - x)
+        f(x, a, b) = 1 / b \exp(\exp(-(x - a) / b) - x).
 
     其中 :math:`a, b` 为分别为Gumbel分布的位置参数和比例参数。
 

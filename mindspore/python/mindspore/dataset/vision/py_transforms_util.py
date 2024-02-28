@@ -1032,8 +1032,8 @@ def perspective(img, start_points, end_points, interpolation=Inter.BICUBIC):
         for pt1, pt2 in zip(transformed_points, original_points):
             matrix.append([pt1[0], pt1[1], 1, 0, 0, 0, -pt2[0] * pt1[0], -pt2[0] * pt1[1]])
             matrix.append([0, 0, 0, pt1[0], pt1[1], 1, -pt2[1] * pt1[0], -pt2[1] * pt1[1]])
-        matrix_a = np.array(matrix, dtype=float)
-        matrix_b = np.array(original_points, dtype=float).reshape(8)
+        matrix_a = np.array(matrix, dtype=np.float)
+        matrix_b = np.array(original_points, dtype=np.float).reshape(8)
         res = np.linalg.lstsq(matrix_a, matrix_b, rcond=None)[0]
         return res.tolist()
 

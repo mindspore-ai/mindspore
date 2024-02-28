@@ -20,14 +20,14 @@
 #include <set>
 #include <memory>
 #include <mutex>
-#include <vector>
 
 #include "include/common/debug/rdr/base_recorder.h"
 #include "include/backend/visible.h"
-#include "kernel/kernel.h"
 
 namespace mindspore {
-using mindspore::kernel::KernelTensor;
+namespace kernel {
+struct KernelLaunchAddr;
+}  // namespace kernel
 class MemAddressRecorder : public BaseRecorder {
  public:
   MemAddressRecorder() {}
@@ -35,9 +35,7 @@ class MemAddressRecorder : public BaseRecorder {
   ~MemAddressRecorder() {}
 
   virtual void Export();
-  void SaveMemInfo(const std::string &op_name, const std::vector<KernelTensor *> &input_kernel_tensors,
-                   const std::vector<KernelTensor *> &output_kernel_tensors,
-                   const std::vector<KernelTensor *> &workspace_kernel_tensors);
+  void SaveMemInfo(const std::string &op_name, const kernel::KernelLaunchAddr &mem_info);
 
   void Reset() {
     op_names_.clear();
@@ -57,9 +55,7 @@ using MemAddressRecorderPtr = std::shared_ptr<MemAddressRecorder>;
 namespace RDR {
 BACKEND_EXPORT bool RecordMemAddressInfo(const SubModuleId module, const std::string &name);
 BACKEND_EXPORT bool UpdateMemAddress(const SubModuleId module, const std::string &name, const std::string &op_name,
-                                     const std::vector<KernelTensor *> &input_kernel_tensors,
-                                     const std::vector<KernelTensor *> &output_kernel_tensors,
-                                     const std::vector<KernelTensor *> &workspace_kernel_tensors);
+                                     const kernel::KernelLaunchAddr &mem_info);
 BACKEND_EXPORT void ClearMemAddressInfo();
 }  // namespace RDR
 }  // namespace mindspore

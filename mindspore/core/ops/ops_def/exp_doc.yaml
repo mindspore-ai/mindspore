@@ -6,7 +6,7 @@ exp:
             out_i = e^{x_i}
 
         Args:
-            input (Tensor): The input tensor. :math:`x` in the following formula.
+            input (Tensor): The input tensor.
 
         Returns:
             Tensor, has the same shape and dtype as the `input`.

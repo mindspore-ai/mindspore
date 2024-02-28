@@ -61,7 +61,7 @@ class GPUKernelRuntime : public KernelRuntime {
                                        const KernelWithIndex &node_index) const override;
   void *GetKernelStream(const AnfNodePtr &kernel) const override;
   bool SyncStream() override;
-  bool MemcpyAsync(void *dst, const void *src, uint64_t size, int32_t kind, void *stream) override;
+  bool MemcpyAsync(void *dst, const void *src, uint64_t size, int32_t kind) override;
 
  private:
   GPUKernelRuntime(const GPUKernelRuntime &);

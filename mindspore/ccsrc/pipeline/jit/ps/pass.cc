@@ -60,7 +60,6 @@
 #include "frontend/parallel/pass/overlap_gradmatmul_and_gradallreduce.h"
 #include "frontend/parallel/pass/split_matmul_comm_elementwise_fp.h"
 #include "frontend/parallel/pass/split_layernorm_comm_fp.h"
-#include "frontend/parallel/pipeline_transformer/pipeline_transformer.h"
 #include "frontend/optimizer/recompute.h"
 #include "frontend/optimizer/irpass/recompute.h"
 #include "frontend/optimizer/slice_activation_in_recompute.h"
@@ -479,7 +478,6 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
                          {"cell_reuse_recompute_pass", opt::OptPassConfig(opt::irpass::AddRecomputeNodes)},
                          {"cell_reuse_handle_not_recompute_node_pass", cell_reuse_handle_not_recompute_node_pass},
                          {"meta_fg_expand", opt::OptPassConfig(opt::irpass::ExpandMetaFg())},
-                         {"receive_attached", opt::OptPassConfig(parallel::IsolatedNodeAttach)},
                          {"after_resolve", after_resolve_pass},
                          {"a_after_grad", a_after_grad},
                          {"renormalize", opt::OptPassConfig::Renormalize()},
@@ -570,8 +568,7 @@ OptPassGroupMap GetOptPassesB(const opt::irpass::OptimizeIRPassLib &irpass) {
                                                irpass.environ_get_depend_swap_,
                                                irpass.environ_add_const_eliminate_,
                                                irpass.value_based_eliminate_,
-                                               irpass.parallel_virtual_node_,
-                                               irpass.const_output_eliminate_},
+                                               irpass.parallel_virtual_node_},
                                               false, true);
   opt::OptPassConfig b_2 = opt::OptPassConfig({
     irpass.row_tensor_eliminate_,

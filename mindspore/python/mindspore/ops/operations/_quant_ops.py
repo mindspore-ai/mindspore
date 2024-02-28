@@ -579,7 +579,7 @@ class FakeQuantWithMinMaxVars(PrimitiveWithInfer):
             range is [1, 2^num_bits-1]. Default: ``False``.
 
     Inputs:
-        - **x** (Tensor) - float32 tensor representing the shape of the output tensor.
+        - **x** (Tensor) - Float32 tensor representing the shape of the output tensor.
         - **min** (Tensor) - Value of the min range of the input data x.
         - **max** (Tensor) - Value of the max range of the input data x.
 
@@ -638,7 +638,7 @@ class FakeQuantWithMinMaxVarsGradient(PrimitiveWithInfer):
 
     Inputs:
         - **gradients** (Tensor) - The gradient above the FakeQuantWithMinMaxVars.
-        - **x** (Tensor) - float32 tensor representing the shape of the output tensor.
+        - **x** (Tensor) - Float32 tensor representing the shape of the output tensor.
         - **min** (Tensor) - Value of the min range of the input data x.
         - **max** (Tensor) - Value of the max range of the input data x.
 
@@ -702,7 +702,7 @@ class FakeQuantWithMinMaxVarsPerChannel(PrimitiveWithInfer):
             range is [1, 2^num_bits-1]. Default: ``False``.
 
     Inputs:
-        - **x** (Tensor) - float32 tensor representing the shape of the output tensor.
+        - **x** (Tensor) - Float32 tensor representing the shape of the output tensor.
         - **min** (Tensor) - Value of the min range of the input data x.
         - **max** (Tensor) - Value of the max range of the input data x.
 
@@ -754,7 +754,7 @@ class FakeQuantWithMinMaxVarsPerChannelGradient(PrimitiveWithInfer):
 
     Inputs:
         - **gradients** (Tensor) - The gradient above the FakeQuantWithMinMaxVars.
-        - **x** (Tensor) - float32 tensor representing the shape of the output tensor.
+        - **x** (Tensor) - Float32 tensor representing the shape of the output tensor.
         - **min** (Tensor) - Value of the min range of the input data x.
         - **max** (Tensor) - Value of the max range of the input data x.
 

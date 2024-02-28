@@ -17,7 +17,7 @@ mindspore.train.Loss
         计算loss的平均值。
 
         返回：
-            float，loss的平均值。
+            Float，loss的平均值。
 
         异常：
             - **RuntimeError** - 样本总数为0。

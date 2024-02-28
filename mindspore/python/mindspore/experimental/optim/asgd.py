@@ -19,7 +19,6 @@ from mindspore.ops import functional as F, composite as C, operations as P
 from mindspore.common import Tensor, Parameter
 import mindspore.common.dtype as mstype
 from mindspore.experimental.optim.optimizer import Optimizer, check_not_less_than, check_not_less_than_without_equal
-from mindspore.common.api import jit
 
 _asgd_opt = C.MultitypeFuncGraph("asgd_opt")
 
@@ -124,22 +123,6 @@ class ASGD(Optimizer):
         self.assignadd = P.AssignAdd()
         self.op_cast = P.Cast()
 
-    @jit
-    def implementation(self, lambd, alpha, t0, lr, group_id, maximize, gradients, weight_decay):
-        """Extract the common computing part for acceleration"""
-        start_id = self.group_start_id[group_id]
-        end_id = self.group_start_id[group_id + 1]
-        params = self.parameters[start_id: end_id]
-        grads = tuple([grad if not maximize else F.neg(grad) for grad in gradients[start_id: end_id]])
-        grads = self._decay_weight(weight_decay, params, grads)
-
-        ax = self.ax[start_id: end_id]
-        eta = self.eta[start_id: end_id]
-        mu = self.mu[start_id: end_id]
-        self.hyper_map(F.partial(_asgd_opt, lambd, alpha, t0, self.step_t, lr),
-                       params, grads, eta, mu, ax)
-        return True
-
     def construct(self, gradients):
         self.assignadd(self.step_t, self.increase_tensor)
         for group_id, group in enumerate(self.param_groups):
@@ -148,6 +131,16 @@ class ASGD(Optimizer):
                 lr = self.op_cast(group.get("lr"), mstype.float32)
             maximize = group.get("maximize")
 
-            self.implementation(group["lambd"], group["alpha"], group["t0"], lr, group_id, maximize, gradients,
-                                group["weight_decay"])
+            start_id = self.group_start_id[group_id]
+            end_id = self.group_start_id[group_id + 1]
+            params = self.parameters[start_id: end_id]
+            grads = tuple([grad if not maximize else F.neg(grad) for grad in gradients[start_id: end_id]])
+            grads = self._decay_weight(group["weight_decay"], params, grads)
+
+            ax = self.ax[start_id: end_id]
+            eta = self.eta[start_id: end_id]
+            mu = self.mu[start_id: end_id]
+
+            self.hyper_map(F.partial(_asgd_opt, group["lambd"], group["alpha"], group["t0"], self.step_t, lr),
+                           params, grads, eta, mu, ax)
         return True

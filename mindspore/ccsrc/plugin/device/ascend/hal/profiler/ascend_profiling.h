@@ -39,8 +39,6 @@ class AscendProfiler : public Profiler {
   void Finalize() override;
   void Start() override;
   void Stop() override;
-  void StepStart(uint64_t step_id, void *stream) override;
-  void StepStop() override;
   void StepProfilingEnable(const bool enable_flag) override;
   void OpDataProducerEnd() override { return; }
   uint64_t GetOptionsMask() const;
@@ -58,8 +56,6 @@ class AscendProfiler : public Profiler {
   uint32_t device_id_ = 0;
   uint32_t max_op_taskid_limit_ = 65536;
   aclprofConfig *acl_config_{nullptr};
-  aclprofStepInfo *acl_prof_step_info_{nullptr};
-  aclrtStream acl_stream_{nullptr};
 };
 }  // namespace ascend
 }  // namespace profiler

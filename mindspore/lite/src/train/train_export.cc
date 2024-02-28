@@ -410,7 +410,6 @@ int TrainExport::ExportTensor(const Model *model, const std::vector<mindspore::l
     mindspore::lite::Tensor *tensor = tensors.at(pid);
     in_tensors.push_back(tensor);
   }
-  std::map<std::string, uint32_t> ordered_output_names;
   for (auto index : map_index) {
     auto id = index.first;
     size_t pid = id - static_cast<size_t>(offset);
@@ -434,19 +433,14 @@ int TrainExport::ExportTensor(const Model *model, const std::vector<mindspore::l
     }
     // find output tensor
     if (std::find(output_names.begin(), output_names.end(), tensor->tensor_name()) != output_names.end()) {
-      ordered_output_names[tensor->tensor_name()] = remap_[id];
+      meta_graph_->outputIndex.push_back(remap_[id]);
+      if (!meta_graph_->subGraph.empty()) {
+        meta_graph_->subGraph[0]->outputIndices.push_back(remap_[id]);
+      }
     }
     meta_graph_->allTensors.emplace_back(std::move(tensorT));
     if (!meta_graph_->subGraph.empty()) {
       meta_graph_->subGraph[0]->tensorIndices.push_back(meta_graph_->allTensors.size() - 1);
-    }
-  }
-  for (auto &output_name : output_names) {
-    if (ordered_output_names.find(output_name) != ordered_output_names.end()) {
-      meta_graph_->outputIndex.push_back(ordered_output_names[output_name]);
-      if (!meta_graph_->subGraph.empty()) {
-        meta_graph_->subGraph[0]->outputIndices.push_back(ordered_output_names[output_name]);
-      }
     }
   }
   return RET_OK;

@@ -419,10 +419,6 @@ void GeDeviceContext::SetHcclOptions(const std::shared_ptr<MsContext> &inst_cont
   if (env_table_file.empty()) {
     env_table_file = common::GetEnv("RANK_TABLE_FILE");
   }
-  auto simulation_level = common::GetEnv(kSimulationLevel);
-  if (!simulation_level.empty()) {
-    env_table_file = "";
-  }
   auto env_rank_id = common::GetEnv("RANK_ID");
   auto env_device_id = std::to_string(inst_context->get_param<uint32_t>(MS_CTX_DEVICE_ID));
   auto env_cluster_info = common::GetEnv("HELP_CLUSTER");

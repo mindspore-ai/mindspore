@@ -117,8 +117,6 @@ class BACKEND_EXPORT DeviceAddressUtils {
 
   static void UpdateDeviceAddressHostInfoByNode(const device::DeviceAddressPtr &addr, const AnfNodePtr &node,
                                                 size_t output_idx);
-  static device::DeviceAddressPtr CreateDeviceAddress(DeviceContext *device_context, const tensor::TensorPtr &tensor,
-                                                      const ShapeVector &real_shape, const size_t &stream_id);
 };
 }  // namespace runtime
 }  // namespace mindspore

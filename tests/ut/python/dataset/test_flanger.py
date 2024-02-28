@@ -72,10 +72,10 @@ def test_flanger_eager_triangular_linear_int():
     Expectation: Output is equal to the expected output
     """
     # Original waveform
-    waveform = np.array([[-2, -3, 0], [2, 2, 3]], dtype=int)
+    waveform = np.array([[-2, -3, 0], [2, 2, 3]], dtype=np.int)
     # Expect waveform
     expect_waveform = np.array([[-1, -1, 0],
-                                [1, 1, 1]], dtype=int)
+                                [1, 1, 1]], dtype=np.int)
     flanger_op = audio.Flanger(44100, 0.0, 2.0, 0.0, 71.0, 0.5, 25.0, Modulation.TRIANGULAR, Interpolation.LINEAR)
     # Filtered waveform by flanger
     output = flanger_op(waveform)

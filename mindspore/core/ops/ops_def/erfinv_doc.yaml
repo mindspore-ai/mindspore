@@ -9,12 +9,7 @@ erfinv:
     where :math:`x` is the `input`.
 
     Args:
-        input (Tensor): The input tensor to compute with.
-
-        Supported dtypes: 
-
-            - Ascend: float16, float32.
-            - GPU/CPU: float16, float32, float64.
+        input (Tensor): The input tensor to compute with, with data type float16, float32 or float64.
 
     Returns:
         Tensor, has the same shape and dtype as `input`.

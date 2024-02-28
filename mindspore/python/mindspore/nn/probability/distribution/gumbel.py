@@ -32,9 +32,9 @@ class Gumbel(TransformedDistribution):
     and the probability density function:
 
     .. math::
-        f(x, a, b) = 1 / b \exp(\exp(-(x - a) / b) - x)
+        f(x, a, b) = 1 / b \exp(\exp(-(x - a) / b) - x),
 
-    Where :math:`a, b` are loc and scale parameter respectively.
+    where :math:`a, b` are loc and scale parameter respectively.
 
     Args:
         loc (int, float, list, numpy.ndarray, Tensor): The location of Gumbel distribution.

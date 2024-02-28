@@ -29,11 +29,6 @@ constexpr size_t kTileInputsNum = 2;
 constexpr size_t kTileOutputsNum = 1;
 constexpr size_t kIndex0 = 0;
 constexpr size_t kIndex1 = 1;
-void ChangeEmptyToOne(ShapeVector *shape) {
-  if (shape->empty()) {
-    shape->push_back(1L);
-  }
-}
 }  // namespace
 
 void TileCpuKernelMod::TileMultipleCompute() {
@@ -43,10 +38,6 @@ void TileCpuKernelMod::TileMultipleCompute() {
                       << "', input shape can not be greater than default max size: " << MAX_SHAPE_SIZE
                       << " and output shape: " << y_shape_.size() << ", but got input shape " << x_shape_.size();
   }
-  ChangeEmptyToOne(&x_shape_);
-  ChangeEmptyToOne(&multiple_shape_);
-  ChangeEmptyToOne(&y_shape_);
-
   input_size_ = 1;
   tile_struct_.in_dim_ = x_shape_.size();
   for (int i = 0; i < tile_struct_.in_dim_; i++) {

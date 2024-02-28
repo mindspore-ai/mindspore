@@ -29,7 +29,7 @@ mindspore.ops.AlltoAll
 
         - :math:`y_{split\_dim} = x_{split\_dim} / split\_count`
         - :math:`y_{concat\_dim} = x_{concat\_dim} * split\_count`
-        - :math:`y_{other} = x_{other}` 。
+        - :math:`y_{other} = x_{other}`.
 
     异常：
         - **TypeError** - 如果 `group` 不是字符串。

@@ -18,8 +18,7 @@
 #include "include/backend/anf_runtime_algorithm.h"
 #include "utils/trace_base.h"
 #include "runtime/device/kernel_runtime_manager.h"
-#include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
-#include "acl/acl_rt.h"
+#include "runtime/mem.h"
 
 namespace mindspore {
 namespace kernel {
@@ -39,15 +38,10 @@ void TensorShapeKernelMod::Execute(const std::vector<KernelTensor *> &inputs,
   } else {
     // cppcheck-suppress unreadVariable
     auto lock = device::KernelRuntime::LockRuntime(stream_ptr);
-    // Memcpy needs to be synchronized first, if tensor data is from numpy.
-    if (!device::ascend::AscendStreamMng::GetInstance().SyncStream(stream_ptr)) {
-      MS_EXCEPTION(DeviceProcessError) << "Sync stream error!";
-    }
-
-    auto ret_rt_memcpy = aclrtMemcpy(outputs[0]->device_ptr(), outputs[0]->size(), shape.data(), LongToSize(size),
-                                     ACL_MEMCPY_DEVICE_TO_HOST);
-    if (ret_rt_memcpy != ACL_ERROR_NONE) {
-      MS_EXCEPTION(DeviceProcessError) << "aclrtMemcpy failed";
+    auto status = rtMemcpyAsync(outputs[0]->device_ptr(), outputs[0]->size(), shape.data(), LongToSize(size),
+                                RT_MEMCPY_HOST_TO_DEVICE_EX, stream_ptr);
+    if (status != RT_ERROR_NONE) {
+      MS_LOG(EXCEPTION) << "Execute TensorShapeKernel rtMemcpyAsync failed!";
     }
   }
 }

@@ -26,6 +26,7 @@
 #include "ops/array_ops.h"
 #include "ops/math_op_name.h"
 #include "ops/lite_op_name.h"
+#include "runtime/mem.h"
 #include "acl/acl_rt.h"
 #include "plugin/device/ascend/kernel/aicpu/aicpu_util.h"
 #include "plugin/device/ascend/kernel/aicpu/aicpu_proto_util.h"

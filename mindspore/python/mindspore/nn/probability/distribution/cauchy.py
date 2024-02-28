@@ -30,9 +30,9 @@ class Cauchy(Distribution):
     and the probability density function:
 
     .. math::
-        f(x, a, b) = 1 / \pi b(1 - ((x - a)/b)^2)
+        f(x, a, b) = 1 / \pi b(1 - ((x - a)/b)^2),
 
-    Where :math:`a, b` are loc and scale parameter respectively.
+    where :math:`a, b` are loc and scale parameter respectively.
 
     Args:
         loc (int, float, list, numpy.ndarray, Tensor): The location of the Cauchy distribution. Default: ``None`` .

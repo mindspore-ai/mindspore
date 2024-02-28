@@ -52,8 +52,8 @@ class Context:
             .. code-block::
 
                 [execution_plan]
-                [op_name1]=data_Type: float16 (The operator named op_name1 sets the data type as float16)
-                [op_name2]=data_Type: float32 (The operator named op_name2 sets the data type as float32)
+                [op_name1]=data_Type: float16 (The operator named op_name1 sets the data type as Float16)
+                [op_name2]=data_Type: float32 (The operator named op_name2 sets the data type as Float32)
 
           - Usage 2: When GPU inference, set the configuration of TensorRT. The content and description of the
             configuration file are as follows:
@@ -845,8 +845,8 @@ class _Parallel:
                   .. code-block::
 
                       [execution_plan]
-                      [op_name1]=data_Type: float16 (The operator named op_name1 sets the data type as float16)
-                      [op_name2]=data_Type: float32 (The operator named op_name2 sets the data type as float32)
+                      [op_name1]=data_Type: float16 (The operator named op_name1 sets the data type as Float16)
+                      [op_name2]=data_Type: float32 (The operator named op_name2 sets the data type as Float32)
 
                 - Usage 2: When GPU inference, set the configuration of TensorRT. The content and description of the
                   configuration file are as follows:

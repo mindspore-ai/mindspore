@@ -18,6 +18,7 @@ Cifar100 convert tool for MindRecord.
 
 from importlib import import_module
 import os
+import numpy as np
 
 from mindspore import log as logger
 from .cifar100 import Cifar100
@@ -147,8 +148,8 @@ class Cifar100ToMR:
         """
         raw_data = []
         for i, img in enumerate(images):
-            fine_label = fine_labels[i][0]
-            coarse_label = coarse_labels[i][0]
+            fine_label = np.int(fine_labels[i][0])
+            coarse_label = np.int(coarse_labels[i][0])
             _, img = self.cv_import.imencode(".jpeg", img[..., [2, 1, 0]])
             row_data = {"id": int(i),
                         "data": img.tobytes(),

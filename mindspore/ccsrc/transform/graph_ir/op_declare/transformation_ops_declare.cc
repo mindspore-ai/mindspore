@@ -157,13 +157,13 @@ ATTR_MAP(TfIdfVectorizer) = {
   {"pool_strings", ATTR_DESC(pool_strings, AnyTraits<std::vector<std::string>>())},
   {"weights", ATTR_DESC(weights, AnyTraits<std::vector<float>>())}};
 OUTPUT_MAP(TfIdfVectorizer) = {{0, OUTPUT_DESC(output)}};
-REG_ADPT_DESC(TfIdfVectorizer, kNameTfIdfVectorizer, ADPT_DESC(TfIdfVectorizer));
+REG_ADPT_DESC(TfIdfVectorizer, kNameTfIdfVectorizer, ADPT_DESC(TfIdfVectorizer))
 
 // AffineGrid
-CUST_INPUT_MAP(AffineGrid) = {{1, INPUT_DESC(theta)}, {2, INPUT_DESC(output_size)}};
-CUST_ATTR_MAP(AffineGrid) = {{"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())}};
-CUST_OUTPUT_MAP(AffineGrid) = {{0, OUTPUT_DESC(output)}};
-REG_ADPT_DESC(AffineGrid, prim::kPrimAffineGrid->name(), CUST_ADPT_DESC(AffineGrid));
+INPUT_MAP(AffineGrid) = {{1, INPUT_DESC(theta)}, {2, INPUT_DESC(output_size)}};
+ATTR_MAP(AffineGrid) = {{"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())}};
+OUTPUT_MAP(AffineGrid) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(AffineGrid, prim::kPrimAffineGrid->name(), ADPT_DESC(AffineGrid));
 
 // AffineGridGrad
 CUST_INPUT_MAP(AffineGridGrad) = {{1, INPUT_DESC(y_grad)}, {2, INPUT_DESC(x_size)}};

@@ -270,8 +270,8 @@ void AllocateMemForTensor(const tensor::TensorPtr &tensor, DeviceContext *device
 
   auto tensor_size = LongToSize(tensor->data().nbytes());
   auto tensor_type = tensor->data_type();
-  if (!device_address->SyncHostToDevice(tensor->shape(), tensor_size, tensor_type, tensor->device_info().host_format_,
-                                        tensor->data_ptr())) {
+  if (!device_address->SyncHostToDevice(tensor->shape(), tensor_size, tensor_type, tensor->data_c(),
+                                        tensor->device_info().host_format_)) {
     MS_LOG(EXCEPTION) << "SyncHostToDevice failed";
   }
 }
@@ -721,10 +721,9 @@ runtime::ActorSet *MindRTBackend::RealCompileGraphBeforeRunActor(const GraphComp
   }
   runtime::GraphScheduler::GetInstance().Schedule(actor_set);
 
-  for (size_t i = 0; i < graphs.size(); ++i) {
-    pynative::GraphAdapter::ClearForwardOutputValueNodeDeviceAddress(graphs[i], device_contexts[i]);
-    pynative::GraphAdapter::GenerateRefCountForBpropValueNode(graphs[i]);
-    graph_adapter_.GenerateBackoffValueNodeOwners(graphs[i]);
+  for (auto &graph : graphs) {
+    pynative::GraphAdapter::ClearForwardOutputValueNodeDeviceAddress(graph);
+    pynative::GraphAdapter::GenerateRefCountForBpropValueNode(graph);
   }
   return actor_set;
 }
@@ -751,7 +750,7 @@ void MindRTBackend::RunGraphByActors(const ActorInfo &actor_info, const GraphCom
 
   if (root_graph_->has_flag(kFlagIsPynativeBpropGraph)) {
     for (size_t i = 0; i < graphs.size(); ++i) {
-      graph_adapter_.UpdateForwardOutputInBpropGraph(graphs[i], device_contexts[i], no_multi_graph);
+      pynative::GraphAdapter::UpdateForwardOutputInBpropGraph(graphs[i], device_contexts[i], no_multi_graph);
       pynative::GraphAdapter::UpdateDynamicValueNodeAbstract(graphs[i]);
     }
   }

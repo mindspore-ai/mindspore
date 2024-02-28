@@ -3,9 +3,7 @@ mindspore.ops.greater_equal
 
 .. py:function:: mindspore.ops.greater_equal(input, other)
 
-    输入两个Tensor，逐元素比较第一个Tensor是否大于等于第二个Tensor。
-
-    更多参考详见 :func:`mindspore.ops.ge`。
+    按元素比较输入参数 :math:`input \geq other` 的值，输出结果为bool值。
 
     参数：
         - **input** (Union[Tensor, Number]) - 第一个输入，是一个Number或数据类型为 `number <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.dtype.html#mindspore.dtype>`_ 或 `bool_ <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.dtype.html#mindspore.dtype>`_ 的Tensor。

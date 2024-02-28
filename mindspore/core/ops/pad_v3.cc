@@ -176,14 +176,6 @@ abstract::ShapePtr PadV3InferShape(const PrimitivePtr &primitive, const std::vec
   if (mode != kConstant) {
     (void)CheckAndConvertUtils::CheckInteger("input dims for edge, reflect or circular mode", size, kGreaterEqual,
                                              kOtherMinDims, prim_name);
-    auto type_constant_value = input_args[kIndex2]->GetType();
-    if (!type_constant_value->isa<TypeNone>()) {
-      MS_EXCEPTION(ValueError)
-        << "For '" << prim_name
-        << "', the input[constant_value] is only valid when the attribute[mode] is `constant`. DO NOT set "
-           "it in ["
-        << mode << "] mode.";
-    }
     if (mode == kReflect) {
       ReflectModeCheck(prim_name, paddings_size, x_shape, paddings_arg, size);
     } else {
