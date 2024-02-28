@@ -934,6 +934,9 @@ std::vector<py::object> PackArgs(const PyFrameObject *frame) {
       args[argi] = py::reinterpret_borrow<py::object>(PyCell_GET(cell));
     }
   }
+  if (vargs.ptr() != nullptr) {
+    PyList_Append(args.ptr(), vargs.ptr());
+  }
   return {args, vargs, kwvargs};
 }
 
@@ -1140,9 +1143,6 @@ static py::object CallCompiledResults(PyThreadState *tstate, PyFrameObject *f, c
   ValidateCompiledResults(c);
 
   std::vector<py::object> packed_args = PackArgs(f);
-  if (packed_args[1].ptr() != nullptr) {
-    PyList_Append(packed_args[0].ptr(), packed_args[1].ptr());
-  }
 
   py::object args = py::reinterpret_steal<py::object>(PyList_AsTuple(packed_args[0].ptr()));
   py::object kwvargs = packed_args[2];
