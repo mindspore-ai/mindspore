@@ -43,7 +43,7 @@ int ActivationDynamicFP16Coder::DoCode(CoderContext *const context) {
   auto *activation_parameter = reinterpret_cast<ActivationParameter *>(parameter_);
   MS_CHECK_PTR(activation_parameter);
   auto in_shape = shape_info_container_->GetTemplateShape(input_tensor_);
-  count_ = AccumulateShape(in_shape);
+  count_ = AccumulateShape(in_shape, 0, in_shape.size());
   input_data_ = dynamic_mem_manager_->GetVarTensorAddr(input_tensor_);
   MS_CHECK_TRUE_MSG(!input_data_.empty(), RET_ERROR, "pointer is not allocated by the allocator");
   output_data_ = dynamic_mem_manager_->GetVarTensorAddr(output_tensor_);
