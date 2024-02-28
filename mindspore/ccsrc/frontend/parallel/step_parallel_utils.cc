@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2023 Huawei Technologies Co., Ltd
+ * Copyright 2021-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -499,6 +499,14 @@ Shapes GetNodeShape(const AnfNodePtr &node) {
     return GetValueListShape(node);
   }
   BaseShapePtr base_shape_ptr = node->Shape();
+  if (base_shape_ptr == nullptr && node->isa<ValueNode>()) {
+    auto value_node = node->cast<ValueNodePtr>();
+    MS_EXCEPTION_IF_CHECK_FAIL(value_node->value() != nullptr, "ValueNode has no value.");
+    auto abstract = value_node->value()->ToAbstract();
+    MS_EXCEPTION_IF_CHECK_FAIL(abstract != nullptr, "ValueNode has no Abstract.");
+    node->set_abstract(abstract);
+    base_shape_ptr = node->Shape();
+  }
   if (node->isa<CNode>() && !IsControlFlowNode(node)) {
     auto cnode = node->cast<CNodePtr>();
     if (cnode->input(0)->isa<CNode>()) {
