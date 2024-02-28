@@ -486,7 +486,7 @@ EvalResultPtr BaseFuncGraphEvaluator::Eval(AnalysisEnginePtr engine, const Abstr
   FuncGraphPtr fg = GetFuncGraph(engine, args_abs_list);
   MS_EXCEPTION_IF_NULL(fg);
   MS_EXCEPTION_IF_NULL(parent_context_);
-  auto context = parent_context_->NewContext(fg, args_abs_list);
+  auto context = NewContext(parent_context_, fg, args_abs_list);
   trace::TraceGraphEvalEnter(context, out_conf);
 
   std::size_t nargs = fg->parameters().size();
