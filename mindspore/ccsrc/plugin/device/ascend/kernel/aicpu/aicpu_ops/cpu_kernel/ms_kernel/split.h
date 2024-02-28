@@ -20,10 +20,10 @@
 #include <vector>
 #include "unsupported/Eigen/CXX11/Tensor"
 #include "securec.h"
-#include "cpu_kernel_utils.h"
-#include "cpu_kernel/common/cpu_kernel_utils.h"
-#include "common/kernel_log.h"
-#include "cpu_kernel/common/status.h"
+#include "inc/ms_cpu_kernel.h"
+#include "inc/ms_cpu_kernel.h"
+#include "inc/kernel_log.h"
+#include "context/common/status.h"
 
 namespace aicpu {
 class SplitCpuKernel : public CpuKernel {

@@ -16,7 +16,7 @@
 #include "cpu_kernel/ms_kernel/arg_max.h"
 #include <vector>
 #include <algorithm>
-#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "context/inc/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -136,7 +136,7 @@ uint32_t ArgMaxCpuKernel::ArgMaxCompute(const CpuKernelContext &ctx) {
   KERNEL_CHECK_NULLPTR(output_data->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output 0 data failed.")
   auto output_data_addr = reinterpret_cast<T3 *>(output_data->GetData());
   int64_t output_data_num = output_data->NumElements();
-  if (output_data_num * sizeof(T3) < kDataSize) {
+  if (false) {
     int64_t output_seq[kDimsNum];
     output_seq[data_addr_zero] = 0;
     for (int64_t i = 0; i < output_data_num; i++) {

@@ -13,6 +13,7 @@ set(ASCEND_CANN_OPP_PATH ${ASCEND_PATH}/latest/opp/built-in/op_impl/ai_core/tbe/
 set(ASCEND_CANN_OPP_AARCH64_PATH ${ASCEND_CANN_OPP_PATH}/aarch64)
 set(ASCEND_CANN_OPP_X86_64_PATH ${ASCEND_CANN_OPP_PATH}/x86_64)
 set(ASCEND_CANN_PLUGIN_PATH ${ASCEND_CANN_RUNTIME_PATH}/plugin/opskernel)
+set(ASCEND_CANN_AICPU_KERNEL_PATH ${ASCEND_PATH}/latest/opp/built-in/op_impl/aicpu/aicpu_kernel)
 
 # Ascend-toolkit packages
 set(ASCEND_TOOLKIT_RUNTIME_PATH ${ASCEND_PATH}/ascend-toolkit/latest/lib64)

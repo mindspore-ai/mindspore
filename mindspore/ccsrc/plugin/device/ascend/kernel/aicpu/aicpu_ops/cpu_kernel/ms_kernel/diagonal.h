@@ -18,7 +18,7 @@
 #include <array>
 #include <iostream>
 
-#include "cpu_kernel_utils.h"
+#include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
 class DiagonalCpuKernel final : public CpuKernel {

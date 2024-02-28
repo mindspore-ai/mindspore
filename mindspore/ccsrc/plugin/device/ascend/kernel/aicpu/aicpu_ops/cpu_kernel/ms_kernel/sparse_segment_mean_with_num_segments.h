@@ -16,7 +16,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_SPARSE_SEGMENT_MEAN_WITH_NUM_SEGMENTS_H_
 #define AICPU_KERNELS_NORMALIZED_SPARSE_SEGMENT_MEAN_WITH_NUM_SEGMENTS_H_
 
-#include "cpu_kernel_utils.h"
+#include "inc/ms_cpu_kernel.h"
 #include "cpu_types.h"
 #include "utils/bcast.h"
 

@@ -19,7 +19,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_COMPLEX_H_
 #define AICPU_KERNELS_NORMALIZED_COMPLEX_H_
 
-#include "cpu_kernel_utils.h"
+#include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
 class ComplexCpuKernel : public CpuKernel {

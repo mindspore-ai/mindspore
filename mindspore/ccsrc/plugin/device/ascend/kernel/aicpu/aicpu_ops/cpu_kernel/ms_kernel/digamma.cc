@@ -18,10 +18,10 @@
 
 #include <unsupported/Eigen/CXX11/Tensor>
 
-#include "cpu_kernel_utils.h"
+#include "context/inc/cpu_kernel_utils.h"
 #include "cpu_types.h"
-#include "kernel_log.h"
-#include "status.h"
+#include "inc/kernel_log.h"
+#include "context/common/status.h"
 #include "utils/kernel_util.h"
 
 namespace {

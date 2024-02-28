@@ -24,10 +24,10 @@
 #include "tile.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
-#include "cpu_kernel_utils.h"
+#include "context/inc/cpu_kernel_utils.h"
 #include "Eigen/Core"
 #include "base/bfloat16.h"
-#include "mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/common/atomic_op.h"
+#include "utils/atomic_op.h"
 #include "mindspore/core/utils/ms_utils_secure.h"
 
 namespace aicpu {

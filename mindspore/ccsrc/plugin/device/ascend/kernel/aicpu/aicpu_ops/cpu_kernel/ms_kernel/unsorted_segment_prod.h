@@ -17,7 +17,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_UNSORTED_SEGMENT_PROD_H
 #define AICPU_KERNELS_NORMALIZED_UNSORTED_SEGMENT_PROD_H
 
-#include "cpu_kernel_utils.h"
+#include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
 class UnsortedSegmentProdCpuKernel : public CpuKernel {

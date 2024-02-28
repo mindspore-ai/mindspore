@@ -19,12 +19,12 @@
 #include <algorithm>
 
 #include "Eigen/Dense"
-#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "context/inc/cpu_kernel_utils.h"
 #include "cpu_types.h"
 #include "utils/kernel_util.h"
-#include "common/kernel_log.h"
+#include "inc/kernel_log.h"
 #include "securec.h"
-#include "cpu_kernel/common/status.h"
+#include "context/common/status.h"
 
 namespace {
 const uint32_t kOutputNum = 1;

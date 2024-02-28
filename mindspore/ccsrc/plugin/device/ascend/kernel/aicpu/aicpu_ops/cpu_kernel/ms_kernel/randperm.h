@@ -16,7 +16,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_RANDPERM_H
 #define AICPU_KERNELS_NORMALIZED_RANDPERM_H
 
-#include "cpu_kernel_utils.h"
+#include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
 class RandpermCpuKernel : public CpuKernel {

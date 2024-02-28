@@ -16,6 +16,7 @@
 #include "fused_sparse_proximal_adagrad.h"
 #include <securec.h>
 #include "utils/kernel_util.h"
+#include "context/inc/cpu_kernel_utils.h"
 
 namespace aicpu {
 namespace {

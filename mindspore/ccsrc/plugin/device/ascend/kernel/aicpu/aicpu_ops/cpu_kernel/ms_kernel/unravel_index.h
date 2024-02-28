@@ -17,7 +17,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_UNRAVEL_INDEX_
 #define AICPU_KERNELS_NORMALIZED_UNRAVEL_INDEX_
 
-#include "cpu_kernel_utils.h"
+#include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
 class UnravelIndexCpuKernel : public CpuKernel {

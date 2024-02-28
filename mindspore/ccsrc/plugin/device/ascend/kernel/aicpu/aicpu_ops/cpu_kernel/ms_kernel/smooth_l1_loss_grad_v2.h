@@ -18,7 +18,7 @@
 #define AICPU_KERNELS_NORMALIZED_SMOOTH_L1_LOSS_GRAD_V2_H_
 
 #include <string>
-#include "cpu_kernel_utils.h"
+#include "inc/ms_cpu_kernel.h"
 #include "utils/bcast.h"
 
 namespace aicpu {

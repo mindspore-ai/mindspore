@@ -69,46 +69,7 @@ if(EXISTS ${CMAKE_C_COMPILER} AND EXISTS ${CMAKE_CXX_COMPILER})
 
     string(REGEX REPLACE "-B.*mold" " " CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
     string(REGEX REPLACE "-B.*mold" " " CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
-    add_library(mindspore_aicpu_kernels SHARED
-        ${AICPU_SRC}
-    )
 
-    target_compile_options(mindspore_aicpu_kernels PRIVATE
-        -march=armv8-a
-        -O2
-        -fvisibility-inlines-hidden
-        -fvisibility=hidden
-        -fno-strict-aliasing
-        -fno-common
-    )
-
-    target_link_libraries(mindspore_aicpu_kernels PRIVATE
-        -ldl
-        -shared
-        PUBLIC
-        ${SECUREC_ARM_LIBRARY}
-        -Wl,--whole-archive
-        -Wl,--no-whole-archive
-        -Wl,-Bsymbolic
-        -rdynamic
-        -s
-        mindspore::protobuf_arm
-        -pthread
-    )
-
-    set(INSTALL_LIBRARY_DIR lib/plugin)
-    install(TARGETS mindspore_aicpu_kernels OPTIONAL
-        EXPORT mindspore_aicpu_kernels-targets
-        LIBRARY DESTINATION ${INSTALL_LIBRARY_DIR}/ascend
-    )
-
-    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/common)
-    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/aicpu_sharder)
-    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/cpu_kernel/inc)
-    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/cpu_kernel/common)
-    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/cpu_kernel/cpu_proto)
-    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/cpu_kernel/utils)
-    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/cpu_kernel/)
     if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/customize/op_info_cfg)
         add_subdirectory(customize)
     endif()

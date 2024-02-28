@@ -19,7 +19,7 @@
 
 #include <vector>
 #include <utility>
-#include "cpu_kernel_utils.h"
+#include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
 class TileCpuKernel : public CpuKernel {

@@ -18,7 +18,7 @@
 #define AICPU_KERNELS_NORMALIZED_SCATTERNDUPDATE_H_
 
 #include <string.h>
-#include "cpu_kernel_utils.h"
+#include "inc/ms_cpu_kernel.h"
 #include "cpu_types.h"
 #include "utils/bcast.h"
 

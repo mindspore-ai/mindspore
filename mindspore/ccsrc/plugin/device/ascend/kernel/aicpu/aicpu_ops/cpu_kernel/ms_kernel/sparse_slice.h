@@ -18,8 +18,8 @@
 #define OPS_BUILT_IN_OP_PROTO_INC_SPARSE_OPS_H_
 
 #include <string>
-#include "cpu_kernel_utils.h"
-#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "inc/ms_cpu_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 #include "cpu_tensor.h"
 #include "cpu_tensor_shape.h"
 #include "unsupported/Eigen/CXX11/Tensor"

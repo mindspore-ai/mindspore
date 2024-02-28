@@ -20,10 +20,10 @@
 #define EIGEN_USE_SIMPLE_THREAD_POOL
 
 #include <Eigen/Dense>
-#include "cpu_kernel_utils.h"
+#include "inc/ms_cpu_kernel.h"
 #include "cpu_types.h"
 #include "utils/bcast.h"
-#include "common/cpu_kernel_utils.h"
+#include "inc/ms_cpu_kernel.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 

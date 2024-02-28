@@ -17,7 +17,7 @@
 #include <math.h>
 #include <stdint.h>
 #include "Eigen/Dense"
-#include "cpu_kernel_utils.h"
+#include "context/inc/cpu_kernel_utils.h"
 #include "cpu_types.h"
 #include "utils/kernel_util.h"
 #include "securec.h"

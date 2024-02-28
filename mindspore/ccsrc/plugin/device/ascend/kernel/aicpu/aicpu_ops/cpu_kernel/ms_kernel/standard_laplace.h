@@ -15,7 +15,7 @@
  */
 #ifndef AICPU_KERNELS_NORMALIZED_STANDARD_LAPLACE_H_
 #define AICPU_KERNELS_NORMALIZED_STANDARD_LAPLACE_H_
-#include "cpu_kernel_utils.h"
+#include "inc/ms_cpu_kernel.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 #include "random/utils.h"

@@ -17,7 +17,7 @@
 #include "cpu_kernel/ms_kernel/setsize.h"
 #include <securec.h>
 #include <algorithm>
-#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "context/inc/cpu_kernel_utils.h"
 #include "frontend/parallel/status.h"
 #include "utils/kernel_util.h"
 

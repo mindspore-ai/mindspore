@@ -20,7 +20,7 @@
 
 #include "Eigen/Core"
 
-#include "cpu_kernel_utils.h"
+#include "inc/ms_cpu_kernel.h"
 #include "utils/bcast.h"
 
 namespace aicpu {

@@ -18,7 +18,7 @@
 
 #include "Eigen/Core"
 #include "Eigen/SparseCore"
-#include "cpu_kernel_utils.h"
+#include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
 
