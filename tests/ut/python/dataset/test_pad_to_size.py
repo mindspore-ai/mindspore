@@ -180,7 +180,7 @@ def test_pad_to_size_check():
                        data=np.random.random(28))
     test_invalid_input(RuntimeError, "Expecting tensor in type of "
                                      "(bool, int8, uint8, int16, uint16, int32, float16, float32, float64)",
-                       data=np.random.random((28, 28, 3)).astype(np.str_))
+                       data=np.random.random((28, 28, 3)).astype(np.str))
 
 
 if __name__ == "__main__":

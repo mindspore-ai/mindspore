@@ -38,7 +38,7 @@ bool IsDynamicShapeInput(const CNodePtr &node, const AnfNodePtr &input);
 // split tensor only for first input
 static const std::set<std::string> SPLIT_TENSOR_ONLY_FOR_FIRST_INPUT_OPS = {PAD_V3};
 // the input is tuple or list
-static const std::set<std::string> INPUT_IS_TUPLE_OR_LIST_OPS = {CONCAT, STACK, ADDN, INCRE_FLASH_ATTENTION};
+static const std::set<std::string> INPUT_IS_TUPLE_OR_LIST_OPS = {CONCAT, STACK, ADDN};
 
 const int64_t TWO_INPUT_SIZE = 2;
 

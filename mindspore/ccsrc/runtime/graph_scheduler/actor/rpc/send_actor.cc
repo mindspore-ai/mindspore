@@ -102,13 +102,14 @@ bool SendActor::LaunchKernel(OpContext<DeviceTensor> *const context) {
   }
 
   // Send input data(inter-process data is the input of the Send kernel) to peers.
-  if (input_device_tensors_.empty()) {
+  if (launch_info_.inputs_.empty()) {
     MS_LOG(ERROR) << "Send kernel has no output tensor.";
     return false;
   }
+  auto send_output = launch_info_.inputs_;
   for (const auto &peer : peer_actor_urls_) {
     std::string peer_server_url = peer.second;
-    auto message = BuildRpcMessage(peer_server_url);
+    auto message = BuildRpcMessage(send_output, peer_server_url);
     MS_ERROR_IF_NULL_W_RET_VAL(message, false);
     MS_ERROR_IF_NULL_W_RET_VAL(client_, false);
     MS_LOG(INFO) << "Rpc actor send message for inter-process edge: " << peer.first;
@@ -126,7 +127,8 @@ void SendActor::EraseInput(const OpContext<DeviceTensor> *context) {
   }
 }
 
-std::unique_ptr<MessageBase> SendActor::BuildRpcMessage(const std::string &server_url) {
+std::unique_ptr<MessageBase> SendActor::BuildRpcMessage(const kernel::AddressPtrList &data_list,
+                                                        const std::string &server_url) {
   std::unique_ptr<MessageBase> message = std::make_unique<MessageBase>();
   MS_ERROR_IF_NULL_W_RET_VAL(message, nullptr);
   message->to = AID("", server_url);
@@ -134,7 +136,7 @@ std::unique_ptr<MessageBase> SendActor::BuildRpcMessage(const std::string &serve
 
   // To reach optimal performance, we use workspace memory as the data sent to the remote. So the size must be
   // strictly checked to avoid illegal memory access.
-  auto send_workspace = workspace_device_tensors_;
+  auto send_workspace = launch_info_.workspaces_;
   if (send_workspace.empty()) {
     MS_LOG(EXCEPTION) << "RpcSendKernel's workspace should not be empty.";
   }
@@ -142,9 +144,9 @@ std::unique_ptr<MessageBase> SendActor::BuildRpcMessage(const std::string &serve
   auto workspace_addr = send_workspace[kIndex0];
   if (is_dynamic_shape_) {
     MS_LOG(INFO) << "This send actor builds message with dynamic shape.";
-    SerializeDynamicShapeMessage(message.get(), workspace_addr);
+    SerializeDynamicShapeMessage(message.get(), data_list, workspace_addr);
   } else {
-    SerializeCommonMessage(message.get(), workspace_addr);
+    SerializeCommonMessage(message.get(), data_list, workspace_addr);
   }
 
   MS_LOG(DEBUG) << "RpcSend message size is " << message->size;
@@ -181,7 +183,7 @@ std::vector<DeviceTensor *> SendActor::FindDeviceTensorNeedsFree(const void *dat
 }
 
 size_t SendActor::SerializeSingleDynamicShapeInput(RpcDataPtr rpc_data, const ShapeVector &shape_vec,
-                                                   const TypeId &data_type, const DeviceTensor *addr) const {
+                                                   const TypeId &data_type, const kernel::AddressPtr &addr) const {
   MS_EXCEPTION_IF_NULL(rpc_data);
   MS_EXCEPTION_IF_NULL(addr);
 
@@ -215,58 +217,58 @@ size_t SendActor::SerializeSingleDynamicShapeInput(RpcDataPtr rpc_data, const Sh
   serialized_data_size += pb_msg_str.size();
 
   // Part 4. The real data buffer of the input.
-  if (!CopyRpcDataWithOffset(&rpc_data, addr->GetMutablePtr(), addr->GetSize())) {
+  if (!CopyRpcDataWithOffset(&rpc_data, addr->addr, addr->size)) {
     MS_LOG(EXCEPTION) << "Failed to copy data for real input data.";
   }
-  serialized_data_size += addr->GetSize();
+  serialized_data_size += addr->size;
 
   return serialized_data_size;
 }
 
-void SendActor::SerializeDynamicShapeMessage(MessageBase *message, const DeviceTensor *workspace_addr) const {
+void SendActor::SerializeDynamicShapeMessage(MessageBase *message, const kernel::AddressPtrList &data_list,
+                                             const kernel::AddressPtr &workspace_addr) const {
   MS_EXCEPTION_IF_NULL(workspace_addr);
   size_t offset = 0;
-  RpcDataPtr rpc_data = static_cast<RpcDataPtr>(workspace_addr->GetMutablePtr());
+  RpcDataPtr rpc_data = static_cast<RpcDataPtr>(workspace_addr->addr);
   for (size_t i = 0; i < input_kernel_tensors_.size(); i++) {
     auto shapes = input_kernel_tensors_[i]->GetShapeVector();
     TypeId data_type = input_kernel_tensors_[i]->dtype_id();
-    size_t serialized_data_size =
-      SerializeSingleDynamicShapeInput(rpc_data + offset, shapes, data_type, input_device_tensors_[i]);
+    size_t serialized_data_size = SerializeSingleDynamicShapeInput(rpc_data + offset, shapes, data_type, data_list[i]);
     offset += serialized_data_size;
   }
 
-  if (workspace_addr->GetSize() != offset) {
+  if (workspace_addr->size != offset) {
     MS_LOG(EXCEPTION) << "Send void data size is not the same as workspace size.";
   }
   MS_EXCEPTION_IF_NULL(message);
-  message->data = workspace_addr->GetMutablePtr();
-  message->size = workspace_addr->GetSize();
+  message->data = workspace_addr->addr;
+  message->size = workspace_addr->size;
 }
 
-void SendActor::SerializeCommonMessage(MessageBase *message, const DeviceTensor *workspace_addr) const {
+void SendActor::SerializeCommonMessage(MessageBase *message, const kernel::AddressPtrList &data_list,
+                                       const kernel::AddressPtr &workspace_addr) const {
   MS_EXCEPTION_IF_NULL(message);
   MS_EXCEPTION_IF_NULL(workspace_addr);
-  MS_EXCEPTION_IF_NULL(workspace_addr->GetMutablePtr());
+  MS_EXCEPTION_IF_NULL(workspace_addr->addr);
   size_t total_size = 0;
   total_size =
-    std::accumulate(input_device_tensors_.begin(), input_device_tensors_.end(), total_size,
-                    [](size_t total_size, const DeviceTensor *output) { return total_size + output->GetSize(); });
-  if (workspace_addr->GetSize() != total_size) {
-    MS_LOG(EXCEPTION) << "Workspace size should be the same as inputs size. But got " << workspace_addr->GetSize()
-                      << " and " << total_size;
+    std::accumulate(data_list.begin(), data_list.end(), total_size,
+                    [](size_t total_size, const kernel::AddressPtr &output) { return total_size + output->size; });
+  if (workspace_addr->size != total_size) {
+    MS_LOG(EXCEPTION) << "Workspace size should be the same as inputs size. But got " << workspace_addr->size << " and "
+                      << total_size;
   }
 
-  RpcDataPtr rpc_data = static_cast<RpcDataPtr>(workspace_addr->GetMutablePtr());
+  RpcDataPtr rpc_data = static_cast<RpcDataPtr>(workspace_addr->addr);
   MS_EXCEPTION_IF_NULL(rpc_data);
-  for (size_t i = 0; i < input_device_tensors_.size(); i++) {
-    MS_EXCEPTION_IF_NULL(input_device_tensors_[i]);
-    if (!CopyRpcDataWithOffset(&rpc_data, input_device_tensors_[i]->GetMutablePtr(),
-                               input_device_tensors_[i]->GetSize())) {
+  for (size_t i = 0; i < data_list.size(); i++) {
+    MS_EXCEPTION_IF_NULL(data_list[i]);
+    if (!CopyRpcDataWithOffset(&rpc_data, data_list[i]->addr, data_list[i]->size)) {
       MS_LOG(EXCEPTION) << "Failed to copy data for rpc send input " << i;
     }
   }
-  message->data = workspace_addr->GetMutablePtr();
-  message->size = workspace_addr->GetSize();
+  message->data = workspace_addr->addr;
+  message->size = workspace_addr->size;
 }
 
 }  // namespace runtime

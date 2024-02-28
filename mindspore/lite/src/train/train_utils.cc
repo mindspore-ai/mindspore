@@ -204,20 +204,5 @@ int ScaleTensor(Tensor *tensor, float scale) {
   MS_LOG(DEBUG) << "Scale tensor: " << tensor->tensor_name() << " " << scale;
   return tensor->Scale<float>(scale);
 }
-
-std::vector<Tensor *> TSFindTensors(const kernel::KernelExec *pre_kernel, const kernel::KernelExec *post_kernel) {
-  MS_ASSERT(pre_kernel != nullptr);
-  MS_ASSERT(post_kernel != nullptr);
-  auto out_tensors = pre_kernel->out_tensors();
-  auto in_tensors = post_kernel->in_tensors();
-  std::vector<Tensor *> res;
-  for (auto tensor : out_tensors) {
-    if (std::find(in_tensors.begin(), in_tensors.end(), tensor) == in_tensors.end()) {
-      continue;
-    }
-    res.push_back(tensor);
-  }
-  return res;
-}
 }  // namespace lite
 }  // namespace mindspore

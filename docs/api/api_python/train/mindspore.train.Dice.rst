@@ -22,7 +22,7 @@ mindspore.train.Dice
         计算Dice系数。
 
         返回：
-            float，计算的结果。
+            Float，计算的结果。
 
         异常：
             - **RuntimeError** - 样本数为0。

@@ -35,6 +35,7 @@ class Net(nn.Cell):
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
+@pytest.mark.skip(reason="the operator inc not cann")
 def test_net():
     """
     Feature: test apply_came_part1 tensor api.

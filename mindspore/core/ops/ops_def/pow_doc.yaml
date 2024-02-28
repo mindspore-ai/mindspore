@@ -4,10 +4,6 @@ pow:
         
         When `exponent` is a Tensor, the shapes of `input` and `exponent` must be broadcastable.
 
-        .. math::
-
-            out_{i} = input_{i} ^{ exponent_{i}}
-
         Args:
             input (Union[Tensor, Number]): The first input is a Number or a tensor whose data type is
                 `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or

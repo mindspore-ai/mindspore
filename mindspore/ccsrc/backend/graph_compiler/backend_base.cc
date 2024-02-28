@@ -843,7 +843,6 @@ void MindRTBackendBase::ConstructOutputs(runtime::ActorSet *actor_set, VectorRef
   is_embedding_cache_server = ps::PSContext::instance()->cache_enable() && ps::PSContext::instance()->is_server();
 #endif
   if (need_contruct_output) {
-    MS_EXCEPTION_IF_NULL(actor_set->output_actor_);
     // Update device address for output node of graph.
     // Summary processing will use the output device address, so must be after the summary processing.
     if (!is_embedding_cache_server) {
@@ -851,6 +850,7 @@ void MindRTBackendBase::ConstructOutputs(runtime::ActorSet *actor_set, VectorRef
     }
 
     // Fetch outputs.
+    MS_EXCEPTION_IF_NULL(actor_set->output_actor_);
     auto &output_tensors = actor_set->output_actor_->outputs();
     if (!output_tensors.empty()) {
       size_t output_position = 0;

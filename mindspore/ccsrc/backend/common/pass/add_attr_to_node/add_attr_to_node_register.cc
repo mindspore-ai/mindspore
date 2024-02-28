@@ -29,6 +29,8 @@ namespace opt {
 AddAttrToNodeImplRegistry::AddAttrToNodeImplRegistry() {
   Register(prim::kPrimAddN->name(), AddNFusionProcess);
   Register(prim::kPrimAccumulateNV2->name(), AccumulateNV2FusionProcess);
+  Register(prim::kPrimArgMaxWithValue->name(), ArgMaxMinWithValueFusionProcess);
+  Register(prim::kPrimArgMinWithValue->name(), ArgMaxMinWithValueFusionProcess);
   Register(prim::kPrimBatchMatMul->name(), BatchMatMulAttrFusionProcess);
   Register(prim::kPrimConcatOffsetV1->name(), ConcatOffsetV1FusionProcess);
   Register(prim::kPrimConv3DBackpropInput->name(), Conv3DBackpropInputPadListFusionProcess);

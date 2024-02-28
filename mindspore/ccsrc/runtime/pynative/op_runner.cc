@@ -162,7 +162,7 @@ void CopyTensorDataToDevice(const tensor::TensorPtr &tensor, const AnfNodePtr &n
   auto tensor_type = tensor->data_type();
   MS_LOG(DEBUG) << "Copy to device, node:" << common::AnfAlgo::GetNodeDebugString(node);
   if (!device_address->SyncHostToDevice(trans::GetRuntimePaddingShape(node, 0), tensor_size, tensor_type,
-                                        tensor->device_info().host_format_, tensor->data_ptr())) {
+                                        tensor->data_c(), tensor->device_info().host_format_)) {
     MS_LOG(EXCEPTION) << "SyncHostToDevice failed";
   }
 }
@@ -195,6 +195,12 @@ void CopyNodeValueToDevice(const device::DeviceAddressPtr &device_address, const
   const void *node_value = kernel_tensor->GetValuePtr();
   MS_EXCEPTION_IF_NULL(node_value);
   auto data_type_id = kernel_tensor->dtype_id();
+  if (data_type_id == kObjectTypeString) {
+    // NOTE: For string type, ge::StringHead.len does not include '\0', since kernel_tensor allocated size including
+    // '\0', see method `CreateDeviceAddressForScalarAndString` defined in `device_address_utils.cc`, so here
+    // `data_size` needs to decrease `1`
+    data_size -= 1;
+  }
   auto format = kernel_tensor->GetStringFormat();
   MS_LOG(DEBUG) << "Copy to device, node:" << common::AnfAlgo::GetNodeDebugString(node);
   if (!device_address->SyncHostToDevice(trans::GetRuntimePaddingShape(node, 0), data_size, data_type_id, node_value,
@@ -303,6 +309,7 @@ bool MallocForKernelInput(const std::shared_ptr<OpRuntimeInfo> &runtime_info,
     auto input_address = runtime_info->GetInputDeviceAddress(i);
     MS_EXCEPTION_IF_NULL(kernel_mod);
     MS_EXCEPTION_IF_NULL(input_address);
+    kernel_mod->set_input_user_data(input_address->user_data().get(), i);
     if (TEST_FLAG(input_address->flag(), device::kDeviceAddressFlagIgnoreDevicePtr)) {
       MS_LOG(DEBUG) << "Node " << node->DebugString() << " input[" << i << "] with address " << input_address
                     << " has flag ignore device address, so skip malloc device address";
@@ -335,6 +342,7 @@ bool MallocForKernelOutput(const std::shared_ptr<OpRuntimeInfo> &runtime_info, c
   for (size_t i = 0; i < output_size; ++i) {
     auto device_address = runtime_info->GetOutputDeviceAddress(i);
     MS_EXCEPTION_IF_NULL(device_address);
+    kernel_mod->set_output_user_data(device_address->user_data().get(), i);
     // For example, we need to call cudnnGetRNNTrainingReserveSize to get real output size in LstmGpuKernelMod!
     if (kernel_out_size_list[i] != device_address->GetSize() &&
         AnfAlgo::GetOutputFormat(node, i) == device_address->format()) {
@@ -978,8 +986,8 @@ void DynamicOpRunner::CopyHostToDevice(const OpCompilerInfoPtr &op_compiler_info
                         << ", alloc size: " << device_address->GetSize() << "B.";
     }
     if (!device_address->SyncHostToDevice(trans::GetRuntimePaddingShape(input_node, 0), device_address->GetSize(),
-                                          device_address->type_id(), input_tensor->device_info().host_format_,
-                                          input_tensor->data_ptr())) {
+                                          device_address->type_id(), input_tensor->data_c(),
+                                          input_tensor->device_info().host_format_)) {
       MS_LOG(EXCEPTION) << "SyncHostToDevice failed";
     }
     MS_LOG(DEBUG) << "Copy host tensor to device for op " << op_compiler_info->graph_info_ << " input " << i;

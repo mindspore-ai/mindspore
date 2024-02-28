@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_INCLUDE_API_LLM_ENGINE_H_
-#define MINDSPORE_INCLUDE_API_LLM_ENGINE_H_
+#ifndef MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_LLM_ENGINE_H_
+#define MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_LLM_ENGINE_H_
 #include <map>
 #include <string>
 #include <vector>
@@ -53,59 +53,29 @@ enum LLMRole {
   kLLMRoleDecoder = 1,
 };
 
-struct LLMTensorInfo {
-  std::string name;
-  std::vector<int64_t> shape;
-  DataType dtype;
-};
-
-class LLMModel;
-class LLMEngineImpl;
+class LLMEnginePluginBase;
 class MS_API LLMEngine {
  public:
-  LLMEngine(LLMRole role, uint64_t cluster_id, const std::string &batch_mode = "auto")
-      : LLMEngine(role, cluster_id, StringToChar(batch_mode)) {}
+  LLMEngine();
   ~LLMEngine() = default;
-  Status AddModel(LLMModel *llm_model, const std::vector<std::string> &model_paths,
-                  const std::map<std::string, std::string> &options, const std::string &postprocess_model_path = "") {
-    return AddModelInner(llm_model, VectorStringToChar(model_paths), MapStringToVectorChar(options),
-                         StringToChar(postprocess_model_path));
-  }
-  Status Init(const std::map<std::string, std::string> &options) { return InitInner(MapStringToVectorChar(options)); }
-
+  Status Init(const std::vector<std::string> &model_paths, LLMRole role, uint64_t cluster_id,
+              const std::map<std::string, std::string> &options, const std::string &batch_mode,
+              const std::string &postprocess_model_path);
   void Finalize();
-  LLMEngineStatus FetchStatus();
-  Status LinkClusters(const std::vector<LLMClusterInfo> &clusters, std::vector<Status> *rets, int32_t timeout = -1);
-  Status UnlinkClusters(const std::vector<LLMClusterInfo> &clusters, std::vector<Status> *rets, int32_t timeout = -1);
-  Status CompleteRequest(const LLMReq &req);
-
- private:
-  std::shared_ptr<LLMEngineImpl> impl_ = nullptr;
-  friend class LLMModel;
-
-  LLMEngine(LLMRole role, uint64_t cluster_id, const std::vector<char> &batch_mode);
-  Status AddModelInner(LLMModel *llm_model, const std::vector<VecChar> &model_paths,
-                       const std::map<VecChar, VecChar> &options, const VecChar &postprocess_model_path);
-  Status InitInner(const std::map<VecChar, VecChar> &options);
-};
-
-class LLMModelImpl;
-class MS_API LLMModel {
- public:
-  LLMModel();
-  ~LLMModel() = default;
   Status Predict(const LLMReq &req, const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs);
   Status Predict(const std::vector<LLMReq> &req, const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs);
+  Status CompleteRequest(const LLMReq &req);
   LLMEngineStatus FetchStatus();
   Status PreloadPromptPrefix(const LLMReq &req, const std::vector<MSTensor> &inputs);
   Status ReleasePromptPrefix(const LLMReq &req);
   Status PullKV(const LLMReq &req);
-  Status MergeKV(const LLMReq &req, uint32_t batch_index, uint32_t batch_id);
-  std::vector<LLMTensorInfo> GetInputInfos();
+  Status MergeKV(const LLMReq &req, uint32_t batch_index);
+
+  Status LinkClusters(const std::vector<LLMClusterInfo> &clusters, std::vector<Status> *rets, int32_t timeout = -1);
+  Status UnlinkClusters(const std::vector<LLMClusterInfo> &clusters, std::vector<Status> *rets, int32_t timeout = -1);
 
  private:
-  std::shared_ptr<LLMModelImpl> impl_ = nullptr;
-  friend class LLMEngine;
+  std::shared_ptr<LLMEnginePluginBase> plugin_ = nullptr;
 };
 }  // namespace mindspore
-#endif  // MINDSPORE_INCLUDE_API_LLM_ENGINE_H_
+#endif  // MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_LLM_ENGINE_H_

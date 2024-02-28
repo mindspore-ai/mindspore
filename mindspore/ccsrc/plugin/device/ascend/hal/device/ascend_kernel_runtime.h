@@ -43,7 +43,7 @@ class AscendKernelRuntime : public KernelRuntime {
   void ClearGraphRuntimeResource(uint32_t graph_id) override;
   void ClearGlobalIdleMem() override;
   bool SyncStream() override;
-  bool MemcpyAsync(void *dst, const void *src, uint64_t size, int32_t kind, void *stream) override;
+  bool MemcpyAsync(void *dst, const void *src, uint64_t size, int32_t kind) override;
   void SetContext() override;
   void SetContextForce() override;
   void ResetStreamAndCtx() override;

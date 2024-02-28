@@ -21,18 +21,18 @@ import mindspore.common.dtype as mstype
 from mindspore import _checkparam as validator
 from mindspore.experimental.optim.optimizer import Optimizer, check_not_less_than, check_not_less_than_without_equal
 from mindspore import ops
-from mindspore import jit
 
 _adamax_opt = C.MultitypeFuncGraph("adamax_opt")
 
 
-@_adamax_opt.register("Number", "Number", "Number", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor")
-def _tensor_run_opt(beta1, beta2, eps, clr, param, grad, exp_avg, exp_inf):
+@_adamax_opt.register("Number", "Number", "Number", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor")
+def _tensor_run_opt(beta1, beta2, eps, step_t, lr, param, grad, exp_avg, exp_inf):
     """Apply adamax optimizer to the weight parameter."""
     F.assign(exp_avg, exp_avg * beta1 + grad * (1-beta1))
     norm_buf = ops.cat([ops.unsqueeze(exp_inf * beta2, 0), ops.unsqueeze(grad.abs().add(eps), 0)], 0)
     F.assign(exp_inf, ops.amax(norm_buf, 0))
-
+    bias_correction = 1 - beta1 ** step_t
+    clr = lr / bias_correction
     F.assign(param, param - clr * exp_avg / exp_inf)
     return True
 
@@ -138,22 +138,6 @@ class Adamax(Optimizer):
         self.assignadd = P.AssignAdd()
         self.op_cast = P.Cast()
 
-    @jit
-    def implementation(self, group_id, lr, gradients, maximize, weight_decay, beta1, beta2, eps):
-        """Extract the common computing part for acceleration"""
-        start_id = self.group_start_id[group_id]
-        end_id = self.group_start_id[group_id + 1]
-        params = self.parameters[start_id: end_id]
-        grads = tuple([grad if not maximize else F.neg(grad) for grad in gradients[start_id: end_id]])
-        grads = self._decay_weight(weight_decay, params, grads)
-        exp_avg = self.exp_avg[start_id: end_id]
-        exp_inf = self.exp_inf[start_id: end_id]
-        bias_correction = 1 - beta1 ** self.step_t
-        clr = lr / bias_correction
-        self.hyper_map(F.partial(_adamax_opt, beta1, beta2, eps, clr),
-                       params, grads, exp_avg, exp_inf)
-        return True
-
     def construct(self, gradients):
         self.assignadd(self.step_t, self.increase_tensor)
 
@@ -165,6 +149,13 @@ class Adamax(Optimizer):
 
             maximize = group.get("maximize")
             beta1, beta2 = group["betas"]
-
-            self.implementation(group_id, lr, gradients, maximize, group["weight_decay"], beta1, beta2, group["eps"])
+            start_id = self.group_start_id[group_id]
+            end_id = self.group_start_id[group_id + 1]
+            params = self.parameters[start_id: end_id]
+            grads = tuple([grad if not maximize else F.neg(grad) for grad in gradients[start_id: end_id]])
+            grads = self._decay_weight(group["weight_decay"], params, grads)
+            exp_avg = self.exp_avg[start_id: end_id]
+            exp_inf = self.exp_inf[start_id: end_id]
+            self.hyper_map(F.partial(_adamax_opt, beta1, beta2, group["eps"], self.step_t, lr),
+                           params, grads, exp_avg, exp_inf)
         return True

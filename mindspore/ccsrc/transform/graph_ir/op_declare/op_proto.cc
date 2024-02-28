@@ -147,7 +147,7 @@ std::vector<enum ge::DataType> ParseGeTypes(const std::string &op_name, const st
   for (const auto &n : split_tensor_types) {
     auto iter = kGeTypeMap.find(n);
     if (iter == kGeTypeMap.end()) {
-      MS_LOG(INFO) << "Unknown data type: " << n << " in prototype of operator " << op_name;
+      MS_LOG(WARNING) << "Unknown data type: " << n << " in prototype of operator " << op_name;
       continue;
     }
     auto &v = iter->second;

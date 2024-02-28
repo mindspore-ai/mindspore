@@ -27,7 +27,6 @@
 #include <vector>
 
 namespace mindspore {
-using VecChar = std::vector<char>;
 inline std::vector<char> StringToChar(const std::string &s) { return std::vector<char>(s.begin(), s.end()); }
 
 inline std::string CharToString(const std::vector<char> &c) { return std::string(c.begin(), c.end()); }

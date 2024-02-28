@@ -20,7 +20,7 @@ mindspore.ops.NLLLoss
         \ell(x, t)=\left\{\begin{array}{ll}
         \sum_{n=1}^{N} \frac{1}{\sum_{n=1}^{N} w_{t n}} l_{n}, & \text { if reduction }=\text { 'mean'; } \\
         \sum_{n=1}^{N} l_{n}, & \text { if reduction }=\text { 'sum' }
-        \end{array}\right
+        \end{array}\right.
 
     参数：
         - **reduction** (str，可选) - 指定应用于输出结果的规约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认值： ``'mean'`` 。

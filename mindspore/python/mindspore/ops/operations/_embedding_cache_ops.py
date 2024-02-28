@@ -65,7 +65,7 @@ class SubAndFilter(PrimitiveWithCheck):
 
     Inputs:
         - **input_x** (Tensor) - Input tensor.
-        - **max_num** (int) - The max value of element that after sub `offset`.
+        - **max_num** (Int) - The max value of element that after sub `offset`.
         - **offset** (int) - Specifies the offset value of this `input_x`.
 
     Outputs:

@@ -286,7 +286,7 @@ def vm_impl_not_equal(self):
     return vm_impl
 
 
-@vm_impl_getters.register("Greater")
+@vm_impl_getters.register(P.Greater)
 def vm_impl_greater(self):
     """Generate vm_impl function for Greater."""
 

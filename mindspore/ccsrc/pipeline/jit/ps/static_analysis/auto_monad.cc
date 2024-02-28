@@ -1477,6 +1477,13 @@ class SideEffectFinder {
     MS_EXCEPTION_IF_NULL(func_graph);
     auto effect_info = func_graph->GetEffectInfo();
     if (effect_info.state != EffectInfo::kUnknown) {
+      // Effect info already set, return it.
+      if (func_graph->stage() != -1) {
+        // Graph which need PipelineSplit doesn't have effect.
+        effect_info.memory = false;
+        effect_info.load = false;
+        effect_info.io = false;
+      }
       return effect_info;
     }
 
@@ -1526,6 +1533,12 @@ class SideEffectFinder {
       if (cnode_effect.state != EffectInfo::kDetected && scc->find(cnode->func_graph()) != scc->end()) {
         MS_LOG(INTERNAL_EXCEPTION) << "Side effect is undetectable: " << cnode->DebugString();
       }
+    }
+    // Graph which need PipelineSplit doesn't have effect.
+    if (func_graph->stage() != -1) {
+      info.memory = false;
+      info.load = false;
+      info.io = false;
     }
     return info;
   }
@@ -2197,6 +2210,9 @@ bool AutoMonad(const FuncGraphPtr &func_graph) {
   for (auto &fg : fg_used_total) {
     MS_EXCEPTION_IF_NULL(fg);
     auto top_flag = fg->has_flag(mindspore::kFuncGraphFlagBackPropEntry);
+    if (fg->stage() != -1) {
+      top_flag = true;
+    }
     bool fg_has_effects = AutoMonadConverter::Handle(fg, top_flag);
     has_effects = has_effects || fg_has_effects;
   }

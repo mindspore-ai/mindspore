@@ -24,8 +24,6 @@
 #include <set>
 #include <string>
 #include <utility>
-#include <deque>
-#include <functional>
 
 #include "mindspore/core/ops/sequence_ops.h"
 #include "mindspore/core/ops/other_ops.h"
@@ -1372,11 +1370,8 @@ void HandleMirrorInAdaSum(
   }
 }
 
-void HandleCameAndAdaFactorOpt(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_nodes,
-                               const FuncGraphManagerPtr &manager) {
-  MS_LOG(INFO) << "Adafactor or Came optimizer process start";
+void HandleAdaFactorOpt(const FuncGraphPtr &root) {
   MS_EXCEPTION_IF_NULL(root);
-  std::set<AnfNodePtr> origin_params;
   for (auto &param_node : root->parameters()) {
     MS_EXCEPTION_IF_NULL(param_node);
     auto param = param_node->cast<ParameterPtr>();
@@ -1389,8 +1384,7 @@ void HandleCameAndAdaFactorOpt(const FuncGraphPtr &root, const std::vector<AnfNo
     int64_t row_col_count = 0;
     int64_t exp_avg_sq_count = 0;
     for (auto &row_col_node : root->parameters()) {
-      bool is_all_param_collected = (row_col_count == 4) && (exp_avg_sq_count == 1);
-      if (is_all_param_collected) {
+      if (row_col_count == 2 && exp_avg_sq_count == 1) {
         break;
       }
 
@@ -1401,16 +1395,13 @@ void HandleCameAndAdaFactorOpt(const FuncGraphPtr &root, const std::vector<AnfNo
       std::string param_name = param->name();
       std::string exp_row_name = EXP_AVG_SQ_ROW + param_name;
       std::string exp_col_name = EXP_AVG_SQ_COL + param_name;
-      std::string exp_insta_row_name = EXP_AVG_INSTA_ROW + param_name;
-      std::string exp_insta_col_name = EXP_AVG_INSTA_COL + param_name;
       std::string exp_avg_name = EXP_AVG_SQ + param_name;
-      std::set<std::string> came_param_set = {exp_row_name, exp_col_name, exp_insta_row_name, exp_insta_col_name,
-                                              exp_avg_name};
 
-      if (came_param_set.find(row_col_param_name) == came_param_set.end()) {
+      if ((row_col_param_name != exp_row_name) && (row_col_param_name != exp_col_name) &&
+          (row_col_param_name != exp_avg_name)) {
         continue;
       }
-      origin_params.insert(param_node);
+
       auto tensor_layout = param->user_data<TensorLayout>();
       MS_EXCEPTION_IF_NULL(tensor_layout);
       auto slice_shape = tensor_layout->slice_shape().array();
@@ -1420,7 +1411,7 @@ void HandleCameAndAdaFactorOpt(const FuncGraphPtr &root, const std::vector<AnfNo
       }
 
       auto shape_size = slice_shape.size();
-      bool is_row_or_col_param = row_col_param_name != exp_avg_name;
+      bool is_row_or_col_param = (row_col_param_name == exp_row_name) || (row_col_param_name == exp_col_name);
       if (is_row_or_col_param && shape_size <= 1) {
         row_col_count++;
         continue;
@@ -1435,12 +1426,12 @@ void HandleCameAndAdaFactorOpt(const FuncGraphPtr &root, const std::vector<AnfNo
       auto dev_mat = tensor_layout->device_arrangement().array();
       auto tensor_map = tensor_layout->tensor_map().array();
 
-      if (row_col_param_name == exp_row_name || row_col_param_name == exp_insta_row_name) {
+      if (row_col_param_name == exp_row_name) {
         opt_shard_slice_shape.pop_back();
         origin_shape.pop_back();
         tensor_map.pop_back();
         row_col_count++;
-      } else if (row_col_param_name == exp_col_name || row_col_param_name == exp_insta_col_name) {
+      } else if (row_col_param_name == exp_col_name) {
         (void)opt_shard_slice_shape.erase(opt_shard_slice_shape.cbegin() +
                                           static_cast<different_type>(SECOND_FROM_END(shape_size)));
         (void)origin_shape.erase(origin_shape.cbegin() + static_cast<different_type>(SECOND_FROM_END(shape_size)));
@@ -1457,7 +1448,6 @@ void HandleCameAndAdaFactorOpt(const FuncGraphPtr &root, const std::vector<AnfNo
 
       if (AdafactorStateIsOptShard(tensor_layout->opt_shard_group(), shape_size, param_name, row_col_param_name)) {
         new_tensor_layout.set_opt_shard_group(tensor_layout->opt_shard_group());
-        new_tensor_layout.GenerateOptShardSliceShape();
       }
 
       auto cloned_abstract = row_col_node->abstract()->Clone();
@@ -1467,12 +1457,9 @@ void HandleCameAndAdaFactorOpt(const FuncGraphPtr &root, const std::vector<AnfNo
       cloned_abstract->set_shape(parallel_shape);
       row_col_param->set_user_data<TensorLayout>(std::make_shared<TensorLayout>(new_tensor_layout));
       row_col_node->set_abstract(cloned_abstract);
+      MS_LOG(INFO) << "Set the slice shape for " << row_col_param_name << ", origin shape is " << origin_shape
+                   << ", new slice shape is " << opt_shard_slice_shape;
     }
-  }
-
-  for (const auto &origin_param_node : origin_params) {
-    auto inserter = CameCommHandler(origin_param_node->cast<ParameterPtr>(), root->parameters(), manager->node_users());
-    inserter.Process();
   }
 }
 

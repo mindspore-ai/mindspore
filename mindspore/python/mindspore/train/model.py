@@ -1515,8 +1515,8 @@ class Model:
                     [ascend_context]
                     rank_table_file = [path_a](storage initial path of the rank table file)
                     [execution_plan]
-                    [op_name1] = data_type:float16 (operator named op_name1 is set to data type float16)
-                    [op_name2] = data_type:float32 (operator named op_name2 is set to data type float32)
+                    [op_name1] = data_type:float16 (operator named op_name1 is set to data type Float16)
+                    [op_name2] = data_type:float32 (operator named op_name2 is set to data type Float32)
 
                 When only the config_path is configured, it is done as follows:
 
@@ -1649,8 +1649,8 @@ class Model:
                     [ascend_context]
                     rank_table_file = [path_a](storage initial path of the rank table file)
                     [execution_plan]
-                    [op_name1] = data_type:float16 (operator named op_name1 is set to data type float16)
-                    [op_name2] = data_type:float32 (operator named op_name2 is set to data type float32)
+                    [op_name1] = data_type:float16 (operator named op_name1 is set to data type Float16)
+                    [op_name2] = data_type:float32 (operator named op_name2 is set to data type Float32)
 
                 When only the config_path is configured, it is done as follows:
 

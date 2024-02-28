@@ -81,6 +81,23 @@ python3 print_data.py /tmp/npy_acl_data/xxx*.npy
 
 constexpr auto kAclDumpConfigPath = "MS_ACL_DUMP_CFG_PATH";
 
+bool g_acl_initialized = false;
+std::mutex g_acl_init_mutex;
+
+void InitializeAcl() {
+  std::lock_guard<std::mutex> lock(g_acl_init_mutex);
+  if (g_acl_initialized) {
+    return;
+  }
+
+  if (aclInit(nullptr) != ACL_ERROR_NONE) {
+    MS_LOG(WARNING) << "Call aclInit failed, acl data dump function will be unusable.";
+  } else {
+    MS_LOG(INFO) << "Call aclInit successfully";
+  }
+  g_acl_initialized = true;
+}
+
 class AclDumper {
  public:
   AclDumper(AclDumper const &) = delete;             // disable copy constructor
@@ -95,7 +112,7 @@ class AclDumper {
 
     // NOTE: function `aclmdlInitDump` must be called after `aclInit` to take effect, MindSpore never call `aclInit`
     // before, so here call it once
-    mindspore::device::ascend::InitializeAcl();
+    InitializeAcl();
 
     if (aclmdlInitDump() != ACL_ERROR_NONE) {
       acl_dump_config_ = "";

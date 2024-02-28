@@ -73,7 +73,7 @@ class SymbolTree:
         will parse the internal statements in the statement and generate corresponding nodes:
 
         - :class:`mindspore.nn.SequentialCell`
-        - Functions(Excludes Python built-in functions and third-party library functions)
+        - Functions within classes
         - Control flow statements, such as `if` statements
 
         Note:
@@ -90,8 +90,11 @@ class SymbolTree:
         The current rewrite module has the following syntax limitations:
 
         - Only networks of type :class:`mindspore.nn.Cell` are supported as input to the rewrite module.
-        - Parsing one-line control flow syntax(e.g. one-line if-else, one-line for loop) is not currently supported.
+        - Parsing assignment statements with multiple output values is not currently supported.
+        - Parsing loop statements is not currently supported.
         - Parsing decorator syntax is not currently supported.
+        - Parsing class variable syntax is not currently supported. If class variable uses external data,
+          the network after rewrite may be missing data.
         - Parsing local classes and embedded classes is not currently supported, that is, the definition
           of classes need to be placed on the outermost layer.
         - Parsing closure syntax is not currently supported, that is, the definition of out-of-class

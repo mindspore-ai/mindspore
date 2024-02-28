@@ -1951,23 +1951,6 @@ AnfNodePtr Parser::MakeGetAttrWithInterpret(const std::string &obj_name, const s
   return ret_node;
 }
 
-AnfNodePtr TransPropertyToFunc(const FuncGraphPtr &fg, const AnfNodePtr &node, const py::object &property_net_obj,
-                               std::string attr_str) {
-  py::object property_func = py::none();
-  try {
-    property_func = property_net_obj.attr("__class__").attr(py::str(attr_str));
-  } catch (const std::exception &e) {
-    MS_LOG(ERROR) << property_net_obj << " has no attribute " << attr_str;
-  }
-  py::object property_func_fget = property_func.attr(py::str("fget"));
-  auto inner_fg = ParsePythonCode(property_func_fget);
-  std::vector<AnfNodePtr> new_inputs = {NewValueNode(inner_fg)};
-  new_inputs.push_back(node);
-  AnfNodePtr call_func_node = fg->NewCNodeInOrder(new_inputs);
-  MS_LOG(DEBUG) << "call_func_node:" << call_func_node->DebugString();
-  return call_func_node;
-}
-
 // Process call attributes of class type define, eg: x.y()
 AnfNodePtr Parser::ParseAttribute(const FunctionBlockPtr &block, const py::object &node) {
   MS_LOG(DEBUG) << "Process ast Attribute";
@@ -1997,9 +1980,8 @@ AnfNodePtr Parser::ParseAttribute(const FunctionBlockPtr &block, const py::objec
     bool is_property =
       (python_adapter::CallPyModFn(mod, PYTHON_PARSE_CHECK_ATTR_IS_PROPERTY, ast()->obj(), attr_str)).cast<bool>();
     if (is_property) {
-      py::object property_net_obj = ast()->obj();
-      AnfNodePtr value_node = ParseExprNode(block, value_body);
-      return TransPropertyToFunc(cur_fg, value_node, property_net_obj, attr_str);
+      MS_LOG(INFO) << "The property decorator is not supported in graph mode.\n"
+                      "You can remove the property decorator and call the function as a method.\n";
     }
     obj_name = "self";
     getattr_obj = ast()->obj();

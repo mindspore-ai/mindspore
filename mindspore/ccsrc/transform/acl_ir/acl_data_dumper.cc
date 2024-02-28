@@ -50,7 +50,7 @@ class AclDataDumper : public DataDumper {
     InitializeAcl();
 
     if (aclmdlInitDump() != ACL_ERROR_NONE) {
-      MS_LOG(INFO) << "Call aclmdlInitDump failed, acl data dump function will be unusable.";
+      MS_LOG(WARNING) << "Call aclmdlInitDump failed, acl data dump function will be unusable.";
     }
   }
   void EnableDump(uint32_t device_id, uint32_t step_id) override {
@@ -80,7 +80,7 @@ class AclDataDumper : public DataDumper {
 class AclDumpRegister {
  public:
   AclDumpRegister() {
-    MS_LOG(INFO) << " Register AclDataDumper for ascend backend\n";
+    MS_LOG(WARNING) << " Register AclDataDumper for ascend backend\n";
     DataDumperRegister::Instance().RegistDumper(device::DeviceType::kAscend, std::make_shared<AclDataDumper>());
   }
 

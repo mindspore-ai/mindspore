@@ -29,6 +29,7 @@ namespace opt {
 const AnfNodePtr AccumulateNV2FusionProcess(const FuncGraphPtr &, const AnfNodePtr &);
 const AnfNodePtr AddDropoutAttrs(const FuncGraphPtr &, const AnfNodePtr &);
 const AnfNodePtr AddNFusionProcess(const FuncGraphPtr &, const AnfNodePtr &);
+const AnfNodePtr ArgMaxMinWithValueFusionProcess(const FuncGraphPtr &, const AnfNodePtr &);
 const AnfNodePtr BatchMatMulAttrFusionProcess(const FuncGraphPtr &, const AnfNodePtr &);
 const AnfNodePtr ConcatOffsetV1FusionProcess(const FuncGraphPtr &, const AnfNodePtr &);
 const AnfNodePtr Conv3DBackpropInputPadListFusionProcess(const FuncGraphPtr &, const AnfNodePtr &);

@@ -67,7 +67,7 @@ def test_func_dc_shift_pipeline_error():
     Description: Test DCShift in pipeline mode with invalid input
     Expectation: Correct error and message are thrown as expected
     """
-    arr = np.random.uniform(-2, 2, size=(1000)).astype(float)
+    arr = np.random.uniform(-2, 2, size=(1000)).astype(np.float)
     label = np.random.sample((1000, 1))
     data = (arr, label)
     dataset = ds.NumpySlicesDataset(

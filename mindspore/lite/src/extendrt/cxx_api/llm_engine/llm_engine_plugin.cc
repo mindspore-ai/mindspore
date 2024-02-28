@@ -24,63 +24,53 @@
 #include "ge/llm_engine.h"
 #include "common/ge_common/ge_inner_error_codes.h"
 
-namespace mindspore {
-struct LLMModelInfo {
-  std::vector<LLMEngineModelInfo> model_infos;
-  std::map<std::string, std::string> options;
-  LLMEngineModelInfo postprocess_model;
-};
+#define LLM_RUN_ASYNC
 
+namespace mindspore {
 class LLMEnginePlugin : public LLMEnginePluginBase {
  public:
-  LLMEnginePlugin(LLMRole role, uint64_t cluster_id, const std::string &batch_mode)
-      : LLMEnginePluginBase(role, cluster_id, batch_mode), llm_engine_(std::make_shared<llm::LLMEngine>(cluster_id_)) {}
+  LLMEnginePlugin();
   ~LLMEnginePlugin();
-  Status AddModel(const std::vector<LLMEngineModelInfo> &model_infos, const std::map<std::string, std::string> &options,
-                  const LLMEngineModelInfo &postprocess_model, uint64_t *model_id) override;
-  Status Init(const std::map<std::string, std::string> &options) override;
+  Status Init(const std::vector<LLMEngineModelInfo> &model_infos, LLMRole role, uint64_t cluster_id,
+              const std::map<std::string, std::string> &options, const std::string &batch_mode,
+              const LLMEngineModelInfo &postprocess_model) override;
   void Finalize() override;
-  LLMEngineStatus FetchStatus() override;
+  Status Predict(const LLMReq &req, const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) override;
 
-  Status Predict(const LLMReq &req, const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
-                 uint64_t model_id) override;
-
-  Status Predict(const std::vector<LLMReq> &req, const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
-                 uint64_t model_id) override;
+  Status Predict(const std::vector<LLMReq> &req, const std::vector<MSTensor> &inputs,
+                 std::vector<MSTensor> *outputs) override;
   Status CompleteRequest(const LLMReq &req) override;
-  Status PreloadPromptPrefix(const LLMReq &req, const std::vector<MSTensor> &inputs, uint64_t model_id) override;
-  Status ReleasePromptPrefix(const LLMReq &req, uint64_t model_id) override;
+  LLMEngineStatus FetchStatus() override;
+  Status PreloadPromptPrefix(const LLMReq &req, const std::vector<MSTensor> &inputs) override;
+  Status ReleasePromptPrefix(const LLMReq &req) override;
 
-  Status PullKV(const LLMReq &req, uint64_t model_id) override;
-  Status MergeKV(const LLMReq &req, uint32_t batch_index, uint32_t batch_id, uint64_t model_id) override;
+  Status PullKV(const LLMReq &req) override;
+  Status MergeKV(const LLMReq &req, uint32_t batch_index) override;
 
   Status LinkClusters(const std::vector<LLMClusterInfo> &, std::vector<Status> *rets, int32_t timeout) override;
   Status UnlinkClusters(const std::vector<LLMClusterInfo> &, std::vector<Status> *rets, int32_t timeout) override;
 
  private:
+  LLMRole role_ = kLLMRolePrompt;
+  uint64_t cluster_id_ = 0;
+  std::map<std::string, std::string> options_;
   std::shared_ptr<::llm::LLMEngine> llm_engine_ = nullptr;
   bool finalized_ = false;
-  bool inited_ = false;
-  std::map<uint64_t, LLMModelInfo> model_infos_;
 
   MSTensor ConvertGeTensorNoCopy(::ge::Tensor *ge_tensor_ptr);
-  Status Run(const llm::LLMReq &req, const std::vector<::ge::Tensor> &ge_inputs, std::vector<::ge::Tensor> *ge_outputs,
-             uint64_t model_id);
-  Status Run(const std::vector<llm::LLMReq> &req, const std::vector<::ge::Tensor> &ge_inputs,
-             std::vector<::ge::Tensor> *ge_outputs, uint64_t model_id);
+  Status Run(llm::LLMReq *req, const std::vector<::ge::Tensor> &ge_inputs, std::vector<::ge::Tensor> *ge_outputs);
   Status CheckModelInfos(const std::vector<LLMEngineModelInfo> &model_infos);
-  void InitInputOptions(const LLMEngineModelInfo &model_info, bool postprocess,
-                        std::map<std::string, std::string> *options);
-  static void TransLLMReq(const LLMReq &req, llm::LLMReq *llm_req);
-  static void TransLLMClusterInfos(const std::vector<LLMClusterInfo> &clusters,
-                                   std::vector<llm::ClusterInfo> *llm_clusters);
+  void InitInputOptions(const LLMEngineModelInfo &model_info, bool postprocess);
+  void TransLLMReq(const LLMReq &req, llm::LLMReq *llm_req) const;
+  void TransLLMClusterInfos(const std::vector<LLMClusterInfo> &clusters,
+                            std::vector<llm::ClusterInfo> *llm_clusters) const;
   Status MSTensorToGeTensor(const std::vector<MSTensor> &inputs, std::vector<::ge::Tensor> *ge_inputs);
   Status OnGeStatus(ge::Status ge_status, const std::string &func_s, const std::string &phase);
 };
 
-LLMEnginePluginBase *CreateLLMEnginePlugin(LLMRole role, uint64_t cluster_id, const std::string &batch_mode) {
-  return new LLMEnginePlugin(role, cluster_id, batch_mode);
-}
+LLMEnginePluginBase *CreateLLMEnginePlugin() { return new LLMEnginePlugin(); }
+
+LLMEnginePlugin::LLMEnginePlugin() {}
 
 LLMEnginePlugin::~LLMEnginePlugin() { LLMEnginePlugin::Finalize(); }
 
@@ -110,8 +100,7 @@ Status LLMEnginePlugin::CheckModelInfos(const std::vector<LLMEngineModelInfo> &m
   return kSuccess;
 }
 
-void LLMEnginePlugin::InitInputOptions(const LLMEngineModelInfo &model_info, bool postprocess,
-                                       std::map<std::string, std::string> *options_ptr) {
+void LLMEnginePlugin::InitInputOptions(const LLMEngineModelInfo &model_info, bool postprocess) {
   auto shape_as_string = [](const ShapeVector &shape) {
     std::string str;
     for (size_t i = 0; i < shape.size(); i++) {
@@ -142,19 +131,18 @@ void LLMEnginePlugin::InitInputOptions(const LLMEngineModelInfo &model_info, boo
   for (auto &item : model_info.ref_input_dtypes) {
     ref_input_dtypes += dtype_as_string(item) + ";";
   }
-  auto &options = *options_ptr;
   auto erase_comma = [](const std::string &str) { return str.empty() ? str : str.substr(0, str.size() - 1); };
   if (!postprocess) {
-    options["llm.InputShapes"] = erase_comma(input_shapes);
-    options["llm.InputDtypes"] = erase_comma(input_dtypes);
-    options["llm.RefInputShapes"] = erase_comma(ref_input_shapes);
-    options["llm.RefInputDtypes"] = erase_comma(ref_input_dtypes);
-    options["llm.OutputNums"] = std::to_string(model_info.output_count);
+    options_["llm.InputShapes"] = erase_comma(input_shapes);
+    options_["llm.InputDtypes"] = erase_comma(input_dtypes);
+    options_["llm.RefInputShapes"] = erase_comma(ref_input_shapes);
+    options_["llm.RefInputDtypes"] = erase_comma(ref_input_dtypes);
+    options_["llm.OutputNums"] = std::to_string(model_info.output_count);
   } else {
-    options["llm.PostProcessInputShapes"] = erase_comma(input_shapes);
-    options["llm.PostProcessInputDtypes"] = erase_comma(input_dtypes);
-    options["llm.PostProcessOutputNums"] = std::to_string(model_info.output_count);
-    options["llm.PostProcessOmCachePath"] = model_info.weight_dir;
+    options_["llm.PostProcessInputShapes"] = erase_comma(input_shapes);
+    options_["llm.PostProcessInputDtypes"] = erase_comma(input_dtypes);
+    options_["llm.PostProcessOutputNums"] = std::to_string(model_info.output_count);
+    options_["llm.PostProcessOmCachePath"] = model_info.weight_dir;
   }
 }
 
@@ -190,37 +178,33 @@ Status LLMEnginePlugin::OnGeStatus(ge::Status ge_status, const std::string &func
   return lite_status;
 }
 
-Status LLMEnginePlugin::AddModel(const std::vector<LLMEngineModelInfo> &model_infos,
-                                 const std::map<std::string, std::string> &options_i,
-                                 const LLMEngineModelInfo &postprocess_model, uint64_t *model_id) {
+Status LLMEnginePlugin::Init(const std::vector<LLMEngineModelInfo> &model_infos, LLMRole role, uint64_t cluster_id,
+                             const std::map<std::string, std::string> &options, const std::string &batch_mode,
+                             const LLMEngineModelInfo &postprocess_model) {
   if (model_infos.empty()) {
     MS_LOG(ERROR) << "Model infos cannot be empty";
-    return kLiteError;
-  }
-  if (model_id == nullptr) {
-    MS_LOG(ERROR) << "Input argument model_id is nullptr";
     return kLiteError;
   }
   if (finalized_) {
     MS_LOG(ERROR) << "LLMEngine has been finalized";
     return kLiteLLMEngineFinalized;
   }
-  if (inited_) {
+  if (llm_engine_ != nullptr) {
     MS_LOG(ERROR) << "LLMEngine has been inited";
     return kLiteError;
   }
-  if (llm_engine_ == nullptr) {
-    MS_LOG(ERROR) << "LLMEngine object is nullptr";
-    return kLiteError;
-  }
-  MS_LOG(INFO) << "LLMEngine AddLLMModel begin";
-  auto options = options_i;
+  MS_LOG(INFO) << "LLMEngine Init begin";
+  role_ = role;
+  cluster_id_ = cluster_id;
+  options_ = options;
   if (CheckModelInfos(model_infos) != kSuccess) {
     return kLiteError;
   }
-  InitInputOptions(model_infos[0], false, &options);
-  auto option_it = options.find("llm.OmCachePath");
-  if (option_it == options.end()) {
+  InitInputOptions(model_infos[0], false);
+  options_["llm.Role"] = role == LLMRole::kLLMRolePrompt ? "Prompt" : "Decoder";
+  options_["llm.batch_mode"] = batch_mode;
+  auto option_it = options_.find("llm.OmCachePath");
+  if (option_it == options_.end()) {
     std::string cache_path;
     for (size_t i = 0; i < model_infos.size(); i++) {
       cache_path += model_infos[i].weight_dir;
@@ -229,7 +213,7 @@ Status LLMEnginePlugin::AddModel(const std::vector<LLMEngineModelInfo> &model_in
       }
     }
     MS_LOG(INFO) << "Add option llm.OmCachePath to " << cache_path;
-    options["llm.OmCachePath"] = cache_path;
+    options_["llm.OmCachePath"] = cache_path;
   }
   std::vector<ge::ModelBufferData> model_buffers;
   for (auto &item : model_infos) {
@@ -237,69 +221,42 @@ Status LLMEnginePlugin::AddModel(const std::vector<LLMEngineModelInfo> &model_in
     buff.data = std::shared_ptr<uint8_t>(reinterpret_cast<uint8_t *>(item.om_data->data_c()), [](uint8_t *) {});
     buff.length = item.om_data->Size();
     model_buffers.push_back(buff);
-    MS_LOG(INFO) << "Inference model " << item.name << ", model buffer size " << item.om_data->Size();
+    MS_LOG(INFO) << "Model " << item.name << ", model buffer size " << item.om_data->Size();
   }
-  std::map<ge::AscendString, std::vector<ge::ModelBufferData>> model_buffers_map;
-  model_buffers_map["inference"] = model_buffers;
   if (postprocess_model.om_data != nullptr) {
-    InitInputOptions(postprocess_model, true, &options);
-
+    InitInputOptions(postprocess_model, true);
+  }
+  std::map<ge::AscendString, ge::AscendString> init_options;
+  for (auto &option : options_) {
+    init_options[ge::AscendString(option.first.c_str())] = ge::AscendString(option.second.c_str());
+    MS_LOG(INFO) << "LLMEngineInitialize option " << option.first << " = " << option.second;
+  }
+  auto llm_engine = std::make_shared<llm::LLMEngine>(cluster_id);
+  if (postprocess_model.om_data == nullptr) {
+    MS_LOG(INFO) << "Start to call llm::LLMEngine::LLMEngineInitialize";
+    auto ge_status = llm_engine->LLMEngineInitialize(model_buffers, init_options);
+    if (ge_status != ge::GRAPH_SUCCESS) {
+      MS_LOG(ERROR) << "Failed to call LLMEngineInitialize, status: " << ge_status;
+      return kLiteError;
+    }
+  } else {
+    std::map<ge::AscendString, std::vector<ge::ModelBufferData>> model_buffers_map;
+    model_buffers_map["inference"] = model_buffers;
     ge::ModelBufferData postprocess_buff;
     postprocess_buff.data =
       std::shared_ptr<uint8_t>(reinterpret_cast<uint8_t *>(postprocess_model.om_data->data_c()), [](uint8_t *) {});
     postprocess_buff.length = postprocess_model.om_data->Size();
-    MS_LOG(INFO) << "Postprocess model " << postprocess_model.name << ", model buffer size "
-                 << postprocess_model.om_data->Size();
+    MS_LOG(INFO) << "Model " << postprocess_model.name << ", model buffer size " << postprocess_model.om_data->Size();
     model_buffers_map["postprocess"] = {postprocess_buff};
-  }
-  std::map<ge::AscendString, ge::AscendString> model_options;
-  for (auto &option : options) {
-    model_options[ge::AscendString(option.first.c_str())] = ge::AscendString(option.second.c_str());
-    MS_LOG(INFO) << "AddLLMModel option " << option.first << " = " << option.second;
-  }
-  MS_LOG(INFO) << "Start to call llm::LLMEngine::LLMEngineInitializeV2";
-  auto ge_status = llm_engine_->AddLLMModel(model_buffers_map, model_options, *model_id);
-  if (ge_status != ge::GRAPH_SUCCESS) {
-    return OnGeStatus(ge_status, "AddLLMModel", "return");
-  }
-  LLMModelInfo info;
-  info.model_infos = model_infos;
-  info.postprocess_model = postprocess_model;
-  info.options = options;
-  model_infos_[*model_id] = info;
-  MS_LOG(INFO) << "LLMEngine AddLLMModel end";
-  return kSuccess;
-}
 
-Status LLMEnginePlugin::Init(const std::map<std::string, std::string> &options_i) {
-  if (finalized_) {
-    MS_LOG(ERROR) << "LLMEngine has been finalized";
-    return kLiteLLMEngineFinalized;
+    MS_LOG(INFO) << "Start to call llm::LLMEngine::LLMEngineInitializeV2";
+    auto ge_status = llm_engine->LLMEngineInitializeV2(model_buffers_map, init_options);
+    if (ge_status != ge::GRAPH_SUCCESS) {
+      MS_LOG(ERROR) << "Failed to call LLMEngineInitializeV2, status: " << ge_status;
+      return kLiteError;
+    }
   }
-  if (inited_) {
-    MS_LOG(ERROR) << "LLMEngine has been inited";
-    return kLiteError;
-  }
-  if (llm_engine_ == nullptr) {
-    MS_LOG(ERROR) << "LLMEngine object is nullptr";
-    return kLiteError;
-  }
-  MS_LOG(INFO) << "LLMEngine Init begin";
-  auto options = options_i;
-  options["llm.Role"] = role_ == LLMRole::kLLMRolePrompt ? "Prompt" : "Decoder";
-  options["llm.batch_mode"] = batch_mode_;
-  std::map<ge::AscendString, ge::AscendString> init_options;
-  for (auto &option : options) {
-    init_options[ge::AscendString(option.first.c_str())] = ge::AscendString(option.second.c_str());
-    MS_LOG(INFO) << "LLMEngineInitializeV2 option " << option.first << " = " << option.second;
-  }
-  MS_LOG(INFO) << "Start to call llm::LLMEngine::LLMEngineInitialize";
-  auto ge_status = llm_engine_->LLMEngineInitializeV2({}, init_options);
-  if (ge_status != ge::GRAPH_SUCCESS) {
-    return OnGeStatus(ge_status, "LLMEngineInitializeV2", "return");
-  }
-  model_infos_.clear();
-  inited_ = true;
+  llm_engine_ = llm_engine;
   MS_LOG(INFO) << "LLMEngine Init end";
   return kSuccess;
 }
@@ -318,50 +275,24 @@ void LLMEnginePlugin::Finalize() {
   }
 }
 
-Status LLMEnginePlugin::Run(const llm::LLMReq &llm_req, const std::vector<::ge::Tensor> &ge_inputs,
-                            std::vector<::ge::Tensor> *outputs, uint64_t model_id) {
+#ifndef LLM_RUN_ASYNC
+Status LLMEnginePlugin::Run(llm::LLMReq *llm_req, const std::vector<::ge::Tensor> &ge_inputs,
+                            std::vector<::ge::Tensor> *outputs) {
   auto time_start = std::chrono::system_clock::now();
 
   if (role_ == kLLMRolePrompt) {
     MS_LOG(INFO) << "Start to call llm::LLMEngine::RunPrompt";
-    auto ge_status = llm_engine_->RunPrompt(llm_req, ge_inputs, *outputs, model_id);
-    if (ge_status != ge::GRAPH_SUCCESS) {
-      return OnGeStatus(ge_status, "RunPrompt", "return");
-    }
-  } else {
-    if (model_id != 0) {
-      MS_LOG(ERROR) << "Decoder only support manual mode when there are more than one LLM Model, current mode "
-                    << batch_mode_;
+    auto ret = llm_engine_->RunPrompt(*llm_req, ge_inputs, *outputs);
+    if (ret != ge::GRAPH_SUCCESS) {
+      MS_LOG(ERROR) << "Failed to call llm::LLMEngine::RunPrompt, status: " << ret;
       return kLiteError;
     }
-    MS_LOG(INFO) << "Start to call llm::LLMEngine::RunDecoder";
-    auto ge_status = llm_engine_->RunDecoder(llm_req, ge_inputs, *outputs);
-    if (ge_status != ge::GRAPH_SUCCESS) {
-      return OnGeStatus(ge_status, "RunDecoder", "return");
-    }
-  }
-  auto time_cost =
-    std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - time_start).count();
-  MS_LOG(INFO) << "Call LLMEngine RunPrompt or RunDecoder Success in " << time_cost << " us, role "
-               << (role_ == LLMRole::kLLMRolePrompt ? "Prompt" : "Decoder") << ", outputs num is: " << outputs->size();
-  return kSuccess;
-}
-
-Status LLMEnginePlugin::Run(const std::vector<llm::LLMReq> &llm_req, const std::vector<::ge::Tensor> &ge_inputs,
-                            std::vector<::ge::Tensor> *outputs, uint64_t model_id) {
-  auto time_start = std::chrono::system_clock::now();
-
-  if (role_ == kLLMRolePrompt) {
-    MS_LOG(INFO) << "Start to call llm::LLMEngine::RunPrompt";
-    auto ge_status = llm_engine_->RunPrompt(llm_req, ge_inputs, *outputs, model_id);
-    if (ge_status != ge::GRAPH_SUCCESS) {
-      return OnGeStatus(ge_status, "RunPrompt", "return");
-    }
   } else {
     MS_LOG(INFO) << "Start to call llm::LLMEngine::RunDecoder";
-    auto ge_status = llm_engine_->RunDecoder(llm_req, ge_inputs, *outputs, model_id);
-    if (ge_status != ge::GRAPH_SUCCESS) {
-      return OnGeStatus(ge_status, "RunDecoder", "return");
+    auto ret = llm_engine_->RunDecoder(*llm_req, ge_inputs, *outputs);
+    if (ret != ge::GRAPH_SUCCESS) {
+      MS_LOG(ERROR) << "Failed to call llm::LLMEngine::RunDecoder, status: " << ret;
+      return kLiteError;
     }
   }
   auto time_cost =
@@ -371,7 +302,54 @@ Status LLMEnginePlugin::Run(const std::vector<llm::LLMReq> &llm_req, const std::
   return kSuccess;
 }
 
-void LLMEnginePlugin::TransLLMReq(const LLMReq &req, llm::LLMReq *llm_req_ptr) {
+#else
+
+Status LLMEnginePlugin::Run(llm::LLMReq *llm_req, const std::vector<::ge::Tensor> &ge_inputs,
+                            std::vector<::ge::Tensor> *outputs) {
+  auto time_start = std::chrono::system_clock::now();
+  std::promise<void> promise;
+  Status lite_status = kSuccess;
+  auto call_back = [outputs, &promise, &lite_status, this](ge::Status ge_status,
+                                                           const std::vector<ge::Tensor> &ge_outputs) {
+    if (ge_status == ge::GRAPH_SUCCESS) {
+      *outputs = ge_outputs;
+    } else {
+      auto func_s = role_ == kLLMRolePrompt ? "RunPromptAsync" : "RunDecoderAsync";
+      lite_status = OnGeStatus(ge_status, func_s, "callback");
+    }
+    promise.set_value();
+    return;
+  };
+  if (role_ == kLLMRolePrompt) {
+    MS_LOG(INFO) << "Start to call llm::LLMEngine::RunPromptAsync";
+    auto ge_status = llm_engine_->RunPromptAsync(*llm_req, ge_inputs, call_back);
+    if (ge_status != ge::GRAPH_SUCCESS) {
+      return OnGeStatus(ge_status, "RunPromptAsync", "return");
+    }
+  } else {
+    MS_LOG(INFO) << "Start to call llm::LLMEngine::RunDecoderAsync";
+    auto ge_status = llm_engine_->RunDecoderAsync(*llm_req, ge_inputs, call_back);
+    if (ge_status != ge::GRAPH_SUCCESS) {
+      return OnGeStatus(ge_status, "RunPromptAsync", "return");
+    }
+  }
+  auto future = promise.get_future();
+  future.wait();
+  auto time_cost =
+    std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - time_start).count();
+  auto role = (role_ == LLMRole::kLLMRolePrompt ? "Prompt" : "Decoder");
+  if (lite_status != kSuccess) {
+    MS_LOG(WARNING) << "Call LLMEngine RunPromptAsync or RunDecoderAsync Failed, time cost " << time_cost
+                    << " us, role " << role;
+    return lite_status;
+  }
+  MS_LOG(INFO) << "Call LLMEngine RunPromptAsync or RunDecoderAsync Success in " << time_cost << " us, role " << role
+               << ", outputs num is: " << outputs->size();
+  return kSuccess;
+}
+#endif
+
+void LLMEnginePlugin::TransLLMReq(const LLMReq &req, llm::LLMReq *llm_req_ptr) const {
   if (llm_req_ptr == nullptr) {
     MS_LOG(ERROR) << "Input argument llm_req_ptr is nullptr";
     return;
@@ -385,7 +363,7 @@ void LLMEnginePlugin::TransLLMReq(const LLMReq &req, llm::LLMReq *llm_req_ptr) {
 }
 
 void LLMEnginePlugin::TransLLMClusterInfos(const std::vector<LLMClusterInfo> &clusters,
-                                           std::vector<llm::ClusterInfo> *llm_clusters_ptr) {
+                                           std::vector<llm::ClusterInfo> *llm_clusters_ptr) const {
   if (llm_clusters_ptr == nullptr) {
     MS_LOG(ERROR) << "Input argument llm_clusters_ptr is nullptr";
     return;
@@ -434,22 +412,14 @@ Status LLMEnginePlugin::MSTensorToGeTensor(const std::vector<MSTensor> &inputs, 
   return kSuccess;
 }
 
-Status LLMEnginePlugin::Predict(const LLMReq &req, const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
-                                uint64_t model_id) {
-  if (outputs == nullptr) {
-    MS_LOG(ERROR) << "Input argument outputs is nullptr";
-    return kLiteError;
-  }
+Status LLMEnginePlugin::Predict(const LLMReq &req, const std::vector<MSTensor> &inputs,
+                                std::vector<MSTensor> *outputs) {
   if (finalized_) {
     MS_LOG(ERROR) << "LLMEngine has been finalized";
     return kLiteLLMEngineFinalized;
   }
-  if (!inited_) {
-    MS_LOG(ERROR) << "LLMEngine has not been inited or inited failed";
-    return kLiteError;
-  }
   if (llm_engine_ == nullptr) {
-    MS_LOG(ERROR) << "LLMEngine object is nullptr";
+    MS_LOG(ERROR) << "LLMEngine has not been inited or inited failed";
     return kLiteError;
   }
   std::vector<::ge::Tensor> ge_inputs;
@@ -464,7 +434,7 @@ Status LLMEnginePlugin::Predict(const LLMReq &req, const std::vector<MSTensor> &
                << llm_req.GetPromptLength() << ", prompt_cluster_id: " << llm_req.GetPromptClusterId()
                << ", decoder_cluster_id: " << llm_req.GetDecoderClusterId() << ", prefix id " << llm_req.GetPrefixId();
   std::vector<::ge::Tensor> ge_outputs;
-  ret = Run(llm_req, ge_inputs, &ge_outputs, model_id);
+  ret = Run(&llm_req, ge_inputs, &ge_outputs);
   if (ret != kSuccess) {
     return ret;
   }
@@ -482,21 +452,9 @@ Status LLMEnginePlugin::Predict(const LLMReq &req, const std::vector<MSTensor> &
 }
 
 Status LLMEnginePlugin::Predict(const std::vector<LLMReq> &req, const std::vector<MSTensor> &inputs,
-                                std::vector<MSTensor> *outputs, uint64_t model_id) {
-  if (outputs == nullptr) {
-    MS_LOG(ERROR) << "Input argument outputs is nullptr";
-    return kLiteError;
-  }
-  if (finalized_) {
-    MS_LOG(ERROR) << "LLMEngine has been finalized";
-    return kLiteLLMEngineFinalized;
-  }
-  if (!inited_) {
-    MS_LOG(ERROR) << "LLMEngine has not been inited or inited failed";
-    return kLiteError;
-  }
+                                std::vector<MSTensor> *outputs) {
   if (llm_engine_ == nullptr) {
-    MS_LOG(ERROR) << "LLMEngine object is nullptr";
+    MS_LOG(ERROR) << "LLMEngine has not been inited or inited failed";
     return kLiteError;
   }
   std::vector<::ge::Tensor> ge_inputs;
@@ -505,21 +463,14 @@ Status LLMEnginePlugin::Predict(const std::vector<LLMReq> &req, const std::vecto
     MS_LOG(ERROR) << "Failed to transform MSTensor to Ge Tensor";
     return ret;
   }
-  MS_LOG(INFO) << "Start to call predict, requests: ";
-  std::vector<llm::LLMReq> llm_reqs;
-  (void)std::transform(req.begin(), req.end(), std::back_inserter(llm_reqs), [](const LLMReq &item) {
-    llm::LLMReq llm_req;
-    TransLLMReq(item, &llm_req);
-    MS_LOG(INFO) << "req_id " << llm_req.GetReqId() << ", prompt_length " << llm_req.GetPromptLength()
-                 << ", prompt_cluster_id: " << llm_req.GetPromptClusterId()
-                 << ", decoder_cluster_id: " << llm_req.GetDecoderClusterId() << ", prefix id "
-                 << llm_req.GetPrefixId();
-    return llm_req;
-  });
+  std::vector<uint64_t> req_ids;
+  (void)std::transform(req.begin(), req.end(), std::back_inserter(req_ids),
+                       [](const LLMReq &item) { return item.req_id; });
+  MS_LOG(INFO) << "Start to call predict, req_ids " << req_ids;
   std::vector<::ge::Tensor> ge_outputs;
-  ret = Run(llm_reqs, ge_inputs, &ge_outputs, model_id);
-  if (ret != kSuccess) {
-    return ret;
+  auto ge_ret = llm_engine_->RunDecoder(req_ids, ge_inputs, ge_outputs);
+  if (ge_ret != ge::GRAPH_SUCCESS) {
+    return OnGeStatus(ge_ret, "RunDecoder", "return");
   }
   for (size_t i = 0; i < ge_outputs.size(); i++) {
     auto &ge_tensor = ge_outputs[i];
@@ -534,37 +485,27 @@ Status LLMEnginePlugin::Predict(const std::vector<LLMReq> &req, const std::vecto
   return kSuccess;
 }
 
-Status LLMEnginePlugin::PullKV(const LLMReq &req, uint64_t model_id) {
-  if (!inited_) {
-    MS_LOG(ERROR) << "LLMEngine has not been inited or inited failed";
-    return kLiteError;
-  }
+Status LLMEnginePlugin::PullKV(const LLMReq &req) {
   if (llm_engine_ == nullptr) {
-    MS_LOG(ERROR) << "LLMEngine object is nullptr";
+    MS_LOG(ERROR) << "LLMEngine has not been inited or inited failed";
     return kLiteError;
   }
   llm::LLMReq llm_req;
   TransLLMReq(req, &llm_req);
   MS_LOG(INFO) << "Start to call PullKv, req_id " << llm_req.GetReqId() << ", prompt_length "
                << llm_req.GetPromptLength() << ", prompt_cluster_id: " << llm_req.GetPromptClusterId()
-               << ", decoder_cluster_id: " << llm_req.GetDecoderClusterId() << ", prefix_id " << llm_req.GetPrefixId()
-               << ", model_id " << model_id;
-  auto ge_ret = llm_engine_->PullKv(llm_req, model_id);
+               << ", decoder_cluster_id: " << llm_req.GetDecoderClusterId() << ", prefix id " << llm_req.GetPrefixId();
+  auto ge_ret = llm_engine_->PullKv(llm_req);
   return OnGeStatus(ge_ret, "PullKv", "return");
 }
 
-Status LLMEnginePlugin::MergeKV(const LLMReq &req, uint32_t batch_index, uint32_t batch_id, uint64_t model_id) {
-  if (!inited_) {
+Status LLMEnginePlugin::MergeKV(const LLMReq &req, uint32_t batch_index) {
+  if (llm_engine_ == nullptr) {
     MS_LOG(ERROR) << "LLMEngine has not been inited or inited failed";
     return kLiteError;
   }
-  if (llm_engine_ == nullptr) {
-    MS_LOG(ERROR) << "LLMEngine object is nullptr";
-    return kLiteError;
-  }
-  MS_LOG(INFO) << "Start to call MergeKV, req_id " << req.req_id << ", batch_index " << batch_index << ", batch_id "
-               << batch_id << ", model_id " << model_id;
-  auto ge_ret = llm_engine_->MergeKv(req.req_id, batch_index, batch_id, model_id);
+  MS_LOG(INFO) << "Start to call MergeKV, req_id " << req.req_id << ", batch_index " << batch_index;
+  auto ge_ret = llm_engine_->MergeKv(req.req_id, batch_index);
   return OnGeStatus(ge_ret, "MergeKV", "return");
 }
 
@@ -573,12 +514,8 @@ Status LLMEnginePlugin::CompleteRequest(const LLMReq &req) {
     MS_LOG(ERROR) << "LLMEngine has been finalized";
     return kLiteLLMEngineFinalized;
   }
-  if (!inited_) {
-    MS_LOG(ERROR) << "LLMEngine has not been inited or inited failed";
-    return kLiteError;
-  }
   if (llm_engine_ == nullptr) {
-    MS_LOG(ERROR) << "LLMEngine object is nullptr";
+    MS_LOG(ERROR) << "LLMEngine has not been inited or inited failed";
     return kLiteError;
   }
   MS_LOG(INFO) << "Start to call llm::LLMEngine::LLMReqComplete, req_id " << req.req_id << ", prompt_length "
@@ -594,36 +531,28 @@ LLMEngineStatus LLMEnginePlugin::FetchStatus() {
     MS_LOG(ERROR) << "LLMEngine has been finalized";
     return LLMEngineStatus();
   }
-  if (!inited_) {
+  if (llm_engine_ == nullptr) {
     MS_LOG(ERROR) << "LLMEngine has not been inited or inited failed";
     return LLMEngineStatus();
   }
-  if (llm_engine_ == nullptr) {
-    MS_LOG(ERROR) << "LLMEngine object is nullptr";
-    return LLMEngineStatus();
-  }
   LLMEngineStatus status;
-  // When llm_engine_->fetchLLMEngineStatus() is implemented, it will be replaced by return of fetchLLMEngineStatus.
-  status.empty_max_prompt_kv = 0;
+  // llm::LLMEngineStatus llm_status = llm_engine_->fetchLLMEngineStatus();
+  // status.empty_max_prompt_kv = llm_status.empty_max_prompt_kv;
   return status;
 }
 
-Status LLMEnginePlugin::PreloadPromptPrefix(const LLMReq &req, const std::vector<MSTensor> &inputs, uint64_t model_id) {
+Status LLMEnginePlugin::PreloadPromptPrefix(const LLMReq &req, const std::vector<MSTensor> &inputs) {
   if (finalized_) {
     MS_LOG(ERROR) << "LLMEngine has been finalized";
     return kLiteLLMEngineFinalized;
   }
-  if (!inited_) {
-    MS_LOG(ERROR) << "LLMEngine has not been inited or inited failed";
-    return kLiteError;
-  }
   if (llm_engine_ == nullptr) {
-    MS_LOG(ERROR) << "LLMEngine object is nullptr";
+    MS_LOG(ERROR) << "LLMEngine has not been inited or inited failed";
     return kLiteError;
   }
   MS_LOG(INFO) << "Start to call llm::LLMEngine::PreloadPromptPrefix, req_id " << req.req_id << ", prompt_length "
                << req.prompt_length << ", prompt_cluster_id: " << req.prompt_cluster_id << ", prefix_id "
-               << req.prefix_id << ", model_id " << model_id;
+               << req.prefix_id;
   std::vector<::ge::Tensor> ge_inputs;
   auto ret = MSTensorToGeTensor(inputs, &ge_inputs);
   if (ret != kSuccess) {
@@ -632,29 +561,25 @@ Status LLMEnginePlugin::PreloadPromptPrefix(const LLMReq &req, const std::vector
   }
   llm::LLMReq llm_req;
   TransLLMReq(req, &llm_req);
-  auto ge_ret = llm_engine_->PreloadPromptPrefix(llm_req, ge_inputs, model_id);
+  auto ge_ret = llm_engine_->PreloadPromptPrefix(llm_req, ge_inputs);
   return OnGeStatus(ge_ret, "PreloadPromptPrefix", "return");
 }
 
-Status LLMEnginePlugin::ReleasePromptPrefix(const LLMReq &req, uint64_t model_id) {
+Status LLMEnginePlugin::ReleasePromptPrefix(const LLMReq &req) {
   if (finalized_) {
     MS_LOG(ERROR) << "LLMEngine has been finalized";
     return kLiteLLMEngineFinalized;
   }
-  if (!inited_) {
-    MS_LOG(ERROR) << "LLMEngine has not been inited or inited failed";
-    return kLiteError;
-  }
   if (llm_engine_ == nullptr) {
-    MS_LOG(ERROR) << "LLMEngine object is nullptr";
+    MS_LOG(ERROR) << "LLMEngine has not been inited or inited failed";
     return kLiteError;
   }
   MS_LOG(INFO) << "Start to call llm::LLMEngine::ReleasePromptPrefix, req_id " << req.req_id << ", prompt_length "
                << req.prompt_length << ", prompt_cluster_id: " << req.prompt_cluster_id << ", prefix_id "
-               << req.prefix_id << ", model_id " << model_id;
+               << req.prefix_id;
   llm::LLMReq llm_req;
   TransLLMReq(req, &llm_req);
-  auto ge_ret = llm_engine_->ReleasePromptPrefix(llm_req, model_id);
+  auto ge_ret = llm_engine_->ReleasePromptPrefix(llm_req);
   return OnGeStatus(ge_ret, "ReleasePromptPrefix", "return");
 }
 
@@ -664,12 +589,8 @@ Status LLMEnginePlugin::LinkClusters(const std::vector<LLMClusterInfo> &clusters
     MS_LOG(ERROR) << "LLMEngine has been finalized";
     return kLiteLLMEngineFinalized;
   }
-  if (!inited_) {
-    MS_LOG(ERROR) << "LLMEngine has not been inited or inited failed";
-    return kLiteError;
-  }
   if (llm_engine_ == nullptr) {
-    MS_LOG(ERROR) << "LLMEngine object is nullptr";
+    MS_LOG(ERROR) << "LLMEngine has not been inited or inited failed";
     return kLiteError;
   }
   if (rets == nullptr) {
@@ -699,7 +620,7 @@ Status LLMEnginePlugin::LinkClusters(const std::vector<LLMClusterInfo> &clusters
   for (size_t i = 0; i < ge_rets.size(); i++) {
     auto ge_ret = ge_rets[i];
     if (ge_ret != ge::GRAPH_SUCCESS) {
-      rets->push_back(OnGeStatus(ge_ret, "LinkClusters", "return"));
+      rets->push_back(kLiteError);
       auto &cluster = clusters[i];
       MS_LOG(ERROR) << "Cluster " << i << " error occur, ge error code " << ge_ret << ", remote_cluster_id "
                     << cluster.remote_cluster_id << ", remote_role_type " << cluster.remote_role_type
@@ -718,12 +639,8 @@ Status LLMEnginePlugin::UnlinkClusters(const std::vector<LLMClusterInfo> &cluste
     MS_LOG(ERROR) << "LLMEngine has been finalized";
     return kLiteLLMEngineFinalized;
   }
-  if (!inited_) {
-    MS_LOG(ERROR) << "LLMEngine has not been inited or inited failed";
-    return kLiteError;
-  }
   if (llm_engine_ == nullptr) {
-    MS_LOG(ERROR) << "LLMEngine object is nullptr";
+    MS_LOG(ERROR) << "LLMEngine has not been inited or inited failed";
     return kLiteError;
   }
   if (rets == nullptr) {
@@ -753,7 +670,7 @@ Status LLMEnginePlugin::UnlinkClusters(const std::vector<LLMClusterInfo> &cluste
   for (size_t i = 0; i < ge_rets.size(); i++) {
     auto ge_ret = ge_rets[i];
     if (ge_ret != ge::GRAPH_SUCCESS) {
-      rets->push_back(OnGeStatus(ge_ret, "UnlinkClusters", "return"));
+      rets->push_back(kLiteError);
       auto &cluster = clusters[i];
       MS_LOG(ERROR) << "Cluster " << i << " error occur, ge error code " << ge_ret << ", remote_cluster_id "
                     << cluster.remote_cluster_id << ", remote_role_type " << cluster.remote_role_type

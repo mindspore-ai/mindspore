@@ -18,8 +18,6 @@
 #define MINDSPORE_MINDSPORE_CCSRC_RUNTIME_PYNATIVE_GRAPH_ADAPTER_H_
 
 #include <vector>
-#include <set>
-#include <unordered_map>
 #include "include/backend/kernel_graph.h"
 #include "runtime/hardware/device_context.h"
 #include "runtime/graph_scheduler/graph_compiler.h"
@@ -28,15 +26,13 @@ namespace mindspore::pynative {
 using GraphCompilerInfo = runtime::GraphCompilerInfo;
 class GraphAdapter {
  public:
-  void UpdateForwardOutputInBpropGraph(const KernelGraphPtr &graph, const device::DeviceContext *device_context,
-                                       bool no_control_flow);
-  void GenerateBackoffValueNodeOwners(const KernelGraphPtr &graph);
+  static void UpdateForwardOutputInBpropGraph(const KernelGraphPtr &graph, const device::DeviceContext *device_context,
+                                              bool no_control_flow);
   static void ReplaceGraphParameterProperties(const KernelGraphPtr &graph,
                                               const std::vector<tensor::TensorPtr> &input_tensors,
                                               const device::DeviceContext *device_context);
   static void GenerateRefCountForBpropValueNode(const KernelGraphPtr &graph);
-  static void ClearForwardOutputValueNodeDeviceAddress(const KernelGraphPtr &graph,
-                                                       const device::DeviceContext *device_context);
+  static void ClearForwardOutputValueNodeDeviceAddress(const KernelGraphPtr &graph);
   static void RemoveUnusedValueNodes(const KernelGraphPtr &graph);
   static void HandleHeterogeneousTensors(const std::vector<std::vector<tensor::TensorPtr>> &tensors,
                                          const std::vector<device::DeviceContext *> &device_contexts);
@@ -46,13 +42,6 @@ class GraphAdapter {
   static bool IsAutoParallel();
   static void UpdateDynamicValueNodeAbstract(const KernelGraphPtr &graph);
   static void SensTensorToDevice(const KernelGraphPtr &graph, const device::DeviceContext *device_context);
-
- private:
-  void HandleBackoffValueNode(const ValueNodePtr &value_node, const AnfNodePtr &front_node,
-                              const DeviceContext *device_context) const;
-  // Each backend has an independent map.
-  // The map will be destroyed when the backend object is destroyed.
-  std::unordered_map<AnfNode *, std::set<CNodePtr>> node_to_backoff_kernels_;
 };
 }  // namespace mindspore::pynative
 #endif  // MINDSPORE_MINDSPORE_CCSRC_RUNTIME_PYNATIVE_GRAPH_ADAPTER_H_

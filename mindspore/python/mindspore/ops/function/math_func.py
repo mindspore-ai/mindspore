@@ -118,7 +118,7 @@ tensor_expm1 = P.Expm1()
 tensor_floordiv = P.FloorDiv()
 floordiv = tensor_floordiv
 tensor_ge = P.GreaterEqual()
-tensor_gt = greater
+tensor_gt = P.Greater()
 tensor_le = P.LessEqual()
 tensor_lt = P.Less()
 tensor_mod = P.FloorMod()
@@ -169,6 +169,7 @@ digamma_ = P.Digamma()
 div_ = P.Div()
 dtype_ = P.DType()
 eps_ = P.Eps()
+equal_ = P.Equal()
 erf_ = P.Erf()
 erfc_ = P.Erfc()
 erfinv_ = P.Erfinv()
@@ -3214,7 +3215,7 @@ def eq(input, other):
         >>> print(output)
         [ True  True False]
     """
-    return equal(input, other)
+    return equal_(input, other)
 
 
 def ne(input, other):
@@ -3404,7 +3405,7 @@ def isclose(input, other, rtol=1e-05, atol=1e-08, equal_nan=False):
     is “close” to the corresponding element of `other`. Closeness is defined as:
 
     .. math::
-        |input-other| ≤ atol + rtol × |other|
+        ∣input−other∣  ≤  atol + rtol × ∣other∣
 
     Args:
         input (Tensor): First Tensor to compare, with data type belongs to float32, float16, int32.
@@ -3956,7 +3957,7 @@ def heaviside(input, values):
             0, & \text { if input }<0 \\
             \text { values, } & \text { if input }=0 \\
             1, & \text { if input }>0
-            \end{array}\right
+            \end{array}\right.
 
     Args:
         input (Tensor): The input tensor. With real number data type.

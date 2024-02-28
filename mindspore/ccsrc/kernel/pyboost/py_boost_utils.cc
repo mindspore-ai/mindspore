@@ -34,8 +34,6 @@ namespace mindspore {
 namespace kernel {
 namespace pyboost {
 namespace {
-std::unordered_map<std::string, DeviceContext *> g_device_contexts;
-
 void CreateTensor(const TypePtr &type, const ShapeVector &shape_vector, const AbstractBasePtr &abstract_tensor,
                   std::vector<tensor::TensorPtr> *outputs) {
   auto output_tensor = std::make_shared<tensor::Tensor>(type->type_id(), shape_vector);
@@ -78,8 +76,9 @@ void PyBoostUtils::CreateOutputTensor(const AbstractBasePtr &abstract, std::vect
 }
 
 DeviceContext *PyBoostUtils::GetDeviceContext(const std::string &device_type) {
-  auto iter = g_device_contexts.find(device_type);
-  if (iter != g_device_contexts.end()) {
+  static std::unordered_map<std::string, DeviceContext *> device_contexts;
+  auto iter = device_contexts.find(device_type);
+  if (iter != device_contexts.end()) {
     return iter->second;
   }
 
@@ -90,14 +89,9 @@ DeviceContext *PyBoostUtils::GetDeviceContext(const std::string &device_type) {
 
   MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
   device_context->device_res_manager_->BindDeviceToCurrentThread(false);
-  g_device_contexts[device_type] = device_context;
+  device_contexts[device_type] = device_context;
   MS_LOG(DEBUG) << "Get device context of " << device_type << " id " << device_id;
   return device_context;
-}
-
-void PyBoostUtils::ChildAfterFork() {
-  MS_LOG(DEBUG) << "Clear device context " << g_device_contexts.size();
-  g_device_contexts.clear();
 }
 
 bool PyBoostUtils::IsKernelModRegistered(const std::string &device_name, const std::string &op_name) {
@@ -267,6 +261,10 @@ void PyBoostUtils::GetKernelTensor(DeviceContext *device_context, const abstract
   (void)device_address_list->emplace_back(device_address);
   const auto &kernel_tensor = device_address->kernel_tensor();
   (void)kernel_tensor_list->emplace_back(kernel_tensor.get());
+  if (!kernel_tensor->host_info_exist()) {
+    kernel_tensor->SetHostInfo(std::make_shared<abstract::TensorShape>(tensor->shape()),
+                               std::make_shared<TensorType>(tensor->Dtype()), nullptr);
+  }
 }
 
 void PyBoostUtils::GetKernelTensor(DeviceContext *device_context, const abstract::AbstractBasePtr &input_abs,

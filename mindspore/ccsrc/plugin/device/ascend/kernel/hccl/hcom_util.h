@@ -37,22 +37,18 @@ using std::string;
 using std::vector;
 /* Correspondence between data_type and hcom data type in Ascend */
 static map<int64_t, HcclDataType> kConstOpHcomDataTypeMap = {
-  {TypeId::kNumberTypeInt8, HCCL_DATA_TYPE_INT8},     {TypeId::kNumberTypeInt16, HCCL_DATA_TYPE_INT16},
-  {TypeId::kNumberTypeInt32, HCCL_DATA_TYPE_INT32},   {TypeId::kNumberTypeFloat16, HCCL_DATA_TYPE_FP16},
-  {TypeId::kNumberTypeFloat32, HCCL_DATA_TYPE_FP32},  {TypeId::kNumberTypeInt64, HCCL_DATA_TYPE_INT64},
-  {TypeId::kNumberTypeUInt64, HCCL_DATA_TYPE_UINT64}, {TypeId::kNumberTypeUInt8, HCCL_DATA_TYPE_UINT8},
-  {TypeId::kNumberTypeUInt16, HCCL_DATA_TYPE_UINT16}, {TypeId::kNumberTypeUInt32, HCCL_DATA_TYPE_UINT32},
-  {TypeId::kNumberTypeFloat64, HCCL_DATA_TYPE_FP64},  {TypeId::kNumberTypeBFloat16, HCCL_DATA_TYPE_BFP16},
+  {TypeId::kNumberTypeFloat32, HCCL_DATA_TYPE_FP32},
+  {TypeId::kNumberTypeFloat16, HCCL_DATA_TYPE_FP16},
+  {TypeId::kNumberTypeInt8, HCCL_DATA_TYPE_INT8},
+  {TypeId::kNumberTypeInt32, HCCL_DATA_TYPE_INT32},
 };
 
 /* Correspondence between data_type and occupied byte size in hcom */
 static map<HcclDataType, uint32_t> kConstOpHcomDataTypeSizeMap = {
-  {HCCL_DATA_TYPE_INT8, sizeof(int8_t)},         {HCCL_DATA_TYPE_INT16, sizeof(int32_t) / 2},
-  {HCCL_DATA_TYPE_INT32, sizeof(int32_t)},       {HCCL_DATA_TYPE_FP16, sizeof(float) / 2},
-  {HCCL_DATA_TYPE_FP32, sizeof(float)},          {HCCL_DATA_TYPE_INT64, sizeof(int64_t)},
-  {HCCL_DATA_TYPE_UINT64, sizeof(uint64_t)},     {HCCL_DATA_TYPE_UINT8, sizeof(uint8_t)},
-  {HCCL_DATA_TYPE_UINT16, sizeof(uint32_t) / 2}, {HCCL_DATA_TYPE_UINT32, sizeof(uint64_t)},
-  {HCCL_DATA_TYPE_FP64, sizeof(double)},         {HCCL_DATA_TYPE_BFP16, sizeof(float)},
+  {HCCL_DATA_TYPE_FP32, sizeof(float)},
+  {HCCL_DATA_TYPE_FP16, sizeof(float) / 2},
+  {HCCL_DATA_TYPE_INT8, sizeof(int8_t)},
+  {HCCL_DATA_TYPE_INT32, sizeof(int32_t)},
 };
 
 class HcomUtil {

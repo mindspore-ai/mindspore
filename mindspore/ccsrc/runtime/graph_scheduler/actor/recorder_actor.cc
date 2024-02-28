@@ -24,13 +24,9 @@
 
 namespace mindspore {
 namespace runtime {
-void RecorderActor::RecordInfo(const std::string op_name, const std::vector<KernelTensor *> *input_kernel_tensors,
-                               const std::vector<KernelTensor *> *output_kernel_tensors,
-                               const std::vector<KernelTensor *> *workspace_kernel_tensors,
+void RecorderActor::RecordInfo(const std::string op_name, const KernelLaunchAddr *launch_info_,
                                const DeviceContext *device_context, OpContext<DeviceTensor> *const op_context) {
-  MS_EXCEPTION_IF_NULL(input_kernel_tensors);
-  MS_EXCEPTION_IF_NULL(output_kernel_tensors);
-  MS_EXCEPTION_IF_NULL(workspace_kernel_tensors);
+  MS_EXCEPTION_IF_NULL(launch_info_);
   MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(op_context);
 
@@ -44,8 +40,7 @@ void RecorderActor::RecordInfo(const std::string op_name, const std::vector<Kern
     (void)RDR::RecordMemAddressInfo(SUBMODULE_ID, name);
     RecorderManager::Instance().SetRdrMemIsRecord(true);
   } else {
-    (void)RDR::UpdateMemAddress(SUBMODULE_ID, name, op_name, *input_kernel_tensors, *output_kernel_tensors,
-                                *workspace_kernel_tensors);
+    (void)RDR::UpdateMemAddress(SUBMODULE_ID, name, op_name, *launch_info_);
   }
 #endif
 }

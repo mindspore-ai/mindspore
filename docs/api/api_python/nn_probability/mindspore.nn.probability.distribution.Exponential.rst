@@ -7,7 +7,7 @@ mindspore.nn.probability.distribution.Exponential
     连续随机分布，取值范围为所有正实数 :math:`[0, \inf)`，概率密度函数为
 
     .. math::
-        f(x, \lambda) = \lambda \exp(-\lambda x)
+        f(x, \lambda) = \lambda \exp(-\lambda x).
 
     其中 :math:`\lambda` 为分别为指数分布的率参数。
 

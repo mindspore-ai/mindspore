@@ -805,14 +805,14 @@ class MultiHeadAttention(Cell):
             - **attention_mask** (Tensor) - If the use_past is False or is_first_iteration=True, the attention mask
               matrix should ba (batch_size, src_seq_length, tgt_seq_length), or None. None means there will be no mask
               in softmax computation. Otherwise, the mask must be (batch_size, 1, tgt_seq_length)
-            - **key_past** (Tensor) - float16 tensor with shape (batch_size, num_heads, size_per_head, tgt_seq_length).
+            - **key_past** (Tensor) - Float16 tensor with shape (batch_size, num_heads, size_per_head, tgt_seq_length).
               The past calculated key vector. Used for incremental prediction when the use_past is True.
               Default None.
-            - **value_past** (Tensor) - float16 tensor with shape
+            - **value_past** (Tensor) - Float16 tensor with shape
               (batch_size, num_heads, tgt_seq_length, size_per_head).
               The past calculated value vector. Used for incremental prediction when the use_past is True.
               Default None.
-            - **batch_valid_length** (Tensor) - int32 tensor with shape (batch_size,) the past calculated the index.
+            - **batch_valid_length** (Tensor) - Int32 tensor with shape (batch_size,) the past calculated the index.
               Used for incremental prediction when the use_past is True. Default None.
 
         Outputs:
@@ -1412,7 +1412,7 @@ class TransformerEncoderLayer(Cell):
               be no mask in softmax computation. Otherwise, should be [batch_size, 1, hidden_size]
             - **init_reset** (Tensor) - A bool tensor with shape [1], used to clear the past key parameter and
               past value parameter used in the incremental prediction. Only valid when use_past is True. Default True.
-            - **batch_valid_length** (Tensor) - int32 tensor with shape [batch_size] the past calculated the index.
+            - **batch_valid_length** (Tensor) - Int32 tensor with shape [batch_size] the past calculated the index.
               Used for incremental prediction when the use_past is True. Default None.
 
         Outputs:
@@ -1824,7 +1824,7 @@ class TransformerDecoderLayer(Cell):
               means there will be no mask in softmax computation in cross attention. Default None.
             - **init_reset** (Tensor) - A bool tensor with shape [1], used to clear the past key parameter and
               past value parameter used in the incremental prediction. Only valid when use_past is True. Default True.
-            - **batch_valid_length** (Tensor) - int32 tensor with shape [batch_size] the past calculated the index.
+            - **batch_valid_length** (Tensor) - Int32 tensor with shape [batch_size] the past calculated the index.
               Used for incremental prediction when the use_past is True. Default None.
 
         Outputs:
@@ -2333,7 +2333,7 @@ class TransformerEncoder(Cell):
               be no mask in softmax computation. Otherwise, should be [batch_size, 1, hidden_size]
             - **init_reset** (Tensor) - A bool tensor with shape [1], used to clear the past key parameter and
               past value parameter used in the incremental prediction. Only valid when use_past is True. Default True.
-            - **batch_valid_length** (Tensor) - int32 tensor with shape [batch_size] the past calculated the index.
+            - **batch_valid_length** (Tensor) - Int32 tensor with shape [batch_size] the past calculated the index.
               Used for incremental prediction when the use_past is True. Default None.
 
         Outputs:
@@ -2589,7 +2589,7 @@ class TransformerDecoder(Cell):
               means there will be no mask in softmax computation in cross attention. Default None.
             - **init_reset** (Tensor) - A bool tensor with shape [1], used to clear the past key parameter and
               past value parameter used in the incremental prediction. Only valid when use_past is True. Default True.
-            - **batch_valid_length** (Tensor) - int32 tensor with shape [batch_size] the past calculated the index.
+            - **batch_valid_length** (Tensor) - Int32 tensor with shape [batch_size] the past calculated the index.
               Used for incremental prediction when the use_past is True. Default None.
 
         Outputs:
@@ -2842,7 +2842,7 @@ class Transformer(Cell):
               seq_length, hidden_size], this should be none if the decoder layer is 0 or the user wants no mask.
             - **init_reset** (Tensor) - A bool tensor with shape [1], used to clear the past key parameter and
               past value parameter used in the incremental prediction. Only valid when use_past is True. Default True.
-            - **batch_valid_length** (Tensor) - int32 tensor with shape [batch_size] the past calculated the index.
+            - **batch_valid_length** (Tensor) - Int32 tensor with shape [batch_size] the past calculated the index.
               Used for incremental prediction when the use_past is True. Default None.
 
         Outputs:

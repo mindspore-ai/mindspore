@@ -211,7 +211,6 @@ struct PyBoost {
     }
     return ret;
   }
-  static void DataSyncForGraph(const kernel::pyboost::OpPtr &op);
 };
 
 // Some common functions used in both jit and PackFunc grad

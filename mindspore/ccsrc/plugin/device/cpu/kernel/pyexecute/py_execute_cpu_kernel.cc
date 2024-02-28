@@ -81,18 +81,18 @@ bool PyExecuteCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, co
   const auto &output_type = py::str(output.get_type());
   MS_LOG(DEBUG) << "Python *prebuilt* output type: " << output_type << ", output: " << output;
   const auto &py_output = std::make_shared<PyExecuteOutputUserData>();
+  constexpr auto kPyExecuteOutIndex = 0;
   py_output->obj = output;
-  if (outputs[0]->user_data() == nullptr) {
-    MS_LOG(ERROR) << "Invalid output kernel tensor.";
-    return false;
-  }
   // Set Python data for kernel node.
-  outputs[0]->user_data()->set(PyExecuteOutputUserData::key, py_output);
+  auto out_user_data = outputs[kPyExecuteOutIndex]->user_data();
+  MS_EXCEPTION_IF_NULL(out_user_data);
+  out_user_data->set(PyExecuteOutputUserData::key, py_output);
   if (is_output_any_) {
     return true;
   }
   MS_LOG(DEBUG) << "Pyexecute launch for primitive:" << reinterpret_cast<void *>(primitive_.get());
-  if (outputs[0]->user_data()->get<kernel::PyExecuteOutputUserData>(kernel::PyExecuteOutputUserData::key) == nullptr) {
+  if (outputs[0]->user_data() == nullptr ||
+      outputs[0]->user_data()->get<kernel::PyExecuteOutputUserData>(kernel::PyExecuteOutputUserData::key) == nullptr) {
     MS_LOG(ERROR) << "Invalid output kernel tensor.";
     return false;
   }

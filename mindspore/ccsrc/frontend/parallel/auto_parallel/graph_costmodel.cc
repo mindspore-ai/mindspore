@@ -1808,7 +1808,7 @@ Status CostGraph::InitReshapeStrategy() {
       });
       bool reshape_is_first_op = reshape_info->pre_operator_name() == reshape_info->name();
       if (reshape_is_first_op) {
-        (void)reshape_info->InitSelectedStrategy(reshape_info->selected_strategy(), nullptr);
+        (void)reshape_info->InitSelectedStrategy(reshape_info->selected_strategy());
       }
       if (pre_iter != in_edges.end() || reshape_is_first_op) {
         MS_LOG(DEBUG) << "Set reshape input layout by " << reshape_info->pre_operator_name();
@@ -1854,11 +1854,7 @@ Status CostGraph::InitSelectedStrategy() {
     if (op->IsReshape()) {
       continue;
     }
-    StrategyPtr out_strategy = nullptr;
-    if (op->type() == MATMUL && op->out_strategy() != nullptr) {
-      out_strategy = op->out_strategy();
-    }
-    auto result_op = op->InitSelectedStrategy(op->selected_strategy(), out_strategy);
+    auto result_op = op->InitSelectedStrategy(op->selected_strategy());
     if (result_op != SUCCESS) {
       return result_op;
     }

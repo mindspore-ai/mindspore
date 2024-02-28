@@ -34,7 +34,6 @@ py::object ${func_name}_Base(const PrimitivePtr &prim, const py::list &args) {
           // Run op
           (void)op->Call(${cast_args});
           ${optional_to_value}
-          PyNativeAlgo::PyBoost::DataSyncForGraph(op);
           // Update op and op_run_info by op outputs
           PyNativeAlgo::PyBoost::UpdateOpRunInfo(op, {${grad_args}}, op_run_info);
 

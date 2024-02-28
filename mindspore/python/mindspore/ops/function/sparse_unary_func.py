@@ -28,7 +28,7 @@ def csr_cos(x: CSRTensor) -> CSRTensor:
         out_i = \cos(x_i)
 
     .. warning::
-        Currently support data types float16 and float32. If use float64, there may be a problem of missing precision.
+        Currently support data types float16 and float32. If use Float64, there may be a problem of missing precision.
 
     Args:
         x (CSRTensor): Input CSRTensor.
@@ -69,7 +69,7 @@ def coo_cos(x: COOTensor) -> COOTensor:
         out_i = \cos(x_i)
 
     .. warning::
-        If use float64, there may be a problem of missing precision.
+        If use Float64, there may be a problem of missing precision.
 
     Args:
         x (COOTensor): Input COOTensor.

@@ -692,13 +692,13 @@ class SoftmaxCrossEntropyWithLogits(LossBase):
     Measures the distribution error between the probabilities of the input (computed with softmax function) and the
     labels where the classes are mutually exclusive (only one class is positive) using cross entropy loss.
 
-    Typical input into this function is unnormalized scores denoted as :math:`x` whose shape is :math:`(N, C)` ,
+    Typical input into this function is unnormalized scores denoted as x whose shape is :math:`(N, C)` ,
     and the corresponding targets.
 
     Typically, the input to this function is the fractional value of each category and the corresponding target value,
     and the input format is :math:`(N, C)` .
 
-    For each instance :math:`x_i`, :math:`i` ranges from 0 to N-1, the loss is given as:
+    For each instance :math:`x_i`, i ranges from 0 to N-1, the loss is given as:
 
     .. math::
         \ell(x_i, c) = - \log\left(\frac{\exp(x_i[c])}{\sum_j \exp(x_i[j])}\right)

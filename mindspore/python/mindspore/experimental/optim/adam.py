@@ -20,25 +20,25 @@ from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor
 import mindspore.common.dtype as mstype
 from mindspore.experimental.optim.optimizer import Optimizer
-from mindspore.common.api import jit
 
 _adam_opt = C.MultitypeFuncGraph("adam_opt")
-adam_op = P.Adam(False, False)
 
 
-@_adam_opt.register("Tensor", "Tensor", "Float", "Float", "Float", "Tensor",
+@_adam_opt.register("Function", "Tensor", "Tensor", "Float", "Float", "Float", "Tensor",
                     "Tensor", "Tensor", "Tensor", "Tensor")
-def _run_adam_opt(beta1_power, beta2_power, beta1, beta2, eps, lr, gradient, param, moment1, moment2):
+def _run_adam_opt(opt, beta1_power, beta2_power, beta1, beta2, eps, lr, gradient, param, moment1, moment2):
     """Apply adam optimizer to the weight parameter."""
-    adam_op(param, moment1, moment2, beta1_power, beta2_power, lr, beta1, beta2, eps, gradient)
-    return True
+    success = True
+    success = F.depend(success, opt(param, moment1, moment2, beta1_power, beta2_power, lr, beta1, beta2, eps, gradient))
+    return success
 
 
-@_adam_opt.register("Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor")
-def _run_adam_with_amsgrad_opt(beta1_power, beta2_power, lr, gradient, param, moment1, moment2, vhat):
+@_adam_opt.register("Function", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor")
+def _run_adam_with_amsgrad_opt(opt, beta1_power, beta2_power, lr, gradient, param, moment1, moment2, vhat):
     """Apply adam optimizer to the weight parameter with amsgrad."""
-    adam_op(param, moment1, moment2, vhat, beta1_power, beta2_power, lr, gradient)
-    return True
+    success = True
+    success = F.depend(success, opt(param, moment1, moment2, vhat, beta1_power, beta2_power, lr, gradient))
+    return success
 
 
 class Adam(Optimizer):
@@ -129,7 +129,6 @@ class Adam(Optimizer):
         ...     optimizer(grads)
         ...     return loss
     """
-
     def __init__(self, params, lr=1e-3, betas=(0.9, 0.999), eps=1e-8,
                  weight_decay=0.0, amsgrad=False, *, maximize=False):
         if lr < 0.0:
@@ -160,24 +159,11 @@ class Adam(Optimizer):
         self.adam_opt = P.Adam(False, False)
         self.op_cast = P.Cast()
 
-    @jit
-    def implementation(self, beta1, beta2, eps, lr, start_id, end_id, gradients, maximize, weight_decay):
-        """Extract the common computing part for acceleration"""
-        beta1_power = self.op_pow(beta1, self.state_step)
-        beta2_power = self.op_pow(beta2, self.state_step)
-        params = self.parameters[start_id: end_id]
-        grads = tuple([grad if not maximize else F.neg(grad) for grad in gradients[start_id: end_id]])
-        grads = self._decay_weight(weight_decay, params, grads)
-        self.hyper_map(F.partial(_adam_opt, beta1_power, beta2_power, beta1, beta2, eps, lr),
-                       grads, params,
-                       self.exp_avg[start_id: end_id], self.exp_avg_sq[start_id: end_id])
-        return True
-
     def construct(self, gradients):
         self.assignadd(self.state_step, self.increase_tensor)
         for group_id, group in enumerate(self.param_groups):
             start_id = self.group_start_id[group_id]
-            end_id = self.group_start_id[group_id + 1]
+            end_id = self.group_start_id[group_id+1]
 
             lr = self.lrs[group_id]
             weight_decay = group.get("weight_decay")
@@ -185,9 +171,21 @@ class Adam(Optimizer):
             maximize = group.get("maximize")
             eps = group.get("eps")
 
+            beta1_power = self.op_pow(beta1, self.state_step)
+            beta2_power = self.op_pow(beta2, self.state_step)
+            adam_with_amsgrad_opt = P.ApplyAdamWithAmsgrad(beta1, beta2, eps, False)
+            params = self.parameters[start_id: end_id]
+            grads = tuple([grad if not maximize else F.neg(grad) for grad in gradients[start_id: end_id]])
+            grads = self._decay_weight(weight_decay, params, grads)
             if isinstance(group.get("lr"), float):
                 lr = self.op_cast(group.get("lr"), mstype.float32)
-
-            self.implementation(beta1, beta2, eps, lr, start_id, end_id, gradients, maximize, weight_decay)
-
+            if group.get("amsgrad"):
+                self.hyper_map(F.partial(_adam_opt, adam_with_amsgrad_opt, beta1_power, beta2_power, lr),
+                               grads, params,
+                               self.exp_avg[start_id: end_id], self.exp_avg_sq[start_id: end_id],
+                               self.max_exp_avg_sq[start_id: end_id])
+            else:
+                self.hyper_map(F.partial(_adam_opt, self.adam_opt, beta1_power, beta2_power, beta1, beta2, eps, lr),
+                               grads, params,
+                               self.exp_avg[start_id: end_id], self.exp_avg_sq[start_id: end_id])
         return True

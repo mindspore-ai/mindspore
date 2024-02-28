@@ -4597,12 +4597,12 @@ class Rotate(ImageTensorOperation):
 
 
 class SlicePatches(ImageTensorOperation):
-    r"""
+    """
     Slice Tensor to multiple patches in horizontal and vertical directions.
 
     The usage scenario is suitable to large height and width Tensor. The Tensor
     will keep the same if set both num_height and num_width to 1. And the
-    number of output tensors is equal to :math:`num\_height * num\_width`.
+    number of output tensors is equal to num_height*num_width.
 
     Args:
         num_height (int, optional): The number of patches in vertical direction, which must be positive. Default: ``1``.

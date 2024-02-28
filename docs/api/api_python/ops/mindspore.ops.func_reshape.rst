@@ -10,7 +10,7 @@ mindspore.ops.reshape
     参数：
         - **input** (Tensor) - Tensor的 `shape` 为 :math:`(x_1, x_2, ..., x_R)` 。
         - **shape** (Union[tuple[int], list[int], Tensor[int]]) - 如果 `shape` 是list或者tuple，其元素需为整数，
-          并且只支持常量值。如 :math:`(y_1, y_2, ..., y_S)` 。如果 `shape` 是张量，则其数据类型为int32或者int64，并且只支持一维张量。
+          并且只支持常量值。 如 :math:`(y_1, y_2, ..., y_S)` 。如果 `shape` 是张量，则其数据类型为int32或者int64，并且只支持一维张量。
           兼容支持list和Tensor类型输入，但是不推荐使用。
 
     返回：

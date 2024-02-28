@@ -31,9 +31,9 @@ class Uniform(Distribution):
     and the probability density function:
 
     .. math::
-        f(x, a, b) = 1 / (b - a)
+        f(x, a, b) = 1 / (b - a),
 
-    Where :math:`a, b` are the lower and upper bound respectively.
+    where :math:`a, b` are the lower and upper bound respectively.
 
     Args:
         low (int, float, list, numpy.ndarray, Tensor): The lower bound of the distribution. Default: ``None`` .

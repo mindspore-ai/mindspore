@@ -180,27 +180,19 @@ const std::vector<std::pair<KernelAttr, TensorScatterElementsCpuKernelMod::Kerne
     {TENSOR_SCATTER_ELEMENTS_CPU_REG(kNumberTypeInt8, kNumberTypeInt32, int8_t, int32_t)},
     {TENSOR_SCATTER_ELEMENTS_CPU_REG(kNumberTypeUInt8, kNumberTypeInt32, uint8_t, int32_t)},
     {TENSOR_SCATTER_ELEMENTS_CPU_REG(kNumberTypeInt32, kNumberTypeInt32, int32_t, int32_t)},
-    {TENSOR_SCATTER_ELEMENTS_CPU_REG(kNumberTypeUInt32, kNumberTypeInt32, uint32_t, int32_t)},
     {TENSOR_SCATTER_ELEMENTS_CPU_REG(kNumberTypeFloat16, kNumberTypeInt32, float16, int32_t)},
     {TENSOR_SCATTER_ELEMENTS_CPU_REG(kNumberTypeFloat32, kNumberTypeInt32, float, int32_t)},
     {TENSOR_SCATTER_ELEMENTS_CPU_REG(kNumberTypeFloat64, kNumberTypeInt32, double, int32_t)},
     {TENSOR_SCATTER_ELEMENTS_CPU_REG(kNumberTypeInt64, kNumberTypeInt32, int64_t, int32_t)},
-    {TENSOR_SCATTER_ELEMENTS_CPU_REG(kNumberTypeUInt64, kNumberTypeInt32, uint64_t, int32_t)},
-    {TENSOR_SCATTER_ELEMENTS_CPU_REG(kNumberTypeInt16, kNumberTypeInt32, int16_t, int32_t)},
-    {TENSOR_SCATTER_ELEMENTS_CPU_REG(kNumberTypeUInt16, kNumberTypeInt32, uint16_t, int32_t)},
 
     {TENSOR_SCATTER_ELEMENTS_CPU_REG(kNumberTypeBool, kNumberTypeInt64, bool, int64_t)},
     {TENSOR_SCATTER_ELEMENTS_CPU_REG(kNumberTypeInt8, kNumberTypeInt64, int8_t, int64_t)},
     {TENSOR_SCATTER_ELEMENTS_CPU_REG(kNumberTypeUInt8, kNumberTypeInt64, uint8_t, int64_t)},
     {TENSOR_SCATTER_ELEMENTS_CPU_REG(kNumberTypeInt32, kNumberTypeInt64, int32_t, int64_t)},
-    {TENSOR_SCATTER_ELEMENTS_CPU_REG(kNumberTypeUInt32, kNumberTypeInt64, uint32_t, int64_t)},
     {TENSOR_SCATTER_ELEMENTS_CPU_REG(kNumberTypeFloat16, kNumberTypeInt64, float16, int64_t)},
     {TENSOR_SCATTER_ELEMENTS_CPU_REG(kNumberTypeFloat32, kNumberTypeInt64, float, int64_t)},
     {TENSOR_SCATTER_ELEMENTS_CPU_REG(kNumberTypeFloat64, kNumberTypeInt64, double, int64_t)},
-    {TENSOR_SCATTER_ELEMENTS_CPU_REG(kNumberTypeInt64, kNumberTypeInt64, int64_t, int64_t)},
-    {TENSOR_SCATTER_ELEMENTS_CPU_REG(kNumberTypeUInt64, kNumberTypeInt64, uint64_t, int64_t)},
-    {TENSOR_SCATTER_ELEMENTS_CPU_REG(kNumberTypeInt16, kNumberTypeInt64, int16_t, int64_t)},
-    {TENSOR_SCATTER_ELEMENTS_CPU_REG(kNumberTypeUInt16, kNumberTypeInt64, uint16_t, int64_t)}};
+    {TENSOR_SCATTER_ELEMENTS_CPU_REG(kNumberTypeInt64, kNumberTypeInt64, int64_t, int64_t)}};
   return func_list;
 }
 

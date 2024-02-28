@@ -36,7 +36,6 @@ float CalculateSparseClassification(lite::Tensor *input, lite::Tensor *output);
 float CalculateOneHotClassification(lite::Tensor *input, lite::Tensor *output);
 Tensor *CastTensor(Tensor *tensor, TypeId dst_data_type, bool support_fp16);
 int ScaleTensor(Tensor *tensor, float scale);
-std::vector<Tensor *> TSFindTensors(const kernel::KernelExec *pre_kernel, const kernel::KernelExec *post_kernel);
 }  // namespace lite
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_TRAIN_TRAIN_UTILS_H_

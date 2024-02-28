@@ -30,8 +30,6 @@ constexpr auto kTripletMarginLossOpName = "TripletMarginLoss";
 
 constexpr auto kLayerNormOpName = "LayerNorm";
 constexpr auto kLayerNormGradOpName = "LayerNormGrad";
-constexpr auto kLayerNormV3OpName = "LayerNormV3";
-constexpr auto kLayerNormGradV3OpName = "LayerNormGradV3";
 constexpr auto kPadV3OpName = "PadV3";
 constexpr auto kPadV3GradOpName = "PadV3Grad";
 constexpr auto kMirrorPadGradOpName = "MirrorPadGrad";
@@ -148,7 +146,6 @@ constexpr auto kFlashAttentionScoreOpName = "FlashAttentionScore";
 constexpr auto kFlashAttentionScoreGradOpName = "FlashAttentionScoreGrad";
 constexpr auto kRmsNormOpName = "RmsNorm";
 constexpr auto kRmsNormGradOpName = "RmsNormGrad";
-constexpr auto kRNNTLossOpName = "RNNTLoss";
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_BASE_NN_OP_NAME_H_

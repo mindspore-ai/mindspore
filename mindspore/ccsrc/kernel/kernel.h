@@ -230,6 +230,12 @@ using AddressPtrList = std::vector<AddressPtr>;
 using StreamType = void *;
 using abstract::AbstractBase;
 using device::DeviceSynchronizerPtr;
+// The memory info of kernel launch.
+struct KernelLaunchAddr {
+  AddressPtrList inputs_;
+  AddressPtrList outputs_;
+  AddressPtrList workspaces_;
+};
 struct TensorInfo {
   mindspore::Format format;
   abstract::AbstractTensorPtr base_;
@@ -755,6 +761,9 @@ class BACKEND_EXPORT KernelMod {
 
   virtual void set_is_monad(bool is_monad) { MS_LOG(EXCEPTION) << "Call the method which doesn't implement"; }
 
+  // User data is the extra dat-a required when the kernel is launched, It will be set before launch by runtime.
+  virtual void set_input_user_data(UserData *user_data, size_t input_index) {}
+  virtual void set_output_user_data(UserData *user_data, size_t output_index) {}
   // If output of kernel has a user_data, it needs to return true, and the framework will create user_data for it.
   virtual bool need_user_data() const { return false; }
 
@@ -812,6 +821,8 @@ inline T *GetDeviceAddress(const std::vector<KernelTensor *> &addr_list, size_t 
 }
 
 BACKEND_EXPORT std::vector<std::vector<int64_t>> GetShapes(const std::vector<KernelTensor *> &tensors);
+
+BACKEND_EXPORT void ConvertLaunchInfoToAddr(const KernelLaunchInfo &launch_info, KernelLaunchAddr *mem_info);
 
 template <typename T>
 inline bool CheckNullInput(const std::vector<T> &input_shape) {

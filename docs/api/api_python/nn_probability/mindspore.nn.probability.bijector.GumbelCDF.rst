@@ -7,7 +7,7 @@ mindspore.nn.probability.bijector.GumbelCDF
     此Bijector对应的映射函数为：
 
     .. math::
-        Y = \exp(-\exp(\frac{-(X - loc)}{scale}))
+        Y = g(x) = \exp(-\exp(\frac{-(X - loc)}{scale}))
 
     参数：
         - **loc** (float, list, numpy.ndarray, Tensor) - 位移因子，即上述公式中的loc。默认值： ``0.0`` 。

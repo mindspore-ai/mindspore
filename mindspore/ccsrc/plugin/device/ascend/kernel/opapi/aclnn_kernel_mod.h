@@ -40,19 +40,6 @@ using CallBackFunc = std::function<void()>;
 using OpApiUtil = transform::OpApiUtil;
 using AclUtil = transform::AclUtil;
 
-#define DEFINE_GET_WORKSPACE_FOR_RESIZE()                                  \
-  template <typename... Args>                                              \
-  void GetWorkspaceForResize(const Args &... args) {                       \
-    hash_id_ = transform::CalcOpApiHash(args...);                          \
-    if (cache_hash_.count(hash_id_) == 0) {                                \
-      auto return_value = GEN_EXECUTOR_CUST(op_type_, args...);            \
-      UpdateWorkspace(return_value);                                       \
-    } else {                                                               \
-      auto return_value = GEN_EXECUTOR_BOOST(op_type_, hash_id_, args...); \
-      UpdateWorkspace(return_value);                                       \
-    }                                                                      \
-  }
-
 class EmptyKernelTensor {
  public:
   EmptyKernelTensor() { tensor_ = new KernelTensor(); }
