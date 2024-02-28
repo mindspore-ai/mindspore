@@ -8,13 +8,13 @@ auto kernel_attr_pair =
   PyBoostUtils::SelectKernel(input_abs(), output_abs(), device_context(), primitive()->name());
 if (kernel_attr_pair.first || op_name() == "Cast") {
   // Create device address for input tensors
+  auto op = get_op();
   ${create_input_address}
   ${inplace_process}
   // Create device address for output tensors
-  PyBoostUtils::PrepareOpOutputs(device_context_, outputs_);
+  PyBoostUtils::PrepareOpOutputs(device_context_, 0, outputs_);
 
   // Async
-  auto op = get_op();
   PyBoostUtils::DispatchRun(
   std::make_shared<runtime::PyBoostDeviceTask>([this, op, ${call_args_with_tensor}]() {
     auto device_context = op->device_context();
@@ -30,7 +30,7 @@ if (kernel_attr_pair.first || op_name() == "Cast") {
 
     // Get outputs kernel tensors
     const auto &output_address_info =
-      PyBoostUtils::GetAddressInfo(device_context, {op->output_abs()}, outputs);
+      PyBoostUtils::GetAddressInfo(device_context, op->stream_id(), {op->output_abs()}, outputs);
 
     PyBoostUtils::LaunchKernel(primitive(), op->device_context(),
                                input_address_info, output_address_info);

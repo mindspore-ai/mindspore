@@ -94,9 +94,9 @@ DeviceMemPtr DynamicMemPoolBestFit::AllocTensorMem(size_t size, bool from_persis
     (void)mem_bufs_.insert(device_addr);
   }
   MS_LOG(DEBUG) << "Alloc memory details, name:" << DynamicMemAllocatorDebugInfo::GetDebugInfo().name_
-                << ", stream id: " << stream_id << ", address:" << device_addr << ", size:" << size
-                << "B, total allocated mem:" << TotalMemStatistics() << "B, peak used mem:" << UsedMemPeakStatistics()
-                << "B, in used mem:" << TotalUsedMemStatistics()
+                << ", persistent_mem:" << from_persistent_mem << ", stream id: " << stream_id
+                << ", address:" << device_addr << ", size:" << size << "B, total allocated mem:" << TotalMemStatistics()
+                << "B, peak used mem:" << UsedMemPeakStatistics() << "B, in used mem:" << TotalUsedMemStatistics()
                 << "B, total idle mem:" << (TotalMemStatistics() - TotalUsedMemStatistics()) << "B.";
   return device_addr;
 }

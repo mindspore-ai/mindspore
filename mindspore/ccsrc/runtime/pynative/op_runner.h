@@ -18,6 +18,7 @@
 #define MINDSPORE_MINDSPORE_CCSRC_RUNTIME_RUN_OP_RUN_OP_HELPER_H_
 
 #include <vector>
+#include <string>
 #include "include/backend/kernel_graph.h"
 #include "runtime/pynative/op_compiler.h"
 #include "runtime/hardware/device_context.h"
@@ -38,6 +39,8 @@ class OpRunner {
   static void LaunchKernelTask(const runtime::KernelTaskType &task_type, DeviceContext *device_context,
                                const device::DeviceAddressPtrList &input_addr_list,
                                const device::DeviceAddressPtrList &output_addr_list, size_t stream_id);
+  BACKEND_EXPORT static DeviceContext *GetDeviceContext(const std::string &device_type);
+  BACKEND_EXPORT static void ChildAfterFork();
 };
 
 class DynamicOpRunner {

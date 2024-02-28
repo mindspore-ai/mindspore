@@ -33,6 +33,7 @@ tensor::TensorPtr ContiguousAscendCustomize(const std::shared_ptr<OpRunner> &op,
   }
 
   auto copy_op = CREATE_PYBOOST_OP(Copy, kAscendDevice);
+  copy_op->set_stream_id(op->stream_id());
   output_tensor = copy_op->Call(input_tensor);
   op->set_input_abs(copy_op->input_abs());
   op->set_outputs(copy_op->outputs());

@@ -28,8 +28,8 @@ tensor::TensorPtr AddAscendCustomize(const std::shared_ptr<OpRunner> &op, const 
                                      const TensorPtr &y_tensor) {
   OpRunner::InferOpOutput(op, x_tensor, y_tensor);
   // No need to convert input
-  PyBoostUtils::PrepareOpInputs(op->device_context(), x_tensor, y_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->outputs());
+  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), x_tensor, y_tensor);
+  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
 
   // Async
   PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, x_tensor, y_tensor]() {
@@ -40,9 +40,8 @@ tensor::TensorPtr AddAscendCustomize(const std::shared_ptr<OpRunner> &op, const 
     PyBoostUtils::MallocOpInputs(device_context, x_tensor, y_tensor);
     // Malloc for output tensors
     PyBoostUtils::MallocOpOutputs(device_context, outputs);
-    auto stream_ptr = device_context->device_res_manager_->GetStream(kDefaultStreamIndex);
     ScalarPtr alpha = std::make_shared<FP32Imm>(1);
-    LAUNCH_ACLNN(aclnnAdd, device_context, stream_ptr, x_tensor, y_tensor, alpha, outputs[0]);
+    LAUNCH_ACLNN(aclnnAdd, device_context, op->stream_id(), x_tensor, y_tensor, alpha, outputs[0]);
     MS_LOG(DEBUG) << "Run device task Add end";
   }));
   return op->output(0);

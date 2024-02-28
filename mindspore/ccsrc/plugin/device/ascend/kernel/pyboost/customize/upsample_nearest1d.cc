@@ -28,8 +28,7 @@ tensor::TensorPtr UpsampleNearest1dAscendCall(const std::shared_ptr<OpRunner> &o
                                               const TensorPtr &input_tensor, const std::vector<int64_t> &output_size,
                                               const std::vector<tensor::TensorPtr> &outputs) {
   MS_LOG(DEBUG) << "Call start";
-  auto stream_ptr = device_context->device_res_manager_->GetStream(op->stream_id());
-  LAUNCH_ACLNN(aclnnUpsampleNearest1d, device_context, stream_ptr, input_tensor, output_size, outputs[0]);
+  LAUNCH_ACLNN(aclnnUpsampleNearest1d, device_context, op->stream_id(), input_tensor, output_size, outputs[0]);
   return outputs[0];
 }
 }  // namespace
@@ -41,8 +40,8 @@ tensor::TensorPtr UpsampleNearest1dAscendCustomize(const std::shared_ptr<OpRunne
 
   std::vector<int64_t> output_size_vector = ConvertValueTupleToVector<int64_t>(output_size);
 
-  PyBoostUtils::PrepareOpInputs(op->device_context(), input_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->outputs());
+  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor);
+  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
 
   // Async
   PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor, output_size_vector]() {

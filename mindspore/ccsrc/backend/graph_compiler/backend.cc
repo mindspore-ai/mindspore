@@ -1097,7 +1097,7 @@ void MindRTBackend::RunOpImplDynamic(bool single_op_cache_hit, const OpCompilerI
     auto input_tensors = runtime::OpRunner::GetTensorWithoutValueMask(op_run_info);
     runtime::DynamicOpRunner::UpdateInputDeviceAddress(op_compiler_info, input_tensors);
     auto device_address_list = runtime::DeviceAddressUtils::CreateGraphOutputDeviceAddress(
-      op_compiler_info, op_run_info->base_op_run_info.abstract);
+      op_compiler_info, op_run_info->base_op_run_info.abstract, op_run_info->base_op_run_info.stream_id);
     // Create output tensor
     UpdateOutputDynamic(op_run_info, op_compiler_info, device_address_list, outputs);
     DispatchOpTaskDynamic(outputs, op_compiler_info, op_run_info, device_address_list);
@@ -1185,6 +1185,7 @@ void MindRTBackend::RunViewKernelTask(const pynative::BaseOpRunInfo &base_op_run
         device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
       kernel_tensor->SetType(std::make_shared<TensorType>(input_tensor->Dtype()));
       kernel_tensor->SetShape(std::make_shared<abstract::TensorShape>(input_tensor->shape()));
+      kernel_tensor->set_stream_id(base_op_run_info.stream_id);
       auto input_addr = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
 
       input_tensor->set_device_address(input_addr);
@@ -1237,6 +1238,7 @@ device::DeviceAddressPtr MindRTBackend::RunContiguousTaskByAddress(const device:
     device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
   kernel_tensor->SetType(std::make_shared<TensorType>(TypeIdToType(old_device_address->type_id())));
   kernel_tensor->SetShape(std::make_shared<abstract::TensorShape>(old_storage_info->shape));
+  kernel_tensor->set_stream_id(stream_id);
 
   auto new_device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
   new_device_address->set_device_shape(old_storage_info->shape);

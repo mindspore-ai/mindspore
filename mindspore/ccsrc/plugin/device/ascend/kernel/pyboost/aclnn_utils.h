@@ -23,16 +23,18 @@
 #include "transform/acl_ir/op_api_exec.h"
 #include "runtime/device/device_address_utils.h"
 
-#define LAUNCH_ACLNN(aclnn_api, device_context, stream_ptr, ...)                                                    \
+#define LAUNCH_ACLNN(aclnn_api, device_context, stream_id, ...)                                                     \
   do {                                                                                                              \
     static const std::string aclnn_name = #aclnn_api;                                                               \
     runtime::ProfilerRecorder aclnn_profiler(runtime::ProfilerModule::kPynative,                                    \
                                              runtime::ProfilerEvent::kPyBoostLaunchAclnn, aclnn_name, false);       \
+    auto stream_ptr = device_context->device_res_manager_->GetStream(stream_id);                                    \
     auto [ws_size, executor_handle, release_function] = GEN_EXECUTOR(aclnn_name, __VA_ARGS__);                      \
     if (ws_size == 0) {                                                                                             \
       RUN_OP_API_ASYNC(aclnn_name, nullptr, 0, executor_handle, stream_ptr, release_function);                      \
     } else {                                                                                                        \
-      auto workspace_device_address = runtime::DeviceAddressUtils::CreateWorkspaceAddress(device_context, ws_size); \
+      auto workspace_device_address =                                                                               \
+        runtime::DeviceAddressUtils::CreateWorkspaceAddress(device_context, stream_id, ws_size);                    \
       RUN_OP_API_ASYNC(aclnn_name, workspace_device_address->GetMutablePtr(), ws_size, executor_handle, stream_ptr, \
                        release_function);                                                                           \
     }                                                                                                               \

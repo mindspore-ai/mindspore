@@ -314,6 +314,15 @@ bool AscendStreamMng::QueryStream(size_t stream_id) {
   }
   return status == ACL_STREAM_STATUS_COMPLETE;
 }
+
+size_t AscendStreamMng::GetStreamId(void *stream_ptr) {
+  auto iter = std::find(streams_.begin(), streams_.end(), stream_ptr);
+  if (iter == streams_.end()) {
+    MS_LOG(EXCEPTION) << "Failed to find stream_ptr in streams_, stream_ptr:" << stream_ptr;
+  }
+
+  return LongToSize(std::distance(streams_.begin(), iter));
+}
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

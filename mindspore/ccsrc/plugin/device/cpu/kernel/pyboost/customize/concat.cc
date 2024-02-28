@@ -33,8 +33,8 @@ void ConcatCpuCustomize(const std::shared_ptr<OpRunner> &op, const ValueTuplePtr
   OpRunner::InferOpOutput(op, tensors, axis);
   std::vector<tensor::TensorPtr> tensors_vector = ConvertValueTupleToVector<tensor::TensorPtr>(tensors);
 
-  PyBoostUtils::PrepareOpInputs(op->device_context(), tensors_vector);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->outputs());
+  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), tensors_vector);
+  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
 
   // Sync
   PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, tensors_vector, axis]() {
@@ -45,8 +45,9 @@ void ConcatCpuCustomize(const std::shared_ptr<OpRunner> &op, const ValueTuplePtr
     PyBoostUtils::MallocOpOutputs(device_context, outputs);
 
     const auto &input_address_info =
-      PyBoostUtils::GetAddressInfo(device_context, op->input_abs(), tensors_vector, axis);
-    const auto &output_address_info = PyBoostUtils::GetAddressInfo(device_context, {op->output_abs()}, outputs);
+      PyBoostUtils::GetAddressInfo(device_context, op->stream_id(), op->input_abs(), tensors_vector, axis);
+    const auto &output_address_info =
+      PyBoostUtils::GetAddressInfo(device_context, op->stream_id(), {op->output_abs()}, outputs);
 
     PyBoostUtils::LaunchKernel(op->primitive(), device_context, input_address_info, output_address_info);
     MS_LOG(DEBUG) << "For 'Concat', the cpu task end";

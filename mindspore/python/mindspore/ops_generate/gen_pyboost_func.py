@@ -116,8 +116,8 @@ def generate_get_inputs_kernel_tensors(call_args):
         args_list += f'{item}, '
     args_list = args_list[:-2]
     if args_list:
-        inputs_kernel_tensors += f'const auto &input_address_info = ' \
-                                 f'PyBoostUtils::GetAddressInfo(device_context, op->input_abs(), {args_list});\n'
+        inputs_kernel_tensors += f'const auto &input_address_info = PyBoostUtils::GetAddressInfo(' \
+                                 f'device_context, op->stream_id(), op->input_abs(), {args_list});\n'
     return inputs_kernel_tensors
 
 
@@ -129,7 +129,7 @@ def generate_create_input_address(need_malloc_tensors):
         args_list += f'{item}, '
     args_list = args_list[:-2]
     if args_list:
-        create_input_address = f'PyBoostUtils::PrepareOpInputs(device_context_, {args_list});\n'
+        create_input_address = f'PyBoostUtils::PrepareOpInputs(device_context_, op->stream_id(), {args_list});\n'
     return create_input_address
 
 

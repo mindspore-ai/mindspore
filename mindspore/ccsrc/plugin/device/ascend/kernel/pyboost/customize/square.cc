@@ -28,11 +28,10 @@ namespace {
 void SquareAscendCall(const std::shared_ptr<OpRunner> &op, const device::DeviceContext *device_context,
                       const tensor::TensorPtr &input_tensor, const std::vector<tensor::TensorPtr> &outputs) {
   MS_LOG(DEBUG) << "Call start";
-  auto stream_ptr = device_context->device_res_manager_->GetStream(op->stream_id());
   constexpr int64_t val = 2;
   const auto exponent = std::dynamic_pointer_cast<Scalar>(MakeValue(val));
   MS_EXCEPTION_IF_NULL(exponent);
-  LAUNCH_ACLNN(aclnnPowTensorScalar, device_context, stream_ptr, input_tensor, exponent, outputs[0]);
+  LAUNCH_ACLNN(aclnnPowTensorScalar, device_context, op->stream_id(), input_tensor, exponent, outputs[0]);
   MS_LOG(DEBUG) << "Launch end";
 }
 }  // namespace
@@ -40,8 +39,8 @@ void SquareAscendCall(const std::shared_ptr<OpRunner> &op, const device::DeviceC
 tensor::TensorPtr SquareAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &x_tensor) {
   OpRunner::InferOpOutput(op, x_tensor);
   // No need to convert input
-  PyBoostUtils::PrepareOpInputs(op->device_context(), x_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->outputs());
+  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), x_tensor);
+  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
   // Async
   PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, x_tensor]() {
     MS_LOG(DEBUG) << "Run device task Square start";
