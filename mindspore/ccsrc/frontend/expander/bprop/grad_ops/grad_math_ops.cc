@@ -790,10 +790,10 @@ REG_BPROP_BUILDER("Pow").SetBody(BODYFUNC(ib) {
   return {BinopGradCommon(ib, x, power, bc_dx, bc_dpower)};
 });
 
-REG_BPROP_BUILDER("Exp").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("Exp").SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
+  auto g = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
-  auto g = ib->Exp(x);
   auto dx = ib->Mul(g, dout);
   return {dx};
 });

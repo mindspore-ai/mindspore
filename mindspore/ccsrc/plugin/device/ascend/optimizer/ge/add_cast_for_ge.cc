@@ -45,6 +45,7 @@ const std::unordered_set<TypeId> int_type_with_bool = {kNumberTypeUInt8,  kNumbe
 // prim_name | {is_input, input_index/output_index, src_dtypes, dst_dtype}
 const std::unordered_map<std::string, CastInfo> kNeedAddCastMap = {
   {ops::kNameReciprocal, {true, 0, int_type_with_bool, kNumberTypeFloat32}},
+  {ops::kNameExp, {true, 0, int_type_with_bool, kNumberTypeFloat32}},
   {ops::kNameArgMaxWithValue, {false, 0, {}, kNumberTypeInt32}},
   {ops::kNameArgMinWithValue, {false, 0, {}, kNumberTypeInt32}}};
 
