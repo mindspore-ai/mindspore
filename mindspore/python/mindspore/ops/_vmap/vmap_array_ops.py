@@ -1964,14 +1964,6 @@ def get_squeeze_vmap_rule(prim, axis_size):
 @vmap_rules_getters.register(P.StridedSlice)
 def get_stridedslice_vmap_rule(prim, axis_size):
     """VmapRule for `StridedSlice`."""
-    new_begin_mask = prim.begin_mask * 2 + 1
-    new_end_mask = prim.end_mask * 2 + 1
-    new_ellipsis_mask = prim.ellipsis_mask
-    new_new_axis_mask = prim.new_axis_mask * 2
-    new_shrink_axis_mask = prim.shrink_axis_mask * 2
-    batch_stridedslice = P.StridedSlice(new_begin_mask, new_end_mask, new_ellipsis_mask, new_new_axis_mask,
-                                        new_shrink_axis_mask)
-
     @_primexpr
     def get_new_begin_end_strided(begin, end, strided):
         new_begin = (0,) + begin
@@ -1979,7 +1971,24 @@ def get_stridedslice_vmap_rule(prim, axis_size):
         new_strided = (1,) + strided
         return new_begin, new_end, new_strided
 
-    def vmap_rule(x_bdim, begin_bdim, end_bdim, strided_bdim):
+    def _get_mask_value_and_prim(begin_mask_bdim, end_mask_bdim, ellipsis_mask_bdim, new_axis_mask_bdim,
+                                 shrink_axis_mask_bdim):
+        begin_mask, _ = begin_mask_bdim
+        end_mask, _ = end_mask_bdim
+        ellipsis_mask, _ = ellipsis_mask_bdim
+        new_axis_mask, _ = new_axis_mask_bdim
+        shrink_axis_mask, _ = shrink_axis_mask_bdim
+        new_begin_mask = begin_mask * 2 + 1
+        new_end_mask = end_mask * 2 + 1
+        new_ellipsis_mask = ellipsis_mask
+        new_new_axis_mask = new_axis_mask * 2
+        new_shrink_axis_mask = shrink_axis_mask * 2
+        batch_stridedslice = P.StridedSlice(new_begin_mask, new_end_mask, new_ellipsis_mask, new_new_axis_mask,
+                                            new_shrink_axis_mask)
+        return batch_stridedslice
+
+    def vmap_rule(x_bdim, begin_bdim, end_bdim, strided_bdim, begin_mask_bdim, end_mask_bdim, ellipsis_mask_bdim,
+                  new_axis_mask_bdim, shrink_axis_mask_bdim):
         is_all_none, result = vmap_general_preprocess(prim, x_bdim, begin_bdim, end_bdim, strided_bdim)
         if is_all_none:
             return result
@@ -1988,6 +1997,8 @@ def get_stridedslice_vmap_rule(prim, axis_size):
         begin, begin_dim = begin_bdim
         end, end_dim = end_bdim
         strided, strided_dim = strided_bdim
+        batch_stridedslice = _get_mask_value_and_prim(begin_mask_bdim, end_mask_bdim, ellipsis_mask_bdim,
+                                                      new_axis_mask_bdim, shrink_axis_mask_bdim)
 
         if any(dim is not None for dim in [begin_dim, end_dim, strided_dim]):
             _raise_value_error("vmap of `StridedSlice` not support `begin`, `end` or `strided` has batch dimension, "

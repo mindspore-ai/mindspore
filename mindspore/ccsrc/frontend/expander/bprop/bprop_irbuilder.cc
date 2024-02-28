@@ -134,14 +134,9 @@ NodePtr BpropIRBuilder::TensorGetItem(const NodePtr &node, int64_t idx) {
   constexpr int64_t ellipsis_mask = 0;
   constexpr int64_t new_axis_mask = 0;
   constexpr int64_t shrink_axis_mask = 1;
-  return Emit(
-    kStridedSliceOpName,
-    {node, EmitValue(MakeValue(begin_strides)), EmitValue(MakeValue(end_strides)), EmitValue(MakeValue(step_strides))},
-    {{kAttrBeginMask, MakeValue(begin_mask)},
-     {kAttrEndMask, MakeValue(end_mask)},
-     {kAttrEllipsisMask, MakeValue(ellipsis_mask)},
-     {kAttrNewAxisMask, MakeValue(new_axis_mask)},
-     {kAttrShrinkAxisMask, MakeValue(shrink_axis_mask)}});
+  return StridedSlice(node, EmitValue(MakeValue(begin_strides)), EmitValue(MakeValue(end_strides)),
+                      EmitValue(MakeValue(step_strides)), begin_mask, end_mask, ellipsis_mask, new_axis_mask,
+                      shrink_axis_mask);
 }
 
 NodePtr BpropIRBuilder::StridedSlice(const NodePtr &x, const std::map<int64_t, std::vector<int64_t>> &slices) {
@@ -173,12 +168,8 @@ NodePtr BpropIRBuilder::StridedSlice(const NodePtr &x, const std::map<int64_t, s
       }
     }
   }
-  return Emit(kStridedSliceOpName, {x, Value(begin_strides), Value(end_strides), Value(step_strides)},
-              {{kAttrBeginMask, zero},
-               {kAttrEndMask, MakeValue(SizeToLong(end_mask))},
-               {kAttrEllipsisMask, zero},
-               {kAttrNewAxisMask, zero},
-               {kAttrShrinkAxisMask, MakeValue(SizeToLong(shrink_axis_mask))}});
+  return StridedSlice(x, Value(begin_strides), Value(end_strides), Value(step_strides), 0, SizeToLong(end_mask), 0, 0,
+                      SizeToLong(shrink_axis_mask));
 }
 
 DEF_PURE_SHAPE_CALC(g_dyn_size)

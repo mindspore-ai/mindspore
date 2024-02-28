@@ -179,14 +179,14 @@ REG_ADPT_DESC(StridedSliceGrad, kNameStridedSliceGrad, ADPT_DESC(StridedSliceGra
 
 // StridedSlice
 INPUT_MAP(StridedSlice) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(begin)}, {3, INPUT_DESC(end)}, {4, INPUT_DESC(strides)}};
-ATTR_MAP(StridedSlice) = {{"begin_mask", ATTR_DESC(begin_mask, AnyTraits<int64_t>())},
-                          {"end_mask", ATTR_DESC(end_mask, AnyTraits<int64_t>())},
-                          {"ellipsis_mask", ATTR_DESC(ellipsis_mask, AnyTraits<int64_t>())},
-                          {"new_axis_mask", ATTR_DESC(new_axis_mask, AnyTraits<int64_t>())},
-                          {"shrink_axis_mask", ATTR_DESC(shrink_axis_mask, AnyTraits<int64_t>())}};
+ATTR_MAP(StridedSlice) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(StridedSlice) = {{kIndex5, ATTR_DESC(begin_mask, AnyTraits<int64_t>())},
+                                {kIndex6, ATTR_DESC(end_mask, AnyTraits<int64_t>())},
+                                {kIndex7, ATTR_DESC(ellipsis_mask, AnyTraits<int64_t>())},
+                                {kIndex8, ATTR_DESC(new_axis_mask, AnyTraits<int64_t>())},
+                                {kIndex9, ATTR_DESC(shrink_axis_mask, AnyTraits<int64_t>())}};
 OUTPUT_MAP(StridedSlice) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(StridedSlice, kNameStridedSlice, ADPT_DESC(StridedSlice))
-REG_ADPT_DESC(StridedSliceD, kStridedSliceDOpName, ADPT_DESC(StridedSlice))
 
 // StridedSliceV2
 INPUT_MAP(StridedSliceV2) = {

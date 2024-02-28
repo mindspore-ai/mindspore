@@ -329,13 +329,8 @@ NodePtrList FFTGradCommon(BpropIRBuilder *ib, const std::string &op_name) {
       (void)begin.emplace_back(0LL);
       (void)strides.emplace_back(1LL);
     }
-    auto slice_dout = ib->Emit(
-      "StridedSlice", {grad_dout, ib->Value<ShapeVector>(begin), input_shape_node, ib->Value<ShapeVector>(strides)},
-      {{kAttrBeginMask, MakeValue<int64_t>(0)},
-       {kAttrEndMask, MakeValue<int64_t>(0)},
-       {kAttrEllipsisMask, MakeValue<int64_t>(0)},
-       {kAttrNewAxisMask, MakeValue<int64_t>(0)},
-       {kAttrShrinkAxisMask, MakeValue<int64_t>(0)}});
+    auto slice_dout =
+      ib->StridedSlice(grad_dout, ib->Value<ShapeVector>(begin), input_shape_node, ib->Value<ShapeVector>(strides));
 
     auto slicegrad_dout = ib->Emit(
       "StridedSliceGrad",
@@ -1854,16 +1849,10 @@ REG_BPROP_BUILDER("TridiagonalMatMul").SetUnusedInputs({i4}).SetBody(BODYFUNC(ib
       (void)strides.emplace_back(1LL);
     }
     begin[rank - 2] = 1LL;
-    return ib->Emit(
-      "Pad",
-      {ib->Emit("StridedSlice",
-                {x, ib->Value<ShapeVector>(begin), ib->Value<ShapeVector>(end), ib->Value<ShapeVector>(strides)},
-                {{"begin_mask", MakeValue<int64_t>(0LL)},
-                 {"end_mask", MakeValue<int64_t>(0LL)},
-                 {"ellipsis_mask", MakeValue<int64_t>(0LL)},
-                 {"new_axis_mask", MakeValue<int64_t>(0LL)},
-                 {"shrink_axis_mask", MakeValue<int64_t>(0LL)}})},
-      {{"paddings", MakeValue(paddings)}});
+    return ib->Emit("Pad",
+                    {ib->StridedSlice(x, ib->Value<ShapeVector>(begin), ib->Value<ShapeVector>(end),
+                                      ib->Value<ShapeVector>(strides))},
+                    {{"paddings", MakeValue(paddings)}});
   };
   auto RightShift = [](BpropIRBuilder *ib, NodePtr x) {
     auto x_shape = ib->GetShape(x);
@@ -1881,16 +1870,10 @@ REG_BPROP_BUILDER("TridiagonalMatMul").SetUnusedInputs({i4}).SetBody(BODYFUNC(ib
       (void)strides.emplace_back(1LL);
     }
     end[rank - 2] = -1;
-    return ib->Emit(
-      "Pad",
-      {ib->Emit("StridedSlice",
-                {x, ib->Value<ShapeVector>(begin), ib->Value<ShapeVector>(end), ib->Value<ShapeVector>(strides)},
-                {{"begin_mask", MakeValue<int64_t>(0)},
-                 {"end_mask", MakeValue<int64_t>(0)},
-                 {"ellipsis_mask", MakeValue<int64_t>(0)},
-                 {"new_axis_mask", MakeValue<int64_t>(0)},
-                 {"shrink_axis_mask", MakeValue<int64_t>(0)}})},
-      {{"paddings", MakeValue(paddings)}});
+    return ib->Emit("Pad",
+                    {ib->StridedSlice(x, ib->Value<ShapeVector>(begin), ib->Value<ShapeVector>(end),
+                                      ib->Value<ShapeVector>(strides))},
+                    {{"paddings", MakeValue(paddings)}});
   };
   auto MatrixTranspose = [](BpropIRBuilder *ib, const NodePtr &x) {
     auto x_shape = ib->GetShape(x);
@@ -2654,14 +2637,8 @@ REG_BPROP_BUILDER("DCT").SetBody(BODYFUNC(ib) {
                           {kAttrNewAxisMask, MakeValue<int64_t>(0)},
                           {kAttrShrinkAxisMask, MakeValue<int64_t>(0)}});
   } else if (need_slice) {
-    grad_dout =
-      ib->Emit("StridedSlice",
-               {grad_dout, ib->Value<ShapeVector>(begin), ib->Value<ShapeVector>(end), ib->Value<ShapeVector>(strides)},
-               {{kAttrBeginMask, MakeValue<int64_t>(0)},
-                {kAttrEndMask, MakeValue<int64_t>(0)},
-                {kAttrEllipsisMask, MakeValue<int64_t>(0)},
-                {kAttrNewAxisMask, MakeValue<int64_t>(0)},
-                {kAttrShrinkAxisMask, MakeValue<int64_t>(0)}});
+    grad_dout = ib->StridedSlice(grad_dout, ib->Value<ShapeVector>(begin), ib->Value<ShapeVector>(end),
+                                 ib->Value<ShapeVector>(strides));
   }
 
   return {grad_dout,          ib->OutZeros(type),    ib->OutZeros(n),   ib->OutZeros(axis),

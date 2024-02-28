@@ -49,7 +49,8 @@ class StridedSliceCpuKernelMod : public NativeCpuKernelMod {
   bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
                     const std::vector<KernelTensor *> &outputs);
   enum ParallelStrategy { kOnSplitAxis, kOnOuter };
-  void InitSliceParam(std::vector<int64_t> *begin, std::vector<int64_t> *end, std::vector<int64_t> *stride);
+  void InitSliceParam(std::vector<int64_t> *begin, std::vector<int64_t> *end, std::vector<int64_t> *stride,
+                      const std::vector<kernel::KernelTensor *> &inputs);
   bool MatchParallelPattern();
   void InitParallelParam();
   void ParallelRun(const uint8_t *input_addr, uint8_t *output_addr, int thread_num);

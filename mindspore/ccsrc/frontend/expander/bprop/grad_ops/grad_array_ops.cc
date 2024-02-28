@@ -828,12 +828,17 @@ REG_BPROP_BUILDER("Contiguous").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   return {ib->GetInput(kIndex2)};
 });
 
-REG_BPROP_BUILDER("StridedSlice").SetUnusedInputs({i0, i4}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("StridedSlice").SetUnusedInputs({i0, i9}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto begin = ib->GetInput(kIndex1);
   auto end = ib->GetInput(kIndex2);
   auto strides = ib->GetInput(kIndex3);
-  auto dout = ib->GetInput(kIndex5);
+  auto begin_mask = ib->GetInput(kIndex4);
+  auto end_mask = ib->GetInput(kIndex5);
+  auto ellipsis_mask = ib->GetInput(kIndex6);
+  auto new_axis_mask = ib->GetInput(kIndex7);
+  auto shrink_axis_mask = ib->GetInput(kIndex8);
+  auto dout = ib->GetInput(kIndex10);
   auto x_shape_vec = ib->GetShape(x);
 
   NodePtr x_shape_node;
@@ -843,15 +848,23 @@ REG_BPROP_BUILDER("StridedSlice").SetUnusedInputs({i0, i4}).SetBody(BODYFUNC(ib)
     x_shape_node = ib->EmitValue(MakeValue(x_shape_vec));
   }
   auto dx = ib->Emit("StridedSliceGrad", {dout, x_shape_node, begin, end, strides},
-                     {{"begin_mask", ib->GetAttr("begin_mask")},
-                      {"end_mask", ib->GetAttr("end_mask")},
-                      {"ellipsis_mask", ib->GetAttr("ellipsis_mask")},
-                      {"new_axis_mask", ib->GetAttr("new_axis_mask")},
-                      {"shrink_axis_mask", ib->GetAttr("shrink_axis_mask")}});
+                     {{"begin_mask", begin_mask->BuildValue()},
+                      {"end_mask", end_mask->BuildValue()},
+                      {"ellipsis_mask", ellipsis_mask->BuildValue()},
+                      {"new_axis_mask", new_axis_mask->BuildValue()},
+                      {"shrink_axis_mask", shrink_axis_mask->BuildValue()}});
   auto dbegin = ib->OutZeros(begin);
   auto dend = ib->OutZeros(end);
   auto dstrides = ib->OutZeros(strides);
-  return {dx, dbegin, dend, dstrides};
+  return {dx,
+          dbegin,
+          dend,
+          dstrides,
+          ib->OutZeros(begin_mask),
+          ib->OutZeros(end_mask),
+          ib->OutZeros(ellipsis_mask),
+          ib->OutZeros(new_axis_mask),
+          ib->OutZeros(shrink_axis_mask)};
 });
 
 REG_BPROP_BUILDER("StridedSliceGrad").SetUnusedInputs({i0, i1, i5}).SetBody(BODYFUNC(ib) {
@@ -860,13 +873,14 @@ REG_BPROP_BUILDER("StridedSliceGrad").SetUnusedInputs({i0, i1, i5}).SetBody(BODY
   auto end = ib->GetInput(kIndex3);
   auto strides = ib->GetInput(kIndex4);
   auto dout = ib->GetInput(kIndex6);
-  return {ib->Emit("StridedSlice", {dout, begin, end, strides},
-                   {{"begin_mask", ib->GetAttr("begin_mask")},
-                    {"end_mask", ib->GetAttr("end_mask")},
-                    {"ellipsis_mask", ib->GetAttr("ellipsis_mask")},
-                    {"new_axis_mask", ib->GetAttr("new_axis_mask")},
-                    {"shrink_axis_mask", ib->GetAttr("shrink_axis_mask")}}),
-          ib->OutZeros(shapex), ib->OutZeros(begin), ib->OutZeros(end), ib->OutZeros(strides)};
+  auto begin_mask = GetValue<int64_t>(ib->GetAttr("begin_mask"));
+  auto end_mask = GetValue<int64_t>(ib->GetAttr("end_mask"));
+  auto ellipsis_mask = GetValue<int64_t>(ib->GetAttr("ellipsis_mask"));
+  auto new_axis_mask = GetValue<int64_t>(ib->GetAttr("new_axis_mask"));
+  auto shrink_axis_mask = GetValue<int64_t>(ib->GetAttr("shrink_axis_mask"));
+  return {
+    ib->StridedSlice(dout, begin, end, strides, begin_mask, end_mask, ellipsis_mask, new_axis_mask, shrink_axis_mask),
+    ib->OutZeros(shapex), ib->OutZeros(begin), ib->OutZeros(end), ib->OutZeros(strides)};
 });
 
 REG_BPROP_BUILDER("Eye").SetUnusedInputs({i0, i1, i3, i4}).SetBody(BODYFUNC(ib) {
@@ -2157,14 +2171,8 @@ REG_BPROP_BUILDER("Im2Col").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   if (IsDynamic(x_shape)) {
     auto tensor_shape = ib->Emit("TensorShape", {x});
     // Im2Col only support 4-D input, so we hard-code [2:4] here
-    shape =
-      ib->Emit("StridedSlice",
-               {tensor_shape, ib->Value<ShapeVector>({2}), ib->Value<ShapeVector>({4}), ib->Value<ShapeVector>({1})},
-               {{"begin_mask", MakeValue<int64_t>(0)},
-                {"end_mask", MakeValue<int64_t>(0)},
-                {"ellipsis_mask", MakeValue<int64_t>(0)},
-                {"new_axis_mask", MakeValue<int64_t>(0)},
-                {"shrink_axis_mask", MakeValue<int64_t>(0)}});
+    shape = ib->StridedSlice(tensor_shape, ib->Value<ShapeVector>({2}), ib->Value<ShapeVector>({4}),
+                             ib->Value<ShapeVector>({1}));
     shape = ib->Cast(shape, kInt32);
   } else {
     ShapeVector output_shape(x_shape.begin() + i2, x_shape.end());

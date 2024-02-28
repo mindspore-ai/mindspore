@@ -102,17 +102,12 @@ AnfNodePtrList TensorIndex::ParseSlice(const AnfNodePtr &index_node, const abstr
   return AnfNodePtrList{slice_nodes[kStart], slice_nodes[kStop], slice_nodes[kStep]};
 }
 
-static ValueNodePtr MakeStridedSliceNode(int64_t shrink_axis, int64_t begin_mask = 0, int64_t end_mask = 0) {
+static ValueNodePtr MakeStridedSliceNode() {
   auto prim = std::make_shared<Primitive>(kPrimStridedSlice->name());
-  const std::vector<std::string> &input_names = {"x", "begin", "end", "strides"};
+  const std::vector<std::string> &input_names = {
+    "x", "begin", "end", "strides", "begin_mask", "end_mask", "ellipsis_mask", "new_axis_mask", "shrink_axis_mask"};
   const std::vector<std::string> &output_names = {"output"};
-  prim->SetAttrs({{ops::kBeginMask, MakeValue(begin_mask)},
-                  {ops::kEndMask, MakeValue(end_mask)},
-                  {ops::kEllipsisMask, MakeValue(kZeroAnfValue)},
-                  {ops::kNewAxisMask, MakeValue(kZeroAnfValue)},
-                  {ops::kShrinkAxisMask, MakeValue(shrink_axis)},
-                  {kAttrInputNames, MakeValue(input_names)},
-                  {kAttrOutputNames, MakeValue(output_names)}});
+  prim->SetAttrs({{kAttrInputNames, MakeValue(input_names)}, {kAttrOutputNames, MakeValue(output_names)}});
   return NewValueNode(prim);
 }
 
@@ -167,13 +162,19 @@ void TensorIndexGetitem::GetItemBySlice(const AnfNodePtr &data_node, const AnfNo
                                         const AbstractBasePtr &data, const abstract::AbstractSlicePtr &abs_slice_ptr) {
   std::vector<int64_t> init_by_none;
   auto slice_nodes = ParseSlice(index_node, abs_slice_ptr, &init_by_none);
-  auto strided_slice_vnode = MakeStridedSliceNode(0, init_by_none[kIndex0], init_by_none[kIndex1]);
+  auto strided_slice_vnode = MakeStridedSliceNode();
   for (size_t i = 0; i < slice_nodes.size(); i++) {
     auto make_tuple = NewValueNode(prim::kPrimMakeTuple);
     slice_nodes[i] = res_graph_->NewCNode({make_tuple, slice_nodes[i]});
   }
-  (void)slice_nodes.insert(slice_nodes.begin(), {strided_slice_vnode, data_node});
-  res_graph_->set_output(res_graph_->NewCNode(slice_nodes));
+  auto begin_mask_node = NewValueNode(MakeValue(init_by_none[kIndex0]));
+  auto end_mask_node = NewValueNode(MakeValue(init_by_none[kIndex1]));
+  auto ellipsis_mask_node = NewValueNode(MakeValue(static_cast<int64_t>(0)));
+  auto new_axis_mask_node = NewValueNode(MakeValue(static_cast<int64_t>(0)));
+  auto shrink_axis_mask_node = NewValueNode(MakeValue(static_cast<int64_t>(0)));
+  res_graph_->set_output(res_graph_->NewCNode(
+    {strided_slice_vnode, data_node, slice_nodes[kIndex0], slice_nodes[kIndex1], slice_nodes[kIndex2], begin_mask_node,
+     end_mask_node, ellipsis_mask_node, new_axis_mask_node, shrink_axis_mask_node}));
 }
 
 FuncGraphPtr TensorIndexGetitem::GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) {
@@ -573,8 +574,15 @@ void TensorIndexGetitem::ConstGetStrideInfoFromTuple(const AnfNodePtr &data_node
   AnfNodePtr begin_stride = res_graph_->NewCNode(begin_strides);
   AnfNodePtr end_stride = res_graph_->NewCNode(end_strides);
   AnfNodePtr step_stride = res_graph_->NewCNode(step_strides);
-  auto strided_slice_vnode = MakeStridedSliceNode(shrink_axis, begin_mask, end_mask);
-  auto slice_node = res_graph_->NewCNode({strided_slice_vnode, data_node, begin_stride, end_stride, step_stride});
+  auto strided_slice_vnode = MakeStridedSliceNode();
+  auto begin_mask_node = NewValueNode(MakeValue(begin_mask));
+  auto end_mask_node = NewValueNode(MakeValue(end_mask));
+  auto ellipsis_mask_node = NewValueNode(MakeValue(static_cast<int64_t>(0)));
+  auto new_axis_mask_node = NewValueNode(MakeValue(static_cast<int64_t>(0)));
+  auto shrink_axis_mask_node = NewValueNode(MakeValue(shrink_axis));
+  auto slice_node =
+    res_graph_->NewCNode({strided_slice_vnode, data_node, begin_stride, end_stride, step_stride, begin_mask_node,
+                          end_mask_node, ellipsis_mask_node, new_axis_mask_node, shrink_axis_mask_node});
   res_graph_->set_output(slice_node);
 }
 
@@ -630,7 +638,7 @@ void TensorIndexGetitem::GetStrideInfoFromTuple(const AnfNodePtr &data_node, con
       index_count += 1;
     } else if (index_type_id == kObjectTypeTensorType) {
       // in this case the Tensor must be a single value whose shape is (), which has the same behavior with Scalar
-      // the other caeses is handled in other function
+      // the other cases is handled in other function
       // cast + TensorToScalar + ScalarCast can replaced by only one TensorToScalar when it supports a type input
       auto cast = prim::GetPythonOps("cast", "mindspore.ops.functional");
       new_index_node = res_graph_->NewCNode({NewValueNode(cast), new_index_node, NewValueNode(kInt64)});
@@ -706,9 +714,16 @@ void TensorIndexGetitem::GetStrideInfoFromTuple(const AnfNodePtr &data_node, con
       end_mask = NormalizeMaskWithEllipsis(end_mask, ellipsis_position, ellipsis_range_size, data_shape_);
     }
   }
-  auto strided_slice_vnode = MakeStridedSliceNode(shrink_axis, begin_mask, end_mask);
+  auto strided_slice_vnode = MakeStridedSliceNode();
+  auto begin_mask_node = NewValueNode(MakeValue(begin_mask));
+  auto end_mask_node = NewValueNode(MakeValue(end_mask));
+  auto ellipsis_mask_node = NewValueNode(MakeValue(static_cast<int64_t>(0)));
+  auto new_axis_mask_node = NewValueNode(MakeValue(static_cast<int64_t>(0)));
+  auto shrink_axis_mask_node = NewValueNode(MakeValue(shrink_axis));
 
-  auto slice_node = res_graph_->NewCNode({strided_slice_vnode, data_node, begin_stride, end_stride, step_stride});
+  auto slice_node =
+    res_graph_->NewCNode({strided_slice_vnode, data_node, begin_stride, end_stride, step_stride, begin_mask_node,
+                          end_mask_node, ellipsis_mask_node, new_axis_mask_node, shrink_axis_mask_node});
   if (IsDynamicRank(data_shape_) & has_int & has_ellipsis) {
     // this can be optimized when shrink_axis is supported as an input
     auto get_shape_prim = std::make_shared<Primitive>(kPrimGetSqueezeSliceShape->name());

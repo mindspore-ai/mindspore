@@ -68,64 +68,40 @@ int StridedSliceGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   begin_ = inputs[kBeginIndex_]->GetValueWithCheck<std::vector<int64_t>>();
   end_ = inputs[kEndIndex_]->GetValueWithCheck<std::vector<int64_t>>();
   strides_ = inputs[kStrideIndex_]->GetValueWithCheck<std::vector<int64_t>>();
-  CollectInfo(kernel_name_, primitive_);
+  CollectInfo(kernel_name_, inputs);
 
   return ret;
 }
 
-#define STRIDEDSLICE_TENSOR_DYNAMIC_GPU_REG(TYPEID_1, TYPEID_2, TYPE_1, TYPE_2) \
-  KernelAttr()                                                                  \
-    .AddInputAttr(TYPEID_1)                                                     \
-    .AddInputAttr(TYPEID_2)                                                     \
-    .AddInputAttr(TYPEID_2)                                                     \
-    .AddInputAttr(TYPEID_2)                                                     \
-    .AddOutputAttr(TYPEID_1),                                                   \
+#define STRIDEDSLICE_GPU_REG(TYPEID_1, TYPEID_2, TYPE_1, TYPE_2) \
+  KernelAttr()                                                   \
+    .AddInputAttr(TYPEID_1)                                      \
+    .AddInputAttr(kObjectTypeTuple, TYPEID_2)                    \
+    .AddInputAttr(kObjectTypeTuple, TYPEID_2)                    \
+    .AddInputAttr(kObjectTypeTuple, TYPEID_2)                    \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)           \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)           \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)           \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)           \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)           \
+    .AddOutputAttr(TYPEID_1),                                    \
     &StridedSliceGpuKernelMod::LaunchKernel<TYPE_1, TYPE_2>
-
-#define STRIDEDSLICE_TUPLE_DYNAMIC_GPU_REG(TYPEID_1, TYPEID_2, TYPE_1, TYPE_2) \
-  KernelAttr()                                                                 \
-    .AddInputAttr(TYPEID_1)                                                    \
-    .AddInputAttr(kObjectTypeTuple, TYPEID_2)                                  \
-    .AddInputAttr(kObjectTypeTuple, TYPEID_2)                                  \
-    .AddInputAttr(kObjectTypeTuple, TYPEID_2)                                  \
-    .AddOutputAttr(TYPEID_1),                                                  \
-    &StridedSliceGpuKernelMod::LaunchKernel<TYPE_1, TYPE_2>
-
-#define STRIDEDSLICE_DYNAMIC_GPU_REG(TYPEID_1, TYPEID_2, TYPE_1, TYPE_2)       \
-  {STRIDEDSLICE_TENSOR_DYNAMIC_GPU_REG(TYPEID_1, TYPEID_2, TYPE_1, TYPE_2)}, { \
-    STRIDEDSLICE_TUPLE_DYNAMIC_GPU_REG(TYPEID_1, TYPEID_2, TYPE_1, TYPE_2)     \
-  }
 
 std::vector<std::pair<KernelAttr, StridedSliceGpuKernelMod::StridedSliceFunc>> StridedSliceGpuKernelMod::func_list_ = {
-  STRIDEDSLICE_DYNAMIC_GPU_REG(kNumberTypeFloat64, kNumberTypeInt64, double, int64_t),
-  STRIDEDSLICE_DYNAMIC_GPU_REG(kNumberTypeFloat32, kNumberTypeInt64, float, int64_t),
-  STRIDEDSLICE_DYNAMIC_GPU_REG(kNumberTypeFloat16, kNumberTypeInt64, half, int64_t),
-  STRIDEDSLICE_DYNAMIC_GPU_REG(kNumberTypeInt64, kNumberTypeInt64, int64_t, int64_t),
-  STRIDEDSLICE_DYNAMIC_GPU_REG(kNumberTypeInt32, kNumberTypeInt64, int32_t, int64_t),
-  STRIDEDSLICE_DYNAMIC_GPU_REG(kNumberTypeInt16, kNumberTypeInt64, int16_t, int64_t),
-  STRIDEDSLICE_DYNAMIC_GPU_REG(kNumberTypeInt8, kNumberTypeInt64, int8_t, int64_t),
-  STRIDEDSLICE_DYNAMIC_GPU_REG(kNumberTypeUInt64, kNumberTypeInt64, uint64_t, int64_t),
-  STRIDEDSLICE_DYNAMIC_GPU_REG(kNumberTypeUInt32, kNumberTypeInt64, uint32_t, int64_t),
-  STRIDEDSLICE_DYNAMIC_GPU_REG(kNumberTypeUInt16, kNumberTypeInt64, uint16_t, int64_t),
-  STRIDEDSLICE_DYNAMIC_GPU_REG(kNumberTypeUInt8, kNumberTypeInt64, uint8_t, int64_t),
-  STRIDEDSLICE_DYNAMIC_GPU_REG(kNumberTypeBool, kNumberTypeInt64, bool, int64_t),
-  STRIDEDSLICE_DYNAMIC_GPU_REG(kNumberTypeComplex64, kNumberTypeInt64, Complex<float>, int64_t),
-  STRIDEDSLICE_DYNAMIC_GPU_REG(kNumberTypeComplex128, kNumberTypeInt64, Complex<double>, int64_t),
-
-  STRIDEDSLICE_DYNAMIC_GPU_REG(kNumberTypeFloat64, kNumberTypeInt32, double, int32_t),
-  STRIDEDSLICE_DYNAMIC_GPU_REG(kNumberTypeFloat32, kNumberTypeInt32, float, int32_t),
-  STRIDEDSLICE_DYNAMIC_GPU_REG(kNumberTypeFloat16, kNumberTypeInt32, half, int32_t),
-  STRIDEDSLICE_DYNAMIC_GPU_REG(kNumberTypeInt64, kNumberTypeInt32, int64_t, int32_t),
-  STRIDEDSLICE_DYNAMIC_GPU_REG(kNumberTypeInt32, kNumberTypeInt32, int32_t, int32_t),
-  STRIDEDSLICE_DYNAMIC_GPU_REG(kNumberTypeInt16, kNumberTypeInt32, int16_t, int32_t),
-  STRIDEDSLICE_DYNAMIC_GPU_REG(kNumberTypeInt8, kNumberTypeInt32, int8_t, int32_t),
-  STRIDEDSLICE_DYNAMIC_GPU_REG(kNumberTypeUInt64, kNumberTypeInt32, uint64_t, int32_t),
-  STRIDEDSLICE_DYNAMIC_GPU_REG(kNumberTypeUInt32, kNumberTypeInt32, uint32_t, int32_t),
-  STRIDEDSLICE_DYNAMIC_GPU_REG(kNumberTypeUInt16, kNumberTypeInt32, uint16_t, int32_t),
-  STRIDEDSLICE_DYNAMIC_GPU_REG(kNumberTypeUInt8, kNumberTypeInt32, uint8_t, int32_t),
-  STRIDEDSLICE_DYNAMIC_GPU_REG(kNumberTypeBool, kNumberTypeInt32, bool, int32_t),
-  STRIDEDSLICE_DYNAMIC_GPU_REG(kNumberTypeComplex64, kNumberTypeInt32, Complex<float>, int32_t),
-  STRIDEDSLICE_DYNAMIC_GPU_REG(kNumberTypeComplex128, kNumberTypeInt32, Complex<double>, int32_t),
+  {STRIDEDSLICE_GPU_REG(kNumberTypeFloat64, kNumberTypeInt64, double, int64_t)},
+  {STRIDEDSLICE_GPU_REG(kNumberTypeFloat32, kNumberTypeInt64, float, int64_t)},
+  {STRIDEDSLICE_GPU_REG(kNumberTypeFloat16, kNumberTypeInt64, half, int64_t)},
+  {STRIDEDSLICE_GPU_REG(kNumberTypeInt64, kNumberTypeInt64, int64_t, int64_t)},
+  {STRIDEDSLICE_GPU_REG(kNumberTypeInt32, kNumberTypeInt64, int32_t, int64_t)},
+  {STRIDEDSLICE_GPU_REG(kNumberTypeInt16, kNumberTypeInt64, int16_t, int64_t)},
+  {STRIDEDSLICE_GPU_REG(kNumberTypeInt8, kNumberTypeInt64, int8_t, int64_t)},
+  {STRIDEDSLICE_GPU_REG(kNumberTypeUInt64, kNumberTypeInt64, uint64_t, int64_t)},
+  {STRIDEDSLICE_GPU_REG(kNumberTypeUInt32, kNumberTypeInt64, uint32_t, int64_t)},
+  {STRIDEDSLICE_GPU_REG(kNumberTypeUInt16, kNumberTypeInt64, uint16_t, int64_t)},
+  {STRIDEDSLICE_GPU_REG(kNumberTypeUInt8, kNumberTypeInt64, uint8_t, int64_t)},
+  {STRIDEDSLICE_GPU_REG(kNumberTypeBool, kNumberTypeInt64, bool, int64_t)},
+  {STRIDEDSLICE_GPU_REG(kNumberTypeComplex64, kNumberTypeInt64, Complex<float>, int64_t)},
+  {STRIDEDSLICE_GPU_REG(kNumberTypeComplex128, kNumberTypeInt64, Complex<double>, int64_t)},
 };
 
 std::vector<KernelAttr> StridedSliceGpuKernelMod::GetOpSupport() {
