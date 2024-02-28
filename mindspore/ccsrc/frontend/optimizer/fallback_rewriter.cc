@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2023 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -590,6 +590,7 @@ class BeforeOptARewriter : public BaseRewriter {
   ValuePtr ConvertDictValue(const ValuePtr &value, size_t depth, bool convert_dict, bool *need_convert) const {
     MS_EXCEPTION_IF_NULL(value);
     if (depth > kMaxSeqRecursiveDepth) {
+      MS_LOG(ERROR) << "value:" << value->ToString();
       MS_LOG(INTERNAL_EXCEPTION) << "List, tuple and dict nesting is not allowed more than " << kMaxSeqRecursiveDepth
                                  << " levels.";
     }
@@ -649,6 +650,7 @@ class BeforeOptARewriter : public BaseRewriter {
   // AbstractDictionary --> AbstractSequence.
   AbstractSequencePtr ConvertToAbstractSequence(const AbstractBasePtr &abs, size_t depth) {
     if (depth > kMaxSeqRecursiveDepth) {
+      MS_LOG(ERROR) << "abs:" << abs->ToString();
       MS_LOG(INTERNAL_EXCEPTION) << "List, tuple and dict nesting is not allowed more than " << kMaxSeqRecursiveDepth
                                  << " levels.";
     }
@@ -2387,6 +2389,7 @@ class AfterOptARewriter : public BaseRewriter {
   // AbstractRowTensor --> AbstractTuple.
   static AbstractBasePtr ConvertToAbstractTuple(const AbstractBasePtr &abs, size_t depth) {
     if (depth > kMaxSeqRecursiveDepth) {
+      MS_LOG(ERROR) << "abs:" << abs->ToString();
       MS_LOG(INTERNAL_EXCEPTION) << "List, tuple and dict nesting is not allowed more than " << kMaxSeqRecursiveDepth
                                  << " levels.";
     }
