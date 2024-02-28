@@ -590,7 +590,6 @@ void ForwardExecutor::RunOpFrontend(const FrontendOpRunInfoPtr &op_run_info) {
   SetCastForInputs(op_run_info);
 
 #ifndef ENABLE_TEST
-  // Ascend Op not support, We will remove it next week;
   if (op_run_info->is_view_op &&
       ProcessViewOp(op_run_info, strides_calc_info.first.value(), strides_calc_info.second)) {
     return;
