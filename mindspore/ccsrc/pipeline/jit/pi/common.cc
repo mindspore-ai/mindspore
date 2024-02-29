@@ -1402,7 +1402,9 @@ PyObject *EvalFrame(PyThreadState *tstate, PyFrameObject *f, int exc) {
   }
   py::object res;
   try {
+    common::SetEnv("MS_DEV_JIT_SYNTAX_LEVEL", "0");
     res = CodeHook(tstate, c, f);
+    common::SetEnv("MS_DEV_JIT_SYNTAX_LEVEL", "2");
   } catch (py::error_already_set &e) {
     MS_LOG(ERROR) << "execute failed with " << e.what() << " at "
                   << std::string(py::str(reinterpret_cast<PyObject *>(f->f_code)));
