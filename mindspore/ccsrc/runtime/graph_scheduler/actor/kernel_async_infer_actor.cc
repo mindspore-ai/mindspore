@@ -24,6 +24,7 @@ void KernelAsyncInferActor::InferShape(OpContext<DeviceTensor> *const context, K
     kernel_actor->ExecuteInferShapeTask(context);
   } catch (const std::exception &e) {
     MsException::Instance().SetException();
+    MS_LOG(ERROR) << e.what();
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(GraphExecutionStrategy::kPipeline, (*context), e.what());
   }
 }
