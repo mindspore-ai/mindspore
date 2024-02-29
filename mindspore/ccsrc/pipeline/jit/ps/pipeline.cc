@@ -505,6 +505,11 @@ py::object GraphExecutorPy::GenerateArgumentsKey(const py::object &obj, const py
   return py::int_(key_counter++);
 }
 
+void GraphExecutorPy::ClearCompileArgumentsResource() {
+  // Clear global converted args saved in GenerateArgumentsKey.
+  ClearCurConvertInput();
+}
+
 void ClearArgCache(const py::object &obj) {
   if (py::isinstance<py::none>(obj)) {
     return;
@@ -945,7 +950,7 @@ void GraphExecutorPy::CleanCompileRes(const ResourcePtr &resource) {
   ProcessStatus::GetInstance().RecordStart(kPipelineClean);
   (void)profiler::CollectHostInfo(kCompiler, kPipelineClean, kPipelineClean, 0, 0, 0);
   abstract::AnalysisContext::ClearContext();
-  ClearCurConvertInput();
+  ClearCompileArgumentsResource();
   ad::PrimBpropOptimizer::GetPrimBpropOptimizerInst().Clear();
   ad::g_k_prims.clear();
   ad::DFunctor::Clear();
@@ -1546,6 +1551,12 @@ void GraphExecutorPy::GeFirstInitParams() {
 }
 #endif
 
+void GraphExecutorPy::ClearRunArgumentsResource(size_t input_arg_size, VectorRef *arg_list) {
+  for (std::size_t i = 0; i < input_arg_size; ++i) {
+    (*arg_list)[i] = nullptr;
+  }
+}
+
 py::object GraphExecutorPy::RunInner(const py::tuple &args, const py::object &phase_obj) {
   if (common::GetEnv(kSimulationLevel) == kSimulationLevelCompileGraph) {
     py::int_ ret = 0;
@@ -1630,7 +1641,7 @@ py::object GraphExecutorPy::RunInner(const py::tuple &args, const py::object &ph
     return py::none();
   }
   py::object res = BaseRefToPyDataWithUserData(value, output_abs);
-
+  ClearRunArgumentsResource(args.size(), &execute_info->arg_list);
   MS_LOG(DEBUG) << "Run end";
   return res;
 }  // namespace pipeline
