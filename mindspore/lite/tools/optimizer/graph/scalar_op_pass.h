@@ -31,6 +31,7 @@ class ScalarOpPass : public Pass {
  private:
   ValueNodePtr GenerateScalarValueTensor(const FuncGraphPtr &func_graph, const AnfNodePtr &anf_node, int input_index);
   ValueNodePtr GenerateScalarValueTuple(const FuncGraphPtr &func_graph, int64_t value);
+  ValueNodePtr GenerateScalarValue(const FuncGraphPtr &func_graph, int64_t value);
   CNodePtr GenerateScalarToTensor(const FuncGraphPtr &func_graph, const AnfNodePtr &anf_node, int input_index);
   CNodePtr GenerateTensorToScalar(const FuncGraphPtr &func_graph, const AnfNodePtr &anf_node,
                                   bool is_curr_node = false);

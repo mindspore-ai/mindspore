@@ -630,17 +630,13 @@ def test_stridedslice_layout():
     features_expect_layout = ([4, 2], [-1, 1, 0], [256, 16, 16], 0, True, '')
     assert validator.check_parameter_layout('w1', features_expect_layout)
 
-    # check attrs
-    roi_expect_attrs = {'begin_mask': 1, 'end_mask': 2, 'ellipsis_mask': 0}
-    assert validator.check_node_attrs('StridedSlice-1', roi_expect_attrs)
-
     # check inputs
-    roi_expect_inputs = ['Load-0', '((127, 0, 0))', '((128, 64, 32))', '((1, 1, 1))']
+    roi_expect_inputs = ['Load-0', '((127, 0, 0))', '((128, 64, 32))', '((1, 1, 1))', 1, 2, 0, 0, 0]
     assert validator.check_node_inputs_fuzzy_match('StridedSlice-1', roi_expect_inputs)
 
     # check sub_graph
     sub_graph = {
-        'StridedSlice-1': ['Load-0', '((127, 0, 0))', '((128, 64, 32))', '((1, 1, 1))'],
+        'StridedSlice-1': ['Load-0', '((127, 0, 0))', '((128, 64, 32))', '((1, 1, 1))', 1, 2, 0, 0, 0],
         'Mul-0': ['Reshape-1', 'StridedSlice-1'],
         'Split-1': ['AllGather-1', 0, 2],
         'Concat-1': ['MakeTuple-2', 3]

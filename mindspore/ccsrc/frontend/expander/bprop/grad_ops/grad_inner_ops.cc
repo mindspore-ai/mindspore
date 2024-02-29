@@ -120,17 +120,7 @@ REG_BPROP_BUILDER("TensorCopySlices").SetUnusedInputs({i0, i5}).SetBody(BODYFUNC
   auto stride = ib->GetInput(kIndex4);
   auto dout = ib->GetInput(kIndex6);
   auto x_grad = ib->Emit(kTensorCopySlicesOpName, {dout, ib->ZerosLike(update), begin, end, stride});
-  constexpr int64_t begin_mask = 0;
-  constexpr int64_t end_mask = 0;
-  constexpr int64_t ellipsis_mask = 0;
-  constexpr int64_t new_axis_mask = 0;
-  constexpr int64_t shrink_axis_mask = 0;
-  auto update_grad = ib->Emit(kStridedSliceOpName, {dout, begin, end, stride},
-                              {{kAttrBeginMask, MakeValue(begin_mask)},
-                               {kAttrEndMask, MakeValue(end_mask)},
-                               {kAttrEllipsisMask, MakeValue(ellipsis_mask)},
-                               {kAttrNewAxisMask, MakeValue(new_axis_mask)},
-                               {kAttrShrinkAxisMask, MakeValue(shrink_axis_mask)}});
+  auto update_grad = ib->StridedSlice(dout, begin, end, stride);
   return {x_grad, update_grad, ib->OutZeros(begin), ib->OutZeros(end), ib->OutZeros(stride)};
 });
 

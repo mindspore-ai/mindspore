@@ -291,6 +291,17 @@ void EmplaceSliceInputs(const FrontendOpRunInfoPtr &op_run_info, const std::vect
     (void)op_run_info->op_grad_info->input_value.emplace_back(v);
   }
 
+  if (op_run_info->requires_grad && op_run_info->base_op_run_info.op_name == kStridedSliceOpName) {
+    // StridedSlice mask input
+    int64_t v = 0;
+
+    (void)op_run_info->op_grad_info->input_value.emplace_back(MakeValue(v));  // begin_mask
+    (void)op_run_info->op_grad_info->input_value.emplace_back(MakeValue(v));  // end_mask
+    (void)op_run_info->op_grad_info->input_value.emplace_back(MakeValue(v));  // ellipsis_mask
+    (void)op_run_info->op_grad_info->input_value.emplace_back(MakeValue(v));  // new_axis_mask
+    (void)op_run_info->op_grad_info->input_value.emplace_back(MakeValue(v));  // shrink_new_mask
+  }
+
   op_run_info->input_size = op_run_info->op_grad_info->input_value.size();
   PyNativeAlgo::PyParser::PrepareOpGradInfo(op_run_info);
 }
@@ -653,14 +664,6 @@ PrimitivePtr ForwardExecutor::GetSlicePrimFromCache(const std::string &op_name) 
   }
 
   auto prim = std::make_shared<Primitive>(op_name);
-  if (op_name == kStridedSliceOpName) {
-    int64_t v = 0;
-    prim->set_attr(kAttrBeginMask, MakeValue(v));
-    prim->set_attr(kAttrEndMask, MakeValue(v));
-    prim->set_attr(kAttrEllipsisMask, MakeValue(v));
-    prim->set_attr(kAttrNewAxisMask, MakeValue(v));
-    prim->set_attr(kAttrShrinkAxisMask, MakeValue(v));
-  }
   slice_prim_cache_[op_name] = prim;
   return prim;
 }

@@ -103,7 +103,6 @@ function(__install_white_list_ops)
             ${TOP_DIR}/mindspore/core/ops/squeeze.h
             ${TOP_DIR}/mindspore/core/ops/squared_difference.h
             ${TOP_DIR}/mindspore/core/ops/stack.h
-            ${TOP_DIR}/mindspore/core/ops/strided_slice.h
             ${TOP_DIR}/mindspore/core/ops/switch.h
             ${TOP_DIR}/mindspore/core/ops/tensor_list_from_tensor.h
             ${TOP_DIR}/mindspore/core/ops/tensor_list_get_item.h
@@ -1044,7 +1043,6 @@ if(MSLITE_ENABLE_KERNEL_EXECUTOR)
     install(FILES
             ${TOP_DIR}/mindspore/core/ops/auto_generate/gen_lite_ops.h
             ${TOP_DIR}/mindspore/core/ops/auto_generate/gen_ops_name.h
-            ${TOP_DIR}/mindspore/core/ops/strided_slice.h
             ${TOP_DIR}/mindspore/core/ops/base_operator.h
             ${TOP_DIR}/mindspore/core/ops/custom.h
             ${TOP_DIR}/mindspore/core/ops/conv2d.h

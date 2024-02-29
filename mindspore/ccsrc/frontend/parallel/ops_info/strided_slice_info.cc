@@ -53,17 +53,12 @@ Status StridedSliceInfo::GetMask(const std::string &mask_name, int64_t *mask_val
   if (mask_value == nullptr) {
     return FAILED;
   }
-  auto mask_iter = attrs_.find(mask_name);
-  if (mask_iter != attrs_.end()) {
-    MS_EXCEPTION_IF_NULL(mask_iter->second);
-    if (mask_iter->second->isa<Int64Imm>()) {
-      *mask_value = mask_iter->second->cast<Int64ImmPtr>()->value();
-    } else {
-      MS_LOG(ERROR) << name_ << ": The value of " << mask_name << " is not int64_t";
-      return FAILED;
-    }
-  }
 
+  auto mask_opt = GetScalarValueFromInputs<int64_t>(input_value_, name_, mask_name);
+  if (!mask_opt.has_value()) {
+    MS_LOG(ERROR) << name_ << " failed to get value for " << mask_name << ".";
+  }
+  *mask_value = mask_opt.value();
   MS_LOG(INFO) << name_ << ": The attr name: " << mask_name << ", the value is " << *mask_value;
   return SUCCESS;
 }
@@ -169,11 +164,6 @@ void StridedSliceInfo::AdjustShrinkAxisMask() {
 }
 
 Status StridedSliceInfo::GetAttrs() {
-  if (attrs_.size() < STRIDED_SLICE_ATTRS_SIZE) {
-    MS_LOG(ERROR) << name_ << ": The size of attrs small than " << STRIDED_SLICE_ATTRS_SIZE;
-    return FAILED;
-  }
-
   if ((GetMask(BEGIN_MASK, &begin_mask_) != SUCCESS) || (GetMask(END_MASK, &end_mask_) != SUCCESS) ||
       (GetMask(ELLIPSIS_MASK, &ellipsis_mask_) != SUCCESS) || (GetMask(NEW_AXIS_MASK, &new_axis_mask_) != SUCCESS) ||
       (GetMask(SHRINK_AXIS_MASK, &shrink_axis_mask_) != SUCCESS)) {
@@ -434,6 +424,12 @@ Status StridedSliceInfo::InferMirrorOps() {
   mirror_ops_.push_back(begin_op);
   mirror_ops_.push_back(end_op);
   mirror_ops_.push_back(strides_op);
+  OperatorVector op_helper;
+  auto prim_name = GetPrimNameFromInfoName(name_);
+  auto res_size = ops::GetOpInputsNum(prim_name) - mirror_ops_.size();
+  for (size_t i = 0; i < res_size; ++i) {
+    mirror_ops_.push_back(op_helper);
+  }
   return SUCCESS;
 }
 

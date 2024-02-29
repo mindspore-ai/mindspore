@@ -159,12 +159,13 @@ Status ROIAlignInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
   auto begin = CreateValueTupleAnfNodePtr({0, 0});
   auto end = CreateValueTupleAnfNodePtr({rois_slice_size_, 0});
   auto strides = CreateValueTupleAnfNodePtr({1, 1});
-  OperatorAttrs strided_slice_attrs = {std::make_pair(END_MASK, MakeValue(0)), std::make_pair(BEGIN_MASK, MakeValue(0)),
-                                       std::make_pair(ELLIPSIS_MASK, MakeValue(0)),
-                                       std::make_pair(NEW_AXIS_MASK, MakeValue(0)),
-                                       std::make_pair(SHRINK_AXIS_MASK, MakeValue(2))};
-  auto strided_slice = gen_g.PushBack(
-    {gen_g.NewOpInst(STRIDEDSLICE, strided_slice_attrs), gen_g.virtual_input_node(), begin, end, strides});
+  auto begin_mask = CreatInt64Imm(0);
+  auto end_mask = CreatInt64Imm(0);
+  auto ellipsis_mask = CreatInt64Imm(0);
+  auto new_axis_mask = CreatInt64Imm(0);
+  auto shrink_axis_mask = CreatInt64Imm(2);
+  auto strided_slice = gen_g.PushBack({gen_g.NewOpInst(STRIDEDSLICE), gen_g.virtual_input_node(), begin, end, strides,
+                                       begin_mask, end_mask, ellipsis_mask, new_axis_mask, shrink_axis_mask});
   auto dtype_rois = gen_g.PushBack({gen_g.NewOpInst(DTYPE), gen_g.virtual_input_node()});
   auto dtype_id_rois = gen_g.PushBack(
     {gen_g.NewOpInst(DTYPETOENUM), CreateStringImm("DtypeToEnum"), CreateStringImm("dtype"), dtype_rois});

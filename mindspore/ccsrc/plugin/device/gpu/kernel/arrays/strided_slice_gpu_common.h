@@ -25,7 +25,6 @@
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "kernel/ops_utils.h"
-#include "ops/strided_slice.h"
 
 namespace mindspore {
 namespace kernel {
@@ -36,11 +35,11 @@ class StridedSliceGpuCommon {
   ~StridedSliceGpuCommon() = default;
 
   inline bool IsEmptyInput(int input_size) { return input_size == 0; }
-  void CollectInfo(const std::string &kernel_name, const PrimitivePtr &op_prim) {
+  void CollectInfo(const std::string &kernel_name, const std::vector<KernelTensor *> inputs) {
     auto shape_tmp = Convert2Long(input_shape_);
     FillEmptyDims(kernel_name, &begin_, &end_, &strides_, &shape_tmp, true);
     input_shape_ = Convert2SizeT(shape_tmp);
-    ParseStrideSliceMasks(op_prim, &begin_, &end_, &strides_, shape_tmp);
+    ParseStrideSliceMasks(inputs, &begin_, &end_, &strides_, shape_tmp);
     FillOutputDim();
     null_output_ = IsNullOutput();
   }
