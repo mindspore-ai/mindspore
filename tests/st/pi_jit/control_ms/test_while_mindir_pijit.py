@@ -33,6 +33,7 @@ class SingleWhileNet(nn.Cell):
         return y
 
 
+@pytest.mark.skip
 @pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard

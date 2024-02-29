@@ -478,7 +478,10 @@ void FuncGraphBuilder::EraseUnusedParameter() {
   std::vector<AnfNodePtr> new_params;
   const auto &origin_params = graph_->parameters();
   (void)std::copy_if(origin_params.begin(), origin_params.end(), std::back_inserter(new_params),
-                     [&used_params](const AnfNodePtr &param) { return used_params.find(param) != used_params.end(); });
+                     [&used_params](const AnfNodePtr &param) {
+                       return param->cast_ptr<Parameter>()->has_default() ||
+                              used_params.find(param) != used_params.end();
+                     });
   graph_->set_parameters(new_params);
 }
 
