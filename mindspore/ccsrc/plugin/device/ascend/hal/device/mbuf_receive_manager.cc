@@ -97,15 +97,22 @@ mindspore::tensor::TensorPtr acltdtDataItemToTensorPtr(acltdtDataItem *item) {
   return nullptr;
 }
 
-MbufDataHandler::MbufDataHandler(MbufFuncType func, uint32_t device_id, string channel_name, size_t capacity,
-                                 int32_t timeout)
-    : func_(func), device_id_(device_id), channel_name_(channel_name), capacity_(capacity), timeout_(timeout) {
+MbufDataHandler::MbufDataHandler(MbufFuncType func, uint32_t device_id, string channel_name, string prim_name,
+                                 size_t capacity, int32_t timeout)
+    : func_(func),
+      device_id_(device_id),
+      channel_name_(channel_name),
+      prim_name_(prim_name),
+      capacity_(capacity),
+      timeout_(timeout) {
   MS_LOG(INFO) << "Channel " << channel_name_ << " begins the construction process.";
   acl_handle_ = acltdtCreateChannelWithCapacity(device_id_, channel_name_.c_str(), capacity_);
-  future_ = promise_.get_future();
   if (acl_handle_ == nullptr) {
-    MS_LOG(ERROR) << "Channel " << channel_name_ << " failed to create mbuf Channel.";
-    promise_.set_value(MbufReceiveError::AclError);
+    string warning_info = "The creation of " + channel_name_ + " channel failed";
+    if (!prim_name_.empty()) {
+      warning_info += " and the corresponding " + prim_name_ + " Primitive cannot be used in GRAPH_MODE";
+    }
+    MS_LOG(WARNING) << warning_info;
     return;
   }
   thread_ = std::thread(&MbufDataHandler::HandleData, this);
@@ -118,18 +125,15 @@ MbufDataHandler::~MbufDataHandler() {
   if (thread_.joinable()) {
     thread_.join();
   }
-  MbufReceiveError thread_status = future_.get();
-  if (thread_status != MbufReceiveError::Success) {
-    MS_LOG(ERROR) << "Channel " << channel_name_ << " having a problem during operation. Error code: " << thread_status;
-  }
   if (acl_handle_) {
     aclError status = acltdtDestroyChannel(acl_handle_);
+    acl_handle_ = nullptr;
     if (status != ACL_SUCCESS) {
       MS_LOG(ERROR) << "Channel " << channel_name_ << " failed destroy acl channel. Error code: " << status;
       return;
     }
   } else {
-    MS_LOG(WARNING) << "Channel " << channel_name_ << ": acl handle has been destroyed.";
+    MS_LOG(INFO) << "Channel " << channel_name_ << ": acl handle has been destroyed.";
   }
 }
 
@@ -137,7 +141,6 @@ bool MbufDataHandler::ReceiveAndProcessData(const ScopeAclTdtDataset &scope_acl_
   aclError status = acltdtReceiveTensor(acl_handle_, scope_acl_dataset.Get(), timeout_);
   if (status != ACL_ERROR_RT_QUEUE_EMPTY && status != ACL_SUCCESS) {
     MS_LOG(ERROR) << "Channel " << channel_name_ << " failed to receive tensor. Error code is " << status;
-    promise_.set_value(MbufReceiveError::AclError);
     return false;
   }
 
@@ -151,7 +154,6 @@ bool MbufDataHandler::QueryChannelSize(size_t *size) {
   aclError status = acltdtQueryChannelSize(acl_handle_, size);
   if (status != ACL_SUCCESS) {
     MS_LOG(ERROR) << "Channel " << channel_name_ << " failed to QueryChannelSize. Error code is " << status;
-    promise_.set_value(MbufReceiveError::AclError);
     return false;
   }
   return true;
@@ -162,7 +164,6 @@ void MbufDataHandler::HandleData() {
   ScopeAclTdtDataset scope_acl_dataset;
   if (scope_acl_dataset.Get() == nullptr) {
     MS_LOG(ERROR) << "Channel " << channel_name_ << " failed to create aclDateaset.";
-    promise_.set_value(MbufReceiveError::AclError);
     return;
   }
 
@@ -188,10 +189,8 @@ void MbufDataHandler::HandleData() {
   if (channel_size > 0) {
     MS_LOG(ERROR) << "Channel " << channel_name_ << " has stopped receiving data, and " << channel_size
                   << " pieces of data have not been received.";
-    promise_.set_value(MbufReceiveError::Timeout);
     return;
   }
-  promise_.set_value(MbufReceiveError::Success);
 }
 
 }  // namespace mindspore::device::ascend

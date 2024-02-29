@@ -40,12 +40,6 @@ namespace mindspore::device::ascend {
 
 using MbufFuncType = std::function<void(acltdtDataset *)>;
 
-enum class MbufReceiveError : int {
-  Success = 0,
-  Timeout = 1,
-  AclError = 2,
-};
-
 const std::map<aclDataType, TypeId> kAclDataTypeMap = {
   {ACL_INT8, TypeId::kNumberTypeInt8},       {ACL_UINT8, TypeId::kNumberTypeUInt8},
   {ACL_INT16, TypeId::kNumberTypeInt16},     {ACL_UINT16, TypeId::kNumberTypeUInt16},
@@ -74,8 +68,8 @@ class ScopeAclTdtDataset {
 
 class MbufDataHandler {
  public:
-  MbufDataHandler(MbufFuncType func, uint32_t device_id, string channel_name, size_t capacity = 128,
-                  int32_t timeout = 800);
+  MbufDataHandler(MbufFuncType func, uint32_t device_id, string channel_name, string op_name = "",
+                  size_t capacity = 128, int32_t timeout = 800);
   ~MbufDataHandler();
   string GetChannelName() { return channel_name_; }
   uint32_t GetDeviceId() { return device_id_; }
@@ -86,13 +80,12 @@ class MbufDataHandler {
   MbufFuncType func_;
   uint32_t device_id_;
   std::string channel_name_;
+  std::string prim_name_;
   size_t capacity_;
   int32_t timeout_;
   std::mutex mutex_;
   std::atomic_bool stop_receive_{false};
   std::thread thread_;
-  std::promise<MbufReceiveError> promise_;
-  std::future<MbufReceiveError> future_;
   acltdtChannelHandle *acl_handle_;
 
   void HandleData();
