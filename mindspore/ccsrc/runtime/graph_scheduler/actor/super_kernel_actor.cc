@@ -191,6 +191,7 @@ void SuperKernelActor::Run(OpContext<DeviceTensor> *const context) {
     MS_LOG(WARNING) << "Need Profile Memory, launch actor name: " << GetAID().Name()
                     << ", kernel graph: " << graph_->ToString();
   }
+  WaitRuntimePipelineFinish();
   FetchInputDeviceTensor(context);
   if (memory_alloc_list_.size() > 0) {
     if (common::IsNeedProfileMemory()) {
@@ -405,6 +406,7 @@ bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context, con
       // Update Shape.
       node_device_kernel_tensor->SetShape(input_kernel_tensor->GetShape()->Clone());
     }
+
     node_device_tensor->set_user_data(input_device_tensor->user_data());
     node_device_tensor->set_need_sync_user_data(input_device_tensor->need_sync_user_data());
     if (type_ != KernelTransformType::kSuperKernelActor) {

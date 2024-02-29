@@ -319,7 +319,7 @@ bool EnableAsyncInfer();
 bool EnableRuntimePipeline();
 // If enable async launch kernel, wait all kernels launch task finish.
 // If enable infer->resize->launch pipeline, also wait all infer, resize and launch task finish.
-void WaitRuntimePipelineFinish();
+void WaitRuntimePipelineFinish(bool wait_kernel_launch_finish = true);
 
 // Copy data from src_device_tensor to dst_device_tensor.
 bool Copy(const DeviceTensor *dst_device_tensor, const DeviceTensor *src_device_tensor);

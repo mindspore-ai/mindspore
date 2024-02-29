@@ -58,17 +58,14 @@ class GpuConvertToDynamicShapeGpuKernelMod : public NativeGpuKernelMod {
 
   int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
     int ret = KernelMod::Resize(inputs, outputs);
-    if (ret != KRET_OK && ret != KRET_UNKNOWN_OUT_SHAPE) {
+    if (ret != KRET_OK) {
       return ret;
     }
     input_shape_ = inputs[0]->GetShapeVector();
-    outputs[0]->SetShapeVector(input_shape_);
     input_size_ = 1;
     for (const auto &e : input_shape_) {
       input_size_ *= e;
     }
-    InitSizeLists();
-    outputs[0]->set_size(output_size_list_[0]);
     return KRET_OK;
   }
 

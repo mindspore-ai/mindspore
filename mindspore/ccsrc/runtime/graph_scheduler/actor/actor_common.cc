@@ -233,14 +233,14 @@ bool EnableRuntimePipeline() {
   return ret;
 }
 
-void WaitRuntimePipelineFinish() {
+void WaitRuntimePipelineFinish(bool wait_kernel_launch_finish) {
 #ifndef BUILD_LITE
   if (ActorDispatcher::enable_runtime_multi_pipeline()) {
     KernelAsyncInferActor::GetInstance()->Wait();
     KernelAsyncResizeActor::GetInstance()->Wait();
   }
 
-  if (ActorDispatcher::enable_async_launch_kernel()) {
+  if (ActorDispatcher::enable_async_launch_kernel() && wait_kernel_launch_finish) {
     KernelAsyncLaunchActor::GetInstance()->Wait();
   }
 #endif

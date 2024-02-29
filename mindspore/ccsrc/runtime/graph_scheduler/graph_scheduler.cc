@@ -597,14 +597,21 @@ ActorSet *GraphScheduler::Transform(const GraphCompilerInfo &graph_compiler_info
   return actor_set.get();
 }
 
-void GraphScheduler::SpawnMultiPipelineActor(ActorSet *const actor_set) {
+void GraphScheduler::SpawnMultiPipelineActor(ActorSet *const actor_set, ActorThreadPool *const thread_pool) {
   auto actor_manager = ActorMgr::GetActorMgrRef();
   MS_EXCEPTION_IF_NULL(actor_manager);
 
   ActorDispatcher::set_enable_async_launch_kernel(EnableRuntimePipeline() && !actor_set->kernel_actors_.empty() &&
                                                   default_actor_thread_num_ > kAsyncLaunchThreadNum);
   if (ActorDispatcher::enable_async_launch_kernel() && !already_spawn_kernel_async_launch_actor_) {
-    MS_LOG(INFO) << "Enable runtime asynchronously launch kernel.";
+    size_t current_actor_thread_num = thread_pool->GetActorThreadNum();
+    MS_LOG(INFO) << "Enable runtime asynchronously launch kernel, default actor thread num "
+                 << default_actor_thread_num_ << ", current actor thread num: " << current_actor_thread_num;
+    if (current_actor_thread_num != default_actor_thread_num_) {
+      thread_pool->SetActorThreadNum(default_actor_thread_num_);
+      MS_LOG(DEBUG) << "Reset actor thread number to: " << default_actor_thread_num_;
+    }
+
     auto &kernel_async_launch_actor = KernelAsyncLaunchActor::GetInstance();
     MS_EXCEPTION_IF_NULL(kernel_async_launch_actor);
     (void)actor_manager->Spawn(kernel_async_launch_actor, false);
@@ -616,7 +623,14 @@ void GraphScheduler::SpawnMultiPipelineActor(ActorSet *const actor_set) {
                                                      !actor_set->kernel_actors_.empty() &&
                                                      default_actor_thread_num_ > kMultiPipelineThreadNum);
   if (ActorDispatcher::enable_runtime_multi_pipeline() && !already_spawn_kernel_async_infer_resize_actor_) {
-    MS_LOG(INFO) << "Enable runtime multi pipeline.";
+    size_t current_actor_thread_num = thread_pool->GetActorThreadNum();
+    MS_LOG(INFO) << "Enable runtime multi pipeline, default actor thread num: " << default_actor_thread_num_
+                 << ", current actor thread num: " << current_actor_thread_num;
+    if (current_actor_thread_num != default_actor_thread_num_) {
+      thread_pool->SetActorThreadNum(default_actor_thread_num_);
+      MS_LOG(DEBUG) << "Reset actor thread number to: " << default_actor_thread_num_;
+    }
+
     auto &kernel_async_infer_actor = KernelAsyncInferActor::GetInstance();
     MS_EXCEPTION_IF_NULL(kernel_async_infer_actor);
     (void)actor_manager->Spawn(kernel_async_infer_actor, false);
@@ -720,8 +734,6 @@ void GraphScheduler::Run(ActorSet *const actor_set, const std::vector<std::vecto
   }
 #endif
 
-  SpawnMultiPipelineActor(actor_set);
-
   // Construct OpContext.
   OpContext<DeviceTensor> op_context;
   std::vector<Promise<int>> result(1);
@@ -739,6 +751,7 @@ void GraphScheduler::Run(ActorSet *const actor_set, const std::vector<std::vecto
   MS_EXCEPTION_IF_NULL(ActorMgr::GetActorMgrRef());
   auto thread_pool = ActorMgr::GetActorMgrRef()->GetActorThreadPool();
   MS_EXCEPTION_IF_NULL(thread_pool);
+  SpawnMultiPipelineActor(actor_set, thread_pool);
   RefreshContextAndThreadPool(actor_set, thread_pool);
   if (actor_set->is_multi_thread_execution_) {
     thread_pool->SetSpinCountMaxValue();
@@ -778,6 +791,25 @@ void GraphScheduler::Run(ActorSet *const actor_set, const std::vector<std::vecto
 #if defined(__linux__) && defined(WITH_BACKEND)
   DoDisasterRecovery(actor_set->name_);
 #endif
+}
+
+void GraphScheduler::ChildAfterFork() {
+  MS_LOG(DEBUG) << "GraphScheduler reinitialize after fork.";
+  auto actor_manager = ActorMgr::GetActorMgrRef();
+  MS_EXCEPTION_IF_NULL(actor_manager);
+
+  if (already_spawn_kernel_async_infer_resize_actor_) {
+    already_spawn_kernel_async_infer_resize_actor_ = false;
+    actor_manager->ResetActorAfterFork(KernelAsyncInferActor::GetInstance());
+    actor_manager->ResetActorAfterFork(KernelAsyncResizeActor::GetInstance());
+  }
+
+  if (already_spawn_kernel_async_launch_actor_) {
+    already_spawn_kernel_async_launch_actor_ = false;
+    actor_manager->ResetActorAfterFork(KernelAsyncLaunchActor::GetInstance());
+  }
+
+  MS_LOG(DEBUG) << "GraphScheduler reinitialize after fork done.";
 }
 
 bool GraphScheduler::CheckSingleThreadRunningCondition(ActorSet *const actor_set,

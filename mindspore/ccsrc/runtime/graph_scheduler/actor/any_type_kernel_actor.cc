@@ -45,7 +45,8 @@ void AnyTypeKernelActor::RunOpData(OpData<DeviceTensor> *const input_data, OpCon
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(graph());
   auto &sequential_num = context->sequential_num_;
-  if (!input_data->data_->IsPtrValid() && !TEST_FLAG(input_data->data_->flag(), device::kDeviceAddressFlagNotUsed)) {
+  if (!ActorDispatcher::enable_async_launch_kernel() && !input_data->data_->IsPtrValid() &&
+      !TEST_FLAG(input_data->data_->flag(), device::kDeviceAddressFlagNotUsed)) {
     MS_LOG(EXCEPTION) << "The input_data does not have a valid ptr of actor:" << GetAID().Name()
                       << " with index:" << input_data->index_ << ", flag:" << input_data->data_->flag()
                       << " device address:" << input_data->data_ << " ref count:" << input_data->data_->ref_count()
@@ -66,12 +67,24 @@ void AnyTypeKernelActor::RunOpData(OpData<DeviceTensor> *const input_data, OpCon
     // Collect graph input data.
     input_op_datas_[sequential_num].emplace_back(input_data);
     if (CheckRunningCondition(context)) {
+      MS_LOG(DEBUG) << "Begin wait runtime pipeline to run for graph input for actor: " << GetAID().Name();
+      WaitRuntimePipelineFinish();
+      if (IsRunningFailed(context)) {
+        return;
+      }
+      MS_LOG(DEBUG) << "End wait runtime pipeline to run for graph input for actor: " << GetAID().Name();
       RunForGraphInput(context);
     }
   } else {
     // Collect graph output data.
     graph_output_op_data_[sequential_num].emplace_back(input_data);
     if (CheckGraphOutputRunningCondition(context)) {
+      MS_LOG(DEBUG) << "End wait runtime pipeline to run for graph output for actor: " << GetAID().Name();
+      WaitRuntimePipelineFinish();
+      if (IsRunningFailed(context)) {
+        return;
+      }
+      MS_LOG(DEBUG) << "End wait runtime pipeline to run for graph output for actor: " << GetAID().Name();
       RunForGraphOutput(context);
     }
   }
@@ -87,11 +100,19 @@ void AnyTypeKernelActor::RunOpControl(AID *const input_control, OpContext<Device
         [input_control](const auto &arrow_pair) { return arrow_pair.first.Name() == input_control->Name(); })) {
     (void)input_op_controls_[sequential_num].emplace_back(input_control);
     if (CheckRunningCondition(context)) {
+      WaitRuntimePipelineFinish();
+      if (IsRunningFailed(context)) {
+        return;
+      }
       RunForGraphInput(context);
     }
   } else {
     graph_output_op_control_[sequential_num].emplace_back(input_control);
     if (CheckGraphOutputRunningCondition(context)) {
+      WaitRuntimePipelineFinish();
+      if (IsRunningFailed(context)) {
+        return;
+      }
       RunForGraphOutput(context);
     }
   }

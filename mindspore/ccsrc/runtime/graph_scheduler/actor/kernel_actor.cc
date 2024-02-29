@@ -63,6 +63,8 @@ void KernelActor::Init() {
 
   // Check whether the kernel has input node which is a computed depend kernel.
   has_computed_depend_input_ = AnfAlgo::HasComputedDependInputNode(kernel_);
+  MS_LOG(DEBUG) << "The kernel: " << kernel_->fullname_with_scope()
+                << " has computed depend input kernel: " << has_computed_depend_input_;
   launch_ignored_inputs_ = kernel_mod_->GetLaunchIgnoredInputAddressIdx();
 
   stream_ = device_contexts_[0]->device_res_manager_->GetStream(kernel_info_->stream_id());
@@ -253,7 +255,9 @@ void KernelActor::RunWithMultiPipeline(OpContext<DeviceTensor> *const context) {
   SetSomasMemory(context);
 
   if (is_dynamic_value_ || has_computed_depend_input_) {
-    MS_LOG(DEBUG) << "Begin wait runtime pipeline for kernel: " << kernel_->fullname_with_scope();
+    MS_LOG(DEBUG) << "Begin wait runtime pipeline for kernel: " << kernel_->fullname_with_scope()
+                  << ", is dynamic value: " << is_dynamic_value_
+                  << ", has computed depend input: " << has_computed_depend_input_;
     WaitRuntimePipelineFinish();
     MS_LOG(DEBUG) << "End wait runtime pipeline for kernel: " << kernel_->fullname_with_scope();
   }
@@ -269,11 +273,6 @@ void KernelActor::RunWithMultiPipeline(OpContext<DeviceTensor> *const context) {
   Async(kernel_async_infer_aid_, &KernelAsyncInferActor::InferShape, context, this);
 
   // 3. Post run.
-  if (kernel_mod_->need_user_data()) {
-    for_each(output_device_tensors_.begin(), output_device_tensors_.end(),
-             [](auto &device_tensor) { device_tensor->set_need_sync_user_data(true); });
-  }
-
   EraseInput(context);
   SendOutput(context);
 }
@@ -287,11 +286,6 @@ void KernelActor::RunWithAsyncLaunchKernel(OpContext<DeviceTensor> *const contex
   }
 
   // PostLaunchKernel
-  if (kernel_mod_->need_user_data()) {
-    for_each(output_device_tensors_.begin(), output_device_tensors_.end(),
-             [](auto &device_tensor) { device_tensor->set_need_sync_user_data(true); });
-  }
-
   EraseInput(context);
   SendOutput(context);
 }
@@ -678,6 +672,7 @@ void KernelActor::ExecuteLaunchKernelTask(OpContext<DeviceTensor> *const context
     MS_LOG(INFO) << "Run failed and early stop launch kernel: " << kernel_->fullname_with_scope();
     return;
   }
+  PreLaunchKernel(context);
 
   // 2. Launch kernel if need.
   device_contexts_[0]->device_res_manager_->BindDeviceToCurrentThread(false);
@@ -686,8 +681,15 @@ void KernelActor::ExecuteLaunchKernelTask(OpContext<DeviceTensor> *const context
     MS_LOG(EXCEPTION) << "#umsg#Kernel error:#umsg#Launch kernel failed: " + kernel_->fullname_with_scope();
   }
 
+  LaunchCallback(context);
+
   if (is_dynamic_shape_ && kernel_mod_->IsNeedUpdateOutputShapeAndSize()) {
     kernel_mod_->UpdateOutputShapeAndSize(input_kernel_tensors_, output_kernel_tensors_);
+  }
+
+  if (kernel_mod_->need_user_data()) {
+    for_each(output_device_tensors_.begin(), output_device_tensors_.end(),
+             [](auto &device_tensor) { device_tensor->set_need_sync_user_data(true); });
   }
 
   if ((modifiable_ref_input_indexes_.size() != 0) || (modifiable_ref_output_indexes_.size() != 0)) {
@@ -776,6 +778,7 @@ bool KernelActor::LaunchKernel(OpContext<DeviceTensor> *const) {
     MS_EXCEPTION_IF_NULL(input_device_tensors_[0]);
     MS_EXCEPTION_IF_NULL(output_device_tensors_[0]);
     if (input_device_tensors_[0]->GetPtr() == output_device_tensors_[0]->GetPtr()) {
+      MS_LOG(DEBUG) << "Skipped launch kernel: " << kernel_->fullname_with_scope();
       return true;
     } else {
       MS_LOG(ERROR) << "Input address and output address are not equal of skipped launch actor: " << GetAID().Name();
@@ -783,8 +786,11 @@ bool KernelActor::LaunchKernel(OpContext<DeviceTensor> *const) {
     }
   }
 
-  return device_contexts_[0]->GetKernelExecutor(false)->LaunchKernel(
+  MS_LOG(DEBUG) << "Begin launch kernel: " << kernel_->fullname_with_scope();
+  auto ret = device_contexts_[0]->GetKernelExecutor(false)->LaunchKernel(
     kernel_, input_kernel_tensors_, workspace_kernel_tensors_, output_kernel_tensors_, kernel_mod_, stream_);
+  MS_LOG(DEBUG) << "End launch kernel: " << kernel_->fullname_with_scope();
+  return ret;
 }
 
 void KernelActor::LaunchCallback(OpContext<DeviceTensor> *const context) {
