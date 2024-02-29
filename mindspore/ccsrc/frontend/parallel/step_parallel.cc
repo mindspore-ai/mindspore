@@ -2479,8 +2479,7 @@ std::set<FuncGraphPtr> ForwardGraph(const FuncGraphPtr &root) {
   MS_EXCEPTION_IF_NULL(root);
   auto ret = root->get_return();
   MS_EXCEPTION_IF_NULL(ret);
-  auto all_nodes = DeepScopedGraphSearch(ret);
-  std::reverse(all_nodes.begin(), all_nodes.end());
+  auto all_nodes = TopoSort(ret, SuccDeeperSimple);
   std::set<FuncGraphPtr> graph_set = FindForwardGraphByRootNodes(all_nodes);
   return graph_set;
 }
@@ -2590,8 +2589,7 @@ void MarkForwardCNode(const FuncGraphPtr &root) {
   MS_EXCEPTION_IF_NULL(root);
   auto ret = root->get_return();
   MS_EXCEPTION_IF_NULL(ret);
-  auto all_nodes = DeepScopedGraphSearch(ret);
-  std::reverse(all_nodes.begin(), all_nodes.end());
+  auto all_nodes = TopoSort(ret, SuccDeeperSimple);
   auto graph_set = FindForwardGraphByRootNodes(all_nodes);
 
   if (graph_set.empty()) {
@@ -2963,7 +2961,7 @@ static void HandleGlobalNormScale(const FuncGraphPtr &root, const FuncGraphManag
 static void MoveMicroMirrorOutCallFunc(const FuncGraphPtr &root) {
   AnfNodePtr ret_after = root->get_return();
   MS_EXCEPTION_IF_NULL(ret_after);
-  auto all_nodes = DeepScopedGraphSearch(ret_after);
+  auto all_nodes = TopoSort(ret_after, SuccDeeperSimple);
   auto manager = root->manager();
   for (const auto &node : all_nodes) {
     if (!IsPrimitiveCNode(node, prim::kPrimMirrorMicroStep)) {
@@ -3103,8 +3101,7 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
   std::reverse(all_nodes.begin(), all_nodes.end());
   bool merged = MergeConcatSlice(all_nodes, manager);
   if (merged) {
-    all_nodes = DeepScopedGraphSearch(ret);
-    std::reverse(all_nodes.begin(), all_nodes.end());
+    all_nodes = TopoSort(ret, SuccDeeperSimple);
   }
   if (pipeline_stages <= 1 && parallel_mode != kAutoParallel && ParallelInit() != SUCCESS) {
     MS_LOG(EXCEPTION) << "Parallel init failed";
@@ -3121,8 +3118,7 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
       InsertVirtualOutput(root, all_nodes);
       AnfNodePtr ret_after = root->get_return();
       MS_EXCEPTION_IF_NULL(ret_after);
-      all_nodes = DeepScopedGraphSearch(ret_after);
-      std::reverse(all_nodes.begin(), all_nodes.end());
+      all_nodes = TopoSort(ret_after, SuccDeeperSimple);
     }
 
     // extract shape and strategy, set operator_info
