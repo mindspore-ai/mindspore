@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "plugin/device/ascend/kernel/internal/elewise_binary.h"
 #include <memory>
+#include "plugin/device/ascend/kernel/internal/elewise_binary.h"
+#include "plugin/device/ascend/kernel/internal/internal_kernel_utils.h"
+#include "include/param/add_param.h"
 
 namespace mindspore {
 namespace kernel {
@@ -37,11 +39,19 @@ class InternalAdd : public ElewiseBinary {
   ~InternalAdd() = default;
 
  protected:
-  void SetComputeType(internal::OpParamPtr param_ptr) override {
+  void SetComputeType(internal::OpParamPtr param_ptr) override {}
+  internal::OpParamPtr CreateOpParam(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) override {
+    auto param_ptr = std::make_shared<internal::AddParam>();
     param_ptr->opId = internal::OpId::Add;
+    param_ptr->input1_dtype_ = InternalKernelUtils::ToInternalDType(inputs[0]->dtype_id());
+    param_ptr->input2_dtype_ = InternalKernelUtils::ToInternalDType(inputs[1]->dtype_id());
+    param_ptr->input1_dims_ = internal::VecToSVec<int64_t>(inputs[0]->GetShapeVector());
+    param_ptr->input2_dims_ = internal::VecToSVec<int64_t>(inputs[1]->GetShapeVector());
     internal::ElewiseParam op_param;
     op_param.elewiseType = internal::ElewiseParam::ELEWISE_ADD;
     param_ptr->specificParam = op_param;
+    return std::static_pointer_cast<internal::OpParam>(param_ptr);
   }
   uint64_t GenTilingCacheKey(const std::vector<KernelTensor *> &inputs,
                              const std::vector<KernelTensor *> &outputs) override {
