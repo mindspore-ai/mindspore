@@ -36,15 +36,21 @@ std::string GetAscendSuffixPath(const std::string &version) {
                                                     "Ascend910ProB"};
   const std::set<std::string> kAscend910BVersions = {"Ascend910B1", "Ascend910B2", "Ascend910B2C", "Ascend910B3",
                                                      "Ascend910B4"};
+  const std::set<std::string> kAscend310BVersions = {"Ascend310B1", "Ascend310B4"};
   const std::string kAscend910SuffixPath =
     "/opp/built-in/op_impl/ai_core/tbe/config/ascend910/aic-ascend910-ops-info.json";
   const std::string kAscend910BSuffixPath =
     "/opp/built-in/op_impl/ai_core/tbe/config/ascend910b/aic-ascend910b-ops-info.json";
+  const std::string kAscend310BSuffixPath =
+    "/opp/built-in/op_impl/ai_core/tbe/config/ascend310b/aic-ascend310b-ops-info.json";
   if (kAscend910Versions.count(version) != 0) {
     return kAscend910SuffixPath;
   }
   if (kAscend910BVersions.count(version) != 0) {
     return kAscend910BSuffixPath;
+  }
+  if (kAscend310BVersions.count(version) != 0) {
+    return kAscend310BSuffixPath;
   }
   return "";
 }
