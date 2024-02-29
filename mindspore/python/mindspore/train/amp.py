@@ -71,7 +71,7 @@ MS_AMP_BY_REWRITE = False
 
 def amp_cast(value, dtype):
     """This function is used to insert cast operators for tensors during auto mixed precision."""
-    if isinstance(value, ms.Tensor):
+    if isinstance(value, ms.Tensor) and value.dtype in mstype.float_type:
         return P.Cast()(value, dtype)
     return value
 

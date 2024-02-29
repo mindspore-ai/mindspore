@@ -144,7 +144,7 @@ number_type = (int8,
 
 int_type = (int8, int16, int32, int64,)
 uint_type = (uint8, uint16, uint32, uint64,)
-float_type = (float16, float32, float64,)
+float_type = (float16, float32, float64, bfloat16,)
 signed_type = (int8, byte, int16, short, int32, intc, int64,
                intp, float16, half, float32, single, float64,
                double, bfloat16, complex64, complex128)
