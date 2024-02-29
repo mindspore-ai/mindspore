@@ -31,5 +31,21 @@ void ElewiseUnary::SetInOutIdx() {
   inputsIdxMap_[0] = 0;
   outputsIdxMap_[0] = 0;
 }
+
+class InternalLogicalNot : public ElewiseUnary {
+ public:
+  InternalLogicalNot() : ElewiseUnary("LogicalNot") {}
+  ~InternalLogicalNot() = default;
+
+ protected:
+  void SetComputeType(internal::OpParamPtr param_ptr) override {
+    param_ptr->opId = internal::OpId::LogicalNot;
+    internal::ElewiseParam op_param;
+    op_param.elewiseType = internal::ElewiseParam::ELEWISE_LOGICAL_NOT;
+    param_ptr->specificParam = op_param;
+  }
+};
+
+MS_INTERNAL_KERNEL_FACTORY_REG(LogicalNot, InternalLogicalNot);
 }  // namespace kernel
 }  // namespace mindspore
