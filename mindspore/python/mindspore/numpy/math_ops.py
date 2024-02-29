@@ -3271,12 +3271,7 @@ def log1p(x, dtype=None):
 
 def logaddexp(x1, x2, dtype=None):
     """
-    Logarithm of the sum of exponentiations of the inputs.
-
-    Calculates ``log(exp(x1) + exp(x2))``. This function is useful in statistics where the
-    calculated probabilities of events may be so small as to exceed the range of normal
-    floating point numbers. In such cases the logarithm of the calculated probability is
-    stored. This function allows adding probabilities stored in such a fashion.
+    Logarithm of the sum of exponentiations of the inputs. Calculates ``log(exp(x1) + exp(x2))``.
 
     Note:
         Numpy arguments `out`, `where`, `casting`, `order`, `subok`, `signature`, and `extobj` are
