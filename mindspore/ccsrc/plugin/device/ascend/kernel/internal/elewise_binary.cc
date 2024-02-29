@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "plugin/device/ascend/kernel/internal/elewise_binary.h"
+#include "plugin/device/ascend/kernel/internal/internal_kernel_utils.h"
 #include <memory>
 
 namespace mindspore {
@@ -65,7 +66,144 @@ class InternalSub : public ElewiseBinary {
   }
 };
 
+class InternalEqual : public ElewiseBinary {
+ public:
+  InternalEqual() : ElewiseBinary("Equal") {}
+  ~InternalEqual() = default;
+
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+    auto ret = KernelMod::Resize(inputs, outputs);
+    if (ret != 0) {
+      MS_LOG(ERROR) << "op " << op_type_ << " invoke resize failed";
+      return KRET_RESIZE_FAILED;
+    }
+    if (impl_ == nullptr) {
+      ret = Build(inputs, outputs);
+      if (ret != 0) {
+        MS_LOG(ERROR) << "op " << op_type_ << " build kernel failed";
+        return KRET_RESIZE_FAILED;
+      }
+    }
+    for (auto iter = inputsIdxMap_.begin(); iter != inputsIdxMap_.end(); iter++) {
+      InternalKernelUtils::ToInternalTensor(inputs_[iter->second], inputs[iter->first]);
+    }
+    impl_->SetInputs(inputs_);
+
+    for (auto iter = outputsIdxMap_.begin(); iter != outputsIdxMap_.end(); iter++) {
+      InternalKernelUtils::ToInternalTensor(outputs_[iter->second], outputs[iter->first]);
+      if(outputs_[iter->second]->desc.dtype == internal::TensorDType::TENSOR_DTYPE_BOOL){
+        outputs_[iter->second]->desc.dtype = internal::TensorDType::TENSOR_DTYPE_INT8;
+      } 
+    }
+    impl_->SetOutputs(outputs_);
+
+    auto key = GenTilingCacheKey(inputs, outputs);
+    SetTilingInfo(key);
+    // update workspace_size list
+    auto workspace_size_list = impl_->GetWorkSpaceSize();
+    workspace_size_list_.resize(workspace_size_list.size());
+    for (size_t i = 0; i < workspace_size_list.size(); ++i) {
+      workspace_size_list_[i] = static_cast<size_t>(workspace_size_list[i]);
+    }
+
+    return 0;
+  }
+
+ protected:
+  void SetComputeType(internal::OpParamPtr param_ptr) override {
+    param_ptr->opId = internal::OpId::Equal;
+    internal::ElewiseParam op_param;
+    op_param.elewiseType = internal::ElewiseParam::ELEWISE_EQUAL;
+    param_ptr->specificParam = op_param;
+  }
+};
+
+class InternalLess : public ElewiseBinary {
+ public:
+  InternalLess() : ElewiseBinary("Less") {}
+  ~InternalLess() = default;
+
+   int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+    auto ret = KernelMod::Resize(inputs, outputs);
+    if (ret != 0) {
+      MS_LOG(ERROR) << "op " << op_type_ << " invoke resize failed";
+      return KRET_RESIZE_FAILED;
+    }
+    if (impl_ == nullptr) {
+      ret = Build(inputs, outputs);
+      if (ret != 0) {
+        MS_LOG(ERROR) << "op " << op_type_ << " build kernel failed";
+        return KRET_RESIZE_FAILED;
+      }
+    }
+    for (auto iter = inputsIdxMap_.begin(); iter != inputsIdxMap_.end(); iter++) {
+      InternalKernelUtils::ToInternalTensor(inputs_[iter->second], inputs[iter->first]);
+    }
+    impl_->SetInputs(inputs_);
+
+    for (auto iter = outputsIdxMap_.begin(); iter != outputsIdxMap_.end(); iter++) {
+      InternalKernelUtils::ToInternalTensor(outputs_[iter->second], outputs[iter->first]);
+      if(outputs_[iter->second]->desc.dtype == internal::TensorDType::TENSOR_DTYPE_BOOL){
+        outputs_[iter->second]->desc.dtype = internal::TensorDType::TENSOR_DTYPE_INT8;
+      } 
+    }
+    impl_->SetOutputs(outputs_);
+
+    auto key = GenTilingCacheKey(inputs, outputs);
+    SetTilingInfo(key);
+    // update workspace_size list
+    auto workspace_size_list = impl_->GetWorkSpaceSize();
+    workspace_size_list_.resize(workspace_size_list.size());
+    for (size_t i = 0; i < workspace_size_list.size(); ++i) {
+      workspace_size_list_[i] = static_cast<size_t>(workspace_size_list[i]);
+    }
+
+    return 0;
+  }
+
+ protected:
+  void SetComputeType(internal::OpParamPtr param_ptr) override {
+    param_ptr->opId = internal::OpId::Less;
+    internal::ElewiseParam op_param;
+    op_param.elewiseType = internal::ElewiseParam::ELEWISE_LESS;
+    param_ptr->specificParam = op_param;
+  }
+};
+
+class InternalMul : public ElewiseBinary {
+ public:
+  InternalMul() : ElewiseBinary("Mul") {}
+  ~InternalMul() = default;
+
+ protected:
+  void SetComputeType(internal::OpParamPtr param_ptr) override {
+    param_ptr->opId = internal::OpId::Mul;
+    internal::ElewiseParam op_param;
+    op_param.elewiseType = internal::ElewiseParam::ELEWISE_MUL;
+    param_ptr->specificParam = op_param;
+  }
+};
+
+class InternalRealDiv : public ElewiseBinary {
+ public:
+  InternalRealDiv() : ElewiseBinary("RealDiv") {}
+  ~InternalRealDiv() = default;
+
+ protected:
+  void SetComputeType(internal::OpParamPtr param_ptr) override {
+    param_ptr->opId = internal::OpId::RealDiv;
+    internal::ElewiseParam op_param;
+    op_param.elewiseType = internal::ElewiseParam::ELEWISE_REALDIV;
+    param_ptr->specificParam = op_param;
+  }
+};
+
+
 MS_INTERNAL_KERNEL_FACTORY_REG(Add, InternalAdd);
 MS_INTERNAL_KERNEL_FACTORY_REG(Sub, InternalSub);
+MS_INTERNAL_KERNEL_FACTORY_REG(Equal, InternalEqual);
+MS_INTERNAL_KERNEL_FACTORY_REG(Less, InternalLess);
+MS_INTERNAL_KERNEL_FACTORY_REG(Mul, InternalMul);
+MS_INTERNAL_KERNEL_FACTORY_REG(RealDiv, InternalRealDiv);
 }  // namespace kernel
 }  // namespace mindspore
