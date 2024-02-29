@@ -78,22 +78,22 @@ class HookBackwardNode : public BackwardNode {
 
 class GraphBackwardNode : public BackwardNode {
  public:
-  explicit GraphBackwardNode(const string &name, size_t output_size, bool is_control_flow, std::string cache_key,
-                             FuncGraphPtr func_graph, const VectorRef &args)
+  explicit GraphBackwardNode(const string &name, FuncGraphPtr func_graph, const VectorRef &args, size_t output_size,
+                             std::string cache_key, bool is_control_flow, bool is_jit_graph,
+                             bool is_dynamic_shape_process, bool jit_out_has_dict)
       : BackwardNode(name, output_size),
-        is_control_flow_(is_control_flow),
-        cache_key_(std::move(cache_key)),
         func_graph_(std::move(func_graph)),
-        args_(args) {}
+        args_(args),
+        cache_key_(std::move(cache_key)),
+        graph_call_condition_(is_control_flow, is_jit_graph, is_dynamic_shape_process, jit_out_has_dict, true) {}
   TensorPtrList CallBackward(const TensorPtrList &grads) override;
   ValuePtr op_output_;
-  bool jit_out_has_dict_{false};
 
  private:
-  bool is_control_flow_{false};
-  std::string cache_key_{false};
   FuncGraphPtr func_graph_;
   VectorRef args_;
+  std::string cache_key_{false};
+  GraphCallCondition graph_call_condition_;
 };
 
 class GraphRoot : public BackwardNode {

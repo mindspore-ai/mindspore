@@ -2099,13 +2099,20 @@ void AutoGrad::BuildFakeBpropCNode(const CNodePtr &cnode, std::vector<CNodePtr> 
 }
 
 CallBackFn AutoGrad::CreateGraphCallBack(const FuncGraphPtr &call_graph, const std::string &cache_key,
-                                         bool is_control_flow, bool is_func_grad, bool jit_out_has_dict) {
+                                         const GraphCallCondition &graph_call_condition) {
   // kFlagJitCallGraph is set true to avoid compilig call_graph whe compiling the main graph
   call_graph->set_flag(kFlagJitCallGraph, true);
   // call graph not inline to grad top
   call_graph->set_flag(FUNC_GRAPH_FLAG_NO_INLINE, true);
   // Pynative bprop graph flag
   call_graph->set_flag(kFlagIsPynativeBpropGraph, true);
+  // Run graph by single op will use this kFlagPyNativeBpropGraphWithBpropCut flag
+  if (graph_call_condition.is_dynamic_shape_process_) {
+    call_graph->set_flag(kFlagPyNativeBpropGraphWithBpropCut, false);
+    if (!graph_call_condition.is_jit_graph_) {
+      call_graph->set_flag(kFlagEnableRunGraphBySingleOp, true);
+    }
+  }
   pipeline::ResourcePtr resource;
   constexpr auto kNeedCompile = "NeedCompile";
   const auto it = jit_call_graph_compile_cache_.find(cache_key);
@@ -2115,20 +2122,23 @@ CallBackFn AutoGrad::CreateGraphCallBack(const FuncGraphPtr &call_graph, const s
     resource->set_func_graph(call_graph);
     auto manager = resource->manager();
     manager->AddFuncGraph(call_graph, true);
-    if (is_func_grad) {
+    if (graph_call_condition.is_func_grad_) {
       (void)opt::EnvironConversion(resource);
-      if (jit_out_has_dict) {
+      if (graph_call_condition.jit_out_has_dict_) {
         MS_LOG(DEBUG) << "Jit out is dict, need convert make dict to pyexecute";
         (void)mindspore::opt::RewriterAfterOptA(resource->func_graph(), resource);
       }
     }
-    (void)jit_call_graph_compile_cache_.emplace(cache_key, resource);
+    if (graph_call_condition.is_jit_graph_ || !graph_call_condition.is_dynamic_shape_process_) {
+      (void)jit_call_graph_compile_cache_.emplace(cache_key, resource);
+    }
   } else {
     resource = it->second;
     // If resource func graph not compile(not call run grad graph), but hit cache
     need_compile = resource->GetResult(kNeedCompile).cast<bool>();
   }
   MS_EXCEPTION_IF_NULL(resource);
+  bool is_control_flow = graph_call_condition.is_control_flow_;
   auto fn = [resource, need_compile, is_control_flow, &kNeedCompile](const VectorRef &arg_list) -> VectorRef {
     if (need_compile) {
       MS_LOG(DEBUG) << "Start emit action for graph " << resource->func_graph()->ToString();

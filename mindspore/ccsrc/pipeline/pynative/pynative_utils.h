@@ -210,7 +210,7 @@ struct AutoGrad {
   // Create fake bprop
   static void BuildFakeBpropCNode(const CNodePtr &cnode, std::vector<CNodePtr> *outputs);
   static CallBackFn CreateGraphCallBack(const FuncGraphPtr &call_graph, const std::string &cache_key,
-                                        bool is_control_flow, bool is_func_grad, bool jit_out_has_dict);
+                                        const GraphCallCondition &graph_call_condition);
   static void ClearAutoGradStaticCache();
 };
 

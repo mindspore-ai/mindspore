@@ -267,15 +267,14 @@ TensorPtrList HookBackwardNode::CallBackward(const TensorPtrList &grads) {
 
 TensorPtrList GraphBackwardNode::CallBackward(const TensorPtrList &grads) {
   MS_LOG(DEBUG) << "Begin GraphBackwardNode CallBackward ";
-  auto graph_call_back =
-    PyNativeAlgo::AutoGrad::CreateGraphCallBack(func_graph_, cache_key_, is_control_flow_, true, jit_out_has_dict_);
+  auto graph_call_back = PyNativeAlgo::AutoGrad::CreateGraphCallBack(func_graph_, cache_key_, graph_call_condition_);
   // Add graph din
   const auto &device_target = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   auto ir_builder = FuncBuilder(name_, device_target, nullptr);
   auto real_dout = LazeUpdateZeroGradient(grads, &ir_builder, op_output_);
-  // Add din
+
   // If output is jit and has dict output. Key and value will converte into tuples for inputs
-  if (!jit_out_has_dict_) {
+  if (!graph_call_condition_.jit_out_has_dict_) {
     for (const auto &arg : real_dout) {
       (void)args_.emplace_back(arg);
     }
@@ -427,11 +426,11 @@ BackwardNodePtr FuncGrad::BuildGraphBackwardNode(const GradParamPtr &grad_param)
   (void)std::transform(grad_param->op_grad_info->input_value.begin(), grad_param->op_grad_info->input_value.end(),
                        std::back_inserter(input_args), [](const ValuePtr &v) { return v; });
   PyNativeAlgo::Common::DumpGraphIR("call_graph.ir", bprop_graph);
-  auto fn = std::make_shared<GraphBackwardNode>(bprop_graph->ToString(), grad_param->op_grad_info->output_size,
-                                                grad_param->is_control_flow, grad_param->graph_cache_key, bprop_graph,
-                                                input_args);
+  auto fn = std::make_shared<GraphBackwardNode>(bprop_graph->ToString(), bprop_graph, input_args,
+                                                grad_param->op_grad_info->output_size, grad_param->graph_cache_key,
+                                                grad_param->is_control_flow, grad_param->is_jit_graph,
+                                                grad_param->use_dynamic_shape_process, grad_param->jit_out_has_dict);
   fn->op_output_ = grad_param->op_grad_info->out_value;
-  fn->jit_out_has_dict_ = grad_param->jit_out_has_dict;
   auto flatten_inputs = PyNativeAlgo::DataConvert::FlattenTensorSeqInValueSeq(grad_param->op_grad_info->input_value);
   ConstructParameterNodes(flatten_inputs);
   fn->UpdateNextEdges(flatten_inputs);

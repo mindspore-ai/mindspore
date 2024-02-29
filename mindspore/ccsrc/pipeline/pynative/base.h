@@ -219,6 +219,21 @@ struct SliceOpInfo {
 };
 using SliceOpInfoPtr = std::shared_ptr<SliceOpInfo>;
 
+struct GraphCallCondition {
+  GraphCallCondition(bool is_control_flow, bool is_jit_graph, bool is_dynamic_shape_process, bool jit_out_has_dict,
+                     bool is_func_grad)
+      : is_control_flow_(is_control_flow),
+        is_jit_graph_(is_jit_graph),
+        is_dynamic_shape_process_(is_dynamic_shape_process),
+        jit_out_has_dict_(jit_out_has_dict),
+        is_func_grad_(is_func_grad) {}
+
+  bool is_control_flow_;
+  bool is_jit_graph_;
+  bool is_dynamic_shape_process_;
+  bool jit_out_has_dict_;
+  bool is_func_grad_;
+};
 }  // namespace pynative
 }  // namespace mindspore
 

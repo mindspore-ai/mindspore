@@ -42,11 +42,10 @@ namespace pynative {
 namespace autograd {
 namespace {
 void SetJitCallGraph(const CNodePtr &cnode, const FuncGraphPtr &call_graph, const std::string &cache_key,
-                     bool is_control_flow) {
+                     const GraphCallCondition &graph_call_condition) {
   MS_EXCEPTION_IF_NULL(cnode);
   common::AnfAlgo::SetNodeAttr(kAttrJitCallNode, MakeValue(true), cnode);
-  auto graph_call_back =
-    PyNativeAlgo::AutoGrad::CreateGraphCallBack(call_graph, cache_key, is_control_flow, false, false);
+  auto graph_call_back = PyNativeAlgo::AutoGrad::CreateGraphCallBack(call_graph, cache_key, graph_call_condition);
   cnode->set_user_data<JitCallGraph>(std::make_shared<JitCallGraph>(graph_call_back));
 }
 
@@ -366,7 +365,9 @@ CNodePtr IrGrad::GetBPropCNode(const GradParamPtr &grad_param, const AnfNodePtrL
   auto bprop_cnode = ad_param()->tape_->FuncGraph::NewCNode(bprop_inputs);
   bprop_cnode->set_abstract(bprop_graph->output()->abstract());
   if (is_jit_dynamic_shape) {
-    SetJitCallGraph(bprop_cnode, bprop_graph, grad_param->graph_cache_key, grad_param->is_control_flow);
+    GraphCallCondition graph_call_condition{grad_param->is_control_flow, grad_param->is_jit_graph,
+                                            grad_param->use_dynamic_shape_process, false, false};
+    SetJitCallGraph(bprop_cnode, bprop_graph, grad_param->graph_cache_key, graph_call_condition);
     ad_param()->tape_->set_flag(FUNC_GRAPH_FLAG_NO_INLINE, true);
   }
   // For replacing parameter and dout.
