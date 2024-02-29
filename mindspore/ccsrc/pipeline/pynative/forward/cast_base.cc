@@ -162,7 +162,7 @@ ValuePtr CastBaseOperation::GetDstTypeValue(const TypeId &type_id) const {
   } else if (type_id == kNumberTypeInt64) {
     value = std::make_shared<Int>(k64Bits);
   } else {
-    MS_LOG(EXCEPTION) << "Not support dst type " << type_id;
+    MS_LOG(EXCEPTION) << "Not support dst type " << TypeIdToType(type_id)->ToString();
   }
   MS_EXCEPTION_IF_NULL(value);
   return value;
@@ -264,7 +264,8 @@ TypeId CastBaseOperation::JudgeMaxType(TypeId max_type, bool has_scalar_float32,
 const std::string &CastBaseOperation::TypeIdToMsTypeStr(const TypeId &type_id) const {
   const auto &type_name = type_name_map().find(type_id);
   if (type_name == type_name_map().cend()) {
-    MS_LOG(EXCEPTION) << "For implicit type conversion, not support convert to the type: " << TypeIdToType(type_id);
+    MS_LOG(EXCEPTION) << "For implicit type conversion, not support convert to the type: "
+                      << TypeIdToType(type_id)->ToString();
   }
   return type_name->second;
 }

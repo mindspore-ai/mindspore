@@ -893,7 +893,8 @@ void DeviceAddressUtils::CreateInputTensorAddress(const DeviceContext *device_co
   device_address->set_from_persistent_mem(tensor->is_parameter());
   tensor->set_device_address(device_address);
   MS_LOG(DEBUG) << "Create input tensor device address " << device_address << " for " << index
-                << "th input, Shape: " << tensor->shape() << ", Type: " << tensor->data_type();
+                << "th input, Shape: " << tensor->shape()
+                << ", Type: " << TypeIdToType(tensor->data_type())->ToString();
 }
 
 void DeviceAddressUtils::MallocForInput(const DeviceContext *device_context, const tensor::TensorPtr &tensor) {
@@ -976,8 +977,9 @@ device::DeviceAddressPtr DeviceAddressUtils::CreateInputAddress(const DeviceCont
     MS_LOG(EXCEPTION) << "SyncHostToDevice failed";
   }
   MS_LOG(DEBUG) << "Create input tensor device address " << device_address << " for " << index
-                << "th input, Shape: " << shape->ToString() << ", Type: " << type->ToString()
-                << ", host shape: " << tensor->shape() << ", dev ptr " << device_address->GetPtr();
+                << "th input, Shape: " << shape->ToString()
+                << ", Type: " << TypeIdToType(tensor->data_type())->ToString() << ", host shape: " << tensor->shape()
+                << ", dev ptr " << device_address->GetPtr();
   return device_address;
 }
 
@@ -1095,7 +1097,8 @@ void DeviceAddressUtils::CreateOutputTensorAddress(DeviceContext *device_context
     device::DeviceAddressPtr device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
     tensor->set_device_address(device_address);
     MS_LOG(DEBUG) << "Create output tensor device address " << device_address << " for " << i
-                  << "th input, Shape: " << tensor->shape() << ", Type: " << tensor->data_type();
+                  << "th output, Shape: " << tensor->shape()
+                  << ", Type: " << TypeIdToType(tensor->data_type())->ToString();
   }
 }
 
@@ -1113,7 +1116,7 @@ device::DeviceAddressPtr DeviceAddressUtils::CreateDeviceAddress(DeviceContext *
   kernel_tensor->set_stream_id(stream_id);
   device::DeviceAddressPtr device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
   MS_LOG(DEBUG) << "Create tensor device address " << device_address << "Shape: " << tensor->shape()
-                << ", Type: " << tensor->data_type();
+                << ", Type: " << TypeIdToType(tensor->data_type())->ToString();
   return device_address;
 }
 
