@@ -150,6 +150,14 @@ std::pair<Status, std::shared_ptr<LLMModel>> PyLLMEngineAddModel(LLMEngine *llm_
   return {status, llm_model};
 }
 
+std::vector<MSTensorPtr> PyLLMModelGetInputs(LLMModel *model) {
+  if (model == nullptr) {
+    MS_LOG(ERROR) << "model object cannot be nullptr";
+    return {};
+  }
+  return MSTensorToMSTensorPtr(model->GetInputs());
+}
+
 void LLMEnginePyBind(const py::module &m) {
   (void)py::enum_<LLMRole>(m, "LLMRole_", py::arithmetic())
     .value("Prompt", LLMRole::kLLMRolePrompt)
@@ -190,7 +198,7 @@ void LLMEnginePyBind(const py::module &m) {
     .def("release_prompt_prefix", &LLMModel::ReleasePromptPrefix, py::call_guard<py::gil_scoped_release>())
     .def("pull_kv", &LLMModel::PullKV, py::call_guard<py::gil_scoped_release>())
     .def("merge_kv", &LLMModel::MergeKV, py::call_guard<py::gil_scoped_release>())
-    .def("get_input_infos", &LLMModel::GetInputInfos);
+    .def("get_inputs", &PyLLMModelGetInputs);
 
   (void)py::class_<LLMEngine, std::shared_ptr<LLMEngine>>(m, "LLMEngine_")
     .def(py::init<LLMRole, uint64_t, const std::string &>())

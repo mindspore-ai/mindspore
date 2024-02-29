@@ -101,7 +101,7 @@ class MS_API LLMModel {
   Status ReleasePromptPrefix(const LLMReq &req);
   Status PullKV(const LLMReq &req);
   Status MergeKV(const LLMReq &req, uint32_t batch_index, uint32_t batch_id);
-  std::vector<LLMTensorInfo> GetInputInfos();
+  std::vector<MSTensor> GetInputs();
 
  private:
   std::shared_ptr<LLMModelImpl> impl_ = nullptr;

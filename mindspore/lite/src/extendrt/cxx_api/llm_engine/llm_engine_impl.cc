@@ -22,6 +22,7 @@
 #include "mindspore/lite/src/common/common.h"
 #include "mindspore/lite/tools/common/custom_ascend_utils.h"
 #include "mindspore/lite/src/extendrt/utils/func_graph_utils.h"
+#include "mindspore/lite/src/extendrt/utils/tensor_default_impl.h"
 
 namespace mindspore {
 namespace {
@@ -231,7 +232,7 @@ Status LLMEngineImpl::MergeKV(const LLMReq &req, uint32_t batch_index, uint32_t 
   return plugin_->MergeKV(req, batch_index, batch_id, model_id);
 }
 
-std::vector<LLMTensorInfo> LLMEngineImpl::GetInputInfos(uint64_t model_id) {
+std::vector<MSTensor> LLMEngineImpl::GetInputs(uint64_t model_id) {
   if (plugin_ == nullptr) {
     MS_LOG(ERROR) << "LLMEngine plugin has not been created";
     return {};
@@ -241,7 +242,13 @@ std::vector<LLMTensorInfo> LLMEngineImpl::GetInputInfos(uint64_t model_id) {
     MS_LOG(ERROR) << "Cannot find model info for model " << model_id;
     return {};
   }
-  return it->second;
+  auto input_infos = it->second;
+  std::vector<MSTensor> tensors;
+  for (auto &item : input_infos) {
+    auto tensor_impl = std::make_shared<TensorDefaultImpl>(item.name, item.dtype, item.shape);
+    tensors.push_back(MSTensor(tensor_impl));
+  }
+  return tensors;
 }
 
 Status LLMEngineImpl::LinkClusters(const std::vector<LLMClusterInfo> &clusters, std::vector<Status> *rets,
@@ -268,8 +275,9 @@ Status LLMEngineImpl::GetModelInfo(const FuncGraphPtr &func_graph, LLMEngineMode
   }
   std::map<std::string, ValuePtr> attr_map;
   std::vector<std::pair<std::string, tensor::TensorPtr>> ref_datas;
-  auto ret =
-    CustomAscendUtils::ParseCustomFuncGraph(func_graph, &model_info->om_data, &model_info->name, &attr_map, &ref_datas);
+  DynKVCacheSaveInfo kv_info;
+  auto ret = CustomAscendUtils::ParseCustomFuncGraph(func_graph, &model_info->om_data, &model_info->name, &attr_map,
+                                                     &ref_datas, &kv_info);
   if (!ret) {
     MS_LOG(ERROR) << "Failed to parse custom func graph";
     return kLiteError;
@@ -283,27 +291,23 @@ Status LLMEngineImpl::GetModelInfo(const FuncGraphPtr &func_graph, LLMEngineMode
   }
   for (auto &item : ref_datas) {
     auto &tensor = item.second;
-    model_info->ref_input_shapes.push_back(tensor->shape_c());
+    auto ref_shape =
+      SetKVCacheShape(kv_info.batch_size_dyn, kv_info.seq_length_dyn, kv_info.kv_cache_layout, tensor->shape_c());
+    model_info->ref_input_shapes.push_back(ref_shape);
     model_info->ref_input_dtypes.push_back(static_cast<TypeId>(tensor->data_type()));
   }
-  auto get_string_attr = [&attr_map](const std::string &attr_name, std::string *val) {
-    auto attr_it = attr_map.find(attr_name);
-    if (attr_it == attr_map.end()) {
-      MS_LOG(ERROR) << "Failed to attr " << attr_name;
-      return false;
-    }
-    auto &attr_val = attr_it->second;
-    if (!attr_val->isa<StringImm>()) {
-      MS_LOG(ERROR) << "Failed to attr " << attr_name << ", attr type is " << attr_val->type_name();
-      return false;
-    }
-    *val = GetValue<std::string>(attr_it->second);
-    MS_LOG(INFO) << "Get graph attr " << attr_name << " " << *val;
-    return true;
-  };
-  if (!get_string_attr(lite::kNameAttrWeightDir, &model_info->weight_dir)) {
+  auto attr_it = attr_map.find(lite::kNameAttrWeightDir);
+  if (attr_it == attr_map.end()) {
+    MS_LOG(ERROR) << "Failed to attr " << lite::kNameAttrWeightDir;
     return kLiteError;
   }
+  auto &attr_val = attr_it->second;
+  if (!attr_val->isa<StringImm>()) {
+    MS_LOG(ERROR) << "Failed to attr " << lite::kNameAttrWeightDir << ", attr type is " << attr_val->type_name();
+    return kLiteError;
+  }
+  model_info->weight_dir = GetValue<std::string>(attr_it->second);
+  MS_LOG(INFO) << "Get graph attr " << lite::kNameAttrWeightDir << " " << model_info->weight_dir;
   std::vector<AnfWithOutIndex> outputs;
   if (!FuncGraphUtils::GetFuncGraphOutputs(func_graph, &outputs)) {
     MS_LOG(ERROR) << "Failed to get func graph outputs";

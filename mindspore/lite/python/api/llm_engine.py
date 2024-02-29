@@ -21,7 +21,7 @@ import threading
 from enum import Enum
 from typing import Union, List, Tuple, Dict
 from mindspore_lite._checkparam import check_isinstance
-from mindspore_lite.tensor import Tensor, data_type_cxx_py_map, DataType
+from mindspore_lite.tensor import Tensor
 from mindspore_lite.lib._c_lite_wrapper import LLMEngine_, LLMReq_, LLMRole_, StatusCode, LLMClusterInfo_
 from mindspore_lite.model import set_env
 
@@ -527,20 +527,30 @@ class LLMModel:
         ret = self.model_.release_prompt_prefix(llm_req.llm_request_)
         _handle_llm_status(ret, "release_prompt_prefix", "llm_req " + _llm_req_str(llm_req))
 
-    @property
-    def input_infos(self):
-        """Get input infos of this LLMModel. return format is (input0_info, input1_info), and every input_info is a
-        dict likes {"name": "input_name", "shape": (xx,xx,xx), "dtype": mindspore_lite.DataType}
+    def get_inputs(self) -> List[Tensor]:
         """
-        input_infos = self.model_.get_input_infos()
-        input_infos_ret = []
-        for item in input_infos:
-            if item.dtype in data_type_cxx_py_map:
-                dtype = data_type_cxx_py_map.get(item.dtype)
-            else:
-                dtype = DataType.UNKNOWN
-            input_infos_ret.append({"name": item.name, "shape": item.shape, "dtype": dtype})
-        return tuple(input_infos_ret)
+        Get inputs of this LLMModel.
+
+        Returns:
+            Tuple[Tensor], the input Tensor list of the model.
+
+        Examples:
+            >>> import mindspore_lite as mslite
+            >>> cluster_id = 1
+            >>> llm_engine = mslite.LLMEngine(mslite.LLMRole.Prompt, cluster_id)
+            >>> model_paths = [os.path.join(model_dir, f"device_${rank}") for rank in range(4)]
+            >>> options = {}
+            >>> llm_model = llm_engine.add_mode(model_paths, options)  # return LLMModel object
+            >>> inputs = llm_model.get_inputs()
+            >>> for i in range(len(inputs)):
+            ...     print(f"Input name {inputs[i].name}, dtype {inputs[i].dtype}, shape: {inputs[i].shape}")
+        """
+        if not self.model_:
+            raise RuntimeError(f"LLMEngine is not inited or init failed")
+        inputs = []
+        for _tensor in self.model_.get_inputs():
+            inputs.append(Tensor(_tensor))
+        return inputs
 
 
 class LLMEngine:
