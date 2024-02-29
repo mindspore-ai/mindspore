@@ -35,7 +35,7 @@ bool ActorDispatcher::is_multi_thread_execution_ = true;
 bool ActorDispatcher::is_memory_allocation_sync_ = true;
 bool ActorDispatcher::is_memory_free_sync_ = true;
 bool ActorDispatcher::enable_runtime_multi_pipeline_ = false;
-bool ActorDispatcher::enable_async_launch_kernel_ = EnableRuntimePipeline();
+bool ActorDispatcher::enable_async_launch_kernel_ = false;
 
 bool IsRunningFailed(const OpContext<DeviceTensor> *context) { return (context->error_info_ != ""); }
 

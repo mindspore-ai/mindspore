@@ -94,6 +94,9 @@ constexpr char kTransformFinishReady[] = "1";
 static const size_t kRetry = 200;
 static const size_t kInterval = 3;
 
+static constexpr size_t kAsyncLaunchThreadNum = 1;
+static constexpr size_t kMultiPipelineThreadNum = 3;
+
 bool GetNeedSyncStream(const GraphCompilerInfo &graph_compiler_info) {
   const auto &graphs = graph_compiler_info.graphs_;
   if (graphs.empty() && graph_compiler_info.control_nodes_.size() > 1) {
@@ -434,7 +437,7 @@ void GraphScheduler::Initialize() {
   if (ret != MINDRT_OK) {
     MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Actor manager init failed.";
   }
-  defalut_actor_thread_num_ = actor_thread_num;
+  default_actor_thread_num_ = actor_thread_num;
   common::SetOMPThreadNum();
   MS_LOG(INFO) << "The actor thread number: " << actor_thread_num
                << ", the kernel thread number: " << (actor_and_kernel_thread_num - actor_thread_num);
@@ -462,12 +465,6 @@ void GraphScheduler::BuildAndScheduleGlobalActor() {
   auto base_actor = static_cast<ActorReference>(memory_manager_actor);
   // Bind single thread to response to memory alloc and free quickly.
   (void)actor_manager->Spawn(base_actor, true);
-
-  if (ActorDispatcher::enable_async_launch_kernel()) {
-    auto &kernel_async_launch_actor = KernelAsyncLaunchActor::GetInstance();
-    MS_EXCEPTION_IF_NULL(kernel_async_launch_actor);
-    (void)actor_manager->Spawn(kernel_async_launch_actor, false);
-  }
 
   // Create and schedule recorder actor.
   bool recorder_actor_need = false;
@@ -599,14 +596,26 @@ ActorSet *GraphScheduler::Transform(const GraphCompilerInfo &graph_compiler_info
   return actor_set.get();
 }
 
-void GraphScheduler::Schedule(const ActorSet *actor_set) {
-  MS_EXCEPTION_IF_NULL(actor_set);
-  auto actors = SchedulerHelper::CollectActors(actor_set);
-  // Schedule actors.
+void GraphScheduler::SpawnMultiPipelineActor(ActorSet *const actor_set) {
   auto actor_manager = ActorMgr::GetActorMgrRef();
   MS_EXCEPTION_IF_NULL(actor_manager);
 
-  if (EnableRuntimePipeline() && actor_set->has_dynamic_shape_ && !multi_pipeline_actors_spawned_) {
+  ActorDispatcher::set_enable_async_launch_kernel(EnableRuntimePipeline() && !actor_set->kernel_actors_.empty() &&
+                                                  default_actor_thread_num_ > kAsyncLaunchThreadNum);
+  if (ActorDispatcher::enable_async_launch_kernel() && !already_spawn_kernel_async_launch_actor_) {
+    MS_LOG(INFO) << "Enable runtime asynchronously launch kernel.";
+    auto &kernel_async_launch_actor = KernelAsyncLaunchActor::GetInstance();
+    MS_EXCEPTION_IF_NULL(kernel_async_launch_actor);
+    (void)actor_manager->Spawn(kernel_async_launch_actor, false);
+    already_spawn_kernel_async_launch_actor_ = true;
+  }
+
+  // If enable runtime multi pipeline, async launch kernel will be enabled.
+  ActorDispatcher::set_enable_runtime_multi_pipeline(EnableRuntimePipeline() && actor_set->has_dynamic_shape_ &&
+                                                     !actor_set->kernel_actors_.empty() &&
+                                                     default_actor_thread_num_ > kMultiPipelineThreadNum);
+  if (ActorDispatcher::enable_runtime_multi_pipeline() && !already_spawn_kernel_async_infer_resize_actor_) {
+    MS_LOG(INFO) << "Enable runtime multi pipeline.";
     auto &kernel_async_infer_actor = KernelAsyncInferActor::GetInstance();
     MS_EXCEPTION_IF_NULL(kernel_async_infer_actor);
     (void)actor_manager->Spawn(kernel_async_infer_actor, false);
@@ -615,8 +624,16 @@ void GraphScheduler::Schedule(const ActorSet *actor_set) {
     MS_EXCEPTION_IF_NULL(kernel_async_resize_actor);
     (void)actor_manager->Spawn(kernel_async_resize_actor, false);
 
-    multi_pipeline_actors_spawned_ = true;
+    already_spawn_kernel_async_infer_resize_actor_ = true;
   }
+}
+
+void GraphScheduler::Schedule(const ActorSet *actor_set) {
+  MS_EXCEPTION_IF_NULL(actor_set);
+  auto actors = SchedulerHelper::CollectActors(actor_set);
+  // Schedule actors.
+  auto actor_manager = ActorMgr::GetActorMgrRef();
+  MS_EXCEPTION_IF_NULL(actor_manager);
 
   for (auto actor : actors) {
     MS_EXCEPTION_IF_NULL(actor);
@@ -648,18 +665,24 @@ void GraphScheduler::RefreshContextAndThreadPool(ActorSet *const actor_set, Acto
     context_ptr->set_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK, is_multi_graph_sink);
   };
 
+  auto calculate_runtime_pipeline_thread_num = [this]() {
+    return already_spawn_kernel_async_infer_resize_actor_
+             ? kMultiPipelineThreadNum
+             : (already_spawn_kernel_async_launch_actor_ ? kAsyncLaunchThreadNum : 0);
+  };
+
   if (!actor_set->kernel_actors_.empty()) {
     // kernel by kernel
     set_ctx(false, false);
-    thread_pool->SetActorThreadNum(defalut_actor_thread_num_);
+    thread_pool->SetActorThreadNum(default_actor_thread_num_);
   } else if (actor_set->super_kernel_actors_.size() == 1 && actor_set->control_actors_ == nullptr) {
     // multi graph sink
     set_ctx(true, true);
-    thread_pool->SetActorThreadNum(kSingleThreadNum);
+    thread_pool->SetActorThreadNum(kSingleThreadNum + calculate_runtime_pipeline_thread_num());
   } else {
     // sub graph sink
     set_ctx(true, false);
-    thread_pool->SetActorThreadNum(kSingleThreadNum);
+    thread_pool->SetActorThreadNum(kSingleThreadNum + calculate_runtime_pipeline_thread_num());
   }
 }
 
@@ -696,6 +719,8 @@ void GraphScheduler::Run(ActorSet *const actor_set, const std::vector<std::vecto
   }
 #endif
 
+  SpawnMultiPipelineActor(actor_set);
+
   // Construct OpContext.
   OpContext<DeviceTensor> op_context;
   std::vector<Promise<int>> result(1);
@@ -718,7 +743,6 @@ void GraphScheduler::Run(ActorSet *const actor_set, const std::vector<std::vecto
     thread_pool->SetSpinCountMaxValue();
   }
   ActorDispatcher::set_is_multi_thread_execution(actor_set->is_multi_thread_execution_);
-  ActorDispatcher::set_enable_runtime_multi_pipeline(EnableRuntimePipeline() && actor_set->has_dynamic_shape_);
   double start_time = GetTime();
   ActorDispatcher::Send(actor_set->data_prepare_actor_->GetAID(), &DataPrepareActor::PrepareData, input_tensors, args,
                         &op_context, GraphExecutionStrategy::kPipeline);
