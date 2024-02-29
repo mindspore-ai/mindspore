@@ -118,7 +118,7 @@ def gelu_net(x_shape, dtype):
     output = net(Tensor(x, dtype=dtype))
 
 
-def test_add(dtype=np.float16):
+def test_add_broadcast1(dtype=np.float16):
     """
     Feature: test add operator in graph mode
     Description: test add.
@@ -126,6 +126,28 @@ def test_add(dtype=np.float16):
     """
     x_shape = (1024, 1664)
     y_shape = (1664,)
+    add_net(x_shape, y_shape, dtype)
+
+
+def test_add_nobroadcast(dtype=np.float16):
+    """
+    Feature: test add operator in graph mode
+    Description: test add.
+    Expectation: the result is correct
+    """
+    x_shape = (1024, 1664)
+    y_shape = (1024, 1664)
+    add_net(x_shape, y_shape, dtype)
+
+
+def test_add_broadcast2(dtype=np.float16):
+    """
+    Feature: test add operator in graph mode
+    Description: test add.
+    Expectation: the result is correct
+    """
+    x_shape = (32, 1, 1664)
+    y_shape = (1, 1024, 1664)
     add_net(x_shape, y_shape, dtype)
 
 
