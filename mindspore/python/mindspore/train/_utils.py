@@ -16,7 +16,9 @@
 from __future__ import absolute_import
 
 import os
+import json
 from collections.abc import Iterable
+
 import numpy as np
 
 from mindspore.common.tensor import Tensor
@@ -263,3 +265,175 @@ def read_proto(file_name, proto_format="MINDIR", display_data=False):
                     ele.tensor_content = b'\0'
 
     return model
+
+
+def parse_strategy_ckpt(file_name):
+    """
+    Parses a strategy ckpt layout file and returns the rank location dict.
+
+    Args:
+        file_name (str):Strategy ckpt file name.
+
+    Returns:
+        Dict, layout dict. Key is parameter name, value is (dev_matrix, tensor_map).
+
+    Examples:
+        >>> from mindspore.train.utils import parse_strategy_ckpt
+        >>> layout_dict = parse_strategy_ckpt("/path/to/strategy.ckpt")
+        {"param1": [[4, 4], [0, -1]], "param2": [[4, 4], [-1, 0]],,,,}
+    """
+    model = ckpt_strategy()
+    with open(file_name, "rb") as f:
+        pb_content = f.read()
+        model.ParseFromString(pb_content)
+    layout_dict = {}
+    for param in model.parallel_layout_item:
+        dev_matrix = []
+        tensor_map = []
+        for ele in param.parallel_layouts.dev_matrix[0].ListFields()[0][1]:
+            dev_matrix.append(ele)
+
+        for ele in param.parallel_layouts.tensor_map[0].ListFields()[0][1]:
+            tensor_map.append(ele)
+        layout_dict[param.param_name] = [dev_matrix, tensor_map]
+    return layout_dict
+
+
+def get_parameter_redundancy(layout_obj, initial_rank=0):
+    """
+    Get parameter redundancy map.
+
+    Args:
+        layout_obj (Union[str, layout): File name of `strategy.ckpt` or net.parameter_layout_dict.
+        initial_rank (int): Start rank id for each pipeline. Default: 0.
+
+    Returns:
+        Dict, dict of parameter redundancy info.
+
+    Examples:
+        >>> from mindspore.train.utils import get_parameter_redundancy
+        >>> param_redundancy_dict = get_parameter_redundancy("/path/to/strategy.ckpt")
+        {'param1': ((0, 1, 2, 3, 4, 5, 6, 7),),
+         'param2': ((0, 4, 8, 12), (1, 5, 9, 13), (2, 6, 10, 14), (3, 7, 11, 15)),
+         'param3': ((0, 4, 8, 12), (1, 5, 9, 13), (2, 6, 10, 14), (3, 7, 11, 15)),
+         'param4': ((0, 4, 8, 12), (1, 5, 9, 13), (2, 6, 10, 14), (3, 7, 11, 15))}
+    """
+    if isinstance(layout_obj, str):
+        parameter_layout = parse_strategy_ckpt(layout_obj)
+    else:
+        parameter_layout = {}
+        for k, v in layout_obj.items():
+            parameter_layout[k] = v[:2]
+
+    param_redundancy_dict = {}
+    for key, (slices, deploy_loc, *_) in parameter_layout.items():
+        redundancy_matrix = np.zeros(shape=slices + [len(slices)], dtype=np.int8)
+        for i in deploy_loc:
+            internal_slice = tuple(slice(None) for _ in range(i))
+            for j in range(slices[-i - 1]):
+                if i == -1:
+                    continue
+                else:
+                    redundancy_matrix[(..., j) + internal_slice + (i,)] = j
+        locate_list = redundancy_matrix.reshape((-1, len(slices))).tolist()
+        redundancy_dict = {}
+        for index, locate in enumerate(locate_list):
+            redundancy_dict.setdefault(tuple(locate), []).append(index+initial_rank)
+        redundancy_list = []
+        for _, indices in sorted(redundancy_dict.items()):
+            redundancy_list.append(tuple(indices))
+
+        param_redundancy_dict[key] = tuple(redundancy_list)
+    return param_redundancy_dict
+
+
+def _collect_settings_by_rank(redundancy_map):
+    """
+    Collect parameter redundancy map by rank id.
+
+    {"param1":((1,3,5,7),(2,4,6,8)),"param2":((1,3,5,7),(2,4,6,8))}
+    ->{(1,3,5,7):{"param1", "param2"},(2,4,6,8):{"param1", "param2"}}
+    """
+    redundancy_map_reversed = {}
+    for key, redundancy in redundancy_map.items():
+        for index, item in enumerate(redundancy):
+            redundancy_map_reversed.setdefault(item, []).append(
+                (key, index))
+    return redundancy_map_reversed
+
+
+def _restructure(input_dict):
+    """
+    Flatten and reorganize the nested dictionary structure."""
+    if all(not isinstance(item, tuple) for item in input_dict):
+        return input_dict
+    res_dict = {}
+    for key, values in input_dict.items():
+        for index, value in enumerate(values):
+            res_dict.setdefault(key[index % len(key)], []).append(value)
+    return _restructure(res_dict)
+
+
+def _rotate_list_elements(i, input_list):
+    """Rotate element list."""
+    rotated_list = [input_list[(i + j) % len(input_list)] for j in
+                    range(len(input_list))]
+    return rotated_list
+
+
+def remove_param_redundancy(param_redundancy_dict, keep_redundancy=1):
+    """
+    Remove parameter redundancy, get the single parameter for each rank id.
+    Args:
+        param_redundancy_dict (Dict): Parameter redundancy dict.
+        keep_redundancy (Int): Keep redundancy number.
+
+    Returns:
+        Dict, single parameter for each rank id. Key is rank_id, value is set(params).
+
+    Examples:
+        >>> from mindspore.train.utils import get_parameter_redundancy, remove_param_redundancy
+        >>> param_redundancy_dict = get_parameter_redundancy("/path/to/strategy.ckpt")
+        >>> single_parameter = remove_param_redundancy(param_redundancy_dict)
+        {0: {param1, param3}, 1: {param2, param4},,,}}
+    """
+    redundancy_dict_reversed = _collect_settings_by_rank(param_redundancy_dict)
+    sorted_layouts = {}
+    for device_layout, layer_names_list in redundancy_dict_reversed.items():
+        sorted_layer_names = [item[0] for item in layer_names_list]
+        sorted_layouts[device_layout] = sorted_layer_names
+    result = {}
+    for i in range(keep_redundancy):
+        rotated_layouts = {tuple(_rotate_list_elements(i, key)): value for
+                           key, value in sorted_layouts.items()}
+        restructured_layouts = _restructure(rotated_layouts)
+        for key, value in restructured_layouts.items():
+            result.setdefault(key, set()).update(set(value))
+    return result
+
+
+def parse_hccl_file(hccl_file_path):
+    """
+    Parses an HCCL configuration JSON file, return a dict key is rank_id, value is device_ip.
+
+    Args:
+        hccl_file_path (str): The path to the HCCL configuration JSON file.
+
+    Returns:
+        Dict: A Dict, key is rank_id, value is device_ip.
+
+    Examples:
+        >>> from mindspore.train.utils import parse_hccl_file
+        >>> rankid_dict = parse_hccl_file("/path/to/hccl.json")
+        {0: "10.11.10.163", 1: "10.11.10.164", 2: "10.11.10.165", 3: "10.11.10.166",,,,}
+    """
+    with open(hccl_file_path) as f:
+        hccl_dict = json.load(f)
+    server_list = hccl_dict["server_list"]
+    rankid_dict = {}
+    for server in server_list:
+        device_list = server["device"]
+        for device in device_list:
+            rankid_dict[int(device["rank_id"])] = device["device_ip"]
+
+    return rankid_dict
