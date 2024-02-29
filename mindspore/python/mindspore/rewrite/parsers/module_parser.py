@@ -49,13 +49,6 @@ class ModuleParser(Parser):
         return classes[0]
 
     @staticmethod
-    def _save_imports(stree):
-        """save imports in module where network is located."""
-        origin_net = stree.get_origin_network()
-        net_path = inspect.getfile(type(origin_net))
-        stree.save_imports_from_file(net_path)
-
-    @staticmethod
     def _add_decorator_to_class(class_ast: ast.ClassDef, origin_net):
         """Add decorators to class"""
         origin_net_source_code_file = inspect.getfile(type(origin_net))
@@ -110,7 +103,6 @@ class ModuleParser(Parser):
 
     def process(self, stree: SymbolTree, node: ast.Module, node_manager: NodeManager):
         """Process ast.ClassDef nodes in ast.Module."""
-        ModuleParser._save_imports(stree)
         class_ast = ModuleParser._find_class(node)
         ModuleParser._add_decorator_to_class(class_ast, stree.get_origin_network())
         stree.set_class_ast(class_ast)
