@@ -387,5 +387,14 @@ class TupleGetItemOp : public VirtualOp {
   using VirtualOp::VirtualOp;
   ~TupleGetItemOp() = default;
 };
+
+class PagedAttentionOp : public OpaqueOp {
+ public:
+  explicit PagedAttentionOp(const std::string &op) : OpaqueOp(op) {}
+  ~PagedAttentionOp() = default;
+
+ protected:
+  void RectifyAbstract(const PrimitivePtr &, AbstractBasePtrList *input_abstract_ptr) override;
+};
 }  // namespace mindspore::graphkernel::inner
 #endif
