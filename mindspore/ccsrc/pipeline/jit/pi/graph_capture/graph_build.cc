@@ -2392,6 +2392,7 @@ py::object MindGraphBuilder::ResolveCallable(CallNode *call_node, StopTraceReaso
   if (method.ptr() != nullptr) {
     MS_LOG(INFO) << "convert method :" << py::str(callable_info) << " to " << py::str(method);
     callable_info = method;
+    call_node->input(0)->SetVobj(AObject::Convert(callable_info.ptr()));
     args = GetNewArgs(call_node);
   }
   auto func = FGBuilder()->ConvertFunction(callable_info);
