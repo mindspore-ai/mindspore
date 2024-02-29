@@ -248,6 +248,10 @@ bool MsContext::set_ascend_soc_version(const std::string &soc_version) {
 
 std::string MsContext::ascend_soc_version() const { return ascend_soc_version_; }
 
+void MsContext::set_ascend_soc_name(const std::string &soc_name) { ascend_soc_name_ = soc_name; }
+
+std::string MsContext::ascend_soc_name() const { return ascend_soc_name_; }
+
 bool MsContext::enable_dump_ir() const {
 #ifdef ENABLE_DUMP_IR
   return true;

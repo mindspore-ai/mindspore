@@ -121,7 +121,7 @@ class BACKEND_EXPORT KernelBuildClient {
   }
 
   // Run Kernel Compiler building.
-  bool CompilerStart(int process_num, int wait_time);
+  bool CompilerStart(int process_num, int wait_time, const std::string &platform);
   bool CompilerSendAttr(const std::string &attr);
   bool CompilerSendData(const std::vector<std::string> &jsons);
   bool CompilerWait();

@@ -574,6 +574,10 @@ void ReleaseConvertTypes(const Tuple &t) {
       out = std::make_shared<FP64Imm>(static_cast<double>(num));            \
       break;                                                                \
     }                                                                       \
+    case kNumberTypeBFloat16: {                                             \
+      out = std::make_shared<FP32Imm>(static_cast<float>(num));             \
+      break;                                                                \
+    }                                                                       \
     case kNumberTypeInt8: {                                                 \
       out = std::make_shared<Int8Imm>(static_cast<int8_t>(num));            \
       break;                                                                \
