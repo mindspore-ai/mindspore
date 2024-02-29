@@ -38,6 +38,7 @@
 #include "utils/check_convert_utils.h"
 #include "utils/hash_map.h"
 #include "utils/ms_context.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 const int ONNX_VERSION = 11;
@@ -1383,6 +1384,20 @@ void OnnxExporter::ExportFuncGraph(const FuncGraphPtr &func_graph, std::map<AnfN
                                    onnx::GraphProto *const graph_proto, bool export_inputs) {
   MS_LOG(INFO) << "Begin exporting onnx model for graph " << func_graph->ToString();
 
+  // Convert yaml defined primitive to old primitive.
+  std::vector<AnfNodePtr> nodes = TopoSort(func_graph->get_return(), SuccIncoming, AlwaysInclude);
+  auto manager = func_graph->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  for (const auto &node : nodes) {
+    if (node->isa<CNode>()) {
+      auto converted_node = ops::ConvertArgsToAttr(node->cast<CNodePtr>());
+      // If node is old primitive node, nullptr will be returned.
+      if (converted_node == nullptr) {
+        continue;
+      }
+      (void)manager->Replace(node, converted_node);
+    }
+  }
   // set graph name
   graph_proto->set_name(func_graph->ToString());
 
