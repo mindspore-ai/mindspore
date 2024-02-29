@@ -1021,9 +1021,7 @@ py::object MindCodeBreakGenerator::MakeCopyCode(const std::string &co_name, int 
   }
   phase += ".pi_jit";
   MindCompiler::CompileInfo compile_info{co_name, co_argcount, co_kwonlyargcount, co_flags};
-  common::SetEnv("MS_DEV_JIT_SYNTAX_LEVEL", "0");
   CallableGraph callable = mindspore::pijit::MindCompiler::Compile(func_graph, args, py::dict(), phase, compile_info);
-  common::SetEnv("MS_DEV_JIT_SYNTAX_LEVEL", "2");
   // Set NativeFunc.
   auto parent = getJitCompileResults(reinterpret_cast<PyObject *>(co_), false);
   if (make_graph) {
