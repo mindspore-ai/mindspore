@@ -555,21 +555,35 @@ void CodeGenerator::LoadValue(ValueNode *node) {
   }
 
   std::string key = node->GetName();
+  if (opcode == LOAD_GLOBAL) {
+    PyObject *globals = node->GetGraph() ? node->GetGraph()->GetGlobals().ptr() : nullptr;
+    MS_EXCEPTION_IF_NULL(globals);
+    if (globals != GetGlobals().ptr()) {
+      py::str key_object(key);
+      PyObject *value = PyObject_GetItem(globals, key_object.ptr());
+      if (value != nullptr) {
+        py::object handle_value = py::reinterpret_steal<py::object>(value);
+        MapAdd(GetGlobals(), key, handle_value, &key);
+      } else {
+        // name error, global undefined
+        PyErr_Clear();
+      }
+    }
+    NewInstr(LOAD_GLOBAL);
+    code_.co_code.back()->set_name(key);
+    return;
+  }
+
   py::object cnst = node->GetVobj()->GetPyObject();
   if (opcode == LOAD_CONST) {
+    MS_EXCEPTION_IF_NULL(cnst.ptr());
     if (CheckConstPyObject(cnst.ptr())) {
       NewInstr(LOAD_CONST);
       code_.co_code.back()->set_cnst(cnst);
       return;
     }
     key = GenerateObjectKey(cnst);
-    opcode = LOAD_GLOBAL;
-  }
-
-  if (opcode == LOAD_GLOBAL) {
-    if (cnst.ptr() != nullptr) {
-      MapAdd(GetGlobals(), key, cnst, &key);
-    }
+    MapAdd(GetGlobals(), key, cnst);
     NewInstr(LOAD_GLOBAL);
     code_.co_code.back()->set_name(key);
     return;
