@@ -503,8 +503,13 @@ static bool GraphCapture(JitCompileResults *jcr) {
   GraphJitConfig &conf = *jcr->conf;
 
   auto g = GraphBuilder::Creator(jcr->origin_frame_, conf.GetBoolConfig(GraphJitConfig::kTraceFlag));
+  auto all_args = PackArgs(jcr->origin_frame_);
+  auto args = py::cast<py::list>(all_args[0]);
+  if (all_args[2].ptr() != nullptr) {
+    PyList_Append(args.ptr(), all_args[2].ptr());  // args + kwargs
+  }
 
-  (void)g->TraceRun(py::cast<py::list>(PackArgs(jcr->origin_frame_)[0]).cast<std::vector<py::object>>());
+  (void)g->TraceRun(args.cast<std::vector<py::object>>());
 
   if (g->StackSize() > 0) {
     auto block = g->PeekStack(0);
