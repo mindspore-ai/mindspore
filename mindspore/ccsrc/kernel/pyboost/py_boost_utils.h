@@ -93,7 +93,8 @@ class BACKEND_EXPORT PyBoostUtils {
                               std::vector<kernel::KernelTensor *> *kernel_tensor_list,
                               device::DeviceAddressPtrList *device_address_list, const std::optional<T> &val) {
     if (val.has_value()) {
-      GetKernelTensor(device_context, input_abs, index, kernel_tensor_list, device_address_list, val.value());
+      GetKernelTensor(device_context, stream_id, input_abs, index, kernel_tensor_list, device_address_list,
+                      val.value());
     } else {
       // Construct none kernel tensor
       MS_EXCEPTION_IF_NULL(kernel_tensor_list);
