@@ -206,6 +206,15 @@ std::string ConvertAnyUtil(const ValuePtr &value, const AnyTraits<GEReduction>) 
   return GEReduction::ConvertEnumToString(reduction_id);
 }
 
+std::string ConvertAnyUtil(const ValuePtr &value, const AnyTraits<FASInputLayoutMode>) {
+  MS_EXCEPTION_IF_NULL(value);
+  if (value->isa<StringImm>()) {
+    return GetValue<std::string>(value);
+  }
+  int64_t input_layout_id = GetCastIntegralValue<int64_t>(value);
+  return FASInputLayoutMode::ConvertEnumToString(input_layout_id);
+}
+
 std::string ConvertAnyUtil(const ValuePtr &value, const AnyTraits<GEEnumToStr>,
                            const std::vector<std::string> &enum_string) {
   MS_EXCEPTION_IF_NULL(value);

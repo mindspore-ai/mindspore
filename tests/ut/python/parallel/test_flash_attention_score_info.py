@@ -45,10 +45,20 @@ def generate_inputs(B, N, S, D, input_layout, use_mqa=False, with_real_shift=Tru
         query = Tensor(np.ones((B, S, H_Q), dtype=np.float16))
         key = Tensor(np.ones((B, S, H_KV), dtype=np.float16))
         value = Tensor(np.ones((B, S, H_KV), dtype=np.float16))
+    elif input_layout == "SBH":
+        H_Q = N_Q * D
+        H_KV = N_KV * D
+        query = Tensor(np.ones((S, B, H_Q), dtype=np.float16))
+        key = Tensor(np.ones((S, B, H_KV), dtype=np.float16))
+        value = Tensor(np.ones((S, B, H_KV), dtype=np.float16))
     elif input_layout == "BNSD":
         query = Tensor(np.ones((B, N_Q, S, D), dtype=np.float16))
         key = Tensor(np.ones((B, N_KV, S, D), dtype=np.float16))
         value = Tensor(np.ones((B, N_KV, S, D), dtype=np.float16))
+    elif input_layout == "BSND":
+        query = Tensor(np.ones((B, S, N_Q, D), dtype=np.float16))
+        key = Tensor(np.ones((B, S, N_KV, D), dtype=np.float16))
+        value = Tensor(np.ones((B, S, N_KV, D), dtype=np.float16))
     else:
         raise ValueError(f"input_layout is invalid.")
     real_shift = Tensor(np.ones((B, N, S, S), dtype=np.float16)) if with_real_shift else None
@@ -106,8 +116,14 @@ class Net(nn.Cell):
             kv_head_stra = 1 if use_mqa else mp
             if input_layout == "BSH":
                 stra = ((dp, sp, mp), (dp, 1, kv_head_stra), (dp, 1, kv_head_stra))
-            else:
+            elif input_layout == "SBH":
+                stra = ((sp, dp, mp), (1, dp, kv_head_stra), (1, dp, kv_head_stra))
+            elif input_layout == "BNSD":
                 stra = ((dp, mp, sp, 1), (dp, kv_head_stra, 1, 1), (dp, kv_head_stra, 1, 1))
+            elif input_layout == "BSND":
+                stra = ((dp, sp, mp, 1), (dp, 1, kv_head_stra, 1), (dp, 1, kv_head_stra, 1))
+            else:
+                raise ValueError(f"input_layout is invalid.")
             if with_real_shift:
                 stra += ((dp, mp, sp, 1),)
             if keep_prob < 1.0:
@@ -121,8 +137,14 @@ class Net(nn.Cell):
     def construct(self, query, key, value, real_shift, attn_mask):
         if self.input_layout == "BSH":
             bsz, seq_len, _ = query.shape
-        else:
+        elif self.input_layout == "SBH":
+            seq_len, bsz, _ = query.shape
+        elif self.input_layout == "BNSD":
             bsz, _, seq_len, _ = query.shape
+        elif self.input_layout == "BSND":
+            bsz, seq_len, _, _ = query.shape
+        else:
+            raise ValueError(f"input_layout is invalid.")
         if self.keep_prob < 1.0:
             drop_mask_bits = self.reshape(self.drop_gen_mask((bsz, self.head_num, seq_len, seq_len),
                                                              self.keep_prob),
@@ -133,7 +155,7 @@ class Net(nn.Cell):
 
 
 @pytest.mark.parametrize('keep_prob', [0.9, 1.0])
-@pytest.mark.parametrize('input_layout', ["BSH", "BNSD"])
+@pytest.mark.parametrize('input_layout', ["BSH", "SBH", "BNSD", "BSND"])
 @pytest.mark.parametrize('with_real_shift', [True, False])
 def test_self_attention_standalone(keep_prob, input_layout, with_real_shift):
     """
@@ -151,7 +173,7 @@ def test_self_attention_standalone(keep_prob, input_layout, with_real_shift):
     compile_net(net, query, key, value, real_shift, attn_mask)
 
 
-@pytest.mark.parametrize('input_layout', ["BSH", "BNSD"])
+@pytest.mark.parametrize('input_layout', ["BSH", "SBH", "BNSD", "BSND"])
 @pytest.mark.parametrize('sparse_mode', [2, 3, 4])
 def test_self_attention_standalone_with_compressed_mask(input_layout, sparse_mode):
     """
@@ -169,7 +191,7 @@ def test_self_attention_standalone_with_compressed_mask(input_layout, sparse_mod
     compile_net(net, query, key, value, real_shift, attn_mask)
 
 
-@pytest.mark.parametrize('input_layout', ["BSH", "BNSD"])
+@pytest.mark.parametrize('input_layout', ["BSH", "SBH", "BNSD", "BSND"])
 @pytest.mark.parametrize('use_mqa', [True, False])
 @pytest.mark.parametrize('with_real_shift', [True, False])
 def test_flash_attention_semi_auto_parallel(input_layout, use_mqa, with_real_shift):
@@ -192,7 +214,7 @@ def test_flash_attention_semi_auto_parallel(input_layout, use_mqa, with_real_shi
     compile_net(net, query, key, value, real_shift, attn_mask)
 
 
-@pytest.mark.parametrize('input_layout', ["BSH", "BNSD"])
+@pytest.mark.parametrize('input_layout', ["BSH", "SBH", "BNSD", "BSND"])
 @pytest.mark.parametrize('sparse_mode', [2, 3, 4])
 def test_flash_attention_semi_auto_parallel_with_compressed_mask(input_layout, sparse_mode):
     """
@@ -248,7 +270,7 @@ def test_flash_attention_auto_parallel(keep_prob, input_layout, use_mqa, with_re
     compile_net(net, query, key, value, real_shift, attn_mask)
 
 
-@pytest.mark.parametrize('input_layout', ["BSH", "BNSD"])
+@pytest.mark.parametrize('input_layout', ["BSH", "SBH", "BNSD", "BSND"])
 @pytest.mark.parametrize('use_mqa', [True, False])
 @pytest.mark.parametrize('with_real_shift', [True, False])
 def test_flash_attention_with_seq_parallel(input_layout, use_mqa, with_real_shift):
@@ -272,7 +294,7 @@ def test_flash_attention_with_seq_parallel(input_layout, use_mqa, with_real_shif
     compile_net(net, query, key, value, real_shift, attn_mask)
 
 
-@pytest.mark.parametrize('input_layout', ["BSH", "BNSD"])
+@pytest.mark.parametrize('input_layout', ["BSH", "SBH", "BNSD", "BSND"])
 @pytest.mark.parametrize('sparse_mode', [2, 3, 4])
 def test_flash_attention_compressed_mask_with_seq_parallel(input_layout, sparse_mode):
     """
@@ -294,7 +316,7 @@ def test_flash_attention_compressed_mask_with_seq_parallel(input_layout, sparse_
     compile_net(net, query, key, value, real_shift, attn_mask)
 
 
-@pytest.mark.parametrize('input_layout', ["BSH", "BNSD"])
+@pytest.mark.parametrize('input_layout', ["BSH", "SBH", "BNSD", "BSND"])
 @pytest.mark.parametrize('use_mqa', [True, False])
 @pytest.mark.parametrize('with_real_shift', [True, False])
 def test_flash_attention_with_load_balance(input_layout, use_mqa, with_real_shift):
@@ -323,7 +345,7 @@ def test_flash_attention_with_load_balance(input_layout, use_mqa, with_real_shif
     compile_net(net, query, key, value, real_shift, attn_mask)
 
 
-@pytest.mark.parametrize('input_layout', ["BSH", "BNSD"])
+@pytest.mark.parametrize('input_layout', ["BSH", "SBH", "BNSD", "BSND"])
 @pytest.mark.parametrize('sparse_mode', [2, 3, 4])
 def test_flash_attention_compressed_mask_with_load_balance(input_layout, sparse_mode):
     """

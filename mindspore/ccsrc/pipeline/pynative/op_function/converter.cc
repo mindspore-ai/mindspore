@@ -23,7 +23,6 @@ namespace mindspore {
 namespace pynative {
 
 namespace {
-static constexpr size_t N = 10;
 using OP_DTYPE = mindspore::ops::OP_DTYPE;
 template <typename T, typename U>
 std::shared_ptr<U> PyCast(const py::object &obj) {
@@ -92,7 +91,8 @@ ValueTuplePtr ConvertList(const py::object &obj) {
 }
 }  // namespace
 
-Converter::Converter(ops::OpDef *op_def) : op_def_(op_def), source_type_(std::vector<ops::OP_DTYPE>(N)) {}
+Converter::Converter(ops::OpDef *op_def)
+    : op_def_(op_def), source_type_(std::vector<ops::OP_DTYPE>(op_def->args_.size())) {}
 
 void Converter::Parse(const py::list &python_args) {
   if (op_def_->args_.size() != python_args.size()) {

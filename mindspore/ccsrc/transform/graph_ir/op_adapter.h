@@ -652,6 +652,10 @@ class OpAdapter : public BaseOpAdapter {
     return ConvertAnyUtil(value, anyTraitsGE);
   }
 
+  static std::string ConvertAny(const ValuePtr &value, const AnyTraits<FASInputLayoutMode> anyTraitsGE) {
+    return ConvertAnyUtil(value, anyTraitsGE);
+  }
+
   static std::string ConvertAny(const ValuePtr &value, const AnyTraits<GEEnumToStr> enum_str,
                                 const std::vector<std::string> &enum_string) {
     return ConvertAnyUtil(value, enum_str, enum_string);
@@ -814,6 +818,11 @@ class OpAdapter : public BaseOpAdapter {
   }
 
   static std::string GetAttrType(const AnyTraits<GEDataFormat> anyTraitsGE) {
+    std::string ret{};
+    return ret;
+  }
+
+  static std::string GetAttrType(const AnyTraits<FASInputLayoutMode> anyTraitsGE) {
     std::string ret{};
     return ret;
   }

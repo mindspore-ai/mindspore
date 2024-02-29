@@ -50,22 +50,7 @@ def get_index(index: int):
     :param index:
     :return: str
     """
-    index_map = {
-        0: 'kIndex0',
-        1: 'kIndex1',
-        2: 'kIndex2',
-        3: 'kIndex3',
-        4: 'kIndex4',
-        5: 'kIndex5',
-        6: 'kIndex6',
-        7: 'kIndex7',
-        8: 'kIndex8',
-        9: 'kIndex9',
-        10: 'kIndex10',
-    }
-    if index in index_map:
-        return index_map[index]
-    raise TypeError(f"""Unsupported index {index} for index map.""")
+    return "kIndex" + str(index)
 
 
 def get_convert_type_str(dtype: str, optional):

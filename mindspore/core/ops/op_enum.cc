@@ -151,6 +151,11 @@ REG_STRING_TO_ENUM(grid_sampler_padding_mode, StrToGridSamplerPaddingMode)
 REG_STRING_TO_ENUM(k_v_cache_align_mode,
                    StrToEnumMap{{"LEFT", KVCacheAlignMode::LEFT}, {"RIGHT", KVCacheAlignMode::RIGHT}})
 
+REG_STRING_TO_ENUM(fas_input_layout_mode, StrToEnumMap{{"BSH", FASInputLayoutMode::BSH},
+                                                       {"BNSD", FASInputLayoutMode::BNSD},
+                                                       {"SBH", FASInputLayoutMode::SBH},
+                                                       {"BSND", FASInputLayoutMode::BSND},
+                                                       {"TND", FASInputLayoutMode::TND}})
 }  // namespace
 
 int64_t StringToEnumImpl(const std::string &op_name, const std::string &arg_name, const std::string &enum_string) {

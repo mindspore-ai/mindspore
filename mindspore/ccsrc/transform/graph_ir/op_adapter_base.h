@@ -223,6 +223,18 @@ class GEDataFormat {
   }
 };
 
+class FASInputLayoutMode {
+ public:
+  static std::string ConvertEnumToString(int64_t id) {
+    static const std::vector<std::string> input_layout_modes = {"BSH", "BNSD", "SBH", "BSND", "TND"};
+    if (id < 0 || id >= static_cast<int64_t>(input_layout_modes.size())) {
+      MS_LOG(EXCEPTION) << "Invalid input layout mode " << id;
+      return "";
+    }
+    return input_layout_modes[id];
+  }
+};
+
 class GEPadMod {
  public:
   static std::string ConvertEnumToString(int64_t id) {

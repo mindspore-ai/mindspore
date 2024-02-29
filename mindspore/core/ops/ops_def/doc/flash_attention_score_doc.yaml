@@ -1,0 +1,87 @@
+flash_attention_score:
+  description: |
+    FlashAttentionScore.
+
+    .. math::
+        \begin{array}{ll} \\
+            y = Dropout(Softmax(Mask(scale_value \mul (real_shift + query * key), attn_mask), -1), keep_prob) \\
+            \mul value \\
+        \end{array}
+
+    B -- Batch size
+    S1 -- Sequence length of query.
+    S2 -- Sequence length of key and value.
+    N1 -- Num heads of query.
+    N2 -- Num heads of key and value, and N2 must be a factor of N1.
+    D -- Head size.  The value ranges is a multiple of 16.
+    H1 -- Hidden size of query, which equals to N1 * D.
+    H2 -- Hidden size of key and value, which equals to N2 * D.
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
+    Args:
+        head_num (int): The head num of query.
+        keep_prob (float): The keep probability of dropout. Default: 1.0.
+        scale_value (float): The scale factor of score. Default: 1.0.
+        pre_tokens (int): Parameter for sparse computation, represents how many tokens are counted forward.
+            When sparse_mode is set to 1, 2, 3, or 5, this parameter does not take effect. Default: 2147483647.
+        next_tokens (int): Parameter for sparse computation, represents how many tokens are counted backward.
+            When sparse_mode is set to 1, 2, 3, or 5, this parameter does not take effect. Default: 2147483647.
+        inner_precise (int): The parameter is reserved and not implemented yet. Default: 0.
+        input_layout (str): Specifies the layout of input `query`, key and value. The value can be "BSH", "BNSD", "SBH",
+            "BSND" or "TND". Default: "BSH".
+        sparse_mode (int): Indicates sparse mode. Default 0.
+
+            - 0: Indicates the defaultMask mode. If attn_mask is not passed, the mask operation is not performed,
+              and preTokens and nextTokens(internally assigned as INT_MAX) are ignored. If passed in, the full attn_mask
+              matrix (S1 * S2) needs to be passed in, indicating that the part between preTokens and nextTokens needs to
+              be calculated.
+            - 1: Represents allMask, that is, passing in the complete attn_mask matrix.
+            - 2: Representing the leftUpCausal mode corresponds to the lower triangle scenario divided by the left
+              vertex, and the optimized attn_mask matrix (2048*2048) is required.
+            - 3: Representing the rightDownCausal model corresponds to the lower triangle scene divided by the lower
+              right vertex, and the optimized attn_mask matrix (2048*2048) is required.
+            - 4: Represents the band scenario, that is, the part between counting preTokens and nextTokens, and the
+              optimized attn_mask matrix (2048*2048) is required..
+            - 5: Represents the prefix scenario, that is, on the basis of rightDownCasual, a matrix with length S1 and
+              width N is added to the left side. The value of N is obtained by the new input prefix, and the N value of
+              each Batch axis is different. Not implemented yet.
+            - 6: Represents the global scenario, not implemented yet.
+            - 7: Represents the dilated scenario, not implemented yet.
+            - 8: Represents the block_local scenario, not implemented yet.
+
+    Inputs:
+        - **query** (Tensor[float16, bfloat16]) - The query tensor.
+          Input tensor of shape :math:`(B, S1, H1)`, `(B, N1, S1, D)`, `(S1, B, H1)`, `(B, S1, N1, D)` or `(T1, N1, D)`.
+        - **key** (Tensor[float16, bfloat16]) - The key tensor.
+          Input tensor of shape :math:`(B, S2, H2)`, `(B, N2, S2, D)`, `(S2, B, H2)`, `(B, S2, N2, D)` or `(T2, N2, D)`.
+        - **value** (Tensor[float16, bfloat16]) - The value tensor.
+          Input tensor of shape :math:`(B, S2, H2)`, `(B, N2, S2, D)`, `(S2, B, H2)`, `(B, S2, N2, D)` or `(T2, N2, D)`.
+        - **real_shift** (Union[Tensor[float16, bfloat16], None]) - The position embedding code. If S is greater than
+          1024 and the mask of the lower triangle is used, enter only the inverse 1024 lines of the lower triangle for
+          memory optimization.
+          Input tensor of shape :math: `(B, N1, S1, S2)`, `(1, N1, S1, S2)`, `(B, N1, 1024, S2)`, `(1, N1, 1024, S2)`
+          or (1024, 1024).
+        - **drop_mask** (Union[Tensor[uint8], None]) - The dropout mask tensor.
+          Input tensor of shape :math:`(B, N1, S1, S2 // 8) or None`.
+        - **padding_mask** (None) - Reserved parameter. Not implemented yet.
+        - **attn_mask** (Union[Tensor[uint8], None]) - The attention mask tensor. For each element, 0 indicates
+          retention and 1 indicates discard. Input tensor of shape :math:`(B, N1, S1, S2)`, `(B, 1, S1, S2)`, `(S1, S2)`
+          or (2048, 2048).
+        - **prefix** (Union[List[int64], Tuple[int64], None]) - N value of each Batch in the prefix sparse calculation
+          scenario. Input tensor of shape :math:`(B,)`.
+        - **actual_seq_qlen** (Union[List[int64], Tuple[int64], None]) - Size of query corresponding to each batch, array
+          with increasing values and the last value equal to T1.
+        - **actual_seq_kvlen** (Union[List[int64], Tuple[int64], None]) - Size of key and value corresponding to each
+          batch, array with increasing values and the last value equal to T2.
+
+    Outputs:
+        - **softmax_max** (Tensor[float32]) - (B, N1, S1, 8) when input_layout is not `TND` else (T1, N1, D)
+        - **softmax_sum** (Tensor[float32]) - (B, N1, S1, 8) when input_layout is not `TND` else (T1, N1, D)
+        - **softmax_out** (Tensor[float16, bfloat16]) - Useless output, ignore it. Output tensor of shape : `()`
+        - **attention_out** (Tensor[float16, bfloat16]) - The output of attention, its shape, and data type
+          are the same as the query.
+
+    Supported Platforms:
+        ``Ascend``

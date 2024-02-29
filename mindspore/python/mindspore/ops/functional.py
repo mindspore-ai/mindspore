@@ -36,7 +36,7 @@ from mindspore.ops import auto_generate
 from mindspore.ops_generate.gen_ops_inner_prim import DtypeToEnum
 from mindspore.ops.operations.manually_defined.ops_def import scalar_div, scalar_mod, scalar_add, scalar_mul,\
     scalar_sub, scalar_gt, scalar_ge, scalar_le, scalar_lt, scalar_eq, scalar_floordiv, scalar_log, scalar_pow,\
-    scalar_uadd, scalar_usub
+    scalar_uadd, scalar_usub, flash_attention_score
 
 typeof = Primitive('typeof')
 hastype = Primitive('hastype')
