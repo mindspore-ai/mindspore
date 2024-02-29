@@ -87,8 +87,8 @@ class COMMON_EXPORT Emitter {
   NodePtr Transpose(const NodePtr &node, const ShapeVector &perm) { return Transpose(node, Value(perm)); }
   NodePtr Tile(const NodePtr &node, const NodePtr &dims);
   NodePtr Tile(const NodePtr &node, const ShapeVector &dims) { return Tile(node, Value(dims)); }
-  virtual NodePtr Concat(const NodePtr &input, int64_t axis) { return Emit(kConcatOpName, {input, Value(axis)}); }
-  virtual NodePtr Concat(const NodePtrList &inputs, int64_t axis) {
+  NodePtr Concat(const NodePtr &input, int64_t axis) { return Emit(kConcatOpName, {input, Value(axis)}); }
+  NodePtr Concat(const NodePtrList &inputs, int64_t axis) {
     return Emit(kConcatOpName, {MakeTuple(inputs), Value(axis)});
   }
   NodePtr Add(const NodePtr &lhs, const NodePtr &rhs) { return UnifyDtypeAndEmit(mindspore::kAddOpName, lhs, rhs); }

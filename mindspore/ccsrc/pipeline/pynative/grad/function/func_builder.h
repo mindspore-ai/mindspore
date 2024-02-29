@@ -39,9 +39,6 @@ class FuncBuilder : public BpropBuilder {
   ~FuncBuilder() override = default;
   NodePtr EmitOp(const PrimitivePtr &prim, const NodePtrList &inputs) override;
   NodePtr EmitValue(const ValuePtr &value) override;
-  // Override Concat to flatten tuple input.
-  NodePtr Concat(const NodePtr &inputs, int64_t axis) override;
-  NodePtr Concat(const NodePtrList &inputs, int64_t axis) override;
   // Override Stack to flatten tuple input.
   NodePtr Stack(const NodePtr &x, const ValuePtr &axis) override;
   NodePtr Stack(const NodePtrList &x, int64_t axis) override;
@@ -63,6 +60,7 @@ class FuncBuilder : public BpropBuilder {
 
  private:
   NodePtrList FlattenNode(const NodePtr &input);
+  ValuePtr FillZeros(const ValuePtr &value, const abstract::AbstractBasePtr &abs);
   std::string device_target_;
   bprop_pass::FuncPassForwardPtr pass_forward_;
 };

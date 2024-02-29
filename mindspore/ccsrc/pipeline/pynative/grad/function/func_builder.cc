@@ -94,6 +94,16 @@ void SetDependValue(const PrimitivePtr &primitive, const NodePtrList &inputs) {
     abstract->set_value(value);
   }
 }
+
+std::vector<int64_t> BuildShape(const abstract::AbstractBasePtr &abs) {
+  auto base_shape = abs->BuildShape();
+  if (base_shape->isa<abstract::NoShape>()) {
+    return {};
+  }
+  auto shape = base_shape->cast<abstract::ShapePtr>();
+  MS_EXCEPTION_IF_NULL(shape);
+  return shape->shape();
+}
 }  // namespace
 
 NodePtr FuncBuilder::EmitOp(const PrimitivePtr &prim, const NodePtrList &inputs) {
@@ -107,17 +117,8 @@ NodePtr FuncBuilder::EmitOp(const PrimitivePtr &prim, const NodePtrList &inputs)
   input_mask.reserve(real_inputs.size());
   SetDependValue(prim, inputs);
   for (const auto &input : real_inputs) {
-    auto value = input->Value();
     auto abs = input->abstract();
-    if (value->isa<None>()) {
-      if (!abs->isa<abstract::AbstractNone>()) {
-        auto out_tensor = std::make_shared<tensor::Tensor>(input->dtype()->type_id(), input->shape());
-        auto zero_node = ZerosLike(NewFuncNode(out_tensor, abs, input->input_type()));
-        value = zero_node->Value();
-      } else {
-        MS_LOG(DEBUG) << "None value abstract got None abstract!";
-      }
-    }
+    auto value = FillZeros(input->Value(), abs);
     (void)op_inputs.emplace_back(value);
     (void)input_abs.emplace_back(abs);
     (void)input_mask.emplace_back(input->input_type());
@@ -146,19 +147,6 @@ NodePtr FuncBuilder::EmitValue(const ValuePtr &value) {
   // from FuncBuilder::abstract()
   auto node = NewFuncNode(value, nullptr, InputType::kConstant);
   return node;
-}
-
-NodePtr FuncBuilder::Concat(const NodePtr &inputs, int64_t axis) {
-  NodePtrList node_inputs = FlattenNode(inputs);
-  return Concat(node_inputs, axis);
-}
-
-NodePtr FuncBuilder::Concat(const NodePtrList &inputs, int64_t axis) {
-  std::vector<int64_t> dyn_size{static_cast<int64_t>(inputs.size()), -1};
-  expander::DAttr attrs{std::make_pair(kAttrDynInputSizes, MakeValue(dyn_size))};
-  NodePtrList real_input(inputs);
-  (void)real_input.emplace_back(Value(axis));
-  return Emit(kConcatOpName, real_input, attrs);
 }
 
 NodePtr FuncBuilder::Stack(const NodePtr &x, const ValuePtr &axis_value) {
@@ -264,5 +252,36 @@ NodePtrList FuncBuilder::FlattenNode(const NodePtr &input) {
     (void)flattenNodes.emplace_back(NewFuncNode(value, value_abs->elements()[i], input->input_type()));
   }
   return flattenNodes;
+}
+
+ValuePtr FuncBuilder::FillZeros(const ValuePtr &value, const abstract::AbstractBasePtr &abs) {
+  auto convert_value = value;
+  if (value->isa<None>()) {
+    if (abs->isa<abstract::AbstractTensor>()) {
+      auto tensor_dtype = abs->BuildType()->cast<TensorTypePtr>();
+      MS_EXCEPTION_IF_NULL(tensor_dtype);
+      auto dtype = tensor_dtype->element();
+      auto shape = BuildShape(abs);
+      auto out_tensor = std::make_shared<tensor::Tensor>(dtype->type_id(), shape);
+      auto zero_node = ZerosLike(NewFuncNode(out_tensor, abs, InputType::kOpOutput));
+      convert_value = zero_node->Value();
+    } else {
+      MS_LOG(DEBUG) << "None value abstract got None abstract!";
+    }
+  } else if (value->isa<ValueSequence>()) {
+    auto seq = value->cast<ValueSequencePtr>();
+    auto abs_list = abs->cast<abstract::AbstractSequencePtr>();
+    MS_EXCEPTION_IF_NULL(abs_list);
+    std::vector<ValuePtr> value_list;
+    value_list.reserve(seq->value().size());
+    for (size_t i = 0; i < seq->value().size(); ++i) {
+      const auto &val = seq->value()[i];
+      const auto &temp_abs = abs_list->elements()[i];
+      auto convert = FillZeros(val, temp_abs);
+      (void)value_list.emplace_back(convert);
+    }
+    convert_value = std::make_shared<ValueTuple>(value_list);
+  }
+  return convert_value;
 }
 }  // namespace mindspore::pynative::autograd
