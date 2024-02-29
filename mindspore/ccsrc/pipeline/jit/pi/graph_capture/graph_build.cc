@@ -2446,8 +2446,13 @@ bool GraphBuilder::HandleCallParameters(const py::object &func_info, CallNode *c
 static void SetGradFuncInfo(mindspore::pijit::CallNode *call_node);
 
 StopTraceReason MindGraphBuilder::TraceRun(const std::vector<py::object> &args) {
+  size_t i = 0;
+  if (!args.empty() && !GraphUtils::IsTensor(args[0]) && py::hasattr(args[0], common::SafeCStr(co_name_))) {
+    i = 1;  // skip self
+  }
+
   // Add function graph inputs.
-  for (size_t i = 0; i < args.size(); ++i) {
+  for (; i < args.size(); ++i) {
     MS_LOG(INFO) << "try add input: " << py::str(args[i]);
     FGBuilder()->AddInput(args[i]);
     MS_LOG(INFO) << "add input suc";

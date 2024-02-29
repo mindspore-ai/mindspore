@@ -283,6 +283,7 @@ class MindGraphBuilder : public GraphBuilder {
     fg_builder_ = std::make_shared<FuncGraphBuilder>(true);
     fg_builder_->SetGraphName(py::cast<std::string>(f->f_code->co_name) + "_" +
                               std::to_string(f->f_code->co_firstlineno));
+    co_name_ = py::cast<std::string>(f->f_code->co_name);
   }
   MindGraphBuilder(GraphBuilder *r, GraphBuilder *p, PyCodeObject *co, PyObject *globals)
       : GraphBuilder(r, p, co, globals) {
@@ -321,6 +322,7 @@ class MindGraphBuilder : public GraphBuilder {
 
  private:
   mindspore::FuncGraphBuilderPtr fg_builder_{nullptr};
+  std::string co_name_;
   AObject *HandleMultiOp(const Instr &instr, const std::vector<ValueNode *> &p, bool is_compare);
   AObject *HandleBuildOp(const Instr &instr, const std::vector<ValueNode *> &p);
 };
