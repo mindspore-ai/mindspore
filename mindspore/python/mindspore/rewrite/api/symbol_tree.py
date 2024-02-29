@@ -97,6 +97,9 @@ class SymbolTree:
         - Parsing closure syntax is not currently supported, that is, the definition of out-of-class
           functions need to be placed at the outermost layer.
         - Parsing lambda expression syntax is not currently supported.
+        - Parsing global variables is not currently supported, that is, global variables need to be converted to
+          class variables or local variables before they can be used.
+        - Parsing methods in the parent classes is not currently supported.
 
         For statements that do not support parsing, rewrite will generate nodes of type `NodeType.Python`
         for corresponding statements to ensure that the network after rewrite can run normally.
