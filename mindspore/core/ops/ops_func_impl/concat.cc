@@ -128,8 +128,8 @@ inline ShapeVector CheckAndCalOutputShapeInTupleCase(const ShapeArray &shapes, s
     axis = NormalizeAxis(axis_temp, output_shape.size());
     if (MS_UNLIKELY(diff_idx != kUnknownDiffIdx && axis != LongToSize(diff_idx))) {
       MS_EXCEPTION(ValueError) << "For primitive[" << primitive->name()
-                               << "], the only different axis should be same with the axis, but got different axis "
-                               << LongToSize(diff_idx) << " when axis is " << axis << "(all input shapes are " << shapes
+                               << "], shapes of tensors must match except in given concat axis " << axis
+                               << ", but got mismatch in " << LongToSize(diff_idx) << "(all input shapes are " << shapes
                                << ")!";
     }
   }
