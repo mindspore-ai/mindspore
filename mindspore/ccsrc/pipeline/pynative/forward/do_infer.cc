@@ -394,7 +394,7 @@ void InferOperation::SetNodeAbsCacheByValue(const FrontendOpRunInfoPtr &op_run_i
   }
   // If Just call run op and have no cell or function running, node_abs_cache_ will not be clear.
   // So, set a threshold for clear it.
-  if (only_single_op_run_ && node_abs_cache_.size() > kCacheThreshold) {
+  if (node_abs_cache_.size() > kCacheThreshold) {
     std::unique_lock lock(abs_mutex_);
     node_abs_cache_.clear();
   }

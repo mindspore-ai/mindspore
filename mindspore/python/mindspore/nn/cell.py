@@ -641,51 +641,39 @@ class Cell(Cell_):
         return cast_inputs
 
     def _init_check(self):
-        if self._init_flag:
-            return
         for param in self.get_parameters(expand=False):
             if param.has_init:
                 param.init_data()
-        self._init_flag = True
 
-    def __call__(self, *args, **kwargs):
-        if self.__class__.construct is Cell.construct:
-            raise AttributeError("For 'Cell', the method 'construct' is not defined.")
-
-        if kwargs:
-            bound_arguments = inspect.signature(self.construct).bind(*args, **kwargs)
-            bound_arguments.apply_defaults()
-            args = bound_arguments.args
-            kwargs = bound_arguments.kwargs
-
-        if hasattr(self, '_is_check_and_refresh') and not self._is_check_and_refresh:
+    def _self_check(self):
+        if not self._is_check_and_refresh:
             self.check_names_and_refresh_name()
             self._is_check_and_refresh = True
 
+    def __call__(self, *args, **kwargs):
         # Run in Graph mode.
         if os.getenv("MS_JIT") != '0' and context._get_mode() == context.GRAPH_MODE:
+            if kwargs:
+                bound_arguments = inspect.signature(self.construct).bind(*args, **kwargs)
+                bound_arguments.apply_defaults()
+                args = bound_arguments.args
+                kwargs = bound_arguments.kwargs
             self._check_construct_args(*args)
             if self._hook_fn_registered():
                 logger.warning(f"For 'Cell', it's not support hook function in graph mode. If you want to use hook "
                                f"function, please use context.set_context to set pynative mode.")
+            self._self_check()
             out = self.compile_and_run(*args, **kwargs)
             return out
 
         # Run in PyNative mode.
-        if _pynative_executor.is_first_cell():
-            _pynative_executor._optimizer = getattr(self, "optimizer", None)
-            _pynative_executor._top_cell = self
-            # There many Casts in parameter_broadcast. Enable build faster.
-            self._do_parameter_broadcast()
+        self._self_check()
+        if self._init_flag:
+            self._init_check()
+            self._init_flag = True
 
-        self._init_check()
-        self._check_cell_flags_in_pynative()
-
-        if self.requires_grad and _pynative_executor.enable_grad():
+        if self.requires_grad:
             _pynative_executor.set_grad_flag(True)
-
-        if self._dynamic_shape_inputs is not None:
-            self._check_compile_dynamic_shape(self._dynamic_shape_inputs, args)
 
         try:
             _pynative_executor.new_graph(self, *args, **kwargs)
@@ -695,15 +683,7 @@ class Cell(Cell_):
             _pynative_executor.clear_res()
             raise err
 
-        if isinstance(output, Parameter):
-            output = output.data
         return output
-
-    def _check_cell_flags_in_pynative(self):
-        """Check the flags added to cell in pynative mode"""
-        if hasattr(self, "_func_graph_flags") and self._func_graph_flags.get("output_no_recompute"):
-            raise TypeError("Recompute is not supported in PyNative mode currently, you can use "
-                            "'context.set_context(mode=context.GRAPH_MODE)' or @jit to set graph mode.")
 
     def _add_attr(self, name, value):
         if name and name[:2] != '__' and name not in Cell.IGNORE_LIST:
@@ -1147,7 +1127,7 @@ class Cell(Cell_):
         Returns:
             Tensor, returns the computed result.
         """
-        return None
+        raise AttributeError("For 'Cell', the method 'construct' is not defined.")
 
     def remove_redundant_parameters(self):
         """
@@ -1682,6 +1662,9 @@ class Cell(Cell_):
         if not hasattr(self, "_func_graph_flags"):
             self._func_graph_flags = {}
         self._func_graph_flags.update({**flags})
+        if context._get_mode() == context.PYNATIVE_MODE and self._func_graph_flags.get("output_no_recompute"):
+            raise TypeError("Recompute is not supported in PyNative mode currently, you can use "
+                            "'context.set_context(mode=context.GRAPH_MODE)' or @jit to set graph mode.")
         self.__dict__.update({**flags})
         self._add_mixed_precision_flag(**flags)
         return self

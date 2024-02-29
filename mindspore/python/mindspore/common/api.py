@@ -1183,7 +1183,6 @@ class _PyNativeExecutor:
         self._executor = PyNativeExecutor_.get_instance()
         self._executor.set_py_exe_path(sys.executable)
         self._executor.set_kernel_build_server_dir(os.path.split(kernel_build_server.__file__)[0] + os.sep)
-        self._top_cell = None
 
     def __call__(self):
         """
@@ -1427,15 +1426,6 @@ class _PyNativeExecutor:
             None.
         """
         self._executor.set_hook_changed(cell)
-
-    def get_top_cell(self):
-        """
-        Get the top cell object.
-
-        Return:
-            The top cell object.
-        """
-        return self._top_cell
 
     def constant_folding(self, *args):
         """

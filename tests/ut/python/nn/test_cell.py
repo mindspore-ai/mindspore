@@ -200,7 +200,8 @@ def test_exceptions():
         ModError2(t)
 
     m = nn.Cell()
-    assert m.construct() is None
+    with pytest.raises(AttributeError):
+        m.construct()
 
 
 def test_cell_copy():
