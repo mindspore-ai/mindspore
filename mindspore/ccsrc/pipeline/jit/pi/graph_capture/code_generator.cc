@@ -903,7 +903,7 @@ void CodeBreakGenerator::BreakAtBlock(CodeGenerator *code_gen, int untracked_bci
    *         y = 2
    *     return y
    */
-  interpret_.outputs.resize(alive_locals_.size(), &ValueNode::UnboundLocal);
+  interpret_.outputs.resize(alive_locals_.size(), &ValueNode::kUnboundLocal);
   untracked_stack_effect = 0;
 
   py::object code = MakeUntrackedCode(untracked_bci, untracked_stack_effect);
@@ -1110,7 +1110,7 @@ std::vector<ValueNode *> CollectInterpretOutputs(const FrameStates &last_frame, 
   // collect alive locals
   for (size_t i = 0; i < alive.size(); ++i) {
     // exclude undefined locals
-    if (alive.Get(i) && last_frame.Local(i) != &ValueNode::UnboundLocal) {
+    if (alive.Get(i) && last_frame.Local(i) != &ValueNode::kUnboundLocal) {
       alive_locals->push_back(i);
       outputs.push_back(last_frame.Local(i));
     }
@@ -1156,11 +1156,11 @@ void CodeBreakGenerator::BuildGraphParameters(const std::unordered_map<ValueNode
   ValueNode *vargs = nullptr;
   ValueNode *kwargs = nullptr;
   int arg_index = co_->co_argcount + co_->co_kwonlyargcount;
-  if ((co_->co_flags & CO_VARARGS) && interpret_.inputs[arg_index] != &ValueNode::UnboundLocal) {
+  if ((co_->co_flags & CO_VARARGS) && interpret_.inputs[arg_index] != &ValueNode::kUnboundLocal) {
     vargs = interpret_.inputs[arg_index];
   }
   arg_index += (co_->co_flags & CO_VARARGS) != 0;
-  if ((co_->co_flags & CO_VARKEYWORDS) && interpret_.inputs[arg_index] != &ValueNode::UnboundLocal) {
+  if ((co_->co_flags & CO_VARKEYWORDS) && interpret_.inputs[arg_index] != &ValueNode::kUnboundLocal) {
     kwargs = interpret_.inputs[arg_index];
   }
 

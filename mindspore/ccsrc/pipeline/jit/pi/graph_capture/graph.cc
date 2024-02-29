@@ -233,7 +233,7 @@ TracePtr GetTrace(ValueNode *node, bool strict, bool print, int depth, int max_d
     case AbstractNode::Type::CellVar: /* fall-through */
     case AbstractNode::Type::FreeVar:
       return std::make_shared<RootTrace>(obj, mindspore::pijit::TraceType::Param, oparg, name);
-    case AbstractNode::Type::Unbound:
+    case AbstractNode::Type::kUnbound:
       break;
     default:
       break;
@@ -298,8 +298,8 @@ static std::string TraceInferFailed(ValueNode *node) {
       s << "Closure " << node->GetOparg();
       break;
     }
-    case AbstractNode::Unbound: {
-      s << "(UnboundLocal)";
+    case AbstractNode::kUnbound: {
+      s << "(kUnboundLocal)";
       break;
     }
     default: {
@@ -432,7 +432,7 @@ std::string FrameStates::ToString() const {
   std::stringstream s;
   s << "locals:\n";
   for (size_t i = 0; i < locals.size(); ++i) {
-    if (locals[i] != &ValueNode::UnboundLocal) {
+    if (locals[i] != &ValueNode::kUnboundLocal) {
       s << i << ": " << locals[i]->ToString() << "\n";
     }
   }

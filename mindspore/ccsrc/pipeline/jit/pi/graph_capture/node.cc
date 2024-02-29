@@ -20,7 +20,9 @@
 
 namespace mindspore {
 namespace pijit {
-ValueNode ValueNode::UnboundLocal(ValueNode::Unbound, nullptr, 0, 0);
+
+static AbstractObjectBase kNullObject(AObject::kTypeAnyValue);
+ValueNode ValueNode::kUnboundLocal(ValueNode::kUnbound, &kNullObject, 0, 0);
 
 // these value node not in locals
 bool IsNonLocalValue(ValueNode *i) {
@@ -69,8 +71,8 @@ std::string CallNode::ToString() const {
 }
 
 std::string ValueNode::ToString() const {
-  if (this == &ValueNode::UnboundLocal) {
-    return "(UnboundLocal)";
+  if (this == &ValueNode::kUnboundLocal) {
+    return "(kUnboundLocal)";
   }
   std::stringstream s;
   s << this->InstrNode::ToString();

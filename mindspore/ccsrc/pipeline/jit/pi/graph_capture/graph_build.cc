@@ -471,7 +471,7 @@ bool GraphBuilder::DoLocalAccess(const Instr &instr) {
       setLocal(instr.arg(), pop());
       break;
     case DELETE_FAST:
-      setLocal(instr.arg(), &ValueNode::UnboundLocal);
+      setLocal(instr.arg(), &ValueNode::kUnboundLocal);
       break;
     default:
       return false;
@@ -503,7 +503,7 @@ bool GraphBuilder::DoCellAccess(const Instr &instr) {
       break;
     case DELETE_DEREF:
       node = NewValueNode(nullptr, instr, {});
-      frame_.Closure(oparg)->SetValue(&ValueNode::UnboundLocal);
+      frame_.Closure(oparg)->SetValue(&ValueNode::kUnboundLocal);
       frame_.Closure(oparg)->AddCellOper(node);
       current_block_->SetTrackResult(Block::kHasClosureSideEffect);
       break;
@@ -1185,7 +1185,7 @@ GraphBuilder::GraphBuilder(const PyFrameObject *f)
       n->SetFromParam(co->co_cell2arg[i]);
     }
     if (cell_contents == nullptr) {
-      n->SetValue(&ValueNode::UnboundLocal);
+      n->SetValue(&ValueNode::kUnboundLocal);
     } else {
       ValueNode *param = NewValueNode(AObject::Convert(cell_contents), LOAD_DEREF, i);
       param->SetGraph(graph_);
@@ -2093,7 +2093,7 @@ bool GraphBuilder::CheckAndSetDefaultParams(const py::object &func, FrameStates 
 
   int defs_off = defs ? co->co_argcount - PyTuple_GET_SIZE(defs) : INT_MAX;
   for (int i = position_argc; i < argc; ++i) {
-    if (frame->Local(i) != &ValueNode::UnboundLocal) {
+    if (frame->Local(i) != &ValueNode::kUnboundLocal) {
       continue;
     }
     PyObject *val;
@@ -2171,7 +2171,7 @@ bool GraphBuilder::HandlePositionParams(const py::object &func, std::vector<Valu
     return false;
   }
 
-  if (has_kwvarg && frame->Local(kwvarg_loc) == &ValueNode::UnboundLocal) {
+  if (has_kwvarg && frame->Local(kwvarg_loc) == &ValueNode::kUnboundLocal) {
     auto vo = AObject::Convert(py::dict());
     auto m = NewValueNode(vo, BUILD_MAP, 0, {});
     call_node->AddParam(m);
@@ -2191,7 +2191,7 @@ bool GraphBuilder::HandlePositionParams(const py::object &func, std::vector<Valu
 
   pargc = params->size();
   for (int i = pargc - 1; i >= 0; --i) {
-    if (frame->Local(i) != &ValueNode::UnboundLocal) {
+    if (frame->Local(i) != &ValueNode::kUnboundLocal) {
       MS_LOG(DEBUG) << "duplicate key-word parameter error";
       return false;
     }
@@ -2231,7 +2231,7 @@ bool GraphBuilder::HandleCallParameters(const py::object &func_info, CallNode *c
       ValueNode *arg_node = frame->Local(arg_index);
       /**
        * here not delete the local, continue with local same as closure
-       * frame->SetLocal(arg_index, &ValueNode::UnboundLocal);
+       * frame->SetLocal(arg_index, &ValueNode::kUnboundLocal);
        */
 
       PyObject *cell = cell_node->GetVobj()->GetPyObject().ptr();

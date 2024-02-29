@@ -111,7 +111,7 @@ std::vector<ValueNode *> Liveness::CollectAliveNode(const Graph *graph, int bci,
   // collect alive locals
   for (size_t i = 0; i < alive.size(); ++i) {
     // exclude undefined locals
-    if (alive.Get(i) && last_frame.Local(i) != &ValueNode::UnboundLocal) {
+    if (alive.Get(i) && last_frame.Local(i) != &ValueNode::kUnboundLocal) {
       if (ids != nullptr) {
         ids->push_back(i);
       }
