@@ -16,7 +16,6 @@ import os
 import sys
 import tempfile
 import shutil
-import glob
 import numpy as np
 import pytest
 import time
@@ -33,11 +32,9 @@ from mindspore.nn import SoftmaxCrossEntropyWithLogits
 from mindspore.nn import Momentum
 from mindspore.nn import TrainOneStepCell
 from mindspore.nn import WithLossCell
-from dump_test_utils import generate_dump_json, generate_dump_json_with_overflow, \
-    generate_statistic_dump_json, check_statistic_dump, check_data_dump
+from dump_test_utils import generate_dump_json, generate_dump_json_with_overflow, generate_statistic_dump_json, \
+    check_ge_dump_structure, check_saved_data, check_iteration, check_overflow_file
 from tests.security_utils import security_off_wrap
-
-
 
 
 class Net(nn.Cell):
@@ -60,72 +57,6 @@ class NetMul(nn.Cell):
 
 x = np.array([[1, 2, 3], [4, 5, 6]]).astype(np.float32)
 y = np.array([[7, 8, 9], [10, 11, 12]]).astype(np.float32)
-
-
-def check_saved_data(iteration_path, saved_data):
-    if not saved_data:
-        return
-    if saved_data in ('statistic', 'full'):
-        check_statistic_dump(iteration_path)
-    if saved_data in ('tensor', 'full'):
-        check_data_dump(iteration_path, True)
-    if saved_data == 'statistic':
-        # assert only file is statistic.csv, tensor data is not saved
-        assert len(os.listdir(iteration_path)) == 1
-    elif saved_data == 'tensor':
-        # assert only tensor data is saved, not statistics
-        stat_path = os.path.join(iteration_path, 'statistic.csv')
-        assert not os.path.isfile(stat_path)
-
-
-def check_overflow_file(iteration_path, overflow_num, need_check):
-    if not need_check:
-        return overflow_num
-    overflow_files = glob.glob(os.path.join(iteration_path, "Opdebug.Node_OpDebug.*.*.*"))
-    overflow_num += len(overflow_files)
-    return overflow_num
-
-
-def check_iteration(iteration_id, num_iteration):
-    if iteration_id.isdigit():
-        assert int(iteration_id) < num_iteration
-
-
-def check_ge_dump_structure(dump_path, num_iteration, device_num=1, check_overflow=False, saved_data=None):
-    overflow_num = 0
-    for _ in range(3):
-        if not os.path.exists(dump_path):
-            time.sleep(2)
-    sub_paths = os.listdir(dump_path)
-    for sub_path in sub_paths:
-        # on GE, the whole dump directory of one training is saved within a time path, like '20230822120819'
-        if not (sub_path.isdigit() and len(sub_path) == 14):
-            continue
-        time_path = os.path.join(dump_path, sub_path)
-        assert os.path.isdir(time_path)
-        device_paths = os.listdir(time_path)
-        assert len(device_paths) == device_num
-        for device_path in device_paths:
-            assert device_path.isdigit()
-            abs_device_path = os.path.join(time_path, device_path)
-            assert os.path.isdir(abs_device_path)
-            model_names = os.listdir(abs_device_path)
-            for model_name in model_names:
-                model_path = os.path.join(abs_device_path, model_name)
-                assert os.path.isdir(model_path)
-                model_ids = os.listdir(model_path)
-                for model_id in model_ids:
-                    model_id_path = os.path.join(model_path, model_id)
-                    assert os.path.isdir(model_id_path)
-                    iteration_ids = os.listdir(model_id_path)
-                    for iteration_id in iteration_ids:
-                        check_iteration(iteration_id, num_iteration)
-                        iteration_path = os.path.join(model_id_path, iteration_id)
-                        assert os.path.isdir(iteration_path)
-                        check_saved_data(iteration_path, saved_data)
-                        overflow_num = check_overflow_file(iteration_path, overflow_num, check_overflow)
-    if check_overflow:
-        assert overflow_num
 
 
 def check_ge_dump_structure_acl(dump_path, num_iteration, device_num=1, check_overflow=False, saved_data=None):
@@ -471,6 +402,7 @@ def test_ge_full_dump():
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     run_saved_data_dump_test('test_ge_dump', 'full')
+
 
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
