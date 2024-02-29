@@ -71,44 +71,6 @@ class InternalEqual : public ElewiseBinary {
   InternalEqual() : ElewiseBinary("Equal") {}
   ~InternalEqual() = default;
 
-  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
-    auto ret = KernelMod::Resize(inputs, outputs);
-    if (ret != 0) {
-      MS_LOG(ERROR) << "op " << op_type_ << " invoke resize failed";
-      return KRET_RESIZE_FAILED;
-    }
-    if (impl_ == nullptr) {
-      ret = Build(inputs, outputs);
-      if (ret != 0) {
-        MS_LOG(ERROR) << "op " << op_type_ << " build kernel failed";
-        return KRET_RESIZE_FAILED;
-      }
-    }
-    for (auto iter = inputsIdxMap_.begin(); iter != inputsIdxMap_.end(); iter++) {
-      InternalKernelUtils::ToInternalTensor(inputs_[iter->second], inputs[iter->first]);
-    }
-    impl_->SetInputs(inputs_);
-
-    for (auto iter = outputsIdxMap_.begin(); iter != outputsIdxMap_.end(); iter++) {
-      InternalKernelUtils::ToInternalTensor(outputs_[iter->second], outputs[iter->first]);
-      if(outputs_[iter->second]->desc.dtype == internal::TensorDType::TENSOR_DTYPE_BOOL){
-        outputs_[iter->second]->desc.dtype = internal::TensorDType::TENSOR_DTYPE_INT8;
-      } 
-    }
-    impl_->SetOutputs(outputs_);
-
-    auto key = GenTilingCacheKey(inputs, outputs);
-    SetTilingInfo(key);
-    // update workspace_size list
-    auto workspace_size_list = impl_->GetWorkSpaceSize();
-    workspace_size_list_.resize(workspace_size_list.size());
-    for (size_t i = 0; i < workspace_size_list.size(); ++i) {
-      workspace_size_list_[i] = static_cast<size_t>(workspace_size_list[i]);
-    }
-
-    return 0;
-  }
-
  protected:
   void SetComputeType(internal::OpParamPtr param_ptr) override {
     param_ptr->opId = internal::OpId::Equal;
@@ -122,44 +84,6 @@ class InternalLess : public ElewiseBinary {
  public:
   InternalLess() : ElewiseBinary("Less") {}
   ~InternalLess() = default;
-
-   int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
-    auto ret = KernelMod::Resize(inputs, outputs);
-    if (ret != 0) {
-      MS_LOG(ERROR) << "op " << op_type_ << " invoke resize failed";
-      return KRET_RESIZE_FAILED;
-    }
-    if (impl_ == nullptr) {
-      ret = Build(inputs, outputs);
-      if (ret != 0) {
-        MS_LOG(ERROR) << "op " << op_type_ << " build kernel failed";
-        return KRET_RESIZE_FAILED;
-      }
-    }
-    for (auto iter = inputsIdxMap_.begin(); iter != inputsIdxMap_.end(); iter++) {
-      InternalKernelUtils::ToInternalTensor(inputs_[iter->second], inputs[iter->first]);
-    }
-    impl_->SetInputs(inputs_);
-
-    for (auto iter = outputsIdxMap_.begin(); iter != outputsIdxMap_.end(); iter++) {
-      InternalKernelUtils::ToInternalTensor(outputs_[iter->second], outputs[iter->first]);
-      if(outputs_[iter->second]->desc.dtype == internal::TensorDType::TENSOR_DTYPE_BOOL){
-        outputs_[iter->second]->desc.dtype = internal::TensorDType::TENSOR_DTYPE_INT8;
-      } 
-    }
-    impl_->SetOutputs(outputs_);
-
-    auto key = GenTilingCacheKey(inputs, outputs);
-    SetTilingInfo(key);
-    // update workspace_size list
-    auto workspace_size_list = impl_->GetWorkSpaceSize();
-    workspace_size_list_.resize(workspace_size_list.size());
-    for (size_t i = 0; i < workspace_size_list.size(); ++i) {
-      workspace_size_list_[i] = static_cast<size_t>(workspace_size_list[i]);
-    }
-
-    return 0;
-  }
 
  protected:
   void SetComputeType(internal::OpParamPtr param_ptr) override {
@@ -197,7 +121,6 @@ class InternalRealDiv : public ElewiseBinary {
     param_ptr->specificParam = op_param;
   }
 };
-
 
 MS_INTERNAL_KERNEL_FACTORY_REG(Add, InternalAdd);
 MS_INTERNAL_KERNEL_FACTORY_REG(Sub, InternalSub);
