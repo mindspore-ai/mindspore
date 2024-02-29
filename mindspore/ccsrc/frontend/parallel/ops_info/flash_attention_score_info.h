@@ -52,7 +52,7 @@ class FlashAttentionScoreInfo : public OperatorInfo {
   Status InferMirrorOps() override;
 
  private:
-  std::vector<Operator> GetDropoutGenMaskReplaceOp(const CNodePtr &cnode);
+  void UpdateDropoutGenMaskSliceShapeAndSeed(const CNodePtr &reshape_cnode);
   void InitIsInputPassed();
   void InitInputsTensorMap();
   void InitSplittableInputs();
@@ -67,7 +67,10 @@ class FlashAttentionScoreInfo : public OperatorInfo {
   int64_t dev_matrix_batch_dim_;
   int64_t dev_matrix_n1_dim_;
   int64_t dev_matrix_s1_dim_;
-  bool real_shift_have_s1_dim_ = false;  // true if pass real_shift and have s1 dim.
+  bool real_shift_have_s1_dim_ = false;     // true if real_shift and have s1 dim.
+  bool real_shift_have_batch_dim_ = false;  // true if real_shift have batch dim
+  bool attn_mask_have_batch_dim_ = false;   // true if attn_mask have batch dim.
+  bool attn_mask_have_n1_dim_ = false;      // true if attn_mask have n1 dim.
   std::string input_layout_;
   int64_t sparse_mode_;
   bool kv_split_ = false;

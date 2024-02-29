@@ -193,7 +193,7 @@ def test_flash_attention_dp(keep_prob, input_layout, with_real_shift):
     compile_net(net, query, key, value, real_shift, attn_mask)
 
 
-@pytest.mark.parametrize('keep_prob', [1.0])
+@pytest.mark.parametrize('keep_prob', [0.9, 1.0])
 @pytest.mark.parametrize('input_layout', ["BSH", "BNSD"])
 @pytest.mark.parametrize('use_mqa', [True, False])
 @pytest.mark.parametrize('with_real_shift', [True, False])

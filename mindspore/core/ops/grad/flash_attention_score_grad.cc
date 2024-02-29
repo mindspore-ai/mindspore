@@ -67,6 +67,7 @@ constexpr size_t kFlashAttentionScoreGradSoftmaxLastDim = 8;
 constexpr size_t kInputFlashAttentionScoreGradQueryBSHRank = 3;
 constexpr size_t kInputFlashAttentionScoreGradQueryBNSDRank = 4;
 constexpr size_t kInputFlashAttentionScoreGradAttnMaskCompressionDim = 2048;
+constexpr size_t kPseShiftCompressionDim = 1024;
 constexpr char kInputFlashAttentionScoreGradLayoutBSH[] = "BSH";
 constexpr char kInputFlashAttentionScoreGradLayoutBNSD[] = "BNSD";
 
@@ -203,10 +204,12 @@ abstract::TupleShapePtr FlashAttentionScoreGradInferShape(const PrimitivePtr &pr
   CheckFlashAttentionScoreGradInputShape(input_args[kFlashAttentionScoreGradInputDyIndex], query_shape, op_name, "dy");
   CheckFlashAttentionScoreGradInputShape(input_args[kFlashAttentionScoreGradInputAttentionInIndex], query_shape,
                                          op_name, "attention_in");
-  CheckFlashAttentionScoreGradInputShape(
-    input_args[kFlashAttentionScoreGradInputPseShiftIndex],
-    {{batch_size, q_head_num, q_seq_len, kv_seq_len}, {batch_size, q_head_num, 1, kv_seq_len}}, op_name, "pse_shift",
-    true);
+  CheckFlashAttentionScoreGradInputShape(input_args[kFlashAttentionScoreGradInputPseShiftIndex],
+                                         {{batch_size, q_head_num, q_seq_len, kv_seq_len},
+                                          {1, q_head_num, q_seq_len, kv_seq_len},
+                                          {batch_size, q_head_num, kPseShiftCompressionDim, kv_seq_len},
+                                          {1, q_head_num, kPseShiftCompressionDim, kv_seq_len}},
+                                         op_name, "pse_shift", true);
   CheckFlashAttentionScoreGradInputShape(input_args[kFlashAttentionScoreGradInputDropMaskIndex],
                                          {batch_size, q_head_num, q_seq_len, kv_seq_len / 8}, op_name, "drop_mask",
                                          true);
