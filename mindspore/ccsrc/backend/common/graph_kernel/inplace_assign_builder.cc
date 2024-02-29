@@ -154,10 +154,14 @@ CNodePtr InplaceAssignBuilder::CreateCleanCompositeNode(const InplaceAssignerInf
 
   // Create broadcast basic op.
   auto dst_shape_vec = GetShape(op_info.op_node);
-  AnfNodePtrList clean_inputs = {NewValueNode(prim::kPrimBroadcastTo), broadcast_input_node};
+  auto device_shape = GetDeviceShape(op_info.op_node);
+  auto shape_node = CreateScalarTensorValueNode<ShapeVector>(
+    {kOpFormat_DEFAULT, {SizeToLong(device_shape.size())}, TypeIdToType(kNumberTypeInt64)}, device_shape,
+    device_shape.size() * sizeof(int64_t));
+
+  AnfNodePtrList clean_inputs = {NewValueNode(prim::kPrimBroadcastTo), broadcast_input_node, shape_node};
   auto broadcast_to_node_inner =
     CreateCNode(clean_inputs, new_sub_graph, {format, dst_shape_vec, GetType(op_info.op_node)});
-  SetNodeAttrSafely("shape", MakeValue(GetDeviceShape(op_info.op_node)), broadcast_to_node_inner);
 
   // Makeup sub-graph.
   new_sub_graph->set_output(broadcast_to_node_inner);

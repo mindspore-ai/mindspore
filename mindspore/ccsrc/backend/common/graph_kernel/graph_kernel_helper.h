@@ -80,10 +80,6 @@ void SetNodeAttrSafely(const std::string &key, const ValuePtr &value, const AnfN
 template <typename T>
 ValueNodePtr CreateScalarTensorValueNode(const DataInfo &info, T value, size_t data_length) {
   // Create tensor value.
-  if (info.shape.size() != 1 && info.shape[0] != 1) {
-    MS_LOG(EXCEPTION) << "Only support create scalar tensor value node!!!";
-  }
-
   if (info.type == nullptr) {
     MS_LOG(EXCEPTION) << "Data type can not be nullptr when creating scalar tensor!";
   }

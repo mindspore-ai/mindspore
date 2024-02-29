@@ -501,7 +501,8 @@ class BroadcastTo(OpInfer):
     """BroadcastTo op."""
 
     def supported_format(self):
-        return ["ND,ND"]
+        io_format = ["ND"] * len(self.input_desc)
+        return [",".join(io_format)]
 
     def infer_shape(self):
         """Broadcast op keeps ND format, so the output shape will not be changed"""
@@ -509,7 +510,7 @@ class BroadcastTo(OpInfer):
 
     def infer_ori_shape(self):
         shape = self.input_desc[0][ORI_SHAPE]
-        broad_shape = self.get_attr(SHAPE)
+        broad_shape = self.get_attr(SHAPE) if SHAPE in self.attr else self.input_desc[1][VALUE]
         if len(broad_shape) < len(shape):
             raise ValueError("The length of attr 'shape' must be >= the length of input shape, but got attr 'shape': "
                              "{}, input shape: {}".format(broad_shape, shape))
@@ -523,6 +524,8 @@ class BroadcastTo(OpInfer):
         self.output_desc[0][ORI_SHAPE] = out_shape
 
     def post_process(self):
+        if not isinstance(self.op_desc.get(ATTR), list):
+            return
         for item in self.op_desc[ATTR]:
             if item[NAME] == SHAPE:
                 item["ori_value"] = item[VALUE]
@@ -760,6 +763,9 @@ def update_akg_info(args, info_path, kernel_name=None):
 
         # Update data format to DefaultFormat
         convert_to_default_format(desc)
+
+        # GE backend must use old CCE
+        desc["backend"] = "GE"
 
         return desc
 

@@ -905,6 +905,11 @@ bool ArithmeticSimplify::Run(const FuncGraphPtr &func_graph) {
   for (auto node : func_graph->GetOrderedCnodes()) {
     if (AnfUtils::IsGraphKernel(node)) {
       auto sub_graph = GetCNodeFuncGraph(node);
+      if (auto type = sub_graph->get_attr("composite_type")) {
+        if (GetValue<std::string>(type) == "inplace_assign_builder") {
+          continue;
+        }
+      }
       auto cnode = node->cast<CNodePtr>();
       AnfNodePtrList inputs = cnode->inputs();
       inner::LiteGraphPtr lg = GkUtils::AnfGraph2LiteGraph(sub_graph);
