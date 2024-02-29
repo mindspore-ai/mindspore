@@ -10,8 +10,8 @@ sqrt:
             x (Tensor): The input tensor with a dtype of number.Number.
         
         Returns:
-            Tensor, has the same shape and dtype as the `x`.
-    
+            Tensor, has the same shape as the `x`.
+
         Raises:
             TypeError: If `x` is not a Tensor.
     

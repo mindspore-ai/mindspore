@@ -17,7 +17,6 @@
 
 namespace mindspore {
 namespace kernel {
-MS_ACLNN_COMMON_KERNEL_FACTORY_REG(Exp, aclnnExp, 2)
 MS_ACLNN_COMMON_KERNEL_FACTORY_REG(GreaterEqual, aclnnGeTensor, 3)
 MS_ACLNN_COMMON_KERNEL_FACTORY_REG(IsFinite, aclnnIsFinite, 2)
 MS_ACLNN_COMMON_KERNEL_FACTORY_REG(LessEqual, aclnnLeTensor, 3)
@@ -31,6 +30,5 @@ MS_ACLNN_COMMON_KERNEL_FACTORY_REG(Neg, aclnnNeg, 2)
 MS_ACLNN_COMMON_KERNEL_FACTORY_REG(NotEqual, aclnnNeTensor, 3)
 MS_ACLNN_COMMON_KERNEL_FACTORY_REG(RealDiv, aclnnDiv, 3)
 MS_ACLNN_COMMON_KERNEL_FACTORY_REG(Rsqrt, aclnnRsqrt, 2)
-MS_ACLNN_COMMON_KERNEL_FACTORY_REG(Sqrt, aclnnSqrt, 2)
 }  // namespace kernel
 }  // namespace mindspore
