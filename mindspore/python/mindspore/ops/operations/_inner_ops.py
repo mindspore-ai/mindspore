@@ -2885,8 +2885,8 @@ class _MirrorSilentCheck(PrimitiveWithInfer):
         return thresh
 
     def get_thresh(self):
-        upper_thresh = self.parse_thresh("NPU_UPPER_THRESH", "1000000,10000", 3)
-        sigma_thresh = self.parse_thresh("NPU_SIGMA_THRESH", "100000,100", 3)
+        upper_thresh = self.parse_thresh("NPU_ASD_UPPER_THRESH", "1000000,10000", 3)
+        sigma_thresh = self.parse_thresh("NPU_ASD_SIGMA_THRESH", "100000,100", 3)
         return upper_thresh, sigma_thresh
 
     def infer_shape(self, x_shape, pre_shape, min_shape, max_shape, n_step, loss_scale_shape):
