@@ -5138,7 +5138,7 @@ class TensorScatterUpdate(_TensorScatterOp):
 
 
 class TensorScatterMax(Primitive):
-    """
+    r"""
     By comparing the value at the position indicated by `indices` in `x` with the value in the `updates`,
     the value at the index will eventually be equal to the largest one to create a new tensor.
 
@@ -5149,7 +5149,7 @@ class TensorScatterMax(Primitive):
         - **indices** (Tensor) - The index of input tensor whose data type is int32 or int64.
           The rank must be at least 2.
         - **updates** (Tensor) - The tensor to update the input tensor, has the same type as input,
-          and updates.shape should be equal to indices.shape[:-1] + input_x.shape[indices.shape[-1]:].
+          and updates.shape should be equal to :math:`indices.shape[:-1] + input\_x.shape[indices.shape[-1]:]`.
 
     Outputs:
         Tensor, has the same shape and type as `input_x`.
@@ -5242,7 +5242,7 @@ class TensorScatterSub(Primitive):
     instead of input `Parameter`.
 
     .. math::
-        output[indices] = input\_x - update
+        output\left [indices  \right ] = input\_x- update
 
     Refer to :func:`mindspore.ops.tensor_scatter_sub` for more details.
 
@@ -5346,7 +5346,7 @@ class TensorScatterMul(_TensorScatterOp):
     The updates are applied on output `Tensor` instead of input `Parameter`.
 
     .. math::
-        output[indices] = input\_x \times update
+        output\left [indices  \right ] = input\_x\times  update
 
     Refer to :func:`mindspore.ops.tensor_scatter_mul` for more details.
 
@@ -5355,7 +5355,7 @@ class TensorScatterMul(_TensorScatterOp):
         - **indices** (Tensor) - The index of input tensor whose data type is int32 or int64.
           The rank must be at least 2.
         - **updates** (Tensor) - The tensor to update the input tensor, has the same type as `input_x`,
-          and the shape of `updates` should be equal to indices.shape[:-1] + input_x.shape[indices.shape[-1]:].
+          and the shape of `updates` should be equal to :math:`indices.shape[:-1] + input\_x.shape[indices.shape[-1]:]`.
 
     Outputs:
         Tensor, has the same shape and type as `input_x`.

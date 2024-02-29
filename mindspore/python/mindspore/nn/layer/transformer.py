@@ -623,7 +623,8 @@ class TransformerDecoder(Cell):
         - **tgt** (Tensor) - The sequence to the decoder. For unbatched input, the shape is
           :math:`(T, E)` ; otherwise if `batch_first=False` in :class:`mindspore.nn.TransformerDecoderLayer`,
           the shape is :math:`(T, N, E)` and if `batch_first=True` , the shape is :math:`(N, T, E)`,
-          where :math:`(T)` is the target sequence length. Supported types: float16, float32, float64.
+          where :math:`(T)` is the target sequence length, :math:`(N)` is the number of batches,
+          and :math:`(E)` is the number of features. Supported types: float16, float32, float64.
         - **memory** (Tensor) - The sequence from the last layer of the encoder. Supported types: float16,
           float32, float64.
         - **tgt_mask** (Tensor, optional) - the mask of the tgt sequence. The shape is :math:`(T, T)`

@@ -16,7 +16,7 @@ mindspore.nn.TransformerDecoder
         - **tgt_mask** (Tensor, 可选) - 目标序列的掩码矩阵。shape是 :math:`(T, T)` 或 :math:`(N*nhead, T, T)` 。其中 `nhead` 是 :class:`mindspore.nn.TransformerDecoderLayer` 中的 `nhead` 参数。数据类型：float16、float32、float64或者bool。默认值：``None``。
         - **memory_mask** (Tensor, 可选) - memory序列的掩码矩阵。shape是 :math:`(T, S)` 。数据类型：float16、float32、float64或者bool。默认值：``None``。
         - **tgt_key_padding_mask** (Tensor, 可选) - 目标序列Key矩阵的掩码矩阵。shape是 :math:`(T)` 。数据类型：float16、float32、float64或者bool。默认值：``None``。
-        - **memory_key_padding_mask** (Tensor, 可选) - memory序列Key矩阵的掩码矩阵。shape是 :math:`(S)` 。数据类型：float16、float32、float64或者bool。默认值：``None``。
+        - **memory_key_padding_mask** (Tensor, 可选) - memory序列Key矩阵的掩码矩阵。如果目标序列没有batch，shape是 :math:`(S)` ，否则shape为 :math:`(N, S)` 。数据类型：float16、float32、float64或者bool。默认值：``None``。
 
     输出：
         Tensor。Tensor的shape和dtype与 `tgt` 一致。

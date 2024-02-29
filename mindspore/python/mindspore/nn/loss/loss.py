@@ -398,7 +398,7 @@ class MAELoss(LossBase):
     the unreduced loss (i.e. with argument reduction set to 'none') of :math:`x` and :math:`y` is given as:
 
     .. math::
-        \ell(x, y) = L = \{l_1,\dots,l_N\}^\top, \quad \text{with } l_n = \left| x_n - y_n \right|,
+        \ell(x, y) = L = \{l_1,\dots,l_N\}^\top, \quad \text{with } l_n = \left| x_n - y_n \right|
 
     where :math:`N` is the batch size. If `reduction` is not ``'none'``, then:
 
@@ -2258,7 +2258,7 @@ class NLLLoss(LossBase):
     :math:`N` is the batch size, :math:`c` belonging to :math:`[0, C-1]` is class index,
     where :math:`C` is the number of classes.
 
-    If `reduction` is not ``'none'`` (default 'mean'), then
+    If :math:`reduction \neq none` (default 'mean'), then
 
     .. math::
 
