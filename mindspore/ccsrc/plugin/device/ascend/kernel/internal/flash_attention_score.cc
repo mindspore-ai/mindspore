@@ -28,7 +28,7 @@ void InternalFlashAttentionScore::SetInOutIdx() {
   inputsIdxMap_[0] = 0;
   inputsIdxMap_[1] = 1;
   inputsIdxMap_[2] = 2;
-  outputsIdxMap_[0] = 0;
+  outputsIdxMap_[3] = 0;
 }
 
 MS_INTERNAL_KERNEL_FACTORY_REG(FlashAttentionScore, InternalFlashAttentionScore);
