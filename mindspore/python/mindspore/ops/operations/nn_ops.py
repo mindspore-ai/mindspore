@@ -34,7 +34,8 @@ from ..auto_generate import (CeLU, Flatten, LogSoftmax, ReLU, ReLU6,
                              Elu, Sigmoid, Softmax, HSwish, HSigmoid, AvgPool, BiasAdd,
                              NLLLoss, OneHot, GeLU, FastGeLU, PReLU,
                              GridSampler3D, GridSampler2D, LayerNorm, HShrink, AdamWeightDecay, Dropout,
-                             ApplyRotaryPosEmb, PagedAttention, PagedAttentionMask, ReshapeAndCache)
+                             ApplyRotaryPosEmb, PagedAttention, PagedAttentionMask, ReshapeAndCache,
+                             FlashAttentionScore)
 from .manually_defined import BatchNorm
 
 
@@ -10039,120 +10040,6 @@ class IncreFlashAttention(Primitive):
                                         "dequant_scale1", "quant_scale1", "dequant_scale2", "quant_scale2",
                                         "quant_offset2", "antiquant_scale", "antiquant_offset", "block_table"],
                                 outputs=["attention_out"])
-
-
-class FlashAttentionScore(Primitive):
-    r"""
-    FlashAttentionScore.
-    .. math::
-        \begin{array}{ll} \\
-            y = Dropout(Softmax(Mask(scale_value \mul (real_shift + query * key), attn_mask), -1), keep_prob) \\
-            \mul value \\
-        \end{array}
-
-    .. warning::
-        This is an experimental API that is subject to change or deletion.
-    B -- Batch size
-    S1 -- Sequence length of query. The value ranges from 1 to 32768 and is a multiple of 16.
-    S2 -- Sequence length of key and value. The value ranges from 1 to 32768 and is a multiple of 16.
-    N1 -- Num heads of query
-    N2 -- Num heads of key and value, and N2 must be a factor of N1
-    D -- Head size. Support value: 64, 80, 96, 120, 128 and 256.
-    H1 -- Hidden size of query, which equals to N1 * D
-    H2 -- Hidden size of key and value, which equals to N2 * D
-    Args:
-        head_num (int): The head num of query. Default: 1.
-        keep_prob (float): The keep probability of dropout. Default: 1.0.
-        scale_value (float): The scale factor of score. Default: 1.0.
-        pre_tokens (int): Parameter for sparse computation, represents how many tokens are counted forward.
-        When sparse_mode is set to 1, 2, 3, or 5, this parameter does not take effect. Default: 2147483647.
-        next_tokens (int): Parameter for sparse computation, represents how many tokens are counted backward.
-        When sparse_mode is set to 1, 2, 3, or 5, this parameter does not take effect. Default: 2147483647.
-        inner_precise (int): The parameter is reserved and not implemented yet. Default: 0.
-        input_layout (str): Specifies the layout of input `query`, key and value. The value can be "BSH" or "BNSD".
-        Default: "BSH".
-        sparse_mode (int): Indicates sparse mode. Default 0.
-
-            - 0: Indicates the defaultMask mode. If attn_mask is not passed, the mask operation is not performed,
-              and preTokens and nextTokens(internally assigned as INT_MAX) are ignored. If passed in, the full attn_mask
-              matrix (S1 * S2) needs to be passed in, indicating that the part between preTokens and nextTokens needs to
-              be calculated.
-            - 1: Represents allMask, that is, passing in the complete attn_mask matrix.
-            - 2: Representing the leftUpCausal mode corresponds to the lower triangle scenario divided by the left
-              vertex, and the optimized attn_mask matrix (2048*2048) is required.
-            - 3: Representing the rightDownCausal model corresponds to the lower triangle scene divided by the lower
-              right vertex, and the optimized attn_mask matrix (2048*2048) is required.
-            - 4: Represents the band scenario, that is, the part between counting preTokens and nextTokens, and the
-              optimized attn_mask matrix (2048*2048) is required..
-            - 5: Represents the prefix scenario, that is, on the basis of rightDownCasual, a matrix with length S1 and
-              width N is added to the left side. The value of N is obtained by the new input prefix, and the N value of
-              each Batch axis is different. Not implemented yet.
-            - 6: Represents the global scenario, not implemented yet.
-            - 7: Represents the dilated scenario, not implemented yet.
-            - 8: Represents the block_local scenario, not implemented yet.
-
-        enable_load_balance (bool): Enable load balance of calculation on each rank. Only take effect
-        when sequence parallel is used. Default False.
-
-    Inputs:
-        - **query** (Tensor[float16, bfloat16]) - The query tensor.
-          Input tensor of shape :math:`(B, S1, H1)` or `(B, N1, S1, D)`.
-        - **key** (Tensor[float16, bfloat16]) - The key tensor.
-          Input tensor of shape :math:`(B, S2, H2)` or `(B, N2, S2, D)`.
-        - **value** (Tensor[float16, bfloat16]) - The value tensor.
-          Input tensor of shape :math:`(B, S2, H2)` or `(B, N2, S2, D)`.
-        - **real_shift** (Union[Tensor[float16, bfloat16], None]) - The position embedding code. If S is greater than
-          1024 and the mask of the lower triangle is used, enter only the inverse 1024 lines of the lower triangle for
-          memory optimization.
-          Input tensor of shape :math: `(B, N1, S1, S2)`, `(1, N1, S1, S2)`, `(B, N1, 1024, S2)`, `(1, N1, 1024, S2)`
-          or (1024, 1024).
-        - **drop_mask** (Union[Tensor[uint8], None]) - The dropout mask tensor.
-          Input tensor of shape :math:`(B, N1, S1, S2 // 8) or None`.
-        - **padding_mask** (None) - Reserved parameter. Not implemented yet.
-        - **attn_mask** (Union[Tensor[uint8], None]) - The attention mask tensor. For each element, 0 indicates
-          retention and 1 indicates discard. Input tensor of shape :math:`(B, N1, S1, S2)`, `(B, 1, S1, S2)`, `(S1, S2)`
-          or (2048, 2048).
-        - **prefix** (Union[Tensor[int64], None]) - N value of each Batch in the prefix sparse calculation scenario.
-          Input tensor of shape :math:`(B,)`.
-
-    Outputs:
-        - **softmax_max** (Tensor[float32]) - (B, N1, S1, 8)
-        - **softmax_sum** (Tensor[float32]) - (B, N1, S1, 8)
-        - **softmax_out** (Tensor[float16, bfloat16]) - Useless output, ignore it. Output tensor of shape : `()`
-        - **attention_out** (Tensor[float16, bfloat16]) - The output of attention, its shape, and data type
-          are the same as the query.
-
-    Supported Platforms:
-        ``Ascend910B``
-    """
-
-    @prim_attr_register
-    def __init__(self, head_num=1, keep_prob=1.0, scale_value=1.0, pre_tokens=2147483647, next_tokens=2147483647,
-                 inner_precise=0, input_layout="BSH", sparse_mode=0, enable_load_balance=False):
-        """Initialize FlashAttentionScore"""
-        validator.check_value_type('head_num', head_num, [int], self.name)
-        validator.check_value_type('keep_prob', keep_prob, [int, float], self.name)
-        validator.check_float(keep_prob, 0.0, validator.GE, "keep_prob", self.name)
-        validator.check_float(keep_prob, 1.0, validator.LE, "keep_prob", self.name)
-        validator.check_value_type('scale_value', scale_value, [float], self.name)
-        validator.check_value_type('pre_tokens', pre_tokens, [int], self.name)
-        validator.check_value_type('next_tokens', next_tokens, [int], self.name)
-        validator.check_value_type('inner_precise', inner_precise, [int], self.name)
-        validator.check_value_type('sparse_mode', sparse_mode, [int], self.name)
-        validator.check_value_type('enable_load_balance', enable_load_balance, [bool], self.name)
-        valid_sparse_mode = [0, 1, 2, 3, 4]
-        if sparse_mode not in valid_sparse_mode:
-            raise ValueError(f"Attribute 'sparse_mode' must be one of {valid_sparse_mode}, but got {sparse_mode}")
-        if inner_precise not in [0]:
-            raise ValueError(f"Attribute 'inner_precise' must be 0, but got {inner_precise}")
-        validator.check_value_type('input_layout', input_layout, [str], self.name)
-        support_layout = ["BSH", "BNSD"]
-        if input_layout not in support_layout:
-            raise ValueError(f"Attribute 'input_layout' must be one of {support_layout}, but got {input_layout}")
-        self.init_prim_io_names(
-            inputs=['query', 'key', 'value', 'real_shift', 'drop_mask', 'padding_mask', 'attn_mask', 'prefix'],
-            outputs=['softmax_max', 'softmax_sum', 'softmax_out', 'attention_out'])
-
 
 class RmsNorm(Primitive):
     r"""

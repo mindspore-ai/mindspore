@@ -1,0 +1,95 @@
+#operator flash_attention_score_grad
+flash_attention_score_grad:
+  args:
+    query:
+      dtype: tensor
+    key:
+      dtype: tensor
+    value:
+      dtype: tensor
+    dy:
+      dtype: tensor
+    pse_shift:
+      dtype: tensor
+      default: None
+    drop_mask:
+      dtype: tensor
+      default: None
+    padding_mask:
+      dtype: tensor
+      default: None
+    atten_mask:
+      dtype: tensor
+      default: None
+    softmax_max:
+      dtype: tensor
+      default: None
+    softmax_sum:
+      dtype: tensor
+      default: None
+    softmax_in:
+      dtype: tensor
+      default: None
+    attention_in:
+      dtype: tensor
+      default: None
+    prefix:
+      dtype: tuple[int]
+      default: None
+      type_cast: list[int], tensor
+    actual_seq_qlen:
+      dtype: tuple[int]
+      default: None
+      type_cast: list[int], tensor
+    actual_seq_kvlen:
+      dtype: tuple[int]
+      default: None
+      type_cast: list[int], tensor
+    head_num:
+      dtype: int
+      prim_init: True  
+    keep_prob:
+      dtype: float
+      default: 1.0
+      prim_init: True
+    scale_value:
+      dtype: float
+      default: 1.0
+      prim_init: True
+    pre_tokens:
+      dtype: int
+      default: 65536
+      prim_init: True
+    next_tokens:
+      dtype: int
+      default: 65536
+      prim_init: True
+    inner_precise:
+      dtype: int
+      default: 1
+      prim_init: True
+    input_layout:
+      dtype: int
+      default: "'BSH'"
+      prim_init: True
+      arg_handler: str_to_enum
+    sparse_mode:
+      dtype: int
+      default: 0
+      prim_init: True
+  returns:
+    dq:
+      dtype: tensor
+    dk:
+      dtype: tensor
+    dv:
+      dtype: tensor
+    dpse:
+      dtype: tensor
+  function:
+    disable: True
+  dispatch:
+    enable: True
+    Ascend: FlashAttentionScoreGradAscend
+    CPU: FlashAttentionScoreGradCPU
+    GPU: FlashAttentionScoreGradGPU

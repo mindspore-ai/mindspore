@@ -1,0 +1,8 @@
+flash_attention_score_grad:
+  description: |
+    Calculates the gradient of FlashAttentionScore operation.
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
+    Supported Platforms:
+        ``Ascend``

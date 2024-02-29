@@ -38,7 +38,8 @@ from ..auto_generate import (AbsGrad, ACosGrad, LogitGrad, AcoshGrad,
                              ResizeLinear1DGrad, ResizeNearestNeighborV2Grad,
                              SigmoidGrad, HSwishGrad, NLLLossGrad, AtanGrad, GridSampler3DGrad,
                              GridSampler2DGrad, ResizeBicubicGrad, HSigmoidGrad, CholeskyGrad,
-                             ResizeNearestNeighborGrad, LayerNormGrad, HShrinkGrad, LayerNormGradGrad, SiLUGrad)
+                             ResizeNearestNeighborGrad, LayerNormGrad, HShrinkGrad, LayerNormGradGrad, SiLUGrad,
+                             FlashAttentionScoreGrad)
 
 
 class SparseFillEmptyRowsGrad(Primitive):
@@ -3105,38 +3106,6 @@ class WKVGrad(Primitive):
         self.init_prim_io_names(inputs=["time_first", "time_decay", "key", "value", "gy"],
                                 outputs=["gw", "gu", "gk", "gv"])
 
-
-class FlashAttentionScoreGrad(Primitive):
-    r"""
-    Calculates the gradient of FlashAttentionScore operation.
-    .. warning::
-        This is an experimental API that is subject to change or deletion.
-
-    Supported Platforms:
-        ``Ascend``
-    """
-    @prim_attr_register
-    def __init__(self, head_num, keep_prob=1.0, scale_value=1.0, pre_tokens=65536, next_tokens=65536, inner_precise=1,
-                 input_layout='BSH', sparse_mode=0):
-        """Initialize FlashAttentionScoreGrad."""
-        validator.check_value_type('head_num', head_num, [int], self.name)
-        validator.check_value_type('keep_prob', keep_prob, [int, float], self.name)
-        validator.check_float(keep_prob, 0.0, validator.GE, "keep_prob", self.name)
-        validator.check_float(keep_prob, 1.0, validator.LE, "keep_prob", self.name)
-        validator.check_value_type('scale_value', scale_value, [float], self.name)
-        validator.check_value_type('pre_tokens', pre_tokens, [int], self.name)
-        validator.check_value_type('next_tokens', next_tokens, [int], self.name)
-        validator.check_value_type('inner_precise', inner_precise, [int], self.name)
-        validator.check_value_type('sparse_mode', sparse_mode, [int], self.name)
-        if inner_precise not in [0, 1]:
-            raise ValueError(f"Attribute 'inner_precise' must be either 0 or 1, but got {inner_precise}")
-        validator.check_value_type('input_layout', input_layout, [str], self.name)
-        if input_layout not in ["BSH", "BNSD"]:
-            raise ValueError(f"Attribute 'input_layout' must be either 'BSH' or 'BNSD', but got {input_layout}")
-        self.init_prim_io_names(inputs=['query', 'key', 'value', 'dy', 'pse_shift', 'drop_mask', "padding_mask",
-                                        'attn_mask', 'softmax_max', 'softmax_sum', 'softmax_out', 'attention_in',
-                                        'prefix'],
-                                outputs=['dq', 'dk', 'dv', 'dpse'])
 
 class RmsNormGrad(Primitive):
     r"""

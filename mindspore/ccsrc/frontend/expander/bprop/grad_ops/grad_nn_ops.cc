@@ -2166,35 +2166,50 @@ REG_BPROP_BUILDER("FlashAttentionScore").SetBody((BODYFUNC(ib) {
   auto padding_mask = ib->GetInput(kIndex5);
   auto attn_mask = ib->GetInput(kIndex6);
   auto prefix = ib->GetInput(kIndex7);
-  auto out = ib->GetInput(kIndex8);
+  auto actual_seq_qlen = ib->GetInput(kIndex8);
+  auto actual_seq_kvlen = ib->GetInput(kIndex9);
+  auto head_num = ib->GetInput(kIndex10);
+  auto keep_prob = ib->GetInput(kIndex11);
+  auto scale_value = ib->GetInput(kIndex12);
+  auto pre_tokens = ib->GetInput(kIndex13);
+  auto next_tokens = ib->GetInput(kIndex14);
+  auto inner_precise = ib->GetInput(kIndex15);
+  auto input_layout = ib->GetInput(kIndex16);
+  auto sparse_mode = ib->GetInput(kIndex17);
+  auto out = ib->GetInput(kIndex18);
   auto softmax_max = ib->TupleGetItem(out, kIndex0);
   auto softmax_sum = ib->TupleGetItem(out, kIndex1);
   auto softmax_out = ib->TupleGetItem(out, kIndex2);
   auto attention_out = ib->TupleGetItem(out, kIndex3);
-  auto dout = ib->GetInput(kIndex9);
+  auto dout = ib->GetInput(kIndex19);
   auto d_attention_out = ib->TupleGetItem(dout, kIndex3);
-  auto grad = ib->Emit("FlashAttentionScoreGrad",
-                       {query, key, value, d_attention_out, pse_shift, drop_mask, padding_mask, attn_mask, softmax_max,
-                        softmax_sum, softmax_out, attention_out, prefix},
-                       {
-                         {"head_num", ib->GetAttr("head_num")},
-                         {"keep_prob", ib->GetAttr("keep_prob")},
-                         {"scale_value", ib->GetAttr("scale_value")},
-                         {"pre_tokens", ib->GetAttr("pre_tokens")},
-                         {"next_tokens", ib->GetAttr("next_tokens")},
-                         {"inner_precise", ib->GetAttr("inner_precise")},
-                         {"input_layout", ib->GetAttr("input_layout")},
-                         {"sparse_mode", ib->GetAttr("sparse_mode")},
-                       });
+  auto grad =
+    ib->Emit("FlashAttentionScoreGrad", {query,         key,           value,       d_attention_out, pse_shift,
+                                         drop_mask,     padding_mask,  attn_mask,   softmax_max,     softmax_sum,
+                                         softmax_out,   attention_out, prefix,      actual_seq_qlen, actual_seq_kvlen,
+                                         head_num,      keep_prob,     scale_value, pre_tokens,      next_tokens,
+                                         inner_precise, input_layout,  sparse_mode});
   auto g_query = ib->TupleGetItem(grad, kIndex0);
   auto g_key = ib->TupleGetItem(grad, kIndex1);
   auto g_value = ib->TupleGetItem(grad, kIndex2);
   auto g_pse_shift = ib->TupleGetItem(grad, kIndex3);
-  auto g_drop_mask = ib->ZerosLike(drop_mask);
-  auto g_padding_mask = ib->ZerosLike(padding_mask);
-  auto g_attn_mask = ib->ZerosLike(attn_mask);
-  auto g_prefix = ib->ZerosLike(prefix);
-  return {g_query, g_key, g_value, g_pse_shift, g_drop_mask, g_padding_mask, g_attn_mask, g_prefix};
+  auto g_drop_mask = ib->OutZeros(drop_mask);
+  auto g_padding_mask = ib->OutZeros(padding_mask);
+  auto g_attn_mask = ib->OutZeros(attn_mask);
+  auto g_prefix = ib->OutZeros(prefix);
+  auto g_actual_seq_qlen = ib->OutZeros(actual_seq_qlen);
+  auto g_actual_seq_kvlen = ib->OutZeros(actual_seq_kvlen);
+  auto g_head_num = ib->OutZeros(head_num);
+  auto g_keep_prob = ib->OutZeros(keep_prob);
+  auto g_scale_value = ib->OutZeros(scale_value);
+  auto g_pre_tokens = ib->OutZeros(pre_tokens);
+  auto g_next_tokens = ib->OutZeros(next_tokens);
+  auto g_inner_precise = ib->OutZeros(inner_precise);
+  auto g_input_layout = ib->OutZeros(input_layout);
+  auto g_sparse_mode = ib->OutZeros(sparse_mode);
+  return {g_query,       g_key,        g_value,           g_pse_shift,        g_drop_mask,    g_padding_mask,
+          g_attn_mask,   g_prefix,     g_actual_seq_qlen, g_actual_seq_kvlen, g_head_num,     g_keep_prob,
+          g_scale_value, g_pre_tokens, g_next_tokens,     g_inner_precise,    g_input_layout, g_sparse_mode};
 }));
 
 REG_BPROP_BUILDER("RmsNorm").SetBody((BODYFUNC(ib) {

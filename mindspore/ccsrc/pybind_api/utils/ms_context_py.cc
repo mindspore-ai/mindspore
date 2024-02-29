@@ -136,7 +136,8 @@ void RegMsContext(const py::module *m) {
     .value("enable_begin_end_inline_opt", MsCtxParam::MS_CTX_ENABLE_BEGIN_END_INLINE_OPT)
     .value("enable_concat_eliminate_opt", MsCtxParam::MS_CTX_ENABLE_CONCAT_ELIMINATE_OPT)
     .value("host_scheduling_max_threshold", MsCtxParam::MS_CTX_HOST_SCHEDULING_MAX_THRESHOLD)
-    .value("topo_order", MsCtxParam::MS_CTX_TOPO_ORDER);
+    .value("topo_order", MsCtxParam::MS_CTX_TOPO_ORDER)
+    .value("enable_flash_attention_load_balance", MsCtxParam::MS_CTX_ENABLE_FLASH_ATTENTION_LOAD_BALANCE);
   (void)py::class_<mindspore::MsContext, std::shared_ptr<mindspore::MsContext>>(*m, "MSContext")
     .def_static("get_instance", &mindspore::MsContext::GetInstance, "Get ms context instance.")
     .def("get_param", &mindspore::MsCtxGetParameter, "Get value of specified parameter.")
