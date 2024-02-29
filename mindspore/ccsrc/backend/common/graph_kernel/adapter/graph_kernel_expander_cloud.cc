@@ -130,6 +130,7 @@ std::vector<PrimitivePtr> GraphKernelExpanderCloud::GetExpanderOps() {
     {kAscendDevice, OpLevel_1, prim::kLambApplyOptimizerAssign},
     {kAscendDevice, OpLevel_1, prim::kLambApplyWeightAssign},
     {kAscendDevice, OpLevel_1, prim::kSoftmaxGradExt},
+    {kAscendDevice, OpLevel_1, prim::kPrimAdamApplyOneWithDecay},
   };
   const auto &flags = GraphKernelFlags::GetInstance();
   auto ops_with_level = GraphKernelFlags::GetInstance().kernel_generator == "DVM" ? std::move(expand_ops_with_level_dvm)

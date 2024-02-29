@@ -50,21 +50,14 @@ bool DependElimination::Run(const FuncGraphPtr &func_graph) {
           // If the second input of depend is only used by depend, then this depend can not be eliminated.
           continue;
         }
-        auto assign_node = inputs[kDependAttachNodeIndex]->cast<CNodePtr>();
-        auto side_effect_node = assign_node->input(1);
-        if (inputs[kRealInputIndexInDepend]->isa<CNode>()) {
-          auto real_input_node = inputs[kRealInputIndexInDepend]->cast<CNodePtr>();
-          for (size_t i = 0; i < real_input_node->inputs().size(); i++) {
-            if (real_input_node->input(i) == side_effect_node) {
-              // If the first input of depend uses side-effect node, then this depend is necessary.
-              continue;
-            }
-          }
-        } else if (inputs[kRealInputIndexInDepend] == side_effect_node) {
+        const auto &assign_node = inputs[kDependAttachNodeIndex]->cast<CNodePtr>();
+        const auto &side_effect_node = assign_node->input(1);
+        const auto &real_input = common::AnfAlgo::VisitKernel(node, 0).first;
+        if (real_input == side_effect_node) {
           // If the first input of depend is side-effect node, then this depend is necessary.
           continue;
         }
-        mng->Replace(node, inputs[kRealInputIndexInDepend]);
+        mng->Replace(node, real_input);
       }
     }
   }
