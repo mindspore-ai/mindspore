@@ -44,7 +44,7 @@ void TileCpuKernelMod::TileMultipleCompute() {
                       << " and output shape: " << y_shape_.size() << ", but got input shape " << x_shape_.size();
   }
   ChangeEmptyToOne(&x_shape_);
-  ChangeEmptyToOne(&multiple_shape_);
+  ChangeEmptyToOne(&multiples_);
   ChangeEmptyToOne(&y_shape_);
 
   input_size_ = 1;
