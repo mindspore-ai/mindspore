@@ -10,16 +10,21 @@ erfinv:
 
     Args:
         input (Tensor): The input tensor to compute with.
-            Supported dtypes: 
 
-            - Ascend: float16, float32.
-            - GPU/CPU: float16, float32, float64.
+        Supported dtypes:
+
+          - Ascend: float16, float32, int8, int16, int32, int64, uint8, bool.
+          - GPU/CPU: float16, float32 or float64.
+
 
     Returns:
         Tensor, has the same shape and dtype as `input`.
 
     Raises:
-        TypeError: If dtype of `input` is not float16, float32 or float64.
+        TypeError: If dtype of `input` is not as follows
+    
+          - Ascend: float16, float32, int8, int16, int32, int64, uint8, bool.
+          - GPU/CPU: float16, float32 or float64.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
