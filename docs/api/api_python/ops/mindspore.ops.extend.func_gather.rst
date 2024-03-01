@@ -8,14 +8,17 @@ mindspore.ops.extend.gather
     .. math::
         output[(i_0, i_1, ..., i_{dim}, i_{dim+1}, ..., i_n)] = input[(i_0, i_1, ..., index[(i_0, i_1, ..., i_{dim}, i_{dim+1}, ..., i_n)], i_{dim+1}, ..., i_n)]
 
+    .. warning::
+        在Ascend后端，当 `index` 的取值不在范围 `[-input.shape[dim], input.shape[dim])` 内，将导致不可预测的行为。
+
     参数：
         - **input** (Tensor) - 待索引切片取值的原始Tensor。
         - **dim** (int) - 指定要切片的维度索引。取值范围 `[-input.rank, input.rank)`。
         - **index** (Tensor) - 指定原始Tensor中要切片的索引。数据类型必须是int32或int64。需要满足以下条件：
 
           - `index.rank == input.rank`；
-          - 取 `axis` 遍历 `input.shape` 所有轴，当 `axis != dim` ， `index.shape[axis] <= input.shape[axis]`；
-          - `index` 的取值在有效区间 `[-input.shape[dim], input.shape[dim])` ；在Ascend后端，非法的取值会导致不可预测的行为。
+          - 对于 `axis != dim` ， `index.shape[axis] <= input.shape[axis]` ；
+          - `index` 的取值在有效区间 `[-input.shape[dim], input.shape[dim])` ；
 
     返回：
         Tensor，数据类型与 `input` 保持一致，shape与 `index` 保持一致。

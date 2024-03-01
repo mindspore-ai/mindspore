@@ -26,6 +26,11 @@ namespace kernel {
 namespace pyboost {
 tensor::TensorPtr GatherDGradAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &x,
                                              const Int64ImmPtr dim, const TensorPtr &index, const TensorPtr &d_out) {
+  MS_EXCEPTION_IF_NULL(dim);
+  MS_EXCEPTION_IF_NULL(op);
+  MS_EXCEPTION_IF_NULL(x);
+  MS_EXCEPTION_IF_NULL(index);
+  MS_EXCEPTION_IF_NULL(d_out);
   OpRunner::InferOpOutput(op, x, dim, index, d_out);
   auto dim_value = dim->value();
   PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), d_out);
@@ -41,7 +46,7 @@ tensor::TensorPtr GatherDGradAscendCustomize(const std::shared_ptr<OpRunner> &op
     // Malloc for output tensors
     PyBoostUtils::MallocOpOutputs(device_context, outputs);
     LAUNCH_ACLNN(aclnnInplaceZero, device_context, op->stream_id(), outputs[0]);
-    LAUNCH_ACLNN(aclnnScatter, device_context, op->stream_id(), outputs[0], dim_value, index, d_out, 1, outputs[0]);
+    LAUNCH_ACLNN(aclnnScatterAdd, device_context, op->stream_id(), outputs[0], dim_value, index, d_out, outputs[0]);
     MS_LOG(DEBUG) << "Run device task GatherDGrad end";
   }));
   return op->output(0);
