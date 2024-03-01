@@ -3171,13 +3171,11 @@ def pad(input_x, padding, mode='constant', value=None):
             :math:`(\text{padding_left}, \text{padding_right})`;
 
             Example: to pad the last 2 dimensions of the input tensor, then use
-            :math:`(\text{padding_left}, \text{padding_right}`,
-            :math:`\text{padding_top}, \text{padding_bottom})`;
+            :math:`(\text{padding_left}, \text{padding_right}, \text{padding_top}, \text{padding_bottom})`;
 
             Example: to pad the last 3 dimensions, use
-            :math:`(\text{padding_left}, \text{padding_right}`,
-            :math:`\text{padding_top}, \text{padding_bottom}`,
-            :math:`\text{padding_front}, \text{padding_back})` and so on.
+            :math:`(\text{padding_left}, \text{padding_right}, \text{padding_top}, \text{padding_bottom},
+            \text{padding_front}, \text{padding_back})` and so on.
 
         mode (str, optional): Pad filling mode, ``'constant'`` , ``'reflect'`` , ``'replicate'``  or ``'circular'`` .
             Default: ``'constant'`` .
@@ -5110,12 +5108,14 @@ def conv2d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
     , :math:`weight` is the convolution kernel value and :math:`X` represents the input feature map.
 
     Here are the indices' meanings:
-    - :math:`i` corresponds to the batch number, ranging from 0 to N-1, where N is the batch size of the input.
+    - :math:`i` corresponds to the batch number, the range is :math:`[0, N-1]`,
+      where :math:`N` is the batch size of the input.
 
-    - :math:`j` corresponds to the output channel, ranging from 0 to C_{out}-1, where C_{out} is the number of
-      output channels, which is also equal to the number of kernels.
+    - :math:`j` corresponds to the output channel, the range is :math:`[0, C_{out}-1]`,
+      where :math:`C_{out}` is the number of output channels, which is also equal to the number of kernels.
 
-    - :math:`k` corresponds to the input channel, ranging from 0 to C_{in}-1, where C_{in} is the number of
+    - :math:`k` corresponds to the input channel, the range is :math:`[0, C_{in}-1]`,
+      where :math:`C_{in}` is the number of
       input channels, which is also equal to the number of channels in the convolutional kernels.
 
     Therefore, in the above formula, :math:`{bias}(C_{out_j})` represents the bias of the :math:`j`-th
@@ -5123,8 +5123,9 @@ def conv2d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
     kernel in the :math:`k`-th channel, and :math:`{X}(N_i, k)` represents the slice of the :math:`k`-th input
     channel in the :math:`i`-th batch of the input feature map.
 
-    The shape of the convolutional kernel is given by :math:`(kernel\_size[0], kernel\_size[1])`,
-    where :math:`kernel\_size[0]` and :math:`kernel\_size[1]` are the height and width of the kernel, respectively.
+    The shape of the convolutional kernel is given by :math:`(\text{kernel_size[0]}, \text{kernel_size[1]})`,
+    where :math:`\text{kernel_size[0]}` and :math:`\text{kernel_size[1]}` are the height and width of the kernel,
+    respectively.
     If we consider the input and output channels as well as the `group` parameter, the complete kernel shape
     will be :math:`(C_{out}, C_{in} / \text{group}, \text{kernel_size[0]}, \text{kernel_size[1]})`,
     where `group` is the number of groups dividing `x`'s input channel when applying group convolution.
@@ -5180,7 +5181,7 @@ def conv2d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
         TypeError: If `stride`, `padding` or `dilation` is neither an int nor a tuple.
         TypeError: `groups` is not an int.
         TypeError: If `bias` is not a Tensor.
-        ValueError: If  the shape of `bias` is not :math:`C_{out}` .
+        ValueError: If  the shape of `bias` is not :math:`(C_{out})` .
         ValueError: If `stride` or `dilation` is less than 1.
         ValueError: If `pad_mode` is not one of 'same', 'valid' or 'pad'.
         ValueError: If `padding` is a tuple/list whose length is not equal to 2.

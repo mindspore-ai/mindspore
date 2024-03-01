@@ -18,7 +18,7 @@ fftshift:
     Raises:
         TypeError: If `input` is not a tensor.
         TypeError: If the type/dtype of `dim` is not int.
-        ValueError: If `dim` is out of the range of `[-input.ndim, input.ndim)`.
+        ValueError: If `dim` is out of the range of :math:`[-input.ndim, input.ndim)`.
 
     Supported Platforms:
         ``Ascend`` ``CPU``

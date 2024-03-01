@@ -11,7 +11,7 @@
         如果 `indices` 中的值超出输入 `input_x` 索引范围：GPU平台上相应的 `updates` 不会更新到 `input_x` 且不会抛出索引错误；CPU平台上直接抛出索引错误；Ascend平台不支持越界检查，若越界可能会造成未知错误。
 
     .. math::
-        output\left [indices  \right ] = input\_x- update
+        output[indices] = input\_x - update
 
     参数：
         - **input_x** (Tensor) - 输入Tensor。 `input_x` 的维度必须不小于 `indices.shape[-1]` 。

@@ -66,35 +66,35 @@ class MultiheadAttention(Cell):
         dtype (:class:`mindspore.dtype`): Data type of Parameter. Default: ``mstype.float32`` .
 
     Inputs:
-        - **query** (Tensor): The query embeddings. If `query` is unbatched, the shape is :math:`(L, E_q)`,
+        - **query** (Tensor) - The query embeddings. If `query` is unbatched, the shape is :math:`(L, E_q)`,
           otherwise the shape is :math:`(L, N, E_q)` when `batch_first=False` or :math:`(N, L, E_q)` when
           `batch_first=True` , where :math:`L`is the target sequence length, :math:`N` is the batch size,
           and :math:`E_q` is the query embedding dimension `embed_dim`. Supported types: float16, float32,
           float64. Queries are compared against key-value pairs to produce the output.
-        - **key** (Tensor): The key embeddings. If `key` is unbatched, the shape is :math:`(S, E_k)`, otherwise
+        - **key** (Tensor) - The key embeddings. If `key` is unbatched, the shape is :math:`(S, E_k)`, otherwise
           the shape is :math:`(S, N, E_k)` when `batch_first=False` or :math:`(N, S, E_k)` when
           `batch_first=True` , where :math:`S` is the source sequence length, :math:`N` is the batch size,
           and :math:`E_k` is the key embedding dimension `kdim`. Supported types: float16, float32, float64.
-        - **value** (Tensor): The value embeddings. If `value` is unbatched, the shape is :math:`(S, E_v)`,
+        - **value** (Tensor) - The value embeddings. If `value` is unbatched, the shape is :math:`(S, E_v)`,
           otherwise the shape is :math:`(S, N, E_v)` when `batch_first=False` or :math:`(N, S, E_v)` when
           `batch_first=True` , where :math:`S` is the source sequence length, :math:`N` is the batch size,
           and :math:`E_v` is the value embedding dimension `vdim`. Supported types: float16, float32, float64.
-        - **key_padding_mask** (Tensor, optional): If specified, a mask of shape :math:`(N, S)` indicating which
+        - **key_padding_mask** (Tensor, optional) - If specified, a mask of shape :math:`(N, S)` indicating which
           elements within `key` to ignore for the purpose of attention (i.e. treat as "padding").
           For unbatched `query`, shape should be :math:`(S)`. Binary and float masks are supported.
           For a binary mask, a ``True`` value indicates that the corresponding `key` value will be ignored for
           the purpose of attention. For a float mask, it will be directly added to the corresponding `key` value.
           Supported float types: float16, float32, float64. Default: ``None``.
-        - **need_weights** (bool): Whether returns `attn_output_weights` in addition to `attn_outputs`.
+        - **need_weights** (bool) - Whether returns `attn_output_weights` in addition to `attn_outputs`.
           Default: ``True``.
-        - **attn_mask** (Tensor, optional): If specified, a 2D or 3D mask preventing attention to certain positions.
+        - **attn_mask** (Tensor, optional) - If specified, a 2D or 3D mask preventing attention to certain positions.
           Must be of shape :math:`(L, S)` or :math:`(N\cdot\text{num_heads}, L, S)`, where :math:`N` is the
           batch size, :math:`L` is the target sequence length, and :math:`S` is the source sequence length.
           A 2D mask will be broadcasted across the batch while a 3D mask allows for a different mask for each entry
           in the batch. For a binary mask, a ``True`` value indicates that the corresponding position is not allowed
           to attend. For a float mask, the mask values will be added to the attention weight.
           Supported float types: float16, float32, float64. Default: ``None``.
-        - **average_attn_weights** (bool): If true, indicates that the returned `attn_weights` should be averaged
+        - **average_attn_weights** (bool) - If true, indicates that the returned `attn_weights` should be averaged
           across heads. Otherwise, `attn_weights` are provided separately per head. Note that this flag only
           has an effect when `need_weights=True`. Default: ``True`` (i.e. average weights across heads)
 
