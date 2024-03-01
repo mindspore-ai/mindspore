@@ -335,7 +335,7 @@ class MindGraphBuilder : public GraphBuilder {
   bool DoBuildOp(const Instr &instr) override;
 
  private:
-  std::vector<py::object> GetNewArgs(CallNode *call_node);
+  std::vector<py::object> GetNewArgs(CallNode *call_node, AObj *vobj = nullptr);
   bool IsFuncInWhiteList(const py::object &f, std::string *special_func_key);
   bool HandleFuncInWhiteList(const std::string &key, CallNode *n) override;
 
