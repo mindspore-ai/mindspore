@@ -381,7 +381,7 @@ class SymbolTree:
 
         - **node type** (str): The type of node, refer to class:`mindspore.rewrite.NodeType` .
         - **name** (str): The name of node.
-        - **codes** (str): The source code statement corresponding to the node.
+        - **codes** (str): The code statement in the SymbolTree corresponding to the node.
         - **arg providers** (Dict[int, Tuple[str, int]]): The format is `{[idx, (n, k)]}` , which means the
           `idx` th parameter of the node is provided by the `k` th output of node `n` .
         - **target users** (Dict[int, List[Tuple[str, int]]]): The format is '{[idx, [(n, k)]]}' , which means
