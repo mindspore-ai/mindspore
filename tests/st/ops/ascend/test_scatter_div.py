@@ -77,6 +77,8 @@ def scattre_div_dynamic_indices():
 
 
 @pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_scattre_div_forward_float16():
     """
@@ -94,6 +96,8 @@ def test_scattre_div_forward_float16():
 
 
 @pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_scattre_div_forward_float32():
     """

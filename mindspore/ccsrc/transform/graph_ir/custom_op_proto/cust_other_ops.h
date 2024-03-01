@@ -69,6 +69,13 @@ REG_CUST_OP(GenerateEodMask)
     .REQUIRED_ATTR(n_error_mode, String)
     .CUST_OP_END_FACTORY_REG(GenerateEodMask)
 
-
+REG_CUST_OP(ConcatOffset)
+    .DYNAMIC_INPUT(x, TensorType({DT_BOOL, DT_DOUBLE, DT_FLOAT, DT_FLOAT16, DT_INT16, DT_INT32, DT_INT64,
+                                  DT_INT8, DT_UINT16, DT_UINT32, DT_UINT64, DT_UINT8}))
+    .DYNAMIC_OUTPUT(y, TensorType({DT_BOOL, DT_DOUBLE, DT_FLOAT, DT_FLOAT16, DT_INT16, DT_INT32, DT_INT64,
+                                   DT_INT8, DT_UINT16, DT_UINT32, DT_UINT64, DT_UINT8}))
+    .REQUIRED_ATTR(N, Int)
+    .REQUIRED_ATTR(axis, Int)
+    .CUST_OP_END_FACTORY_REG(ConcatOffset)
 }  // namespace ge
 #endif  // MINDSPORE_CCSRC_GRAPH_IR_CUSTOM_OP_PROTO_CUST_OTHER_OPS_H_

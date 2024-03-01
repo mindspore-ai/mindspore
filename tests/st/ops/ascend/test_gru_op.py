@@ -89,6 +89,8 @@ class GRUWeightBias():
 
 
 @pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_sit_gru_forward_input_3_32_32_is_32_hs_16():
     input_size = 32
@@ -129,6 +131,8 @@ def test_sit_gru_forward_input_3_32_32_is_32_hs_16():
 
 
 @pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_sit_gru_grad_input_3_32_32_is_32_hs_16():
     input_size = 32

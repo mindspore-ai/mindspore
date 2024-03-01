@@ -177,6 +177,8 @@ def test_dynamic_setitem_int_number():
 @pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_dynamic_setitem_int_tensor():
     """
@@ -218,6 +220,8 @@ def test_dynamic_setitem_int_sequence():
 @pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_dynamic_setitem_tensor_number():
     """
@@ -238,6 +242,8 @@ def test_dynamic_setitem_tensor_number():
 @pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_dynamic_setitem_tensor_tensor():
     """
@@ -473,6 +479,8 @@ def test_dynamic_setitem_bool_sequence():
 @pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_dynamic_setitem_list_number():
     """
@@ -492,6 +500,8 @@ def test_dynamic_setitem_list_number():
 @pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_dynamic_setitem_list_tensor():
     """
@@ -533,6 +543,8 @@ def test_dynamic_setitem_list_sequence():
 @pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_dynamic_setitem_slice_sequence():
     """

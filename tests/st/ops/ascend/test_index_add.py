@@ -47,6 +47,8 @@ def index_add_forward(nptype):
 
 
 @pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_index_add_float32():
     """
@@ -61,6 +63,8 @@ def test_index_add_float32():
 
 
 @pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_index_add_float16():
     """
@@ -75,6 +79,8 @@ def test_index_add_float16():
 
 
 @pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_index_add_int32():
     """
@@ -89,6 +95,8 @@ def test_index_add_int32():
 
 
 @pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_index_add_int8():
     """
@@ -103,6 +111,8 @@ def test_index_add_int8():
 
 
 @pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_index_add_uint8():
     """

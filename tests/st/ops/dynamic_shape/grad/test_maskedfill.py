@@ -50,6 +50,8 @@ def run_dynamic_rank():
 @pytest.mark.level2
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 def test_dynamic_maskedfill_gpu():
     """
     Feature: MaskedFill Grad DynamicShape.

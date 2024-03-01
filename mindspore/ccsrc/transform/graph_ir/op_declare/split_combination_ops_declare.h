@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_SPLIT_COMBINATION_OPS_DECLARE_H_
 
 #include "op_proto/inc/split_combination_ops.h"
+#include "transform/graph_ir/custom_op_proto/cust_other_ops.h"
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
 #include "utils/hash_map.h"
 
@@ -48,4 +49,9 @@ DECLARE_OP_USE_OUTPUT(Pack)
 
 DECLARE_OP_ADAPTER(SplitV)
 DECLARE_OP_USE_DYN_OUTPUT(SplitV)
+
+DECLARE_CUST_OP_ADAPTER(ConcatOffset)
+DECLARE_CUST_OP_USE_DYN_INPUT(ConcatOffset)
+DECLARE_CUST_OP_USE_DYN_OUTPUT(ConcatOffset)
+DECLARE_CUST_OP_USE_OUTPUT(ConcatOffset)
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_SPLIT_COMBINATION_OPS_DECLARE_H_

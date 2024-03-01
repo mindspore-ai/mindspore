@@ -129,22 +129,29 @@ ATTR_MAP(CropAndResizeD) = {{"extrapolation_value", ATTR_DESC(extrapolation_valu
                             {"method", ATTR_DESC(method, AnyTraits<std::string>())},
                             {"crop_size", ATTR_DESC(crop_size, AnyTraits<std::vector<int64_t>>())}};
 OUTPUT_MAP(CropAndResizeD) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(CropAndResize, kNameCropAndResize, ADPT_DESC(CropAndResizeD))
+
+// CropAndResize
+CUST_INPUT_MAP(CropAndResize) = {
+  {1, INPUT_DESC(image)}, {2, INPUT_DESC(boxes)}, {3, INPUT_DESC(box_index)}, {4, INPUT_DESC(crop_size)}};
+CUST_ATTR_MAP(CropAndResize) = {{"method", ATTR_DESC(method, AnyTraits<std::string>())},
+                                {"extrapolation_value", ATTR_DESC(extrapolation_value, AnyTraits<float>())}};
+CUST_OUTPUT_MAP(CropAndResize) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(CropAndResize, prim::kPrimCropAndResize->name(), CUST_ADPT_DESC(CropAndResize));
 
 // CropAndResizeGradImage
-INPUT_MAP(CropAndResizeGradImage) = {
+CUST_INPUT_MAP(CropAndResizeGradImage) = {
   {1, INPUT_DESC(grads)}, {2, INPUT_DESC(boxes)}, {3, INPUT_DESC(box_index)}, {4, INPUT_DESC(image_size)}};
-ATTR_MAP(CropAndResizeGradImage) = {{"method", ATTR_DESC(method, AnyTraits<std::string>())},
-                                    {"T", ATTR_DESC(T, AnyTraits<GEType>())}};
-OUTPUT_MAP(CropAndResizeGradImage) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(CropAndResizeGradImage, kCropAndResizeGradImageOpName, ADPT_DESC(CropAndResizeGradImage))
+CUST_ATTR_MAP(CropAndResizeGradImage) = {{"method", ATTR_DESC(method, AnyTraits<std::string>())},
+                                         {"T", ATTR_DESC(T, AnyTraits<GEType>())}};
+CUST_OUTPUT_MAP(CropAndResizeGradImage) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(CropAndResizeGradImage, kCropAndResizeGradImageOpName, CUST_ADPT_DESC(CropAndResizeGradImage))
 
 // CropAndResizeGradBoxes
-INPUT_MAP(CropAndResizeGradBoxes) = {
+CUST_INPUT_MAP(CropAndResizeGradBoxes) = {
   {1, INPUT_DESC(grads)}, {2, INPUT_DESC(images)}, {3, INPUT_DESC(boxes)}, {4, INPUT_DESC(box_index)}};
-ATTR_MAP(CropAndResizeGradBoxes) = {{"method", ATTR_DESC(method, AnyTraits<std::string>())}};
-OUTPUT_MAP(CropAndResizeGradBoxes) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(CropAndResizeGradBoxes, kCropAndResizeGradBoxesOpName, ADPT_DESC(CropAndResizeGradBoxes))
+CUST_ATTR_MAP(CropAndResizeGradBoxes) = {{"method", ATTR_DESC(method, AnyTraits<std::string>())}};
+CUST_OUTPUT_MAP(CropAndResizeGradBoxes) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(CropAndResizeGradBoxes, kCropAndResizeGradBoxesOpName, CUST_ADPT_DESC(CropAndResizeGradBoxes))
 
 // DecodeImage
 INPUT_MAP(DecodeImage) = {{1, INPUT_DESC(contents)}};
