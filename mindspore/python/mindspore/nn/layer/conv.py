@@ -154,9 +154,10 @@ class Conv2d(_Conv):
 
     where :math:`bias` is the output channel bias, :math:`ccor` is
     the `cross-correlation <https://en.wikipedia.org/wiki/Cross-correlation>`_,
-    , :math:`weight` is the convolution kernel value and :math:`X` represents the input feature map.
+    :math:`weight` is the convolution kernel value and :math:`X` represents the input feature map.
 
     Here are the indices' meanings:
+
     - :math:`i` corresponds to the batch number, the range is :math:`[0, N-1]`,
       where :math:`N` is the batch size of the input.
 
@@ -383,9 +384,10 @@ class Conv1d(_Conv):
 
     where :math:`bias` is the output channel bias, :math:`ccor` is
     the `cross-correlation <https://en.wikipedia.org/wiki/Cross-correlation>`_,
-    , :math:`weight` is the convolution kernel value and :math:`X` represents the input feature map.
+    :math:`weight` is the convolution kernel value and :math:`X` represents the input feature map.
 
     Here are the indices' meanings:
+
     - :math:`i` corresponds to the batch number, the range is :math:`[0, N-1]`,
       where :math:`N` is the batch size of the input.
 
@@ -599,9 +601,10 @@ class Conv3d(_Conv):
 
     where :math:`bias` is the output channel bias, :math:`ccor` is
     the `cross-correlation <https://en.wikipedia.org/wiki/Cross-correlation>`_,
-    , :math:`weight` is the convolution kernel value and :math:`X` represents the input feature map.
+    :math:`weight` is the convolution kernel value and :math:`X` represents the input feature map.
 
     Here are the indices' meanings:
+
     - :math:`i` corresponds to the batch number, the range is :math:`[0, N-1]`,
       where :math:`N` is the batch size of the input.
 
