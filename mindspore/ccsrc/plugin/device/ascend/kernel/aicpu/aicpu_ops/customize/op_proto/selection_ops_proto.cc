@@ -577,17 +577,4 @@ IMPLEMT_COMMON_INFERFUNC(SliceInferShape) {
 
 COMMON_INFER_FUNC_REG(Slice, SliceInferShape);
 // ----------------Slice Op END ----------------------
-
-// ----------------SearchSorted-------------------
-IMPLEMT_COMMON_INFERFUNC(SearchSortedInferShape) {
-  TensorDesc output_desc = op.GetOutputDescByName("out");
-  output_desc.SetShape(op.GetInputDescByName("values").GetShape());
-  DataType dtype;
-  RETURN_IF_FAILURE(op.GetAttr("dtype", dtype));
-  output_desc.SetDataType(dtype);
-  return op.UpdateOutputDesc("out", output_desc);
-}
-
-COMMON_INFER_FUNC_REG(SearchSorted, SearchSortedInferShape);
-// ----------------SearchSorted END-------------------
 }  // namespace ge
