@@ -37,7 +37,7 @@ Status LLMEngine::AddModelInner(mindspore::LLMModel *llm_model, const std::vecto
   auto model_paths = VectorCharToString(model_paths_c);
   auto options = MapVectorCharToString(options_c);
   auto postprocess_model_path = CharToString(postprocess_model_path_c);
-  uint64_t model_id = -1;
+  uint64_t model_id = 0;
   auto status = impl_->AddModel(model_paths, options, postprocess_model_path, &model_id);
   if (status != kSuccess) {
     return status;
