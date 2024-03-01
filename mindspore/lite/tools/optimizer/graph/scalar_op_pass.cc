@@ -253,15 +253,15 @@ CNodePtr ScalarOpPass::GenerateStridedSlice(const FuncGraphPtr &func_graph, cons
   MS_CHECK_TRUE_MSG(tmp_abstract != nullptr, nullptr, "make AbstractTensor failed");
 
   auto begin_mask = GenerateScalarValue(func_graph, 0);
-  MS_EXCEPTION_IF_NULL(begin_mask);
+  MS_CHECK_TRUE_MSG(begin_mask != nullptr, nullptr, "generate StridedSlice begin_mask node failed.");
   auto end_mask = GenerateScalarValue(func_graph, 0);
-  MS_EXCEPTION_IF_NULL(end_mask);
+  MS_CHECK_TRUE_MSG(end_mask != nullptr, nullptr, "generate StridedSlice end_mask node failed.");
   auto ellipsis_mask = GenerateScalarValue(func_graph, 0);
-  MS_EXCEPTION_IF_NULL(ellipsis_mask);
+  MS_CHECK_TRUE_MSG(ellipsis_mask != nullptr, nullptr, "generate StridedSlice ellipsis_mask node failed.");
   auto new_axis_mask = GenerateScalarValue(func_graph, 0);
-  MS_EXCEPTION_IF_NULL(new_axis_mask);
+  MS_CHECK_TRUE_MSG(new_axis_mask != nullptr, nullptr, "generate StridedSlice new_axis_mask node failed.");
   auto shrink_axis_mask = GenerateScalarValue(func_graph, 0);
-  MS_EXCEPTION_IF_NULL(shrink_axis_mask);
+  MS_CHECK_TRUE_MSG(shrink_axis_mask != nullptr, nullptr, "generate StridedSlice shrink_axis_mask node failed.");
 
   auto prim = NewValueNode(std::make_shared<Primitive>(kStridedSliceOpName));
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
