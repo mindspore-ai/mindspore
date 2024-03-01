@@ -44,6 +44,10 @@
 #include "tools/converter/quantizer/smooth_quant.h"
 
 namespace mindspore::lite::quant {
+namespace {
+constexpr auto kAttrNameNeedFusedXoffsetToBias = "need_fused_x_offset_to_bias";
+}
+
 int AscendDistributeFakeQuantTransform::RemoveWeightRedundantNode(const FuncGraphPtr &func_graph,
                                                                   const CNodePtr &cnode) {
   auto manager = func_graph->manager();
@@ -328,6 +332,9 @@ int AscendDistributeFakeQuantTransform::InsertAscendQuantDeQuantNode(const FuncG
     if (curr_quant_type != lite::quant::QUANT_ALL) {
       continue;
     }
+    auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
+    primitive->SetAttrs({{kAttrNameNeedFusedXoffsetToBias, MakeValue(true)}});
+
     lite::quant::InsertQuantNodeManager insert_node_manager;
     auto ret = insert_node_manager.InsertAscendDeQuantNode(func_graph, cnode);
     if (ret != RET_OK) {
