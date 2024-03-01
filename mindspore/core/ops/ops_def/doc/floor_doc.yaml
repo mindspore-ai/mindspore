@@ -7,7 +7,7 @@ floor:
             out_i = \lfloor x_i \rfloor
 
         Args:
-            input (Tensor): The input tensor, its data type must be float16,
+            input (Tensor): The input tensor, :math:`x` in the above formula. Its data type must be float16,
                 float32 or float64.
 
         Returns:

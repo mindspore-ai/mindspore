@@ -11135,7 +11135,8 @@ def vecdot(x, y, *, axis=-1):
     Calculates the dot product of two batches of vectors across the specified dimension.
 
     The formula of calculation is as follows.
-    :math:`\bar{x_{i}}` represents the conjugate for complex vectors, and it is the raw value for real vectors.
+    :math:`\bar{x_{i}}` represents the conjugate for complex vectors,
+    and :math:`\bar{x_{i}}` is the raw value for real vectors.
 
     .. math::
 

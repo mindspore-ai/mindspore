@@ -21,7 +21,7 @@ reshape:
             ValueError: The given 'shape' contains elements less than -1.
             ValueError: For scenarios where the given 'shape' does not contain -1, the product of elements of the given
                 'shape' is not equal to the product of the input's 'shape',
-                :math:`\prod_{i=1}^{R}x_{i}\ne \prod_{i=1}^{S}y_{i}`, (Namely, it does not match the input's array size).
+                :math:`\prod_{i=1}^{R}x_{i} \ne \prod_{i=1}^{S}y_{i}`, (Namely, it does not match the input's array size).
                 And for scenarios where the given 'shape' contains -1, the product of elements other than -1 of the given
                 `shape` is an aliquant part of the product of the input's 'shape' :math:`\prod_{i=1}^{R}x_{i}`.
 

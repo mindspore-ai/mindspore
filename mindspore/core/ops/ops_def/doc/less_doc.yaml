@@ -2,6 +2,12 @@ less:
   description: |
     Computes the boolean value of :math:`input < other` element-wise.
 
+    .. math::
+        out_{i} =\begin{cases}
+            & \text{True,    if } input_{i}<other_{i} \\
+            & \text{False,   if } input_{i}>=other_{i}
+            \end{cases}
+
     Args:
         input (Union[Tensor, Number, bool]): The first input is a number or
             a bool or a tensor whose data type is number or bool.

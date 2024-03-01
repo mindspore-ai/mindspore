@@ -39,8 +39,8 @@ def idct(x, type=2, n=None, axis=-1, norm=None):
             Cosine Transform in One and Two Dimensions', by J. Makhoul, IEEE Transactions on
             acoustics, speech and signal processing vol. 28(1), pp. 27-34,
             <https://doi.org/10.1109/TASSP.1980.1163351>`_ . Default: ``2`` .
-        n (int, optional): Length of the transform. If n < x.shape[axis],
-            x is truncated. If n > x.shape[axis], x is zero-padded. Default: ``n = x.shape[axis]`` .
+        n (int, optional): Length of the transform. If :math:`n < x.shape[axis]`,
+            x is truncated. If :math:`n > x.shape[axis]`, x is zero-padded. Default: ``n = x.shape[axis]`` .
         axis (int, optional): Axis along which the idct is computed. Default: ``-1`` .
         norm (str, optional): Normalization mode,
             only support ``"ORTHO"`` now. Default: ``"ORTHO"`` .
@@ -51,7 +51,7 @@ def idct(x, type=2, n=None, axis=-1, norm=None):
     Raises:
         TypeError: If the `x` type is not Tensor.
         TypeError: If `n` or `dim` type is not int.
-        ValueError: If `axis` is not in the range of "[ `-x.ndim` , `x.ndim` )".
+        ValueError: If `axis` is not in the range of :math:`[-x.ndim, x.ndim)`.
         ValueError: If `n` is less than 1.
         ValueError: If `norm` is not "ORTHO".
 

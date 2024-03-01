@@ -4264,7 +4264,7 @@ def tensor_scatter_mul(input_x, indices, updates):
     equal to the shape of `input_x[indices]`. For more details, see Examples.
 
     .. math::
-        output[indices] = input\_x \times update
+        output\left [indices  \right ] = input\_x\times  update
 
     Note:
         - If some values of the `indices` are out of bound, instead of raising an index error,

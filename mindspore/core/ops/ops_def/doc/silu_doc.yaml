@@ -13,7 +13,7 @@ silu:
             \text{sigma}(x_i) = \frac{1}{1 + \exp(-x_i)},
 
         Args:
-            input (Tensor): `input` is `x` in the preceding formula. Input with the data type
+            input (Tensor): `input` is :math:`x` in the preceding formula. Input with the data type
                 float16 or float32.
 
         Returns:

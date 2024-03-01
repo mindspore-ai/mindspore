@@ -20,8 +20,8 @@ layer_norm:
     Inputs:
         - **input_x** (Tensor) - Tensor of shape :math:`(N, \ldots)`.
           The input of LayerNorm. Supported dtypes: float16, float32, float64.
-        - **gamma** (Tensor) - Tensor of shape `input_x_shape[begin_params_axis:]`.
-        - **beta** (Tensor) - Tensor of shape `input_x_shape[begin_params_axis:]`.
+        - **gamma** (Tensor) - Learnable parameter :math:`\gamma` . Tensor of shape `input_x_shape[begin_params_axis:]`. Supported dtypes: float16, float32, float64.
+        - **beta** (Tensor) - Learnable parameter :math:`\beta` . Tensor of shape `input_x_shape[begin_params_axis:]`. Supported dtypes: float16, float32, float64.
 
     Outputs:
         tuple[Tensor], tuple of 3 tensors, the normalized input and the updated parameters.

@@ -22,4 +22,4 @@ mindspore.scipy.linalg.cho_solve
           默认值：``True``。
 
     返回：
-        Tensor, 线性方程 :math:`A x = b` 的解。
+        Tensor，线性方程 :math:`A x = b` 的解。
