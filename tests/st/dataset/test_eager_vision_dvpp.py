@@ -15,6 +15,7 @@
 """Test Eager Support for Vision ops in Dataset"""
 import os
 import sys
+import time
 import cv2
 import numpy as np
 import pytest
@@ -1436,8 +1437,26 @@ def test_eager_affine_dvpp_exception():
     assert "Invalid interpolation mode, only support BILINEAR and NEAREST" in str(error_info.value)
 
 
+def test_resize_performance():
+    """
+    Feature: Resize
+    Description: Test dvpp Resize performance in eager mode after optimize ndarray to cde.Tensor without memcpy
+    Expectation: SUCCESS
+    """
+
+    img_bytes = np.fromfile(input_apple_jpg, dtype=np.uint8)
+    img_decode = vision.Decode()(img_bytes)
+    _ = vision.Resize(224).device("Ascend")(img_decode)
+
+    s = time.time()
+    for _ in range(1000):
+        _ = vision.Resize(224).device("Ascend")(img_decode)
+    assert (time.time() - s) < 5.0  # Probably around 4.43 seconds
+
+
 if __name__ == '__main__':
     test_eager_resize_dvpp()
+    test_resize_performance()
     test_eager_resize_dvpp_exception()
     test_eager_decode_dvpp()
     test_eager_decode_dvpp_exception()
