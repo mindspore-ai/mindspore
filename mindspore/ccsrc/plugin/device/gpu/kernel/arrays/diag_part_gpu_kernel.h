@@ -72,7 +72,7 @@ class DiagPartGpuKernelMod : public NativeGpuKernelMod {
 
  private:
   int p_{0};
-  int64_t output_dims;
+  int64_t output_dims{0};
   size_t unit_size_{1};
   size_t input_elements_{0};
   size_t output_elements_{1};

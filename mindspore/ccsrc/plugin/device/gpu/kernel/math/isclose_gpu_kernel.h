@@ -56,9 +56,9 @@ class IsCloseGpuKernelMod : public NativeGpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  void *stream_ptr_;
-  bool is_null_input_;
-  std::unique_ptr<cukernel::GpuKernelHelperBase> helper_ptr_ = nullptr;
+  void *stream_ptr_{nullptr};
+  bool is_null_input_{false};
+  std::unique_ptr<cukernel::GpuKernelHelperBase> helper_ptr_{nullptr};
   std::optional<bool> is_input_dynamic_shape_ = {};
   std::shared_ptr<cukernel::IsCloseAttr> attr_ptr_{nullptr};
 };

@@ -57,11 +57,11 @@ class ScatterFunctorGPUKernelMod : public NativeGpuKernelMod {
   static std::map<std::string, std::vector<std::pair<KernelAttr, LaunchFunc>>> kernel_attr_map_;
   ScatterFunctorType scatter_functor_type_;
   LaunchFunc kernel_func_{};
-  size_t first_dim_size_;
-  size_t input_size_;
-  size_t inner_size_;
-  size_t indices_size_;
-  size_t updates_size_;
+  size_t first_dim_size_{0};
+  size_t input_size_{0};
+  size_t inner_size_{0};
+  size_t indices_size_{0};
+  size_t updates_size_{0};
   std::string kernel_type_;
   void *cuda_stream_{nullptr};
   bool has_null_input_{false};
