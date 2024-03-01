@@ -416,8 +416,8 @@ class TransformerDecoderLayer(Cell):
           or :math:`(N*nhead, T, T)`. Supported types: float16, float32, float64, bool. Default: ``None``.
         - **memory_mask** (Tensor, optional) - The mask of the memory sequence. The shape is
           :math:`(T, S)` . Supported types: float16, float32, float64, bool. Default: ``None``.
-        - **tgt_key_padding_mask** (Tensor, optional) - The mask of the tgt keys per batch. The shape is
-          :math:`(T)` for unbatched input, otherwise :math:`(N, S)` . Supported types: float16, float32,
+        - **tgt_key_padding_mask** (Tensor, optional): The mask of the tgt keys per batch. The shape is
+          :math:`(T)` for unbatched input, otherwise :math:`(N, T)` . Supported types: float16, float32,
           float64, bool. Default: ``None``.
         - **memory_key_padding_mask** (Tensor, optional) - The mask of the memory keys per batch. The shape
           is :math:`(S)` for unbatched input, otherwise :math:`(N, S)` . Supported types: float16, float32,

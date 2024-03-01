@@ -30,7 +30,9 @@ namespace datadump {
 class BACKEND_EXPORT DataDumper {
  public:
   virtual void Initialize() { MS_LOG(WARNING) << "Initialize ACL DataDumper"; }
-  virtual void EnableDump(uint32_t device_id, uint32_t step_id) { MS_LOG(WARNING) << "EnableDump ACL DataDumper"; }
+  virtual void EnableDump(uint32_t device_id, uint32_t step_id, bool is_init) {
+    MS_LOG(WARNING) << "EnableDump ACL DataDumper";
+  }
   virtual void Finalize() { MS_LOG(WARNING) << "Finalize ACL DataDumper"; }
 };
 

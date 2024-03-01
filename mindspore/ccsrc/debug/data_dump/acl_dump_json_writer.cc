@@ -72,13 +72,18 @@ void AclDumpJsonWriter::Parse() {
   }
 }
 
-bool AclDumpJsonWriter::WriteToFile(uint32_t device_id, uint32_t step_id) {
+bool AclDumpJsonWriter::WriteToFile(uint32_t device_id, uint32_t step_id, bool is_init) {
   nlohmann::json dump_list;
   if (!layer_.empty()) {
     dump_list.push_back({{"layer", layer_}});
   }
   std::string dump_path = dump_base_path_ + "/" + std::to_string(step_id);
-  nlohmann::json dump = {{"dump_path", dump_path}, {"dump_mode", dump_mode_}};
+  nlohmann::json dump;
+  if (is_init == True) {
+    dump = {{"dump_path", dump_base_path_}, {"dump_mode", dump_mode_}, {"dump_step", std::to_string(2147483647)}};
+  } else {
+    dump = {{"dump_path", dump_path}, {"dump_mode", dump_mode_}};
+  }
   if (!dump_list.empty()) {
     dump["dump_list"] = dump_list;
   } else {

@@ -32,7 +32,7 @@ void InitializeAcl() {
   }
 
   if (aclInit(nullptr) != ACL_ERROR_NONE) {
-    MS_LOG(WARNING) << "Call aclInit failed, acl data dump function will be unusable.";
+    MS_LOG(INFO) << "Call aclInit failed, acl data dump function may be unusable.";
   } else {
     MS_LOG(DEBUG) << "Call aclInit successfully";
   }
@@ -53,13 +53,13 @@ class AclDataDumper : public DataDumper {
       MS_LOG(INFO) << "Call aclmdlInitDump failed, acl data dump function will be unusable.";
     }
   }
-  void EnableDump(uint32_t device_id, uint32_t step_id) override {
+  void EnableDump(uint32_t device_id, uint32_t step_id, bool is_init) override {
     auto &dump_parser = DumpJsonParser::GetInstance();
     dump_parser.Parse();
     if (dump_parser.async_dump_enabled()) {
       auto &acl_json_writer = AclDumpJsonWriter::GetInstance();
       acl_json_writer.Parse();
-      acl_json_writer.WriteToFile(device_id, step_id);
+      acl_json_writer.WriteToFile(device_id, step_id, is_init);
       auto acl_dump_file_path = acl_json_writer.GetAclDumpJsonPath();
       std::string json_file_name = acl_dump_file_path + +"/acl_dump_" + std::to_string(device_id) + ".json";
       if (aclmdlSetDump(json_file_name.c_str()) != ACL_ERROR_NONE) {
