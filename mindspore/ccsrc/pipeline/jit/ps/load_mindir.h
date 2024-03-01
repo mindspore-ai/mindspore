@@ -29,6 +29,7 @@
 namespace mindspore {
 namespace pipeline {
 bool ModifyGraphGeneratedByMindIR(const ResourcePtr &resource);
+void ModifyGraphs(const FuncGraphPtr &func_graph);
 void ModifyOneFuncGraph(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *func_graph_set,
                         std::set<FuncGraphPtr> *func_graph_modified);
 void ModifyOneCNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
