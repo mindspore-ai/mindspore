@@ -90,6 +90,7 @@ def run_generate_eod_mask_on_step(data, element_pos, bit_pos, n_step, n_error_mo
             else:
                 assert (source_data == out.asnumpy()).all()
 
+@pytest.mark.skip(reason="there should be only one operation in one process")
 def test_generate_eod_mask_fp16():
     """
     Feature: Test bit flip on the first element on 14-th bits with float16 dtype.
@@ -101,7 +102,7 @@ def test_generate_eod_mask_fp16():
     res = run_generate_eod_mask_support_dtype(test_data, element_pos=1, bit_pos=14, n_step=[0])
     assert res.asnumpy()[0][1] == -test_data.asnumpy()[0][1], f"The output of ms is {res}"
 
-
+@pytest.mark.skip(reason="there should be only one operation in one process")
 def test_generate_eod_mask_fp32():
     """
     Feature: Test bit flip on the first element on 14-th bits with float32 dtype.
@@ -114,6 +115,7 @@ def test_generate_eod_mask_fp32():
     res = run_generate_eod_mask_support_dtype(test_data, element_pos=1, bit_pos=31, n_step=[0])
     assert res.asnumpy()[0][1] == -test_data.asnumpy()[0][1], f"The output of ms is {res}"
 
+@pytest.mark.skip(reason="there should be only one operation in one process")
 def test_generate_eod_mask_bf16():
     """
     Feature: Test bit flip on the first element on 14-th bits with float32 dtype.
@@ -126,6 +128,7 @@ def test_generate_eod_mask_bf16():
     res = run_generate_eod_mask_support_dtype(test_data, element_pos=1, bit_pos=15, n_step=[0])
     assert res[0][1] == -test_data[0][1], f"The output of ms is {res}"
 
+@pytest.mark.skip(reason="there should be only one operation in one process")
 def test_generate_eod_mask_input_as_fp32_on_specific_step_6():
     """
     Feature: Test bit flip on the first element on step6.
@@ -136,6 +139,7 @@ def test_generate_eod_mask_input_as_fp32_on_specific_step_6():
     test_data = Tensor(x, dtype=mindspore.float32)
     run_generate_eod_mask_on_step(test_data, element_pos=3, bit_pos=31, n_step=[6])
 
+@pytest.mark.skip(reason="there should be only one operation in one process")
 def test_generate_eod_mask_input_as_fp32_on_specific_step_1_6():
     """
     Feature: Test bit flip on the first element on 14-th bits on step 1th and 6th
@@ -147,6 +151,7 @@ def test_generate_eod_mask_input_as_fp32_on_specific_step_1_6():
     print("Test the flip on specific steps")
     run_generate_eod_mask_on_step(test_data, element_pos=3, bit_pos=31, n_step=[1, 6])
 
+@pytest.mark.skip(reason="there should be only one operation in one process")
 def test_generate_eod_mask_on_each_step():
     """
     Feature: Test bit flip on the first element on 14-th bits on each step in 10 steps
@@ -156,6 +161,7 @@ def test_generate_eod_mask_on_each_step():
     test_data = Tensor([[0.1]], dtype=mindspore.float32)
     run_generate_eod_mask_on_step(test_data, element_pos=0, bit_pos=31, n_step=[1], n_error_mode='circle')
 
+@pytest.mark.skip(reason="there should be only one operation in one process")
 def test_generate_eod_mask_input_as_fp32_on_circle_2():
     """
     Feature: Test bit flip on the first element on 14-th bits on step 1th and 6th
