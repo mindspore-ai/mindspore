@@ -28,6 +28,7 @@ INPUT_MAP(CumulativeLogsumexp) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(axis)}};
 ATTR_MAP(CumulativeLogsumexp) = {{"exclusive", ATTR_DESC(exclusive, AnyTraits<bool>())},
                                  {"reverse", ATTR_DESC(reverse, AnyTraits<bool>())}};
 OUTPUT_MAP(CumulativeLogsumexp) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(CumulativeLogsumexp, kNameCumulativeLogsumexp, ADPT_DESC(CumulativeLogsumexp))
 
 // Cumsum
 INPUT_MAP(Cumsum) = {{kIndex1, INPUT_DESC(x)}, {kIndex2, INPUT_DESC(axis)}};
