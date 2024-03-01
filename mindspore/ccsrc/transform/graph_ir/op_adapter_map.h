@@ -523,6 +523,7 @@ constexpr const char kNameReal[] = "Real";
 constexpr const char kNameLogUniformCandidateSampler[] = "LogUniformCandidateSampler";
 constexpr const char kNameCoalesce[] = "Coalesce";
 constexpr const char kNameFFTWithSize[] = "FFTWithSize";
+constexpr const char kNameCumulativeLogsumexp[] = "CumulativeLogsumexp";
 
 class OpAdapterDesc;
 
