@@ -80,7 +80,7 @@ def _convert_python_data(data):
     Returns:
         data, a data convert C++ to python
     """
-    if isinstance(data, Tensor) and data.adapter_flag:
+    if isinstance(data, (Tensor, PythonTensor)) and data.adapter_flag:
         return ms_adapter_registry.tensor(data)
     if _ms_adapter_tensor_as_parameter_output(data):
         return data.tensor
