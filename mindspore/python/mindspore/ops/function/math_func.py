@@ -5428,7 +5428,7 @@ def cumsum(x, axis, dtype=None):
         For the case of dynamic shape, the dtype of `x` only support int32, float16 or float32.
 
     Args:
-        x (Tensor): The input Tensor of shape :math:`(N,*)` where :math:`*` means, any number
+        x (Tensor): The input Tensor of shape :math:`(N, *)` where :math:`*` means, any number
             of additional dimensions.
         axis (int): Axis along which the cumulative sum is computed.
         dtype (:class:`mindspore.dtype`, optional): The desired dtype of returned Tensor. If specified,

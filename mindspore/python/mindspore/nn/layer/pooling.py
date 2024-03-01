@@ -168,7 +168,7 @@ class LPPool2d(Cell):
         f(X) = \sqrt[p]{\sum_{x \in X} x^{p}}
 
     Args:
-        norm_type(Union[int, float]) - Type of normalization, represents :math:`p` in the formula, can not be 0.
+        norm_type(Union[int, float]): Type of normalization, represents :math:`p` in the formula, can not be 0.
 
             - if p = 1, the result is the sum of the elements within the pooling kernel(proportional to average
               pooling).
