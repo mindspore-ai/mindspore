@@ -178,9 +178,14 @@ class AstFlattener(ast.NodeTransformer):
             todos = getattr(node, todo_name)
             if isinstance(todos, list):
                 new_list = []
-                for todo in todos:
+                for idx, todo in enumerate(todos):
                     # Starred expression(e.g. *args) cannot be flatten.
                     if isinstance(todo, ast.Starred):
+                        new_list.append(todo)
+                        continue
+                    # For codes like 'xxx and yyy and zzz', only 'xxx' can be flatten and parsed,
+                    # otherwise executing 'yyy' may raise an exception when 'xxx' is False
+                    if isinstance(node, ast.BoolOp) and isinstance(node.op, ast.And) and idx > 0:
                         new_list.append(todo)
                         continue
                     # ast.keywords are processed individually:
