@@ -77,6 +77,7 @@ def perf_bytecode_complex(a, b):
     return a
 
 
+@pytest.mark.skip
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu

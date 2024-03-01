@@ -1713,7 +1713,7 @@ bool GraphBuilder::HandleCallClass(CallNode *call_node) {
   }
   AbstractType *t = static_cast<AbstractType *>(vobj);
   AObject::Type type = t->GetTypeType();
-  if (ClassInstantiationFold(call_node, type)) {
+  if (!trace_flag() && ClassInstantiationFold(call_node, type)) {
     return true;
   }
 
