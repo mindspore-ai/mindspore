@@ -484,7 +484,7 @@ class Crop(ImageTensorOperation):
         self.size = size
 
     def parse(self):
-        return cde.CropOperation(self.coordinates, self.size)
+        return cde.CropOperation(self.coordinates, self.size, "CPU")
 
 
 class CutMixBatch(ImageTensorOperation):
@@ -681,7 +681,7 @@ class GaussianBlur(ImageTensorOperation):
         self.sigma = sigma
 
     def parse(self):
-        return cde.GaussianBlurOperation(self.kernel_size, self.sigma)
+        return cde.GaussianBlurOperation(self.kernel_size, self.sigma, "CPU")
 
 
 class HorizontalFlip(ImageTensorOperation):
