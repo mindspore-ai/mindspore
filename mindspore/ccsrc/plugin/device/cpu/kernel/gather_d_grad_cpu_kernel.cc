@@ -75,6 +75,19 @@ int GatherDGradV2CpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   index_shape_ = Convert2SizeT(inputs[kIndex2]->GetShapeVector());
   grad_shape_ = Convert2SizeT(inputs[kIndex3]->GetShapeVector());
   output_shape_ = Convert2SizeT(outputs[0]->GetShapeVector());
+
+  if (index_shape_.empty()) {
+    index_shape_ = {1};
+  }
+
+  if (output_shape_.empty()) {
+    output_shape_ = {1};
+  }
+
+  if (grad_shape_.empty()) {
+    grad_shape_ = {1};
+  }
+
   return KRET_OK;
 }
 

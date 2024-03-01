@@ -87,6 +87,15 @@ int GatherDCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const
 
   input_shape_ = Convert2SizeT(inputs[kIndex0]->GetShapeVector());
   index_shape_ = Convert2SizeT(inputs[kIndex2]->GetShapeVector());
+
+  if (input_shape_.empty()) {
+    input_shape_ = {1};
+  }
+
+  if (index_shape_.empty()) {
+    index_shape_ = {1};
+  }
+
   output_shape_ = index_shape_;
   return KRET_OK;
 }

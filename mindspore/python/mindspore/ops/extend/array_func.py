@@ -19,9 +19,9 @@ Array Operators
 
 """
 
-from mindspore.ops.auto_generate.gen_ops_prim import gather_ext_op
 from mindspore.ops.operations.array_ops import ArgMaxWithValue, ArgMinWithValue
 from mindspore.ops._primitive_cache import _get_cache_prim
+from mindspore.ops.auto_generate.gen_ops_prim import gather_d_op
 
 # define Primitive global variables
 
@@ -41,7 +41,8 @@ def gather(input, dim, index):
 
             - `index.rank == input.rank`;
             - `index.shape[axis] <= input.shape[axis]` where axis goes through all dimensions of `input` except `dim`;
-            - the value of `index` is in range `[-input.shape[dim], input.shape[dim])`.
+            - the value of `index` is in range `[-input.shape[dim], input.shape[dim])`. The behavior is unpredictable
+              when the value of index is out of the valid range on Ascend.
 
     Returns:
         Tensor, has the same type as `input` and the same shape as `index`.
@@ -53,7 +54,7 @@ def gather(input, dim, index):
         TypeError: If the type of `index` is illegal.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore
@@ -66,7 +67,7 @@ def gather(input, dim, index):
         [[-0.1 -0.1]
         [ 0.5  0.5]]
     """
-    return gather_ext_op(input, dim, index)
+    return gather_d_op(input, dim, index)
 
 
 def max(input, dim, keepdim=False):

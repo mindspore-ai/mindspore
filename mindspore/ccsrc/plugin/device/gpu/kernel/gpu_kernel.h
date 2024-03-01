@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,6 +62,8 @@ constexpr size_t kShapeIndex7th = 7;
 constexpr size_t kDim2DShapeSize = 4;
 constexpr size_t kDim3DShapeSize = 5;
 constexpr size_t kPoolingNbDims = kDim3DShapeSize;
+
+constexpr size_t kHelperDimsNum = 5;
 
 static std::map<int, int> kNCHWToNHWCAxisMap = {
   {0, 0},
