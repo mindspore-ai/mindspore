@@ -179,8 +179,6 @@ class BACKEND_EXPORT Debugger : public std::enable_shared_from_this<Debugger> {
   // check if dump using debugger backend is enabled
   bool CheckDebuggerDumpEnabled() const;
 
-  bool CheckProfilerInit() const;
-
   // check if debugger is enabled
   bool CheckDebuggerEnabled() const;
 

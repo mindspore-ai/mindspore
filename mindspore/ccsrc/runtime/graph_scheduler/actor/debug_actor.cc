@@ -145,10 +145,11 @@ void DebugActor::DebugForGraph(const KernelGraphPtr &graph, const DeviceContext 
  */
 void DebugActor::AscendStepStart(const std::vector<KernelGraphPtr> &graphs,
                                  std::vector<DeviceContext *> device_contexts) {
-  if (profiler::Profiler::GetInstance(kAscendDevice) == nullptr || graphs.empty()) {
+  auto profiler = profiler::Profiler::GetInstance(kAscendDevice);
+  if (profiler == nullptr || !profiler->IsInitialized() || graphs.empty()) {
     return;
   }
-  if (profiler::Profiler::GetInstance(kAscendDevice)->GetEnableFlag() && !graphs[0]->IsDatasetGraph()) {
+  if (profiler->GetEnableFlag() && !graphs[0]->IsDatasetGraph()) {
     profile_started_ = false;
     for (size_t i = 0; i < graphs.size(); ++i) {
       MS_EXCEPTION_IF_NULL(graphs[i]);
@@ -156,8 +157,8 @@ void DebugActor::AscendStepStart(const std::vector<KernelGraphPtr> &graphs,
       if (device_contexts[i]->GetDeviceType() == device::DeviceType::kAscend && !profile_started_) {
         device_ctx_ = device_contexts[i];
         device_ctx_->device_res_manager_->BindDeviceToCurrentThread(false);
-        profiler::Profiler::GetInstance(kAscendDevice)
-          ->StepStart(current_step++, device_contexts[i]->device_res_manager_->GetStream());
+        MS_LOG(INFO) << "Dot step start timestamp.";
+        profiler->StepStart(current_step++, device_contexts[i]->device_res_manager_->GetStream());
         profile_started_ = true;
       }
     }
@@ -170,11 +171,12 @@ void DebugActor::AscendStepStart(const std::vector<KernelGraphPtr> &graphs,
  * Description: Add step end timestamp when profiler is end.
  */
 void DebugActor::AscendStepEnd() {
-  if (profiler::Profiler::GetInstance(kAscendDevice) != nullptr &&
-      profiler::Profiler::GetInstance(kAscendDevice)->GetEnableFlag() && profile_started_) {
+  auto profiler = profiler::Profiler::GetInstance(kAscendDevice);
+  if (profile_started_ && profiler != nullptr && profiler->GetEnableFlag()) {
     MS_EXCEPTION_IF_NULL(device_ctx_);
     device_ctx_->device_res_manager_->BindDeviceToCurrentThread(false);
-    profiler::Profiler::GetInstance(kAscendDevice)->StepStop();
+    MS_LOG(INFO) << "Dot step end timestamp.";
+    profiler->StepStop();
     profile_started_ = false;
   }
 }
@@ -189,11 +191,14 @@ void DebugActor::DebugOnStepBegin(const std::vector<KernelGraphPtr> &graphs,
                                   const std::vector<AnfNodePtr> &origin_parameters_order,
                                   std::vector<DeviceContext *> device_contexts,
                                   OpContext<DeviceTensor> *const op_context, const AID *) {
+  MS_LOG(INFO) << "Debug on step begin.";
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   std::string backend = context->backend_policy();
   auto device_context = device_contexts[0];
-  if (device_context->GetDeviceType() == device::DeviceType::kAscend) {
+  auto profiler = profiler::Profiler::GetInstance(kAscendDevice);
+  if ((profiler == nullptr || !profiler->IsInitialized()) &&
+      device_context->GetDeviceType() == device::DeviceType::kAscend) {
     auto device_id = context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
     ACLDump(device_id);
   }
@@ -204,8 +209,6 @@ void DebugActor::DebugOnStepBegin(const std::vector<KernelGraphPtr> &graphs,
   }
   MS_EXCEPTION_IF_NULL(op_context);
   std::lock_guard<std::mutex> locker(debug_mutex_);
-
-  MS_LOG(DEBUG) << "Debug on step begin.";
 #ifdef ENABLE_DEBUGGER
   if (!graphs.empty()) {
     // First graph is the dataset graph when dataset_sink_mode = True
@@ -236,9 +239,6 @@ void DebugActor::DebugOnStepBegin(const std::vector<KernelGraphPtr> &graphs,
       }
     }
   }
-  if (DumpJsonParser::GetInstance().async_dump_enabled()) {
-    MS_LOG(DEBUG) << "Async dump is not need this function currently.";
-  }
 #endif
 }
 
@@ -250,6 +250,7 @@ void DebugActor::DebugOnStepBegin(const std::vector<KernelGraphPtr> &graphs,
  * Ascend and update step number of online debugger GPU.
  */
 void DebugActor::DebugOnStepEnd(OpContext<DeviceTensor> *const op_context, const AID *, int total_running_count_) {
+  MS_LOG(INFO) << "Debug on step begin.";
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   std::string backend = context->backend_policy();
@@ -269,7 +270,6 @@ void DebugActor::DebugOnStepEnd(OpContext<DeviceTensor> *const op_context, const
   MS_EXCEPTION_IF_NULL(op_context);
   std::lock_guard<std::mutex> locker(debug_mutex_);
 
-  MS_LOG(DEBUG) << "Debug on step end.";
 #ifndef ENABLE_SECURITY
   if (DumpJsonParser::GetInstance().GetIterDumpFlag()) {
     CPUE2eDump::DumpParametersData();
