@@ -2,6 +2,9 @@ ceil:
     description: |
         Rounds a tensor up to the closest integer element-wise.
 
+        .. math::
+            out_i = \lceil x_i \rceil = \lfloor x_i \rfloor + 1
+
         Args:
             input (Tensor): The input tensor with a dtype of float16 or float32.
 

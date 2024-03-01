@@ -35,7 +35,7 @@ mindspore.scipy.linalg.eigh
         - **turbo** (bool, 可选) - 使用分而治之算法（速度更快，但占用大量内存，仅适用于需要计算全量特征值的广义特征值问题）。
           如果不需要计算特征向量，则没有显著影响。
           默认值：``True``。
-        - **eigvals** (tuple, 可选) - 要返回的最小和最大（按升序排列）特征值和对应的特征向量的索引: :math:`0<=lo<=hi<=M-1`。
+        - **eigvals** (tuple, 可选) - 要返回的最小和最大（按升序排列）特征值和对应的特征向量的索引: :math:`0 <= lo <= hi <= M-1`。
           如果缺省，则返回所有特征值和特征向量。
           默认值：``None``。
         - **type** (int, 可选) - 对于广义问题，此参数指定 `w` 和 `v` 要解决的问题类型（仅取1、2、3作为可能的输入）：
@@ -52,7 +52,7 @@ mindspore.scipy.linalg.eigh
           默认值：``True``。
 
     返回：
-        - **w** (Tensor) - 返回shape为 :math:`(N,)` 的Tensor，其中特征值 :math:`N(1<=N<=M)`，按升序排列，根据其多样性重复。
+        - **w** (Tensor) - 返回shape为 :math:`(N,)` 的Tensor，其中特征值 :math:`N (1<=N<=M)`，按升序排列，根据其多样性重复。
 
         - **v** (Tensor) - 如果 `eigvals_only==False`，返回shape为 :math:`(M, N)` 的Tensor。
 

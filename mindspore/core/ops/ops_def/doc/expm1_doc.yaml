@@ -7,7 +7,7 @@ expm1:
       out_i = e^{x_i} - 1
 
     Args:
-      input (Tensor): The input Tensor.
+      input (Tensor): The input Tensor. :math:`x` in the above formula.
 
     Returns:
       Tensor, has the same shape as the `input`.

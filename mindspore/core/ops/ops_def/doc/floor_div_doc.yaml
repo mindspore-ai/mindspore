@@ -10,8 +10,7 @@ floor_div:
     the scalar could only be a constant.
 
     .. math::
-
-        out_{i} = \\text{floor}( \\frac{x_i}{y_i})
+        out_{i} = \text{floor}( \frac{input_i}{other_i})
 
     where the :math:`floor` indicates the Floor operator, for more details,
     please refer to the :class:`mindspore.ops.Floor` operator.

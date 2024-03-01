@@ -311,7 +311,6 @@ class Im2Col(Primitive):
 
             - If one int, :math:`pad\_height = pad\_width`.
             - If two int, :math:`pad\_height = pads[0]`, :math:`pad\_width = pads[1]`.
-            - If four int, :math:`pads = [pad\_height\_top, pad\_height\_bottom, pad\_width\_left, pad\_width\_right]`.
 
     Inputs:
         - **x** (Tensor) - input tensor, only 4-D input tensors (batched image-like tensors) are supported.
@@ -5186,7 +5185,7 @@ class TensorScatterMax(Primitive):
 
 
 class TensorScatterMin(Primitive):
-    """
+    r"""
     By comparing the value at the position indicated by `indices` in `input_x` with the value in the `updates`,
     the value at the index will eventually be equal to the smallest one to create a new tensor.
 
@@ -5197,7 +5196,7 @@ class TensorScatterMin(Primitive):
         - **indices** (Tensor) - The index of input tensor whose data type is int32 or int64.
           The rank must be at least 2.
         - **updates** (Tensor) - The tensor to update the input tensor, has the same type as input,
-          and updates.shape should be equal to indices.shape[:-1] + input_x.shape[indices.shape[-1]:].
+          and updates.shape should be equal to :math:`indices.shape[:-1] + input\_x.shape[indices.shape[-1]:]`.
 
     Outputs:
         Tensor, has the same shape and type as `input_x`.
@@ -5392,7 +5391,7 @@ class TensorScatterMul(_TensorScatterOp):
 
 
 class TensorScatterDiv(_TensorScatterOp):
-    """
+    r"""
     Creates a new tensor by dividing the values from the positions in `input_x` indicated by
     `indices`, with values from `updates`. When divided values are provided for the same
     index, the result of the update will be to divided these values respectively. Except that
@@ -5405,7 +5404,7 @@ class TensorScatterDiv(_TensorScatterOp):
         - **indices** (Tensor) - The index of input tensor whose data type is int32 or int64.
           The rank must be at least 2.
         - **updates** (Tensor) - The tensor to update the input tensor, has the same type as input,
-          and updates.shape should be equal to indices.shape[:-1] + input_x.shape[indices.shape[-1]:].
+          and updates.shape should be equal to :math:`indices.shape[:-1] + input\_x.shape[indices.shape[-1]:]`.
 
     Outputs:
         Tensor, has the same shape and type as `input_x`.

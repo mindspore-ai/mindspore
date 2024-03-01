@@ -18,7 +18,7 @@ mindspore.scipy.optimize.minimize
         - `LAGRANGE` 方法仅在 `GPU` 上支持。
 
     参数：
-        - **func** (Callable) - 要最小化的目标函数 :math:`fun(x,*args)->float`，其中 `x` 是一个一维数组，其shape为 :math:`(n,)`。
+        - **func** (Callable) - 要最小化的目标函数 :math:`fun(x,*args) -> float`，其中 `x` 是一个一维数组，其shape为 :math:`(n,)`。
           `args` 是一个Tuple，用于指定 `func` 的执行所需的所有参数。
           当 `jac` 为None时，`func` 必须能支持微分。
         - **x0** (Tensor) - 初始猜测。shape为 :math:`(n,)` 的实数数组，其中 `n` 是自变量的个数。
