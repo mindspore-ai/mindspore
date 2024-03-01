@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <memory>
 #include "plugin/device/ascend/kernel/internal/elewise_binary.h"
+
+#include <memory>
 #include "plugin/device/ascend/kernel/internal/internal_kernel_utils.h"
 #include "include/param/add_param.h"
 
@@ -31,6 +32,13 @@ void ElewiseBinary::SetInOutIdx() {
   inputsIdxMap_[0] = 0;
   inputsIdxMap_[1] = 1;
   outputsIdxMap_[0] = 0;
+}
+
+uint64_t ElewiseBinary::GenTilingCacheKey(const std::vector<KernelTensor *> &inputs,
+                                          const std::vector<KernelTensor *> &outputs) {
+  return TilingCacheMgr::GetInstance().GenTilingCacheKey(kernel_name_, inputs[0]->GetShapeVector(),
+                                                         inputs[0]->dtype_id(), inputs[1]->GetShapeVector(),
+                                                         inputs[1]->dtype_id());
 }
 
 class InternalAdd : public ElewiseBinary {
@@ -53,12 +61,6 @@ class InternalAdd : public ElewiseBinary {
     param_ptr->specificParam = op_param;
     return std::static_pointer_cast<internal::OpParam>(param_ptr);
   }
-  uint64_t GenTilingCacheKey(const std::vector<KernelTensor *> &inputs,
-                             const std::vector<KernelTensor *> &outputs) override {
-    return TilingCacheMgr::GetInstance().GenTilingCacheKey(kernel_name_, inputs[0]->GetShapeVector(),
-                                                           inputs[0]->dtype_id(), inputs[1]->GetShapeVector(),
-                                                           inputs[1]->dtype_id());
-  }
 };
 
 class InternalSub : public ElewiseBinary {
@@ -75,7 +77,67 @@ class InternalSub : public ElewiseBinary {
   }
 };
 
+class InternalEqual : public ElewiseBinary {
+ public:
+  InternalEqual() : ElewiseBinary("Equal") {}
+  ~InternalEqual() = default;
+
+ protected:
+  void SetComputeType(internal::OpParamPtr param_ptr) override {
+    param_ptr->opId = internal::OpId::Equal;
+    internal::ElewiseParam op_param;
+    op_param.elewiseType = internal::ElewiseParam::ELEWISE_EQUAL;
+    param_ptr->specificParam = op_param;
+  }
+};
+
+class InternalLess : public ElewiseBinary {
+ public:
+  InternalLess() : ElewiseBinary("Less") {}
+  ~InternalLess() = default;
+
+ protected:
+  void SetComputeType(internal::OpParamPtr param_ptr) override {
+    param_ptr->opId = internal::OpId::Less;
+    internal::ElewiseParam op_param;
+    op_param.elewiseType = internal::ElewiseParam::ELEWISE_LESS;
+    param_ptr->specificParam = op_param;
+  }
+};
+
+class InternalMul : public ElewiseBinary {
+ public:
+  InternalMul() : ElewiseBinary("Mul") {}
+  ~InternalMul() = default;
+
+ protected:
+  void SetComputeType(internal::OpParamPtr param_ptr) override {
+    param_ptr->opId = internal::OpId::Mul;
+    internal::ElewiseParam op_param;
+    op_param.elewiseType = internal::ElewiseParam::ELEWISE_MUL;
+    param_ptr->specificParam = op_param;
+  }
+};
+
+class InternalRealDiv : public ElewiseBinary {
+ public:
+  InternalRealDiv() : ElewiseBinary("RealDiv") {}
+  ~InternalRealDiv() = default;
+
+ protected:
+  void SetComputeType(internal::OpParamPtr param_ptr) override {
+    param_ptr->opId = internal::OpId::RealDiv;
+    internal::ElewiseParam op_param;
+    op_param.elewiseType = internal::ElewiseParam::ELEWISE_REALDIV;
+    param_ptr->specificParam = op_param;
+  }
+};
+
 MS_INTERNAL_KERNEL_FACTORY_REG(Add, InternalAdd);
 MS_INTERNAL_KERNEL_FACTORY_REG(Sub, InternalSub);
+MS_INTERNAL_KERNEL_FACTORY_REG(Equal, InternalEqual);
+MS_INTERNAL_KERNEL_FACTORY_REG(Less, InternalLess);
+MS_INTERNAL_KERNEL_FACTORY_REG(Mul, InternalMul);
+MS_INTERNAL_KERNEL_FACTORY_REG(RealDiv, InternalRealDiv);
 }  // namespace kernel
 }  // namespace mindspore

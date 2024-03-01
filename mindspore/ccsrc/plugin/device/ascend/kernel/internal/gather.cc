@@ -37,6 +37,17 @@ internal::OpParamPtr Gather::CreateOpParam(const std::vector<KernelTensor *> &in
     gather_param.axis = {0};
   }
 
+  int64_t batch_dims_value = 0;
+  auto batch_dims_tensor = inputs.at(3);
+  if (batch_dims_tensor->dtype_id() == TypeId::kNumberTypeInt64) {
+    batch_dims_value = batch_dims_tensor->GetValue<int64_t>().value();
+  } else if (batch_dims_tensor->dtype_id() == TypeId::kNumberTypeInt32) {
+    batch_dims_value = batch_dims_tensor->GetValue<int32_t>().value();
+  } else {
+    MS_LOG(EXCEPTION) << "For internal op 'Gather', batch_dims should be int32 or int64.";
+  }
+  gather_param.batchDims = batch_dims_value;
+
   param_ptr->specificParam = gather_param;
   param_ptr->opId = internal::OpId::Gather;
   return param_ptr;
