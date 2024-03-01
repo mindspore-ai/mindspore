@@ -118,6 +118,7 @@ uint32_t GenerateEodMaskCpuKernel::ComputeKernel(CpuKernelContext &ctx, const in
                       "GenerateEodMask kernel compute failed.");
   for (uint32_t i = 0; i < n_step.size(); ++i) {
     if ((circle >= 1 && compute_count % circle == 0) || compute_count == n_step[i] || n_step[i] == -1) {
+      // cppcheck-suppress *
       auto new_ds = reinterpret_cast<M *>(&input_positionptr[n_pos]);
 
       if (enable_mask_nfirst) {
