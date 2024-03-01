@@ -2506,6 +2506,9 @@ bool ValidateAndConvertArgsType(const std::string &op_name, const std::vector<op
     if (ValidateArgOptional(abs_arg, op_arg) || ops::ValidateArgsType(abs_arg, op_arg.arg_dtype_)) {
       continue;
     }
+    if (fallback::ContainsSequenceAnyType(abs_arg)) {
+      continue;
+    }
     bool match = false;
     auto cast_dtypes = op_arg.cast_dtype_;
     for (size_t j = 0; j < cast_dtypes.size(); j++) {
