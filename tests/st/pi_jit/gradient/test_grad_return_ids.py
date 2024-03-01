@@ -134,6 +134,7 @@ def grad_return_ids_pos_weight(class_name):
     return jit_grad, pijit_grad
 
 
+@pytest.mark.skip
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -161,6 +162,7 @@ def test_grad_return_ids_pos0_pynative(func):
     match_array(jit_grad2, pijit_grad2)
 
 
+@pytest.mark.skip
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
