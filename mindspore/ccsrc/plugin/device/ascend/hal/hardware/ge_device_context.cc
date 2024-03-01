@@ -28,7 +28,6 @@
 #include "include/common/utils/scoped_long_running.h"
 #include "include/backend/debug/data_dump/dump_json_parser.h"
 #include "plugin/device/ascend/hal/hardware/ge_utils.h"
-#include "include/backend/debug/data_dump/acl_dump_json_writer.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "plugin/device/cpu/hal/device/cpu_memory_manager.h"
 #include "include/backend/debug/profiler/profiling.h"

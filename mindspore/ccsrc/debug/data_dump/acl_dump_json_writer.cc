@@ -38,13 +38,13 @@ void AclDumpJsonWriter::Parse() {
   auto dump_mode = dump_parser.input_output();
   MS_LOG(INFO) << "Dump mode is: " << dump_mode;
   switch (dump_mode) {
-    case 0:
+    case static_cast<uint32_t>(mindspore::DumpJsonParser::JsonInputOutput::DUMP_BOTH):
       dump_mode_ = "all";
       break;
-    case 1:
+    case static_cast<uint32_t>(mindspore::DumpJsonParser::JsonInputOutput::DUMP_INPUT):
       dump_mode_ = "input";
       break;
-    case 2:
+    case static_cast<uint32_t>(mindspore::DumpJsonParser::JsonInputOutput::DUMP_OUTPUT):
       dump_mode_ = "output";
       break;
     default:
