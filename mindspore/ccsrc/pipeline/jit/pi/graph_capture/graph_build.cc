@@ -1840,7 +1840,7 @@ StopTraceReason MindGraphBuilder::BuildSubGraph(CallNode *call_node, int depth, 
 
   auto args = call_node->GetArgs();
   if (PyFunction_Check(func.ptr())) {
-    args = GetNewArgs(call_node);
+    args = GetNewArgs(call_node, AObject::Convert(func.ptr()));
   }
 
   MS_LOG(INFO) << "new subgraph->TraceRun:" << py::str(func);
@@ -2194,7 +2194,9 @@ ValueNode *GetBoundSelf(CallNode *call_node) {
     case AObject::kTypeAnyValue:
       self = func_val;
       break;
-    case AObject::kTypeFunction:
+    case AObject::kTypeCFunction:
+    case AObject::kTypeTraceNode:
+    case AObject::kTypeFunction: {
       break;
     default:
       MS_LOG(INTERNAL_EXCEPTION) << "unimplemented type " << vo->ToString();
@@ -2206,7 +2208,8 @@ ValueNode *GetBoundSelf(CallNode *call_node) {
 bool GraphBuilder::HandlePositionParams(const py::object &func, std::vector<ValueNode *> *params, FrameStates *frame) {
   CallNode *call_node = reinterpret_cast<CallNode *>(seek(0));
   PyCodeObject *co = reinterpret_cast<PyCodeObject *>(PyFunction_GET_CODE(func.ptr()));
-  AObject::Type callable_type = call_node->input(0)->GetVobj()->GetType();
+  auto vobj = AObject::Convert(func.ptr());
+  AObject::Type callable_type = vobj->GetType();
 
   ValueNode *self = GetBoundSelf(call_node);
   if (self != nullptr) {
@@ -2315,7 +2318,8 @@ static void SetGradFuncInfo(mindspore::pijit::CallNode *call_node);
 
 StopTraceReason MindGraphBuilder::TraceRun(const std::vector<py::object> &args) {
   size_t i = 0;
-  if (!args.empty() && !GraphUtils::IsTensor(args[0]) && py::hasattr(args[0], common::SafeCStr(co_name_))) {
+  if (!args.empty() && args[0].ptr() != nullptr && !GraphUtils::IsTensor(args[0]) &&
+      py::hasattr(args[0], common::SafeCStr(co_name_))) {
     i = 1;  // skip self
   }
 
@@ -2362,9 +2366,13 @@ py::object MindGraphBuilder::FGAddNode(CallNode *call_node, const py::object &ca
   return py::object();
 }
 
-std::vector<py::object> MindGraphBuilder::GetNewArgs(CallNode *call_node) {
+std::vector<py::object> MindGraphBuilder::GetNewArgs(CallNode *call_node, AObj *vobj) {
   std::vector<py::object> new_args;
-  auto new_callable_info = GetFuncInfo(call_node->input(0));
+  vobj = vobj ? vobj : call_node->GetVobj();
+  if (vobj->GetType() == AObject::kTypeCFunction) {
+    MS_LOG(ERROR) << "not support cfunction";
+  }
+  auto new_callable_info = FindPyFunc(vobj);
   FrameStates f;
   ResolveClosure(new_callable_info, call_node->input(0), &f);
   if (!HandleCallParameters(new_callable_info, call_node, &f)) {
@@ -2397,8 +2405,7 @@ py::object MindGraphBuilder::ResolveCallable(CallNode *call_node, StopTraceReaso
   if (method.ptr() != nullptr) {
     MS_LOG(INFO) << "convert method :" << py::str(callable_info) << " to " << py::str(method);
     callable_info = method;
-    call_node->input(0)->SetVobj(AObject::Convert(callable_info.ptr()));
-    args = GetNewArgs(call_node);
+    args = GetNewArgs(call_node, AObject::Convert(callable_info.ptr()));
   }
   auto func = FGBuilder()->ConvertFunction(callable_info);
   if (func.ptr() != nullptr) {
@@ -2446,7 +2453,11 @@ py::object MindGraphBuilder::ResolveCallable(CallNode *call_node, StopTraceReaso
   }
 
   // find code object
-  callable_info = GetFuncInfo(call_node->input(0));
+  auto vobj = AObject::Convert(callable_info.ptr());
+  if (vobj->GetType() == AObject::kTypeCFunction) {
+    callable_info = py::object();
+  }
+  callable_info = FindPyFunc(vobj);
   if (callable_info.ptr() == nullptr) {
     *stop_reason = StopTraceReason::kStopTraceFunc_Type_Unsupported;
     call_node->SetInlineReason(InlineReason::kInlineCFunction_Unsupported);
