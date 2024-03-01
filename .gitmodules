@@ -13,3 +13,7 @@
 [submodule "tests/st/networks/mindcv"]
 	path = tests/st/networks/mindcv
 	url = https://gitee.com/mindspore-lab/mindcv.git
+[submodule "tests/st/networks/mindocr"]
+	path = tests/st/networks/mindocr
+	url = https://gitee.com/mindspore-lab/mindocr.git
+	branch = overfit
