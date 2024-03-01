@@ -1227,7 +1227,7 @@ void Somas::CommunicationNodeProcess() {
     }
 
     // Contiguous input
-    if ((!node->input_tensors_.empty()) && (!node->input_tensors_[0]->contiguous_)) {
+    if (node->input_tensors_.size() > 1 && (!node->input_tensors_.empty()) && (!node->input_tensors_[0]->contiguous_)) {
       CommunicationTensorProcess(node->input_tensors_);
       std::vector<size_t> inputs;
       for (const auto &input_tensor : node->input_tensors_) {
@@ -1247,7 +1247,8 @@ void Somas::CommunicationNodeProcess() {
     }
 
     // Contiguous output
-    if ((!node->output_tensors_.empty()) && (!node->output_tensors_[0]->contiguous_)) {
+    if (node->output_tensors_.size() > 1 && (!node->output_tensors_.empty()) &&
+        (!node->output_tensors_[0]->contiguous_)) {
       CommunicationTensorProcess(node->output_tensors_);
       std::vector<size_t> outputs;
       for (const auto &output_tensor : node->output_tensors_) {
