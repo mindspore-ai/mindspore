@@ -415,7 +415,7 @@ BackwardNodePtr FuncGrad::BuildGraphBackwardNode(const GradParamPtr &grad_param)
     ir_bprop_ = std::make_unique<IrBprop>(std::make_shared<AdParam>(), device_target_, grad_by_value_);
   }
   grad_param->is_func_grad = true;
-  auto [cache_hit, bprop_graph] = ir_bprop()->GetBpropGraph(grad_param);
+  auto [cache_hit, bprop_graph] = ir_bprop_->GetBpropGraph(grad_param);
   bool is_jit_dynamic_shape = grad_param->is_jit_graph && grad_param->use_dynamic_shape_process;
   // Save replace info in first time
   if (!cache_hit && is_jit_dynamic_shape && grad_param->has_added_v) {

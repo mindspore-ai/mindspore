@@ -911,7 +911,7 @@ void Common::ProcessDictParam(const FuncGraphPtr &bprop_graph, size_t position) 
   if (!target_abstract->isa<abstract::AbstractDictionary>()) {
     MS_LOG(EXCEPTION) << "Get wrong param " << target_abstract->ToString();
   }
-  MS_LOG(DEBUG) << "Process tuple param " << target_abstract->ToString();
+  MS_LOG(DEBUG) << "Process Dict param " << target_abstract->ToString();
   auto it = std::find(bprop_params.begin(), bprop_params.end(), target_param);
   it = bprop_params.erase(it);
   const auto &abs_dict = target_abstract->cast<abstract::AbstractDictionaryPtr>();

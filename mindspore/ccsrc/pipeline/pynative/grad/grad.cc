@@ -23,7 +23,7 @@
 #include "ops/framework_ops.h"
 #include "pipeline/pynative/grad/top_cell.h"
 #include "pipeline/pynative/grad/function/func_grad.h"
-#include "pipeline/pynative/grad/ir/auto_grad.h"
+#include "pipeline/pynative/grad/ir/ir_grad.h"
 #include "pipeline/pynative/pynative_utils.h"
 #include "pipeline/pynative/pynative_cache.h"
 #include "pipeline/jit/ps/pipeline.h"
@@ -540,6 +540,7 @@ bool GradExecutor::IsBpropGraph(const std::string &cell_id) const {
 
 void GradExecutor::HandleInputArgsForTopCell(const InputArgsInfoPtr &input_args_info, bool is_bprop_top) {
   MS_EXCEPTION_IF_NULL(input_args_info);
+  MS_EXCEPTION_IF_NULL(top_cell_);
   if (is_bprop_top) {
     // Convert input args to parameters for top cell graph in bprop.
     for (size_t i = 0; i < input_args_info->input_size; ++i) {
@@ -547,7 +548,7 @@ void GradExecutor::HandleInputArgsForTopCell(const InputArgsInfoPtr &input_args_
       MS_EXCEPTION_IF_NULL(input_args_info->input_arg_value_vec[i]);
       new_param->set_abstract(
         PyNativeAlgo::Common::SetAbstractValueToAnyValue(input_args_info->input_arg_value_vec[i]->ToAbstract()));
-      top_cell()->SetParamNodeMapInGraphInfoMap(input_args_info->input_arg_id_vec[i], new_param);
+      top_cell_->SetParamNodeMapInGraphInfoMap(input_args_info->input_arg_id_vec[i], new_param);
       MS_LOG(DEBUG) << "Top bprop graph set input parameter " << input_args_info->input_arg_id_vec;
     }
     return;
@@ -569,7 +570,7 @@ void GradExecutor::HandleInputArgsForTopCell(const InputArgsInfoPtr &input_args_
   }
   // If New cellid come up, bprop graph use cnode for reusing
   if (IsNewCellId()) {
-    top_cell()->set_is_ir_grad(true);
+    top_cell_->set_is_ir_grad(true);
   }
   if (top_cell()->is_ir_grad()) {
     top_cell()->set_auto_grad_cell_ptr(
@@ -582,7 +583,7 @@ void GradExecutor::HandleInputArgsForTopCell(const InputArgsInfoPtr &input_args_
 }
 
 bool GradExecutor::IsNewCellId() {
-  const auto &already_top_cell_id = top_cell()->already_run_cell_id();
+  const auto &already_top_cell_id = top_cell_->already_run_cell_id();
   // Update top cell by current cell op info
   auto pre_top_cell = GetAlreadyRunTopCell(already_top_cell_id);
   if (pre_top_cell == nullptr) {
@@ -1474,7 +1475,9 @@ void GradExecutor::MakeNestedCnode(bool has_custom_bprop, const std::vector<Valu
   grad_param->fg = grad_fg;
   grad_param->source_fg = first_grad_fg;
   grad_param->is_control_flow = has_call_graph;
-  grad_param->graph_cache_key = cur_top_cell_id;
+  // If fun grad and ir grad use the same ad grad graph(hit cache), dout will occur wrong by different type(tuple or
+  // plant tuple)
+  grad_param->graph_cache_key = cur_top_cell_id + std::to_string(top_cell()->is_ir_grad());
   if (!top_cell()->auto_grad_cell_ptr()->KPynativeWithFProp(grad_param)) {
     MS_LOG(EXCEPTION) << "Failed to run ad grad for second grad graph ";
   }

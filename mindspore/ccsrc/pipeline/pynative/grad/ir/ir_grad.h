@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_PIPELINE_PYNATIVE_GRAD_IR_AUTO_GRAD_H_
-#define MINDSPORE_CCSRC_PIPELINE_PYNATIVE_GRAD_IR_AUTO_GRAD_H_
+#ifndef MINDSPORE_CCSRC_PIPELINE_PYNATIVE_GRAD_IR_IR_GRAD_H_
+#define MINDSPORE_CCSRC_PIPELINE_PYNATIVE_GRAD_IR_IR_GRAD_H_
 
 #include <utility>
 #include <memory>
@@ -55,10 +55,10 @@ class IrGrad : public AutoGrad {
     MS_EXCEPTION_IF_NULL(ad_param_);
     return ad_param_;
   }
-  inline bool bprop_graph_run_by_single_op() { return ir_bprop()->bprop_graph_run_by_single_op(); }
+  inline bool bprop_graph_run_by_single_op() { return ir_bprop_->bprop_graph_run_by_single_op(); }
   void set_bprop_graph_run_by_single_op(bool bprop_graph_run_by_single_op) {
     bool flag = ir_bprop()->bprop_graph_run_by_single_op() || bprop_graph_run_by_single_op;
-    ir_bprop()->set_bprop_graph_run_by_single_op(flag);
+    ir_bprop_->set_bprop_graph_run_by_single_op(flag);
   }
 
  private:
@@ -111,4 +111,4 @@ class IrGrad : public AutoGrad {
 }  // namespace pynative
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PIPELINE_PYNATIVE_GRAD_IR_AUTO_GRAD_H_
+#endif  // MINDSPORE_CCSRC_PIPELINE_PYNATIVE_GRAD_IR_IR_GRAD_H_

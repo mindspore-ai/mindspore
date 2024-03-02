@@ -488,6 +488,7 @@ FuncGraphPtr IrBprop::GetBpropGraphFromExpander(const GradParamPtr &grad_param) 
   ad_param_ = std::make_shared<AdParam>();
   ad_param_->tape_->debug_info()->set_name("ad_graph");
   bprop_graph_run_by_single_op_ = bprop_graph_run_by_single_op_ || grad_param->use_dynamic_shape_process;
+
   GradGraphByExpander(grad_param);
 
   if (ad_param_->last_node_ != nullptr) {
@@ -612,7 +613,6 @@ void IrBprop::GradGraphByExpander(const GradParamPtr &grad_param) {
       continue;
     }
     MS_LOG(DEBUG) << "Get cnode " << cnode->DebugString() << ", " << cnode->fullname_with_scope();
-    prim->AddAttr(kSkipCheckInputNum, MakeValue(true));
     ValuePtrList inputs_value;
     AnfNodePtrList cnode_inputs;
     PrepareGradCNodeInputs(prim, cnode, &inputs_value, &cnode_inputs);

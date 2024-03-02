@@ -26,7 +26,8 @@ namespace mindspore {
 namespace kernel {
 namespace pyboost {
 tensor::TensorPtr GatherDGradAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &x,
-                                             const Int64ImmPtr dim, const TensorPtr &index, const TensorPtr &d_out);
+                                             const Int64ImmPtr dim, const TensorPtr &index, const TensorPtr &d_out,
+                                             OpRunnerInfo *op_runner_info);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

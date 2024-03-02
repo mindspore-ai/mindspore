@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-#include "pipeline/pynative/grad/ir/auto_grad.h"
+#include "pipeline/pynative/grad/ir/ir_grad.h"
 #include <algorithm>
 #include <memory>
 #include <string>
@@ -263,10 +263,10 @@ bool IrGrad::KPynativeOp(const GradParamPtr &grad_param) {
     // cppcheck-suppress unreadVariable
     if (MS_UNLIKELY(!ret || outputs.empty())) {
       MS_LOG(DEBUG) << "Expander has no bprop of this prim: " << prim->name();
-      ir_bprop()->BuildCustomBpropCNode(input_node, prim, &outputs);
+      ir_bprop_->BuildCustomBpropCNode(input_node, prim, &outputs);
     }
   } else {
-    ir_bprop()->BuildBPropCutCNode(input_node, prim, &outputs);
+    ir_bprop_->BuildBPropCutCNode(input_node, prim, &outputs);
   }
   // cppcheck-suppress unreadVariable
   if (MS_UNLIKELY(outputs.empty())) {
@@ -277,8 +277,8 @@ bool IrGrad::KPynativeOp(const GradParamPtr &grad_param) {
   }
   (void)ad_param()->variable_adjoint_set_.insert(variable_adjoint);
   PyNativeAlgo::AutoGrad::SetGradMetaData(grad_param->op_grad_info->out_value, variable_adjoint);
-  ir_bprop()->UpdateNextEdges(variable_adjoint, outputs, grad_param->op_grad_info->input_value,
-                              grad_param->op_grad_info->input_abs, prim->name());
+  ir_bprop_->UpdateNextEdges(variable_adjoint, outputs, grad_param->op_grad_info->input_value,
+                             grad_param->op_grad_info->input_abs, prim->name());
   return true;
 }
 
@@ -293,11 +293,10 @@ bool IrGrad::KPynativeWithFProp(const GradParamPtr &grad_param) {
     for (size_t i = 0; i < grad_param->input_size; ++i) {
       if (PyNativeAlgo::Common::IsParam(grad_param->op_grad_info->input_value_grad_type[i])) {
         auto parameter =
-          ir_bprop()->MapParameter(grad_param->op_grad_info->input_value[i], grad_param->op_grad_info->input_abs[i]);
-        if (parameter != nullptr) {
-          (void)args_node_list.emplace_back(parameter);
-          continue;
-        }
+          ir_bprop_->MapParameter(grad_param->op_grad_info->input_value[i], grad_param->op_grad_info->input_abs[i]);
+        MS_EXCEPTION_IF_NULL(parameter);
+        (void)args_node_list.emplace_back(parameter);
+        continue;
       }
       // Valuenode, node
       const auto value_node = PyNativeAlgo::Common::CreateValueNodeByValue(
@@ -322,8 +321,8 @@ bool IrGrad::KPynativeWithFProp(const GradParamPtr &grad_param) {
     din->set_abstract(grad_param->op_grad_info->input_abs[i]);
     (void)outputs.emplace_back(din);
   }
-  ir_bprop()->UpdateNextEdges(variable_adjoint, outputs, grad_param->op_grad_info->input_value,
-                              grad_param->op_grad_info->input_abs);
+  ir_bprop_->UpdateNextEdges(variable_adjoint, outputs, grad_param->op_grad_info->input_value,
+                             grad_param->op_grad_info->input_abs);
   (void)ad_param()->variable_adjoint_set_.insert(variable_adjoint);
   (void)ad_param()->anfnode_to_variable_adjoint_.insert(std::make_pair(grad_param->cnode, variable_adjoint));
   PyNativeAlgo::AutoGrad::SetGradMetaData(grad_param->op_grad_info->out_value, variable_adjoint);
@@ -354,7 +353,7 @@ CNodePtr IrGrad::GetBPropCNode(const GradParamPtr &grad_param, const AnfNodePtrL
           {NewValueNode(prim::kPrimTupleGetItem), *tape_dout, NewValueNode(SizeToLong(i))});
         din->set_abstract(abs_seq->elements()[i]);
         (void)bprop_inputs.emplace_back(din);
-        ir_bprop()->AddUser(*tape_dout, din, kIndex1);
+        ir_bprop_->AddUser(*tape_dout, din, kIndex1);
       }
     }
   } else {
@@ -372,7 +371,7 @@ CNodePtr IrGrad::GetBPropCNode(const GradParamPtr &grad_param, const AnfNodePtrL
   }
   // For replacing parameter and dout.
   for (size_t i = 1; i < bprop_inputs.size(); ++i) {
-    ir_bprop()->AddUser(bprop_inputs[i], bprop_cnode, i);
+    ir_bprop_->AddUser(bprop_inputs[i], bprop_cnode, i);
   }
   return bprop_cnode;
 }
@@ -380,7 +379,7 @@ CNodePtr IrGrad::GetBPropCNode(const GradParamPtr &grad_param, const AnfNodePtrL
 CNodePtr IrGrad::GetBpropGraphCNode(const GradParamPtr &grad_param, const AnfNodePtrList &args,
                                     AnfNodePtr *const tape_dout) {
   MS_EXCEPTION_IF_NULL(grad_param);
-  auto [cache_hit, bprop_graph] = ir_bprop()->GetBpropGraph(grad_param);
+  auto [cache_hit, bprop_graph] = ir_bprop_->GetBpropGraph(grad_param);
   return GetBPropCNode(grad_param, args, bprop_graph, cache_hit, tape_dout);
 }
 
@@ -401,7 +400,7 @@ FuncGraphPtr IrGrad::Finish(const tensor::TensorPtrList &weights, const std::vec
 
   // BackPropagate sensitivity, except when the last node is a valuenode which may be obtained by constant folding;
   if (ad_param()->last_variable_->is_need_grad() && !ad_param()->last_variable_->is_leaf()) {
-    (void)ir_bprop()->BackPropagate();
+    ir_bprop_->BackPropagate();
   }
   SetOutput(weights, grad_position, grad_attr);
   // Replace Parameter of primal func graph with parameter of ad_param()->tape_;
@@ -425,7 +424,7 @@ CNodePtr IrGrad::ConstructBpropGraphInput(const GradParamPtr &grad_param, const 
       if (PyNativeAlgo::Common::IsParam(grad_param->op_grad_info->input_value_grad_type[i])) {
         // To solve the input is a tuple like (parameter, ...)
         auto parameter =
-          ir_bprop()->MapParameter(grad_param->op_grad_info->input_value[i], grad_param->op_grad_info->input_abs[i]);
+          ir_bprop_->MapParameter(grad_param->op_grad_info->input_value[i], grad_param->op_grad_info->input_abs[i]);
         MS_EXCEPTION_IF_NULL(parameter);
         (void)node_list.emplace_back(parameter);
         continue;
@@ -471,7 +470,7 @@ AnfNodePtr IrGrad::BuildKNodeForCNodeInput(const ValuePtr &input, const abstract
       return k_node;
     }
     if (PyNativeAlgo::Common::IsParam(auto_grad_meta_data->input_type())) {
-      return ir_bprop()->MapParameter(input, abs);
+      return ir_bprop_->MapParameter(input, abs);
     }
   } else if (input->isa<ValueSequence>() && !IsConstant(input)) {
     AnfNodePtrList inputs;
@@ -568,8 +567,8 @@ void IrGrad::UpdateSensParameter(const ValuePtr &value) {
     const auto variable = auto_grad_meta_data->variable();
     // Return input parameter or weight parameter for net, if v is parameter just entry once
     if (auto_grad_meta_data->input_type() == InputType::kParameter && variable == nullptr) {
-      (void)ir_bprop()->AddParameterNode(sens_tensor,
-                                         PyNativeAlgo::Common::SetAbstractValueToAnyValue(sens_tensor->ToAbstract()));
+      (void)ir_bprop_->AddParameterNode(sens_tensor,
+                                        PyNativeAlgo::Common::SetAbstractValueToAnyValue(sens_tensor->ToAbstract()));
     }
   } else if (value->isa<ValueSequence>()) {
     const auto &value_seq = value->cast<ValueSequencePtr>()->value();
@@ -594,7 +593,7 @@ ParameterPtr IrGrad::ExtractParameter(const tensor::TensorPtr &tensor) const {
 }
 
 void IrGrad::SetSensAndWeights(const tensor::TensorPtrList &weights, bool has_sens_arg) {
-  const auto &sens_abstract = ir_bprop()->BuildForwardLastNode();
+  const auto &sens_abstract = ir_bprop_->BuildForwardLastNode();
   ParameterPtr sens_param = nullptr;
   if (has_sens_arg) {
     sens_param = ad_param()->tape_->add_parameter();
@@ -773,7 +772,7 @@ void IrGrad::ElimateTupleGetItem() {
     auto index_value = GetValueNode<Int64ImmPtr>(old_cnode->input(kIndex2));
     size_t index = LongToSize(index_value->value());
     auto tuple_cnode = tuple_node->cast<CNodePtr>();
-    ir_bprop()->Replace(old_node, tuple_cnode->input(index + 1), &ad_param()->users_.tuple_getitem_user_);
+    ir_bprop_->Replace(old_node, tuple_cnode->input(index + 1), &ad_param()->users_.tuple_getitem_user_);
   }
 }
 
@@ -805,7 +804,7 @@ void IrGrad::DoParameterReplaceByUser(bool has_sens_arg, expander::bprop::UserTy
   const auto &parameters = ad_param()->tape_->parameters();
   auto cell_inputs_size = cell_inputs_.size();
   for (size_t i = 0; i < cell_inputs_size; ++i) {
-    ir_bprop()->Replace(cell_inputs_[i].first, parameters[i], user);
+    ir_bprop_->Replace(cell_inputs_[i].first, parameters[i], user);
   }
   size_t weight_offset = cell_inputs_size;
   if (has_sens_arg) {
@@ -816,7 +815,7 @@ void IrGrad::DoParameterReplaceByUser(bool has_sens_arg, expander::bprop::UserTy
     MS_EXCEPTION_IF_NULL(tensor);
     auto parameter = ExtractParameter(tensor);
     MS_EXCEPTION_IF_NULL(parameter);
-    ir_bprop()->Replace(parameter, parameters[i], user);
+    ir_bprop_->Replace(parameter, parameters[i], user);
   }
 }
 
@@ -841,7 +840,7 @@ void IrGrad::UpdateTapeParameter(const tensor::TensorPtr &tensor) {
   auto param = ExtractParameter(tensor);
   if (param == nullptr) {
     param =
-      ir_bprop()->CreateTapeParameter(tensor, PyNativeAlgo::Common::SetAbstractValueToAnyValue(tensor->ToAbstract()));
+      ir_bprop_->CreateTapeParameter(tensor, PyNativeAlgo::Common::SetAbstractValueToAnyValue(tensor->ToAbstract()));
   }
   MS_EXCEPTION_IF_NULL(param);
   const auto &param_info = tensor->param_info();
