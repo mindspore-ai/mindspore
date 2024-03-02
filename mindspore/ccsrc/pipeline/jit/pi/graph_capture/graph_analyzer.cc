@@ -403,14 +403,25 @@ void GraphAnalyzer::Analyze() {
 }
 
 void MindGraphAnalyzer::CollectInputs() {
-  auto &values = GetCaptureInfo().captured_locals.values;
   auto &inputs = GetCaptureInfo().captured_locals.inputs;
-  for (ValueNode *i : GetCaptureInfo().captured_locals.order) {
-    for (auto input : i->getInputs()) {
-      if (values.find(input) != values.end() || IsNonLocalValue(input)) {
-        continue;
+  const FrameStates &enter_frame = graph_->GetFrame(0);
+  PyCodeObject *co = graph_->GetCodeObj();
+  int argc = co->co_argcount + co->co_kwonlyargcount;
+  argc += (co->co_flags & CO_VARARGS) ? 1 : 0;
+  argc += (co->co_flags & CO_VARKEYWORDS) ? 1 : 0;
+  for (Py_ssize_t m = 0; m < argc; ++m) {
+    auto local = enter_frame.Local(m);
+    if (local != &ValueNode::UnboundLocal) {
+      inputs.insert(enter_frame.Local(m));
+    } else {
+      const Py_ssize_t ncells = PyTuple_GET_SIZE(co->co_cellvars);
+      for (Py_ssize_t i = 0; co->co_cell2arg && i < ncells; ++i) {
+        Py_ssize_t argi = co->co_cell2arg[i];
+        if (argi != CO_CELL_NOT_AN_ARG) {
+          auto cell = enter_frame.Closure(i)->GetValue();
+          inputs.insert(cell);
+        }
       }
-      inputs.insert(input);
     }
   }
 }

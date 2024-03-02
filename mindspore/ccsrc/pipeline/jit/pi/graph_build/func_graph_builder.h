@@ -120,8 +120,6 @@ class FuncGraphBuilder {
 
   static AbstractBasePtr EvalValue(const ValuePtr &value, const AbstractBasePtrList &inputs_abs_list);
 
-  void EraseUnusedParameter();
-
   static py::object ConvertToPyObj(const AbstractBasePtr &abs);
 
  private:
