@@ -1491,14 +1491,6 @@ py::object MakeCodeFromCodeGen(const GraphBuilderPtr &builder, const GraphAnalyz
   auto graph = builder->GetGraph();
   GraphAnalyzer::CapturedInfo info = analyzer->GetCaptureInfo();
   auto cg = CodeBreakGenerator::Creator(builder, graph->GetCodeObj());
-  if (builder->trace_flag()) {
-    auto mind_builder = std::dynamic_pointer_cast<MindGraphBuilder>(builder);
-    auto mind_fg_builder = mind_builder->FGBuilder();
-    MS_EXCEPTION_IF_NULL(mind_fg_builder);
-    if (analyzer->NeedInterpret()) {
-      mind_fg_builder->EraseUnusedParameter();
-    }
-  }
   cg->Init(graph, &info);
   cg->SetGlobals(py::cast<py::dict>(globals));
   py::object code = cg->MakeCode(!analyzer->NeedInterpret());
