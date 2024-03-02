@@ -2498,7 +2498,7 @@ py::object MindGraphBuilder::FGAddNode(CallNode *call_node, const py::object &ca
   return py::object();
 }
 
-std::vector<py::object> MindGraphBuilder::GetNewArgs(CallNode *call_node, AObj *vobj) {
+std::vector<py::object> MindGraphBuilder::GetNewArgs(CallNode *call_node, AObject *vobj) {
   std::vector<py::object> new_args;
   vobj = vobj ? vobj : call_node->GetVobj();
   if (vobj->GetType() == AObject::kTypeCFunction) {
