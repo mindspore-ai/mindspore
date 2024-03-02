@@ -91,16 +91,32 @@ static void ensureInitialize() {
 
     if (kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kLogGuardPerf)) {
       std::map<std::string, std::pair<size_t, size_t>> guard_info;
-      std::map<std::string, std::pair<size_t, size_t>> item_info;
-      OptGuardPerf::GetGuardPerf()->GetGuardPerfInfo(&guard_info, &item_info);
+      std::map<std::string, std::pair<size_t, size_t>> guard_freq_info;
+      std::map<std::string, std::pair<size_t, size_t>> trace_info;
+      std::map<std::string, std::pair<size_t, std::vector<size_t>>> item_info;
+      OptGuardPerf::GetGuardPerf()->GetGuardPerfInfo(&guard_info, &item_info, &trace_info, &guard_freq_info);
       std::cout << "Guard performance info:" << std::endl;
-      std::cout << "guard, count, total time" << std::endl;
+      std::cout << "guard, count, total time, success, fail" << std::endl;
       for (const auto &item : guard_info) {
-        std::cout << item.first << ", " << item.second.first << ", " << item.second.second << std::endl;
+        auto iter = guard_freq_info.find(item.first);
+        if (iter != guard_freq_info.end()) {
+          std::cout << "guard:" << item.first << ", " << item.second.first << ", " << item.second.second << ","
+                    << iter->second.first << "," << iter->second.second << std::endl;
+        } else {
+          std::cout << "guard:" << item.first << ", " << item.second.first << ", " << item.second.second << std::endl;
+        }
       }
-      std::cout << "item, count, total time" << std::endl;
+      std::cout << "trace, count, total time" << std::endl;
+      for (const auto &item : trace_info) {
+        std::cout << "trace:" << item.first << ", " << item.second.first << ", " << item.second.second << std::endl;
+      }
+      std::cout << "item, count, [stage time]" << std::endl;
       for (const auto &item : item_info) {
-        std::cout << item.first << ", " << item.second.first << ", " << item.second.second << std::endl;
+        std::cout << "item:" << item.first << "," << item.second.first << ", [";
+        for (auto stage : item.second.second) {
+          std::cout << stage << ",";
+        }
+        std::cout << "]" << std::endl;
       }
     }
 
@@ -430,7 +446,10 @@ static void GuardForFrame(const PyFrameObject *frame, const OptCodePtr &oc, cons
     GRAPH_JIT_LOG_F("Guard on %s by %s!\n", code_name, oc->GetGuard()->GetDescript().c_str());
     return;
   }
-  MS_LOG(DEBUG) << "Guard on " << code_name << " by " << oc->GetGuard()->GetDescript() << "!" << std::endl;
+  if (IS_OUTPUT_ON(mindspore::kDebug)) {
+    // It tooks too much time in Guard's GetDescript function when trace depth is too large.
+    MS_LOG(DEBUG) << "Guard on " << code_name << " by " << oc->GetGuard()->GetDescript() << "!" << std::endl;
+  }
 }
 
 static void ValidateCompiledResults(const JitCompileResults *c) {
@@ -494,6 +513,7 @@ static bool GraphCapture(JitCompileResults *jcr) {
     ) {
       // something happened in with syntax
       jcr->code->SetGuard(std::make_shared<OptGuard>());
+      AddConfigToGuard(*jcr->conf, jcr->code->GetGuard());
       jcr->conf->SetBool<GraphJitConfig::kSkipException>(Py_True);
       bool code_change = GraphCapture(jcr);
       g->GetTryBlockStacks().clear();
@@ -525,6 +545,7 @@ static bool GraphCapture(JitCompileResults *jcr) {
     }
     // reset guard
     jcr->code->SetGuard(std::make_shared<OptGuard>());
+    AddConfigToGuard(*jcr->conf, jcr->code->GetGuard());
     // disable loop unroll
     jcr->conf->SetBool<GraphJitConfig::kLoopUnrolling>(Py_False);
     // restart captured
@@ -573,7 +594,7 @@ std::string GetFuncGraphPhase(const PyFrameObject &frame, const OptCodePtr &oc) 
   std::string phase = py::cast<std::string>(frame.f_code->co_filename) + "_" +
                       std::to_string(frame.f_code->co_firstlineno) + "_" + py::cast<std::string>(frame.f_code->co_name);
   if (oc != nullptr) {
-    phase += oc->GetGuard()->GetDescript();
+    phase += std::to_string(oc->GetGuard()->Info().Id());
   } else {
     for (int i = 0; i < frame.f_code->co_argcount; i++) {
       PyObject *obj = PyTuple_GET_ITEM(frame.f_code->co_varnames, i);
@@ -587,11 +608,13 @@ std::string GetFuncGraphPhase(const PyFrameObject &frame, const OptCodePtr &oc) 
 }
 
 void AddConfigToGuard(const GraphJitConfig &c, OptGuardPtr guard) {
-  std::map<std::string, bool> cfg;
-  cfg[kSpecializeScalar] = c.GetBoolConfig(GraphJitConfig::kGuardSpecializeScalar);
-  cfg[kSpecializeContainer] = c.GetBoolConfig(GraphJitConfig::kGuardSpecializeContainer);
-  cfg[kSpecializeTensor] = c.GetBoolConfig(GraphJitConfig::kGuardSpecializeTensor);
-  guard->UpdateConfig(cfg);
+  std::map<std::string, bool> bool_cfg;
+  std::map<std::string, int> int_cfg;
+  bool_cfg[kSpecializeScalar] = c.GetBoolConfig(GraphJitConfig::kGuardSpecializeScalar);
+  bool_cfg[kSpecializeContainer] = c.GetBoolConfig(GraphJitConfig::kGuardSpecializeContainer);
+  bool_cfg[kSpecializeTensor] = c.GetBoolConfig(GraphJitConfig::kGuardSpecializeTensor);
+  int_cfg[kGuardRelaxCnt] = c.getIntConfig(GraphJitConfig::kGuardRelaxCount);
+  guard->UpdateConfig(bool_cfg, int_cfg);
 }
 
 void AddGuardForParam(const PyFrameObject *f, OptGuardPtr guard, bool detach) {
@@ -698,7 +721,10 @@ static void AddGradFlagForParam(bool grad_flag, OptGuardPtr guard, bool detach) 
   CustomizedTracePtr ptr = std::make_shared<CustomizedTrace>(
     grad_flag ? Py_True : Py_False,
     [](PTraceContext context) -> PyObject * {
-      auto pynative_exec = pynative::PyNativeExecutor::GetInstance();
+      static pynative::PyNativeExecutor *pynative_exec = nullptr;
+      if (pynative_exec == nullptr) {
+        pynative_exec = pynative::PyNativeExecutor::GetInstance().get();
+      }
       PyObject *ret = pynative_exec->grad_flag() ? Py_True : Py_False;
       Py_INCREF(ret);
       return ret;
@@ -824,6 +850,7 @@ static bool JitCompile(PyThreadState *tstate, JitCompileResults *c) {
 
   // new guard code
   c->code = c->codehub->AddOptTarget(OptOption::CreateOptionByPoint(c));
+  AddConfigToGuard(*c->conf, c->code->GetGuard());
   bool code_changed = false;
 
   py::object frame = py::reinterpret_borrow<py::object>(reinterpret_cast<PyObject *>(c->origin_frame_));
@@ -849,6 +876,11 @@ static bool JitCompile(PyThreadState *tstate, JitCompileResults *c) {
     PyFrameObject *f = reinterpret_cast<PyFrameObject *>(frame.ptr());
     PyFrame_FastToLocals(f);
     GraphCompile(c, f);
+  }
+
+  auto guard = c->code->GetGuard()->Optimize();
+  if (guard != nullptr) {
+    c->code->SetGuard(guard);
   }
 
   CollectTraceBack(c, c->code->GetPythonCode(), c->code->GetNativeFunc() != nullptr);
@@ -1138,8 +1170,8 @@ static bool CheckGuard(JitCompileResults *c, const PyFrameObject *f) {
     auto oc = set[i - 1];
     OptGuardPtr guard = oc->GetGuard();
     bool print_guard = c->conf->GetBoolConfig(GraphJitConfig::kPrintGuard);
-    if (guard != nullptr &&
-        guard->Check(f, print_guard, &cache, &success, &fail, c->conf->GetBoolConfig(GraphJitConfig::kLogGuardPerf))) {
+    if (guard != nullptr && guard->Check(c, f, print_guard, &cache, &success, &fail,
+                                         c->conf->GetBoolConfig(GraphJitConfig::kLogGuardPerf))) {
       c->code = oc;
       c->codehub->UpdateOptTarget(opt, oc);
       break;

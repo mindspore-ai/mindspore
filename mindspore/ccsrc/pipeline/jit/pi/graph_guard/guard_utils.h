@@ -38,7 +38,7 @@ typedef enum _GIType {
   GTRepr,
 } GIType;
 
-class GuardItem {
+class GuardItem : public std::enable_shared_from_this<GuardItem> {
  public:
   explicit GuardItem(TracePtr var);
   virtual ~GuardItem() = default;
@@ -52,11 +52,14 @@ class GuardItem {
   virtual GIType GetType() { return type_; }
   virtual bool MatchDynamicShape(std::shared_ptr<GuardItem> other) { return false; }
   virtual PyObject *ApplyDynamicShape(PyObject *obj) { return nullptr; }
+  virtual std::shared_ptr<GuardItem> Optimize();
+  virtual std::shared_ptr<GuardItem> This() { return shared_from_this(); }
 
  protected:
   TracePtr var_;
   GIType type_;
   InfoPackPtr info_;
+  std::string strGuard_;
 };
 using GuardItemPtr = std::shared_ptr<GuardItem>;
 

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "pipeline/jit/pi/graph_guard/guard_utils.h"
+#include <regex>
 #include "pybind11/pybind11.h"
 #include "pybind_api/ir/primitive_py.h"
 #include "pybind_api/ir/cell_py.h"
@@ -21,6 +22,7 @@
 #include "pipeline/jit/pi/utils/utils.h"
 #include "include/common/utils/stub_tensor.h"
 #include "pipeline/jit/pi/graph_guard/strategy.h"
+#include "pipeline/jit/pi/graph_guard/guard.h"
 
 namespace mindspore {
 namespace pijit {
@@ -387,6 +389,7 @@ class ListData : public ItemData {
  protected:
   void SubInfo(InfoPack *info) override {
     (*info) << uint8_t(tp_);
+    (*info) << listVar_.size();
     for (auto v : listVar_) {
       (*info) << v->Info();
     }
@@ -569,9 +572,11 @@ class DictData : public ItemData {
  protected:
   void SubInfo(InfoPack *info) override {
     (*info) << dt_;
+    (*info) << listK_.size();
     for (auto i : listK_) {
       (*info) << i->Info();
     }
+    (*info) << listV_.size();
     for (auto i : listV_) {
       (*info) << i->Info();
     }
@@ -1243,6 +1248,7 @@ class TensorData : public MetaTensorData {
     MetaTensorData::SubInfo(info);
     (*info) << is_forward_output_ << init_flag_ << graph_output_ << cast_dtype_ << base_shape_ptr_
             << uint8_t(compression_type_) << tensor_name_;
+    (*info) << quant_params_.size();
     for (auto qp : quant_params_) {
       (*info) << qp;
     }
@@ -1583,9 +1589,11 @@ class PrimitiveData : public ItemData {
 
  protected:
   void SubInfo(InfoPack *info) override {
+    (*info) << listK_.size();
     for (auto item : listK_) {
       (*info) << item->Info();
     }
+    (*info) << listV_.size();
     for (auto item : listV_) {
       (*info) << item->Info();
     }
@@ -1661,9 +1669,11 @@ class CellData : public ItemData {
 
  protected:
   void SubInfo(InfoPack *info) override {
+    (*info) << listK_.size();
     for (auto item : listK_) {
       (*info) << item->Info();
     }
+    (*info) << listV_.size();
     for (auto item : listV_) {
       (*info) << item->Info();
     }
@@ -1802,9 +1812,31 @@ void GuardItem::Replace(TracePtr dst, TracePtr src) {
   }
 }
 
+GuardItemPtr GuardItem::Optimize() {
+  auto trace = var_->Optimize();
+  if (trace != nullptr) {
+    var_ = trace;
+    info_ = nullptr;
+    Info();
+    return shared_from_this();
+  } else {
+    return nullptr;
+  }
+}
+
 TracePtr GuardItem::GetTrace() { return var_; }
 
 bool GuardItem::operator==(const GuardItem &obj) const { return type_ == obj.type_ && *var_ == *(obj.var_); }
+
+#define GUARD_ITEM_PERF_START(enable, total)               \
+  if (enable) {                                            \
+    OptGuardPerf::GetGuardPerf()->LogItemPerfStart(total); \
+  }
+
+#define GUARD_ITEM_PERF_STAGE(enable, item, stage)             \
+  if (enable) {                                                \
+    OptGuardPerf::GetGuardPerf()->LogItemPerfEnd(item, stage); \
+  }
 
 class EqGuard : public GuardItem {
  public:
@@ -1820,8 +1852,11 @@ class EqGuard : public GuardItem {
     if (var_->IsConst()) {
       return true;
     }
+    GUARD_ITEM_PERF_START(perf, 2)
     PyObject *obj = GetObjectFromTrace(frame, var_, cache, perf);
+    GUARD_ITEM_PERF_STAGE(perf, this, 0)
     bool ret = Check(obj);
+    GUARD_ITEM_PERF_STAGE(perf, this, 1)
     if (obj != NULL) {
       Py_DECREF(obj);
     }
@@ -1833,7 +1868,14 @@ class EqGuard : public GuardItem {
     return *dp_ == *other;
   }
 
-  virtual std::string ToString() { return var_->ToString() + "==" + dp_->ToString(); }
+  virtual std::string ToString() {
+    if (strGuard_.size() > 0) {
+      return strGuard_;
+    }
+    strGuard_ = var_->ToString() + "==" + dp_->ToString();
+    strGuard_ = std::regex_replace(strGuard_, std::regex("(\n)"), "");
+    return strGuard_;
+  }
 
   virtual const InfoPack &Info() {
     if (info_ == nullptr) {
@@ -1901,8 +1943,11 @@ class TypeGuard : public GuardItem {
     if (var_->IsConst()) {
       return true;
     }
+    GUARD_ITEM_PERF_START(perf, 2)
     PyObject *obj = GetObjectFromTrace(frame, var_, cache, perf);
+    GUARD_ITEM_PERF_STAGE(perf, this, 0)
     bool ret = Check(obj);
+    GUARD_ITEM_PERF_STAGE(perf, this, 1)
     if (var_->GetTraceType() != TraceType::Type && obj != NULL) {
       Py_DECREF(obj);
     }
@@ -1927,11 +1972,16 @@ class TypeGuard : public GuardItem {
   }
 
   std::string ToString() override {
-    if (var_->GetTraceType() == TraceType::Type) {
-      return var_->ToString() + std::string("==") + refType_->tp_name;
-    } else {
-      return std::string("type(") + var_->ToString() + std::string(")==") + refType_->tp_name;
+    if (strGuard_.size() > 0) {
+      return strGuard_;
     }
+    if (var_->GetTraceType() == TraceType::Type) {
+      strGuard_ = var_->ToString() + std::string("==") + refType_->tp_name;
+    } else {
+      strGuard_ = std::string("type(") + var_->ToString() + std::string(")==") + refType_->tp_name;
+    }
+    strGuard_ = std::regex_replace(strGuard_, std::regex("(\n)"), "");
+    return strGuard_;
   }
 
   virtual const InfoPack &Info() {
@@ -1969,8 +2019,11 @@ class IdGuard : public GuardItem {
     if (var_->IsConst()) {
       return true;
     }
+    GUARD_ITEM_PERF_START(perf, 2)
     PyObject *obj = GetObjectFromTrace(frame, var_, cache, perf);
+    GUARD_ITEM_PERF_STAGE(perf, this, 0)
     bool ret = Check(obj);
+    GUARD_ITEM_PERF_STAGE(perf, this, 1)
     if (obj != NULL) {
       Py_DECREF(obj);
     }
@@ -1991,7 +2044,12 @@ class IdGuard : public GuardItem {
   }
 
   std::string ToString() override {
-    return std::string("id(") + var_->ToString() + std::string(")==") + std::to_string((size_t)refId_);
+    if (strGuard_.size() > 0) {
+      return strGuard_;
+    }
+    strGuard_ = std::string("id(") + var_->ToString() + std::string(")==") + std::to_string((size_t)refId_);
+    strGuard_ = std::regex_replace(strGuard_, std::regex("(\n)"), "");
+    return strGuard_;
   }
 
   virtual const InfoPack &Info() {
@@ -2031,8 +2089,11 @@ class ReprGuard : public GuardItem {
     if (var_->IsConst()) {
       return true;
     }
+    GUARD_ITEM_PERF_START(perf, 2)
     PyObject *obj = GetObjectFromTrace(frame, var_, cache, perf);
+    GUARD_ITEM_PERF_STAGE(perf, this, 0)
     bool ret = Check(obj);
+    GUARD_ITEM_PERF_STAGE(perf, this, 1)
     if (obj != nullptr) {
       Py_DECREF(obj);
     }
@@ -2055,7 +2116,14 @@ class ReprGuard : public GuardItem {
     return ret;
   }
 
-  std::string ToString() override { return std::string(PyUnicode_AsUTF8(refRepr_)); }
+  std::string ToString() override {
+    if (strGuard_.size() > 0) {
+      return strGuard_;
+    }
+    strGuard_ = std::string(PyUnicode_AsUTF8(refRepr_));
+    strGuard_ = std::regex_replace(strGuard_, std::regex("(\n)"), "");
+    return strGuard_;
+  }
 
   bool operator==(const GuardItem &obj) const override {
     if (GuardItem::operator==(obj)) {
@@ -2116,8 +2184,11 @@ class AttrGuard : public GuardItem {
     if (var_->IsConst()) {
       return true;
     }
+    GUARD_ITEM_PERF_START(perf, 2)
     PyObject *obj = GetObjectFromTrace(frame, var_, cache, perf);
+    GUARD_ITEM_PERF_STAGE(perf, this, 0)
     bool ret = CheckIntern(obj);
+    GUARD_ITEM_PERF_STAGE(perf, this, 1)
     if (obj != NULL) {
       Py_DECREF(obj);
     }
@@ -2160,8 +2231,13 @@ class AttrGuard : public GuardItem {
   }
 
   virtual std::string ToString() {
-    return std::string("exist(") + var_->ToString() + std::string(".") + nameAttr_ + "==" + std::to_string(hasAttr_) +
-           std::string(")");
+    if (strGuard_.size() > 0) {
+      return strGuard_;
+    }
+    strGuard_ = std::string("exist(") + var_->ToString() + std::string(".") + nameAttr_ +
+                "==" + std::to_string(hasAttr_) + std::string(")");
+    strGuard_ = std::regex_replace(strGuard_, std::regex("(\n)"), "");
+    return strGuard_;
   }
 
   bool operator==(const GuardItem &obj) const override {
