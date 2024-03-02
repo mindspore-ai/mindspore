@@ -76,6 +76,7 @@ class GraphJitConfig {
     kInferPrimitiveMax,
     kLimitGraphSize,
     kLimitGraphCount,
+    kGuardRelaxCount,
     /* ------------------------------ */
     kStrListConf,
     kAllowedInlineModules,

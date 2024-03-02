@@ -27,19 +27,16 @@ namespace py = pybind11;
 namespace mindspore {
 namespace pijit {
 
-constexpr size_t INVALID_HASH = size_t(-1);
-constexpr size_t INVALID_ID = size_t(-1);
+constexpr size_t kInvalidId = size_t(-1);
 
 class InfoPack {
  public:
   InfoPack();
   InfoPack(const InfoPack &);
-  size_t Hash() const;
+  virtual ~InfoPack();
   size_t Id() const;
-  std::string ToString() const;
+  uint8_t *Buf(size_t *sz) const;
   void Update();
-  bool operator()(const InfoPack &lhs, const InfoPack &rhs) const;
-  size_t operator()(const InfoPack &k) const;
   InfoPack &Begin();
   InfoPack &End();
   InfoPack &operator<<(int8_t v);
@@ -74,12 +71,13 @@ class InfoPack {
   InfoPack &operator<<(const InfoPack &v);
 
  protected:
-  size_t CalcHash(std::string v);
-  size_t CalcId(std::string v);
+  size_t CalcBuffer(uint8_t *buf, size_t sz);
   size_t CalcString(std::string v);
-  size_t hash_;
+  void AllocIfNeed(size_t need);
   size_t id_;
-  std::string info_;
+  std::unique_ptr<uint8_t[]> buf_;
+  size_t ptr_;
+  size_t limit_;
 };
 using InfoPackPtr = std::shared_ptr<InfoPack>;
 
