@@ -27,6 +27,7 @@ tensor::TensorPtr CopyCustomizeCall(const std::shared_ptr<OpRunner> &op, const T
   MS_EXCEPTION_IF_NULL(input_tensor);
 
   auto input_abs = input_tensor->ToAbstract();
+  input_abs->set_value(kValueAny);
   auto output_abs = input_abs->Clone();
   op->set_input_abs({input_abs});
   op->set_output_abs(output_abs);
@@ -90,6 +91,7 @@ tensor::TensorPtr ContiguousTensorOpProcess(const std::shared_ptr<OpRunner> &op,
 
   if (input_tensor->storage_info() == nullptr) {
     auto input_abs = input_tensor->ToAbstract();
+    input_abs->set_value(kValueAny);
     op->set_input_abs({input_abs});
     auto output_tensor = std::make_shared<tensor::Tensor>(*input_tensor);
     op->set_outputs({output_tensor});

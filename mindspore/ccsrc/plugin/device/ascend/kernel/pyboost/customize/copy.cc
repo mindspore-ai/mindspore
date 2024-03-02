@@ -24,6 +24,7 @@ namespace pyboost {
 tensor::TensorPtr CopyAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor) {
   MS_LOG(DEBUG) << "Call start";
   auto input_abs = input_tensor->ToAbstract();
+  input_abs->set_value(kValueAny);
   auto output_abs = input_abs->Clone();
   op->set_input_abs({input_abs});
   op->set_output_abs(output_abs);

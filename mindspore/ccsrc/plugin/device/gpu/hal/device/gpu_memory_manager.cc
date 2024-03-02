@@ -23,19 +23,17 @@
 namespace mindspore {
 namespace device {
 namespace gpu {
-// GPU use default stream id currently.
-void *GPUMemoryManager::MallocMemFromMemPool(size_t size, bool from_persistent_mem, bool, uint32_t /*stream_id*/) {
-  return GPUMemoryAllocator::GetInstance().AllocTensorMem(size, from_persistent_mem, false);
+void *GPUMemoryManager::MallocMemFromMemPool(size_t size, bool from_persistent_mem, bool, uint32_t stream_id) {
+  return GPUMemoryAllocator::GetInstance().AllocTensorMem(size, from_persistent_mem, false, stream_id);
 }
 
 void GPUMemoryManager::FreeMemFromMemPool(void *device_ptr) {
   GPUMemoryAllocator::GetInstance().FreeTensorMem(device_ptr);
 }
 
-// GPU use default stream id currently.
 std::vector<void *> GPUMemoryManager::MallocContinuousMemFromMemPool(const std::vector<size_t> &size_list,
-                                                                     uint32_t /*stream_id*/) {
-  return GPUMemoryAllocator::GetInstance().AllocContinuousTensorMem(size_list);
+                                                                     uint32_t stream_id) {
+  return GPUMemoryAllocator::GetInstance().AllocContinuousTensorMem(size_list, stream_id);
 }
 
 size_t GPUMemoryManager::GetAvailableMemSize() {

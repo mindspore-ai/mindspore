@@ -247,16 +247,15 @@ void GPUDeviceContext::Destroy() {
   initialized_ = false;
 }
 
-// GPU use default stream id currently, so stream id would be ignored.
-void *GPUDeviceResManager::AllocateMemory(size_t size, uint32_t /*stream_id*/) const {
+void *GPUDeviceResManager::AllocateMemory(size_t size, uint32_t stream_id) const {
   MS_EXCEPTION_IF_NULL(mem_manager_);
   if (!BindDeviceToCurrentThread(false)) {
     return nullptr;
   }
   if (swap_manager_ != nullptr) {
-    return swap_manager_->AllocDeviceMemory(size);
+    return swap_manager_->AllocDeviceMemory(size, stream_id);
   }
-  return mem_manager_->MallocMemFromMemPool(size, false, false);
+  return mem_manager_->MallocMemFromMemPool(size, false, false, stream_id);
 }
 
 void GPUDeviceResManager::FreeMemory(void *ptr) const {
@@ -287,11 +286,11 @@ bool GPUDeviceResManager::AllocateMemory(DeviceAddress *const &address) const {
     return false;
   }
   void *device_ptr;
-  // GPU use default stream id currently, so stream id would be ignored.
   if (swap_manager_ != nullptr) {
-    device_ptr = swap_manager_->AllocDeviceMemory(address->GetSize());
+    device_ptr = swap_manager_->AllocDeviceMemory(address->GetSize(), address->stream_id());
   } else {
-    device_ptr = mem_manager_->MallocMemFromMemPool(address->GetSize(), address->from_persistent_mem(), false);
+    device_ptr = mem_manager_->MallocMemFromMemPool(address->GetSize(), address->from_persistent_mem(), false,
+                                                    address->stream_id());
   }
   if (!device_ptr) {
     return false;
@@ -302,9 +301,8 @@ bool GPUDeviceResManager::AllocateMemory(DeviceAddress *const &address) const {
   return true;
 }
 
-// GPU use default stream id currently, so stream id would be ignored.
 std::vector<void *> GPUDeviceResManager::AllocateContinuousMemory(const std::vector<size_t> &size_list,
-                                                                  uint32_t /*stream_id*/) const {
+                                                                  uint32_t stream_id) const {
   if (!BindDeviceToCurrentThread(false)) {
     std::vector<void *> ptr_list;
     return ptr_list;
@@ -317,9 +315,9 @@ std::vector<void *> GPUDeviceResManager::AllocateContinuousMemory(const std::vec
     (void)align_size_list.emplace_back(align_size);
   }
   if (swap_manager_ != nullptr) {
-    return swap_manager_->AllocDeviceContinuousMem(align_size_list);
+    return swap_manager_->AllocDeviceContinuousMem(align_size_list, stream_id);
   }
-  return mem_manager_->MallocContinuousMemFromMemPool(align_size_list);
+  return mem_manager_->MallocContinuousMemFromMemPool(align_size_list, stream_id);
 }
 
 namespace {
