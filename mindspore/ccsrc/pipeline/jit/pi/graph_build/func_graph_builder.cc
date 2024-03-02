@@ -466,25 +466,6 @@ FuncGraphPtr FuncGraphBuilder::graph() {
   return graph_;
 }
 
-void FuncGraphBuilder::EraseUnusedParameter() {
-  // Build output for graph.
-  if (!has_set_output_) {
-    (void)graph();
-  }
-  const auto &nodes = graph_->TopoSort(graph_->output());
-  std::unordered_set<AnfNodePtr> used_params;
-  (void)std::copy_if(nodes.begin(), nodes.end(), std::inserter(used_params, used_params.begin()),
-                     [](const AnfNodePtr &node) { return node->isa<Parameter>(); });
-  std::vector<AnfNodePtr> new_params;
-  const auto &origin_params = graph_->parameters();
-  (void)std::copy_if(origin_params.begin(), origin_params.end(), std::back_inserter(new_params),
-                     [&used_params](const AnfNodePtr &param) {
-                       return param->cast_ptr<Parameter>()->has_default() ||
-                              used_params.find(param) != used_params.end();
-                     });
-  graph_->set_parameters(new_params);
-}
-
 py::object FuncGraphBuilder::AddFgCallNode(const FuncGraphPtr &fg, const vector<py::object> &inputs_obj) {
   std::vector<AnfNodePtr> input_node_list;
   input_node_list.reserve(inputs_obj.size() + 1);
