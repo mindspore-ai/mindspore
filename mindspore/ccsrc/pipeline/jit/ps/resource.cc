@@ -23,6 +23,7 @@
 #include "mindspore/core/ops/array_ops.h"
 #include "mindspore/core/ops/arithmetic_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
+#include "include/common/utils/compile_cache_context.h"
 #include "ir/dtype.h"
 #include "pipeline/jit/ps/static_analysis/static_analysis.h"
 #include "pipeline/jit/ps/debug/trace.h"
@@ -678,8 +679,10 @@ void Resource::GetCompileCacheResource(const py::list &compile_cache_dep_files, 
                                        bool *compile_cache_consistent) {
   compile_cache_manager_ = std::make_shared<CompileCacheManager>(compile_cache_id);
   compile_cache_manager_->InitParallelGroupCkptSaveFile();
-  static const bool force_use_compile_cache = (common::GetEnv("MS_DEV_FORCE_USE_COMPILE_CACHE") == "1");
+  const bool force_use_compile_cache = (common::GetEnv("MS_DEV_FORCE_USE_COMPILE_CACHE") == "1");
+  auto &context = CompileCacheContext::GetInstance();
   if (force_use_compile_cache) {
+    context.set_init_compile_cache(true);
     MS_LOG(WARNING)
       << "The env MS_DEV_FORCE_USE_COMPILE_CACHE has been set. It will force to use the compile cache without "
          "checking whether the network has been changed. Please note the correctness.";
@@ -689,6 +692,7 @@ void Resource::GetCompileCacheResource(const py::list &compile_cache_dep_files, 
       MS_LOG(WARNING) << "Check the consistency of dependency files hash failed. Execute all the compilation actions.";
       return;
     }
+    context.set_init_compile_cache(true);
     compile_cache_manager_->InitCompileCacheHash(compile_cache_dep_files);
     *compile_cache_consistent = compile_cache_manager_->CheckDepFilesHashConsistency();
     if (!*compile_cache_consistent) {

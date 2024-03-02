@@ -51,6 +51,9 @@
 #include "ops/array_ops.h"
 #include "pybind_api/gil_scoped_long_running.h"
 #include "include/common/utils/compile_cache_context.h"
+using InputNameAndType = std::vector<std::pair<std::string, bool>>;
+using Data = ::ge::op::Data;
+using RefData = ::ge::op::RefData;
 
 namespace mindspore {
 namespace device {
@@ -90,7 +93,7 @@ void GetMeRetDataType(const AbstractBasePtr &cnode_data, std::vector<TypeId> *me
 }
 
 transform::TensorOrderMap GetDefaultParams(const FuncGraphPtr &anf_graph,
-                                           std::map<std::string, ShapeVector> *m_origin_shape) {
+                                           std::map<std::string, ShapeVector> *origin_shape) {
   MS_EXCEPTION_IF_NULL(anf_graph);
   transform::TensorOrderMap res;
   for (auto &anf_node : anf_graph->parameters()) {
@@ -102,7 +105,7 @@ transform::TensorOrderMap GetDefaultParams(const FuncGraphPtr &anf_graph,
       MS_EXCEPTION_IF_NULL(value);
       auto tensor = value->cast<std::shared_ptr<tensor::Tensor>>();
       MS_EXCEPTION_IF_NULL(tensor);
-      m_origin_shape->emplace(para->name(), tensor->shape_c());
+      origin_shape->emplace(para->name(), tensor->shape_c());
       // need ref shape when auto parallel
       auto build_shape = para->abstract()->BuildShape();
       if (build_shape != nullptr) {
@@ -116,7 +119,7 @@ transform::TensorOrderMap GetDefaultParams(const FuncGraphPtr &anf_graph,
   return res;
 }
 
-void RevertOriginShape(const KernelGraphPtr &anf_graph, const std::map<std::string, ShapeVector> &m_origin_shape) {
+void RevertOriginShape(const KernelGraphPtr &anf_graph, const std::map<std::string, ShapeVector> &origin_shape) {
   MS_EXCEPTION_IF_NULL(anf_graph);
   transform::TensorOrderMap res;
   for (auto &anf_node : anf_graph->parameters()) {
@@ -124,9 +127,9 @@ void RevertOriginShape(const KernelGraphPtr &anf_graph, const std::map<std::stri
     auto para = anf_node->cast<ParameterPtr>();
     MS_EXCEPTION_IF_NULL(para);
     if (para->has_default()) {
-      auto it = m_origin_shape.find(para->name());
-      if (it == m_origin_shape.end()) {
-        MS_LOG(ERROR) << "Failed to find input " << para->name() << " in input_shape " << m_origin_shape;
+      auto it = origin_shape.find(para->name());
+      if (it == origin_shape.end()) {
+        MS_LOG(ERROR) << "Failed to find input " << para->name() << " in input_shape " << origin_shape;
         continue;
       }
       auto value = para->default_param();
@@ -465,7 +468,7 @@ std::string RemoveSuffix(const std::string &str, const std::string &suffix) {
   return str;
 }
 
-bool BuildFakeGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap &init_inputs_map) {
+bool BuildFakeGraph(const FuncGraphPtr &anf_graph) {
   MS_EXCEPTION_IF_NULL(anf_graph);
 #ifdef ENABLE_DUMP_IR
   auto context = MsContext::GetInstance();
@@ -477,13 +480,11 @@ bool BuildFakeGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderM
     DumpIR("anf_graph_before_build_df_graph.ir", anf_graph, true, kWholeStack);
   }
 #endif
-
   (void)setenv("GE_TRAIN", IsGeTrain() ? "1" : "0", 1);
-  if (!AddFakeGraph(anf_graph, init_inputs_map)) {
+  if (!AddFakeGraph(anf_graph)) {
     MS_LOG(ERROR) << "Add fake graph failed";
     return false;
   }
-
 #ifdef ENABLE_DUMP_IR
   if (context->CanDump(kIntroductory)) {
     if (context->CanDump(kFully)) {
@@ -492,7 +493,6 @@ bool BuildFakeGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderM
     DumpIR("anf_graph_after_build_df_graph.ir", anf_graph, true, kWholeStack);
   }
 #endif
-
   return true;
 }
 
@@ -688,21 +688,22 @@ void GeGraphExecutor::BuildInputDataGeTensor(const KernelGraphPtr &kernel_graph)
   MS_EXCEPTION_IF_NULL(kernel_graph);
   std::vector<GeTensor> ge_inputs;
   std::vector<std::pair<AnfNodeWeakPtr, size_t>> need_update_input;
-  auto input_data_list = kernel_graph->user_data<transform::InputDataList>();
-  if (input_data_list == nullptr) {
+  InputNameAndType input_names;
+  auto input_name_list = kernel_graph->user_data<transform::InputNameList>();
+  if (input_name_list) {
+    input_names = input_name_list->input_names;
+  }
+  if (input_names.empty()) {
     MS_LOG(INFO) << "Kernel graph: " << kernel_graph->graph_id() << " input data list is nullptr";
     input_datas_[kernel_graph.get()] = {ge_inputs, need_update_input};
     return;
   }
   auto parameters = FilterAllParameters(kernel_graph);
-  using Data = ::ge::op::Data;
-  using RefData = ::ge::op::RefData;
   const auto &cur_inputs = kernel_graph->get_inputs();
   size_t cur_inputs_index = 0;
-  for (const auto &op : input_data_list->input_datas) {
+  for (auto [name, is_ref] : input_names) {
     AnfNodePtr node = nullptr;
-    auto name = op->GetName();
-    if (auto data = std::dynamic_pointer_cast<Data>(op); data != nullptr) {
+    if (!is_ref) {
       while (HasAbstractMonad(cur_inputs.at(cur_inputs_index))) {
         cur_inputs_index++;
       }
@@ -715,7 +716,7 @@ void GeGraphExecutor::BuildInputDataGeTensor(const KernelGraphPtr &kernel_graph)
       }
       node = cur_inputs.at(cur_inputs_index);
       cur_inputs_index++;
-    } else if (auto ref_data = std::dynamic_pointer_cast<RefData>(op); ref_data != nullptr) {
+    } else {
       auto iter = parameters.find(name);
       if (iter == parameters.end()) {
         MS_LOG(WARNING) << "Cannot find parameter " << name << " from kernel graph: " << kernel_graph->graph_id();
@@ -727,10 +728,7 @@ void GeGraphExecutor::BuildInputDataGeTensor(const KernelGraphPtr &kernel_graph)
       } else {
         MS_LOG(EXCEPTION) << "Cannot find parameter " << name << " from kernel graph: " << kernel_graph->graph_id();
       }
-    } else {
-      MS_LOG(EXCEPTION) << "Op " << name << " is invalid type " << op->GetOpType() << " as graph input.";
     }
-
     MS_EXCEPTION_IF_NULL(node);
     MS_LOG(INFO) << "Build input ge tensor: " << name << ", kernel graph: " << kernel_graph->graph_id();
     auto output_addr = AnfAlgo::GetMutableOutputAddr(node, 0, false);
@@ -913,29 +911,47 @@ void GeGraphExecutor::PreprocessBeforeRun(const KernelGraphPtr &graph) {
 }
 
 bool GeGraphExecutor::BuildGraph(const KernelGraphPtr &graph, const transform::TensorOrderMap &tensor_order_map) {
+  std::set<KernelGraphPtr> memo;
+  GEGraphOptimization::GetInstance().OptimizeGEGraph(graph, &memo);
   auto &compile_cache_context = CompileCacheContext::GetInstance();
   auto use_compile_cache = compile_cache_context.UseCompileCache();
   if (use_compile_cache) {
     MS_LOG(INFO) << "Use ge compile cache, and skip specific optimization and ge_adapter execution";
-    if (!BuildFakeGraph(graph, tensor_order_map)) {
+    if (!BuildFakeGraph(graph)) {
       return false;
     }
   } else {
-    std::set<KernelGraphPtr> memo;
-    GEGraphOptimization::GetInstance().OptimizeGEGraph(graph, &memo);
     (void)BuildDFGraph(graph, tensor_order_map, false);
   }
   return true;
+}
+
+void GeGraphExecutor::AllocMemory(const KernelGraphPtr &graph) {
+  AllocParameterMemory(graph);
+  AllocOutputMemory(graph);
+  BuildInputDataGeTensor(graph);
+  BuildOutputDataGeTensor(graph);
+  EnableGraphInputZeroCopy(graph);
+  EnableGraphOutputZeroCopy(graph);
 }
 
 bool GeGraphExecutor::CompileGraph(const KernelGraphPtr &graph,
                                    const std::map<string, string> & /* compile_options */) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_LOG(INFO) << "ge graph executor compile graph " << graph->ToString();
-  std::map<std::string, ShapeVector> m_origin_shape;
-  const auto &tensor_order_map = GetDefaultParams(graph, &m_origin_shape);
-  if (!BuildGraph(graph, tensor_order_map)) {
-    return false;
+  auto &compile_cache_context = CompileCacheContext::GetInstance();
+  auto use_compile_cache = compile_cache_context.UseCompileCache();
+  std::map<std::string, ShapeVector> origin_shape;
+  std::set<KernelGraphPtr> memo;
+  GEGraphOptimization::GetInstance().OptimizeGEGraph(graph, &memo);
+  if (use_compile_cache) {
+    MS_LOG(INFO) << "Use ge compile cache, and skip specific optimization and ge_adapter execution";
+    if (!BuildFakeGraph(graph)) {
+      return false;
+    }
+  } else {
+    const auto &tensor_order_map = GetDefaultParams(graph, &origin_shape);
+    (void)BuildGraph(graph, tensor_order_map);
   }
   SetDynamicShapeAttr(graph);
   transform::RunOptions run_options;
@@ -964,18 +980,14 @@ bool GeGraphExecutor::CompileGraph(const KernelGraphPtr &graph,
     AllocFeatureMemory(run_options, summary.feature_memory_size);
     AddRefCorrespondPairs(graph, summary.io_indexes);
   }
-  AllocParameterMemory(graph);
-  AllocOutputMemory(graph);
-  BuildInputDataGeTensor(graph);
-  BuildOutputDataGeTensor(graph);
-  EnableGraphInputZeroCopy(graph);
-  EnableGraphOutputZeroCopy(graph);
+  AllocMemory(graph);
+
   graph->set_run_mode(RunMode::kGraphMode);
   graph->set_memory_managed_by_ge(true);
   if (ConfigManager::GetInstance().dataset_mode() == DatasetMode::DS_SINK_MODE) {
     graph->set_is_loop_count_sink(true);
   }
-  RevertOriginShape(graph, m_origin_shape);
+  RevertOriginShape(graph, origin_shape);
   return true;
 }
 
@@ -1049,13 +1061,20 @@ bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map<str
   } else {
     // delete SetCPUMemManager when delete env MS_DISABLE_REF_MODE
     ResManager()->SetCPUMemManager();
-
-    std::map<std::string, ShapeVector> m_origin_shape;
-    const auto &tensor_order_map = GetDefaultParams(graph, &m_origin_shape);
-    if (!BuildGraph(kg, tensor_order_map)) {
-      return false;
+    std::map<std::string, ShapeVector> origin_shape;
+    auto &compile_cache_context = CompileCacheContext::GetInstance();
+    auto use_compile_cache = compile_cache_context.UseCompileCache();
+    std::set<KernelGraphPtr> memo;
+    GEGraphOptimization::GetInstance().OptimizeGEGraph(kg, &memo);
+    if (use_compile_cache) {
+      MS_LOG(INFO) << "Use ge compile cache, and skip specific optimization and ge_adapter execution";
+      if (!BuildFakeGraph(kg)) {
+        return false;
+      }
+    } else {
+      const auto &tensor_order_map = GetDefaultParams(graph, &origin_shape);
+      (void)BuildGraph(kg, tensor_order_map);
     }
-
     SetDynamicShapeAttr(kg);
     AllocInputHostMemory(kg);
     AllocOutputHostMemory(kg);
@@ -1065,7 +1084,7 @@ bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map<str
     }
     // copy init weight to device
     RunGEInitGraph(kg);
-    RevertOriginShape(kg, m_origin_shape);
+    RevertOriginShape(kg, origin_shape);
     return true;
   }
 }
@@ -1335,7 +1354,7 @@ bool GeGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<tens
     ConfigManager::GetInstance().ResetIterNum();
   }
   profiler::CollectHostInfo("Ascend", "RunGraph", "GeRunGraph_" + graph_name, 1, 0, 1);
-  MS_LOG(DEBUG) << "GE run graph end.";
+  MS_LOG(INFO) << "GE run graph end.";
   return true;
 }
 

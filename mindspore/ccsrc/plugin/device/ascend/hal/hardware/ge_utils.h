@@ -32,7 +32,7 @@ OptionMap GetComputeGraphOptions(const ShapeArray &input_shapes, bool is_dynamic
 void GetComputeGraphReuseOptions(const FuncGraphPtr &graph, OptionMap *option);
 void SetPassthroughGeOptions(bool is_global, OptionMap *options);
 bool AddDFGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap &init_inputs_map, bool export_air);
-bool AddFakeGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap &init_inputs_map);
+bool AddFakeGraph(const FuncGraphPtr &anf_graph);
 bool IsGeTrain();
 inline std::string GetPhasePrefix() {
   const std::string &phase = PhaseManager::GetInstance().phase();
