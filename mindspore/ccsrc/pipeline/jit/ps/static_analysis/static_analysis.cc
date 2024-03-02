@@ -342,11 +342,19 @@ EvalResultPtr ConvertCallPyObjCallFunc(const CNodePtr &cnode, const AbstractBase
   MS_EXCEPTION_IF_NULL(warp_obj);
   py::object cls_obj = warp_obj->obj();
   auto class_name = GetClassName(cls_obj);
-  const std::string call_func_name = "__call__";
-  if (!py::hasattr(cls_obj, common::SafeCStr(call_func_name))) {
+  py::object call_obj = py::none();
+  const std::string construct_func_name = "construct";
+  if (py::hasattr(cls_obj, common::SafeCStr(construct_func_name)) && py::isinstance<Cell>(cls_obj)) {
+    call_obj = py::getattr(cls_obj, common::SafeCStr(construct_func_name));
+  } else {
+    const std::string call_func_name = "__call__";
+    if (py::hasattr(cls_obj, common::SafeCStr(call_func_name))) {
+      call_obj = py::getattr(cls_obj, common::SafeCStr(call_func_name));
+    }
+  }
+  if (py::isinstance<py::none>(call_obj)) {
     MS_EXCEPTION(ValueError) << class_name << "is not a callable object";
   }
-  py::object call_obj = py::getattr(cls_obj, common::SafeCStr(call_func_name));
   return ParsePyObjToFunc(call_obj, cnode, conf);
 }
 
@@ -1719,6 +1727,33 @@ AbstractBasePtr EvalFunctionValue(const ValuePtr &func, const AbstractBasePtrLis
     auto res = engine->Run(infer_graph, args_spec);
     return res.eval_result->abstract();
   }
+}
+
+AnalysisContextPtr NewContext(const AnalysisContextPtr &current_context, const FuncGraphPtr &fg,
+                              const AbstractBasePtrList &args_abs_list) {
+  MS_EXCEPTION_IF_NULL(fg);
+  auto new_context = current_context->NewContext(fg, args_abs_list);
+  if (new_context == nullptr) {  // Not obtain context for fg->parent() during create context.
+    FuncGraphPtr parent_graph = fg->parent();
+    const auto no_parent = parent_graph == nullptr;
+#ifdef ENABLE_DUMP_IR
+    auto ms_context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(ms_context);
+    if (ms_context->CanDump(kIntroductory)) {
+      DumpIR(std::string("EXCEPTION_NEW_CONTEXT_CURRENT_") + (no_parent ? "0" : "1") + "_" + fg->ToString() + ".ir",
+             fg);
+      if (!no_parent) {
+        DumpIR("EXCEPTION_NEW_CONTEXT_PARENT_" + parent_graph->ToString() + ".ir", parent_graph);
+      }
+    }
+#endif
+    // If parent context is not found, we'll raise exception.
+    MS_LOG(INTERNAL_EXCEPTION) << "BUG: Failed to find parent context in current context: "
+                               << current_context->ToString() << ", func_graph: " << fg->ToString()
+                               << ", parent_graph: " << (no_parent ? "null" : parent_graph->ToString()) << ",\n"
+                               << trace::GetDebugInfoStr(fg->debug_info());
+  }
+  return new_context;
 }
 }  // namespace abstract
 }  // namespace mindspore

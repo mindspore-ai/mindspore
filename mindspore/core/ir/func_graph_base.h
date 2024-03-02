@@ -45,7 +45,7 @@ class MS_CORE_API FuncGraphLoopBreaker {
 
   void CleanMetaFuncGraphs();
 
-  void CleanUnusedFuncGraphs();
+  void CleanUnusedFuncGraphs(const std::string &phase);
 
   void ClearCellGraphs(const std::string &phase);
 

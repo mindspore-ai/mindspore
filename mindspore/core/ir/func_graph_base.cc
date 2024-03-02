@@ -112,7 +112,8 @@ void FuncGraphLoopBreaker::CleanMetaFuncGraphs() {
   }
 }
 
-void FuncGraphLoopBreaker::CleanUnusedFuncGraphs() {
+// If phase is empty, clean all collected func graphs.
+void FuncGraphLoopBreaker::CleanUnusedFuncGraphs(const std::string &phase) {
   std::list<FuncGraphBasePtr> func_list;
   // Generate shared_ptr for every graph, to avoid func_set_ changes while BreakLoop
   (void)std::for_each(func_set_.begin(), func_set_.end(), [&func_list](FuncGraphBase *fun) {
@@ -125,11 +126,17 @@ void FuncGraphLoopBreaker::CleanUnusedFuncGraphs() {
       continue;
     }
     const auto &fg = dyn_cast<FuncGraph>(item);
-    if (fg != nullptr && fg->IsSameTypeId(FuncGraph::kTypeId) && fg->manager() != nullptr &&
-        fg->attached_mng_cnt() == 0) {
-      MS_LOG(DEBUG) << "Drop " << fg << "/" << fg->ToString();
-      fg->manager()->DropFuncGraph(fg);
+    if (fg == nullptr || !fg->IsSameTypeId(FuncGraph::kTypeId)) {
+      continue;
     }
+    if (!phase.empty() && fg->phase() != phase) {
+      continue;
+    }
+    MS_LOG(INFO) << "Drop " << fg << "/" << fg->ToString() << ", use_count: " << fg.use_count()
+                 << ", type: " << fg->type_name();
+    fg->ResetReturnOwner();
+    fg->ResetOwnNodes();
+    fg->set_dropped(true);
   }
 }
 
