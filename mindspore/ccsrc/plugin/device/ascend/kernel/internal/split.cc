@@ -16,9 +16,6 @@
 #include <memory>
 #include "plugin/device/ascend/kernel/internal/split.h"
 
-namespace {
-const int64_t DEFAULT_OUTPUT_NUM = 2;
-}
 
 namespace mindspore {
 namespace kernel {
@@ -35,17 +32,13 @@ internal::OpParamPtr InternalSplit::CreateOpParam(const std::vector<KernelTensor
   return param_ptr;
 }
 void InternalSplit::SetInOutIdx() {
+  auto value_str = primitive_->GetAttr("size_splits");
+  MS_EXCEPTION_IF_NULL(value_str);
+  auto axis_list = GetValue<std::vector<int64_t>>(value_str);
+  size_t split_num = axis_list.size();
   inputsIdxMap_[0] = 0;
-  outputsIdxMap_[0] = 0;
-  outputsIdxMap_[1] = 1;
-  int64_t splitNum = DEFAULT_OUTPUT_NUM;
-  if (primitive_->HasAttr("output_num")) {
-    auto value_str = primitive_->GetAttr("output_num");
-    MS_EXCEPTION_IF_NULL(value_str);
-    splitNum = GetValue<int64_t>(value_str);
-  }
-  if (splitNum > DEFAULT_OUTPUT_NUM) {
-    outputsIdxMap_[2] = 2;
+  for(size_t i = 0; i < split_num; i++){
+       outputsIdxMap_[i] = i;
   }
 }
 

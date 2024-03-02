@@ -68,4 +68,5 @@ def test_split_bf16():
     input_params_shape = (4, 1024)
     dtype = bfloat16
     split_net(input_params_shape, dtype, axis=1, output_num=2)
-    split_net(input_params_shape, dtype, axis=-1, output_num=4)
+    input_params_shape = (4, 128, 1024*3)
+    split_net(input_params_shape, dtype, axis=-1, output_num=3)
