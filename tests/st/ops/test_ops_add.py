@@ -145,3 +145,28 @@ def test_ops_bf16(context_mode):
     expect = np.ones_like(y)
 
     np.testing.assert_allclose(output, expect, rtol=rtol)
+
+
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_ops_bool(context_mode):
+    """
+    Feature: test sub backward
+    Description: test sub backward
+    Expectation: success
+    """
+    ms.context.set_context(mode=context_mode)
+
+    add_cell = AddCell()
+
+    # 2 x 2
+    x = np.array([[True, True], [False, False]], np.bool_)
+    y = np.array([[True, False], [True, False]], np.bool_)
+    alpha = True
+
+    output = ops.grad(add_cell, (0))(ms.tensor(x), ms.tensor(y), alpha).asnumpy()
+    expect = np.ones_like(y)
+
+    np.testing.assert_allclose(output, expect, rtol=rtol)
