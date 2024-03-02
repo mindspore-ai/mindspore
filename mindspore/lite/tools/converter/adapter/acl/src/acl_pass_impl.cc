@@ -1081,6 +1081,25 @@ STATUS AclPassImpl::RemoveQuantDtypeCast(const FuncGraphPtr &func_graph) {
   return RET_OK;
 }
 
+STATUS AclPassImpl::PostProcCustomOp(const FuncGraphPtr &func_graph) {
+  auto node_list = TopoSort(func_graph->get_return());
+  for (auto &node : node_list) {
+    if (!utils::isa<CNodePtr>(node)) {
+      continue;
+    }
+    auto cnode = utils::cast<CNodePtr>(node);
+    if (!CheckPrimitiveType(cnode, prim::kPrimCustom)) {
+      continue;
+    }
+    auto prim = GetCNodePrimitive(cnode);
+    CHECK_NULL_RETURN(prim);
+    prim->EraseAttr("attr");
+  }
+
+  MS_LOG(DEBUG) << "Post proc CustomOp success.";
+  return lite::RET_OK;
+}
+
 bool AclPassImpl::Run(const FuncGraphPtr &func_graph) {
   MS_LOG(INFO) << "Acl pass run start.";
   if (param_->fmk_type == converter::kFmkTypeOM) {
@@ -1136,6 +1155,11 @@ bool AclPassImpl::Run(const FuncGraphPtr &func_graph) {
     return false;
   }
 #endif
+
+  if (PostProcCustomOp(func_graph) != lite::RET_OK) {
+    MS_LOG(ERROR) << "Post proc CustomOp failed.";
+    return false;
+  }
 
   if (BuildGraph(func_graph) != lite::RET_OK) {
     MS_LOG(ERROR) << "Build graph failed.";
