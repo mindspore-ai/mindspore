@@ -43,7 +43,7 @@ class DynamicAkgCpuKernelMod : public CpuKernelMod {
   explicit DynamicAkgCpuKernelMod(const KernelPackPtr &kernel_pack);
   ~DynamicAkgCpuKernelMod() = default;
 
-  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+  bool Init(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &) override { return true; }
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
               const std::vector<KernelTensor *> &outputs, void *) override;
   int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;

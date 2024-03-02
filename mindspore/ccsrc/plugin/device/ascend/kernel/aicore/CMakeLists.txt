@@ -44,6 +44,8 @@ add_custom_target(${RUN_TARGET} ALL DEPENDS ${ALL_MODULES})
 message("RUN_TARGET ${RUN_TARGET}")
 
 set(VENDOR_IMPL "${VENDOR_NAME}_impl")
+set(MS_PY_DIR ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore)
+set(AKG_GEN_CUSTOM_PY ${MS_PY_DIR}/_extends/parallel_compile/akg_compiler/gen_custom_op_files.py)
 add_custom_command(
   TARGET ${RUN_TARGET}
   PRE_BUILD
@@ -55,6 +57,10 @@ add_custom_command(
     ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_DIR}/op_impl/vector_core/tbe/${VENDOR_IMPL}
   COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/cmake/util/gen_impl_and_merge_json.sh
           ${OPS_DIR} ${CMAKE_CURRENT_BINARY_DIR} ${VENDOR_NAME}
+  COMMAND
+    ${Python3_EXECUTABLE} ${AKG_GEN_CUSTOM_PY}
+    ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_DIR}/op_impl/ai_core/tbe/config
+    ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_DIR}/op_impl/ai_core/tbe/${VENDOR_IMPL}
 )
 
 # specify output dir

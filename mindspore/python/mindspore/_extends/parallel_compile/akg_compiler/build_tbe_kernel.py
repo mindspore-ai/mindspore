@@ -41,11 +41,22 @@ ENABLE_VECTOR_2X = "enable_vector_2x"
 ENABLE_GROUP_INPLACE = "enable_group_inplace"
 
 
-def initialize(kernel_meta_parent_dir):
+def get_arch_name(op_json):
+    """Get the arch name from op json."""
+    target_info = op_json.get("target_info")
+    if isinstance(target_info, dict):
+        arch_name = target_info.get("arch")
+        if arch_name:
+            return arch_name
+    return "Ascend910A"
+
+
+def initialize(kernel_meta_parent_dir, arch_name):
     """Initialize the TBE compile environment."""
     os.environ["CONTEXT_MODELCOMPILING"] = "TRUE"
+    core_type = "VectorCore" if arch_name != "Ascend910A" else ""
     # socVersion, coreType, coreNum, l1Fusion, l2Mode, l2Fusion
-    soc_info = ["Ascend910A", "", "", "false", "2", "false",
+    soc_info = [arch_name, core_type, "", "false", "2", "false",
                 {"op_impl_mode": "",
                  "op_debug_level": "3",
                  "op_impl_mode_list": [],
@@ -83,7 +94,7 @@ def add_new_shape(names, shapes, new_shapes, inputs):
         if shapes[i] == new_shapes[i]:
             continue
         if name not in inputs:
-            raise RuntimeError("Can not support reshape on output tensor {}".format(name))
+            continue
         if NEW_SHAPE not in inputs[name]:
             inputs[name][NEW_SHAPE] = new_shapes[i]
         elif new_shapes[i] != inputs[name][NEW_SHAPE]:
@@ -512,6 +523,7 @@ def build(json_str, kernel_meta_parent_dir):
 
 def build_tbe_kernel(json_str, kernel_meta_parent_dir):
     """Build TBE kernel."""
-    initialize(kernel_meta_parent_dir)
+    arch_name = get_arch_name(json.loads(json_str))
+    initialize(kernel_meta_parent_dir, arch_name)
     with build_config(kernel_meta_parent_dir=kernel_meta_parent_dir):
         build(json_str, kernel_meta_parent_dir)

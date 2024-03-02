@@ -34,6 +34,42 @@
 #include "backend/common/graph_kernel/core/value_depend_op_utils.h"
 
 namespace mindspore::graphkernel {
+const std::vector<OpWithLevel> clusterable_ops_with_level_v2 = {
+  // cpu
+  {kCPUDevice, OpLevel_0, prim::kPrimNotEqual},
+  {kCPUDevice, OpLevel_0, prim::kPrimGreaterEqual},
+  {kCPUDevice, OpLevel_0, prim::kPrimGreater},
+  {kCPUDevice, OpLevel_0, prim::kPrimFloor},
+  {kCPUDevice, OpLevel_0, prim::kPrimIsNan},
+  {kCPUDevice, OpLevel_0, prim::kPrimAssign},
+  {kCPUDevice, OpLevel_0, prim::kPrimBroadcastTo},
+  {kCPUDevice, OpLevel_0, prim::kPrimTile},
+  {kCPUDevice, OpLevel_0, prim::kPrimLogicalAnd},
+  {kCPUDevice, OpLevel_0, prim::kPrimCos},
+  {kCPUDevice, OpLevel_0, prim::kPrimSin},
+  {kCPUDevice, OpLevel_0, prim::kPrimACos},
+  {kCPUDevice, OpLevel_0, prim::kPrimAsin},
+  {kCPUDevice, OpLevel_0, prim::kPrimTanh},
+  {kCPUDevice, OpLevel_0, prim::kPrimAtan2},
+  {kCPUDevice, OpLevel_0, prim::kPrimMinimum},
+  {kCPUDevice, OpLevel_0, prim::kPrimMaximum},
+  {kCPUDevice, OpLevel_0, prim::kPrimReduceAll},
+  {kCPUDevice, OpLevel_0, prim::kPrimStridedSlice},
+  // gpu
+  {kGPUDevice, OpLevel_0, prim::kPrimNotEqual},
+  {kGPUDevice, OpLevel_0, prim::kPrimSelect},
+  {kGPUDevice, OpLevel_0, prim::kPrimTile},
+  {kGPUDevice, OpLevel_0, prim::kPrimLogicalAnd},
+  {kGPUDevice, OpLevel_0, prim::kPrimCos},
+  {kGPUDevice, OpLevel_0, prim::kPrimSin},
+  {kGPUDevice, OpLevel_0, prim::kPrimMinimum},
+  {kGPUDevice, OpLevel_0, prim::kPrimMaximum},
+  {kGPUDevice, OpLevel_0, prim::kPrimAssign},
+};
+
+const std::vector<std::string> disable_cluster_op_list_v2 = {"OneHot", "CumSum",      "Transpose",   "BatchMatMul",
+                                                             "MatMul", "BroadcastTo", "StridedSlice"};
+
 std::vector<PrimitivePtr> StaticShapeCluster::GetClusterOps() {
   std::vector<OpWithLevel> clusterable_ops_with_level = {
     // all target
@@ -107,9 +143,31 @@ std::vector<PrimitivePtr> StaticShapeCluster::GetClusterOps() {
     {kCPUDevice, OpLevel_0, prim::kPrimLess},
     {kCPUDevice, OpLevel_0, prim::kPrimLessEqual},
   };
+
   const auto &flags = GraphKernelFlags::GetInstance();
+  std::vector<std::string> disable_cluster_ops = flags.disable_cluster_ops;
+  auto cb = Callback::Instance();
+
+  if (flags.kernel_generator == "AKG_V2") {
+    std::move(clusterable_ops_with_level_v2.begin(), clusterable_ops_with_level_v2.end(),
+              std::back_inserter(clusterable_ops_with_level));
+
+    if (cb->GetTargetFromContext() == kCPUDevice &&
+        std::find(flags.enable_cluster_ops.begin(), flags.enable_cluster_ops.end(), "Reshape") ==
+          flags.enable_cluster_ops.end()) {
+      disable_cluster_ops.push_back("Reshape");
+    }
+    if (cb->GetTargetFromContext() == kGPUDevice) {
+      for (const std::string &item : disable_cluster_op_list_v2) {
+        if (std::find(flags.enable_cluster_ops.begin(), flags.enable_cluster_ops.end(), item) ==
+            flags.enable_cluster_ops.end()) {
+          disable_cluster_ops.push_back(item);
+        }
+      }
+    }
+  }
   auto ops = GkUtils::GetValidOps(clusterable_ops_with_level, flags.fusion_ops_level, flags.enable_cluster_ops_only,
-                                  flags.enable_cluster_ops, flags.disable_cluster_ops);
+                                  flags.enable_cluster_ops, disable_cluster_ops);
   return GkUtils::FilterExcludedOps(ops);
 }
 
@@ -177,19 +235,17 @@ bool StaticShapeCluster::IsClusterableOp(const AnfNodePtr &node) {
 }
 
 std::vector<PrimitivePtr> DynamicShapeCluster::GetClusterableOpList() {
-  std::vector<PrimitivePtr> clusterable_ops_with_level = {
-    prim::kPrimAbs,       prim::kPrimAdd,       prim::kPrimCast,    prim::kPrimExp,     prim::kPrimLog,
-    prim::kPrimMaximum,   prim::kPrimMinimum,   prim::kPrimMul,     prim::kPrimNeg,     prim::kPrimPow,
-    prim::kPrimRealDiv,   prim::kPrimSqrt,      prim::kPrimSub,     prim::kPrimReshape, prim::kPrimReduceSum,
-    prim::kPrimReduceMin, prim::kPrimReduceMax, prim::kPrimBiasAdd, prim::kPrimMatMul,  prim::kPrimBatchMatMul,
-    prim::kPrimTranspose};
-  return clusterable_ops_with_level;
+  std::vector<PrimitivePtr> dyn_clusterable_ops_list = {
+    prim::kPrimAdd, prim::kPrimCast, prim::kPrimMul,  prim::kPrimRealDiv,   prim::kPrimSub,
+    prim::kPrimAbs, prim::kPrimExp,  prim::kPrimLog,  prim::kPrimMaximum,   prim::kPrimMinimum,
+    prim::kPrimNeg, prim::kPrimPow,  prim::kPrimSqrt, prim::kPrimTranspose, prim::kPrimReduceSum};
+  return dyn_clusterable_ops_list;
 }
 
 bool DynamicShapeCluster::IsClusterableOp(const AnfNodePtr &node) {
   bool node_in_oplist = std::any_of(op_list_.begin(), op_list_.end(),
                                     [&node](const PrimitivePtr &prim) { return IsPrimitiveCNode(node, prim); });
-  if (!node_in_oplist || !common::AnfAlgo::IsDynamicShape(node) || common::AnfAlgo::IsDynamicRankNode(node)) {
+  if (!node_in_oplist || common::AnfAlgo::IsDynamicRankNode(node)) {
     return false;
   }
   if (GkUtils::IsKeepBasicNode(node)) {

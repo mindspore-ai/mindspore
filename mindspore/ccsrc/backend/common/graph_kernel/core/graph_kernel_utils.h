@@ -31,6 +31,7 @@ namespace mindspore::graphkernel {
 constexpr auto kGraphKernelDumpPath = "graph_kernel_dump";
 constexpr auto kAllTarget = "ALL";
 constexpr auto kOutputsFormat = "outputs_format";
+constexpr auto kAttrToPrim = "to_prim";
 
 using OpWithLevel = std::tuple<std::string, unsigned int, PrimitivePtr>;
 
