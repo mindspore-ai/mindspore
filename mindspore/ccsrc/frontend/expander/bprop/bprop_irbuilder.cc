@@ -176,20 +176,19 @@ DEF_PURE_SHAPE_CALC(g_dyn_size)
   .SetCalc([](const ShapeArray &inputs) -> ShapeArray { return {{abstract::ShapeSize(inputs.at(0))}}; })
   .SetInfer([](const ShapeArray &, const HashSet<size_t> &) -> ShapeVector { return {1}; });
 
+// This function will be removed, not recommended to use.
 NodePtr BpropIRBuilder::DynSize(const NodePtr &node) {
   if (!IsDynamic(GetShape(node))) {
-    return Value(GetSize(node));
+    return Tensor(GetSize(node), kInt64);
   }
-  return ShapeCalc(g_dyn_size, {node})[0];
+  return SequenceToTensor(ShapeCalc(g_dyn_size, {node})[0]);
 }
 
-NodePtr BpropIRBuilder::DynSize(const NodePtr &node, const TypePtr &type) {
-  return Cast(SequenceToTensor(DynSize(node)), type);
-}
+// This function will be removed, not recommended to use.
+NodePtr BpropIRBuilder::DynSize(const NodePtr &node, const TypePtr &type) { return Cast(DynSize(node), type); }
 
-NodePtr BpropIRBuilder::DynSize(const NodePtr &node, TypeId type_id) {
-  return Cast(SequenceToTensor(DynSize(node)), type_id);
-}
+// This function will be removed, not recommended to use.
+NodePtr BpropIRBuilder::DynSize(const NodePtr &node, TypeId type_id) { return Cast(DynSize(node), type_id); }
 
 NodePtr BpropIRBuilder::SequenceToTensor(const NodePtr &node, const TypePtr &dtype) {
   auto abs = node->abstract();
