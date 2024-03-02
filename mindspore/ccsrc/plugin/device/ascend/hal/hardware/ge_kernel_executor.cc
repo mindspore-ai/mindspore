@@ -365,6 +365,22 @@ void InlineSwitchGraph(const KernelGraphPtr &graph, std::set<KernelGraphPtr> *co
     SelectKernelInfo(graph, cond_gather_node);
     partial_inline_cnode.push_back(true_branch_node);
     partial_inline_cnode.push_back(false_branch_node);
+
+    // Record the branch info for condition node.
+    auto false_sub_graph = common::AnfAlgo::GetNodeAttr<KernelGraphPtr>(false_branch_cnode, kAttrKernelGraph);
+    auto true_sub_graph = common::AnfAlgo::GetNodeAttr<KernelGraphPtr>(true_branch_cnode, kAttrKernelGraph);
+    MS_EXCEPTION_IF_NULL(false_sub_graph);
+    MS_EXCEPTION_IF_NULL(true_sub_graph);
+    std::vector<ValuePtr> branch_graph_names;
+    branch_graph_names.emplace_back(std::make_shared<StringImm>(false_sub_graph->ToString()));
+    branch_graph_names.emplace_back(std::make_shared<StringImm>(true_sub_graph->ToString()));
+    cond_switch_node->AddAttr("inline_sub_graph_name", std::make_shared<ValueTuple>(branch_graph_names));
+    reverse(branch_graph_names.begin(), branch_graph_names.end());
+    cond_gather_node->AddAttr("branch_graph_name", std::make_shared<ValueTuple>(branch_graph_names));
+    graph->AddConditionGatherSwitchPair(cond_gather_node, cond_switch_node);
+    MS_LOG(DEBUG) << "Add new condition gather node:" << cond_gather_node->fullname_with_scope()
+                  << " and condition switch actor:" << cond_switch_node->fullname_with_scope()
+                  << " for graph:" << graph->ToString();
     (void)mng->Replace(kernel_cnode, cond_gather_node);
   }
 
@@ -384,6 +400,248 @@ void InlineSwitchGraph(const KernelGraphPtr &graph, std::set<KernelGraphPtr> *co
     DumpIR(file_name, graph, true, kWholeStack);
   }
 #endif
+}
+
+// Flatten the input abstract, and record the index construct.
+// eg. tuple(tuple(1, 2), 3) -> {1, 2, 3}  ((-1, -1), -1)
+AbstractBasePtrList CollectAbstract(const abstract::AbstractBasePtr &abstract, ValuePtr *abstract_construct_index) {
+  MS_EXCEPTION_IF_NULL(abstract);
+  MS_EXCEPTION_IF_NULL(abstract_construct_index);
+  if (!abstract->isa<abstract::AbstractSequence>()) {
+    *abstract_construct_index = MakeValue(-1);
+    return {abstract};
+  }
+  const auto &seq_abs = abstract->cast<abstract::AbstractSequencePtr>();
+  MS_EXCEPTION_IF_NULL(seq_abs);
+  if (seq_abs->dynamic_len()) {
+    *abstract_construct_index = MakeValue(-1);
+    return {seq_abs};
+  }
+
+  AbstractBasePtrList abs_list;
+  ValuePtrList construct_index_list;
+  for (const auto &sub_abs : seq_abs->elements()) {
+    ValuePtr sub_construct_index = nullptr;
+    AbstractBasePtrList sub_list = CollectAbstract(sub_abs, &sub_construct_index);
+    abs_list.insert(abs_list.end(), sub_list.begin(), sub_list.end());
+    construct_index_list.emplace_back(sub_construct_index);
+  }
+  *abstract_construct_index = std::make_shared<ValueTuple>(construct_index_list);
+  return abs_list;
+}
+
+// Rebuild the output construct by construct index.
+CNodePtr ConstructMakeTupleRecursion(const ValuePtr &abstract_construct_index, std::deque<CNodePtr> *get_item_list,
+                                     const KernelGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(abstract_construct_index);
+  MS_EXCEPTION_IF_NULL(get_item_list);
+  MS_EXCEPTION_IF_NULL(graph);
+  if (!abstract_construct_index->isa<ValueSequence>()) {
+    if (get_item_list->empty()) {
+      MS_LOG(EXCEPTION) << "Failed to get item node by value:" << abstract_construct_index->ToString();
+    }
+    auto top = get_item_list->front();
+    get_item_list->pop_front();
+    return top;
+  }
+
+  // Build node and abstract for tuple construct.
+  const auto &seq_value = abstract_construct_index->cast<ValueSequencePtr>();
+  MS_EXCEPTION_IF_NULL(seq_value);
+  AnfNodePtrList node_list{NewValueNode(std::make_shared<Primitive>(prim::kPrimMakeTuple->name()))};
+  AbstractBasePtrList abs_list;
+  for (const auto &sub_value : seq_value->value()) {
+    MS_EXCEPTION_IF_NULL(sub_value);
+    const auto &new_node = ConstructMakeTupleRecursion(sub_value, get_item_list, graph);
+    MS_EXCEPTION_IF_NULL(new_node);
+    node_list.emplace_back(new_node);
+    abs_list.emplace_back(new_node->abstract());
+  }
+  const auto &make_tuple = graph->NewCNode(node_list);
+  make_tuple->set_abstract(std::make_shared<abstract::AbstractTuple>(abs_list));
+  return make_tuple;
+}
+
+// Flatten the tuple input of condition gather.
+CNodePtr FlattenConditionGatherNodeInput(const CNodePtr &kernel, const KernelGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(kernel);
+  MS_EXCEPTION_IF_NULL(graph);
+  auto mng = graph->manager();
+  if (mng == nullptr) {
+    auto manager = MakeManager({graph});
+    MS_EXCEPTION_IF_NULL(manager);
+    manager->AddFuncGraph(graph);
+    graph->set_manager(manager);
+    mng = graph->manager();
+  }
+
+  AnfNodePtrList new_inputs{NewValueNode(std::make_shared<Primitive>(prim::kPrimConditionGather->name()))};
+  size_t output_num = SIZE_MAX;
+  // Collect inputs.
+  for (size_t i = 1; i < kernel->inputs().size(); ++i) {
+    const auto &input = kernel->inputs()[i];
+    MS_EXCEPTION_IF_NULL(input);
+    const auto &outputs = common::AnfAlgo::GetAllOutputWithIndex(input, {prim::kPrimDepend});
+    // All input branch should have same output num.
+    if (output_num != SIZE_MAX && output_num != outputs.size()) {
+      MS_LOG(EXCEPTION) << "Invalid output size:" << output_num << " and " << outputs.size()
+                        << " for kernel:" << kernel->fullname_with_scope();
+    }
+    output_num = outputs.size();
+    // Flatten the branch output.
+    for (const auto &node_with_index : outputs) {
+      const auto &node = node_with_index.first;
+      MS_EXCEPTION_IF_NULL(node);
+      MS_EXCEPTION_IF_NULL(node->abstract());
+      size_t index = node_with_index.second;
+      if (!node->abstract()->isa<abstract::AbstractSequence>()) {
+        if (index > 0) {
+          MS_LOG(EXCEPTION) << "Invalid index:" << index << " for node:" << node->fullname_with_scope()
+                            << " for condition gather actor:" << kernel->fullname_with_scope();
+        }
+        new_inputs.emplace_back(node);
+        continue;
+      }
+      const auto &seq_abs = node->abstract()->cast<abstract::AbstractSequencePtr>();
+      MS_EXCEPTION_IF_NULL(seq_abs);
+      if (index >= seq_abs->size()) {
+        MS_LOG(EXCEPTION) << "Invalid index:" << index << " for abstract:" << seq_abs->ToString()
+                          << " in node:" << node->fullname_with_scope()
+                          << " in kernel:" << kernel->fullname_with_scope();
+      }
+      auto get_item = graph->NewCNode({NewValueNode(std::make_shared<Primitive>(prim::kPrimTupleGetItem->name())), node,
+                                       NewValueNode(MakeValue<int64_t>(SizeToLong(index)))});
+      get_item->set_abstract(seq_abs->elements().at(index));
+      new_inputs.emplace_back(get_item);
+    }
+  }
+
+  // Create new condition gather node.
+  auto new_kernel = graph->NewCNode(new_inputs);
+  MS_EXCEPTION_IF_NULL(new_kernel);
+  ValuePtr abstract_construct_index = nullptr;
+  AbstractBasePtrList new_abstract_list = CollectAbstract(kernel->abstract(), &abstract_construct_index);
+  MS_EXCEPTION_IF_NULL(abstract_construct_index);
+  MS_LOG(INFO) << "Abstract construct index:" << abstract_construct_index->ToString()
+               << " for rebuild the abstract of kernel:" << new_kernel->DebugString(2);
+  if (new_abstract_list.size() != output_num) {
+    MS_LOG(EXCEPTION) << "Invalid abstract list size:" << new_abstract_list.size() << " and output size:" << output_num
+                      << " for kernel:" << kernel->DebugString() << " abstract:" << kernel->abstract()->ToString();
+  }
+  new_kernel->set_abstract(std::make_shared<abstract::AbstractTuple>(new_abstract_list));
+  SelectKernelInfo(graph, new_kernel);
+  if (output_num == SIZE_MAX) {
+    MS_LOG(EXCEPTION) << "Invalid output size:" << output_num << " for kernel:" << kernel->fullname_with_scope();
+  }
+  new_kernel->AddAttr("branch_output_num", MakeValue<size_t>(output_num));
+  if (kernel->HasAttr("branch_graph_name")) {
+    new_kernel->AddAttr("branch_graph_name", kernel->GetAttr("branch_graph_name"));
+  }
+
+  // Rebuild the output construct for condition gather node.
+  std::deque<CNodePtr> get_item_list;
+  for (size_t i = 0; i < output_num; ++i) {
+    auto get_item = graph->NewCNode({NewValueNode(std::make_shared<Primitive>(prim::kPrimTupleGetItem->name())),
+                                     new_kernel, NewValueNode(MakeValue<int64_t>(i))});
+    get_item_list.emplace_back(get_item);
+    get_item->set_abstract(new_abstract_list[i]);
+  }
+  auto make_tuple = ConstructMakeTupleRecursion(abstract_construct_index, &get_item_list, graph);
+  (void)mng->Replace(kernel, make_tuple);
+  return new_kernel;
+}
+
+// Flatten the tuple input of condition node.
+void FlattenConditionNodeInput(const KernelGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  for (auto &kernel : graph->execution_order()) {
+    if (!IsPrimitiveCNode(kernel, prim::kPrimConditionGather)) {
+      continue;
+    }
+    const auto &new_kernel = FlattenConditionGatherNodeInput(kernel, graph);
+    MS_EXCEPTION_IF_NULL(new_kernel);
+    const auto &iter = graph->condition_gather_to_switch().find(kernel);
+    if (iter == graph->condition_gather_to_switch().end()) {
+      MS_LOG(EXCEPTION) << "Failed to get condition switch node for gather:" << kernel->DebugString();
+    }
+    const auto &inline_iter = graph->inline_sub_graph_kernels().find(kernel);
+    if (inline_iter != graph->inline_sub_graph_kernels().end()) {
+      graph->AddInlineSubgraphKernel(new_kernel, inline_iter->second);
+      MS_LOG(INFO) << "Add new condition gather node:" << new_kernel->fullname_with_scope()
+                   << " subgraph name:" << inline_iter->second << " to graph:" << graph->ToString();
+    }
+    graph->AddConditionGatherSwitchPair(new_kernel, iter->second);
+    graph->RemoveConditionGatherSwitchPair(kernel);
+    MS_LOG(INFO) << "Add new condition gather node:" << new_kernel->fullname_with_scope()
+                 << " to replace node:" << kernel->fullname_with_scope() << " branch name:"
+                 << (kernel->HasAttr("branch_graph_name") ? new_kernel->GetAttr("branch_graph_name")->ToString()
+                                                          : " null");
+  }
+  graph->SetExecOrderByDefault();
+
+#ifdef ENABLE_DUMP_IR
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  bool save_graphs = context_ptr->CanDump(kIntroductory);
+  if (save_graphs) {
+    std::string file_name = "hwopt_d_after_flatten_gather_input_graph_" + std::to_string(graph->graph_id()) + ".ir";
+    DumpIR(file_name, graph, true, kWholeStack);
+  }
+#endif
+}
+
+std::string GetBranchName(const KernelGraphPtr &graph, const CNodePtr &kernel) {
+  MS_EXCEPTION_IF_NULL(graph);
+  std::string current_branch = graph->ToString();
+  const auto &iter = graph->inline_sub_graph_kernels().find(kernel);
+  if (iter != graph->inline_sub_graph_kernels().end()) {
+    current_branch = iter->second;
+  }
+  return current_branch;
+}
+
+// Put the kernels belonging to the same inline subgraph together in the execution order.
+void FixExecutionOrderForInlineControlFlowGraph(const KernelGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  if (graph->condition_gather_to_switch().empty()) {
+    return;
+  }
+  auto execution_order = graph->execution_order();
+  for (const auto &condition_node_pair : graph->condition_gather_to_switch()) {
+    std::vector<CNodePtr> new_order;
+    std::vector<CNodePtr> new_order_after_switch;
+    MS_EXCEPTION_IF_NULL(condition_node_pair.first);
+    MS_EXCEPTION_IF_NULL(condition_node_pair.second);
+    std::string current_branch = GetBranchName(graph, condition_node_pair.second->cast<CNodePtr>());
+    bool is_get_switch = false;
+    for (auto iter = execution_order.begin(); iter != execution_order.end(); ++iter) {
+      if (*iter == condition_node_pair.second) {
+        is_get_switch = true;
+        continue;
+      }
+      if (*iter == condition_node_pair.first) {
+        if (!is_get_switch) {
+          MS_LOG(EXCEPTION) << "Condition gather:" << condition_node_pair.first->fullname_with_scope()
+                            << " is in front of condition switch: "
+                            << condition_node_pair.second->fullname_with_scope();
+        }
+        new_order.emplace_back(condition_node_pair.second->cast<CNodePtr>());
+        new_order.insert(new_order.end(), new_order_after_switch.begin(), new_order_after_switch.end());
+        new_order.insert(new_order.end(), iter, execution_order.end());
+        break;
+      }
+      if (!is_get_switch || current_branch == GetBranchName(graph, *iter)) {
+        new_order.emplace_back(*iter);
+      } else {
+        new_order_after_switch.emplace_back(*iter);
+      }
+    }
+    if (execution_order.size() != new_order.size()) {
+      MS_LOG(EXCEPTION) << "Failed to reoder execution kernel for graph:" << graph->ToString();
+    }
+    execution_order = new_order;
+  }
+  graph->set_execution_order(execution_order);
 }
 }  // namespace
 
@@ -440,6 +698,7 @@ void GeKernelExecutor::OptimizeGraph(const FuncGraphPtr &graph) const {
   InlineCallGraph(kernel_graph);
   memo.clear();
   InlineSwitchGraph(kernel_graph, &memo);
+  FlattenConditionNodeInput(kernel_graph);
   OptimizeExecutionOrder(NOT_NULL(graph));
   profiler::CollectHostInfo("Ascend", "Graph Optimization", "GeOptimizeGraph", 1, 0, 1);
 }
@@ -538,6 +797,7 @@ void GeKernelExecutor::OptimizeExecutionOrder(const FuncGraphPtr &graph) const {
   kernel_graph->DisableRuntimeCache();
   kernel_graph->set_execution_order(execution_order);
   MS_LOG(DEBUG) << "Status record: end optimize execution order. graph id: " << kernel_graph->graph_id();
+  FixExecutionOrderForInlineControlFlowGraph(kernel_graph);
 }
 
 void GeKernelExecutor::PreprocessBeforeRun(const FuncGraphPtr &graph) const {

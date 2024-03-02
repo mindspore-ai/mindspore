@@ -116,7 +116,10 @@ enum class KernelTransformType {
   // Memory actor type.
   kMemoryAllocActor,
   kMemoryFreeActor,
-  kMemorySwapActor
+  kMemorySwapActor,
+  // Inner control flow actor type.
+  kConditionGatherActor,
+  kConditionSwitchActor
 };
 
 #define SET_OPCONTEXT_FAIL_RET_WITH_ERROR(op_context, message) \
@@ -302,6 +305,7 @@ bool IsSkippedKernelActor(const AnfNodePtr &node);
 
 bool IsRpcActor(const AnfNodePtr &node);
 
+bool IsInnerControlFlowActor(const AnfNodePtr &node);
 // Internal parameter is not the origin parameter of func graph, it is the output of previous kernel graph which is
 // related to the input of this kernel graph.
 bool IsInternalParameter(const AnfNodePtr &node, const KernelGraphPtr &graph);

@@ -2819,12 +2819,17 @@ AnfNodePtr KernelGraphMgr::DoInline(const FuncGraphPtr &func_graph, const FuncGr
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(target_func_graph);
+  KernelGraphPtr target_kernel_graph = nullptr;
+  if (target_func_graph->isa<KernelGraph>()) {
+    target_kernel_graph = target_func_graph->cast<KernelGraphPtr>();
+  }
   Cloner cloner({}, false);
   if (scope != nullptr) {
     cloner.set_scope(scope);
   }
   cloner.AddClone(func_graph, target_func_graph, func_graph_args, kInline);
   auto node_list = TopoSort(func_graph->output());
+  mindspore::HashMap<AnfNodePtr, AnfNodePtr> condition_node_map;
   for (auto &ori_node : node_list) {
     MS_EXCEPTION_IF_NULL(ori_node);
     if (ori_node->isa<Parameter>()) {
@@ -2837,8 +2842,53 @@ AnfNodePtr KernelGraphMgr::DoInline(const FuncGraphPtr &func_graph, const FuncGr
       MS_EXCEPTION_IF_NULL(value_node);
       graph->AddValueNodeToGraph(value_node);
     }
+    // Add sub graph kernel for switch inline kernel graph.
+    if (new_node->isa<CNode>() && target_kernel_graph != nullptr) {
+      MS_LOG(DEBUG) << "Add inline sub graph for kernel:" << new_node->fullname_with_scope()
+                    << " graph:" << func_graph->ToString();
+      std::string sub_graph_name = func_graph->ToString();
+      if (func_graph->isa<KernelGraph>()) {
+        const auto &kernel_graph = func_graph->cast<KernelGraphPtr>();
+        MS_EXCEPTION_IF_NULL(kernel_graph);
+        const auto &sub_graph_iter = kernel_graph->inline_sub_graph_kernels().find(ori_node);
+        if (sub_graph_iter != kernel_graph->inline_sub_graph_kernels().end()) {
+          sub_graph_name = sub_graph_iter->second;
+        }
+      }
+      target_kernel_graph->AddInlineSubgraphKernel(new_node, sub_graph_name);
+      if (common::AnfAlgo::CheckPrimitiveType(new_node, prim::kPrimConditionGather) ||
+          common::AnfAlgo::CheckPrimitiveType(new_node, prim::kPrimConditionSwitch)) {
+        condition_node_map[ori_node] = new_node;
+      }
+    }
     CopyCNodeInfo(func_graph, target_graph_id, ori_node, new_node);
   }
+  // Collect condition gather node and condition switch node.
+  if (func_graph->isa<KernelGraph>()) {
+    const auto &kernel_graph = func_graph->cast<KernelGraphPtr>();
+    MS_EXCEPTION_IF_NULL(kernel_graph);
+    const auto &gather_to_switch = kernel_graph->condition_gather_to_switch();
+    for (const auto &pair : gather_to_switch) {
+      MS_EXCEPTION_IF_NULL(pair.first);
+      MS_EXCEPTION_IF_NULL(pair.second);
+      const auto &gather_iter = condition_node_map.find(pair.first);
+      const auto &switch_iter = condition_node_map.find(pair.second);
+      if (gather_iter == condition_node_map.end() || switch_iter == condition_node_map.end()) {
+        MS_LOG(EXCEPTION) << "Failed to get new gather node:" << pair.first->fullname_with_scope()
+                          << " or switch node:" << pair.second->fullname_with_scope()
+                          << " in graph:" << func_graph->ToString();
+      }
+      MS_EXCEPTION_IF_NULL(gather_iter->second);
+      MS_EXCEPTION_IF_NULL(switch_iter->second);
+      if (target_kernel_graph != nullptr) {
+        target_kernel_graph->AddConditionGatherSwitchPair(gather_iter->second, switch_iter->second);
+        MS_LOG(INFO) << "Add condition node pair:" << gather_iter->second->fullname_with_scope()
+                     << " and:" << switch_iter->second->fullname_with_scope()
+                     << " for graph:" << target_kernel_graph->ToString();
+      }
+    }
+  }
+
   for (const auto &kv : ref_map) {
     auto final_pair = kv.first;
     auto origin_pair = kv.second;

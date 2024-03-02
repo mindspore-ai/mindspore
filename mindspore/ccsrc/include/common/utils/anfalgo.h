@@ -65,7 +65,8 @@ class COMMON_EXPORT AnfAlgo {
   static std::vector<KernelWithIndex> GetAllOutputIndexByReturnTypes(const AnfNodePtr &node,
                                                                      const std::vector<PrimitivePtr> &return_types = {},
                                                                      bool need_make_tuple = false);
-  static std::vector<KernelWithIndex> GetAllOutputWithIndex(const AnfNodePtr &node);
+  static std::vector<KernelWithIndex> GetAllOutputWithIndex(const AnfNodePtr &node,
+                                                            const std::vector<PrimitivePtr> &return_types = {});
   static std::vector<KernelWithIndex> GetAllOutputWithOutMonadAndParameter(const AnfNodePtr &node);
   // get cnode primitive
   static AnfNodePtr GetCNodePrimitiveNode(const CNodePtr &node);

@@ -552,7 +552,7 @@ ActorSet *GraphScheduler::Transform(const GraphCompilerInfo &graph_compiler_info
   (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageLink, 1, 0, 0);
   Link(actor_set.get(), graph_compiler_info);
   (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageLink, 1, 0, 1);
-
+  inline_control_flow_scheduler_.Link(actor_set.get(), graph_compiler_info);
   DumpActor(actor_set.get(), graph_compiler_info);
   if (graph_compiler_info.strategy_ == GraphExecutionStrategy::kPipeline) {
     SchedulerHelper::CheckActorValid(actor_set.get());
@@ -1062,6 +1062,8 @@ void GraphScheduler::UpdateDeviceAddressByRefInternalParameter(const GraphCompil
       cur_node_output_addr->DecreaseOriginalRefCount();
       cur_node_output_addr->ResetRefCount();
       origin_node_output_addr->IncreaseOriginalRefCount();
+      MS_LOG(DEBUG) << "After increase ref count for device address:" << origin_node_output_addr
+                    << " ref count:" << origin_node_output_addr->original_ref_count();
       origin_node_output_addr->ResetRefCount();
       cur_node_output_addr->set_pointer_ref_count(origin_node_output_addr->pointer_ref_count());
     }
@@ -1285,6 +1287,9 @@ std::vector<KernelActorPtr> GraphScheduler::BuildKernelActor(const GraphCompiler
         KernelActorPtr kernel_actor = nullptr;
         if (IsRpcActor(kernel)) {
           kernel_actor = GenerateRpcActor(kernel, real_device_context, strategy, ref_input_indexes, ref_output_indexes);
+        } else if (IsInnerControlFlowActor(kernel)) {
+          kernel_actor =
+            GenerateInnerControlFlowActor(kernel, real_device_context, strategy, ref_input_indexes, ref_output_indexes);
         } else {
           kernel_actor = std::make_shared<KernelActor>(kernel->fullname_with_scope(), kernel, real_device_context,
                                                        memory_manager_aid_, debug_aid_, recorder_aid_, strategy,
@@ -1516,6 +1521,27 @@ KernelActorPtr GraphScheduler::GenerateRpcActor(const CNodePtr &kernel, const De
   }
 #endif
   return nullptr;
+}
+
+KernelActorPtr GraphScheduler::GenerateInnerControlFlowActor(const CNodePtr &kernel,
+                                                             const DeviceContext *device_context,
+                                                             GraphExecutionStrategy strategy,
+                                                             const std::set<size_t> &ref_input_indexes,
+                                                             const std::set<size_t> &ref_output_indexes) {
+  MS_EXCEPTION_IF_NULL(kernel);
+  if (common::AnfAlgo::GetCNodeName(kernel) != "ConditionSwitch" &&
+      common::AnfAlgo::GetCNodeName(kernel) != "ConditionGather") {
+    MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Kernel " << kernel->fullname_with_scope()
+                               << " is not a inner control flow kernel.";
+  }
+  if (common::AnfAlgo::GetCNodeName(kernel) == "ConditionSwitch") {
+    return std::make_shared<ConditionSwitchActor>(kernel->fullname_with_scope(), kernel, device_context,
+                                                  memory_manager_aid_, debug_aid_, recorder_aid_, strategy,
+                                                  ref_input_indexes, ref_output_indexes);
+  }
+  return std::make_shared<ConditionGatherActor>(kernel->fullname_with_scope(), kernel, device_context,
+                                                memory_manager_aid_, debug_aid_, recorder_aid_, strategy,
+                                                ref_input_indexes, ref_output_indexes);
 }
 
 namespace {
@@ -2385,7 +2411,7 @@ void GraphScheduler::LinkDataArrowForCustomActor(const ActorSet *actor_set,
 void GraphScheduler::LinkControlArrowByExecutionOrder(const KernelGraphPtr &graph,
                                                       const GraphCompilerInfo &graph_compiler_info) const {
   MS_EXCEPTION_IF_NULL(graph);
-  if (graph->is_graph_run_mode() || graph->is_any_type_input()) {
+  if (graph->is_graph_run_mode() || graph->is_any_type_input() || !graph->inline_sub_graph_kernels().empty()) {
     return;
   }
 
