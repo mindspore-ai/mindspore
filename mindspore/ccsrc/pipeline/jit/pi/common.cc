@@ -1061,6 +1061,9 @@ static bool PreferCallGraph(const JitCompileResults *c, py::object args) {
   if (c->code->GetNativeFunc() == nullptr) {
     return false;
   }
+  if (c->conf->GetBoolConfig(GraphJitConfig::kTraceFlag)) {
+    return true;
+  }
   if (!CheckValidReturn(c)) {
     return false;
   }
