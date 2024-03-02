@@ -30,12 +30,10 @@ class SplitNet(nn.Cell):
     def construct(self, input_x):
         return self.split(input_x)
 
-def split_net(input_params_shape, dtype):
+def split_net(input_params_shape, dtype, axis=0, output_num=2):
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
-    axis = 0
-    output_num = 2
-    net = SplitNet()
+    net = SplitNet(axis, output_num)
 
     input_np = np.random.randn(*input_params_shape).astype(np.float16)
 
@@ -69,4 +67,5 @@ def test_split_bf16():
     """
     input_params_shape = (4, 1024)
     dtype = bfloat16
-    split_net(input_params_shape, dtype)
+    split_net(input_params_shape, dtype, axis=1, output_num=2)
+    split_net(input_params_shape, dtype, axis=-1, output_num=4)

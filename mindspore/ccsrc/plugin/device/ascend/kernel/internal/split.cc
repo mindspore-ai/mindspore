@@ -28,24 +28,8 @@ internal::OpParamPtr InternalSplit::CreateOpParam(const std::vector<KernelTensor
   internal::SplitParam split_param;
   param_ptr->opId = internal::OpId::Split;
 
-  if (primitive_->HasAttr("axis")) {
-    auto value_str = primitive_->GetAttr("axis");
-    MS_EXCEPTION_IF_NULL(value_str);
-    int64_t axis = GetValue<int64_t>(value_str);
-    split_param.splitDim = axis;
-  } else {
-    int64_t default_axis = 0;
-    split_param.splitDim = default_axis;
-  }
-
-  if (primitive_->HasAttr("output_num")) {
-    auto value_str = primitive_->GetAttr("output_num");
-    MS_EXCEPTION_IF_NULL(value_str);
-    int64_t output_num = GetValue<int64_t>(value_str);
-    split_param.splitNum = output_num;
-  } else {
-    split_param.splitNum = DEFAULT_OUTPUT_NUM;
-  }
+  split_param.splitDim = inputs[1]->GetValueWithCheck<int64_t>();
+  split_param.splitNum = inputs[2]->GetValueWithCheck<int64_t>();
 
   param_ptr->specificParam = split_param;
   return param_ptr;
