@@ -490,6 +490,8 @@ REG_BPROP_BUILDER("AddExt").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
     alpha_tensor = ib->Cast(alpha_tensor, kNumberTypeComplex64);
   } else if (ib->GetDtypeId(x) == kNumberTypeComplex128) {
     alpha_tensor = ib->Cast(alpha_tensor, kNumberTypeComplex128);
+  } else if (ib->GetDtypeId(x) == kNumberTypeBFloat16) {
+    alpha_tensor = ib->Cast(alpha_tensor, kNumberTypeBFloat16);
   }
 
   ret[1] = ib->Mul(ret[1], alpha_tensor);
@@ -509,6 +511,8 @@ REG_BPROP_BUILDER("SubExt").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
     alpha_tensor = ib->Cast(alpha_tensor, kNumberTypeComplex64);
   } else if (ib->GetDtypeId(x) == kNumberTypeComplex128) {
     alpha_tensor = ib->Cast(alpha_tensor, kNumberTypeComplex128);
+  } else if (ib->GetDtypeId(x) == kNumberTypeBFloat16) {
+    alpha_tensor = ib->Cast(alpha_tensor, kNumberTypeBFloat16);
   }
 
   ret[1] = ib->Mul(ret[1], alpha_tensor);
