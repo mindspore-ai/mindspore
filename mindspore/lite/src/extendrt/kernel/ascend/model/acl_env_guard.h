@@ -37,6 +37,7 @@ class AclInitAdapter {
 
   bool init_flag_;
   std::mutex flag_mutex_;
+  bool is_repeat_init_ = false;
 };
 
 class ModelInfer;
