@@ -116,7 +116,7 @@ class OptGuardPerfImpl : public OptGuardPerf {
                                 std::map<std::string, std::pair<size_t, size_t>> *guard_freq_info) const;
   OptGuardPerfImpl() = default;
   virtual ~OptGuardPerfImpl() = default;
-  virtual void LogGuardPerfStart(void *tag1, void *tag2, GuardItem *item);
+  virtual void LogGuardPerfStart(OptGuard *tag2, GuardItem *item);
   virtual void LogGuardPerfEnd(GuardItem *item, bool res);
   virtual void LogItemPerfStart(int total_stage);
   virtual void LogItemPerfEnd(GuardItem *item, int stage);
@@ -124,8 +124,7 @@ class OptGuardPerfImpl : public OptGuardPerf {
   virtual void LogTracePerfEnd(Trace *trace, bool cache);
 
  protected:
-  void *cur_tag1_ = nullptr;
-  void *cur_tag2_ = nullptr;
+  OptGuard *cur_tag2_ = nullptr;
   GuardItem *cur_guard_ = nullptr;
   std::chrono::steady_clock::time_point guard_start_;
   std::chrono::steady_clock::time_point trace_start_;
@@ -161,9 +160,8 @@ void OptGuardPerfImpl::GetGuardPerfInfo(std::map<std::string, std::pair<size_t, 
   }
 }
 
-void OptGuardPerfImpl::LogGuardPerfStart(void *tag1, void *tag2, GuardItem *item) {
+void OptGuardPerfImpl::LogGuardPerfStart(OptGuard *tag2, GuardItem *item) {
   cur_guard_ = item;
-  cur_tag1_ = tag1;
   cur_tag2_ = tag2;
   guard_start_ = std::chrono::steady_clock::now();
 }
@@ -175,7 +173,7 @@ void OptGuardPerfImpl::LogGuardPerfEnd(GuardItem *item, bool res) {
   size_t inc = 1;
   auto info = item->ToString();
   std::stringstream s;
-  s << (void *)cur_tag1_ << "=>" << (void *)cur_tag2_ << "=>" << (void *)cur_guard_ << "=>";
+  s << reinterpret_cast<void *>(cur_tag2_) << "=>" << reinterpret_cast<void *>(cur_guard_) << "=>";
   info = s.str() + info;
   auto iter = guard_info_.find(info);
   if (iter != guard_info_.end()) {
@@ -207,13 +205,14 @@ void OptGuardPerfImpl::LogItemPerfStart(int total_stage) {
 }
 
 void OptGuardPerfImpl::LogItemPerfEnd(GuardItem *item, int stage) {
-  if (item_stage_.size() > (size_t)(stage + 1)) {
-    item_stage_[stage + 1] = std::chrono::steady_clock::now();
+  size_t cur_stage = static_cast<size_t>(stage + 1);
+  if (item_stage_.size() > cur_stage) {
+    item_stage_[cur_stage] = std::chrono::steady_clock::now();
   }
-  if (item_stage_.size() == (size_t)(stage + 2)) {
+  if (item_stage_.size() == (cur_stage + 1)) {
     auto info = item->ToString();
     std::stringstream s;
-    s << (void *)cur_tag1_ << "=>" << (void *)cur_tag2_ << "=>" << (void *)cur_guard_ << "=>";
+    s << reinterpret_cast<void *>(cur_tag2_) << "=>" << reinterpret_cast<void *>(cur_guard_) << "=>";
     info = s.str() + info;
     std::vector<size_t> vecDur;
     for (int idx = 0; idx <= stage; ++idx) {
@@ -223,7 +222,7 @@ void OptGuardPerfImpl::LogItemPerfEnd(GuardItem *item, int stage) {
     auto iter = item_info_.find(info);
     if (iter != item_info_.end()) {
       iter->second.first += 1;
-      for (int i = 0; i < (int)(vecDur.size()); ++i) {
+      for (size_t i = 0; i < vecDur.size(); ++i) {
         iter->second.second[i] += vecDur[i];
       }
     } else {
@@ -241,7 +240,7 @@ void OptGuardPerfImpl::LogTracePerfEnd(Trace *trace, bool cache) {
   size_t inc = 1;
   auto info = trace->ToString(true);
   std::stringstream s;
-  s << (void *)cur_guard_ << "=>";
+  s << reinterpret_cast<void *>(cur_guard_) << "=>";
   if (cache) {
     s << "cache:";
   }
@@ -270,7 +269,7 @@ void OptGuard::UpdateGuardList(GuardItemPtr item) {
   }
 }
 
-bool OptGuard::Check(void *tag, const PyFrameObject *frame, bool print, std::map<size_t, PyObject *> *cache,
+bool OptGuard::Check(const PyFrameObject *frame, bool print, std::map<size_t, PyObject *> *cache,
                      std::map<size_t, bool> *success, std::map<size_t, bool> *fail, bool perf) {
   // filter failure case
   if (fail != nullptr) {
@@ -296,7 +295,7 @@ bool OptGuard::Check(void *tag, const PyFrameObject *frame, bool print, std::map
   for (size_t i = 0; i < list.size(); ++i) {
     GuardItemPtr item = list[i];
     if (perf) {
-      g_guard_perf.LogGuardPerfStart(tag, this, item.get());
+      g_guard_perf.LogGuardPerfStart(this, item.get());
     }
     bool result = item->Check(frame, cache, perf);
     if (perf) {

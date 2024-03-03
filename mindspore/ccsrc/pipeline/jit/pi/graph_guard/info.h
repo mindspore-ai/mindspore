@@ -69,11 +69,11 @@ class InfoPack {
   InfoPack &operator<<(const std::vector<void *> &v);
   InfoPack &operator<<(const std::vector<PyObject *> &v);
   InfoPack &operator<<(const InfoPack &v);
+  void AllocIfNeed(size_t need);
 
  protected:
   size_t CalcBuffer(uint8_t *buf, size_t sz);
   size_t CalcString(std::string v);
-  void AllocIfNeed(size_t need);
   size_t id_;
   std::unique_ptr<uint8_t[]> buf_;
   size_t ptr_;

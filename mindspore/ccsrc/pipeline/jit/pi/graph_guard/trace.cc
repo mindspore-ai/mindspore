@@ -38,14 +38,18 @@ namespace pijit {
 extern bool check_builtin_cfunc(const py::object &func);
 static PyObject *RichCompare(PyObject *left, PyObject *right, int oparg);
 
-#define OPTIMIZE_TRACE(trace, update)   \
-  if (trace != nullptr) {               \
-    auto new_trace = trace->Optimize(); \
-    if (new_trace != nullptr) {         \
-      update = true;                    \
-      trace = new_trace;                \
-    }                                   \
+static TracePtr OptimizeTrace(TracePtr trace, bool *update) {
+  if (trace != nullptr) {
+    auto new_trace = trace->Optimize();
+    if (new_trace != nullptr) {
+      if (update != nullptr) {
+        *update = true;
+      }
+      return new_trace;
+    }
   }
+  return trace;
+}
 
 class TracePerf {
  public:
@@ -163,11 +167,7 @@ void Trace::Cache(PTraceContext context, PyObject *obj) {
   }
   if (relax_count_ != -1 && obj != nullptr) {
     if (obj_ != nullptr) {
-#if (PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION < 9)
-      auto cmp = RichCompare(obj_, obj, PyCmp_IS);
-#else
       auto cmp = RichCompare(obj_, obj, Py_EQ);
-#endif
       if (cmp != Py_True) {
         relax_count_ = -1;
       } else if (relax_count_ < relax_limit_) {
@@ -541,8 +541,8 @@ const InfoPack &ItemTrace::Info() {
 
 TracePtr ItemTrace::Optimize() {
   bool need_update = false;
-  OPTIMIZE_TRACE(origin_, need_update)
-  OPTIMIZE_TRACE(item_, need_update)
+  origin_ = OptimizeTrace(origin_, &need_update);
+  item_ = OptimizeTrace(item_, &need_update);
   if (need_update) {
     if (origin_ != nullptr && item_ != nullptr && origin_->IsConst() && item_->IsConst()) {
       is_const_ = true;
@@ -653,7 +653,7 @@ const InfoPack &AttrTrace::Info() {
 
 TracePtr AttrTrace::Optimize() {
   bool need_update = false;
-  OPTIMIZE_TRACE(origin_, need_update)
+  origin_ = OptimizeTrace(origin_, &need_update);
   if (need_update) {
     if (origin_ != nullptr && origin_->IsConst()) {
       is_const_ = true;
@@ -825,7 +825,7 @@ const InfoPack &TypeTrace::Info() {
 
 TracePtr TypeTrace::Optimize() {
   bool need_update = false;
-  OPTIMIZE_TRACE(origin_, need_update)
+  origin_ = OptimizeTrace(origin_, &need_update);
   if (need_update) {
     if (origin_ != nullptr && origin_->IsConst()) {
       is_const_ = true;
@@ -1690,6 +1690,22 @@ OpTrace::OpTrace(PyObject *obj, int opcode, int opargs, TraceVector params, std:
   }
 }
 
+int OpTrace::GetOpCode() { return opcode_; }
+
+int OpTrace::GetOpArgs() { return opargs_; }
+
+TracePtr OpTrace::GetParam(size_t idx) {
+  if (params_.size() > idx) {
+    return params_[idx];
+  } else {
+    return nullptr;
+  }
+}
+
+size_t OpTrace::GetParamCount() { return params_.size(); }
+
+std::string OpTrace::GetName() { return name_; }
+
 PyObject *OpTrace::Retrieve(PTraceContext context, bool perf) {
   PyObject *ret = Trace::Retrieve(context, perf);
   if (ret != nullptr) {
@@ -1813,18 +1829,26 @@ const InfoPack &OpTrace::Info() {
   return *info_;
 }
 
+static constexpr size_t kParamCountOne = 1;
+static constexpr size_t kParamCountTwo = 2;
+static constexpr size_t kParamCountThree = 3;
+static constexpr size_t kParamIndexOne = 0;
+static constexpr size_t kParamIndexTwo = 1;
+static constexpr size_t kParamIndexThree = 2;
+
 TracePtr OpTrace::RemoveCastDuplicatePatternPass() {
   do {
-    if (opcode_ != CALL_FUNCTION || params_.size() < 2 || params_[1]->GetTraceType() != TraceType::Operation) {
+    if (opcode_ != CALL_FUNCTION || params_.size() < kParamCountTwo ||
+        params_[kParamIndexTwo]->GetTraceType() != TraceType::Operation) {
       break;
     }
-    OpTrace *cast_op = (OpTrace *)(params_[1].get());
-    if (cast_op->params_.size() < 2) {
+    OpTrace *cast_op = reinterpret_cast<OpTrace *>(params_[kParamIndexTwo].get());
+    if (cast_op->params_.size() < kParamCountTwo) {
       break;
     }
     if ((name_ == "cast_to_ms_tensor" && cast_op->name_ == "cast_to_adapter_tensor") ||
         (name_ == "cast_to_adapter_tensor" && cast_op->name_ == "cast_to_ms_tensor")) {
-      auto ret = cast_op->params_[1];
+      auto ret = cast_op->params_[kParamIndexTwo];
       auto new_ret = ret->Optimize();
       if (new_ret != nullptr) {
         return new_ret;
@@ -1838,20 +1862,21 @@ TracePtr OpTrace::RemoveCastDuplicatePatternPass() {
 
 TracePtr OpTrace::RemovePrimOutIsTensorPass() {
   do {
-    if (opcode_ != CALL_FUNCTION || !(name_ == "isinstance") || params_.size() < 3 ||
-        params_[1]->GetTraceType() != TraceType::Operation || params_[2]->GetTraceType() != TraceType::Global) {
+    if (opcode_ != CALL_FUNCTION || !(name_ == "isinstance") || params_.size() < kParamCountThree ||
+        params_[1]->GetTraceType() != TraceType::Operation ||
+        params_[kParamIndexThree]->GetTraceType() != TraceType::Global) {
       break;
     }
-    OpTrace *call_op = (OpTrace *)(params_[1].get());
-    RootTrace *global_op = (RootTrace *)(params_[2].get());
+    OpTrace *call_op = reinterpret_cast<OpTrace *>(params_[kParamIndexTwo].get());
+    RootTrace *global_op = reinterpret_cast<RootTrace *>(params_[kParamIndexThree].get());
     int idx;
     std::string name, module_name;
     global_op->GetParam(&idx, &name, &module_name);
-    if (!(name == "Tensor") || call_op->params_.size() < 1) {
+    if (!(name == "Tensor") || call_op->params_.size() < kParamCountOne) {
       break;
     }
     if ((call_op->params_[0]->GetTraceType() == TraceType::Const &&
-         py::isinstance<mindspore::PrimitivePyAdapter>(call_op->params_[0]->GetObject())) ||
+         py::isinstance<mindspore::PrimitivePyAdapter>(call_op->params_[kParamIndexOne]->GetObject())) ||
         (call_op->opcode_ == CALL_FUNCTION && call_op->name_ == "cast_to_ms_tensor")) {
       is_const_ = true;
       if (obj_ == nullptr) {
@@ -1865,8 +1890,8 @@ TracePtr OpTrace::RemovePrimOutIsTensorPass() {
 }
 
 TracePtr OpTrace::RemoveCastPass() {
-  if (opcode_ == CALL_FUNCTION && params_.size() > 1 && (name_ == "cast_to_ms_tensor")) {
-    auto ret = params_[1];
+  if (opcode_ == CALL_FUNCTION && params_.size() > kParamCountOne && (name_ == "cast_to_ms_tensor")) {
+    auto ret = params_[kParamIndexTwo];
     auto new_ret = ret->Optimize();
     if (new_ret != nullptr) {
       return new_ret;
@@ -1877,40 +1902,66 @@ TracePtr OpTrace::RemoveCastPass() {
   return nullptr;
 }
 
+static OpTrace *GetSubScrTrace(TracePtr trace) {
+  if (trace->GetTraceType() == TraceType::Operation &&
+      (reinterpret_cast<OpTrace *>(trace.get()))->GetOpCode() == BINARY_SUBSCR) {
+    return reinterpret_cast<OpTrace *>(trace.get());
+  } else {
+    return nullptr;
+  }
+}
+
+static OpTrace *GetLoadAttrTrace(TracePtr trace) {
+  if (trace->GetTraceType() == TraceType::Operation &&
+      (reinterpret_cast<OpTrace *>(trace.get()))->GetOpCode() == LOAD_ATTR) {
+    return reinterpret_cast<OpTrace *>(trace.get());
+  } else {
+    return nullptr;
+  }
+}
+
+static OpTrace *GetCastAdapterTrace(TracePtr trace) {
+  if (trace->GetTraceType() == TraceType::Operation) {
+    OpTrace *cast_op = reinterpret_cast<OpTrace *>(trace.get());
+    if (cast_op->GetName() == "cast_to_adapter_tensor") {
+      return cast_op;
+    }
+  }
+  return nullptr;
+}
+
+static ConstTrace *GetConstTrace(TracePtr trace) {
+  if (trace->GetTraceType() == TraceType::Const && (reinterpret_cast<ConstTrace *>(trace.get()))->GetIndex() == -1) {
+    return reinterpret_cast<ConstTrace *>(trace.get());
+  } else {
+    return nullptr;
+  }
+}
+
 TracePtr OpTrace::RemoveEmptyTensorPass() {
   do {
-    if (opcode_ != COMPARE_OP || params_.size() < 2) {
+    if (opcode_ != COMPARE_OP || params_.size() < kParamCountTwo) {
       break;
     }
     OpTrace *subscr_op = nullptr;
     ConstTrace *const_op = nullptr;
-    for (int idx = 0; idx < 2; ++idx) {
-      if (params_[idx]->GetTraceType() == TraceType::Operation &&
-          ((OpTrace *)(params_[idx].get()))->opcode_ == BINARY_SUBSCR) {
-        subscr_op = (OpTrace *)(params_[idx].get());
-      } else if (params_[idx]->GetTraceType() == TraceType::Const &&
-                 ((ConstTrace *)(params_[idx].get()))->GetIndex() == -1) {
-        const_op = (ConstTrace *)(params_[idx].get());
-      }
+    for (size_t idx = 0; idx < kParamCountTwo; ++idx) {
+      subscr_op = GetSubScrTrace(params_[idx]);
+      const_op = GetConstTrace(params_[idx]);
     }
-    if (subscr_op == nullptr || const_op == nullptr) {
+    if (subscr_op == nullptr || const_op == nullptr || const_op->GetIndex() != -1) {
       break;
     }
-    if (subscr_op->params_.size() < 2 || subscr_op->params_[0]->GetTraceType() != TraceType::Operation ||
-        subscr_op->params_[1]->GetTraceType() != TraceType::Const) {
+    ConstTrace *const2_op = nullptr;
+    OpTrace *loadattr_op = nullptr;
+    if (subscr_op->params_.size() < kParamCountTwo ||
+        (const2_op = GetConstTrace(subscr_op->params_[kParamIndexTwo])) == nullptr || const2_op->GetIndex() != -1 ||
+        (loadattr_op = GetLoadAttrTrace(subscr_op->params_[kParamIndexOne])) == nullptr) {
       break;
     }
-    OpTrace *loadattr_op = (OpTrace *)(subscr_op->params_[0].get());
-    ConstTrace *const2_op = (ConstTrace *)(subscr_op->params_[1].get());
-    if (loadattr_op->opcode_ != LOAD_ATTR || !(loadattr_op->name_ == "shape") || loadattr_op->params_.size() < 1 ||
-        loadattr_op->params_[0]->GetTraceType() != TraceType::Operation) {
-      break;
-    }
-    OpTrace *cast_op = (OpTrace *)(loadattr_op->params_[0].get());
-    if (cast_op == nullptr || !(cast_op->name_ == "cast_to_adapter_tensor")) {
-      break;
-    }
-    if (const2_op == nullptr || const2_op->GetIndex() != -1 || const_op->GetIndex() != -1) {
+    OpTrace *cast_op = nullptr;
+    if (!(loadattr_op->name_ == "shape") || loadattr_op->params_.size() < kParamCountOne ||
+        (cast_op = GetCastAdapterTrace(loadattr_op->params_[kParamIndexOne])) == nullptr) {
       break;
     }
     auto c1 = const_op->GetObject();
@@ -1929,20 +1980,17 @@ TracePtr OpTrace::RemoveEmptyTensorPass() {
 }
 
 void OpTrace::JudgeDTypeChangePass() {
-  if (opcode_ != COMPARE_OP || params_.size() < 2) {
+  if (opcode_ != COMPARE_OP || params_.size() < kParamCountTwo) {
     return;
   }
-  for (int i = 0; i < 2; ++i) {
+  for (size_t i = 0; i < kParamCountTwo; ++i) {
     if (params_[i]->GetTraceType() == TraceType::Operation) {
-      OpTrace *trace = (OpTrace *)(params_[i].get());
-      if (trace->opcode_ == CALL_FUNCTION && trace->params_[0]->GetTraceType() == TraceType::Const &&
-          trace->params_[0]->GetObject() != nullptr &&
-          py::isinstance<mindspore::PrimitivePyAdapter>(trace->params_[0]->GetObject())) {
-        mindspore::PrimitivePyAdapterPtr prim =
-          py::cast<mindspore::PrimitivePyAdapterPtr>(trace->params_[0]->GetObject());
-        if (prim->name() == "DType") {
-          continue;
-        }
+      OpTrace *trace = reinterpret_cast<OpTrace *>(params_[i].get());
+      if (trace->opcode_ == CALL_FUNCTION && trace->params_[kParamIndexOne]->GetTraceType() == TraceType::Const &&
+          trace->params_[kParamIndexOne]->GetObject() != nullptr &&
+          py::isinstance<mindspore::PrimitivePyAdapter>(trace->params_[kParamIndexOne]->GetObject()) &&
+          py::cast<mindspore::PrimitivePyAdapterPtr>(trace->params_[kParamIndexOne]->GetObject())->name() == "DType") {
+        continue;
       } else if (trace->opcode_ == LOAD_ATTR && trace->name_ == "dtype") {
         continue;
       }
@@ -1953,11 +2001,11 @@ void OpTrace::JudgeDTypeChangePass() {
 }
 
 void OpTrace::JudgeDTypeScopePass() {
-  if (opcode_ != CONTAINS_OP || params_.size() < 2) {
+  if (opcode_ != CONTAINS_OP || params_.size() < kParamCountTwo) {
     return;
   }
   if (params_[0]->GetTraceType() == TraceType::Operation) {
-    OpTrace *trace = (OpTrace *)(params_[0].get());
+    OpTrace *trace = reinterpret_cast<OpTrace *>(params_[kParamIndexOne].get());
     if (trace->opcode_ == LOAD_ATTR && trace->name_ == "dtype") {
       relax_count_ = 0;
     }
@@ -1965,7 +2013,7 @@ void OpTrace::JudgeDTypeScopePass() {
 }
 
 void OpTrace::JudgeCodeChangePass() {
-  if (opcode_ != LOAD_ATTR || params_.size() < 1) {
+  if (opcode_ != LOAD_ATTR || params_.size() < kParamCountOne) {
     return;
   }
   if (name_ == "__code__") {
@@ -1974,7 +2022,7 @@ void OpTrace::JudgeCodeChangePass() {
 }
 
 void OpTrace::JudgeTrainFlagPass() {
-  if (opcode_ != LOAD_ATTR || params_.size() < 1) {
+  if (opcode_ != LOAD_ATTR || params_.size() < kParamCountOne) {
     return;
   }
   if (name_ == "training") {
@@ -1994,12 +2042,11 @@ TracePtr OpTrace::Optimize() {
   if (relax_limit_ > 0) {
     JudgeDTypeChangePass();
     JudgeDTypeScopePass();
-    // JudgeCodeChangePass();
     JudgeTrainFlagPass();
   }
   bool need_update = false;
   for (size_t i = 0; i < params_.size(); ++i) {
-    OPTIMIZE_TRACE(params_[i], need_update)
+    params_[i] = OptimizeTrace(params_[i], &need_update);
   }
   if (need_update) {
     if (!std::any_of(params_.begin(), params_.end(), [](const TracePtr &item) { return !item->IsConst(); })) {
@@ -2240,7 +2287,7 @@ const InfoPack &UnsupportedTrace::Info() {
     info.Begin();
     info << op_;
     info << arg_;
-    info << params_.size();
+    info << uint64_t(params_.size());
     for (auto i : params_) {
       info << i->Info();
     }

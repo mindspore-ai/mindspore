@@ -68,6 +68,36 @@ static void CollectTraceBack(JitCompileResults *c, PyCodeObject *code, bool is_g
 std::map<TimeRecorder::RecorderType, TimeRecorder::PerfData> TimeRecorder::data_;
 static std::map<uint64_t, size_t> code_size_execute_python;  // execute count, code size
 static std::map<uint64_t, size_t> code_size_execute_graph;   // execute count, code size
+static void PrintGuardPerf() {
+  std::map<std::string, std::pair<size_t, size_t>> guard_info;
+  std::map<std::string, std::pair<size_t, size_t>> guard_freq_info;
+  std::map<std::string, std::pair<size_t, size_t>> trace_info;
+  std::map<std::string, std::pair<size_t, std::vector<size_t>>> item_info;
+  OptGuardPerf::GetGuardPerf()->GetGuardPerfInfo(&guard_info, &item_info, &trace_info, &guard_freq_info);
+  std::cout << "Guard performance info:" << std::endl;
+  std::cout << "guard, count, total time, success, fail" << std::endl;
+  for (const auto &item : guard_info) {
+    auto iter = guard_freq_info.find(item.first);
+    if (iter != guard_freq_info.end()) {
+      std::cout << "guard:" << item.first << ", " << item.second.first << ", " << item.second.second << ","
+                << iter->second.first << "," << iter->second.second << std::endl;
+    } else {
+      std::cout << "guard:" << item.first << ", " << item.second.first << ", " << item.second.second << std::endl;
+    }
+  }
+  std::cout << "trace, count, total time" << std::endl;
+  for (const auto &item : trace_info) {
+    std::cout << "trace:" << item.first << ", " << item.second.first << ", " << item.second.second << std::endl;
+  }
+  std::cout << "item, count, [stage time]" << std::endl;
+  for (const auto &item : item_info) {
+    std::cout << "item:" << item.first << "," << item.second.first << ", [";
+    for (auto stage : item.second.second) {
+      std::cout << stage << ",";
+    }
+    std::cout << "]" << std::endl;
+  }
+}
 
 // jit compiler initialize
 static void ensureInitialize() {
@@ -90,34 +120,7 @@ static void ensureInitialize() {
     }
 
     if (kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kLogGuardPerf)) {
-      std::map<std::string, std::pair<size_t, size_t>> guard_info;
-      std::map<std::string, std::pair<size_t, size_t>> guard_freq_info;
-      std::map<std::string, std::pair<size_t, size_t>> trace_info;
-      std::map<std::string, std::pair<size_t, std::vector<size_t>>> item_info;
-      OptGuardPerf::GetGuardPerf()->GetGuardPerfInfo(&guard_info, &item_info, &trace_info, &guard_freq_info);
-      std::cout << "Guard performance info:" << std::endl;
-      std::cout << "guard, count, total time, success, fail" << std::endl;
-      for (const auto &item : guard_info) {
-        auto iter = guard_freq_info.find(item.first);
-        if (iter != guard_freq_info.end()) {
-          std::cout << "guard:" << item.first << ", " << item.second.first << ", " << item.second.second << ","
-                    << iter->second.first << "," << iter->second.second << std::endl;
-        } else {
-          std::cout << "guard:" << item.first << ", " << item.second.first << ", " << item.second.second << std::endl;
-        }
-      }
-      std::cout << "trace, count, total time" << std::endl;
-      for (const auto &item : trace_info) {
-        std::cout << "trace:" << item.first << ", " << item.second.first << ", " << item.second.second << std::endl;
-      }
-      std::cout << "item, count, [stage time]" << std::endl;
-      for (const auto &item : item_info) {
-        std::cout << "item:" << item.first << "," << item.second.first << ", [";
-        for (auto stage : item.second.second) {
-          std::cout << stage << ",";
-        }
-        std::cout << "]" << std::endl;
-      }
+      PrintGuardPerf();
     }
 
     size_t sum_code_py =
@@ -1170,8 +1173,8 @@ static bool CheckGuard(JitCompileResults *c, const PyFrameObject *f) {
     auto oc = set[i - 1];
     OptGuardPtr guard = oc->GetGuard();
     bool print_guard = c->conf->GetBoolConfig(GraphJitConfig::kPrintGuard);
-    if (guard != nullptr && guard->Check(c, f, print_guard, &cache, &success, &fail,
-                                         c->conf->GetBoolConfig(GraphJitConfig::kLogGuardPerf))) {
+    if (guard != nullptr &&
+        guard->Check(f, print_guard, &cache, &success, &fail, c->conf->GetBoolConfig(GraphJitConfig::kLogGuardPerf))) {
       c->code = oc;
       c->codehub->UpdateOptTarget(opt, oc);
       break;
