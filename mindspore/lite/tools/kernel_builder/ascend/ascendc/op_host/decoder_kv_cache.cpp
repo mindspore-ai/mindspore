@@ -243,6 +243,7 @@ class DecoderKvCache : public OpDef {
       .SetTiling(optiling::TilingFunc)
       .AddConfig("ascend910")
       .AddConfig("ascend910b")
+      .AddConfig("ascend310p")
       .SetCheckSupport(optiling::CheckSupported);
   }
 };
