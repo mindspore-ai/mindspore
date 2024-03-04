@@ -53,7 +53,7 @@ bool CanbeMutable(const py::object &arg) {
   if (GraphUtils::IsMutable(arg)) {
     return false;
   }
-  if (py::isinstance<py::dict>(arg)) {
+  if (py::isinstance<py::dict>(arg) || py::isinstance<py::list>(arg) || py::isinstance<py::tuple>(arg)) {
     py::object o = python_adapter::CallPyFn("mindspore.common.mutable", "_check_element_type", arg);
     return o.ptr() == Py_True;
   }
