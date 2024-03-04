@@ -56,8 +56,6 @@ class DvmKernelMod : public KernelMod {
 
   virtual void UpdateOutputShapes() = 0;
 
-  size_t GetInputNum() { return inputs_addr_.size(); }
-
   size_t GetOutputNum() { return outputs_addr_.size(); }
 
   // used in dynamic shape
