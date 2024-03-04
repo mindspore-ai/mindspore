@@ -55,6 +55,13 @@ abstract::TupleShapePtr TopKInferShape(const PrimitivePtr &primitive, const std:
   if (input_args[kInputIndex1]->isa<abstract::AbstractTensor>()) {
     MS_EXCEPTION_IF_NULL(input1_value);
     if (input1_value->isa<tensor::Tensor>()) {
+      auto k_dim =
+        CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape].size();
+      if (k_dim > 1) {
+        MS_LOG(EXCEPTION) << "For '" << prim_name
+                          << "', the dimension of 'k' should only be 0 or 1 when 'k' is a Tensor, but got: " << k_dim
+                          << ".";
+      }
       auto k_tensor_ptr = input1_value->cast<tensor::TensorPtr>();
       MS_EXCEPTION_IF_NULL(k_tensor_ptr);
       k_v = *static_cast<int32_t *>(k_tensor_ptr->data_c());
@@ -82,7 +89,7 @@ TuplePtr TopKInferType(const PrimitivePtr &primitive, const std::vector<Abstract
   auto output0_type = input_args[kInputIndex0]->BuildType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", output0_type, common_valid_types, prim_name);
   auto k_type = input_args[kInputIndex1]->BuildType();
-  const std::set<TypePtr> int_types = {kInt8, kInt16, kInt32, kInt64};
+  const std::set<TypePtr> int_types = {kInt32, kInt64};
   (void)CheckAndConvertUtils::CheckTypeValid("k", k_type, int_types, prim_name);
   auto output1_type = kInt32;
   return std::make_shared<Tuple>(std::vector<TypePtr>{output0_type, output1_type});

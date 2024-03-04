@@ -6521,7 +6521,7 @@ def topk(input, k, dim=None, largest=True, sorted=True):
 
     Args:
         input (Tensor): Input to be computed, data type must be float16, float32 or int32.
-        k (int): The number of top or bottom elements to be computed along the last dimension, constant input is needed.
+        k (int): The number of top or bottom elements to be computed along the last dimension.
         dim (int, optional): The dimension to sort along. Default: ``None`` .
         largest (bool, optional): If largest is ``False``  then the k smallest elements are returned.
             Default: ``True`` .
