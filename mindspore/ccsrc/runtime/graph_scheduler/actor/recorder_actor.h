@@ -29,6 +29,7 @@
 namespace mindspore {
 namespace runtime {
 using mindspore::device::DeviceContext;
+using mindspore::kernel::KernelLaunchAddr;
 using mindspore::kernel::KernelTensor;
 
 // The recorder actor is used to record kernel info.
@@ -38,9 +39,7 @@ class RecorderActor : public ActorBase {
   ~RecorderActor() override = default;
 
   // The memory recorder of each node.
-  void RecordInfo(const std::string op_name, const std::vector<KernelTensor *> *input_kernel_tensors,
-                  const std::vector<KernelTensor *> *output_kernel_tensors,
-                  const std::vector<KernelTensor *> *workspace_kernel_tensors, const DeviceContext *device_context,
+  void RecordInfo(const std::string op_name, const KernelLaunchAddr *launch_info, const DeviceContext *device_context,
                   OpContext<DeviceTensor> *const op_context);
 
   // Clear memory recorder at the step end.
