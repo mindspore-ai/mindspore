@@ -30,6 +30,13 @@ REG_OP(Meshgrid)
   .ATTR(indexing, String, "")
   .OP_END_FACTORY_REG(Meshgrid)
 
+REG_OP(UniqueWithPad)
+  .INPUT(x, TensorType({DT_INT32, DT_INT64}))
+  .INPUT(pad_num, TensorType({DT_INT32, DT_INT64}))
+  .OUTPUT(y, TensorType({DT_INT32, DT_INT64}))
+  .OUTPUT(idx, TensorType({DT_INT32, DT_INT64}))
+  .OP_END_FACTORY_REG(UniqueWithPad)
+
 REG_CUST_OP(SliceGrad)
   .INPUT(dy, TensorType({DT_BOOL, DT_INT8, DT_INT16, DT_INT32, DT_INT64, DT_UINT8, DT_UINT16, DT_UINT32, DT_UINT64,
                          DT_FLOAT16, DT_FLOAT, DT_DOUBLE, DT_COMPLEX64, DT_COMPLEX128}))
