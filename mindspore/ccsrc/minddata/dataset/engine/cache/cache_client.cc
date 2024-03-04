@@ -350,7 +350,8 @@ bool CacheClient::CacheMissKeys::KeyIsCacheMiss(row_id_type key) {
   }
 }
 
-CacheClient::AsyncBufferStream::AsyncBufferStream() : cc_(nullptr), offset_addr_(-1), cur_(0) {}
+CacheClient::AsyncBufferStream::AsyncBufferStream()
+    : cc_(nullptr), offset_addr_(-1), cur_(0), buf_arr_(std::vector<AsyncWriter>(kNumAsyncBuffer)) {}
 
 CacheClient::AsyncBufferStream::~AsyncBufferStream() {
   (void)vg_.ServiceStop();

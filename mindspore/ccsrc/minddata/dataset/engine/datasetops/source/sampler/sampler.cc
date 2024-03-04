@@ -39,7 +39,8 @@ SamplerRT::SamplerRT(int64_t num_samples, int64_t samples_per_tensor)
       num_samples_(num_samples),
       samples_per_tensor_(samples_per_tensor),
       col_desc_(nullptr),
-      is_initialized(false) {}
+      is_initialized(false),
+      child_ids_(TensorRow()) {}
 
 Status SamplerRT::HandshakeRandomAccessOp(const RandomAccessOp *op, const int32_t reset_count) {
   RETURN_UNEXPECTED_IF_NULL(op);

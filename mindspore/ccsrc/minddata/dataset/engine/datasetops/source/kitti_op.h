@@ -114,7 +114,6 @@ class KITTIOp : public MappableLeafOp {
 
  private:
   bool decode_;
-  int64_t row_cnt_;
   std::string folder_path_;
   std::string usage_;
   std::unique_ptr<DataSchema> data_schema_;

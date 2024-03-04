@@ -25,8 +25,6 @@ namespace dataset {
 RootNode::RootNode(std::shared_ptr<DatasetNode> child) : DatasetNode() {
   // The root node's parent must remain nullptr, which is set in the constructor of DatasetNode.
   AddChild(child);
-  num_epochs_ = 0;
-  step_ = 0;
 }
 
 std::shared_ptr<DatasetNode> RootNode::Copy() {
