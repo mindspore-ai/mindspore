@@ -753,7 +753,9 @@ def jit(fn=None, mode="PSJit", input_signature=None, hash_args=None, jit_config=
             return decorated
 
         config = dict()
-        if jit_config is not None:
+        if isinstance(jit_config, JitConfig):
+            config.update(jit_config.jit_config_dict)
+        elif jit_config is not None:
             config.update(jit_config)
         jit_mode_pi_enable()
 
