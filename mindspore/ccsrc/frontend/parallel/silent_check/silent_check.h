@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace parallel {
 constexpr char NPU_ASD_ENABLE[] = "NPU_ASD_ENABLE";
-constexpr char LOSS_SCALE[] = "loss_scale";
+constexpr char LOSS_SCALE[] = "scale_sense";
 constexpr size_t LOSS_SCALE_INDEX = 6;
 class SilentCheck {
  public:
