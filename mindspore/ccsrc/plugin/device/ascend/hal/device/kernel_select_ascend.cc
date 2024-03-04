@@ -561,7 +561,16 @@ std::tuple<bool, std::string, ExceptionType> SelectKernelInfoWithMsg(const Kerne
   if (common::GetEnv("MS_ENABLE_INTERNAL_KERNELS") == "off") {
     enable_internal = false;
   }
+
   std::string op_name = common::AnfAlgo::GetCNodeName(node);
+  std::string disable_name_list = common::GetEnv("MS_DISABLE_INTERNAL_KERNELS_LIST");
+  std::vector<std::string> op_name_vec = SplitString(disable_name_list, ',');
+  for (auto name : op_name_vec) {
+    if (name == op_name) {
+      enable_internal = false;
+      break;
+    }
+  }
 
   if (enable_internal && kernel::IsRegisteredInternalKernel(node)) {
     GenerateKernelBuildInfo(node, KernelType::INTERNAL_KERNEL);
@@ -576,15 +585,6 @@ std::tuple<bool, std::string, ExceptionType> SelectKernelInfoWithMsg(const Kerne
   static const std::set<std::string> select_host_priorly = {kShapeOpName};
   if (select_host_priorly.count(op_name) != 0) {
     return {false, op_name + " select host kernel priorly.", NotSupportError};
-  }
-
-  std::string disable_name_list = common::GetEnv("MS_DISABLE_INTERNAL_KERNELS_LIST");
-  std::vector<std::string> op_name_vec = SplitString(disable_name_list, ',');
-  for (auto name : op_name_vec) {
-    if (name == op_name) {
-      enable_internal = false;
-      break;
-    }
   }
 
   if (IsEnableAclnn(graph, node)) {
