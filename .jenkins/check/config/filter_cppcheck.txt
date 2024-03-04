@@ -66,6 +66,7 @@
 "mindspore/mindspore/ccsrc/runtime/graph_scheduler/actor/embedding_cache/embedding_cache_prefetch_actor.cc"  "oppositeInnerCondition"
 "mindspore/mindspore/ccsrc/transform/graph_ir/op_declare/image_ops_declare.cc"                         "unknownMacro"
 "mindspore/mindspore/ccsrc/backend/common/expander/fallback/nn_ops.cc"                                           "unknownMacro"
+"mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/eltwise_grad_cpu_kernel.cc"                        "compareBoolExpressionWithInt"
 
 # MindData
 "mindspore/mindspore/ccsrc/minddata/dataset/engine/dataset_iterator.cc"                               "useStlAlgorithm"
