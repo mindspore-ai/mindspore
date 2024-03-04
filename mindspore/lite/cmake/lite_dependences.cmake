@@ -46,7 +46,7 @@ if(MSLITE_DEPS_MKLDNN)
     if(USE_MS_THREADPOOL_FOR_DNNL)
         add_compile_definitions(USE_MS_THREADPOOL_FOR_DNNL)
     endif()
-include(${TOP_DIR}/cmake/external_libs/mkl_dnn.cmake)
+    include(${TOP_DIR}/cmake/external_libs/mkl_dnn.cmake)
 endif()
 
 if(MSLITE_DEPS_LIBEVENT)

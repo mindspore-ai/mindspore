@@ -64,6 +64,15 @@ if(ANDROID_NDK)
     set(TARGET_AOS_ARM ON)
 endif()
 
+if(NOT MSLITE_TARGET_SITEAI)
+    set(MSLITE_DEPS_OPENSSL on)
+    set(MSLITE_SIMPLEST_CLOUD_INFERENCE off)
+endif()
+
+if(MSLITE_DEPS_OPENSSL)
+    add_compile_definitions(ENABLE_OPENSSL)
+endif()
+
 if(NOT ONLY_BUILD_DEVICE_PLUGINS)
     set(CORE_SRC_LIST ${CORE_SRC_LIST} ${CORE_OPS_LIST})
 endif()
@@ -125,6 +134,7 @@ if(ENABLE_NATIVE_PROTOBUF)
 elseif(NOT TARGET_AOS_ARM AND NOT ANDROID_NDK)
     target_link_libraries(mindspore_core PRIVATE mindspore::protobuf)
 endif()
+
 target_link_libraries(mindspore_core PRIVATE securec)
 
 if(CMAKE_SYSTEM_NAME MATCHES "Linux")
@@ -144,7 +154,8 @@ if(USE_GLOG)
     target_link_libraries(mindspore_core PRIVATE mindspore::glog)
 endif()
 
-if((${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR APPLE) AND (NOT TARGET_AOS_ARM) AND (NOT ANDROID_NDK))
+if((${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR APPLE) AND (NOT TARGET_AOS_ARM) AND (NOT ANDROID_NDK) AND
+        (NOT MSLITE_SIMPLEST_CLOUD_INFERENCE))
     target_link_libraries(mindspore_core PRIVATE mindspore::crypto -pthread)
 endif()
 

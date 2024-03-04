@@ -15,6 +15,8 @@ set(MSLITE_REGISTRY_DEVICE "off" CACHE STRING "Compile Mindspore Lite that suppo
     currently supported devices: Hi3516D/Hi3519A/Hi3559A/SD3403")
 set(MSLITE_MICRO_PLATFORM "auto" CACHE STRING "Platform of micro static library micro static, \
     currently supported : cortex-m7/cortex-m4/cortex-m33/auto")
+set(MSLITE_MINDDATA_IMPLEMENT "full" CACHE STRING "minddata mode, \
+    currently supported : off/full/wrapper/lite/lite_cv")
 option(MSLITE_ENABLE_NPU "enable npu, only arm64 or arm32 support" off)
 option(MSLITE_ENABLE_COREML "enable coreML, only apple ios devices support" off)
 option(MSLITE_ENABLE_NNAPI "enable nnapi, only android with arm64 or arm32" off)
@@ -59,6 +61,7 @@ option(MSLITE_ENABLE_MODEL_PRE_INFERENCE "enable model do pre-inference when Bui
 option(MSLITE_EXPORT_COMPUTE_IR "export graph structure dotfile when debug mode" off)
 option(MSLITE_ENABLE_PACKAGE_WHEEL "enable package python wheel" off)
 option(MSLITE_ENABLE_OPENCV "enable opencv" on)
+option(MSLITE_TARGET_SITEAI "target siteai" off)
 
 #Option that can be configured through manually
 option(ENABLE_VERBOSE "" off)
@@ -208,6 +211,24 @@ endif()
 if(DEFINED ENV{MSLITE_ENABLE_OPENCV})
     set(MSLITE_ENABLE_OPENCV $ENV{MSLITE_ENABLE_OPENCV})
 endif()
+if(DEFINED ENV{MSLITE_MINDDATA_IMPLEMENT})
+    set(MSLITE_MINDDATA_IMPLEMENT $ENV{MSLITE_MINDDATA_IMPLEMENT})
+endif()
+if(DEFINED ENV{MSLITE_TARGET_SITEAI})
+    set(MSLITE_TARGET_SITEAI $ENV{MSLITE_TARGET_SITEAI})
+endif()
+
+if(MSLITE_TARGET_SITEAI)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/providers/siteai)
+else()
+    set(MSLITE_DEPS_EIGEN on)
+    set(MSLITE_DEPS_CMSIS on)
+endif()
+
+if(MSLITE_DEPS_EIGEN)
+    add_compile_definitions(ENABLE_EIGEN)
+endif()
+
 if(DEFINED ENV{MSLITE_ENABLE_MODEL_ENCRYPTION})
     if((${CMAKE_SYSTEM_NAME} MATCHES "Linux" AND PLATFORM_X86_64) OR (
         (PLATFORM_ARM64 OR PLATFORM_ARM32) AND (ANDROID_NDK_TOOLCHAIN_INCLUDED OR TARGET_AOS_ARM)))
@@ -259,7 +280,9 @@ endif()
 
 if(DEFINED ENV{ENABLE_FAST_HASH_TABLE})
     add_compile_definitions(ENABLE_FAST_HASH_TABLE)
-    set(MSLITE_DEPS_ROBIN_HOOD_HASHING on)
+    if(NOT MSLITE_TARGET_SITEAI)
+        set(MSLITE_DEPS_ROBIN_HOOD_HASHING on)
+    endif()
 endif()
 
 if(DEFINED ENV{MSLITE_ENABLE_MODEL_OBF})
@@ -418,7 +441,9 @@ endif()
 if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
     set(MSLITE_ENABLE_RUNTIME_GLOG on)
     set(MSLITE_ENABLE_TRAIN off)
-    add_compile_definitions(ENABLE_MINDDATA_PYTHON)
+    if(NOT MSLITE_MINDDATA_IMPLEMENT STREQUAL "off")
+        add_compile_definitions(ENABLE_MINDDATA_PYTHON)
+    endif()
 endif()
 
 if(MSLITE_ENABLE_TRAIN AND NOT MSLITE_ENABLE_WEIGHT_DECODE)
@@ -554,6 +579,7 @@ message(STATUS "\tMSLITE_ENABLE_MODEL_PRE_INFERENCE          = \t${MSLITE_ENABLE
 message(STATUS "\tMSLITE_EXPORT_COMPUTE_IR                   = \t${MSLITE_EXPORT_COMPUTE_IR}")
 message(STATUS "\tMSLITE_ENABLE_PACKAGE_WHEEL                = \t${MSLITE_ENABLE_PACKAGE_WHEEL}")
 message(STATUS "\tMSLITE_ENABLE_OPENCV                       = \t${MSLITE_ENABLE_OPENCV}")
+message(STATUS "\tMSLITE_TARGET_SITEAI                       = \t${MSLITE_TARGET_SITEAI}")
 
 if((MSLITE_ENABLE_CONVERTER OR MSLITE_ENABLE_TESTCASES) AND (
         NOT MSLITE_ENABLE_MINDRT
@@ -677,6 +703,7 @@ set(NNACL_DIR ${CCSRC_DIR}/plugin/device/cpu/kernel/nnacl)
 
 if(PLATFORM_MCU)
     set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -Wno-incompatible-pointer-types")
+#    set(MSLITE_DEPS_CMSIS on)
     add_subdirectory(${NNACL_DIR} build/nnacl)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/tools/converter/micro/cmake/cortex-m/ build)
     include(${TOP_DIR}/cmake/package_lite.cmake)
@@ -852,7 +879,9 @@ endif()
 
 if(NOT APPLE)
     if(PLATFORM_X86_64 OR MACHINE_LINUX_ARM64)
-        set(MSLITE_DEPS_PYBIND11 on)
+        if(NOT MSLITE_TARGET_SITEAI)
+            set(MSLITE_DEPS_PYBIND11 on)
+        endif()
     endif()
 endif()
 
@@ -861,13 +890,18 @@ if(MSLITE_ENABLE_CONVERTER OR MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENA
         set(MSLITE_DEPS_OPENCV on)
         add_definitions(-DMSLITE_DEPS_OPENCV)
     endif()
-    set(MSLITE_DEPS_EIGEN on)
+endif()
+
+if(NOT MSLITE_TARGET_SITEAI)
+    set(MSLITE_DEPS_CMSIS on)
 endif()
 
 if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
-    set(MSLITE_DEPS_MKLDNN on)
-    set(MSLITE_DEPS_LIBEVENT on)
-    set(MSLITE_DEPS_PYBIND11 on)
+    if(NOT MSLITE_TARGET_SITEAI)
+        set(MSLITE_DEPS_MKLDNN on)
+        set(MSLITE_DEPS_LIBEVENT on)
+        set(MSLITE_DEPS_PYBIND11 on)
+    endif()
     if(SUPPORT_TENSORRT)
         set(MSLITE_DEPS_FAST_TRANSFORMERS on)
         if(MSLITE_ENABLE_GRAPH_KERNEL)
@@ -881,12 +915,18 @@ endif()
 # Such as when MSLITE_ENABLE_CONVERTER is on or MSLITE_ENABLE_KERNEL_EXECUTOR is on.
 if((${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR APPLE) AND (
     MSLITE_ENABLE_CONVERTER OR (MSLITE_ENABLE_KERNEL_EXECUTOR AND NOT TARGET_AOS_ARM)))
-    set(MSLITE_DEPS_OPENSSL on)
+    if(NOT MSLITE_TARGET_SITEAI)
+        set(MSLITE_DEPS_OPENSSL on)
+    endif()
 endif()
 
 if(MSLITE_ENABLE_MODEL_ENCRYPTION AND NOT TARGET_AOS_ARM)
-    set(MSLITE_DEPS_OPENSSL on)
-    add_compile_definitions(ENABLE_OPENSSL)
+    if(NOT MSLITE_TARGET_SITEAI)
+        set(MSLITE_DEPS_OPENSSL on)
+    endif()
+    if(MSLITE_DEPS_OPENSSL)
+        add_compile_definitions(ENABLE_OPENSSL)
+    endif()
 endif()
 
 include(${LITE_DIR}/cmake/lite_dependences.cmake)
