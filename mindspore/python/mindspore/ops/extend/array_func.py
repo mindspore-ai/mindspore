@@ -34,6 +34,10 @@ def gather(input, dim, index):
         output[(i_0, i_1, ..., i_{dim}, i_{dim+1}, ..., i_n)] =
         input[(i_0, i_1, ..., index[(i_0, i_1, ..., i_{dim}, i_{dim+1}, ..., i_n)], i_{dim+1}, ..., i_n)]
 
+    .. warning::
+        On Ascend, the behavior is unpredictable when the value of `index` in not in the range
+        `[-input.shape[dim], input.shape[dim])`.
+
     Args:
         input (Tensor): The target tensor to gather values.
         dim (int): the axis to index along, must be in range `[-input.rank, input.rank)`.
@@ -41,8 +45,7 @@ def gather(input, dim, index):
 
             - `index.rank == input.rank`;
             - `index.shape[axis] <= input.shape[axis]` where axis goes through all dimensions of `input` except `dim`;
-            - the value of `index` is in range `[-input.shape[dim], input.shape[dim])`. The behavior is unpredictable
-              when the value of index is out of the valid range on Ascend.
+            - the value of `index` is in range `[-input.shape[dim], input.shape[dim])`.
 
     Returns:
         Tensor, has the same type as `input` and the same shape as `index`.

@@ -1,12 +1,12 @@
 mindspore.ops.extend
 =====================
 
-XXX函数
---------
+Array操作
+---------
 
 .. mscnplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.ops.extend.xxx
+    mindspore.ops.extend.gather

@@ -1,7 +1,7 @@
 mindspore.ops.extend
 =====================
 
-xxx Functions
+Array Functions
 ---------------
 
 .. msplatwarnautosummary::
@@ -9,4 +9,4 @@ xxx Functions
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.ops.extend.xxx
+    mindspore.ops.extend.gather
