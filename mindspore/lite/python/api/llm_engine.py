@@ -211,7 +211,7 @@ class LLMClusterInfo:
     @remote_role.setter
     def remote_role(self, remote_role):
         """Set remote role of this LLMClusterInfo object"""
-        check_isinstance("remote_role_type", remote_role, LLMRole)
+        check_isinstance("remote_role", remote_role, LLMRole)
         remote_role_type_int = 0 if remote_role == LLMRole.Prompt else 1  # 0: Prompt, 1: Decoder
         self.llm_cluster_.remote_role_type = remote_role_type_int
 
@@ -470,9 +470,10 @@ class LLMModel:
         if not self.model_:
             raise RuntimeError(f"LLMEngine is not inited or init failed")
         if self.batch_mode_ != "manual":
-            raise RuntimeError(f"LLMEngine.pull_kv is only support when batch_mode is \"manual\"")
+            raise RuntimeError(f"LLMEngine.merge_kv is only support when batch_mode is \"manual\"")
         check_isinstance("llm_req", llm_req, LLMReq)
         check_isinstance("batch_index", batch_index, int)
+        check_isinstance("batch_id", batch_id, int)
         # pylint: disable=protected-access
         status = self.model_.merge_kv(llm_req.llm_request_, batch_index, batch_id)
         _handle_llm_status(status, "merge_kv", "llm_req " + _llm_req_str(llm_req))
@@ -589,7 +590,7 @@ class LLMEngine:
         check_isinstance("cluster_id", cluster_id, int)
         check_isinstance("batch_mode", batch_mode, str)
         if batch_mode != "auto" and batch_mode != "manual":
-            raise RuntimeError(f"batch_mode should be str \"auto\" or \"manual\", but got {batch_mode}")
+            raise ValueError(f"batch_mode should be str \"auto\" or \"manual\", but got {batch_mode}")
         self.role_ = role
         self.cluster_id_ = cluster_id
         self.batch_mode_ = batch_mode
@@ -632,17 +633,25 @@ class LLMEngine:
         if self.inited_:
             raise RuntimeError(f"Cannot add model for LLMEngine: LLMEngine has been inited")
         if not isinstance(model_paths, (list, tuple)):
-            raise TypeError(f"model_paths must be tuple/list of str, but got item {type(model_paths)}.")
+            raise TypeError(f"model_paths must be tuple/list of str, but got {type(model_paths)}.")
         for i, model_path in enumerate(model_paths):
             if not isinstance(model_path, str):
                 raise TypeError(f"model_paths element must be str, but got {type(model_path)} at index {i}.")
             if not os.path.exists(model_path):
-                raise RuntimeError(f"Failed to init LLMEngine, model path {model_path} at index {i} does not exist!")
+                raise RuntimeError(f"model_paths {model_path} at index {i} does not exist!")
         check_isinstance("options", options, dict)
+        for key, value in options.items():
+            if not isinstance(key, str):
+                raise TypeError(f"options key must be str, but got {type(key)}.")
+            if not isinstance(value, str):
+                raise TypeError(f"options value must be str, but got {type(value)}.")
         if postprocess_model_path is not None:
             if not isinstance(postprocess_model_path, str):
                 raise TypeError(
-                    f"postprocess_model_path must be None or str, but got item {type(postprocess_model_path)}.")
+                    f"postprocess_model_path must be None or str, but got {type(postprocess_model_path)}.")
+            if not os.path.exists(postprocess_model_path):
+                raise RuntimeError(f"postprocess_model_path {postprocess_model_path} does not"
+                                   f" exist!")
         else:
             postprocess_model_path = ""
 
@@ -671,9 +680,14 @@ class LLMEngine:
             TypeError: `options` is not a dict.
             RuntimeError: init LLMEngine failed.
         """
-        check_isinstance("options", options, dict)
         if self.inited_:
             raise RuntimeError(f"LLMEngine has been inited")
+        check_isinstance("options", options, dict)
+        for key, value in options.items():
+            if not isinstance(key, str):
+                raise TypeError(f"options key must be str, but got {type(key)}.")
+            if not isinstance(value, str):
+                raise TypeError(f"options value must be str, but got {type(value)}.")
         ret = self.engine_.init(options)
         status_code = ret.StatusCode()
         if status_code == StatusCode.kLiteParamInvalid:
@@ -762,6 +776,7 @@ class LLMEngine:
             raise RuntimeError(f"LLMEngine is not inited or init failed")
         if not isinstance(clusters, (tuple, list)):
             raise TypeError(f"clusters must be list/tuple of LLMClusterInfo, but got {type(clusters)}.")
+        check_isinstance("timeout", timeout, int)
         for i, element in enumerate(clusters):
             if not isinstance(element, LLMClusterInfo):
                 raise TypeError(f"clusters element must be LLMClusterInfo, but got {type(element)} at index {i}.")
@@ -812,6 +827,7 @@ class LLMEngine:
             raise RuntimeError(f"LLMEngine is not inited or init failed")
         if not isinstance(clusters, (tuple, list)):
             raise TypeError(f"clusters must be list/tuple of LLMClusterInfo, but got {type(clusters)}.")
+        check_isinstance("timeout", timeout, int)
         for i, element in enumerate(clusters):
             if not isinstance(element, LLMClusterInfo):
                 raise TypeError(f"clusters element must be LLMClusterInfo, but got {type(element)} at index {i}.")
