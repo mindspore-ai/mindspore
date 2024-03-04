@@ -147,10 +147,11 @@ std::vector<std::string> SplitString(std::string str, const std::string &pattern
   return results;
 }
 
-std::string AccumulateShape(const std::vector<std::string> &shape_template) {
+std::string AccumulateShape(const std::vector<std::string> &shape_template, size_t start_index, size_t end_index) {
   int64_t const_part = 1;
   std::string non_const_part;
-  for (const auto &item : shape_template) {
+  for (size_t i = start_index; i < end_index; ++i) {
+    auto item = shape_template[i];
     if (IsNumber(item)) {
       const_part *= std::stoi(item);
     } else {
@@ -165,5 +166,16 @@ std::string AccumulateShape(const std::vector<std::string> &shape_template) {
     accumulate_shape += " * " + non_const_part;
   }
   return accumulate_shape;
+}
+
+std::string GetTensorAddr(lite::Tensor *tensor, bool is_const, DynamicMemManager *dynamic_mem_manager,
+                          MemoryAllocator *allocator) {
+  if (is_const) {
+    return allocator->GetRuntimeAddr(tensor, true);
+  }
+  if (dynamic_mem_manager == nullptr) {
+    return allocator->GetRuntimeAddr(tensor);
+  }
+  return dynamic_mem_manager->GetVarTensorAddr(tensor);
 }
 }  // namespace mindspore::lite::micro

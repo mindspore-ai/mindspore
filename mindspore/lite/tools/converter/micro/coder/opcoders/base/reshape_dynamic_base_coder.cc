@@ -47,7 +47,7 @@ int ReshapeDynamicBaseCoder::DoCode(CoderContext *const context) {
 
   int data_item_size = static_cast<int>(lite::DataTypeSize(input_tensor_->data_type()));
   auto in_shape = shape_info_container_->GetTemplateShape(input_tensor_);
-  std::string size = AccumulateShape(in_shape) + " * " + std::to_string(data_item_size);
+  std::string size = AccumulateShape(in_shape, 0, in_shape.size()) + " * " + std::to_string(data_item_size);
   std::string input_data = dynamic_mem_manager_->GetVarTensorAddr(input_tensor_);
   MS_CHECK_TRUE_MSG(!input_data.empty(), RET_ERROR, "pointer is not allocated by the allocator");
   std::string output_data = dynamic_mem_manager_->GetVarTensorAddr(output_tensor_);

@@ -57,6 +57,14 @@
 #include "nnacl/kernel/tile.h"
 #include "nnacl/kernel/slice.h"
 #include "coder/opcoders/nnacl/dynamic_parameter/transpose_dynamic_parameter.h"
+#include "coder/opcoders/nnacl/dynamic_parameter/dynamic_lstm_parameter.h"
+#include "coder/opcoders/nnacl/dynamic_parameter/slice_dynamic_parameter.h"
+#include "coder/opcoders/nnacl/dynamic_parameter/split_dynamic_parameter.h"
+#include "coder/opcoders/nnacl/dynamic_parameter/strided_slice_dynamic_parameter.h"
+#include "coder/opcoders/nnacl/dynamic_parameter/scale_dynamic_parameter.h"
+#include "coder/opcoders/nnacl/dynamic_parameter/conv_dynamic_parameter.h"
+#include "coder/opcoders/nnacl/dynamic_parameter/arithmetic_dynamic_parameter.h"
+#include "coder/opcoders/nnacl/dynamic_parameter/pooling_dynamic_parameter.h"
 
 namespace mindspore::lite::micro::nnacl {
 class NNaclFp32Serializer : public Serializer {
@@ -70,6 +78,7 @@ class NNaclFp32Serializer : public Serializer {
   void CodeStruct(const std::string &name, const InstanceNormParameter &param);
   void CodeStruct(const std::string &name, const ArithmeticParameter &arithmetic_parameter);
   void CodeStruct(const std::string &name, const ConvParameter &conv_parameter);
+  void CodeStruct(const std::string &name, const MatMulParameter &mat_mul_parameter);
   void CodeStruct(const std::string &name, const MicroMatmulParameter &micro_matmul_parameter);
   void CodeStruct(const std::string &name, const LstmParameter &lstm_parameter);
   void CodeStruct(const std::string &name, const ScaleStruct &scale_struct);
@@ -95,6 +104,22 @@ class NNaclFp32Serializer : public Serializer {
   void CodeStruct(const std::string &name, const SliceStruct &param);
   void CodeStruct(const std::string &name, const TransposeParameter &transpose_param,
                   const TransposeDynamicParameter &dynamic_transpose_param);
+  void CodeStruct(const std::string &name, const SplitParameter &split_parameter,
+                  const SplitDynamicParameter &dynamic_split_param);
+  void CodeStruct(const std::string &name, const BroadcastShapeInfo &param,
+                  const BroadcastDynamicShapeInfo &dynamic_param);
+  void CodeStruct(const std::string &name, const LstmParameter &lstm_param,
+                  const DynamicLstmParameter &dynamic_lstm_param);
+  void CodeStruct(const std::string &name, const SliceStruct &slice_parameter,
+                  const SliceDynamicParameter &dynamic_slice_param);
+  void CodeStruct(const std::string &name, const StridedSliceParameter &strided_slice_parameter,
+                  const StridedSliceDynamicParameter &dynamic_strided_slice_param);
+  void CodeStruct(const std::string &name, const ScaleStruct &scale_struct,
+                  const ScaleDynamicParameter &dynamic_scale_param);
+  void CodeStruct(const std::string &name, const ConvParameter &conv_parameter,
+                  const ConvDynamicParameter &dynamic_conv_param);
+  void CodeStruct(const std::string &name, const PoolingComputeParam &pooling_compute,
+                  const PoolingDynamicParameter &dynamic_pooling_param);
   void CodeStruct(const std::string &name, const int *list, int size);
   void CodeArrayStruct(const std::string &name, TensorC *tensorC, std::vector<Tensor *> tensor);
 
