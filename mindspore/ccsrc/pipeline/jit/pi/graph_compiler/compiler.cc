@@ -212,7 +212,7 @@ CallableGraph MindCompiler::Compile(const FuncGraphPtr &func_graph, const py::tu
     tuple = EliminateSelf(tuple, compile_info.co_name_);
     tuple = EliminateStubTensor(tuple);
     MarkArgmentMutable(tuple);
-    tuple = EliminateInvalidArgs(tuple, compile_info.co_flags_, true);
+    tuple = EliminateInvalidArgs(tuple, compile_info.co_flags_, false); // need adapt for optimizer
     auto graph_executor = pipeline::GraphExecutorPy::GetInstance();
     MS_EXCEPTION_IF_NULL(graph_executor);
     py::object ret = graph_executor->Run(tuple, py::str(phase));
