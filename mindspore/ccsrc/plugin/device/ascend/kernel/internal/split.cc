@@ -16,9 +16,6 @@
 #include <memory>
 #include "plugin/device/ascend/kernel/internal/split.h"
 
-namespace {
-const int64_t DEFAULT_OUTPUT_NUM = 2;
-}
 
 namespace mindspore {
 namespace kernel {
@@ -28,40 +25,20 @@ internal::OpParamPtr InternalSplit::CreateOpParam(const std::vector<KernelTensor
   internal::SplitParam split_param;
   param_ptr->opId = internal::OpId::Split;
 
-  if (primitive_->HasAttr("axis")) {
-    auto value_str = primitive_->GetAttr("axis");
-    MS_EXCEPTION_IF_NULL(value_str);
-    int64_t axis = GetValue<int64_t>(value_str);
-    split_param.splitDim = axis;
-  } else {
-    int64_t default_axis = 0;
-    split_param.splitDim = default_axis;
-  }
-
-  if (primitive_->HasAttr("output_num")) {
-    auto value_str = primitive_->GetAttr("output_num");
-    MS_EXCEPTION_IF_NULL(value_str);
-    int64_t output_num = GetValue<int64_t>(value_str);
-    split_param.splitNum = output_num;
-  } else {
-    split_param.splitNum = DEFAULT_OUTPUT_NUM;
-  }
+  split_param.splitDim = inputs[1]->GetValueWithCheck<int64_t>();
+  split_param.splitNum = inputs[2]->GetValueWithCheck<int64_t>();
 
   param_ptr->specificParam = split_param;
   return param_ptr;
 }
 void InternalSplit::SetInOutIdx() {
+  auto value_str = primitive_->GetAttr("size_splits");
+  MS_EXCEPTION_IF_NULL(value_str);
+  auto axis_list = GetValue<std::vector<int64_t>>(value_str);
+  size_t split_num = axis_list.size();
   inputsIdxMap_[0] = 0;
-  outputsIdxMap_[0] = 0;
-  outputsIdxMap_[1] = 1;
-  int64_t splitNum = DEFAULT_OUTPUT_NUM;
-  if (primitive_->HasAttr("output_num")) {
-    auto value_str = primitive_->GetAttr("output_num");
-    MS_EXCEPTION_IF_NULL(value_str);
-    splitNum = GetValue<int64_t>(value_str);
-  }
-  if (splitNum > DEFAULT_OUTPUT_NUM) {
-    outputsIdxMap_[2] = 2;
+  for(size_t i = 0; i < split_num; i++){
+       outputsIdxMap_[i] = i;
   }
 }
 
