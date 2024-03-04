@@ -228,6 +228,9 @@ class OpTrace : public Trace {
   virtual void JudgeDTypeScopePass();
   virtual void JudgeCodeChangePass();
   virtual void JudgeTrainFlagPass();
+  virtual void JudgeCompareConstPass();
+  virtual void JudgeContainsConstPass();
+  virtual void JudgeInplaceAddConstPass();
 
  protected:
   int opcode_;

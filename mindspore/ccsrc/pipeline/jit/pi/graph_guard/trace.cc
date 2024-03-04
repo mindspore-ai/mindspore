@@ -2030,6 +2030,45 @@ void OpTrace::JudgeTrainFlagPass() {
   }
 }
 
+void OpTrace::JudgeCompareConstPass() {
+  if (relax_count_ != -1) {
+    return;
+  }
+  if (opcode_ != COMPARE_OP || params_.size() < kParamCountTwo) {
+    return;
+  }
+  if (params_[kParamIndexOne]->GetObject() == nullptr || params_[kParamIndexTwo]->GetObject() == nullptr) {
+    return;
+  }
+  relax_count_ = 0;
+}
+
+void OpTrace::JudgeContainsConstPass() {
+  if (relax_count_ != -1) {
+    return;
+  }
+  if (opcode_ != CONTAINS_OP || params_.size() < kParamCountTwo) {
+    return;
+  }
+  if (params_[kParamIndexOne]->GetObject() == nullptr || params_[kParamIndexTwo]->GetObject() == nullptr) {
+    return;
+  }
+  relax_count_ = 0;
+}
+
+void OpTrace::JudgeInplaceAddConstPass() {
+  if (relax_count_ != -1) {
+    return;
+  }
+  if (opcode_ != INPLACE_ADD || params_.size() < kParamCountTwo) {
+    return;
+  }
+  if (params_[kParamIndexOne]->GetObject() == nullptr || params_[kParamIndexTwo]->GetObject() == nullptr) {
+    return;
+  }
+  relax_count_ = 0;
+}
+
 TracePtr OpTrace::Optimize() {
   if (is_const_) {
     return nullptr;
@@ -2043,6 +2082,9 @@ TracePtr OpTrace::Optimize() {
     JudgeDTypeChangePass();
     JudgeDTypeScopePass();
     JudgeTrainFlagPass();
+    JudgeCompareConstPass();
+    JudgeContainsConstPass();
+    JudgeInplaceAddConstPass();
   }
   bool need_update = false;
   for (size_t i = 0; i < params_.size(); ++i) {
