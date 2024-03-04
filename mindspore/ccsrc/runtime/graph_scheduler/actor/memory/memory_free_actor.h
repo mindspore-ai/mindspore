@@ -43,9 +43,6 @@ class MemoryFreeActor : public MemoryAwareActor {
   // Get the member.
   SomasInfo *somas_info() const { return somas_info_; }
 
-  void AddStreamId(uint32_t stream_id) { (void)stream_ids_.emplace(stream_id); }
-  std::set<uint32_t> &stream_ids() { return stream_ids_; }
-
   // Process somas cross streams memory synchronize.
   void ProcessSomasCrossStreamMemorySynchronization(OpContext<DeviceTensor> *const context);
 
@@ -60,7 +57,6 @@ class MemoryFreeActor : public MemoryAwareActor {
   friend class SchedulerHelper;
 
   SomasInfo *somas_info_;
-  std::set<uint32_t> stream_ids_;
 };
 
 using MemoryFreeActorPtr = std::shared_ptr<MemoryFreeActor>;
