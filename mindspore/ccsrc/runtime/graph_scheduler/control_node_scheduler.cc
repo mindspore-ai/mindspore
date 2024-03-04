@@ -62,10 +62,16 @@ bool is_need_copy_device_tensor(const AnfNodePtr &backend_node, size_t index) {
 
   auto kernel_graph = AnfAlgo::FetchKernelGraph(backend_node.get());
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  if ((!kernel_graph->is_graph_run_mode()) && kernel_graph->IsInRefOutputMap({backend_node, index})) {
-    return false;
+  if (kernel_graph->IsInRefOutputMap({backend_node, index})) {
+    if (!kernel_graph->is_graph_run_mode()) {
+      return false;
+    }
+    const auto &origin_node = kernel_graph->GetRefCorrespondOutput({backend_node, index}).first;
+    MS_EXCEPTION_IF_NULL(origin_node);
+    if (origin_node->isa<ValueNode>() || origin_node->isa<Parameter>()) {
+      return false;
+    }
   }
-
   return true;
 }
 
