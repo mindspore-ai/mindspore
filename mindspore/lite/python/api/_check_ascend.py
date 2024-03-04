@@ -20,7 +20,7 @@ import os
 import re
 import logging
 from abc import ABCMeta
-
+from multiprocessing import Process, Queue
 
 class AscendEnvChecker(metaclass=ABCMeta):
     """Ascend version and env check"""
@@ -48,6 +48,27 @@ class AscendEnvChecker(metaclass=ABCMeta):
         self.env_ld_lib_path = os.getenv("LD_LIBRARY_PATH")
         self.env_python_path = os.getenv("PYTHONPATH")
         self.env_ascend_opp_path = os.getenv("ASCEND_OPP_PATH")
+
+    @staticmethod
+    def read_version(version_file: str) -> str:
+        """
+        Read the version number from Ascend version file.
+
+        :param version_file: version file path in Ascend, which contains the line like "Version=7.0.0.1".
+        :return: parsed version str, only keep major and minor version number, like '7.0', return None if any error.
+        """
+        if not os.path.isfile(version_file):
+            logging.debug("version file is one valid file path.")
+            return None
+
+        with open(version_file, 'r', encoding="utf-8") as f:
+            lines = f.readlines()
+            for line in lines:
+                if line.startswith("Version="):
+                    full_version = line.strip().split("=")[1]
+                    ver = '.'.join(full_version.split('.')[0:2])
+                    return ver
+        return None
 
     def check_env(self) -> bool:
         """Check Ascend env"""
@@ -95,12 +116,7 @@ class AscendEnvChecker(metaclass=ABCMeta):
 
         return True
 
-    def check_python_deps(self) -> bool:
-        """
-        Ascend software contains two python package: te, hccl.
-        This method checks the version compatibility of these two packages.
-        Note: In order to update the change of 'LD_LIBRARY_PATH' env, launch a sub-process to do the checking.
-        """
+    def check_python_path(self) -> bool:
         python_path_keyword = "opp/built-in/op_impl/ai_core/tbe"
         if (self.env_python_path is None) or (python_path_keyword not in self.env_python_path):
             logging.warning(
@@ -109,7 +125,16 @@ class AscendEnvChecker(metaclass=ABCMeta):
                 "For example: PYTHONPATH=\"${ASCEND_CUSTOM_PATH}/latest/opp/built-in/op_impl/ai_core/tbe\". "
                 "For more details, refer to the installation guidelines: https://www.mindspore.cn/install.")
             return False
+        return True
 
+    def do_check_python_deps(self, q: Queue):
+        """
+        Ascend software contains two python package: te, hccl.
+        This method checks the version compatibility of these two packages.
+
+        Note: To avoid the conflict with mslite-akg, which imports a different version of te, we MUST launch an isolated
+            child process to do the check! The multiprocessing.Queue is adopted to return check result.
+        """
         check_result = True
         try:
             check_result = self.check_te_version() and self.check_hccl_version()
@@ -121,13 +146,14 @@ class AscendEnvChecker(metaclass=ABCMeta):
                           "folder of the Ascend AI software package (Ascend Data Center Solution). Please make sure"
                           " they are installed correctly. For more install guideline, please refer to: "
                           "https://www.mindspore.cn/install")
-            return False
-        return check_result
+            q.put(False)
+        q.put(check_result)
 
     def check_te_version(self) -> bool:
         """
         This method may throw exception from module te.
         """
+
         # pylint: disable=import-outside-toplevel
         from te import version as te_version
         v = '.'.join(te_version.version.split('.')[0:2])
@@ -155,23 +181,17 @@ class AscendEnvChecker(metaclass=ABCMeta):
             return False
         return True
 
-    @staticmethod
-    def read_version(version_file: str) -> str:
+    def check_python_deps(self) -> bool:
         """
-        Read the version number from Ascend version file.
-
-        :param version_file: version file path in Ascend, which contains the line like "Version=7.0.0.1".
-        :return: parsed version str, only keep major and minor version number, like '7.0', return None if any error.
+        Check PYTHONPATH and necessary python packages.
         """
-        if not os.path.isfile(version_file):
-            logging.debug("version file is one valid file path.")
-            return None
+        if not self.check_python_path():
+            return False
 
-        with open(version_file, 'r', encoding="utf-8") as f:
-            lines = f.readlines()
-            for line in lines:
-                if line.startswith("Version="):
-                    full_version = line.strip().split("=")[1]
-                    ver = '.'.join(full_version.split('.')[0:2])
-                    return ver
-        return None
+        q = Queue()
+        p = Process(target=self.do_check_python_deps, args=(q,))
+        p.start()
+        ret = q.get() # this will block to wait return value.
+        p.join()
+
+        return ret
