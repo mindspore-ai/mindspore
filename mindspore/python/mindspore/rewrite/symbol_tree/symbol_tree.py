@@ -1403,6 +1403,7 @@ class SymbolTree(Observer, Observable, NodeManager):
             gencode_module = ast.Module(body=code_bodies, type_ignores=[])
         else:
             gencode_module = ast.Module(body=code_bodies)
+        self._process_duplicate_name_modules(gencode_module)
         SymbolTree._remove_duplicated_import(gencode_module)
         SymbolTree._remove_unused_import(gencode_module)
         SymbolTree._remove_arg_annotations(gencode_module)
@@ -1575,8 +1576,8 @@ class SymbolTree(Observer, Observable, NodeManager):
         import_asts = self._get_imports_list_of_ast(belonging_ast)
         for import_node in import_nodes:
             # remove unused imports
-            if belonging_ast and isinstance(import_node, (ast.Import, ast.ImportFrom)):
-                str_checker = StrChecker(belonging_ast)
+            if isinstance(import_node, (ast.Import, ast.ImportFrom)):
+                str_checker = StrChecker(belonging_ast) if belonging_ast else StrChecker(self.get_class_ast())
                 for alias in import_node.names[:]:
                     name = alias.asname if alias.asname else alias.name
                     if name != '*' and not str_checker.check(name):
@@ -1744,3 +1745,71 @@ class SymbolTree(Observer, Observable, NodeManager):
         primitives = self._cal_difference_set(self._origin_network._primitives.keys(), new_net._primitives.keys())
         for p in primitives:
             new_net._primitives[p] = self._origin_network._primitives[p] # pylint: disable=protected-access
+
+    def _process_duplicate_name_modules(self, module_ast: ast.Module):
+        """Adjust names of imported modules with same name and different import path."""
+        # {name1: [path1, path2, ...], ...}
+        name_path_dict: Dict[str, List[str]] = {}
+        # names of modules need to be suffixed: {name1: suffixed_name1, ...}
+        name_need_suffix: Dict[str, str] = {}
+        # used to record replace actions in ast.ImportFrom
+        import_replacer = AstReplacer(None)
+        self._tmp_replacers.append(import_replacer)
+
+        def suffix_alias(alias: ast.alias, suffix: int):
+            """suffix the name of alias in ast.ImportFrom"""
+            new_name = f"{alias.asname}_{suffix}" if alias.asname else f"{alias.name}_{suffix}"
+            import_replacer._trace.append((alias, 'asname', alias.asname, new_name)) # pylint: disable=protected-access
+            alias.asname = new_name
+            return new_name
+
+        def is_divider(ast_node):
+            """judge if ast node is divider of new class or function by checking ast.Expr of '#'."""
+            return isinstance(ast_node, ast.Expr) and isinstance(ast_node.value, ast.Name) and ast_node.value.id == '#'
+
+        def record_imports(ast_node: ast.ImportFrom):
+            """record name and path of imported modules to find the duplicate name modules."""
+            for alias in ast_node.names[:]:
+                name = alias.asname if alias.asname else alias.name
+                if name == '*':
+                    continue
+                # current name is firstly imported, just record it
+                if name not in name_path_dict:
+                    name_path_dict[name] = [ast_node.module]
+                    continue
+                # current name is imported before, check whether it is a duplicated name
+                for idx, path in enumerate(name_path_dict[name]):
+                    if path.startswith(ast_node.module):
+                        # e.g. origin code is 'from a.b.c import A' and new code is 'from a.b import A'
+                        # then we update name_path_dict[name][idx] from 'a.b.c' to 'a.b' and update name to A_{idx}
+                        name_path_dict[name][idx] = ast_node.module
+                        if idx > 0:
+                            name_need_suffix[name] = suffix_alias(alias, idx)
+                        break
+                    elif ast_node.module.startswith(path):
+                        # e.g. origin code is 'from a.b import A' and new code is 'from a.b.c import A'
+                        # then we just need to update name to A_{idx}
+                        if idx > 0:
+                            name_need_suffix[name] = suffix_alias(alias, idx)
+                        break
+                else:
+                    # current name is imported from a new path, save the path and update the name
+                    name_path_dict[name].append(ast_node.module)
+                    name_need_suffix[name] = suffix_alias(alias, len(name_path_dict[name]) - 1)
+
+        def suffix_names_in_ast(ast_node: Union[ast.ClassDef, ast.FunctionDef]):
+            """suffix names in ast.ClassDef or ast.FunctionDef"""
+            if not name_need_suffix:
+                return
+            name_replacer = AstReplacer(ast_node)
+            self._tmp_replacers.append(name_replacer)
+            for name, new_name in name_need_suffix.items():
+                name_replacer.replace_all(name, new_name)
+
+        for ast_node in module_ast.body:
+            if isinstance(ast_node, ast.ImportFrom):
+                record_imports(ast_node)
+            if isinstance(ast_node, (ast.ClassDef, ast.FunctionDef)):
+                suffix_names_in_ast(ast_node)
+            if is_divider(ast_node):
+                name_need_suffix.clear()
