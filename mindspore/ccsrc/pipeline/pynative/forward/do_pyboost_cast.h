@@ -41,9 +41,10 @@ class PyBoostCastOperation : public CastBaseOperation {
     if (op_run_info->async_status.disable_mix_precision) {
       return std::make_tuple(input_args...);
     }
-    size_t index = 0;
-    auto increase_index_fn = [&index]() { return index++; };
-    auto ret = std::make_tuple(SetTensorMixPrecisionCast(op_run_info, input_args, increase_index_fn())...);
+    size_t index = sizeof...(input_args);
+    auto decrease_index_fn = [&index]() { return --index; };
+    // Notice, the input_args of variadic template in make_tuple obtaining is reverse
+    auto ret = std::make_tuple(SetTensorMixPrecisionCast(op_run_info, input_args, decrease_index_fn())...);
     return ret;
   }
 

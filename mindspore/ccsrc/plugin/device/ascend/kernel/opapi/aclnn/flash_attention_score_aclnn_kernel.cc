@@ -29,9 +29,11 @@ void FAScoreAclnnKernelMod::GetWorkSpaceInfo(const std::vector<KernelTensor *> &
   auto head_num = GetFAAttr<int64_t>("head_num");
   auto input_layout = GetFAAttr<std::string>("input_layout");
   auto inner_precise = GetFAAttr<int64_t>("inner_precise");
-  GetWorkspaceForResize(inputs[kIndex0], inputs[kIndex1], inputs[kIndex2], nullptr, nullptr, nullptr, inputs[kIndex3],
-                        nullptr, scale_value, keep_prob, pre_tokens, next_tokens, head_num, input_layout, inner_precise,
-                        nullptr, outputs[kIndex1], outputs[kIndex2], empty_kernel_tensor_ptr->get(), outputs[kIndex0]);
+  auto sparse_mode = GetFAAttr<int64_t>("sparse_mode");
+  GetWorkspaceForResize(inputs[kIndex0], inputs[kIndex1], inputs[kIndex2], inputs[kIndex3], inputs[kIndex4],
+                        inputs[kIndex5], inputs[kIndex6], nullptr, scale_value, keep_prob, pre_tokens, next_tokens,
+                        head_num, input_layout, inner_precise, sparse_mode, outputs[kIndex0], outputs[kIndex1],
+                        outputs[kIndex2], outputs[kIndex3]);
 }
 
 bool FAScoreAclnnKernelMod::Launch(const std::vector<KernelTensor *> &inputs,

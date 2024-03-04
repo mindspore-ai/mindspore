@@ -28,11 +28,12 @@
 #include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
 #include "ops/ops_func_impl/mul.h"
-#include "ops/sub.h"
 #include "ops/ops_func_impl/real_div.h"
 #include "ops/ops_func_impl/add.h"
+#include "ops/ops_func_impl/sub.h"
 #include "ops/ops_func_impl/sqrt.h"
 #include "ops/nn_optimizer_ops.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {
@@ -42,6 +43,13 @@ auto AdamDecayAddInfer = [](const abstract::AnalysisEnginePtr &, const Primitive
                             const AbstractBasePtrList &input_args) {
   auto add_op = AddFuncImpl();
   return abstract::MakeAbstract(add_op.InferShape(primitive, input_args), add_op.InferType(primitive, input_args));
+};
+
+// Apply ops will have a refractor and sub_infer is just a temp modify
+auto AdamDecaySubInfer = [](const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                            const AbstractBasePtrList &input_args) {
+  auto sub_op = SubFuncImpl();
+  return abstract::MakeAbstract(sub_op.InferShape(primitive, input_args), sub_op.InferType(primitive, input_args));
 };
 
 auto AdamDecaySqrtInfer = [](const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
@@ -89,7 +97,7 @@ std::vector<AbstractBasePtr> AdamDecayInferOutputs(const PrimitivePtr &primitive
   auto real_div0 = MakeAbstract(infer_shape, infer_type);
   auto add3 = ops::AdamDecayAddInfer(nullptr, primitive, {mul4, real_div0});
   auto mul5 = ops::AdamDecayMulInfer(primitive, input4, add3);
-  auto sub0 = ops::SubInfer(nullptr, primitive, {input3, mul5});
+  auto sub0 = ops::AdamDecaySubInfer(nullptr, primitive, {input3, mul5});
   return {add1, add0, sub0};
 }
 }  // namespace

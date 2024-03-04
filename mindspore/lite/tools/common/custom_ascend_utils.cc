@@ -27,6 +27,49 @@ constexpr auto kCustomPrimTypeACL = "ACL";
 constexpr auto kCustomNodeName = "custom_0";
 constexpr auto kFuncType = "func_type";
 constexpr auto kUniqueName = "uniq_name";
+
+void SaveDynKVCacheInfo(const DynKVCacheSaveInfo &dyn_kv_info, std::map<std::string, ValuePtr> *attr_map) {
+  if (!dyn_kv_info.batch_size_dyn && !dyn_kv_info.seq_length_dyn) {
+    return;
+  }
+  std::vector<std::string> dynamic_kv_cache;
+  dynamic_kv_cache.push_back("batch_size_dyn");
+  dynamic_kv_cache.push_back(std::to_string(dyn_kv_info.batch_size_dyn));
+  dynamic_kv_cache.push_back("seq_length_dyn");
+  dynamic_kv_cache.push_back(std::to_string(dyn_kv_info.seq_length_dyn));
+  dynamic_kv_cache.push_back("kv_cache_layout");
+  dynamic_kv_cache.push_back(dyn_kv_info.kv_cache_layout);
+  (*attr_map)["dynamic_kv_cache"] = MakeValue(dynamic_kv_cache);
+}
+
+void LoadDynKVCacheInfo(const std::map<std::string, ValuePtr> &attr_map, DynKVCacheSaveInfo *dyn_kv_info) {
+  if (dyn_kv_info == nullptr) {
+    return;
+  }
+  auto it = attr_map.find("dynamic_kv_cache");
+  if (it == attr_map.end()) {
+    return;
+  }
+  auto option_pairs = GetValue<std::vector<std::string>>(it->second);
+
+  constexpr size_t pair_size = 2;
+  if (option_pairs.size() % pair_size != 0) {
+    MS_LOG(WARNING) << "Attr dynamic_kv_cache value sequence size " << option_pairs.size()
+                    << " is invalid, option paris: " << option_pairs;
+  }
+  for (size_t i = 0; i + 1 < option_pairs.size(); i += pair_size) {
+    auto &key = option_pairs[i];
+    auto &val = option_pairs[i + 1];
+    MS_LOG(INFO) << "Set dynamic_kv_cache option " << key << ": " << val;
+    if (key == "batch_size_dyn") {
+      dyn_kv_info->batch_size_dyn = std::stoi(val);
+    } else if (key == "seq_length_dyn") {
+      dyn_kv_info->seq_length_dyn = std::stoi(val);
+    } else if (key == "kv_cache_layout") {
+      dyn_kv_info->kv_cache_layout = val;
+    }
+  }
+}
 }  // namespace
 
 ParameterPtr CustomAscendUtils::CreateOmParameter(const FuncGraphPtr &func_graph, const Buffer &om_data,
@@ -293,7 +336,8 @@ bool CustomAscendUtils::IsParameterValueZero(const tensor::TensorPtr &tensor) {
 bool CustomAscendUtils::CreateCustomFuncGraph(const FuncGraphPtr &func_graph, const Buffer &model_cache,
                                               const std::string &graph_name,
                                               const std::map<std::string, ValuePtr> &attr_map,
-                                              const std::vector<std::string> &ref_datas) {
+                                              const std::vector<std::string> &ref_datas,
+                                              const DynKVCacheSaveInfo &dyn_kv_info) {
   CustomAscendUtils utils;
   utils.outputs_ = opt::GetNodeInputs(func_graph->get_return());
   auto om_parameter = CreateOmParameter(func_graph, model_cache, graph_name);
@@ -301,7 +345,9 @@ bool CustomAscendUtils::CreateCustomFuncGraph(const FuncGraphPtr &func_graph, co
     MS_LOG(ERROR) << "Create custom parameter failed";
     return false;
   }
-  auto cnode = utils.CreateCustomNode(func_graph, om_parameter, attr_map, ref_datas);
+  std::map<std::string, ValuePtr> attr_map_new = attr_map;
+  SaveDynKVCacheInfo(dyn_kv_info, &attr_map_new);
+  auto cnode = utils.CreateCustomNode(func_graph, om_parameter, attr_map_new, ref_datas);
   if (cnode == nullptr) {
     MS_LOG(ERROR) << "Create custom cnode failed";
     return false;
@@ -354,7 +400,8 @@ bool CustomAscendUtils::IsCustomFuncGraph(const FuncGraphPtr &func_graph) {
 
 bool CustomAscendUtils::ParseCustomFuncGraph(const FuncGraphPtr &func_graph, tensor::TensorPtr *model_cache,
                                              std::string *graph_name, std::map<std::string, ValuePtr> *attr_map,
-                                             std::vector<std::pair<std::string, tensor::TensorPtr>> *ref_datas) {
+                                             std::vector<std::pair<std::string, tensor::TensorPtr>> *ref_datas,
+                                             DynKVCacheSaveInfo *dyn_kv_info) {
   MS_ERROR_IF_NULL_W_RET_VAL(func_graph, false);
   MS_ERROR_IF_NULL_W_RET_VAL(model_cache, false);
   MS_ERROR_IF_NULL_W_RET_VAL(graph_name, false);
@@ -423,6 +470,7 @@ bool CustomAscendUtils::ParseCustomFuncGraph(const FuncGraphPtr &func_graph, ten
       ref_datas->push_back(std::make_pair(ref_name, ref_tensor));
     }
   }
+  LoadDynKVCacheInfo(*attr_map, dyn_kv_info);
   *model_cache = tensor;
   *graph_name = input_last->fullname_with_scope();
   return true;

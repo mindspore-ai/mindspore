@@ -976,7 +976,10 @@ void DataPrepareActor::PrepareDataForStringValue(const ValueNodePtr &node, size_
   auto value = GetValue<std::string>(node_value);
   size_t tensor_size = value.size();
   ShapeVector shape = {1, SizeToLong(tensor_size)};
-  if (!device_tensor->SyncHostToDevice(shape, tensor_size, kObjectTypeString, value.data())) {
+  // account '\0' to string size, keep consistent with method `CreateDeviceAddressForScalarAndString` defined in
+  // `device_address_utils.cc`
+  size_t string_tensor_size = tensor_size + 1;
+  if (!device_tensor->SyncHostToDevice(shape, string_tensor_size, kObjectTypeString, value.data())) {
     std::string error_info = "SyncHostToDevice failed, node name: " + node->fullname_with_scope();
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(real_strategy_, (*context), error_info);
   }

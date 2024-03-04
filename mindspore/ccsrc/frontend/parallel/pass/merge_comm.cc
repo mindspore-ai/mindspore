@@ -143,6 +143,8 @@ bool MergeComm(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) {
 
   // allreduce fusion only run once
   root->set_flag(MERGE_COMM_RUN_ONCE_ONLY, true);
+  // Keep all func graph for parallel before save result.
+  SetReserved(root);
   res->SetResult(pipeline::kStepParallelGraph, root);
   return changes;
 }

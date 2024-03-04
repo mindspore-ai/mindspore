@@ -16,9 +16,9 @@
 #include "pack.h"
 #include <securec.h>
 #include "cpu_types.h"
-#include "kernel_log.h"
-#include "status.h"
-#include "cpu_kernel_utils.h"
+#include "inc/kernel_log.h"
+#include "context/common/status.h"
+#include "context/inc/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 #include "unsupported/Eigen/CXX11/Tensor"

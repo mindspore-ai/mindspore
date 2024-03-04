@@ -20,7 +20,6 @@
 #include <vector>
 #include "common/anf_util.h"
 #include "common/op_enum.h"
-#include "ops/strided_slice.h"
 #include "op/extract_slice_operator.h"
 
 namespace mindspore {

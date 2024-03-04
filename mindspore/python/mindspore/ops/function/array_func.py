@@ -61,7 +61,8 @@ from mindspore._c_expression import Tensor as Tensor_
 from mindspore.ops._utils.utils import ms_arrange
 
 from mindspore.ops.auto_generate import cat, range, scatter_nd, deepcopy, masked_fill, diagonal, expand_dims, \
-    nonzero, reverse, transpose, unsorted_segment_sum, diag, gather, gather_d, gather_nd, reshape, broadcast_to
+    nonzero, reverse, transpose, unsorted_segment_sum, diag, gather, gather_d, gather_nd, reshape, broadcast_to, \
+    strided_slice
 from mindspore.ops.operations.manually_defined import tile, rank, scalar_cast
 
 arg_max_with_value_ = ArgMaxWithValue()
@@ -1681,176 +1682,6 @@ def select(cond, x, y):
     return tensor_select_(cond, input_x, input_y)
 
 
-def strided_slice(input_x,
-                  begin,
-                  end,
-                  strides,
-                  begin_mask=0,
-                  end_mask=0,
-                  ellipsis_mask=0,
-                  new_axis_mask=0,
-                  shrink_axis_mask=0):
-    r"""
-    Extracts a strided slice of a Tensor based on `begin/end` index and `strides`.
-
-    This operation extracts a fragment of size (end-begin)/strides from the given 'input_tensor'.
-    Starting from the beginning position, the fragment continues adding strides to the index until
-    all dimensions are not less than the ending position.
-
-    Note:
-        - `begin` , `end` and `strides` must have the same shape.
-        - `begin` , `end` and `strides` are all 1-D Tensor,  and their shape size
-          must not greater than the dim of `input_x`.
-
-    During the slicing process, the fragment (end-begin)/strides are extracted from each dimension.
-
-    Example: For Tensor `input_x` with shape :math:`(5, 6, 7)`,
-    set `begin`, `end` and `strides` to (1, 3, 2), (3, 5, 6),
-    (1, 1, 2) respectively, then elements from index 1 to 3 are extrected for dim 0, index 3 to 5
-    are extrected for dim 1 and index 2 to 6 with a `stirded` of 2 are extrected for dim 2, this
-    process is equivalent to a pythonic slice `input_x[1:3, 3:5, 2:6:2]`.
-
-    If the length of `begin` 、 `end` and `strides` is smaller than the dim of `input_x`,
-    then all elements are extracted from the missing dims, it behaves like all the
-    missing dims are filled with zeros, size of that missing dim and ones.
-
-    Example: For Tensor `input_x` with shape :math:`(5, 6, 7)`,
-    set `begin`, `end` and `strides` to (1, 3),
-    (3, 5), (1, 1) respectively, then elements from index 1 to 3 are extrected
-    for dim 0, index 3 to 5 are extrected for dim 1 and index 3 to 5 are extrected
-    for dim 2, this process is equivalent to a pythonic slice `input_x[1:3, 3:5, 0:7]`.
-
-    Here's how a mask works:
-    For each specific mask, it will be converted to a binary representation internally, and then
-    reverse the result to start the calculation. For Tensor `input_x` with
-    shape :math:`(5, 6, 7)`. Given mask value of 3 which
-    can be represented as 0b011. Reverse that we get 0b110, which implies the first and second dim of the
-    original Tensor will be effected by this mask. See examples below, for simplicity all mask mentioned
-    below are all in their reverted binary form:
-
-    - `begin_mask` and `end_mask`
-
-      If the ith bit of `begin_mask` is 1, `begin[i]` is ignored and the fullest
-      possible range in that dimension is used instead. `end_mask` is analogous,
-      except with the end range. For Tensor `input_x` with shape :math:`(5, 6, 7, 8)`,  if `begin_mask`
-      is 0b110, `end_mask` is 0b011, the slice `input_x[0:3, 0:6, 2:7:2]` is produced.
-
-    - `ellipsis_mask`
-
-      If the ith bit of `ellipsis_mask` is 1, as many unspecified dimensions as needed
-      will be inserted between other dimensions. Only one non-zero bit is allowed
-      in `ellipsis_mask`. For Tensor `input_x` with shape :math:`(5, 6, 7, 8)`,  `input_x[2:,...,:6]`
-      is equivalent to `input_x[2:5,:,:,0:6]` ,  `input_x[2:,...]` is equivalent
-      to `input_x[2:5,:,:,:]`.
-
-    - `new_axis_mask`
-
-      If the ith bit of `new_axis_mask` is 1, `begin`, `end` and `strides` are
-      ignored and a new length 1 dimension is added at the specified position
-      in the output Tensor. For Tensor `input_x` with shape :math:`(5, 6, 7)`, if `new_axis_mask`
-      is 0b110,  a new dim is added to the second dim, which will produce
-      a Tensor with shape :math:`(5, 1, 6, 7)`.
-
-    - `shrink_axis_mask`
-
-      If the ith bit of `shrink_axis_mask` is 1, `begin`, `end` and `strides`
-      are ignored and dimension i will be shrunk to 0.
-      For Tensor `input_x` with shape :math:`(5, 6, 7)`,
-      if `shrink_axis_mask` is 0b010, it is equivalent to slice `x[:, 5, :]`
-      and results in an output shape of :math:`(5, 7)`.
-
-    Note:
-        `new_axis_mask` and  `shrink_axis_mask` are not recommended to
-        use at the same time, it might incur unexpected result.
-
-    Args:
-        input_x (Tensor): The input Tensor to be extracted from.
-        begin (tuple[int]): A tuple which represents the location where to start.
-        end (tuple[int]): A tuple or which represents the maximum location where to end.
-        strides (tuple[int]): A tuple which represents the strides is continuously added
-            before reaching the maximum location. Only int is allowed, it can be negative
-            which results in reversed slicing.
-        begin_mask (int, optional): Starting index of the slice. Default: ``0`` .
-        end_mask (int, optional): Ending index of the slice. Default: ``0`` .
-        ellipsis_mask (int, optional): An int mask, ignore slicing operation when set to 1. Default: ``0`` .
-        new_axis_mask (int, optional): An int mask for adding new dims. Default: ``0`` .
-        shrink_axis_mask (int, optional): An int mask for shrinking dims. Default: ``0`` .
-
-    Returns:
-        Tensor, return the extracts a strided slice of a Tensor based on `begin/end` index and `strides`.
-
-    Raises:
-        TypeError: If `begin_mask`, `end_mask`, `ellipsis_mask`, `new_axis_mask` or
-            `shrink_axis_mask` is not an int.
-        TypeError: If `begin`, `end` or `strides` is not tuple[int].
-        ValueError: If `begin_mask`, `end_mask`, `ellipsis_mask`, `new_axis_mask` or
-            `shrink_axis_mask` is less than 0.
-        ValueError: If `begin`, `end` and `strides` have different shapes.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> from mindspore import Tensor, ops
-        >>> input_x = Tensor([[[1, 1, 1], [2, 2, 2]], [[3, 3, 3], [4, 4, 4]],
-        ...                   [[5, 5, 5], [6, 6, 6]]], mindspore.float32)
-        >>> output = ops.strided_slice(input_x, (1, 0, 2), (3, 1, 3), (1, 1, 1))
-        >>> # Take this " output = strided_slice(input_x, (1, 0, 2), (3, 1, 3), (1, 1, 1)) " as an example,
-        >>> # start = [1, 0, 2] , end = [3, 1, 3], strides = [1, 1, 1], Find a segment of (start, end),
-        >>> # note that end is an open interval
-        >>> # To facilitate understanding, this operator can be divided into three steps:
-        >>> # Step 1: Calculation of the first dimension:
-        >>> # start = 1, end = 3, strides = 1, So can take 1st, 2nd rows, and then gets the final output at this time.
-        >>> # output_1th =
-        >>> # [
-        >>> #     [
-        >>> #         [3,3,3]
-        >>> #         [4,4,4]
-        >>> #     ]
-        >>> #     [
-        >>> #         [5,5,5]
-        >>> #         [6,6,6]
-        >>> #     ]
-        >>> # ]
-        >>> # Step 2: Calculation of the second dimension
-        >>> # 2nd dimension, start = 0, end = 1, strides = 1. So only 0th rows
-        >>> # can be taken, and the output at this time.
-        >>> # output_2nd =
-        >>> # [
-        >>> #     [
-        >>> #         [3,3,3]
-        >>> #     ]
-        >>> #     [
-        >>> #         [5,5,5]
-        >>> #     ]
-        >>> # ]
-        >>> # Step 3: Calculation of the third dimension
-        >>> # 3nd dimension,start = 2, end = 3, strides = 1, So can take 2th cols,
-        >>> # and you get the final output at this time.
-        >>> # output_3ed =
-        >>> # [
-        >>> #     [
-        >>> #         [3]
-        >>> #     ]
-        >>> #     [
-        >>> #         [5]
-        >>> #     ]
-        >>> # ]
-        >>> # The final output after finishing is:
-        >>> print(output)
-        [[[3.]]
-         [[5.]]]
-        >>> # another example like :
-        >>> output = strided_slice(input_x, (1, 0, 0), (2, 1, 3), (1, 1, 1))
-        >>> print(output)
-        [[[3. 3. 3.]]]
-    """
-    strided_slice_ = _get_cache_prim(P.StridedSlice)(
-        begin_mask, end_mask, ellipsis_mask, new_axis_mask, shrink_axis_mask)
-    return strided_slice_(input_x, begin, end, strides)
-
-
 def slice(input_x, begin, size):
     r"""
     Slices a tensor in the specified shape.
@@ -3053,7 +2884,7 @@ def gather_elements(input, dim, index):
     Raises:
         TypeError: If dtype of `dim` or `index` is neither int32 nor int64.
         ValueError: If length of shape of `input` is not equal to length of shape of `index`.
-        ValueError: If the size of the dimension except `dim` is not equal between `input` and `index`.
+        ValueError: If the size of the dimension except `dim` in `input` is less than size in `index`.
         ValueError: If the value of `dim` is not in the expected range.
 
     Supported Platforms:
@@ -4433,7 +4264,7 @@ def tensor_scatter_mul(input_x, indices, updates):
     equal to the shape of `input_x[indices]`. For more details, see Examples.
 
     .. math::
-        output[indices] = input\_x \times update
+        output\left [indices  \right ] = input\_x\times  update
 
     Note:
         - If some values of the `indices` are out of bound, instead of raising an index error,

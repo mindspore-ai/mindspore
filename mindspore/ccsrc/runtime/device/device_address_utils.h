@@ -40,7 +40,8 @@ class BACKEND_EXPORT DeviceAddressUtils {
                                               bool is_gradient_out);
 
   static vector<device::DeviceAddressPtr> CreateGraphOutputDeviceAddress(const OpCompilerInfoPtr &op_compiler_info,
-                                                                         const abstract::AbstractBasePtr &out_abstract);
+                                                                         const abstract::AbstractBasePtr &out_abstract,
+                                                                         size_t stream_id);
 
   static void CreateKernelWorkspaceDeviceAddress(const DeviceContext *device_context, const KernelGraphPtr &graph);
   static void CreateDeviceAddressByMapTensorNode(const DeviceContext *device_context, const AnfNodePtr &node,
@@ -56,38 +57,38 @@ class BACKEND_EXPORT DeviceAddressUtils {
                                     const ShapeVector &shape, const string &format, TypeId dtype, size_t output_index);
 
   // Overloading
-  static void CreateInputTensorAddress(const DeviceContext *device_context, size_t index,
+  static void CreateInputTensorAddress(const DeviceContext *device_context, size_t stream_id, size_t index,
                                        const tensor::TensorPtr &tensor);
   static void MallocForInput(const DeviceContext *device_context, const tensor::TensorPtr &tensor);
   static void MallocForInput(const DeviceContext *device_context, const std::optional<tensor::TensorPtr> &val);
   static void MallocForInput(const DeviceContext *device_context, const std::vector<tensor::TensorPtr> &tensors);
-  static void CreateInputTensorAddress(const DeviceContext *device_context, size_t index,
+  static void CreateInputTensorAddress(const DeviceContext *device_context, size_t stream_id, size_t index,
                                        const std::optional<tensor::TensorPtr> &val);
   template <typename T>
-  static void CreateInputTensorAddress(const DeviceContext *device_context, size_t index,
+  static void CreateInputTensorAddress(const DeviceContext *device_context, size_t stream_id, size_t index,
                                        const std::vector<T> &inputs) {
     for (size_t i = 0; i < inputs.size(); ++i) {
-      CreateInputTensorAddress(device_context, index, inputs[i]);
+      CreateInputTensorAddress(device_context, stream_id, index, inputs[i]);
     }
   }
 
-  static device::DeviceAddressPtr CreateInputAddress(const DeviceContext *device_context,
+  static device::DeviceAddressPtr CreateInputAddress(const DeviceContext *device_context, size_t stream_id,
                                                      const abstract::AbstractBasePtr &abs, size_t index,
                                                      const tensor::TensorPtr &tensor);
-  static device::DeviceAddressPtr CreateInputAddress(const DeviceContext *device_context,
+  static device::DeviceAddressPtr CreateInputAddress(const DeviceContext *device_context, size_t stream_id,
                                                      const abstract::AbstractBasePtr &abs, size_t index,
                                                      const std::optional<tensor::TensorPtr> &val);
-  static device::DeviceAddressPtr CreateInputAddress(const DeviceContext *device_context,
+  static device::DeviceAddressPtr CreateInputAddress(const DeviceContext *device_context, size_t stream_id,
                                                      const abstract::AbstractBasePtr &abs, size_t index,
                                                      const ScalarPtr &scalar_value);
-  static device::DeviceAddressPtr CreateInputAddress(const DeviceContext *device_context,
+  static device::DeviceAddressPtr CreateInputAddress(const DeviceContext *device_context, size_t stream_id,
                                                      const abstract::AbstractBasePtr &abs, size_t index,
                                                      const StringImmPtr &string_imm);
-  static device::DeviceAddressPtr CreateInputAddress(const DeviceContext *device_context,
+  static device::DeviceAddressPtr CreateInputAddress(const DeviceContext *device_context, size_t stream_id,
                                                      const abstract::AbstractBasePtr &abs, size_t index,
                                                      const TypePtr &type_ptr);
   template <typename T>
-  static device::DeviceAddressPtr CreateInputAddress(const DeviceContext *device_context,
+  static device::DeviceAddressPtr CreateInputAddress(const DeviceContext *device_context, size_t stream_id,
                                                      const abstract::AbstractBasePtr &abs, size_t index, const T &t) {
     MS_EXCEPTION_IF_NULL(device_context);
     MS_EXCEPTION_IF_NULL(abs);
@@ -108,11 +109,12 @@ class BACKEND_EXPORT DeviceAddressUtils {
     return device_address;
   }
 
-  static void CreateOutputTensorAddress(DeviceContext *device_context, const std::vector<tensor::TensorPtr> &outputs);
+  static void CreateOutputTensorAddress(DeviceContext *device_context, size_t stream_id,
+                                        const std::vector<tensor::TensorPtr> &outputs);
 
   static void MallocForOutputs(DeviceContext *device_context, const std::vector<tensor::TensorPtr> &outputs);
 
-  static device::DeviceAddressPtr CreateWorkspaceAddress(const DeviceContext *device_context,
+  static device::DeviceAddressPtr CreateWorkspaceAddress(const DeviceContext *device_context, size_t stream_id,
                                                          const size_t &workspace_size);
 
   static void UpdateDeviceAddressHostInfoByNode(const device::DeviceAddressPtr &addr, const AnfNodePtr &node,

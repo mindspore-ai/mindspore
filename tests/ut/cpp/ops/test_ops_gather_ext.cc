@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "ops/test_ops.h"
-#include "ops/ops_func_impl/gather_ext.h"
+#include "ops/ops_func_impl/gather_d.h"
 #include "ops/test_value_utils.h"
 
 namespace mindspore {
@@ -40,8 +40,8 @@ TEST_P(TestGatherExt, dyn_shape) {
   auto expect_type = input->GetType();
 
   //  生成算子infer实例
-  GatherExtFuncImpl gather_ext_func_impl;
-  auto prim = std::make_shared<Primitive>("GatherExt");
+  GatherDFuncImpl gather_ext_func_impl;
+  auto prim = std::make_shared<Primitive>("GatherD");
   //  调用算子InferSahpe & InferType并与期望进行对比
   auto out_dtype = gather_ext_func_impl.InferType(prim, {input, dim, index});
   ASSERT_TRUE(*out_dtype == *expect_type);
@@ -59,8 +59,8 @@ TEST_P(TestGatherExtException, exception) {
   auto expect_type = input->GetType();
 
   //  生成算子infer实例
-  GatherExtFuncImpl gather_ext_func_impl;
-  auto prim = std::make_shared<Primitive>("GatherExt");
+  GatherDFuncImpl gather_ext_func_impl;
+  auto prim = std::make_shared<Primitive>("GatherD");
 
   try {
     (void)gather_ext_func_impl.CheckValidation(prim, {input, dim, index});

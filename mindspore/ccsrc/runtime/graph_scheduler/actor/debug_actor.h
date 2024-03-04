@@ -40,7 +40,7 @@ class DebugActor : public ActorBase {
   DebugActor() : ActorBase("DebugActor") {}
   ~DebugActor() override = default;
 
-  void ACLDump(uint32_t device_id);
+  void ACLDump(uint32_t device_id, const std::vector<KernelGraphPtr> &graphs);
 
   // The debug of each node.
   void Debug(const AnfNodePtr &node, const KernelLaunchInfo *launch_info, const DeviceContext *device_context,
@@ -68,7 +68,8 @@ class DebugActor : public ActorBase {
   // class members
   uint32_t exec_order_ = 0;
   int step_count = 0;
-  int dump_flag = 0;
+  bool dump_flag = false;
+  int is_dataset_sink = 0;
 
   bool profile_started_ = false;
   DeviceContext *device_ctx_ = nullptr;

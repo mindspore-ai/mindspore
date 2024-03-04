@@ -23,11 +23,11 @@
 #include "linear_sum_assignment.h"
 #include "log.h"
 #include "securec.h"
-#include "status.h"
+#include "context/common/status.h"
 #include "utils/kernel_util.h"
 #include "utils/eigen_tensor.h"
 
-#include "common/kernel_log.h"
+#include "inc/kernel_log.h"
 
 namespace {
 const char *const kLinearSumAssignment = "LinearSumAssignment";

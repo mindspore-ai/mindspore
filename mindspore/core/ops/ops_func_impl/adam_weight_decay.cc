@@ -100,8 +100,8 @@ TypePtr AdamWeightDecayFuncImpl::InferType(const PrimitivePtr &prim,
   auto decay_type = input_args[kInputIndex7]->GetType();
   auto grad_type = input_args[kInputIndex8]->GetType();
 
-  const std::set<TypePtr> number_type = {kInt8,   kInt16,   kInt32,   kInt64,   kUInt8,     kUInt16,   kUInt32,
-                                         kUInt64, kFloat16, kFloat32, kFloat64, kComplex64, kComplex64};
+  const std::set<TypePtr> number_type = {kInt8,   kInt16,   kInt32,   kInt64,   kUInt8,     kUInt16,    kUInt32,
+                                         kUInt64, kFloat16, kFloat32, kFloat64, kComplex64, kComplex64, kBFloat16};
   std::map<std::string, TypePtr> type_dict_var_grad;
   type_dict_var_grad.emplace("var", var_type);
   type_dict_var_grad.emplace("grad", grad_type);

@@ -18,7 +18,7 @@
 #define MINDSPORE_CCSRC_TRANSFORM_ACL_IR_ACL_ALLOCATOR_H_
 
 #include <memory>
-#include <unordered_set>
+#include "utils/hash_map.h"
 #include "runtime/device/memory_manager.h"
 #include "plugin/device/ascend/hal/device/ascend_memory_manager.h"
 #include "acl/acl_rt_allocator.h"
@@ -27,11 +27,9 @@ namespace mindspore {
 namespace transform {
 class AclAllocator {
  public:
-  AclAllocator() = default;
+  AclAllocator(void *stream, std::shared_ptr<device::ascend::AscendMemoryManager> mem_manager)
+      : stream_(stream), mem_manager_(mem_manager) {}
   ~AclAllocator() = default;
-
-  void Initialize();
-  void Finalize();
 
   // Acl register func.
   static void *AllocFunc(void *obj, size_t size);
@@ -39,9 +37,16 @@ class AclAllocator {
   static void FreeFunc(void *obj, void *block);
   static void *GetAddrFromBlock(void *block);
 
+  void set_allocator_desc(const aclrtAllocatorDesc &allocator_desc) { allocator_desc_ = allocator_desc; }
+  aclrtAllocatorDesc allocator_desc() { return allocator_desc_; }
+  void *stream() { return stream_; }
+
  private:
+  void *stream_{nullptr};
   std::shared_ptr<device::ascend::AscendMemoryManager> mem_manager_{nullptr};
+  aclrtAllocatorDesc allocator_desc_{nullptr};
 };
+using AclAllocatorPtr = std::shared_ptr<AclAllocator>;
 
 class AclAllocatorRegister {
  public:
@@ -51,11 +56,12 @@ class AclAllocatorRegister {
   ~AclAllocatorRegister();
 
  private:
-  AclAllocatorRegister();
+  AclAllocatorRegister() = default;
+  AclAllocatorPtr NewAclAllocator(void *stream, std::shared_ptr<device::ascend::AscendMemoryManager> mem_manager);
+  void FreeAclAllocatorRes(const AclAllocatorPtr &allocator_obj);
 
-  AclAllocator *allocator_obj_{nullptr};
-  aclrtAllocatorDesc allocator_desc_{nullptr};
-  std::unordered_set<void *> streams_;
+  mindspore::HashMap<void *, AclAllocatorPtr> allocator_map_;
+  std::shared_ptr<device::ascend::AscendMemoryManager> mem_manager_{nullptr};
 };
 }  // namespace transform
 }  // namespace mindspore

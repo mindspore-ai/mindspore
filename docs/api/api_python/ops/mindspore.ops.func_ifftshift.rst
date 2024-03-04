@@ -20,5 +20,5 @@ mindspore.ops.ifftshift
     异常：
         - **TypeError** - 如果 `input` 不是Tensor。
         - **TypeError** - 如果 `dim` 不是上述支持的类型。
-        - **ValueError** - 如果 `dim` 中的值超出： :math:`[-input.ndim, -input.ndim)` 范围。
+        - **ValueError** - 如果 `dim` 中的值超出： :math:`[-input.ndim, input.ndim)` 范围。
         

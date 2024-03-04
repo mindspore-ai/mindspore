@@ -51,6 +51,7 @@ def test_basic():
     output_np = output.asnumpy().copy()
     assert np.allclose(expect_np, output_np, 5.e-3, 5.e-3)
 
+
 @pytest.mark.level0
 @pytest.mark.env_onecard
 def test_basic_ascend():

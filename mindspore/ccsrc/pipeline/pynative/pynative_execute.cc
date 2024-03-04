@@ -26,6 +26,7 @@
 #include "pipeline/jit/ps/pass.h"
 #include "runtime/pynative/op_executor.h"
 #include "runtime/pynative/op_compiler.h"
+#include "runtime/pynative/op_runner.h"
 #include "include/common/profiler.h"
 #include "pipeline/jit/ps/parse/data_converter.h"
 #include "ir/cell.h"
@@ -90,6 +91,7 @@ void SetCallbackForInputTensor(const FrontendOpRunInfoPtr &op_run_info) {
 }  // namespace
 
 void PyNativeExecutor::StoreAsyncStatus(const FrontendOpRunInfoPtr &op_run_info) const {
+  // Pure function running or cell not set mix precision
   op_run_info->async_status.disable_mix_precision =
     (forward_executor()->IsFirstCell() || forward_executor()->CellNotSetMixedPrecision(op_run_info));
   op_run_info->async_status.is_jit_compiling = forward_executor()->is_jit_compiling();
@@ -341,7 +343,7 @@ void PyNativeExecutor::ChildAfterFork() {
     MS_LOG(DEBUG) << "Reinitialize grad_executor_.";
     grad_executor_->ChildAfterFork();
   }
-  kernel::pyboost::PyBoostUtils::ChildAfterFork();
+  runtime::OpRunner::ChildAfterFork();
   MS_LOG(DEBUG) << "PyNativeExecutor reinitialize after fork done.";
 }
 

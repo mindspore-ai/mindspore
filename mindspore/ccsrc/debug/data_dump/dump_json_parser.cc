@@ -661,24 +661,28 @@ void DumpJsonParser::ParseOpDebugMode(const nlohmann::json &content) {
   CheckJsonUnsignedType(content, kOpDebugMode);
   op_debug_mode_ = content;
   switch (op_debug_mode_) {
-    case 0:
+    case static_cast<uint32_t>(DUMP_WHOLE):
       break;
-    case 1:
-    case 2:
-    case 3:
+    case static_cast<uint32_t>(DUMP_AICORE_OVERFLOW):
+    case static_cast<uint32_t>(DUMP_ATOMIC_OVERFLOW):
+    case static_cast<uint32_t>(DUMP_BOTH_OVERFLOW):
       if (IsKernelByKernel()) {
         MS_LOG(EXCEPTION) << "Overflow dump is not supported on KernelByKernel mode.";
       } else {
         break;
       }
-    case 4:
+    case static_cast<uint32_t>(DUMP_LITE_EXCEPTION):
       if (IsKernelByKernel()) {
         break;
       } else {
-        MS_LOG(EXCEPTION) << "Dump Json Parse Failed. op_debug_mode should be 0, 1, 2, 3, 4";
+        MS_LOG(EXCEPTION) << "Dump Json Parse Failed. op_debug_mode should be 0, 1, 2, 3";
       }
     default:
-      MS_LOG(EXCEPTION) << "Dump Json Parse Failed. op_debug_mode should be 0, 1, 2, 3, 4";
+      if (IsKernelByKernel()) {
+        MS_LOG(EXCEPTION) << "Dump Json Parse Failed. op_debug_mode should be 0, 1, 2, 3, 4";
+      } else {
+        MS_LOG(EXCEPTION) << "Dump Json Parse Failed. op_debug_mode should be 0, 1, 2, 3";
+      }
   }
 }
 
@@ -921,8 +925,9 @@ bool DumpJsonParser::IsHCCLKernelInput(const std::string &kernel_name) const {
 }
 bool DumpJsonParser::IsKernelByKernel() {
   bool is_kbk = false;
-  auto env_enable_kbk = common::GetEnv("GRAPH_OP_RUN");
-  if (!env_enable_kbk.empty() && env_enable_kbk == "1") {
+  auto env_enable_kbk = common::GetEnv("MS_ACL_DUMP_CFG_PATH");
+  auto kbk_enable_kbk = common::GetEnv("GRAPH_OP_RNU");
+  if ((!env_enable_kbk.empty() && env_enable_kbk == "1") || (!env_enable_kbk.empty() && kbk_enable_kbk == "1")) {
     is_kbk = true;
   }
   return is_kbk;

@@ -7,8 +7,8 @@ mindspore.scipy.linalg.cho_factor
 
     返回包含cholesky分解的矩阵，对于一个Hermitian正定矩阵 `A`，根据 `lower` 取值，进行如下形式的分解：
 
-    - `lower` 为True: :math:`A=LL^*`
-    - `lower` 为False: :math:`A=U^*U`
+    - `lower` 为True: :math:`A = L L^*`
+    - `lower` 为False: :math:`A = U^* U`
 
     其中， :math:`L^*` 为 :math:`L` 的共轭转置矩阵。
     其中， :math:`U^*` 为 :math:`U` 的共轭转置矩阵。

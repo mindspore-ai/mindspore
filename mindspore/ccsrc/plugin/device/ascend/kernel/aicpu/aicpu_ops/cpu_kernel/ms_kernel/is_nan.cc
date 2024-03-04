@@ -19,11 +19,11 @@
 #include <algorithm>
 
 #include "utils/kernel_util.h"
-#include "common/kernel_log.h"
+#include "inc/kernel_log.h"
 #include "cpu_types.h"
-#include "cpu_kernel/common/status.h"
+#include "context/common/status.h"
 #include "unsupported/Eigen/CXX11/Tensor"
-#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "context/inc/cpu_kernel_utils.h"
 
 namespace {
 const uint32_t kOutputNum = 1;

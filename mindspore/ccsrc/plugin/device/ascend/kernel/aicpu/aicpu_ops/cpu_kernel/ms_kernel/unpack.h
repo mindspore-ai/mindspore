@@ -22,10 +22,10 @@
 #include "utils/bcast.h"
 #include "unsupported/Eigen/CXX11/Tensor"
 #include "securec.h"
-#include "cpu_kernel_utils.h"
-#include "cpu_kernel_utils.h"
-#include "kernel_log.h"
-#include "status.h"
+#include "inc/ms_cpu_kernel.h"
+#include "inc/ms_cpu_kernel.h"
+#include "inc/kernel_log.h"
+#include "context/common/status.h"
 
 namespace aicpu {
 class UnpackCpuKernel : public CpuKernel {

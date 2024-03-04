@@ -17,6 +17,13 @@
     :exclude-members: infer_value, infer_shape, infer_dtype, target
     :members:
 
+{% elif "mindspore.experimental.optim" in fullname and "lr_scheduler" not in fullname and objname[0].istitle() %}
+{{ fullname | underline }}
+
+.. autoclass:: {{ name }}
+    :exclude-members: infer_value, infer_shape, infer_dtype, implementation
+    :members:
+
 {% elif fullname=="mindspore.Tensor" %}
 {{ fullname | underline }}
 

@@ -14,3 +14,6 @@ gelu_grad:
         name: GeLUGrad
     function:
         disable: True
+    dispatch:
+        enable: True
+        Ascend: GeLUGradAscend

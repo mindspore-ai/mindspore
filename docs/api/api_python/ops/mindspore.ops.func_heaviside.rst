@@ -10,7 +10,7 @@ mindspore.ops.heaviside
             0, & \text { if input }<0 \\
             \text { values, } & \text { if input }=0 \\
             1, & \text { if input }>0
-            \end{array}\right
+            \end{array}\right.
 
     参数：
         - **input** (Tensor) - 输入Tensor。需为实数类型。

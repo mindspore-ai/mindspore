@@ -26,7 +26,7 @@ int MatMulDynamicFP16Coder::InitAShape() {
   auto a_shape = shape_info_container_->GetTemplateShape(input_tensor_);
   MS_CHECK_TRUE_MSG(a_shape.size() >= DIMENSION_2D, RET_INPUT_PARAM_INVALID,
                     "MatMul's a_shape_size must be not less than two.");
-  dynamic_params_.batch_ = AccumulateShape(a_shape);
+  dynamic_params_.batch_ = AccumulateShape(a_shape, 0, a_shape.size());
   dynamic_params_.row_ = params_.a_transpose_ ? a_shape[a_shape.size() - C1NUM] : a_shape[a_shape.size() - C2NUM];
   return RET_OK;
 }

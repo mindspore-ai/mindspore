@@ -21,10 +21,10 @@
 #include <Eigen/Dense>
 #include <limits>
 #include <cmath>
-#include "cpu_kernel_utils.h"
+#include "context/inc/cpu_kernel_utils.h"
 #include "cpu_types.h"
-#include "kernel_log.h"
-#include "status.h"
+#include "inc/kernel_log.h"
+#include "context/common/status.h"
 #include "utils/kernel_util.h"
 #include "utils/igamma_utils.h"
 

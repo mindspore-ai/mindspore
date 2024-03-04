@@ -46,7 +46,7 @@ bool ArgsToAttrPass::Run(const FuncGraphPtr &func_graph) {
     if (prim == nullptr) {
       continue;
     }
-
+    auto dst_prim = prim->Clone();
     auto node_inputs = cnode->inputs();
     std::vector<AnfNodePtr> new_node_inputs;
 
@@ -85,10 +85,12 @@ bool ArgsToAttrPass::Run(const FuncGraphPtr &func_graph) {
       }
       auto arg_value_node = arg_input_node->cast<ValueNodePtr>();
       auto arg_value = arg_value_node->value();
-      prim->AddAttr(arg.arg_name_, arg_value);
+      dst_prim->AddAttr(arg.arg_name_, arg_value);
+      ValueNodePtr value_node = cnode->input(0)->cast<ValueNodePtr>();
+      value_node->set_value(dst_prim);
     }
 
-    auto new_node = func_graph->NewCNode(prim, new_node_inputs);
+    auto new_node = func_graph->NewCNode(dst_prim, new_node_inputs);
     new_node->set_abstract(node->abstract());
     new_node->set_fullname_with_scope(node->fullname_with_scope());
 

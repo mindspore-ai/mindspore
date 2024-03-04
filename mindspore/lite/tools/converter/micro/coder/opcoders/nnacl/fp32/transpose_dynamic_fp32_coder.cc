@@ -144,7 +144,7 @@ int TransposeDynamicFp32Coder::ComputeOfflineInfo() {
   const int ori_stride = 1;
   dynamic_param_.strides_ = std::to_string(ori_stride) + ", ";
   dynamic_param_.out_strides_ = std::to_string(ori_stride) + ", ";
-  dynamic_param_.data_num_ = AccumulateShape(in_shapes_);
+  dynamic_param_.data_num_ = AccumulateShape(in_shapes_, 0, in_shapes_.size());
   std::vector<std::string> strides(param_->num_axes_);
   std::vector<std::string> out_strides(param_->num_axes_);
   strides[param_->num_axes_ - 1] = "1";

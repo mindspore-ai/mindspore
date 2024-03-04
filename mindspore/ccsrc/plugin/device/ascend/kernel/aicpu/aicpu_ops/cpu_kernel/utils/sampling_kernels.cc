@@ -17,8 +17,8 @@
 #include "cpu_kernel/utils/sampling_kernels.h"
 #include <algorithm>
 #include <string>
-#include "common/kernel_log.h"
-#include "common/status.h"
+#include "inc/kernel_log.h"
+#include "context/common/status.h"
 
 namespace aicpu {
 SamplingKernelType SamplingKernelTypeFromString(const std::string &str) {

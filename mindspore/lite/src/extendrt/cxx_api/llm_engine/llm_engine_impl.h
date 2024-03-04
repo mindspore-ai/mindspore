@@ -45,7 +45,7 @@ class MS_API LLMEngineImpl {
   Status ReleasePromptPrefix(const LLMReq &req, uint64_t model_id);
   Status PullKV(const LLMReq &req, uint64_t model_id);
   Status MergeKV(const LLMReq &req, uint32_t batch_index, uint32_t batch_id, uint64_t model_id);
-  std::vector<LLMTensorInfo> GetInputInfos(uint64_t model_id);
+  std::vector<MSTensor> GetInputs(uint64_t model_id);
 
   LLMEngineStatus FetchStatus();
   Status LinkClusters(const std::vector<LLMClusterInfo> &clusters, std::vector<Status> *rets, int32_t timeout = -1);

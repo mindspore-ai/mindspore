@@ -83,17 +83,6 @@ class AclAdapter {
 
 #if !defined(BUILD_LITE) && defined(ENABLE_D)
   // Ascend910B
-  APP_ERROR DvppResize(const std::shared_ptr<DeviceTensorAscend910B> &input,
-                       std::shared_ptr<DeviceTensorAscend910B> *output, int32_t output_height, int32_t output_width,
-                       double fx, double fy, InterpolationMode mode);
-
-  APP_ERROR DvppDecode(const std::shared_ptr<DeviceTensorAscend910B> &input,
-                       std::shared_ptr<DeviceTensorAscend910B> *output);
-
-  APP_ERROR DvppNormalize(const std::shared_ptr<DeviceTensorAscend910B> &input,
-                          std::shared_ptr<DeviceTensorAscend910B> *output, std::vector<float> mean,
-                          std::vector<float> std, bool is_hwc);
-
   APP_ERROR DvppAdjustBrightness(const std::shared_ptr<DeviceTensorAscend910B> &input,
                                  std::shared_ptr<DeviceTensorAscend910B> *output, float factor);
 
@@ -106,21 +95,48 @@ class AclAdapter {
   APP_ERROR DvppAdjustSaturation(const std::shared_ptr<DeviceTensorAscend910B> &input,
                                  std::shared_ptr<DeviceTensorAscend910B> *output, float factor);
 
+  APP_ERROR DvppAffine(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                       std::shared_ptr<DeviceTensorAscend910B> *output, const std::vector<float> &matrix,
+                       uint32_t interpolation_mode, uint32_t padding_mode, const std::vector<float> &fill);
+
+  APP_ERROR DvppCrop(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                     std::shared_ptr<DeviceTensorAscend910B> *output, uint32_t top, uint32_t left, uint32_t height,
+                     uint32_t width);
+
+  APP_ERROR DvppDecode(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                       std::shared_ptr<DeviceTensorAscend910B> *output);
+
+  APP_ERROR DvppGaussianBlur(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                             std::shared_ptr<DeviceTensorAscend910B> *output, const std::vector<int64_t> &kernel_size,
+                             const std::vector<float> &sigma, uint32_t padding_mode);
+
   APP_ERROR DvppHorizontalFlip(const std::shared_ptr<DeviceTensorAscend910B> &input,
                                std::shared_ptr<DeviceTensorAscend910B> *output);
 
-  APP_ERROR DvppVerticalFlip(const std::shared_ptr<DeviceTensorAscend910B> &input,
-                             std::shared_ptr<DeviceTensorAscend910B> *output);
+  APP_ERROR DvppNormalize(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                          std::shared_ptr<DeviceTensorAscend910B> *output, std::vector<float> mean,
+                          std::vector<float> std, bool is_hwc);
+
+  APP_ERROR DvppPad(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                    std::shared_ptr<DeviceTensorAscend910B> *output, const std::vector<int64_t> &padding,
+                    uint32_t padding_mode, const std::vector<float> &fill);
 
   APP_ERROR DvppPerspective(const std::shared_ptr<DeviceTensorAscend910B> &input,
                             std::shared_ptr<DeviceTensorAscend910B> *output,
                             const std::vector<std::vector<int32_t>> &start_points,
                             const std::vector<std::vector<int32_t>> &end_points, InterpolationMode interpolation);
 
+  APP_ERROR DvppResize(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                       std::shared_ptr<DeviceTensorAscend910B> *output, int32_t output_height, int32_t output_width,
+                       double fx, double fy, InterpolationMode mode);
+
   APP_ERROR DvppResizedCrop(const std::shared_ptr<DeviceTensorAscend910B> &input,
                             std::shared_ptr<DeviceTensorAscend910B> *output, int32_t top, int32_t left, int32_t height,
                             int32_t width, int32_t output_height, int32_t output_width,
                             InterpolationMode interpolation);
+
+  APP_ERROR DvppVerticalFlip(const std::shared_ptr<DeviceTensorAscend910B> &input,
+                             std::shared_ptr<DeviceTensorAscend910B> *output);
 
   // acl
   APP_ERROR GetSocName(std::string *soc_name);
@@ -186,17 +202,21 @@ class AclAdapter {
 
 #if !defined(BUILD_LITE) && defined(ENABLE_D)
   // Ascend910B
-  DvppResizeFunObj dvpp_resize_fun_obj_;
-  DvppDecodeFunObj dvpp_decode_fun_obj_;
-  DvppNormalizeFunObj dvpp_normalize_fun_obj_;
   DvppAdjustBrightnessFunObj dvpp_brightness_fun_obj_;
   DvppAdjustContrastFunObj dvpp_contrast_fun_obj_;
   DvppAdjustHueFunObj dvpp_hue_fun_obj_;
   DvppAdjustSaturationFunObj dvpp_saturation_fun_obj_;
+  DvppAffineFunObj dvpp_affine_fun_obj_;
+  DvppCropFunObj dvpp_crop_fun_obj_;
+  DvppDecodeFunObj dvpp_decode_fun_obj_;
+  DvppGaussianBlurFunObj dvpp_gaussian_blur_fun_obj_;
   DvppHorizontalFlipFunObj dvpp_horizontal_flip_fun_obj_;
-  DvppVerticalFlipFunObj dvpp_vertical_flip_fun_obj_;
+  DvppNormalizeFunObj dvpp_normalize_fun_obj_;
+  DvppPadFunObj dvpp_pad_fun_obj_;
   DvppPerspectiveFunObj dvpp_perspective_fun_obj_;
+  DvppResizeFunObj dvpp_resize_fun_obj_;
   DvppResizedCropFunObj dvpp_resized_crop_fun_obj_;
+  DvppVerticalFlipFunObj dvpp_vertical_flip_fun_obj_;
 
   // acl interface
   GetSocNameFunObj get_soc_name_fun_obj_;

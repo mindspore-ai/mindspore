@@ -25,11 +25,11 @@ namespace mindspore {
 namespace kernel {
 namespace pyboost {
 namespace {
-void SoftmaxAscendCall(const device::DeviceContext *device_context, const tensor::TensorPtr &logits_tensor,
-                       const int64_t dim, const std::vector<tensor::TensorPtr> &outputs) {
+void SoftmaxAscendCall(const std::shared_ptr<OpRunner> &op, const device::DeviceContext *device_context,
+                       const tensor::TensorPtr &logits_tensor, const int64_t dim,
+                       const std::vector<tensor::TensorPtr> &outputs) {
   MS_LOG(DEBUG) << "Call start";
-  auto stream_ptr = device_context->device_res_manager_->GetStream(kDefaultStreamIndex);
-  LAUNCH_ACLNN(aclnnSoftmax, device_context, stream_ptr, logits_tensor, dim, outputs[0]);
+  LAUNCH_ACLNN(aclnnSoftmax, device_context, op->stream_id(), logits_tensor, dim, outputs[0]);
   MS_LOG(DEBUG) << "Launch end";
 }
 }  // namespace
@@ -42,8 +42,8 @@ tensor::TensorPtr SoftmaxAscendCustomize(const std::shared_ptr<OpRunner> &op, co
   auto axis_vector = ConvertValueTupleToVector<int64_t>(axis);
   auto dim = axis_vector[0];
 
-  PyBoostUtils::PrepareOpInputs(op->device_context(), logits_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->outputs());
+  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), logits_tensor);
+  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
 
   // Async
   PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, logits_tensor, dim]() {
@@ -55,7 +55,7 @@ tensor::TensorPtr SoftmaxAscendCustomize(const std::shared_ptr<OpRunner> &op, co
     // Malloc for output tensors
     PyBoostUtils::MallocOpOutputs(device_context, outputs);
     // Call aclnnSoftmax
-    SoftmaxAscendCall(device_context, logits_tensor, dim, outputs);
+    SoftmaxAscendCall(op, device_context, logits_tensor, dim, outputs);
     MS_LOG(DEBUG) << "Run device task Softmax end";
   }));
   return op->output(0);

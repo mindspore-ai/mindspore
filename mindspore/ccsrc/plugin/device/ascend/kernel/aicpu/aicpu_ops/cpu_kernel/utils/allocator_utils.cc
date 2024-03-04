@@ -20,7 +20,7 @@
 
 #include "cce/fwk_adpt_struct.h"
 #include "mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/common/kernel_log.h"
-#include "cpu_kernel/common/status.h"
+#include "context/common/status.h"
 
 namespace {
 std::unordered_set<uint64_t> g_allocated_ptr;

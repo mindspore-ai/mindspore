@@ -294,7 +294,7 @@ def test_return_branch_1(jit_func):
     x = Tensor(-6, mstype.float32)
     assert jit_func(x, y) == Tensor(-6, mstype.float32)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard

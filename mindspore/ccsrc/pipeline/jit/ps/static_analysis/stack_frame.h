@@ -48,6 +48,7 @@ class StackFrame final : public Base {
   MS_DECLARE_PARENT(StackFrame, Base);
 
   void Load() {
+    MS_EXCEPTION_IF_NULL(func_graph_);
     node_slots_ = TopoSort(func_graph_->get_return(), SuccIncoming, [](const AnfNodePtr &node) -> IncludeType {
       static const bool enable_pre_lift = (common::GetEnv("MS_DEV_PRE_LIFT") == "1");
       if (node->isa<ValueNode>() || node->isa<Parameter>() ||
@@ -56,6 +57,11 @@ class StackFrame final : public Base {
       }
       return FOLLOW;
     });
+    if (node_slots_.empty()) {
+      MS_LOG(INTERNAL_EXCEPTION) << "The func graph is empty, func graph: " << func_graph_ << "/"
+                                 << func_graph_->ToString()
+                                 << ", has return: " << (func_graph_->get_return() != nullptr);
+    }
     slot_index_ = 0;
     args_abs_list_.clear();
   }

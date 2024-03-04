@@ -17,7 +17,7 @@
 #include "polar.h"
 
 #include "complex"
-#include "cpu_kernel_utils.h"
+#include "context/inc/cpu_kernel_utils.h"
 #include "iostream"
 #include "utils/kernel_util.h"
 

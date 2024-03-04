@@ -17,7 +17,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_INSTANCE_NORM_V2_GRAD_H_
 #define AICPU_KERNELS_NORMALIZED_INSTANCE_NORM_V2_GRAD_H_
 
-#include "cpu_kernel_utils.h"
+#include "inc/ms_cpu_kernel.h"
 #include <vector>
 
 namespace aicpu {

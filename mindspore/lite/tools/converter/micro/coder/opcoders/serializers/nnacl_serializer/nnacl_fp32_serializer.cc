@@ -38,6 +38,15 @@ void NNaclFp32Serializer::CodeStruct(const std::string &name, const PoolingCompu
                         pooling_compute.maxf);
 }
 
+void NNaclFp32Serializer::CodeStruct(const std::string &name, const PoolingComputeParam &pooling_compute,
+                                     const PoolingDynamicParameter &dynamic_pooling_param) {
+  CodeBaseStruct<false>("PoolingComputeParam", name, pooling_compute.input_w_, pooling_compute.input_h_,
+                        dynamic_pooling_param.input_batch_, pooling_compute.input_channel_, pooling_compute.output_w_,
+                        pooling_compute.output_h_, dynamic_pooling_param.output_batch_, pooling_compute.output_channel_,
+                        pooling_compute.window_w_, pooling_compute.window_h_, pooling_compute.minf,
+                        pooling_compute.maxf);
+}
+
 void NNaclFp32Serializer::CodeStruct(const std::string &name, const BatchNormStruct &bn_struct) {
   CodeBaseStruct<false>("BatchNormStruct", name, "{}", "{}", "{}", "{}", bn_struct.momentum_, bn_struct.unit_,
                         bn_struct.channel_, bn_struct.epsilon_);
@@ -84,6 +93,29 @@ void NNaclFp32Serializer::CodeStruct(const std::string &name, const ConvParamete
     conv_parameter.output_padding_w_, conv_parameter.output_padding_h_);
 }
 
+void NNaclFp32Serializer::CodeStruct(const std::string &name, const ConvParameter &conv_parameter,
+                                     const ConvDynamicParameter &dynamic_conv_param) {
+  CodeBaseStruct<false>(
+    "ConvParameter", name, conv_parameter.op_parameter_, "{0}", conv_parameter.kernel_h_, conv_parameter.kernel_w_,
+    conv_parameter.stride_h_, conv_parameter.stride_w_, conv_parameter.dilation_h_, conv_parameter.dilation_w_,
+    conv_parameter.pad_u_, conv_parameter.pad_d_, conv_parameter.pad_l_, conv_parameter.pad_r_, conv_parameter.group_,
+    conv_parameter.tile_num_, dynamic_conv_param.input_batch_, conv_parameter.input_h_, conv_parameter.input_w_,
+    conv_parameter.input_channel_, dynamic_conv_param.output_batch_, conv_parameter.output_h_, conv_parameter.output_w_,
+    conv_parameter.output_channel_, conv_parameter.thread_num_, conv_parameter.input_unit_, conv_parameter.output_unit_,
+    conv_parameter.pad_mode_, conv_parameter.act_type_, conv_parameter.channel_multiplie_,
+    conv_parameter.output_padding_w_, conv_parameter.output_padding_h_);
+}
+
+void NNaclFp32Serializer::CodeStruct(const std::string &name, const MatMulParameter &mat_mul_parameter) {
+  CodeBaseStruct<false>(
+    "MatMulParameter", name, mat_mul_parameter.op_parameter_, mat_mul_parameter.has_bias_, mat_mul_parameter.use_axis_,
+    mat_mul_parameter.a_transpose_, mat_mul_parameter.b_transpose_, mat_mul_parameter.act_type_, mat_mul_parameter.row_,
+    mat_mul_parameter.col_, mat_mul_parameter.row_4_, mat_mul_parameter.row_16_, mat_mul_parameter.row_align_,
+    mat_mul_parameter.col_8_, mat_mul_parameter.col_align_, mat_mul_parameter.deep_, mat_mul_parameter.deep_4_,
+    mat_mul_parameter.deep_16_, mat_mul_parameter.deep_align_, mat_mul_parameter.batch, mat_mul_parameter.a_const_,
+    mat_mul_parameter.b_const_, mat_mul_parameter.axis_, mat_mul_parameter.matmul_type_);
+}
+
 void NNaclFp32Serializer::CodeStruct(const std::string &name, const MicroMatmulParameter &micro_matmul_parameter) {
   CodeBaseStruct<false>(
     "MicroMatmulParameter", name, micro_matmul_parameter.act_type_, micro_matmul_parameter.thread_num_,
@@ -101,10 +133,26 @@ void NNaclFp32Serializer::CodeStruct(const std::string &name, const ScaleStruct 
                         scale_struct.outer_size_, scale_struct.inner_size_);
 }
 
+void NNaclFp32Serializer::CodeStruct(const std::string &name, const ScaleStruct &scale_struct,
+                                     const ScaleDynamicParameter &dynamic_scale_param) {
+  CodeBaseStruct<false>("ScaleStruct", name, "{}", scale_struct.axis_, scale_struct.data_type_,
+                        dynamic_scale_param.axis_size_, dynamic_scale_param.outer_size_,
+                        dynamic_scale_param.inner_size_);
+}
+
 void NNaclFp32Serializer::CodeStruct(const std::string &name, const SplitParameter &split_parameter) {
   CodeBaseStruct("SplitParameter", name, split_parameter.op_parameter_, split_parameter.num_split_, "split_sizes",
                  split_parameter.split_dim_, ToString(split_parameter.strides_), "{0}", split_parameter.n_dims_,
                  split_parameter.split_count_);
+}
+
+void NNaclFp32Serializer::CodeStruct(const std::string &name, const SplitParameter &split_parameter,
+                                     const SplitDynamicParameter &dynamic_split_param) {
+  CodeArray("split_sizes", split_parameter.split_sizes_, split_parameter.num_split_, false);
+  CodeBaseStruct<false>("SplitParameter", name, split_parameter.op_parameter_, split_parameter.num_split_, nullptr,
+                        split_parameter.split_dim_, dynamic_split_param.strides_, "{0}", split_parameter.n_dims_,
+                        dynamic_split_param.split_count_);
+  code << "    " << name << ".split_sizes_ = split_sizes;\n";
 }
 
 void NNaclFp32Serializer::CodeStruct(const std::string &name, const TileStruct &tile_struct) {
@@ -138,6 +186,17 @@ void NNaclFp32Serializer::CodeStruct(const std::string &name, const LstmParamete
                  lstm_parameter.state_col_align_, lstm_parameter.proj_col_align_, lstm_parameter.has_bias_);
 }
 
+void NNaclFp32Serializer::CodeStruct(const std::string &name, const LstmParameter &lstm_parameter,
+                                     const DynamicLstmParameter &dynamic_lstm_param) {
+  CodeBaseStruct("LstmParameter", name, lstm_parameter.op_parameter_, lstm_parameter.input_size_,
+                 lstm_parameter.hidden_size_, lstm_parameter.project_size_, lstm_parameter.output_size_,
+                 dynamic_lstm_param.seq_len_, dynamic_lstm_param.batch_, dynamic_lstm_param.output_step_,
+                 lstm_parameter.bidirectional_, lstm_parameter.zoneout_cell_, lstm_parameter.zoneout_hidden_,
+                 dynamic_lstm_param.input_row_align_, lstm_parameter.input_col_align_,
+                 dynamic_lstm_param.state_row_align_, lstm_parameter.state_col_align_, lstm_parameter.proj_col_align_,
+                 lstm_parameter.has_bias_);
+}
+
 void NNaclFp32Serializer::CodeStruct(const std::string &name, const DeQuantArg &de_quant_arg) {
   // this clusters is meaningless which will be supported in future
   CodeBaseStruct("DeQuantArg", name, de_quant_arg.scale, de_quant_arg.zeroPoint, de_quant_arg.var_corr,
@@ -168,9 +227,27 @@ void NNaclFp32Serializer::CodeStruct(const std::string &name, const StridedSlice
                  strided_slice_parameter.newAxisMask_, strided_slice_parameter.shrinkAxisMask_);
 }
 
+void NNaclFp32Serializer::CodeStruct(const std::string &name, const StridedSliceParameter &strided_slice_parameter,
+                                     const StridedSliceDynamicParameter &dynamic_strided_slice_param) {
+  CodeBaseStruct<false>("StridedSliceParameter", name, strided_slice_parameter.op_parameter_,
+                        ToString(strided_slice_parameter.begins_), ToString(strided_slice_parameter.ends_),
+                        ToString(strided_slice_parameter.strides_), strided_slice_parameter.isScale,
+                        strided_slice_parameter.in_shape_length_, dynamic_strided_slice_param.in_shape_,
+                        strided_slice_parameter.num_axes_, strided_slice_parameter.data_type,
+                        strided_slice_parameter.begins_mask_, strided_slice_parameter.ellipsisMask_,
+                        strided_slice_parameter.newAxisMask_, strided_slice_parameter.shrinkAxisMask_);
+}
+
 void NNaclFp32Serializer::CodeStruct(const std::string &name, const SliceStruct &param) {
   CodeBaseStruct("SliceStruct", name, "{}", param.data_type_size_, ToString(param.begin_), ToString(param.size_),
                  ToString(param.shape_), ToString(param.end_), param.param_length_);
+}
+
+void NNaclFp32Serializer::CodeStruct(const std::string &name, const SliceStruct &param,
+                                     const SliceDynamicParameter &dynamic_slice_param) {
+  CodeBaseStruct<false>("SliceParameter", name, "{}", param.data_type_size_, ToString(param.begin_),
+                        dynamic_slice_param.size_, dynamic_slice_param.shape_, dynamic_slice_param.end_,
+                        param.param_length_);
 }
 
 void NNaclFp32Serializer::CodeStruct(const std::string &name, const ArithmeticWrapperInfo &arithmetic_wrapper_info) {
@@ -213,6 +290,12 @@ void NNaclFp32Serializer::CodeStruct(const std::string &name, const LayerNormCom
 void NNaclFp32Serializer::CodeStruct(const std::string &name, const BroadcastShapeInfo &param) {
   CodeBaseStruct<false>("BroadcastShapeInfo", name, ToString(param.input_shape_), param.input_shape_size_,
                         ToString(param.output_shape_), param.output_shape_size_);
+}
+
+void NNaclFp32Serializer::CodeStruct(const std::string &name, const BroadcastShapeInfo &op_param,
+                                     const BroadcastDynamicShapeInfo &dynamic_param) {
+  CodeBaseStruct<false>("BroadcastShapeInfo", name, dynamic_param.input_shape_, op_param.input_shape_size_,
+                        dynamic_param.output_shape_, op_param.output_shape_size_);
 }
 
 void NNaclFp32Serializer::CodeStruct(const std::string &name, const CustomGruParameter &op_param) {

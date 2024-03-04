@@ -6,11 +6,11 @@ mindspore.ops.Heaviside
     计算输入中每个元素的Heaviside步长函数。
 
     .. math::
-            \text { Heaviside }(\text { x, values })=\left\{\begin{array}{ll}
+            \text { heaviside }(\text { x, values })=\left\{\begin{array}{ll}
             0, & \text { if x }<0 \\
             \text { values, } & \text { if x }==0 \\
             1, & \text { if x }>0
-            \end{array}\right
+            \end{array}\right.
 
     .. warning::
         这是一个实验性API，后续可能修改或删除。

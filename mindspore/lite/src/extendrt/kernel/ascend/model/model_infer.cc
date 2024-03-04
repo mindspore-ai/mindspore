@@ -61,12 +61,12 @@ bool ModelInfer::Init() {
   }
   MS_LOG(INFO) << "Open device " << device_id << " success.";
 
-  ret = aclrtCreateContext(&context_, device_id);
+  ret = aclrtGetCurrentContext(&context_);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Acl create context failed.";
     return false;
   }
-  MS_LOG(INFO) << "Create context success.";
+  MS_LOG(INFO) << "get default context success, we will use default context";
 
   aclrtRunMode run_mode;
   ret = aclrtGetRunMode(&run_mode);
@@ -115,11 +115,8 @@ bool ModelInfer::Finalize() {
     stream_ = nullptr;
   }
   if (context_ != nullptr) {
-    rt_ret = aclrtDestroyContext(context_);
-    if (rt_ret != ACL_ERROR_NONE) {
-      MS_LOG(ERROR) << "Destroy context failed.";
-    }
     context_ = nullptr;
+    MS_LOG(INFO) << "use default context, not destroy context";
   }
   MS_LOG(INFO) << "End to destroy context.";
 

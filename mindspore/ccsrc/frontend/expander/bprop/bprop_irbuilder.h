@@ -94,6 +94,21 @@ class BpropIRBuilder : public Emitter {
   // case 2: x[2, ..., 1:3]   => StridedSlice(x, {{0,{2}}, {-1,{1,3}}})
   // case 3: x[..., 0:3:2, 0::2, :]   => StridedSlice(x, {{-3,{0,3,2}}, {-2,{0,LLONG_MAX,2}}})
   NodePtr StridedSlice(const NodePtr &x, const std::map<int64_t, std::vector<int64_t>> &slices);
+
+  NodePtr StridedSlice(const NodePtr &dout, const NodePtr &begin, const NodePtr &end, const NodePtr &strides,
+                       const NodePtr &begin_mask, const NodePtr &end_mask, const NodePtr &ellipsis_mask,
+                       const NodePtr &new_axis_mask, const NodePtr &shrink_axis_mask) {
+    return Emit("StridedSlice",
+                {dout, begin, end, strides, begin_mask, end_mask, ellipsis_mask, new_axis_mask, shrink_axis_mask});
+  }
+
+  NodePtr StridedSlice(const NodePtr &dout, const NodePtr &begin, const NodePtr &end, const NodePtr &strides,
+                       int64_t begin_mask = 0, int64_t end_mask = 0, int64_t ellipsis_mask = 0,
+                       int64_t new_axis_mask = 0, int64_t shrink_axis_mask = 0) {
+    return StridedSlice(dout, begin, end, strides, Value(begin_mask), Value(end_mask), Value(ellipsis_mask),
+                        Value(new_axis_mask), Value(shrink_axis_mask));
+  }
+
   std::string GetInstanceName() const { return instance_name_; }
   NodePtr TanhGrad(const NodePtr &y, const NodePtr &dy) { return Emit("TanhGrad", {y, dy}); }
   virtual NodePtr OutZeros(const NodePtr &node) { return ZerosLike(node); }

@@ -29,7 +29,9 @@ namespace opt {
 
 namespace {
 struct CastInfo {
+  // true: input; false: output
   bool is_input;
+  // input_index/output_index
   size_t idx;
   // If `src_dtypes` is empty, it represents all dtypes
   std::unordered_set<TypeId> src_dtypes;
@@ -40,8 +42,12 @@ const std::unordered_set<TypeId> int_type_with_bool = {kNumberTypeUInt8,  kNumbe
                                                        kNumberTypeUInt64, kNumberTypeInt8,   kNumberTypeInt16,
                                                        kNumberTypeInt32,  kNumberTypeInt64,  kNumberTypeBool};
 
+// prim_name | {is_input, input_index/output_index, src_dtypes, dst_dtype}
 const std::unordered_map<std::string, CastInfo> kNeedAddCastMap = {
   {ops::kNameReciprocal, {true, 0, int_type_with_bool, kNumberTypeFloat32}},
+  {ops::kNameExp, {true, 0, int_type_with_bool, kNumberTypeFloat32}},
+  {ops::kNameSqrt, {true, 0, int_type_with_bool, kNumberTypeFloat32}},
+  {ops::kNameErfinv, {true, 0, int_type_with_bool, kNumberTypeFloat32}},
   {ops::kNameArgMaxWithValue, {false, 0, {}, kNumberTypeInt32}},
   {ops::kNameArgMinWithValue, {false, 0, {}, kNumberTypeInt32}}};
 
@@ -74,8 +80,9 @@ const CNodePtr AddCastForGeInput(const FuncGraphPtr &graph, const CNodePtr &node
   }
   auto cast_node = AddCastNode(graph, cast_info.dst_dtype, node, true, input_idx);
   std::vector<AnfNodePtr> new_inputs(node->inputs());
+  // In the process of calling function `AddCastNode`, it has been verified that
+  // `input_id + 1` is less than node->inputs().size().
   new_inputs[input_idx + 1] = cast_node;
-  MS_EXCEPTION_IF_NULL(graph);
   auto kernel_graph = graph->cast<KernelGraphPtr>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto new_node = kernel_graph->NewCNodeWithInfos(new_inputs, node);

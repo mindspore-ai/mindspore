@@ -102,7 +102,7 @@ def coo_cos(x: COOTensor) -> COOTensor:
 
 
 def csr_tan(x: CSRTensor) -> CSRTensor:
-    """
+    r"""
     Computes tangent of `x` element-wise.
 
     .. math::
@@ -139,7 +139,7 @@ def csr_tan(x: CSRTensor) -> CSRTensor:
 
 
 def coo_tan(x: COOTensor) -> COOTensor:
-    """
+    r"""
     Computes tangent of `x` element-wise.
 
     .. math::
@@ -1026,7 +1026,7 @@ def coo_floor(x: COOTensor) -> COOTensor:
 
 
 def csr_atan(x: CSRTensor) -> CSRTensor:
-    """
+    r"""
     Computes the trigonometric inverse tangent of the input element-wise.
 
     .. math::
@@ -1557,7 +1557,7 @@ def coo_softsign(x: COOTensor) -> COOTensor:
 
 
 def csr_log1p(x: CSRTensor) -> CSRTensor:
-    """
+    r"""
     Returns the natural logarithm of one plus the input CSRTensor element-wise.
 
     .. math::
@@ -1595,7 +1595,7 @@ def csr_log1p(x: CSRTensor) -> CSRTensor:
 
 
 def coo_log1p(x: COOTensor) -> COOTensor:
-    """
+    r"""
     Returns the natural logarithm of one plus the input COOTensor element-wise.
 
     .. math::

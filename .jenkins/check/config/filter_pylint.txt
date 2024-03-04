@@ -53,6 +53,7 @@
 "mindspore/mindspore/python/mindspore/ops/_tracefunc.py"                                                                 "protected-access"
 "mindspore/mindspore/python/mindspore/ops/_tracefunc.py"                                                                 "function-redefined"
 "mindspore/mindspore/python/mindspore/nn/cell.py"                                                                        "assignment-from-none"
+"mindspore/mindspore/python/mindspore/nn/cell.py"                                                                        "assignment-from-no-return"
 "mindspore/mindspore/python/mindspore/_extends/parse/resources.py"                                                       "bad-whitespace"
 "mindspore/mindspore/python/mindspore/_extends/parse/parser.py"                                                          "broad-except"
 "mindspore/mindspore/python/mindspore/_extends/parse/parser.py"                                                          "protected-access"
@@ -234,6 +235,7 @@
 "mindspore/tests/st/ops/dynamic_shape/"                                                                 "too-many-locals"
 "mindspore/tests/ut/python/graph_syntax/test_invalid_attribute.py"                                      "misplaced-bare-raise"
 "mindspore/tests/st/fallback/test_graph_fallback_runtime_is_isnot.py"                                   "iteral-comparison"
+"mindspore/tests/st/dump/dump_test_utils.py"                                                            "too-many-nested-blocks"
 
 #MindSpore Lite
 "mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/experimental/HPC-generator/generator.py"                                         "redefined-builtin"

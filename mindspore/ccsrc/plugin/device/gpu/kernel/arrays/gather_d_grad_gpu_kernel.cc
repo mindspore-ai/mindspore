@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2023-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 
 #include "plugin/device/gpu/kernel/arrays/gather_d_grad_gpu_kernel.h"
+#include <functional>
 #include "mindspore/core/ops/array_ops.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 #include "plugin/device/gpu/hal/device/gpu_device_address.h"
@@ -37,8 +38,10 @@ bool GatherDGradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &in
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemsetAsync(output_addr, 0, outputs[kIndex0]->size(), cuda_stream),
                                     "GatherGrad cudaMemSet Failed");
 
-  auto status = GatherGrad(index_addr, grad_addr, output_addr, dims_[kIndex0], dims_[kIndex1], dims_[kIndex2],
-                           dims_[kIndex3], cuda_stream);
+  auto index_size =
+    static_cast<size_t>(std::accumulate(index_shapes_.begin(), index_shapes_.end(), 1, std::multiplies<int64_t>()));
+  auto status = GatherGrad(index_addr, grad_addr, output_addr, dims_[0], dims_[1], dims_[2], dims_[3], dims_[4],
+                           index_size, cuda_stream);
   CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
@@ -57,20 +60,28 @@ void GatherDGradGpuKernelMod::CalculateDim(int64_t dim_value) {
   if (dim_value < 0) {
     dim_value += rank;
   }
-  int64_t dim_before_axis = 1;
-  for (size_t i = 0; i < LongToSize(dim_value); i++) {
-    dim_before_axis *= output_shapes_[i];
+  auto dim_size = static_cast<size_t>(dim_value);
+  int64_t dim_before_axis_index = 1;
+  for (size_t i = 0; i < dim_size; i++) {
+    dim_before_axis_index *= index_shapes_[i];
   }
-  size_t dim_at_axis_index = LongToSizeClipNeg(index_shapes_[LongToSize(dim_value)]);
-  size_t dim_at_axis_output = LongToSizeClipNeg(output_shapes_[LongToSize(dim_value)]);
-  int64_t dim_after_axis = 1;
-  for (size_t i = LongToSize(dim_value) + 1; i < output_shapes_.size(); i++) {
-    dim_after_axis *= output_shapes_[i];
+  auto dim_at_axis_index = static_cast<size_t>(index_shapes_[dim_size]);
+  auto dim_at_axis_out = static_cast<size_t>(output_shapes_[dim_size]);
+  int64_t dim_after_axis_out = 1;
+  for (size_t i = dim_size + 1; i < output_shapes_.size(); i++) {
+    dim_after_axis_out *= output_shapes_[i];
   }
-  dims_[kIndex0] = LongToSize(dim_before_axis);
+
+  int64_t dim_after_axis_index = 1;
+  for (size_t i = dim_size + 1; i < index_shapes_.size(); i++) {
+    dim_after_axis_index *= index_shapes_[i];
+  }
+
+  dims_[kIndex0] = static_cast<size_t>(dim_before_axis_index);
   dims_[kIndex1] = dim_at_axis_index;
-  dims_[kIndex2] = dim_at_axis_output;
-  dims_[kIndex3] = LongToSize(dim_after_axis);
+  dims_[kIndex2] = static_cast<size_t>(dim_after_axis_index);
+  dims_[kIndex3] = dim_at_axis_out;
+  dims_[kIndex4] = static_cast<size_t>(dim_after_axis_out);
 }
 
 int GatherDGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
@@ -80,8 +91,16 @@ int GatherDGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   output_shapes_ = outputs.at(kIndex0)->GetShapeVector();
   grad_shapes_ = inputs.at(kIndex3)->GetShapeVector();
 
-  int64_t dim_value = inputs[kIndex1]->GetValueWithCheck<int64_t>();
-  CalculateDim(dim_value);
+  if (output_shapes_.empty()) {
+    output_shapes_ = ShapeVector{1};
+  }
+
+  if (index_shapes_.empty()) {
+    index_shapes_ = ShapeVector{1};
+  }
+
+  auto dim = inputs[kIndex1]->GetValueWithCheck<int64_t>();
+  CalculateDim(dim);
   return static_cast<int>(ret);
 }
 

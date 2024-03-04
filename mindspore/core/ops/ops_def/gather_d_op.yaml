@@ -11,3 +11,5 @@ gather_d:
   returns:
     output:
       dtype: tensor
+  dispatch:
+      enable: True

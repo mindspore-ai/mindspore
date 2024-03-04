@@ -128,11 +128,9 @@ mindspore/python/mindspore/ops_generate/inner_ops_doc.yaml
 mindspore/python/mindspore/ops/auto_generate/cpp_create_prim_instance_helper.py
 mindspore/python/mindspore/ops/auto_generate/gen_arg_handler.py
 mindspore/python/mindspore/ops/auto_generate/gen_arg_dtype_cast.py
-mindspore/python/mindspore/ops/auto_generate/gen_inner_ops_def.py
 mindspore/python/mindspore/ops/auto_generate/gen_ops_def.py
 mindspore/python/mindspore/ops/auto_generate/gen_pyboost_func.py
 mindspore/python/mindspore/ops/auto_generate/pyboost_inner_prim.py
-mindspore/python/mindspore/ops/auto_generate/gen_inner_ops_prim.py
 mindspore/python/mindspore/ops/auto_generate/gen_extend_func.py
 mindspore/python/mindspore/ops/auto_generate/gen_ops_prim.py
 mindspore/ccsrc/pipeline/pynative/op_function/auto_generate/

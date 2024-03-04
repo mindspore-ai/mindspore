@@ -78,7 +78,7 @@ class ForwardExecutor {
   inline const std::string &device_target() const { return device_target_; }
   const MindrtBackendMap &mindrt_backend() const { return mindrt_backends_; }
   inline bool IsFirstCell() const { return forward_cell_stack_.empty(); }
-  void PushForwardCell(const py::object &cell) { forward_cell_stack_.push(cell.cast<CellPtr>()); }
+  void PushForwardCell(const CellPtr &cell) { forward_cell_stack_.push(cell); }
   void PopForwardCell() { forward_cell_stack_.pop(); }
   void ExecuteLazyTask() const;
   void Sync();

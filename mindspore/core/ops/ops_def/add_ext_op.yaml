@@ -1,0 +1,21 @@
+#operator add_ext
+add_ext:
+  args:
+    input:
+      dtype: tensor
+      type_cast: number
+    other:
+      dtype: tensor
+      type_cast: number
+    alpha:
+      dtype: number
+      default: 1
+  args_signature:
+    dtype_group: (input, other),(alpha)
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: AddExt
+  dispatch:
+    enable: True

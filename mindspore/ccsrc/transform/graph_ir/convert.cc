@@ -647,8 +647,8 @@ bool DfGraphConvertor::NodeInputKeepUpdate(const FuncGraphManagerPtr &manager, c
     return true;
   }
   const auto &node_users = manager->node_users();
-  std::vector<PrimitivePtr> vec{prim::kPrimAssign, prim::kPrimKVCacheMgr, prim::kPrimScatterUpdate,
-                                prim::kPrimPromptKVCache, prim::kPrimDecoderKVCache};
+  std::vector<PrimitivePtr> vec{prim::kPrimAssign,          prim::kPrimKVCacheMgr,    prim::kPrimScatterUpdate,
+                                prim::kPrimScatterNdUpdate, prim::kPrimPromptKVCache, prim::kPrimDecoderKVCache};
   auto user_it = node_users.find(node);
   if (user_it != node_users.end()) {
     auto &users = user_it->second;
@@ -658,9 +658,43 @@ bool DfGraphConvertor::NodeInputKeepUpdate(const FuncGraphManagerPtr &manager, c
                                   [&node_use](const PrimitivePtr &prim) { return IsPrimitiveCNode(node_use, prim); })) {
         return true;
       }
+      // check if node is ReshapeAndKVCache which is fused by akg.
+      if (IsPrimitiveCNode(node_use, prim::kPrimCustom)) {
+        auto prim_custom = GetCNodePrimitive(node_use);
+        const std::string kAttrNameInfoPath = "info_path";
+
+        if (!prim_custom->HasAttr(kAttrNameInfoPath)) {
+          continue;
+        }
+        auto info_path_attr_node = prim_custom->GetAttr(kAttrNameInfoPath);
+        if (info_path_attr_node == nullptr) {
+          MS_LOG(EXCEPTION) << "attr node '" << kAttrNameInfoPath << "' is null";
+        }
+        std::string info_path = GetValue<std::string>(info_path_attr_node);
+        const std::string kOpReshapeAndCache = "ReshapeAndCache";
+        if (info_path.find(kOpReshapeAndCache) == std::string::npos) {
+          continue;
+        }
+
+        MS_LOG(INFO) << "found ReshapeAndCache, make use inpu keep update";
+        return true;
+      }
     }
   }
   return false;
+}
+
+void DfGraphConvertor::JudgeParamTransType(const bool &node_will_update, bool *as_ref_data, bool *as_constant) const {
+  if (ref_mode_) {
+    if ((ref_mode_type_ == RefModeFlag::kRefModeAll || node_will_update) && !export_air_) {
+      *as_ref_data = true;
+    } else {  // When only variable will be treated as RefData, constant Parameter will be treated as Constant
+      *as_constant = true;
+    }
+  } else if (!training_ && !node_will_update) {
+    // parameter will be updated, lite inference mode will treat as variables
+    *as_constant = true;
+  }
 }
 
 void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
@@ -693,24 +727,20 @@ void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
     }
 
     MS_EXCEPTION_IF_NULL(it.second);
-    auto desc = TransformUtil::GetGeTensorDesc(it.second->shape_c(), it.second->data_type(),
-                                               SelectParamOriFormat(graph_manager_, node));
-    if (desc == nullptr) {
-      MS_LOG(WARNING) << "Create const " << name << " output descriptor failed!";
-      continue;
-    }
     bool as_ref_data = false;
     bool as_constant = false;
     auto node_will_update = NodeInputKeepUpdate(graph_manager_, node);
-    if (ref_mode_) {
-      if ((ref_mode_type_ == RefModeFlag::kRefModeAll || node_will_update) && !export_air_) {
-        as_ref_data = true;
-      } else {  // When only variable will be treated as RefData, constant Parameter will be treated as Constant
-        as_constant = true;
-      }
-    } else if (!training_ && !node_will_update) {
-      // parameter will be updated, lite inference mode will treat as variables
-      as_constant = true;
+    JudgeParamTransType(node_will_update, &as_ref_data, &as_constant);
+
+    auto shape = it.second->shape_c();
+    if (as_ref_data && dyn_ref_data_func_ != nullptr) {
+      shape = dyn_ref_data_func_(node, shape);
+    }
+    auto desc =
+      TransformUtil::GetGeTensorDesc(shape, it.second->data_type(), SelectParamOriFormat(graph_manager_, node));
+    if (desc == nullptr) {
+      MS_LOG(WARNING) << "Create const " << name << " output descriptor failed!";
+      continue;
     }
     if (as_ref_data) {
       StorageFormatConvertor::SetupStorageFormat(anf_graph_, node, desc);
@@ -986,7 +1016,7 @@ DfGraphConvertor &DfGraphConvertor::ConvertAllNode() {
     // Ref mode need build all node(cnode && parameter).
     for (auto &p : anf_graph_->parameters()) {
       if (std::find(nodes.begin(), nodes.end(), p) == nodes.end()) {
-        MS_LOG(INFO) << "Parameter " << p->DebugString() << " cannot found in toposort lists.";
+        MS_LOG(INFO) << "Parameter " << p->DebugString() << " can not found in topo sort lists.";
         nodes.emplace_back(p);
       }
     }
@@ -2671,7 +2701,7 @@ void DfGraphConvertor::SetDynamicInputBeforeNormalInput(const OpAdapterPtr &adpt
   MS_EXCEPTION_IF_NULL(dyn_input_sizes);
   if (dyn_input_sizes->empty()) {
     *dyn_input_sizes = std::vector<int64_t>(ge_input_size, -1);
-    for (const auto iter : dyn_input_map) {
+    for (const auto &iter : dyn_input_map) {
       dyn_input_sizes->at(iter.first - kIndex1) = 1;
     }
   }

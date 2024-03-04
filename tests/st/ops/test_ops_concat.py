@@ -137,7 +137,7 @@ def test_concat_vmap(mode, params):
     assert np.allclose(out.asnumpy(), expect)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -152,7 +152,7 @@ def test_concat_dynamic(mode):
     ms.context.set_context(runtime_num_threads=1)  # multi-threads have none-initialized bug now.
     axis = 1
     inputs_case1, _ = forward_datas_prepare((2, 4), axis=axis, need_expect=False)
-    inputs_case2 = forward_datas_prepare((2, 2, 2), axis=axis, need_expect=False)
+    inputs_case2, _ = forward_datas_prepare((2, 2, 2), axis=axis, need_expect=False)
     TEST_OP(concat_func, [[*inputs_case1, axis], [*inputs_case2, axis]], mode=mode, grad=True)
 
 

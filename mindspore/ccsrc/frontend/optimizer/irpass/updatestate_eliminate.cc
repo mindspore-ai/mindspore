@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2023 Huawei Technologies Co., Ltd
+ * Copyright 2020-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -143,9 +143,9 @@ AnfNodePtr EliminateUpdateStateWithDepend(const CNodePtr &update_state) {
     return nullptr;
   }
   auto update_monad = update_state->input(kInputIndex);
-  if (!HasAbstractMonad(update_monad)) {
+  if (update_monad->abstract() == nullptr || !HasAbstractMonad(update_monad)) {
     // Skip if UpdateState input is not a monad.
-    MS_LOG(WARNING) << "Not a monad input: " << update_state->DebugString();
+    MS_LOG(INFO) << "Not a monad input: " << update_state->DebugString();
     return nullptr;
   }
   // x1 = Depend(x, u0)        <-not match--   <--match--

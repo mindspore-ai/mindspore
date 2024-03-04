@@ -21,7 +21,7 @@
 #include <string>
 #include <memory>
 #include <map>
-#include "common/kernel_log.h"
+#include "inc/kernel_log.h"
 
 namespace aicpu {
 constexpr int64_t kObjectTypeTensorType = 17;

@@ -149,6 +149,10 @@ static const char *const kConverterOutputFile = "output_file";
 static const char *const kOMConverterOptionsSection = "om_converter";
 
 static const char *const KModelUserInfo = "user_info";
+
+// for [ascend_context] [kvcache_input_layout]
+static const char *const kKVCacheLayoutBNSD = "BNSD";
+static const char *const kKVCacheLayoutBSH = "BSH";
 }  // namespace lite
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_COMMON_COMMON_H_

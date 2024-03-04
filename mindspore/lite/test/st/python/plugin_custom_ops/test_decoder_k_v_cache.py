@@ -22,7 +22,7 @@ import mindspore.nn as nn
 import mindspore.ops as ops
 from mindspore import Tensor, context
 from mindspore.train.serialization import export
-from mindspore.ops.auto_generate.gen_inner_ops_def import DecoderKVCache
+from mindspore.ops.auto_generate import DecoderKVCache
 
 
 b = 26

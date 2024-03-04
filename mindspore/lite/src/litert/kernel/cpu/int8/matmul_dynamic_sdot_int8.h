@@ -30,8 +30,6 @@ class MatMulDynamicSdotInt8Kernel : public MatmulDynamicBaseInt8CPUKernel {
   }
   ~MatMulDynamicSdotInt8Kernel() override = default;
   int Run() override;
-
- public:
   int MatMulDynamicArm64SdotPre(int task_id);
   int MatMulDynamicArm64SdotImpl(int task_id);
 

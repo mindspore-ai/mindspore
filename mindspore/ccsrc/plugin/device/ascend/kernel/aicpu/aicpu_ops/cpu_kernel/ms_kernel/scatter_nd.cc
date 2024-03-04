@@ -24,8 +24,8 @@
 #include <securec.h>
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
-#include "cpu_kernel/common/cpu_kernel_utils.h"
-#include "mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/common/atomic_op.h"
+#include "context/inc/cpu_kernel_utils.h"
+#include "utils/atomic_op.h"
 
 namespace {
 const uint32_t kInputNum = 3;

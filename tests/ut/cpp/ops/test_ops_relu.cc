@@ -40,6 +40,7 @@ TEST_P(TestReLU, dyn_shape) {
 
 namespace {
 auto ReLUOpTypeCases = testing::ValuesIn({
+  EltwiseOpTypeParams{kBool, kBool},
   EltwiseOpTypeParams{kInt8, kInt8},
   EltwiseOpTypeParams{kInt16, kInt16},
   EltwiseOpTypeParams{kInt32, kInt32},

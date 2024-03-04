@@ -119,7 +119,7 @@ bool GPUDeviceAddress::SyncHostToDevice(size_t size, const void *host_ptr) const
     return GPUDeviceManager::GetInstance().CopyHostMemToHost(offload_ptr_, host_ptr, size);
   } else {
     MS_EXCEPTION_IF_NULL(GetDevicePtr());
-    auto &stream = GPUDeviceManager::GetInstance().default_stream();
+    auto stream = GPUDeviceManager::GetInstance().GetStream(this->stream_id());
     MS_EXCEPTION_IF_NULL(stream);
     if (!GPUDeviceManager::GetInstance().CopyHostMemToDeviceAsync(GetDevicePtr(), host_ptr, size, stream)) {
       MS_LOG(ERROR) << "CopyHostMemToDeviceAsync failed";
@@ -180,7 +180,7 @@ bool GPUDeviceAddress::SyncHostToDevice(const ShapeVector &, size_t size, TypeId
   if (!need_sync) {
     return true;
   }
-  auto &stream = GPUDeviceManager::GetInstance().default_stream();
+  auto stream = GPUDeviceManager::GetInstance().GetStream(this->stream_id());
   MS_EXCEPTION_IF_NULL(stream);
   return GPUDeviceManager::GetInstance().CopyHostMemToDeviceAsync(GetDevicePtr(), host_ptr, size, stream);
 }

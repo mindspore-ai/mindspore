@@ -23,8 +23,8 @@
 #include "unsupported/Eigen/CXX11/Tensor"
 #include "securec.h"
 #include "Eigen/Core"
-#include "cpu_kernel_utils.h"
-#include "cpu_kernel_utils.h"
+#include "inc/ms_cpu_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
 

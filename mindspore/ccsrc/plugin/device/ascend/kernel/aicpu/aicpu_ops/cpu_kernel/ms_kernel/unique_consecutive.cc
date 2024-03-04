@@ -20,8 +20,8 @@
 #include <iostream>
 #include <vector>
 
-#include "cpu_kernel/common/cpu_kernel_utils.h"
-#include "common/kernel_log.h"
+#include "context/inc/cpu_kernel_utils.h"
+#include "inc/kernel_log.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 #define NoneN 1000

@@ -134,14 +134,9 @@ NodePtr BpropIRBuilder::TensorGetItem(const NodePtr &node, int64_t idx) {
   constexpr int64_t ellipsis_mask = 0;
   constexpr int64_t new_axis_mask = 0;
   constexpr int64_t shrink_axis_mask = 1;
-  return Emit(
-    kStridedSliceOpName,
-    {node, EmitValue(MakeValue(begin_strides)), EmitValue(MakeValue(end_strides)), EmitValue(MakeValue(step_strides))},
-    {{kAttrBeginMask, MakeValue(begin_mask)},
-     {kAttrEndMask, MakeValue(end_mask)},
-     {kAttrEllipsisMask, MakeValue(ellipsis_mask)},
-     {kAttrNewAxisMask, MakeValue(new_axis_mask)},
-     {kAttrShrinkAxisMask, MakeValue(shrink_axis_mask)}});
+  return StridedSlice(node, EmitValue(MakeValue(begin_strides)), EmitValue(MakeValue(end_strides)),
+                      EmitValue(MakeValue(step_strides)), begin_mask, end_mask, ellipsis_mask, new_axis_mask,
+                      shrink_axis_mask);
 }
 
 NodePtr BpropIRBuilder::StridedSlice(const NodePtr &x, const std::map<int64_t, std::vector<int64_t>> &slices) {
@@ -173,32 +168,27 @@ NodePtr BpropIRBuilder::StridedSlice(const NodePtr &x, const std::map<int64_t, s
       }
     }
   }
-  return Emit(kStridedSliceOpName, {x, Value(begin_strides), Value(end_strides), Value(step_strides)},
-              {{kAttrBeginMask, zero},
-               {kAttrEndMask, MakeValue(SizeToLong(end_mask))},
-               {kAttrEllipsisMask, zero},
-               {kAttrNewAxisMask, zero},
-               {kAttrShrinkAxisMask, MakeValue(SizeToLong(shrink_axis_mask))}});
+  return StridedSlice(x, Value(begin_strides), Value(end_strides), Value(step_strides), 0, SizeToLong(end_mask), 0, 0,
+                      SizeToLong(shrink_axis_mask));
 }
 
 DEF_PURE_SHAPE_CALC(g_dyn_size)
   .SetCalc([](const ShapeArray &inputs) -> ShapeArray { return {{abstract::ShapeSize(inputs.at(0))}}; })
   .SetInfer([](const ShapeArray &, const HashSet<size_t> &) -> ShapeVector { return {1}; });
 
+// This function will be removed, not recommended to use.
 NodePtr BpropIRBuilder::DynSize(const NodePtr &node) {
   if (!IsDynamic(GetShape(node))) {
-    return Value(GetSize(node));
+    return Tensor(GetSize(node), kInt64);
   }
-  return ShapeCalc(g_dyn_size, {node})[0];
+  return SequenceToTensor(ShapeCalc(g_dyn_size, {node})[0]);
 }
 
-NodePtr BpropIRBuilder::DynSize(const NodePtr &node, const TypePtr &type) {
-  return Cast(SequenceToTensor(DynSize(node)), type);
-}
+// This function will be removed, not recommended to use.
+NodePtr BpropIRBuilder::DynSize(const NodePtr &node, const TypePtr &type) { return Cast(DynSize(node), type); }
 
-NodePtr BpropIRBuilder::DynSize(const NodePtr &node, TypeId type_id) {
-  return Cast(SequenceToTensor(DynSize(node)), type_id);
-}
+// This function will be removed, not recommended to use.
+NodePtr BpropIRBuilder::DynSize(const NodePtr &node, TypeId type_id) { return Cast(DynSize(node), type_id); }
 
 NodePtr BpropIRBuilder::SequenceToTensor(const NodePtr &node, const TypePtr &dtype) {
   auto abs = node->abstract();

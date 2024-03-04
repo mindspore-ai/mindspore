@@ -39,13 +39,14 @@ OpPtr SiLUGradCPUCall(const device::DeviceContext *device_context, const TensorP
   const auto &sigmoid_grad = CREATE_PYBOOST_OP(SigmoidGrad, device_context->device_context_key_.device_name_);
   sigmoid_grad->set_primitive(prim::kPrimSigmoidGrad);
   const auto &add = CREATE_PYBOOST_OP(Add, device_context->device_context_key_.device_name_);
-  add->set_primitive(prim::kPrimAdd);
+  add->set_primitive(prim::kPrimAddExt);
+  auto alpha = std::make_shared<FP32Imm>(1.0);
 
   const auto &sigmoid_tensor = sigmoid->Call(x_tensor);
   const auto &bc_dx = mul_a->Call(x_tensor, dout_tensor);
   const auto &bc_dy = mul_b->Call(sigmoid_tensor, dout_tensor);
   const auto &dx = sigmoid_grad->Call(sigmoid_tensor, bc_dx);
-  add->Call(dx, bc_dy);
+  add->Call(dx, bc_dy, alpha);
   MS_LOG(DEBUG) << "Launch end";
   return add;
 }

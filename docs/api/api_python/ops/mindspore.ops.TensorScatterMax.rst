@@ -7,9 +7,6 @@
 
     更多参考详见 :func:`mindspore.ops.tensor_scatter_max`。
 
-    .. math::
-        output\left [indices  \right ] = \max(input\_x, update)
-
     输入：
         - **input_x** (Tensor) - 输入Tensor。 `input_x` 的维度必须不小于indices.shape[-1]。
         - **indices** (Tensor) - 输入Tensor的索引，数据类型为int32或int64。其rank必须至少为2。

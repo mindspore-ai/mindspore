@@ -47,6 +47,14 @@ static const std::map<std::string, std::vector<string>> kAttrMapNeedAdjust = {
      "pad_mode",
      "data_format",
    }},
+  {"StridedSlice",
+   {
+     "begin_mask",
+     "end_mask",
+     "ellipsis_mask",
+     "new_axis_mask",
+     "shrink_axis_mask",
+   }},
   {"BatchNorm",
    {
      "is_training",

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2023 Huawei Technologies Co., Ltd
+ * Copyright 2020-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,8 +62,8 @@ class GatherDGpuKernelMod : public NativeGpuKernelMod {
   ShapeVector index_shapes_;
   ShapeVector output_shapes_;
 
-  size_t dims_[4] = {};
   bool is_null_input_{false};
+  size_t dims_[kHelperDimsNum] = {};
 };
 }  // namespace kernel
 }  // namespace mindspore

@@ -16,7 +16,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_NANTONUM_H_
 #define AICPU_KERNELS_NORMALIZED_NANTONUM_H_
 
-#include "cpu_kernel_utils.h"
+#include "inc/ms_cpu_kernel.h"
 namespace aicpu {
 class NanToNumCpuKernel : public CpuKernel {
  public:

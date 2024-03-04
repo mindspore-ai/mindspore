@@ -20,7 +20,7 @@
 #include "minddata/dataset/kernels/image/resized_crop_op.h"
 #endif
 #if !defined(BUILD_LITE) && defined(ENABLE_D)
-#include "minddata/dataset/kernels/image/dvpp/ascend910b/dvpp_resized_crop.h"
+#include "minddata/dataset/kernels/image/dvpp/ascend910b/dvpp_resized_crop_op.h"
 #endif
 #include "minddata/dataset/kernels/ir/validators.h"
 #include "minddata/dataset/util/validators.h"

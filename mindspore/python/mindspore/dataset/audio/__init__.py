@@ -47,15 +47,15 @@ The data transform operation can be executed in the data processing pipeline or 
 """
 from __future__ import absolute_import
 
-from mindspore.dataset.audio import transforms
-from mindspore.dataset.audio import utils
-from mindspore.dataset.audio.transforms import AllpassBiquad, AmplitudeToDB, Angle, BandBiquad, \
+from . import transforms
+from . import utils
+from .transforms import AllpassBiquad, AmplitudeToDB, Angle, BandBiquad, \
     BandpassBiquad, BandrejectBiquad, BassBiquad, Biquad, ComplexNorm, ComputeDeltas, Contrast, DBToAmplitude, \
     DCShift, DeemphBiquad, DetectPitchFrequency, Dither, EqualizerBiquad, Fade, Filtfilt, Flanger, FrequencyMasking, \
     Gain, GriffinLim, HighpassBiquad, InverseMelScale, InverseSpectrogram, LFCC, LFilter, LowpassBiquad, Magphase, \
     MaskAlongAxis, MaskAlongAxisIID, MelScale, MelSpectrogram, MFCC, MuLawDecoding, MuLawEncoding, Overdrive, \
     Phaser, PhaseVocoder, PitchShift, Resample, RiaaBiquad, SlidingWindowCmn, SpectralCentroid, Spectrogram, \
     TimeMasking, TimeStretch, TrebleBiquad, Vad, Vol
-from mindspore.dataset.audio.utils import BorderType, DensityFunction, FadeShape, GainType, Interpolation, \
+from .utils import BorderType, DensityFunction, FadeShape, GainType, Interpolation, \
     MelType, Modulation, NormMode, NormType, ResampleMethod, ScaleType, WindowType, create_dct, linear_fbanks, \
     melscale_fbanks

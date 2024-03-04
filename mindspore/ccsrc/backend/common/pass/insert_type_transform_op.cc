@@ -652,7 +652,7 @@ AnfNodePtrList InsertTypeTransformOp::ProcessTupleUnfoldToTensor(const FuncGraph
     data_type = seq_abs->cast<abstract::AbstractSequencePtr>()->ElementsType()[kIndex0]->type_id();
     MS_LOG(DEBUG) << "Input " << input->DebugString() << " real data type is " << data_type;
   }
-  auto type_id_value_node = AnfAlgo::CreateTypeIdValueNodeToGraph(func_graph, data_type);
+  auto type_id_value_node = AnfAlgo::CreateTypeIdValueNodeToKernelGraph(func_graph, data_type);
   // Use TupleToTensor op as the input of this node. Then TupleUnfoldToTuple pattern will be matched.
   auto prim = NewValueNode(std::make_shared<Primitive>(prim::kPrimTupleToTensor->name()));
   MS_EXCEPTION_IF_NULL(prim);
@@ -824,7 +824,7 @@ AnfNodePtrList InsertTypeTransformOp::ProcessTupleToTensor(const FuncGraphPtr &f
     data_type = seq_abs->cast<abstract::AbstractSequencePtr>()->ElementsType()[kIndex0]->type_id();
     MS_LOG(DEBUG) << "Input " << input->DebugString() << " real data type is " << data_type;
   }
-  auto type_id_value_node = AnfAlgo::CreateTypeIdValueNodeToGraph(func_graph, data_type);
+  auto type_id_value_node = AnfAlgo::CreateTypeIdValueNodeToKernelGraph(func_graph, data_type);
   // Simply insert TupleToTensor op between 'input' and 'node'.
   auto prim = NewValueNode(std::make_shared<Primitive>(prim::kPrimTupleToTensor->name()));
   MS_EXCEPTION_IF_NULL(prim);
@@ -865,7 +865,7 @@ AnfNodePtrList InsertTypeTransformOp::ProcessScalarToTensor(const FuncGraphPtr &
   // Data type of the tensor should be set as an attr of ScalarToTensor op.
   size_t input_index = GetInputNodeIndex(input, node);
   auto data_type = AnfAlgo::GetInputDeviceDataType(node, input_index);
-  auto type_id_value_node = AnfAlgo::CreateTypeIdValueNodeToGraph(func_graph, data_type);
+  auto type_id_value_node = AnfAlgo::CreateTypeIdValueNodeToKernelGraph(func_graph, data_type);
   // Simply insert ScalarToTensor op between 'input' and 'node'.
   auto prim = NewValueNode(std::make_shared<Primitive>(prim::kPrimScalarToTensor->name()));
   MS_EXCEPTION_IF_NULL(prim);

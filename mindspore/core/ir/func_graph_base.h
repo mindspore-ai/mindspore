@@ -43,9 +43,13 @@ class MS_CORE_API FuncGraphLoopBreaker {
 
   void BreakLoop();
 
-  void CleanMetaFuncGraphCache();
+  void CleanMetaFuncGraphs();
+
+  void CleanUnusedFuncGraphs(const std::string &phase);
 
   void ClearCellGraphs(const std::string &phase);
+
+  void Dump() const;
 
  private:
   FuncGraphLoopBreaker() = default;

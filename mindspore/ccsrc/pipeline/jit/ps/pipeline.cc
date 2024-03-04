@@ -804,12 +804,12 @@ void GraphExecutorPy::DelNetRes(const py::object &source, const py::set &id) {
 }
 
 void GraphExecutorPy::DelOneNetRes(const py::handle &py_phase) {
-  MS_LOG(INFO) << "Delete one net resource start";
   if (!pybind11::isinstance<py::str>(py_phase)) {
     MS_LOG(ERROR) << "Expect string phase, but got " << py::str(py_phase);
     return;
   }
   auto phase = pybind11::cast<std::string>(py_phase);
+  MS_LOG(INFO) << "Delete one net resource start, phase: " << phase;
   auto iter = info_.find(phase);
   auto clear = false;
   if (iter != info_.end()) {
@@ -825,8 +825,9 @@ void GraphExecutorPy::DelOneNetRes(const py::handle &py_phase) {
   if (clear) {
     // Do clear here to avoid any pointer for resource.
     FuncGraphLoopBreaker::Inst().ClearCellGraphs(phase);
+    FuncGraphLoopBreaker::Inst().CleanUnusedFuncGraphs(phase);
   }
-  MS_LOG(INFO) << "Delete one net resource end.";
+  MS_LOG(INFO) << "Delete one net resource end. " << clear;
 }
 
 void GraphExecutorPy::ClearRes() {
@@ -953,7 +954,7 @@ void GraphExecutorPy::CleanCompileRes(const ResourcePtr &resource) {
   ad::DFunctor::Clear();
   ReclaimOptimizer();
   resource->Clean();
-  FuncGraphLoopBreaker::Inst().CleanMetaFuncGraphCache();
+  FuncGraphLoopBreaker::Inst().CleanMetaFuncGraphs();
   (void)profiler::CollectHostInfo(kCompiler, kPipelineClean, kPipelineClean, 0, 0, 1);
   ProcessStatus::GetInstance().RecordEnd();
   expander::ClearCompileAllCache();
@@ -1331,7 +1332,9 @@ void CheckInterpretNodeLineInfos() {
     ss << "# No. " << num << ":\n";
     const auto &cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
-    const auto &script_node = cnode->input(1);
+    const auto &weak_script_node = cnode->weak_input(1);
+    const auto &script_node = weak_script_node.lock();
+    MS_EXCEPTION_IF_NULL(script_node);
     const auto &script = GetValueNode<StringImmPtr>(script_node);
     // Usually the script is a value node.
     std::string script_str;
@@ -2291,7 +2294,7 @@ void MemoryRecycle() {
   pynative::PyNativeExecutor::GetInstance()->ClearRes();
   ConfigManager::GetInstance().ResetConfig();
   ScopeManager::GetInstance().ClearScope();
-  FuncGraphLoopBreaker::Inst().CleanMetaFuncGraphCache();
+  FuncGraphLoopBreaker::Inst().CleanMetaFuncGraphs();
   FuncGraphLoopBreaker::Inst().BreakLoop();
 }
 

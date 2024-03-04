@@ -15,7 +15,7 @@ mindspore.ops.max
     参考：:class:`mindspore.ops.ArgMaxWithValue`。
 
     参数：
-        - **input** (Tensor) - 输入任意维度的Tensor。不支持复数类型。
+        - **input** (Tensor) - 输入任意维度的Tensor。不支持complex类型。
         - **axis** (int) - 指定计算维度，当为 ``None`` 时，计算 `input` 中所有元素的最大值。默认值： ``None`` 。
         - **keepdims** (bool) - 表示是否减少维度，如果为 ``True`` ，输出将与输入保持相同的维度；如果为 ``False`` ，输出将减少维度。默认值： ``False`` 。
 

@@ -80,7 +80,7 @@ def _convert_python_data(data):
     Returns:
         data, a data convert C++ to python
     """
-    if isinstance(data, Tensor) and data.adapter_flag:
+    if isinstance(data, (Tensor, PythonTensor)) and data.adapter_flag:
         return ms_adapter_registry.tensor(data)
     if _ms_adapter_tensor_as_parameter_output(data):
         return data.tensor
@@ -1183,7 +1183,6 @@ class _PyNativeExecutor:
         self._executor = PyNativeExecutor_.get_instance()
         self._executor.set_py_exe_path(sys.executable)
         self._executor.set_kernel_build_server_dir(os.path.split(kernel_build_server.__file__)[0] + os.sep)
-        self._top_cell = None
 
     def __call__(self):
         """
@@ -1428,15 +1427,6 @@ class _PyNativeExecutor:
         """
         self._executor.set_hook_changed(cell)
 
-    def get_top_cell(self):
-        """
-        Get the top cell object.
-
-        Return:
-            The top cell object.
-        """
-        return self._top_cell
-
     def constant_folding(self, *args):
         """
         Get value by infer value.
@@ -1570,7 +1560,7 @@ class _CellGraphExecutor:
         self.enable_tuple_broaden = False
         if hasattr(obj, "enable_tuple_broaden"):
             self.enable_tuple_broaden = obj.enable_tuple_broaden
-        logger.debug("Convert the network.", do_convert)
+        logger.debug(f"Convert the network: {do_convert}.")
         self._graph_executor.set_enable_tuple_broaden(self.enable_tuple_broaden)
         key = self._graph_executor.generate_arguments_key(obj, args, kwargs, self.enable_tuple_broaden)
         obj.arguments_key = str(key)

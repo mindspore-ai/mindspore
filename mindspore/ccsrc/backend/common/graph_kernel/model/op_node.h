@@ -347,6 +347,13 @@ class StridedSliceOp : public OpaqueOp {
  public:
   explicit StridedSliceOp(const std::string &op) : OpaqueOp(op) {}
   ~StridedSliceOp() = default;
+  void RectifyAbstract(const PrimitivePtr &p, AbstractBasePtrList *input_abstract_ptr) override {
+    input_abstract_ptr->push_back(p->GetAttr("begin_mask")->ToAbstract());
+    input_abstract_ptr->push_back(p->GetAttr("end_mask")->ToAbstract());
+    input_abstract_ptr->push_back(p->GetAttr("ellipsis_mask")->ToAbstract());
+    input_abstract_ptr->push_back(p->GetAttr("new_axis_mask")->ToAbstract());
+    input_abstract_ptr->push_back(p->GetAttr("shrink_axis_mask")->ToAbstract());
+  }
 };
 
 class StridedSliceOnnxOp : public OpaqueOp {
@@ -379,6 +386,15 @@ class TupleGetItemOp : public VirtualOp {
  public:
   using VirtualOp::VirtualOp;
   ~TupleGetItemOp() = default;
+};
+
+class PagedAttentionOp : public OpaqueOp {
+ public:
+  explicit PagedAttentionOp(const std::string &op) : OpaqueOp(op) {}
+  ~PagedAttentionOp() = default;
+
+ protected:
+  void RectifyAbstract(const PrimitivePtr &, AbstractBasePtrList *input_abstract_ptr) override;
 };
 }  // namespace mindspore::graphkernel::inner
 #endif

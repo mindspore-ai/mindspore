@@ -20,7 +20,7 @@
 #include <complex>
 #include <algorithm>
 
-#include "common/cpu_kernel_utils.h"
+#include "context/inc/cpu_kernel_utils.h"
 #include "cpu_types.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"

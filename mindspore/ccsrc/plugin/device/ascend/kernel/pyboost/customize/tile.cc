@@ -40,8 +40,8 @@ void TileAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &i
     (void)multiples_vector.insert(multiples_vector.begin(), expand_len, 1);
   }
 
-  PyBoostUtils::PrepareOpInputs(op->device_context(), input_x_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->outputs());
+  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_x_tensor);
+  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
 
   // Async
   PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, input_x_tensor, multiples_vector]() {
@@ -51,8 +51,7 @@ void TileAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &i
     PyBoostUtils::MallocOpInputs(device_context, input_x_tensor);
     PyBoostUtils::MallocOpOutputs(device_context, outputs);
 
-    auto stream_ptr = device_context->device_res_manager_->GetStream(kDefaultStreamIndex);
-    LAUNCH_ACLNN(aclnnRepeat, device_context, stream_ptr, input_x_tensor, multiples_vector, outputs[0]);
+    LAUNCH_ACLNN(aclnnRepeat, device_context, op->stream_id(), input_x_tensor, multiples_vector, outputs[0]);
     MS_LOG(DEBUG) << "Run device task Tile end";
   }));
 }

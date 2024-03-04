@@ -49,8 +49,8 @@ int MatmulDynamicInt8CPUKernel::RunImpl(int task_id) {
   if (bias_ptr_ != nullptr) {
     bias_ptr += cur_stride;
   }
-  float *filter_scale = quant_param_->filter_scale_;
-  int32_t filter_zp = quant_param_->filter_zp_[0];
+  float *filter_scale = quant_param_->filter_scale_ + b_quant_offset_;
+  int32_t filter_zp = (quant_param_->filter_zp_ + b_quant_offset_)[0];
   if (filter_per_channel_) {
     filter_scale += cur_stride;
   }
@@ -58,8 +58,9 @@ int MatmulDynamicInt8CPUKernel::RunImpl(int task_id) {
 
   DynamicMatmul4x16x4AIWI(batch_a_ptr_, batch_b_ptr_ + cur_stride * param_->deep_align_, bias_ptr,
                           static_cast<float *>(batch_c_ptr_) + cur_stride, param_->row_, cur_oc, param_->deep_,
-                          param_->deep_align_, param_->col_, *quant_param_->input_zp_, quant_param_->input_scale_,
-                          filter_scale, filter_zp, input_per_channel_, filter_per_channel_, act_type);
+                          param_->deep_align_, param_->col_, *(quant_param_->input_zp_ + a_quant_offset_),
+                          quant_param_->input_scale_ + a_quant_offset_, filter_scale, filter_zp, input_per_channel_,
+                          filter_per_channel_, act_type);
   return RET_OK;
 }
 
@@ -113,7 +114,16 @@ int MatmulDynamicInt8CPUKernel::Run() {
   CHECK_NULL_RETURN(a_ptr);
   CHECK_NULL_RETURN(c_ptr);
   for (int i = 0; i < param_->batch; i++) {
-    memset(pack_a_ptr_, *(quant_param_->input_zp_), param_->row_align_ * param_->deep_align_ * sizeof(int8_t));
+    a_quant_offset_ = 0;
+    if (input_per_batch_channel_) {
+      a_quant_offset_ = a_offset_[i] * param_->row_;
+    }
+    b_quant_offset_ = 0;
+    if (filter_per_batch_channel_) {
+      b_quant_offset_ = b_offset_[i] * param_->col_;
+    }
+    (void)memset(pack_a_ptr_, *(quant_param_->input_zp_ + a_quant_offset_),
+                 param_->row_align_ * param_->deep_align_ * sizeof(int8_t));
     auto current_src_a = a_ptr + a_offset_[i] * param_->row_ * param_->deep_;
     if (param_->a_transpose_) {
       MS_CHECK_TRUE_RET(a_pack_func_ != nullptr, RET_ERROR);
@@ -126,7 +136,6 @@ int MatmulDynamicInt8CPUKernel::Run() {
     batch_a_ptr_ = pack_a_ptr_;
     batch_b_ptr_ = pack_b_ptr_ + b_offset_[i] * param_->col_align_ * param_->deep_align_;
     batch_c_ptr_ = c_ptr + i * param_->row_ * param_->col_;
-
     ret = ParallelLaunch(this->ms_context_, MatmulDynamicInt8Run, this, thread_num_);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "MatmulInt8Run error: [" << ret << "]";

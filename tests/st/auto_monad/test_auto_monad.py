@@ -1649,10 +1649,10 @@ def test_auto_mixed_precision_controlflow_auto(pynative_save_graphs):
                                                        label, cast_num)
 
 
-# op_cast should be located in order_list after abstract_specialize.
-# Besides Ascend, it can work on CPU.
-@pytest.mark.level2
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_if_cast():
     """

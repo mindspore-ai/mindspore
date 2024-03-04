@@ -37,7 +37,12 @@ aclError AclInitAdapter::AclInit(const char *config_file) {
   }
 
   init_flag_ = true;
-  return aclInit(config_file);
+  auto ret = aclInit(config_file);
+  if (ret == ACL_ERROR_REPEAT_INITIALIZE) {
+    MS_LOG(WARNING) << "acl is repeat init";
+    is_repeat_init_ = true;
+  }
+  return ret;
 }
 
 aclError AclInitAdapter::AclFinalize() {
@@ -49,20 +54,34 @@ aclError AclInitAdapter::AclFinalize() {
 
   MS_LOG(INFO) << "Begin to aclFinalize.";
   init_flag_ = false;
-  MS_LOG(INFO) << "AclInitAdapter::aclFinalize begin.";
-  auto rt_ret = aclFinalize();
-  if (rt_ret != ACL_ERROR_NONE) {
-    MS_LOG(ERROR) << "aclFinalize failed.";
+  if (!is_repeat_init_) {
+    MS_LOG(INFO) << "AclInitAdapter::aclFinalize begin.";
+    auto rt_ret = aclFinalize();
+    if (rt_ret != ACL_ERROR_NONE) {
+      MS_LOG(ERROR) << "aclFinalize failed.";
+    }
+    MS_LOG(INFO) << "AclInitAdapter::aclFinalize end.";
+    return rt_ret;
+  } else {
+    MS_LOG(WARNING) << "has repeat init, not aclFinalize";
   }
-  MS_LOG(INFO) << "AclInitAdapter::aclFinalize end.";
-  return rt_ret;
+  return ACL_ERROR_NONE;
 }
 
 aclError AclInitAdapter::ForceFinalize() {
   std::lock_guard<std::mutex> lock(flag_mutex_);
   MS_LOG(INFO) << "Begin to force aclFinalize.";
   init_flag_ = false;
-  return aclFinalize();
+  if (!is_repeat_init_) {
+    auto rt_ret = aclFinalize();
+    if (rt_ret != ACL_ERROR_NONE) {
+      MS_LOG(ERROR) << "aclFinalize failed.";
+    }
+    return rt_ret;
+  } else {
+    MS_LOG(WARNING) << "has repeat init, not aclFinalize";
+  }
+  return ACL_ERROR_NONE;
 }
 
 AclEnvGuard::AclEnvGuard() : errno_(AclInitAdapter::GetInstance().AclInit(nullptr)) {

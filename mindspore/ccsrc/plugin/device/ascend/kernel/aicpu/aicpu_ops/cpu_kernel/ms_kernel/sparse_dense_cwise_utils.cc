@@ -23,8 +23,8 @@
 #include <type_traits>
 #include <vector>
 
-#include "common/kernel_log.h"
-#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "inc/kernel_log.h"
+#include "context/inc/cpu_kernel_utils.h"
 #include "utils/broadcast_iterator.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"

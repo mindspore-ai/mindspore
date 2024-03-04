@@ -25,7 +25,6 @@
 #include "ops/conv2d_transpose.h"
 #include "ops/max_pool.h"
 #include "ops/pad.h"
-#include "ops/strided_slice.h"
 #include "ops/base_operator.h"
 
 namespace mindspore {

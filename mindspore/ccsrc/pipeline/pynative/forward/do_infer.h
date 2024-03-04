@@ -46,8 +46,6 @@ class InferOperation {
   // Manage constant flag primitive cache.
   inline void ClearConstFlagPrimCache() { no_const_flag_prims_.clear(); }
   py::object CallConstantFolding(const py::args &args) const;
-  void set_only_single_op_run(bool only_single_op_run) { only_single_op_run_ = only_single_op_run; }
-  inline bool only_single_op_run() const { return only_single_op_run_; }
 
  private:
   void PynativeInfer(const FrontendOpRunInfoPtr &op_run_info) const;
@@ -66,7 +64,6 @@ class InferOperation {
   void SaveSpecifiedOutputToCache(const std::string &op_name, const ValuePtrList &value_list,
                                   const AbstractBasePtrList &abs_list);
 
-  bool only_single_op_run_{true};
   // The primitive has no constant flag(const prim or const input) will be saved in this map.
   mindspore::HashSet<std::string> no_const_flag_prims_;
   // This map is used to get the input abstract of input value form cache.

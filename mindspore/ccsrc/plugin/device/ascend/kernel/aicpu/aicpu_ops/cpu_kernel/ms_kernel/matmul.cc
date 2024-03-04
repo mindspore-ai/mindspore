@@ -19,9 +19,9 @@
 #include "unsupported/Eigen/CXX11/Tensor"
 
 #include "utils/kernel_util.h"
-#include "cpu_kernel/common/cpu_kernel_utils.h"
-#include "common/kernel_log.h"
-#include "cpu_kernel/common/status.h"
+#include "context/inc/cpu_kernel_utils.h"
+#include "inc/kernel_log.h"
+#include "context/common/status.h"
 
 namespace {
 const char *kMatmul = "MatMul";

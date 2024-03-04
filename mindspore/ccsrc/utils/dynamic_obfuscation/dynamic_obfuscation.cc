@@ -24,6 +24,7 @@
 #include "ops/other_ops.h"
 #include "ops/comparison_ops.h"
 #include "ops/array_ops.h"
+#include "ops/auto_generate/gen_ops_primitive.h"
 #include "ops/framework_ops.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "include/common/utils/dynamic_obfuscation/registry_opaque_predicate.h"
@@ -363,26 +364,40 @@ CNodePtr DynamicObfuscator::RandomSeedModeControl(const FuncGraphPtr func_graph)
   return greater_c_node;
 }
 
+ValueNodePtr CreateScalarValue(const FuncGraphPtr &func_graph, int64_t value) {
+  auto scalar_value = MakeValue(value);
+  auto scalar_node = NewValueNode(scalar_value);
+  scalar_node->set_abstract(scalar_value->ToAbstract());
+  func_graph->AddValueNode(scalar_node);
+  return scalar_node;
+}
+
 mindspore::CNodePtr add_stride_slice_node(FuncGraphPtr func_graph, ShapeVector begin_vector, ShapeVector stride_vector,
                                           ShapeVector end_vector, int end_mask, int begin_mask,
                                           mindspore::CNodePtr prev_node) {
   mindspore::ValueNodePtr begin_v_node = build_tuple_value_node(begin_vector);
   mindspore::ValueNodePtr stride_v_node = build_tuple_value_node(stride_vector);
   mindspore::ValueNodePtr end_v_node = build_tuple_value_node(end_vector);
+  auto begin_mask_node = CreateScalarValue(func_graph, begin_mask);
+  MS_EXCEPTION_IF_NULL(begin_mask_node);
+  auto end_mask_node = CreateScalarValue(func_graph, end_mask);
+  MS_EXCEPTION_IF_NULL(end_mask_node);
+  auto ellipsis_mask_node = CreateScalarValue(func_graph, int64_t(0));
+  MS_EXCEPTION_IF_NULL(ellipsis_mask_node);
+  auto new_axis_mask_node = CreateScalarValue(func_graph, int64_t(0));
+  MS_EXCEPTION_IF_NULL(new_axis_mask_node);
+  auto shrink_axis_mask_node = CreateScalarValue(func_graph, int64_t(1));
+  MS_EXCEPTION_IF_NULL(shrink_axis_mask_node);
   func_graph->AddValueNode(begin_v_node);
   func_graph->AddValueNode(stride_v_node);
   func_graph->AddValueNode(end_v_node);
   mindspore::PrimitivePtr slice_prim = mindspore::prim::kPrimStridedSlice;
   slice_prim->set_attr("is_load", MakeValue(true));
-  slice_prim->set_attr("new_axis_mask", MakeValue(int64_t(0)));
-  slice_prim->set_attr("shrink_axis_mask", MakeValue(int64_t(1)));
-  slice_prim->set_attr("end_mask", MakeValue(int64_t(end_mask)));
-  slice_prim->set_attr("begin_mask", MakeValue(int64_t(begin_mask)));
-  slice_prim->set_attr("ellipsis_mask", MakeValue(int64_t(0)));
   mindspore::ValueNodePtr slice_v_node = std::make_shared<mindspore::ValueNode>(slice_prim);
   func_graph->AddValueNode(slice_v_node);
   mindspore::CNodePtr slice_c_node =
-    func_graph->NewCNode({slice_v_node, prev_node, begin_v_node, end_v_node, stride_v_node});
+    func_graph->NewCNode({slice_v_node, prev_node, begin_v_node, end_v_node, stride_v_node, begin_mask_node,
+                          end_mask_node, ellipsis_mask_node, new_axis_mask_node, shrink_axis_mask_node});
   return slice_c_node;
 }
 

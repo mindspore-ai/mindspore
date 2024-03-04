@@ -147,11 +147,11 @@ Status LLMModel::MergeKV(const LLMReq &req, uint32_t batch_index, uint32_t batch
   return impl_->GetLLMEngine()->MergeKV(req, batch_index, batch_id, impl_->GetModelId());
 }
 
-std::vector<LLMTensorInfo> LLMModel::GetInputInfos() {
+std::vector<MSTensor> LLMModel::GetInputs() {
   if (impl_ == nullptr || impl_->GetLLMEngine() == nullptr) {
     MS_LOG(ERROR) << "LLMEngine impl is nullptr";
     return {};
   }
-  return impl_->GetLLMEngine()->GetInputInfos(impl_->GetModelId());
+  return impl_->GetLLMEngine()->GetInputs(impl_->GetModelId());
 }
 }  // namespace mindspore

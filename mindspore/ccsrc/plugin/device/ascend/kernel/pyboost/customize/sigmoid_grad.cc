@@ -24,10 +24,10 @@ namespace mindspore {
 namespace kernel {
 namespace pyboost {
 namespace {
-void SigmoidGradAscendCall(const device::DeviceContext *device_context, const TensorPtr &dy_tensor,
-                           const TensorPtr &y_tensor, const std::vector<tensor::TensorPtr> &outputs) {
-  auto stream_ptr = device_context->device_res_manager_->GetStream(kDefaultStreamIndex);
-  LAUNCH_ACLNN(aclnnSigmoidBackward, device_context, stream_ptr, dy_tensor, y_tensor, outputs[0]);
+void SigmoidGradAscendCall(const std::shared_ptr<OpRunner> &op, const device::DeviceContext *device_context,
+                           const TensorPtr &dy_tensor, const TensorPtr &y_tensor,
+                           const std::vector<tensor::TensorPtr> &outputs) {
+  LAUNCH_ACLNN(aclnnSigmoidBackward, device_context, op->stream_id(), dy_tensor, y_tensor, outputs[0]);
 }
 }  // namespace
 
@@ -36,8 +36,8 @@ tensor::TensorPtr SigmoidGradAscendCustomize(const std::shared_ptr<OpRunner> &op
   OpRunner::InferOpOutput(op, dy_tensor, y_tensor);
 
   // Create device address for input/output tensors
-  PyBoostUtils::PrepareOpInputs(op->device_context(), dy_tensor, y_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->outputs());
+  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), dy_tensor, y_tensor);
+  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
 
   // Async
   PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, dy_tensor, y_tensor]() {
@@ -48,7 +48,7 @@ tensor::TensorPtr SigmoidGradAscendCustomize(const std::shared_ptr<OpRunner> &op
     // Malloc for output tensors
     PyBoostUtils::MallocOpOutputs(device_context, outputs);
     MS_LOG(DEBUG) << op->primitive()->name() << " Call start";
-    SigmoidGradAscendCall(device_context, dy_tensor, y_tensor, outputs);
+    SigmoidGradAscendCall(op, device_context, dy_tensor, y_tensor, outputs);
     MS_LOG(DEBUG) << op->primitive()->name() << " Launch end";
   }));
   return op->output(0);

@@ -15,6 +15,7 @@
  */
 #include "unpack.h"
 #include "utils/kernel_util.h"
+#include "context/inc/cpu_kernel_utils.h"
 
 namespace {
 const char *kUnpack = "Unpack";

@@ -180,7 +180,7 @@ def test_range_float64():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_range_invalid_max_output_length():
-    with pytest.raises(RuntimeError):
+    with pytest.raises(ValueError):
         range1 = P.Range(0)
         _ = range1(Tensor(-4, mstype.float64), Tensor(-1, mstype.float64), Tensor(1.5, mstype.float64))
         range2 = P.Range(-1)

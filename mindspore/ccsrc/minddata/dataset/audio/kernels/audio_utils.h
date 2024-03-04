@@ -57,13 +57,14 @@ Status AmplitudeToDB(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
                            ? TensorShape({1, 1, input_shape[-2], input_shape[-1]})
                            : TensorShape({input->Size() / (input_shape[-3] * input_shape[-2] * input_shape[-1]),
                                           input_shape[-3], input_shape[-2], input_shape[-1]});
-  RETURN_IF_NOT_OK(input->Reshape(to_shape));
+  RETURN_IF_NOT_OK(Tensor::CreateFromTensor(input, output));
+  RETURN_IF_NOT_OK((*output)->Reshape(to_shape));
 
   std::vector<T> max_val;
   uint64_t step = to_shape[-3] * input_shape[-2] * input_shape[-1];
   uint64_t cnt = 0;
   T temp_max = std::numeric_limits<T>::lowest();
-  for (auto itr = input->begin<T>(); itr != input->end<T>(); itr++) {
+  for (auto itr = (*output)->begin<T>(); itr != (*output)->end<T>(); itr++) {
     // do clamp
     *itr = *itr < amin ? log10(amin) * multiplier : log10(*itr) * multiplier;
     *itr -= multiplier * db_multiplier;
@@ -80,13 +81,12 @@ Status AmplitudeToDB(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
 
   if (!std::isnan(top_db)) {
     uint64_t ind = 0;
-    for (auto itr = input->begin<T>(); itr != input->end<T>(); itr++, ind++) {
+    for (auto itr = (*output)->begin<T>(); itr != (*output)->end<T>(); itr++, ind++) {
       T lower_bound = max_val[ind / step] - top_db;
       *itr = std::max((*itr), lower_bound);
     }
   }
-  RETURN_IF_NOT_OK(input->Reshape(input_shape));
-  *output = input;
+  RETURN_IF_NOT_OK((*output)->Reshape(input_shape));
   return Status::OK();
 }
 
@@ -245,11 +245,12 @@ Status DBToAmplitude(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
 /// \return Status code.
 template <typename T>
 Status DCShift(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float shift, float limiter_gain) {
+  RETURN_IF_NOT_OK(Tensor::CreateFromTensor(input, output));
   float limiter_threshold = 0.0;
   if (std::fabs(shift - limiter_gain) > std::numeric_limits<float>::epsilon() &&
       std::fabs(shift) > std::numeric_limits<float>::epsilon()) {
     limiter_threshold = 1.0 - (std::abs(shift) - limiter_gain);
-    for (auto itr = input->begin<T>(); itr != input->end<T>(); itr++) {
+    for (auto itr = (*output)->begin<T>(); itr != (*output)->end<T>(); itr++) {
       if (*itr > limiter_threshold && shift > 0) {
         T peak = (*itr - limiter_threshold) * limiter_gain / (1 - limiter_threshold);
         T sample = (peak + limiter_threshold + shift);
@@ -264,12 +265,11 @@ Status DCShift(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *ou
       }
     }
   } else {
-    for (auto itr = input->begin<T>(); itr != input->end<T>(); itr++) {
+    for (auto itr = (*output)->begin<T>(); itr != (*output)->end<T>(); itr++) {
       T sample = (*itr + shift);
       *itr = sample > 1 || sample < -1 ? (sample > 1 ? 1 : -1) : sample;
     }
   }
-  *output = input;
   return Status::OK();
 }
 
@@ -279,16 +279,15 @@ Status DCShift(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *ou
 /// \return Status code.
 template <typename T>
 Status Gain(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, T gain_db) {
+  RETURN_IF_NOT_OK(Tensor::CreateFromTensor(input, output));
   if (gain_db == 0) {
-    *output = input;
     return Status::OK();
   }
 
   T radio = pow(10, gain_db / 20);
-  for (auto itr = input->begin<T>(); itr != input->end<T>(); ++itr) {
+  for (auto itr = (*output)->begin<T>(); itr != (*output)->end<T>(); ++itr) {
     *itr = (*itr) * radio;
   }
-  *output = input;
   return Status::OK();
 }
 
@@ -944,6 +943,7 @@ Status Fade(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outpu
 /// \return Status code.
 template <typename T>
 Status Vol(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, T gain, GainType gain_type) {
+  RETURN_IF_NOT_OK(Tensor::CreateFromTensor(input, output));
   const T lower_bound = -1;
   const T upper_bound = 1;
 
@@ -965,14 +965,12 @@ Status Vol(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output
     gain = std::pow(base, (gain / power_factor_div));
   }
 
-  for (auto itr = input->begin<T>(); itr != input->end<T>(); itr++) {
+  for (auto itr = (*output)->begin<T>(); itr != (*output)->end<T>(); itr++) {
     if (gain != 0 || gain_type == GainType::kAmplitude) {
       *itr = (*itr) * gain;
     }
     *itr = std::min(std::max((*itr), lower_bound), upper_bound);
   }
-
-  *output = input;
 
   return Status::OK();
 }

@@ -38,11 +38,16 @@ constexpr size_t SLICE_BEGIN_INDEX = 1;
 constexpr size_t SLICE_SIZE_INDEX = 2;
 constexpr size_t SLICE_INPUTS_SIZE = 3;
 constexpr size_t STRIDED_SLICE_ATTRS_SIZE = 5;
-constexpr size_t STRIDED_SLICE_INPUTS_SIZE = 4;
+constexpr size_t STRIDED_SLICE_INPUTS_SIZE = 9;
 constexpr size_t STRIDED_SLICE_ARGS_SIZE = 3;
 constexpr size_t STRIDED_SLICE_BEGIN_INDEX = 1;
 constexpr size_t STRIDED_SLICE_END_INDEX = 2;
 constexpr size_t STRIDED_SLICE_STRIDES_INDEX = 3;
+constexpr size_t STRIDED_SLICE_BEGIN_MASK_INDEX = 4;
+constexpr size_t STRIDED_SLICE_END_MASK_INDEX = 5;
+constexpr size_t STRIDED_SLICE_ELLIPSIS_MASK_INDEX = 6;
+constexpr size_t STRIDED_SLICE_NEW_AXIS_MASK_INDEX = 7;
+constexpr size_t STRIDED_SLICE_SHRINK_AXIS_MASK_INDEX = 8;
 constexpr size_t MATMUL_INPUTS_SIZE = 2;
 constexpr size_t MATMUL_OUTPUTS_SIZE = 1;
 constexpr size_t LAYERNORM_INPUTS_SIZE = 3;
@@ -689,6 +694,8 @@ constexpr char UPDATESTATE[] = "UpdateState";
 constexpr char LOAD[] = "Load";
 constexpr char OPPOSITE_RANK[] = "opposite_rank";
 constexpr char TARGET_PARAM[] = "target_param";
+constexpr char ASCEND_QUANT[] = "Quant";
+constexpr char ASCEND_DEQUANT[] = "Dequant";
 
 // Batch parallel black list
 constexpr char TENSOR_SCATTER_UPDATE[] = "TensorScatterUpdate";

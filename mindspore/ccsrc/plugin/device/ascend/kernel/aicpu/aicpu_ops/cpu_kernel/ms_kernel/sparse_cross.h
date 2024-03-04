@@ -20,8 +20,8 @@
 #include <numeric>
 #include <vector>
 
-#include "cpu_kernel_utils.h"
-#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "inc/ms_cpu_kernel.h"
+#include "inc/ms_cpu_kernel.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 

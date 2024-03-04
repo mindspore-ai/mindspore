@@ -486,7 +486,7 @@ EvalResultPtr BaseFuncGraphEvaluator::Eval(AnalysisEnginePtr engine, const Abstr
   FuncGraphPtr fg = GetFuncGraph(engine, args_abs_list);
   MS_EXCEPTION_IF_NULL(fg);
   MS_EXCEPTION_IF_NULL(parent_context_);
-  auto context = parent_context_->NewContext(fg, args_abs_list);
+  auto context = NewContext(parent_context_, fg, args_abs_list);
   trace::TraceGraphEvalEnter(context, out_conf);
 
   std::size_t nargs = fg->parameters().size();
@@ -652,7 +652,6 @@ FuncGraphPtr MetaFuncGraphEvaluator::GetFuncGraph(AnalysisEnginePtr engine, cons
   if (scope_ != nullptr) {
     meta_func_graph_->set_scope_name(scope_->name());
   }
-  FuncGraphPtr generated_func_graph;
   if (this->bound_node() != nullptr) {
     auto node_debug_info = bound_node()->debug_info();
     TraceGuard trace_guard(std::make_shared<TraceGenMetaFuncGraph>(node_debug_info));
@@ -660,9 +659,9 @@ FuncGraphPtr MetaFuncGraphEvaluator::GetFuncGraph(AnalysisEnginePtr engine, cons
     if (node_location != nullptr) {
       meta_func_graph_->set_node_expr_src(node_location->expr_src());
     }
-    generated_func_graph = meta_func_graph_->GenerateFuncGraph(args_abs_list);
+    generated_func_graph_ = meta_func_graph_->GenerateFuncGraph(args_abs_list);
   } else {
-    generated_func_graph = meta_func_graph_->GenerateFuncGraph(args_abs_list);
+    generated_func_graph_ = meta_func_graph_->GenerateFuncGraph(args_abs_list);
   }
 
   FuncGraphPtr cloned_func_graph;
@@ -673,9 +672,9 @@ FuncGraphPtr MetaFuncGraphEvaluator::GetFuncGraph(AnalysisEnginePtr engine, cons
   if (meta_func_graph_->isa<expander::bprop::BpropMetaFuncGraph>()) {
     auto method = "-expand";
     auto new_scope = std::make_shared<Scope>(scope_->name() + method);
-    cloned_func_graph = GetCloneBpropGraph(meta_func_graph_, generated_func_graph, this->bound_node(), new_scope);
+    cloned_func_graph = GetCloneBpropGraph(meta_func_graph_, generated_func_graph_, this->bound_node(), new_scope);
   } else {
-    cloned_func_graph = BasicClone(generated_func_graph, false, std::make_shared<UpdateInfo>(scope_, debug_info));
+    cloned_func_graph = BasicClone(generated_func_graph_, false, std::make_shared<UpdateInfo>(scope_, debug_info));
   }
   func_graph_cache_[args_abs_list] = cloned_func_graph;
   MS_EXCEPTION_IF_NULL(engine);

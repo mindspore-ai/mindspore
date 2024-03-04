@@ -36,11 +36,27 @@ OpParameter *PopulateDynamicQuantParameter(const void *prim) {
   memset(param, 0, sizeof(DynamicQuantParameter));
 
   param->op_parameter_.type_ = primitive->value_type();
-  param->dst_type_ = value->dst_type();
+  param->dst_type_ = static_cast<int>(value->dst_type());
   param->symmetric_ = value->symmetric();
-  param->activation_perchannel_ = value->activation_channel();
-  param->prefer_axis_ = value->prefer_axis();
-  param->transpose_ = value->transpose();
+  auto prefer_axes = value->prefer_axes();
+  if (prefer_axes != nullptr) {
+    param->axis_num_ = static_cast<int>(prefer_axes->size());
+    if (param->axis_num_ > MAX_SHAPE_SIZE) {
+      MS_LOG(ERROR) << "Dynamic quant's prefer_axes's number is more than 8.";
+      free(param);
+      return nullptr;
+    }
+    for (int i = 0; i < param->axis_num_; ++i) {
+      param->prefer_axes_[i] = prefer_axes->Get(i);
+    }
+    return reinterpret_cast<OpParameter *>(param);
+  }
+  auto activation_channel = value->activation_channel();
+  if (!activation_channel) {
+    return reinterpret_cast<OpParameter *>(param);
+  }
+  param->axis_num_ = 1;
+  param->prefer_axes_[0] = static_cast<int>(value->prefer_axis());
   return reinterpret_cast<OpParameter *>(param);
 }
 REG_POPULATE(PrimitiveType_DynamicQuant, PopulateDynamicQuantParameter, SCHEMA_CUR);

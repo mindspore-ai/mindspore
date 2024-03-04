@@ -22,7 +22,7 @@
 #include <iostream>
 #include <map>
 
-#include "cpu_kernel_utils.h"
+#include "context/inc/cpu_kernel_utils.h"
 #include "unsupported/Eigen/CXX11/Tensor"
 #include "utils/broadcast_iterator.h"
 #include "utils/eigen_tensor.h"

@@ -17,7 +17,7 @@
 #ifndef OPS_BUILT_IN_OP_PROTO_INC_SPARSE_OPS_H_
 #define OPS_BUILT_IN_OP_PROTO_INC_SPARSE_OPS_H_
 
-#include "cpu_kernel_utils.h"
+#include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
 class SparseSliceGradCpuKernel : public CpuKernel {

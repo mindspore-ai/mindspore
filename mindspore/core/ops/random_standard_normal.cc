@@ -72,16 +72,29 @@ abstract::ShapePtr RandomStandardNormalInferShape(const PrimitivePtr &primitive,
   auto shape_value = input_args[kInputIndex0]->GetValue();
   MS_EXCEPTION_IF_NULL(shape_value);
   if (CheckAndConvertUtils::IsTuple(input_args[kInputIndex0])) {
-    std::vector<int64_t> out_shape =
-      CheckAndConvertUtils::CheckIntOrTupleInt("input[shape]", input_args[kInputIndex0], prim_name);
     if (IsValueKnown(shape_value)) {
+      // Static Shape.
+      std::vector<int64_t> out_shape =
+        CheckAndConvertUtils::CheckIntOrTupleInt("input[shape]", input_args[kInputIndex0], prim_name);
       (void)CheckAndConvertUtils::CheckPositiveVector("shape", out_shape, prim_name);
       return std::make_shared<abstract::Shape>(out_shape);
-    } else {
-      constexpr int dynamic_rank_value = -2;
-      ShapeVector shape = {dynamic_rank_value};
-      return std::make_shared<abstract::Shape>(shape);
     }
+    auto shape_value_opt = ops::GetArrayValue<ShapeValueDType>(input_args[kInputIndex0]);
+    // Dynamic rank.
+    if (!shape_value_opt.has_value()) {
+      return std::make_shared<abstract::TensorShape>(ShapeVector{abstract::TensorShape::kShapeRankAny});
+    }
+    // Dynamic shape.
+    auto array_value = shape_value_opt.value();
+    ShapeVector shape;
+    for (size_t i = 0; i < array_value.size(); ++i) {
+      if (array_value.IsValueUnknown(i)) {
+        shape.push_back(abstract::TensorShape::kShapeDimAny);
+      } else {
+        shape.push_back(array_value[i]);
+      }
+    }
+    return std::make_shared<abstract::Shape>(shape);
   } else if (CheckAndConvertUtils::IsTensor(input_args[kInputIndex0])) {
     if (IsValueKnown(shape_value)) {
       auto shape_ptr = input_args[kInputIndex0]->GetShape();

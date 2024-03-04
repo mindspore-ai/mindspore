@@ -158,8 +158,8 @@ def cho_factor(a, lower=False, overwrite_a=False, check_finite=True):
     - when `lower` is True: :math:`A = L L^*`
     - when `lower` is False: :math:`A = U^* U`
 
-    :math:`L^*` is a conjugate transpose matrix of L.
-    :math:`U^*` is a conjugate transpose matrix of U.
+    :math:`L^*` is a conjugate transpose matrix of :math:`L`.
+    :math:`U^*` is a conjugate transpose matrix of :math:`U`.
 
     The return value can be directly used as the first parameter to :func:`mindspore.scipy.linalg.cho_solve`.
 
@@ -174,7 +174,7 @@ def cho_factor(a, lower=False, overwrite_a=False, check_finite=True):
         entries, use the function `cholesky` instead.
 
     Args:
-        a (Tensor): square Matrix of (M, M) to be decomposed.
+        a (Tensor): square Matrix of :math:`(M,M)` to be decomposed.
         lower (bool, optional): Whether to compute the upper or lower triangular cholesky factorization.
             Default: ``False`` .
         overwrite_a(bool, optional): Whether to overwrite data in a (may improve performance). Default: ``False`` .
@@ -243,7 +243,7 @@ def cholesky(a, lower=False, overwrite_a=False, check_finite=True):
         - If Tensor with dtype int32 or int64 is passed, it will be cast to mstype.float64.
 
     Args:
-        a (Tensor): square Matrix of (M, M) to be decomposed.
+        a (Tensor): square Matrix of :math:`(M, M)` to be decomposed.
         lower (bool, optional): Whether to compute the upper- or lower-triangular cholesky
             factorization. Default: ``False`` .
         overwrite_a (bool, optional): Whether to overwrite data in `a` (may improve performance). Default: ``False`` .
@@ -291,10 +291,10 @@ def cholesky(a, lower=False, overwrite_a=False, check_finite=True):
 
 def cho_solve(c_and_lower, b, overwrite_b=False, check_finite=True):
     """
-    Given the cholesky factorization of a, solve the linear equation
+    Given the cholesky factorization of :math:`A`, solve the linear equation.
 
     .. math::
-        A x = B
+        A x = b
 
     Note:
         - `cho_solve` is not supported on Windows platform yet.

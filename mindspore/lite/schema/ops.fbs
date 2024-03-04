@@ -1251,6 +1251,7 @@ table DynamicQuant {
     activation_channel: bool = false;
     prefer_axis: long = 0;
     transpose: bool = false;
+    prefer_axes: [int];
 }
 
 table LSTMGradData {

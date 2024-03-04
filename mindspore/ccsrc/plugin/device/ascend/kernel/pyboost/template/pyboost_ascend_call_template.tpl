@@ -5,12 +5,13 @@ ${value_tuple_convert}
 // Convert ValuePtr to c++ scalar
 ${const_number_convert}
 
+auto op = get_op();
 ${create_input_address}
 ${inplace_process}
-PyBoostUtils::PrepareOpOutputs(device_context_, outputs_);
+
+PyBoostUtils::PrepareOpOutputs(device_context_, op->stream_id(), outputs_);
 
 // Async
-auto op = get_op();
 PyBoostUtils::DispatchRun(
 std::make_shared<runtime::PyBoostDeviceTask>(
   [op, ${real_call_args}]() {
@@ -24,8 +25,7 @@ std::make_shared<runtime::PyBoostDeviceTask>(
       // Malloc for output tensors
       PyBoostUtils::MallocOpOutputs(device_context, outputs);
       ${get_cube_math_type}
-      auto stream_ptr = device::ascend::AscendStreamMng::GetInstance().GetStream(op->stream_id());
-      LAUNCH_ACLNN(${aclnn_name}, device_context, stream_ptr, ${real_call_args}${outputs}${cube_math_type});
+      LAUNCH_ACLNN(${aclnn_name}, device_context, op->stream_id(), ${real_call_args}${outputs}${cube_math_type});
       MS_LOG(DEBUG) << "Run device task " << op_name() << " end";
   }
 )

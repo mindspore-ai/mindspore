@@ -514,12 +514,22 @@ Shapes GetNodeShape(const AnfNodePtr &node) {
   }
   auto tuple_shape_ptr = dyn_cast<abstract::SequenceShape>(base_shape_ptr);
   if (tuple_shape_ptr != nullptr) {
+    if (tuple_shape_ptr->size() == 0) {
+      shapes.push_back(Shape{0});
+      return shapes;
+    }
     auto tuple_shape = tuple_shape_ptr->shape();
+    if (tuple_shape[0]->isa<abstract::NoShape>()) {
+      shapes.push_back(Shape{SizeToLong(tuple_shape_ptr->size())});
+      return shapes;
+    }
     for (auto &shape : tuple_shape) {
       auto each_shape = dyn_cast<abstract::Shape>(shape);
       MS_EXCEPTION_IF_NULL(each_shape);
       shapes.push_back(each_shape->shape());
     }
+  } else if (base_shape_ptr->isa<abstract::DynamicSequenceShape>()) {
+    shapes.push_back(Shape{-1});
   } else if (base_shape_ptr->isa<abstract::Shape>()) {
     auto shape_ptr = dyn_cast<abstract::Shape>(base_shape_ptr);
     MS_EXCEPTION_IF_NULL(shape_ptr);
@@ -976,7 +986,7 @@ bool IsSplittableOperator(const std::string &op_name) {
      POPULATION_COUNT, IDENTITY, BESSELI0, BESSELI1, BESSELJ0, BESSELJ1, CUM_MAX, CUM_MIN, HYPOT, IGAMMA, IGAMMAC,
      LEFT_SHIFT, RIGHT_SHIFT, NEXT_AFTER, ZETA, REVERSEV2, LGAMMA, TRUNC, BETAINC, GCD, CHOLESKY, CONV3D, MAXPOOL_3D,
      AVGPOOL_3D, FILLV2, FAKE_QUANT_PER_LAYER, FAKE_QUANT_PER_CHANNEL, MIN_MAX_UPDATE_PER_LAYER,
-     MIN_MAX_UPDATE_PER_CHANNEL, FFN, FLASH_ATTENTION_SCORE};
+     MIN_MAX_UPDATE_PER_CHANNEL, FFN, FLASH_ATTENTION_SCORE, ASCEND_QUANT, ASCEND_DEQUANT};
   // clang-format on
 
   auto iter = splittable_op.find(op_name);

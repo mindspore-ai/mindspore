@@ -77,6 +77,11 @@ Tensor::Tensor(Tensor &&other) noexcept
     py::gil_scoped_acquire gil_acquire;
     python_dict_ = (other.python_dict_);
   }
+  // If other.python_array_ has value, assign it to this->python_array_
+  if (static_cast<bool>(other.python_array_)) {
+    py::gil_scoped_acquire gil_acquire;
+    python_array_ = (other.python_array_);
+  }
 #endif
   other.Invalidate();
 }
@@ -93,6 +98,11 @@ Tensor &Tensor::operator=(Tensor &&other) noexcept {
     if (type_.value() == DataType::DE_PYTHON) {
       py::gil_scoped_acquire gil_acquire;
       python_dict_ = (other.python_dict_);
+    }
+    // If other.python_array_ has value, assign it to this->python_array_
+    if (static_cast<bool>(other.python_array_)) {
+      py::gil_scoped_acquire gil_acquire;
+      python_array_ = (other.python_array_);
     }
 #endif
     other.Invalidate();
@@ -206,7 +216,7 @@ Status Tensor::CreateFromNpString(py::array arr, std::shared_ptr<Tensor> *out) {
   return Status::OK();
 }
 
-Status Tensor::CreateFromNpArray(const py::array &arr, std::shared_ptr<Tensor> *out) {
+Status Tensor::CreateFromNpArray(py::array arr, std::shared_ptr<Tensor> *out) {
   RETURN_UNEXPECTED_IF_NULL(out);
   DataType type = DataType::FromNpArray(arr);
   CHECK_FAIL_RETURN_UNEXPECTED(type != DataType::DE_UNKNOWN,
@@ -233,13 +243,28 @@ Status Tensor::CreateFromNpArray(const py::array &arr, std::shared_ptr<Tensor> *
     }
   }
 
-  unsigned char *data = static_cast<unsigned char *>(arr.request().ptr);
-
   if (is_strided) {
+    unsigned char *data = static_cast<unsigned char *>(arr.request().ptr);
     RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape(shape), type, out));
     RETURN_IF_NOT_OK(CopyStridedArray((*out)->data_, data, shape, strides, (*out)->type_.SizeInBytes()));
   } else {
+#ifdef ENABLE_PYTHON
+    // here we create empty tensor and use this->python_array_ point to data which is np.ndarray
+    *out = std::make_shared<Tensor>(TensorShape(shape), type);
+    {
+      py::gil_scoped_acquire gil_acquire;
+      (*out)->python_array_ = arr;
+    }
+    unsigned char *data = static_cast<unsigned char *>((*out)->python_array_.request().ptr);
+    int64_t byte_size = (*out)->SizeInBytes();
+    if (byte_size == 0) {
+      return Status::OK();
+    }
+    (*out)->data_ = data;
+    (*out)->data_end_ = data + byte_size;
+#else
     RETURN_IF_NOT_OK(Tensor::CreateFromMemory(TensorShape(shape), type, data, out));
+#endif
   }
   return Status::OK();
 }
@@ -408,19 +433,29 @@ Status Tensor::CopyStridedArray(unsigned char *dst, unsigned char *src, std::vec
 // Name: Destructor
 // Description: Destructor
 Tensor::~Tensor() {
-  if (data_ != nullptr) {
-    if (data_allocator_ != nullptr) {
-      data_allocator_->deallocate(data_);
-      data_ = nullptr;
-      data_end_ = nullptr;
-    } else {
-      // If we didn't have an allocator, but data_ is not null then it must
-      // be a stand-alone tensor that used malloc directly.
-      free(data_);
-      data_ = nullptr;
-      data_end_ = nullptr;
+#ifdef ENABLE_PYTHON
+  if (!static_cast<bool>(python_array_)) {  // the data is not np.ndarray from python layer
+#endif
+    if (data_ != nullptr) {
+      if (data_allocator_ != nullptr) {
+        data_allocator_->deallocate(data_);
+        data_ = nullptr;
+        data_end_ = nullptr;
+      } else {
+        // If we didn't have an allocator, but data_ is not null then it must
+        // be a stand-alone tensor that used malloc directly.
+        free(data_);
+        data_ = nullptr;
+        data_end_ = nullptr;
+      }
     }
+#ifdef ENABLE_PYTHON
+  } else {
+    // release the data from python layer
+    py::gil_scoped_acquire gil_acquire;
+    python_array_ = py::none();  // let borrowed python ndarray ref - 1
   }
+#endif
 #ifdef ENABLE_PYTHON
   try {
     // The default destructor will not acquire the Python GIL when it destructs
@@ -587,6 +622,10 @@ void Tensor::Invalidate() {
   if (type_.value() == DataType::DE_PYTHON) {
     py::gil_scoped_acquire gil_acquire;
     python_dict_ = py::none();
+  }
+  if (static_cast<bool>(python_array_)) {
+    py::gil_scoped_acquire gil_acquire;
+    python_array_ = py::none();  // let borrowed python ndarray ref - 1
   }
 #endif
 }

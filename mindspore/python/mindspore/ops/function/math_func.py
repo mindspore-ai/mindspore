@@ -3952,11 +3952,11 @@ def heaviside(input, values):
     Computes the Heaviside step function for each element in input.
 
     .. math::
-            \text { heaviside }(\text { input, values })=\left\{\begin{array}{ll}
-            0, & \text { if input }<0 \\
-            \text { values, } & \text { if input }=0 \\
-            1, & \text { if input }>0
-            \end{array}\right
+        \text { heaviside }(\text { input, values })=\left\{\begin{array}{ll}
+        0, & \text { if input }<0 \\
+        \text { values, } & \text { if input }=0 \\
+        1, & \text { if input }>0
+        \end{array}\right.
 
     Args:
         input (Tensor): The input tensor. With real number data type.
@@ -5428,7 +5428,7 @@ def cumsum(x, axis, dtype=None):
         For the case of dynamic shape, the dtype of `x` only support int32, float16 or float32.
 
     Args:
-        x (Tensor): The input Tensor of shape :math:`(N,*)` where :math:`*` means, any number
+        x (Tensor): The input Tensor of shape :math:`(N, *)` where :math:`*` means, any number
             of additional dimensions.
         axis (int): Axis along which the cumulative sum is computed.
         dtype (:class:`mindspore.dtype`, optional): The desired dtype of returned Tensor. If specified,
@@ -7576,14 +7576,14 @@ def _check_logits_shape(logits):
         raise ValueError("For gumbel_softmax, the 0-D input is not supported.")
 
 
-def gumbel_softmax(logits, tau=1, hard=False, dim=-1):
+def gumbel_softmax(logits, tau=1.0, hard=False, dim=-1):
     r"""
     Returns the samples from the Gumbel-Softmax distribution and optionally discretizes. If `hard = True`, the returned
     samples will be one-hot, otherwise it will be probability distributions that sum to 1 across `dim`.
 
     Args:
         logits (Tensor): Unnormalized log probabilities. The data type must be float16 or float32.
-        tau (float): The scalar temperature, which is a positive number. Default: ``1`` .
+        tau (float): The scalar temperature, which is a positive number. Default: ``1.0`` .
         hard (bool): if `True`, the returned samples will be discretized as one-hot vectors, but will be differentiated
           as if it is the soft sample in autograd. Default: ``False`` .
         dim (int): Dim for softmax to compute. Default: ``-1`` .
@@ -10315,6 +10315,8 @@ def _canonicalize_fft_shape_and_dim(input, shape, dim):
 def as_strided(x, shape=None, strides=None):
     n = np.dtype(mstype.dtype_to_nptype(x.dtype)).itemsize
     strides = tuple(np.array(strides) * n)
+    if x.dtype == mstype.bfloat16:
+        return Tensor(np.lib.stride_tricks.as_strided(x.float().asnumpy(), shape, strides, False, True), dtype=x.dtype)
     return Tensor(np.lib.stride_tricks.as_strided(x.asnumpy(), shape, strides, False, True), dtype=x.dtype)
 
 
@@ -11133,7 +11135,8 @@ def vecdot(x, y, *, axis=-1):
     Calculates the dot product of two batches of vectors across the specified dimension.
 
     The formula of calculation is as follows.
-    :math:`\bar{x_{i}}` represents the conjugate for complex vectors, and it is the raw value for real vectors.
+    :math:`\bar{x_{i}}` represents the conjugate for complex vectors,
+    and :math:`\bar{x_{i}}` is the raw value for real vectors.
 
     .. math::
 

@@ -93,7 +93,7 @@ void AscendDeviceAddress::SyncHostMemoryToDeviceWithCopySrc(void *dst, const voi
     ConvertSameType(buffer.get(), src, size, type_id());
   }
 
-  const auto stream = AscendStreamMng::GetInstance().GetStream(0);
+  const auto stream = AscendStreamMng::GetInstance().GetStream(this->stream_id());
   auto ret = runtime_instance->MemcpyAsync(dst, buffer.get(), size, static_cast<int32_t>(kind), stream);
   if (!ret) {
     MS_LOG(EXCEPTION) << "MemcpyAsync failed!";
@@ -119,7 +119,7 @@ void AscendDeviceAddress::SyncHostMemoryToDeviceForTensorFromNumpy(void *dst, co
 
   runtime_instance->SetContextForce();
   // Memcpy needs to be synchronized firstm, if tensor data is from numpy.
-  const auto stream = AscendStreamMng::GetInstance().GetStream(0);
+  const auto stream = AscendStreamMng::GetInstance().GetStream(this->stream_id());
   // cppcheck-suppress unreadVariable
   auto lock = device::KernelRuntime::LockRuntime(stream);
   if (!AscendStreamMng::GetInstance().SyncStream(stream)) {
@@ -140,7 +140,7 @@ void AscendDeviceAddress::SyncHostMemoryToDeviceWithTensorData(void *dst, const 
   MS_EXCEPTION_IF_NULL(runtime_instance);
 
   MS_LOG(DEBUG) << "Begin, size:" << size;
-  const auto stream = AscendStreamMng::GetInstance().GetStream(0);
+  const auto stream = AscendStreamMng::GetInstance().GetStream(this->stream_id());
   auto ret = runtime_instance->MemcpyAsync(dst, src, size, static_cast<int32_t>(kind), stream);
   if (!ret) {
     MS_LOG(EXCEPTION) << "MemcpyAsync failed!";
@@ -892,18 +892,25 @@ void AscendDeviceAddress::CopyDeviceToHost(void *dst, uint64_t size) const {
 void AscendDeviceAddress::CopyHostToDevice(const void *src, uint64_t size,
                                            const tensor::TensorDataPtr &tensor_data) const {
   MS_EXCEPTION_IF_NULL(src);
+
   if (mem_offloaded()) {
     MS_EXCEPTION_IF_NULL(offload_ptr_);
     SyncMemory(offload_ptr_, src, size, ACL_MEMCPY_HOST_TO_HOST, tensor_data);
   } else {
     MS_EXCEPTION_IF_NULL(GetDevicePtr());
     if (type_id() == kObjectTypeString) {
-      ge::StringHead head{.addr = sizeof(ge::StringHead), static_cast<int64_t>(size)};
+      // NOTE: For string type, ge::StringHead.len does not include '\0', since kernel_tensor allocated size including
+      // '\0', see method `CreateDeviceAddressForScalarAndString` defined in `device_address_utils.cc`, and method
+      // `PrepareDataForStringValue` defined in `device_address_utils.cc`, so here pass `size - 1` to `head.len`.
+      ge::StringHead head{.addr = sizeof(ge::StringHead), .len = static_cast<int64_t>(size) - 1};
       // sync string head info from device to host
       SyncMemory(GetDevicePtr(), &head, sizeof(ge::StringHead), ACL_MEMCPY_HOST_TO_DEVICE, nullptr);
       // sync string body (real contents) from device to host
       SyncMemory(static_cast<void *>(static_cast<char *>(GetDevicePtr()) + sizeof(ge::StringHead)), src, size,
                  ACL_MEMCPY_HOST_TO_DEVICE, tensor_data);
+      MS_LOG(DEBUG) << "Copy string info to device, ge::StringHead.len=" << head.len
+                    << ", text=" << std::string(static_cast<const char *>(src), head.len)
+                    << ", device_addr=" << GetDevicePtr();
     } else {
       SyncMemory(GetDevicePtr(), src, size, ACL_MEMCPY_HOST_TO_DEVICE, tensor_data);
     }

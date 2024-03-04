@@ -19,7 +19,7 @@
 
 #include "utils/eigen_tensor.h"
 
-#include "cpu_kernel_utils.h"
+#include "inc/ms_cpu_kernel.h"
 #include "cpu_types.h"
 #include "utils/bcast.h"
 

@@ -79,20 +79,21 @@ int GatherDPlugin::enqueue(const nvinfer1::PluginTensorDesc *inputDesc, const nv
     axis_ += dims;
   }
 
+  auto num = dim_before_axis_index_ * dim_at_axis_index_ * dim_after_axis_index_;
   if (inputDesc->type == nvinfer1::DataType::kINT32) {
     auto input = static_cast<const int *>(inputs[0]);
     auto index = static_cast<const int *>(inputs[1]);
     auto output = static_cast<int *>(outputs[0]);
     Reshape(inputDesc, outputDesc);
-    GatherD<int, int>(input, index, output, dim_before_axis_, dim_at_axis_input_, dim_at_axis_output_, dim_after_axis_,
-                      stream, device_id_);
+    GatherD<int, int>(input, index, output, dim_before_axis_index_, dim_at_axis_index_, dim_after_axis_index_,
+                      dim_at_axis_input_, dim_after_axis_input_, num, stream, device_id_);
   } else if (inputDesc->type == nvinfer1::DataType::kFLOAT) {
     auto input = static_cast<const float *>(inputs[0]);
     auto index = static_cast<const int *>(inputs[1]);
     auto output = static_cast<float *>(outputs[0]);
     Reshape(inputDesc, outputDesc);
-    GatherD<float, int>(input, index, output, dim_before_axis_, dim_at_axis_input_, dim_at_axis_output_,
-                        dim_after_axis_, stream, device_id_);
+    GatherD<float, int>(input, index, output, dim_before_axis_index_, dim_at_axis_index_, dim_after_axis_index_,
+                        dim_at_axis_input_, dim_after_axis_input_, num, stream, device_id_);
   } else {
     MS_LOG(ERROR) << "unsupported data type gatherd" << layer_name_;
   }
@@ -118,21 +119,23 @@ nvinfer1::DimsExprs GatherDPlugin::getOutputDimensions(int outputIndex, const nv
 void GatherDPlugin::Reshape(const nvinfer1::PluginTensorDesc *inputDesc, const nvinfer1::PluginTensorDesc *outputDesc) {
   nvinfer1::Dims input_dims = inputDesc[0].dims;
   nvinfer1::Dims output_dims = outputDesc[0].dims;
-  size_t dim_before_axis = 1;
+  dim_before_axis_index_ = 1;
   for (size_t i = 0; i < IntToSize(axis_); i++) {
-    dim_before_axis *= output_dims.d[i];
+    dim_before_axis_index_ *= output_dims.d[i];
   }
-  size_t dim_at_axis_input = input_dims.d[IntToSize(axis_)];
-  size_t dim_at_axis_output = output_dims.d[IntToSize(axis_)];
-  size_t dim_after_axis = 1;
+  dim_at_axis_input_ = input_dims.d[IntToSize(axis_)];
+  dim_at_axis_index_ = output_dims.d[IntToSize(axis_)];
+
+  dim_after_axis_index_ = 1;
   for (size_t i = IntToSize(axis_) + 1; i < IntToSize(output_dims.nbDims); i++) {
-    dim_after_axis *= output_dims.d[i];
+    dim_after_axis_index_ *= output_dims.d[i];
   }
 
-  dim_before_axis_ = dim_before_axis;
-  dim_at_axis_input_ = dim_at_axis_input;
-  dim_at_axis_output_ = dim_at_axis_output;
-  dim_after_axis_ = dim_after_axis;
+  dim_after_axis_input_ = 1;
+  for (size_t i = IntToSize(axis_) + 1; i < IntToSize(input_dims.nbDims); i++) {
+    dim_after_axis_input_ *= input_dims.d[i];
+  }
+
   return;
 }
 REGISTER_TENSORRT_CREATOR(ops::kNameGatherD, GatherDTensorRT)

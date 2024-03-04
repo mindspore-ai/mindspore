@@ -61,7 +61,8 @@ static const std::map<std::string, aclFormat> kMsFormatToAclFormat = {{kOpFormat
                                                                       {kOpFormat_FRAC_Z, ACL_FORMAT_FRACTAL_Z},
                                                                       {kOpFormat_FRAC_NZ, ACL_FORMAT_FRACTAL_NZ},
                                                                       {kOpFormat_FRACTAL_Z_3D, ACL_FRACTAL_Z_3D},
-                                                                      {kOpFormat_NCDHW, ACL_FORMAT_NCDHW}};
+                                                                      {kOpFormat_NCDHW, ACL_FORMAT_NCDHW},
+                                                                      {kOpFormat_NDHWC, ACL_FORMAT_NDHWC}};
 
 static const std::map<aclDataType, std::string> kAclDatatypeToStr = {
   {ACL_FLOAT, "float"},   {ACL_FLOAT16, "float16"},     {ACL_INT8, "int8"},

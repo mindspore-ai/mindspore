@@ -29,4 +29,9 @@ CUDA_LIB_EXPORT cudaError_t BinaryOpWithBroadcastCudaFunc(const bool is_broadcas
                                                           In1_t *input1, Out_t *output, size_t device_id,
                                                           cudaStream_t cuda_stream);
 
+template <enum BinaryOpType OP, typename In0_t, typename In1_t, typename In2_t, typename Out_t>
+cudaError_t BinaryExtOpWithBroadcastCudaFunc(const bool is_broadcast, const std::vector<int64_t> &in0_shape,
+                                             const std::vector<int64_t> &in1_shape,
+                                             const std::vector<int64_t> &out_shape, In0_t *in0, In1_t *in1,
+                                             In2_t *alpha, Out_t *out, size_t device_id, cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_BINARY_OPS_IMPL_CUH_

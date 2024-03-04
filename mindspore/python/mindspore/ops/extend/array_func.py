@@ -19,9 +19,9 @@ Array Operators
 
 """
 
-from mindspore.ops.auto_generate.gen_ops_prim import gather_ext_op
 from mindspore.ops.operations.array_ops import ArgMaxWithValue, ArgMinWithValue
 from mindspore.ops._primitive_cache import _get_cache_prim
+from mindspore.ops.auto_generate.gen_ops_prim import gather_d_op
 
 # define Primitive global variables
 
@@ -41,7 +41,8 @@ def gather(input, dim, index):
 
             - `index.rank == input.rank`;
             - `index.shape[axis] <= input.shape[axis]` where axis goes through all dimensions of `input` except `dim`;
-            - the value of `index` is in range `[-input.shape[dim], input.shape[dim])`.
+            - the value of `index` is in range `[-input.shape[dim], input.shape[dim])`. The behavior is unpredictable
+              when the value of index is out of the valid range on Ascend.
 
     Returns:
         Tensor, has the same type as `input` and the same shape as `index`.
@@ -53,7 +54,7 @@ def gather(input, dim, index):
         TypeError: If the type of `index` is illegal.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore
@@ -66,14 +67,12 @@ def gather(input, dim, index):
         [[-0.1 -0.1]
         [ 0.5  0.5]]
     """
-    return gather_ext_op(input, dim, index)
+    return gather_d_op(input, dim, index)
 
 
 def max(input, dim, keepdim=False):
     """
     Calculates the maximum value along with the given axis for the input tensor.
-
-    Also see: :class:`mindspore.ops.ArgMaxWithValue`.
 
     Args:
         input (Tensor): The input tensor, can be any dimension. Complex tensor is not supported for now.
@@ -82,14 +81,14 @@ def max(input, dim, keepdim=False):
             the output will reduce dimension if false. Default: ``False`` .
 
     Returns:
-        tuple (Tensor), tuple of 2 tensors, containing the corresponding index and the maximum value of the input
-        tensor.
+        tuple (Tensor), tuple of 2 tensors, containing the maximum value of the input tensor and the corresponding
+        index.
 
-        - values (Tensor) - The maximum value of input tensor, with the same shape as index, and same dtype as x.
-        - index (Tensor) - The index for the maximum value of the input tensor, with dtype int64. If `keepdims`
+        - values (Tensor) - The maximum value of input tensor, with same dtype as `input`. If `keepdim`
           is true, the shape of output tensors is :math:`(input_1, input_2, ..., input_{axis-1}, 1, input_{axis+1},
           ..., input_N)` . Otherwise, the shape is :math:`(input_1, input_2, ..., input_{axis-1}, input_{axis+1},
           ..., input_N)` .
+        - index (Tensor) - The index for the maximum value of the input tensor, with the same shape as `values`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -111,9 +110,7 @@ def max(input, dim, keepdim=False):
 
 def min(input, dim, keepdim=False):
     """
-    Calculates the maximum value along with the given axis for the input tensor.
-
-    Also see: :class:`mindspore.ops.ArgMinWithValue`.
+    Calculates the minimum value along with the given axis for the input tensor.
 
     Args:
         input (Tensor): The input tensor, can be any dimension. Complex tensor is not supported for now.
@@ -122,14 +119,14 @@ def min(input, dim, keepdim=False):
             the output will reduce dimension if false. Default: ``False`` .
 
     Returns:
-        tuple (Tensor), tuple of 2 tensors, containing the corresponding index and the maximum value of the input
-        tensor.
+        tuple (Tensor), tuple of 2 tensors, containing the minimum value of the input tensor and the corresponding
+        index.
 
-        - values (Tensor) - The maximum value of input tensor, with the same shape as index, and same dtype as x.
-        - index (Tensor) - The index for the maximum value of the input tensor, with dtype int64. If `keepdims`
+        - values (Tensor) - The minimum value of input tensor, with same dtype as `input`. If `keepdim`
           is true, the shape of output tensors is :math:`(input_1, input_2, ..., input_{axis-1}, 1, input_{axis+1},
           ..., input_N)` . Otherwise, the shape is :math:`(input_1, input_2, ..., input_{axis-1}, input_{axis+1},
           ..., input_N)` .
+        - index (Tensor) - The index for the minimum value of the input tensor, with same shape as `values`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -139,9 +136,9 @@ def min(input, dim, keepdim=False):
         >>> import numpy as np
         >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([0.0, 0.4, 0.6, 0.7, 0.1]), mindspore.float32)
-        >>> output, index = ops.extend.min(x, 0, keepdims=True)
+        >>> output, index = ops.extend.min(x, 0, keepdim=True)
         >>> print(output, index)
-        0.0 0
+        [0.0] [0]
     """
     argmin_with_value_op = _get_cache_prim(ArgMinWithValue)(dim, keepdim)
     indices, values = argmin_with_value_op(input)

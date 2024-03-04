@@ -220,6 +220,14 @@ ValueNodePtr ScalarOpPass::GenerateScalarValueTuple(const FuncGraphPtr &func_gra
   return tuple_node;
 }
 
+ValueNodePtr ScalarOpPass::GenerateScalarValue(const FuncGraphPtr &func_graph, int64_t value) {
+  auto scalar_value = MakeValue(value);
+  auto scalar_node = NewValueNode(scalar_value);
+  scalar_node->set_abstract(scalar_value->ToAbstract());
+  func_graph->AddValueNode(scalar_node);
+  return scalar_node;
+}
+
 CNodePtr ScalarOpPass::GenerateStridedSlice(const FuncGraphPtr &func_graph, const AnfNodePtr &shape_node,
                                             const AnfNodePtr &tuple_get_node, const FuncGraphManagerPtr &manager) {
   auto begin_index = GetTupleGetItemOutIndex(tuple_get_node->cast<CNodePtr>());
@@ -244,9 +252,21 @@ CNodePtr ScalarOpPass::GenerateStridedSlice(const FuncGraphPtr &func_graph, cons
   auto tmp_abstract = abstract::MakeAbstract(std::make_shared<abstract::Shape>(tensor_shape), TypeIdToType(infer_type));
   MS_CHECK_TRUE_MSG(tmp_abstract != nullptr, nullptr, "make AbstractTensor failed");
 
+  auto begin_mask = GenerateScalarValue(func_graph, 0);
+  MS_CHECK_TRUE_MSG(begin_mask != nullptr, nullptr, "generate StridedSlice begin_mask node failed.");
+  auto end_mask = GenerateScalarValue(func_graph, 0);
+  MS_CHECK_TRUE_MSG(end_mask != nullptr, nullptr, "generate StridedSlice end_mask node failed.");
+  auto ellipsis_mask = GenerateScalarValue(func_graph, 0);
+  MS_CHECK_TRUE_MSG(ellipsis_mask != nullptr, nullptr, "generate StridedSlice ellipsis_mask node failed.");
+  auto new_axis_mask = GenerateScalarValue(func_graph, 0);
+  MS_CHECK_TRUE_MSG(new_axis_mask != nullptr, nullptr, "generate StridedSlice new_axis_mask node failed.");
+  auto shrink_axis_mask = GenerateScalarValue(func_graph, 0);
+  MS_CHECK_TRUE_MSG(shrink_axis_mask != nullptr, nullptr, "generate StridedSlice shrink_axis_mask node failed.");
+
   auto prim = NewValueNode(std::make_shared<Primitive>(kStridedSliceOpName));
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
-  AnfNodePtrList inputs = {prim, shape_node, begin_node, end_node, strides_node};
+  AnfNodePtrList inputs = {prim,       shape_node, begin_node,    end_node,      strides_node,
+                           begin_mask, end_mask,   ellipsis_mask, new_axis_mask, shrink_axis_mask};
   CNodePtr strided_slice = func_graph->NewCNode(inputs);
   MS_CHECK_TRUE_RET(strided_slice != nullptr, nullptr);
   strided_slice->set_fullname_with_scope(tuple_get_node->fullname_with_scope() + "_strided_slice");
@@ -255,12 +275,6 @@ CNodePtr ScalarOpPass::GenerateStridedSlice(const FuncGraphPtr &func_graph, cons
   // set attrs, all defaults to zero
   auto primitive = GetCNodePrimitive(strided_slice);
   MS_CHECK_TRUE_RET(primitive != nullptr, nullptr);
-  primitive->set_attr("new_axis_mask", MakeValue<int64_t>(0));
-  primitive->set_attr("shrink_axis_mask", MakeValue<int64_t>(0));
-  primitive->set_attr("end_mask", MakeValue<int64_t>(0));
-  primitive->set_attr("begin_mask", MakeValue<int64_t>(0));
-  primitive->set_attr("ellipsis_mask", MakeValue<int64_t>(0));
-
   return strided_slice;
 }
 

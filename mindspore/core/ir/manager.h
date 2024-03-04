@@ -66,11 +66,13 @@ using FuncGraphSetPtr = std::shared_ptr<FuncGraphSet>;
 // func_graph, be managed graph
 // manage: if true, created manager will be set in func_graph
 // FuncGraphManagerPtr: return created manager
-MS_CORE_API FuncGraphManagerPtr Manage(FuncGraphPtr func_graph, bool manage = true);
+MS_CORE_API FuncGraphManagerPtr Manage(FuncGraphPtr func_graph, bool manage = true, bool drop_unused_graph = false);
 
-MS_CORE_API FuncGraphManagerPtr Manage(const std::vector<FuncGraphPtr> &func_graphs, bool manage = true);
+MS_CORE_API FuncGraphManagerPtr Manage(const std::vector<FuncGraphPtr> &func_graphs, bool manage = true,
+                                       bool drop_unused_graph = false);
 
-MS_CORE_API FuncGraphManagerPtr MakeManager(const std::vector<FuncGraphPtr> &func_graphs = {}, bool manage = true);
+MS_CORE_API FuncGraphManagerPtr MakeManager(const std::vector<FuncGraphPtr> &func_graphs = {}, bool manage = true,
+                                            bool drop_unused_graph = false);
 
 struct Signals {
   Signal<void()> InvalidateComputer;
@@ -297,12 +299,13 @@ class FuncGraphMetaFgPrimTotalComputer final : public DepComputer {
 
 class MS_CORE_API FuncGraphManager : public std::enable_shared_from_this<FuncGraphManager> {
  public:
-  explicit FuncGraphManager(const std::vector<FuncGraphPtr> &roots, bool manage = true);
+  explicit FuncGraphManager(const std::vector<FuncGraphPtr> &roots, bool manage = true, bool drop_unused_graph = false);
   virtual ~FuncGraphManager();
 
   void Reset();
   void Init();
   void Clear() noexcept;
+  void DropFuncGraph(const FuncGraphPtr &fg, bool force = false);
   void AddFuncGraph(const FuncGraphPtr &func_graph, bool is_root = false);
   void AddFuncGraphs(const FuncGraphPtr &source_func_graph);
   void KeepRoots(const std::vector<FuncGraphPtr> &roots = {});
@@ -387,7 +390,8 @@ class MS_CORE_API FuncGraphManager : public std::enable_shared_from_this<FuncGra
   std::shared_ptr<RecursiveComputer> recursive_;
   std::shared_ptr<FuncGraphMetaFgPrimTotalComputer> meta_fg_prim_total_;
 
-  bool is_manage_;
+  bool is_manage_{false};
+  bool drop_unused_graph_{false};
 };
 
 class MS_CORE_API FuncGraphTransaction {

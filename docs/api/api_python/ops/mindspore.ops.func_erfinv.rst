@@ -13,11 +13,15 @@ mindspore.ops.erfinv
     参数：
         - **input** (Tensor) - 输入Tensor。支持数据类型：
 
-          - Ascend： float16、float32。
+          - Ascend： float16、float32、int8、int16、int32、int64、uint8、bool。
           - GPU/CPU： float16、float32、float64。
 
     返回：
-        Tensor，具有与 `input` 相同的数据类型和shape。
+        当输入为 int8、int16、int32、int64、uint8、bool 时，返回值类型为float32。
+        否则，返回值类型与输入类型相同。
 
     异常：
-        - **TypeError** - `input` 的数据类型不是float16、float32、float64。
+        - **TypeError** - `input` 的数据类型不是如下类型：
+
+          - Ascend: float16、float32、int8、int16、int32、int64、uint8、bool。
+          - CPU/GPU: float16、float32、float64。

@@ -18,7 +18,7 @@
 #define AICPU_KERNELS_MULTINOMIAL_H_
 
 #include <map>
-#include "cpu_kernel_utils.h"
+#include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
 class MultinomialCpuKernel : public CpuKernel {

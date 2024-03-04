@@ -13,7 +13,7 @@ mindspore.ops.clamp
             max & \text{ if } input_i\ge max \\
             input_i & \text{ if } min \lt input_i \lt max \\
             min & \text{ if } input_i \le min \\
-        \end{array}\right
+        \end{array}\right.
 
     .. note::
         - `min` 和 `max` 不能同时为None；

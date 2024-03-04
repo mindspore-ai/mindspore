@@ -1,0 +1,36 @@
+erfinv:
+  description: |
+    Returns the result of the inverse error function with `input`, which is defined in the range `(-1, 1)` as:
+
+    .. math::
+
+        erfinv(erf(x)) = x
+
+    where :math:`x` is the `input`.
+
+    Args:
+        input (Tensor): The input tensor to compute with.
+
+        Supported dtypes:
+
+          - Ascend: float16, float32, int8, int16, int32, int64, uint8, bool.
+          - GPU/CPU: float16, float32 or float64.
+
+    Returns:
+        Tensor, has the same shape and dtype as `input`.
+
+    :raise TypeError: If dtype of `input` is not as follows
+        - Ascend: float16, float32, int8, int16, int32, int64, uint8, bool.
+        - GPU/CPU: float16, float32 or float64.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> input = Tensor(np.array([0, 0.5, -0.9]), mindspore.float32)
+        >>> output = ops.erfinv(input)
+        >>> print(output)
+        [ 0.          0.47695306 -1.1630805 ]

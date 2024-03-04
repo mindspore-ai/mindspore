@@ -17,7 +17,7 @@
 #define AICPU_KERNELS_NORMALIZED_FFTSHIFT_H_
 
 #include <vector>
-#include "cpu_kernel_utils.h"
+#include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
 class FFTShiftCpuKernel : public CpuKernel {

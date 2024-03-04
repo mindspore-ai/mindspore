@@ -17,7 +17,7 @@
 #define AICPU_KERNELS_NORMALIZED_RANDOM_SHUFFLE_H_
 #define EIGEN_USE_THREADS
 #define EIGEN_USE_SIMPLE_THREAD_POOL
-#include "cpu_kernel_utils.h"
+#include "inc/ms_cpu_kernel.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 #include "random/utils.h"

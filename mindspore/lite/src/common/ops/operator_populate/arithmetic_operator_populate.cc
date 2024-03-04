@@ -23,7 +23,6 @@
 #include "ops/fusion/mul_fusion.h"
 #include "ops/eltwise.h"
 #include "ops/fusion/div_fusion.h"
-#include "ops/sub.h"
 #include "ops/fusion/sub_fusion.h"
 
 using mindspore::ops::kActivationType;

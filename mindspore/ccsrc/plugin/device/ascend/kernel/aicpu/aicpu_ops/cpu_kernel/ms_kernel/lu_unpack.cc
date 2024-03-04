@@ -24,8 +24,8 @@
 #include <vector>
 
 #include "cpu_context.h"
-#include "cpu_kernel_utils.h"
-#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "context/inc/cpu_kernel_utils.h"
+#include "context/inc/cpu_kernel_utils.h"
 #include "cpu_tensor.h"
 #include "securec/include/securec.h"
 #include "utils/eigen_tensor.h"

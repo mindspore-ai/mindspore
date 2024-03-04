@@ -38,6 +38,7 @@
 #include "utils/check_convert_utils.h"
 #include "utils/hash_map.h"
 #include "utils/ms_context.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 const int ONNX_VERSION = 11;
@@ -48,6 +49,9 @@ const int kThreeNum = 3;
 const int kFourNum = 4;
 const int kFiveNum = 5;
 const int kSixNum = 6;
+const int kSevenNum = 7;
+const int kEightNum = 8;
+const int kNineNum = 9;
 const int64_t kOneNumLong = 1;
 const float weight_for_mul = 0.5;
 enum OpMergeMode {
@@ -1383,6 +1387,20 @@ void OnnxExporter::ExportFuncGraph(const FuncGraphPtr &func_graph, std::map<AnfN
                                    onnx::GraphProto *const graph_proto, bool export_inputs) {
   MS_LOG(INFO) << "Begin exporting onnx model for graph " << func_graph->ToString();
 
+  // Convert yaml defined primitive to old primitive.
+  std::vector<AnfNodePtr> nodes = TopoSort(func_graph->get_return(), SuccIncoming, AlwaysInclude);
+  auto manager = func_graph->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  for (const auto &node : nodes) {
+    if (node->isa<CNode>()) {
+      auto converted_node = ops::ConvertArgsToAttr(node->cast<CNodePtr>());
+      // If node is old primitive node, nullptr will be returned.
+      if (converted_node == nullptr) {
+        continue;
+      }
+      (void)manager->Replace(node, converted_node);
+    }
+  }
   // set graph name
   graph_proto->set_name(func_graph->ToString());
 
@@ -1854,13 +1872,14 @@ void OnnxExporter::ExportPrimStridedSlice(const FuncGraphPtr &, const CNodePtr &
   auto name = node_name + prim::kPrimStridedSlice->name();
 
   auto begin = node->input(kTwoNum);
-  if (!begin->isa<ValueNode>()) {
+  auto begin_mask = node->input(kFiveNum);
+  if (!begin->isa<ValueNode>() && !begin_mask->isa<ValueNode>()) {
     MS_LOG(EXCEPTION) << "The input begin of StridedSlice is not a ValueNode! "
                       << "Need to insert op convert variable from tuple to tensor for " << name;
   }
   auto begin_value_node = dyn_cast<ValueNode>(begin);
   auto begin_value = GetValue<std::vector<int64_t>>(begin_value_node->value());
-  auto begin_ignore_mask = GetOpAttribute<int64_t>(node, "begin_mask");
+  auto begin_ignore_mask = GetValue<int64_t>(dyn_cast<ValueNode>(begin_mask)->value());
   for (size_t i = 0; i < begin_value.size(); ++i) {
     if ((static_cast<uint64_t>(begin_ignore_mask) & (1UL << i)) != 0) {
       begin_value[i] = 0;
@@ -1868,14 +1887,15 @@ void OnnxExporter::ExportPrimStridedSlice(const FuncGraphPtr &, const CNodePtr &
   }
 
   auto end = node->input(kThreeNum);
-  if (!end->isa<ValueNode>()) {
+  auto end_mask = node->input(kSixNum);
+  if (!end->isa<ValueNode>() && !end_mask->isa<ValueNode>()) {
     MS_LOG(EXCEPTION) << "The input end of StridedSlice is not a ValueNode! "
                       << "Need to insert op convert variable from tuple to tensor for " << name;
   }
   auto end_value_node = dyn_cast<ValueNode>(end);
   auto end_value = GetValue<std::vector<int64_t>>(end_value_node->value());
   const auto &x_shape = dyn_cast<abstract::Shape>(node->input(kOneNum)->Shape())->shape();
-  auto end_ignore_mask = GetOpAttribute<int64_t>(node, "end_mask");
+  auto end_ignore_mask = GetValue<int64_t>(dyn_cast<ValueNode>(end_mask)->value());
   for (size_t i = 0; i < end_value.size(); ++i) {
     if ((static_cast<uint64_t>(end_ignore_mask) & (1UL << i)) != 0) {
       end_value[i] = x_shape[i];
@@ -1889,14 +1909,15 @@ void OnnxExporter::ExportPrimStridedSlice(const FuncGraphPtr &, const CNodePtr &
   }
 
   auto strides = node->input(kFourNum);
-  if (!strides->isa<ValueNode>()) {
+  auto shrink_mask = node->input(kNineNum);
+  if (!strides->isa<ValueNode>() && !shrink_mask->isa<ValueNode>()) {
     MS_LOG(EXCEPTION) << "The input strides of StridedSlice is not a ValueNode! "
                       << "Need to insert op convert variable from tuple to tensor for " << name;
   }
   auto strides_value_node = dyn_cast<ValueNode>(strides);
   auto strides_value = GetValue<std::vector<int64_t>>(strides_value_node->value());
 
-  auto shrink_axis_mask = GetOpAttribute<int64_t>(node, "shrink_axis_mask");
+  auto shrink_axis_mask = GetValue<int64_t>(dyn_cast<ValueNode>(shrink_mask)->value());
   for (size_t i = 0; i < end_value.size(); ++i) {
     if ((static_cast<uint64_t>(shrink_axis_mask) & (1UL << i)) != 0) {
       strides_value[i] = end_value[i] > begin_value[i] ? 1 : -1;

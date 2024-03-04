@@ -31,8 +31,6 @@
 #include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
 #include "src/common/utils.h"
 #include "ops/auto_generate/gen_lite_ops.h"
-#include "ops/auto_generate/gen_ops_name.h"
-#include "ops/strided_slice.h"
 #include "ops/fusion/topk_fusion.h"
 
 namespace mindspore::lite {

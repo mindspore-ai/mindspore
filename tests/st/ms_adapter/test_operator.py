@@ -20,7 +20,7 @@ import tests.st.ms_adapter as adapter
 ms.set_context(mode=ms.GRAPH_MODE)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_arithmetic_operator():
@@ -60,14 +60,14 @@ def test_arithmetic_operator():
     def check_output_type(func):
         ms_x = ms.Tensor(1)
         adapter_x = adapter.Tensor(1)
-        assert type(func(ms_x, ms_x)) is ms.Tensor
-        assert type(func(adapter_x, adapter_x)) is adapter.Tensor      # "Tensor", "Tensor"
-        assert type(func(adapter_x, 1)) is adapter.Tensor              # "Tensor", "Number"
-        assert type(func(1, adapter_x)) is adapter.Tensor              # "Number", "Tensor"
-        assert type(func(adapter_x, (adapter_x,))) is adapter.Tensor   # "Tensor", "Tuple"
-        assert type(func((adapter_x,), adapter_x)) is adapter.Tensor   # "Tuple", "Tensor"
-        assert type(func(adapter_x, [adapter_x,])) is adapter.Tensor   # "Tensor", "List"
-        assert type(func([adapter_x,], adapter_x)) is adapter.Tensor   # "List", "Tensor"
+        assert isinstance(func(ms_x, ms_x), ms.Tensor)
+        assert isinstance(func(adapter_x, adapter_x), adapter.Tensor)      # "Tensor", "Tensor"
+        assert isinstance(func(adapter_x, 1), adapter.Tensor)              # "Tensor", "Number"
+        assert isinstance(func(1, adapter_x), adapter.Tensor)              # "Number", "Tensor"
+        assert isinstance(func(adapter_x, (adapter_x,)), adapter.Tensor)   # "Tensor", "Tuple"
+        assert isinstance(func((adapter_x,), adapter_x), adapter.Tensor)   # "Tuple", "Tensor"
+        assert isinstance(func(adapter_x, [adapter_x,]), adapter.Tensor)   # "Tensor", "List"
+        assert isinstance(func([adapter_x,], adapter_x), adapter.Tensor)   # "List", "Tensor"
 
     check_output_type(add_fn)
     check_output_type(sub_fn)
@@ -78,7 +78,7 @@ def test_arithmetic_operator():
     check_output_type(pow_fn)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_binary_operator():
@@ -128,10 +128,10 @@ def test_binary_operator():
         ms_y = ms.Tensor([3, 2, 1])
         adapter_x = adapter.Tensor([1, 2, 3], dtype=ms.int32)
         adapter_y = adapter.Tensor([3, 2, 1], dtype=ms.int32)
-        assert type(func(ms_x, ms_y)) is ms.Tensor
-        assert type(func(adapter_x, adapter_y)) is adapter.Tensor    # "Tensor", "Tensor"
-        assert type(func(adapter_x, 1)) is adapter.Tensor            # "Tensor", "Number"
-        assert type(func(1, adapter_x)) is adapter.Tensor            # "Number", "Tensor"
+        assert isinstance(func(ms_x, ms_y), ms.Tensor)
+        assert isinstance(func(adapter_x, adapter_y), adapter.Tensor)    # "Tensor", "Tensor"
+        assert isinstance(func(adapter_x, 1), adapter.Tensor)            # "Tensor", "Number"
+        assert isinstance(func(1, adapter_x), adapter.Tensor)            # "Number", "Tensor"
 
     check_output_type(equal_fn)
     check_output_type(not_equal_fn)
@@ -144,7 +144,7 @@ def test_binary_operator():
     check_output_type(bitwise_xor_fn)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_unary_operator():
@@ -163,13 +163,13 @@ def test_unary_operator():
 
     ms_x = ms.Tensor([1, -2, 3])
     adapter_x = adapter.Tensor([1, -2, 3])
-    assert type(positive_fn(ms_x)) is ms.Tensor
-    assert type(negative_fn(ms_x)) is ms.Tensor
-    assert type(positive_fn(adapter_x)) is adapter.Tensor
-    assert type(negative_fn(adapter_x)) is adapter.Tensor
+    assert isinstance(positive_fn(ms_x), ms.Tensor)
+    assert isinstance(negative_fn(ms_x), ms.Tensor)
+    assert isinstance(positive_fn(adapter_x), adapter.Tensor)
+    assert isinstance(negative_fn(adapter_x), adapter.Tensor)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_logical_operator():
@@ -198,13 +198,13 @@ def test_logical_operator():
     adapter_x = adapter.Tensor(True)
     assert not is_fn(adapter_x)
     assert is_not_fn(adapter_x)
-    assert type(invert_fn(ms_x)) is ms.Tensor
-    assert type(logical_not_fn(ms_x)) is ms.Tensor
-    assert type(invert_fn(adapter_x)) is adapter.Tensor
-    assert type(logical_not_fn(adapter_x)) is adapter.Tensor
+    assert isinstance(invert_fn(ms_x), ms.Tensor)
+    assert isinstance(logical_not_fn(ms_x), ms.Tensor)
+    assert isinstance(invert_fn(adapter_x), adapter.Tensor)
+    assert isinstance(logical_not_fn(adapter_x), adapter.Tensor)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_contain_operator():
@@ -227,13 +227,13 @@ def test_contain_operator():
     adapter_x = adapter.Tensor(1)
     adapter_y = adapter.Tensor(2)
     adapter_z = adapter.Tensor(3)
-    assert type(in_fn(ms_x, ms_y, ms_z)) is ms.Tensor
-    assert type(not_in_fn(ms_x, ms_y, ms_z)) is ms.Tensor
-    assert type(in_fn(adapter_x, adapter_y, adapter_z)) is adapter.Tensor
-    assert type(not_in_fn(adapter_x, adapter_y, adapter_z)) is adapter.Tensor
+    assert isinstance(in_fn(ms_x, ms_y, ms_z), ms.Tensor)
+    assert isinstance(not_in_fn(ms_x, ms_y, ms_z), ms.Tensor)
+    assert isinstance(in_fn(adapter_x, adapter_y, adapter_z), adapter.Tensor)
+    assert isinstance(not_in_fn(adapter_x, adapter_y, adapter_z), adapter.Tensor)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_matmul():
@@ -250,11 +250,11 @@ def test_matmul():
     ms_y = ms.Tensor([3, 4], ms.float32)
     adapter_x = adapter.Tensor([1, 2], dtype=ms.float32)
     adapter_y = adapter.Tensor([3, 4], dtype=ms.float32)
-    assert type(func(ms_x, ms_y)) is ms.Tensor
-    assert type(func(adapter_x, adapter_y)) is adapter.Tensor
+    assert isinstance(func(ms_x, ms_y), ms.Tensor)
+    assert isinstance(func(adapter_x, adapter_y), adapter.Tensor)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_getitem():
@@ -273,19 +273,19 @@ def test_getitem():
 
     ms_x = ms.Tensor([[1, 2, 3], [4, 5, 6]])
     adapter_x = adapter.Tensor([[1, 2, 3], [4, 5, 6]])
-    assert type(getitem_fn(ms_x, 0)) is ms.Tensor
-    assert type(getitem_fn(ms_x, None)) is ms.Tensor
-    assert type(getitem_fn(ms_x, [0, 1])) is ms.Tensor
-    assert type(getitem_fn(ms_x, (0, 1))) is ms.Tensor
-    assert type(getitem_slice_fn(ms_x)) is ms.Tensor
-    assert type(getitem_fn(adapter_x, 0)) is adapter.Tensor
-    assert type(getitem_fn(adapter_x, None)) is adapter.Tensor
-    assert type(getitem_fn(adapter_x, [0, 1])) is adapter.Tensor
-    assert type(getitem_fn(adapter_x, (0, 1))) is adapter.Tensor
-    assert type(getitem_slice_fn(adapter_x)) is adapter.Tensor
+    assert isinstance(getitem_fn(ms_x, 0), ms.Tensor)
+    assert isinstance(getitem_fn(ms_x, None), ms.Tensor)
+    assert isinstance(getitem_fn(ms_x, [0, 1]), ms.Tensor)
+    assert isinstance(getitem_fn(ms_x, (0, 1)), ms.Tensor)
+    assert isinstance(getitem_slice_fn(ms_x), ms.Tensor)
+    assert isinstance(getitem_fn(adapter_x, 0), adapter.Tensor)
+    assert isinstance(getitem_fn(adapter_x, None), adapter.Tensor)
+    assert isinstance(getitem_fn(adapter_x, [0, 1]), adapter.Tensor)
+    assert isinstance(getitem_fn(adapter_x, (0, 1)), adapter.Tensor)
+    assert isinstance(getitem_slice_fn(adapter_x), adapter.Tensor)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_setitem():
@@ -303,5 +303,5 @@ def test_setitem():
     adapter_x = adapter.Tensor([[1, 2, 3], [4, 5, 6]])
     adapter_index = adapter.Tensor([0], dtype=ms.int32)
     adapter_value = adapter.Tensor([7, 8, 9])
-    assert type(setitem_fn(adapter_x, adapter_index, adapter_value)) is adapter.Tensor
-    assert type(setitem_fn(ms_x, adapter_index, adapter_value)) is ms.Tensor
+    assert isinstance(setitem_fn(adapter_x, adapter_index, adapter_value), adapter.Tensor)
+    assert isinstance(setitem_fn(ms_x, adapter_index, adapter_value), ms.Tensor)

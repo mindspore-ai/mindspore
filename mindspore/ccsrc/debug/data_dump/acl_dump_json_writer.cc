@@ -38,13 +38,13 @@ void AclDumpJsonWriter::Parse() {
   auto dump_mode = dump_parser.input_output();
   MS_LOG(INFO) << "Dump mode is: " << dump_mode;
   switch (dump_mode) {
-    case 0:
+    case static_cast<uint32_t>(mindspore::DumpJsonParser::JsonInputOutput::DUMP_BOTH):
       dump_mode_ = "all";
       break;
-    case 1:
+    case static_cast<uint32_t>(mindspore::DumpJsonParser::JsonInputOutput::DUMP_INPUT):
       dump_mode_ = "input";
       break;
-    case 2:
+    case static_cast<uint32_t>(mindspore::DumpJsonParser::JsonInputOutput::DUMP_OUTPUT):
       dump_mode_ = "output";
       break;
     default:
@@ -72,13 +72,18 @@ void AclDumpJsonWriter::Parse() {
   }
 }
 
-bool AclDumpJsonWriter::WriteToFile(uint32_t device_id, uint32_t step_id) {
+bool AclDumpJsonWriter::WriteToFile(uint32_t device_id, uint32_t step_id, bool is_init) {
   nlohmann::json dump_list;
   if (!layer_.empty()) {
     dump_list.push_back({{"layer", layer_}});
   }
   std::string dump_path = dump_base_path_ + "/" + std::to_string(step_id);
-  nlohmann::json dump = {{"dump_path", dump_path}, {"dump_mode", dump_mode_}};
+  nlohmann::json dump;
+  if (is_init == True) {
+    dump = {{"dump_path", dump_base_path_}, {"dump_mode", dump_mode_}, {"dump_step", std::to_string(2147483647)}};
+  } else {
+    dump = {{"dump_path", dump_path}, {"dump_mode", dump_mode_}};
+  }
   if (!dump_list.empty()) {
     dump["dump_list"] = dump_list;
   } else {

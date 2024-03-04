@@ -1984,7 +1984,7 @@ inline AnalysisContextPtr FuncGraphSpecializer::GetAnalysisContext(const Analysi
     return cached_context;
   }
   // if it is a bprop meta func graph, need to make a new context and do static analysis in ProcessNode.
-  return parent_context->NewContext(fg, normalized_args_abs_list);
+  return NewContext(parent_context, fg, normalized_args_abs_list);
 }
 }  // namespace abstract
 }  // namespace mindspore

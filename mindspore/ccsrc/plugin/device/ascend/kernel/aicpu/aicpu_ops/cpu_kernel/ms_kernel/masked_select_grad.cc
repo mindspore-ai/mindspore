@@ -20,8 +20,8 @@
 #include "Eigen/Core"
 #include "securec/include/securec.h"
 #include "cpu_types.h"
-#include "common/kernel_log.h"
-#include "cpu_kernel/common/status.h"
+#include "inc/kernel_log.h"
+#include "context/common/status.h"
 #include "utils/broadcast_iterator.h"
 #include "utils/kernel_util.h"
 

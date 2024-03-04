@@ -16,7 +16,7 @@
 #include "cpu_kernel/ms_kernel/sparse_tensor_to_csr_sparse_matrix.h"
 #include <complex>
 #include <numeric>
-#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "context/inc/cpu_kernel_utils.h"
 #include "utils/kernel_util.h"
 
 namespace {

@@ -20,6 +20,7 @@
 #include <vector>
 #include <memory>
 #include <map>
+#include <unordered_map>
 #include <algorithm>
 #include "ops/structure_op_name.h"
 #include "utils/log_adapter.h"
@@ -45,6 +46,8 @@ using EdgePtr = mindspore::pynative::EdgePtr;
 
 namespace mindspore::runtime {
 namespace {
+std::unordered_map<std::string, DeviceContext *> g_device_contexts;
+
 // 1. Device type is different in heterogeneous scenes.
 // 2. The device address format is different.
 void UpdateInputTensorFromDevice(const std::vector<AnfNodePtr> &input_nodes,
@@ -195,12 +198,6 @@ void CopyNodeValueToDevice(const device::DeviceAddressPtr &device_address, const
   const void *node_value = kernel_tensor->GetValuePtr();
   MS_EXCEPTION_IF_NULL(node_value);
   auto data_type_id = kernel_tensor->dtype_id();
-  if (data_type_id == kObjectTypeString) {
-    // NOTE: For string type, ge::StringHead.len does not include '\0', since kernel_tensor allocated size including
-    // '\0', see method `CreateDeviceAddressForScalarAndString` defined in `device_address_utils.cc`, so here
-    // `data_size` needs to decrease `1`
-    data_size -= 1;
-  }
   auto format = kernel_tensor->GetStringFormat();
   MS_LOG(DEBUG) << "Copy to device, node:" << common::AnfAlgo::GetNodeDebugString(node);
   if (!device_address->SyncHostToDevice(trans::GetRuntimePaddingShape(node, 0), data_size, data_type_id, node_value,
@@ -820,6 +817,29 @@ void OpRunner::LaunchKernelTask(const runtime::KernelTaskType &task_type, Device
     MS_LOG(EXCEPTION) << "ExecuteKernelTask failed, task_type:" << task_type;
   }
   MS_LOG(DEBUG) << "End";
+}
+
+DeviceContext *OpRunner::GetDeviceContext(const std::string &device_type) {
+  auto iter = g_device_contexts.find(device_type);
+  if (iter != g_device_contexts.end()) {
+    return iter->second;
+  }
+
+  auto device_id = MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+  auto device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_type, device_id});
+  MS_EXCEPTION_IF_NULL(device_context);
+  device_context->Initialize();
+
+  MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
+  device_context->device_res_manager_->BindDeviceToCurrentThread(false);
+  g_device_contexts[device_type] = device_context;
+  MS_LOG(DEBUG) << "Get device context of " << device_type << " id " << device_id;
+  return device_context;
+}
+
+void OpRunner::ChildAfterFork() {
+  MS_LOG(DEBUG) << "Clear device context " << g_device_contexts.size();
+  g_device_contexts.clear();
 }
 
 void DynamicOpRunner::RunSingleOpGraph(const session::BackendOpRunInfoPtr &op_run_info,

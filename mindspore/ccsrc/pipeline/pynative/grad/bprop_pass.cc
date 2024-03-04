@@ -659,7 +659,9 @@ void PyNativePassForward::ReverseMakeTupleNode(const CNodePtr &cnode, ValuePtrLi
                                       inputs_value->begin() + SizeToLong(kIndex0) + dyn_input_sizes[i]);
       (void)inputs_value->insert(item, std::make_shared<ValueTuple>(value_tuple));
     } else {
-      (void)new_inputs.emplace_back(cnode->input(i + kIndex1));
+      auto last_index = (i == 0 ? 0 : i - 1);
+      auto skip_index = (dyn_input_sizes[last_index] == -1 ? 1 : dyn_input_sizes[last_index]);
+      (void)new_inputs.emplace_back(cnode->input(i + skip_index));
     }
   }
   cnode->set_inputs(new_inputs);

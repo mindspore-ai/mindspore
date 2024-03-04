@@ -23,7 +23,7 @@ thread_local int g_hash_offset = 0;
 typedef void (*AddTensorAddrToCachedList)(void *addr);
 
 void GatherInfo(mindspore::kernel::KernelTensor *tensor) {
-  if (tensor == nullptr) {
+  if (tensor == nullptr || tensor->type_id() == kMetaTypeNone) {
     return;
   }
 
@@ -150,6 +150,18 @@ void GatherInfo(const ScalarPtr &scalar) {
   } else if (scalar->isa<Int32Imm>()) {
     auto value = GetValue<int32_t>(scalar);
     MemcpyToBuf(&value, sizeof(int32_t));
+  } else if (scalar->isa<Int8Imm>()) {
+    auto value = GetValue<int8_t>(scalar);
+    MemcpyToBuf(&value, sizeof(int8_t));
+  } else if (scalar->isa<Int16Imm>()) {
+    auto value = GetValue<int16_t>(scalar);
+    MemcpyToBuf(&value, sizeof(int16_t));
+  } else if (scalar->isa<UInt8Imm>()) {
+    auto value = GetValue<uint8_t>(scalar);
+    MemcpyToBuf(&value, sizeof(uint8_t));
+  } else if (scalar->isa<FP64Imm>()) {
+    auto value = GetValue<double>(scalar);
+    MemcpyToBuf(&value, sizeof(double));
   } else {
     MS_LOG(EXCEPTION) << "Currently not support value: " << scalar->ToString();
   }
@@ -183,7 +195,7 @@ void GatherInfo(const std::optional<string> &s) {
 void GatherInfo() {}
 
 void RefreshAddr(mindspore::kernel::KernelTensor *tensor) {
-  if (tensor == nullptr) {
+  if (tensor == nullptr || tensor->type_id() == kMetaTypeNone) {
     return;
   }
 

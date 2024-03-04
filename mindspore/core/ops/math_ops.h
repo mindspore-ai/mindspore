@@ -79,7 +79,6 @@ GVAR_DEF(PrimitivePtr, kPrimReduceProdD, std::make_shared<Primitive>(kReduceProd
 GVAR_DEF(PrimitivePtr, kPrimCentralization, std::make_shared<Primitive>("Centralization"));
 GVAR_DEF(PrimitivePtr, kPrimNegGrad, std::make_shared<Primitive>(kNegOpName));
 GVAR_DEF(PrimitivePtr, kPrimLcm, std::make_shared<Primitive>("Lcm"));
-GVAR_DEF(PrimitivePtr, kPrimSub, std::make_shared<Primitive>(kSubOpName));
 GVAR_DEF(PrimitivePtr, kPrimHypot, std::make_shared<Primitive>("Hypot"));
 GVAR_DEF(PrimitivePtr, kPrimHeaviside, std::make_shared<Primitive>("Heaviside"));
 GVAR_DEF(PrimitivePtr, kPrimMulNoNan, std::make_shared<Primitive>(kMulNoNanOpName));

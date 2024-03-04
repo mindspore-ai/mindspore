@@ -18,7 +18,7 @@
 
 #include <algorithm>
 #include <vector>
-#include "cpu_kernel_utils.h"
+#include "inc/ms_cpu_kernel.h"
 #include "utils/philox_random.h"
 
 class Rectangle {

@@ -16,7 +16,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_SEGMENTPROD_H_
 #define AICPU_KERNELS_NORMALIZED_SEGMENTPROD_H_
 
-#include "cpu_kernel_utils.h"
+#include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
 class SegmentProdCpuKernel : public CpuKernel {

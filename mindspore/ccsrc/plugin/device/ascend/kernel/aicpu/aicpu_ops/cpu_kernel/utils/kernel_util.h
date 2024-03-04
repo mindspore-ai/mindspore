@@ -27,7 +27,7 @@
 
 #include "cpu_context.h"
 #include "mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/common/kernel_log.h"
-#include "cpu_kernel/common/status.h"
+#include "context/common/status.h"
 
 namespace aicpu {
 constexpr uint32_t kResvCpuNum = 2;
