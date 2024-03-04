@@ -178,6 +178,13 @@ class Graph {
   void SetSideEffectReplacedMap(ValueNode *newNode, ValueNode *old) { replace_map.insert({newNode, old}); }
   std::map<ValueNode *, ValueNode *> GetSideEffectReplacedMap() { return replace_map; }
   std::map<ValueNode *, ValueNode *> GetSideEffectReplacedMap() const { return replace_map; }
+  std::vector<ValueNode *> GetSideEffectReplacedList() const {
+    std::vector<ValueNode *> replace_list;
+    for (auto &item : replace_map) {
+      replace_list.push_back(item.second);
+    }
+    return replace_list;
+  }
   void SetOldBreakBci(int bci) { old_break_bci_ = bci; }
   int GetOldBreakBci() { return old_break_bci_; }
 

@@ -1186,10 +1186,8 @@ void CodeBreakGenerator::Init(const Graph *graph, const GraphAnalyzer::CapturedI
   // top_graph_side_effect_vector;
   std::transform(graph->GetSideEffectNodes().begin(), graph->GetSideEffectNodes().end(),
                  std::back_inserter(alive_nodes), [](ValueNode *valueNode) { return valueNode; });
-
-  std::transform(graph->GetSideEffectReplacedMap().begin(), graph->GetSideEffectReplacedMap().end(),
-                 std::back_inserter(alive_nodes),
-                 [](std::pair<ValueNode *, ValueNode *> value_node_map) { return value_node_map.second; });
+  std::transform(graph->GetSideEffectReplacedList().begin(), graph->GetSideEffectReplacedList().end(),
+                 std::back_inserter(alive_nodes), [](ValueNode *valueNode) { return valueNode; });
 
   interpret_.inputs = graph->GetFrame(0).GetLocals();
   interpret_.outputs = std::move(alive_nodes);
