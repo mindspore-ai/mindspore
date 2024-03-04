@@ -2743,10 +2743,10 @@ class _MirrorSilentCheck(PrimitiveWithInfer):
     def __init__(self, min_steps=8):
         upper_thresh, sigma_thresh = self.get_thresh()
         self.min_steps = min_steps
-        self.thresh_l1 = sigma_thresh[0]
-        self.coeff_l1 = sigma_thresh[1]
-        self.thresh_l2 = upper_thresh[0]
-        self.coeff_l2 = upper_thresh[1]
+        self.thresh_l1 = upper_thresh[0]
+        self.coeff_l1 = sigma_thresh[0]
+        self.thresh_l2 = upper_thresh[1]
+        self.coeff_l2 = sigma_thresh[1]
         self.add_prim_attr('side_effect_mem', True)
 
     def parse_thresh(self, env_var_name, default_value, min_value):
@@ -2762,7 +2762,7 @@ class _MirrorSilentCheck(PrimitiveWithInfer):
 
     def get_thresh(self):
         upper_thresh = self.parse_thresh("NPU_ASD_UPPER_THRESH", "1000000,10000", 3)
-        sigma_thresh = self.parse_thresh("NPU_ASD_SIGMA_THRESH", "100000,100", 3)
+        sigma_thresh = self.parse_thresh("NPU_ASD_SIGMA_THRESH", "100000,5000", 3)
         return upper_thresh, sigma_thresh
 
     def infer_shape(self, x_shape, pre_shape, min_shape, max_shape, n_step, loss_scale_shape):

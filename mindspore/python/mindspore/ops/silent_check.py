@@ -29,7 +29,6 @@ from .primitive import Primitive
 NPU_ASD_ENABLE = 'NPU_ASD_ENABLE'
 
 
-
 class ASDBase:
     """
     ASD Base Class.
@@ -86,7 +85,7 @@ class ASDBase:
 class RmsNormASD(ASDBase):
     """
     RmsNorm with ASD.
-"""
+    """
 
     def __init__(self, *args, **kwargs):
         super().__init__(OriginRmsNorm, *args, **kwargs)
