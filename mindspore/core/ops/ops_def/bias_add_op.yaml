@@ -10,6 +10,8 @@ bias_add:
             default: "'NCHW'"
             prim_init: True
             arg_handler: str_to_enum
+    function:
+        disable: True
     returns:
         output:
             dtype: tensor
