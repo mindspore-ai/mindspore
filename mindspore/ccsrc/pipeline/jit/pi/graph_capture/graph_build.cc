@@ -2554,14 +2554,8 @@ bool GraphBuilder::HandleCallParameters(const py::object &func_info, CallNode *c
 static void SetGradFuncInfo(mindspore::pijit::CallNode *call_node);
 
 StopTraceReason MindGraphBuilder::TraceRun(const std::vector<py::object> &args) {
-  size_t i = 0;
-  if (!args.empty() && args[0].ptr() != nullptr && !GraphUtils::IsTensor(args[0]) &&
-      py::hasattr(args[0], common::SafeCStr(co_name_))) {
-    i = 1;  // skip self
-  }
-
   // Add function graph inputs.
-  for (; i < args.size(); ++i) {
+  for (size_t i = 0; i < args.size(); ++i) {
     MS_LOG(INFO) << "try add input: " << py::str(args[i]);
     FGBuilder()->AddInput(args[i]);
     MS_LOG(INFO) << "add input suc";
@@ -2619,8 +2613,21 @@ std::vector<py::object> MindGraphBuilder::GetNewArgs(CallNode *call_node, AObjec
   int argc = co->co_argcount + co->co_kwonlyargcount;
   argc += (co->co_flags & CO_VARARGS) ? 1 : 0;
   argc += (co->co_flags & CO_VARKEYWORDS) ? 1 : 0;
-  std::transform(f.GetLocals().begin(), f.GetLocals().begin() + argc, std::back_inserter(new_args),
-                 [](ValueNode *n) { return n->GetVobj() ? n->GetVobj()->GetPyObject() : py::object(); });
+  for (auto it = f.GetLocals().begin(); it != f.GetLocals().begin() + argc; it++) {
+    std::set<AObject::Type> unsupported_parameter = {
+      AObject::kTypeAnyValue,  AObject::kTypeFunction,      AObject::kTypeBoundMethod,
+      AObject::kTypePrimitive, AObject::kTypeMetaFuncGraph, AObject::kTypeCell,
+    };
+    auto vobj = (*it)->GetVobj();
+    if (vobj != nullptr) {
+      auto pyobj = vobj->GetPyObject();
+      if (pyobj.ptr() != nullptr) {
+        if (unsupported_parameter.find(AbstractObjectBase::GetPyType(pyobj.ptr())) == unsupported_parameter.end()) {
+          new_args.push_back(pyobj);
+        }
+      }
+    }
+  }
   return new_args;
 }
 
