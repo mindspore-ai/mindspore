@@ -565,6 +565,7 @@ enum PrimType {
   PrimType_Inner_CustomMaskedFill = 10014,
   PrimType_Inner_CustomTensorScatterMax = 10015,
   PrimType_Inner_CustomIsInf = 10016,
+  PrimType_Inner_CustomGatherDGradV2 = 10017,
   PrimType_InnerOpMax,
   PrimType_InnerOpMin = PrimType_Inner_ToFormat
 };
