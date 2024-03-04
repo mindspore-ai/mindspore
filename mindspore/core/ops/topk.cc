@@ -52,6 +52,12 @@ abstract::TupleShapePtr TopKInferShape(const PrimitivePtr &primitive, const std:
 
   // 2rd input is a Tensor when TopK is a dynamic shape operator
   if (CheckAndConvertUtils::IsTensor(input_args[kInputIndex1])) {
+    auto k_dim = input_args[kInputIndex1]->GetShape()->GetShapeVector().size();
+    if (k_dim > 1) {
+      MS_LOG(EXCEPTION) << "For '" << prim_name
+                        << "', the dimension of 'k' should only be 0 or 1 when 'k' is a Tensor, but got: " << k_dim
+                        << ".";
+    }
     auto k_val = CheckAndConvertUtils::CheckTensorIntValue("k", input_args[kInputIndex1]->GetValue(), prim_name,
                                                            input_args[kInputIndex1]->GetType());
     k_v = k_val[0];
@@ -78,7 +84,7 @@ TuplePtr TopKInferType(const PrimitivePtr &primitive, const std::vector<Abstract
   auto output0_type = input_args[kInputIndex0]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", output0_type, common_valid_types, prim_name);
   auto k_type = input_args[kInputIndex1]->GetType();
-  const std::set<TypePtr> int_types = {kInt8, kInt16, kInt32, kInt64};
+  const std::set<TypePtr> int_types = {kInt32, kInt64};
   (void)CheckAndConvertUtils::CheckTypeValid("k", k_type, int_types, prim_name);
   auto output1_type = kInt32;
   return std::make_shared<Tuple>(std::vector<TypePtr>{output0_type, output1_type});
