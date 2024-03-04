@@ -7,8 +7,6 @@ select:
             dtype: tensor
         y:
             dtype: tensor
-    args_signature:
-        dtype_group: (x, y)
     returns:
         output:
             dtype: tensor
