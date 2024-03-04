@@ -519,7 +519,7 @@ class DvmKernelBuilder {
     Construct(func_graph);
     if (!is_dynamic_) {
       // Static shape need codegen
-      std::vector<ShapeVector> inputs_shape(kernel_mod_->GetInputNum());
+      std::vector<ShapeVector> inputs_shape(cnode->size() - 1);
       for (size_t i = 0; i < inputs_shape.size(); ++i) {
         inputs_shape[i] = AnfAlgo::GetInputDeviceShape(cnode, i);
       }
