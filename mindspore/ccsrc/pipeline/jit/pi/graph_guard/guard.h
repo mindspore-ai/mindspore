@@ -55,7 +55,7 @@ class OptGuard : public std::enable_shared_from_this<OptGuard> {
   /// \param[in] fail to record the items which fail to guard
   /// \param[in] perf to record the performance of guard
   /// \param[out] the variables have been modified
-  virtual bool Check(void *tag, const PyFrameObject *frame, bool print, std::map<size_t, PyObject *> *cache = nullptr,
+  virtual bool Check(const PyFrameObject *frame, bool print, std::map<size_t, PyObject *> *cache = nullptr,
                      std::map<size_t, bool> *success = nullptr, std::map<size_t, bool> *fail = nullptr,
                      bool perf = false);
   /// \brief guard the variable which has trace to retrieve

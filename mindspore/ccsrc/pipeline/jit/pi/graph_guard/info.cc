@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 #include "pipeline/jit/pi/graph_guard/info.h"
-#include "pipeline/jit/pi/utils/utils.h"
 #include <sstream>
 #include <map>
 #include <unordered_map>
+#include <algorithm>
+#include <numeric>
+#include "pipeline/jit/pi/utils/utils.h"
 
 namespace mindspore {
 namespace pijit {
@@ -28,6 +30,41 @@ static constexpr char kEndFlag = '}';
 static constexpr char kArrayBeginFlag = '[';
 static constexpr char kArrayEndFlag = ']';
 static constexpr size_t kInitLimit = 1024;
+
+template <typename T>
+size_t StoreScalar(uint8_t *buf, size_t ptr, T val) {
+  uint8_t *pVal = reinterpret_cast<uint8_t *>(&val);
+  constexpr int kScalarSize = sizeof(T);
+  for (int idx = 0; idx < kScalarSize; ++idx) {
+    buf[ptr++] = pVal[idx];
+  }
+  return ptr;
+}
+
+template <typename T>
+size_t AppendScalar(uint8_t *buf, size_t ptr, T v) {
+  ptr = StoreScalar(buf, ptr, v);
+  ptr = StoreScalar(buf, ptr, kSepFlag);
+  return ptr;
+}
+
+template <typename T>
+size_t StoreVector(uint8_t *buf, size_t ptr, const std::vector<T> &val) {
+  T *pVal = const_cast<T *>(val.data());
+  size_t szVal = val.size() * sizeof(T);
+  ptr = StoreScalar(buf, ptr, szVal);
+  memcpy(buf + ptr, pVal, szVal);
+  return ptr + szVal;
+}
+
+template <typename T>
+size_t AppendVector(uint8_t *buf, size_t ptr, const std::vector<T> &v) {
+  ptr = StoreScalar(buf, ptr, kArrayBeginFlag);
+  ptr = StoreVector(buf, ptr, v);
+  ptr = StoreScalar(buf, ptr, kArrayEndFlag);
+  ptr = StoreScalar(buf, ptr, kSepFlag);
+  return ptr;
+}
 
 InfoPack::InfoPack() : id_(kInvalidId), buf_(std::make_unique<uint8_t[]>(kInitLimit)), ptr_(0), limit_(kInitLimit) {}
 
@@ -50,117 +87,92 @@ uint8_t *InfoPack::Buf(size_t *sz) const {
 
 void InfoPack::Update() { id_ = CalcBuffer(buf_.get(), ptr_); }
 
-#define ALLOC_IF_NEED(v) AllocIfNeed(sizeof(v))
-#define ALLOC2_IF_NEED(v, w) AllocIfNeed(sizeof(v) + sizeof(w))
-#define ALLOC3_IF_NEED(v, w, x) AllocIfNeed(sizeof(v) + sizeof(w) + sizeof(x))
-#define ALLOC3_ARR_IF_NEED(v, w, x, a) AllocIfNeed(sizeof(v) + sizeof(w) + sizeof(x) + sizeof(a[0]) * a.size())
-#define ASSIGN_BYTE(v) *(buf_.get() + ptr_++) = (uint8_t)v
-#define ASSIGN_VALUE(v)                     \
-  memcpy(buf_.get() + ptr_, &v, sizeof(v)); \
-  ptr_ += sizeof(v)
-#define ASSIGN_ARRAY(a)                                         \
-  memcpy(buf_.get() + ptr_, a.data(), sizeof(a[0]) * a.size()); \
-  ptr_ += sizeof(a[0]) * a.size()
-#define GET_BYTE *(buf_.get() + ptr_ - 1)
-
 InfoPack &InfoPack::Begin() {
-  ALLOC_IF_NEED(kBeginFlag);
-  ASSIGN_BYTE(kBeginFlag);
+  AllocIfNeed(sizeof(kBeginFlag));
+  *(buf_.get() + ptr_++) = (uint8_t)kBeginFlag;
   return *this;
 }
 
 InfoPack &InfoPack::End() {
-  if (GET_BYTE == kSepFlag) {
-    GET_BYTE = kEndFlag;
+  if (buf_.get()[ptr_ - 1] == kSepFlag) {
+    buf_.get()[ptr_ - 1] = kEndFlag;
   } else {
-    ALLOC_IF_NEED(kEndFlag);
-    ASSIGN_BYTE(kEndFlag);
+    AllocIfNeed(sizeof(kEndFlag));
+    *(buf_.get() + ptr_++) = (uint8_t)kEndFlag;
   }
   return *this;
 }
 
 InfoPack &InfoPack::operator<<(int8_t v) {
-  ALLOC2_IF_NEED(v, kSepFlag);
-  ASSIGN_BYTE(v);
-  ASSIGN_BYTE(kSepFlag);
+  AllocIfNeed(sizeof(v) + sizeof(kSepFlag));
+  ptr_ = AppendScalar(buf_.get(), ptr_, v);
   return *this;
 }
 
 InfoPack &InfoPack::operator<<(uint8_t v) {
-  ALLOC2_IF_NEED(v, kSepFlag);
-  ASSIGN_BYTE(v);
-  ASSIGN_BYTE(kSepFlag);
+  AllocIfNeed(sizeof(v) + sizeof(kSepFlag));
+  ptr_ = AppendScalar(buf_.get(), ptr_, v);
   return *this;
 }
 
 InfoPack &InfoPack::operator<<(int16_t v) {
-  ALLOC2_IF_NEED(v, kSepFlag);
-  ASSIGN_VALUE(v);
-  ASSIGN_BYTE(kSepFlag);
+  AllocIfNeed(sizeof(v) + sizeof(kSepFlag));
+  ptr_ = AppendScalar(buf_.get(), ptr_, v);
   return *this;
 }
 
 InfoPack &InfoPack::operator<<(uint16_t v) {
-  ALLOC2_IF_NEED(v, kSepFlag);
-  ASSIGN_VALUE(v);
-  ASSIGN_BYTE(kSepFlag);
+  AllocIfNeed(sizeof(v) + sizeof(kSepFlag));
+  ptr_ = AppendScalar(buf_.get(), ptr_, v);
   return *this;
 }
 
 InfoPack &InfoPack::operator<<(int32_t v) {
-  ALLOC2_IF_NEED(v, kSepFlag);
-  ASSIGN_VALUE(v);
-  ASSIGN_BYTE(kSepFlag);
+  AllocIfNeed(sizeof(v) + sizeof(kSepFlag));
+  ptr_ = AppendScalar(buf_.get(), ptr_, v);
   return *this;
 }
 
 InfoPack &InfoPack::operator<<(uint32_t v) {
-  ALLOC2_IF_NEED(v, kSepFlag);
-  ASSIGN_VALUE(v);
-  ASSIGN_BYTE(kSepFlag);
+  AllocIfNeed(sizeof(v) + sizeof(kSepFlag));
+  ptr_ = AppendScalar(buf_.get(), ptr_, v);
   return *this;
 }
 
 InfoPack &InfoPack::operator<<(int64_t v) {
-  ALLOC2_IF_NEED(v, kSepFlag);
-  ASSIGN_VALUE(v);
-  ASSIGN_BYTE(kSepFlag);
+  AllocIfNeed(sizeof(v) + sizeof(kSepFlag));
+  ptr_ = AppendScalar(buf_.get(), ptr_, v);
   return *this;
 }
 
 InfoPack &InfoPack::operator<<(uint64_t v) {
-  ALLOC2_IF_NEED(v, kSepFlag);
-  ASSIGN_VALUE(v);
-  ASSIGN_BYTE(kSepFlag);
+  AllocIfNeed(sizeof(v) + sizeof(kSepFlag));
+  ptr_ = AppendScalar(buf_.get(), ptr_, v);
   return *this;
 }
 
 InfoPack &InfoPack::operator<<(float v) {
-  ALLOC2_IF_NEED(v, kSepFlag);
-  ASSIGN_VALUE(v);
-  ASSIGN_BYTE(kSepFlag);
+  AllocIfNeed(sizeof(v) + sizeof(kSepFlag));
+  ptr_ = AppendScalar(buf_.get(), ptr_, v);
   return *this;
 }
 
 InfoPack &InfoPack::operator<<(double v) {
-  ALLOC2_IF_NEED(v, kSepFlag);
-  ASSIGN_VALUE(v);
-  ASSIGN_BYTE(kSepFlag);
+  AllocIfNeed(sizeof(v) + sizeof(kSepFlag));
+  ptr_ = AppendScalar(buf_.get(), ptr_, v);
   return *this;
 }
 
 InfoPack &InfoPack::operator<<(bool vv) {
   uint8_t v = vv ? 1 : 0;
-  ALLOC2_IF_NEED(v, kSepFlag);
-  ASSIGN_BYTE(v);
-  ASSIGN_BYTE(kSepFlag);
+  AllocIfNeed(sizeof(v) + sizeof(kSepFlag));
+  ptr_ = AppendScalar(buf_.get(), ptr_, v);
   return *this;
 }
 
 InfoPack &InfoPack::operator<<(void *v) {
-  ALLOC2_IF_NEED(v, kSepFlag);
-  ASSIGN_VALUE(v);
-  ASSIGN_BYTE(kSepFlag);
+  AllocIfNeed(sizeof(v) + sizeof(kSepFlag));
+  ptr_ = AppendScalar(buf_.get(), ptr_, v);
   return *this;
 }
 
@@ -168,14 +180,12 @@ InfoPack &InfoPack::operator<<(PyObject *vv) {
   uint8_t v = vv != nullptr ? 1 : 0;
   if (vv != nullptr) {
     size_t w = CalcString(std::string(py::str(vv)));
-    ALLOC3_IF_NEED(v, w, kSepFlag);
-    ASSIGN_BYTE(v);
-    ASSIGN_VALUE(w);
-    ASSIGN_BYTE(kSepFlag);
+    AllocIfNeed(sizeof(v) + sizeof(w) + sizeof(kSepFlag));
+    ptr_ = StoreScalar(buf_.get(), ptr_, v);
+    ptr_ = AppendScalar(buf_.get(), ptr_, w);
   } else {
-    ALLOC2_IF_NEED(v, kSepFlag);
-    ASSIGN_BYTE(v);
-    ASSIGN_BYTE(kSepFlag);
+    AllocIfNeed(sizeof(v) + sizeof(kSepFlag));
+    ptr_ = AppendScalar(buf_.get(), ptr_, v);
   }
   return *this;
 }
@@ -184,144 +194,115 @@ InfoPack &InfoPack::operator<<(mindspore::BasePtr vv) {
   uint8_t v = vv != nullptr ? 1 : 0;
   if (vv != nullptr) {
     size_t w = CalcString(vv->ToString());
-    ALLOC3_IF_NEED(v, w, kSepFlag);
-    ASSIGN_BYTE(v);
-    ASSIGN_VALUE(w);
-    ASSIGN_BYTE(kSepFlag);
+    AllocIfNeed(sizeof(v) + sizeof(w) + sizeof(kSepFlag));
+    ptr_ = StoreScalar(buf_.get(), ptr_, v);
+    ptr_ = AppendScalar(buf_.get(), ptr_, w);
   } else {
-    ALLOC2_IF_NEED(v, kSepFlag);
-    ASSIGN_BYTE(v);
-    ASSIGN_BYTE(kSepFlag);
+    AllocIfNeed(sizeof(v) + sizeof(kSepFlag));
+    ptr_ = AppendScalar(buf_.get(), ptr_, v);
   }
   return *this;
 }
 
 InfoPack &InfoPack::operator<<(const std::string &vv) {
   size_t v = CalcString(vv);
-  ALLOC2_IF_NEED(v, kSepFlag);
-  ASSIGN_VALUE(v);
-  ASSIGN_BYTE(kSepFlag);
+  AllocIfNeed(sizeof(v) + sizeof(kSepFlag));
+  ptr_ = AppendScalar(buf_.get(), ptr_, v);
   return *this;
 }
 
 InfoPack &InfoPack::operator<<(const std::vector<int8_t> &v) {
-  ALLOC3_ARR_IF_NEED(kArrayBeginFlag, kArrayEndFlag, kSepFlag, v);
-  ASSIGN_BYTE(kArrayBeginFlag);
-  ASSIGN_ARRAY(v);
-  ASSIGN_BYTE(kArrayEndFlag);
-  ASSIGN_BYTE(kSepFlag);
+  AllocIfNeed(sizeof(kArrayBeginFlag) + sizeof(kArrayEndFlag) + sizeof(kSepFlag) + sizeof(v[0]) * v.size() +
+              sizeof(size_t));
+  ptr_ = AppendVector(buf_.get(), ptr_, v);
   return *this;
 }
 
 InfoPack &InfoPack::operator<<(const std::vector<uint8_t> &v) {
-  ALLOC3_ARR_IF_NEED(kArrayBeginFlag, kArrayEndFlag, kSepFlag, v);
-  ASSIGN_BYTE(kArrayBeginFlag);
-  ASSIGN_ARRAY(v);
-  ASSIGN_BYTE(kArrayEndFlag);
-  ASSIGN_BYTE(kSepFlag);
+  AllocIfNeed(sizeof(kArrayBeginFlag) + sizeof(kArrayEndFlag) + sizeof(kSepFlag) + sizeof(v[0]) * v.size() +
+              sizeof(size_t));
+  ptr_ = AppendVector(buf_.get(), ptr_, v);
   return *this;
 }
 
 InfoPack &InfoPack::operator<<(const std::vector<int16_t> &v) {
-  ALLOC3_ARR_IF_NEED(kArrayBeginFlag, kArrayEndFlag, kSepFlag, v);
-  ASSIGN_BYTE(kArrayBeginFlag);
-  ASSIGN_ARRAY(v);
-  ASSIGN_BYTE(kArrayEndFlag);
-  ASSIGN_BYTE(kSepFlag);
+  AllocIfNeed(sizeof(kArrayBeginFlag) + sizeof(kArrayEndFlag) + sizeof(kSepFlag) + sizeof(v[0]) * v.size() +
+              sizeof(size_t));
+  ptr_ = AppendVector(buf_.get(), ptr_, v);
   return *this;
 }
 
 InfoPack &InfoPack::operator<<(const std::vector<uint16_t> &v) {
-  ALLOC3_ARR_IF_NEED(kArrayBeginFlag, kArrayEndFlag, kSepFlag, v);
-  ASSIGN_BYTE(kArrayBeginFlag);
-  ASSIGN_ARRAY(v);
-  ASSIGN_BYTE(kArrayEndFlag);
-  ASSIGN_BYTE(kSepFlag);
+  AllocIfNeed(sizeof(kArrayBeginFlag) + sizeof(kArrayEndFlag) + sizeof(kSepFlag) + sizeof(v[0]) * v.size() +
+              sizeof(size_t));
+  ptr_ = AppendVector(buf_.get(), ptr_, v);
   return *this;
 }
 
 InfoPack &InfoPack::operator<<(const std::vector<int32_t> &v) {
-  ALLOC3_ARR_IF_NEED(kArrayBeginFlag, kArrayEndFlag, kSepFlag, v);
-  ASSIGN_BYTE(kArrayBeginFlag);
-  ASSIGN_ARRAY(v);
-  ASSIGN_BYTE(kArrayEndFlag);
-  ASSIGN_BYTE(kSepFlag);
+  AllocIfNeed(sizeof(kArrayBeginFlag) + sizeof(kArrayEndFlag) + sizeof(kSepFlag) + sizeof(v[0]) * v.size() +
+              sizeof(size_t));
+  ptr_ = AppendVector(buf_.get(), ptr_, v);
   return *this;
 }
 
 InfoPack &InfoPack::operator<<(const std::vector<uint32_t> &v) {
-  ALLOC3_ARR_IF_NEED(kArrayBeginFlag, kArrayEndFlag, kSepFlag, v);
-  ASSIGN_BYTE(kArrayBeginFlag);
-  ASSIGN_ARRAY(v);
-  ASSIGN_BYTE(kArrayEndFlag);
-  ASSIGN_BYTE(kSepFlag);
+  AllocIfNeed(sizeof(kArrayBeginFlag) + sizeof(kArrayEndFlag) + sizeof(kSepFlag) + sizeof(v[0]) * v.size() +
+              sizeof(size_t));
+  ptr_ = AppendVector(buf_.get(), ptr_, v);
   return *this;
 }
 
 InfoPack &InfoPack::operator<<(const std::vector<int64_t> &v) {
-  ALLOC3_ARR_IF_NEED(kArrayBeginFlag, kArrayEndFlag, kSepFlag, v);
-  ASSIGN_BYTE(kArrayBeginFlag);
-  ASSIGN_ARRAY(v);
-  ASSIGN_BYTE(kArrayEndFlag);
-  ASSIGN_BYTE(kSepFlag);
+  AllocIfNeed(sizeof(kArrayBeginFlag) + sizeof(kArrayEndFlag) + sizeof(kSepFlag) + sizeof(v[0]) * v.size() +
+              sizeof(size_t));
+  ptr_ = AppendVector(buf_.get(), ptr_, v);
   return *this;
 }
 
 InfoPack &InfoPack::operator<<(const std::vector<uint64_t> &v) {
-  ALLOC3_ARR_IF_NEED(kArrayBeginFlag, kArrayEndFlag, kSepFlag, v);
-  ASSIGN_BYTE(kArrayBeginFlag);
-  ASSIGN_ARRAY(v);
-  ASSIGN_BYTE(kArrayEndFlag);
-  ASSIGN_BYTE(kSepFlag);
+  AllocIfNeed(sizeof(kArrayBeginFlag) + sizeof(kArrayEndFlag) + sizeof(kSepFlag) + sizeof(v[0]) * v.size() +
+              sizeof(size_t));
+  ptr_ = AppendVector(buf_.get(), ptr_, v);
   return *this;
 }
 
 InfoPack &InfoPack::operator<<(const std::vector<float> &v) {
-  ALLOC3_ARR_IF_NEED(kArrayBeginFlag, kArrayEndFlag, kSepFlag, v);
-  ASSIGN_BYTE(kArrayBeginFlag);
-  ASSIGN_ARRAY(v);
-  ASSIGN_BYTE(kArrayEndFlag);
-  ASSIGN_BYTE(kSepFlag);
+  AllocIfNeed(sizeof(kArrayBeginFlag) + sizeof(kArrayEndFlag) + sizeof(kSepFlag) + sizeof(v[0]) * v.size() +
+              sizeof(size_t));
+  ptr_ = AppendVector(buf_.get(), ptr_, v);
   return *this;
 }
 
 InfoPack &InfoPack::operator<<(const std::vector<double> &v) {
-  ALLOC3_ARR_IF_NEED(kArrayBeginFlag, kArrayEndFlag, kSepFlag, v);
-  ASSIGN_BYTE(kArrayBeginFlag);
-  ASSIGN_ARRAY(v);
-  ASSIGN_BYTE(kArrayEndFlag);
-  ASSIGN_BYTE(kSepFlag);
+  AllocIfNeed(sizeof(kArrayBeginFlag) + sizeof(kArrayEndFlag) + sizeof(kSepFlag) + sizeof(v[0]) * v.size() +
+              sizeof(size_t));
+  ptr_ = AppendVector(buf_.get(), ptr_, v);
   return *this;
 }
 
 InfoPack &InfoPack::operator<<(const std::vector<bool> &vv) {
   std::vector<uint8_t> v;
   std::transform(vv.begin(), vv.end(), std::back_inserter(v), [](const auto &item) { return item ? 1 : 0; });
-  ALLOC3_ARR_IF_NEED(kArrayBeginFlag, kArrayEndFlag, kSepFlag, v);
-  ASSIGN_BYTE(kArrayBeginFlag);
-  ASSIGN_ARRAY(v);
-  ASSIGN_BYTE(kArrayEndFlag);
-  ASSIGN_BYTE(kSepFlag);
+  AllocIfNeed(sizeof(kArrayBeginFlag) + sizeof(kArrayEndFlag) + sizeof(kSepFlag) + sizeof(v[0]) * v.size() +
+              sizeof(size_t));
+  ptr_ = AppendVector(buf_.get(), ptr_, v);
   return *this;
 }
 
 InfoPack &InfoPack::operator<<(const std::vector<std::string> &vv) {
   std::vector<size_t> v;
   std::transform(vv.begin(), vv.end(), std::back_inserter(v), [this](const auto &item) { return CalcString(item); });
-  ALLOC3_ARR_IF_NEED(kArrayBeginFlag, kArrayEndFlag, kSepFlag, v);
-  ASSIGN_BYTE(kArrayBeginFlag);
-  ASSIGN_ARRAY(v);
-  ASSIGN_BYTE(kArrayEndFlag);
-  ASSIGN_BYTE(kSepFlag);
+  AllocIfNeed(sizeof(kArrayBeginFlag) + sizeof(kArrayEndFlag) + sizeof(kSepFlag) + sizeof(v[0]) * v.size() +
+              sizeof(size_t));
+  ptr_ = AppendVector(buf_.get(), ptr_, v);
   return *this;
 }
 
 InfoPack &InfoPack::operator<<(const std::vector<void *> &v) {
-  ALLOC3_ARR_IF_NEED(kArrayBeginFlag, kArrayEndFlag, kSepFlag, v);
-  ASSIGN_BYTE(kArrayBeginFlag);
-  ASSIGN_ARRAY(v);
-  ASSIGN_BYTE(kArrayEndFlag);
-  ASSIGN_BYTE(kSepFlag);
+  AllocIfNeed(sizeof(kArrayBeginFlag) + sizeof(kArrayEndFlag) + sizeof(kSepFlag) + sizeof(v[0]) * v.size() +
+              sizeof(size_t));
+  ptr_ = AppendVector(buf_.get(), ptr_, v);
   return *this;
 }
 
@@ -329,19 +310,16 @@ InfoPack &InfoPack::operator<<(const std::vector<PyObject *> &vv) {
   std::vector<size_t> v;
   std::transform(vv.begin(), vv.end(), std::back_inserter(v),
                  [this](const auto &item) { return CalcString(std::string(py::str(item))); });
-  ALLOC3_ARR_IF_NEED(kArrayBeginFlag, kArrayEndFlag, kSepFlag, v);
-  ASSIGN_BYTE(kArrayBeginFlag);
-  ASSIGN_ARRAY(v);
-  ASSIGN_BYTE(kArrayEndFlag);
-  ASSIGN_BYTE(kSepFlag);
+  AllocIfNeed(sizeof(kArrayBeginFlag) + sizeof(kArrayEndFlag) + sizeof(kSepFlag) + sizeof(v[0]) * v.size() +
+              sizeof(size_t));
+  ptr_ = AppendVector(buf_.get(), ptr_, v);
   return *this;
 }
 
 InfoPack &InfoPack::operator<<(const InfoPack &v) {
   size_t id = v.Id();
-  ALLOC2_IF_NEED(id, kSepFlag);
-  ASSIGN_VALUE(id);
-  ASSIGN_BYTE(kSepFlag);
+  AllocIfNeed(sizeof(id) + sizeof(kSepFlag));
+  ptr_ = AppendScalar(buf_.get(), ptr_, id);
   return *this;
 }
 
@@ -375,9 +353,10 @@ struct BufferHash {
   }
   size_t operator()(const std::vector<uint8_t> &k) const {
     size_t ret = 0;
-    for (auto v : k) {
-      ret ^= ((size_t)v) << 3;
-    }
+    ret = std::accumulate(k.begin(), k.end(), ret, [](size_t key, uint8_t v) {
+      static constexpr int kShiftKey = 3;
+      return (key << kShiftKey) + v;
+    });
     return ret;
   }
 };
@@ -417,6 +396,5 @@ void InfoPack::AllocIfNeed(size_t need) {
     buf_.reset(buf.release());
   }
 }
-
 }  // namespace pijit
 }  // namespace mindspore

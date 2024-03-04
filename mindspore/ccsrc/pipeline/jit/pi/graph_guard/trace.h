@@ -204,6 +204,11 @@ class OpTrace : public Trace {
  public:
   OpTrace(PyObject *obj, int opcode, int opargs, TraceVector params, std::string name = "");
   virtual ~OpTrace() = default;
+  virtual int GetOpCode();
+  virtual int GetOpArgs();
+  virtual TracePtr GetParam(size_t idx);
+  virtual size_t GetParamCount();
+  virtual std::string GetName();
   virtual void Replace(std::shared_ptr<Trace> dst, std::shared_ptr<Trace> src);
   virtual PyObject *Retrieve(PTraceContext context, bool perf = false);
   virtual std::string ToString(bool include_param = true);

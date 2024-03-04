@@ -389,7 +389,7 @@ class ListData : public ItemData {
  protected:
   void SubInfo(InfoPack *info) override {
     (*info) << uint8_t(tp_);
-    (*info) << listVar_.size();
+    (*info) << uint64_t(listVar_.size());
     for (auto v : listVar_) {
       (*info) << v->Info();
     }
@@ -572,11 +572,11 @@ class DictData : public ItemData {
  protected:
   void SubInfo(InfoPack *info) override {
     (*info) << dt_;
-    (*info) << listK_.size();
+    (*info) << uint64_t(listK_.size());
     for (auto i : listK_) {
       (*info) << i->Info();
     }
-    (*info) << listV_.size();
+    (*info) << uint64_t(listV_.size());
     for (auto i : listV_) {
       (*info) << i->Info();
     }
@@ -1248,7 +1248,7 @@ class TensorData : public MetaTensorData {
     MetaTensorData::SubInfo(info);
     (*info) << is_forward_output_ << init_flag_ << graph_output_ << cast_dtype_ << base_shape_ptr_
             << uint8_t(compression_type_) << tensor_name_;
-    (*info) << quant_params_.size();
+    (*info) << uint64_t(quant_params_.size());
     for (auto qp : quant_params_) {
       (*info) << qp;
     }
@@ -1589,11 +1589,11 @@ class PrimitiveData : public ItemData {
 
  protected:
   void SubInfo(InfoPack *info) override {
-    (*info) << listK_.size();
+    (*info) << uint64_t(listK_.size());
     for (auto item : listK_) {
       (*info) << item->Info();
     }
-    (*info) << listV_.size();
+    (*info) << uint64_t(listV_.size());
     for (auto item : listV_) {
       (*info) << item->Info();
     }
@@ -1669,11 +1669,11 @@ class CellData : public ItemData {
 
  protected:
   void SubInfo(InfoPack *info) override {
-    (*info) << listK_.size();
+    (*info) << uint64_t(listK_.size());
     for (auto item : listK_) {
       (*info) << item->Info();
     }
-    (*info) << listV_.size();
+    (*info) << uint64_t(listV_.size());
     for (auto item : listV_) {
       (*info) << item->Info();
     }
@@ -1828,15 +1828,21 @@ TracePtr GuardItem::GetTrace() { return var_; }
 
 bool GuardItem::operator==(const GuardItem &obj) const { return type_ == obj.type_ && *var_ == *(obj.var_); }
 
-#define GUARD_ITEM_PERF_START(enable, total)               \
-  if (enable) {                                            \
-    OptGuardPerf::GetGuardPerf()->LogItemPerfStart(total); \
-  }
+static constexpr int kGuardItemTotalStage = 2;
+static constexpr int kGuardItemRetrieveStage = 0;
+static constexpr int kGuardItemCompareStage = 1;
 
-#define GUARD_ITEM_PERF_STAGE(enable, item, stage)             \
-  if (enable) {                                                \
-    OptGuardPerf::GetGuardPerf()->LogItemPerfEnd(item, stage); \
+static void GuardItemPerfStart(bool enable, int total) {
+  if (enable) {
+    OptGuardPerf::GetGuardPerf()->LogItemPerfStart(total);
   }
+}
+
+static void GuardItemPerfStage(bool enable, GuardItem *item, int stage) {
+  if (enable) {
+    OptGuardPerf::GetGuardPerf()->LogItemPerfEnd(item, stage);
+  }
+}
 
 class EqGuard : public GuardItem {
  public:
@@ -1852,11 +1858,11 @@ class EqGuard : public GuardItem {
     if (var_->IsConst()) {
       return true;
     }
-    GUARD_ITEM_PERF_START(perf, 2)
+    GuardItemPerfStart(perf, kGuardItemTotalStage);
     PyObject *obj = GetObjectFromTrace(frame, var_, cache, perf);
-    GUARD_ITEM_PERF_STAGE(perf, this, 0)
+    GuardItemPerfStage(perf, this, kGuardItemRetrieveStage);
     bool ret = Check(obj);
-    GUARD_ITEM_PERF_STAGE(perf, this, 1)
+    GuardItemPerfStage(perf, this, kGuardItemCompareStage);
     if (obj != NULL) {
       Py_DECREF(obj);
     }
@@ -1943,11 +1949,11 @@ class TypeGuard : public GuardItem {
     if (var_->IsConst()) {
       return true;
     }
-    GUARD_ITEM_PERF_START(perf, 2)
+    GuardItemPerfStart(perf, kGuardItemTotalStage);
     PyObject *obj = GetObjectFromTrace(frame, var_, cache, perf);
-    GUARD_ITEM_PERF_STAGE(perf, this, 0)
+    GuardItemPerfStage(perf, this, kGuardItemRetrieveStage);
     bool ret = Check(obj);
-    GUARD_ITEM_PERF_STAGE(perf, this, 1)
+    GuardItemPerfStage(perf, this, kGuardItemCompareStage);
     if (var_->GetTraceType() != TraceType::Type && obj != NULL) {
       Py_DECREF(obj);
     }
@@ -2019,11 +2025,11 @@ class IdGuard : public GuardItem {
     if (var_->IsConst()) {
       return true;
     }
-    GUARD_ITEM_PERF_START(perf, 2)
+    GuardItemPerfStart(perf, kGuardItemTotalStage);
     PyObject *obj = GetObjectFromTrace(frame, var_, cache, perf);
-    GUARD_ITEM_PERF_STAGE(perf, this, 0)
+    GuardItemPerfStage(perf, this, kGuardItemRetrieveStage);
     bool ret = Check(obj);
-    GUARD_ITEM_PERF_STAGE(perf, this, 1)
+    GuardItemPerfStage(perf, this, kGuardItemCompareStage);
     if (obj != NULL) {
       Py_DECREF(obj);
     }
@@ -2089,11 +2095,11 @@ class ReprGuard : public GuardItem {
     if (var_->IsConst()) {
       return true;
     }
-    GUARD_ITEM_PERF_START(perf, 2)
+    GuardItemPerfStart(perf, kGuardItemTotalStage);
     PyObject *obj = GetObjectFromTrace(frame, var_, cache, perf);
-    GUARD_ITEM_PERF_STAGE(perf, this, 0)
+    GuardItemPerfStage(perf, this, kGuardItemRetrieveStage);
     bool ret = Check(obj);
-    GUARD_ITEM_PERF_STAGE(perf, this, 1)
+    GuardItemPerfStage(perf, this, kGuardItemCompareStage);
     if (obj != nullptr) {
       Py_DECREF(obj);
     }
@@ -2184,11 +2190,11 @@ class AttrGuard : public GuardItem {
     if (var_->IsConst()) {
       return true;
     }
-    GUARD_ITEM_PERF_START(perf, 2)
+    GuardItemPerfStart(perf, kGuardItemTotalStage);
     PyObject *obj = GetObjectFromTrace(frame, var_, cache, perf);
-    GUARD_ITEM_PERF_STAGE(perf, this, 0)
+    GuardItemPerfStage(perf, this, kGuardItemRetrieveStage);
     bool ret = CheckIntern(obj);
-    GUARD_ITEM_PERF_STAGE(perf, this, 1)
+    GuardItemPerfStage(perf, this, kGuardItemCompareStage);
     if (obj != NULL) {
       Py_DECREF(obj);
     }
