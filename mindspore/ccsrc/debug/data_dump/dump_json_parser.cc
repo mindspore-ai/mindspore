@@ -926,7 +926,7 @@ bool DumpJsonParser::IsHCCLKernelInput(const std::string &kernel_name) const {
 bool DumpJsonParser::IsKernelByKernel() {
   bool is_kbk = false;
   auto env_enable_kbk = common::GetEnv("MS_ACL_DUMP_CFG_PATH");
-  auto kbk_enable_kbk = common::GetEnv("GRAPH_OP_RNU");
+  auto kbk_enable_kbk = common::GetEnv("GRAPH_OP_RUN");
   if ((!env_enable_kbk.empty() && env_enable_kbk == "1") || (!env_enable_kbk.empty() && kbk_enable_kbk == "1")) {
     is_kbk = true;
   }
