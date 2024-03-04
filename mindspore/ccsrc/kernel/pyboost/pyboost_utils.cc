@@ -409,6 +409,9 @@ std::pair<bool, KernelAttr> PyBoostUtils::SelectKernel(const std::vector<Abstrac
                                                        const std::string &op_name) {
   // only support CPU
   const auto &kernel_mod = device_context->GetKernelExecutor(false)->CreateKernelMod(op_name);
+  if (kernel_mod == nullptr) {
+    MS_LOG(EXCEPTION) << "The kernel " << op_name << " unregistered.";
+  }
   const auto &support_list = kernel_mod->GetOpSupport();
   const auto &inputs_dtypes = GetTypeFromAbstractBase(inputs_abs);
   const auto &output_dtypes = GetTypeFromAbstractBase(outputs_abs);
