@@ -54,6 +54,7 @@
 #include "pipeline/jit/ps/pipeline_split.h"
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
+#include "utils/ms_context.h"
 #if defined(__linux__) && defined(WITH_BACKEND)
 #include "include/backend/distributed/ps/util.h"
 #endif
@@ -115,6 +116,13 @@ bool StepAutoParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &) {
   bool changes;
   if (is_pre_action) {
     root->set_flag(AUTO_PARALLEL_FINISH_PRE_ACTION, true);
+    auto manager = root->manager();
+    const auto &graphs = manager->func_graphs();
+    bool is_training = std::any_of(graphs.cbegin(), graphs.cend(),
+                                   [](auto cur_graph) -> bool { return cur_graph->has_flag(kTraining); });
+    if (is_training) {
+      root->set_flag(kTraining, true);
+    }
     changes = true;
   } else {
     changes = false;
