@@ -21,6 +21,7 @@ from mindspore.common.dtype import type_size_in_bytes
 from mindspore._c_expression import TensorNode, SequenceNode, NoneTypeNode, AnyTypeNode
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore.common.api import _convert_python_data
+import numpy as np
 
 
 def _stub_member(var, init):
@@ -68,6 +69,7 @@ class StubTensor:
         self.grad_ = None
         self.grad_fn_ = None
         self.requires_grad_ = False
+        self.retain_grad_ = False
 
     __str__ = _stub_method(Tensor.__str__)
     __repr__ = _stub_method(Tensor.__repr__)
@@ -144,53 +146,79 @@ class StubTensor:
     @property
     def grad_fn(self):
         r"""
-        function for backward.
+        The function for backward.
         """
         return self.grad_fn_
 
     @grad_fn.setter
     def grad_fn(self, grad_fn):
         r"""
-        set function for backward.
+        Set the function for backward.
         """
         self.grad_fn_ = grad_fn
 
     @property
     def grad(self):
         r"""
-        get grad value.
+        Get the gradient value.
         """
-        if self.grad_fn_ is not None:
-            self.grad_fn_.get_grad()
-        return self.grad_
+        return _convert_python_data(self.grad_)
 
     @grad.setter
     def grad(self, grad):
         r"""
-        set grad value.
+        Set the gradient value.
         """
         self.grad_ = grad
 
     @property
     def requires_grad(self):
         r"""
-        whether the stub tensor need requires grad.
+        Whether the stub tensor need requires grad.
         """
         return self.requires_grad_
 
     @requires_grad.setter
     def requires_grad(self, requires_grad):
         r"""
-        mark this stub tensor need requires grad.
+        Mark the stub tensor whether need requires gradient.
         """
         self.requires_grad_ = requires_grad
 
+    @property
+    def is_leaf(self):
+        r"""
+        Whether the stub tensor is leaf.
+        They will be a leaf if they have requires_grad and requires_grad is False,
+        Or they were created by user.
+        """
+        return self.requires_grad_ is False or self.grad_fn_ is None
+
+    def retain_grad(self):
+        r"""
+        Enable the stub tensor which is not non-leaf to have the grad during backward().
+        """
+        if not self.requires_grad_:
+            RuntimeError("can't retain_grad on Tensor that has requires_grad = False.")
+        self.retain_grad_ = self.grad_fn_ is not None
+
+    @property
+    def retains_grad(self):
+        r"""
+        Is True if the stub tensor is non-leaf and its grad is enabled to be populated during backward().
+        """
+        return self.retain_grad_
+
     def backward(self, grad=None):
         r"""
-        calculate the gradient.
+        Calculate the gradient.
         """
+        if grad is None:
+            grad = Tensor(np.ones(self.shape), self.dtype)
         if self.grad_fn_ is not None:
             self.grad_fn_.apply(grad)
+        elif self.requires_grad_:
+            self.grad_ = grad
 
     asnumpy = _stub_method(Tensor.asnumpy)
     is_persistent_data = _stub_method(Tensor.is_persistent_data)

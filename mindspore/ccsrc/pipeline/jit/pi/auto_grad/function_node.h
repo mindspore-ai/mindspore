@@ -23,6 +23,7 @@
 #include "pipeline/jit/pi/auto_grad/function_context.h"
 #include "pipeline/pynative/pynative_utils.h"
 #include "pybind11/stl.h"
+#include "utils/tensor_construct_utils.h"
 
 namespace mindspore {
 namespace pijit {
@@ -38,7 +39,11 @@ class FunctionNode : public FunctionContext {
   /// \param[in] tensor The tensor that is asked to calculate the gradient.
   ///
   /// \return The instance of FunctionNode.
-  explicit FunctionNode(const py::object &tensor) : FunctionContext(Convert::PyObjToValue(tensor)), tensor_(tensor) {}
+  explicit FunctionNode(const py::object &tensor)
+      : FunctionContext(
+          Convert::PyObjToValue(tensor),
+          TensorConstructUtils::CreateZerosTensor(GetStubTensorInfo(tensor).second, GetStubTensorInfo(tensor).first)),
+        tensor_(tensor) {}
 
   /// \brief The constructor of FunctionNode.
   ///
@@ -46,7 +51,10 @@ class FunctionNode : public FunctionContext {
   ///
   /// \return The instance of FunctionNode.
   explicit FunctionNode(const py::object &tensor, const py::object &prim, const py::object &out)
-      : FunctionContext(Convert::PyObjToValue(prim), Convert::PyObjToValue(out)), tensor_(tensor) {}
+      : FunctionContext(
+          Convert::PyObjToValue(prim), Convert::PyObjToValue(out),
+          TensorConstructUtils::CreateZerosTensor(GetStubTensorInfo(tensor).second, GetStubTensorInfo(tensor).first)),
+        tensor_(tensor) {}
 
   /// \brief Destructor.
   virtual ~FunctionNode() = default;
@@ -98,17 +106,17 @@ class FunctionNode : public FunctionContext {
   /// \param[in] index The index of the input.
   void AddNextEdge(const FunctionNodePtr &node) { edges_.push_back(std::make_shared<Edge>(node)); }
 
-  /// \brief Get the python object grad.
+  /// \brief Save the grad value to python object.
   ///
-  /// \return The python object grad.
-  const py::object GetPyObjectGrad() const { return ValueToPyData(GetGrad()); }
+  /// \param[in] grad The grad value.
+  void SaveGradToPyObject(const py::object &grad);
 
   /// \brief Generate the grad value of function.
   ///
   /// \param[in] grad The default gradient value of the function node.
   ///
   /// \note This function node must be the tensor who call backward from python.
-  void Apply(const py::object &grad = py::none());
+  void Apply(const py::object &grad);
 
  private:
   /// \brief Generate the grad value of function.
@@ -120,6 +128,8 @@ class FunctionNode : public FunctionContext {
   py::object tensor_;
   /// \brief The bprop function.
   FuncGraphPtr grad_fn_;
+  /// \brief The accumulate function.
+  FuncGraphPtr acc_fn_;
   /// \brief The called functions in the previous/next step.
   EdgePtrList edges_;
   /// \brief The index.

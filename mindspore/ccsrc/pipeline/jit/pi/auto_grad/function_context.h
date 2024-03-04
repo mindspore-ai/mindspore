@@ -33,7 +33,7 @@ class FunctionContext : public std::enable_shared_from_this<FunctionContext> {
   /// \param[in] output The output of FunctionContext.
   ///
   /// \return The instance of FunctionContext.
-  explicit FunctionContext(const ValuePtr &output) : FunctionContext(nullptr, output) {}
+  explicit FunctionContext(const ValuePtr &output, const ValuePtr &dout) : FunctionContext(nullptr, output, dout) {}
 
   /// \brief The constructor of FunctionContext.
   ///
@@ -41,7 +41,8 @@ class FunctionContext : public std::enable_shared_from_this<FunctionContext> {
   /// \param[in] output The output of FunctionContext.
   ///
   /// \return The instance of FunctionContext.
-  explicit FunctionContext(const ValuePtr &fn, const ValuePtr &output) : fn_(fn), inputs_({}), output_(output) {}
+  explicit FunctionContext(const ValuePtr &fn, const ValuePtr &output, const ValuePtr &dout)
+      : fn_(fn), inputs_({}), output_(output), dout_(dout) {}
 
   /// \brief Destructor.
   virtual ~FunctionContext() = default;

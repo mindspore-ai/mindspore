@@ -34,8 +34,7 @@ void RegPIJitInterface(py::module *m) {
   (void)py::class_<FunctionNode, mindspore::pijit::grad::FunctionNodePtr>(*m, "FunctionNode_")
     .def_static("record_primitive", &FunctionNode::RecordPrimitive, py::arg("prim"), py::arg("out"), py::arg("inputs"),
                 "Record the executed primitive during forward execution.")
-    .def("apply", &FunctionNode::Apply, py::arg("grad"), "Calculate the gradient of the function node.")
-    .def("get_grad", &FunctionNode::GetPyObjectGrad, "Get the gradient of the function node.");
+    .def("apply", &FunctionNode::Apply, py::arg("grad"), "Calculate the gradient of the function node.");
 }
 }  // namespace pijit
 }  // namespace mindspore

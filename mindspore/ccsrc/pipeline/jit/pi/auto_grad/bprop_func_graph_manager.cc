@@ -17,19 +17,14 @@
 #include <algorithm>
 #include <iterator>
 #include <memory>
-#include "base/base.h"
 #include "frontend/expander/bprop/bprop_meta_func_graph.h"
-#include "frontend/operator/ops.h"
 #include "frontend/optimizer/ad/grad.h"
 #include "frontend/optimizer/irpass.h"
 #include "ir/func_graph_cloner.h"
-#include "ir/value.h"
-#include "ops/framework_ops.h"
 #include "ops/sequence_ops.h"
 #include "pipeline/jit/ps/pass.h"
 #include "pipeline/jit/ps/resource.h"
 #include "pipeline/pynative/pynative_utils.h"
-#include "ops/array_ops.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
 
@@ -80,9 +75,11 @@ FuncGraphPtr BpropFuncGraphManager::GetPrimBpropGraph(const PrimitivePtr &prim,
     key += "_" + abs->GetShapeTrack()->ToString();
   });
   if (prim_to_bprop_.find(key) != prim_to_bprop_.end()) {
+    MS_LOG(DEBUG) << "Cache hit for prim[" << prim_name << "] and key is " << key;
     return prim_to_bprop_.at(key);
   }
   if (prim_to_bprop_.find(prim_name) != prim_to_bprop_.end()) {
+    MS_LOG(DEBUG) << "Cache hit for prim[" << prim_name << "].";
     auto func_graph = BasicClone(prim_to_bprop_.at(prim_name));
     MS_EXCEPTION_IF_CHECK_FAIL(func_graph->parameters().size() == args_abs.size(),
                                "Arguments is not match parameters.");
@@ -93,10 +90,15 @@ FuncGraphPtr BpropFuncGraphManager::GetPrimBpropGraph(const PrimitivePtr &prim,
     return prim_to_bprop_.at(key);
   }
   const expander::bprop::BpropHandle *handle = expander::bprop::BpropIRBuilderFactory::Instance().GetBuilder(prim_name);
+  if (handle == nullptr) {
+    MS_LOG(WARNING) << "Prim " << prim_name << " does not have a handle in bprop expander.";
+    return nullptr;
+  }
   auto meta_graph = std::make_shared<expander::bprop::BpropMetaFuncGraph>(prim, handle);
   auto grad_graph = meta_graph->GenerateFuncGraph(args_abs);
   prim_to_bprop_[prim_name] = PrimBpropGraphPass(grad_graph);
   prim_to_bprop_[key] = prim_to_bprop_[prim_name];
+  MS_LOG(DEBUG) << "Create new graph for prim[" << prim_name << "].";
   return prim_to_bprop_.at(key);
 }
 

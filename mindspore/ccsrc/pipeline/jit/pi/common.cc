@@ -1311,7 +1311,7 @@ py::list CollectGradientArguments(const PyFrameObject &frame) {
 }
 
 void AutoGrad(PyFrameObject *f, PyObject *ret) {
-  if (!kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kAutoGrad)) {
+  if (kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kInferOnly)) {
     return;
   }
   if (ret == nullptr || !IsStubTensor(ret)) {

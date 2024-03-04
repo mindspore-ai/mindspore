@@ -31,7 +31,6 @@ constexpr int kDefaultMaxTraceDepth = 16;
 static const std::unordered_map<std::string, bool (GraphJitConfig::*)(PyObject *)> key_map = {
   {"auto_jit_func_filter", &GraphJitConfig::SetAutoJitFilter},
   {"auto_jit_cell", &GraphJitConfig::SetBool<GraphJitConfig::kAutoJitCell>},
-  {"auto_grad", &GraphJitConfig::SetBool<GraphJitConfig::kAutoGrad>},
   // remove this config if 'strict_mode_cells' works well, and default inline all construct
   {"replace_nncell_by_construct", &GraphJitConfig::SetBool<GraphJitConfig::kReplaceNNCellByConstruct>},
   {"trace_flag", &GraphJitConfig::SetBool<GraphJitConfig::kTraceFlag>},
@@ -52,6 +51,7 @@ static const std::unordered_map<std::string, bool (GraphJitConfig::*)(PyObject *
   {"auto_clean_cache", &GraphJitConfig::SetBool<GraphJitConfig::kAutoCleanCache>},
   {"prune_case", &GraphJitConfig::SetBool<GraphJitConfig::kPruneCase>},
   {"loop_unrolling", &GraphJitConfig::SetBool<GraphJitConfig::kLoopUnrolling>},
+  {"infer_only", &GraphJitConfig::SetBool<GraphJitConfig::kInferOnly>},
   {"infer_primitive", &GraphJitConfig::SetBool<GraphJitConfig::kInferPrimitive>},
   {"strict_trace", &GraphJitConfig::SetBool<GraphJitConfig::kStrictTrace>},
   {"perf_statistics", &GraphJitConfig::SetBool<GraphJitConfig::kPerfStatistics>},
@@ -104,6 +104,7 @@ GraphJitConfig::GraphJitConfig() {
   bool_conf[kPruneCase - kBoolConf] = true;
   bool_conf[kLoopUnrolling - kBoolConf] = false;
   bool_conf[kSkipException - kBoolConf] = false;
+  bool_conf[kInferOnly - kBoolConf] = false;
   bool_conf[kInferPrimitive - kBoolConf] = true;
   bool_conf[kStrictTrace - kBoolConf] = true;
   bool_conf[kPerfStatistics - kBoolConf] = false;
