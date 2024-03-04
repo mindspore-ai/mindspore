@@ -27,9 +27,9 @@ namespace mindspore {
 namespace opt {
 namespace {
 std::set<PrimitivePtr> fusion_pattern_nodes = {
-  prim::kPrimShape,     prim::kPrimTupleGetItem,  prim::kPrimRealTupleGetItem, prim::kPrimScalarAdd,
-  prim::kPrimScalarSub, prim::kPrimScalarDiv,     prim::kPrimScalarMul,        prim::kPrimScalarFloorDiv,
-  prim::kPrimMakeTuple, prim::kPrimRealMakeTuple, prim::kPrimReshape,
+  prim::kPrimShape,     prim::kPrimReshape,       prim::kPrimTupleGetItem,   prim::kPrimRealTupleGetItem,
+  prim::kPrimMakeTuple, prim::kPrimRealMakeTuple, prim::kPrimScalarAdd,      prim::kPrimScalarSub,
+  prim::kPrimScalarMul, prim::kPrimScalarDiv,     prim::kPrimScalarFloorDiv,
 };
 
 bool GetScalarValueFromNode(const ValueNodePtr &v_node, int64_t *v) {
@@ -93,7 +93,7 @@ void FindFusionPatternNodes(const CNodePtr &reshape_node, std::vector<AnfNodePtr
     if (cur_node->isa<CNode>()) {
       auto cur_cnode = cur_node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cur_cnode);
-      for (size_t i = 1; i < cur_cnode->size(); i++) {
+      for (size_t i = 1; i < cur_cnode->size(); ++i) {
         auto input = cur_cnode->inputs().at(i);
         if (visited.find(input) == visited.end()) {
           node_queue.push(input);
@@ -177,22 +177,14 @@ std::shared_ptr<ops::ScalarGraphHolder> CreateScalarGraph(const CNodePtr &reshap
     return nullptr;
   }
 
-  auto scalar_graph_holder = std::make_shared<ops::ScalarGraphHolder>(fusion_nodes);
+  auto scalar_graph_holder = std::make_shared<ops::ScalarGraphHolder>();
   MS_EXCEPTION_IF_NULL(scalar_graph_holder);
-  scalar_graph_holder->SetInputShapeNodes(input_shape_nodes);
-
-  // Get the scalar value for ValueNode. The Scalar Value should be int64_t.
-  for (size_t i = 0; i < scalar_graph_holder->GetNodeSize(); ++i) {
-    auto node = scalar_graph_holder->GetAnfNode(i);
-    if (node->isa<ValueNode>()) {
-      int64_t v = 0;
-      if (!GetScalarValueFromNode(node->cast<ValueNodePtr>(), &v)) {
-        MS_LOG(DEBUG) << "The ValueNode in ShapeReshapeFusion pattern is not int scalar.";
-        return nullptr;
-      }
-      scalar_graph_holder->SetScalarValue(node, {v});
-    }
+  auto ret = scalar_graph_holder->Init(fusion_nodes);
+  if (!ret) {
+    MS_LOG(DEBUG) << "Init ScalarGraph failed.";
+    return nullptr;
   }
+  scalar_graph_holder->SetInputShapeNodes(input_shape_nodes);
   return scalar_graph_holder;
 }
 }  // namespace
@@ -220,15 +212,17 @@ const AnfNodePtr ShapeReshapeFusion::Process(const FuncGraphPtr &func_graph, con
   auto prim = std::make_shared<Primitive>("ReshapeExt");
   std::vector<AnfNodePtr> inputs = {NewValueNode(prim), utils::cast<AnfNodePtr>((*equiv)[reshape_input_])};
   size_t index = kIndex2;
+  std::vector<size_t> shape_index;
   for (const auto &shape_node : scalar_graph_holder->GetInputShapeNodes()) {
     if (!IsPrimitiveCNode(shape_node, prim::kPrimShape)) {
       MS_LOG(INFO) << "The subgraph input nodes is not Shape. There is no change in ShapeReshapeFusion.";
       return node;
     }
     inputs.push_back(shape_node->cast<CNodePtr>()->inputs().at(kIndex1));
-    scalar_graph_holder->SetShapeIndex(shape_node, index);
+    shape_index.push_back(index);
     index++;
   }
+  scalar_graph_holder->SetShapeIndex(shape_index);
   prim->AddAttr("graph", MakeValue(scalar_graph_holder));
 
   auto new_node = NewCNode(inputs, func_graph);

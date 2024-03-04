@@ -36,52 +36,69 @@ int64_t Mul(const int64_t &x, const int64_t &y) { return x * y; }
 int64_t Div(const int64_t &x, const int64_t &y) { return x / y; }
 int64_t FloorDiv(const int64_t &x, const int64_t &y) { return floor(float(x) / y); }
 
-std::map<PrimitivePtr, ARITHMETIC> arith_func_map = {
-  {prim::kPrimScalarAdd, Add}, {prim::kPrimScalarSub, Sub},           {prim::kPrimScalarMul, Mul},
-  {prim::kPrimScalarDiv, Div}, {prim::kPrimScalarFloorDiv, FloorDiv},
+std::map<OpType, ARITHMETIC> arith_func_map = {
+  {OpType::SCALAR_ADD, Add},
+  {OpType::SCALAR_SUB, Sub},
+  {OpType::SCALAR_MUL, Mul},
+  {OpType::SCALAR_DIV, Div},
+  {OpType::SCALAR_FLOOR_DIV, FloorDiv},
 };
 
-void SetScalarValueForNode(const AnfNodePtr &node, const ScalarGraphHolderPtr &graph,
-                           const std::vector<AbstractBasePtr> &input_args) {
-  auto cnode = node->cast<CNodePtr>();
-  auto prim = GetCNodePrimitive(cnode);
-  MS_EXCEPTION_IF_NULL(prim);
-  if (IsPrimitiveEquals(prim, prim::kPrimShape)) {
-    auto input_index = graph->GetShapeIndex(node);
-    graph->SetScalarValue(node, input_args[input_index - 1]->GetShape()->GetShapeVector());
-  } else if (IsPrimitiveEquals(prim, prim::kPrimTupleGetItem) || IsPrimitiveEquals(prim, prim::kPrimRealTupleGetItem)) {
-    auto get_item_input = cnode->inputs().at(kIndex1);
-    auto get_item_index = cnode->inputs().at(kIndex2);
-    auto input_value = graph->GetScalarValue(get_item_input);
-    auto index_value = LongToSize(graph->GetScalarValue(get_item_index).at(0));
-    graph->SetScalarValue(node, {input_value[index_value]});
-  } else if (IsPrimitiveEquals(prim, prim::kPrimScalarAdd) || IsPrimitiveEquals(prim, prim::kPrimScalarSub) ||
-             IsPrimitiveEquals(prim, prim::kPrimScalarMul) || IsPrimitiveEquals(prim, prim::kPrimScalarDiv) ||
-             IsPrimitiveEquals(prim, prim::kPrimScalarFloorDiv)) {
-    auto x = graph->GetScalarValue(cnode->inputs().at(kIndex1)).at(0);
-    auto y = graph->GetScalarValue(cnode->inputs().at(kIndex2)).at(0);
-    for (const auto &itr : arith_func_map) {
-      if (IsPrimitiveEquals(prim, itr.first)) {
-        auto arith_func = itr.second;
-        graph->SetScalarValue(node, {arith_func(x, y)});
-
-      } else {
-        MS_LOG_EXCEPTION << "Can't find the function for scalar arithmetic operator.";
+void CalScalarValueForGraph(const ScalarGraphHolderPtr &graph, const std::vector<AbstractBasePtr> &input_args) {
+  size_t shape_index = 0;
+  for (size_t i = 0; i < graph->GetNodeSize(); ++i) {
+    auto node = graph->GetScalarNode(i);
+    switch (node->type_) {
+      case OpType::VALUE:
+        break;
+      case OpType::SHAPE: {
+        auto index = graph->GetShapeIndex().at(shape_index);
+        shape_index++;
+        graph->SetScalarValue(i, input_args[index - 1]->GetShape()->GetShapeVector());
+        break;
       }
+      case OpType::RESHAPE: {
+        auto index = node->in_index_.at(kIndex1);
+        graph->SetScalarValue(i, graph->GetScalarValue(index));
+        break;
+      }
+      case OpType::TUPLE_GET_ITEM: {
+        auto get_item_input = node->in_index_.at(kIndex0);
+        auto get_item_index = node->in_index_.at(kIndex1);
+        auto input_value = graph->GetScalarValue(get_item_input);
+        auto index_value = LongToSize(graph->GetScalarValue(get_item_index).at(0));
+        graph->SetScalarValue(i, {input_value[index_value]});
+        break;
+      }
+      case OpType::MAKE_TUPLE: {
+        std::vector<int64_t> tuple;
+        for (size_t j = 0; j < node->in_index_.size(); ++j) {
+          tuple.push_back(graph->GetScalarValue(node->in_index_.at(j)).at(0));
+        }
+        graph->SetScalarValue(i, tuple);
+        break;
+      }
+      case OpType::SCALAR_ADD:
+      case OpType::SCALAR_SUB:
+      case OpType::SCALAR_MUL:
+      case OpType::SCALAR_DIV:
+      case OpType::SCALAR_FLOOR_DIV: {
+        auto x = graph->GetScalarValue(node->in_index_.at(kIndex0)).at(0);
+        auto y = graph->GetScalarValue(node->in_index_.at(kIndex1)).at(0);
+        auto itr = arith_func_map.find(node->type_);
+        if (itr != arith_func_map.end()) {
+          auto arith_func = itr->second;
+          graph->SetScalarValue(i, {arith_func(x, y)});
+        } else {
+          MS_LOG_EXCEPTION << "Can't find the function for scalar arithmetic operator.";
+        }
+        break;
+      }
+      default:
+        MS_LOG_EXCEPTION
+          << "The Node in ReshapeExt graph should in the whitelist. Please check the ShapeReshapeFusion pass.";
+        break;
     }
-  } else if (IsPrimitiveEquals(prim, prim::kPrimMakeTuple) || IsPrimitiveEquals(prim, prim::kPrimRealMakeTuple)) {
-    std::vector<int64_t> tuple;
-    for (size_t i = 1; i < cnode->size(); i++) {
-      auto in = cnode->inputs().at(i);
-      tuple.push_back(graph->GetScalarValue(in).at(0));
-    }
-    graph->SetScalarValue(node, tuple);
-  } else if (IsPrimitiveEquals(prim, prim::kPrimReshape)) {
-    auto shape = cnode->inputs().at(kIndex2);
-    graph->SetScalarValue(node, graph->GetScalarValue(shape));
-  } else {
-    MS_LOG_EXCEPTION
-      << "The CNode in ReshapeExt graph should in the whitelist. Please check the ShapeReshapeFusion pass.";
   }
 }
 
@@ -91,25 +108,15 @@ abstract::ShapePtr ReshapeExtInferShape(const PrimitivePtr &primitive, const std
   MS_EXCEPTION_IF_NULL(attr);
   auto graph = attr->cast<ScalarGraphHolderPtr>();
 
-  for (size_t i = 0; i < graph->GetNodeSize(); ++i) {
-    auto node = graph->GetAnfNode(i);
-    if (node->isa<ValueNode>()) {
-      continue;
-    } else if (node->isa<CNode>()) {
-      SetScalarValueForNode(node, graph, input_args);
-    } else {
-      MS_LOG_EXCEPTION
-        << "The node in ReshapeExt graph should be ValueNode or CNode. Please check the ShapeReshapeFusion pass.";
-    }
-  }
+  CalScalarValueForGraph(graph, input_args);
 
   // The last node is Reshape.
-  auto reshape_node = graph->GetAnfNode(graph->GetNodeSize() - 1);
-  if (!IsPrimitiveCNode(reshape_node, prim::kPrimReshape)) {
+  auto reshape_node = graph->GetScalarNode(graph->GetNodeSize() - 1);
+  if (reshape_node->type_ != OpType::RESHAPE) {
     MS_LOG_EXCEPTION
       << "The last node in ReshapeExt graph should be Reshape. Please check the ShapeReshapeFusion pass.";
   }
-  auto key_shape = std::make_shared<abstract::Shape>(graph->GetScalarValue(reshape_node));
+  auto key_shape = std::make_shared<abstract::Shape>(graph->GetScalarValue(graph->GetNodeSize() - 1));
   return key_shape;  // output shape
 }
 
