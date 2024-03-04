@@ -84,7 +84,7 @@ class FrameStates {
 
   void ResizeLocal(int i) {
     MS_ASSERT((int)locals.size() <= i);
-    locals.resize(i, &ValueNode::UnboundLocal);
+    locals.resize(i, &ValueNode::kUnboundLocal);
   }
   void ResizeClosure(int i) {
     MS_ASSERT((int)cell_free.size() <= i);

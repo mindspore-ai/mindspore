@@ -37,11 +37,11 @@ class AbstractNode {
     Abstract,
     kInstr,
     Value,
-    Call,     // call node, it is also a value produced operation
-    Param,    // parameter value node
-    CellVar,  // cell value node
-    FreeVar,  // free value node
-    Unbound,  // unbound value node
+    Call,      // call node, it is also a value produced operation
+    Param,     // parameter value node
+    CellVar,   // cell value node
+    FreeVar,   // free value node
+    kUnbound,  // unbound value node
   };
   explicit AbstractNode(Type t) : type_(t), graph_(nullptr), block_(nullptr), marker_(0) {}
   virtual ~AbstractNode() {}
@@ -94,7 +94,7 @@ class InstrNode : public AbstractNode {
 
 class ValueNode : public InstrNode {
  public:
-  static ValueNode UnboundLocal;
+  static ValueNode kUnboundLocal;
 
   ValueNode(AObject *vobj, int opcode, int oparg, const std::vector<ValueNode *> &inputs = {})
       : InstrNode(Value, opcode, oparg),
