@@ -11,6 +11,10 @@ apply_rotary_pos_emb:
             dtype: tensor
         position_ids:
             dtype: tensor
+        cos_format:
+            dtype: int
+            default: 0
+            prim_init: True
     returns:
         query_embed:
             dtype: tensor
