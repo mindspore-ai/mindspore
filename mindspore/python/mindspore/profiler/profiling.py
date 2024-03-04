@@ -542,6 +542,9 @@ class Profiler:
             dev_info = info_dict.get("DeviceInfo", [])
             dev_id = dev_info[0].get("id", -1)
 
+            if int(rank_id) < 0:
+                rank_id = 0
+
             return str(rank_id), str(dev_id)
 
     def op_analyse(self, op_name, device_id=None):
