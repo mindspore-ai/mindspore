@@ -20,12 +20,14 @@
 #include "pipeline/jit/pi/pi_jit_config.h"
 #include "pipeline/jit/pi/graph_guard/infer.h"
 #include "pipeline/jit/pi/graph_capture/graph.h"
+#include "pipeline/jit/pi/graph_capture/special_func_infer.h"
 
 namespace mindspore {
 namespace pijit {
 
 extern bool CheckMSConstexpr(const py::object &func);
 extern bool CheckJitConstexpr(const py::object &func);
+extern TracePtr GetTrace(ValueNode *node, bool strict, bool print, int depth, int max_depth);
 
 const int kMsFlagSet = AObject::kMsFlagGradFunc | AObject::kMsFlagStandardFunc | AObject::kMsFlagShardFunc |
                        AObject::kMsFlagVmapFunc | AObject::kMsFlagJitFunc;
@@ -121,7 +123,15 @@ static bool CheckAttrItemSupport(ValueNode *v, bool repeat_op) {
   return true;
 }
 
-extern bool CheckJitConstexpr(const py::object &func);
+static bool CheckSideEffectedFunc(ValueNode *v) {
+  std::set<std::string> funcs = {"assign", "Assign"};
+  if (Utils::IsCallOp(v->GetOpcode())) {
+    py::object callable = v->input(0)->GetVobj() ? v->input(0)->GetVobj()->GetPyObject() : py::object();
+    return callable.ptr() != nullptr ? funcs.find(GetFuncName(callable)) != funcs.end() : true;
+  }
+  return false;
+}
+
 bool GraphAnalyzer::HandleCallableToGraph(AObject *f) {
   if (f == nullptr) {
     return false;
@@ -131,6 +141,9 @@ bool GraphAnalyzer::HandleCallableToGraph(AObject *f) {
                        f->GetType() == AObject::kTypeMetaFuncGraph || CheckJitConstexpr(f->GetPyObject());
   bool is_ms_support_func = f->TestMsFlag(kMsFlagSet);
   if (!is_known_func && !is_ms_support_func) {
+    return false;
+  }
+  if (f->GetType() == AObject::kTypePrimitive && std::string("Assign") == GetFuncName(f->GetPyObject())) {
     return false;
   }
   return true;
@@ -184,8 +197,6 @@ void GraphAnalyzer::AddToEscaped(ValueNode *v) {
   GetCaptureInfo().ordered_escaped_locals.push_back(v);
 }
 
-extern TracePtr GetTrace(ValueNode *node, bool strict, bool print, int depth, int max_depth);
-
 bool GraphAnalyzer::TryToCapture(AbstractNode *n) {
   ValueNode *v = static_cast<ValueNode *>(n);
   AObject *o = v->GetVobj();
@@ -206,6 +217,9 @@ bool GraphAnalyzer::TryToCapture(AbstractNode *n) {
     return true;
   }
   if (v->GetOpcode() == STORE_ATTR || v->GetOpcode() == STORE_DEREF) {
+    return false;
+  }
+  if (!GetCaptureInfo().captured_locals.values.empty() && CheckSideEffectedFunc(v)) {
     return false;
   }
   if (ProduceInterpretValue(v)) {
