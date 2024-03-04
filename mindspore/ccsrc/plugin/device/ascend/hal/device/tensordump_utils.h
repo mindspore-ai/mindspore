@@ -22,6 +22,7 @@
 #include <queue>
 #include <thread>
 #include <mutex>
+#include <utility>
 #include <condition_variable>
 #include "acl/acl_tdt.h"
 #include "ir/tensor.h"
@@ -29,6 +30,7 @@
 #include "plugin/device/ascend/hal/device/mbuf_receive_manager.h"
 
 namespace mindspore::device::ascend {
+const std::pair<string, string> tensordump_mapping{"ms_tensor_dump", "TensorDump"};
 class AsyncFileWriter {
  public:
   explicit AsyncFileWriter(size_t thread_nums);
