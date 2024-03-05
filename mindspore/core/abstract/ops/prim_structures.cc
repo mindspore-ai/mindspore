@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2023 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,10 +28,10 @@ namespace {
 void CheckDictKey(const AbstractBasePtr &key, const std::string &op_name) {
   auto key_value = key->BuildValue();
   MS_EXCEPTION_IF_NULL(key_value);
-  if (!(key_value->isa<StringImm>() || key_value->isa<Scalar>() ||
+  if (!(key_value->isa<StringImm>() || key_value->isa<Scalar>() || key_value->isa<Type>() || key_value->isa<None>() ||
         (key->isa<AbstractTensor>() && !key_value->ContainsValueAny()) || key->isa<AbstractTuple>())) {
-    MS_LOG(EXCEPTION) << op_name << " evaluator key only supports string, number, constant tensor and tuple, but got "
-                      << key->BuildValue()->ToString();
+    MS_LOG(EXCEPTION) << op_name << " evaluator key only supports string, number, type, none, "
+                      << "constant tensor and tuple, but got " << key->BuildValue()->ToString();
   }
   if (key->isa<AbstractTuple>() && key_value->isa<ValueAny>()) {
     MS_LOG(EXCEPTION) << op_name << " evaluator key should not be tuple that contains variables, but got "
