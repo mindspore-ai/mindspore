@@ -64,5 +64,28 @@ REG_CUST_OP(LinearSumAssignment)
   .OUTPUT(row_ind, TensorType({DT_INT64}))
   .OUTPUT(col_ind, TensorType({DT_INT64}))
   .CUST_OP_END_FACTORY_REG(LinearSumAssignment)
+
+REG_CUST_OP(SolveTriangular)
+  .INPUT(a, TensorType({DT_FLOAT16, DT_FLOAT, DT_DOUBLE, DT_INT16, DT_INT32, DT_INT64, DT_INT8, DT_COMPLEX64,
+                        DT_COMPLEX128}))
+  .INPUT(b, TensorType({DT_FLOAT16, DT_FLOAT, DT_DOUBLE, DT_INT16, DT_INT32, DT_INT64, DT_INT8, DT_COMPLEX64,
+                        DT_COMPLEX128}))
+  .INPUT(trans, TensorType({DT_INT64}))
+  .INPUT(lower, TensorType({DT_BOOL}))
+  .INPUT(unit_diagonal, TensorType({DT_BOOL}))
+  .OUTPUT(x, TensorType({DT_FLOAT16, DT_FLOAT, DT_DOUBLE, DT_COMPLEX64, DT_COMPLEX128}))
+  .CUST_OP_END_FACTORY_REG(SolveTriangular)
+
+REG_CUST_OP(SolveTriangularGrad)
+  .INPUT(a, TensorType({DT_DOUBLE, DT_FLOAT, DT_FLOAT16, DT_COMPLEX128, DT_COMPLEX64, DT_INT16, DT_INT32, DT_INT64,
+                        DT_INT8}))
+  .INPUT(x, TensorType({DT_DOUBLE, DT_FLOAT, DT_FLOAT16, DT_COMPLEX128, DT_COMPLEX64}))
+  .INPUT(dx, TensorType({DT_DOUBLE, DT_FLOAT, DT_FLOAT16, DT_COMPLEX128, DT_COMPLEX64}))
+  .INPUT(trans, TensorType({DT_INT64}))
+  .INPUT(lower, TensorType({DT_BOOL}))
+  .INPUT(unit_diagonal, TensorType({DT_BOOL}))
+  .OUTPUT(da, TensorType({DT_FLOAT, DT_DOUBLE, DT_COMPLEX64, DT_COMPLEX128}))
+  .OUTPUT(db, TensorType({DT_FLOAT, DT_DOUBLE, DT_COMPLEX64, DT_COMPLEX128}))
+  .CUST_OP_END_FACTORY_REG(SolveTriangularGrad)
 }  // namespace ge
 #endif  // MINDSPORE_CCSRC_GRAPH_IR_CUSTOM_OP_PROTO_CUST_LINALG_OPS_H_

@@ -18,9 +18,8 @@ import numpy as onp
 import mindspore.nn as nn
 import mindspore.ops as ops
 from mindspore import context, Tensor
-from mindspore.scipy.linalg import cho_factor, cho_solve
+from mindspore.scipy.linalg import cho_factor, cho_solve, solve_triangular
 from mindspore.ops.operations.linalg_ops import Eigh
-from mindspore.scipy.ops import SolveTriangular
 from tests.st.scipy_st.utils import create_random_rank_matrix, create_sym_pos_matrix, gradient_check
 
 
@@ -156,10 +155,10 @@ def test_trsm_grad_pynative(shapes, trans, lower, unit_diagonal, data_type):
             super(Net, self).__init__()
             self.mean = ops.ReduceMean()
             self.sum = ops.ReduceSum()
-            self.trsm = SolveTriangular(lower, unit_diagonal, trans)
+            self.trsm = solve_triangular
 
         def construct(self, a, b):
-            x = self.trsm(a, b)
+            x = self.trsm(a, b, trans, lower, unit_diagonal)
             return self.sum(x) + self.mean(x)
 
     net = Net()
@@ -193,10 +192,10 @@ def test_trsm_grad_graph(shapes, trans, lower, unit_diagonal, data_type):
             super(Net, self).__init__()
             self.mean = ops.ReduceMean()
             self.sum = ops.ReduceSum()
-            self.trsm = SolveTriangular(lower, unit_diagonal, trans)
+            self.trsm = solve_triangular
 
         def construct(self, a, b):
-            x = self.trsm(a, b)
+            x = self.trsm(a, b, trans, lower, unit_diagonal)
             return self.sum(x) + self.mean(x)
 
     net = Net()
