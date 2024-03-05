@@ -149,6 +149,13 @@ AnfNodePtr TwoCastEliminater::operator()(const OptimizerPtr &, const AnfNodePtr 
   if (x_ == nullptr || t_ == nullptr || y_ == nullptr) {
     return nullptr;
   }
+  // Sometimes the abstract information of the Depend node has not been derived.
+  // the type of X is nullptr, {prim::kPrimCast, {prim::kPrimCast, Depend(W, Z), Y}, T}
+  // In this case, we postpone the elimination of the two casts after the next renormalize.
+  auto x_type = x_->Type();
+  if (x_type != nullptr) {
+    return nullptr;
+  }
   if (CheckTypesIsIncreasingOrDecreasing()) {
     auto cnode = NewCNode({NewValueNode(prim::kPrimCast), x_, t_}, node->func_graph());
     MS_EXCEPTION_IF_NULL(cnode);
