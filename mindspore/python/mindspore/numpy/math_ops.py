@@ -295,7 +295,7 @@ def add(x1, x2, dtype=None):
     # broadcast is not fully supported in tensor_add on CPU,
     # so we use tensor_sub as a substitute solution
     if _get_device() == 'CPU':
-        return subtract(x1, F.neg_tensor(_to_tensor(x2)), dtype=dtype)
+        return subtract(x1, F.neg(_to_tensor(x2)), dtype=dtype)
     return _apply_tensor_op(F.tensor_add, x1, x2, dtype=dtype)
 
 
@@ -1552,7 +1552,7 @@ def hypot(x1, x2, dtype=None):
         if _get_device() == 'CPU':
             # broadcast is not fully supported in tensor_add on CPU,
             # so we use tensor_sub as a substitute solution
-            return F.sqrt(F.tensor_sub(F.square(x1), F.neg_tensor(F.square(x2))))
+            return F.sqrt(F.tensor_sub(F.square(x1), F.neg(F.square(x2))))
         return F.sqrt(F.tensor_add(F.square(x1), F.square(x2)))
 
     return _apply_tensor_op(_hypot, x1, x2, dtype=dtype)
@@ -1716,7 +1716,7 @@ def fix(x):
         x = F.cast(x, mstype.float32)
     floored = F.floor(x)
     # change to F.ceil once supported on CPU.
-    ceiled = F.neg_tensor(F.floor(F.neg_tensor(x)))
+    ceiled = F.neg(F.floor(F.neg(x)))
     is_neg = F.tensor_lt(x, zeros(F.shape(x), F.dtype(x)))
     return F.select(is_neg, ceiled, floored)
 
@@ -2997,11 +2997,11 @@ def cross(a, b, axisa=- 1, axisb=- 1, axisc=- 1, axis=None):
         cx = F.tensor_sub(_get_slice_product(1, 2), _get_slice_product(2, 1)) # ay*bz - az*by
         cy = F.tensor_sub(_get_slice_product(2, 0), _get_slice_product(0, 2)) # az*bx - ax*bz
     elif a_has_z:
-        cx = F.neg_tensor(_get_slice_product(2, 1)) # -az*by
+        cx = F.neg(_get_slice_product(2, 1)) # -az*by
         cy = _get_slice_product(2, 0)               # az*bx
     else: # b_has_z
         cx = _get_slice_product(1, 2)               # ay*bz
-        cy = F.neg_tensor(_get_slice_product(0, 2)) # -ax*bz
+        cy = F.neg(_get_slice_product(0, 2)) # -ax*bz
     res = _concat((cx, cy, cz)).reshape(shape_out)
     return moveaxis(res, -1, axisc).astype(dtype)
 
@@ -3035,7 +3035,7 @@ def ceil(x, dtype=None):
         >>> print(output)
         [-1. -1. -0.  1.  2.  2.  2.]
     """
-    return _apply_tensor_op(lambda x: F.neg_tensor(F.floor(F.neg_tensor(x.astype(mstype.float32)))),
+    return _apply_tensor_op(lambda x: F.neg(F.floor(F.neg(x.astype(mstype.float32)))),
                             x, dtype=dtype)
 
 
@@ -3080,8 +3080,8 @@ def positive(a, dtype=None):
         [1. -1.]
     """
     _check_input_tensor(a)
-    neg_tensor = F.neg_tensor(a)
-    return _apply_tensor_op(F.neg_tensor, neg_tensor, dtype=dtype)
+    neg_tensor = F.neg(a)
+    return _apply_tensor_op(F.neg, neg_tensor, dtype=dtype)
 
 
 def negative(a, dtype=None):
@@ -3110,7 +3110,7 @@ def negative(a, dtype=None):
         >>> print(output)
         [-1. 1.]
     """
-    return _apply_tensor_op(F.neg_tensor, a, dtype=dtype)
+    return _apply_tensor_op(F.neg, a, dtype=dtype)
 
 
 def cumsum(a, axis=None, dtype=None):
@@ -4554,7 +4554,7 @@ def copysign(x1, x2, dtype=None):
     else:
         pos_tensor = F.absolute(x1)
 
-    neg_tensor = F.neg_tensor(pos_tensor)
+    neg_tensor = F.neg(pos_tensor)
     less_zero = F.less(x2, 0)
     res = F.select(less_zero, neg_tensor, pos_tensor)
 
@@ -5118,7 +5118,7 @@ def polysub(a1, a2):
         >>> print(np.polysub([2, 10, -2], [3, 10, -4]))
         [-1  0  2]
     """
-    return polyadd(a1, F.neg_tensor(_to_tensor(a2)))
+    return polyadd(a1, F.neg(_to_tensor(a2)))
 
 
 def polyval(p, x):

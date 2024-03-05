@@ -284,7 +284,7 @@ def get_bprop_csr_div(self):
             csr_tensor_grad_value = P.ReduceSum(True)(csr_tensor_grad.values, reduce_x)
         else:
             csr_tensor_grad_value = csr_tensor_grad.values
-        dense_grad_value = F.neg_tensor(F.mul(out, csr_tensor_grad_value))
+        dense_grad_value = F.neg(F.mul(out, csr_tensor_grad_value))
         dense_grad = F.make_csr_tensor(indptr, indices, dense_grad_value, shape)
         if len(dense.shape) == 1 or dense.shape[0] == 1:
             raise ValueError(

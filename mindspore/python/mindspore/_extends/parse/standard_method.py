@@ -1839,7 +1839,7 @@ def searchsorted(x, v, side='left', sorter=None):
     loop_num = get_log2_size(F.shape_mul(a.shape) + 1)
     index = Tensor([0])
     while index < loop_num:
-        mid = (i - F.neg_tensor(j)) // 2
+        mid = (i - F.neg(j)) // 2
         mask = less_op(v, F.gather_nd(a, mid.reshape(mid.shape + (1,))))
         i = F.select(mask, i, mid)
         j = F.select(mask, mid, j)
