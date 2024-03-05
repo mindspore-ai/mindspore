@@ -122,6 +122,13 @@ class BACKEND_EXPORT DeviceAddressUtils {
   static device::DeviceAddressPtr CreateDeviceAddress(const DeviceContext *device_context,
                                                       const tensor::TensorPtr &tensor, const ShapeVector &real_shape,
                                                       const size_t &stream_id);
+
+  // Convert tensor to contiguous tensor.
+  static void ConvertContiguousTensorSync(const tensor::TensorPtr &tensor);
+
+  // Convert old_device_address to contiguous device address.
+  static device::DeviceAddressPtr ConvertContiguousDeviceAddressSync(
+    const device::DeviceAddressPtr &old_device_address);
 };
 }  // namespace runtime
 }  // namespace mindspore

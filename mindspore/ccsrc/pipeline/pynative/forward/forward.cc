@@ -40,6 +40,7 @@ using mindspore::profiler::ProfilerManager;
 #include "include/common/utils/tensor_future.h"
 #include "frontend/operator/ops_front_infer_function.h"
 #include "runtime/pipeline/pipeline.h"
+#include "runtime/device/device_address_utils.h"
 
 namespace mindspore {
 namespace pynative {
@@ -1040,19 +1041,8 @@ device::DeviceAddressPtr ForwardExecutor::TensorContiguousCallback(const DeviceS
     return device_addr;
   }
 
-  GilReleaseWithCheck release_gil;
-  const auto &cur_mind_rt_backend = GetMindRtBackend(device_addr->device_name());
-  MS_EXCEPTION_IF_NULL(cur_mind_rt_backend);
-
-  const auto &device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
-    {device_addr->device_name(), device_addr->device_id()});
-  MS_EXCEPTION_IF_NULL(device_context);
-  auto stream_id = device_context->device_res_manager_->GetCurrentStreamId();
-
   // as_numpy sync promise contiguous run_sync
-  auto ret = cur_mind_rt_backend->RunContiguousTaskByAddress(device_addr, storage_info, stream_id, false);
-  runtime::OpExecutor::GetInstance().WaitAll();
-  return ret;
+  return runtime::DeviceAddressUtils::ConvertContiguousDeviceAddressSync(device_addr);
 }
 
 void ForwardExecutor::PrepareOpInputs(const FrontendOpRunInfoPtr &op_run_info) {
