@@ -88,6 +88,8 @@
 #include "kernel/graph_kernel/graph_kernel_builder_manager.h"
 #include "kernel/graph_kernel_info.h"
 #include "include/backend/data_queue/data_queue_mgr.h"
+#include "pipeline/jit/ps/load_mindir.h"
+#include "load_mindir/infer_mindir.h"
 
 #ifndef ENABLE_SECURITY
 #include "include/backend/debug/data_dump/dump_json_parser.h"
@@ -2153,6 +2155,13 @@ FuncGraphPtr DynamicObfuscateMindIR(const std::string &file_name, float obf_rati
   mindspore::DynamicObfuscator dynamic_obfuscator(obf_ratio, branch_control_input);
   MindIRLoader mindir_loader(false, reinterpret_cast<unsigned char *>(dec_key), key_len, dec_mode, false);
   FuncGraphPtr func_graph = mindir_loader.LoadMindIR(file_name);
+  ModifyGraphs(func_graph);
+  auto manager = func_graph->manager();
+  if (manager == nullptr) {
+    manager = MakeManager();
+    manager->AddFuncGraph(func_graph, true);
+  }
+  InferFuncGraphLoaded(func_graph);
   if (func_graph == nullptr) {
     MS_LOG(EXCEPTION) << "[DynamicObfuscateMindIR] load mindir failed, please check the mindir file.";
     return nullptr;
