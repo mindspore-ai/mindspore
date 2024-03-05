@@ -425,6 +425,9 @@ class _MindsporeFunctionExecutor:
         update_auto_dynamic_shape_phase_with_check_input_signature(compile_args, key_id, phase, self.input_signature)
 
         if phase in ms_compile_cache:
+            # Release resource should be released when CompileInner won't be executed, such as cur_convert_input_
+            # generated in generate_arguments_key.
+            self._graph_executor.clear_compile_arguments_resource()
             return phase
 
         self._check_recompile(full_function_name, create_time, echo_function_name)
@@ -1571,6 +1574,9 @@ class _CellGraphExecutor:
 
         if phase in obj.compile_cache and self.has_compiled(phase):
             logger.debug("%r graph has existed.", phase)
+            # Release resource should be released when CompileInner won't be executed, such as cur_convert_input_
+            # generated in generate_arguments_key.
+            self._graph_executor.clear_compile_arguments_resource()
             return phase, False
 
         obj.check_names()

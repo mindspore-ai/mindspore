@@ -139,6 +139,7 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
   // Generate a key for mapping function graph
   py::object GenerateArgumentsKey(const py::object &obj, const py::tuple &args, const py::dict &kwargs,
                                   bool enable_tuple_broaden = false);
+  void ClearCompileArgumentsResource();
 
   void ClearCurConvertInput();
   void ParentBeforeFork();
@@ -164,6 +165,7 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
   bool CompileInner(const py::object &source, const py::tuple &args, const py::dict &kwargs, const py::object &phase,
                     bool use_vm);
   py::object RunInner(const py::tuple &args, const py::object &phase);
+  void ClearRunArgumentsResource(size_t input_arg_size, VectorRef *arg_list);
 
   std::map<std::string, ExecutorInfoPtr> info_;
   static std::shared_ptr<GraphExecutorPy> executor_;
