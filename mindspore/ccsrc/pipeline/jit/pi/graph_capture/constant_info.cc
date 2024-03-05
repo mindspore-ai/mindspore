@@ -184,7 +184,8 @@ bool CheckConstantContains(ValueNode *node) {
     return std::any_of(items.begin(), items.end(), IsTarget);
   }
   if (container_op == BUILD_MAP) {
-    for (size_t i = 0; i < items.size(); i += 2) {
+    constexpr int second = 2;
+    for (size_t i = 0; i < items.size(); i += second) {
       if (IsTarget(items[i])) {
         return true;
       }
@@ -273,13 +274,16 @@ static bool CheckConstantLen(ValueNode *node) {
 static bool MakeConstantTypeCheck(ValueNode *node) {
   const auto &c1 = node->input(1)->GetConstantInfo();
   bool cnst = c1 != nullptr && c1->type() != nullptr;
-  return cnst && node->GetGraph()->GuardValueNode(node->input(2));
+  constexpr int second = 2;
+  return cnst && node->GetGraph()->GuardValueNode(node->input(second));
 }
 
-#define DECLARE_BUILTIN_CFUNCTION(func_name, handler)           \
-  func = PyDict_GetItemString(PyEval_GetBuiltins(), func_name); \
-  cfunc = PyCFunction_GET_FUNCTION(func);                       \
+using cfunction = bool (*)(ValueNode *);
+auto declare_builtin_cfunction = [] (std::string func_name, cfunction handler) -> {
+  func = PyDict_GetItemString(PyEval_GetBuiltins(), func_name);
+  cfunc = PyCFunction_GET_FUNCTION(func);
   cnst_func.insert({cfunc, handler});
+}
 
 static const std::map<PyCFunction, bool (*)(ValueNode *)> &GetConstantBuiltinFuncMap() {
   static std::map<PyCFunction, bool (*)(ValueNode *)> cnst_func = {};
@@ -288,12 +292,11 @@ static const std::map<PyCFunction, bool (*)(ValueNode *)> &GetConstantBuiltinFun
   }
   PyObject *func;
   PyCFunction cfunc;
-  DECLARE_BUILTIN_CFUNCTION("len", CheckConstantLen);
-  DECLARE_BUILTIN_CFUNCTION("isinstance", MakeConstantTypeCheck);
-  DECLARE_BUILTIN_CFUNCTION("issubclass", MakeConstantTypeCheck);
+  declare_builtin_cfunction("len", CheckConstantLen);
+  declare_builtin_cfunction("isinstance", MakeConstantTypeCheck);
+  declare_builtin_cfunction("issubclass", MakeConstantTypeCheck);
   return cnst_func;
 }
-#undef DECLARE_BUILTIN_CFUNCTION
 
 void ConstantInfo::CollectBuiltinFuncConstantInfo(CallNode *node) {
   MS_EXCEPTION_IF_NULL(node->input(0)->GetVobj()->GetPyObject().ptr());

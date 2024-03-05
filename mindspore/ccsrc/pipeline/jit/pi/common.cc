@@ -45,6 +45,16 @@
 #include "pipeline/jit/pi/graph_capture/code_generator.h"
 #include "pipeline/jit/pi/graph_capture/bytecode_inliner.h"
 
+#ifndef PY_MINOR_VERSION
+#define PY_MINOR_VERSION 3.7
+#error "undefined PY_MINOR_VERSION"
+#endif // PY_MINOR_VERSION
+
+#ifndef PY_MAJOR_VERSION
+#define PY_MAJOR_VERSION 3.9
+#error "undefined PY_MAJOR_VERSION"
+#endif // PY_MAJOR_VERSION
+
 namespace mindspore {
 namespace pijit {
 static Py_tss_t *tss = NULL;
