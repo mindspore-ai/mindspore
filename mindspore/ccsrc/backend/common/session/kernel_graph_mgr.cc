@@ -2815,7 +2815,7 @@ AnfNodePtr KernelGraphMgr::DoInline(const FuncGraphPtr &func_graph, const FuncGr
                                     const AnfNodePtrList &func_graph_args, const ScopePtr &scope,
                                     const uint32_t &target_graph_id,
                                     const std::map<session::AnfWithOutIndex, session::AnfWithOutIndex> &ref_map,
-                                    const KernelGraphPtr &graph) {
+                                    const KernelGraphPtr &graph, bool is_switch_inline) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(target_func_graph);
@@ -2843,7 +2843,7 @@ AnfNodePtr KernelGraphMgr::DoInline(const FuncGraphPtr &func_graph, const FuncGr
       graph->AddValueNodeToGraph(value_node);
     }
     // Add sub graph kernel for switch inline kernel graph.
-    if (new_node->isa<CNode>() && target_kernel_graph != nullptr) {
+    if (new_node->isa<CNode>() && target_kernel_graph != nullptr && is_switch_inline) {
       MS_LOG(DEBUG) << "Add inline sub graph for kernel:" << new_node->fullname_with_scope()
                     << " graph:" << func_graph->ToString();
       std::string sub_graph_name = func_graph->ToString();
@@ -2864,7 +2864,7 @@ AnfNodePtr KernelGraphMgr::DoInline(const FuncGraphPtr &func_graph, const FuncGr
     CopyCNodeInfo(func_graph, target_graph_id, ori_node, new_node);
   }
   // Collect condition gather node and condition switch node.
-  if (func_graph->isa<KernelGraph>()) {
+  if (func_graph->isa<KernelGraph>() && is_switch_inline) {
     const auto &kernel_graph = func_graph->cast<KernelGraphPtr>();
     MS_EXCEPTION_IF_NULL(kernel_graph);
     const auto &gather_to_switch = kernel_graph->condition_gather_to_switch();

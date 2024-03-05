@@ -43,6 +43,9 @@ const AnfNodePtr ProcessPartialInline::Process(const FuncGraphPtr &graph, const 
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
+  if (!cnode->HasPrimalAttr(kAttrNotCut)) {
+    return nullptr;
+  }
   auto partial_graph = cnode->input(kIndex1);
   auto sub_kernel_graph = session::AnfRuntimeAlgorithm::GetValueNodeKernelGraph(partial_graph);
   std::vector<AnfNodePtr> partial_inline_inputs = {

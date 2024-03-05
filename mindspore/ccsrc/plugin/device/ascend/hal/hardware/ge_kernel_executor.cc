@@ -163,7 +163,7 @@ void SelectKernel(const KernelGraphPtr &kernel_graph, std::set<KernelGraphPtr> *
   }
 }
 
-void InlineSubGraph(const KernelGraphPtr &graph, CNodePtr kernel_cnode, AnfNodePtr *last_call) {
+void InlineSubGraph(const KernelGraphPtr &graph, CNodePtr kernel_cnode, AnfNodePtr *last_call, bool is_switch_inline) {
   MS_EXCEPTION_IF_NULL(kernel_cnode);
   auto sub_graph = common::AnfAlgo::GetNodeAttr<KernelGraphPtr>(kernel_cnode, kAttrKernelGraph);
   MS_EXCEPTION_IF_NULL(sub_graph);
@@ -189,7 +189,7 @@ void InlineSubGraph(const KernelGraphPtr &graph, CNodePtr kernel_cnode, AnfNodeP
   }
   const auto &ref_map = sub_graph->GetRefMap();
   auto out = session::KernelGraphMgr::DoInline(sub_graph, main_graph, inp, kernel_cnode->input(0)->scope(),
-                                               kernel_info->graph_id(), ref_map, graph);
+                                               kernel_info->graph_id(), ref_map, graph, is_switch_inline);
   (void)mng->Replace(kernel_cnode, out);
   // Inline graph boundary: MakeTuple---->Depend---->Tensormove
   // Avoid long link times at runtime
@@ -225,7 +225,7 @@ void InlineCallGraph(const KernelGraphPtr &graph) {
   for (auto &kernel_cnode : kernel_cnodes) {
     MS_EXCEPTION_IF_NULL(kernel_cnode);
     if (common::AnfAlgo::CheckPrimitiveType(kernel_cnode, prim::kPrimCallInline)) {
-      InlineSubGraph(graph, kernel_cnode, &last_call);
+      InlineSubGraph(graph, kernel_cnode, &last_call, false);
     }
   }
   GEGraphOptimization::GetInstance().OptimizeACLGraphAfterInline(graph);
@@ -388,7 +388,7 @@ void InlineSwitchGraph(const KernelGraphPtr &graph, std::set<KernelGraphPtr> *co
   for (auto &kernel_cnode : partial_inline_cnode) {
     MS_EXCEPTION_IF_NULL(kernel_cnode);
     if (common::AnfAlgo::CheckPrimitiveType(kernel_cnode, prim::kPrimPartialInline)) {
-      InlineSubGraph(graph, kernel_cnode, nullptr);
+      InlineSubGraph(graph, kernel_cnode, nullptr, true);
     } else {
       MS_LOG(EXCEPTION) << "Invalid node type, node: " << kernel_cnode->fullname_with_scope();
     }
@@ -575,7 +575,7 @@ void FlattenConditionNodeInput(const KernelGraphPtr &graph) {
     MS_LOG(INFO) << "Add new condition gather node:" << new_kernel->fullname_with_scope()
                  << " to replace node:" << kernel->fullname_with_scope() << " branch name:"
                  << (kernel->HasAttr(kAttrBranchGraphName) ? new_kernel->GetAttr(kAttrBranchGraphName)->ToString()
-                                                          : " null");
+                                                           : " null");
   }
   graph->SetExecOrderByDefault();
 
