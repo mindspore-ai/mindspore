@@ -14,29 +14,24 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_COMMON_PASS_SHAPE_GETITEM_RESHAPE_FUSION_H_
-#define MINDSPORE_CCSRC_BACKEND_COMMON_PASS_SHAPE_GETITEM_RESHAPE_FUSION_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_COMMON_PASS_SHAPE_RESHAPE_FUSION_H_
+#define MINDSPORE_CCSRC_BACKEND_COMMON_PASS_SHAPE_RESHAPE_FUSION_H_
 
 #include "include/backend/optimizer/optimizer.h"
 
 namespace mindspore {
 namespace opt {
-class BACKEND_EXPORT ShapeGetItemReshapeFusion : public PatternProcessPass {
+class BACKEND_EXPORT ShapeReshapeFusion : public PatternProcessPass {
  public:
-  explicit ShapeGetItemReshapeFusion(bool multigraph = true)
-      : PatternProcessPass("shape_getitem_reshape", multigraph) {}
-  ~ShapeGetItemReshapeFusion() override = default;
+  explicit ShapeReshapeFusion(bool multigraph = true) : PatternProcessPass("shape_reshape", multigraph) {}
+  ~ShapeReshapeFusion() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                            const EquivPtr &equiv) const override;
 
  private:
-  VarPtr x_ = std::make_shared<Var>();
-  VarPtr y_ = std::make_shared<Var>();
-  VarPtr index0_ = std::make_shared<Var>();
-  VarPtr index1_ = std::make_shared<Var>();
-  VarPtr var_ = std::make_shared<Var>();
+  VarPtr reshape_input_ = std::make_shared<Var>();
 };
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_COMMON_PASS_SHAPE_GETITEM_RESHAPE_FUSION_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_COMMON_PASS_SHAPE_RESHAPE_FUSION_H_

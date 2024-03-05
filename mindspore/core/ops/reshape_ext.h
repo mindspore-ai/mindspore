@@ -35,7 +35,7 @@ class MIND_API ReshapeExt : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ReshapeExt);
   /// \brief Constructor.
-  ReshapeExt() : BaseOperator(kNameReshapeExt) { InitIOName({"x", "y"}, {"out"}); }
+  ReshapeExt() : BaseOperator(kNameReshapeExt) {}
 };
 
 AbstractBasePtr ReshapeExtInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
