@@ -19,6 +19,8 @@
 #include "utils/log_adapter.h"
 #include "mindspore/core/utils/convert_utils_base.h"
 #include "cxx_api/acl_utils.h"
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace mindspore {
 API_GRAPH_REG(Ascend310, AclGraphImpl);
@@ -112,7 +114,7 @@ Status AclGraphImpl::InitEnv() {
   }
   MS_LOG(INFO) << "Open device " << device_id_ << " success";
 
-  ret = aclrtCreateContext(&context_, device_id_);
+  ret = CALL_ASCEND_API(aclrtCreateContext, &context_, device_id_);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Acl create context failed";
     return kMCDeviceError;

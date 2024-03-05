@@ -23,6 +23,8 @@
 #include "include/common/utils/utils.h"
 #include "utils/file_utils.h"
 #include "include/common/utils/anfalgo.h"
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -329,7 +331,7 @@ bool AicpuOpKernelLoad::LaunchAicpuKernelSo() {
     MS_LOG(ERROR) << "Call rtCpuKernelLaunch failed, ret = 0x" << status;
     return false;
   }
-  status = aclrtSynchronizeStreamWithTimeout(stream, -1);
+  status = CALL_ASCEND_API(aclrtSynchronizeStreamWithTimeout, stream, -1);
   if (status != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Call aclrtSynchronizeStream failed, ret = 0x" << status;
     return false;

@@ -30,6 +30,8 @@
 #include "utils/log_adapter.h"
 #include "include/common/utils/utils.h"
 #include "runtime/device/kernel_runtime_manager.h"
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace mindspore {
 namespace device {
@@ -71,7 +73,7 @@ void AscendDmaHandle::InitDmaMem() {
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "aclrtSetDevice failed:" << ret;
   }
-  ret = aclrtGetMemInfo(ACL_HBM_MEM, &device_hbm_free_size_, &device_hbm_total_size_);
+  ret = CALL_ASCEND_API(aclrtGetMemInfo, ACL_HBM_MEM, &device_hbm_free_size_, &device_hbm_total_size_);
   MS_LOG(INFO) << "InitDmaMem device_hbm_free_size_:" << device_hbm_free_size_
                << ", device_hbm_total_size_:" << device_hbm_total_size_;
   if (ret != ACL_ERROR_NONE) {

@@ -18,7 +18,8 @@ file(GLOB GE_EXECUTOR_SRC
     ${TOP_DIR}/mindspore/lite/tools/converter/adapter/acl/mapper/*.cc
     ${TOP_DIR}/mindspore/lite/tools/converter/adapter/acl/common/utils.cc
     )
-list(APPEND GE_EXECUTOR_SRC $<TARGET_OBJECTS:_mindspore_transform_graph_ir_obj>)
+list(APPEND GE_EXECUTOR_SRC $<TARGET_OBJECTS:_mindspore_transform_graph_ir_obj>
+    $<TARGET_OBJECTS:_mindspore_transform_symbol_obj>)
 
 
 add_library(ascend_ge_plugin SHARED ${GE_EXECUTOR_SRC})

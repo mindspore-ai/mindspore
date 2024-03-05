@@ -20,6 +20,8 @@
 #include "acl/acl_rt.h"
 #ifndef ENABLE_SECURITY
 #include "plugin/device/ascend/hal/profiler/memory_profiling.h"
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 using mindspore::profiler::ascend::MemoryProfiling;
 #endif
@@ -156,7 +158,7 @@ void AscendMemoryManager::SwapIn(const void *host_ptr, void *device_ptr, size_t 
     if (ret_rt_memcpy != ACL_ERROR_NONE) {
       MS_EXCEPTION(DeviceProcessError) << "SwapIn aclrtMemcpyAsync failed.";
     }
-    if (aclrtSynchronizeStreamWithTimeout(stream, -1) != ACL_ERROR_NONE) {
+    if (CALL_ASCEND_API(aclrtSynchronizeStreamWithTimeout, stream, -1) != ACL_ERROR_NONE) {
       MS_EXCEPTION(DeviceProcessError) << "Call runtime aclrtSynchronizeStreamWithTimeout error.";
     }
   }
@@ -173,7 +175,7 @@ void AscendMemoryManager::SwapOut(const void *device_ptr, void *host_ptr, size_t
     if (ret_rt_memcpy != ACL_ERROR_NONE) {
       MS_EXCEPTION(DeviceProcessError) << "SwapOut aclrtMemcpyAsync failed.";
     }
-    if (aclrtSynchronizeStreamWithTimeout(stream, -1) != ACL_ERROR_NONE) {
+    if (CALL_ASCEND_API(aclrtSynchronizeStreamWithTimeout, stream, -1) != ACL_ERROR_NONE) {
       MS_EXCEPTION(DeviceProcessError) << "Call runtime aclrtSynchronizeStreamWithTimeout error.";
     }
   }
