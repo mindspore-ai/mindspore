@@ -158,31 +158,105 @@ void LLMEnginePlugin::InitInputOptions(const LLMEngineModelInfo &model_info, boo
   }
 }
 
-Status LLMEnginePlugin::OnGeStatus(ge::Status ge_status, const std::string &func_s, const std::string &phase) {
-  Status lite_status;
-  if (ge_status == ge::GRAPH_SUCCESS) {
+using ErrorCodeMap = std::unordered_map<ge::Status, std::function<Status(const std::string, const std::string)>>;
+
+static ErrorCodeMap error_map = {
+  {ge::GRAPH_SUCCESS, [](const std::string &func_s, const std::string &phase) {
     MS_LOG(INFO) << "End call llm::LLMEngine::" << func_s;
-    lite_status = kSuccess;
-  } else if (ge_status == ge::LLM_WAIT_PROC_TIMEOUT) {
+    return kSuccess;}
+  },
+  {ge::LLM_WAIT_PROC_TIMEOUT, [](const std::string &func_s, const std::string &phase){
     MS_LOG(WARNING) << "Failed to call llm::LLMEngine::" << func_s << " "
                     << ", " << phase << " status: LLM_WAIT_PROC_TIMEOUT";
-    lite_status = kLiteLLMWaitProcessTimeOut;
-  } else if (ge_status == ge::LLM_KV_CACHE_NOT_EXIST) {
+    return kLiteLLMWaitProcessTimeOut;}
+  },
+  {ge::LLM_KV_CACHE_NOT_EXIST, [](const std::string &func_s, const std::string &phase){
     MS_LOG(WARNING) << "Failed to call llm::LLMEngine::" << func_s << " " << phase << " status: LLM_KV_CACHE_NOT_EXIST";
-    lite_status = kLiteLLMKVCacheNotExist;
-  } else if (ge_status == ge::LLM_REPEAT_REQUEST) {
+    return kLiteLLMKVCacheNotExist;}
+  },
+  {ge::LLM_REPEAT_REQUEST, [](const std::string &func_s, const std::string &phase){
     MS_LOG(ERROR) << "Failed to call llm::LLMEngine::" << func_s << " " << phase << " status: LLM_REPEAT_REQUEST";
-    lite_status = kLiteLLMRepeatRequest;
-  } else if (ge_status == ge::LLM_REQUEST_ALREADY_COMPLETED) {
+    return kLiteLLMRepeatRequest;}
+  },
+  {ge::LLM_REQUEST_ALREADY_COMPLETED, [](const std::string &func_s, const std::string &phase){
     MS_LOG(ERROR) << "Failed to call llm::LLMEngine::" << func_s << " " << phase
                   << " receive LLM_REQUEST_ALREADY_COMPLETED";
-    lite_status = kLiteLLMRequestAlreadyCompleted;
-  } else if (ge_status == ge::LLM_ENGINE_FINALIZED) {
+    return kLiteLLMRequestAlreadyCompleted;}
+  },
+  {ge::LLM_ENGINE_FINALIZED, [](const std::string &func_s, const std::string &phase){
     MS_LOG(ERROR) << "Failed to call llm::LLMEngine::" << func_s << " " << phase << " status: LLM_ENGINE_FINALIZED";
-    lite_status = kLiteLLMEngineFinalized;
-  } else if (ge_status == ge::LLM_PARAM_INVALID) {
+    return kLiteLLMRequestAlreadyCompleted;}
+  },
+  {ge::LLM_PARAM_INVALID, [](const std::string &func_s, const std::string &phase){
     MS_LOG(ERROR) << "Failed to call llm::LLMEngine::" << func_s << " " << phase << " status: LLM_PARAM_INVALID";
-    lite_status = kLiteParamInvalid;
+    return kLiteParamInvalid;}
+  },
+  {ge::LLM_NOT_YET_LINK, [](const std::string &func_s, const std::string &phase){
+    MS_LOG(ERROR) << "Failed to call llm::LLMEngine::" << func_s << " " << phase << " status: LLM_NOT_YET_LINK";
+    return kLiteLLMNotYetLink;}
+  },
+  {ge::LLM_ALREADY_LINK, [](const std::string &func_s, const std::string &phase){
+    MS_LOG(ERROR) << "Failed to call llm::LLMEngine::" << func_s << " " << phase << " status: LLM_ALREADY_LINK";
+    return kLiteLLMAlreadyLink;}
+  },
+  {ge::LLM_LINK_FAILED, [](const std::string &func_s, const std::string &phase){
+    MS_LOG(ERROR) << "Failed to call llm::LLMEngine::" << func_s << " " << phase << " status: LLM_LINK_FAILED";
+    return kLiteLLMLinkFailed;}
+  },
+  {ge::LLM_UNLINK_FAILED, [](const std::string &func_s, const std::string &phase){
+    MS_LOG(ERROR) << "Failed to call llm::LLMEngine::" << func_s << " " << phase << " status: LLM_UNLINK_FAILED";
+    return kLiteLLMUnlinkFailed;}
+  },
+  {ge::LLM_NOTIFY_PROMPT_UNLINK_FAILED, [](const std::string &func_s, const std::string &phase){
+    MS_LOG(ERROR) << "Failed to call llm::LLMEngine::" << func_s << " "
+                  << phase << " status: LLM_NOTIFY_PROMPT_UNLINK_FAILED";
+    return kLiteLLMNofiryPromptUnlinkFailed;}
+  },
+  {ge::LLM_CLUSTER_NUM_EXCEED_LIMIT, [](const std::string &func_s, const std::string &phase){
+    MS_LOG(ERROR) << "Failed to call llm::LLMEngine::" << func_s << " "
+                  << phase << " status: LLM_CLUSTER_NUM_EXCEED_LIMIT";
+    return kLiteLLMClusterNumExceedLimit;}
+  },
+  {ge::LLM_PROCESSING_LINK, [](const std::string &func_s, const std::string &phase){
+    MS_LOG(ERROR) << "Failed to call llm::LLMEngine::" << func_s << " " << phase << " status: LLM_PROCESSING_LINK";
+    return kLiteLLMProcessingLink;}
+  },
+  {ge::LLM_DEVICE_OUT_OF_MEMORY, [](const std::string &func_s, const std::string &phase){
+    MS_LOG(ERROR) << "Failed to call llm::LLMEngine::" << func_s << " "
+                  << phase << " status: LLM_DEVICE_OUT_OF_MEMORY";
+    return kLiteLLMOutOfMemory;}
+  },
+  {ge::LLM_PREFIX_ALREADY_EXIST, [](const std::string &func_s, const std::string &phase){
+    MS_LOG(ERROR) << "Failed to call llm::LLMEngine::" << func_s << " "
+                  << phase << " status: LLM_PREFIX_ALREADY_EXIST";
+    return kLiteLLMPrefixAlreadyExist;}
+  },
+  {ge::LLM_PREFIX_NOT_EXIST, [](const std::string &func_s, const std::string &phase){
+    MS_LOG(ERROR) << "Failed to call llm::LLMEngine::" << func_s << " "
+                  << phase << " status: LLM_PREFIX_NOT_EXIST";
+    return kLiteLLMPrefixNotExist;}
+  },
+  {ge::LLM_SEQ_LEN_OVER_LIMIT, [](const std::string &func_s, const std::string &phase){
+    MS_LOG(ERROR) << "Failed to call llm::LLMEngine::" << func_s << " "
+                  << phase << " status: LLM_SEQ_LEN_OVER_LIMIT";
+    return kLiteLLMSeqLenOverLimit;}
+  },
+  {ge::LLM_NO_FREE_BLOCK, [](const std::string &func_s, const std::string &phase){
+    MS_LOG(ERROR) << "Failed to call llm::LLMEngine::" << func_s << " "
+                  << phase << " status: LLM_NO_FREE_BLOCK";
+    return kLiteLLMNoFreeBlock;}
+  },
+  {ge::LLM_BLOCKS_OUT_OF_MEMORY, [](const std::string &func_s, const std::string &phase){
+    MS_LOG(ERROR) << "Failed to call llm::LLMEngine::" << func_s << " "
+                  << phase << " status: LLM_BLOCKS_OUT_OF_MEMORY";
+    return kLiteLLMBlockOutOfMemory;}
+  }
+};
+
+Status LLMEnginePlugin::OnGeStatus(ge::Status ge_status, const std::string &func_s, const std::string &phase) {
+  Status lite_status;
+  if (error_map.count(ge_status) == 1) {
+    lite_status = error_map[ge_status](func_s, phase);
   } else {
     MS_LOG(ERROR) << "Failed to call llm::LLMEngine::" << func_s << " " << phase << " status: " << ge_status;
     lite_status = kLiteError;
