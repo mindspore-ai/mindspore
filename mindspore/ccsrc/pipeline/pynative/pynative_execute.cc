@@ -50,7 +50,7 @@ std::mutex PyNativeExecutor::instance_lock_;
 namespace {
 enum class AsyncRunOpArgsEnum : size_t { PY_PRIM = 0, PY_INPUTS, PY_ARGS_NUM };
 template <typename T, typename... Args>
-T PyNativeExecutorTry(const std::function<T(const Args &...)> &method, const Args &...args) {
+T PyNativeExecutorTry(const std::function<T(const Args &...)> &method, const Args &... args) {
   const auto &inst = PyNativeExecutor::GetInstance();
   MS_EXCEPTION_IF_NULL(inst);
   MS_EXCEPTION_IF_NULL(method);
@@ -76,19 +76,6 @@ T PyNativeExecutorTry(const std::function<T(const Args &...)> &method, const Arg
     return res;
   }
 }
-
-// Tensor may be used before the execution of the asynchronous task.
-void SetCallbackForInputTensor(const FrontendOpRunInfoPtr &op_run_info) {
-  MS_EXCEPTION_IF_NULL(op_run_info->op_grad_info);
-  for (auto &input : op_run_info->op_grad_info->input_value) {
-    MS_EXCEPTION_IF_NULL(input);
-    if (input->isa<tensor::Tensor>()) {
-      auto tensor = input->cast<tensor::TensorPtr>();
-      MS_EXCEPTION_IF_NULL(tensor);
-      tensor->set_lazy_callback([]() { runtime::OpExecutor::GetInstance().WaitAll(); });
-    }
-  }
-}
 }  // namespace
 
 void PyNativeExecutor::StoreAsyncStatus(const FrontendOpRunInfoPtr &op_run_info) const {
@@ -102,7 +89,6 @@ void PyNativeExecutor::StoreAsyncStatus(const FrontendOpRunInfoPtr &op_run_info)
 py::object PyNativeExecutor::RunOpStub(const py::args &args) const {
   runtime::ProfilerStageRecorder recorder(runtime::ProfilerStage::kRunOp);
   FrontendOpRunInfoPtr op_run_info = forward_executor()->GenerateOpRunInfo(args, true);
-  SetCallbackForInputTensor(op_run_info);
 
   StoreAsyncStatus(op_run_info);
   const auto &op_name = op_run_info->base_op_run_info.op_name;
@@ -130,15 +116,6 @@ py::object PyNativeExecutor::RunOpStub(const py::args &args) const {
 py::object PyNativeExecutor::RunSliceOpStub(const std::vector<ValuePtr> &input_values,
                                             const std::vector<SliceOpInfoPtr> &slice_op_infos) const {
   runtime::ProfilerStageRecorder recorder(runtime::ProfilerStage::kRunOp);
-  for (auto &input : input_values) {
-    MS_EXCEPTION_IF_NULL(input);
-    if (input->isa<tensor::Tensor>()) {
-      auto tensor = input->cast<tensor::TensorPtr>();
-      MS_EXCEPTION_IF_NULL(tensor);
-      tensor->set_lazy_callback([]() { runtime::OpExecutor::GetInstance().WaitAll(); });
-    }
-  }
-
   auto requires_grad = grad_executor()->RequiresGrad();
   if (!forward_executor()->EnablePipeline("")) {
     forward_executor()->WaitForwardTask();
