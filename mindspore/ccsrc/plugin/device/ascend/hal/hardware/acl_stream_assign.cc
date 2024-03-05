@@ -39,6 +39,7 @@ void AclStreamAssign::AssignStream(const NotNull<KernelGraphPtr> &kernel_graph) 
     MS_LOG(INFO) << "Not stream assign when pynative forward.";
     return;
   }
+  bool enable_multi_stream = false;
   for (const auto &node : kernels) {
     if (AnfAlgo::IsKernelSelectBackoffOp(node)) {
       continue;
@@ -46,11 +47,13 @@ void AclStreamAssign::AssignStream(const NotNull<KernelGraphPtr> &kernel_graph) 
     if (common::AnfAlgo::IsCommunicationOp(node)) {
       AnfAlgo::SetStreamId(kWorldGroupStreamIndex, node.get());
       common::AnfAlgo::SetNodeAttr(kAttrStreamId, MakeValue(kWorldGroupStreamIndex), node);
+      enable_multi_stream = true;
     } else {
       AnfAlgo::SetStreamId(kDefaultStreamIndex, node.get());
       common::AnfAlgo::SetNodeAttr(kAttrStreamId, MakeValue(kDefaultStreamIndex), node);
     }
   }
+  kernel_graph->set_enable_multi_stream(enable_multi_stream);
   for (size_t i = 1; i < kernels.size(); ++i) {
     if (common::AnfAlgo::GetCNodeName(kernels[i - 1]) == kMemSetOpName) {
       auto stream_id = AnfAlgo::GetStreamId(kernels[i]);

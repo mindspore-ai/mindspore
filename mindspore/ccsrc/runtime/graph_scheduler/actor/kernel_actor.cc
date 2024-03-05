@@ -765,7 +765,7 @@ bool KernelActor::LaunchKernel(OpContext<DeviceTensor> *const) {
 }
 
 void KernelActor::LaunchCallback(OpContext<DeviceTensor> *const context) {
-  if (!enable_callback_ || input_device_tensors_.empty()) {
+  if (!ActorDispatcher::enable_multi_stream() || input_device_tensors_.empty()) {
     return;
   }
   auto stream_id = kernel_info_->stream_id();

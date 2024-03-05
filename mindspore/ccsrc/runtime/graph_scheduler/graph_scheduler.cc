@@ -592,6 +592,13 @@ ActorSet *GraphScheduler::Transform(const GraphCompilerInfo &graph_compiler_info
       break;
     }
   }
+  for (const auto &graph : graph_compiler_info.graphs_) {
+    MS_EXCEPTION_IF_NULL(graph);
+    if (graph->enable_multi_stream()) {
+      actor_set->enable_multi_stream_ = true;
+      break;
+    }
+  }
 
   (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageGraphTransform, 1, 0, 1);
   return actor_set.get();
@@ -744,6 +751,7 @@ void GraphScheduler::Run(ActorSet *const actor_set, const std::vector<std::vecto
     thread_pool->SetSpinCountMaxValue();
   }
   ActorDispatcher::set_is_multi_thread_execution(actor_set->is_multi_thread_execution_);
+  ActorDispatcher::set_enable_multi_stream(actor_set->enable_multi_stream_);
   double start_time = GetTime();
   ActorDispatcher::Send(actor_set->data_prepare_actor_->GetAID(), &DataPrepareActor::PrepareData, input_tensors, args,
                         &op_context, GraphExecutionStrategy::kPipeline);
