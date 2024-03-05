@@ -877,26 +877,6 @@ bool GraphBuilder::DoUnary(const Instr &instr) {
   return true;
 }
 
-bool MindGraphBuilder::DoIsOp(const Instr &instr) {
-  int opcode = instr.op();
-  int oparg = instr.arg();
-  auto r = pop();
-  auto l = pop();
-  AObject *o;
-  if (l->IsConstantValue() && r->IsConstantValue()) {
-    o = static_cast<AbstractObject *>(l->GetVobj())->AbstractObject::Binary(r->GetVobj(), opcode);
-  } else {
-    o = l->GetVobj() ? l->GetVobj()->Binary(r->GetVobj(), opcode) : AObject::MakeAObject(AObject::kTypeAnyValue);
-  }
-  if ((opcode == CONTAINS_OP || opcode == IS_OP) && o && o->GetPyObject().ptr()) {
-    bool res = (o->GetPyObject().ptr() == Py_True) ^ oparg;
-    o = AObject::Convert(py::bool_(res));
-  }
-  auto v = NewValueNode(o, instr, {l, r});
-  push(v);
-  return true;
-}
-
 bool GraphBuilder::DoIsOp(const Instr &instr) { return DoBinary(instr); }
 
 bool GraphBuilder::DoBinary(const Instr &instr) {
@@ -2196,7 +2176,7 @@ ValueNode *GetBoundSelf(CallNode *call_node) {
       break;
     case AObject::kTypeCFunction:
     case AObject::kTypeTraceNode:
-    case AObject::kTypeFunction: {
+    case AObject::kTypeFunction:
       break;
     default:
       MS_LOG(INTERNAL_EXCEPTION) << "unimplemented type " << vo->ToString();
