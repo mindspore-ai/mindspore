@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,4 +43,14 @@ ATTR_MAP(AscendAntiQuant) = {{"scale", ATTR_DESC(scale, AnyTraits<float>())},
                              {"dtype", ATTR_DESC(dtype, AnyTraits<GEType>())}};
 OUTPUT_MAP(AscendAntiQuant) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(AscendAntiQuant, kNameAscendAntiQuant, ADPT_DESC(AscendAntiQuant))
+
+// QuantBatchMatmulV3
+INPUT_MAP(QuantBatchMatmulV3) = {
+  {1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}, {3, INPUT_DESC(scale)}, {4, INPUT_DESC(offset)}, {5, INPUT_DESC(bias)}};
+ATTR_MAP(QuantBatchMatmulV3) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(QuantBatchMatmulV3) = {{6, ATTR_DESC(transpose_x1, AnyTraits<bool>())},
+                                      {7, ATTR_DESC(transpose_x2, AnyTraits<bool>())},
+                                      {8, ATTR_DESC(dtype, AnyTraits<GEType>())}};
+OUTPUT_MAP(QuantBatchMatmulV3) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(QuantBatchMatmulV3, kNameQuantBatchMatmul, ADPT_DESC(QuantBatchMatmulV3))
 }  // namespace mindspore::transform

@@ -1,0 +1,33 @@
+#operator quant_batch_matmul
+quant_batch_matmul:
+  args:
+    x1:
+      dtype: tensor
+    x2:
+      dtype: tensor
+    scale:
+      dtype: tensor
+    offset:
+      dtype: tensor
+      default: None
+    bias:
+      dtype: tensor
+      default: None
+    transpose_x1:
+      dtype: bool
+      default: false
+      prim_init: True
+    transpose_x2:
+      dtype: bool
+      default: false
+      prim_init: True
+    dtype:
+      dtype: TypeId
+      default: mstype.float16
+      prim_init: True
+      arg_handler: dtype_to_type_id
+  args_signature:
+        dtype_group: (x1, x2)
+  returns:
+    y:
+      dtype: tensor
