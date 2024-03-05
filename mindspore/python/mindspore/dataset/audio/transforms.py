@@ -1186,9 +1186,9 @@ class Fade(AudioTensorOperation):
         >>>
         >>> # Use the transform in dataset pipeline mode
         >>> waveform = np.random.random([5, 16])  # 5 samples
-        >>> dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.Fade(fade_in_len=3, fade_out_len=2, fade_shape=audio.FadeShape.LINEAR)]
-        >>> dataset = dataset.map(operations=transforms, input_columns=["audio"])
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
         >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
         ...     print(item["audio"].shape, item["audio"].dtype)
         ...     break
