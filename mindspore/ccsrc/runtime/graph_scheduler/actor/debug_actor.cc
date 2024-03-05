@@ -185,6 +185,7 @@ void DebugActor::AscendStepEnd() {
   if (profile_started_ && profiler != nullptr && profiler->GetEnableFlag()) {
     MS_EXCEPTION_IF_NULL(device_ctx_);
     device_ctx_->device_res_manager_->BindDeviceToCurrentThread(false);
+    device_ctx_->device_res_manager_->SyncAllStreams();
     MS_LOG(INFO) << "Dot step end timestamp.";
     profiler->StepStop();
     profile_started_ = false;
