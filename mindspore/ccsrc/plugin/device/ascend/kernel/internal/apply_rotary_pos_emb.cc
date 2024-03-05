@@ -22,13 +22,16 @@ internal::OpParamPtr ApplyRotaryPosEmb::CreateOpParam(const std::vector<KernelTe
   internal::OpParamPtr param_ptr = std::make_shared<internal::OpParam>();
   param_ptr->opId = internal::OpId::ApplyRotaryPosEmb;
 
-  internal::MixParam mixParam;
-  mixParam.mixType = internal::MixParam::MixType::MIX_ROPE;
-  mixParam.rotaryCoeff = 2;
-  mixParam.cosFormat = 0;
+  internal::ApplyRotaryPosEmbParam ropeParam;
+  auto last_input = inputs.at(5);
+  if (last_input->dtype_id() == TypeId::kNumberTypeInt64) {
+    ropeParam.cosFormat = static_cast<int32_t>(last_input->GetValue<int64_t>().value());
+  } else {
+    MS_LOG(EXCEPTION) << "ApplyRotaryPosEmb input[5] dtype is not kNumberTypeInt64";
+  }
 
   // setup rope param from inputs
-  param_ptr->specificParam = mixParam;
+  param_ptr->specificParam = ropeParam;
   return param_ptr;
 }
 void ApplyRotaryPosEmb::SetInOutIdx() {
