@@ -23,6 +23,12 @@
 
 namespace mindspore {
 namespace parallel {
+namespace {
+const int ANTIQUANT_INPUT_X = 0;
+const int ANTIQUANT_INPUT_SCALE = 1;
+const int ANTIQUANT_INPUT_OFFSET = 2;
+const int ANTIQUANT_INPUT_SIZE = 3;
+}  // namespace
 Status FakeQuantPerLayerInfo::GetAttrs() {
   if (inputs_shape_[1].size() != 1 || inputs_shape_[2].size() != 1) {
     MS_LOG(ERROR) << name_ << ": only support that both shape of min and max are 1, but the shape of min is "
@@ -440,6 +446,105 @@ void MinMaxUpdatePerChannelInfo::ReComputeBatchSplitFlagList() {
   return;
 }
 
+Shape AntiQuantExpandShape(const Shape &bigger_size_shape, Shape smaller_size_shape) {
+  size_t insert_num = bigger_size_shape.size() - smaller_size_shape.size();
+  for (size_t num = 0; num < insert_num; ++num) {
+    (void)smaller_size_shape.insert(smaller_size_shape.cbegin(), 1);
+  }
+  return smaller_size_shape;
+}
+
+Strategies AntiQuantExpandStrategy(const StrategyPtr &strategy) {
+  Strategies expand_strategy;
+  Strategies stra = strategy->GetInputDim();
+  Dimensions in0_strategy = stra.at(ANTIQUANT_INPUT_X);
+  Dimensions in1_strategy = stra.at(ANTIQUANT_INPUT_SCALE);
+  Dimensions in2_strategy = stra.at(ANTIQUANT_INPUT_OFFSET);
+  size_t in0_size = in0_strategy.size();
+  size_t in1_size = in1_strategy.size();
+  size_t in2_size = in2_strategy.size();
+
+  // in0_size >= in1_size, in0_size >= in2_size
+  if (in0_size < in1_size || in0_size < in2_size) {
+    return expand_strategy;
+  }
+  expand_strategy.push_back(in0_strategy);
+  if (in0_size > in1_size) {
+    expand_strategy.push_back(AntiQuantExpandShape(in0_strategy, in1_strategy));
+  } else {
+    expand_strategy.push_back(in1_strategy);
+  }
+
+  if (in0_size > in2_size) {
+    expand_strategy.push_back(AntiQuantExpandShape(in0_strategy, in2_strategy));
+  } else {
+    expand_strategy.push_back(in2_strategy);
+  }
+  return expand_strategy;
+}
+
+TensorMap SetExpandQuantTensorMap(const Shape &strategy, const Shape &dev_matrix_shape) {
+  TensorMap tensor_map_index;
+  for (size_t i = 0; i < strategy.size(); ++i) {
+    if (strategy[i] == dev_matrix_shape[i]) {
+      tensor_map_index.push_back(static_cast<int64_t>(LAST_INDEX(strategy.size()) - i));
+    } else {
+      tensor_map_index.push_back(-1);
+    }
+  }
+  return tensor_map_index;
+}
+
+TensorMap SetQuantTensorMap(const Shape &strategy_expand, const Shape &dev_matrix_shape, const Shape &strategy) {
+  TensorMap expand_map = SetExpandQuantTensorMap(strategy_expand, dev_matrix_shape);
+  size_t dev_matrix_size = dev_matrix_shape.size();
+  size_t strategy_size = strategy.size();
+  if (dev_matrix_size != strategy_size) {
+    (void)expand_map.erase(expand_map.cbegin(),
+                           expand_map.cbegin() + static_cast<different_type>(dev_matrix_size - strategy_size));
+  }
+  return expand_map;
+}
+
+Status AntiQuantInfo::InferTensorMap() {
+  if (inputs_shape_.size() == ANTIQUANT_INPUT_SIZE - 1) {
+    return ArithmeticBase::InferTensorMap();
+  }
+
+  Shape tensor_map_index;
+  Strategies expand_strategy = AntiQuantExpandStrategy(strategy_);
+  if (expand_strategy.size() == 0) {
+    return FAILED;
+  }
+  Dimensions in0_expand_strategy = expand_strategy.at(ANTIQUANT_INPUT_X);
+  Dimensions in1_expand_strategy = expand_strategy.at(ANTIQUANT_INPUT_SCALE);
+  Dimensions in2_expand_strategy = expand_strategy.at(ANTIQUANT_INPUT_OFFSET);
+  Strategies stra = strategy_->GetInputDim();
+  Dimensions in0_strategy = stra.at(ANTIQUANT_INPUT_X);
+  Dimensions in1_strategy = stra.at(ANTIQUANT_INPUT_SCALE);
+  Dimensions in2_strategy = stra.at(ANTIQUANT_INPUT_OFFSET);
+  for (size_t i = 0; i < in0_expand_strategy.size(); ++i) {
+    tensor_map_index.push_back(static_cast<int64_t>(LAST_INDEX(in0_expand_strategy.size()) - i));
+  }
+
+  // Get dev matrix without repeated calculation
+  Shape dev_shape = dev_matrix_shape_;
+  if (repeated_calc_num_ > 1) {
+    if (repeated_num_in_dev_matrix_right_) {
+      dev_shape.pop_back();
+    } else {
+      (void)dev_shape.erase(dev_shape.cbegin());
+    }
+  }
+
+  (void)inputs_tensor_map_.emplace_back(SetQuantTensorMap(in0_expand_strategy, dev_shape, in0_strategy));
+  (void)inputs_tensor_map_.emplace_back(SetQuantTensorMap(in1_expand_strategy, dev_shape, in1_strategy));
+  (void)inputs_tensor_map_.emplace_back(SetQuantTensorMap(in2_expand_strategy, dev_shape, in2_strategy));
+  (void)outputs_tensor_map_.emplace_back(std::move(tensor_map_index));
+  return SUCCESS;
+}
+
+REGISTER(AntiQuantInfo);
 REGISTER(FakeQuantPerLayerInfo);
 REGISTER(FakeQuantPerChannelInfo);
 REGISTER(MinMaxUpdatePerLayerInfo);

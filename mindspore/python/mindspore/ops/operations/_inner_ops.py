@@ -223,6 +223,53 @@ class Dequant(PrimitiveWithInfer):
         return mstype.float16
 
 
+class AntiQuant(Primitive):
+    r"""
+    Returns the antiquantized value of input_x.
+
+    If `sqrt_mode` is False:
+
+    .. math::
+        y = scale * (x + offset)
+
+    If `sqrt_mode` is True:
+
+    .. math::
+        y = scale * scale * (x + offset)
+
+    Note:
+        This operation only support Atlas 200/300/500 inference product.
+
+    Args:
+        scale (float) : Specifies the scaling ratio.
+        offset (float): Specifies the offset.
+        sqrt_mode (bool) : Specifies whether to perform square root on `scale`. Default: ``False``.
+
+    Inputs:
+        - **input_x** (Tensor) : Input tensor. Must be mindspore.int8.
+
+    Outputs:
+        - Tensor: The antiquantized output tensor of type mindspore.float32.
+
+    Examples:
+        >>> from mindspore.ops.operations._inner_ops import AntiQuant
+        >>> input_x = Tensor([50.0, 20.0], mstype.int8)
+        >>> antiquant = AntiQuant(2.0, 1.0, False)
+        >>> y = antiquant(input_x)
+        >>> print(y)
+        [102. 42.]
+    """
+
+    @prim_attr_register
+    def __init__(self, sqrt_mode=False, dtype=mstype.float16):
+        super().__init__("AntiQuant")
+        self.sqrt_mode = validator.check_value_type("sqrt_mode", sqrt_mode, [bool], self.name)
+        self.dtype = dtype
+
+        self.init_prim_io_names(inputs=['x', 'scale', 'offset'],
+                                outputs=['y'])
+
+
 class MatrixDiag(PrimitiveWithInfer):
     """
     Returns a batched diagonal tensor with a given batched diagonal values.

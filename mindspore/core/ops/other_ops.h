@@ -100,7 +100,7 @@ GVAR_DEF(PrimitivePtr, kPrimBufferAppend, std::make_shared<Primitive>("BufferApp
 GVAR_DEF(PrimitivePtr, kPrimNPUGetFloatStatus, std::make_shared<Primitive>("NPUGetFloatStatus"));
 GVAR_DEF(PrimitivePtr, kPrimNPUAllocFloatStatus, std::make_shared<Primitive>("NPUAllocFloatStatus"));
 GVAR_DEF(PrimitivePtr, kPrimNPUClearFloatStatus, std::make_shared<Primitive>("NPUClearFloatStatus"));
-GVAR_DEF(PrimitivePtr, kPrimNPUAntiQuant, std::make_shared<Primitive>("AscendAntiQuant"));
+GVAR_DEF(PrimitivePtr, kPrimAntiQuant, std::make_shared<Primitive>("AntiQuant"));
 
 // Fusion Inference OP
 GVAR_DEF(PrimitivePtr, kPrimFFN, std::make_shared<Primitive>("FFN"));
