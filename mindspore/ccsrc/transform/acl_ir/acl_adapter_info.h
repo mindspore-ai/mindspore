@@ -113,6 +113,11 @@ class AclAdapterInfo {
     return *this;
   }
 
+  AclAdapterInfo &set_complex_parallel_concerned() {
+    is_complex_parallel_concerned_ = true;
+    return *this;
+  }
+
   const std::map<size_t, AclSpecialInfo> &inputs() const { return input_info_; }
   bool no_special_outputs() const { return (output_info_.empty() && output_index_info_.empty()); }
   std::string output_format(size_t index, const std::vector<std::string> &input_formats) const;
@@ -122,6 +127,7 @@ class AclAdapterInfo {
   const bool &is_need_retrieve_output_shape() const { return is_need_retrieve_output_shape_; }
   const bool &is_dynamic(bool is_dynamic) const { return set_dynamic_mode ? is_dynamic_ : is_dynamic; }
   const bool &is_const_input() const { return is_const_input_; }
+  const bool &is_complex_parallel_concerned() const { return is_complex_parallel_concerned_; }
   const AclPrecisionMode &precision_mode() const { return precision_mode_; }
   const std::vector<ge::DataType> &extra_supported_datatype() const { return extra_supported_datatype_; }
   const std::map<size_t, AclFormatSelector> &input_selector() const { return input_selector_; }
@@ -138,6 +144,7 @@ class AclAdapterInfo {
   bool set_dynamic_mode{false};
   bool is_dynamic_{true};
   bool is_const_input_{false};
+  bool is_complex_parallel_concerned_{false};
   AclPrecisionMode precision_mode_{DEFAULT_MODE};
   std::map<size_t, AclSpecialInfo> input_info_{};
   std::map<size_t, std::vector<std::string>> output_info_{};
