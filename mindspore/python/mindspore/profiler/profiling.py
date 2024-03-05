@@ -648,8 +648,6 @@ class Profiler:
         self._dynamic_status = self._profiler_manager.dynamic_status()
         _environment_check()
 
-        self._cpu_profiler.stop()
-
         cpu_op_file = glob.glob(os.path.join(self._output_path, 'cpu_op_type_info_*'))
         if self._device_target and self._device_target != DeviceTarget.CPU.value and cpu_op_file:
             self._is_heterogeneous = True
@@ -786,6 +784,7 @@ class Profiler:
         # Stop data collection after all operators are executed.
         _pynative_executor.sync()
 
+        self._cpu_profiler.stop()
         if self._data_process:
             self._md_profiler.stop()
             self._md_profiler.save(self._output_path)
