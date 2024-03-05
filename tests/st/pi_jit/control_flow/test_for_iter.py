@@ -63,7 +63,6 @@ def for_mix_with_sideeffect(x):
 
 
 @pytest.mark.level0
-@pytest.mark.skip
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('func', [for_range, for_enumerate, for_mix, for_zip])
@@ -91,7 +90,6 @@ def test_for_iter_unrolling(func, param):
 
 
 @pytest.mark.level0
-@pytest.mark.skip
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('func', [for_mix_with_sideeffect])

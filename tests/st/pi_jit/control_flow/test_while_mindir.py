@@ -29,7 +29,6 @@ class SingleWhileNet(nn.Cell):
         y += 2 * x
         return y
 
-@pytest.mark.skip
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
