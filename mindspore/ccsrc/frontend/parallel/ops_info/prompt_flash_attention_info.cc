@@ -59,12 +59,12 @@ bool PromptFlashAttentionInfo::CheckStrategy(int64_t strategy, int64_t true_valu
 
 void PromptFlashAttentionInfo::SetOptinalInputs() {
   optinal_inputs_.resize(ops::kPromptFlashAttentionInputsNum, true);
-  optinal_tensor_map_.resize(ops::kPromptFlashAttentionInputsNum);
+  optinal_tensor_map_.resize(ops::kPromptFlashAttentionInputsNum, {-1, -1});
   optinal_op_strategies_.resize(ops::kPromptFlashAttentionInputsNum, {0});
   size_t valid_input_index = 0;
   for (size_t index = 0; index < input_value_.size(); index++) {
     auto optinal_input_ptr = input_value_[index];
-    if (optinal_input_ptr == nullptr) {
+    if (optinal_input_ptr == nullptr || optinal_input_ptr->isa<tensor::Tensor>()) {
       if (index == ops::kPromptFlashAttentionInputAttnMaskIndex && valid_input_index < inputs_shape_.size()) {
         atten_mask_rank_ = inputs_shape_[valid_input_index].size();
       }
@@ -72,10 +72,14 @@ void PromptFlashAttentionInfo::SetOptinalInputs() {
         padding_mask_rank_ = inputs_shape_[valid_input_index].size();
       }
       valid_input_index++;
+    } else if (optinal_input_ptr->isa<None>()) {
+      optinal_inputs_[index] = False;
     } else {
-      if (optinal_input_ptr->isa<None>()) {
-        optinal_inputs_[index] = False;
-      }
+      TypePtr input_type = optinal_input_ptr->type();
+      MS_EXCEPTION_IF_NULL(input_type);
+      MS_EXCEPTION(TypeError) << "The given input at index: " << index
+                              << "has an invalid data type: " << input_type->ReprString()
+                              << ". The expected types are: Tensor or None.";
     }
   }
 
