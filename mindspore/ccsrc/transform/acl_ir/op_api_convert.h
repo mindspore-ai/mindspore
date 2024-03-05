@@ -355,6 +355,10 @@ inline aclTensor *ConvertType(const tensor::TensorPtr &tensor) {
   }
   auto acl_data_type = AclConverter::ConvertType(tensor->data_type());
   auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
+  if (device_address->GetMutablePtr() == nullptr) {
+    MS_LOG(EXCEPTION) << "The device memory is null, please allocate the device memory for tensor "
+                      << tensor->ToString();
+  }
   auto [view_shape, strides, offset, ori_dev_shape] = GetViewShapeAndStride(tensor, device_address);
   auto acl_tensor = aclCreateTensor(view_shape.data(), view_shape.size(), acl_data_type, strides.data(), offset, format,
                                     ori_dev_shape.data(), ori_dev_shape.size(), device_address->GetMutablePtr());

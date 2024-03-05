@@ -17,7 +17,7 @@
 #include "plugin/device/ascend/kernel/pyboost/customize/reshape.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 #include "kernel/pyboost/op_register.h"
-#include "kernel/pyboost/py_boost_utils.h"
+#include "kernel/pyboost/pyboost_utils.h"
 #include "plugin/device/ascend/kernel/pyboost/aclnn_utils.h"
 #include "kernel/pyboost/auto_generate/copy.h"
 #include "kernel/pyboost/auto_generate/view.h"

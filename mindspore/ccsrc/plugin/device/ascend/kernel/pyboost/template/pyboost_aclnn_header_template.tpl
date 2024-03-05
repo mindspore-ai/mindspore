@@ -26,7 +26,8 @@ namespace kernel {
 namespace pyboost {
 class ${op_name}Ascend : public pyboost::${op_name} {
  public:
-  ${op_name}Ascend() = default;
+  ${op_name}Ascend(PrimitivePtr primitive, const DeviceContext *device_context)
+      : ${op_name}(std::move(primitive), device_context) {}
   ~${op_name}Ascend() = default;
 
   ${return_type} Call(${call_args_with_type}) override;

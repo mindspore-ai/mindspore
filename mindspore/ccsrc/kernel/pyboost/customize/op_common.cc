@@ -15,7 +15,7 @@
  */
 
 #include "kernel/pyboost/customize/op_common.h"
-#include "kernel/pyboost/py_boost_utils.h"
+#include "kernel/pyboost/pyboost_utils.h"
 #include "mindspore/core/ops/framework_ops.h"
 
 namespace mindspore {

@@ -182,10 +182,6 @@ def generate_pyboost_op_source_code(work_path, op_proto, template_paths, convert
         get_cube_math_type = ''
         real_output = ', ' + converter.op_outputs
         proto_operator_name = op_proto.operator_name
-        if op_name_str.endswith('Ext'):
-            op_name_str = op_name_str[:-3]
-        if operator_name.endswith('ext'):
-            operator_name = operator_name[:-4]
         if is_ascend and op_proto.ascend != 'default':
             call_impl = cus_tpl.replace(call_args=converter.call_args,
                                         return_values=converter.call_func_outputs,
@@ -382,19 +378,6 @@ def generate_parser_func(op_proto: OpProto) -> str:
     return parser_func_str
 
 
-def convert_op_name(op_proto):
-    """
-    Convert operator_name and op_name.
-    """
-    operator_name = op_proto.operator_name
-    if operator_name.endswith('ext'):
-        operator_name = operator_name[:-4]
-    op_name_str = op_proto.class_name
-    if op_proto.class_name.endswith('Ext'):
-        op_name_str = op_proto.class_name[:-3]
-    return operator_name, op_name_str
-
-
 def get_convert_tensor_template():
     """
     Get convert tensor template
@@ -421,7 +404,8 @@ def generate_pyboost_functions(work_path, yaml_data):
         if not op_proto.is_dispatch:
             continue
         op_def_name_str = f"g{op_proto.class_name}"
-        operator_name, op_name_str = convert_op_name(op_proto)
+        operator_name = op_proto.operator_name
+        op_name_str = op_proto.class_name
         op_args_str = [op_arg.arg_name for op_arg in op_proto.op_args]
         parser_body_str = generate_parser_func(op_proto)
         convert_to_tensor_template, convert_to_tensor_list_template = get_convert_tensor_template()
@@ -542,11 +526,7 @@ def generate_pyboost_grad_functions(work_path, yaml_data):
         if not op_proto.is_dispatch:
             continue
         operator_name = op_proto.operator_name
-        if operator_name.endswith('ext'):
-            operator_name = operator_name[:-4]
         op_name_str = op_proto.class_name
-        if op_proto.class_name.endswith('Ext'):
-            op_name_str = op_proto.class_name[:-3]
         op_args_str = [op_arg.arg_name for op_arg in op_proto.op_args]
         convert_value_type_str = convert_value_type(op_proto)
 
@@ -625,8 +605,8 @@ class OpTemplateConverter:
 
     def __init__(self, op_proto):
         self.op_proto = op_proto
-        self.op_name = self.parse_op_name(op_proto.class_name)
-        self.functional_name = self.parse_functional_name(op_proto.operator_name)
+        self.op_name = op_proto.class_name
+        self.functional_name = op_proto.operator_name
         self.call_args = self.parse_original_call_args(op_proto.op_args)
         self.call_args_types = self.parse_call_args_types(op_proto.op_args)
         self.call_args_with_types = self.parse_call_args_with_types(self.call_args, self.call_args_types)
@@ -662,16 +642,6 @@ class OpTemplateConverter:
             call_args_with_types.append("const " + type_name + " &" + arg_name)
         return call_args_with_types
 
-    @staticmethod
-    def parse_functional_name(name):
-        """
-        :param name:
-        :return: functional_name
-        """
-        functional_name = name
-        if functional_name.endswith('ext'):
-            functional_name = functional_name[:-4]
-        return functional_name
 
     @staticmethod
     def parse_need_malloc_tensors(op_args, call_args):
@@ -696,16 +666,6 @@ class OpTemplateConverter:
                 call_args_with_tensor.append(call_arg)
         return need_malloc_tensors, tensor_list_convert, call_args_with_tensor
 
-    @staticmethod
-    def parse_op_name(name):
-        """
-        :param name:
-        :return: op_name
-        """
-        op_name = name
-        if op_name.endswith('Ext'):
-            op_name = op_name[:-3]
-        return op_name
 
     @staticmethod
     def parse_original_call_args(op_args):
@@ -863,8 +823,6 @@ def gen_pyboost_py_func(work_path, op_yaml_data, doc_data):
             item = func_def.get("name")
             if item is not None:
                 func_name = item
-        if func_name.endswith("_ext"):
-            func_name = func_name[:-4]
         else:
             continue
         func_impl_name = func_name

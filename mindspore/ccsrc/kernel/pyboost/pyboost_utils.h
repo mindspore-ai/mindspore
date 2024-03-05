@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_KERNEL_PYBOOST_PY_BOOST_UTILS_H_
-#define MINDSPORE_MINDSPORE_CCSRC_KERNEL_PYBOOST_PY_BOOST_UTILS_H_
+#ifndef MINDSPORE_MINDSPORE_CCSRC_KERNEL_PYBOOST_PYBOOST_UTILS_H_
+#define MINDSPORE_MINDSPORE_CCSRC_KERNEL_PYBOOST_PYBOOST_UTILS_H_
 
 #include <memory>
 #include <string>
@@ -45,26 +45,26 @@ class BACKEND_EXPORT PyBoostUtils {
 
   // Create output tensors
   static void CreateOutputTensor(const AbstractBasePtr &abstract, std::vector<tensor::TensorPtr> *outputs);
-  static void CreateOutputTensor(DeviceContext *device_context, const tensor::TensorPtr &input,
+  static void CreateOutputTensor(const DeviceContext *device_context, const tensor::TensorPtr &input,
                                  const TensorStorageInfoPtr &storage_info, std::vector<tensor::TensorPtr> *outputs);
 
   // Create input device address without kernel tensor
   template <typename... Args>
-  static void PrepareOpInputs(DeviceContext *device_context, size_t stream_id, const Args &... args) {
+  static void PrepareOpInputs(const DeviceContext *device_context, size_t stream_id, const Args &... args) {
     size_t index = 0;
     auto add_index = [&index]() { return index++; };
     (runtime::DeviceAddressUtils::CreateInputTensorAddress(device_context, stream_id, add_index(), args), ...);
   }
 
   template <typename... T>
-  static void MallocOpInputs(DeviceContext *device_context, const T &... args) {
+  static void MallocOpInputs(const DeviceContext *device_context, const T &... args) {
     runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyBoostMallocInput,
                                        runtime::ProfilerRecorder::kNoName, false);
     (runtime::DeviceAddressUtils::MallocForInput(device_context, args), ...);
   }
 
   template <typename... T>
-  static AddressInfoPair GetAddressInfo(DeviceContext *device_context, size_t stream_id,
+  static AddressInfoPair GetAddressInfo(const DeviceContext *device_context, size_t stream_id,
                                         const std::vector<AbstractBasePtr> &input_abs, const T &... args) {
     std::vector<kernel::KernelTensor *> kernel_tensor_list;
     // Kernel tensor is a raw ppointer, device address need to be returned.
@@ -78,17 +78,17 @@ class BACKEND_EXPORT PyBoostUtils {
     return std::make_pair(kernel_tensor_list, device_address_list);
   }
 
-  static void LaunchKernel(const PrimitivePtr &primitive, device::DeviceContext *device_context,
+  static void LaunchKernel(const PrimitivePtr &primitive, const device::DeviceContext *device_context,
                            const AddressInfoPair &input_address_info, const AddressInfoPair &output_address_info,
                            void *stream_ptr = nullptr);
 
-  static void GetKernelTensor(DeviceContext *device_context, size_t stream_id,
+  static void GetKernelTensor(const DeviceContext *device_context, size_t stream_id,
                               const abstract::AbstractBasePtr &input_abs, size_t index,
                               std::vector<kernel::KernelTensor *> *kernel_tensor_list,
                               device::DeviceAddressPtrList *device_address_list, const TensorPtr &tensor);
 
   template <typename T>
-  static void GetKernelTensor(DeviceContext *device_context, size_t stream_id,
+  static void GetKernelTensor(const DeviceContext *device_context, size_t stream_id,
                               const abstract::AbstractBasePtr &input_abs, size_t index,
                               std::vector<kernel::KernelTensor *> *kernel_tensor_list,
                               device::DeviceAddressPtrList *device_address_list, const std::optional<T> &val) {
@@ -111,13 +111,13 @@ class BACKEND_EXPORT PyBoostUtils {
     }
   }
 
-  static void GetKernelTensor(DeviceContext *device_context, size_t stream_id,
+  static void GetKernelTensor(const DeviceContext *device_context, size_t stream_id,
                               const abstract::AbstractBasePtr &input_abs, size_t index,
                               std::vector<kernel::KernelTensor *> *kernel_tensor_list,
                               device::DeviceAddressPtrList *device_address_list, const std::vector<TensorPtr> &tensors);
 
   template <typename T>
-  static void GetKernelTensor(DeviceContext *device_context, size_t stream_id,
+  static void GetKernelTensor(const DeviceContext *device_context, size_t stream_id,
                               const abstract::AbstractBasePtr &input_abs, size_t index,
                               std::vector<kernel::KernelTensor *> *kernel_tensor_list,
                               device::DeviceAddressPtrList *device_address_list, const T &val) {
@@ -132,12 +132,13 @@ class BACKEND_EXPORT PyBoostUtils {
   }
 
   // Create output tensor device address without kernel tensor
-  static void PrepareOpOutputs(DeviceContext *device_context, size_t stream_id, const std::vector<TensorPtr> &outputs) {
+  static void PrepareOpOutputs(const DeviceContext *device_context, size_t stream_id,
+                               const std::vector<TensorPtr> &outputs) {
     runtime::DeviceAddressUtils::CreateOutputTensorAddress(device_context, stream_id, outputs);
   }
 
   // Create output tensor device address without kernel tensor
-  static void MallocOpOutputs(DeviceContext *device_context, const std::vector<TensorPtr> &outputs) {
+  static void MallocOpOutputs(const DeviceContext *device_context, const std::vector<TensorPtr> &outputs) {
     runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyBoostMallocOutput,
                                        runtime::ProfilerRecorder::kNoName, false);
     runtime::DeviceAddressUtils::MallocForOutputs(device_context, outputs);
@@ -151,12 +152,13 @@ class BACKEND_EXPORT PyBoostUtils {
   static bool IsKernelModRegistered(const std::string &device_name, const std::string &op_name);
 
   static kernel::KernelModPtr CreateKernelMod(const PrimitivePtr &prim, const std::string &op_name,
-                                              DeviceContext *device_context, const std::vector<KernelTensor *> &inputs,
+                                              const DeviceContext *device_context,
+                                              const std::vector<KernelTensor *> &inputs,
                                               const std::vector<KernelTensor *> &outputs);
   // return IsStrictlyMatched and KernelAttr
   static std::pair<bool, KernelAttr> SelectKernel(const std::vector<AbstractBasePtr> &inputs_abs,
-                                                  const AbstractBasePtr &outputs_abs, DeviceContext *device_context,
-                                                  const std::string &op_name);
+                                                  const AbstractBasePtr &outputs_abs,
+                                                  const DeviceContext *device_context, const std::string &op_name);
   static tensor::TensorPtr CastTensor(const tensor::TensorPtr &tensor, const TypeId &type_id,
                                       const std::string &device_target);
   static std::vector<tensor::TensorPtr> CastTensor(const std::vector<tensor::TensorPtr> &tensors,
@@ -233,4 +235,4 @@ class PyboostKernelExtraFuncRegistrar {
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_MINDSPORE_CCSRC_KERNEL_PYBOOST_PY_BOOST_UTILS_H_
+#endif  // MINDSPORE_MINDSPORE_CCSRC_KERNEL_PYBOOST_PYBOOST_UTILS_H_

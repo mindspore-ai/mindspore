@@ -40,7 +40,6 @@ if (kernel_attr_pair.first || op_name() == "Cast") {
 } else {
   ${cast_input_code}
   const auto &op = CREATE_PYBOOST_OP(${op_name_str}, "CPU");
-  op->set_primitive(prim::kPrim${class_name});
   (void)op->Call(${real_call_args_tensor});
   std::vector<TypeId> output_types;
   for (auto &tensor : outputs()) {

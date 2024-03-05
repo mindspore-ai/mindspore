@@ -26,7 +26,8 @@ namespace kernel {
 namespace pyboost {
 class ${op_name}GPU : public pyboost::${op_name} {
  public:
-  ${op_name}GPU() = default;
+  ${op_name}GPU(PrimitivePtr primitive, const DeviceContext *device_context)
+    : ${op_name}(std::move(primitive), device_context) {}
   ~${op_name}GPU() = default;
 
   ${return_type} Call(${call_args_with_type}) override;
