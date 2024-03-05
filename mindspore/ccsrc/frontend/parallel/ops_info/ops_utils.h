@@ -699,7 +699,9 @@ constexpr char ASCEND_DEQUANT[] = "Dequant";
 
 // Batch parallel black list
 constexpr char TENSOR_SCATTER_UPDATE[] = "TensorScatterUpdate";
+constexpr char TENSOR_SCATTER_ELEMENTS[] = "TensorScatterElements";
 constexpr char STACK[] = "Stack";
+constexpr char GRID_SAMPLER_2D[] = "GridSampler2D";
 
 constexpr size_t LAST_INDEX(size_t s) {
   if (s < 1) {
