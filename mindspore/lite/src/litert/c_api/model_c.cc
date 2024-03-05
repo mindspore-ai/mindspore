@@ -243,13 +243,25 @@ MSStatus MSModelPredict(MSModelHandle model, const MSTensorHandleArray inputs, M
     MS_LOG(ERROR) << "model is nullptr.";
     return kMSStatusLiteNullptr;
   }
-  std::vector<mindspore::MSTensor> ms_tensor_inputs;
-  for (size_t i = 0; i < inputs.handle_num; i++) {
-    auto user_input = static_cast<mindspore::MSTensor *>(inputs.handle_list[i]);
-    ms_tensor_inputs.push_back(*user_input);
+  auto impl = static_cast<mindspore::ModelC *>(model);
+  size_t input_num;
+  (void)impl->GetInputs(&input_num);
+  if (input_num != inputs.handle_num) {
+    MS_LOG(ERROR) << "Wrong input size.";
+    return kMSStatusLiteError;
   }
 
-  auto impl = static_cast<mindspore::ModelC *>(model);
+  std::vector<mindspore::MSTensor> ms_tensor_inputs;
+  for (size_t i = 0; i < inputs.handle_num; i++) {
+    if (inputs.handle_list[i] != nullptr) {
+      auto user_input = static_cast<mindspore::MSTensor *>(inputs.handle_list[i]);
+      ms_tensor_inputs.push_back(*user_input);
+    } else {
+      MS_LOG(ERROR) << "input handle is nullptr.";
+      return kMSStatusLiteNullptr;
+    }
+  }
+
   mindspore::MSKernelCallBack before_call_back = impl->TransCallBack(before);
   mindspore::MSKernelCallBack after_call_back = impl->TransCallBack(after);
   std::vector<mindspore::MSTensor> ms_tensor_outputs;
