@@ -63,8 +63,7 @@ static constexpr const char *kBuiltinNameHasattr = "hasattr";        // call __g
 // ------------------------------mindspore functions-------------------------------
 static constexpr const char *kMindsporeNameGetCachePrim = "_get_cache_prim";
 static constexpr const char *kMindsporeNameRegistryGet = "get";
-static constexpr const char *kMindsporeNamePrimexpr = "CompileOp";
-static constexpr const char *kMindsporeNameConstexpr = "ProxyOp";
+static constexpr const char *kMindsporeNameConstexpr = "CompileOp";
 /**
  * NOTE: mindspore/ops/composite/base.py, after_grad decorated by '_warp_func'
  * code name is 'wrapper', not 'after_grad', it only called by pynative
@@ -708,15 +707,7 @@ bool CheckJitConstexpr(const py::object &func) {
   }
   return kPIJitConfigDefault.CheckJitConstexpr(py::cast<py::object>(op));
 }
-
 bool CheckMSConstexpr(const py::object &func) {
-  std::string tp_name = py::str(reinterpret_cast<PyObject *>(Py_TYPE(func.ptr())));
-  constexpr const char name[] = ".<locals>.decorator.<locals>.ProxyOp'>";
-  constexpr const int size = sizeof(name) - 1;
-  return tp_name.size() > size ? !tp_name.compare(tp_name.size() - size, size, name) : false;
-}
-
-bool CheckMSPrimexpr(const py::object &func) {
   std::string tp_name = py::str(reinterpret_cast<PyObject *>(Py_TYPE(func.ptr())));
   constexpr const char name[] = ".<locals>.deco.<locals>.CompileOp'>";
   constexpr const int size = sizeof(name) - 1;
@@ -907,7 +898,6 @@ static const std::unordered_map<std::string, SpecialAction> kFuncWhiteListMap = 
   {kJitForbidden, {CheckJitForbidden, SetCallResType<AObject::kTypeAnyValue>}},
   {kJitConstexpr, {CheckJitConstexpr, JustCallAndSetRes}},
   {kMindsporeNameConstexpr, {CheckMSConstexpr, InferMSConstexpr}},
-  {kMindsporeNamePrimexpr, {CheckMSPrimexpr, InferMSConstexpr}},
   {kMindsporeNameTensorAsType, {CheckTensorAsType, InferTensorAsType}},
 };
 
