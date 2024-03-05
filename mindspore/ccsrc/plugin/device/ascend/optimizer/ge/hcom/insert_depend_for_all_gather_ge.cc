@@ -77,6 +77,19 @@ bool InsertDepend(const FuncGraphPtr &graph, const std::vector<CNodePtr> &allgat
   bool changed = false;
   auto manager = graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
+  // Remove Depend node between TensorMove and preAllGather
+  // Depend(param, AllGather)->TensorMove->AllGather to param->TensorMove->AllGather
+  for (size_t i = 0; i < allgather_with_output_order.size(); ++i) {
+    auto current_ag_node = allgather_with_output_order[i];
+    if (IsPrimitiveCNode(current_ag_node->input(1), prim::kPrimTensorMove)) {
+      CNodePtr tensor_move_node = current_ag_node->input(1)->cast<CNodePtr>();
+      tensor_move_node->input(1)->DebugString();
+      if (IsPrimitiveCNode(tensor_move_node->input(1), prim::kPrimDepend)) {
+        CNodePtr depend_node = tensor_move_node->input(1)->cast<CNodePtr>();
+        manager->Replace(depend_node, depend_node->input(1));
+      }
+    }
+  }
   for (size_t i = 0; i + 1 < allgather_with_output_order.size(); ++i) {
     auto current_ag_node = allgather_with_output_order[i];
     auto next_ag_node = allgather_with_output_order[i + 1];

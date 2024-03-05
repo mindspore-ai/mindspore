@@ -19,6 +19,7 @@
 #endif
 #include <fstream>
 #include <iomanip>
+#include <nlohmann/json.hpp>
 #include "mindspore/core/ops/structure_ops.h"
 #include "utils/label.h"
 #include "utils/hash_map.h"
@@ -26,6 +27,7 @@
 #include "ir/primitive.h"
 #include "ir/func_graph.h"
 #include "ir/graph_utils.h"
+#include "ir/value.h"
 #include "utils/trace_base.h"
 #include "utils/anf_utils.h"
 #include "include/common/utils/anfalgo.h"
@@ -1288,6 +1290,114 @@ void DumpIR(const std::string &filename, const FuncGraphPtr &graph, bool dump_fu
   // Output each sub graph
   DumpSubgraph(&sub_graphs, graph, &para_map, buffer);
   fout << buffer.str();
+
+  fout.close();
+  // Set file mode to read only by user
+  ChangeFileMode(realpath.value(), S_IRUSR);
+}
+
+nlohmann::ordered_json ToJson(const CNodePtr &para_node, const int64_t global_rank_id,
+                              std::unordered_map<std::string, std::vector<uint32_t>> group_map) {
+  nlohmann::ordered_json args;
+  MS_EXCEPTION_IF_NULL(para_node);
+  auto abs = para_node->abstract();
+  MS_EXCEPTION_IF_NULL(abs);
+  auto prim = GetCNodePrimitive(para_node);
+  MS_EXCEPTION_IF_NULL(prim);
+  args["op_name"] = para_node->UniqueName();
+  args["op_type"] = prim->name();
+  args["shape"] = abs->BuildShape()->ToString();
+  args["data_type"] = abs->BuildType()->ToString();
+  args["global_rank_id"] = std::to_string(global_rank_id);
+  std::string group_name = "";
+  std::string group = "group";
+  if (prim->HasAttr(group)) {
+    group_name = GetValue<std::string>(prim->GetAttr(group));
+  }
+  args["comm_group_name"] = group_name;
+  if (prim->HasAttr(kAttrGroupRankIds)) {
+    auto value_ptr = prim->GetAttr(kAttrGroupRankIds);
+    args["comm_group_rank_ids"] = value_ptr->ToString();
+    if (group_map.find(group_name) != group_map.end()) {
+      std::ostringstream oss;
+      oss << "(";
+      const std::vector<uint32_t> group_ranks = group_map[group_name];
+      (void)std::copy(group_ranks.begin(), group_ranks.end() - 1, std::ostream_iterator<int>(oss, ","));
+      oss << group_ranks.back() << ")";
+      args["comm_group_rank_ids"] = oss.str();
+    }
+  }
+  if (prim->HasAttr(kAttrSrcRank) && prim->HasAttr(kAttrSrTag)) {
+    args["src_rank"] = std::to_string(GetValue<int64_t>(prim->GetAttr(kAttrSrcRank)));
+    args["sr_tag"] = std::to_string(GetValue<int64_t>(prim->GetAttr(kAttrSrTag)));
+  }
+  if (prim->HasAttr(kAttrDestRank) && prim->HasAttr(kAttrSrTag)) {
+    args["dest_rank"] = std::to_string(GetValue<int64_t>(prim->GetAttr(kAttrDestRank)));
+    args["sr_tag"] = std::to_string(GetValue<int64_t>(prim->GetAttr(kAttrSrTag)));
+  }
+  return args;
+}
+
+void DumpParallelInfo(const FuncGraphPtr &graph, size_t *op_id, nlohmann::ordered_json *args,
+                      const int64_t global_rank_id,
+                      const std::unordered_map<std::string, std::vector<uint32_t>> &group_map) {
+  MS_EXCEPTION_IF_NULL(graph);
+  std::list<CNodePtr> graph_orders = graph->GetOrderedCnodes();
+  for (auto &node : graph_orders) {
+    MS_EXCEPTION_IF_NULL(node);
+    if (IsValueNode<FuncGraph>(node->input(0))) {
+      FuncGraphPtr sub_graph = node->input(0)->cast<ValueNodePtr>()->value()->cast<FuncGraphPtr>();
+      DumpParallelInfo(sub_graph, op_id, args, global_rank_id, group_map);
+    } else if (common::AnfAlgo::IsCommunicationOp(node)) {
+      (*args)[std::to_string(*op_id)] = ToJson(node, global_rank_id, group_map);
+      *op_id = *op_id + 1;
+    } else if (node->input(0)->isa<CNode>() && node->input(0)->abstract() != nullptr) {
+      auto abs = node->input(0)->abstract();
+      if (abs->isa<abstract::FuncGraphAbstractClosure>()) {
+        const auto &abstract_func_graph = abs->cast<abstract::FuncGraphAbstractClosurePtr>();
+        MS_EXCEPTION_IF_NULL(abstract_func_graph->func_graph());
+        DumpParallelInfo(abstract_func_graph->func_graph(), op_id, args, global_rank_id, group_map);
+      } else if (abs->isa<abstract::PartialAbstractClosure>()) {
+        const auto &abstract_partial_func = abs->cast<abstract::PartialAbstractClosurePtr>();
+        const auto &abstract_fn = abstract_partial_func->fn();
+        if (abstract_fn->isa<abstract::FuncGraphAbstractClosure>()) {
+          const auto &abstract_func_graph = abstract_fn->cast<abstract::FuncGraphAbstractClosurePtr>();
+          MS_EXCEPTION_IF_NULL(abstract_func_graph->func_graph());
+          DumpParallelInfo(abstract_func_graph->func_graph(), op_id, args, global_rank_id, group_map);
+        }
+      }
+    }
+  }
+}
+
+void DumpParallelJson(const std::string &filename, const FuncGraphPtr &graph, const int64_t global_rank_id,
+                      const std::unordered_map<std::string, std::vector<uint32_t>> &group_map) {
+  if (graph == nullptr) {
+    return;
+  }
+  std::string save_path = "";
+  if (!common::GetEnv("MA_LOG_DIR").empty()) {
+    save_path = common::GetEnv("MA_LOG_DIR");
+  }
+  auto path = GetSaveGraphsPathName(filename, save_path);
+  auto realpath = Common::CreatePrefixPath(path);
+  if (!realpath.has_value()) {
+    MS_LOG(ERROR) << "Get real path failed, path=" << path;
+    return;
+  }
+
+  ChangeFileMode(realpath.value(), S_IWUSR);
+  std::ofstream fout(realpath.value());
+  if (!fout.is_open()) {
+    MS_LOG(ERROR) << "Open dump file '" << realpath.value() << "' failed!" << ErrnoToString(errno);
+    return;
+  }
+  size_t op_id = 0;
+  nlohmann::ordered_json args;
+  args["hccl_algo"] = common::GetEnv("HCCL_ALGO");
+  DumpParallelInfo(graph, &op_id, &args, global_rank_id, group_map);
+  constexpr size_t json_dump_mode = 2;
+  fout << args.dump(json_dump_mode);
 
   fout.close();
   // Set file mode to read only by user

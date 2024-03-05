@@ -21,6 +21,7 @@
 #include <memory>
 #include <vector>
 #include <atomic>
+#include <unordered_map>
 #include "utils/ms_utils.h"
 #include "include/backend/distributed/constants.h"
 #if defined(__linux__) && defined(WITH_BACKEND)
@@ -97,6 +98,7 @@ class BACKEND_EXPORT CollectiveManager {
 
   // Return collective manager is initialized.
   bool initialized() const { return inited_.load(); }
+  std::unordered_map<std::string, std::vector<uint32_t>> get_group_map() { return group_map_; }
 
   // Init Dummy communication lib
   bool InitializeDummyCommLib();
@@ -173,6 +175,7 @@ class BACKEND_EXPORT CollectiveManager {
 
   // This member uses to assign local rank and size for each group.
   std::vector<size_t> all_host_hashs_;
+  std::unordered_map<std::string, std::vector<uint32_t>> group_map_;
 };
 
 // For scheduler node, CollectiveManager is not initialized. Return 0 as rank id.
