@@ -20,7 +20,7 @@ from mindspore import jit
 from mindspore import context
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_generate_mutable_sequence_with_dynamic_length_with_jit():
@@ -46,31 +46,6 @@ def test_generate_mutable_sequence_with_dynamic_length_with_jit():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_generate_mutable_sequence_with_dynamic_length_and_shape__with_jit():
-    """
-    Feature: Mutable with dynamic length.
-    Description: Generate mutable sequence of dynamic length and shape with in jit.
-    Expectation: No exception.
-    """
-    context.set_context(mode=context.GRAPH_MODE)
-    @jit
-    def foo():
-        output1 = mutable([Tensor([[1, 2, 3]]), Tensor([[2]]), Tensor([[3], [4]])], True)
-        output2 = mutable([(1,), (2, 3), (4, 5, 6)], True)
-        return output1, output2
-    ret = foo()
-    assert len(ret) == 2
-    assert len(ret[0]) == 3
-    expect_tensor = [Tensor([[1, 2, 3]]), Tensor([[2]]), Tensor([[3], [4]])]
-    for x in ret[0]:
-        for y in expect_tensor:
-            assert x.all().asnumpy() == y.all().asnumpy()
-    assert ret[1] == [(1,), (2, 3), (4, 5, 6)]
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
 def test_mutable_dynamic_len_with_any():
     """
     Feature: Mutable with dynamic length.
@@ -85,8 +60,8 @@ def test_mutable_dynamic_len_with_any():
         x = mutable(x, True)
         return x
 
-    ret = foo([(1, 2), 2, 2.])
-    assert ret == [[(1, 2), 2, 2.], [(1, 2), 2, 2.]]
+    ret = foo([(1, 2), 2, '2'])
+    assert ret == [[(1, 2), 2, '2'], [(1, 2), 2, '2']]
 
 
 @pytest.mark.level0
@@ -106,8 +81,8 @@ def test_mutable_dynamic_len_with_any_2():
         x = mutable(x, True)
         return x
 
-    ret = foo([(1, 2), 2, 2.])
-    assert ret == [[(1, 2), 2, 2.], [(1, 2), 2, 2.]]
+    ret = foo([(1, 2), 2, '2'])
+    assert ret == [[(1, 2), 2, '2'], [(1, 2), 2, '2']]
 
 
 @pytest.mark.level0

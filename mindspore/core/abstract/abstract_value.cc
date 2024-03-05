@@ -784,6 +784,19 @@ bool CheckElementAbstractSame(const AbstractBasePtr &first_element, const Abstra
                              << "The 0th element type is: " << TypeIdToString(first_element_type_id) << ". The " << i
                              << "th element type is: " << TypeIdToString(cur_element_type_id);
   }
+  auto first_element_shape = first_element->GetShape();
+  MS_EXCEPTION_IF_NULL(first_element_shape);
+  auto cur_element_shape = cur_element->GetShape();
+  MS_EXCEPTION_IF_NULL(cur_element_shape);
+  if (*first_element_shape != *cur_element_shape) {
+    if (!raise_exception) {
+      return false;
+    }
+    MS_EXCEPTION(ValueError) << "In graph mode, the element shape of dynamic length array must be the same."
+                             << "The element shape do not match, can not convert to dynamic length sequence. "
+                             << "The 0th element shape is: " << first_element_shape->ToString() << ". The " << i
+                             << "th element shape is: " << cur_element_shape->ToString();
+  }
   if (!AbstractCanJoin(first_element, cur_element)) {
     if (!raise_exception) {
       return false;
@@ -1087,7 +1100,7 @@ void AbstractSequence::CheckAndConvertToDynamicLenSequence(bool raise_exception)
         return;
       }
     }
-    set_dynamic_len_element_abs(first_element->Broaden());
+    set_dynamic_len_element_abs(first_element);
   } else if (input_len == 1) {
     set_dynamic_len_element_abs(elements()[0]);
   }

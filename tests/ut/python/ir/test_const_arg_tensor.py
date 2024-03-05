@@ -1,4 +1,4 @@
-# Copyright 2022-2024 Huawei Technologies Co., Ltd
+# Copyright 2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,13 +13,165 @@
 # limitations under the License.
 # ============================================================================
 """test const tensor for network arg"""
+import time
 import numpy as np
 from mindspore.ops.composite import GradOperation
 from mindspore.common import mutable
+from mindspore.common.api import _CellGraphExecutor, _MindsporeFunctionExecutor
 from mindspore.ops import operations as P
 import mindspore.nn as nn
 import mindspore.common.dtype as mstype
 from mindspore import Tensor, context, jit
+
+
+def test_tensor_compile_phase1():
+    """
+    Feature: Set mutable tensor input to constant.
+    Description: Test whether the compilation phase for tensor inputs twice are the same.
+    Expectation: The phases are the same only when the tensor inputs are set mutable.
+    """
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.matmul = P.MatMul()
+
+        def construct(self, x, y):
+            out = self.matmul(x, y)
+            return out
+
+    # Init the tensors as const arguments.
+    x = Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32, const_arg=True)
+    y = Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32, const_arg=True)
+    p = Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32, const_arg=True)
+    q = Tensor([[0.01, 3.0, 1.1], [1.0, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32, const_arg=True)
+    net = Net()
+    _cell_graph_executor = _CellGraphExecutor()
+    phase1, _ = _cell_graph_executor.compile(net, x, y)
+    phase2, _ = _cell_graph_executor.compile(net, p, q)
+    assert phase1 != phase2
+    # mutable api
+    phase1, _ = _cell_graph_executor.compile(net, mutable(x), mutable(y))
+    phase2, _ = _cell_graph_executor.compile(net, mutable(p), mutable(q))
+    assert phase1 == phase2
+    # set_mutable api of Tensor
+    x.set_const_arg(False)
+    y.set_const_arg(False)
+    p.set_const_arg(False)
+    q.set_const_arg(False)
+    phase1, _ = _cell_graph_executor.compile(net, x, y)
+    phase2, _ = _cell_graph_executor.compile(net, p, q)
+    assert phase1 == phase2
+
+
+def test_ms_function_tensor_compile_phase1():
+    """
+    Feature: Set mutable tensor input to constant.
+    Description: Test whether the compilation phase for tensor inputs twice are the same of ms_function.
+    Expectation: The phases are the same only when the tensor inputs are set mutable.
+    """
+
+    @jit
+    def fn(x, y):
+        out = P.MatMul()(x, y)
+        return out
+
+    x = Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32, const_arg=True)
+    y = Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32, const_arg=True)
+    p = Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32, const_arg=True)
+    q = Tensor([[0.01, 3.0, 1.1], [1.0, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32, const_arg=True)
+    ms_create_time = int(time.time() * 1e9)
+    _ms_function_executor = _MindsporeFunctionExecutor(fn, ms_create_time)
+    # The ms_function makes the tensor inputs mutable by default
+    phase1 = _ms_function_executor.compile("fn", x, y)
+    phase2 = _ms_function_executor.compile("fn", p, q)
+    assert phase1 != phase2
+    # mutable api
+    phase1 = _ms_function_executor.compile("fn", mutable(x), mutable(y))
+    phase2 = _ms_function_executor.compile("fn", mutable(p), mutable(q))
+    assert phase1 == phase2
+    # set_mutable api of Tensor
+    x.set_const_arg(False)
+    y.set_const_arg(False)
+    p.set_const_arg(False)
+    q.set_const_arg(False)
+    phase1 = _ms_function_executor.compile("fn", x, y)
+    phase2 = _ms_function_executor.compile("fn", p, q)
+    assert phase1 == phase2
+
+
+def test_tensor_compile_phase2():
+    """
+    Feature: Set mutable tensor input to constant.
+    Description: Test whether the compilation phase for constant tensor inputs twice are the same.
+    Expectation: The phases are the same only when the tensor inputs are set mutable.
+    """
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.matmul = P.MatMul()
+
+        def construct(self, x, y):
+            out = self.matmul(x, y)
+            return out
+
+    x = Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32)
+    y = Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)
+    p = Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32)
+    q = Tensor([[0.01, 3.0, 1.1], [1.0, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)
+    net = Net()
+    _cell_graph_executor = _CellGraphExecutor()
+    phase1, _ = _cell_graph_executor.compile(net, x, y)
+    phase2, _ = _cell_graph_executor.compile(net, p, q)
+    assert phase1 == phase2
+    # Set const arg.
+    x.set_const_arg()
+    y.set_const_arg()
+    p.set_const_arg()
+    q.set_const_arg()
+    phase1, _ = _cell_graph_executor.compile(net, x, y)
+    phase2, _ = _cell_graph_executor.compile(net, p, q)
+    assert phase1 != phase2
+    # mutable api
+    phase1, _ = _cell_graph_executor.compile(net, mutable(x), mutable(y))
+    phase2, _ = _cell_graph_executor.compile(net, mutable(p), mutable(q))
+    assert phase1 == phase2
+
+
+def test_ms_function_tensor_compile_phase2():
+    """
+    Feature: Set mutable tensor input to constant.
+    Description: Test whether the compilation phase for constant tensor inputs twice are the same of ms_function.
+    Expectation: The phases are the same only when the tensor inputs are set mutable.
+    """
+
+    @jit
+    def fn(x, y):
+        out = P.MatMul()(x, y)
+        return out
+
+    x = Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32)
+    y = Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)
+    p = Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32)
+    q = Tensor([[0.01, 3.0, 1.1], [1.0, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)
+    ms_create_time = int(time.time() * 1e9)
+    _ms_function_executor = _MindsporeFunctionExecutor(fn, ms_create_time)
+    phase1 = _ms_function_executor.compile("fn", x, y)
+    phase2 = _ms_function_executor.compile("fn", p, q)
+    assert phase1 == phase2
+    # Set const arg.
+    x.set_const_arg()
+    y.set_const_arg()
+    p.set_const_arg()
+    q.set_const_arg()
+    phase1 = _ms_function_executor.compile("fn", x, y)
+    phase2 = _ms_function_executor.compile("fn", p, q)
+    assert phase1 != phase2
+    # mutable api
+    phase1 = _ms_function_executor.compile("fn", mutable(x), mutable(y))
+    phase2 = _ms_function_executor.compile("fn", mutable(p), mutable(q))
+    assert phase1 == phase2
 
 
 def test_grad_constant_tensor():
