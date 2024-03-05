@@ -16,6 +16,7 @@
 import os
 import json
 import requests
+import mindspore.log as logger
 
 def _generate_cmd(cmd, cmd_args, output_name):
     """
@@ -38,6 +39,21 @@ def _generate_cmd_args_list(cmd, cmd_args):
         # If user don't set binary file name, defaulty use 'python' to launch the job.
         return ['python'] + [cmd] + cmd_args
     return [cmd] + cmd_args
+
+def _generate_cmd_args_list_with_core(cmd, cmd_args, cpu_start, cpu_end):
+    """
+    Generates arguments list for 'Popen'. It consists of a binary file name and subsequential arguments.
+    """
+    # Bind cpu cores to this process.
+    taskset_args = ['taskset'] + ['-c'] + [str(cpu_start) + '-' + str(cpu_end)]
+    final_cmd = []
+    if cmd != 'python' and cmd != 'pytest':
+        # If user don't set binary file name, defaulty use 'python' to launch the job.
+        final_cmd = taskset_args + ['python'] + [cmd] + cmd_args
+    else:
+        final_cmd = taskset_args + [cmd] + cmd_args
+    logger.info(f"Launch process with command: {' '.join(final_cmd)}")
+    return final_cmd
 
 def _generate_url(addr, port):
     """

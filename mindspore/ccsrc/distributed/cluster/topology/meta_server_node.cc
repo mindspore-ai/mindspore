@@ -292,6 +292,7 @@ MessageBase *const MetaServerNode::ProcessUnregister(MessageBase *const message)
     return response.release();
   }
   (void)nodes_.erase(node_id);
+  MS_LOG(WARNING) << "Node " << node_id << " has unregistered.";
   if (nodes_.size() == 0) {
     topo_state_ = TopoState::kFinished;
   }
@@ -464,7 +465,8 @@ void MetaServerNode::UpdateTopoState() {
         if (elapsed > node_timeout_) {
           node_info->state = NodeState::kTimeout;
           ++abnormal_node_num;
-          MS_LOG(ERROR) << "The node: " << node_id << " is timed out.";
+          MS_LOG(ERROR) << "The node: " << node_id
+                        << " is timed out. It may exit with exception, please check this node's log.";
         }
       }
       abnormal_node_num_ = abnormal_node_num;
