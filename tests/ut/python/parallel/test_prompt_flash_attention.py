@@ -110,7 +110,7 @@ def compile_net(net, *inputs):
 
 class Net(nn.Cell):
     def __init__(self, num_heads, scale_value=1.0, pre_tokens=2147483547, next_tokens=0, input_layout='BSH',
-                 num_key_value_heads=0, dp=None, mp=None, strategy=None, sparse_mode=0):
+                 num_key_value_heads=0, strategy=None, sparse_mode=0, set_atten_mask_as_constant=False):
         super(Net, self).__init__()
         self.fa_op = P.PromptFlashAttention(num_heads=num_heads, scale_value=scale_value, pre_tokens=pre_tokens,
                                             next_tokens=next_tokens, input_layout=input_layout,
@@ -121,12 +121,18 @@ class Net(nn.Cell):
             stra_q = (stra[0],)
         self.square = OPS.Square().shard(stra_q)
         self.fa_op.shard(stra)
+        self.set_atten_mask_as_constant = set_atten_mask_as_constant
+        self.atten_mask = Tensor(np.ones([1, 1, 2048, 2048]), dtype=mindspore.bool_)
 
     def construct(self, query, key, value, attn_mask, actual_seq_lengths, actual_seq_lengths_kv, pse_shift,
                   deq_scale1, quant_scale1, deq_scale2, quant_scale2, quant_offset2):
         ret = self.square(query)
-        out = self.fa_op(ret, key, value, attn_mask, actual_seq_lengths, actual_seq_lengths_kv, pse_shift,
-                         deq_scale1, quant_scale1, deq_scale2, quant_scale2, quant_offset2)
+        if self.set_atten_mask_as_constant:
+            out = self.fa_op(ret, key, value, self.atten_mask, actual_seq_lengths, actual_seq_lengths_kv, pse_shift,
+                             deq_scale1, quant_scale1, deq_scale2, quant_scale2, quant_offset2)
+        else:
+            out = self.fa_op(ret, key, value, attn_mask, actual_seq_lengths, actual_seq_lengths_kv, pse_shift,
+                             deq_scale1, quant_scale1, deq_scale2, quant_scale2, quant_offset2)
         return self.square(out)
 
 
@@ -211,7 +217,8 @@ def test_prompt_flash_attention_strategy_error(input_layout):
 
 @pytest.mark.parametrize('input_layout', ['BSH', 'BNSD'])
 @pytest.mark.parametrize('strategys', [(4, 2), (2, 2)])
-def test_prompt_flash_attention_semi_auto_parallel_sparsemode2(input_layout, strategys):
+@pytest.mark.parametrize('if_atten_mask_as_constant', [True, False])
+def test_prompt_flash_attention_semi_auto_parallel_sparsemode2(input_layout, strategys, if_atten_mask_as_constant):
     """
     Feature: test PromptFlashAttention semi parallel
     Description: semi parallel
@@ -226,5 +233,6 @@ def test_prompt_flash_attention_semi_auto_parallel_sparsemode2(input_layout, str
     dims = [B, N, S, D]
     inputs = generate_inputs(dims, optinal_inputs, input_layout=input_layout, sparse_mode=2)
     strategies = generate_strategy(dp, mp, optinal_inputs, input_layout=input_layout, sparse_mode=2)
-    net = Net(N, input_layout=input_layout, strategy=strategies, sparse_mode=2)
+    net = Net(N, input_layout=input_layout, strategy=strategies,
+              sparse_mode=2, set_atten_mask_as_constant=if_atten_mask_as_constant)
     compile_net(net, *inputs)
