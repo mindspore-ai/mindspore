@@ -1,4 +1,4 @@
-# Copyright 2022-2024 Huawei Technologies Co., Ltd
+# Copyright 2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -75,7 +75,7 @@ def test_generate_mutable_sequence_with_dynamic_length_wrong_input_3():
     """
     Feature: Mutable with dynamic length.
     Description: Generate mutable sequence of dynamic length when data has different element shape.
-    Expectation: No Exception.
+    Expectation: ValueError.
     """
     context.set_context(mode=context.GRAPH_MODE)
     @jit
@@ -83,7 +83,9 @@ def test_generate_mutable_sequence_with_dynamic_length_wrong_input_3():
         output = mutable(((1, 2, 3), (1, 2)), True)
         return output
 
-    foo()
+    with pytest.raises(ValueError) as ex:
+        foo()
+    assert "The element shape do not match" in str(ex.value)
 
 
 def test_dynamic_length_sequence_length_sequence_value_shape_unknown():
@@ -381,5 +383,4 @@ def test_convert_dynamic_length_sequence_to_constant_length():
 
     with pytest.raises(RuntimeError) as ex:
         foo()
-    assert "For 'mutable', can not convert a dynamic length sequence to constant length." \
-        in str(ex.value)
+    assert "Can not convert a dynamic length sequence to constant length" in str(ex.value)

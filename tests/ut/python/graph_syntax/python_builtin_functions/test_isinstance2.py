@@ -641,6 +641,7 @@ def test_isinstance_wrong_cmp_input_4():
     assert "isinstance() arg 2 must be a type or tuple of types" in str(err.value)
 
 
+@pytest.mark.skip(reason='mutable feature not support scalar input')
 def test_isinstance_x_mutable():
     """
     Feature: Graph isinstance.
@@ -655,6 +656,7 @@ def test_isinstance_x_mutable():
     assert foo(x)
 
 
+@pytest.mark.skip(reason='mutable feature not support scalar input')
 def test_isinstance_x_mutable_2():
     """
     Feature: Graph isinstance.
@@ -669,6 +671,7 @@ def test_isinstance_x_mutable_2():
     assert foo(x)
 
 
+@pytest.mark.skip(reason='mutable feature not support scalar input')
 def test_isinstance_x_mutable_3():
     """
     Feature: Graph isinstance.
