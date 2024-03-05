@@ -157,19 +157,6 @@ void ProfilingFrameworkData::RecordGETask(const CNodePtr &node) {
 
   OpRangeData report = OpRangeData(start_ns, end_ns, sequence_number, process_id, start_thread_id, end_thread_id,
                                    forward_thread_id, is_async, full_scope_name, ProfilingFrameworkData::Device_Id);
-  size_t total_size = common::AnfAlgo::GetInputTensorNum(node);
-  for (size_t index = 0U; index < total_size; index++) {
-    auto input_node_with_index = common::AnfAlgo::GetPrevNodeOutput(node, index);
-    auto input_node = input_node_with_index.first;
-    auto input_index = input_node_with_index.second;
-    ShapeVector shape = AnfAlgo::GetOutputDeviceShape(input_node, input_index);
-    report.input_shapes.push_back(shape);
-
-    TypeId type_id = AnfAlgo::GetOutputDeviceDataType(input_node, input_index);
-    std::string type = TypeIdToString(type_id, true);
-    report.input_dtypes.push_back(type);
-  }
-
   ProfilingDataDumper::GetInstance()->Report(std::make_unique<OpRangeData>(report));
 }
 
