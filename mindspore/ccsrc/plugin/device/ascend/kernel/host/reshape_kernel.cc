@@ -24,7 +24,8 @@
 #include "runtime/device/kernel_runtime_manager.h"
 #include "utils/check_convert_utils.h"
 #include "utils/trace_base.h"
-#include "acl/acl_rt.h"
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -36,8 +37,8 @@ bool ReshapeKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const s
 
   // cppcheck-suppress unreadVariable
   auto lock = device::KernelRuntime::LockRuntime(stream_ptr);
-  auto status = aclrtMemcpyAsync(outputs[0]->device_ptr(), outputs[0]->size(), inputs[0]->device_ptr(),
-                                 inputs[0]->size(), ACL_MEMCPY_DEVICE_TO_DEVICE, stream_ptr);
+  auto status = CALL_ASCEND_API(aclrtMemcpyAsync, outputs[0]->device_ptr(), outputs[0]->size(), inputs[0]->device_ptr(),
+                                inputs[0]->size(), ACL_MEMCPY_DEVICE_TO_DEVICE, stream_ptr);
   if (status != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "ReshapeKernelMod Launch failed. kernel: " << kernel_name_
                   << ", call rtMemcpyAsync failed, ret = 0x" << status;

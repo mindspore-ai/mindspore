@@ -30,6 +30,7 @@ aclrtEventElapsedTimeFunObj aclrtEventElapsedTime_ = nullptr;
 aclrtFreeFunObj aclrtFree_ = nullptr;
 aclrtFreeHostFunObj aclrtFreeHost_ = nullptr;
 aclrtGetCurrentContextFunObj aclrtGetCurrentContext_ = nullptr;
+aclrtGetDeviceFunObj aclrtGetDevice_ = nullptr;
 aclrtGetDeviceCountFunObj aclrtGetDeviceCount_ = nullptr;
 aclrtGetDeviceIdFromExceptionInfoFunObj aclrtGetDeviceIdFromExceptionInfo_ = nullptr;
 aclrtGetErrorCodeFromExceptionInfoFunObj aclrtGetErrorCodeFromExceptionInfo_ = nullptr;
@@ -67,7 +68,8 @@ void LoadAclRtApiSymbol(const std::string &ascend_path) {
   std::string aclrt_plugin_path = "lib64/libascendcl.so";
   auto handler = GetLibHandler(ascend_path + aclrt_plugin_path);
   if (handler == nullptr) {
-    MS_LOG(EXCEPTION) << "Dlopen " << aclrt_plugin_path << " failed!" << dlerror();
+    MS_LOG(WARNING) << "Dlopen " << aclrt_plugin_path << " failed!" << dlerror();
+    return;
   }
   aclrtCreateContext_ = DlsymAscendFuncObj(aclrtCreateContext, handler);
   aclrtCreateEvent_ = DlsymAscendFuncObj(aclrtCreateEvent, handler);
@@ -80,6 +82,7 @@ void LoadAclRtApiSymbol(const std::string &ascend_path) {
   aclrtFree_ = DlsymAscendFuncObj(aclrtFree, handler);
   aclrtFreeHost_ = DlsymAscendFuncObj(aclrtFreeHost, handler);
   aclrtGetCurrentContext_ = DlsymAscendFuncObj(aclrtGetCurrentContext, handler);
+  aclrtGetDevice_ = DlsymAscendFuncObj(aclrtGetDevice, handler);
   aclrtGetDeviceCount_ = DlsymAscendFuncObj(aclrtGetDeviceCount, handler);
   aclrtGetDeviceIdFromExceptionInfo_ = DlsymAscendFuncObj(aclrtGetDeviceIdFromExceptionInfo, handler);
   aclrtGetErrorCodeFromExceptionInfo_ = DlsymAscendFuncObj(aclrtGetErrorCodeFromExceptionInfo, handler);

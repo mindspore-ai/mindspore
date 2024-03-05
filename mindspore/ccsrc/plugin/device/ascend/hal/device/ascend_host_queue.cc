@@ -24,7 +24,8 @@
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "runtime/device/kernel_runtime.h"
 #include "include/backend/distributed/ps/ps_cache/ps_data_prefetch.h"
-#include "acl/acl_rt.h"
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace mindspore {
 namespace device {
@@ -81,7 +82,7 @@ DataQueueStatus AscendHostQueue::Push(std::vector<DataQueueItem> data) {
 }
 
 bool AscendHostQueue::HostQueueInit() {
-  auto rt_ret = aclrtSetDevice(device_id_);
+  auto rt_ret = CALL_ASCEND_API(aclrtSetDevice, device_id_);
   if (rt_ret != ACL_RT_SUCCESS) {
     MS_LOG(ERROR) << "call aclrtSetDevice failed, ret = " << rt_ret;
     return false;
@@ -176,7 +177,7 @@ bool AscendHostQueue::LaunchTensor2MBuff(const std::vector<DataQueueItem> &data,
 bool AscendHostQueue::EnqueueData(void *buff, bool *need_resend) {
   MS_EXCEPTION_IF_NULL(need_resend);
   *need_resend = false;
-  auto rt_error = aclrtSetDevice(device_id_);
+  auto rt_error = CALL_ASCEND_API(aclrtSetDevice, device_id_);
   if (rt_error != ACL_RT_SUCCESS) {
     MS_LOG(ERROR) << "call aclrtSetDevice device failed, ret=" << rt_error;
     return false;

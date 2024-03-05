@@ -26,6 +26,8 @@
 #include "plugin/device/cpu/hal/device/cpu_device_synchronizer.h"
 #include "include/transform/graph_ir/utils.h"
 #include "graph/def_types.h"
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace mindspore {
 namespace device {
@@ -236,7 +238,7 @@ bool GeDeviceResManager::BindDeviceToCurrentThread(bool force_bind) const {
     auto ms_context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(ms_context);
     auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-    auto ret = aclrtSetDevice(static_cast<int32_t>(device_id));
+    auto ret = CALL_ASCEND_API(aclrtSetDevice, static_cast<int32_t>(device_id));
     if (ret != ACL_ERROR_NONE) {
       MS_LOG(EXCEPTION) << "Device " << device_id << " call aclrtSetDevice failed, ret:" << static_cast<int>(ret);
     }

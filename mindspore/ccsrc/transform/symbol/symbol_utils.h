@@ -27,10 +27,19 @@ auto RunAscendApi(Function f, const char *func_name, Args... args) {
   return f(args...);
 }
 
+template <typename Function>
+auto RunAscendApi(Function f, const char *func_name) {
+  if (f == nullptr) {
+    MS_LOG(EXCEPTION) << func_name << " is null.";
+  }
+  return f();
+}
+
 namespace mindspore {
 namespace transform {
 
 #define CALL_ASCEND_API(func_name, ...) RunAscendApi(mindspore::transform::func_name##_, #func_name, __VA_ARGS__)
+#define CALL_ASCEND_API2(func_name) RunAscendApi(mindspore::transform::func_name##_, #func_name)
 void *GetLibHandler(const std::string &lib_path);
 void LoadAscendApiSymbols();
 }  // namespace transform

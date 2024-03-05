@@ -46,7 +46,8 @@ void LoadAcltdtApiSymbol(const std::string &ascend_path) {
   std::string aclrt_tdt_path = "lib64/libacl_tdt_channel.so";
   auto handler = GetLibHandler(ascend_path + aclrt_tdt_path);
   if (handler == nullptr) {
-    MS_LOG(EXCEPTION) << "Dlopen " << aclrt_tdt_path << " failed!" << dlerror();
+    MS_LOG(WARNING) << "Dlopen " << aclrt_tdt_path << " failed!" << dlerror();
+    return;
   }
   acltdtAddDataItem_ = DlsymAscendFuncObj(acltdtAddDataItem, handler);
   acltdtCreateChannel_ = DlsymAscendFuncObj(acltdtCreateChannel, handler);

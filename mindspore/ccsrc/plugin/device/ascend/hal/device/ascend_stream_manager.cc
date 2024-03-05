@@ -22,7 +22,6 @@
 #include "include/backend/debug/data_dump/dump_json_parser.h"
 #endif
 #include "acl/error_codes/rt_error_codes.h"
-#include "acl/acl_rt.h"
 #include "plugin/device/ascend/hal/device/ascend_gmem_adapter.h"
 #include "transform/symbol/acl_rt_symbol.h"
 #include "transform/symbol/symbol_utils.h"
@@ -38,7 +37,7 @@ AscendStreamMng &AscendStreamMng::GetInstance() {
 void AscendStreamMng::DestroyAllRtEvents() {
   for (size_t i = 0; i < events_.size(); ++i) {
     if (events_[i] != nullptr) {
-      auto rt_ret = aclrtDestroyEvent(events_[i]);
+      auto rt_ret = CALL_ASCEND_API(aclrtDestroyEvent, events_[i]);
       if (rt_ret != ACL_ERROR_NONE) {
         MS_LOG(ERROR) << "Call aclrtDestroyEvent failed, ret:" << rt_ret;
       }
@@ -72,11 +71,12 @@ uint32_t AscendStreamMng::GetCurAllocStreamId() const {
 
 void AscendStreamMng::CreateStream(aclrtStream *stream, int32_t priority) {
   std::lock_guard<std::mutex> lock_streams(stream_mutex_);
-  auto ret = aclrtCreateStreamWithConfig(stream, IntToUint(priority), (ACL_STREAM_FAST_LAUNCH | ACL_STREAM_FAST_SYNC));
+  auto ret = CALL_ASCEND_API(aclrtCreateStreamWithConfig, stream, IntToUint(priority),
+                             (ACL_STREAM_FAST_LAUNCH | ACL_STREAM_FAST_SYNC));
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Create stream failed, ret:" << ret;
   }
-  ret = aclrtSetStreamFailureMode(*stream, ACL_STOP_ON_FAILURE);
+  ret = CALL_ASCEND_API(aclrtSetStreamFailureMode, *stream, ACL_STOP_ON_FAILURE);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "aclrtSetStreamFailureMode failed, ret:" << ret;
   }
@@ -92,11 +92,12 @@ void AscendStreamMng::CreateStream(aclrtStream *stream, int32_t priority) {
 void AscendStreamMng::CreateStream(size_t *stream_id, int32_t priority) {
   std::lock_guard<std::mutex> lock_streams(stream_mutex_);
   aclrtStream stream;
-  auto ret = aclrtCreateStreamWithConfig(&stream, IntToUint(priority), (ACL_STREAM_FAST_LAUNCH | ACL_STREAM_FAST_SYNC));
+  auto ret = CALL_ASCEND_API(aclrtCreateStreamWithConfig, &stream, IntToUint(priority),
+                             (ACL_STREAM_FAST_LAUNCH | ACL_STREAM_FAST_SYNC));
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Create stream failed, ret:" << ret;
   }
-  ret = aclrtSetStreamFailureMode(stream, ACL_STOP_ON_FAILURE);
+  ret = CALL_ASCEND_API(aclrtSetStreamFailureMode, stream, ACL_STOP_ON_FAILURE);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "aclrtSetStreamFailureMode failed, ret:" << ret;
   }
@@ -124,7 +125,7 @@ void AscendStreamMng::RegCallback(aclrtStream stream) {
 
     auto callback_thread = std::make_shared<CallbackThread>();
     callback_thread->create();
-    auto ret = aclrtSubscribeReport(callback_thread->thread_, (aclrtStream)callback_cached_stream);
+    auto ret = CALL_ASCEND_API(aclrtSubscribeReport, callback_thread->thread_, (aclrtStream)callback_cached_stream);
     if (!ret) {
       MS_LOG(INFO) << "Register callback thread success, stream : " << callback_cached_stream << ".";
       (void)stream_call_backs_.emplace(callback_cached_stream, callback_thread);
@@ -156,11 +157,11 @@ void AscendStreamMng::UnRegCallback(aclrtStream stream) {
 
 void AscendStreamMng::CreateStreamWithFlags(aclrtStream *stream, uint32_t flags, int32_t priority) {
   std::lock_guard<std::mutex> lock_streams(stream_mutex_);
-  auto ret = aclrtCreateStreamWithConfig(stream, IntToUint(priority), flags);
+  auto ret = CALL_ASCEND_API(aclrtCreateStreamWithConfig, stream, IntToUint(priority), flags);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Create stream failed, ret:" << ret;
   }
-  ret = aclrtSetStreamFailureMode(*stream, ACL_STOP_ON_FAILURE);
+  ret = CALL_ASCEND_API(aclrtSetStreamFailureMode, *stream, ACL_STOP_ON_FAILURE);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "aclrtSetStreamFailureMode failed, ret:" << ret;
   }
@@ -171,11 +172,11 @@ void AscendStreamMng::CreateStreamWithFlags(aclrtStream *stream, uint32_t flags,
 void AscendStreamMng::CreateStreamWithFlags(size_t *stream_id, uint32_t flags, int32_t priority) {
   std::lock_guard<std::mutex> lock_streams(stream_mutex_);
   aclrtStream stream;
-  auto ret = aclrtCreateStreamWithConfig(&stream, IntToUint(priority), flags);
+  auto ret = CALL_ASCEND_API(aclrtCreateStreamWithConfig, &stream, IntToUint(priority), flags);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Create stream failed, ret:" << ret;
   }
-  ret = aclrtSetStreamFailureMode(stream, ACL_STOP_ON_FAILURE);
+  ret = CALL_ASCEND_API(aclrtSetStreamFailureMode, stream, ACL_STOP_ON_FAILURE);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "aclrtSetStreamFailureMode failed, ret:" << ret;
   }
@@ -204,7 +205,7 @@ bool AscendStreamMng::DestroyStream(size_t stream_id) {
     MS_LOG(WARNING) << "Ascend stream hsa been destroyed for stream id " << stream_id;
     return true;
   }
-  const auto ret = aclrtDestroyStream(streams_.at(stream_id));
+  const auto ret = CALL_ASCEND_API(aclrtDestroyStream, streams_.at(stream_id));
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Call aclrtDestroyStream, ret[" << ret << "]";
   }
@@ -219,7 +220,7 @@ bool AscendStreamMng::DestroyAllStreams() {
     if (stream == nullptr) {
       continue;
     }
-    const auto ret = aclrtDestroyStream(stream);
+    const auto ret = CALL_ASCEND_API(aclrtDestroyStream, stream);
     if (ret != ACL_ERROR_NONE) {
       MS_LOG(EXCEPTION) << "Call aclrtDestroyStream, ret[" << ret << "]";
     }
@@ -310,7 +311,7 @@ bool AscendStreamMng::QueryStream(size_t stream_id) {
   }
 
   aclrtStreamStatus status;
-  auto ret = aclrtStreamQuery(stream, &status);
+  auto ret = CALL_ASCEND_API(aclrtStreamQuery, stream, &status);
   if (ret != ACL_SUCCESS) {
     MS_LOG(EXCEPTION) << "Failed to query completion status for stream id: " << stream_id;
   }

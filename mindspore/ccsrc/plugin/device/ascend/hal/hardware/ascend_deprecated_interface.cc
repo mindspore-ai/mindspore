@@ -28,7 +28,6 @@
 #include "framework/common/helper/model_helper.h"
 #include "transform/graph_ir/op_adapter_map.h"
 #include "plugin/device/ascend/hal/device/tensorprint_utils.h"
-#include "acl/acl_rt.h"
 #include "acl/acl_base.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "plugin/device/ascend/hal/profiler/parallel_strategy_profiling.h"
@@ -39,6 +38,8 @@
 #include "plugin/device/ascend/hal/device/tensorsummary_utils.h"
 #include "plugin/device/ascend/hal/device/tensordump_utils.h"
 #include "plugin/device/ascend/hal/device/mbuf_receive_manager.h"
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 using mindspore::abstract::AbstractScalar;
 using mindspore::abstract::AbstractTensor;
@@ -282,7 +283,7 @@ bool AscendDeprecatedInterface::OpenTsd(const std::shared_ptr<MsContext> &ms_con
   }
   (void)ErrorManagerAdapter::Init();
   MS_LOG(INFO) << "Device id = " << device_id << ", rank size = " << rank_size << ".";
-  auto ret = aclrtSetDevice(static_cast<int32_t>(device_id));
+  auto ret = CALL_ASCEND_API(aclrtSetDevice, static_cast<int32_t>(device_id));
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Device " << device_id << " call aclrtSetDevice failed, ret[" << static_cast<int>(ret)
                       << "]. The details refer to 'Ascend Error Message'.";
@@ -322,7 +323,7 @@ bool AscendDeprecatedInterface::CloseTsd(const std::shared_ptr<MsContext> &ms_co
     }
     (void)ErrorManagerAdapter::Init();
     uint32_t device_id = ms_context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-    auto ret = aclrtResetDevice(static_cast<int32_t>(device_id));
+    auto ret = CALL_ASCEND_API(aclrtResetDevice, static_cast<int32_t>(device_id));
     if (ret != ACL_ERROR_NONE) {
       MS_LOG(EXCEPTION) << "Device " << device_id << " call aclrtResetDevice failed, ret[" << static_cast<int>(ret)
                         << "]. The details refer to 'Ascend Error Message'.";

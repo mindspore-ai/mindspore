@@ -16,7 +16,8 @@
 
 #include "src/litert/kernel/ascend/src/acl_env_guard.h"
 #include "common/log_adapter.h"
-#include "acl/acl.h"
+#include "transform/symbol/acl_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace mindspore::kernel {
 namespace acl {
@@ -35,7 +36,7 @@ aclError AclInitAdapter::AclInit(const char *config_file) {
   }
 
   init_flag_ = true;
-  return aclInit(config_file);
+  return CALL_ASCEND_API(aclInit, config_file);
 }
 
 aclError AclInitAdapter::AclFinalize() {
@@ -47,14 +48,14 @@ aclError AclInitAdapter::AclFinalize() {
 
   MS_LOG(INFO) << "Begin to aclFinalize.";
   init_flag_ = false;
-  return aclFinalize();
+  return CALL_ASCEND_API2(aclFinalize);
 }
 
 aclError AclInitAdapter::ForceFinalize() {
   std::lock_guard<std::mutex> lock(flag_mutex_);
   MS_LOG(INFO) << "Begin to force aclFinalize.";
   init_flag_ = false;
-  return aclFinalize();
+  return CALL_ASCEND_API2(aclFinalize);
 }
 
 AclEnvGuard::AclEnvGuard() : errno_(AclInitAdapter::GetInstance().AclInit(nullptr)) {

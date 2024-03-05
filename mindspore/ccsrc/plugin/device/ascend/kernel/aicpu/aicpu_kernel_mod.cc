@@ -166,7 +166,7 @@ void AicpuOpKernelMod::FreeExtInfoDeviceAddr() {
 
 bool AicpuOpKernelMod::CheckDeviceSupportBlockingAicpuOpProcess() const {
   int32_t device_id = 0;
-  auto ret = aclrtGetDevice(&device_id);
+  auto ret = CALL_ASCEND_API(aclrtGetDevice, &device_id);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Call aclrtGetDevice failed, ret: " << ret;
   }
@@ -341,8 +341,9 @@ bool AicpuOpKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const s
     MS_LOG(INFO) << "For AICPU ,The node " << node_scope_name_ << " Need Skip.";
     // cppcheck-suppress unreadVariable
     auto lock = device::KernelRuntime::LockRuntime(stream_ptr);
-    aclError status = aclrtMemcpyAsync(outputs[0]->device_ptr(), inputs[0]->size(), inputs[0]->device_ptr(),
-                                       inputs[0]->size(), ACL_MEMCPY_DEVICE_TO_DEVICE, stream_ptr);
+    aclError status =
+      CALL_ASCEND_API(aclrtMemcpyAsync, outputs[0]->device_ptr(), inputs[0]->size(), inputs[0]->device_ptr(),
+                      inputs[0]->size(), ACL_MEMCPY_DEVICE_TO_DEVICE, stream_ptr);
     if (status != ACL_ERROR_NONE) {
       MS_LOG(EXCEPTION) << "AclrtMemcpyAsync failed for " << node_scope_name_;
     }
@@ -366,8 +367,8 @@ bool AicpuOpKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const s
   if (ext_info_handler_ != nullptr) {
     // cppcheck-suppress unreadVariable
     auto lock = device::KernelRuntime::LockRuntime(stream_ptr);
-    auto ret = aclrtMemcpyAsync(ext_info_addr_dev_, ext_info_size_, ext_info_handler_->GetExtInfo(),
-                                ext_info_handler_->GetExtInfoLen(), ACL_MEMCPY_HOST_TO_DEVICE, stream_ptr);
+    auto ret = CALL_ASCEND_API(aclrtMemcpyAsync, ext_info_addr_dev_, ext_info_size_, ext_info_handler_->GetExtInfo(),
+                               ext_info_handler_->GetExtInfoLen(), ACL_MEMCPY_HOST_TO_DEVICE, stream_ptr);
     if (ret != ACL_ERROR_NONE) {
       MS_LOG(ERROR) << "UpdateExtInfo aclrtMemcpy failed. Node info: " << node_scope_name_;
       return false;
@@ -410,13 +411,13 @@ bool AicpuOpKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const s
     MS_LOG(INFO) << "Insert EventWait, stream: " << stream_ptr << ", event: " << rt_event_
                  << ", node: " << node_scope_name_;
 
-    auto rt_ret = aclrtStreamWaitEvent(stream_ptr, rt_event_);
+    auto rt_ret = CALL_ASCEND_API(aclrtStreamWaitEvent, stream_ptr, rt_event_);
     if (rt_ret != ACL_ERROR_NONE) {
       MS_LOG(ERROR) << "Call rt api aclrtStreamWaitEvent failed, ret: " << rt_ret;
       return false;
     }
 
-    rt_ret = aclrtResetEvent(rt_event_, stream_ptr);
+    rt_ret = CALL_ASCEND_API(aclrtResetEvent, rt_event_, stream_ptr);
     if (rt_ret != ACL_ERROR_NONE) {
       MS_LOG(ERROR) << "Call rt api aclrtResetEvent failed, ret: " << rt_ret;
       return false;
@@ -446,8 +447,8 @@ void AicpuOpKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *
 
   // cppcheck-suppress unreadVariable
   auto lock = device::KernelRuntime::LockRuntime(stream_);
-  auto ret = aclrtMemcpyAsync(ext_info_handler_->GetExtInfo(), ext_info_handler_->GetExtInfoLen(), ext_info_addr_dev_,
-                              ext_info_size_, ACL_MEMCPY_DEVICE_TO_HOST, stream_);
+  auto ret = CALL_ASCEND_API(aclrtMemcpyAsync, ext_info_handler_->GetExtInfo(), ext_info_handler_->GetExtInfoLen(),
+                             ext_info_addr_dev_, ext_info_size_, ACL_MEMCPY_DEVICE_TO_HOST, stream_);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "AclrtMemcpyAsync output shape failed. Op name: " << node_scope_name_;
   }

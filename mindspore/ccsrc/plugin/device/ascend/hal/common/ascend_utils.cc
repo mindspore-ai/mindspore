@@ -20,8 +20,10 @@
 #include <map>
 #include "utils/dlopen_macro.h"
 #include "acl/error_codes/rt_error_codes.h"
-#include "acl/acl.h"
 #include "acl/acl_base.h"
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/acl_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace mindspore {
 namespace device {
@@ -117,7 +119,7 @@ bool ErrorManagerAdapter::Init() {
 }
 
 std::string ErrorManagerAdapter::GetErrorMessage(bool add_title) {
-  const char *message = aclGetRecentErrMsg();
+  const char *message = CALL_ASCEND_API2(aclGetRecentErrMsg);
   const string error_message = message == nullptr ? "" : message;
   if (error_message.empty() || error_message.find(kUnknowErrorString) != string::npos) {
     return "";
@@ -166,7 +168,7 @@ void *callback_thread_func(void *data) {
   auto callback_thread = reinterpret_cast<CallbackThread *>(data);
   while (callback_thread->flag_.load()) {
     try {
-      aclrtProcessReport(callback_thread->default_timeout_);
+      CALL_ASCEND_API(aclrtProcessReport, callback_thread->default_timeout_);
     } catch (const std::exception &ex) {
       MS_LOG(ERROR) << "aclrtProcessReport exception : " << ex.what() << ".";
       break;
@@ -183,7 +185,7 @@ void InitializeAcl() {
     return;
   }
 
-  if (aclInit(nullptr) != ACL_ERROR_NONE) {
+  if (CALL_ASCEND_API(aclInit, nullptr) != ACL_ERROR_NONE) {
     MS_LOG(WARNING) << "Call aclInit failed, acl data dump function will be unusable.";
   } else {
     MS_LOG(INFO) << "Call aclInit successfully";

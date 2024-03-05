@@ -24,6 +24,8 @@
 #include "transform/acl_ir/acl_helper.h"
 #include "transform/acl_ir/op_api_convert.h"
 #include "abstract/ops/primitive_infer_map.h"
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -37,8 +39,8 @@ void MaskedFillAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &input
 bool MaskedFillAscend::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
                               const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
-  auto status = aclrtMemcpyAsync(outputs[0]->device_ptr(), outputs[0]->size(), inputs[0]->device_ptr(),
-                                 inputs[0]->size(), ACL_MEMCPY_DEVICE_TO_DEVICE, stream_ptr);
+  auto status = CALL_ASCEND_API(aclrtMemcpyAsync, outputs[0]->device_ptr(), outputs[0]->size(), inputs[0]->device_ptr(),
+                                inputs[0]->size(), ACL_MEMCPY_DEVICE_TO_DEVICE, stream_ptr);
   if (status != ACL_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "MaskedFillAscend Launch and call rtMemcpyAsync failed, ret = 0x" << status;
   }

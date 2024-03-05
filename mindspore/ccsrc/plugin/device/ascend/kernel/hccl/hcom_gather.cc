@@ -17,6 +17,8 @@
 #include "plugin/device/ascend/kernel/hccl/hcom_gather.h"
 #include "plugin/device/ascend/hal/hccl_adapter/hccl_adapter.h"
 #include "include/backend/distributed/init.h"
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -85,8 +87,8 @@ bool HcomGatherKernel::LaunchKernel(const std::vector<KernelTensor *> &inputs,
     for (int r = 0; r < rank_size_; r++) {
       int offset = r * hccl_count_;
       if (r == dest_rank_) {
-        auto cp_ret = aclrtMemcpyAsync(output_device_ptr + offset, input_size, inputs[0]->device_ptr(), input_size,
-                                       ACL_MEMCPY_DEVICE_TO_DEVICE, stream_ptr);
+        auto cp_ret = CALL_ASCEND_API(aclrtMemcpyAsync, output_device_ptr + offset, input_size, inputs[0]->device_ptr(),
+                                      input_size, ACL_MEMCPY_DEVICE_TO_DEVICE, stream_ptr);
         if (cp_ret != EOK) {
           MS_LOG(ERROR) << "aclrtMemcpy failed.";
           return false;

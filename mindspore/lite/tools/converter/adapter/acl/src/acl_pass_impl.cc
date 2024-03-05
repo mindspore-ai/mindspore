@@ -71,6 +71,7 @@
 #include "tools/optimizer/graph/make_list_pass.h"
 #include "tools/common/custom_ascend_utils.h"
 #include "tools/optimizer/graph/attr_to_args_pass.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace mindspore {
 namespace opt {
@@ -1106,10 +1107,11 @@ bool AclPassImpl::Run(const FuncGraphPtr &func_graph) {
     // func_graph is already acl custom node
     return true;
   }
+  transform::LoadAscendApiSymbols();
   MS_CHECK_TRUE_MSG(func_graph != nullptr, false, "func_graph is nullptr.");
+
   auto manager = Manage(func_graph, true);
   MS_CHECK_TRUE_MSG(manager != nullptr, false, "manager is nullptr.");
-
   if (PreProcGraph(func_graph) != lite::RET_OK) {
     MS_LOG(ERROR) << "Pre proc graph failed.";
     return false;
