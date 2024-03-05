@@ -1,7 +1,7 @@
 add_definitions(-DPRIMITIVE_WRITEABLE)
 add_definitions(-DUSE_GLOG)
 set(USE_GLOG on)
-if(MSLITE_ENABLE_MODEL_ENCRYPTION)
+if(MSLITE_ENABLE_MODEL_ENCRYPTION AND MSLITE_DEPS_OPENSSL)
     add_compile_definitions(ENABLE_OPENSSL)
 endif()
 
@@ -374,7 +374,6 @@ target_link_libraries(mindspore_converter
         graph_pass_mid
         fusion_mid
         quantizer_mid
-        decomposer_mid
         proto_mid
         ${SECUREC_LIBRARY}
         mindspore::json
@@ -387,6 +386,10 @@ target_link_libraries(mindspore_converter
         coder_mid
         mindir_serializer_mid
         )
+
+if(NOT MSLITE_SIMPLEST_CLOUD_INFERENCE)
+    target_link_libraries(mindspore_converter decomposer_mid)
+endif()
 
 if(MSLITE_EXPORT_COMPUTE_IR)
     target_link_libraries(mindspore_converter mindspore_lite_drawer)

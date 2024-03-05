@@ -392,8 +392,10 @@ if(PLATFORM_ARM64)
                 DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${EXTENDRT_BUILD_DIR}/delegate/graph_executor/litert/${MINDSPORE_GE_LITERT_LIB_NAME}.so
                 DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(FILES ${EXECUTOR_BUILD_DIR}/${MINDSPORE_LITE_EXECUTOR_LIB_NAME}.so
-                DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+        if(NOT MSLITE_SIMPLEST_CLOUD_INFERENCE)
+            install(FILES ${EXECUTOR_BUILD_DIR}/${MINDSPORE_LITE_EXECUTOR_LIB_NAME}.so
+                    DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+        endif()
         install(FILES ${glog_LIBPATH}/${glog_name} DESTINATION ${RUNTIME_LIB_DIR}
                 RENAME libmindspore_glog.so.0 COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(TARGETS mindspore_core DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
@@ -402,8 +404,10 @@ if(PLATFORM_ARM64)
         if(MSLITE_ENABLE_ACL)
             install(FILES ${TOP_DIR}/mindspore/lite/build/src/extendrt/kernel/ascend/libascend_kernel_plugin.so
                     DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
-            install(FILES ${TOP_DIR}/mindspore/lite/build/src/extendrt/delegate/ascend_ge/libascend_ge_plugin.so
-                    DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+            if(NOT MSLITE_SIMPLEST_CLOUD_INFERENCE)
+                install(FILES ${TOP_DIR}/mindspore/lite/build/src/extendrt/delegate/ascend_ge/libascend_ge_plugin.so
+                        DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+            endif()
             install(FILES ${TOP_DIR}/mindspore/lite/build/src/extendrt/cxx_api/llm_engine/libllm_engine_plugin.so
                 DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
             __install_ascend_tbe_and_aicpu()
@@ -643,8 +647,10 @@ elseif(PLATFORM_ARM32)
                 DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${EXTENDRT_BUILD_DIR}/delegate/graph_executor/litert/${MINDSPORE_GE_LITERT_LIB_NAME}.so
                 DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(FILES ${EXECUTOR_BUILD_DIR}/${MINDSPORE_LITE_EXECUTOR_LIB_NAME}.so
-                DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+        if(NOT MSLITE_SIMPLEST_CLOUD_INFERENCE)
+            install(FILES ${EXECUTOR_BUILD_DIR}/${MINDSPORE_LITE_EXECUTOR_LIB_NAME}.so
+                    DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+        endif()
         install(FILES ${glog_LIBPATH}/${glog_name} DESTINATION ${RUNTIME_LIB_DIR}
                 RENAME libmindspore_glog.so.0 COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(TARGETS mindspore_core DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
@@ -653,8 +659,10 @@ elseif(PLATFORM_ARM32)
         if(MSLITE_ENABLE_ACL)
             install(FILES ${TOP_DIR}/mindspore/lite/build/src/extendrt/kernel/ascend/libascend_kernel_plugin.so
                     DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
-            install(FILES ${TOP_DIR}/mindspore/lite/build/src/extendrt/delegate/ascend_ge/libascend_ge_plugin.so
-                    DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+            if(NOT MSLITE_SIMPLEST_CLOUD_INFERENCE)
+                install(FILES ${TOP_DIR}/mindspore/lite/build/src/extendrt/delegate/ascend_ge/libascend_ge_plugin.so
+                        DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+            endif()
             install(FILES ${TOP_DIR}/mindspore/lite/build/src/extendrt/cxx_api/llm_engine/libllm_engine_plugin.so
                 DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
             __install_ascend_tbe_and_aicpu()
@@ -843,20 +851,26 @@ else()
                 DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${EXTENDRT_BUILD_DIR}/delegate/graph_executor/litert/${MINDSPORE_GE_LITERT_LIB_NAME}.so
                 DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(FILES ${EXECUTOR_BUILD_DIR}/${MINDSPORE_LITE_EXECUTOR_LIB_NAME}.so
-                DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+        if(NOT MSLITE_SIMPLEST_CLOUD_INFERENCE)
+            install(FILES ${EXECUTOR_BUILD_DIR}/${MINDSPORE_LITE_EXECUTOR_LIB_NAME}.so
+                    DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+        endif()
         install(FILES ${glog_LIBPATH}/${glog_name} DESTINATION ${RUNTIME_LIB_DIR}
                 RENAME libmindspore_glog.so.0 COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(FILES ${onednn_LIBPATH}/libdnnl.so.2.2 DESTINATION ${DNNL_DIR}
-                RENAME libdnnl.so.2 COMPONENT ${RUNTIME_COMPONENT_NAME})
+        if(MSLITE_DEPS_MKLDNN)
+                install(FILES ${onednn_LIBPATH}/libdnnl.so.2.2 DESTINATION ${DNNL_DIR}
+                        RENAME libdnnl.so.2 COMPONENT ${RUNTIME_COMPONENT_NAME})
+        endif()
         install(TARGETS mindspore_core DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${TOP_DIR}/mindspore/lite/build/src/extendrt/convert/libruntime_convert_plugin.so
                 DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
         if(MSLITE_ENABLE_ACL)
             install(FILES ${TOP_DIR}/mindspore/lite/build/src/extendrt/kernel/ascend/libascend_kernel_plugin.so
                     DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
-            install(FILES ${TOP_DIR}/mindspore/lite/build/src/extendrt/delegate/ascend_ge/libascend_ge_plugin.so
-                    DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+            if(NOT MSLITE_SIMPLEST_CLOUD_INFERENCE)
+                install(FILES ${TOP_DIR}/mindspore/lite/build/src/extendrt/delegate/ascend_ge/libascend_ge_plugin.so
+                        DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+            endif()
             install(FILES ${TOP_DIR}/mindspore/lite/build/src/extendrt/cxx_api/llm_engine/libllm_engine_plugin.so
                 DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
             __install_ascend_tbe_and_aicpu()

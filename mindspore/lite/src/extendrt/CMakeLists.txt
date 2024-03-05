@@ -161,20 +161,29 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
 
     if(NOT PLATFORM_ARM)
         add_dependencies(mindspore-extendrt _mindspore_cpu_kernel_mod_depend_obj
-                mindspore-lite-proto mindspore::dnnl)
+                mindspore-lite-proto)
         target_link_libraries(mindspore-extendrt _mindspore_cpu_kernel_mod_depend_obj
-                mindspore-lite-proto mindspore::dnnl)
+                mindspore-lite-proto)
         add_dependencies(mindspore-extendrt_static _mindspore_cpu_kernel_mod_depend_obj
-                mindspore-lite-proto mindspore::dnnl)
+                mindspore-lite-proto)
         target_link_libraries(mindspore-extendrt_static _mindspore_cpu_kernel_mod_depend_obj
-                mindspore-lite-proto mindspore::dnnl)
+                mindspore-lite-proto)
+        if(MSLITE_DEPS_MKLDNN)
+            add_dependencies(mindspore-extendrt mindspore::dnnl)
+            target_link_libraries(mindspore-extendrt mindspore::dnnl)
+            add_dependencies(mindspore-extendrt_static mindspore::dnnl)
+            target_link_libraries(mindspore-extendrt_static mindspore::dnnl)
+        endif()
 
-        set(CPU_KERNEL_OBJECT_COUNT 0)
-        add_subdirectory(${CCSRC_DIR}/plugin/device/cpu/kernel lite_kernel_mod)
-        foreach(number RANGE 1 ${CPU_KERNEL_OBJECT_COUNT})
-            target_link_libraries(mindspore-extendrt _mindspore_plugin_device_cpu_kernel_obj_${number})
-            target_link_libraries(mindspore-extendrt_static _mindspore_plugin_device_cpu_kernel_obj_${number})
-        endforeach()
+        if(MSLITE_DEPS_MKLDNN)
+            set(CPU_KERNEL_OBJECT_COUNT 0)
+            add_subdirectory(${CCSRC_DIR}/plugin/device/cpu/kernel lite_kernel_mod)
+            foreach(number RANGE 1 ${CPU_KERNEL_OBJECT_COUNT})
+                target_link_libraries(mindspore-extendrt _mindspore_plugin_device_cpu_kernel_obj_${number})
+                target_link_libraries(mindspore-extendrt_static _mindspore_plugin_device_cpu_kernel_obj_${number})
+            endforeach()
+        endif()
+
     endif()
 
     if(NOT WIN32)
