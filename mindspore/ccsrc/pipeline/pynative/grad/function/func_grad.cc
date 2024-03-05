@@ -760,6 +760,13 @@ void FuncGrad::PruningGradGraph(const TensorPtrList &weights, const GradAttr &gr
     }
   }
 
+  // Pruning all inputs not grad
+  if (!grad_attr.grad_all_inputs && grad_attr.grad_weights) {
+    for (size_t i = 0; i < cell_inputs_.size(); ++i) {
+      cell_inputs_[i].second->set_is_need_grad(false);
+    }
+  }
+
   // Pruning weights in grad graph
   if (grad_attr.grad_weights) {
     mindspore::HashSet<std::string> grad_weights_id;
