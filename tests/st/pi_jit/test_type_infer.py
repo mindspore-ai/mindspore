@@ -56,7 +56,6 @@ def func(self, x):
     return {e: d, **self, "rec_tuple": x}
 
 
-@pytest.mark.skip(reason="List self reference, tmp skip for one stage")
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
