@@ -22,10 +22,25 @@ namespace kernel {
 
 void AddExtAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                     const std::vector<KernelTensor *> &outputs) {
-  if (inputs.size() == 2) {
-    MAKE_SCALAR(1, inputs[0]->dtype_id(), alpha_);
-  } else {
-    alpha_ = transform::ConvertKernelTensor<ScalarPtr>(inputs[kIndex2]);
+  auto alpha_dtype_id = inputs[kIndex2]->dtype_id();
+  switch (alpha_dtype_id) {
+    case kNumberTypeFloat32: {
+      auto alpha_value = inputs[kIndex2]->GetValueWithCheck<float>();
+      MAKE_SCALAR(alpha_value, inputs[0]->dtype_id(), alpha_);
+      break;
+    }
+    case kNumberTypeFloat64: {
+      auto alpha_value = inputs[kIndex2]->GetValueWithCheck<double>();
+      MAKE_SCALAR(alpha_value, inputs[0]->dtype_id(), alpha_);
+      break;
+    }
+    case kNumberTypeInt64: {
+      auto alpha_value = inputs[kIndex2]->GetValueWithCheck<int64_t>();
+      MAKE_SCALAR(alpha_value, inputs[0]->dtype_id(), alpha_);
+      break;
+    }
+    default:
+      MS_LOG(EXCEPTION) << "AddExt only support float32 and float64 and int64, but got " << alpha_dtype_id;
   }
   GetWorkspaceForResize(inputs[kIndex0], inputs[kIndex1], alpha_, outputs[kIndex0]);
 }

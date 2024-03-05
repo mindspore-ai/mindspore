@@ -199,6 +199,7 @@ class COMMON_EXPORT Emitter {
   }
   NodePtr CSR2COO(const NodePtr &indptr, const NodePtr &nnz) { return Emit("CSR2COO", {indptr, nnz}); }
   NodePtr ScalarToTensor(const NodePtr &node);
+  NodePtr ScalarToTensor(const NodePtr &node, const TypePtr &dtype);
   std::pair<bool, ShapeVector> NeedReduce(const ShapeVector &shape, const std::vector<int64_t> &axis, bool keep_dim,
                                           bool skip_mode = false) const;
   std::pair<bool, NodePtr> NeedReduce(const NodePtr &shape, const NodePtr &axis, bool keep_dim, bool skip_mode = false);
