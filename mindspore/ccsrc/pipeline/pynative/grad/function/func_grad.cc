@@ -19,7 +19,6 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include "kernel/pyboost/auto_generate/add.h"
 #include "include/common/utils/primitive_utils.h"
 #include "pipeline/pynative/pynative_utils.h"
 #include "ops/framework_ops.h"

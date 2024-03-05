@@ -1,2 +1,2 @@
-  ${customize_func}(get_op(), ${call_args}, op_runner_info);
+  ${customize_func}(get_op(), ${call_args});
   return ${return_values};

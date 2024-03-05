@@ -36,14 +36,8 @@ void SquareAscendCall(const std::shared_ptr<OpRunner> &op, const device::DeviceC
 }
 }  // namespace
 
-tensor::TensorPtr SquareAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &x_tensor,
-                                        OpRunnerInfo *op_runner_info) {
-  if (op_runner_info != nullptr) {
-    OpRunner::InferOpOutput(op, op_runner_info);
-  } else {
-    OpRunner::InferOpOutput(op, x_tensor);
-  }
-
+tensor::TensorPtr SquareAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &x_tensor) {
+  OpRunner::InferOpOutput(op, x_tensor);
   // No need to convert input
   PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), x_tensor);
   PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());

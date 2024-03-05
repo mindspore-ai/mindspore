@@ -28,8 +28,8 @@ namespace mindspore {
 namespace kernel {
 namespace pyboost {
 tensor::TensorPtr UpsampleNearest1dAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                                                   const ValueTuplePtr &output_size, const ValueTuplePtr &scale_factors,
-                                                   OpRunnerInfo *op_runner_info);
+                                                   const ValueTuplePtr &output_size,
+                                                   const ValueTuplePtr &scale_factors);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

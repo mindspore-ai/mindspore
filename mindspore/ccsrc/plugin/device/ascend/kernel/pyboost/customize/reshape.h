@@ -28,7 +28,7 @@ namespace mindspore {
 namespace kernel {
 namespace pyboost {
 tensor::TensorPtr ReshapeAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                                         const ValueTuplePtr &shape, OpRunnerInfo *op_runner_info);
+                                         const ValueTuplePtr &shape);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

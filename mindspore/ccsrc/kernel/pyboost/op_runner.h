@@ -37,15 +37,6 @@ namespace pyboost {
 using GradFunc = std::function<void()>;
 constexpr size_t kAbstractCacheSize = 8192;
 
-struct OpRunnerInfo {
-  const PrimitivePtr &prim;
-  const std::string &device_target;
-  const vector<ValuePtr> &inputs;
-  const abstract::AbstractBasePtrList &inputs_abs;
-  const std::vector<InputType> &inputs_mask;
-  abstract::AbstractBasePtr output_abs;
-};
-
 // OpRunner is a base class for operators.
 // OpRunner records the operator's input abstract,
 // output abstract and output Tensors for grad,
@@ -124,40 +115,18 @@ class BACKEND_EXPORT OpRunner : public std::enable_shared_from_this<OpRunner> {
   }
 
   template <typename... T>
-  void GenerateAbstract(T &...args) {
+  void GenerateAbstract(T &... args) {
     (input_abs_.emplace_back(ConvertAbstract(args)), ...);
   }
 
   // Member function for Infer and creating output tensors.
   template <typename... T>
-  void InferOutput(T &...args) {
+  void InferOutput(T &... args) {
     runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyBoostInferOutput,
                                        primitive_->name(), false);
     (input_abs_.emplace_back(ConvertAbstract(args)), ...);
     output_abs_ = PyBoostUtils::InferByOpDef(primitive_, input_abs_);
     MS_EXCEPTION_IF_NULL(output_abs_);
-    CreateOutput();
-  }
-
-  void InferOutput(OpRunnerInfo *op_runner_info) {
-    MS_EXCEPTION_IF_NULL(op_runner_info);
-    runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyBoostInferOutput,
-                                       primitive_->name(), false);
-    if (op_runner_info->inputs_abs.empty()) {
-      MS_LOG(EXCEPTION) << "Get empty input abstract";
-    }
-    input_abs_ = op_runner_info->inputs_abs;
-    if (op_runner_info->output_abs == nullptr) {
-      output_abs_ = PyBoostUtils::InferByOpDef(primitive_, input_abs_);
-      MS_EXCEPTION_IF_NULL(output_abs_);
-      op_runner_info->output_abs = output_abs_;
-    } else {
-      output_abs_ = op_runner_info->output_abs;
-    }
-    CreateOutput();
-  }
-
-  void CreateOutput() {
     MS_LOG(DEBUG) << "PyBoost infer output " << output_abs_->ToString();
     PyBoostUtils::CreateOutputTensor(output_abs_, &outputs_);
     abstract_cache_.Push(output_abs_);
@@ -165,31 +134,11 @@ class BACKEND_EXPORT OpRunner : public std::enable_shared_from_this<OpRunner> {
 
   // A static function used for the "customize" operator to generate the operator's output Tensor.
   template <typename... T>
-  static void InferOpOutput(const std::shared_ptr<OpRunner> &op, T &...args) {
+  static void InferOpOutput(const std::shared_ptr<OpRunner> &op, T &... args) {
     runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyBoostInferOutput,
                                        op->primitive()->name(), false);
     (op->input_abs_.emplace_back(ConvertAbstract(args)), ...);
     op->output_abs_ = PyBoostUtils::InferByOpDef(op->primitive(), op->input_abs_);
-    PyBoostUtils::CreateOutputTensor(op->output_abs_, &op->outputs_);
-    abstract_cache_.Push(op->output_abs_);
-  }
-
-  // A static function used for the "customize" operator to generate the operator's output Tensor for grad op.
-  static void InferOpOutput(const std::shared_ptr<OpRunner> &op, OpRunnerInfo *op_runner_info) {
-    MS_EXCEPTION_IF_NULL(op_runner_info);
-    runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyBoostInferOutput,
-                                       op->primitive()->name(), false);
-    if (op_runner_info->inputs_abs.empty()) {
-      MS_LOG(EXCEPTION) << "Get empty input abstract";
-    }
-    op->input_abs_ = op_runner_info->inputs_abs;
-    if (op_runner_info->output_abs == nullptr) {
-      op->output_abs_ = PyBoostUtils::InferByOpDef(op->primitive(), op->input_abs_);
-      MS_EXCEPTION_IF_NULL(op->output_abs_);
-      op_runner_info->output_abs = op->output_abs_;
-    } else {
-      op->output_abs_ = op_runner_info->output_abs;
-    }
     PyBoostUtils::CreateOutputTensor(op->output_abs_, &op->outputs_);
     abstract_cache_.Push(op->output_abs_);
   }

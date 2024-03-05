@@ -23,8 +23,7 @@ namespace kernel {
 namespace pyboost {
 // Unconventional pyboost writing. Please do not refer to this to implement other operators!
 void CustomizeCopyAscend(device::DeviceContext *device_context, const device::DeviceAddressPtr &input_addr,
-                         const device::DeviceAddressPtr &output_addr, const size_t &stream_id,
-                         OpRunnerInfo *op_runner_info) {
+                         const device::DeviceAddressPtr &output_addr, const size_t &stream_id) {
   MS_LOG(DEBUG) << "Call start";
   MS_EXCEPTION_IF_NULL(input_addr);
   MS_EXCEPTION_IF_NULL(output_addr);

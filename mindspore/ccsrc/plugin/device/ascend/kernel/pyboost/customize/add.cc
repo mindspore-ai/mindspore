@@ -25,12 +25,7 @@ namespace mindspore {
 namespace kernel {
 namespace pyboost {
 tensor::TensorPtr AddAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &x_tensor,
-                                     const TensorPtr &y_tensor, OpRunnerInfo *op_runner_info) {
-  if (op_runner_info != nullptr) {
-    OpRunner::InferOpOutput(op, op_runner_info);
-  } else {
-    OpRunner::InferOpOutput(op, x_tensor, y_tensor);
-  }
+                                     const TensorPtr &y_tensor) {
   OpRunner::InferOpOutput(op, x_tensor, y_tensor);
   // No need to convert input
   PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), x_tensor, y_tensor);

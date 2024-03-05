@@ -25,19 +25,14 @@ namespace mindspore {
 namespace kernel {
 namespace pyboost {
 tensor::TensorPtr GatherDGradAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &x,
-                                             const Int64ImmPtr dim, const TensorPtr &index, const TensorPtr &d_out,
-                                             OpRunnerInfo *op_runner_info) {
+                                             const Int64ImmPtr dim, const TensorPtr &index, const TensorPtr &d_out) {
   MS_EXCEPTION_IF_NULL(dim);
   MS_EXCEPTION_IF_NULL(op);
   MS_EXCEPTION_IF_NULL(x);
   MS_EXCEPTION_IF_NULL(index);
   MS_EXCEPTION_IF_NULL(d_out);
-  if (op_runner_info != nullptr) {
-    OpRunner::InferOpOutput(op, op_runner_info);
-  } else {
-    OpRunner::InferOpOutput(op, x, dim, index, d_out);
-  }
 
+  OpRunner::InferOpOutput(op, x, dim, index, d_out);
   auto dim_value = dim->value();
   PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), d_out);
   PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());

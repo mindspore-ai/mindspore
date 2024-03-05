@@ -515,14 +515,14 @@ bool GeKernelExecutor::ExecuteKernelTask(const runtime::KernelTaskType &task_typ
     if (input_addr_list.size() != kCopyTaskInputsNum) {
       MS_LOG(EXCEPTION) << "input_addr_list.size() is invalid, input_addr_list.size():" << input_addr_list.size();
     }
-    kernel::pyboost::CustomizeCopyAscend(device_context_, input_addr_list[1], input_addr_list[0], stream_id, nullptr);
+    kernel::pyboost::CustomizeCopyAscend(device_context_, input_addr_list[1], input_addr_list[0], stream_id);
   } else {
     // For contiguous task, there must be at least one input and one output.
     if (input_addr_list.empty() || output_addr_list.empty()) {
       MS_LOG(EXCEPTION) << "input_addr_list.size() or output_addr_list.size() is invalid, input_addr_list.size():"
                         << input_addr_list.size() << ", output_addr_list.size():" << output_addr_list.size();
     }
-    kernel::pyboost::CustomizeCopyAscend(device_context_, input_addr_list[0], output_addr_list[0], stream_id, nullptr);
+    kernel::pyboost::CustomizeCopyAscend(device_context_, input_addr_list[0], output_addr_list[0], stream_id);
   }
 
   return true;

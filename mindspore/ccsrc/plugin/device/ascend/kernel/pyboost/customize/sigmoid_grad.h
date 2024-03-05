@@ -28,7 +28,7 @@ namespace mindspore {
 namespace kernel {
 namespace pyboost {
 tensor::TensorPtr SigmoidGradAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &y_tensor,
-                                             const TensorPtr &dy_tensor, OpRunnerInfo *op_runner_info);
+                                             const TensorPtr &dy_tensor);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

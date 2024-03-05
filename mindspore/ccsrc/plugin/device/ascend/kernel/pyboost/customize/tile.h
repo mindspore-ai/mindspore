@@ -25,6 +25,6 @@
 
 namespace mindspore::kernel::pyboost {
 void TileAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                         const ValueTuplePtr &multiples, OpRunnerInfo *op_runner_info);
+                         const ValueTuplePtr &multiples);
 }  // namespace mindspore::kernel::pyboost
 #endif  // MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_TILE_H_

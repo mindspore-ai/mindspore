@@ -1,9 +1,5 @@
 MS_LOG(DEBUG) << op_name() << " call start";
-if (op_runner_info != nullptr) {
-  InferOutput(op_runner_info);
-} else {
-  InferOutput(${call_args});
-}
+InferOutput(${call_args});
 // ValueTuple to std::vector
 ${value_tuple_convert}
 // Convert ValuePtr to c++ scalar

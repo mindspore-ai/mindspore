@@ -30,7 +30,7 @@ class ${op_name}GPU : public pyboost::${op_name} {
     : ${op_name}(std::move(primitive), device_context) {}
   ~${op_name}GPU() = default;
 
-  ${return_type} Call(${call_args_with_type}, OpRunnerInfo * op_runner_info = nullptr) override;
+  ${return_type} Call(${call_args_with_type}) override;
 };
 }  // namespace pyboost
 }  // namespace kernel

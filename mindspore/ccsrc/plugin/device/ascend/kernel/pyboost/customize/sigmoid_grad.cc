@@ -32,13 +32,8 @@ void SigmoidGradAscendCall(const std::shared_ptr<OpRunner> &op, const device::De
 }  // namespace
 
 tensor::TensorPtr SigmoidGradAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &y_tensor,
-                                             const TensorPtr &dy_tensor, OpRunnerInfo *op_runner_info) {
-  if (op_runner_info != nullptr) {
-    OpRunner::InferOpOutput(op, op_runner_info);
-  } else {
-    OpRunner::InferOpOutput(op, dy_tensor, y_tensor);
-  }
-
+                                             const TensorPtr &dy_tensor) {
+  OpRunner::InferOpOutput(op, dy_tensor, y_tensor);
   // Create device address for input/output tensors
   PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), dy_tensor, y_tensor);
   PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());

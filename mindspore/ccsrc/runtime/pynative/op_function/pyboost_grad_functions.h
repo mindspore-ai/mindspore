@@ -21,11 +21,11 @@
 #include <string>
 #include <vector>
 #include "kernel/pyboost/op_runner.h"
+#include "runtime/pynative/op_runner.h"
 #include "runtime/pynative/op_function/func_object.h"
 #include "backend/graph_compiler/backend.h"
 
 namespace mindspore::runtime {
-using OpRunnerInfo = kernel::pyboost::OpRunnerInfo;
 using Func = std::function<void(OpRunnerInfo *, VectorRef *)>;
 
 class PyBoostOpExecute {

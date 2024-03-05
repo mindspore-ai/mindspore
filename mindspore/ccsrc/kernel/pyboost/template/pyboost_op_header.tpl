@@ -29,7 +29,7 @@ class BACKEND_EXPORT ${op_name} : public pyboost::OpRunner {
       : OpRunner(std::move(primitive), device_context) {}
   ~${op_name}() override = default;
 
-  virtual ${return_type} Call(${call_args}, OpRunnerInfo *op_run_info = nullptr) = 0;
+  virtual ${return_type} Call(${call_args}) = 0;
 
  protected:
   static const std::string &op_name() {return op_name_;}
