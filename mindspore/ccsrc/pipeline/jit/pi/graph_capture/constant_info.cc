@@ -16,6 +16,7 @@
 #include "pipeline/jit/pi/graph_capture/constant_info.h"
 #include <set>
 #include <vector>
+#include <functional>
 #include "pipeline/jit/pi/pydef.h"
 #include "pipeline/jit/pi/graph_capture/node.h"
 #include "pipeline/jit/pi/graph_capture/graph.h"
@@ -279,22 +280,21 @@ static bool MakeConstantTypeCheck(ValueNode *node) {
 }
 
 using cfunction = bool (*)(ValueNode *);
-auto declare_builtin_cfunction = [] (std::string func_name, cfunction handler) -> {
-  func = PyDict_GetItemString(PyEval_GetBuiltins(), func_name);
-  cfunc = PyCFunction_GET_FUNCTION(func);
-  cnst_func.insert({cfunc, handler});
-}
+using c_func = std::map<PyCFunction, bool (*)(ValueNode *)>;
+auto declare_builtin_cfunction = [](const char *func_name, cfunction handler, c_func *cnst_func) {
+  auto func = PyDict_GetItemString(PyEval_GetBuiltins(), func_name);
+  auto cfunc = PyCFunction_GET_FUNCTION(func);
+  cnst_func->insert({cfunc, handler});
+};
 
 static const std::map<PyCFunction, bool (*)(ValueNode *)> &GetConstantBuiltinFuncMap() {
-  static std::map<PyCFunction, bool (*)(ValueNode *)> cnst_func = {};
+  static c_func cnst_func = {};
   if (!cnst_func.empty()) {
     return cnst_func;
   }
-  PyObject *func;
-  PyCFunction cfunc;
-  declare_builtin_cfunction("len", CheckConstantLen);
-  declare_builtin_cfunction("isinstance", MakeConstantTypeCheck);
-  declare_builtin_cfunction("issubclass", MakeConstantTypeCheck);
+  declare_builtin_cfunction("len", CheckConstantLen, &cnst_func);
+  declare_builtin_cfunction("isinstance", MakeConstantTypeCheck, &cnst_func);
+  declare_builtin_cfunction("issubclass", MakeConstantTypeCheck, &cnst_func);
   return cnst_func;
 }
 

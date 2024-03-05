@@ -291,17 +291,13 @@ OptStrategy::CalcKind OptStrategy::MakeCalcStrategyByShape(const ShapeVector &sh
 
 OptCodeSet OptStrategy::MakeGuardListStrategyByFrame(const PyFrameObject *frame, const OptCodeSet &codes) {
   OptCodeSet ret;
-  for (auto code : codes) {
-    ret.push_back(code);
-  }
+  std::transform(codes.begin(), codes.end(), std::back_inserter(ret), [](const OptCodePtr &code) { return code; });
   return ret;
 }
 
 GuardItemVector OptStrategy::MakeGuardItemListStrategyByFrame(const PyFrameObject *frame, const GuardItemVector &list) {
   GuardItemVector ret;
-  for (auto item : list) {
-    ret.push_back(item);
-  }
+  std::transform(list.begin(), list.end(), std::back_inserter(ret), [](const GuardItemPtr &code) { return code; });
   return ret;
 }
 }  // namespace pijit

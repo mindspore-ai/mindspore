@@ -48,12 +48,12 @@
 #ifndef PY_MINOR_VERSION
 #define PY_MINOR_VERSION 3.7
 #error "undefined PY_MINOR_VERSION"
-#endif // PY_MINOR_VERSION
+#endif  // PY_MINOR_VERSION
 
 #ifndef PY_MAJOR_VERSION
 #define PY_MAJOR_VERSION 3.9
 #error "undefined PY_MAJOR_VERSION"
-#endif // PY_MAJOR_VERSION
+#endif  // PY_MAJOR_VERSION
 
 namespace mindspore {
 namespace pijit {

@@ -31,6 +31,7 @@ constexpr int kDefaultMaxTraceDepth = 16;
 static const std::unordered_map<std::string, bool (GraphJitConfig::*)(PyObject *)> key_map = {
   {"auto_jit_func_filter", &GraphJitConfig::SetAutoJitFilter},
   {"auto_jit_cell", &GraphJitConfig::SetBool<GraphJitConfig::kAutoJitCell>},
+  {"auto_grad", &GraphJitConfig::SetBool<GraphJitConfig::kAutoGrad>},
   // remove this config if 'strict_mode_cells' works well, and default inline all construct
   {"replace_nncell_by_construct", &GraphJitConfig::SetBool<GraphJitConfig::kReplaceNNCellByConstruct>},
   {"trace_flag", &GraphJitConfig::SetBool<GraphJitConfig::kTraceFlag>},
