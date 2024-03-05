@@ -611,7 +611,13 @@ bool StopGradientForScalar(const CNodePtr &cnode) {
     return false;
   }
   auto abs = cnode->abstract();
-  return abs != nullptr && abs->isa<abstract::AbstractScalar>();
+  if (abs == nullptr || !(abs->isa<abstract::AbstractScalar>())) {
+    return false;
+  }
+  if (abs->BuildType()->isa<Number>() && abs->BuildValue()->isa<ValueAny>()) {
+    return false;
+  }
+  return true;
 }
 
 // Construct representation graph for {CNode, Index} of Primitive.

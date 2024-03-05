@@ -379,26 +379,32 @@ void CheckMutableArgAbstract(const AbstractBasePtr &abs) {
     return;
   }
   if (abs->isa<AbstractScalar>()) {
-    return;
+    auto type_ptr = abs->GetType();
+    if (type_ptr->isa<Number>()) {
+      return;
+    }
   }
-  MS_EXCEPTION(TypeError)
-    << "For mutable api in graph, the input arg should be one of (int, float, bool, Tensor, tuple, list, dict) "
-    << "or their nested structures, but got " << abs->ToString();
+  MS_EXCEPTION(TypeError) << "For 'mutable', the 'input_data' should be one of (bool, int, float, Tensor, "
+                             "tuple, list, dict) or their nested structures, but got "
+                          << abs->ToString();
 }
 }  // namespace
 
-AbstractBasePtr InferImplMutable(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+AbstractBasePtr InferImplMutable(const AnalysisEnginePtr &, const PrimitivePtr &,
                                  const AbstractBasePtrList &args_abs_list) {
-  const std::string &op_name = primitive->name();
-  constexpr int max_args_spec_size = 2;
+  constexpr int min_args_abs_size = 1;
+  constexpr int max_args_abs_size = 2;
   auto arg_size = args_abs_list.size();
-  (void)CheckAndConvertUtils::CheckValue<size_t>("input size", arg_size, kLessEqual, max_args_spec_size, op_name);
+  if (arg_size != min_args_abs_size && arg_size != max_args_abs_size) {
+    MS_LOG(EXCEPTION) << "For 'mutable', the number of inputs should be 1 or 2, but got " << args_abs_list.size();
+  }
   bool variable_len = false;
-  if (arg_size == max_args_spec_size) {
-    auto arg_value = args_abs_list[1]->BuildValue();
+  if (arg_size == max_args_abs_size) {
+    auto arg_value = args_abs_list[1]->GetValue();
     MS_EXCEPTION_IF_NULL(arg_value);
     if (!arg_value->isa<BoolImm>()) {
-      MS_EXCEPTION(TypeError) << "The second argument to mutable should be boolean value.";
+      MS_EXCEPTION(TypeError) << "For 'mutable', the second input should be bool, but got: "
+                              << args_abs_list[1]->ToString();
     }
     variable_len = arg_value->cast<BoolImmPtr>()->value();
   }
@@ -406,7 +412,7 @@ AbstractBasePtr InferImplMutable(const AnalysisEnginePtr &, const PrimitivePtr &
   MS_EXCEPTION_IF_NULL(data);
   if (!variable_len) {
     if (data->isa<AbstractSequence>() && data->cast<AbstractSequencePtr>()->dynamic_len()) {
-      MS_LOG(EXCEPTION) << "Can not convert a dynamic length sequence to constant length.";
+      MS_LOG(EXCEPTION) << "For 'mutable', can not convert a dynamic length sequence to constant length.";
     }
     CheckMutableArgAbstract(data);
     return AbstractBroaden(data);
@@ -416,7 +422,7 @@ AbstractBasePtr InferImplMutable(const AnalysisEnginePtr &, const PrimitivePtr &
     return ret;
   }
   if (!ret->isa<AbstractSequence>()) {
-    MS_EXCEPTION(TypeError) << "For mutable, when the variable_len is True, the first input should be"
+    MS_EXCEPTION(TypeError) << "For 'mutable', when the variable_len is True, the first input should be"
                             << " list or tuple, but got: " << ret->ToString();
   }
   auto ret_seq = ret->cast<AbstractSequencePtr>();
