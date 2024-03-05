@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <string>
 #include "pipeline/jit/pi/graph_capture/graph.h"
+#include "pipeline/jit/pi/graph_capture/side_effect.h"
 #include "pipeline/jit/pi/graph_guard/cache.h"
 #include "pipeline/jit/pi/pi_jit_config.h"
 
@@ -146,6 +147,17 @@ void BytecodeInliner::Rebuild() {
     ns.outputs.push_back(graph_->GetRetVal());
   }
   if (graph_->Config().GetBoolConfig(GraphJitConfig::kEnableEliminateUnusedOperation)) {
+    for (auto side_effect_node : graph_->GetSideEffectNodes()) {
+      for (auto item : side_effect_node->getInputs()) {
+        ns.outputs.push_back(item);
+      }
+    }
+    for (auto replace_map : graph_->GetSideEffectReplacedMap()) {
+      ns.outputs.push_back(replace_map.second);
+      for (auto item : replace_map.second->getInputs()) {
+        ns.outputs.push_back(item);
+      }
+    }
     // erase dead local between inline and code rebuild
     EraseDeadLocal(ns.outputs);
     EliminateClosureSideEffect();
@@ -182,6 +194,18 @@ void BytecodeInliner::CollectTracedNodes(Graph *graph) {
     }
     std::copy(call_node->GetParams().begin(), call_node->GetParams().end(), std::back_inserter(traced_nodes_));
     CollectTracedNodes(call_node->GetSubGraph());
+  }
+  // collect side_effect_nodes // graph_ is top graph
+
+  if (graph->GetSideEffect() != nullptr) {
+    graph_->GetSideEffect()->ReprocessVariableMutationMaps();
+
+    for (auto side_effect_item : graph->GetSideEffect()->GetSideEffectInstrs()) {
+      graph_->SetSideEffectNode(side_effect_item.first);
+    }
+    for (auto side_effect_item : graph->GetSideEffect()->GetReplaceMaps()) {
+      graph_->SetSideEffectReplacedMap(side_effect_item.first, side_effect_item.second);
+    }
   }
 }
 
