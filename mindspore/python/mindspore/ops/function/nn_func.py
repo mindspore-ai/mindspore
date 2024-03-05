@@ -5070,6 +5070,7 @@ def conv2d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
     , :math:`weight` is the convolution kernel value and :math:`X` represents the input feature map.
 
     Here are the indices' meanings:
+
     - :math:`i` corresponds to the batch number, the range is :math:`[0, N-1]`,
       where :math:`N` is the batch size of the input.
 
