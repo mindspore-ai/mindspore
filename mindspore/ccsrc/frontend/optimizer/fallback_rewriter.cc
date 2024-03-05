@@ -2574,9 +2574,8 @@ AnfNodePtr ConvertToPyExecuteListInner(const AnfNodePtr &node, const FuncGraphPt
   return fg->NewCNode(new_make_tuple_inputs);
 }
 
-AnfNodePtr ConvertToPyExecuteList(const AnfNodePtr &node, const FuncGraphPtr &fg) {
+AnfNodePtr ConvertToPyExecuteList(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  MS_EXCEPTION_IF_NULL(fg);
   if (!IsPrimitiveCNode(node, prim::kPrimPyExecute)) {
     return nullptr;
   }
@@ -2587,6 +2586,7 @@ AnfNodePtr ConvertToPyExecuteList(const AnfNodePtr &node, const FuncGraphPtr &fg
                                << cnode->size() << " for node: " << cnode->DebugString();
   }
   constexpr size_t pyexecute_value_index = 3;
+  const auto &fg = cnode->func_graph();
   return ConvertToPyExecuteListInner(cnode->input(pyexecute_value_index), fg);
 }
 
@@ -2607,7 +2607,7 @@ bool ConvertPyExecuteAfterRewriter(const FuncGraphPtr &graph, const FuncGraphMan
       change = true;
       continue;
     }
-    auto new_value_input = ConvertToPyExecuteList(node, graph);
+    auto new_value_input = ConvertToPyExecuteList(node);
     if (new_value_input != nullptr) {
       tr.SetEdge(node, pyexecute_value_index, new_value_input);
       tr.Commit();

@@ -3028,6 +3028,7 @@ EvalResultPtr MakeTupleEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abst
 EvalResultPtr MakeListEvaluator::EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args_abs_list,
                                           const ConfigPtr &, const AnfNodeConfigPtr &out_conf) {
   std::shared_ptr<AnfNodeWeakPtrList> sequence_nodes = std::make_shared<AnfNodeWeakPtrList>();
+  auto abs = std::make_shared<AbstractList>(args_abs_list, sequence_nodes);
   if (out_conf != nullptr) {  // 'out_conf' maybe nullptr in PyNative mode.
     if (args_abs_list.empty()) {
       MS_LOG(INFO) << "For MakeList, the inputs should not be empty. node: " << out_conf->node()->DebugString();
@@ -3040,9 +3041,13 @@ EvalResultPtr MakeListEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abstr
       }
 
       (void)sequence_nodes->emplace_back(AnfNodeWeakPtr(out_conf->node()));
+      bool has_any = fallback::ContainsSequenceAnyType(abs);
+      if (has_any) {
+        SetSequenceElementsUseFlagsRecursively(abs, true);
+      }
     }
   }
-  auto abs = std::make_shared<AbstractList>(args_abs_list, sequence_nodes);
+
   MS_LOG(DEBUG) << "Generate python object for new value node.";
   if (fallback::EnableFallbackListDictInplace()) {
     py::object py_list_obj = fallback::GeneratePyObj(abs);

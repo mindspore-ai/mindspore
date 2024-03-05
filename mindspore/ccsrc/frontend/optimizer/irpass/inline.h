@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,8 +64,16 @@ class ReplaceApplicator : public AnfVisitor {
     if ((input_size == 1 && param_size == 0) || (input_size > 1 && (input_size - 1) == param_size &&
                                                  std::equal(inputs.begin() + 1, inputs.end(), params.begin()))) {
       auto inner = inputs[0];
-      if (IsValueNode<Primitive>(inner) ||
-          (IsValueNode<FuncGraph>(inner) && GetValueNode<FuncGraphPtr>(inner)->parent() == nullptr)) {
+      if (IsValueNode<Primitive>(inner)) {
+        return inner;
+      }
+      if (IsValueNode<FuncGraph>(inner) && GetValueNode<FuncGraphPtr>(inner)->parent() == nullptr) {
+        const auto &inner_fg = GetValueNode<FuncGraphPtr>(inner);
+        MS_EXCEPTION_IF_NULL(inner_fg);
+        bool is_recursive = (inner_fg->has_flag(FUNC_GRAPH_FLAG_NO_RECURSIVE) ? false : inner_fg->recursive());
+        if (is_recursive) {
+          return nullptr;
+        }
         return inner;
       }
     }
