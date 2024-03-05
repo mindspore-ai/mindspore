@@ -6416,7 +6416,7 @@ def logcumsumexp(input, axis):
     Args:
         input (Tensor) - The input tensor. Must be one of the following types: float16, float32, float64.
         axis (int) - Describing the dimension to compute the cumulative product.
-            Must be in the range [-rank(x), rank(x)).
+            Must be in the range [-rank(input), rank(input)).
 
     Returns:
         Tensor, has the same dtype and shape as the `input`.
