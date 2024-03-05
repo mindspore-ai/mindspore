@@ -327,36 +327,65 @@ TypeId GetTypeIdFromAbstractTensor(const AbstractBasePtr &abs_base) {
   return abs_base->BuildType()->type_id();
 }
 
-std::vector<TypeId> GetTypeFromAbstractBase(const AbstractBasePtr &abs_base) {
-  if (abs_base->isa<abstract::AbstractTuple>()) {
-    auto abs_tuple = std::dynamic_pointer_cast<abstract::AbstractTuple>(abs_base);
-    std::vector<TypeId> input_type;
-    for (auto &abs : abs_tuple->elements()) {
-      (void)input_type.emplace_back(GetTypeIdFromAbstractTensor(abs));
-    }
-    return input_type;
-  } else {
-    const auto &type_id = GetTypeIdFromAbstractTensor(abs_base);
-    return {type_id};
+TypeId GetAbstractObjectType(const AbstractBasePtr &abstract) {
+  if (abstract == nullptr) {
+    return kTypeUnknown;
   }
+  if (abstract->isa<abstract::AbstractTensor>()) {
+    return kObjectTypeTensorType;
+  }
+  if (abstract->isa<abstract::AbstractTuple>()) {
+    return kObjectTypeTuple;
+  }
+  if (abstract->isa<abstract::AbstractList>()) {
+    return kObjectTypeList;
+  }
+  if (abstract->isa<abstract::AbstractScalar>()) {
+    // scalar input may not converted to tensor
+    return kObjectTypeNumber;
+  }
+  if (abstract->isa<abstract::AbstractNone>()) {
+    return kMetaTypeNone;
+  }
+
+  return kTypeUnknown;
 }
 
-std::vector<TypeId> GetTypeFromAbstractBase(const std::vector<AbstractBasePtr> &abs_vec) {
+std::pair<std::vector<TypeId>, std::vector<TypeId>> GetOutputTypeFromAbstractBase(const AbstractBasePtr &abs_base) {
+  std::vector<TypeId> output_dtype;
+  std::vector<TypeId> output_type;
+  if (abs_base->isa<abstract::AbstractTuple>()) {
+    auto abs_tuple = std::dynamic_pointer_cast<abstract::AbstractTuple>(abs_base);
+    for (auto &abs : abs_tuple->elements()) {
+      (void)output_dtype.emplace_back(GetTypeIdFromAbstractTensor(abs));
+      (void)output_type.emplace_back(GetAbstractObjectType(abs));
+    }
+  } else {
+    (void)output_type.emplace_back(GetAbstractObjectType(abs_base));
+    (void)output_dtype.emplace_back(GetTypeIdFromAbstractTensor(abs_base));
+  }
+  return std::make_pair(output_type, output_dtype);
+}
+
+std::pair<std::vector<TypeId>, std::vector<TypeId>> GetInputTypeFromAbstractBase(
+  const std::vector<AbstractBasePtr> &abs_vec) {
+  std::vector<TypeId> input_dtype;
   std::vector<TypeId> input_type;
   for (auto &abs : abs_vec) {
     if (abs->isa<abstract::AbstractTuple>()) {
       // a tuple tensors have same type
       auto abs_tuple = std::dynamic_pointer_cast<abstract::AbstractTuple>(abs);
       if (abs_tuple->elements().empty()) {
-        input_type.emplace_back(kTypeUnknown);
+        input_dtype.emplace_back(kTypeUnknown);
         continue;
       }
-      input_type.emplace_back(abs_tuple->elements()[0]->BuildType()->type_id());
+      input_dtype.emplace_back(abs_tuple->elements()[0]->BuildType()->type_id());
     } else {
-      input_type.emplace_back(GetTypeIdFromAbstractTensor(abs));
+      input_dtype.emplace_back(GetTypeIdFromAbstractTensor(abs));
     }
+    input_type.emplace_back(GetAbstractObjectType(abs));
   }
-  return input_type;
+  return std::make_pair(input_type, input_dtype);
 }
 
 bool InputDtypeMatch(TypeId input_attr, TypeId input_type) {
@@ -372,8 +401,8 @@ bool InputDtypeMatch(TypeId input_attr, TypeId input_type) {
   return false;
 }
 
-bool IsObjectTypeWeaklyMatched(const std::vector<TypeId> &object_dtypes,
-                               const std::vector<DataType> &kernel_data_types) {
+bool IsObjectDtypeWeaklyMatched(const std::vector<TypeId> &object_dtypes,
+                                const std::vector<DataType> &kernel_data_types) {
   // only support CPU
   for (size_t i = 0; i < object_dtypes.size(); i++) {
     // For optional input, the real input object type can be a None.
@@ -384,8 +413,8 @@ bool IsObjectTypeWeaklyMatched(const std::vector<TypeId> &object_dtypes,
   return true;
 }
 
-bool IsObjectTypeStrictlyMatched(const std::vector<TypeId> &object_dtypes,
-                                 const std::vector<DataType> &kernel_data_types) {
+bool IsObjectStrictlyMatched(const std::vector<TypeId> &object_types, const std::vector<TypeId> &object_dtypes,
+                             const std::vector<DataType> &kernel_data_types) {
   if (object_dtypes.size() != kernel_data_types.size()) {
     return false;
   }
@@ -394,7 +423,8 @@ bool IsObjectTypeStrictlyMatched(const std::vector<TypeId> &object_dtypes,
     auto is_tuple = (kernel_data_types[i].object_type == kObjectTypeTuple);
     // For optional input, the real input object type can be a None.Tuple data-type unknown means empty tuple.
     if (object_dtypes[i] != kernel_data_types[i].dtype) {
-      if (!is_tuple || object_dtypes[i] != kTypeUnknown) {
+      if ((!is_tuple || object_dtypes[i] != kTypeUnknown) &&
+          !(object_types[i] == kMetaTypeNone && kernel_data_types[i].is_optional)) {
         return false;
       }
     }
@@ -413,13 +443,13 @@ std::pair<bool, KernelAttr> PyBoostUtils::SelectKernel(const std::vector<Abstrac
     MS_LOG(EXCEPTION) << "The kernel " << op_name << " unregistered.";
   }
   const auto &support_list = kernel_mod->GetOpSupport();
-  const auto &inputs_dtypes = GetTypeFromAbstractBase(inputs_abs);
-  const auto &output_dtypes = GetTypeFromAbstractBase(outputs_abs);
+  const auto &[inputs_types, inputs_dtypes] = GetInputTypeFromAbstractBase(inputs_abs);
+  const auto &[output_types, output_dtypes] = GetOutputTypeFromAbstractBase(outputs_abs);
   for (auto &cur_kernel_attr : support_list) {
     auto data_pair = kernel::GetInOutDataTypesFromKernelAttr(cur_kernel_attr);
     const auto &[input_data_types, output_data_types] = kernel::GetInOutDataTypesFromKernelAttr(cur_kernel_attr);
-    if (IsObjectTypeStrictlyMatched(inputs_dtypes, input_data_types) &&
-        IsObjectTypeStrictlyMatched(output_dtypes, output_data_types)) {
+    if (IsObjectStrictlyMatched(inputs_types, inputs_dtypes, input_data_types) &&
+        IsObjectStrictlyMatched(output_types, output_dtypes, output_data_types)) {
       return std::make_pair(true, cur_kernel_attr);
     }
   }
@@ -427,8 +457,8 @@ std::pair<bool, KernelAttr> PyBoostUtils::SelectKernel(const std::vector<Abstrac
   for (auto &cur_kernel_attr : support_list) {
     auto data_pair = kernel::GetInOutDataTypesFromKernelAttr(cur_kernel_attr);
     const auto &[input_data_types, output_data_types] = kernel::GetInOutDataTypesFromKernelAttr(cur_kernel_attr);
-    if (IsObjectTypeWeaklyMatched(inputs_dtypes, input_data_types) &&
-        IsObjectTypeWeaklyMatched(output_dtypes, output_data_types)) {
+    if (IsObjectDtypeWeaklyMatched(inputs_dtypes, input_data_types) &&
+        IsObjectDtypeWeaklyMatched(output_dtypes, output_data_types)) {
       return std::make_pair(false, cur_kernel_attr);
     }
   }
