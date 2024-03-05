@@ -31,6 +31,8 @@ add_ext:
     
     Raises:
         TypeError: If the type of `input`, `other`, or `alpha` is not one of the following: Tensor, number.Number, bool.
+        TypeError: If `alpha` is of type float but `input` and `other` are not of type float.
+        TypeError: If `alpha` is of type bool but `input` and `other` are not of type bool.
     
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -42,7 +44,7 @@ add_ext:
         >>> # case 1: x, y and alpha are all Tensor.
         >>> x = Tensor(np.array([1, 2, 3]).astype(np.float32))
         >>> y = Tensor(np.array([4, 5, 6]).astype(np.float32))
-        >>> alpha = Tensor(2.0, mindspore.float32)
+        >>> alpha = 2.0
         >>> output = add(x, y, alpha)
         >>> print(output)
         [9. 12. 15.]
