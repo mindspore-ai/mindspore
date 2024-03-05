@@ -59,8 +59,13 @@ template <typename Tuple>
 class OpApiParams {
  public:
   explicit OpApiParams(Tuple &&converted_params) : converted_params_(std::move(converted_params)) {}
+  explicit OpApiParams(Tuple &&converted_params, bool mem_clear)
+      : converted_params_(std::move(converted_params)), mem_clear_(mem_clear) {}
   explicit OpApiParams(OpApiParams &&other) : converted_params_(std::move(other.converted_params_)) {
+    need_free_ = other.need_free_;
+    mem_clear_ = other.mem_clear_;
     other.need_free_ = false;
+    other.mem_clear_ = false;
   }
   OpApiParams &operator=(OpApiParams &&other) {
     if (this == &other) {
@@ -70,9 +75,12 @@ class OpApiParams {
     if (need_free_) {
       ReleaseConvertTypes(converted_params_);
     }
+
     converted_params_ = std::move(other.converted_params_);
-    need_free_ = true;
+    need_free_ = other.need_free_;
+    mem_clear_ = other.mem_clear_;
     other.need_free_ = false;
+    other.mem_clear_ = false;
     return *this;
   }
 
@@ -83,6 +91,16 @@ class OpApiParams {
   ~OpApiParams() {
     if (need_free_) {
       ReleaseConvertTypes(converted_params_);
+    }
+    if (mem_clear_) {
+      auto release_mem_func = transform::OpApiDefaultResource::GetInstance().release_mem_func();
+      if (release_mem_func) {
+        release_mem_func(nullptr, false);
+      }
+      auto uninit_mem_func = transform::OpApiDefaultResource::GetInstance().uninit_mem_func();
+      if (uninit_mem_func) {
+        uninit_mem_func(nullptr, false);
+      }
     }
   }
 
@@ -96,6 +114,7 @@ class OpApiParams {
  private:
   Tuple converted_params_;
   bool need_free_{true};
+  bool mem_clear_{false};
 };
 
 template <typename Function, typename Tuple, size_t... I>
@@ -124,10 +143,6 @@ class ReleaseCall {
     auto release_mem_func = transform::OpApiDefaultResource::GetInstance().release_mem_func();
     if (release_mem_func) {
       release_mem_func(nullptr, false);
-    }
-    auto uninit_mem_func = transform::OpApiDefaultResource::GetInstance().uninit_mem_func();
-    if (uninit_mem_func) {
-      uninit_mem_func(nullptr, false);
     }
   }
 
@@ -186,40 +201,48 @@ class ApiCachePool {
     }                                                                                                             \
     auto releas_call = transform::ReleaseCall(std::move(converted_params));                                       \
     release_func = std::function<void()>(releas_call);                                                            \
+    auto uninit_mem_func = transform::OpApiDefaultResource::GetInstance().uninit_mem_func();                      \
+    if (uninit_mem_func) {                                                                                        \
+      uninit_mem_func(nullptr, false);                                                                            \
+    }                                                                                                             \
     return std::make_tuple(workspace_size, executor, release_func);                                               \
   }                                                                                                               \
   (aclnn_api, aclnn_api + "GetWorkspaceSize", __VA_ARGS__)
 
 // For custom generate executor.
-#define GEN_EXECUTOR_CUST(aclnn_api, ...)                                                                         \
-  [](const std::string &workspace_api_name, auto &... args) -> auto {                                             \
-    static const auto get_workspace_size_func_ptr = transform::GetOpApiFunc(workspace_api_name.c_str());          \
-    if (get_workspace_size_func_ptr == nullptr) {                                                                 \
-      MS_LOG(EXCEPTION) << workspace_api_name << " not in " << transform::GetOpApiLibName() << ", please check!"; \
-    }                                                                                                             \
-    static const auto init_cache_thread_local = transform::GetOpApiFunc("InitPTACacheThreadLocal");               \
-    static const auto set_hash_key = transform::GetOpApiFunc("SetPTAHashKey");                                    \
-    transform::InitCacheThreadLocal init_cache_thread_local_func =                                                \
-      reinterpret_cast<transform::InitCacheThreadLocal>(init_cache_thread_local);                                 \
-    transform::SetHashKey set_hash_key_func = reinterpret_cast<transform::SetHashKey>(set_hash_key);              \
-    if (init_cache_thread_local_func && set_hash_key_func) {                                                      \
-      init_cache_thread_local_func();                                                                             \
-      set_hash_key_func(0);                                                                                       \
-    }                                                                                                             \
-    uint64_t workspace_size = 0;                                                                                  \
-    uint64_t *workspace_size_addr = &workspace_size;                                                              \
-    transform::aclOpExecutor *executor = nullptr;                                                                 \
-    transform::aclOpExecutor **executor_addr = &executor;                                                         \
-    auto converted_params = transform::ConvertTypes(args..., workspace_size_addr, executor_addr);                 \
-    static auto get_workspace_size_func =                                                                         \
-      transform::ConvertToOpApiFunc(converted_params, get_workspace_size_func_ptr);                               \
-    auto workspace_status = transform::call(get_workspace_size_func, converted_params);                           \
-    if (workspace_status != 0) {                                                                                  \
-      MS_LOG(EXCEPTION) << workspace_api_name << " call failed, please check!";                                   \
-    }                                                                                                             \
-    return std::make_tuple(workspace_size, executor,                                                              \
-                           transform::OpApiParams<decltype(converted_params)>(std::move(converted_params)));      \
-  }                                                                                                               \
+#define GEN_EXECUTOR_CUST(aclnn_api, ...)                                                                          \
+  [](const std::string &workspace_api_name, auto &... args) -> auto {                                              \
+    static const auto get_workspace_size_func_ptr = transform::GetOpApiFunc(workspace_api_name.c_str());           \
+    if (get_workspace_size_func_ptr == nullptr) {                                                                  \
+      MS_LOG(EXCEPTION) << workspace_api_name << " not in " << transform::GetOpApiLibName() << ", please check!";  \
+    }                                                                                                              \
+    static const auto init_cache_thread_local = transform::GetOpApiFunc("InitPTACacheThreadLocal");                \
+    static const auto set_hash_key = transform::GetOpApiFunc("SetPTAHashKey");                                     \
+    transform::InitCacheThreadLocal init_cache_thread_local_func =                                                 \
+      reinterpret_cast<transform::InitCacheThreadLocal>(init_cache_thread_local);                                  \
+    transform::SetHashKey set_hash_key_func = reinterpret_cast<transform::SetHashKey>(set_hash_key);               \
+    if (init_cache_thread_local_func && set_hash_key_func) {                                                       \
+      init_cache_thread_local_func();                                                                              \
+      set_hash_key_func(0);                                                                                        \
+    }                                                                                                              \
+    uint64_t workspace_size = 0;                                                                                   \
+    uint64_t *workspace_size_addr = &workspace_size;                                                               \
+    transform::aclOpExecutor *executor = nullptr;                                                                  \
+    transform::aclOpExecutor **executor_addr = &executor;                                                          \
+    auto init_mem_func = transform::OpApiDefaultResource::GetInstance().init_mem_func();                           \
+    if (init_mem_func) {                                                                                           \
+      init_mem_func(nullptr, false);                                                                               \
+    }                                                                                                              \
+    auto converted_params = transform::ConvertTypes(args..., workspace_size_addr, executor_addr);                  \
+    static auto get_workspace_size_func =                                                                          \
+      transform::ConvertToOpApiFunc(converted_params, get_workspace_size_func_ptr);                                \
+    auto workspace_status = transform::call(get_workspace_size_func, converted_params);                            \
+    if (workspace_status != 0) {                                                                                   \
+      MS_LOG(EXCEPTION) << workspace_api_name << " call failed, please check!";                                    \
+    }                                                                                                              \
+    return std::make_tuple(workspace_size, executor,                                                               \
+                           transform::OpApiParams<decltype(converted_params)>(std::move(converted_params)), true); \
+  }                                                                                                                \
   (aclnn_api + "GetWorkspaceSize", __VA_ARGS__)
 
 // For speed up generate executor.
@@ -254,6 +277,10 @@ class ApiCachePool {
     }                                                                                                             \
     auto releas_call = transform::ReleaseCall(std::move(converted_params));                                       \
     release_func = std::function<void()>(releas_call);                                                            \
+    auto uninit_mem_func = transform::OpApiDefaultResource::GetInstance().uninit_mem_func();                      \
+    if (uninit_mem_func) {                                                                                        \
+      uninit_mem_func(nullptr, false);                                                                            \
+    }                                                                                                             \
     return std::make_tuple(workspace_size, executor, release_func, new_hash_id, false);                           \
   }                                                                                                               \
   (aclnn_api, aclnn_api + "GetWorkspaceSize", hash_id, __VA_ARGS__)
