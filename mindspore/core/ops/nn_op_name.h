@@ -152,6 +152,7 @@ constexpr auto kReshapeAndCacheOpName = "ReshapeAndCache";
 constexpr auto kRmsNormOpName = "RmsNorm";
 constexpr auto kRmsNormGradOpName = "RmsNormGrad";
 constexpr auto kRNNTLossOpName = "RNNTLoss";
+constexpr auto kMatmulQkvOpName = "MatmulQkv";
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_BASE_NN_OP_NAME_H_
