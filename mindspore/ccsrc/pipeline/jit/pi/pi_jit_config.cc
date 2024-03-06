@@ -83,7 +83,7 @@ static const std::unordered_map<std::string, bool (GraphJitConfig::*)(PyObject *
 GraphJitConfig::GraphJitConfig() {
   bool_conf[kAutoJitCell - kBoolConf] = false;
   bool_conf[kAutoGrad - kBoolConf] = false;
-  bool_conf[kReplaceNNCellByConstruct - kBoolConf] = false;
+  bool_conf[kReplaceNNCellByConstruct - kBoolConf] = true;
   bool_conf[kPrintAfterAll - kBoolConf] = false;
   bool_conf[kTraceFlag - kBoolConf] = false;
   bool_conf[kPrintTraceback - kBoolConf] = false;
