@@ -1343,8 +1343,6 @@ PyObject *EvalFrame(PyThreadState *tstate, PyFrameObject *f, int exc) {
                   << std::string(py::str(reinterpret_cast<PyObject *>(f->f_code)));
 
     e.restore();
-  } catch (const std::exception &e) {
-    PyErr_SetString(PyExc_RuntimeError, e.what());
   }
   if (PyErr_Occurred()) {
     res = py::object();

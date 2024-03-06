@@ -3020,11 +3020,13 @@ EvalResultPtr MakeTupleEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abst
   auto res = std::make_shared<EvalResult>(abs, std::make_shared<AttrValueMap>());
   evaluator_cache_mgr_->SetValue(args_abs_list, res);
   // pass the need_unpack tag from the AnfNode to the abstract
-  auto node = out_conf->node();
-  constexpr auto need_unpack_str = "need_unpack";
-  auto need_unpack = node->user_data<bool>(need_unpack_str);
-  if (need_unpack != nullptr && *need_unpack) {
-    abs->SetData<bool>(need_unpack_str, std::make_shared<bool>(true));
+  if (out_conf != nullptr) {
+    auto node = out_conf->node();
+    constexpr auto need_unpack_str = "need_unpack";
+    auto need_unpack = node->user_data<bool>(need_unpack_str);
+    if (need_unpack != nullptr && *need_unpack) {
+      abs->SetData<bool>(need_unpack_str, std::make_shared<bool>(true));
+    }
   }
   return res;
 }
