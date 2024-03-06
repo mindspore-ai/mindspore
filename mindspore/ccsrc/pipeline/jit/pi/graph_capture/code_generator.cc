@@ -738,12 +738,6 @@ py::object CodeBreakGenerator::MakeCapturedCode(std::vector<std::unique_ptr<Inst
   return code;
 }
 
-py::object MindCodeBreakGenerator::MakeCapturedCode(std::vector<std::unique_ptr<Instr>> &&, int argc,
-                                                    int code_flag) const {
-  int flags = co_->co_flags & ~(CO_VARARGS | CO_VARKEYWORDS);
-  return MakeCopyCode(AttachCodeID(MakeCompiledName(py::str(co_->co_name))), argc, 0, flags | code_flag);
-}
-
 void CodeBreakGenerator::CallCapturedCode(CodeGenerator *code_gen) {
   if (captured_.operations.empty()) {
     return;
@@ -1047,101 +1041,6 @@ void CodeBreakGenerator::CallUntrackedCode(CodeGenerator *code_gen) {
 
   code_gen->NewInstr(CALL_FUNCTION, interpret_.outputs.size() + untracked_stack_effect);
   code_gen->NewInstr(RETURN_VALUE);
-}
-
-py::object MindCodeBreakGenerator::MakeCopyCode(const std::string &co_name, int co_argcount, int co_kwonlyargcount,
-                                                int co_flags, bool make_graph) const {
-  py::str py_co_name(co_name);
-  PyCodeObject *new_code =
-    PyCode_New(co_argcount, co_kwonlyargcount, co_->co_nlocals, co_->co_stacksize, co_flags, co_->co_code,
-               co_->co_consts, co_->co_names, co_->co_varnames, co_->co_freevars, co_->co_cellvars, co_->co_filename,
-               py_co_name.ptr(), co_->co_firstlineno, co_->co_lnotab);
-  if (new_code == nullptr) {
-    throw py::error_already_set();
-  }
-  auto copy_code = py::reinterpret_steal<py::object>(reinterpret_cast<PyObject *>(new_code));
-  // Compile graph.
-  auto b = std::dynamic_pointer_cast<MindGraphBuilder>(builder_);
-  MS_EXCEPTION_IF_NULL(b);
-  auto func_graph = FGBuilder()->graph();
-  if (func_graph == nullptr) {
-    MS_LOG(EXCEPTION) << "Get function graph from function graph builder failed.";
-  }
-  std::string phase =
-    py::cast<std::string>(co_->co_filename) + "_" + std::to_string(co_->co_firstlineno) + "_" + co_name;
-  const auto &parameters = func_graph->parameters();
-  py::tuple args(parameters.size() - func_graph->fv_param_count());
-  for (size_t i = 0; i < parameters.size(); ++i) {
-    auto para = parameters[i]->cast<ParameterPtr>();
-    MS_EXCEPTION_IF_NULL(para);
-    if (para->has_default()) {
-      continue;
-    }
-    phase += "_" + para->abstract()->ToString();
-    args[i] = *(para->user_data<py::object>("pi_jit_py_obj"));
-  }
-  phase += ".pi_jit";
-  MindCompiler::CompileInfo compile_info{co_name, co_argcount, co_kwonlyargcount, co_flags};
-  CallableGraph callable = mindspore::pijit::MindCompiler::Compile(func_graph, args, py::dict(), phase, compile_info);
-  // Set NativeFunc.
-  auto parent = getJitCompileResults(reinterpret_cast<PyObject *>(co_), false);
-  if (make_graph) {
-    parent->code->SetNativeFunc(phase, callable, nullptr);
-  } else {
-    JitCompileResults *child = getJitCompileResults(copy_code.ptr());
-    child->code = child->codehub->AddOptTarget(OptOption::CreateOptionByPoint(child));
-    child->code->SetNativeFunc(phase, callable, nullptr);
-    child->stat = CodeExtra::GRAPH_CALLABLE;
-    child->conf = parent->conf;
-    child->tbs = parent->tbs;
-  }
-
-  return copy_code;
-}
-
-py::object MindCodeBreakGenerator::MakeCode(bool make_graph, Graph *graph) {
-  auto jcr = getJitCompileResults(reinterpret_cast<PyObject *>(co_), false);
-
-  std::string co_name = PyUnicode_AsUTF8(co_->co_name);
-  if (make_graph) {
-    co_name = MakeCompiledName(co_name);
-    co_name = std::to_string(jcr->IncCodeCount()) + "R." + co_name;
-    return MakeCopyCode(AttachCodeID(co_name), co_->co_argcount + co_->co_kwonlyargcount, 0, co_->co_flags, true);
-  }
-
-  CodeGenerator code_gen(&interpret_);
-  code_gen.SetGlobals(GetGlobals());
-  code_gen.Init();
-  for (auto i : captured_.inputs) {
-    code_gen.MarkAlive(i);
-  }
-  code_gen.Build();
-
-  CallCapturedCode(&code_gen);
-  FixInterpretOuput(&code_gen);
-  // ... handle side effects
-  CallUntrackedCode(&code_gen);
-  MakeReturn(&code_gen);
-
-  co_name = std::to_string(jcr->IncCodeCount()) + "R." + co_name;
-
-  int nlocals = code_gen.GetLocalsMap().size();
-  nlocals = std::max(nlocals, co_->co_nlocals);
-  nlocals = std::max(nlocals, cfg_->GetLocalCount());
-
-  code_gen.SetArgsInfo(co_->co_argcount + co_->co_kwonlyargcount, 0);
-  code_gen.SetLocalsCount(nlocals);
-  code_gen.SetCodeFlags(co_->co_flags);
-  code_gen.SetFirstLineNumber(co_->co_firstlineno);
-  code_gen.SetVariableNames(py::cast<std::vector<std::string>>(co_->co_varnames));
-  code_gen.SetCellVariableNames(py::cast<std::vector<std::string>>(co_->co_cellvars));
-  code_gen.SetFreeVariableNames(py::cast<std::vector<std::string>>(co_->co_freevars));
-  code_gen.SetCodeName(co_name);
-  code_gen.SetFileName(py::reinterpret_borrow<py::object>(co_->co_filename));
-
-  code_gen.EraseUnusedInstr();
-  py::object result = CodeGenerator::Transform(code_gen.GetCode());
-  return result;
 }
 
 py::object CodeBreakGenerator::MakeCode(bool make_graph, Graph *graph) {
@@ -1603,6 +1502,107 @@ std::string PrintNodeSet(const NodeSet &nodes) {
     s << i->ToString() << "\n";
   }
   return s.str();
+}
+
+py::object MindCodeBreakGenerator::MakeCapturedCode(std::vector<std::unique_ptr<Instr>> &&, int argc,
+                                                    int code_flag) const {
+  int flags = co_->co_flags & ~(CO_VARARGS | CO_VARKEYWORDS);
+  return MakeCopyCode(AttachCodeID(MakeCompiledName(py::str(co_->co_name))), argc, 0, flags | code_flag);
+}
+
+py::object MindCodeBreakGenerator::MakeCopyCode(const std::string &co_name, int co_argcount, int co_kwonlyargcount,
+                                                int co_flags, bool make_graph) const {
+  py::str py_co_name(co_name);
+  PyCodeObject *new_code =
+    PyCode_New(co_argcount, co_kwonlyargcount, co_->co_nlocals, co_->co_stacksize, co_flags, co_->co_code,
+               co_->co_consts, co_->co_names, co_->co_varnames, co_->co_freevars, co_->co_cellvars, co_->co_filename,
+               py_co_name.ptr(), co_->co_firstlineno, co_->co_lnotab);
+  if (new_code == nullptr) {
+    throw py::error_already_set();
+  }
+  auto copy_code = py::reinterpret_steal<py::object>(reinterpret_cast<PyObject *>(new_code));
+  // Compile graph.
+  auto b = std::dynamic_pointer_cast<MindGraphBuilder>(builder_);
+  MS_EXCEPTION_IF_NULL(b);
+  auto func_graph = FGBuilder()->graph();
+  if (func_graph == nullptr) {
+    MS_LOG(EXCEPTION) << "Get function graph from function graph builder failed.";
+  }
+  std::string phase =
+    py::cast<std::string>(co_->co_filename) + "_" + std::to_string(co_->co_firstlineno) + "_" + co_name;
+  const auto &parameters = func_graph->parameters();
+  py::tuple args(parameters.size() - func_graph->fv_param_count());
+  for (size_t i = 0; i < parameters.size(); ++i) {
+    auto para = parameters[i]->cast<ParameterPtr>();
+    MS_EXCEPTION_IF_NULL(para);
+    if (para->has_default()) {
+      continue;
+    }
+    phase += "_" + para->abstract()->ToString();
+    args[i] = *(para->user_data<py::object>("pi_jit_py_obj"));
+  }
+  phase += ".pi_jit";
+  MindCompiler::CompileInfo compile_info{co_name, co_argcount, co_kwonlyargcount, co_flags};
+  CallableGraph callable = mindspore::pijit::MindCompiler::Compile(func_graph, args, py::dict(), phase, compile_info);
+  // Set NativeFunc.
+  auto parent = getJitCompileResults(reinterpret_cast<PyObject *>(co_), false);
+  if (make_graph) {
+    parent->code->SetNativeFunc(phase, callable, nullptr);
+  } else {
+    JitCompileResults *child = getJitCompileResults(copy_code.ptr());
+    child->code = child->codehub->AddOptTarget(OptOption::CreateOptionByPoint(child));
+    child->code->SetNativeFunc(phase, callable, nullptr);
+    child->stat = CodeExtra::GRAPH_CALLABLE;
+    child->conf = parent->conf;
+    child->tbs = parent->tbs;
+  }
+
+  return copy_code;
+}
+
+py::object MindCodeBreakGenerator::MakeCode(bool make_graph) {
+  auto jcr = getJitCompileResults(reinterpret_cast<PyObject *>(co_), false);
+
+  std::string co_name = PyUnicode_AsUTF8(co_->co_name);
+  if (make_graph) {
+    co_name = MakeCompiledName(co_name);
+    co_name = std::to_string(jcr->IncCodeCount()) + "R." + co_name;
+    return MakeCopyCode(AttachCodeID(co_name), co_->co_argcount + co_->co_kwonlyargcount, 0, co_->co_flags, true);
+  }
+
+  CodeGenerator code_gen(&interpret_);
+  code_gen.SetGlobals(GetGlobals());
+  code_gen.Init();
+  for (auto i : captured_.inputs) {
+    code_gen.MarkAlive(i);
+  }
+  code_gen.Build();
+
+  CallCapturedCode(&code_gen);
+  FixInterpretOuput(&code_gen);
+  // ... handle side effects
+  CallUntrackedCode(&code_gen);
+  MakeReturn(&code_gen);
+
+  co_name = std::to_string(jcr->IncCodeCount()) + "R." + co_name;
+
+  int nlocals = code_gen.GetLocalsMap().size();
+  nlocals = std::max(nlocals, co_->co_nlocals);
+  nlocals = std::max(nlocals, cfg_->GetLocalCount());
+
+  code_gen.SetArgsInfo(co_->co_argcount + co_->co_kwonlyargcount, 0);
+  code_gen.SetLocalsCount(nlocals);
+  code_gen.SetCodeFlags(co_->co_flags);
+  code_gen.SetFirstLineNumber(co_->co_firstlineno);
+  code_gen.SetVariableNames(py::cast<std::vector<std::string>>(co_->co_varnames));
+  code_gen.SetCellVariableNames(py::cast<std::vector<std::string>>(co_->co_cellvars));
+  code_gen.SetFreeVariableNames(py::cast<std::vector<std::string>>(co_->co_freevars));
+  code_gen.SetCodeName(co_name);
+  code_gen.SetFileName(py::reinterpret_borrow<py::object>(co_->co_filename));
+
+  code_gen.EraseUnusedInstr();
+  py::object result = CodeGenerator::Transform(code_gen.GetCode());
+  return result;
 }
 
 }  // namespace pijit
