@@ -2406,7 +2406,7 @@ ValueNode *GetBoundSelf(CallNode *call_node) {
 bool GraphBuilder::HandlePositionParams(const py::object &func, std::vector<ValueNode *> *params, FrameStates *frame) {
   CallNode *call_node = reinterpret_cast<CallNode *>(seek(0));
   PyCodeObject *co = reinterpret_cast<PyCodeObject *>(PyFunction_GET_CODE(func.ptr()));
-  auto vobj = AObject::Convert(func.ptr());
+  auto vobj = trace_flag() ? AObject::Convert(func.ptr()) : call_node->input(0)->GetVobj();
   AObject::Type callable_type = vobj->GetType();
 
   ValueNode *self = GetBoundSelf(call_node);
@@ -3325,7 +3325,7 @@ py::object MindGraphBuilder::FGAddNode(CallNode *call_node, const py::object &ca
 
 std::vector<py::object> MindGraphBuilder::GetNewArgs(CallNode *call_node, AObject *vobj) {
   std::vector<py::object> new_args;
-  vobj = vobj ? vobj : call_node->GetVobj();
+  vobj = vobj ? vobj : call_node->input(0)->GetVobj();
   if (vobj->GetType() == AObject::kTypeCFunction) {
     MS_LOG(ERROR) << "not support cfunction";
   }
@@ -3375,7 +3375,9 @@ py::object MindGraphBuilder::ResolveCallable(CallNode *call_node, StopTraceReaso
   if (method.ptr() != nullptr) {
     MS_LOG(INFO) << "convert method :" << py::str(callable_info) << " to " << py::str(method);
     callable_info = method;
-    args = GetNewArgs(call_node, AObject::Convert(callable_info.ptr()));
+    if (!PyFunction_Check(callable_info.ptr())) {  // prim getnewargs here, func getnewargs in subgraph
+      args = GetNewArgs(call_node);
+    }
   }
   auto func = FGBuilder()->ConvertFunction(callable_info);
   if (func.ptr() != nullptr) {
@@ -3563,5 +3565,7 @@ bool MindGraphBuilder::DoBuildOp(const Instr &instr) {
   push(v);
   return true;
 }
+
+bool MindGraphBuilder::DoIsOp(const Instr &instr) { return GraphBuilder::DoBinary(instr); }
 }  // namespace pijit
 }  // namespace mindspore
