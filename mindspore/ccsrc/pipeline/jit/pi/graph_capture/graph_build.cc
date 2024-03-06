@@ -1695,7 +1695,6 @@ bool GuardInlinedFunc(CallNode *call_node) {
     if (std::string(PyUnicode_AsUTF8(name)).find(kPIJitCopyFuncKey) != std::string::npos) {
       return true;
     }
-    tr = CreateOpTrace(PyFunction_GET_CODE(callable), LOAD_ATTR, 0, {tr}, "", "__code__", strict);
     call_node->GetGraph()->GetGuard()->GetGuard()->GuardOn(tr, GuardLevel::GId);
   } else {
     return false;
