@@ -366,7 +366,7 @@ def generate_parser_func(op_proto: OpProto) -> str:
     :param op_proto:
     :return: str
     """
-    convert_template = CppTemplate("auto $arg_name = converter.${convert_func}($arg_index);\n")
+    convert_template = CppTemplate("auto $arg_name = converter.${convert_func}(args, $arg_index);\n")
     parser_func_str = ''
     for index, arg in enumerate(op_proto.op_args):
         is_optional = is_optional_param(arg)

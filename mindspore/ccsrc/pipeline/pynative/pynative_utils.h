@@ -29,16 +29,6 @@
 #include "pipeline/pynative/grad/function/func_builder.h"
 #include "pipeline/jit/ps/parse/data_converter.h"
 #include "include/common/utils/primfunc_utils.h"
-
-#ifndef MS_UNLIKELY
-#ifdef _MSC_VER
-#define MS_UNLIKELY(x) (x)
-#define MS_LIKELY(x) (x)
-#else
-#define MS_LIKELY(x) __builtin_expect(!!(x), 1)
-#define MS_UNLIKELY(x) __builtin_expect(!!(x), 0)
-#endif
-#endif
 namespace mindspore {
 namespace pynative {
 class PyNativeExecutor;
@@ -93,6 +83,7 @@ struct Common {
   static ValuePtr ConvertToContiguousValue(const ValuePtr &v, bool requires_grad);
   static size_t GetValueSize(const ValuePtr &v);
   static tensor::TensorPtr ConvertToContiguousTensor(const tensor::TensorPtr &tensor);
+  static ValuePtr CreateTensorByConstantValue(const ValuePtr &value);
   template <typename T>
   static std::string PrintDebugInfo(std::vector<T> items, const std::string &info_header = "") {
     static constexpr size_t end_char_size = 2;

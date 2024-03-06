@@ -188,7 +188,7 @@ void IrBprop::BuildCustomBpropCNode(const CNodePtr &cnode, const PrimitivePtr &p
       return;
     }
     (void)prim_py->AddBackwardHookFn(0, fn);
-    prim_py->AddAttr("custom_op_bprop", MakeValue(true));
+    (void)prim_py->AddAttr("custom_op_bprop", MakeValue(true));
   }
   BuildBPropCutCNode(cnode, prim, outputs);
 }

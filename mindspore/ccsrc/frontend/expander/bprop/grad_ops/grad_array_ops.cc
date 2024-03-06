@@ -830,7 +830,6 @@ REG_BPROP_BUILDER("ReverseV2").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
 });
 
 REG_BPROP_BUILDER("Unstack").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
-  auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
   auto dx = ib->Stack(dout, ib->GetAttr("axis"));
   return {dx};
@@ -1528,7 +1527,6 @@ REG_BPROP_BUILDER("Slice").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
 
 REG_BPROP_BUILDER("Split").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex4);
-  auto out = ib->GetInput(kIndex3);
   auto axis = ib->GetInput(kIndex1);
   auto output_num = ib->GetInput(kIndex2);
   auto axis_ptr = axis->BuildValue();
@@ -1904,7 +1902,6 @@ REG_BPROP_BUILDER("MaskedSelect").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
 
 REG_BPROP_BUILDER("SplitV").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   auto split_dim = GetValue<int64_t>(ib->GetAttr("split_dim"));
-  auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
   auto dx = ib->Concat(dout, split_dim);
   return {dx};
@@ -2215,7 +2212,7 @@ REG_BPROP_BUILDER("MaskedScatter").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
     // The operator test case pass on cpu or ascend backend. But it may fail once enabled on gpu backend for pynative
     // mode. Now it is not supported on gpu backend.
     dupdates = ib->Reshape(dupdates, ib->Shape(updates));
-    ib->Cast(dupdates, ib->GetDtype(updates));
+    dupdates = ib->Cast(dupdates, ib->GetDtype(updates));
   } else {
     dupdates = ib->OutZeros(updates);
   }

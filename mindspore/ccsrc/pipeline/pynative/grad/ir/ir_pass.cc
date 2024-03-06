@@ -37,22 +37,7 @@ void CreateTensorByConstantValue(const ValueNodePtr &v_node) {
   MS_EXCEPTION_IF_NULL(v_node);
   const auto &value = v_node->value();
   MS_EXCEPTION_IF_NULL(value);
-  auto type = value->type();
-  if (PyNativeAlgo::Common::IsTensor(value, true) || value->isa<Number>() || value->isa<None>() ||
-      (type != nullptr && type->isa<String>())) {
-    return;
-  }
-  tensor::TensorPtr tensor_ptr = nullptr;
-  if (value->isa<Scalar>()) {
-    tensor_ptr = ScalarToTensor(value->cast<ScalarPtr>());
-  } else if (value->isa<ValueTuple>()) {
-    tensor_ptr = opt::CreateTupleTensor(value->cast<ValueTuplePtr>());
-  } else if (value->isa<ValueList>()) {
-    tensor_ptr = opt::CreateTupleTensor(std::make_shared<ValueTuple>(value->cast<ValueListPtr>()->value()));
-  } else {
-    MS_LOG(EXCEPTION) << "The value should be a scalar or value tuple, but get type " << value->type_name()
-                      << ", value " << value->ToString();
-  }
+  auto tensor_ptr = PyNativeAlgo::Common::CreateTensorByConstantValue(value);
   MS_EXCEPTION_IF_NULL(tensor_ptr);
   v_node->set_value(tensor_ptr);
   v_node->set_abstract(tensor_ptr->ToAbstract());
@@ -664,7 +649,7 @@ void IrPassForward::ReverseMakeTupleNode(const CNodePtr &cnode, ValuePtrList *in
     }
   }
   cnode->set_inputs(new_inputs);
-  cnode->EraseAttr(kTupleToMakeTuple);
+  (void)cnode->EraseAttr(kTupleToMakeTuple);
 }
 
 void IrPassForward::ReverseBNInfer(const CNodePtr &cnode) {
@@ -689,7 +674,7 @@ void IrPassForward::ReverseBNInfer(const CNodePtr &cnode) {
     MS_LOG(EXCEPTION) << "Replace failed. cnode " << cnode->DebugString() << " to cnode "
                       << item->second[kIndex0].second->DebugString();
   }
-  node_attr_value_.erase(item);
+  (void)node_attr_value_.erase(item);
 }
 
 void IrPassForward::ReverseCNodeInputs(const CNodePtr &cnode, AnfNodePtrList *cnode_inputs,
@@ -719,7 +704,7 @@ void IrPassForward::ReverseCNodeInputs(const CNodePtr &cnode, AnfNodePtrList *cn
       MS_LOG(EXCEPTION) << "No scenario for " << t.second->DebugString();
     }
   }
-  node_attr_value_.erase(item);
+  (void)node_attr_value_.erase(item);
 }
 
 void IrPassForward::ReversePassFuncGraph(const FuncGraphPtr &func_graph) {

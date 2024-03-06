@@ -28,7 +28,7 @@ inline TypePtr PredictOutTypeByOutputNum(const int64_t &output_num) {
   constexpr int64_t kZero = 0;
   constexpr int64_t kTen = 10;
   if (output_num > kZero && output_num < kTen) {
-    return types[output_num];
+    return types[static_cast<size_t>(output_num)];
   }
   return kTuple;
 }
@@ -65,7 +65,7 @@ TypePtr PredictOutTypeByOpDef(const ops::OpDefPtr op_def) {
 }
 
 TypePtr PredictOutTypeByName(const std::string &op_name) {
-  static PredictOutTypeMap ops_map;
+  static PredictOutTypeMap ops_map{};
   const auto iter = ops_map.find(op_name);
   if (iter != ops_map.end()) {
     return iter->second;

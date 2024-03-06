@@ -47,7 +47,7 @@ class FuncObject {
   template <typename T>
   FuncObject &operator=(T &&rhs) {
     // cppcheck-suppress *
-    FuncObject(static_cast<T &&>(rhs)).swap(*this);
+    (void)FuncObject(static_cast<T &&>(rhs)).swap(*this);
     return *this;
   }
 

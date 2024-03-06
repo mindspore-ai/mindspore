@@ -85,7 +85,7 @@ struct OpGradInfo {
 using OpGradInfoPtr = std::shared_ptr<OpGradInfo>;
 
 struct GradParam {
-  GradParam(OpGradInfoPtr op_grad_info, bool use_dynamic_shape_process)
+  GradParam(const OpGradInfoPtr &op_grad_info, bool use_dynamic_shape_process)
       : op_grad_info(op_grad_info), use_dynamic_shape_process(use_dynamic_shape_process) {
     input_size = op_grad_info->input_value.size();
   }
@@ -204,7 +204,7 @@ class FastValue {
   const std::vector<int64_t> &vec_value() const { return vec_value_; }
 
  private:
-  int64_t int_value_;
+  int64_t int_value_{0};
   std::vector<int64_t> vec_value_;
   bool is_int_{false};
 };

@@ -732,7 +732,7 @@ void UpdateAddressInfoByInputTensor(const OpCompilerInfoPtr &op_compiler_info, c
 std::vector<kernel::KernelTensor *> GetInputKernelTensors(const std::vector<EdgePtr> &edges) {
   std::vector<kernel::KernelTensor *> input_kernel_tensors;
   input_kernel_tensors.reserve(edges.size());
-  std::transform(edges.begin(), edges.end(), std::back_inserter(input_kernel_tensors), [](const EdgePtr &edge) {
+  (void)std::transform(edges.begin(), edges.end(), std::back_inserter(input_kernel_tensors), [](const EdgePtr &edge) {
     MS_EXCEPTION_IF_NULL(edge->address_);
     return edge->address_->kernel_tensor().get();
   });
@@ -742,7 +742,7 @@ std::vector<kernel::KernelTensor *> GetInputKernelTensors(const std::vector<Edge
 std::vector<abstract::AbstractBasePtr> GetInputInferAbstract(const std::vector<EdgePtr> &edges) {
   std::vector<abstract::AbstractBasePtr> input_abstracts;
   input_abstracts.reserve(edges.size());
-  std::transform(edges.begin(), edges.end(), std::back_inserter(input_abstracts), [](const EdgePtr &edge) {
+  (void)std::transform(edges.begin(), edges.end(), std::back_inserter(input_abstracts), [](const EdgePtr &edge) {
     MS_EXCEPTION_IF_NULL(edge->address_);
     return edge->address_->kernel_tensor();
   });
@@ -831,7 +831,7 @@ DeviceContext *OpRunner::GetDeviceContext(const std::string &device_type) {
   device_context->Initialize();
 
   MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
-  device_context->device_res_manager_->BindDeviceToCurrentThread(false);
+  (void)device_context->device_res_manager_->BindDeviceToCurrentThread(false);
   g_device_contexts[device_type] = device_context;
   MS_LOG(DEBUG) << "Get device context of " << device_type << " id " << device_id;
   return device_context;

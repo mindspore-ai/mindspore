@@ -192,8 +192,8 @@ TypePtr ConcatFuncImpl::InferType(const PrimitivePtr &primitive, const std::vect
     }
     elements = tuple_type->elements();
   } else {
-    std::transform(input_args.begin(), input_args.end() - 1, std::back_inserter(elements),
-                   [](const auto &ele) { return ele->GetType(); });
+    (void)std::transform(input_args.begin(), input_args.end() - 1, std::back_inserter(elements),
+                         [](const auto &ele) { return ele->GetType(); });
   }
   MS_CHECK_VALUE(elements.size() > 0, CheckAndConvertUtils::FormatCheckIntegerMsg("elements size", elements.size(),
                                                                                   kGreaterThan, 0, primitive));

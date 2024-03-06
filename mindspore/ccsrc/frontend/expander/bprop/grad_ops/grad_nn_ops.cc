@@ -311,7 +311,7 @@ REG_BPROP_BUILDER("Dense").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
         dw = ib->Emit("Conj", {dw});
       }
     } else {
-      ib->OutZeros(w);
+      dw = ib->OutZeros(w);
     }
 
     if (x->need_compute_grad_out()) {

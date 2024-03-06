@@ -51,7 +51,7 @@ class COMMON_EXPORT Node : public std::enable_shared_from_this<Node> {
   std::vector<std::vector<int64_t>> shapes();
   TypePtr dtype();
   std::vector<TypePtr> dtypes();
-  Emitter *emitter() const { return emitter_; }
+  Emitter *emitter() { return emitter_; }
   virtual std::string ToString() const;
   virtual void set_debug_info(const std::string &debug_info) {}
   virtual std::string debug_info() const { return ""; }
@@ -85,7 +85,6 @@ class COMMON_EXPORT IrNode : public Node {
   BaseShapePtr GetShape() override;
   TypePtr GetType() override;
 
-  Emitter *emitter() const { return emitter_; }
   std::string ToString() const override;
   void set_debug_info(const std::string &debug_info) override;
   std::string debug_info() const override;

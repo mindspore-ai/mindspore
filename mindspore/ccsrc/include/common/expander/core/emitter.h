@@ -379,7 +379,6 @@ class COMMON_EXPORT IrEmitter : public Emitter {
     MS_EXCEPTION_IF_NULL(func_graph);
     MS_EXCEPTION_IF_NULL(infer);
   }
-  NodePtr EmitOp(const PrimitivePtr &prim, const NodePtrList &inputs) override;
   NodePtr EmitValue(const ValuePtr &value) override;
   using BlockFunc = std::function<NodePtrList(Emitter *)>;
   NodePtr Conditional(const NodePtr &cond, const BlockFunc &true_case, const BlockFunc &false_case) override;
@@ -387,6 +386,7 @@ class COMMON_EXPORT IrEmitter : public Emitter {
   FuncGraphPtr func_graph() { return func_graph_; }
 
  protected:
+  NodePtr EmitOp(const PrimitivePtr &prim, const NodePtrList &inputs) override;
   FuncGraphPtr func_graph_;
 };
 

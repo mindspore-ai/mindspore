@@ -106,7 +106,7 @@ void ChildAtFork() {
     MS_LOG(DEBUG) << "Release GIL lock acquired manually before fork.";
     PyGILState_Release(static_cast<PyGILState_STATE>(ForkUtils::GetInstance().GetGilState()));
   }
-  
+
   // Trigger ChildAfterFork callbacks in child process.
   ForkUtils::GetInstance().ChildAtFork();
 }

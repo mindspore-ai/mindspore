@@ -339,7 +339,7 @@ inline std::set<int64_t> GetDependList(const pynative::BaseOpRunInfo &op_info, c
           bias += op_info.dyn_input_sizes[idx];
         }
       }
-      depend_list.emplace(bias);
+      (void)depend_list.emplace(bias);
       MS_LOG(DEBUG) << "Adjust depend list from " << item << " to " << bias << " for op: " << op_prim->name();
     }
   }

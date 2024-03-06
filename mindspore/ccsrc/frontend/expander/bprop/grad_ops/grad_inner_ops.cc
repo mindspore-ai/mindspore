@@ -23,7 +23,7 @@
 
 namespace mindspore::expander::bprop {
 
-NodePtr GetMatrixDiagPartAssit(BpropBuilder *ib, const ShapeVector &x_shape, TypePtr x_dtype) {
+NodePtr GetMatrixDiagPartAssit(BpropBuilder *ib, const ShapeVector &x_shape, const TypePtr &x_dtype) {
   auto base_eye = ib->Emit(
     "Eye", {ib->Value(x_shape[x_shape.size() - i2]), ib->Value(x_shape[x_shape.size() - 1]), ib->EmitValue(x_dtype)});
   base_eye = ib->Reshape(base_eye, {-1});
@@ -33,7 +33,7 @@ NodePtr GetMatrixDiagPartAssit(BpropBuilder *ib, const ShapeVector &x_shape, Typ
   return assist;
 }
 
-NodePtr GetMatrixDiagAssit(BpropBuilder *ib, const ShapeVector &x_shape, TypePtr x_dtype) {
+NodePtr GetMatrixDiagAssit(BpropBuilder *ib, const ShapeVector &x_shape, const TypePtr &x_dtype) {
   auto base_eye = ib->Emit(
     "Eye", {ib->Value(x_shape[x_shape.size() - 1]), ib->Value(x_shape[x_shape.size() - 1]), ib->EmitValue(x_dtype)});
   base_eye = ib->Reshape(base_eye, {-1});
@@ -123,8 +123,8 @@ REG_BPROP_BUILDER("TensorCopySlices").SetUnusedInputs({i0, i5}).SetBody(BODYFUNC
   auto x_grad = x->need_compute_grad_out()
                   ? ib->Emit(kTensorCopySlicesOpName, {dout, ib->ZerosLike(update), begin, end, stride})
                   : ib->OutZeros(x);
-  auto update_grad = update->need_compute_grad_out() ? ib->StridedSlice(dout, begin, end, stride)
-                                                     : ib->OutZeros(update);
+  auto update_grad =
+    update->need_compute_grad_out() ? ib->StridedSlice(dout, begin, end, stride) : ib->OutZeros(update);
   return {x_grad, update_grad, ib->OutZeros(begin), ib->OutZeros(end), ib->OutZeros(stride)};
 });
 

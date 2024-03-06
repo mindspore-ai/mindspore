@@ -76,7 +76,6 @@ void GetRealOutputRecursively(const AnfNodePtr &node, size_t output_index, std::
     MS_EXCEPTION_IF_NULL(tuple_get_item);
     auto input = AnfAlgo::GetTupleGetItemRealInput(tuple_get_item);
     auto index = AnfAlgo::GetTupleGetItemOutIndex(tuple_get_item);
-
     // Conceal MakeTuple + TupleGetItem pair.
     if (AnfAlgo::CheckPrimitiveType(input, prim::kPrimMakeTuple)) {
       auto make_tuple = input->cast<CNodePtr>();

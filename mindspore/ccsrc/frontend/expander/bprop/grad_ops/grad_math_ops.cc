@@ -811,7 +811,6 @@ REG_BPROP_BUILDER("Atan").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
 
 REG_BPROP_BUILDER("AtanGrad").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
-  auto grad = ib->GetInput(kIndex1);
   auto out = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex3);
   auto dgrad = ib->Emit("AtanGrad", {x, dout});
@@ -1998,7 +1997,7 @@ REG_BPROP_BUILDER("Lerp").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
 });
 
 REG_BPROP_BUILDER("TridiagonalMatMul").SetUnusedInputs({i4}).SetBody(BODYFUNC(ib) {
-  auto LeftShift = [](BpropBuilder *ib, NodePtr x) {
+  auto LeftShift = [](BpropBuilder *ib, const NodePtr &x) {
     auto x_shape = ib->GetShape(x);
     std::vector<std::vector<int64_t>> paddings;
     auto rank = x_shape.size();
@@ -2019,7 +2018,7 @@ REG_BPROP_BUILDER("TridiagonalMatMul").SetUnusedInputs({i4}).SetBody(BODYFUNC(ib
                                       ib->Value<ShapeVector>(strides))},
                     {{"paddings", MakeValue(paddings)}});
   };
-  auto RightShift = [](BpropBuilder *ib, NodePtr x) {
+  auto RightShift = [](BpropBuilder *ib, const NodePtr &x) {
     auto x_shape = ib->GetShape(x);
     std::vector<std::vector<int64_t>> paddings;
     auto rank = x_shape.size();

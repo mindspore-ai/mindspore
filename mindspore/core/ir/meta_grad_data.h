@@ -64,7 +64,7 @@ class AutoGradMetaData {
   // Optional for op output, represent index of op in execute order.
   size_t op_index_{0};
   // Index of op output tensors.
-  size_t output_index_;
+  size_t output_index_{0};
 };
 using AutoGradMetaDataPtr = std::shared_ptr<AutoGradMetaData>;
 }  // namespace mindspore

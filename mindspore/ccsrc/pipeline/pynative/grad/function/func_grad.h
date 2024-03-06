@@ -32,9 +32,6 @@
 #include "pipeline/pynative/grad/function/func_builder.h"
 
 namespace mindspore::pynative::autograd {
-using NodePtr = expander::NodePtr;
-using NodePtrList = expander::NodePtrList;
-
 class FuncBackwardNode : public BackwardNode {
  public:
   FuncBackwardNode(const string &name, expander::bprop::BpropBuilderFunc func,
@@ -152,6 +149,8 @@ class FuncGrad : public AutoGrad {
   void CheckSensShapeAndType(const ValuePtr &sens_gradient);
   void PruningGradGraph(const TensorPtrList &weights, const GradAttr &grad_attr,
                         const std::vector<size_t> &grad_position);
+  void PruningInput(const GradAttr &grad_attr, const std::vector<size_t> &grad_position);
+  void PruningWeights(const TensorPtrList &weights, const GradAttr &grad_attr);
   std::shared_ptr<FuncBuilder> func_impl_;
   OrderedSet<FuncVariablePtr> variable_set_;
   std::vector<std::pair<ValuePtr, FuncVariablePtr>> cell_inputs_;

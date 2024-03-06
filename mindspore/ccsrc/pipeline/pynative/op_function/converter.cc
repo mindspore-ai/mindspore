@@ -93,17 +93,16 @@ ValueTuplePtr ConvertList(const py::object &obj) {
 
 Converter::Converter(ops::OpDef *op_def) : op_def_(op_def), source_type_(std::vector<ops::OP_DTYPE>(N)) {}
 
-void Converter::Parse(py::list python_args) {
-  python_args_ = &python_args;
+void Converter::Parse(const py::list &python_args) {
   if (op_def_->args_.size() != python_args.size()) {
     MS_LOG(EXCEPTION) << "For operator " << op_def_->name_ << ", it requires " << op_def_->args_.size()
                       << "parameters, bug got " << python_args.size() << "parameters!";
   }
 }
 
-ValuePtr Converter::ToTensor(size_t i) {
+ValuePtr Converter::ToTensor(const py::list &python_args, size_t i) {
   const auto &op_arg = op_def_->args_[i];
-  const py::object &obj = (*python_args_)[i];
+  const py::object &obj = (python_args)[i];
   source_type_[i] = OP_DTYPE::DT_BEGIN;
   auto tensor = parse::ConvertTensor(obj);
   if (tensor != nullptr) {
@@ -116,41 +115,33 @@ ValuePtr Converter::ToTensor(size_t i) {
     }
   }
 
-  PyNativeAlgo::PyParser::PrintTypeCastError(op_def_, *python_args_, i);
+  PyNativeAlgo::PyParser::PrintTypeCastError(op_def_, python_args, i);
   return nullptr;
 }
 
-std::optional<ValuePtr> Converter::ToTensorOptional(size_t i) {
-  const py::object &obj = (*python_args_)[i];
+std::optional<ValuePtr> Converter::ToTensorOptional(const py::list &python_args, size_t i) {
+  const py::object &obj = (python_args)[i];
   if (py::isinstance<py::none>(obj)) {
     return std::nullopt;
   }
-  return std::make_optional(ToTensor(i));
+  return std::make_optional(ToTensor(python_args, i));
 }
 
 template <typename T>
-ValueTuplePtr Converter::ToTensorList(size_t i) {
+ValueTuplePtr Converter::ToTensorList(const py::list &python_args, size_t i) {
   const auto &op_arg = op_def_->args_[i];
-  const py::object &obj = (*python_args_)[i];
+  const py::object &obj = python_args[i];
   source_type_[i] = OP_DTYPE::DT_BEGIN;
   auto val_seq = parse::ConvertSequence<py::tuple, ValueTuple, parse::ConvertTensor>(obj);
-
   if (val_seq != nullptr && val_seq->isa<ValueTuple>()) {
     return val_seq->cast<ValueTuplePtr>();
   }
-  if (!op_arg.cast_dtype_.empty()) {
-    auto convert_value = ConvertByCastDtype(obj, op_arg, i);
-    if (convert_value != nullptr && convert_value->isa<ValueTuple>()) {
-      return convert_value->cast<ValueTuplePtr>();
-    }
-  }
-  PyNativeAlgo::PyParser::PrintTypeCastError(op_def_, *python_args_, i);
-  return nullptr;
+  return ConvertValueTupleByCastDtype(python_args, op_arg, i);
 }
 
-Int64ImmPtr Converter::ToInt(size_t i) {
+Int64ImmPtr Converter::ToInt(const py::list &python_args, size_t i) {
   const auto &op_arg = op_def_->args_[i];
-  const py::object &obj = (*python_args_)[i];
+  const py::object &obj = python_args[i];
   source_type_[i] = OP_DTYPE::DT_BEGIN;
   auto convert = ConvertInt(obj);
   if (convert != nullptr) {
@@ -162,48 +153,41 @@ Int64ImmPtr Converter::ToInt(size_t i) {
       return convert_value->cast<Int64ImmPtr>();
     }
   }
-  PyNativeAlgo::PyParser::PrintTypeCastError(op_def_, *python_args_, i);
+  PyNativeAlgo::PyParser::PrintTypeCastError(op_def_, python_args, i);
   return nullptr;
 }
 
-std::optional<Int64ImmPtr> Converter::ToIntOptional(size_t i) {
-  const py::object &obj = (*python_args_)[i];
+std::optional<Int64ImmPtr> Converter::ToIntOptional(const py::list &python_args, size_t i) {
+  const py::object &obj = python_args[i];
   if (py::isinstance<py::none>(obj)) {
     return std::nullopt;
   }
-  return std::make_optional(ToInt(i));
+  return std::make_optional(ToInt(python_args, i));
 }
 
 template <typename T>
-ValueTuplePtr Converter::ToIntList(size_t i) {
+ValueTuplePtr Converter::ToIntList(const py::list &python_args, size_t i) {
   const auto &op_arg = op_def_->args_[i];
-  const py::object &obj = (*python_args_)[i];
+  const py::object &obj = python_args[i];
   ValueTuplePtr convert = ConvertList<T, py::int_, Int64Imm>(obj);
   if (convert != nullptr) {
     return convert;
   }
-  if (!op_arg.cast_dtype_.empty()) {
-    auto convert_value = ConvertByCastDtype(obj, op_arg, i);
-    if (convert_value != nullptr && convert_value->isa<ValueTuple>()) {
-      return convert_value->cast<ValueTuplePtr>();
-    }
-  }
-  PyNativeAlgo::PyParser::PrintTypeCastError(op_def_, *python_args_, i);
-  return nullptr;
+  return ConvertValueTupleByCastDtype(python_args, op_arg, i);
 }
 
 template <typename T>
-std::optional<ValueTuplePtr> Converter::ToIntListOptional(size_t i) {
-  const py::object &obj = (*python_args_)[i];
+std::optional<ValueTuplePtr> Converter::ToIntListOptional(const py::list &python_args, size_t i) {
+  const py::object &obj = python_args[i];
   if (py::isinstance<py::none>(obj)) {
     return std::nullopt;
   }
-  return std::make_optional(ToIntList<T>(i));
+  return std::make_optional(ToIntList<T>(python_args, i));
 }
 
-BoolImmPtr Converter::ToBool(size_t i) {
+BoolImmPtr Converter::ToBool(const py::list &python_args, size_t i) {
   const auto &op_arg = op_def_->args_[i];
-  const py::object &obj = (*python_args_)[i];
+  const py::object &obj = python_args[i];
   source_type_[i] = OP_DTYPE::DT_BEGIN;
   auto convert = ConvertBool(obj);
   if (convert != nullptr) {
@@ -215,50 +199,43 @@ BoolImmPtr Converter::ToBool(size_t i) {
       return convert_value->cast<BoolImmPtr>();
     }
   }
-  PyNativeAlgo::PyParser::PrintTypeCastError(op_def_, *python_args_, i);
+  PyNativeAlgo::PyParser::PrintTypeCastError(op_def_, python_args, i);
   return nullptr;
 }
 
-std::optional<BoolImmPtr> Converter::ToBoolOptional(size_t i) {
-  const py::object &obj = (*python_args_)[i];
+std::optional<BoolImmPtr> Converter::ToBoolOptional(const py::list &python_args, size_t i) {
+  const py::object &obj = python_args[i];
   if (py::isinstance<py::none>(obj)) {
     return std::nullopt;
   }
-  return std::make_optional(ToBool(i));
+  return std::make_optional(ToBool(python_args, i));
 }
 
 template <typename T>
-ValueTuplePtr Converter::ToBoolList(size_t i) {
+ValueTuplePtr Converter::ToBoolList(const py::list &python_args, size_t i) {
   const auto &op_arg = op_def_->args_[i];
-  const py::object &obj = (*python_args_)[i];
+  const py::object &obj = python_args[i];
   source_type_[i] = OP_DTYPE::DT_BEGIN;
   ValueTuplePtr convert = ConvertList<T, py::bool_, BoolImm>(obj);
   if (convert != nullptr) {
     return convert;
   }
-  if (!op_arg.cast_dtype_.empty()) {
-    auto convert_value = ConvertByCastDtype(obj, op_arg, i);
-    if (convert_value != nullptr && convert_value->isa<ValueTuple>()) {
-      return convert_value->cast<ValueTuplePtr>();
-    }
-  }
-  PyNativeAlgo::PyParser::PrintTypeCastError(op_def_, *python_args_, i);
-  return nullptr;
+  return ConvertValueTupleByCastDtype(python_args, op_arg, i);
 }
 
 template <typename T>
-std::optional<ValueTuplePtr> Converter::ToBoolListOptional(size_t i) {
-  const py::object &obj = (*python_args_)[i];
+std::optional<ValueTuplePtr> Converter::ToBoolListOptional(const py::list &python_args, size_t i) {
+  const py::object &obj = python_args[i];
   source_type_[i] = OP_DTYPE::DT_BEGIN;
   if (py::isinstance<py::none>(obj)) {
     return std::nullopt;
   }
-  return std::make_optional(ToBoolList<T>(i));
+  return std::make_optional(ToBoolList<T>(python_args, i));
 }
 
-FP32ImmPtr Converter::ToFloat(size_t i) {
+FP32ImmPtr Converter::ToFloat(const py::list &python_args, size_t i) {
   const auto &op_arg = op_def_->args_[i];
-  const py::object &obj = (*python_args_)[i];
+  const py::object &obj = python_args[i];
   source_type_[i] = OP_DTYPE::DT_BEGIN;
   auto convert = ConvertFloat(obj);
   if (convert != nullptr) {
@@ -270,41 +247,34 @@ FP32ImmPtr Converter::ToFloat(size_t i) {
       return convert_value->cast<FP32ImmPtr>();
     }
   }
-  PyNativeAlgo::PyParser::PrintTypeCastError(op_def_, *python_args_, i);
+  PyNativeAlgo::PyParser::PrintTypeCastError(op_def_, python_args, i);
   return nullptr;
 }
 
 template <typename T>
-ValueTuplePtr Converter::ToFloatList(size_t i) {
+ValueTuplePtr Converter::ToFloatList(const py::list &python_args, size_t i) {
   const auto &op_arg = op_def_->args_[i];
-  const py::object &obj = (*python_args_)[i];
+  const py::object &obj = python_args[i];
   source_type_[i] = OP_DTYPE::DT_BEGIN;
   ValueTuplePtr convert = ConvertList<T, py::float_, FP32Imm>(obj);
   if (convert != nullptr) {
     return convert;
   }
-  if (!op_arg.cast_dtype_.empty()) {
-    auto convert_value = ConvertByCastDtype(obj, op_arg, i);
-    if (convert_value != nullptr && convert_value->isa<ValueTuple>()) {
-      return convert_value->cast<ValueTuplePtr>();
-    }
-  }
-  PyNativeAlgo::PyParser::PrintTypeCastError(op_def_, *python_args_, i);
-  return nullptr;
+  return ConvertValueTupleByCastDtype(python_args, op_arg, i);
 }
 
 template <typename T>
-std::optional<ValueTuplePtr> Converter::ToFloatListOptional(size_t i) {
-  const py::object &obj = (*python_args_)[i];
+std::optional<ValueTuplePtr> Converter::ToFloatListOptional(const py::list &python_args, size_t i) {
+  const py::object &obj = python_args[i];
   if (py::isinstance<py::none>(obj)) {
     return std::nullopt;
   }
-  return std::make_optional(ToFloatList<T>(i));
+  return std::make_optional(ToFloatList<T>(python_args, i));
 }
 
-ScalarPtr Converter::ToScalar(size_t i) {
+ScalarPtr Converter::ToScalar(const py::list &python_args, size_t i) {
   const auto &op_arg = op_def_->args_[i];
-  const py::object &obj = (*python_args_)[i];
+  const py::object &obj = python_args[i];
   source_type_[i] = OP_DTYPE::DT_BEGIN;
   auto convert = ConvertNumber(obj);
   if (convert != nullptr) {
@@ -316,21 +286,21 @@ ScalarPtr Converter::ToScalar(size_t i) {
       return convert_value->cast<ScalarPtr>();
     }
   }
-  PyNativeAlgo::PyParser::PrintTypeCastError(op_def_, *python_args_, i);
+  PyNativeAlgo::PyParser::PrintTypeCastError(op_def_, python_args, i);
   return nullptr;
 }
 
-std::optional<ScalarPtr> Converter::ToScalarOptional(size_t i) {
-  const py::object &obj = (*python_args_)[i];
+std::optional<ScalarPtr> Converter::ToScalarOptional(const py::list &python_args, size_t i) {
+  const py::object &obj = python_args[i];
   if (py::isinstance<py::none>(obj)) {
     return std::nullopt;
   }
-  return std::make_optional(ToScalar(i));
+  return std::make_optional(ToScalar(python_args, i));
 }
 
-StringImmPtr Converter::ToString(size_t i) {
+StringImmPtr Converter::ToString(const py::list &python_args, size_t i) {
   const auto &op_arg = op_def_->args_[i];
-  const py::object &obj = (*python_args_)[i];
+  const py::object &obj = python_args[i];
   source_type_[i] = OP_DTYPE::DT_BEGIN;
   auto convert = ConvertStr(obj);
   if (convert != nullptr) {
@@ -342,20 +312,20 @@ StringImmPtr Converter::ToString(size_t i) {
       return convert_value->cast<StringImmPtr>();
     }
   }
-  PyNativeAlgo::PyParser::PrintTypeCastError(op_def_, *python_args_, i);
+  PyNativeAlgo::PyParser::PrintTypeCastError(op_def_, python_args, i);
   return nullptr;
 }
 
-std::optional<StringImmPtr> Converter::ToStringOptional(size_t i) {
-  const py::object &obj = (*python_args_)[i];
+std::optional<StringImmPtr> Converter::ToStringOptional(const py::list &python_args, size_t i) {
+  const py::object &obj = python_args[i];
   if (py::isinstance<py::none>(obj)) {
     return std::nullopt;
   }
-  return std::make_optional(ToString(i));
+  return std::make_optional(ToString(python_args, i));
 }
 
-Int64ImmPtr Converter::ToDtype(size_t i) {
-  const py::object &obj = (*python_args_)[i];
+Int64ImmPtr Converter::ToDtype(const py::list &python_args, size_t i) {
+  const py::object &obj = python_args[i];
   source_type_[i] = OP_DTYPE::DT_BEGIN;
   auto convert = ConvertInt(obj);
   if (convert != nullptr) {
@@ -365,19 +335,19 @@ Int64ImmPtr Converter::ToDtype(size_t i) {
     TypePtr type = py::cast<mindspore::TypePtr>(obj);
     return std::make_shared<Int64Imm>(static_cast<int>(type->type_id()));
   }
-  PyNativeAlgo::PyParser::PrintTypeCastError(op_def_, *python_args_, i);
+  PyNativeAlgo::PyParser::PrintTypeCastError(op_def_, python_args, i);
   return nullptr;
 }
 
-std::optional<Int64ImmPtr> Converter::ToDtypeOptional(size_t i) {
-  const py::object &obj = (*python_args_)[i];
+std::optional<Int64ImmPtr> Converter::ToDtypeOptional(const py::list &python_args, size_t i) {
+  const py::object &obj = python_args[i];
   if (py::isinstance<py::none>(obj)) {
     return std::nullopt;
   }
-  return std::make_optional(ToDtype(i));
+  return std::make_optional(ToDtype(python_args, i));
 }
 
-ValuePtr Converter::ConvertByCastDtype(const py::object &input, const ops::OpInputArg &op_arg, size_t i) {
+ValuePtr Converter::ConvertByCastDtype(const py::object &input, const ops::OpInputArg &op_arg, size_t index) {
   for (auto &cast_dtype : op_arg.cast_dtype_) {
     auto convert_func = parse::GetConverterByType(parse::CombineTypesForTypeCast(cast_dtype, op_arg.arg_dtype_));
     if (convert_func == nullptr) {
@@ -386,22 +356,35 @@ ValuePtr Converter::ConvertByCastDtype(const py::object &input, const ops::OpInp
     }
     auto value = convert_func(input);
     if (value != nullptr) {
-      source_type_[i] = cast_dtype;
+      source_type_[index] = cast_dtype;
       return value;
     }
   }
   return nullptr;
 }
 
+ValueTuplePtr Converter::ConvertValueTupleByCastDtype(const py::list &python_args, const ops::OpInputArg &op_arg,
+                                                      size_t index) {
+  const auto &input = python_args[index];
+  if (!op_arg.cast_dtype_.empty()) {
+    auto convert_value = ConvertByCastDtype(input, op_arg, index);
+    if (convert_value != nullptr && convert_value->isa<ValueTuple>()) {
+      return convert_value->cast<ValueTuplePtr>();
+    }
+  }
+  PyNativeAlgo::PyParser::PrintTypeCastError(op_def_, python_args, index);
+  return nullptr;
+}
+
 // Declare template to compile corresponding method.
-template ValueTuplePtr Converter::ToTensorList<py::tuple>(size_t i);
-template ValueTuplePtr Converter::ToTensorList<py::list>(size_t i);
-template std::optional<ValueTuplePtr> Converter::ToIntListOptional<py::tuple>(size_t i);
-template std::optional<ValueTuplePtr> Converter::ToIntListOptional<py::list>(size_t i);
-template std::optional<ValueTuplePtr> Converter::ToBoolListOptional<py::tuple>(size_t i);
-template std::optional<ValueTuplePtr> Converter::ToBoolListOptional<py::list>(size_t i);
-template std::optional<ValueTuplePtr> Converter::ToFloatListOptional<py::tuple>(size_t i);
-template std::optional<ValueTuplePtr> Converter::ToFloatListOptional<py::list>(size_t i);
+template ValueTuplePtr Converter::ToTensorList<py::tuple>(const py::list &python_args, size_t i);
+template ValueTuplePtr Converter::ToTensorList<py::list>(const py::list &python_args, size_t i);
+template std::optional<ValueTuplePtr> Converter::ToIntListOptional<py::tuple>(const py::list &python_args, size_t i);
+template std::optional<ValueTuplePtr> Converter::ToIntListOptional<py::list>(const py::list &python_args, size_t i);
+template std::optional<ValueTuplePtr> Converter::ToBoolListOptional<py::tuple>(const py::list &python_args, size_t i);
+template std::optional<ValueTuplePtr> Converter::ToBoolListOptional<py::list>(const py::list &python_args, size_t i);
+template std::optional<ValueTuplePtr> Converter::ToFloatListOptional<py::tuple>(const py::list &python_args, size_t i);
+template std::optional<ValueTuplePtr> Converter::ToFloatListOptional<py::list>(const py::list &python_args, size_t i);
 
 }  // namespace pynative
 }  // namespace mindspore

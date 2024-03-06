@@ -34,6 +34,22 @@
 #include "ir/dtype/type.h"
 #include "utils/log_adapter.h"
 
+#ifndef MS_UNLIKELY
+#ifdef _MSC_VER
+#define MS_UNLIKELY(x) (x)
+#else
+#define MS_UNLIKELY(x) __builtin_expect(!!(x), 0)
+#endif
+#endif
+
+#ifndef MS_LIKELY
+#ifdef _MSC_VER
+#define MS_LIKELY(x) (x)
+#else
+#define MS_LIKELY(x) __builtin_expect(!!(x), 1)
+#endif
+#endif
+
 namespace mindspore {
 // attr key name
 constexpr auto kAttrSegment = "segment";

@@ -460,12 +460,12 @@ void ForwardExecutor::CreateViewOpOutputs(const FrontendOpRunInfoPtr &op_run_inf
     op_run_info->op_grad_info->output_size = 1;
   } else {
     std::vector<ValuePtr> output_values;
-    std::transform(op_run_info->base_op_run_info.output_tensors.begin(),
-                   op_run_info->base_op_run_info.output_tensors.end(), std::back_inserter(output_values),
-                   [](const auto &t) {
-                     MS_EXCEPTION_IF_NULL(t);
-                     return t;
-                   });
+    (void)std::transform(op_run_info->base_op_run_info.output_tensors.begin(),
+                         op_run_info->base_op_run_info.output_tensors.end(), std::back_inserter(output_values),
+                         [](const auto &t) {
+                           MS_EXCEPTION_IF_NULL(t);
+                           return t;
+                         });
     op_run_info->real_out = std::make_shared<ValueTuple>(output_values);
     op_run_info->op_grad_info->output_size = output_values.size();
   }
@@ -563,7 +563,7 @@ ValuePtr ForwardExecutor::RunSliceOpFrontend(const std::vector<ValuePtr> &input_
       auto type_value = slice_op_info->slice_index_inputs[0];
       MS_EXCEPTION_IF_CHECK_FAIL(type_value->is_int(), "type_value should be int.");
       auto type_id = static_cast<TypeId>(type_value->int_value());
-      cast_operation()->DoNormalCast(op_run_info, intermediate_tensor[first_data_idx], type_id);
+      (void)cast_operation()->DoNormalCast(op_run_info, intermediate_tensor[first_data_idx], type_id);
     } else {
       EmplaceSliceInputs(op_run_info, intermediate_tensor, slice_op_info);
 
@@ -1018,7 +1018,7 @@ void ForwardExecutor::CreateInputAddressForViewOp(const tensor::TensorPtr &input
   MS_EXCEPTION_IF_NULL(device_context);
 
   MS_LOG(DEBUG) << "Input_tensor address is nullptr, need create address.";
-  auto address_size = GetTypeByte(input_tensor->Dtype()) * input_tensor->ElementsNum();
+  auto address_size = GetTypeByte(input_tensor->Dtype()) * static_cast<size_t>(input_tensor->ElementsNum());
   auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
     nullptr, address_size, Format::DEFAULT_FORMAT, input_tensor->data_type(), input_tensor->shape(),
     device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);

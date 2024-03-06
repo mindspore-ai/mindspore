@@ -82,43 +82,9 @@ ValuePtr TensorToValue(const std::vector<TensorPtr> &tensors) {
   }
   std::vector<ValuePtr> values;
   values.reserve(tensors.size());
-  std::transform(tensors.begin(), tensors.end(), std::back_inserter(values), [](const ValuePtr &val) { return val; });
+  (void)std::transform(tensors.begin(), tensors.end(), std::back_inserter(values),
+                       [](const ValuePtr &val) { return val; });
   return std::make_shared<ValueTuple>(values);
-}
-
-void ConvertPyObjectToTensor(const py::object &input_object, std::vector<ValuePtr> *tensors) {
-  MS_EXCEPTION_IF_NULL(tensors);
-  ValuePtr tensor_ptr = nullptr;
-  if (py::isinstance<tensor::Tensor>(input_object)) {
-    tensor_ptr = py::cast<tensor::TensorPtr>(input_object);
-  } else if (IsStubTensor(input_object)) {
-    tensor_ptr = ConvertStubTensor(input_object);
-  } else if (py::isinstance<py::float_>(input_object)) {
-    double input_value = py::cast<py::float_>(input_object);
-    tensor_ptr = std::make_shared<tensor::Tensor>(input_value, kFloat32);
-  } else if (py::isinstance<py::int_>(input_object)) {
-    tensor_ptr = std::make_shared<tensor::Tensor>(py::cast<int64_t>(input_object), kInt64);
-  } else if (py::isinstance<py::list>(input_object)) {
-    auto list_inputs = py::cast<py::list>(input_object);
-    for (size_t i = 0; i < list_inputs.size(); ++i) {
-      ConvertPyObjectToTensor(list_inputs[i], tensors);
-    }
-    return;
-  } else if (py::isinstance<py::tuple>(input_object)) {
-    auto tuple_inputs = py::cast<py::tuple>(input_object);
-    for (size_t i = 0; i < tuple_inputs.size(); ++i) {
-      ConvertPyObjectToTensor(tuple_inputs[i], tensors);
-    }
-    return;
-  } else if (py::isinstance<tensor::CSRTensor>(input_object)) {
-    tensor_ptr = py::cast<tensor::CSRTensorPtr>(input_object);
-  } else if (py::isinstance<tensor::COOTensor>(input_object)) {
-    tensor_ptr = py::cast<tensor::COOTensorPtr>(input_object);
-  } else {
-    MS_EXCEPTION(TypeError) << "Unreasonable data type: " << input_object.get_type() << ".";
-  }
-  MS_EXCEPTION_IF_NULL(tensor_ptr);
-  (void)tensors->emplace_back(tensor_ptr);
 }
 
 bool IsOutputBothEmpty(const ValuePtr &input_grads, const ValuePtr &weight_grads) {
@@ -191,13 +157,13 @@ TensorPtrList FuncBackwardNode::CallBackward(const TensorPtrList &gradients_in) 
   ValuePtrList cal_grads_values;
   cal_grads_values.reserve(cal_grads_node.size());
   // Binary op grad result may be nulllptr, we need convert to kNone.
-  std::transform(cal_grads_node.begin(), cal_grads_node.end(), std::back_inserter(cal_grads_values),
-                 [](const NodePtr &node) -> ValuePtr {
-                   if (node == nullptr) {
-                     return kNone;
-                   }
-                   return node->Value();
-                 });
+  (void)std::transform(cal_grads_node.begin(), cal_grads_node.end(), std::back_inserter(cal_grads_values),
+                       [](const NodePtr &node) -> ValuePtr {
+                         if (node == nullptr) {
+                           return kNone;
+                         }
+                         return node->Value();
+                       });
   auto gradients = PostProcess(cal_grads_values);
   MS_LOG(DEBUG) << "End CallBackward: " << name();
   return gradients;
@@ -218,7 +184,7 @@ NodePtrList FuncBackwardNode::PreProcess(const TensorPtrList &dout, FuncBuilder 
     ValuePtrList value_dout;
     value_dout.reserve(dout.size());
     // If dout is nullptr, lazy update zero tensor to funcbuilder emitop.
-    std::transform(dout.begin(), dout.end(), std::back_inserter(value_dout), [](const auto &val) -> ValuePtr {
+    (void)std::transform(dout.begin(), dout.end(), std::back_inserter(value_dout), [](const auto &val) -> ValuePtr {
       if (val == nullptr) {
         return kNone;
       }
@@ -281,8 +247,8 @@ TensorPtrList GraphBackwardNode::CallBackward(const TensorPtrList &grads) {
     }
     (void)args_.emplace_back(std::make_shared<ValueTuple>(key_inputs));
     value_inputs.reserve(real_dout.size());
-    std::transform(real_dout.begin(), real_dout.end(), std::back_inserter(value_inputs),
-                   [](const ValuePtr &val) { return val; });
+    (void)std::transform(real_dout.begin(), real_dout.end(), std::back_inserter(value_inputs),
+                         [](const ValuePtr &val) { return val; });
     (void)args_.emplace_back(std::make_shared<ValueTuple>(value_inputs));
   }
   auto gradient_vec_ref = graph_call_back(args_);
@@ -433,7 +399,7 @@ void FuncGrad::BackPropagate() {
   const auto &last_node_reverse_iter = GetLastNodeReverseIter();
   const auto &root_fn = (*last_node_reverse_iter)->func_node();
   mindspore::HashMap<BackwardNode *, TensorPtrList> input_buffer;
-  input_buffer.insert({root_fn.get(), root_gradients_});
+  (void)input_buffer.insert({root_fn.get(), root_gradients_});
   for (auto iter = last_node_reverse_iter; iter != variable_set_.rend(); ++iter) {
     const auto &variable = *iter;
     const auto &fn = variable->func_node();
@@ -482,7 +448,7 @@ void FuncGrad::BackPropagate() {
       }
       variable->set_grad(grad_tensor[0]);
     }
-    input_buffer.erase(fn.get());
+    (void)input_buffer.erase(fn.get());
     variable->Release();
   }
   MS_LOG(DEBUG) << "End BackPropagate";
@@ -547,7 +513,7 @@ BackwardNodePtr FuncGrad::BuildCustomBackwardNode(const PrimitivePtr &prim, cons
       return std::make_shared<FakeBackwardNode>(prim->name());
     }
     (void)prim_py->AddBackwardHookFn(0, fn);
-    prim_py->AddAttr("custom_op_bprop", MakeValue(true));
+    (void)prim_py->AddAttr("custom_op_bprop", MakeValue(true));
   }
   return BuildHookBackwardNode(prim, flatten_inputs, op_grad_info);
 }
@@ -581,24 +547,24 @@ BackwardNodePtr FuncGrad::BuildHookBackwardNode(const PrimitivePtr &prim, const 
 
 ValuePtr FuncGrad::GetGrads(const tensor::TensorPtrList &weights, const std::vector<size_t> &grad_position,
                             const GradAttr &grad_attr) {
-  auto inputs_grad_ret = GetInputGrads(grad_attr.grad_all_inputs, grad_attr.get_by_position, grad_position);
-  auto weights_grad_ret = GetWeightGrads(grad_attr.grad_weights, weights, grad_attr.weight_param_is_tuple);
+  auto inputs_grad = GetInputGrads(grad_attr.grad_all_inputs, grad_attr.get_by_position, grad_position);
+  auto weights_grad = GetWeightGrads(grad_attr.grad_weights, weights, grad_attr.weight_param_is_tuple);
   // Gradients wrt inputs and weights.
-  if (inputs_grad_ret != nullptr && weights_grad_ret != nullptr) {
-    if (IsOutputBothEmpty(inputs_grad_ret, weights_grad_ret)) {
+  if (inputs_grad != nullptr && weights_grad != nullptr) {
+    if (IsOutputBothEmpty(inputs_grad, weights_grad)) {
       return GenerateEmptyTupleValue();
     } else {
-      ValuePtrList gradients{inputs_grad_ret, weights_grad_ret};
+      ValuePtrList gradients{inputs_grad, weights_grad};
       return std::make_shared<ValueTuple>(gradients);
     }
   }
   // Gradients wrt inputs.
-  if (inputs_grad_ret != nullptr) {
-    return inputs_grad_ret;
+  if (inputs_grad != nullptr) {
+    return inputs_grad;
   }
   // Gradients wrt weights.
-  if (weights_grad_ret != nullptr) {
-    return weights_grad_ret;
+  if (weights_grad != nullptr) {
+    return weights_grad;
   }
   // grad_all_inputs, grad_weights and get_by_position are all false.
   if (cell_inputs_.empty()) {
@@ -742,6 +708,24 @@ void FuncGrad::CheckSensShapeAndType(const ValuePtr &sens_gradient) {
 
 void FuncGrad::PruningGradGraph(const TensorPtrList &weights, const GradAttr &grad_attr,
                                 const std::vector<size_t> &grad_position) {
+  PruningInput(grad_attr, grad_position);
+  PruningWeights(weights, grad_attr);
+
+  // Pruning all node in grad graph
+  for (const auto &variable : variable_set_) {
+    if (variable->is_leaf()) {
+      continue;
+    }
+    bool is_need_grad =
+      std::any_of(variable->func_node()->next_edges().begin(), variable->func_node()->next_edges().end(),
+                  [](const auto &edge) { return edge.variable->is_need_grad(); });
+    if (!is_need_grad) {
+      variable->set_is_need_grad(false);
+    }
+  }
+}
+
+void FuncGrad::PruningInput(const GradAttr &grad_attr, const std::vector<size_t> &grad_position) {
   mindspore::HashSet<size_t> grad_pos_list{grad_position.begin(), grad_position.end()};
   // Pruning inputs by position in grad graph
   if (grad_attr.get_by_position) {
@@ -765,7 +749,9 @@ void FuncGrad::PruningGradGraph(const TensorPtrList &weights, const GradAttr &gr
       cell_inputs_[i].second->set_is_need_grad(false);
     }
   }
+}
 
+void FuncGrad::PruningWeights(const TensorPtrList &weights, const GradAttr &grad_attr) {
   // Pruning weights in grad graph
   if (grad_attr.grad_weights) {
     mindspore::HashSet<std::string> grad_weights_id;
@@ -783,19 +769,6 @@ void FuncGrad::PruningGradGraph(const TensorPtrList &weights, const GradAttr &gr
     for (const auto &weight : weights_used_in_graph_) {
       auto variable = weight->auto_grad_meta_data()->variable();
       MS_EXCEPTION_IF_NULL(variable);
-      variable->set_is_need_grad(false);
-    }
-  }
-
-  // Pruning all node in grad graph
-  for (const auto &variable : variable_set_) {
-    if (variable->is_leaf()) {
-      continue;
-    }
-    bool is_need_grad =
-      std::any_of(variable->func_node()->next_edges().begin(), variable->func_node()->next_edges().end(),
-                  [](const auto &edge) { return edge.variable->is_need_grad(); });
-    if (!is_need_grad) {
       variable->set_is_need_grad(false);
     }
   }

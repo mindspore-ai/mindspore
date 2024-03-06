@@ -265,7 +265,7 @@ std::string GetWeightsObjIdsByWeights(const py::object &weights) {
   auto append_weights_info = [&weights_obj_id, is_require_grad](const py::object &obj) {
     const auto &v = PyNativeAlgo::DataConvert::PyObjToValue(obj);
     if (is_require_grad(v)) {
-      weights_obj_id.append("_").append(PyNativeAlgo::Common::GetIdByValue(v));
+      (void)weights_obj_id.append("_").append(PyNativeAlgo::Common::GetIdByValue(v));
     }
   };
 
@@ -442,7 +442,7 @@ void KPynativeGraph(const autograd::AutoGradPtr &auto_grad_cell_ptr, const GradP
   grad_param->graph_cache_key = std::to_string(graph_grad_info->graph_id);
   MS_EXCEPTION_IF_NULL(auto_grad_cell_ptr);
   op_grad_info->output_size = PyNativeAlgo::Common::GetValueSize(op_grad_info->out_value);
-  auto_grad_cell_ptr->KPynativeWithFProp(grad_param);
+  (void)auto_grad_cell_ptr->KPynativeWithFProp(grad_param);
 }
 
 void CheckBpropCutNode(const TopCellInfoPtr &top_cell, const PrimitivePtr &op_prim) {
@@ -801,7 +801,7 @@ void GradExecutor::EndGraphImpl(const InputArgsInfoPtr &input_args_info) {
       AbstractBasePtrList abs{
         PyNativeAlgo::Common::SetAbstractValueToAnyValue(input_args_info->out_value->ToAbstract())};
       auto node_info = std::make_shared<DynamicDetectNodeInfo>(nullptr, abs, nullptr);
-      dynamic_shape()->CheckNodeDynamic(top_cell(), inputs, node_info);
+      (void)dynamic_shape()->CheckNodeDynamic(top_cell(), inputs, node_info);
       auto output_node = GetInput(input_args_info->out_value, out_id);
       curr_g()->set_output(output_node);
       bprop_grad_stack_.pop();
@@ -815,7 +815,7 @@ void GradExecutor::EndGraphImpl(const InputArgsInfoPtr &input_args_info) {
     ValuePtrList inputs{input_args_info->out_value};
     AbstractBasePtrList abs{PyNativeAlgo::Common::SetAbstractValueToAnyValue(input_args_info->out_value->ToAbstract())};
     auto node_info = std::make_shared<DynamicDetectNodeInfo>(nullptr, abs, nullptr);
-    dynamic_shape()->CheckNodeDynamic(top_cell(), inputs, node_info);
+    (void)dynamic_shape()->CheckNodeDynamic(top_cell(), inputs, node_info);
     SaveForwardGraph(input_args_info->out_value, out_id);
   }
   // Reset grad flag and update output node of the outermost cell
@@ -869,7 +869,7 @@ void GradExecutor::DoGradForCustomBprop(const InputArgsInfoPtr &input_args_info,
   DoOpGrad(op_run_info);
   auto node_info = std::make_shared<DynamicDetectNodeInfo>(
     op_run_info->op_grad_info->op_prim, op_run_info->op_grad_info->input_abs, op_run_info->base_op_run_info.abstract);
-  dynamic_shape()->CheckNodeDynamic(top_cell(), op_run_info->op_grad_info->input_value, node_info);
+  (void)dynamic_shape()->CheckNodeDynamic(top_cell(), op_run_info->op_grad_info->input_value, node_info);
   RecordForwardGraph(op_run_info);
 }
 
@@ -940,7 +940,7 @@ void GradExecutor::ClearPreTopCell(const TopCellInfoPtr &new_top_cell, bool is_n
       }
       iter = already_run_top_cell_.erase(iter);
     } else {
-      iter++;
+      (void)iter++;
     }
   }
 }
@@ -1833,7 +1833,7 @@ void GradExecutor::ProcessOpGradInfo(const FrontendOpRunInfoPtr &op_run_info) co
   auto node_info = std::make_shared<DynamicDetectNodeInfo>(
     op_run_info->op_grad_info->op_prim, op_run_info->op_grad_info->input_abs, op_run_info->op_grad_info->out_abs);
   CheckBpropCutNode(top_cell(), op_run_info->op_grad_info->op_prim);
-  dynamic_shape()->CheckNodeDynamic(top_cell(), op_run_info->op_grad_info->input_value, node_info);
+  (void)dynamic_shape()->CheckNodeDynamic(top_cell(), op_run_info->op_grad_info->input_value, node_info);
 }
 
 void GradExecutor::SaveOutputNodeMap(const std::string &obj_id, const FrontendOpRunInfoPtr &op_run_info,
@@ -1861,10 +1861,10 @@ void GradExecutor::DoOpGrad(const FrontendOpRunInfoPtr &op_run_info) const {
   auto &&grad_param = CreateOpGradParam(op_run_info, top_cell());
   if (forward()->enable_async()) {
     auto auto_grad_cell_ptr = top_cell()->auto_grad_cell_ptr();
-    auto task = [auto_grad_cell_ptr, grad_param]() { auto_grad_cell_ptr->KPynativeOp(grad_param); };
+    auto task = [auto_grad_cell_ptr, grad_param]() { (void)auto_grad_cell_ptr->KPynativeOp(grad_param); };
     DispatchGradQueueTask(std::move(task));
   } else {
-    top_cell()->auto_grad_cell_ptr()->KPynativeOp(grad_param);
+    (void)top_cell()->auto_grad_cell_ptr()->KPynativeOp(grad_param);
   }
 }
 
@@ -1878,7 +1878,7 @@ void GradExecutor::DoGraphGrad(const FrontendOpRunInfoPtr &op_run_info) const {
     auto fn = [auto_grad_cell_ptr, grad_param, graph_grad_info, forward_vnodes_values]() {
       KPynativeGraph(auto_grad_cell_ptr, grad_param, graph_grad_info, forward_vnodes_values);
     };
-    bprop_queue_->Push(new (std::nothrow) BpropTask(std::move(fn)));
+    (void)bprop_queue_->Push(new (std::nothrow) BpropTask(std::move(fn)));
   } else {
     KPynativeGraph(top_cell()->auto_grad_cell_ptr(), grad_param, graph_grad_info, forward_vnodes_values);
   }
@@ -2091,7 +2091,7 @@ void GradExecutor::SaveDynamicInputsCells(const py::object &obj, const py::args 
   MS_LOG(INFO) << "SaveDynamicInputsCells: "
                << (py::isinstance<Cell>(obj) ? obj_id + " " + obj.cast<CellPtr>()->ToString()
                                              : py::getattr(obj, "__name__").cast<std::string>());
-  dynamic_inputs_cells_.insert(obj_id);
+  (void)dynamic_inputs_cells_.insert(obj_id);
 }
 
 void GradExecutor::SetTopCellDynamicAttr(const py::object &cell) {

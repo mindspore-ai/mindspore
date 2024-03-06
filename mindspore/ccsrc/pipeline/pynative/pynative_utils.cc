@@ -575,7 +575,7 @@ ValuePtr StubNodeToValueInner(const ValuePtr &v) {
     } else if (utils::isa<ValueList>(v)) {
       return std::make_shared<ValueList>(value_list);
     } else {
-      MS_LOG(EXCEPTION) << "Not support ValueSequence " << v->ToString();
+      MS_LOG(EXCEPTION) << "Value not support ValueSequence " << v->ToString();
     }
   } else {
     return v;
@@ -648,6 +648,28 @@ tensor::TensorPtr Common::ConvertToContiguousTensor(const tensor::TensorPtr &ten
   const auto &device_target = device_address->device_name();
 
   return GetContiguousTensor(tensor, device_target, requires_grad);
+}
+
+ValuePtr CreateTensorByConstantValue(const ValuePtr &value) {
+  MS_EXCEPTION_IF_NULL(value);
+  auto type = value->type();
+  if (PyNativeAlgo::Common::IsTensor(value, true) || value->isa<Number>() || value->isa<None>() ||
+      (type != nullptr && type->isa<String>())) {
+    return value;
+  }
+  tensor::TensorPtr tensor_ptr = nullptr;
+  if (value->isa<Scalar>()) {
+    tensor_ptr = ScalarToTensor(value->cast<ScalarPtr>());
+  } else if (value->isa<ValueTuple>()) {
+    tensor_ptr = opt::CreateTupleTensor(value->cast<ValueTuplePtr>());
+  } else if (value->isa<ValueList>()) {
+    tensor_ptr = opt::CreateTupleTensor(std::make_shared<ValueTuple>(value->cast<ValueListPtr>()->value()));
+  } else {
+    MS_LOG(EXCEPTION) << "The value should be a scalar or value tuple, but get type " << value->type_name()
+                      << ", value " << value->ToString();
+  }
+  MS_EXCEPTION_IF_NULL(tensor_ptr);
+  return tensor_ptr;
 }
 
 TensorPtr Common::ConvertStubNodeToTensor(const ValuePtr &v, bool need_contiguous, bool requires_grad) {
@@ -815,7 +837,7 @@ InputType Common::SetValueGradInfo(const ValuePtr &value, const TopCellInfoPtr &
   } else if (value->isa<ValueDictionary>()) {
     const auto &dic_v = value->cast<ValueDictionaryPtr>()->value();
     for (const auto &v : dic_v) {
-      SetValueGradInfo(v.second, top_cell, grad_type);
+      (void)SetValueGradInfo(v.second, top_cell, grad_type);
     }
   }
   return grad_type;
@@ -973,6 +995,29 @@ size_t Common::GetValueSize(const ValuePtr &v) {
     return output_size;
   }
   return 0;
+}
+
+ValuePtr Common::CreateTensorByConstantValue(const ValuePtr &value) {
+  MS_EXCEPTION_IF_NULL(value);
+  MS_EXCEPTION_IF_NULL(value);
+  auto type = value->type();
+  if (PyNativeAlgo::Common::IsTensor(value, true) || value->isa<Number>() || value->isa<None>() ||
+      (type != nullptr && type->isa<String>())) {
+    return value;
+  }
+  tensor::TensorPtr tensor_ptr = nullptr;
+  if (value->isa<Scalar>()) {
+    tensor_ptr = ScalarToTensor(value->cast<ScalarPtr>());
+  } else if (value->isa<ValueTuple>()) {
+    tensor_ptr = opt::CreateTupleTensor(value->cast<ValueTuplePtr>());
+  } else if (value->isa<ValueList>()) {
+    tensor_ptr = opt::CreateTupleTensor(std::make_shared<ValueTuple>(value->cast<ValueListPtr>()->value()));
+  } else {
+    MS_LOG(EXCEPTION) << "The value should be a scalar or value tuple, but get type " << value->type_name()
+                      << ", value " << value->ToString();
+  }
+  MS_EXCEPTION_IF_NULL(tensor_ptr);
+  return tensor_ptr;
 }
 
 std::string PyParser::GetIdByPyObj(const py::object &obj) {
@@ -2139,7 +2184,7 @@ CallBackFn AutoGrad::CreateGraphCallBack(const FuncGraphPtr &call_graph, const s
   }
   MS_EXCEPTION_IF_NULL(resource);
   bool is_control_flow = graph_call_condition.is_control_flow_;
-  auto fn = [resource, need_compile, is_control_flow, &kNeedCompile](const VectorRef &arg_list) -> VectorRef {
+  auto fn = [resource, need_compile, is_control_flow, kNeedCompile](const VectorRef &arg_list) -> VectorRef {
     if (need_compile) {
       MS_LOG(DEBUG) << "Start emit action for graph " << resource->func_graph()->ToString();
       auto manager = resource->manager();

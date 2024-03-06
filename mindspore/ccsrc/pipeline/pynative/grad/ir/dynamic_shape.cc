@@ -497,7 +497,7 @@ void TopCellUnknownShapeDetect::TryChangeTopCellToUnknownShape(const std::string
       }
       // If not match before, compare shape and change current top cell do unknown shape
       if (SetTopCellUnknownShape(grad_executor->top_cell(), it->second, arg_base_shape_vec)) {
-        top_cell_list.erase(it);
+        (void)top_cell_list.erase(it);
         return;
       }
     } else {
@@ -507,7 +507,7 @@ void TopCellUnknownShapeDetect::TryChangeTopCellToUnknownShape(const std::string
         const auto &input_args_info = grad_executor->top_cell()->input_args_info();
         UpdateUnknownShapeAbsCache(input_args_info->input_arg_id_vec, input_args_info->input_arg_value_vec,
                                    item->second);
-        obj_id_args_info_by_set_inputs_.erase(item);
+        (void)obj_id_args_info_by_set_inputs_.erase(item);
         return;
       }
       // C1.set_inputs, run C1(x); C2 is top cell, and run C2(x).
@@ -527,7 +527,7 @@ void TopCellUnknownShapeDetect::TryChangeTopCellToUnknownShape(const std::string
     if (item != obj_id_args_info_by_set_inputs_.end()) {
       MS_LOG(DEBUG) << "Get jit set inputs";
       ChangeTopCellToUnknownShape(grad_executor->top_cell(), arg_base_shape_vec);
-      obj_id_args_info_by_set_inputs_.erase(item);
+      (void)obj_id_args_info_by_set_inputs_.erase(item);
     }
   }
 }
@@ -590,13 +590,13 @@ void TopCellUnknownShapeDetect::UpdateArgsAbsToUnknownShapeAbs(const py::object 
   // C1.set_inputs, run C1(x); C2 is top cell, and run C2(x).
   if (top_cell_has_not_been_create) {
     // Has not create top cell yet
-    obj_id_args_info_by_set_inputs_.erase(it);
+    (void)obj_id_args_info_by_set_inputs_.erase(it);
     return;
   }
 
   // C1 is top cell, run C1(x); C2 set_inputs, and run C2(x).
   UpdatePossibleTopCellToUnknownShape(grad_executor->top_cell(), args_id_v.first, it->second);
-  obj_id_args_info_by_set_inputs_.erase(it);
+  (void)obj_id_args_info_by_set_inputs_.erase(it);
 }
 
 void TopCellUnknownShapeDetect::UpdatePossibleTopCellToUnknownShape(const TopCellInfoPtr &cur_top_cell,
@@ -683,7 +683,7 @@ bool TopCellUnknownShapeDetect::SetTopCellUnknownShape(const TopCellInfoPtr &cur
       auto has_unknown = GetUnknownShape(cur_shape->cast<abstract::ShapePtr>()->shape(),
                                          pre_top_cell_shape->cast<abstract::ShapePtr>()->shape(), &new_shape);
       if (has_unknown) {
-        args_unknown_shape.emplace_back(std::make_shared<abstract::Shape>(new_shape));
+        (void)args_unknown_shape.emplace_back(std::make_shared<abstract::Shape>(new_shape));
       }
     } else if (cur_shape->isa<abstract::SequenceShape>() && pre_top_cell_shape->isa<abstract::SequenceShape>()) {
       // Input arg is list or tuple
@@ -703,11 +703,11 @@ bool TopCellUnknownShapeDetect::SetTopCellUnknownShape(const TopCellInfoPtr &cur
         ShapeVector new_shape;
         auto has_unknown = GetUnknownShape(cur_shape_elem->shape(), pre_top_cell_shape_elem->shape(), &new_shape);
         if (has_unknown) {
-          shape_ptr_list.emplace_back(std::make_shared<abstract::Shape>(new_shape));
+          (void)shape_ptr_list.emplace_back(std::make_shared<abstract::Shape>(new_shape));
         }
       }
       if (shape_ptr_list.size() == cur_shape_size) {
-        args_unknown_shape.emplace_back(std::make_shared<abstract::TupleShape>(shape_ptr_list));
+        (void)args_unknown_shape.emplace_back(std::make_shared<abstract::TupleShape>(shape_ptr_list));
       }
     } else {
       MS_LOG(DEBUG) << "The " << i << "th args shape type is not the same, cur is " << cur_shape->ToString()

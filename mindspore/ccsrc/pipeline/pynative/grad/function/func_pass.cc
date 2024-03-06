@@ -28,29 +28,6 @@ namespace mindspore {
 namespace pynative {
 namespace bprop_pass {
 namespace {
-ValuePtr CreateTensorByConstantValue(const ValuePtr &value) {
-  MS_EXCEPTION_IF_NULL(value);
-  MS_EXCEPTION_IF_NULL(value);
-  auto type = value->type();
-  if (PyNativeAlgo::Common::IsTensor(value, true) || value->isa<Number>() || value->isa<None>() ||
-      (type != nullptr && type->isa<String>())) {
-    return value;
-  }
-  tensor::TensorPtr tensor_ptr = nullptr;
-  if (value->isa<Scalar>()) {
-    tensor_ptr = ScalarToTensor(value->cast<ScalarPtr>());
-  } else if (value->isa<ValueTuple>()) {
-    tensor_ptr = opt::CreateTupleTensor(value->cast<ValueTuplePtr>());
-  } else if (value->isa<ValueList>()) {
-    tensor_ptr = opt::CreateTupleTensor(std::make_shared<ValueTuple>(value->cast<ValueListPtr>()->value()));
-  } else {
-    MS_LOG(EXCEPTION) << "The value should be a scalar or value tuple, but get type " << value->type_name()
-                      << ", value " << value->ToString();
-  }
-  MS_EXCEPTION_IF_NULL(tensor_ptr);
-  return tensor_ptr;
-}
-
 NodePtrList ChangeInputToAttr(const PrimitivePtr &prim, const NodePtrList &inputs, const ValuePtr &input_names,
                               const mindspore::HashSet<size_t> &input_to_attr) {
   MS_EXCEPTION_IF_NULL(prim);
@@ -79,7 +56,7 @@ NodePtrList ChangeInputToAttr(const PrimitivePtr &prim, const NodePtrList &input
     }
   }
   if (convert_size > 0) {
-    prim->AddAttr(kAttrConvertAttrNode, MakeValue(convert_size));
+    (void)prim->AddAttr(kAttrConvertAttrNode, MakeValue(convert_size));
   }
   return new_inputs;
 }
@@ -110,8 +87,8 @@ class SparseSoftmaxCrossEntropyWithLogitsUnifyMindIR {
       kReshapeOpName, {{kAttrInputNames, MakeValue(input_names)}, {kAttrOutputNames, MakeValue(output_names)}});
     constexpr auto kShapeFromTensor = "shape_from_tensor";
     prim->set_attr(kShapeFromTensor, MakeValue(true));
-    auto shape_node =
-      func_builder_->NewFuncNode(CreateTensorByConstantValue(MakeValue(shape)), nullptr, InputType::kConstant);
+    auto shape_node = func_builder_->NewFuncNode(PyNativeAlgo::Common::CreateTensorByConstantValue(MakeValue(shape)),
+                                                 nullptr, InputType::kConstant);
     shape_node->set_abstract(shape_node->Value()->ToAbstract());
     return func_builder_->EmitOp(prim, {input_node, shape_node});
   }
