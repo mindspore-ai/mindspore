@@ -1,0 +1,15 @@
+optimizer:
+  type: momentum
+  weight_decay: 0.00005
+  momentum: 0.9
+  nesterov: False
+  filter_bias_and_bn: True # group param strategy
+
+lr:
+  warmup_step: 500
+  warmup_ratio: 0001
+  decay_rate: 0.1
+  milestones: [8, 11]
+
+clip_grads: False
+epochs: 12
