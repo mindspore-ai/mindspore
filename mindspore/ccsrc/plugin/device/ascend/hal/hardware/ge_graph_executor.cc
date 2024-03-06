@@ -1003,10 +1003,12 @@ void GeGraphExecutor::AddRefCorrespondPairs(const KernelGraphPtr &graph,
   std::vector<common::KernelWithIndex> graph_outputs = {};
 
   for (auto &node_with_index : graph_outputs_all) {
-    if (common::AnfAlgo::IsNoOuputNode(node_with_index.first)) {
-      MS_LOG(INFO) << "Output node: " << node_with_index.first->fullname_with_scope() << " is a no output node, skip.";
+    if (common::AnfAlgo::IsNoOuputNode(node_with_index.first) || HasAbstractMonad(node_with_index.first)) {
+      MS_LOG(INFO) << "Output node: " << node_with_index.first->fullname_with_scope()
+                   << " is a no output node or monad node, skip.";
       continue;
     }
+
     graph_outputs.emplace_back(node_with_index);
   }
 
