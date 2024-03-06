@@ -10056,7 +10056,7 @@ class FlashAttentionScore(Primitive):
     H1 -- Hidden size of query, which equals to N1 * D
     H2 -- Hidden size of key and value, which equals to N2 * D
     Args:
-        head_num (int): The head num of query.
+        head_num (int): The head num of query. Default: 1.
         keep_prob (float): The keep probability of dropout. Default: 1.0.
         scale_value (float): The scale factor of score. Default: 1.0.
         pre_tokens (int): Parameter for sparse computation, represents how many tokens are counted forward.
@@ -10119,7 +10119,7 @@ class FlashAttentionScore(Primitive):
     """
 
     @prim_attr_register
-    def __init__(self, head_num, keep_prob=1.0, scale_value=1.0, pre_tokens=2147483647, next_tokens=2147483647,
+    def __init__(self, head_num=1, keep_prob=1.0, scale_value=1.0, pre_tokens=2147483647, next_tokens=2147483647,
                  inner_precise=0, input_layout="BSH", sparse_mode=0):
         """Initialize FlashAttentionScore"""
         validator.check_value_type('head_num', head_num, [int], self.name)

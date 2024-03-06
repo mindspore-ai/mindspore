@@ -108,7 +108,6 @@ class DropoutGenMask(Primitive):
     @prim_attr_register
     def __init__(self, Seed0=0, Seed1=0):
         """Initialize DropoutGenMask."""
-        super().__init__(name="DropoutGenMask")
         self.init_prim_io_names(inputs=['shape', 'keep_prob'], outputs=['output'])
         validator.check_value_type("Seed0", Seed0, [int], self.name)
         validator.check_value_type("Seed1", Seed1, [int], self.name)
