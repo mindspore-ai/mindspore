@@ -324,6 +324,12 @@ ATTR_MAP(UniqueConsecutive) = {{"return_idx", ATTR_DESC(return_idx, AnyTraits<bo
 OUTPUT_MAP(UniqueConsecutive) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(idx)}, {2, OUTPUT_DESC(count)}};
 REG_ADPT_DESC(UniqueConsecutive, prim::kPrimUniqueConsecutive->name(), ADPT_DESC(UniqueConsecutive));
 
+// UniqueWithPad
+INPUT_MAP(UniqueWithPad) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(pad_num)}};
+ATTR_MAP(UniqueWithPad) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(UniqueWithPad) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(idx)}};
+REG_ADPT_DESC(UniqueWithPad, prim::kPrimUniqueWithPad->name(), ADPT_DESC(UniqueWithPad));
+
 // UpperBound
 INPUT_MAP(UpperBound) = {{1, INPUT_DESC(sorted_x)}, {2, INPUT_DESC(values)}};
 ATTR_MAP(UpperBound) = EMPTY_ATTR_MAP;
