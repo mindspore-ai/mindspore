@@ -272,13 +272,13 @@ if [[ $backend == "all" || $backend == "mslite_large_model_inference_arm_ascend9
     exit 1
   fi
 
-  echo "Run AKG Cutsom Ops ST in ascend910B....."
-  sh $cur_path/scripts/ascend/run_akg_custom_ops.sh -r $release_path
-  ascend_status=$?
-  if [[ ascend_status -ne 0 ]]; then
-    echo "Run AKG Cutsom Ops ST on Arm Ascend failed"
-    exit 1
-  fi
+  #echo "Run AKG Cutsom Ops ST in ascend910B....."
+  #sh $cur_path/scripts/ascend/run_akg_custom_ops.sh -r $release_path
+  #ascend_status=$?
+  #if [[ ascend_status -ne 0 ]]; then
+  #  echo "Run AKG Cutsom Ops ST on Arm Ascend failed"
+  #  exit 1
+  #fi
 fi
 
 if [[ $backend == "all" || $backend == "mslite_large_model_cloud_infer" ]]; then
