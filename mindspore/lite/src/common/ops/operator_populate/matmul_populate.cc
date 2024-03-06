@@ -16,7 +16,7 @@
 #include "src/common/ops/operator_populate/operator_populate_register.h"
 #include "src/common/ops/operator_populate/utils.h"
 #include "nnacl/matmul_parameter.h"
-#include "ops/mat_mul.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/fusion/mat_mul_fusion.h"
 #include "ops/op_name.h"
 using mindspore::ops::kActivationType;

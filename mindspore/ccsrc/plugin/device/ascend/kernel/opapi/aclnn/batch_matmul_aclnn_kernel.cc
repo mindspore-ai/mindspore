@@ -23,13 +23,9 @@ namespace mindspore {
 namespace kernel {
 void BMMAclnnKernelMod::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                          const std::vector<KernelTensor *> &outputs) {
-  const auto &attr_list = primitive()->attrs();
-  bool trans_a = false;
-  bool trans_b = false;
-  if (attr_list.at("transpose_a") && attr_list.at("transpose_b")) {
-    trans_a = GetValue<bool>(attr_list.at("transpose_a"));
-    trans_b = GetValue<bool>(attr_list.at("transpose_b"));
-  }
+  bool trans_a = inputs[kIndex2]->GetValueWithCheck<bool>();
+  bool trans_b = inputs[kIndex3]->GetValueWithCheck<bool>();
+
   input_a_ = std::pair<KernelTensor *, bool>(inputs[kIndex0], trans_a);
   input_b_ = std::pair<KernelTensor *, bool>(inputs[kIndex1], trans_b);
   GetWorkspaceForResize(input_a_, input_b_, outputs[kIndex0], OpApiUtil::GetCubeMathType());
@@ -45,6 +41,21 @@ bool BMMAclnnKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const 
   RunOp(stream_ptr, workspace);
   return true;
 }
+void BMMExtAclnnKernelMod::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
+                                            const std::vector<KernelTensor *> &outputs) {
+  GetWorkspaceForResize(inputs[kIndex0], inputs[kIndex1], outputs[kIndex0], OpApiUtil::GetCubeMathType());
+}
+
+bool BMMExtAclnnKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
+                                  const std::vector<KernelTensor *> &workspace,
+                                  const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
+  MS_EXCEPTION_IF_NULL(stream_ptr);
+  ParseGenExecutor(GEN_EXECUTOR_BOOST(op_type_, hash_id_, inputs[kIndex0], inputs[kIndex1], outputs[kIndex0],
+                                      OpApiUtil::GetCubeMathType()));
+  RunOp(stream_ptr, workspace);
+  return true;
+}
+MS_ACLNN_KERNEL_FACTORY_REG(BatchMatMulExt, BMMExtAclnnKernelMod);
 MS_ACLNN_KERNEL_FACTORY_REG(BatchMatMul, BMMAclnnKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

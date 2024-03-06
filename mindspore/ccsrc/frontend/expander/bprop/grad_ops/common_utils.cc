@@ -286,6 +286,20 @@ NodePtr StaticBinopGradCommon(BpropBuilder *ib, const NodePtr &dx, const ShapeAr
   return reduce_dx;
 }
 
+NodePtr MatMulExtBroadCastGradPart(BpropBuilder *ib, const NodePtr &dx, const ShapeArray &shape,
+                                   const ShapeArray &broadcast_shape, size_t ignore_offset, size_t index) {
+  NodePtr reduce_dx = dx;
+  std::vector<std::vector<int64_t>> bc_axis =
+    BroadcastGradientArgsInferValue(broadcast_shape[0], broadcast_shape[1], ignore_offset);
+  if (!bc_axis[index].empty()) {
+    reduce_dx = ib->ReduceSum(reduce_dx, bc_axis[index], ib->GetRank(reduce_dx) == shape[index].size());
+  }
+  if (ib->GetRank(reduce_dx) != shape[index].size()) {
+    reduce_dx = ib->Reshape(reduce_dx, shape[index]);
+  }
+  return reduce_dx;
+}
+
 NodePtrList BinopGradCommon(BpropBuilder *ib, const NodePtr &x, const NodePtr &y, const NodePtr &dx, const NodePtr &dy,
                             size_t shift) {
   // Common grad definition for binary operations with shift.
@@ -316,6 +330,24 @@ NodePtrList BinopGradCommon(BpropBuilder *ib, const NodePtr &x, const NodePtr &y
   }
   if (is_x_shape_dynamic || is_y_shape_dynamic) {
     return DynBinopGradCommon(ib, x, y, dx, dy, shift);
+  }
+  return reduce;
+}
+
+NodePtrList MatMulExtBroadCastGrad(BpropBuilder *ib, const NodePtr &x, const NodePtr &y, const NodePtr &dx,
+                                   const NodePtr &dy, size_t ignore_offset) {
+  NodePtrList inputs{x, y};
+  ShapeArray shape{ib->GetShape(inputs[kIndex0]), ib->GetShape(inputs[kIndex1])};
+  NodePtrList reduce = {dx, dy};
+  ShapeArray broadcast_shape(kDim2);
+  broadcast_shape[0] = shape[0];
+  broadcast_shape[1] = shape[1];
+
+  if (dx != nullptr) {
+    reduce[kIndex0] = MatMulExtBroadCastGradPart(ib, reduce[kIndex0], shape, broadcast_shape, ignore_offset, kIndex0);
+  }
+  if (dy != nullptr) {
+    reduce[kIndex1] = MatMulExtBroadCastGradPart(ib, reduce[kIndex1], shape, broadcast_shape, ignore_offset, kIndex1);
   }
   return reduce;
 }
@@ -637,9 +669,10 @@ NodePtr MatrixTranspose(BpropBuilder *ib, const NodePtr &x) {
     auto dim = ib->Emit("Rank", {x});
     auto perm = ib->Range(dim);
     auto stridedslice_helper = [&perm, &ib](int64_t begin, int64_t end, int64_t step, int64_t end_mask = 0) {
-      return ib->StridedSlice(perm, ib->Value<ShapeVector>(ShapeVector{begin}),
-                              ib->Value<ShapeVector>(ShapeVector{end}), ib->Value<ShapeVector>(ShapeVector{step}), 0,
-                              end_mask, 0, 0, 0);
+      return ib->Emit("StridedSlice",
+                      {perm, ib->Value<ShapeVector>(ShapeVector{begin}), ib->Value<ShapeVector>(ShapeVector{end}),
+                       ib->Value<ShapeVector>(ShapeVector{step}), ib->Value<int64_t>(0LL), ib->Value<int64_t>(end_mask),
+                       ib->Value<int64_t>(0LL), ib->Value<int64_t>(0LL), ib->Value<int64_t>(0LL)});
     };
     auto part_1 = stridedslice_helper(0, -2, 1);
     auto part_2 = stridedslice_helper(-1, 0, 1, 1);
@@ -650,6 +683,35 @@ NodePtr MatrixTranspose(BpropBuilder *ib, const NodePtr &x) {
   auto dim = shape.size();
   if (dim < kDim2) {
     MS_LOG_EXCEPTION << "For MatrixTranspose, input's ndim " << dim << " is less or equal to 2, which is invalid";
+  }
+  std::vector<int64_t> perm(dim);
+  for (size_t i = 0; i < dim; i++) {
+    perm[i] = static_cast<int64_t>(i);
+  }
+  std::swap(perm[dim - kIndex2], perm[dim - kIndex1]);
+  return ib->Transpose(x, perm);
+}
+
+NodePtr MatrixTransposeExt(BpropBuilder *ib, const NodePtr &x) {
+  auto shape = ib->GetShape(x);
+  if (IsDynamicRank(shape)) {
+    auto dim = ib->Emit("Rank", {x});
+    auto perm = ib->Range(dim);
+    auto stridedslice_helper = [&perm, &ib](int64_t begin, int64_t end, int64_t step, int64_t end_mask = 0) {
+      return ib->Emit("StridedSlice",
+                      {perm, ib->Value<ShapeVector>(ShapeVector{begin}), ib->Value<ShapeVector>(ShapeVector{end}),
+                       ib->Value<ShapeVector>(ShapeVector{step}), ib->Value<int64_t>(0LL), ib->Value<int64_t>(end_mask),
+                       ib->Value<int64_t>(0LL), ib->Value<int64_t>(0LL), ib->Value<int64_t>(0LL)});
+    };
+    auto part_1 = stridedslice_helper(0, -2, 1);
+    auto part_2 = stridedslice_helper(-1, 0, 1, 1);
+    auto part_3 = stridedslice_helper(-2, -1, 1);
+    perm = ib->Concat({part_1, part_2, part_3}, -1);
+    return ib->Transpose(x, ib->TensorToTuple(perm));
+  }
+  auto dim = shape.size();
+  if (dim < kDim2) {
+    return x;
   }
   std::vector<int64_t> perm(dim);
   for (size_t i = 0; i < dim; i++) {

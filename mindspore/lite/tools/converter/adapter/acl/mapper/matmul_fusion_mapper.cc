@@ -24,9 +24,9 @@
 #include "tools/converter/adapter/acl/common/utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/converter/quantizer/quantize_util.h"
-#include "ops/mat_mul.h"
-#include "ops/batch_matmul.h"
+#include "tools/common/tensor_util.h"
 #include "ops/op_name.h"
+#include "ir/named.h"
 #include "ops/op_utils.h"
 #include "ops/auto_generate/gen_lite_ops.h"
 #include "nnacl/op_base.h"
@@ -64,17 +64,13 @@ void MatMulFusionMapper::SetMatMulTransposeAttr(const PrimitivePtr &src_prim, co
   auto transpose_a = src_prim->GetAttr(mindspore::ops::kTransposeA);
   auto transpose_b = src_prim->GetAttr(mindspore::ops::kTransposeB);
   if (transpose_a != nullptr) {
-    dst_prim->AddAttr("transpose_x1", transpose_a);
     dst_prim->AddAttr("transpose_a", transpose_a);
   } else {
-    dst_prim->AddAttr("transpose_x1", MakeValue(false));
     dst_prim->AddAttr("transpose_a", MakeValue(false));
   }
   if (transpose_b != nullptr) {
-    dst_prim->AddAttr("transpose_x2", transpose_b);
     dst_prim->AddAttr("transpose_b", transpose_b);
   } else {
-    dst_prim->AddAttr("transpose_x2", MakeValue(false));
     dst_prim->AddAttr("transpose_b", MakeValue(false));
   }
 }

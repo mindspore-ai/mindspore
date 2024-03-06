@@ -30,6 +30,7 @@ file(GLOB_RECURSE MS_OPTIMIZER_910B RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "./ir_fission/bn_split.cc"
         "./ir_fission/bn_grad_split.cc"
         "./ir_fission/seed_adapter.cc"
+        "./ir_fission/matmul_add_bias.cc"
         "./ir_fission/tensor_scatter_fission.cc"
         "./ir_fission/adam_weight_decay_fission.cc"
         "./ir_fission/batch_norm_grad_infer_fission.cc"

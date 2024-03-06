@@ -1,0 +1,64 @@
+matmul_ext:
+    description: |
+
+        Extends the functionality of matrix multiplication to support multi-dimensional inputs, aligning with `torch.matmul`.
+
+        This function supports:
+        - Vector * Vector
+        - Vector * Matrix
+        - Matrix * Vector
+        - Matrix * Matrix
+        - Tensor * Tensor
+
+        For inputs with more than 2 dimensions, the function treats it as a stack of matrices residing in the last two dimensions and broadcasts the other dimensions following standard broadcasting rules.
+
+        .. math::
+
+        (Output)_{i j}=\sum_{k=1}^{p} input_{i k} other_{k j}
+
+        The exact operation performed depends on the dimensions of the input tensors:
+
+        - If both tensors are 1-dimensional, the dot product is performed.
+        - If both inputs are 2-dimensional, a matrix-matrix product is performed.
+        - If one input is 1-dimensional and the other is 2-dimensional, a matrix-vector product is performed, and a 1-dimensional tensor is returned.
+        - For higher-dimensional inputs, the function supports broadcasting, performing the operation on corresponding 2-dimensional matrices from the input tensors.
+
+        Args:
+            - **input** (Tensor) - The first tensor to be multiplied.
+            - **other** (Tensor) - The second tensor to be multiplied.
+    
+        Outputs:
+            Tensor, the output tensor's shape depends on the input shapes following the rules of matrix multiplication and broadcasting.
+    
+        Raises:
+            ValueError: If the dimensions of the inputs are less than 1.
+            ValueError: If the inner dimensions of the matrices don't match for multiplication.
+            ValueError: If the broadcasting rules are not met for inputs.
+    
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+    
+        Examples:
+            ```python
+            import mindspore
+            import numpy as np
+            from mindspore import Tensor
+            from mindspore.ops import matmul
+            # Vector x Vector
+            a = Tensor(np.array([1, 2]), mindspore.float32)
+            b = Tensor(np.array([3, 4]), mindspore.float32)
+            output = matmul(a, b)
+            print(output)  # Expected output: 11
+    
+            # Matrix x Matrix
+            a = Tensor(np.ones(shape=[2, 3]), mindspore.float32)
+            b = Tensor(np.ones(shape=[3, 2]), mindspore.float32)
+            output = matmul(a, b)
+            print(output)  # Expected output: [[3., 3.], [3., 3.]]
+    
+            # Broadcasting higher dimensional inputs
+            a = Tensor(np.ones(shape=[4, 5, 2, 3]), mindspore.float32)
+            b = Tensor(np.ones(shape=[4, 1, 3, 2]), mindspore.float32)
+            output = matmul(a, b)
+            print(output)  # Expected output: tensor of shape [4, 5, 2, 2] with all elements being 3
+            ```

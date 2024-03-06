@@ -117,7 +117,7 @@ def test_hal_event_sync():
     ev1.record(stream)
     a = Tensor(np.random.randn(5000, 5000), ms.float32)
     with ms.hal.StreamCtx(stream):
-        ops.matmul(a, a)
+        ops.bmm(a, a)
         stream.record_event(ev2)
         assert ev2.query() is False
         assert stream.query() is False

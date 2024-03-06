@@ -20,7 +20,7 @@ Math Operators with better performance
 """
 
 from mindspore.ops import auto_generate as P
-from mindspore.ops.auto_generate.gen_ops_def import add_ext as add, sub_ext as sub
+from mindspore.ops.auto_generate.gen_ops_def import add_ext as add, sub_ext as sub, batch_mat_mul_ext as bmm
 
 
 # define Primitive global variables
@@ -73,4 +73,4 @@ def baddbmm(input, batch1, batch2, beta=1, alpha=1):
     return P.baddbmm(input, batch1, batch2, beta, alpha)
 
 
-__all__ = ['baddbmm', 'add', 'sub']
+__all__ = ['baddbmm', 'add', 'sub', 'bmm']

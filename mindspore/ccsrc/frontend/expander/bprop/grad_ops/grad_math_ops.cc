@@ -208,10 +208,14 @@ class ReduceStdShapeCalc : public ShapeCalcFunctor {
  public:
   // cppcheck-suppress unknownMacro
   DECLARE_SHAPE_CALC("ShapeCalc_ReduceStd", ReduceStdShapeCalc)
+
   explicit ReduceStdShapeCalc(const std::vector<int64_t> &axis)
       : ShapeCalcFunctor("ShapeCalc_ReduceStd"), axis_(axis) {}
+
   ValuePtr ToValue() const override { return MakeValue(axis_); }
+
   void FromValue(const ValuePtr &value) override { axis_ = GetValue<std::vector<int64_t>>(value); }
+
   ShapeArray Calc(const ShapeArray &inputs) const override {
     auto new_axis = axis_;
     auto x_shape = inputs.at(0);
@@ -245,6 +249,7 @@ class ReduceStdShapeCalc : public ShapeCalcFunctor {
     }
     return {reshape, {num - 1}, {num}};
   }
+
   std::vector<int64_t> Infer(const ShapeArray &inputs, const HashSet<size_t> &) const override {
     auto shape_x = inputs.at(0);
     auto rank = IsDynamicRank(shape_x) ? -1 : SizeToLong(shape_x.size());
@@ -254,6 +259,7 @@ class ReduceStdShapeCalc : public ShapeCalcFunctor {
  protected:
   std::vector<int64_t> axis_;
 };
+
 REG_FUNCTOR("ShapeCalc_ReduceStd", ReduceStdShapeCalc);
 
 NodePtrList FminFmaxGrad(BpropBuilder *ib, bool if_fmin) {
@@ -407,12 +413,15 @@ class DiagonalShapeCalc : public ShapeCalcFunctor {
  public:
   // cppcheck-suppress unknownMacro
   DECLARE_SHAPE_CALC("ShapeCalc_Diagonal", DiagonalShapeCalc)
+
   explicit DiagonalShapeCalc(int64_t dim1, int64_t dim2)
       : ShapeCalcFunctor("ShapeCalc_Diagonal"), dim1_(dim1), dim2_(dim2) {}
+
   ValuePtr ToValue() const override {
     auto values = {MakeValue(dim1_), MakeValue(dim2_)};
     return std::make_shared<ValueTuple>(values);
   }
+
   void FromValue(const ValuePtr &value) override {
     auto values = value->cast<ValueTuplePtr>();
     MS_EXCEPTION_IF_NULL(values);
@@ -422,6 +431,7 @@ class DiagonalShapeCalc : public ShapeCalcFunctor {
     dim1_ = GetValue<int64_t>(values->value()[0]);
     dim2_ = GetValue<int64_t>(values->value()[1]);
   }
+
   ShapeArray Calc(const ShapeArray &inputs) const override {
     auto x_shape = inputs.at(i0);
     auto out_shape = inputs.at(i1);
@@ -430,6 +440,7 @@ class DiagonalShapeCalc : public ShapeCalcFunctor {
     dx_trans_shape.push_back(x_shape[static_cast<size_t>(dim2_)]);
     return {dx_trans_shape};
   }
+
   std::vector<int64_t> Infer(const ShapeArray &inputs, const HashSet<size_t> &) const override {
     auto out_shape = inputs.at(1);
     auto rank = IsDynamicRank(out_shape) ? -1 : SizeToLong(out_shape.size() + 1);
@@ -440,17 +451,27 @@ class DiagonalShapeCalc : public ShapeCalcFunctor {
   int64_t dim1_;
   int64_t dim2_;
 };
+
 REG_FUNCTOR("ShapeCalc_Diagonal", DiagonalShapeCalc);
 
 REG_BPROP_BUILDERS_BEGIN(GradMathOps)
-REG_BPROP_BUILDER("MatMul").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
-  auto ta = ib->GetAttr<bool>("transpose_a");
-  auto tb = ib->GetAttr<bool>("transpose_b");
+REG_BPROP_BUILDER("MatMul").SetUnusedInputs({i4}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto w = ib->GetInput(kIndex1);
+  auto trans_a = ib->GetInput(kIndex2);
+  auto trans_b = ib->GetInput(kIndex3);
+  auto ta_opt = mindspore::ops::GetScalarValue<bool>(trans_a->BuildValue());
+  auto tb_opt = mindspore::ops::GetScalarValue<bool>(trans_b->BuildValue());
+
+  if (!ta_opt.has_value() || !tb_opt.has_value()) {
+    MS_LOG_EXCEPTION << "For MatMul, got invalid 'transpose_a' or 'transpose_b'.";
+  }
+  auto ta = ta_opt.value();
+  auto tb = tb_opt.value();
+
   auto x_type = ib->GetDtype(x);
   auto w_type = ib->GetDtype(w);
-  auto dout = ib->GetInput(kIndex3);
+  auto dout = ib->GetInput(kIndex5);
   NodePtr dx;
   NodePtr dw;
 
@@ -478,7 +499,7 @@ REG_BPROP_BUILDER("MatMul").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
     } else {
       dw = ib->OutZeros(w);
     }
-    return {dx, dw};
+    return {dx, dw, ib->OutZeros(trans_a), ib->OutZeros(trans_b)};
   }
 
   if ((*x_type) == (*kComplex64) || (*x_type) == (*kComplex128) || (*w_type) == (*kComplex64) ||
@@ -504,7 +525,133 @@ REG_BPROP_BUILDER("MatMul").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   } else {
     dw = ib->OutZeros(w);
   }
-  return {dx, dw};
+  return {dx, dw, ib->OutZeros(trans_a), ib->OutZeros(trans_b)};
+});
+
+DEF_PURE_SHAPE_CALC(g_matmul_ext_bprop_shapecalc)
+  .SetCalc([](const ShapeArray &inputs) -> ShapeArray {
+    auto &input_shape = inputs.at(kIndex0);
+    auto &weight_shape = inputs.at(kIndex1);
+    auto &output_grad_shape = inputs.at(kIndex2);
+    ShapeVector modified_input_shape = input_shape;
+    ShapeVector modified_weight_shape = weight_shape;
+    ShapeVector modified_output_grad_shape = output_grad_shape;
+    if (modified_weight_shape.size() == 1) {
+      modified_weight_shape.push_back(1);
+      modified_output_grad_shape.push_back(1);
+    }
+    if (modified_input_shape.size() == 1) {
+      modified_input_shape.insert(modified_input_shape.begin(), 1);
+      modified_output_grad_shape.insert(modified_output_grad_shape.end() - 1, 1);
+    }
+    ShapeVector input_permutation;
+    ShapeVector weight_permutation;
+    for (size_t i = 0; i < modified_input_shape.size() - 2; i++) {
+      input_permutation.push_back(SizeToLong(i));
+    }
+    input_permutation.push_back(SizeToLong(modified_input_shape.size()) - 1);
+    input_permutation.push_back(SizeToLong(modified_input_shape.size()) - 2);
+    for (size_t i = 0; i < modified_weight_shape.size() - 2; i++) {
+      weight_permutation.push_back(SizeToLong(i));
+    }
+    weight_permutation.push_back(SizeToLong(modified_weight_shape.size()) - 1);
+    weight_permutation.push_back(SizeToLong(modified_weight_shape.size()) - 2);
+    return {modified_input_shape, modified_weight_shape, modified_output_grad_shape, input_permutation,
+            weight_permutation};
+  })
+  .SetInfer([](const ShapeArray &inputs, const HashSet<size_t> &) -> std::vector<int64_t> {
+    auto input_rank = -1LL;
+    auto weight_rank = -1LL;
+    auto output_grad_rank = -1LL;
+    auto input_permutation_rank = -1LL;
+    auto weight_permutation_rank = -1LL;
+
+    if (!IsDynamicRank(inputs[0])) {
+      auto &input_shape = inputs.at(kIndex0);
+      auto &weight_shape = inputs.at(kIndex1);
+      auto &output_grad_shape = inputs.at(kIndex2);
+      input_rank = SizeToLong(input_shape.size());
+      weight_rank = SizeToLong(weight_shape.size());
+      output_grad_rank = SizeToLong(output_grad_shape.size());
+      if (weight_rank == 1) {
+        weight_rank++;
+        output_grad_rank++;
+      }
+      if (input_rank == 1) {
+        input_rank++;
+        output_grad_rank++;
+      }
+      input_permutation_rank = input_rank;
+      weight_permutation_rank = weight_rank;
+    }
+    return {input_rank, weight_rank, output_grad_rank, input_permutation_rank, weight_permutation_rank};
+  });
+
+REG_BPROP_BUILDER("MatMulExt").SetUnusedInputs({}).SetBody(BODYFUNC(ib) {
+  auto x_origin = ib->GetInput(kIndex0);
+  auto w_origin = ib->GetInput(kIndex1);
+  auto y_origin = ib->GetInput(kIndex2);
+  auto dout_origin = ib->GetInput(kIndex3);
+
+  auto x = x_origin;
+  auto w = w_origin;
+  auto dout = dout_origin;
+  bool is_dynamic_rank = IsDynamicRank(ib->GetShape(w_origin)) || IsDynamicRank(ib->GetShape(x_origin));
+  bool is_dynamic_shape = IsDynamicShape(ib->GetShape(w_origin)) || IsDynamicShape(ib->GetShape(x_origin));
+  if (is_dynamic_rank || is_dynamic_shape) {
+    auto shapes = ib->ShapeCalc(g_matmul_ext_bprop_shapecalc, {x, w, dout});
+    x = ib->Reshape(x, shapes[0]);
+    w = ib->Reshape(w, shapes[1]);
+    dout = ib->Reshape(dout, shapes[2]);
+    x = ib->Transpose(x, shapes[3]);
+    w = ib->Transpose(w, shapes[4]);
+
+    NodePtr dx;
+    NodePtr dw;
+
+    dx = ib->MatMulExt(dout, w);
+    dw = ib->MatMulExt(x, dout);
+    if (is_dynamic_shape && (x_origin->shape().size() == 1 || w_origin->shape().size() == 1)) {
+      return MatMulExtBroadCastGrad(ib, x_origin, w_origin, dx, dw, 2);
+    } else {
+      return BinopGradCommon(ib, x_origin, w_origin, dx, dw, 2);
+    }
+  } else {
+    if (ib->GetRank(w) == 1) {
+      w = ib->ExpandDims(w, -1);
+      dout = ib->ExpandDims(dout, -1);
+    }
+    if (ib->GetRank(x) == 1) {
+      x = ib->ExpandDims(x, 0);
+      dout = ib->ExpandDims(dout, -2);
+    }
+    w = MatrixTransposeExt(ib, w);
+    x = MatrixTransposeExt(ib, x);
+  }
+  auto x_type = ib->GetDtype(x);
+  auto w_type = ib->GetDtype(w);
+
+  NodePtr dx;
+  NodePtr dw;
+
+  if (((*x_type) == (*kComplex64) && (*w_type) == (*kComplex64)) ||
+      ((*x_type) == (*kComplex128) && (*w_type) == (*kComplex128))) {
+    // complex need conjoint transform
+    dx = ib->MatMulExt((ib->Emit("Conj", {dout})), w);
+    dx = ib->Emit("Conj", {dx});
+
+    dw = ib->MatMulExt(ib->Emit("Conj", {x}), dout);
+    return MatMulExtBroadCastGrad(ib, x_origin, w_origin, dx, dw, 2);
+  }
+
+  if ((*x_type) == (*kComplex64) || (*x_type) == (*kComplex128) || (*w_type) == (*kComplex64) ||
+      (*w_type) == (*kComplex128)) {
+    // only support complex64 * complex64 and complex128 * complex128, others throw exception
+    MS_EXCEPTION(TypeError) << "For 'MatMulExt', gradient not support x_type " << x_type << " * w_type " << w_type;
+  }
+  dx = ib->MatMulExt(dout, w);
+  dw = ib->MatMulExt(x, dout);
+  return MatMulExtBroadCastGrad(ib, x_origin, w_origin, dx, dw, 2);
 });
 
 REG_BPROP_BUILDER("Add").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
@@ -2399,12 +2546,20 @@ REG_BPROP_BUILDER("Einsum").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   return {dx};
 });
 
-REG_BPROP_BUILDER("BatchMatMul").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
-  auto ta = GetValue<bool>(ib->GetAttr("transpose_a"));
-  auto tb = GetValue<bool>(ib->GetAttr("transpose_b"));
+REG_BPROP_BUILDER("BatchMatMul").SetUnusedInputs({i4}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto w = ib->GetInput(kIndex1);
-  auto dout = ib->GetInput(kIndex3);
+  auto trans_a = ib->GetInput(kIndex2);
+  auto trans_b = ib->GetInput(kIndex3);
+  auto ta_opt = mindspore::ops::GetScalarValue<bool>(trans_a->BuildValue());
+  auto tb_opt = mindspore::ops::GetScalarValue<bool>(trans_b->BuildValue());
+
+  if (!ta_opt.has_value() || !tb_opt.has_value()) {
+    MS_LOG_EXCEPTION << "For BatchMatMul, got invalid 'transpose_a' or 'transpose_b'.";
+  }
+  auto ta = ta_opt.value();
+  auto tb = tb_opt.value();
+  auto dout = ib->GetInput(kIndex5);
 
   NodePtr dx = nullptr;
   if (x->need_compute_grad_out()) {
@@ -2422,7 +2577,18 @@ REG_BPROP_BUILDER("BatchMatMul").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
       dw = ib->BatchMatMul(x, dout, !ta, false);
     }
   }
-  return BinopGradCommon(ib, x, w, dx, dw, 2);
+
+  std::vector<NodePtr> ret = BinopGradCommon(ib, x, w, dx, dw, 2);
+  ret.emplace_back(ib->OutZeros(trans_a));
+  ret.emplace_back(ib->OutZeros(trans_b));
+  return ret;
+});
+
+REG_BPROP_BUILDER("BatchMatMulExt").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto w = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex3);
+  return {ib->BatchMatMul(dout, w, false, true), ib->BatchMatMul(x, dout, true, false)};
 });
 
 REG_BPROP_BUILDER("Eps").SetUnusedInputs({i0, i1, i2}).SetBody(ReturnZeros);

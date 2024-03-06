@@ -249,9 +249,9 @@ Dimensions PrepareMatMulStrategy(Graph::NodeType *node, bool transpose_a, bool t
 
 Strategies PrepareMatMul(Graph::NodeType *node, const std::shared_ptr<OperatorInfo> &op) {
   Strategies strategies;
-  auto attrs = op->attrs();
-  bool transpose_a = attrs[TRANSPOSE_A]->cast<BoolImmPtr>()->value();
-  bool transpose_b = attrs[TRANSPOSE_B]->cast<BoolImmPtr>()->value();
+  auto input_value = op->input_value();
+  bool transpose_a = input_value[2]->cast<BoolImmPtr>()->value();
+  bool transpose_b = input_value[3]->cast<BoolImmPtr>()->value();
 
   for (size_t iter_op_inputs = 0; iter_op_inputs < op->inputs_shape().size(); iter_op_inputs++) {
     Dimensions strategy = PrepareMatMulStrategy(node, transpose_a, transpose_b, iter_op_inputs);
@@ -267,9 +267,9 @@ Strategies PreparePropagateBatchMatMul(const std::shared_ptr<OperatorInfo> &op, 
   }
   // This backward propagation does NOT complete strategy on k. Could be done later
   Strategies stra;
-  auto attrs = op->attrs();
-  bool transpose_a = attrs[TRANSPOSE_A]->cast<BoolImmPtr>()->value();
-  bool transpose_b = attrs[TRANSPOSE_B]->cast<BoolImmPtr>()->value();
+  auto input_value = op->input_value();
+  bool transpose_a = input_value[2]->cast<BoolImmPtr>()->value();
+  bool transpose_b = input_value[3]->cast<BoolImmPtr>()->value();
 
   size_t first_input_size = op->inputs_shape()[0].size();
   size_t second_input_size = op->inputs_shape()[1].size();
@@ -339,9 +339,9 @@ Dimensions PrepareBatchMatMulStrategy(Graph::NodeType *node, const bool transpos
 
 Strategies PrepareBatchMatMul(Graph::NodeType *node, const std::shared_ptr<OperatorInfo> &op) {
   Strategies strategies;
-  auto attrs = op->attrs();
-  bool transpose_a = attrs[TRANSPOSE_A]->cast<BoolImmPtr>()->value();
-  bool transpose_b = attrs[TRANSPOSE_B]->cast<BoolImmPtr>()->value();
+  auto input_value = op->input_value();
+  bool transpose_a = input_value[2]->cast<BoolImmPtr>()->value();
+  bool transpose_b = input_value[3]->cast<BoolImmPtr>()->value();
 
   for (size_t iter_op_inputs = 0; iter_op_inputs < op->inputs_shape().size(); iter_op_inputs++) {
     Dimensions strategy = PrepareBatchMatMulStrategy(node, transpose_a, transpose_b, iter_op_inputs,
@@ -2055,9 +2055,9 @@ Strategies MakeMatMulStratFromParam(const std::shared_ptr<OperatorInfo> &op, Dim
   Dimensions input0_strat = op->selected_strategy()->GetInputDim()[0];
   int64_t k_cuts = 1;
 
-  auto attrs = op->attrs();
-  bool transpose_a = attrs[TRANSPOSE_A]->cast<BoolImmPtr>()->value();
-  bool transpose_b = attrs[TRANSPOSE_B]->cast<BoolImmPtr>()->value();
+  auto input_value = op->input_value();
+  bool transpose_a = input_value[2]->cast<BoolImmPtr>()->value();
+  bool transpose_b = input_value[3]->cast<BoolImmPtr>()->value();
 
   k_cuts = param_strategy[0];
   if (transpose_b) {

@@ -1061,7 +1061,6 @@ if(MSLITE_ENABLE_KERNEL_EXECUTOR)
             ${TOP_DIR}/mindspore/core/ops/custom.h
             ${TOP_DIR}/mindspore/core/ops/conv2d.h
             ${TOP_DIR}/mindspore/core/ops/conv2d_transpose.h
-            ${TOP_DIR}/mindspore/core/ops/mat_mul.h
             ${TOP_DIR}/mindspore/core/ops/max_pool.h
             ${TOP_DIR}/mindspore/core/ops/pad.h
             ${TOP_DIR}/mindspore/core/ops/topk.h

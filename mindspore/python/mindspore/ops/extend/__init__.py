@@ -36,6 +36,7 @@ from . import (
 from .array_func import gather, max, min
 from .math_func import (
     baddbmm,
+    bmm,
     add,
     sub
 )

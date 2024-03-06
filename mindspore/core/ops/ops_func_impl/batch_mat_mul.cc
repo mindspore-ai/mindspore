@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2023 Huawei Technologies Co., Ltd
+ * Copyright 2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -8,51 +8,33 @@
  * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "ASF IS" BASIS,
+ * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
 
-#include "ops/batch_matmul.h"
-
+#include "ops/ops_func_impl/batch_mat_mul.h"
 #include <algorithm>
-#include <map>
-#include <memory>
 #include <set>
+#include <map>
+#include <vector>
+#include <memory>
 #include <string>
-
-#include "abstract/abstract_value.h"
-#include "abstract/dshape.h"
-#include "abstract/ops/op_infer.h"
-#include "abstract/ops/primitive_infer_map.h"
-#include "abstract/utils.h"
-#include "base/base.h"
-#include "ir/anf.h"
-#include "ir/dtype/number.h"
-#include "ir/dtype/type.h"
-#include "ir/primitive.h"
-#include "mindapi/base/shape_vector.h"
-#include "mindapi/base/type_id.h"
-#include "mindapi/src/helper.h"
-#include "mindspore/core/ops/math_ops.h"
-#include "ops/mat_mul.h"
 #include "ops/op_name.h"
-#include "ops/primitive_c.h"
-#include "utils/check_convert_utils.h"
-#include "utils/convert_utils_base.h"
-#include "utils/log_adapter.h"
-#include "utils/ms_context.h"
 #include "utils/shape_utils.h"
+#include "abstract/dshape.h"
+#include "ir/primitive.h"
+#include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace ops {
-// batchmatmul
-namespace {
-constexpr size_t kMatSize = 2;
 
 void BatchMatMulMakeShape(ShapeVector *output, const ShapeVector xshp, const ShapeVector yshp, bool transpose_a,
-                          bool transpose_b, size_t offset) {
+                          bool transpose_b) {
+  size_t offset = kDim2;
   if (xshp.empty() || yshp.empty()) {
     return;
   }
@@ -86,8 +68,8 @@ void CheckBatchMatmulInputSize(const std::string &op_name, const std::string &in
 
 void CheckBatchMatmulInputWhetherCanBeMul(const std::string &name, const ShapeVector &x_shape,
                                           const ShapeVector &y_shape, bool transpose_a, bool transpose_b) {
-  ShapeVector x_mat_shape(x_shape.end() - SizeToLong(kMatSize), x_shape.end());
-  ShapeVector y_mat_shape(y_shape.end() - SizeToLong(kMatSize), y_shape.end());
+  ShapeVector x_mat_shape(x_shape.end() - SizeToLong(kDim2), x_shape.end());
+  ShapeVector y_mat_shape(y_shape.end() - SizeToLong(kDim2), y_shape.end());
   int64_t x_col = x_mat_shape[static_cast<size_t>(!transpose_a)];
   int64_t y_row = y_mat_shape[static_cast<size_t>(transpose_b)];
   if (std::find(x_shape.begin(), x_shape.end(), -1) == x_shape.end() &&
@@ -103,31 +85,12 @@ void CheckBatchMatmulInputWhetherCanBeMul(const std::string &name, const ShapeVe
 
 void CheckBatchMatmulInputWhetherCanBeBroadcast(const std::string &name, const ShapeVector &x_shape,
                                                 const ShapeVector &y_shape) {
-  ShapeVector x_batch(x_shape.begin(), x_shape.end() - SizeToLong(kMatSize));
-  ShapeVector y_batch(y_shape.begin(), y_shape.end() - SizeToLong(kMatSize));
+  ShapeVector x_batch(x_shape.begin(), x_shape.end() - SizeToLong(kDim2));
+  ShapeVector y_batch(y_shape.begin(), y_shape.end() - SizeToLong(kDim2));
   if (x_batch == y_batch) {
     return;
   }
 
-  // todo: delete after broadcast shape is supported on cpu/gpu
-#if !(defined(ENABLE_TEST) || defined(ENABLE_TESTCASES))
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  std::string device_target = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-  if (device_target == kGPUDevice || device_target == kCPUDevice) {
-    if (x_batch.size() != y_batch.size()) {
-      MS_EXCEPTION(ValueError) << "For " << name << ", inputs shape cannot be broadcast on CPU/GPU, with x shape "
-                               << x_shape << ", y shape " << y_shape;
-    }
-
-    for (size_t i = 0; i < x_batch.size(); ++i) {
-      if (x_batch[i] != y_batch[i]) {
-        MS_EXCEPTION(ValueError) << "For " << name << ", inputs shape cannot be broadcast on CPU/GPU, with x shape "
-                                 << x_shape << ", y shape " << y_shape;
-      }
-    }
-  }
-#endif
   size_t min_size = std::min(x_batch.size(), y_batch.size());
   for (int64_t i = 0; i < SizeToLong(min_size); ++i) {
     auto x = *(x_batch.rbegin() + i);
@@ -141,10 +104,10 @@ void CheckBatchMatmulInputWhetherCanBeBroadcast(const std::string &name, const S
   }
 }
 
-abstract::ShapePtr BatchMatmulInferShape(const PrimitivePtr &primitive,
-                                         const std::vector<AbstractBasePtr> &input_args) {
+BaseShapePtr BatchMatMulFuncImpl::InferShape(const PrimitivePtr &primitive,
+                                             const std::vector<AbstractBasePtr> &input_args) const {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto constexpr kBatchMatmulInputNum = 2;
+  auto constexpr kBatchMatmulInputNum = 4;
   (void)CheckAndConvertUtils::CheckInteger("input num", SizeToLong(input_args.size()), kEqual, kBatchMatmulInputNum,
                                            primitive->name());
   auto prim_name = primitive->name();
@@ -159,10 +122,19 @@ abstract::ShapePtr BatchMatmulInferShape(const PrimitivePtr &primitive,
                       << "', input 'y' must be a Tensor type, but got:" << input_args[1]->ToString();
   }
 
-  ValuePtr transpose_a_ptr = primitive->GetAttr("transpose_a");
-  ValuePtr transpose_b_ptr = primitive->GetAttr("transpose_b");
-  bool transpose_a = GetValue<bool>(transpose_a_ptr);
-  bool transpose_b = GetValue<bool>(transpose_b_ptr);
+  auto transpose_a_op = GetScalarValue<bool>(input_args[2]->GetValue());
+  auto transpose_b_op = GetScalarValue<bool>(input_args[3]->GetValue());
+
+  if (!transpose_a_op.has_value()) {
+    return input_args[0]->GetShape()->Clone();
+  }
+
+  if (!transpose_b_op.has_value()) {
+    return input_args[1]->GetShape()->Clone();
+  }
+
+  auto transpose_a = transpose_a_op.value();
+  auto transpose_b = transpose_b_op.value();
 
   auto x_shp = x_shape_map[kShape];
   auto y_shp = y_shape_map[kShape];
@@ -179,11 +151,11 @@ abstract::ShapePtr BatchMatmulInferShape(const PrimitivePtr &primitive,
   }
 
   ShapeVector ret_shape;
-  BatchMatMulMakeShape(&ret_shape, x_shp, y_shp, transpose_a, transpose_b, kMatSize);
+  BatchMatMulMakeShape(&ret_shape, x_shp, y_shp, transpose_a, transpose_b);
   return std::make_shared<abstract::Shape>(ret_shape);
 }
 
-TypePtr BatchMatmulInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr BatchMatMulFuncImpl::InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const {
   MS_EXCEPTION_IF_NULL(prim);
   const std::set<TypePtr> valid_types = {kInt8,   kInt16,   kInt32,   kInt64,   kUInt8,     kUInt16,     kUInt32,
                                          kUInt64, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128, kBFloat16};
@@ -193,7 +165,7 @@ TypePtr BatchMatmulInferType(const PrimitivePtr &prim, const std::vector<Abstrac
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
   TypePtr x_type = input_args[0]->GetType();
   if (x_type->type_id() == TypeId::kNumberTypeInt8 || x_type->ToString() == "Tensor[Int8]") {
-    x_type = kInt32;
+    x_type = std::make_shared<TensorType>(kInt32);
   }
   if (prim->HasAttr("cast_type")) {
     auto out_type = prim->GetAttr("cast_type");
@@ -202,45 +174,9 @@ TypePtr BatchMatmulInferType(const PrimitivePtr &prim, const std::vector<Abstrac
       MS_EXCEPTION(ValueError) << "For '" << prim->name() << "', MatMul cast_type must be a 'Type', but got: '"
                                << out_type << "'.";
     }
-    x_type = out_type->cast<TypePtr>();
+    x_type = std::make_shared<TensorType>(out_type->cast<TypePtr>());
   }
   return x_type;
 }
-}  // namespace
-
-MIND_API_OPERATOR_IMPL(BatchMatMul, MatMul);
-
-AbstractBasePtr BatchMatmulInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                 const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  for (auto item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
-  const int64_t input_num = 2;
-  (void)CheckAndConvertUtils::CheckInteger("BatchMatmul infer", SizeToLong(input_args.size()), kGreaterEqual, input_num,
-                                           primitive->name());
-  auto infer_type = BatchMatmulInferType(primitive, input_args);
-  auto infer_shape = BatchMatmulInferShape(primitive, input_args);
-  return abstract::MakeAbstract(infer_shape, infer_type);
-}
-
-// AG means auto generated
-class MIND_API AGBatchMatmulInfer : public abstract::OpInferBase {
- public:
-  BaseShapePtr InferShape(const PrimitivePtr &primitive,
-                          const std::vector<AbstractBasePtr> &input_args) const override {
-    return BatchMatmulInferShape(primitive, input_args);
-  }
-
-  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    return BatchMatmulInferType(primitive, input_args);
-  }
-  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
-                                    const std::vector<AbstractBasePtr> &input_args) const override {
-    return BatchMatmulInfer(engine, primitive, input_args);
-  }
-};
-
-REGISTER_PRIMITIVE_OP_INFER_IMPL(BatchMatMul, prim::kPrimBatchMatMul, AGBatchMatmulInfer, false);
 }  // namespace ops
 }  // namespace mindspore

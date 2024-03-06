@@ -20,7 +20,6 @@
 #include "src/litert/cxx_api/kernel_executor/kernel_executor.h"
 #include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/conv2d.h"
-#include "ops/mat_mul.h"
 #include "ops/topk.h"
 #include "ops/conv2d_transpose.h"
 #include "ops/max_pool.h"

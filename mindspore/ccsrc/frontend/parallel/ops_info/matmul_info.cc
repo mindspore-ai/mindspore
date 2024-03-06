@@ -93,32 +93,16 @@ Shape MatMulBase::GetCommonShape(const Dimensions &mat_a_strategy, const Dimensi
 }
 
 Status MatMulBase::GetAttrs() {
-  if (attrs_.size() < MATMUL_ATTRS_SIZE) {
-    MS_LOG(ERROR) << name_ << ": The size of attrs small than 2, got " << attrs_.size();
+  auto transpose_a_value = GetScalarValueFromInputsWithCheck<bool>(input_value_, name_, TRANSPOSE_A);
+  if (!transpose_a_value.has_value()) {
     return FAILED;
   }
-
-  auto transpose_a_iter = attrs_.find(TRANSPOSE_A);
-  if (transpose_a_iter != attrs_.end()) {
-    MS_EXCEPTION_IF_NULL(transpose_a_iter->second);
-    if (transpose_a_iter->second->isa<BoolImm>()) {
-      transpose_a_ = transpose_a_iter->second->cast<BoolImmPtr>()->value();
-    } else {
-      MS_LOG(ERROR) << name_ << ": The value of transpose_a is not bool.";
-      return FAILED;
-    }
+  transpose_a_ = transpose_a_value.value();
+  auto transpose_b_value = GetScalarValueFromInputsWithCheck<bool>(input_value_, name_, TRANSPOSE_B);
+  if (!transpose_b_value.has_value()) {
+    return FAILED;
   }
-
-  auto transpose_b_iter = attrs_.find(TRANSPOSE_B);
-  if (transpose_b_iter != attrs_.end()) {
-    MS_EXCEPTION_IF_NULL(transpose_b_iter->second);
-    if (transpose_b_iter->second->isa<BoolImm>()) {
-      transpose_b_ = transpose_b_iter->second->cast<BoolImmPtr>()->value();
-    } else {
-      MS_LOG(ERROR) << name_ << ": The value of transpose_b is not bool.";
-      return FAILED;
-    }
-  }
+  transpose_b_ = transpose_b_value.value();
 
   auto field_size_iter = attrs_.find(FIELD_SIZE);
   if (field_size_iter != attrs_.end()) {
@@ -966,10 +950,9 @@ ReplaceGraphPtr MatMul::replace_graph(const CNodePtr &cnode) {
   }
 
   // matmul
-  Attr transpose_a_attr = std::make_pair(TRANSPOSE_A, MakeValue(transpose_a_));
-  Attr transpose_b_attr = std::make_pair(TRANSPOSE_B, MakeValue(transpose_b_));
-  OperatorAttrs matmul_attrs = {transpose_a_attr, transpose_b_attr};
-  auto matmul = gen_g.PushBack({gen_g.NewOpInst(MATMUL, matmul_attrs), matmul_left_input, matmul_right_input});
+  auto trans_a = CreateBoolImm(transpose_a_);
+  auto trans_b = CreateBoolImm(transpose_b_);
+  auto matmul = gen_g.PushBack({gen_g.NewOpInst(MATMUL), matmul_left_input, matmul_right_input, trans_a, trans_b});
 
   std::pair<AnfNodePtr, int64_t> left_input_node, right_input_node;
   if (x_flag) {

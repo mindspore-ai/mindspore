@@ -163,11 +163,37 @@ static const std::map<std::string, std::vector<string>> kAttrMapNeedAdjust = {
    {
      "axis",
    }},
+  {"MatMul",
+   {
+     "transpose_a",
+     "transpose_b",
+   }},
+  {"MatMulV2",
+   {
+     "transpose_a",
+     "transpose_b",
+   }},
+  {"BatchMatMul",
+   {
+     "transpose_a",
+     "transpose_b",
+   }},
   {"Softmax",
    {
      "axis",
    }},
 };
+
+constexpr size_t kMatMulInputSizeWithoutBias = 3;  // primitive, x1, x2
+constexpr auto kMatMulOpName = "MatMul";
+constexpr auto kMatMulV2OpName = "MatMulV2";
+
+void AddBiasForMatMul(const FuncGraphManagerPtr &manager, const CNodePtr &cnode) {
+  auto none_value = std::make_shared<None>();
+  auto none_node = NewValueNode(none_value);
+  none_node->set_abstract(none_value->ToAbstract());
+  manager->AddEdge(cnode, none_node);
+}
 
 int ConvertAttrToArgsForNode(const AnfNodePtr &node, const FuncGraphManagerPtr &manager) {
   auto cnode = node->cast<CNodePtr>();
@@ -181,6 +207,11 @@ int ConvertAttrToArgsForNode(const AnfNodePtr &node, const FuncGraphManagerPtr &
   // Create new primitive and inherit the origin attributes.
   MS_LOG(INFO) << "Begin to convert Primitive to Primitive_Func for node: " << node->DebugString()
                << "new name: " << prim_name;
+  if ((prim_name == kMatMulOpName || prim_name == kMatMulV2OpName) &&
+      cnode->inputs().size() == kMatMulInputSizeWithoutBias) {
+    AddBiasForMatMul(manager, cnode);
+  }
+
   for (const auto &attr : attrs_adjust) {
     if (origin_attrs.count(attr) == 0) {
       MS_LOG(INFO) << "Origin primitive: " << prim_name << " has no attr : " << attr;

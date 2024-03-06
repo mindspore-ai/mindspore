@@ -54,8 +54,10 @@ class BroadcastGradientArgsShapeCalc : public ShapeCalcFunctor {
     if (shift_ == 0) {
       return BroadcastGradientArgsInferValue(shape_x, shape_y);
     } else {
-      ShapeVector broadcast_shape_of_x(shape_x.begin(), shape_x.end() - shift_);
-      ShapeVector broadcast_shape_of_y(shape_y.begin(), shape_y.end() - shift_);
+      auto shift1 = SizeToLong(std::min(shift_, shape_x.size()));
+      auto shift2 = SizeToLong(std::min(shift_, shape_y.size()));
+      ShapeVector broadcast_shape_of_x(shape_x.begin(), shape_x.end() - shift1);
+      ShapeVector broadcast_shape_of_y(shape_y.begin(), shape_y.end() - shift2);
       return BroadcastGradientArgsInferValue(broadcast_shape_of_x, broadcast_shape_of_y);
     }
   }

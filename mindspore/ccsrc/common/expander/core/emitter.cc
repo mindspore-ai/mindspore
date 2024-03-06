@@ -190,19 +190,15 @@ NodePtr Emitter::Reshape(const NodePtr &node, const NodePtr &shape) {
 }
 
 NodePtr Emitter::MatMul(const NodePtr &a, const NodePtr &b, bool transpose_a, bool transpose_b) {
-  return UnifyDtypeAndEmit(prim::kPrimMatMul->name(), a, b,
-                           {{"transpose_x1", MakeValue(transpose_a)},
-                            {"transpose_x2", MakeValue(transpose_b)},
-                            {"transpose_a", MakeValue(transpose_a)},
-                            {"transpose_b", MakeValue(transpose_b)}});
+  return Emit(prim::kPrimMatMul->name(), {a, b, Value(transpose_a), Value(transpose_b)});
 }
 
 NodePtr Emitter::BatchMatMul(const NodePtr &a, const NodePtr &b, bool transpose_a, bool transpose_b) {
-  return UnifyDtypeAndEmit(prim::kPrimBatchMatMul->name(), a, b,
-                           {{"adj_x1", MakeValue(transpose_a)},
-                            {"adj_x2", MakeValue(transpose_b)},
-                            {"transpose_a", MakeValue(transpose_a)},
-                            {"transpose_b", MakeValue(transpose_b)}});
+  return Emit(prim::kPrimBatchMatMul->name(), {a, b, Value(transpose_a), Value(transpose_b)});
+}
+
+NodePtr Emitter::MatMulExt(const NodePtr &a, const NodePtr &b) {
+  return UnifyDtypeAndEmit(prim::kPrimMatMulExt->name(), a, b, {});
 }
 
 NodePtr Emitter::Transpose(const NodePtr &node, const NodePtr &perm) {

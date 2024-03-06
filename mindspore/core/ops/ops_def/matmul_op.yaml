@@ -1,0 +1,29 @@
+#operator matmul
+matmul:
+  args:
+    input:
+      dtype: tensor
+    mat2:
+      dtype: tensor
+    transpose_a:
+      dtype: bool
+      default: False
+      prim_init: True
+    transpose_b:
+      dtype: bool
+      default: False
+      prim_init: True
+  args_signature:
+    dtype_group: (input, mat2)
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: MatMul
+  dispatch:
+    enable: True
+    Ascend: MatMulAscend
+
+
+
+
