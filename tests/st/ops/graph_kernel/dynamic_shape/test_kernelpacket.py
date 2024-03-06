@@ -17,6 +17,7 @@ import numpy as np
 import mindspore as ms
 from mindspore import ops, nn, Tensor
 from mindspore.ops.operations._inner_ops import DynamicBroadcastTo
+from mindspore.ops.functional import grad
 import pytest
 
 
@@ -101,7 +102,7 @@ class DynamicBroadcastToNet(nn.Cell):
         self.dbt = DynamicBroadcastTo()
 
     def construct(self, x):
-        shape = list(self.shape(x))
+        shape = self.shape(x)
         a = shape[0]
         z = self.dbt(x, (a, a))
         return z
@@ -126,10 +127,10 @@ class ReduceSumNet(nn.Cell):
         super().__init__()
         self.add = ops.Add()
         self.shape = ops.Shape()
-        self.reducesum = ops.ReduceSum()
+        self.reducesum = ops.ReduceSum(True, True)
 
     def construct(self, x):
-        shape = list(self.shape(x))
+        shape = self.shape(x)
         b = shape[1]
         y = self.reducesum(x, b)
         return y
@@ -147,3 +148,44 @@ def test_reducesum_gpu():
     x_dyn = Tensor(shape=[None, None], dtype=ms.float32)
     x = Tensor(np.array([[2], [1]]), dtype=ms.float32)
     helper(ReduceSumNet, (x_dyn,), (x,), "GPU")
+
+
+class ReduceSumMulNet(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.reducesum = ops.ReduceSum(True, True)
+
+    def construct(self, x):
+        y = x*x
+        z = self.reducesum(y, ())
+        return z
+
+
+def grad_helper(net_type, input_dyns, inputs, device_target):
+    ms.set_context(mode=ms.GRAPH_MODE, device_target=device_target,
+                   enable_graph_kernel=False)
+    net1 = net_type()
+    net1.set_inputs(*input_dyns)
+    net1 = grad(net1)
+    expect = net1(*inputs)
+    ms.set_context(enable_graph_kernel=True)
+    net2 = net_type()
+    net2.set_inputs(*input_dyns)
+    output = grad(net2)(*inputs)
+    print("expect: ", expect.asnumpy())
+    print("output: ", output.asnumpy())
+    assert np.allclose(expect.asnumpy(), output.asnumpy())
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_reducesum_mul_gpu():
+    """
+    Feature: KernelPacket
+    Description: test kernelpacket with ReduceSum in gpu
+    Expectation: success
+    """
+    x_dyn = Tensor(shape=[None, None], dtype=ms.int32)
+    x = Tensor(np.array([[20], [32]]), dtype=ms.int32)
+    grad_helper(ReduceSumMulNet, (x_dyn,), (x,), "GPU")

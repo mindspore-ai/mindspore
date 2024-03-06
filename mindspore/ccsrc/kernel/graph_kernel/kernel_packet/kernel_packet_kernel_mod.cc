@@ -136,6 +136,8 @@ int KernelPacketKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   if (ret != KRET_OK) {
     return ret;
   }
+  input_workspace_map_.clear();
+  shape_cache_.clear();
   auto inner_input_num = inputs_cache_.size();
   std::vector<KernelTensor *> inner_inputs(inner_input_num, nullptr);
   // Hold pointer to temp host data, to free them after kernel resize
@@ -158,6 +160,7 @@ int KernelPacketKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
       }
       MS_LOG(DEBUG) << "Result of QueryValue: " << value->DumpText();
       if (!ValueToShape(value, &shape_values)) {
+        // Case when value is bool
         inner_inputs[i]->SetValue(value);
         continue;
       }
@@ -172,6 +175,11 @@ int KernelPacketKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
       auto type_id = inner_inputs[i]->type_id();
       if (type_id == kObjectTypeTensorType) {
         inner_inputs[i]->SetShapeVector(shape_vector);
+      } else if (type_id == kObjectTypeTuple || type_id == kObjectTypeList) {
+        // Case when value is tuple of int
+        abstract::BaseShapePtrList shapes(shape_vector[0], std::make_shared<abstract::NoShape>());
+        auto tuple_shape = std::make_shared<abstract::TupleShape>(std::move(shapes));
+        inner_inputs[i]->SetShape(tuple_shape);
       }
       // SetHostData, in case some operations use shape data when resize.
       size_t data_size = kShapeTypeSize * shape_vector[0];

@@ -206,11 +206,14 @@ std::vector<int64_t> TupleDiv(const std::vector<int64_t> &x, const std::vector<i
   return out;
 }
 
-std::vector<int64_t> ReduceShape(const std::vector<int64_t> &x, const std::vector<int64_t> &axis) {
+std::vector<int64_t> ReduceShape(const std::vector<int64_t> &x, const std::vector<int64_t> &axis, bool skip_mode) {
   if (x.empty()) {
     return {};
   }
   if (axis.empty()) {
+    if (skip_mode) {
+      return x;
+    }
     return std::vector<int64_t>(x.size(), 1LL);
   }
   int64_t x_rank = SizeToLong(x.size());
@@ -452,21 +455,34 @@ std::vector<int64_t> GetTransposition(int64_t axis, int64_t rank) {
   return trans;
 }
 
-DEF_PURE_SHAPE_CALC(reduce_shape_shapecalc)
-  .SetCalc([](const ShapeArray &inputs) -> ShapeArray {
+class ReduceShapeShapeCalc : public ShapeCalcFunctor {
+ public:
+  // cppcheck-suppress unknownMacro
+  DECLARE_SHAPE_CALC("ShapeCalc_ReduceShape", ReduceShapeShapeCalc)
+  explicit ReduceShapeShapeCalc(bool skip_mode) : ShapeCalcFunctor("ShapeCalc_ReduceShape"), skip_mode_(skip_mode) {}
+  ValuePtr ToValue() const override { return MakeValue(skip_mode_); }
+  void FromValue(const ValuePtr &value) override { skip_mode_ = GetValue<int64_t>(value); }
+  ShapeArray Calc(const ShapeArray &inputs) const override {
     auto x_shape = inputs.at(0);
     auto axis_value = inputs.at(1);
-    auto r_shape = ReduceShape(x_shape, axis_value);
+    auto r_shape = ReduceShape(x_shape, axis_value, skip_mode_);
     auto scaling = TupleDiv(x_shape, r_shape);
     return {r_shape, scaling};
-  })
-  .SetInfer([](const ShapeArray &inputs, const HashSet<size_t> &) -> std::vector<int64_t> {
+  }
+  std::vector<int64_t> Infer(const ShapeArray &inputs, const HashSet<size_t> &) const override {
     int64_t x_rank = IsDynamicRank(inputs.at(0)) ? -1 : static_cast<int64_t>(inputs.at(0).size());
     return {x_rank, x_rank};
-  });
-NodePtr SumGrad(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &axis, const NodePtr &dout, const bool keep_dims) {
+  }
+
+ protected:
+  bool skip_mode_ = false;
+};
+REG_FUNCTOR("ShapeCalc_ReduceShape", ReduceShapeShapeCalc);
+
+NodePtr SumGrad(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &axis, const NodePtr &dout, const bool keep_dims,
+                const bool skip_mode) {
   auto grad = dout;
-  auto calc_res = ib->ShapeCalc(reduce_shape_shapecalc, {x, axis}, {1});
+  auto calc_res = ib->ShapeCalc(std::make_shared<ReduceShapeShapeCalc>(skip_mode), {x, axis}, {1});
   if (!keep_dims) {
     grad = ib->Reshape(grad, calc_res[0]);
   }
@@ -483,7 +499,7 @@ NodePtr MinOrMaxGrad(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &axis, 
   auto grad = dout;
   auto keepdims = GetValue<bool>(keep_dims->BuildValue());
   if (!keepdims) {
-    auto output_shape_kept_dims = ib->ShapeCalc(reduce_shape_shapecalc, {x, axis}, {1})[0];
+    auto output_shape_kept_dims = ib->ShapeCalc(std::make_shared<ReduceShapeShapeCalc>(), {x, axis}, {1})[0];
     y = ib->Reshape(out, output_shape_kept_dims);
     grad = ib->Reshape(dout, output_shape_kept_dims);
   }
