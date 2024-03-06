@@ -375,7 +375,15 @@ KernelType AclHelper::GetKernelInfoByInputs(const CNodePtr &cnode, const std::sh
     }
 
     if (ge_input_info.type == Ms2GeParamInfo::DYNAMIC) {
-      // process op which has only one dynamic input
+      if (dyn_input_sizes.empty()) {
+        auto input_node = common::AnfAlgo::GetPrevNodeOutput(cnode, ms_real_idx);
+        auto abstract = input_node.first->abstract();
+        MS_EXCEPTION_IF_NULL(abstract);
+        if (abstract->isa<abstract::AbstractTuple>() || abstract->isa<abstract::AbstractList>()) {
+          ms_real_idx += 1;
+          continue;
+        }
+      }
       if (ms_proto_idx >= dyn_input_sizes.size()) {
         MS_LOG(EXCEPTION) << "Attribute " << kAttrDynInputSizes << " of " << cnode->fullname_with_scope() << " is "
                           << dyn_input_sizes << ", of which size is less than " << ms_proto_idx;

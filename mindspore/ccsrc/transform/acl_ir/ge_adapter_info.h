@@ -57,7 +57,7 @@ struct GeTensorInfo {
   // Attr
   mindspore::HashMap<std::string, std::string> attr_map;
   // NOTE: input index starts with 0
-  mindspore::HashMap<uint32_t, std::string> input_attr_map;
+  std::map<uint32_t, std::string> input_attr_map;
   mindspore::HashMap<size_t, std::string> attr_input_map;
 
   // Input/Output
@@ -94,7 +94,7 @@ class GeAdapterInfo {
 
   const std::string &op_type() const { return info_.op_type; }
   const mindspore::HashMap<std::string, std::string> &attr_map() const { return info_.attr_map; }
-  const mindspore::HashMap<uint32_t, std::string> &input_attr_map() const { return info_.input_attr_map; }
+  const std::map<uint32_t, std::string> &input_attr_map() const { return info_.input_attr_map; }
   const mindspore::HashMap<size_t, std::string> &attr_input_map() const { return info_.attr_input_map; }
 
   // Get number of inputs in mindspore operator prototype, not the real number of inputs

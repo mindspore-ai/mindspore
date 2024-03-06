@@ -78,10 +78,23 @@ struct MsInputInfo {
   size_t ge_offset;
 };
 
+struct MsInputIdxToGe {
+  size_t ge_adapter_idx;
+  std::vector<size_t> ms_real_idx;
+  std::vector<size_t> ge_real_idx;
+};
+
+class CompareGeIdx {
+ public:
+  bool operator()(const std::pair<size_t, size_t> &a, const std::pair<size_t, size_t> &b) const {
+    return a.second == b.second ? a.first < b.first : a.second < b.second;
+  }
+};
+
 class AclConverter {
  public:
   void ConvertToAclOpType(const std::string &prim_name);
-  void ResizeAclOpInputs(const PrimitivePtr &prim);
+  void ResizeAclOpInputs(const PrimitivePtr &prim, const std::vector<KernelTensor *> &inputs);
   void ConvertInputMsIndexToAclIndex(const PrimitivePtr &prim, const std::vector<KernelTensor *> &inputs);
   void ConvertToAclInput(const PrimitivePtr &prim, const std::vector<KernelTensor *> &inputs,
                          const std::vector<TensorParams> &input_params);
@@ -93,6 +106,12 @@ class AclConverter {
   void ConvertValueDependToHostInput(const std::string &kernel_name, const std::vector<KernelTensor *> &inputs,
                                      const std::vector<TensorParams> &input_params,
                                      const std::set<int64_t> &value_depend_args);
+
+  // NOTE: Attribute kAttrDynInputSizes is a vector<int64_t> with its element value -1 for dynamic input, and
+  // number of foled real inputs for dynamic input. For example a op with 5 inputs, of whicch the input 1 and 2
+  // are dynamic inputs, the attribute `dyn_input_size` of it may be the value as below: ms_proto_index : |  0 | 1
+  // | 2 |  3 |  4 | dyn_input_sizes: | -1 |  2 |  5 | -1 | -1 |
+  void ConvertMsIdxToGeIdx(const PrimitivePtr &prim, const std::vector<KernelTensor *> &inputs);
 
   void ConvertAttrToAclInput(const mindspore::HashMap<std::string, ValuePtr> &attrs, const std::string &kernel_name);
   void ConvertInputToAclAttr(const std::vector<KernelTensor *> &inputs, const std::string &kernel_name);
@@ -122,6 +141,10 @@ class AclConverter {
                                                                      const TensorParams &params,
                                                                      const std::string &desc_name,
                                                                      AclDumpString *dump_str) const;
+  std::pair<aclTensorDesc *, aclDataBuffer *> ConvertTensorToAclDesc(const KernelTensor *ori_tensor,
+                                                                     const TensorParams &params,
+                                                                     const std::string &desc_name,
+                                                                     AclDumpString *dump_str) const;
   std::pair<aclTensorDesc *, aclDataBuffer *> ConvertTensorToAclDesc(const AclHostInfoPtr &address,
                                                                      const TensorParams &params,
                                                                      const std::string &desc_name,
@@ -130,6 +153,8 @@ class AclConverter {
                                                                      const TensorParams &params,
                                                                      const std::string &desc_name,
                                                                      AclDumpString *dump_str) const;
+
+  void GenerateRealGeIdx();
 
   template <typename T>
   void AclRunnerAddAttr(const std::string &attrName, T value);
@@ -144,23 +169,30 @@ class AclConverter {
 
   AclRunner runner_;
   AclInputToHost input_on_host_;
-  std::vector<std::vector<uint8_t>> value_depend_cast_;
-  std::vector<std::vector<uint8_t>> attr_input_value_;
+  std::vector<std::vector<uint8_t>> host_save_list_;
 
   std::vector<AclDumpString> input_str_;
   std::vector<AclDumpString> output_str_;
   std::map<std::string, std::string> attr_map_str_;
-  // number of folded inputs of dynamic input, only used for op with only one dynamic input
-  std::pair<size_t, size_t> num_folded_inputs_{SIZE_MAX, 1};
+
+  bool is_create_mapping_ = false;
+
   bool is_dynamic_ = false;
   AclPrecisionMode precision_mode_ = DEFAULT_MODE;
   bool is_need_retrieve_output_shape_ = false;
+
   // Fields for op containing multiple dynamic inputs, since operators with more than one dynamic inputs are rare, for
   // speed reason, we process this case separately.
   // Map for recording [MindSpore op input proto index of dynamic input] to [its number of folded inputs]
   // NOTE: here the map MUST be an ordered map to sort the input indices ascendly.
   std::map<size_t, size_t> dyn_inputs_map_;
   std::map<size_t, MsInputInfo> inputs_idx_convert_map_;
+  // number of folded inputs of dynamic input, only used for op with only one dynamic input
+  std::pair<size_t, size_t> num_folded_inputs_{SIZE_MAX, 1};
+
+  std::map<std::pair<size_t, size_t>, std::pair<std::vector<size_t>, std::vector<size_t>>, CompareGeIdx>
+    ms_and_ge_inputs_sort_info_;
+  std::map<size_t, MsInputIdxToGe> ms_and_ge_inputs_idx_info_;
 };
 
 using AclConverterPtr = std::shared_ptr<AclConverter>;
