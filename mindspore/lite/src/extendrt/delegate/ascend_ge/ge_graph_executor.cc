@@ -370,6 +370,15 @@ bool GeGraphExecutor::SetDynamicKVCache(const FuncGraphPtr &func_graph) {
     if (!IsPrimitiveCNode(kv_input, prim::kPrimPadV3)) {
       dyn_kv_cache_info_.dynamic_kv_cache = true;
       dyn_kv_cache_info_.seq_length_dyn = true;
+      auto kv_shape = FuncGraphUtils::GetTensorShape({kv_input, 0});
+      if (kv_shape.size() == kShape4dDims) {
+        dyn_kv_cache_info_.kv_cache_layout = lite::kKVCacheLayoutBNSD;
+      } else if (kv_shape.size() == kShape3dDims) {
+        dyn_kv_cache_info_.kv_cache_layout = lite::kKVCacheLayoutBSH;
+      } else {
+        MS_LOG(ERROR) << "Expect RefData shape to be BNSD or BSH when dynamic kv cache is enable, but got " << kv_shape;
+        return false;
+      }
     }
     break;
   }
@@ -383,14 +392,6 @@ bool GeGraphExecutor::CheckRefDataInfo() {
     return true;
   }
   auto &ref_shape = ref_data_infos_.front().shape;
-  if (ref_shape.size() == kShape4dDims) {
-    dyn_kv_cache_info_.kv_cache_layout = lite::kKVCacheLayoutBNSD;
-  } else if (ref_shape.size() == kShape3dDims) {
-    dyn_kv_cache_info_.kv_cache_layout = lite::kKVCacheLayoutBSH;
-  } else {
-    MS_LOG(ERROR) << "Expect RefData shape to be BNSD or BSH when dynamic kv cache is enable, but got " << ref_shape;
-    return false;
-  }
   for (size_t i = 0; i < ref_data_infos_.size(); i++) {
     auto &ref_data_info = ref_data_infos_[i];
     auto &para_name = ref_data_info.name;
