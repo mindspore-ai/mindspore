@@ -279,12 +279,12 @@ PassManagerPtr GraphKernelOptimizer::PostProcess() const {
   // Add the new tensors to the kernel_graph
   pm->Add(std::make_shared<BindValueToGraph>(), OptLevel_1);
 
-  auto kernel_packet_lv = GetPassLevelByFlag(common::GetEnv("MS_DEV_CLUSTER_SHAPE") != "off");
+  auto kernel_packet_lv = GetPassLevelByFlag(common::GetEnv("MS_DEV_CLUSTER_SHAPE") == "on");
   pm->Add(std::make_shared<SymbolEngineBuilder>(true), kernel_packet_lv, is_gpu);
   pm->Add(std::make_shared<SymbolEngineExtender>(), kernel_packet_lv, is_gpu);
-  pm->Add(std::make_shared<ConvertCallToPrim>(kAttrKernelPacketNode, prim::kPrimKernelPacket->name()), kernel_packet_lv,
-          is_gpu);
 
+  // In dynamic shape graph, the infer shape function only support Primitive node
+  pm->Add(std::make_shared<ConvertCallToPrim>(), OptLevel_1);
   return pm;
 }
 

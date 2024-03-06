@@ -19,29 +19,37 @@
 #include <vector>
 
 #include "ir/func_graph.h"
-#include "ir/functor.h"
 #include "include/backend/visible.h"
 #include "include/backend/optimizer/pass.h"
 #include "backend/common/graph_kernel/symbol_engine/jit/cpp_visitor.h"
+#include "backend/common/optimizer/dynamic_shape/dynamic_shape_helper.h"
 
 namespace mindspore::graphkernel {
+using opt::dynamic_shape::InferShapeFunctor;
+using opt::dynamic_shape::kAttrInferShapeFunctor;
+
 class SymbolEngineInfer : public InferShapeFunctor {
  public:
-  explicit SymbolEngineInfer(const std::string &name) : InferShapeFunctor(name) {}
+  SymbolEngineInfer(const std::string &name, const SymbolEnginePtr &engine, const AbstractBasePtr &out_abstract)
+      : InferShapeFunctor(name), engine_(engine), out_abstract_(out_abstract) {}
   ~SymbolEngineInfer() override = default;
   MS_DECLARE_PARENT(SymbolEngineInfer, InferShapeFunctor)
-  BaseShapePtr InferShape(const CNodePtr &cnode, const AbstractBasePtrList &args) override;
+  BaseShapePtr InferShape(const AbstractBasePtrList &args) override;
+
+ protected:
+  SymbolEnginePtr engine_;
+  AbstractBasePtr out_abstract_;
 };
 
 class SymbolEngineJitInfer : public InferShapeFunctor {
  public:
-  explicit SymbolEngineJitInfer(const std::string &name, const std::string &func_name,
-                                const symshape::CppVisitorPtr &cpp_visitor, const ListSymbolPtr &output_symbol)
+  SymbolEngineJitInfer(const std::string &name, const std::string &func_name,
+                       const symshape::CppVisitorPtr &cpp_visitor, const ListSymbolPtr &output_symbol)
       : InferShapeFunctor(name), func_name_(func_name), cpp_visitor_(cpp_visitor), output_symbol_(output_symbol) {
     Init();
   }
   MS_DECLARE_PARENT(SymbolEngineJitInfer, InferShapeFunctor)
-  BaseShapePtr InferShape(const CNodePtr &cnode, const AbstractBasePtrList &args_spec_list) override;
+  BaseShapePtr InferShape(const AbstractBasePtrList &args) override;
 
  protected:
   void Init();

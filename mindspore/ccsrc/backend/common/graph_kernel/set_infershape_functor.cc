@@ -20,41 +20,33 @@
 
 #include "mindspore/core/symbolic_shape/symbol_engine.h"
 #include "mindspore/core/symbolic_shape/utils.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "include/common/utils/anfalgo.h"
 #include "ir/anf.h"
 #include "backend/common/graph_kernel/symbol_engine/jit/transform_visitor.h"
 #include "backend/common/graph_kernel/symbol_engine/multi_symbol_engine.h"
 #include "backend/common/graph_kernel/symbol_engine/jit/cpp_visitor.h"
+#include "backend/common/graph_kernel/core/graph_kernel_utils.h"
 
 namespace mindspore::graphkernel {
-BaseShapePtr SymbolEngineInfer::InferShape(const CNodePtr &cnode, const AbstractBasePtrList &args) {
-  MS_EXCEPTION_IF_NULL(cnode);
-  MS_LOG(DEBUG) << "Infer shape using symbol engine for cnode: " << cnode->fullname_with_scope();
-  auto func_graph = common::AnfAlgo::GetCNodeFuncGraphPtr(cnode);
-  MS_EXCEPTION_IF_NULL(func_graph);
-  auto output = func_graph->output();
-  auto symbol_engine = func_graph->symbol_engine();
-  MS_EXCEPTION_IF_NULL(symbol_engine);
-  if (!symbol_engine->Infer(args)) {
-    MS_LOG(WARNING) << "Infer failed by symbol engine. node " << cnode->fullname_with_scope();
+BaseShapePtr SymbolEngineInfer::InferShape(const AbstractBasePtrList &args) {
+  if (!engine_->Infer(args)) {
+    MS_LOG(WARNING) << "Infer failed. symbol_engine:" << engine_->ToString();
     return nullptr;
   }
-  return mindspore::symshape::QueryShape(output->abstract());
+  return mindspore::symshape::QueryShape(out_abstract_);
 }
 
-BaseShapePtr SymbolEngineJitInfer::InferShape(const CNodePtr &cnode, const AbstractBasePtrList &inputs) {
-  MS_EXCEPTION_IF_NULL(cnode);
-  MS_LOG(DEBUG) << "Infer shape using symbol engine for cnode: " << cnode->fullname_with_scope();
-
+BaseShapePtr SymbolEngineJitInfer::InferShape(const AbstractBasePtrList &args) {
   // Load library
   if (infer_func_ == nullptr) {
-    MS_LOG(DEBUG) << " Start to load function";
+    MS_LOG(DEBUG) << " Start to load function" << func_name_;
     infer_func_ = cpp_visitor_->LoadFunc(func_name_);
   }
 
   // Prepare inputs
-  std::vector<const int64_t *> input_parm(inputs.size());
-  std::transform(inputs.begin(), inputs.end(), input_parm.begin(), [](AbstractBasePtr abs) {
+  std::vector<const int64_t *> input_parm(args.size());
+  (void)std::transform(args.begin(), args.end(), input_parm.begin(), [](const AbstractBasePtr &abs) {
     auto base_shape_p = abs->GetShape();
     MS_EXCEPTION_IF_NULL(base_shape_p);
     auto shape_p = base_shape_p->cast<abstract::TensorShapePtr>();
@@ -67,8 +59,8 @@ BaseShapePtr SymbolEngineJitInfer::InferShape(const CNodePtr &cnode, const Abstr
   infer_func_(input_parm.data(), output_parm_.data());
   MS_LOG(DEBUG) << "After run function: " << func_name_ << " output: " << out_shapes_;
 
-  abstract::AbstractBasePtr out_abs = cnode->abstract();
-  if (out_abs->isa<abstract::AbstractTuple>()) {
+  bool is_tuple = out_shapes_.size() > 1;
+  if (is_tuple) {
     abstract::BaseShapePtrList shapes(out_shapes_.size());
     (void)std::transform(out_shapes_.begin(), out_shapes_.end(), shapes.begin(),
                          [](const ShapeVector &s) { return std::make_shared<abstract::TensorShape>(s); });
@@ -126,15 +118,19 @@ bool Process(const AnfNodePtrList &cnodes, bool use_jit) {
           auto output_symbol = func_graph->output()->abstract()->GetSymbolicShape();
           MS_EXCEPTION_IF_NULL(output_symbol);
           common::AnfAlgo::SetNodeAttrSafely(
-            "infer_shape_functor",
+            kAttrInferShapeFunctor,
             std::make_shared<SymbolEngineJitInfer>("symbol_engine_jit_infer_functor", func_name, cpp_visitor,
                                                    output_symbol),
             cnode);
         } else {
           MS_LOG(DEBUG) << "Set infershape functor for cnode: " << cnode->fullname_with_scope();
-          common::AnfAlgo::SetNodeAttrSafely("infer_shape_functor",
-                                             std::make_shared<SymbolEngineInfer>("symbol_engine_infer_functor"), cnode);
+          common::AnfAlgo::SetNodeAttrSafely(
+            kAttrInferShapeFunctor,
+            std::make_shared<SymbolEngineInfer>("symbol_engine_infer_functor", func_graph->symbol_engine(),
+                                                func_graph->output()->abstract()),
+            cnode);
         }
+        cnode->cast<CNodePtr>()->AddAttr(kAttrToPrim, MakeValue(prim::kPrimGraphKernel->name()));
         changed = true;
       }
     }

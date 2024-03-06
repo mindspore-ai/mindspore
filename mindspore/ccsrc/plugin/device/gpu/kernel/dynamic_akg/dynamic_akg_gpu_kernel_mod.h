@@ -68,9 +68,7 @@ class DynamicAkgGpuKernelMod : public GpuKernelMod {
   explicit DynamicAkgGpuKernelMod(const KernelPackPtr &kernel_pack);
   virtual ~DynamicAkgGpuKernelMod() {}
 
-  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
-    return true;
-  };
+  bool Init(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &) override { return true; };
 
   int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 

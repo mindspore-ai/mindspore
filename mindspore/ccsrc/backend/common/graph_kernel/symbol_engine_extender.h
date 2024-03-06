@@ -34,14 +34,9 @@ class SymbolEngineExtender : public opt::Pass {
 
 class ConvertCallToPrim : public opt::Pass {
  public:
-  explicit ConvertCallToPrim(const std::string &fg_name, const std::string &prim_name)
-      : Pass("convert_call_to_prim"), fg_name_(fg_name), prim_name_(prim_name) {}
+  ConvertCallToPrim() : Pass("convert_call_to_prim") {}
   ~ConvertCallToPrim() override = default;
   bool Run(const FuncGraphPtr &func_graph) override;
-
- protected:
-  std::string fg_name_;
-  std::string prim_name_;
 };
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_SYMBOL_ENGINE_EXTENDER_H_
