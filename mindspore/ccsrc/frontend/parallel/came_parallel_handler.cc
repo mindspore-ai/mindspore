@@ -423,7 +423,7 @@ void CameCommHandler::InsertAllReduceAndRealDivToReduceMeanInput(CNodePtr reduce
   OperatorName allreduce_op_name = ALL_REDUCE;
   OperatorAttrs all_reduce_op_attrs;
   ValuePtr allreduce_pyop_instance = CreateOpInstance(all_reduce_op_attrs, allreduce_op_name, "came_norm_allreduce");
-  std::vector<AnfNodePtr> all_reduce_input = {NewValueNode(allreduce_pyop_instance), reduce_mean->input(1)};
+  std::vector<AnfNodePtr> all_reduce_input = {NewValueNode(allreduce_pyop_instance), reduce_mean};
   auto all_reduce_node = func_graph->NewCNode(all_reduce_input);
   auto all_reduce_prim = GetCNodePrimitive(all_reduce_node);
   auto all_reduce_attrs = all_reduce_prim->attrs();
@@ -450,7 +450,7 @@ void CameCommHandler::InsertAllReduceAndRealDivToReduceMeanInput(CNodePtr reduce
   std::vector<AnfNodePtr> real_div_input = {NewValueNode(pyop_instance), all_reduce_node->cast<AnfNodePtr>(),
                                             NewValueNode(scale_value)};
   auto real_div_node = func_graph->NewCNode(real_div_input);
-  manager->SetEdge(reduce_mean, 1, real_div_node);
+  manager->Replace(reduce_mean, real_div_node);
 }
 
 void CameCommHandler::Process() {
