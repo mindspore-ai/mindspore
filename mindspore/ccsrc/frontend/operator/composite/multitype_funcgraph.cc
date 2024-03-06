@@ -236,12 +236,64 @@ const std::string MultitypeFuncGraph::PrintMatchFailLog(const TypeListMap<py::fu
   return oss.str();
 }
 
+bool CheckDictContainsAny(const std::vector<std::pair<mindspore::ValuePtr, mindspore::TypePtr>> &key_values) {
+  for (const auto &pair : key_values) {
+    const auto &type = pair.second;
+    if (type->isa<AnyType>()) {
+      return true;
+    }
+    bool res = false;
+    if (type->isa<Tuple>()) {
+      const auto &elements = type->cast<TuplePtr>()->elements();
+      res = CheckContainsAny(elements);
+    } else if (type->isa<List>()) {
+      const auto &elements = type->cast<ListPtr>()->elements();
+      res = CheckContainsAny(elements);
+    } else if (type->isa<Dictionary>()) {
+      const auto &elements = type->cast<DictionaryPtr>()->key_values();
+      res = CheckDictContainsAny(elements);
+    }
+    if (res) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool CheckContainsAny(const TypePtrList &types) {
+  for (const auto &type : types) {
+    if (type->isa<AnyType>()) {
+      return true;
+    }
+    bool res = false;
+    if (type->isa<Tuple>()) {
+      const auto &elements = type->cast<TuplePtr>()->elements();
+      res = CheckContainsAny(elements);
+    } else if (type->isa<List>()) {
+      const auto &elements = type->cast<ListPtr>()->elements();
+      res = CheckContainsAny(elements);
+    } else if (type->isa<Dictionary>()) {
+      const auto &elements = type->cast<DictionaryPtr>()->key_values();
+      res = CheckDictContainsAny(elements);
+    }
+    if (res) {
+      return true;
+    }
+  }
+  return false;
+}
+
 FuncGraphPtr MultitypeFuncGraph::GenerateFromTypes(const TypePtrList &types) {
   auto [py_fn, has_extra_u_monad, match_max_idx] = SignMatch(types);
   std::ostringstream buffer;
   buffer << types;
-  bool has_any = std::any_of(types.begin(), types.end(), [](const TypePtr &type) { return type->isa<AnyType>(); });
-  if (!py_fn.is_none() && (!has_any || name_ == "add_backward")) {
+  bool need_convert = false;
+  if (name_ == "getitem" || name_ == "setitem") {
+    need_convert = CheckContainsAny(types);
+  } else {
+    need_convert = std::any_of(types.begin(), types.end(), [](const TypePtr &type) { return type->isa<AnyType>(); });
+  }
+  if (!py_fn.is_none() && !need_convert) {
     FuncGraphPtr func_graph = parse::ParsePythonCode(py_fn);
     if (func_graph == nullptr) {
       MS_LOG(INTERNAL_EXCEPTION) << "Fail to parse overload function " << buffer.str() << ".";
@@ -272,7 +324,7 @@ FuncGraphPtr MultitypeFuncGraph::GenerateFromTypes(const TypePtrList &types) {
     return func_graph;
   }
 
-  auto match_fail_log = PrintMatchFailLog(fn_cache_py_, types, match_max_idx, has_any);
+  auto match_fail_log = PrintMatchFailLog(fn_cache_py_, types, match_max_idx, need_convert);
   MS_LOG(EXCEPTION) << match_fail_log;
 }
 }  // namespace prim
