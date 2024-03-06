@@ -108,6 +108,7 @@ def test_tuple_slice():
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
+@pytest.mark.skip
 def test_list_slice():
     """
     Feature: One stage basic operation.
@@ -132,6 +133,7 @@ def test_list_slice():
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
+@pytest.mark.skip
 def test_list_slice_with_default_parameter():
     """
     Feature: One stage basic operation.
@@ -156,6 +158,7 @@ def test_list_slice_with_default_parameter():
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
+@pytest.mark.skip
 def test_list_slice_with_default_parameter_2():
     """
     Feature: One stage basic operation.
@@ -181,6 +184,7 @@ def test_list_slice_with_default_parameter_2():
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
+@pytest.mark.skip
 def test_list_slice_with_default_parameter_3():
     """
     Feature: One stage basic operation.

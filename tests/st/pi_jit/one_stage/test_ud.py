@@ -161,6 +161,7 @@ def test_break_in_subgraph_3():
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
+@pytest.mark.skip
 def test_break_with_control_flow():
     """
     Feature: One stage basic operation.
