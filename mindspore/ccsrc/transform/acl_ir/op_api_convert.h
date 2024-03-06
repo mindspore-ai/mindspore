@@ -374,7 +374,7 @@ inline aclTensor *ConvertType(const std::optional<tensor::TensorPtr> &value) {
 
 inline aclIntArray *ConvertType(const std::vector<int64_t> &int_array) {
   if (int_array.empty()) {
-    MS_LOG(ERROR) << "int array is empty!";
+    MS_LOG(DEBUG) << "int array is empty!";
   }
   static OpApiTensorConverter converter;
   return converter.CreateIntArray(int_array);
