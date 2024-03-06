@@ -2972,7 +2972,7 @@ void GraphScheduler::BindNumaNode() {
   }
 
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__) && !defined(ENABLE_ANDROID)
-  uint32_t rank_id = CommManager::GetInstance().GetRank();
+  uint32_t rank_id = CollectiveManager::instance()->local_rank_id();
   MS_LOG(INFO) << "Bind numa node for rank " << rank_id;
   if (numa_handle_ == nullptr) {
     numa_handle_ = GetNumaAdapterHandle();
@@ -2980,8 +2980,8 @@ void GraphScheduler::BindNumaNode() {
       MS_LOG(EXCEPTION) << "Load numa library failed.";
     }
   }
-  (void)LoadNumaCpuInfo(numa_handle_.get(), rank_id + 1, &numa_cpus_);
-  auto ret = NumaBind(numa_handle_.get(), rank_id + 1);
+  (void)LoadNumaCpuInfo(numa_handle_.get(), rank_id, &numa_cpus_);
+  auto ret = NumaBind(numa_handle_.get(), rank_id);
   if (ret != StatusCode::kSuccess) {
     MS_LOG(EXCEPTION) << "Bind numa node failed, ret = " << ret.GetErrDescription();
   }
