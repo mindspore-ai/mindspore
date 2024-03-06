@@ -32,16 +32,18 @@ REG_SYMBOL_OP_BUILDER("LogSoftmaxGrad").SetShapeDepend({DependOn::kNone, DependO
 REG_SYMBOL_OP_BUILDER("LogSoftmax").SetShapeDepend({DependOn::kShape});
 REG_SYMBOL_OP_BUILDER("Neg").SetShapeDepend({DependOn::kShape});
 REG_SYMBOL_OP_BUILDER("OnesLike").SetShapeDepend({DependOn::kShape});
+REG_SYMBOL_OP_BUILDER("PagedAttention").SetShapeDepend({DependOn::kShape});
 REG_SYMBOL_OP_BUILDER("Reciprocal").SetShapeDepend({DependOn::kShape});
 REG_SYMBOL_OP_BUILDER("ReluGrad").SetShapeDepend({DependOn::kShape, DependOn::kNone});
 REG_SYMBOL_OP_BUILDER("ReLU").SetShapeDepend({DependOn::kShape});
+REG_SYMBOL_OP_BUILDER("Rsqrt").SetShapeDepend({DependOn::kShape});
+REG_SYMBOL_OP_BUILDER("RsqrtGrad").SetShapeDepend({DependOn::kShape});
+REG_SYMBOL_OP_BUILDER("ReshapeAndCache").SetShapeDepend({DependOn::kShape});
 REG_SYMBOL_OP_BUILDER("SoftmaxBackward").SetShapeDepend({DependOn::kNone, DependOn::kShape});
 REG_SYMBOL_OP_BUILDER("SoftmaxGrad").SetShapeDepend({DependOn::kNone, DependOn::kShape});
 REG_SYMBOL_OP_BUILDER("Softmax").SetShapeDepend({DependOn::kShape});
 REG_SYMBOL_OP_BUILDER("Sqrt").SetShapeDepend({DependOn::kShape});
 REG_SYMBOL_OP_BUILDER("StopGradient").SetShapeDepend({DependOn::kShape});
-REG_SYMBOL_OP_BUILDER("Rsqrt").SetShapeDepend({DependOn::kShape});
-REG_SYMBOL_OP_BUILDER("RsqrtGrad").SetShapeDepend({DependOn::kShape});
 REG_SYMBOL_OP_BUILDER("Tril").SetShapeDepend({DependOn::kShape});
 REG_SYMBOL_OP_BUILDER("Sigmoid").SetShapeDepend({DependOn::kShape});
 REG_SYMBOL_OP_BUILDER("SigmoidGrad").SetShapeDepend({DependOn::kShape});
@@ -52,6 +54,8 @@ REG_SYMBOL_OP_BUILDER("TensorShape").SetValueDepend({DependOn::kShape});
 REG_SYMBOL_OP_BUILDER("ScalarToTensor").SetValueDepend({DependOn::kValue});
 REG_SYMBOL_OP_BUILDER("TensorToTuple").SetValueDepend({DependOn::kValue});
 REG_SYMBOL_OP_BUILDER("TupleToTensor").SetValueDepend({DependOn::kValue});
+REG_SYMBOL_OP_BUILDER("ListToTuple").SetValueDepend({DependOn::kValue});
+REG_SYMBOL_OP_BUILDER("TupleToList").SetValueDepend({DependOn::kValue});
 }  // namespace ops
 }  // namespace symshape
 }  // namespace mindspore

@@ -18,6 +18,7 @@
 
 #include <vector>
 #include <memory>
+#include <utility>
 #include "ir/pattern_matcher.h"
 #include "ir/functor.h"
 #include "ops/array_ops.h"
@@ -246,6 +247,38 @@ AnfNodePtr FoldConstSymbol::operator()(const OptimizerPtr &, const AnfNodePtr &n
   auto new_node = NewCNode(new_inputs, node->func_graph());
   new_node->set_abstract(node->abstract());
   return new_node;
+}
+
+bool ShapeOpCse::operator()(const FuncGraphPtr &func_graph, const OptimizerPtr &optimizer) {
+  auto nodes = TopoSort(func_graph->get_return(), SuccDeeperSimple, AlwaysInclude);
+  auto mng = optimizer->manager();
+  MS_EXCEPTION_IF_NULL(mng);
+  std::vector<std::pair<AnfNodePtr, SymbolPtr>> shape_values;
+  bool changed = false;
+  for (auto &node : nodes) {
+    if (IsPrimitiveCNode(node, prim::kPrimShape)) {
+      auto v = node->abstract()->GetSymbolicValue();
+      if (v == nullptr) {
+        continue;
+      }
+      bool matched = false;
+      for (auto &prev : shape_values) {
+        if (node->func_graph() == prev.first->func_graph() && v->EqualsTo(prev.second)) {
+          MS_LOG(INFO) << "The symbolic value of " << node->DebugString() << " (" << node->fullname_with_scope()
+                       << ") is same as previous node " << prev.first->DebugString() << " ("
+                       << prev.first->fullname_with_scope() << "), eliminated it. Value:" << v->ToString();
+          mng->Replace(node, prev.first);
+          changed = true;
+          matched = true;
+          break;
+        }
+      }
+      if (!matched) {
+        shape_values.emplace_back(std::make_pair(node, v));
+      }
+    }
+  }
+  return changed;
 }
 }  // namespace irpass
 }  // namespace opt
