@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,22 @@
  * limitations under the License.
  */
 
-#include "plugin/device/ascend/kernel/pyboost/customize/reshape.h"
-#include "kernel/pyboost/customize/reshape.h"
+#ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_PYBOOST_CUSTOMIZE_RESHAPE_H_
+#define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_PYBOOST_CUSTOMIZE_RESHAPE_H_
+
+#include <vector>
+#include <memory>
+#include "ir/tensor.h"
+#include "ir/value.h"
+#include "runtime/hardware/device_context_manager.h"
+#include "kernel/pyboost/op_runner.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::BaseTensorPtr ReshapeAscendCustomize(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &input_tensor,
-                                             const ValueTuplePtr &shape) {
-  MS_LOG(DEBUG) << "Call start";
-  return ReshapeCustomize(op, input_tensor, shape, op->device_context()->device_context_key_.device_name_);
-}
+tensor::BaseTensorPtr ReshapeGPUCustomize(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &input_tensor,
+                                          const ValueTuplePtr &shape);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore
+#endif  // MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_PYBOOST_CUSTOMIZE_RESHAPE_H_

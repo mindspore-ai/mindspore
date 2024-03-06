@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-#include "plugin/device/ascend/kernel/pyboost/customize/reshape.h"
+#include "plugin/device/cpu/kernel/pyboost/customize/reshape.h"
 #include "kernel/pyboost/customize/reshape.h"
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::BaseTensorPtr ReshapeAscendCustomize(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &input_tensor,
-                                             const ValueTuplePtr &shape) {
+tensor::BaseTensorPtr ReshapeCPUCustomize(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &input_tensor,
+                                          const ValueTuplePtr &shape) {
   MS_LOG(DEBUG) << "Call start";
   return ReshapeCustomize(op, input_tensor, shape, op->device_context()->device_context_key_.device_name_);
 }
