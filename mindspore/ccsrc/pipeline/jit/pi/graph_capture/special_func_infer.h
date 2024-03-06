@@ -40,7 +40,6 @@ bool JustCallAndSetRes(CallNode *call_node);
 std::unordered_map<std::string, SpecialAction> GetFuncWhiteListMap(bool trace_flag = false);
 std::vector<std::pair<CheckFunc, std::string>> GetFuncWhiteListFuzzyMatcher(bool trace_flag = false);
 const std::string GetMindsporeNamePrimitive();
-bool CheckCell(const py::object &callable_info);
 }  // namespace pijit
 }  // namespace mindspore
 

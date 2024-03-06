@@ -56,7 +56,7 @@ class GraphBuilder {
                       : std::make_shared<GraphBuilder>(r, p, co, globals);
   }
 
-  virtual StopTraceReason TraceRun(const std::vector<py::object> &args);
+  StopTraceReason TraceRun();
   virtual bool trace_flag() { return false; }
 
   void CollectInlineInfo(CallNode *node, int depth);
@@ -70,7 +70,6 @@ class GraphBuilder {
   static bool IsByteCodeImplemented(int bytecode);
 
  protected:
-  std::vector<py::object> args_;  // inputs
   GraphBuilder *root_;
   GraphBuilder *parent_;
   Graph *graph_;
@@ -273,7 +272,7 @@ class MindGraphBuilder : public GraphBuilder {
   }
   bool trace_flag() { return true; }
   mindspore::FuncGraphBuilderPtr FGBuilder() const { return fg_builder_; }
-  StopTraceReason TraceRun(const std::vector<py::object> &args);
+  void FGAddInputs(const std::vector<py::object> &args);
   py::object FGAddNode(CallNode *call_node, const py::object &callable_info, const std::vector<py::object> &args,
                        StopTraceReason *stop_reason);
   void FGAddOutput();
