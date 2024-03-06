@@ -201,8 +201,7 @@ CallableGraph MindCompiler::Compile(const FuncGraphPtr &func_graph, const py::tu
   MS_EXCEPTION_IF_CHECK_FAIL(!phase.empty(),
                              "Phase name should not be empty for function " + compile_info.co_name_ + ".");
 
-  CallableGraph callable = [compile_info, phase](
-                             PyObject *args, PyObject *kwargs) -> PyObject * {
+  CallableGraph callable = [compile_info, phase](PyObject *args, PyObject *kwargs) -> PyObject * {
     MS_EXCEPTION_IF_CHECK_FAIL(PyTuple_Check(args), "Excepted a Tuple Object for run args.");
     MS_EXCEPTION_IF_CHECK_FAIL(((kwargs == nullptr) || PyDict_Check(kwargs)),
                                "Excepted nullptr or a Dict Object for run kwargs.");
@@ -212,7 +211,7 @@ CallableGraph MindCompiler::Compile(const FuncGraphPtr &func_graph, const py::tu
     tuple = EliminateSelf(tuple, compile_info.co_name_);
     tuple = EliminateStubTensor(tuple);
     MarkArgmentMutable(tuple);
-    tuple = EliminateInvalidArgs(tuple, compile_info.co_flags_, false); // need adapt for optimizer
+    tuple = EliminateInvalidArgs(tuple, compile_info.co_flags_, false);  // need adapt for optimizer
     auto graph_executor = pipeline::GraphExecutorPy::GetInstance();
     MS_EXCEPTION_IF_NULL(graph_executor);
     py::object ret = graph_executor->Run(tuple, py::str(phase));

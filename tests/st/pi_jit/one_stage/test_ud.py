@@ -102,7 +102,7 @@ def test_break_in_subgraph():
             m = x + y
             return type(m)
 
-    inner_net = InnerNet();
+    inner_net = InnerNet()
     net = Net(inner_net)
     a = Tensor([1])
     jit(net.construct, mode="PIJit", jit_config=cfg)
@@ -123,7 +123,7 @@ def test_break_in_subgraph_2():
     def out(x, y):
         m = x + y
         n = inner(x, y)
-        ret= m/n
+        ret = m/n
         return ret
 
     def inner(a, b):
@@ -147,7 +147,7 @@ def test_break_in_subgraph_3():
     def out(x, y):
         m = x + y
         n = inner(x, y)
-        ret= m/n
+        ret = m/n
         return ret
 
     def inner(a, b):

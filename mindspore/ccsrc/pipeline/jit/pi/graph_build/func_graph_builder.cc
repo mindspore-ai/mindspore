@@ -17,6 +17,7 @@
 #include "pipeline/jit/pi/graph_build/func_graph_builder.h"
 #include <algorithm>
 #include <utility>
+#include <set>
 #include <unordered_set>
 #include "pipeline/jit/ps/static_analysis/static_analysis.h"
 #include "pipeline/jit/ps/action.h"
