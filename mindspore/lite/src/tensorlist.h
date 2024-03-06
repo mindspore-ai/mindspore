@@ -56,7 +56,7 @@ namespace mindspore::lite {
  *
  *  See the code for other constructors.
  */
-class MS_API TensorList : public Tensor {
+class TensorList : public Tensor {
  public:
   TensorList() { tensor_list_c_ = {false, kObjectTypeTensorType, DEFAULT_FORMAT, 0, kTypeUnknown, -1, nullptr, 0, 0}; }
 
