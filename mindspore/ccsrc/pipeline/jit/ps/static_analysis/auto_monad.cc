@@ -117,7 +117,7 @@ RefInputs GetRefInputs(const CNodePtr &cnode) {
   RefInputs ref_inputs;
   MS_EXCEPTION_IF_NULL(cnode);
   for (size_t i = 1; i < cnode->size(); ++i) {
-    auto &input = cnode->inputs().at(i);
+    auto &input = cnode->input(i);
     if (common::AnfAlgo::HasAbstractRef(input)) {
       ref_inputs[input].push_back(i);
     }
@@ -127,22 +127,23 @@ RefInputs GetRefInputs(const CNodePtr &cnode) {
 
 // Return true if cnode has ref input.
 bool HasRefInput(const CNodePtr &cnode) {
-  if (cnode == nullptr || cnode->inputs().empty()) {
+  if (cnode == nullptr || cnode->empty()) {
     return false;
   }
-  auto &inputs = cnode->inputs();
   // Return true if any of arguments is ref.
-  return std::any_of(inputs.begin() + 1, inputs.end(),
-                     [](const auto &input) { return common::AnfAlgo::HasAbstractRef(input); });
+  return std::any_of(cnode->weak_inputs().begin() + 1, cnode->weak_inputs().end(), [](const auto &weak_input) {
+    const auto &input = weak_input.lock();
+    MS_EXCEPTION_IF_NULL(input);
+    return common::AnfAlgo::HasAbstractRef(input);
+  });
 }
 
 // Return true if cnode has tuple(ref) or list(ref).
 bool HasRefSequenceInput(const CNodePtr &cnode) {
-  if (cnode == nullptr || cnode->inputs().empty()) {
+  if (cnode == nullptr || cnode->empty()) {
     return false;
   }
-  auto &inputs = cnode->inputs();
-  for (size_t index = 1; index < inputs.size(); ++index) {
+  for (size_t index = 1; index < cnode->size(); ++index) {
     const auto &input = cnode->input(index);
     MS_EXCEPTION_IF_NULL(input);
     if (common::AnfAlgo::SequenceHasAbstractRef(input)) {
@@ -162,7 +163,7 @@ bool IsKeepRef(const PrimitivePtr &prim) {
 
 // Gets func_graph from the given cnode, return nullptr if it is not a func graph call.
 FuncGraphPtr GetFuncGraph(const CNodePtr &cnode) {
-  if (cnode != nullptr && !cnode->inputs().empty()) {
+  if (cnode != nullptr && !cnode->empty()) {
     return GetValueNode<FuncGraphPtr>(cnode->input(0));
   }
   return nullptr;
@@ -171,7 +172,7 @@ FuncGraphPtr GetFuncGraph(const CNodePtr &cnode) {
 // Gets first input as cnode from the given cnode,
 // return null if input[0] is not a cnode.
 CNodePtr GetFuncCNode(const CNodePtr &cnode) {
-  if (cnode != nullptr && !cnode->inputs().empty()) {
+  if (cnode != nullptr && !cnode->empty()) {
     return dyn_cast<CNode>(cnode->input(0));
   }
   return nullptr;
@@ -180,7 +181,7 @@ CNodePtr GetFuncCNode(const CNodePtr &cnode) {
 // Gets first input as function parameter from the given cnode,
 // return null if input[0] is not a parameter.
 ParameterPtr GetFuncParameter(const CNodePtr &cnode) {
-  if (cnode != nullptr && !cnode->inputs().empty()) {
+  if (cnode != nullptr && !cnode->empty()) {
     return dyn_cast<Parameter>(cnode->input(0));
   }
   return nullptr;
@@ -227,7 +228,7 @@ FuncGraphPtr GetFuncGraphFromFuncGraphAbstract(const abstract::AbstractBasePtr &
 // Gets first input as MultitypeFuncGraph from the given cnode,
 // return null if input[0] is not a MultitypeFuncGraph.
 prim::MultitypeFuncGraphPtr GetFuncMultitypeFuncGraph(const CNodePtr &cnode) {
-  if (cnode != nullptr && !cnode->inputs().empty()) {
+  if (cnode != nullptr && !cnode->empty()) {
     return GetValueNode<prim::MultitypeFuncGraphPtr>(cnode->input(0));
   }
   return nullptr;
@@ -240,7 +241,7 @@ bool IsNonEffectRealNodeAndInputIsDynamic(const CNodePtr &cnode) {
     prim::kPrimStack,        prim::kPrimConcat,   prim::kPrimAddN,          prim::kPrimIdentityN,
     prim::kPrimSparseConcat, prim::kPrimMeshgrid, prim::kPrimDynamicStitch, prim::kPrimPyExecute,
     prim::kPrimPyInterpret,  prim::kPrimMakeDict};
-  PrimitivePtr prim = cnode->inputs().empty() ? nullptr : GetValueNode<PrimitivePtr>(cnode->input(0));
+  PrimitivePtr prim = cnode->empty() ? nullptr : GetValueNode<PrimitivePtr>(cnode->input(0));
   if (prim == nullptr) {
     return false;
   }
@@ -466,7 +467,7 @@ class SideEffectFinder {
   // Gets branch graph from a switch cnode at given input index.
   FuncGraphPtr GetSwitchBranch(const CNodePtr &cnode, size_t index) const {
     MS_EXCEPTION_IF_NULL(cnode);
-    const auto &branch_node = cnode->inputs().at(index);
+    const auto &branch_node = cnode->input(index);
     AnfNodePtr branch_fg_node = branch_node;
     if (IsPrimitiveCNode(branch_node, prim::kPrimPartial)) {
       auto branch_abs = branch_node->abstract();
@@ -688,22 +689,22 @@ class SideEffectFinder {
     if (cnode->size() <= func_tuple_index) {
       MS_LOG(INTERNAL_EXCEPTION) << "Invalid switch_layer: " << cnode->DebugString(recursive_level);
     }
-    auto func_tuple = cnode->inputs().at(func_tuple_index);
+    auto func_tuple = cnode->input(func_tuple_index);
     return GetGraphsFromTuple(func_tuple);
   }
 
   FuncGraphPtr GetGraphFromSwitchWithDeadNode(const CNodePtr &cnode) const {
     MS_EXCEPTION_IF_NULL(cnode);
-    auto node = cnode->inputs()[0];
-    MS_EXCEPTION_IF_NULL(node);
-    if (!IsPrimitiveCNode(node, prim::kPrimSwitch)) {
+    auto input = cnode->input(0);
+    MS_EXCEPTION_IF_NULL(input);
+    if (!IsPrimitiveCNode(input, prim::kPrimSwitch)) {
       return nullptr;
     }
-    const auto &inputs = node->cast<CNodePtr>()->inputs();
-    if (inputs.size() < kSwitchInputSize) {
-      MS_LOG(EXCEPTION) << "Switch inputs size: " << inputs.size() << "less than " << kSwitchInputSize;
+    auto node = input->cast_ptr<CNode>();
+    if (node->size() < kSwitchInputSize) {
+      MS_LOG(EXCEPTION) << "Switch inputs size: " << node->size() << "less than " << kSwitchInputSize;
     }
-    auto cond_node = inputs[kSwitchCondIndex];
+    auto cond_node = node->input(kSwitchCondIndex);
     auto cond_abs = cond_node->abstract();
     MS_EXCEPTION_IF_NULL(cond_abs);
     auto cond_abs_val = cond_abs->BuildValue();
@@ -713,7 +714,8 @@ class SideEffectFinder {
     }
     auto cond_abs_bool_val = dyn_cast<BoolImm>(cond_abs_val);
     MS_EXCEPTION_IF_NULL(cond_abs_bool_val);
-    auto branch = cond_abs_bool_val->value() ? inputs[kSwitchTrueBranchIndex] : inputs[kSwitchFalseBranchIndex];
+    auto branch =
+      cond_abs_bool_val->value() ? node->input(kSwitchTrueBranchIndex) : node->input(kSwitchFalseBranchIndex);
     return GetValueNode<FuncGraphPtr>(branch);
   }
 
@@ -753,15 +755,14 @@ class SideEffectFinder {
   // Get graphs from a tuple of funcs make node for switch_layer.
   std::vector<FuncGraphPtr> GetGraphsFromMakeTuple(const CNodePtr &make_tuple) const {
     MS_EXCEPTION_IF_NULL(make_tuple);
-    auto &inputs = make_tuple->inputs();
     constexpr int recursive_level = 2;
-    if (inputs.size() <= 1) {
+    if (make_tuple->size() <= 1) {
       MS_LOG(INTERNAL_EXCEPTION) << "Invalid make_tuple for switch_layer: " << make_tuple->DebugString(recursive_level);
     }
     std::vector<FuncGraphPtr> graphs;
-    graphs.reserve(inputs.size() - 1);
-    for (size_t i = 1; i < inputs.size(); ++i) {
-      auto func_graph = GetValueNode<FuncGraphPtr>(inputs.at(i));
+    graphs.reserve(make_tuple->size() - 1);
+    for (size_t i = 1; i < make_tuple->size(); ++i) {
+      auto func_graph = GetValueNode<FuncGraphPtr>(make_tuple->input(i));
       if (func_graph == nullptr) {
         MS_LOG(WARNING) << "Non-graph found in switch_layer input: " << make_tuple->DebugString(recursive_level)
                         << ", index: " << i;
@@ -806,14 +807,14 @@ class SideEffectFinder {
       MS_LOG(INTERNAL_EXCEPTION) << "Invalid getitem: " << cnode->DebugString();
     }
     // Get item index.
-    auto &index_node = cnode->inputs().at(index_input);
+    auto &index_node = cnode->input(index_input);
     auto index_value = dyn_cast<ValueNode>(index_node);
     if (index_value == nullptr) {
       MS_LOG(INTERNAL_EXCEPTION) << "getitem with non-const index, cnode: " << cnode->DebugString();
     }
 
     // Get tuple, list or dict value.
-    const auto &tuple_or_list_or_dict_node = cnode->inputs().at(tuple_or_list_or_dict_input);
+    const auto &tuple_or_list_or_dict_node = cnode->input(tuple_or_list_or_dict_input);
     // Push tuple, list or dict index.
     indexes->push(index_value->value());
     return TraceTupleListOrDictEffectInfo(tuple_or_list_or_dict_node, indexes);
@@ -879,10 +880,10 @@ class SideEffectFinder {
     auto input_index = GetInputIndex(top_index_value, cnode, cnode->size());
     if (indexes->empty()) {
       // Trace non-tuple.
-      return TraceEffectInfo(cnode->inputs().at(input_index));
+      return TraceEffectInfo(cnode->input(input_index));
     }
     // This is the tuple of tuple case.
-    return TraceTupleListOrDictEffectInfo(cnode->inputs().at(input_index), indexes);
+    return TraceTupleListOrDictEffectInfo(cnode->input(input_index), indexes);
   }
 
   EffectInfo TraceMakeDictEffectInfo(const CNodePtr &cnode, std::stack<ValuePtr> *indexes) {
@@ -908,7 +909,7 @@ class SideEffectFinder {
       if (*(keys->value()[i]) == *top_key_value) {
         // The values_node is a make_dict.
         indexes->push(MakeValue(SizeToLong(i)));
-        return TraceTupleListOrDictEffectInfo(cnode->inputs().at(values_node_index), indexes);
+        return TraceTupleListOrDictEffectInfo(cnode->input(values_node_index), indexes);
       }
     }
     MS_LOG(WARNING) << "make_dict untraceable from: " << cnode->DebugString(recursive_level);
@@ -1071,10 +1072,9 @@ class SideEffectFinder {
 
     if (IsPrimitiveEquals(prim, prim::kPrimMakeTuple) || IsPrimitiveEquals(prim, prim::kPrimMakeList)) {
       // Trace make_tuple or make_list.
-      const auto &inputs = cnode->inputs();
       EffectInfo info{EffectInfo::kDetected, false, false, false, false};
-      for (size_t i = 1; i < inputs.size(); ++i) {
-        auto input_info = TraceEffectInfo(inputs[i]);
+      for (size_t i = 1; i < cnode->size(); ++i) {
+        auto input_info = TraceEffectInfo(cnode->input(i));
         info.Merge(input_info);
       }
       return info;
@@ -1339,7 +1339,7 @@ class SideEffectFinder {
     if (cnode->size() < min_call_node_size) {
       MS_LOG(INTERNAL_EXCEPTION) << "Invalid call node: " << cnode->DebugString();
     }
-    auto func_graph = GetValueNode<FuncGraphPtr>(cnode->inputs().at(1));
+    auto func_graph = GetValueNode<FuncGraphPtr>(cnode->input(1));
     if (func_graph == nullptr) {
       MS_LOG(INTERNAL_EXCEPTION) << "Invalid call node: " << cnode->DebugString();
     }
@@ -1583,7 +1583,7 @@ class SideEffectFinder {
     MS_EXCEPTION_IF_NULL(monad);
     auto monad_abs = monad->ToAbstract();
     for (size_t i = 1; i < cnode->size(); ++i) {
-      auto abs = cnode->inputs().at(i)->abstract();
+      auto abs = cnode->input(i)->abstract();
       if (abs != nullptr && *abs == *monad_abs) {
         // Skip if monad argument already existed.
         return;
@@ -1592,7 +1592,7 @@ class SideEffectFinder {
     // Add monad argument if not yet.
     auto monad_input = NewValueNode(monad);
     monad_input->set_abstract(monad_abs);
-    if ((monad == kUMonad) && cnode->size() > 1 && HasAbstractIOMonad(cnode->inputs().back())) {
+    if ((monad == kUMonad) && cnode->size() > 1 && HasAbstractIOMonad(cnode->weak_inputs().back().lock())) {
       // Insert u monad before io monad.
       size_t last_index = cnode->size() - 1;
       cnode->add_input(cnode->input(last_index));
@@ -1893,10 +1893,9 @@ class AutoMonadConverter {
   // params = (param1, param2, ..., value)
   // addn(params, xxx)  non-effect-node need insert load for params.
   void InsertLoadForSequenceRef(const CNodePtr &cnode, bool update_state) {
-    const auto &inputs = cnode->inputs();
     abstract::AbstractBasePtrList new_seq_abstracts;
-    for (size_t index = 1; index < inputs.size(); ++index) {
-      const auto &input = inputs[index];
+    for (size_t index = 1; index < cnode->size(); ++index) {
+      const auto &input = cnode->input(index);
       const auto &input_abs = input->abstract();
       MS_EXCEPTION_IF_NULL(input_abs);
       if (!input_abs->isa<abstract::AbstractTuple>() && !input_abs->isa<abstract::AbstractList>()) {
@@ -2015,13 +2014,12 @@ class AutoMonadConverter {
     MS_EXCEPTION_IF_NULL(cnode);
     constexpr size_t max_monad_inputs = 2;
     auto monad_abs = monad->abstract();
-    auto &inputs = cnode->inputs();
-    int last = static_cast<int>(inputs.size()) - 1;
+    int last = static_cast<int>(cnode->size()) - 1;
     int stop = last - max_monad_inputs;
     // Search monad in inputs, replace it if found.
     for (int i = last; i > 0 && i > stop; --i) {
       size_t index = static_cast<size_t>(i);
-      auto input_abs = inputs[index]->abstract();
+      auto input_abs = cnode->input(index)->abstract();
       if (input_abs && *input_abs == *monad_abs) {
         manager_->SetEdge(cnode, i, monad);
         return;
