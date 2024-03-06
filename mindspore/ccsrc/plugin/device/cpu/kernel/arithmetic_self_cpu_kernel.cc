@@ -488,6 +488,7 @@ void Cosh(ArithmeticSelfCpuKernelFunc<T, S> *content, const T *in, S *out, size_
 template <typename T, typename S>
 void Tanh(ArithmeticSelfCpuKernelFunc<T, S> *content, const T *in, S *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
+#if !defined(__APPLE__)
     if constexpr (std::is_same<T, float>::value) {
       (void)::Tanh(in + start, SizeToInt(end - start), out + start);
       return;
@@ -495,6 +496,11 @@ void Tanh(ArithmeticSelfCpuKernelFunc<T, S> *content, const T *in, S *out, size_
     for (size_t i = start; i < end; i++) {
       out[i] = static_cast<S>(tanh(in[i]));
     }
+#else
+    for (size_t i = start; i < end; i++) {
+      out[i] = static_cast<S>(tanh(in[i]));
+    }
+#endif
   };
   ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
 }
