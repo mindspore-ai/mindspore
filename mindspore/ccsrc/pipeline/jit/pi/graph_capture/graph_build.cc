@@ -3425,10 +3425,7 @@ py::object MindGraphBuilder::ResolveCallable(CallNode *call_node, StopTraceReaso
 
   // find code object
   auto vobj = AObject::Convert(callable_info.ptr());
-  if (vobj->GetType() == AObject::kTypeCFunction) {
-    callable_info = py::object();
-  }
-  callable_info = FindPyFunc(vobj);
+  callable_info = (vobj->GetType() == AObject::kTypeCFunction) ? py::object() : FindPyFunc(vobj);
   if (callable_info.ptr() == nullptr) {
     *stop_reason = StopTraceReason::kStopTraceFunc_Type_Unsupported;
     call_node->SetInlineReason(InlineReason::kInlineCFunction_Unsupported);
