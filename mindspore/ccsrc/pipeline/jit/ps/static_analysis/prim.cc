@@ -2997,6 +2997,7 @@ EvalResultPtr ConstexprEvaluator::EvalPrim(const AnalysisEnginePtr &engine, cons
 EvalResultPtr MakeTupleEvaluator::EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args_abs_list,
                                            const ConfigPtr &, const AnfNodeConfigPtr &out_conf) {
   std::shared_ptr<AnfNodeWeakPtrList> sequence_nodes = std::make_shared<AnfNodeWeakPtrList>();
+  auto abs = std::make_shared<AbstractTuple>(args_abs_list, sequence_nodes);
   if (out_conf != nullptr) {  // 'out_conf' maybe nullptr in PyNative mode.
     if (args_abs_list.empty()) {
       MS_EXCEPTION_IF_NULL(out_conf->node());
@@ -3008,11 +3009,14 @@ EvalResultPtr MakeTupleEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abst
       if (flags == nullptr) {
         SetSequenceNodeElementsUseFlags(out_conf->node(), std::make_shared<std::vector<bool>>(args_abs_list.size()));
       }
-
+      bool has_any = fallback::ContainsSequenceAnyType(abs);
+      if (has_any) {
+        SetSequenceElementsUseFlagsRecursively(abs, true);
+      }
       (void)sequence_nodes->emplace_back(AnfNodeWeakPtr(out_conf->node()));
     }
   }
-  auto abs = std::make_shared<AbstractTuple>(args_abs_list, sequence_nodes);
+
   auto res = std::make_shared<EvalResult>(abs, std::make_shared<AttrValueMap>());
   evaluator_cache_mgr_->SetValue(args_abs_list, res);
   // pass the need_unpack tag from the AnfNode to the abstract
