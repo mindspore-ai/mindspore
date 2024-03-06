@@ -316,6 +316,10 @@ STATUS PytorchModelParser::ConvertConstNode(const torch::jit::Node *torch_node, 
       auto data = static_cast<float>(value.value().toDouble());
       parameter = opt::BuildFloatValueParameterNode(anf_graph, data, output->debugName());
     } break;
+    case c10::TypeKind::StringType: {
+      auto data = static_cast<std::string>(value.value().toStringRef());
+      parameter = opt::BuildStringValueParameterNode(anf_graph, data, output->debugName());
+    } break;
     case c10::TypeKind::ListType: {
       auto element_type = value->toList().elementType()->kind();
       switch (element_type) {
