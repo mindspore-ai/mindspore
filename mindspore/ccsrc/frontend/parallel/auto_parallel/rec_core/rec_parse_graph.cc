@@ -121,9 +121,9 @@ void CompleteOperatorInputs(const std::vector<std::shared_ptr<OperatorInfo>> &op
 void Complete2DInputs(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
                       const size_t iter_input_tensors, Graph::NodeType *NewTensor) {
   if (NewTensor->apply.op_type == OperatorType::kRecMatMul) {
-    auto attrs = ops[iter_ops]->attrs();
-    bool transpose_a = attrs[TRANSPOSE_A]->cast<BoolImmPtr>()->value();
-    bool transpose_b = attrs[TRANSPOSE_B]->cast<BoolImmPtr>()->value();
+    auto input_value = ops[iter_ops]->input_value();
+    bool transpose_a = input_value[2]->cast<BoolImmPtr>()->value();
+    bool transpose_b = input_value[3]->cast<BoolImmPtr>()->value();
     if (transpose_a && (iter_input_tensors == 0)) {
       NewTensor->apply.arguments[iter_input_tensors] =
         MakeTensor(1, 1, ops[iter_ops]->inputs_shape()[iter_input_tensors][1],
@@ -146,9 +146,9 @@ void Complete2DInputs(const std::vector<std::shared_ptr<OperatorInfo>> &ops, con
 void Complete4DInputs(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
                       const size_t iter_input_tensors, Graph::NodeType *NewTensor) {
   if (NewTensor->apply.op_type == OperatorType::kRecBatchMatMul) {
-    auto attrs = ops[iter_ops]->attrs();
-    bool transpose_a = attrs[TRANSPOSE_A]->cast<BoolImmPtr>()->value();
-    bool transpose_b = attrs[TRANSPOSE_B]->cast<BoolImmPtr>()->value();
+    auto input_value = ops[iter_ops]->input_value();
+    bool transpose_a = input_value[2]->cast<BoolImmPtr>()->value();
+    bool transpose_b = input_value[3]->cast<BoolImmPtr>()->value();
     if (transpose_a && (iter_input_tensors == 0)) {
       NewTensor->apply.arguments[iter_input_tensors] =
         MakeTensor(ops[iter_ops]->inputs_shape()[iter_input_tensors][INDEX_ZERO],

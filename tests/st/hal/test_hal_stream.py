@@ -72,7 +72,7 @@ def test_hal_stream_query():
     a = Tensor(np.ones([5000, 5000]), ms.float32)
     s1 = ms.hal.Stream()
     with ms.hal.StreamCtx(s1):
-        ops.matmul(a, a)
+        ops.bmm(a, a)
         assert not s1.query()
 
     s1.synchronize()

@@ -21,7 +21,7 @@
 #include "tools/converter/quantizer/eigen_util.h"
 #include "tools/converter/quantizer/gptq.h"
 #include "tools/converter/preprocess/image_preprocess.h"
-#include "ops/mat_mul.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "src/litert/weight_decoder.h"
 
 namespace mindspore::lite::quant {

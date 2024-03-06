@@ -32,7 +32,6 @@
 #include "tools/converter/adapter/acl/common/utils.h"
 #include "tools/converter/converter_context.h"
 #include "include/registry/pass_registry.h"
-#include "ops/batch_matmul.h"
 #include "ops/custom.h"
 #include "ops/op_utils.h"
 #include "ops/auto_generate/gen_lite_ops.h"

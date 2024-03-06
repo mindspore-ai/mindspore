@@ -21,7 +21,28 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_OPERATOR_IMPL(MatMulBiasAddReluFusion, MatMul);
+void MatMulBiasAddReluFusion::Init(bool transpose_a, bool transpose_b) {
+  set_transpose_a(transpose_a);
+  set_transpose_b(transpose_b);
+}
+void MatMulBiasAddReluFusion::set_transpose_a(bool transpose_a) {
+  (void)AddAttr(kTransposeA, api::MakeValue(transpose_a));
+}
+
+void MatMulBiasAddReluFusion::set_transpose_b(bool transpose_b) {
+  (void)AddAttr(kTransposeB, api::MakeValue(transpose_b));
+}
+
+bool MatMulBiasAddReluFusion::get_transpose_a() const {
+  auto value_ptr = GetAttr(kTransposeA);
+  return GetValue<bool>(value_ptr);
+}
+
+bool MatMulBiasAddReluFusion::get_transpose_b() const {
+  auto value_ptr = GetAttr(kTransposeB);
+  return GetValue<bool>(value_ptr);
+}
+MIND_API_OPERATOR_IMPL(MatMulBiasAddReluFusion, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameMatMulBiasAddReluFusion, MatMulBiasAddReluFusion);
 }  // namespace ops
 }  // namespace mindspore

@@ -22,7 +22,6 @@
 #include "ops/affine.h"
 #include "src/common/log_adapter.h"
 #include "ops/splice.h"
-#include "ops/mat_mul.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "nnacl/op_base.h"
 #include "ops/op_utils.h"

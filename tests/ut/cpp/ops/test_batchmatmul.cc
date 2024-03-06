@@ -16,13 +16,15 @@
 #include <vector>
 #include <memory>
 #include "common/common_test.h"
-#include "ops/test_ops.h"
-#include "ops/batch_matmul.h"
+#include "ops/ops_func_impl/batch_mat_mul.h"
 #include "ir/dtype/type.h"
 #include "abstract/dshape.h"
 #include "utils/tensor_construct_utils.h"
 #include "ir/primitive.h"
 #include "abstract/abstract_value.h"
+#include "ops/test_ops.h"
+#include "ops/test_value_utils.h"
+#include "ops/test_ops_cmp_utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -55,6 +57,7 @@ struct BmmTypes {
   TypePtr cast_type;
 };
 
+
 class TestBmm : public TestOps, public testing::WithParamInterface<std::tuple<BmmShapes, BmmTypes>> {};
 
 TEST_P(TestBmm, bmm) {
@@ -62,22 +65,27 @@ TEST_P(TestBmm, bmm) {
   const auto &type_param = std::get<1>(GetParam());
   auto prim = std::make_shared<Primitive>(kNameBatchMatMul);
   ASSERT_NE(prim, nullptr);
-  prim->set_attr("transpose_a", MakeValue<bool>(shape_param.transpose_a));
-  prim->set_attr("transpose_b", MakeValue<bool>(shape_param.transpose_b));
   if (type_param.cast_type != nullptr) {
     prim->set_attr("cast_type", type_param.cast_type);
   }
-  auto x = abstract::MakeAbstract(std::make_shared<abstract::Shape>(shape_param.x_shape), type_param.x_type);
-  auto y = abstract::MakeAbstract(std::make_shared<abstract::Shape>(shape_param.y_shape), type_param.y_type);
+  auto x = std::make_shared<abstract::AbstractTensor>(type_param.x_type, shape_param.x_shape);
+  auto y = std::make_shared<abstract::AbstractTensor>(type_param.y_type, shape_param.y_shape);
   ASSERT_NE(x, nullptr);
   ASSERT_NE(y, nullptr);
+  auto trans_a = CreateScalar(shape_param.transpose_a)->ToAbstract();
+  auto trans_b = CreateScalar(shape_param.transpose_b)->ToAbstract();
+  ASSERT_NE(trans_a, nullptr);
+  ASSERT_NE(trans_b, nullptr);
+  OpFuncImplPtr bmm_func_impl = std::make_shared<BatchMatMulFuncImpl>();
   if (shape_param.is_success && type_param.is_success) {
-    auto expect = abstract::MakeAbstract(std::make_shared<abstract::Shape>(shape_param.out_shape), type_param.out_type);
-    auto out_abstract = BatchMatmulInfer(nullptr, prim, {x, y});
-    ASSERT_NE(out_abstract, nullptr);
-    ASSERT_TRUE(*out_abstract == *expect);
+    auto expect_shape = std::make_shared<abstract::Shape>(shape_param.out_shape);
+    auto expect_type = std::make_shared<TensorType>(type_param.out_type);
+    auto inferred_shape = bmm_func_impl->InferShape(prim, {x, y, trans_a, trans_b});
+    auto inferred_type = bmm_func_impl->InferType(prim, {x, y, trans_a, trans_b});
+    ShapeCompare(inferred_shape, expect_shape);
+    TypeCompare(inferred_type, expect_type);
   } else {
-    ASSERT_ANY_THROW(BatchMatmulInfer(nullptr, prim, {x, y}));
+    ASSERT_ANY_THROW(bmm_func_impl->InferShape(prim, {x, y, trans_a}));
   }
 }
 
@@ -115,32 +123,5 @@ INSTANTIATE_TEST_CASE_P(
                      BmmTypes{kInt32, kInt8, false},
                    })));
 
-/// Feature: BatchMatmul infer
-/// Description: primitive has no attr "transpose_a"
-/// Expectation: infer will fail
-TEST_F(TestBmm, test_bmm_no_transpose_a_attr_fail) {
-  auto prim = std::make_shared<Primitive>(kNameBatchMatMul);
-  ASSERT_NE(prim, nullptr);
-  prim->set_attr("transpose_b", MakeValue<bool>(false));
-  auto x = abstract::MakeAbstract(std::make_shared<abstract::Shape>(std::vector<int64_t>{1, 3}), kFloat32);
-  auto y = abstract::MakeAbstract(std::make_shared<abstract::Shape>(std::vector<int64_t>{3, 1}), kFloat32);
-  ASSERT_NE(x, nullptr);
-  ASSERT_NE(y, nullptr);
-  ASSERT_ANY_THROW(BatchMatmulInfer(nullptr, prim, {x, y}));
-}
-
-/// Feature: BatchMatmul infer
-/// Description: primitive has no attr "transpose_b"
-/// Expectation: infer will fail
-TEST_F(TestBmm, test_bmm_no_transpose_b_attr_fail) {
-  auto prim = std::make_shared<Primitive>(kNameBatchMatMul);
-  ASSERT_NE(prim, nullptr);
-  prim->set_attr("transpose_a", MakeValue<bool>(false));
-  auto x = abstract::MakeAbstract(std::make_shared<abstract::Shape>(std::vector<int64_t>{1, 3}), kFloat32);
-  auto y = abstract::MakeAbstract(std::make_shared<abstract::Shape>(std::vector<int64_t>{3, 1}), kFloat32);
-  ASSERT_NE(x, nullptr);
-  ASSERT_NE(y, nullptr);
-  ASSERT_ANY_THROW(BatchMatmulInfer(nullptr, prim, {x, y}));
-}
 }  // namespace ops
 }  // namespace mindspore

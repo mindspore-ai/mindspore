@@ -101,17 +101,11 @@ ATTR_MAP(ScatterNdSub) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>
 OUTPUT_MAP(ScatterNdSub) = {{0, OUTPUT_DESC(var)}};
 REG_ADPT_DESC(ScatterNdSub, kNameScatterNdSub, ADPT_DESC(ScatterNdSub))
 
-// MatMul
-INPUT_MAP(MatMul) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
-ATTR_MAP(MatMul) = {{"transpose_x1", ATTR_DESC(transpose_x1, AnyTraits<bool>())},
-                    {"transpose_x2", ATTR_DESC(transpose_x2, AnyTraits<bool>())}};
-OUTPUT_MAP(MatMul) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(MatMul, kNameMatMul, ADPT_DESC(MatMulV2))
-
 // MatMulV2
 INPUT_MAP(MatMulV2) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}, {3, INPUT_DESC(bias)}};
-ATTR_MAP(MatMulV2) = {{"transpose_a", ATTR_DESC(transpose_x1, AnyTraits<bool>())},
-                      {"transpose_b", ATTR_DESC(transpose_x2, AnyTraits<bool>())}};
+ATTR_MAP(MatMulV2) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(MatMulV2) = {{kIndex4, ATTR_DESC(transpose_x1, AnyTraits<bool>())},
+                            {kIndex5, ATTR_DESC(transpose_x2, AnyTraits<bool>())}};
 OUTPUT_MAP(MatMulV2) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(MatMulV2, prim::kPrimMatMul->name(), ADPT_DESC(MatMulV2))
 REG_ADPT_DESC(MatMulV2Duplicate, prim::kPrimMatMulV2->name(), ADPT_DESC(MatMulV2))
@@ -169,9 +163,10 @@ OUTPUT_MAP(DiagPartD) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(DiagPartD, kNameDiagPartD, ADPT_DESC(DiagPartD))
 
 // BatchMatMul
-INPUT_MAP(BatchMatMul) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
-ATTR_MAP(BatchMatMul) = {{"transpose_a", ATTR_DESC(adj_x1, AnyTraits<bool>())},
-                         {"transpose_b", ATTR_DESC(adj_x2, AnyTraits<bool>())}};
+INPUT_MAP(BatchMatMul) = {{kIndex1, INPUT_DESC(x1)}, {kIndex2, INPUT_DESC(x2)}};
+ATTR_MAP(BatchMatMul) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(BatchMatMul) = {{kIndex3, ATTR_DESC(adj_x1, AnyTraits<bool>())},
+                               {kIndex4, ATTR_DESC(adj_x2, AnyTraits<bool>())}};
 OUTPUT_MAP(BatchMatMul) = {{0, OUTPUT_DESC(y)}};
 
 // BatchMatMul->BatchMatMulV2

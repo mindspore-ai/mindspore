@@ -18,17 +18,30 @@
 #define MINDSPORE_CORE_OPS_FUSION_MATMUL_BIASADD_RELU_FUSION_H_
 #include "mindapi/base/types.h"
 #include "ops/base_operator.h"
-#include "ops/mat_mul.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameMatMulBiasAddReluFusion = "MatMulBiasAddReluFusion";
 /// \brief MatMulBiasAddReluFusion.
-class MIND_API MatMulBiasAddReluFusion : public MatMul {
+class MIND_API MatMulBiasAddReluFusion : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(MatMulBiasAddReluFusion);
   /// \brief Constructor.
-  MatMulBiasAddReluFusion() : MatMul(kNameMatMulBiasAddReluFusion) {}
+  MatMulBiasAddReluFusion() : BaseOperator(kNameMatMulBiasAddReluFusion) {}
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.MatMulBiasAddReluFusion for the inputs.
+  void Init(bool transpose_a = false, bool transpose_b = false);
+  /// \brief Set transpose_a.
+  void set_transpose_a(bool transpose_a);
+  /// \brief Set transpose_b.
+  void set_transpose_b(bool transpose_b);
+  /// \brief Get transpose_a.
+  ///
+  /// \return transpose_a.
+  bool get_transpose_a() const;
+  /// \brief Get transpose_b.
+  ///
+  /// \return transpose_b.
+  bool get_transpose_b() const;
 };
 }  // namespace ops
 }  // namespace mindspore

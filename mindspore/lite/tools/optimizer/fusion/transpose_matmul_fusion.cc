@@ -23,7 +23,7 @@
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/optimizer/common/format_utils.h"
 #include "nnacl/op_base.h"
-#include "ops/mat_mul.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/op_utils.h"
 
 namespace mindspore {

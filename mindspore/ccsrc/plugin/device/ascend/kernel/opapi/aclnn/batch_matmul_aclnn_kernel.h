@@ -40,6 +40,19 @@ class BMMAclnnKernelMod : public AclnnKernelMod {
   std::pair<KernelTensor *, bool> input_a_;
   std::pair<KernelTensor *, bool> input_b_;
 };
+
+class BMMExtAclnnKernelMod : public AclnnKernelMod {
+ public:
+  BMMExtAclnnKernelMod() : AclnnKernelMod("aclnnBatchMatMul") {}
+  ~BMMExtAclnnKernelMod() = default;
+
+  void GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+              const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
+
+ private:
+  DEFINE_GET_WORKSPACE_FOR_RESIZE()
+};
 }  // namespace kernel
 }  // namespace mindspore
 
