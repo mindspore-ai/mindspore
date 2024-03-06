@@ -58,7 +58,7 @@ typedef struct _TraceContext {
   std::map<size_t, PyObject *> *cache;
 } TraceContext, *PTraceContext;
 
-class Trace {
+class Trace : public std::enable_shared_from_this<Trace> {
  public:
   Trace(PyObject *obj, std::shared_ptr<Trace> origin);
   virtual ~Trace();
@@ -81,6 +81,9 @@ class Trace {
   virtual const InfoPack &Info() = 0;
   virtual void Cache(PTraceContext context, PyObject *obj);
   virtual bool IsConst() const;
+  virtual std::shared_ptr<Trace> Optimize();
+  virtual std::shared_ptr<Trace> This();
+  virtual void SetRelaxCount(int cnt);
 
  protected:
   PyObject *obj_;
@@ -90,6 +93,8 @@ class Trace {
   std::string strTrace_;
   InfoPackPtr info_;
   bool is_const_;
+  int relax_count_;
+  int relax_limit_;
 };
 using TracePtr = std::shared_ptr<Trace>;
 using TraceVector = std::vector<TracePtr>;
@@ -133,6 +138,8 @@ class ItemTrace : public Trace {
   virtual void Detach();
   std::string FormatString() override { return ToString(); }
   virtual const InfoPack &Info();
+  virtual TracePtr Optimize();
+  virtual void SetRelaxCount(int cnt);
 
  protected:
   TracePtr item_;
@@ -149,6 +156,8 @@ class AttrTrace : public Trace {
   virtual bool operator==(const Trace &trace);
   std::string FormatString() override { return ToString(); }
   virtual const InfoPack &Info();
+  virtual TracePtr Optimize();
+  virtual void SetRelaxCount(int cnt);
 
  protected:
   std::string attr_;
@@ -183,6 +192,8 @@ class TypeTrace : public Trace {
   std::string FormatString() override { return ToString(); }
   virtual const InfoPack &Info();
   virtual void Detach();
+  virtual TracePtr Optimize();
+  virtual void SetRelaxCount(int cnt);
 
  protected:
   PyTypeObject *pType_;
@@ -193,6 +204,11 @@ class OpTrace : public Trace {
  public:
   OpTrace(PyObject *obj, int opcode, int opargs, TraceVector params, std::string name = "");
   virtual ~OpTrace() = default;
+  virtual int GetOpCode();
+  virtual int GetOpArgs();
+  virtual TracePtr GetParam(size_t idx);
+  virtual size_t GetParamCount();
+  virtual std::string GetName();
   virtual void Replace(std::shared_ptr<Trace> dst, std::shared_ptr<Trace> src);
   virtual PyObject *Retrieve(PTraceContext context, bool perf = false);
   virtual std::string ToString(bool include_param = true);
@@ -200,6 +216,21 @@ class OpTrace : public Trace {
   virtual void Detach();
   std::string FormatString() override;
   virtual const InfoPack &Info();
+  virtual TracePtr Optimize();
+  virtual void SetRelaxCount(int cnt);
+
+ protected:
+  virtual TracePtr RemoveCastDuplicatePatternPass();
+  virtual TracePtr RemovePrimOutIsTensorPass();
+  virtual TracePtr RemoveEmptyTensorPass();
+  virtual TracePtr RemoveCastPass();
+  virtual void JudgeDTypeChangePass();
+  virtual void JudgeDTypeScopePass();
+  virtual void JudgeCodeChangePass();
+  virtual void JudgeTrainFlagPass();
+  virtual void JudgeCompareConstPass();
+  virtual void JudgeContainsConstPass();
+  virtual void JudgeInplaceAddConstPass();
 
  protected:
   int opcode_;
@@ -239,6 +270,7 @@ class UnsupportedTrace : public Trace {
   virtual void Detach();
   std::string FormatString() override;
   virtual const InfoPack &Info();
+  virtual void SetRelaxCount(int cnt);
 
  protected:
   TraceVector params_;

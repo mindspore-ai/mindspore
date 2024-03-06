@@ -16,278 +16,312 @@
 #include "pipeline/jit/pi/graph_guard/info.h"
 #include <sstream>
 #include <map>
+#include <unordered_map>
+#include <algorithm>
+#include <numeric>
+#include "pipeline/jit/pi/utils/utils.h"
 
 namespace mindspore {
 namespace pijit {
 
-static constexpr char SEP_FLAG[] = "\\";
-static constexpr char BEGIN_FLAG[] = "{";
-static constexpr char END_FLAG[] = "}";
-static constexpr char ARRAY_BEGIN_FLAG[] = "[";
-static constexpr char ARRAY_END_FLAG[] = "[";
+static constexpr char kSepFlag = '\\';
+static constexpr char kBeginFlag = '{';
+static constexpr char kEndFlag = '}';
+static constexpr char kArrayBeginFlag = '[';
+static constexpr char kArrayEndFlag = ']';
+static constexpr size_t kInitLimit = 1024;
 
-InfoPack::InfoPack() : hash_(INVALID_HASH), id_(INVALID_ID), info_("") {}
+template <typename T>
+size_t StoreScalar(uint8_t *buf, size_t ptr, T val) {
+  uint8_t *pVal = reinterpret_cast<uint8_t *>(&val);
+  constexpr int kScalarSize = sizeof(T);
+  for (int idx = 0; idx < kScalarSize; ++idx) {
+    buf[ptr++] = pVal[idx];
+  }
+  return ptr;
+}
 
-InfoPack::InfoPack(const InfoPack &dup) : hash_(dup.Hash()), id_(dup.Id()), info_(dup.ToString()) {}
+template <typename T>
+size_t AppendScalar(uint8_t *buf, size_t ptr, T v) {
+  ptr = StoreScalar(buf, ptr, v);
+  ptr = StoreScalar(buf, ptr, kSepFlag);
+  return ptr;
+}
 
-size_t InfoPack::Hash() const { return hash_; }
+template <typename T>
+size_t StoreVector(uint8_t *buf, size_t ptr, const std::vector<T> &val) {
+  T *pVal = const_cast<T *>(val.data());
+  size_t szVal = val.size() * sizeof(T);
+  ptr = StoreScalar(buf, ptr, szVal);
+  memcpy(buf + ptr, pVal, szVal);
+  return ptr + szVal;
+}
+
+template <typename T>
+size_t AppendVector(uint8_t *buf, size_t ptr, const std::vector<T> &v) {
+  ptr = StoreScalar(buf, ptr, kArrayBeginFlag);
+  ptr = StoreVector(buf, ptr, v);
+  ptr = StoreScalar(buf, ptr, kArrayEndFlag);
+  ptr = StoreScalar(buf, ptr, kSepFlag);
+  return ptr;
+}
+
+InfoPack::InfoPack() : id_(kInvalidId), buf_(std::make_unique<uint8_t[]>(kInitLimit)), ptr_(0), limit_(kInitLimit) {}
+
+InfoPack::InfoPack(const InfoPack &dup)
+    : id_(dup.id_), buf_(std::make_unique<uint8_t[]>(dup.ptr_)), ptr_(dup.ptr_), limit_(dup.ptr_) {
+  memcpy(buf_.get(), dup.buf_.get(), dup.ptr_);
+}
+
+InfoPack::~InfoPack() { buf_.reset(nullptr); }
 
 size_t InfoPack::Id() const { return id_; }
 
-std::string InfoPack::ToString() const { return info_; }
-
-void InfoPack::Update() {
-  if (hash_ == INVALID_HASH) {
-    hash_ = CalcHash(info_);
+uint8_t *InfoPack::Buf(size_t *sz) const {
+  if (sz != nullptr) {
+    *sz = ptr_;
+    return buf_.get();
   }
-  if (id_ == INVALID_ID) {
-    id_ = CalcId(info_);
-  }
+  return nullptr;
 }
 
-bool InfoPack::operator()(const InfoPack &lhs, const InfoPack &rhs) const { return lhs.ToString() == rhs.ToString(); }
-
-size_t InfoPack::operator()(const InfoPack &k) const { return Hash(); }
+void InfoPack::Update() { id_ = CalcBuffer(buf_.get(), ptr_); }
 
 InfoPack &InfoPack::Begin() {
-  info_ += BEGIN_FLAG;
+  AllocIfNeed(sizeof(kBeginFlag));
+  *(buf_.get() + ptr_++) = (uint8_t)kBeginFlag;
   return *this;
 }
 
 InfoPack &InfoPack::End() {
-  if (info_.rfind(SEP_FLAG) == info_.size() - 1) {
-    info_ = info_.substr(0, info_.size() - 1);
+  if (buf_.get()[ptr_ - 1] == kSepFlag) {
+    buf_.get()[ptr_ - 1] = kEndFlag;
+  } else {
+    AllocIfNeed(sizeof(kEndFlag));
+    *(buf_.get() + ptr_++) = (uint8_t)kEndFlag;
   }
-  info_ += END_FLAG;
   return *this;
 }
 
-#define APPEND_SCALAR(v) info_ += std::to_string(v) + SEP_FLAG
-#define APPEND_SCALAR_PACK(v) \
-  std::stringstream ss;       \
-  ss << std::hex << v;        \
-  info_ += ss.str() + SEP_FLAG
-
 InfoPack &InfoPack::operator<<(int8_t v) {
-  APPEND_SCALAR(v);
+  AllocIfNeed(sizeof(v) + sizeof(kSepFlag));
+  ptr_ = AppendScalar(buf_.get(), ptr_, v);
   return *this;
 }
 
 InfoPack &InfoPack::operator<<(uint8_t v) {
-  APPEND_SCALAR(v);
+  AllocIfNeed(sizeof(v) + sizeof(kSepFlag));
+  ptr_ = AppendScalar(buf_.get(), ptr_, v);
   return *this;
 }
 
 InfoPack &InfoPack::operator<<(int16_t v) {
-  APPEND_SCALAR_PACK(v);
+  AllocIfNeed(sizeof(v) + sizeof(kSepFlag));
+  ptr_ = AppendScalar(buf_.get(), ptr_, v);
   return *this;
 }
 
 InfoPack &InfoPack::operator<<(uint16_t v) {
-  APPEND_SCALAR_PACK(v);
+  AllocIfNeed(sizeof(v) + sizeof(kSepFlag));
+  ptr_ = AppendScalar(buf_.get(), ptr_, v);
   return *this;
 }
 
 InfoPack &InfoPack::operator<<(int32_t v) {
-  APPEND_SCALAR_PACK(v);
+  AllocIfNeed(sizeof(v) + sizeof(kSepFlag));
+  ptr_ = AppendScalar(buf_.get(), ptr_, v);
   return *this;
 }
 
 InfoPack &InfoPack::operator<<(uint32_t v) {
-  APPEND_SCALAR_PACK(v);
+  AllocIfNeed(sizeof(v) + sizeof(kSepFlag));
+  ptr_ = AppendScalar(buf_.get(), ptr_, v);
   return *this;
 }
 
 InfoPack &InfoPack::operator<<(int64_t v) {
-  APPEND_SCALAR_PACK(v);
+  AllocIfNeed(sizeof(v) + sizeof(kSepFlag));
+  ptr_ = AppendScalar(buf_.get(), ptr_, v);
   return *this;
 }
 
 InfoPack &InfoPack::operator<<(uint64_t v) {
-  APPEND_SCALAR_PACK(v);
+  AllocIfNeed(sizeof(v) + sizeof(kSepFlag));
+  ptr_ = AppendScalar(buf_.get(), ptr_, v);
   return *this;
 }
 
 InfoPack &InfoPack::operator<<(float v) {
-  APPEND_SCALAR_PACK(v);
+  AllocIfNeed(sizeof(v) + sizeof(kSepFlag));
+  ptr_ = AppendScalar(buf_.get(), ptr_, v);
   return *this;
 }
 
 InfoPack &InfoPack::operator<<(double v) {
-  APPEND_SCALAR(v);
+  AllocIfNeed(sizeof(v) + sizeof(kSepFlag));
+  ptr_ = AppendScalar(buf_.get(), ptr_, v);
   return *this;
 }
 
-InfoPack &InfoPack::operator<<(bool v) {
-  info_ += std::to_string(v ? 1 : 0) + SEP_FLAG;
+InfoPack &InfoPack::operator<<(bool vv) {
+  uint8_t v = vv ? 1 : 0;
+  AllocIfNeed(sizeof(v) + sizeof(kSepFlag));
+  ptr_ = AppendScalar(buf_.get(), ptr_, v);
   return *this;
 }
 
 InfoPack &InfoPack::operator<<(void *v) {
-  std::stringstream ss;
-  ss << v;
-  info_ += ss.str() + SEP_FLAG;
+  AllocIfNeed(sizeof(v) + sizeof(kSepFlag));
+  ptr_ = AppendScalar(buf_.get(), ptr_, v);
   return *this;
 }
 
-InfoPack &InfoPack::operator<<(PyObject *v) {
-  info_ += std::to_string(v != nullptr ? 1 : 0) + SEP_FLAG;
-  if (v != nullptr) {
-    info_ += std::to_string(CalcString(std::string(py::str(v)))) + SEP_FLAG;
+InfoPack &InfoPack::operator<<(PyObject *vv) {
+  uint8_t v = vv != nullptr ? 1 : 0;
+  if (vv != nullptr) {
+    size_t w = CalcString(std::string(py::str(vv)));
+    AllocIfNeed(sizeof(v) + sizeof(w) + sizeof(kSepFlag));
+    ptr_ = StoreScalar(buf_.get(), ptr_, v);
+    ptr_ = AppendScalar(buf_.get(), ptr_, w);
+  } else {
+    AllocIfNeed(sizeof(v) + sizeof(kSepFlag));
+    ptr_ = AppendScalar(buf_.get(), ptr_, v);
   }
   return *this;
 }
 
-InfoPack &InfoPack::operator<<(mindspore::BasePtr v) {
-  info_ += std::to_string(v != nullptr ? 1 : 0) + SEP_FLAG;
-  if (v != nullptr) {
-    info_ += v->ToString();
+InfoPack &InfoPack::operator<<(mindspore::BasePtr vv) {
+  uint8_t v = vv != nullptr ? 1 : 0;
+  if (vv != nullptr) {
+    size_t w = CalcString(vv->ToString());
+    AllocIfNeed(sizeof(v) + sizeof(w) + sizeof(kSepFlag));
+    ptr_ = StoreScalar(buf_.get(), ptr_, v);
+    ptr_ = AppendScalar(buf_.get(), ptr_, w);
+  } else {
+    AllocIfNeed(sizeof(v) + sizeof(kSepFlag));
+    ptr_ = AppendScalar(buf_.get(), ptr_, v);
   }
   return *this;
 }
 
-InfoPack &InfoPack::operator<<(const std::string &v) {
-  info_ += std::to_string(CalcString(v)) + SEP_FLAG;
+InfoPack &InfoPack::operator<<(const std::string &vv) {
+  size_t v = CalcString(vv);
+  AllocIfNeed(sizeof(v) + sizeof(kSepFlag));
+  ptr_ = AppendScalar(buf_.get(), ptr_, v);
   return *this;
 }
-
-#define APPEND_ARRAY(v)                            \
-  info_ += ARRAY_BEGIN_FLAG;                       \
-  for (auto val : v) {                             \
-    info_ += std::to_string(val) + SEP_FLAG;       \
-  }                                                \
-  if (info_.rfind(SEP_FLAG) == info_.size() - 1) { \
-    info_ = info_.substr(0, info_.size() - 1);     \
-  }                                                \
-  info_ += ARRAY_END_FLAG;                         \
-  info_ += SEP_FLAG
-
-#define APPEND_ARRAY_PACK(v)                       \
-  info_ += ARRAY_BEGIN_FLAG;                       \
-  for (auto val : v) {                             \
-    std::stringstream ss;                          \
-    ss << std::hex << val;                         \
-    info_ += ss.str() + SEP_FLAG;                  \
-  }                                                \
-  if (info_.rfind(SEP_FLAG) == info_.size() - 1) { \
-    info_ = info_.substr(0, info_.size() - 1);     \
-  }                                                \
-  info_ += ARRAY_END_FLAG;                         \
-  info_ += SEP_FLAG
 
 InfoPack &InfoPack::operator<<(const std::vector<int8_t> &v) {
-  APPEND_ARRAY(v);
+  AllocIfNeed(sizeof(kArrayBeginFlag) + sizeof(kArrayEndFlag) + sizeof(kSepFlag) + sizeof(v[0]) * v.size() +
+              sizeof(size_t));
+  ptr_ = AppendVector(buf_.get(), ptr_, v);
   return *this;
 }
 
 InfoPack &InfoPack::operator<<(const std::vector<uint8_t> &v) {
-  APPEND_ARRAY(v);
+  AllocIfNeed(sizeof(kArrayBeginFlag) + sizeof(kArrayEndFlag) + sizeof(kSepFlag) + sizeof(v[0]) * v.size() +
+              sizeof(size_t));
+  ptr_ = AppendVector(buf_.get(), ptr_, v);
   return *this;
 }
 
 InfoPack &InfoPack::operator<<(const std::vector<int16_t> &v) {
-  APPEND_ARRAY_PACK(v);
+  AllocIfNeed(sizeof(kArrayBeginFlag) + sizeof(kArrayEndFlag) + sizeof(kSepFlag) + sizeof(v[0]) * v.size() +
+              sizeof(size_t));
+  ptr_ = AppendVector(buf_.get(), ptr_, v);
   return *this;
 }
 
 InfoPack &InfoPack::operator<<(const std::vector<uint16_t> &v) {
-  APPEND_ARRAY_PACK(v);
+  AllocIfNeed(sizeof(kArrayBeginFlag) + sizeof(kArrayEndFlag) + sizeof(kSepFlag) + sizeof(v[0]) * v.size() +
+              sizeof(size_t));
+  ptr_ = AppendVector(buf_.get(), ptr_, v);
   return *this;
 }
 
 InfoPack &InfoPack::operator<<(const std::vector<int32_t> &v) {
-  APPEND_ARRAY_PACK(v);
+  AllocIfNeed(sizeof(kArrayBeginFlag) + sizeof(kArrayEndFlag) + sizeof(kSepFlag) + sizeof(v[0]) * v.size() +
+              sizeof(size_t));
+  ptr_ = AppendVector(buf_.get(), ptr_, v);
   return *this;
 }
 
 InfoPack &InfoPack::operator<<(const std::vector<uint32_t> &v) {
-  APPEND_ARRAY_PACK(v);
+  AllocIfNeed(sizeof(kArrayBeginFlag) + sizeof(kArrayEndFlag) + sizeof(kSepFlag) + sizeof(v[0]) * v.size() +
+              sizeof(size_t));
+  ptr_ = AppendVector(buf_.get(), ptr_, v);
   return *this;
 }
 
 InfoPack &InfoPack::operator<<(const std::vector<int64_t> &v) {
-  APPEND_ARRAY_PACK(v);
+  AllocIfNeed(sizeof(kArrayBeginFlag) + sizeof(kArrayEndFlag) + sizeof(kSepFlag) + sizeof(v[0]) * v.size() +
+              sizeof(size_t));
+  ptr_ = AppendVector(buf_.get(), ptr_, v);
   return *this;
 }
 
 InfoPack &InfoPack::operator<<(const std::vector<uint64_t> &v) {
-  APPEND_ARRAY_PACK(v);
+  AllocIfNeed(sizeof(kArrayBeginFlag) + sizeof(kArrayEndFlag) + sizeof(kSepFlag) + sizeof(v[0]) * v.size() +
+              sizeof(size_t));
+  ptr_ = AppendVector(buf_.get(), ptr_, v);
   return *this;
 }
 
 InfoPack &InfoPack::operator<<(const std::vector<float> &v) {
-  APPEND_ARRAY(v);
+  AllocIfNeed(sizeof(kArrayBeginFlag) + sizeof(kArrayEndFlag) + sizeof(kSepFlag) + sizeof(v[0]) * v.size() +
+              sizeof(size_t));
+  ptr_ = AppendVector(buf_.get(), ptr_, v);
   return *this;
 }
 
 InfoPack &InfoPack::operator<<(const std::vector<double> &v) {
-  APPEND_ARRAY(v);
+  AllocIfNeed(sizeof(kArrayBeginFlag) + sizeof(kArrayEndFlag) + sizeof(kSepFlag) + sizeof(v[0]) * v.size() +
+              sizeof(size_t));
+  ptr_ = AppendVector(buf_.get(), ptr_, v);
   return *this;
 }
 
-InfoPack &InfoPack::operator<<(const std::vector<bool> &v) {
-  info_ += ARRAY_BEGIN_FLAG;
-  for (auto val : v) {
-    info_ += std::to_string(val ? 1 : 0) + SEP_FLAG;
-  }
-  if (info_.rfind(SEP_FLAG) == info_.size() - 1) {
-    info_ = info_.substr(0, info_.size() - 1);
-  }
-  info_ += ARRAY_END_FLAG;
-  info_ += SEP_FLAG;
+InfoPack &InfoPack::operator<<(const std::vector<bool> &vv) {
+  std::vector<uint8_t> v;
+  std::transform(vv.begin(), vv.end(), std::back_inserter(v), [](const auto &item) { return item ? 1 : 0; });
+  AllocIfNeed(sizeof(kArrayBeginFlag) + sizeof(kArrayEndFlag) + sizeof(kSepFlag) + sizeof(v[0]) * v.size() +
+              sizeof(size_t));
+  ptr_ = AppendVector(buf_.get(), ptr_, v);
   return *this;
 }
 
-InfoPack &InfoPack::operator<<(const std::vector<std::string> &v) {
-  info_ += ARRAY_BEGIN_FLAG;
-  for (auto val : v) {
-    info_ += std::to_string(CalcString(val)) + SEP_FLAG;
-  }
-  if (info_.rfind(SEP_FLAG) == info_.size() - 1) {
-    info_ = info_.substr(0, info_.size() - 1);
-  }
-  info_ += ARRAY_END_FLAG;
-  info_ += SEP_FLAG;
+InfoPack &InfoPack::operator<<(const std::vector<std::string> &vv) {
+  std::vector<size_t> v;
+  std::transform(vv.begin(), vv.end(), std::back_inserter(v), [this](const auto &item) { return CalcString(item); });
+  AllocIfNeed(sizeof(kArrayBeginFlag) + sizeof(kArrayEndFlag) + sizeof(kSepFlag) + sizeof(v[0]) * v.size() +
+              sizeof(size_t));
+  ptr_ = AppendVector(buf_.get(), ptr_, v);
   return *this;
 }
 
 InfoPack &InfoPack::operator<<(const std::vector<void *> &v) {
-  info_ += ARRAY_BEGIN_FLAG;
-  for (auto p : v) {
-    std::stringstream ss;
-    ss << p;
-    info_ += ss.str() + SEP_FLAG;
-  }
-  if (info_.rfind(SEP_FLAG) == info_.size() - 1) {
-    info_ = info_.substr(0, info_.size() - 1);
-  }
-  info_ += ARRAY_END_FLAG;
-  info_ += SEP_FLAG;
+  AllocIfNeed(sizeof(kArrayBeginFlag) + sizeof(kArrayEndFlag) + sizeof(kSepFlag) + sizeof(v[0]) * v.size() +
+              sizeof(size_t));
+  ptr_ = AppendVector(buf_.get(), ptr_, v);
   return *this;
 }
 
-InfoPack &InfoPack::operator<<(const std::vector<PyObject *> &v) {
-  info_ += ARRAY_BEGIN_FLAG;
-  for (auto p : v) {
-    info_ += std::to_string(p != nullptr ? 1 : 0) + SEP_FLAG;
-    if (p != nullptr) {
-      info_ += std::to_string(CalcString(std::string(py::str(p)))) + SEP_FLAG;
-    }
-  }
-  if (info_.rfind(SEP_FLAG) == info_.size() - 1) {
-    info_ = info_.substr(0, info_.size() - 1);
-  }
-  info_ += ARRAY_END_FLAG;
-  info_ += SEP_FLAG;
+InfoPack &InfoPack::operator<<(const std::vector<PyObject *> &vv) {
+  std::vector<size_t> v;
+  std::transform(vv.begin(), vv.end(), std::back_inserter(v),
+                 [this](const auto &item) { return CalcString(std::string(py::str(item))); });
+  AllocIfNeed(sizeof(kArrayBeginFlag) + sizeof(kArrayEndFlag) + sizeof(kSepFlag) + sizeof(v[0]) * v.size() +
+              sizeof(size_t));
+  ptr_ = AppendVector(buf_.get(), ptr_, v);
   return *this;
 }
 
 InfoPack &InfoPack::operator<<(const InfoPack &v) {
-  info_ += v.ToString() + SEP_FLAG;
+  size_t id = v.Id();
+  AllocIfNeed(sizeof(id) + sizeof(kSepFlag));
+  ptr_ = AppendScalar(buf_.get(), ptr_, id);
   return *this;
 }
-
-size_t InfoPack::CalcHash(std::string v) { return std::hash<std::string>()(v); }
 
 class String2Id {
  public:
@@ -306,13 +340,61 @@ class String2Id {
   std::map<std::string, size_t> map_;
 };
 
-static String2Id g_IdMap;
-
-size_t InfoPack::CalcId(std::string v) { return g_IdMap.Insert(v); }
-
 static String2Id g_StrMap;
 
 size_t InfoPack::CalcString(std::string v) { return g_StrMap.Insert(v); }
 
+struct BufferHash {
+  bool operator()(const std::vector<uint8_t> &lhs, const std::vector<uint8_t> &rhs) const {
+    if (lhs.size() == rhs.size()) {
+      return memcmp(lhs.data(), rhs.data(), lhs.size()) == 0;
+    }
+    return false;
+  }
+  size_t operator()(const std::vector<uint8_t> &k) const {
+    size_t ret = 0;
+    ret = std::accumulate(k.begin(), k.end(), ret, [](size_t key, uint8_t v) {
+      static constexpr int kShiftKey = 3;
+      return (key << kShiftKey) + v;
+    });
+    return ret;
+  }
+};
+
+class Buffer2Id {
+ public:
+  Buffer2Id() = default;
+  ~Buffer2Id() = default;
+  size_t Insert(uint8_t *buf, size_t sz) {
+    std::vector<uint8_t> vec(sz);
+    memcpy(vec.data(), buf, sz);
+    auto it = map_.find(vec);
+    if (it == map_.end()) {
+      size_t ret = map_.size();
+      map_[vec] = ret;
+      return ret;
+    } else {
+      return it->second;
+    }
+  }
+
+ protected:
+  std::unordered_map<std::vector<uint8_t>, size_t, BufferHash, BufferHash> map_;
+};
+
+static Buffer2Id g_BufMap;
+
+size_t InfoPack::CalcBuffer(uint8_t *buf, size_t sz) { return g_BufMap.Insert(buf, sz); }
+
+void InfoPack::AllocIfNeed(size_t need) {
+  if (limit_ < need + ptr_) {
+    do {
+      limit_ += kInitLimit;
+    } while (limit_ < need + ptr_);
+    auto buf = std::make_unique<uint8_t[]>(limit_);
+    memcpy(buf.get(), buf_.get(), ptr_ * sizeof(uint8_t));
+    buf_.reset(buf.release());
+  }
+}
 }  // namespace pijit
 }  // namespace mindspore
