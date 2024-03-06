@@ -24,7 +24,6 @@
 #include "src/tensor.h"
 
 namespace mindspore::lite::quant {
-#ifdef ENABLE_EIGEN
 template <typename T>
 int CalculateHessianMatrix(void *x, void *y, int64_t m, int64_t n, bool transpose = false) {
   CHECK_NULL_RETURN(x);
@@ -118,24 +117,6 @@ int CalculateCholeskyInverse(void *x, void *y, int64_t n, bool upper = false) {
   }
   return RET_OK;
 }
-#else
-template <typename T>
-int CalculateHessianMatrix(void *x, void *y, int64_t m, int64_t n, bool transpose = false) {
-  MS_LOG(ERROR) << "Unsupported feature when eigen not imported.";
-  return RET_ERROR;
-}
-
-int CalculateCholesky(const void *x, void *y, std::vector<int64_t> dims, bool upper = false) {
-  MS_LOG(ERROR) << "Unsupported feature when eigen not imported.";
-  return RET_ERROR;
-}
-
-template <typename T>
-int CalculateCholeskyInverse(void *x, void *y, int64_t n, bool upper = false) {
-  MS_LOG(ERROR) << "Unsupported feature when eigen not imported.";
-  return RET_ERROR;
-}
-#endif
 }  // namespace mindspore::lite::quant
 
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_EIGEN_UTIL_H_
