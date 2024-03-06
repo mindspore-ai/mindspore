@@ -498,7 +498,7 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
                 data_list[key].append(dims)
                 tensor_type = str(param["data"].dtype)
                 data_list[key].append(tensor_type)
-                data = Tensor_(param["data"])
+                data = param["data"]
                 data_list[key].append(data)
 
     if async_save:
@@ -517,7 +517,21 @@ def _convert_list_to_param_list(save_obj, choice_func):
     if not save_obj:
         return param_list
     if isinstance(save_obj[0], dict):
-        param_list = [param for param in save_obj if choice_func is None or choice_func(param["name"])]
+        for param in save_obj:
+            if isinstance(param, dict) and "name" in param and "data" in param:
+                if not isinstance(param["name"], str):
+                    raise TypeError(f"For save_checkpoint, when save_obj is a list of dict items, the name in dict "
+                                    f"should be string, but got {type(param['name'])}.")
+                if not isinstance(param["data"], Tensor):
+                    raise TypeError(f"For save_checkpoint, when save_obj is a list of dict items, the data in dict "
+                                    f"should be parameter, but got {type(param['data'])}.")
+                if choice_func is not None and not choice_func(param["name"]):
+                    continue
+                each_param = {"name": param["name"], "data": param["data"]}
+                param_list.append(each_param)
+            else:
+                raise TypeError(f"For save_checkpoint, save_obj should be a list of dict items, and the dict should"
+                                f"have key values 'name' and 'value', but got {type(param)} and {param}.")
     else:
         for param in save_obj:
             if isinstance(param, Parameter):

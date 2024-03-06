@@ -203,3 +203,28 @@ def test_save_load_checkpoint_with_bf16_pynative_accuracy(mode):
         if os.path.exists(file_name):
             os.chmod(file_name, stat.S_IWRITE)
             os.remove(file_name)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_list_ckpt_error(mode):
+    """
+    Feature: save_checkpoint raises list typeerror.
+    Description: Whether typeerror of list can be caught.
+    Expectation: success.
+    """
+    x = ms.Parameter(ms.Tensor([1, 2, 3.4]))
+
+    save_obj1 = [{"name": 12, "data": x}]
+    with pytest.raises(TypeError):
+        ms.save_checkpoint(save_obj1, "./tmp.ckpt")
+
+    save_obj1 = [{"name": "parameter1", "data": 12}]
+    with pytest.raises(TypeError):
+        ms.save_checkpoint(save_obj1, "./tmp.ckpt")
