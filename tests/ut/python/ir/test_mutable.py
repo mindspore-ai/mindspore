@@ -343,3 +343,8 @@ def test_mutable_with_bool():
         return x
     out = net()
     assert isinstance(out, bool) and not out
+
+    @jit
+    def check_type(x):
+        return isinstance(x, bool)
+    assert check_type(data)
