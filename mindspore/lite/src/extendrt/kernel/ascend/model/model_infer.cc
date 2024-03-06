@@ -61,6 +61,23 @@ bool ModelInfer::Init() {
   }
   MS_LOG(INFO) << "Open device " << device_id << " success.";
 
+  std::string overflow_mode = common::GetEnv("MS_ASCEND_CHECK_OVERFLOW_MODE");
+  if (overflow_mode == "INFNAN_MODE") {
+    auto mode = aclrtFloatOverflowMode::ACL_RT_OVERFLOW_MODE_INFNAN;
+    ret = aclrtSetDeviceSatMode(mode);
+    if (ret != ACL_SUCCESS) {
+      MS_LOG(ERROR) << "Set INFNAN mode failed";
+      return false;
+    }
+  } else if (overflow_mode == "SATURATION_MODE") {
+    auto mode = aclrtFloatOverflowMode::ACL_RT_OVERFLOW_MODE_SATURATION;
+    ret = aclrtSetDeviceSatMode(mode);
+    if (ret != ACL_SUCCESS) {
+      MS_LOG(ERROR) << "Set SATURATION mode failed";
+      return false;
+    }
+  }
+
   ret = aclrtGetCurrentContext(&context_);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Acl create context failed.";
