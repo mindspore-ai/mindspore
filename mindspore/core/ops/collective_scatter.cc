@@ -75,7 +75,10 @@ class CollectiveScatterInfer : public abstract::OpInferBase {
       return abstract_shape;
     }
     auto shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(abstract_shape)[kShape];
-    if (shape.empty() || shape[0] % rank_size != 0) {
+    if (shape.empty()) {
+      MS_EXCEPTION(ValueError) << "'input_shape' is empty. ";
+    }
+    if (shape[0] % rank_size != 0) {
       MS_EXCEPTION(ValueError)
         << "the first dimension for 'input_shape' must be divided by 'rank_size', but got input_shape[0]: " << shape[0]
         << ", rank_size: " << rank_size;
