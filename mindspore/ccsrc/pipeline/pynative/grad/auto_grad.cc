@@ -372,7 +372,7 @@ void SetJitCallGraph(const CNodePtr &cnode, const FuncGraphPtr &call_graph, cons
     need_compile = resource->GetResult(kNeedCompile).cast<bool>();
   }
   MS_EXCEPTION_IF_NULL(resource);
-  auto fn = [resource, need_compile, is_control_flow, &kNeedCompile](const VectorRef &arg_list) -> VectorRef {
+  auto fn = [resource, need_compile, is_control_flow, kNeedCompile](const VectorRef &arg_list) -> VectorRef {
     if (need_compile) {
       MS_LOG(DEBUG) << "Start emit action for graph " << resource->func_graph()->ToString();
       auto manager = resource->manager();
