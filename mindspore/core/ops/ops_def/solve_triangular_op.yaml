@@ -1,0 +1,19 @@
+#operator solve_triangular
+solve_triangular:
+    args:
+        a:
+            dtype: tensor
+        b:
+            dtype: tensor
+        trans:
+            dtype: int
+            default: 0
+        lower:
+            dtype: bool
+            default: False
+        unit_diagonal:
+            dtype: bool
+            default: False
+    returns:
+        output:
+            dtype: tensor

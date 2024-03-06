@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,43 +21,16 @@
 namespace mindspore::expander::bprop {
 REG_BPROP_BUILDERS_BEGIN(GradScipyOps)
 REG_BPROP_BUILDER("SolveTriangular").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
-  auto reverse_perm = [](const ShapeVector &shape) -> ShapeVector {
-    ShapeVector perm;
-    for (int64_t i = SizeToLong(shape.size()) - 1; i >= 0; --i) {
-      perm.push_back(i);
-    }
-    return perm;
-  };
-  auto lower = ib->GetAttr("lower");
-  auto unit_diagonal = ib->GetAttr("unit_diagonal");
   auto a = ib->GetInput(kIndex0);
-  auto out = ib->GetInput(kIndex2);
-  auto dout = ib->GetInput(kIndex3);
-  auto trans = GetValue<std::string>(ib->GetAttr("trans"));
-  std::string bp_trans = trans == "T" || trans == "C" ? "N" : "T";
-  auto grad_b = ib->Emit("SolveTriangular", {a, dout},
-                         {{"lower", lower}, {"unit_diagonal", unit_diagonal}, {"trans", MakeValue(bp_trans)}});
-  auto a_shape = ib->GetShape(a);
-  auto row_size = a_shape[a_shape.size() - 2];
-  auto grad_b_align = ib->Reshape(grad_b, {row_size, -1});
-  auto x_align = ib->Reshape(out, {row_size, -1});
-  NodePtr grad_a;
-  if (bp_trans.compare("T") == 0) {
-    auto conj = ib->Conj(x_align);
-    grad_a = ib->MatMul(grad_b_align, ib->Transpose(conj, reverse_perm(ib->GetShape(conj))));
-  } else {
-    auto conj = ib->Conj(grad_b_align);
-    grad_a = ib->MatMul(x_align, ib->Transpose(conj, reverse_perm(ib->GetShape(conj))));
-  }
-  int is_lower = static_cast<int>(GetValue<bool>(lower));
-  grad_a = ib->Neg(ib->Emit("MatrixBandPart", {grad_a, ib->Value(-is_lower), ib->Value(is_lower - 1)}));
-  if (GetValue<bool>(unit_diagonal)) {
-    auto fill = ib->Emit("Fill", {ib->EmitValue(ib->GetDtype(grad_a)), ib->Value<ShapeVector>(ShapeVector(1, row_size)),
-                                  ib->Tensor(0, ib->GetDtype(grad_a))});
-    grad_a =
-      ib->MatrixSetDiagV3(grad_a, fill, ib->Fill(int64_t(0), {2}, TypeId::kNumberTypeInt32), MakeValue("RIGHT_LEFT"));
-  }
-  return {grad_a, grad_b};
+  auto out = ib->GetInput(kIndex5);
+  auto dout = ib->GetInput(kIndex6);
+  auto trans = ib->GetInput(kIndex2);
+  auto lower = ib->GetInput(kIndex3);
+  auto unit_diagonal = ib->GetInput(kIndex4);
+  auto grads = ib->Emit("SolveTriangularGrad", {a, out, dout, trans, lower, unit_diagonal});
+  auto grad_a = ib->TupleGetItem(grads, 0);
+  auto grad_b = ib->TupleGetItem(grads, 1);
+  return {grad_a, grad_b, ib->OutZeros(trans), ib->OutZeros(lower), ib->OutZeros(unit_diagonal)};
 });
 
 REG_BPROP_BUILDER("Eigh").SetBody(BODYFUNC(ib) {

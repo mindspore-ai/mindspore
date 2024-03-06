@@ -14,7 +14,7 @@
 # ============================================================================
 """Grad implementation of operators for scipy submodule"""
 from .. import numpy as mnp
-from .ops import Eig, SolveTriangular
+from .ops import Eig
 from .utils_const import _raise_type_error
 from .ops_wrapper import matrix_set_diag
 from ..ops import operations as P
@@ -23,6 +23,7 @@ from ..ops.operations.linalg_ops import Eigh
 from ..ops._grad_experimental.grad_base import bprop_getters
 from ..ops.composite import multitype_ops as C
 from ..common import dtype as mstype
+
 
 _matmul = P.MatMul(False, False)
 _real = P.Real()
@@ -110,34 +111,5 @@ def get_bprpo_eigh(self):
         middle_diag = 0.5 * grad_a.diagonal(0, -2, -1)
         grad_a = matrix_set_diag(grad_a, middle_diag)
         return (grad_a,)
-
-    return bprop
-
-
-@bprop_getters.register(SolveTriangular)
-def get_bprpo_trsm(self):
-    """Grad definition for `SolveTriangular` operation.
-    Appendix(see trsm) from Matthias Seeger, et al. 'Auto-Differentiating Linear Algebra', 2017, pg. 28-29
-    """
-    is_lower = self.lower
-    is_unit_diagonal = self.unit_diagonal
-    lower = int(is_lower)
-    bp_trans = ("N" if self.trans in ["T", "C"] else "T")
-    solve_triangular = SolveTriangular(is_lower, is_unit_diagonal, bp_trans)
-
-    def bprop(a, b, out, dout):
-        row_size = F.shape(a)[-2]
-        grad_b = solve_triangular(a, dout)
-        grad_b_align = F.reshape(grad_b, (row_size, -1))
-        x_align = F.reshape(out, (row_size, -1))
-        if bp_trans in ["T", "C"]:
-            grad_a = _matmul(grad_b_align, _adjoint(x_align))
-        else:
-            grad_a = _matmul(x_align, _adjoint(grad_b_align))
-
-        grad_a = -1 * F.matrix_band_part(grad_a, 0 - lower, lower - 1)
-        if is_unit_diagonal:
-            grad_a = matrix_set_diag(grad_a, F.fill(grad_a.dtype, (row_size,), 0))
-        return grad_a, grad_b
 
     return bprop

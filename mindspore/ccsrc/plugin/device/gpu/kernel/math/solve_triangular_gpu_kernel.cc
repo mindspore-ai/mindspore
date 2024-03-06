@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,29 +18,38 @@
 #include <map>
 #include <utility>
 #include <memory>
-#include "mindspore/core/ops/solve_triangular.h"
 
 namespace mindspore {
 namespace kernel {
+constexpr size_t kIndexA = 0;
+constexpr size_t kIndexB = 1;
+constexpr size_t kIndexX = 0;
+constexpr size_t kIndexTrans = 2;
+constexpr size_t kIndexLower = 3;
+constexpr size_t kIndexUnitDiagonal = 4;
+constexpr size_t kSquareSize = 2;
+constexpr int64_t kTransN = 0;
+constexpr int64_t kTransT = 1;
+constexpr int64_t kTransC = 2;
 using KernelRunFunc = SolveTriangularGpuKernelMod::KernelRunFunc;
 bool SolveTriangularGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                        const std::vector<KernelTensor *> &outputs) {
   blas_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCublasHandle();
 
-  bool lower = GetValue<bool>(primitive_->GetAttr("lower"));
+  bool lower = inputs[kIndexLower]->GetValueWithCheck<bool>();
   // reverting the trans flag by default, so also flip the lower flag
   lower = !lower;
   uplo_ = lower ? CUBLAS_FILL_MODE_LOWER : CUBLAS_FILL_MODE_UPPER;
 
-  bool unit_diagonal = GetValue<bool>(primitive_->GetAttr("unit_diagonal"));
+  bool unit_diagonal = inputs[kIndexUnitDiagonal]->GetValueWithCheck<bool>();
   unit_diagonal_ = unit_diagonal ? CUBLAS_DIAG_UNIT : CUBLAS_DIAG_NON_UNIT;
 
-  const std::string trans = GetValue<std::string>(primitive_->GetAttr("trans"));
-  if (trans == "N") {
+  int64_t trans = inputs[kIndexTrans]->GetValueWithCheck<int64_t>();
+  if (trans == kTransN) {
     trans_ = CUBLAS_OP_T;
-  } else if (trans == "T") {
+  } else if (trans == kTransT) {
     trans_ = CUBLAS_OP_N;
-  } else if (trans == "C") {
+  } else if (trans == kTransC) {
     // currently does not support complex.
     trans_ = CUBLAS_OP_N;
   } else {
@@ -59,22 +68,22 @@ int SolveTriangularGpuKernelMod::Resize(const std::vector<KernelTensor *> &input
     return ret;
   }
 
-  auto a_shape = LongVecToSizeVec(inputs.at(kIndex0)->GetShapeVector());
-  auto b_shape = LongVecToSizeVec(inputs.at(kIndex1)->GetShapeVector());
+  auto a_shape = LongVecToSizeVec(inputs.at(kIndexA)->GetShapeVector());
+  auto b_shape = LongVecToSizeVec(inputs.at(kIndexB)->GetShapeVector());
 
   is_null_input_ =
     CHECK_SHAPE_NULL(a_shape, kernel_name_, "input_a") || CHECK_SHAPE_NULL(b_shape, kernel_name_, "input_b");
   // Since the shape check is done in frontend, we can suppose that the shape of a, b here is valid.
   size_t a_dims = a_shape.size();
   size_t b_dims = b_shape.size();
-  m_ = a_shape[a_dims - kIndex2];
+  m_ = a_shape[a_dims - kSquareSize];
   n_ = (b_dims == a_dims - 1) ? 1 : b_shape[b_dims - 1];
-  batch_ = std::accumulate(a_shape.begin(), a_shape.end() - kIndex2, int64_t(1), std::multiplies{});
+  batch_ = std::accumulate(a_shape.begin(), a_shape.end() - kSquareSize, int64_t(1), std::multiplies{});
 
   lda_ = SizeToInt(m_);
   ldb_ = SizeToInt(m_);
 
-  const size_t unit_size = GetTypeByte(TypeIdToType(inputs.at(kIndex0)->dtype_id()));
+  const size_t unit_size = GetTypeByte(TypeIdToType(inputs.at(kIndexA)->dtype_id()));
   constexpr size_t pointer_size = sizeof(float *);
   size_t b_size = batch_ * m_ * n_ * unit_size;
   workspace_size_list_.clear();
@@ -108,9 +117,9 @@ bool SolveTriangularGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *>
                                                const std::vector<KernelTensor *> &workspace,
                                                const std::vector<KernelTensor *> &outputs) {
   CHECK_CUBLAS_RET_WITH_ERROR(cublasSetStream(blas_handle_, cuda_stream_), "cublasSetStream failed");
-  auto inputa_addr = GetDeviceAddress<T>(inputs, 0);
-  auto inputb_addr = GetDeviceAddress<T>(inputs, 1);
-  auto output_addr = GetDeviceAddress<T>(outputs, 0);
+  auto inputa_addr = GetDeviceAddress<T>(inputs, kIndexA);
+  auto inputb_addr = GetDeviceAddress<T>(inputs, kIndexB);
+  auto output_addr = GetDeviceAddress<T>(outputs, kIndexX);
 
   std::vector<T *> host_a_array(batch_);
   std::vector<T *> host_dst_array(batch_);
@@ -182,9 +191,21 @@ bool SolveTriangularGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *>
 
 const std::vector<std::pair<KernelAttr, KernelRunFunc>> &SolveTriangularGpuKernelMod::GetFuncList() const {
   static const std::vector<std::pair<KernelAttr, KernelRunFunc>> func_list = {
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+       .AddOutputAttr(kNumberTypeFloat32),
      &SolveTriangularGpuKernelMod::LaunchKernel<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+       .AddOutputAttr(kNumberTypeFloat64),
      &SolveTriangularGpuKernelMod::LaunchKernel<double>},
   };
   return func_list;

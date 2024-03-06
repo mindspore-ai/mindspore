@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EIGEN_SOLVE_TRIANGULAR_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EIGEN_SOLVE_TRIANGULAR_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EIGEN_SOLVE_TRIANGULAR_GRAD_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EIGEN_SOLVE_TRIANGULAR_GRAD_CPU_KERNEL_H_
 
 #include <Eigen/Dense>
 #include <vector>
@@ -26,10 +26,11 @@
 
 namespace mindspore {
 namespace kernel {
-class SolveTriangularCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<SolveTriangularCpuKernelMod> {
+class SolveTriangularGradCpuKernelMod : public NativeCpuKernelMod,
+                                        public MatchKernelHelper<SolveTriangularGradCpuKernelMod> {
  public:
-  SolveTriangularCpuKernelMod() = default;
-  ~SolveTriangularCpuKernelMod() override = default;
+  SolveTriangularGradCpuKernelMod() = default;
+  ~SolveTriangularGradCpuKernelMod() override = default;
 
   bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
@@ -45,14 +46,20 @@ class SolveTriangularCpuKernelMod : public NativeCpuKernelMod, public MatchKerne
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
  private:
-  template <typename T_in, typename T_out>
+  template <typename T_in, typename T_out, typename T_grad>
   bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
                     const std::vector<KernelTensor *> &outputs);
 
   template <typename Derived_a, typename Derived_b, typename T>
   void solve(const Eigen::MatrixBase<Derived_a> &a, const Eigen::MatrixBase<Derived_b> &b, T *output_addr, bool lower);
 
-  void SolveTriangularCheck(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
+  void set_attr(const std::vector<KernelTensor *> &inputs);
+
+  template <typename T>
+  void calculate_db(T *a_addr, T *dx_addr, T *db_addr);
+
+  template <typename T>
+  void calculate_da(T *x_addr, T *da_addr, T *db_addr);
 
   size_t m_{0};
   size_t n_{0};
@@ -61,8 +68,13 @@ class SolveTriangularCpuKernelMod : public NativeCpuKernelMod, public MatchKerne
   bool trans_{false};
   bool conj_{false};
   bool unit_diagonal_{false};
+  size_t a_batch_size_{0};
+  size_t x_batch_size_{0};
+  size_t dx_batch_size_{0};
+  size_t da_batch_size_{0};
+  size_t db_batch_size_{0};
 };
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EIGEN_SOLVE_TRIANGULAR_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EIGEN_SOLVE_TRIANGULAR_GRAD_CPU_KERNEL_H_
