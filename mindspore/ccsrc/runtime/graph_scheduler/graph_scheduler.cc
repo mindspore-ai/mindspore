@@ -2947,7 +2947,7 @@ void GraphScheduler::BindNumaNode() {
   }
 
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__) && !defined(ENABLE_ANDROID)
-  uint32_t rank_id = CommManager::GetInstance().GetRank();
+  uint32_t rank_id = CollectiveManager::instance()->local_rank_id();
   MS_LOG(INFO) << "Bind numa node for rank " << rank_id;
   if (numa_handle_ == nullptr) {
     numa_handle_ = GetNumaAdapterHandle();
