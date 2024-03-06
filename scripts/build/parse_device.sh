@@ -67,7 +67,7 @@ parse_device()
         export ENABLE_ACL="on"
         ENABLE_CPU="on"
         export ENABLE_MPI="on"
-        export ENABLE_INTERNAL_KERNELS="on"
+        # export ENABLE_INTERNAL_KERNELS="on"
       else
         echo "Invalid value ${DEVICE_VERSION} for option -V"
         usage
