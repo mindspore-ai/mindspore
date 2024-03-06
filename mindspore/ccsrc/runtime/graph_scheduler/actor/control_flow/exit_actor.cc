@@ -270,10 +270,16 @@ void ExitActor::CopyDeviceAddress(OpContext<DeviceTensor> *const context) {
   }
 
   std::vector<DeviceTensor *> new_device_tensors;
+  mindspore::HashMap<DeviceTensor *, DeviceTensor *> device_tensor_map;
   for (size_t i = 0; i < input_device_tensors_.size(); ++i) {
     auto &input_device_tensor = input_device_tensors_[i];
     if ((input_device_tensor == nullptr) || (!is_need_copy_device_tensors_[i])) {
       (void)new_device_tensors.emplace_back(input_device_tensor);
+      continue;
+    }
+    auto iter = device_tensor_map.find(input_device_tensor);
+    if (iter != device_tensor_map.end()) {
+      (void)new_device_tensors.emplace_back(iter->second);
       continue;
     }
 
@@ -308,6 +314,7 @@ void ExitActor::CopyDeviceAddress(OpContext<DeviceTensor> *const context) {
     }
     (void)created_device_tensors_.emplace_back(new_device_tensor);
     (void)new_device_tensors.emplace_back(new_device_tensor.get());
+    device_tensor_map[input_device_tensor] = new_device_tensor.get();
     new_device_tensor->set_need_sync_user_data(input_device_tensor->need_sync_user_data());
     new_device_tensor->SetNodeIndex(node_with_index.first, node_with_index.second);
     new_device_tensor->set_from_persistent_mem(input_device_tensor->from_persistent_mem());
@@ -317,7 +324,7 @@ void ExitActor::CopyDeviceAddress(OpContext<DeviceTensor> *const context) {
     new_device_tensor->ResetRefCount();
 
     // If the address ptr can't be changed, then alloc the new device memory and copy the data.
-    if (IsOutputAddressPersisted(input_device_tensor, node_with_index)) {
+    if (input_device_tensor->is_ptr_persisted()) {
       device::DynamicMemAllocatorDebugInfo::SetDebugInfo(GetAID().Name(), device::AllocatorType::kOther);
       if (!device_context->device_res_manager_->AllocateMemory(new_device_tensor.get())) {
         SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(GraphExecutionStrategy::kPipeline, *context, *device_context,
