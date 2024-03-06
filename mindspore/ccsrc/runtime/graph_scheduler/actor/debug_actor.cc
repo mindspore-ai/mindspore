@@ -78,7 +78,7 @@ void DebugActor::ACLDump(uint32_t device_id, const std::vector<KernelGraphPtr> &
  * Description: Load and read data for the given node if needed. Dump the node if dump is enabled and free the loaded
  * memory after the dump (for GPU and ascend kernel-by-kernel).
  */
-void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchInfo *launch_info, const DeviceContext *device_context,
+void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchAddr *launch_info, const DeviceContext *device_context,
                        OpContext<DeviceTensor> *const op_context, const AID *) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(device_context);

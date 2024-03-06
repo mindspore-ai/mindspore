@@ -39,7 +39,7 @@ namespace runtime {
 using mindspore::device::DeviceContext;
 using mindspore::device::KernelInfo;
 using mindspore::kernel::Address;
-using mindspore::kernel::KernelLaunchInfo;
+using mindspore::kernel::KernelLaunchAddr;
 using mindspore::kernel::KernelMod;
 using mindspore::kernel::KernelTensor;
 using mindspore::kernel::KernelTensorPtr;
@@ -233,6 +233,9 @@ class KernelActor : public DebugAwareActor {
 
   // Whether skip the kernel launch.
   bool is_launch_skipped_;
+
+  // Recoreded mem info.
+  KernelLaunchAddr mem_info_;
 
   // The ignore input addresses when the kernel launch.
   std::vector<size_t> launch_ignored_inputs_;

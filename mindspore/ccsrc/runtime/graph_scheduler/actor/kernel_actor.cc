@@ -104,6 +104,9 @@ void KernelActor::InitInputInfo() {
   input_kernel_tensors_for_infer_.resize(real_input_num_);
   for (auto &input_address : input_device_tensors_) {
     (void)memory_free_list_.emplace_back(input_address);
+    if (recorder_aid_ != nullptr || debug_aid_ != nullptr) {
+      (void)mem_info_.inputs_.emplace_back(std::make_shared<Address>());
+    }
   }
 }
 
@@ -127,7 +130,9 @@ void KernelActor::InitOutputInfo() {
                   << " addr:" << output_address << " type:" << output_address->type_id()
                   << ", kernel tensor addr:" << output_address->kernel_tensor().get()
                   << ", kernel tensor: " << output_address->kernel_tensor()->ToString();
-
+    if (recorder_aid_ != nullptr || debug_aid_ != nullptr) {
+      (void)mem_info_.outputs_.emplace_back(std::make_shared<Address>());
+    }
     // The output taken over by soma does not need to allocate memory.
     if (kernel_info_->IsTensorEnableSomas(somas_outputs, i)) {
       // Somas outputs use the info of kernelMod, and output address use the info of device address.
@@ -174,6 +179,9 @@ void KernelActor::InitWorkspaceInfo() {
     MS_EXCEPTION_IF_NULL(workspace_address);
     (void)workspace_device_tensors_.emplace_back(workspace_address.get());
     (void)workspace_kernel_tensors_.emplace_back(workspace_address->kernel_tensor().get());
+    if (recorder_aid_ != nullptr || debug_aid_ != nullptr) {
+      (void)mem_info_.workspaces_.emplace_back(std::make_shared<Address>());
+    }
 
     // The workspace taken over by soma does not need to allocate memory.
     if (kernel_info_->IsTensorEnableSomas(somas_workspace, i)) {
@@ -437,10 +445,25 @@ void KernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
     MS_LOG(EXCEPTION) << "#umsg#Kernel error:#umsg#Launch kernel failed: " + kernel_->fullname_with_scope();
   }
 
+  // Record mem info, because async send may free device info.
+  if (recorder_aid_ != nullptr || debug_aid_ != nullptr) {
+    for (size_t i = 0; i < input_device_tensors_.size(); ++i) {
+      mem_info_.inputs_[i]->addr = input_device_tensors_[i]->GetMutablePtr();
+      mem_info_.inputs_[i]->size = input_device_tensors_[i]->GetSize();
+    }
+    for (size_t i = 0; i < output_device_tensors_.size(); ++i) {
+      mem_info_.outputs_[i]->addr = output_device_tensors_[i]->GetMutablePtr();
+      mem_info_.outputs_[i]->size = output_device_tensors_[i]->GetSize();
+    }
+    for (size_t i = 0; i < workspace_device_tensors_.size(); ++i) {
+      mem_info_.workspaces_[i]->addr = workspace_device_tensors_[i]->GetMutablePtr();
+      mem_info_.workspaces_[i]->size = workspace_device_tensors_[i]->GetSize();
+    }
+  }
+
   // Debug actor is blocked, must wait debug actor callback message to process continue.
   if (debug_aid_ != nullptr) {
-    KernelLaunchInfo launch_info = {input_kernel_tensors_, output_kernel_tensors_, workspace_kernel_tensors_};
-    ActorDispatcher::SendSync(*debug_aid_, &DebugActor::Debug, kernel_, &launch_info, device_contexts_[0], context,
+    ActorDispatcher::SendSync(*debug_aid_, &DebugActor::Debug, kernel_, &mem_info_, device_contexts_[0], context,
                               &GetAID());
   }
 
@@ -907,8 +930,7 @@ void KernelActor::RefreshDeviceTensorCopyStore(OpContext<DeviceTensor> *const co
 void KernelActor::SendRecorderInfo(OpContext<DeviceTensor> *const context) const {
   if (recorder_aid_ != nullptr) {
     MS_EXCEPTION_IF_NULL(kernel_);
-    ActorDispatcher::Send(*recorder_aid_, &RecorderActor::RecordInfo, kernel_->fullname_with_scope(),
-                          &input_kernel_tensors_, &output_kernel_tensors_, &workspace_kernel_tensors_,
+    ActorDispatcher::Send(*recorder_aid_, &RecorderActor::RecordInfo, kernel_->fullname_with_scope(), &mem_info_,
                           device_contexts_[0], context);
   }
 }
