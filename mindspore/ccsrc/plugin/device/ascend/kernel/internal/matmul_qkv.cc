@@ -25,8 +25,8 @@ internal::OpParamPtr InternalMatmulQkv::CreateOpParam(const std::vector<KernelTe
                                                       const std::vector<KernelTensor *> &outputs) {
   auto param_ptr = std::make_shared<internal::OpParam>();
   param_ptr->opId = internal::OpId::MatmulQkv;
-  bool tranpose_a = false;
-  bool transpose_b = true
+  bool transpose_a = false;
+  bool transpose_b = true;
   internal::MatmulQkvParam op_param = {transpose_a, transpose_b};
   param_ptr->specificParam = op_param;
   return param_ptr;
