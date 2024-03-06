@@ -772,6 +772,27 @@ class _TrainGradAccuStepCell(TrainOneStepCell):
         return loss
 
 
+class AllreduceGraph(Cell):
+    """
+    A allreduce graph to broadcast parameters.
+    """
+    def __init__(self, inputs, group_name):
+        super(AllreduceGraph, self).__init__()
+        self.input_num = len(inputs)
+        self.inputs = inputs
+        self.allreduces = []
+        self.assigns = []
+        for _ in range(self.input_num):
+            self.allreduces.append(ops.AllReduce(op="sum", group=group_name))
+            self.assigns.append(ops.Assign())
+
+    def construct(self):
+        for i in range(self.input_num):
+            res = self.allreduces[i](self.inputs[i])
+            self.assigns[i](self.inputs[i], res)
+        return self.inputs
+
+
 class VirtualDatasetCellTriple(Cell):
     """
     Wrap the network with virtual dataset to convert data parallel layout to model parallel layout.
