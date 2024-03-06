@@ -352,6 +352,7 @@ AnfNodePtr HandleRealToComplex(const TensorPtr &input, const AbstractBasePtr &ab
 void SetJitCallGraph(const CNodePtr &cnode, const FuncGraphPtr &call_graph, const std::string &cache_key,
                      bool is_control_flow) {
   MS_EXCEPTION_IF_NULL(cnode);
+  constexpr auto kNeedCompile = "NeedCompile";
   common::AnfAlgo::SetNodeAttr(kAttrJitCallNode, MakeValue(true), cnode);
   // kFlagJitCallGraph is set true to avoid compilig call_graph whe compiling the main graph
   call_graph->set_flag(kFlagJitCallGraph, true);
@@ -364,11 +365,14 @@ void SetJitCallGraph(const CNodePtr &cnode, const FuncGraphPtr &call_graph, cons
     resource = std::make_shared<pipeline::Resource>();
     resource->set_func_graph(call_graph);
     (void)jit_call_graph_compile_cache_.emplace(cache_key, resource);
+    resource->SetResult(kNeedCompile, true);
   } else {
     resource = it->second;
+    // If resource func graph not compile(not call run grad graph), but hit cache
+    need_compile = resource->GetResult(kNeedCompile).cast<bool>();
   }
   MS_EXCEPTION_IF_NULL(resource);
-  auto fn = [resource, need_compile, is_control_flow](const VectorRef &arg_list) -> VectorRef {
+  auto fn = [resource, need_compile, is_control_flow, &kNeedCompile](const VectorRef &arg_list) -> VectorRef {
     if (need_compile) {
       MS_LOG(DEBUG) << "Start emit action for graph " << resource->func_graph()->ToString();
       auto manager = resource->manager();
@@ -383,6 +387,7 @@ void SetJitCallGraph(const CNodePtr &cnode, const FuncGraphPtr &call_graph, cons
       }
       (void)TaskEmitAction(resource);
       (void)ExecuteAction(resource);
+      resource->SetResult(kNeedCompile, false);
     }
     MS_LOG(DEBUG) << "Start execute action for graph " << resource->func_graph()->ToString();
     compile::VmEvalFuncPtr run = resource->GetResult(pipeline::kOutput).cast<compile::VmEvalFuncPtr>();

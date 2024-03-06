@@ -19,13 +19,10 @@
 #include <utility>
 #include "frontend/optimizer/ad/grad.h"
 #include "ops/structure_op_name.h"
-#include "ops/other_op_name.h"
-#include "ops/nn_optimizer_op_name.h"
 #include "ops/framework_op_name.h"
 #include "ops/sequence_ops.h"
 #include "pipeline/pynative/pynative_utils.h"
 #include "pipeline/pynative/grad/jit/jit_dfunctor.h"
-#include "include/common/utils/anfalgo.h"
 #include "ir/func_graph_cloner.h"
 #include "pipeline/pynative/grad/bprop_task.h"
 #include "pipeline/jit/ps/pass.h"
@@ -389,13 +386,21 @@ void Jit::GradJitInner(const FrontendOpRunInfoPtr &op_run_info, const GradExecut
     ReplaceAddedCnodeActualOutput(added_node, total_output_tensors);
   }
 
-  // Step 2: Update actual output tensors used in grad graph.
+  // Step 2: Check or set set_use_dynamic_shape_process flag
+  auto node_info = std::make_shared<DynamicDetectNodeInfo>(nullptr, op_run_info->op_grad_info->input_abs,
+                                                           op_run_info->base_op_run_info.abstract);
+  node_info->is_graph_node = true;
+  node_info->graph_phase = graph_phase_;
+  grad_executor->dynamic_shape()->CheckNodeDynamic(grad_executor->top_cell(), op_run_info->op_grad_info->input_value,
+                                                   node_info);
+
+  // Step 3: Update actual output tensors used in grad graph.
   MS_LOG(DEBUG) << "jit actual output value: " << op_run_info->real_out->ToString();
   grad_executor->top_cell()->GetOpInfo(op_run_info);
   grad_executor->UpdateTopCellForwardTensorInfoInBpropGraph(op_run_info->op_info, op_run_info->real_out,
                                                             op_run_info->base_op_run_info.stream_id);
 
-  // Step 3: Update output tensors of added forward nodes, which are added to return node of jit func graph.
+  // Step 4: Update output tensors of added forward nodes, which are added to return node of jit func graph.
   if (!added_v_is_empty) {
     if (grad_executor->use_dynamic_shape_process()) {
       // If jit is not control flow, the jit is executed by actor under dynamic shape, and valuenode
@@ -413,13 +418,6 @@ void Jit::GradJitInner(const FrontendOpRunInfoPtr &op_run_info, const GradExecut
 
   // Make Adjoint for grad graph
   MakeAdjointForJit(op_run_info, grad_executor, primal_func_graph, jit_grad_graph, !added_v_is_empty);
-
-  auto node_info = std::make_shared<DynamicDetectNodeInfo>(nullptr, op_run_info->op_grad_info->input_abs,
-                                                           op_run_info->base_op_run_info.abstract);
-  node_info->is_graph_node = true;
-  node_info->graph_phase = op_run_info->base_op_run_info.op_name;
-  grad_executor->dynamic_shape()->CheckNodeDynamic(grad_executor->top_cell(), op_run_info->op_grad_info->input_value,
-                                                   node_info);
 }
 
 void Jit::UpdateJitlForwardTensorInfoInBpropGraph(const std::string &op_info, const ValuePtr &v,

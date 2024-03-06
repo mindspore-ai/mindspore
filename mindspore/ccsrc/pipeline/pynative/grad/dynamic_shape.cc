@@ -48,7 +48,7 @@ bool IsDynamicDetectAbsChange(const AbstractBasePtr &old_abs, const AbstractBase
   if (!common::IsEqual(old_abs->BuildType(), new_abs->BuildType()) ||
       !common::IsEqual(old_abs->BuildShape(), new_abs->BuildShape())) {
     MS_LOG(DEBUG) << "Graph is dynamic, old_abs is different with new_abs, old abs: " << old_abs->ToString()
-                  << " new abs: " << new_abs->ToString();
+                  << ", new abs: " << new_abs->ToString();
     return true;
   }
   return false;
@@ -58,7 +58,7 @@ bool IsDynamicDetectAbsChange(const abstract::AbstractBasePtrList &node_abs,
                               const abstract::AbstractBasePtrList &old_node_abs) {
   if (node_abs.size() != old_node_abs.size()) {
     MS_LOG(DEBUG) << "Graph is dynamic, node_abs size: " << node_abs.size()
-                  << " old_node_abs size: " << old_node_abs.size();
+                  << ", old_node_abs size: " << old_node_abs.size();
     return true;
   }
   for (size_t i = 0; i < node_abs.size(); ++i) {
@@ -97,9 +97,9 @@ bool IsDynamicDetectNodeInfoChange(const NodeInfo &old_node_info, const NodeInfo
     if (new_tensor->id() != old_tensor->id()) {
       MS_LOG(DEBUG) << "Graph is dynamic, new node info value: "
                     << (new_node_info.value != nullptr ? new_node_info.value->ToString() : "")
-                    << " grad type: " << new_node_info.grad_type << " old node info value: "
+                    << ", grad type: " << new_node_info.grad_type << ", old node info value: "
                     << (old_node_info.value != nullptr ? old_node_info.value->ToString() : "")
-                    << " grad type: " << old_node_info.grad_type;
+                    << ", grad type: " << old_node_info.grad_type;
       return true;
     }
     return false;
@@ -107,13 +107,13 @@ bool IsDynamicDetectNodeInfoChange(const NodeInfo &old_node_info, const NodeInfo
 
   if (new_node_info.grad_type != old_node_info.grad_type) {
     MS_LOG(DEBUG) << "Graph is dynamic, new node info grad type: " << new_node_info.grad_type
-                  << " old node info grad type: " << old_node_info.grad_type;
+                  << ", old node info grad type: " << old_node_info.grad_type;
     return true;
   }
 
   if (new_node_info.grad_type == TensorGradType::kOpOutput && new_node_info.op_index != old_node_info.op_index) {
     MS_LOG(DEBUG) << "Graph is dynamic, new node info op_index: " << new_node_info.op_index
-                  << " old node info op_index: " << old_node_info.op_index;
+                  << ", old node info op_index: " << old_node_info.op_index;
     return true;
   }
 
@@ -121,9 +121,9 @@ bool IsDynamicDetectNodeInfoChange(const NodeInfo &old_node_info, const NodeInfo
       !IsValuePtrEqual(new_node_info.value, old_node_info.value)) {
     MS_LOG(DEBUG) << "Graph is dynamic, new node info value: "
                   << (new_node_info.value != nullptr ? new_node_info.value->ToString() : "")
-                  << " grad type: " << new_node_info.grad_type
-                  << " old node info value: " << (old_node_info.value != nullptr ? old_node_info.value->ToString() : "")
-                  << " grad type: " << old_node_info.grad_type;
+                  << ", grad type: " << new_node_info.grad_type << ", old node info value: "
+                  << (old_node_info.value != nullptr ? old_node_info.value->ToString() : "")
+                  << ", grad type: " << old_node_info.grad_type;
     return true;
   }
 
@@ -189,14 +189,14 @@ bool IsDynamicDetectInputChange(const std::vector<std::pair<std::string, NodeInf
     std::string new_tensor_idx = new_inputs[i].first;
     auto new_node_info = new_inputs[i].second;
     if (old_tensor_idx != new_tensor_idx) {
-      MS_LOG(DEBUG) << "Graph is dynamic, old_tensor_idx: " << old_tensor_idx << "new_tensor_idx: " << new_tensor_idx;
+      MS_LOG(DEBUG) << "Graph is dynamic, old_tensor_idx: " << old_tensor_idx << ", new_tensor_idx: " << new_tensor_idx;
       return true;
     }
     if (IsDynamicDetectNodeInfoChange(old_node_info, new_node_info)) {
       MS_LOG(DEBUG) << "Graph is dynamic, old_node op index is: " << old_node_info.op_index
-                    << " value is: " << (old_node_info.value != nullptr ? old_node_info.value->ToString() : "")
-                    << " new_node op index is: " << new_node_info.op_index
-                    << " value is: " << (new_node_info.value != nullptr ? new_node_info.value->ToString() : "");
+                    << ", value is: " << (old_node_info.value != nullptr ? old_node_info.value->ToString() : "")
+                    << ", new_node op index is: " << new_node_info.op_index
+                    << ", value is: " << (new_node_info.value != nullptr ? new_node_info.value->ToString() : "");
       return true;
     }
   }
@@ -340,7 +340,7 @@ bool NodeDynamicDetect::CheckNodeDynamic(const TopCellInfoPtr &top_cell, const V
     auto context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context);
     if (context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE)) {
-      MS_LOG(WARNING) << "Detect dynamic shape or dynamic graph structure, the python stack is:";
+      MS_LOG(WARNING) << "Detect dynamic shape or dynamic graph structure, the python stack is: ";
       py::gil_scoped_acquire acquire_gil;
       py::exec(R"(
                   import traceback
@@ -361,9 +361,9 @@ bool NodeDynamicDetect::IsNodeDynamic(const TopCellInfoPtr &top_cell, const Valu
   }
 
   MS_LOG(DEBUG) << "Check node " << (node->op_prim != nullptr ? node->op_prim->name() : "") << " node_idx: " << node_idx
-                << ", is_jit_node: " << node->is_graph_node << ", graph_phase:" << node->graph_phase
-                << " obj_id_with_grad_order:" << top_cell->obj_id_with_grad_order()
-                << ", cell id:" << top_cell->cell_id();
+                << ", is_jit_node: " << node->is_graph_node << ", graph_phase: " << node->graph_phase
+                << ", obj_id_with_grad_order: " << top_cell->obj_id_with_grad_order()
+                << ", cell id: " << top_cell->cell_id();
   const auto &dynamic_nodes =
     cell_id_with_dynamic_detect_nodes_[top_cell->obj_id_with_grad_order()][top_cell->cell_id()];
   if (node_idx >= dynamic_nodes.size()) {
@@ -377,15 +377,15 @@ bool NodeDynamicDetect::IsNodeDynamic(const TopCellInfoPtr &top_cell, const Valu
   if (node->is_graph_node) {
     if (!old_node_info->is_graph_node || node->graph_phase != old_node_info->graph_phase) {
       MS_LOG(DEBUG) << "Graph is dynamic, old is_graph_node: " << old_node_info->is_graph_node
-                    << " new is_graph_node: " << node->is_graph_node << " old graph_phase "
-                    << old_node_info->graph_phase << " new graph_phase: " << node->graph_phase;
+                    << ", new is_graph_node: " << node->is_graph_node << ", old graph_phase "
+                    << old_node_info->graph_phase << ", new graph_phase: " << node->graph_phase;
       return true;
     }
     return false;
   }
 
   if (IsDynamicDetectPrimChange(old_node_info->op_prim, node->op_prim)) {
-    MS_LOG(DEBUG) << "Graph is dynamic, old node prim : "
+    MS_LOG(DEBUG) << "Graph is dynamic, old node prim: "
                   << (old_node_info->op_prim != nullptr
                         ? old_node_info->op_prim->name() + ", attr: " + old_node_info->op_prim->GetAttrsText()
                         : "")
@@ -423,9 +423,9 @@ void NodeDynamicDetect::SaveDynamicDetectNodeInfoInFirstTime(const TopCellInfoPt
   (void)cell_id_with_dynamic_detect_nodes_[top_cell->obj_id_with_grad_order()][top_cell->cell_id()].emplace_back(node);
   MS_LOG(DEBUG) << "Save node " << (node->op_prim != nullptr ? node->op_prim->name() : "")
                 << " firstly, node_idx: " << node_idx << ", is_jit_node: " << node->is_graph_node
-                << ", graph_phase:" << node->graph_phase
-                << " obj_id_with_grad_order:" << top_cell->obj_id_with_grad_order()
-                << ", cell id:" << top_cell->cell_id();
+                << ", graph_phase: " << node->graph_phase
+                << ", obj_id_with_grad_order: " << top_cell->obj_id_with_grad_order()
+                << ", cell id: " << top_cell->cell_id();
 }
 
 bool NodeDynamicDetect::IsNeedSaveDynamicDetectNodes(const TopCellInfoPtr &top_cell, bool use_dynamic_shape_process) {
@@ -453,10 +453,10 @@ bool NodeDynamicDetect::IsNeedSaveDynamicDetectNodes(const TopCellInfoPtr &top_c
       top_cell->set_use_dynamic_shape_process(true);
       (void)cell_id_with_dynamic_detect_nodes_.erase(top_cell->obj_id_with_grad_order());
       MS_LOG(INFO) << "Set use_dynamic_shape_process: " << use_dynamic_shape_process << ", already cached "
-                   << cell_infos.size() << " top cell, cur top cell shape is different:" << top_cell->cell_id();
+                   << cell_infos.size() << " top cell, cur top cell shape is different: " << top_cell->cell_id();
     }
   } else {
-    MS_LOG(EXCEPTION) << "cell_info.size():" << cell_infos.size() << " is invalid";
+    MS_LOG(EXCEPTION) << "cell_info.size(): " << cell_infos.size() << " is invalid";
   }
   return false;
 }
