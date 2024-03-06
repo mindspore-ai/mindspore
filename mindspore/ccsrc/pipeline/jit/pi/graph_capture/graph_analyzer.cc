@@ -308,10 +308,10 @@ void GraphAnalyzer::UseDefAnalyze() {
   // UD analyze: alive nodes analysis
   std::vector<ValueNode *> aliveLocals = GetAliveLocals(graph_);
   if (!aliveLocals.empty()) {
-    bool stop_analyze = false;
-    while (!stop_analyze) {
-      stop_analyze = AnalyzeAliveLocals(aliveLocals);
-      if (stop_analyze) {
+    bool isStopAnalyze = false;
+    while (!isStopAnalyze) {
+      isStopAnalyze = AnalyzeAliveLocals(aliveLocals);
+      if (isStopAnalyze) {
         break;
       }
       aliveLocals = GetAliveLocals(graph_);

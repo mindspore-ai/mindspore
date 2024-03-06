@@ -2034,7 +2034,7 @@ bool GraphBuilder::ReplaceCall(CallNode *call_node, const py::object &old_func) 
 }
 
 namespace {
-std::string GetFuncGraphName(const py::object &func, const GraphBuilderPtr &subgraph) {
+std::string GetFuncGraphName(const py::object &func, const MindGraphBuilderPtr &subgraph) {
   auto func_str = py::cast<std::string>(py::str(func));
   std::vector<std::string> vec;
   std::istringstream iss(func_str);
@@ -2053,15 +2053,16 @@ std::string GetFuncGraphName(const py::object &func, const GraphBuilderPtr &subg
 
 StopTraceReason MindGraphBuilder::BuildSubGraph(CallNode *call_node, int depth, const py::object &func,
                                                 const GraphBuilderPtr &subgraph) {
+  auto sg = std::dynamic_pointer_cast<MindGraphBuilder>(subgraph);
   InlineReason stat = InlineReason::kInline;
   bool is_make_func = call_node->input(0)->GetOpcode() == MAKE_FUNCTION;
   if (is_make_func) {
     // inline MAKE_FUNCTION, need eliminate cell and free variable if the function is not dead local.
-    bool has_cell = PyTuple_GET_SIZE(subgraph->GetGraph()->GetCodeObj()->co_cellvars) != 0;
+    bool has_cell = PyTuple_GET_SIZE(sg->GetGraph()->GetCodeObj()->co_cellvars) != 0;
     stat = has_cell ? InlineReason::kInlinePolicyDisabled : stat;
   }
 
-  auto code = subgraph->GetGraph()->GetGuard();
+  auto code = sg->GetGraph()->GetGuard();
   MS_EXCEPTION_IF_NULL(code);
   code->GetGuard()->Backup();
 
@@ -2071,18 +2072,18 @@ StopTraceReason MindGraphBuilder::BuildSubGraph(CallNode *call_node, int depth, 
   }
 
   MS_LOG(INFO) << "new subgraph->TraceRun:" << py::str(func);
-  auto reason = subgraph->TraceRun(args);
+  sg->FGAddInputs(args);
+  auto reason = sg->TraceRun();
   MS_LOG(INFO) << "new subgraph->TraceRun end:" << py::str(func);
 
-  call_node->SetSubGraph(subgraph->GetGraph());
-  auto sg = std::dynamic_pointer_cast<MindGraphBuilder>(subgraph);
-  auto sub_ret = subgraph->GetGraph()->GetRetVal();
+  call_node->SetSubGraph(sg->GetGraph());
+  auto sub_ret = sg->GetGraph()->GetRetVal();
   if (sub_ret != nullptr) {
     if (sub_ret->GetVobj()->GetPyObject().ptr() == nullptr ||
         CheckConstPyObject(sub_ret->GetVobj()->GetPyObject().ptr())) {
       call_node->SetVobj(sub_ret->GetVobj());
     } else {
-      sg->FGBuilder()->SetGraphName(GetFuncGraphName(func, subgraph));
+      sg->FGBuilder()->SetGraphName(GetFuncGraphName(func, sg));
       sg->FGAddOutput();
       if (sg->FGBuilder()->graph() == nullptr) {
         MS_LOG(ERROR) << "subgraph trace null";
@@ -2140,7 +2141,7 @@ StopTraceReason GraphBuilder::BuildSubGraph(CallNode *call_node, int depth, cons
   code->GetGuard()->Backup();
 
   MS_LOG(INFO) << "old subgraph->TraceRun";
-  subgraph->TraceRun(call_node->GetArgs());
+  subgraph->TraceRun();
 
   call_node->SetSubGraph(subgraph->GetGraph());
   if (subgraph->GetGraph()->GetRetVal() != nullptr) {
@@ -2533,15 +2534,13 @@ bool GraphBuilder::HandleCallParameters(const py::object &func_info, CallNode *c
 
 static void SetGradFuncInfo(mindspore::pijit::CallNode *call_node);
 
-StopTraceReason MindGraphBuilder::TraceRun(const std::vector<py::object> &args) {
+void MindGraphBuilder::FGAddInputs(const std::vector<py::object> &args) {
   // Add function graph inputs.
   for (size_t i = 0; i < args.size(); ++i) {
     MS_LOG(INFO) << "try add input: " << py::str(args[i]);
     FGBuilder()->AddInput(args[i]);
     MS_LOG(INFO) << "add input suc";
   }
-  auto res = GraphBuilder::TraceRun(args);
-  return res;
 }
 
 void MindGraphBuilder::FGAddOutput() {
@@ -2553,7 +2552,6 @@ void MindGraphBuilder::FGAddOutput() {
       MS_LOG(INFO) << "add output succuss";
     } else {
       MS_LOG(ERROR) << "add output fail";
-      // TODO(xiaruijie)
     }
   }
 }
@@ -2642,8 +2640,7 @@ py::object MindGraphBuilder::ResolveCallable(CallNode *call_node, StopTraceReaso
     }
     return FGAddNode(call_node, callable_info, args, stop_reason);
   }
-  if (FGBuilder()->CanConstantFoldFunc(callable_info) ||
-      (CheckCell(callable_info) && callable->GetType() == AObject::kTypeType)) {
+  if (FGBuilder()->CanConstantFoldFunc(callable_info)) {
     MS_LOG(INFO) << "CanConstantFoldFunc for: " << py::str(callable_info);
     JustCallAndSetRes(call_node);
     *stop_reason = StopTraceReason::kNonStopTrace;
@@ -3333,8 +3330,7 @@ static void EliminateCellAccess(Graph *g) {
   }
 }
 
-StopTraceReason GraphBuilder::TraceRun(const std::vector<py::object> &args) {
-  args_ = args;
+StopTraceReason GraphBuilder::TraceRun() {
   current_block_ = graph_->GetCFG()->GetFirstBB();
   cur_bci_ = 0;
   const auto &instrs = graph_->GetCFG()->instr_pool();
@@ -3387,7 +3383,7 @@ AObject *InferFuncResult(const py::object &callable, const py::object &args, con
   if (g == nullptr) {
     return nullptr;
   }
-  g->TraceRun(py::cast<py::list>(args).cast<std::vector<py::object>>());
+  g->TraceRun();
   if (clear_guard) {
     Graph *graph = g->GetGraph();
     auto jcr = getJitCompileResults(reinterpret_cast<PyObject *>(graph->GetCodeObj()));
