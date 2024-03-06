@@ -580,11 +580,29 @@ void UpdateOutputShape(const std::vector<EdgePtr> &output_edges) {
   }
 }
 
+void FillHostInfoForInputTensor(const std::vector<tensor::TensorPtr> &input_tensors) {
+  MS_LOG(DEBUG) << "Start";
+
+  for (const auto &tensor : input_tensors) {
+    MS_EXCEPTION_IF_NULL(tensor);
+    auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
+    if (!device_address->kernel_tensor()->host_info_exist()) {
+      // The tensor from PyBoost output.
+      device_address->kernel_tensor()->SetHostInfo(std::make_shared<abstract::TensorShape>(tensor->shape()),
+                                                   std::make_shared<TensorType>(tensor->Dtype()), nullptr);
+    }
+  }
+}
+
 void LaunchKernels(const KernelGraphPtr &graph, const device::DeviceContext *device_context,
-                   const session::BackendOpRunInfoPtr &op_run_info) {
+                   const session::BackendOpRunInfoPtr &op_run_info,
+                   const std::vector<tensor::TensorPtr> &input_tensors) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(device_context);
   MS_LOG(DEBUG) << "Start";
+
+  // If node is dynamic, need to fill host info for kernel tensor.
+  bool need_refresh_host_info = true;
 
   // Get device address from OpRuntimeInfo
   const auto &execution_order = graph->execution_order();
@@ -600,6 +618,13 @@ void LaunchKernels(const KernelGraphPtr &graph, const device::DeviceContext *dev
     if (!MallocForKernelInput(runtime_info, device_context, node)) {
       MS_LOG(EXCEPTION) << "Malloc for kernel input failed, Memory isn't enough, node:" << node->fullname_with_scope();
     }
+
+    if (need_refresh_host_info && (is_dynamic_shape || is_dynamic_value)) {
+      // Host info is need when resize.
+      FillHostInfoForInputTensor(input_tensors);
+      need_refresh_host_info = false;
+    }
+
     auto inputs = GetInputKernelTensors(runtime_info, node);
     auto outputs = GetOutputKernelTensors(runtime_info);
     if (is_dynamic_shape) {
@@ -804,7 +829,7 @@ void OpRunner::RunSingleOpGraph(const session::BackendOpRunInfoPtr &op_run_info,
                                 const OpCompilerInfoPtr &op_compiler_info,
                                 const std::vector<tensor::TensorPtr> &input_tensors) {
   CopyDataToDevice(op_compiler_info->graph_, input_tensors, op_compiler_info->device_context_);
-  LaunchKernels(op_compiler_info->graph_, op_compiler_info->device_context_, op_run_info);
+  LaunchKernels(op_compiler_info->graph_, op_compiler_info->device_context_, op_run_info, input_tensors);
 }
 
 void OpRunner::LaunchKernelTask(const runtime::KernelTaskType &task_type, DeviceContext *device_context,

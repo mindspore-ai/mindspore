@@ -166,6 +166,11 @@ void PyBoostUtils::CreateOutputTensor(const DeviceContext *device_context, const
     nullptr, input_device_address->GetSize(), Format::DEFAULT_FORMAT, output_tensor->data_type(),
     output_tensor->shape(), device_context->device_context_key().device_name_,
     device_context->device_context_key().device_id_);
+  if (input_device_address->GetDeviceType() != device::DeviceType::kAscend) {
+    // Not transmitting host shape information under Ascend for better performance.
+    kernel_tensor->SetType(std::make_shared<TensorType>(TypeIdToType(output_tensor->data_type())));
+    kernel_tensor->SetShape(std::make_shared<abstract::TensorShape>(output_tensor->shape()));
+  }
   kernel_tensor->set_tensor_storage_info(storage_info);
   kernel_tensor->set_size(input_device_address->GetSize());
   kernel_tensor->set_stream_id(input_device_address->stream_id());
