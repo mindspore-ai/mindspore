@@ -185,7 +185,6 @@ from .math_func import (
     add,
     addcdiv,
     addcmul,
-    neg_tensor,
     neg,
     negative,
     tensor_lt,
