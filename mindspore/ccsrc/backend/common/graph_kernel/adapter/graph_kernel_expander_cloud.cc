@@ -15,7 +15,7 @@
  */
 
 #include "backend/common/graph_kernel/adapter/graph_kernel_expander_cloud.h"
-
+#include <set>
 #include "mindspore/core/ops/random_ops.h"
 #include "mindspore/core/ops/nn_optimizer_ops.h"
 #include "mindspore/core/ops/nn_ops.h"
@@ -31,6 +31,8 @@
 namespace mindspore::graphkernel {
 namespace {
 bool DvmSupported(const AnfNodePtr &node) {
+  static std::set<TypeId> supported_types{kNumberTypeFloat16, kNumberTypeFloat32, kNumberTypeBool, kNumberTypeInt32,
+                                          kNumberTypeBFloat16};
   if (IsPrimitiveCNode(node, prim::kPrimAddN)) {
     constexpr auto max_input_num = 10;
     auto input_num = common::AnfAlgo::GetInputTensorNum(node);
@@ -41,8 +43,7 @@ bool DvmSupported(const AnfNodePtr &node) {
   auto cb = Callback::Instance();
   MS_EXCEPTION_IF_NULL(cb);
   auto node_output_type = cb->GetOutputType(node, 0);
-  return (node_output_type == kNumberTypeFloat16 || node_output_type == kNumberTypeFloat32 ||
-          node_output_type == kNumberTypeBool || node_output_type == kNumberTypeInt32);
+  return supported_types.find(node_output_type) != supported_types.end();
 }
 }  // namespace
 

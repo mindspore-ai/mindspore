@@ -463,12 +463,14 @@ class OpBuilder {
 std::unordered_map<dvm::DType, TypeId> OpBuilder::v_type_map = {{dvm::DType::kFloat32, TypeId::kNumberTypeFloat32},
                                                                 {dvm::DType::kFloat16, TypeId::kNumberTypeFloat16},
                                                                 {dvm::DType::kInt8, TypeId::kNumberTypeBool},
-                                                                {dvm::DType::kInt32, TypeId::kNumberTypeInt32}};
+                                                                {dvm::DType::kInt32, TypeId::kNumberTypeInt32},
+                                                                {dvm::DType::kBFloat16, TypeId::kNumberTypeBFloat16}};
 
 std::unordered_map<TypeId, dvm::DType> OpBuilder::ms_type_map = {{TypeId::kNumberTypeFloat32, dvm::DType::kFloat32},
                                                                  {TypeId::kNumberTypeFloat16, dvm::DType::kFloat16},
                                                                  {TypeId::kNumberTypeBool, dvm::DType::kInt8},
-                                                                 {TypeId::kNumberTypeInt32, dvm::DType::kInt32}};
+                                                                 {TypeId::kNumberTypeInt32, dvm::DType::kInt32},
+                                                                 {TypeId::kNumberTypeBFloat16, dvm::DType::kBFloat16}};
 
 size_t GetSubGraphNums(FuncGraphPtr graph_kernel) {
   auto output = graph_kernel->get_return()->cast<CNodePtr>()->input(1);

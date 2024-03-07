@@ -24,6 +24,7 @@ namespace dvm {
 enum DType {
   kInt8 = 0,
   kFloat16,
+  kBFloat16,
   kFloat32,
   kInt32,
   kTypeEnd,
@@ -136,7 +137,6 @@ class Kernel {
   ShapeRef *GetShape(NDObject *op) const;
   DType GetDType(NDObject *op) const;
 
-  const char *DisAssemble();
   VKernel *GetImpl() const { return kernel_; }
 
  private:
