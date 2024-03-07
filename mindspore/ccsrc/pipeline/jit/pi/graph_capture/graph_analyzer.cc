@@ -16,6 +16,7 @@
 #include "pipeline/jit/pi/graph_capture/graph_analyzer.h"
 #include <algorithm>
 #include <unordered_set>
+#include <string>
 #include <vector>
 #include "pipeline/jit/pi/pi_jit_config.h"
 #include "pipeline/jit/pi/graph_guard/infer.h"
