@@ -1,5 +1,5 @@
 /**
- * Copyright 2023-2024 Huawei Technologies Co., Ltd
+ * Copyright 2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,25 +14,26 @@
  * limitations under the License.
  */
 #include <memory>
-#include "plugin/device/ascend/kernel/internal/flash_attention_score.h"
+#include "plugin/device/ascend/kernel/internal/paged_attention_mask.h"
 namespace mindspore {
 namespace kernel {
-internal::OpParamPtr InternalFlashAttentionScore::CreateOpParam(const std::vector<KernelTensor *> &inputs,
-                                                                const std::vector<KernelTensor *> &outputs) {
+internal::OpParamPtr InternalPagedAttentionMask::CreateOpParam(const std::vector<KernelTensor *> &inputs,
+                                                               const std::vector<KernelTensor *> &outputs) {
   internal::OpParamPtr param_ptr = std::make_shared<internal::OpParam>();
-  // setup param from inputs
-  param_ptr->opId = internal::OpId::FlashAttentionScore;
+  param_ptr->opId = internal::OpId::PagedAttention;
   return param_ptr;
 }
-void InternalFlashAttentionScore::SetInOutIdx() {
+
+void InternalPagedAttentionMask::SetInOutIdx() {
   inputsIdxMap_[0] = 0;
   inputsIdxMap_[1] = 1;
   inputsIdxMap_[2] = 2;
-  inputsIdxMap_[3] = 3;
-  inputsIdxMap_[6] = 4;
-  outputsIdxMap_[3] = 0;
+  inputsIdxMap_[3] = 4;
+  inputsIdxMap_[4] = 3;
+  inputsIdxMap_[5] = 5;
+  outputsIdxMap_[0] = 0;
 }
 
-MS_INTERNAL_KERNEL_FACTORY_REG(FlashAttentionScore, InternalFlashAttentionScore);
+MS_INTERNAL_KERNEL_FACTORY_REG(PagedAttentionMask, InternalPagedAttentionMask);
 }  // namespace kernel
 }  // namespace mindspore
