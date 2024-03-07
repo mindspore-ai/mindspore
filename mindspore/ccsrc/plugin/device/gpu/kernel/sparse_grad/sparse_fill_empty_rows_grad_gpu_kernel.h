@@ -82,17 +82,17 @@ class SparseFillEmptyRowsGradGpuKernelMod : public NativeGpuKernelMod {
   // input
   size_t reverse_map_size_{1};
   size_t grad_values_size_{1};
-  size_t reverse_map_num_;
-  size_t workspace_flag_size_;
-  size_t workspace_sum_val_size_;
-  size_t grad_values_num_;
-  std::vector<int64_t> reverse_map_shape_;
-  std::vector<int64_t> grad_values_shapes_;
+  size_t reverse_map_num_{0};
+  size_t workspace_flag_size_{0};
+  size_t workspace_sum_val_size_{0};
+  size_t grad_values_num_{0};
+  std::vector<int64_t> reverse_map_shape_{};
+  std::vector<int64_t> grad_values_shapes_{};
   // output
   size_t output_dvalues_size_{1};
   size_t output_ddefault_value_size_{1};
-  size_t dvalues_num_;
-  std::vector<int64_t> dvalues_shapes_;
+  size_t dvalues_num_{0};
+  std::vector<int64_t> dvalues_shapes_{};
 };
 }  // namespace kernel
 }  // namespace mindspore
