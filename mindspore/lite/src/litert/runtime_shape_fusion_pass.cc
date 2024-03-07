@@ -150,6 +150,7 @@ bool ShapeFusionPass::CheckArithmetic(const LiteGraph::Node *shape_fusion, const
     // couldn't fuse add/sub/mul+div or add/sub/div+mul, because it maybe change indivisible to divisible.
     return false;
   }
+  is_div_ |= (type == schema::PrimitiveType_DivFusion);
   MS_CHECK_TRUE_RET(post_node->input_indices_.size() == kInputSize1, false);
   auto input1_index =
     post_node->input_indices_.at(0) == input_idx ? post_node->input_indices_.at(1) : post_node->input_indices_.at(0);
