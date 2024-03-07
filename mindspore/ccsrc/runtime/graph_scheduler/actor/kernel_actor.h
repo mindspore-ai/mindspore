@@ -131,7 +131,7 @@ class KernelActor : public DebugAwareActor {
   void RunWithAsyncLaunchKernel(OpContext<DeviceTensor> *const context);
 
   // Infer shape(and type) and resize kernel mod.
-  void InferAndResize();
+  void InferAndResize(OpContext<DeviceTensor> *const context);
 
   // Re-Infer shape, type and resize before kernel launch in dynamic scenarios.
   void InferShapeAndType();

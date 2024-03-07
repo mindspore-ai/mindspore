@@ -31,12 +31,10 @@ class KernelActor;
 
 class BACKEND_EXPORT KernelAsyncLaunchActor : public ActorBase {
  public:
-  static std::shared_ptr<KernelAsyncLaunchActor> &GetInstance() {
-    static std::shared_ptr<KernelAsyncLaunchActor> instance =
-      std::shared_ptr<KernelAsyncLaunchActor>(new KernelAsyncLaunchActor());
-    return instance;
-  }
+  static std::shared_ptr<KernelAsyncLaunchActor> &GetInstance();
   ~KernelAsyncLaunchActor() override = default;
+
+  void Initialize();
 
   void LaunchKernel(OpContext<DeviceTensor> *const context, KernelActor *kernel_actor);
 
@@ -47,6 +45,11 @@ class BACKEND_EXPORT KernelAsyncLaunchActor : public ActorBase {
  private:
   KernelAsyncLaunchActor() : ActorBase("KernelAsyncLaunchActor") {}
   DISABLE_COPY_AND_ASSIGN(KernelAsyncLaunchActor);
+
+  void GetThreadId() { thread_id_ = std::this_thread::get_id(); }
+
+  // The thread id of exclusive thread used by this actor.
+  std::thread::id thread_id_;
 };
 }  // namespace runtime
 }  // namespace mindspore

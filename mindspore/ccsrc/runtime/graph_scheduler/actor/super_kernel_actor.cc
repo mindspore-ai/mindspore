@@ -191,7 +191,10 @@ void SuperKernelActor::Run(OpContext<DeviceTensor> *const context) {
     MS_LOG(WARNING) << "Need Profile Memory, launch actor name: " << GetAID().Name()
                     << ", kernel graph: " << graph_->ToString();
   }
-  WaitRuntimePipelineFinish();
+  if (!WaitRuntimePipelineFinish(context)) {
+    MS_LOG(INFO) << "Run failed and early stop.";
+    return;
+  }
   FetchInputDeviceTensor(context);
   if (memory_alloc_list_.size() > 0) {
     if (common::IsNeedProfileMemory()) {

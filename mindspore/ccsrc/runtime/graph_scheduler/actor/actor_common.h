@@ -323,13 +323,9 @@ bool IsSkippedLaunch(const CNodePtr &kernel, const KernelGraphPtr &kernel_graph)
 // Whether enable asynchronously infer shape and resize kernel mod by KernelInferActor and KernelResizeActor.
 bool EnableAsyncInfer();
 
-// Whether enable async launch kernel or infer->resize->launch pipeline.
-// Set ture will enable async launch, and also enable infer->resize->launch pipeline if actor set contains dynamic shape
-// kernel.
-bool EnableRuntimePipeline();
 // If enable async launch kernel, wait all kernels launch task finish.
 // If enable infer->resize->launch pipeline, also wait all infer, resize and launch task finish.
-void WaitRuntimePipelineFinish(bool wait_kernel_launch_finish = true);
+bool WaitRuntimePipelineFinish(const OpContext<DeviceTensor> *context, bool wait_kernel_launch_finish = true);
 
 // Copy data from src_device_tensor to dst_device_tensor.
 bool Copy(const DeviceTensor *dst_device_tensor, const DeviceTensor *src_device_tensor);

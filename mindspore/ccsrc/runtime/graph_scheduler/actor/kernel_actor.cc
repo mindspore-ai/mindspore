@@ -222,7 +222,7 @@ void KernelActor::Run(OpContext<DeviceTensor> *const context) {
     device_contexts_[0]->device_res_manager_->BindDeviceToCurrentThread(false);
     if (has_dynamic_) {
       // Infer shape and resize for dynamic shape case.
-      InferAndResize();
+      InferAndResize(context);
       FetchOutputDeviceTensor(context);
       FetchWorkspaceDeviceTensor();
     } else {
@@ -254,17 +254,15 @@ void KernelActor::RunWithMultiPipeline(OpContext<DeviceTensor> *const context) {
   // 1. Set the memory address for the tensors which use the somas if need.
   SetSomasMemory(context);
 
-  if (is_dynamic_value_ || has_computed_depend_input_) {
-    MS_LOG(DEBUG) << "Begin wait runtime pipeline for kernel: " << kernel_->fullname_with_scope()
-                  << ", is dynamic value: " << is_dynamic_value_
-                  << ", has computed depend input: " << has_computed_depend_input_;
-    WaitRuntimePipelineFinish();
+  // If the kernel need user data and is dynamic, maybe need input kernel's output user data to infer shape, this value
+  // depend case can not handle in KernelTensor auto sync phase currently.
+  if (has_computed_depend_input_ || (kernel_mod_->need_user_data() && has_dynamic_)) {
+    MS_LOG(DEBUG) << "Begin wait runtime pipeline for kernel: " << kernel_->fullname_with_scope();
+    if (!WaitRuntimePipelineFinish(context)) {
+      MS_LOG(INFO) << "Run failed and early stop for kernel: " << kernel_->fullname_with_scope();
+      return;
+    }
     MS_LOG(DEBUG) << "End wait runtime pipeline for kernel: " << kernel_->fullname_with_scope();
-  }
-
-  if (IsRunningFailed(context)) {
-    MS_LOG(INFO) << "Run failed and early stop for kernel: " << kernel_->fullname_with_scope();
-    return;
   }
 
   // 2. Push run task to pipeline.
@@ -482,7 +480,10 @@ void KernelActor::CopyInputDeviceTensor(const OpData<DeviceTensor> *input_data,
     return;
   }
 
-  WaitRuntimePipelineFinish();
+  if (!WaitRuntimePipelineFinish(context)) {
+    MS_LOG(INFO) << "Run failed and early stop for kernel: " << kernel_->fullname_with_scope();
+    return;
+  }
   if (inputs_continuous_memory_) {
     std::string error_info = GetAID().Name() + " inputs must be continuous memory and can't be copied for index " +
                              std::to_string(input_data_index);
@@ -681,7 +682,9 @@ void KernelActor::ExecuteLaunchKernelTask(OpContext<DeviceTensor> *const context
     MS_LOG(EXCEPTION) << "#umsg#Kernel error:#umsg#Launch kernel failed: " + kernel_->fullname_with_scope();
   }
 
-  LaunchCallback(context);
+  if (ActorDispatcher::enable_multi_stream()) {
+    LaunchCallback(context);
+  }
 
   if (is_dynamic_shape_ && kernel_mod_->IsNeedUpdateOutputShapeAndSize()) {
     kernel_mod_->UpdateOutputShapeAndSize(input_kernel_tensors_, output_kernel_tensors_);
@@ -702,8 +705,16 @@ void KernelActor::ExecuteLaunchKernelTask(OpContext<DeviceTensor> *const context
   }
 }
 
-void KernelActor::InferAndResize() {
+void KernelActor::InferAndResize(OpContext<DeviceTensor> *const context) {
   if (!enable_async_infer_) {
+    // If the kernel need user data and is dynamic, maybe need input kernel's output user data to infer shape, this
+    // value depend case can not handle in KernelTensor auto sync phase currently.
+    if (ActorDispatcher::enable_async_launch_kernel() && kernel_mod_->need_user_data() &&
+        !WaitRuntimePipelineFinish(context)) {
+      MS_LOG(INFO) << "Run failed and early stop for kernel: " << kernel_->fullname_with_scope();
+      return;
+    }
+
     if (is_dynamic_type_) {
       ProfilerRecorder profiler(ProfilerModule::kKernel, ProfilerEvent::kKernelInferAndResize, GetAID().Name());
       // For dynamic shape case, need Re-InferShape and Resize kernel mod.
@@ -716,11 +727,6 @@ void KernelActor::InferAndResize() {
       ResizeKernelMod();
     } else if (is_dynamic_value_) {
       ProfilerRecorder profiler(ProfilerModule::kKernel, ProfilerEvent::kKernelResize, GetAID().Name());
-      if (ActorDispatcher::enable_async_launch_kernel()) {
-        MS_LOG(DEBUG) << "Begin wait runtime pipeline for dynamic value kernel.";
-        WaitRuntimePipelineFinish();
-        MS_LOG(DEBUG) << "End wait runtime pipeline for dynamic value kernel.";
-      }
       ResizeKernelMod();
     }
 
@@ -794,7 +800,7 @@ bool KernelActor::LaunchKernel(OpContext<DeviceTensor> *const) {
 }
 
 void KernelActor::LaunchCallback(OpContext<DeviceTensor> *const context) {
-  if (!ActorDispatcher::enable_multi_stream() || input_device_tensors_.empty()) {
+  if (input_device_tensors_.empty()) {
     return;
   }
   auto stream_id = kernel_info_->stream_id();
@@ -849,7 +855,9 @@ void KernelActor::LaunchCallback(OpContext<DeviceTensor> *const context) {
 
 void KernelActor::PostLaunchKernel(OpContext<DeviceTensor> *const context) {
   // Execute kernel actor callbacks.
-  LaunchCallback(context);
+  if (ActorDispatcher::enable_multi_stream()) {
+    LaunchCallback(context);
+  }
 
   if (is_dynamic_shape_ && kernel_mod_->IsNeedUpdateOutputShapeAndSize()) {
     kernel_mod_->UpdateOutputShapeAndSize(input_kernel_tensors_, output_kernel_tensors_);

@@ -31,12 +31,10 @@ class KernelActor;
 
 class BACKEND_EXPORT KernelAsyncInferActor : public ActorBase {
  public:
-  static std::shared_ptr<KernelAsyncInferActor> &GetInstance() {
-    static std::shared_ptr<KernelAsyncInferActor> instance =
-      std::shared_ptr<KernelAsyncInferActor>(new KernelAsyncInferActor());
-    return instance;
-  }
+  static std::shared_ptr<KernelAsyncInferActor> &GetInstance();
   ~KernelAsyncInferActor() override = default;
+
+  void Initialize();
 
   void InferShape(OpContext<DeviceTensor> *const context, KernelActor *kernel_actor);
 
@@ -47,6 +45,11 @@ class BACKEND_EXPORT KernelAsyncInferActor : public ActorBase {
  private:
   KernelAsyncInferActor() : ActorBase("KernelAsyncInferActor") {}
   DISABLE_COPY_AND_ASSIGN(KernelAsyncInferActor);
+
+  void GetThreadId() { thread_id_ = std::this_thread::get_id(); }
+
+  // The thread id of exclusive thread used by this actor.
+  std::thread::id thread_id_;
 };
 }  // namespace runtime
 }  // namespace mindspore

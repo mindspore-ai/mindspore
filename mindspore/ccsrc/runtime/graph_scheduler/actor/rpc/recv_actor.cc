@@ -209,6 +209,10 @@ void RecvActor::EraseInput(const OpContext<DeviceTensor> *context) {
   }
   // Release data allocated by AllocateMessage.
   if (recv_data_ != nullptr) {
+    if (!WaitRuntimePipelineFinish(context)) {
+      MS_LOG(INFO) << "Run failed and early stop.";
+      return;
+    }
     MS_EXCEPTION_IF_CHECK_FAIL((!device_contexts_.empty()), "The device context doesn't exist.");
     MS_EXCEPTION_IF_NULL(device_contexts_[0]);
     MS_EXCEPTION_IF_NULL(device_contexts_[0]->device_res_manager_);
@@ -218,6 +222,10 @@ void RecvActor::EraseInput(const OpContext<DeviceTensor> *context) {
 #ifdef ENABLE_RDMA
   // Release data of URPC by caller.
   if (common::GetEnv(kEnableRDMA) == "1" && rdma_buf_ != nullptr) {
+    if (!WaitRuntimePipelineFinish(context)) {
+      MS_LOG(INFO) << "Run failed and early stop.";
+      return;
+    }
     auto rdma_server = dynamic_cast<RDMAServer *>(server_.get());
     MS_EXCEPTION_IF_NULL(rdma_server);
     auto urpc_alloc = rdma_server->urpc_allocator();

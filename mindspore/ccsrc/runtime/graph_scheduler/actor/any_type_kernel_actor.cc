@@ -68,8 +68,8 @@ void AnyTypeKernelActor::RunOpData(OpData<DeviceTensor> *const input_data, OpCon
     input_op_datas_[sequential_num].emplace_back(input_data);
     if (CheckRunningCondition(context)) {
       MS_LOG(DEBUG) << "Begin wait runtime pipeline to run for graph input for actor: " << GetAID().Name();
-      WaitRuntimePipelineFinish();
-      if (IsRunningFailed(context)) {
+      if (!WaitRuntimePipelineFinish(context)) {
+        MS_LOG(INFO) << "Run failed and early stop.";
         return;
       }
       MS_LOG(DEBUG) << "End wait runtime pipeline to run for graph input for actor: " << GetAID().Name();
@@ -80,8 +80,8 @@ void AnyTypeKernelActor::RunOpData(OpData<DeviceTensor> *const input_data, OpCon
     graph_output_op_data_[sequential_num].emplace_back(input_data);
     if (CheckGraphOutputRunningCondition(context)) {
       MS_LOG(DEBUG) << "End wait runtime pipeline to run for graph output for actor: " << GetAID().Name();
-      WaitRuntimePipelineFinish();
-      if (IsRunningFailed(context)) {
+      if (!WaitRuntimePipelineFinish(context)) {
+        MS_LOG(INFO) << "Run failed and early stop.";
         return;
       }
       MS_LOG(DEBUG) << "End wait runtime pipeline to run for graph output for actor: " << GetAID().Name();
@@ -100,8 +100,8 @@ void AnyTypeKernelActor::RunOpControl(AID *const input_control, OpContext<Device
         [input_control](const auto &arrow_pair) { return arrow_pair.first.Name() == input_control->Name(); })) {
     (void)input_op_controls_[sequential_num].emplace_back(input_control);
     if (CheckRunningCondition(context)) {
-      WaitRuntimePipelineFinish();
-      if (IsRunningFailed(context)) {
+      if (!WaitRuntimePipelineFinish(context)) {
+        MS_LOG(INFO) << "Run failed and early stop.";
         return;
       }
       RunForGraphInput(context);
@@ -109,8 +109,8 @@ void AnyTypeKernelActor::RunOpControl(AID *const input_control, OpContext<Device
   } else {
     graph_output_op_control_[sequential_num].emplace_back(input_control);
     if (CheckGraphOutputRunningCondition(context)) {
-      WaitRuntimePipelineFinish();
-      if (IsRunningFailed(context)) {
+      if (!WaitRuntimePipelineFinish(context)) {
+        MS_LOG(INFO) << "Run failed and early stop.";
         return;
       }
       RunForGraphOutput(context);

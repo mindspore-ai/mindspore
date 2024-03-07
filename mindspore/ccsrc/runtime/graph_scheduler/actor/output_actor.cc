@@ -187,7 +187,7 @@ void OutputActor::RunOpControl(AID *const, OpContext<DeviceTensor> *const contex
         }
       }
       outputs_[device_tensor_store_key.first] =
-        CreateOutputTensor(device_tensor_store_key.second, 0, device_tensor_store_key.first);
+        CreateOutputTensor(device_tensor_store_key.second, 0, device_tensor_store_key.first, context);
       if (outputs_[device_tensor_store_key.first] == nullptr) {
         SET_OPCONTEXT_FAIL_RET_WITH_ERROR(*context, "Create output tensor failed.");
       }
@@ -239,7 +239,7 @@ void OutputActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<De
     return;
   }
 
-  auto tensor = CreateOutputTensor(node_with_index.first, node_with_index.second, output_position);
+  auto tensor = CreateOutputTensor(node_with_index.first, node_with_index.second, output_position, context);
   if (tensor == nullptr) {
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR(*context, "Create output tensor failed.");
   }
@@ -251,11 +251,15 @@ void OutputActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<De
   current_outputs_num_++;
 }
 
-TensorPtr OutputActor::CreateOutputTensor(const AnfNodePtr &output_node, size_t output_index, size_t output_position) {
+TensorPtr OutputActor::CreateOutputTensor(const AnfNodePtr &output_node, size_t output_index, size_t output_position,
+                                          OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(output_node);
+  bool is_dynamic_shape_output =
+    common::AnfAlgo::IsDynamicShape(output_node) || common::AnfAlgo::IsDynamicSequence(output_node);
+  // Wait pipeline for dynamic shape output node if need.
   // Note: In dynamic shape case, when actor thread number <= 3, maybe only enable async launch kernel, we should check
   // weather enable async launch kernel rather than whether enable multi pipeline here.
-  if (ActorDispatcher::enable_async_launch_kernel()) {
+  if (ActorDispatcher::enable_async_launch_kernel() && is_dynamic_shape_output) {
     // Need wait all kernel launch task finish to update output shape and size for computed depend kernel.
     bool is_computed_depend_kernel = false;
     if (!output_node->isa<CNode>()) {
@@ -267,7 +271,9 @@ TensorPtr OutputActor::CreateOutputTensor(const AnfNodePtr &output_node, size_t 
       }
     }
 
-    WaitRuntimePipelineFinish(is_computed_depend_kernel);
+    if (!WaitRuntimePipelineFinish(context, is_computed_depend_kernel)) {
+      MS_LOG(INFO) << "Run graph failed and please check error log.";
+    }
   }
 
   const auto &output_kernel_tensor = AnfAlgo::GetOutputKernelTensor(output_node, output_index);

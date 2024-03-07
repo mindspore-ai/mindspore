@@ -19,6 +19,16 @@
 
 namespace mindspore {
 namespace runtime {
+std::shared_ptr<KernelAsyncResizeActor> &KernelAsyncResizeActor::GetInstance() {
+  static std::shared_ptr<KernelAsyncResizeActor> instance =
+    std::shared_ptr<KernelAsyncResizeActor>(new KernelAsyncResizeActor());
+  return instance;
+}
+
+void KernelAsyncResizeActor::Initialize() {
+  Async(this->GetAID(), &KernelAsyncResizeActor::GetThreadId);
+  Wait();
+}
 
 void KernelAsyncResizeActor::ResizeKernelMod(OpContext<DeviceTensor> *const context, KernelActor *kernel_actor) {
   try {
@@ -32,6 +42,10 @@ void KernelAsyncResizeActor::ResizeKernelMod(OpContext<DeviceTensor> *const cont
 }
 
 void KernelAsyncResizeActor::Wait() {
+  // To prevent deadlocks, you cannot wait again inside the processing of all messages received by this actor.
+  if (thread_id_ == std::this_thread::get_id()) {
+    return;
+  }
   MS_LOG(DEBUG) << "Begin wait kernel resize finish";
   ProfilerRecorder profiler(ProfilerModule::kRuntime, ProfilerEvent::kWaitKernelsResizeFinish, GetAID().Name());
   Future<bool> f = Async(this->GetAID(), &KernelAsyncResizeActor::OnTaskFinish);
