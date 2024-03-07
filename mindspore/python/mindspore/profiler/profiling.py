@@ -90,8 +90,8 @@ class DeviceSupportParam(Enum):
     ]
     ASCEND = [
         'start', 'start_profile', 'output_path', 'data_process', 'timeline_limit', 'profile_memory',
-        'parallel_strategy', 'profile_communication', 'aicore_metrics', 'l2_cache', 'op_time', 'ascend_job_id',
-        'profile_framework'
+        'parallel_strategy', 'profile_communication', 'aicore_metrics', 'l2_cache', 'hbm_ddr', 'pcie', 'op_time',
+        'ascend_job_id', 'profile_framework'
     ]
 
 
@@ -441,6 +441,8 @@ class Profiler:
     _has_initialized = False
     _ascend_profiling_options = ""
     _ascend_job_id = ""
+    ENABLE_STATUS = "on"
+    DISABLE_STATUS = "off"
 
     def __init__(self, **kwargs):
         self._dev_id = None
@@ -464,7 +466,9 @@ class Profiler:
         _environment_check()
         # default aicore_metrics type is ArithmeticUtilization
         self._aicore_metrics_id = 0
-        self._l2_cache = "off"
+        self._l2_cache = self.DISABLE_STATUS
+        self._hbm_ddr = self.DISABLE_STATUS
+        self._pcie = self.DISABLE_STATUS
         self._data_process = True
         self._op_time = True
         self._profile_communication = False
@@ -929,15 +933,17 @@ class Profiler:
             "output": self._output_path,
             "fp_point": fp_point,
             "bp_point": bp_point,
-            "training_trace": "on" if self._op_time else "off",
-            "task_trace": "on" if self._op_time else "off",
+            "training_trace": self.ENABLE_STATUS if self._op_time else self.DISABLE_STATUS,
+            "task_trace": self.ENABLE_STATUS if self._op_time else self.DISABLE_STATUS,
             "aic_metrics": AICORE_METRICS_DICT.get(self._aicore_metrics_id, "ArithmeticUtilization"),
-            "aicpu": "on" if self._data_process or self._op_time else "off",
-            "profile_memory": "on" if self._op_time and self._profile_memory else "off",
-            "hccl": "on" if self._op_time and self._profile_communication else "off",
+            "aicpu": self.ENABLE_STATUS if self._data_process or self._op_time else self.DISABLE_STATUS,
+            "profile_memory": self.ENABLE_STATUS if self._op_time and self._profile_memory else self.DISABLE_STATUS,
+            "hccl": self.ENABLE_STATUS if self._op_time and self._profile_communication else self.DISABLE_STATUS,
             "l2_cache": self._l2_cache,
-            "parallel_strategy": "on" if self._parallel_strategy else "off",
-            "op_time": "on" if self._op_time else "off",
+            "hbm_ddr": self._hbm_ddr,
+            "pcie": self._pcie,
+            "parallel_strategy": self.ENABLE_STATUS if self._parallel_strategy else self.DISABLE_STATUS,
+            "op_time": self.ENABLE_STATUS if self._op_time else self.DISABLE_STATUS,
             "profile_framework": self._profile_framework
         }
 
@@ -971,7 +977,7 @@ class Profiler:
             self._profile_communication = False
 
         if self._profile_communication:
-            hccl_option = {"output": self._output_path, "task_trace": "on"}
+            hccl_option = {"output": self._output_path, "task_trace": self.ENABLE_STATUS}
             os.environ['PROFILING_OPTIONS'] = json.dumps(hccl_option)
 
         self._profile_memory = kwargs.pop("profile_memory", False)
@@ -996,10 +1002,21 @@ class Profiler:
             logger.warning(f"For '{self.__class__.__name__}', the parameter l2_cache must be bool, "
                            f"but got type {type(l2_cache_enable)}, it will be set to False.")
             l2_cache_enable = False
-        if l2_cache_enable:
-            self._l2_cache = "on"
-        else:
-            self._l2_cache = "off"
+        self._l2_cache = self.ENABLE_STATUS if l2_cache_enable else self.DISABLE_STATUS
+
+        hbm_ddr_enable = kwargs.pop("hbm_ddr", False)
+        if not isinstance(hbm_ddr_enable, bool):
+            logger.warning(f"For '{self.__class__.__name__}', the parameter hbm_ddr must be bool, "
+                           f"but got type {type(hbm_ddr_enable)}, it will be set to False.")
+            hbm_ddr_enable = False
+        self._hbm_ddr = self.ENABLE_STATUS if hbm_ddr_enable else self.DISABLE_STATUS
+
+        pcie_enable = kwargs.pop("pcie", False)
+        if not isinstance(pcie_enable, bool):
+            logger.warning(f"For '{self.__class__.__name__}', the parameter pcie must be bool, "
+                           f"but got type {type(pcie_enable)}, it will be set to False.")
+            pcie_enable = False
+        self._pcie = self.ENABLE_STATUS if pcie_enable else self.DISABLE_STATUS
 
         self._parallel_strategy = kwargs.pop("parallel_strategy", True)
         if not isinstance(self._parallel_strategy, bool):
