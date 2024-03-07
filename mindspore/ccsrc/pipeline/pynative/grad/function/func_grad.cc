@@ -27,21 +27,21 @@
 
 namespace mindspore::pynative::autograd {
 namespace {
-TensorPtr Add(const TensorPtr &input, const TensorPtr &other, const FuncBuilderPtr &func_impl) {
-  if (input == nullptr) {
+ValuePtr Add(const ValuePtr &input, const ValuePtr &other, const FuncBuilderPtr &func_impl) {
+  if (input->isa<None>()) {
     MS_EXCEPTION_IF_NULL(other);
     return other;
   }
-  if (other == nullptr) {
+  if (other->isa<None>()) {
     MS_EXCEPTION_IF_NULL(input);
     return input;
   }
-  auto result = func_impl->Add(input, other)->cast<tensor::TensorPtr>();
+  auto result = func_impl->Add(input, other);
   MS_EXCEPTION_IF_NULL(result);
   return result;
 }
 
-void Add(const TensorPtr &other, size_t input_index, const FuncBuilderPtr &func_impl, std::vector<TensorPtr> *inputs) {
+void Add(const ValuePtr &other, size_t input_index, const FuncBuilderPtr &func_impl, std::vector<ValuePtr> *inputs) {
   if (input_index >= inputs->size()) {
     MS_LOG(EXCEPTION) << "The input index should less than inputs size";
   }
@@ -49,16 +49,16 @@ void Add(const TensorPtr &other, size_t input_index, const FuncBuilderPtr &func_
   (*inputs)[input_index] = Add(inputs->at(input_index), other, func_impl);
 }
 
-std::vector<TensorPtr> PaddingGradientInput(const tensor::TensorPtr &grad, size_t output_size, size_t input_index) {
-  std::vector<TensorPtr> gradients;
+ValuePtrList PaddingGradientInput(const ValuePtr &grad, size_t output_size, size_t input_index) {
+  ValuePtrList gradients;
   gradients.reserve(output_size);
   for (size_t i = 0; i < output_size; ++i) {
     if (input_index == i) {
       (void)gradients.emplace_back(grad);
     } else {
-      // If gradient is not, we just set nullptr, then we lazy update zero gradient by
+      // If gradient is not, we just set kNone, then we lazy update zero gradient by
       // LazeUpdateZeroGradient method
-      (void)gradients.emplace_back(nullptr);
+      (void)gradients.emplace_back(kNone);
     }
   }
   return gradients;
@@ -73,17 +73,13 @@ VectorRef GeneratePythonArgs(const ValuePtrList &inputs, const ValuePtr &output)
   return args;
 }
 
-ValuePtr TensorToValue(const std::vector<TensorPtr> &tensors) {
-  if (tensors.size() == kSizeZero) {
+ValuePtr ValueListToValue(const ValuePtrList &values) {
+  if (values.size() == kSizeZero) {
     MS_LOG(EXCEPTION) << "tensors size should not be empty!";
   }
-  if (tensors.size() == kSizeOne) {
-    return tensors[kIndex0];
+  if (values.size() == kSizeOne) {
+    return values[kIndex0];
   }
-  std::vector<ValuePtr> values;
-  values.reserve(tensors.size());
-  (void)std::transform(tensors.begin(), tensors.end(), std::back_inserter(values),
-                       [](const ValuePtr &val) { return val; });
   return std::make_shared<ValueTuple>(values);
 }
 
@@ -147,7 +143,7 @@ bool IsNeedComputeGrad(const ValuePtr &input) {
 }
 }  // namespace
 
-TensorPtrList FuncBackwardNode::CallBackward(const TensorPtrList &gradients_in) {
+ValuePtrList FuncBackwardNode::CallBackward(const ValuePtrList &gradients_in) {
   MS_LOG(DEBUG) << "Begin CallBackward: " << name();
   const auto &device_target = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   auto ir_builder = FuncBuilder(name_, device_target, nullptr);
@@ -169,7 +165,7 @@ TensorPtrList FuncBackwardNode::CallBackward(const TensorPtrList &gradients_in) 
   return gradients;
 }
 
-NodePtrList FuncBackwardNode::PreProcess(const TensorPtrList &dout, FuncBuilder *emitter) {
+NodePtrList FuncBackwardNode::PreProcess(const ValuePtrList &dout, FuncBuilder *emitter) {
   NodePtrList node_inputs;
   node_inputs.reserve(op_inputs_.size() + kSizeFive);
   for (size_t i = 0; i < op_inputs_.size(); ++i) {
@@ -181,17 +177,8 @@ NodePtrList FuncBackwardNode::PreProcess(const TensorPtrList &dout, FuncBuilder 
   if (dout.size() == kSizeOne) {
     (void)node_inputs.emplace_back(emitter->NewFuncNode(dout[kIndex0], out_abstract_, InputType::kOpOutput));
   } else {
-    ValuePtrList value_dout;
-    value_dout.reserve(dout.size());
-    // If dout is nullptr, lazy update zero tensor to funcbuilder emitop.
-    (void)std::transform(dout.begin(), dout.end(), std::back_inserter(value_dout), [](const auto &val) -> ValuePtr {
-      if (val == nullptr) {
-        return kNone;
-      }
-      return val;
-    });
     (void)node_inputs.emplace_back(
-      emitter->NewFuncNode(std::make_shared<ValueTuple>(value_dout), out_abstract_, InputType::kOpOutput));
+      emitter->NewFuncNode(std::make_shared<ValueTuple>(dout), out_abstract_, InputType::kOpOutput));
   }
   return node_inputs;
 }
@@ -201,9 +188,9 @@ void FuncBackwardNode::Release() {
   op_output_ = nullptr;
 }
 
-TensorPtrList HookBackwardNode::CallBackward(const TensorPtrList &grads) {
+ValuePtrList HookBackwardNode::CallBackward(const ValuePtrList &grads) {
   MS_LOG(DEBUG) << "Begin HookBackwardNode CallBackward ";
-  auto gradient = TensorToValue(grads);
+  auto gradient = ValueListToValue(grads);
   (void)args_.emplace_back(gradient);
   auto out = prim_->RunHookFunction(args_);
   ValuePtrList gradient_values;
@@ -222,7 +209,7 @@ TensorPtrList HookBackwardNode::CallBackward(const TensorPtrList &grads) {
 
 void HookBackwardNode::Release() { args_.clear(); }
 
-TensorPtrList GraphBackwardNode::CallBackward(const TensorPtrList &grads) {
+ValuePtrList GraphBackwardNode::CallBackward(const ValuePtrList &grads) {
   MS_LOG(DEBUG) << "Begin GraphBackwardNode CallBackward ";
   auto graph_call_back = PyNativeAlgo::AutoGrad::CreateGraphCallBack(func_graph_, cache_key_, graph_call_condition_);
   // Add graph din
@@ -241,15 +228,11 @@ TensorPtrList GraphBackwardNode::CallBackward(const TensorPtrList &grads) {
     }
     const auto &v_dict = op_output_->cast<ValueDictionaryPtr>();
     ValuePtrList key_inputs;
-    ValuePtrList value_inputs;
     for (const auto &elem : v_dict->value()) {
       (void)key_inputs.emplace_back(elem.first);
     }
     (void)args_.emplace_back(std::make_shared<ValueTuple>(key_inputs));
-    value_inputs.reserve(real_dout.size());
-    (void)std::transform(real_dout.begin(), real_dout.end(), std::back_inserter(value_inputs),
-                         [](const ValuePtr &val) { return val; });
-    (void)args_.emplace_back(std::make_shared<ValueTuple>(value_inputs));
+    (void)args_.emplace_back(std::make_shared<ValueTuple>(real_dout));
   }
   auto gradient_vec_ref = graph_call_back(args_);
   auto gradient_values = common::AnfAlgo::TransformVectorRefToMultiValue(gradient_vec_ref);
@@ -258,15 +241,13 @@ TensorPtrList GraphBackwardNode::CallBackward(const TensorPtrList &grads) {
   return gradient_tensors;
 }
 
-TensorPtrList GraphRoot::BuildFlattenSensGradient(const ValuePtrList &sens_gradient) const {
-  TensorPtrList real_gradients;
+ValuePtrList GraphRoot::BuildFlattenSensGradient(const ValuePtrList &sens_gradient) const {
+  ValuePtrList real_gradients;
   for (const auto &index : gradient_index_) {
     if (index >= sens_gradient.size()) {
       MS_LOG(EXCEPTION) << "Inputs gradient index should smaller than flatten_values size!";
     }
-    const auto &gradient_tensor = sens_gradient[index]->cast<tensor::TensorPtr>();
-    MS_EXCEPTION_IF_NULL(gradient_tensor);
-    (void)real_gradients.emplace_back(gradient_tensor);
+    (void)real_gradients.emplace_back(sens_gradient[index]);
   }
   return real_gradients;
 }
@@ -398,7 +379,7 @@ void FuncGrad::BackPropagate() {
   MS_LOG(DEBUG) << "Begin BackPropagate";
   const auto &last_node_reverse_iter = GetLastNodeReverseIter();
   const auto &root_fn = (*last_node_reverse_iter)->func_node();
-  mindspore::HashMap<BackwardNode *, TensorPtrList> input_buffer;
+  mindspore::HashMap<BackwardNode *, ValuePtrList> input_buffer;
   (void)input_buffer.insert({root_fn.get(), root_gradients_});
   for (auto iter = last_node_reverse_iter; iter != variable_set_.rend(); ++iter) {
     const auto &variable = *iter;
@@ -414,9 +395,9 @@ void FuncGrad::BackPropagate() {
     if (input_buffer.find(fn.get()) == input_buffer.end()) {
       MS_LOG(EXCEPTION) << "Fn not has gradient";
     }
-    const TensorPtrList &gradient_in = input_buffer[fn.get()];
+    const auto &gradient_in = input_buffer[fn.get()];
     MS_LOG(DEBUG) << PyNativeAlgo::Common::PrintDebugInfo(gradient_in, "Begin print gradient in: ");
-    TensorPtrList gradient_out = fn->CallBackward(gradient_in);
+    auto gradient_out = fn->CallBackward(gradient_in);
     MS_LOG(DEBUG) << PyNativeAlgo::Common::PrintDebugInfo(gradient_out, "Begin print gradient out: ");
     if (gradient_out.size() != fn->next_edges().size()) {
       MS_LOG(EXCEPTION) << "Fn gradient size should be same as next edges size";
@@ -426,9 +407,9 @@ void FuncGrad::BackPropagate() {
       const auto &last_variable = next_edge.variable;
       const auto &last_fn = last_variable->func_node();
       const auto &last_gradient = gradient_out[i];
-      // If last_gradient is nullptr, It represents that this tensor grad is zeros.
-      if (last_gradient == nullptr) {
-        MS_LOG(DEBUG) << last_variable->ToString() << ", its gradient is nullptr!";
+      // If last_gradient is None, It represents that this tensor grad is zeros.
+      if (last_gradient->isa<None>()) {
+        MS_LOG(DEBUG) << last_variable->ToString() << ", its gradient is kNone!";
         continue;
       }
       if (input_buffer.find(last_fn.get()) != input_buffer.end()) {
@@ -441,12 +422,13 @@ void FuncGrad::BackPropagate() {
     }
     if (variable->is_leaf()) {
       MS_LOG(DEBUG) << "Get leaf node " << variable->ToString();
-      auto grad_tensor = input_buffer[fn.get()];
-      if (grad_tensor.empty() || grad_tensor[0] == nullptr) {
-        MS_LOG(EXCEPTION) << variable->ToString() << ", "
-                          << (grad_tensor.empty() ? "grad is empty" : "grad is nullptr");
+      auto grads = input_buffer[fn.get()];
+      if (grads.empty() || grads[0]->isa<None>()) {
+        MS_LOG(EXCEPTION) << variable->ToString() << ", " << (grads.empty() ? "grad is empty" : "grad is kNone");
       }
-      variable->set_grad(grad_tensor[0]);
+      auto grad_tensor = grads[0]->cast<tensor::TensorPtr>();
+      MS_EXCEPTION_IF_NULL(grad_tensor);
+      variable->set_grad(grad_tensor);
     }
     (void)input_buffer.erase(fn.get());
     variable->Release();

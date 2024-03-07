@@ -41,23 +41,22 @@ void BackwardNode::UpdateNextEdges(const ValuePtrList &inputs) {
   }
 }
 
-TensorPtrList BackwardNode::PostProcess(const ValuePtrList &gradient_value) {
-  TensorPtrList gradients;
+ValuePtrList BackwardNode::PostProcess(const ValuePtrList &gradient_value) {
+  ValuePtrList gradients;
   ValuePtrList flatten_values = PyNativeAlgo::DataConvert::FlattenTensorSeqInValueSeq(gradient_value);
   gradients.reserve(flatten_values.size());
   for (const auto index : gradient_index_) {
     if (index >= flatten_values.size()) {
       MS_LOG(EXCEPTION) << "Inputs gradient index should smaller than flatten_values size!";
     }
-    auto val = flatten_values[index];
-    auto gradient_tensor = flatten_values[index]->cast<tensor::TensorPtr>();
+    auto gradient_tensor = flatten_values[index];
     (void)gradients.emplace_back(gradient_tensor);
   }
   return gradients;
 }
 
-TensorPtrList BackwardNode::LazeUpdateZeroGradient(const TensorPtrList &dout, FuncBuilder *func_builder,
-                                                   const ValuePtr &output) {
+ValuePtrList BackwardNode::LazeUpdateZeroGradient(const ValuePtrList &dout, FuncBuilder *func_builder,
+                                                  const ValuePtr &output) {
   if (dout.size() == kSizeOne) {
     return dout;
   }
@@ -67,16 +66,14 @@ TensorPtrList BackwardNode::LazeUpdateZeroGradient(const TensorPtrList &dout, Fu
     MS_LOG(EXCEPTION) << "Gradients size should be same as output size! But got output size: " << outputs.size()
                       << ", gradients size: " << dout.size();
   }
-  TensorPtrList real_dout(dout.size());
+  ValuePtrList real_dout(dout.size());
   for (size_t i = 0; i < dout.size(); ++i) {
-    if (dout[i] == nullptr) {
+    if (dout[i]->isa<None>()) {
       MS_LOG(DEBUG) << "Op " << name() << " has multi outputs, and exist null dout, now do emit zeros";
       auto zero_value =
         PyNativeAlgo::AutoGrad::BuildSpecialValueGrad(outputs[i], nullptr, func_builder, SpecialType::kZerosLikeType);
       MS_EXCEPTION_IF_NULL(zero_value);
-      auto zero_tensor = zero_value->cast<tensor::TensorPtr>();
-      MS_EXCEPTION_IF_NULL(zero_tensor);
-      real_dout[i] = zero_tensor;
+      real_dout[i] = zero_value;
     } else {
       real_dout[i] = dout[i];
     }

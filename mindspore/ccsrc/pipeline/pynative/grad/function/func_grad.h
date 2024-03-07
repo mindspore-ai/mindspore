@@ -47,8 +47,8 @@ class FuncBackwardNode : public BackwardNode {
         out_abstract_(std::move(out_abstract)),
         func_(std::move(func)) {}
   ~FuncBackwardNode() override = default;
-  TensorPtrList CallBackward(const TensorPtrList &grads) override;
-  NodePtrList PreProcess(const TensorPtrList &dout, FuncBuilder *emitter);
+  ValuePtrList CallBackward(const ValuePtrList &grads) override;
+  NodePtrList PreProcess(const ValuePtrList &dout, FuncBuilder *emitter);
   const expander::bprop::BpropBuilderFunc &grad_func() { return func_; }
   void set_attrs(const mindspore::HashMap<std::string, ValuePtr> &attrs) { attrs_ = attrs; }
   void Release() override;
@@ -67,7 +67,7 @@ class HookBackwardNode : public BackwardNode {
  public:
   HookBackwardNode(const string &name, PrimitivePyPtr prim, VectorRef &&args, size_t output_size)
       : BackwardNode(name, output_size), prim_(std::move(prim)), args_(args) {}
-  TensorPtrList CallBackward(const TensorPtrList &grads) override;
+  ValuePtrList CallBackward(const ValuePtrList &grads) override;
   void Release() override;
 
  private:
@@ -85,7 +85,7 @@ class GraphBackwardNode : public BackwardNode {
         args_(args),
         cache_key_(std::move(cache_key)),
         graph_call_condition_(is_control_flow, is_jit_graph, is_dynamic_shape_process, jit_out_has_dict, true) {}
-  TensorPtrList CallBackward(const TensorPtrList &grads) override;
+  ValuePtrList CallBackward(const ValuePtrList &grads) override;
   ValuePtr op_output_;
 
  private:
@@ -99,15 +99,15 @@ class GraphRoot : public BackwardNode {
  public:
   explicit GraphRoot(const string &name) : BackwardNode(name) {}
   ~GraphRoot() override = default;
-  TensorPtrList CallBackward(const TensorPtrList &grads) override { return grads; }
-  TensorPtrList BuildFlattenSensGradient(const ValuePtrList &sens_gradient) const;
+  ValuePtrList CallBackward(const ValuePtrList &grads) override { return grads; }
+  ValuePtrList BuildFlattenSensGradient(const ValuePtrList &sens_gradient) const;
 };
 
 class FakeBackwardNode : public BackwardNode {
  public:
   explicit FakeBackwardNode(const string &name) : BackwardNode(name) {}
   ~FakeBackwardNode() override = default;
-  TensorPtrList CallBackward(const TensorPtrList &grads) override {
+  ValuePtrList CallBackward(const ValuePtrList &grads) override {
     MS_LOG(EXCEPTION) << "Illegal primitive " << name() << "'s bprop not defined";
   }
 };
@@ -157,7 +157,7 @@ class FuncGrad : public AutoGrad {
   std::vector<tensor::TensorPtr> weights_used_in_graph_;
   ValuePtr sens_value_{nullptr};
   FuncVariablePtr last_variable_{nullptr};
-  TensorPtrList root_gradients_;
+  ValuePtrList root_gradients_;
 };
 }  // namespace mindspore::pynative::autograd
 

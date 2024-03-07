@@ -69,7 +69,7 @@ class BackwardNode {
   /// \brief CallBackward function is used to calculate gradient of this node.
   ///
   /// \param[in] grads Grads is this node output's gradients.
-  virtual TensorPtrList CallBackward(const TensorPtrList &grads) { return {}; }
+  virtual ValuePtrList CallBackward(const ValuePtrList &grads) { return {}; }
 
   /// \brief Collect next edges of this node. The inputs should be flatten.
   /// \param[in] inputs Inputs is op input.
@@ -79,10 +79,10 @@ class BackwardNode {
   /// \param[in] gradient_value Gradients value is gradients result from func
   /// which need postprocess.
   /// \return Real gradients after postprocess, the size is same as next edges size.
-  virtual TensorPtrList PostProcess(const ValuePtrList &gradient_value);
+  virtual ValuePtrList PostProcess(const ValuePtrList &gradient_value);
 
   // Update nullptr grad.
-  TensorPtrList LazeUpdateZeroGradient(const TensorPtrList &dout, FuncBuilder *func_builder, const ValuePtr &output);
+  ValuePtrList LazeUpdateZeroGradient(const ValuePtrList &dout, FuncBuilder *func_builder, const ValuePtr &output);
 
   /// \brief The PostProcess function is used to represent this node's inputs, which can
   /// backpropagation gradients.

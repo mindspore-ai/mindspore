@@ -2177,6 +2177,7 @@ CallBackFn AutoGrad::CreateGraphCallBack(const FuncGraphPtr &call_graph, const s
     if (graph_call_condition.is_jit_graph_ || !graph_call_condition.is_dynamic_shape_process_) {
       (void)jit_call_graph_compile_cache_.emplace(cache_key, resource);
     }
+    resource->SetResult(kNeedCompile, true);
   } else {
     resource = it->second;
     // If resource func graph not compile(not call run grad graph), but hit cache
