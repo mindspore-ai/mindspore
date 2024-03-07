@@ -31,23 +31,23 @@
 namespace mindspore {
 namespace expander {
 namespace bprop {
-class BpropIRBuilder;
+class BpropBuilder;
 
-using BpropIRBuilderFunc = std::function<NodePtrList(BpropIRBuilder *)>;
-struct BpropHandle {
-  BpropIRBuilderFunc func;
+using BpropBuilderFunc = std::function<NodePtrList(BpropBuilder *)>;
+struct COMMON_EXPORT BpropHandle {
+  BpropBuilderFunc func;
   mindspore::HashSet<size_t> unused_inputs;
 };
 
-class BpropIRBuilder : public Emitter {
+class COMMON_EXPORT BpropBuilder : public Emitter {
  public:
-  BpropIRBuilder(const std::string &name, const FuncGraphPtr &func_graph, const ExpanderInferPtr &infer)
-      : Emitter(func_graph, infer, std::make_shared<Scope>(std::string("Bprop/grad") + name)), name_(name) {}
+  BpropBuilder(const std::string &name, const ExpanderInferPtr &infer)
+      : Emitter(infer, std::make_shared<Scope>(std::string("Bprop/grad") + name)), name_(name) {}
+  BpropBuilder();
 
   /// \brief Run irbuilder to generate a graph
   NodePtrList Run(const NodePtrList &inputs, const mindspore::HashMap<std::string, ValuePtr> &attrs,
                   const BpropHandle &handle, const std::string &instance_name);
-
   ValuePtr GetAttr(const std::string &attr) const;
   template <typename S>
   S GetAttr(const std::string &attr) const {
@@ -120,7 +120,41 @@ class BpropIRBuilder : public Emitter {
   const mindspore::HashMap<std::string, ValuePtr> *attrs_ptr_{nullptr};
 };
 
-class BpropIRBuilderFactory {
+class IrBuilder : public BpropBuilder {
+ public:
+  IrBuilder(const std::string &name, const FuncGraphPtr &func_graph, const ExpanderInferPtr &infer)
+      : BpropBuilder(name, infer), func_graph_(func_graph) {}
+  NodePtr EmitOp(const PrimitivePtr &prim, const NodePtrList &inputs) override;
+  NodePtr EmitValue(const ValuePtr &value) override;
+  using BlockFunc = std::function<NodePtrList(Emitter *)>;
+  /// \brief Generate a conditional block.
+  ///
+  /// \param[in] cond condition node, it should be a tensor of Bool.
+  /// \param[in] true_case  the true branch.
+  /// \param[in] false_case the false branch.
+  /// \return node of tuple or single value, which is depends on the output list of two branches.
+  /// \note The overloaded operators (like a+b) should not be used for captured variables in the true_case/false_case
+  /// functions, use the function argument `Emitter` instead, like `emitter->Add(a, b)`. The output list of two branches
+  /// should match the join rules of control flow.
+  NodePtr Conditional(const NodePtr &cond, const BlockFunc &true_case, const BlockFunc &false_case) override;
+
+  /// \brief Generate a while-loop block.
+  ///
+  /// \param[in] cond condition node, it should be a tensor of Bool.
+  /// \param[in] body  the loop body.
+  /// \param[in] init_list the initial variables that would be modified in body.
+  /// \return node of tuple or single value, which is depends on the init_list.
+  /// \note The overloaded operators (like `a+b`) should not be used for captured variables in the body function, use
+  /// the function argument `Emitter` instead, like `emitter->Add(a, b)`. The length and node order of the output list
+  /// of the body function should match init_list.
+  NodePtr While(const NodePtr &cond, const BlockFunc &body, const NodePtrList &init_list) override;
+  const FuncGraphPtr &func_graph() { return func_graph_; }
+
+ protected:
+  FuncGraphPtr func_graph_;
+};
+
+class COMMON_EXPORT BpropIRBuilderFactory {
  public:
   static BpropIRBuilderFactory &Instance() {
     static BpropIRBuilderFactory instance{};
@@ -132,7 +166,7 @@ class BpropIRBuilderFactory {
     return (iter == registry_.end()) ? nullptr : &(iter->second);
   }
 
-  void RegBuilder(const std::string &name, const BpropIRBuilderFunc &func) { registry_[name].func = func; }
+  void RegBuilder(const std::string &name, const BpropBuilderFunc &func) { registry_[name].func = func; }
   void RegUnusedInputs(const std::string &name, const mindspore::HashSet<size_t> &unused) {
     registry_[name].unused_inputs = unused;
   }
@@ -145,7 +179,7 @@ class BpropIRBuilderRegHelper {
  public:
   explicit BpropIRBuilderRegHelper(const std::string &name) : name_(name) {}
   ~BpropIRBuilderRegHelper() = default;
-  const BpropIRBuilderRegHelper &SetBody(const BpropIRBuilderFunc &func) const {
+  const BpropIRBuilderRegHelper &SetBody(const BpropBuilderFunc &func) const {
     BpropIRBuilderFactory::Instance().RegBuilder(name_, func);
     return *this;
   }
@@ -162,7 +196,7 @@ class BpropIRBuilderRegHelper {
 #define BPROP_EXPANDER_UNIQUE_NAME(prefix, cnt) BPROP_EXPANDER_JOIN(prefix, cnt)
 #define REG_BPROP_BUILDER(name) \
   const BpropIRBuilderRegHelper BPROP_EXPANDER_UNIQUE_NAME(g_bprop, __COUNTER__) = BpropIRBuilderRegHelper(name)
-#define BODYFUNC(v) [](BpropIRBuilder * v) -> NodePtrList
+#define BODYFUNC(v) [](BpropBuilder * (v)) -> NodePtrList
 
 #ifdef _MSC_VER
 #define REG_BPROP_BUILDERS_BEGIN(func_name) void Reg##func_name() {

@@ -69,7 +69,7 @@ BaseShapePtr SplitTensorFuncImpl::InferShape(const PrimitivePtr &primitive,
     auto last_shape = input_shape;
     last_shape[pos] = last_size;
     abstract::ShapePtr last_output = std::make_shared<abstract::Shape>(last_shape);
-    (void)output_list.push_back(last_output);
+    output_list.push_back(last_output);
   }
   return std::make_shared<abstract::TupleShape>(output_list);
 }

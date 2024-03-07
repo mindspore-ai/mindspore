@@ -41,7 +41,6 @@ namespace expander {
 namespace {
 std::pair<bool, std::vector<int64_t>> GetIntList(const NodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  MS_EXCEPTION_IF_NULL(node->get());
   ValuePtr value_ptr = node->BuildValue();
   if (value_ptr != nullptr) {
     if ((value_ptr->isa<ValueSequence>() && !value_ptr->ContainsValueAny()) || value_ptr->isa<Scalar>()) {
@@ -95,6 +94,15 @@ ShapeVector CalReshapeRealDstShape(const ShapeVector &x_shape, const ShapeVector
 }  // namespace
 
 NodePtr Emitter::Emit(const std::string &op_name, const NodePtrList &inputs, const DAttr &attrs) {
+  auto prim = NewPrimitive(op_name, attrs);
+  return EmitOp(prim, inputs);
+}
+
+NodePtr Emitter::EmitOp(const PrimitivePtr &prim, const NodePtrList &inputs) {
+  MS_EXCEPTION(NotImplementedError) << "Base Emitter not implemented EmitOp() method";
+}
+
+PrimitivePtr Emitter::NewPrimitive(const std::string &op_name, const DAttr &attrs) {
   PrimitivePtr prim = nullptr;
   if (mindspore::ops::IsPrimitiveFunction(op_name)) {
     prim = std::make_shared<Primitive>(op_name);
@@ -115,29 +123,11 @@ NodePtr Emitter::Emit(const std::string &op_name, const NodePtrList &inputs, con
   if (!attrs.empty()) {
     (void)prim->SetAttrs(attrs);
   }
-  return EmitOp(prim, inputs);
-}
-
-NodePtr Emitter::EmitOp(const PrimitivePtr &prim, const NodePtrList &inputs) {
-  AnfNodePtrList cnode_inputs = {NewValueNode(prim)};
-  cnode_inputs.reserve(inputs.size() + 1);
-  (void)std::transform(inputs.cbegin(), inputs.cend(), std::back_inserter(cnode_inputs), [](const NodePtr &no) {
-    MS_EXCEPTION_IF_NULL(no);
-    return no->get();
-  });
-  auto cnode = func_graph_->NewCNode(cnode_inputs);
-  if (scope_ != nullptr) {
-    cnode->set_scope(scope_);
-  }
-  auto node = NewNode(cnode->cast<AnfNodePtr>());
-  infer_->Infer(node);
-  return node;
+  return prim;
 }
 
 NodePtr Emitter::EmitValue(const ValuePtr &value) {
-  auto node = NewNode(NewValueNode(value));
-  infer_->Infer(node);
-  return node;
+  MS_EXCEPTION(NotImplementedError) << "Base Emitter not implemented EmitValue() method";
 }
 
 NodePtr Emitter::Exp(const NodePtr &x) {
@@ -171,11 +161,11 @@ NodePtr Emitter::Reshape(const NodePtr &node, const NodePtr &shape) {
     return Emit(kReshapeOpName, {node, tuple_shape});
   }
 
-  auto vnode = node->get<ValueNodePtr>();
-  if (vnode != nullptr) {
+  if (node->input_type() == InputType::kConstant) {
     // If node and shape is both known, return node itself or a new tensor with target shape.
-    MS_EXCEPTION_IF_NULL(vnode->value());
-    auto tensor = vnode->value()->cast<tensor::TensorPtr>();
+    auto value = node->BuildValue();
+    MS_EXCEPTION_IF_NULL(value);
+    auto tensor = value->cast<tensor::TensorPtr>();
     if (tensor != nullptr && tensor->data().const_data() != nullptr) {
       const auto &tensor_shape = tensor->shape_c();
       auto update_shape = CalReshapeRealDstShape(tensor_shape, dst_shape);
@@ -260,13 +250,11 @@ NodePtr Emitter::BroadcastTo(const NodePtr &x, const NodePtr &y) {
 
 NodePtr Emitter::ZerosLike(const NodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  if (node->isa<ValueNode>()) {
+  if (node->input_type() == InputType::kConstant) {
     if (node->dtype()->type_id() == kMetaTypeNone) {
       return Tensor(0);
     }
-    auto value_node = node->get<ValueNodePtr>();
-    MS_EXCEPTION_IF_NULL(value_node);
-    auto v = value_node->value();
+    auto v = node->BuildValue();
     MS_EXCEPTION_IF_NULL(v);
     if (v->isa<ValueSequence>()) {
       return Emit(kSequenceZerosLikeOpName, {node});
@@ -298,7 +286,7 @@ NodePtr Emitter::ZerosLike(const NodePtr &node) {
     return EmitValue(value);
   }
 
-  MS_LOG(EXCEPTION) << "Cannot emit ZerosLike for " << node->get()->ToString() << " with abstract " << abs;
+  MS_LOG(EXCEPTION) << "Cannot emit ZerosLike for " << node->ToString() << " with abstract " << abs;
 }
 
 NodePtr Emitter::Fill(double value, const ShapeVector &shape, TypeId data_type) {
@@ -561,209 +549,238 @@ std::tuple<NodePtr, NodePtr> Emitter::UnifyDtype2(const NodePtr &lhs, const Node
   return {lhs, this->Cast(rhs, lhs->dtype())};
 }
 
-class Emitter::CtrlFlowBlock {
- public:
-  explicit CtrlFlowBlock(Emitter *emitter) : emitter_(emitter) { MS_EXCEPTION_IF_NULL(emitter); }
-  ~CtrlFlowBlock() = default;
-  NodePtr IfThenElse(const NodePtr &cond, const BlockFunc &true_case, const BlockFunc &false_case) {
-    auto tb = BuildSubgraph(true_case);
-    auto fb = BuildSubgraph(false_case);
-    auto s = emitter_->Emit("Switch", {cond, tb, fb});
-    auto cnode = emitter_->func_graph_->NewCNode({s->get()});
-    cnode->set_abstract(out_abstract_);
-    auto node = emitter_->NewNode(cnode->cast<AnfNodePtr>());
-    return node;
+NodePtr Emitter::SparseSoftmaxCrossEntropyWithLogits(const NodePtrList &inputs, const DAttr &attrs, const NodePtr &out,
+                                                     const NodePtr &dout, bool is_graph_mode) {
+  auto grad = Emit("SparseSoftmaxCrossEntropyWithLogits", inputs, attrs);
+  if (is_graph_mode) {
+    grad = Depend(grad, out);
   }
-
-  NodePtr While(const NodePtr &cond, const BlockFunc &while_body_func, const NodePtrList &init_list) {
-    auto while_fg = std::make_shared<FuncGraph>();
-    MS_EXCEPTION_IF_NULL(while_fg);
-    auto cond_cnode = cond->get<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(cond_cnode);
-    cond_cnode->set_func_graph(while_fg);
-    auto while_fg_emitter = std::make_unique<Emitter>(while_fg, std::make_shared<CppInferWithPartial>());
-    AnfNodePtrList main_while_fg_inputs = {NewValueNode(while_fg)};
-    std::map<AnfNodePtr, ParameterPtr> param_map;
-    auto replace_by_param = [&main_while_fg_inputs, &param_map, &while_fg](const AnfNodePtr &inp) {
-      auto &param = param_map[inp];
-      if (param == nullptr) {
-        param = while_fg->add_parameter();
-        param->set_abstract(inp->abstract());
-        (void)main_while_fg_inputs.emplace_back(inp);
-      }
-      return param;
-    };
-
-    auto empty_body_func = [&init_list](Emitter *) { return init_list; };
-    auto empty_body_fg_with_inputs = BuildSubgraphOfPartial(empty_body_func);
-    for (size_t i = 1; i < empty_body_fg_with_inputs.size(); i++) {
-      auto inp = empty_body_fg_with_inputs[i]->get();
-      empty_body_fg_with_inputs[i] = while_fg_emitter->NewNode(replace_by_param(inp));
-    }
-    for (size_t i = 1; i < cond_cnode->size(); i++) {
-      auto inp = cond_cnode->input(i);
-      MS_EXCEPTION_IF_NULL(inp);
-      if (!inp->isa<ValueNode>()) {
-        cond_cnode->set_input(i, replace_by_param(inp));
-      }
-    }
-
-    auto body_with_inputs = BuildSubgraphOfPartial(while_body_func);
-    auto body_fg = body_with_inputs[0]->get<ValueNodePtr>()->value()->cast<FuncGraphPtr>();
-    for (size_t i = 1; i < body_with_inputs.size(); i++) {
-      body_with_inputs[i] = while_fg_emitter->NewNode(replace_by_param(body_with_inputs[i]->get()));
-    }
-    // replace the body's output to call the outside while-fg
-    AnfNodePtrList body_while_fg_inputs{NewValueNode(while_fg)};
-    if (IsPrimitiveCNode(body_fg->output(), prim::kPrimMakeTuple)) {
-      auto mt = body_fg->output()->cast<CNodePtr>();
-      MS_EXCEPTION_IF_NULL(mt);
-      (void)body_while_fg_inputs.insert(body_while_fg_inputs.end(), mt->inputs().begin() + 1, mt->inputs().end());
-    } else {
-      body_while_fg_inputs.push_back(body_fg->output());
-    }
-    if (body_while_fg_inputs.size() - 1 != init_list.size()) {
-      MS_LOG(EXCEPTION) << "The while body's output size should be equal to init_list.size(), but got "
-                        << (body_while_fg_inputs.size() - 1) << " vs " << init_list.size();
-    }
-    if (body_while_fg_inputs.size() < main_while_fg_inputs.size()) {
-      for (size_t i = body_while_fg_inputs.size(); i < main_while_fg_inputs.size(); i++) {
-        auto inp = while_fg->parameters()[i - 1];
-        auto iter = std::find_if(body_with_inputs.begin(), body_with_inputs.end(),
-                                 [&inp](const NodePtr &no) { return no->get() == inp; });
-        if (iter != body_with_inputs.end()) {
-          auto param_idx = iter - body_with_inputs.begin() - 1;
-          body_while_fg_inputs.push_back(body_fg->parameters()[LongToSize(param_idx)]);
-        } else {
-          body_with_inputs.push_back(while_fg_emitter->NewNode(inp));
-          auto p = body_fg->add_parameter();
-          p->set_abstract(inp->abstract());
-          body_while_fg_inputs.push_back(p);
-        }
-      }
-    }
-    auto body_call_fg = body_fg->NewCNode(body_while_fg_inputs);
-    body_call_fg->set_abstract(out_abstract_);
-    body_fg->set_output(body_call_fg);
-
-    auto tb = while_fg_emitter->Emit("Partial", body_with_inputs);
-    auto fb = while_fg_emitter->Emit("Partial", empty_body_fg_with_inputs);
-    auto s = while_fg_emitter->Emit("Switch", {cond, tb, fb});
-    auto cnode = while_fg_emitter->func_graph_->NewCNode({s->get()});
-    cnode->set_abstract(out_abstract_);
-    while_fg->set_output(cnode);
-
-    auto main_cnode = emitter_->func_graph_->NewCNode(main_while_fg_inputs);
-    main_cnode->set_abstract(out_abstract_);
-    return emitter_->NewNode(main_cnode);
-  }
-
- protected:
-  NodePtr BuildSubgraph(const BlockFunc &func) {
-    auto fg = std::make_shared<FuncGraph>();
-    MS_EXCEPTION_IF_NULL(fg);
-    fg->set_indirect(std::make_shared<bool>(true));
-    auto e = std::make_unique<Emitter>(fg, emitter_->infer());
-    auto outputs = func(e.get());
-    if (outputs.empty()) {
-      MS_LOG(EXCEPTION) << "The block function should not return empty list.";
-    }
-    if (output_num_ == 0) {
-      output_num_ = outputs.size();
-    } else if (output_num_ != outputs.size()) {
-      MS_LOG(EXCEPTION) << "The count of outputs of each block function should be equal, but got " << output_num_
-                        << " vs " << outputs.size() << ".";
-    }
-    NodePtr output;
-    if (output_num_ > 1) {
-      output = e->MakeTuple(outputs);
-      SetSequenceNodeElementsUseFlags(output->get(), std::make_shared<std::vector<bool>>(output_num_, true));
-    } else {
-      output = outputs[0];
-    }
-    fg->set_output(output->get());
-    if (out_abstract_ == nullptr) {
-      out_abstract_ = output->abstract();
-    }
-    return emitter_->Value(fg);
-  }
-
-  NodePtrList BuildSubgraphOfPartial(const BlockFunc &func) {
-    auto fg = std::make_shared<FuncGraph>();
-    MS_EXCEPTION_IF_NULL(fg);
-    fg->set_indirect(std::make_shared<bool>(true));
-    auto sub_emitter = std::make_unique<Emitter>(fg, emitter_->infer());
-    auto output = func(sub_emitter.get());
-    if (output.empty()) {
-      MS_LOG(EXCEPTION) << "The block function should not return empty list.";
-    }
-    if (output_num_ == 0) {
-      output_num_ = output.size();
-    } else if (output_num_ != output.size()) {
-      MS_LOG(EXCEPTION) << "The count of outputs of each block function should be equal, but got " << output_num_
-                        << " vs " << output.size() << ".";
-    }
-    fg->set_output((output_num_ > 1) ? sub_emitter->MakeTuple(output)->get() : output[0]->get());
-    if (out_abstract_ == nullptr) {
-      out_abstract_ = fg->output()->abstract();
-    }
-    if (output_num_ > 1) {
-      SetSequenceNodeElementsUseFlags(fg->output(), std::make_shared<std::vector<bool>>(output_num_, true));
-    }
-
-    // replace the captured inputs to parameter
-    std::function<void(const CNodePtr &)> dfs;
-    std::unordered_set<AnfNodePtr> visited;
-    std::map<AnfNodePtr, ParameterPtr> param_map;
-    NodePtrList fg_with_inputs = {emitter_->Value(fg)};
-    dfs = [&visited, &dfs, &fg, &param_map, &fg_with_inputs, this](const CNodePtr &node) {
-      (void)visited.insert(node);
-      for (size_t i = 0; i < node->size(); i++) {
-        auto inp = node->input(i);
-        if (inp->func_graph() == nullptr) {
-          continue;
-        }
-        if (inp->func_graph() == fg) {
-          if (inp->isa<CNode>() && visited.count(inp) == 0) {
-            dfs(inp->cast<CNodePtr>());
-          }
-        } else {
-          auto &param = param_map[inp];
-          if (param == nullptr) {
-            param = fg->add_parameter();
-            param->set_abstract(inp->abstract());
-            (void)fg_with_inputs.emplace_back(emitter_->NewNode(inp));
-          }
-          node->set_input(i, param);
-        }
-      }
-    };
-    dfs(fg->get_return());
-    return fg_with_inputs;
-  }
-
-  size_t output_num_{0};
-  Emitter *emitter_;
-  abstract::AbstractBasePtr out_abstract_{nullptr};
-
-  class CppInferWithPartial : public CppInfer {
-   public:
-    void Infer(const NodePtr &node) override {
-      if (IsPrimitiveCNode(node->get(), prim::kPrimPartial) || IsPrimitiveCNode(node->get(), prim::kPrimSwitch)) {
-        return;
-      }
-      CppInfer::Infer(node);
-    }
-  };
-};
+  grad = Mul(grad, dout);
+  return grad;
+}
 
 NodePtr Emitter::Conditional(const NodePtr &cond, const BlockFunc &true_case, const BlockFunc &false_case) {
-  CtrlFlowBlock cfb(this);
-  return cfb.IfThenElse(cond, true_case, false_case);
+  MS_EXCEPTION(NotImplementedError) << "Base Emitter not implement Conditional() method";
 }
 
 NodePtr Emitter::While(const NodePtr &cond, const BlockFunc &body, const NodePtrList &init_list) {
-  CtrlFlowBlock cfb(this);
+  MS_EXCEPTION(NotImplementedError) << "Base Emitter not implement While() method";
+}
+
+NodePtr CtrlFlowBlock::IfThenElse(const NodePtr &cond, const BlockFunc &true_case, const BlockFunc &false_case) {
+  auto tb = BuildSubgraph(true_case);
+  auto fb = BuildSubgraph(false_case);
+  auto s = emitter_->Emit("Switch", {cond, tb, fb});
+
+  auto cnode = func_graph_->NewCNode({s->get()});
+  cnode->set_abstract(out_abstract_);
+  auto node = emitter_->NewIrNode(cnode->cast<AnfNodePtr>());
+  return node;
+}
+
+NodePtr CtrlFlowBlock::While(const NodePtr &cond, const BlockFunc &while_body_func, const NodePtrList &init_list) {
+  auto while_fg = std::make_shared<FuncGraph>();
+  MS_EXCEPTION_IF_NULL(while_fg);
+  auto cond_cnode = cond->get()->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cond_cnode);
+
+  cond_cnode->set_func_graph(while_fg);
+  auto while_fg_emitter = std::make_unique<IrEmitter>(while_fg, std::make_shared<CppInferWithPartial>());
+  AnfNodePtrList main_while_fg_inputs = {NewValueNode(while_fg)};
+  std::map<AnfNodePtr, ParameterPtr> param_map;
+  auto replace_by_param = [&main_while_fg_inputs, &param_map, &while_fg](const AnfNodePtr &inp) {
+    auto &param = param_map[inp];
+    if (param == nullptr) {
+      param = while_fg->add_parameter();
+      param->set_abstract(inp->abstract());
+      (void)main_while_fg_inputs.emplace_back(inp);
+    }
+    return param;
+  };
+
+  auto empty_body_func = [&init_list](Emitter *) { return init_list; };
+  auto empty_body_fg_with_inputs = BuildSubgraphOfPartial(empty_body_func);
+  for (size_t i = 1; i < empty_body_fg_with_inputs.size(); i++) {
+    auto inp = empty_body_fg_with_inputs[i]->get();
+    empty_body_fg_with_inputs[i] = while_fg_emitter->NewIrNode(replace_by_param(inp));
+  }
+  for (size_t i = 1; i < cond_cnode->size(); i++) {
+    auto inp = cond_cnode->input(i);
+    MS_EXCEPTION_IF_NULL(inp);
+    if (!inp->isa<ValueNode>()) {
+      cond_cnode->set_input(i, replace_by_param(inp));
+    }
+  }
+
+  auto body_with_inputs = BuildSubgraphOfPartial(while_body_func);
+  auto body_fg = body_with_inputs[0]->get()->cast<ValueNodePtr>()->value()->cast<FuncGraphPtr>();
+  for (size_t i = 1; i < body_with_inputs.size(); i++) {
+    body_with_inputs[i] = while_fg_emitter->NewIrNode(replace_by_param(body_with_inputs[i]->get()));
+  }
+  // replace the body's output to call the outside while-fg
+  AnfNodePtrList body_while_fg_inputs{NewValueNode(while_fg)};
+  if (IsPrimitiveCNode(body_fg->output(), prim::kPrimMakeTuple)) {
+    auto mt = body_fg->output()->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(mt);
+    (void)body_while_fg_inputs.insert(body_while_fg_inputs.end(), mt->inputs().begin() + 1, mt->inputs().end());
+  } else {
+    body_while_fg_inputs.push_back(body_fg->output());
+  }
+  if (body_while_fg_inputs.size() - 1 != init_list.size()) {
+    MS_LOG(EXCEPTION) << "The while body's output size should be equal to init_list.size(), but got "
+                      << (body_while_fg_inputs.size() - 1) << " vs " << init_list.size();
+  }
+  if (body_while_fg_inputs.size() < main_while_fg_inputs.size()) {
+    for (size_t i = body_while_fg_inputs.size(); i < main_while_fg_inputs.size(); i++) {
+      auto inp = while_fg->parameters()[i - 1];
+      auto iter = std::find_if(body_with_inputs.begin(), body_with_inputs.end(),
+                               [&inp](const NodePtr &no) { return no->get() == inp; });
+      if (iter != body_with_inputs.end()) {
+        auto param_idx = iter - body_with_inputs.begin() - 1;
+        body_while_fg_inputs.push_back(body_fg->parameters()[LongToSize(param_idx)]);
+      } else {
+        body_with_inputs.push_back(while_fg_emitter->NewIrNode(inp));
+        auto p = body_fg->add_parameter();
+        p->set_abstract(inp->abstract());
+        body_while_fg_inputs.push_back(p);
+      }
+    }
+  }
+  auto body_call_fg = body_fg->NewCNode(body_while_fg_inputs);
+  body_call_fg->set_abstract(out_abstract_);
+  body_fg->set_output(body_call_fg);
+
+  auto tb = while_fg_emitter->Emit("Partial", body_with_inputs);
+  auto fb = while_fg_emitter->Emit("Partial", empty_body_fg_with_inputs);
+  auto s = while_fg_emitter->Emit("Switch", {cond, tb, fb});
+  auto cnode = while_fg_emitter->func_graph()->NewCNode({s->get()});
+  cnode->set_abstract(out_abstract_);
+  while_fg->set_output(cnode);
+
+  auto main_cnode = func_graph_->NewCNode(main_while_fg_inputs);
+  main_cnode->set_abstract(out_abstract_);
+  return emitter_->NewIrNode(main_cnode);
+}
+
+NodePtr CtrlFlowBlock::BuildSubgraph(const BlockFunc &func) {
+  auto fg = std::make_shared<FuncGraph>();
+  MS_EXCEPTION_IF_NULL(fg);
+  fg->set_indirect(std::make_shared<bool>(true));
+  auto e = std::make_unique<IrEmitter>(fg, emitter_->infer());
+  auto outputs = func(e.get());
+  if (outputs.empty()) {
+    MS_LOG(EXCEPTION) << "The block function should not return empty list.";
+  }
+  if (output_num_ == 0) {
+    output_num_ = outputs.size();
+  } else if (output_num_ != outputs.size()) {
+    MS_LOG(EXCEPTION) << "The count of outputs of each block function should be equal, but got " << output_num_
+                      << " vs " << outputs.size() << ".";
+  }
+  NodePtr output;
+  if (output_num_ > 1) {
+    output = e->MakeTuple(outputs);
+    SetSequenceNodeElementsUseFlags(output->get(), std::make_shared<std::vector<bool>>(output_num_, true));
+  } else {
+    output = outputs[0];
+  }
+  fg->set_output(output->get());
+  if (out_abstract_ == nullptr) {
+    out_abstract_ = output->abstract();
+  }
+  return emitter_->Value(fg);
+}
+
+NodePtrList CtrlFlowBlock::BuildSubgraphOfPartial(const BlockFunc &func) {
+  auto fg = std::make_shared<FuncGraph>();
+  MS_EXCEPTION_IF_NULL(fg);
+  fg->set_indirect(std::make_shared<bool>(true));
+  auto sub_emitter = std::make_unique<IrEmitter>(fg, emitter_->infer());
+  auto output = func(sub_emitter.get());
+  if (output.empty()) {
+    MS_LOG(EXCEPTION) << "The block function should not return empty list.";
+  }
+  if (output_num_ == 0) {
+    output_num_ = output.size();
+  } else if (output_num_ != output.size()) {
+    MS_LOG(EXCEPTION) << "The count of outputs of each block function should be equal, but got " << output_num_
+                      << " vs " << output.size() << ".";
+  }
+  fg->set_output((output_num_ > 1) ? sub_emitter->MakeTuple(output)->get() : output[0]->get());
+  if (out_abstract_ == nullptr) {
+    out_abstract_ = fg->output()->abstract();
+  }
+  if (output_num_ > 1) {
+    SetSequenceNodeElementsUseFlags(fg->output(), std::make_shared<std::vector<bool>>(output_num_, true));
+  }
+
+  // replace the captured inputs to parameter
+  std::function<void(const CNodePtr &)> dfs;
+  std::unordered_set<AnfNodePtr> visited;
+  std::map<AnfNodePtr, ParameterPtr> param_map;
+  NodePtrList fg_with_inputs = {emitter_->Value(fg)};
+  dfs = [&visited, &dfs, &fg, &param_map, &fg_with_inputs, this](const CNodePtr &node) {
+    (void)visited.insert(node);
+    for (size_t i = 0; i < node->size(); i++) {
+      auto inp = node->input(i);
+      if (inp->func_graph() == nullptr) {
+        continue;
+      }
+      if (inp->func_graph() == fg) {
+        if (inp->isa<CNode>() && visited.count(inp) == 0) {
+          dfs(inp->cast<CNodePtr>());
+        }
+      } else {
+        auto &param = param_map[inp];
+        if (param == nullptr) {
+          param = fg->add_parameter();
+          param->set_abstract(inp->abstract());
+          (void)fg_with_inputs.emplace_back(emitter_->NewIrNode(inp));
+        }
+        node->set_input(i, param);
+      }
+    }
+  };
+  dfs(fg->get_return());
+  return fg_with_inputs;
+}
+
+void CtrlFlowBlock::CppInferWithPartial::Infer(const NodePtr &node) {
+  if (IsPrimitiveCNode(node->get(), prim::kPrimPartial) || IsPrimitiveCNode(node->get(), prim::kPrimSwitch)) {
+    return;
+  }
+  CppInfer::Infer(node);
+}
+
+NodePtr IrEmitter::EmitOp(const PrimitivePtr &prim, const NodePtrList &inputs) {
+  AnfNodePtrList cnode_inputs = {NewValueNode(prim)};
+  cnode_inputs.reserve(inputs.size() + 1);
+  (void)std::transform(inputs.cbegin(), inputs.cend(), std::back_inserter(cnode_inputs), [](const NodePtr &no) {
+    MS_EXCEPTION_IF_NULL(no);
+    return no->get();
+  });
+  auto cnode = func_graph_->NewCNode(cnode_inputs);
+  if (scope_ != nullptr) {
+    cnode->set_scope(scope_);
+  }
+  auto node = NewIrNode(cnode->cast<AnfNodePtr>());
+  infer_->Infer(node);
+  return node;
+}
+
+NodePtr IrEmitter::EmitValue(const ValuePtr &value) {
+  auto node = NewIrNode(NewValueNode(value));
+  infer_->Infer(node);
+  return node;
+}
+
+NodePtr IrEmitter::Conditional(const NodePtr &cond, const BlockFunc &true_case, const BlockFunc &false_case) {
+  CtrlFlowBlock cfb(this, this->func_graph_);
+  return cfb.IfThenElse(cond, true_case, false_case);
+}
+
+NodePtr IrEmitter::While(const NodePtr &cond, const BlockFunc &body, const NodePtrList &init_list) {
+  CtrlFlowBlock cfb(this, this->func_graph_);
   return cfb.While(cond, body, init_list);
 }
 

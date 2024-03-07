@@ -55,6 +55,19 @@ std::pair<bool, PrimitivePtr> IsNeedCheckPrimitiveNode(const AnfNodePtr &prim_no
   return {true, prim};
 }
 
+void PrintErrorInfo(const AnfNodeWeakPtrList &inputs, const PrimitivePtr &prim, size_t input_tensor_num,
+                    const ops::OpDefPtr &op_def) {
+  std::stringstream ss;
+  size_t i = 0;
+  ss << "Inputs are as follows: \n";
+  for (const auto &input : inputs) {
+    ss << "Input[" << i++ << "]: " << input.lock()->DebugString() << "\n";
+  }
+  MS_LOG(DEBUG) << "Primitive<" << prim->name() << "> inputs num: " << input_tensor_num
+                << " is not equal to expect input num: " << op_def->args_.size() << "\n"
+                << ss.str();
+}
+
 void CheckCNodeInputsNum(const AnfNodeWeakPtrList &inputs) {
   if (!IS_OUTPUT_ON(mindspore::kDebug) || inputs.empty()) {
     return;
@@ -66,17 +79,17 @@ void CheckCNodeInputsNum(const AnfNodeWeakPtrList &inputs) {
   }
 
   auto op_def = mindspore::ops::GetOpDef(prim->name());
+  if (op_def == nullptr) {
+    return;
+  }
   bool input_num_err = false;
   constexpr size_t prim_num = 1;
   size_t input_tensor_num = inputs.size() - prim_num;
   if (prim->HasAttr(GRAPH_FLAG_SIDE_EFFECT_MEM) || prim->HasAttr(GRAPH_FLAG_SIDE_EFFECT_IO)) {
     size_t monad_num = std::count_if(inputs.cbegin() + 1, inputs.end(), [](const AnfNodeWeakPtr &weak_input) {
       const auto &input = weak_input.lock();
-      if (HasAbstractMonad(input)) {
-        return true;
-      }
-      return IsPrimitiveCNode(input, prim::kPrimUpdateState) || IsValueNode<UMonad>(input) ||
-             IsValueNode<IOMonad>(input);
+      return HasAbstractMonad(input) || (IsPrimitiveCNode(input, prim::kPrimUpdateState) ||
+                                         IsValueNode<UMonad>(input) || IsValueNode<IOMonad>(input));
     });
 
     // If monad input is parameter_monad, monad num is 0, actual monad num should be 1. And monad num is 0 if monad
@@ -100,17 +113,8 @@ void CheckCNodeInputsNum(const AnfNodeWeakPtrList &inputs) {
       input_num_err = true;
     }
   }
-
   if (input_num_err) {
-    std::stringstream ss;
-    size_t i = 0;
-    ss << "Inputs are as follows: \n";
-    for (const auto &input : inputs) {
-      ss << "Input[" << i++ << "]: " << input.lock()->DebugString() << "\n";
-    }
-    MS_LOG(DEBUG) << "Primitive<" << prim->name() << "> inputs num: " << input_tensor_num
-                  << " is not equal to expect input num: " << op_def->args_.size() << "\n"
-                  << ss.str();
+    PrintErrorInfo(inputs, prim, input_tensor_num, op_def);
   }
 }
 }  // namespace

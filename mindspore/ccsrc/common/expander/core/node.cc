@@ -20,49 +20,36 @@
 
 namespace mindspore {
 namespace expander {
-Node::Node(const AnfNodePtr &node, Emitter *emitter) : anf_node_(node), emitter_(emitter) {
-  MS_EXCEPTION_IF_NULL(node);
-  MS_EXCEPTION_IF_NULL(emitter);
-}
+Node::Node(Emitter *emitter) : emitter_(emitter) { MS_EXCEPTION_IF_NULL(emitter); }
 
-AbstractBasePtr Node::abstract() { return emitter()->infer()->GetAbstract(shared_from_this()); }
+InputType Node::input_type() { MS_EXCEPTION(NotImplementedError) << "Base node not implement input_type() method"; }
 
-bool Node::HasAbstractValue() {
-  ValuePtr value = abstract()->BuildValue();
-  return (value != nullptr && !value->ContainsValueAny());
-}
+AbstractBasePtr Node::abstract() { MS_EXCEPTION(NotImplementedError) << "Base node not implement abstract() method"; }
 
-ValuePtr Node::BuildValue() {
-  is_used_value_ = true;
-  if (value_ == nullptr) {
-    if (anf_node_->isa<ValueNode>()) {
-      return value_ = anf_node_->cast<ValueNodePtr>()->value();
-    } else {
-      return value_ = abstract()->BuildValue();
-    }
-  }
-  return value_;
-}
+bool Node::HasAbstractValue() { MS_EXCEPTION(NotImplementedError) << "Base node not implement abstract() method"; }
+
+BaseShapePtr Node::GetShape() { MS_EXCEPTION(NotImplementedError) << "Base node not implement GetShape() method"; }
+
+TypePtr Node::GetType() { MS_EXCEPTION(NotImplementedError) << "Base node not implement GetType() method"; }
+
+ValuePtr Node::BuildValue() { MS_EXCEPTION(NotImplementedError) << "Base node not implement BuildValue() method"; }
 
 std::vector<int64_t> Node::shape() {
   if (shape_ == nullptr) {
-    shape_ = emitter()->infer()->GetShape(shared_from_this());
+    shape_ = GetShape();
     MS_EXCEPTION_IF_NULL(shape_);
   }
   if (shape_->isa<abstract::NoShape>()) {
     return {};
   }
   auto shape = shape_->cast<abstract::ShapePtr>();
-  if (shape == nullptr) {
-    MS_EXCEPTION_IF_NULL(anf_node_);
-    MS_LOG(INTERNAL_EXCEPTION) << "Shape should not be null, node: " << anf_node_->DebugString();
-  }
+  MS_EXCEPTION_IF_NULL(shape);
   return shape->shape();
 }
 
 std::vector<std::vector<int64_t>> Node::shapes() {
   if (shape_ == nullptr) {
-    shape_ = emitter()->infer()->GetShape(shared_from_this());
+    shape_ = GetShape();
     MS_EXCEPTION_IF_NULL(shape_);
   }
   auto tuple_shape = shape_->cast<abstract::SequenceShapePtr>();
@@ -82,7 +69,7 @@ std::vector<std::vector<int64_t>> Node::shapes() {
 
 TypePtr Node::dtype() {
   if (type_ == nullptr) {
-    type_ = emitter()->infer()->GetDtype(shared_from_this());
+    type_ = GetType();
     MS_EXCEPTION_IF_NULL(type_);
     if (type_->isa<TensorType>()) {
       type_ = type_->cast<TensorTypePtr>()->element();
@@ -94,7 +81,7 @@ TypePtr Node::dtype() {
 
 std::vector<TypePtr> Node::dtypes() {
   if (type_ == nullptr) {
-    type_ = emitter()->infer()->GetDtype(shared_from_this());
+    type_ = GetType();
     MS_EXCEPTION_IF_NULL(type_);
   }
   auto tuple = type_->cast<TuplePtr>();
@@ -104,6 +91,86 @@ std::vector<TypePtr> Node::dtypes() {
   (void)std::transform(elements.cbegin(), elements.cend(), result.begin(),
                        [](const TypePtr &t) { return t->isa<TensorType>() ? t->cast<TensorTypePtr>()->element() : t; });
   return result;
+}
+
+std::string Node::ToString() const { return value_ != nullptr ? value_->ToString() : ""; }
+
+InputType IrNode::input_type() {
+  if (anf_node_->isa<ValueNode>()) {
+    return InputType::kConstant;
+  } else if (anf_node_->isa<Parameter>()) {
+    return InputType::kParameter;
+  } else {
+    return InputType::kOpOutput;
+  }
+}
+
+AbstractBasePtr IrNode::abstract() { return emitter()->infer()->GetAbstract(shared_from_this()); }
+
+ValuePtr IrNode::BuildValue() {
+  is_used_value_ = true;
+  if (value_ == nullptr) {
+    if (anf_node_->isa<ValueNode>()) {
+      return value_ = anf_node_->cast<ValueNodePtr>()->value();
+    } else {
+      return value_ = abstract()->BuildValue();
+    }
+  }
+  return value_;
+}
+
+bool IrNode::HasAbstractValue() {
+  ValuePtr value = abstract()->BuildValue();
+  return (value != nullptr && !value->ContainsValueAny());
+}
+
+BaseShapePtr IrNode::GetShape() {
+  auto shape = emitter()->infer()->GetShape(shared_from_this());
+  MS_EXCEPTION_IF_NULL(shape);
+  return shape;
+}
+
+TypePtr IrNode::GetType() {
+  auto type = emitter()->infer()->GetDtype(shared_from_this());
+  MS_EXCEPTION_IF_NULL(type);
+  return type;
+}
+
+std::string IrNode::ToString() const {
+  MS_EXCEPTION_IF_NULL(anf_node_);
+  return anf_node_->ToString();
+}
+
+void IrNode::set_debug_info(const std::string &debug_info) {
+  auto primitive = GetCNodePrimitive(anf_node_);
+  primitive->set_instance_name(debug_info);
+}
+
+std::string IrNode::debug_info() const {
+  auto primitive = GetCNodePrimitive(anf_node_);
+  return primitive->instance_name();
+}
+
+ValuePtr FuncNode::BuildValue() { return value_; }
+InputType FuncNode::input_type() { return input_type_; }
+
+AbstractBasePtr FuncNode::abstract() {
+  if (abstract_ != nullptr) {
+    return abstract_;
+  }
+  return abstract_ = value_->ToAbstract();
+}
+
+BaseShapePtr FuncNode::GetShape() {
+  auto shape = abstract()->BuildShape();
+  MS_EXCEPTION_IF_NULL(shape);
+  return shape;
+}
+
+TypePtr FuncNode::GetType() {
+  auto type = abstract()->BuildType();
+  MS_EXCEPTION_IF_NULL(type);
+  return type;
 }
 }  // namespace expander
 }  // namespace mindspore

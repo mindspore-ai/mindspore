@@ -38,7 +38,6 @@ BaseShapePtr Conv2DExtFuncImpl::InferShape(const PrimitivePtr &primitive,
     MS_LOG(EXCEPTION) << "input args size should be 5, but got " << input_args.size();
   }
 
-  auto prim_name = primitive->name();
   auto input_shape_ptr = input_args[kInputIdx]->GetShape();
   auto weight_shape_ptr = input_args[kWightIdx]->GetShape();
   MS_EXCEPTION_IF_NULL(input_shape_ptr);
@@ -62,7 +61,7 @@ BaseShapePtr Conv2DExtFuncImpl::InferShape(const PrimitivePtr &primitive,
     if (vec.size() == 1) {
       std::vector<int64_t> expand_vec;
       for (size_t i = 0; i < expand_vec_size; i++) {
-        expand_vec.emplace_back(vec[0]);
+        (void)expand_vec.emplace_back(vec[0]);
       }
       return expand_vec;
     }
@@ -91,8 +90,6 @@ BaseShapePtr Conv2DExtFuncImpl::InferShape(const PrimitivePtr &primitive,
 TypePtr Conv2DExtFuncImpl::InferType(const PrimitivePtr &primitive,
                                      const std::vector<AbstractBasePtr> &input_args) const {
   MS_EXCEPTION_IF_NULL(primitive);
-  // TODO(wch) 1. bias dtype must be same with input， if bias is defined.
-
   const std::set<TypePtr> valid_types = {kInt8, kInt32, kInt64, kFloat16, kFloat32, kBFloat16};
   auto out_type =
     CheckAndConvertUtils::CheckTypeValid("input", input_args[kInputIdx]->GetType(), valid_types, primitive->name());

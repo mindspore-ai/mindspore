@@ -867,4 +867,39 @@ ValuePtr ShallowCopyTensorValue(const ValuePtr &value) {
     return value;
   }
 }
+
+void ConvertPyObjectToTensor(const py::object &input_object, std::vector<ValuePtr> *tensors) {
+  MS_EXCEPTION_IF_NULL(tensors);
+  ValuePtr tensor_ptr = nullptr;
+  if (py::isinstance<tensor::Tensor>(input_object)) {
+    tensor_ptr = py::cast<tensor::TensorPtr>(input_object);
+  } else if (IsStubTensor(input_object)) {
+    tensor_ptr = ConvertStubTensor(input_object);
+  } else if (py::isinstance<py::float_>(input_object)) {
+    double input_value = py::cast<py::float_>(input_object);
+    tensor_ptr = std::make_shared<tensor::Tensor>(input_value, kFloat32);
+  } else if (py::isinstance<py::int_>(input_object)) {
+    tensor_ptr = std::make_shared<tensor::Tensor>(py::cast<int64_t>(input_object), kInt64);
+  } else if (py::isinstance<py::list>(input_object)) {
+    auto list_inputs = py::cast<py::list>(input_object);
+    for (size_t i = 0; i < list_inputs.size(); ++i) {
+      ConvertPyObjectToTensor(list_inputs[i], tensors);
+    }
+    return;
+  } else if (py::isinstance<py::tuple>(input_object)) {
+    auto tuple_inputs = py::cast<py::tuple>(input_object);
+    for (size_t i = 0; i < tuple_inputs.size(); ++i) {
+      ConvertPyObjectToTensor(tuple_inputs[i], tensors);
+    }
+    return;
+  } else if (py::isinstance<tensor::CSRTensor>(input_object)) {
+    tensor_ptr = py::cast<tensor::CSRTensorPtr>(input_object);
+  } else if (py::isinstance<tensor::COOTensor>(input_object)) {
+    tensor_ptr = py::cast<tensor::COOTensorPtr>(input_object);
+  } else {
+    MS_EXCEPTION(TypeError) << "Unreasonable data type: " << input_object.get_type() << ".";
+  }
+  MS_EXCEPTION_IF_NULL(tensor_ptr);
+  (void)tensors->emplace_back(tensor_ptr);
+}
 }  // namespace mindspore

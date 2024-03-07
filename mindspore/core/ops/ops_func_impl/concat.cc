@@ -179,17 +179,22 @@ BaseShapePtr ConcatFuncImpl::InferShape(const PrimitivePtr &primitive,
 }
 
 TypePtr ConcatFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
-  auto tuple_type = input_args[kInputIndex0]->GetType()->cast<TuplePtr>();
-  MS_EXCEPTION_IF_NULL(tuple_type);
-  if (MS_UNLIKELY(tuple_type->dynamic_len())) {
-    auto element_type = tuple_type->dynamic_element_type();
-    MS_EXCEPTION_IF_NULL(element_type);
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("dynamic-length element", element_type,
-                                                     common_valid_types_with_complex_and_bool, primitive->name());
-    return element_type->Clone();
+  TypePtrList elements;
+  if (!CheckAndConvertUtils::IsTensor(input_args[kInputIndex0])) {
+    auto tuple_type = input_args[kInputIndex0]->GetType()->cast<TuplePtr>();
+    MS_EXCEPTION_IF_NULL(tuple_type);
+    if (MS_UNLIKELY(tuple_type->dynamic_len())) {
+      auto element_type = tuple_type->dynamic_element_type();
+      MS_EXCEPTION_IF_NULL(element_type);
+      (void)CheckAndConvertUtils::CheckTensorTypeValid("dynamic-length element", element_type,
+                                                       common_valid_types_with_complex_and_bool, primitive->name());
+      return element_type->Clone();
+    }
+    elements = tuple_type->elements();
+  } else {
+    (void)std::transform(input_args.begin(), input_args.end() - 1, std::back_inserter(elements),
+                         [](const auto &ele) { return ele->GetType(); });
   }
-
-  auto elements = tuple_type->elements();
   MS_CHECK_VALUE(elements.size() > 0, CheckAndConvertUtils::FormatCheckIntegerMsg("elements size", elements.size(),
                                                                                   kGreaterThan, 0, primitive));
   std::map<std::string, TypePtr> types;

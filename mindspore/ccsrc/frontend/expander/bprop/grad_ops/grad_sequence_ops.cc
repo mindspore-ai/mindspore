@@ -18,7 +18,7 @@
 #include "include/common/utils/utils.h"
 
 namespace mindspore::expander::bprop {
-NodePtrList SequenceToTensorGrad(BpropIRBuilder *ib) {
+NodePtrList SequenceToTensorGrad(BpropBuilder *ib) {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex3);
   dout = ib->Cast(dout, ib->GetDtype(x));
@@ -26,14 +26,14 @@ NodePtrList SequenceToTensorGrad(BpropIRBuilder *ib) {
   return {dx, ib->OutZeros(ib->GetInput(kIndex1))};
 }
 
-NodePtrList TensorToSequenceGrad(BpropIRBuilder *ib) {
+NodePtrList TensorToSequenceGrad(BpropBuilder *ib) {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);
   auto dx = ib->SequenceToTensor(dout, ib->GetDtype(x));
   return {dx};
 }
 
-NodePtrList SequenceSetItemGrad(BpropIRBuilder *ib) {
+NodePtrList SequenceSetItemGrad(BpropBuilder *ib) {
   auto idx = ib->GetInput(kIndex1);
   auto value = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex4);
@@ -42,7 +42,7 @@ NodePtrList SequenceSetItemGrad(BpropIRBuilder *ib) {
   return {dx, ib->OutZeros(idx), dvalue};
 }
 
-NodePtrList SequenceMaxMinGrad(BpropIRBuilder *ib) {
+NodePtrList SequenceMaxMinGrad(BpropBuilder *ib) {
   auto x = ib->GetInput(kIndex0);
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
@@ -60,9 +60,12 @@ REG_BPROP_BUILDER("SequenceAdd").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto y = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
   auto out_offset = ib->Emit("SequenceAddOffset", {x, y});
-  auto dx = ib->SequenceSlice(dout, ib->TupleGetItem(out_offset, 0), ib->Len(x), ib->Value<int64_t>(1));
-  auto dy = ib->SequenceSlice(dout, ib->TupleGetItem(out_offset, 1), ib->ScalarAdd(ib->Len(x), ib->Len(y)),
-                              ib->Value<int64_t>(1));
+  auto dx = x->need_compute_grad_out()
+              ? ib->SequenceSlice(dout, ib->TupleGetItem(out_offset, 0), ib->Len(x), ib->Value<int64_t>(1))
+              : ib->OutZeros(x);
+  auto dy = y->need_compute_grad_out() ? ib->SequenceSlice(dout, ib->TupleGetItem(out_offset, 1),
+                                                           ib->ScalarAdd(ib->Len(x), ib->Len(y)), ib->Value<int64_t>(1))
+                                       : ib->OutZeros(y);
   return {dx, dy};
 });
 

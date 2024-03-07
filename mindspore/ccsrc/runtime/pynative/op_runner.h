@@ -24,6 +24,15 @@
 #include "runtime/hardware/device_context.h"
 
 namespace mindspore::runtime {
+struct OpRunnerInfo {
+  const PrimitivePtr &prim;
+  const std::string &device_target;
+  const vector<ValuePtr> &inputs;
+  const abstract::AbstractBasePtrList &inputs_abs;
+  const std::vector<InputType> &inputs_mask;
+  abstract::AbstractBasePtr output_abs;
+};
+
 class OpRunner {
  public:
   // Update Tensor or input node DeviceAddress before PyNative async running.

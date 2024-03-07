@@ -80,8 +80,9 @@ using BackendOpRunInfoPtr = std::shared_ptr<BackendOpRunInfo>;
 
 struct InputInfo {
   std::vector<ValuePtr> input_values;
-  std::vector<int64_t> input_masks;
+  std::vector<InputType> input_types;
   std::set<KernelWithIndex> input_kernel;
+  abstract::AbstractBasePtrList input_abs;
 };
 
 struct OutputTensorInfo {
@@ -134,9 +135,9 @@ class BACKEND_EXPORT SessionBasic : public KernelGraphMgr, public std::enable_sh
                                                          const std::vector<tensor::TensorPtr> &inputs) const;
   // create a single run op graph
   std::shared_ptr<KernelGraph> ConstructSingleOpGraph(const BackendOpRunInfoPtr &op_run_info,
-                                                      const std::vector<ValuePtr> &input_tensors,
-                                                      const std::vector<int64_t> &tensors_mask);
-  void EraseValueNodeTensor(const std::vector<int64_t> &tensors_mask,
+                                                      const std::vector<ValuePtr> &input_values,
+                                                      const std::vector<InputType> &input_type);
+  void EraseValueNodeTensor(const std::vector<InputType> &input_types,
                             std::vector<tensor::TensorPtr> *input_tensors) const;
   void RunOpRemoveNopNode(const KernelGraphPtr &kernel_graph) const;
   static void RunOpHideNopNode(const KernelGraphPtr &kernel_graph);

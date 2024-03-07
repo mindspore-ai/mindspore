@@ -230,7 +230,7 @@ void GraphAdapter::GenerateRefCountForBpropValueNode(const KernelGraphPtr &graph
     }
 
     (void)value_node_ref_count_list.emplace_back(iter->second);
-    value_node_forward_output_flags.emplace_back(true);
+    (void)value_node_forward_output_flags.emplace_back(true);
     MS_LOG(DEBUG) << "ValueNode " << value_node->DebugString() << " ref_count " << iter->second;
   }
   graph->set_attr(kAttrBpropValueNodeRefCount, MakeValue(value_node_ref_count_list));
@@ -247,7 +247,7 @@ void GraphAdapter::GenerateBackoffValueNodeOwners(const KernelGraphPtr &graph) {
       const auto &real_input_node = common::AnfAlgo::VisitKernelWithReturnType(input_node, 0, false).first;
       MS_EXCEPTION_IF_NULL(real_input_node);
       if (real_input_node->isa<ValueNode>()) {
-        node_to_backoff_kernels_[real_input_node.get()].insert(kernel);
+        (void)node_to_backoff_kernels_[real_input_node.get()].insert(kernel);
         MS_LOG(DEBUG) << "Generate backoff ValueNode " << real_input_node->DebugString() << " with kernel "
                       << kernel->DebugString();
       }

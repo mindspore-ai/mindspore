@@ -32,7 +32,6 @@ std::tuple<tensor::TensorPtr, tensor::TensorPtr> ArgMinWithValueAscendCustomize(
                                                                                 const Int64ImmPtr &axis,
                                                                                 const BoolImmPtr &keep_dims) {
   OpRunner::InferOpOutput(op, input_tensor, axis, keep_dims);
-
   // Convert ValuePtr to c++ scalar
   auto axis_imm = GetValue<int64_t>(axis);
   auto keep_dims_imm = GetValue<bool>(keep_dims);

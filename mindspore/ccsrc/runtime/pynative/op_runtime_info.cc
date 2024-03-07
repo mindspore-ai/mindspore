@@ -67,11 +67,11 @@ void CacheForExecutionOrder(const KernelGraphPtr &graph) {
       auto output_type = AnfAlgo::GetOutputDeviceDataType(node, i);
       auto device_shape = AnfAlgo::GetOutputDeviceShape(node, i);
       auto tensor_size = OpRuntimeInfoGetOutputTensorMemSize(node, i, output_type, output_format, device_shape);
-      formats.emplace_back(output_format);
-      types.emplace_back(output_type);
-      tensor_sizes.emplace_back(tensor_size);
-      output_infer_shape.emplace_back(common::AnfAlgo::GetOutputInferShape(node, i));
-      output_device_shape.emplace_back(device_shape);
+      (void)formats.emplace_back(output_format);
+      (void)types.emplace_back(output_type);
+      (void)tensor_sizes.emplace_back(tensor_size);
+      (void)output_infer_shape.emplace_back(common::AnfAlgo::GetOutputInferShape(node, i));
+      (void)output_device_shape.emplace_back(device_shape);
     }
 
     // For input
@@ -80,8 +80,8 @@ void CacheForExecutionOrder(const KernelGraphPtr &graph) {
     for (size_t i = 0; i < input_size; ++i) {
       session::KernelWithIndex kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(node, i, true);
       MS_EXCEPTION_IF_NULL(kernel_with_index.first);
-      input_kernel_infos.emplace_back(dynamic_cast<device::KernelInfo *>(kernel_with_index.first->kernel_info()),
-                                      kernel_with_index.second);
+      (void)input_kernel_infos.emplace_back(dynamic_cast<device::KernelInfo *>(kernel_with_index.first->kernel_info()),
+                                            kernel_with_index.second);
     }
 
     // For workspace and output
@@ -115,11 +115,11 @@ void CacheForGraphInputs(const KernelGraphPtr &graph) {
       }
       auto device_shape = AnfAlgo::GetOutputDeviceShape(input, index);
       auto tensor_size = OpRuntimeInfoGetOutputTensorMemSize(input, index, type_id, format, device_shape);
-      formats.emplace_back(format);
-      types.emplace_back(type_id);
-      tensor_sizes.emplace_back(tensor_size);
-      output_infer_shape.emplace_back(common::AnfAlgo::GetOutputInferShape(input, index));
-      output_device_shape.emplace_back(device_shape);
+      (void)formats.emplace_back(format);
+      (void)types.emplace_back(type_id);
+      (void)tensor_sizes.emplace_back(tensor_size);
+      (void)output_infer_shape.emplace_back(common::AnfAlgo::GetOutputInferShape(input, index));
+      (void)output_device_shape.emplace_back(device_shape);
     }
     input->set_user_data<runtime::OpRuntimeInfo>(
       std::make_shared<runtime::OpRuntimeInfo>(formats, types, tensor_sizes, output_infer_shape, output_device_shape,

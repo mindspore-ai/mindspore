@@ -732,7 +732,7 @@ void UpdateAddressInfoByInputTensor(const OpCompilerInfoPtr &op_compiler_info, c
 std::vector<kernel::KernelTensor *> GetInputKernelTensors(const std::vector<EdgePtr> &edges) {
   std::vector<kernel::KernelTensor *> input_kernel_tensors;
   input_kernel_tensors.reserve(edges.size());
-  std::transform(edges.begin(), edges.end(), std::back_inserter(input_kernel_tensors), [](const EdgePtr &edge) {
+  (void)std::transform(edges.begin(), edges.end(), std::back_inserter(input_kernel_tensors), [](const EdgePtr &edge) {
     MS_EXCEPTION_IF_NULL(edge->address_);
     return edge->address_->kernel_tensor().get();
   });
@@ -742,7 +742,7 @@ std::vector<kernel::KernelTensor *> GetInputKernelTensors(const std::vector<Edge
 std::vector<abstract::AbstractBasePtr> GetInputInferAbstract(const std::vector<EdgePtr> &edges) {
   std::vector<abstract::AbstractBasePtr> input_abstracts;
   input_abstracts.reserve(edges.size());
-  std::transform(edges.begin(), edges.end(), std::back_inserter(input_abstracts), [](const EdgePtr &edge) {
+  (void)std::transform(edges.begin(), edges.end(), std::back_inserter(input_abstracts), [](const EdgePtr &edge) {
     MS_EXCEPTION_IF_NULL(edge->address_);
     return edge->address_->kernel_tensor();
   });
@@ -770,13 +770,13 @@ std::vector<tensor::TensorPtr> OpRunner::GetTensorWithoutValueMask(const session
   MS_EXCEPTION_IF_NULL(op_run_info);
   std::vector<tensor::TensorPtr> tensors_without_value_node;
   const auto &input_values = op_run_info->base_op_run_info.expanded_input_values;
-  const auto &input_masks = op_run_info->base_op_run_info.input_masks;
+  const auto &input_masks = op_run_info->base_op_run_info.input_types;
   if (input_values.size() != input_masks.size()) {
     MS_LOG(EXCEPTION) << "Input tensors size " << input_values.size() << " should be equal to tensors mask size "
                       << input_masks.size();
   }
   for (size_t index = 0; index < input_masks.size(); ++index) {
-    if (input_masks.at(index) != kValueNodeMask) {
+    if (input_masks.at(index) != InputType::kConstant) {
       if (!input_values[index]->isa<tensor::Tensor>()) {
         MS_LOG(EXCEPTION) << "The " << index << "' input shoulde be a Tensor, but got "
                           << input_values[index]->ToString();
@@ -831,7 +831,7 @@ DeviceContext *OpRunner::GetDeviceContext(const std::string &device_type) {
   device_context->Initialize();
 
   MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
-  device_context->device_res_manager_->BindDeviceToCurrentThread(false);
+  (void)device_context->device_res_manager_->BindDeviceToCurrentThread(false);
   g_device_contexts[device_type] = device_context;
   MS_LOG(DEBUG) << "Get device context of " << device_type << " id " << device_id;
   return device_context;

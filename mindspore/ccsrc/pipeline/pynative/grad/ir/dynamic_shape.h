@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_PIPELINE_PYNATIVE_GRAD_DYNAMIC_SHAPE_H_
-#define MINDSPORE_MINDSPORE_CCSRC_PIPELINE_PYNATIVE_GRAD_DYNAMIC_SHAPE_H_
+#ifndef MINDSPORE_MINDSPORE_CCSRC_PIPELINE_PYNATIVE_GRAD_IR_DYNAMIC_SHAPE_H_
+#define MINDSPORE_MINDSPORE_CCSRC_PIPELINE_PYNATIVE_GRAD_IR_DYNAMIC_SHAPE_H_
 
 #include <memory>
 #include <utility>
@@ -28,9 +28,9 @@ namespace pynative {
 
 struct NodeInfo {
   NodeInfo() = default;
-  explicit NodeInfo(const TensorGradType &grad_type, size_t op_index = 0, ValuePtr value = nullptr)
+  explicit NodeInfo(const InputType &grad_type, size_t op_index = 0, ValuePtr value = nullptr)
       : grad_type(grad_type), op_index(op_index), value(std::move(value)) {}
-  TensorGradType grad_type;
+  InputType grad_type;
   size_t op_index{};
   ValuePtr value;
 };
@@ -158,4 +158,4 @@ using DynamicShapePtr = std::shared_ptr<DynamicShape>;
 }  // namespace pynative
 }  // namespace mindspore
 
-#endif  // MINDSPORE_MINDSPORE_CCSRC_PIPELINE_PYNATIVE_GRAD_DYNAMIC_SHAPE_H_
+#endif  // MINDSPORE_MINDSPORE_CCSRC_PIPELINE_PYNATIVE_GRAD_IR_DYNAMIC_SHAPE_H_

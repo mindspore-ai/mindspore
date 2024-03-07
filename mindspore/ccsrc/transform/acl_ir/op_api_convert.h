@@ -341,13 +341,13 @@ inline aclTensor *ConvertType(const tensor::TensorPtr &tensor) {
   const auto shape_size = shape.size();
   aclFormat format = ACL_FORMAT_ND;
   switch (shape_size) {
-    case 3:
+    case kSizeThree:
       format = ACL_FORMAT_NCL;
       break;
-    case 4:
+    case kSizeFour:
       format = ACL_FORMAT_NCHW;
       break;
-    case 5:
+    case kSizeFive:
       format = ACL_FORMAT_NCDHW;
       break;
     default:

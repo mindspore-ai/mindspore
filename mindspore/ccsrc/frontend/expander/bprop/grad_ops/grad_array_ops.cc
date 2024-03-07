@@ -99,7 +99,7 @@ DEF_PURE_SHAPE_CALC(g_gather_drop_negative)
     auto is_pos_rank = is_pos.size();
     return {SizeToLong(std::max(gather_rank, is_pos_rank))};
   });
-NodePtrList GatherDropNegatives(BpropIRBuilder *ib, const NodePtr &params, const NodePtr &ids,
+NodePtrList GatherDropNegatives(BpropBuilder *ib, const NodePtr &params, const NodePtr &ids,
                                 const NodePtr &zero_clipped_indices_param = nullptr,
                                 const NodePtr &is_positive_param = nullptr) {
   NodePtr zero_clipped_indices = zero_clipped_indices_param;
@@ -132,7 +132,7 @@ NodePtrList GatherDropNegatives(BpropIRBuilder *ib, const NodePtr &params, const
   return {ib->Select(is_positive, gathered, zero_slice), zero_clipped_indices, is_positive};
 }
 
-NodePtrList UnsortedSegmentMinOrMaxGrad(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &segment_ids,
+NodePtrList UnsortedSegmentMinOrMaxGrad(BpropBuilder *ib, const NodePtr &x, const NodePtr &segment_ids,
                                         const NodePtr &num_segments, const NodePtr &out, const NodePtr &dout) {
   auto temp_outs = GatherDropNegatives(ib, out, segment_ids, nullptr, nullptr);
   constexpr size_t out_size = 3;
@@ -152,7 +152,7 @@ NodePtrList UnsortedSegmentMinOrMaxGrad(BpropIRBuilder *ib, const NodePtr &x, co
   return {ib->Select(is_selected, gathered_grads, zeros), ib->OutZeros(segment_ids), ib->OutZeros(num_segments)};
 }
 
-NodePtrList SegmentMinOrMaxGrad(BpropIRBuilder *ib) {
+NodePtrList SegmentMinOrMaxGrad(BpropBuilder *ib) {
   auto input_x = ib->GetInput(kIndex0);
   auto segment_ids = ib->GetInput(kIndex1);
   auto output = ib->GetInput(kIndex2);
@@ -178,7 +178,7 @@ NodePtrList SegmentMinOrMaxGrad(BpropIRBuilder *ib) {
   return {dx, ib->OutZeros(segment_ids)};
 }
 
-NodePtrList TensorScatterPossibleReplacement(BpropIRBuilder *ib) {
+NodePtrList TensorScatterPossibleReplacement(BpropBuilder *ib) {
   auto x = ib->GetInput(kIndex0);
   auto indices = ib->GetInput(kIndex1);
   auto updates = ib->GetInput(kIndex2);
@@ -190,11 +190,24 @@ NodePtrList TensorScatterPossibleReplacement(BpropIRBuilder *ib) {
   auto input_shape = ib->Shape(x);
   auto scattered_out_indicators = ib->ScatterNd(indices, out_indicators, input_shape);
   auto indicators = ib->Add(x_indicators, scattered_out_indicators);
-  auto dx = ib->RealDiv((ib->Mul(dout, (ib->Cast(x_indicators, ib->GetDtype(dout))))),
-                        (ib->Cast(indicators, ib->GetDtype(dout))));
-  auto dupdates = ib->Mul((ib->GatherNd(ib->RealDiv(dout, (ib->Cast(indicators, ib->GetDtype(dout)))), indices)),
+  NodePtr dx = nullptr;
+  if (x->need_compute_grad_out()) {
+    dx = ib->RealDiv((ib->Mul(dout, (ib->Cast(x_indicators, ib->GetDtype(dout))))),
+                     (ib->Cast(indicators, ib->GetDtype(dout))));
+    dx = ib->Cast(dx, ib->GetDtype(x));
+  } else {
+    dx = ib->OutZeros(x);
+  }
+  NodePtr update_grad = nullptr;
+  if (updates->need_compute_grad_out()) {
+    update_grad = ib->Mul((ib->GatherNd(ib->RealDiv(dout, (ib->Cast(indicators, ib->GetDtype(dout)))), indices)),
                           (ib->Cast(out_indicators, ib->GetDtype(dout))));
-  return {ib->Cast(dx, ib->GetDtype(x)), ib->OutZeros(indices), ib->Cast(dupdates, ib->GetDtype(updates))};
+    update_grad = ib->Cast(update_grad, ib->GetDtype(updates));
+  } else {
+    update_grad = ib->OutZeros(updates);
+  }
+
+  return {dx, ib->OutZeros(indices), update_grad};
 }
 
 ShapeArray RegenerateOutputShapeFunc(const ShapeArray &inputs) {
@@ -271,12 +284,12 @@ DEF_PURE_SHAPE_CALC(g_calc_num_segment)
     return {{x_shp[LongToSize(axis_v)]}};
   })
   .SetInfer([](const ShapeArray &, const HashSet<size_t> &) -> std::vector<int64_t> { return {1}; });
-NodePtr CalcNumSegment(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &axis) {
+NodePtr CalcNumSegment(BpropBuilder *ib, const NodePtr &x, const NodePtr &axis) {
   MS_EXCEPTION_IF_NULL(ib);
   MS_EXCEPTION_IF_NULL(x);
   MS_EXCEPTION_IF_NULL(axis);
   auto num_segment = ib->ShapeCalc(g_calc_num_segment, {x, axis}, {1})[0];
-  if (num_segment->isa<ValueNode>()) {
+  if (num_segment->input_type() == InputType::kConstant) {
     auto num_segment_value = GetIntList(num_segment);
     MS_EXCEPTION_IF_CHECK_FAIL(num_segment_value.size() == 1,
                                "The num_segment should be a int for gradient of Gather.");
@@ -422,8 +435,8 @@ class ResizeNearestNeighborV2ShapeCalc : public ShapeCalcFunctor {
 };
 REG_FUNCTOR("ShapeCalc_ResizeNearestNeighborV2", ResizeNearestNeighborV2ShapeCalc);
 
-NodePtr CalBatchGather(BpropIRBuilder *ib, const NodePtr &values, const NodePtr &indices, const NodePtr &x,
-                       int64_t axis, int64_t batch_dims) {
+NodePtr CalBatchGather(BpropBuilder *ib, const NodePtr &values, const NodePtr &indices, const NodePtr &x, int64_t axis,
+                       int64_t batch_dims) {
   auto reshape_shape =
     ib->ShapeCalc(g_gather_reshape, {values, indices, x, ib->Tensor(axis), ib->Tensor(batch_dims)}, {3, 4});
   constexpr size_t reshape_size = 4;
@@ -448,7 +461,6 @@ NodePtr CalBatchGather(BpropIRBuilder *ib, const NodePtr &values, const NodePtr 
 
 bool IsMutable(const NodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  MS_EXCEPTION_IF_NULL(node->get());
   ValuePtr value_ptr = node->BuildValue();
   if (value_ptr != nullptr &&
       (value_ptr->isa<ValueSequence>() || value_ptr->isa<Scalar>() || value_ptr->isa<tensor::Tensor>())) {
@@ -459,7 +471,7 @@ bool IsMutable(const NodePtr &node) {
 
 DEF_PURE_SHAPE_CALC(g_regenerate_output).SetCalc(RegenerateOutputShapeFunc).SetInfer(RegenerateOutputInferFunc);
 DEF_PURE_SHAPE_CALC(g_perms).SetCalc(PermsShapeFunc).SetInfer(PermsInferFunc);
-NodePtrList BinopGather(BpropIRBuilder *ib) {
+NodePtrList BinopGather(BpropBuilder *ib) {
   auto x = ib->GetInput(kIndex0);
   auto indices = ib->GetInput(kIndex1);
   auto ori_indices = indices;  // indices may be changed latter.
@@ -543,7 +555,7 @@ ShapeArray ConcatOffsetCal(const ShapeArray &input_shapes, size_t axis_s) {
   return res;
 }
 
-NodePtrList ConcatBpropStatic(BpropIRBuilder *ib, const NodePtr &dout, const ShapeArray &input_shapes, int64_t axis) {
+NodePtrList ConcatBpropStatic(BpropBuilder *ib, const NodePtr &dout, const ShapeArray &input_shapes, int64_t axis) {
   auto rank = input_shapes[0].size();
   auto axis_s = LongToSize(NormalizeAxis(axis, rank));
 
@@ -577,13 +589,13 @@ NodePtrList ConcatBpropStatic(BpropIRBuilder *ib, const NodePtr &dout, const Sha
   return {ib->MakeTuple(res)};
 }
 
-NodePtrList StackBpropFunc(BpropIRBuilder *ib) {
+NodePtrList StackBpropFunc(BpropBuilder *ib) {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);
   auto num = ib->GetAttr("num");
   auto ret = ib->Emit("Unstack", {dout}, {{"num", num}, {"axis", ib->GetAttr("axis")}});
 
-  auto x_abs = x->get()->abstract();
+  auto x_abs = x->abstract();
   MS_EXCEPTION_IF_NULL(x_abs);
   bool is_list = x_abs->isa<abstract::AbstractList>();
   if (is_list) {
@@ -597,7 +609,7 @@ NodePtrList StackBpropFunc(BpropIRBuilder *ib) {
   return {ret};
 }
 
-NodePtrList BinopGatherDGradCommon(BpropIRBuilder *ib, const std::string &op_name) {
+NodePtrList BinopGatherDGradCommon(BpropBuilder *ib, const std::string &op_name) {
   auto dim = LongToSize(GetValue<int64_t>(ib->GetAttr("dim")));
   auto index = ib->GetInput(kIndex0);
   auto x = ib->GetInput(kIndex1);
@@ -762,7 +774,7 @@ REG_BPROP_BUILDER("Sort").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto res1 = ib->ShapeCalc(std::make_shared<SortShapeCalc1>(axis), {input_x});
   auto k = res1[0];
   if (k->abstract()->isa<abstract::AbstractSequence>()) {
-    if (k->isa<ValueNode>()) {
+    if (k->input_type() == InputType::kConstant) {
       auto value = GetIntList(k);
       k = ib->Tensor(value.at(0), kInt64);
     } else {
@@ -819,8 +831,8 @@ REG_BPROP_BUILDER("ReverseV2").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
 
 REG_BPROP_BUILDER("Unstack").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex2);
-  auto out = ib->Stack(dout, ib->GetAttr("axis"));
-  return {out};
+  auto dx = ib->Stack(dout, ib->GetAttr("axis"));
+  return {dx};
 });
 
 REG_BPROP_BUILDER("Contiguous").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
@@ -895,7 +907,9 @@ REG_BPROP_BUILDER("Select").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex1);
   auto y = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex4);
-  return {ib->OutZeros(cond), ib->Select(cond, dout, ib->ZerosLike(x)), ib->Select(cond, ib->ZerosLike(y), dout)};
+  auto dx = x->need_compute_grad_out() ? ib->Select(cond, dout, ib->ZerosLike(x)) : ib->OutZeros(x);
+  auto dy = x->need_compute_grad_out() ? ib->Select(cond, ib->ZerosLike(y), dout) : ib->OutZeros(y);
+  return {ib->OutZeros(cond), dx, dy};
 });
 
 REG_BPROP_BUILDER("OnesLike").SetUnusedInputs({i0, i1, i2}).SetBody(ReturnZeros);
@@ -955,24 +969,34 @@ REG_BPROP_BUILDER("ScatterNd").SetUnusedInputs({i1, i2, i3}).SetBody(BODYFUNC(ib
 });
 
 REG_BPROP_BUILDER("ScatterNdUpdate").SetUnusedInputs({i0, i2, i3}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
   auto indices = ib->GetInput(kIndex1);
+  auto updates = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex4);
-  return {dout, ib->OutZeros(indices), ib->GatherNd(dout, indices)};
+  auto dx = x->need_compute_grad_out() ? dout : ib->OutZeros(x);
+  auto update_grad = updates->need_compute_grad_out() ? ib->GatherNd(dout, indices) : ib->OutZeros(updates);
+  return {dx, ib->OutZeros(indices), update_grad};
 });
 
 REG_BPROP_BUILDER("ScatterNonAliasingAdd").SetUnusedInputs({i0, i2, i3}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
   auto indices = ib->GetInput(kIndex1);
+  auto updates = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex4);
-  return {dout, ib->OutZeros(indices), ib->GatherNd(dout, indices)};
+  auto dx = x->need_compute_grad_out() ? dout : ib->OutZeros(x);
+  auto updates_grad = updates->need_compute_grad_out() ? ib->GatherNd(dout, indices) : ib->OutZeros(updates);
+  return {dx, ib->OutZeros(indices), updates_grad};
 });
 
 REG_BPROP_BUILDER("TensorScatterUpdate").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
   auto indices = ib->GetInput(kIndex1);
   auto update = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex4);
-  auto x_grad = ib->TensorScatterUpdate(dout, indices, ib->ZerosLike(update));
-  auto update_grad = ib->GatherNd(dout, indices);
-  return {x_grad, ib->OutZeros(indices), update_grad};
+  auto x_grad =
+    x->need_compute_grad_out() ? ib->TensorScatterUpdate(dout, indices, ib->ZerosLike(update)) : ib->OutZeros(x);
+  auto updates_grad = x->need_compute_grad_out() ? ib->GatherNd(dout, indices) : ib->OutZeros(x);
+  return {x_grad, ib->OutZeros(indices), updates_grad};
 });
 
 REG_BPROP_BUILDER("Flatten").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
@@ -1038,10 +1062,13 @@ REG_BPROP_BUILDER("ReverseSequence").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(
 });
 
 REG_BPROP_BUILDER("TensorScatterAdd").SetUnusedInputs({i0, i2, i3}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
   auto indices = ib->GetInput(kIndex1);
+  auto update = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex4);
-  auto update_grad = ib->GatherNd(dout, indices);
-  return {dout, ib->OutZeros(indices), update_grad};
+  auto dx = x->need_compute_grad_out() ? dout : ib->OutZeros(x);
+  auto update_grad = update->need_compute_grad_out() ? ib->GatherNd(dout, indices) : ib->OutZeros(update);
+  return {dx, ib->OutZeros(indices), update_grad};
 });
 
 DEF_PURE_SHAPE_CALC(g_concat)
@@ -1073,7 +1100,7 @@ REG_BPROP_BUILDER("Concat").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
 
   auto axis_node = ib->GetInput(kIndex1);
 
-  auto x_abs = x->get()->abstract();
+  auto x_abs = x->abstract();
   MS_EXCEPTION_IF_NULL(x_abs);
   auto base_shape = x_abs->GetShape();
   MS_EXCEPTION_IF_NULL(base_shape);
@@ -1152,20 +1179,29 @@ REG_BPROP_BUILDER("TensorScatterDiv").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib)
   auto indices = ib->GetInput(kIndex1);
   auto update = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex4);
-  auto in_grad = ib->Emit("TensorScatterDiv", {dout, indices, update});
-  auto gather_update = ib->GatherNd(dout, indices);
-  auto gather_x = ib->GatherNd(x, indices);
-  auto mul_result = ib->Mul(update, update);
-  auto neg_result = ib->Emit("Neg", {mul_result});
-  auto update_grad = ib->Mul(gather_update, (ib->Div(gather_x, neg_result)));
+  auto in_grad = x->need_compute_grad_out() ? ib->Emit("TensorScatterDiv", {dout, indices, update}) : ib->OutZeros(x);
+  NodePtr update_grad = nullptr;
+  if (update->need_compute_grad_out()) {
+    auto gather_update = ib->GatherNd(dout, indices);
+    auto gather_x = ib->GatherNd(x, indices);
+    auto mul_result = ib->Mul(update, update);
+    auto neg_result = ib->Emit("Neg", {mul_result});
+    update_grad = ib->Mul(gather_update, (ib->Div(gather_x, neg_result)));
+  } else {
+    update_grad = ib->OutZeros(update);
+  }
   return {in_grad, ib->OutZeros(indices), update_grad};
 });
 
 REG_BPROP_BUILDER("TensorScatterSub").SetUnusedInputs({i0, i2, i3}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
   auto indices = ib->GetInput(kIndex1);
+  auto update = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex4);
-  auto update_grad = ib->Emit("Neg", {ib->GatherNd(dout, indices)});
-  return {dout, ib->OutZeros(indices), update_grad};
+  auto dx = x->need_compute_grad_out() ? dout : ib->OutZeros(x);
+  auto update_grad =
+    update->need_compute_grad_out() ? ib->Emit("Neg", {ib->GatherNd(dout, indices)}) : ib->OutZeros(update);
+  return {dx, ib->OutZeros(indices), update_grad};
 });
 
 REG_BPROP_BUILDER("TensorScatterMul").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
@@ -1173,10 +1209,15 @@ REG_BPROP_BUILDER("TensorScatterMul").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib)
   auto indices = ib->GetInput(kIndex1);
   auto update = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex4);
-  auto gather_update = ib->GatherNd(dout, indices);
-  auto gather_x = ib->GatherNd(x, indices);
-  auto dx = ib->Emit("TensorScatterMul", {dout, indices, update});
-  auto d_update = ib->Mul(gather_x, gather_update);
+  auto dx = x->need_compute_grad_out() ? ib->Emit("TensorScatterMul", {dout, indices, update}) : ib->OutZeros(x);
+  NodePtr d_update = nullptr;
+  if (update->need_compute_grad_out()) {
+    auto gather_update = ib->GatherNd(dout, indices);
+    auto gather_x = ib->GatherNd(x, indices);
+    d_update = ib->Mul(gather_x, gather_update);
+  } else {
+    d_update = ib->OutZeros(update);
+  }
   return {dx, ib->OutZeros(indices), d_update};
 });
 
@@ -1331,21 +1372,33 @@ REG_BPROP_BUILDER("DepthToSpace").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib)
 });
 
 REG_BPROP_BUILDER("ScatterMax").SetUnusedInputs({i0, i2, i3}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
   auto indices = ib->GetInput(kIndex1);
+  auto updates = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex4);
-  return {dout, ib->OutZeros(indices), ib->Gather(dout, indices, 0)};
+  auto dx = x->need_compute_grad_out() ? dout : ib->OutZeros(x);
+  auto updates_grad = updates->need_compute_grad_out() ? ib->Gather(dout, indices, 0) : ib->OutZeros(updates);
+  return {dx, ib->OutZeros(indices), updates_grad};
 });
 
 REG_BPROP_BUILDER("ScatterMin").SetUnusedInputs({i0, i2, i3}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
   auto indices = ib->GetInput(kIndex1);
+  auto updates = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex4);
-  return {dout, ib->OutZeros(indices), ib->Gather(dout, indices, 0)};
+  auto dx = x->need_compute_grad_out() ? dout : ib->OutZeros(x);
+  auto updates_grad = updates->need_compute_grad_out() ? ib->Gather(dout, indices, 0) : ib->OutZeros(updates);
+  return {dx, ib->OutZeros(indices), updates_grad};
 });
 
 REG_BPROP_BUILDER("ScatterUpdate").SetUnusedInputs({i0, i2, i3}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
   auto indices = ib->GetInput(kIndex1);
+  auto updates = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex4);
-  return {dout, ib->OutZeros(indices), ib->Gather(dout, indices, 0)};
+  auto dx = x->need_compute_grad_out() ? dout : ib->OutZeros(x);
+  auto updates_grad = updates->need_compute_grad_out() ? ib->Gather(dout, indices, 0) : ib->OutZeros(updates);
+  return {dx, ib->OutZeros(indices), updates_grad};
 });
 
 REG_BPROP_BUILDER("NormalizeSlice").SetUnusedInputs({i0, i1, i2, i3, i4, i5}).SetBody(ReturnZeros);
@@ -1479,7 +1532,7 @@ REG_BPROP_BUILDER("Split").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
   auto axis_ptr = axis->BuildValue();
   MS_EXCEPTION_IF_NULL(axis_ptr);
   auto axis_value = GetValue<int64_t>(axis_ptr);
-  auto dx = ib->Emit("Concat", {dout, ib->Value(axis_value)});
+  auto dx = ib->Concat(dout, axis_value);
   return {dx, ib->OutZeros(axis), ib->OutZeros(output_num)};
 });
 
@@ -1652,20 +1705,27 @@ REG_BPROP_BUILDER("MatrixDiagPartV3").SetUnusedInputs({i0, i2, i3}).SetBody(BODY
 
 REG_BPROP_BUILDER("MatrixSetDiagV3").SetUnusedInputs({i0, i1, i3}).SetBody(BODYFUNC(ib) {
   auto align = ib->GetAttr("align");
+  auto x = ib->GetInput(kIndex0);
   auto diagonal = ib->GetInput(kIndex1);
   auto k = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex4);
-  auto diagonal_cal = ib->MatrixDiagPartV3(dout, k, ib->Tensor(0, ib->GetDtype(dout)), align);
-  auto diagonal_shape = ib->GetShape(diagonal);
-  NodePtr x_cal;
-  auto dout_type = ib->GetDtypeId(dout);
-  if (IsDynamic(diagonal_shape)) {
-    auto diagonal_temp = ib->Cast(diagonal, dout_type);
-    x_cal = ib->MatrixSetDiagV3(dout, ib->ZerosLike(diagonal_temp), k, align);
+  auto diagonal_grad = diagonal->need_compute_grad_out()
+                         ? ib->MatrixDiagPartV3(dout, k, ib->Tensor(0, ib->GetDtype(dout)), align)
+                         : ib->OutZeros(diagonal);
+  NodePtr dx = nullptr;
+  if (x->need_compute_grad_out()) {
+    auto diagonal_shape = ib->GetShape(diagonal);
+    auto dout_type = ib->GetDtypeId(dout);
+    if (IsDynamic(diagonal_shape)) {
+      auto diagonal_temp = ib->Cast(diagonal, dout_type);
+      dx = ib->MatrixSetDiagV3(dout, ib->ZerosLike(diagonal_temp), k, align);
+    } else {
+      dx = ib->MatrixSetDiagV3(dout, ib->Fill(static_cast<int64_t>(0), diagonal_shape, dout_type), k, align);
+    }
   } else {
-    x_cal = ib->MatrixSetDiagV3(dout, ib->Fill(static_cast<int64_t>(0), diagonal_shape, dout_type), k, align);
+    dx = ib->OutZeros(x);
   }
-  return {x_cal, diagonal_cal, ib->OutZeros(k)};
+  return {dx, diagonal_grad, ib->OutZeros(k)};
 });
 
 REG_BPROP_BUILDER("LogNormalReverse").SetUnusedInputs({i0, i1, i2}).SetBody(ReturnZeros);
@@ -1712,24 +1772,24 @@ REG_BPROP_BUILDER("MaskedFill").SetUnusedInputs({i2, i3}).SetBody(BODYFUNC(ib) {
   auto dmask = ib->OutZeros(mask);
   mask = ib->Cast(mask, kFloat32);
   dout = ib->Cast(dout, kFloat32);
-  auto dinput = ib->Mul(dout, ib->Sub((ib->Tensor(1, ib->GetDtype(mask))), mask));
-  auto dvalue = ib->Mul(dout, mask);
+  NodePtr dinput =
+    input_data->need_compute_grad_out() ? ib->Mul(dout, ib->Sub((ib->Tensor(1, ib->GetDtype(mask))), mask)) : nullptr;
+  NodePtr dvalue = value->need_compute_grad_out() ? ib->Mul(dout, mask) : nullptr;
   auto bout = BinopGradCommon(ib, input_data, mask, dinput, dvalue);
 
-  auto dvalue_shape = dvalue->shape();
-  if (IsDynamicRank(dvalue_shape)) {
-    auto dvalue_rank = ib->Shape(ib->Shape(dvalue, true), true);
-    auto axis_node = ib->Range(ib->TensorToScalar(dvalue_rank));
-    dvalue = ib->ReduceSum(bout[1], axis_node);
-  } else {
-    dvalue = ib->ReduceSum(bout[1]);
-  }
-
-  dinput = ib->Cast(bout[0], ib->GetDtype(input_data));
-  if (value->isa<ValueNode>()) {
-    dvalue = ib->OutZeros(value);
-  } else {
+  dinput = input_data->need_compute_grad_out() ? ib->Cast(bout[0], ib->GetDtype(input_data)) : ib->OutZeros(dinput);
+  if (value->need_compute_grad_out()) {
+    auto dvalue_shape = dvalue->shape();
+    if (IsDynamicRank(dvalue_shape)) {
+      auto dvalue_rank = ib->Shape(ib->Shape(dvalue, true), true);
+      auto axis_node = ib->Range(ib->TensorToScalar(dvalue_rank));
+      dvalue = ib->ReduceSum(bout[1], axis_node);
+    } else {
+      dvalue = ib->ReduceSum(bout[1]);
+    }
     dvalue = ib->Cast(dvalue, ib->GetDtype(value));
+  } else {
+    dvalue = ib->OutZeros(value);
   }
   return {dinput, dmask, dvalue};
 });
@@ -1777,7 +1837,7 @@ REG_BPROP_BUILDER("ResizeNearestNeighborV2").SetUnusedInputs({i1, i4}).SetBody(B
   auto half_pixel_centers = ib->GetInput(kIndex3);
   auto dout = ib->GetInput(kIndex5);
   auto grad_in_size = ib->ShapeCalc(std::make_shared<ResizeNearestNeighborV2ShapeCalc>(true), {x})[0];
-  if (grad_in_size->isa<ValueNode>()) {
+  if (grad_in_size->input_type() == InputType::kConstant) {
     grad_in_size = ib->Value<ShapeVector>(GetIntList(grad_in_size));
   }
   auto dx = ib->Emit("ResizeNearestNeighborV2Grad", {dout, grad_in_size, align_corners, half_pixel_centers});
@@ -1843,7 +1903,7 @@ REG_BPROP_BUILDER("MaskedSelect").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
 REG_BPROP_BUILDER("SplitV").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   auto split_dim = GetValue<int64_t>(ib->GetAttr("split_dim"));
   auto dout = ib->GetInput(kIndex2);
-  auto dx = ib->Emit("Concat", {dout, ib->Value(split_dim)});
+  auto dx = ib->Concat(dout, split_dim);
   return {dx};
 });
 
@@ -1893,8 +1953,7 @@ REG_BPROP_BUILDER("ExtractVolumePatches").SetUnusedInputs({i0, i1}).SetBody(BODY
   auto out_indices_num = ((((out_d * out_h) * out_w) * ksize_d) * ksize_h) * ksize_w;
   auto out_idx = ib->Tensor(Range(0, out_indices_num), kInt32);
   out_idx = ib->Reshape(out_idx, {1, out_d, out_h, out_w, (ksize_d * ksize_h) * ksize_w});
-  auto idx_tensor = ib->Emit("Concat", {ib->MakeTuple({ib->ExpandDims(x_idx_patched, -1), ib->ExpandDims(out_idx, -1)}),
-                                        ib->Value<int64_t>(-1)});
+  auto idx_tensor = ib->Concat({ib->ExpandDims(x_idx_patched, -1), ib->ExpandDims(out_idx, -1)}, -1);
   auto idx_map = ib->Reshape(idx_tensor, {-1, 2});
   std::vector<int64_t> sp_shape = {x_indices_num, out_indices_num};
   std::vector<int64_t> ones(out_indices_num, 1);
@@ -2004,37 +2063,51 @@ REG_BPROP_BUILDER("SegmentMax").SetBody(SegmentMinOrMaxGrad);
 REG_BPROP_BUILDER("SegmentMin").SetBody(SegmentMinOrMaxGrad);
 
 REG_BPROP_BUILDER("TensorScatterElements").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
   auto indices = ib->GetInput(kIndex1);
   auto update = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex4);
   auto axis = ib->GetAttr("axis");
-  auto x_grad = ib->Emit("TensorScatterElements", {dout, indices, ib->ZerosLike(update)},
-                         {{"axis", axis}, {"reduction", ib->GetAttr("reduction")}});
-  auto update_grad = ib->GatherD(dout, ib->EmitValue(axis), indices);
+  NodePtr x_grad = nullptr;
+  if (x->need_compute_grad_out()) {
+    x_grad = ib->Emit("TensorScatterElements", {dout, indices, ib->ZerosLike(update)},
+                      {{"axis", axis}, {"reduction", ib->GetAttr("reduction")}});
+  } else {
+    x_grad = ib->OutZeros(x);
+  }
+  auto update_grad =
+    update->need_compute_grad_out() ? ib->GatherD(dout, ib->EmitValue(axis), indices) : ib->OutZeros(update);
   return {x_grad, ib->OutZeros(indices), update_grad};
 });
 
 REG_BPROP_BUILDER("ScatterAddWithAxis").SetUnusedInputs({i0, i2, i3}).SetBody(BODYFUNC(ib) {
   auto axis = ib->GetAttr("axis");
+  auto x = ib->GetInput(kIndex0);
   auto indices = ib->GetInput(kIndex1);
+  auto update = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex4);
   auto dout_shape = ib->GetShape(dout);
   auto index_shape = ib->GetShape(indices);
+  auto dx = x->need_compute_grad_out() ? dout : ib->OutZeros(x);
   NodePtr update_grad = nullptr;
-  if (dout_shape != index_shape) {
-    ShapeVector slice_list(dout_shape.size(), 0);
-    std::vector<ShapeVector> pad_list;
-    pad_list.reserve(dout_shape.size());
-    for (size_t i = 0; i < dout_shape.size(); i++) {
-      (void)pad_list.emplace_back(ShapeVector{0, dout_shape[i] - index_shape[i]});
+  if (update->need_compute_grad_out()) {
+    if (dout_shape != index_shape) {
+      ShapeVector slice_list(dout_shape.size(), 0);
+      std::vector<ShapeVector> pad_list;
+      pad_list.reserve(dout_shape.size());
+      for (size_t i = 0; i < dout_shape.size(); i++) {
+        (void)pad_list.emplace_back(ShapeVector{0, dout_shape[i] - index_shape[i]});
+      }
+      auto out_index = ib->Emit("Pad", {indices}, {{"paddings", MakeValue(pad_list)}});
+      auto out_gather = ib->GatherD(dout, ib->EmitValue(axis), out_index);
+      update_grad = ib->Slice(out_gather, ib->Value(slice_list), ib->Value(index_shape));
+    } else {
+      update_grad = ib->GatherD(dout, ib->EmitValue(axis), indices);
     }
-    auto out_index = ib->Emit("Pad", {indices}, {{"paddings", MakeValue(pad_list)}});
-    auto out_gather = ib->GatherD(dout, ib->EmitValue(axis), out_index);
-    update_grad = ib->Slice(out_gather, ib->Value(slice_list), ib->Value(index_shape));
   } else {
-    update_grad = ib->GatherD(dout, ib->EmitValue(axis), indices);
+    update_grad = ib->OutZeros(update);
   }
-  return {dout, ib->OutZeros(indices), update_grad};
+  return {dx, ib->OutZeros(indices), update_grad};
 });
 
 REG_BPROP_BUILDER("CopyWithSlice").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
@@ -2047,7 +2120,7 @@ REG_BPROP_BUILDER("Expand").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
   auto shape = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
   auto dout_shape = ib->GetShape(dout);
-  auto dshape = ib->ZerosLike(shape);
+  auto dshape = ib->OutZeros(shape);
   if (dout_shape.empty()) {
     return {ib->ReduceSum(dout), dshape};
   }
@@ -2121,17 +2194,29 @@ REG_BPROP_BUILDER("MaskedScatter").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
   auto updates = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex4);
   dout = ib->Cast(dout, kFloat32);
-  auto dx = ib->Emit("MaskedFill", {dout, mask, ib->Tensor(0, kFloat32)});
-  auto dupdates = ib->Cast(ib->Reshape(ib->ZerosLike(updates), {-1}), kFloat32);
-  auto dupdates_val = ib->Cast(ib->Emit("MaskedSelect", {dout, mask}), kFloat32);
-  auto length = ib->TupleGetItem(ib->Shape(dupdates_val), LongToSize(0));
-  auto scatter_indices = ib->Range(length);
-  dupdates = ib->Emit("TensorScatterElements", {dupdates, scatter_indices, dupdates_val},
-                      {{"reduction", MakeValue<string>("none")}, {"axis", MakeValue<int64_t>(0)}});
-  // The operator test case pass on cpu or ascend backend. But it may fail once enabled on gpu backend for pynative
-  // mode. Now it is not supported on gpu backend.
-  dupdates = ib->Reshape(dupdates, ib->Shape(updates));
-  return {ib->Cast(dx, ib->GetDtype(x)), ib->OutZeros(mask), ib->Cast(dupdates, ib->GetDtype(updates))};
+  NodePtr dx = nullptr;
+  if (x->need_compute_grad_out()) {
+    dx = ib->Emit("MaskedFill", {dout, mask, ib->Tensor(0, kFloat32)});
+    dx = ib->Cast(dx, ib->GetDtype(x));
+  } else {
+    dx = ib->OutZeros(x);
+  }
+  NodePtr dupdates = nullptr;
+  if (updates->need_compute_grad_out()) {
+    dupdates = ib->Cast(ib->Reshape(ib->ZerosLike(updates), {-1}), kFloat32);
+    auto dupdates_val = ib->Cast(ib->Emit("MaskedSelect", {dout, mask}), kFloat32);
+    auto length = ib->TupleGetItem(ib->Shape(dupdates_val), LongToSize(0));
+    auto scatter_indices = ib->Range(length);
+    dupdates = ib->Emit("TensorScatterElements", {dupdates, scatter_indices, dupdates_val},
+                        {{"reduction", MakeValue<string>("none")}, {"axis", MakeValue<int64_t>(0)}});
+    // The operator test case pass on cpu or ascend backend. But it may fail once enabled on gpu backend for pynative
+    // mode. Now it is not supported on gpu backend.
+    dupdates = ib->Reshape(dupdates, ib->Shape(updates));
+    dupdates = ib->Cast(dupdates, ib->GetDtype(updates));
+  } else {
+    dupdates = ib->OutZeros(updates);
+  }
+  return {dx, ib->OutZeros(mask), dupdates};
 });
 
 REG_BPROP_BUILDER("CountNonZero").SetUnusedInputs({i0, i1, i2}).SetBody(ReturnZeros);
