@@ -55,6 +55,7 @@ MS_CORE_API size_t GetTypeByte(const TypePtr &type_ptr);
 MS_CORE_API int64_t GetTypeId(const TypeId &type_id);
 
 enum class BitsNum : int {
+  eBits4 = 4,
   eBits8 = 8,
   eBits16 = 16,
   eBits32 = 32,

@@ -336,6 +336,8 @@ class Parameter(Tensor_):
                     cpu_cast = Cast().set_device("CPU")
                     data = cpu_cast(data, mstype.float32)
                     return (Tensor, data.asnumpy(), mstype.bfloat16)
+                if data.dtype == mstype.qint4x2:
+                    return (Tensor, data.asnumpy(), mstype.qint4x2)
                 return (Tensor, data.asnumpy())
 
             not_init_data = _is_role_sched() or (_is_role_pserver() and _cache_enable()) or _is_in_parallel_mode()

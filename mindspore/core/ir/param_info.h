@@ -119,6 +119,12 @@ class ParamInfo {
   bool requires_aggr() const { return requires_aggr_; }
   void set_requires_aggr(bool requires_aggr) { requires_aggr_ = requires_aggr; }
 
+  bool is_quant_int4() const { return is_quant_int4_; }
+  void set_is_quant_int4(bool is_quant_int4) { is_quant_int4_ = is_quant_int4; }
+
+  std::vector<int64_t> quant_shape() const { return quant_shape_; }
+  void set_quant_shape(const std::vector<int64_t> &quant_shape) { quant_shape_ = quant_shape; }
+
  private:
   std::string name_{"Parameter"};
   bool requires_grad_{true};
@@ -147,6 +153,10 @@ class ParamInfo {
   int32_t key_{-1};
   // Used to indicate parameter strategy, only take effect in cell shard
   std::vector<int64_t> param_strategy_;
+
+  // Used to identify parameters of quant int4 type
+  bool is_quant_int4_{false};
+  std::vector<int64_t> quant_shape_;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_IR_PARAM_INFO_H_

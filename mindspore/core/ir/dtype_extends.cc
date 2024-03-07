@@ -77,6 +77,7 @@ TypePtr TypeIdToType(TypeId id) {
                                                                 {kNumberTypeFloat64, kFloat64},
                                                                 {kNumberTypeBFloat16, kBFloat16},
                                                                 {kNumberTypeComplex64, kComplex64},
+                                                                {kNumberTypeInt4, kInt4},
                                                                 {kNumberTypeInt8, kInt8},
                                                                 {kNumberTypeInt16, kInt16},
                                                                 {kNumberTypeInt32, kInt32},
@@ -146,6 +147,7 @@ size_t UnitSizeInBytes(TypeId id) {
   size_t complex_factor = 2;
   switch (id) {
     case kNumberTypeBool:
+    case kNumberTypeInt4:
     case kNumberTypeInt8:
     case kNumberTypeUInt8:
       bytes = sizeof(int8_t);
@@ -186,7 +188,6 @@ size_t UnitSizeInBytes(TypeId id) {
     case kObjectTypeIOMonad:
       bytes = 0;
       break;
-    case kNumberTypeInt4:
     default:
       MS_LOG(EXCEPTION) << "Invalid types for UnitSizeInBytes : " << TypeIdToString(id) << ", type id: " << id;
   }
