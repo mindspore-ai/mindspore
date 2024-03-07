@@ -81,6 +81,7 @@ def vmap(fn, in_axes=0, out_axes=0):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> from mindspore import Tensor
         >>> from mindspore import vmap
         >>> def test_vmap(x, y, z):                                              # ([a],[a],[a]) -> [a]

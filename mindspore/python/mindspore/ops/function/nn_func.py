@@ -3720,6 +3720,7 @@ def l1_loss(input, target, reduction='mean'):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore as ms
         >>> from mindspore import Tensor, ops
         >>> from mindspore import dtype as mstype
         >>> x = ms.Tensor([[1, 2, 3], [4, 5, 6]], mstype.float32)
