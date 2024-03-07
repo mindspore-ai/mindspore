@@ -100,6 +100,9 @@ class COMMON_EXPORT CompileCacheContext {
   void set_has_cached_queue_name(bool cached) { has_cached_queue_name_ = cached; }
   bool has_cached_queue_name() const { return has_cached_queue_name_; }
 
+  void set_init_compile_cache(const bool &init) { init_compile_cache_ = init; }
+  bool init_compile_cache() const { return init_compile_cache_; }
+
  private:
   CompileCacheContext() = default;
   ~CompileCacheContext() = default;
@@ -121,6 +124,7 @@ class COMMON_EXPORT CompileCacheContext {
   bool restricted_scenarios_{false};
   std::string compile_cache_dep_files_hash_ = "";
   bool has_cached_queue_name_{false};
+  bool init_compile_cache_{false};
 };
 }  // namespace mindspore
 
