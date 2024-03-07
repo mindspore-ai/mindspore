@@ -163,10 +163,10 @@ class MatMulInfer : public abstract::OpInferBase {
       valid_types = {kInt32, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
     } else {
       std::string backend_name = context_ptr->backend_policy();
-      if (backend_name == "vm") {
-        valid_types = {kUInt8, kInt32, kInt64, kFloat16, kFloat32, kBFloat16};
-      } else {
+      if (backend_name == "ge" || backend_name == "ge_only") {
         valid_types = {kUInt8, kInt8, kInt32, kInt64, kFloat16, kFloat32, kBFloat16};
+      } else {
+        valid_types = {kUInt8, kInt32, kInt64, kFloat16, kFloat32, kBFloat16};
       }
     }
     std::map<std::string, TypePtr> types;
