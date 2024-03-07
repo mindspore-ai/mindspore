@@ -23,6 +23,8 @@ mindspore.Profiler
           - 5: MemoryUB，包含ub\_read/write_bw_mte, ub\_read/write_bw_vector, ub\_/write_bw_scalar等。
 
         - **l2_cache** (bool, 可选) -（仅限Ascend）是否收集l2缓存数据，当值为 ``True`` 时，收集这些数据。默认值： ``False`` 。
+        - **hbm_ddr** (bool, 可选) -（仅限Ascend）是否收集HBM/DDR内存读写速率数据，当值为 ``True`` 时，收集这些数据。默认值： ``False`` 。
+        - **pcie** (bool, 可选) -（仅限Ascend）是否收集PCIe带宽数据，当值为 ``True`` 时，收集这些数据。默认值： ``False`` 。
         - **sync_enable** (bool, 可选) -（仅限GPU）Profiler是否用同步的方式收集算子耗时，默认值： ``True`` 。
 
           - True: 同步方式，在把算子发送到GPU之前，在CPU端记录开始时间戳。然后在算子执行完毕返回到CPU端后，再记录结束时间戳。算子耗时为两个时间戳的差值。
