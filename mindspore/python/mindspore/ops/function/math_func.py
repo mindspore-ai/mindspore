@@ -13394,6 +13394,7 @@ def batch_dot(x1, x2, axes=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
         >>> from mindspore import Tensor, ops
         >>> import numpy as np
         >>> x1 = Tensor(np.ones(shape=[2, 2, 3]), mindspore.float32)

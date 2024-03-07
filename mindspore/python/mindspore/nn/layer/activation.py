@@ -782,7 +782,7 @@ class Tanhshrink(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import mindspore
+        >>> import mindspore as ms
         >>> from mindspore import Tensor, nn
         >>> import numpy as np
         >>> x = Tensor(np.array([1, 2, 3, 2, 1]), ms.float16)
