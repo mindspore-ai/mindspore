@@ -29,5 +29,6 @@ class MIND_API PReLUFuncImpl : public OpFuncImpl {
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
   int32_t CheckValidation(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
 };
+MIND_API bool IsAscend();
 }  // namespace mindspore::ops
 #endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_PRELU_H_
