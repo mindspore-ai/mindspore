@@ -53,4 +53,25 @@ INPUT_ATTR_MAP(QuantBatchMatmulV3) = {{6, ATTR_DESC(transpose_x1, AnyTraits<bool
                                       {8, ATTR_DESC(dtype, AnyTraits<GEType>())}};
 OUTPUT_MAP(QuantBatchMatmulV3) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(QuantBatchMatmulV3, kNameQuantBatchMatmul, ADPT_DESC(QuantBatchMatmulV3))
+
+INPUT_MAP(AscendAntiQuantV2) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(scale)}, {3, INPUT_DESC(offset)}};
+ATTR_MAP(AscendAntiQuantV2) = {{"sqrt_mode", ATTR_DESC(sqrt_mode, AnyTraits<bool>())},
+                               {"dtype", ATTR_DESC(dst_type, AnyTraits<GEType>())}};
+OUTPUT_MAP(AscendAntiQuantV2) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(AscendAntiQuantV2, kNameAscendAntiQuant, ADPT_DESC(AscendAntiQuantV2))
+
+// WeightQuantBatchMatmulV2
+INPUT_MAP(WeightQuantBatchMatmulV2) = {{1, INPUT_DESC(x)},
+                                       {2, INPUT_DESC(weight)},
+                                       {3, INPUT_DESC(antiquant_scale)},
+                                       {4, INPUT_DESC(antiquant_offset)},
+                                       {5, INPUT_DESC(quant_scale)},
+                                       {6, INPUT_DESC(quant_offset)},
+                                       {7, INPUT_DESC(bias)}};
+ATTR_MAP(WeightQuantBatchMatmulV2) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(WeightQuantBatchMatmulV2) = {{8, ATTR_DESC(transpose_x, AnyTraits<bool>())},
+                                            {9, ATTR_DESC(transpose_weight, AnyTraits<bool>())},
+                                            {10, ATTR_DESC(antiquant_group_size, AnyTraits<int64_t>())}};
+OUTPUT_MAP(WeightQuantBatchMatmulV2) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(WeightQuantBatchMatmulV2, kNameWeightQuantBatchMatmul, ADPT_DESC(WeightQuantBatchMatmulV2))
 }  // namespace mindspore::transform

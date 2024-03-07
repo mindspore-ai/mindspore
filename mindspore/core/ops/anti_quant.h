@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_NPU_ANTIQUANT_H_
-#define MINDSPORE_CORE_OPS_NPU_ANTIQUANT_H_
+#ifndef MINDSPORE_CORE_OPS_ANTI_QUANT_H_
+#define MINDSPORE_CORE_OPS_ANTI_QUANT_H_
 #include <map>
 #include <memory>
 #include <string>
@@ -25,19 +25,21 @@
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameNPUAntiQuant = "NPUAntiQuant";
-class MIND_API NPUAntiQuant : public BaseOperator {
+constexpr auto kNameAntiQuant = "AntiQuant";
+class MIND_API AntiQuant : public BaseOperator {
  public:
-  MIND_API_BASE_MEMBER(NPUAntiQuant);
+  MIND_API_BASE_MEMBER(AntiQuant);
   /// \brief Constructor.
-  NPUAntiQuant() : BaseOperator(kNameNPUAntiQuant) { InitIOName({"x"}, {"output"}); }
-  explicit NPUAntiQuant(const std::string k_name) : BaseOperator(k_name) { InitIOName({"x"}, {"output"}); }
+  AntiQuant() : BaseOperator(kNameAntiQuant) { InitIOName({"x", "scale", "offset"}, {"output"}); }
+  explicit AntiQuant(const std::string k_name) : BaseOperator(k_name) {
+    InitIOName({"x", "scale", "offset"}, {"output"});
+  }
   /// \brief Init.
   void Init() const {}
 };
 
-MIND_API abstract::AbstractBasePtr NPUAntiQuantInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                     const std::vector<abstract::AbstractBasePtr> &input_args);
+MIND_API abstract::AbstractBasePtr AntiQuantInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                  const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

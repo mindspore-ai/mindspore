@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "ops/npu_antiquant.h"
+#include "ops/anti_quant.h"
 #include <set>
 #include <string>
 #include <vector>
@@ -38,11 +38,11 @@
 namespace mindspore {
 namespace ops {
 namespace {
-BaseShapePtr NPUAntiQuantInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+BaseShapePtr AntiQuantInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  constexpr int64_t kNumber1 = 1;
-  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, kNumber1, prim_name);
+  constexpr int64_t kNumber3 = 3;
+  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, kNumber3, prim_name);
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
   (void)CheckAndConvertUtils::CheckArgsType(prim_name, input_args, kInputIndex0, kObjectTypeTensorType);
   auto x = input_args[kInputIndex0]->GetShape();
@@ -50,7 +50,7 @@ BaseShapePtr NPUAntiQuantInferShape(const PrimitivePtr &primitive, const std::ve
   return x->Clone();
 }
 
-TypePtr NPUAntiQuantInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr AntiQuantInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   std::map<std::string, TypePtr> types;
   std::set<TypePtr> valid_types = {kInt8};
@@ -65,38 +65,38 @@ TypePtr NPUAntiQuantInferType(const PrimitivePtr &primitive, const std::vector<A
 }
 }  // namespace
 
-AbstractBasePtr NPUAntiQuantInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                  const std::vector<AbstractBasePtr> &input_args) {
+AbstractBasePtr AntiQuantInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                               const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   for (auto &input : input_args) {
     MS_EXCEPTION_IF_NULL(input);
   }
-  const int64_t input_num = 1;
+  const int64_t input_num = 3;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
-  auto types = NPUAntiQuantInferType(primitive, input_args);
-  auto shapes = NPUAntiQuantInferShape(primitive, input_args);
+  auto types = AntiQuantInferType(primitive, input_args);
+  auto shapes = AntiQuantInferShape(primitive, input_args);
   return abstract::MakeAbstract(shapes, types);
 }
 
-MIND_API_OPERATOR_IMPL(NPUAntiQuant, BaseOperator);
-class MIND_API AGNPUAntiQuantInfer : public abstract::OpInferBase {
+MIND_API_OPERATOR_IMPL(AntiQuant, BaseOperator);
+class MIND_API AGAntiQuantInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    return NPUAntiQuantInferShape(primitive, input_args);
+    return AntiQuantInferShape(primitive, input_args);
   }
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    return NPUAntiQuantInferType(primitive, input_args);
+    return AntiQuantInferType(primitive, input_args);
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) const override {
-    return NPUAntiQuantInfer(engine, primitive, input_args);
+    return AntiQuantInfer(engine, primitive, input_args);
   }
 };
 
-REGISTER_PRIMITIVE_OP_INFER_IMPL(NPUAntiQuant, prim::kPrimNPUAntiQuant, AGNPUAntiQuantInfer, false);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(AntiQuant, prim::kPrimAntiQuant, AGAntiQuantInfer, false);
 }  // namespace ops
 }  // namespace mindspore

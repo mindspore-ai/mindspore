@@ -20,7 +20,6 @@ from mindspore.nn import Cell
 from mindspore.ops.operations._inner_ops import Dequant
 from parallel.utils.utils import ParallelValidator, compile_net
 
-
 def setup_function():
     context.set_auto_parallel_context(dataset_strategy="full_batch")
 
