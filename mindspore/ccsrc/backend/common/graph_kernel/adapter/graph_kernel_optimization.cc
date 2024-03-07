@@ -62,7 +62,10 @@
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
 #include "backend/common/graph_kernel/compact_tensor_liveness.h"
 #include "backend/common/graph_kernel/adapter/symbol_engine_builder.h"
+#include "backend/common/graph_kernel/symbol_engine_extender.h"
 #include "backend/common/graph_kernel/core/graph_kernel_op_combiner.h"
+#include "backend/common/graph_kernel/set_infershape_functor.h"
+#include "backend/common/graph_kernel/recognize_softmax_grad_ext.h"
 #include "backend/common/graph_kernel/convert_custom_for_ge.h"
 #include "backend/common/graph_kernel/convert_input_and_attr.h"
 #ifdef ENABLE_AKG
@@ -93,7 +96,7 @@ PassManagerPtr GraphKernelOptimizer::PreProcess() const {
   pm->Add(std::make_shared<SaveOutputShape>(), OptLevel_1);
 
   // Change Assign(p, a, U) to Assign(Depend(p, U), a)
-  pm->Add(std::make_shared<SplitAssign>(), OptLevel_1, is_gpu);
+  pm->Add(std::make_shared<SplitAssign>(), OptLevel_1, is_gpu || is_cpu);
 
   // Spread the MakeTuple input of UpdateState
   pm->Add(std::make_shared<SpreadUpdateState>(), OptLevel_1);
@@ -103,6 +106,10 @@ PassManagerPtr GraphKernelOptimizer::PreProcess() const {
 
   // Eliminate the common nodes that generated in SpreadUpdateState
   pm->Add(std::make_shared<GraphKernelCSE>(), OptLevel_1);
+
+  // Recognize ops that will be fused by GE
+  pm->Add(std::make_shared<RecognizeSoftmaxGradExt>(), OptLevel_1, is_ge);
+
   return pm;
 }
 
@@ -165,7 +172,7 @@ PassManagerPtr GraphKernelOptimizer::Split() const {
   std::vector<PrimitivePtr> duplicated_ops = {prim::kPrimReshape};
   pm->Add(std::make_shared<ShapeOpsSplitter>(duplicated_ops), OptLevel_1);
   // Split kernel according to costmodel
-  pm->Add(std::make_shared<GraphKernelSplitterWithPy>(), OptLevel_1);
+  pm->Add(std::make_shared<GraphKernelSplitterWithPy>(false), OptLevel_1);
   // After Simplify and Splitter, a lot of redundant getitem/maketuple
   // will be exposed, use GetitemTuple Pass to delete them.
   pm->Add(std::make_shared<GetitemTuple>(), OptLevel_1);
@@ -236,16 +243,18 @@ PassManagerPtr GraphKernelOptimizer::Build() const {
   auto pm = std::make_shared<GraphKernelPassManager>(6, "build");
   pm->Add(std::make_shared<ExtendOutputForUpdateState>(), OptLevel_1);
   // Reduce fake output memory.
-  pm->Add(std::make_shared<ReduceFakeOutMem>(), OptLevel_1);
+  auto only_static_shape_fusion = GetPassLevelByFlag(!GraphKernelFlags::GetInstance().enable_dynamic_shape_fusion);
+  pm->Add(std::make_shared<ReduceFakeOutMem>(), only_static_shape_fusion);
   // Compile graph kernel nodes, and inline nodes if compile failed.
   auto enable_dyn_level = GetPassLevelByFlag(GraphKernelFlags::GetInstance().enable_dynamic_shape_fusion);
   pm->Add(std::make_shared<DynamicShapeCluster>(), enable_dyn_level, is_cpu || is_gpu);
-  pm->Add(std::make_shared<SymbolEngineBuilder>(), enable_dyn_level, is_cpu || is_gpu);
+  pm->Add(std::make_shared<SymbolEngineBuilder>(true), enable_dyn_level, is_cpu || is_gpu);
+  pm->Add(std::make_shared<GraphKernelSplitterWithPy>(true), enable_dyn_level, is_gpu);
 #ifdef ENABLE_AKG
   pm->Add(std::make_shared<GraphKernelBuild>(), OptLevel_1, !is_ge);
 #endif
   pm->Add(std::make_shared<ConvertCustomForGE>(), OptLevel_1, is_ge);
-  pm->Add(std::make_shared<GeneratedDependElimination>(), OptLevel_2, is_gpu || is_ascend);
+  pm->Add(std::make_shared<GeneratedDependElimination>(), OptLevel_2, is_gpu || (is_ascend && !is_ge));
   pm->Add(std::make_shared<GetitemTuple>(), OptLevel_1);
   pm->Add(std::make_shared<MergeOutputForUpdateState>(), OptLevel_1);
   return pm;
@@ -260,11 +269,22 @@ PassManagerPtr GraphKernelOptimizer::PostProcess() const {
   pm->Add(std::make_shared<GetitemTuple>(), OptLevel_1);
   pm->Add(std::make_shared<RewriteOutputShape>(), OptLevel_1);
 
+  auto enable_dyn_level = GetPassLevelByFlag(GraphKernelFlags::GetInstance().enable_dynamic_shape_fusion);
+  // Add infershape functor for dynamic shape graph kernel
+  pm->Add(std::make_shared<SetInferShapeFunctor>(), enable_dyn_level);
+
   // Contrary to ConvertFrontEndToGraphKernel pass, adapter for dyn-shape
   pm->Add(std::make_shared<ConvertGraphKernelToFrontEnd>(), OptLevel_1);
 
   // Add the new tensors to the kernel_graph
   pm->Add(std::make_shared<BindValueToGraph>(), OptLevel_1);
+
+  auto kernel_packet_lv = GetPassLevelByFlag(common::GetEnv("MS_DEV_CLUSTER_SHAPE") != "off");
+  pm->Add(std::make_shared<SymbolEngineBuilder>(true), kernel_packet_lv, is_gpu);
+  pm->Add(std::make_shared<SymbolEngineExtender>(), kernel_packet_lv, is_gpu);
+
+  // In dynamic shape graph, the infer shape function only support Primitive node
+  pm->Add(std::make_shared<ConvertCallToPrim>(), OptLevel_1);
   return pm;
 }
 
@@ -274,7 +294,7 @@ void GraphKernelOptimizer::Run(const KernelGraphPtr &kernel_graph) {
   is_gpu = (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice);
   is_ascend = (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
   is_cpu = (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kCPUDevice);
-  is_ge = (is_ascend && (context_ptr->backend_policy() == "ge"));
+  is_ge = (is_ascend && (context_ptr->backend_policy() == "ge") && kernel_graph->is_graph_run_mode());
   auto cb = Callback::Instance();
   if (is_ge) {
     Callback::RegImpl(std::make_shared<CallbackImplWithInferShape>());

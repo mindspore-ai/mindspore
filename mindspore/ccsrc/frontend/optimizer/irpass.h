@@ -179,6 +179,12 @@ class OptimizeIRPassLib {
   // Recompute
   SubstitutionPtr set_cell_output_no_recompute_;
   SubstitutionPtr remove_not_recompute_node_;
+
+  // Optimize with SymbolEngine
+  SubstitutionPtr elim_not_effective_node_;
+  SubstitutionPtr elim_shapecalc_of_broadcastargs_;
+  SubstitutionPtr opt_reshape_;
+  SubstitutionPtr fold_const_symbol_;
 };
 
 // the collection of irpass for resolve action

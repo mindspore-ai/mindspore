@@ -119,6 +119,8 @@ bool AxisNormalizer::Process(const AnfNodePtr &graph_kernel_node) const {
       new_axis_value = std::make_shared<tensor::Tensor>(axis_vec);
       auto new_axis_node = std::make_shared<ValueNode>(new_axis_value);
       new_axis_node->set_abstract(new_axis_value->ToAbstract());
+      Callback::Instance()->SetBasicNodeKernelInfo(
+        new_axis_node, {{ShapeVector{SizeToLong(axis_vec.size())}, kNumberTypeInt64, "DefaultFormat"}});
       if (axis_node->isa<ValueNode>()) {
         cnode->set_input(axis_idx, new_axis_node);
       } else {

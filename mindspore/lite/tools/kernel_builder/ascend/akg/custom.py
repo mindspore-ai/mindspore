@@ -20,6 +20,7 @@ import json
 import copy
 import functools
 import subprocess
+import shutil
 
 from tbe.common.buildcfg import get_current_build_config
 from impl.util.util_select_op_base import gen_param
@@ -46,6 +47,8 @@ FRACTAL_NZ = "FRACTAL_NZ"
 DEFAULT_FORMAT = "DefaultFormat"
 FLOAT16 = "float16"
 FLOAT32 = "float32"
+O_SUFFIX = ".o"
+JSON_SUFFIX = ".json"
 
 
 def copy_shape(shape):
@@ -59,9 +62,12 @@ def copy_shape(shape):
 
 # InfoGlobalConfig is used to store global configuration for info files.
 # It can be accessed or modified internally in custom.py using InfoGlobalConfig.xxx.
+
+
 class InfoGlobalConfig:
     # whether enable akg cce lib
     enable_cce_lib = False
+
 
 class OpInfer:
     """Base infer class, used to provide supported formats and data type of each op and update each of"""
@@ -137,7 +143,9 @@ class OpInfer:
 
     def infer_type(self):
         """infer data type"""
-        self.output_desc[0][DATA_TYPE] = self.input_desc[0][DATA_TYPE]
+        fixed_out_type_ops = ["Equal", "Less", "LessEqual", "Greater", "GreaterEqual"]
+        if self.name not in fixed_out_type_ops:
+            self.output_desc[0][DATA_TYPE] = self.input_desc[0][DATA_TYPE]
 
     def infer_format(self):
         """infer format"""
@@ -185,6 +193,19 @@ class Elemwise(OpInfer):
 
     def infer_ori_shape(self):
         self.output_desc[0][ORI_SHAPE] = self.input_desc[0][ORI_SHAPE]
+
+
+class Cast(Elemwise):
+    """Cast op."""
+
+    def supported_type(self):
+        in_type = self.input_desc[0][DATA_TYPE]
+        out_type = self.output_desc[0][DATA_TYPE]
+        io_type = ",".join([in_type, out_type])
+        return [io_type]
+
+    def infer_type(self):
+        self.output_desc[0][DATA_TYPE] = self.output_desc[0][DATA_TYPE]
 
 
 class ElemwiseBinaryNoBroadcast(OpInfer):
@@ -551,8 +572,10 @@ class Tile(OpInfer):
             out_shape.append(m * pad_shape[i])
         self.output_desc[0][ORI_SHAPE] = out_shape
 
+
 class PagedAttention(OpInfer):
     """PagedAttention"""
+
     def supported_format(self):
         return ["ND,ND,ND,ND,ND,ND"]
 
@@ -563,8 +586,10 @@ class PagedAttention(OpInfer):
     def infer_ori_shape(self):
         self.output_desc[0]["ori_shape"] = self.input_desc[0]["ori_shape"]
 
+
 class ReshapeAndCache(OpInfer):
     """ReshapeAndCache"""
+
     def supported_format(self):
         return ["ND,ND,ND,ND,ND,ND"]
 
@@ -575,10 +600,13 @@ class ReshapeAndCache(OpInfer):
     def infer_ori_shape(self):
         self.output_desc[0]["ori_shape"] = self.input_desc[0]["ori_shape"]
 
+
 class PagedAttentionMask(PagedAttention):
     """PagedAttentionMask"""
+
     def supported_format(self):
         return ["ND,ND,ND,ND,ND,ND,ND"]
+
 
 # Ge will convert dtype bool to int8, and ReLU will be expand to Greater op in expander,
 # and the dtype of Greater op is bool, which is incompatible with bool.
@@ -594,6 +622,7 @@ prims = {
     "Rsqrt": Elemwise,
     "Reciprocal": Elemwise,
     "FastGeLU": Elemwise,
+    "Round": Elemwise,
     "Assign": ElemwiseBinaryNoBroadcast,
     "Add": ElemwiseBinary,
     "Sub": ElemwiseBinary,
@@ -619,6 +648,7 @@ prims = {
     "Tanh": Elemwise,
     "ReduceMax": Reduce,
     "ReduceMin": Reduce,
+    "Cast": Cast,
     "PagedAttention": PagedAttention,
     "PagedAttentionMask": PagedAttentionMask,
     "ReshapeAndCache": ReshapeAndCache,
@@ -631,24 +661,36 @@ def convert_to_default_format(desc):
     for _, input_desc in enumerate(desc[INPUT_DESC]):
         if input_desc[0][FORMAT] in default_format:
             input_desc[0][FORMAT] = DEFAULT_FORMAT
+        if not input_desc[0][SHAPE]:
+            input_desc[0][SHAPE] = [1]
     for _, op_desc in enumerate(desc[OP_DESC]):
         for _, input_desc in enumerate(op_desc[INPUT_DESC]):
             if input_desc[0][FORMAT] in default_format:
                 input_desc[0][FORMAT] = DEFAULT_FORMAT
+            if not input_desc[0][SHAPE]:
+                input_desc[0][SHAPE] = [1]
         for _, output_desc in enumerate(op_desc[OUTPUT_DESC]):
             if output_desc[FORMAT] in default_format:
                 output_desc[FORMAT] = DEFAULT_FORMAT
+            if not output_desc[SHAPE]:
+                output_desc[SHAPE] = [1]
     for _, output_desc in enumerate(desc[OUTPUT_DESC]):
         if output_desc[FORMAT] in default_format:
             output_desc[FORMAT] = DEFAULT_FORMAT
+        if not output_desc[SHAPE]:
+            output_desc[SHAPE] = [1]
 
 
 def update_global_input_desc(info_desc, args):
     """Update the global input of the fused info file"""
 
-    def _convert_tbe_type(tbe_type):
+    def _convert_tbe_type(tbe_type, ori_type):
         if tbe_type == "float":
             return FLOAT32
+        if tbe_type == "int8" and ori_type == "bool":
+            # GE pass int8 here if data type is bool, but we must return bool back to GE, otherwise GE will
+            # raise an error "current op does not support bool"
+            return ori_type
         return tbe_type
 
     def _covert_tbe_shape(tbe_shape):
@@ -659,7 +701,7 @@ def update_global_input_desc(info_desc, args):
     if isinstance(info_desc.get(INPUT_DESC), list):
         for i, desc in enumerate(info_desc[INPUT_DESC]):
             desc[0][ORI_DATA_TYPE] = desc[0][DATA_TYPE]
-            desc[0][DATA_TYPE] = _convert_tbe_type(args[i]["dtype"])
+            desc[0][DATA_TYPE] = _convert_tbe_type(args[i]["dtype"], desc[0][ORI_DATA_TYPE])
             desc[0][ORI_FORMAT] = args[i].get(ORI_FORMAT, desc[0][FORMAT])
             desc[0][FORMAT] = args[i][FORMAT]
             desc[0][ORI_SHAPE] = _covert_tbe_shape(args[i].get(ORI_SHAPE, desc[0][SHAPE]))
@@ -762,6 +804,64 @@ def update_akg_info(args, info_path, kernel_name=None):
         convert_to_default_format(desc)
 
         return desc
+
+
+def save_updated_akg_info(*args):
+    """Save the updated akg info."""
+    info_path = args[-2]
+    kernel_name = args[-1]
+    if not isinstance(info_path, str):
+        # in this case, kernel_name is not passed by GE, skip compiling
+        return ""
+    updated_desc = update_akg_info(args, info_path, kernel_name)
+    real_info_path = os.path.join(os.path.realpath(os.path.dirname(info_path)), kernel_name + ".info")
+    # Save the updated info file
+    save(real_info_path, json.dumps(updated_desc))
+    return real_info_path
+
+
+def create_dirs(*dirs):
+    """Create directories."""
+    for d in dirs:
+        if not os.path.isdir(d):
+            try:
+                os.makedirs(d)
+            except OSError as err:
+                # File exists
+                if err.errno == 17:
+                    pass
+                else:
+                    raise err
+
+
+def copy_file(src_path, dst_path):
+    """Copy file to dst."""
+    try:
+        if os.path.isfile(dst_path):
+            os.remove(dst_path)
+    except OSError:
+        pass
+
+    try:
+        shutil.copy(src_path, dst_path)
+    except PermissionError:
+        # If dst_path already exits and only has READ permission
+        pass
+
+
+def _compile_subprocess(kernel_meta_dirs, info_path, is_lite=True, compile_backend=None, attrs=None):
+    """Use a new process to compile info."""
+    kernel_meta_parent_dir, kernel_meta_dir = kernel_meta_dirs
+    my_env = os.environ
+    my_env["MS_COMPILER_CACHE_PATH"] = kernel_meta_parent_dir
+    my_env["KERNEL_META_DIR"] = kernel_meta_dir
+    compiler = os.path.join(os.path.split(os.path.realpath(__file__))[0], "compiler.py")
+    if is_lite:
+        run_args = [sys.executable, compiler, info_path]
+    else:
+        run_args = [sys.executable, compiler, info_path, compile_backend, attrs, kernel_meta_parent_dir]
+    compile_result = subprocess.run(run_args, text=True, check=False, capture_output=True, env=my_env)
+    return compile_result
 
 
 def search_supported_types_formats(info):
@@ -881,22 +981,71 @@ def op_select_format(*args, **kwags):
 
 def custom(*args, **kwags):
     """Entrance for akg info compiling, will invoked by GE"""
-    info_path = args[-2]
     kernel_name = args[-1]
-    if not isinstance(info_path, str):
-        # in this case, kernel_name is not passed by GE, skip compiling
+    real_info_path = save_updated_akg_info(*args)
+    if not real_info_path:
         return
-    updated_desc = update_akg_info(args, info_path, kernel_name)
-    real_info_path = os.path.join(os.path.realpath(os.path.dirname(info_path)), kernel_name + ".info")
-    # Save the updated info file which will be compiled by AKG
-    save(real_info_path, json.dumps(updated_desc))
-    my_env = os.environ
-    my_env["MS_COMPILER_CACHE_PATH"] = get_current_build_config("kernel_meta_parent_dir")
-    my_env["KERNEL_META_DIR"] = "kernel_meta"
-    compiler = os.path.join(os.path.split(os.path.realpath(__file__))[0], "compiler.py")
-    compile_result = subprocess.run([sys.executable, compiler, real_info_path], text=True, check=False,
-                                    capture_output=True, env=my_env)
-    json_path = os.path.join(my_env["MS_COMPILER_CACHE_PATH"], my_env["KERNEL_META_DIR"], kernel_name + ".json")
+    kernel_meta_parent_dir = get_current_build_config("kernel_meta_parent_dir")
+    kernel_meta_dir = "kernel_meta"
+    compile_result = _compile_subprocess([kernel_meta_parent_dir, kernel_meta_dir], real_info_path, is_lite=True)
+    json_path = os.path.join(kernel_meta_parent_dir, kernel_meta_dir, kernel_name + JSON_SUFFIX)
     if compile_result.returncode or not os.path.exists(json_path):
         raise RuntimeError("Compile {} failed! Detailed compile message: {}, {}"
                            .format(kernel_name, compile_result.stdout.strip(), compile_result.stderr.strip()))
+
+
+def custom_train(*args, **kwags):
+    """Entrance for akg info compiling, will invoked by GE"""
+
+    def _get_optimized_info_path():
+        """Get the info optimized by akg."""
+        target_info = "target_info"
+        file_path = os.path.join(composite_graph_dir, kernel_name + ".info")
+        if not os.path.isfile(file_path):
+            return real_info_path
+        with open(real_info_path, 'r') as f:
+            desc = json.loads(f.read())
+            if target_info in desc:
+                with open(file_path, 'r') as fo:
+                    info_desc = json.loads(fo.read())
+                    info_desc[target_info] = desc[target_info]
+                save(file_path, json.dumps(info_desc))
+        return file_path
+
+    info_path = args[-2]
+    kernel_name = args[-1]
+    real_info_path = save_updated_akg_info(*args)
+    if not real_info_path:
+        return
+    info_dir = os.path.realpath(os.path.dirname(info_path))
+    kernel_meta_parent_dir = get_current_build_config("kernel_meta_parent_dir")
+    kernel_meta = "kernel_meta"
+    kernel_meta_dir = os.path.join(kernel_meta_parent_dir, kernel_meta)
+    akg_compile_dir = os.path.join(info_dir, "akg")
+    tbe_compile_dir = os.path.join(info_dir, "tbe")
+    composite_graph_dir = os.path.join(info_dir, "composite")  # save akg optimized info
+    akg_kernel_meta_dir = os.path.join(akg_compile_dir, kernel_meta)  # save akg compile result
+    tbe_kernel_meta_dir = os.path.join(tbe_compile_dir, kernel_meta)  # save tbe compile result
+    create_dirs(kernel_meta_dir, composite_graph_dir, akg_kernel_meta_dir, tbe_kernel_meta_dir)
+    # Compile with AKG
+    attr = {"dump_composite_graph": composite_graph_dir, "optimize_for_tbe": True}
+    attrs = json.dumps(attr)
+    akg_compile_result = _compile_subprocess([akg_compile_dir, kernel_meta], real_info_path,
+                                             is_lite=False, compile_backend="AKG", attrs=attrs)
+    json_path = os.path.join(akg_kernel_meta_dir, kernel_name + JSON_SUFFIX)
+    o_path = os.path.join(akg_kernel_meta_dir, kernel_name + O_SUFFIX)
+    if not os.path.exists(json_path):
+        # Compile with TBE
+        optimized_info_path = _get_optimized_info_path()
+        tbe_compile_result = _compile_subprocess([tbe_compile_dir, kernel_meta], optimized_info_path,
+                                                 is_lite=False, compile_backend="TBE", attrs=attrs)
+        json_path = os.path.join(tbe_kernel_meta_dir, kernel_name + JSON_SUFFIX)
+        o_path = os.path.join(tbe_kernel_meta_dir, kernel_name + O_SUFFIX)
+        if not os.path.exists(json_path):
+            raise RuntimeError("Compile {} failed! Detailed akg compile message: {}, {}\n"
+                               "Detailed tbe compile message: {}, {}"
+                               .format(kernel_name,
+                                       akg_compile_result.stdout.strip(), akg_compile_result.stderr.strip(),
+                                       tbe_compile_result.stdout.strip(), tbe_compile_result.stderr.strip()))
+    copy_file(json_path, os.path.join(kernel_meta_dir, kernel_name + JSON_SUFFIX))
+    copy_file(o_path, os.path.join(kernel_meta_dir, kernel_name + O_SUFFIX))

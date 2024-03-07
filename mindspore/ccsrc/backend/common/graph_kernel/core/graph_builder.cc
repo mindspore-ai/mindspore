@@ -172,6 +172,39 @@ bool ConvertTensorToParameter(const FuncGraphPtr &fg, AnfNodePtrList *inputs_ptr
   return true;
 }
 
+bool SortParameters(const FuncGraphPtr &fg, AnfNodePtrList *inputs_ptr) {
+  auto params = fg->parameters();
+  if (params.size() != inputs_ptr->size()) {
+    MS_LOG(EXCEPTION) << "parameters and inputs should have same size, but got " << params.size() << " and "
+                      << inputs_ptr->size();
+  }
+  size_t n = inputs_ptr->size();
+  using PairType = std::pair<AnfNodePtr, AnfNodePtr>;
+  std::vector<PairType> normal_pairs;
+  std::vector<PairType> monad_pairs;
+  for (size_t i = 0; i < n; ++i) {
+    if (HasAbstractMonad((*inputs_ptr)[i])) {
+      (void)monad_pairs.emplace_back(params[i], (*inputs_ptr)[i]);
+    } else {
+      (void)normal_pairs.emplace_back(params[i], (*inputs_ptr)[i]);
+    }
+  }
+  if (normal_pairs.empty() || monad_pairs.empty()) {
+    return false;
+  }
+  auto normal_pairs_size = normal_pairs.size();
+  for (size_t i = 0; i < normal_pairs_size; ++i) {
+    params[i] = normal_pairs[i].first;
+    (*inputs_ptr)[i] = normal_pairs[i].second;
+  }
+  for (size_t i = 0; i < monad_pairs.size(); ++i) {
+    params[normal_pairs_size + i] = monad_pairs[i].first;
+    (*inputs_ptr)[normal_pairs_size + i] = monad_pairs[i].second;
+  }
+  fg->set_parameters(std::move(params));
+  return true;
+}
+
 bool IsTupleOutput(const AnfNodePtr &out, AnfNodePtrList *real_outs) {
   if (IsPrimitiveCNode(out, prim::kPrimMakeTuple)) {
     auto &inputs = out->cast<CNodePtr>()->inputs();
@@ -257,7 +290,8 @@ void EliminateRedundantParameters(const FuncGraphPtr &func_graph, AnfNodePtrList
   *inputs = std::move(new_inputs);
 }
 
-std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> BuildGraphFromNodes(const AnfNodePtrList &nodes) {
+std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> BuildGraphFromNodes(const AnfNodePtrList &nodes,
+                                                                             const ClusterConfig &config) {
   FuncGraphPtr fg = nullptr;
   {
     // limit the lifetime of guard.
@@ -278,7 +312,17 @@ std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> BuildGraphFromNodes(con
     eqv[node]->cast<CNodePtr>()->CloneCNodeInfo(node->cast<CNodePtr>());
     eqv[node]->cast<CNodePtr>()->set_fullname_with_scope(node->fullname_with_scope());
   }
-  auto outputs = FindOutputs(nodes, eqv);
+  AnfNodePtrList outputs;
+  if (config.only_output_basenode) {
+    // Make base node the only output of func_graph, to duplicate the overlapping parts
+    MS_EXCEPTION_IF_NULL(config.base_node);
+    if (eqv.find(config.base_node) == eqv.end()) {
+      MS_LOG(EXCEPTION) << "Base node is not in the list of nodes: " << config.base_node->fullname_with_scope();
+    }
+    outputs.push_back(config.base_node);
+  } else {
+    outputs = FindOutputs(nodes, eqv);
+  }
   AnfNodePtr fg_output;
   if (outputs.size() > 1) {
     std::vector<AnfNodePtr> output_args;
@@ -295,25 +339,31 @@ std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> BuildGraphFromNodes(con
 }
 
 // Transform nodes(including basic and composite node) to a new graph, and collect their inputs and outputs.
-std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> BuildSingleGraphFromNodes(const AnfNodePtrList &nodes) {
+std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> BuildSingleGraphFromNodes(const AnfNodePtrList &nodes,
+                                                                                   const ClusterConfig &config) {
   FuncGraphPtr fg;
   AnfNodePtrList inputs;
   AnfNodePtrList outputs;
-  std::tie(fg, inputs, outputs) = BuildGraphFromNodes(nodes);
+  std::tie(fg, inputs, outputs) = BuildGraphFromNodes(nodes, config);
 
   FuncGraphManagerPtr mng = GkUtils::GetFuncGraphManager(fg);
   MS_EXCEPTION_IF_NULL(mng);
 
-  (void)InlineInnerFuncGraph(fg);
+  if (config.inline_sub_func_graph) {
+    (void)InlineInnerFuncGraph(fg);
+  }
   // eliminate tuple of tuple, and set Abstract for output MakeTuple
   EliminateTupleOfTuple(fg);
   (void)EliminateMaketupleGetitem(fg);
   (void)ConvertTensorToParameter(fg, &inputs);
+  if (config.sort_parameter) {
+    SortParameters(fg, &inputs);
+  }
 
   return std::make_tuple(fg, inputs, outputs);
 }
 
-AnfNodePtr CreateNewFuseCNode(const FuncGraphPtr &main_fg, const FuncGraphPtr &sub_fg, const AnfNodePtrList &inputs) {
+CNodePtr CreateNewFuseCNode(const FuncGraphPtr &main_fg, const FuncGraphPtr &sub_fg, const AnfNodePtrList &inputs) {
   std::vector<AnfNodePtr> fn_inputs{NewValueNode(sub_fg)};
   (void)fn_inputs.insert(fn_inputs.end(), inputs.cbegin(), inputs.cend());
   EliminateRedundantParameters(sub_fg, &fn_inputs);
@@ -323,8 +373,8 @@ AnfNodePtr CreateNewFuseCNode(const FuncGraphPtr &main_fg, const FuncGraphPtr &s
   return fuse_cnode;
 }
 
-AnfNodePtr ReplaceNodesWithGraphKernelNode(const AnfNodePtrList &nodes, const FuncGraphPtr &main_graph,
-                                           const std::string &postfix) {
+CNodePtr ReplaceNodesWithGraphKernelNode(const AnfNodePtrList &nodes, const FuncGraphPtr &main_graph,
+                                         const std::string &postfix, const ClusterConfig &config) {
   auto mng = main_graph->manager();
   if (mng == nullptr) {
     mng = Manage(main_graph, true);
@@ -333,11 +383,18 @@ AnfNodePtr ReplaceNodesWithGraphKernelNode(const AnfNodePtrList &nodes, const Fu
   FuncGraphPtr fg;
   AnfNodePtrList inputs;
   AnfNodePtrList outputs;
-  std::tie(fg, inputs, outputs) = BuildSingleGraphFromNodes(nodes);
+  std::tie(fg, inputs, outputs) = BuildSingleGraphFromNodes(nodes, config);
   auto fuse_new_node = CreateNewFuseCNode(main_graph, fg, inputs);
   ReplaceNewFuseCNode(main_graph, fuse_new_node, outputs);
   auto fuse_op_name = GkUtils::ExtractGraphKernelName(nodes, "", postfix);
   fg->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, MakeValue(fuse_op_name));
+  return fuse_new_node;
+}
+
+CNodePtr ReplaceNodesWithGraphKernelFuncGraph(const FuncGraphPtr &main_graph, const FuncGraphPtr &sub_graph,
+                                              const AnfNodePtrList &inputs, const AnfNodePtrList &outputs) {
+  auto fuse_new_node = CreateNewFuseCNode(main_graph, sub_graph, inputs);
+  ReplaceNewFuseCNode(main_graph, fuse_new_node, outputs);
   return fuse_new_node;
 }
 

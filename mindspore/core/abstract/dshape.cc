@@ -18,6 +18,7 @@
 
 #include "abstract/dshape.h"
 #include "utils/shape_utils.h"
+#include "mindspore/core/symbolic_shape/int_symbol.h"
 
 namespace mindspore {
 namespace abstract {
@@ -90,6 +91,22 @@ void TensorShape::Broaden() {
   }
 }
 
+ListSymbolPtr TensorShape::BuildSymbolicShape() const {
+  if (mindspore::IsDynamicRank(shape_)) {
+    return ListSymbol::Make();
+  }
+  symshape::SymbolPtrList symlist(shape_.size());
+  (void)std::transform(shape_.begin(), shape_.end(), symlist.begin(), [](int64_t s) {
+    if (s == abstract::Shape::kShapeDimAny) {
+      auto ints = IntSymbol::Make();
+      ints->SetRangeMin(1);
+      return ints;
+    }
+    return IntSymbol::Make(s);
+  });
+  return ListSymbol::Make(std::move(symlist));
+}
+
 bool DynamicSequenceShape::IsDynamic() const { return true; }
 
 bool DynamicSequenceShape::IsDimZero() const {
@@ -148,6 +165,13 @@ BaseShapePtrList SequenceShape::ElementsClone() const {
     ele_list.push_back(p_shp->Clone());
   }
   return ele_list;
+}
+
+ListSymbolPtr SequenceShape::BuildSymbolicShape() const {
+  symshape::SymbolPtrList symlist(p_shapes_.size());
+  (void)std::transform(p_shapes_.begin(), p_shapes_.end(), symlist.begin(),
+                       [](const BaseShapePtr &s) { return s->BuildSymbolicShape(); });
+  return ListSymbol::Make(std::move(symlist));
 }
 
 template bool SequenceShape::SequenceEqual<TupleShape>(const BaseShape &) const;

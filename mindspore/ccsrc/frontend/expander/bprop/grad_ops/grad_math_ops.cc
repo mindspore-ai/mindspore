@@ -1380,7 +1380,8 @@ REG_BPROP_BUILDER("ReduceSum").SetUnusedInputs({i0, i4}).SetBody(BODYFUNC(ib) {
   auto keep_dims = ib->GetInput(kIndex2);
   auto skip_mode = ib->GetInput(kIndex3);
   auto dout = ib->GetInput(kIndex5);
-  auto dx = SumGrad(ib, x, axis, dout, GetValue<bool>(keep_dims->BuildValue()));
+  auto dx =
+    SumGrad(ib, x, axis, dout, GetValue<bool>(keep_dims->BuildValue()), GetValue<bool>(skip_mode->BuildValue()));
   return {dx, ib->OutZeros(axis), ib->OutZeros(keep_dims), ib->OutZeros(skip_mode)};
 });
 
