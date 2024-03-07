@@ -143,15 +143,47 @@ void UpdateFuncGraphParameter(const FuncGraphPtr &func_graph, const std::vector<
   func_graph->set_parameters(new_paras);
 }
 
-bool IsDynamicShapeGraph(const FuncGraphPtr &func_graph) {
+// Dynamic shape node or PyExecute node exist in graph.
+bool IsDynamicGraph(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   std::vector<AnfNodePtr> node_list = TopoSort(func_graph->get_return(), SuccDeeperSimple);
-  return std::any_of(node_list.begin(), node_list.end(), [](const AnfNodePtr &node) {
-    if (common::AnfAlgo::IsCallNode(node)) {
-      return false;
+  AnfNodePtr dynamic_node = nullptr;
+  AnfNodePtr pyexecute_node = nullptr;
+  for (const auto &node : node_list) {
+    if (node->abstract() == nullptr) {
+      MS_LOG(INFO) << "Null abstract of node: " << node->DebugString();
+      continue;
     }
-    return common::AnfAlgo::IsDynamicShape(node);
-  });
+    if (node->abstract() != nullptr) {
+      auto shape = node->abstract()->GetShape();
+      // Dynamic shape tensor.
+      if (shape->isa<abstract::TensorShape>() && IsDynamic(shape->GetShapeVector())) {
+        dynamic_node = node;
+        break;
+      }
+      // Dynamic len sequence.
+      if (node->abstract()->isa<abstract::AbstractSequence>() &&
+          node->abstract()->cast<abstract::AbstractSequencePtr>()->dynamic_len()) {
+        dynamic_node = node;
+        break;
+      }
+      // PyExecute node exist
+      if (IsPrimitiveCNode(node, prim::kPrimPyExecute)) {
+        pyexecute_node = node;
+      }
+    }
+  }
+  if (dynamic_node != nullptr) {
+    MS_LOG(INFO) << "Func graph:" << func_graph->ToString()
+                 << " is dynamic shape graph, because find dynamic shape node:" << dynamic_node->DebugString()
+                 << ", abstract: " << dynamic_node->abstract()->ToString();
+    return true;
+  }
+  if (pyexecute_node != nullptr) {
+    MS_LOG(INFO) << "Func graph:" << func_graph->ToString() << " has pyexecute node:" << pyexecute_node->DebugString();
+    return true;
+  }
+  return false;
 }
 
 // Exist ScalarAdd ScalarSub etc OPS which will backoff to CPU
@@ -1325,7 +1357,7 @@ void SetRunMode(const FuncGraphPtr &func_graph, compile::Backend *backend_ptr, s
   }
 
   // GRAPH | Dynamic Shape : KernelByKernel path in MindRT.
-  if (IsDynamicShapeGraph(func_graph) && (context_ptr->backend_policy() != "ge")) {
+  if (IsDynamicGraph(func_graph) && (context_ptr->backend_policy() != "ge")) {
     if (kbk_reason != nullptr) {
       *kbk_reason =
         "Run graph mode with kernel by kernel because graph exist dynamic shape. Call "
@@ -1337,7 +1369,7 @@ void SetRunMode(const FuncGraphPtr &func_graph, compile::Backend *backend_ptr, s
   }
 
   // GRAPH | Dynamic Scalar : Dynamic scalar ops in graph.
-  if (IsNeedBackoffGraph(func_graph) && !IsDynamicShapeGraph(func_graph)) {
+  if (IsNeedBackoffGraph(func_graph) && !IsDynamicGraph(func_graph)) {
     if (kbk_reason != nullptr) {
       *kbk_reason = "Run graph mode with kernel by kernel because graph exist dynamic scalar ops.";
       MS_LOG(INFO) << *kbk_reason;

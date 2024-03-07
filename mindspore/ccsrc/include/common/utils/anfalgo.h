@@ -185,7 +185,6 @@ class COMMON_EXPORT AnfAlgo {
   static bool IsNodeOutputDynamicRank(const AnfNodePtr &node);
   static bool IsInputAnchorDynamicRank(const AnfNodePtr &node, size_t idx);
   static bool IsOutputAnchorDynamicRank(const AnfNodePtr &node, size_t idx);
-  static bool HasDynamicShapeFlag(const PrimitivePtr &prim);
   static bool IsCondControlKernel(const CNodePtr &node);
   static bool GetBooleanAttr(const AnfNodePtr &node, const std::string &attr);
   static std::optional<string> GetDumpFlag(const AnfNodePtr &node);
