@@ -1,0 +1,30 @@
+#operator layer_norm_grad_ext
+layer_norm_grad_ext:
+  args:
+    dy:
+      dtype: tensor
+    x:
+      dtype: tensor
+    normalized_shape:
+      dtype: tuple[int]
+      type_cast: int, list[int]
+    mean:
+      dtype: tensor
+    variance:
+      dtype: tensor
+    gamma:
+      dtype: tensor
+    beta:
+      dtype: tensor
+  returns:
+    pd_x:
+      dtype: tensor
+    pd_gamma:
+      dtype: tensor
+    pd_beta:
+      dtype: tensor
+  function:
+    disable: True
+  dispatch:
+    enable: True
+    Ascend: LayerNormGradExtAscend

@@ -36,7 +36,8 @@ from mindspore.nn.extend import MaxPool2dExt as MaxPool2d
 # 7
 
 # 8
-
+from mindspore.nn.extend.layer import normalization
+from mindspore.nn.extend.layer.normalization import *
 # 9
 
 # 10
@@ -426,3 +427,4 @@ __all__ = [
 
 __all__.extend(basic.__all__)
 __all__.extend(embedding.__all__)
+__all__.extend(normalization.__all__)

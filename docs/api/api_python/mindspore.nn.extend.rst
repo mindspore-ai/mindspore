@@ -20,3 +20,13 @@ mindspore.nn.extend
     :template: classtemplate.rst
 
     mindspore.nn.extend.Linear
+
+归一化层
+---------
+
+.. mscnplatformautosummary::
+    :toctree: nn
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.nn.extend.LayerNorm

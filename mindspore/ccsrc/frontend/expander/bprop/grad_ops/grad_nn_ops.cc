@@ -799,6 +799,36 @@ REG_BPROP_BUILDER("GroupNorm").SetUnusedInputs({i4}).SetBody(BODYFUNC(ib) {
   return {d_x, grad_group, d_gamma, d_beta, grad_epsilon};
 });
 
+REG_BPROP_BUILDER("LayerNormExt").SetUnusedInputs({i4}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto normalized_shape = ib->GetInput(kIndex1);
+  auto gamma = ib->GetInput(kIndex2);
+  auto beta = ib->GetInput(kIndex3);
+  auto eps = ib->GetInput(kIndex4);
+  auto out = ib->GetInput(kIndex5);
+  auto dout = ib->GetInput(kIndex6);
+  auto normalized_shape_ptr = normalized_shape->BuildValue();
+  bool is_shape_mutable = true;
+  if (normalized_shape_ptr != nullptr &&
+      (normalized_shape_ptr->isa<ValueSequence>() || normalized_shape_ptr->isa<Scalar>() ||
+       normalized_shape_ptr->isa<tensor::Tensor>())) {
+    is_shape_mutable = false;
+  }
+  auto result = ib->Emit(
+    "LayerNormGradExt",
+    {ib->TupleGetItem(dout, 0), x, normalized_shape, ib->TupleGetItem(out, 1), ib->TupleGetItem(out, 2), gamma, beta},
+    {});
+  auto d_x = x->need_compute_grad_out() ? ib->TupleGetItem(result, 0) : ib->OutZeros(x);
+  auto d_gamma = gamma->need_compute_grad_out() ? ib->TupleGetItem(result, 1) : ib->OutZeros(gamma);
+  auto d_beta = beta->need_compute_grad_out() ? ib->TupleGetItem(result, 2) : ib->OutZeros(beta);
+  auto grad_normalized_shape = ib->OutZeros(normalized_shape);
+  auto grad_eps = ib->OutZeros(eps);
+  if (is_shape_mutable) {
+    return {d_x, d_gamma, d_beta, grad_normalized_shape, grad_eps};
+  }
+  return {d_x, grad_normalized_shape, d_gamma, d_beta, grad_eps};
+});
+
 REG_BPROP_BUILDER("LayerNorm").SetUnusedInputs({i2, i5}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto gamma = ib->GetInput(kIndex1);
