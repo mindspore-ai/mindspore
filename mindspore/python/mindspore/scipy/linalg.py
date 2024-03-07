@@ -14,7 +14,7 @@
 # ============================================================================
 """Linear algebra submodule"""
 from __future__ import absolute_import
-from .ops import LU
+from .ops import LU, SolveTriangular
 from .utils import _nd_transpose, _value_check, _type_check, _dtype_check, _mstype_check, _square_check, _solve_check
 from .utils_const import _raise_value_error
 from .. import numpy as mnp

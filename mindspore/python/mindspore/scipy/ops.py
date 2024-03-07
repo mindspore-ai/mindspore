@@ -15,7 +15,19 @@
 """Operators for scipy submodule"""
 from mindspore import _checkparam as validator
 from ..ops import PrimitiveWithInfer, prim_attr_register, Primitive
+from ..ops.auto_generate import solve_triangular
 from ..common import dtype as mstype
+
+
+class SolveTriangular():
+    def __init__(self, lower: bool = False, unit_diagonal: bool = False, trans: str = 'N'):
+        self.lower = lower
+        self.unit_diagonal = unit_diagonal
+        trans_str_to_int = {'N': 0, 'T': 1, 'C': 2}
+        self.trans = trans_str_to_int.get(trans)
+
+    def __call__(self, a, b):
+        return solve_triangular(a, b, self.trans, self.lower, self.unit_diagonal)
 
 
 class Eig(PrimitiveWithInfer):
