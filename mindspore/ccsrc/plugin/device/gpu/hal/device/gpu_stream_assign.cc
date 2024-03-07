@@ -56,6 +56,7 @@ void AssignGpuStream(const std::shared_ptr<session::KernelGraph> &kernel_graph) 
   std::vector<SendRecvPair> send_recv_pairs;
   const bool multi_stream =
     allreduce_kernels.size() > 1 && FindAllReduceStreamSwitchPos(kernel_graph, &send_recv_pairs);
+  kernel_graph->set_enable_multi_stream(multi_stream);
   // Assign multiple streams only when there're multiple AllReduce nodes.
   size_t allreduce_stream_id = default_stream_id;
   if (multi_stream) {

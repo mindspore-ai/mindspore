@@ -540,6 +540,9 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   void set_is_from_pynative(const bool &from_pynative) { from_pynative_ = from_pynative; }
   bool is_from_pynative() const { return from_pynative_; }
 
+  bool enable_multi_stream() const { return enable_multi_stream_; }
+  void set_enable_multi_stream(bool enable_multi_stream) { enable_multi_stream_ = enable_multi_stream; }
+
  private:
   AnfNodePtr MakeValueNode(const AnfNodePtr &node) const;
 
@@ -659,6 +662,8 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   // graph info for single op
   std::string graph_info_;
   bool from_pynative_{false};
+
+  bool enable_multi_stream_{false};
 };
 }  // namespace session
 using KernelGraphPtr = std::shared_ptr<session::KernelGraph>;
