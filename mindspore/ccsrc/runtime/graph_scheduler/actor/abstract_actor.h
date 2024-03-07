@@ -68,17 +68,9 @@ class CallbackCounter {
   void Wait() {
     std::unique_lock<std::mutex> locker(lock_);
     MS_LOG(DEBUG) << "Wait for callback execution start.";
-    auto start_time = std::chrono::steady_clock::now();
-    int64_t start_time_microseconds =
-      std::chrono::duration_cast<std::chrono::microseconds>(start_time.time_since_epoch()).count();
     while (!cv_.wait_for(locker, std::chrono::seconds(1), [&]() { return counter_.load() == 0; })) {
       MS_LOG(DEBUG) << "Wait cycle.";
     }
-    auto end_time = std::chrono::steady_clock::now();
-    int64_t cost_microseconds =
-      std::chrono::duration_cast<std::chrono::microseconds>(end_time.time_since_epoch()).count() -
-      start_time_microseconds;
-    MS_LOG(DEBUG) << "Wait for callback execution cost : " << cost_microseconds << " us.";
   }
 
   void Notify() {

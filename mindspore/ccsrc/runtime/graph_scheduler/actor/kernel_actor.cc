@@ -811,24 +811,18 @@ void KernelActor::LaunchCallback(OpContext<DeviceTensor> *const context) {
           << "Exit callback since callback_counter is nullptr or expired, which indicates that main thread is expired.";
         return;
       }
-      auto start_time = std::chrono::steady_clock::now();
-      int64_t start_time_microseconds =
-        std::chrono::duration_cast<std::chrono::microseconds>(start_time.time_since_epoch()).count();
+
       std::vector<DeviceTensor *> free_list{device_tensor_ptr};
       MemoryManagerActor::GetInstance()->FreeMemory(&free_list, device_context_ptr, context, aid);
       auto ref_counter = callback_counter->Decrease();
       callback_counter->Notify();
-      auto end_time = std::chrono::steady_clock::now();
-      int64_t cost_microseconds =
-        std::chrono::duration_cast<std::chrono::microseconds>(end_time.time_since_epoch()).count() -
-        start_time_microseconds;
       MS_LOG(DEBUG) << "Callback is called, device tensor : " << device_tensor_ptr
                     << ", device_tensor_ptr ptr : " << device_tensor_ptr->GetMutablePtr()
                     << ", device_tensor_ptr ref count : " << device_tensor_ptr->ref_count()
                     << ", device_tensor_ptr dynamic ref count : " << device_tensor_ptr->dynamic_ref_count()
                     << ", device tensor ptr : " << device_tensor_ptr->GetMutablePtr()
                     << ", callback counter : " << ref_counter << ", stream id : " << device_tensor_ptr->stream_id()
-                    << ", cost : " << cost_microseconds << "us.";
+                    << ".";
     };
     (void)callback_funcs.emplace_back(release_ref_callback);
   }
