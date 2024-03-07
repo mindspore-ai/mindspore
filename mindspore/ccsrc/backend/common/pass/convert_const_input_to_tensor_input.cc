@@ -26,6 +26,7 @@
 #include "ops/array_op_name.h"
 #include "ops/framework_ops.h"
 #include "ops/sequence_ops.h"
+#include "ops/comparison_op_name.h"
 
 namespace mindspore {
 namespace opt {
@@ -33,7 +34,7 @@ AnfNodePtr ConvertConstInputToTensorInput::ConstInputToTensorInput(const FuncGra
                                                                    const CNodePtr &cnode) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(cnode);
-  const std::set<std::string> no_need_to_convert_nodes = {kStackOpName};
+  const std::set<std::string> no_need_to_convert_nodes = {kStackOpName, kScalarEqOpName};
   auto node_type = common::AnfAlgo::GetCNodeName(cnode);
   if (no_need_to_convert_nodes.find(node_type) != no_need_to_convert_nodes.end()) {
     return nullptr;
