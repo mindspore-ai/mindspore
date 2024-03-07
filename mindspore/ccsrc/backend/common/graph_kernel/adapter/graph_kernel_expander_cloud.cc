@@ -29,6 +29,22 @@
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
 namespace mindspore::graphkernel {
+namespace {
+bool DvmSupported(const AnfNodePtr &node) {
+  if (IsPrimitiveCNode(node, prim::kPrimAddN)) {
+    constexpr auto max_input_num = 10;
+    auto input_num = common::AnfAlgo::GetInputTensorNum(node);
+    if (input_num > max_input_num) {
+      return false;
+    }
+  }
+  auto cb = Callback::Instance();
+  MS_EXCEPTION_IF_NULL(cb);
+  auto node_output_type = cb->GetOutputType(node, 0);
+  return (node_output_type == kNumberTypeFloat16 || node_output_type == kNumberTypeFloat32);
+}
+}  // namespace
+
 std::vector<PrimitivePtr> GraphKernelExpanderCloud::GetExpanderOps() {
   std::vector<OpWithLevel> expand_ops_with_level = {
     {kAllTarget, OpLevel_0, prim::kPrimAddN},
@@ -89,74 +105,55 @@ std::vector<PrimitivePtr> GraphKernelExpanderCloud::GetExpanderOps() {
     {kCPUDevice, OpLevel_1, prim::kPrimSoftplus},
     {kCPUDevice, OpLevel_1, prim::kPrimSoftplusGrad},
   };
-  std::vector<OpWithLevel> expand_ops_with_level_v2 = {
-    // CPU
-    {kCPUDevice, OpLevel_0, prim::kPrimIdentityMath},
-    {kCPUDevice, OpLevel_0, prim::kPrimSqueeze},
-    {kCPUDevice, OpLevel_0, prim::kPrimSlice},
-
-    // GPU
-    {kGPUDevice, OpLevel_0, prim::kPrimBiasAdd},
-    {kGPUDevice, OpLevel_0, prim::kPrimDropout},
-    {kGPUDevice, OpLevel_0, prim::kPrimDropoutGrad},
-    {kGPUDevice, OpLevel_0, prim::kPrimLayerNorm},
-    {kGPUDevice, OpLevel_0, prim::kPrimLayerNormGrad},
-    {kGPUDevice, OpLevel_0, prim::kPrimRelu},
-    {kGPUDevice, OpLevel_0, prim::kPrimReluGrad},
-    {kGPUDevice, OpLevel_0, prim::kPrimClipByNorm},
+  std::vector<OpWithLevel> expand_ops_with_level_dvm = {
+    {kAscendDevice, OpLevel_0, prim::kPrimAddN},
+    {kAscendDevice, OpLevel_0, prim::kPrimGeLU},
+    {kAscendDevice, OpLevel_0, prim::kPrimGelu},
+    {kAscendDevice, OpLevel_0, prim::kPrimGeLUGrad},
+    {kAscendDevice, OpLevel_0, prim::kPrimRsqrtGrad},
+    {kAscendDevice, OpLevel_0, prim::kPrimSqrtGrad},
+    {kAscendDevice, OpLevel_0, prim::kPrimSquare},
+    {kAscendDevice, OpLevel_0, prim::kPrimTile},
+    {kAscendDevice, OpLevel_0, prim::kPrimClipByNormNoDivSum},
+    {kAscendDevice, OpLevel_0, prim::kFusedMulAdd},
+    {kAscendDevice, OpLevel_0, prim::kPrimSigmoid},
+    {kAscendDevice, OpLevel_0, prim::kPrimSigmoidGrad},
+    {kAscendDevice, OpLevel_1, prim::kPrimAssignAdd},
+    {kAscendDevice, OpLevel_1, prim::kPrimExpandDims},
+    {kAscendDevice, OpLevel_1, prim::kLambApplyOptimizerAssign},
+    {kAscendDevice, OpLevel_1, prim::kLambApplyWeightAssign},
+    {kAscendDevice, OpLevel_1, prim::kSoftmaxGradExt},
   };
   const auto &flags = GraphKernelFlags::GetInstance();
-  std::vector<std::string> disable_expand_ops = flags.disable_expand_ops;
-  auto cb = Callback::Instance();
-
-  std::vector<std::string> disable_expand_op_list_v2 = {
-    "OnesLike", "OneHot", "StridedSlice", "CumSum", "Transpose", "BatchMatMul", "MatMul", "ExpandDims", "BroadcastTo"};
-  if (flags.kernel_generator == "AKG_V2") {
-    std::move(expand_ops_with_level_v2.begin(), expand_ops_with_level_v2.end(),
-              std::back_inserter(expand_ops_with_level));
-    if (cb->GetTargetFromContext() == kGPUDevice) {
-      for (const std::string &item : disable_expand_op_list_v2) {
-        if (std::find(flags.enable_expand_ops.begin(), flags.enable_expand_ops.end(), item) ==
-            flags.enable_expand_ops.end()) {
-          disable_expand_ops.push_back(item);
-        }
-      }
-    }
-  }
-  auto ops = GkUtils::GetValidOps(expand_ops_with_level, flags.fusion_ops_level, flags.enable_expand_ops_only,
-                                  flags.enable_expand_ops, disable_expand_ops);
+  auto ops_with_level = GraphKernelFlags::GetInstance().kernel_generator == "DVM" ? std::move(expand_ops_with_level_dvm)
+                                                                                  : std::move(expand_ops_with_level);
+  auto ops = GkUtils::GetValidOps(ops_with_level, flags.fusion_ops_level, flags.enable_expand_ops_only,
+                                  flags.enable_expand_ops, flags.disable_expand_ops);
   return GkUtils::FilterExcludedOps(ops);
 }
 
 std::vector<PrimitivePtr> GraphKernelExpanderCloud::InitOpList() { return GraphKernelExpanderCloud::GetExpanderOps(); }
 
 bool GraphKernelExpanderCloud::CanExpand(const CNodePtr &node) const {
-  if (IsComplexOp(node)) {
+  bool is_dvm = (GraphKernelFlags::GetInstance().kernel_generator == "DVM");
+  if (IsComplexOp(node) && !is_dvm) {
     return true;
   }
   if (!GraphKernelExpander::CanExpand(node)) {
     return false;
   }
-
-  if (!common::AnfAlgo::IsDynamicShape(node)) {
-    // for static cases, the node can be expanded if this is complex op
-    // or in the list
-    return true;
-  }
-
-  // deal wich dynamic cases
-  // the node with dyn rank will not be expand
-  if (common::AnfAlgo::IsDynamicRankNode(node)) {
+  if (is_dvm && !DvmSupported(node)) {
     return false;
   }
-
-  std::vector<PrimitivePtr> expand_ops_dyn = {prim::kPrimReLU, prim::kPrimReluGrad, prim::kPrimBiasAdd,
-                                              prim::kPrimBiasAddGrad, prim::kPrimDropout};
-
-  bool dyn_can_expand_op = std::any_of(expand_ops_dyn.begin(), expand_ops_dyn.end(),
-                                       [&node](const PrimitivePtr &prim) { return IsPrimitiveCNode(node, prim); });
-  // the dyn shape node can be expanded
-  return (GraphKernelFlags::GetInstance().enable_dynamic_shape_fusion && dyn_can_expand_op);
+  bool enable_dynshape_expander = GraphKernelFlags::GetInstance().enable_dynamic_shape_fusion;
+  if (enable_dynshape_expander) {
+    if (common::AnfAlgo::IsDynamicRankNode(node)) {
+      return false;
+    }
+  } else if (common::AnfAlgo::IsDynamicShape(node)) {
+    return false;
+  }
+  return true;
 }
 
 ExpanderPtr GraphKernelExpanderCloud::InitExpander(const AnfNodePtr &node) {
