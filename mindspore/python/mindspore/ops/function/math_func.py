@@ -7906,18 +7906,6 @@ def _check_value(items, max_size, msg_prefix, shape1, shape2):
 def _check_matmul_shapes(shape1, shape2, prim_name=None):
     """Checks shape1 and shape2 are valid to perform matmul, and returns output shape after broadcasting."""
     msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
-
-    def _check(shape1, shape2):
-        ndim1, ndim2 = len(shape1), len(shape2)
-        if ndim1 < 1 or ndim2 < 1:
-            raise ValueError(f"{msg_prefix} dimension of input operands must be at least 1, but got "
-                             f"the length of shape1: {ndim1}, the length of shape2: {ndim2}.")
-        if ndim2 >= 2 and shape1[-1] != shape2[-2]:
-            raise ValueError(f"{msg_prefix} shape1[-1] must be equal to shape2[-2] when the length of shape2 "
-                             f"is greater than or equal to 2, but got shape1[-1]: {shape1[-1]}, "
-                             f"shape2[-2]: {shape2[-2]}.")
-
-    _check(shape1, shape2)
     shape_out = list()
     r_shape1 = shape1[:-2]
     r_shape2 = shape2[:-2]
