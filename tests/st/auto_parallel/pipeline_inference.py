@@ -178,7 +178,8 @@ def test_pipeline_inference_without_wrapper():
     D.init()
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", full_batch=True,
                                       pipeline_stages=pipeline_stages, pipeline_result_broadcast=True)
-    net = Net()
+
+    net = PipelineCellInference(Net(), micro_batch_num=1)
     net.set_train(False)
 
     shape = (8, 8)
@@ -244,12 +245,13 @@ def test_pipeline_inference_shared_params():
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", full_batch=True,
                                       pipeline_stages=pipeline_stages, pipeline_result_broadcast=True)
     net = Net()
-    net.set_train(False)
 
     if get_stage_id() == pipeline_stages - 1:
         shape, dtype = net.word_embedding.w.shape, net.word_embedding.w.dtype
         net.word_embedding.w.set_data(Tensor(np.zeros(shape), dtype))
 
+    net = PipelineCellInference(net, micro_batch_num=1)
+    net.set_train(False)
     shape = (8, 8)
     x = Tensor(np.ones(shape), mindspore.float32)
     # compile and synchronize

@@ -490,6 +490,9 @@ bool CombineLikeGraphs(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   auto &obj_map = parse::data_converter::GetObjGraphs();
   for (auto it = obj_map.rbegin(); it != obj_map.rend(); ++it) {
+    if (it->first.find("lazy_inline") != it->first.npos) {
+      continue;
+    }
     auto &graphs = it->second;
     MS_LOG(DEBUG) << "Start combine like graph:" << it->first << ", size:" << graphs.size();
     auto fg = graphs[0];
@@ -547,41 +550,14 @@ bool CombineLikeGraphs(const ResourcePtr &resource) {
 }
 
 namespace {
-// Get all the trainable parameters of the reusable cell.
-void GetTrainableParameters(const FuncGraphPtr &fg, std::vector<AnfNodePtr> *parameters) {
-  if (common::GetEnv("MS_DEV_DISABLE_TRACE") != "on" && expander::IsPackGraph(fg)) {
-    return expander::GetPackGraphParams(fg, parameters);
-  }
-  MS_EXCEPTION_IF_NULL(parameters);
-  if (fg->manager() == nullptr) {
-    MS_LOG(INFO) << fg->ToString() << " manager is null. This Cell init should not be assigned cell_attr_register.";
-    return;
-  }
-  auto used_fgs = fg->func_graphs_used_total();
-  std::set<const AnfNode *> memo;
-  for (auto &g : used_fgs) {
-    for (auto &item : g->parameter_obj_nodes()) {
-      MS_LOG(DEBUG) << fg->ToString() << " has_default: " << item->cast<ParameterPtr>()->has_default()
-                    << " parameter: " << item->cast<ParameterPtr>()->ToString();
-      if (item->cast<ParameterPtr>()->has_default() && memo.emplace(item.get()).second) {
-        parameters->push_back(item);
-      }
-    }
-    if (common::GetEnv("MS_DEV_DISABLE_TRACE") != "on" && expander::IsPackGraph(g)) {
-      expander::GetSubPackGraphParams(fg, g, parameters, &memo);
-    }
-  }
-  MS_LOG(DEBUG) << fg->ToString() << ", parameters: " << parameters->size();
-}
 
-FuncGraphPtr GenerateReusingGraph(const FuncGraphPtr &fg) {
-  std::vector<AnfNodePtr> parameters;
-  MS_LOG(DEBUG) << fg->ToString();
-  GetTrainableParameters(fg, &parameters);
-  if (parameters.empty()) {
-    MS_LOG(DEBUG) << "Finish handling the reusable graph: " << fg->ToString()
-                  << ", parameter size: " << parameters.size();
-    return nullptr;
+void GeneralizeReusingGraph(const FuncGraphPtr &func_graph, const FuncGraphPtr &top_func_graph) {
+  auto reusing_node = func_graph->output()->cast<CNodePtr>()->input(0);
+  FuncGraphPtr fg;
+  if (IsValueNode<FuncGraph>(reusing_node)) {
+    fg = GetValueNode<FuncGraphPtr>(reusing_node);
+  } else {
+    fg = GetValueNode<FuncGraphPtr>(reusing_node->cast<CNodePtr>()->input(1));
   }
   FuncGraphVector func_graphs = {fg};
   Cloner cloner(func_graphs, false, false, true, std::make_shared<TraceCopy>(), std::make_shared<TraceGraphReusing>());
@@ -591,21 +567,20 @@ FuncGraphPtr GenerateReusingGraph(const FuncGraphPtr &fg) {
     MS_LOG(INTERNAL_EXCEPTION) << "Clone func graph failed! " << fg->ToString();
   }
   auto reusing_graph = cloned_fg_iter->second;
-  if (common::GetEnv("MS_DEV_DISABLE_TRACE") != "on" && expander::IsPackGraph(fg)) {
-    return expander::UpdateReusingGraphForPack(reusing_graph, parameters);
-  }
-
-  // Make the reusable graph to be the no_inline status.
-  reusing_graph->set_flag(FUNC_GRAPH_FLAG_NO_INLINE, true);
-  reusing_graph->set_flag(FUNC_GRAPH_FLAG_CELL_REUSE, true);
-
-  // Make the all trainable parameters of the reusable cell to be the
-  // parameters of the reusable graph.
   auto &cloned_nodes = cloner.cloned_nodes();
   auto manager = fg->manager();
-  for (auto &fv : parameters) {
-    TraceGuard guard(std::make_shared<TraceGraphReusing>(fv->debug_info()));
-    auto param = reusing_graph->add_parameter();
+  const int pre_reusing_cell_name_len = 3;
+  for (auto &node : reusing_graph->parameters()) {
+    Parameter *param = dynamic_cast<Parameter *>(node.get());
+    MS_LOG(DEBUG) << param->ToString() << " name: " << param->name() << " debug name: " << param->debug_info()->name();
+    if (param->name().find("CR_") == std::string::npos) {
+      continue;
+    }
+    auto fv = top_func_graph->GetParameterByName(param->name().substr(pre_reusing_cell_name_len));
+    if (fv == nullptr) {
+      MS_LOG(WARNING) << reusing_graph->ToString() << " has not free variable: " << param->ToString();
+      continue;
+    }
     auto &node_users = manager->node_users()[fv];
     for (auto &n : node_users) {
       auto iter = cloned_nodes.find(n.first);
@@ -614,29 +589,18 @@ FuncGraphPtr GenerateReusingGraph(const FuncGraphPtr &fg) {
       }
       auto repl_n = iter->second->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(repl_n);
-      repl_n->set_input(IntToSize(n.second), param);
+      repl_n->set_input(IntToSize(n.second), node);
     }
   }
-  MS_LOG(DEBUG) << "The reusable graph parameter size: " << reusing_graph->parameters().size();
-  return reusing_graph;
-}
-
-void ReplaceWithReusingGraph(const FuncGraphPtr &reusing_graph, const FuncGraphPtr &origin_graph) {
-  std::vector<AnfNodePtr> fvs;
-  MS_LOG(DEBUG) << origin_graph->ToString();
-  GetTrainableParameters(origin_graph, &fvs);
-  std::vector<AnfNodePtr> new_node_inputs;
-  new_node_inputs.push_back(NewValueNode(reusing_graph));
-  for (auto &p : origin_graph->parameters()) {
-    AnfNodePtr para_after_cast = parse::GetMixedPrecisionCastHelp(origin_graph, p);
-    new_node_inputs.push_back(para_after_cast);
+  reusing_graph->set_flag(FUNC_GRAPH_FLAG_NO_INLINE, true);
+  reusing_graph->set_flag(FUNC_GRAPH_FLAG_CELL_REUSE, true);
+  auto cnodes_index = func_graph->func_graph_cnodes_index();
+  auto tr = manager->Transact();
+  for (auto &cnode_index : cnodes_index) {
+    MS_EXCEPTION_IF_NULL(cnode_index.first);
+    tr.SetEdge(cnode_index.first->first, cnode_index.first->second, NewValueNode(reusing_graph));
   }
-  (void)new_node_inputs.insert(new_node_inputs.cend(), fvs.cbegin(), fvs.cend());
-  AnfNodePtr out = origin_graph->NewCNodeBefore(origin_graph->get_return(), new_node_inputs);
-  origin_graph->set_output(out);
-  MS_LOG(DEBUG) << "The original graph's new out: " << out->DebugString();
-  origin_graph->erase_flag(FUNC_GRAPH_FLAG_NO_INLINE);
-  origin_graph->erase_flag(FUNC_GRAPH_OUTPUT_NO_RECOMPUTE);
+  tr.Commit();
 }
 
 void SetCalledSubGraphMixedPrecisionFlag(const FuncGraphPtr &func_graph) {
@@ -682,45 +646,40 @@ void SetCalledSubGraphMixedPrecisionFlag(const FuncGraphPtr &func_graph) {
 // Make the reusable cell to be the reusable function graph.
 bool GraphReusingAction(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
-  const auto &obj_map = parse::data_converter::GetObjGraphs();
   bool cell_reused = false;
-  for (const auto &[cell_key, graphs] : obj_map) {
-    MS_LOG(DEBUG) << "Start to handle the reusable graph: " << cell_key << ", size: " << graphs.size();
-    const auto &fg = graphs[0];
-    // fg->parameter_obj_nodes().empty() have been handled by combine like.
-    if (!fg->parameter_obj_nodes().empty()) {
-      MS_LOG(INFO) << "Finish handling the reusable graph: " << cell_key;
+  auto func_graph = resource->func_graph();
+  std::multimap<int, FuncGraphPtr> order_fgs;
+  for (auto &fg : func_graph->func_graphs_used_total()) {
+    auto order_value = fg->get_attr(FUNC_GRAPH_FLAG_CELL_LAZY_INLINE_ORDER);
+    if (order_value == nullptr) {
       continue;
     }
-    if (cell_key.find("lazy_inline") == cell_key.npos) {
-      continue;
-    }
-    auto reusing_graph = GenerateReusingGraph(fg);
-    if (reusing_graph == nullptr) {
-      MS_LOG(WARNING) << "Failed to generate reused graph for cell_key: " << cell_key;
-      continue;
-    }
-    // Let the original cell graph call the reusable graph.
-    (void)std::for_each(graphs.begin(), graphs.end(), [&reusing_graph](const auto &origin_graph) {
-      ReplaceWithReusingGraph(reusing_graph, origin_graph);
-    });
-    cell_reused = true;
-    MS_LOG(DEBUG) << "Finish handling the reusable graph: " << cell_key;
+    fg->erase_flag(FUNC_GRAPH_FLAG_CELL_LAZY_INLINE_ORDER);
+    order_fgs.insert(std::make_pair(GetValue<int>(order_value), fg));
   }
+  for (auto it = order_fgs.rbegin(); it != order_fgs.rend(); ++it) {
+    MS_LOG(INFO) << "Lazy_inline graph: " << it->second->ToString() << " , order: " << it->first;
+    GeneralizeReusingGraph(it->second, func_graph);
+    cell_reused = true;
+  }
+  if (!cell_reused) {
+    return true;
+  }
+
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   const bool enable_ge = context->backend_policy() == "ge";
   const bool force_no_inline = common::GetEnv("MS_FORCE_NO_INLINE") == "1";
   context->SetCellReuseLevel(CellReuseLevel::kNoCellReuse);
-  if (cell_reused) {
-    MS_LOG(INFO) << "Cell reuse(@lazy_inline) actually takes effect.";
-    auto cell_reuse_level =
-      (enable_ge && !context->IsKByKExecutorMode()) ? CellReuseLevel::kNoInline : CellReuseLevel::kLazyInline;
-    if (force_no_inline) {
-      cell_reuse_level = CellReuseLevel::kNoInline;
-    }
-    context->SetCellReuseLevel(cell_reuse_level);
+
+  MS_LOG(INFO) << "Cell reuse(@lazy_inline) actually takes effect.";
+  auto cell_reuse_level =
+    (enable_ge && !context->IsKByKExecutorMode()) ? CellReuseLevel::kNoInline : CellReuseLevel::kLazyInline;
+  if (force_no_inline) {
+    cell_reuse_level = CellReuseLevel::kNoInline;
   }
+  context->SetCellReuseLevel(cell_reuse_level);
+
   return true;
 }
 
@@ -1752,7 +1711,6 @@ static std::vector<ActionItem> CommonPipeline(bool trace_flag) {
     if (!is_cluster_initialized && (!is_parallel_mode || combine_like_graphs)) {
       (void)actions.emplace_back(std::make_pair(kCombineLikeGraphs, CombineLikeGraphs));
     }
-
     // Make the reusable cell to be the reusable function graph
     (void)actions.emplace_back(std::make_pair(kGraphReusing, GraphReusingAction));
     (void)actions.emplace_back(std::make_pair(kMetaUnpackPrepare, MetaUnpackPrepareAction));

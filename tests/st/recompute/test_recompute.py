@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
+import pytest
 import numpy as np
 from mindspore.nn import Cell
 from mindspore.common import Tensor, Parameter
@@ -70,6 +70,32 @@ class Block(Cell):
         return transpose4
 
 
+class TestBlock(Cell):
+    def __init__(self):
+        super(TestBlock, self).__init__()
+        self.y = Parameter(Tensor(5))
+
+    def construct(self, x):
+        x = x + self.y
+        x = x + self.y * 2
+        x = x - 9
+        return x
+
+
+class TestIfBlock(Cell):
+    def __init__(self):
+        super(TestIfBlock, self).__init__()
+        self.y = Parameter(Tensor(5))
+
+    def construct(self, x):
+        if x > 10:
+            x = x + self.y * 2
+        else:
+            x = x + self.y
+        x = x - 9
+        return x
+
+
 def test_recompute_block_recompute():
     """
     Feature: Recompute with lazy inline.
@@ -105,6 +131,99 @@ def test_recompute_block_recompute():
     net = Net()
     grad_net = Grad(net)
     grad_net(x)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+def test_nest():
+    """
+    Feature: Nest reusing cell with lazy inline.
+    Description: Each block is set recompute by the cell recompute api.
+    Expectation: Run successfully and the memory usage is reduced.
+    """
+
+    class MyBlock(Cell):
+        @lazy_inline
+        def __init__(self):
+            super(MyBlock, self).__init__()
+            self.block = TestBlock()
+            self.if_block = TestIfBlock()
+            self.if_block.recompute()
+
+        def construct(self, x):
+            y = x + 3
+            if x > 3:
+                x = self.if_block(x)
+            else:
+                x = self.block(y)
+            x = x + 4
+            return x
+
+    class InnerBlock(Cell):
+        @lazy_inline
+        def __init__(self):
+            super(InnerBlock, self).__init__()
+            self.blocks = nn.SequentialCell()
+            for _ in range(5):
+                b = MyBlock()
+                self.blocks.append(b)
+
+        def construct(self, x):
+            x = x + 1
+            x = self.blocks(x)
+            return x
+
+    class OuterBlock(Cell):
+        @lazy_inline
+        def __init__(self):
+            super(OuterBlock, self).__init__()
+            self.blocks = nn.SequentialCell()
+            for _ in range(5):
+                b = InnerBlock()
+                self.blocks.append(b)
+
+        def construct(self, x):
+            out = x + 2
+            out = self.blocks(out)
+            return out
+
+    class Net(Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.blocks = nn.SequentialCell()
+            for _ in range(3):
+                b = OuterBlock()
+                self.blocks.append(b)
+
+        def construct(self, x):
+            out = x
+            out = self.blocks(out)
+            out = out + 0.1
+            out = self.blocks(out)
+            return out
+
+    class Net1(Cell):
+        def __init__(self):
+            super(Net1, self).__init__()
+            self.blocks = nn.SequentialCell()
+            for _ in range(3):
+                b = OuterBlock()
+                self.blocks.append(b)
+
+        def construct(self, x):
+            out = x
+            out = self.blocks(out)
+            out = out + x
+            out = self.blocks(out)
+            return out
+
+    context.set_context(mode=context.GRAPH_MODE, save_graphs=0, save_graphs_path="./lazy")
+    x = Tensor(10)
+    net = Net1()
+    net(x)
+
+    net = Grad(net)
+    net(x)
 
 
 def test_recompute_op_recompute1():
