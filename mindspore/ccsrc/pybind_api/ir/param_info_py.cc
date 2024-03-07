@@ -42,6 +42,8 @@ void RegParamInfo(const py::module *m) {
     .def_property("cache_shape", &ParamInfo::cache_shape, &ParamInfo::set_cache_shape)
     .def_property("requires_aggr", &ParamInfo::requires_aggr, &ParamInfo::set_requires_aggr)
     .def_property("param_strategy", &ParamInfo::param_strategy, &ParamInfo::set_param_strategy)
+    .def_property("is_quant_int4", &ParamInfo::is_quant_int4, &ParamInfo::set_is_quant_int4)
+    .def_property("quant_shape", &ParamInfo::quant_shape, &ParamInfo::set_quant_shape)
     .def(py::pickle(
       [](const ParamInfo &p) {  // __getstate__
         return py::make_tuple(p.name(), p.requires_grad(), p.layerwise_parallel());
