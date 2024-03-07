@@ -41,7 +41,7 @@ from mindspore.ops.auto_generate import (minimum, maximum, mul, sin, sinc, sinh,
                                          matrix_exp, sqrt, rsqrt, square, trace, nextafter, abs, acos, acosh, angle,
                                          asin, asinh, atan, atan2, atanh, ceil, equal, erf, erfc, erfinv, exp, expm1,
                                          floor, floor_divide, floor_mod, gcd, greater, greater_equal, less, less_equal,
-                                         log, log1p, logit, neg, not_equal, pow, round)
+                                         log, log1p, neg, not_equal, pow, round)
 from mindspore.nn import layer
 from mindspore._checkparam import check_is_number
 from mindspore import _checkparam as validator
@@ -2999,6 +2999,49 @@ def ldexp(x, other):
     out = tensor_mul(x, tensor_pow(2.0, other))
     return out
 
+def logit(input, eps=None):
+    r"""
+    Calculate the logit of a tensor element-wise.
+
+    .. math::
+        \begin{align}
+        y_{i} & = \ln(\frac{z_{i}}{1 - z_{i}}) \\
+        z_{i} & = \begin{cases}
+        input_{i} & \text{if eps is None} \\
+        \text{eps} & \text{if } input_{i} \lt \text{eps} \\
+        input_{i} & \text{if } \text{eps} \leq input_{i} \leq 1 - \text{eps} \\
+        1 - \text{eps} & \text{if } input_{i} \gt 1 - \text{eps}
+        \end{cases}
+        \end{align}
+
+    Args:
+        input (Tensor): The input tensor of type float16, float32 or float64.
+        eps (float, optional): The epsilon. If eps is not None, the input clamp bound is defined as [eps, 1-eps],
+            otherwise, the `input` is not clamped. Default: ``None`` .
+
+    Returns:
+        Tensor, with the same shape and dtype as the `input`.
+
+    Raises:
+        TypeError: If `eps` is not a float.
+        TypeError: If `input` is not a Tensor.
+        TypeError: If dtype of `input` is not float16, float32 or float64.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> x = Tensor(np.array([0.1, 0.2, 0.3]).astype(np.float32))
+        >>> output = ops.logit(x, eps=1e-5)
+        >>> print(output)
+        [-2.1972246 -1.3862944 -0.8472978]
+    """
+    if eps is None:
+        eps = -1.0
+    logit_ = _get_cache_prim(Logit)(eps)
+    return logit_(input)
 
 #####################################
 # Comparison Operation Functions.
