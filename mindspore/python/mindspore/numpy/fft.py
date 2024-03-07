@@ -16,7 +16,7 @@
 from __future__ import absolute_import
 from mindspore import ops
 
-__all__ = ['fftshift', 'ifftshift', 'fft', 'ifft']
+__all__ = ['fftshift', 'ifftshift', 'fft', 'ifft', 'fft2', 'ifft2', 'fftn', 'ifftn']
 
 def fftshift(x, axes=None):
     """
@@ -144,3 +144,165 @@ def ifft(a, n=None, axis=-1, norm=None):
         Tensor(shape=[4], dtype=Complex64, value= [-0.147138+0j, 0.538129+0.115303j, 0.695225+0j, 0.538129-0.115303j])
     """
     return ops.ifft(a, n, axis, norm)
+
+
+def fft2(a, s=None, axes=(-2, -1), norm=None):
+    r"""
+    Calculates the two dimensional discrete Fourier transform of `a`.
+
+    Refer to :func:`mindspore.ops.fft2` for more details.
+    The difference is that `a` corresponds to `input` and `axes` corresponds to `dim`.
+
+    Args:
+        a (Tensor): The input tensor.
+        s (tuple[int], optional): Length of the transformed `axes` of the result.
+            If given, the input will either be zero-padded or trimmed to this length before computing `fft2`.
+            Default: ``None``, which does not need to process `a`.
+        axes (tuple[int], optional): The dimension along which to take the one dimensional `fft2`.
+            Default: ``(-2, -1)``, which means transform the last two dimension of `a`.
+        norm (string, optional): Normalization mode. Default: ``None`` that means ``"backward"``.
+            Three modes are defined as,
+
+            - ``"backward"``(no normalization).
+            - ``"forward"`` (normalize by :math:`1/n`).
+            - ``"ortho"`` (normalize by :math:`1/\sqrt{n}`).
+
+    Returns:
+        Tensor, The result of `fft2()` function.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> a = np.ones((4, 4))
+        >>> np.fft.fft2(a, s=(4, 4), axes=(0, 1), norm="backward")
+        Tensor(shape=[4, 4], dtype=Complex64, value=
+        [[16+0j, 0+0j, 0+0j, 0+0j],
+         [0+0j, 0+0j, 0+0j, 0+0j],
+         [0+0j, 0+0j, 0+0j, 0+0j],
+         [0+0j, 0+0j, 0+0j, 0+0j]])
+    """
+    return ops.fft2(a, s, axes, norm)
+
+
+def ifft2(a, s=None, axes=(-2, -1), norm=None):
+    r"""
+    Calculates the inverse of `fft2()`.
+
+    Refer to :func:`mindspore.ops.ifft2` for more details.
+    The difference is that `a` corresponds to `input` and `axes` corresponds to `dim`.
+
+    Args:
+        a (Tensor): The input tensor.
+        s (tuple[int], optional): Length of the transformed `axes` of the result.
+            If given, the input will either be zero-padded or trimmed to this length before computing `ifft2`.
+            Default: ``None``, which does not need to process `a`.
+        axes (tuple[int], optional): The dimension along which to take the one dimensional `ifft2`.
+            Default: ``(-2, -1)``, which means transform the last two dimension of `a`.
+        norm (string, optional): Normalization mode. Default: ``None`` that means ``"backward"``.
+            Three modes are defined as,
+
+            - ``"backward"`` (no normalization).
+            - ``"forward"`` (normalize by :math:`1*n`).
+            - ``"ortho"`` (normalize by :math:`1*\sqrt{n}`).
+
+    Returns:
+        Tensor, The result of `ifft2()` function.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> a = np.ones((4, 4))
+        >>> np.fft.ifft2(a, s=(4, 4), axes=(0, 1), norm="backward")
+        Tensor(shape=[4, 4], dtype=Complex64, value=
+        [[1+0j, 0+0j, 0+0j, 0+0j],
+         [0+0j, 0+0j, 0+0j, 0+0j],
+         [0+0j, 0+0j, 0+0j, 0+0j],
+         [0+0j, 0+0j, 0+0j, 0+0j]])
+    """
+    return ops.ifft2(a, s, axes, norm)
+
+
+def fftn(a, s=None, axes=None, norm=None):
+    r"""
+    Calculates the N dimensional discrete Fourier transform of `a`.
+
+    Refer to :func:`mindspore.ops.fftn` for more details.
+    The difference is that `a` corresponds to `input` and `axis` corresponds to `dim`.
+
+    Args:
+        a (Tensor): The input tensor.
+        s (tuple[int], optional): Length of the transformed `axes` of the result.
+            If given, the input will either be zero-padded or trimmed to this length before computing `fftn`.
+            Default: ``None``, which does not need to process `a`.
+        axes (tuple[int], optional): The dimension along which to take the one dimensional `fftn`.
+            Default: ``None``, which means transform the all dimension of `a`,
+            or the last `len(s)` dimensions if s is given.
+        norm (string, optional): Normalization mode. Default: ``None`` that means ``"backward"``.
+            Three modes are defined as,
+
+            - ``"backward"``(no normalization).
+            - ``"forward"`` (normalize by :math:`1/n`).
+            - ``"ortho"`` (normalize by :math:`1/\sqrt{n}`).
+
+    Returns:
+        Tensor, The result of `fft()` function.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> a = np.ones((2, 2, 2))
+        >>> np.fft.fftn(a, s=(2, 2, 2), axes=(0, 1, 2), norm="backward")
+        Tensor(shape=[2, 2, 2], dtype=Complex64, value=
+        [[[8+0j, 0+0j],
+         [0+0j, 0+0j]],
+         [[0+0j, 0+0j],
+         [0+0j, 0+0j]]])
+    """
+    return ops.fftn(a, s, axes, norm)
+
+
+def ifftn(a, s=None, axes=None, norm=None):
+    r"""
+    Calculates the inverse of `fftn()`.
+
+    Refer to :func:`mindspore.ops.ifftn` for more details.
+    The difference is that `a` corresponds to `input` and `axes` corresponds to `dim`.
+
+    Args:
+        a (Tensor): The input tensor.
+        s (tuple[int], optional): Length of the transformed `axes` of the result.
+            If given, the input will either be zero-padded or trimmed to this length before computing `ifftn`.
+            Default: ``None``, which does not need to process `a`.
+        axes (tuple[int], optional): The dimension along which to take the one dimensional `ifftn`.
+            Default: ``None``, which means transform the all dimension of `a`,
+            or the last `len(s)` dimensions if s is given.
+        norm (string, optional): Normalization mode. Default: ``None`` that means ``"backward"``.
+            Three modes are defined as,
+
+            - ``"backward"`` (no normalization).
+            - ``"forward"`` (normalize by :math:`1*n`).
+            - ``"ortho"`` (normalize by :math:`1*\sqrt{n}`).
+
+    Returns:
+        Tensor, The result of `ifftn()` function.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> a = np.ones((2, 2, 2))
+        >>> np.fft.ifftn(a, s=(2, 2, 2), axes=(0, 1, 2), norm="backward")
+        Tensor(shape=[2, 2, 2], dtype=Complex64, value=
+        [[[1+0j, 0+0j],
+         [0+0j, 0+0j]],
+         [[0+0j, 0+0j],
+         [0+0j, 0+0j]]])
+    """
+    return ops.ifftn(a, s, axes, norm)

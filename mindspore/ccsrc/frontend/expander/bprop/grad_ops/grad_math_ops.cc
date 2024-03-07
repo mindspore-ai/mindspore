@@ -2696,6 +2696,10 @@ REG_BPROP_BUILDER("TridiagonalSolve").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib)
 
 REG_BPROP_BUILDER("FFT").SetBody(BODYFUNC(ib) { return FFTGradCommon(ib, "IFFT"); });
 REG_BPROP_BUILDER("IFFT").SetBody(BODYFUNC(ib) { return FFTGradCommon(ib, "FFT"); });
+REG_BPROP_BUILDER("FFT2").SetBody(BODYFUNC(ib) { return FFTGradCommon(ib, "IFFT2"); });
+REG_BPROP_BUILDER("IFFT2").SetBody(BODYFUNC(ib) { return FFTGradCommon(ib, "FFT2"); });
+REG_BPROP_BUILDER("FFTN").SetBody(BODYFUNC(ib) { return FFTGradCommon(ib, "IFFTN"); });
+REG_BPROP_BUILDER("IFFTN").SetBody(BODYFUNC(ib) { return FFTGradCommon(ib, "FFTN"); });
 
 REG_BPROP_BUILDER("FFTShift").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
   auto dim = ib->GetInput(kIndex1);

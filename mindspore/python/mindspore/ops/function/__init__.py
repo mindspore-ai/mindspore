@@ -433,10 +433,6 @@ from .math_func import (
     trace,
     zeta,
     histc,
-    fft2,
-    fftn,
-    ifft2,
-    ifftn,
     count_nonzero,
     tensor_dot,
     vecdot,
@@ -715,8 +711,12 @@ from .clip_func import (
 )
 from .fft_func import (
     fft,
+    fft2,
+    fftn,
     fftshift,
     ifft,
+    ifft2,
+    ifftn,
     ifftshift,
 )
 from .other_func import (
