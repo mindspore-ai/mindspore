@@ -2258,7 +2258,7 @@ class NLLLoss(LossBase):
     :math:`N` is the batch size, :math:`c` belonging to :math:`[0, C-1]` is class index,
     where :math:`C` is the number of classes.
 
-    If :math:`reduction \neq none` (default 'mean'), then
+    If :math:`reduction \neq none` (default ``'mean'`` ), then
 
     .. math::
 

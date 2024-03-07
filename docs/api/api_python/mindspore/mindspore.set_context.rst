@@ -103,7 +103,7 @@ mindspore.set_context
           - 3：生成可视化计算图和更多详细的前端ir图。
 
           当 `save_graphs` 属性设为 ``1`` 、 ``2`` 、 ``3`` 或者 ``True`` 时， `save_graphs_path` 属性用于设置中间编译图的存储路径。默认情况下，计算图保存在当前目录下。
-        - **save_graphs_path** (str) - 表示保存计算图的路径。默认值："."。如果指定的目录不存在，系统将自动创建该目录。在分布式训练中，图形将被保存到 `save_graphs_path/rank_${rank_id}/` 目录下。 `rank_id` 为集群中当前设备的ID。
+        - **save_graphs_path** (str) - 表示保存计算图的路径。默认值： ``"."`` 。如果指定的目录不存在，系统将自动创建该目录。在分布式训练中，图形将被保存到 `save_graphs_path/rank_${rank_id}/` 目录下。 `rank_id` 为集群中当前设备的ID。
         - **deterministic** (str) - 表示是否使能算子确定性运行模式。值必须在['ON','OFF']范围内，默认值： ``'OFF'`` 。
 
           - ON：开启算子确定性运行模式。
@@ -145,7 +145,7 @@ mindspore.set_context
 
           一些常用选项：
 
-          - **opt_level**：设置优化级别。默认值：2。当opt_level的值大于0时，启动图算融合。可选值包括：
+          - **opt_level**：设置优化级别。默认值： ``2`` 。当opt_level的值大于0时，启动图算融合。可选值包括：
 
             - 0：关闭图算融合。
             - 1：启动算子的基本融合。
@@ -167,12 +167,12 @@ mindspore.set_context
         - **max_call_depth** (int) - 指定函数调用的最大深度。其值必须为正整数。默认值： ``1000`` 。当嵌套Cell太深或子图数量太多时，需要设置 `max_call_depth` 参数。系统最大堆栈深度应随着 `max_call_depth` 的调整而设置为更大的值，否则可能会因为系统堆栈溢出而引发 "core dumped" 异常。
         - **grad_for_scalar** (bool) - 表示是否获取标量梯度。默认值： ``False`` 。当 `grad_for_scalar` 设置为True时，则可以导出函数的标量输入。由于后端目前不支持伸缩操作，所以该接口只支持在前端可推演的简单操作。
         - **enable_compile_cache** (bool) - 表示是否加载或者保存前端编译的图。当 `enable_compile_cache` 被设置为True时，在第一次执行的过程中，一个硬件无关的编译缓存会被生成并且导出为一个MINDIR文件。当该网络被再次执行时，如果 `enable_compile_cache` 仍然为True并且网络脚本没有被更改，那么这个编译缓存会被加载。注意目前只支持有限的Python脚本更改的自动检测，这意味着可能有正确性风险。默认值： ``False`` 。这是一个实验特性，可能会被更改或者删除。
-        - **compile_cache_path** (str) - 保存编译缓存的路径。默认值："."。如果目录不存在，系统会自动创建这个目录。缓存会被保存到如下目录： `compile_cache_path/rank_${rank_id}/` 。 `rank_id` 是集群上当前设备的ID。
+        - **compile_cache_path** (str) - 保存编译缓存的路径。默认值： ``"."`` 。如果目录不存在，系统会自动创建这个目录。缓存会被保存到如下目录： `compile_cache_path/rank_${rank_id}/` 。 `rank_id` 是集群上当前设备的ID。
         - **inter_op_parallel_num** (int) - 算子间并行数控制。 默认值为 ``0`` ，表示由框架默认指定。
         - **runtime_num_threads** (int) - 运行时actor和CPU算子核使用的线程池线程数，必须大于等于 ``0`` 。默认值为 ``30`` ，如果同时运行多个进程，应将该值设置得小一些，以避免线程争用。
         - **disable_format_transform** (bool) - 表示是否取消NCHW到NHWC的自动格式转换功能。当fp16的网络性能不如fp32的时，可以设置 `disable_format_transform` 为 ``True`` ，以尝试提高训练性能。默认值： ``False`` 。
         - **support_binary** (bool) - 是否支持在图形模式下运行.pyc或.so。如果要支持在图形模式下运行.so或.pyc，可将 `support_binary` 置为 ``True`` ，并运行一次.py文件，从而将接口源码保存到接口定义.py文件中，因此要保证该文件可写。然后将.py文件编译成.pyc或.so文件，即可在图模式下运行。
-        - **memory_optimize_level** (str) - 内存优化级别，默认值：O0。其值必须在 ['O0', 'O1'] 范围中。
+        - **memory_optimize_level** (str) - 内存优化级别，默认值： ``O0`` 。其值必须在 ['O0', 'O1'] 范围中。
 
           - O0: 执行性能优先，关闭 SOMAS (Safe Optimized Memory Allocation Solver)。
           - O1: 内存性能优先，使能 SOMAS。
@@ -215,11 +215,11 @@ mindspore.set_context
           - **parallel_speed_up_json_path** (Union[str, None]): 并行加速配置文件，配置项可以参考 `parallel_speed_up.json <https://gitee.com/mindspore/mindspore/blob/master/config/parallel_speed_up.json>`_ 。
             当设置为None时，表示不启用。
 
-            - **recompute_comm_overlap** (bool): 为True时表示开启反向重计算和通信掩盖。默认值：False。
-            - **matmul_grad_comm_overlap** (bool): 为True时表示开启反向Matmul和通信掩盖。默认值：False。
-            - **enable_task_opt** (bool): 为True时表示开启通信算子task数量优化。默认值：False。
-            - **interleaved_matmul_comm** (bool): 为True时表示开启Matmul-Comm的细粒度双副本优化。默认值：False。
-            - **interleaved_layernorm_comm** (bool): 为True时表示开启LayerNorm-Comm细粒度双副本优化。默认值：False。
+            - **recompute_comm_overlap** (bool): 为 ``True`` 时表示开启反向重计算和通信掩盖。默认值： ``False`` 。
+            - **matmul_grad_comm_overlap** (bool): 为 ``True`` 时表示开启反向Matmul和通信掩盖。默认值： ``False`` 。
+            - **enable_task_opt** (bool): 为 ``True`` 时表示开启通信算子task数量优化。默认值： ``False`` 。
+            - **interleaved_matmul_comm** (bool): 为 ``True`` 时表示开启Matmul-Comm的细粒度双副本优化。默认值： ``False`` 。
+            - **interleaved_layernorm_comm** (bool): 为 ``True`` 时表示开启LayerNorm-Comm细粒度双副本优化。默认值： ``False`` 。
           - **host_scheduling_max_threshold** (int): 控制静态小图（根图）执行时是否使用动态shape调度的最大阈值，默认阈值为0。如果静态根图节点个数小于最大阈值，则使用动态shape调度。大模型场景，该方式可以节约stream资源。如果静态根图节点个数大于最大阈值，则保持原有流程不变。
 
         - **jit_syntax_level** (int) - 当通过GRAPH_MODE或者@jit装饰器触发图编译时，此选项用于设置JIT语法支持级别。

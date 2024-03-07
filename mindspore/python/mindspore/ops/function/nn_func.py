@@ -3562,7 +3562,7 @@ def nll_loss(inputs, target, weight=None, ignore_index=-100, reduction='mean', l
     N is the batch size, :math:`c` belonging to :math:`[0, C-1]` is class index, where :math:`C` is the number of
     classes.
 
-    If `reduction` is not ``None`` (default 'mean'), then
+    If `reduction` is not ``None`` (default ``'mean'``), then
 
     .. math::
 
@@ -3720,11 +3720,10 @@ def l1_loss(input, target, reduction='mean'):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import mindspore as ms
         >>> from mindspore import Tensor, ops
         >>> from mindspore import dtype as mstype
-        >>> x = ms.Tensor([[1, 2, 3], [4, 5, 6]], mstype.float32)
-        >>> target = ms.Tensor([[6, 5, 4], [3, 2, 1]], mstype.float32)
+        >>> x = Tensor([[1, 2, 3], [4, 5, 6]], mstype.float32)
+        >>> target = Tensor([[6, 5, 4], [3, 2, 1]], mstype.float32)
         >>> output = ops.l1_loss(x, target, reduction="mean")
         >>> print(output)
         3.0
