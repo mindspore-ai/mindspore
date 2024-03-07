@@ -95,7 +95,7 @@ class BACKEND_EXPORT DumpJsonParser {
     DUMP_BOTH_OVERFLOW = 3,
     DUMP_LITE_EXCEPTION = 4
   };
-  static bool IsKernelByKernel();
+  static bool IsAclDump();
   nlohmann::json GetKernelsJson() { return kernels_json_; }
 
  private:

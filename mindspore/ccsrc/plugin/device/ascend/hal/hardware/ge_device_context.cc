@@ -373,7 +373,7 @@ void GeDeviceContext::SetDumpOptions(std::map<std::string, std::string> *ge_opti
   // set up dump options
   auto &dump_parser = DumpJsonParser::GetInstance();
   dump_parser.Parse();
-  if (dump_parser.async_dump_enabled() && !dump_parser.IsKernelByKernel()) {
+  if (dump_parser.async_dump_enabled() && !dump_parser.IsAclDump()) {
     (*ge_options)["ge.exec.enableDump"] = std::to_string(static_cast<int>(dump_parser.async_dump_enabled()));
     auto dump_path = FileUtils::CreateNotExistDirs(dump_parser.path());
     if (!dump_path.has_value()) {

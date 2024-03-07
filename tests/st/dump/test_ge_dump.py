@@ -33,7 +33,7 @@ from mindspore.nn import Momentum
 from mindspore.nn import TrainOneStepCell
 from mindspore.nn import WithLossCell
 from dump_test_utils import generate_dump_json, generate_dump_json_with_overflow, generate_statistic_dump_json, \
-    check_ge_dump_structure, check_saved_data, check_iteration, check_overflow_file
+    check_ge_dump_structure, check_saved_data, check_overflow_file
 from tests.security_utils import security_off_wrap
 
 
@@ -64,12 +64,12 @@ def check_ge_dump_structure_acl(dump_path, num_iteration, device_num=1, check_ov
     for _ in range(3):
         if not os.path.exists(dump_path):
             time.sleep(2)
-    sub_paths = os.listdir(dump_path)
+    assert os.path.isdir(dump_path)
+    iteration_path = os.path.join(dump_path, str(num_iteration))
+    assert os.path.isdir(iteration_path)
+    sub_paths = os.listdir(iteration_path)
     for sub_path in sub_paths:
-        # on GE, the whole dump directory of one training is saved within a time path, like '20230822120819'
-        if not (sub_path.isdigit() and len(sub_path) == 14):
-            continue
-        time_path = os.path.join(dump_path, sub_path)
+        time_path = os.path.join(iteration_path, sub_path)
         assert os.path.isdir(time_path)
         device_paths = os.listdir(time_path)
         assert len(device_paths) == device_num
@@ -87,7 +87,6 @@ def check_ge_dump_structure_acl(dump_path, num_iteration, device_num=1, check_ov
                     assert os.path.isdir(model_id_path)
                     iteration_ids = os.listdir(model_id_path)
                     for iteration_id in iteration_ids:
-                        check_iteration(iteration_id, num_iteration)
                         iteration_path = os.path.join(model_id_path, iteration_id)
                         assert os.path.isdir(iteration_path)
                         check_saved_data(iteration_path, saved_data)
@@ -130,17 +129,19 @@ def run_ge_dump(test_name):
 def run_ge_dump_acl(test_name):
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     with tempfile.TemporaryDirectory(dir='/tmp') as tmp_dir:
-        dump_path = os.path.join(tmp_dir, 'ge_dump')
-        dump_config_path = os.path.join(tmp_dir, 'ge_dump.json')
+        dump_path = os.path.join(tmp_dir, 'acl_dump')
+        dump_config_path = os.path.join(tmp_dir, 'acl_dump.json')
         generate_dump_json(dump_path, dump_config_path, test_name)
         os.environ['MINDSPORE_DUMP_CONFIG'] = dump_config_path
-        os.environ['MS_ACL_DUMP_CFG_PATH'] = "1"
+        os.environ['MS_ACL_DUMP_CFG_PATH'] = dump_config_path
         if os.path.isdir(dump_path):
             shutil.rmtree(dump_path)
+        os.mkdir(dump_path)
         add = Net()
         add(Tensor(x), Tensor(y))
-        check_ge_dump_structure_acl(dump_path, 1, 1)
+        check_ge_dump_structure_acl(dump_path, 0, 1)
         del os.environ['MINDSPORE_DUMP_CONFIG']
+        del os.environ['MS_ACL_DUMP_CFG_PATH']
 
 
 @pytest.mark.level1

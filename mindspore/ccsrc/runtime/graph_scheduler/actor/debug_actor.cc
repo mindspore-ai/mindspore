@@ -37,9 +37,9 @@
 
 namespace mindspore {
 namespace runtime {
-void DebugActor::ACLDump(uint32_t device_id, const std::vector<KernelGraphPtr> &graphs) {
+void DebugActor::ACLDump(uint32_t device_id, const std::vector<KernelGraphPtr> &graphs, bool is_kbyk) {
   std::string env_enable_str = common::GetEnv("MS_ACL_DUMP_CFG_PATH");
-  std::string kbk_enable_str = common::GetEnv("GRAPH_OP_RUN");
+  std::string dump_enable_str = common::GetEnv("MINDSPORE_DUMP_CONFIG");
   auto step_count_num = 0;
   step_count_num = step_count;
   if (step_count == 1 && is_dataset_sink == 1) {
@@ -50,9 +50,10 @@ void DebugActor::ACLDump(uint32_t device_id, const std::vector<KernelGraphPtr> &
     is_dataset_sink = graph->IsDatasetGraph();
   }
   if (DumpJsonParser::GetInstance().async_dump_enabled() &&
-      ((DumpJsonParser::GetInstance().IsDumpIter(step_count_num) && kbk_enable_str == "1") || env_enable_str == "1")) {
+      ((DumpJsonParser::GetInstance().IsDumpIter(step_count_num) && is_kbyk) ||
+       (env_enable_str == dump_enable_str && !is_kbyk))) {
     bool is_init = false;
-    if ((env_enable_str == "1") && !(DumpJsonParser::GetInstance().IsDumpIter(step_count_num))) {
+    if ((env_enable_str == dump_enable_str) && !(DumpJsonParser::GetInstance().IsDumpIter(step_count_num))) {
       is_init = true;
     } else {
       std::string dump_path = DumpJsonParser::GetInstance().path();
@@ -204,6 +205,7 @@ void DebugActor::DebugOnStepBegin(const std::vector<KernelGraphPtr> &graphs,
                                   OpContext<DeviceTensor> *const op_context, const AID *) {
   MS_LOG(INFO) << "Debug on step begin.";
   auto context = MsContext::GetInstance();
+  auto is_kbyk = context->IsKByKExecutorMode();
   MS_EXCEPTION_IF_NULL(context);
   std::string backend = context->backend_policy();
   device_ctx_ = device_contexts[0];
@@ -211,8 +213,8 @@ void DebugActor::DebugOnStepBegin(const std::vector<KernelGraphPtr> &graphs,
   if ((profiler == nullptr || !profiler->IsInitialized()) &&
       device_ctx_->GetDeviceType() == device::DeviceType::kAscend) {
     auto device_id = context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-    if (common::GetEnv("MS_ACL_DUMP_CFG_PATH") == "1" || common::GetEnv("GRAPH_OP_RUN") == "1") {
-      ACLDump(device_id, graphs);
+    if (common::GetEnv("MS_ACL_DUMP_CFG_PATH") == common::GetEnv("MINDSPORE_DUMP_CONFIG")) {
+      ACLDump(device_id, graphs, is_kbyk);
     }
   }
   if (backend == "ge") {
