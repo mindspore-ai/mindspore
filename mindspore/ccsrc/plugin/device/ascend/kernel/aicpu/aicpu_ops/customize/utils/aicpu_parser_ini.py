@@ -226,7 +226,6 @@ cust_op_lists = [
     "tile",
     "trace",
     "tracegrad",
-    "transpose",
     "tril",
     "truncatednormal",
     "unravelindex",
