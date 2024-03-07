@@ -134,10 +134,15 @@ const char *GetOpPythonPath(const char *op_name) {
     return GRAD_OP_PATH;
   }
 
+  static const py::module nn_mod = py::module::import(NN_OPS_PATH);
+  if (py::hasattr(nn_mod, op_name)) {
+    return NN_OPS_PATH;
+  }
+
   static const py::module functional_mod = py::module::import(FUNCTIONAL_OP_PATH);
   if (!py::hasattr(functional_mod, op_name)) {
-    MS_LOG(EXCEPTION) << OP_PATH << " and " << INNER_OP_PATH << " and " << GRAD_OP_PATH << " and " << FUNCTIONAL_OP_PATH
-                      << " don't have op:" << op_name;
+    MS_LOG(EXCEPTION) << OP_PATH << " and " << INNER_OP_PATH << " and " << GRAD_OP_PATH << " and " << NN_OPS_PATH
+                      << "and" << FUNCTIONAL_OP_PATH << " don't have op:" << op_name;
   }
   return FUNCTIONAL_OP_PATH;
 }

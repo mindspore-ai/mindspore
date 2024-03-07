@@ -137,6 +137,7 @@ constexpr char OP_PATH[] = "mindspore.ops.operations";
 constexpr char INNER_OP_PATH[] = "mindspore.ops.operations._inner_ops";
 constexpr char GRAD_OP_PATH[] = "mindspore.ops.operations._grad_ops";
 constexpr char FUNCTIONAL_OP_PATH[] = "mindspore.ops.functional";
+constexpr char NN_OPS_PATH[] = "mindspore.ops.operations.nn_ops";
 constexpr char GET_OP_FUNCTION_PATH[] = "mindspore.parallel._utils";
 constexpr char GET_OP_FUNCTION[] = "_get_python_op";
 constexpr char KEEP_DIMS[] = "keep_dims";
@@ -314,6 +315,13 @@ constexpr char CONSTANT[] = "constant";
 constexpr char CHANNEL_AXIS[] = "channel_axis";
 constexpr char EMA[] = "ema";
 constexpr char EMA_DECAY[] = "ema_decay";
+constexpr char HEAD_NUM[] = "head_num";
+constexpr char SCALE_VALUE[] = "scale_value";
+constexpr char PRE_TOKENS[] = "pre_tokens";
+constexpr char NEXT_TOKENS[] = "next_tokens";
+constexpr char INNER_PRECISE[] = "inner_precise";
+constexpr char INPUT_LAYOUT[] = "input_layout";
+constexpr char SPARSE_MODE[] = "sparse_mode";
 
 // Operator
 constexpr char VIRTUAL_DIV[] = "_VirtualDiv";
