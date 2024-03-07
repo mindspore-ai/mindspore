@@ -127,7 +127,7 @@ class ModelProcess {
   aclmdlIODims *dynamic_dims_ = nullptr;
   void *weight_ptr_ = nullptr;
   std::vector<bool> user_defined_output_buf_;
-  void *dyn_out_sys_buf_addr_ = nullptr;
+  std::set<void *> dyn_out_sys_buf_addr_;
   bool is_sharing_workspace_ = false;
   int32_t device_id_ = 0;
 };
