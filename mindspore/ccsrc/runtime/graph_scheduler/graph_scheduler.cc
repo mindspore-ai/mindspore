@@ -3080,8 +3080,30 @@ bool GraphScheduler::HaveRpcActors(const ActorSet *actor_set) const {
 
 bool GraphScheduler::EnableRuntimePipeline() {
   static const char kEnableRuntimePipeline[] = "MS_ENABLE_RUNTIME_PIPELINE";
-  static bool ret = common::GetEnv(kEnableRuntimePipeline) == "1";
-  return ret;
+  static bool disable = common::GetEnv(kEnableRuntimePipeline) == "0";
+  if (disable) {
+    return false;
+  }
+
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->get_param<bool>(MS_CTX_ENABLE_MEM_OFFLOAD)) {
+    return false;
+  }
+
+  if (ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kCPUDevice) {
+    return false;
+  }
+
+  if (distributed::recovery::RecoveryContext::GetInstance()->enable_recovery()) {
+    return false;
+  }
+
+  if (recorder_aid_ != nullptr || debug_aid_ != nullptr) {
+    return false;
+  }
+
+  return true;
 }
 
 }  // namespace runtime

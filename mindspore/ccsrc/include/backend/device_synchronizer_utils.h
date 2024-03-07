@@ -18,15 +18,28 @@
 #define MINDSPORE_CCSRC_INCLUDE_BACKEND_DEVICE_SYNCHRONIZER_UTILS_H
 
 #ifndef BUILD_LITE
+#include "runtime/graph_scheduler/actor/kernel_async_infer_actor.h"
 #include "runtime/graph_scheduler/actor/kernel_async_resize_actor.h"
 #include "runtime/graph_scheduler/actor/kernel_async_launch_actor.h"
 #endif
 
 namespace mindspore {
 static inline void WaitAsyncResizeAndLaunchFinish() {
+// The runtime pipeline: InferShape->ResizeKernelMod->LaunchKernel, the latter cannot wait for the former, otherwise
+// deadlock may occur.
+// 1. infer shape task needs to wait for resize and kernel launch.
+// 2. Internally, the resize task only needs to wait for the kernel launch
 #ifndef BUILD_LITE
   if (runtime::ActorDispatcher::enable_runtime_multi_pipeline()) {
-    runtime::KernelAsyncResizeActor::GetInstance()->Wait();
+    const auto &cur_thread_id = std::this_thread::get_id();
+    if (cur_thread_id != runtime::KernelAsyncResizeActor::GetInstance()->actor_thread_id() &&
+        cur_thread_id != runtime::KernelAsyncLaunchActor::GetInstance()->actor_thread_id()) {
+      runtime::KernelAsyncInferActor::GetInstance()->Wait();
+    }
+
+    if (cur_thread_id != runtime::KernelAsyncLaunchActor::GetInstance()->actor_thread_id()) {
+      runtime::KernelAsyncResizeActor::GetInstance()->Wait();
+    }
   }
 
   if (runtime::ActorDispatcher::enable_async_launch_kernel()) {

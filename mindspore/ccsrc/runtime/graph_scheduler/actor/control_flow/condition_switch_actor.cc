@@ -91,6 +91,10 @@ void ConditionSwitchActor::SendOutput(OpContext<DeviceTensor> *const context, si
 
 void ConditionSwitchActor::Run(OpContext<DeviceTensor> *const context) {
   try {
+    if (!WaitRuntimePipelineFinish(context)) {
+      MS_LOG(INFO) << "Run failed and early stop.";
+      return;
+    }
     FetchInput(context);
     MS_EXCEPTION_IF_NULL(input_device_tensors_[0]);
     MS_EXCEPTION_IF_NULL(input_device_tensors_[0]->kernel_tensor());
