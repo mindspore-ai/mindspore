@@ -1208,6 +1208,15 @@ class Profiler:
 
     def _ascend_ms_analyze(self, source_path):
         """Ascend ms generate"""
+        time_stamp = time.strftime("%Y%m%d%H%M%S", time.localtime(time.time()))
+        if self._rank_id:
+            ascend_ms_path = f"rank-{self._rank_id}_{time_stamp}_ascend_ms"
+        else:
+            ascend_ms_path = f"{socket.gethostname()}--{os.getpid()}_{time_stamp}_ascend_ms"
+        self._ascend_ms_path = os.path.join(self._output_path, ascend_ms_path)
+        if not os.path.exists(self._ascend_ms_path):
+            os.makedirs(self._ascend_ms_path, exist_ok=True)
+            os.chmod(self._ascend_ms_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
 
         dev_id = self._rank_id if self._device_target == DeviceTarget.ASCEND.value else self._dev_id
         ascend_profiler_output_path = os.path.join(self._ascend_ms_path, 'ASCEND_PROFILER_OUTPUT')
@@ -1688,24 +1697,13 @@ class Profiler:
             output_path = kwargs.pop("output_path")
             self._output_path = validate_and_normalize_path(output_path)
 
-        time_stamp = time.strftime("%Y%m%d%H%M%S", time.localtime(time.time()))
-        if self._rank_id:
-            ascend_ms_path = f"rank-{self._rank_id}_{time_stamp}_ascend_ms"
-        else:
-            ascend_ms_path = f"{socket.gethostname()}--{os.getpid()}_{time_stamp}_ascend_ms"
-
         self._output_path = os.path.join(self._output_path, "profiler")
-        self._ascend_ms_path = os.path.join(self._output_path, ascend_ms_path)
         if not os.path.exists(self._output_path):
             os.makedirs(self._output_path, exist_ok=True)
             os.chmod(self._output_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
         else:
             logger.warning("The target dir already exists. "
                            "There may be some old profiling data, and they will be rewritten in the end.")
-
-        if not os.path.exists(self._ascend_ms_path):
-            os.makedirs(self._ascend_ms_path, exist_ok=True)
-            os.chmod(self._ascend_ms_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
 
     def _parser_kwargs(self, kwargs):
         """Parse kwargs vale."""
