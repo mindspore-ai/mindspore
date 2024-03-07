@@ -56,6 +56,7 @@ const AnfNodePtr ProcessCallInline::Process(const FuncGraphPtr &graph, const Anf
     }
     auto call_inline = graph->NewCNode(call_inline_inputs);
     MS_EXCEPTION_IF_NULL(call_inline);
+    call_inline->set_scope(node->scope());
     call_inline->set_abstract(cnode->abstract());
     common::AnfAlgo::SetNodeAttr(kAttrKernelGraph, MakeValue(sub_kernel_graph), call_inline);
     return call_inline;

@@ -229,6 +229,7 @@ void CreateMultipleOutputsOfAnfNode(const FuncGraphPtr &func_graph, const AnfNod
     idx->set_abstract(abstract_scalar);
     auto tuple_getitem = func_graph->NewCNode({NewValueNode(prim::kPrimTupleGetItem), node, idx});
     MS_EXCEPTION_IF_NULL(tuple_getitem);
+    tuple_getitem->set_scope(node->scope());
     common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(type_ptr, i)},
                                                 {common::AnfAlgo::GetOutputInferShape(node, i)}, tuple_getitem.get());
     (*outputs).push_back(tuple_getitem);

@@ -73,6 +73,7 @@ bool DropoutGenMaskDepend::Run(const FuncGraphPtr &func_graph) {
     std::vector<AnfNodePtr> inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimDepend->name())),
                                       common::AnfAlgo::GetInputNode(next_cnode, 0), this_node};
     auto new_input = func_graph->NewCNode(inputs);
+    new_input->set_scope(this_node->scope());
     new_input->set_abstract(common::AnfAlgo::GetInputNode(next_cnode, 0)->abstract());
     common::AnfAlgo::SetNodeInput(next_cnode, new_input, 0);
     changed = true;

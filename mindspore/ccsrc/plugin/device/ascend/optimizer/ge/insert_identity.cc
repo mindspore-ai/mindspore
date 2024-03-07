@@ -86,6 +86,7 @@ CNodePtr InsertTransIdentityForInput(const FuncGraphPtr &func_graph, const CNode
     auto input_kernel = common::AnfAlgo::GetInputNode(cnode, index);
     auto identity_node =
       kernel_graph->NewCNode({NewValueNode(std::make_shared<Primitive>(kIdentityOpName)), input_kernel});
+    identity_node->set_scope(cnode->scope());
     auto kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(cnode, index, false);
     bool need_cast = cast_input->count(index) != 0;
     if (need_cast) {
@@ -107,6 +108,7 @@ CNodePtr InsertCastIdentityForInput(const FuncGraphPtr &func_graph, const CNodeP
     auto input_kernel = common::AnfAlgo::GetInputNode(cnode, index);
     auto identity_node =
       kernel_graph->NewCNode({NewValueNode(std::make_shared<Primitive>(kIdentityOpName)), input_kernel});
+    identity_node->set_scope(cnode->scope());
     auto kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(cnode, index, false);
     SetBuildInfo(kernel_with_index.first, identity_node, kernel_with_index.second, false, true);
     common::AnfAlgo::SetNodeInput(cnode, identity_node, index);
@@ -124,6 +126,7 @@ CNodePtr InsertIdentityForOutput(const FuncGraphPtr &func_graph, const CNodePtr 
   MS_EXCEPTION_IF_NULL(kernel_graph);
   CNodePtr new_node = kernel_graph->NewCNode({NewValueNode(std::make_shared<Primitive>(kIdentityOpName)), cnode});
   MS_EXCEPTION_IF_NULL(new_node);
+  new_node->set_scope(cnode->scope());
   SetBuildInfo(cnode, new_node, 0);
   return new_node;
 }

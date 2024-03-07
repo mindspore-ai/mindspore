@@ -71,6 +71,7 @@ CNodePtr AllToAllUnifyMindIR::CreateSplitNode(const FuncGraphPtr &graph, const C
                                          all_to_all_input};
   auto split_v = NewCNode(split_input, graph);
   MS_EXCEPTION_IF_NULL(split_v);
+  split_v->set_scope(all_to_all->scope());
   auto dtype = common::AnfAlgo::GetOutputInferDataType(all_to_all_input, 0);
   auto shape = common::AnfAlgo::GetOutputInferShape(all_to_all_input, 0);
   auto shape_size = SizeToLong(shape.size());
@@ -117,6 +118,7 @@ CNodePtr AllToAllUnifyMindIR::CreateAllToAllvNode(const FuncGraphPtr &graph, con
   (void)all_to_all_v_input.insert(all_to_all_v_input.end(), split_outputs.begin(), split_outputs.end());
   auto all_to_all_v = NewCNode(all_to_all_v_input, graph);
   MS_EXCEPTION_IF_NULL(all_to_all_v);
+  all_to_all_v->set_scope(all_to_all->scope());
   auto single_shape = AnfAlgo::GetOutputDetailShape(split_outputs[0], 0UL);
   auto single_type = common::AnfAlgo::GetOutputInferDataType(split_outputs[0], 0UL);
   std::vector<TypeId> dtypes(split_count, single_type);
@@ -161,6 +163,7 @@ CNodePtr AllToAllUnifyMindIR::CreateConcatNode(const FuncGraphPtr &graph, const 
   std::vector<AnfNodePtr> concat_input = {NewValueNode(std::make_shared<Primitive>(kConcatDOpName)), all_to_all_v};
   auto concat = NewCNode(concat_input, graph);
   MS_EXCEPTION_IF_NULL(concat);
+  concat->set_scope(all_to_all->scope());
   auto single_shape = common::AnfAlgo::GetOutputInferShape(all_to_all_v_outputs[0], 0);
   auto shape_size = SizeToLong(single_shape.size());
   if (concat_dim >= shape_size || concat_dim < -shape_size) {

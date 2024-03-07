@@ -60,7 +60,7 @@ class FlashAttentionFusionV1 : public FlashAttentionFusion {
 class FlashAttentionFusionV2 : public FlashAttentionFusion {
  public:
   explicit FlashAttentionFusionV2(bool multigraph = true)
-      : FlashAttentionFusion("FlashAttentionFusionV1", multigraph) {}
+      : FlashAttentionFusion("FlashAttentionFusionV2", multigraph) {}
   ~FlashAttentionFusionV2() override = default;
 
  private:

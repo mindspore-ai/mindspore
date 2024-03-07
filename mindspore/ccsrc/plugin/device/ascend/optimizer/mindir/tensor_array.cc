@@ -127,6 +127,7 @@ const AnfNodePtr GeTensorArrayCastIndex::Process(const FuncGraphPtr &graph, cons
   MS_EXCEPTION_IF_NULL(new_node);
   cast_abstract->set_type(dst_type);
   new_node->set_abstract(cast_abstract);
+  new_node->set_scope(node->scope());
 
   auto input_names = std::vector<std::string>{"x", "dst_type"};
   auto output_names = std::vector<std::string>{"output"};

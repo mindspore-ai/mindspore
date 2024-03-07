@@ -96,6 +96,7 @@ CNodePtr CreateReshape(const FuncGraphPtr &graph, const AnfNodePtr &input_node, 
   auto data_types = common::AnfAlgo::GetOutputInferDataType(input_node, 0UL);
   common::AnfAlgo::SetOutputInferTypeAndShape({data_types}, {shape}, reshape_node.get());
   common::AnfAlgo::SetNodeAttr(kShapeFromTensor, MakeValue(true), reshape_node);
+  reshape_node->set_scope(input_node->scope());
   return reshape_node;
 }
 void GetDepthAndBatchSizeFromSparseSoftmaxNode(const AnfNodePtr &sparse_softmax_node, int64_t *batch_size,
@@ -629,10 +630,10 @@ const AnfNodePtr GradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR::Process(con
   std::vector<AnfNodePtr> inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimDepend->name())),
                                     NewValueNode(MakeValue<bool>(true)), NewValueNode(MakeValue<bool>(true))};
   auto new_depend = graph->NewCNode(inputs);
+  new_depend->set_scope(depend_node->scope());
   (void)manager->Replace(sparse_softmax_node_grad, new_depend);
 
-  int64_t batch_size;
-  int64_t depth;
+  int64_t batch_size, depth;
   GetDepthAndBatchSizeFromSparseSoftmaxNode(sparse_softmax_node, &batch_size, &depth);
   auto is_dynamic = common::AnfAlgo::IsDynamicShape(sparse_softmax_node);
   ShapeVector shape = is_dynamic ? ShapeVector{-1, depth} : ShapeVector{batch_size, depth};

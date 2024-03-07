@@ -34,6 +34,11 @@ class AdamWeightDecayUnifyMindIR : public PatternProcessPass {
   ~AdamWeightDecayUnifyMindIR() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+
+ private:
+  const AnfNodePtr CreateAdamApplyOneWithDecay(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+                                               const AnfNodePtr &ori_param, const AnfNodePtrList &input_list,
+                                               const AnfNodePtrList &new_node_inputs) const;
 };
 }  // namespace opt
 }  // namespace mindspore

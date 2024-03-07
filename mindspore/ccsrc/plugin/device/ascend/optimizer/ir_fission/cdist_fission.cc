@@ -67,6 +67,7 @@ AnfNodePtr AddBroadCastToNode(const FuncGraphPtr &func_graph, const AnfNodePtr &
   std::vector<AnfNodePtr> expand_dims_inputs = {
     NewValueNode(std::make_shared<Primitive>(prim::kPrimExpandDims->name())), input_node};
   auto expand_dims = pass.NewCNode(expand_dims_inputs, func_graph);
+  expand_dims->set_scope(input_node->scope());
   auto dtype = common::AnfAlgo::GetOutputInferDataType(input_node, 0);
   auto expand_shape = common::AnfAlgo::GetOutputInferShape(input_node, 0);
   (void)expand_shape.insert(expand_shape.cend() + dim, 1);
@@ -80,6 +81,7 @@ AnfNodePtr AddBroadCastToNode(const FuncGraphPtr &func_graph, const AnfNodePtr &
   auto broadcast_to = pass.NewCNode(broadcast_to_inputs, func_graph);
   common::AnfAlgo::SetOutputInferTypeAndShape({dtype}, {need_shape}, broadcast_to.get());
   common::AnfAlgo::SetNodeAttr("is_backend_insert", MakeValue(true), broadcast_to);
+  broadcast_to->set_scope(input_node->scope());
   return broadcast_to;
 }
 }  // namespace
@@ -127,6 +129,7 @@ const AnfNodePtr CdistFission::Process(const FuncGraphPtr &graph, const AnfNodeP
   MS_EXCEPTION_IF_NULL(new_cnode);
   new_cnode->set_abstract(cdist_cnode->abstract());
   new_cnode->set_scope(cdist_cnode->scope());
+  new_cnode->set_fullname_with_scope(cdist_cnode->fullname_with_scope());
   common::AnfAlgo::CopyNodeAttrs(cdist_cnode, new_cnode);
   return new_cnode;
 }
@@ -162,6 +165,7 @@ const AnfNodePtr CdistGradFission::Process(const FuncGraphPtr &graph, const AnfN
   MS_EXCEPTION_IF_NULL(new_cnode);
   new_cnode->set_abstract(cdist_grad_cnode->abstract());
   new_cnode->set_scope(cdist_grad_cnode->scope());
+  new_cnode->set_fullname_with_scope(cdist_grad_cnode->fullname_with_scope());
   common::AnfAlgo::CopyNodeAttrs(cdist_grad_cnode, new_cnode);
   return new_cnode;
 }
