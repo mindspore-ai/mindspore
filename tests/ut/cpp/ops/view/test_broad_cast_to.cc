@@ -37,7 +37,7 @@ TEST_F(TestViewBroadcastTo, func) {
   auto input_tensor = std::make_shared<tensor::Tensor>(tensor_data, kInt64);
   input_tensor->set_shape({1, 4});
 
-  auto storage_list = BroadCastToCalc(prim, std::vector<ValuePtr>({input_tensor, input_perm}));
+  auto storage_list = BroadcastToCalc(prim, std::vector<ValuePtr>({input_tensor, input_perm}));
   std::vector<int64_t> expect_shape({2, 1, 4});
   std::vector<int64_t> expect_strides({0, 4, 1});
   size_t expect_size = 1;
@@ -67,7 +67,7 @@ TEST_F(TestViewBroadcastTo, BroadDim) {
                                                        tensor_total_length * sizeof(int64_t));
 
   std::vector<ValuePtr> inputs{input_tensor, input_perm};
-  auto storage_list = BroadCastToCalc(prim, inputs);
+  auto storage_list = BroadcastToCalc(prim, inputs);
   std::vector<int64_t> expect_shape({2, 1, 2, 3});
   std::vector<int64_t> expect_strides({0, 6, 3, 1});
   size_t expect_size = 1;
@@ -80,7 +80,7 @@ TEST_F(TestViewBroadcastTo, BroadDim) {
   input_perm = MakeValue(perm_data);
   inputs[kIndex1] = input_perm;
 
-  storage_list = BroadCastToCalc(prim, inputs);
+  storage_list = BroadcastToCalc(prim, inputs);
   std::vector<int64_t> expect_shape_2({3, 2, 3});
   std::vector<int64_t> expect_strides_2({0, 3, 1});
   ASSERT_EQ(storage_list.size(), expect_size);
