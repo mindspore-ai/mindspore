@@ -117,8 +117,8 @@ uint32_t GenerateEodMaskCpuKernel::ComputeKernel(CpuKernelContext &ctx, const in
   KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, batch_size, get_per_unit_size(batch_size), shard_generate_tril),
                       "GenerateEodMask kernel compute failed.");
   for (uint32_t i = 0; i < n_step.size(); ++i) {
-    bool condition = circle >= 1 && compute_count != 0 && compute_count % circle == 0;
-    if (condition || compute_count == n_step[i] || n_step[i] == -1) {
+    bool condition = circle >= 1 && _compute_count != 0 && _compute_count % circle == 0;
+    if (condition || _compute_count == n_step[i] || n_step[i] == -1) {
       // cppcheck-suppress *
       auto new_ds = reinterpret_cast<M *>(&input_positionptr[n_pos]);
 
@@ -139,7 +139,7 @@ uint32_t GenerateEodMaskCpuKernel::ComputeKernel(CpuKernelContext &ctx, const in
       break;
     }
   }
-  ++compute_count;
+  ++_compute_count;
   return KERNEL_STATUS_OK;
 }
 REGISTER_MS_CPU_KERNEL(kGenerateEodMask, GenerateEodMaskCpuKernel);

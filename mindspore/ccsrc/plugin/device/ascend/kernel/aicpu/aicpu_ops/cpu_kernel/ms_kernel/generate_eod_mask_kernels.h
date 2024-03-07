@@ -32,10 +32,10 @@ class GenerateEodMaskCpuKernel : public CpuKernel {
   template <typename T, typename M>
   uint32_t ComputeKernel(CpuKernelContext &ctx, const int64_t &n_pos, const int64_t &eod_token_id,
                          const std::vector<int64_t> &n_step, const int64_t &circle, const bool &enable_mask_nfirst);
-  static int64_t compute_count;
-  static int64_t skip_step;
+  static int64_t _compute_count;
+  static int64_t _skip_step;
 };
-int64_t GenerateEodMaskCpuKernel::compute_count = 0;
-int64_t GenerateEodMaskCpuKernel::skip_step = 0;
+int64_t GenerateEodMaskCpuKernel::_compute_count = 0;
+int64_t GenerateEodMaskCpuKernel::_skip_step = 0;
 }  // namespace aicpu
 #endif  // AICPU_KERNELS_GENERATEEODMASK_H_

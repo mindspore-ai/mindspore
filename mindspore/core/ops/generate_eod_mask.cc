@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,8 +98,8 @@ class MIND_API AGGenerateEodMaskInfer : public abstract::OpInferBase {
     MS_EXCEPTION_IF_NULL(primitive);
     const int64_t kInputsNum = 1;
     CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputsNum, primitive->name());
-    auto type = InferType(primitive, input_args);
-    auto shape = InferShape(primitive, input_args);
+    const auto &type = InferType(primitive, input_args);
+    const auto &shape = InferShape(primitive, input_args);
     return abstract::MakeAbstract(shape, type);
   }
 };

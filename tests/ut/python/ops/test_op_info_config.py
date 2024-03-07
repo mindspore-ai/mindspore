@@ -1,4 +1,4 @@
-# Copyright 2023 Huawei Technologies Co., Ltd
+# Copyright 2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -53,8 +53,7 @@ def test_op_info_config():
 
     hash_object = hashlib.md5(hash_list.encode('utf-8'))
     hash_value = hash_object.hexdigest()
-
-    expect_value = "ab2fab2eb6b4d168bf837bca5888d09f"
+    expect_value = "1ca6ed4df14d1d35e96ba261ab035d92"
     if hash_value != expect_value:
         log.error(
             "Hash value check failed! You have modified the registration file of AICPU and CPU, please check whether "

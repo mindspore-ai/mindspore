@@ -69,6 +69,7 @@ namespace parallel {
 static const std::set<std::string> INVALID_LOSS_OPS = {GET_NEXT, VIRTUALLOSS, LOAD, UPDATESTATE};
 static const std::set<std::string> NO_INPUT_TENSOR_OPS = {UNIFORM_REAL, STANDARD_NORMAL};
 const uint32_t MAX_BFS_DEPTH = 7;
+const char kSilentCheckEnvEnable[] = "1";
 
 static void SetAllReduceRecomputeFlag(const std::vector<AnfNodePtr> &new_node_input, const CNodePtr &node) {
   if (new_node_input.empty()) {
@@ -1051,6 +1052,22 @@ static CNodePtr SkipTrivialNodesMoveUp(CNodePtr node) {
   }
 }
 
+static void CreateMirrorForParam(const ParameterPtr param_ptr, OperatorVector *backward_op, bool *is_shared_param) {
+  std::string opt_shard_mirror_group;
+  if (param_ptr->user_data<TensorLayout>()) {
+    opt_shard_mirror_group = param_ptr->user_data<TensorLayout>()->opt_shard_mirror_group();
+    *is_shared_param = param_ptr->user_data<TensorLayout>()->is_shared_param();
+  }
+  if (!opt_shard_mirror_group.empty()) {
+    // mirror ops is covered in not fully use opt shard case
+    uint32_t group_rank_size = 0;
+    if (!CommManager::GetInstance().GetRankSize(opt_shard_mirror_group, &group_rank_size)) {
+      MS_LOG(EXCEPTION) << "Got the group size from the group " << opt_shard_mirror_group << " failed";
+    }
+    *backward_op = CreateMirrorOps(opt_shard_mirror_group, static_cast<size_t>(group_rank_size));
+  }
+}
+
 static void DoInsertMirrorOps(const FuncGraphPtr &root, const MirrorOps &mirror_ops, const CNodePtr &node) {
   FuncGraphPtr func_graph = node->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
@@ -1084,19 +1101,7 @@ static void DoInsertMirrorOps(const FuncGraphPtr &root, const MirrorOps &mirror_
         MS_LOG(INFO) << param_name << " do not need gradient. Skip inserting mirror.";
         continue;
       }
-      std::string opt_shard_mirror_group;
-      if (param_ptr->user_data<TensorLayout>()) {
-        opt_shard_mirror_group = param_ptr->user_data<TensorLayout>()->opt_shard_mirror_group();
-        is_shared_param = param_ptr->user_data<TensorLayout>()->is_shared_param();
-      }
-      if (!opt_shard_mirror_group.empty()) {
-        // mirror ops is covered in not fully use opt shard case
-        uint32_t group_rank_size = 0;
-        if (!CommManager::GetInstance().GetRankSize(opt_shard_mirror_group, &group_rank_size)) {
-          MS_LOG(EXCEPTION) << "Got the group size from the group " << opt_shard_mirror_group << " failed";
-        }
-        backward_op = CreateMirrorOps(opt_shard_mirror_group, static_cast<size_t>(group_rank_size));
-      }
+      CreateMirrorForParam(param_ptr, &backward_op, &is_shared_param);
     }
     // not a RefKey
     std::string mirror_op_name = MirrorOpName();
@@ -3107,10 +3112,13 @@ static void BroadcastLastResult(const FuncGraphPtr &root, const FuncGraphManager
 
 static void HandleSilentCheck(const FuncGraphPtr &root, const FuncGraphManagerPtr &mng) {
   auto env = common::GetEnv(NPU_ASD_ENABLE);
-  if (env != "1") {
+  if (env != kSilentCheckEnvEnable) {
     return;
   }
   auto sdc = std::make_shared<SilentCheck>(root, mng);
+  if (sdc == nullptr) {
+    MS_LOG(EXCEPTION) << "The silent check env got nullptr;";
+  }
   sdc->GetLossScale();
   sdc->ModifySilentCheckOps();
 }

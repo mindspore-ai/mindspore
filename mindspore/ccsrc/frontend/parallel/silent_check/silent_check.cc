@@ -26,8 +26,8 @@ void SilentCheck::GetLossScale() {
   for (const auto &param : parameters) {
     auto param_ptr = param->cast<ParameterPtr>();
     MS_EXCEPTION_IF_NULL(param_ptr);
-    auto name = param_ptr->name();
-    if (name == LOSS_SCALE) {
+    const auto &name = param_ptr->name();
+    if (name == kScale_Sense) {
       loss_scale_ = param;
     }
   }
@@ -38,9 +38,9 @@ void SilentCheck::ModifySilentCheckOps() {
   auto ret = root_->get_return();
   MS_EXCEPTION_IF_NULL(ret);
   MS_EXCEPTION_IF_NULL(mng_);
-  auto all_nodes = DeepScopedGraphSearch(ret);
+  const auto &all_nodes = DeepScopedGraphSearch(ret);
   for (const auto &node : all_nodes) {
-    if (!IsPrimitiveCNode(node, prim::kPrimMirrorSilentCheck)) {
+    if (node && !IsPrimitiveCNode(node, prim::kPrimMirrorSilentCheck)) {
       continue;
     }
     auto cnode = node->cast<CNodePtr>();
