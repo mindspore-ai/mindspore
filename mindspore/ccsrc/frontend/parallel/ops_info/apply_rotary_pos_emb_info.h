@@ -45,7 +45,7 @@ constexpr size_t kInputCosSeqLenIndex = 0;
 constexpr size_t kInputCosHeaDimIndex = 1;
 constexpr size_t kInputSinSeqLenIndex = 0;
 constexpr size_t kInputSinHeaDimIndex = 1;
-constexpr size_t kInputPositionIdsBatchIndex = 2;
+constexpr size_t kInputPositionIdsBatchIndex = 0;
 constexpr size_t kIncInferSeqLen = 1;
 class ApplyRotaryPosEmbInfo : public OperatorInfo {
  public:
