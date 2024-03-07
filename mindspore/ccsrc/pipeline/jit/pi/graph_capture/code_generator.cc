@@ -1194,10 +1194,11 @@ void CodeBreakGenerator::BuildGraphParameters(const std::unordered_map<ValueNode
 }
 
 std::string GraphParameterBuilder::Key(int index, ValueNode *n) {
+  static uint64_t kId = 0;
   PyTypeObject *tp = n->GetVobj() ? n->GetVobj()->GetTypeObject() : nullptr;
   std::string descr = AObject::GetTypeDesc(n->GetVobj() ? n->GetVobj()->GetType() : AObject::kTypeAnyValue);
   std::stringstream s;
-  s << "Parameter<" << index << ">" << (tp ? (tp->tp_name ? tp->tp_name : "<unnamed>") : descr);
+  s << "<" << index << ">" << (tp ? (tp->tp_name ? tp->tp_name : "<unnamed>") : descr) << "<" << (kId++) << ">";
   return s.str();
 }
 
