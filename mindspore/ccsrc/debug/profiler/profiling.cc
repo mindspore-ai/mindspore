@@ -33,7 +33,6 @@ constexpr auto HostDataHeader =
   "tid,pid,parent_pid,module_name,event,stage,level,start_end,custom_info,memory_usage(kB),time_stamp(us)\n";
 const auto kVmRSS = "VmRSS";
 std::mutex file_line_mutex;
-static bool log_once = false;
 static bool first_open_file = true;
 const int profile_all = 0;
 const int profile_memory = 1;
@@ -271,18 +270,9 @@ void CollectHostInfo(const std::string &module_name, const std::string &event, c
 #else
   auto profiler_manager = profiler::ProfilerManager::GetInstance();
   MS_EXCEPTION_IF_NULL(profiler_manager);
-  if (!log_once && !profiler_manager->GetProfilingEnableFlag()) {
-    MS_LOG(DEBUG) << "Profiler is not enabled, no need to record Host info.";
-    log_once = true;
-    return;
-  } else if (!profiler_manager->GetProfilingEnableFlag()) {
-    return;
-  }
-  if (!log_once && !profiler_manager->EnableCollectHost()) {
-    MS_LOG(DEBUG) << "Profiler profile_framework is not enabled, no need to record Host info.";
-    log_once = true;
-    return;
-  } else if (!profiler_manager->EnableCollectHost()) {
+  if (!profiler_manager->GetProfilingEnableFlag() || !profiler_manager->EnableCollectHost()) {
+    first_open_file = true;
+    MS_LOG(DEBUG) << "Profiler or profile_framework is not enabled, no need to record Host info.";
     return;
   }
   auto output_path = profiler_manager->ProfileDataPath();
@@ -383,6 +373,7 @@ void WriteHostDataToFile(const HostProfileData &host_profile_data, const std::st
   row.append(std::to_string(host_profile_data.time_stamp));
 
   csv.WriteToCsv(row, true);
+  csv.CloseFile();
 }
 #endif
 }  // namespace profiler
