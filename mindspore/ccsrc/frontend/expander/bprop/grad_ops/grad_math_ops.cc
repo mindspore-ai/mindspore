@@ -2870,5 +2870,31 @@ REG_BPROP_BUILDER("DCT").SetBody(BODYFUNC(ib) {
   return {grad_dout,          ib->OutZeros(type),    ib->OutZeros(n),   ib->OutZeros(axis),
           ib->OutZeros(norm), ib->OutZeros(forward), ib->OutZeros(grad)};
 });
+
+REG_BPROP_BUILDER("RFFT").SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto n = ib->GetInput(kIndex1);
+  auto dim = ib->GetInput(kIndex2);
+  auto norm = ib->GetInput(kIndex3);
+  auto out = ib->GetInput(kIndex4);
+  auto dout = ib->GetInput(kIndex5);
+
+  auto grad_dout = ib->Emit("RFFTGrad", {dout, x, n, dim, norm});
+
+  return {grad_dout, ib->OutZeros(n), ib->OutZeros(dim), ib->OutZeros(norm)};
+});
+
+REG_BPROP_BUILDER("IRFFT").SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto n = ib->GetInput(kIndex1);
+  auto dim = ib->GetInput(kIndex2);
+  auto norm = ib->GetInput(kIndex3);
+  auto out = ib->GetInput(kIndex4);
+  auto dout = ib->GetInput(kIndex5);
+
+  auto grad_dout = ib->Emit("IRFFTGrad", {dout, x, n, dim, norm});
+
+  return {grad_dout, ib->OutZeros(n), ib->OutZeros(dim), ib->OutZeros(norm)};
+});
 REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop

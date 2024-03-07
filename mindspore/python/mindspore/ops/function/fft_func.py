@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Defines Fast Fourier Transform operators with functional form."""
-from mindspore.ops.auto_generate import fft, fft2, fftn, ifft, ifft2, ifftn, fftshift, ifftshift
+from mindspore.ops.auto_generate import fft, fft2, fftn, ifft, ifft2, ifftn, fftshift, ifftshift, rfft, irfft
 
 __all__ = [
     'fftshift',
@@ -23,7 +23,9 @@ __all__ = [
     'fftn',
     'ifft',
     'ifft2',
-    'ifftn'
+    'ifftn',
+    'rfft',
+    'irfft'
 ]
 
 __all__.sort()

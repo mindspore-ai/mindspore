@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_FFTBASE_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_FFTBASE_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_IRFFT_GRAD_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_IRFFT_GRAD_CPU_KERNEL_H_
 
 #include <vector>
 #include <complex>
@@ -30,10 +30,10 @@
 
 namespace mindspore {
 namespace kernel {
-class FFTBaseCpuKernelMod : public NativeCpuKernelMod {
+class IRFFTGradCpuKernelMod : public NativeCpuKernelMod {
  public:
-  FFTBaseCpuKernelMod() = default;
-  ~FFTBaseCpuKernelMod() override = default;
+  IRFFTGradCpuKernelMod() = default;
+  ~IRFFTGradCpuKernelMod() override = default;
 
   bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
   int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
@@ -50,21 +50,20 @@ class FFTBaseCpuKernelMod : public NativeCpuKernelMod {
   bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
                     const std::vector<kernel::KernelTensor *> &outputs);
 
-  using FFTBaseFunc = std::function<bool(FFTBaseCpuKernelMod *, const std::vector<KernelTensor *> &,
-                                         const std::vector<KernelTensor *> &)>;
-  static std::vector<std::pair<KernelAttr, FFTBaseFunc>> func_list_;
-  FFTBaseFunc kernel_func_;
+  using IRFFTGradFunc = std::function<bool(IRFFTGradCpuKernelMod *, const std::vector<KernelTensor *> &,
+                                           const std::vector<KernelTensor *> &)>;
+  static std::vector<std::pair<KernelAttr, IRFFTGradFunc>> func_list_;
+  IRFFTGradFunc kernel_func_;
 
   std::vector<int64_t> tensor_shape_;
   int64_t x_rank_;
-  int64_t dim_;
-  int64_t n_;
+  std::vector<int64_t> tensor2_shape_;
+  int64_t x2_rank_;
+  int64_t dim;
+  int64_t n;
   int64_t input_element_nums_;
-  double norm_weight_;
-  mindspore::NormMode norm_;
-  bool forward_;
-  bool rfft_slice_;
+  mindspore::NormMode norm;
 };
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_FFTBASE_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_IRFFT_GRAD_CPU_KERNEL_H_

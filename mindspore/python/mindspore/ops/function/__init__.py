@@ -718,6 +718,8 @@ from .fft_func import (
     ifft2,
     ifftn,
     ifftshift,
+    rfft,
+    irfft,
 )
 from .other_func import (
     depend,

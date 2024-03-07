@@ -416,6 +416,32 @@ CUST_ATTR_MAP(IFFTShift) = EMPTY_ATTR_MAP;
 CUST_OUTPUT_MAP(IFFTShift) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(IFFTShift, prim::kPrimIFFTShift->name(), CUST_ADPT_DESC(IFFTShift));
 
+// RFFT
+CUST_INPUT_MAP(RFFT) = {{1, INPUT_DESC(input)}, {2, INPUT_DESC(n)}, {3, INPUT_DESC(dim)}, {4, INPUT_DESC(norm)}};
+CUST_ATTR_MAP(RFFT) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(RFFT) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(RFFT, prim::kPrimRFFT->name(), CUST_ADPT_DESC(RFFT));
+
+// IRFFT
+CUST_INPUT_MAP(IRFFT) = {{1, INPUT_DESC(input)}, {2, INPUT_DESC(n)}, {3, INPUT_DESC(dim)}, {4, INPUT_DESC(norm)}};
+CUST_ATTR_MAP(IRFFT) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(IRFFT) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(IRFFT, prim::kPrimIRFFT->name(), CUST_ADPT_DESC(IRFFT));
+
+// IRFFTGrad
+CUST_INPUT_MAP(IRFFTGrad) = {
+  {1, INPUT_DESC(input1)}, {2, INPUT_DESC(input2)}, {3, INPUT_DESC(n)}, {4, INPUT_DESC(dim)}, {5, INPUT_DESC(norm)}};
+CUST_ATTR_MAP(IRFFTGrad) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(IRFFTGrad) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(IRFFTGrad, prim::kPrimIRFFTGrad->name(), CUST_ADPT_DESC(IRFFTGrad));
+
+// RFFTGrad
+CUST_INPUT_MAP(RFFTGrad) = {
+  {1, INPUT_DESC(input1)}, {2, INPUT_DESC(input2)}, {3, INPUT_DESC(n)}, {4, INPUT_DESC(dim)}, {5, INPUT_DESC(norm)}};
+CUST_ATTR_MAP(RFFTGrad) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(RFFTGrad) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(RFFTGrad, prim::kPrimRFFTGrad->name(), CUST_ADPT_DESC(RFFTGrad));
+
 std::vector<std::string> mode_strings = {"pad", "same", "valid", "full"};
 // Correlate
 CUST_INPUT_MAP(Correlate) = {{1, INPUT_DESC(a)}, {2, INPUT_DESC(v)}};

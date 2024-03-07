@@ -24,10 +24,12 @@
 namespace aicpu {
 const uint32_t kOutputNum = 1;
 const uint32_t kInputNum = 1;
+const int kRealFFTSideNum = 2;
 const char *const kInputNName = "n";
 const char *const kInputNormName = "norm";
 const char *kFFT = "FFT";
 const char *kIFFT = "IFFT";
+const char *kRFFT = "RFFT";
 
 using complex64 = std::complex<float>;
 using complex128 = std::complex<double>;
@@ -62,28 +64,28 @@ uint32_t FFTBaseCpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-#define EIGEN_FFT_INPUT_RANK_CASE(T1, T2)                                                             \
-  if (x_rank == 1) {                                                                                  \
-    EigenFFTBase<T1, T2, 1>(calculate_input, output_ptr, forward, norm_weight, calculate_shape, dim); \
-  } else if (x_rank == 2) {                                                                           \
-    EigenFFTBase<T1, T2, 2>(calculate_input, output_ptr, forward, norm_weight, calculate_shape, dim); \
-  } else if (x_rank == 3) {                                                                           \
-    EigenFFTBase<T1, T2, 3>(calculate_input, output_ptr, forward, norm_weight, calculate_shape, dim); \
-  } else if (x_rank == 4) {                                                                           \
-    EigenFFTBase<T1, T2, 4>(calculate_input, output_ptr, forward, norm_weight, calculate_shape, dim); \
-  } else if (x_rank == 5) {                                                                           \
-    EigenFFTBase<T1, T2, 5>(calculate_input, output_ptr, forward, norm_weight, calculate_shape, dim); \
-  } else if (x_rank == 6) {                                                                           \
-    EigenFFTBase<T1, T2, 6>(calculate_input, output_ptr, forward, norm_weight, calculate_shape, dim); \
-  } else if (x_rank == 7) {                                                                           \
-    EigenFFTBase<T1, T2, 7>(calculate_input, output_ptr, forward, norm_weight, calculate_shape, dim); \
-  } else {                                                                                            \
-    EigenFFTBase<T1, T2, 8>(calculate_input, output_ptr, forward, norm_weight, calculate_shape, dim); \
+#define EIGEN_FFT_INPUT_RANK_CASE(T1, T2)                                                                         \
+  if (x_rank == 1) {                                                                                              \
+    EigenFFTBase<T1, T2, 1>(calculate_input, output_ptr, forward, norm_weight, calculate_shape, dim, rfft_slice); \
+  } else if (x_rank == 2) {                                                                                       \
+    EigenFFTBase<T1, T2, 2>(calculate_input, output_ptr, forward, norm_weight, calculate_shape, dim, rfft_slice); \
+  } else if (x_rank == 3) {                                                                                       \
+    EigenFFTBase<T1, T2, 3>(calculate_input, output_ptr, forward, norm_weight, calculate_shape, dim, rfft_slice); \
+  } else if (x_rank == 4) {                                                                                       \
+    EigenFFTBase<T1, T2, 4>(calculate_input, output_ptr, forward, norm_weight, calculate_shape, dim, rfft_slice); \
+  } else if (x_rank == 5) {                                                                                       \
+    EigenFFTBase<T1, T2, 5>(calculate_input, output_ptr, forward, norm_weight, calculate_shape, dim, rfft_slice); \
+  } else if (x_rank == 6) {                                                                                       \
+    EigenFFTBase<T1, T2, 6>(calculate_input, output_ptr, forward, norm_weight, calculate_shape, dim, rfft_slice); \
+  } else if (x_rank == 7) {                                                                                       \
+    EigenFFTBase<T1, T2, 7>(calculate_input, output_ptr, forward, norm_weight, calculate_shape, dim, rfft_slice); \
+  } else {                                                                                                        \
+    EigenFFTBase<T1, T2, 8>(calculate_input, output_ptr, forward, norm_weight, calculate_shape, dim, rfft_slice); \
   }
 
 template <typename T_in, typename T_out, int x_rank>
 bool EigenFFTBase(T_in *input_ptr, T_out *output_ptr, bool forward, double norm_weight,
-                  std::vector<int64_t> calculate_shape, int64_t dim) {
+                  std::vector<int64_t> calculate_shape, int64_t dim, bool rfft_slice) {
   Eigen::array<Eigen::DenseIndex, x_rank> calculate_shape_array;
   for (size_t i = 0; i < x_rank; ++i) {
     calculate_shape_array[i] = calculate_shape[i];
@@ -100,6 +102,19 @@ bool EigenFFTBase(T_in *input_ptr, T_out *output_ptr, bool forward, double norm_
     out = in.template fft<Eigen::BothParts, Eigen::FFT_FORWARD>(eigem_dim);
   } else {
     out = in.template fft<Eigen::BothParts, Eigen::FFT_REVERSE>(eigem_dim);
+  }
+
+  // rfft slice
+  if (rfft_slice) {
+    auto dims = in.dimensions();
+    Eigen::DSizes<Eigen::DenseIndex, x_rank> offsets;
+    Eigen::DSizes<Eigen::DenseIndex, x_rank> input_slice_sizes;
+    for (auto i = 0; i < x_rank; i++) {
+      offsets[i] = 0;
+      input_slice_sizes[i] = (i == dim) ? (dims[i] / kRealFFTSideNum + 1) : dims[i];
+    }
+    Eigen::Tensor<T_out, x_rank, Eigen::RowMajor> slice_out = out.slice(offsets, input_slice_sizes);
+    out = slice_out;
   }
 
   T_out *out_ptr = out.data();
@@ -147,6 +162,7 @@ uint32_t FFTBaseCpuKernel::FFTBaseCompute(CpuKernelContext &ctx) {
 
   bool forward = IsForwardOp(op_name_);
   double norm_weight = GetNormalized(n, norm, forward);
+  bool rfft_slice = (op_name_ == kRFFT);
 
   // step2：Calculate the required memory based on n and dim.
   int64_t input_element{ctx.Input(kIndex0)->NumElements()};
@@ -172,4 +188,5 @@ uint32_t FFTBaseCpuKernel::FFTBaseCompute(CpuKernelContext &ctx) {
 
 REGISTER_MS_CPU_KERNEL(kFFT, FFTBaseCpuKernel);
 REGISTER_MS_CPU_KERNEL(kIFFT, FFTBaseCpuKernel);
+REGISTER_MS_CPU_KERNEL(kRFFT, FFTBaseCpuKernel);
 }  // namespace aicpu

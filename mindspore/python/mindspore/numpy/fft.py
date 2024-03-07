@@ -146,6 +146,86 @@ def ifft(a, n=None, axis=-1, norm=None):
     return ops.ifft(a, n, axis, norm)
 
 
+def rfft(a, n=None, axis=-1, norm=None):
+    r"""
+    Calculates the one dimensional discrete Fourier transform for real input `a`.
+
+    Refer to :func:`mindspore.ops.rfft` for more details.
+    The difference is that `a` corresponds to `input` and `axis` corresponds to `dim`.
+
+    Args:
+        a (Tensor): The input tensor.
+        n (int, optional): Number of points along `axis` in the input to use.
+            If given, the input will either be zero-padded or trimmed to this length before computing `rfft`.
+            Default: ``None``.
+        axis (int, optional): Axis over which to compute the `rfft`.
+            Default: ``-1``, which means the last axis of `a` is used.
+        norm (string, optional): Normalization mode. Default: ``None`` that means ``"backward"``.
+            Three modes are defined as,
+
+            - ``"backward"``(no normalization).
+            - ``"forward"`` (normalize by :math:`1/n`).
+            - ``"ortho"`` (normalize by :math:`1/\sqrt{n}`).
+
+    Returns:
+        Tensor, the result of `rfft()` function.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor
+        >>> from mindspore import numpy as mnp
+        >>> input = Tensor([1, 2, 3, 4])
+        >>> y = mnp.fft.rfft(input)
+        >>> print(y)
+        [10.+0.j -2.+2.j -2.+0.j]
+    """
+    return ops.rfft(a, n, axis, norm)
+
+
+def irfft(a, n=None, axis=-1, norm=None):
+    r"""
+    Calculates the inverse of `rfft()`.
+
+    Refer to :func:`mindspore.ops.irfft` for more details.
+    The difference is that `a` corresponds to `input` and `axis` corresponds to `dim`.
+
+    Args:
+        a (Tensor): The input tensor.
+        n (int, optional): Length of the transformed `dim` of the result.
+            If given, the input will either be zero-padded or trimmed to this length before computing `rfft`.
+            If n is not given, it is taken to be :math:`2*(a.shape[axis]-1)`.
+            Default: ``None``.
+        axis (int, optional): Axis over which to compute the `irfft`.
+            Default: ``-1``, which means the last axis of `a` is used.
+        norm (string, optional): Normalization mode. Default: ``None`` that means ``"backward"``.
+            Three modes are defined as,
+
+            - ``"backward"``(no normalization).
+            - ``"forward"`` (normalize by :math:`1/n`).
+            - ``"ortho"`` (normalize by :math:`1/\sqrt{n}`).
+
+    Returns:
+        Tensor, the result of `irfft()` function.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor
+        >>> from mindspore import numpy as mnp
+        >>> input = Tensor([1, 2, 3, 4])
+        >>> y = mnp.fft.irfft(input)
+        >>> print(y)
+        [ 2.5000000e+00 -6.6666669e-01  1.2590267e-15 -1.6666667e-01
+        4.2470195e-16 -6.6666669e-01]
+    """
+    return ops.irfft(a, n, axis, norm)
+
+
 def fft2(a, s=None, axes=(-2, -1), norm=None):
     r"""
     Calculates the two dimensional discrete Fourier transform of `a`.
