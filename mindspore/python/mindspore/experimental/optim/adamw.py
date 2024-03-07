@@ -195,6 +195,8 @@ class AdamW(Optimizer):
             start_id = self.group_start_id[group_id]
             end_id = self.group_start_id[group_id + 1]
             lr = self.lrs[group_id]
+            if isinstance(group.get("lr"), float):
+                lr = self.op_cast(group.get("lr"), mstype.float32)
             grads = tuple([grad if not group.get("maximize") else F.neg(grad) for grad in gradients[start_id: end_id]])
 
             self.implementation(lr, group.get("weight_decay"), beta1, beta2, group.get("amsgrad"), group.get("eps"),
