@@ -63,9 +63,6 @@ void ConditionSwitchActor::SendOutput(OpContext<DeviceTensor> *const context, si
                 << " for actor:" << GetAID();
   ActorDispatcher::Send(*gather_aid_, &ConditionGatherActor::RunBranchName, branch_names_[index], context);
 
-  std::vector<AnfNodePtr> output_data_nodes;
-  std::vector<std::pair<OpDataUniquePtr<DeviceTensor>, size_t>> output_data;
-  std::vector<DataArrowPtr> output_data_arrows;
   if (output_data_arrows_.size() != output_data_nodes_.size() || output_data_nodes_.size() != output_data_.size() ||
       output_data_.size() != output_data_branch_indexes_.size()) {
     MS_LOG(EXCEPTION) << "Invalid data arrow size:" << output_data_arrows_.size()

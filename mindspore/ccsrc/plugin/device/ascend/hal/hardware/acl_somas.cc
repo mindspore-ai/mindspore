@@ -112,7 +112,8 @@ bool AclSomas::RuntimeNodeProcess(const session::KernelGraph &graph) {
       MS_EXCEPTION_IF_NULL(node);
       auto input_tensors = node->input_tensors_;
       auto output_tensors = node->output_tensors_;
-      MS_EXCEPTION_IF_CHECK_FAIL(input_tensors.size() == output_tensors.size() * 2,
+      constexpr size_t value_two = 2;
+      MS_EXCEPTION_IF_CHECK_FAIL(input_tensors.size() == output_tensors.size() * value_two,
                                  "Invalid input and output tensors size" + std::to_string(input_tensors.size()) + ", " +
                                    std::to_string(output_tensors.size()));
       std::vector<std::vector<size_t>> union_tensors;

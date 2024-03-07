@@ -2809,6 +2809,31 @@ void CopyCNodeInfo(const FuncGraphPtr &func_graph, const uint32_t &target_graph_
     common::AnfAlgo::SetNodeAttr(kAttrPreKernelGraph, MakeValue(func_graph), new_node);
   }
 }
+
+void UpdateConditionNodePair(const KernelGraphPtr &kernel_graph, const KernelGraphPtr &target_kernel_graph,
+                             const mindspore::HashMap<AnfNodePtr, AnfNodePtr> &condition_node_map) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  const auto &gather_to_switch = kernel_graph->condition_gather_to_switch();
+  for (const auto &pair : gather_to_switch) {
+    MS_EXCEPTION_IF_NULL(pair.first);
+    MS_EXCEPTION_IF_NULL(pair.second);
+    const auto &gather_iter = condition_node_map.find(pair.first);
+    const auto &switch_iter = condition_node_map.find(pair.second);
+    if (gather_iter == condition_node_map.end() || switch_iter == condition_node_map.end()) {
+      MS_LOG(EXCEPTION) << "Failed to get new gather node:" << pair.first->fullname_with_scope()
+                        << " or switch node:" << pair.second->fullname_with_scope()
+                        << " in graph:" << kernel_graph->ToString();
+    }
+    MS_EXCEPTION_IF_NULL(gather_iter->second);
+    MS_EXCEPTION_IF_NULL(switch_iter->second);
+    if (target_kernel_graph != nullptr) {
+      target_kernel_graph->AddConditionGatherSwitchPair(gather_iter->second, switch_iter->second);
+      MS_LOG(INFO) << "Add condition node pair:" << gather_iter->second->fullname_with_scope()
+                   << " and:" << switch_iter->second->fullname_with_scope()
+                   << " for graph:" << target_kernel_graph->ToString();
+    }
+  }
+}
 }  // namespace
 
 AnfNodePtr KernelGraphMgr::DoInline(const FuncGraphPtr &func_graph, const FuncGraphPtr &target_func_graph,
@@ -2867,26 +2892,7 @@ AnfNodePtr KernelGraphMgr::DoInline(const FuncGraphPtr &func_graph, const FuncGr
   if (func_graph->isa<KernelGraph>() && is_switch_inline) {
     const auto &kernel_graph = func_graph->cast<KernelGraphPtr>();
     MS_EXCEPTION_IF_NULL(kernel_graph);
-    const auto &gather_to_switch = kernel_graph->condition_gather_to_switch();
-    for (const auto &pair : gather_to_switch) {
-      MS_EXCEPTION_IF_NULL(pair.first);
-      MS_EXCEPTION_IF_NULL(pair.second);
-      const auto &gather_iter = condition_node_map.find(pair.first);
-      const auto &switch_iter = condition_node_map.find(pair.second);
-      if (gather_iter == condition_node_map.end() || switch_iter == condition_node_map.end()) {
-        MS_LOG(EXCEPTION) << "Failed to get new gather node:" << pair.first->fullname_with_scope()
-                          << " or switch node:" << pair.second->fullname_with_scope()
-                          << " in graph:" << func_graph->ToString();
-      }
-      MS_EXCEPTION_IF_NULL(gather_iter->second);
-      MS_EXCEPTION_IF_NULL(switch_iter->second);
-      if (target_kernel_graph != nullptr) {
-        target_kernel_graph->AddConditionGatherSwitchPair(gather_iter->second, switch_iter->second);
-        MS_LOG(INFO) << "Add condition node pair:" << gather_iter->second->fullname_with_scope()
-                     << " and:" << switch_iter->second->fullname_with_scope()
-                     << " for graph:" << target_kernel_graph->ToString();
-      }
-    }
+    UpdateConditionNodePair(kernel_graph, target_kernel_graph, condition_node_map);
   }
 
   for (const auto &kv : ref_map) {

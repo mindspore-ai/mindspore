@@ -15,6 +15,7 @@
  */
 
 #include "runtime/graph_scheduler/inline_control_flow_scheduler.h"
+#include <vector>
 #include "runtime/graph_scheduler/scheduler_helper.h"
 #include "ops/framework_ops.h"
 
@@ -131,7 +132,7 @@ void InlineControlFlowScheduler::FixRefCountByKernelGraphRefMap(ConditionSwitchA
     // If the input node of ref node pair is a condition switch node , the ref count of corresponding switch node input
     // should add 1.
     if (recursive_origin_pair.first == condition_switch_actor->kernel() && output_pair.first != nullptr) {
-      MS_LOG(DEBUG) << "Condtion switch node is an input of ref node:" << output_pair.first->fullname_with_scope();
+      MS_LOG(DEBUG) << "Condition switch node is an input of ref node:" << output_pair.first->fullname_with_scope();
       if (inline_sub_graph_kernels.find(output_pair.first) == inline_sub_graph_kernels.end()) {
         MS_LOG(EXCEPTION) << "Failed to get inline subgraph name by ref node:"
                           << output_pair.first->fullname_with_scope();
@@ -373,7 +374,7 @@ void InlineControlFlowScheduler::FixRefCountByKernelGraphRefMap(ConditionGatherA
                   << " origin node:" << origin_pair.first->fullname_with_scope();
     const auto &recursive_origin_pair = kernel_graph->GetRefNodeRecursive(output_pair);
     if (recursive_origin_pair.first == condition_gather_actor->kernel() && output_pair.first != nullptr) {
-      MS_LOG(DEBUG) << "Condtion gather node output index:" << recursive_origin_pair.second
+      MS_LOG(DEBUG) << "Condition gather node output index:" << recursive_origin_pair.second
                     << " is an input of ref node:" << output_pair.first->fullname_with_scope()
                     << " to index:" << output_pair.second
                     << " need update ref count for actor:" << condition_gather_actor->GetAID();

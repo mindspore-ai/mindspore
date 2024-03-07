@@ -343,15 +343,17 @@ void InlineSwitchGraph(const KernelGraphPtr &graph, std::set<KernelGraphPtr> *co
     auto now_input_cnt = 0;
     for (size_t i = 0; i < common::AnfAlgo::GetInputNum(true_branch_cnode); i++) {
       auto input = common::AnfAlgo::GetInputNode(true_branch_cnode, i);
-      if (branch_input.find(input) == branch_input.end()) {
-        branch_input[input] = now_input_cnt++;
+      if (branch_input.find(input) != branch_input.end()) {
+        continue;
       }
+      branch_input[input] = now_input_cnt++;
     }
     for (size_t i = 0; i < common::AnfAlgo::GetInputNum(false_branch_cnode); i++) {
       auto input = common::AnfAlgo::GetInputNode(false_branch_cnode, i);
-      if (branch_input.find(input) == branch_input.end()) {
-        branch_input[input] = now_input_cnt++;
+      if (branch_input.find(input) != branch_input.end()) {
+        continue;
       }
+      branch_input[input] = now_input_cnt++;
     }
 
     auto cond_switch_node = GetCondSwitchNode(graph, branch_input, cond, &branch_tuple_getitem);
@@ -360,7 +362,6 @@ void InlineSwitchGraph(const KernelGraphPtr &graph, std::set<KernelGraphPtr> *co
     auto cond_gather_node =
       graph->NewCNode({NewValueNode(std::make_shared<Primitive>(prim::kPrimConditionGather->name())), true_branch_node,
                        false_branch_node});
-    MS_EXCEPTION_IF_NULL(cond_gather_node);
     cond_gather_node->set_abstract(kernel_cnode->abstract());
     SelectKernelInfo(graph, cond_gather_node);
     partial_inline_cnode.push_back(true_branch_node);
@@ -439,10 +440,11 @@ CNodePtr ConstructMakeTupleRecursion(const ValuePtr &abstract_construct_index, s
   if (!abstract_construct_index->isa<ValueSequence>()) {
     if (get_item_list->empty()) {
       MS_LOG(EXCEPTION) << "Failed to get item node by value:" << abstract_construct_index->ToString();
+    } else {
+      auto top = get_item_list->front();
+      get_item_list->pop_front();
+      return top;
     }
-    auto top = get_item_list->front();
-    get_item_list->pop_front();
-    return top;
   }
 
   // Build node and abstract for tuple construct.
@@ -465,24 +467,24 @@ CNodePtr ConstructMakeTupleRecursion(const ValuePtr &abstract_construct_index, s
 AnfNodePtrList CreateTupleGetItemForTupleOutput(const AnfNodePtr &node, const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(node);
   const auto &abstract = node->abstract();
-  if(abstract == nullptr) {
-    MS_LOG(EXCEPTION)<<"Invalid abstract for node:"<<node->DebugString();
+  if (abstract == nullptr) {
+    MS_LOG(EXCEPTION) << "Invalid abstract for node:" << node->DebugString();
   }
 
-  if(!abstract->isa<abstract::AbstractSequence>()) {
+  if (!abstract->isa<abstract::AbstractSequence>()) {
     return {node};
   }
   const auto &sequence_abstract = abstract->cast<abstract::AbstractSequencePtr>();
   MS_EXCEPTION_IF_NULL(sequence_abstract);
-  if(sequence_abstract->dynamic_len()) {
+  if (sequence_abstract->dynamic_len()) {
     return {node};
   }
   AnfNodePtrList outputs;
-  for(size_t i=0;i<sequence_abstract->elements().size();++i) {
+  for (size_t i = 0; i < sequence_abstract->elements().size(); ++i) {
     const auto &sub_abstract = sequence_abstract->elements()[i];
     MS_EXCEPTION_IF_NULL(sub_abstract);
     auto get_item = graph->NewCNode({NewValueNode(std::make_shared<Primitive>(prim::kPrimTupleGetItem->name())), node,
-                                       NewValueNode(MakeValue<int64_t>(SizeToLong(i)))});
+                                     NewValueNode(MakeValue<int64_t>(SizeToLong(i)))});
     get_item->set_abstract(sub_abstract);
     const auto &sub_outputs = CreateTupleGetItemForTupleOutput(get_item, graph);
     outputs.insert(outputs.end(), sub_outputs.begin(), sub_outputs.end());
@@ -526,7 +528,7 @@ CNodePtr FlattenConditionGatherNodeInput(const CNodePtr &kernel, const KernelGra
   AbstractBasePtrList new_abstract_list = CollectAbstract(kernel->abstract(), &abstract_construct_index);
   MS_EXCEPTION_IF_NULL(abstract_construct_index);
   MS_LOG(INFO) << "Abstract construct index:" << abstract_construct_index->ToString()
-               << " for rebuild the abstract of kernel:" << new_kernel->DebugString(2);
+               << " for rebuild the abstract of kernel:" << new_kernel->DebugString();
   if (new_abstract_list.size() != output_num) {
     MS_LOG(EXCEPTION) << "Invalid abstract list size:" << new_abstract_list.size() << " and output size:" << output_num
                       << " for kernel:" << kernel->DebugString() << " abstract:" << kernel->abstract()->ToString();
@@ -640,7 +642,7 @@ void FixExecutionOrderForInlineControlFlowGraph(const KernelGraphPtr &graph) {
       }
     }
     if (execution_order.size() != new_order.size()) {
-      MS_LOG(EXCEPTION) << "Failed to reoder execution kernel for graph:" << graph->ToString();
+      MS_LOG(EXCEPTION) << "Failed to reorder execution kernel for graph:" << graph->ToString();
     }
     execution_order = new_order;
   }

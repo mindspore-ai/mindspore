@@ -17,6 +17,10 @@
 #ifndef MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_ACTOR_CONTROLFLOW_CONDITION_GATHER_ACTOR_H_
 #define MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_ACTOR_CONTROLFLOW_CONDITION_GATHER_ACTOR_H_
 
+#include <set>
+#include <vector>
+#include <string>
+#include <memory>
 #include "runtime/graph_scheduler/actor/actor_common.h"
 #include "runtime/graph_scheduler/actor/kernel_actor.h"
 
@@ -48,7 +52,7 @@ class ConditionGatherActor : public KernelActor {
   size_t branch_output_num_;
   // The order of each branch name.
   std::vector<std::string> branch_names_;
-  // The current execute branch between swtich and gather actor.
+  // The current execute branch between switch and gather actor.
   std::string current_branch_name_;
   // Input data and control num for each branch.
   mindspore::HashMap<std::string, size_t> branch_name_to_id_;

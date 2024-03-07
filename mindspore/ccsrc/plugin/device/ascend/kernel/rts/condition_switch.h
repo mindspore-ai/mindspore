@@ -16,9 +16,10 @@
 
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_RTS_CONDITION_SWITCH_H
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_RTS_CONDITION_SWITCH_H
-#include "plugin/device/ascend/kernel/rts/rt_kernel.h"
 #include <memory>
 #include <vector>
+
+#include "plugin/device/ascend/kernel/rts/rt_kernel.h"
 
 namespace mindspore {
 namespace kernel {

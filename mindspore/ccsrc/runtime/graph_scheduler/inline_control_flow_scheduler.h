@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_INLINE_CONTROL_FLOW_SCHEDULER_H_
 #define MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_INLINE_CONTROL_FLOW_SCHEDULER_H_
 
+#include <string>
 #include "runtime/graph_scheduler/actor/actor_set.h"
 
 namespace mindspore {

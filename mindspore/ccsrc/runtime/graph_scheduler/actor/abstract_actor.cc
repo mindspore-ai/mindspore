@@ -29,7 +29,7 @@ void AbstractActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<
     std::string error_info = "The input_data does not have a valid ptr of actor:" + GetAID().Name() +
                              " with index:" + std::to_string(input_data->index_) +
                              ", flag:" + std::to_string(input_data->data_->flag()) +
-                             " device address:" + std::to_string((long long)(input_data->data_)) +
+                             " device address:" + std::to_string((int64_t)(input_data->data_)) +
                              " ref count:" + std::to_string(input_data->data_->ref_count()) +
                              " dynamic ref count:" + std::to_string(input_data->data_->dynamic_ref_count()) +
                              " origin ref count:" + std::to_string(input_data->data_->original_ref_count());

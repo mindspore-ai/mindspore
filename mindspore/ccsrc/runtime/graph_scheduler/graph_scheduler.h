@@ -132,7 +132,7 @@ class BACKEND_EXPORT GraphScheduler {
   KernelActorPtr GenerateRpcActor(const CNodePtr &kernel, const DeviceContext *device_context,
                                   GraphExecutionStrategy strategy, const std::set<size_t> &modifiable_ref_input_indexes,
                                   const std::set<size_t> &modifiable_ref_output_indexes);
-  // Generate inner cotrol flow actor in execution order.
+  // Generate inner control flow actor in execution order.
   KernelActorPtr GenerateInnerControlFlowActor(const CNodePtr &kernel, const DeviceContext *device_context,
                                                GraphExecutionStrategy strategy,
                                                const std::set<size_t> &ref_input_indexes,
