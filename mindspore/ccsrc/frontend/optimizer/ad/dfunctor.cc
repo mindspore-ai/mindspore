@@ -940,9 +940,9 @@ CNodePtr GetPrimalUser(const CNodePtr &j_user, const std::map<FuncGraphPtr, std:
     // The CNode using the forward graph result and the gradient of the forward graph are not in the same graph.
     // The EliminatePrimalGraph optimization can not be done. If the code use the forward network and its gradient,
     // the forward network can not be eliminated. This may cause the decrease of the compilation and running efficiency.
-    MS_LOG(INFO) << "The gradient operation of forward network and the forward network are not called in the same"
-                 << " graph. The CNode to use the gradient result is: " << j_user->DebugString()
-                 << " This CNode is in graph: " << graph->ToString();
+    MS_LOG(DEBUG) << "The gradient operation of forward network and the forward network are not called in the same"
+                  << " graph. The CNode to use the gradient result is: " << j_user->DebugString()
+                  << " This CNode is in graph: " << graph->ToString();
     return nullptr;
   }
 
