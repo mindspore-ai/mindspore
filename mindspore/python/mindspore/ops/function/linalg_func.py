@@ -330,11 +330,13 @@ def pinv(x, *, atol=None, rtol=None, hermitian=False):
         ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor([[4., 0.], [0., 5.]], mindspore.float32)
         >>> output = ops.pinv(x)
         >>> print(output)
-        [[0.25  0. ]
-        [0.  0.2 ]]
+        [[0.25 0.  ]
+         [0.   0.2 ]]
     """
     if not isinstance(x, (Tensor, Tensor_)):
         raise TypeError("The input x must be tensor")

@@ -99,6 +99,7 @@ def assign_sub(variable, value):
         >>> import mindspore
         >>> import numpy as np
         >>> from mindspore import Tensor, ops
+        >>> from mindspore.common.initializer import initializer
         >>> variable = mindspore.Parameter(initializer(1, [1], mindspore.int32), name="global_step")
         >>> value = Tensor(np.ones([1]).astype(np.int32) * 100)
         >>> ops.assign_sub(variable, value)
@@ -149,6 +150,7 @@ def assign_add(variable, value):
         >>> import mindspore
         >>> import numpy as np
         >>> from mindspore import Tensor, ops
+        >>> from mindspore.common.initializer import initializer
         >>> variable = mindspore.Parameter(initializer(1, [1], mindspore.int32), name="global_step")
         >>> value = Tensor(np.ones([1]).astype(np.int32) * 100)
         >>> ops.assign_add(variable, value)

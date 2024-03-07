@@ -570,6 +570,7 @@ class AssignSub(Primitive):
         >>> import mindspore
         >>> import numpy as np
         >>> from mindspore import Tensor, ops, nn
+        >>> from mindspore.common.initializer import initializer
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
@@ -7311,6 +7312,7 @@ class Igamma(Primitive):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore
         >>> from mindspore import Tensor, ops
         >>> a = Tensor(np.array([2.0, 4.0, 6.0, 8.0]).astype(np.float32))
         >>> x = Tensor(np.array([2.0, 3.0, 4.0, 5.0]).astype(np.float32))

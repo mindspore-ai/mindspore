@@ -967,7 +967,7 @@ class Model:
             of data will be transferred one by one. The limitation of data transmission per time is 256M.
 
             When dataset_sink_mode is True, the `step_end` method of the instance of Callback will be called at the end
-            of step in PyNative mode， or will be called at the end of epoch in Graph mode.
+            of step in PyNative mode, or will be called at the end of epoch in Graph mode.
 
             If dataset_sink_mode is True, dataset will be bound to this model and cannot be used by other models.
 
@@ -1004,6 +1004,7 @@ class Model:
                                  Default: 0.
 
         Examples:
+            >>> import mindspore as ms
             >>> from mindspore import nn
             >>> from mindspore.train import Model
             >>>

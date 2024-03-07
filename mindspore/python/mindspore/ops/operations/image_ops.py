@@ -816,7 +816,7 @@ class ResizeBicubic(Primitive):
     Examples:
         >>> import mindspore
         >>> import numpy as np
-        >>> from mindspore import Tensor, ops
+        >>> from mindspore import Tensor, ops, nn
         >>> class NetResizeBicubic(nn.Cell):
         ...     def __init__(self):
         ...         super(NetResizeBicubic, self).__init__()
