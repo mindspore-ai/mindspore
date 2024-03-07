@@ -26,6 +26,7 @@ namespace pipeline {
 constexpr size_t NODE_INPUT_NUM = 2;
 bool PipelineSplit(const ResourcePtr &res);
 bool HasVirtualDataset(const std::vector<AnfNodePtr> &all_nodes);
+bool ParallelVirtualDataset(const ResourcePtr &res);
 void InsertVirtualDataset(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_nodes);
 }  // namespace pipeline
 }  // namespace mindspore

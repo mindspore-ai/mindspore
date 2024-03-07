@@ -18,6 +18,7 @@ import mindspore as ms
 import mindspore.nn as nn
 from mindspore import context
 from mindspore import Tensor
+from mindspore import Symbol
 from mindspore.ops import operations as P
 from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer
@@ -128,8 +129,9 @@ def test_pipeline_split_dynamic_loss_is_scalar_stage0():
     strategy2 = ((16, 1), (1, 1))
     net = PipelineCell(PipelineSplitWithScalarLoss(strategy1, strategy2), 4)
     params = net.network.cell.block[0].trainable_params()
-    dynamic_data = Tensor(shape=[None, None], dtype=ms.float32)
-    dynamic_label = Tensor(shape=[None, None], dtype=ms.float32)
+    s1 = Symbol(divisor=4)
+    dynamic_data = Tensor(shape=[s1, None], dtype=ms.float32)
+    dynamic_label = Tensor(shape=[s1, None], dtype=ms.float32)
     net.set_inputs(dynamic_data, dynamic_label)
     dataset = DatasetLenet(data, label, 3)
     optimizer = nn.Lamb(params, learning_rate=0.01)
@@ -151,8 +153,9 @@ def test_pipeline_split_dynamic_loss_is_not_scalar_stage0():
     strategy2 = ((16, 1), (1, 1))
     net = PipelineCell(PipelineSplitWithTensorLoss(strategy1, strategy2), 4)
     params = net.network.cell.block[0].trainable_params()
-    dynamic_data = Tensor(shape=[None, None], dtype=ms.float32)
-    dynamic_label = Tensor(shape=[None, None], dtype=ms.float32)
+    s1 = Symbol(divisor=4)
+    dynamic_data = Tensor(shape=[s1, None], dtype=ms.float32)
+    dynamic_label = Tensor(shape=[s1, None], dtype=ms.float32)
     net.set_inputs(dynamic_data, dynamic_label)
     dataset = DatasetLenet(data, label, 3)
     optimizer = nn.Lamb(params, learning_rate=0.01)

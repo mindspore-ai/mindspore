@@ -71,6 +71,7 @@ bool IsAutoParallelCareNode(const CNodePtr &cnode);
 Shapes GetNodeShape(const AnfNodePtr &node);
 // Extract shape from anfnode
 std::vector<Shapes> ExtractShape(const CNodePtr &node);
+std::vector<Shapes> ExtractRealDivisor(const CNodePtr &node);
 // Generate and init parallel operator
 OperatorInfoPtr OperatorInstance(const PrimitivePtr &prim, const PrimitiveAttrs &attrs,
                                  const std::vector<Shapes> &shape_list);

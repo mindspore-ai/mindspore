@@ -21,13 +21,17 @@
 #include <memory>
 #include <utility>
 #include <vector>
+#include <functional>
 
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/strategy.h"
 #include "frontend/parallel/graph_util/node_info.h"
+#include "frontend/parallel/graph_util/graph_utils.h"
+#include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/tensor_layout/tensor_redistribution.h"
 #include "pipeline/jit/ps/resource.h"
+#include "mindspore/core/symbolic_shape/symbol.h"
 
 namespace mindspore {
 namespace parallel {
@@ -163,12 +167,46 @@ void StridedSliceInfo::AdjustShrinkAxisMask() {
   }
 }
 
+void StridedSliceInfo::ComputeFullyFetchFlag() {
+  ListSymbolPtr in_symbol = nullptr, out_symbol = nullptr;
+
+  if (dynamic_shape_flag_) {
+    MS_EXCEPTION_IF_NULL(cnode_);
+    MS_EXCEPTION_IF_NULL(cnode_->input(1));
+    MS_EXCEPTION_IF_NULL(cnode_->input(1)->abstract());
+    MS_EXCEPTION_IF_NULL(cnode_->abstract());
+    in_symbol = cnode_->input(1)->abstract()->GetSymbolicShape();  // the input of stridedslice
+    out_symbol = cnode_->abstract()->GetSymbolicShape();           // the output of stridedslice
+    MS_EXCEPTION_IF_NULL(in_symbol);
+    MS_EXCEPTION_IF_NULL(out_symbol);
+  }
+  fully_fetch_flag_.clear();
+
+  for (size_t k = 0; k < begin_.size(); ++k) {
+    bool fully_fetch = false;
+    if (dynamic_shape_flag_) {
+      MS_EXCEPTION_IF_NULL(in_symbol->item(k));
+      if (in_symbol->item(k)->EqualsTo(out_symbol->item(k))) {
+        fully_fetch = true;
+      }
+    } else {
+      fully_fetch = ((begin_[k] == 0) && (end_[k] >= input_shape_in_process_[k]));
+    }
+    fully_fetch_flag_.push_back(fully_fetch);
+  }
+
+  MS_LOG(INFO) << name_ << ": the fully fetch flag is " << fully_fetch_flag_;
+}
+
 Status StridedSliceInfo::GetAttrs() {
   if ((GetMask(BEGIN_MASK, &begin_mask_) != SUCCESS) || (GetMask(END_MASK, &end_mask_) != SUCCESS) ||
       (GetMask(ELLIPSIS_MASK, &ellipsis_mask_) != SUCCESS) || (GetMask(NEW_AXIS_MASK, &new_axis_mask_) != SUCCESS) ||
       (GetMask(SHRINK_AXIS_MASK, &shrink_axis_mask_) != SUCCESS)) {
     return FAILED;
   }
+
+  has_mask_ =
+    (begin_mask_ != 0 || end_mask_ != 0 || ellipsis_mask_ != 0 || new_axis_mask_ != 0 || shrink_axis_mask_ != 0);
 
   if (ellipsis_mask_ != 0) {
     MS_LOG(ERROR) << name_ << ": It can not support ellipsis_mask now";
@@ -238,6 +276,7 @@ Status StridedSliceInfo::GetAttrs() {
     skip_redistribution_ = GetValue<bool>(prim->GetAttr(parallel::SKIP_REDISTRIBUTION));
   }
 
+  ComputeFullyFetchFlag();
   return SUCCESS;
 }
 
@@ -273,8 +312,7 @@ Status StridedSliceInfo::CheckInputStrategy(const Shape &strategy_value) {
   }
 
   for (size_t k = 0; k < begin_.size(); ++k) {
-    bool no_fully_fetch = ((begin_[k] != 0) || (end_[k] < input_shape_in_process_[k]));
-    if (no_fully_fetch && (strategy_in_process[k] != 1) && !skip_redistribution_) {
+    if (!fully_fetch_flag_[k] && (strategy_in_process[k] != 1) && !skip_redistribution_) {
       MS_LOG(ERROR) << name_
                     << ": When a dimension is not fully fetched, the dimension can not be split now, the begin is "
                     << begin_ << ", the end is " << end_ << ", the index is " << k << ", the input shape in process is "
@@ -314,6 +352,24 @@ Status StridedSliceInfo::CheckStrategy(const StrategyPtr &strategy) {
   if (strategy_value.size() < strides_.size()) {
     MS_LOG(ERROR) << name_ << ": The size of strategy must be larger or equal to the size of strides";
     return FAILED;
+  }
+
+  if (dynamic_shape_flag_) {
+    auto shard_num = std::accumulate(strategy_value.begin(), strategy_value.end(), 1, std::multiplies<int64_t>());
+    if (shard_num == 1) {
+      return SUCCESS;
+    }
+
+    if (has_mask_) {
+      MS_LOG(ERROR) << name_ << ": it does not support dynamic shape when it has mask, the strategy is "
+                    << ShapeToString(strategy_value);
+      return FAILED;
+    }
+
+    if (strides_ == Shape(inputs_shape_[0].size(), -1)) {
+      MS_LOG(ERROR) << name_ << ": it does not support dynamic shape when the strides attr is not constant";
+      return FAILED;
+    }
   }
 
   return CheckInputStrategy(strategy_value);
@@ -433,6 +489,19 @@ Status StridedSliceInfo::InferMirrorOps() {
   return SUCCESS;
 }
 
+static void InsertDivOpToNodeInput(const CNodePtr &node, int64_t div_num, size_t index, const string &instance_name) {
+  MS_EXCEPTION_IF_NULL(node);
+  FuncGraphPtr func_graph = node->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  // instance the div operator
+  Operator div_op = CreateScalarFloorDivOp(div_num);
+
+  // Insert it as the input of the node
+  AnfNodePtr input = node->input(index);
+  MS_EXCEPTION_IF_NULL(input);
+  InsertNode(div_op, node, index, node->input(index), func_graph, instance_name);
+}
+
 void StridedSliceInfo::ChangeMakeTupleConstant(const CNodePtr &cnode, size_t make_tuple_index) {
   size_t input_dim = inputs_shape_[0].size();
   auto shard_size = strategy_->GetInputDim()[0];
@@ -442,15 +511,17 @@ void StridedSliceInfo::ChangeMakeTupleConstant(const CNodePtr &cnode, size_t mak
   }
 
   auto make_tuple = cnode->input(make_tuple_index);
-  auto make_tuple_cnode = dyn_cast_ptr<CNode>(make_tuple);
+  auto make_tuple_cnode = make_tuple->cast<CNodePtr>();
   for (size_t i = 0; i < input_dim; ++i) {
     if (shard_size[i] <= 1) {
       continue;
     }
     auto value_node = GetValueNode(make_tuple_cnode->input(i + 1));
-    if (value_node != nullptr && value_node->isa<Int64Imm>()) {
+    if (value_node == nullptr) {
+      InsertDivOpToNodeInput(make_tuple_cnode, shard_size[i], i + 1, "stridedslice_div");
+    } else if (value_node->isa<Int64Imm>()) {
       MS_EXCEPTION_IF_ZERO("shard_size", shard_size[i]);
-      int64_t origin_value = GetValue<int64_t>(value_node);
+      auto origin_value = GetValue<int64_t>(value_node);
       if (origin_value < 0 || origin_value % shard_size[i] != 0) {
         MS_LOG(EXCEPTION) << name_ << ": the origin value is " << origin_value << ", can not be div by shard size "
                           << shard_size[i] << ", the input index of stridedslice is " << make_tuple_index
@@ -461,6 +532,8 @@ void StridedSliceInfo::ChangeMakeTupleConstant(const CNodePtr &cnode, size_t mak
       auto replace_value_node = std::make_shared<ValueNode>(replace_value_ptr);
       auto manager = make_tuple->func_graph()->manager();
       manager->SetEdge(make_tuple, i + 1, replace_value_node);
+    } else {
+      MS_LOG(EXCEPTION) << name_ << ": the input of make_tuple is value node but not int64, the index is " << (i + 1);
     }
   }
 }
@@ -510,8 +583,8 @@ std::shared_ptr<Strategies> StridedSliceInfo::GenerateBatchStrategies() {
     MS_LOG(EXCEPTION) << name_ << "generate batch parallel strategies failed.";
   }
   split_flag_list_ = {true};
-  bool no_fully_fetch = ((begin_[0] != 0) || (end_[0] < input_shape_in_process_[0]));
-  if (no_fully_fetch) {
+
+  if (!fully_fetch_flag_[0]) {
     split_flag_list_ = {false};
   }
   return GenerateBatchStrategiesBySplitFlag(inputs_shape_, split_flag_list_);
@@ -524,8 +597,7 @@ Status StridedSliceInfo::SetCostUnderStrategy(const StrategyPtr &strategy) {
 std::vector<StrategyPtr> StridedSliceInfo::GenerateOpStrategies(int64_t stage_id) {
   Shape input_split(inputs_shape_[0].size(), 1);
   for (size_t i = 0; i < begin_.size(); ++i) {
-    bool no_fully_fetch = ((begin_[i] != 0) || (end_[i] < inputs_shape_[0][i]));
-    if (no_fully_fetch || (strides_[i] != 1)) {
+    if (!fully_fetch_flag_[i] || (strides_[i] != 1)) {
       input_split[i] = 0;
     }
   }

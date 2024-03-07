@@ -120,6 +120,9 @@ class OperatorInfo {
   void ComputeBatchSplitFlagList();
   Shapes inputs_shape() const { return inputs_shape_; }
   Shapes outputs_shape() const { return outputs_shape_; }
+  void set_inputs_divisor(const Shapes &in_divisor) { inputs_divisor_ = in_divisor; }
+  void set_outputs_divisor(const Shapes &out_divisor) { outputs_divisor_ = out_divisor; }
+  void set_dynamic_shape_flag(bool flag) { dynamic_shape_flag_ = flag; }
 
   double GetForwardMemoryCostFromCNode();
   // This is a common method for setting operator cost for a given strategy, in which the validity of this strategy
@@ -277,6 +280,8 @@ class OperatorInfo {
   virtual Status CheckStrategyForDynamicShape(const StrategyPtr &strategy) { return SUCCESS; }
   Status CheckStrategyByVector(const Shapes &strategy, const Shapes &inputs_shape);
   Status CheckStrategyValue(const StrategyPtr &strategy, const Shapes &inputs_shape);
+  void DivisorsReplaceShapes();  // in dynamic shape, using divisors replace to shapes before CheckStrategy and so on
+  void ResumeShapes();           // in dynamic shape, resume shapes after CheckStrategy and so on
   void SetRepeatedCalcDevMatrix();
   void ResetTensorMapIfRepeatedCalc();
   Status CreateGroupByDim(size_t axis, std::vector<Group> *group);
@@ -313,6 +318,11 @@ class OperatorInfo {
   std::string prim_name_;
   Shapes inputs_shape_;
   Shapes outputs_shape_;
+  Shapes inputs_divisor_;   // using for dynamic shape, the size is equal to inputs_shape_
+  Shapes outputs_divisor_;  // using for dynamic shape, the size is equal to outputs_shape_
+  Shapes inputs_shape_clone_;
+  Shapes outputs_shape_clone_;
+  bool dynamic_shape_flag_ = False;  // means this op in the dynamic shape graph
   mindspore::HashMap<std::string, ValuePtr> attrs_;
   std::vector<ValuePtr> input_value_;
   TypePtr outputs_dtype_;
@@ -401,6 +411,7 @@ Operator CreateReduceScatterOp(const std::string &reduce_op, const std::string &
 Operator CreateAllGatherOp(const std::string &group);
 Operator CreateCastOp(TypePtr type);
 Operator CreateDivOp(float scale);
+Operator CreateScalarFloorDivOp(int64_t div_num);
 void AddCNodePrimAttr(const CNodePtr &comm_node, const std::string &attr_name, const ValuePtr &attr_val);
 int32_t AddCommOpFusionType(const CNodePtr &comm_node, const AnfNodePtr &param_node);
 Operator CreateMicroStepAllGatherOp(const std::string &group);

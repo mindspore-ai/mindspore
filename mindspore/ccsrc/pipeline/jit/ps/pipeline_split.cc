@@ -29,6 +29,7 @@
 #include "include/common/utils/parallel_context.h"
 #include "frontend/parallel/pipeline_transformer/pipeline_transformer.h"
 #include "frontend/parallel/pipeline_transformer/fold_pipeline_transformer.h"
+#include "frontend/parallel/dynamic_shape/dynamic_shape.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/step_parallel_utils.h"
 #include "frontend/parallel/parameter_manager.h"
@@ -236,14 +237,10 @@ bool PipelineSplit(const ResourcePtr &res) {
 
   auto manager = res->manager();
   auto root = res->func_graph();
-  AnfNodePtr ret = root->get_return();
-  MS_EXCEPTION_IF_NULL(ret);
-  std::vector<AnfNodePtr> all_nodes = DeepScopedGraphSearch(ret);
 
-  SetPynativeShardFlagIfHasShardNode(root, all_nodes);
-  if (!HasVirtualDataset(all_nodes)) {
-    InsertVirtualDataset(root, all_nodes);
-  }
+  // tag dynamic shape graph
+  parallel::TagDynamicShapeFuncGraph(root);
+
   auto global_rank = GetRank();
   auto world_group = mindspore::parallel::GetWorldGroup();
   uint32_t world_rank_size = 0;
@@ -314,6 +311,37 @@ bool PipelineSplit(const ResourcePtr &res) {
   // step5: Elim Graph stages and no used parameter
   transformer->ModifyParameterList();
   transformer->ElimGraphStage();
+  return true;
+}
+
+// Only auto_parallel and semi_auto_parallel support ParallelVirtualDataset
+bool ParallelVirtualDataset(const ResourcePtr &res) {
+#if defined(__linux__) && defined(WITH_BACKEND)
+  if (ps::PSContext::instance()->is_server() || ps::PSContext::instance()->is_scheduler()) {
+    return true;
+  }
+#endif
+  MS_EXCEPTION_IF_NULL(res);
+  auto parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode();
+  if (parallel_mode != parallel::kSemiAutoParallel && parallel_mode != parallel::kAutoParallel) {
+    MS_LOG(INFO) << "Only auto_parallel and semi_auto_parallel support it.";
+    return true;
+  }
+
+  auto root = res->func_graph();
+  AnfNodePtr ret = root->get_return();
+
+  // tag dynamic shape graph
+  parallel::TagDynamicShapeFuncGraph(root);
+
+  MS_EXCEPTION_IF_NULL(ret);
+  std::vector<AnfNodePtr> all_nodes = DeepScopedGraphSearch(ret);
+
+  SetPynativeShardFlagIfHasShardNode(root, all_nodes);
+  if (!HasVirtualDataset(all_nodes)) {
+    InsertVirtualDataset(root, all_nodes);
+  }
+
   return true;
 }
 }  // namespace pipeline

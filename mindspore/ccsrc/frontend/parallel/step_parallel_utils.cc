@@ -39,6 +39,7 @@
 #include "frontend/parallel/graph_util/pipeline_split_utils.h"
 #include "frontend/parallel/node_check.h"
 #include "frontend/parallel/parameter_manager.h"
+#include "frontend/parallel/dynamic_shape/dynamic_shape.h"
 #include "include/common/utils/comm_manager.h"
 #include "include/common/utils/parallel_context.h"
 #include "ir/param_info.h"
@@ -53,6 +54,7 @@
 #include "utils/ms_context.h"
 #include "utils/symbolic.h"
 #include "utils/trace_base.h"
+#include "mindspore/core/symbolic_shape/int_symbol.h"
 
 namespace mindspore {
 namespace parallel {
@@ -1143,16 +1145,19 @@ static Shapes GetRefKeyNodeShape(const AnfNodePtr &node, const FuncGraphPtr &fun
   return input_shapes;
 }
 
-std::vector<Shapes> ExtractShape(const CNodePtr &node) {
+std::pair<std::vector<Shapes>, std::vector<Symbols>> ExtractShapeAndSymbol(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   Shapes shape_inputs, shape_outputs;
+  Symbols symbol_inputs, symbol_outputs;
   std::vector<Shapes> shape_all;
+  std::vector<Symbols> symbol_all;
   std::vector<AnfNodePtr> all_inputs = node->inputs();
 
   const int min_size = 2;
   size_t inputs_size = all_inputs.size();
   for (size_t i = 1; i < inputs_size; ++i) {
     Shapes input_shapes;
+    Symbols input_symbols;
     AnfNodePtr input = all_inputs[i];
     if (HasAbstractMonad(input)) {
       continue;
@@ -1168,6 +1173,7 @@ std::vector<Shapes> ExtractShape(const CNodePtr &node) {
       g_RefMap[parameters[0]] = node_pair;
       MS_LOG(INFO) << "Find parameter by ref key node" << node_pair.first;
       input_shapes = GetRefKeyNodeShape(input, func_graph);
+      input_symbols = StaticShapesToSymbols(input_shapes);  // now the parameter can only be static shape
     } else if (input->isa<CNode>() || IsValueNode<Tensor>(input) || input->isa<Parameter>() ||
                (IsValueSequence(input) &&
                 (inputs_size == min_size || IsSomePrimitiveList(node, INPUT_IS_TUPLE_OR_LIST_OPS)))) {
@@ -1178,8 +1184,10 @@ std::vector<Shapes> ExtractShape(const CNodePtr &node) {
 
       if (IsPrimitiveCNode(input, prim::kPrimShape)) {
         input_shapes = GetNodeShape(input->cast<CNodePtr>()->input(1));
+        input_symbols = GetNodeSymbol(input->cast<CNodePtr>()->input(1));
       } else {
         input_shapes = GetNodeShape(input);
+        input_symbols = GetNodeSymbol(input);
       }
     } else {
       continue;
@@ -1187,18 +1195,59 @@ std::vector<Shapes> ExtractShape(const CNodePtr &node) {
     if (input_shapes.size() != 1) {
       if (inputs_size == min_size || IsSomePrimitiveList(node, INPUT_IS_TUPLE_OR_LIST_OPS)) {
         shape_inputs = input_shapes;
+        symbol_inputs = input_symbols;
         break;
       } else {
         MS_LOG(EXCEPTION) << "ExtractShape: Get input shape failed";
       }
     }
     shape_inputs.push_back(input_shapes[0]);
+    symbol_inputs.push_back(input_symbols[0]);
   }
   shape_all.push_back(shape_inputs);
+  symbol_all.push_back(symbol_inputs);
   // extract out shape
   shape_outputs = GetNodeShape(node);
+  symbol_outputs = GetNodeSymbol(node);
   shape_all.push_back(shape_outputs);
-  return shape_all;
+  symbol_all.push_back(symbol_outputs);
+
+  return std::make_pair(shape_all, symbol_all);
+}
+
+std::vector<Shapes> ExtractShape(const CNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto shapes_and_symbols = ExtractShapeAndSymbol(node);
+  return shapes_and_symbols.first;
+}
+
+std::vector<Shapes> ExtractRealDivisor(const CNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto shapes_and_symbols = ExtractShapeAndSymbol(node);
+  std::vector<Shapes> shapes = shapes_and_symbols.first;
+  std::vector<Symbols> symbols = shapes_and_symbols.second;
+  if (shapes.size() != INPUT_OUTPUT_SYMBOLS_SIZE || symbols.size() != INPUT_OUTPUT_SYMBOLS_SIZE) {
+    MS_LOG(EXCEPTION) << "the size of shapes or symbols must be " << INPUT_OUTPUT_SYMBOLS_SIZE
+                      << ", but the size of shapes is " << shapes.size() << ", the size of symbols is "
+                      << symbols.size();
+  }
+
+  auto inputs_shape = shapes[0];
+  auto outputs_shape = shapes[1];
+  auto inputs_symbol = symbols[0];
+  auto outputs_symbol = symbols[1];
+
+  Shapes in_divisor_symbols, out_divisor_symbols;
+  MS_LOG(DEBUG) << "the node is " << node->ToString() << ", the divisor of inputs is "
+                << DivisorOfSymbolsToString(inputs_symbol) << ", the inputs shape is " << ShapesToString(inputs_shape);
+  in_divisor_symbols = GetRealDivisorSymbols(inputs_shape, inputs_symbol);
+  out_divisor_symbols = GetRealDivisorSymbols(outputs_shape, outputs_symbol);
+
+  MS_LOG(DEBUG) << "the node is " << node->ToString() << ", the inputs shape is " << ShapesToString(inputs_shape)
+                << ", the inputs divisor is " << ShapesToString(in_divisor_symbols);
+  MS_LOG(DEBUG) << "the node is " << node->ToString() << ", the outputs shape is " << ShapesToString(outputs_shape)
+                << ", the outputs divisor is " << ShapesToString(out_divisor_symbols);
+  return {in_divisor_symbols, out_divisor_symbols};
 }
 
 AnfNodePtr GetInputNodeWithFilter(const AnfNodePtr &node,
@@ -1547,9 +1596,13 @@ OperatorInfoPtr CreateOperatorInfo(const CNodePtr &cnode) {
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
   MS_EXCEPTION_IF_NULL(prim);
 
-  auto shape_list = ExtractShape(cnode);
-  if (shape_list.empty()) {
-    MS_LOG(EXCEPTION) << "Node: " << cnode->DebugString() << " failed to extract shape.";
+  std::pair<std::vector<Shapes>, std::vector<Symbols>> shapes_and_symbols = ExtractShapeAndSymbol(cnode);
+  auto shape_list = shapes_and_symbols.first;
+  auto symbol_list = shapes_and_symbols.second;
+  if (shape_list.size() != INPUT_OUTPUT_SYMBOLS_SIZE || symbol_list.size() != INPUT_OUTPUT_SYMBOLS_SIZE) {
+    MS_LOG(EXCEPTION) << "the size of shapes or symbols must be " << INPUT_OUTPUT_SYMBOLS_SIZE
+                      << ", but the size of shapes is " << shape_list.size() << ", the size of symbols is "
+                      << symbol_list.size();
   }
 
   auto attrs = prim->attrs();
@@ -1583,6 +1636,18 @@ OperatorInfoPtr CreateOperatorInfo(const CNodePtr &cnode) {
   (*op_info).set_input_value(input_value);
   (*op_info).set_outputs_dtype(cnode->Type());
   (*op_info).set_cnode(cnode);
+  if (InDynamicGraph(cnode) && IsDynamicShapesList(shape_list)) {
+    Shapes in_real_divisors, out_real_divisors;
+    in_real_divisors = GetRealDivisorSymbols(shape_list[INPUT_SYMBOLS_INDEX], symbol_list[INPUT_SYMBOLS_INDEX]);
+    out_real_divisors = GetRealDivisorSymbols(shape_list[OUTPUT_SYMBOLS_INDEX], symbol_list[OUTPUT_SYMBOLS_INDEX]);
+    (*op_info).set_dynamic_shape_flag(True);
+    (*op_info).set_inputs_divisor(in_real_divisors);
+    (*op_info).set_outputs_divisor(out_real_divisors);
+    MS_LOG(DEBUG) << (*op_info).name() << ": inputs-shape: " << ShapesToString(shape_list[0])
+                  << ", inputs_d_symbol: " << ShapesToString(in_real_divisors);
+    MS_LOG(DEBUG) << (*op_info).name() << ": outputs-shape: " << ShapesToString(shape_list[1])
+                  << ", outputs_d_symbol: " << ShapesToString(out_real_divisors);
+  }
   return op_info;
 }
 

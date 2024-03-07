@@ -47,6 +47,7 @@
 #include "frontend/parallel/allreduce_fusion/step_allreduce_fusion.h"
 #include "frontend/parallel/pass/handle_group_info.h"
 #include "frontend/parallel/step_assigned_parallel.h"
+#include "frontend/parallel/dynamic_shape/dynamic_shape.h"
 #include "frontend/expander/pack/packfunc.h"
 #include "frontend/expander/utils.h"
 #include "include/common/utils/config_manager.h"
@@ -1185,7 +1186,17 @@ void GraphExecutorPy::ConvertSymbolicShape(const py::tuple &args, AbstractBasePt
       continue;
     }
     constexpr char symbolic_shape_attr[] = "symbolic_shape";
+    MS_EXCEPTION_IF_NULL(parallel::ParallelContext::GetInstance());
+    std::string parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode();
+    bool is_parallel = (parallel_mode == parallel::kAutoParallel || parallel_mode == parallel::kSemiAutoParallel);
+
     if (!py::hasattr(args[i], symbolic_shape_attr)) {
+      if (is_parallel) {
+        auto digital_shape = iter->second.second->GetShape();
+        if (digital_shape != nullptr && digital_shape->isa<abstract::TensorShape>()) {
+          info_list.resize(digital_shape->GetShapeVector().size());
+        }
+      }
       continue;
     }
     auto symbolic_shape_obj = py::getattr(args[i], symbolic_shape_attr);
@@ -1215,6 +1226,12 @@ void GraphExecutorPy::ConvertSymbolicShape(const py::tuple &args, AbstractBasePt
       }
     }
   }
+
+  MS_LOG(DEBUG) << "before parallel symbol";
+  parallel::PrintSymbolInfo(symbol_infos);
+  symbol_infos = parallel::ParallelSymbolInfo(symbol_infos);
+  MS_LOG(DEBUG) << "after parallel symbol";
+  parallel::PrintSymbolInfo(symbol_infos);
 
   auto symbolic_shape_list = symshape::ops::BuildSymbolicShapeBySymbolInfo(*args_abs, symbol_infos);
   for (size_t i = 0; i < symbolic_shape_list.size(); i++) {

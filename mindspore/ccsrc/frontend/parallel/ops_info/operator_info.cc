@@ -406,6 +406,9 @@ Status OperatorInfo::InferAttrs() {
     return FAILED;
   }
 
+  inputs_shape_clone_ = inputs_shape_;
+  outputs_shape_clone_ = outputs_shape_;
+
   infer_attrs_completed_ = true;
   return SUCCESS;
 }
@@ -620,6 +623,19 @@ Operator CreateDivOp(float scale) {
   constexpr size_t parameter_pos = 2;
   mindspore::tensor::TensorPtr tensor_ptr = std::make_shared<mindspore::tensor::Tensor>(scale);
   ValuePtr scale_value = MakeValue(tensor_ptr);
+  (void)operator_param.emplace_back(std::make_pair(std::make_pair(Y, scale_value), parameter_pos));
+  OperatorArgs operator_arg = std::make_pair(operator_attrs, operator_param);
+
+  Operator op = std::make_pair(operator_name, operator_arg);
+  return op;
+}
+
+Operator CreateScalarFloorDivOp(int64_t div_num) {
+  OperatorName operator_name = SCALAR_FLOOR_DIV;
+  OperatorAttrs operator_attrs;
+  OperatorParams operator_param;
+  constexpr size_t parameter_pos = 2;
+  ValuePtr scale_value = MakeValue(div_num);
   (void)operator_param.emplace_back(std::make_pair(std::make_pair(Y, scale_value), parameter_pos));
   OperatorArgs operator_arg = std::make_pair(operator_attrs, operator_param);
 
@@ -1052,6 +1068,24 @@ Status OperatorInfo::InitForCostModel(const StrategyPtr &in_strategy, const Stra
   return SUCCESS;
 }
 
+void OperatorInfo::DivisorsReplaceShapes() {
+  if (!dynamic_shape_flag_) {
+    return;
+  }
+
+  inputs_shape_ = inputs_divisor_;
+  outputs_shape_ = outputs_divisor_;
+}
+
+void OperatorInfo::ResumeShapes() {
+  if (!dynamic_shape_flag_) {
+    return;
+  }
+
+  inputs_shape_ = inputs_shape_clone_;
+  outputs_shape_ = outputs_shape_clone_;
+}
+
 // auto insert repeated_calculation_num for dev_matrix_shape when repeated_calculation_num > 1
 Status OperatorInfo::InitForCostModelWithAutoRepeatCalc(const StrategyPtr &in_strategy,
                                                         const StrategyPtr &out_strategy) {
@@ -1071,11 +1105,13 @@ Status OperatorInfo::InitForCostModelWithAutoRepeatCalc(const StrategyPtr &in_st
 
   // if layout is configured, no need to check strategy and infer dev matrix
   if (!is_layout_config_) {
+    DivisorsReplaceShapes();  // in dynamic shape, using divisors replace to shapes before CheckStrategy
     // must be after InferAttrs()
     if (CheckStrategy(in_strategy) != SUCCESS) {
       FILTER_LOG(is_auto_parallel_) << name_ << ": CheckStrategy failed.";
       return FAILED;
     }
+    ResumeShapes();  // in dynamic shape, resume shapes after CheckStrategy
 
     if (is_dynamic_shape_ && CheckStrategyForDynamicShape(in_strategy) != SUCCESS) {
       MS_LOG(ERROR) << name_ << ": Check strategy for dynamic shape failed";
@@ -1310,6 +1346,11 @@ void OperatorInfo::ReplaceSuccEdges(const std::shared_ptr<OperatorInfo> &op, con
 }
 
 std::shared_ptr<Strategies> OperatorInfo::GenerateBatchStrategiesWithCheck() {
+  if (InferAttrs() != SUCCESS) {
+    MS_LOG(EXCEPTION) << name_ << ": Infer attrs failed";
+  }
+  DivisorsReplaceShapes();  // in dynamic shape, using divisors replace to shapes before GenerateBatchStrategies
+
   std::shared_ptr<Strategies> batch_strategy = GenerateBatchStrategies();
   if (batch_strategy->size() != inputs_shape_.size()) {
     MS_LOG(WARNING) << "The inputs size:" << inputs_shape_.size()
@@ -1341,6 +1382,8 @@ std::shared_ptr<Strategies> OperatorInfo::GenerateBatchStrategiesWithCheck() {
   for (auto &pair : changed_pos) {
     batch_strategy->at(pair.first).at(pair.second) = shard_size;
   }
+
+  ResumeShapes();
   return batch_strategy;
 }
 
@@ -2287,7 +2330,9 @@ Status OperatorInfo::GenerateStrategies(int64_t stage_id) {
     return FAILED;
   }
 
+  DivisorsReplaceShapes();  // in dynamic shape, using divisors replace to shapes before CheckStrategy and so on
   std::vector<StrategyPtr> sp_vector = GenerateOpStrategies(stage_id);
+  ResumeShapes();  // resume shapes
 
   size_t success = 0;
   for (auto &sp : sp_vector) {

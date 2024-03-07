@@ -22,6 +22,7 @@ from mindspore.ops import functional as F
 from mindspore.nn.wrap.cell_wrapper import _VirtualDatasetCell
 from mindspore import context, Tensor
 from mindspore.context import ParallelMode
+from mindspore import Symbol
 from parallel.utils.utils import ParallelValidator, compile_net
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
@@ -281,7 +282,8 @@ def test_allsplit_parallel_on_dynamic_dim():
     model = TestRedistribution(from_shard, to_shard).to_float(mstype.float16)
     model = _VirtualDatasetCell(model)
     model._virtual_dataset.add_prim_attr("repeat_dim_direct", "right")
-    input_ids = Tensor(shape=[None, 768, 2, 2], dtype=mstype.float16)
+    s1 = Symbol(divisor=8)
+    input_ids = Tensor(shape=[s1, 768, 2, 2], dtype=mstype.float16)
     phase = compile_net(model, input_ids)
     validator = ParallelValidator(model, phase)
     context.reset_auto_parallel_context()

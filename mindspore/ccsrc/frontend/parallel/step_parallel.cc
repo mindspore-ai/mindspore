@@ -50,6 +50,7 @@
 #include "frontend/parallel/silent_check/silent_check.h"
 #include "frontend/parallel/parameter_manager.h"
 #include "frontend/parallel/ops_info/matmul_info.h"
+#include "frontend/parallel/dynamic_shape/dynamic_shape.h"
 #include "frontend/parallel/tensor_layout/tensor_transform.h"
 #include "ir/param_info.h"
 #include "ir/tensor.h"
@@ -1459,7 +1460,13 @@ void SetVirtualDatasetStrategy(const CNodePtr &node) {
     if (dev_num == 0) {
       MS_LOG(EXCEPTION) << "Device Num must be larger than 0, but got 0.";
     }
-    std::vector<Shapes> shape_list = ExtractShape(node);
+    std::vector<Shapes> shape_list;
+    if (InDynamicGraph(node)) {
+      shape_list = ExtractRealDivisor(node);
+      MS_LOG(INFO) << "The node is in dynamic shape graph, the real divisor is " << ShapesToString(shape_list[0]);
+    } else {
+      shape_list = ExtractShape(node);
+    }
     if (shape_list.empty()) {
       MS_LOG(EXCEPTION) << "Failure:node " << node->ToString() << " failed to extract shape";
     }
@@ -3025,6 +3032,8 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
   // mark the forward cnodes, parallel only care these nodes
   MarkForwardCNode(root);
   HandleSilentCheck(root, manager);
+  // tag dynamic shape graph
+  TagDynamicShapeFuncGraph(root);
   UpdateMicroBatchInterleavedStatus(all_nodes);
   if (parallel_mode != kAutoParallel) {
     TOTAL_OPS = 0;

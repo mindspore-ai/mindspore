@@ -391,6 +391,8 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   void set_stage(int64_t stage) { stage_ = stage; }
   int64_t segment() const { return segment_; }
   void set_segment(int64_t segment) { segment_ = segment; }
+  bool dynamic_shape() { return dynamic_shape_; }
+  void set_dynamic_shape(bool dynamic_shape) { dynamic_shape_ = dynamic_shape; }
 
   bool dropped() const { return dropped_; }
   void set_dropped(bool dropped) { dropped_ = dropped; }
@@ -510,6 +512,7 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
 
   int64_t stage_;
   int64_t segment_;
+  bool dynamic_shape_ = false;
   std::unordered_map<AbstractBasePtrList, FuncGraphPtr, abstract::AbstractBasePtrListHasher,
                      abstract::AbstractBasePtrListEqual>
     func_graph_cache_;

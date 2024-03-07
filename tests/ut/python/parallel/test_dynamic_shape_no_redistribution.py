@@ -176,6 +176,7 @@ def test_padv3_dynamic():
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     strategy1 = ((1, 1, 1), (1, 1, 1))
     strategy2 = ((1, 1, 1),)
+    context.set_context(save_graphs=True)
     input_x = Tensor(shape=[32, 16, None], dtype=ms.int32)
     weight = Tensor(np.ones([32, 16, 1]), dtype=ms.float32)
     net = PadV3Net(weight, strategy1, strategy2)
@@ -193,6 +194,7 @@ def test_padv3_paddings_concat_scalar_to_tensor_dynamic():
     Expectation: compile success
     """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    context.set_context(save_graphs=True)
     strategy1 = ((1, 1, 1), (1, 1, 1))
     strategy2 = ((1, 1, 1),)
     input_x = Tensor(shape=[32, 16, None], dtype=ms.int32)
@@ -212,6 +214,7 @@ def test_padv3_concat_tensor_shape_dynamic():
     Expectation: compile success
     """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    context.set_context(save_graphs=True)
     strategy1 = ((1, 1, 1), (1, 1, 1))
     strategy2 = ((1, 1, 1),)
     input_x = Tensor(shape=[32, 16, None], dtype=ms.int32)
@@ -324,6 +327,7 @@ def test_attention_reshape():
     Expectation: compile success
     """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    context.set_context(save_graphs=True)
     strategy1 = ((1, 1), (1, 8))
     strategy2 = ((1, 8), (8,))
     strategy3 = ((1, 1, 8, 1),)
@@ -331,8 +335,15 @@ def test_attention_reshape():
     weight = Tensor(np.ones([32, 64]), dtype=ms.float32)
     bias = Tensor(np.ones([64]), dtype=ms.float32)
     net = AttentionNet(weight, bias, strategy1, strategy2, strategy3, strategy4)
+
     input_x = Tensor(shape=[None, 32], dtype=ms.float32)
     net.set_inputs(input_x)
+
+    from mindspore import Symbol
+    s1 = Symbol(divisor=8, remainder=1)
+    input_x = Tensor(shape=[s1, 32], dtype=ms.float32)
+    net.set_inputs(input_x)
+
 
     phase = compile_net(net, input_x)
     validator = ParallelValidator(net, phase)
@@ -421,6 +432,7 @@ def test_modify_inputs_of_stridedslice_and_reshape():
     Expectation: compile success
     """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0, full_batch=False)
+    context.set_context(save_graphs=True)
     strategy1 = ((8, 1),)
     strategy2 = ((1, 1), (8, 1))
     strategy3 = ((8, 1), (8, 1))
@@ -478,11 +490,13 @@ class ConcatPadV3Net(Cell):
         self.pad_1 = Tensor([0], dtype=ms.int64)
         self.pad_2 = Tensor([0], dtype=ms.int64)
         self.relu = P.ReLU()
+        self.cast = P.Cast()
 
     def construct(self, x):
         pad_1 = self.relu(self.pad_1)
         pad_2 = self.relu(self.pad_2)
         paddings = self.concat((pad_1, pad_2))
+        x = self.cast(x, ms.float16)
         out = self.pad(x, paddings, 0)
         return out
 
@@ -495,12 +509,19 @@ def test_concat_is_the_input_of_padv3():
     """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0,
                                       dataset_strategy=((1, 8, 1, 1),))
+    context.set_context(save_graphs=True)
     strategy1 = ((1,), (1,))
     strategy2 = ((1, 8, 1, 1), (1,), ())
     net = ConcatPadV3Net(strategy1, strategy2)
 
-    input_x = Tensor(shape=[1, 32, None, 128], dtype=ms.float32)
+    # input_x = Tensor(shape=[1, 32, None, 128], dtype=ms.float32)
+    # net.set_inputs(input_x)
+    #
+    from mindspore import Symbol
+    s1 = Symbol(divisor=8)
+    input_x = Tensor(shape=[1, 32, s1, 128], dtype=ms.float32)
     net.set_inputs(input_x)
+
     phase = compile_net(net, input_x)
     validator = ParallelValidator(net, phase)
     assert validator.check_node_inputs_has('PadV3-0', ['Concat-0'])

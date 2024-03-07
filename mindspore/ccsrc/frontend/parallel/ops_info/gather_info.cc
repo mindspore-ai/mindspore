@@ -131,15 +131,15 @@ void GatherInfo::GetBatchDims() noexcept {
 }
 
 GatherUtilPtr GatherInfo::MakeManualUtil() {
-  return std::make_shared<GatherManualImpl>(name_, inputs_shape_, outputs_shape_, axis_);
+  return std::make_shared<GatherManualImpl>(name_, inputs_shape_clone_, outputs_shape_clone_, axis_);
 }
 
 GatherUtilPtr SparseGatherV2Info::MakeManualUtil() {
-  return std::make_shared<ManualImpl>(name_, inputs_shape_, outputs_shape_, axis_);
+  return std::make_shared<ManualImpl>(name_, inputs_shape_clone_, outputs_shape_clone_, axis_);
 }
 
 GatherUtilPtr EmbeddingLookupInfo::MakeManualUtil() {
-  return std::make_shared<ManualImpl>(name_, inputs_shape_, outputs_shape_, axis_);
+  return std::make_shared<ManualImpl>(name_, inputs_shape_clone_, outputs_shape_clone_, axis_);
 }
 
 Status GatherInfo::GetAttrs() {
@@ -1082,13 +1082,13 @@ Status GatherInfo::CheckStrategy(const StrategyPtr &strategy) {
   gather_mode_ = GetGatherMode(param_strategy, indices_strategy);
   switch (gather_mode_) {
     case BATCH: {
-      gather_util_ = std::make_shared<BatchImpl>(name_, inputs_shape_, outputs_shape_, axis_);
+      gather_util_ = std::make_shared<BatchImpl>(name_, inputs_shape_clone_, outputs_shape_clone_, axis_);
       auto batch_util = std::dynamic_pointer_cast<BatchImpl>(gather_util_);
       batch_util->set_batch_dims(batch_dims_);
       break;
     }
     case NORMAL:
-      gather_util_ = std::make_shared<NormalImpl>(name_, inputs_shape_, outputs_shape_, axis_);
+      gather_util_ = std::make_shared<NormalImpl>(name_, inputs_shape_clone_, outputs_shape_clone_, axis_);
       break;
     case MANUAL: {
       gather_util_ = MakeManualUtil();
@@ -1101,7 +1101,7 @@ Status GatherInfo::CheckStrategy(const StrategyPtr &strategy) {
       break;
     }
     case SHARD_BATCH_AND_AXIS: {
-      gather_util_ = std::make_shared<ShardBatchAndAxisImpl>(name_, inputs_shape_, outputs_shape_, axis_);
+      gather_util_ = std::make_shared<ShardBatchAndAxisImpl>(name_, inputs_shape_clone_, outputs_shape_clone_, axis_);
       auto shard_batch_and_axis_util = std::dynamic_pointer_cast<ShardBatchAndAxisImpl>(gather_util_);
       shard_batch_and_axis_util->set_target(target_);
       shard_batch_and_axis_util->set_dynamic_shape_indices(dynamic_shape_indices_);
@@ -1114,7 +1114,7 @@ Status GatherInfo::CheckStrategy(const StrategyPtr &strategy) {
     case SHARD_AXIS_0_DYNAMIC:
     case SHARD_AXIS_0_STATIC:
     case SHARD_AXIS_1: {
-      gather_util_ = std::make_shared<ShardAxisImpl>(name_, inputs_shape_, outputs_shape_, axis_);
+      gather_util_ = std::make_shared<ShardAxisImpl>(name_, inputs_shape_clone_, outputs_shape_clone_, axis_);
       auto shard_axis_util = std::dynamic_pointer_cast<ShardAxisImpl>(gather_util_);
       shard_axis_util->set_target(target_);
       shard_axis_util->set_dynamic_shape_indices(dynamic_shape_indices_);
@@ -1128,9 +1128,16 @@ Status GatherInfo::CheckStrategy(const StrategyPtr &strategy) {
       return FAILED;
   }
 
+  gather_util_->set_dynamic_shape_flag(dynamic_shape_flag_);
+  gather_util_->set_inputs_divisor(inputs_divisor_);
+  gather_util_->set_outputs_divisor(outputs_divisor_);
+
+  gather_util_->DivisorsReplaceShapes();
   if (gather_util_->CheckStrategy(param_strategy, indices_strategy) != SUCCESS) {
     return FAILED;
   }
+  gather_util_->ResumeShapes();
+
   gather_util_->set_param_strategy(param_strategy);
   gather_util_->set_indices_strategy(indices_strategy);
   gather_util_->set_gather_mode(gather_mode_);
@@ -1284,6 +1291,24 @@ Status GatherUtil::InferTensorInfoNoSplitAxis() {
   inputs_tensor_info_.push_back(input_index_info);
   outputs_tensor_info_.push_back(output_tensor_info);
   return SUCCESS;
+}
+
+void GatherUtil::DivisorsReplaceShapes() {
+  if (!dynamic_shape_flag_) {
+    return;
+  }
+
+  inputs_shape_ = inputs_divisor_;
+  outputs_shape_ = outputs_divisor_;
+}
+
+void GatherUtil::ResumeShapes() {
+  if (!dynamic_shape_flag_) {
+    return;
+  }
+
+  inputs_shape_ = inputs_shape_clone_;
+  outputs_shape_ = outputs_shape_clone_;
 }
 
 Status GatherInfo::InferTensorInfo() {

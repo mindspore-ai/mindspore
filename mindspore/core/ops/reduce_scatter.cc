@@ -81,11 +81,16 @@ class ReduceScatterInfer : public abstract::OpInferBase {
     }
     auto abstract_shape = input_args[kIndex0]->GetShape();
     MS_ERROR_IF_NULL_W_RET_VAL(abstract_shape, std::make_shared<abstract::Shape>());
-    if (abstract_shape->IsDynamic()) {
+
+    auto shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(abstract_shape)[kShape];
+    if (shape.empty()) {
+      MS_EXCEPTION(ValueError) << "the shape is empty";
+    }
+
+    if (shape[0] < 0) {  // first dim is dynamic shape
       return abstract_shape;
     }
-    auto shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(abstract_shape)[kShape];
-    if (shape.empty() || shape[0] % rank_size != 0) {
+    if (shape[0] % rank_size != 0) {
       MS_EXCEPTION(ValueError)
         << "the first dimension for 'input_shape' must be divided by 'rank_size', but got input_shape[0]: " << shape[0]
         << ", rank_size: " << rank_size;

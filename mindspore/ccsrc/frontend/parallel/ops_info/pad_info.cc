@@ -39,18 +39,42 @@ Status PadV3Info::GetAttrs() {
     return FAILED;
   }
 
-  paddings_flag_ = Shape(inputs_shape_[0].size(), 0);
+  ComputePaddingsFlag();
+  return SUCCESS;
+}
 
-  for (size_t i = 0; i < inputs_shape_[0].size(); ++i) {
-    if ((inputs_shape_[0][i] != -1) && (outputs_shape_[0][i] != -1) && (inputs_shape_[0][i] != outputs_shape_[0][i])) {
-      paddings_flag_[i] = 1;  // means this dimension can not be split, now only for this dimension is static shape
+void PadV3Info::ComputePaddingsFlag() {
+  ListSymbolPtr in_symbol = nullptr, out_symbol = nullptr;
+
+  if (dynamic_shape_flag_) {
+    MS_EXCEPTION_IF_NULL(cnode_);
+    MS_EXCEPTION_IF_NULL(cnode_->input(1));
+    MS_EXCEPTION_IF_NULL(cnode_->input(1)->abstract());
+    MS_EXCEPTION_IF_NULL(cnode_->abstract());
+    in_symbol = cnode_->input(1)->abstract()->GetSymbolicShape();  // the input of padv3
+    out_symbol = cnode_->abstract()->GetSymbolicShape();           // the output of padv3
+    MS_EXCEPTION_IF_NULL(in_symbol);
+    MS_EXCEPTION_IF_NULL(out_symbol);
+  }
+  paddings_flag_.clear();
+
+  for (size_t k = 0; k < inputs_shape_[0].size(); ++k) {
+    int64_t has_pad = 1;  // 1 means this dimension can not be split
+    if (dynamic_shape_flag_) {
+      MS_EXCEPTION_IF_NULL(in_symbol->item(k));
+      // the input's symbol equal to the output's symbol, means this dimension can be split
+      if (in_symbol->item(k)->EqualsTo(out_symbol->item(k))) {
+        has_pad = 0;
+      }
     } else {
-      paddings_flag_[i] = 0;
+      if (inputs_shape_[0][k] == outputs_shape_[0][k]) {
+        has_pad = 0;
+      }
     }
+    paddings_flag_.push_back(has_pad);
   }
 
   MS_LOG(INFO) << name_ << ": the paddings flag is " << paddings_flag_;
-  return SUCCESS;
 }
 
 Status PadV3Info::CheckStrategy(const StrategyPtr &strategy) {
