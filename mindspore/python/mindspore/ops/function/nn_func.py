@@ -2748,6 +2748,7 @@ def softshrink(x, lambd=0.5):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
         >>> from mindspore import Tensor
         >>> from mindspore import ops
         >>> import numpy as np
@@ -3000,11 +3001,12 @@ def dense(input, weight, bias=None):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore
         >>> from mindspore import Tensor, ops
-        >>> input = mindspore.Tensor([[-1., 1., 2.], [-3., -3., 1.]], mindspore.float32)
-        >>> weight = mindspore.Tensor([[-2., -2., -2.], [0., -1., 0.]], mindspore.float32)
-        >>> bias = mindspore.Tensor([0., 1.], mindspore.float32)
-        >>> output = mindspore.ops.dense(input, weight, bias)
+        >>> input = Tensor([[-1., 1., 2.], [-3., -3., 1.]], mindspore.float32)
+        >>> weight = Tensor([[-2., -2., -2.], [0., -1., 0.]], mindspore.float32)
+        >>> bias = Tensor([0., 1.], mindspore.float32)
+        >>> output = ops.dense(input, weight, bias)
         >>> print(output)
         [[-4.  0.]
          [10.  4.]]
@@ -5342,7 +5344,7 @@ def conv1d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
         >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.arange(64).reshape((4, 4, 4)), mindspore.float32)
         >>> weight = Tensor(np.arange(8).reshape((2, 2, 2)), mindspore.float32)
-        >>> bias = Tensor([-0.12345, 2.7683], ms.float32)
+        >>> bias = Tensor([-0.12345, 2.7683], mindspore.float32)
         >>> output = ops.conv1d(x, weight, pad_mode='pad', padding=(1,), bias=bias, groups=2)
         >>> print(output.shape)
         (4, 2, 5)

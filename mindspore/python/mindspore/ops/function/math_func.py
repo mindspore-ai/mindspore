@@ -343,6 +343,7 @@ def add(input, other):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore
         >>> from mindspore import Tensor, ops
         >>> # case 1: x and y are both Tensor.
         >>> x = Tensor(np.array([1, 2, 3]).astype(np.float32))
@@ -12784,6 +12785,7 @@ def count_nonzero(x, axis=(), keep_dims=False, dtype=mstype.int32):
     Examples:
         >>> from mindspore import Tensor, ops
         >>> import numpy as np
+        >>> import mindspore
         >>> # case 1: each value specified.
         >>> x = Tensor(np.array([[0, 1, 0], [1, 1, 0]]).astype(np.float32))
         >>> nonzero_num = ops.count_nonzero(x=x, axis=[0, 1], keep_dims=True, dtype=mindspore.int32)
