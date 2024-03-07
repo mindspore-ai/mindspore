@@ -3447,6 +3447,7 @@ def space_to_batch_nd(input_x, block_size, paddings):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore
         >>> from mindspore import Tensor, ops
         >>> block_size = [2, 2]
         >>> paddings = [[0, 0], [0, 0]]
@@ -4463,8 +4464,8 @@ def masked_select(input, mask):
 
     Examples:
         >>> import numpy as np
-        >>> import mindspore.ops as ops
-        >>> from mindspore import Tensor
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([1, 2, 3, 4]), mindspore.int64)
         >>> mask = Tensor(np.array([1, 0, 1, 0]), mindspore.bool_)
         >>> output = ops.masked_select(x, mask)

@@ -3841,6 +3841,7 @@ class Adam(Primitive):
         >>> import mindspore
         >>> import numpy as np
         >>> from mindspore import Tensor, nn, ops
+        >>> from mindspore import Parameter
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
