@@ -66,6 +66,7 @@
 #include "backend/common/graph_kernel/core/graph_kernel_op_combiner.h"
 #include "backend/common/graph_kernel/convert_custom_for_ge.h"
 #include "backend/common/graph_kernel/convert_input_and_attr.h"
+#include "backend/common/graph_kernel/convert_bfloat16.h"
 #include "backend/common/graph_kernel/add_ref_pair.h"
 #ifdef ENABLE_AKG
 #include "backend/common/graph_kernel/graph_kernel_build.h"
@@ -126,6 +127,9 @@ PassManagerPtr GraphKernelOptimizer::Cluster() const {
 
   // Cluster basic kernels and composite kernels
   pm->Add(std::make_shared<StaticShapeCluster>(), OptLevel_1);
+
+  // Add Cast for op's inputs if the input data type is not supported by op
+  pm->Add(std::make_shared<ConvertBFloat16>(), OptLevel_1, is_dvm);
 
   // Eliminate the outputs without external user
   pm->Add(std::make_shared<EliminateRedundantOutput>(), OptLevel_1);
