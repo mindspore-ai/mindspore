@@ -253,6 +253,7 @@ class MS_CORE_API Complex : public Number {
 };
 
 GVAR_DEF(TypePtr, kBool, std::make_shared<Bool>());
+GVAR_DEF(TypePtr, kInt4, std::make_shared<Int>(static_cast<int>(BitsNum::eBits4)));
 GVAR_DEF(TypePtr, kInt8, std::make_shared<Int>(static_cast<int>(BitsNum::eBits8)));
 GVAR_DEF(TypePtr, kInt16, std::make_shared<Int>(static_cast<int>(BitsNum::eBits16)));
 GVAR_DEF(TypePtr, kInt32, std::make_shared<Int>(static_cast<int>(BitsNum::eBits32)));

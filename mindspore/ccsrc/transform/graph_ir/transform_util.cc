@@ -105,6 +105,7 @@ static std::map<MeDataType, GeDataType> datatype_trans_map = {
   {MeDataType::kNumberTypeFloat32, GeDataType::DT_FLOAT},
   {MeDataType::kNumberTypeFloat64, GeDataType::DT_DOUBLE},
   {MeDataType::kNumberTypeBFloat16, GeDataType::DT_BF16},
+  {MeDataType::kNumberTypeInt4, GeDataType::DT_INT4},
   {MeDataType::kNumberTypeInt8, GeDataType::DT_INT8},
   {MeDataType::kNumberTypeInt16, GeDataType::DT_INT16},
   {MeDataType::kNumberTypeInt32, GeDataType::DT_INT32},
@@ -200,6 +201,10 @@ std::shared_ptr<GeTensorDesc> TransformUtil::GetGeTensorDesc(const ShapeVector &
   // set device shape and format, if value is empty, use ori shape and format replace.
   auto dev_ge_shape = dev_shape.empty() ? ori_ge_shape : GeShape(dev_shape);
   GeFormat dev_ge_format = dev_format.empty() ? ori_ge_format : ConvertFormat(dev_format, dev_ge_shape.GetDimNum());
+  if (me_type == MeDataType::kNumberTypeInt4) {
+    int64_t last_dim = dev_ge_shape.GetDimNum() - 1;
+    dev_ge_shape.SetDim(last_dim, dev_ge_shape.GetDim(last_dim) * 2);
+  }
   desc->SetShape(dev_ge_shape);
   desc->SetFormat(dev_ge_format);
 
