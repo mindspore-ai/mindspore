@@ -1,7 +1,7 @@
 mindspore.ops.gelu
 ==================
 
-.. py:function:: mindspore.ops.gelu(input_x, approximate='none')
+.. py:function:: mindspore.ops.gelu(input, approximate='none')
 
     高斯误差线性单元激活函数。
 
@@ -28,13 +28,13 @@ mindspore.ops.gelu
         :align: center
 
     参数：
-        - **input_x** (Tensor) - 用于计算GELU的Tensor。数据类型为float16、float32、float64。
+        - **input** (Tensor) - 用于计算GELU的Tensor。
         - **approximate** (str) - gelu近似算法。有两种：``'none'`` 和 ``'tanh'`` 。默认值： ``'none'`` 。
 
     返回：
-        Tensor，具有与 `input_x` 相同的数据类型和shape。
+        Tensor，具有与 `input` 相同的数据类型和shape。
 
     异常：
-        - **TypeError** - 如果 `input_x` 的数据类型不是Tensor。
-        - **TypeError** - `input_x` 的数据类型既不是float16、float32或者float64。
+        - **TypeError** - 如果 `input` 的数据类型不是Tensor。
+        - **TypeError** - `input` 的数据类型既不是bfloat16、float16、float32或者float64。
         - **ValueError** - 如果 `approximate` 的值既不是 `none` 也不是 `tanh`。

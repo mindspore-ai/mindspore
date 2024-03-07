@@ -6152,7 +6152,7 @@ def multilabel_soft_margin_loss(input, target, weight=None, reduction='mean'):
     return _get_loss(loss, reduction, cls_name)
 
 
-def gelu(input_x, approximate='none'):
+def gelu(input, approximate='none'):
     r"""
     Gaussian Error Linear Units activation function.
 
@@ -6179,16 +6179,16 @@ def gelu(input_x, approximate='none'):
         :align: center
 
     Args:
-        input_x (Tensor): The input of the activation function GeLU, the data type is float16, float32 or float64.
+        input (Tensor): The input of the activation function GeLU, the data type is float16, float32 or float64.
         approximate (str): the gelu approximation algorithm to use. Acceptable vaslues are ``'none'`` and ``'tanh'`` .
             Default: ``'none'`` .
 
     Returns:
-        Tensor, with the same type and shape as `input_x`.
+        Tensor, with the same type and shape as `input`.
 
     Raises:
-        TypeError: If `input_x` is not a Tensor.
-        TypeError: If dtype of `input_x` is not float16, float32 or float64.
+        TypeError: If `input` is not a Tensor.
+        TypeError: If dtype of `input` is not float16, float32 or float64.
         ValueError: If `approximate` value is neither `none` or `tanh`.
 
     Supported Platforms:
@@ -6205,17 +6205,17 @@ def gelu(input_x, approximate='none'):
     if approximate not in ['none', 'tanh']:
         raise ValueError("For ops.gelu, approximate value should be either 'none' or 'tanh'.")
 
-    x_dtype = dtype_(input_x)
+    x_dtype = dtype_(input)
     if x_dtype not in [mstype.float16, mstype.float32, mstype.float64]:
         raise TypeError(f"For gelu, the input dtype must be float16, float32 or float64, "
                         f"but got {x_dtype}.")
     if approximate == 'tanh':
-        output = gelu_(input_x)
+        output = gelu_(input)
     else:
         output = sqrt_(Tensor(2.0, x_dtype))
-        output = div_(input_x, output)
+        output = div_(input, output)
         output = erf_(output) + Tensor(1.0, x_dtype)
-        output = input_x * output * Tensor(0.5, x_dtype)
+        output = input * output * Tensor(0.5, x_dtype)
 
     return output
 
