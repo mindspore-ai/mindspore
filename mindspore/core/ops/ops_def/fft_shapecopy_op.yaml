@@ -1,0 +1,14 @@
+#operator fft_shapecopy
+fft_shapecopy:
+  args:
+    dout:
+      dtype: tensor
+    shape:
+      dtype: tuple[int]
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: FFTShapeCopy
+  function:
+    disable: True

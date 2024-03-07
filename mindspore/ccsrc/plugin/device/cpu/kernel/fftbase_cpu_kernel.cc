@@ -15,35 +15,27 @@
  */
 
 #include "plugin/device/cpu/kernel/fftbase_cpu_kernel.h"
-#include <algorithm>
 #include "ops/op_utils.h"
 #include "kernel/kernel.h"
+#include "utils/fft_helper.h"
 
-#define SWITCH_DIM_CALCULATE(T1, T2)                                                                \
-  if (x_rank_ == 1) {                                                                               \
-    ComputeFFTBase<T1, T2, 1>(calculate_input, output_ptr, forward, norm, n, dim, calculate_shape_, \
-                              calculate_element_nums_);                                             \
-  } else if (x_rank_ == 2) {                                                                        \
-    ComputeFFTBase<T1, T2, 2>(calculate_input, output_ptr, forward, norm, n, dim, calculate_shape_, \
-                              calculate_element_nums_);                                             \
-  } else if (x_rank_ == 3) {                                                                        \
-    ComputeFFTBase<T1, T2, 3>(calculate_input, output_ptr, forward, norm, n, dim, calculate_shape_, \
-                              calculate_element_nums_);                                             \
-  } else if (x_rank_ == 4) {                                                                        \
-    ComputeFFTBase<T1, T2, 4>(calculate_input, output_ptr, forward, norm, n, dim, calculate_shape_, \
-                              calculate_element_nums_);                                             \
-  } else if (x_rank_ == 5) {                                                                        \
-    ComputeFFTBase<T1, T2, 5>(calculate_input, output_ptr, forward, norm, n, dim, calculate_shape_, \
-                              calculate_element_nums_);                                             \
-  } else if (x_rank_ == 6) {                                                                        \
-    ComputeFFTBase<T1, T2, 6>(calculate_input, output_ptr, forward, norm, n, dim, calculate_shape_, \
-                              calculate_element_nums_);                                             \
-  } else if (x_rank_ == 7) {                                                                        \
-    ComputeFFTBase<T1, T2, 7>(calculate_input, output_ptr, forward, norm, n, dim, calculate_shape_, \
-                              calculate_element_nums_);                                             \
-  } else {                                                                                          \
-    ComputeFFTBase<T1, T2, 8>(calculate_input, output_ptr, forward, norm, n, dim, calculate_shape_, \
-                              calculate_element_nums_);                                             \
+#define EIGEN_FFT_INPUT_RANK_CASE(T1, T2)                                                                \
+  if (x_rank_ == 1) {                                                                                    \
+    EigenFFTBase<T1, T2, 1>(calculate_input, output_ptr, forward_, norm_weight_, calculate_shape, dim_); \
+  } else if (x_rank_ == 2) {                                                                             \
+    EigenFFTBase<T1, T2, 2>(calculate_input, output_ptr, forward_, norm_weight_, calculate_shape, dim_); \
+  } else if (x_rank_ == 3) {                                                                             \
+    EigenFFTBase<T1, T2, 3>(calculate_input, output_ptr, forward_, norm_weight_, calculate_shape, dim_); \
+  } else if (x_rank_ == 4) {                                                                             \
+    EigenFFTBase<T1, T2, 4>(calculate_input, output_ptr, forward_, norm_weight_, calculate_shape, dim_); \
+  } else if (x_rank_ == 5) {                                                                             \
+    EigenFFTBase<T1, T2, 5>(calculate_input, output_ptr, forward_, norm_weight_, calculate_shape, dim_); \
+  } else if (x_rank_ == 6) {                                                                             \
+    EigenFFTBase<T1, T2, 6>(calculate_input, output_ptr, forward_, norm_weight_, calculate_shape, dim_); \
+  } else if (x_rank_ == 7) {                                                                             \
+    EigenFFTBase<T1, T2, 7>(calculate_input, output_ptr, forward_, norm_weight_, calculate_shape, dim_); \
+  } else {                                                                                               \
+    EigenFFTBase<T1, T2, 8>(calculate_input, output_ptr, forward_, norm_weight_, calculate_shape, dim_); \
   }
 
 namespace mindspore {
@@ -71,100 +63,45 @@ int FFTBaseCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const
   x_rank_ = SizeToLong(tensor_shape_.size());
 
   // Get or set attribute s and dims.
-  auto n_opt = inputs[kIndex1]->GetOptionalValueWithCheck<int64_t>();
-  dim = inputs[kIndex2]->GetValueWithCheck<int64_t>();
-  dim = dim < 0 ? x_rank_ + dim : dim;
+  dim_ = inputs[kIndex2]->GetValueWithCheck<int64_t>();
+  dim_ = dim_ < 0 ? x_rank_ + dim_ : dim_;
 
-  n = n_opt.has_value() ? n_opt.value() : tensor_shape_[dim];
+  auto n_opt = inputs[kIndex1]->GetOptionalValueWithCheck<int64_t>();
+  n_ = n_opt.has_value() ? n_opt.value() : tensor_shape_[dim_];
 
   auto norm_opt = inputs[kIndex3]->GetOptionalValueWithCheck<int64_t>();
   if (norm_opt.has_value()) {
-    norm = static_cast<mindspore::NormMode>(norm_opt.value());
+    norm_ = static_cast<mindspore::NormMode>(norm_opt.value());
   } else {
-    norm = NormMode::BACKWARD;
+    norm_ = NormMode::BACKWARD;
   }
 
-  if (kernel_name_ == prim::kPrimIFFT->name()) {
-    forward = false;
-  } else {
-    forward = true;
-  }
-
+  forward_ = IsForwardOp(kernel_name_);
   input_element_nums_ = SizeToLong(SizeOf(tensor_shape_));
-
+  norm_weight_ = GetNormalized(n_, norm_, forward_);
   return KRET_OK;
 }
 
-double Getnormalized(int64_t element_nums_, mindspore::NormMode norm_type_, bool forward) {
-  double result = 1.0;
-  if (forward) {
-    if (norm_type_ == NormMode::FORWARD) {
-      result = 1.0 / element_nums_;
-    } else if (norm_type_ == NormMode::ORTHO) {
-      result = 1.0 / sqrt(static_cast<double>(element_nums_));
-    }
-  } else {
-    if (norm_type_ == NormMode::FORWARD) {
-      result = 1.0 * element_nums_;
-    } else if (norm_type_ == NormMode::ORTHO) {
-      result = 1.0 * sqrt(static_cast<double>(element_nums_));
-    }
-  }
-  return result;
-}
-
-template <typename T_in, typename T_out>
-void GenarateCalculateInput(T_in *array_in, T_out *array_out, int64_t element_nums_,
-                            const std::vector<int64_t> &x_shape, const std::vector<int64_t> &calculate_shape, int64_t n,
-                            int64_t dim) {
-  // compute original and new offsets for each dim
-  std::vector<int64_t> offsets(x_shape.size(), 0);
-  std::vector<int64_t> new_offsets(x_shape.size(), 0);
-  for (size_t j = 0; j < x_shape.size(); j++) {
-    offsets[j] = std::accumulate(x_shape.begin() + j + 1, x_shape.end(), 1, std::multiplies<>());
-    new_offsets[j] = std::accumulate(calculate_shape.begin() + j + 1, calculate_shape.end(), 1, std::multiplies<>());
-  }
-
-  for (int64_t i = 0; i < element_nums_; ++i) {
-    std::vector<int64_t> index(x_shape.size(), 0);
-    int64_t flat_index = i;
-    // compute original coordinates
-    for (size_t dim = 0; dim < offsets.size(); ++dim) {
-      index[dim] = flat_index / offsets[dim];
-      flat_index %= offsets[dim];
-    }
-    // if n > input.shape[dim] ->truncate, invalid ele should be dropped out
-    if (index[dim] >= n) {
-      continue;
-    }
-    int64_t new_flat_index = 0;
-    for (size_t dim = 0; dim < new_offsets.size(); ++dim) {
-      new_flat_index += index[dim] * new_offsets[dim];
-    }
-    array_out[new_flat_index] = static_cast<T_out>(array_in[i]);
-  }
-}
-
 template <typename T_in, typename T_out, int x_rank>
-bool ComputeFFTBase(T_in *input_ptr, T_out *output_ptr, bool forward, mindspore::NormMode norm_type, int64_t n,
-                    int64_t dim, std::vector<int64_t> tensor_shape_, int64_t element_nums_) {
-  Eigen::array<Eigen::DenseIndex, x_rank> tensor_shape;
-  for (int i = 0; i < x_rank; ++i) {
-    tensor_shape[i] = tensor_shape_[i];
+bool EigenFFTBase(T_in *input_ptr, T_out *output_ptr, bool forward, double norm_weight,
+                  std::vector<int64_t> calculate_shape, int64_t dim) {
+  Eigen::array<Eigen::DenseIndex, x_rank> calculate_shape_array;
+  for (size_t i = 0; i < x_rank; ++i) {
+    calculate_shape_array[i] = calculate_shape[i];
   }
-  Eigen::TensorMap<Eigen::Tensor<T_in, x_rank, Eigen::RowMajor>, Eigen::RowMajor> in(&input_ptr[0], tensor_shape);
+
+  Eigen::TensorMap<Eigen::Tensor<T_in, x_rank, Eigen::RowMajor>, Eigen::RowMajor> in(&input_ptr[0],
+                                                                                     calculate_shape_array);
   Eigen::Tensor<T_out, x_rank, Eigen::RowMajor> out;
 
-  Eigen::array<int, 1> dims_array;
-  dims_array[0] = dim;
+  std::vector<int32_t> eigen_dim;
+  (void)eigen_dim.emplace_back(static_cast<int32_t>(dim));
 
   if (forward) {
-    out = in.template fft<Eigen::BothParts, Eigen::FFT_FORWARD>(dims_array);
+    out = in.template fft<Eigen::BothParts, Eigen::FFT_FORWARD>(eigen_dim);
   } else {
-    out = in.template fft<Eigen::BothParts, Eigen::FFT_REVERSE>(dims_array);
+    out = in.template fft<Eigen::BothParts, Eigen::FFT_REVERSE>(eigen_dim);
   }
-
-  double norm_weight = Getnormalized(tensor_shape_[dim], norm_type, forward);
 
   T_out *out_ptr = out.data();
   for (int i = 0; i < out.size(); i++) {
@@ -172,7 +109,6 @@ bool ComputeFFTBase(T_in *input_ptr, T_out *output_ptr, bool forward, mindspore:
     temp_value *= norm_weight;
     *(output_ptr + i) = temp_value;
   }
-
   return true;
 }
 
@@ -183,19 +119,21 @@ bool FFTBaseCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *>
   auto *output_ptr = reinterpret_cast<T_out *>(outputs[kIndex0]->device_ptr());
 
   // Calculate the required memory based on s and dim.
-  int64_t calculate_element_nums_ = input_element_nums_ / tensor_shape_[dim] * n;
-  std::vector<int64_t> calculate_shape_(tensor_shape_.begin(), tensor_shape_.end());
-  calculate_shape_[dim] = n;
+  int64_t calculate_element_nums = input_element_nums_ / tensor_shape_[dim_] * n_;
+  std::vector<int64_t> calculate_shape(tensor_shape_.begin(), tensor_shape_.end());
+  calculate_shape[dim_] = n_;
 
   // Allocate temporary memory of the required type and size and copy the input into this space.
-  T_mid *calculate_input = static_cast<T_mid *>(malloc(sizeof(T_mid) * calculate_element_nums_));
-  // memset(calculate_input, 0, sizeof(T_mid) * calculate_element_nums_);
-  memset_s(calculate_input, sizeof(T_mid) * calculate_element_nums_, 0, sizeof(T_mid) * calculate_element_nums_);
-  GenarateCalculateInput<T_in, T_mid>(input_ptr, calculate_input, input_element_nums_, tensor_shape_, calculate_shape_,
-                                      n, dim);
+  T_mid *calculate_input = static_cast<T_mid *>(malloc(sizeof(T_mid) * calculate_element_nums));
+  auto ret =
+    memset_s(calculate_input, sizeof(T_mid) * calculate_element_nums, 0, sizeof(T_mid) * calculate_element_nums);
+  if (ret != EOK) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset_s failed, ret=" << ret;
+  }
+  ShapeCopy<T_in, T_mid>(input_ptr, calculate_input, tensor_shape_, calculate_shape);
 
   // Run FFT according to parameters
-  SWITCH_DIM_CALCULATE(T_mid, T_out);
+  EIGEN_FFT_INPUT_RANK_CASE(T_mid, T_out);
 
   // Release temporary memory
   free(calculate_input);

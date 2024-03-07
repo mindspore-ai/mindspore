@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_FFTBASE_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_FFTBASE_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_FFTSHAPECOPY_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_FFTSHAPECOPY_CPU_KERNEL_H_
 
 #include <vector>
 #include <complex>
@@ -27,13 +27,14 @@
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 #include "unsupported/Eigen/CXX11/Tensor"
+#include "utils/fft_helper.h"
 
 namespace mindspore {
 namespace kernel {
-class FFTBaseCpuKernelMod : public NativeCpuKernelMod {
+class FFTShapeCopyCpuKernelMod : public NativeCpuKernelMod {
  public:
-  FFTBaseCpuKernelMod() = default;
-  ~FFTBaseCpuKernelMod() override = default;
+  FFTShapeCopyCpuKernelMod() = default;
+  ~FFTShapeCopyCpuKernelMod() override = default;
 
   bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
   int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
@@ -46,24 +47,17 @@ class FFTBaseCpuKernelMod : public NativeCpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  template <typename T_in, typename T_mid, typename T_out>
+  template <typename T>
   bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
                     const std::vector<kernel::KernelTensor *> &outputs);
 
-  using FFTBaseFunc = std::function<bool(FFTBaseCpuKernelMod *, const std::vector<KernelTensor *> &,
-                                         const std::vector<KernelTensor *> &)>;
-  static std::vector<std::pair<KernelAttr, FFTBaseFunc>> func_list_;
-  FFTBaseFunc kernel_func_;
-
-  std::vector<int64_t> tensor_shape_;
-  int64_t x_rank_;
-  int64_t dim_;
-  int64_t n_;
-  int64_t input_element_nums_;
-  double norm_weight_;
-  mindspore::NormMode norm_;
-  bool forward_;
+  using FFTShapeCopyFunc = std::function<bool(FFTShapeCopyCpuKernelMod *, const std::vector<KernelTensor *> &,
+                                              const std::vector<KernelTensor *> &)>;
+  static std::vector<std::pair<KernelAttr, FFTShapeCopyFunc>> func_list_;
+  FFTShapeCopyFunc kernel_func_;
+  std::vector<int64_t> dout_shape_;
+  std::vector<int64_t> shape_;
 };
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_FFTBASE_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_FFTSHAPECOPY_CPU_KERNEL_H_

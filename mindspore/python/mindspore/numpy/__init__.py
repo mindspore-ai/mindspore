@@ -64,7 +64,7 @@ from mindspore.numpy.logic_ops import (not_equal, less_equal, less, greater_equa
                                        logical_or, logical_xor, in1d, isin, isclose, signbit, sometrue,
                                        array_equal, array_equiv, setdiff1d)
 
-from mindspore.numpy.fft import (fftshift, ifftshift, fft, ifft)
+from . import fft
 
 mod = remainder
 fabs = absolute
@@ -116,8 +116,6 @@ logic_module = ['not_equal', 'less_equal', 'less', 'greater_equal', 'greater', '
                 'logical_or', 'logical_xor', 'in1d', 'isin', 'isclose', 'signbit', 'sometrue',
                 'array_equal', 'array_equiv', 'setdiff1d']
 
-fft_module = ['fftshift', 'ifftshift', 'fft', 'ifft']
-
-__all__ = array_ops_module + array_creations_module + math_module + logic_module + numeric_types + fft_module
+__all__ = array_ops_module + array_creations_module + math_module + logic_module + numeric_types
 
 __all__.sort()

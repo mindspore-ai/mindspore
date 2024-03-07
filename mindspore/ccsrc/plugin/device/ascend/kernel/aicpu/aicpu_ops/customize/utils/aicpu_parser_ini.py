@@ -84,6 +84,7 @@ cust_op_lists = [
     "extractglimpse",
     "eye",
     "fft",
+    "fftshapecopy",
     "fftshift",
     "fftwithsize",
     "filldiagonal",

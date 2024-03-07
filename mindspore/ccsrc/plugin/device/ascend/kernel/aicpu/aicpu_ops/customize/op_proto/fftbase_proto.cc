@@ -17,47 +17,61 @@
 #include "custom_op_proto/cust_math_ops.h"
 #include "register/op_impl_registry.h"
 #include "utils/util.h"
+#include "utils/common_shape_fns.h"
+#include "utils/op_common_util.h"
+#include "utils/op_const.h"
 
 namespace ge {
 IMPLEMT_COMMON_INFERFUNC(FFTBaseInferShape) {
-  DataType x_dtype = op.GetInputDescByName("input").GetDataType();
+  auto input_desc = op.GetInputDescByName("input");
+  auto out_desc = op.GetOutputDescByName("y");
+
+  DataType x_dtype = input_desc.GetDataType();
   DataType y_dtype;
   if (x_dtype == DT_DOUBLE || x_dtype == DT_COMPLEX128) {
     y_dtype = DT_COMPLEX128;
   } else {
     y_dtype = DT_COMPLEX64;
   }
-  TensorDesc out_desc = op.GetOutputDescByName("y");
   out_desc.SetDataType(y_dtype);
-  out_desc.SetShape(op.GetInputDescByName("input").GetShape());
-  // TODO: If n is given, the input will be zero-padded or trimmed to this length.
-  // Tensor n_tensor;
-  // if (op.GetInputConstData("n", n_tensor) != GRAPH_SUCCESS) {
-  //   out_desc.SetShape(op.GetInputDescByName("input").GetShape());
-  // } else {
-  //   int64_t n = reinterpret_cast<int64_t>(n_tensor.GetData());
 
-  //   vector<int64_t> x_shape_list = op.GetInputDescByName("input").GetShape().GetDims();
-  //   std::vector<int64_t> out_shape_list = {};
-  //   out_shape_list.assign(x_shape_list.begin(), x_shape_list.end());
-
-  //   int64_t x_rank = x_shape_list.size();
-  //   Tensor dim_tensor;
-  //   op.GetInputConstData("dim", dim_tensor);
-  //   int64_t dim = reinterpret_cast<int64_t>(dim_tensor.GetData());
-  //   dim = dim < 0 ? x_rank + dim : dim;
-  //   out_shape_list[dim] = n;
-
-  //   Shape out_shape(out_shape_list);
-  //   out_desc.SetShape(out_shape);
-  // }
-
-  if (op.UpdateOutputDesc("y", out_desc) != GRAPH_SUCCESS) {
-    OP_LOGE(TbeGetName(op).c_str(), "Failed to update output desc.");
-    return GRAPH_FAILED;
+  bool unknown_rank_shape = IsUnknownRankShape(input_desc.GetShape());
+  if (unknown_rank_shape) {
+    out_desc.SetShape(ge::Shape(UNKNOWN_RANK));
+    OP_LOGD(TbeGetName(op).c_str(), "output shape:%s", to_string(out_desc.GetShape()).c_str());
+    op.UpdateOutputDesc("y", out_desc);
+    return GRAPH_SUCCESS;
   }
+
+  size_t x_rank = input_desc.GetShape().GetDimNum();
+  auto input_shape_dims = input_desc.GetShape().GetDims();
+  vector<int64_t> output_shape_dims(input_shape_dims.begin(), input_shape_dims.end());
+  const vector<string> depend_names = {"n", "dim"};
+  PREPARE_DYNAMIC_SHAPE(depend_names);
+
+  // infer output shape based on 'n' and 'dim'
+  Tensor n_data;
+  if (op.GetInputConstData("n", n_data) == GRAPH_SUCCESS) {
+    DataType dtype = op.GetInputDescByName("n").GetDataType();
+    std::vector<int64_t> const_vec;
+    GetConstValue(op, n_data, dtype, const_vec);
+    int64_t n = const_vec[0];
+    Tensor dim_data;
+    op.GetInputConstData("dim", dim_data);
+
+    DataType dim_dtype = op.GetInputDescByName("dim").GetDataType();
+    std::vector<int64_t> const_vec_dim;
+    GetConstValue(op, dim_data, dim_dtype, const_vec_dim);
+    int64_t dim = const_vec_dim[0];
+    dim = dim < 0 ? static_cast<int64_t>(x_rank) + dim : dim;
+    output_shape_dims[dim] = n;
+  }
+
+  out_desc.SetShape(ge::Shape(output_shape_dims));
+  op.UpdateOutputDesc("y", out_desc);
   return GRAPH_SUCCESS;
 }
+
 CUST_COMMON_INFER_FUNC_REG(FFT, FFTBaseInferShape);
 CUST_COMMON_INFER_FUNC_REG(IFFT, FFTBaseInferShape);
 }  // namespace ge

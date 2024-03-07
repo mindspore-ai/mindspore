@@ -13,32 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef AICPU_KERNELS_NORMALIZED_FFTBASE_H_
-#define AICPU_KERNELS_NORMALIZED_FFTBASE_H_
+#ifndef AICPU_KERNELS_NORMALIZED_FFT_SHAPECOPY_H_
+#define AICPU_KERNELS_NORMALIZED_FFT_SHAPECOPY_H_
 
 #include <vector>
 #include <securec.h>
 #include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
-const uint32_t kIndex0 = 0;
-const uint32_t kFftNIndex = 1;
-const uint32_t kFftDimIndex = 2;
-const uint32_t kFftNormIndex = 3;
-class FFTBaseCpuKernel : public CpuKernel {
+class FFTShapeCopyCpuKernel : public CpuKernel {
  public:
-  ~FFTBaseCpuKernel() = default;
+  ~FFTShapeCopyCpuKernel() = default;
 
  protected:
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  template <typename T_in, typename T_mid, typename T_out>
-  uint32_t FFTBaseCompute(CpuKernelContext &ctx);
+  template <typename T>
+  uint32_t FFTShapeCopyCompute(CpuKernelContext &ctx);
 
   std::string op_name_;
-  std::size_t dim_index_ = kFftDimIndex;
-  std::size_t norm_index_ = kFftNormIndex;
 };
 }  // namespace aicpu
-#endif  //  AICPU_FFTBASE_H
+#endif  //  AICPU_KERNELS_NORMALIZED_FFT_SHAPECOPY_H_
