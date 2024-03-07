@@ -345,13 +345,13 @@ def _sync_params(name, param, layout):
         ms.log.warning("The layout dict does not contain the pipeline_shared_param info %s", name)
         return
 
-    pipeline_shared = layout[6]
+    pipeline_shared = layout[8]
     if not pipeline_shared:
         return
 
-    is_send = layout[7]
-    peer_rank = layout[8]
-    sr_tag = layout[9]
+    is_send = layout[9]
+    peer_rank = layout[10]
+    sr_tag = layout[11]
 
     class SharedParameterSyncCell(ms.nn.Cell):
         """synchronize cell"""
