@@ -39,6 +39,7 @@ add_ext:
     
     Examples:
         >>> import numpy as np
+        >>> import mindspore
         >>> from mindspore import Tensor
         >>> from mindspore.ops.extend import add
         >>> # case 1: x, y and alpha are all Tensor.

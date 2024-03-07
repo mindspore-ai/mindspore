@@ -36,6 +36,7 @@ add:
 
         Examples:
             >>> import numpy as np
+            >>> import mindspore
             >>> from mindspore import Tensor, ops
             >>> # case 1: x and y are both Tensor.
             >>> x = Tensor(np.array([1, 2, 3]).astype(np.float32))
