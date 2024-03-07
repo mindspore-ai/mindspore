@@ -3992,8 +3992,8 @@ def l1_loss(input, target, reduction='mean'):
     Examples:
         >>> from mindspore import Tensor, ops
         >>> from mindspore import dtype as mstype
-        >>> x = ms.Tensor([[1, 2, 3], [4, 5, 6]], mstype.float32)
-        >>> target = ms.Tensor([[6, 5, 4], [3, 2, 1]], mstype.float32)
+        >>> x = Tensor([[1, 2, 3], [4, 5, 6]], mstype.float32)
+        >>> target = Tensor([[6, 5, 4], [3, 2, 1]], mstype.float32)
         >>> output = ops.l1_loss(x, target, reduction="mean")
         >>> print(output)
         3.0

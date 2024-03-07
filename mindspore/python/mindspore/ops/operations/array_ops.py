@@ -5837,6 +5837,9 @@ class SpaceToBatchND(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
+        >>> import numpy as np
         >>> block_shape = [2, 2]
         >>> paddings = [[0, 0], [0, 0]]
         >>> space_to_batch_nd = ops.SpaceToBatchND(block_shape, paddings)
