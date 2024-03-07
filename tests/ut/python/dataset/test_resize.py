@@ -15,6 +15,7 @@
 """
 Testing Resize op in DE
 """
+import time
 import cv2
 import numpy as np
 from PIL import Image
@@ -292,6 +293,24 @@ def test_resize_op_exception_py_interpolation():
     assert "Current Interpolation is not supported with PIL input." in str(error_info.value)
 
 
+def test_resize_performance():
+    """
+    Feature: Resize
+    Description: Test Resize performance in eager mode after optimize ndarray to cde.Tensor without memcpy
+    Expectation: SUCCESS
+    """
+
+    input_apple_jpg = "../data/dataset/apple.jpg"
+    img_bytes = np.fromfile(input_apple_jpg, dtype=np.uint8)
+    img_decode = vision.Decode()(img_bytes)
+    _ = vision.Resize(224)(img_decode)
+
+    s = time.time()
+    for _ in range(1000):
+        _ = vision.Resize(224)(img_decode)
+    assert (time.time() - s) < 2.5  # Probably around 1.9 seconds
+
+
 if __name__ == "__main__":
     test_resize_op(plot=True)
     test_resize_4d_input_1_size()
@@ -304,3 +323,4 @@ if __name__ == "__main__":
     test_resize_op_invalid_input()
     test_resize_op_exception_c_interpolation()
     test_resize_op_exception_py_interpolation()
+    test_resize_performance()

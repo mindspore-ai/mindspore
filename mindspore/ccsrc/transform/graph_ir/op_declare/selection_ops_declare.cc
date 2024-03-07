@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ INPUT_MAP(CumulativeLogsumexp) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(axis)}};
 ATTR_MAP(CumulativeLogsumexp) = {{"exclusive", ATTR_DESC(exclusive, AnyTraits<bool>())},
                                  {"reverse", ATTR_DESC(reverse, AnyTraits<bool>())}};
 OUTPUT_MAP(CumulativeLogsumexp) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(CumulativeLogsumexp, kNameCumulativeLogsumexp, ADPT_DESC(CumulativeLogsumexp))
 
 // Cumsum
 INPUT_MAP(Cumsum) = {{kIndex1, INPUT_DESC(x)}, {kIndex2, INPUT_DESC(axis)}};
@@ -130,10 +131,11 @@ OUTPUT_MAP(GatherNd) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(GatherNd, kNameGatherNd, ADPT_DESC(GatherNd))
 
 // GatherD
-INPUT_MAP(GatherD) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(dim)}, {3, INPUT_DESC(index)}};
-ATTR_MAP(GatherD) = EMPTY_ATTR_MAP;
-OUTPUT_MAP(GatherD) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(GatherD, kNameGatherD, ADPT_DESC(GatherD))
+INPUT_MAP(GatherElements) = {{1, INPUT_DESC(x)}, {3, INPUT_DESC(index)}};
+ATTR_MAP(GatherElements) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(GatherElements) = {{2, ATTR_DESC(dim, AnyTraits<int64_t>())}};
+OUTPUT_MAP(GatherElements) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(GatherD, kNameGatherD, ADPT_DESC(GatherElements))
 
 // RangeV2
 INPUT_MAP(Range) = {{1, INPUT_DESC(start)}, {2, INPUT_DESC(limit)}, {3, INPUT_DESC(delta)}};
@@ -179,14 +181,14 @@ REG_ADPT_DESC(StridedSliceGrad, kNameStridedSliceGrad, ADPT_DESC(StridedSliceGra
 
 // StridedSlice
 INPUT_MAP(StridedSlice) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(begin)}, {3, INPUT_DESC(end)}, {4, INPUT_DESC(strides)}};
-ATTR_MAP(StridedSlice) = {{"begin_mask", ATTR_DESC(begin_mask, AnyTraits<int64_t>())},
-                          {"end_mask", ATTR_DESC(end_mask, AnyTraits<int64_t>())},
-                          {"ellipsis_mask", ATTR_DESC(ellipsis_mask, AnyTraits<int64_t>())},
-                          {"new_axis_mask", ATTR_DESC(new_axis_mask, AnyTraits<int64_t>())},
-                          {"shrink_axis_mask", ATTR_DESC(shrink_axis_mask, AnyTraits<int64_t>())}};
+ATTR_MAP(StridedSlice) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(StridedSlice) = {{kIndex5, ATTR_DESC(begin_mask, AnyTraits<int64_t>())},
+                                {kIndex6, ATTR_DESC(end_mask, AnyTraits<int64_t>())},
+                                {kIndex7, ATTR_DESC(ellipsis_mask, AnyTraits<int64_t>())},
+                                {kIndex8, ATTR_DESC(new_axis_mask, AnyTraits<int64_t>())},
+                                {kIndex9, ATTR_DESC(shrink_axis_mask, AnyTraits<int64_t>())}};
 OUTPUT_MAP(StridedSlice) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(StridedSlice, kNameStridedSlice, ADPT_DESC(StridedSlice))
-REG_ADPT_DESC(StridedSliceD, kStridedSliceDOpName, ADPT_DESC(StridedSlice))
 
 // StridedSliceV2
 INPUT_MAP(StridedSliceV2) = {

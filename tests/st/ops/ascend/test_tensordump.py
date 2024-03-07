@@ -25,17 +25,17 @@ def find_npy_files(folder_path):
 @pytest.mark.parametrize(
     "dtype",
     [
-        ms.float16,
-        ms.float32,
-        ms.float64,
-        ms.int8,
-        ms.uint8,
-        ms.int16,
-        ms.uint16,
-        ms.int32,
-        ms.uint32,
-        ms.int64,
-        ms.uint64,
+        np.float16,
+        np.float32,
+        np.float64,
+        np.int8,
+        np.uint8,
+        np.int16,
+        np.uint16,
+        np.int32,
+        np.uint32,
+        np.int64,
+        np.uint64,
     ],
 )
 @pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
@@ -50,33 +50,24 @@ def test_net(dtype, mode):
         def __init__(self, path):
             super(Net, self).__init__()
             self.dump = ops.TensorDump()
-            self.path_x1 = str(path / "x1")
-            self.path_x2 = str(path / "x2")
-            self.path_out = str(path / "out")
+            self.path_x = str(path / "x")
 
-        def construct(self, x1, x2):
-            self.dump(self.path_x1, x1)
-            self.dump(self.path_x2, x2)
-            x1 = ops.cast(x1, ms.float32)
-            x2 = ops.cast(x2, ms.float32)
-            out = x1 + x2
-            self.dump(self.path_out, out)
-            return out
+        def construct(self, x):
+            self.dump(self.path_x, x)
+            return x
 
     ms.set_context(device_target="Ascend", mode=mode)
     temp_dir = tempfile.TemporaryDirectory(suffix="TensorDump")
     path = Path(temp_dir.name)
-    x1 = ops.randint(0, 10, (3, 5)).astype(dtype)
-    x2 = ops.randint(0, 10, (3, 5)).astype(dtype)
+    np_x = np.random.rand(3, 5)
+    x = ms.Tensor(np_x.astype(dtype))
     net = Net(path)
-    output = net(x1, x2)
+    output = net(x)
     out = output.asnumpy()
     time.sleep(0.1)
     name2file = find_npy_files(path)
 
-    assert np.allclose(x1.asnumpy(), np.load(name2file["x1"]))
-    assert np.allclose(x2.asnumpy(), np.load(name2file["x2"]))
-    assert np.allclose(out, np.load(name2file["out"]))
+    assert np.allclose(out, np.load(name2file["x"]))
 
 
 @pytest.mark.level0

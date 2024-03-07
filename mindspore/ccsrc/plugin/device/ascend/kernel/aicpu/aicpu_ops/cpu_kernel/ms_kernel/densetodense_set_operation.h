@@ -21,7 +21,7 @@
 #include <set>
 #include <vector>
 
-#include "cpu_kernel_utils.h"
+#include "inc/ms_cpu_kernel.h"
 namespace aicpu {
 enum SetOperation { A_MINUS_B = 0, B_MINUS_A = 1, INTERSECTION = 2, UNION = 3 };
 

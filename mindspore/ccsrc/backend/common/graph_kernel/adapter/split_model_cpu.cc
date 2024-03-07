@@ -16,6 +16,7 @@
 #include "backend/common/graph_kernel/adapter/split_model_cpu.h"
 #include <memory>
 #include "utils/ms_context.h"
+#include "ops/array_op_name.h"
 #include "ops/nn_optimizer_op_name.h"
 
 namespace mindspore::graphkernel::inner {
@@ -37,7 +38,7 @@ void SplitModelCpu::InitFusePatterns() {
 
 AreaMode SplitModelCpu::GetDefaultAreaMode(const PrimOpPtr &node) const {
   if (node != nullptr) {
-    if (node->op() == kAssignOpName) {
+    if (node->op() == kReshapeOpName || node->op() == kAssignOpName) {
       return AreaMode::BASIC;
     }
   }

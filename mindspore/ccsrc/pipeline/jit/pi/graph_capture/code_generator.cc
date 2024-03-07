@@ -555,21 +555,35 @@ void CodeGenerator::LoadValue(ValueNode *node) {
   }
 
   std::string key = node->GetName();
+  if (opcode == LOAD_GLOBAL) {
+    PyObject *globals = node->GetGraph() ? node->GetGraph()->GetGlobals().ptr() : nullptr;
+    MS_EXCEPTION_IF_NULL(globals);
+    if (globals != GetGlobals().ptr()) {
+      py::str key_object(key);
+      PyObject *value = PyObject_GetItem(globals, key_object.ptr());
+      if (value != nullptr) {
+        py::object handle_value = py::reinterpret_steal<py::object>(value);
+        MapAdd(GetGlobals(), key, handle_value, &key);
+      } else {
+        // name error, global undefined
+        PyErr_Clear();
+      }
+    }
+    NewInstr(LOAD_GLOBAL);
+    code_.co_code.back()->set_name(key);
+    return;
+  }
+
   py::object cnst = node->GetVobj()->GetPyObject();
   if (opcode == LOAD_CONST) {
+    MS_EXCEPTION_IF_NULL(cnst.ptr());
     if (CheckConstPyObject(cnst.ptr())) {
       NewInstr(LOAD_CONST);
       code_.co_code.back()->set_cnst(cnst);
       return;
     }
     key = GenerateObjectKey(cnst);
-    opcode = LOAD_GLOBAL;
-  }
-
-  if (opcode == LOAD_GLOBAL) {
-    if (cnst.ptr() != nullptr) {
-      MapAdd(GetGlobals(), key, cnst, &key);
-    }
+    MapAdd(GetGlobals(), key, cnst);
     NewInstr(LOAD_GLOBAL);
     code_.co_code.back()->set_name(key);
     return;
@@ -903,7 +917,7 @@ void CodeBreakGenerator::BreakAtBlock(CodeGenerator *code_gen, int untracked_bci
    *         y = 2
    *     return y
    */
-  interpret_.outputs.resize(alive_locals_.size(), &ValueNode::UnboundLocal);
+  interpret_.outputs.resize(alive_locals_.size(), &ValueNode::kUnboundLocal);
   untracked_stack_effect = 0;
 
   py::object code = MakeUntrackedCode(untracked_bci, untracked_stack_effect);
@@ -1110,7 +1124,7 @@ std::vector<ValueNode *> CollectInterpretOutputs(const FrameStates &last_frame, 
   // collect alive locals
   for (size_t i = 0; i < alive.size(); ++i) {
     // exclude undefined locals
-    if (alive.Get(i) && last_frame.Local(i) != &ValueNode::UnboundLocal) {
+    if (alive.Get(i) && last_frame.Local(i) != &ValueNode::kUnboundLocal) {
       alive_locals->push_back(i);
       outputs.push_back(last_frame.Local(i));
     }
@@ -1156,11 +1170,11 @@ void CodeBreakGenerator::BuildGraphParameters(const std::unordered_map<ValueNode
   ValueNode *vargs = nullptr;
   ValueNode *kwargs = nullptr;
   int arg_index = co_->co_argcount + co_->co_kwonlyargcount;
-  if ((co_->co_flags & CO_VARARGS) && interpret_.inputs[arg_index] != &ValueNode::UnboundLocal) {
+  if ((co_->co_flags & CO_VARARGS) && interpret_.inputs[arg_index] != &ValueNode::kUnboundLocal) {
     vargs = interpret_.inputs[arg_index];
   }
   arg_index += (co_->co_flags & CO_VARARGS) != 0;
-  if ((co_->co_flags & CO_VARKEYWORDS) && interpret_.inputs[arg_index] != &ValueNode::UnboundLocal) {
+  if ((co_->co_flags & CO_VARKEYWORDS) && interpret_.inputs[arg_index] != &ValueNode::kUnboundLocal) {
     kwargs = interpret_.inputs[arg_index];
   }
 

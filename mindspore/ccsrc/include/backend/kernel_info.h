@@ -69,6 +69,7 @@ class BACKEND_EXPORT KernelInfo : public KernelInfoDevice {
   }
   void set_kernel_mod(const kernel::KernelModPtr &kernel_mod);
   kernel::KernelMod *MutableKernelMod() const;
+  kernel::KernelModPtr GetKernelMod() const;
   const kernel::KernelMod *kernel_mod() const;
   uint32_t stream_id() const { return stream_id_; }
   void set_stream_id(uint32_t stream_id) { stream_id_ = stream_id; }

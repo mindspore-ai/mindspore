@@ -101,6 +101,15 @@ IMPLEMT_COMMON_INFERFUNC(CustIm2colInferShape) {
   auto dtype = desc_in.GetDataType();
   auto shape_in = desc_in.GetShape();
   auto x_format = desc_in.GetOriginFormat();
+
+  if (IsUnknown(shape_in.GetDims())) {
+    std::vector<int64_t> out_dim{UNKNOWN_DIM, UNKNOWN_DIM, UNKNOWN_DIM, UNKNOWN_DIM};
+    desc_out.SetShape(ge::Shape(out_dim));
+    desc_out.SetDataType(dtype);
+    op.UpdateOutputDesc("y", desc_out);
+    return GRAPH_SUCCESS;
+  }
+
   if (x_format != FORMAT_NHWC && x_format != FORMAT_NCHW) {
     OP_LOGE(TbeGetName(op).c_str(), "Attr x_format only support NHWC, NCHW.");
     return GRAPH_FAILED;

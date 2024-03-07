@@ -17,12 +17,16 @@
 #ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_SUB_EXT_H_
 #define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_SUB_EXT_H_
 
+#include <vector>
 #include "mindapi/base/macros.h"
 #include "ops/ops_func_impl/binary_op.h"
 
 namespace mindspore {
 namespace ops {
-class MIND_API SubExtFuncImpl : public BinaryOpFuncImpl {};
+class MIND_API SubExtFuncImpl : public BinaryOpFuncImpl {
+ public:
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+};
 }  // namespace ops
 }  // namespace mindspore
 

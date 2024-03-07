@@ -128,7 +128,7 @@ class DATASET_API Tensor {
   /// \param[in] arr py::array
   /// \param[out] out Created tensor
   /// \return Status Code
-  static Status CreateFromNpArray(const py::array &arr, TensorPtr *out);
+  static Status CreateFromNpArray(py::array arr, TensorPtr *out);
 
   /// Helper function to create a tensor from a Python dictionary object
   /// \param[in] obj pybind11 wrapper for Python dictionary object
@@ -864,6 +864,9 @@ class DATASET_API Tensor {
 #ifdef ENABLE_PYTHON
   /// Store python dictionary wrapper
   py::object python_dict_;
+
+  /// Hold the np.ndarray which is from python layer without memcpy cost
+  py::buffer python_array_;
 #endif
 
  private:

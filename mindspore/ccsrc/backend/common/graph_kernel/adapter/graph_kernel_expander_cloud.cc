@@ -107,6 +107,22 @@ std::vector<PrimitivePtr> GraphKernelExpanderCloud::GetExpanderOps() {
     {kCPUDevice, OpLevel_1, prim::kPrimSoftplus},
     {kCPUDevice, OpLevel_1, prim::kPrimSoftplusGrad},
   };
+  std::vector<OpWithLevel> expand_ops_with_level_v2 = {
+    // CPU
+    {kCPUDevice, OpLevel_0, prim::kPrimIdentityMath},
+    {kCPUDevice, OpLevel_0, prim::kPrimSqueeze},
+    {kCPUDevice, OpLevel_0, prim::kPrimSlice},
+
+    // GPU
+    {kGPUDevice, OpLevel_0, prim::kPrimBiasAdd},
+    {kGPUDevice, OpLevel_0, prim::kPrimDropout},
+    {kGPUDevice, OpLevel_0, prim::kPrimDropoutGrad},
+    {kGPUDevice, OpLevel_0, prim::kPrimLayerNorm},
+    {kGPUDevice, OpLevel_0, prim::kPrimLayerNormGrad},
+    {kGPUDevice, OpLevel_0, prim::kPrimRelu},
+    {kGPUDevice, OpLevel_0, prim::kPrimReluGrad},
+    {kGPUDevice, OpLevel_0, prim::kPrimClipByNorm},
+  };
   std::vector<OpWithLevel> expand_ops_with_level_dvm = {
     {kAscendDevice, OpLevel_0, prim::kPrimAddN},
     {kAscendDevice, OpLevel_0, prim::kPrimGeLU},
@@ -134,10 +150,27 @@ std::vector<PrimitivePtr> GraphKernelExpanderCloud::GetExpanderOps() {
     {kAscendDevice, OpLevel_1, prim::kPrimAdamApplyOneWithDecay},
   };
   const auto &flags = GraphKernelFlags::GetInstance();
-  auto ops_with_level = GraphKernelFlags::GetInstance().kernel_generator == "DVM" ? std::move(expand_ops_with_level_dvm)
-                                                                                  : std::move(expand_ops_with_level);
-  auto ops = GkUtils::GetValidOps(ops_with_level, flags.fusion_ops_level, flags.enable_expand_ops_only,
-                                  flags.enable_expand_ops, flags.disable_expand_ops);
+  std::vector<std::string> disable_expand_ops = flags.disable_expand_ops;
+  auto cb = Callback::Instance();
+
+  std::vector<std::string> disable_expand_op_list_v2 = {
+    "OnesLike", "OneHot", "StridedSlice", "CumSum", "Transpose", "BatchMatMul", "MatMul", "ExpandDims", "BroadcastTo"};
+  if (flags.kernel_generator == "AKG_V2") {
+    std::move(expand_ops_with_level_v2.begin(), expand_ops_with_level_v2.end(),
+              std::back_inserter(expand_ops_with_level));
+    if (cb->GetTargetFromContext() == kGPUDevice) {
+      for (const std::string &item : disable_expand_op_list_v2) {
+        if (std::find(flags.enable_expand_ops.begin(), flags.enable_expand_ops.end(), item) ==
+            flags.enable_expand_ops.end()) {
+          disable_expand_ops.push_back(item);
+        }
+      }
+    }
+  } else if (flags.kernel_generator == "DVM") {
+    expand_ops_with_level = std::move(expand_ops_with_level_dvm);
+  }
+  auto ops = GkUtils::GetValidOps(expand_ops_with_level, flags.fusion_ops_level, flags.enable_expand_ops_only,
+                                  flags.enable_expand_ops, disable_expand_ops);
   return GkUtils::FilterExcludedOps(ops);
 }
 
@@ -154,15 +187,30 @@ bool GraphKernelExpanderCloud::CanExpand(const CNodePtr &node) const {
   if (is_dvm && !DvmSupported(node)) {
     return false;
   }
-  bool enable_dynshape_expander = GraphKernelFlags::GetInstance().enable_dynamic_shape_fusion;
-  if (enable_dynshape_expander) {
-    if (common::AnfAlgo::IsDynamicRankNode(node)) {
-      return false;
-    }
-  } else if (common::AnfAlgo::IsDynamicShape(node)) {
+  if (!common::AnfAlgo::IsDynamicShape(node)) {
+    // for static cases, the node can be expanded if this is complex op
+    // or in the list
+    return true;
+  }
+
+  // deal wich dynamic cases
+  // the node with dyn rank will not be expand
+  if (common::AnfAlgo::IsDynamicRankNode(node)) {
     return false;
   }
-  return true;
+
+  auto enable_dynamic_shape = GraphKernelFlags::GetInstance().enable_dynamic_shape_fusion;
+  if (is_dvm) {
+    return enable_dynamic_shape;
+  }
+
+  std::vector<PrimitivePtr> expand_ops_dyn = {prim::kPrimReLU, prim::kPrimReluGrad, prim::kPrimBiasAdd,
+                                              prim::kPrimBiasAddGrad, prim::kPrimDropout};
+
+  bool dyn_can_expand_op = std::any_of(expand_ops_dyn.begin(), expand_ops_dyn.end(),
+                                       [&node](const PrimitivePtr &prim) { return IsPrimitiveCNode(node, prim); });
+  // the dyn shape node can be expanded
+  return (enable_dynamic_shape && dyn_can_expand_op);
 }
 
 ExpanderPtr GraphKernelExpanderCloud::InitExpander(const AnfNodePtr &node) {

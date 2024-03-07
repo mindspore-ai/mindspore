@@ -42,7 +42,7 @@ from ..auto_generate import (ExpandDims, Reshape, TensorShape, Transpose, Gather
                              ReverseV2, Diag, Eye, ScatterNd, ResizeNearestNeighborV2, GatherNd, GatherD,
                              Range, MaskedFill, RightShift, NonZero, ResizeNearestNeighbor, Identity, Split,
                              CumSum, CumProd, Cummax, Cummin, Argmin, Concat, UnsortedSegmentSum, ScalarToTensor,
-                             BroadcastTo, Select)
+                             BroadcastTo, StridedSlice, Select)
 from .manually_defined import Rank, Shape, Tile, Cast
 from ..auto_generate import ArgMaxWithValue, ArgMinWithValue
 
@@ -311,7 +311,6 @@ class Im2Col(Primitive):
 
             - If one int, :math:`pad\_height = pad\_width`.
             - If two int, :math:`pad\_height = pads[0]`, :math:`pad\_width = pads[1]`.
-            - If four int, :math:`pads = [pad\_height\_top, pad\_height\_bottom, pad\_width\_left, pad\_width\_right]`.
 
     Inputs:
         - **x** (Tensor) - input tensor, only 4-D input tensors (batched image-like tensors) are supported.
@@ -1986,15 +1985,19 @@ class Stack(PrimitiveWithInfer):
         tuple_value = value['value']
         input_array = []
         infered_value = None
+        dtype = x_type[0]
         if tuple_value is not None and None not in tuple_value:
             for item in tuple_value:
-                npy_item = item.asnumpy()
+                npy_item = item.asnumpy() if item.dtype != mstype.bfloat16 else item.float().asnumpy()
                 input_array.append(npy_item)
-            infered_value = Tensor(np.stack(input_array, axis=self.axis))
+            if dtype == mstype.TensorType(mstype.bfloat16):
+                infered_value = Tensor(np.stack(input_array, axis=self.axis), mstype.bfloat16)
+            else:
+                infered_value = Tensor(np.stack(input_array, axis=self.axis))
 
         shape = all_shape.get('shape') if isinstance(all_shape, dict) else all_shape
         out = {'shape': shape,
-               'dtype': x_type[0],
+               'dtype': dtype,
                'value': infered_value}
 
         return out
@@ -2240,424 +2243,6 @@ class StridedSliceV2(Primitive):
                  shrink_axis_mask=0):
         """Initialize StridedSliceV2"""
         self.init_prim_io_names(inputs=['x', 'begin', 'end', 'strides'], outputs=['output'])
-
-
-class StridedSlice(PrimitiveWithInfer):
-    r"""
-
-    Extracts a strided slice of a tensor.
-
-    Refer to :func:`mindspore.ops.strided_slice` for more details.
-
-    Args:
-        begin_mask (int, optional): Starting index of the slice. Default: ``0`` .
-        end_mask (int, optional): Ending index of the slice. Default: ``0`` .
-        ellipsis_mask (int, optional): An int mask, ignore slicing operation when set to 1. Default: ``0`` .
-        new_axis_mask (int, optional): An int mask for adding new dims. Default: ``0`` .
-        shrink_axis_mask (int, optional): An int mask for shrinking dims. Default: ``0`` .
-
-    Inputs:
-        - **input_x** (Tensor) - The input Tensor to be extracted from.
-        - **begin** (tuple[int]) - A tuple which represents the location where to start.
-        - **end** (tuple[int]) - A tuple or which represents the maximum location where to end.
-        - **strides** (tuple[int]) - A tuple which represents the strides is continuously added
-          before reaching the maximum location. Only int is allowed, it can be negative
-          which results in reversed slicing.
-
-    Outputs:
-        Tensor, return the extracts a strided slice of a Tensor based on `begin/end` index and `strides`.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> from mindspore import Tensor, ops
-        >>> input_x = Tensor([[[1, 1, 1], [2, 2, 2]], [[3, 3, 3], [4, 4, 4]],
-        ...                   [[5, 5, 5], [6, 6, 6]]], mindspore.float32)
-        >>> #         [[[1. 1. 1.]
-        >>> #           [2. 2. 2.]]
-        >>> #
-        >>> #          [[3. 3. 3.]
-        >>> #           [4. 4. 4.]]
-        >>> #
-        >>> #          [[5. 5. 5.]
-        >>> #           [6. 6. 6.]]]
-        >>> # In order to visually view the multi-dimensional array, write the above as follows
-        >>> #         [
-        >>> #             [
-        >>> #                 [1,1,1]
-        >>> #                 [2,2,2]
-        >>> #             ]
-        >>> #             [
-        >>> #                 [3,3,3]
-        >>> #                 [4,4,4]
-        >>> #             ]
-        >>> #             [
-        >>> #                 [5,5,5]
-        >>> #                 [6,6,6]
-        >>> #             ]
-        >>> #         ]
-        >>> strided_slice = ops.StridedSlice()
-        >>> output = strided_slice(input_x, (1, 0, 2), (3, 1, 3), (1, 1, 1))
-        >>> # Take this " output = strided_slice(input_x, (1, 0, 2), (3, 1, 3), (1, 1, 1)) " as an example,
-        >>> # start = [1, 0, 2] , end = [3, 1, 3], stride = [1, 1, 1], Find a segment of (start, end),
-        >>> # note that end is an open interval
-        >>> # To facilitate understanding, this operator can be divided into three steps:
-        >>> # Step 1: Calculation of the first dimension:
-        >>> # start = 1, end = 3, stride = 1, So can take 1st, 2nd rows, and then gets the final output at this time.
-        >>> # output_1th =
-        >>> # [
-        >>> #     [
-        >>> #         [3,3,3]
-        >>> #         [4,4,4]
-        >>> #     ]
-        >>> #     [
-        >>> #         [5,5,5]
-        >>> #         [6,6,6]
-        >>> #     ]
-        >>> # ]
-        >>> # Step 2: Calculation of the second dimension
-        >>> # 2nd dimension, start = 0, end = 1, stride = 1. So only 0th rows can be taken, and the output at this time.
-        >>> # output_2nd =
-        >>> # [
-        >>> #     [
-        >>> #         [3,3,3]
-        >>> #     ]
-        >>> #     [
-        >>> #         [5,5,5]
-        >>> #     ]
-        >>> # ]
-        >>> # Step 3: Calculation of the third dimension
-        >>> # 3nd dimension,start = 2, end = 3, stride = 1, So can take 2th cols,
-        >>> # and you get the final output at this time.
-        >>> # output_3ed =
-        >>> # [
-        >>> #     [
-        >>> #         [3]
-        >>> #     ]
-        >>> #     [
-        >>> #         [5]
-        >>> #     ]
-        >>> # ]
-        >>> # The final output after finishing is:
-        >>> print(output)
-        [[[3.]]
-         [[5.]]]
-        >>> # another example like :
-        >>> output = strided_slice(input_x, (1, 0, 0), (2, 1, 3), (1, 1, 1))
-        >>> print(output)
-        [[[3. 3. 3.]]]
-    """
-
-    @prim_attr_register
-    def __init__(self,
-                 begin_mask=0,
-                 end_mask=0,
-                 ellipsis_mask=0,
-                 new_axis_mask=0,
-                 shrink_axis_mask=0):
-        """Initialize StridedSlice"""
-        self.init_prim_io_names(inputs=['x', 'begin', 'end', 'strides'], outputs=['output'])
-
-        validator.check_non_negative_int(begin_mask, 'begin_mask', self.name)
-        validator.check_non_negative_int(end_mask, 'end_mask', self.name)
-        validator.check_non_negative_int(ellipsis_mask, 'ellipsis_mask', self.name)
-        if len(tuple(filter(lambda x: x == '1', bin(ellipsis_mask)[-1:1:-1]))) > 1:
-            raise ValueError(f"For '{self.name}', only support one ellipsis in the index, but got {ellipsis_mask}.")
-        validator.check_non_negative_int(new_axis_mask, 'new_axis_mask', self.name)
-        validator.check_non_negative_int(shrink_axis_mask, 'shrink_axis_mask',
-                                         self.name)
-
-    def __infer__(self, x, begin, end, strides):
-        begin_v, begin_len = self._check_and_get_value(begin, 'begin')
-        end_v, end_len = self._check_and_get_value(end, 'end')
-        strides_v, strides_len = self._check_and_get_value(strides, 'strides')
-
-        is_dynamic_tuple = (self._is_none_in_tuple(begin_v.get('value'))
-                            or self._is_none_in_tuple(end_v.get('value'))
-                            or self._is_none_in_tuple(strides_v.get('value')))
-        is_dynamic = None in (begin_v.get('value'), end_v.get('value'), strides_v.get('value'))
-
-        if not is_dynamic and (begin_len != strides_len or end_len != strides_len):
-            raise ValueError(
-                f"For '{self.name}', 'begin', 'end' and 'strides' must be the same length, but got "
-                f"'begin' length: {begin_len}, 'end' length: {end_len}, 'strides' length: {strides_len}."
-            )
-
-        if is_dynamic or is_dynamic_tuple or is_shape_unknown(x['shape']):
-            ret_shape = self._compute_dynamic_slicing_shape(x, begin_v, end_v, strides_v, begin_len)
-            rets = {'shape': ret_shape,
-                    'dtype': x['dtype'],
-                    'value': None}
-            return rets
-
-        ret_shape = self._compute_slicing_shape(x['shape'], begin_v['value'], end_v['value'], strides_v['value'])
-        if all(ret_shape):
-            value = None
-        else:
-            init_func = Zero()
-            init_func.__enable_zero_dim__ = True
-            value = Tensor(dtype=x['dtype'].element_type(), shape=ret_shape, init=init_func)
-
-        return {'shape': ret_shape,
-                'dtype': x['dtype'],
-                'value': value}
-
-    @staticmethod
-    def _compute_slicing_len_for_positive_stride(begin, end, stride, x_dim):
-        """Compute slice length for positive stride."""
-        if x_dim == -1:
-            return -1
-        # When slicing forward, convert begin and end to positive numbers.
-        if begin >= x_dim or end < -x_dim:
-            # When slicing forward, if begin >= x_dim or end < -x_dim, the length of the slicing is 0.
-            slicing_length = 0
-        else:
-            if -x_dim <= begin < 0:
-                begin += x_dim
-            if begin < -x_dim:
-                # When slicing forward, if begin < -x_dim, set begin = 0, which means start from the 0th element.
-                begin = 0
-            if -x_dim <= end < 0:
-                end += x_dim
-            if end > x_dim:
-                # When slicing forward, if end > x_dim, set end = x_dims, which means slice to the last element.
-                end = x_dim
-            if begin >= end:
-                # When slicing forward, if begin >= end, the length of the slicing is 0.
-                slicing_length = 0
-            else:
-                slicing_length = 1 + (end - 1 - begin) // stride
-        return slicing_length
-
-    @staticmethod
-    def _compute_slicing_len_for_negative_stride(begin, end, stride, x_dim):
-        """Compute slice length for negative stride."""
-        if x_dim == -1:
-            return -1
-        # When slicing backward, convert begin and end to negative numbers.
-        if begin < -x_dim or end >= x_dim:
-            # When slicing backward, if begin < -x_dim or end >= x_dim, the length of the slicing is 0.
-            slicing_length = 0
-        else:
-            if 0 <= begin < x_dim:
-                begin += -x_dim
-            if begin >= x_dim:
-                begin = -1
-            if 0 <= end < x_dim:
-                end += -x_dim
-            if end < -x_dim - 1:
-                # Slicing to the 0th element.
-                end = -x_dim - 1
-            if begin <= end:
-                slicing_length = 0
-            else:
-                slicing_length = 1 + (end + 1 - begin) // stride
-        return slicing_length
-
-    def _is_none_in_tuple(self, x):
-        return isinstance(x, tuple) and None in x
-
-    def _compute_slicing_length(self, begin, end, stride, x_dim):
-        """Computes the length of the slicing."""
-        if stride > 0:
-            slicing_length = self._compute_slicing_len_for_positive_stride(begin, end, stride, x_dim)
-        else:
-            slicing_length = self._compute_slicing_len_for_negative_stride(begin, end, stride, x_dim)
-        return slicing_length
-
-    def _compute_slicing_shape(self, x_shape, begin_v, end_v, strides_v):
-        """Computes the shape of the slicing."""
-        x_rank = len(x_shape)
-        slice_len = len(begin_v)
-
-        # After the integer is converted to binary, it is a str and the first two chars are the flag char '0b'.
-        begin_pos = bin(self.begin_mask)[-1:1:-1]
-        end_pos = bin(self.end_mask)[-1:1:-1]
-        ellipsis_pos = bin(self.ellipsis_mask)[-1:1:-1]
-        new_axis_pos = bin(self.new_axis_mask)[-1:1:-1]
-        shrink_axis_pos = bin(self.shrink_axis_mask)[-1:1:-1]
-
-        ret_shape = []
-        i, j = 0, 0
-        has_ellipsis = False
-        while i < x_rank or j < slice_len:
-            if j < slice_len:
-                begin, end, stride = begin_v[j], end_v[j], strides_v[j]
-
-                if j < len(ellipsis_pos) and ellipsis_pos[j] == '1':
-                    # When there is ellipsis, the latter part of the ellipsis will be processed separately.
-                    has_ellipsis = True
-                    break
-                if j < len(begin_pos) and begin_pos[j] == '1':
-                    begin = -1 if strides_v[j] < 0 else 0
-                if j < len(end_pos) and end_pos[j] == '1':
-                    end = -(x_shape[i] + 1) if strides_v[j] < 0 else x_shape[i]
-                if j < len(new_axis_pos) and new_axis_pos[j] == '1':
-                    ret_shape.append(1)
-                    j += 1
-                    continue
-                if j < len(shrink_axis_pos) and shrink_axis_pos[j] == '1':
-                    if (not -x_shape[i] <= begin < x_shape[i]) or stride < 0:
-                        raise IndexError(f"For '{self.name}', the 'strides[{i}]' cannot be negative number and "
-                                         f"'begin[{i}]' must be in [-{x_shape[i]}, {x_shape[i]}) "
-                                         f"when 'shrink_axis_mask' is greater than 0, "
-                                         f"but got 'shrink_axis_mask': {self.shrink_axis_mask}, "
-                                         f"'strides[{i}]': {stride}, 'begin[{i}]': {begin}.")
-                    j += 1
-                    i += 1
-                    continue
-            else:
-                begin, end, stride = 0, x_shape[i], 1
-
-            slicing_length = self._compute_slicing_length(begin, end, stride, x_shape[i])
-            ret_shape.append(slicing_length)
-            i += 1
-            j += 1
-        if has_ellipsis:
-            # When there is ellipsis, handle the second half of the ellipsis split.
-            ellipsis_occupied_dims = x_rank - i - (slice_len - (j + 1)) + \
-                                     len(tuple(filter(lambda x: x == '1', new_axis_pos[j + 1:slice_len])))
-            ret_shape.extend(x_shape[i:i + ellipsis_occupied_dims])
-            j += 1
-            i += ellipsis_occupied_dims
-
-            while i < x_rank or j < slice_len:
-                begin, end, stride = begin_v[j], end_v[j], strides_v[j]
-
-                if j < len(begin_pos) and begin_pos[j] == '1':
-                    begin = -1 if strides_v[j] < 0 else 0
-                if j < len(end_pos) and end_pos[j] == '1':
-                    end = -(x_shape[i] + 1) if strides_v[j] < 0 else x_shape[i]
-                if j < len(new_axis_pos) and new_axis_pos[j] == '1':
-                    ret_shape.append(1)
-                    j += 1
-                    continue
-                if j < len(shrink_axis_pos) and shrink_axis_pos[j] == '1':
-                    if (not -x_shape[i] <= begin < x_shape[i]) or stride < 0:
-                        raise IndexError(f"For '{self.name}', the 'strides[{i}]' can not be negative number and "
-                                         f"'begin[{i}]' must be in [-{x_shape[i]}, {x_shape[i]}) "
-                                         f"when 'shrink_axis_mask' is greater than 0, "
-                                         f"but got 'shrink_axis_mask': {self.shrink_axis_mask}, "
-                                         f"'strides[{i}]': {stride}, 'begin[{i}]': {begin}.")
-                    j += 1
-                    i += 1
-                    continue
-
-                slicing_length = self._compute_slicing_length(begin, end, stride, x_shape[i])
-                ret_shape.append(slicing_length)
-                i += 1
-                j += 1
-        return ret_shape
-
-    def _compute_dynamic_slicing_value(self, shape_value, begin_v, end_v, strides_v):
-        """Computes the length of the slicing for dynamic shape."""
-        shape_value_np = np.array(shape_value)
-        slice_index = []
-        for begin_i, end_i, strides_i in zip(begin_v['value'], end_v['value'], strides_v['value']):
-            s = slice(begin_i, end_i, strides_i)
-            slice_index.append(s)
-        slice_index = tuple(slice_index)
-        shape_value_slice = shape_value_np[slice_index]
-        shape_value_slice = tuple(shape_value_slice.tolist())
-        return shape_value_slice
-
-    def _compute_dynamic_slicing_length(self, begin, end, stride, x_dim):
-        """Computes the length of the slicing for dynamic shape."""
-        slicing_length = -1
-        if None in (begin, end, stride) or -1 in (begin, end, stride):
-            return slicing_length
-        slicing_length = self._compute_slicing_length(begin, end, stride, x_dim)
-        return slicing_length
-
-    def _compute_dynamic_slicing_shape(self, x, begin_v, end_v, strides_v, slice_len):
-        """Computes the shape of the slicing for dynamic shape, mask is currently not supported."""
-        x_shape = x['shape']
-        if is_dim_unknown(x_shape):
-            return [-2]
-        x_rank = len(x_shape)
-        new_axis_pos = bin(self.new_axis_mask)[-1:1:-1]
-        shrink_axis_pos = bin(self.shrink_axis_mask)[-1:1:-1]
-        if self.ellipsis_mask:
-            raise ValueError("Ellipsis Mask is currently not supported in dynamic shape.")
-        ret_shape = []
-        i, j = 0, 0
-        slice_has_special_value = False
-        begin_value = begin_v['value']
-        end_value = end_v['value']
-        strides_value = strides_v['value']
-        is_dynamic_tuple = (self._is_none_in_tuple(begin_value)
-                            or self._is_none_in_tuple(end_value)
-                            or self._is_none_in_tuple(strides_value))
-        if None in (begin_v['value'], end_v['value'], strides_v['value']) or is_dynamic_tuple:
-            slice_has_special_value = True
-        while i < x_rank or j < slice_len:
-            slicing_length = -1
-            if j < slice_len:
-                if j < len(new_axis_pos) and new_axis_pos[j] == '1':
-                    ret_shape.append(1)
-                    j += 1
-                    continue
-                if j < len(shrink_axis_pos) and shrink_axis_pos[j] == '1':
-                    j += 1
-                    i += 1
-                    continue
-                if None in (begin_value, end_value, strides_value):
-                    slicing_length = -1
-                elif slice_has_special_value:
-                    slicing_length = self._compute_dynamic_slicing_length(
-                        begin_value[j], end_value[j], strides_value[j], x_shape[i])
-                else:
-                    slicing_length = \
-                        self._compute_slicing_length(begin_value[j], end_value[j], strides_value[j], x_shape[i])
-            else:
-                if i >= len(x_shape):
-                    raise ValueError(f"For 'StridedSlice', the index must be less than or equal to "
-                                     f"the dimension of 'input_x', but got the dimension of 'input_x': {len(x_shape)} "
-                                     f"and the index: {i}.")
-                begin, end, stride = 0, x_shape[i], 1
-                if end > 0:
-                    slicing_length = self._compute_slicing_length(begin, end, stride, x_shape[i])
-            ret_shape.append(slicing_length)
-            i += 1
-            j += 1
-        return ret_shape
-
-    def _check_and_get_value(self, slice_input, name):
-        """Check begin, end, strides. Get its length and value."""
-        slice_value = slice_input['value']
-        if slice_value is None:
-            validator.check_tensor_dtype_valid(name, slice_input['dtype'], [mstype.int32, mstype.int64], self.name)
-            slice_shape = slice_input['shape']
-            if len(slice_shape) != 1:
-                raise ValueError(f"For '{self.name}', both the 'begins', 'ends', and 'strides' must be 1-D, "
-                                 f"but got '{name}' shape: {slice_shape}.")
-            # not support scalar
-            slices = {
-                'value': slice_value,
-            }
-            return slices, slice_shape[0]
-
-        if isinstance(slice_value, (Tensor, Tensor_)):
-            validator.check_tensor_dtype_valid(name, slice_input['dtype'], [mstype.int64], self.name)
-            slice_value = slice_value.asnumpy().tolist()
-        elif not isinstance(slice_value, tuple):
-            raise TypeError(f"For '{self.name}', both the 'begin', 'end', and 'strides' must be a tuple or Tensor, "
-                            f"but got '{name}': {slice_value}.")
-
-        if tuple(filter(lambda x: x is not None and not isinstance(x, int), slice_value)):
-            raise TypeError(f"For '{self.name}', the elements of 'begin', 'end', and 'strides' must be int, "
-                            f"but got {name}: {slice_value}.")
-
-        if name == 'strides':
-            if slice_value is not None and tuple(filter(lambda x: x == 0, slice_value)):
-                raise ValueError(f"For '{self.name}', 'strides' cannot contain 0, but got 'strides': {slice_value}.")
-
-        slices = {
-            'value': slice_value,
-        }
-        return slices, len(slice_value)
 
 
 class DiagPart(PrimitiveWithCheck):
@@ -4293,6 +3878,9 @@ class SpaceToBatchND(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
+        >>> import numpy as np
         >>> block_shape = [2, 2]
         >>> paddings = [[0, 0], [0, 0]]
         >>> space_to_batch_nd = ops.SpaceToBatchND(block_shape, paddings)
@@ -5134,7 +4722,7 @@ class TensorScatterUpdate(_TensorScatterOp):
 
 
 class TensorScatterMax(Primitive):
-    """
+    r"""
     By comparing the value at the position indicated by `indices` in `x` with the value in the `updates`,
     the value at the index will eventually be equal to the largest one to create a new tensor.
 
@@ -5145,7 +4733,7 @@ class TensorScatterMax(Primitive):
         - **indices** (Tensor) - The index of input tensor whose data type is int32 or int64.
           The rank must be at least 2.
         - **updates** (Tensor) - The tensor to update the input tensor, has the same type as input,
-          and updates.shape should be equal to indices.shape[:-1] + input_x.shape[indices.shape[-1]:].
+          and updates.shape should be equal to :math:`indices.shape[:-1] + input\_x.shape[indices.shape[-1]:]`.
 
     Outputs:
         Tensor, has the same shape and type as `input_x`.
@@ -5182,7 +4770,7 @@ class TensorScatterMax(Primitive):
 
 
 class TensorScatterMin(Primitive):
-    """
+    r"""
     By comparing the value at the position indicated by `indices` in `input_x` with the value in the `updates`,
     the value at the index will eventually be equal to the smallest one to create a new tensor.
 
@@ -5193,7 +4781,7 @@ class TensorScatterMin(Primitive):
         - **indices** (Tensor) - The index of input tensor whose data type is int32 or int64.
           The rank must be at least 2.
         - **updates** (Tensor) - The tensor to update the input tensor, has the same type as input,
-          and updates.shape should be equal to indices.shape[:-1] + input_x.shape[indices.shape[-1]:].
+          and updates.shape should be equal to :math:`indices.shape[:-1] + input\_x.shape[indices.shape[-1]:]`.
 
     Outputs:
         Tensor, has the same shape and type as `input_x`.
@@ -5238,7 +4826,7 @@ class TensorScatterSub(Primitive):
     instead of input `Parameter`.
 
     .. math::
-        output[indices] = input\_x - update
+        output\left [indices  \right ] = input\_x- update
 
     Refer to :func:`mindspore.ops.tensor_scatter_sub` for more details.
 
@@ -5342,7 +4930,7 @@ class TensorScatterMul(_TensorScatterOp):
     The updates are applied on output `Tensor` instead of input `Parameter`.
 
     .. math::
-        output[indices] = input\_x \times update
+        output\left [indices  \right ] = input\_x\times  update
 
     Refer to :func:`mindspore.ops.tensor_scatter_mul` for more details.
 
@@ -5351,7 +4939,7 @@ class TensorScatterMul(_TensorScatterOp):
         - **indices** (Tensor) - The index of input tensor whose data type is int32 or int64.
           The rank must be at least 2.
         - **updates** (Tensor) - The tensor to update the input tensor, has the same type as `input_x`,
-          and the shape of `updates` should be equal to indices.shape[:-1] + input_x.shape[indices.shape[-1]:].
+          and the shape of `updates` should be equal to :math:`indices.shape[:-1] + input\_x.shape[indices.shape[-1]:]`.
 
     Outputs:
         Tensor, has the same shape and type as `input_x`.
@@ -5388,7 +4976,7 @@ class TensorScatterMul(_TensorScatterOp):
 
 
 class TensorScatterDiv(_TensorScatterOp):
-    """
+    r"""
     Creates a new tensor by dividing the values from the positions in `input_x` indicated by
     `indices`, with values from `updates`. When divided values are provided for the same
     index, the result of the update will be to divided these values respectively. Except that
@@ -5401,7 +4989,7 @@ class TensorScatterDiv(_TensorScatterOp):
         - **indices** (Tensor) - The index of input tensor whose data type is int32 or int64.
           The rank must be at least 2.
         - **updates** (Tensor) - The tensor to update the input tensor, has the same type as input,
-          and updates.shape should be equal to indices.shape[:-1] + input_x.shape[indices.shape[-1]:].
+          and updates.shape should be equal to :math:`indices.shape[:-1] + input\_x.shape[indices.shape[-1]:]`.
 
     Outputs:
         Tensor, has the same shape and type as `input_x`.
@@ -5655,64 +5243,13 @@ class TensorScatterElements(Primitive):
 
 
 class ExtractVolumePatches(Primitive):
-    r"""
-    Extract patches from input and put them in the "depth" output dimension.
-    "depth" dimension is the second dim of output.
-
-    .. warning::
-        This is an experimental API that is subject to change or deletion.
-
-    Args:
-        kernel_size (Union[int, tuple[int], list[int]]): A list of ints which's length is 3 or 5.
-            The size of the sliding window for each dimension of input. Must be: :math:`[1, 1, k_d, k_h, k_w]` or
-            :math:`[k_d, k_h, k_w]`. If :math:`k_d = k_h = k_w`, you can enter an integer.
-        strides (Union[int, tuple[int], list[int]]): A list of ints which's length is 3 or 5.
-            How far the centers of two consecutive patches are in input. Must be: :math:`[1, 1, s_d, s_h, s_w]` or
-            :math:`[s_d, s_h, s_w]`. If :math:`s_d = s_h = s_w`, you can enter an integer.
-        padding (str): A string from: ``"SAME"`` , ``"VALID"`` . The type of padding algorithm to use.
-
-    Inputs:
-        - **input_x** (Tensor) - A Tensor. 5-D Tensor with shape :math:`(x_n, x_c, x_d, x_h, x_w)`.
-
-    Outputs:
-        Tensor, has the same type as input.
-        If padding is "VALID", the shape is :math:`(x_n, k_d * k_h * k_w * x_c, 1 + (x_d - k_d) / s_d,
-        1 + (x_h - k_h) / s_h, 1 + (x_w - k_w) / s_w)`; if padding is "SAME", the shape is :math:`(
-        x_n, k_d * k_h * k_w * x_c, (x_d + s_d - 1) / s_d, (x_h + s_h - 1) / s_h, (x_w + s_w - 1) / s_w)`.
-
-    Raises:
-        TypeError: If kernel_size or strides is not a list, a tuple or an int.
-        TypeError: If input_x is not a tensor.
-        TypeError: If padding is not str.
-        ValueError: If the length of kernel_size is neither 3 nor 5 and kernel_size is not an integer.
-        ValueError: If the length of strides is neither 3 nor 5 and strides is not an integer.
-        ValueError: If padding is neither ``"VALID"`` nor ``"SAME"`` .
-        ValueError: If elements of kernel_size or strides are not positive integer.
-        ValueError: If input_x is not a tensor in dimension 5.
-        ValueError: If input_x's shape has zero.
-        ValueError: If one of kernel_size or strides' first two numbers is not 1.
-        ValueError: If padding = "VALID" and :math:`input\_x - kernel\_size` is less than 0 in d, h or w dimension.
-        ValueError: If padding = "SAME" and :math:`padding\_needed = ((input\_x + strides - 1) / strides - 1) *
-                    strides + kernel\_size - input\_x` is less than 0 in d, h or w dimension.
-        ValueError: If x_h is not 1 or x_w is not 1 and :math:`x_w + padding\_needed - k_w - s_w` is less than 0.
-        ValueError: If :math:`x_d * x_h * x_w` is greater than 2048.
+    """
+    `ops.ExtractVolumePatches` is deprecated from version 2.3 and will be removed in a future version.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> from mindspore import dtype as mstype
-        >>> kernel_size = (1, 1, 2, 2, 2)
-        >>> strides = (1, 1, 1, 1, 1)
-        >>> padding = "VALID"
-        >>> input_x = ops.Reshape()(Tensor(np.arange(1, 28), mstype.float16), (1, 1, 3, 3, 3))
-        >>> output_y = ops.ExtractVolumePatches(kernel_size, strides, padding)(input_x)
-        >>> print(output_y.shape)
-        (1, 8, 2, 2, 2)
+        Deprecated
     """
-
+    @deprecated("2.3", "ops.ExtractVolumePatches", False)
     @prim_attr_register
     def __init__(self, kernel_size, strides, padding):
         validator.check_value_type("kernel_size", kernel_size, (int, list, tuple), self.name)

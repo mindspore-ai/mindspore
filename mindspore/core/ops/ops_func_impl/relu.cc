@@ -31,7 +31,7 @@ TypePtr ReLUFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector
   MS_EXCEPTION_IF_NULL(input_args[0]);
   auto x_type = input_args[0]->BuildType();
   MS_EXCEPTION_IF_NULL(x_type);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", x_type, common_valid_types, primitive->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", x_type, common_valid_types_with_bool, primitive->name());
   return x_type->Clone();
 }
 }  // namespace ops

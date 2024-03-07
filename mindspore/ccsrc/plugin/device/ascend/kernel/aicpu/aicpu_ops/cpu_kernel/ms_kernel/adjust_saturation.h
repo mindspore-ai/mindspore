@@ -18,7 +18,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_ADJUST_SATURATION_H_
 #define AICPU_KERNELS_NORMALIZED_ADJUST_SATURATION_H_
 
-#include "cpu_kernel_utils.h"
+#include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
 class AdjustSaturationCpuKernel final : public CpuKernel {

@@ -305,9 +305,8 @@ class _ProcessManager:
                                                       "|awk -F: '{print $1}'")
             log_names = list(grepper(id) for id in time_out_node_ids)
             for log in log_names:
-                logger.warning(f"cat log {log} error info and tail log:"
-                               "==========================")
-                os.system(f"cat {os.path.join(self.log_dir, log)}"
-                          "|grep -E 'ERROR|CRITICAL|Traceback|Error' -C 5")
+                logger.error(f"cat log {log} error info and tail log:"
+                             "==========================")
+                os.system(f"cat {log}|grep -E 'ERROR|CRITICAL|Traceback|Error' -C 5")
         else:
             os.system(f"grep -rn -E 'ERROR|CRITICAL|Traceback|Error' -C 5 {self.log_dir}")

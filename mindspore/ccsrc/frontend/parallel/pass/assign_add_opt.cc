@@ -63,6 +63,16 @@ std::pair<int64_t, int64_t> GetMatMulReduceAxis(size_t matmul_input_shape_size, 
   return {axis1, axis2};
 }
 
+void UpdateValueNodeAbs(ValueNodePtr *axis) {
+  MS_EXCEPTION_IF_NULL(axis);
+  auto value_node = (*axis);
+  MS_EXCEPTION_IF_NULL(value_node);
+  MS_EXCEPTION_IF_NULL(value_node->value());
+  auto value_abs = value_node->value()->ToAbstract();
+  MS_EXCEPTION_IF_NULL(value_abs);
+  value_node->set_abstract(value_abs);
+}
+
 void MergeMultiMatmulAssignAdd(const FuncGraphManagerPtr &manager, const FuncGraphPtr &each_graph,
                                const std::vector<CNodePtr> &matmul_dw_nodes,
                                const std::pair<AnfNodePtr, std::vector<AnfNodePtr>> &pair,
@@ -99,10 +109,12 @@ void MergeMultiMatmulAssignAdd(const FuncGraphManagerPtr &manager, const FuncGra
   auto axis_pair = GetMatMulReduceAxis(matmul_dw_node_front_input_node2_input_shape.size(), transpose_a1, transpose_b1);
   auto axis1 = axis_pair.first;
   auto axis2 = axis_pair.second;
-  std::vector<AnfNodePtr> concat1_inputs{NewValueNode(prim::kPrimConcat->Clone()), maketuple1,
-                                         NewValueNode(MakeValue<int64_t>(axis1))};
-  std::vector<AnfNodePtr> concat2_inputs{NewValueNode(prim::kPrimConcat->Clone()), maketuple2,
-                                         NewValueNode(MakeValue<int64_t>(axis2))};
+  auto axis1_value = NewValueNode(MakeValue<int64_t>(axis1));
+  auto axis2_value = NewValueNode(MakeValue<int64_t>(axis2));
+  UpdateValueNodeAbs(&axis1_value);
+  UpdateValueNodeAbs(&axis2_value);
+  std::vector<AnfNodePtr> concat1_inputs{NewValueNode(prim::kPrimConcat->Clone()), maketuple1, axis1_value};
+  std::vector<AnfNodePtr> concat2_inputs{NewValueNode(prim::kPrimConcat->Clone()), maketuple2, axis2_value};
   auto concat1 = each_graph->NewCNode(concat1_inputs);
   auto concat2 = each_graph->NewCNode(concat2_inputs);
   std::vector<AnfNodePtr> merged_matmul_inputs{NewValueNode(prim::kPrimMatMul), concat1, concat2};

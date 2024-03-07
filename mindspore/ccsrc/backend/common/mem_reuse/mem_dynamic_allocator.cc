@@ -94,9 +94,9 @@ DeviceMemPtr DynamicMemPoolBestFit::AllocTensorMem(size_t size, bool from_persis
     (void)mem_bufs_.insert(device_addr);
   }
   MS_LOG(DEBUG) << "Alloc memory details, name:" << DynamicMemAllocatorDebugInfo::GetDebugInfo().name_
-                << ", stream id: " << stream_id << ", address:" << device_addr << ", size:" << size
-                << "B, total allocated mem:" << TotalMemStatistics() << "B, peak used mem:" << UsedMemPeakStatistics()
-                << "B, in used mem:" << TotalUsedMemStatistics()
+                << ", persistent_mem:" << from_persistent_mem << ", stream id: " << stream_id
+                << ", address:" << device_addr << ", size:" << size << "B, total allocated mem:" << TotalMemStatistics()
+                << "B, peak used mem:" << UsedMemPeakStatistics() << "B, in used mem:" << TotalUsedMemStatistics()
                 << "B, total idle mem:" << (TotalMemStatistics() - TotalUsedMemStatistics()) << "B.";
   return device_addr;
 }
@@ -370,6 +370,13 @@ DeviceMemPtr DynamicMemPoolBestFit::CreateMemBlockAndMemBuf(size_t size, bool fr
   if (mem_mng->mps_.total_used_mem_size_ > mem_mng->mps_.used_mem_peak_size_) {
     mem_mng->mps_.used_mem_peak_size_ = mem_mng->mps_.total_used_mem_size_;
   }
+  if (mem_buf_status == DynamicMemBufStatus::kMemBufIdle) {
+    mem_mng->mps_.total_idle_mem_size_ += source_size - mem_buf->size_;
+  } else if (mem_buf_status == DynamicMemBufStatus::kMemBufEagerFree) {
+    mem_mng->mps_.total_eager_free_mem_size_ += source_size - mem_buf->size_;
+  } else {
+    MS_LOG(INTERNAL_EXCEPTION) << "Unsupported mem_buf_status : " << mem_buf_status << ".";
+  }
   MS_LOG(DEBUG) << "Usage: used size : " << TotalUsedMemStatistics() << ", idle size : " << TotalIdleMemStatistics()
                 << ", eager free size : " << TotalEagerFreeMemStatistics() << ".";
   return mem_buf->device_addr_;
@@ -533,6 +540,13 @@ void DynamicMemPoolBestFit::CombineMemBuf(const DeviceMemPtr &device_addr, Dynam
   } else {
     MS_LOG(INTERNAL_EXCEPTION) << "Unsupported origin status : " << origin_status << ".";
   }
+  if (target_status == DynamicMemBufStatus::kMemBufIdle) {
+    mem_mng->mps_.total_idle_mem_size_ += mem_buf->size_;
+  } else if (target_status == DynamicMemBufStatus::kMemBufEagerFree) {
+    mem_mng->mps_.total_eager_free_mem_size_ += mem_buf->size_;
+  } else {
+    MS_LOG(INTERNAL_EXCEPTION) << "Unsupported target status : " << target_status << ".";
+  }
   // Combine backward(combine the next_mem_buf to mem_buf)
   auto next_iter = iter;
   (void)next_iter++;
@@ -568,10 +582,8 @@ void DynamicMemPoolBestFit::CombineMemBuf(const DeviceMemPtr &device_addr, Dynam
                                 &mem_block = mem_block](const DynamicMemBufPtr &mem_buf) {
     if (target_status == DynamicMemBufStatus::kMemBufIdle) {
       (void)mem_mng->AddIdleMemBuf(mem_buf, mem_block->stream_id_);
-      mem_mng->mps_.total_idle_mem_size_ += mem_buf->size_;
     } else if (target_status == DynamicMemBufStatus::kMemBufEagerFree) {
       (void)mem_mng->AddEagerFreeMemBuf(mem_buf, mem_block->stream_id_);
-      mem_mng->mps_.total_eager_free_mem_size_ += mem_buf->size_;
     }
   };
   if (forward_combine) {

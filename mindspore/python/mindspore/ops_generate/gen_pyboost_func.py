@@ -116,8 +116,8 @@ def generate_get_inputs_kernel_tensors(call_args):
         args_list += f'{item}, '
     args_list = args_list[:-2]
     if args_list:
-        inputs_kernel_tensors += f'const auto &input_address_info = ' \
-                                 f'PyBoostUtils::GetAddressInfo(device_context, op->input_abs(), {args_list});\n'
+        inputs_kernel_tensors += f'const auto &input_address_info = PyBoostUtils::GetAddressInfo(' \
+                                 f'device_context, op->stream_id(), op->input_abs(), {args_list});\n'
     return inputs_kernel_tensors
 
 
@@ -129,7 +129,7 @@ def generate_create_input_address(need_malloc_tensors):
         args_list += f'{item}, '
     args_list = args_list[:-2]
     if args_list:
-        create_input_address = f'PyBoostUtils::PrepareOpInputs(device_context_, {args_list});\n'
+        create_input_address = f'PyBoostUtils::PrepareOpInputs(device_context_, op->stream_id(), {args_list});\n'
     return create_input_address
 
 
@@ -182,10 +182,6 @@ def generate_pyboost_op_source_code(work_path, op_proto, template_paths, convert
         get_cube_math_type = ''
         real_output = ', ' + converter.op_outputs
         proto_operator_name = op_proto.operator_name
-        if op_name_str.endswith('Ext'):
-            op_name_str = op_name_str[:-3]
-        if operator_name.endswith('ext'):
-            operator_name = operator_name[:-4]
         if is_ascend and op_proto.ascend != 'default':
             call_impl = cus_tpl.replace(call_args=converter.call_args,
                                         return_values=converter.call_func_outputs,
@@ -382,19 +378,6 @@ def generate_parser_func(op_proto: OpProto) -> str:
     return parser_func_str
 
 
-def convert_op_name(op_proto):
-    """
-    Convert operator_name and op_name.
-    """
-    operator_name = op_proto.operator_name
-    if operator_name.endswith('ext'):
-        operator_name = operator_name[:-4]
-    op_name_str = op_proto.class_name
-    if op_proto.class_name.endswith('Ext'):
-        op_name_str = op_proto.class_name[:-3]
-    return operator_name, op_name_str
-
-
 def get_convert_tensor_template():
     """
     Get convert tensor template
@@ -421,7 +404,8 @@ def generate_pyboost_functions(work_path, yaml_data):
         if not op_proto.is_dispatch:
             continue
         op_def_name_str = f"g{op_proto.class_name}"
-        operator_name, op_name_str = convert_op_name(op_proto)
+        operator_name = op_proto.operator_name
+        op_name_str = op_proto.class_name
         op_args_str = [op_arg.arg_name for op_arg in op_proto.op_args]
         parser_body_str = generate_parser_func(op_proto)
         convert_to_tensor_template, convert_to_tensor_list_template = get_convert_tensor_template()
@@ -542,11 +526,7 @@ def generate_pyboost_grad_functions(work_path, yaml_data):
         if not op_proto.is_dispatch:
             continue
         operator_name = op_proto.operator_name
-        if operator_name.endswith('ext'):
-            operator_name = operator_name[:-4]
         op_name_str = op_proto.class_name
-        if op_proto.class_name.endswith('Ext'):
-            op_name_str = op_proto.class_name[:-3]
         op_args_str = [op_arg.arg_name for op_arg in op_proto.op_args]
         convert_value_type_str = convert_value_type(op_proto)
 
@@ -625,8 +605,8 @@ class OpTemplateConverter:
 
     def __init__(self, op_proto):
         self.op_proto = op_proto
-        self.op_name = self.parse_op_name(op_proto.class_name)
-        self.functional_name = self.parse_functional_name(op_proto.operator_name)
+        self.op_name = op_proto.class_name
+        self.functional_name = op_proto.operator_name
         self.call_args = self.parse_original_call_args(op_proto.op_args)
         self.call_args_types = self.parse_call_args_types(op_proto.op_args)
         self.call_args_with_types = self.parse_call_args_with_types(self.call_args, self.call_args_types)
@@ -662,16 +642,6 @@ class OpTemplateConverter:
             call_args_with_types.append("const " + type_name + " &" + arg_name)
         return call_args_with_types
 
-    @staticmethod
-    def parse_functional_name(name):
-        """
-        :param name:
-        :return: functional_name
-        """
-        functional_name = name
-        if functional_name.endswith('ext'):
-            functional_name = functional_name[:-4]
-        return functional_name
 
     @staticmethod
     def parse_need_malloc_tensors(op_args, call_args):
@@ -696,16 +666,6 @@ class OpTemplateConverter:
                 call_args_with_tensor.append(call_arg)
         return need_malloc_tensors, tensor_list_convert, call_args_with_tensor
 
-    @staticmethod
-    def parse_op_name(name):
-        """
-        :param name:
-        :return: op_name
-        """
-        op_name = name
-        if op_name.endswith('Ext'):
-            op_name = op_name[:-3]
-        return op_name
 
     @staticmethod
     def parse_original_call_args(op_args):
@@ -745,27 +705,27 @@ class OpTemplateConverter:
             value_tuple_convert.insert(0, '// ValueTuple to std::vector\n')
         return call_args_after_convert, value_tuple_convert, const_number_convert
 
-def delete_residual_files(work_path, all_op_names, code_generate_path_list):
+def delete_residual_files(work_path, all_operator_name, code_generate_path_list):
     """
     Delete residual files.
     """
-    low_all_op_names = [item.lower() for item in all_op_names]
     code_generate_path_list.append("mindspore/ccsrc/kernel/pyboost/auto_generate/")
     for code_generate_path in code_generate_path_list:
         all_files_name = []
         code_generate_path = os.path.join(work_path, code_generate_path)
         if os.path.exists(code_generate_path):
             all_files_name = os.listdir(code_generate_path)
-        all_registered_op = set(item.split(".")[0].replace("_", "") for item in all_files_name)
-        need_clean_op = all_registered_op - set(low_all_op_names)
+        all_registered_op = set(item.split(".")[0] for item in all_files_name)
+        need_clean_op = all_registered_op - set(all_operator_name)
         for file in all_files_name:
             if file == "op_register.cc":
                 continue
             for clean_name in need_clean_op:
-                judge_file = file.replace("_", "")
-                if judge_file.startswith(clean_name):
+                judge_file = file.split(".")[0]
+                if judge_file == clean_name:
                     file_path = os.path.join(code_generate_path, file)
-                    os.remove(file_path)
+                    if os.path.exists(file_path):
+                        os.remove(file_path)
 
 def generate_pyboost_op_cpp_code(work_path, yaml_data):
     """
@@ -774,6 +734,7 @@ def generate_pyboost_op_cpp_code(work_path, yaml_data):
 
     all_op_names = []
     all_functional_names = []
+    all_operator_name = []
     for operator_name, operator_data in yaml_data.items():
         op_proto = OpProto.load_from_yaml(operator_name, operator_data)
         if not op_proto.is_dispatch:
@@ -785,6 +746,7 @@ def generate_pyboost_op_cpp_code(work_path, yaml_data):
         op_name_str = converter.op_name
 
         all_op_names.append(op_name_str)
+        all_operator_name.append(operator_name)
         all_functional_names.append(functional_name)
 
         call_args_with_types = converter.call_args_with_types
@@ -797,7 +759,7 @@ def generate_pyboost_op_cpp_code(work_path, yaml_data):
                                      functional_name, call_args_with_types, cpp_func_return)
         generate_pyboost_op_header_code(header_data)
         generate_pyboost_op_source_code(work_path, op_proto, template_paths, converter)
-    delete_residual_files(work_path, all_op_names, template_paths.code_generate_path)
+    delete_residual_files(work_path, all_operator_name, template_paths.code_generate_path)
     generate_pyboost_op_register_source_code(work_path, all_op_names, all_functional_names)
 
 
@@ -862,8 +824,6 @@ def gen_pyboost_py_func(work_path, op_yaml_data, doc_data):
             item = func_def.get("name")
             if item is not None:
                 func_name = item
-        if func_name.endswith("_ext"):
-            func_name = func_name[:-4]
         else:
             continue
         func_impl_name = func_name

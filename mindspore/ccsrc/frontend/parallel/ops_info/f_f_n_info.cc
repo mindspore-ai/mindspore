@@ -226,6 +226,10 @@ Status FFNInfo::InferTensorMap() {
   size_t expert_index = GetStrategyRealIndex(kInputIndexExpert);
   size_t bias1_index = GetStrategyRealIndex(kInputIndexBias1);
   size_t bias2_index = GetStrategyRealIndex(kInputIndexBias2);
+  size_t input_scale = GetStrategyRealIndex(kInputScale);
+  size_t input_offset = GetStrategyRealIndex(kInputOffset);
+  size_t input_deqscale1 = GetStrategyRealIndex(kInputDeqScale1);
+  size_t input_deqscale2 = GetStrategyRealIndex(kInputDeqScale2);
   size_t antiquant_scale1 = GetStrategyRealIndex(kInputAntiquantScale1);
   size_t antiquant_scale2 = GetStrategyRealIndex(kInputAntiquantScale2);
   size_t antiquant_offset1 = GetStrategyRealIndex(kInputAntiquantOffset1);
@@ -244,8 +248,17 @@ Status FFNInfo::InferTensorMap() {
     Shape expert_tensor_map{-1};
     // b1: [expert, ffn_hidden_size]
     Shape bias1_tensor_map{expert_pos, 0};
-    // b1: [expert, hidden_size]
+    // b2: [expert, hidden_size]
     Shape bias2_tensor_map{expert_pos, 1};
+    // input scale: [expert]
+    Shape input_scale_tensor_map{expert_pos};
+    // input offset: [expert]
+    Shape input_offset_tensor_map{expert_pos};
+    // input deqscale1: [expert, ffn_hidden_size]
+    Shape input_deqscale1_tensor_map{expert_pos, 0};
+    // input deqscale2: [expert, hidden_size]
+    Shape input_deqscale2_tensor_map{expert_pos, 1};
+
     // aq scale1: [expert, ffn_hidden_size]
     Shape antiquant_scale1_tensor_map{expert_pos, 0};
     // aq scale2: [expert, hidden_size]
@@ -264,6 +277,18 @@ Status FFNInfo::InferTensorMap() {
     }
     if (inputs_shape_.size() > bias2_index) {
       inputs_tensor_map_.emplace_back(bias2_tensor_map);
+    }
+    if (inputs_shape_.size() > input_scale) {
+      inputs_tensor_map_.emplace_back(input_scale_tensor_map);
+    }
+    if (inputs_shape_.size() > input_offset) {
+      inputs_tensor_map_.emplace_back(input_offset_tensor_map);
+    }
+    if (inputs_shape_.size() > input_deqscale1) {
+      inputs_tensor_map_.emplace_back(input_deqscale1_tensor_map);
+    }
+    if (inputs_shape_.size() > input_deqscale2) {
+      inputs_tensor_map_.emplace_back(input_deqscale2_tensor_map);
     }
     if (inputs_shape_.size() > antiquant_scale1) {
       inputs_tensor_map_.emplace_back(antiquant_scale1_tensor_map);

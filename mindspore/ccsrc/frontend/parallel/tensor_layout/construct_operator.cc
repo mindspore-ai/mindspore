@@ -63,14 +63,6 @@ Status ConstructOperator::ReshapeOP(const Shape &shape) {
 }
 
 Operator CreateStridedSliceOp(int64_t value, const Shape &begin, const Shape &end, const Shape &strides) {
-  ValuePtr attr_value = MakeValue(value);
-  Attr attr_begin_mask = std::make_pair(BEGIN_MASK, attr_value);
-  Attr attr_end_mask = std::make_pair(END_MASK, attr_value);
-  Attr attr_ellipsis_mask = std::make_pair(ELLIPSIS_MASK, attr_value);
-  Attr attr_new_axis_mask = std::make_pair(NEW_AXIS_MASK, attr_value);
-  Attr attr_shrink_axis_mask = std::make_pair(SHRINK_AXIS_MASK, attr_value);
-  OperatorAttrs attrs = {attr_begin_mask, attr_end_mask, attr_ellipsis_mask, attr_new_axis_mask, attr_shrink_axis_mask};
-
   ValuePtr param_begin_value = MakeValue(begin);
   Param param_begin = std::make_pair(std::make_pair(BEGIN, param_begin_value), STRIDED_SLICE_BEGIN_INDEX + 1);
   ValuePtr param_end_value = MakeValue(end);
@@ -78,7 +70,24 @@ Operator CreateStridedSliceOp(int64_t value, const Shape &begin, const Shape &en
 
   ValuePtr param_strides_value = MakeValue(strides);
   Param param_strides = std::make_pair(std::make_pair(STRIDES, param_strides_value), STRIDED_SLICE_STRIDES_INDEX + 1);
-  OperatorParams params = {param_begin, param_end, param_strides};
+
+  ValuePtr begin_mask = MakeValue(value);
+  Param param_begin_mask = std::make_pair(std::make_pair(BEGIN_MASK, begin_mask), STRIDED_SLICE_BEGIN_MASK_INDEX + 1);
+  ValuePtr end_mask = MakeValue(value);
+  Param param_end_mask = std::make_pair(std::make_pair(END_MASK, end_mask), STRIDED_SLICE_END_MASK_INDEX + 1);
+  ValuePtr ellipsis_mask = MakeValue(value);
+  Param param_ellipsis_mask =
+    std::make_pair(std::make_pair(ELLIPSIS_MASK, ellipsis_mask), STRIDED_SLICE_ELLIPSIS_MASK_INDEX + 1);
+  ValuePtr new_axis_mask = MakeValue(value);
+  Param param_new_axis_mask =
+    std::make_pair(std::make_pair(NEW_AXIS_MASK, new_axis_mask), STRIDED_SLICE_NEW_AXIS_MASK_INDEX + 1);
+  ValuePtr shrink_axis_mask = MakeValue(value);
+  Param param_shrink_axis_mask =
+    std::make_pair(std::make_pair(SHRINK_AXIS_MASK, shrink_axis_mask), STRIDED_SLICE_SHRINK_AXIS_MASK_INDEX + 1);
+
+  OperatorParams params = {param_begin,    param_end,           param_strides,       param_begin_mask,
+                           param_end_mask, param_ellipsis_mask, param_new_axis_mask, param_shrink_axis_mask};
+  OperatorAttrs attrs;
   OperatorArgs op_args = std::make_pair(attrs, params);
 
   return std::make_pair(STRIDED_SLICE, op_args);

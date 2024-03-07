@@ -20,7 +20,7 @@
 #include <map>
 #include "utils/kernel_util.h"
 #include "utils/eigen_tensor.h"
-#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "context/inc/cpu_kernel_utils.h"
 
 namespace {
 const uint32_t kInputNum = 4;

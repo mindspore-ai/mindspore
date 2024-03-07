@@ -564,7 +564,7 @@ class Print(Primitive):
 
     Examples:
         >>> import numpy as np
-        >>> from mindspore import Tensor, nn
+        >>> from mindspore import Tensor, nn, ops
         >>> class PrintDemo(nn.Cell):
         ...     def __init__(self):
         ...         super(PrintDemo, self).__init__()

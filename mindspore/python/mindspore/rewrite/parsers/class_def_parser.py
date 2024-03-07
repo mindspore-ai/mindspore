@@ -50,6 +50,13 @@ class ClassDefParser(Parser):
         self._cell_namespace = CellNamespace('mindspore.nn')
 
     @staticmethod
+    def _save_imports(stree):
+        """save imports in module where network is located."""
+        origin_net = stree.get_origin_network()
+        net_path = inspect.getfile(type(origin_net))
+        stree.save_imports_from_file(net_path)
+
+    @staticmethod
     def _process_init_func_ast(init_ast: ast.FunctionDef, class_name_ori: str, class_name_opt: str,
                                is_father_class: bool, father_classes: dict):
         """Process init func"""
@@ -228,8 +235,11 @@ class ClassDefParser(Parser):
         replacer = AstReplacer(node)
         replacer.replace_all(stree.get_ori_cls_name(), stree.get_opt_cls_name())
 
-        # process network's father classes
+        # save imports of current class
         stree.set_class_ast(node)
+        ClassDefParser._save_imports(stree)
+
+        # process network's father classes
         cur_class_type = type(stree.get_origin_network())
         father_classes = ClassDefParser._process_father_classes(stree, node, cur_class_type)
 

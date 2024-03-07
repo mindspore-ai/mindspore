@@ -41,8 +41,6 @@
 #include "ops/ops_func_impl/greater_equal.h"
 #include "ops/ops_func_impl/greater.h"
 #include "ops/mod.h"
-#include "ops/sub.h"
-#include "ops/strided_slice.h"
 #include "ops/strided_slice_v2.h"
 #include "ops/grad/strided_slice_v2_grad.h"
 #include "abstract/abstract_function.h"

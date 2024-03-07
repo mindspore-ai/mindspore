@@ -1242,9 +1242,7 @@ void SessionBasic::CreateOutputNode(const CNodePtr &cnode, const std::shared_ptr
 std::shared_ptr<KernelGraph> SessionBasic::ConstructSingleOpGraph(const BackendOpRunInfoPtr &op_run_info,
                                                                   const std::vector<ValuePtr> &input_values,
                                                                   const std::vector<int64_t> &tensors_mask) {
-  auto graph = std::make_shared<KernelGraph>();
-  graph->set_graph_id(graph_sum_);
-  graph_sum_++;
+  auto graph = NewPynativeKernelGraph();
   std::vector<AnfNodePtr> inputs;
   // set input[0]
   auto op_prim = op_run_info->op_prim;

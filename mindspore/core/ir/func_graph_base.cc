@@ -74,14 +74,28 @@ void FuncGraphLoopBreaker::BreakLoop() {
     }
   }
   if (func_graph_cnt > 0) {
-    MS_LOG(INFO) << "Size of not recycled graph after break loop should be 0, but got:" << func_graph_cnt << "\n"
+    MS_LOG(INFO) << "Size of not recycled graph after break loop should be 0, but got: " << func_graph_cnt << "\n"
                  << "Please check the usage of clear_compile_cache or contact to the maintenance engineers.";
   }
 }
 
-void FuncGraphLoopBreaker::CleanMetaFuncGraphCache() {
-  std::list<FuncGraphBasePtr> func_list;
+void FuncGraphLoopBreaker::Dump() const {
+  MS_LOG(INFO) << "Total func graphs: " << func_set_.size();
+  for (const auto &fun : func_set_) {
+    if (fun != nullptr && !fun->subclass_destruct_flag_) {
+      const auto &f = fun->shared_from_base<FuncGraphBase>();
+      auto use_count = f.use_count();
+      const auto &fg = dyn_cast<FuncGraph>(f);
+      MS_LOG(INFO) << "FuncGraph: " << f << "/" << f->ToString() << ", use_count: " << use_count
+                   << (fg != nullptr ? (std::string(", attached_mng_cnt: ") + std::to_string(fg->attached_mng_cnt()))
+                                     : "")
+                   << ", type: " << f->type_name();
+    }
+  }
+}
 
+void FuncGraphLoopBreaker::CleanMetaFuncGraphs() {
+  std::list<FuncGraphBasePtr> func_list;
   // Generate shared_ptr for every graph, to avoid func_set_ changes while BreakLoop
   (void)std::for_each(func_set_.begin(), func_set_.end(), [&func_list](FuncGraphBase *fun) {
     if (fun != nullptr && !fun->subclass_destruct_flag_) {
@@ -89,9 +103,40 @@ void FuncGraphLoopBreaker::CleanMetaFuncGraphCache() {
     }
   });
   for (auto item : func_list) {
-    if (item != nullptr && item->isa<MetaFuncGraph>()) {
+    if (item == nullptr) {
+      continue;
+    }
+    if (item->isa<MetaFuncGraph>()) {
       item->DoBreakLoop();
     }
+  }
+}
+
+// If phase is empty, clean all collected func graphs.
+void FuncGraphLoopBreaker::CleanUnusedFuncGraphs(const std::string &phase) {
+  std::list<FuncGraphBasePtr> func_list;
+  // Generate shared_ptr for every graph, to avoid func_set_ changes while BreakLoop
+  (void)std::for_each(func_set_.begin(), func_set_.end(), [&func_list](FuncGraphBase *fun) {
+    if (fun != nullptr && !fun->subclass_destruct_flag_) {
+      (void)func_list.emplace_back(fun->shared_from_base<FuncGraphBase>());
+    }
+  });
+  for (auto item : func_list) {
+    if (item == nullptr) {
+      continue;
+    }
+    const auto &fg = dyn_cast<FuncGraph>(item);
+    if (fg == nullptr || !fg->IsSameTypeId(FuncGraph::kTypeId)) {
+      continue;
+    }
+    if (!phase.empty() && fg->phase() != phase) {
+      continue;
+    }
+    MS_LOG(INFO) << "Drop " << fg << "/" << fg->ToString() << ", use_count: " << fg.use_count()
+                 << ", type: " << fg->type_name();
+    fg->ResetReturnOwner();
+    fg->ResetOwnNodes();
+    fg->set_dropped(true);
   }
 }
 

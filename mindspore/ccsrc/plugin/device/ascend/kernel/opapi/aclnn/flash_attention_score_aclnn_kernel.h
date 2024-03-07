@@ -39,8 +39,6 @@ class FAScoreAclnnKernelMod : public AclnnKernelMod {
     if (outputs[0]->type_id() != kObjectTypeTensorType) {
       MS_LOG(EXCEPTION) << "now only support tensor type for EmptyKernelTensor in " << op_type_;
     }
-    empty_kernel_tensor_ptr = std::make_shared<EmptyKernelTensor>(outputs[0]->type_id(), outputs[0]->dtype_id());
-    MS_EXCEPTION_IF_NULL(empty_kernel_tensor_ptr);
     return true;
   }
 
@@ -55,10 +53,11 @@ class FAScoreAclnnKernelMod : public AclnnKernelMod {
     auto head_num = GetFAAttr<int64_t>("head_num");
     auto input_layout = GetFAAttr<std::string>("input_layout");
     auto inner_precise = GetFAAttr<int64_t>("inner_precise");
+    auto sparse_mode = GetFAAttr<int64_t>("sparse_mode");
     auto return_value = GEN_EXECUTOR_BOOST(
-      op_type_, hash_id_, inputs[kIndex0], inputs[kIndex1], inputs[kIndex2], nullptr, nullptr, nullptr, inputs[kIndex3],
-      nullptr, scale_value, keep_prob, pre_tokens, next_tokens, head_num, input_layout, inner_precise, nullptr,
-      outputs[kIndex1], outputs[kIndex2], empty_kernel_tensor_ptr->get(), outputs[kIndex0]);
+      op_type_, hash_id_, inputs[kIndex0], inputs[kIndex1], inputs[kIndex2], inputs[kIndex3], inputs[kIndex4],
+      inputs[kIndex5], inputs[kIndex6], nullptr, scale_value, keep_prob, pre_tokens, next_tokens, head_num,
+      input_layout, inner_precise, sparse_mode, outputs[kIndex0], outputs[kIndex1], outputs[kIndex2], outputs[kIndex3]);
     return return_value;
   }
 

@@ -21,10 +21,10 @@
 #include <iostream>
 #include <string>
 #include <unordered_map>
-#include "cpu_kernel_utils.h"
-#include "common/cpu_kernel_utils.h"
-#include "common/kernel_log.h"
-#include "common/status.h"
+#include "inc/ms_cpu_kernel.h"
+#include "inc/ms_cpu_kernel.h"
+#include "inc/kernel_log.h"
+#include "context/common/status.h"
 #include "utils/eigen_tensor.h"
 #include "utils/broadcast_iterator.h"
 #include "utils/kernel_util.h"

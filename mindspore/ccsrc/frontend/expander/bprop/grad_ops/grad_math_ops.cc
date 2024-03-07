@@ -329,13 +329,8 @@ NodePtrList FFTGradCommon(BpropIRBuilder *ib, const std::string &op_name) {
       (void)begin.emplace_back(0LL);
       (void)strides.emplace_back(1LL);
     }
-    auto slice_dout = ib->Emit(
-      "StridedSlice", {grad_dout, ib->Value<ShapeVector>(begin), input_shape_node, ib->Value<ShapeVector>(strides)},
-      {{kAttrBeginMask, MakeValue<int64_t>(0)},
-       {kAttrEndMask, MakeValue<int64_t>(0)},
-       {kAttrEllipsisMask, MakeValue<int64_t>(0)},
-       {kAttrNewAxisMask, MakeValue<int64_t>(0)},
-       {kAttrShrinkAxisMask, MakeValue<int64_t>(0)}});
+    auto slice_dout =
+      ib->StridedSlice(grad_dout, ib->Value<ShapeVector>(begin), input_shape_node, ib->Value<ShapeVector>(strides));
 
     auto slicegrad_dout = ib->Emit(
       "StridedSliceGrad",
@@ -480,6 +475,48 @@ REG_BPROP_BUILDER("Add").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
   auto y = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
   return BinopGradCommon(ib, x, y, dout, dout);
+});
+
+REG_BPROP_BUILDER("AddExt").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto y = ib->GetInput(kIndex1);
+  auto alpha = ib->GetInput(kIndex2);
+  auto alpha_tensor = ib->ScalarToTensor(alpha);
+  auto dout = ib->GetInput(kIndex4);
+  std::vector<NodePtr> ret = BinopGradCommon(ib, x, y, dout, dout);
+  ret.emplace_back(alpha);
+
+  if (ib->GetDtypeId(x) == kNumberTypeComplex64) {
+    alpha_tensor = ib->Cast(alpha_tensor, kNumberTypeComplex64);
+  } else if (ib->GetDtypeId(x) == kNumberTypeComplex128) {
+    alpha_tensor = ib->Cast(alpha_tensor, kNumberTypeComplex128);
+  } else if (ib->GetDtypeId(x) == kNumberTypeBFloat16) {
+    alpha_tensor = ib->Cast(alpha_tensor, kNumberTypeBFloat16);
+  }
+
+  ret[1] = ib->Mul(ret[1], alpha_tensor);
+  return ret;
+});
+
+REG_BPROP_BUILDER("SubExt").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto y = ib->GetInput(kIndex1);
+  auto alpha = ib->GetInput(kIndex2);
+  auto alpha_tensor = ib->ScalarToTensor(alpha);
+  auto dout = ib->GetInput(kIndex4);
+  std::vector<NodePtr> ret = BinopGradCommon(ib, x, y, dout, ib->Emit(kNegOpName, {dout}));
+  ret.emplace_back(alpha);
+
+  if (ib->GetDtypeId(x) == kNumberTypeComplex64) {
+    alpha_tensor = ib->Cast(alpha_tensor, kNumberTypeComplex64);
+  } else if (ib->GetDtypeId(x) == kNumberTypeComplex128) {
+    alpha_tensor = ib->Cast(alpha_tensor, kNumberTypeComplex128);
+  } else if (ib->GetDtypeId(x) == kNumberTypeBFloat16) {
+    alpha_tensor = ib->Cast(alpha_tensor, kNumberTypeBFloat16);
+  }
+
+  ret[1] = ib->Mul(ret[1], alpha_tensor);
+  return ret;
 });
 
 REG_BPROP_BUILDER("Mul").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
@@ -752,10 +789,10 @@ REG_BPROP_BUILDER("Pow").SetBody(BODYFUNC(ib) {
   return {BinopGradCommon(ib, x, power, bc_dx, bc_dpower)};
 });
 
-REG_BPROP_BUILDER("Exp").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("Exp").SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
+  auto g = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
-  auto g = ib->Exp(x);
   auto dx = ib->Mul(g, dout);
   return {dx};
 });
@@ -1343,7 +1380,8 @@ REG_BPROP_BUILDER("ReduceSum").SetUnusedInputs({i0, i4}).SetBody(BODYFUNC(ib) {
   auto keep_dims = ib->GetInput(kIndex2);
   auto skip_mode = ib->GetInput(kIndex3);
   auto dout = ib->GetInput(kIndex5);
-  auto dx = SumGrad(ib, x, axis, dout, GetValue<bool>(keep_dims->BuildValue()));
+  auto dx =
+    SumGrad(ib, x, axis, dout, GetValue<bool>(keep_dims->BuildValue()), GetValue<bool>(skip_mode->BuildValue()));
   return {dx, ib->OutZeros(axis), ib->OutZeros(keep_dims), ib->OutZeros(skip_mode)};
 });
 
@@ -1816,16 +1854,10 @@ REG_BPROP_BUILDER("TridiagonalMatMul").SetUnusedInputs({i4}).SetBody(BODYFUNC(ib
       (void)strides.emplace_back(1LL);
     }
     begin[rank - 2] = 1LL;
-    return ib->Emit(
-      "Pad",
-      {ib->Emit("StridedSlice",
-                {x, ib->Value<ShapeVector>(begin), ib->Value<ShapeVector>(end), ib->Value<ShapeVector>(strides)},
-                {{"begin_mask", MakeValue<int64_t>(0LL)},
-                 {"end_mask", MakeValue<int64_t>(0LL)},
-                 {"ellipsis_mask", MakeValue<int64_t>(0LL)},
-                 {"new_axis_mask", MakeValue<int64_t>(0LL)},
-                 {"shrink_axis_mask", MakeValue<int64_t>(0LL)}})},
-      {{"paddings", MakeValue(paddings)}});
+    return ib->Emit("Pad",
+                    {ib->StridedSlice(x, ib->Value<ShapeVector>(begin), ib->Value<ShapeVector>(end),
+                                      ib->Value<ShapeVector>(strides))},
+                    {{"paddings", MakeValue(paddings)}});
   };
   auto RightShift = [](BpropIRBuilder *ib, NodePtr x) {
     auto x_shape = ib->GetShape(x);
@@ -1843,16 +1875,10 @@ REG_BPROP_BUILDER("TridiagonalMatMul").SetUnusedInputs({i4}).SetBody(BODYFUNC(ib
       (void)strides.emplace_back(1LL);
     }
     end[rank - 2] = -1;
-    return ib->Emit(
-      "Pad",
-      {ib->Emit("StridedSlice",
-                {x, ib->Value<ShapeVector>(begin), ib->Value<ShapeVector>(end), ib->Value<ShapeVector>(strides)},
-                {{"begin_mask", MakeValue<int64_t>(0)},
-                 {"end_mask", MakeValue<int64_t>(0)},
-                 {"ellipsis_mask", MakeValue<int64_t>(0)},
-                 {"new_axis_mask", MakeValue<int64_t>(0)},
-                 {"shrink_axis_mask", MakeValue<int64_t>(0)}})},
-      {{"paddings", MakeValue(paddings)}});
+    return ib->Emit("Pad",
+                    {ib->StridedSlice(x, ib->Value<ShapeVector>(begin), ib->Value<ShapeVector>(end),
+                                      ib->Value<ShapeVector>(strides))},
+                    {{"paddings", MakeValue(paddings)}});
   };
   auto MatrixTranspose = [](BpropIRBuilder *ib, const NodePtr &x) {
     auto x_shape = ib->GetShape(x);
@@ -2616,14 +2642,8 @@ REG_BPROP_BUILDER("DCT").SetBody(BODYFUNC(ib) {
                           {kAttrNewAxisMask, MakeValue<int64_t>(0)},
                           {kAttrShrinkAxisMask, MakeValue<int64_t>(0)}});
   } else if (need_slice) {
-    grad_dout =
-      ib->Emit("StridedSlice",
-               {grad_dout, ib->Value<ShapeVector>(begin), ib->Value<ShapeVector>(end), ib->Value<ShapeVector>(strides)},
-               {{kAttrBeginMask, MakeValue<int64_t>(0)},
-                {kAttrEndMask, MakeValue<int64_t>(0)},
-                {kAttrEllipsisMask, MakeValue<int64_t>(0)},
-                {kAttrNewAxisMask, MakeValue<int64_t>(0)},
-                {kAttrShrinkAxisMask, MakeValue<int64_t>(0)}});
+    grad_dout = ib->StridedSlice(grad_dout, ib->Value<ShapeVector>(begin), ib->Value<ShapeVector>(end),
+                                 ib->Value<ShapeVector>(strides));
   }
 
   return {grad_dout,          ib->OutZeros(type),    ib->OutZeros(n),   ib->OutZeros(axis),

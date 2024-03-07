@@ -232,6 +232,9 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
   static void UpdateOutputAddrSize(device::KernelInfo const *kernel_info, const CNodePtr &kernel);
   static bool IsShapesDynamic(const std::vector<ShapeVector> &shapes);
 
+  // Check whether the kernel has input node which is a computed depend kernel.
+  static bool HasComputedDependInputNode(const CNodePtr &kernel);
+
   static void AddOutInRefToGraph(const KernelGraphPtr &graph);
   static bool HasOriginFormat(const AnfNodePtr &anf_node);
   static std::string GetOriginFormat(const AnfNodePtr &anf_node);
@@ -304,7 +307,8 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
     return value_node;
   }
   // create type id value node and add it to graph
-  static ValueNodePtr CreateTypeIdValueNodeToGraph(const FuncGraphPtr &func_graph, TypeId data_type);
+  static ValueNodePtr CreateTypeIdValueNodeToKernelGraph(const FuncGraphPtr &func_graph, TypeId data_type);
+  static ValueNodePtr CreateTypeIdValueNodeToFuncGraph(const FuncGraphPtr &func_graph, TypeId data_type);
 };
 }  // namespace session
 

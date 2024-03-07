@@ -48,6 +48,7 @@ class AclPassImpl {
   /* pre or post pass */
   STATUS PreProcGraph(const FuncGraphPtr &func_graph);
   STATUS PostProcGraph(const FuncGraphPtr &func_graph);
+  STATUS PostProcCustomOp(const FuncGraphPtr &func_graph);
   /* map func graph */
   STATUS DeparseGraph(const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &manager);
   STATUS ConvertGraphToOm(const FuncGraphPtr &func_graph, Buffer *om_data);

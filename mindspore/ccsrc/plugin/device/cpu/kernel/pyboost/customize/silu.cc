@@ -16,7 +16,7 @@
 
 #include "plugin/device/cpu/kernel/pyboost/customize/silu.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "kernel/pyboost/py_boost_utils.h"
+#include "kernel/pyboost/pyboost_utils.h"
 #include "plugin/device/cpu/kernel/pyboost/auto_generate/sigmoid.h"
 #include "plugin/device/cpu/kernel/pyboost/auto_generate/mul.h"
 #include "mindspore/core/ops/auto_generate/gen_ops_primitive.h"
@@ -28,9 +28,7 @@ namespace {
 OpPtr SiLUCPUCall(const device::DeviceContext *device_context, const TensorPtr &x_tensor) {
   MS_LOG(DEBUG) << "Call start";
   const auto &sigmoid = CREATE_PYBOOST_OP(Sigmoid, device_context->device_context_key_.device_name_);
-  sigmoid->set_primitive(prim::kPrimSigmoid);
   const auto &mul = CREATE_PYBOOST_OP(Mul, device_context->device_context_key_.device_name_);
-  mul->set_primitive(prim::kPrimMul);
   const auto &sigmoid_tensor = sigmoid->Call(x_tensor);
   mul->Call(x_tensor, sigmoid_tensor);
   MS_LOG(DEBUG) << "Launch end";

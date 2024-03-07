@@ -144,6 +144,20 @@ KernelGraphPtr OpCompiler::GenerateKernelGraph(const session::BackendOpRunInfoPt
   return graph;
 }
 
+void OpCompiler::AssignStreamIdForSingleOpGraph(const KernelGraphPtr &graph, uint32_t stream_id) {
+  MS_EXCEPTION_IF_NULL(graph);
+
+  for (const auto &cnode : graph->execution_order()) {
+    MS_EXCEPTION_IF_NULL(cnode);
+    AnfAlgo::SetStreamId(stream_id, cnode.get());
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(cnode);
+    for (size_t index = 0; index < input_num; ++index) {
+      const auto &input_node = common::AnfAlgo::GetInputNode(cnode, index);
+      AnfAlgo::SetStreamId(stream_id, input_node.get());
+    }
+  }
+}
+
 OpCompilerInfoPtr OpCompiler::Compile(const session::BackendOpRunInfoPtr &op_run_info, bool *single_op_cache_hit,
                                       const std::string &device_name, const uint32_t &device_id) {
   MS_EXCEPTION_IF_NULL(op_run_info);
@@ -186,7 +200,7 @@ OpCompilerInfoPtr OpCompiler::Compile(const session::BackendOpRunInfoPtr &op_run
   kernel_executor->OptimizeGraph(graph);
 
   UpdateRefInfoBeforeCreateKernel(op_run_info, graph);
-
+  AssignStreamIdForSingleOpGraph(graph, op_run_info->base_op_run_info.stream_id);
   // Create device address for all anf nodes of graph.
   CreateDeviceAddressWithoutWorkspace(graph, device_context, op_run_info->is_gradient_out);
 
@@ -408,6 +422,8 @@ std::string OpCompiler::GetSingleOpGraphInfo(const pynative::BaseOpRunInfo &op_i
 
     graph_info += "_";
   }
+
+  graph_info += std::to_string(op_info.stream_id);
 
   // Operator with hidden side effect.
   if (has_hidden_side_effect) {

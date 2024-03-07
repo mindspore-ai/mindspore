@@ -465,7 +465,7 @@ def test_concat_is_the_input_of_stridedslice():
 
     phase = compile_net(net, input_x)
     validator = ParallelValidator(net, phase)
-    assert validator.check_node_inputs_has('StridedSlice-0', ['Concat-0'])
+    assert validator.check_node_inputs_has('StridedSlice-0', ['TensorToTuple-0'])
 
 
 class ConcatPadV3Net(Cell):

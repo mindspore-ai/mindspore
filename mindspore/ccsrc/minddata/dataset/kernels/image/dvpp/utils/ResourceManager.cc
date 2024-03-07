@@ -18,6 +18,8 @@
 
 #include <algorithm>
 #include <memory>
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 bool ResourceManager::initFlag_ = true;
 std::shared_ptr<ResourceManager> ResourceManager::ptr_ = nullptr;
@@ -114,7 +116,7 @@ APP_ERROR ResourceManager::InitResource(ResourceInfo &resourceInfo) {
     }
     MS_LOG(INFO) << "Open device " << deviceIds_[i] << " successfully.";
     aclrtContext context;
-    ret = aclrtCreateContext(&context, deviceIds_[i]);
+    ret = CALL_ASCEND_API(aclrtCreateContext, &context, deviceIds_[i]);
     if (ret != APP_ERR_OK) {
       MS_LOG(ERROR) << "Failed to create acl context, ret = " << ret << ".";
       return ret;

@@ -1,0 +1,9 @@
+approvers:
+- dayschan #
+- gaoxiong1
+- zichun_ye
+- ckey_dou
+- anyrenwei
+
+options:
+    no_parent_owners: true

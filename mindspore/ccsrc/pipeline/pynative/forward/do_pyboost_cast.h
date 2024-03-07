@@ -41,15 +41,17 @@ class PyBoostCastOperation : public CastBaseOperation {
     if (op_run_info->async_status.disable_mix_precision) {
       return std::make_tuple(input_args...);
     }
-    size_t index = 0;
-    auto increase_index_fn = [&index]() { return index++; };
-    auto ret = std::make_tuple(SetTensorMixPrecisionCast(op_run_info, input_args, increase_index_fn())...);
+    size_t index = sizeof...(input_args);
+    auto decrease_index_fn = [&index]() { return --index; };
+    // Notice, the input_args of variadic template in make_tuple obtaining is reverse
+    auto ret = std::make_tuple(SetTensorMixPrecisionCast(op_run_info, input_args, decrease_index_fn())...);
     return ret;
   }
 
   template <typename T>
   T SetTensorMixPrecisionCast(const FrontendOpRunInfoPtr &op_run_info, const T &t, size_t index) const {
     MS_EXCEPTION_IF_NULL(t);
+    MS_LOG(DEBUG) << "Get input type " << typeid(t).name();
     return t;
   }
 
@@ -249,6 +251,8 @@ class PyBoostCastOperation : public CastBaseOperation {
   template <class Item>
   Item DoAutoCast(const FrontendOpRunInfoPtr &op_run_info, const std::pair<TypeId, bool> &dst_type, size_t index,
                   const Item &t) const {
+    MS_EXCEPTION_IF_NULL(t);
+    MS_LOG(DEBUG) << "Get input type " << typeid(t).name();
     return t;
   }
 
@@ -256,13 +260,18 @@ class PyBoostCastOperation : public CastBaseOperation {
                       const ValuePtr &v) const;
   tensor::TensorPtr DoAutoCast(const FrontendOpRunInfoPtr &op_run_info, const std::pair<TypeId, bool> &dst_type,
                                size_t index, const tensor::TensorPtr &t) const;
+  ValuePtr SetTensorMixPrecisionCast(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &v, size_t index) const;
   tensor::TensorPtr SetTensorMixPrecisionCast(const FrontendOpRunInfoPtr &op_run_info, const tensor::TensorPtr &t,
                                               size_t index) const;
   std::optional<tensor::TensorPtr> SetTensorMixPrecisionCast(const FrontendOpRunInfoPtr &op_run_info,
                                                              const std::optional<tensor::TensorPtr> &t,
                                                              size_t index) const;
-  ValuePtr SetTensorMixPrecisionCast(const FrontendOpRunInfoPtr &op_run_info, const ValueSequencePtr &v_seq,
-                                     size_t index) const;
+  ValueTuplePtr SetTensorMixPrecisionCast(const FrontendOpRunInfoPtr &op_run_info, const ValueTuplePtr &v_tuple,
+                                          size_t index) const;
+  ValueListPtr SetTensorMixPrecisionCast(const FrontendOpRunInfoPtr &op_run_info, const ValueListPtr &v_list,
+                                         size_t index) const;
+  ValuePtrList SetSeqMixPrecisionCast(const FrontendOpRunInfoPtr &op_run_info, const ValueSequencePtr &v_seq,
+                                      size_t index) const;
 };
 using PyBoostCastOperationPtr = std::shared_ptr<PyBoostCastOperation>;
 

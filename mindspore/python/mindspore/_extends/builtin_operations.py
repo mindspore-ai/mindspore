@@ -216,7 +216,8 @@ def mixed_precision_cast(dst_type, x):
     """Implement `mixed_precision_cast`."""
 
     def cast_inner(data):
-        if isinstance(data, Tensor) and data.dtype in (mstype.float32, mstype.float16, mstype.float64):
+        if isinstance(data, Tensor) and data.dtype in (mstype.float32, mstype.float16,
+                                                       mstype.float64, mstype.bfloat16):
             return F.cast(data, dst_type)
         return data
 

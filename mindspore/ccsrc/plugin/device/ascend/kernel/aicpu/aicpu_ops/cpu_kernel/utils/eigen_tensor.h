@@ -20,7 +20,7 @@
 #include <functional>
 #include <vector>
 #include "cpu_tensor.h"
-#include "common/kernel_log.h"
+#include "inc/kernel_log.h"
 #include "unsupported/Eigen/CXX11/Tensor"
 
 namespace aicpu {

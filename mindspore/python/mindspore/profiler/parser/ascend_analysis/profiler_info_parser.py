@@ -47,6 +47,8 @@ class ProfilerInfoParser:
     _host_start = "host/host_start.log"
     _start_info = "host/start_info"
     _info_json = "host/info.json"
+    _loaded_localtime = False
+    _loaded_syscnt = False
 
     @classmethod
     def init_source_path(cls, source_path: str):
@@ -125,25 +127,30 @@ class ProfilerInfoParser:
     @classmethod
     def __load_timediff_info(cls):
         """Update the value of _localtime_diff"""
+        if cls._loaded_localtime:
+            return
         start_info_path = os.path.join(cls._source_prof_path, cls._start_info)
         start_info_path = validate_and_normalize_path(start_info_path)
         start_info = ast.literal_eval(FileManager.read_file_content(start_info_path, "rt"))
         # The unit of _localtime_diff is us
         cls._localtime_diff = Decimal(start_info.get(Constant.CANN_BEGIN_TIME, 0)) - Decimal(
             start_info.get(Constant.CANN_BEGIN_MONOTONIC, 0)) / Constant.NS_TO_US
+        cls._loaded_localtime = True
 
     @classmethod
     def __load_syscnt_info(cls):
         """Update _syscnt_enable, _time_offset and _start_cnt value."""
         # update cls._syscnt_enable
+        if cls._loaded_syscnt:
+            return
         info_json_path = os.path.join(cls._source_prof_path, cls._info_json)
         info_json_path = validate_and_normalize_path(info_json_path)
         try:
             jsondata = json.loads(FileManager.read_file_content(info_json_path, "rt"))
             config_freq = jsondata.get("CPU")[0].get("Frequency")
             if config_freq is None or not cls.__is_number(config_freq):
-                logger.warning("cpu frequency is: {config_freq}")
-                config_freq = "1000"
+                logger.warning(f"cpu frequency is: {config_freq}")
+                config_freq = "100.0"
         except (AttributeError, IndexError, TypeError, ValueError, JSONDecodeError) as err:
             msg = f"Incorrect file content in {os.path.basename(info_json_path)}"
             raise RuntimeError(msg) from err
@@ -162,6 +169,7 @@ class ProfilerInfoParser:
         if cls.__is_number(config_time_offset) and cls.__is_number(config_start_cnt):
             cls._time_offset = int(config_time_offset)
             cls._start_cnt = int(config_start_cnt)
+        cls._loaded_syscnt = True
 
     @classmethod
     def __get_timestamp(cls, syscnt: int, time_fmt: int = 1000):

@@ -20,11 +20,11 @@
 #include <utility>
 #include <vector>
 
-#include "cpu_kernel_utils.h"
-#include "cpu_kernel_utils.h"
-#include "kernel_log.h"
+#include "inc/ms_cpu_kernel.h"
+#include "inc/ms_cpu_kernel.h"
+#include "inc/kernel_log.h"
 #include "securec.h"
-#include "status.h"
+#include "context/common/status.h"
 #include "utils/bcast.h"
 
 namespace aicpu {

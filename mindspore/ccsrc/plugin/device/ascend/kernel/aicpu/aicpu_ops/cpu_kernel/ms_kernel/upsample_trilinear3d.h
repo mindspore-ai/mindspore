@@ -19,7 +19,7 @@
 #include <cmath>
 #include <limits>
 
-#include "cpu_kernel_utils.h"
+#include "inc/ms_cpu_kernel.h"
 namespace aicpu {
 class UpsampleTrilinear3dCpuKernel : public CpuKernel {
  public:

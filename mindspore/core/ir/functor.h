@@ -155,29 +155,6 @@ class MS_CORE_API ShapeCalcFunctor : public ShapeCalcBaseFunctor {
 };
 using ShapeCalcFunctorPtr = std::shared_ptr<ShapeCalcFunctor>;
 
-class MS_CORE_API InferShapeFunctor : public Functor {
- public:
-  /// \brief Constructor of InferShapeFunctor.
-  explicit InferShapeFunctor(const std::string &name) : Functor(name) {}
-
-  /// \brief Destructor of InferShapeFunctor.
-  ~InferShapeFunctor() override = default;
-  MS_DECLARE_PARENT(InferShapeFunctor, Functor)
-
-  /// \brief Infer output shape.
-  /// \param[in] args_spec_list AbstractBasePtrList of the inputs.
-  /// \return Result true if inference success, return false otherwise.
-  virtual BaseShapePtr InferShape(const AbstractBasePtrList &args) { return nullptr; }
-
-  /// \brief Pack functor name to a Value
-  /// \return The name of this infershape functor.
-  ValuePtr ToValue() const override { return MakeValue(name_); };
-
-  /// \brief Rename the functor.
-  void FromValue(const ValuePtr &value) override { name_ = GetValue<std::string>(value); };
-};
-using InferShapeFunctorPtr = std::shared_ptr<InferShapeFunctor>;
-
 // common code to declare ShapeCalcFunctor
 #define DECLARE_SHAPE_CALC(reg_name, cls) \
   cls() : ShapeCalcFunctor(reg_name) {}   \

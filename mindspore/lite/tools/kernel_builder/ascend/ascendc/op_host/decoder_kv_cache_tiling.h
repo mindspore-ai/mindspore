@@ -19,13 +19,22 @@
 #include "register/tilingdata_base.h"
 
 namespace optiling {
-BEGIN_TILING_DATA_DEF(TilingData)
+BEGIN_TILING_DATA_DEF(DecoderKvTilingData)
 TILING_DATA_FIELD_DEF(int64_t, core_num);
 TILING_DATA_FIELD_DEF(int64_t, b);
 TILING_DATA_FIELD_DEF(int64_t, h);
+TILING_DATA_FIELD_DEF(int64_t, s);
 TILING_DATA_FIELD_DEF(int64_t, d);
 TILING_DATA_FIELD_DEF(int64_t, us);
+TILING_DATA_FIELD_DEF(int64_t, former_bh);
+TILING_DATA_FIELD_DEF(int64_t, tail_bh);
+TILING_DATA_FIELD_DEF(int64_t, f_split_bh);
+TILING_DATA_FIELD_DEF(int64_t, f_f_bh);
+TILING_DATA_FIELD_DEF(int64_t, f_t_bh);
+TILING_DATA_FIELD_DEF(int64_t, t_split_bh);
+TILING_DATA_FIELD_DEF(int64_t, t_f_bh);
+TILING_DATA_FIELD_DEF(int64_t, t_t_bh);
 END_TILING_DATA_DEF;
-REGISTER_TILING_DATA_CLASS(DecoderKvCache, TilingData)
+REGISTER_TILING_DATA_CLASS(DecoderKvCache, DecoderKvTilingData)
 }  // namespace optiling
 #endif  // DECODER_KV_CACHE_TILING_H

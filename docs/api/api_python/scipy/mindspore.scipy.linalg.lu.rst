@@ -32,10 +32,10 @@ mindspore.scipy.linalg.lu
         **如果 permute_l == False**
 
         - **p** (Tensor) - :math:`(M, M)` 置换矩阵。
-        - **l** (Tensor) - :math:`(M, K)` 对角线元素全为1的下三角矩阵或梯形矩阵。 :math:`K=min(M, N)`。
+        - **l** (Tensor) - :math:`(M, K)` 对角线元素全为1的下三角矩阵或梯形矩阵。 :math:`K = min(M, N)`。
         - **u** (Tensor) - :math:`(K, N)` 上三角矩阵或梯形矩阵。
 
         **如果 permute_l == True**
 
-        - **pl** (Tensor) - :math:`(M, K)` 置换L矩阵。 :math:`K=min(M,N)`。
+        - **pl** (Tensor) - :math:`(M, K)` 置换L矩阵。 :math:`K = min(M,N)`。
         - **u** (Tensor) - :math:`(K, N)` 上三角矩阵或梯形矩阵。

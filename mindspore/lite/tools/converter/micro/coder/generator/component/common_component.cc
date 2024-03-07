@@ -23,6 +23,8 @@
 #include "include/errorcode.h"
 #include "nnacl/op_base.h"
 #include "include/c_api/model_c.h"
+#include "coder/generator/component/const_blocks/license.h"
+#include "tools/common/string_util.h"
 
 namespace mindspore::lite::micro {
 const char handle_array_destroy_state[] = R"RAW(
@@ -31,28 +33,28 @@ void MSTensorHandleArrayDestroy(MSTensorHandleArray inputs);
 
 const char handle_array_destroy[] = R"RAW(
 void MSTensorHandleArrayDestroy(MSTensorHandleArray inputs) {
-  if (inputs.handle_list == NULL) {
-    return;
-  }
-  for (size_t i = 0; i < inputs.handle_num; i++) {
-    MicroTensor *micro_tensor = inputs.handle_list[i];
-    if (micro_tensor == NULL) {
-      continue;
-    }
-    if (micro_tensor->data != NULL && micro_tensor->owned) {
-      free(micro_tensor->data);
-      micro_tensor->data = NULL;
-      micro_tensor->owned = false;
-    }
-    if (micro_tensor->shape != NULL) {
-      free(micro_tensor->shape);
-      micro_tensor->shape = NULL;
-    }
-    free(micro_tensor);
-    micro_tensor = NULL;
-  }
-  free(inputs.handle_list);
-  inputs.handle_list = NULL;
+ if (inputs.handle_list == NULL) {
+   return;
+ }
+ for (size_t i = 0; i < inputs.handle_num; i++) {
+   MicroTensor *micro_tensor = inputs.handle_list[i];
+   if (micro_tensor == NULL) {
+     continue;
+   }
+   if (micro_tensor->data != NULL && micro_tensor->owned) {
+     free(micro_tensor->data);
+     micro_tensor->data = NULL;
+     micro_tensor->owned = false;
+   }
+   if (micro_tensor->shape) {
+     free(micro_tensor->shape);
+     micro_tensor->shape = NULL;
+   }
+   free(micro_tensor);
+   micro_tensor = NULL;
+ }
+ free(inputs.handle_list);
+ inputs.handle_list = NULL;
 }
 
 )RAW";
@@ -234,12 +236,6 @@ void CodeCortexSetWorkspace(std::ofstream &ofs, const std::unique_ptr<CoderConte
   ofs << "}\n";
 }
 
-void CodeMSTensorHandleArrayDestroyState(std::ofstream &ofs, const Configurator &config) {
-  if (config.target() != kCortex_M) {
-    ofs << handle_array_destroy_state;
-  }
-}
-
 void CodeMSModelCreateDefault(std::ofstream &ofs) { ofs << "MSModelHandle MSModelCreate() { return model0; }\n"; }
 
 void CodeMSModelCreate(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx, const Configurator &config) {
@@ -249,17 +245,20 @@ void CodeMSModelCreate(std::ofstream &ofs, const std::unique_ptr<CoderContext> &
   if (micro_model == NULL) {
     return kMSStatusLiteNullptr;
   }
-
-  void *runtime_buffer = GlobalMemory();
-  if (runtime_buffer == NULL) {
-    return kMSStatusLiteNullptr;
-  }
-  micro_model->runtime_buffer = runtime_buffer;
 )RAW";
-    ofs << "  int ret = SetBuffer" << ctx->GetCurModelIndex() << "(((MemBlock *)runtime_buffer)->addr);\n"
-        << "  if (ret != kMSStatusSuccess) {\n"
-        << "    return kMSStatusLiteMemoryFailed;\n"
-        << "  }\n\n";
+    if (!config.dynamic_shape()) {
+      ofs << "void *runtime_buffer = GlobalMemory();\n"
+          << "if (runtime_buffer == NULL) {\n"
+          << "    return kMSStatusLiteNullptr;\n"
+          << "  }\n"
+          << "  micro_model->runtime_buffer = runtime_buffer;\n";
+      ofs << "  int ret = SetBuffer" << ctx->GetCurModelIndex() << "(((MemBlock *)runtime_buffer)->addr);\n"
+          << "  if (ret != kMSStatusSuccess) {\n"
+          << "    return kMSStatusLiteMemoryFailed;\n"
+          << "  }\n\n";
+    } else {
+      ofs << "  micro_model->runtime_buffer = NULL;\n";
+    }
     if (config.code_mode() == CodeMode::Inference) {
       ofs << "  micro_model->train_mode = false;\n";
     } else if (config.code_mode() == CodeMode::Train) {
@@ -330,7 +329,7 @@ void CodeMSModelBuildCommon(std::ofstream &ofs, const Configurator &config) {
     return kMSStatusLiteNullptr;
   }
 )RAW";
-  if (config.target() != kCortex_M) {
+  if (config.target() != kCortex_M && !config.dynamic_shape()) {
     ofs << "  IncRefCount();\n";
   }
   ofs << R"RAW(
@@ -384,31 +383,200 @@ void CodeMSModelBuild(std::ofstream &ofs, const int model_index, const size_t we
   ofs << "}\n";
 }
 
+void CodeMSModelResizeInit(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx, const Configurator &config) {
+  const auto &dynamic_symbols_num = config.dynamic_symbols_num();
+  std::string array_index;
+  for (const auto num : dynamic_symbols_num) {
+    array_index += "[" + std::to_string(num) + "]";
+  }
+  auto shapes = ctx->shape_all_scenes();
+  if (!shapes.empty()) {
+    auto num_of_each_scene = shapes.begin()->second.size();
+    ofs << "  static int shapes" << array_index << "[" + std::to_string(num_of_each_scene) + "] = {";
+    for (auto &item : shapes) {
+      auto &shape_val = item.second;
+      for (size_t j = 0; j < shape_val.size(); ++j) {
+        ofs << shape_val[j] << ", ";
+      }
+    }
+    ofs << "};\n";
+  }
+  auto offsets = ctx->offset_all_scenes();
+  if (!offsets.empty()) {
+    auto num_of_each_scene = offsets.begin()->second.size();
+    ofs << "  static int offsets" << array_index << "[" + std::to_string(num_of_each_scene) + "] = {";
+    for (auto &item : offsets) {
+      auto &offset_val = item.second;
+      for (size_t j = 0; j < offset_val.size(); ++j) {
+        ofs << offset_val[j] << ", ";
+      }
+    }
+    ofs << "};\n";
+  }
+  ofs << "  size_t buffer_sizes" << array_index << " = {";
+  auto buffer_size = ctx->buffer_sizes();
+  auto workspace = ctx->workspaces();
+  if (buffer_size.size() != workspace.size()) {
+    return;
+  }
+  for (size_t i = 0; i < buffer_size.size(); i++) {
+    ofs << buffer_size[i] + workspace[i] << ", ";
+  }
+  ofs << "};\n";
+}
+
+void CodeRealDimImplement(std::ofstream &ofs, const Configurator &config,
+                          const std::map<std::string, std::vector<int>> &symbol_to_indexes,
+                          const std::map<std::string, std::string> &user_to_inner,
+                          std::map<std::string, std::string> *inner_to_outer) {
+  int index = 0;
+  for (auto &item : symbol_to_indexes) {
+    ofs << "  int dim" << index << " = shape_infos[" << item.second[0] << "].shape[" << item.second[1] << "];\n";
+    (*inner_to_outer)[item.first] = "dim" + std::to_string(index);
+    std::string cur_dim_symbol;
+    for (std::map<std::string, std::string>::const_iterator it = user_to_inner.begin(); it != user_to_inner.end();
+         ++it) {
+      if (it->second == item.first) {
+        cur_dim_symbol = it->first;
+        break;
+      }
+    }
+    auto dynamic_dim_range = config.dynamic_symbols_map().at(cur_dim_symbol);
+    ofs << "  int dim" << index << "_range[" << dynamic_dim_range.size() << "] = {";
+    for (const auto dim : dynamic_dim_range) {
+      ofs << dim << ", ";
+    }
+    ofs << "};\n";
+    ++index;
+  }
+}
+
+void CodeMSModelResize(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx, const Configurator &config) {
+  auto &shape_templates = ctx->shape_templates();
+  ofs << "MSStatus MSModelResize" << ctx->GetCurModelIndex()
+      << "(MSModelHandle model, const MSTensorHandleArray inputs, MSShapeInfo *shape_infos, size_t shape_info_num) {\n"
+         "  if (model == NULL) {\n"
+         "    return kMSStatusLiteParamInvalid;\n"
+         "  }\n";
+  if (!config.dynamic_shape()) {
+    ofs << "  return kMSStatusLiteNotSupport;\n";
+  } else {
+    ofs << "  MicroModel *micro_model = (MicroModel *)model;\n"
+        << "  if (micro_model == NULL) {\n"
+           "    return kMSStatusLiteNullptr;\n"
+           "  }\n";
+    CodeMSModelResizeInit(ofs, ctx, config);
+    std::map<std::string, std::vector<int>> symbol_to_indexes;
+    std::map<std::string, std::string> user_to_inner;
+    auto &user_graph_inputs_template = config.user_graph_inputs_template();
+    for (size_t i = 0; i < ctx->graph_inputs().size(); ++i) {
+      auto cur_tensor = ctx->graph_inputs()[i];
+      auto cur_shapes = shape_templates.at(cur_tensor);
+      for (size_t j = 0; j < cur_shapes.size(); ++j) {
+        if (IsNumber(cur_shapes.at(j))) {
+          continue;
+        }
+        ofs << "  if (shape_infos[" << i << "].shape[" << j << "] <= 0) {\n"
+            << "    return kMSStatusLiteParamInvalid;\n"
+            << "  }\n";
+        ofs << "  ((MicroTensor *)(inputs.handle_list[" << i << "]))->shape[" << j << "] = shape_infos[" << i
+            << "].shape[" << j << "];\n";
+        if (symbol_to_indexes.find(cur_shapes.at(j)) != symbol_to_indexes.end()) {
+          continue;
+        }
+        symbol_to_indexes[cur_shapes.at(j)] = {static_cast<int>(i), static_cast<int>(j)};
+        user_to_inner[user_graph_inputs_template[i][j]] = cur_shapes.at(j);
+      }
+    }
+    std::map<std::string, std::string> inner_to_outer;
+    CodeRealDimImplement(ofs, config, symbol_to_indexes, user_to_inner, &inner_to_outer);
+    std::string condition;
+    int index = 0;
+    for (; index < static_cast<int>(symbol_to_indexes.size()) - 1; ++index) {
+      condition += "store" + std::to_string(ctx->GetCurModelIndex()) + "_" + std::to_string(index) + " == dim" +
+                   std::to_string(index) + " && ";
+    }
+    condition += "store" + std::to_string(ctx->GetCurModelIndex()) + "_" + std::to_string(index) + " == dim" +
+                 std::to_string(index);
+    ofs << "  if (" << condition << ") {\n"
+        << "    return kMSStatusSuccess;\n"
+        << "  }\n";
+    for (size_t i = 0; i < symbol_to_indexes.size(); ++i) {
+      ofs << "  store" + std::to_string(ctx->GetCurModelIndex()) + "_" << i << " = dim" << i << ";\n";
+    }
+    auto &dynamic_symbols = config.dynamic_symbols();
+    int id = 0;
+    for (auto &symbol : dynamic_symbols) {
+      auto cur_dim = inner_to_outer[user_to_inner[symbol]];
+      auto dim_list = cur_dim + "_range";
+      ofs << "  int index" << id << " = 0;\n";
+      ofs << "  for (int i = 0; i < sizeof(" << dim_list << ") / sizeof(" << dim_list << "[0]); i++) {\n"
+          << "    if (" << dim_list << "[i] == " << cur_dim << ") {\n"
+          << "      index" << id << " = i;\n"
+          << "      break;\n"
+          << "    }\n"
+          << "  }\n";
+      id++;
+    }
+    ofs << "  if (" << kBufferPrefixName << " != NULL) {\n";
+    ofs << "    free(" << kBufferPrefixName << ");\n";
+    ofs << "    " << kBufferPrefixName << " = NULL;\n";
+    ofs << "  }\n";
+    std::string array_index_str;
+    for (size_t i = 0; i < dynamic_symbols.size(); i++) {
+      array_index_str += "[index" + std::to_string(i) + "]";
+    }
+    ofs << "  " << kBufferPrefixName << " = malloc(buffer_sizes" << array_index_str << ");\n";
+    ofs << "  micro_model->runtime_buffer = " << kBufferPrefixName << ";\n";
+    ofs << "  " << kShapePrefixName << " = &shapes" << array_index_str << "[0];\n";
+    ofs << "  " << kOffsetPrefixName << " = &offsets" << array_index_str << "[0];\n";
+    ofs << "  MSTensorHandleArray outputs = MSModelGetOutputs(model);\n";
+    for (size_t i = 0; i < ctx->graph_outputs().size(); ++i) {
+      ofs << "  MSTensorSetData(outputs.handle_list[" << i << "], NULL);\n";
+      auto cur_tensor = ctx->graph_outputs()[i];
+      auto cur_shapes = shape_templates.at(cur_tensor);
+      for (size_t j = 0; j < cur_shapes.size(); ++j) {
+        if (IsNumber(cur_shapes.at(j))) {
+          continue;
+        }
+        ofs << "  ((MicroTensor *)(outputs.handle_list[" << i << "]))->shape[" << j << "] = " << cur_shapes.at(j)
+            << ";\n";
+      }
+    }
+    ofs << "  return kMSStatusSuccess;\n";
+  }
+  ofs << "}\n";
+}
+
 void CodeMSModelDestory(std::ofstream &ofs, const Configurator *config) {
   if (config->target() != kCortex_M) {
     ofs << handle_array_destroy;
   }
   ofs << "void MSModelDestroy(MSModelHandle *model) {\n";
+  ofs << "  if (*model) {\n"
+         "    MicroModel *micro_model = (MicroModel *)*model;\n";
   if (config->target() != kCortex_M) {
-    ofs << "  if (*model) {\n"
-           "    MicroModel *micro_model = (MicroModel *)*model;\n";
-    ofs << "    if (micro_model->runtime_buffer) {\n"
-           "      micro_model->runtime_buffer = NULL;\n"
-           "    }\n";
+    ofs << "    if (micro_model->runtime_buffer) {\n";
+    if (config->dynamic_shape()) {
+      ofs << "      free(micro_model->runtime_buffer);\n";
+    } else {
+      ofs << "      micro_model->runtime_buffer = NULL;\n";
+    }
+    ofs << "    }\n";
     ofs << "    MSTensorHandleArrayDestroy(micro_model->inputs);\n"
            "    MSTensorHandleArrayDestroy(micro_model->outputs);\n"
            "    micro_model->inputs.handle_list = NULL;\n"
            "    micro_model->outputs.handle_list = NULL;\n"
-           "    micro_model->free_resource();\n"
-           "    DecRefCount();\n"
-           "  }\n";
+           "    micro_model->free_resource();\n";
+    if (!config->dynamic_shape()) {
+      ofs << "    DecRefCount();\n";
+    }
+    ofs << "  }\n";
 
     if (config->support_parallel()) {
       ofs << "  ClearThreadPool();\n";
     }
   } else {
-    ofs << "  if (*model) {\n"
-           "    MicroModel *micro_model = (MicroModel *)*model;\n";
     ofs << "    micro_model->runtime_buffer = NULL;\n"
            "    *model = NULL;\n"
            "  }\n";
@@ -456,7 +624,7 @@ void CodeMSModelPredict(std::ofstream &ofs, const std::unique_ptr<CoderContext> 
   ofs << "  if (outputs->handle_num != " << outputs_num << ") {\n";
   ofs << "    return kMSStatusLiteParamInvalid;\n";
   ofs << "  }\n";
-  if (config.target() != kCortex_M) {
+  if (config.target() != kCortex_M && !config.dynamic_shape()) {
     ofs << "  if (!LockBuffer(micro_model->runtime_buffer)) {\n"
         << "    void *buffer = Malloc(GetBufferSize" << ctx->GetCurModelIndex() << "());\n"
         << "    if (buffer == NULL) {\n"
@@ -495,7 +663,6 @@ void CodeMSModelPredict(std::ofstream &ofs, const std::unique_ptr<CoderContext> 
   ofs << "    }\n";
   ofs << "  }\n";
   ofs << "\n";
-  ofs << "  void *outputs_data_array[" << outputs_num << "];\n";
   ofs << "  int cur_out_types[" << outputs_num << "] = {";
   for (size_t i = 0; i < outputs_num; ++i) {
     ofs << ctx->graph_outputs().at(i)->data_type() << ", ";
@@ -506,15 +673,12 @@ void CodeMSModelPredict(std::ofstream &ofs, const std::unique_ptr<CoderContext> 
     ofs << "false, ";
   }
   ofs << "};\n";
-  ofs << "  for (int i = 0; i < " << outputs_num << "; i++) {\n";
-  ofs << "    outputs_data_array[i] = MSTensorGetMutableData(outputs->handle_list[i]);\n";
-  ofs << "  }\n";
-  ofs << "  CopyOutputsData" << ctx->GetCurModelIndex()
-      << "(outputs, outputs_data_array, cur_out_types, out_type_changed);\n";
-  if (config.target() != kCortex_M) {
+  ofs << "  MSStatus ret = CopyOutputsData" << ctx->GetCurModelIndex()
+      << "(outputs, cur_out_types, out_type_changed);\n";
+  if (config.target() != kCortex_M && !config.dynamic_shape()) {
     ofs << "  UnLockBuffer(micro_model->runtime_buffer);\n";
   }
-  ofs << "  return kMSStatusSuccess;\n";
+  ofs << "  return ret;\n";
   ofs << "}\n";
 }
 
@@ -529,31 +693,31 @@ void CodeCopyOutputsImplement(std::ofstream &ofs, const std::unique_ptr<CoderCon
   size_t outputs_size = outputs.size();
 
   ofs << "int CopyOutputsData" << ctx->GetCurModelIndex()
-      << "(MSTensorHandleArray *outputs_ori, void **outputs, int *cur_types, bool *type_changed) {\n"
-         "  if (outputs_ori == NULL || outputs == NULL) {\n"
-         "    return RET_ERROR;\n"
+      << "(MSTensorHandleArray *outputs_ori, int *cur_out_types, bool *type_changed) {\n"
+         "  if (outputs_ori == NULL || cur_out_types == NULL || type_changed == NULL) {\n"
+         "    return kMSStatusLiteNullptr;\n"
          "  }\n";
   ofs << "  unsigned char *buffer[" << outputs_size << "] = {";
   for (size_t i = 0; i < outputs_size; ++i) {
-    ofs << tensor_map[outputs[i]] << ", ";
-  }
-  ofs << "};\n";
-  ofs << "  size_t buffer_size[" << outputs_size << "] = {";
-  for (size_t i = 0; i < outputs_size; ++i) {
-    Tensor *output = outputs[i];
-    MS_CHECK_PTR_IF_NULL(output);
-    ofs << output->Size() << ", ";
+    auto out_str = ctx->tensor_addr(outputs[i]);
+    if (out_str.empty()) {
+      ofs << tensor_map[outputs[i]] << ", ";
+    } else {
+      ofs << out_str << ", ";
+    }
   }
   ofs << "};\n";
   ofs << "  for (int i = 0; i < " << outputs_size << "; i++) {\n"
       << "    MicroTensor *micro_tensor = (MicroTensor *)outputs_ori->handle_list[i];\n"
       << "    int expect_type = micro_tensor->type;\n"
-      << "    int cur_type = cur_types[i];\n";
-  ofs << "    if (cur_type == expect_type) {\n"
-      << "      memcpy(outputs[i], buffer[i], buffer_size[i]);\n"
+      << "    int cur_type = cur_out_types[i];\n";
+  ofs << "    if (expect_type == cur_type) {\n"
+      << "      micro_tensor->data = buffer[i];\n"
+      << "      micro_tensor->owned = false;\n"
       << "      continue;\n"
       << "    }\n";
-  ofs << "    int type_trans_mode = TypeTransMode_MAX;\n"
+  ofs << "#ifdef ENABLE_FP16\n"
+      << "    int type_trans_mode = TypeTransMode_MAX;\n"
          "    if (expect_type == kMSDataTypeNumberTypeFloat16 && cur_type == kMSDataTypeNumberTypeFloat32) {\n"
          "      type_trans_mode = TypeTransMode_FP32_TO_FP16;\n"
          "    } else if (expect_type == kMSDataTypeNumberTypeFloat32 && cur_type == kMSDataTypeNumberTypeFloat16) {\n"
@@ -562,17 +726,17 @@ void CodeCopyOutputsImplement(std::ofstream &ofs, const std::unique_ptr<CoderCon
   ofs << "    if (type_trans_mode == TypeTransMode_UNSUPPORT) {\n"
       << "      return kMSStatusLiteNotSupport;\n"
       << "    }\n";
-  ofs << "#ifdef ENABLE_FP16\n"
-      << "    int shape_size = micro_tensor->ndim;\n"
+  ofs << "    int shape_size = micro_tensor->ndim;\n"
       << "    int num = 1;\n"
       << "    for (int i = 0; i < shape_size; ++i) {\n"
       << "      num *= micro_tensor->shape[i];\n"
-      << "    }\n"
+      << "    }\n";
+  ofs << "    void *out_data = MSTensorGetMutableData(micro_tensor);\n"
       << "    if (type_trans_mode == TypeTransMode_FP32_TO_FP16) {\n"
-      << "      Fp32CastToFp16((float *)(buffer[i]), (float16_t *)outputs[i], num);\n"
+      << "      Fp32CastToFp16((float *)(buffer[i]), (float16_t *)out_data, num);\n"
       << "      type_changed[i] = true;\n"
       << "    } else if (type_trans_mode == TypeTransMode_FP16_TO_FP32) {\n"
-      << "      Fp16CastToFp32((float16_t *)(buffer[i]), (float *)outputs[i], num);\n"
+      << "      Fp16CastToFp32((float16_t *)(buffer[i]), (float *)out_data, num);\n"
       << "      type_changed[i] = true;\n"
       << "    }\n"
       << "#endif\n"
@@ -686,6 +850,16 @@ void CodeInitResourceImplement(std::ofstream &ofs, const std::unique_ptr<CoderCo
   ofs << "  " << ctx->buffer_name() << " = (unsigned char *)buffer;\n"
       << "  return RET_OK;\n"
          "}\n";
+}
+
+void CodeResetImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx, const Configurator &config) {
+  ofs << "void Reset" << ctx->GetCurModelIndex() << "() {\n";
+  auto &dynamic_symbols = config.dynamic_symbols();
+  for (size_t i = 0; i < dynamic_symbols.size(); ++i) {
+    ofs << "  store" << ctx->GetCurModelIndex() << "_" << i << " = -1;\n";
+  }
+  ofs << "  FreeResource" << ctx->GetCurModelIndex() << "();\n";
+  ofs << "}\n";
 }
 
 void CodeFreeResourceState(std::ofstream &ofs) { ofs << free_resource_state; }

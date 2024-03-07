@@ -22,6 +22,8 @@ add_subdirectory(mindrt)
 
 if(CMAKE_SIZEOF_VOID_P EQUAL 4 OR NOT BUILD_LITE)
     file(GLOB_RECURSE CORE_OPS_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "ops/*.cc")
+    file(GLOB_RECURSE CORE_SYMBOL_OPS_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "ops/symbol_ops_impl/*.cc")
+    list(REMOVE_ITEM CORE_OPS_LIST ${CORE_SYMBOL_OPS_LIST})
     if(ENABLE_SECURITY)
         file(GLOB_RECURSE _INFER_SUMMARY_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "ops/*_summary.cc")
         list(REMOVE_ITEM CORE_OPS_LIST ${_INFER_SUMMARY_FILES})
@@ -45,7 +47,6 @@ file(GLOB_RECURSE CORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
   "utils/*.cc"
   "load_mindir/*.cc"
   "mindapi/src/*.cc"
-  "expander/*.cc"
   )
 if(TARGET_AOS_ARM)
     file(GLOB_RECURSE CORE_LOAD_MINDIR_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "load_mindir/*.cc")
@@ -54,6 +55,7 @@ if(TARGET_AOS_ARM)
     string(REPLACE "-Werror" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
     string(REPLACE "-Werror" "" CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
 endif()
+file(GLOB_RECURSE SYMBOLIC_SHAPE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "symbolic_shape/*.cc")
 
 if(ANDROID_NDK)
     file(GLOB_RECURSE CORE_LOAD_MINDIR_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "load_mindir/*.cc")
@@ -64,8 +66,20 @@ if(ANDROID_NDK)
     set(TARGET_AOS_ARM ON)
 endif()
 
+if(NOT MSLITE_TARGET_SITEAI)
+    set(MSLITE_DEPS_OPENSSL on)
+    set(MSLITE_SIMPLEST_CLOUD_INFERENCE off)
+endif()
+
+if(MSLITE_DEPS_OPENSSL)
+    add_compile_definitions(ENABLE_OPENSSL)
+endif()
+
 if(NOT ONLY_BUILD_DEVICE_PLUGINS)
     set(CORE_SRC_LIST ${CORE_SRC_LIST} ${CORE_OPS_LIST})
+    if(CMAKE_SIZEOF_VOID_P EQUAL 4 OR NOT BUILD_LITE)
+        set(SYMBOLIC_SHAPE_SRC_LIST ${SYMBOLIC_SHAPE_SRC_LIST} ${CORE_SYMBOL_OPS_LIST})
+    endif()
 endif()
 
 if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
@@ -95,6 +109,10 @@ endif()
 set(CORE_OBJECT_COUNT 1)
 
 set_property(SOURCE ${CORE_SRC_LIST} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_CORE)
+set_property(SOURCE ${SYMBOLIC_SHAPE_SRC_LIST} PROPERTY COMPILE_DEFINITIONS
+  SUBMODULE_ID=mindspore::SubModuleId::SM_SYMBOLIC_SHAPE)
+set(CORE_SRC_LIST ${CORE_SRC_LIST} ${SYMBOLIC_SHAPE_SRC_LIST})
+
 if(NOT TARGET_AOS_ARM AND NOT ANDROID_NDK)
     add_library(core_proto_obj OBJECT ${PROTO_SRCS})
     list(APPEND CORE_OBJECT_LIST $<TARGET_OBJECTS:core_proto_obj>)
@@ -125,6 +143,7 @@ if(ENABLE_NATIVE_PROTOBUF)
 elseif(NOT TARGET_AOS_ARM AND NOT ANDROID_NDK)
     target_link_libraries(mindspore_core PRIVATE mindspore::protobuf)
 endif()
+
 target_link_libraries(mindspore_core PRIVATE securec)
 
 if(CMAKE_SYSTEM_NAME MATCHES "Linux")
@@ -144,7 +163,8 @@ if(USE_GLOG)
     target_link_libraries(mindspore_core PRIVATE mindspore::glog)
 endif()
 
-if((${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR APPLE) AND (NOT TARGET_AOS_ARM) AND (NOT ANDROID_NDK))
+if((${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR APPLE) AND (NOT TARGET_AOS_ARM) AND (NOT ANDROID_NDK) AND
+        (NOT MSLITE_SIMPLEST_CLOUD_INFERENCE))
     target_link_libraries(mindspore_core PRIVATE mindspore::crypto -pthread)
 endif()
 

@@ -11,7 +11,7 @@ mindspore.ops.logcumsumexp
 
     参数：
         - **input** (Tensor) - 任意维度的Tensor。必须是以下几种数据类型：float16、float32、float64。
-        - **axis** (int) - 累积计算的轴。必须在 [-rank(x), rank(x)) 的范围之内. 
+        - **axis** (int) - 累积计算的轴。必须在 [-rank(input), rank(input)) 的范围之内。
 
     返回：
         Tensor，和输入Tensor的dtype和shape相同。

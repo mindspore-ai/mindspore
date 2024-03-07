@@ -295,10 +295,11 @@ bool AscendDeprecatedInterface::OpenTsd(const std::shared_ptr<MsContext> &ms_con
   if (ms_context_ptr->backend_policy() == "ge") {
     MbufDataHandlerManager::GetInstance().AddHandler(std::make_unique<MbufDataHandler>(
       std::bind(&TensorDumpUtils::AsyncSaveDatasetToNpyFile, &TensorDumpUtils::GetInstance(), std::placeholders::_1),
-      device_id, "ms_tensor_dump"));
-    for (auto &summary_channel_name : summary_channel_names) {
-      MbufDataHandlerManager::GetInstance().AddHandler(std::make_unique<MbufDataHandler>(
-        std::bind(SummaryReceiveData, std::placeholders::_1, summary_channel_name), device_id, summary_channel_name));
+      device_id, tensordump_mapping.first, tensordump_mapping.second));
+    for (const std::pair<string, string> &summary_mapping : summary_mappings) {
+      MbufDataHandlerManager::GetInstance().AddHandler(
+        std::make_unique<MbufDataHandler>(std::bind(SummaryReceiveData, std::placeholders::_1, summary_mapping.first),
+                                          device_id, summary_mapping.first, summary_mapping.second));
     }
   }
   return true;

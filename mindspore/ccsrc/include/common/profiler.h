@@ -72,6 +72,9 @@ enum class ProfilerEvent {
   kMemoryFree,
   kCopyData,
   kStreamSync,
+  kWaitKernelsInferFinish,
+  kWaitKernelsResizeFinish,
+  kWaitKernelsLaunchFinish,
 
   // Inner event is not counted in the total time.
   kKernelInferInner,

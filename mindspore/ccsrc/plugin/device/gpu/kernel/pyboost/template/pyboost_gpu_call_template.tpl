@@ -3,14 +3,14 @@ InferOutput(${call_args});
 
 ${tensor_list_convert}
 
+auto op = get_op();
 // Create device address for input tensors
 ${create_input_address}
 ${inplace_process}
 // Create device address for output tensors
-PyBoostUtils::PrepareOpOutputs(device_context_, outputs_);
+PyBoostUtils::PrepareOpOutputs(device_context_, op->stream_id(), outputs_);
 
 // Async
-auto op = get_op();
 PyBoostUtils::DispatchRun(
 std::make_shared<runtime::PyBoostDeviceTask>([this, op, ${call_args_with_tensor}]() {
   auto device_context = op->device_context();
@@ -27,7 +27,7 @@ std::make_shared<runtime::PyBoostDeviceTask>([this, op, ${call_args_with_tensor}
 
   // Get outputs kernel tensors
   const auto &output_address_info =
-    PyBoostUtils::GetAddressInfo(device_context, {op->output_abs()}, outputs);
+    PyBoostUtils::GetAddressInfo(device_context, op->stream_id(), {op->output_abs()}, outputs);
 
   auto stream = device::gpu::GPUDeviceManager::GetInstance().GetStream(op->stream_id());
   PyBoostUtils::LaunchKernel(primitive(), op->device_context(),

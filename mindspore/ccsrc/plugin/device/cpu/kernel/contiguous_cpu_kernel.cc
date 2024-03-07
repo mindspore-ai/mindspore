@@ -41,7 +41,8 @@ std::map<std::pair<TypeId, TypeId>, ContiguousCpuKernel::ContiguousFunc> Contigu
   {std::make_pair(kNumberTypeUInt8, kNumberTypeUInt8), &ContiguousCpuKernel::LaunchContiguousImpl<uint8_t>},
   {std::make_pair(kNumberTypeUInt16, kNumberTypeUInt16), &ContiguousCpuKernel::LaunchContiguousImpl<uint16_t>},
   {std::make_pair(kNumberTypeUInt32, kNumberTypeUInt32), &ContiguousCpuKernel::LaunchContiguousImpl<uint32_t>},
-  {std::make_pair(kNumberTypeUInt64, kNumberTypeUInt64), &ContiguousCpuKernel::LaunchContiguousImpl<uint64_t>}};
+  {std::make_pair(kNumberTypeUInt64, kNumberTypeUInt64), &ContiguousCpuKernel::LaunchContiguousImpl<uint64_t>},
+  {std::make_pair(kNumberTypeBFloat16, kNumberTypeBFloat16), &ContiguousCpuKernel::LaunchContiguousImpl<bfloat16>}};
 
 bool ContiguousCpuKernel::LaunchContiguous(TypeId input_type_id, const kernel::KernelTensorPtr &input,
                                            const TensorStorageInfoPtr &input_storage_info, TypeId output_type_id,

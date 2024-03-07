@@ -35,7 +35,6 @@
 #include "kernel/kash/kernel_pack.h"
 #include "kernel/kernel_build_info.h"
 #include "ops/base_operator.h"
-#include "ops/strided_slice.h"
 
 namespace mindspore {
 namespace kernel {

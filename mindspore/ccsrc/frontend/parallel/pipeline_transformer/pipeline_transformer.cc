@@ -88,6 +88,9 @@ static void SeparateParamBorder(const std::vector<AnfNodePtr> &nodes, bool send,
     (void)std::transform(nodes.begin(), nodes.end(), std::back_inserter(real_comm_ops), [](const AnfNodePtr &n) {
       const auto &cnode = n->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
+      if (cnode->inputs().size() <= INDEX_TWO) {
+        return cnode;
+      }
       const auto &real = cnode->input(INDEX_TWO)->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(real);
       return real;
@@ -945,15 +948,12 @@ SendAttr PipelineTransformer::InsertSend(const AnfNodePtr &parameter, int64_t us
   }
   send->AddPrimalAttr(MICRO, value);
   send->AddPrimalAttr(DEST_RANK, MakeValue(user_node_stage));
-  OperatorAttrs depend_attrs;
-  CNodePtr depend = CreateCNodeByInputsAndAttr(graph, DEPEND, DEPEND, AnfNodePtrList{parameter, send}, depend_attrs);
   auto abstract = parameter->abstract();
   if (care_node) {
     abstract = care_node->abstract();
   }
-  depend->set_abstract(abstract);
   send->set_abstract(abstract);
-  SendAttr send_out = {shape_type_pair.first, shape_type_pair.second, depend};
+  SendAttr send_out = {shape_type_pair.first, shape_type_pair.second, send};
 
   // for FetchSends
   send->set_user_data<int64_t>(DEST_RANK, std::make_shared<int64_t>(dest_rank));
@@ -1337,19 +1337,12 @@ AnfNodePtr PipelineTransformer::GenNewSendFromOld(const AnfNodePtr &node, const 
     send->set_user_data<OperatorInfo>(op_info);
   }
   send->AddPrimalAttr(MICRO, value);
-
-  OperatorAttrs depend_attrs;
-  std::vector<AnfNodePtr> depend_input = {send_input[INDEX_ZERO], send};
-  auto depend = CreateCNodeByInputsAndAttr(main_graph_, DEPEND, DEPEND, depend_input, depend_attrs);
   auto abstract = input->abstract();
   if (care_node) {
     abstract = care_node->abstract();
   }
-  depend->set_abstract(abstract);
   send->set_abstract(abstract);
-  depend->set_user_data<ValueList>(SHAPE, shape_type_pair.first);
-  depend->set_user_data<Type>(DTYPE, shape_type_pair.second);
-  return depend;
+  return send;
 }
 
 std::vector<AnfNodePtr> PipelineTransformer::FetchSend(const AnfNodePtr &node, bool pipeline_param,

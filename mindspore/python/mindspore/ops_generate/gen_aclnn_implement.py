@@ -182,12 +182,9 @@ def gen_aclnn_kernel(op_name, need_update_shape=False, auto=False):
 
     # get ops yaml
     ops_yaml_path = os.path.join(work_path, 'mindspore/python/mindspore/ops_generate/ops.yaml')
-    inner_ops_yaml_path = os.path.join(work_path, 'mindspore/python/mindspore/ops_generate/inner_ops.yaml')
     aclnn_path = 'mindspore/ccsrc/plugin/device/ascend/kernel/opapi/aclnn/'
     yaml_str = gen_utils.safe_load_yaml(ops_yaml_path)
-    inner_yaml_str = gen_utils.safe_load_yaml(inner_ops_yaml_path)
     # merge inner ops
-    yaml_str.update(inner_yaml_str)
     op_yaml = yaml_str.get(op_name)
     class_name = ''.join(word.capitalize() for word in op_name.split('_'))
     if op_yaml is None:

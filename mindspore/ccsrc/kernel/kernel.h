@@ -230,6 +230,12 @@ using AddressPtrList = std::vector<AddressPtr>;
 using StreamType = void *;
 using abstract::AbstractBase;
 using device::DeviceSynchronizerPtr;
+// The memory info of kernel launch.
+struct KernelLaunchAddr {
+  AddressPtrList inputs_;
+  AddressPtrList outputs_;
+  AddressPtrList workspaces_;
+};
 struct TensorInfo {
   mindspore::Format format;
   abstract::AbstractTensorPtr base_;
@@ -580,7 +586,7 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   void set_device_id(uint32_t device_id) { device_info_->device_id_ = device_id; }
 
   // Get logical stream id.
-  uint32_t stream_id() { return device_info_->stream_id_; }
+  uint32_t stream_id() const { return device_info_->stream_id_; }
 
   // Set logical stream id.
   void set_stream_id(uint32_t stream_id) { device_info_->stream_id_ = stream_id; }
@@ -812,6 +818,8 @@ inline T *GetDeviceAddress(const std::vector<KernelTensor *> &addr_list, size_t 
 }
 
 BACKEND_EXPORT std::vector<std::vector<int64_t>> GetShapes(const std::vector<KernelTensor *> &tensors);
+
+BACKEND_EXPORT void ConvertLaunchInfoToAddr(const KernelLaunchInfo &launch_info, KernelLaunchAddr *mem_info);
 
 template <typename T>
 inline bool CheckNullInput(const std::vector<T> &input_shape) {

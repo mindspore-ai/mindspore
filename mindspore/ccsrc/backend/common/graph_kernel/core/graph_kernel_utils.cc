@@ -168,7 +168,8 @@ bool GkUtils::IsKeepBasicNode(const AnfNodePtr &node) {
                   [&prim](const std::string &attr_name) -> bool { return prim->HasAttr(attr_name); })) {
     return true;
   }
-  return false;
+  auto cnode = node->cast<CNodePtr>();
+  return (cnode != nullptr && cnode->HasAttr("keep_basic"));
 }
 
 CNodePtr GkUtils::NewRealCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &func_graph,

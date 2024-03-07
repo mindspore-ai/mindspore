@@ -27,6 +27,8 @@
 #include "acl/acl_mdl.h"
 #include "include/common/profiler.h"
 #include "transform/acl_ir/op_api_util.h"
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace {
 /*
@@ -347,7 +349,7 @@ void AclRunner::Run(void *stream_ptr, bool is_sync) {
 
   MS_LOG(DEBUG) << "Start aclopCompileAndExecute of op_type: " << op_type_;
   if (is_sync) {
-    bool ret = aclrtSynchronizeStreamWithTimeout(stream_ptr, -1);
+    bool ret = CALL_ASCEND_API(aclrtSynchronizeStreamWithTimeout, stream_ptr, -1);
     if (ret != ACL_SUCCESS) {
       MS_LOG(EXCEPTION) << "Acl syncsteam failed, op_type_:" << op_type_;
     }

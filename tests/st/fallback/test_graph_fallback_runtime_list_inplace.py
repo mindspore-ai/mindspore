@@ -1,4 +1,4 @@
-# Copyright 2023 Huawei Technologies Co., Ltd
+# Copyright 2023-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ from mindspore import context, ops
 from mindspore import Tensor, jit, jit_class
 from mindspore.common import mutable
 from mindspore.ops.operations import _sequence_ops as seq
+from collections import deque
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -1617,3 +1618,34 @@ def test_list_inplace_mixed():
     exp = [[5, 4], [3, Tensor(3)], [2, 4, Tensor(2), 4, Tensor(4)], [5]]
     for i in list(range(len(out))):
         assert out[i] == exp[i]
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_deque_list_cycle():
+    """
+    Feature: support list deque operation, the graph is correct and does not form cycle.
+    Description: support list deque operation.
+    Expectation: No exception.
+    """
+
+    class Net(nn.Cell):
+        def construct(self, inputs):
+            inputs = inputs.asnumpy()
+            inputs = Tensor(inputs)
+            queue = deque([inputs])
+            outputs = []
+            while queue:
+                x = queue.popleft()
+                if isinstance(x, list):
+                    queue.extend(x)
+                elif isinstance(x, Tensor):
+                    outputs.append(x)
+            return outputs
+
+    net = Net()
+    x = Tensor([2, 3, 4])
+    out = net(x)
+    assert (out == x).all()

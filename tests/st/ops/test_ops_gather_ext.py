@@ -1,4 +1,4 @@
-# Copyright 2023 Huawei Technologies Co., Ltd
+# Copyright 2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,8 +20,7 @@ import numpy as np
 import pytest
 import os
 
-import mindspore as ms
-from mindspore import ops, Tensor, jit
+from mindspore import ops, Tensor, jit, JitConfig
 from mindspore.common.api import _pynative_executor
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
 import time
@@ -97,8 +96,10 @@ def gather_ext_backward_func(x, dim, indices):
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@pytest.mark.parametrize('input_dtype', [np.bool_, np.float64, np.float32])
+@pytest.mark.platform_x86_cpu_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.parametrize('mode', ['pynative', 'KBK', 'GE'])
+@pytest.mark.parametrize('input_dtype', [np.float32])
 @pytest.mark.parametrize('index_dtype', [np.int64])
 def test_gather_ext_static_shape(mode, input_dtype, index_dtype):
     """
@@ -110,10 +111,12 @@ def test_gather_ext_static_shape(mode, input_dtype, index_dtype):
     ms_indices = GenIndexData(index_dtype)
     dim = GenDim()
 
-    if mode == ms.PYNATIVE_MODE:
+    if mode == 'pynative':
         ms_out = call_gather(ms_data, dim, ms_indices)
+    elif mode == 'KBK':
+        ms_out = (jit(call_gather, jit_config=JitConfig(jit_level="O0")))(ms_data, dim, ms_indices)
     else:
-        ms_out = (jit(call_gather))(ms_data, dim, ms_indices)
+        ms_out = (jit(call_gather, jit_config=JitConfig(jit_level="O2")))(ms_data, dim, ms_indices)
 
     expect = GenExpectResult(input_dtype)
     assert np.allclose(ms_out.asnumpy(), expect, rtol=1e-4)
@@ -121,29 +124,35 @@ def test_gather_ext_static_shape(mode, input_dtype, index_dtype):
 
 @pytest.mark.level0
 @pytest.mark.env_onecard
+@pytest.mark.parametrize('jit_level', ["O0", "O2"])
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
-def test_gather_ext_dynamic_shape():
+@pytest.mark.platform_x86_cpu_training
+@pytest.mark.platform_x86_gpu_training
+def test_gather_ext_dynamic_shape(jit_level):
     """
     Feature: Test gather with dynamic shape in graph mode.
     Description: call ops.extend.gather with valid input and index.
     Expectation: return the correct value.
     """
-    ms_data1 = GenInputData(np.float32, (4, 5, 6))
-    ms_indices1 = Tensor(np.random.randint(4, size=(4, 5, 6)))
+    ms_data1 = GenInputData(np.float32, (3, 4, 5))
+    ms_indices1 = Tensor(np.random.randint(3, size=(14, 2, 2)))
     dim1 = 0
 
-    ms_data2 = GenInputData(np.float32, (3, 7, 8, 10))
-    ms_indices2 = Tensor(np.random.randint(8, size=(3, 7, 8, 10)))
+    ms_data2 = GenInputData(np.float32, (3, 7, 8, 3))
+    ms_indices2 = Tensor(np.random.randint(8, size=(2, 6, 4, 3)))
     dim2 = 2
-    TEST_OP(call_gather, [[ms_data1, dim1, ms_indices1], [ms_data2, dim2, ms_indices2]], grad=True, jit_level="O0")
+    TEST_OP(call_gather, [[ms_data1, dim1, ms_indices1], [ms_data2, dim2, ms_indices2]], grad=True, jit_level=jit_level)
 
 
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
-def test_gather_ext_vmap():
+@pytest.mark.platform_x86_cpu_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.parametrize('graph_level', ["0", "1"])
+def test_gather_ext_vmap(graph_level):
     """
     Feature: Test gather with vmap.
     Description: call ops.extend.gather with valid input and index.
@@ -159,10 +168,10 @@ def test_gather_ext_vmap():
                 input_inner = x[i, ...]
                 index_inner = index[i, ...]
             out.append(call_gather(input_inner, dim, index_inner))
-        out = ops.Stack(axis=batch_axis)(out)
+        out = ops.Stack()(out)
         return out
 
-    os.environ['GRAPH_OP_RUN'] = '1'
+    os.environ['GRAPH_OP_RUN'] = graph_level
     ms_data = GenInputData(np.float32, (4, 5, 6))
     ms_indices = Tensor(np.random.randint(4, size=(4, 5, 6)))
     dim = GenDim()
@@ -253,7 +262,9 @@ def _test_gather_ext_vmap_perf(batch):
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
-@pytest.mark.parametrize("mode", [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
+@pytest.mark.platform_x86_cpu_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.parametrize("mode", ['pynative', 'GE', 'KBK'])
 def test_gather_ext_grad(mode):
     """
     Feature: Test gather with backward.
@@ -265,11 +276,10 @@ def test_gather_ext_grad(mode):
     expect = GenGradOut(np.float32)
     dim = GenDim()
 
-    os.environ['GRAPH_OP_RUN'] = '1'
-    if mode == ms.PYNATIVE_MODE:
+    if mode == 'pynative':
         ms_out = gather_ext_backward_func(ms_data, dim, ms_indices)
+    elif mode == 'KBK':
+        ms_out = (jit(gather_ext_backward_func, jit_config=JitConfig(jit_level="O0")))(ms_data, dim, ms_indices)
     else:
-        ms_out = (jit(gather_ext_backward_func))(ms_data, dim, ms_indices)
+        ms_out = (jit(gather_ext_backward_func, jit_config=JitConfig(jit_level="O2")))(ms_data, dim, ms_indices)
     assert np.allclose(ms_out.asnumpy(), expect, rtol=1e-4)
-
-    del os.environ['GRAPH_OP_RUN']

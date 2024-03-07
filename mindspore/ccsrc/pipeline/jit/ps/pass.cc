@@ -83,6 +83,7 @@
 #include "frontend/optimizer/irpass/updatestate_eliminate.h"
 #include "frontend/optimizer/irpass/expand_dump_flag.h"
 #include "frontend/optimizer/irpass/pack_expand.h"
+#include "frontend/optimizer/irpass/symbol_engine_optimizer.h"
 #if defined(__linux__) && defined(WITH_BACKEND)
 #include "include/backend/distributed/ps/util.h"
 #include "include/backend/distributed/ps/ps_context.h"
@@ -642,6 +643,21 @@ OptPassGroupMap GetAfterRecomputePass(const opt::irpass::OptimizeIRPassLib &) {
   return map;
 }
 
+OptPassGroupMap GetSymbolEngineOptPass(const opt::irpass::OptimizeIRPassLib &irpass) {
+  if (common::GetEnv("MS_SYMBOL_ENGINE_OPTIMIZE") != "on") {
+    MS_LOG(INFO) << "SymbolEngine optimizer is disabled, use 'export MS_SYMBOL_ENGINE_OPTIMIZE=on' to enable it.";
+    return OptPassGroupMap();
+  }
+  OptPassGroupMap map({{"build", opt::OptPassConfig(opt::irpass::SymbolEngineBuilder())},
+                       {"elim_shapecalc", opt::OptPassConfig({irpass.elim_shapecalc_of_broadcastargs_})},
+                       {"elim_not_effective", opt::OptPassConfig({irpass.elim_not_effective_node_})},
+                       {"opt_reshape", opt::OptPassConfig({irpass.opt_reshape_})},
+                       {"fold_const_symbol", opt::OptPassConfig({irpass.fold_const_symbol_})},
+                       {"shape_op_cse", opt::OptPassConfig(opt::irpass::ShapeOpCse())},
+                       {"renormalize", opt::OptPassConfig::Renormalize()}});
+  return map;
+}
+
 static mindspore::HashMap<std::string, std::shared_ptr<Optimizer>> g_pass_opts = {};
 
 void InitOpt(const ResourcePtr &resource) {
@@ -660,6 +676,8 @@ void InitOpt(const ResourcePtr &resource) {
     g_pass_opts["opt_prepare"] = Optimizer::MakeOptimizer("opt_prepare", resource, GetPreparePhases(irpass));
     g_pass_opts["opt_after_recompute"] =
       Optimizer::MakeOptimizer("opt_after_recompute", resource, GetAfterRecomputePass(irpass));
+    g_pass_opts["symbol_engine_opt"] =
+      Optimizer::MakeOptimizer("symbol_engine_opt", resource, GetSymbolEngineOptPass(irpass), true, true);
   }
 }
 }  // namespace
@@ -700,6 +718,7 @@ bool PrepareGroup(const ResourcePtr &resource) { return OptPassGroup(resource, "
 bool OptAfterRecomputeGroup(const ResourcePtr &resource) { return OptPassGroup(resource, "opt_after_recompute"); }
 
 bool OptPassRNGroup(const ResourcePtr &resource) { return OptPassGroup(resource, "renormal"); }
+bool SymEngOptGroup(const ResourcePtr &resource) { return OptPassGroup(resource, "symbol_engine_opt"); }
 
 bool OptPassGradEpilogueGroup(const ResourcePtr &resource) { return OptPassGroup(resource, "opt_grad_epilogue"); }
 
@@ -1105,7 +1124,8 @@ std::vector<PassItem> kVmPasses = {{"py_interpret_to_execute", PyInterpretToExec
                                    {"split_layernorm_comm", SplitLayerNormCommFpPass},
                                    {"process_send_recv_for_ge", ProcessSendRecvForGE},
                                    // The pass cache hccl group, so the hccl group should be created before the pass
-                                   {"handle_group_info", HandleGroupInfoPass}};
+                                   {"handle_group_info", HandleGroupInfoPass},
+                                   {"symbol_engine_optimizer", SymEngOptGroup}};
 
 std::vector<PassItem> kPynativePasses = {{"opt_a", OptPassAGroup},
                                          {"opt_b", OptPassBGroup},

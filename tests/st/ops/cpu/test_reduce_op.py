@@ -128,7 +128,7 @@ class NetReduceAll(nn.Cell):
         return self.op(x, self.axis)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_reduce_any_onnx():
@@ -156,7 +156,7 @@ def test_reduce_any_onnx():
     os.remove(file)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_reduce_all_onnx():

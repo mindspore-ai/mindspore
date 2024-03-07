@@ -20,12 +20,16 @@
 #include <vector>
 #include <string>
 #include <functional>
+#include <utility>
 #include "acl/acl_tdt.h"
 #include "ir/tensor.h"
 
 namespace mindspore::device::ascend {
-const std::vector<string> summary_channel_names{"ms_tensor_summary", "ms_image_summary", "ms_scalar_summary",
-                                                "ms_histogram_summary"};
+const std::vector<std::pair<string, string>> summary_mappings{{"ms_tensor_summary", "TensorSummary"},
+                                                              {"ms_image_summary", "ImageSummary"},
+                                                              {"ms_scalar_summary", "ScalarSummary"},
+                                                              {"ms_histogram_summary", "HistogramSummary"}};
+
 void SummaryReceiveData(acltdtDataset *acl_dataset, const string &channel_name);
 };  // namespace mindspore::device::ascend
 

@@ -381,6 +381,7 @@ set(COMMON_SUB_COMP
         common
         common/debug
         common/expander
+        common/symbol_engine
         )
 
 foreach(_comp ${COMMON_SUB_COMP})
@@ -649,6 +650,7 @@ if(NOT ENABLE_TESTCASES AND NOT (ENABLE_D OR ENABLE_CPU OR ENABLE_GPU))
 endif()
 add_subdirectory(transform/graph_ir)
 add_subdirectory(transform/acl_ir)
+add_subdirectory(transform/symbol)
 add_subdirectory(cxx_api)
 enable_directory_when_only_build_plugins(cxx_api)
 add_subdirectory(c_api)

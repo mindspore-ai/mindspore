@@ -8,5 +8,5 @@ relu:
       dtype: tensor
   class:
     name: ReLU
-  function:
-    disable: True
+  dispatch:
+    enable: True

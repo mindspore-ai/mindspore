@@ -17,7 +17,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_GATHER_D_GRAD_V2_H_
 #define AICPU_KERNELS_NORMALIZED_GATHER_D_GRAD_V2_H_
 
-#include "cpu_kernel_utils.h"
+#include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
 class GatherDGradV2Kernel : public CpuKernel {

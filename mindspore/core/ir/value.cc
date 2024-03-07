@@ -145,6 +145,16 @@ bool FP64Imm::operator==(const Value &other) const {
     return false;
   }
 }
+
+bool BF16Imm::operator==(const Value &other) const {
+  if (other.isa<BF16Imm>()) {
+    auto &other_ = static_cast<const BF16Imm &>(other);
+    return *this == other_;
+  } else {
+    return false;
+  }
+}
+bool BF16Imm::operator==(const BF16Imm &other) const { return v_ == other.v_; }
 bool ValueSequence::operator==(const Value &other) const {
   if (other.isa<ValueSequence>()) {
     auto &other_ = static_cast<const ValueSequence &>(other);

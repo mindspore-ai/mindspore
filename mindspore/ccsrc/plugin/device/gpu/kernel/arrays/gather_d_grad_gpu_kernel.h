@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2023-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ class GatherDGradGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHel
   ShapeVector grad_shapes_;
   ShapeVector output_shapes_;
 
-  size_t dims_[4] = {};
+  size_t dims_[kHelperDimsNum] = {};
   void *cuda_stream_{nullptr};
 };
 }  // namespace kernel

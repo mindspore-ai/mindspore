@@ -21,10 +21,10 @@
 #include <vector>
 #include <cmath>
 
-#include "cpu_kernel_utils.h"
+#include "context/inc/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
-#include "cpu_kernel_utils.h"
+#include "context/inc/cpu_kernel_utils.h"
 
 namespace {
 const uint32_t kInputNum = 2;

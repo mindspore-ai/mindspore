@@ -21,7 +21,7 @@
         \ell(x, t)=\left\{\begin{array}{ll}
         \sum_{n=1}^{N} \frac{1}{\sum_{n=1}^{N} w_{t n}} l_{n}, & \text { if reduction }=\text { 'mean', } \\
         \sum_{n=1}^{N} l_{n}, & \text { if reduction }=\text { 'sum' }
-        \end{array}\right
+        \end{array}\right.
 
     参数：
         - **inputs** (Tensor) - 输入预测值，shape为 :math:`(N, C)` 或 :math:`(N, C, H, W)`

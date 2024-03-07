@@ -17,12 +17,12 @@
 #ifndef AICPU_KERNELS_NORMALIZED_CONCAT_H_
 #define AICPU_KERNELS_NORMALIZED_CONCAT_H_
 
-#include "cpu_kernel_utils.h"
+#include "inc/ms_cpu_kernel.h"
 
-#include "cpu_kernel_utils.h"
-#include "cpu_kernel/common/cpu_kernel_utils.h"
-#include "common/kernel_log.h"
-#include "common/status.h"
+#include "inc/ms_cpu_kernel.h"
+#include "inc/ms_cpu_kernel.h"
+#include "inc/kernel_log.h"
+#include "context/common/status.h"
 #include "securec/include/securec.h"
 
 #include "unsupported/Eigen/CXX11/Tensor"

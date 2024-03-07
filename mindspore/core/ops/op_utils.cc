@@ -43,6 +43,7 @@
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
 #include "utils/shape_utils.h"
+#include "ir/func_graph.h"
 
 namespace mindspore {
 namespace ops {
@@ -881,6 +882,49 @@ size_t GetOpInputsNum(const std::string &op_name) {
     return SIZE_MAX;
   }
   return op_def->indexes_.size();
+}
+
+// This is used to convert arg with 'prim_init' of cnode convert to attr of primitive.
+// CNode in new mindir can be converted to old mindir by this function.
+// For example, {PrimAvgPool, x, kernel_size, strides, pad_mode, data_format} =>
+//              {PrimAvgPool, x}
+CNodePtr ConvertArgsToAttr(const CNodePtr &cnode) {
+  auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+  MS_EXCEPTION_IF_NULL(prim);
+  auto prim_name = prim->name();
+  auto op_def = mindspore::ops::GetOpDef(prim_name);
+  if (op_def == nullptr) {
+    MS_LOG(DEBUG) << "Prim:" << prim->ToString()
+                  << "is not a primitive defined in yaml, cannot convert args to attr, cnode:" << cnode->DebugString();
+    return nullptr;
+  }
+  std::vector<AnfNodePtr> new_node_inputs = {cnode->input(0)};
+  for (size_t arg_index = 0; arg_index < op_def->args_.size(); ++arg_index) {
+    auto arg = op_def->args_[arg_index];
+    if (!arg.as_init_arg_) {
+      // origin is input , put the node input into new node inputs vector
+      (void)new_node_inputs.emplace_back(cnode->input(arg_index + 1));
+      continue;
+    }
+
+    auto arg_input_node = cnode->input(arg_index + 1);
+    if (!arg_input_node->isa<ValueNode>()) {
+      // arg is not ValueNode, Network has dynamic args, not support
+      MS_LOG(INTERNAL_EXCEPTION) << "Node " << cnode->DebugString() << " with arg " << arg_input_node->DebugString()
+                                 << " is dynamic, not supported now.";
+      continue;
+    }
+    auto arg_value_node = arg_input_node->cast<ValueNodePtr>();
+    auto arg_value = arg_value_node->value();
+    prim->AddAttr(arg.arg_name_, arg_value);
+  }
+
+  auto func_graph = cnode->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  auto new_node = func_graph->NewCNode(new_node_inputs);
+  new_node->set_abstract(cnode->abstract());
+  new_node->set_fullname_with_scope(cnode->fullname_with_scope());
+  return new_node;
 }
 
 template <typename T>

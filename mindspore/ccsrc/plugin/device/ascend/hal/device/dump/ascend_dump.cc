@@ -256,7 +256,8 @@ bool AscendAsyncDump::DumpTensorStatsIfNeeded(const dump_data_t &dump_tensor_inf
   std::shared_ptr<TensorData> data = std::make_shared<TensorData>();
   if (dump_tensor_info.data_type <= TypeId::kNumberTypeBegin ||
       dump_tensor_info.data_type >= TypeId::kNumberTypeComplex64) {
-    MS_LOG(ERROR) << "Data type of operator " << file_name << " is not supported by statistic dump";
+    MS_LOG(ERROR) << "Data type of operator " << file_name << " is not supported by statistic dump. The data type is: "
+                  << TypeIdToString(dump_tensor_info.data_type, true);
     return false;
   }
   mindspore::TypeId src_data_type = dump_tensor_info.data_type;

@@ -663,6 +663,10 @@ ValuePtr ConvertNumberWithType(const T &obj, const TypePtr &dtype) {
 
 ValuePtr ConvertIntegerWithType(const py::object &obj, const TypePtr &dtype = nullptr) {
   auto obj_int64 = py::cast<int64_t>(obj);
+  if (py::hasattr(obj, "__ms_mutable_bool__")) {
+    bool obj_bool = obj_int64 != 0;
+    return std::make_shared<BoolImm>(obj_bool);
+  }
   if (dtype == nullptr) {
     return std::make_shared<Int64Imm>(obj_int64);
   }

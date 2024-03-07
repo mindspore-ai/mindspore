@@ -52,7 +52,8 @@ std::vector<int64_t> GetTransposeAxis(const std::vector<int64_t> &x_shape, int64
 
 std::vector<int64_t> TupleDiv(const std::vector<int64_t> &x, const std::vector<int64_t> &y);
 
-std::vector<int64_t> ReduceShape(const std::vector<int64_t> &x, const std::vector<int64_t> &axis);
+std::vector<int64_t> ReduceShape(const std::vector<int64_t> &x, const std::vector<int64_t> &axis,
+                                 bool skip_mode = false);
 
 int64_t CheckRange(int64_t idx, int64_t dim_size);
 
@@ -84,8 +85,8 @@ std::vector<int64_t> RegenerateOutputShape(const std::vector<int64_t> &x_shp, co
 std::vector<int64_t> InvertPermutation(const std::vector<int64_t> &perm);
 std::vector<int64_t> GetTransposition(int64_t axis, int64_t rank);
 
-NodePtr SumGrad(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &axis, const NodePtr &dout,
-                const bool keep_dims = false);
+NodePtr SumGrad(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &axis, const NodePtr &dout, bool keep_dims = false,
+                bool skip_mode = false);
 NodePtr MinOrMaxGrad(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &axis, const NodePtr &keep_dims,
                      const NodePtr &out, const NodePtr &dout);
 std::pair<ShapeVector, ShapeVector> SplitShapeIndex(const ShapeVector &input_shape, const ShapeVector &axis);

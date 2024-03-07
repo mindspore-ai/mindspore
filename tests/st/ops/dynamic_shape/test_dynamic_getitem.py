@@ -265,6 +265,8 @@ def test_dynamic_getitem_tensor():
 @pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_dynamic_getitem_tensor_001():
     """
@@ -380,10 +382,11 @@ def test_dynamic_rank_getitem_slice():
     fact.grad_impl()
 
 
-@pytest.mark.skip(reason="Need to be fixed.")
 @pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_dynamic_rank_getitem_with_single_basic_index():
     """
@@ -463,6 +466,8 @@ def test_dynamic_rank_getitem_tuple_with_basic_index():
 @pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_dynamic_rank_getitem_with_tensor_index():
     """
@@ -496,7 +501,6 @@ def test_dynamic_rank_getitem_with_tensor_index():
     fact.grad_impl()
 
 
-@pytest.mark.skip(reason="Need to be fixed.")
 @pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -534,10 +538,11 @@ def test_dynamic_rank_getitem_tuple_with_multi_tensor_index():
     fact.grad_impl()
 
 
-@pytest.mark.skip(reason="Need to be fixed.")
 @pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_dynamic_rank_getitem_with_list_index():
     """
@@ -569,7 +574,6 @@ def test_dynamic_rank_getitem_with_list_index():
     fact.forward_cmp()
 
 
-@pytest.mark.skip(reason="Need to be fixed.")
 @pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -724,10 +728,11 @@ def test_dynamic_getitem_int_001():
     fact.grad_impl()
 
 
-@pytest.mark.skip(reason="Need to be fixed.")
 @pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_dynamic_getitem_int_002():
     """
@@ -914,6 +919,8 @@ def test_dynamic_getitem_tuple_002():
 @pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_dynamic_getitem_tuple_003():
     """

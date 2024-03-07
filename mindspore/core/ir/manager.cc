@@ -165,13 +165,13 @@ class InsertFrontParam : public Change {
 
 }  // namespace change
 
-FuncGraphManagerPtr MakeManager(const std::vector<FuncGraphPtr> &func_graphs, bool manage) {
-  auto m = std::make_shared<FuncGraphManager>(func_graphs, manage);
+FuncGraphManagerPtr MakeManager(const std::vector<FuncGraphPtr> &func_graphs, bool manage, bool drop_unused_graph) {
+  auto m = std::make_shared<FuncGraphManager>(func_graphs, manage, drop_unused_graph);
   m->Init();
   return m;
 }
 
-FuncGraphManagerPtr Manage(const std::vector<FuncGraphPtr> &func_graphs, bool manage) {
+FuncGraphManagerPtr Manage(const std::vector<FuncGraphPtr> &func_graphs, bool manage, bool drop_unused_graph) {
   FuncGraphManagerPtr m = nullptr;
   bool root = false;
 
@@ -187,7 +187,7 @@ FuncGraphManagerPtr Manage(const std::vector<FuncGraphPtr> &func_graphs, bool ma
 
   if (m == nullptr) {
     std::vector<FuncGraphPtr> tmp;
-    m = MakeManager(tmp, manage);
+    m = MakeManager(tmp, manage, drop_unused_graph);
     root = true;
   }
 
@@ -200,13 +200,13 @@ FuncGraphManagerPtr Manage(const std::vector<FuncGraphPtr> &func_graphs, bool ma
   return m;
 }
 
-FuncGraphManagerPtr Manage(FuncGraphPtr func_graph, bool manage) {
+FuncGraphManagerPtr Manage(FuncGraphPtr func_graph, bool manage, bool drop_unused_graph) {
   std::vector<FuncGraphPtr> func_graphs = {func_graph};
-  return Manage(func_graphs, manage);
+  return Manage(func_graphs, manage, drop_unused_graph);
 }
 
-FuncGraphManager::FuncGraphManager(const std::vector<FuncGraphPtr> &roots, bool manage)
-    : roots_(roots), is_manage_(manage) {
+FuncGraphManager::FuncGraphManager(const std::vector<FuncGraphPtr> &roots, bool manage, bool drop_unused_graph)
+    : roots_(roots), is_manage_(manage), drop_unused_graph_(drop_unused_graph) {
   Reset();
 }
 
@@ -392,27 +392,35 @@ void FuncGraphManager::AddFuncGraphs(const FuncGraphPtr &source_func_graph) {
   }
 }
 
+// Drop the func graph
+void FuncGraphManager::DropFuncGraph(const FuncGraphPtr &fg, bool force) {
+  if (force || (is_manage_ && drop_unused_graph_ && !fg->reserved())) {
+    MS_LOG(INFO) << "Drop " << fg << "/" << fg->ToString() << ", use_count: " << fg.use_count()
+                 << ", type: " << fg->type_name();
+    fg->ResetReturnOwner();
+    fg->ResetOwnNodes();
+    fg->set_dropped(true);
+  }
+}
+
 // Clear the all information in manager
 void FuncGraphManager::Clear() noexcept {
+  roots_.clear();
   for (auto &fg : func_graphs_) {
     MS_EXCEPTION_IF_NULL(fg);
     fg->DecAttachedMngCnt();
     if (fg->attached_mng_cnt() == 0) {
-      fg->ClearAllManagerInfo();
+      fg->ClearAllResource();
+      DropFuncGraph(fg);
     } else if (fg->attached_mng_cnt() < 0) {
       MS_LOG(INTERNAL_EXCEPTION) << "The func graph '" << fg->ToString()
                                  << "' attached cnt not right: " << fg->attached_mng_cnt();
-    }
-    if (fg.unique()) {
-      fg->ResetReturnOwner();
-      fg->ResetOwnNodes();
     }
   }
   func_graphs_.clear();
 
   all_nodes_.clear();
   node_users_.clear();
-  roots_.clear();
   todo_.clear();
 
   signals_->InvalidateComputer();
@@ -557,7 +565,8 @@ void FuncGraphManager::ProcessInputsEdgeRemove(const CNodePtr &cnode) {
   }
 }
 
-static inline void FollowGraph(const FuncGraphPtr &fg, SeenNum seen, std::vector<AnfNodePtr> *nodes) {
+namespace {
+inline void FollowGraph(const FuncGraphPtr &fg, SeenNum seen, std::vector<AnfNodePtr> *nodes) {
   if (fg == nullptr) {
     return;
   }
@@ -565,6 +574,17 @@ static inline void FollowGraph(const FuncGraphPtr &fg, SeenNum seen, std::vector
     (void)nodes->emplace_back(std::move(res));
   }
 }
+
+inline void FollowInputs(const CNodePtr &cnode, std::vector<AnfNodePtr> *nodes) {
+  auto &weak_inputs = cnode->weak_inputs();
+  (void)std::transform(weak_inputs.cbegin(), weak_inputs.cend(), std::back_inserter(*nodes),
+                       [](const AnfNodeWeakPtr &weak_node) {
+                         auto node = weak_node.lock();
+                         MS_EXCEPTION_IF_NULL(node);
+                         return node;
+                       });
+}
+}  // namespace
 
 void FuncGraphManager::AcquireNodes(std::vector<AnfNodePtr> &&nodes, bool recursive) {
   auto seen = NewSeenGeneration();
@@ -608,8 +628,7 @@ void FuncGraphManager::AcquireNodes(std::vector<AnfNodePtr> &&nodes, bool recurs
     if (recursive) {
       ProcessInputsEdgeAdd(cnode);
       // Follow inputs.
-      auto &inputs = cnode->inputs();
-      (void)nodes.insert(nodes.end(), inputs.begin(), inputs.end());
+      FollowInputs(cnode, &nodes);
       continue;
     }
     // The way not recursive.
@@ -628,8 +647,7 @@ void FuncGraphManager::AcquireNodes(std::vector<AnfNodePtr> &&nodes, bool recurs
       OnEdgeAdded(node, i, input);
     }
     // Follow inputs.
-    auto &inputs = cnode->inputs();
-    (void)nodes.insert(nodes.end(), inputs.begin(), inputs.end());
+    FollowInputs(cnode, &nodes);
   }
 }
 
@@ -670,8 +688,7 @@ FuncGraphSet FuncGraphManager::MaybeDropNodes(std::vector<AnfNodePtr> &&nodes) {
       // Remove inputs edges.
       ProcessInputsEdgeRemove(cnode);
       // Handle inputs nodes.
-      auto &inputs = cnode->inputs();
-      (void)nodes.insert(nodes.end(), inputs.begin(), inputs.end());
+      FollowInputs(cnode, &nodes);
     }
     // Remove it from all_nodes_;
     (void)all_nodes_.erase(node);
@@ -838,7 +855,7 @@ void FuncGraphManager::MoveAllNodes(const FuncGraphPtr &source, const FuncGraphP
   target->CopyFreeVariables(source);
   target->CopyFuncGraphsUsed(source);
   target->CopyMetaFgPrimValueNodes(source);
-  source->ClearAllManagerInfo();
+  source->ClearAllResource();
   signals_->InvalidateComputer();
 }
 
@@ -878,7 +895,7 @@ void FuncGraphManager::EraseOneGraph(const FuncGraphPtr &fg) {
   }
   fg->DecAttachedMngCnt();
   if (fg->attached_mng_cnt() == 0) {
-    fg->ClearAllManagerInfo();
+    fg->ClearAllResource();
   }
 }
 

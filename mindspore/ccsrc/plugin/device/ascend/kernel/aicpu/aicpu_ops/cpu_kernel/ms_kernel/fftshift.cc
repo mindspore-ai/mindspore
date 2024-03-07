@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
+#include "cpu_kernel/ms_kernel/fftshift.h"
 #include <securec.h>
 #include "unsupported/Eigen/CXX11/Tensor"
-#include "cpu_kernel/common/cpu_kernel_utils.h"
-#include "cpu_kernel/ms_kernel/fftshift.h"
+#include "context/inc/cpu_kernel_utils.h"
 #include "utils/kernel_util.h"
 
 namespace {

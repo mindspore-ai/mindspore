@@ -37,7 +37,7 @@ Status LLMEngine::AddModelInner(mindspore::LLMModel *llm_model, const std::vecto
   auto model_paths = VectorCharToString(model_paths_c);
   auto options = MapVectorCharToString(options_c);
   auto postprocess_model_path = CharToString(postprocess_model_path_c);
-  uint64_t model_id = -1;
+  uint64_t model_id = 0;
   auto status = impl_->AddModel(model_paths, options, postprocess_model_path, &model_id);
   if (status != kSuccess) {
     return status;
@@ -147,11 +147,11 @@ Status LLMModel::MergeKV(const LLMReq &req, uint32_t batch_index, uint32_t batch
   return impl_->GetLLMEngine()->MergeKV(req, batch_index, batch_id, impl_->GetModelId());
 }
 
-std::vector<LLMTensorInfo> LLMModel::GetInputInfos() {
+std::vector<MSTensor> LLMModel::GetInputs() {
   if (impl_ == nullptr || impl_->GetLLMEngine() == nullptr) {
     MS_LOG(ERROR) << "LLMEngine impl is nullptr";
     return {};
   }
-  return impl_->GetLLMEngine()->GetInputInfos(impl_->GetModelId());
+  return impl_->GetLLMEngine()->GetInputs(impl_->GetModelId());
 }
 }  // namespace mindspore

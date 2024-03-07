@@ -44,7 +44,7 @@
 #include "runtime/graph_scheduler/graph_compiler.h"
 #include "runtime/pynative/op_runner.h"
 #include "runtime/pynative/graph_adapter.h"
-#include "kernel/pyboost/py_boost_utils.h"
+#include "kernel/pyboost/pyboost_utils.h"
 #include "runtime/pynative/op_function/pyboost_grad_functions.h"
 #include "include/backend/distributed/recovery/recovery_context.h"
 #include "pybind_api/gil_scoped_long_running.h"
@@ -862,6 +862,7 @@ void MindRTBackend::RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_i
           runtime::PyBoostOpExecute::GetInstance().RunPyBoostCall(primitive, device_target, input_info.input_values,
                                                                   &op_outputs);
         } else {
+          MS_LOG(DEBUG) << "Run " << primitive->name() << " by single op graph";
           session::BackendOpRunInfoPtr op_run_info;
           graph_compiler_->GetSingleOpInputTensors(kernel, op_output_map, parameter_index, inputs[graph_index], false,
                                                    &input_info);
@@ -1096,7 +1097,7 @@ void MindRTBackend::RunOpImplDynamic(bool single_op_cache_hit, const OpCompilerI
     auto input_tensors = runtime::OpRunner::GetTensorWithoutValueMask(op_run_info);
     runtime::DynamicOpRunner::UpdateInputDeviceAddress(op_compiler_info, input_tensors);
     auto device_address_list = runtime::DeviceAddressUtils::CreateGraphOutputDeviceAddress(
-      op_compiler_info, op_run_info->base_op_run_info.abstract);
+      op_compiler_info, op_run_info->base_op_run_info.abstract, op_run_info->base_op_run_info.stream_id);
     // Create output tensor
     UpdateOutputDynamic(op_run_info, op_compiler_info, device_address_list, outputs);
     DispatchOpTaskDynamic(outputs, op_compiler_info, op_run_info, device_address_list);
@@ -1184,6 +1185,7 @@ void MindRTBackend::RunViewKernelTask(const pynative::BaseOpRunInfo &base_op_run
         device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
       kernel_tensor->SetType(std::make_shared<TensorType>(input_tensor->Dtype()));
       kernel_tensor->SetShape(std::make_shared<abstract::TensorShape>(input_tensor->shape()));
+      kernel_tensor->set_stream_id(base_op_run_info.stream_id);
       auto input_addr = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
 
       input_tensor->set_device_address(input_addr);
@@ -1208,49 +1210,6 @@ void MindRTBackend::RunViewKernelTask(const pynative::BaseOpRunInfo &base_op_run
     runtime::OpRunner::LaunchKernelTask(task_type, device_context, input_addr_list, output_addr_list,
                                         base_op_run_info.stream_id);
   }
-}
-
-void MindRTBackend::RunContiguousTaskForArgs(const tensor::TensorPtr &tensor, size_t stream_id, bool enable_async) {
-  MS_EXCEPTION_IF_NULL(tensor);
-  // RunContiguousTaskForArgs will be called in pynative and graph mix execution.
-  auto old_device_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
-  auto new_device_address =
-    RunContiguousTaskByAddress(old_device_address, old_device_address->GetTensorStorageInfo(), stream_id, enable_async);
-  MS_EXCEPTION_IF_NULL(new_device_address);
-  tensor->set_device_address(new_device_address);
-}
-
-device::DeviceAddressPtr MindRTBackend::RunContiguousTaskByAddress(const device::DeviceAddressPtr &old_device_address,
-                                                                   const TensorStorageInfoPtr &old_storage_info,
-                                                                   size_t stream_id, bool enable_async) {
-  MS_EXCEPTION_IF_NULL(old_device_address);
-  MS_EXCEPTION_IF_NULL(old_storage_info);
-
-  const auto &device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
-    {old_device_address->device_name(), old_device_address->device_id()});
-  MS_EXCEPTION_IF_NULL(device_context);
-
-  auto address_size = GetTypeByte(TypeIdToType(old_device_address->type_id())) * SizeOf(old_storage_info->shape);
-  auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
-    nullptr, address_size, Format::DEFAULT_FORMAT, old_device_address->type_id(), old_storage_info->shape,
-    device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
-  kernel_tensor->SetType(std::make_shared<TensorType>(TypeIdToType(old_device_address->type_id())));
-  kernel_tensor->SetShape(std::make_shared<abstract::TensorShape>(old_storage_info->shape));
-
-  auto new_device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
-  new_device_address->set_device_shape(old_storage_info->shape);
-  new_device_address->set_original_ref_count(SIZE_MAX);
-  new_device_address->ResetRefCount();
-
-  if (enable_async) {
-    RunViewKernelTaskAsyncImpl(runtime::KernelTaskType::kCONTIGUOUS_TASK, device_context, {old_device_address},
-                               {new_device_address}, stream_id);
-  } else {
-    WaitTaskFinish();
-    runtime::OpRunner::LaunchKernelTask(runtime::KernelTaskType::kCONTIGUOUS_TASK, device_context, {old_device_address},
-                                        {new_device_address}, stream_id);
-  }
-  return new_device_address;
 }
 
 void MindRTBackend::RunAllocMemTask(DeviceContext *device_context, const tensor::TensorPtr &tensor, bool enable_async) {

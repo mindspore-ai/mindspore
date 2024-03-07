@@ -16,7 +16,7 @@
 
 #include "plugin/device/ascend/kernel/pyboost/customize/contiguous.h"
 #include "kernel/pyboost/op_register.h"
-#include "kernel/pyboost/py_boost_utils.h"
+#include "kernel/pyboost/pyboost_utils.h"
 #include "kernel/pyboost/auto_generate/copy.h"
 #include "kernel/pyboost/customize/op_common.h"
 
@@ -33,6 +33,7 @@ tensor::TensorPtr ContiguousAscendCustomize(const std::shared_ptr<OpRunner> &op,
   }
 
   auto copy_op = CREATE_PYBOOST_OP(Copy, kAscendDevice);
+  copy_op->set_stream_id(op->stream_id());
   output_tensor = copy_op->Call(input_tensor);
   op->set_input_abs(copy_op->input_abs());
   op->set_outputs(copy_op->outputs());

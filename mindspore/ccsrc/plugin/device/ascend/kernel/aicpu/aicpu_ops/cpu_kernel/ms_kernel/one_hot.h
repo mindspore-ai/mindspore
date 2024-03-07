@@ -22,7 +22,7 @@
 #define AICPU_KERNELS_NORMALIZED_ONE_HOT_H_
 
 #include <type_traits>
-#include "cpu_kernel_utils.h"
+#include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
 class OneHotCpuKernel : public CpuKernel {

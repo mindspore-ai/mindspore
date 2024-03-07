@@ -35,6 +35,7 @@
 #include "ops/sequence_ops.h"
 #include "ops/sparse_tensor_ops.h"
 #include "ops/nn_ops.h"
+#include "runtime/device/device_address_utils.h"
 #include "runtime/graph_scheduler/graph_compiler.h"
 #include "runtime/pynative/graph_adapter.h"
 #include "pybind_api/gil_scoped_long_running.h"
@@ -867,29 +868,10 @@ void MindRTBackendBase::ConstructOutputs(runtime::ActorSet *actor_set, VectorRef
 }
 
 void MindRTBackendBase::ContiguousArgs(const VectorRef &args, const GraphCompilerInfo &graph_compiler_info) {
-  auto stream_id = kDefaultStreamIndex;
-  if (!graph_compiler_info.device_contexts_.empty()) {
-    auto device_context = graph_compiler_info.device_contexts_[0];
-    MS_EXCEPTION_IF_NULL(device_context);
-    stream_id = device_context->device_res_manager_->GetCurrentStreamId();
-  }
-
-  auto dispatch_contiguous_task = [stream_id, this](const tensor::TensorPtr &t) {
-    MS_EXCEPTION_IF_NULL(t);
-    if (t->storage_info() == nullptr) {
-      return;
-    }
-
-    GilReleaseWithCheck release_gil;
-    MS_LOG(DEBUG) << "Tensor storage_info is not nullptr, id:" << t->id();
-
-    RunContiguousTaskForArgs(t, stream_id, false);
-  };
-
   for (const auto &arg : args) {
     if (utils::isa<tensor::TensorPtr>(arg)) {
       auto value = utils::cast<tensor::TensorPtr>(arg);
-      dispatch_contiguous_task(value);
+      runtime::DeviceAddressUtils::ConvertContiguousTensorSync(value);
     } else if (utils::isa<ValuePtr>(arg)) {
       auto value = utils::cast<ValuePtr>(arg);
       MS_EXCEPTION_IF_NULL(value);
@@ -904,7 +886,7 @@ void MindRTBackendBase::ContiguousArgs(const VectorRef &args, const GraphCompile
           continue;
         }
         auto t = v->cast<tensor::TensorPtr>();
-        dispatch_contiguous_task(t);
+        runtime::DeviceAddressUtils::ConvertContiguousTensorSync(t);
       }
     }
   }
@@ -945,7 +927,6 @@ void MindRTBackendBase::RunGraph(const ActorInfo &actor_info, const VectorRef &a
   MS_EXCEPTION_IF_NULL(graph_iter->second);
   const auto &graph_compiler_info = *(graph_iter->second);
   // For pynative and graph mix execution.
-  ContiguousArgs(args, graph_compiler_info);
   WaitTaskFinish();
   WaitMultiStream(graph_compiler_info);
 
@@ -953,6 +934,9 @@ void MindRTBackendBase::RunGraph(const ActorInfo &actor_info, const VectorRef &a
   MS_EXCEPTION_IF_NULL(outputs);
   // There will be more than one kernel graph in heterogeneous scenario in a jit of PyNative Mode.
   if (ms_execution_mode_ == kPynativeMode && !pynative::GraphAdapter::IsPynativeGeGraphSink(root_graph_)) {
+    // The tensor needs to be converted to contiguous before being given to the actors.
+    // After the view feature is supported in the graph mode, the following code will be deleted.
+    ContiguousArgs(args, graph_compiler_info);
     RunGraphByCondition(actor_info, graph_compiler_info, args, outputs);
     return;
   }
@@ -963,6 +947,13 @@ void MindRTBackendBase::RunGraph(const ActorInfo &actor_info, const VectorRef &a
   std::vector<std::vector<tensor::TensorPtr>> input_tensors;
   if (graph_compiler_info.exist_flatten_concat_) {
     input_tensors = GetRunGraphInputs(graph_compiler_info, args);
+    // The tensor needs to be converted to contiguous before being given to the actors.
+    // After the view feature is supported in the graph mode, the following code will be deleted.
+    (void)std::for_each(input_tensors.begin(), input_tensors.end(), [this](const auto &tensor_vec) {
+      (void)std::for_each(tensor_vec.begin(), tensor_vec.end(), [](const tensor::TensorPtr &t) {
+        runtime::DeviceAddressUtils::ConvertContiguousTensorSync(t);
+      });
+    });
   }
   (void)profiler::CollectHostInfo(kModelNameRuntime, kEventRunGraph, kStageGetInputs, 1, 0, 1);
   // Release python gil.

@@ -203,6 +203,9 @@ inline aclTensor *ConvertType(mindspore::kernel::KernelTensor *tensor) {
   if (aclCreateTensor == nullptr) {
     return nullptr;
   }
+  if (tensor == nullptr || tensor->type_id() == kMetaTypeNone) {
+    return nullptr;
+  }
 
   auto acl_data_type = AclConverter::ConvertType(tensor->dtype_id());
   auto shape = tensor->GetShapeVector();
@@ -352,6 +355,10 @@ inline aclTensor *ConvertType(const tensor::TensorPtr &tensor) {
   }
   auto acl_data_type = AclConverter::ConvertType(tensor->data_type());
   auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
+  if (device_address->GetMutablePtr() == nullptr) {
+    MS_LOG(EXCEPTION) << "The device memory is null, please allocate the device memory for tensor "
+                      << tensor->ToString();
+  }
   auto [view_shape, strides, offset, ori_dev_shape] = GetViewShapeAndStride(tensor, device_address);
   auto acl_tensor = aclCreateTensor(view_shape.data(), view_shape.size(), acl_data_type, strides.data(), offset, format,
                                     ori_dev_shape.data(), ori_dev_shape.size(), device_address->GetMutablePtr());
@@ -425,6 +432,16 @@ inline aclScalar *ConvertType(const ScalarPtr &value) {
     converter.ConvertValue(value, AttrDeclType<float>(), &acl_scalar);
   } else if (value->isa<Int32Imm>()) {
     converter.ConvertValue(value, AttrDeclType<int32_t>(), &acl_scalar);
+  } else if (value->isa<Int8Imm>()) {
+    converter.ConvertValue(value, AttrDeclType<int8_t>(), &acl_scalar);
+  } else if (value->isa<Int16Imm>()) {
+    converter.ConvertValue(value, AttrDeclType<int16_t>(), &acl_scalar);
+  } else if (value->isa<UInt8Imm>()) {
+    converter.ConvertValue(value, AttrDeclType<uint8_t>(), &acl_scalar);
+  } else if (value->isa<FP64Imm>()) {
+    converter.ConvertValue(value, AttrDeclType<double>(), &acl_scalar);
+  } else if (value->isa<BF16Imm>()) {
+    converter.ConvertValue(value, AttrDeclType<bfloat16>(), &acl_scalar);
   } else {
     MS_LOG(EXCEPTION) << "Currently not support value: " << value->ToString();
   }
@@ -581,6 +598,14 @@ void ReleaseConvertTypes(const Tuple &t) {
     }                                                                       \
     case kNumberTypeBool: {                                                 \
       out = std::make_shared<BoolImm>(static_cast<bool>(num));              \
+      break;                                                                \
+    }                                                                       \
+    case kNumberTypeUInt8: {                                                \
+      out = std::make_shared<UInt8Imm>(static_cast<uint8_t>(num));          \
+      break;                                                                \
+    }                                                                       \
+    case kNumberTypeBFloat16: {                                             \
+      out = std::make_shared<BF16Imm>(static_cast<bfloat16>(num));          \
       break;                                                                \
     }                                                                       \
     default: {                                                              \

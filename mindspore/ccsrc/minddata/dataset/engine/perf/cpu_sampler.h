@@ -71,7 +71,11 @@ typedef struct TaskUtil_s OpUtil;
 
 class SystemInfo {
  public:
-  SystemInfo() : first_sample_(true), prev_context_switch_count_(0), last_mem_sampling_failed_(false) {}
+  SystemInfo()
+      : first_sample_(true),
+        prev_context_switch_count_(0),
+        last_mem_sampling_failed_(false),
+        prev_system_memory_info_({0, 0, 0}) {}
   // Read in current stats and return previous and currently read stats
   Status SampleAndGetCurrPrevStat(SystemStat *current_stat, SystemStat *previous_stat);
   static int32_t num_cpu_;

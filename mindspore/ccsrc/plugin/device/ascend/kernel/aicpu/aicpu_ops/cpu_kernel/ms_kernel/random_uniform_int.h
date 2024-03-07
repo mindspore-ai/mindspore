@@ -15,7 +15,7 @@
  */
 #ifndef AICPU_KERNELS_NORMALIZED_RANDOM_UNIFORM_INT_H_
 #define AICPU_KERNELS_NORMALIZED_RANDOM_UNIFORM_INT_H_
-#include "cpu_kernel_utils.h"
+#include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
 class RandomUniformIntCpuKernel : public CpuKernel {

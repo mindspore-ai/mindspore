@@ -21,7 +21,7 @@
 #include <tuple>
 
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
-#include "kernel/pyboost/py_boost_utils.h"
+#include "kernel/pyboost/pyboost_utils.h"
 #include "plugin/device/ascend/kernel/pyboost/aclnn_utils.h"
 
 namespace mindspore {
@@ -37,13 +37,12 @@ std::tuple<tensor::TensorPtr, tensor::TensorPtr> ArgMinWithValueAscendCustomize(
   auto axis_imm = GetValue<int64_t>(axis);
   auto keep_dims_imm = GetValue<bool>(keep_dims);
 
-  PyBoostUtils::PrepareOpInputs(op->device_context(), input_tensor);
+  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor);
 
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->outputs());
+  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
 
   // Async
   PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor, axis_imm, keep_dims_imm]() {
-    const std::string op_name = "ArgMinWithValue";
     MS_LOG(DEBUG) << "Run device task ArgMinWithValue end";
     auto device_context = op->device_context();
     const auto &outputs = op->outputs();
@@ -52,8 +51,7 @@ std::tuple<tensor::TensorPtr, tensor::TensorPtr> ArgMinWithValueAscendCustomize(
     // Malloc for output tensors
     PyBoostUtils::MallocOpOutputs(device_context, outputs);
 
-    auto stream_ptr = device::ascend::AscendStreamMng::GetInstance().GetStream(kDefaultStreamIndex);
-    LAUNCH_ACLNN(aclnnMinDim, device_context, stream_ptr, input_tensor, axis_imm, keep_dims_imm, outputs[1],
+    LAUNCH_ACLNN(aclnnMinDim, device_context, op->stream_id(), input_tensor, axis_imm, keep_dims_imm, outputs[1],
                  outputs[0]);
     MS_LOG(DEBUG) << "Run device task ArgMinWithValue end";
   }));

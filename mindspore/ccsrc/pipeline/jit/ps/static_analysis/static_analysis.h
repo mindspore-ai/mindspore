@@ -52,6 +52,10 @@ void IncreaseStackFrameDepth();
 void DecreaseStackFrameDepth();
 size_t StackFrameDepth();
 
+// Extend current context with values for another graph.
+AnalysisContextPtr NewContext(const AnalysisContextPtr &current_context, const FuncGraphPtr &fg,
+                              const AbstractBasePtrList &args_abs_list);
+
 // Config to a certain node in a certain context.
 class AnfNodeConfig final : public Config {
  public:

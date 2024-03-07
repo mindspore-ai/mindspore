@@ -23,12 +23,19 @@
 #include "utils/ms_context.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/backend/distributed/ps/ps_context.h"
+#ifndef BUILD_LITE
+#include "runtime/graph_scheduler/actor/kernel_async_launch_actor.h"
+#include "runtime/graph_scheduler/actor/kernel_async_infer_actor.h"
+#include "runtime/graph_scheduler/actor/kernel_async_resize_actor.h"
+#endif
 
 namespace mindspore {
 namespace runtime {
 bool ActorDispatcher::is_multi_thread_execution_ = true;
 bool ActorDispatcher::is_memory_allocation_sync_ = true;
 bool ActorDispatcher::is_memory_free_sync_ = true;
+bool ActorDispatcher::enable_runtime_multi_pipeline_ = false;
+bool ActorDispatcher::enable_async_launch_kernel_ = false;
 
 bool IsRunningFailed(const OpContext<DeviceTensor> *context) { return (context->error_info_ != ""); }
 
@@ -216,7 +223,27 @@ bool IsSkippedLaunch(const CNodePtr &kernel, const KernelGraphPtr &kernel_graph)
 
 bool EnableAsyncInfer() {
   static const char kEnableAsyncInferdEnv[] = "MS_ENABLE_ASYNC_INFER";
-  return common::GetEnv(kEnableAsyncInferdEnv) == "1";
+  static bool ret = common::GetEnv(kEnableAsyncInferdEnv) == "1";
+  return ret;
+}
+
+bool EnableRuntimePipeline() {
+  static const char kEnableRuntimePipeline[] = "MS_ENABLE_RUNTIME_PIPELINE";
+  static bool ret = common::GetEnv(kEnableRuntimePipeline) == "1";
+  return ret;
+}
+
+void WaitRuntimePipelineFinish() {
+#ifndef BUILD_LITE
+  if (ActorDispatcher::enable_runtime_multi_pipeline()) {
+    KernelAsyncInferActor::GetInstance()->Wait();
+    KernelAsyncResizeActor::GetInstance()->Wait();
+  }
+
+  if (ActorDispatcher::enable_async_launch_kernel()) {
+    KernelAsyncLaunchActor::GetInstance()->Wait();
+  }
+#endif
 }
 
 bool Copy(const DeviceTensor *dst_device_tensor, const DeviceTensor *src_device_tensor) {

@@ -1,38 +1,28 @@
-set(CPU_PROTO_SRC
-    ${CMAKE_CURRENT_SOURCE_DIR}/cpu_proto/proto/cpu_attr.proto
-    ${CMAKE_CURRENT_SOURCE_DIR}/cpu_proto/proto/cpu_node_def.proto
-    ${CMAKE_CURRENT_SOURCE_DIR}/cpu_proto/proto/cpu_tensor_shape.proto
-    ${CMAKE_CURRENT_SOURCE_DIR}/cpu_proto/proto/cpu_tensor.proto
-)
+set(CANN_CONTEXT "${ASCEND_PATH}/latest/tools/msopgen/template/custom_operator_sample/AICPU/Tensorflow/cpukernel/")
+if(NOT EXISTS ${CANN_CONTEXT})
+    message(FATAL_ERROR "${CANN_CONTEXT} not exists. Please check if the cann package is installed properly.")
+endif()
 
-ms_protobuf_generate(PROTO_SRCS PROTO_HDRS ${CPU_PROTO_SRC})
-
-aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/common COMMON_LISTS)
-aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/cpu_proto CPU_PROTO_LISTS)
-aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/utils UTILS_LISTS)
-aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/format_transfer FORMAT_TRANSFER_LISTS)
-set(CPU_SRC
-    ${COMMON_LISTS}
-    ${CPU_PROTO_LISTS}
-    ${UTILS_LISTS}
-    ${FORMAT_TRANSFER_LISTS}
-    ${CMAKE_CURRENT_SOURCE_DIR}/../aicpu_sharder/aicpu_context.cc
-)
+include_directories(${CANN_CONTEXT})
+include_directories(${ASCEND_CANN_AICPU_KERNEL_PATH})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/ms_kernel MS_KERNELS)
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/ms_kernel/environ ENVIRON_KERNELS)
+aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/utils UTILS_LISTS)
+aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/format_transfer FORMAT_TRANSFER_LISTS)
 set(CPU_OPS_SRC
     ${MS_KERNELS}
     ${ENVIRON_KERNELS}
     ${CMAKE_CURRENT_SOURCE_DIR}/ms_kernel/random/utils.cc
+    ${UTILS_LISTS}
+    ${FORMAT_TRANSFER_LISTS}
 )
 
-add_library(mindspore_cpu_kernels SHARED
-    ${PROTO_SRCS}
-    ${CPU_SRC}
-    ${CPU_OPS_SRC}
-)
+add_library(mindspore_cpu_kernels SHARED ${CPU_OPS_SRC})
 
+remove_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
+add_definitions(-D_GLIBCXX_USE_CXX11_ABI=1)
 target_compile_options(mindspore_cpu_kernels PRIVATE
     -march=armv8-a
     -O2
@@ -52,6 +42,35 @@ target_link_libraries(mindspore_cpu_kernels PRIVATE
     -Wl,-Bsymbolic
     -rdynamic
     mindspore::protobuf_arm
+    -pthread
+    )
+
+set(ASCEND_SOC_VERSION $ENV{AICPU_SOC_VERSION})
+if(EXISTS "${ASCEND_CANN_AICPU_KERNEL_PATH}/lib/${ASCEND_SOC_VERSION}/libcpu_kernels_context.a")
+    set(CONTEXT_LIB "${ASCEND_CANN_AICPU_KERNEL_PATH}/lib/${ASCEND_SOC_VERSION}/libcpu_kernels_context.a")
+elseif(EXISTS "${ASCEND_CANN_AICPU_KERNEL_PATH}/lib/libcpu_kernels_context.a")
+    set(CONTEXT_LIB "${ASCEND_CANN_AICPU_KERNEL_PATH}/lib/libcpu_kernels_context.a")
+else()
+    message(FATAL_ERROR "Can not find libcpu_kernels_context.a in the environment."
+                        "Please check if the cann package is installed properly.")
+endif()
+
+if(EXISTS "${ASCEND_CANN_AICPU_KERNEL_PATH}/lib/${ASCEND_SOC_VERSION}/libascend_protobuf.a")
+    set(PROTOBUF_LIB "${ASCEND_CANN_AICPU_KERNEL_PATH}/lib/libascend_protobuf.a")
+elseif(EXISTS "${ASCEND_CANN_AICPU_KERNEL_PATH}/lib/Ascend/libascend_protobuf.a")
+    set(PROTOBUF_LIB "${ASCEND_CANN_AICPU_KERNEL_PATH}/lib/Ascend/libascend_protobuf.a")
+else()
+    message(FATAL_ERROR "Can not find libascend_protobuf.a in the environment."
+                        "Please check if the cann package is installed properly.")
+endif()
+
+
+target_link_libraries(mindspore_cpu_kernels PRIVATE
+    -ldl
+    -Wl,--whole-archive
+    ${CONTEXT_LIB}
+    ${PROTOBUF_LIB}
+    -Wl,--no-whole-archive
     -pthread
     )
 

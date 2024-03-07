@@ -16,7 +16,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_SPARSE_APPLY_CENTERED_RMS_PROP_H_
 #define AICPU_KERNELS_NORMALIZED_SPARSE_APPLY_CENTERED_RMS_PROP_H_
 
-#include "cpu_kernel_utils.h"
+#include "inc/ms_cpu_kernel.h"
 #include "utils/sparse_tensor.h"
 
 namespace aicpu {

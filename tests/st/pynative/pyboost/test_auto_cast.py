@@ -21,7 +21,6 @@ import numpy as np
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_implicit_cast_float16_float32():
     """

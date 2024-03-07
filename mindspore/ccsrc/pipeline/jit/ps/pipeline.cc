@@ -88,6 +88,10 @@
 #include "kernel/graph_kernel/graph_kernel_builder_manager.h"
 #include "kernel/graph_kernel_info.h"
 #include "include/backend/data_queue/data_queue_mgr.h"
+#include "mindspore/core/ops/symbol_ops_impl/getnext.h"
+#include "include/common/symbol_engine/symbol_engine_impl.h"
+#include "pipeline/jit/ps/load_mindir.h"
+#include "load_mindir/infer_mindir.h"
 
 #ifndef ENABLE_SECURITY
 #include "include/backend/debug/data_dump/dump_json_parser.h"
@@ -505,6 +509,11 @@ py::object GraphExecutorPy::GenerateArgumentsKey(const py::object &obj, const py
   return py::int_(key_counter++);
 }
 
+void GraphExecutorPy::ClearCompileArgumentsResource() {
+  // Clear global converted args saved in GenerateArgumentsKey.
+  ClearCurConvertInput();
+}
+
 void ClearArgCache(const py::object &obj) {
   if (py::isinstance<py::none>(obj)) {
     return;
@@ -802,12 +811,12 @@ void GraphExecutorPy::DelNetRes(const py::object &source, const py::set &id) {
 }
 
 void GraphExecutorPy::DelOneNetRes(const py::handle &py_phase) {
-  MS_LOG(INFO) << "Delete one net resource start";
   if (!pybind11::isinstance<py::str>(py_phase)) {
     MS_LOG(ERROR) << "Expect string phase, but got " << py::str(py_phase);
     return;
   }
   auto phase = pybind11::cast<std::string>(py_phase);
+  MS_LOG(INFO) << "Delete one net resource start, phase: " << phase;
   auto iter = info_.find(phase);
   auto clear = false;
   if (iter != info_.end()) {
@@ -823,8 +832,9 @@ void GraphExecutorPy::DelOneNetRes(const py::handle &py_phase) {
   if (clear) {
     // Do clear here to avoid any pointer for resource.
     FuncGraphLoopBreaker::Inst().ClearCellGraphs(phase);
+    FuncGraphLoopBreaker::Inst().CleanUnusedFuncGraphs(phase);
   }
-  MS_LOG(INFO) << "Delete one net resource end.";
+  MS_LOG(INFO) << "Delete one net resource end. " << clear;
 }
 
 void GraphExecutorPy::ClearRes() {
@@ -945,13 +955,13 @@ void GraphExecutorPy::CleanCompileRes(const ResourcePtr &resource) {
   ProcessStatus::GetInstance().RecordStart(kPipelineClean);
   (void)profiler::CollectHostInfo(kCompiler, kPipelineClean, kPipelineClean, 0, 0, 0);
   abstract::AnalysisContext::ClearContext();
-  ClearCurConvertInput();
+  ClearCompileArgumentsResource();
   ad::PrimBpropOptimizer::GetPrimBpropOptimizerInst().Clear();
   ad::g_k_prims.clear();
   ad::DFunctor::Clear();
   ReclaimOptimizer();
   resource->Clean();
-  FuncGraphLoopBreaker::Inst().CleanMetaFuncGraphCache();
+  FuncGraphLoopBreaker::Inst().CleanMetaFuncGraphs();
   (void)profiler::CollectHostInfo(kCompiler, kPipelineClean, kPipelineClean, 0, 0, 1);
   ProcessStatus::GetInstance().RecordEnd();
   expander::ClearCompileAllCache();
@@ -1080,6 +1090,7 @@ bool GraphExecutorPy::CompileInner(const py::object &source, const py::tuple &ar
   bool is_auto_parallel = is_parallel_mode && !py::hasattr(source, parallel::kSkipAutoParallelCompile) &&
                           !py::hasattr(source, parallel::kKeepInputUnchanged);
   ConvertArgs(args, kwargs, is_auto_parallel, &args_abs, &arguments);
+  ConvertSymbolicShape(args, &args_abs);
   AddManagerForFuncGraphArgs(resource, arguments);
   resource->set_arguments(arguments);
   resource->set_args_abs(args_abs);
@@ -1156,6 +1167,61 @@ void GraphExecutorPy::ConvertArgs(const py::tuple &args, const py::dict &kwargs,
     auto keyword_arg_abs = std::make_shared<abstract::AbstractKeywordArg>(GetValue<std::string>(key), value_abs);
     (void)arguments->emplace_back(value);
     (void)args_abs->emplace_back(keyword_arg_abs);
+  }
+}
+
+void GraphExecutorPy::ConvertSymbolicShape(const py::tuple &args, AbstractBasePtrList *args_abs) {
+  std::vector<symshape::ops::SymbolInfoList> symbol_infos;
+  symbol_infos.reserve(args_abs->size());
+  for (size_t i = 0; i < args.size(); i++) {
+    auto iter = cur_convert_input_.find(args[i].ptr());
+    if (iter == cur_convert_input_.end()) {
+      continue;
+    }
+    auto &info_list = symbol_infos.emplace_back(symshape::ops::SymbolInfoList{});
+    if (!iter->second.first->isa<MetaTensor>()) {
+      continue;
+    }
+    constexpr char symbolic_shape_attr[] = "symbolic_shape";
+    if (!py::hasattr(args[i], symbolic_shape_attr)) {
+      continue;
+    }
+    auto symbolic_shape_obj = py::getattr(args[i], symbolic_shape_attr);
+    MS_EXCEPTION_IF_CHECK_FAIL(py::isinstance<py::list>(symbolic_shape_obj), "tensor.symbolic_shape should be a list");
+    auto obj_list = py::cast<py::list>(symbolic_shape_obj);
+    info_list.resize(obj_list.size());
+    for (size_t j = 0; j < obj_list.size(); j++) {
+      if (!py::isinstance<py::dict>(obj_list[j])) {
+        continue;
+      }
+      auto dict_obj = py::cast<py::dict>(obj_list[j]);
+      for (auto cfg_iter = dict_obj.begin(); cfg_iter != dict_obj.end(); ++cfg_iter) {
+        auto cfg_key = py::cast<std::string>(cfg_iter->first);
+        if (cfg_key == "max") {
+          info_list[j].max = py::cast<int64_t>(cfg_iter->second);
+        } else if (cfg_key == "min") {
+          info_list[j].min = py::cast<int64_t>(cfg_iter->second);
+        } else if (cfg_key == "divisor") {
+          info_list[j].divisor = py::cast<int64_t>(cfg_iter->second);
+        } else if (cfg_key == "remainder") {
+          info_list[j].remainder = py::cast<int64_t>(cfg_iter->second);
+        } else if (cfg_key == "id") {
+          info_list[j].id = py::cast<int64_t>(cfg_iter->second);
+        } else if (cfg_key == "name") {
+          info_list[j].name = py::cast<std::string>(cfg_iter->second);
+        }
+      }
+    }
+  }
+
+  auto symbolic_shape_list = symshape::ops::BuildSymbolicShapeBySymbolInfo(*args_abs, symbol_infos);
+  for (size_t i = 0; i < symbolic_shape_list.size(); i++) {
+    // when the same tensor object is used in set_inputs interface, the inputs may shared a same Abstract object.
+    // but for dynamic shape, the same "-1" in abstract can be different symbolic shape.
+    auto abs = symshape::CloneAbstractIfSymbolExists((*args_abs)[i]);
+    MS_EXCEPTION_IF_NULL(abs);
+    abs->SetSymbolicShape(symbolic_shape_list[i]);
+    (*args_abs)[i] = abs;
   }
 }
 
@@ -1268,7 +1334,9 @@ void CheckInterpretNodeLineInfos() {
     ss << "# No. " << num << ":\n";
     const auto &cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
-    const auto &script_node = cnode->input(1);
+    const auto &weak_script_node = cnode->weak_input(1);
+    const auto &script_node = weak_script_node.lock();
+    MS_EXCEPTION_IF_NULL(script_node);
     const auto &script = GetValueNode<StringImmPtr>(script_node);
     // Usually the script is a value node.
     std::string script_str;
@@ -1544,6 +1612,12 @@ void GraphExecutorPy::GeFirstInitParams() {
 }
 #endif
 
+void GraphExecutorPy::ClearRunArgumentsResource(size_t input_arg_size, VectorRef *arg_list) {
+  for (std::size_t i = 0; i < input_arg_size; ++i) {
+    (*arg_list)[i] = nullptr;
+  }
+}
+
 py::object GraphExecutorPy::RunInner(const py::tuple &args, const py::object &phase_obj) {
   if (common::GetEnv(kSimulationLevel) == kSimulationLevelCompileGraph) {
     py::int_ ret = 0;
@@ -1628,7 +1702,7 @@ py::object GraphExecutorPy::RunInner(const py::tuple &args, const py::object &ph
     return py::none();
   }
   py::object res = BaseRefToPyDataWithUserData(value, output_abs);
-
+  ClearRunArgumentsResource(args.size(), &execute_info->arg_list);
   MS_LOG(DEBUG) << "Run end";
   return res;
 }  // namespace pipeline
@@ -2150,6 +2224,13 @@ FuncGraphPtr DynamicObfuscateMindIR(const std::string &file_name, float obf_rati
   mindspore::DynamicObfuscator dynamic_obfuscator(obf_ratio, branch_control_input);
   MindIRLoader mindir_loader(false, reinterpret_cast<unsigned char *>(dec_key), key_len, dec_mode, false);
   FuncGraphPtr func_graph = mindir_loader.LoadMindIR(file_name);
+  ModifyGraphs(func_graph);
+  auto manager = func_graph->manager();
+  if (manager == nullptr) {
+    manager = MakeManager();
+    manager->AddFuncGraph(func_graph, true);
+  }
+  InferFuncGraphLoaded(func_graph);
   if (func_graph == nullptr) {
     MS_LOG(EXCEPTION) << "[DynamicObfuscateMindIR] load mindir failed, please check the mindir file.";
     return nullptr;
@@ -2228,7 +2309,7 @@ void MemoryRecycle() {
   pynative::PyNativeExecutor::GetInstance()->ClearRes();
   ConfigManager::GetInstance().ResetConfig();
   ScopeManager::GetInstance().ClearScope();
-  FuncGraphLoopBreaker::Inst().CleanMetaFuncGraphCache();
+  FuncGraphLoopBreaker::Inst().CleanMetaFuncGraphs();
   FuncGraphLoopBreaker::Inst().BreakLoop();
 }
 

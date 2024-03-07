@@ -23,8 +23,8 @@
 #include "cpu_attr_value.h"
 #include "cpu_tensor.h"
 #include "cpu_tensor_shape.h"
-#include "kernel_log.h"
-#include "status.h"
+#include "inc/kernel_log.h"
+#include "context/common/status.h"
 #include "utils/kernel_util.h"
 
 namespace {

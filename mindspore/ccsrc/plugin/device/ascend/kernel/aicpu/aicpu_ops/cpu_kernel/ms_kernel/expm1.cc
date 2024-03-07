@@ -15,7 +15,7 @@
  */
 #include "expm1.h"
 
-#include "cpu_kernel_utils.h"
+#include "context/inc/cpu_kernel_utils.h"
 #include "math.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"

@@ -66,7 +66,7 @@ class AllpassBiquad(AudioTensorOperation):
     .. math::
         H(s) = \frac{s^2 - \frac{s}{Q} + 1}{s^2 + \frac{s}{Q} + 1}
 
-    Similar to `SoX <http://sox.sourceforge.net/sox.html>`_ implementation.
+    Similar to `SoX <https://sourceforge.net/projects/sox/>`_ implementation.
 
     Note:
         The shape of the audio waveform to be processed needs to be <..., time>.
@@ -91,11 +91,23 @@ class AllpassBiquad(AudioTensorOperation):
     Examples:
         >>> import numpy as np
         >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.audio as audio
         >>>
-        >>> waveform = np.array([[2.716064453125e-03, 6.34765625e-03], [9.246826171875e-03, 1.0894775390625e-02]])
+        >>> # Use the transform in dataset pipeline mode.
+        >>> waveform = np.random.random([5, 16])  # 5 samples
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
-        >>> transforms = [ds.audio.AllpassBiquad(44100, 200.0)]
+        >>> transforms = [audio.AllpassBiquad(44100, 200.0)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["audio"].shape, item["audio"].dtype)
+        ...     break
+        (16,) float64
+        >>>
+        >>> # Use the transform in eager mode
+        >>> waveform = np.random.random([16])  # 1 sample
+        >>> output = audio.AllpassBiquad(44100, 200.0)(waveform)
+        >>> print(output.shape, output.dtype)
+        (16,) float64
 
     Tutorial Examples:
         - `Illustration of audio transforms
@@ -153,12 +165,22 @@ class AmplitudeToDB(AudioTensorOperation):
         >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.audio as audio
-        >>> from mindspore.dataset.audio import ScaleType
         >>>
-        >>> waveform = np.random.random([1, 400 // 2 + 1, 30])
+        >>> # Use the transform in dataset pipeline mode
+        >>> waveform = np.random.random([5, 400 // 2 + 1, 30])  # 5 samples
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
-        >>> transforms = [audio.AmplitudeToDB(stype=ScaleType.POWER)]
+        >>> transforms = [audio.AmplitudeToDB(stype=audio.ScaleType.POWER)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["audio"].shape, item["audio"].dtype)
+        ...     break
+        (201, 30) float64
+        >>>
+        >>> # Use the transform in eager mode
+        >>> waveform = np.random.random([400 // 2 + 1, 30])  # 1 sample
+        >>> output = audio.AmplitudeToDB(stype=audio.ScaleType.POWER)(waveform)
+        >>> print(output.shape, output.dtype)
+        (201, 30) float64
 
     Tutorial Examples:
         - `Illustration of audio transforms
@@ -196,10 +218,21 @@ class Angle(AudioTensorOperation):
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.audio as audio
         >>>
-        >>> waveform = np.array([[1.43, 5.434], [23.54, 89.38]])
+        >>> # Use the transform in dataset pipeline mode
+        >>> waveform = np.random.random([5, 16, 2])  # 5 samples
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.Angle()]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["audio"].shape, item["audio"].dtype)
+        ...     break
+        (16,) float64
+        >>>
+        >>> # Use the transform in eager mode
+        >>> waveform = np.random.random([16, 2])  # 1 sample
+        >>> output = audio.Angle()(waveform)
+        >>> print(output.shape, output.dtype)
+        (16,) float64
 
     Tutorial Examples:
         - `Illustration of audio transforms
@@ -218,7 +251,7 @@ class BandBiquad(AudioTensorOperation):
     bandwidth gives the slope of the drop. The frequencies at band edge will be
     half of their original amplitudes.
 
-    Similar to `SoX <http://sox.sourceforge.net/sox.html>`_ implementation.
+    Similar to `SoX <https://sourceforge.net/projects/sox/>`_ implementation.
 
     Note:
         The shape of the audio waveform to be processed needs to be <..., time>.
@@ -249,10 +282,21 @@ class BandBiquad(AudioTensorOperation):
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.audio as audio
         >>>
-        >>> waveform = np.array([[2.716064453125e-03, 6.34765625e-03], [9.246826171875e-03, 1.0894775390625e-02]])
+        >>> # Use the transform in dataset pipeline mode
+        >>> waveform = np.random.random([5, 16])  # 5 samples
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.BandBiquad(44100, 200.0)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["audio"].shape, item["audio"].dtype)
+        ...     break
+        (16,) float64
+        >>>
+        >>> # Use the transform in eager mode
+        >>> waveform = np.random.random([16])  # 1 sample
+        >>> output = audio.BandBiquad(44100, 200.0)(waveform)
+        >>> print(output.shape, output.dtype)
+        (16,) float64
 
     Tutorial Examples:
         - `Illustration of audio transforms
@@ -286,7 +330,7 @@ class BandpassBiquad(AudioTensorOperation):
             \frac{\frac{s}{Q}}{s^2 + \frac{s}{Q} + 1}, &\text{if const_skirt_gain=False}.
         \end{cases}
 
-    Similar to `SoX <http://sox.sourceforge.net/sox.html>`_ implementation.
+    Similar to `SoX <https://sourceforge.net/projects/sox/>`_ implementation.
 
     Note:
         The shape of the audio waveform to be processed needs to be <..., time>.
@@ -316,10 +360,21 @@ class BandpassBiquad(AudioTensorOperation):
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.audio as audio
         >>>
-        >>> waveform = np.array([[2.716064453125e-03, 6.34765625e-03], [9.246826171875e-03, 1.0894775390625e-02]])
+        >>> # Use the transform in dataset pipeline mode
+        >>> waveform = np.random.random([5, 16])  # 5 samples
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.BandpassBiquad(44100, 200.0)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["audio"].shape, item["audio"].dtype)
+        ...     break
+        (16,) float64
+        >>>
+        >>> # Use the transform in eager mode
+        >>> waveform = np.random.random([16])  # 1 sample
+        >>> output = audio.BandpassBiquad(44100, 200.0)(waveform)
+        >>> print(output.shape, output.dtype)
+        (16,) float64
 
     Tutorial Examples:
         - `Illustration of audio transforms
@@ -351,7 +406,7 @@ class BandrejectBiquad(AudioTensorOperation):
     .. math::
         H(s) = \frac{s^2 + 1}{s^2 + \frac{s}{Q} + 1}
 
-    Similar to `SoX <http://sox.sourceforge.net/sox.html>`_ implementation.
+    Similar to `SoX <https://sourceforge.net/projects/sox/>`_ implementation.
 
     Note:
         The shape of the audio waveform to be processed needs to be <..., time>.
@@ -378,10 +433,21 @@ class BandrejectBiquad(AudioTensorOperation):
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.audio as audio
         >>>
-        >>> waveform = np.array([[2.716064453125e-03, 6.34765625e-03],[9.246826171875e-03, 1.0894775390625e-02]])
+        >>> # Use the transform in dataset pipeline mode
+        >>> waveform = np.random.random([5, 16])  # 5 samples
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.BandrejectBiquad(44100, 200.0)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["audio"].shape, item["audio"].dtype)
+        ...     break
+        (16,) float64
+        >>>
+        >>> # Use the transform in eager mode
+        >>> waveform = np.random.random([16])  # 1 sample
+        >>> output = audio.BandrejectBiquad(44100, 200.0)(waveform)
+        >>> print(output.shape, output.dtype)
+        (16,) float64
 
     Tutorial Examples:
         - `Illustration of audio transforms
@@ -409,7 +475,7 @@ class BassBiquad(AudioTensorOperation):
     .. math::
         H(s) = A\frac{s^2 + \frac{\sqrt{A}}{Q}s + A}{As^2 + \frac{\sqrt{A}}{Q}s + 1}
 
-    Similar to `SoX <http://sox.sourceforge.net/sox.html>`_ implementation.
+    Similar to `SoX <https://sourceforge.net/projects/sox/>`_ implementation.
 
     Note:
         The shape of the audio waveform to be processed needs to be <..., time>.
@@ -438,10 +504,21 @@ class BassBiquad(AudioTensorOperation):
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.audio as audio
         >>>
-        >>> waveform = np.array([[2.716064453125e-03, 6.34765625e-03], [9.246826171875e-03, 1.0894775390625e-02]])
+        >>> # Use the transform in dataset pipeline mode
+        >>> waveform = np.random.random([5, 16])  # 5 samples
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.BassBiquad(44100, 100.0)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["audio"].shape, item["audio"].dtype)
+        ...     break
+        (16,) float64
+        >>>
+        >>> # Use the transform in eager mode
+        >>> waveform = np.random.random([16])  # 1 sample
+        >>> output = audio.BassBiquad(44100, 200.0)(waveform)
+        >>> print(output.shape, output.dtype)
+        (16,) float64
 
     Tutorial Examples:
         - `Illustration of audio transforms
@@ -487,11 +564,24 @@ class Biquad(TensorOperation):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.audio as audio
         >>>
-        >>> waveform = np.array([[2.716064453125e-03, 6.34765625e-03], [9.246826171875e-03, 1.0894775390625e-02]])
-        >>> biquad_op = audio.Biquad(0.01, 0.02, 0.13, 1, 0.12, 0.3)
-        >>> waveform_filtered = biquad_op(waveform)
+        >>> # Use the transform in dataset pipeline mode
+        >>> waveform = np.random.random([5, 16])  # 5 samples
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
+        >>> transforms = [audio.Biquad(0.01, 0.02, 0.13, 1, 0.12, 0.3)]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["audio"].shape, item["audio"].dtype)
+        ...     break
+        (16,) float64
+        >>>
+        >>> # Use the transform in eager mode
+        >>> waveform = np.random.random([16])  # 1 sample
+        >>> output = audio.Biquad(0.01, 0.02, 0.13, 1, 0.12, 0.3)(waveform)
+        >>> print(output.shape, output.dtype)
+        (16,) float64
 
     Tutorial Examples:
         - `Illustration of audio transforms
@@ -536,10 +626,21 @@ class ComplexNorm(AudioTensorOperation):
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.audio as audio
         >>>
-        >>> waveform = np.random.random([2, 4, 2])
+        >>> # Use the transform in dataset pipeline mode
+        >>> waveform = np.random.random([5, 16, 2])  # 5 samples
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.ComplexNorm()]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["audio"].shape, item["audio"].dtype)
+        ...     break
+        (16,) float64
+        >>>
+        >>> # Use the transform in eager mode
+        >>> waveform = np.random.random([16, 2])  # 1 samples
+        >>> output = audio.ComplexNorm()(waveform)
+        >>> print(output.shape, output.dtype)
+        (16,) float64
 
     Tutorial Examples:
         - `Illustration of audio transforms
@@ -601,12 +702,22 @@ class ComputeDeltas(AudioTensorOperation):
         >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.audio as audio
-        >>> from mindspore.dataset.audio import BorderType
         >>>
-        >>> waveform = np.random.random([1, 400 // 2 + 1, 30])
+        >>> # Use the transform in dataset pipeline mode
+        >>> waveform = np.random.random([5, 400 // 2 + 1, 30])  # 5 samples
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
-        >>> transforms = [audio.ComputeDeltas(win_length=7, pad_mode=BorderType.EDGE)]
+        >>> transforms = [audio.ComputeDeltas(win_length=7, pad_mode=audio.BorderType.EDGE)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["audio"].shape, item["audio"].dtype)
+        ...     break
+        (201, 30) float64
+        >>>
+        >>> # Use the transform in eager mode
+        >>> waveform = np.random.random([400 // 2 + 1, 30])  # 1 sample
+        >>> output = audio.ComputeDeltas(win_length=7, pad_mode=audio.BorderType.EDGE)(waveform)
+        >>> print(output.shape, output.dtype)
+        (201, 30) float64
 
     Tutorial Examples:
         - `Illustration of audio transforms
@@ -629,7 +740,7 @@ class Contrast(AudioTensorOperation):
 
     Comparable with compression, this effect modifies an audio signal to make it sound louder.
 
-    Similar to `SoX <http://sox.sourceforge.net/sox.html>`_ implementation.
+    Similar to `SoX <https://sourceforge.net/projects/sox/>`_ implementation.
 
     Note:
         The shape of the audio waveform to be processed needs to be <..., time>.
@@ -652,10 +763,21 @@ class Contrast(AudioTensorOperation):
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.audio as audio
         >>>
-        >>> waveform = np.array([[2.716064453125e-03, 6.34765625e-03], [9.246826171875e-03, 1.0894775390625e-02]])
+        >>> # Use the transform in dataset pipeline mode
+        >>> waveform = np.random.random([5, 16])  # 5 samples
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.Contrast()]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["audio"].shape, item["audio"].dtype)
+        ...     break
+        (16,) float64
+        >>>
+        >>> # Use the transform in eager mode
+        >>> waveform = np.random.random([16])  # 1 sample
+        >>> output = audio.Contrast()(waveform)
+        >>> print(output.shape, output.dtype)
+        (16,) float64
 
     Tutorial Examples:
         - `Illustration of audio transforms
@@ -691,10 +813,21 @@ class DBToAmplitude(AudioTensorOperation):
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.audio as audio
         >>>
-        >>> waveform = np.array([[2.716064453125e-03, 6.34765625e-03], [9.246826171875e-03, 1.0894775390625e-02]])
+        >>> # Use the transform in dataset pipeline mode
+        >>> waveform = np.random.random([5, 16])  # 5 samples
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.DBToAmplitude(0.5, 0.5)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["audio"].shape, item["audio"].dtype)
+        ...     break
+        (16,) float64
+        >>>
+        >>> # Use the transform in eager mode
+        >>> waveform = np.random.random([16])  # 1 sample
+        >>> output = audio.DBToAmplitude(0.5, 0.5)(waveform)
+        >>> print(output.shape, output.dtype)
+        (16,) float64
 
     Tutorial Examples:
         - `Illustration of audio transforms
@@ -734,10 +867,21 @@ class DCShift(AudioTensorOperation):
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.audio as audio
         >>>
-        >>> waveform = np.array([0.60, 0.97, -1.04, -1.26, 0.97, 0.91, 0.48, 0.93])
+        >>> # Use the transform in dataset pipeline mode
+        >>> waveform = np.random.random([5, 16])  # 5 samples
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.DCShift(0.5, 0.02)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["audio"].shape, item["audio"].dtype)
+        ...     break
+        (16,) float64
+        >>>
+        >>> # Use the transform in eager mode
+        >>> waveform = np.random.random([16])  # 1 sample
+        >>> output = audio.DCShift(0.5, 0.02)(waveform)
+        >>> print(output.shape, output.dtype)
+        (16,) float64
 
     Tutorial Examples:
         - `Illustration of audio transforms
@@ -758,7 +902,7 @@ class DeemphBiquad(AudioTensorOperation):
     """
     Apply Compact Disc (IEC 60908) de-emphasis (a treble attenuation shelving filter) to the audio waveform.
 
-    Similar to `SoX <http://sox.sourceforge.net/sox.html>`_ implementation.
+    Similar to `SoX <https://sourceforge.net/projects/sox/>`_ implementation.
 
     Args:
         sample_rate (int): Sampling rate of the waveform, must be 44100 or 48000 (Hz).
@@ -776,10 +920,21 @@ class DeemphBiquad(AudioTensorOperation):
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.audio as audio
         >>>
-        >>> waveform = np.array([[2.716064453125e-03, 6.34765625e-03], [9.246826171875e-03, 1.0894775390625e-02]])
+        >>> # Use the transform in dataset pipeline mode
+        >>> waveform = np.random.random([5, 8])  # 5 samples
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.DeemphBiquad(44100)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["audio"].shape, item["audio"].dtype)
+        ...     break
+        (8,) float64
+        >>>
+        >>> # Use the transform in eager mode
+        >>> waveform = np.random.random([8])  # 1 sample
+        >>> output = audio.DeemphBiquad(44100)(waveform)
+        >>> print(output.shape, output.dtype)
+        (8,) float64
 
     Tutorial Examples:
         - `Illustration of audio transforms
@@ -831,11 +986,21 @@ class DetectPitchFrequency(AudioTensorOperation):
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.audio as audio
         >>>
-        >>> waveform = np.array([[0.716064e-03, 5.347656e-03, 6.246826e-03, 2.089477e-02, 7.138305e-02],
-        ...                      [4.156616e-02, 1.394653e-02, 3.550292e-02, 0.614379e-02, 3.840209e-02]])
+        >>> # Use the transform in dataset pipeline mode
+        >>> waveform = np.random.random([5, 16])  # 5 samples
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.DetectPitchFrequency(30, 0.1, 3, 5, 25)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["audio"].shape, item["audio"].dtype)
+        ...     break
+        (5,) float32
+        >>>
+        >>> # Use the transform in eager mode
+        >>> waveform = np.random.random([16])  # 1 sample
+        >>> output = audio.DetectPitchFrequency(30, 0.1, 3, 5, 25)(waveform)
+        >>> print(output.shape, output.dtype)
+        (5,) float32
 
     Tutorial Examples:
         - `Illustration of audio transforms
@@ -888,10 +1053,21 @@ class Dither(AudioTensorOperation):
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.audio as audio
         >>>
-        >>> waveform = np.array([[1, 2, 3], [4, 5, 6]])
+        >>> # Use the transform in dataset pipeline mode
+        >>> waveform = np.random.random([5, 16])  # 5 samples
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.Dither()]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["audio"].shape, item["audio"].dtype)
+        ...     break
+        (16,) float64
+        >>>
+        >>> # Use the transform in eager mode
+        >>> waveform = np.random.random([16])  # 1 sample
+        >>> output = audio.Dither()(waveform)
+        >>> print(output.shape, output.dtype)
+        (16,) float64
 
     Tutorial Examples:
         - `Illustration of audio transforms
@@ -912,7 +1088,7 @@ class EqualizerBiquad(AudioTensorOperation):
     """
     Design biquad equalizer filter and perform filtering.
 
-    Similar to `SoX <http://sox.sourceforge.net/sox.html>`_ implementation.
+    Similar to `SoX <https://sourceforge.net/projects/sox/>`_ implementation.
 
     Args:
         sample_rate (int): Sampling rate of the waveform, e.g. ``44100`` (Hz), the value can't be 0.
@@ -936,10 +1112,21 @@ class EqualizerBiquad(AudioTensorOperation):
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.audio as audio
         >>>
-        >>> waveform = np.array([[2.716064453125e-03, 6.34765625e-03], [9.246826171875e-03, 1.0894775390625e-02]])
+        >>> # Use the transform in dataset pipeline mode
+        >>> waveform = np.random.random([5, 16])  # 5 samples
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.EqualizerBiquad(44100, 1500, 5.5, 0.7)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["audio"].shape, item["audio"].dtype)
+        ...     break
+        (16,) float64
+        >>>
+        >>> # Use the transform in eager mode
+        >>> waveform = np.random.random([16])  # 1 sample
+        >>> output = audio.EqualizerBiquad(44100, 1500, 5.5, 0.7)(waveform)
+        >>> print(output.shape, output.dtype)
+        (16,) float64
 
     Tutorial Examples:
         - `Illustration of audio transforms
@@ -996,12 +1183,22 @@ class Fade(AudioTensorOperation):
         >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.audio as audio
-        >>> from mindspore.dataset.audio import FadeShape
         >>>
-        >>> waveform = np.array([[2.716064453125e-03, 6.34765625e-03, 9.246826171875e-03, 1.0894775390625e-02]])
-        >>> dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
-        >>> transforms = [audio.Fade(fade_in_len=3, fade_out_len=2, fade_shape=FadeShape.LINEAR)]
-        >>> dataset = dataset.map(operations=transforms, input_columns=["audio"])
+        >>> # Use the transform in dataset pipeline mode
+        >>> waveform = np.random.random([5, 16])  # 5 samples
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
+        >>> transforms = [audio.Fade(fade_in_len=3, fade_out_len=2, fade_shape=audio.FadeShape.LINEAR)]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["audio"].shape, item["audio"].dtype)
+        ...     break
+        (16,) float64
+        >>>
+        >>> # Use the transform in eager mode
+        >>> waveform = np.random.random([16])  # 1 sample
+        >>> output = audio.Fade(fade_in_len=3, fade_out_len=2, fade_shape=audio.FadeShape.LINEAR)(waveform)
+        >>> print(output.shape, output.dtype)
+        (16,) float64
 
     Tutorial Examples:
         - `Illustration of audio transforms
@@ -1045,12 +1242,21 @@ class Filtfilt(AudioTensorOperation):
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.audio as audio
         >>>
-        >>> waveform = np.array([[2.716064453125e-03, 6.34765625e-03], [9.246826171875e-03, 1.0894775390625e-02]])
-        >>> a_coeffs = [0.1, 0.2, 0.3]
-        >>> b_coeffs = [0.1, 0.2, 0.3]
+        >>> # Use the transform in dataset pipeline mode
+        >>> waveform = np.random.random([5, 16])  # 5 samples
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
-        >>> transforms = [audio.Filtfilt(a_coeffs, b_coeffs)]
+        >>> transforms = [audio.Filtfilt(a_coeffs=[0.1, 0.2, 0.3], b_coeffs=[0.1, 0.2, 0.3])]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["audio"].shape, item["audio"].dtype)
+        ...     break
+        (16,) float64
+        >>>
+        >>> # Use the transform in eager mode
+        >>> waveform = np.random.random([16])  # 1 sample
+        >>> output = audio.Filtfilt(a_coeffs=[0.1, 0.2, 0.3], b_coeffs=[0.1, 0.2, 0.3])(waveform)
+        >>> print(output.shape, output.dtype)
+        (16,) float64
 
     Tutorial Examples:
         - `Illustration of audio transforms
@@ -1079,7 +1285,7 @@ class Flanger(AudioTensorOperation):
     """
     Apply a flanger effect to the audio.
 
-    Similar to `SoX <http://sox.sourceforge.net/sox.html>`_ implementation.
+    Similar to `SoX <https://sourceforge.net/projects/sox/>`_ implementation.
 
     Args:
         sample_rate (int): Sampling rate of the waveform, e.g. 44100 (Hz).
@@ -1121,10 +1327,21 @@ class Flanger(AudioTensorOperation):
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.audio as audio
         >>>
-        >>> waveform = np.array([[2.716064453125e-03, 6.34765625e-03], [9.246826171875e-03, 1.0894775390625e-02]])
+        >>> # Use the transform in dataset pipeline mode
+        >>> waveform = np.random.random([5, 4, 16])  # 5 samples
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.Flanger(44100)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["audio"].shape, item["audio"].dtype)
+        ...     break
+        (4, 16) float64
+        >>>
+        >>> # Use the transform in eager mode
+        >>> waveform = np.random.random([4, 16])  # 1 sample
+        >>> output = audio.Flanger(44100)(waveform)
+        >>> print(output.shape, output.dtype)
+        (4, 16) float64
 
     Tutorial Examples:
         - `Illustration of audio transforms
@@ -1187,10 +1404,21 @@ class FrequencyMasking(AudioTensorOperation):
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.audio as audio
         >>>
-        >>> waveform = np.random.random([1, 3, 2])
+        >>> # Use the transform in dataset pipeline mode
+        >>> waveform = np.random.random([5, 16, 2])  # 5 samples
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
-        >>> transforms = [audio.FrequencyMasking(freq_mask_param=1)]
+        >>> transforms = [audio.FrequencyMasking(iid_masks=True, freq_mask_param=1)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["audio"].shape, item["audio"].dtype)
+        ...     break
+        (16, 2) float64
+        >>>
+        >>> # Use the transform in eager mode
+        >>> waveform = np.random.random([16, 2])  # 1 sample
+        >>> output = audio.FrequencyMasking(iid_masks=True, freq_mask_param=1)(waveform)
+        >>> print(output.shape, output.dtype)
+        (16, 2) float64
 
     Tutorial Examples:
         - `Illustration of audio transforms
@@ -1232,10 +1460,21 @@ class Gain(AudioTensorOperation):
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.audio as audio
         >>>
-        >>> waveform = np.array([[2.716064453125e-03, 6.34765625e-03], [9.246826171875e-03, 1.0894775390625e-02]])
+        >>> # Use the transform in dataset pipeline mode
+        >>> waveform = np.random.random([5, 8])  # 5 samples
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.Gain(1.2)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["audio"].shape, item["audio"].dtype)
+        ...     break
+        (8,) float64
+        >>>
+        >>> # Use the transform in eager mode
+        >>> waveform = np.random.random([8])  # 1 sample
+        >>> output = audio.Gain(1.2)(waveform)
+        >>> print(output.shape, output.dtype)
+        (8,) float64
 
     Tutorial Examples:
         - `Illustration of audio transforms
@@ -1302,10 +1541,21 @@ class GriffinLim(AudioTensorOperation):
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.audio as audio
         >>>
-        >>> waveform = np.random.random([201, 6])
+        >>> # Use the transform in dataset pipeline mode
+        >>> waveform = np.random.random([5, 201, 6])  # 5 samples
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.GriffinLim(n_fft=400)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["audio"].shape, item["audio"].dtype)
+        ...     break
+        (1000,) float64
+        >>>
+        >>> # Use the transform in eager mode
+        >>> waveform = np.random.random([201, 6])  # 1 sample
+        >>> output = audio.GriffinLim(n_fft=400)(waveform)
+        >>> print(output.shape, output.dtype)
+        (1000,) float64
 
     Tutorial Examples:
         - `Illustration of audio transforms
@@ -1336,7 +1586,7 @@ class HighpassBiquad(AudioTensorOperation):
     """
     Design biquad highpass filter and perform filtering.
 
-    Similar to `SoX <http://sox.sourceforge.net/sox.html>`_ implementation.
+    Similar to `SoX <https://sourceforge.net/projects/sox/>`_ implementation.
 
     Args:
         sample_rate (int): Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be 0.
@@ -1359,10 +1609,21 @@ class HighpassBiquad(AudioTensorOperation):
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.audio as audio
         >>>
-        >>> waveform = np.array([[2.716064453125e-03, 6.34765625e-03], [9.246826171875e-03, 1.0894775390625e-02]])
+        >>> # Use the transform in dataset pipeline mode
+        >>> waveform = np.random.random([5, 16])  # 5 samples
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.HighpassBiquad(44100, 1500, 0.7)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["audio"].shape, item["audio"].dtype)
+        ...     break
+        (16,) float64
+        >>>
+        >>> # Use the transform in eager mode
+        >>> waveform = np.random.random([16])  # 1 sample
+        >>> output = audio.HighpassBiquad(44100, 1500, 0.7)(waveform)
+        >>> print(output.shape, output.dtype)
+        (16,) float64
 
     Tutorial Examples:
         - `Illustration of audio transforms
@@ -1429,10 +1690,21 @@ class InverseMelScale(AudioTensorOperation):
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.audio as audio
         >>>
-        >>> waveform = np.random.randn(2, 2, 3, 2)
+        >>> # Use the transform in dataset pipeline mode
+        >>> waveform = np.random.randn(5, 8, 3, 2)  # 5 samples
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.InverseMelScale(20, 3, 16000, 0, 8000, 10)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["audio"].shape, item["audio"].dtype)
+        ...     break
+        (8, 20, 2) float64
+        >>>
+        >>> # Use the transform in eager mode
+        >>> waveform = np.random.random([8, 3, 2])  # 1 sample
+        >>> output = audio.InverseMelScale(20, 3, 16000, 0, 8000, 10)(waveform)
+        >>> print(output.shape, output.dtype)
+        (8, 20, 2) float64
 
     Tutorial Examples:
         - `Illustration of audio transforms
@@ -1513,11 +1785,21 @@ class InverseSpectrogram(AudioTensorOperation):
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.audio as audio
         >>>
-        >>> waveform = np.array([[[0.8236, 0.2049, 0.3335], [0.5933, 0.9911, 0.2482],
-        ...                      [0.3007, 0.9054, 0.7598], [0.5394, 0.2842, 0.5634], [0.6363, 0.2226, 0.2288]]])
+        >>> # Use the transform in dataset pipeline mode
+        >>> waveform = np.random.random([5, 400 // 2 + 1, 30, 2])  # 5 samples
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.InverseSpectrogram(1, 400, 400, 200)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["audio"].shape, item["audio"].dtype)
+        ...     break
+        (1,) float64
+        >>>
+        >>> # Use the transform in eager mode
+        >>> waveform = np.random.random([400 // 2 + 1, 30, 2])  # 1 sample
+        >>> output = audio.InverseSpectrogram(1, 400, 400, 200)(waveform)
+        >>> print(output.shape, output.dtype)
+        (1,) float64
 
     Tutorial Examples:
         - `Illustration of audio transforms
@@ -1601,10 +1883,21 @@ class LFCC(AudioTensorOperation):
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.audio as audio
         >>>
-        >>> waveform = np.random.random([1, 1, 300])
+        >>> # Use the transform in dataset pipeline mode
+        >>> waveform = np.random.random([5, 10, 300])
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.LFCC()]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["audio"].shape, item["audio"].dtype)
+        ...     break
+        (10, 40, 2) float32
+        >>>
+        >>> # Use the transform in eager mode
+        >>> waveform = np.random.random([10, 300])  # 1 sample
+        >>> output = audio.LFCC()(waveform)
+        >>> print(output.shape, output.dtype)
+        (10, 40, 2) float32
 
     Tutorial Examples:
         - `Illustration of audio transforms
@@ -1673,12 +1966,21 @@ class LFilter(AudioTensorOperation):
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.audio as audio
         >>>
-        >>> waveform = np.array([[2.716064453125e-03, 6.34765625e-03], [9.246826171875e-03, 1.0894775390625e-02]])
-        >>> a_coeffs = [0.1, 0.2, 0.3]
-        >>> b_coeffs = [0.1, 0.2, 0.3]
+        >>> # Use the transform in dataset pipeline mode
+        >>> waveform = np.random.random([5, 16])  # 5 samples
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
-        >>> transforms = [audio.LFilter(a_coeffs, b_coeffs)]
+        >>> transforms = [audio.LFilter(a_coeffs=[0.1, 0.2, 0.3], b_coeffs=[0.3, 0.2, 0.1])]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["audio"].shape, item["audio"].dtype)
+        ...     break
+        (16,) float64
+        >>>
+        >>> # Use the transform in eager mode
+        >>> waveform = np.random.random([16])  # 1 sample
+        >>> output = audio.LFilter(a_coeffs=[0.1, 0.2, 0.3], b_coeffs=[0.3, 0.2, 0.1])(waveform)
+        >>> print(output.shape, output.dtype)
+        (16,) float64
 
     Tutorial Examples:
         - `Illustration of audio transforms
@@ -1706,7 +2008,7 @@ class LowpassBiquad(AudioTensorOperation):
     .. math::
         H(s) = \frac{1}{s^2 + \frac{s}{Q} + 1}
 
-    Similar to `SoX <http://sox.sourceforge.net/sox.html>`_ implementation.
+    Similar to `SoX <https://sourceforge.net/projects/sox/>`_ implementation.
 
     Note:
         The shape of the audio waveform to be processed needs to be <..., time>.
@@ -1733,11 +2035,21 @@ class LowpassBiquad(AudioTensorOperation):
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.audio as audio
         >>>
-        >>> waveform = np.array([[0.8236, 0.2049, 0.3335], [0.5933, 0.9911, 0.2482],
-        ...                      [0.3007, 0.9054, 0.7598], [0.5394, 0.2842, 0.5634], [0.6363, 0.2226, 0.2288]])
+        >>> # Use the transform in dataset pipeline mode
+        >>> waveform = np.random.random([5, 10])  # 5 samples
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.LowpassBiquad(4000, 1500, 0.7)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["audio"].shape, item["audio"].dtype)
+        ...     break
+        (10,) float64
+        >>>
+        >>> # Use the transform in eager mode
+        >>> waveform = np.random.random([10])  # 1 sample
+        >>> output = audio.LowpassBiquad(4000, 1500, 0.7)(waveform)
+        >>> print(output.shape, output.dtype)
+        (10,) float64
 
     Tutorial Examples:
         - `Illustration of audio transforms
@@ -1773,10 +2085,22 @@ class Magphase(AudioTensorOperation):
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.audio as audio
         >>>
-        >>> waveform = np.random.random([2, 4, 2])
+        >>> # Use the transform in dataset pipeline mode
+        >>> waveform = np.random.random([5, 16, 2])  # 5 samples
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.Magphase()]
-        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"],
+        ...                                                 output_columns=["spect", "phase"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["spect"].shape, item["spect"].dtype)
+        ...     break
+        (16,) float64
+        >>>
+        >>> # Use the transform in eager mode
+        >>> waveform = np.random.random([16, 2])  # 1 sample
+        >>> output = audio.Magphase()(waveform)
+        >>> print(output[0].shape, output[0].dtype)
+        (16,) float64
 
     Tutorial Examples:
         - `Illustration of audio transforms
@@ -1815,10 +2139,21 @@ class MaskAlongAxis(AudioTensorOperation):
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.audio as audio
         >>>
-        >>> waveform = np.random.random([1, 20, 20])
+        >>> # Use the transform in dataset pipeline mode
+        >>> waveform = np.random.random([5, 20, 20])  # 5 samples
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.MaskAlongAxis(0, 10, 0.5, 1)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["audio"].shape, item["audio"].dtype)
+        ...     break
+        (20, 20) float64
+        >>>
+        >>> # Use the transform in eager mode
+        >>> waveform = np.random.random([20, 20])  # 1 sample
+        >>> output = audio.MaskAlongAxis(0, 10, 0.5, 1)(waveform)
+        >>> print(output.shape, output.dtype)
+        (20, 20) float64
 
     Tutorial Examples:
         - `Illustration of audio transforms
@@ -1866,10 +2201,21 @@ class MaskAlongAxisIID(AudioTensorOperation):
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.audio as audio
         >>>
-        >>> waveform= np.random.random([1, 20, 20])
+        >>> # Use the transform in dataset pipeline mode
+        >>> waveform= np.random.random([5, 20, 20])  # 5 samples
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.MaskAlongAxisIID(5, 0.5, 2)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["audio"].shape, item["audio"].dtype)
+        ...     break
+        (20, 20) float64
+        >>>
+        >>> # Use the transform in eager mode
+        >>> waveform = np.random.random([20, 20])  # 1 sample
+        >>> output = audio.MaskAlongAxisIID(5, 0.5, 2)(waveform)
+        >>> print(output.shape, output.dtype)
+        (20, 20) float64
 
     Tutorial Examples:
         - `Illustration of audio transforms
@@ -1932,11 +2278,21 @@ class MelScale(AudioTensorOperation):
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.audio as audio
         >>>
-        >>> waveform = np.array([[0.8236, 0.2049, 0.3335], [0.5933, 0.9911, 0.2482],
-        ...                      [0.3007, 0.9054, 0.7598], [0.5394, 0.2842, 0.5634], [0.6363, 0.2226, 0.2288]])
+        >>> # Use the transform in dataset pipeline mode
+        >>> waveform = np.random.random([5, 201, 3])  # 5 samples
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
-        >>> transforms = [audio.MelScale(4000, 1500, 0.7)]
+        >>> transforms = [audio.MelScale(200, 1500, 0.7)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["audio"].shape, item["audio"].dtype)
+        ...     break
+        (200, 3) float64
+        >>>
+        >>> # Use the transform in eager mode
+        >>> waveform = np.random.random([201, 3])  # 1 sample
+        >>> output = audio.MelScale(200, 1500, 0.7)(waveform)
+        >>> print(output.shape, output.dtype)
+        (200, 3) float64
 
     Tutorial Examples:
         - `Illustration of audio transforms
@@ -2029,15 +2385,29 @@ class MelSpectrogram(AudioTensorOperation):
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.audio as audio
         >>>
-        >>> from mindspore.dataset.audio import WindowType, BorderType, NormType, MelType
         >>>
-        >>> waveform = np.array([[[1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1, 0, 0, 1, 1, 2, 2, 3, 3, 4]]])
+        >>> # Use the transform in dataset pipeline mode
+        >>> waveform = np.random.random([5, 32])  # 5 samples
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
-        >>> transforms = [audio.MelSpectrogram(sample_rate=16000, n_fft=16, win_length=16, hop_length=8, f_min=0.0, \
-        ...                                    f_max=5000.0, pad=0, n_mels=8, window=WindowType.HANN, power=2.0, \
-        ...                                    normalized=False, center=True, pad_mode=BorderType.REFLECT, \
-        ...                                    onesided=True, norm=NormType.SLANEY,  mel_scale=MelType.HTK)]
+        >>> transforms = [audio.MelSpectrogram(sample_rate=16000, n_fft=16, win_length=16, hop_length=8, f_min=0.0,
+        ...                                    f_max=5000.0, pad=0, n_mels=2, window=audio.WindowType.HANN, power=2.0,
+        ...                                    normalized=False, center=True, pad_mode=audio.BorderType.REFLECT,
+        ...                                    onesided=True, norm=audio.NormType.SLANEY, mel_scale=audio.MelType.HTK)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["audio"].shape, item["audio"].dtype)
+        ...     break
+        (2, 5) float64
+        >>>
+        >>> # Use the transform in eager mode
+        >>> waveform = np.random.random([32])  # 1 sample
+        >>> output = audio.MelSpectrogram(sample_rate=16000, n_fft=16, win_length=16, hop_length=8, f_min=0.0,
+        ...                               f_max=5000.0, pad=0, n_mels=2, window=audio.WindowType.HANN, power=2.0,
+        ...                               normalized=False, center=True, pad_mode=audio.BorderType.REFLECT,
+        ...                               onesided=True, norm=audio.NormType.SLANEY,
+        ...                               mel_scale=audio.MelType.HTK)(waveform)
+        >>> print(output.shape, output.dtype)
+        (2, 5) float64
 
     Tutorial Examples:
         - `Illustration of audio transforms
@@ -2120,11 +2490,21 @@ class MFCC(AudioTensorOperation):
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.audio as audio
         >>>
-        >>> waveform = np.array([[0.8236, 0.2049, 0.3335], [0.5933, 0.9911, 0.2482],
-        ...                      [0.3007, 0.9054, 0.7598], [0.5394, 0.2842, 0.5634], [0.6363, 0.2226, 0.2288]])
+        >>> # Use the transform in dataset pipeline mode
+        >>> waveform = np.random.random([5, 500])  # 5 samples
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
-        >>> transforms = [audio.MFCC(4000, 1500, 2)]
+        >>> transforms = [audio.MFCC(4000, 128, 2)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["audio"].shape, item["audio"].dtype)
+        ...     break
+        (128, 3) float32
+        >>>
+        >>> # Use the transform in eager mode
+        >>> waveform = np.random.random([500])  # 1 sample
+        >>> output = audio.MFCC(4000, 128, 2)(waveform)
+        >>> print(output.shape, output.dtype)
+        (128, 3) float32
 
     Tutorial Examples:
         - `Illustration of audio transforms
@@ -2189,10 +2569,21 @@ class MuLawDecoding(AudioTensorOperation):
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.audio as audio
         >>>
-        >>> waveform = np.random.random([1, 3, 4])
+        >>> # Use the transform in dataset pipeline mode
+        >>> waveform = np.random.random([5, 3, 4])  # 5 samples
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.MuLawDecoding()]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["audio"].shape, item["audio"].dtype)
+        ...     break
+        (3, 4) float64
+        >>>
+        >>> # Use the transform in eager mode
+        >>> waveform = np.random.random([3, 4])  # 1 sample
+        >>> output = audio.MuLawDecoding()(waveform)
+        >>> print(output.shape, output.dtype)
+        (3, 4) float64
 
     Tutorial Examples:
         - `Illustration of audio transforms
@@ -2227,10 +2618,21 @@ class MuLawEncoding(AudioTensorOperation):
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.audio as audio
         >>>
-        >>> waveform = np.random.random([1, 3, 4])
+        >>> # Use the transform in dataset pipeline mode
+        >>> waveform = np.random.random([5, 3, 4])  # 5 samples
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.MuLawEncoding()]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["audio"].shape, item["audio"].dtype)
+        ...     break
+        (3, 4) int32
+        >>>
+        >>> # Use the transform in eager mode
+        >>> waveform = np.random.random([3, 4])  # 1 sample
+        >>> output = audio.MuLawEncoding()(waveform)
+        >>> print(output.shape, output.dtype)
+        (3, 4) int32
 
     Tutorial Examples:
         - `Illustration of audio transforms
@@ -2250,7 +2652,7 @@ class Overdrive(AudioTensorOperation):
     """
     Apply an overdrive effect to the audio waveform.
 
-    Similar to `SoX <http://sox.sourceforge.net/sox.html>`_ implementation.
+    Similar to `SoX <https://sourceforge.net/projects/sox/>`_ implementation.
 
     Args:
         gain (float, optional): Desired gain at the boost (or attenuation) in dB, in range of [0, 100].
@@ -2273,10 +2675,21 @@ class Overdrive(AudioTensorOperation):
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.audio as audio
         >>>
-        >>> waveform = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.float32)
+        >>> # Use the transform in dataset pipeline mode
+        >>> waveform = np.random.random([5, 10])  # 5 samples
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.Overdrive()]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["audio"].shape, item["audio"].dtype)
+        ...     break
+        (10,) float64
+        >>>
+        >>> # Use the transform in eager mode
+        >>> waveform = np.random.random([10])  # 1 sample
+        >>> output = audio.Overdrive()(waveform)
+        >>> print(output.shape, output.dtype)
+        (10,) float64
 
     Tutorial Examples:
         - `Illustration of audio transforms
@@ -2297,7 +2710,7 @@ class Phaser(AudioTensorOperation):
     """
     Apply a phasing effect to the audio.
 
-    Similar to `SoX <http://sox.sourceforge.net/sox.html>`_ implementation.
+    Similar to `SoX <https://sourceforge.net/projects/sox/>`_ implementation.
 
     Args:
         sample_rate (int): Sampling rate of the waveform, e.g. 44100 (Hz).
@@ -2335,10 +2748,21 @@ class Phaser(AudioTensorOperation):
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.audio as audio
         >>>
-        >>> waveform = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.float32)
+        >>> # Use the transform in dataset pipeline mode
+        >>> waveform = np.random.random([5, 12])  # 5 samples
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.Phaser(44100)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["audio"].shape, item["audio"].dtype)
+        ...     break
+        (12,) float64
+        >>>
+        >>> # Use the transform in eager mode
+        >>> waveform = np.random.random([12])  # 1 sample
+        >>> output = audio.Phaser(44100)(waveform)
+        >>> print(output.shape, output.dtype)
+        (12,) float64
 
     Tutorial Examples:
         - `Illustration of audio transforms
@@ -2384,11 +2808,21 @@ class PhaseVocoder(AudioTensorOperation):
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.audio as audio
         >>>
-        >>> waveform = np.random.random([2, 44, 10, 2])
+        >>> # Use the transform in dataset pipeline mode
+        >>> waveform = np.random.random([5, 44, 10, 2])  # 5 samples
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
-        >>> phase_advance = np.random.random([44, 1])
-        >>> transforms = [audio.PhaseVocoder(rate=2, phase_advance=phase_advance)]
+        >>> transforms = [audio.PhaseVocoder(rate=2, phase_advance=np.random.random([44, 1]))]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["audio"].shape, item["audio"].dtype)
+        ...     break
+        (44, 5, 2) float64
+        >>>
+        >>> # Use the transform in eager mode
+        >>> waveform = np.random.random([44, 10, 2])  # 1 sample
+        >>> output = audio.PhaseVocoder(rate=2, phase_advance=np.random.random([44, 1]))(waveform)
+        >>> print(output.shape, output.dtype)
+        (44, 5, 2) float64
 
     Tutorial Examples:
         - `Illustration of audio transforms
@@ -2439,15 +2873,24 @@ class PitchShift(AudioTensorOperation):
 
     Examples:
         >>> import numpy as np
-        >>>
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.audio as audio
-        >>> from mindspore.dataset.audio import WindowType
         >>>
-        >>> waveform = np.random.random([1, 1, 300])
+        >>> # Use the transform in dataset pipeline mode
+        >>> waveform = np.random.random([5, 8, 30])  # 5 samples
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
-        >>> transforms = [audio.PitchShift(sample_rate=16000,n_steps=4)]
+        >>> transforms = [audio.PitchShift(sample_rate=16000, n_steps=4)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["audio"].shape, item["audio"].dtype)
+        ...     break
+        (8, 30) float64
+        >>>
+        >>> # Use the transform in eager mode
+        >>> waveform = np.random.random([8, 30])  # 1 sample
+        >>> output = audio.PitchShift(sample_rate=16000, n_steps=4)(waveform)
+        >>> print(output.shape, output.dtype)
+        (8, 30) float64
 
     Tutorial Examples:
         - `Illustration of audio transforms
@@ -2512,14 +2955,26 @@ class Resample(AudioTensorOperation):
         >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.audio as audio
-        >>> from mindspore.dataset.audio import ResampleMethod
         >>>
-        >>> waveform = np.random.random([1, 30])
+        >>> # Use the transform in dataset pipeline mode
+        >>> waveform = np.random.random([5, 16, 30])  # 5 samples
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.Resample(orig_freq=48000, new_freq=16000,
-        ...                              resample_method=ResampleMethod.SINC_INTERPOLATION,
+        ...                              resample_method=audio.ResampleMethod.SINC_INTERPOLATION,
         ...                              lowpass_filter_width=6, rolloff=0.99, beta=None)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["audio"].shape, item["audio"].dtype)
+        ...     break
+        (16, 10) float64
+        >>>
+        >>> # Use the transform in eager mode
+        >>> waveform = np.random.random([16, 30])  # 1 sample
+        >>> output = audio.Resample(orig_freq=48000, new_freq=16000,
+        ...                         resample_method=audio.ResampleMethod.SINC_INTERPOLATION,
+        ...                         lowpass_filter_width=6, rolloff=0.99, beta=None)(waveform)
+        >>> print(output.shape, output.dtype)
+        (16, 10) float64
 
     Tutorial Examples:
         - `Illustration of audio transforms
@@ -2547,7 +3002,7 @@ class RiaaBiquad(AudioTensorOperation):
     """
     Apply RIAA vinyl playback equalization.
 
-    Similar to `SoX <http://sox.sourceforge.net/sox.html>`_ implementation.
+    Similar to `SoX <https://sourceforge.net/projects/sox/>`_ implementation.
 
     Args:
         sample_rate (int): sampling rate of the waveform, e.g. 44100 (Hz),
@@ -2565,10 +3020,21 @@ class RiaaBiquad(AudioTensorOperation):
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.audio as audio
         >>>
-        >>> waveform = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.float64)
+        >>> # Use the transform in dataset pipeline mode
+        >>> waveform = np.random.random([5, 24])  # 5 samples
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.RiaaBiquad(44100)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["audio"].shape, item["audio"].dtype)
+        ...     break
+        (24,) float64
+        >>>
+        >>> # Use the transform in eager mode
+        >>> waveform = np.random.random([24])  # 1 sample
+        >>> output = audio.RiaaBiquad(44100)(waveform)
+        >>> print(output.shape, output.dtype)
+        (24,) float64
 
     Tutorial Examples:
         - `Illustration of audio transforms
@@ -2612,10 +3078,21 @@ class SlidingWindowCmn(AudioTensorOperation):
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.audio as audio
         >>>
-        >>> waveform = np.array([[[1, 2, 3], [4, 5, 6]]], dtype=np.float64)
+        >>> # Use the transform in dataset pipeline mode
+        >>> waveform = np.random.random([5, 16, 3])  # 5 samples
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.SlidingWindowCmn()]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["audio"].shape, item["audio"].dtype)
+        ...     break
+        (16, 3) float64
+        >>>
+        >>> # Use the transform in eager mode
+        >>> waveform = np.random.random([16, 3])  # 1 sample
+        >>> output = audio.SlidingWindowCmn()(waveform)
+        >>> print(output.shape, output.dtype)
+        (16, 3) float64
 
     Tutorial Examples:
         - `Illustration of audio transforms
@@ -2678,10 +3155,21 @@ class SpectralCentroid(TensorOperation):
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.audio as audio
         >>>
-        >>> waveform = np.random.random([5, 10, 20])
+        >>> # Use the transform in dataset pipeline mode
+        >>> waveform = np.random.random([5, 10, 20])  # 5 samples
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.SpectralCentroid(44100)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["audio"].shape, item["audio"].dtype)
+        ...     break
+        (10, 1, 1) float64
+        >>>
+        >>> # Use the transform in eager mode
+        >>> waveform = np.random.random([10, 20])  # 1 sample
+        >>> output = audio.SpectralCentroid(44100)(waveform)
+        >>> print(output.shape, output.dtype)
+        (10, 1, 1) float64
 
     Tutorial Examples:
         - `Illustration of audio transforms
@@ -2751,10 +3239,21 @@ class Spectrogram(TensorOperation):
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.audio as audio
         >>>
-        >>> waveform = np.random.random([5, 10, 20])
+        >>> # Use the transform in dataset pipeline mode
+        >>> waveform = np.random.random([5, 10, 20])  # 5 samples
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.Spectrogram()]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["audio"].shape, item["audio"].dtype)
+        ...     break
+        (10, 201, 1) float64
+        >>>
+        >>> # Use the transform in eager mode
+        >>> waveform = np.random.random([10, 20])  # 1 sample
+        >>> output = audio.Spectrogram()(waveform)
+        >>> print(output.shape, output.dtype)
+        (10, 201, 1) float64
 
     Tutorial Examples:
         - `Illustration of audio transforms
@@ -2818,10 +3317,21 @@ class TimeMasking(AudioTensorOperation):
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.audio as audio
         >>>
-        >>> waveform = np.random.random([4, 3, 2])
+        >>> # Use the transform in dataset pipeline mode
+        >>> waveform = np.random.random([5, 16, 2])  # 5 samples
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.TimeMasking(time_mask_param=1)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["audio"].shape, item["audio"].dtype)
+        ...     break
+        (16, 2) float64
+        >>>
+        >>> # Use the transform in eager mode
+        >>> waveform = np.random.random([16, 2])  # 1 sample
+        >>> output = audio.TimeMasking(time_mask_param=1)(waveform)
+        >>> print(output.shape, output.dtype)
+        (16, 2) float64
 
     Tutorial Examples:
         - `Illustration of audio transforms
@@ -2876,10 +3386,21 @@ class TimeStretch(AudioTensorOperation):
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.audio as audio
         >>>
-        >>> waveform = np.random.random([44, 10, 2])
+        >>> # Use the transform in dataset pipeline mode
+        >>> waveform = np.random.random([5, 16, 8, 2])  # 5 samples
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.TimeStretch()]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["audio"].shape, item["audio"].dtype)
+        ...     break
+        (1, 16, 8, 2) float64
+        >>>
+        >>> # Use the transform in eager mode
+        >>> waveform = np.random.random([16, 8, 2])  # 1 sample
+        >>> output = audio.TimeStretch()(waveform)
+        >>> print(output.shape, output.dtype)
+        (1, 16, 8, 2) float64
 
     Tutorial Examples:
         - `Illustration of audio transforms
@@ -2910,7 +3431,7 @@ class TrebleBiquad(AudioTensorOperation):
     """
     Design a treble tone-control effect.
 
-    Similar to `SoX <http://sox.sourceforge.net/sox.html>`_ implementation.
+    Similar to `SoX <https://sourceforge.net/projects/sox/>`_ implementation.
 
     Args:
         sample_rate (int): Sampling rate (in Hz), which can't be zero.
@@ -2936,10 +3457,21 @@ class TrebleBiquad(AudioTensorOperation):
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.audio as audio
         >>>
-        >>> waveform = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.float64)
+        >>> # Use the transform in dataset pipeline mode
+        >>> waveform = np.random.random([5, 20])  # 5 samples
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.TrebleBiquad(44100, 200.0)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["audio"].shape, item["audio"].dtype)
+        ...     break
+        (20,) float64
+        >>>
+        >>> # Use the transform in eager mode
+        >>> waveform = np.random.random([20])  # 1 sample
+        >>> output = audio.TrebleBiquad(44100, 200.0)(waveform)
+        >>> print(output.shape, output.dtype)
+        (20,) float64
 
     Tutorial Examples:
         - `Illustration of audio transforms
@@ -2964,7 +3496,7 @@ class Vad(AudioTensorOperation):
 
     Attempt to trim silence and quiet background sounds from the ends of recordings of speech.
 
-    Similar to `SoX <http://sox.sourceforge.net/sox.html>`_ implementation.
+    Similar to `SoX <https://sourceforge.net/projects/sox/>`_ implementation.
 
     Args:
         sample_rate (int): Sampling rate of audio signal.
@@ -3042,10 +3574,21 @@ class Vad(AudioTensorOperation):
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.audio as audio
         >>>
-        >>> waveform = np.random.random([2, 1000])
+        >>> # Use the transform in dataset pipeline mode
+        >>> waveform = np.random.random([5, 1000])  # 5 samples
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.Vad(sample_rate=600)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["audio"].shape, item["audio"].dtype)
+        ...     break
+        (660,) float64
+        >>>
+        >>> # Use the transform in eager mode
+        >>> waveform = np.random.random([1000])  # 1 sample
+        >>> output = audio.Vad(sample_rate=600)(waveform)
+        >>> print(output.shape, output.dtype)
+        (660,) float64
 
     Tutorial Examples:
         - `Illustration of audio transforms
@@ -3115,12 +3658,22 @@ class Vol(AudioTensorOperation):
         >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.audio as audio
-        >>> from mindspore.dataset.audio import GainType
         >>>
-        >>> waveform = np.random.random([20, 30])
+        >>> # Use the transform in dataset pipeline mode
+        >>> waveform = np.random.random([5, 30])  # 5 sample
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
-        >>> transforms = [audio.Vol(gain=10, gain_type=GainType.DB)]
+        >>> transforms = [audio.Vol(gain=10, gain_type=audio.GainType.DB)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["audio"].shape, item["audio"].dtype)
+        ...     break
+        (30,) float64
+        >>>
+        >>> # Use the transform in eager mode
+        >>> waveform = np.random.random([30])  # 1 sample
+        >>> output = audio.Vol(gain=10, gain_type=audio.GainType.DB)(waveform)
+        >>> print(output.shape, output.dtype)
+        (30,) float64
 
     Tutorial Examples:
         - `Illustration of audio transforms

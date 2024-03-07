@@ -40,7 +40,7 @@ from mindspore.ops.operations.nn_ops import ChannelShuffle
 from mindspore.ops.operations.nn_ops import TripletMarginLoss
 from mindspore.ops.operations._sequence_ops import TupleToTensor, TensorToTuple, ListToTensor
 from mindspore.common.api import _function_forbid_reuse
-from mindspore.ops.auto_generate import log_softmax, prelu, celu, fast_gelu, silu, elu, sigmoid, bias_add, relu6
+from mindspore.ops.auto_generate import log_softmax, prelu, celu, relu, fast_gelu, silu, elu, sigmoid, bias_add, relu6
 
 abs_ = P.Abs()
 add_ = P.Add()
@@ -2179,8 +2179,9 @@ def interpolate(input,
                 ori_i = new_length > 1 ? (new_i + 0.5) * ori_length / new_length - 0.5 : 0  # 'align_corners' = False
 
             Among them, :math:`ori\_length` and :math:`new\_length` represent the length of the Tensor before and after
-            transformation along the x-axis respectively; :math:`new_i` represents the coordinate of the i-th element
-            along the x-axis after transformation; :math:`ori_i` represents the corresponding coordinate of the original
+            transformation along the x-axis respectively; :math:`new\_i` represents the coordinate of the i-th element
+            along the x-axis after transformation; :math:`ori\_i` represents
+            the corresponding coordinate of the original
             data along the x-axis.
 
             This is only valid for ``'linear'``, ``'bilinear'``, or ``'bicubic'`` modes. Default: ``False`` .
@@ -2563,7 +2564,7 @@ def soft_margin_loss(input, target, reduction='mean'):
 def softmax(input, axis=-1, *, dtype=None):
     r"""
     Applies the Softmax operation to the input tensor on the specified axis.
-    Suppose a slice in the given axis, then for each element :math:`input_i`,
+    Suppose a slice in the given axis :math:`axis`, then for each element :math:`input_i`,
     the Softmax function is shown as follows:
 
     .. math::
@@ -2690,6 +2691,7 @@ def softshrink(x, lambd=0.5):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
         >>> from mindspore import Tensor
         >>> from mindspore import ops
         >>> import numpy as np
@@ -2883,11 +2885,12 @@ def dense(input, weight, bias=None):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore
         >>> from mindspore import Tensor, ops
-        >>> input = mindspore.Tensor([[-1., 1., 2.], [-3., -3., 1.]], mindspore.float32)
-        >>> weight = mindspore.Tensor([[-2., -2., -2.], [0., -1., 0.]], mindspore.float32)
-        >>> bias = mindspore.Tensor([0., 1.], mindspore.float32)
-        >>> output = mindspore.ops.dense(input, weight, bias)
+        >>> input = Tensor([[-1., 1., 2.], [-3., -3., 1.]], mindspore.float32)
+        >>> weight = Tensor([[-2., -2., -2.], [0., -1., 0.]], mindspore.float32)
+        >>> bias = Tensor([0., 1.], mindspore.float32)
+        >>> output = ops.dense(input, weight, bias)
         >>> print(output)
         [[-4.  0.]
          [10.  4.]]
@@ -3171,13 +3174,11 @@ def pad(input_x, padding, mode='constant', value=None):
             :math:`(\text{padding_left}, \text{padding_right})`;
 
             Example: to pad the last 2 dimensions of the input tensor, then use
-            :math:`(\text{padding_left}, \text{padding_right}`,
-            :math:`\text{padding_top}, \text{padding_bottom})`;
+            :math:`(\text{padding_left}, \text{padding_right}, \text{padding_top}, \text{padding_bottom})`;
 
             Example: to pad the last 3 dimensions, use
-            :math:`(\text{padding_left}, \text{padding_right}`,
-            :math:`\text{padding_top}, \text{padding_bottom}`,
-            :math:`\text{padding_front}, \text{padding_back})` and so on.
+            :math:`(\text{padding_left}, \text{padding_right}, \text{padding_top}, \text{padding_bottom},
+            \text{padding_front}, \text{padding_back})` and so on.
 
         mode (str, optional): Pad filling mode, ``'constant'`` , ``'reflect'`` , ``'replicate'``  or ``'circular'`` .
             Default: ``'constant'`` .
@@ -3290,49 +3291,6 @@ def pad(input_x, padding, mode='constant', value=None):
     if is_expand:
         out = out.squeeze(0)
     return out
-
-
-def relu(input):
-    r"""
-    Computes ReLU (Rectified Linear Unit activation function) of input tensors element-wise.
-
-    It returns :math:`\max(input,\  0)` element-wise. Specially, the neurons with the negative output
-    will be suppressed and the active neurons will stay the same.
-
-    .. math::
-
-        ReLU(input) = (input)^+ = \max(0, input)
-
-    ReLU Activation Function Graph:
-
-    .. image:: ../images/ReLU.png
-        :align: center
-
-    Args:
-        input (Tensor): The input Tensor.
-
-    Returns:
-        Tensor, has the same dtype and shape as `input`.
-
-    Raises:
-        TypeError: If dtype of `input` is not supported.
-        TypeError: If `input` is not a Tensor.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import numpy as np
-        >>> import mindspore
-        >>> from mindspore import Tensor, ops
-        >>> input = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
-        >>> output = ops.relu(input)
-        >>> print(output)
-        [[0. 4. 0.]
-         [2. 0. 9.]]
-    """
-    relu_ = _get_cache_prim(NN_OPS.ReLU)()
-    return relu_(input)
 
 
 def rrelu(input, lower=1.0 / 8, upper=1.0 / 3):
@@ -3613,7 +3571,7 @@ def nll_loss(inputs, target, weight=None, ignore_index=-100, reduction='mean', l
         \ell(x, t)=\left\{\begin{array}{ll}
         \sum_{n=1}^{N} \frac{1}{\sum_{n=1}^{N} w_{t n}} l_{n}, & \text { if reduction }=\text { 'mean', } \\
         \sum_{n=1}^{N} l_{n}, & \text { if reduction }=\text { 'sum' }
-        \end{array}\right
+        \end{array}\right.
 
     Args:
         inputs (Tensor): :math:`(N, C)` where `C = number of classes` or :math:`(N, C, H, W)`
@@ -3764,6 +3722,7 @@ def l1_loss(input, target, reduction='mean'):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore as ms
         >>> from mindspore import Tensor, ops
         >>> from mindspore import dtype as mstype
         >>> x = ms.Tensor([[1, 2, 3], [4, 5, 6]], mstype.float32)
@@ -4421,7 +4380,7 @@ def grid_sample(input, grid, mode='bilinear', padding_mode='zeros', align_corner
 
         padding_mode (str): An optional string specifying the pad method. The optional values are "zeros", "border" or
             "reflection". Default: ``'zeros'`` .
-        align_corners (bool): An optional bool. If set to `True`, the extrema (-1 and 1) are considered as referring to
+        align_corners (bool): If set to `True`, the extrema (-1 and 1) are considered as referring to
             the center points of the input’s corner pixels. If set to `False`, they are instead considered as referring
             to the corner points of the input’s corner pixels, making the sampling more resolution agnostic. Default:
             ``False`` .
@@ -4496,8 +4455,8 @@ def ctc_loss(log_probs, targets, input_lengths, target_lengths, blank=0, reducti
         log_probs (Tensor): A tensor of shape :math:`(T, N, C)`, where T is input length, N is batch size and C is
             number of classes (including blank).
         targets (Tensor): Target sequences. A tensor of shape :math:`(N, S)`, where S is max target length.
-        input_lengths (Union(tuple, Tensor)): Lengths of the input. A tuple or Tensor of shape(N).
-        target_lengths (Union(tuple, Tensor)): Lengths of the target. A tuple or Tensor of shape(N).
+        input_lengths (Union(tuple, Tensor)): Lengths of the input. A tuple or Tensor of shape :math:`(N)`.
+        target_lengths (Union(tuple, Tensor)): Lengths of the target. A tuple or Tensor of shape :math:`(N)`.
         blank (int, optional): The blank label. Default: ``0`` .
         reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
             ``'sum'`` . Default: ``'mean'`` .
@@ -4962,21 +4921,25 @@ def conv1d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
     , :math:`weight` is the convolution kernel value and :math:`X` represents the input feature map.
 
     Here are the indices' meanings:
-    - :math:`i` corresponds to the batch number, ranging from 0 to N-1, where N is the batch size of the input.
 
-    - :math:`j` corresponds to the output channel, ranging from 0 to C_{out}-1, where C_{out} is the number of
+    - :math:`i` corresponds to the batch number, the range is :math:`[0, N-1]`,
+      where :math:`N` is the batch size of the input.
+
+    - :math:`j` corresponds to the output channel, ranging from :math:`[0, C_{out}-1]`,
+      where :math:`C_{out}` is the number of
       output channels, which is also equal to the number of kernels.
 
-    - :math:`k` corresponds to the input channel, ranging from 0 to C_{in}-1, where C_{in} is the number of
+    - :math:`k` corresponds to the input channel, ranging from :math:`[0, C_{in}-1]`,
+      where :math:`C_{in}` is the number of
       input channels, which is also equal to the number of channels in the convolutional kernels.
 
-    Therefore, in the above formula, :math:`{bias}(C_{out_j})` represents the bias of the :math:`j`-th
-    output channel, :math:`{weight}(C_{out_j}, k)` represents the slice of the :math:`j`-th convolutional
+    Therefore, in the above formula, :math:`{bias}(C_{\text{out}_j})` represents the bias of the :math:`j`-th
+    output channel, :math:`{weight}(C_{\text{out}_j}, k)` represents the slice of the :math:`j`-th convolutional
     kernel in the :math:`k`-th channel, and :math:`{X}(N_i, k)` represents the slice of the :math:`k`-th input
     channel in the :math:`i`-th batch of the input feature map.
 
-    The shape of the convolutional kernel is given by :math:`(kernel\_size)`,
-    where :math:`kernel\_size` is the width of the kernel.
+    The shape of the convolutional kernel is given by :math:`(\text{kernel_size})`,
+    where :math:`\text{kernel_size}` is the width of the kernel.
     If we consider the input and output channels as well as the `group` parameter, the complete kernel shape
     will be :math:`(C_{out}, C_{in} / \text{group}, \text{kernel_size})`,
     where `group` is the number of groups dividing `x`'s input channel when applying group convolution.
@@ -5047,7 +5010,7 @@ def conv1d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
         >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.arange(64).reshape((4, 4, 4)), mindspore.float32)
         >>> weight = Tensor(np.arange(8).reshape((2, 2, 2)), mindspore.float32)
-        >>> bias = Tensor([-0.12345, 2.7683], ms.float32)
+        >>> bias = Tensor([-0.12345, 2.7683], mindspore.float32)
         >>> output = ops.conv1d(x, weight, pad_mode='pad', padding=(1,), bias=bias, groups=2)
         >>> print(output.shape)
         (4, 2, 5)
@@ -5110,12 +5073,15 @@ def conv2d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
     , :math:`weight` is the convolution kernel value and :math:`X` represents the input feature map.
 
     Here are the indices' meanings:
-    - :math:`i` corresponds to the batch number, ranging from 0 to N-1, where N is the batch size of the input.
 
-    - :math:`j` corresponds to the output channel, ranging from 0 to C_{out}-1, where C_{out} is the number of
-      output channels, which is also equal to the number of kernels.
+    - :math:`i` corresponds to the batch number, the range is :math:`[0, N-1]`,
+      where :math:`N` is the batch size of the input.
 
-    - :math:`k` corresponds to the input channel, ranging from 0 to C_{in}-1, where C_{in} is the number of
+    - :math:`j` corresponds to the output channel, the range is :math:`[0, C_{out}-1]`,
+      where :math:`C_{out}` is the number of output channels, which is also equal to the number of kernels.
+
+    - :math:`k` corresponds to the input channel, the range is :math:`[0, C_{in}-1]`,
+      where :math:`C_{in}` is the number of
       input channels, which is also equal to the number of channels in the convolutional kernels.
 
     Therefore, in the above formula, :math:`{bias}(C_{out_j})` represents the bias of the :math:`j`-th
@@ -5123,8 +5089,9 @@ def conv2d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
     kernel in the :math:`k`-th channel, and :math:`{X}(N_i, k)` represents the slice of the :math:`k`-th input
     channel in the :math:`i`-th batch of the input feature map.
 
-    The shape of the convolutional kernel is given by :math:`(kernel\_size[0], kernel\_size[1])`,
-    where :math:`kernel\_size[0]` and :math:`kernel\_size[1]` are the height and width of the kernel, respectively.
+    The shape of the convolutional kernel is given by :math:`(\text{kernel_size[0]}, \text{kernel_size[1]})`,
+    where :math:`\text{kernel_size[0]}` and :math:`\text{kernel_size[1]}` are the height and width of the kernel,
+    respectively.
     If we consider the input and output channels as well as the `group` parameter, the complete kernel shape
     will be :math:`(C_{out}, C_{in} / \text{group}, \text{kernel_size[0]}, \text{kernel_size[1]})`,
     where `group` is the number of groups dividing `x`'s input channel when applying group convolution.
@@ -5180,7 +5147,7 @@ def conv2d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
         TypeError: If `stride`, `padding` or `dilation` is neither an int nor a tuple.
         TypeError: `groups` is not an int.
         TypeError: If `bias` is not a Tensor.
-        ValueError: If  the shape of `bias` is not :math:`C_{out}` .
+        ValueError: If  the shape of `bias` is not :math:`(C_{out})` .
         ValueError: If `stride` or `dilation` is less than 1.
         ValueError: If `pad_mode` is not one of 'same', 'valid' or 'pad'.
         ValueError: If `padding` is a tuple/list whose length is not equal to 2.
@@ -5629,7 +5596,7 @@ def conv3d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
     r"""
     Applies a 3D convolution over an input tensor. The input tensor is typically of
     shape :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})`, where :math:`N` is batch size, :math:`C`
-    is channel number, :math:`D` is feature depth, :math:`H` is feature height, :math:`W` is feature width.
+    is channel number, :math:`D, H, W` are the depth, height and width of the feature graph, respectively.
 
     The output is calculated based on formula:
 
@@ -5643,22 +5610,26 @@ def conv3d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
     , :math:`weight` is the convolution kernel value and :math:`X` represents the input feature map.
 
     Here are the indices' meanings:
-    - :math:`i` corresponds to the batch number, ranging from 0 to N-1, where N is the batch size of the input.
 
-    - :math:`j` corresponds to the output channel, ranging from 0 to C_{out}-1, where C_{out} is the number of
+    - :math:`i` corresponds to the batch number, the range is :math:`[0, N-1]`,
+      where :math:`N` is the batch size of the input.
+
+    - :math:`j` corresponds to the output channel, the range is :math:`[0, C_{out}-1]`,
+      where :math:`C_{out}` is the number of
       output channels, which is also equal to the number of kernels.
 
-    - :math:`k` corresponds to the input channel, ranging from 0 to C_{in}-1, where C_{in} is the number of
+    - :math:`k` corresponds to the input channel, the range is :math:`[0, C_{in}-1]`,
+      where :math:`C_{in}` is the number of
       input channels, which is also equal to the number of channels in the convolutional kernels.
 
-    Therefore, in the above formula, :math:`{bias}(C_{out_j})` represents the bias of the :math:`j`-th
-    output channel, :math:`{weight}(C_{out_j}, k)` represents the slice of the :math:`j`-th convolutional
+    Therefore, in the above formula, :math:`{bias}(C_{\text{out}_j})` represents the bias of the :math:`j`-th
+    output channel, :math:`{weight}(C_{\text{out}_j}, k)` represents the slice of the :math:`j`-th convolutional
     kernel in the :math:`k`-th channel, and :math:`{X}(N_i, k)` represents the slice of the :math:`k`-th input
     channel in the :math:`i`-th batch of the input feature map.
 
     The shape of the convolutional kernel is given by
     :math:`(\text{kernel_size[0]}, \text{kernel_size[1]}, \text{kernel_size[2]})`
-    where :math:`kernel\_size[0]` , :math:`kernel\_size[1]` and :math:`kernel\_size[2]` are the depth,
+    where :math:`\text{kernel_size[0]}` , :math:`\text{kernel_size[1]}` and :math:`\text{kernel_size[2]}` are the depth,
     height and width of the kernel, respectively.
     If we consider the input and output channels as well as the `group` parameter, the complete kernel shape
     will be :math:`(C_{out}, C_{in} / \text{group}, \text{kernel_size[0]},
@@ -5669,8 +5640,8 @@ def conv3d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
     <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_.
 
     Note:
-        1. On Ascend platform, `groups = 1` must be satisfied.
-        2. On Ascend dilation on depth only supports the case of 1.
+        1. On Ascend platform, :math:`groups = 1` must be satisfied.
+        2. On Ascend platform, :math:`dilation=1` must be satisfied.
 
     Args:
         input (Tensor): Tensor of shape :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})`.
@@ -5751,7 +5722,7 @@ def conv3d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
         TypeError: If `out_channel` or `groups` is not an int.
         TypeError: If `stride`, `padding` or `dilation` is neither an int nor a tuple.
         TypeError: If `bias` is not a Tensor.
-        ValueError: If the shape of `bias` is not :math:`C_{out}`.
+        ValueError: If the shape of `bias` is not :math:`(C_{out})`.
         ValueError: If `stride` or `dilation` is less than 1.
         ValueError: If `pad_mode` is not one of 'same', 'valid' or 'pad'.
         ValueError: If `padding` is a tuple or list whose length is not equal to 3.

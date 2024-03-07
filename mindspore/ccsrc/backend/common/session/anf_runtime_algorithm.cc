@@ -1672,6 +1672,27 @@ bool AnfRuntimeAlgorithm::IsNeedUpdateShapeAndTypeAfterLaunch(const AnfNodePtr &
   return kernel_mod->IsNeedUpdateOutputShapeAndSize();
 }
 
+bool AnfRuntimeAlgorithm::HasComputedDependInputNode(const CNodePtr &kernel) {
+  MS_EXCEPTION_IF_NULL(kernel);
+  auto real_input_num = common::AnfAlgo::GetInputTensorNum(kernel);
+
+  for (size_t i = 0; i < real_input_num; i++) {
+    const auto &input_node = common::AnfAlgo::GetInputNode(kernel, i);
+    MS_EXCEPTION_IF_NULL(input_node);
+    auto real_input_node = common::AnfAlgo::VisitKernelWithReturnType(input_node, 0, false);
+    MS_EXCEPTION_IF_NULL(real_input_node.first);
+    if (!real_input_node.first->isa<CNode>()) {
+      continue;
+    }
+
+    auto kernel_mod = AnfAlgo::GetKernelMod(real_input_node.first);
+    if (kernel_mod && kernel_mod->IsNeedUpdateOutputShapeAndSize()) {
+      return true;
+    }
+  }
+  return false;
+}
+
 void AnfRuntimeAlgorithm::UpdateOutputAddrSize(device::KernelInfo const *kernel_info, const CNodePtr &kernel) {
   MS_EXCEPTION_IF_NULL(kernel_info);
   MS_EXCEPTION_IF_NULL(kernel);
@@ -2415,7 +2436,8 @@ abstract::AbstractBasePtr AnfRuntimeAlgorithm::GetNodeAbstractByIndex(const AnfN
   }
   return elements[index];
 }
-ValueNodePtr AnfRuntimeAlgorithm::CreateTypeIdValueNodeToGraph(const FuncGraphPtr &func_graph, TypeId data_type) {
+
+ValueNodePtr AnfRuntimeAlgorithm::CreateTypeIdValueNodeToKernelGraph(const FuncGraphPtr &func_graph, TypeId data_type) {
   auto type_id_value_node = NewValueNode(static_cast<int64_t>(data_type));
   auto type_id_value = std::make_shared<Int64Imm>(static_cast<int64_t>(data_type));
   type_id_value_node->set_abstract(type_id_value->ToAbstract());
@@ -2423,6 +2445,13 @@ ValueNodePtr AnfRuntimeAlgorithm::CreateTypeIdValueNodeToGraph(const FuncGraphPt
   MS_EXCEPTION_IF_NULL(kernel_graph);
   type_id_value_node = kernel_graph->NewValueNode(type_id_value_node);
   kernel_graph->AddValueNodeToGraph(type_id_value_node);
+  return type_id_value_node;
+}
+
+ValueNodePtr AnfRuntimeAlgorithm::CreateTypeIdValueNodeToFuncGraph(const FuncGraphPtr &func_graph, TypeId data_type) {
+  auto type_id_value_node = NewValueNode(static_cast<int64_t>(data_type));
+  auto type_id_value = std::make_shared<Int64Imm>(static_cast<int64_t>(data_type));
+  type_id_value_node->set_abstract(type_id_value->ToAbstract());
   return type_id_value_node;
 }
 }  // namespace mindspore::session

@@ -18,7 +18,7 @@
 #include <memory>
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 #include "kernel/pyboost/op_register.h"
-#include "kernel/pyboost/py_boost_utils.h"
+#include "kernel/pyboost/pyboost_utils.h"
 #include "plugin/device/ascend/kernel/pyboost/aclnn_utils.h"
 #include "transform/acl_ir/acl_helper.h"
 #include "plugin/device/ascend/kernel/acl/acl_kernel_mod.h"
@@ -70,13 +70,12 @@ void IdentityCustomizeCallWithoutContigous(const std::shared_ptr<OpRunner> &op, 
            ->Init(prim::kPrimIdentity, input_kernel_tensors, output_kernel_tensors)) {
       MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#Initialize acl kernel op[Identity] failed.";
     }
-    identity_kernel->CreateAclConverter();
+    identity_kernel->RefreshAclConverter(input_kernel_tensors);
     identity_kernel->SetDeviceInfo({input_x_address->format()}, {launch_device_address->format()},
                                    {input_x_address->type_id()}, {launch_device_address->type_id()});
 
     identity_kernel->PackageInput(kIndex0, input_x_address->format(), &input_shape);
     identity_kernel->PackageOutput(kIndex0, output_shape);
-    identity_kernel->SetNeedConvertHostTensor(true);
 
     if (identity_kernel->Resize(input_kernel_tensors, output_kernel_tensors) != KRET_OK) {
       MS_LOG(EXCEPTION) << "Kernel identity resize failed";
@@ -119,13 +118,12 @@ void IdentityCustomizeCall(const std::shared_ptr<OpRunner> &op, const TensorPtr 
            ->Init(prim::kPrimIdentity, input_kernel_tensors, output_kernel_tensors)) {
       MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#Initialize acl kernel op[Identity] failed.";
     }
-    identity_kernel->CreateAclConverter();
+    identity_kernel->RefreshAclConverter(input_kernel_tensors);
     identity_kernel->SetDeviceInfo({input_x_address->format()}, {output_address->format()},
                                    {input_x_address->type_id()}, {output_address->type_id()});
 
     identity_kernel->PackageInput(kIndex0, input_x_address->format(), &input_shape);
     identity_kernel->PackageOutput(kIndex0, output_shape);
-    identity_kernel->SetNeedConvertHostTensor(true);
 
     if (identity_kernel->Resize(input_kernel_tensors, output_kernel_tensors) != KRET_OK) {
       MS_LOG(EXCEPTION) << "Kernel identity resize failed";
@@ -145,8 +143,8 @@ void IdentityCustomizeCall(const std::shared_ptr<OpRunner> &op, const TensorPtr 
 tensor::TensorPtr IdentityAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &x_tensor) {
   OpRunner::InferOpOutput(op, x_tensor);
 
-  PyBoostUtils::PrepareOpInputs(op->device_context(), x_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->outputs());
+  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), x_tensor);
+  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
   FillHostInfoForAclOp(x_tensor);
   FillHostInfoForAclOp(op->output(0));
 

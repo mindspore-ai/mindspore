@@ -24,6 +24,7 @@ mindspore.scipy.linalg
     mindspore.scipy.linalg.inv
     mindspore.scipy.linalg.lu
     mindspore.scipy.linalg.lu_factor
+    mindspore.scipy.linalg.solve_triangular
 
 mindspore.scipy.optimize
 ------------------------

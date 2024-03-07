@@ -94,6 +94,9 @@ COMMON_EXPORT std::vector<ShapeVector> BaseShapeToShapeVector(const abstract::Ba
 COMMON_EXPORT ShapeVector BaseShapeToShape(const abstract::BaseShapePtr &base_shape);
 
 COMMON_EXPORT ValuePtr UpdateValueByAttrDataType(const ValuePtr &value, const std::string &attr_data_type);
+
+COMMON_EXPORT TypeId ConvertTypeForTensorsOrScalars(const TypeId &current, const TypeId &other);
+COMMON_EXPORT TypeId ConvertTypeBetweenTensorAndScalar(const TypeId &tensor_type_id, const TypeId &scalar_type_id);
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CCSRC_INCLUDE_COMMON_UTILS_CONVERT_UTILS_H_

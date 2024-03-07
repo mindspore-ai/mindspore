@@ -114,9 +114,7 @@ void ModifyOneFuncGraph(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *
   }
 }
 
-bool ModifyGraphGeneratedByMindIR(const ResourcePtr &resource) {
-  MS_EXCEPTION_IF_NULL(resource);
-  const auto &func_graph = resource->func_graph();
+void ModifyGraphs(const FuncGraphPtr &func_graph) {
   std::set<FuncGraphPtr> func_graph_set{};
   std::set<FuncGraphPtr> func_graph_modified{};
   func_graph_set.insert(func_graph);
@@ -129,6 +127,12 @@ bool ModifyGraphGeneratedByMindIR(const ResourcePtr &resource) {
     (void)func_graph_set.erase(fg);
     (void)func_graph_modified.insert(fg);
   }
+}
+
+bool ModifyGraphGeneratedByMindIR(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  const auto &func_graph = resource->func_graph();
+  ModifyGraphs(func_graph);
   return true;
 }
 }  // namespace pipeline

@@ -19,12 +19,12 @@
 #include <algorithm>
 #include <math.h>
 
-#include "cpu_kernel_utils.h"
+#include "context/inc/cpu_kernel_utils.h"
 #include "cpu_types.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
-#include "kernel_log.h"
-#include "status.h"
+#include "inc/kernel_log.h"
+#include "context/common/status.h"
 
 namespace {
 const char *kPdistGrad = "PdistGrad";

@@ -16,7 +16,7 @@
 
 #include "plugin/device/cpu/kernel/pyboost/pyboost_cpu_kernel_extra_func.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "kernel/pyboost/py_boost_utils.h"
+#include "kernel/pyboost/pyboost_utils.h"
 
 namespace mindspore {
 namespace kernel {

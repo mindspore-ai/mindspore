@@ -73,6 +73,9 @@ class _Bool(int):
     def __repr__(self):
         return repr(self.value)
 
+    def __ms_mutable_bool__(self):
+        pass
+
 
 def _check_element_type(value):
     """Check if all the elements are Tensor."""

@@ -20,7 +20,7 @@
 #include <securec.h>
 #include "utils/philox_random.h"
 #include "unsupported/Eigen/CXX11/Tensor"
-#include "common/kernel_log.h"
+#include "inc/kernel_log.h"
 
 namespace aicpu {
 namespace random {
@@ -152,6 +152,36 @@ uint64_t GetCpuKernelRandomStates(const CpuKernelContext &ctx, const uint32_t &c
   states_ptr[0] = static_cast<uint64_t>(seed_rng());
 
   return final_seed;
+}
+uint64_t MaxNum(uint64_t a, uint64_t b, uint64_t c) {
+  uint64_t res = 0;
+  res = a > b ? a : b;
+  res = res > c ? res : c;
+  return res;
+}
+
+void NormalizeShape(std::vector<uint64_t> *shape, uint64_t size) {
+  for (auto i = (*shape).size(); i < size; ++i) {
+    (void)(*shape).insert((*shape).begin(), 1);
+  }
+}
+
+uint64_t InferOutputShape(std::vector<uint64_t> *out_shape, std::vector<uint64_t> *shape,
+                          std::vector<uint64_t> *mean_shape, std::vector<uint64_t> *stddev_shape, uint64_t *count) {
+  uint64_t size = MaxNum((*shape).size(), (*mean_shape).size(), (*stddev_shape).size());
+  NormalizeShape(shape, size);
+  NormalizeShape(mean_shape, size);
+  NormalizeShape(stddev_shape, size);
+  for (uint64_t i = 0; i < size; ++i) {
+    uint64_t shape_n = MaxNum((*shape)[i], (*mean_shape)[i], (*stddev_shape)[i]);
+    if (((*shape)[i] != 1 && (*shape)[i] != shape_n) || ((*mean_shape)[i] != 1 && (*mean_shape)[i] != shape_n) ||
+        ((*stddev_shape)[i] != 1 && (*stddev_shape)[i] != shape_n)) {
+      return 0;
+    }
+    (*out_shape).push_back(shape_n);
+    (*count) *= shape_n;
+  }
+  return 1;
 }
 }  // namespace random
 }  // namespace aicpu

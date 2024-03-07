@@ -26,6 +26,7 @@ namespace mindspore {
 namespace kernel {
 namespace {
 using complex64 = std::complex<float>;
+using complex128 = std::complex<double>;
 constexpr size_t kOutputNum = 1;
 }  // namespace
 
@@ -55,19 +56,29 @@ bool RealMakeTupleCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &
                                              const std::vector<KernelTensor *> &,
                                              const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
-  T *output_addr = GetDeviceAddress<T>(outputs, 0);
+  auto elem_size = inputs[0]->size();
+  for (size_t i = 1; i < inputs.size(); ++i) {
+    auto cur_input_size = inputs[i]->size();
+    if (elem_size != cur_input_size) {
+      MS_LOG(WARNING) << "For " << kernel_name_
+                      << ", element size is not match, skip launch, error may raise for latter memory use.";
+      return true;
+    }
+  }
 
-  size_t offset = 0;
+  if (elem_size == 0) {
+    return true;
+  }
+
+  size_t elem_offset = (elem_size / sizeof(T));
+  T *output_addr = GetDeviceAddress<T>(outputs, 0);
   for (size_t i = 0; i < inputs.size(); ++i) {
     T *input_addr = GetDeviceAddress<T>(inputs, i);
-    auto input_size = inputs[i]->size();
-    if (input_size != 0) {
-      auto cp_ret = memcpy_s(output_addr + offset, input_size, input_addr, input_size);
-      if (cp_ret != EOK) {
-        MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", memcpy error, errorno: " << cp_ret;
-      }
-      offset += (input_size / sizeof(T));
+    auto cp_ret = memcpy_s(output_addr, elem_size, input_addr, elem_size);
+    if (cp_ret != EOK) {
+      MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", memcpy error, errorno: " << cp_ret;
     }
+    output_addr += elem_offset;
   }
   return true;
 }
@@ -120,6 +131,16 @@ std::vector<std::pair<KernelAttr, RealMakeTupleCpuKernelMod::RealMakeTupleFunc>>
     &RealMakeTupleCpuKernelMod::LaunchKernel<complex64>},
    {KernelAttr()
       .AddAllSameAttr(true)
+      .AddInputAttr(kObjectTypeNumber, kNumberTypeComplex128)
+      .AddOutputAttr(kObjectTypeTuple, kNumberTypeComplex128),
+    &RealMakeTupleCpuKernelMod::LaunchKernel<complex128>},
+   {KernelAttr()
+      .AddAllSameAttr(true)
+      .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+      .AddOutputAttr(kObjectTypeTuple, kNumberTypeBool),
+    &RealMakeTupleCpuKernelMod::LaunchKernel<bool>},
+   {KernelAttr()
+      .AddAllSameAttr(true)
       .AddInputAttr(kNumberTypeFloat32)
       .AddOutputAttr(kObjectTypeTuple, kNumberTypeFloat32),
     &RealMakeTupleCpuKernelMod::LaunchKernel<float>},
@@ -141,13 +162,20 @@ std::vector<std::pair<KernelAttr, RealMakeTupleCpuKernelMod::RealMakeTupleFunc>>
     &RealMakeTupleCpuKernelMod::LaunchKernel<complex64>},
    {KernelAttr()
       .AddAllSameAttr(true)
+      .AddInputAttr(kNumberTypeComplex128)
+      .AddOutputAttr(kObjectTypeTuple, kNumberTypeComplex128),
+    &RealMakeTupleCpuKernelMod::LaunchKernel<complex128>},
+   {KernelAttr()
+      .AddAllSameAttr(true)
       .AddInputAttr(kNumberTypeFloat64)
       .AddOutputAttr(kObjectTypeTuple, kNumberTypeFloat64),
     &RealMakeTupleCpuKernelMod::LaunchKernel<double>},
    {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kObjectTypeTuple, kNumberTypeInt32),
     &RealMakeTupleCpuKernelMod::LaunchKernel<int>},
    {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kObjectTypeTuple, kNumberTypeInt64),
-    &RealMakeTupleCpuKernelMod::LaunchKernel<int64_t>}};
+    &RealMakeTupleCpuKernelMod::LaunchKernel<int64_t>},
+   {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeBool).AddOutputAttr(kObjectTypeTuple, kNumberTypeBool),
+    &RealMakeTupleCpuKernelMod::LaunchKernel<bool>}};
 
 std::vector<KernelAttr> RealMakeTupleCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;

@@ -154,6 +154,15 @@ inline bool IsValueSequence(const AnfNodePtr &node) {
 bool IsCellReuseForwardGraph(const FuncGraphPtr &graph);
 FuncGraphPtr GetCellReuseBackwardGraph(const FuncGraphPtr &forward_graph);
 bool IsCommunicationOp(const PrimitivePtr &prim);
+
+inline void SetReserved(const FuncGraphPtr &root) {
+  // Keep all func graph for parallel before save result.
+  root->set_reserved(true);
+  for (auto &fg : root->func_graphs_used_total()) {
+    MS_EXCEPTION_IF_NULL(fg);
+    fg->set_reserved(true);
+  }
+}
 }  // namespace parallel
 }  // namespace mindspore
 

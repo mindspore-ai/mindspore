@@ -196,6 +196,7 @@ enum SubModuleId : int {
   SM_RUNTIME_FRAMEWORK,  // Runtime framework
   SM_GE,                 // GraphEngine
   SM_API,                // MindAPI
+  SM_SYMBOLIC_SHAPE,     // symbolic shape
   NUM_SUBMODUES          // number of submodules
 };
 

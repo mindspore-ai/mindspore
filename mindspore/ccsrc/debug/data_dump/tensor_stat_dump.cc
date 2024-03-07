@@ -16,8 +16,6 @@
 
 #include "include/backend/debug/data_dump/tensor_stat_dump.h"
 
-#include <memory>
-#include <map>
 #include "include/common/debug/common.h"
 #include "debug/debug_services.h"
 #include "include/backend/debug/debugger/debugger.h"

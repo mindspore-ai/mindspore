@@ -21,8 +21,8 @@
 #include <algorithm>
 
 #include "cpu_types.h"
-#include "common/kernel_log.h"
-#include "cpu_kernel/common/status.h"
+#include "inc/kernel_log.h"
+#include "context/common/status.h"
 #include "unsupported/Eigen/CXX11/Tensor"
 
 namespace {

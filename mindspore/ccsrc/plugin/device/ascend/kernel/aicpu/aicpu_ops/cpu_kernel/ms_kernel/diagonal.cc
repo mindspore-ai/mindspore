@@ -16,8 +16,8 @@
 
 #include "diagonal.h"
 
-#include "cpu_kernel_utils.h"
-#include "kernel_log.h"
+#include "context/inc/cpu_kernel_utils.h"
+#include "inc/kernel_log.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 #define N2 2

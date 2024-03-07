@@ -86,7 +86,7 @@ PYBIND_REGISTER(ConfigManager, 0, ([](const py::module *m) {
 
 PYBIND_REGISTER(Tensor, 0, ([](const py::module *m) {
                   (void)py::class_<Tensor, std::shared_ptr<Tensor>>(*m, "Tensor", py::buffer_protocol())
-                    .def(py::init([](const py::array &arr) {
+                    .def(py::init([](py::array arr) {
                       std::shared_ptr<Tensor> out;
                       THROW_IF_ERROR(Tensor::CreateFromNpArray(arr, &out));
                       return out;

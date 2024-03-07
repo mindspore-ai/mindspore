@@ -1,0 +1,27 @@
+exp:
+    description: |
+        Returns exponential of a tensor element-wise.
+
+        .. math::
+            out_i = e^{x_i}
+
+        Args:
+            input (Tensor): The input tensor. :math:`x` in the following formula.
+
+        Returns:
+            Tensor, has the same shape as the `input`.
+
+        Raises:
+            TypeError: If `input` is not a Tensor.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> input = Tensor(np.array([0.0, 1.0, 3.0]), mindspore.float32)
+            >>> output = ops.exp(input)
+            >>> print(output)
+            [ 1.        2.718282 20.085537]

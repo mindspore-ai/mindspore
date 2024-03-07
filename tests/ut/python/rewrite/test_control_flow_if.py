@@ -199,3 +199,29 @@ def test_flatten_if_control_flow():
     assert codes.count("x = self.abs4(x)") == 0
     assert codes.count("x = self.relu4(x)") == 1
     assert codes.count("x = self.abs5(x)") == 0
+
+
+class IfNet(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.relu = nn.ReLU()
+        self.abs = ops.Abs()
+
+    def construct(self, x, y):
+        if isinstance(y, ms.Tensor) and y.shape == (2, 2):
+            x = self.relu(x)
+        else:
+            x = self.abs(x)
+        return x
+
+def test_flatten_if_with_and():
+    """
+    Feature: Test flatten rewrite if control flow node.
+    Description: Test flatten if with and.
+    Expectation: The first node in and is flatten and other nodes are not flatten.
+    """
+    net = IfNet()
+    stree = SymbolTreeApi.create(net)
+    codes = stree.get_code()
+    assert codes.count("isinstance_var = isinstance(y, ms.Tensor)") == 1
+    assert codes.count("and_var = (isinstance_var and (y.shape == (2, 2)))") == 1

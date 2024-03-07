@@ -28,6 +28,7 @@
 #include "frontend/parallel/step_parallel_utils.h"
 #include "mindspore/core/ops/flash_attention_score.h"
 #include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/nn_ops.h"
 
 namespace mindspore {
 namespace parallel {
@@ -41,7 +42,6 @@ constexpr size_t kInputQKVSeqDimBNSD = 2;
 constexpr size_t kInputQKVHeadSizeDimBNSD = 3;
 constexpr char kInputLayoutBSH[] = "BSH";
 constexpr char kInputLayoutBNSD[] = "BNSD";
-int64_t SEED_NUM = 1;
 
 size_t GetNonMonadInputSize(const CNodePtr &cnode) {
   size_t cnode_non_monad_size = cnode->size();
@@ -53,145 +53,60 @@ size_t GetNonMonadInputSize(const CNodePtr &cnode) {
   return cnode_non_monad_size;
 }
 
-void ReplaceOneOp(const Operator &replace_op, const CNodePtr &reshape_node) {
-  FuncGraphPtr func_graph = reshape_node->func_graph();
-  MS_EXCEPTION_IF_NULL(func_graph);
-  FuncGraphManagerPtr manager = func_graph->manager();
-  if (manager == nullptr) {
-    MS_LOG(EXCEPTION) << "Failure:AddNode error since manager is nullptr";
-  }
-  std::string instance_name = CreateInstanceName(reshape_node, 0);
-  std::vector<AnfNodePtr> replace_input;
-  replace_input = ReplaceOpInput(replace_op, instance_name, reshape_node);
-  if (reshape_node->size() == RESHAPE_INPUT_SIZE) {
-    replace_input.push_back(reshape_node->input(kIndex2));
-  }
-  CNodePtr replace_node = func_graph->NewCNode(replace_input);
-  MS_EXCEPTION_IF_NULL(replace_node);
-  ScopePtr scope = reshape_node->scope();
-  MS_EXCEPTION_IF_NULL(scope);
-  replace_node->set_scope(scope);
-  replace_node->set_in_forward_flag(true);
-  replace_input[0]->set_scope(scope);
-  auto prim = GetValueNode<PrimitivePtr>(replace_node->input(0));
-  auto origin_prim = GetValueNode<PrimitivePtr>(reshape_node->input(0));
-  SetUserAttrs(origin_prim->attrs(), prim);
-  (void)manager->Replace(reshape_node, replace_node);
+int64_t NewSeedGeneration() {
+  static int64_t seed_generation = 0;
+  ++seed_generation;
+  return seed_generation;
 }
+}  // namespace
 
-PrimitivePtr GetDropoutGenMaskPrim(const CNodePtr &cnode) {
-  MS_EXCEPTION_IF_NULL(cnode);
-  if (cnode->size() != RESHAPE_INPUT_SIZE) {
-    MS_LOG(EXCEPTION) << "The size of Reshape cnode's inputs must be " << RESHAPE_INPUT_SIZE;
-  }
-
-  AnfNodePtr dropout_gen_mask = cnode->input(kIndex1);
-  MS_EXCEPTION_IF_NULL(dropout_gen_mask);
-  if (!dropout_gen_mask->isa<CNode>()) {
-    MS_LOG(INFO) << "Input is not a CNode, no need to replace";
-    return nullptr;
-  }
-
-  auto dropout_gen_mask_cnode = dropout_gen_mask->cast<CNodePtr>();
-  size_t cnode_non_monad_size = GetNonMonadInputSize(dropout_gen_mask_cnode);
-  if (cnode_non_monad_size != DROPOUT_GEN_MASK_CNODE_INPUT_SIZE) {
-    MS_LOG(EXCEPTION) << "The size of dropout gen mask cnode's inputs must be " << DROPOUT_GEN_MASK_CNODE_INPUT_SIZE;
-  }
-  if (!IsValueNode<Primitive>(dropout_gen_mask_cnode->input(0))) {
-    MS_LOG(EXCEPTION) << "The input[0] of dropout gen mask cnode is not primitive";
-  }
-
-  auto value_node = dropout_gen_mask_cnode->input(0)->cast<ValueNodePtr>();
-  MS_EXCEPTION_IF_NULL(value_node);
-  auto prim = value_node->value()->cast<PrimitivePtr>();
-  MS_EXCEPTION_IF_NULL(prim);
-  if (prim->name() != DROPOUT_GEN_MASK) {
-    MS_LOG(EXCEPTION) << "The primitive name is not DropoutGenMask";
-  }
-  return prim;
-}
-
-void SetGenMaskShape(const CNodePtr &cnode, const Shape &input_slice_shape) {
-  MS_EXCEPTION_IF_NULL(cnode);
-  if (cnode->size() != RESHAPE_INPUT_SIZE) {
-    MS_LOG(EXCEPTION) << "The size of reshape cnode's inputs must be " << RESHAPE_INPUT_SIZE;
-  }
-
-  AnfNodePtr dropout_gen_mask = cnode->input(kIndex1);
-  MS_EXCEPTION_IF_NULL(dropout_gen_mask);
-  if (!dropout_gen_mask->isa<CNode>()) {
-    MS_LOG(WARNING) << "The dropout do mask cnode's input[" << ops::kFlashAttentionScoreInputDropMaskIndex + 1
-                    << "] is not a cnode.";
+void FlashAttentionScoreInfo::UpdateDropoutGenMaskSliceShapeAndSeed(const CNodePtr &dropout_gen_mask_cnode) {
+  if (!IsPrimitiveCNode(dropout_gen_mask_cnode, prim::kPrimDropoutGenMask)) {
     return;
   }
 
-  auto dropout_gen_mask_cnode = dropout_gen_mask->cast<CNodePtr>();
+  // Update seed according rank_id for DropoutGenMask
+  PrimitivePtr prim = GetCNodePrimitive(dropout_gen_mask_cnode);
+  auto seed_0 = GetValue<int64_t>(prim->GetAttr(SEED0));
+  auto seed_1 = GetValue<int64_t>(prim->GetAttr(SEED1));
+  int64_t rank_id = g_device_manager->rank_index_in_stage();
+  int64_t seed_bias = 0;
+  // When seed and seed2 are both 0, ensure that the 0th card in each group has the same result
+  if (seed_0 == 0 && seed_1 == 0) {
+    seed_bias = NewSeedGeneration();
+  }
+  MS_EXCEPTION_IF_ZERO("repeated_calc_num_", repeated_calc_num_);
+  if (repeated_num_in_dev_matrix_right_) {
+    seed_bias += rank_id / repeated_calc_num_;
+  } else {
+    int64_t device_num = stage_device_size_;
+    MS_EXCEPTION_IF_ZERO("device_num", device_num);
+    seed_bias += rank_id % (device_num / repeated_calc_num_);
+  }
+  auto clone_prim = prim->Clone();
+  clone_prim->set_attr(SEED0, MakeValue<int64_t>(seed_0 + seed_bias));
+  clone_prim->set_attr(SEED1, MakeValue<int64_t>(seed_1 + seed_bias));
+  auto func_graph = dropout_gen_mask_cnode->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  auto manager = func_graph->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  manager->SetEdge(dropout_gen_mask_cnode, 0, NewValueNode(clone_prim)->cast<AnfNodePtr>());
+
+  // Update slice shape for DropoutGenMask and Reshape
+  Shape input_slice_shape = inputs_tensor_info_.at(ops::kFlashAttentionScoreInputDropMaskIndex).slice_shape();
+  constexpr int64_t BITS_NUM_PER_BYTE = 8;
+  input_slice_shape[input_slice_shape.size() - 1] *= BITS_NUM_PER_BYTE;  // Restores the shape of DropoutGenMask input
   size_t cnode_non_monad_size = GetNonMonadInputSize(dropout_gen_mask_cnode);
   if (cnode_non_monad_size != DROPOUT_GEN_MASK_CNODE_INPUT_SIZE) {
     MS_LOG(EXCEPTION) << "The size of dropout gen mask cnode's inputs must be " << DROPOUT_GEN_MASK_CNODE_INPUT_SIZE;
   }
-
-  if (!IsValueNode<ValueTuple>(dropout_gen_mask_cnode->input(1))) {
+  if (!IsValueNode<ValueTuple>(dropout_gen_mask_cnode->input(kIndex1))) {
     MS_LOG(EXCEPTION) << "The input[1] of dropout gen mask cnode is not ValueTuple.";
-  }
-
-  FuncGraphPtr func_graph = cnode->func_graph();
-  MS_EXCEPTION_IF_NULL(func_graph);
-  FuncGraphManagerPtr manager = func_graph->manager();
-  if (manager == nullptr) {
-    MS_LOG(EXCEPTION) << "Failure: AddNode error since manager is nullptr.";
   }
   ValuePtr new_shape = MakeValue(input_slice_shape);
   AnfNodePtr val = NewValueNode(new_shape);
   manager->SetEdge(dropout_gen_mask_cnode, kIndex1, val);
-}
-}  // namespace
-
-std::vector<Operator> FlashAttentionScoreInfo::GetDropoutGenMaskReplaceOp(const CNodePtr &cnode) {
-  std::vector<Operator> replace_ops;
-  MS_EXCEPTION_IF_NULL(cnode);
-  PrimitivePtr prim = GetDropoutGenMaskPrim(cnode);
-  if (prim == nullptr) {
-    return replace_ops;
-  }
-
-  if (inputs_tensor_info_.empty()) {
-    MS_LOG(EXCEPTION) << "The tensor info of FlashAttentionScore is empty";
-  }
-
-  if (cnode->size() != RESHAPE_INPUT_SIZE) {
-    MS_LOG(EXCEPTION) << "The size of reshape cnode's inputs must be " << RESHAPE_INPUT_SIZE;
-  }
-
-  auto attr = prim->attrs();
-  if ((attr.find(SEED0) == attr.end()) || (attr.find(SEED1) == attr.end())) {
-    MS_LOG(EXCEPTION) << "The attrs of dropout gen mask must be have seed0 and seed1";
-  }
-
-  Shape input_slice_shape = inputs_tensor_info_[ops::kFlashAttentionScoreInputDropMaskIndex].slice_shape();
-  input_slice_shape[input_slice_shape.size() - 1] *= 8;  // Restores the shape of DropoutGenMask input
-  auto seed_0 = GetValue<int64_t>(attr[SEED0]);
-  auto seed_1 = GetValue<int64_t>(attr[SEED1]);
-  if ((seed_0 == 0) && (seed_1 == 0) && (repeated_calc_num_ > 1)) {
-    seed_0 = SEED_NUM;
-    seed_1 = SEED_NUM;
-    SEED_NUM++;
-  } else {
-    SetGenMaskShape(cnode, input_slice_shape);
-    MS_LOG(DEBUG) << "The input slice shape dropout is " << ShapeToString(input_slice_shape);
-    return replace_ops;
-  }
-  ValuePtr new_shape = MakeValue(input_slice_shape);
-  Attr attr_0 = std::make_pair(SEED0, MakeValue(seed_0));
-  Attr attr_1 = std::make_pair(SEED1, MakeValue(seed_1));
-  OperatorAttrs attrs = {attr_0, attr_1};
-  Attr param_0 = std::make_pair(SHAPE, new_shape);
-  Attr param_1 = std::make_pair(KEEP_PROB, MakeValue(keep_prob_));
-  OperatorParams params = {std::make_pair(param_0, 1), std::make_pair(param_1, 2)};
-  OperatorArgs args = std::make_pair(attrs, params);
-  Operator replace_op = {std::make_pair(DROPOUT_GEN_MASK, args)};
-  replace_ops.push_back(replace_op);
-  return replace_ops;
+  MS_LOG(DEBUG) << "The input slice shape dropout is " << ShapeToString(input_slice_shape);
 }
 
 void FlashAttentionScoreInfo::InitIsInputPassed() {
@@ -227,7 +142,8 @@ void FlashAttentionScoreInfo::InitExpectedStrategies() {
   }
   if (is_input_passed_[ops::kFlashAttentionScoreInputRealShiftIndex]) {
     int64_t real_shift_s1_split_num = real_shift_have_s1_dim_ ? s1_split_num_ : 1;
-    expect_strategies_[ops::kFlashAttentionScoreInputRealShiftIndex] = {batch_split_num_, n1_split_num_,
+    auto real_shift_batch_split_num = real_shift_have_batch_dim_ ? batch_split_num_ : 1;
+    expect_strategies_[ops::kFlashAttentionScoreInputRealShiftIndex] = {real_shift_batch_split_num, n1_split_num_,
                                                                         real_shift_s1_split_num, 1};
   }
   if (is_input_passed_[ops::kFlashAttentionScoreInputDropMaskIndex]) {
@@ -244,8 +160,9 @@ void FlashAttentionScoreInfo::InitExpectedStrategies() {
       expect_strategies_[ops::kFlashAttentionScoreInputAttnMaskIndex] = {s1_split_num_, 1};
     } else if (attn_mask_shape.size() == kSizeFour) {
       // attn_mask_shape: (B, N1, S1, S2) or (B, 1, S1, S2)
-      auto attn_mask_n1_split_num = attn_mask_shape[kIndex1] == 1 ? 1 : n1_split_num_;
-      expect_strategies_[ops::kFlashAttentionScoreInputAttnMaskIndex] = {batch_split_num_, attn_mask_n1_split_num,
+      auto attn_mask_n1_split_num = attn_mask_have_n1_dim_ ? n1_split_num_ : 1;
+      auto attn_batch_split_num = attn_mask_have_batch_dim_ ? batch_split_num_ : 1;
+      expect_strategies_[ops::kFlashAttentionScoreInputAttnMaskIndex] = {attn_batch_split_num, attn_mask_n1_split_num,
                                                                          s1_split_num_, 1};
     }
   }
@@ -273,7 +190,8 @@ void FlashAttentionScoreInfo::InitInputsTensorMap() {
   }
   if (is_input_passed_[ops::kFlashAttentionScoreInputRealShiftIndex]) {
     auto real_shift_s1_map = real_shift_have_s1_dim_ ? dev_matrix_s1_dim_ : -1;
-    inputs_tensor_map_[ops::kFlashAttentionScoreInputRealShiftIndex] = {dev_matrix_batch_dim_, dev_matrix_n1_dim_,
+    auto real_shift_batch_map = real_shift_have_batch_dim_ ? dev_matrix_batch_dim_ : -1;
+    inputs_tensor_map_[ops::kFlashAttentionScoreInputRealShiftIndex] = {real_shift_batch_map, dev_matrix_n1_dim_,
                                                                         real_shift_s1_map, -1};
   }
   if (is_input_passed_[ops::kFlashAttentionScoreInputDropMaskIndex]) {
@@ -290,8 +208,9 @@ void FlashAttentionScoreInfo::InitInputsTensorMap() {
       inputs_tensor_map_[ops::kFlashAttentionScoreInputAttnMaskIndex] = {dev_matrix_s1_dim_, -1};
     } else if (attn_mask_shape.size() == kSizeFour) {
       // attn_mask_shape: (B, N1, S1, S2) or (B, 1, S1, S2)
-      auto attn_mask_n1_map = attn_mask_shape[kIndex1] == 1 ? -1 : dev_matrix_n1_dim_;
-      inputs_tensor_map_[ops::kFlashAttentionScoreInputAttnMaskIndex] = {dev_matrix_batch_dim_, attn_mask_n1_map,
+      auto attn_mask_batch_map = attn_mask_have_batch_dim_ ? dev_matrix_batch_dim_ : -1;
+      auto attn_mask_n1_map = attn_mask_have_n1_dim_ ? dev_matrix_n1_dim_ : -1;
+      inputs_tensor_map_[ops::kFlashAttentionScoreInputAttnMaskIndex] = {attn_mask_batch_map, attn_mask_n1_map,
                                                                          dev_matrix_s1_dim_, -1};
     }
   }
@@ -370,6 +289,17 @@ Status FlashAttentionScoreInfo::GetAttrs() {
     auto real_shift_s1_dim =
       inputs_shape_.at(GetStrategyRealIndex(ops::kFlashAttentionScoreInputRealShiftIndex)).at(kIndex3);
     real_shift_have_s1_dim_ = real_shift_s1_dim > 1;
+    auto real_shift_batch_dim =
+      inputs_shape_.at(GetStrategyRealIndex(ops::kFlashAttentionScoreInputRealShiftIndex)).at(kIndex0);
+    real_shift_have_batch_dim_ = real_shift_batch_dim > 1;
+  }
+
+  if (is_input_passed_[ops::kFlashAttentionScoreInputAttnMaskIndex]) {
+    auto attn_mask_shape = inputs_shape_.at(GetStrategyRealIndex(ops::kFlashAttentionScoreInputAttnMaskIndex));
+    if (attn_mask_shape.size() == kSizeFour) {
+      attn_mask_have_batch_dim_ = attn_mask_shape.at(kIndex0) > 1;
+      attn_mask_have_n1_dim_ = attn_mask_shape.at(kIndex1) > 1;
+    }
   }
   return SUCCESS;
 }
@@ -425,6 +355,7 @@ Status FlashAttentionScoreInfo::CheckStrategy(const StrategyPtr &strategy) {
     MS_LOG(ERROR) << name_ << ":The S-dimension of query can be split only when sparse_mode is one of "
                   << s1_split_valid_mode_list << ", but got `sparse_mode` is " << sparse_mode_
                   << ", and the strategy of `query` is " << query_strategy;
+    return FAILED;
   }
 
   if (s2_split_num != 1) {
@@ -435,6 +366,7 @@ Status FlashAttentionScoreInfo::CheckStrategy(const StrategyPtr &strategy) {
   if (kv_split_ && n1_split_num_ != n2_split_num_) {
     MS_LOG(ERROR) << name_ << ": The split num of N1-dim and N2-dim must be equal if N2 > 1, but got " << n1_split_num_
                   << " and " << n2_split_num_;
+    return FAILED;
   }
 
   InitExpectedStrategies();
@@ -487,18 +419,17 @@ void FlashAttentionScoreInfo::ReplaceNodeInputOrAttrs() {
       continue;
     }
     auto reshape_cnode = reshape_node->cast<CNodePtr>();
-    // replace slice_shape for ReShape
-    Shape input_slice_shape = inputs_tensor_info_[ops::kFlashAttentionScoreInputDropMaskIndex].slice_shape();
+    if (!IsPrimitiveCNode(reshape_cnode->input(kIndex1), prim::kPrimDropoutGenMask)) {
+      continue;
+    }
+    auto dropout_gen_mask_cnode = reshape_cnode->input(kIndex1)->cast<CNodePtr>();
+    // Update slice_shape for ReShape
+    Shape input_slice_shape = inputs_tensor_info_.at(ops::kFlashAttentionScoreInputDropMaskIndex).slice_shape();
     ValuePtr new_shape = MakeValue(input_slice_shape);
     AnfNodePtr val = NewValueNode(new_shape);
     manager->SetEdge(reshape_cnode, kIndex2, val);
-
-    std::vector<Operator> replace_op = GetDropoutGenMaskReplaceOp(reshape_cnode);
-    if (replace_op.empty()) {
-      MS_LOG(DEBUG) << name_ << ": No need to replace dropout_gen_mask";
-      continue;
-    }
-    ReplaceOneOp(replace_op[0], reshape_cnode->input(kIndex1)->cast<CNodePtr>());
+    // Update slice shape and seed for DropoutGenMask
+    UpdateDropoutGenMaskSliceShapeAndSeed(dropout_gen_mask_cnode);
   }
 }
 

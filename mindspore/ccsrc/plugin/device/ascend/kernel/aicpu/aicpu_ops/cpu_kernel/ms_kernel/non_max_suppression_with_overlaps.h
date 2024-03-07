@@ -16,9 +16,9 @@
 #ifndef AICPU_KERNELS_NORMALIZED_NON_MAX_SUPPRESSION_WITH_OVERLAPS_H_
 #define AICPU_KERNELS_NORMALIZED_NON_MAX_SUPPRESSION_WITH_OVERLAPS_H_
 
-#include "cpu_kernel_utils.h"
+#include "inc/ms_cpu_kernel.h"
 #include "cpu_types.h"
-#include "eigen_tensor.h"
+#include "utils/eigen_tensor.h"
 
 namespace aicpu {
 class NonMaxSuppressionWithOverlapsCpuKernel : public CpuKernel {

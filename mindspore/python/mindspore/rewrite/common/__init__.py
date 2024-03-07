@@ -16,3 +16,4 @@
 `common` package of MindSpore Rewrite package.
 Define some common instruments.
 """
+from . import config

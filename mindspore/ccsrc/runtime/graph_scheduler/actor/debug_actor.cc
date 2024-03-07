@@ -37,27 +37,37 @@
 
 namespace mindspore {
 namespace runtime {
-void DebugActor::ACLDump(uint32_t device_id) {
-  std::string env_enable_str = common::GetEnv("GRAPH_OP_RUN");
-  if (env_enable_str == "1") {
-    auto step_count_num = 0;
-    step_count_num = step_count + 1;
-    if (DumpJsonParser::GetInstance().async_dump_enabled() &&
-        DumpJsonParser::GetInstance().IsDumpIter(step_count_num)) {
-      dump_flag = 1;
+void DebugActor::ACLDump(uint32_t device_id, const std::vector<KernelGraphPtr> &graphs) {
+  std::string env_enable_str = common::GetEnv("MS_ACL_DUMP_CFG_PATH");
+  std::string kbk_enable_str = common::GetEnv("GRAPH_OP_RUN");
+  auto step_count_num = 0;
+  step_count_num = step_count;
+  if (step_count == 1 && is_dataset_sink == 1) {
+    step_count_num = 0;
+  }
+  if (!graphs.empty()) {
+    auto graph = graphs[0];
+    is_dataset_sink = graph->IsDatasetGraph();
+  }
+  if (DumpJsonParser::GetInstance().async_dump_enabled() &&
+      ((DumpJsonParser::GetInstance().IsDumpIter(step_count_num) && kbk_enable_str == "1") || env_enable_str == "1")) {
+    bool is_init = false;
+    if ((env_enable_str == "1") && !(DumpJsonParser::GetInstance().IsDumpIter(step_count_num))) {
+      is_init = true;
+    } else {
       std::string dump_path = DumpJsonParser::GetInstance().path();
       std::string dump_path_step = dump_path + "/" + std::to_string(step_count_num);
       auto real_path = FileUtils::CreateNotExistDirs(dump_path_step, false);
       if (!real_path.has_value()) {
-        MS_LOG(WARNING) << "fail to create aoe dump dir " << real_path.value();
+        MS_LOG(WARNING) << "Fail to create acl dump dir " << real_path.value();
         return;
       }
-      auto registered_dumper =
-        datadump::DataDumperRegister::Instance().GetDumperForBackend(device::DeviceType::kAscend);
-      if (registered_dumper != nullptr) {
-        registered_dumper->Initialize();
-        registered_dumper->EnableDump(device_id, step_count_num);
-      }
+    }
+    dump_flag = true;
+    auto registered_dumper = datadump::DataDumperRegister::Instance().GetDumperForBackend(device::DeviceType::kAscend);
+    if (registered_dumper != nullptr) {
+      registered_dumper->Initialize();
+      registered_dumper->EnableDump(device_id, step_count_num, is_init);
     }
   }
 }
@@ -68,7 +78,7 @@ void DebugActor::ACLDump(uint32_t device_id) {
  * Description: Load and read data for the given node if needed. Dump the node if dump is enabled and free the loaded
  * memory after the dump (for GPU and ascend kernel-by-kernel).
  */
-void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchInfo *launch_info, const DeviceContext *device_context,
+void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchAddr *launch_info, const DeviceContext *device_context,
                        OpContext<DeviceTensor> *const op_context, const AID *) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(device_context);
@@ -145,10 +155,11 @@ void DebugActor::DebugForGraph(const KernelGraphPtr &graph, const DeviceContext 
  */
 void DebugActor::AscendStepStart(const std::vector<KernelGraphPtr> &graphs,
                                  std::vector<DeviceContext *> device_contexts) {
-  if (profiler::Profiler::GetInstance(kAscendDevice) == nullptr || graphs.empty()) {
+  auto profiler = profiler::Profiler::GetInstance(kAscendDevice);
+  if (profiler == nullptr || !profiler->IsInitialized() || graphs.empty()) {
     return;
   }
-  if (profiler::Profiler::GetInstance(kAscendDevice)->GetEnableFlag() && !graphs[0]->IsDatasetGraph()) {
+  if (profiler->GetEnableFlag() && !graphs[0]->IsDatasetGraph()) {
     profile_started_ = false;
     for (size_t i = 0; i < graphs.size(); ++i) {
       MS_EXCEPTION_IF_NULL(graphs[i]);
@@ -156,8 +167,8 @@ void DebugActor::AscendStepStart(const std::vector<KernelGraphPtr> &graphs,
       if (device_contexts[i]->GetDeviceType() == device::DeviceType::kAscend && !profile_started_) {
         device_ctx_ = device_contexts[i];
         device_ctx_->device_res_manager_->BindDeviceToCurrentThread(false);
-        profiler::Profiler::GetInstance(kAscendDevice)
-          ->StepStart(current_step++, device_contexts[i]->device_res_manager_->GetStream());
+        MS_LOG(INFO) << "Dot step start timestamp.";
+        profiler->StepStart(current_step++, device_contexts[i]->device_res_manager_->GetStream());
         profile_started_ = true;
       }
     }
@@ -170,11 +181,13 @@ void DebugActor::AscendStepStart(const std::vector<KernelGraphPtr> &graphs,
  * Description: Add step end timestamp when profiler is end.
  */
 void DebugActor::AscendStepEnd() {
-  if (profiler::Profiler::GetInstance(kAscendDevice) != nullptr &&
-      profiler::Profiler::GetInstance(kAscendDevice)->GetEnableFlag() && profile_started_) {
+  auto profiler = profiler::Profiler::GetInstance(kAscendDevice);
+  if (profile_started_ && profiler != nullptr && profiler->GetEnableFlag()) {
     MS_EXCEPTION_IF_NULL(device_ctx_);
     device_ctx_->device_res_manager_->BindDeviceToCurrentThread(false);
-    profiler::Profiler::GetInstance(kAscendDevice)->StepStop();
+    device_ctx_->device_res_manager_->SyncAllStreams();
+    MS_LOG(INFO) << "Dot step end timestamp.";
+    profiler->StepStop();
     profile_started_ = false;
   }
 }
@@ -189,23 +202,25 @@ void DebugActor::DebugOnStepBegin(const std::vector<KernelGraphPtr> &graphs,
                                   const std::vector<AnfNodePtr> &origin_parameters_order,
                                   std::vector<DeviceContext *> device_contexts,
                                   OpContext<DeviceTensor> *const op_context, const AID *) {
+  MS_LOG(INFO) << "Debug on step begin.";
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   std::string backend = context->backend_policy();
-  auto device_context = device_contexts[0];
-  if (device_context->GetDeviceType() == device::DeviceType::kAscend) {
+  device_ctx_ = device_contexts[0];
+  auto profiler = profiler::Profiler::GetInstance(kAscendDevice);
+  if ((profiler == nullptr || !profiler->IsInitialized()) &&
+      device_ctx_->GetDeviceType() == device::DeviceType::kAscend) {
     auto device_id = context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-    ACLDump(device_id);
+    if (common::GetEnv("MS_ACL_DUMP_CFG_PATH") == "1" || common::GetEnv("GRAPH_OP_RUN") == "1") {
+      ACLDump(device_id, graphs);
+    }
   }
   if (backend == "ge") {
     AscendStepStart(graphs, device_contexts);
-    MS_LOG(INFO) << "On GE backend, debug_actor is not supported.";
     return;
   }
   MS_EXCEPTION_IF_NULL(op_context);
   std::lock_guard<std::mutex> locker(debug_mutex_);
-
-  MS_LOG(DEBUG) << "Debug on step begin.";
 #ifdef ENABLE_DEBUGGER
   if (!graphs.empty()) {
     // First graph is the dataset graph when dataset_sink_mode = True
@@ -236,9 +251,6 @@ void DebugActor::DebugOnStepBegin(const std::vector<KernelGraphPtr> &graphs,
       }
     }
   }
-  if (DumpJsonParser::GetInstance().async_dump_enabled()) {
-    MS_LOG(DEBUG) << "Async dump is not need this function currently.";
-  }
 #endif
 }
 
@@ -250,16 +262,18 @@ void DebugActor::DebugOnStepBegin(const std::vector<KernelGraphPtr> &graphs,
  * Ascend and update step number of online debugger GPU.
  */
 void DebugActor::DebugOnStepEnd(OpContext<DeviceTensor> *const op_context, const AID *, int total_running_count_) {
+  MS_LOG(INFO) << "Debug on step begin.";
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   std::string backend = context->backend_policy();
   step_count = total_running_count_;
-  if (dump_flag == 1) {
+  if (dump_flag == true) {
     auto registered_dumper = datadump::DataDumperRegister::Instance().GetDumperForBackend(device::DeviceType::kAscend);
     if (registered_dumper != nullptr) {
+      device_ctx_->device_res_manager_->SyncAllStreams();
       registered_dumper->Finalize();
     }
-    dump_flag = 0;
+    dump_flag = false;
   }
   if (backend == "ge") {
     AscendStepEnd();
@@ -269,7 +283,6 @@ void DebugActor::DebugOnStepEnd(OpContext<DeviceTensor> *const op_context, const
   MS_EXCEPTION_IF_NULL(op_context);
   std::lock_guard<std::mutex> locker(debug_mutex_);
 
-  MS_LOG(DEBUG) << "Debug on step end.";
 #ifndef ENABLE_SECURITY
   if (DumpJsonParser::GetInstance().GetIterDumpFlag()) {
     CPUE2eDump::DumpParametersData();

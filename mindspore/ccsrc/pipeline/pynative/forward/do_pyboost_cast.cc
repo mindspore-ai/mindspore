@@ -57,7 +57,6 @@ tensor::TensorPtr PyBoostCastOperation::DoAutoCast(const FrontendOpRunInfoPtr &o
   cast_run_info->base_op_run_info.device_target =
     PyNativeAlgo::Common::GetPyNativeExecutor()->forward_executor()->GetCurrentDeviceTarget(cast_prim);
   auto cast_op = CREATE_PYBOOST_OP(Cast, cast_run_info->base_op_run_info.device_target);
-  cast_op->set_primitive(cast_prim);
   (void)cast_op->Call(t, type_id64);
   PyNativeAlgo::PyBoost::UpdateOpRunInfo(cast_op, cast_run_info->op_grad_info->input_value, cast_run_info);
   if (op_run_info->requires_grad) {
@@ -68,6 +67,15 @@ tensor::TensorPtr PyBoostCastOperation::DoAutoCast(const FrontendOpRunInfoPtr &o
     PyNativeAlgo::PyBoost::DoGrad(cast_run_info);
   }
   return cast_run_info->real_out->cast<tensor::TensorPtr>();
+}
+
+ValuePtr PyBoostCastOperation::SetTensorMixPrecisionCast(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &v,
+                                                         size_t index) const {
+  MS_EXCEPTION_IF_NULL(v);
+  if (v->isa<tensor::Tensor>()) {
+    return SetTensorMixPrecisionCast(op_run_info, v->cast<tensor::TensorPtr>(), index);
+  }
+  return v;
 }
 
 tensor::TensorPtr PyBoostCastOperation::SetTensorMixPrecisionCast(const FrontendOpRunInfoPtr &op_run_info,
@@ -111,31 +119,36 @@ std::optional<tensor::TensorPtr> PyBoostCastOperation::SetTensorMixPrecisionCast
   return std::make_optional(SetTensorMixPrecisionCast(op_run_info, t.value(), index));
 }
 
-ValuePtr PyBoostCastOperation::SetTensorMixPrecisionCast(const FrontendOpRunInfoPtr &op_run_info,
-                                                         const ValueSequencePtr &v_seq, size_t index) const {
+ValueTuplePtr PyBoostCastOperation::SetTensorMixPrecisionCast(const FrontendOpRunInfoPtr &op_run_info,
+                                                              const ValueTuplePtr &v_tuple, size_t index) const {
+  return std::make_shared<ValueTuple>(SetSeqMixPrecisionCast(op_run_info, v_tuple, index));
+}
+
+ValueListPtr PyBoostCastOperation::SetTensorMixPrecisionCast(const FrontendOpRunInfoPtr &op_run_info,
+                                                             const ValueListPtr &v_list, size_t index) const {
+  return std::make_shared<ValueList>(SetSeqMixPrecisionCast(op_run_info, v_list, index));
+}
+
+ValuePtrList PyBoostCastOperation::SetSeqMixPrecisionCast(const FrontendOpRunInfoPtr &op_run_info,
+                                                          const ValueSequencePtr &v_seq, size_t index) const {
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(v_seq);
-
   size_t tuple_size = v_seq->size();
   const auto &value_tuple = v_seq->value();
   ValuePtrList result(tuple_size, nullptr);
   for (size_t i = 0; i < tuple_size; i++) {
     if (value_tuple[i]->isa<tensor::MetaTensor>()) {
-      MS_LOG(DEBUG) << "Call cast for item " << i;
+      MS_LOG(DEBUG) << "Call cast for " << i << "th input";
       result[i] = SetTensorMixPrecisionCast(op_run_info, value_tuple[i], index);
-    } else if (value_tuple[i]->isa<ValueSequence>()) {
-      result[i] = SetTensorMixPrecisionCast(op_run_info, value_tuple[i]->cast<ValueSequencePtr>(), index);
+    } else if (value_tuple[i]->isa<ValueTuple>()) {
+      result[i] = SetTensorMixPrecisionCast(op_run_info, value_tuple[i]->cast<ValueTuplePtr>(), index);
+    } else if (value_tuple[i]->isa<ValueList>()) {
+      result[i] = SetTensorMixPrecisionCast(op_run_info, value_tuple[i]->cast<ValueListPtr>(), index);
     } else {
       result[i] = value_tuple[i];
     }
   }
-
-  if (v_seq->isa<ValueList>()) {
-    return std::make_shared<ValueList>(result);
-  } else {
-    return std::make_shared<ValueTuple>(result);
-  }
+  return result;
 }
-
 }  // namespace pynative
 }  // namespace mindspore

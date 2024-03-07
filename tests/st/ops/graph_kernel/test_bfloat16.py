@@ -66,3 +66,4 @@ def test_convert_bfloat16():
     outputs = get_output(x0_ms, x1_ms, shape, True)
     compare_result = [np.allclose(e, o, 1.5e-3, 1.5e-3) for e, o in zip(expects, outputs)]
     assert False not in compare_result
+    del os.environ["GRAPH_OP_RUN"]

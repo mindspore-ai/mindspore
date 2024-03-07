@@ -17,7 +17,7 @@
 #define AICPU_NO_REPEAT_NGRAM_KERNELS_H_
 
 #include <vector>
-#include "cpu_kernel_utils.h"
+#include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
 class NoRepeatNGramCpuKernel : public CpuKernel {

@@ -36,13 +36,8 @@ void MemoryFreeActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) 
 }
 
 void MemoryFreeActor::ProcessSomasCrossStreamMemorySynchronization(OpContext<DeviceTensor> *const /*context*/) {
-  for (const auto &stream_id : stream_ids_) {
-    // Skip sync default calculation stream.
-    if (stream_id != kDefaultStreamIndex) {
-      device_contexts_[0]->device_res_manager_->SyncStream(stream_id);
-      MS_LOG(INFO) << "Somas cross stream memory synchronize, sync stream : " << stream_id << ".";
-    }
-  }
+  device_contexts_[0]->device_res_manager_->SyncAllStreams();
+  MS_LOG(INFO) << "Somas cross stream memory synchronize, sync all streams.";
 }
 }  // namespace runtime
 }  // namespace mindspore

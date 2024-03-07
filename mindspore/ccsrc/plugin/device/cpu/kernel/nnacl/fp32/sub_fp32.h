@@ -27,6 +27,8 @@ extern "C" {
 #endif
 
 int ElementSub(const float *in0, const float *in1, float *out, int size);
+int ElementSubExt(const float *in0, const float *in1, const float alpha, float *out, int size);
+int ElementOptSubExt(const float *in0, const float *in1, const float alpha, float *out, int size, bool first_scalar);
 int ElementSubInt(const int32_t *in0, const int32_t *in1, int32_t *out, int size);
 int ElementSubRelu(const float *in0, const float *in1, float *out, int size);
 int ElementSubRelu6(const float *in0, const float *in1, float *out, int size);

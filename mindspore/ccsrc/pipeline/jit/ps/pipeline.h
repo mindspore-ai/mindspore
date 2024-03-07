@@ -85,6 +85,7 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
   void SaveCompiledGraph(const std::string &phase);
   void ConvertArgs(const py::tuple &args, const py::dict &kwargs, bool is_auto_parallel,
                    abstract::AbstractBasePtrList *args_abs, std::vector<ValuePtr> *arguments);
+  void ConvertSymbolicShape(const py::tuple &args, AbstractBasePtrList *args_abs);
   void ProcessVmArg(const py::tuple &args, const std::string &phase, VectorRef *const arg_list);
   ResourcePtr GetResource(const std::string &phase);
   FuncGraphPtr GetFuncGraph(const std::string &phase);
@@ -139,6 +140,7 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
   // Generate a key for mapping function graph
   py::object GenerateArgumentsKey(const py::object &obj, const py::tuple &args, const py::dict &kwargs,
                                   bool enable_tuple_broaden = false);
+  void ClearCompileArgumentsResource();
 
   void ClearCurConvertInput();
   void ParentBeforeFork();
@@ -164,6 +166,7 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
   bool CompileInner(const py::object &source, const py::tuple &args, const py::dict &kwargs, const py::object &phase,
                     bool use_vm);
   py::object RunInner(const py::tuple &args, const py::object &phase);
+  void ClearRunArgumentsResource(size_t input_arg_size, VectorRef *arg_list);
 
   std::map<std::string, ExecutorInfoPtr> info_;
   static std::shared_ptr<GraphExecutorPy> executor_;

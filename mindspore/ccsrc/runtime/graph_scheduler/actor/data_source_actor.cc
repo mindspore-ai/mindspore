@@ -87,6 +87,9 @@ void DeviceQueueDataSourceActor::Init() {
   const auto &output_addresses = kernel_info_->output_address_list();
   for (size_t i = 0; i < output_addresses.size(); ++i) {
     (void)output_kernel_tensors_.emplace_back(output_addresses[i]->kernel_tensor().get());
+    if (recorder_aid_ != nullptr || debug_aid_ != nullptr) {
+      mem_info_.outputs_.emplace_back(std::make_shared<Address>());
+    }
   }
 
   is_dynamic_shape_ = common::AnfAlgo::IsDynamicShape(data_kernel_);
@@ -164,6 +167,10 @@ void DeviceQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *co
     MS_EXCEPTION_IF_NULL(device_tensors[i]);
     output_kernel_tensors_[i]->set_device_ptr(device_tensors[i]->GetMutablePtr());
     output_kernel_tensors_[i]->set_size(device_tensors[i]->GetSize());
+    if (recorder_aid_ != nullptr || debug_aid_ != nullptr) {
+      mem_info_.outputs_[i]->addr = device_tensors[i]->GetMutablePtr();
+      mem_info_.outputs_[i]->size = device_tensors[i]->GetSize();
+    }
   }
 
   // Copy data from device queue by data kernel launching.
@@ -195,9 +202,7 @@ void DeviceQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *co
 }
 
 void DeviceQueueDataSourceActor::SendDebugReq(OpContext<DeviceTensor> *const context) {
-  KernelLaunchInfo launch_info;
-  launch_info.outputs_ = output_kernel_tensors_;
-  ActorDispatcher::SendSync(*debug_aid_, &DebugActor::Debug, data_kernel_, &launch_info, device_contexts_[0], context,
+  ActorDispatcher::SendSync(*debug_aid_, &DebugActor::Debug, data_kernel_, &mem_info_, device_contexts_[0], context,
                             &GetAID());
   OnDebugFinish(context);
 }
@@ -205,8 +210,7 @@ void DeviceQueueDataSourceActor::SendDebugReq(OpContext<DeviceTensor> *const con
 void DeviceQueueDataSourceActor::SendRecorderInfo(OpContext<DeviceTensor> *const context) const {
   if (recorder_aid_ != nullptr && (!device_contexts_.empty())) {
     MS_EXCEPTION_IF_NULL(data_kernel_);
-    ActorDispatcher::Send(*recorder_aid_, &RecorderActor::RecordInfo, data_kernel_->fullname_with_scope(),
-                          &input_kernel_tensors_, &output_kernel_tensors_, &workspace_kernel_tensors_,
+    ActorDispatcher::Send(*recorder_aid_, &RecorderActor::RecordInfo, data_kernel_->fullname_with_scope(), &mem_info_,
                           device_contexts_[0], context);
   }
 }

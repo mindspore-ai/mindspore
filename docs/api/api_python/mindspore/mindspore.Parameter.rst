@@ -15,21 +15,22 @@
     参数：
         - **default_input** (Union[Tensor, int, float, numpy.ndarray, list]) - 初始化参数的输入值。
         - **name** (str) - 参数的名称。默认值： ``None`` 。如果一个网络中存在两个及以上相同名称的 `Parameter` 对象，在定义时将提示设置一个特有的名称。
-          1) 如果一个 `Parameter` 未命名，默认的名字就是变量名。例如，`param_a` 的名字是 `name_a`，`param_b` 的名字是 `param_b` 。
+          
+          1. 如果一个 `Parameter` 未命名，默认的名字就是变量名。例如，`param_a` 的名字是 `name_a`，`param_b` 的名字是 `param_b` 。
 
           .. code-block::
 
               self.param_a = Parameter(Tensor([1], ms.float32), name="name_a")
               self.param_b = Parameter(Tensor([2], ms.float32))
 
-          2) 如果在list或tuple中的 `Parameter` 未命名，将会提供一个唯一值。例如，以下 `Parameter` 的名字是 **Parameter$1** and **Parameter$2**。
+          2. 如果在list或tuple中的 `Parameter` 未命名，将会提供一个唯一值。例如，以下 `Parameter` 的名字是 **Parameter$1** and **Parameter$2**。
 
           .. code-block::
 
               self.param_list = [Parameter(Tensor([3], ms.float32)),
                                  Parameter(Tensor([4], ms.float32))]
 
-          3) 如果 `Parameter` 已命名， 并且不同 `Parameter` 间有重复名称，将会抛出异常。例如，"its name 'name_a' already exists."将会抛出。
+          3. 如果 `Parameter` 已命名， 并且不同 `Parameter` 间有重复名称，将会抛出异常。例如，"its name 'name_a' already exists."将会抛出。
 
           .. code-block::
 
@@ -37,7 +38,7 @@
               self.param_tuple = (Parameter(Tensor([5], ms.float32), name="name_a"),
                                   Parameter(Tensor([6], ms.float32)))
 
-          4) 如果一个 `Parameter` 多次出现在list或tuple中，只检查一次他的名字。例如，以下代码将不会抛出异常。
+          4. 如果一个 `Parameter` 多次出现在list或tuple中，只检查一次他的名字。例如，以下代码将不会抛出异常。
 
           .. code-block::
 

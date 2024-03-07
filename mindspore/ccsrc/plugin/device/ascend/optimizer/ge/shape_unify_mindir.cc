@@ -41,6 +41,15 @@
 
 namespace mindspore {
 namespace opt {
+namespace {
+ValueNodePtr CreateScalarValue(const FuncGraphPtr &func_graph, int64_t value) {
+  auto scalar_value = MakeValue(value);
+  auto scalar_node = NewValueNode(scalar_value);
+  scalar_node->set_abstract(scalar_value->ToAbstract());
+  func_graph->AddValueNode(scalar_node);
+  return scalar_node;
+}
+}  // namespace
 
 const BaseRef ShapeUnifyMindIR::DefinePattern() const {
   VarPtr x = std::make_shared<Var>();
@@ -131,10 +140,21 @@ CNodePtr ShapeUnifyMindIR::CreateStridedSlice(const FuncGraphPtr &func_graph, co
   MS_EXCEPTION_IF_NULL(end_node);
   auto strides_node = CreateScalarValueTuple(func_graph, kSizeOne);
   MS_EXCEPTION_IF_NULL(strides_node);
+  auto begin_mask = CreateScalarValue(func_graph, 0);
+  MS_EXCEPTION_IF_NULL(begin_mask);
+  auto end_mask = CreateScalarValue(func_graph, 0);
+  MS_EXCEPTION_IF_NULL(end_mask);
+  auto ellipsis_mask = CreateScalarValue(func_graph, 0);
+  MS_EXCEPTION_IF_NULL(ellipsis_mask);
+  auto new_axis_mask = CreateScalarValue(func_graph, 0);
+  MS_EXCEPTION_IF_NULL(new_axis_mask);
+  auto shrink_axis_mask = CreateScalarValue(func_graph, 0);
+  MS_EXCEPTION_IF_NULL(shrink_axis_mask);
 
   auto prim = NewValueNode(std::make_shared<Primitive>(kStridedSliceOpName));
   MS_EXCEPTION_IF_NULL(prim);
-  AnfNodePtrList inputs = {prim, shape_node, begin_node, end_node, strides_node};
+  AnfNodePtrList inputs = {prim,       shape_node, begin_node,    end_node,      strides_node,
+                           begin_mask, end_mask,   ellipsis_mask, new_axis_mask, shrink_axis_mask};
   CNodePtr strided_slice = func_graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(strided_slice);
   strided_slice->set_fullname_with_scope(tuple_get_node->fullname_with_scope() + "_strided_slice");
@@ -142,17 +162,10 @@ CNodePtr ShapeUnifyMindIR::CreateStridedSlice(const FuncGraphPtr &func_graph, co
   MS_EXCEPTION_IF_NULL(primitive);
 
   // set abstract
-  auto tmp_abstract = InferAbstract(primitive, {shape_node, begin_node, end_node, strides_node});
+  auto tmp_abstract = InferAbstract(primitive, {shape_node, begin_node, end_node, strides_node, begin_mask, end_mask,
+                                                ellipsis_mask, new_axis_mask, shrink_axis_mask});
   MS_EXCEPTION_IF_NULL(tmp_abstract);
   strided_slice->set_abstract(tmp_abstract);
-
-  // set attrs, all defaults to zero
-  primitive->set_attr("new_axis_mask", MakeValue<int64_t>(0));
-  primitive->set_attr("shrink_axis_mask", MakeValue<int64_t>(0));
-  primitive->set_attr("end_mask", MakeValue<int64_t>(0));
-  primitive->set_attr("begin_mask", MakeValue<int64_t>(0));
-  primitive->set_attr("ellipsis_mask", MakeValue<int64_t>(0));
-
   return strided_slice;
 }
 

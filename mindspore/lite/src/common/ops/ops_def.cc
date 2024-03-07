@@ -1255,6 +1255,7 @@ OP_ATTR_WITH_VALUE(dst_type, long, 32)
 OP_ATTR_WITH_VALUE(activation_channel, bool, false)
 OP_ATTR_WITH_VALUE(prefer_axis, long, 0)
 OP_ATTR_WITH_VALUE(transpose, bool, false)
+OP_ATTR(prefer_axes, [int])
 OP_SCHEMA_DEF_END(DynamicQuant)
 
 OP_SCHEMA_DEF(LSTMGradData)

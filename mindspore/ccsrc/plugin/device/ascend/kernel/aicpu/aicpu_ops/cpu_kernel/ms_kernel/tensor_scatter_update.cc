@@ -20,7 +20,7 @@
 #include <complex>
 #include <iostream>
 #include <map>
-#include "eigen_tensor.h"
+#include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
 namespace {

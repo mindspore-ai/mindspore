@@ -17,7 +17,7 @@
 #include "plugin/device/ascend/kernel/pyboost/customize/reshape.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 #include "kernel/pyboost/op_register.h"
-#include "kernel/pyboost/py_boost_utils.h"
+#include "kernel/pyboost/pyboost_utils.h"
 #include "plugin/device/ascend/kernel/pyboost/aclnn_utils.h"
 #include "kernel/pyboost/auto_generate/copy.h"
 #include "kernel/pyboost/auto_generate/view.h"
@@ -42,6 +42,7 @@ tensor::TensorPtr ReshapeAscendCustomize(const std::shared_ptr<OpRunner> &op, co
 
   // Tensor is not contiguous, need call copy first
   auto copy_op = CREATE_PYBOOST_OP(Copy, kAscendDevice);
+  copy_op->set_stream_id(op->stream_id());
   const auto copy_tensor = copy_op->Call(input_tensor);
   auto output_tensor = view_op->Call(copy_tensor, shape);
   op->set_output_abs(view_op->output_abs());

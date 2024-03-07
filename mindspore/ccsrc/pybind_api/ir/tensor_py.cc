@@ -461,6 +461,19 @@ py::bytes TensorPy::GetBytes(const Tensor &tensor) {
   return py::bytes(static_cast<const char *>(tensor.data_c()), tensor.Size());
 }
 
+TensorPtr TensorPy::ConvertBytesToTensor(const py::bytes &bytes_obj, const py::tuple &dims, const TypePtr &type_ptr) {
+  ShapeVector shape;
+  for (size_t i = 0; i < dims.size(); ++i) {
+    shape.push_back(dims[i].cast<int>());
+  }
+  auto data_type = type_ptr ? type_ptr->type_id() : TypeId::kTypeUnknown;
+  tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(data_type, shape);
+  const char *tensor_buf = PYBIND11_BYTES_AS_STRING(bytes_obj.ptr());
+  auto *tensor_data_buf = reinterpret_cast<uint8_t *>(tensor->data_c());
+  memcpy_s(tensor_data_buf, tensor->data().nbytes(), tensor_buf, PYBIND11_BYTES_SIZE(bytes_obj.ptr()));
+  return tensor;
+}
+
 py::array TensorPy::SyncAsNumpy(const Tensor &tensor) {
   runtime::ProfilerStageRecorder recorder(runtime::ProfilerStage::kAsnumpy);
   {
@@ -717,6 +730,20 @@ void RegMetaTensor(const py::module *m) {
                                  >>> x = ms.Tensor([1, 2, 3], ms.int16)
                                  >>> print(x.get_bytes())
                                  b'\x01\x00\x02\x00\x03\x00'
+                             )mydelimiter")
+    .def("convert_bytes_to_tensor", &TensorPy::ConvertBytesToTensor, R"mydelimiter(
+                             Convert raw data to tensor.
+
+                             Returns:
+                                 Tensor.
+
+                             Examples:
+                                 >>> import mindspore as ms
+                                 >>> from mindspore import Tensor
+                                 >>> x = Tensor([1, 2, 3], ms.int16)
+                                 >>> out = Tensor.convert_bytes_to_tensor(x.get_bytes(), x.shape, x.dtype)
+                                 >>> print(x.asnumpy())
+                                 [1 2 3]
                              )mydelimiter")
     .def("asnumpy", TensorPy::SyncAsNumpy, R"mydelimiter(
                              Convert tensor to numpy.ndarray.

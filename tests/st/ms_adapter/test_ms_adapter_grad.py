@@ -26,7 +26,7 @@ from tests.st.ms_adapter import Tensor
 ms.set_context(mode=ms.GRAPH_MODE)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_ms_adapter_grad():

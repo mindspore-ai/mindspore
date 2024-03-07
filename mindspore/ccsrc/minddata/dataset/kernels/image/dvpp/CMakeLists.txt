@@ -19,17 +19,21 @@ if(NOT BUILD_LITE AND ENABLE_D)
 set(DVPP_IMAGE_SOURCE
         ${DVPP_IMAGE_SOURCE}
         # Ascend910B
-        ascend910b/dvpp_adjust_brightness.cc
-        ascend910b/dvpp_adjust_contrast.cc
-        ascend910b/dvpp_adjust_hue.cc
-        ascend910b/dvpp_adjust_saturation.cc
-        ascend910b/dvpp_horizontal_flip.cc
-        ascend910b/dvpp_vertical_flip.cc
-        ascend910b/dvpp_resize_op.cc
-        ascend910b/dvpp_resized_crop.cc
+        ascend910b/dvpp_adjust_brightness_op.cc
+        ascend910b/dvpp_adjust_contrast_op.cc
+        ascend910b/dvpp_adjust_hue_op.cc
+        ascend910b/dvpp_adjust_saturation_op.cc
+        ascend910b/dvpp_affine_op.cc
+        ascend910b/dvpp_crop_op.cc
         ascend910b/dvpp_decode_op.cc
+        ascend910b/dvpp_gaussian_blur_op.cc
+        ascend910b/dvpp_horizontal_flip_op.cc
         ascend910b/dvpp_normalize_v2_op.cc
-        ascend910b/dvpp_perspective.cc
+        ascend910b/dvpp_pad_op.cc
+        ascend910b/dvpp_perspective_op.cc
+        ascend910b/dvpp_resize_op.cc
+        ascend910b/dvpp_resized_crop_op.cc
+        ascend910b/dvpp_vertical_flip_op.cc
         )
 endif()
 

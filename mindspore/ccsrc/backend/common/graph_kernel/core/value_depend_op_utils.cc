@@ -39,6 +39,7 @@ const std::unordered_map<std::string, HashSet<size_t>> &ValueDependOpUtils::GetO
     {prim::kPrimReduceSum->name(), {1}},
     {prim::kPrimTranspose->name(), {1}},
     {prim::kPrimTile->name(), {1}},
+    {prim::kPrimBroadcastTo->name(), {1}},
     {prim::kPrimReduceMean->name(), {1}},
     {prim::kPrimSlice->name(), {1, 2}},
     {prim::kPrimStridedSlice->name(), {1, 2, 3}},

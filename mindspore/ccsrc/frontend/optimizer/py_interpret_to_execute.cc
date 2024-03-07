@@ -1,5 +1,5 @@
 /**
- * Copyright 2022-2023 Huawei Technologies Co., Ltd
+ * Copyright 2022-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,8 @@ namespace mindspore {
 /* namespace to support opt */
 namespace opt {
 namespace {
-CNodePtr Transform(const CNodePtr &cnode, const FuncGraphManagerPtr &manager);
+CNodePtr Transform(const CNodePtr &cnode, const FuncGraphManagerPtr &manager,
+                   std::map<AnfNodePtr, AnfNodePtr> *has_converted_nodes);
 AnfNodePtr NewValueNodeWithAbstract(const ValuePtr &value, const AbstractBasePtr &abs = nullptr) {
   auto value_node = NewValueNode(value);
   if (abs != nullptr) {
@@ -183,7 +184,8 @@ std::set<std::string> GetLocalKeySet(const std::vector<AnfNodePtr> &key_node_lis
 std::pair<AnfNodePtr, AnfNodePtr> MergeGlobalDictToLocal(const AnfNodePtr &global_dict_node,
                                                          const AnfNodePtr &local_dict_node,
                                                          const FuncGraphPtr &func_graph,
-                                                         const FuncGraphManagerPtr &manager) {
+                                                         const FuncGraphManagerPtr &manager,
+                                                         std::map<AnfNodePtr, AnfNodePtr> *has_converted_nodes) {
   MS_EXCEPTION_IF_NULL(global_dict_node);
   MS_EXCEPTION_IF_NULL(local_dict_node);
   auto [global_keys, global_values] = UnzipGlobalDict(global_dict_node);
@@ -207,19 +209,24 @@ std::pair<AnfNodePtr, AnfNodePtr> MergeGlobalDictToLocal(const AnfNodePtr &globa
     (void)local_value_inputs.emplace_back(FuncGraphToPyData(global_values.at(index)));
   }
   std::copy(local_keys.begin(), local_keys.end(), std::back_inserter(local_keys_inputs));
-  std::transform(local_values.begin(), local_values.end(), std::back_inserter(local_value_inputs),
-                 [&manager, &func_graph](const AnfNodePtr &node) -> AnfNodePtr {
-                   if (!IsPrimitiveCNode(node, prim::kPrimPyInterpret)) {
-                     return node;
-                   }
-                   auto trans_node = Transform(node->cast<CNodePtr>(), manager);
-                   (void)manager->Replace(node, trans_node);
-                   return trans_node;
-                 });
+
+  for (size_t i = 0; i < local_values.size(); ++i) {
+    auto local_value_node = local_values[i];
+    if (!IsPrimitiveCNode(local_value_node, prim::kPrimPyInterpret)) {
+      (void)local_value_inputs.emplace_back(local_value_node);
+    } else if (has_converted_nodes->find(local_value_node) != has_converted_nodes->end()) {
+      (void)local_value_inputs.emplace_back((*has_converted_nodes)[local_value_node]);
+    } else {
+      auto trans_node = Transform(local_value_node->cast<CNodePtr>(), manager, has_converted_nodes);
+      (void)manager->Replace(local_value_node, trans_node);
+      (void)local_value_inputs.emplace_back(trans_node);
+    }
+  }
   return std::make_pair(func_graph->NewCNode(local_keys_inputs), func_graph->NewCNode(local_value_inputs));
 }
 
-CNodePtr Transform(const CNodePtr &cnode, const FuncGraphManagerPtr &manager) {
+CNodePtr Transform(const CNodePtr &cnode, const FuncGraphManagerPtr &manager,
+                   std::map<AnfNodePtr, AnfNodePtr> *has_converted_nodes) {
   constexpr auto input_index_one = 1;
   constexpr auto input_index_two = 2;
   constexpr auto input_index_three = 3;
@@ -240,13 +247,14 @@ CNodePtr Transform(const CNodePtr &cnode, const FuncGraphManagerPtr &manager) {
   auto local_dict_node = cnode->input(input_index_three);
 
   auto [local_dict_keys, local_dict_values] =
-    MergeGlobalDictToLocal(global_dict_node, local_dict_node, cnode->func_graph(), manager);
+    MergeGlobalDictToLocal(global_dict_node, local_dict_node, cnode->func_graph(), manager, has_converted_nodes);
 
   new_cnode->set_input(input_index_two, local_dict_keys);
   new_cnode->set_input(input_index_three, local_dict_values);
 
   // Record the PyExecute node.
   InterpretNodeRecorder::GetInstance().PushPyExecuteNode(new_cnode);
+  (void)has_converted_nodes->emplace(cnode, new_cnode);
   return new_cnode;
 }
 }  // namespace
@@ -264,9 +272,10 @@ bool PyInterpretToExecute(const pipeline::ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(manager);
   auto transact = manager->Transact();
   const auto all_nodes = manager->all_nodes();
+  std::map<AnfNodePtr, AnfNodePtr> has_converted_nodes;
   for (const auto &node : all_nodes) {
     if (IsPrimitiveCNode(node, prim::kPrimPyInterpret)) {
-      auto trans_node = Transform(node->cast<CNodePtr>(), manager);
+      auto trans_node = Transform(node->cast<CNodePtr>(), manager, &has_converted_nodes);
       (void)transact.Replace(node, trans_node);
     }
   }

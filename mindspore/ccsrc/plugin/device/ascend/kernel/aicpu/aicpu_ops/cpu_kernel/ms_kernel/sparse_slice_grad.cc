@@ -17,7 +17,7 @@
 #include "cpu_kernel/ms_kernel/sparse_slice_grad.h"
 #include <complex>
 #include <vector>
-#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "context/inc/cpu_kernel_utils.h"
 #include "securec.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"

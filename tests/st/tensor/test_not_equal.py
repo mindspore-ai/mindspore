@@ -26,6 +26,11 @@ class NotEqualNet(nn.Cell):
         return x.not_equal(other)
 
 
+class NotEqualNet1(nn.Cell):
+    def construct(self, x, other):
+        return x != other
+
+
 @pytest.mark.level2
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
@@ -52,3 +57,27 @@ def test_not_equal(mode):
     expect_output_case_2 = np.not_equal(x_np, y_np)
     np.testing.assert_array_equal(output_ms_case_1.asnumpy(), expect_output_case_1)
     np.testing.assert_array_equal(output_ms_case_2.asnumpy(), expect_output_case_2)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_tensor_ne(mode):
+    """
+    Feature: __ne__ in Tensor.
+    Description: Verify the result of __ne__ in Tensor.
+    Expectation: success
+    """
+    ms.set_context(mode=mode)
+    net = NotEqualNet1()
+
+    inputs = Tensor(np.array([[True, False], [False, True]]))
+    other = Tensor(np.array([[True, True], [True, True]]))
+    value = net(inputs, other)
+    expect_value = np.array([[False, True], [True, False]])
+    assert np.allclose(expect_value, value.asnumpy())

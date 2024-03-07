@@ -26,7 +26,8 @@ namespace kernel {
 namespace pyboost {
 class ${op_name}CPU : public pyboost::${op_name} {
  public:
-  ${op_name}CPU() = default;
+  ${op_name}CPU(PrimitivePtr primitive, const DeviceContext *device_context)
+    : ${op_name}(std::move(primitive), device_context) {}
   ~${op_name}CPU() = default;
 
   ${return_type} Call(${call_args_with_type}) override;

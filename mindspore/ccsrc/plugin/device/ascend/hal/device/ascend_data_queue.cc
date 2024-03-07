@@ -29,6 +29,8 @@
 #include "include/backend/distributed/ps/ps_cache/ps_data_prefetch.h"
 #include "include/backend/distributed/embedding_cache/embedding_cache_utils.h"
 #include "acl/acl_rt.h"
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace mindspore {
 namespace device {
@@ -163,7 +165,7 @@ DataQueueStatus AscendDataQueueDynamic::Push(std::vector<DataQueueItem> data) {
       "Rt Memcpy Error");
     item.device_addr = addr;
   }
-  CheckRtRetWithError(aclrtSynchronizeStreamWithTimeout(stream_, -1),
+  CheckRtRetWithError(CALL_ASCEND_API(aclrtSynchronizeStreamWithTimeout, stream_, -1),
                       "Call runtime aclrtSynchronizeStreamWithTimeout failed");
   node_info_[tail_].data_ = std::move(data);
   tail_ = (tail_ + 1) % (capacity_);

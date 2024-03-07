@@ -9,14 +9,19 @@ adam_weight_decay:
       dtype: tensor
     lr:
       dtype: tensor
+      type_cast: float
     beta1:
       dtype: tensor
+      type_cast: float
     beta2:
       dtype: tensor
+      type_cast: float
     epsilon:
       dtype: tensor
+      type_cast: float
     decay:
       dtype: tensor
+      type_cast: float
     gradient:
       dtype: tensor
     use_locking:

@@ -73,10 +73,11 @@ bool IsRegFile(const std::string &file_path) {
 #ifndef OFFLINE_DBG_MODE
 void openssl_md5(char *input, char *output, int64_t len) {
   unsigned char digest[MD5_DIGEST_LENGTH];
-  MD5((unsigned char *)input, len, (unsigned char *)digest);
+  MD5(reinterpret_cast<unsigned char *>(input), len, reinterpret_cast<unsigned char *>(digest));
   for (int i = 0; i < MD5_DIGEST_LENGTH; i++) {
     int rest_len = md5_len + 1 - i * md5_bit_wide;
-    auto ret = snprintf_s(&output[i * md5_bit_wide], rest_len, md5_bit_wide, "%02x", (unsigned int)digest[i]);
+    auto ret =
+      snprintf_s(&output[i * md5_bit_wide], rest_len, md5_bit_wide, "%02x", static_cast<unsigned int>(digest[i]));
     if (ret < 0) {
       MS_LOG(ERROR) << "snprintf_s encountered an error when record md5, which may lead to incorrect MD5 value in the "
                        "statistic.csv file.";

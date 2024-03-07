@@ -3,7 +3,7 @@ mindspore.dataset.vision.Decode
 
 .. py:class:: mindspore.dataset.vision.Decode(to_pil=False)
 
-    将输入的压缩图像解码为RGB格式。当前支持的图片类型：JPEG, BMP, PNG, TIFF, GIF(需要指定 `to_pil=True`), WEBP(需要指定 `to_pil=True`)。
+    将输入的压缩图像解码为RGB格式。当前支持的图片类型：JPEG、BMP、PNG、TIFF、GIF(需要指定 `to_pil=True`)、WEBP(需要指定 `to_pil=True`)。
 
     支持 Ascend 硬件加速，需要通过 `.device("Ascend")` 方式开启。
 

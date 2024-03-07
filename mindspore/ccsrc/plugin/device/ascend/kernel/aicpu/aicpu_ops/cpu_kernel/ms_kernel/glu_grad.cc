@@ -21,7 +21,7 @@
 #include <iostream>
 #include <unsupported/Eigen/CXX11/Tensor>
 #include <unsupported/Eigen/SpecialFunctions>
-#include "cpu_kernel_utils.h"
+#include "context/inc/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 

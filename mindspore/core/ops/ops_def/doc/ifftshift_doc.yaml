@@ -1,0 +1,32 @@
+ifftshift:
+  description: |
+    The inverse of :func:`mindspore.ops.fftshift` .
+
+    Note:
+        - `ifftshift` is currently only used in `mindscience` scientific computing scenarios and
+          dose not support other usage scenarios.
+        - `ifftshift` is not supported on Windows platform yet.
+
+    Args:
+        input (Tensor): Input tensor.
+        dim (Union[int, list(int), tuple(int)], optional): The dimensions which to shift.
+            Default is ``None``, which shifts all dimensions.
+
+    Returns:
+        output (Tensor), the shifted tensor with the same shape and dtype as `input`.
+
+    Raises:
+        TypeError: If `input` is not a tensor.
+        TypeError: If the type/dtype of `dim` is not int.
+        ValueError: If `dim` is out of the range of :math:`[-input.ndim, input.ndim)`.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> from mindspore.ops import fftshift, ifftshift
+        >>> from mindspore import Tensor
+        >>> from mindspore import dtype as mstype
+        >>> input = Tensor([0, 1, 2, 3, 4, -5, -4, -3, -2, -1], dtype=mstype.int32)
+        >>> ifftshift(fftshift(input))
+        Tensor(shape=[10], dtype=Int32, value= [ 0, 1, 2, 3, 4, -5, -4, -3, -2, -1])

@@ -642,13 +642,13 @@ PrimitivePyAdapter &PrimitivePyAdapter::operator=(const PrimitivePyAdapter &othe
 
 void PrimitivePyAdapter::AddPyAttr(const py::str &name, const py::object &obj) {
   std::string attr_name = name;
-  ValuePtr converted_ret = nullptr;
+  ValuePtr converted_res = nullptr;
   if (py::isinstance<py::module>(obj)) {
     MS_LOG(EXCEPTION) << "Call 'add_attr' to add attribute to primitive failed,"
                       << " not support py::module to be attribute value; primitive name: " << this->name_
                       << ", attribute name: " << attr_name << " attribute value: " << py::str(obj);
   }
-  bool converted = parse::ConvertData(obj, &converted_ret);
+  bool converted = parse::ConvertData(obj, &converted_res);
   if (!converted) {
     MS_LOG(EXCEPTION) << "Call 'add_attr' to add attribute to primitive failed,"
                       << " convert python obj to MindSpore obj failed; primitive name: " << this->name_
@@ -658,15 +658,15 @@ void PrimitivePyAdapter::AddPyAttr(const py::str &name, const py::object &obj) {
   if (kOpAttrNameReplaceMap.find(attr_name) != kOpAttrNameReplaceMap.end()) {
     attr_name = kOpAttrNameReplaceMap[attr_name];
   }
-  (void)CheckAndConvertUtils::ConvertAttrValueToInt(this->name_, name, &converted_ret);
+  (void)CheckAndConvertUtils::ConvertAttrValueToInt(this->name_, name, &converted_res);
   if (attr_name == "primitive_target") {
-    MS_EXCEPTION_IF_NULL(converted_ret);
-    if (!converted_ret->isa<StringImm>()) {
+    MS_EXCEPTION_IF_NULL(converted_res);
+    if (!converted_res->isa<StringImm>()) {
       MS_LOG(EXCEPTION) << "Call 'add_attr' to add attribute to primitive '" << this->name_
                         << "' failed, value of attribute 'primitive_target' must be CPU|GPU|Ascend but got "
                         << py::str(obj);
     }
-    auto target = GetValue<std::string>(converted_ret);
+    auto target = GetValue<std::string>(converted_res);
     if (!target.empty() && target != kCPUDevice && target != kGPUDevice && target != kAscendDevice &&
         target != "Device") {
       MS_LOG(EXCEPTION) << "Call 'add_attr' to add attribute to primitive '" << this->name_
@@ -675,10 +675,22 @@ void PrimitivePyAdapter::AddPyAttr(const py::str &name, const py::object &obj) {
     }
   }
 
-  attrs_[attr_name] = converted_ret;
+  // If it's func graph, to reserve all used func graphs.
+  if (converted_res->isa<FuncGraph>()) {
+    const auto &fg = dyn_cast<FuncGraph>(converted_res);
+    MS_EXCEPTION_IF_NULL(fg);
+    fg->set_reserved(true);
+    auto manager = Manage({fg}, false);
+    const auto &total_used_fg = manager->func_graphs_used_total(fg);
+    for (const auto &used_fg : total_used_fg) {
+      used_fg->set_reserved(true);
+    }
+  }
+
+  attrs_[attr_name] = converted_res;
   auto prim = attached_primitive_.lock();
   if (prim != nullptr) {
-    (void)prim->AddAttr(attr_name, converted_ret);
+    (void)prim->AddAttr(attr_name, converted_res);
   }
 }
 

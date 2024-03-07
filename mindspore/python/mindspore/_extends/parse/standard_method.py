@@ -2883,7 +2883,7 @@ def select(x, condition, y):
             input_y = F.cast(input_y, mstype.int32)
         else:
             input_y = F.cast(input_y, mstype.float32)
-    return F.select(condition, x, y)
+    return F.select(condition, x, input_y)
 
 
 def view(x, *shape):

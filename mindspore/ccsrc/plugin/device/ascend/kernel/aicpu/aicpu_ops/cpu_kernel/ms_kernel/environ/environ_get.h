@@ -18,7 +18,7 @@
 #define AICPU_KERNELS_NORMALIZED_ENVIRON_GET_H_
 
 #include <vector>
-#include "cpu_kernel_utils.h"
+#include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
 class EnvironGetKernel : public CpuKernel {

@@ -65,6 +65,8 @@ class MultitypeFuncGraph : public MetaFuncGraph {
   bool need_raise_ = false;
 };
 using MultitypeFuncGraphPtr = std::shared_ptr<MultitypeFuncGraph>;
+bool CheckDictContainsAny(const std::vector<std::pair<mindspore::ValuePtr, mindspore::TypePtr>> &key_values);
+bool CheckContainsAny(const TypePtrList &types);
 }  // namespace prim
 }  // namespace mindspore
 

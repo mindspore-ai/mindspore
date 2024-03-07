@@ -16,7 +16,7 @@
 
 #include "cpu_kernel/ms_kernel/environ/environ_destroy_all.h"
 #include "cpu_kernel/ms_kernel/environ/aicpu_environ_manager.h"
-#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "context/inc/cpu_kernel_utils.h"
 #include "utils/kernel_util.h"
 
 namespace {

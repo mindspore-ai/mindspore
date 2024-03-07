@@ -25,7 +25,8 @@ namespace kernel {
 namespace pyboost {
 class BACKEND_EXPORT ${op_name} : public pyboost::OpRunner {
  public:
-  ${op_name}() = default;
+  ${op_name}(PrimitivePtr primitive, const DeviceContext *device_context)
+      : OpRunner(std::move(primitive), device_context) {}
   ~${op_name}() override = default;
 
   virtual ${return_type} Call(${call_args}) = 0;

@@ -62,6 +62,7 @@
 #include "tools/graph_kernel/converter/graph_kernel_optimization.h"
 #include "tools/lite_exporter/fetch_content.h"
 #include "tools/converter/quantizer/quant_helper/ascend_distribute_fake_quant_transform.h"
+#include "tools/converter/quantizer/quant_helper/ffn_full_quant.h"
 #include "tools/converter/adapter/acl/common/acl_types_utils.h"
 #include "tools/optimizer/graph/redundant_op_remove_pass.h"
 #include "src/common/common.h"
@@ -1080,6 +1081,25 @@ STATUS AclPassImpl::RemoveQuantDtypeCast(const FuncGraphPtr &func_graph) {
   return RET_OK;
 }
 
+STATUS AclPassImpl::PostProcCustomOp(const FuncGraphPtr &func_graph) {
+  auto node_list = TopoSort(func_graph->get_return());
+  for (auto &node : node_list) {
+    if (!utils::isa<CNodePtr>(node)) {
+      continue;
+    }
+    auto cnode = utils::cast<CNodePtr>(node);
+    if (!CheckPrimitiveType(cnode, prim::kPrimCustom)) {
+      continue;
+    }
+    auto prim = GetCNodePrimitive(cnode);
+    CHECK_NULL_RETURN(prim);
+    prim->EraseAttr("attr");
+  }
+
+  MS_LOG(DEBUG) << "Post proc CustomOp success.";
+  return lite::RET_OK;
+}
+
 bool AclPassImpl::Run(const FuncGraphPtr &func_graph) {
   MS_LOG(INFO) << "Acl pass run start.";
   if (param_->fmk_type == converter::kFmkTypeOM) {
@@ -1092,6 +1112,12 @@ bool AclPassImpl::Run(const FuncGraphPtr &func_graph) {
 
   if (PreProcGraph(func_graph) != lite::RET_OK) {
     MS_LOG(ERROR) << "Pre proc graph failed.";
+    return false;
+  }
+
+  auto ffn_full_quant_transform = lite::quant::FFNFullQuant(func_graph, param_);
+  if (ffn_full_quant_transform.Transform() != RET_OK) {
+    MS_LOG(ERROR) << "Do FFNFullQuantTransform failed.";
     return false;
   }
 
@@ -1129,6 +1155,11 @@ bool AclPassImpl::Run(const FuncGraphPtr &func_graph) {
     return false;
   }
 #endif
+
+  if (PostProcCustomOp(func_graph) != lite::RET_OK) {
+    MS_LOG(ERROR) << "Post proc CustomOp failed.";
+    return false;
+  }
 
   if (BuildGraph(func_graph) != lite::RET_OK) {
     MS_LOG(ERROR) << "Build graph failed.";

@@ -126,7 +126,7 @@ std::string CallbackImpl::GetTargetFromContextImpl(bool detail) {
   MS_EXCEPTION_IF_NULL(context_ptr);
   const auto &target = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   if (detail && target == kAscendDevice) {
-    return "Ascend910";
+    return context_ptr->ascend_soc_name();
   }
   return target;
 }

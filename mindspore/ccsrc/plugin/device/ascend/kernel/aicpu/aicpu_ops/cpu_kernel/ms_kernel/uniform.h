@@ -21,7 +21,7 @@
 #include <random>
 #include <unordered_map>
 
-#include "cpu_kernel_utils.h"
+#include "inc/ms_cpu_kernel.h"
 
 namespace aicpu {
 class UniformCpuKernel : public CpuKernel {

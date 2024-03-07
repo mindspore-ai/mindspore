@@ -929,7 +929,7 @@ class Tile(Primitive):
     Refer to :func:`mindspore.ops.tile` for more details.
 
     Inputs:
-        - **input** (Tensor) - 1-D or higher dimensional Tensor. Set the shape of input tensor as
+        - **input** (Tensor) - The tensor whose elements need to be repeated. Set the shape of input tensor as
           :math:`(x_1, x_2, ..., x_S)` .
         - **dims** (tuple[int]) - The parameter that specifies the number of replications,
           the parameter type is tuple, and the data type is int, i.e., :math:`(y_1, y_2, ..., y_S)`.
@@ -1018,7 +1018,7 @@ def tile(input, dims):
     are replicated `dims[i]` times along the i'th dimension.
 
     Args:
-        input (Tensor): 1-D or higher dimensional Tensor. Set the shape of input tensor as
+        input (Tensor): The tensor whose elements need to be repeated. Set the shape of input tensor as
             :math:`(x_1, x_2, ..., x_S)` .
 
         dims (tuple[int]): The parameter that specifies the number of replications,
@@ -1260,9 +1260,10 @@ def infer_value_for_Cast(x, dst_type_enum):
     np_dst_type = mstype.dtype_to_nptype(dst_type)
     if isinstance(x, (int, float)):
         value = Tensor(np.array(x).astype(np_dst_type), dtype=dst_type)
-    elif x.dtype == mstype.bfloat16:
-        value = Tensor_(x.float().asnumpy().astype(np_dst_type), dtype=dst_type)
     else:
+        if x.dtype == mstype.bfloat16:
+            cpu_cast = Cast().set_device("CPU")
+            x = cpu_cast(x, mstype.float32)
         value = Tensor_(x.asnumpy().astype(np_dst_type), dtype=dst_type)
     return value
 
@@ -1314,6 +1315,15 @@ def infer_value_for_BroadcastTo(x, shape):
         return isinstance(x, (tuple, list)) and None in x
     if shape is None or none_in_tuple_or_list(shape) or x is None:
         return None
+
+    if isinstance(shape, (Tensor, Tensor_)):
+        validator.check_tensor_dtype_valid("shape", mstype.TensorType(shape.dtype),
+                                           [mstype.int32, mstype.int64], "BroadcastTo")
+        shape = shape.asnumpy().tolist()
+    else:
+        validator.check_value_type("shape", shape, [tuple], "BroadcastTo")
+        shape = list(shape)
+
     np_data = np.broadcast_to(x.asnumpy(), shape)
     if 0 in shape:
         init_func = Zero()

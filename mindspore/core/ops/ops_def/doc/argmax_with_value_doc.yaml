@@ -1,0 +1,51 @@
+#operator argmax_with_value
+argmax_with_value:
+    description: |
+        Calculates the maximum value along with the given axis for the input tensor, and returns the maximum values and
+        indices.
+
+        Note:
+            In auto_parallel and semi_auto_parallel mode, the first output index can not be used.
+
+        .. warning::
+            - If there are multiple maximum values, the index of the first maximum value is used.
+            - The value range of `axis` is [-dims, dims - 1]. "dims" is the dimension length of `input`.
+
+        Also see :func:`mindspore.ops.max`.
+
+        Args:
+            axis (int): The dimension to reduce. Default: ``0`` .
+            keep_dims (bool): Whether to reduce dimension, if ``True`` , the output will keep same dimension with the
+                input, the output will reduce dimension if ``false`` . Default: ``False`` .
+
+        Inputs:
+            - **input** (Tensor) - The input tensor, can be any dimension. Set the shape of input tensor as
+              :math:`(input_1, input_2, ..., input_N)`.
+
+        Outputs:
+            tuple (Tensor), tuple of 2 tensors, containing the corresponding index and the maximum value of the input
+            tensor.
+
+            - **index** (Tensor) - The index for the maximum value of the input tensor, with dtype int64. If `keep_dims`
+              is ``True`` , the shape of output tensors is :math:`(input_1, input_2, ..., input_{axis-1}, 1, input_{axis+1}, ..., input_N)`.
+              Otherwise, the shape is :math:`(input_1, input_2, ..., input_{axis-1}, input_{axis+1}, ..., input_N)` .
+            - **values** (Tensor) - The maximum value of input tensor, with the same shape as `index`, and same dtype as `input`.
+
+        Raises:
+            TypeError: If `keep_dims` is not a bool.
+            TypeError: If `axis` is not an int.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> input_x = Tensor(np.array([0.0, 0.4, 0.6, 0.7, 0.1]), mindspore.float32)
+            >>> index, output = ops.ArgMaxWithValue()(input_x)
+            >>> print(index, output)
+            3 0.7
+            >>> index, output = ops.ArgMaxWithValue(keep_dims=True)(input_x)
+            >>> print(index, output)
+            [3] [0.7]

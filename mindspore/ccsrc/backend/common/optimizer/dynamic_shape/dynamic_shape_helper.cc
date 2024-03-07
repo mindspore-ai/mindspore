@@ -36,9 +36,9 @@
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindspore/ccsrc/plugin/device/cpu/kernel/pyexecute/py_execute_cpu_kernel.h"
 #include "include/common/profiler.h"
-#include "backend/common/graph_kernel/symbol_engine/symbol_engine.h"
-#include "backend/operator/ops_backend_infer_function.h"
+#include "ir/anf.h"
 #include "ir/functor.h"
+#include "backend/operator/ops_backend_infer_function.h"
 
 namespace mindspore {
 namespace opt::dynamic_shape {
@@ -392,89 +392,6 @@ abstract::AbstractBasePtr MakeNewAbstract(const AnfNodePtr &input, const tensor:
   return new_abs;
 }
 
-bool InferShapeForGraphWithSymbolEngine(const CNodePtr &cnode, const FuncGraphPtr &func_graph,
-                                        const AbstractBasePtrList &args_spec_list) {
-  MS_EXCEPTION_IF_NULL(func_graph);
-  MS_EXCEPTION_IF_NULL(cnode);
-  auto output = func_graph->output();
-  MS_EXCEPTION_IF_NULL(output);
-  auto symbol_engine = GetValue<SymbolEnginePtr>(func_graph->get_attr(kAttrSymbolEngine));
-  MS_EXCEPTION_IF_NULL(symbol_engine);
-  if (!symbol_engine->Infer(args_spec_list)) {
-    MS_LOG(INFO) << "Infer failed by symbol engine. node " << cnode->fullname_with_scope();
-    return false;
-  }
-  auto out_shapes = symbol_engine->QueryShape(output);
-  BaseShapePtr abs_shape = nullptr;
-  if (out_shapes.size() == 1) {
-    abs_shape = std::make_shared<abstract::Shape>(out_shapes[0]);
-  } else {
-    abstract::BaseShapePtrList shape_list;
-    shape_list.reserve(out_shapes.size());
-    (void)std::transform(out_shapes.cbegin(), out_shapes.cend(), std::back_insert_iterator(shape_list),
-                         [](const ShapeVector &s) { return std::make_shared<abstract::Shape>(s); });
-    abs_shape = std::make_shared<abstract::TupleShape>(shape_list);
-  }
-  auto output_abs = output->abstract();
-  MS_EXCEPTION_IF_NULL(output_abs);
-  output_abs->set_shape(abs_shape);
-  cnode->set_abstract(output_abs);
-  return true;
-}
-
-void InferShapeForGraph(const CNodePtr &cnode, const FuncGraphPtr &func_graph,
-                        const AbstractBasePtrList &args_spec_list) {
-  MS_EXCEPTION_IF_NULL(func_graph);
-  MS_EXCEPTION_IF_NULL(cnode);
-  if (func_graph->has_attr(kAttrSymbolEngine)) {
-    MS_LOG(DEBUG) << "SymbolEngine is found in funcgraph " << func_graph->ToString();
-    if (InferShapeForGraphWithSymbolEngine(cnode, func_graph, args_spec_list)) {
-      return;
-    }
-  }
-  MS_LOG(DEBUG) << "InferShape by primitive for funcgraph " << func_graph->ToString();
-  if (args_spec_list.size() != func_graph->parameters().size()) {
-    MS_LOG(EXCEPTION)
-      << "The args_spec_list size should be the same as that of func_graph parameters, but get args_spec_list: "
-      << args_spec_list.size() << " vs func_graph parameters: " << func_graph->parameters().size();
-  }
-  for (size_t i = 0; i < args_spec_list.size(); i++) {
-    MS_EXCEPTION_IF_NULL(func_graph->parameters()[i]);
-    MS_EXCEPTION_IF_NULL(args_spec_list[i]);
-    func_graph->parameters()[i]->set_abstract(args_spec_list[i]->Clone());
-  }
-  std::vector<AnfNodePtr> nodes = TopoSort(func_graph->get_return());
-  for (auto &node : nodes) {
-    MS_EXCEPTION_IF_NULL(node);
-    if (!node->isa<CNode>() || !IsValueNode<Primitive>(node->cast<CNodePtr>()->input(0))) {
-      continue;
-    }
-    if (!IsPrimitiveCNode(node, prim::kPrimReturn)) {
-      auto cnode_primitive = GetCNodePrimitive(node);
-      MS_EXCEPTION_IF_NULL(cnode_primitive);
-      auto prim_cnode = node->cast<CNodePtr>();
-      MS_EXCEPTION_IF_NULL(prim_cnode);
-
-      AbstractBasePtrList cnode_args_spec_list;
-
-      for (size_t i = 1; i < prim_cnode->size(); i++) {
-        auto input_node = prim_cnode->input(i);
-        MS_EXCEPTION_IF_NULL(input_node);
-        MS_EXCEPTION_IF_NULL(input_node->abstract());
-        (void)cnode_args_spec_list.emplace_back(input_node->abstract()->Clone());
-      }
-      opt::CppInferShape(cnode_primitive, cnode_args_spec_list, prim_cnode);
-    } else {
-      auto return_cnode = node->cast<CNodePtr>();
-      MS_EXCEPTION_IF_NULL(return_cnode);
-      MS_EXCEPTION_IF_NULL(return_cnode->input(1));
-      MS_EXCEPTION_IF_NULL(return_cnode->input(1)->abstract());
-      cnode->set_abstract(return_cnode->input(1)->abstract()->Clone());
-    }
-  }
-  return;
-}
-
 void InferShapeForPrimitive(const CNodePtr &cnode, const PrimitivePtr &primitive,
                             const AbstractBasePtrList &args_spec_list, bool has_py_execute_data) {
   MS_EXCEPTION_IF_NULL(cnode);
@@ -558,8 +475,6 @@ void InferShape(const CNodePtr &cnode, std::map<uint32_t, tensor::TensorPtr> *de
     MS_EXCEPTION_IF_NULL(primitive);
     (void)primitive->AddAttr(kAttrListStartIndex, MakeValue(list_start_index));
     InferShapeForPrimitive(cnode, primitive, args_spec_list, has_py_execute_data);
-  } else if (auto func_graph = GetValueNode<FuncGraphPtr>(inputs[0])) {
-    InferShapeForGraph(cnode, func_graph, args_spec_list);
   } else {
     MS_LOG(EXCEPTION) << "The first input of the cnode should be either a primitive or a function graph, but get: "
                       << inputs[0]->fullname_with_scope();
@@ -574,9 +489,9 @@ inline bool IsCpuKernelMod(kernel::KernelModType kernel_mod_type) {
 
 BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  if (primitive->HasAttr("infer_shape_functor")) {
-    // sub graph infer shape
-    auto functor = GetValue<InferShapeFunctorPtr>(primitive->GetAttr("infer_shape_functor"));
+  if (primitive->HasAttr(kAttrInferShapeFunctor)) {
+    auto functor = primitive->GetAttr(kAttrInferShapeFunctor)->cast<InferShapeFunctorPtr>();
+    MS_EXCEPTION_IF_NULL(functor);
     return functor->InferShape(input_args);
   }
   const auto &op_name = primitive->name();

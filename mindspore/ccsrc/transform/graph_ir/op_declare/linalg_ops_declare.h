@@ -1,5 +1,5 @@
 /**
- * Copyright 2022-2023 Huawei Technologies Co., Ltd
+ * Copyright 2022-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,5 +66,11 @@ DECLARE_OP_USE_OUTPUT(Qr)
 
 DECLARE_CUST_OP_ADAPTER(LinearSumAssignment)
 DECLARE_CUST_OP_USE_OUTPUT(LinearSumAssignment)
+
+DECLARE_CUST_OP_ADAPTER(SolveTriangular)
+DECLARE_CUST_OP_USE_OUTPUT(SolveTriangular)
+
+DECLARE_CUST_OP_ADAPTER(SolveTriangularGrad)
+DECLARE_CUST_OP_USE_OUTPUT(SolveTriangularGrad)
 
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_LINALG_OPS_DECLARE_H_

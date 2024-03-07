@@ -42,7 +42,8 @@ void IdentityCustomizeCallWithoutContigous(const std::shared_ptr<OpRunner> &op, 
     }
 
     // Get inputs kernel tensors, the not-tensor value will malloc here
-    const auto &input_address_info = PyBoostUtils::GetAddressInfo(device_context, op->input_abs(), x_tensor);
+    const auto &input_address_info =
+      PyBoostUtils::GetAddressInfo(device_context, op->stream_id(), op->input_abs(), x_tensor);
 
     // Get outputs kernel tensors
     std::vector<kernel::KernelTensor *> output_kernel_tensor_list{launch_device_address->kernel_tensor().get()};
@@ -70,10 +71,12 @@ void IdentityCustomizeCall(const std::shared_ptr<OpRunner> &op, const TensorPtr 
     PyBoostUtils::MallocOpOutputs(device_context, outputs);
 
     // Get inputs kernel tensors, the not-tensor value will malloc here
-    const auto &input_address_info = PyBoostUtils::GetAddressInfo(device_context, op->input_abs(), x_tensor);
+    const auto &input_address_info =
+      PyBoostUtils::GetAddressInfo(device_context, op->stream_id(), op->input_abs(), x_tensor);
 
     // Get outputs kernel tensors
-    const auto &output_address_info = PyBoostUtils::GetAddressInfo(device_context, {op->output_abs()}, outputs);
+    const auto &output_address_info =
+      PyBoostUtils::GetAddressInfo(device_context, op->stream_id(), {op->output_abs()}, outputs);
 
     PyBoostUtils::LaunchKernel(op->primitive(), op->device_context(), input_address_info, output_address_info, stream);
     MS_LOG(DEBUG) << "Run device task Identity end";
@@ -83,8 +86,8 @@ void IdentityCustomizeCall(const std::shared_ptr<OpRunner> &op, const TensorPtr 
 tensor::TensorPtr IdentityCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &x_tensor, void *stream) {
   OpRunner::InferOpOutput(op, x_tensor);
 
-  PyBoostUtils::PrepareOpInputs(op->device_context(), x_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->outputs());
+  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), x_tensor);
+  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
 
   if (x_tensor->is_contiguous()) {
     MS_LOG(DEBUG) << "Run Identity input contiguous";

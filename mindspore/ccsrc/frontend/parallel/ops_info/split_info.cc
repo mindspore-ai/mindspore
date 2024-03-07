@@ -52,6 +52,12 @@ Status SplitInfo::GetAttrs() {
   axis_ = LongToSize(axis);
 
   inputs_shape_ = Shapes{inputs_shape_[0]};  // Truncation for Strategy check.
+
+  auto prim = GetCNodePrimitive(cnode_);
+  if (prim->HasAttr(parallel::SKIP_REDISTRIBUTION)) {
+    skip_redistribution_ = GetValue<bool>(prim->GetAttr(parallel::SKIP_REDISTRIBUTION));
+  }
+
   return SUCCESS;
 }
 

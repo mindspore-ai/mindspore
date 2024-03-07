@@ -24,7 +24,7 @@ from tests.st.ms_adapter._register.utils import convert_to_ms_tensor, convert_to
 ms.set_context(mode=ms.GRAPH_MODE)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_tensor_attr():
@@ -41,7 +41,7 @@ def test_tensor_attr():
     assert func(x) == 10
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_tensor_method():
@@ -58,7 +58,7 @@ def test_tensor_method():
     assert func(x) == 20
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_parameter_attr():
@@ -75,7 +75,7 @@ def test_parameter_attr():
     assert func(x) == 10
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_parameter_method():
@@ -92,7 +92,7 @@ def test_parameter_method():
     assert func(x) == 20
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_tensor_convert_type():
@@ -119,7 +119,7 @@ def test_tensor_convert_type():
     assert out[2] == (3, 3, 3, 3)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_convert_to_ms_tensor():
@@ -158,7 +158,7 @@ def test_tensor_isinstance():
     assert out[0] and not out[1] and out[2]
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_parameter_isinstance():

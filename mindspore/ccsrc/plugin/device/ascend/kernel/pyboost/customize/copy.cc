@@ -15,7 +15,7 @@
  */
 #include "plugin/device/ascend/kernel/pyboost/customize/copy.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
-#include "kernel/pyboost/py_boost_utils.h"
+#include "kernel/pyboost/pyboost_utils.h"
 #include "plugin/device/ascend/kernel/pyboost/aclnn_utils.h"
 
 namespace mindspore {
@@ -24,6 +24,7 @@ namespace pyboost {
 tensor::TensorPtr CopyAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor) {
   MS_LOG(DEBUG) << "Call start";
   auto input_abs = input_tensor->ToAbstract();
+  input_abs->set_value(kValueAny);
   auto output_abs = input_abs->Clone();
   op->set_input_abs({input_abs});
   op->set_output_abs(output_abs);
@@ -32,8 +33,8 @@ tensor::TensorPtr CopyAscendCustomize(const std::shared_ptr<OpRunner> &op, const
   PyBoostUtils::CreateOutputTensor(output_abs, &outputs);
   op->set_outputs(outputs);
 
-  PyBoostUtils::PrepareOpInputs(op->device_context(), input_tensor);
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->outputs());
+  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor);
+  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
 
   // Async
   PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor]() {
@@ -44,9 +45,8 @@ tensor::TensorPtr CopyAscendCustomize(const std::shared_ptr<OpRunner> &op, const
     // Malloc for output tensors
     PyBoostUtils::MallocOpOutputs(device_context, outputs);
 
-    auto stream_ptr = device::ascend::AscendStreamMng::GetInstance().GetStream(kDefaultStreamIndex);
     // Inplace output need be front
-    LAUNCH_ACLNN(aclnnInplaceCopy, device_context, stream_ptr, outputs[0], input_tensor);
+    LAUNCH_ACLNN(aclnnInplaceCopy, device_context, op->stream_id(), outputs[0], input_tensor);
     MS_LOG(DEBUG) << "Launch end";
   }));
   return op->output(0);

@@ -6,9 +6,10 @@ mindspore.ops.bucketize
     根据 `boundaries` 对 `input` 进行分桶。如果 `right` 为 ``False``，则左边界关闭，对于 `input` 中的每个元素 x，返回的索引满足以下规则:
 
     .. math::
+
         \begin{cases}
         boundaries[i-1] < x <= boundaries[i], & \text{if right} = False\\
-        boundaries[i-1] <= x < boundaries[i], & \text{if right} = True\\
+        boundaries[i-1] <= x < boundaries[i], & \text{if right} = True
         \end{cases}
 
     参数：

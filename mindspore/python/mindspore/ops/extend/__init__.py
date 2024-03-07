@@ -28,15 +28,19 @@ from mindspore.ops.op_info_register import op_info_register, custom_info_registe
     AiCPURegOp, TBERegOp, CpuRegOp, CustomRegOp, DataType
 from mindspore.ops.primitive import constexpr
 from . import (
+    array_func,
     math_func,
     nn_func,
 )
 
 from .array_func import gather, max, min
 from .math_func import (
-    baddbmm
+    baddbmm,
+    add,
+    sub
 )
 
 __all__ = []
+__all__.extend(array_func.__all__)
 __all__.extend(math_func.__all__)
 __all__.extend(nn_func.__all__)

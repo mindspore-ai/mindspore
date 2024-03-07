@@ -51,8 +51,8 @@ static map<HcclDataType, uint32_t> kConstOpHcomDataTypeSizeMap = {
   {HCCL_DATA_TYPE_INT32, sizeof(int32_t)},       {HCCL_DATA_TYPE_FP16, sizeof(float) / 2},
   {HCCL_DATA_TYPE_FP32, sizeof(float)},          {HCCL_DATA_TYPE_INT64, sizeof(int64_t)},
   {HCCL_DATA_TYPE_UINT64, sizeof(uint64_t)},     {HCCL_DATA_TYPE_UINT8, sizeof(uint8_t)},
-  {HCCL_DATA_TYPE_UINT16, sizeof(uint32_t) / 2}, {HCCL_DATA_TYPE_UINT32, sizeof(uint64_t)},
-  {HCCL_DATA_TYPE_FP64, sizeof(double)},         {HCCL_DATA_TYPE_BFP16, sizeof(float)},
+  {HCCL_DATA_TYPE_UINT16, sizeof(uint32_t) / 2}, {HCCL_DATA_TYPE_UINT32, sizeof(uint32_t)},
+  {HCCL_DATA_TYPE_FP64, sizeof(double)},         {HCCL_DATA_TYPE_BFP16, sizeof(float) / 2},
 };
 
 class HcomUtil {

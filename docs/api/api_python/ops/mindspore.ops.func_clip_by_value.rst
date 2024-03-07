@@ -13,7 +13,7 @@
             clip\_value\_max & \text{ if } x_i\ge  clip\_value\_max \\
             x_i & \text{ if } clip\_value\_min \lt x_i \lt clip\_value\_max \\
             clip\_value\_min & \text{ if } x_i \le clip\_value\_min \\
-        \end{array}\right
+        \end{array}\right.
 
     .. note::
         - `clip_value_min` 和 `clip_value_max` 不能同时为None；

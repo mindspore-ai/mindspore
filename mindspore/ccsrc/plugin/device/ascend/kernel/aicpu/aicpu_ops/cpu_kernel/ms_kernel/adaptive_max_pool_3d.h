@@ -16,7 +16,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_ADAPTIVE_MAX_POOL_3D_H_
 #define AICPU_KERNELS_NORMALIZED_ADAPTIVE_MAX_POOL_3D_H_
 
-#include "cpu_kernel_utils.h"
+#include "inc/ms_cpu_kernel.h"
 #include <vector>
 
 namespace aicpu {

@@ -85,12 +85,6 @@ class BACKEND_EXPORT MindRTBackend : public MindRTBackendBase {
                          bool enable_async);
 
   void RunAllocMemTask(DeviceContext *device_context, const tensor::TensorPtr &tensor, bool enable_async);
-
-  void RunContiguousTaskForArgs(const tensor::TensorPtr &tensor, size_t stream_id, bool enable_async) override;
-
-  device::DeviceAddressPtr RunContiguousTaskByAddress(const device::DeviceAddressPtr &old_device_address,
-                                                      const TensorStorageInfoPtr &old_storage_info, size_t stream_id,
-                                                      bool enable_async);
   // Sync default stream in PyNative mode.
   void SyncStream();
 

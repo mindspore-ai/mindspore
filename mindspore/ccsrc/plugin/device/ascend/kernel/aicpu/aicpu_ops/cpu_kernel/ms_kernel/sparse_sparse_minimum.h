@@ -17,8 +17,8 @@
 #ifndef AICPU_KERNELS_NORMALIZED_SPARSE_SPARSE_MINIMUM_H_
 #define AICPU_KERNELS_NORMALIZED_SPARSE_SPARSE_MINIMUM_H_
 
-#include "cpu_kernel_utils.h"
-#include "eigen_tensor.h"
+#include "inc/ms_cpu_kernel.h"
+#include "utils/eigen_tensor.h"
 
 namespace aicpu {
 

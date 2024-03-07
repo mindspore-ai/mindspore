@@ -40,6 +40,7 @@ using mindspore::profiler::ProfilerManager;
 #include "include/common/utils/tensor_future.h"
 #include "frontend/operator/ops_front_infer_function.h"
 #include "runtime/pipeline/pipeline.h"
+#include "runtime/device/device_address_utils.h"
 
 namespace mindspore {
 namespace pynative {
@@ -291,15 +292,24 @@ void EmplaceSliceInputs(const FrontendOpRunInfoPtr &op_run_info, const std::vect
     (void)op_run_info->op_grad_info->input_value.emplace_back(v);
   }
 
+  if (op_run_info->requires_grad && op_run_info->base_op_run_info.op_name == kStridedSliceOpName) {
+    // StridedSlice mask input
+    int64_t v = 0;
+
+    (void)op_run_info->op_grad_info->input_value.emplace_back(MakeValue(v));  // begin_mask
+    (void)op_run_info->op_grad_info->input_value.emplace_back(MakeValue(v));  // end_mask
+    (void)op_run_info->op_grad_info->input_value.emplace_back(MakeValue(v));  // ellipsis_mask
+    (void)op_run_info->op_grad_info->input_value.emplace_back(MakeValue(v));  // new_axis_mask
+    (void)op_run_info->op_grad_info->input_value.emplace_back(MakeValue(v));  // shrink_new_mask
+  }
+
   op_run_info->input_size = op_run_info->op_grad_info->input_value.size();
   PyNativeAlgo::PyParser::PrepareOpGradInfo(op_run_info);
 }
 
 #ifndef ENABLE_TEST
 size_t GetCurStreamId(const std::string &device_target) {
-  const auto &device_ctx = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
-    {device_target, MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
-  MS_EXCEPTION_IF_NULL(device_ctx);
+  auto device_ctx = runtime::OpRunner::GetDeviceContext(device_target);
   return device_ctx->device_res_manager_->GetCurrentStreamId();
 }
 #endif
@@ -340,6 +350,8 @@ void ForwardExecutor::InitOpRunInfo(const FrontendOpRunInfoPtr &op_run_info) {
   }
   op_run_info->base_op_run_info.device_target = GetCurrentDeviceTarget(op_run_info->op_grad_info->op_prim);
   op_run_info->cell_obj_id = GetCurrentCellObjId();
+  auto device_context = runtime::OpRunner::GetDeviceContext(op_run_info->base_op_run_info.device_target);
+  op_run_info->base_op_run_info.stream_id = device_context->device_res_manager_->GetCurrentStreamId();
 }
 
 void ForwardExecutor::ReInit() {
@@ -348,11 +360,7 @@ void ForwardExecutor::ReInit() {
 }
 
 void ForwardExecutor::Init() {
-  // Single op run with out cell or function packed
-  // cppcheck-suppress unreadVariable
-  if (MS_UNLIKELY(infer_operation()->only_single_op_run())) {
-    ReInit();
-  }
+  ReInit();
   if (init_) {
     return;
   }
@@ -590,7 +598,6 @@ void ForwardExecutor::RunOpFrontend(const FrontendOpRunInfoPtr &op_run_info) {
   SetCastForInputs(op_run_info);
 
 #ifndef ENABLE_TEST
-  // Ascend Op not support, We will remove it next week;
   if (op_run_info->is_view_op &&
       ProcessViewOp(op_run_info, strides_calc_info.first.value(), strides_calc_info.second)) {
     return;
@@ -658,14 +665,6 @@ PrimitivePtr ForwardExecutor::GetSlicePrimFromCache(const std::string &op_name) 
   }
 
   auto prim = std::make_shared<Primitive>(op_name);
-  if (op_name == kStridedSliceOpName) {
-    int64_t v = 0;
-    prim->set_attr(kAttrBeginMask, MakeValue(v));
-    prim->set_attr(kAttrEndMask, MakeValue(v));
-    prim->set_attr(kAttrEllipsisMask, MakeValue(v));
-    prim->set_attr(kAttrNewAxisMask, MakeValue(v));
-    prim->set_attr(kAttrShrinkAxisMask, MakeValue(v));
-  }
   slice_prim_cache_[op_name] = prim;
   return prim;
 }
@@ -906,26 +905,21 @@ void ForwardExecutor::PrintPyObjInfo(const py::object &obj, const std::string &s
 }
 
 void ForwardExecutor::ProcessBeforeNewGraph(const py::object &obj, const py::args &args) {
-  if (IsFirstCell()) {
-    ReInit();
-  }
   bool is_cell = py::isinstance<Cell>(obj);
   if (is_cell) {
-    PushForwardCell(obj);
-  }
-  PrintPyObjInfo(obj, kBegin, is_cell);
-  infer_operation()->set_only_single_op_run(false);
-  if (!grad()->RequiresGrad()) {
-    const auto &obj_id = PyNativeAlgo::PyParser::GetIdByPyObj(obj);
-    if (grad()->is_cell_has_dynamic_inputs(obj_id)) {
-      MS_LOG(DEBUG) << "obj id:" << obj_id << " set forward use dynamic shape process true";
-      grad()->set_forward_use_dynamic_shape_process(true);
+    CellPtr cell = obj.cast<CellPtr>();
+    MS_EXCEPTION_IF_NULL(cell);
+    PushForwardCell(cell);
+    if (!grad()->RequiresGrad()) {
+      if (grad()->is_cell_has_dynamic_inputs(cell->id())) {
+        MS_LOG(DEBUG) << "obj id:" << cell->id() << " set forward use dynamic shape process true";
+        grad()->set_forward_use_dynamic_shape_process(true);
 #ifndef ENABLE_SECURITY
-      ProfilerManager::GetInstance()->SetNetDynamicShapeStatus();
+        ProfilerManager::GetInstance()->SetNetDynamicShapeStatus();
 #endif
+      }
     }
   }
-  grad()->dynamic_shape()->UpdateArgsAbsToUnknownShapeAbs(obj, args);
 }
 
 void ForwardExecutor::ProcessAfterNewGraph(const py::object &obj) const { grad()->SetTopCellDynamicAttr(obj); }
@@ -933,9 +927,6 @@ void ForwardExecutor::ProcessAfterNewGraph(const py::object &obj) const { grad()
 void ForwardExecutor::ProcessBeforeEndGraph(const py::object &obj, bool is_cell) {
   if (is_cell) {
     PopForwardCell();
-  }
-  if (!grad()->RequiresGrad()) {
-    PrintPyObjInfo(obj, kEnd, is_cell);
   }
 
   // Do some finishing work before end graph
@@ -1018,10 +1009,8 @@ void ForwardExecutor::CreateInputAddressForViewOp(const tensor::TensorPtr &input
     return;
   }
 
-  const auto &device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
-    {op_run_info->base_op_run_info.device_target, MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
+  const auto &device_context = runtime::OpRunner::GetDeviceContext(op_run_info->base_op_run_info.device_target);
   MS_EXCEPTION_IF_NULL(device_context);
-  device_context->Initialize();
 
   MS_LOG(DEBUG) << "Input_tensor address is nullptr, need create address.";
   auto address_size = GetTypeByte(input_tensor->Dtype()) * input_tensor->ElementsNum();
@@ -1030,6 +1019,7 @@ void ForwardExecutor::CreateInputAddressForViewOp(const tensor::TensorPtr &input
     device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
   kernel_tensor->SetType(std::make_shared<TensorType>(input_tensor->Dtype()));
   kernel_tensor->SetShape(std::make_shared<abstract::TensorShape>(input_tensor->shape()));
+  kernel_tensor->set_stream_id(op_run_info->base_op_run_info.stream_id);
 
   auto device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
   device_address->set_is_view(true);
@@ -1051,19 +1041,8 @@ device::DeviceAddressPtr ForwardExecutor::TensorContiguousCallback(const DeviceS
     return device_addr;
   }
 
-  GilReleaseWithCheck release_gil;
-  const auto &cur_mind_rt_backend = GetMindRtBackend(device_addr->device_name());
-  MS_EXCEPTION_IF_NULL(cur_mind_rt_backend);
-
-  const auto &device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
-    {device_addr->device_name(), device_addr->device_id()});
-  MS_EXCEPTION_IF_NULL(device_context);
-  auto stream_id = device_context->device_res_manager_->GetCurrentStreamId();
-
   // as_numpy sync promise contiguous run_sync
-  auto ret = cur_mind_rt_backend->RunContiguousTaskByAddress(device_addr, storage_info, stream_id, false);
-  runtime::OpExecutor::GetInstance().WaitAll();
-  return ret;
+  return runtime::DeviceAddressUtils::ConvertContiguousDeviceAddressSync(device_addr);
 }
 
 void ForwardExecutor::PrepareOpInputs(const FrontendOpRunInfoPtr &op_run_info) {
@@ -1101,12 +1080,10 @@ void ForwardExecutor::CreateViewOutputTensor(const FrontendOpRunInfoPtr &op_run_
     output_tensor->shape(), input_device_address->device_name(), input_device_address->device_id());
   kernel_tensor->set_tensor_storage_info(storage_info);
   kernel_tensor->set_size(input_device_address->GetSize());
+  kernel_tensor->set_stream_id(input_device_address->stream_id());
 
-  const auto &device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
-    {input_device_address->device_name(), input_device_address->device_id()});
+  const auto &device_context = runtime::OpRunner::GetDeviceContext(input_device_address->device_name());
   MS_EXCEPTION_IF_NULL(device_context);
-  device_context->Initialize();
-
   auto output_device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
   MS_EXCEPTION_IF_NULL(output_device_address);
 

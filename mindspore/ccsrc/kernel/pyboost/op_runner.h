@@ -28,8 +28,8 @@
 #include "ir/tensor.h"
 #include "include/backend/visible.h"
 #include "abstract/ops/primitive_infer_map.h"
-#include "kernel/pyboost/py_boost_utils.h"
 #include "kernel/pyboost/ring_buffer.h"
+#include "kernel/pyboost/pyboost_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -42,7 +42,8 @@ constexpr size_t kAbstractCacheSize = 8192;
 // and it also contains several functional methods for the operator to run.
 class BACKEND_EXPORT OpRunner : public std::enable_shared_from_this<OpRunner> {
  public:
-  OpRunner() = default;
+  OpRunner(PrimitivePtr primitive, const DeviceContext *device_context)
+      : primitive_(std::move(primitive)), device_context_(device_context) {}
   virtual ~OpRunner() = default;
 
   // For users to implement custom call functions in the "customize" directory.
@@ -55,16 +56,11 @@ class BACKEND_EXPORT OpRunner : public std::enable_shared_from_this<OpRunner> {
   void set_input_abs(const std::vector<AbstractBasePtr> &input_abs) { input_abs_ = input_abs; }
   const AbstractBasePtr &output_abs() const { return output_abs_; }
   void set_output_abs(const AbstractBasePtr &output_abs) { output_abs_ = output_abs; }
-  void set_device_context(DeviceContext *device_context) { device_context_ = device_context; }
-  DeviceContext *device_context() const { return device_context_; }
+  const DeviceContext *device_context() const { return device_context_; }
   const std::vector<pynative::DeviceAddressPromisePtr> &device_sync_promises() const { return device_sync_promises_; }
   const std::vector<tensor::TensorPtr> &outputs() const { return outputs_; }
   void set_outputs(const std::vector<tensor::TensorPtr> &outputs) { outputs_ = outputs; }
-  void SetStreamId() {
-    // device_context_ is checked in PyBoostUtils::GetDeviceContext
-    stream_id_ = device_context_->device_res_manager_->GetCurrentStreamId();
-  }
-
+  void set_stream_id(size_t stream_id) { stream_id_ = stream_id; }
   size_t stream_id() const { return stream_id_; }
 
   const tensor::TensorPtr &output(const size_t &idx) {
@@ -82,14 +78,6 @@ class BACKEND_EXPORT OpRunner : public std::enable_shared_from_this<OpRunner> {
     grad_func_();
   }
 
-  template <typename T>
-  static AbstractBasePtr ConvertAbstract(const std::optional<T> &t) {
-    if (!t.has_value()) {
-      return kNone->ToAbstract();
-    }
-    return t.value()->ToAbstract();
-  }
-
   static AbstractBasePtr ConvertAbstract(const ValuePtr &t) { return t->ToAbstract(); }
 
   // Tensor is held by Abstract, may lead to memory leak.
@@ -99,6 +87,30 @@ class BACKEND_EXPORT OpRunner : public std::enable_shared_from_this<OpRunner> {
     t->set_abstract(abs);
     abstract_cache_.Push(abs);
     return abs;
+  }
+
+  static AbstractBasePtr ConvertAbstract(const ValueTuplePtr &t) {
+    AbstractBasePtrList abs_list(t->value().size());
+    for (size_t i = 0; i < t->value().size(); ++i) {
+      auto &val = t->value()[i];
+      auto abs = val->ToAbstract();
+      if (val->isa<tensor::Tensor>()) {
+        abs->set_value(kValueAny);
+        auto tensor = val->cast<tensor::TensorPtr>();
+        tensor->set_abstract(abs);
+        abstract_cache_.Push(abs);
+      }
+      abs_list[i] = abs;
+    }
+    return std::make_shared<abstract::AbstractTuple>(abs_list);
+  }
+
+  template <typename T>
+  static AbstractBasePtr ConvertAbstract(const std::optional<T> &t) {
+    if (!t.has_value()) {
+      return kNone->ToAbstract();
+    }
+    return ConvertAbstract(t.value());
   }
 
   template <typename... T>
@@ -138,7 +150,7 @@ class BACKEND_EXPORT OpRunner : public std::enable_shared_from_this<OpRunner> {
   AbstractBasePtr output_abs_{nullptr};
   // Forward output for grad.
   std::vector<tensor::TensorPtr> outputs_{};
-  DeviceContext *device_context_{nullptr};
+  const DeviceContext *device_context_{nullptr};
   // Device address promise for multi-stage pipeline.
   std::vector<pynative::DeviceAddressPromisePtr> device_sync_promises_;
   // If the grad_func is not a null pointer,

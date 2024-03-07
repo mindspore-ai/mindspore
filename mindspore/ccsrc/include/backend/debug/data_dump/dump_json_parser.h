@@ -87,6 +87,14 @@ class BACKEND_EXPORT DumpJsonParser {
   const std::vector<session::KernelGraph *> &graphs() const { return graphs_; }
   enum JsonDumpMode { DUMP_ALL = 0, DUMP_KERNEL = 1, DUMP_KERNELS_WITH_FLAG = 2 };
   enum JsonFileFormat { FORMAT_NPY = 0, FORMAT_BIN = 1 };
+  enum JsonInputOutput { DUMP_BOTH = 0, DUMP_INPUT = 1, DUMP_OUTPUT = 2 };
+  enum JosonOpDebugMode {
+    DUMP_WHOLE = 0,
+    DUMP_AICORE_OVERFLOW = 1,
+    DUMP_ATOMIC_OVERFLOW = 2,
+    DUMP_BOTH_OVERFLOW = 3,
+    DUMP_LITE_EXCEPTION = 4
+  };
   static bool IsKernelByKernel();
   nlohmann::json GetKernelsJson() { return kernels_json_; }
 
@@ -116,8 +124,8 @@ class BACKEND_EXPORT DumpJsonParser {
   bool trans_flag_{false};
   uint32_t cur_dump_iter_{0};
   bool already_parsed_{false};
-  std::string dump_layer_;
-  nlohmann::json kernels_json_;
+  std::string dump_layer_{""};
+  nlohmann::json kernels_json_ = nlohmann::json::array();
 
   // Save graphs for dump.
   std::vector<session::KernelGraph *> graphs_;

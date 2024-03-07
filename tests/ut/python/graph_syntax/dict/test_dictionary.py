@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -173,7 +173,7 @@ def test_dict_error_1():
 
     with pytest.raises(RuntimeError) as ex:
         foo()
-    assert "key only supports string, number, constant tensor and tuple, but got" in str(ex.value)
+    assert "key only supports string, number, type, none, constant tensor and tuple, but got" in str(ex.value)
 
 
 def test_dict_error_2():
@@ -207,10 +207,9 @@ def test_dict_error_3():
     x = Tensor([1, 2])
     with pytest.raises(RuntimeError) as ex:
         foo(x)
-    assert "key only supports string, number, constant tensor and tuple, but got" in str(ex.value)
+    assert "key only supports string, number, type, none, constant tensor and tuple, but got" in str(ex.value)
 
 
-@pytest.mark.skip(reason="No support yet.")
 def test_dict_multiple_duplicate_keys():
     """
     Feature: Support dict.

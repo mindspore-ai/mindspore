@@ -21,10 +21,10 @@
 
 #include <algorithm>
 
-#include "cpu_kernel/common/cpu_kernel_utils.h"
+#include "context/inc/cpu_kernel_utils.h"
 #include "cpu_types.h"
-#include "common/kernel_log.h"
-#include "common/status.h"
+#include "inc/kernel_log.h"
+#include "context/common/status.h"
 #include "utils/kernel_util.h"
 
 namespace {

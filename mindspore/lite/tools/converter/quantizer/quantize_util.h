@@ -138,6 +138,11 @@ STATUS RemoveAntiQuantModeNodes(const FuncGraphPtr &func_graph, const AnfNodePtr
 
 std::vector<std::vector<int64_t>> ExtractStrategy(const ValuePtr &stra);
 
+std::vector<schema::QuantParamT> CalQuantParamWithMinMax(const tensor::TensorPtr &min_value,
+                                                         const tensor::TensorPtr &max_value, bool symmetric);
+
+std::vector<schema::QuantParamT> GetQuantParamWithFakeQuantNode(const CNodePtr &fake_quant_node, bool symmetric);
+
 template <typename T>
 int DeQuantData(const int8_t *tensor_data, int64_t elements_num, std::vector<mindspore::QuantParam> quant_params,
                 std::vector<T> *dequant_data) {

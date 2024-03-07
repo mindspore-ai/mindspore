@@ -41,6 +41,7 @@
 #include "ir/func_graph_transform.h"
 #include "ir/func_graph_base.h"
 #include "abstract/abstract_value.h"
+#include "mindspore/core/symbolic_shape/symbol_engine.h"
 
 namespace mindspore {
 using BaseRefCounterMap = OrderedMap<BaseRef, int, BaseRefHash>;
@@ -423,13 +424,22 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
 
   const std::string &phase() const { return phase_; }
 
- private:
+  void set_symbol_engine(const SymbolEnginePtr &se) { symbol_engine_ = se; }
+  const SymbolEnginePtr &symbol_engine() const { return symbol_engine_; }
+
   // Only used for func_graph manager to control resource free.
   int attached_mng_cnt() const { return attached_mng_cnt_; }
+
+  // Reserve the func graph, not to release in manager.
+  void set_reserved(bool reserved) { reserved_ = reserved; }
+  bool reserved() const { return reserved_; }
+
+ private:
+  // Only used for func_graph manager to control resource free.
   void IncAttachedMngCnt() { attached_mng_cnt_++; }
   void DecAttachedMngCnt() { attached_mng_cnt_--; }
   // Clear all info from manager.
-  void ClearAllManagerInfo();
+  void ClearAllResource();
 
   // Graph is manipulated by manager and others.
   friend FuncGraphManager;
@@ -484,7 +494,7 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   // FuncGraphManager. In that special case, Manage() should be called to make the func graph
   // managed.
   std::weak_ptr<FuncGraphManager> manager_;
-  int attached_mng_cnt_ = 0;
+  int attached_mng_cnt_{0};
 
   GraphDebugInfoPtr debug_info_;
   void GenerateKwargReplNode(const FuncGraphPtr &specialized_graph, const AnfNodePtrList &kwarg_keys_tuple_nodes,
@@ -506,7 +516,7 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
 
   // If the graph was changed, it should be dropped in cache data_converter::object_map_
   // which used by ConvertToFuncGraph.
-  bool dropped_ = false;
+  bool dropped_{false};
   // If the graph is a bprop graph, it should has a hash of the bprop function.
   std::string bprop_hash_;
   // If the graph is a bprop graph, it should has a filepath of the bprop function.
@@ -514,15 +524,19 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
 
   // If the graph is decorated with @jit and runs grad process in pynative mode,
   // forward nodes used in grad graph will be added to output for holding output values.
-  bool modify_output_ = false;
+  bool modify_output_{false};
   mindspore::OrderedSet<AnfNodePtr> used_forward_nodes_;
   // If the func_graph is input of switch node, and the condition of switch is AbstractTensor, need set true.
-  bool is_tensor_condition_branch_ = false;
+  bool is_tensor_condition_branch_{false};
   // Corresponding python obj.
-  ValuePtr python_obj_ = nullptr;
+  ValuePtr python_obj_{nullptr};
   std::string phase_;
   // Own all nodes in the func graph.
   std::list<AnfNodePtr> own_nodes_;
+  // the manager of symbolic shape's symbols and operations.
+  SymbolEnginePtr symbol_engine_;
+  // Reserve the func graph, not to release in manager.
+  bool reserved_{false};
 };
 
 inline CNodePtr NewCNode(const AnfNodePtrList &inputs, const FuncGraphPtr &fg) {

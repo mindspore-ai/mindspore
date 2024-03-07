@@ -583,7 +583,11 @@ TensorPtr DataPrepareActor::FetchInputTensor(const std::vector<TensorPtr> &tenso
                                              const VectorRef &args, const KernelWithIndex &front_node) const {
   if (!tensors.empty()) {
     MS_EXCEPTION_IF_CHECK_FAIL((tensor_index < tensors.size()), "The tensor index is out of range.");
-    return tensors[tensor_index];
+    auto tensor = tensors[tensor_index];
+    // The tensor needs to be converted to contiguous before being given to the actors.
+    // After the view feature is supported in the graph mode, the following code will be deleted.
+    DeviceAddressUtils::ConvertContiguousTensorSync(tensor);
+    return tensor;
   }
 
   MS_EXCEPTION_IF_NULL(front_node.first);
@@ -594,7 +598,11 @@ TensorPtr DataPrepareActor::FetchInputTensor(const std::vector<TensorPtr> &tenso
     return nullptr;
   }
   auto arg_index = iter - graph_compiler_info_->origin_parameters_order_.begin();
-  return FetchInputTensorByArg(args, arg_index, front_node);
+  auto tensor = FetchInputTensorByArg(args, arg_index, front_node);
+  // The tensor needs to be converted to contiguous before being given to the actors.
+  // After the view feature is supported in the graph mode, the following code will be deleted.
+  DeviceAddressUtils::ConvertContiguousTensorSync(tensor);
+  return tensor;
 }
 
 TensorPtr DataPrepareActor::FetchInputTensorByArg(const VectorRef &args, size_t arg_index,
@@ -612,7 +620,12 @@ TensorPtr DataPrepareActor::FetchInputTensorByArg(const VectorRef &args, size_t 
                  << flatten_tensors.size();
     return nullptr;
   }
-  return flatten_tensors[input_tensor_index];
+
+  auto tensor = flatten_tensors[input_tensor_index];
+  // The tensor needs to be converted to contiguous before being given to the actors.
+  // After the view feature is supported in the graph mode, the following code will be deleted.
+  DeviceAddressUtils::ConvertContiguousTensorSync(tensor);
+  return tensor;
 }
 
 size_t DataPrepareActor::FetchInputTensorIndex(const KernelWithIndex &front_node) const {
@@ -976,7 +989,10 @@ void DataPrepareActor::PrepareDataForStringValue(const ValueNodePtr &node, size_
   auto value = GetValue<std::string>(node_value);
   size_t tensor_size = value.size();
   ShapeVector shape = {1, SizeToLong(tensor_size)};
-  if (!device_tensor->SyncHostToDevice(shape, tensor_size, kObjectTypeString, value.data())) {
+  // account '\0' to string size, keep consistent with method `CreateDeviceAddressForScalarAndString` defined in
+  // `device_address_utils.cc`
+  size_t string_tensor_size = tensor_size + 1;
+  if (!device_tensor->SyncHostToDevice(shape, string_tensor_size, kObjectTypeString, value.data())) {
     std::string error_info = "SyncHostToDevice failed, node name: " + node->fullname_with_scope();
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(real_strategy_, (*context), error_info);
   }

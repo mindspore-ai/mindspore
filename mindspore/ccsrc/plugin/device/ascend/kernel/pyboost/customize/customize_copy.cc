@@ -15,7 +15,7 @@
  */
 #include "plugin/device/ascend/kernel/pyboost/customize/customize_copy.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
-#include "kernel/pyboost/py_boost_utils.h"
+#include "kernel/pyboost/pyboost_utils.h"
 #include "plugin/device/ascend/kernel/pyboost/aclnn_utils.h"
 
 namespace mindspore {
@@ -54,15 +54,14 @@ void CustomizeCopyAscend(device::DeviceContext *device_context, const device::De
     fill_kernel_info(input_kernel_tensor);
     fill_kernel_info(output_kernel_tensor);
     const auto &input_storage_info = input_kernel_tensor->tensor_storage_info();
-    const auto &output_storage_info = input_kernel_tensor->tensor_storage_info();
+    const auto &output_storage_info = output_kernel_tensor->tensor_storage_info();
     MS_LOG(DEBUG) << "Input_storage_info:" << (input_storage_info == nullptr ? "" : input_storage_info->ToString())
                   << ", output_storage_info:" << (output_storage_info == nullptr ? "" : output_storage_info->ToString())
                   << ", input address size:" << input_kernel_tensor->size()
                   << ", output address size:" << output_kernel_tensor->size();
 
-    auto stream_ptr = device::ascend::AscendStreamMng::GetInstance().GetStream(stream_id);
     // Inplace output need be front
-    LAUNCH_ACLNN(aclnnInplaceCopy, device_context, stream_ptr, output_kernel_tensor.get(), input_kernel_tensor.get());
+    LAUNCH_ACLNN(aclnnInplaceCopy, device_context, stream_id, output_kernel_tensor.get(), input_kernel_tensor.get());
     MS_LOG(DEBUG) << "Launch end";
   }));
 }

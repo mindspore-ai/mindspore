@@ -377,3 +377,71 @@ def test_to_float(mode, dst_type):
     net = AddNet().to_float(dst_type)
     output = net(x)
     assert output.dtype == dst_type
+
+
+class TestAmpNet(ms.nn.Cell):
+    def __init__(self):
+        super(TestAmpNet, self).__init__()
+        self.conv = nn.Conv2d(3, 64, kernel_size=1, weight_init='ones', bias_init='zeros')
+        self.relu = nn.ReLU()
+
+    def construct(self, x):
+        x = self.conv(x)
+        x = self.relu(x)
+        return x
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('amp_level', ["O1", "O2", "O3"])
+def test_amp_bfloat16(amp_level):
+    """
+    Feature: to_float
+    Description: Verify the result of to_float
+    Expectation: success
+    """
+    # graph mode
+    context.set_context(mode=context.GRAPH_MODE)
+    context.set_context(save_graphs=True, save_graphs_path=f'./test_amp_{amp_level}')
+    x = Tensor(np.random.rand(1, 3, 16, 16), ms.float32)
+    net_graph = TestAmpNet()
+    net_graph = amp.auto_mixed_precision(net_graph, amp_level=amp_level, dtype=ms.bfloat16)
+    out_graph = net_graph(x)
+    content = read_validateir_file(f'./test_amp_{amp_level}/')
+    assert re.search(r"Conv2D(.*?)\n(.*) -> \(\<Tensor\[BFloat16\]", content), content
+    # pynative mode
+    context.set_context(mode=context.PYNATIVE_MODE)
+    context.set_context(save_graphs=False)
+    net_pynative = TestAmpNet()
+    net_pynative = amp.auto_mixed_precision(net_pynative, amp_level=amp_level, dtype=ms.bfloat16)
+    out_pynative = net_pynative(x)
+    allclose_nparray(out_graph.asnumpy(), out_pynative.asnumpy(), 0.001, 0.001)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+def test_custom_mixed_precision_bfloat16():
+    """
+    Feature: to_float
+    Description: Verify the result of to_float
+    Expectation: success
+    """
+    # graph mode
+    context.set_context(mode=context.GRAPH_MODE)
+    context.set_context(save_graphs=True, save_graphs_path=f'./test_custom_amp')
+    x = Tensor(np.random.rand(1, 3, 16, 16), ms.float32)
+    net_graph = TestAmpNet()
+    white_list = [nn.ReLU, nn.Conv2d]
+    net_graph = amp.custom_mixed_precision(net_graph, white_list=white_list, dtype=ms.bfloat16)
+    out_graph = net_graph(x)
+    content = read_validateir_file(f'./test_custom_amp/')
+    assert re.search(r"Conv2D(.*?)\n(.*) -> \(\<Tensor\[BFloat16\]", content), content
+    # pynative mode
+    context.set_context(mode=context.PYNATIVE_MODE)
+    context.set_context(save_graphs=False)
+    net_pynative = TestAmpNet()
+    white_list = [nn.ReLU, nn.Conv2d]
+    net_pynative = amp.custom_mixed_precision(net_pynative, white_list=white_list, dtype=ms.bfloat16)
+    out_pynative = net_pynative(x)
+    allclose_nparray(out_graph.asnumpy(), out_pynative.asnumpy(), 0.001, 0.001)

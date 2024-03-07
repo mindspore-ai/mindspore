@@ -48,6 +48,7 @@ else()
     find_library(acl_dvpp_mpi libacl_dvpp_mpi.so ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
     target_link_libraries(dvpp_utils PRIVATE _c_dataengine ${acl} ${acl_dvpp} mindspore_core mindspore_shared_lib ${nnopbase} ${acl_dvpp_op} ${acl_dvpp_mpi})
 endif()
+target_link_libraries(dvpp_utils PRIVATE $<TARGET_OBJECTS:_mindspore_transform_symbol_obj>)
 
 if(MSLITE_ENABLE_CLOUD_MIND_DATA)
     add_dependencies(dvpp_utils fbs_src)

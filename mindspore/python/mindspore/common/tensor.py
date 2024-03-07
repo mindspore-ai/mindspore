@@ -34,6 +34,7 @@ from mindspore._c_expression import Tensor as Tensor_
 from mindspore import _checkparam as validator
 from mindspore._checkparam import check_is_number, is_stub_tensor
 from mindspore._check_jit_forbidden_api import jit_forbidden_register
+from mindspore.common.symbol import Symbol
 
 np_types = (np.int8, np.int16, np.int32, np.int64,
             np.uint8, np.uint16, np.uint32, np.uint64, np.float16,
@@ -227,8 +228,16 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
                 if isinstance(input_data, np_types):
                     input_data = np.array(input_data)
 
-                if isinstance(shape, numbers.Number):
-                    shape = (shape,)
+                if shape is not None:
+                    if isinstance(shape, numbers.Number):
+                        shape = (shape,)
+                    elif isinstance(shape, Symbol):
+                        self.symbolic_shape = [shape]
+                        shape = (None,)
+                    elif isinstance(shape, (list, tuple)) and any(isinstance(s, Symbol) for s in shape):
+                        self.symbolic_shape = [item.to_dict() if isinstance(item, Symbol) else item for item in shape]
+                        shape_without_symbol = (None if isinstance(item, Symbol) else item for item in shape)
+                        shape = list(shape_without_symbol) if isinstance(shape, list) else tuple(shape_without_symbol)
 
                 _check_tensor_input(input_data, dtype, shape, init)
 
@@ -304,19 +313,11 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
     def __eq__(self, other):
         if not isinstance(other, (int, float, Tensor)):
             return False
-        # bool type is not supported for `Equal` operator in backend.
-        if self.dtype == mstype.bool_ or (isinstance(other, Tensor) and other.dtype == mstype.bool_):
-            if isinstance(other, Tensor):
-                return Tensor(np.array(self.asnumpy() == other.asnumpy()))
-            return Tensor(np.array(self.asnumpy() == other))
         return tensor_operator_registry.get('__eq__')(self, other)
 
     def __ne__(self, other):
         if not isinstance(other, (int, float, Tensor)):
             return True
-        #  bool type is not supported for `NotEqual` operator in backend.
-        if self.dtype == mstype.bool_ or (isinstance(other, Tensor) and other.dtype == mstype.bool_):
-            return Tensor(np.array(self.asnumpy() != other.asnumpy()))
         return tensor_operator_registry.get('__ne__')(self, other)
 
     def __hash__(self):
@@ -335,7 +336,10 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         return out
 
     def __bool__(self):
-        data = self.asnumpy()
+        if self.dtype == mstype.bfloat16:
+            data = self.float().asnumpy()
+        else:
+            data = self.asnumpy()
         if data.shape == ():
             return bool(data)
         if data.shape == (1,):
@@ -351,15 +355,24 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         raise ValueError(message)
 
     def __int__(self):
-        data = self.asnumpy()
+        if self.dtype == mstype.bfloat16:
+            data = self.float().asnumpy()
+        else:
+            data = self.asnumpy()
         return self._convert_scalar_(data, int, "Only one element tensors can be converted to Python scalars")
 
     def __float__(self):
-        data = self.asnumpy()
+        if self.dtype == mstype.bfloat16:
+            data = self.float().asnumpy()
+        else:
+            data = self.asnumpy()
         return self._convert_scalar_(data, float, "Only one element tensors can be converted to Python scalars")
 
     def __index__(self):
-        data = self.asnumpy()
+        if self.dtype == mstype.bfloat16:
+            data = self.float().asnumpy()
+        else:
+            data = self.asnumpy()
         if data.dtype not in ["int8", "int16", "int32", "int64", "bool"]:
             raise ValueError("Only integer tensors of a single element can be converted to an index.")
         return self._convert_scalar_(data, int,
@@ -1851,16 +1864,16 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         """
         Return a contiguous flattened tensor.
 
+        See also:
+            :func:`mindspore.Tensor.reshape`: Give a new shape to a tensor without changing its data.
+
+            :func:`mindspore.Tensor.flatten`: Return a copy of the tensor collapsed into one dimension.
+
         Returns:
             Tensor, a 1-D tensor, containing the same elements of the input.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
-
-        See also:
-            :func:`mindspore.Tensor.reshape`: Give a new shape to a tensor without changing its data.
-
-            :func:`mindspore.Tensor.flatten`: Return a copy of the tensor collapsed into one dimension.
 
         Examples:
             >>> import numpy as np
@@ -2264,6 +2277,13 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         """
         Return the maximum of a tensor or maximum along an axis.
 
+        See also:
+            :func:`mindspore.Tensor.argmin`: Return the indices of the minimum values along an axis.
+
+            :func:`mindspore.Tensor.argmax`: Return the indices of the maximum values along an axis.
+
+            :func:`mindspore.Tensor.min`: Return the minimum of a tensor or minimum along an axis.
+
         Note:
             When `axis` is ``None``, `keepdims` and subsequent parameters
             have no effect. At the same time, the index is fixed to return 0.
@@ -2299,13 +2319,6 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
 
-        See also:
-            :func:`mindspore.Tensor.argmin`: Return the indices of the minimum values along an axis.
-
-            :func:`mindspore.Tensor.argmax`: Return the indices of the maximum values along an axis.
-
-            :func:`mindspore.Tensor.min`: Return the minimum of a tensor or minimum along an axis.
-
         Examples:
             >>> import numpy as np
             >>> from mindspore import Tensor
@@ -2333,6 +2346,13 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
     def min(self, axis=None, keepdims=False, *, initial=None, where=True, return_indices=False):
         """
         Return the minimum of a tensor or minimum along an axis.
+
+        See also:
+            :func:`mindspore.Tensor.argmin`: Return the indices of the minimum values along an axis.
+
+            :func:`mindspore.Tensor.argmax`: Return the indices of the maximum values along an axis.
+
+            :func:`mindspore.Tensor.max`: Return the minimum of a tensor or minimum along an axis.
 
         Note:
             When `axis` is ``None``, `keepdims` and subsequent parameters
@@ -2368,13 +2388,6 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
-
-        See also:
-            :func:`mindspore.Tensor.argmin`: Return the indices of the minimum values along an axis.
-
-            :func:`mindspore.Tensor.argmax`: Return the indices of the maximum values along an axis.
-
-            :func:`mindspore.Tensor.max`: Return the minimum of a tensor or minimum along an axis.
 
         Examples:
             >>> import numpy as np
@@ -2722,6 +2735,11 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         with 0. And if the shape of the new tensor is smaller than the shape of the original tensor, the new tensor is
         filled with the elements of the original tensor in order.
 
+        See also:
+            :func:`mindspore.Tensor.reshape`: Give a new shape to a tensor without changing its data.
+
+            :func:`mindspore.Tensor.repeat`: Repeat elements of a tensor.
+
         Note:
             Instead of changing the size of the input tensor and returns nothing as in numpy,
             this method returns a new Tensor with the input size.
@@ -2735,11 +2753,6 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
-
-        See also:
-            :func:`mindspore.Tensor.reshape`: Give a new shape to a tensor without changing its data.
-
-            :func:`mindspore.Tensor.repeat`: Repeat elements of a tensor.
 
         Examples:
             >>> import numpy as np
@@ -2835,6 +2848,9 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         """
         Return the sum along diagonals of the tensor.
 
+        See also:
+            :func:`mindspore.Tensor.diagonal`: Return specified diagonals.
+
         Args:
             offset (int, optional): Offset of the diagonal from the main diagonal.
                 Can be positive or negative. Defaults to main diagonal.
@@ -2855,9 +2871,6 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
-
-        See also:
-            :func:`mindspore.Tensor.diagonal`: Return specified diagonals.
 
         Examples:
             >>> import numpy as np
@@ -3106,6 +3119,11 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         Return the variance, which is computed for the flattened array by default,
         otherwise over the specified axis.
 
+        See also:
+            :func:`mindspore.Tensor.mean`: Reduce a dimension of a tensor by averaging all elements in the dimension.
+
+            :func:`mindspore.Tensor.std`: Compute the standard deviation along the specified axis.
+
         Note:
             Numpy arguments `dtype`, `out` and `where` are not supported.
 
@@ -3121,11 +3139,6 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
-
-        See also:
-            :func:`mindspore.Tensor.mean`: Reduce a dimension of a tensor by averaging all elements in the dimension.
-
-            :func:`mindspore.Tensor.std`: Compute the standard deviation along the specified axis.
 
         Examples:
             >>> import numpy as np
@@ -3171,6 +3184,9 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         """
         Return sum of tensor elements over a given axis.
 
+        See also:
+            :func:`mindspore.Tensor.cumsum`: Return the cumulative sum of the elements along a given axis.
+
         Note:
             Numpy arguments `out`, `where`, `casting`, `order`, `subok`, `signature`, and
             `extobj` are not supported.
@@ -3202,9 +3218,6 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
-
-        See also:
-            :func:`mindspore.Tensor.cumsum`: Return the cumulative sum of the elements along a given axis.
 
         Examples:
             >>> import numpy as np
@@ -3291,6 +3304,11 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         """
         Repeat elements of a tensor.
 
+        See also:
+            :func:`mindspore.Tensor.reshape`: Give a new shape to a tensor without changing its data.
+
+            :func:`mindspore.Tensor.resize`: Changes shape and size of tensor in-place.
+
         Args:
             repeats (Union[int, tuple, list]): The number of repetitions for each element.
                 `repeats` is broadcasted to fit the shape of the given axis.
@@ -3306,11 +3324,6 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
-
-        See also:
-            :func:`mindspore.Tensor.reshape`: Give a new shape to a tensor without changing its data.
-
-            :func:`mindspore.Tensor.resize`: Changes shape and size of tensor in-place.
 
         Examples:
             >>> import numpy as np

@@ -51,6 +51,8 @@ def test_adaptive_max_pool2d():
 
 
 @pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_adaptive_max_pool2d_to_pooling():
     """

@@ -853,6 +853,7 @@ bool ExistSummaryNode(const KernelGraph *graph) {
 #endif
 
 GraphId KernelGraphMgr::graph_sum_ = 0;
+GraphId KernelGraphMgr::pynative_graph_sum_ = 0;
 HashMap<std::string, std::weak_ptr<AnfNode>> KernelGraphMgr::name_to_params_ =
   HashMap<std::string, std::weak_ptr<AnfNode>>();
 
@@ -911,6 +912,7 @@ void KernelGraphMgr::ClearGraph() {
     graph_iter = graphs_.erase(graph_iter);
   }
   graph_sum_ = 0;
+  pynative_graph_sum_ = 0;
 }
 
 void KernelGraphMgr::InitInternalOutputParameter(const AnfNodePtr &out_node, const AnfNodePtr &parameter) const {
@@ -2014,8 +2016,7 @@ std::shared_ptr<KernelGraph> KernelGraphMgr::ConstructKernelGraph(const FuncGrap
 std::shared_ptr<KernelGraph> KernelGraphMgr::ConstructPackKernelGraph(const FuncGraphPtr &func_graph,
                                                                       std::vector<KernelGraphPtr> *all_out_graph,
                                                                       DeviceType device_target) {
-  auto graph = std::make_shared<KernelGraph>();
-  graph->set_graph_id(graph_sum_++);
+  auto graph = NewPynativeKernelGraph();
   ConstructKernelGraphInner(func_graph, all_out_graph, device_target, graph);
   return graph;
 }
@@ -2740,6 +2741,15 @@ CNodePtr KernelGraphMgr::ConstructOutput(const AnfNodePtrList &outputs, const st
   MS_EXCEPTION_IF_NULL(abstract_tuple);
   output_node->set_abstract(abstract_tuple);
   return output_node;
+}
+
+KernelGraphPtr KernelGraphMgr::NewPynativeKernelGraph() {
+  auto graph = std::make_shared<KernelGraph>();
+  graph->set_is_from_pynative(true);
+  MS_EXCEPTION_IF_NULL(graph);
+  graph->set_graph_id(pynative_graph_sum_);
+  pynative_graph_sum_++;
+  return graph;
 }
 
 KernelGraphPtr KernelGraphMgr::NewKernelGraph() {

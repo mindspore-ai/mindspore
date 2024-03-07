@@ -30,8 +30,8 @@ NodePtr GraphBuilder::Reshape(const NodePtr &input, const ShapeVector &shape) co
 }
 
 NodePtr GraphBuilder::BroadcastTo(const NodePtr &input, const ShapeVector &shape) const {
-  auto shape_value = MakeValue(shape);
-  return Emit("BroadcastTo", {input}, {{"shape", shape_value}});
+  auto shape_value = Tensor(shape);
+  return Emit("BroadcastTo", {input, shape_value});
 }
 
 NodePtr GraphBuilder::Gather(const NodePtr &param, const NodePtr &indice, int64_t axis, int64_t batch_dims) const {

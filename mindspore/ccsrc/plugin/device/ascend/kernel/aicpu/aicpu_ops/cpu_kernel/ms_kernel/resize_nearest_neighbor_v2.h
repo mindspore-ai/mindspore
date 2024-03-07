@@ -19,7 +19,7 @@
 
 #include <unordered_map>
 
-#include "cpu_kernel_utils.h"
+#include "inc/ms_cpu_kernel.h"
 #include "utils/eigen_tensor.h"
 
 namespace aicpu {

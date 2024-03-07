@@ -116,6 +116,9 @@ class Node:
         """
         Create a node that corresponds to a function call.
 
+        Note:
+            The codes inside the function will not be parsed.
+
         Args:
             function (FunctionType): The function to be called.
             targets (List[Union[ScopedValue, str]]): indicates output names. Used as targets of an assign statement in

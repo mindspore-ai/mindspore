@@ -8,7 +8,7 @@ mindspore.scipy.linalg.lu_factor
     分解为：
 
     .. math::
-        A = P L U
+        a = P L U
 
     其中， :math:`P` 是一个置换矩阵， :math:`L` 是对角线元素全为1的下三角矩阵， :math:`U` 是上三角矩阵。
 
@@ -32,4 +32,4 @@ mindspore.scipy.linalg.lu_factor
         - **piv** (Tensor) - shape为 :math:`(M,)` 的Tensor，表示置换矩阵 `p` 的索引：索引中的第 `i` 个元素值 `j` 表示矩阵的第 `i` 行与第 `j` 行互换。
 
     异常：
-        - **ValueError** - 如果 `a` 不是2D方阵。
+        - **ValueError** - 如果 :math:`a` 不是2D方阵。

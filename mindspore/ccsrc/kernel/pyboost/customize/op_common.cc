@@ -15,7 +15,7 @@
  */
 
 #include "kernel/pyboost/customize/op_common.h"
-#include "kernel/pyboost/py_boost_utils.h"
+#include "kernel/pyboost/pyboost_utils.h"
 #include "mindspore/core/ops/framework_ops.h"
 
 namespace mindspore {
@@ -27,6 +27,7 @@ tensor::TensorPtr CopyCustomizeCall(const std::shared_ptr<OpRunner> &op, const T
   MS_EXCEPTION_IF_NULL(input_tensor);
 
   auto input_abs = input_tensor->ToAbstract();
+  input_abs->set_value(kValueAny);
   auto output_abs = input_abs->Clone();
   op->set_input_abs({input_abs});
   op->set_output_abs(output_abs);
@@ -36,9 +37,9 @@ tensor::TensorPtr CopyCustomizeCall(const std::shared_ptr<OpRunner> &op, const T
   op->set_outputs(outputs);
 
   // Create device address for input tensors
-  PyBoostUtils::PrepareOpInputs(op->device_context(), input_tensor);
+  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor);
   // Create device address for output tensors
-  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->outputs());
+  PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
 
   // Async
   PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor, stream]() {
@@ -55,9 +56,11 @@ tensor::TensorPtr CopyCustomizeCall(const std::shared_ptr<OpRunner> &op, const T
     if (input_device_sync->GetTensorStorageInfo() == nullptr) {
       op->set_primitive(prim::kPrimTensorMove);
       // Get inputs kernel tensors, the not-tensor value will malloc here
-      const auto &input_address_info = PyBoostUtils::GetAddressInfo(device_context, op->input_abs(), input_tensor);
+      const auto &input_address_info =
+        PyBoostUtils::GetAddressInfo(device_context, op->stream_id(), op->input_abs(), input_tensor);
       // Get outputs kernel tensors
-      const auto &output_address_info = PyBoostUtils::GetAddressInfo(device_context, {op->output_abs()}, outputs);
+      const auto &output_address_info =
+        PyBoostUtils::GetAddressInfo(device_context, op->stream_id(), {op->output_abs()}, outputs);
 
       const auto &output_device_address =
         std::dynamic_pointer_cast<device::DeviceAddress>(op->output(0)->device_address());
@@ -88,6 +91,7 @@ tensor::TensorPtr ContiguousTensorOpProcess(const std::shared_ptr<OpRunner> &op,
 
   if (input_tensor->storage_info() == nullptr) {
     auto input_abs = input_tensor->ToAbstract();
+    input_abs->set_value(kValueAny);
     op->set_input_abs({input_abs});
     auto output_tensor = std::make_shared<tensor::Tensor>(*input_tensor);
     op->set_outputs({output_tensor});

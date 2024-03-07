@@ -15,6 +15,7 @@
  */
 
 #include "cpu_kernel/ms_kernel/sspaddmm.h"
+#include "context/inc/cpu_kernel_utils.h"
 #include <complex>
 #include <algorithm>
 

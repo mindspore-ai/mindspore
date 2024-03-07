@@ -41,6 +41,7 @@
 "mindspore/mindspore/core/ops/max_pool.cc"                                                            "zerodivcond"
 "mindspore/mindspore/core/ops/max_pool3d.cc"                                                          "zerodivcond"
 "mindspore/mindspore/core/ops/pooling.cc"                                                             "zerodivcond"
+"mindspore/mindspore/core/ops/symbol_ops_impl/"                                                       "unknownMacro"
 "mindspore/core/utils/log_adapter.cc"                                                                 "stlIfStrFind"
 "mindspore/mindspore/ccsrc/transform/graph_ir/convert.cc"                                             "knownConditionTrueFalse"
 "mindspore/mindspore/ccsrc/frontend/expander/bprop/grad_ops/grad_array_ops.cc"                        "internalAstError"
@@ -67,6 +68,7 @@
 "mindspore/mindspore/ccsrc/runtime/graph_scheduler/actor/embedding_cache/embedding_cache_prefetch_actor.cc"  "oppositeInnerCondition"
 "mindspore/mindspore/ccsrc/transform/graph_ir/op_declare/image_ops_declare.cc"                         "unknownMacro"
 "mindspore/mindspore/ccsrc/backend/common/expander/fallback/nn_ops.cc"                                           "unknownMacro"
+"mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/eltwise_grad_cpu_kernel.cc"                        "compareBoolExpressionWithInt"
 
 # MindData
 "mindspore/mindspore/ccsrc/minddata/dataset/engine/dataset_iterator.cc"                               "useStlAlgorithm"

@@ -26,8 +26,7 @@
 #include "pipeline/jit/pi/graph_compiler/pi_ir/ir_mutator.h"
 #include "utils/trace_info.h"
 
-namespace mindspore {
-namespace pijit {
+namespace mindspore::pijit {
 namespace py = pybind11;
 
 class MindNode : public ir::Node {
@@ -61,15 +60,11 @@ class FuncGraphBuilder : public ir::IRMutator {
         args_(args),
         kwargs_(kwargs),
         func_graph_(std::make_shared<FuncGraph>()),
-        func_graph_mgr_(nullptr),
         last_line_no_(func->GetFirstLineNo()) {}
   virtual ~FuncGraphBuilder() = default;
   static FuncGraphPtr BuildFuncGraph(const ir::FunctionNodePtr &func, const py::tuple &args, const py::dict &kwargs);
   static FuncGraphPtr BuildFuncGraph(const ir::FunctionNodePtr &func, const AnfNodePtrList &args,
                                      const AnfNodePtr &kwargs);
-
-  FuncGraphManagerPtr GetFuncGraphManager() const { return func_graph_mgr_; }
-  void SetFuncGraphManager(const FuncGraphManagerPtr &manager) { func_graph_mgr_ = manager; }
 
   // overloadable Mutate function.
   ir::NodePtr Mutate_(const ir::RefNodePtr &node) override;
@@ -113,7 +108,6 @@ class FuncGraphBuilder : public ir::IRMutator {
   AnfNodePtrList args_;
   AnfNodePtr kwargs_;
   FuncGraphPtr func_graph_;
-  FuncGraphManagerPtr func_graph_mgr_;
   int last_line_no_;
   bool enable_debug_info_{false};
 
@@ -123,7 +117,6 @@ class FuncGraphBuilder : public ir::IRMutator {
 };
 
 using FuncGraphBuilderPtr = std::shared_ptr<FuncGraphBuilder>;
-}  // namespace pijit
-}  // namespace mindspore
+}  // namespace mindspore::pijit
 
 #endif  // MINDSPORE_PI_JIT_FUNC_GRAPH_BUILDER_H_

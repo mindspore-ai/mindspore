@@ -17,7 +17,7 @@
 #ifndef AICPU_KERNELS_NORMALIZED_AVGPOOL_H_
 #define AICPU_KERNELS_NORMALIZED_AVGPOOL_H_
 #include <string>
-#include "cpu_kernel_utils.h"
+#include "inc/ms_cpu_kernel.h"
 #include "cpu_types.h"
 namespace aicpu {
 struct AvgPoolCalcArgs {

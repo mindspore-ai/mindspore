@@ -20,8 +20,8 @@
 #include <vector>
 #include <string>
 
-#include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/core/device_tensor_ascend910b.h"
+#include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/kernels/tensor_op.h"
 
 namespace mindspore {

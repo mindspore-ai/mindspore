@@ -42,20 +42,22 @@ class Net(Cell):
         return self.add(add1_res, add1_res)
 
 
-def get_output(i0, i1, i2, enable_graph_kernel=False):
+def get_output(i0, i1, i2, enable_graph_kernel=False, is_ge=False):
     context.set_context(enable_graph_kernel=enable_graph_kernel)
+    if enable_graph_kernel and is_ge:
+        context.set_context(graph_kernel_flags="--kernel_generator=AKG")
     net = Net()
     output = net(i0, i1, i2)
     return output
 
 
-def test_basic():
+def test_basic(is_ge=False):
     i0 = Tensor(np.random.normal(0, 1, [2, 3, 4, 3]).astype(np.float32))
     i1 = Tensor(np.random.normal(0, 1, [2, 3, 4, 3]).astype(np.float32))
     i2 = Tensor(np.random.normal(0, 1, [2, 3, 4, 3]).astype(np.float32))
 
-    expect = get_output(i0, i1, i2, False)
-    output = get_output(i0, i1, i2, True)
+    expect = get_output(i0, i1, i2, False, is_ge)
+    output = get_output(i0, i1, i2, True, is_ge)
 
     expect_np = expect.asnumpy().copy()
     output_np = output.asnumpy().copy()
@@ -71,8 +73,10 @@ def test_basic_gpu():
     test_basic()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_basic_ascend():
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    test_basic()
+    test_basic(True)

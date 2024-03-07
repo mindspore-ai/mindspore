@@ -49,14 +49,20 @@ bool InsertMakeTupleInput(const AnfNodePtr &node) {
   return true;
 }
 
+bool IsStepIn() {
+  if (parallel::g_device_manager == nullptr) {
+    MS_LOG(INFO) << "parallel::g_device_manager is not initialized.";
+    return false;
+  }
+  if (!parallel::ParallelContext::GetInstance()->enable_fine_grained_micro_interleaved()) {
+    return false;
+  }
+  return true;
+}
 }  // namespace
 
 void MergeCastOpt(const FuncGraphPtr &graph) {
-  if (parallel::g_device_manager == nullptr) {
-    MS_LOG(INFO) << "parallel::g_device_manager is not initialized.";
-    return;
-  }
-  if (!parallel::ParallelContext::GetInstance()->enable_fine_grained_micro_interleaved()) {
+  if (!IsStepIn()) {
     return;
   }
   auto manager = graph->manager();
@@ -82,6 +88,7 @@ void MergeCastOpt(const FuncGraphPtr &graph) {
       if (pair.second.size() <= 1) {
         continue;
       }
+      bool can_merge = true;
       std::vector<AnfNodePtr> make_tuple_inputs{NewValueNode(prim::kPrimMakeTuple)};
       std::vector<AbstractBasePtr> maketuple_abs_inputs;
       MS_LOG(INFO) << "Merged cast node input:" << pair.first->fullname_with_scope()
@@ -95,6 +102,9 @@ void MergeCastOpt(const FuncGraphPtr &graph) {
           auto make_tuple_cnode = depend_second_input->cast<CNodePtr>();
           for (size_t i = 1; i < make_tuple_cnode->size(); ++i) {
             if (!InsertMakeTupleInput(make_tuple_cnode->input(i))) {
+              if (!make_tuple_cnode->input(i)->cast<CNodePtr>()->HasAttr(parallel::FINE_GRAINED_INTERLEAVED_TAG)) {
+                can_merge = false;
+              }
               continue;
             }
             make_tuple_inputs.push_back(make_tuple_cnode->input(i));
@@ -103,10 +113,16 @@ void MergeCastOpt(const FuncGraphPtr &graph) {
           continue;
         }
         if (!InsertMakeTupleInput(depend_second_input)) {
+          if (!depend_second_input->cast<CNodePtr>()->HasAttr(parallel::FINE_GRAINED_INTERLEAVED_TAG)) {
+            can_merge = false;
+          }
           continue;
         }
         make_tuple_inputs.push_back(depend_second_input);
         maketuple_abs_inputs.push_back(depend_second_input->abstract()->Clone());
+      }
+      if (!can_merge) {
+        continue;
       }
       auto new_make_tuple_node = each_graph->NewCNode(make_tuple_inputs);
       new_make_tuple_node->set_abstract(std::make_shared<abstract::AbstractTuple>(maketuple_abs_inputs));

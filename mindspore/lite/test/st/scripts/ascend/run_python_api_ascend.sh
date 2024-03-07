@@ -48,6 +48,13 @@ function RunAscendST() {
       exit ${RET}
     fi
     echo "Run test_check_ascend success"
+    pytest ${base_path}/python/python_api/test_lite_llm_engine_api.py -s
+    RET=$?
+    if [ ${RET} -ne 0 ]; then
+      echo "Failed to run test_lite_llm_engine_api.py"
+      exit ${RET}
+    fi
+    echo "Run test_lite_llm_engine_api success"
 }
 
 # Example:sh run_python_api_ascend.sh -r /home/temp_test -e x86_gpu

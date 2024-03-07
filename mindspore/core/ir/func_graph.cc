@@ -619,7 +619,7 @@ std::shared_ptr<std::list<FuncGraphPtr>> FuncGraph::recursive_graphs() {
   return mng->recursive_graphs(shared_from_base<FuncGraph>());
 }
 
-void FuncGraph::ClearAllManagerInfo() {
+void FuncGraph::ClearAllResource() {
   ClearNodes();
   ClearValueNodes();
   ClearFuncGraphCNodesIndex();

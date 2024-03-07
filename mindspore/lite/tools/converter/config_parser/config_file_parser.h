@@ -113,6 +113,9 @@ struct MicroParamString {
   std::string project_name;
   std::string keep_original_weight;
   std::string changeable_weights_name;
+  std::string inputs_shape;
+  std::string dynamic_dim_params;
+  std::map<std::string, std::vector<int>> dynamic_symbols_map;
 };
 
 struct CpuOptionCfgString {

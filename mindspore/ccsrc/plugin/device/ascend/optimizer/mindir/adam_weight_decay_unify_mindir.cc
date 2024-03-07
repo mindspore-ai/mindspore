@@ -23,7 +23,8 @@
 namespace mindspore {
 namespace opt {
 namespace {
-constexpr size_t kAdamWeightDecayInputNum = 12;
+constexpr size_t kAdamWeightDecayInputNum = 11;
+constexpr size_t kAdamWeightDecayInputNumWithMonad = 12;
 const std::vector<size_t> kdamWeightDecayIndexMapping = {9, 3, 2, 1, 4, 5, 12, 6, 13, 8, 7};
 
 ValueNodePtr CreateValueNode(const FuncGraphPtr &graph, double value) {
@@ -76,8 +77,11 @@ const AnfNodePtr AdamWeightDecayUnifyMindIR::Process(const FuncGraphPtr &func_gr
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   auto input_list = cnode->inputs();
-  if (input_list.size() != kAdamWeightDecayInputNum) {
-    MS_LOG(EXCEPTION) << "AdamWeightDecay's input size must be " << kAdamWeightDecayInputNum << ", but got "
+  if (input_list.size() == kAdamWeightDecayInputNum) {
+    input_list.push_back(nullptr);
+  }
+  if (input_list.size() != kAdamWeightDecayInputNumWithMonad) {
+    MS_LOG(EXCEPTION) << "AdamWeightDecay's input size must be " << kAdamWeightDecayInputNumWithMonad << ", but got "
                       << input_list.size();
   }
 

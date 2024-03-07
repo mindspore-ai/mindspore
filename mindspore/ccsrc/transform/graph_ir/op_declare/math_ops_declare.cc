@@ -269,7 +269,8 @@ REG_ADPT_DESC(Bincount, kNameBincount, ADPT_DESC(Bincount));
 
 // CholeskyInverse
 CUST_INPUT_MAP(CholeskyInverse) = {{1, INPUT_DESC(x)}};
-CUST_ATTR_MAP(CholeskyInverse) = {{"upper", ATTR_DESC(upper, AnyTraits<bool>())}};
+CUST_INPUT_ATTR_MAP(CholeskyInverse) = {{2, ATTR_DESC(upper, AnyTraits<bool>())}};
+CUST_ATTR_MAP(CholeskyInverse) = EMPTY_ATTR_MAP;
 CUST_OUTPUT_MAP(CholeskyInverse) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(CholeskyInverse, prim::kPrimCholeskyInverse->name(), CUST_ADPT_DESC(CholeskyInverse));
 
@@ -466,4 +467,10 @@ INPUT_MAP(IgammaGradA) = {{1, INPUT_DESC(a)}, {2, INPUT_DESC(x)}};
 ATTR_MAP(IgammaGradA) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(IgammaGradA) = {{0, OUTPUT_DESC(z)}};
 REG_ADPT_DESC(IgammaGradA, prim::kPrimIgammaGradA->name(), ADPT_DESC(IgammaGradA));
+
+// Zeta
+INPUT_MAP(Zeta) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(q)}};
+ATTR_MAP(Zeta) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Zeta) = {{0, OUTPUT_DESC(z)}};
+REG_ADPT_DESC(Zeta, prim::kPrimZeta->name(), ADPT_DESC(Zeta));
 }  // namespace mindspore::transform
