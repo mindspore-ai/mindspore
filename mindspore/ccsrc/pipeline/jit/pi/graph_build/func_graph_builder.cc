@@ -183,7 +183,7 @@ py::object FuncGraphBuilder::ConvertToPyObj(const AbstractBasePtr &abs) {
     return py::object();
   }
 
-  return ConvertToPythonTensor(py_obj);
+  return py_obj;
 }
 
 AnfNodePtr FuncGraphBuilder::ConvertInputObjToNode(const py::object &input_obj) {
@@ -368,6 +368,7 @@ py::object FuncGraphBuilder::TryToAddNode(const ValuePtr &callable_value, const 
       MS_LOG(ERROR) << "Convert abs " << abs->ToString() << " to python object failed.";
       return py::object();
     }
+    output_py_obj = ConvertToPythonTensor(output_py_obj);
   }
 
   new_node->set_abstract(abs);
