@@ -477,12 +477,31 @@ REG_BPROP_BUILDER("Add").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
   return BinopGradCommon(ib, x, y, dout, dout);
 });
 
-REG_BPROP_BUILDER("AddExt").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("AddExt").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);
-  auto alpha = ib->GetInput(kIndex2);
-  auto alpha_tensor = ib->ScalarToTensor(alpha);
   auto dout = ib->GetInput(kIndex4);
+
+  auto alpha = ib->GetInput(kIndex2);
+  auto alpha_tensor = ib->ScalarToTensor(alpha, ib->GetDtype(x));
+  auto alpha_value = alpha->BuildValue();
+  if (!alpha_value->ContainsValueAny()) {
+    MS_EXCEPTION_IF_NULL(alpha_value);
+    auto imm_int64 = alpha_value->cast_ptr<Int64Imm>();
+    if (imm_int64 != nullptr && imm_int64->value() == 1) {
+      return BinopGradCommon(ib, x, y, dout, dout);
+    }
+
+    auto imm_float = alpha_value->cast_ptr<FP32Imm>();
+    if (imm_float == nullptr) {
+      MS_LOG(INTERNAL_EXCEPTION) << "Invalid alpha type " << alpha_value->type_name()
+                                 << " , alpha type should be Int64 or Float32";
+    }
+    auto alpha_scalar_float = imm_float->value();
+    if (alpha_scalar_float == 1.0) {
+      return BinopGradCommon(ib, x, y, dout, dout);
+    }
+  }
   std::vector<NodePtr> ret = BinopGradCommon(ib, x, y, dout, dout);
   ret.emplace_back(alpha);
 
@@ -498,12 +517,32 @@ REG_BPROP_BUILDER("AddExt").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
   return ret;
 });
 
-REG_BPROP_BUILDER("SubExt").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("SubExt").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);
-  auto alpha = ib->GetInput(kIndex2);
-  auto alpha_tensor = ib->ScalarToTensor(alpha);
   auto dout = ib->GetInput(kIndex4);
+
+  auto alpha = ib->GetInput(kIndex2);
+  auto alpha_tensor = ib->ScalarToTensor(alpha, ib->GetDtype(x));
+
+  auto alpha_value = alpha->BuildValue();
+  if (!alpha_value->ContainsValueAny()) {
+    MS_EXCEPTION_IF_NULL(alpha_value);
+    auto imm_int64 = alpha_value->cast_ptr<Int64Imm>();
+    if (imm_int64 != nullptr && imm_int64->value() == 1) {
+      return BinopGradCommon(ib, x, y, dout, ib->Emit(kNegOpName, {dout}));
+    }
+
+    auto imm_float = alpha_value->cast_ptr<FP32Imm>();
+    if (imm_float == nullptr) {
+      MS_LOG(INTERNAL_EXCEPTION) << "Invalid alpha type " << alpha_value->type_name()
+                                 << " , alpha type should be Int64 or Float32";
+    }
+    auto alpha_scalar_float = imm_float->value();
+    if (alpha_scalar_float == 1.0) {
+      return BinopGradCommon(ib, x, y, dout, ib->Emit(kNegOpName, {dout}));
+    }
+  }
   std::vector<NodePtr> ret = BinopGradCommon(ib, x, y, dout, ib->Emit(kNegOpName, {dout}));
   ret.emplace_back(alpha);
 

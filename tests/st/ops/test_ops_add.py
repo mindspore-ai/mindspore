@@ -21,6 +21,7 @@ import mindspore as ms
 from mindspore import ops
 from mindspore.nn import Cell
 from mindspore.ops.extend import add
+from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
 
 rtol = 1e-3
 
@@ -96,6 +97,26 @@ def test_ops_forward(context_mode):
 
     np.testing.assert_allclose(output, expect, rtol=rtol)
     del os.environ["GRAPH_OP_RUN"]
+
+
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_ops_dynamic(context_mode):
+    """
+    Feature: ops.extend.add
+    Description: dynamic shape and rank
+    Expectation: success
+    """
+    ms.context.set_context(mode=context_mode)
+    x1 = ms.Tensor(np.array([[1, 2], [3, 4]], np.float32))
+    y1 = ms.Tensor(np.array([[5, 6], [7, 8]], np.float32))
+    x2 = ms.Tensor(np.array([[1, 2, 3]], np.float32))
+    y2 = ms.Tensor(np.array([[10, 11, 12], [13, 14, 15], [16, 17, 18]], np.float32))
+
+    TEST_OP(add, [[x1, y1, 1.], [x2, y2, 2.]], dump_ir=True, custom_flag='2')
 
 
 @pytest.mark.level1
