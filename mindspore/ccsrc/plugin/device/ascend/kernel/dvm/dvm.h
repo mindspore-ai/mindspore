@@ -1,0 +1,140 @@
+/**
+ * Copyright 2024 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#ifndef _DVM_H_
+#define _DVM_H_
+
+#include <cstdint>
+#include <vector>
+
+namespace dvm {
+enum DType {
+  kInt8 = 0,
+  kFloat16,
+  kFloat32,
+  kInt32,
+  kTypeEnd,
+};
+
+enum UnaryOpType {
+  kSqrt = 0,
+  kRsqrt,
+  kAbs,
+  kLog,
+  kExp,
+  kReciprocal,
+  kIsFinite,
+  kLogicalNot,
+  kUnaryOpEnd,
+};
+
+enum BinaryOpType {
+  kEqual = 0,
+  kNotEqual,
+  kGreater,
+  kGreaterEqual,
+  kLess,
+  kLessEqual,
+  kAdd,
+  kSub,
+  kMul,
+  kDiv,
+  kPow,
+  kMaximum,
+  kMinimum,
+  kLogicalAnd,
+  kLogicalOr,
+  kBinaryOpEnd,
+};
+
+enum ReduceOpType {
+  kSum = 0,
+  kReduceOpEnd,
+};
+
+enum KernelType {
+  kStaticShape = 0,
+  kDynShape,
+  kStaticParallel,
+  kEager,
+  kKernelTmplEnd,
+};
+
+class NDObject;
+class VKernel;
+
+struct ShapeRef {
+  ShapeRef() {}
+  explicit ShapeRef(const std::vector<int64_t> &other) : data(other.data()), size(other.size()) {}
+  ShapeRef &operator=(const std::vector<int64_t> &other) {
+    data = other.data();
+    size = other.size();
+    return *this;
+  }
+  const int64_t *data;
+  size_t size;
+};
+
+struct RelocTable {
+  NDObject **inputs;
+  size_t inputs_size;
+  NDObject **outputs;
+  size_t outputs_size;
+};
+
+class Kernel {
+ public:
+  Kernel();
+  ~Kernel();
+
+  void Reset(KernelType type);
+  void Reserve(size_t size);
+  // int ParallelNext();     -- TODO: parallel fusion
+
+  NDObject *Load(void *addr, ShapeRef *shape, DType type);
+  NDObject *Store(void *addr, NDObject *input);
+
+  NDObject *Unary(int op_type, NDObject *input);
+  NDObject *Binary(int op_type, NDObject *lhs, NDObject *rhs);
+  NDObject *Binary(int op_type, float val, NDObject *rhs);
+  NDObject *Binary(int op_type, NDObject *lhs, float val);
+  NDObject *Reduce(int op_type, NDObject *input, ShapeRef *dims, bool keepdims = false);
+  NDObject *Select(NDObject *cond, NDObject *lhs, NDObject *rhs);
+
+  NDObject *Cast(NDObject *input, DType type);
+  NDObject *Broadcast(NDObject *input, ShapeRef *shape);
+  NDObject *Broadcast(float val, ShapeRef *shape, DType type, bool dummy_load);
+  NDObject *Reshape(NDObject *input, ShapeRef *shape);
+  NDObject *Copy(NDObject *input);
+
+  NDObject *ElemAny(NDObject *input);
+
+  int CodeGen();
+  int Launch(void *stream);
+  int Launch(const RelocTable &reloc_table, void **inputs, void **outputs, void *stream);
+  int Launch(NDObject **op, int size, void *stream);
+
+  ShapeRef *GetShape(NDObject *op) const;
+  DType GetDType(NDObject *op) const;
+
+  const char *DisAssemble();
+  VKernel *GetImpl() const { return kernel_; }
+
+ private:
+  VKernel *kernel_;
+};
+}  // namespace dvm
+#endif  // _DVM_H_
