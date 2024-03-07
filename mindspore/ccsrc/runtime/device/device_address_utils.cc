@@ -30,6 +30,9 @@
 #include "runtime/device/hash_table.h"
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "runtime/hardware/device_context_manager.h"
+#include "runtime/pynative/op_runner.h"
+#include "runtime/pynative/op_executor.h"
+#include "pybind_api/gil_scoped_long_running.h"
 #ifdef ENABLE_DEBUGGER
 #include "include/backend/debug/debugger/debugger.h"
 #include "include/backend/debug/data_dump/dump_json_parser.h"
@@ -1151,6 +1154,54 @@ device::DeviceAddressPtr DeviceAddressUtils::CreateWorkspaceAddress(const Device
   }
   MS_LOG(DEBUG) << "Create workspace device address:" << device_address;
   return device_address;
+}
+
+void DeviceAddressUtils::ConvertContiguousTensorSync(const tensor::TensorPtr &tensor) {
+  MS_EXCEPTION_IF_NULL(tensor);
+  if (tensor->storage_info() == nullptr) {
+    return;
+  }
+
+  MS_LOG(DEBUG) << "Tensor storage_info is not nullptr, need to contiguous, id:" << tensor->id();
+  const auto &new_device_address =
+    ConvertContiguousDeviceAddressSync(std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address()));
+  MS_EXCEPTION_IF_NULL(new_device_address);
+  tensor->set_device_address(new_device_address);
+}
+
+device::DeviceAddressPtr DeviceAddressUtils::ConvertContiguousDeviceAddressSync(
+  const device::DeviceAddressPtr &old_device_address) {
+  MS_EXCEPTION_IF_NULL(old_device_address);
+  const auto &device_context = runtime::OpRunner::GetDeviceContext(old_device_address->device_name());
+  MS_EXCEPTION_IF_NULL(device_context);
+  auto stream_id = device_context->device_res_manager_->GetCurrentStreamId();
+
+  GilReleaseWithCheck release_gil;
+  const auto &old_storage_info = old_device_address->GetTensorStorageInfo();
+  MS_EXCEPTION_IF_NULL(old_storage_info);
+
+  auto address_size = GetTypeByte(TypeIdToType(old_device_address->type_id())) * SizeOf(old_storage_info->shape);
+  auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
+    nullptr, address_size, Format::DEFAULT_FORMAT, old_device_address->type_id(), old_storage_info->shape,
+    device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+  kernel_tensor->SetType(std::make_shared<TensorType>(TypeIdToType(old_device_address->type_id())));
+  kernel_tensor->SetShape(std::make_shared<abstract::TensorShape>(old_storage_info->shape));
+  kernel_tensor->set_stream_id(stream_id);
+
+  auto new_device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
+  new_device_address->set_device_shape(old_storage_info->shape);
+  new_device_address->set_original_ref_count(SIZE_MAX);
+  new_device_address->ResetRefCount();
+
+  // ExecuteKernelTask sync, need to wait until all tasks in queue are complete.
+  runtime::OpExecutor::GetInstance().WaitAll();
+  if (!device_context->GetKernelExecutor(false)->ExecuteKernelTask(
+        runtime::KernelTaskType::kCONTIGUOUS_TASK, {old_device_address}, {new_device_address}, stream_id)) {
+    MS_LOG(EXCEPTION) << "ExecuteKernelTask failed, task_type:" << runtime::KernelTaskType::kCONTIGUOUS_TASK;
+  }
+
+  runtime::OpExecutor::GetInstance().WaitAll();
+  return new_device_address;
 }
 
 }  // namespace runtime
