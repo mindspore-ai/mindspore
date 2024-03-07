@@ -85,6 +85,15 @@ class GeLUInfo : public ActivationOther {
            const PrimitiveAttrs &attrs)
       : ActivationOther(name, inputs_shape, outputs_shape, attrs, std::make_shared<GeLUCost>()) {}
   ~GeLUInfo() override = default;
+
+ protected:
+  Status InferForwardCommunicationByLayout() override;
+  Status CheckInputLayout() override;
+  Status CheckOutputLayout() override;
+  Status InferOutputTensorInfo() override;
+
+ private:
+  TensorLayout output_infer_tensor_layout_;
 };
 
 class FastGeLUInfo : public ActivationOther {

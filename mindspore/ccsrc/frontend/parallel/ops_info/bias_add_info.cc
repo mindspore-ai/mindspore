@@ -119,6 +119,62 @@ std::vector<StrategyPtr> BiasAddInfo::GenerateOpStrategies(int64_t stage_id) {
   return sp_vector;
 }
 
+Status BiasAddInfo::CheckInputLayout() {
+  // Check all device matrix should be the same
+  if (inputs_tensor_info_.size() != kSizeTwo) {
+    MS_LOG(ERROR) << "The size of input_tensor_layout for bias_add is " << inputs_tensor_info_.size()
+                  << " rather than 2.";
+    return FAILED;
+  }
+  auto in_layout0 = inputs_tensor_info_[kIndex0].tensor_layout();
+  auto in_layout1 = inputs_tensor_info_[kIndex1].tensor_layout();
+  if (in_layout0.device_arrangement_origin().array() != in_layout1.device_arrangement_origin().array()) {
+    MS_LOG(ERROR) << "The device_matrix of input0 " << in_layout0.device_arrangement_origin().array()
+                  << " dose not equal to device_matrix of input1 " << in_layout1.device_arrangement_origin().array();
+    return FAILED;
+  }
+
+  if (in_layout0.tensor_map_before().back() != in_layout1.tensor_map_before()[0]) {
+    MS_LOG(ERROR) << "The shard size of bias_add is not equal for last dim of input0 and input1";
+    return FAILED;
+  }
+  return SUCCESS;
+}
+
+Status BiasAddInfo::InferOutputTensorInfo() {
+  auto in_layout0 = inputs_tensor_info_[kIndex0].tensor_layout();
+  // output layout should be the same as input layout 0
+  if (in_layout0.tensor_shape_before().array() != outputs_shape_[kIndex0]) {
+    MS_LOG(ERROR) << "The infer output shape " << in_layout0.tensor_shape_before().array()
+                  << " dose not match the output shape " << outputs_shape_[kIndex0];
+    return FAILED;
+  }
+
+  TensorLayout output_tensor_layout;
+  output_tensor_layout.InitFromExtendVector(in_layout0.device_arrangement_origin().array(),
+                                            in_layout0.tensor_map_before(), in_layout0.tensor_shape_before().array());
+
+  TensorInfo output_tensor_info(output_tensor_layout);
+  outputs_tensor_info_.push_back(output_tensor_info);
+  return SUCCESS;
+}
+
+Status BiasAddInfo::CheckOutputLayout() {
+  if (outputs_tensor_info_.size() != kSizeOne) {
+    MS_LOG(ERROR) << "The size of output_tensor_layout for bias_add is " << outputs_tensor_info_.size()
+                  << " rather than 1.";
+    return FAILED;
+  }
+  auto out_layout = outputs_tensor_info_[kIndex0].tensor_layout();
+  auto in_layout0 = inputs_tensor_info_[kIndex0].tensor_layout();
+  if (out_layout.tensor_map_before() != in_layout0.tensor_map_before()) {
+    MS_LOG(ERROR) << "output layout of bias_add does not match the layout of first input";
+    return FAILED;
+  }
+  MS_LOG(INFO) << "Using output tensor layout infer by input tensor layout.";
+  return SUCCESS;
+}
+
 REGISTER(BiasAddInfo);
 }  // namespace parallel
 }  // namespace mindspore

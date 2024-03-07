@@ -510,6 +510,115 @@ Status MaskedFillInfo::InferMirrorOps() {
   return SUCCESS;
 }
 
+void ExpandSmallerShapes(const Shapes *bigger_size_shapes, Shapes *smaller_size_shapes) {
+  size_t insert_num = bigger_size_shapes->size() - smaller_size_shapes->size();
+  Shape map_none_shape(1, MAP_NONE);
+  for (size_t num = 0; num < insert_num; ++num) {
+    (void)smaller_size_shapes->insert(smaller_size_shapes->cbegin(), map_none_shape);
+  }
+}
+
+Status AddInfo::CheckInputLayout() {
+  // Check all device matrix should be the same
+  if (inputs_tensor_info_.size() != kSizeTwo) {
+    MS_LOG(ERROR) << "The size of input_tensor_layout for add is " << inputs_tensor_info_.size() << " rather than 2.";
+    return FAILED;
+  }
+  auto in_layout0 = inputs_tensor_info_[kIndex0].tensor_layout();
+  auto in_layout1 = inputs_tensor_info_[kIndex1].tensor_layout();
+  if (in_layout0.device_arrangement_origin().array() != in_layout1.device_arrangement_origin().array()) {
+    MS_LOG(ERROR) << "The device_matrix of input0 " << in_layout0.device_arrangement_origin().array()
+                  << " dose not equal to device_matrix of input1 " << in_layout1.device_arrangement_origin().array();
+    return FAILED;
+  }
+
+  Shapes input_shapes = InferExpandShape();
+  Shape input_shape_0 = input_shapes.at(0);
+  Shape input_shape_1 = input_shapes.at(1);
+
+  Shapes tensormap0 = in_layout0.tensor_map_before();
+  Shapes tensormap1 = in_layout1.tensor_map_before();
+  if (tensormap0.size() > tensormap1.size()) {
+    (void)ExpandSmallerShapes(&tensormap0, &tensormap1);
+  } else {
+    (void)ExpandSmallerShapes(&tensormap1, &tensormap0);
+  }
+
+  for (size_t i = 0; i < input_shape_0.size(); ++i) {
+    if (tensormap0[i] != tensormap1[i] && input_shape_0[i] != 1 && input_shape_1[i] != 1) {
+      MS_LOG(ERROR) << name_ << " : Invalid strategy.";
+      return FAILED;
+    }
+  }
+  return SUCCESS;
+}
+
+TensorLayout AddInfo::InferOutputLayout() {
+  auto in_layout0 = inputs_tensor_info_[kIndex0].tensor_layout();
+  auto in_layout1 = inputs_tensor_info_[kIndex1].tensor_layout();
+  Shapes tensormap0 = in_layout0.tensor_map_before();
+  Shapes tensormap1 = in_layout1.tensor_map_before();
+
+  Shapes input_shapes = InferExpandShape();
+  Shape input_a_shape = input_shapes.at(0);
+  Shape input_b_shape = input_shapes.at(1);
+
+  for (size_t i = 0; i < input_a_shape.size(); ++i) {
+    input_a_shape[i] = (input_a_shape[i] == 1) ? input_b_shape[i] : input_a_shape[i];
+  }
+
+  Shapes output_tensormap;
+  Shape map_none_shape(1, MAP_NONE);
+  size_t len_diff = 0;
+  if (tensormap0.size() > tensormap1.size()) {
+    output_tensormap = tensormap0;
+    len_diff = tensormap0.size() - tensormap1.size();
+    for (size_t i = 0; i < tensormap1.size(); ++i) {
+      output_tensormap[i + len_diff] =
+        tensormap0[i + len_diff] == map_none_shape ? tensormap1[i] : tensormap0[i + len_diff];
+    }
+  } else {
+    output_tensormap = tensormap1;
+    len_diff = tensormap1.size() - tensormap0.size();
+    for (size_t i = 0; i < tensormap0.size(); ++i) {
+      output_tensormap[i + len_diff] =
+        tensormap1[i + len_diff] == map_none_shape ? tensormap0[i] : tensormap1[i + len_diff];
+    }
+  }
+
+  TensorLayout output_tensor_layout;
+  output_tensor_layout.InitFromExtendVector(in_layout0.device_arrangement_origin().array(), output_tensormap,
+                                            input_a_shape);
+  return output_tensor_layout;
+}
+
+Status AddInfo::InferOutputTensorInfo() {
+  output_infer_tensor_layout_ = InferOutputLayout();
+  if (output_infer_tensor_layout_.tensor_shape_before().array() != outputs_shape_[kIndex0]) {
+    MS_LOG(ERROR) << "The infer output shape " << output_infer_tensor_layout_.tensor_shape_before().array()
+                  << " dose not match the output shape " << outputs_shape_[kIndex0];
+    return FAILED;
+  }
+  TensorInfo output_tensor_info(output_infer_tensor_layout_);
+  outputs_tensor_info_.push_back(output_tensor_info);
+  return SUCCESS;
+}
+
+Status AddInfo::CheckOutputLayout() {
+  if (outputs_tensor_info_.size() != kSizeOne) {
+    MS_LOG(ERROR) << "The size of output_tensor_layout for matmul is " << outputs_tensor_info_.size()
+                  << " rather than 1.";
+    return FAILED;
+  }
+
+  if (output_infer_tensor_layout_.tensor_shape_before().array().empty()) {
+    MS_LOG(ERROR) << "Parameter of output tensor layout for add is not allowed to be set by users.";
+    return FAILED;
+  }
+  MS_LOG(INFO) << "Using output tensor layout infer by input tensor layout.";
+  return SUCCESS;
+}
+
 REGISTER(SubInfo);
 REGISTER(AddInfo);
 REGISTER(MulInfo);

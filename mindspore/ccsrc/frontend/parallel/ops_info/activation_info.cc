@@ -817,6 +817,37 @@ Status SortInfo::GetAttrs() {
   return SUCCESS;
 }
 
+Status GeLUInfo::CheckInputLayout() {
+  if (inputs_tensor_info_.size() != kSizeOne) {
+    MS_LOG(ERROR) << "The size of input_tensor_layout for gelu is " << inputs_tensor_info_.size() << " rather than 1.";
+    return FAILED;
+  }
+  return SUCCESS;
+}
+
+Status GeLUInfo::CheckOutputLayout() {
+  if (outputs_tensor_info_.size() != kSizeOne) {
+    MS_LOG(ERROR) << "The size of output_tensor_layout for gelu is " << outputs_tensor_info_.size()
+                  << " rather than 1.";
+    return FAILED;
+  }
+  if (output_infer_tensor_layout_.tensor_shape_before().array().empty()) {
+    MS_LOG(ERROR) << "Parameter of output tensor layout for gelu is not allowed to be set by users.";
+    return FAILED;
+  }
+  MS_LOG(INFO) << "Using output tensor layout infer by input tensor layout.";
+  return SUCCESS;
+}
+
+Status GeLUInfo::InferOutputTensorInfo() {
+  output_infer_tensor_layout_ = inputs_tensor_info_[kIndex0].tensor_layout();
+  TensorInfo output_tensor_info(output_infer_tensor_layout_);
+  outputs_tensor_info_.push_back(output_tensor_info);
+  return SUCCESS;
+}
+
+Status GeLUInfo::InferForwardCommunicationByLayout() { return SUCCESS; }
+
 REGISTER(ActivationInfo);
 REGISTER(GeLUInfo);
 REGISTER(FastGeLUInfo);
