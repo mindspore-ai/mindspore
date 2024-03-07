@@ -19,13 +19,14 @@
 #include <memory>
 #include <vector>
 #include <string>
-#include "ir/functor.h"
 #include "kernel/kernel.h"
 #include "plugin/device/ascend/kernel/dvm/dvm.h"
+#include "backend/common/optimizer/dynamic_shape/dynamic_shape_helper.h"
 
 namespace mindspore {
 namespace kernel {
 using ShapeRefPtr = std::shared_ptr<dvm::ShapeRef>;
+using opt::dynamic_shape::InferShapeFunctor;
 class DvmKernelMod;
 class DvmInfer : public InferShapeFunctor {
  public:

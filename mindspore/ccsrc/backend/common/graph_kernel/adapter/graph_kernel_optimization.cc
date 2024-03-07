@@ -57,6 +57,7 @@
 #include "backend/common/graph_kernel/reduce_fake_out_mem.h"
 #include "backend/common/graph_kernel/depend_elimination.h"
 #include "backend/common/graph_kernel/tensor_inplace.h"
+#include "backend/common/graph_kernel/floatstatus_fusion.h"
 #include "backend/common/graph_kernel/floatstatus_addn_fusion.h"
 #include "backend/common/graph_kernel/parallel_optimizer.h"
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
@@ -68,6 +69,7 @@
 #include "backend/common/graph_kernel/recognize_softmax_grad_ext.h"
 #include "backend/common/graph_kernel/convert_custom_for_ge.h"
 #include "backend/common/graph_kernel/convert_input_and_attr.h"
+#include "backend/common/graph_kernel/convert_bfloat16.h"
 #include "backend/common/graph_kernel/add_ref_pair.h"
 #ifdef ENABLE_AKG
 #include "backend/common/graph_kernel/graph_kernel_build.h"
@@ -117,8 +119,11 @@ PassManagerPtr GraphKernelOptimizer::PreProcess() const {
 PassManagerPtr GraphKernelOptimizer::Cluster() const {
   auto pm = std::make_shared<GraphKernelPassManager>(1, "cluster");
 
+  // Convert IsFinite and its user to FloatStatus
+  pm->Add(std::make_shared<FloatStatusFusion>(), OptLevel_2, is_dvm);
+
   // Expand FloatStatus(AddN)
-  pm->Add(std::make_shared<FloatStatusAddNFusion>(), OptLevel_2, is_gpu);
+  pm->Add(std::make_shared<FloatStatusAddNFusion>(), OptLevel_2, is_gpu || is_dvm);
 
   // Expand complex basic kernels to composite kernels
   pm->Add(std::make_shared<GraphKernelExpanderCloud>(), OptLevel_1);
@@ -129,6 +134,9 @@ PassManagerPtr GraphKernelOptimizer::Cluster() const {
 
   // Cluster basic kernels and composite kernels
   pm->Add(std::make_shared<StaticShapeCluster>(), OptLevel_1);
+
+  // Add Cast for op's inputs if the input data type is not supported by op
+  pm->Add(std::make_shared<ConvertBFloat16>(), OptLevel_1, is_dvm);
 
   // Eliminate the outputs without external user
   pm->Add(std::make_shared<EliminateRedundantOutput>(), OptLevel_1);
@@ -253,7 +261,7 @@ PassManagerPtr GraphKernelOptimizer::Build() const {
   pm->Add(std::make_shared<SymbolEngineBuilder>(true), enable_dyn_level, is_cpu || is_gpu);
   pm->Add(std::make_shared<GraphKernelSplitterWithPy>(true), enable_dyn_level, is_gpu);
 #ifdef ENABLE_AKG
-  pm->Add(std::make_shared<GraphKernelBuild>(), OptLevel_1, !is_ge);
+  pm->Add(std::make_shared<GraphKernelBuild>(), OptLevel_1, !is_ge && !is_dvm);
 #endif
   pm->Add(std::make_shared<ConvertCustomForGE>(), OptLevel_1, is_ge);
   pm->Add(std::make_shared<GeneratedDependElimination>(), OptLevel_2, is_gpu || (is_ascend && !is_ge));
@@ -273,7 +281,7 @@ PassManagerPtr GraphKernelOptimizer::PostProcess() const {
 
   auto enable_dyn_level = GetPassLevelByFlag(GraphKernelFlags::GetInstance().enable_dynamic_shape_fusion);
   // Add infershape functor for dynamic shape graph kernel
-  pm->Add(std::make_shared<SetInferShapeFunctor>(), enable_dyn_level);
+  pm->Add(std::make_shared<SetInferShapeFunctor>(), enable_dyn_level, !is_dvm);
 
   // Contrary to ConvertFrontEndToGraphKernel pass, adapter for dyn-shape
   pm->Add(std::make_shared<ConvertGraphKernelToFrontEnd>(), OptLevel_1);
@@ -286,7 +294,7 @@ PassManagerPtr GraphKernelOptimizer::PostProcess() const {
   pm->Add(std::make_shared<SymbolEngineExtender>(), kernel_packet_lv, is_gpu);
 
   // In dynamic shape graph, the infer shape function only support Primitive node
-  pm->Add(std::make_shared<ConvertCallToPrim>(), OptLevel_1);
+  pm->Add(std::make_shared<ConvertCallToPrim>(), OptLevel_1, !is_dvm);
   return pm;
 }
 
@@ -297,6 +305,7 @@ void GraphKernelOptimizer::Run(const KernelGraphPtr &kernel_graph) {
   is_ascend = (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
   is_cpu = (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kCPUDevice);
   is_ge = (is_ascend && (context_ptr->backend_policy() == "ge") && kernel_graph->is_graph_run_mode());
+  is_dvm = (GraphKernelFlags::GetInstance().kernel_generator == "DVM");
   auto cb = Callback::Instance();
   if (is_ge) {
     Callback::RegImpl(std::make_shared<CallbackImplWithInferShape>());
