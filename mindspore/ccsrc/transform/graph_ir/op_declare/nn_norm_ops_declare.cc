@@ -119,6 +119,14 @@ INPUT_ATTR_MAP(GroupNormGrad) = {{kIndex6, ATTR_DESC(num_groups, AnyTraits<int64
 REG_ADPT_DESC(GroupNormGrad, prim::kPrimGroupNormGrad->name(), ADPT_DESC(GroupNormGrad))
 
 // LayerNorm
+INPUT_MAP(LayerNormV4) = {
+  {1, INPUT_DESC(x)}, {2, INPUT_DESC(normalized_shape)}, {3, INPUT_DESC(gamma)}, {4, INPUT_DESC(beta)}};
+ATTR_MAP(LayerNormV4) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(LayerNormV4) = {{5, ATTR_DESC(epsilon, AnyTraits<float>())}};
+OUTPUT_MAP(LayerNormV4) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(mean)}, {2, OUTPUT_DESC(rstd)}};
+REG_ADPT_DESC(LayerNormExt, prim::kPrimLayerNormExt->name(), ADPT_DESC(LayerNormV4))
+
+// LayerNorm
 INPUT_MAP(LayerNorm) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(gamma)}, {3, INPUT_DESC(beta)}};
 ATTR_MAP(LayerNorm) = EMPTY_ATTR_MAP;
 INPUT_ATTR_MAP(LayerNorm) = {{4, ATTR_DESC(begin_norm_axis, AnyTraits<int64_t>())},

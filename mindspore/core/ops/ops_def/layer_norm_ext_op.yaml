@@ -1,0 +1,32 @@
+#operator layer_norm_ext
+layer_norm_ext:
+  args:
+    input:
+      dtype: tensor
+    normalized_shape:
+      dtype: tuple[int]
+      type_cast: int, list[int]
+    weight:
+      dtype: tensor
+      default: None
+    bias:
+      dtype: tensor
+      default: None
+    eps:
+      dtype: float
+      default: 1e-5
+  returns:
+    output_x:
+      dtype: tensor
+    mean:
+      dtype: tensor
+    rstd:
+      dtype: tensor
+  function:
+    disable: True
+  class:
+    name: LayerNormExt
+  dispatch:
+    enable: True
+    Ascend: LayerNormExtAscend
+    CPU: LayerNormExtCPU
