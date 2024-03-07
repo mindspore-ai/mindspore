@@ -3298,7 +3298,7 @@ void MindGraphBuilder::FGAddOutput() {
     if (FGBuilder()->AddOutput(out)) {
       MS_LOG(INFO) << "add output succuss";
     } else {
-      MS_LOG(ERROR) << "add output fail";
+      MS_LOG(INFO) << "add output fail";
     }
   }
 }
@@ -3309,7 +3309,7 @@ py::object MindGraphBuilder::FGAddNode(CallNode *call_node, const py::object &ca
   TraceGuard trace_guard(GetLocation(call_node));
   auto res = FGBuilder()->AddNode(callable_info, args);
   if (res.ptr() == nullptr) {
-    MS_LOG(ERROR) << "add node fail";
+    MS_LOG(INFO) << "add node fail";
     *stop_reason = StopTraceReason::kTrace_Fail;
   } else {
     MS_LOG(INFO) << "add node suc";
@@ -3326,13 +3326,13 @@ std::vector<py::object> MindGraphBuilder::GetNewArgs(CallNode *call_node, AObjec
   std::vector<py::object> new_args;
   vobj = vobj ? vobj : call_node->input(0)->GetVobj();
   if (vobj->GetType() == AObject::kTypeCFunction) {
-    MS_LOG(ERROR) << "not support cfunction";
+    MS_LOG(INFO) << "not support cfunction";
   }
   auto new_callable_info = FindPyFunc(vobj);
   FrameStates f;
   ResolveClosure(new_callable_info, call_node->input(0), &f);
   if (!HandleCallParameters(new_callable_info, call_node, &f)) {
-    MS_LOG(ERROR) << "HandleCallParameters error" << std::endl;
+    MS_LOG(INFO) << "HandleCallParameters error" << std::endl;
   }
   PyCodeObject *co = reinterpret_cast<PyCodeObject *>(PyFunction_GET_CODE(new_callable_info.ptr()));
   int argc = co->co_argcount + co->co_kwonlyargcount;
