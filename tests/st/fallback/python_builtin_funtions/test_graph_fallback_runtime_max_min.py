@@ -1,4 +1,4 @@
-# Copyright 2023 Huawei Technologies Co., Ltd
+# Copyright 2023-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -102,7 +102,7 @@ def test_fallback_runtime_max_min_scalar_tensor():
     assert out == (2, 3)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_fallback_runtime_max_scalar_asnumpy():
@@ -116,7 +116,6 @@ def test_fallback_runtime_max_scalar_asnumpy():
     def foo(x):
         return max(1, x.asnumpy())
 
-    with pytest.raises(TypeError) as info:
-        x = Tensor([2])
-        foo(x)
-    assert "Cannot join the return values of different branches" in str(info.value)
+    x = Tensor([2])
+    out = foo(x)
+    assert out == 2
