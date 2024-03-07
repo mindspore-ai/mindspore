@@ -462,6 +462,34 @@ CNodePtr ConstructMakeTupleRecursion(const ValuePtr &abstract_construct_index, s
   return make_tuple;
 }
 
+AnfNodePtrList CreateTupleGetItemForTupleOutput(const AnfNodePtr &node, const KernelGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(node);
+  const auto &abstract = node->abstract();
+  if(abstract == nullptr) {
+    MS_LOG(EXCEPTION)<<"Invalid abstract for node:"<<node->DebugString();
+  }
+
+  if(!abstract->isa<abstract::AbstractSequence>()) {
+    return {node};
+  }
+  const auto &sequence_abstract = abstract->cast<abstract::AbstractSequencePtr>();
+  MS_EXCEPTION_IF_NULL(sequence_abstract);
+  if(sequence_abstract->dynamic_len()) {
+    return {node};
+  }
+  AnfNodePtrList outputs;
+  for(size_t i=0;i<sequence_abstract->elements().size();++i) {
+    const auto &sub_abstract = sequence_abstract->elements()[i];
+    MS_EXCEPTION_IF_NULL(sub_abstract);
+    auto get_item = graph->NewCNode({NewValueNode(std::make_shared<Primitive>(prim::kPrimTupleGetItem->name())), node,
+                                       NewValueNode(MakeValue<int64_t>(SizeToLong(i)))});
+    get_item->set_abstract(sub_abstract);
+    const auto &sub_outputs = CreateTupleGetItemForTupleOutput(get_item, graph);
+    outputs.insert(outputs.end(), sub_outputs.begin(), sub_outputs.end());
+  }
+  return outputs;
+}
+
 // Flatten the tuple input of condition gather.
 CNodePtr FlattenConditionGatherNodeInput(const CNodePtr &kernel, const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(kernel);
@@ -481,39 +509,14 @@ CNodePtr FlattenConditionGatherNodeInput(const CNodePtr &kernel, const KernelGra
   for (size_t i = 1; i < kernel->inputs().size(); ++i) {
     const auto &input = kernel->inputs()[i];
     MS_EXCEPTION_IF_NULL(input);
-    const auto &outputs = common::AnfAlgo::GetAllOutputWithIndex(input, {prim::kPrimDepend});
+    AnfNodePtrList outputs = CreateTupleGetItemForTupleOutput(input, graph);
     // All input branch should have same output num.
     if (output_num != SIZE_MAX && output_num != outputs.size()) {
       MS_LOG(EXCEPTION) << "Invalid output size:" << output_num << " and " << outputs.size()
                         << " for kernel:" << kernel->fullname_with_scope();
     }
     output_num = outputs.size();
-    // Flatten the branch output.
-    for (const auto &node_with_index : outputs) {
-      const auto &node = node_with_index.first;
-      MS_EXCEPTION_IF_NULL(node);
-      MS_EXCEPTION_IF_NULL(node->abstract());
-      size_t index = node_with_index.second;
-      if (!node->abstract()->isa<abstract::AbstractSequence>()) {
-        if (index > 0) {
-          MS_LOG(EXCEPTION) << "Invalid index:" << index << " for node:" << node->fullname_with_scope()
-                            << " for condition gather actor:" << kernel->fullname_with_scope();
-        }
-        new_inputs.emplace_back(node);
-        continue;
-      }
-      const auto &seq_abs = node->abstract()->cast<abstract::AbstractSequencePtr>();
-      MS_EXCEPTION_IF_NULL(seq_abs);
-      if (index >= seq_abs->size()) {
-        MS_LOG(EXCEPTION) << "Invalid index:" << index << " for abstract:" << seq_abs->ToString()
-                          << " in node:" << node->fullname_with_scope()
-                          << " in kernel:" << kernel->fullname_with_scope();
-      }
-      auto get_item = graph->NewCNode({NewValueNode(std::make_shared<Primitive>(prim::kPrimTupleGetItem->name())), node,
-                                       NewValueNode(MakeValue<int64_t>(SizeToLong(index)))});
-      get_item->set_abstract(seq_abs->elements().at(index));
-      new_inputs.emplace_back(get_item);
-    }
+    new_inputs.insert(new_inputs.end(), outputs.begin(), outputs.end());
   }
 
   // Create new condition gather node.

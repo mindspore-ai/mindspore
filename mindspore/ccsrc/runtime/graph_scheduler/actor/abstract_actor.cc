@@ -26,11 +26,14 @@ void AbstractActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<
   // The unused data may be invalid ptr.
   if (!ActorDispatcher::enable_async_launch_kernel() && !input_data->data_->IsPtrValid() &&
       !TEST_FLAG(input_data->data_->flag(), device::kDeviceAddressFlagNotUsed)) {
-    MS_LOG(EXCEPTION) << "The input_data does not have a valid ptr of actor:" << GetAID().Name()
-                      << " with index:" << input_data->index_ << ", flag:" << input_data->data_->flag()
-                      << " device address:" << input_data->data_ << " ref count:" << input_data->data_->ref_count()
-                      << " dynamic ref count:" << input_data->data_->dynamic_ref_count()
-                      << " origin ref count:" << input_data->data_->original_ref_count();
+    std::string error_info = "The input_data does not have a valid ptr of actor:" + GetAID().Name() +
+                             " with index:" + std::to_string(input_data->index_) +
+                             ", flag:" + std::to_string(input_data->data_->flag()) +
+                             " device address:" + std::to_string((long long)(input_data->data_)) +
+                             " ref count:" + std::to_string(input_data->data_->ref_count()) +
+                             " dynamic ref count:" + std::to_string(input_data->data_->dynamic_ref_count()) +
+                             " origin ref count:" + std::to_string(input_data->data_->original_ref_count());
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
   }
   auto &sequential_num = context->sequential_num_;
   (void)input_op_datas_[sequential_num].emplace_back(input_data);

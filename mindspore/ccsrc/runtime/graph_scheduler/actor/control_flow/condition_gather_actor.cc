@@ -118,7 +118,7 @@ void ConditionGatherActor::FetchInput(OpContext<DeviceTensor> *const context) {
       MS_LOG(EXCEPTION) << "Invalid from index:" << from_index << " to actor:" << output_data_arrows_[i]->to_op_id_
                         << " to index:" << output_data_arrows_[i]->to_input_index_ << " for actor:" << GetAID();
     }
-    if (input_device_tensors_[i] == nullptr) {
+    if (input_device_tensors_[from_index] == nullptr) {
       std::string error_info =
         GetAID().Name() + " get input device tensor index:" + std::to_string(from_index) + " failed.";
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
