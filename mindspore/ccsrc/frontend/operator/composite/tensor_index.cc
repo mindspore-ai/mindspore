@@ -1224,7 +1224,7 @@ FuncGraphPtr HandleBoolTensor::GenerateFuncGraph(const AbstractBasePtrList &args
           MS_EXCEPTION(IndexError) << "Tensor index in tuple can not be dynamic rank.";
         }
         new_index_node = res_graph_->NewCNode({NewValueNode(kPrimNonZero), new_index_node});
-        (void)non_zero_shape_list.emplace_back(res_graph_->NewCNode({NewValueNode(kPrimTensorShape), new_index_node}));
+        (void)non_zero_shape_list.emplace_back(res_graph_->NewCNode({NewValueNode(kPrimShape), new_index_node}));
         for (size_t j = 0; j < tensor_shape.size(); j++) {
           auto gather_index_tensor = std::make_shared<tensor::Tensor>(SizeToLong(j));
           auto gather_index_tensor_node = NewValueNode(gather_index_tensor->ToAbstract()->BuildValue());

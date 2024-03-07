@@ -35,8 +35,10 @@ def gather(input, dim, index):
         input[(i_0, i_1, ..., index[(i_0, i_1, ..., i_{dim}, i_{dim+1}, ..., i_n)], i_{dim+1}, ..., i_n)]
 
     .. warning::
-        On Ascend, the behavior is unpredictable when the value of `index` in not in the range
-        `[-input.shape[dim], input.shape[dim])`.
+        On Ascend, the behavior is unpredictable in the following cases:
+
+            - the value of `index` is not in the range `[-input.shape[dim], input.shape[dim])` in forward;
+            - the value of `index` is not in the range `[0, input.shape[dim])` in backward.
 
     Args:
         input (Tensor): The target tensor to gather values.
