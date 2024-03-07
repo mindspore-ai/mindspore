@@ -627,7 +627,7 @@ REG_BPROP_BUILDER("Div").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
   NodePtr bc_dx = nullptr;
   NodePtr bc_dy = nullptr;
   auto x_dtype_id = ib->GetDtypeId(x);
-  bc_dx = ib->Emit(kDivOpName, {dout, y});
+  bc_dx = ib->Div(dout, y);
   if (y->need_compute_grad_out()) {
     bc_dy = -(bc_dx * out);
   }

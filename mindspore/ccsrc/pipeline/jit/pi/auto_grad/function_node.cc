@@ -15,11 +15,13 @@
  */
 #include "pipeline/jit/pi/auto_grad/function_node.h"
 #include <algorithm>
+#include <exception>
 #include <iterator>
 #include <memory>
+#include <sstream>
+#include <string>
 #include <utility>
 #include "ir/func_graph_cloner.h"
-#include "ir/manager.h"
 #include "ops/sequence_ops.h"
 #include "pipeline/jit/pi/auto_grad/grad_executor.h"
 #include "utils/ms_utils.h"
@@ -60,20 +62,51 @@ void PostBpropFunctionToEdges(const py::object &tensor) {
   std::for_each(edges.begin(), edges.end(), [](const EdgePtr &edge) { edge->GetFunction()->GenerateBropFunction(); });
 }
 
-void SupplementSelfInitArguments(const PrimitivePyPtr &prim, const py::list &inputs) {
-  auto op_def = mindspore::ops::GetOpDef(prim->name());
-  if (op_def == nullptr || op_def->args_.size() <= inputs.size()) {
-    return;
+ValuePtr ConvertArgByCastDtype(const py::object &arg, const ops::OpInputArg &op_arg) {
+  parse::OpDefConvertFunc convert_func = parse::GetConverterByType(static_cast<int32_t>(op_arg.arg_dtype_));
+  MS_EXCEPTION_IF_NULL(convert_func);
+  ValuePtr value = convert_func(arg);
+  if (value != nullptr) {
+    return value;
   }
-  std::for_each(op_def->args_.begin(), op_def->args_.end(), [&prim, &inputs](const auto &arg) {
-    if (!arg.as_init_arg_) {
-      return;
+  for (auto cast_dtype : op_arg.cast_dtype_) {
+    convert_func = parse::GetConverterByType(parse::CombineTypesForTypeCast(cast_dtype, op_arg.arg_dtype_));
+    MS_EXCEPTION_IF_NULL(convert_func);
+    value = convert_func(arg);
+    if (value != nullptr) {
+      return value;
     }
-    auto value = py::getattr(prim->GetPyObj(), common::SafeCStr(arg.arg_name_));
-    if (!py::isinstance<py::none>(value)) {
-      inputs.append(value);
-    }
-  });
+  }
+  if (!py::isinstance<py::none>(arg) && value == nullptr) {
+    value = Convert::PyObjToValue(arg);
+  }
+  return value;
+}
+
+InputList ParseInputsByOpDef(const PrimitivePyPtr &prim, const py::list &inputs) {
+  InputList input_values;
+  auto op_def = mindspore::ops::GetOpDef(prim->name());
+  if (op_def == nullptr) {
+    std::for_each(inputs.begin(), inputs.end(), [&input_values](const auto &input) {
+      input_values.push_back(Convert::PyObjToValue(py::cast<py::object>(input)));
+    });
+  } else {
+    MS_EXCEPTION_IF_CHECK_FAIL(inputs.size() <= op_def->args_.size(),
+                               "The arguments of " + prim->name() + " is not match defined.");
+    size_t index = 0;
+    std::for_each(op_def->args_.begin(), op_def->args_.end(), [&prim, &inputs, &input_values, &index](const auto &arg) {
+      if (!arg.as_init_arg_) {
+        input_values.push_back(ConvertArgByCastDtype(inputs[index], arg));
+      } else {
+        auto value = py::getattr(prim->GetPyObj(), common::SafeCStr(arg.arg_name_));
+        if (!py::isinstance<py::none>(value)) {
+          input_values.push_back(ConvertArgByCastDtype(value, arg));
+        }
+      }
+      index++;
+    });
+  }
+  return input_values;
 }
 
 void FunctionNode::RecordPrimitive(const py::object &prim, const py::object &out, const py::list &inputs) {
@@ -111,10 +144,7 @@ void FunctionNode::InitDataField(const py::object &prim, const py::list &inputs)
 }
 
 void FunctionNode::SetInputs(const py::list &inputs) {
-  RemoveInputs();
-  SupplementSelfInitArguments(GetFunction()->cast<PrimitivePyPtr>(), inputs);
-  std::for_each(inputs.begin(), inputs.end(),
-                [this](const auto &input) { AddInput(Convert::PyObjToValue(py::cast<py::object>(input))); });
+  FunctionContext::SetInputs(ParseInputsByOpDef(GetFunction()->cast<PrimitivePyPtr>(), inputs));
   index_ = std::distance(inputs.begin(), std::find(inputs.begin(), inputs.end(), tensor_));
 }
 
@@ -126,7 +156,12 @@ void FunctionNode::GenerateBropFunction() {
     auto executor = GradExecutor::GetInstance();
     // gil for PyObject accessing
     py::gil_scoped_acquire gil_acquire;
-    grad_fn_ = executor->GetBpropGraph(NewValueNode(GetFunction()), inputs, output, output);
+    try {
+      grad_fn_ = executor->GetBpropGraph(NewValueNode(GetFunction()), inputs, output, output);
+    } catch (const std::exception &e) {
+      MS_LOG_ERROR << "Prim : " << GetFunction()->ToString() << " Output : " << output->ToString();
+      MS_LOG_ERROR << e.what();
+    }
     if (grad_fn_ == nullptr) {
       return;
     }
@@ -158,6 +193,7 @@ void FunctionNode::SaveGradToPyObject(const py::object &grad) {
 }
 
 void FunctionNode::Apply(const py::object &grad) {
+  MS_LOG_DEBUG << ToString();
   SetGrad(Convert::PyObjToValue(grad));
   SaveGradToPyObject(grad);
   ApplyInner(GetGrad());
@@ -194,6 +230,22 @@ void FunctionNode::ApplyInner(const ValuePtr &dout) {
     py::gil_scoped_release release;
     GradExecutor::GetInstance()->GetAsyncTaskManager()->GetRunTaskQueue()->Wait();
   }
+}
+
+std::string FunctionNode::ToString() const {
+  std::stringstream ss;
+  Dump(ss, "");
+  return ss.str();
+}
+
+void FunctionNode::Dump(std::stringstream &ss, const std::string &prefix) const {
+  if (!prefix.empty()) {
+    ss << prefix << "-->";
+  }
+  ss << "FunctionNode(" << tensor_.ptr() << ", " << GetFunction()->ToString() << ", "
+     << py::bool_(tensor_.attr("is_leaf")) << ")";
+  std::for_each(edges_.begin(), edges_.end(),
+                [&ss, &prefix](const auto &edge) { edge->GetFunction()->Dump(ss, prefix + "   "); });
 }
 }  // namespace grad
 }  // namespace pijit
