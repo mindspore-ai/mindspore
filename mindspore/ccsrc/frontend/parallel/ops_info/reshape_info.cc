@@ -35,7 +35,6 @@
 
 namespace mindspore {
 namespace parallel {
-constexpr int64_t DYNAMIC_DIM_VAL = -1;
 Status ReshapeInfo::CheckStrategy(const StrategyPtr &strategy) { return CheckStrategyValue(strategy, inputs_shape_); }
 
 /*

@@ -71,6 +71,7 @@ class HcclKernel : public KernelMod {
   bool is_graph_mode_{false};
 };
 
+extern int64_t op_tag;
 using HcclKernelCreater = std::function<std::shared_ptr<HcclKernel>()>;
 
 class HcclKernelFactory {

@@ -1258,8 +1258,18 @@ std::pair<std::vector<AnfNodePtr>, std::vector<AnfNodePtr>> PipelineTransformer:
 
 tensor::TensorPtr PipelineTransformer::CreateZeroseOutput(const AnfNodePtr &node, size_t index) {
   auto out_shapes = GetNodeShape(node);
-  auto out_shape_type = GetShapeType(node, out_shapes.at(index), index);
-  auto zero_tensor = TensorConstructUtils::CreateZerosTensor(out_shape_type.second, out_shapes.at(index));
+  if (out_shapes.size() <= index) {
+    MS_LOG(EXCEPTION) << "the index is out of range, the size of output_shapes is " << out_shapes.size()
+                      << ", but the index is " << index;
+  }
+  auto out_shape = out_shapes.at(index);
+  if (std::count(out_shape.cbegin(), out_shape.cend(), DYNAMIC_DIM_VAL) > 0) {
+    MS_LOG(EXCEPTION) << "it is not supported that loss is not a scalar in dynamic shape and pipeline parallel "
+                         "scenarios, the output shape is "
+                      << out_shape;
+  }
+  auto out_shape_type = GetShapeType(node, out_shape, index);
+  auto zero_tensor = TensorConstructUtils::CreateZerosTensor(out_shape_type.second, out_shape);
   return zero_tensor;
 }
 

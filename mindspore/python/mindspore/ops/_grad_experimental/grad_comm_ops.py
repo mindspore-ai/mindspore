@@ -106,6 +106,7 @@ def get_bprop_send(self):
 def get_bprop_receive(self):
     """Generate bprop for Receive."""
     receive_grad = Send(self.tag, self.rank, self.group_back)
+    receive_grad.add_prim_attr("shape", self.shape)
     depend = P.Depend()
     cast = P.Cast()
     out_tensor = Tensor(0.0, mstype.float16)

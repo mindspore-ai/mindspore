@@ -1677,6 +1677,7 @@ CommInfo GetCommInfo() {
       MS_LOG(EXCEPTION) << "Get rank id failed";
     }
     global_rank = UintToInt(rank_id);
+    ParallelContext::GetInstance()->set_global_rank(global_rank);
     MS_LOG(INFO) << "Get global rank from communication model, the global rank is  " << global_rank;
   }
   CommInfo comm_info{device_num, global_rank, world_group, communication_backend};

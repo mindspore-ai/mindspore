@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,20 +19,28 @@
 
 #include <memory>
 #include <vector>
+#include <string>
 #include "plugin/device/ascend/kernel/hccl/hccl_kernel.h"
+#include "include/backend/distributed/rpc/rpc_client_base.h"
 
 namespace mindspore {
 namespace kernel {
 class HcomSendKernel : public HcclKernel {
  public:
   HcomSendKernel() = default;
-  ~HcomSendKernel() override = default;
+  ~HcomSendKernel() override;
 
   /* Inherit from kernelmod */
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
               const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
+  int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
  private:
+  bool is_dynamic_shape_ = false;
+  bool get_shape_attr_flag_ = false;
+  std::string server_url_;
+  std::unique_ptr<mindspore::distributed::rpc::RPCClientBase> client_ = nullptr;
+  int SendShapeForDynamic();
 };
 
 MS_HCCL_REG_KERNEL(Send, HcomSendKernel);
