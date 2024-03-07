@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,21 +19,25 @@
 #include <string>
 #include <vector>
 #include <memory>
-#include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
-#include "plugin/device/ascend/kernel/tbe/tbe_utils.h"
+#include "plugin/device/ascend/kernel/akg/akg_utils.h"
+
+using AkgKernelManager = mindspore::kernel::akg::KernelManager;
+using AkgKernelManagerPtr = std::shared_ptr<AkgKernelManager>;
 
 namespace mindspore {
 namespace kernel {
-class AkgKernelMod : public AscendKernelMod {
+class AkgKernelMod : public KernelMod {
  public:
   explicit AkgKernelMod(const KernelPackPtr &kernel_pack, const AnfNodePtr &anf_node_ptr);
   ~AkgKernelMod() final {}
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
               const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
-  std::vector<TaskInfoPtr> GenTask(const std::vector<KernelTensor *> &inputs,
-                                   const std::vector<KernelTensor *> &workspace,
-                                   const std::vector<KernelTensor *> &outputs, uint32_t stream_id) override;
   std::vector<size_t> GenParameters() override;
+  std::vector<KernelAttr> GetOpSupport() override {
+    MS_LOG(EXCEPTION) << "This interface is not support in akg kernel module.";
+  }
+
+  static AkgKernelManagerPtr kernel_manager_;
 
  private:
   KernelPackPtr kernel_pack_;

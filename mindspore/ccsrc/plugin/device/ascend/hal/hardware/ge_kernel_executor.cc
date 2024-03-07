@@ -31,6 +31,7 @@
 #include "plugin/device/ascend/kernel/hccl/hccl_kernel_metadata.h"
 #include "plugin/device/ascend/kernel/hccl/hccl_kernel_build.h"
 #include "plugin/device/ascend/kernel/pyboost/customize/customize_copy.h"
+#include "plugin/device/ascend/kernel/internal/internal_kernel_build.h"
 
 #ifdef ENABLE_DVM
 #include "plugin/device/ascend/kernel/dvm/dvm_kernel_build.h"
@@ -65,6 +66,22 @@ constexpr size_t kSwitchCondIndex = 1;
 constexpr size_t kSwitchBranchTrueIndex = 2;
 constexpr size_t kSwitchBranchFalseIndex = 3;
 
+std::string GetKernelTypeStr(const KernelType &kernel_type) {
+  std::string type = "";
+  if (kernel_type == KernelType::ACL_KERNEL) {
+    type = "acl_kernel";
+  } else if (kernel_type == KernelType::HOST_KERNEL) {
+    type = "host_kernel";
+  } else if (kernel_type == KernelType::HCCL_KERNEL) {
+    type = "hccl_kernel";
+  } else if (kernel_type == KernelType::OPAPI_KERNEL) {
+    type = "opapi_kernel";
+  } else if (kernel_type == KernelType::INTERNAL_KERNEL) {
+    type = "internal_kernel";
+  }
+  return type;
+}
+
 bool GenerateKernelMod(const std::vector<CNodePtr> &kernels) {
   for (const auto &kernel : kernels) {
     MS_EXCEPTION_IF_NULL(kernel);
@@ -74,6 +91,7 @@ bool GenerateKernelMod(const std::vector<CNodePtr> &kernels) {
     if (AnfAlgo::IsKernelSelectBackoffOp(kernel)) {
       continue;
     }
+    std::string opname = common::AnfAlgo::GetCNodeName(kernel);
     kernel::KernelModPtr kernel_mod_ptr = nullptr;
     auto kernel_type = AnfAlgo::GetKernelType(kernel);
     if (kernel_type == KernelType::ACL_KERNEL) {
@@ -90,10 +108,13 @@ bool GenerateKernelMod(const std::vector<CNodePtr> &kernels) {
 #endif
     } else if (AnfAlgo::GetKernelType(kernel) == KernelType::RT_KERNEL) {
       kernel_mod_ptr = kernel::RtOpBuild(kernel);
+    } else if (kernel_type == KernelType::INTERNAL_KERNEL) {
+      kernel_mod_ptr = kernel::InternalKernelBuild(kernel);
     } else {
       MS_LOG(EXCEPTION) << "The kernel: " << kernel->fullname_with_scope() << " kernel build failed, kernel type: "
                         << kernel::KernelTypeLabel(AnfAlgo::GetKernelType(kernel));
     }
+    MS_LOG(WARNING) << "kernel opname:" << opname << ", kernel type:" << GetKernelTypeStr(kernel_type);
     MS_EXCEPTION_IF_NULL(kernel_mod_ptr);
     AnfAlgo::SetKernelMod(kernel_mod_ptr, kernel.get());
   }

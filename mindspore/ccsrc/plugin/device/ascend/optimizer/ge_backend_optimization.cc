@@ -167,6 +167,7 @@ void GEBackendOptimizeACLAfterKernelSelect(const KernelGraphPtr &kernel_graph) {
   if (!kernel_graph->is_from_single_op() && !kernel_graph->has_flag(kFlagIsPyNativeBpropKernelGraph)) {
     opt_acl_after_kernel_select_pm->AddPass(std::make_shared<opt::InsertTypeTransformOp>());
   }
+
   optimizer->AddPassManager(opt_acl_after_kernel_select_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();

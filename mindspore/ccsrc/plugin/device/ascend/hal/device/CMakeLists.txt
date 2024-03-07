@@ -19,14 +19,6 @@ if(ENABLE_MPI AND ENABLE_D)
     target_link_libraries(_ascend_mpi PRIVATE mindspore::pybind11_module mindspore::ompi)
 endif()
 
-list(REMOVE_ITEM DEVICE_SRC_LIST "profiling/profiling_callback_register.cc")
-
-if(ENABLE_SECURITY)
-    list(REMOVE_ITEM DEVICE_SRC_LIST "profiling/profiling_callback_register.cc")
-    list(REMOVE_ITEM DEVICE_SRC_LIST "profiling/profiling_manager.cc")
-    list(REMOVE_ITEM DEVICE_SRC_LIST "profiling/profiling_utils.cc")
-endif()
-
 set_property(SOURCE ${DEVICE_SRC_LIST}}
     PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_DEVICE)
 

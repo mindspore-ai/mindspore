@@ -59,6 +59,10 @@ else()
             "4. Re-compile the source codes")
 endif()
 
+if(DEFINED ENV{MS_INTERNAL_KERNEL_HOME})
+    add_compile_definitions(ENABLE_INTERNAL_KERNELS)
+endif()
+
 ########### mindspore_ascend.so #####
 set(ASCEND_SUB_COMP
         hal/device
@@ -95,6 +99,14 @@ foreach(a_comp ${ASCEND_COMMON_SUB})
     endif()
 endforeach()
 
+if(DEFINED ENV{MS_INTERNAL_KERNEL_HOME})
+    include_directories($ENV{MS_INTERNAL_KERNEL_HOME})
+    include_directories($ENV{MS_INTERNAL_KERNEL_HOME}/include)
+    include_directories($ENV{MS_INTERNAL_KERNEL_HOME}/ascend-op-common-lib/output/asdops/include)
+
+    link_directories($ENV{MS_INTERNAL_KERNEL_HOME}/build)
+endif()
+
 list(APPEND ASCEND_COMMON_OBJECTS_SRC $<TARGET_OBJECTS:_mindspore_transform_graph_ir_obj>)
 list(APPEND ASCEND_COMMON_OBJECTS_SRC $<TARGET_OBJECTS:_mindspore_transform_acl_ir_obj>)
 list(APPEND ASCEND_COMMON_OBJECTS_SRC $<TARGET_OBJECTS:_mindspore_transform_acl_declare_obj>)
@@ -114,6 +126,10 @@ set_target_properties(mindspore_ascend PROPERTIES INSTALL_RPATH
 
 if(DVM_LIB)
     target_link_libraries(mindspore_ascend PRIVATE ${DVM_LIB})
+endif()
+
+if(DEFINED ENV{MS_INTERNAL_KERNEL_HOME})
+    target_link_libraries(mindspore_ascend PRIVATE ms_kernels_internal)
 endif()
 
 if(ENABLE_DEBUGGER)
