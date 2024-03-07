@@ -33,7 +33,7 @@ class ReshapeMapper : public PrimitiveMapper {
   STATUS Mapper(const CNodePtr &cnode) override;
 
  private:
-  STATUS AttrAdjust(const PrimitivePtr &src_prim, const ValueNodePtr &val_node, const CNodePtr &cnode);
+  STATUS ShapeAttrAdjustTensor(const PrimitivePtr &src_prim, const ValueNodePtr &val_node, const CNodePtr &cnode);
 };
 }  // namespace lite
 }  // namespace mindspore
