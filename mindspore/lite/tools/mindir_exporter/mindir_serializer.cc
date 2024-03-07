@@ -20,6 +20,7 @@
 #include <fstream>
 #include <set>
 #include <algorithm>
+#include <map>
 #include "utils/crypto.h"
 #include "mindspore/ccsrc/include/common/debug/dump_proto.h"
 #include "mindspore/ccsrc/include/common/utils/utils.h"
@@ -535,9 +536,15 @@ int MindIRSerializer::SplitSave(const std::shared_ptr<ConverterPara> &param) {
     MS_LOG(ERROR) << "change parameter data file failed.";
     return ret;
   }
-
+  // Sort by parameter name to ensure split data order
+  std::map<std::string, mind_ir::TensorProto *> proto_map;
   for (auto &param_proto : *(model_proto_.mutable_graph()->mutable_parameter())) {
     std::string proto_name = param_proto.name();
+    proto_map.insert({proto_name, &param_proto});
+  }
+  for (const auto &proto : proto_map) {
+    std::string proto_name = proto.first;
+    auto param_proto = proto.second;
     auto para = GetFgParaAccordingToProtoName(proto_name);
     if (para == nullptr) {
       return RET_ERROR;
@@ -565,11 +572,12 @@ int MindIRSerializer::SplitSave(const std::shared_ptr<ConverterPara> &param) {
       parameter_size = OFFSET / PARA_ROUND;
     }
     std::string external_local_data = model_name_ + "_variables/" + external_local;
-    *(param_proto.mutable_external_data()->mutable_location()) = external_local_data;
-    param_proto.mutable_external_data()->set_length(data_length);
-    param_proto.mutable_external_data()->set_offset(offset);
+    *(param_proto->mutable_external_data()->mutable_location()) = external_local_data;
+    param_proto->mutable_external_data()->set_length(data_length);
+    param_proto->mutable_external_data()->set_offset(offset);
+    MS_LOG(INFO) << "The proto " << proto_name << " data_length:" << data_length << " offset:" << offset;
     data_fs_->write(static_cast<const char *>(data->data_c()), data_length);
-    auto append_data = new char[append_size];
+    auto append_data = new char[append_size]();
     if (append_data == nullptr) {
       return RET_NULL_PTR;
     }
