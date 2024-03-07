@@ -15,7 +15,7 @@
 
 import numpy as np
 import pytest
-
+import os
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor, Parameter
@@ -65,7 +65,10 @@ def test_assign_add_gpu():
 
 
 @pytest.mark.level1
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 def test_assign_add_ascend():
+    os.environ["GRAPH_OP_RUN"] = "1"
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     assign_add()
+    del os.environ["GRAPH_OP_RUN"]
