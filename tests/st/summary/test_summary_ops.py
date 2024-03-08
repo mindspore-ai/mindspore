@@ -21,6 +21,7 @@ import time
 import numpy as np
 import pytest
 
+import mindspore as ms
 from mindspore import nn, Tensor, context
 from mindspore.common.initializer import Normal
 from mindspore.train import Loss
@@ -50,6 +51,7 @@ class LeNet5(nn.Cell):
 
         self.scalar_summary = P.ScalarSummary()
         self.image_summary = P.ImageSummary()
+        self.histogram_summary = P.HistogramSummary()
         self.tensor_summary = P.TensorSummary()
         self.channel = Tensor(num_channel)
 
@@ -57,6 +59,7 @@ class LeNet5(nn.Cell):
         """construct"""
         self.image_summary('x', x)
         self.tensor_summary('x', x)
+        self.histogram_summary('x', x)
         x = self.conv1(x)
         x = self.relu(x)
         x = self.max_pool2d(x)
@@ -112,10 +115,12 @@ class TestSummaryOps:
         summary_data = _get_summary_tensor_data()
         image_data = summary_data.get('x[:Image]').asnumpy()
         tensor_data = summary_data.get('x[:Tensor]').asnumpy()
+        histogram_data = summary_data.get('x[:Histogram]').asnumpy()
         x_fc3 = summary_data.get('x_fc3[:Scalar]').asnumpy()
 
         assert np.allclose(expected_data, image_data)
         assert np.allclose(expected_data, tensor_data)
+        assert np.allclose(expected_data, histogram_data)
         assert not np.allclose(0, x_fc3)
 
     @pytest.mark.level0
@@ -140,10 +145,12 @@ class TestSummaryOps:
         summary_data = _get_summary_tensor_data()
         image_data = summary_data.get('x[:Image]').asnumpy()
         tensor_data = summary_data.get('x[:Tensor]').asnumpy()
+        histogram_data = summary_data.get('x[:Histogram]').asnumpy()
         x_fc3 = summary_data.get('x_fc3[:Scalar]').asnumpy()
 
         assert np.allclose(expected_data, image_data)
         assert np.allclose(expected_data, tensor_data)
+        assert np.allclose(expected_data, histogram_data)
         assert not np.allclose(0, x_fc3)
 
     @pytest.mark.level0
@@ -169,10 +176,41 @@ class TestSummaryOps:
         summary_data = _get_summary_tensor_data()
         image_data = summary_data.get('x[:Image]').asnumpy()
         tensor_data = summary_data.get('x[:Tensor]').asnumpy()
+        histogram_data = summary_data.get('x[:Histogram]').asnumpy()
         x_fc3 = summary_data.get('x_fc3[:Scalar]').asnumpy()
 
         assert np.allclose(expected_data, image_data)
         assert np.allclose(expected_data, tensor_data)
+        assert np.allclose(expected_data, histogram_data)
         assert not np.allclose(0, x_fc3)
 
         del os.environ['GRAPH_OP_RUN']
+
+    @pytest.mark.level0
+    @pytest.mark.platform_x86_ascend_training
+    @pytest.mark.platform_arm_ascend_training
+    @pytest.mark.platform_x86_gpu_training
+    @pytest.mark.env_onecard
+    @security_off_wrap
+    def test_dynamic_shape_summary_ops(self):
+        context.set_context(mode=context.GRAPH_MODE, device_id=self.device_id)
+        ds_train = create_mnist_dataset('train', num_samples=1, batch_size=1)
+        ds_train_iter = ds_train.create_dict_iterator()
+        expected_data = next(ds_train_iter)['image'].asnumpy()
+
+        net = LeNet5()
+        dynamic_shape = Tensor(shape=[None, None, None, None], dtype=ms.float32)
+        net.set_inputs(dynamic_shape)
+        net(Tensor(expected_data))
+
+        time.sleep(0.5)
+        summary_data = _get_summary_tensor_data()
+        image_data = summary_data.get('x[:Image]').asnumpy()
+        tensor_data = summary_data.get('x[:Tensor]').asnumpy()
+        histogram_data = summary_data.get('x[:Histogram]').asnumpy()
+        x_fc3 = summary_data.get('x_fc3[:Scalar]').asnumpy()
+
+        assert np.allclose(expected_data, image_data)
+        assert np.allclose(expected_data, tensor_data)
+        assert np.allclose(expected_data, histogram_data)
+        assert not np.allclose(0, x_fc3)

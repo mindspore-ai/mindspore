@@ -116,7 +116,7 @@ class ScalarSummary(Primitive):
         _cache_summary_data(self.name, args[0], args[1])
 
 
-class ImageSummary(PrimitiveWithInfer):
+class ImageSummary(Primitive):
     """
     This operator will put an image tensor to a summary file with protocol buffer format. It must be used with
     SummaryRecord or SummaryCollector, which specify the directory of the summary file. The summary file can
@@ -162,18 +162,6 @@ class ImageSummary(PrimitiveWithInfer):
         self.add_prim_attr("side_effect_io", True)
         self.add_prim_attr("channel_name", "ms_image_summary")
         self.add_prim_attr("dyn_input_sizes", [-1, 1])
-
-    def __infer__(self, name, value):
-        _check_summary_param(name, value, self.__class__.__name__)
-
-        # The shape dim of image should be 4.
-        v_shape = value['shape']
-        image_dim = 4
-        if len(v_shape) != image_dim:
-            raise ValueError(f"For '{self.name}', the dimension of 'value' must be {image_dim},"
-                             f" but got {len(v_shape)}.")
-
-        return SUMMARY_RETURN_VALUE
 
     def __call__(self, *args):
         _cache_summary_data(self.name, args[0], args[1])
@@ -320,7 +308,7 @@ class TensorDump(Primitive):
         TENSORDUMP_ID += 1
 
 
-class HistogramSummary(PrimitiveWithInfer):
+class HistogramSummary(Primitive):
     """
     This operator will calculate the histogram of a tensor and put it to a summary file with protocol buffer format.
     It must be used with SummaryRecord or SummaryCollector, which specify the directory of the summary file.
@@ -372,17 +360,6 @@ class HistogramSummary(PrimitiveWithInfer):
         self.add_prim_attr("side_effect_io", True)
         self.add_prim_attr("channel_name", "ms_histogram_summary")
         self.add_prim_attr("dyn_input_sizes", [-1, 1])
-
-    def __infer__(self, name, value):
-        _check_summary_param(name, value, self.__class__.__name__)
-
-        v_shape = value['shape']
-        # In the summary, the histogram value should be a tensor whose shape is not [].
-        if not v_shape:
-            raise ValueError(f"For '{self.name}', the type of 'value' must be tensor, "
-                             f"its shape should not be [], but got {v_shape}.")
-
-        return SUMMARY_RETURN_VALUE
 
     def __call__(self, *args):
         _cache_summary_data(self.name, args[0], args[1])
