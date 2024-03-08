@@ -70,6 +70,7 @@ class GeGraphExecutor : public GraphExecutor {
   std::vector<GeTensor> GenerateOutputGeTensor(const KernelGraphPtr &kernel_graph) const;
   GeDeviceResManager *ResManager() const;
   void RunInitGraph(const std::string &graph_name) const;
+  void AllocMemory(const KernelGraphPtr &graph);
 
   mindspore::HashMap<session::KernelGraph *, GeInputData> input_datas_;
   mindspore::HashMap<session::KernelGraph *, GeOutputData> output_datas_;

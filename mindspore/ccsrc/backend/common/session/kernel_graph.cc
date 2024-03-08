@@ -1354,7 +1354,10 @@ bool KernelGraph::IsDatasetGraph() const {
   return false;
 }
 
-std::string KernelGraph::ToString() const { return std::string("kernel_graph_").append(std::to_string(graph_id_)); }
+std::string KernelGraph::ToString() const {
+  std::string prefix = is_from_pynative() ? "pynative_kernel_graph" : "kernel_graph";
+  return prefix.append(std::to_string(graph_id_));
+}
 
 bool KernelGraph::FrontendNodeExistInFrontBackendMap(const AnfNodePtr &frontend_anf) {
   return front_backend_anf_map_.find(frontend_anf) != front_backend_anf_map_.end();

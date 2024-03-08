@@ -161,10 +161,10 @@ void UpdateTopoOrderOptions(const string &graph_name, OptionMap *option) {
 }
 }  // namespace
 
-bool AddFakeGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap &init_inputs_map) {
+bool AddFakeGraph(const FuncGraphPtr &anf_graph) {
   MS_EXCEPTION_IF_NULL(anf_graph);
   auto converter = transform::NewConverter(anf_graph, GetPhasePrefix());
-  transform::GenFakeComputeGraph(anf_graph->ToString(), converter, init_inputs_map);
+  transform::GenFakeGraph(anf_graph->ToString(), converter);
   auto graph_name = GetGraphName(anf_graph);
   std::string init_graph = "init_subgraph." + graph_name;
   std::string checkpoint_name = "save." + graph_name;
@@ -176,10 +176,10 @@ bool AddFakeGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap
   MS_LOG(INFO) << "Set options of compute graph: " << graph_name << " to " << MapToString(options);
   (void)transform::AddGraph(graph_name, transform::GetComputeGraph(converter));
   (void)transform::AddGraph(init_graph, transform::GetInitGraph(converter));
-  (void)transform::AddGraph(BROADCAST_GRAPH_NAME, transform::GenFakeGraph("broadcast"));
+  (void)transform::AddGraph(BROADCAST_GRAPH_NAME, transform::GetBroadcastGraph(converter));
 
   if (!IsEnableRefMode()) {
-    transform::Status ret = transform::AddGraph(checkpoint_name, transform::GenFakeGraph("checkpoint"));
+    transform::Status ret = transform::AddGraph(checkpoint_name, transform::GetSaveCheckpointGraph(converter));
     if (ret == transform::Status::SUCCESS) {
       transform::SetAnfGraph(checkpoint_name, anf_graph);
     }
