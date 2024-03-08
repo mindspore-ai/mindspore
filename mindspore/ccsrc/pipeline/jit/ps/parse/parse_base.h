@@ -106,6 +106,7 @@ const char PYTHON_MOD_GET_CONST_LEN[] = "get_const_len";
 const char PYTHON_MOD_CHECK_ATTRS[] = "check_attrs";
 const char PYTHON_MOD_CHECK_IS_SUBCLASS[] = "check_is_subclass";
 const char PYTHON_MOD_GET_METHOD_INFO[] = "get_method_info";
+const char PYTHON_MOD_IS_MS_TENSOR_METHOD[] = "is_ms_tensor_method";
 const char PYTHON_MOD_CAN_CONSTANT_FOLD[] = "can_constant_fold";
 
 const char PYTHON_PARSE_GET_ARGS[] = "get_args";

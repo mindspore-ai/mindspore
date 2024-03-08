@@ -30,7 +30,7 @@ from .parser import (Parser, create_instance, is_supported_create_instance_type,
                      get_adapter_tensor_attr, get_obj_defined_from_obj_type, is_from_third_party_library,
                      get_const_abs, get_const_round, get_const_len, is_adapter_tensor_class,
                      is_adapter_parameter_class, convert_to_namedtuple, check_attrs, generate_lambda_object,
-                     check_is_subclass, check_attr_is_property, get_method_info, can_constant_fold)
+                     check_is_subclass, check_attr_is_property, get_method_info, can_constant_fold, is_ms_tensor_method)
 
 __all__ = ['Parser', 'create_instance', 'is_supported_create_instance_type', 'generate_scope', 'get_attr_from_object',
            'get_bprop_method_of_class', 'get_class_instance_type', 'get_class_member_namespace_symbol',
@@ -44,6 +44,6 @@ __all__ = ['Parser', 'create_instance', 'is_supported_create_instance_type', 'ge
            'convert_cell_list_to_sequence', 'is_cell_list', 'get_obj_from_sequence', 'get_type',
            'is_class_member_recursive', 'get_adapter_tensor_attr', 'get_obj_defined_from_obj_type',
            'is_from_third_party_library', 'get_const_abs', 'get_const_round', 'get_const_len', 'get_method_info',
-           'is_adapter_tensor_class', 'is_adapter_parameter_class',
+           'is_adapter_tensor_class', 'is_adapter_parameter_class', 'is_ms_tensor_method',
            'convert_to_namedtuple', 'check_attrs', 'generate_lambda_object', 'check_is_subclass', 'check_attr_is_property',
            'can_constant_fold']

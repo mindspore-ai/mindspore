@@ -201,7 +201,7 @@ class CodeBreakGenerator {
   void BuildGraphParameters(const std::unordered_map<ValueNode *, int> &locals, GraphParameterBuilder *);
 
   // rebuild captured nodes to bytecode, build parameters load operations
-  py::object MakeCapturedCode(std::vector<std::unique_ptr<Instr>> &&sort, int argc, int flag) const;
+  virtual py::object MakeCapturedCode(std::vector<std::unique_ptr<Instr>> &&sort, int argc, int flag) const;
 
   // make call operations of graph, build parameters load operations
   void CallCapturedCode(CodeGenerator *code_gen);
@@ -272,7 +272,13 @@ class MindCodeBreakGenerator : public CodeBreakGenerator {
     return std::dynamic_pointer_cast<MindGraphBuilder>(builder_)->FGBuilder();
   }
 
+
+  py::object MakeCapturedCode(std::vector<std::unique_ptr<Instr>> &&, int argc, int code_flag) const override;
+
  private:
+  py::object MakeCopyCode(const std::string &co_name, int co_argcount, int co_kwonlyargcount, int co_flags,
+                          bool make_graph = false) const;
+
   GraphBuilderPtr builder_;
 };
 // add a key and value to py::dict, check key conflict or rename the key
