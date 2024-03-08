@@ -57,11 +57,13 @@ class FFTBaseCpuKernelMod : public NativeCpuKernelMod {
 
   std::vector<int64_t> tensor_shape_;
   int64_t x_rank_;
-  int64_t dim;
-  int64_t n;
+  int64_t dim_;
+  int64_t n_;
   int64_t input_element_nums_;
-  mindspore::NormMode norm;
-  bool forward;
+  double norm_weight_;
+  mindspore::NormMode norm_;
+  bool forward_;
+  bool rfft_slice_;
 };
 }  // namespace kernel
 }  // namespace mindspore
