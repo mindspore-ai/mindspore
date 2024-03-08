@@ -254,6 +254,36 @@ TracePtr Graph::TraceValueNode(ValueNode *node, int max_trace_depth) {
                   Config().GetBoolConfig(GraphJitConfig::kPrintGuard), 0, max_trace_depth);
 }
 
+std::vector<ValueNode *> Graph::CollectAliveNode(int bci, std::vector<int> *ids, BitMap *map) const {
+  if (bci == -1) {
+    return {this->GetRetVal()};
+  }
+  BitMap alive = this->GetCFG()->GetLiveness()->CollectAlive(bci);
+  std::vector<ValueNode *> result = CollectAliveNode(this->GetFrame(bci), &alive, ids);
+  if (map != nullptr) {
+    *map = std::move(alive);
+  }
+  return result;
+}
+
+std::vector<ValueNode *> Graph::CollectAliveNode(const FrameStates &last_frame, BitMap *alive, std::vector<int> *ids) {
+  std::vector<ValueNode *> outputs = last_frame.GetStacks();
+  // collect alive locals
+  for (BitMap::Iter iter(alive, true), end(alive, false); iter != end; ++iter) {
+    size_t i = *iter;
+    // exclude undefined locals
+    if (last_frame.Local(i) != &ValueNode::kUnboundLocal) {
+      if (ids != nullptr) {
+        ids->push_back(i);
+      }
+      outputs.push_back(last_frame.Local(i));
+    } else {
+      alive->Clear(i);
+    }
+  }
+  return outputs;
+}
+
 static std::string TraceInferFailed(ValueNode *node) {
   std::stringstream s;
   s << node << " ";

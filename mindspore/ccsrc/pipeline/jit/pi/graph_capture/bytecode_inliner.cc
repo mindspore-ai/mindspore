@@ -27,8 +27,6 @@ namespace mindspore {
 namespace pijit {
 
 extern std::string PrintInstr(const std::vector<std::unique_ptr<Instr>> &list);
-extern std::vector<ValueNode *> CollectInterpretOutputs(const FrameStates &last_frame, const BitMap &alive,
-                                                        std::vector<int> *alive_locals);
 extern bool CheckMSConstexpr(const py::object &func);
 extern bool CheckJitConstexpr(const py::object &func);
 extern bool ApplyInlinePolicy(Graph *g);
@@ -142,7 +140,7 @@ void BytecodeInliner::Rebuild() {
   if (last_frame_ != nullptr) {
     BitMap alive = inline_partial_ ? cfg_->GetLiveness()->CollectAlive(0)
                                    : graph_->GetCFG()->GetLiveness()->CollectAlive(graph_->GetStopTraceBci());
-    ns.outputs = CollectInterpretOutputs(*last_frame_, alive, &alive_locals);
+    ns.outputs = Graph::CollectAliveNode(*last_frame_, &alive, &alive_locals);
   } else {
     ns.outputs.push_back(graph_->GetRetVal());
   }

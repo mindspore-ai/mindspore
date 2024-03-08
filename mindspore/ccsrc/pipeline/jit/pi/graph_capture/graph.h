@@ -188,6 +188,12 @@ class Graph {
   void SetOldBreakBci(int bci) { old_break_bci_ = bci; }
   int GetOldBreakBci() { return old_break_bci_; }
 
+  // collect alive node, output bitmap
+  std::vector<ValueNode *> CollectAliveNode(int bci, std::vector<int> * = nullptr, BitMap * = nullptr) const;
+
+  // collect alive node, clear the bit if alive local is unbound
+  static std::vector<ValueNode *> CollectAliveNode(const FrameStates &, BitMap *, std::vector<int> * = nullptr);
+
  private:
   std::unique_ptr<CFG> cfg_;
   std::vector<LoopInfo *> loops_;
