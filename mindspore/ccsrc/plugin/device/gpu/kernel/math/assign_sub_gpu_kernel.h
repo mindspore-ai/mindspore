@@ -72,9 +72,9 @@ class AssignSubFwdGpuKernelMod : public NativeGpuKernelMod {
                                            const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &)>;
 
  private:
-  bool is_null_input_;
-  int64_t input_size_;
-  int64_t input_elements_;
+  bool is_null_input_{false};
+  int64_t input_size_{0};
+  int64_t input_elements_{0};
 
   AssignSubFunc kernel_func_{};
   void *stream_ptr_{nullptr};

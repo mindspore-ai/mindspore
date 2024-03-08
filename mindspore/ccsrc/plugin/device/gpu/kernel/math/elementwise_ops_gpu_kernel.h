@@ -62,7 +62,7 @@ class ElementwiseOpsGpuKernel : public NativeGpuKernelMod {
   using OpsFunc = std::function<bool(ElementwiseOpsGpuKernel *, const std::vector<kernel::KernelTensor *> &,
                                      const std::vector<kernel::KernelTensor *> &)>;
   static std::map<std::string, std::vector<std::pair<KernelAttr, ElementwiseOpsGpuKernel::OpsFunc>>> kernel_attr_map_;
-  size_t ele_num_;
+  size_t ele_num_{0};
   OpsFunc kernel_func_;
   bool is_null_input_{true};
   void *cuda_stream_{nullptr};

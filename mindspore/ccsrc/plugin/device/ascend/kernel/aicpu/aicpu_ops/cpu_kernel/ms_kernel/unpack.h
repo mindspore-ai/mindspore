@@ -30,11 +30,6 @@
 namespace aicpu {
 class UnpackCpuKernel : public CpuKernel {
  public:
-  UnpackCpuKernel() : data_type(DT_DOUBLE), unpack_axis(0), unpack_num(0), value_num(0) {
-    output_ptr_vec.clear();
-    value_shape_vec.clear();
-  }
-  ~UnpackCpuKernel() = default;
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:

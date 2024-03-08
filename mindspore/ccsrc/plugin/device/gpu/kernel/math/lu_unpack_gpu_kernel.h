@@ -54,16 +54,16 @@ class LuUnpackGpuKernelMod : public NativeGpuKernelMod {
   void *cuda_stream_{nullptr};
   static std::vector<std::pair<KernelAttr, LuUnpackFunc>> func_list_;
 
-  size_t lu_data_size_;
-  size_t lu_pivots_size_;
-  int64_t lu_data_dim1_;
-  int64_t lu_data_dim2_;
-  int64_t l_stride_;
-  int64_t u_stride_;
-  int64_t lu_pivots_dim_;
-  int64_t batch_num_;
-  size_t unit_size1_;
-  size_t unit_size2_;
+  size_t lu_data_size_{0};
+  size_t lu_pivots_size_{0};
+  int64_t lu_data_dim1_{0};
+  int64_t lu_data_dim2_{0};
+  int64_t l_stride_{0};
+  int64_t u_stride_{0};
+  int64_t lu_pivots_dim_{0};
+  int64_t batch_num_{0};
+  size_t unit_size1_{0};
+  size_t unit_size2_{0};
 
   void ResetResource() noexcept;
   template <typename T_data, typename T_pivots>
