@@ -1734,7 +1734,7 @@ std::vector<ActionItem> VmPipeline(const ResourcePtr &resource, bool trace_flag)
   if (IsPhaseLoadFromMindIR(PhaseManager::GetInstance().phase())) {
     actions = MindIRPipeline();
   } else if (!resource->EnableCompileCache() || resource->func_graph() == nullptr) {
-    actions = CommonPipeline();
+    actions = CommonPipeline(trace_flag);
 
     // Optimize
     (void)actions.emplace_back(std::make_pair(kOptimize, VmOptimizeAction));

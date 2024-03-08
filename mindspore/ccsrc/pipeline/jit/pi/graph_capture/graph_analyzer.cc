@@ -512,7 +512,7 @@ void MindGraphAnalyzer::CollectInputs() {
   argc += (co->co_flags & CO_VARKEYWORDS) ? 1 : 0;
   for (Py_ssize_t m = 0; m < argc; ++m) {
     auto local = enter_frame.Local(m);
-    if (local != &ValueNode::kUnboundLocal) {
+    if (local != &ValueNode::UnboundLocal) {
       inputs.insert(enter_frame.Local(m));
     } else {
       const Py_ssize_t ncells = PyTuple_GET_SIZE(co->co_cellvars);

@@ -1560,7 +1560,7 @@ py::object MindCodeBreakGenerator::MakeCopyCode(const std::string &co_name, int 
   return copy_code;
 }
 
-py::object MindCodeBreakGenerator::MakeCode(bool make_graph) {
+py::object MindCodeBreakGenerator::MakeCode(bool make_graph, Graph *graph) {
   auto jcr = getJitCompileResults(reinterpret_cast<PyObject *>(co_), false);
 
   std::string co_name = PyUnicode_AsUTF8(co_->co_name);

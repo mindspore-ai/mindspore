@@ -904,7 +904,7 @@ std::vector<ActionItem> GetPipeline(const ResourcePtr &resource, const std::stri
                                     bool trace_flag = false) {
   MS_EXCEPTION_IF_NULL(resource);
   compile::SetMindRTEnable();
-  return VmPipeline(resource);
+  return VmPipeline(resource, trace_flag);
 }
 
 void GraphExecutorPy::InitCompileCacheInfo(const ResourcePtr &resource, const std::string &phase) {
