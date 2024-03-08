@@ -119,8 +119,9 @@ void ArithmeticDynamicFP16Coder::InitDynamicParams() {
   auto in0_shape = shape_info_container_->GetTemplateShape(input_tensor_);
   std::vector<std::string> in1_shape;
   if (filter_tensor_->IsConst()) {
-    std::transform(filter_tensor_->shape().begin(), filter_tensor_->shape().end(), std::back_inserter(in1_shape),
-                   [](const auto &dim) { return std::to_string(dim); });
+    auto tensor_shape = filter_tensor_->shape();
+    (void)std::transform(tensor_shape.begin(), tensor_shape.end(), std::back_inserter(in1_shape),
+                         [](const auto &dim) { return std::to_string(dim); });
   } else {
     in1_shape = shape_info_container_->GetTemplateShape(filter_tensor_);
   }
@@ -163,8 +164,9 @@ void ArithmeticDynamicFP16Coder::ResetStatus() {
   auto input_shape = shape_info_container_->GetTemplateShape(input_tensor_);
   std::vector<std::string> filter_shape;
   if (filter_tensor_->IsConst()) {
-    std::transform(filter_tensor_->shape().begin(), filter_tensor_->shape().end(), std::back_inserter(filter_shape),
-                   [](const auto &dim) { return std::to_string(dim); });
+    auto tensor_shape = filter_tensor_->shape();
+    (void)std::transform(tensor_shape.begin(), tensor_shape.end(), std::back_inserter(filter_shape),
+                         [](const auto &dim) { return std::to_string(dim); });
   } else {
     filter_shape = shape_info_container_->GetTemplateShape(filter_tensor_);
   }
@@ -227,8 +229,9 @@ int ArithmeticDynamicFP16Coder::DoBroadcast(NNaclFp32Serializer *const code) {
   auto in0_shape = shape_info_container_->GetTemplateShape(input_tensor_);
   std::vector<std::string> in1_shape;
   if (filter_tensor_->IsConst()) {
-    std::transform(filter_tensor_->shape().begin(), filter_tensor_->shape().end(), std::back_inserter(in1_shape),
-                   [](const auto &dim) { return std::to_string(dim); });
+    auto tensor_shape = filter_tensor_->shape();
+    (void)std::transform(tensor_shape.begin(), tensor_shape.end(), std::back_inserter(in1_shape),
+                         [](const auto &dim) { return std::to_string(dim); });
   } else {
     in1_shape = shape_info_container_->GetTemplateShape(filter_tensor_);
   }

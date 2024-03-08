@@ -52,7 +52,7 @@ int TransposeDynamicFp32Coder::DoCode(CoderContext *const context) {
 
   NNaclFp32Serializer code;
   dims_ = static_cast<int>(out_shapes_.size());
-  code << "const int32_t output_shape = [" << dims_ << "] = {";
+  code << "const int32_t output_shape[" << dims_ << "] = {";
   for (size_t i = 0; i < out_shapes_.size(); ++i) {
     code << out_shapes_[i] << ", ";
   }

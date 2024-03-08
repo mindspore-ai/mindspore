@@ -20,6 +20,7 @@
 #include "coder/opcoders/op_coder.h"
 #include "coder/opcoders/nnacl/dynamic_parameter/strided_slice_dynamic_parameter.h"
 #include "nnacl/strided_slice_parameter.h"
+#include "nnacl/kernel/strided_slice.h"
 
 namespace mindspore::lite::micro {
 class StridedSliceDynamicBaseCoder final : public OperatorCoder {
@@ -34,11 +35,15 @@ class StridedSliceDynamicBaseCoder final : public OperatorCoder {
 
   int DoCode(CoderContext *context) override;
 
+  void PadStridedSliceParamTo8D();
+
  private:
   StridedSliceParameter *strided_slice_param_{nullptr};
+  StridedSliceStruct *struct_{nullptr};
   StridedSliceDynamicParameter dynamic_param_;
   size_t inner_{1};
   size_t inner_size_{1};
+  std::vector<std::string> end_;
   std::vector<std::string> input_shape_;
   std::vector<std::string> output_shape_;
 };

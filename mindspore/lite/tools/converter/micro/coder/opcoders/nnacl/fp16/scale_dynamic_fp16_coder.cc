@@ -39,8 +39,7 @@ int ScaleDynamicFP16Coder::Prepare(CoderContext *const context) {
     MS_LOG(ERROR) << "inputs to Scale operator should be 2 or 3, but " << input_tensors_.size() << " is given.";
     return RET_ERROR;
   }
-  scale_tensor_ = input_tensors_.at(kWeightIndex);
-  MS_CHECK_PTR(scale_tensor_);
+  MS_CHECK_RET_CODE(InitScaleOffset(), "Scale fp16 InitScaleOffset failed.");
   MS_CHECK_RET_CODE(CalculateParameter(), "Scale fp16 CalculateParameter failed.");
   return RET_OK;
 }
@@ -59,11 +58,11 @@ int ScaleDynamicFP16Coder::DoCode(CoderContext *const context) {
   NNaclFp32Serializer code;
   code.CodeStruct("scale_struct", scale_struct_, dynamic_param_);
 
-  auto scale = GetTensorAddr(scale_tensor_, scale_tensor_->IsConst(), dynamic_mem_manager_, allocator_);
+  auto scale = GetTensorAddr(scale_tensor_, const_scale_, dynamic_mem_manager_, allocator_);
   std::string offset{"NULL"};
   if (input_tensors_.size() == DIMENSION_3D) {
     auto offset_tensor = input_tensors_.at(kBiasIndex);
-    offset = GetTensorAddr(offset_tensor, offset_tensor->IsConst(), dynamic_mem_manager_, allocator_);
+    offset = GetTensorAddr(offset_tensor, const_offset_, dynamic_mem_manager_, allocator_);
   }
   std::string input_str =
     "(float16_t *)(" + GetTensorAddr(input_tensor_, input_tensor_->IsConst(), dynamic_mem_manager_, allocator_) + ")";
@@ -87,12 +86,25 @@ int ScaleDynamicFP16Coder::DoCode(CoderContext *const context) {
   return RET_OK;
 }
 
+int ScaleDynamicFP16Coder::InitScaleOffset() {
+  scale_tensor_ = input_tensors_.at(kWeightIndex);
+  MS_CHECK_PTR(scale_tensor_);
+  if (scale_tensor_->data() != nullptr) {
+    const_scale_ = true;
+  }
+  if (input_tensors_.size() == DIMENSION_3D && input_tensors_.at(kBiasIndex)->data() != nullptr) {
+    const_offset_ = true;
+  }
+  return RET_OK;
+}
+
 int ScaleDynamicFP16Coder::CalculateParameter() {
   auto in_shape = shape_info_container_->GetTemplateShape(input_tensor_);
   std::vector<std::string> scale_shape;
   if (scale_tensor_->IsConst()) {
-    std::transform(scale_tensor_->shape().begin(), scale_tensor_->shape().end(), std::back_inserter(scale_shape),
-                   [](const auto &dim) { return std::to_string(dim); });
+    auto tensor_shape = scale_tensor_->shape();
+    (void)std::transform(tensor_shape.begin(), tensor_shape.end(), std::back_inserter(scale_shape),
+                         [](const auto &dim) { return std::to_string(dim); });
   } else {
     scale_shape = shape_info_container_->GetTemplateShape(scale_tensor_);
   }

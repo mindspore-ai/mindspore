@@ -66,11 +66,11 @@ int ConvDelegateDynamicFP16Coder::DoCode(CoderContext *const context) { return c
 
 void ConvDelegateDynamicFP16Coder::SetInputOutputShapeInfo(ConvParameter *conv_param, const lite::Tensor *input,
                                                            const lite::Tensor *output) {
-  dynamic_param_->input_batch_ = shape_info_container_->GetTemplateShape(input_tensor_).at(0);
+  dynamic_param_.input_batch_ = shape_info_container_->GetTemplateShape(input_tensor_).at(0);
   conv_param->input_h_ = input->Height();
   conv_param->input_w_ = input->Width();
   conv_param->input_channel_ = input->Channel();
-  dynamic_param_->output_batch_ = shape_info_container_->GetTemplateShape(output_tensor_).at(0);
+  dynamic_param_.output_batch_ = shape_info_container_->GetTemplateShape(output_tensor_).at(0);
   conv_param->output_h_ = output->Height();
   conv_param->output_w_ = output->Width();
   conv_param->output_channel_ = output->Channel();

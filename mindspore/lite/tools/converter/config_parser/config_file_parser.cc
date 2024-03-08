@@ -566,8 +566,12 @@ int ConfigFileParser::ParseConfigParam(std::map<std::string, std::map<std::strin
 }
 
 int ConfigFileParser::SetMapData(const std::map<std::string, std::string> &input_map,
-                                 const std::map<std::string, std::string &> &parse_map, const std::string &section) {
+                                 const std::map<std::string, std::string &> &parse_map, const std::string &section,
+                                 const std::set<std::string> &dynamic_key) {
   for (const auto &map : input_map) {
+    if (dynamic_key.find(map.first) != dynamic_key.end()) {
+      continue;
+    }
     if (parse_map.find(map.first) == parse_map.end()) {
       MS_LOG(ERROR) << "INPUT ILLEGAL: `" << map.first << "` is not supported in "
                     << "[" << section << "]";

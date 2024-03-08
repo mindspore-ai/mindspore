@@ -36,11 +36,14 @@ class ScaleDynamicFP16Coder final : public OperatorCoder {
   int DoCode(CoderContext *const context) override;
 
  private:
+  int InitScaleOffset();
   int CalculateParameter();
   ScaleParameter *scale_param_{nullptr};
   ScaleStruct scale_struct_;
   ScaleDynamicParameter dynamic_param_;
   Tensor *scale_tensor_{nullptr};
+  bool const_scale_ = false;
+  bool const_offset_ = false;
 };
 }  // namespace mindspore::lite::micro::nnacl
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP16_SCALE_DYNAMIC_FP16_CODER_H_

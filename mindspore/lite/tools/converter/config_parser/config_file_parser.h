@@ -20,6 +20,7 @@
 #include <map>
 #include <vector>
 #include <memory>
+#include <set>
 #include "tools/converter/cxx_api/converter_para.h"
 
 namespace mindspore {
@@ -170,7 +171,8 @@ class ConfigFileParser {
   int ParseRegistryInfoString(const std::map<std::string, std::map<std::string, std::string>> &maps);
   int ParseAclOptionCfgString(const std::map<std::string, std::map<std::string, std::string>> &maps);
   int SetMapData(const std::map<std::string, std::string> &input_map,
-                 const std::map<std::string, std::string &> &parse_map, const std::string &section);
+                 const std::map<std::string, std::string &> &parse_map, const std::string &section,
+                 const std::set<std::string> &dynamic_key = {});
   int ParseMicroParamString(const std::map<std::string, std::map<std::string, std::string>> &maps);
   int ParseCpuOptionCfgString(const std::map<std::string, std::map<std::string, std::string>> &maps);
   int ParseTransformQuantString(const std::map<std::string, std::map<std::string, std::string>> &maps);

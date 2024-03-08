@@ -238,6 +238,15 @@ void NNaclFp32Serializer::CodeStruct(const std::string &name, const StridedSlice
                         strided_slice_parameter.newAxisMask_, strided_slice_parameter.shrinkAxisMask_);
 }
 
+void NNaclFp32Serializer::CodeStruct(const std::string &name, const StridedSliceStruct &param,
+                                     const StridedSliceDynamicParameter &dynamic_strided_slice_param) {
+  CodeBaseStruct<false>("StridedSliceStruct", name, "{}", param.data_type_, param.fast_run_, param.soft_copy_mode_,
+                        param.parallel_on_outer_, param.parallel_on_split_axis_, param.split_axis_,
+                        param.in_shape_size_, ToString(param.begins_), dynamic_strided_slice_param.end_,
+                        ToString(param.strides_), dynamic_strided_slice_param.in_shape_, param.inner_, param.outer_,
+                        param.inner_size_, param.cal_num_per_thread_);
+}
+
 void NNaclFp32Serializer::CodeStruct(const std::string &name, const SliceStruct &param) {
   CodeBaseStruct("SliceStruct", name, "{}", param.data_type_size_, ToString(param.begin_), ToString(param.size_),
                  ToString(param.shape_), ToString(param.end_), param.param_length_);
@@ -245,7 +254,7 @@ void NNaclFp32Serializer::CodeStruct(const std::string &name, const SliceStruct 
 
 void NNaclFp32Serializer::CodeStruct(const std::string &name, const SliceStruct &param,
                                      const SliceDynamicParameter &dynamic_slice_param) {
-  CodeBaseStruct<false>("SliceParameter", name, "{}", param.data_type_size_, ToString(param.begin_),
+  CodeBaseStruct<false>("SliceStruct", name, "{}", param.data_type_size_, ToString(param.begin_),
                         dynamic_slice_param.size_, dynamic_slice_param.shape_, dynamic_slice_param.end_,
                         param.param_length_);
 }
