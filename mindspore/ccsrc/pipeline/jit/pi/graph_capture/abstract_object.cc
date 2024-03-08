@@ -57,8 +57,8 @@ namespace pijit {
 
 // mindspore graph can accept these value
 static const std::set<AObject::Type> kMsSupportedType = {
-  AObject::kTypeInt,    AObject::kTypeBool,   AObject::kTypeFloat,     AObject::kTypeNone,
-  AObject::kTypeString, AObject::kTypeTensor, AObject::kTypeTraceNode,
+  AObject::kTypeInt,  AObject::kTypeBool,   AObject::kTypeFloat,
+  AObject::kTypeNone, AObject::kTypeString, AObject::kTypeTensor,
 };
 
 MemPool<AbstractObjectBase> AbstractObjectBase::aobject_mem_pool_(__FILE__, __LINE__, "AObject");

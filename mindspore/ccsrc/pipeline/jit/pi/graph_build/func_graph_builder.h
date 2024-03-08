@@ -23,16 +23,11 @@
 #include "ir/value.h"
 #include "ops/sequence_ops.h"
 #include "pipeline/jit/ps/parse/parse_base.h"
-#include "pipeline/jit/ps/parse/parse.h"
 
 namespace mindspore {
 class FuncGraphBuilder {
  public:
-  explicit FuncGraphBuilder(bool is_top = false) : graph_(std::make_shared<FuncGraph>()) {
-    if (is_top) {
-      parse::Parser::UpdateTopFuncGraph(graph_);
-    }
-  }
+  FuncGraphBuilder() : graph_(std::make_shared<FuncGraph>()) {}
   virtual ~FuncGraphBuilder() { py_obj_to_node_.clear(); }
 
   /// \brief Add an input parameter to the graph.
@@ -64,14 +59,20 @@ class FuncGraphBuilder {
   /// \param[in] inputs_obj The input python objects.
   ///
   /// \return The python object of the infer result.
-  py::object AddMultiNode(const std::string &opcode, const std::vector<py::object> &inputs_obj);
+  py::object AddBinaryNode(const std::string &opcode, const std::vector<py::object> &inputs_obj);
 
   /// \brief Add an output node to the graph.
   ///
   /// \param[in] output_obj The output python object.
   ///
   /// \return Return true if the output object can be used as the output of the graph.
-  bool AddOutput(const py::object &output_obj, bool add_repeat = true);
+  bool AddOutput(const py::object &output_obj);
+
+  /// \brief Update key value for converted_py_obj_ map.
+  ///
+  /// \param[in] new_obj The new python object as key.
+  /// \param[in] old_obj The old python object as key.
+  void UpdatePyObject(const py::object &new_obj, const py::object &old_obj);
 
   /// \brief Remove an output node of the graph.
   ///
@@ -111,11 +112,6 @@ class FuncGraphBuilder {
   /// \return The graph constructed.
   FuncGraphPtr graph();
 
-  /// \brief Set the name of the func_graph.
-  ///
-  /// \param[in] name The func_graph name to set.
-  void SetGraphName(const std::string &name);
-
   static ValuePtr ConvertPyObjToValue(const py::object &obj);
 
   static AbstractBasePtr EvalValue(const ValuePtr &value, const AbstractBasePtrList &inputs_abs_list);
@@ -127,8 +123,6 @@ class FuncGraphBuilder {
 
   static bool CheckGraphOutput(const AbstractBasePtr &abs);
 
-  AnfNodePtr ConvertInputObjToNode(const py::object &input_obj);
-
   py::object AddFgCallNode(const FuncGraphPtr &fg, const std::vector<py::object> &inputs_obj);
 
   bool GetInputNodesAndAbstracts(const ValuePtr &callable_value, const std::vector<py::object> &inputs_obj,
@@ -137,8 +131,6 @@ class FuncGraphBuilder {
 
   static AbstractBasePtr DoInferAndCheck(const ValuePtr &callable_value,
                                          const std::vector<AbstractBasePtr> &input_abs_list);
-
-  py::object TryToAddNode(const ValuePtr &callable_value, const std::vector<py::object> &inputs_obj);
 
   FuncGraphPtr graph_{nullptr};
   bool has_set_output_{false};
