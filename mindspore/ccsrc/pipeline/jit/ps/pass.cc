@@ -40,6 +40,10 @@
 #include "include/common/utils/parallel_context.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/step_auto_parallel.h"
+#include "frontend/parallel/graph_util/pipeline_split_utils.h"
+#include "frontend/parallel/pipeline_transformer/pipeline_scheduler.h"
+#include "frontend/parallel/pipeline_transformer/gpipe_interleave_scheduler.h"
+#include "frontend/parallel/pipeline_transformer/pipeline_interleave.h"
 #include "frontend/parallel/pass/merge_comm.h"
 #include "frontend/parallel/cache_embedding/cache_embedding.h"
 #include "frontend/parallel/cache_embedding/ps_embedding_cache_inserter.h"
@@ -898,6 +902,23 @@ bool CconvPass(const ResourcePtr &resource) {
 
 bool PipelineSplitPass(const ResourcePtr &resource) { return PipelineSplit(resource); }
 
+bool PipelineParallelScheduler(const ResourcePtr &resource) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  auto is_pp_interleave = context->get_param<bool>(MS_CTX_PP_INTERLEAVE);
+  auto root = resource->func_graph();
+  if (is_pp_interleave) {
+    auto manager = resource->manager();
+    auto stage_num = parallel::ParallelContext::GetInstance()->pipeline_stage_split_num();
+    auto stage = parallel::InferStage();
+    auto scheduler = std::make_shared<parallel::InterleavedScheduler>(manager, root, stage, stage_num);
+    scheduler->GetBorderNode();
+    scheduler->Reorder();
+  }
+  opt::ProcessSendRecvForGE(root);
+  return true;
+}
+
 bool AutoParallelPass(const ResourcePtr &resource) {
   auto func_graph = resource->func_graph();
   auto opt = opt::Optimizer::MakeEmptyOptimizer(resource);
@@ -1097,7 +1118,6 @@ std::vector<PassItem> kVmPasses = {{"py_interpret_to_execute", PyInterpretToExec
                                    {"overlap_grad_matmul_and_grad_allreduce", OverlapGradMatmulAndGradAllreduce},
                                    {"split_matmul_comm_elemetwise", SplitMatmulCommElementwiseOpFpPass},
                                    {"split_layernorm_comm", SplitLayerNormCommFpPass},
-                                   {"process_send_recv_for_ge", ProcessSendRecvForGE},
                                    // The pass cache hccl group, so the hccl group should be created before the pass
                                    {"handle_group_info", HandleGroupInfoPass}};
 

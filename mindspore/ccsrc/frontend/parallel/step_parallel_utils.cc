@@ -145,10 +145,19 @@ TensorInfo GetInputsTensorInfo(const std::pair<AnfNodePtr, int64_t> &param_info)
   return tensor_info;
 }
 
+static bool IsRealKernelNode(const AnfNodePtr &node) {
+  if (IsPrimitiveCNode(node, prim::kPrimDepend) || IsPrimitiveCNode(node, prim::kPrimLoad) ||
+      IsPrimitiveCNode(node, prim::kPrimCast) || IsPrimitiveCNode(node, prim::kPrimVirtualDiv) ||
+      IsPrimitiveCNode(node, prim::kPrimReceive) || IsPrimitiveCNode(node, prim::kPrimMicroStepAllGather) ||
+      IsPrimitiveCNode(node, prim::kPrimSend)) {
+    return false;
+  }
+  return true;
+}
+
 std::pair<AnfNodePtr, int64_t> GetRealKernelNode(const AnfNodePtr &node, int64_t get_item_index, CNodePtr *call_node,
                                                  bool ignore_get_item) {
-  if (IsPrimitiveCNode(node, prim::kPrimDepend) || IsPrimitiveCNode(node, prim::kPrimLoad) ||
-      IsPrimitiveCNode(node, prim::kPrimCast) || IsPrimitiveCNode(node, prim::kPrimVirtualDiv)) {
+  if (!IsRealKernelNode(node)) {
     return GetRealKernelNode(node->cast<CNodePtr>()->input(1), get_item_index, call_node, ignore_get_item);
   }
   if (IsPrimitiveCNode(node, prim::kPrimTupleGetItem) && ignore_get_item) {
@@ -176,14 +185,20 @@ std::pair<AnfNodePtr, int64_t> GetRealKernelNode(const AnfNodePtr &node, int64_t
     auto output = GetRealKernelNode(graph->output(), get_item_index, call_node, ignore_get_item).first;
     MS_EXCEPTION_IF_NULL(output);
     if (output->isa<Parameter>()) {
-      auto parameters = graph->parameters();
-      auto pos_iter = std::find(parameters.begin(), parameters.end(), output);
-      // If can't find in parameters, the parameter is a fv.
-      if (pos_iter == parameters.end()) {
-        return std::make_pair(output, get_item_index);
+      auto param_graph = output->func_graph();
+      auto parameter_list = param_graph->parameters();
+      auto fg_used_map = param_graph->func_graph_cnodes_index();
+      for (auto &cur_fg_use : fg_used_map) {
+        if (cur_fg_use.first->second != 0) {
+          continue;
+        }
+        auto cur_fg = cur_fg_use.first->first->cast<CNodePtr>();
+        auto iter = std::find(parameter_list.begin(), parameter_list.end(), output);
+        auto pos = std::distance(parameter_list.begin(), iter);
+        auto argument = cur_fg->input(pos + 1);
+        return GetRealKernelNode(argument, get_item_index, call_node, ignore_get_item);
       }
-      auto pos = std::distance(parameters.begin(), pos_iter);
-      return GetRealKernelNode(cnode->input(LongToSize(pos + 1)), -1, call_node, ignore_get_item);
+      return std::make_pair(output, get_item_index);
     }
     return std::make_pair(output, get_item_index);
   }

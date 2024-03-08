@@ -412,7 +412,7 @@ void CellReuseProcess(const FuncGraphManagerPtr &manager, const std::string &fin
       auto backward_graph = GetCellReuseBackwardGraph(forward_graph);
       if (backward_graph == nullptr) {
         MS_LOG(WARNING) << "Failed to find backward cell reuse graph, skip pass.";
-        return;
+        continue;
       }
       std::list<CNodePtr> forward_orders = forward_graph->GetOrderedCnodes();
       std::vector<CNodePtr> forward_origin_nodes_topological(forward_orders.cbegin(), forward_orders.cend());
@@ -424,18 +424,18 @@ void CellReuseProcess(const FuncGraphManagerPtr &manager, const std::string &fin
                                             find_rained_block_id);
         MicroInterleavedOrderControlInBlock(backward_graph, manager, backward_origin_nodes_topological,
                                             find_rained_block_id);
-        return;
+        continue;
       }
       interleaved_node_pair_vector micro_interleaved_forward_node_list;
       if (!ExtractInterLeavedCommNode(forward_origin_nodes_topological, true, &micro_interleaved_forward_node_list)) {
         MS_LOG(INFO) << "Cannot match micro interleaved conditions.";
-        return;
+        continue;
       }
       interleaved_node_pair_vector micro_interleaved_backward_node_list;
       if (!ExtractInterLeavedCommNode(backward_origin_nodes_topological, false,
                                       &micro_interleaved_backward_node_list)) {
         MS_LOG(INFO) << "Cannot match micro interleaved conditions.";
-        return;
+        continue;
       }
       MicroInterleavedOrderControlProcess(manager, micro_interleaved_forward_node_list,
                                           micro_interleaved_backward_node_list, forward_origin_nodes_topological);

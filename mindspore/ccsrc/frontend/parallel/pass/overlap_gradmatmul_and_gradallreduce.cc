@@ -332,25 +332,22 @@ void OverlapGradMatmulAndGradAllreduce(const FuncGraphPtr &graph) {
   }
   auto manager = graph->manager();
 
-  FuncGraphPtr forward_graph = graph;
-  FuncGraphPtr backward_graph = graph;
   for (const auto &each_graph : manager->func_graphs()) {
     if (IsCellReuseForwardGraph(each_graph)) {
-      forward_graph = each_graph;
-      backward_graph = GetCellReuseBackwardGraph(forward_graph);
+      auto forward_graph = each_graph;
+      auto backward_graph = GetCellReuseBackwardGraph(forward_graph);
       if (backward_graph == nullptr) {
         MS_LOG(WARNING)
           << "Failed to find backward cell reuse graph, skip pass 'overlap_gradmatmul_and_gradallreduce'.";
-        return;
+        continue;
       }
-      break;
+      if (!parallel::ParallelContext::GetInstance()->enable_fine_grained_micro_interleaved()) {
+        DoOverLap(manager, forward_graph, backward_graph);
+        continue;
+      }
+      DoOverLapWay2(manager, forward_graph, backward_graph);
     }
   }
-  if (!parallel::ParallelContext::GetInstance()->enable_fine_grained_micro_interleaved()) {
-    DoOverLap(manager, forward_graph, backward_graph);
-    return;
-  }
-  DoOverLapWay2(manager, forward_graph, backward_graph);
 }
 }  // namespace parallel
 }  // namespace mindspore

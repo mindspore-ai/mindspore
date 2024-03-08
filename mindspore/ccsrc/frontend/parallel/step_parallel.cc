@@ -43,6 +43,7 @@
 #include "frontend/parallel/graph_util/node_info.h"
 #include "frontend/parallel/graph_util/pipeline_split_utils.h"
 #include "frontend/parallel/graph_util/fold_pipeline_split_utils.h"
+#include "frontend/parallel/pipeline_transformer/pipeline_interleave.h"
 #include "frontend/parallel/graph_util/grad_accumulation_utils.h"
 #include "frontend/parallel/node_check.h"
 #include "frontend/parallel/silent_check/silent_check.h"
@@ -2314,6 +2315,18 @@ static std::vector<std::pair<CNodePtr, LossNodeInfo>> GetSensLossPairs(const Fun
   return sens_loss_pairs;
 }
 
+static void HandleSens(const std::vector<std::pair<CNodePtr, LossNodeInfo>> &sens_loss_pairs) {
+  // split sens must before inserting the operators.
+  for (auto &pair : sens_loss_pairs) {
+    // If the shape of grad-sens tensor is not [] or [1], use get tensor slice to handle it.
+    // If the type of sens node is not Tensor, it is unsupported now, do nothing default.
+    if (IsLastStage()) {
+      StepSplitSens(pair);
+    }
+  }
+  return;
+}
+
 static void ParallelCommunication(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_nodes,
                                   const FuncGraphManagerPtr &manager) {
   MS_EXCEPTION_IF_NULL(root);
@@ -2323,13 +2336,7 @@ static void ParallelCommunication(const FuncGraphPtr &root, const std::vector<An
   std::vector<std::pair<CNodePtr, LossNodeInfo>> sens_loss_pairs = GetSensLossPairs(root);
   auto has_backward = HasBackward(root);
   // split sens must before inserting the operators.
-  for (auto &pair : sens_loss_pairs) {
-    // If the shape of grad-sens tensor is not [] or [1], use get tensor slice to handle it.
-    // If the type of sens node is not Tensor, it is unsupported now, do nothing default.
-    if (IsLastStage()) {
-      StepSplitSens(pair);
-    }
-  }
+  HandleSens(sens_loss_pairs);
 
   const auto &node_users_map = manager->node_users();
   for (auto &node : all_nodes) {
@@ -2351,7 +2358,10 @@ static void ParallelCommunication(const FuncGraphPtr &root, const std::vector<An
       }
 
       // skip Send Receive
-      if (!cnode->HasPrimalAttr(PIPELINE_PARAM)) {
+      auto context = MsContext::GetInstance();
+      MS_EXCEPTION_IF_NULL(context);
+      auto is_pp_interleave = context->get_param<bool>(MS_CTX_PP_INTERLEAVE);
+      if (!cnode->HasPrimalAttr(PIPELINE_PARAM) || is_pp_interleave) {
         // insert forward ops
         if (!IsControlFlowNode(cnode)) {
           InsertForwardOps(distribute_operator, cnode);
@@ -2679,6 +2689,12 @@ bool CreateGroupsByCkptFile(const std::string &file) {
 
 static void ReorderForPipelineSplit(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager,
                                     int64_t pipeline_stages) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  auto is_pp_interleave = context->get_param<bool>(MS_CTX_PP_INTERLEAVE);
+  if (is_pp_interleave) {
+    return;
+  }
   if (!root->has_flag(BACKWARD) && pipeline_stages > 1) {
     root->set_flag(BACKWARD, true);
     auto parallel_context = parallel::ParallelContext::GetInstance();
@@ -2761,7 +2777,7 @@ static void MicroBatchPostProcess(const FuncGraphPtr &root, const std::vector<An
   auto pipeline_stages = ParallelContext::GetInstance()->pipeline_stage_split_num();
   if (pipeline_stages > 1) {
     AddVirtualAssignAdd(root);
-    HandleReceiveParam(root, all_nodes);
+    HandleReceiveParam(root);
     LabelGenMaskMicro(root);
     return;
   }
@@ -3016,6 +3032,70 @@ static void HandleSilentCheck(const FuncGraphPtr &root, const FuncGraphManagerPt
   sdc->ModifySilentCheckOps();
 }
 
+static void ParallelPartProcess(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root,
+                                const FuncGraphManagerPtr &manager) {
+  ReshapeInit(all_nodes);
+
+  SetCastForParamNotRecompute(all_nodes);
+
+  HandleRootReshapeAndSaveStrategy(all_nodes);
+
+  HandleForwardMakeTupleAndMakeList(all_nodes);
+
+  // if the input or parameter has multiple users, check whether its split strategies are consistent.
+  CheckParameterSplit(all_nodes);
+
+  HandleSymbolicKeyInstance(root, all_nodes);
+
+  // cover Parallel shape
+  CoverSliceShape(root);
+
+  // handle input is not used
+  HandleNoUsedParameter(root);
+
+  // set the shape for optimizer's clone tensor
+  SetClonedTensorShapeForOptimizer(root);
+
+  HandleAdaFactorOpt(root);
+
+  InsertUniformRealForTaggedNodes(manager, all_nodes);
+
+  auto adasum_param_tensor_layout_map = AdaSumParamTensorLayout(root);
+  bool is_apply_adasum = HandleAdaSum(root, all_nodes, &adasum_param_tensor_layout_map);
+
+  // save strategy as checkpoint for multi-train
+  if (StrategyCheckpoint::GetInstance().SaveCheckPointOn()) {
+    CheckpointStrategy(all_nodes, root);
+  }
+
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  auto is_pp_interleave = context->get_param<bool>(MS_CTX_PP_INTERLEAVE);
+  std::shared_ptr<PipelinePostProcess> pipeline_processor;
+  auto pipeline_stages = ParallelContext::GetInstance()->pipeline_stage_split_num();
+  if (pipeline_stages > 1 && is_pp_interleave) {
+    pipeline_processor =
+      std::make_shared<PipelinePostProcess>(manager, g_device_manager->stage_id(), pipeline_stages, root);
+    pipeline_processor->Init(all_nodes);
+    pipeline_processor->ModifySendRecvAttr(all_nodes);
+  }
+  // ForwardCommunication BackwardCommunication TensorRedistribution
+  ParallelCommunication(root, all_nodes, manager);
+  if (is_apply_adasum) {
+    HandleMirrorInAdaSum(root, &adasum_param_tensor_layout_map);
+  }
+
+  if (pipeline_stages > 1 && is_pp_interleave) {
+    MS_EXCEPTION_IF_NULL(pipeline_processor);
+    pipeline_processor->GraphPartition(all_nodes);
+    pipeline_processor->ElimGraphStage();
+    pipeline_processor->ModifyParameterList();
+    pipeline_processor->HandleSendParam();
+    MarkForwardCNode(root);
+  }
+  return;
+}
+
 bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) {
 #if defined(__linux__) && defined(WITH_BACKEND)
   if (ps::PSContext::instance()->is_server() || ps::PSContext::instance()->is_scheduler()) {
@@ -3092,44 +3172,8 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
     // extract shape and strategy, set operator_info
     ExtractInformation(all_nodes);
   }
-  ReshapeInit(all_nodes);
 
-  SetCastForParamNotRecompute(all_nodes);
-
-  HandleRootReshapeAndSaveStrategy(all_nodes);
-
-  HandleForwardMakeTupleAndMakeList(all_nodes);
-
-  // if the input or parameter has multiple users, check whether its split strategies are consistent.
-  CheckParameterSplit(all_nodes);
-
-  HandleSymbolicKeyInstance(root, all_nodes);
-
-  // cover Parallel shape
-  CoverSliceShape(root);
-
-  // handle input is not used
-  HandleNoUsedParameter(root);
-
-  // set the shape for optimizer's clone tensor
-  SetClonedTensorShapeForOptimizer(root);
-
-  HandleAdaFactorOpt(root);
-
-  InsertUniformRealForTaggedNodes(manager, all_nodes);
-
-  auto adasum_param_tensor_layout_map = AdaSumParamTensorLayout(root);
-  bool is_apply_adasum = HandleAdaSum(root, all_nodes, &adasum_param_tensor_layout_map);
-
-  // save strategy as checkpoint for multi-train
-  if (StrategyCheckpoint::GetInstance().SaveCheckPointOn()) {
-    CheckpointStrategy(all_nodes, root);
-  }
-  // ForwardCommunication BackwardCommunication TensorRedistribution
-  ParallelCommunication(root, all_nodes, manager);
-  if (is_apply_adasum) {
-    HandleMirrorInAdaSum(root, &adasum_param_tensor_layout_map);
-  }
+  ParallelPartProcess(all_nodes, root, manager);
 
   MicroBatchPostProcess(root, all_nodes);
 

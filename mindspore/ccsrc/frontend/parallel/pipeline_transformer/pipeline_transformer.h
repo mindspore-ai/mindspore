@@ -142,18 +142,21 @@ std::pair<ValueListPtr, TypePtr> GetShapeType(const AnfNodePtr &node, const Shap
 
 class NodeStageInfo {
  public:
-  explicit NodeStageInfo(int64_t stage) : stage_(stage) {}
+  explicit NodeStageInfo(int64_t stage, int64_t chunk = 0) : stage_(stage), chunk_(chunk) {}
   ~NodeStageInfo() = default;
 
   int64_t stage() const { return stage_; }
+  int64_t chunk() const { return chunk_; }
+  void set_chunk(int64_t chunk) { chunk_ = chunk; }
 
   // Key for user data.
   constexpr static char key[] = "NodeStageInfo";
 
  private:
   int64_t stage_;
+  int64_t chunk_;
 };
-bool IsolatedNodeAttach(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer);
+size_t MicroSize(const AnfNodeIndexSet &input_node_users);
 }  // namespace parallel
 }  // namespace mindspore
 
