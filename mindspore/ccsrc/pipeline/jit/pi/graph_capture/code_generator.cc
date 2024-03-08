@@ -139,6 +139,7 @@ int CodeGenerator::CalculateStackSize(const std::vector<std::unique_ptr<Instr>> 
   return sp < 0 ? -1 : max_depth;
 }
 
+// reset bci, reset jump offset
 static void CalculateOffset(const std::vector<std::unique_ptr<Instr>> &list) {
   constexpr auto InstrSize = [](unsigned arg) constexpr {
     return arg <= 0xff ? 1 : arg <= 0xffff ? 2 : arg <= 0xffffff ? 3 : 4;
@@ -172,12 +173,14 @@ std::pair<py::bytes, py::bytes> CodeGenerator::ConvertToCodeBytes(const std::vec
 
   CalculateOffset(list);
 
-  int line = first_line;
+  int line = first_line > 0 ? first_line : 0;
   int bci = 0;
   for (const auto &i : list) {
-    if (i->line() != -1 && i->line() != line) {
-      co_lnotab.push_back(sizeof(_Py_CODEUNIT) * (i->bci() - bci));
-      co_lnotab.push_back(i->line() - line);
+    int addr_off = sizeof(_Py_CODEUNIT) * (i->bci() - bci);
+    int line_off = i->line() - line;
+    if (i->line() != -1 && line_off > 0 && line_off < INT8_MAX && addr_off < INT8_MAX) {
+      co_lnotab.push_back(addr_off);
+      co_lnotab.push_back(line_off);
       bci = i->bci();
       line = i->line();
     }
@@ -896,15 +899,24 @@ void CodeBreakGenerator::BreakAtIf(CodeGenerator *code_gen) const {
 void CodeBreakGenerator::BreakAtBlock(CodeGenerator *code_gen, int untracked_bci, int untracked_stack_effect) {
   RestoreStack(code_gen);
   RestoreLocals(code_gen, false);
-  code_gen->AddInstrs(CodeGenerator::CopyInstr(GetCFG()->instr_pool(), break_bci_, untracked_bci));
+  const auto &instr_list = GetCFG()->instr_pool();
+  code_gen->AddInstrs(CodeGenerator::CopyInstr(instr_list, break_bci_, untracked_bci));
 
   BitMap alive = GetCFG()->liveness()->CollectAlive(untracked_bci);
-  alive_locals_.clear();
-  for (size_t i = 0; i < alive.size(); ++i) {
-    if (alive.Get(i)) {
-      alive_locals_.push_back(i);
+  BitMap defined(alive.size());
+  for (int i = break_bci_; i < untracked_bci; ++i) {
+    if (instr_list[i]->op() == STORE_FAST) {
+      defined.Set(instr_list[i]->arg());
     }
   }
+  std::for_each(alive_locals_.begin(), alive_locals_.end(), [&defined](int i) { defined.Set(i); });
+  alive.And(defined);
+
+  alive_locals_.clear();
+  for (BitMap::Iter iter(&alive, true), end(&alive, false); iter != end; ++iter) {
+    alive_locals_.push_back(*iter);
+  }
+
   /**
    * TODO:
    * # check this bug for break at block
@@ -914,8 +926,6 @@ void CodeBreakGenerator::BreakAtBlock(CodeGenerator *code_gen, int untracked_bci
    *             y = 1
    *     except Exception:
    *         pass
-   *     if x == 2:
-   *         y = 2
    *     return y
    */
   interpret_.outputs.resize(alive_locals_.size(), &ValueNode::kUnboundLocal);
@@ -1061,23 +1071,6 @@ void CodeBreakGenerator::MakeReturn(CodeGenerator *code_gen) const {
   code_gen->NewInstr(RETURN_VALUE);
 }
 
-// collect untracked bytecodes inputs
-std::vector<ValueNode *> CollectInterpretOutputs(const FrameStates &last_frame, const BitMap &alive,
-                                                 std::vector<int> *alive_locals) {
-  // stack values must be the first of outputs
-  std::vector<ValueNode *> outputs = last_frame.GetStacks();
-
-  // collect alive locals
-  for (size_t i = 0; i < alive.size(); ++i) {
-    // exclude undefined locals
-    if (alive.Get(i) && last_frame.Local(i) != &ValueNode::kUnboundLocal) {
-      alive_locals->push_back(i);
-      outputs.push_back(last_frame.Local(i));
-    }
-  }
-  return outputs;
-}
-
 static std::vector<ValueNode *> CollectGraphOutputs(const std::set<ValueNode *> &interpret,
                                                     const std::vector<ValueNode *> &alive) {
   std::vector<ValueNode *> outputs;
@@ -1094,8 +1087,7 @@ static std::vector<ValueNode *> CollectGraphOutputs(const std::set<ValueNode *> 
 void CodeBreakGenerator::Init(const Graph *graph, const GraphAnalyzer::CapturedInfo *info) {
   break_bci_ = graph->GetStopTraceBci();
   cfg_ = graph->GetCFG().get();
-  auto liveness = graph->GetCFG()->GetLiveness();
-  std::vector<ValueNode *> alive_nodes = liveness->CollectAliveNode(graph, break_bci_, &alive_locals_);
+  std::vector<ValueNode *> alive_nodes = graph->CollectAliveNode(break_bci_, &alive_locals_);
   interpret_.inputs = graph->GetFrame(0).GetLocals();
   interpret_.outputs = std::move(alive_nodes);
   interpret_.operations = info->ordered_escaped_locals;
