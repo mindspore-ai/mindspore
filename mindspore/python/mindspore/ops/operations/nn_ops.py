@@ -3777,7 +3777,7 @@ class LayerNorm(Primitive):
         - **output_x** (Tensor) - The normalized input, has the same type and shape as the `input_x`.
         - **mean** (Tensor) - The first `begin_norm_axis` dimensions of `mean` shape is the same as `input_x`,
           and the remaining dimensions are 1. Suppose the shape of the `input_x` is :math:`(x_1, x_2, \ldots, x_R)`,
-          the shape of the `mean` is :math:`(x_1, \ldots, x_{begin_params_axis}, 1, \ldots, 1)`
+          the shape of the `mean` is :math:`(x_1, \ldots, x_{begin\_params\_axis}, 1, \ldots, 1)`
           (when `begin_params_axis=0`, the shape of `mean` is :math:`(1, \ldots, 1)` ).
         - **variance** (Tensor) - Shape is the same as `mean` .
 
