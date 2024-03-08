@@ -42,6 +42,14 @@ class Layout {
   void set_uniform_split(bool uniform_split) { uniform_split_ = uniform_split; }
   const std::string &get_opt_shard_group() const { return opt_shard_group_; }
   void set_opt_shard_group(const std::string &opt_shard_group) { opt_shard_group_ = opt_shard_group; }
+  void set_pipeline_shared(bool pipeline_shared) { pipeline_shared_ = pipeline_shared; }
+  bool pipeline_shared() const { return pipeline_shared_; }
+  void set_is_send(bool is_send) { is_send_ = is_send; }
+  bool is_send() const { return is_send_; }
+  void set_peer_rank(int64_t peer_rank) { peer_rank_ = peer_rank; }
+  int64_t peer_rank() const { return peer_rank_; }
+  void set_sr_tag(int64_t sr_tag) { sr_tag_ = sr_tag; }
+  int64_t sr_tag() const { return sr_tag_; }
 
  private:
   std::vector<int64_t> device_arrangement_{};
@@ -50,6 +58,11 @@ class Layout {
   int64_t field_size_ = 0;
   bool uniform_split_ = false;
   std::string opt_shard_group_ = "";
+  // pipeline stage shared param info
+  bool pipeline_shared_ = false;
+  bool is_send_ = false;
+  int64_t peer_rank_{0};
+  int64_t sr_tag_{0};
 };
 using LayoutPtr = std::shared_ptr<Layout>;
 using LayoutMap = std::map<string, LayoutPtr>;

@@ -63,6 +63,7 @@ from mindspore.parallel._parallel_serialization import _convert_to_list, _conver
     _restore_group_info_list
 from mindspore.parallel._ps_context import _set_checkpoint_load_status, _store_warm_up_ptr_by_tensor, \
     _store_warm_up_ptr_by_tensor_list, _cache_enable
+from mindspore.parallel.checkpoint_transform import sync_pipeline_shared_parameters
 from mindspore.train._utils import read_proto
 from mindspore._c_expression import load_mindir, _encrypt, _decrypt, _is_cipher_file, dynamic_obfuscate_mindir, \
     split_mindir, split_dynamic_mindir
@@ -559,6 +560,7 @@ def _convert_cell_param_and_names_to_dict(save_obj, choice_func):
 
 def _convert_cell_to_param_list(save_obj, integrated_save, append_dict, choice_func):
     """Convert nn.Cell to param_list."""
+    sync_pipeline_shared_parameters(save_obj)
     param_list = []
     parameter_layout_dict = save_obj.parameter_layout_dict
     if _is_in_auto_parallel_mode() and not parameter_layout_dict:

@@ -19,6 +19,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <tuple>
 #include <unordered_map>
 
 #include "ir/func_graph.h"
@@ -28,6 +29,7 @@
 #include "frontend/parallel/tensor_layout/tensor_layout.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "frontend/parallel/parameter_manager.h"
+#include "frontend/parallel/tensor_layout/shared_parameter.h"
 
 namespace mindspore {
 namespace parallel {
@@ -226,6 +228,23 @@ py::dict GetParallelCNodeInfoFromSubGraph(const FuncGraphPtr &sub_graph, const F
   }
   return cnode_info_dict;
 }
+
+std::tuple<bool, bool, int64_t, int64_t> GetSharedParameterInfo(const AnfNodePtr &param) {
+  MS_EXCEPTION_IF_NULL(param);
+  bool is_pipeline_shared = false;
+  bool is_send = false;
+  int64_t peer_rank = 0;
+  int64_t sr_tag = 0;
+
+  auto shared_params = param->user_data<parallel::SharedParameter>();
+  if (shared_params) {
+    is_pipeline_shared = shared_params->pipeline_shared();
+    is_send = shared_params->is_send();
+    peer_rank = shared_params->peer_rank();
+    sr_tag = shared_params->sr_tag();
+  }
+  return std::tuple(is_pipeline_shared, is_send, peer_rank, sr_tag);
+}
 }  // namespace
 
 py::dict GetParameterLayoutFromGraph(const FuncGraphPtr &graph) {
@@ -261,8 +280,10 @@ py::dict GetParameterLayoutFromGraph(const FuncGraphPtr &graph) {
       int64_t field_size = tensor_layout->get_field_size();
       bool uniform_split = tensor_layout->uniform_split();
       const std::string &opt_shard_group = tensor_layout->opt_shard_group();
-      py::tuple layout =
-        py::make_tuple(device_arrangement, tensor_map, slice_shape, field_size, uniform_split, opt_shard_group);
+
+      auto [is_pipeline_shared, is_send, peer_rank, sr_tag] = GetSharedParameterInfo(para);
+      py::tuple layout = py::make_tuple(device_arrangement, tensor_map, slice_shape, field_size, uniform_split,
+                                        opt_shard_group, is_pipeline_shared, is_send, peer_rank, sr_tag);
       for (auto &name : names) {
         dict[py::str(name)] = layout;
       }
@@ -285,8 +306,12 @@ py::dict GetParameterLayoutFromResource(const pipeline::ResourcePtr &resource) {
     int64_t field_size = layout->get_field_size();
     bool uniform_split = layout->get_uniform_split();
     const std::string &opt_shard_group = layout->get_opt_shard_group();
-    py::tuple layout_tuple =
-      py::make_tuple(device_arrangement, tensor_map, slice_shape, field_size, uniform_split, opt_shard_group);
+    bool is_pipeline_shared = layout->pipeline_shared();
+    bool is_send = layout->is_send();
+    int64_t peer_rank = layout->peer_rank();
+    int64_t sr_tag = layout->sr_tag();
+    py::tuple layout_tuple = py::make_tuple(device_arrangement, tensor_map, slice_shape, field_size, uniform_split,
+                                            opt_shard_group, is_pipeline_shared, is_send, peer_rank, sr_tag);
     dict[py::str(name)] = layout_tuple;
   }
   return dict;
