@@ -176,6 +176,7 @@ AnfNodePtr ConcatOpPass::ConvertMakeTupleInputToPlantInputs(const FuncGraphPtr &
     new_cnode->set_scope(cnode_ptr->scope());
     new_cnode->set_primal_attrs(cnode_ptr->primal_attrs());
     new_cnode->set_attrs(cnode_ptr->attrs());
+    new_cnode->set_fullname_with_scope(cnode_ptr->fullname_with_scope() + "-plant_input");
     common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(dyn_input_sizes), new_cnode);
     return new_cnode;
   }

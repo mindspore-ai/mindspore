@@ -73,7 +73,13 @@ OUTPUT_MAP(FFN) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(FFN, kNameFFN, ADPT_DESC(FFN))
 
 // MatMulAllReduce
-INPUT_MAP(MatmulAllReduce) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}, {3, INPUT_DESC(bias)}};
+INPUT_MAP(MatmulAllReduce) = {{1, INPUT_DESC(x1)},
+                              {2, INPUT_DESC(x2)},
+                              {3, INPUT_DESC(bias)},
+                              {4, INPUT_DESC(x3)},
+                              {5, INPUT_DESC(antiquant_scale)},
+                              {6, INPUT_DESC(antiquant_offset)},
+                              {7, INPUT_DESC(dequant_scale)}};
 OUTPUT_MAP(MatmulAllReduce) = {{0, OUTPUT_DESC(y)}};
 ATTR_MAP(MatmulAllReduce) = {{"group", ATTR_DESC(group, AnyTraits<std::string>())},
                              {"op", ATTR_DESC(reduce_op, AnyTraits<std::string>())},
