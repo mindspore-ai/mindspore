@@ -1024,7 +1024,8 @@ void ModelProcess::CheckAndInitDynOutputDeviceBuf(const KernelTensor *output, co
                                                   size_t output_idx) {
   auto device_data = output->GetData();
   auto host_data = output->GetHostData();
-  if ((host_data == nullptr) || (host_data->addr == dyn_out_sys_buf_addr_) || (host_data->size == 0)) {
+  if ((host_data == nullptr) || (dyn_out_sys_buf_addr_.find(host_data->addr) != dyn_out_sys_buf_addr_.end()) ||
+      (host_data->size == 0)) {
     MS_LOG(DEBUG) << "host_data->addr: " << host_data->addr
                   << ", user not defined dynamic output buffer on host, using system defined buffer";
     user_defined_output_buf_[output_idx] = false;
@@ -1089,6 +1090,7 @@ bool ModelProcess::CheckAndInitOutput(const std::vector<KernelTensor *> &outputs
 }
 
 bool ModelProcess::ResetDynamicOutputTensor(const std::vector<KernelTensor *> &outputs) {
+  dyn_out_sys_buf_addr_.clear();
   for (size_t i = 0; i < output_infos_.size(); ++i) {
     auto &output = outputs[i];
     auto &output_info = output_infos_[i];
@@ -1123,9 +1125,9 @@ bool ModelProcess::ResetDynamicOutputTensor(const std::vector<KernelTensor *> &o
         void *data_buf_ptr = kernel::AscendAllocatorPlugin::GetInstance().MallocHost(output_desc_size);
         output->SetHostData(std::make_shared<kernel::Address>(data_buf_ptr, output_desc_size));
         output->SetData(nullptr);
-        dyn_out_sys_buf_addr_ = output->GetHostData()->addr;
-        MS_LOG(DEBUG) << "no user provided output buffer, memory alloc by system with addr: " << dyn_out_sys_buf_addr_
-                      << ", size: " << output_desc_size;
+        (void)dyn_out_sys_buf_addr_.insert(output->GetHostData()->addr);
+        MS_LOG(DEBUG) << "no user provided output buffer, memory alloc by system with addr: "
+                      << output->GetHostData()->addr << ", size: " << output_desc_size;
       } else {
         if (host_data == nullptr) {
           MS_LOG(ERROR) << "critical error! found user defined buffer nullptr";
