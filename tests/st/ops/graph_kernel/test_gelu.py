@@ -15,6 +15,7 @@
 
 import numpy as np
 import pytest
+import os
 import mindspore.context as context
 from mindspore import Tensor
 from mindspore.nn import Cell
@@ -92,10 +93,13 @@ def test_gelu_gpu():
     test_gelu()
 
 @pytest.mark.level1
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 def test_gelu_ascend():
+    os.environ["GRAPH_OP_RUN"] = "1"
     context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="Ascend")
     test_gelu()
+    del os.environ["GRAPH_OP_RUN"]
 
 
 @pytest.mark.level1
@@ -106,7 +110,10 @@ def test_gelu_grad_gpu():
     test_gelu_grad()
 
 @pytest.mark.level1
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 def test_gelu_grad_ascend():
+    os.environ["GRAPH_OP_RUN"] = "1"
     context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="Ascend")
     test_gelu_grad()
+    del os.environ["GRAPH_OP_RUN"]

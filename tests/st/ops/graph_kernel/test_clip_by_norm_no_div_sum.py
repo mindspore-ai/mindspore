@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 import pytest
+import os
 import numpy as np
 import mindspore.context as context
 import mindspore.nn as nn
@@ -60,7 +61,10 @@ def test_clip_by_norm_no_div_sum(shape0, shape1, shape2, shape3, dtype):
 
 
 @pytest.mark.level1
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 def test_clip_by_norm_no_div_sum_ascend():
+    os.environ["GRAPH_OP_RUN"] = "1"
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     test_clip_by_norm_no_div_sum((1, 1), (1,), (1, 1), (1,), np.float32)
+    del os.environ["GRAPH_OP_RUN"]

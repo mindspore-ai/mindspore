@@ -23,4 +23,10 @@ REG_EXPANDER_FUNC("ZerosLike").SetBody(BODYFUNC(ib) {
   auto result = ib->BroadcastTo(const_zero, shape);
   return {result};
 });
+REG_EXPANDER_FUNC("FillV2").SetBody(BODYFUNC(ib) {
+  const auto &shape = ib->input(kIndex0);
+  const auto &val = ib->input(kIndex1);
+  auto result = ib->BroadcastTo(val, shape);
+  return {result};
+});
 }  // namespace mindspore::graphkernel::expander
