@@ -1332,7 +1332,6 @@ PyObject *EvalFrame(PyThreadState *tstate, PyFrameObject *f, int exc) {
   py::object res;
   try {
     if (c->conf->GetBoolConfig(GraphJitConfig::kTraceFlag)) {
-      MS_LOG(INFO) << "Start run pijit with one stage mode";
       common::SetEnv("MS_DEV_JIT_SYNTAX_LEVEL", "0");
     }
     res = CodeHook(tstate, c, f);
