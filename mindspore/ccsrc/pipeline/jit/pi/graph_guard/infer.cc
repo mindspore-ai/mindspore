@@ -16,8 +16,11 @@
 #include "pipeline/jit/pi/graph_guard/infer.h"
 #include <map>
 #include <string>
+#include <functional>
 #include <unordered_set>
+#include "base/base.h"
 #include "abstract/ops/primitive_infer_map.h"
+#include "ops/auto_generate/gen_ops_primitive.h"
 #include "include/common/utils/convert_utils_py.h"
 #include "include/common/utils/stub_tensor.h"
 #include "ir/anf.h"
@@ -30,6 +33,7 @@
 #include "pipeline/jit/pi/pydef.h"
 #include "pipeline/jit/pi/graph_guard/guard_utils.h"
 #include "pipeline/jit/ps/parse/data_converter.h"
+#include "pipeline/jit/pi/graph_build/func_graph_builder.h"
 
 namespace mindspore {
 namespace parse {
@@ -306,8 +310,39 @@ static bool HasTensor(py::object obj) {
   return false;
 }
 
-ValuePtr ConvertArgByCastDtype(py::object arg, ops::OpInputArg op_arg) {
-  ValuePtr value = nullptr;
+ValuePtr DtypeToEnum(const ValuePtr &value) {
+  if (!value->isa<mindspore::Type>()) {
+    return value;
+  }
+  auto type_id = value->cast<TypePtr>()->type_id();
+  return MakeValue<int64_t>(type_id);
+}
+
+using ArgHandlerFunc = std::function<ValuePtr(const ValuePtr &)>;
+
+ArgHandlerFunc GetOppArgHandlerFunc(const std::string &arg_handler) {
+  static const std::unordered_map<std::string, ArgHandlerFunc> opp_arg_handler_funcs = {
+    {"dtype_to_type_id", DtypeToEnum},
+  };
+  if (opp_arg_handler_funcs.find(arg_handler) != opp_arg_handler_funcs.end()) {
+    return opp_arg_handler_funcs.at(arg_handler);
+  } else {
+    return nullptr;
+  }
+}
+
+mindspore::ValuePtr ConvertArgByArgHandler(mindspore::ValuePtr value, ops::OpDef *op_def, size_t i) {
+  if (op_def != nullptr && value != nullptr) {
+    auto opp_arg_handler_func = GetOppArgHandlerFunc(op_def->args_[i].arg_handler_);
+    if (opp_arg_handler_func != nullptr) {
+      return opp_arg_handler_func(value);
+    }
+  }
+  return value;
+}
+
+mindspore::ValuePtr ConvertArgByCastDtype(py::object arg, ops::OpInputArg op_arg) {
+  mindspore::ValuePtr value = nullptr;
   parse::OpDefConvertFunc convert_func = parse::GetConverterByType(static_cast<int32_t>(op_arg.arg_dtype_));
   MS_EXCEPTION_IF_NULL(convert_func);
   value = convert_func(arg);
@@ -369,6 +404,7 @@ static AbstractBasePtrList ChangeAbstractArgList(PrimitivePyPtr prim, const std:
     }
     *has_tensor = HasTensor(param_obj);
     converted = convertData(param_obj, is_stub, op_def, i);
+    converted = ConvertArgByArgHandler(converted, op_def, i);
     auto arg = mindspore::abstract::ToAbstract(converted, nullptr, nullptr);
     list.push_back(arg);
   }
@@ -418,7 +454,12 @@ PyObject *InferEngine::InferPrimitive(PyObject *primitive, const std::vector<PyO
   std::optional<AbstractBasePtr> opt_res = mindspore::abstract::TryInferAbstract(prim, list);
   if (opt_res.has_value()) {
     auto abs = opt_res.value();
-    auto pyObj = MakeObjectFromAbstract(abs->BuildShape(), abs->BuildType(), is_abstract);
+    py::object pyObj;
+    if (abs != nullptr) {
+      pyObj = FuncGraphBuilder::ConvertToPyObj(abs);
+    } else {
+      pyObj = MakeObjectFromAbstract(abs->BuildShape(), abs->BuildType(), is_abstract);
+    }
     return pyObj.inc_ref().ptr();
   } else if (prim->HasPyObj()) {
     if (py::hasattr(adapter_obj, PY_PRIM_METHOD_INFER)) {

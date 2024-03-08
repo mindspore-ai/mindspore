@@ -288,5 +288,17 @@ OptStrategy::CalcKind OptStrategy::MakeCalcStrategyByShape(const ShapeVector &sh
     return CalcKind::kCalcShape;
   }
 }
+
+OptCodeSet OptStrategy::MakeGuardListStrategyByFrame(const PyFrameObject *frame, const OptCodeSet &codes) {
+  OptCodeSet ret;
+  std::transform(codes.begin(), codes.end(), std::back_inserter(ret), [](const OptCodePtr &code) { return code; });
+  return ret;
+}
+
+GuardItemVector OptStrategy::MakeGuardItemListStrategyByFrame(const PyFrameObject *frame, const GuardItemVector &list) {
+  GuardItemVector ret;
+  std::transform(list.begin(), list.end(), std::back_inserter(ret), [](const GuardItemPtr &code) { return code; });
+  return ret;
+}
 }  // namespace pijit
 }  // namespace mindspore

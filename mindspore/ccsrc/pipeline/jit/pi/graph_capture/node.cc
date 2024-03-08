@@ -49,6 +49,27 @@ AObject *ValueNode::binary_subscr(ValueNode *sub) {
   return AObject::MakeAObject(AObject::kTypeAnyValue);
 }
 
+bool ValueNode::IsConstantValue() const {
+  return constant_info_ != nullptr && constant_info_->value().ptr() != nullptr;
+}
+
+void ValueNode::SetConstantValue(bool constant) {
+  if (constant && this->GetVobj() != nullptr) {
+    MakeConstantInfo()->set_value(this->GetVobj()->GetPyObject());
+    return;
+  }
+  if (constant_info_ != nullptr) {
+    constant_info_->set_value(py::object());
+  }
+}
+
+const std::unique_ptr<ConstantInfo> &ValueNode::MakeConstantInfo() {
+  if (constant_info_ == nullptr) {
+    constant_info_ = std::make_unique<ConstantInfo>();
+  }
+  return constant_info_;
+}
+
 std::string ParamNode::ToString() const {
   std::stringstream s;
   s << GetOparg() << ":" << GetVobj()->ToString() << '<' << this << '>';
@@ -77,11 +98,11 @@ std::string ValueNode::ToString() const {
   std::stringstream s;
   s << this->InstrNode::ToString();
   s << " vobj:{" << vobj_ << ":" << (vobj_ ? vobj_->ToString() : "(nil)") << "}";
-  if (inputs_.empty()) {
-    return s.str();
-  }
   for (auto i : inputs_) {
     s << i << ',';
+  }
+  if (constant_info_ != nullptr) {
+    s << " constant: " << constant_info_->ToString();
   }
   return s.str();
 }

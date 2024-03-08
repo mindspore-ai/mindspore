@@ -21,6 +21,8 @@
 #include "pipeline/jit/pi/graph_guard/infer.h"
 #include "pipeline/jit/pi/graph_capture/graph.h"
 #include "pipeline/jit/pi/graph_capture/special_func_infer.h"
+#include "pipeline/jit/pi/graph_capture/graph_build.h"
+#include "pipeline/jit/pi/graph_capture/side_effect.h"
 
 namespace mindspore {
 namespace pijit {
@@ -197,6 +199,8 @@ void GraphAnalyzer::AddToEscaped(ValueNode *v) {
   GetCaptureInfo().ordered_escaped_locals.push_back(v);
 }
 
+extern TracePtr GetTrace(ValueNode *node, bool strict, bool print, int depth, int max_depth);
+
 bool GraphAnalyzer::TryToCapture(AbstractNode *n) {
   ValueNode *v = static_cast<ValueNode *>(n);
   AObject *o = v->GetVobj();
@@ -313,6 +317,7 @@ void GraphAnalyzer::UseDefAnalyze() {
       aliveLocals = GetAliveLocals(graph_);
     }
   }
+  graph_->SetOldBreakBci(graph_->GetStopTraceBci());
 }
 
 void GraphAnalyzer::Analyze() {
@@ -323,6 +328,11 @@ void GraphAnalyzer::Analyze() {
     CleanCapturedValue();
   }
   UseDefAnalyze();
+  for (auto item : graph_->GetSideEffect()->GetSideEffectInstrs()) {
+    if (item.first->bci() > graph_->GetStopTraceBci() && (item.first->bci() < graph_->GetOldBreakBci())) {
+      graph_->GetSideEffect()->GetSideEffectInstrs().erase(item.first);
+    }
+  }
   CollectInputs();
 
   need_interpret_ = true;
@@ -341,6 +351,9 @@ void GraphAnalyzer::Analyze() {
   auto iter = std::find_if(args.begin(), end, [](ValueNode *i) { return !ValidateGraphParameters(i); });
   if (iter == end) {
     need_interpret_ = false;
+  }
+  if (!graph_->GetSideEffect()->GetSideEffectInstrs().empty()) {
+    need_interpret_ = true;
   }
 }
 

@@ -137,6 +137,19 @@ OptCodeSet OptCodeHub::GetOptTarget(OptOptionPtr option) {
   return {};
 }
 
+void OptCodeHub::UpdateOptTarget(OptOptionPtr option, OptCodePtr code) {
+  for (auto &item : codeMap_) {
+    if (*(item.first.get()) == *(option.get())) {
+      auto it = std::find(item.second.begin(), item.second.end(), code);
+      if (it != item.second.end()) {
+        item.second.erase(it);
+        item.second.push_back(code);
+      }
+      break;
+    }
+  }
+}
+
 void OptCodeHub::DelOptTarget(OptOptionPtr option, OptCodePtr code) {
   for (auto &item : codeMap_) {
     if (*(item.first.get()) == *(option.get())) {
