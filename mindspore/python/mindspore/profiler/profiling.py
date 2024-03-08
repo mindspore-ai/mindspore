@@ -14,6 +14,7 @@
 # ============================================================================
 """Profiling api file."""
 import os
+import re
 import shutil
 import stat
 import time
@@ -23,6 +24,7 @@ import subprocess
 import csv
 import socket
 from enum import Enum
+from multiprocessing import Process
 from typing import List
 import numpy as np
 
@@ -482,6 +484,7 @@ class Profiler:
         self._profile_framework = "all"
         self._msprof_enable = os.getenv("PROFILER_SAMPLECONFIG")
         self._pretty_json = False
+        self._analyse_only = kwargs.get("analyse_only", False)
         if self._msprof_enable:
             return
         self._start_time = int(time.time() * 1000000)
@@ -491,12 +494,29 @@ class Profiler:
             return
         Profiler._has_initialized = True
         # get device_id and device_target
-        self._get_devid_rankid_and_devtarget()
-        self._parser_kwargs(kwargs)
-        self._get_output_path(kwargs)
-        self._decide_device_target(kwargs)
-        if self.start_profile:
-            self.start()
+        if self._analyse_only:
+            self._device_target = DeviceTarget.ASCEND.value
+        else:
+            self._get_devid_rankid_and_devtarget()
+            self._parser_kwargs(kwargs)
+            self._get_output_path(kwargs)
+            self._decide_device_target(kwargs)
+            if self.start_profile:
+                self.start()
+
+    @staticmethod
+    def _get_prof_rank(prof_path: str):
+        """get rank id."""
+        sub_dirs = os.listdir(os.path.realpath(prof_path))
+        info_json_path = ""
+        for sub_dir in sub_dirs:
+            if sub_dir.startswith("device_"):
+                device_id = sub_dir.split("_")[-1]
+                info_json_path = os.path.join(prof_path, sub_dir, f"info.json.{device_id}")
+        if not os.path.exists(info_json_path):
+            return -1
+        rank_id, _ = Profiler._parse_info_json(info_json_path)
+        return rank_id
 
     @staticmethod
     def _check_output_path(output_path):
@@ -550,6 +570,43 @@ class Profiler:
                 rank_id = 0
 
             return str(rank_id), str(dev_id)
+
+    @classmethod
+    def offline_analyse(cls, path: str, pretty=False, step_list=None):
+        """
+        analyze training performance data. The example shows above.
+
+        Args:
+            path (str, required): The data path which has a profiler folder in the path
+            pretty (bool, optional): Whether to pretty json files. Default: ``False``.
+            step_list (list, optional): A list of steps that need to be parsed
+        """
+        profiler_path = os.path.join(path, "profiler")
+        if not os.path.exists(profiler_path):
+            raise ProfilerPathErrorException(f'There must be a profiler folder in the data path: {path}.')
+
+        job_id_dict = {}
+        sub_dirs = os.listdir(os.path.realpath(profiler_path))
+        for sub_dir in sub_dirs:
+            sub_path = os.path.join(profiler_path, sub_dir)
+            if os.path.isdir(sub_path) and re.match(r"^PROF_\d+_\d+_[a-zA-Z0-9]+", sub_dir):
+                rank = cls._get_prof_rank(sub_path)
+                job_id_dict.setdefault(rank, []).append(sub_path)
+        if not job_id_dict:
+            return
+
+        process_list = []
+        for job_id_list in job_id_dict.values():
+            job_id_list.sort(key=lambda x: x.split("_")[2])
+            profiler = cls(analyse_only=True)
+            profiler.set_ascend_job_id(job_id_list[-1])
+            process = Process(target=profiler.analyse,
+                              args=(path, pretty, step_list))
+            process.start()
+            process_list.append(process)
+
+        for process in process_list:
+            process.join()
 
     def op_analyse(self, op_name, device_id=None):
         """
@@ -625,6 +682,7 @@ class Profiler:
                 Offline mode isused in abnormal exit scenario. This parameter should be set to ``None``
                 for online mode. Default: ``None``.
             pretty (bool, optional): Whether to pretty json files. Default: ``False``.
+            step_list (list, optional): A list of steps that need to be parsed
         """
         self._pretty_json = pretty
         model_iteration_dict = {}
@@ -814,6 +872,17 @@ class Profiler:
         ProfilerInfo.save(self._output_path)
         logger.info("Profiling: stop time: %d", self._stop_time)
 
+    def set_ascend_job_id(self, ascend_job_id):
+        """Set output_path for offline parsing performance data."""
+        if not ascend_job_id:
+            return
+        self._ascend_job_id = validate_and_normalize_path(ascend_job_id)
+        if not os.path.exists(self._ascend_job_id):
+            msg = f"Invalid ascend_job_id: {self._ascend_job_id}, Please pass the absolute path of the JOB dir"
+            logger.critical(msg)
+            raise ValueError(msg)
+        self._output_path, _ = os.path.split(self._ascend_job_id)
+
     def _profiler_init(self, kwargs):
         """Initialize variables when profiler is enabled by environment variables."""
         options = kwargs.get("env_enable")
@@ -963,7 +1032,7 @@ class Profiler:
     def _parse_parameter_for_ascend(self, kwargs):
         """Parse parameter in Profiler when the device target is Ascend."""
         ascend_job_id = kwargs.pop("ascend_job_id", "")
-        self._set_ascend_job_id(ascend_job_id)
+        self.set_ascend_job_id(ascend_job_id)
         self.start_profile = kwargs.pop("start_profile", True)
         if not isinstance(self.start_profile, bool):
             raise TypeError(f"For '{self.__class__.__name__}', the parameter start_profile must be bool, "
@@ -1023,16 +1092,7 @@ class Profiler:
                            f"but got type {type(self._parallel_strategy)}, it will be set to True.")
             self._parallel_strategy = True
 
-    def _set_ascend_job_id(self, ascend_job_id):
-        """Set output_path for offline parsing performance data."""
-        if not ascend_job_id:
-            return
-        self._ascend_job_id = validate_and_normalize_path(ascend_job_id)
-        if not os.path.exists(self._ascend_job_id):
-            msg = f"Invalid ascend_job_id: {self._ascend_job_id}, Please pass the absolute path of the JOB dir"
-            logger.critical(msg)
-            raise ValueError(msg)
-        self._output_path, _ = os.path.split(self._ascend_job_id)
+
 
     def _ascend_analyse(self):
         """Collect and analyse ascend performance data."""
@@ -1358,12 +1418,18 @@ class Profiler:
 
     def _ascend_graph_analyse(self, offline_path=None):
         """Ascend graph mode analyse."""
-        self._ascend_profiler.finalize()
+        if not offline_path:
+            self._ascend_profiler.finalize()
 
         job_id = self._get_profiling_job_id(offline_path)
         if not job_id:
             return
         logger.info("Profiling: job id is %s ", job_id)
+
+        if offline_path:
+            time_stamp = time.strftime("%Y%m%d%H%M%S", time.localtime(time.time()))
+            ascend_ms = f"rank-{self._rank_id}" if self._rank_id else f"{socket.gethostname()}--{os.getpid()}"
+            self._ascend_ms_path = os.path.join(self._output_path, f"{ascend_ms}_{time_stamp}_ascend_ms")
 
         self._check_output_path(output_path=self._output_path)
         source_path = os.path.join(self._output_path, job_id)
