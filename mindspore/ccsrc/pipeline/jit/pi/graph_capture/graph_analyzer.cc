@@ -421,17 +421,27 @@ bool GraphAnalyzer::AnalyzeAliveLocals(std::vector<ValueNode *> aliveNodes) {
   return isAllNodesSupportOutput;
 }
 
+static bool SkipSpecialFuncOrPrimitive(const py::object &callable) {
+  if (callable.ptr() == nullptr) {
+    return false;
+  }
+  if (CheckJitConstexpr(callable) || CheckMSConstexpr(callable)) {
+    return true;
+  }
+  if (IsPrimitiveType<true>(Py_TYPE(callable.ptr()))) {
+    std::string name = callable.attr("name").cast<std::string>();
+    return GetSpecialPrimitiveInferFunc().find(name) != GetSpecialPrimitiveInferFunc().end();
+  }
+  return false;
+}
+
 bool GraphAnalyzer::HasTensorOperation() const {
   bool has_tensor_cal = false;
   for (auto i : info_.captured_locals.values) {
     AObject *value = i->GetVobj();
     int op = i->GetOpcode();
     if (Utils::IsCallOp(op)) {
-      py::object callable = i->input(0)->GetVobj()->GetPyObject();
-      if (callable.ptr() == nullptr) {
-        return true;
-      }
-      if (CheckJitConstexpr(callable) || CheckMSConstexpr(callable)) {
+      if (SkipSpecialFuncOrPrimitive(i->input(0)->GetVobj()->GetPyObject())) {
         continue;
       }
       if (value->GetType() == AObject::kTypeCFunction) {

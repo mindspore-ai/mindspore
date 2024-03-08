@@ -25,6 +25,10 @@ namespace mindspore {
 namespace pijit {
 
 constexpr const char kModuleName[] = "mindspore";
+constexpr const char kTensorShapeName[] = "shape";
+constexpr const char kTensorDtypeName[] = "dtype";
+
+static void MakePrimitiveConstantInfoCommon(ValueNode *node);
 
 void ConstantInfo::set_value(const py::object &op) {
   value_ = op;
@@ -32,6 +36,12 @@ void ConstantInfo::set_value(const py::object &op) {
     return;
   }
   set_type(Py_TYPE(op.ptr()));
+  if (type() == &PyTuple_Type) {
+    set_len(PyTuple_GET_SIZE(op.ptr()));
+  }
+  if (type() == &PyList_Type) {
+    set_len(PyList_GET_SIZE(op.ptr()));
+  }
 }
 
 std::string ConstantInfo::ToString() const {
@@ -45,14 +55,9 @@ std::string ConstantInfo::ToString() const {
   if (len() != -1) {
     s << "len=" << len() << ", ";
   }
-  if (attrs_.empty()) {
-    return s.str();
-  }
-  s << "attrs={ ";
   for (const auto &i : attrs_) {
-    s << i.first << ":{" << i.second.ToString() << "}, ";
+    s << i.first << "=" << std::string(py::str(i.second.ptr())) << ", ";
   }
-  s << "}";
   return s.str();
 }
 
@@ -112,11 +117,29 @@ static void MakeShapeInfoOfTensor(ValueNode *node) {
   node->MakeConstantInfo()->set_type(&PyTuple_Type);
 }
 
+static void MakeDimInfoOfTensor(ValueNode *node) {
+  const auto &cnst = node->GetConstantInfo();
+  if (cnst == nullptr) {
+    return;
+  }
+  node->SetConstantValue(cnst->HasAttr(kTensorShapeName));
+}
+
+static void MakeConstantInfoOfTensorAttr(ValueNode *node) {
+  const std::string &name = node->GetName();
+  if (name == kTensorShapeName) {
+    MakeShapeInfoOfTensor(node);
+  }
+  if (name == "ndim") {
+    MakeDimInfoOfTensor(node);
+  }
+}
+
 bool CheckConstantAttr(ValueNode *node) {
   const auto &src_cnst_info = node->input(0)->GetConstantInfo();
   const std::string &name = node->GetName();
   if (src_cnst_info != nullptr && src_cnst_info->HasAttr(name)) {
-    node->MakeConstantInfo()->set_value(src_cnst_info->GetAttr(name)->value());
+    node->MakeConstantInfo()->set_value(src_cnst_info->GetAttr(name));
   }
 
   if (node->GetVobj() == nullptr || node->input(0)->GetVobj() == nullptr) {
@@ -124,9 +147,7 @@ bool CheckConstantAttr(ValueNode *node) {
   }
   AObject *src_info = node->input(0)->GetVobj();
   if (src_info->GetType() == AObject::kTypeTensor) {
-    if (name == "shape") {
-      MakeShapeInfoOfTensor(node);
-    }
+    MakeConstantInfoOfTensorAttr(node);
     return false;
   }
   if (src_info->GetType() == AObject::kTypeModule && src_info->GetPyObject().ptr() != nullptr) {
@@ -153,55 +174,69 @@ bool CheckConstantIs(ValueNode *node) {
     return false;
   }
   if (l_cnst_info->type() != nullptr && r_cnst_info->type() != nullptr) {
-    return true;
+    // if type not equal, IS_OP always False
+    return l_cnst_info->type() != r_cnst_info->type();
   }
   return false;
 }
 
-bool CheckConstantContains(ValueNode *node) {
-  ValueNode *value = node->input(0);
-  ValueNode *container = node->input(1);
-  int container_op = container->GetOpcode();
-  bool support = container_op == BUILD_LIST || container_op == BUILD_TUPLE || container_op == BUILD_MAP;
-  if (!value->IsConstantValue() || !support) {
+bool MakeConstantBinary(ValueNode *node) {
+  AObject *res_info = node->GetVobj();
+  if (res_info == nullptr) {
     return false;
   }
-
-  PyObject *target = value->GetConstantInfo()->value().ptr();
-  const auto IsTarget = [&target](ValueNode *i) {
-    if (i->IsConstantValue()) {
-      return false;
-    }
-    int res = PyObject_RichCompareBool(i->GetConstantInfo()->value().ptr(), target, Py_EQ);
-    if (PyErr_Occurred()) {
-      PyErr_Clear();
-      return false;
-    }
-    return res > 0;
-  };
-
-  const auto &items = container->getInputs();
-  if (container_op == BUILD_LIST || container_op == BUILD_TUPLE) {
-    return std::any_of(items.begin(), items.end(), IsTarget);
-  }
-  if (container_op == BUILD_MAP) {
-    constexpr int second = 2;
-    for (size_t i = 0; i < items.size(); i += second) {
-      if (IsTarget(items[i])) {
-        return true;
-      }
-    }
+  AObject::Type type = res_info->GetType();
+  if (type != AObject::kTypeTensor) {
     return false;
+  }
+  const auto &l_cnst = node->input(0)->GetConstantInfo();
+  if (l_cnst == nullptr) {
+    return false;
+  }
+  if (l_cnst->type() != nullptr) {
+    MakePrimitiveConstantInfoCommon(node);
   }
   return false;
+}
+
+bool MakeConstantBinarySubscr(ValueNode *node) {
+  const auto &r_cnst = node->input(1)->GetConstantInfo();
+  if (r_cnst == nullptr || r_cnst->type() == nullptr) {
+    return false;
+  }
+  ValueNode *map_node = node->input(0);
+  if (map_node->GetOpcode() == LOAD_ATTR) {
+    ValueNode *src_node = map_node->input(0);
+    bool is_shape = src_node->GetVobj()->GetType() == AObject::kTypeTensor && map_node->GetName() == kTensorShapeName;
+    if (is_shape && r_cnst->type() == &PyLong_Type) {
+      node->MakeConstantInfo()->set_type(&PyLong_Type);
+      return false;
+    }
+  }
+  const auto &l_cnst = node->input(0)->GetConstantInfo();
+  if (l_cnst == nullptr || l_cnst->type() == nullptr) {
+    return false;
+  }
+  if (r_cnst->type() == &PySlice_Type) {
+    if (l_cnst->type() == &PyTuple_Type || l_cnst->type() == &PyList_Type) {
+      node->MakeConstantInfo()->set_type(l_cnst->type());
+      return false;
+    }
+  }
+  return MakeConstantBinary(node);
 }
 
 static void MakeSpecializeConstantValue(ValueNode *node) {
+  if (node->IsConstantValue()) {
+    return;
+  }
+  if (Utils::IsBinaryMathOp(node->GetOpcode())) {
+    MakeConstantBinary(node);
+  }
   static const std::map<int, bool (*)(ValueNode *)> specialize = {
-    {LOAD_ATTR, CheckConstantAttr},
-    {LOAD_GLOBAL, CheckConstantGlobal},
-    {IS_OP, CheckConstantIs},
-    {CONTAINS_OP, CheckConstantContains},
+    {LOAD_ATTR, CheckConstantAttr},   {LOAD_GLOBAL, CheckConstantGlobal},
+    {IS_OP, CheckConstantIs},         {BINARY_SUBSCR, MakeConstantBinarySubscr},
+    {COMPARE_OP, MakeConstantBinary},
   };
   auto iter = specialize.find(node->GetOpcode());
   if (iter == specialize.end()) {
@@ -220,13 +255,13 @@ void ConstantInfo::CollectConstantInfo(ValueNode *node) {
 }
 
 void MakeConstantInfoOfPrimScalarToTensor(ValueNode *node) {
-  node->MakeConstantInfo()->GetAttr("shape")->set_value(py::tuple());
+  node->MakeConstantInfo()->SetAttr(kTensorShapeName, py::tuple());
 }
 
 void MakeConstantInfoOfPrimCast(ValueNode *node) {
   ValueNode *dtype = node->input(2);
   if (dtype->IsConstantValue()) {
-    node->MakeConstantInfo()->GetAttr("dtype")->set_value(dtype->GetConstantInfo()->value());
+    node->MakeConstantInfo()->SetAttr(kTensorDtypeName, dtype->GetConstantInfo()->value());
   }
 }
 
@@ -236,18 +271,46 @@ void MakeConstantInfoOfPrimIsShapeUnKnown(ValueNode *node) {
   node->SetConstantValue(true);
 }
 
+static void MakeConvertToMsTensorInfo(ValueNode *node) {
+  const auto &cnst = node->input(1)->GetConstantInfo();
+  if (cnst == nullptr) {
+    return;
+  }
+  *node->MakeConstantInfo() = *cnst;
+}
+
+static void MakeReshapeInfo(ValueNode *node) {
+  const auto &shape_cnst = node->input(2)->GetConstantInfo();
+  if (shape_cnst == nullptr || shape_cnst->value().ptr() == nullptr) {
+    return;
+  }
+  const auto &cnst_info = node->input(1)->GetConstantInfo();
+
+  PyObject *out_shape = shape_cnst->value().ptr();
+  PyObject **begin = PyList_Check(out_shape) ? &PyList_GET_ITEM(out_shape, 0) : &PyTuple_GET_ITEM(out_shape, 0);
+  PyObject **end = begin + (PyList_Check(out_shape) ? PyList_GET_SIZE(out_shape) : PyTuple_GET_SIZE(out_shape));
+  bool is_dynamic_shape = std::any_of(begin, end, [](PyObject *op) { return PyLong_AsLong(op) == -1; });
+  bool is_constant_shape = !is_dynamic_shape || (cnst_info != nullptr && cnst_info->HasAttr(kTensorShapeName));
+  if (is_constant_shape) {
+    py::object cnst_shape = node->GetVobj()->GetPyObject().attr(kTensorShapeName);
+    node->MakeConstantInfo()->SetAttr(kTensorShapeName, cnst_shape);
+  }
+}
+
 static const std::map<std::string, void (*)(ValueNode *)> &GetConstantPrimitiveMap() {
   static const std::map<std::string, void (*)(ValueNode *)> cnst_prim = {
     {"ScalarToTensor", MakeConstantInfoOfPrimScalarToTensor},
     {"Cast", MakeConstantInfoOfPrimCast},
     {"IsShapeUnKnown", MakeConstantInfoOfPrimIsShapeUnKnown},
     {"Shape", MakeShapeInfoOfTensor},
+    {"Reshape", MakeReshapeInfo},
+    {"ConvertToMsTensor", MakeConvertToMsTensorInfo},
+    {"ConvertToAdapterTensor", MakeConvertToMsTensorInfo},
   };
   return cnst_prim;
 }
 
-void ConstantInfo::CollectPrimitiveConstantInfo(CallNode *node) {
-  MS_EXCEPTION_IF_CHECK_FAIL(node->input(0)->GetVobj()->GetType() == AObject::kTypePrimitive, "must be primitive");
+static void MakePrimitiveConstantInfoCommon(ValueNode *node) {
   AObject *info = node->GetVobj();
   if (info == nullptr) {
     return;
@@ -255,6 +318,30 @@ void ConstantInfo::CollectPrimitiveConstantInfo(CallNode *node) {
   // assume primitive return type is always constant !!!
   const auto &cnst = node->MakeConstantInfo();
   cnst->set_type(info->GetTypeObject());
+
+  if (info->GetType() != AObject::kTypeTensor) {
+    return;
+  }
+  // check all inputs tensor shape is constant, other inputs is constant
+  const auto &inputs = node->getInputs();
+  bool constant_shape = std::none_of(inputs.begin(), inputs.end(), [](ValueNode *i) {
+    const auto &cnst = i->GetConstantInfo();
+    if (cnst == nullptr) {
+      return true;
+    }
+    if (i->GetVobj()->GetType() == AObject::kTypeTensor) {
+      return !cnst->HasAttr(kTensorShapeName);
+    }
+    return cnst->value().ptr() != nullptr;
+  });
+  if (constant_shape) {
+    cnst->SetAttr(kTensorShapeName, info->GetPyObject().attr(kTensorShapeName));
+  }
+}
+
+void ConstantInfo::CollectPrimitiveConstantInfo(CallNode *node) {
+  MS_EXCEPTION_IF_CHECK_FAIL(node->input(0)->GetVobj()->GetType() == AObject::kTypePrimitive, "must be primitive");
+  MakePrimitiveConstantInfoCommon(node);
 
   std::string prim_key = node->input(0)->GetVobj()->GetPyObject().attr("name").cast<std::string>();
   auto iter = GetConstantPrimitiveMap().find(prim_key);
@@ -265,36 +352,39 @@ void ConstantInfo::CollectPrimitiveConstantInfo(CallNode *node) {
 }
 
 static bool CheckConstantLen(ValueNode *node) {
-  const auto &t = node->input(1)->GetConstantInfo();
-  bool cnst = t != nullptr && t->len() != -1;
-  PyObject *len = node->GetVobj()->GetPyObject().ptr();
-  MS_EXCEPTION_IF_CHECK_FAIL(!cnst || t->len() == PyLong_AsSsize_t(len), "error constant len");
-  return cnst;
+  const auto &cnst = node->input(1)->GetConstantInfo();
+  if (cnst == nullptr || cnst->len() == -1) {
+    return false;
+  }
+  PyObject *len = node->GetVobj() ? node->GetVobj()->GetPyObject().ptr() : nullptr;
+  if (len != nullptr) {
+    MS_EXCEPTION_IF_CHECK_FAIL(cnst->len() == PyLong_AsSsize_t(len), "error constant len");
+  } else {
+    node->SetVobj(AObject::Convert(py::int_(cnst->len()).ptr()));
+  }
+  return true;
 }
 
-static bool MakeConstantTypeCheck(ValueNode *node) {
+static bool CheckConstantInstanceCheck(ValueNode *node) {
   const auto &c1 = node->input(1)->GetConstantInfo();
   bool cnst = c1 != nullptr && c1->type() != nullptr;
-  constexpr int second = 2;
-  return cnst && node->GetGraph()->GuardValueNode(node->input(second));
+  constexpr int second_arg = 2;
+  return cnst && node->input(second_arg)->IsConstantValue();
 }
 
-using cfunction = bool (*)(ValueNode *);
-using c_func = std::map<PyCFunction, bool (*)(ValueNode *)>;
-auto declare_builtin_cfunction = [](const char *func_name, cfunction handler, c_func *cnst_func) {
-  auto func = PyDict_GetItemString(PyEval_GetBuiltins(), func_name);
-  auto cfunc = PyCFunction_GET_FUNCTION(func);
-  cnst_func->insert({cfunc, handler});
-};
-
 static const std::map<PyCFunction, bool (*)(ValueNode *)> &GetConstantBuiltinFuncMap() {
-  static c_func cnst_func = {};
+  using Handler = bool (*)(ValueNode *);
+  static std::map<PyCFunction, Handler> cnst_func = {};
+  static auto func_map_init = [](const char *func_name, Handler handler) {
+    auto func = PyDict_GetItemString(PyEval_GetBuiltins(), func_name);
+    auto cfunc = PyCFunction_GET_FUNCTION(func);
+    cnst_func.insert({cfunc, handler});
+  };
   if (!cnst_func.empty()) {
     return cnst_func;
   }
-  declare_builtin_cfunction("len", CheckConstantLen, &cnst_func);
-  declare_builtin_cfunction("isinstance", MakeConstantTypeCheck, &cnst_func);
-  declare_builtin_cfunction("issubclass", MakeConstantTypeCheck, &cnst_func);
+  func_map_init("len", CheckConstantLen);
+  func_map_init("isinstance", CheckConstantInstanceCheck);
   return cnst_func;
 }
 

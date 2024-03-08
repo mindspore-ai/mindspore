@@ -1,5 +1,7 @@
+import sys
+import dis
 import pytest
-from mindspore._c_expression import jit_mode_pi_enable, jit_mode_pi_disable
+from mindspore._c_expression import jit_mode_pi_enable, jit_mode_pi_disable, get_code_extra
 from mindspore import Tensor, jit, context, ops
 import mindspore.common.dtype as mstype
 import numpy as np
@@ -326,3 +328,99 @@ def test_unpack_call(test_user_defined_dict):
     res2 = unpack_call2()
     assert {**res1} == {**kwargs}
     assert res2 == {1: 1, 2: 2}
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_super_call():
+    """
+    Feature: Test super call.
+    Description: Analyze for super call.
+    Expectation: The results should match for both modes.
+    """
+
+    class SuperTest:
+        def __init__(self) -> None:
+            self.id = Tensor([0])
+
+        def forward(self):
+            return self.id + 1
+
+    class Test(SuperTest):
+        def __init__(self) -> None:
+            super().__init__()
+            self.id = Tensor([1])
+
+        def forward(self):
+            return super().forward() + 1
+
+    def super_call(instance):
+        return instance.forward()
+
+    instance = Test()
+    exceted = super_call(instance)
+    result = jit(fn=super_call, mode="PIJit")(instance)
+
+    assert exceted == result
+
+
+def cast_tensor(x):
+    def _cast(x):
+        if isinstance(x, Tensor):
+            x = x + 1
+        elif isinstance(x, tuple):
+            t = ()
+            for value in x:
+                t += (_cast(value),)
+            x = t
+        elif isinstance(x, list):
+            t = []
+            for value in x:
+                t.append(_cast(value))
+            x = t
+        elif isinstance(x, dict):
+            for key, value in x.items():
+                x[key] = _cast(value)
+        return x
+
+    x = _cast(x)
+    return x
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize("mode", [True, False])
+def test_mix_0(mode: int):
+    """
+    Feature: Test mixed type infer
+    Description: Should inline all function and not generate any guard
+    Expectation: The results should match for both modes.
+    """
+
+    @jit(mode="PIJit", jit_config={"kEnableEliminateUnusedOperation": True, "loop_unrolling": True})
+    def inner_func(mode):
+        index = 1 if mode else 0
+        x = [Tensor([1]), 1]
+        policy = x, (x,)
+        return cast_tensor(policy[index])
+
+    jit_mode_pi_disable()
+    excepted = inner_func(mode)
+
+    jit_mode_pi_enable()
+    result = inner_func(mode)
+
+    assert excepted == result
+
+    # just unrolling loop in python 3.9
+    if sys.version_info.major == 3 and sys.version_info.minor == 9:
+        jcr = get_code_extra(inner_func)
+        # check loop unrolling, function inliner
+        for i in dis.get_instructions(jcr["code"]["compiled_code_"]):
+            assert i.opname != "FOR_ITER"
+            assert i.opname != "CALL_FUNCTION"
+
+        # check no "isinstance" guard
+        assert "isinstance" not in jcr["code"]["guard_"]

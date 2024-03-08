@@ -185,7 +185,7 @@ Block *CFG::NewBBAppend() {
 }
 
 Instr *CFG::NewInstrNode(int bci, int op, int arg, int line) {
-  instrs_.emplace_back(std::make_unique<Instr>(bci, op, arg, line));
+  instrs_.emplace_back(std::make_unique<Instr>(op, arg, bci, line));
   Instr *i = instrs_.back().get();
   if (op == LOAD_CONST) {
     i->set_cnst(PyTuple_GET_ITEM(pycode_->co_consts, arg));
@@ -204,7 +204,7 @@ Instr *CFG::NewLoadInstrNode(int bci, int arg, int line, PyObject *cnst) {
 }
 
 Instr *CFG::NewInstrNode(const Instr &instr) {
-  instrs_.emplace_back(std::make_unique<Instr>(instr.bci(), instr.op(), instr.arg(), instr.line()));
+  instrs_.emplace_back(std::make_unique<Instr>(instr.op(), instr.arg(), instr.bci(), instr.line()));
   Instr *i = instrs_.back().get();
   i->set_cnst(instr.cnst());
   i->set_name(instr.name());

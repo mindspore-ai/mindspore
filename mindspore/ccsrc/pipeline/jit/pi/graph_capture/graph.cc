@@ -59,9 +59,6 @@ Graph::Graph(PyCodeObject *co, PyObject *globals, const GraphJitConfig &conf)
   if (conf_.GetBoolConfig(GraphJitConfig::kLoopUnrolling)) {
     LoopFinder loop_finder(this);
     loop_finder.FormSimpleLoopInfo();
-    if (conf_.GetBoolConfig(GraphJitConfig::kPrintAfterAll) && !loops().empty()) {
-      GRAPH_JIT_LOG_F("%s", DumpLoops().c_str());
-    }
   }
   sideEffect_ = std::make_unique<SideEffect>();
 }
@@ -214,32 +211,20 @@ TracePtr GetTrace(ValueNode *node, bool strict, bool print, int depth, int max_d
     default:
       break;
   }
-  if (ret == nullptr && !strict) {
-    ret = std::make_shared<UnsupportedTrace>(obj, tv, opcode, oparg);
-  }
-  return ret;
+  return (ret == nullptr && !strict) ? std::make_shared<UnsupportedTrace>(obj, tv, opcode, oparg) : ret;
 }
 
 bool Graph::GuardValueNode(ValueNode *node) {
-  AObject *vo = node->GetVobj();
-  if (guard_ == nullptr || !vo || vo->GetPyObject().ptr() == nullptr) {
-    return false;
-  }
   if (node->IsConstantValue()) {
     return true;
   }
-  TracePtr t = GetTrace(node, Config().GetBoolConfig(GraphJitConfig::kStrictTrace),
-                        Config().GetBoolConfig(GraphJitConfig::kPrintGuard), 0,
-                        Config().getIntConfig(GraphJitConfig::GraphJitConfig::kMaxTraceDepth));
-  if (t != nullptr) {
-    bool ret = guard_->GetGuard()->GuardOn(t, mindspore::pijit::GuardLevel::GEqual);
-    if (Config().GetBoolConfig(GraphJitConfig::kGuardDetachObject)) {
-      t->Detach();
-    }
-    return ret;
+  TracePtr tr = this->TraceValueNode(node);
+  if (tr == nullptr) {
+    return false;
   }
-  node->SetConstantValue(true);
-  return false;
+  bool ret = guard_->GetGuard()->GuardOn(tr, mindspore::pijit::GuardLevel::GEqual);
+  node->SetConstantValue(ret);
+  return ret;
 }
 
 TracePtr Graph::TraceValueNode(ValueNode *node, int max_trace_depth) {
@@ -282,6 +267,96 @@ std::vector<ValueNode *> Graph::CollectAliveNode(const FrameStates &last_frame, 
     }
   }
   return outputs;
+}
+
+bool Graph::GuardSequenceNodeLength(ValueNode *sequence_node, Py_ssize_t sequence_size) {
+  if (sequence_node->IsConstantValue()) {
+    return true;
+  }
+  const auto &cnst = sequence_node->GetConstantInfo();
+  if (cnst != nullptr && cnst->len() != -1) {
+    MS_EXCEPTION_IF_CHECK_FAIL(sequence_size == cnst->len(), "error sequence length");
+    return true;
+  }
+  TracePtr tr = this->TraceValueNode(sequence_node);
+  if (tr == nullptr) {
+    return false;
+  }
+  const auto &guard = this->GetGuard()->GetGuard();
+  bool strict = this->Config().GetBoolConfig(GraphJitConfig::kStrictTrace);
+
+  PyObject *builtin_len = PyDict_GetItemString(PyEval_GetBuiltins(), "len");
+  MS_EXCEPTION_IF_NULL(builtin_len);
+  TracePtr len_func = CreateOpTrace(builtin_len, LOAD_CONST, -1, {}, "", "", strict);
+  TracePtr len_trace = CreateOpTrace(py::int_(sequence_size).ptr(), CALL_FUNCTION, 1, {len_func, tr}, "", "", strict);
+  guard->GuardOn(len_trace, GuardLevel::GEqual, false);
+
+  sequence_node->MakeConstantInfo()->set_len(sequence_size);
+  return true;
+}
+
+bool Graph::GuardType(ValueNode *node) {
+  if (node->IsConstantValue()) {
+    return true;
+  }
+  const auto &cnst = node->GetConstantInfo();
+  if (cnst != nullptr && cnst->type() != nullptr) {
+    return true;
+  }
+  TracePtr tr = this->TraceValueNode(node);
+  if (tr == nullptr) {
+    return false;
+  }
+  bool ret = guard_->GetGuard()->GuardOn(tr, mindspore::pijit::GuardLevel::GType);
+  node->MakeConstantInfo()->set_type(node->GetVobj()->GetTypeObject());
+  return ret;
+}
+
+static bool SkipGuardInlinedFunc(ValueNode *func_node) {
+  if (func_node->IsConstantValue()) {
+    return true;
+  }
+  AObject::Type value_type = func_node->GetVobj()->GetType();
+  if (func_node->GetOpcode() == LOAD_ATTR) {
+    AObject *src_info = func_node->input(0)->GetVobj();
+    if (src_info->GetType() == AObject::kTypeTensor && value_type == AObject::kTypeBoundMethod) {
+      // function from Tensor
+      return true;
+    }
+  }
+  return false;
+}
+
+bool Graph::GuardInlinedFunc(CallNode *call_node) {
+  if (SkipGuardInlinedFunc(call_node->input(0))) {
+    return true;
+  }
+  TracePtr tr = this->TraceValueNode(call_node->input(0));
+  if (tr == nullptr) {
+    return false;
+  }
+  const auto &guard = this->GetGuard()->GetGuard();
+  bool strict = this->Config().GetBoolConfig(GraphJitConfig::kStrictTrace);
+
+  AObject *callable_info = call_node->input(0)->GetVobj();
+  AObject::Type func_type = callable_info->GetType();
+  PyObject *callable = callable_info->GetPyObject().ptr();
+  if (func_type == AObject::kTypeBoundMethod) {
+    PyObject *func = PyMethod_GET_FUNCTION(callable);
+    tr = CreateOpTrace(func, LOAD_ATTR, 0, {tr}, "", "__func__", strict);
+    tr = CreateOpTrace(PyFunction_GET_CODE(func), LOAD_ATTR, 0, {tr}, "", "__code__", strict);
+    guard->GuardOn(tr, GuardLevel::GId);
+  } else if (func_type == AObject::kTypeCell || func_type == AObject::kTypeAnyValue) {
+    guard->GuardOn(tr, GuardLevel::GType, false);
+    call_node->input(0)->MakeConstantInfo()->set_type(callable_info->GetTypeObject());
+  } else if (func_type == AObject::kTypeFunction) {
+    tr = CreateOpTrace(PyFunction_GET_CODE(callable), LOAD_ATTR, 0, {tr}, "", "__code__", strict);
+    guard->GuardOn(tr, GuardLevel::GId);
+    call_node->input(0)->SetConstantValue(true);
+  } else {
+    return false;
+  }
+  return true;
 }
 
 static std::string TraceInferFailed(ValueNode *node) {
@@ -457,19 +532,6 @@ std::string FrameStates::ToString() const {
   std::for_each(cell_free.begin(), cell_free.end(), [&s](ValueNode *i) { s << i->ToString() << "\n"; });
   s << "\n";
   return s.str();
-}
-
-std::string Graph::DumpLoops() const {
-  std::ostringstream os;
-  if (loops_.empty()) {
-    return os.str();
-  }
-  os << "*** Dump Loops on [" << py::str(co_.ptr()).cast<std::string>() << "] ***\n";
-  for (const auto *lp : loops_) {
-    os << lp->Dump();
-  }
-  os << '\n';
-  return os.str();
 }
 
 }  // namespace pijit

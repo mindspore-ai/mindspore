@@ -148,6 +148,10 @@ class Graph {
   }
 
   bool GuardValueNode(ValueNode *);
+  bool GuardType(ValueNode *);
+  bool GuardSequenceNodeLength(ValueNode *, Py_ssize_t);
+  bool GuardInlinedFunc(CallNode *call_node);
+
   TracePtr TraceValueNode(ValueNode *, int max_trace_depth = -1);
   int GetPruneBranchCount() const { return prune_branch_count_; }
   void SetPruneBranchCount(int count) { prune_branch_count_ = count; }
@@ -163,7 +167,6 @@ class Graph {
 
   std::string ToString(int depth = 0) const;
 
-  std::string DumpLoops() const;
   std::string DumpBreakInfo() const;
 
   void SetParent(Graph *parent) { parent_ = parent; }

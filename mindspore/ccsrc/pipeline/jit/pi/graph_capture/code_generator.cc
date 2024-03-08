@@ -376,7 +376,7 @@ std::vector<std::unique_ptr<Instr>> CodeGenerator::CopyInstr(const std::vector<s
   for (size_t bci = start_bci; bci < size; ++bci) {
     const auto &i = list[bci];
     size_t index = i->bci() - start_bci;
-    instrs.emplace_back(std::make_unique<Instr>(index, i->op(), i->arg(), i->line()));
+    instrs.emplace_back(std::make_unique<Instr>(i->op(), i->arg(), index, i->line()));
     instrs.back()->set_name(i->name());
     instrs.back()->set_cnst(i->cnst());
     if (i->op() == LOAD_METHOD) {
@@ -396,7 +396,7 @@ std::vector<std::unique_ptr<Instr>> CodeGenerator::CopyInstr(const std::vector<s
     }
   }
   if (insert_nop_to_end) {
-    instrs.emplace_back(std::make_unique<Instr>(instrs.size(), NOP));
+    instrs.emplace_back(std::make_unique<Instr>(NOP, 0, instrs.size()));
   }
   for (const auto &i : edges) {
     instrs[i.first]->set_extra_jump(instrs[i.second].get());
@@ -456,24 +456,24 @@ std::vector<std::unique_ptr<Instr>> CodeGenerator::RotStack(int stack) {
     case 0:  // optimize
       break;
     case 1:
-      res.push_back(std::make_unique<Instr>(0, ROT_TWO));
+      res.push_back(std::make_unique<Instr>(ROT_TWO));
       break;
     case 2:
-      res.push_back(std::make_unique<Instr>(0, ROT_THREE));
+      res.push_back(std::make_unique<Instr>(ROT_THREE));
       break;
 #if (PY_MINOR_VERSION > 7)
     case 3:
-      res.push_back(std::make_unique<Instr>(0, ROT_FOUR));
+      res.push_back(std::make_unique<Instr>(ROT_FOUR));
       break;
 #endif
 #endif
     default:
       MS_LOG(DEBUG) << ("too many stack value, will build tuple to process\n");
-      res.insert(res.begin(), std::make_unique<Instr>(0, BUILD_TUPLE, stack));
-      res.insert(res.begin(), std::make_unique<Instr>(0, UNPACK_SEQUENCE, stack));
-      res.insert(res.begin(), std::make_unique<Instr>(0, BUILD_TUPLE, stack));  // reverse tuple
-      res.push_back(std::make_unique<Instr>(0, ROT_TWO, 0));
-      res.push_back(std::make_unique<Instr>(0, UNPACK_SEQUENCE, stack));
+      res.insert(res.begin(), std::make_unique<Instr>(BUILD_TUPLE, stack));
+      res.insert(res.begin(), std::make_unique<Instr>(UNPACK_SEQUENCE, stack));
+      res.insert(res.begin(), std::make_unique<Instr>(BUILD_TUPLE, stack));  // reverse tuple
+      res.push_back(std::make_unique<Instr>(ROT_TWO));
+      res.push_back(std::make_unique<Instr>(UNPACK_SEQUENCE, stack));
       break;
   }
   return res;
@@ -537,7 +537,7 @@ int CodeGenerator::AllocLocal(ValueNode *node, int index) {
 }
 
 void CodeGenerator::NewInstr(int op, int arg, int line) {
-  code_.co_code.emplace_back(std::make_unique<Instr>(-1, op, arg, line));
+  code_.co_code.emplace_back(std::make_unique<Instr>(op, arg, -1, line));
 }
 
 void CodeGenerator::AddInstrs(std::vector<std::unique_ptr<Instr>> &&l) {
@@ -686,18 +686,16 @@ static bool IsNotNeedTrack(const std::vector<std::unique_ptr<Instr>> &list, int 
 static std::vector<std::unique_ptr<Instr>> MakeFunc(const py::object &code, const std::string &name, int closures) {
   std::vector<std::unique_ptr<Instr>> instrs;
   for (int i = 0; i < closures; ++i) {
-    instrs.emplace_back(std::make_unique<Instr>(0, LOAD_CLOSURE, i));
+    instrs.emplace_back(std::make_unique<Instr>(LOAD_CLOSURE, i));
   }
   int make_oparg = 0;
   if (closures != 0) {
     make_oparg |= 0x08;
-    instrs.emplace_back(std::make_unique<Instr>(0, BUILD_TUPLE, closures));
+    instrs.emplace_back(std::make_unique<Instr>(BUILD_TUPLE, closures));
   }
-  instrs.emplace_back(std::make_unique<Instr>(0, LOAD_CONST));
-  instrs.back()->set_cnst(code);
-  instrs.emplace_back(std::make_unique<Instr>(0, LOAD_CONST));
-  instrs.back()->set_cnst(py::str(name));
-  instrs.emplace_back(std::make_unique<Instr>(0, MAKE_FUNCTION, make_oparg));
+  instrs.emplace_back(std::make_unique<Instr>(LOAD_CONST, 0, code));
+  instrs.emplace_back(std::make_unique<Instr>(LOAD_CONST, 0, py::str(name)));
+  instrs.emplace_back(std::make_unique<Instr>(MAKE_FUNCTION, make_oparg));
   return instrs;
 }
 
@@ -799,7 +797,7 @@ void CodeBreakGenerator::RestoreLocals(CodeGenerator *code_gen, bool only_load) 
     }
     MS_EXCEPTION_IF_CHECK_FAIL(index_iter != alive_locals_.end(), "error alive local");
     code_gen->LoadValue(*node_iter);
-    st.push_back(std::make_unique<Instr>(0, STORE_FAST, *index_iter));
+    st.push_back(std::make_unique<Instr>(STORE_FAST, *index_iter));
   }
   std::reverse(st.begin(), st.end());
   code_gen->AddInstrs(std::move(st));
@@ -841,13 +839,13 @@ py::object CodeBreakGenerator::MakeUntrackedCode(int untracked_bci, int untracke
   std::vector<std::unique_ptr<Instr>> ld;
   std::vector<std::unique_ptr<Instr>> st;
   for (int i = 0; i < stack_count; ++i) {
-    ld.emplace_back(std::make_unique<Instr>(0, LOAD_FAST, i));
+    ld.emplace_back(std::make_unique<Instr>(LOAD_FAST, i));
   }
   int index = stack_count;
   for (auto iter = alive_locals_.begin(); iter != alive_locals_.end(); ++iter, ++index) {
     if (*iter != index) {
-      ld.emplace_back(std::make_unique<Instr>(0, LOAD_FAST, index));
-      st.emplace_back(std::make_unique<Instr>(0, STORE_FAST, *iter));
+      ld.emplace_back(std::make_unique<Instr>(LOAD_FAST, index));
+      st.emplace_back(std::make_unique<Instr>(STORE_FAST, *iter));
     }
   }
 
@@ -1263,7 +1261,7 @@ void GraphParameterBuilder::Build(const std::unordered_map<ValueNode *, int> &lo
   auto Load = [&locals](ValueNode *param) {
     auto iter = locals.find(param);
     MS_EXCEPTION_IF_CHECK_FAIL(iter != locals.end(), "can't find graph parameters from interpret locals");
-    return std::make_unique<Instr>(0, LOAD_FAST, iter->second);
+    return std::make_unique<Instr>(LOAD_FAST, iter->second);
   };
 
   /**
@@ -1281,13 +1279,10 @@ void GraphParameterBuilder::Build(const std::unordered_map<ValueNode *, int> &lo
   for (size_t i = 0; i < globals_.size(); ++i) {
     std::string name = GraphParameterBuilder::Key(i, globals_[i]);
     load_.emplace_back(Load(globals_[i]));
-    load_.emplace_back(std::make_unique<Instr>(0, STORE_GLOBAL));
-    load_.back()->set_name(name);
-    dele_.emplace_back(std::make_unique<Instr>(0, DELETE_GLOBAL));
-    dele_.back()->set_name(name);
-    sort_.emplace_back(std::make_unique<Instr>(0, LOAD_GLOBAL));
-    sort_.back()->set_name(name);
-    sort_.emplace_back(std::make_unique<Instr>(0, STORE_FAST, argc + i));
+    load_.emplace_back(std::make_unique<Instr>(STORE_GLOBAL, 0, name));
+    dele_.emplace_back(std::make_unique<Instr>(DELETE_GLOBAL, 0, name));
+    sort_.emplace_back(std::make_unique<Instr>(LOAD_GLOBAL, 0, name));
+    sort_.emplace_back(std::make_unique<Instr>(STORE_FAST, argc + i));
   }
   if (vargs_) {
     BuildVargs(locals);
@@ -1301,17 +1296,18 @@ void GraphParameterBuilder::BuildVargs(const std::unordered_map<ValueNode *, int
   auto iter = locals.find(vargs_);
   MS_EXCEPTION_IF_CHECK_FAIL(iter != locals.end(), "can't find graph parameters from interpret locals");
   if (args_.size() == 0) {
-    load_.push_back(std::make_unique<Instr>(0, LOAD_FAST, iter->second));
+    load_.push_back(std::make_unique<Instr>(LOAD_FAST, iter->second));
     return;
   }
 
-  load_.push_back(std::make_unique<Instr>(0, BUILD_LIST, args_.size()));
-  load_.push_back(std::make_unique<Instr>(0, LOAD_FAST, iter->second));
+  load_.push_back(std::make_unique<Instr>(BUILD_LIST, args_.size()));
+  load_.push_back(std::make_unique<Instr>(LOAD_FAST, iter->second));
 #if PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION < 9
-  load_.push_back(std::make_unique<Instr>(0, BUILD_TUPLE_UNPACK, 2));
+  const int tuple_unpack_arg = 2;
+  load_.push_back(std::make_unique<Instr>(BUILD_TUPLE_UNPACK, tuple_unpack_arg));
 #else
-  load_.push_back(std::make_unique<Instr>(0, LIST_EXTEND, 1));
-  load_.push_back(std::make_unique<Instr>(0, LIST_TO_TUPLE, 0));
+  load_.push_back(std::make_unique<Instr>(LIST_EXTEND, 1));
+  load_.push_back(std::make_unique<Instr>(LIST_TO_TUPLE, 0));
 #endif
 }
 
@@ -1321,9 +1317,9 @@ void GraphParameterBuilder::BuildKwVargs(const std::unordered_map<ValueNode *, i
 
   if (vargs_ == nullptr) {
     // only kwargs
-    load_.push_back(std::make_unique<Instr>(0, BUILD_TUPLE, args_.size()));
+    load_.push_back(std::make_unique<Instr>(BUILD_TUPLE, args_.size()));
   }
-  load_.push_back(std::make_unique<Instr>(0, LOAD_FAST, iter->second));
+  load_.push_back(std::make_unique<Instr>(LOAD_FAST, iter->second));
 }
 
 // e.g. while..., for..., while...else..., for...else...,

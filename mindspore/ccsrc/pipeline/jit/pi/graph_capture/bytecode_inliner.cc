@@ -29,7 +29,6 @@ namespace pijit {
 extern std::string PrintInstr(const std::vector<std::unique_ptr<Instr>> &list);
 extern bool CheckMSConstexpr(const py::object &func);
 extern bool CheckJitConstexpr(const py::object &func);
-extern bool ApplyInlinePolicy(Graph *g);
 
 void BytecodeInliner::Run() {
   if (graph_->IsBreakAtLoop() && !graph_->RestoreLoopStatus()) {
@@ -271,10 +270,19 @@ static bool CanIninePartial(Graph *top_graph, Graph *sub_graph) {
   if (sub_graph->IsBreakAtLoop()) {
     return false;
   }
+  if (top_graph->GetGlobals() == sub_graph->GetGlobals()) {
+    return true;
+  }
   if (!EliminateSideEffect(top_graph, sub_graph)) {
     return false;
   }
-  return ApplyInlinePolicy(sub_graph);
+  for (auto i : sub_graph->GetTracedNodes()) {
+    int op = i->GetOpcode();
+    if (op == MAKE_FUNCTION || op == STORE_GLOBAL || op == DELETE_GLOBAL) {
+      return false;
+    }
+  }
+  return true;
 }
 
 void BytecodeInliner::Reconstruct(ValueNode *node, int local_off) {
