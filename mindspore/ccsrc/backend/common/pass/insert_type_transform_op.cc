@@ -584,8 +584,8 @@ bool InsertTypeTransformOp::IsInputUpdated(const AnfNodePtr &origin_input, const
   }
 
   if (new_input_list.size() == kSizeOne && new_input_list[kIndex0] == origin_input) {
-    MS_LOG(INFO) << "Input node " << origin_input->fullname_with_scope() << " " << origin_input->DebugString()
-                 << " should not be updated.";
+    MS_LOG(DEBUG) << "Input node " << origin_input->fullname_with_scope() << " " << origin_input->DebugString()
+                  << " should not be updated.";
     return false;
   }
   MS_LOG(DEBUG) << "Input node " << origin_input->fullname_with_scope() << " " << origin_input->DebugString()
