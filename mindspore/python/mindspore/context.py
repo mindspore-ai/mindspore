@@ -894,11 +894,11 @@ def set_auto_parallel_context(**kwargs):
                         - load_file (str): The path to load parallel strategy checkpoint. If the file name extension is
                           `.json`, the file is loaded in JSON format. Otherwise, the file is loaded in ProtoBuf
                           format.
-                          Default: ''
+                          Default: ``''``
 
                         - save_file (str): The path to save parallel strategy checkpoint. If the file name extension is
                           `.json`, the file is saved in JSON format. Otherwise, the file is saved in ProtoBuf format.
-                          Default: ''
+                          Default: ``''``
 
                         - only_trainable_params (bool): Only save/load the strategy information for trainable parameter.
                           Default: ``True`` .
@@ -1192,7 +1192,7 @@ def set_context(**kwargs):
             When the `save_graphs` attribute is set as ``True`` , ``1`` , ``2`` or ``3`` , attribute of
             `save_graphs_path` is used to set the intermediate compilation graph storage path. By default, the graphs
             are saved in the current directory.
-        save_graphs_path (str): Path to save graphs. Default: ".".
+        save_graphs_path (str): Path to save graphs. Default: ``"."``.
             If the specified directory does not exist, the system will automatically create the directory.
             During distributed training, graphs will be saved to the directory of
             `save_graphs_path/rank_${rank_id}/`. `rank_id` is the ID of the current device in the cluster.
@@ -1312,7 +1312,7 @@ def set_context(**kwargs):
             the compile cache is loaded. Note that only limited automatic detection for the changes of
             python scripts is supported by now, which means that there is a correctness risk. Default: ``False`` .
             This is an experimental prototype that is subject to change and/or deletion.
-        compile_cache_path (str): Path to save the compile cache. Default: ".".
+        compile_cache_path (str): Path to save the compile cache. Default: ``"."``.
             If the specified directory does not exist, the system will automatically create the directory.
             The cache will be saved to the directory of `compile_cache_path/rank_${rank_id}/`. The `rank_id` is
             the ID of the current device in the cluster.
@@ -1329,7 +1329,7 @@ def set_context(**kwargs):
             of the interfaces would be compiled by MindSpore to the interfaces definition .py file that should be
             guaranteed to be writable. Then compile the .py file to the .pyc or .so file, and could run in Graph mode.
         memory_optimize_level (str): The memory optimize level.
-            Default: O0. The value must be in ['O0', 'O1'].
+            Default: ``O0``. The value must be in ['O0', 'O1'].
 
             - O0: priority performance option, disable SOMAS (Safe Optimized Memory Allocation Solver).
             - O1: priority memory option, enable SOMAS.
@@ -1394,17 +1394,19 @@ def set_context(**kwargs):
             - parallel_speed_up_json_path(Union[str, None]): The path to the parallel speed up json file, configuration
               can refer to `parallel_speed_up.json
               <https://gitee.com/mindspore/mindspore/blob/master/config/parallel_speed_up.json>`_ .
-              If its value is None or '', it does not take effect. Default None.
+              If its value is None or '', it does not take effect. Default: ``None``.
 
-              - recompute_comm_overlap (bool): Enable overlap between recompute ops and communication ops if True.
-                Default: False.
-              - matmul_grad_comm_overlap (bool): Enable overlap between grad ops and communication ops if True.
-                Default: False.
-              - enable_task_opt (bool): Enable the optimization of the number of tasks for each communication if True.
-                Default: False.
-              - interleaved_matmul_comm (bool): Enable interleaved optimization of Matmul-Comm if True. Default: False.
-              - interleaved_layernorm_comm (bool): Enable interleaved optimization of LayerNorm-Comm if True.
-                Default: False.
+              - recompute_comm_overlap (bool): Enable overlap between recompute ops and communication ops if ``True``.
+                Default: ``False``.
+              - matmul_grad_comm_overlap (bool): Enable overlap between grad ops and communication ops if ``True``.
+                Default: ``False``.
+              - enable_task_opt (bool): Enable the optimization of the number of tasks
+                for each communication if ``True``.
+                Default: ``False``.
+              - interleaved_matmul_comm (bool): Enable interleaved optimization of Matmul-Comm if ``True``.
+                Default: ``False``.
+              - interleaved_layernorm_comm (bool): Enable interleaved optimization of LayerNorm-Comm if ``True``.
+                Default: ``False``.
             - host_scheduling_max_threshold(int): The max threshold to control whether the dynamic shape process is
               used when run the static graph, the default value is 0. When the number of operations in the static graph
               is less than the max threshold, this graph will be executed in dynamic shape process. In large model
