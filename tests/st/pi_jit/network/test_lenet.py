@@ -133,6 +133,7 @@ def test_method_lenet(func, ms_func, x):
     onp.random.seed(0)
     ms_res = ms_func(x)
     match_array(res.asnumpy(), ms_res.asnumpy(), error=6, err_msg=str(ms_res))
+    context.set_context(mode=context.PYNATIVE_MODE)
 
 
 @pytest.mark.level0
@@ -154,3 +155,4 @@ def test_func_lenet(func, ms_func, x):
     onp.random.seed(0)
     ms_res = ms_func(x)
     match_array(res.asnumpy(), ms_res.asnumpy(), error=6, err_msg=str(ms_res))
+    context.set_context(mode=context.PYNATIVE_MODE)
