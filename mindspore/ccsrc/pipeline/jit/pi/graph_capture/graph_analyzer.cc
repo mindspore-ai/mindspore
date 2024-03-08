@@ -351,7 +351,7 @@ std::vector<ValueNode *> GraphAnalyzer::GetAliveLocals(Graph *g) {
   if (this->graph_->Config().GetBoolConfig(GraphJitConfig::kLogGraphBreak)) {
     GRAPH_JIT_LOG_F("UD analyze: enter GetAliveLocals bci %d", bci);
   }
-  std::vector<ValueNode *> outputs = g->CollectAliveNode(bci);
+  std::vector<ValueNode *> outputs = g->GetCFG()->GetLiveness()->CollectAliveNode(g, bci);
   std::set<ValueNode *> uniques(outputs.begin(), outputs.end());
   outputs.assign(uniques.begin(), uniques.end());
   return outputs;
