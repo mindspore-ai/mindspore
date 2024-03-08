@@ -18,7 +18,7 @@
 
 #include <string>
 #include <map>
-#include "graph/def_types.h"
+#include "graph/types.h"
 #include "include/backend/data_queue/data_queue_mgr.h"
 #include "utils/log_adapter.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"

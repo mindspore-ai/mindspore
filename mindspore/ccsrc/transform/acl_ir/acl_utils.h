@@ -22,7 +22,7 @@
 #include <utility>
 #include <map>
 #include "acl/acl_base.h"
-#include "graph/def_types.h"
+#include "graph/types.h"
 #include "include/transform/graph_ir/types.h"
 #include "transform/acl_ir/ge_adapter_info.h"
 #include "transform/symbol/acl_base_symbol.h"
