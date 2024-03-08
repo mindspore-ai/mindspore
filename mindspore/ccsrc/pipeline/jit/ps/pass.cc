@@ -41,6 +41,10 @@
 #include "frontend/parallel/dynamic_shape/dynamic_shape.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/step_auto_parallel.h"
+#include "frontend/parallel/graph_util/pipeline_split_utils.h"
+#include "frontend/parallel/pipeline_transformer/pipeline_scheduler.h"
+#include "frontend/parallel/pipeline_transformer/pipeline_interleave.h"
+#include "frontend/parallel/pipeline_transformer/gpipe_interleave_scheduler.h"
 #include "frontend/parallel/pass/merge_comm.h"
 #include "frontend/parallel/cache_embedding/cache_embedding.h"
 #include "frontend/parallel/cache_embedding/ps_embedding_cache_inserter.h"
@@ -959,6 +963,37 @@ bool PipelineSplitPass(const ResourcePtr &resource) { return PipelineSplit(resou
 
 bool ParallelVirtualDatasetPass(const ResourcePtr &resource) { return ParallelVirtualDataset(resource); }
 
+bool PipelineParallelScheduler(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  auto root = resource->func_graph();
+  auto parallel_context = parallel::ParallelContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(parallel_context);
+  auto parallel_mode = parallel_context->parallel_mode();
+  if (parallel_mode != parallel::kSemiAutoParallel && parallel_mode != parallel::kAutoParallel) {
+    MS_LOG(INFO) << "Only auto_parallel and semi_auto_parallel support pipeline split.";
+    return true;
+  }
+  auto is_pp_interleave = parallel_context->pipeline_interleave();
+  auto stage_num = parallel_context->pipeline_stage_split_num();
+  if (is_pp_interleave && stage_num > 1) {
+    auto manager = resource->manager();
+    auto stage = parallel::InferStage();
+    auto pp_scheduler = parallel_context->pipeline_scheduler();
+    std::shared_ptr<parallel::PipelineScheduler> scheduler = nullptr;
+    if (pp_scheduler == parallel::kPipeline1F1B) {
+      scheduler = std::make_shared<parallel::InterleavedScheduler>(manager, root, stage, stage_num);
+    } else if (pp_scheduler == parallel::kPipelineGpipe) {
+      scheduler = std::make_shared<parallel::GpipeInterleavedScheduler>(manager, root, stage, stage_num);
+    } else {
+      MS_LOG(EXCEPTION) << "Unsupported pipeline parallel scheduler: " << pp_scheduler;
+    }
+    scheduler->GetBorderNode();
+    scheduler->Reorder();
+  }
+  opt::ProcessSendRecvForGE(root);
+  return true;
+}
+
 bool AutoParallelPass(const ResourcePtr &resource) {
   auto func_graph = resource->func_graph();
   auto opt = opt::Optimizer::MakeEmptyOptimizer(resource);
@@ -1161,7 +1196,6 @@ std::vector<PassItem> kVmPasses = {{"py_interpret_to_execute", PyInterpretToExec
                                    {"overlap_grad_comm", OverlapGradCommPass},
                                    {"split_matmul_comm_elemetwise", SplitMatmulCommElementwiseOpFpPass},
                                    {"split_layernorm_comm", SplitLayerNormCommFpPass},
-                                   {"process_send_recv_for_ge", ProcessSendRecvForGE},
                                    // The pass cache hccl group, so the hccl group should be created before the pass
                                    {"handle_group_info", HandleGroupInfoPass},
                                    {"symbol_engine_optimizer", SymEngOptGroup}};

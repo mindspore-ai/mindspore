@@ -1609,6 +1609,7 @@ bool ParallelVirtualDatasetAction(const ResourcePtr &resource) { return Parallel
 bool AutoParallelSymbolWithReNormalizeAction(const ResourcePtr &resource) {
   return AutoParallelSymbolPassWithReNormalize(resource);
 }
+bool PipelineSchedulerAction(const ResourcePtr &resource) { return PipelineParallelScheduler(resource); }
 
 bool AutoParallelAction(const ResourcePtr &resource) { return AutoParallelPass(resource); }
 
@@ -1764,6 +1765,8 @@ std::vector<ActionItem> VmPipeline(const ResourcePtr &resource, bool trace_flag)
 
     // Optimize
     (void)actions.emplace_back(std::make_pair(kOptimize, VmOptimizeAction));
+
+    (void)actions.emplace_back(std::make_pair(kPipelineParallelScheduler, PipelineSchedulerAction));
 
     (void)actions.emplace_back(std::make_pair(kAutoMonadReorder, OrderEnforceAction));
 

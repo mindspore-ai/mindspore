@@ -44,6 +44,7 @@
 #include "frontend/parallel/tensor_layout/prime_generator.h"
 #include "frontend/parallel/graph_util/pipeline_split_utils.h"
 #include "frontend/parallel/graph_util/fold_pipeline_split_utils.h"
+#include "frontend/parallel/pipeline_transformer/pipeline_interleave.h"
 #include "frontend/parallel/graph_util/grad_accumulation_utils.h"
 #include "frontend/parallel/node_check.h"
 #include "frontend/parallel/silent_check/silent_check.h"
@@ -639,7 +640,8 @@ static void StepReplaceOp(OperatorVector replace_op, const CNodePtr &node) {
   MS_LOG(INFO) << "Insert ReplaceOp success for " << distribute_operator->name();
 }
 
-static void StepReplaceGraph(const ReplaceGraphPtr &replace_graph, const CNodePtr &node) {
+static void StepReplaceGraph(const ReplaceGraphPtr &replace_graph, const CNodePtr &node,
+                             const OperatorInfoPtr &op_info) {
   MS_EXCEPTION_IF_NULL(replace_graph);
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(replace_graph->second);
@@ -667,6 +669,7 @@ static void StepReplaceGraph(const ReplaceGraphPtr &replace_graph, const CNodePt
       appear_count = 1;
     }
     auto replace_input_cnode = replace_input.first->cast<CNodePtr>();
+    replace_input_cnode->set_user_data<OperatorInfo>(op_info);
     size_t inputs_size = replace_input_cnode->size();
     while (IntToSize(appear_count) < inputs_size && replace_input_cnode->input(appear_count)->func_graph() != nullptr) {
       ++appear_count;
@@ -1599,7 +1602,8 @@ void ExtractInformation(const std::vector<AnfNodePtr> &all_nodes) {
 
 // if reshape's output connect to several primitive, return the first layout found
 static std::shared_ptr<TensorLayout> FindNextLayout(const AnfNodePtr &cnode, bool *next_is_reshape,
-                                                    mindspore::HashSet<AnfNodePtr> *visit, int make_tuple_index) {
+                                                    mindspore::HashSet<AnfNodePtr> *visit, int make_tuple_index,
+                                                    int tuple_get_index) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(next_is_reshape);
   MS_EXCEPTION_IF_NULL(visit);
@@ -1618,7 +1622,35 @@ static std::shared_ptr<TensorLayout> FindNextLayout(const AnfNodePtr &cnode, boo
       MS_EXCEPTION_IF_NULL(fg);
       auto fg_parameters = fg->parameters();
       auto param = fg_parameters[IntToSize(node_pair.second - 1)];
-      return FindNextLayout(param, next_is_reshape, visit, -1);
+      auto next_layout = FindNextLayout(param, next_is_reshape, visit, make_tuple_index, tuple_get_index);
+      if (next_layout != nullptr) {
+        return next_layout;
+      }
+    }
+
+    if (IsPrimitiveCNode(use_apply, prim::kPrimReturn)) {
+      auto fg = use_apply->func_graph();
+      auto fg_map = fg->func_graph_cnodes_index();
+      for (auto &fg_use : fg_map) {
+        auto fg_node = fg_use.first->first->cast<CNodePtr>();
+        MS_EXCEPTION_IF_NULL(fg_node);
+        auto next_layout = FindNextLayout(fg_node, next_is_reshape, visit, make_tuple_index, tuple_get_index);
+        if (next_layout != nullptr) {
+          return next_layout;
+        }
+      }
+    }
+
+    if (IsPrimitiveCNode(use_apply, prim::kPrimTupleGetItem)) {
+      auto temp = LongToInt(GetTupleGetItemIndex(use_apply));
+      if (temp != make_tuple_index - 1 && make_tuple_index > 0) {
+        continue;
+      }
+      temp = make_tuple_index > 0 ? -1 : temp;
+      auto next_layout = FindNextLayout(use_apply, next_is_reshape, visit, temp, -1);
+      if (next_layout != nullptr) {
+        return next_layout;
+      }
     }
 
     if (use_apply == nullptr || !IsValueNode<Primitive>(use_apply->input(0))) {
@@ -1633,13 +1665,13 @@ static std::shared_ptr<TensorLayout> FindNextLayout(const AnfNodePtr &cnode, boo
     }
     if (IsPrimitiveCNode(use_apply, prim::kPrimMakeTuple)) {
       make_tuple_index = node_pair.second;
-      auto next_layout = FindNextLayout(use_apply, next_is_reshape, visit, make_tuple_index);
+      auto next_layout = FindNextLayout(use_apply, next_is_reshape, visit, make_tuple_index, tuple_get_index);
       if (next_layout != nullptr) {
         return next_layout;
       }
     }
     if (IsParallelCareNode(use_apply) && use_apply->has_user_data<OperatorInfo>()) {
-      if (make_tuple_index != -1) {
+      if (make_tuple_index > 0) {
         node_pair.second = make_tuple_index;
       }
       MS_LOG(INFO) << "FindNextLayout success node " << use_apply->DebugString();
@@ -1650,7 +1682,7 @@ static std::shared_ptr<TensorLayout> FindNextLayout(const AnfNodePtr &cnode, boo
     MS_LOG(DEBUG) << "FindNextLayout failed node " << use_apply->DebugString() << "  " << IsParallelCareNode(use_apply)
                   << "   " << use_apply->has_user_data<OperatorInfo>();
 
-    auto layout_ptr = FindNextLayout(use_apply, next_is_reshape, visit, -1);
+    auto layout_ptr = FindNextLayout(use_apply, next_is_reshape, visit, make_tuple_index, tuple_get_index);
     if (layout_ptr) {
       return layout_ptr;
     }
@@ -1882,7 +1914,7 @@ static void ReshapeInit(const std::vector<AnfNodePtr> &all_nodes) {
 
     bool is_next_reshape = false;
     mindspore::HashSet<AnfNodePtr> visit;
-    auto next_layout_ptr = FindNextLayout(cnode, &is_next_reshape, &visit, -1);
+    auto next_layout_ptr = FindNextLayout(cnode, &is_next_reshape, &visit, -1, -1);
     if (next_layout_ptr == nullptr) {
       std::string is_reshape = is_next_reshape ? "true" : "false";
       MS_LOG(WARNING) << "FindNextLayout for " << cnode->fullname_with_scope()
@@ -2114,7 +2146,7 @@ static void StepReplace(const std::vector<AnfNodePtr> &all_nodes) {
       }
       if (replace_graph) {
         MS_LOG(INFO) << "StepReplaceGraph " << cnode->ToString();
-        StepReplaceGraph(replace_graph, cnode);
+        StepReplaceGraph(replace_graph, cnode, distribute_operator);
       }
     }
   }
@@ -2185,13 +2217,7 @@ static std::vector<std::pair<CNodePtr, LossNodeInfo>> GetSensLossPairs(const Fun
   return sens_loss_pairs;
 }
 
-static void ParallelCommunication(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_nodes,
-                                  const FuncGraphManagerPtr &manager) {
-  MS_EXCEPTION_IF_NULL(root);
-  MS_EXCEPTION_IF_NULL(manager);
-
-  std::vector<std::pair<CNodePtr, LossNodeInfo>> sens_loss_pairs = GetSensLossPairs(root);
-  auto has_backward = HasBackward(root);
+static void HandleSens(const std::vector<std::pair<CNodePtr, LossNodeInfo>> &sens_loss_pairs) {
   // split sens must before inserting the operators.
   for (auto &pair : sens_loss_pairs) {
     // If the shape of grad-sens tensor is not [] or [1], use get tensor slice to handle it.
@@ -2200,6 +2226,18 @@ static void ParallelCommunication(const FuncGraphPtr &root, const std::vector<An
       StepSplitSens(pair);
     }
   }
+  return;
+}
+
+static void ParallelCommunication(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_nodes,
+                                  const FuncGraphManagerPtr &manager) {
+  MS_EXCEPTION_IF_NULL(root);
+  MS_EXCEPTION_IF_NULL(manager);
+
+  std::vector<std::pair<CNodePtr, LossNodeInfo>> sens_loss_pairs = GetSensLossPairs(root);
+  auto has_backward = HasBackward(root);
+  // split sens must before inserting the operators.
+  HandleSens(sens_loss_pairs);
 
   const auto &node_users_map = manager->node_users();
   for (auto &node : all_nodes) {
@@ -2221,7 +2259,10 @@ static void ParallelCommunication(const FuncGraphPtr &root, const std::vector<An
       }
 
       // skip Send Receive
-      if (!cnode->HasPrimalAttr(PIPELINE_PARAM)) {
+      auto parallel_context = parallel::ParallelContext::GetInstance();
+      MS_EXCEPTION_IF_NULL(parallel_context);
+      auto is_pp_interleave = parallel_context->pipeline_interleave();
+      if (!cnode->HasPrimalAttr(PIPELINE_PARAM) || is_pp_interleave) {
         // insert forward ops
         if (!IsControlFlowNode(cnode)) {
           InsertForwardOps(distribute_operator, cnode);
@@ -2587,9 +2628,14 @@ bool CreateGroupsByCkptFile(const std::string &file) {
 
 static void ReorderForPipelineSplit(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager,
                                     int64_t pipeline_stages) {
+  auto parallel_context = parallel::ParallelContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(parallel_context);
+  auto is_pp_interleave = parallel_context->pipeline_interleave();
+  if (is_pp_interleave) {
+    return;
+  }
   if (!root->has_flag(kSkipAutoParallelCompile) && !root->has_flag(BACKWARD) && pipeline_stages > 1) {
     root->set_flag(BACKWARD, true);
-    auto parallel_context = parallel::ParallelContext::GetInstance();
     if (IsTraining(manager)) {
       if (parallel_context->enable_fold_pipeline()) {
         MS_LOG(INFO) << "Begin Fold Pipeline Reorder. ";
@@ -2670,7 +2716,7 @@ static void MicroBatchPostProcess(const FuncGraphPtr &root, const std::vector<An
   auto pipeline_stages = ParallelContext::GetInstance()->pipeline_stage_split_num();
   if (pipeline_stages > 1) {
     AddVirtualAssignAdd(root);
-    HandleReceiveParam(root, all_nodes);
+    HandleReceiveParam(root);
     LabelGenMaskMicro(root);
     return;
   }
@@ -3032,6 +3078,82 @@ static void HandleSilentCheck(const FuncGraphPtr &root, const FuncGraphManagerPt
   sdc->ModifySilentCheckOps();
 }
 
+static void ParallelPartProcess(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root,
+                                const FuncGraphManagerPtr &manager) {
+  ReshapeInit(all_nodes);
+
+  SetCastForParamNotRecompute(all_nodes);
+
+  HandleRootReshapeAndSaveStrategy(all_nodes);
+
+  HandleForwardMakeTupleAndMakeList(all_nodes);
+
+  // if the input or parameter has multiple users, check whether its split strategies are consistent.
+  CheckParameterSplit(all_nodes);
+
+  HandleSymbolicKeyInstance(root, all_nodes);
+
+  // cover Parallel shape
+  CoverSliceShape(root);
+
+  // handle input is not used
+  HandleNoUsedParameter(root);
+
+  // set the shape for optimizer's clone tensor
+  SetClonedTensorShapeForOptimizer(root);
+
+  HandleCameAndAdaFactorOpt(root, all_nodes, manager);
+
+  InsertUniformRealForTaggedNodes(manager, all_nodes);
+
+  auto adasum_param_tensor_layout_map = AdaSumParamTensorLayout(root);
+  bool is_apply_adasum = HandleAdaSum(root, all_nodes, &adasum_param_tensor_layout_map);
+
+  if (MergeEntireShapeForDynamic(root) != Status::SUCCESS) {
+    MS_LOG(EXCEPTION) << "Merge entire shape for dynamic shape failed.";
+  }
+
+  auto parallel_context = parallel::ParallelContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(parallel_context);
+  auto is_pp_interleave = parallel_context->pipeline_interleave();
+  std::shared_ptr<PipelinePostProcess> pipeline_processor;
+  auto pipeline_stages = ParallelContext::GetInstance()->pipeline_stage_split_num();
+  if (pipeline_stages > 1 && is_pp_interleave) {
+    pipeline_processor =
+      std::make_shared<PipelinePostProcess>(manager, g_device_manager->stage_id(), pipeline_stages, root);
+    pipeline_processor->Init(all_nodes);
+    pipeline_processor->ModifySendRecvAttr(all_nodes);
+  }
+  // ForwardCommunication BackwardCommunication TensorRedistribution
+  ParallelCommunication(root, all_nodes, manager);
+  if (is_apply_adasum) {
+    HandleMirrorInAdaSum(root, &adasum_param_tensor_layout_map);
+  }
+
+  if (pipeline_stages > 1 && is_pp_interleave) {
+    MS_EXCEPTION_IF_NULL(pipeline_processor);
+    pipeline_processor->GraphPartition(all_nodes);
+    pipeline_processor->ElimGraphStage();
+    pipeline_processor->ModifyParameterList();
+  }
+
+  // save strategy as checkpoint for multi-train
+  auto all_nodes_after_pp = TopoSort(root->get_return(), SuccDeeperSimple);
+  if (StrategyCheckpoint::GetInstance().SaveCheckPointOn()) {
+    CheckpointStrategy(all_nodes_after_pp, root);
+  }
+  auto comm_group = FindCommonMirrorGroup(root);
+  StrategyCheckpoint::GetInstance().set_common_mirror_group(comm_group);
+  HandleGlobalNormScale(root, manager);
+  MoveMicroMirrorOutCallFunc(root);
+  if (pipeline_stages > 1 && is_pp_interleave) {
+    pipeline_processor->HandleSendParam();
+    MarkForwardCNode(root);
+  }
+  MergeMicroMirrorForSharedParameter(root);
+  return;
+}
+
 bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) {
 #if defined(__linux__) && defined(WITH_BACKEND)
   if (ps::PSContext::instance()->is_server() || ps::PSContext::instance()->is_scheduler()) {
@@ -3108,59 +3230,13 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
     // extract shape and strategy, set operator_info
     ExtractInformation(all_nodes);
   }
-  ReshapeInit(all_nodes);
 
-  SetCastForParamNotRecompute(all_nodes);
-
-  HandleRootReshapeAndSaveStrategy(all_nodes);
-
-  HandleForwardMakeTupleAndMakeList(all_nodes);
-
-  // if the input or parameter has multiple users, check whether its split strategies are consistent.
-  CheckParameterSplit(all_nodes);
-
-  HandleSymbolicKeyInstance(root, all_nodes);
-
-  // cover Parallel shape
-  CoverSliceShape(root);
-
-  // handle input is not used
-  HandleNoUsedParameter(root);
-
-  // set the shape for optimizer's clone tensor
-  SetClonedTensorShapeForOptimizer(root);
-
-  HandleCameAndAdaFactorOpt(root, all_nodes, manager);
-
-  InsertUniformRealForTaggedNodes(manager, all_nodes);
-
-  auto adasum_param_tensor_layout_map = AdaSumParamTensorLayout(root);
-  bool is_apply_adasum = HandleAdaSum(root, all_nodes, &adasum_param_tensor_layout_map);
-
-  // save strategy as checkpoint for multi-train
-  CheckpointStrategy(all_nodes, root);
-
-  if (MergeEntireShapeForDynamic(root) != Status::SUCCESS) {
-    MS_LOG(ERROR) << "Merge entire shape for dynamic shape failed.";
-    return false;
-  }
-
-  // ForwardCommunication BackwardCommunication TensorRedistribution
-  ParallelCommunication(root, all_nodes, manager);
-
-  if (is_apply_adasum) {
-    HandleMirrorInAdaSum(root, &adasum_param_tensor_layout_map);
-  }
+  ParallelPartProcess(all_nodes, root, manager);
 
   BroadcastLastResult(root, manager);
 
   MicroBatchPostProcess(root, all_nodes);
 
-  auto comm_group = FindCommonMirrorGroup(root);
-  StrategyCheckpoint::GetInstance().set_common_mirror_group(comm_group);
-  HandleGlobalNormScale(root, manager);
-  MoveMicroMirrorOutCallFunc(root);
-  MergeMicroMirrorForSharedParameter(root);
   DumpGraph(root, std::string(STEP_PARALLEL_END));
 
   // step parallel only run once
