@@ -45,7 +45,7 @@ ShapeValueDType GetDimension(const std::vector<ShapeValueDType> &dimensions, con
       for (const auto &dim : dimensions) {
         buffer << dim << ", ";
       }
-      MS_LOG(EXCEPTION) << "For primitive[" << op_name << "], the " << input_name << " should not be equal -1 or equal"
+      MS_LOG(EXCEPTION) << "For primitive[" << op_name << "], the " << input_name << " should not be equal -1 or equal "
                         << baseValue << " but got " << buffer.str();
     }
   }
@@ -182,16 +182,15 @@ std::vector<int64_t> GetIFADynInputShape(const PrimitivePtr &primitive, const st
 void CheckPaddingAttenMaskShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args,
                                 int64_t B, int64_t S) {
   auto op_name = primitive->name();
-  if (!IsOptionalInputNone(input_args[kIncreFlashAttentionInputPaddingMaskIndex])) {
-    std::vector<int64_t> padding_mask_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(
-      input_args[kIncreFlashAttentionInputPaddingMaskIndex]->BuildShape())[kShape];
-    size_t len_pa = padding_mask_shape.size();
-    if (len_pa > 0 && !padding_mask_shape.empty() && !IsDynamicShape(padding_mask_shape)) {
-      if (padding_mask_shape[0] != B || padding_mask_shape[len_pa - 1] != S) {
-        MS_LOG(EXCEPTION) << op_name << ": The shape of padding_mask must be: "
-                          << "(B ... S)"
-                          << ", but got shape (" << padding_mask_shape[0] << " ... " << padding_mask_shape[len_pa - 1]
-                          << ")";
+  if (!IsOptionalInputNone(input_args[kIncreFlashAttentionInputPseShiftIndex])) {
+    std::vector<int64_t> pse_shift_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(
+      input_args[kIncreFlashAttentionInputPseShiftIndex]->BuildShape())[kShape];
+    size_t len_pa = pse_shift_shape.size();
+    if (len_pa > 0 && !pse_shift_shape.empty() && !IsDynamicShape(pse_shift_shape)) {
+      if ((pse_shift_shape[0] != B && pse_shift_shape[0] != 1) || pse_shift_shape[len_pa - 1] != S) {
+        MS_LOG(EXCEPTION) << op_name << ": The shape of pse_shift must be: "
+                          << "(B ... S) or (1 ... S)"
+                          << ", but got shape (" << pse_shift_shape[0] << " ... " << pse_shift_shape[len_pa - 1] << ")";
       }
     }
   }
@@ -247,7 +246,7 @@ abstract::ShapePtr IncreFlashAttentionInferShapeBSH(const PrimitivePtr &primitiv
     query_shape = std::vector(kInputQueryBSHRank, abstract::Shape::kShapeDimAny);
   }
 
-  if (CheckIsFrontend(input_args)) {
+  if (CheckIsFrontend(input_args) && IsOptionalInputNone(input_args[kIncreFlashAttentionInputBlockTable])) {
     if (!IsDynamicShape(query_shape) && !IsDynamicShape(key_shape) && !IsDynamicShape(value_shape)) {
       int64_t B = query_shape[0];
       int64_t Q_H = query_shape[2];
@@ -268,7 +267,7 @@ abstract::ShapePtr IncreFlashAttentionInferShapeBSH(const PrimitivePtr &primitiv
     // kv: [num_blocks,block_size,hidden_size], q: [batch,seq_length,hidden_size]
     attention_out_shape[0] = query_shape[0];
   } else {
-    attention_out_shape[0] = GetDimension({query_shape[0], key_shape[0], value_shape[0]}, op_name, "B");
+    attention_out_shape[0] = GetDimension({query_shape[0]}, op_name, "B");
   }
   attention_out_shape[1] = 1;
   attention_out_shape[2] = GetDimension({query_shape[2]}, op_name, "H");  // 2: h_index
@@ -288,13 +287,11 @@ abstract::ShapePtr IncreFlashAttentionInferShapeBNSD(const PrimitivePtr &primiti
   } else if (query_shape[0] > 50) {
     MS_LOG(EXCEPTION) << op_name << ": The batch must not be bigger than 50, but got " << query_shape[0];
   }
-
-  if (CheckIsFrontend(input_args)) {
+  if (CheckIsFrontend(input_args) && IsOptionalInputNone(input_args[kIncreFlashAttentionInputBlockTable])) {
     if (!IsDynamicShape(query_shape) && !IsDynamicShape(key_shape) && !IsDynamicShape(value_shape)) {
       int64_t B = query_shape[0];
       int64_t N_Q = query_shape[1];
       int64_t D = query_shape[3];
-      int64_t S = key_shape[2];
       int64_t KV_N = key_shape[1];
       int64_t N = GetValue<int64_t>(primitive->GetAttr("num_heads"));
       int64_t KV_N_ATTR = GetValue<int64_t>(primitive->GetAttr("num_key_value_heads"));
@@ -310,6 +307,8 @@ abstract::ShapePtr IncreFlashAttentionInferShapeBNSD(const PrimitivePtr &primiti
                           << " and " << KV_N;
       }
       CheckInputsShape(input_args[kIncreFlashAttentionInputQueryIndex], {B, N, 1, D}, op_name, "query");
+
+      int64_t S = key_shape[2];
       CheckPaddingAttenMaskShape(primitive, input_args, B, S);
       CheckActualSeqLengthsShapeValue(primitive, input_args, B, S);
       if (key_shape != value_shape) {
@@ -320,10 +319,10 @@ abstract::ShapePtr IncreFlashAttentionInferShapeBNSD(const PrimitivePtr &primiti
   }
 
   ShapeVector attention_out_shape(kInputQueryBNSDRank, abstract::Shape::kShapeDimAny);
-  attention_out_shape[0] = GetDimension({query_shape[0], key_shape[0], value_shape[0]}, op_name, "B");
+  attention_out_shape[0] = GetDimension({query_shape[0]}, op_name, "B");
   attention_out_shape[1] = GetDimension({query_shape[1]}, op_name, "N");
-  attention_out_shape[2] = 1;                                                                           // 2: s_index
-  attention_out_shape[3] = GetDimension({query_shape[3], key_shape[3], value_shape[3]}, op_name, "D");  // 3: d_index
+  attention_out_shape[2] = 1;                                             // 2: s_index
+  attention_out_shape[3] = GetDimension({query_shape[3]}, op_name, "D");  // 3: d_index
   return std::make_shared<abstract::Shape>(attention_out_shape);
 }
 
@@ -383,11 +382,11 @@ TypePtr IncreFlashAttentionInferType(const PrimitivePtr &prim, const std::vector
   auto op_name = prim->name();
   if (CheckIsFrontend(input_args)) {
     CheckQuantParamType(prim, input_args);
-    std::map<std::string, TypePtr> pad_mask_types;
-    const std::set<TypePtr> padding_mask_valid_types = {kFloat16};
-    if (!IsOptionalInputNone(input_args[kIncreFlashAttentionInputPaddingMaskIndex])) {
-      (void)pad_mask_types.emplace("padding_mask", input_args[kIncreFlashAttentionInputPaddingMaskIndex]->BuildType());
-      (void)CheckAndConvertUtils::CheckTensorTypeSame(pad_mask_types, padding_mask_valid_types, op_name);
+    std::map<std::string, TypePtr> pse_shift_types;
+    const std::set<TypePtr> pse_shift_valid_types = {kFloat16, kBFloat16};
+    if (!IsOptionalInputNone(input_args[kIncreFlashAttentionInputPseShiftIndex])) {
+      (void)pse_shift_types.emplace("pse_shift", input_args[kIncreFlashAttentionInputPseShiftIndex]->BuildType());
+      (void)CheckAndConvertUtils::CheckTensorTypeSame(pse_shift_types, pse_shift_valid_types, op_name);
     }
     std::map<std::string, TypePtr> atten_mask_types;
     const std::set<TypePtr> atten_mask_valid_types = {kFloat16, kBool};

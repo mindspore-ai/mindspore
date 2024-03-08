@@ -9999,7 +9999,7 @@ class IncreFlashAttention(Primitive):
         - **attn_mask** (Tensor) - The attention mask tensor with data type of float16 or bool.
           Input tensor of shape :math:`(B, S)` / :math:`(B, 1, S)` / :math:`(B, 1, 1, S)`.
         - **actual_seq_lengths** (Tensor) - Describe actual sequence length of each input with data type of int.
-        - **padding_mask** (Tensor) - The padding mask tensor with data type of float16.
+        - **pse_shift** (Tensor) - The position encoding tensor with data type of float16 or float32.
         - **dequant_scale1** (Tensor) - Quantitative parametor, the tensor with data type of uint64.
         - **quant_scale1** (Tensor) - Quantitative parametor, the tensor with data type of float.
         - **dequant_scale2** (Tensor) - Quantitative parametor, the tensor with data type of uint64.
@@ -10034,7 +10034,7 @@ class IncreFlashAttention(Primitive):
         validator.check_value_type('num_key_value_heads', num_key_value_heads, [int], self.name)
         validator.check_value_type('block_size', block_size, [int], self.name)
         validator.check_value_type('inner_precise', inner_precise, [int], self.name)
-        self.init_prim_io_names(inputs=["query", "key", "value", "attn_mask", "actual_seq_lengths", "padding_mask",
+        self.init_prim_io_names(inputs=["query", "key", "value", "attn_mask", "actual_seq_lengths", "pse_shift",
                                         "dequant_scale1", "quant_scale1", "dequant_scale2", "quant_scale2",
                                         "quant_offset2", "antiquant_scale", "antiquant_offset", "block_table"],
                                 outputs=["attention_out"])

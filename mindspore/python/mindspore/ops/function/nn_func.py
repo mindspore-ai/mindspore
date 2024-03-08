@@ -7126,7 +7126,7 @@ def prompt_flash_attention(query, key, value, attn_mask, actual_seq_lengths, act
                quant_scale1, deq_scale2, quant_scale2, quant_offset2)
 
 
-def incre_flash_attention(query, key, value, attn_mask, actual_seq_lengths, padding_mask, dequant_scale1, quant_scale1,
+def incre_flash_attention(query, key, value, attn_mask, actual_seq_lengths, pse_shift, dequant_scale1, quant_scale1,
                           dequant_scale2, quant_scale2, quant_offset2, antiquant_scale, antiquant_offset, block_table,
                           num_heads, input_layout="BSH", scale_value=1.0, num_key_value_heads=0, block_size=0,
                           inner_precise=1):
@@ -7152,7 +7152,7 @@ def incre_flash_attention(query, key, value, attn_mask, actual_seq_lengths, padd
         - **attn_mask** (Tensor) - The attention mask tensor with data type of float16 or bool.
           Input tensor of shape :math:`(B, S)` / :math:`(B, 1, S)` / :math:`(B, 1, 1, S)`.
         - **actual_seq_lengths** (Tensor) - Describe actual sequence length of each input with data type of int.
-        - **padding_mask** (Tensor) - The padding mask tensor with data type of float16.
+        - **pse_shift** (Tensor) - The position encoding tensor with data type of float16 or float32.
         - **dequant_scale1** (Tensor) - Quantitative parametor, the tensor with data type of uint64.
         - **quant_scale1** (Tensor) - Quantitative parametor, the tensor with data type of float.
         - **dequant_scale2** (Tensor) - Quantitative parametor, the tensor with data type of uint64.
@@ -7179,7 +7179,7 @@ def incre_flash_attention(query, key, value, attn_mask, actual_seq_lengths, padd
 
     _ifa = _get_cache_prim(NN_OPS.IncreFlashAttention)(num_heads, input_layout, scale_value, num_key_value_heads,
                                                        block_size, inner_precise)
-    return _ifa(query, key, value, attn_mask, actual_seq_lengths, padding_mask, dequant_scale1, quant_scale1,
+    return _ifa(query, key, value, attn_mask, actual_seq_lengths, pse_shift, dequant_scale1, quant_scale1,
                 dequant_scale2, quant_scale2, quant_offset2, antiquant_scale, antiquant_offset, block_table)
 
 
