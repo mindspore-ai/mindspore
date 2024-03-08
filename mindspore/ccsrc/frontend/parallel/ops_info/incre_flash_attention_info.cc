@@ -65,7 +65,7 @@ void IncreFlashAttentionInfo::SetOptinalInputs() {
       if (index == ops::kIncreFlashAttentionInputAttnMaskIndex && valid_input_index < inputs_shape_.size()) {
         atten_mask_rank_ = inputs_shape_[valid_input_index].size();
       }
-      if (index == ops::kIncreFlashAttentionInputPaddingMaskIndex && valid_input_index < inputs_shape_.size()) {
+      if (index == ops::kIncreFlashAttentionInputPseShiftIndex && valid_input_index < inputs_shape_.size()) {
         padding_mask_rank_ = inputs_shape_[valid_input_index].size();
       }
       valid_input_index++;
@@ -93,9 +93,9 @@ void IncreFlashAttentionInfo::SetOptinalInputs() {
     padding_mask_strategy_map[kInputQueryBatchDimBNSD] = 1;
   }
   optinal_tensor_map_[ops::kIncreFlashAttentionInputAttnMaskIndex] = atten_mask_tensor_map;
-  optinal_tensor_map_[ops::kIncreFlashAttentionInputPaddingMaskIndex] = padding_mask_tensor_map;
+  optinal_tensor_map_[ops::kIncreFlashAttentionInputPseShiftIndex] = padding_mask_tensor_map;
   optinal_op_strategies_[ops::kIncreFlashAttentionInputAttnMaskIndex] = atten_mask_strategy_map;
-  optinal_op_strategies_[ops::kIncreFlashAttentionInputPaddingMaskIndex] = padding_mask_strategy_map;
+  optinal_op_strategies_[ops::kIncreFlashAttentionInputPseShiftIndex] = padding_mask_strategy_map;
 }
 
 Status IncreFlashAttentionInfo::GetAttrs() {
@@ -293,7 +293,7 @@ void IncreFlashAttentionInfo::ReComputeBatchSplitFlagList() {
   split_flag_list_[ops::kIncreFlashAttentionInputKeyIndex] = true;
   split_flag_list_[ops::kIncreFlashAttentionInputValueIndex] = true;
   split_flag_list_[ops::kIncreFlashAttentionInputAttnMaskIndex] = true;
-  split_flag_list_[ops::kIncreFlashAttentionInputPaddingMaskIndex] = false;
+  split_flag_list_[ops::kIncreFlashAttentionInputPseShiftIndex] = false;
   split_flag_list_[ops::kIncreFlashAttentionInputActualSeqLengths] = false;
   split_flag_list_[ops::kIncreFlashAttentionInputDequantScale1] = false;
   split_flag_list_[ops::kIncreFlashAttentionInputQuantScale1] = false;
