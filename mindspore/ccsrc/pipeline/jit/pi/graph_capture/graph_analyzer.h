@@ -50,7 +50,7 @@ class GraphAnalyzer {
 
   explicit GraphAnalyzer(Graph *g) : graph_(g) {}
   static GraphAnalyzerPtr Creator(const GraphBuilderPtr &g) {
-    return g->trace_flag() ? std::static_pointer_cast<GraphAnalyzer>(std::make_shared<MindGraphAnalyzer>(g))
+    return g->trace_flag() ? std::static_pointer_cast<GraphAnalyzer>(std::make_shared<MindGraphAnalyzer>(g->GetGraph()))
                            : std::make_shared<GraphAnalyzer>(g->GetGraph());
   }
   auto &GetCaptureInfo() { return info_; }
@@ -59,40 +59,34 @@ class GraphAnalyzer {
   bool HasTensorOperation() const;
   virtual bool NeedInterpret() const { return need_interpret_; }
 
- protected:
-  void AddToEscaped(ValueNode *value);
-  // UD analyze
-  virtual void UseDefAnalyze();
-  std::vector<ValueNode *> GetAliveLocals(Graph *g);
-  virtual bool AnalyzeAliveLocals(std::vector<ValueNode *> aliveNodes);
-  virtual void CollectInputs();
-  bool need_interpret_;
-  Graph *graph_;
-  CapturedInfo info_;
-
  private:
   bool AnalyzeRecursive(Graph *g);
   bool AnalyzeCall(CallNode *);
   bool TryToCapture(AbstractNode *value);
   bool AddToCaptured(ValueNode *value);
   bool HandleCallableToGraph(AObject *f);
+  void AddToEscaped(ValueNode *value);
   bool ProduceInterpretValue(ValueNode *v);
+  void CollectInputs();
   void CleanCapturedValue();
+  // UD analyze
+  void UseDefAnalyze();
+  std::vector<ValueNode *> GetAliveLocals(Graph *g);
+  bool AnalyzeAliveLocals(std::vector<ValueNode *> aliveNodes);
   void ClearCapturedInfo();
+
+  Graph *graph_;
+  CapturedInfo info_;
+  bool need_interpret_;
 };
 
 class MindGraphAnalyzer : public GraphAnalyzer {
  public:
-  explicit MindGraphAnalyzer(const GraphBuilderPtr &g) : GraphAnalyzer(g->GetGraph()), graph_builder_(g) {}
-  void Analyze() override;
-
- protected:
-  // UD analyze
-  void UseDefAnalyze() override;
-  void CollectInputs() override;
-  void UpdateCapturedOrder();
-  bool AnalyzeAliveLocals(std::vector<ValueNode *> aliveNodes) override;
-  GraphBuilderPtr graph_builder_ = nullptr;
+  explicit MindGraphAnalyzer(Graph *g) : GraphAnalyzer(g) {}
+  void Analyze() override {
+    // TODO(chaiyouheng): new plan need UD, from now on we just focus on no break case
+  }
+  bool NeedInterpret() const override { return false; }
 };
 
 bool ValidateGraphParameters(ValueNode *i);
