@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2023-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -408,17 +408,22 @@ TypePtr IncreFlashAttentionInferType(const PrimitivePtr &prim, const std::vector
     }
   }
 
-  std::map<std::string, TypePtr> qkv_types;
-  const std::set<TypePtr> qkv_valid_types = {kFloat16, kBFloat16};
-  (void)qkv_types.emplace("query", input_args[kIncreFlashAttentionInputQueryIndex]->BuildType());
+  std::map<std::string, TypePtr> q_types;
+  std::map<std::string, TypePtr> kv_types;
+  const std::set<TypePtr> q_valid_types = {kFloat16, kBFloat16};
+  const std::set<TypePtr> kv_valid_types = {kFloat16, kBFloat16, kInt8};
+  TypePtr type;
+  (void)q_types.emplace("query", input_args[kIncreFlashAttentionInputQueryIndex]->BuildType());
   if (CheckIsFrontend(input_args)) {
     AbstractBasePtrList elements =
       input_args[kIncreFlashAttentionInputKeyIndex]->cast<abstract::AbstractSequencePtr>()->elements();
-    (void)qkv_types.emplace("key", elements[0]->GetType());
+    (void)kv_types.emplace("key", elements[0]->GetType());
     elements = input_args[kIncreFlashAttentionInputValueIndex]->cast<abstract::AbstractSequencePtr>()->elements();
-    (void)qkv_types.emplace("value", elements[0]->GetType());
+    (void)kv_types.emplace("value", elements[0]->GetType());
+    type = CheckAndConvertUtils::CheckTensorTypeSame(kv_types, kv_valid_types, op_name);
+    MS_EXCEPTION_IF_NULL(type);
   }
-  auto type = CheckAndConvertUtils::CheckTensorTypeSame(qkv_types, qkv_valid_types, op_name);
+  type = CheckAndConvertUtils::CheckTensorTypeSame(q_types, q_valid_types, op_name);
   return type;
 }
 }  // namespace
