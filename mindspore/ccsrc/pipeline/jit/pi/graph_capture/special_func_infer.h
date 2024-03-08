@@ -42,7 +42,6 @@ const std::vector<std::pair<CheckFunc, std::string>> &GetFuncWhiteListFuzzyMatch
 const std::string GetMindsporeNamePrimitive();
 
 bool InferListAppend(CallNode *call_node);
-bool CheckCell(const py::object &callable_info);
 }  // namespace pijit
 }  // namespace mindspore
 
