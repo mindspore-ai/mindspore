@@ -98,6 +98,8 @@ bool InitializeCluster() {
     MS_LOG(INFO) << "Begin finalize the EmbeddingCacheScheduler.";
     runtime::EmbeddingCacheScheduler::GetInstance().Finalize(false);
     MS_LOG(INFO) << "End finalize the EmbeddingCacheScheduler.";
+    // Forcibly Kill this process.
+    (void)kill(getpid(), SIGTERM);
   });
   node->set_abnormal_callback(callback);
 
