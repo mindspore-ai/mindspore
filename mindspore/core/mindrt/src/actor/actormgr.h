@@ -74,6 +74,9 @@ class MS_CORE_API ActorMgr {
 
   void ChildAfterFork();
 
+  // Quit and reset mailbox for actors after process fork, and prepare to spawn.
+  void ResetActorAfterFork(const ActorReference &actor);
+
  private:
   inline bool IsLocalAddres(const AID &id) {
     if (id.Url() == "" || id.Url().empty() || urls.find(id.Url()) != urls.end()) {

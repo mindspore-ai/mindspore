@@ -88,6 +88,9 @@ class BACKEND_EXPORT GraphScheduler {
   RpcNodeScheduler *rpc_node_scheduler() { return rpc_node_scheduler_.get(); }
 #endif
 
+  // The callback function after process fork finish to reinitialize multi pipeline actors.
+  void ChildAfterFork();
+
  private:
   GraphScheduler() = default;
   ~GraphScheduler() = default;
@@ -228,7 +231,7 @@ class BACKEND_EXPORT GraphScheduler {
   void RefreshContextAndThreadPool(ActorSet *const actor_set, ActorThreadPool *const thread_pool);
 
   // Spawn kernel async infer/resize/launch kernel in run graph phase if need.
-  void SpawnMultiPipelineActor(ActorSet *const actor_set);
+  void SpawnMultiPipelineActor(ActorSet *const actor_set, ActorThreadPool *const thread_pool);
 
   // The global maps, only be cleared in the deconstruction.
   mindspore::HashMap<ActorInfo, ActorSetPtr> actors_;

@@ -278,6 +278,17 @@ AID ActorMgr::Spawn(const ActorReference &actor, bool shareThread) {
   return actor->GetAID();
 }
 
+void ActorMgr::ResetActorAfterFork(const ActorReference &actor) {
+  if (actor) {
+    actor->Quit();
+    if (actor->mailbox != nullptr) {
+      (void)actor->mailbox.release();
+    }
+
+    RemoveActor(actor->GetAID().Name());
+  }
+}
+
 void ActorMgr::Terminate(const AID &id) {
   auto actor = GetActor(id);
   if (actor != nullptr) {
