@@ -16,6 +16,8 @@
 
 #include "extendrt/delegate/ascend_ge/ge_context_manager.h"
 #include "src/common/log_adapter.h"
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace mindspore {
 GeContextManager::GeContextManager() {}
@@ -24,13 +26,13 @@ GeContextManager::~GeContextManager() { DestroyContext(); }
 
 bool GeContextManager::InitContext(uint32_t device_id) {
   device_id_ = device_id;
-  auto ret = aclrtSetDevice(device_id_);
+  auto ret = CALL_ASCEND_API(aclrtSetDevice, device_id_);
   if (ret != ACL_RT_SUCCESS) {
     MS_LOG(ERROR) << "Failed to call aclrtSetDevice , device id " << device_id_ << ", ret: " << static_cast<int>(ret);
     return false;
   }
   // Context will be created by aclrtSetDevice
-  ret = aclrtGetCurrentContext(&context_);
+  ret = CALL_ASCEND_API(aclrtGetCurrentContext, &context_);
   if (ret != ACL_RT_SUCCESS || context_ == nullptr) {
     MS_LOG(ERROR) << "Call aclrtGetCurrentContext failed, ret[" << ret << "]";
     return false;
@@ -45,7 +47,7 @@ bool GeContextManager::InitContext(uint32_t device_id) {
 }
 
 bool GeContextManager::SetContext() {
-  auto rt_ret = aclrtSetCurrentContext(context_);
+  auto rt_ret = CALL_ASCEND_API(aclrtSetCurrentContext, context_);
   if (rt_ret != ACL_RT_SUCCESS) {
     MS_LOG(ERROR) << "Failed to call aclrtSetCurrentContext";
     return false;
@@ -78,12 +80,13 @@ bool GeContextManager::CreateDefaultStream() {
   }
 
   auto priority = 0;
-  auto ret = aclrtCreateStreamWithConfig(&default_stream_, priority, (ACL_STREAM_FAST_LAUNCH | ACL_STREAM_FAST_SYNC));
+  auto ret = CALL_ASCEND_API(aclrtCreateStreamWithConfig, &default_stream_, priority,
+                             (ACL_STREAM_FAST_LAUNCH | ACL_STREAM_FAST_SYNC));
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Create stream failed, ret:" << ret;
     return false;
   }
-  ret = aclrtSetStreamFailureMode(default_stream_, ACL_STOP_ON_FAILURE);
+  ret = CALL_ASCEND_API(aclrtSetStreamFailureMode, default_stream_, ACL_STOP_ON_FAILURE);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "aclrtSetStreamFailureMode failed, ret:" << ret;
     return false;
@@ -93,7 +96,7 @@ bool GeContextManager::CreateDefaultStream() {
 
 bool GeContextManager::SyncStream(aclrtStream stream) const {
   MS_EXCEPTION_IF_NULL(stream);
-  auto RET = aclrtSynchronizeStream(stream);
+  auto RET = CALL_ASCEND_API(aclrtSynchronizeStream, stream);
   if (RET != ACL_ERROR_NONE && RET != ACL_ERROR_RT_AICORE_OVER_FLOW) {  // o for switch stream
     MS_LOG(ERROR) << "Call runtime aclrtSynchronizeStream error.";
     return false;
@@ -108,7 +111,7 @@ void GeContextManager::DestroyDefaultStream() {
   if (default_stream_ == nullptr) {
     return;
   }
-  const auto ret = aclrtDestroyStream(default_stream_);
+  const auto ret = CALL_ASCEND_API(aclrtDestroyStream, default_stream_);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Call aclrtDestroyStream, ret[" << ret << "]";
     return;

@@ -17,6 +17,8 @@
 #include "minddata/dataset/kernels/image/dvpp/utils/VdecHelper.h"
 
 #include "minddata/dataset/kernels/image/dvpp/utils/AclLiteUtils.h"
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 using namespace std;
 
@@ -47,7 +49,7 @@ VdecHelper::VdecHelper(int channelId, uint32_t width, uint32_t height, int type,
 
   aclError aclRet;
   ACLLITE_LOG_INFO("get current context");
-  aclRet = aclrtGetCurrentContext(&context_);
+  aclRet = CALL_ASCEND_API(aclrtGetCurrentContext, &context_);
   if ((aclRet != ACL_SUCCESS) || (context_ == nullptr)) {
     ACLLITE_LOG_ERROR("VdecHelper : Get current acl context error:%d", aclRet);
   }
@@ -91,7 +93,7 @@ void VdecHelper::DestroyResource() {
   // destory stream
   aclError ret;
   if (stream_ != nullptr) {
-    ret = aclrtDestroyStream(stream_);
+    ret = CALL_ASCEND_API(aclrtDestroyStream, stream_);
     if (ret != ACL_SUCCESS) {
       ACLLITE_LOG_ERROR("Vdec destroy stream failed");
     }
@@ -106,14 +108,14 @@ void *VdecHelper::SubscribeReportThreadFunc(void *arg) {
   // Notice: create context for this thread
   auto *vdec = reinterpret_cast<VdecHelper *>(arg);
   aclrtContext context = vdec->GetContext();
-  aclError ret = aclrtSetCurrentContext(context);
+  aclError ret = CALL_ASCEND_API(aclrtSetCurrentContext, context);
   if (ret != ACL_SUCCESS) {
     ACLLITE_LOG_ERROR("Video decoder set context failed, errorno: %d", ret);
   }
 
   while (!vdec->IsExit()) {
     // Notice: timeout 1000ms
-    ret = aclrtProcessReport(1000);
+    ret = CALL_ASCEND_API(aclrtProcessReport, 1000);
     if (ret != ACL_SUCCESS) {
       ACLLITE_LOG_ERROR("Video decoder process report failed, errorno: %d", ret);
     }
@@ -159,7 +161,7 @@ AclLiteError VdecHelper::Init() {
     ACLLITE_LOG_ERROR("Start vdec subscribe thread failed, return: %d", ret);
     return ACLLITE_ERROR_CREATE_THREAD;
   }
-  (void)aclrtSubscribeReport(static_cast<uint64_t>(subscribeThreadId_), stream_);
+  (void)CALL_ASCEND_API(aclrtSubscribeReport, static_cast<uint64_t>(subscribeThreadId_), stream_);
 
   ret = CreateVdecChannelDesc();
   if (ret != ACLLITE_OK) {

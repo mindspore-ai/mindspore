@@ -18,6 +18,9 @@
 #include "common/log_adapter.h"
 #include "acl/acl.h"
 #include "src/litert/kernel/ascend/src/acl_mem_manager.h"
+#include "transform/symbol/acl_mdl_symbol.h"
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace mindspore::kernel {
 namespace acl {
@@ -50,14 +53,14 @@ STATUS ModelInfer::Init() {
     return lite::RET_ERROR;
   }
   int32_t device_id = options_.device_id;
-  aclError ret = aclrtSetDevice(device_id);
+  aclError ret = CALL_ASCEND_API(aclrtSetDevice, device_id);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Acl open device " << device_id << " failed, ret " << ret;
     return lite::RET_ERROR;
   }
   MS_LOG(INFO) << "Open device " << device_id << " success.";
 
-  ret = aclrtCreateContext(&context_, device_id);
+  ret = CALL_ASCEND_API(aclrtCreateContext, &context_, device_id);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Acl create context failed, ret " << ret;
     return lite::RET_ERROR;
@@ -65,7 +68,7 @@ STATUS ModelInfer::Init() {
   MS_LOG(INFO) << "Create context success.";
 
   aclrtRunMode run_mode;
-  ret = aclrtGetRunMode(&run_mode);
+  ret = CALL_ASCEND_API(aclrtGetRunMode, &run_mode);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Acl get run mode failed, ret " << ret;
     return lite::RET_ERROR;
@@ -85,7 +88,7 @@ STATUS ModelInfer::Finalize() {
     return lite::RET_OK;
   }
 
-  aclError rt_ret = aclrtSetCurrentContext(context_);
+  aclError rt_ret = CALL_ASCEND_API(aclrtSetCurrentContext, context_);
   if (rt_ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Set the ascend device context failed, ret " << rt_ret;
     return lite::RET_ERROR;
@@ -98,7 +101,7 @@ STATUS ModelInfer::Finalize() {
     }
   }
   if (context_ != nullptr) {
-    rt_ret = aclrtDestroyContext(context_);
+    rt_ret = CALL_ASCEND_API(aclrtDestroyContext, context_);
     if (rt_ret != ACL_ERROR_NONE) {
       MS_LOG(ERROR) << "Destroy context failed, ret " << rt_ret;
     }
@@ -106,7 +109,7 @@ STATUS ModelInfer::Finalize() {
   }
   MS_LOG(INFO) << "End to destroy context.";
 
-  rt_ret = aclrtResetDevice(options_.device_id);
+  rt_ret = CALL_ASCEND_API(aclrtResetDevice, options_.device_id);
   if (rt_ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Reset device " << options_.device_id << " failed, ret " << rt_ret;
   }
@@ -140,7 +143,7 @@ STATUS ModelInfer::Load() {
     load_flag_ = true;
   }
 
-  aclError rt_ret = aclrtSetCurrentContext(context_);
+  aclError rt_ret = CALL_ASCEND_API(aclrtSetCurrentContext, context_);
   if (rt_ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Set the ascend device context failed, ret = " << rt_ret;
     return lite::RET_ERROR;
@@ -188,7 +191,7 @@ STATUS ModelInfer::LoadAclModel(const Buffer &om_data) {
     }
     model_process_.SetSharingWorkspaceFlag(true);
   } else {
-    auto acl_ret = aclmdlLoadFromMem(om_data.Data(), om_data.DataSize(), &acl_model_id);
+    auto acl_ret = CALL_ASCEND_API(aclmdlLoadFromMem, om_data.Data(), om_data.DataSize(), &acl_model_id);
     if (acl_ret != ACL_ERROR_NONE) {
       MS_LOG(ERROR) << "Call aclmdlLoadFromMem failed, ret = " << acl_ret;
       return lite::RET_ERROR;
@@ -199,7 +202,7 @@ STATUS ModelInfer::LoadAclModel(const Buffer &om_data) {
   model_process_.set_model_id(acl_model_id);
   auto ret = model_process_.PreInitModelResource();
   if (ret != lite::RET_OK) {
-    (void)aclmdlUnload(acl_model_id);
+    (void)CALL_ASCEND_API(aclmdlUnload, acl_model_id);
     MS_LOG(ERROR) << "Pre init model resource failed.";
     return ret;
   }

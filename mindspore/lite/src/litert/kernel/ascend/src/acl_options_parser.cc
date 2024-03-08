@@ -21,7 +21,8 @@
 #include "src/common/log_util.h"
 #include "src/common/utils.h"
 #include "acl/acl_base.h"
-#include "acl/acl_rt.h"
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace mindspore::kernel {
 namespace acl {
@@ -65,7 +66,7 @@ STATUS AclOptionsParser::ParseOptions(const std::shared_ptr<DeviceInfoContext> &
 STATUS AclOptionsParser::CheckDeviceId(int32_t *device_id) {
   CHECK_NULL_RETURN(device_id);
   uint32_t device_count;
-  if (aclrtGetDeviceCount(&device_count) != ACL_ERROR_NONE) {
+  if (CALL_ASCEND_API(aclrtGetDeviceCount, &device_count) != ACL_ERROR_NONE) {
     MS_LOG(WARNING) << "Get device count failed.";
     return lite::RET_OK;
   }

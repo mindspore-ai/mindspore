@@ -49,7 +49,7 @@ AscendDmaHandle::~AscendDmaHandle() {
 #if defined(RT_MEMORY_P2PDMA)
   munmap(buf_, hbm_alloc_size_);
   close(p2p_fd_);
-  aclrtFree(dargs_);
+  CALL_ASCEND_API(aclrtFree, dargs_);
 #endif
 }
 
@@ -69,7 +69,7 @@ void AscendDmaHandle::InitRuntimeInstance() {
 void AscendDmaHandle::InitDmaMem() {
 #if defined(RT_MEMORY_P2PDMA)
   uint16_t app_module_id = static_cast<uint16_t>(APP);
-  auto ret = aclrtSetDevice(device_id_);
+  auto ret = CALL_ASCEND_API(aclrtSetDevice, device_id_);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "aclrtSetDevice failed:" << ret;
   }
@@ -83,7 +83,7 @@ void AscendDmaHandle::InitDmaMem() {
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "rtMalloc failed:" << ret;
   }
-  ret = aclrtMemset(dargs_, hbm_alloc_size_, 0x44, hbm_alloc_size_);
+  ret = CALL_ASCEND_API(aclrtMemset, dargs_, hbm_alloc_size_, 0x44, hbm_alloc_size_);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "aclrtMemset failed:" << ret;
   }

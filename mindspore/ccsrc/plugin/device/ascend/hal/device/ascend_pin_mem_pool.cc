@@ -15,11 +15,12 @@
  */
 
 #include "plugin/device/ascend/hal/device/ascend_pin_mem_pool.h"
-#include "acl/acl_rt.h"
 #include "utils/ms_context.h"
 #include "utils/log_adapter.h"
 #include "include/common/utils/utils.h"
 #include "runtime/device/kernel_runtime_manager.h"
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace mindspore {
 namespace device {
@@ -41,7 +42,7 @@ AscendPinMemPool &AscendPinMemPool::GetInstance() {
 
 void AscendPinMemPool::PinnedMemAlloc(DeviceMemPtr *addr, size_t alloc_size) {
   runtime_instance_->SetContext();
-  aclError rt_ret = aclrtMallocHost(addr, alloc_size);
+  aclError rt_ret = CALL_ASCEND_API(aclrtMallocHost, addr, alloc_size);
   if ((rt_ret != ACL_SUCCESS) || (*addr == nullptr)) {
     MS_LOG(ERROR) << "PinMemPool aclrtMallocHost failed.";
     return;
@@ -52,7 +53,7 @@ void AscendPinMemPool::PinnedMemAlloc(DeviceMemPtr *addr, size_t alloc_size) {
 bool AscendPinMemPool::FreeDeviceMem(const DeviceMemPtr &addr) {
   MS_EXCEPTION_IF_NULL(addr);
   if (pinned_mem_) {
-    (void)aclrtFreeHost(addr);
+    (void)CALL_ASCEND_API(aclrtFreeHost, addr);
   } else {
     free(addr);
   }

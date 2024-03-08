@@ -16,6 +16,7 @@
 
 #include "extendrt/kernel/ascend/api/ascend_kernel_api.h"
 #include "mindspore/lite/src/common/common.h"
+#include "transform/symbol/symbol_utils.h"
 
 std::map<std::string, CreatorFunc> *CreateCustomAscendKernel() {
   CreatorFunc creator_func = []() { return std::make_shared<mindspore::kernel::acl::CustomAscendKernelMod>(); };
@@ -25,6 +26,7 @@ std::map<std::string, CreatorFunc> *CreateCustomAscendKernel() {
     return {};
   }
   (*func_map)[mindspore::lite::kNameCustomAscend] = creator_func;
+  mindspore::transform::LoadAscendApiSymbols();
   return func_map;
 }
 

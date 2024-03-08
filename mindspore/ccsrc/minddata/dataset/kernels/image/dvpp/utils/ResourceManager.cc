@@ -54,14 +54,14 @@ void ResourceManager::Release() {
   APP_ERROR ret;
   for (size_t i = 0; i < deviceIds_.size(); i++) {
     if (contexts_[i] != nullptr) {
-      ret = aclrtDestroyContext(contexts_[i]);  // Destroy context
+      ret = CALL_ASCEND_API(aclrtDestroyContext, contexts_[i]);  // Destroy context
       if (ret != APP_ERR_OK) {
         MS_LOG(ERROR) << "Failed to destroy context, ret = " << ret << ".";
         return;
       }
       contexts_[i] = nullptr;
     }
-    ret = aclrtResetDevice(deviceIds_[i]);  // Reset device
+    ret = CALL_ASCEND_API(aclrtResetDevice, deviceIds_[i]);  // Reset device
     if (ret != APP_ERR_OK) {
       MS_LOG(ERROR) << "Failed to reset device, ret = " << ret << ".";
       return;
@@ -109,7 +109,7 @@ APP_ERROR ResourceManager::InitResource(ResourceInfo &resourceInfo) {
   // Open device and create context for each chip, note: it create one context for each chip
   for (size_t i = 0; i < deviceIds_.size(); i++) {
     deviceIdMap_[deviceIds_[i]] = i;
-    ret = aclrtSetDevice(deviceIds_[i]);
+    ret = CALL_ASCEND_API(aclrtSetDevice, deviceIds_[i]);
     if (ret != APP_ERR_OK) {
       MS_LOG(ERROR) << "Failed to open acl device: " << deviceIds_[i];
       return ret;

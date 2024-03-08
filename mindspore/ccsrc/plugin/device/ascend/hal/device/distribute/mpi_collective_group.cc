@@ -16,8 +16,10 @@
 
 #include <algorithm>
 #include "hccl/hccl.h"
-#include "acl/acl_rt.h"
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 #include "plugin/device/ascend/hal/device/distribute/mpi_collective_group.h"
+
 namespace mindspore {
 namespace device {
 namespace ascend {
@@ -119,7 +121,7 @@ bool MPICollective::CreateCommGroup(const std::string &name, const std::vector<u
   if (group_comm_.count(name) != 0) {
     return true;
   }
-  CHECK_RET(aclrtSetDevice(local_rank_id_), ACL_ERROR_NONE, "Call aclrtSetDevice error.");
+  CHECK_RET(CALL_ASCEND_API(aclrtSetDevice, local_rank_id_), ACL_ERROR_NONE, "Call aclrtSetDevice error.");
   HcclRootInfo rootInfo;
   if (static_cast<unsigned int>(rank_id_) == ranks[0]) {
     CHECK_RET(static_cast<int32_t>(HcclGetRootInfo(&rootInfo)), static_cast<int32_t>(::HcclResult::HCCL_SUCCESS),

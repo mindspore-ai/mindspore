@@ -24,8 +24,9 @@
 #include <regex>
 #include <vector>
 
-#include "acl/acl.h"
 #include "acl/ops/acl_dvpp.h"
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace {
 const char COMMENT_CHAR = '#';
@@ -160,10 +161,10 @@ void *MallocMemory(uint32_t dataSize, MemoryType memType) {
       buffer = new uint8_t[dataSize];
       break;
     case MemoryType::MEMORY_HOST:
-      aclRet = aclrtMallocHost(&buffer, dataSize);
+      aclRet = CALL_ASCEND_API(aclrtMallocHost, &buffer, dataSize);
       break;
     case MemoryType::MEMORY_DEVICE:
-      aclRet = aclrtMalloc(&buffer, dataSize, ACL_MEM_MALLOC_HUGE_FIRST);
+      aclRet = CALL_ASCEND_API(aclrtMalloc, &buffer, dataSize, ACL_MEM_MALLOC_HUGE_FIRST);
       break;
     case MemoryType::MEMORY_DVPP:
       aclRet = acldvppMalloc(&buffer, dataSize);
@@ -193,13 +194,13 @@ void FreeMemory(void *mem, MemoryType memType) {
       delete[](reinterpret_cast<uint8_t *>(mem));
       break;
     case MemoryType::MEMORY_HOST:
-      ret = aclrtFreeHost(mem);
+      ret = CALL_ASCEND_API(aclrtFreeHost, mem);
       if (ret != ACL_SUCCESS) {
         ACLLITE_LOG_ERROR("aclrtFreeHost failed, errorno: %d", ret);
       }
       break;
     case MemoryType::MEMORY_DEVICE:
-      ret = aclrtFree(mem);
+      ret = CALL_ASCEND_API(aclrtFree, mem);
       if (ret != ACL_SUCCESS) {
         ACLLITE_LOG_ERROR("aclrtFree failed, errorno: %d", ret);
       }
@@ -256,7 +257,7 @@ AclLiteError CopyDataToDeviceEx(void *dest, uint32_t destSize, const void *src, 
     policy = ACL_MEMCPY_DEVICE_TO_DEVICE;
   }
 
-  aclError aclRet = aclrtMemcpy(dest, destSize, src, srcSize, policy);
+  aclError aclRet = CALL_ASCEND_API(aclrtMemcpy, dest, destSize, src, srcSize, policy);
   if (aclRet != ACL_SUCCESS) {
     ACLLITE_LOG_ERROR("Copy data to device failed, aclRet is %d", aclRet);
     return ACLLITE_ERROR;
@@ -286,7 +287,7 @@ AclLiteError CopyDataToHostEx(void *dest, uint32_t destSize, const void *src, ui
     policy = ACL_MEMCPY_DEVICE_TO_DEVICE;
   }
 
-  aclError aclRet = aclrtMemcpy(dest, destSize, src, srcSize, policy);
+  aclError aclRet = CALL_ASCEND_API(aclrtMemcpy, dest, destSize, src, srcSize, policy);
   if (aclRet != ACL_SUCCESS) {
     ACLLITE_LOG_ERROR("Copy data to device failed, aclRet is %d", aclRet);
     return ACLLITE_ERROR;
@@ -301,7 +302,7 @@ void *CopyData(const void *data, uint32_t size, aclrtMemcpyKind policy, MemoryTy
     return nullptr;
   }
 
-  aclError aclRet = aclrtMemcpy(buffer, size, data, size, policy);
+  aclError aclRet = CALL_ASCEND_API(aclrtMemcpy, buffer, size, data, size, policy);
   if (aclRet != ACL_SUCCESS) {
     ACLLITE_LOG_ERROR("Copy data to device failed, aclRet is %d", aclRet);
     FreeMemory(buffer, memType);

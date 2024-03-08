@@ -16,26 +16,27 @@
 
 #include "cxx_api/model/acl/model_converter.h"
 #include <memory>
-#include "acl/acl.h"
 #include "include/transform/graph_ir/utils.h"
 #include "cxx_api/model/model_converter_utils/multi_process.h"
 #include "graph/model.h"
 #include "graph/utils/graph_utils_ex.h"
-#include "acl/acl_rt.h"
 #include "cxx_api/model/aoe/auto_tune_process.h"
 #include "plugin/device/ascend/optimizer/ge_optimization.h"
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/acl_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace mindspore {
 namespace {
 // todo: acl doesn't support to clear current context
 void ClearCurrentRtCtx() {
   aclrtContext tmp_ctx = nullptr;
-  auto ret = aclrtCreateContext(&tmp_ctx, 0);
+  auto ret = CALL_ASCEND_API(aclrtCreateContext, &tmp_ctx, 0);
   if (ret != ACL_RT_SUCCESS) {
     MS_LOG(WARNING) << "Call aclrtCreateContext failed, ret = " << ret;
     return;
   }
-  ret = aclrtDestroyContext(tmp_ctx);
+  ret = CALL_ASCEND_API(aclrtDestroyContext, tmp_ctx);
   if (ret != ACL_RT_SUCCESS) {
     MS_LOG(WARNING) << "Call aclrtDestroyContext failed, ret = " << ret;
     return;
@@ -146,13 +147,13 @@ Buffer ModelConverter::BuildAirModel(const transform::DfGraphPtr &graph,
   ge::ModelBufferData model;
   auto ret = ge::aclgrphBuildInitialize(init_options);
   if (ret != ge::SUCCESS) {
-    MS_LOG(ERROR) << "Call aclgrphBuildInitialize fail: " << aclGetRecentErrMsg();
+    MS_LOG(ERROR) << "Call aclgrphBuildInitialize fail: " << CALL_ASCEND_API2(aclGetRecentErrMsg);
     return Buffer();
   }
 
   ret = ge::aclgrphBuildModel(*graph, build_options, model);
   if (ret != ge::SUCCESS) {
-    MS_LOG(ERROR) << "Call aclgrphBuildModel fail: " << aclGetRecentErrMsg();
+    MS_LOG(ERROR) << "Call aclgrphBuildModel fail: " << CALL_ASCEND_API2(aclGetRecentErrMsg);
     ge::aclgrphBuildFinalize();
     return Buffer();
   }

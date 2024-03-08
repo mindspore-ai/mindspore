@@ -277,7 +277,7 @@ uint8_t *AscendMemAdapter::MallocFromRts(size_t size) const {
     return AscendGmemAdapter::GetInstance().MmapMemory(size, reinterpret_cast<void *>(ptr));
   }
 
-  auto ret = aclrtMalloc(reinterpret_cast<void **>(&ptr), size, ACL_MEM_TYPE_HIGH_BAND_WIDTH);
+  auto ret = CALL_ASCEND_API(aclrtMalloc, reinterpret_cast<void **>(&ptr), size, ACL_MEM_TYPE_HIGH_BAND_WIDTH);
   if (ret != ACL_RT_SUCCESS) {
     if (ret == ACL_ERROR_RT_MEMORY_ALLOCATION) {
       auto context_ptr = MsContext::GetInstance();
@@ -306,7 +306,7 @@ bool AscendMemAdapter::FreeToRts(void *devPtr, const size_t size) const {
     if (AscendGmemAdapter::GetInstance().is_eager_free_enabled()) {
       return AscendGmemAdapter::GetInstance().MunmapMemory(devPtr, size);
     }
-    auto ret = aclrtFree(devPtr);
+    auto ret = CALL_ASCEND_API(aclrtFree, devPtr);
     if (ret != ACL_ERROR_NONE) {
       MS_LOG(ERROR) << "aclrtFree mem [" << devPtr << "] fail, ret[" << ret << "]";
       return false;

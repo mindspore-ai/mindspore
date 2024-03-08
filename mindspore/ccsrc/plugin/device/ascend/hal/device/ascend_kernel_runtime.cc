@@ -130,7 +130,7 @@ void AscendKernelRuntime::SetContext() {
   if (thread_local_rt_context == rt_context_) {
     return;
   }
-  auto ret = aclrtSetCurrentContext(rt_context_);
+  auto ret = CALL_ASCEND_API(aclrtSetCurrentContext, rt_context_);
   thread_local_rt_context = rt_context_;
   if (ret != ACL_ERROR_NONE) {
     MS_EXCEPTION(DeviceProcessError) << "Call aclrtSetCurrentContext, ret[" << ret << "]";
@@ -141,7 +141,7 @@ void AscendKernelRuntime::SetContextForce() {
   if (rt_context_ == nullptr) {
     return;
   }
-  auto ret = aclrtSetCurrentContext(rt_context_);
+  auto ret = CALL_ASCEND_API(aclrtSetCurrentContext, rt_context_);
   if (ret != ACL_ERROR_NONE) {
     MS_EXCEPTION(DeviceProcessError) << "Call aclrtSetCurrentContext, ret[" << ret << "]";
   }
@@ -170,7 +170,7 @@ void AscendKernelRuntime::ResetStreamAndCtx() {
   stream_ = nullptr;
   rt_context_ = nullptr;
   // 2 re-create stream and ct
-  auto ret = aclrtCreateContext(&rt_context_, device_id_);
+  auto ret = CALL_ASCEND_API(aclrtCreateContext, &rt_context_, device_id_);
   if (ret != ACL_SUCCESS) {
     MS_LOG(EXCEPTION) << "Call aclrtCreateContext failed, ret: " << ret;
   }
@@ -224,11 +224,11 @@ void AscendKernelRuntime::TaskExceptionCallback(aclrtExceptionInfo *task_fail_in
     MS_LOG(ERROR) << "Execute TaskFailCallback failed. task_fail_info is nullptr";
     return;
   }
-  auto task_id = aclrtGetTaskIdFromExceptionInfo(task_fail_info);
-  auto stream_id = aclrtGetStreamIdFromExceptionInfo(task_fail_info);
-  auto error_code = aclrtGetErrorCodeFromExceptionInfo(task_fail_info);
-  auto device_id = aclrtGetDeviceIdFromExceptionInfo(task_fail_info);
-  auto tid = aclrtGetThreadIdFromExceptionInfo(task_fail_info);
+  auto task_id = CALL_ASCEND_API(aclrtGetTaskIdFromExceptionInfo, task_fail_info);
+  auto stream_id = CALL_ASCEND_API(aclrtGetStreamIdFromExceptionInfo, task_fail_info);
+  auto error_code = CALL_ASCEND_API(aclrtGetErrorCodeFromExceptionInfo, task_fail_info);
+  auto device_id = CALL_ASCEND_API(aclrtGetDeviceIdFromExceptionInfo, task_fail_info);
+  auto tid = CALL_ASCEND_API(aclrtGetThreadIdFromExceptionInfo, task_fail_info);
   MS_LOG(ERROR) << "Run Task failed, task_id: " << task_id << ", stream_id: " << stream_id << ", tid: " << tid
                 << ", device_id: " << device_id << ", retcode: " << error_code << " (" << GetErrorMsg(error_code)
                 << ")";
@@ -263,7 +263,7 @@ void AscendKernelRuntime::ReleaseDeviceRes() {
     mem_manager_->Finalize();
   }
 
-  (void)aclrtSetExceptionInfoCallback(nullptr);
+  (void)CALL_ASCEND_API(aclrtSetExceptionInfoCallback, nullptr);
 
   transform::AclnnFinalize();
   (void)ResetDevice(device_id);
@@ -314,7 +314,7 @@ bool AscendKernelRuntime::Init() {
     mem_manager_ = std::make_shared<AscendMemoryManager>();
     MS_EXCEPTION_IF_NULL(mem_manager_);
     mem_manager_->Initialize();
-    auto rt_ret = aclrtSetExceptionInfoCallback(TaskExceptionCallback);
+    auto rt_ret = CALL_ASCEND_API(aclrtSetExceptionInfoCallback, TaskExceptionCallback);
     if (rt_ret != ACL_ERROR_NONE) {
       MS_LOG(EXCEPTION) << "Reg SetTaskFailCallback failed, error: " << rt_ret;
     }
@@ -340,11 +340,11 @@ bool AscendKernelRuntime::Init() {
     }
     const uint32_t reserve_time = 180;
     uint32_t op_wait_timeout = notify_wait_timeout + reserve_time;
-    auto acl_ret = aclrtSetOpWaitTimeout(op_wait_timeout);
+    auto acl_ret = CALL_ASCEND_API(aclrtSetOpWaitTimeout, op_wait_timeout);
     if (acl_ret != ACL_SUCCESS) {
       MS_LOG(EXCEPTION) << "Set op wait timeout failed, error: " << acl_ret;
     }
-    acl_ret = aclrtSetOpExecuteTimeOut(op_execute_timeout);
+    acl_ret = CALL_ASCEND_API(aclrtSetOpExecuteTimeOut, op_execute_timeout);
     if (acl_ret != ACL_SUCCESS) {
       MS_LOG(EXCEPTION) << "Set op execute timeout failed, error: " << acl_ret;
     }
@@ -617,7 +617,8 @@ bool AscendKernelRuntime::MemcpyAsync(void *dst, const void *src, uint64_t size,
   }
   // cppcheck-suppress unreadVariable
   auto lock = device::KernelRuntime::LockRuntime(stream);
-  if (ACL_ERROR_NONE != aclrtMemcpyAsync(dst, size, src, size, static_cast<aclrtMemcpyKind>(kind), stream)) {
+  if (ACL_ERROR_NONE !=
+      CALL_ASCEND_API(aclrtMemcpyAsync, dst, size, src, size, static_cast<aclrtMemcpyKind>(kind), stream)) {
     MS_LOG(ERROR) << "Call runtime rtMemcpyAsync error.";
     return false;
   }
@@ -637,7 +638,7 @@ void AscendKernelRuntime::SetRtDevice(uint32_t device_id) {
     MS_EXCEPTION(DeviceProcessError) << "Call rtGetDeviceCount, ret[" << static_cast<int>(ret) << "]";
   }
 
-  ret = aclrtSetDevice(UintToInt(device_id));
+  ret = CALL_ASCEND_API(aclrtSetDevice, UintToInt(device_id));
   if (ret != ACL_ERROR_NONE) {
     MS_EXCEPTION(DeviceProcessError) << "Call aclrtSetDevice, ret[" << static_cast<int>(ret) << "]";
   }
@@ -669,7 +670,7 @@ bool AscendKernelRuntime::InitDevice() {
   }
 
   // Context will be created by aclrtSetDevice
-  const auto rt_ret = aclrtGetCurrentContext(&rt_context_);
+  const auto rt_ret = CALL_ASCEND_API(aclrtGetCurrentContext, &rt_context_);
   if (rt_ret != ACL_ERROR_NONE || rt_context_ == nullptr) {
     MS_LOG(ERROR) << "Call aclrtGetCurrentContext failed, ret[" << rt_ret << "]";
     return false;
@@ -690,7 +691,7 @@ bool AscendKernelRuntime::ResetDevice(uint32_t device_id) {
   communication_stream_ = nullptr;
 
   if (initialized_device_set_.find(device_id) != initialized_device_set_.end()) {
-    auto ret = aclrtResetDevice(UintToInt(device_id));
+    auto ret = CALL_ASCEND_API(aclrtResetDevice, UintToInt(device_id));
     if (ret != ACL_ERROR_NONE) {
       MS_EXCEPTION(DeviceProcessError) << "Call aclrtResetDevice, ret[" << ret << "]";
     }

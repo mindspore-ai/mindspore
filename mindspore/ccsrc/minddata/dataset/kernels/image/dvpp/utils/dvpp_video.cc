@@ -25,6 +25,8 @@
 
 #include "minddata/dataset/kernels/image/dvpp/utils/AclLiteUtils.h"
 #include "mindspore/core/utils/log_adapter.h"
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace {
 const int64_t kUsec = 1000000;
@@ -218,14 +220,14 @@ AclLiteError DvppVideo::InitResource() {
   aclError aclRet;
   // use current thread context default
   if (context_ == nullptr) {
-    aclRet = aclrtGetCurrentContext(&context_);
+    aclRet = CALL_ASCEND_API(aclrtGetCurrentContext, &context_);
     if ((aclRet != ACL_SUCCESS) || (context_ == nullptr)) {
       MS_LOG(ERROR) << "Get current acl context error: " << aclRet;
       return ACLLITE_ERROR_GET_ACL_CONTEXT;
     }
   }
   // Get current run mode
-  aclRet = aclrtGetRunMode(&runMode_);
+  aclRet = CALL_ASCEND_API(aclrtGetRunMode, &runMode_);
   if (aclRet != ACL_SUCCESS) {
     MS_LOG(ERROR) << "acl get run mode failed";
     return ACLLITE_ERROR_GET_RUM_MODE;
@@ -531,7 +533,7 @@ void DvppVideo::SaveYuvFile(FILE *const fd, const ImageData &frame) {
 
   if (runMode_ == ACL_HOST) {
     // malloc host memory
-    AclLiteError ret = aclrtMallocHost(reinterpret_cast<void **>(&outImageBuf), imageSize);
+    AclLiteError ret = CALL_ASCEND_API(aclrtMallocHost, reinterpret_cast<void **>(&outImageBuf), imageSize);
     if (ret != ACL_SUCCESS) {
       MS_LOG(ERROR) << "Chn " << channelId_ << " malloc host memory " << imageSize << " failed, error code " << ret;
       return;
@@ -541,18 +543,20 @@ void DvppVideo::SaveYuvFile(FILE *const fd, const ImageData &frame) {
   if ((frame.width == outWidthStride) && (frame.height == outHeightStride)) {
     if (runMode_ == ACL_HOST) {
       // copy device data to host
-      AclLiteError ret = aclrtMemcpy(outImageBuf, imageSize, addr, imageSize, ACL_MEMCPY_DEVICE_TO_HOST);
+      AclLiteError ret =
+        CALL_ASCEND_API(aclrtMemcpy, outImageBuf, imageSize, addr, imageSize, ACL_MEMCPY_DEVICE_TO_HOST);
       if (ret != ACL_SUCCESS) {
         MS_LOG(ERROR) << "Chn " << channelId_ << " Copy aclrtMemcpy " << imageSize
                       << " from device to host failed, error code " << ret;
-        if (aclrtFreeHost(outImageBuf) != ACL_SUCCESS) {
+        ret = CALL_ASCEND_API(aclrtFreeHost, outImageBuf);
+        if (ret != ACL_SUCCESS) {
           MS_LOG(ERROR) << "aclrtFreeHost failed, errorno: " << ret;
         }
         return;
       }
 
       (void)fwrite(outImageBuf, 1, imageSize, fd);
-      ret = aclrtFreeHost(outImageBuf);
+      ret = CALL_ASCEND_API(aclrtFreeHost, outImageBuf);
       if (ret != ACL_SUCCESS) {
         MS_LOG(ERROR) << "aclrtFreeHost failed, errorno: " << ret;
         return;
@@ -567,12 +571,12 @@ void DvppVideo::SaveYuvFile(FILE *const fd, const ImageData &frame) {
       }
       // Copy valid Y data
       for (uint32_t i = 0; i < frame.height; i++) {
-        AclLiteError ret = aclrtMemcpy(outImageBuf + i * frame.width, frame.width, addr + i * outWidthStride,
-                                       frame.width, ACL_MEMCPY_DEVICE_TO_HOST);
+        AclLiteError ret = CALL_ASCEND_API(aclrtMemcpy, outImageBuf + i * frame.width, frame.width,
+                                           addr + i * outWidthStride, frame.width, ACL_MEMCPY_DEVICE_TO_HOST);
         if (ret != ACL_SUCCESS) {
           MS_LOG(ERROR) << "Chn " << channelId_ << " Copy aclrtMemcpy " << imageSize
                         << " from device to host failed, error code " << ret;
-          ret = aclrtFreeHost(outImageBuf);
+          ret = CALL_ASCEND_API(aclrtFreeHost, outImageBuf);
           if (ret != ACL_SUCCESS) {
             MS_LOG(ERROR) << "aclrtFreeHost failed, errorno: " << ret;
           }
@@ -581,13 +585,13 @@ void DvppVideo::SaveYuvFile(FILE *const fd, const ImageData &frame) {
       }
       // Copy valid UV data
       for (uint32_t i = 0; i < frame.height / 2; i++) {
-        AclLiteError ret = aclrtMemcpy(outImageBuf + i * frame.width + frame.width * frame.height, frame.width,
-                                       addr + i * outWidthStride + outWidthStride * outHeightStride, frame.width,
-                                       ACL_MEMCPY_DEVICE_TO_HOST);
+        AclLiteError ret = CALL_ASCEND_API(aclrtMemcpy, outImageBuf + i * frame.width + frame.width * frame.height,
+                                           frame.width, addr + i * outWidthStride + outWidthStride * outHeightStride,
+                                           frame.width, ACL_MEMCPY_DEVICE_TO_HOST);
         if (ret != ACL_SUCCESS) {
           MS_LOG(ERROR) << "Chn " << channelId_ << " Copy aclrtMemcpy " << imageSize
                         << " from device to host failed, error code " << ret;
-          ret = aclrtFreeHost(outImageBuf);
+          ret = CALL_ASCEND_API(aclrtFreeHost, outImageBuf);
           if (ret != ACL_SUCCESS) {
             MS_LOG(ERROR) << "aclrtFreeHost failed, errorno: " << ret;
           }
@@ -596,7 +600,7 @@ void DvppVideo::SaveYuvFile(FILE *const fd, const ImageData &frame) {
       }
 
       (void)fwrite(outImageBuf, 1, imageSize, fd);
-      aclError ret = aclrtFreeHost(outImageBuf);
+      aclError ret = CALL_ASCEND_API(aclrtFreeHost, outImageBuf);
       if (ret != ACL_SUCCESS) {
         MS_LOG(ERROR) << "aclrtFreeHost failed, errorno: " << ret;
       }
@@ -663,7 +667,7 @@ AclLiteError DvppVideo::SetAclContext() {
     return ACLLITE_ERROR_SET_ACL_CONTEXT;
   }
 
-  aclError ret = aclrtSetCurrentContext(context_);
+  aclError ret = CALL_ASCEND_API(aclrtSetCurrentContext, context_);
   if (ret != ACL_SUCCESS) {
     MS_LOG(ERROR) << "Video decoder set context failed, error: " << ret;
     return ACLLITE_ERROR_SET_ACL_CONTEXT;

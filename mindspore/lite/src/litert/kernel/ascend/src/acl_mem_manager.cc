@@ -21,6 +21,8 @@
 #include <string>
 #include "acl/acl.h"
 #include "src/common/log_adapter.h"
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace mindspore::kernel {
 namespace acl {
@@ -42,7 +44,8 @@ STATUS AclMemManager::GetModelWorkMem(AclModelMemInfo *acl_work_mem_info) {
     if (work_mem_info_.mem_size == 0) {
       return lite::RET_ERROR;
     }
-    auto acl_ret = aclrtMalloc(&work_mem_info_.mem_addr, work_mem_info_.mem_size, ACL_MEM_MALLOC_HUGE_FIRST);
+    auto acl_ret =
+      CALL_ASCEND_API(aclrtMalloc, &work_mem_info_.mem_addr, work_mem_info_.mem_size, ACL_MEM_MALLOC_HUGE_FIRST);
     if (acl_ret != ACL_ERROR_NONE) {
       MS_LOG(ERROR) << "Call aclrtMalloc failed, err_code = " << acl_ret;
       return lite::RET_ERROR;
@@ -59,7 +62,8 @@ STATUS AclMemManager::GetModelWeightMem(AclModelMemInfo *acl_weight_mem_info) {
     if (weight_mem_info_.mem_size == 0) {
       return lite::RET_ERROR;
     }
-    auto acl_ret = aclrtMalloc(&weight_mem_info_.mem_addr, weight_mem_info_.mem_size, ACL_MEM_MALLOC_HUGE_FIRST);
+    auto acl_ret =
+      CALL_ASCEND_API(aclrtMalloc, &weight_mem_info_.mem_addr, weight_mem_info_.mem_size, ACL_MEM_MALLOC_HUGE_FIRST);
     if (acl_ret != ACL_ERROR_NONE) {
       MS_LOG(ERROR) << "Call aclrtMalloc failed, err_code = " << acl_ret;
       return lite::RET_ERROR;
@@ -72,12 +76,12 @@ STATUS AclMemManager::GetModelWeightMem(AclModelMemInfo *acl_weight_mem_info) {
 
 AclMemManager::~AclMemManager() {
   if (work_mem_info_.mem_addr != nullptr) {
-    (void)aclrtFree(work_mem_info_.mem_addr);
+    (void)CALL_ASCEND_API(aclrtFree, work_mem_info_.mem_addr);
     work_mem_info_.mem_addr = nullptr;
     work_mem_info_.mem_size = 0;
   }
   if (weight_mem_info_.mem_addr != nullptr) {
-    (void)aclrtFree(weight_mem_info_.mem_addr);
+    (void)CALL_ASCEND_API(aclrtFree, weight_mem_info_.mem_addr);
     weight_mem_info_.mem_addr = nullptr;
     weight_mem_info_.mem_size = 0;
   }

@@ -25,6 +25,8 @@
 #include "utils/file_utils.h"
 #include "utils/ms_context.h"
 #include "utils/shape_utils.h"
+#include "transform/symbol/acl_tdt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace mindspore::device::ascend {
 
@@ -63,10 +65,10 @@ bool CopyDataToTensor(const uint8_t *src_addr, mindspore::tensor::TensorPtr tens
 }  // namespace
 
 mindspore::tensor::TensorPtr acltdtDataItemToTensorPtr(acltdtDataItem *item) {
-  size_t dim_num = acltdtGetDimNumFromItem(item);
-  void *acl_addr = acltdtGetDataAddrFromItem(item);
-  size_t acl_data_size = acltdtGetDataSizeFromItem(item);
-  aclDataType acl_data_type = acltdtGetDataTypeFromItem(item);
+  size_t dim_num = CALL_ASCEND_API(acltdtGetDimNumFromItem, item);
+  void *acl_addr = CALL_ASCEND_API(acltdtGetDataAddrFromItem, item);
+  size_t acl_data_size = CALL_ASCEND_API(acltdtGetDataSizeFromItem, item);
+  aclDataType acl_data_type = CALL_ASCEND_API(acltdtGetDataTypeFromItem, item);
 
   auto acl_data = reinterpret_cast<uint8_t *>(acl_addr);
   if (acl_data_size > 0) {
@@ -76,7 +78,7 @@ mindspore::tensor::TensorPtr acltdtDataItemToTensorPtr(acltdtDataItem *item) {
   ShapeVector tensor_shape;
   tensor_shape.resize(dim_num);
 
-  if (acltdtGetDimsFromItem(item, tensor_shape.data(), dim_num) != ACL_SUCCESS) {
+  if (CALL_ASCEND_API(acltdtGetDimsFromItem, item, tensor_shape.data(), dim_num) != ACL_SUCCESS) {
     MS_LOG(ERROR) << "ACL failed to get dim-size from acl channel data";
     return nullptr;
   }
@@ -106,7 +108,7 @@ MbufDataHandler::MbufDataHandler(MbufFuncType func, uint32_t device_id, string c
       capacity_(capacity),
       timeout_(timeout) {
   MS_LOG(INFO) << "Channel " << channel_name_ << " begins the construction process.";
-  acl_handle_ = acltdtCreateChannelWithCapacity(device_id_, channel_name_.c_str(), capacity_);
+  acl_handle_ = CALL_ASCEND_API(acltdtCreateChannelWithCapacity, device_id_, channel_name_.c_str(), capacity_);
   if (acl_handle_ == nullptr) {
     string warning_info = "The creation of " + channel_name_ + " channel failed";
     if (!prim_name_.empty()) {
@@ -126,7 +128,7 @@ MbufDataHandler::~MbufDataHandler() {
     thread_.join();
   }
   if (acl_handle_) {
-    aclError status = acltdtDestroyChannel(acl_handle_);
+    aclError status = CALL_ASCEND_API(acltdtDestroyChannel, acl_handle_);
     acl_handle_ = nullptr;
     if (status != ACL_SUCCESS) {
       MS_LOG(ERROR) << "Channel " << channel_name_ << " failed destroy acl channel. Error code: " << status;
@@ -138,7 +140,7 @@ MbufDataHandler::~MbufDataHandler() {
 }
 
 bool MbufDataHandler::ReceiveAndProcessData(const ScopeAclTdtDataset &scope_acl_dataset) {
-  aclError status = acltdtReceiveTensor(acl_handle_, scope_acl_dataset.Get(), timeout_);
+  aclError status = CALL_ASCEND_API(acltdtReceiveTensor, acl_handle_, scope_acl_dataset.Get(), timeout_);
   if (status != ACL_ERROR_RT_QUEUE_EMPTY && status != ACL_SUCCESS) {
     MS_LOG(ERROR) << "Channel " << channel_name_ << " failed to receive tensor. Error code is " << status;
     return false;
@@ -151,7 +153,7 @@ bool MbufDataHandler::ReceiveAndProcessData(const ScopeAclTdtDataset &scope_acl_
 }
 
 bool MbufDataHandler::QueryChannelSize(size_t *size) {
-  aclError status = acltdtQueryChannelSize(acl_handle_, size);
+  aclError status = CALL_ASCEND_API(acltdtQueryChannelSize, acl_handle_, size);
   if (status != ACL_SUCCESS) {
     MS_LOG(ERROR) << "Channel " << channel_name_ << " failed to QueryChannelSize. Error code is " << status;
     return false;

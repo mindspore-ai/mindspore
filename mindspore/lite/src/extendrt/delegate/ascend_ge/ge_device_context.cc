@@ -25,11 +25,12 @@
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "include/transform/graph_ir/utils.h"
 #include "ge/ge_api.h"
-#include "acl/acl_rt.h"
 #include "common/config_infos.h"
 #include "common/common.h"
 #include "extendrt/delegate/comm_group_info.h"
 #include "backend/common/session/executor.h"
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace mindspore {
 constexpr auto kHcclPluginFileName = "libhccl.so";
@@ -192,16 +193,17 @@ std::shared_ptr<AscendDeviceInfo> GeDeviceContext::GetGeAscendDeviceInfo(const s
 Status GeDeviceContext::Initialize(const std::shared_ptr<Context> &context, const ConfigInfos &config_info) {
   MsContext::GetInstance()->set_backend_policy("ge");
   std::string overflow_mode = common::GetEnv("MS_ASCEND_CHECK_OVERFLOW_MODE");
+  transform::LoadAscendApiSymbols();
   if (overflow_mode == "INFNAN_MODE") {
     auto mode = aclrtFloatOverflowMode::ACL_RT_OVERFLOW_MODE_INFNAN;
-    auto ret = aclrtSetDeviceSatMode(mode);
+    auto ret = CALL_ASCEND_API(aclrtSetDeviceSatMode, mode);
     if (ret != ACL_SUCCESS) {
       MS_LOG(ERROR) << "Set INFNAN mode failed";
       return kLiteError;
     }
   } else if (overflow_mode == "SATURATION_MODE") {
     auto mode = aclrtFloatOverflowMode::ACL_RT_OVERFLOW_MODE_SATURATION;
-    auto ret = aclrtSetDeviceSatMode(mode);
+    auto ret = CALL_ASCEND_API(aclrtSetDeviceSatMode, mode);
     if (ret != ACL_SUCCESS) {
       MS_LOG(ERROR) << "Set SATURATION mode failed";
       return kLiteError;

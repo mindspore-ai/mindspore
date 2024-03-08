@@ -17,7 +17,8 @@
 #include "extendrt/kernel/ascend/model/acl_env_guard.h"
 #include "extendrt/kernel/ascend/model/model_infer.h"
 #include "common/log_adapter.h"
-#include "acl/acl.h"
+#include "transform/symbol/acl_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace mindspore::kernel {
 namespace acl {
@@ -37,7 +38,8 @@ aclError AclInitAdapter::AclInit(const char *config_file) {
   }
 
   init_flag_ = true;
-  auto ret = aclInit(config_file);
+  transform::LoadAscendApiSymbols();
+  auto ret = CALL_ASCEND_API(aclInit, config_file);
   if (ret == ACL_ERROR_REPEAT_INITIALIZE) {
     MS_LOG(WARNING) << "acl is repeat init";
     is_repeat_init_ = true;
@@ -56,7 +58,7 @@ aclError AclInitAdapter::AclFinalize() {
   init_flag_ = false;
   if (!is_repeat_init_) {
     MS_LOG(INFO) << "AclInitAdapter::aclFinalize begin.";
-    auto rt_ret = aclFinalize();
+    auto rt_ret = CALL_ASCEND_API2(aclFinalize);
     if (rt_ret != ACL_ERROR_NONE) {
       MS_LOG(ERROR) << "aclFinalize failed.";
     }
@@ -73,7 +75,7 @@ aclError AclInitAdapter::ForceFinalize() {
   MS_LOG(INFO) << "Begin to force aclFinalize.";
   init_flag_ = false;
   if (!is_repeat_init_) {
-    auto rt_ret = aclFinalize();
+    auto rt_ret = CALL_ASCEND_API2(aclFinalize);
     if (rt_ret != ACL_ERROR_NONE) {
       MS_LOG(ERROR) << "aclFinalize failed.";
     }
