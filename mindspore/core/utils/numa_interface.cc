@@ -166,26 +166,30 @@ Status NumaBind(void *handle, const int32_t &rank_id) {
 
 Status LoadNumaCpuInfo(void *handle, const int32_t rank_id, std::vector<int> *numa_cpus) {
   DEFINE_NUMA_METHOD(handle, numa_available, int);
-  DEFINE_NUMA_METHOD(handle, numa_max_node, int);
-  DEFINE_NUMA_METHOD(handle, numa_num_task_cpus, int);
-  DEFINE_NUMA_METHOD(handle, numa_bitmask_alloc, struct bitmask *, int);
-  DEFINE_NUMA_METHOD(handle, numa_node_to_cpus, int, int, struct bitmask *);
-  DEFINE_NUMA_METHOD(handle, numa_bitmask_isbitset, int, const struct bitmask *, unsigned int);
-  DEFINE_NUMA_METHOD(handle, numa_bitmask_free, void, struct bitmask *);
   // Call numa_available first to make sure numa available.
   auto flag = numa_available();
   if (flag == -1) {
     // Here we do not care return value.
     return Status::OK();
   }
+
+  DEFINE_NUMA_METHOD(handle, numa_max_node, int);
+  DEFINE_NUMA_METHOD(handle, numa_num_task_cpus, int);
+  DEFINE_NUMA_METHOD(handle, numa_bitmask_alloc, struct bitmask *, int);
+  DEFINE_NUMA_METHOD(handle, numa_node_to_cpus, int, int, struct bitmask *);
+  DEFINE_NUMA_METHOD(handle, numa_bitmask_isbitset, int, const struct bitmask *, unsigned int);
+  DEFINE_NUMA_METHOD(handle, numa_bitmask_free, void, struct bitmask *);
+  // Load cpus in current numa node.
   auto numa_node_max_id = numa_max_node();
   uint32_t numa_bind_id = static_cast<uint32_t>(rank_id % (numa_node_max_id + 1));
-  MS_LOG(DEBUG) << "rank id : " << rank_id << ", numa bind id : " << numa_bind_id
-                << ", numa_node_max_id : " << numa_node_max_id << ".";
+  MS_LOG(INFO) << "rank id : " << rank_id << ", numa bind id : " << numa_bind_id
+               << ", numa_node_max_id : " << numa_node_max_id << ".";
   auto numa_cpu_num = numa_num_task_cpus();
   MS_LOG(DEBUG) << "Numa cpu num : " << numa_cpu_num << ".";
+  // API numa_bitmask_alloc need min bitmask num 1024, or numa_node_to_cpus can not called twice.
   int bitmask_num = 1024;
-  auto numa_cpu_mask = numa_bitmask_alloc(numa_cpu_num < bitmask_num ? bitmask_num : numa_cpu_num);
+  numa_cpu_num = std::max(numa_cpu_num, bitmask_num);
+  auto numa_cpu_mask = numa_bitmask_alloc(numa_cpu_num);
   numa_node_to_cpus(numa_bind_id, numa_cpu_mask);
   MS_LOG(DEBUG) << "Numa numa_available call return : " << flag << ", numa_cpu_mask size : " << numa_cpu_mask->size
                 << ".";

@@ -71,9 +71,13 @@ int ActorMgr::Initialize(bool use_inner_pool, size_t actor_thread_num, size_t ma
         return MINDRT_ERROR;
       }
     } else {
-      inner_pool_ =
-        ActorThreadPool::CreateThreadPool(actor_thread_num, max_thread_num, core_list,
-                                          !core_list.empty() ? BindMode::Power_Higher : BindMode::Power_NoBind);
+      // Reverse core list to avoid bind cpu 0.
+      std::vector<int> bind_list;
+      for (size_t i = 0; i < core_list.size(); i++) {
+        bind_list.push_back(core_list[core_list.size() - 1 - i]);
+      }
+      auto bind_mode = !bind_list.empty() ? BindMode::Power_Higher : BindMode::Power_NoBind;
+      inner_pool_ = ActorThreadPool::CreateThreadPool(actor_thread_num, max_thread_num, bind_list, bind_mode);
       if (inner_pool_ == nullptr) {
         MS_LOG(ERROR) << "ActorMgr CreateThreadPool failed";
         return MINDRT_ERROR;
