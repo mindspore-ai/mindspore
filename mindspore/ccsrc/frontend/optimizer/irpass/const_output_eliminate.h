@@ -32,6 +32,7 @@ namespace mindspore::opt::irpass {
 class ConstOutputEliminater : public AnfVisitor {
  public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
+    Reset();
     auto flag = IsEliminate(node);
     if (!flag) {
       return nullptr;
@@ -93,6 +94,11 @@ class ConstOutputEliminater : public AnfVisitor {
   size_t grad_index_ = 0;
   AbstractBasePtr new_out_abstract_ = nullptr;
 
+  void Reset() {
+    grad_mode_ = false;
+    grad_index_ = 0;
+    new_out_abstract_ = nullptr;
+  }
   AbstractBasePtr GetTupleAbstract(const std::vector<AnfNodePtr> &inputs) const {
     AbstractBasePtrList new_sep_abstracts;
     for (const auto &input : inputs) {

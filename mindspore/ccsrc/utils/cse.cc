@@ -233,7 +233,7 @@ bool CSE::CheckReplace(const AnfNodePtr &main, const AnfNodePtr &node) {
       return false;
     }
     // Can not merge J because the J user size should be 1.
-    if (IsPrimitiveCNode(c_main, prim::kPrimJ)) {
+    if (IsPrimitiveCNode(c_main, prim::kPrimJ) || IsPrimitiveCNode(c_main, prim::kPrimReceive)) {
       return false;
     }
     if (IsPrimitiveCNode(node, prim::kPrimPyExecute)) {

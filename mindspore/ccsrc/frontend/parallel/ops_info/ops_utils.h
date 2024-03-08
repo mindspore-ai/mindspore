@@ -22,6 +22,8 @@
 namespace mindspore {
 namespace parallel {
 constexpr size_t MAX_RECURSIVE_DEPTH = 100000;
+constexpr int64_t MAX_MICRO_BATCH_NUM = 4096;
+constexpr int64_t MAX_INTERLEAVE_NUM = 128;
 constexpr size_t PRELU_INPUTS_SIZE = 2;
 constexpr size_t PRELU_OUTPUTS_SIZE = 1;
 constexpr size_t PRELU_SECOND_INPUT_SIZE = 1;
@@ -244,6 +246,7 @@ constexpr char SRC[] = "src";
 constexpr char CLONE_INFO[] = "clone_info";
 constexpr char CLONED[] = "cloned";
 constexpr char BE_CLONED[] = "be_cloned";
+constexpr char INDEX[] = "index";
 constexpr char CLONED_INDEX[] = "cloned_index";
 constexpr char BE_CLONED_INDEX[] = "be_cloned_index";
 constexpr char GROUP_RANKS[] = "group_ranks";
@@ -626,6 +629,9 @@ constexpr size_t PIPELINE_FUSTION_OFFSET = 100;
 constexpr char MICRO[] = "micro";
 constexpr char NO_UPDATE[] = "no_update";
 constexpr char HAS_ATTACHED[] = "has_attached";
+constexpr char CHUNK[] = "chunk";
+constexpr char ORDER[] = "order";
+constexpr char STAGE[] = "stage";
 constexpr auto MICRO_INTERLEAVED_TAG = "micro_interleaved_tag";
 constexpr char DEST_RANK[] = "dest_rank";
 constexpr char SRC_RANK[] = "src_rank";

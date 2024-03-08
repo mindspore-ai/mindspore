@@ -170,10 +170,19 @@ TensorInfo GetInputsTensorInfo(const std::pair<AnfNodePtr, int64_t> &param_info)
   return tensor_info;
 }
 
+static bool IsRealKernelNode(const AnfNodePtr &node) {
+  if (IsPrimitiveCNode(node, prim::kPrimDepend) || IsPrimitiveCNode(node, prim::kPrimLoad) ||
+      IsPrimitiveCNode(node, prim::kPrimCast) || IsPrimitiveCNode(node, prim::kPrimVirtualDiv) ||
+      IsPrimitiveCNode(node, prim::kPrimReceive) || IsPrimitiveCNode(node, prim::kPrimMicroStepAllGather) ||
+      IsPrimitiveCNode(node, prim::kPrimSend)) {
+    return false;
+  }
+  return true;
+}
+
 std::pair<AnfNodePtr, int64_t> GetRealKernelNode(const AnfNodePtr &node, int64_t get_item_index, CNodePtr *call_node,
                                                  bool ignore_get_item) {
-  if (IsPrimitiveCNode(node, prim::kPrimDepend) || IsPrimitiveCNode(node, prim::kPrimLoad) ||
-      IsPrimitiveCNode(node, prim::kPrimCast) || IsPrimitiveCNode(node, prim::kPrimVirtualDiv)) {
+  if (!IsRealKernelNode(node)) {
     return GetRealKernelNode(node->cast<CNodePtr>()->input(1), get_item_index, call_node, ignore_get_item);
   }
   if (IsPrimitiveCNode(node, prim::kPrimTupleGetItem) && ignore_get_item) {
@@ -201,14 +210,20 @@ std::pair<AnfNodePtr, int64_t> GetRealKernelNode(const AnfNodePtr &node, int64_t
     auto output = GetRealKernelNode(graph->output(), get_item_index, call_node, ignore_get_item).first;
     MS_EXCEPTION_IF_NULL(output);
     if (output->isa<Parameter>()) {
-      auto parameters = graph->parameters();
-      auto pos_iter = std::find(parameters.begin(), parameters.end(), output);
-      // If can't find in parameters, the parameter is a fv.
-      if (pos_iter == parameters.end()) {
-        return std::make_pair(output, get_item_index);
+      auto param_graph = output->func_graph();
+      auto parameter_list = param_graph->parameters();
+      auto fg_used_map = param_graph->func_graph_cnodes_index();
+      for (auto &cur_fg_use : fg_used_map) {
+        if (cur_fg_use.first->second != 0) {
+          continue;
+        }
+        auto cur_fg = cur_fg_use.first->first->cast<CNodePtr>();
+        auto iter = std::find(parameter_list.begin(), parameter_list.end(), output);
+        auto pos = std::distance(parameter_list.begin(), iter);
+        auto argument = cur_fg->input(pos + 1);
+        return GetRealKernelNode(argument, get_item_index, call_node, ignore_get_item);
       }
-      auto pos = std::distance(parameters.begin(), pos_iter);
-      return GetRealKernelNode(cnode->input(LongToSize(pos + 1)), -1, call_node, ignore_get_item);
+      return std::make_pair(output, get_item_index);
     }
     return std::make_pair(output, get_item_index);
   }
@@ -260,6 +275,13 @@ AnfNodePtr CheckMakeTupleSplit(const AnfNodePtr &node, const FuncGraphManagerPtr
 
 bool IsParallelCareNode(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
+  // Not skip Send Receive in pp interleave
+  auto parallel_context = parallel::ParallelContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(parallel_context);
+  auto is_pp_interleave = parallel_context->pipeline_interleave();
+  if (is_pp_interleave && (IsPrimitiveCNode(cnode, prim::kPrimSend) || IsPrimitiveCNode(cnode, prim::kPrimReceive))) {
+    return false;
+  }
   ValueNodePtr prim_node = cnode->input(0)->cast<ValueNodePtr>();
   if (prim_node == nullptr) {
     return false;
@@ -377,7 +399,15 @@ std::vector<std::pair<AnfNodePtr, int>> FuncGraphNodeUsers(const std::pair<AnfNo
     auto param = fg_parameters[IntToSize(node_pair.second - 1)];
     auto manager = fg->manager();
     auto param_node_users = manager->node_users()[param];
-    (void)std::copy(param_node_users.begin(), param_node_users.end(), std::back_inserter(func_users_vector));
+    for (const auto &node_user : param_node_users) {
+      auto cnode = node_user.first->cast<CNodePtr>();
+      if (IsValueNode<FuncGraph>(cnode->input(0))) {
+        auto sub_graph_users = FuncGraphNodeUsers(node_user);
+        (void)std::copy(sub_graph_users.begin(), sub_graph_users.end(), std::back_inserter(func_users_vector));
+      } else {
+        func_users_vector.emplace_back(node_user);
+      }
+    }
   }
   return func_users_vector;
 }
@@ -2126,8 +2156,9 @@ Status ExtractUserConfigLayout(const mindspore::HashMap<std::string, ValuePtr> &
 static bool IsCohesiveNode(const CNodePtr &cnode) {
   return IsPrimitiveCNode(cnode, prim::kPrimCast) || IsPrimitiveCNode(cnode, prim::kPrimLoad) ||
          IsPrimitiveCNode(cnode, prim::kPrimDepend) || IsPrimitiveCNode(cnode, prim::kPrimAllGather) ||
-         IsPrimitiveCNode(cnode, prim::kPrimMiniStepAllGather) ||
-         IsPrimitiveCNode(cnode, prim::kPrimMicroStepAllGather);
+         IsPrimitiveCNode(cnode, prim::kPrimMiniStepAllGather) || IsPrimitiveCNode(cnode, prim::kPrimMirrorMicroStep) ||
+         IsPrimitiveCNode(cnode, prim::kPrimMicroStepAllGather) || IsPrimitiveCNode(cnode, prim::kPrimMirror) ||
+         IsPrimitiveCNode(cnode, prim::kPrimMirrorMiniStep) || IsPrimitiveCNode(cnode, prim::kPrimVirtualDiv);
 }
 
 ParameterMap NodeParameterName(const CNodePtr &node, int64_t index, size_t curr_depth) {
