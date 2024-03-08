@@ -19,9 +19,11 @@
 #include <utility>
 #include <complex>
 #include <functional>
+#include "kernel/kernel.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "plugin/device/cpu/kernel/nnacl/fp32/add_fp32.h"
 #include "include/common/thread_pool.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace kernel {
@@ -42,6 +44,15 @@ int SequenceConcatCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs
                                        const std::vector<KernelTensor *> &outputs) {
   if (auto ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
+  }
+
+  auto user_data = inputs[0]->user_data();
+  if (user_data != nullptr && user_data->has(kRealElementsSize)) {
+    auto real_elem_sizes = user_data->get<std::vector<size_t>>(kRealElementsSize);
+    MS_EXCEPTION_IF_NULL(real_elem_sizes);
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << ", only support all same inner elements now, but got inner elements size: " << (*real_elem_sizes);
+    return KRET_RESIZE_FAILED;
   }
 
   tuple_shape_ = inputs[0]->GetShapeVector();

@@ -17,8 +17,10 @@
 #include <memory>
 #include <algorithm>
 #include <map>
+#include <numeric>
 #include <set>
 #include <complex>
+#include "mindapi/base/shape_vector.h"
 #include "ops/ascend_op_name.h"
 #include "ops/nn_optimizer_op_name.h"
 #include "ops/lite_op_name.h"
@@ -769,11 +771,31 @@ ShapeVector GetOutputShape(const abstract::AbstractBasePtr &abstract, size_t out
     MS_EXCEPTION_IF_NULL(sequence_abstract->elements()[output_idx]);
     return GetOutputShape(sequence_abstract->elements()[output_idx], 0, true);
   }
+
+  // For real sequence output, if the inner elements' shape is same, the output is {element_num, *actual_shape},
+  // otherwise is {element_num, inner_max_size}.
+  // For example:
+  //   1) Output abstract: ((3,4,5), (3,4,5)), output shape: (2, 3, 4, 5).
+  //   2) Output abstract: ((3,4,5), (3,4,6)), output shape: (2, 72).
+  ShapeVector elem_shape_vector;
+  size_t change_cnt = 0;
+  ShapeValueDType elem_size = 0;
+  for (const auto &elem_abs : sequence_abstract->elements()) {
+    MS_EXCEPTION_IF_NULL(elem_abs);
+    elem_shape_vector = GetOutputShape(elem_abs, 0, true);
+    auto cur_size = std::accumulate(elem_shape_vector.begin(), elem_shape_vector.end(), 1L, std::multiplies<int64_t>());
+    if (elem_size < cur_size) {
+      elem_size = cur_size;
+      ++change_cnt;
+    }
+  }
+
   ShapeVector shape_vector = {SizeToLong(sequence_abstract->size())};
-  const auto &element_abstract = sequence_abstract->elements()[0];
-  MS_EXCEPTION_IF_NULL(element_abstract);
-  const auto &element_shape_vector = GetOutputShape(element_abstract, 0, true);
-  (void)shape_vector.insert(shape_vector.end(), element_shape_vector.begin(), element_shape_vector.end());
+  if (change_cnt == 1) {
+    (void)shape_vector.insert(shape_vector.end(), elem_shape_vector.begin(), elem_shape_vector.end());
+  } else {
+    shape_vector.push_back(elem_size);
+  }
   return shape_vector;
 }
 }  // namespace

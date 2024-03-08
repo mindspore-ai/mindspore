@@ -668,8 +668,12 @@ constexpr auto kHcclWorldGroup = "hccl_world_group";
 constexpr auto kSyncBnGroup = "sync_bn_group";
 constexpr auto kRankID = "RANK_ID";
 
-// User data key for pyexecute.
+// User data key.
+
+// pyexecute.
 constexpr auto kSyncUserDataHandler = "sync_user_data_handler";
+
+constexpr auto kRealElementsSize = "real_elements_size";
 
 // For expander and pynative grad graph
 enum class InputType {
