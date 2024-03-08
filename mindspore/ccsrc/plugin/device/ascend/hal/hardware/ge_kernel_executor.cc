@@ -32,6 +32,10 @@
 #include "plugin/device/ascend/kernel/hccl/hccl_kernel_build.h"
 #include "plugin/device/ascend/kernel/pyboost/customize/customize_copy.h"
 
+#ifdef ENABLE_DVM
+#include "plugin/device/ascend/kernel/dvm/dvm_kernel_build.h"
+#endif
+
 #ifndef ENABLE_SECURITY
 #include "include/backend/debug/data_dump/dump_json_parser.h"
 #include "include/backend/optimizer/helper.h"
@@ -66,14 +70,19 @@ bool GenerateKernelMod(const std::vector<CNodePtr> &kernels) {
       continue;
     }
     kernel::KernelModPtr kernel_mod_ptr = nullptr;
-    if (AnfAlgo::GetKernelType(kernel) == KernelType::ACL_KERNEL) {
+    auto kernel_type = AnfAlgo::GetKernelType(kernel);
+    if (kernel_type == KernelType::ACL_KERNEL) {
       kernel_mod_ptr = kernel::AclOpBuild(kernel);
-    } else if (AnfAlgo::GetKernelType(kernel) == KernelType::HOST_KERNEL) {
+    } else if (kernel_type == KernelType::HOST_KERNEL) {
       kernel_mod_ptr = kernel::HostOpBuild(kernel);
-    } else if (AnfAlgo::GetKernelType(kernel) == KernelType::HCCL_KERNEL) {
+    } else if (kernel_type == KernelType::HCCL_KERNEL) {
       kernel_mod_ptr = kernel::HcclOpBuild(kernel);
-    } else if (AnfAlgo::GetKernelType(kernel) == KernelType::OPAPI_KERNEL) {
+    } else if (kernel_type == KernelType::OPAPI_KERNEL) {
       kernel_mod_ptr = kernel::AclnnOpBuild(kernel);
+#ifdef ENABLE_DVM
+    } else if (kernel_type == KernelType::AKG_KERNEL) {
+      kernel_mod_ptr = kernel::DvmOpBuild(kernel);
+#endif
     } else {
       MS_LOG(EXCEPTION) << "The kernel: " << kernel->fullname_with_scope() << " kernel build failed, kernel type: "
                         << kernel::KernelTypeLabel(AnfAlgo::GetKernelType(kernel));

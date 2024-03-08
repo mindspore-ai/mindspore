@@ -56,6 +56,12 @@ void InferByDeviceInfo::SetValue(const NodePtr &node) {
     inner_node_cache_[node] = std::make_shared<inner::ConstTensorNode>(tensor);
     Callback::Instance()->SetBasicNodeKernelInfo(node->as<AnfNodePtr>(),
                                                  {{tensor->shape(), tensor->data_type(), kOpFormat_DEFAULT}});
+  } else {
+    inner_node_cache_[node] = std::make_shared<inner::ConstScalarNode>(v);
+    auto type_ptr = v->type();
+    MS_EXCEPTION_IF_NULL(type_ptr);
+    Callback::Instance()->SetBasicNodeKernelInfo(node->as<AnfNodePtr>(),
+                                                 {{{}, type_ptr->type_id(), kOpFormat_DEFAULT}});
   }
 }
 

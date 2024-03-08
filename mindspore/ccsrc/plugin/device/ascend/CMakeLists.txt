@@ -41,6 +41,24 @@ if(ENABLE_ACL)
     list(APPEND ASCEND_910B_OBJ_SRC $<TARGET_OBJECTS:mindspore_axx_api_d_obj>)
 endif()
 
+### check dvm binary file ###
+set(DVM_LIB)
+if(ENABLE_DVM)
+    set(DVM_LIB $ENV{DVM_LIB})
+    message(STATUS "DVM module is enabled")
+    message(STATUS "DVM library file: ${DVM_LIB}")
+else()
+    message(WARNING "The binary files tracked by git lfs have not been downloaded, and Graph Kernel Fusion can not "
+            "be enabled on Ascend! Please perform the following steps:\n"
+            "1. Install git lfs, refer https://github.com/git-lfs/git-lfs/wiki/installation\n"
+            "2. After installing git lfs, do not forget executing the following command:\n"
+            "   git lfs install\n"
+            "3. Download the files tracked by git lfs, executing the following commands:\n"
+            "   cd ${CMAKE_SOURCE_DIR}\n"
+            "   git lfs pull\n"
+            "4. Re-compile the source codes")
+endif()
+
 ########### mindspore_ascend.so #####
 set(ASCEND_SUB_COMP
         hal/device
@@ -93,6 +111,10 @@ target_link_libraries(mindspore_ascend PRIVATE securec d_collective)
 target_link_libraries(mindspore_ascend PRIVATE mindspore::ssl mindspore::crypto)
 set_target_properties(mindspore_ascend PROPERTIES INSTALL_RPATH
         ${ORIGIN_PATH}:${ORIGIN_PATH}/ascend:${ORIGIN_PATH}/../:${ASCEND_RPATH})
+
+if(DVM_LIB)
+    target_link_libraries(mindspore_ascend PRIVATE ${DVM_LIB})
+endif()
 
 if(ENABLE_DEBUGGER)
     # debugger: link grpc

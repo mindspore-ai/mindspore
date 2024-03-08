@@ -57,6 +57,7 @@
 "mindspore/mindspore/ccsrc/frontend/expander/bprop/grad_ops/grad_linalg_ops.cc"                       "internalAstError"
 "mindspore/mindspore/ccsrc/backend/common/expander/fallback/inner_ops.cc"                             "internalAstError"
 "mindspore/mindspore/ccsrc/backend/common/expander/fallback/nn_ops.cc"                                "internalAstError"
+"mindspore/mindspore/ccsrc/backend/common/graph_kernel/expander/ops/"                                 "internalAstError"
 "mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/arithmetic_cpu_kernel.cc"                         "internalAstError"
 "mindspore/mindspore/ccsrc/frontend/expander/bprop/grad_ops/grad_scalar_ops.cc"                       "internalAstError"
 "mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/xlogy_cpu_kernel.cc"                              "unreadVariable"

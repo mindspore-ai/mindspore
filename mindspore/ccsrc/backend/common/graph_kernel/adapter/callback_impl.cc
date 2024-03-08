@@ -112,7 +112,14 @@ std::string CallbackImpl::GetOutputFormat(const AnfNodePtr &node, size_t i) {
   return AnfAlgo::GetOutputFormat(node, i);
 }
 
-std::string CallbackImpl::GetProcessor(const AnfNodePtr &node) { return kernel::GetProcessorStr(node); }
+std::string CallbackImpl::GetProcessor(const AnfNodePtr &node) {
+  auto processor = kernel::GetProcessorStr(node);
+  if (processor == kernel::kProcessorUnknown) {
+    // the processor will not be set during the Ascend kernel select, so it should be updated from context
+    processor = kernel::GetStrProcessorFromContext();
+  }
+  return processor;
+}
 
 std::string CallbackImpl::GetTargetFromContextImpl(bool detail) {
   auto context_ptr = MsContext::GetInstance();

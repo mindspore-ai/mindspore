@@ -25,12 +25,8 @@ class ReLU : public OpDesc {
   ~ReLU() = default;
 
   static NodePtr Exec(const inner::GraphBuilder &gb, const NodePtrList &inputs) {
-    const auto &input_x = inputs[0];
-    auto dtype = input_x->type;
-    auto const_zero = gb.Tensor(0.0, dtype);
-    auto greater_res = gb.Greater(input_x, const_zero);
-    auto cast_res = gb.Cast(greater_res, dtype);
-    auto result = gb.Mul(cast_res, input_x);
+    auto const_zero = gb.Tensor(0.0, inputs[0]->type);
+    auto result = gb.Emit("Maximum", {inputs[0], const_zero});
     return result;
   }
 
