@@ -209,7 +209,6 @@ void AscendProfiler::Stop() {
   }
 
   ProfilingDataDumper::GetInstance()->Stop();
-  ProfilingDataDumper::GetInstance()->UnInit();
   aclError aclRet = CALL_ASCEND_API(aclprofStop, acl_config_);
   if (aclRet != ACL_SUCCESS) {
     MS_LOG(EXCEPTION) << "Failed to call aclprofStop function.";
