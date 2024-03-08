@@ -240,7 +240,7 @@ class BeforeOptARewriter : public BaseRewriter {
  public:
   using ThisClass = BeforeOptARewriter;
   BeforeOptARewriter(const FuncGraphPtr &root_graph, const FuncGraphManagerPtr &manager)
-      : BaseRewriter(root_graph, manager) {}
+      : BaseRewriter(root_graph, manager), is_dict_output_(HasDictOutput()), has_dict_inplace_(HasDictInplace()) {}
   ~BeforeOptARewriter() override = default;
 
   bool Execute() override {
@@ -262,7 +262,7 @@ class BeforeOptARewriter : public BaseRewriter {
         auto kw_abs = abs->cast_ptr<abstract::AbstractKeywordArg>();
         para->set_abstract(kw_abs->get_arg());
       }
-      if (!allow_fallback_runtime) {
+      if (!allow_fallback_runtime || !is_dict_output_) {
         continue;
       }
       auto new_node_and_abs = ConvertParameterDictAbstract(para, para->abstract());
@@ -278,9 +278,7 @@ class BeforeOptARewriter : public BaseRewriter {
                                                                       const AbstractBasePtr &cur_abs) {
     MS_EXCEPTION_IF_NULL(cur_abs);
     auto seq_abs = cur_abs->cast_ptr<AbstractSequence>();
-    const auto &type = cur_abs->BuildType();
-    if (seq_abs != nullptr && !seq_abs->isa<abstract::AbstractSparseTensor>() &&
-        !type->isa<abstract::AbstractNamedTuple>()) {
+    if (seq_abs != nullptr) {
       bool is_tuple = seq_abs->isa<AbstractTuple>();
       auto seq_prim = is_tuple ? prim::kPrimMakeTuple : prim::kPrimMakeList;
       std::vector<AnfNodePtr> seq_inputs{NewValueNode(seq_prim)};
@@ -364,7 +362,7 @@ class BeforeOptARewriter : public BaseRewriter {
 
   AnfNodePtr ConvertDictGetItem(const CNodePtr &node) const {
     const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
-    if (!allow_fallback_runtime) {
+    if (!allow_fallback_runtime || (!is_dict_output_ && !has_dict_inplace_)) {
       return ConvertDictGetItemToTupleGetItem(node);
     }
     return nullptr;
@@ -433,7 +431,7 @@ class BeforeOptARewriter : public BaseRewriter {
 
   AnfNodePtr ConvertDictSetItem(const CNodePtr &node) const {
     const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
-    if (!allow_fallback_runtime) {
+    if (!allow_fallback_runtime || ConvertDictToTuple(node, node->func_graph())) {
       return ConvertDictSetItemToTupleSetItem(node);
     }
     return nullptr;
@@ -451,9 +449,46 @@ class BeforeOptARewriter : public BaseRewriter {
     return node->input(input_index);
   }
 
+  bool CheckUserHasPyExecute(const AnfNodePtr &node, const FuncGraphPtr &func) const {
+    MS_EXCEPTION_IF_NULL(node);
+    MS_EXCEPTION_IF_NULL(func);
+    auto mng = func->manager();
+    auto &users = mng->node_users()[node];
+    for (auto &user : users) {
+      if (IsPrimitiveCNode(user.first, prim::kPrimPyExecute) || IsPrimitiveCNode(user.first, prim::kPrimPyInterpret)) {
+        return true;
+      } else if (IsPrimitiveCNode(user.first, prim::kPrimMakeTuple)) {
+        if (CheckUserHasPyExecute(user.first, user.first->func_graph())) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  bool CheckDictUserHasFuncGraph(const AnfNodePtr &node, const FuncGraphPtr &func) const {
+    MS_EXCEPTION_IF_NULL(node);
+    MS_EXCEPTION_IF_NULL(func);
+    if (!IsValueNode<ValueDictionary>(node)) {
+      return false;
+    }
+    auto mng = func->manager();
+    auto &users = mng->node_users()[node];
+    for (auto &user : users) {
+      if (user.first->isa<CNode>()) {
+        auto cnode = user.first->cast<CNodePtr>();
+        auto input = cnode->input(0);
+        if (IsValueNode<FuncGraph>(input)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   AnfNodePtr ConvertMakeDict(const CNodePtr &node) const {
     const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
-    if (!allow_fallback_runtime) {
+    if (!allow_fallback_runtime || ConvertDictToTuple(node, node->func_graph())) {
       auto new_node = EraseMakeDictNode(node);
       return new_node;
     }
@@ -470,7 +505,7 @@ class BeforeOptARewriter : public BaseRewriter {
     CheckInputsSize(node, expect_inputs_size);
     auto input = node->input(1);
     const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
-    if (!allow_fallback_runtime) {
+    if (!allow_fallback_runtime || ConvertDictToTuple(node, node->func_graph())) {
       return input;
     }
     auto abs_dict = GetAbstract<AbstractDictionary>(input);
@@ -513,12 +548,13 @@ class BeforeOptARewriter : public BaseRewriter {
     new_inputs.reserve(elements.size() + 1);
     (void)new_inputs.emplace_back(NewValueNode(prim::kPrimMakeList));
     const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
+    bool convert_to_tuple = !allow_fallback_runtime || ConvertDictToTuple(node, node->func_graph());
     for (size_t i = 0; i < elements.size(); ++i) {
       auto index_node = NewValueNode(static_cast<int64_t>(i));
       MS_EXCEPTION_IF_NULL(elements[i].first->BuildValue());
       auto key_node = NewValueNode(elements[i].first->BuildValue());
       AnfNodePtr value_node;
-      if (!allow_fallback_runtime) {
+      if (convert_to_tuple) {
         value_node = fg->NewCNode({NewValueNode(prim::kPrimTupleGetItem), input, index_node});
       } else {
         value_node =
@@ -628,7 +664,7 @@ class BeforeOptARewriter : public BaseRewriter {
   AnfNodePtr ConvertValueNode(const ValueNodePtr &value_node, const ValuePtr &value) override {
     // Convert Dictionary value node.
     const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
-    bool convert_dict = !allow_fallback_runtime;
+    bool convert_dict = !allow_fallback_runtime || ConvertDictToTuple(value_node, root_graph_);
     bool need_convert = false;
     auto new_value = ConvertDictValue(value, 0, convert_dict, &need_convert);
     if (need_convert) {
@@ -690,7 +726,7 @@ class BeforeOptARewriter : public BaseRewriter {
     }
     // AbstractDictionary --> AbstractTuple.
     const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
-    bool convert_to_tuple = !allow_fallback_runtime;
+    bool convert_to_tuple = !allow_fallback_runtime || (!is_dict_output_ && !has_dict_inplace_);
     auto abs_dict = abs->cast<AbstractDictionaryPtr>();
     if (abs_dict != nullptr && convert_to_tuple) {
       const auto &dict_elements = abs_dict->elements();
@@ -713,6 +749,15 @@ class BeforeOptARewriter : public BaseRewriter {
     // AbstractDictionary --> AbstractSequence.
     return ConvertToAbstractSequence(abs, 0);
   }
+
+  bool ConvertDictToTuple(const AnfNodePtr &node, const FuncGraphPtr &fg) const {
+    return !is_dict_output_ && !has_dict_inplace_ && !CheckUserHasPyExecute(node, fg) &&
+           !CheckDictUserHasFuncGraph(node, fg);
+  }
+
+ private:
+  bool is_dict_output_{false};
+  bool has_dict_inplace_{false};
 };
 
 std::pair<AnfNodePtr, AnfNodePtr> ExtractKwargsNode(const AnfNodePtr &node) {
