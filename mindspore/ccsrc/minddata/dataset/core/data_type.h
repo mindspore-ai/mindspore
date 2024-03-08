@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2023 Huawei Technologies Co., Ltd
+ * Copyright 2020-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,8 @@
 #endif
 
 #include <string>
+#include <utility>
+
 #ifdef ENABLE_MINDDATA_PYTHON
 #include "pybind11/numpy.h"
 #include "pybind11/pybind11.h"
@@ -31,9 +33,9 @@ namespace py = pybind11;
 #include "base/float16.h"
 #endif
 #include "minddata/dataset/include/dataset/constants.h"
+
 namespace mindspore {
 namespace dataset {
-
 // Class that represents basic data types in DataEngine.
 class DataType {
  public:
@@ -140,8 +142,8 @@ class DataType {
   ~DataType() = default;
 
   // Create a type from a given enum
-  /// \param d
-  constexpr explicit DataType(Type d) : type_(d) {}
+  /// \param type
+  constexpr explicit DataType(const Type &type) : type_(std::move(type)) {}
 
   constexpr bool operator==(const DataType a) const { return type_ == a.type_; }
 
