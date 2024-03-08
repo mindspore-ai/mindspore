@@ -3262,24 +3262,6 @@ bool MindGraphBuilder::WhiteListFuncCheckAndInfer(CallNode *call_node, const py:
   return false;
 }
 
-namespace {
-std::string GetFuncGraphName(const py::object &func, const MindGraphBuilderPtr &subgraph) {
-  auto func_str = py::cast<std::string>(py::str(func));
-  std::vector<std::string> vec;
-  std::istringstream iss(func_str);
-  std::string str;
-  while (iss >> str) {
-    (void)vec.emplace_back(str);
-  }
-  if (vec.size() <= 1) {
-    return "";
-  }
-  auto func_name = vec[1];
-  std::replace(func_name.begin(), func_name.end(), '.', '_');
-  return func_name + "_" + std::to_string(subgraph->GetGraph()->GetCodeObj()->co_firstlineno);
-}
-}  // namespace
-
 void MindGraphBuilder::FGAddInputs(const std::vector<py::object> &args) {
   // Add function graph inputs.
   for (size_t i = 0; i < args.size(); ++i) {
