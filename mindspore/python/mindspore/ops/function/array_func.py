@@ -277,8 +277,8 @@ def eye(n, m=None, dtype=None):
     Creates a tensor with ones on the diagonal and zeros in the rest.
 
     Note:
-        Combines ReverseV2 operator to get an anti-diagonal Tensor,
-        but ReverseV2 only supports Ascend and GPU platforms currently.
+        The data type of returned tensor can be float16, float32, int8, int16, int32, int64, uint8
+        or bool on Ascend platforms.
 
     Args:
         n (int): The number of rows of returned tensor. Constant value only.
@@ -308,11 +308,11 @@ def eye(n, m=None, dtype=None):
          [0 1]]
         >>> print(output.dtype)
         Int32
-        >>> output = ops.eye(1, 2, mindspore.float64)
+        >>> output = ops.eye(1, 2, mindspore.float32)
         >>> print(output)
         [[1. 0.]]
         >>> print(output.dtype)
-        Float64
+        Float32
         >>> output = ops.eye(2, dtype=mindspore.int32)
         >>> print(output)
         [[1 0]

@@ -4,6 +4,9 @@ eye:
 
     Refer to :func:`mindspore.ops.eye` for more details.
 
+    Note:
+        The data type of returned tensor can be float16, float32, int8, int16, int32, int64, uint8 or bool on Ascend platforms.
+
     Inputs:
         - **n** (int) - The number of rows of returned tensor. Constant value only.
         - **m** (int) - The number of columns of returned tensor. Constant value only.
@@ -27,8 +30,8 @@ eye:
          [0 1]]
         >>> print(output.dtype)
         Int32
-        >>> output = eye(1, 2, mindspore.float64)
+        >>> output = eye(1, 2, mindspore.float32)
         >>> print(output)
         [[1. 0.]]
         >>> print(output.dtype)
-        Float64
+        Float32
