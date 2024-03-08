@@ -26,6 +26,7 @@
 #include "frontend/parallel/auto_parallel/costmodel.h"
 #include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/graph_util/node_info.h"
+#include "frontend/parallel/graph_util/graph_utils.h"
 #include "frontend/parallel/step_parallel_utils.h"
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/strategy.h"

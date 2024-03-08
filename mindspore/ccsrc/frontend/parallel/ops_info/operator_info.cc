@@ -155,8 +155,9 @@ Status OperatorInfo::CheckStrategyByVector(const Shapes &stra, const Shapes &inp
 
       int64_t shape_value = sub_input_shape.at(j);
       if (shape_value != -1 && (shape_value % strategy_value) != 0) {
-        MS_LOG(ERROR) << name_ << ": The strategy is " << StrategyToString(stra) << ", shape " << shape_value
-                      << " cannot be divisible by strategy value " << strategy_value;
+        MS_LOG(ERROR) << name_ << ": The strategy is " << StrategyToString(stra) << ", shape " << shape_value << " at "
+                      << j << " cannot be divisible by strategy value " << strategy_value << ", shape is "
+                      << sub_input_shape;
         return FAILED;
       }
 
@@ -636,6 +637,20 @@ Operator CreateScalarFloorDivOp(int64_t div_num) {
   OperatorParams operator_param;
   constexpr size_t parameter_pos = 2;
   ValuePtr scale_value = MakeValue(div_num);
+  (void)operator_param.emplace_back(std::make_pair(std::make_pair(Y, scale_value), parameter_pos));
+  OperatorArgs operator_arg = std::make_pair(operator_attrs, operator_param);
+
+  Operator op = std::make_pair(operator_name, operator_arg);
+  return op;
+}
+
+Operator CreateScalarMulOp(int64_t scalar) {
+  OperatorName operator_name = SCALAR_MUL;
+  OperatorAttrs operator_attrs;
+  OperatorParams operator_param;
+  constexpr size_t parameter_pos = 2;
+  mindspore::tensor::TensorPtr tensor_ptr = std::make_shared<mindspore::tensor::Tensor>(scalar);
+  ValuePtr scale_value = MakeValue(tensor_ptr);
   (void)operator_param.emplace_back(std::make_pair(std::make_pair(Y, scale_value), parameter_pos));
   OperatorArgs operator_arg = std::make_pair(operator_attrs, operator_param);
 

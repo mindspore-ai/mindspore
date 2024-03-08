@@ -48,7 +48,7 @@ OperatorVector ConstructOperator::SkipRedisReshapeOP(const Shape &shape) const {
 Status ConstructOperator::ReshapeOP(const Shape &shape) {
   int64_t prod = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int64_t>());
   int64_t prod_expect = std::accumulate(tensor_shape_.begin(), tensor_shape_.end(), 1, std::multiplies<int64_t>());
-  if (prod > 0 && prod_expect > 0 && prod != prod_expect) {
+  if (!IsDynamicShape(shape) && !IsDynamicShape(tensor_shape_) > 0 && prod != prod_expect) {
     ValuePtr ptr = MakeValue(shape);
     MS_EXCEPTION_IF_NULL(ptr);
     MS_LOG(ERROR) << "Invalid tensor shape " << ptr->ToString()

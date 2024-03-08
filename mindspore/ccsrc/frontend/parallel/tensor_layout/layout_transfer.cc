@@ -23,6 +23,8 @@
 
 namespace mindspore {
 namespace parallel {
+constexpr size_t INVALID_TENSOR_RANK = 9999;
+
 std::string LayoutTransfer::ToString() const {
   std::ostringstream buffer;
   buffer << std::endl << std::string("from_in_ tensor layout:" + from_in_.ToString());
@@ -53,10 +55,14 @@ int64_t GetTensorSize(const Shape &shape) {
   return std::abs(size);
 }
 
-bool RecordDimsChange(size_t key, int64_t value, std::map<size_t, int64_t> *memo) {
+bool RecordDimsChange(size_t key, int64_t value, std::map<size_t, int64_t> *memo, bool update = false) {
   auto iter = memo->find(key);
-  if (iter != memo->end()) {
+  if (!update && iter != memo->end()) {
     return false;
+  }
+  if (update && memo->find(key) != memo->end()) {
+    (*memo)[key] = value;
+    return true;
   }
   memo->insert({key, value});
   return true;
@@ -321,6 +327,18 @@ bool BackwardMatching(const Shape &expected_tgt_shape, Shape *tgt_shape, const A
   return true;
 }
 
+bool UseStrictMode(const Shape &from_shape, const Shape &to_shape) {
+  if (from_shape.size() == to_shape.size()) {
+    for (size_t i = 0; i < from_shape.size(); ++i) {
+      if (from_shape[i] != to_shape[i]) {
+        return false;
+      }
+    }
+    return true;
+  }
+  return false;
+}
+
 Status LayoutTransfer::CalculateFromTensorShape(Shape *from_shape, const Array &from_factors, const Shape &to_shape,
                                                 const Array &to_factors) {
   if (from_shape->size() != from_factors.GetDimSize() || to_shape.size() != to_factors.GetDimSize()) {
@@ -335,10 +353,21 @@ Status LayoutTransfer::CalculateFromTensorShape(Shape *from_shape, const Array &
   }
   MS_LOG(DEBUG) << "from_shape=" << (*from_shape) << ", from_factors=" << from_factors.array()
                 << ", to_shape=" << to_shape << ", to_factors=" << to_factors.array()
-                << ", to_layout_added_factor=" << to_layout_added_factor << std::endl;
+                << ", to_layout_added_factor=" << to_layout_added_factor;
+  if (from_layout_const_size > to_layout_const_size && from_layout_const_size % to_layout_added_factor == 0) {
+    from_layout_const_size /= to_layout_added_factor;
+    // Existed dim in from_layout already satisfy to_layout_added_factor.
+    to_layout_added_factor = -1;
+  }
+  bool strict_mode = UseStrictMode(*from_shape, to_shape);
   std::vector<int64_t> known_dims;
   (void)std::copy_if(from_shape->begin(), from_shape->end(), std::back_inserter(known_dims),
                      [](int64_t dim) -> bool { return dim != -1; });
+  size_t last_dyn_dim = INVALID_TENSOR_RANK;
+  auto last_dyn_dim_iter = std::find(from_shape->rbegin(), from_shape->rend(), -1);
+  if (last_dyn_dim_iter != from_shape->rend()) {
+    last_dyn_dim = from_shape->size() - (last_dyn_dim_iter - from_shape->rbegin()) - 1;
+  }
   for (size_t i = 0; i < from_shape->size(); ++i) {
     if (from_shape->at(i) != -1) {
       continue;
@@ -348,11 +377,17 @@ Status LayoutTransfer::CalculateFromTensorShape(Shape *from_shape, const Array &
       return Status::FAILED;
     }
     (*from_shape)[i] = prime_num * from_factors.GetDimByIdx(i);
-    if (to_layout_added_factor > 0) {
-      (*from_shape)[i] *= to_layout_added_factor;
+    if (strict_mode && from_shape->at(i) % to_factors.GetDimByIdx(i) != 0) {
+      (*from_shape)[i] *= to_factors.GetDimByIdx(i);
+    }
+    if (i == last_dyn_dim && to_layout_added_factor > 0) {
+      if (from_shape->at(i) % to_layout_added_factor != 0) {
+        (*from_shape)[i] *= to_layout_added_factor;
+      }
       to_layout_added_factor = -1;
     }
     known_dims.emplace_back(from_shape->at(i));
+    MS_LOG(DEBUG) << "Replace  " << i << " with value " << from_shape->at(i) << " prime " << prime_num;
     if (!RecordDimsChange(i, from_shape->at(i), &this->from_dims_replace_memo_)) {
       MS_LOG(ERROR) << "Index " << i << " conflicts.";
       return Status::FAILED;
@@ -469,6 +504,32 @@ Status GetFactors(const TensorLayout &layout, Array *array) {
   return Status::SUCCESS;
 }
 
+void UnifyFromAndToShape(Shape *new_from_shape, Shape *new_to_shape, const TensorLayout &from_in,
+                         const TensorLayout &to_in, ReplacementMemo *from_dims_replace_memo) {
+  Shape original_from_shape = from_in.tensor_shape().array();
+  Shape original_to_shape = to_in.tensor_shape().array();
+  for (size_t i = 0; i < new_from_shape->size(); ++i) {
+    if (original_from_shape[i] == -1) {
+      if (i < new_to_shape->size() && new_from_shape->at(i) < new_to_shape->at(i) &&
+          new_to_shape->at(i) % new_from_shape->at(i) == 0) {
+        int64_t scalar = new_to_shape->at(i) / new_from_shape->at(i);
+        for (size_t j = i + 1; j < new_from_shape->size(); ++j) {
+          if (original_from_shape[j] != -1) {
+            continue;
+          }
+          if (new_from_shape->at(j) > scalar && new_from_shape->at(j) % scalar == 0) {
+            (*new_from_shape)[j] = new_from_shape->at(j) / scalar;
+            (*new_from_shape)[i] = new_from_shape->at(i) * scalar;
+            RecordDimsChange(i, new_from_shape->at(i), from_dims_replace_memo, true);
+            RecordDimsChange(j, new_from_shape->at(j), from_dims_replace_memo, true);
+            break;
+          }
+        }
+      }
+    }
+  }
+}
+
 Status LayoutTransfer::AssembleStaticTensorShape(const TensorLayout &from_in, const TensorLayout &to_in,
                                                  TensorLayout *new_from_layout, TensorLayout *new_to_layout) {
   Shape new_from_shape(from_in.tensor_shape().array());
@@ -495,24 +556,27 @@ Status LayoutTransfer::AssembleStaticTensorShape(const TensorLayout &from_in, co
     return Status::FAILED;
   }
   size_t size = std::min(new_from_shape.size(), new_to_shape.size());
-  int64_t acc_scalar = 1;
-  for (size_t i = 0; i < size; ++i) {
-    if (new_from_shape.at(i) > new_to_shape.at(i) && new_from_shape.at(i) % new_to_shape.at(i) == 0) {
-      int64_t scalar = new_from_shape.at(i) / new_to_shape.at(i);
-      new_to_shape[i] = new_to_shape[i] * scalar;
-      acc_scalar *= scalar;
+  if (GetTensorSize(new_from_shape) != GetTensorSize(new_to_shape)) {
+    int64_t acc_scalar = 1;
+    for (size_t i = 0; i < size; ++i) {
+      if (new_from_shape.at(i) > new_to_shape.at(i) && new_from_shape.at(i) % new_to_shape.at(i) == 0) {
+        int64_t scalar = new_from_shape.at(i) / new_to_shape.at(i);
+        new_to_shape[i] = new_to_shape[i] * scalar;
+        acc_scalar *= scalar;
+      }
     }
-  }
-  int64_t last_dyn_dim = -1;
-  for (size_t i = 0; i < from_in.tensor_shape().array().size(); ++i) {
-    if (from_in.tensor_shape().array()[i] == -1) {
-      last_dyn_dim = static_cast<int64_t>(i);
+    const Shape &f_in_tensor_shape = from_in.tensor_shape().array();
+    auto last_dyn_dim_iter = std::find(f_in_tensor_shape.rbegin(), f_in_tensor_shape.rend(), -1);
+    if (last_dyn_dim_iter != f_in_tensor_shape.rend()) {
+      size_t last_dyn_dim = f_in_tensor_shape.size() - (last_dyn_dim_iter - f_in_tensor_shape.rbegin()) - 1;
+      new_from_shape[static_cast<size_t>(last_dyn_dim)] *= acc_scalar;
     }
-  }
-  if (last_dyn_dim != -1) {
-    new_from_shape[static_cast<size_t>(last_dyn_dim)] *= acc_scalar;
   }
 
+  // Unify shape from begin to end.
+  UnifyFromAndToShape(&new_from_shape, &new_to_shape, from_in, to_in, &this->from_dims_replace_memo_);
+
+  MS_LOG(DEBUG) << "new_from_shape=" << new_from_shape << ", new_to_shape=" << new_to_shape;
   if (new_from_layout->InitFromVector(from_in.device_arrangement().array(), from_in.tensor_map().array(),
                                       new_from_shape) != Status::SUCCESS) {
     MS_LOG(ERROR) << "Failed to init new from_tensor layout.";
@@ -533,7 +597,7 @@ Status LayoutTransfer::AssembleStaticTensorShape(const TensorLayout &from_in, co
 
 Status LayoutTransfer::RollbackToDynamicShape() {
   if (!this->IsAssembledStaticShape()) {
-    return Status::SUCCESS;
+    return Status::FAILED;
   }
   for (auto &iter : this->from_dims_replace_memo_) {
     MS_LOG(DEBUG) << "from index=" << iter.first << ", value=" << iter.second << std::endl;

@@ -209,6 +209,7 @@ static void InsertRedistribution(const RedistributionOpListPtr &redistribution_o
   if ((redistribution_oplist_ptr->first).size() != (redistribution_oplist_ptr->second).size()) {
     MS_LOG(EXCEPTION) << "size of OperatorVector and OutPutInfoVector must be the same!";
   }
+
   for (size_t index = 0; index < (redistribution_oplist_ptr->first).size(); ++index) {
     if (pos >= SizeToLong(node->size())) {
       MS_LOG(EXCEPTION) << "InsertRedistribution:pos can't be larger than node's inputs'size";
@@ -316,6 +317,9 @@ static void Redistribution(const std::pair<AnfNodePtr, int64_t> &node_pair, cons
   MS_LOG(DEBUG) << "Redistribution for pre_node: " << pre_cnode->DebugString()
                 << " next_node: " << next_cnode->DebugString();
   auto tensor_redistribution = next_distribute_operator->CreateTensorRedistribution();
+  tensor_redistribution->SetPreAndNextCNode(pre_cnode, next_cnode);
+  MS_LOG(DEBUG) << "Redistribution for pre_node: " << pre_cnode->DebugString()
+                << "next_node: " << next_cnode->DebugString();
 
   // extract tensor layout in and out
   if (distribute_operator->outputs_tensor_info().empty()) {
@@ -354,10 +358,15 @@ static void Redistribution(const std::pair<AnfNodePtr, int64_t> &node_pair, cons
   }
   MS_LOG(DEBUG) << "Redistribution size " << redistribution_oplist_ptr->first.size();
   if (!redistribution_oplist_ptr->first.empty()) {
-    tensor_redistribution->CreateAssembledDynamicMapping(&redistribution_oplist_ptr, func_graph, pre_cnode);
+    tensor_redistribution->CreateAssembledDynamicMapping(next_cnode, pre_cnode, func_graph);
     // insert node before next node
     InsertRedistribution(redistribution_oplist_ptr, next_cnode, func_graph, node_pair.second, pre_cnode,
                          tensor_redistribution);
+  }
+  // Rollback to dynamic shape.
+  if (tensor_redistribution->IsAssembledStaticShape() &&
+      tensor_redistribution->ResetLayoutTransfer() != Status::SUCCESS) {
+    MS_LOG(WARNING) << "Failed to reset layout transfer.";
   }
 }
 
@@ -392,7 +401,7 @@ static void StepRedistribution(const CNodePtr &cnode, const NodeUsersMap &node_u
                     << pre_node->fullname_with_scope() << "->" << next_node.first.first->fullname_with_scope() << "("
                     << next_node.first.second << ")";
       Redistribution(next_node.first, pre_node, next_node.second);
-      MS_LOG(DEBUG) << "===========Do Redistribution end  ============" << std::endl;
+      MS_LOG(DEBUG) << "===========Do Redistribution end  ============";
     }
     for (const auto &next_node : next_nodes) {
       if (!next_node.first.first->has_user_data(FUNC_PARAM)) {
@@ -588,7 +597,7 @@ static void StepReplaceOp(OperatorVector replace_op, const CNodePtr &node) {
     std::string instance_name = CreateInstanceName(node, index);
     std::vector<AnfNodePtr> replace_input;
     if (index != replace_op.size() - 1) {
-      replace_input = CreateInput(replace_op[index], node, instance_name);
+      replace_input = CreateInput(replace_op[index], node, instance_name, node);
     } else {
       replace_input = ReplaceOpInput(replace_op[index], instance_name, node);
     }
@@ -3083,6 +3092,7 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
 
   // ForwardCommunication BackwardCommunication TensorRedistribution
   ParallelCommunication(root, all_nodes, manager);
+
   if (is_apply_adasum) {
     HandleMirrorInAdaSum(root, &adasum_param_tensor_layout_map);
   }

@@ -88,13 +88,19 @@ PrimeGenerator::PrimeGenerator() { get_prime_table(&this->prime_table_, MAX_PRIM
 int64_t PrimeGenerator::GetCoprimeNum(const Shape &tensor_shape) {
   const int64_t unknown_val = -1;
   if (tensor_shape.empty()) {
-    return this->prime_table_[0];
+    // skip prime 2.
+    return this->prime_table_[1];
   }
   std::set<int64_t> input_flag;
   for (int64_t i : tensor_shape) {
     input_flag.insert(i);
   }
+  const int64_t two = 2;
   for (int64_t prime_num : this->prime_table_) {
+    if (prime_num == two) {
+      // skip prime 2.
+      continue;
+    }
     if (input_flag.find(prime_num) != input_flag.end()) {
       continue;
     }

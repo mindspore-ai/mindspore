@@ -245,12 +245,25 @@ class OperatorInfo {
     this->tensor_redistribution_ = std::make_shared<TensorRedistribution>(construct_op_flag, keep_reshape);
     return this->tensor_redistribution_;
   }
+  TensorRedistributionPtr CreateReshapeTensorRedistribution(bool construct_op_flag = true, bool keep_reshape = false) {
+    if (this->reshape_tensor_redistribution_ != nullptr) {
+      MS_LOG(WARNING) << "TensorRedistribution re-created.";
+    }
+    this->reshape_tensor_redistribution_ = std::make_shared<TensorRedistribution>(construct_op_flag, keep_reshape);
+    return this->reshape_tensor_redistribution_;
+  }
 
   void SetTensorRedistribution(const TensorRedistributionPtr &tensor_redistribution) {
     this->tensor_redistribution_ = tensor_redistribution;
   }
 
+  void SetReshapeTensorRedistribution(const TensorRedistributionPtr &tensor_redistribution) {
+    this->reshape_tensor_redistribution_ = tensor_redistribution;
+  }
+
   TensorRedistributionPtr tensor_redistribution() { return this->tensor_redistribution_; }
+
+  TensorRedistributionPtr reshape_tensor_redistribution() { return this->reshape_tensor_redistribution_; }
 
   // Key for user data.
   constexpr static char key[] = "OpInfo";
@@ -259,6 +272,7 @@ class OperatorInfo {
   // needed by rec_parser
   std::string type_;
   TensorRedistributionPtr tensor_redistribution_;
+  TensorRedistributionPtr reshape_tensor_redistribution_;
   bool is_last_node_ = false;
   virtual Status CheckStrategy(const StrategyPtr &strategy) = 0;
   virtual Status InferTensorMap() = 0;
@@ -412,6 +426,7 @@ Operator CreateAllGatherOp(const std::string &group);
 Operator CreateCastOp(TypePtr type);
 Operator CreateDivOp(float scale);
 Operator CreateScalarFloorDivOp(int64_t div_num);
+Operator CreateScalarMulOp(int64_t scalar);
 void AddCNodePrimAttr(const CNodePtr &comm_node, const std::string &attr_name, const ValuePtr &attr_val);
 int32_t AddCommOpFusionType(const CNodePtr &comm_node, const AnfNodePtr &param_node);
 Operator CreateMicroStepAllGatherOp(const std::string &group);

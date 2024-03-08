@@ -388,6 +388,7 @@ constexpr char BIAS_ADD[] = "BiasAdd";
 constexpr char SUB[] = "Sub";
 constexpr char MUL[] = "Mul";
 constexpr char DIV[] = "Div";
+constexpr char SCALAR_MUL[] = "ScalarMul";
 constexpr char REAL_DIV[] = "RealDiv";
 constexpr char SCALAR_FLOOR_DIV[] = "ScalarFloorDiv";
 constexpr char ASSIGN_SUB[] = "AssignSub";
@@ -611,6 +612,7 @@ constexpr char WKV[] = "WKV";
 constexpr char FFN[] = "FFN";
 constexpr char FLASH_ATTENTION_SCORE[] = "FlashAttentionScore";
 constexpr char KV_CACHE_MGR[] = "KVCacheMgr";
+constexpr char TUPLE_GETITEM_OP[] = "TupleGetItem";
 
 // pipeline
 constexpr size_t PIPELINE_FUSTION_OFFSET = 100;

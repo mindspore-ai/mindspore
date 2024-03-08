@@ -78,8 +78,6 @@ OperatorInfoPtr OperatorInstance(const PrimitivePtr &prim, const PrimitiveAttrs 
 OperatorInfoPtr CreateOperatorInfo(const CNodePtr &cnode);
 std::string GetPrimName(const CNodePtr &node);
 std::shared_ptr<Value> GetAttrsFromAnfNode(const std::shared_ptr<AnfNode> &node, const string &key);
-std::vector<AnfNodePtr> ReplaceOpInput(const Operator &replace_op, const std::string &instance_name,
-                                       const CNodePtr &node);
 std::string CreateInstanceName(const CNodePtr &node, size_t index);
 TensorInfo GetInputsTensorInfo(const std::pair<AnfNodePtr, int64_t> &param_info);
 AnfNodePtr CheckMakeTupleSplit(const AnfNodePtr &node, const FuncGraphManagerPtr &manager);

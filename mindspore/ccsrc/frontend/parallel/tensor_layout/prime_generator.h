@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2023-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,6 +50,7 @@ class PrimeGenerator {
 class DecomposeDim {
  public:
   DecomposeDim() = default;
+  ~DecomposeDim() = default;
 
   void AppendPrimeDim(int64_t v, size_t index) {
     this->prime_.emplace_back(v);
@@ -71,6 +72,5 @@ class DecomposeDim {
   std::vector<int64_t> index_;
   int64_t factor_ = 1;
 };
-// DecomposeDim MatchDims(int64_t dim, const std::vector<int64_t> &src_factor);
 }  // namespace mindspore::parallel
 #endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_PRIME_GENERATOR_H_

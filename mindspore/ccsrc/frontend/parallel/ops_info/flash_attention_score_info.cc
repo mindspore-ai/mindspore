@@ -23,11 +23,11 @@
 
 #include "ir/value.h"
 #include "frontend/parallel/auto_parallel/graph_costmodel.h"
-#include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/step_parallel_utils.h"
 #include "frontend/parallel/graph_util/generate_graph.h"
+#include "frontend/parallel/graph_util/graph_utils.h"
 #include "mindspore/core/ops/flash_attention_score.h"
 #include "mindspore/core/ops/array_ops.h"
 #include "mindspore/core/ops/nn_ops.h"

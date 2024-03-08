@@ -46,9 +46,13 @@ class TensorRedistribution {
     this->is_inited_ = false;
   }
 
-  void SetPreAndNextCNode(const CNodePtr &pre_cnode, const CNodePtr &next_cnode) {
+  void SetPreAndNextCNode(const AnfNodePtr &pre_cnode, const CNodePtr &next_cnode) {
     this->pre_cnode_ = pre_cnode;
     this->next_cnode_ = next_cnode;
+  }
+
+  std::string PrintRedistribution() {
+    return this->pre_cnode_->fullname_with_scope() + "->" + this->next_cnode_->fullname_with_scope();
   }
 
   Status Init(const TensorLayout &from, const TensorLayout &to, const RankList &dev_list);
@@ -64,7 +68,9 @@ class TensorRedistribution {
   double backward_comm_cost() const { return backward_comm_cost_; }
   double memory_cost() const { return memory_cost_; }
   Shape input_shape() const { return from_origin_.slice_shape().array(); }
+  Status ResetLayoutTransfer() { return this->layout_transfer_.RollbackToDynamicShape(); }
   bool IsAssembledStaticShape() const { return this->layout_transfer_.IsAssembledStaticShape(); }
+  RedistributionLayoutTransfer layout_transfer() const { return this->layout_transfer_; }
   TensorLayout assembled_from_layout() const {
     if (!this->IsAssembledStaticShape()) {
       MS_LOG(WARNING) << "TensorRedistribution didn't assemble static shape but call assembled_from_layout().";
@@ -80,8 +86,8 @@ class TensorRedistribution {
     return this->layout_transfer_.to_in();
   }
   AssembledDynamicDimsMapping GetDynamicDimsMapping() const { return this->dynamic_dim_mapping_; }
-  void CreateAssembledDynamicMapping(RedistributionOpListPtr *redistribution_oplist_ptr, const FuncGraphPtr &func_graph,
-                                     const CNodePtr &pre_cnode);
+  void CreateAssembledDynamicMapping(const CNodePtr &cur_cnode, const AnfNodePtr &pre_cnode,
+                                     const FuncGraphPtr &func_graph);
 
  private:
   Status InferReshape(const TensorLayout &from_layout, const TensorLayout &to_layout,
@@ -117,7 +123,7 @@ class TensorRedistribution {
   bool construct_op_flag_;
   bool keep_reshape_;
   bool expand_able_ = true;
-  CNodePtr pre_cnode_;
+  AnfNodePtr pre_cnode_;
   CNodePtr next_cnode_;
 };
 }  // namespace parallel

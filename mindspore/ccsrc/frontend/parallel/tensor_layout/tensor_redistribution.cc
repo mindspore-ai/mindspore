@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@
 #include <string>
 #include "frontend/parallel/status.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
+#include "frontend/parallel/graph_util/graph_utils.h"
 #include "frontend/parallel/tensor_layout/shape_util.h"
 
 namespace mindspore {
@@ -49,39 +50,59 @@ Status TensorRedistribution::Init(const TensorLayout &from, const TensorLayout &
   return Status::SUCCESS;
 }
 
-void TensorRedistribution::CreateAssembledDynamicMapping(RedistributionOpListPtr *redistribution_oplist_ptr,
-                                                         const FuncGraphPtr &func_graph, const CNodePtr &pre_cnode) {
-  MS_LOG(DEBUG) << "Start to create assembled dynamic shape mapping." << std::endl;
-  this->dynamic_dim_mapping_.clear();
-  ReplacementMemo from_layout_memo = this->layout_transfer_.FromLayoutDimsReplacementMemo();
-  for (auto &redistribution_op : (*redistribution_oplist_ptr)->first) {
-    // Create instance_name
-    std::string op_name = redistribution_op.first;
-    if (op_name == RESHAPE) {
-      // Pattern: PrimFunc_Shape->TupleGetItem->MakeTuple->PrimFunc_Reshape
-      // 1. New shape and set pre_cnode to its inputs.
-      auto prim = std::make_shared<Primitive>(SHAPE);
-      MS_EXCEPTION_IF_NULL(prim);
-      prim->set_instance_name("Dynamic-shape-op");
-      AnfNodePtrList shape_node_inputs(2);  // 1 for primitive value node.
-      shape_node_inputs[0] = NewValueNode(prim);
-      shape_node_inputs[1] = pre_cnode;
-      auto shape_cnode = func_graph->NewCNode(shape_node_inputs);
-      // 2. Create TupleGetItem node to get dim value and insert to mapping.
-      for (const auto &iter : from_layout_memo) {
-        int64_t dim = iter.first;
-        int64_t replacement = iter.second;
-        auto prim_tuple_get_item = std::make_shared<Primitive>(TUPLE_GETITEM);
-        AnfNodePtrList inputs{NewValueNode(prim_tuple_get_item), shape_cnode, NewValueNode(MakeValue(dim))};
-        auto tuple_get_item_cnode = func_graph->NewCNode(inputs);
-        this->dynamic_dim_mapping_.insert({replacement, tuple_get_item_cnode});
-        MS_LOG(DEBUG) << "Create TupleGetItem for dim=" << dim << " to replace value=" << replacement;
+CNodePtr UpdateShapeNodeInput(const CNodePtr &current_cnode, const CNodePtr &dst_cnode) {
+  auto is_virtual_dataset_next_func = [&dst_cnode](const CNodePtr &cnode) -> bool {
+    for (size_t j = 1; j < cnode->inputs().size(); ++j) {
+      if (cnode->input(j)->isa<CNode>() && cnode->input(j)->UniqueId() == dst_cnode->UniqueId()) {
+        return true;
       }
+    }
+    return false;
+  };
+
+  for (size_t i = 1; i < current_cnode->inputs().size(); ++i) {
+    auto prev_cnode = current_cnode->input(i)->cast<CNodePtr>();  // tupleGetItem
+    if (prev_cnode == nullptr) {
       continue;
     }
-    if (op_name == STRIDEDSLICE) {
-      MS_LOG(WARNING) << "StridedSlice is not supported yet.";
+    bool found = is_virtual_dataset_next_func(prev_cnode);
+    if (found) {
+      return prev_cnode;
     }
+  }
+  return nullptr;
+}
+
+void TensorRedistribution::CreateAssembledDynamicMapping(const CNodePtr &cur_cnode, const AnfNodePtr &pre_cnode,
+                                                         const FuncGraphPtr &func_graph) {
+  MS_LOG(DEBUG) << "Start to create assembled dynamic shape mapping.";
+  MS_EXCEPTION_IF_NULL(func_graph);
+  this->dynamic_dim_mapping_.clear();
+
+  AnfNodePtr shape_root = pre_cnode;
+  if (pre_cnode->isa<CNode>() && IsPrimitiveCNode(pre_cnode, std::make_shared<Primitive>(VIRTUAL_DATA_SET))) {
+    // Find VirtualDataset successor.
+    auto shape_input = UpdateShapeNodeInput(cur_cnode, pre_cnode->cast<CNodePtr>());
+    if (shape_input == nullptr) {
+      MS_LOG(WARNING) << "Cannot find real input of shape node.";
+    } else {
+      shape_root = shape_input;
+    }
+  }
+
+  ReplacementMemo from_layout_memo = this->layout_transfer_.FromLayoutDimsReplacementMemo();
+  // 1. New shape and set pre_cnode to its inputs.
+  auto shape_cnode = CreateShape(shape_root, func_graph, "assemble_dynamic_shape_op");
+  // 2. Create TupleGetItem node to get dim value and insert to mapping.
+  for (const auto &iter : from_layout_memo) {
+    int64_t dim = UlongToLong(iter.first);
+    int64_t replacement = iter.second;
+    auto prim_tuple_get_item = std::make_shared<Primitive>(TUPLE_GETITEM_OP);
+    AnfNodePtrList inputs{NewValueNode(prim_tuple_get_item), shape_cnode, NewValueNode(MakeValue(dim))};
+    auto tuple_get_item_cnode = func_graph->NewCNode(inputs);
+    tuple_get_item_cnode->set_fullname_with_scope("tuple_getitem_for_value_" + std::to_string(replacement));
+    this->dynamic_dim_mapping_.insert({replacement, tuple_get_item_cnode});
+    MS_LOG(DEBUG) << "Create TupleGetItem for dim=" << dim << " to replace value=" << replacement;
   }
 }
 
@@ -149,6 +170,9 @@ RedistributionOpListPtr TensorRedistribution::InferTensorRedistributionOperatorL
 
 RedistributionOpListPtr TensorRedistribution::InferTensorRedistributionOperatorList(bool is_cost_model) {
   MS_LOG(DEBUG) << "Start to infer tensor redistribution.";
+  if (this->pre_cnode_ != nullptr && this->next_cnode_ != nullptr) {
+    MS_LOG(DEBUG) << this->PrintRedistribution();
+  }
   // Step 1: Match device arrangement between from_ and to_
   // RedistributionLayoutTransfer layout_transfer;
   // Step 0: Do dynamic shape to static shape conversion.
@@ -194,16 +218,10 @@ RedistributionOpListPtr TensorRedistribution::InferTensorRedistributionOperatorL
       Status::SUCCESS) {
     return nullptr;
   }
-  // Step 3: Infer reshape and insert operators
-  if (this->layout_transfer_.IsAssembledStaticShape()) {
-    // Change assemble static shape to dynamic.
-    if (this->layout_transfer_.RollbackToDynamicShape() != Status::SUCCESS) {
-      MS_LOG(ERROR) << "Rollback assembled static shape to dynamic shape failed. from: " << from_layout.ToString()
-                    << ", to: " << to_layout.ToString();
-      return nullptr;
-    }
-    from_layout = this->layout_transfer_.from_in();
-    to_layout = this->layout_transfer_.to_in();
+  //  Step 3: Infer reshape and insert operators
+  if (InferReshape(from_layout, to_layout, &operator_vector, &output_info_vector) != Status::SUCCESS) {
+    MS_LOG(ERROR) << "Construct Reshape operator failed!";
+    return nullptr;
   }
 #ifdef DEBUG
   std::string operator_vec_str;
@@ -211,11 +229,6 @@ RedistributionOpListPtr TensorRedistribution::InferTensorRedistributionOperatorL
   MS_LOG(DEBUG) << "After InferRedistribution, operator_vector size: " << operator_vector.size()
                 << ", operator_vector: " << operator_vec_str;
 #endif
-  if (InferReshape(from_layout, to_layout, &operator_vector, &output_info_vector) != Status::SUCCESS) {
-    MS_LOG(ERROR) << "Construct Reshape operator failed!";
-    return nullptr;
-  }
-
   return std::make_shared<std::pair<OperatorVector, OutPutInfoVector>>(
     std::make_pair(operator_vector, output_info_vector));
 }

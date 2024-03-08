@@ -29,7 +29,6 @@
 #include "frontend/parallel/graph_util/graph_utils.h"
 #include "frontend/parallel/tensor_layout/tensor_transform.h"
 #include "frontend/parallel/auto_parallel/graph_costmodel.h"
-#include "include/common/utils/convert_utils.h"
 #include "utils/log_adapter.h"
 #include "mindspore/core/ops/auto_generate/gen_ops_primitive.h"
 
@@ -356,9 +355,16 @@ Status ReshapeInfo::ComputeReplaceOp() {
       ChangeDynamicDstShapeForSkipRedistribution(cnode_->input(2));
       return SUCCESS;
     }
+    auto reshape_input = this->cnode_->input(1);
+    if (reshape_input == nullptr) {
+      MS_LOG(EXCEPTION) << "input of Reshape " << this->cnode_->fullname_with_scope() << " is nullptr.";
+    }
+
     RankList dev_list = stage_device_list();
     // TensorRedistribution tensor_redistribution(!is_generating_costs_, true);
-    TensorRedistributionPtr tensor_redistribution = this->CreateTensorRedistribution(!is_generating_costs_, true);
+    TensorRedistributionPtr tensor_redistribution =
+      this->CreateReshapeTensorRedistribution(!is_generating_costs_, true);
+    tensor_redistribution->SetPreAndNextCNode(reshape_input, this->cnode_);
     if (tensor_redistribution->Init(input_layout_, output_layout_, dev_list) == FAILED) {
       if (is_generating_costs_) {
         MS_LOG(DEBUG) << name_ << ": tensor_redistribution init failed.";
@@ -370,6 +376,7 @@ Status ReshapeInfo::ComputeReplaceOp() {
     MS_LOG(DEBUG) << name_ << ": input " << input_layout_.ToString();
     MS_LOG(DEBUG) << name_ << ": output " << output_layout_.ToString();
     MS_LOG(DEBUG) << name_ << ": dev_list " << dev_list.size();
+
     RedistributionOpListPtr redistribution_oplist_ptr = tensor_redistribution->InferTensorRedistributionOperatorList();
     if (!is_generating_costs_) {
       redistribution_oplist_ptr = TensorTransform::GetInstance()->OptimizeTensorRedistributionOperatorList(
@@ -382,6 +389,10 @@ Status ReshapeInfo::ComputeReplaceOp() {
         MS_LOG(ERROR) << name_ << "InferTensorRedistribution failed.";
       }
       return FAILED;
+    }
+    if (tensor_redistribution->IsAssembledStaticShape()) {
+      auto func_graph = this->cnode_->func_graph();
+      tensor_redistribution->CreateAssembledDynamicMapping(this->cnode_, reshape_input, func_graph);
     }
     replace_op_ = redistribution_oplist_ptr->first;
     replace_op_info_ = redistribution_oplist_ptr->second;

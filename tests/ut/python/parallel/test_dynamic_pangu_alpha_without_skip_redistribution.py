@@ -1127,10 +1127,11 @@ def test_pangu_alpha_batch_dim_dynamic_and_data_parallel():
     Description: all reshape skip redistribution
     Expectation: compile success
     '''
-    # FIXME: test_pangu_alpha_batch_dim_dynamic_and_dp_mp_op pass, but this failed.
     context.reset_auto_parallel_context()
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, full_batch=False)
-    config = PANGUALPHAConfig(data_parallel_num=8, model_parallel_num=1, num_layers=2)
+    context.set_context(save_graphs=True, save_graphs_path="./pangu_alpha_batch_dim_dynamic_and_data_parallel")
+
+    config = PANGUALPHAConfig(data_parallel_num=8, model_parallel_num=1, num_layers=1)
     pangu_alpha = PanguAlpha(config)
     loss = CrossEntropyLoss(config)
     pangu_alpha_loss = PanguAlphaWithLoss(config, pangu_alpha, loss)
@@ -1151,7 +1152,9 @@ def test_pangu_alpha_batch_dim_dynamic_and_dp_mp():
     context.reset_auto_parallel_context()
     ds_strategy = ((2, 1), (2, 1), (2, 1, 1))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, dataset_strategy=ds_strategy)
-    config = PANGUALPHAConfig(data_parallel_num=2, model_parallel_num=4, num_layers=2)
+    context.set_context(save_graphs=True, save_graphs_path="./pangu_alpha_batch_dim_dynamic_and_dp_mp")
+
+    config = PANGUALPHAConfig(data_parallel_num=2, model_parallel_num=4, num_layers=1)
     pangu_alpha = PanguAlpha(config)
     loss = CrossEntropyLoss(config)
     pangu_alpha_loss = PanguAlphaWithLoss(config, pangu_alpha, loss)

@@ -642,48 +642,6 @@ void SetCommunicationOpGroupLabel(std::vector<AnfNodePtr> new_node_input) {
   }
 }
 
-std::vector<AnfNodePtr> ReplaceOpInput(const Operator &replace_op, const std::string &instance_name,
-                                       const CNodePtr &node) {
-  OperatorArgs arg_replace_op = replace_op.second;
-  OperatorParams params = arg_replace_op.second;
-  if (node->size() < 2) {
-    // GetNext operator dose not has input
-    if (node->size() == 1) {
-      return ConvertToRealInputs(replace_op.first, instance_name, AnfNodePtrList{}, arg_replace_op.first);
-    }
-    MS_LOG(EXCEPTION) << "Failure: " << node->ToString() << " size is smaller than 2";
-  }
-  std::vector<AnfNodePtr> replace_input = {node->input(1)};
-
-  if (replace_op.first == EMBEDDING_LOOKUP) {
-    replace_input = {node->input(1), node->input(2)};
-  }
-
-  if (!params.empty()) {
-    Param param_first = *(params.begin());
-    int64_t first_position = param_first.second;
-    if (first_position == 1) {
-      replace_input.pop_back();
-    }
-    for (auto &param : params) {
-      AnfNodePtr val = NewValueNode(param.first.second);
-      if (val == nullptr) {
-        MS_LOG(EXCEPTION) << "Failure:val is nullptr";
-      }
-      int64_t position = param.second;
-      (void)replace_input.insert(replace_input.cbegin() + position - 1, val);
-    }
-  } else if (replace_op.first == SYNC_BATCH_NORM) {
-    for (size_t i = 2; i < node->size(); ++i) {
-      replace_input.push_back(node->input(i));
-    }
-  }
-
-  replace_input = ConvertToRealInputs(replace_op.first, instance_name, replace_input, arg_replace_op.first);
-  SetCommunicationOpGroupLabel(replace_input);
-  return replace_input;
-}
-
 void SetStridedSliceSplitStrategy(const std::vector<AnfNodePtr> &all_nodes) {
   for (auto &node : all_nodes) {
     if (!node->isa<CNode>()) {
