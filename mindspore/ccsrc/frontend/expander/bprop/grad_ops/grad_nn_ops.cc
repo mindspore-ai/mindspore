@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 #include <cstdint>
+#include <memory>
 #include "frontend/expander/bprop/bprop_irbuilder.h"
 #include "frontend/expander/bprop/grad_ops/common_utils.h"
 #include "include/common/utils/utils.h"
 #include "ir/value.h"
+#include "ops/conv2d.h"
 #include "ops/conv_pool_op_name.h"
 #include "ops/nn_op_name.h"
 #include "ops/nn_optimizer_op_name.h"
@@ -196,6 +198,12 @@ REG_BPROP_BUILDER("Conv2D").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto format = GetValue<std::string>(ib->GetAttr("format"));
   auto dilation = GetValue<ShapeVector>(ib->GetAttr("dilation"));
   auto stride = GetValue<ShapeVector>(ib->GetAttr("stride"));
+  auto pad_list = ib->GetAttr("pad_list");
+  if (pad_list == nullptr) {
+    auto prim = std::make_shared<Primitive>("Conv2D", ib->GetAttrs());
+    (void)ops::Conv2dInfer(nullptr, prim, {x->abstract(), w->abstract()});
+    pad_list = prim->GetAttr("pad_list");
+  }
   auto dx = x->need_compute_grad_out()
               ? ib->Emit(kConv2DBackpropInputOpName, {dout, w, x_shape},
                          {{"mode", ib->GetAttr("mode")},
@@ -209,7 +217,7 @@ REG_BPROP_BUILDER("Conv2D").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
                           {"kernel_size", ib->GetAttr("kernel_size")},
                           {"pad_mode", ib->GetAttr("pad_mode")},
                           {"pad", ib->GetAttr("pad")},
-                          {"pad_list", ib->GetAttr("pad_list")}})
+                          {"pad_list", pad_list}})
               : ib->OutZeros(x);
   auto dw = w->need_compute_grad_out() ? ib->Emit("Conv2DBackpropFilter", {dout, x, w_shape},
                                                   {{"mode", ib->GetAttr("mode")},
@@ -223,7 +231,7 @@ REG_BPROP_BUILDER("Conv2D").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
                                                    {"kernel_size", ib->GetAttr("kernel_size")},
                                                    {"pad_mode", ib->GetAttr("pad_mode")},
                                                    {"pad", ib->GetAttr("pad")},
-                                                   {"pad_list", ib->GetAttr("pad_list")}})
+                                                   {"pad_list", pad_list}})
                                        : ib->OutZeros(w);
   return {dx, dw};
 });

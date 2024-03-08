@@ -333,6 +333,13 @@ void GraphAnalyzer::Analyze() {
       graph_->GetSideEffect()->GetSideEffectInstrs().erase(item.first);
     }
   }
+  for (auto item : graph_->GetSideEffectNodes()) {
+    if (item->bci() >= graph_->GetStopTraceBci()) {
+      graph_->GetSideEffectNodes().erase(
+        std::remove(graph_->GetSideEffectNodes().begin(), graph_->GetSideEffectNodes().end(), item),
+        graph_->GetSideEffectNodes().end());
+    }
+  }
   CollectInputs();
 
   need_interpret_ = true;
@@ -355,6 +362,9 @@ void GraphAnalyzer::Analyze() {
   if (!graph_->GetSideEffect()->GetSideEffectInstrs().empty()) {
     need_interpret_ = true;
   }
+  if (!graph_->GetSideEffect()->GetGlobalList().empty()) {
+    need_interpret_ = true;
+  }
 }
 
 FrameStates buildLastFrame(Graph *g) { return g->GetFrame(g->GetStopTraceBci()); }
@@ -364,7 +374,7 @@ std::vector<ValueNode *> GraphAnalyzer::GetAliveLocals(Graph *g) {
   if (this->graph_->Config().GetBoolConfig(GraphJitConfig::kLogGraphBreak)) {
     GRAPH_JIT_LOG_F("UD analyze: enter GetAliveLocals bci %d", bci);
   }
-  std::vector<ValueNode *> outputs = g->GetCFG()->GetLiveness()->CollectAliveNode(g, bci);
+  std::vector<ValueNode *> outputs = g->CollectAliveNode(bci);
   std::set<ValueNode *> uniques(outputs.begin(), outputs.end());
   outputs.assign(uniques.begin(), uniques.end());
   return outputs;
@@ -421,17 +431,27 @@ bool GraphAnalyzer::AnalyzeAliveLocals(std::vector<ValueNode *> aliveNodes) {
   return isAllNodesSupportOutput;
 }
 
+static bool SkipSpecialFuncOrPrimitive(const py::object &callable) {
+  if (callable.ptr() == nullptr) {
+    return false;
+  }
+  if (CheckJitConstexpr(callable) || CheckMSConstexpr(callable)) {
+    return true;
+  }
+  if (IsPrimitiveType<true>(Py_TYPE(callable.ptr()))) {
+    std::string name = callable.attr("name").cast<std::string>();
+    return GetSpecialPrimitiveInferFunc().find(name) != GetSpecialPrimitiveInferFunc().end();
+  }
+  return false;
+}
+
 bool GraphAnalyzer::HasTensorOperation() const {
   bool has_tensor_cal = false;
   for (auto i : info_.captured_locals.values) {
     AObject *value = i->GetVobj();
     int op = i->GetOpcode();
     if (Utils::IsCallOp(op)) {
-      py::object callable = i->input(0)->GetVobj()->GetPyObject();
-      if (callable.ptr() == nullptr) {
-        return true;
-      }
-      if (CheckJitConstexpr(callable) || CheckMSConstexpr(callable)) {
+      if (SkipSpecialFuncOrPrimitive(i->input(0)->GetVobj()->GetPyObject())) {
         continue;
       }
       if (value->GetType() == AObject::kTypeCFunction) {

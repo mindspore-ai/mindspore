@@ -18,6 +18,7 @@
 #define MINDSPORE_PI_JIT_FUNCTION_NODE_H_
 
 #include <memory>
+#include <string>
 #include "include/common/utils/convert_utils_py.h"
 #include "pipeline/jit/pi/auto_grad/edge.h"
 #include "pipeline/jit/pi/auto_grad/function_context.h"
@@ -106,7 +107,7 @@ class FunctionNode : public FunctionContext {
   /// \param[in] index The index of the input.
   void AddNextEdge(const FunctionNodePtr &node) { edges_.push_back(std::make_shared<Edge>(node)); }
 
-  /// \brief Save the grad value to python object.
+  /// \brief Dump the function node and its children.
   ///
   /// \param[in] grad The grad value.
   void SaveGradToPyObject(const py::object &grad);
@@ -118,11 +119,20 @@ class FunctionNode : public FunctionContext {
   /// \note This function node must be the tensor who call backward from python.
   void Apply(const py::object &grad);
 
+  /// \brief Generate the description of the tree nodes.
+  std::string ToString() const;
+
  private:
   /// \brief Generate the grad value of function.
   ///
   /// \param[in] dout The gradient of the output.
   void ApplyInner(const ValuePtr &dout);
+
+  /// \brief Dump the function node and its children.
+  ///
+  /// \param[in] ss The string stream.
+  /// \param[in] prefix The prefix string for this node.
+  void Dump(std::stringstream &ss, const std::string &prefix) const;
 
   /// \brief The called function.
   py::object tensor_;

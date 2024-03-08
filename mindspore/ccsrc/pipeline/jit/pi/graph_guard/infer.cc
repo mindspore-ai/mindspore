@@ -428,6 +428,36 @@ void FixOpDefAttributes(PrimitivePyPtr prim, std::vector<PyObject *> *list) {
   }
 }
 
+static py::object ConvertCppTensor(const py::object &any) {
+  PyObject *op = any.ptr();
+  PyTypeObject *cpp_tensor_type = GetPybindType<mindspore::tensor::Tensor>();
+
+  if (Py_IS_TYPE(op, cpp_tensor_type)) {
+    py::object tp = py::reinterpret_borrow<py::object>(GetMsTensorType());
+    return tp(any);
+  }
+
+  if (PyTuple_Check(op) || PyList_Check(op)) {
+    for (Py_ssize_t i = 0; i < Py_SIZE(op); ++i) {
+      PyObject **item = PyTuple_Check(op) ? &PyTuple_GET_ITEM(op, i) : &PyList_GET_ITEM(op, i);
+      PyObject *new_item = ConvertCppTensor(py::cast<py::object>(*item)).inc_ref().ptr();
+      Py_SETREF(*item, new_item);
+    }
+    return any;
+  }
+
+  if (PyDict_Check(op)) {
+    Py_ssize_t pos = 0;
+    PyObject *key, *value;
+    while (PyDict_Next(op, &pos, &key, &value)) {
+      py::object new_value = ConvertCppTensor(py::cast<py::object>(value));
+      PyDict_SetItem(op, key, new_value.ptr());
+    }
+    return any;
+  }
+  return any;
+}
+
 // return new reference
 PyObject *InferEngine::InferPrimitive(PyObject *primitive, const std::vector<PyObject *> &args, bool *is_abstract) {
   if (!SupportInfer(primitive)) {
@@ -457,8 +487,12 @@ PyObject *InferEngine::InferPrimitive(PyObject *primitive, const std::vector<PyO
     py::object pyObj;
     if (abs != nullptr) {
       pyObj = FuncGraphBuilder::ConvertToPyObj(abs);
-    } else {
-      pyObj = MakeObjectFromAbstract(abs->BuildShape(), abs->BuildType(), is_abstract);
+      if (pyObj.ptr() == nullptr) {
+        pyObj = MakeObjectFromAbstract(abs->BuildShape(), abs->BuildType(), is_abstract);
+      }
+      if (pyObj.ptr() != nullptr) {
+        pyObj = ConvertCppTensor(pyObj);
+      }
     }
     return pyObj.inc_ref().ptr();
   } else if (prim->HasPyObj()) {
@@ -534,7 +568,8 @@ static TypePtr GetDTypeForStubTensor(PyObject *stubtensor) {
   return dtype;
 }
 
-static PyObject *InferShape(PyObject *arg) {
+static PyObject *InferShape(PyObject *, const std::vector<PyObject *> &args) {
+  PyObject *arg = args[0];
   ShapeVector shape;
   if (IsStubTensor(arg)) {
     shape = GetShapeForStubTensor(arg);
@@ -552,7 +587,8 @@ static PyObject *InferShape(PyObject *arg) {
   return tuple;
 }
 
-static PyObject *InferDType(PyObject *arg) {
+static PyObject *InferDType(PyObject *, const std::vector<PyObject *> &args) {
+  PyObject *arg = args[0];
   mindspore::TypePtr dtype;
   if (IsStubTensor(arg)) {
     dtype = GetDTypeForStubTensor(arg);
@@ -571,7 +607,8 @@ static PyObject *InferDType(PyObject *arg) {
   return type;
 }
 
-static PyObject *InferRank(PyObject *arg) {
+static PyObject *InferRank(PyObject *, const std::vector<PyObject *> &args) {
+  PyObject *arg = args[0];
   ShapeVector shape;
   if (IsStubTensor(arg)) {
     shape = GetShapeForStubTensor(arg);
@@ -583,7 +620,8 @@ static PyObject *InferRank(PyObject *arg) {
   return PyLong_FromSize_t(shape.size());
 }
 
-static PyObject *InferSize(PyObject *arg) {
+static PyObject *InferSize(PyObject *, const std::vector<PyObject *> &args) {
+  PyObject *arg = args[0];
   ShapeVector shape;
   if (IsStubTensor(arg)) {
     shape = GetShapeForStubTensor(arg);
@@ -599,47 +637,37 @@ static PyObject *InferSize(PyObject *arg) {
   return PyLong_FromSize_t(elements);
 }
 
-static PyObject *InferValue(PyObject *primitive, const std::vector<PyObject *> &arglist, const PrimitivePyPtr &prim) {
-  static const std::unordered_set<std::string> specialize = {
-    "ListToTensor",
-    "TupleToTensor",
-    "ScalarToTensor",
-    "make_range",
+const SpecialPrimitiveInferFuncMap &GetSpecialPrimitiveInferFunc() {
+  constexpr const auto CallValue = [](PyObject *prim, const std::vector<PyObject *> &args) {
+    PyObject *res = PyObject_Vectorcall(prim, args.data(), args.size(), nullptr);
+    PyErr_Clear();
+    return res;
   };
-  if (specialize.find(prim->name()) == specialize.end()) {
-    return nullptr;
-  }
-  PyObject *res = PyObject_Vectorcall(primitive, arglist.data(), arglist.size(), nullptr);
-  PyErr_Clear();
-  return res;
+  static const SpecialPrimitiveInferFuncMap specialize = {
+    {"Size", InferSize},
+    {"Rank", InferRank},
+    {"DType", InferDType},
+    {"Shape", InferShape},
+    {"TileSize", CallValue},
+    {"ListToTensor", CallValue},
+    {"TupleToTensor", CallValue},
+    {"ScalarToTensor", CallValue},
+    {"make_range", CallValue},
+    {"ConvertToMsTensor", CallValue},
+    {"ConvertToAdapterTensor", CallValue},
+    {"IsShapeUnKnown", [](PyObject *, const std::vector<PyObject *> &) { Py_RETURN_FALSE; }},
+  };
+  return specialize;
 }
 
 PyObject *InferEngine::InferSpecialPrimitive(PyObject *primitive, const std::vector<PyObject *> &arglist,
                                              const PrimitivePyPtr &prim) {
-  if (prim->name() == "Shape" && arglist.size() == 1) {
-    return InferShape(arglist[0]);
-  } else if (prim->name() == "DType" && arglist.size() == 1) {
-    return InferDType(arglist[0]);
-  } else if (prim->name() == "Rank" && arglist.size() == 1) {
-    return InferRank(arglist[0]);
-  } else if (prim->name() == "TileSize" && arglist.size() == 3) {
-    py::tuple tuple(3);
-    tuple[0] = py::cast<py::object>(arglist[0]);
-    tuple[1] = py::cast<py::object>(arglist[1]);
-    tuple[2] = py::cast<py::object>(arglist[2]);
-    PyObject *t = PyObject_Call(primitive, tuple.ptr(), nullptr);
-    if (PyErr_Occurred()) {
-      PyObject *et, *ev, *tb;
-      PyErr_Fetch(&et, &ev, &tb);
-      MS_LOG(EXCEPTION) << "Shape infer [TileSize] failed " << std::string(py::str(ev));
-      PyErr_Clear();
-    }
-    return t;
-  } else if (prim->name() == "Size" && arglist.size() == 1) {
-    return InferSize(arglist[0]);
-  } else {
-    return InferValue(primitive, arglist, prim);
+  std::string name = py::cast<py::object>(primitive).attr("name").cast<std::string>();
+  auto iter = GetSpecialPrimitiveInferFunc().find(name);
+  if (iter != GetSpecialPrimitiveInferFunc().end()) {
+    return iter->second(primitive, arglist);
   }
+  return nullptr;
 }
 
 bool InferEngine::SupportInfer(PyObject *primitive) {
@@ -661,6 +689,9 @@ bool InferEngine::SupportInfer(PyObject *primitive) {
   auto frontend_func_impl = ops::GetOpFrontendFuncImplPtr(op_name);
   auto op_def = ops::GetOpDef(op_name);
   if (frontend_func_impl != nullptr || op_def != nullptr) {
+    return true;
+  }
+  if (GetSpecialPrimitiveInferFunc().find(prim->name()) != GetSpecialPrimitiveInferFunc().end()) {
     return true;
   }
   return false;
