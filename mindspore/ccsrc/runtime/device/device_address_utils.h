@@ -22,6 +22,7 @@
 #include <memory>
 #include "runtime/hardware/device_context.h"
 #include "runtime/pynative/op_compiler.h"
+#include "kernel/kernel.h"
 
 namespace mindspore {
 using device::DeviceContext;
@@ -129,6 +130,15 @@ class BACKEND_EXPORT DeviceAddressUtils {
   // Convert old_device_address to contiguous device address.
   static device::DeviceAddressPtr ConvertContiguousDeviceAddressSync(
     const device::DeviceAddressPtr &old_device_address);
+
+ private:
+  static void UpdateKernelTensorHostInfoByNode(const kernel::KernelTensorPtr &kernel_tensor, const AnfNodePtr &node,
+                                               size_t output_idx);
+
+  // Whether device address of anf node is valid and device address type
+  // is consistent with device type, for example, device address type
+  // DeviceType::kGPU should be used on GPU device
+  static bool NodeDeviceAddressExist(const DeviceContext *device_context, const AnfNodePtr &node, size_t index);
 };
 }  // namespace runtime
 }  // namespace mindspore
