@@ -31,6 +31,10 @@ namespace mindspore {
 ::HcclDataType HcomUtil::ConvertHcclType(TypeId type_id) {
   auto iter = kConstOpHcomDataTypeMap.find(type_id);
   if (iter == kConstOpHcomDataTypeMap.end()) {
+    if (type_id == TypeId::kNumberTypeComplex64) {
+      MS_LOG(INFO) << "HcomDataType Can't support Current Ascend Data Type : Complex64, Convert it to Float32";
+      return HCCL_DATA_TYPE_FP32;
+    }
     MS_LOG(EXCEPTION) << "HcomDataType can't support Current Ascend Data Type : " << TypeIdLabel(type_id);
   }
   return iter->second;

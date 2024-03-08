@@ -21,5 +21,7 @@ namespace transform {
 REGISTER_ACL_OP(Concat).set_extra_supported_datatype({ge::DT_BOOL});
 
 REGISTER_ACL_OP(ConcatD).set_extra_supported_datatype({ge::DT_BOOL});
+
+REGISTER_ACL_OP(SplitD).set_extra_supported_datatype({ge::DT_COMPLEX64}).set_complex_parallel_concerned();
 }  // namespace transform
 }  // namespace mindspore

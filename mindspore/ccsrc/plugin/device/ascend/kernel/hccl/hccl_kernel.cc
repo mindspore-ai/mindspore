@@ -32,6 +32,7 @@
 
 using AscendCollectiveCommLib = mindspore::device::ascend::AscendCollectiveCommLib;
 namespace {
+constexpr int64_t kComplex64ConvertFloat32Num = 2;
 static std::map<std::string, std::string> kMsOpNameToHcomHcclType = {
   {mindspore::kAllReduceOpName, mindspore::kHcomOpTypeAllReduce},
   {mindspore::kReduceOpName, mindspore::kHcomOpTypeReduce},
@@ -54,6 +55,18 @@ std::string MsOpNameToHcomOpType(const std::string &ms_op_type) {
 
 namespace mindspore {
 namespace kernel {
+void CheckReduceOpUnderComplexInput(const std::vector<KernelTensor *> &inputs, const PrimitivePtr &prim,
+                                    const HcclReduceOp &op_type) {
+  MS_EXCEPTION_IF_NULL(prim);
+  if (!inputs.empty() && (*inputs.cbegin())->dtype_id() == TypeId::kNumberTypeComplex64 &&
+      op_type != ::HcclReduceOp::HCCL_REDUCE_SUM) {
+    std::string hcom_op_type;
+    HcomUtil::GetHcomAttr<std::string>(prim, kAttrOp, &hcom_op_type);
+    MS_LOG(EXCEPTION) << prim->name() << " doesn't support " << hcom_op_type
+                      << " and just support sum in the case of complex input.";
+  }
+}
+
 void HcclKernelFactory::Register(const std::string &name, HcclKernelCreater &&fun) {
   hccl_kernel_map_.emplace(name, fun);
 }
@@ -103,6 +116,7 @@ bool HcclKernel::Init(const std::vector<KernelTensor *> &inputs, const std::vect
       MS_LOG(ERROR) << "GetHcomOperationType fail!";
       return false;
     }
+    CheckReduceOpUnderComplexInput(inputs, primitive_, op_type_);
   } else if (kernel_name_ == kBroadcastOpName) {
     if (!HcomUtil::GetHcomAttr<uint32_t, int64_t>(primitive_, kAttrRootRank, &root_id_)) {
       MS_LOG(ERROR) << "GetHcomRootId fail!";
@@ -159,10 +173,20 @@ bool HcclKernel::CalcTypeShapeAndCount(const std::vector<KernelTensor *> &inputs
   hccl_kernel_output_shape_list_.clear();
 
   // set hccl kernel input/output shape
-  std::transform(inputs.cbegin(), inputs.cend(), std::back_inserter(hccl_kernel_input_shape_list_),
-                 [](KernelTensor *kernel_tensor) { return kernel_tensor->GetShapeVector(); });
-  std::transform(outputs.cbegin(), outputs.cend(), std::back_inserter(hccl_kernel_output_shape_list_),
-                 [](KernelTensor *kernel_tensor) { return kernel_tensor->GetShapeVector(); });
+  std::function<ShapeVector(KernelTensor *)> GetTensorShape;
+  if (!inputs.empty() && (*inputs.cbegin())->dtype_id() == TypeId::kNumberTypeComplex64) {
+    GetTensorShape = [](KernelTensor *kernel_tensor) {
+      // When the input type is Complex64, the type is converted to Float32 and the shape is increased
+      auto re_shape = kernel_tensor->GetShapeVector();
+      re_shape.push_back(kComplex64ConvertFloat32Num);
+      return re_shape;
+    };
+  } else {
+    GetTensorShape = [](KernelTensor *kernel_tensor) { return kernel_tensor->GetShapeVector(); };
+  }
+
+  std::transform(inputs.cbegin(), inputs.cend(), std::back_inserter(hccl_kernel_input_shape_list_), GetTensorShape);
+  std::transform(outputs.cbegin(), outputs.cend(), std::back_inserter(hccl_kernel_output_shape_list_), GetTensorShape);
 
   // set hccl data_type and count
   if (!HcomUtil::GetHcomDataType(kernel_name_, inputs, outputs, &hccl_data_type_list_)) {
