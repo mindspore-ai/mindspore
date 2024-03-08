@@ -97,7 +97,7 @@ def test_contiguous_dim4_with_transpose():
     assert np.allclose(output.asnumpy(), transpose_result.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -117,7 +117,7 @@ def test_contiguous_dim2_with_slice():
     assert np.allclose(output.asnumpy(), slice_res.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -137,7 +137,7 @@ def test_contiguous_dim3_with_slice():
     assert np.allclose(output.asnumpy(), slice_res.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
