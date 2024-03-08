@@ -19,13 +19,10 @@
 #include <utility>
 #include "frontend/optimizer/ad/grad.h"
 #include "ops/structure_op_name.h"
-#include "ops/other_op_name.h"
-#include "ops/nn_optimizer_op_name.h"
 #include "ops/framework_op_name.h"
 #include "ops/sequence_ops.h"
 #include "pipeline/pynative/pynative_utils.h"
 #include "pipeline/pynative/grad/jit/jit_dfunctor.h"
-#include "include/common/utils/anfalgo.h"
 #include "ir/func_graph_cloner.h"
 #include "pipeline/pynative/grad/bprop_task.h"
 #include "pipeline/jit/ps/pass.h"
@@ -208,6 +205,11 @@ void Jit::RunReplace(const CNodePtr &added_node, const ValuePtrList &total_outpu
     // Get new tensors.
     std::vector<ValuePtr> new_values;
     for (size_t j = index; j < index + output_num; ++j) {
+      // If jit graph reused in dynamic shape, added output tensor should be update tensor address in run actor
+      auto tensor = total_output_tensors[j]->cast<tensor::TensorPtr>();
+      if (tensor != nullptr) {
+        tensor->set_is_forward_output(true);
+      }
       (void)new_values.emplace_back(total_output_tensors[j]);
     }
     index = index + output_num;
@@ -312,7 +314,7 @@ void Jit::MakeAdjointForJit(const FrontendOpRunInfoPtr &op_run_info, const GradE
   PyNativeAlgo::Common::SetGraphInputAndWeightsInfo(op_run_info, jit_forward_graph, top_cell);
   RecordForwardGraphForJit(op_run_info, grad_executor, jit_forward_graph);
   // Connect grad graph of jit to context.
-  (void)PyNativeAlgo::Common::SetValueGradInfo(op_run_info->real_out, top_cell, TensorGradType::kOpOutput);
+  (void)PyNativeAlgo::Common::SetValueGradInfo(op_run_info->real_out, top_cell, InputType::kOpOutput);
   MS_EXCEPTION_IF_NULL(jit_forward_graph);
   MS_EXCEPTION_IF_NULL(jit_forward_graph->output()->abstract());
   if (grad_executor->dynamic_shape()->enable_unknown_shape() &&
@@ -325,6 +327,7 @@ void Jit::MakeAdjointForJit(const FrontendOpRunInfoPtr &op_run_info, const GradE
   op_grad_info->input_value = op_run_info->op_grad_info->input_value;
   op_grad_info->input_abs = op_run_info->op_grad_info->input_abs;
   op_grad_info->out_value = op_run_info->real_out;
+  op_grad_info->output_size = PyNativeAlgo::Common::GetValueSize(op_grad_info->out_value);
   op_grad_info->input_value_grad_type = op_run_info->op_grad_info->input_value_grad_type;
   if (jit_forward_graph->output()->abstract()->isa<abstract::AbstractAny>()) {
     op_grad_info->out_abs = PyNativeAlgo::Common::SetAbstractValueToAnyValue(op_grad_info->out_value->ToAbstract());
@@ -343,15 +346,16 @@ void Jit::MakeAdjointForJit(const FrontendOpRunInfoPtr &op_run_info, const GradE
   grad_param->fg = jit_grad_graph;
   grad_param->source_fg = jit_forward_graph;
   grad_param->graph_cache_key = graph_phase_;
+  grad_param->jit_out_has_dict = JitOutputHasDict(op_grad_info->out_abs);
   auto auto_grad_cell_ptr = top_cell->auto_grad_cell_ptr();
   KPynativeWithFProp(grad_executor, auto_grad_cell_ptr, grad_param);
   top_cell->set_need_do_final_opt(true);
   top_cell->set_has_call_graph(grad_executor->use_dynamic_shape_process());
   top_cell->set_has_control_flow(compile_info_.is_control_flow_);
-  top_cell->set_jit_out_has_dict(JitOutputHasDict(op_grad_info->out_abs));
+  top_cell->set_jit_out_has_dict(grad_param->jit_out_has_dict);
 }
 
-void Jit::KPynativeWithFProp(const GradExecutor *grad_executor, const autograd::AutoGradCellImplPtr &auto_grad_cell_ptr,
+void Jit::KPynativeWithFProp(const GradExecutor *grad_executor, const autograd::AutoGradPtr &auto_grad_cell_ptr,
                              const GradParamPtr &grad_param) const {
   grad_executor->WaitBpropTask();
   MS_EXCEPTION_IF_NULL(auto_grad_cell_ptr);
@@ -383,26 +387,34 @@ void Jit::GradJitInner(const FrontendOpRunInfoPtr &op_run_info, const GradExecut
   bool added_v_is_empty = true;
   if (added_out_v != nullptr) {
     ValuePtrList total_output_tensors;
-    PyNativeAlgo::DataConvert::FlattenValueSeqArg(added_out_v, &total_output_tensors);
+    PyNativeAlgo::DataConvert::FlattenValueSeqArg(added_out_v, false, &total_output_tensors);
     flatten_v = std::make_shared<ValueTuple>(total_output_tensors);
     added_v_is_empty = total_output_tensors.empty();
     ReplaceAddedCnodeActualOutput(added_node, total_output_tensors);
   }
 
-  // Step 2: Update actual output tensors used in grad graph.
+  // Step 2: Check or set set_use_dynamic_shape_process flag
+  auto node_info = std::make_shared<DynamicDetectNodeInfo>(nullptr, op_run_info->op_grad_info->input_abs,
+                                                           op_run_info->base_op_run_info.abstract);
+  node_info->is_graph_node = true;
+  node_info->graph_phase = graph_phase_;
+  grad_executor->dynamic_shape()->CheckNodeDynamic(grad_executor->top_cell(), op_run_info->op_grad_info->input_value,
+                                                   node_info);
+
+  // Step 3: Update actual output tensors used in grad graph.
   MS_LOG(DEBUG) << "jit actual output value: " << op_run_info->real_out->ToString();
-  grad_executor->top_cell()->GetOpInfo(op_run_info);
+  grad_executor->top_cell()->GetOpInfo(op_run_info, true);
   grad_executor->UpdateTopCellForwardTensorInfoInBpropGraph(op_run_info->op_info, op_run_info->real_out,
                                                             op_run_info->base_op_run_info.stream_id);
 
-  // Step 3: Update output tensors of added forward nodes, which are added to return node of jit func graph.
+  // Step 4: Update output tensors of added forward nodes, which are added to return node of jit func graph.
   if (!added_v_is_empty) {
     if (grad_executor->use_dynamic_shape_process()) {
       // If jit is not control flow, the jit is executed by actor under dynamic shape, and valuenode
       // will be updated
       if (!compile_info_.is_control_flow_) {
-        UpdateJitlForwardTensorInfoInBpropGraph(op_run_info->op_info + kAddedValue, flatten_v,
-                                                op_run_info->base_op_run_info.stream_id);
+        UpdateJitForwardTensorInfoInBpropGraph(op_run_info->op_info + kAddedValue, flatten_v,
+                                               op_run_info->base_op_run_info.stream_id);
       }
     } else {
       // Static shape will run by replace
@@ -413,17 +425,10 @@ void Jit::GradJitInner(const FrontendOpRunInfoPtr &op_run_info, const GradExecut
 
   // Make Adjoint for grad graph
   MakeAdjointForJit(op_run_info, grad_executor, primal_func_graph, jit_grad_graph, !added_v_is_empty);
-
-  auto node_info = std::make_shared<DynamicDetectNodeInfo>(nullptr, op_run_info->op_grad_info->input_abs,
-                                                           op_run_info->base_op_run_info.abstract);
-  node_info->is_graph_node = true;
-  node_info->graph_phase = op_run_info->base_op_run_info.op_name;
-  grad_executor->dynamic_shape()->CheckNodeDynamic(grad_executor->top_cell(), op_run_info->op_grad_info->input_value,
-                                                   node_info);
 }
 
-void Jit::UpdateJitlForwardTensorInfoInBpropGraph(const std::string &op_info, const ValuePtr &v,
-                                                  const size_t &stream_id) {
+void Jit::UpdateJitForwardTensorInfoInBpropGraph(const std::string &op_info, const ValuePtr &v,
+                                                 const size_t &stream_id) {
   const auto it = graph_phase_with_replace_info_.find(graph_phase_);
   if (it == graph_phase_with_replace_info_.end()) {
     MS_LOG(DEBUG) << "Jit " << graph_phase_ << " run firstly";

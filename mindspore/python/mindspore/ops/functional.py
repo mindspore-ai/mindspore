@@ -298,7 +298,7 @@ tensor_operator_registry.register('orgqr', orgqr)
 # ms cannot support Tensor(True) compare
 tensor_operator_registry.register('__eq__', equal)
 tensor_operator_registry.register('__ne__', not_equal)
-tensor_operator_registry.register('__neg__', neg_tensor)
+tensor_operator_registry.register('__neg__', neg)
 tensor_operator_registry.register('__lt__', tensor_lt)
 tensor_operator_registry.register('__le__', tensor_le)
 tensor_operator_registry.register('__gt__', tensor_gt)

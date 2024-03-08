@@ -77,7 +77,7 @@ class GeGraphExecutor : public GraphExecutor {
   DeviceAddressPtr CreateOutputDeviceAddress(const KernelGraphPtr &kernel_graph,
                                              const KernelWithIndex &output_with_index,
                                              size_t need_alloc_output_cnt) const;
-
+  void AllocMemory(const KernelGraphPtr &graph);
   mindspore::HashMap<session::KernelGraph *, GeInputData> input_datas_;
   mindspore::HashMap<session::KernelGraph *, GeOutputData> output_datas_;
   std::map<std::string, int64_t> graph_sink_size_;

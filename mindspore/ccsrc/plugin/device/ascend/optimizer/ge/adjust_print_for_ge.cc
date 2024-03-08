@@ -118,6 +118,8 @@ const AnfNodePtr AdjustPrintForGe::Process(const FuncGraphPtr &func_graph, const
   auto new_print_node = func_graph->NewCNode(new_inputs);
   MS_EXCEPTION_IF_NULL(new_print_node);
   new_print_node->set_abstract(node->abstract());
+  new_print_node->set_scope(node->scope());
+  new_print_node->set_fullname_with_scope(node->fullname_with_scope());
   common::AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), new_print_node);
 
   // set attribute channel_name and dynamic_input_sizes of print node
@@ -135,6 +137,7 @@ const AnfNodePtr AdjustPrintForGe::Process(const FuncGraphPtr &func_graph, const
   auto new_depend_node = func_graph->NewCNode(depend_input);
   MS_EXCEPTION_IF_NULL(new_depend_node);
   new_depend_node->set_abstract(value_node->abstract());
+  new_depend_node->set_scope(node->scope());
 
   return new_depend_node;
 }

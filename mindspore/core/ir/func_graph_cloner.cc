@@ -267,9 +267,12 @@ void Cloner::CloneFuncGraphValueNodes(const FuncGraphPtr &func_graph, const Func
   for (auto &cnode : cnodes) {
     MS_EXCEPTION_IF_NULL(cnode.first);
     MS_EXCEPTION_IF_NULL(cnode.first->first);
-    auto parent = cnode.first->first->cast_ptr<CNode>();
-    MS_EXCEPTION_IF_NULL(parent);
-    const auto &valuenode = parent->input(IntToSize(cnode.first->second));
+    auto user_cnode = cnode.first->first->cast_ptr<CNode>();
+    MS_EXCEPTION_IF_NULL(user_cnode);
+    const auto &valuenode = user_cnode->input(IntToSize(cnode.first->second));
+    if (valuenode == nullptr) {
+      continue;
+    }
     CloneFuncGraphValueNode(valuenode, target_func_graph);
   }
 }

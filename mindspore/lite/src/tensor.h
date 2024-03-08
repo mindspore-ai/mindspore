@@ -69,7 +69,7 @@ enum CompressType {
   kFSEInfer = 6
 };
 
-class MS_API Tensor {
+class Tensor {
  public:
   Tensor() { tensor_c_ = {false, kTypeUnknown, NHWC, VarTensor, nullptr, 0}; }
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -465,6 +465,7 @@ class TupleListGetitemDependReorder : public AnfVisitor {
     auto item_node = NewCNode({NewValueNode(prim::kPrimTupleGetItem), x_, c_}, fg);
     item_node->set_abstract(node->abstract());
     auto depend_node = NewCNode({depend_cnode->input(0), item_node, y_}, fg);
+    depend_node->set_abstract(node->abstract());
     auto abs = x_->abstract();
     if (abs == nullptr) {
       return depend_node;
@@ -511,9 +512,10 @@ class TupleListGetitemDependReorder : public AnfVisitor {
   void Visit(const CNodePtr &cnode) override {
     // {prim::kPrimDepend, X, Y}
     constexpr auto depend_input_size = 3;
+    constexpr auto depend_index_two = 2;
     if (IsPrimitiveCNode(cnode, prim::kPrimDepend) && cnode->size() == depend_input_size) {
       x_ = cnode->input(1);
-      y_ = cnode->input(2);
+      y_ = cnode->input(depend_index_two);
     }
   }
 

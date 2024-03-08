@@ -66,7 +66,6 @@ tensor::TensorPtr Conv2DAscendCustomize(const std::shared_ptr<OpRunner> &op, con
                                         const ValueTuplePtr &stride, const ValueTuplePtr &padding,
                                         const ValueTuplePtr &dilation, const Int64ImmPtr &groups) {
   OpRunner::InferOpOutput(op, input_tensor, weight_tensor, bias_tensor, stride, padding, dilation, groups);
-
   // Convert ValueTuple to std::vector
   std::vector<int64_t> stride_vector = ConvertValueTupleToVector<int64_t>(stride);
   std::vector<int64_t> padding_vector = ConvertValueTupleToVector<int64_t>(padding);

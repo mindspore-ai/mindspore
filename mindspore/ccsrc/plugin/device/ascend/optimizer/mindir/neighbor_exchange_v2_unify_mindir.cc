@@ -347,6 +347,7 @@ CNodePtr CreateAllToAllvNode(const FuncGraphPtr &graph, const CNodePtr &neighbor
   // create alltoallv node
   auto all_to_all_v = pass.NewCNode(all_to_all_v_input, graph);
   MS_EXCEPTION_IF_NULL(all_to_all_v);
+  all_to_all_v->set_scope(neighbor_exchange_v2_or_grad->scope());
   common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, shapes, all_to_all_v.get());
 
   common::AnfAlgo::SetNodeAttr(kAttrSendRankIds, MakeValue<std::vector<int64_t>>(real_send_rank_ids), all_to_all_v);
@@ -372,6 +373,7 @@ CNodePtr CreateAllToAllvNode(const FuncGraphPtr &graph, const CNodePtr &neighbor
                                             all_to_all_v, input};
     auto depend = graph->NewCNode(depend_input);
     MS_EXCEPTION_IF_NULL(depend);
+    depend->set_scope(neighbor_exchange_v2_or_grad->scope());
     depend->set_abstract(all_to_all_v->abstract());
     return depend;
   }
@@ -436,6 +438,7 @@ std::vector<CNodePtr> NeighborExchangeV2UnifyMindIR::CreateSplitNodes(const Func
 
       split_v = CreateSplitNode(graph, split_input, shape, splitvs_is_first[i], !splitvs_is_first[i], splitvs_dim[i],
                                 send_lens, dtype, &num_split, *this);
+      split_v->set_scope(neighbor_exchange_v2->scope());
     }
     (void)split_nodes.emplace_back(split_v);
     split_num->push_back(num_split);
@@ -480,6 +483,7 @@ std::vector<CNodePtr> NeighborExchangeV2UnifyMindIR::CreateSplitNodes(const Func
       }
       split_v = CreateSplitNode(graph, split_input, shape_tmp, corner_splitvs_is_first[i], !corner_splitvs_is_first[i],
                                 kWDim, send_lens, dtype, &num_split, *this);
+      split_v->set_scope(neighbor_exchange_v2->scope());
     }
     (void)split_nodes.emplace_back(split_v);
     split_num->push_back(num_split);
@@ -589,6 +593,7 @@ CNodePtr NeighborExchangeV2UnifyMindIR::CreateMiddleConcat(
 
   std::vector<TypeId> concat_output_dtype = {common::AnfAlgo::GetOutputInferDataType(all_to_all_v_outputs[0], 0UL)};
   auto concat_all = CreateConcatNode(graph, concat_input_all, SizeToLong(concat_dim), input_num_all);
+  concat_all->set_scope(neighbor_exchange_v2->scope());
   common::AnfAlgo::SetOutputInferTypeAndShape(concat_output_dtype, {single_shape}, concat_all.get());
   return concat_all;
 }
@@ -704,6 +709,7 @@ CNodePtr NeighborExchangeV2UnifyMindIR::CreateConcatNodes(const FuncGraphPtr &gr
 
   std::vector<TypeId> concat_right_output_dtype = {common::AnfAlgo::GetOutputInferDataType(concat_input_all[1], 0)};
   auto concat_all = CreateConcatNode(graph, concat_input_all, static_cast<int64_t>(kWDim), input_nums_all);
+  concat_all->set_scope(neighbor_exchange_v2->scope());
   common::AnfAlgo::SetOutputInferTypeAndShape(concat_right_output_dtype, {shape_all}, concat_all.get());
   return concat_all;
 }
@@ -745,6 +751,7 @@ std::vector<CNodePtr> NeighborExchangeV2GradUnifyMindIR::CreateSplitNodesForGrad
                                            neighbor_exchange_v2_grad_input};
     split_v_top_bottom =
       CreateSplitNode(graph, split_input, shape, is_top, is_bottom, kHDim, send_lens, dtype, &num_split_h, *this);
+    split_v_top_bottom->set_scope(neighbor_exchange_v2_grad->scope());
   }
   (void)split_nodes.emplace_back(split_v_top_bottom);
   split_num->push_back(num_split_h);
@@ -786,6 +793,7 @@ std::vector<CNodePtr> NeighborExchangeV2GradUnifyMindIR::CreateSplitNodesForGrad
       base_shape[kHDim] = size_split_h[i];
       auto split_v_left_right = CreateSplitNode(graph, split_input, base_shape, is_left, is_right, kWDim, send_lens,
                                                 dtype, &num_split_w, *this);
+      split_v_left_right->set_scope(neighbor_exchange_v2_grad->scope());
       (void)split_nodes.emplace_back(split_v_left_right);
       split_num->push_back(num_split_w);
     }
@@ -855,6 +863,7 @@ CNodePtr NeighborExchangeV2GradUnifyMindIR::CreateSplitGradNodes(const FuncGraph
                                             centerx, all_to_all_v};
     auto depend = graph->NewCNode(depend_input);
     MS_EXCEPTION_IF_NULL(depend);
+    depend->set_scope(neighbor_exchange_v2_grad->scope());
     depend->set_abstract(centerx->abstract());
     return depend;
   }
@@ -895,11 +904,12 @@ CNodePtr NeighborExchangeV2GradUnifyMindIR::CreateSplitGradNodes(const FuncGraph
       auto pad =
         CreatePadNode(graph, all_to_all_v_outputs[output_index], begins[i], sizes[i], shape_info, centerx_dtype);
       ++output_index;
+      pad->set_scope(neighbor_exchange_v2_grad->scope());
       (void)pad_nodes.emplace_back(pad);
     }
   }
 
-  // create add node
+  // create addn node
   std::vector<AnfNodePtr> addn_inputs = {centerx};
   int64_t pad_num = 1;
   for (auto pad : pad_nodes) {
@@ -913,8 +923,10 @@ CNodePtr NeighborExchangeV2GradUnifyMindIR::CreateSplitGradNodes(const FuncGraph
     ++pad_num;
   }
   auto addn_input = CreateMakeTupleNode(graph, addn_inputs);
+  addn_input->set_scope(neighbor_exchange_v2_grad->scope());
   auto addn = NewCNode({NewValueNode(std::make_shared<Primitive>(kAddNOpName)), addn_input}, graph);
   MS_EXCEPTION_IF_NULL(addn);
+  addn->set_scope(neighbor_exchange_v2_grad->scope());
   common::AnfAlgo::SetOutputTypeAndDetailShape({centerx_dtype}, {base_shape}, addn.get());
   common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue<std::vector<int64_t>>({pad_num}), addn);
   common::AnfAlgo::SetNodeAttr(kAttrN, MakeValue(pad_num), addn);

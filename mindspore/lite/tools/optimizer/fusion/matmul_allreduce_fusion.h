@@ -36,19 +36,23 @@ class MatMulAllReduceFusion : public MultiplePatternProcessPass {
  private:
   VectorRef DefineMatMulAllReducePattern() const;
   VectorRef DefineMatMulBiasAddAllReducePattern() const;
+  VectorRef DefineMatMulDequantAllReducePattern() const;
   CNodePtr CreateMatMulAllReduceNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const;
   CNodePtr CreateMatMulBiasAddAllReduceNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const;
+  CNodePtr CreateMatMulDequantAllReduceNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const;
   PrimitivePtr CreateMatMulAllReducePrim(const PrimitivePtr &allreduce_prim, const PrimitivePtr &matmul_prim) const;
 
  protected:
   const std::string kPatternNameMatMulAllReduce = "MatMulAllReduce";
   const std::string kPatternNameMatMulBiasAddAllReduce = "MatMulBiasAddAllReduce";
+  const std::string kPatternNameMatMulDequantAllReduce = "MatMulDequantAllReduce";
   const std::string kAttrNameGroup = "group";
   const std::string kAttrNameCommRenuse = "comm_renuse";
   const std::string kAttrNameFusion = "fusion";
   const std::string kAttrNameOp = "op";
   const std::string kAttrNameTransposeA = "transpose_a";
   const std::string kAttrNameTransposeB = "transpose_b";
+  const std::string kAttrNameNeedFusedXoffsetToBias = "need_fused_x_offset_to_bias";
 };
 }  // namespace mindspore::opt
 #endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_MATMUL_ALLREDUCE_FUSION_H_

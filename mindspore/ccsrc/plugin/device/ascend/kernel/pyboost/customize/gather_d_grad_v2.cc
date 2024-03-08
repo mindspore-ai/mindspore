@@ -31,6 +31,7 @@ tensor::TensorPtr GatherDGradAscendCustomize(const std::shared_ptr<OpRunner> &op
   MS_EXCEPTION_IF_NULL(x);
   MS_EXCEPTION_IF_NULL(index);
   MS_EXCEPTION_IF_NULL(d_out);
+
   OpRunner::InferOpOutput(op, x, dim, index, d_out);
   auto dim_value = dim->value();
   PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), d_out);

@@ -44,7 +44,7 @@ inline const auto log_pi = std::log(pi);
 
 using mindspore::ops::BroadcastGradientArgsInferValue;
 
-NodePtrList ReturnZeros(BpropIRBuilder *ib);
+NodePtrList ReturnZeros(BpropBuilder *ib);
 // normalize the axis to [0, rank)
 int64_t NormalizeAxis(int64_t axis, size_t rank);
 
@@ -52,12 +52,13 @@ std::vector<int64_t> GetTransposeAxis(const std::vector<int64_t> &x_shape, int64
 
 std::vector<int64_t> TupleDiv(const std::vector<int64_t> &x, const std::vector<int64_t> &y);
 
-std::vector<int64_t> ReduceShape(const std::vector<int64_t> &x, const std::vector<int64_t> &axis);
+std::vector<int64_t> ReduceShape(const std::vector<int64_t> &x, const std::vector<int64_t> &axis,
+                                 bool skip_mode = false);
 
 int64_t CheckRange(int64_t idx, int64_t dim_size);
 
-NodePtrList BinopGradCommon(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &y, const NodePtr &dx,
-                            const NodePtr &dy, size_t shift = 0UL);
+NodePtrList BinopGradCommon(BpropBuilder *ib, const NodePtr &x, const NodePtr &y, const NodePtr &dx, const NodePtr &dy,
+                            size_t shift = 0UL);
 
 std::vector<int64_t> Range(int64_t start, int64_t stop, int64_t step = 1);
 std::vector<int64_t> Range(int64_t stop);
@@ -75,7 +76,7 @@ int64_t GetIntValue(const NodePtr &node);
 std::vector<int64_t> GetIntList(const ValuePtr &value);
 std::vector<int64_t> GetIntList(const NodePtr &node);
 
-NodePtr GetEps(BpropIRBuilder *ib, const TypePtr &type);
+NodePtr GetEps(BpropBuilder *ib, const TypePtr &type);
 std::vector<int64_t> GenerateInverseIndex(const std::vector<int64_t> &x_shp, int64_t axis_v, int64_t batch_dims = 0);
 std::vector<int64_t> GenerateShapeIndex(const std::vector<int64_t> &out_shp, const std::vector<int64_t> &ind_shp,
                                         int64_t axis_v, int64_t batch_dims = 0);
@@ -84,20 +85,20 @@ std::vector<int64_t> RegenerateOutputShape(const std::vector<int64_t> &x_shp, co
 std::vector<int64_t> InvertPermutation(const std::vector<int64_t> &perm);
 std::vector<int64_t> GetTransposition(int64_t axis, int64_t rank);
 
-NodePtr SumGrad(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &axis, const NodePtr &dout,
-                const bool keep_dims = false);
-NodePtr MinOrMaxGrad(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &axis, const NodePtr &keep_dims,
+NodePtr SumGrad(BpropBuilder *ib, const NodePtr &x, const NodePtr &axis, const NodePtr &dout, bool keep_dims = false,
+                bool skip_mode = false);
+NodePtr MinOrMaxGrad(BpropBuilder *ib, const NodePtr &x, const NodePtr &axis, const NodePtr &keep_dims,
                      const NodePtr &out, const NodePtr &dout);
 std::pair<ShapeVector, ShapeVector> SplitShapeIndex(const ShapeVector &input_shape, const ShapeVector &axis);
-NodePtr ArgminOrArgmaxGrad(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &axis, const NodePtr &keep_dims,
+NodePtr ArgminOrArgmaxGrad(BpropBuilder *ib, const NodePtr &x, const NodePtr &axis, const NodePtr &keep_dims,
                            const NodePtr &out, const NodePtr &dout, const bool is_max);
 TypeId PromoteBinaryDtype(TypeId t1, TypeId t2);
-NodePtr LGamma(BpropIRBuilder *ib, const NodePtr &x);
+NodePtr LGamma(BpropBuilder *ib, const NodePtr &x);
 bool CheckType(const TypePtr &check_type, const std::set<TypePtr> &template_types);
 ShapeVector PoolToNHWC(const ShapeVector &v);
 ShapeVector ConvToNHWC(const ShapeVector &v);
 ShapeVector GetShapeByRange(const ShapeVector &v, int64_t begin = 0, int64_t end = -1);
-NodePtr MatrixTranspose(BpropIRBuilder *ib, const NodePtr &x);
-NodePtr Adjoint(BpropIRBuilder *ib, const NodePtr &x);
+NodePtr MatrixTranspose(BpropBuilder *ib, const NodePtr &x);
+NodePtr Adjoint(BpropBuilder *ib, const NodePtr &x);
 }  // namespace mindspore::expander::bprop
 #endif  // MINDSPORE_CCSRC_FRONTEND_EXPANDER_BPROP_GRAD_OPS_COMMON_UTILS_H_

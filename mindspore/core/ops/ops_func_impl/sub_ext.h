@@ -19,14 +19,11 @@
 
 #include <vector>
 #include "mindapi/base/macros.h"
-#include "ops/ops_func_impl/binary_op.h"
+#include "ops/ops_func_impl/add_ext.h"
 
 namespace mindspore {
 namespace ops {
-class MIND_API SubExtFuncImpl : public BinaryOpFuncImpl {
- public:
-  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
-};
+class MIND_API SubExtFuncImpl : public AddExtFuncImpl {};
 }  // namespace ops
 }  // namespace mindspore
 

@@ -44,13 +44,13 @@ class StridedSliceCoreMLOp : public CoreMLOp {
   int HandleAxis() override;
 
  private:
-  const schema::StridedSlice *strided_slice_prim_;
-  int *begins_idx_ = nullptr;
-  bool *begins_mask_ = nullptr;
-  int *ends_idx_ = nullptr;
-  bool *ends_mask_ = nullptr;
-  int *strides_ = nullptr;
-  bool *squeeze_mask_ = nullptr;
+  const schema::StridedSlice *strided_slice_prim_{nullptr};
+  int *begins_idx_{nullptr};
+  bool *begins_mask_{nullptr};
+  int *ends_idx_{nullptr};
+  bool *ends_mask_{nullptr};
+  int *strides_{nullptr};
+  bool *squeeze_mask_{nullptr};
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_COREML_OP_STRIDED_SLICE_COREML_H_

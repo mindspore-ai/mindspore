@@ -111,8 +111,8 @@ PrimitivePtr CastBaseOperation::GetPrimByTypeId(const TypeId &type_id) const {
   auto cast_prim = std::make_shared<Primitive>(kCastOpName);
   std::vector<std::string> input_names = {"x", "dst_type"};
   std::vector<std::string> output_names = {"output"};
-  cast_prim->AddAttr("input_names", MakeValue(input_names));
-  cast_prim->AddAttr("output_names", MakeValue(output_names));
+  (void)cast_prim->AddAttr("input_names", MakeValue(input_names));
+  (void)cast_prim->AddAttr("output_names", MakeValue(output_names));
   type_prim_cache_[type_id] = cast_prim;
   cast_prim->EnableSharedMutex();
   return cast_prim;
@@ -219,7 +219,7 @@ void CastBaseOperation::GetDstType(const FrontendOpRunInfoPtr &op_run_info,
         if (arg_type_id == kNumberTypeInt8) {
           has_tensor_int8 = true;
         }
-        int64_t cur_priority = type_priority->second;
+        int64_t cur_priority = static_cast<int64_t>(type_priority->second);
         if (op_run_info->source_type[index] != ops::OP_DTYPE::DT_BEGIN) {
           cur_priority = cur_priority - kLowerPriority;
           if (arg_type_id == kNumberTypeFloat32) {
@@ -289,7 +289,7 @@ tensor::TensorPtr CastBaseOperation::TensorToDstDtypeValue(const ValuePtr &src_v
   MS_EXCEPTION_IF_NULL(src_value);
   auto src_tensor = src_value->cast<tensor::TensorPtr>();
   MS_EXCEPTION_IF_NULL(src_tensor);
-  src_tensor->set_data_type(dst_type_id);
+  (void)src_tensor->set_data_type(dst_type_id);
   return src_tensor;
 }
 

@@ -54,21 +54,6 @@ std::vector<int64_t> GetTransposeAxis(const std::vector<int64_t> &x_shape, int64
   return reverse_axis;
 }
 }  // namespace
-REG_FALLBACK_BUILDER("AddExt").SetBody(BODYFUNC(ib) {
-  auto x = ib->GetInput(kIndex0);
-  auto y = ib->GetInput(kIndex1);
-  auto alpha = ib->GetInput(kIndex2);
-  auto alpha_tensor = ib->Cast(ib->ScalarToTensor(alpha), y->dtype());
-  return {x + y * alpha_tensor};
-});
-
-REG_FALLBACK_BUILDER("SubExt").SetBody(BODYFUNC(ib) {
-  auto x = ib->GetInput(kIndex0);
-  auto y = ib->GetInput(kIndex1);
-  auto alpha = ib->GetInput(kIndex2);
-  auto alpha_tensor = ib->Cast(ib->ScalarToTensor(alpha), y->dtype());
-  return {x - y * alpha_tensor};
-});
 
 REG_FALLBACK_BUILDER("SiLU").SetBody(BODYFUNC(ib) {
   auto input_x = ib->GetInput(kIndex0);

@@ -1,7 +1,7 @@
 #operator gelu
 gelu:
     args:
-        x:
+        input:
             dtype: tensor
     returns:
         output: 

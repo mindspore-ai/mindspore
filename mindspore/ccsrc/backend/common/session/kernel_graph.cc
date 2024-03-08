@@ -427,6 +427,8 @@ CNodePtr KernelGraph::NewCNode(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
   auto new_cnode = std::make_shared<CNode>(*cnode);
   new_cnode->CloneUserData(cnode);
+  new_cnode->set_scope(cnode->scope());
+  new_cnode->set_fullname_with_scope(cnode->fullname_with_scope());
   // if a cnode is created not from front,this cnode won't be in map,so when replace it,we shouldn't update map
   if (BackendNodeExistInFrontBackendMap(cnode)) {
     FrontBackendlMapUpdate(cnode, new_cnode);
@@ -602,6 +604,7 @@ AnfNodePtr KernelGraph::TransCNodeTuple(const CNodePtr &node) {
     abstract_list.emplace_back(out->abstract()->Clone());
   }
   auto make_tuple = NewCNode(std::move(make_tuple_inputs_list));
+  make_tuple->set_scope(node->scope());
   make_tuple->set_abstract(std::make_shared<abstract::AbstractTuple>(abstract_list));
   return make_tuple;
 }

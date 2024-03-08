@@ -1,5 +1,5 @@
 /**
- * Copyright 2022-2023 Huawei Technologies Co., Ltd
+ * Copyright 2022-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -116,5 +116,22 @@ CUST_INPUT_MAP(LinearSumAssignment) = {
 CUST_ATTR_MAP(LinearSumAssignment) = EMPTY_ATTR_MAP;
 CUST_OUTPUT_MAP(LinearSumAssignment) = {{0, OUTPUT_DESC(row_ind)}, {1, OUTPUT_DESC(col_ind)}};
 REG_ADPT_DESC(LinearSumAssignment, prim::kPrimLinearSumAssignment->name(), CUST_ADPT_DESC(LinearSumAssignment));
+
+// SolveTriangular
+CUST_INPUT_MAP(SolveTriangular) = {{1, INPUT_DESC(a)},
+                                   {2, INPUT_DESC(b)},
+                                   {3, INPUT_DESC(trans)},
+                                   {4, INPUT_DESC(lower)},
+                                   {5, INPUT_DESC(unit_diagonal)}};
+CUST_ATTR_MAP(SolveTriangular) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(SolveTriangular) = {{0, OUTPUT_DESC(x)}};
+REG_ADPT_DESC(SolveTriangular, prim::kPrimSolveTriangular->name(), CUST_ADPT_DESC(SolveTriangular));
+
+// SolveTriangularGrad
+CUST_INPUT_MAP(SolveTriangularGrad) = {{1, INPUT_DESC(a)},     {2, INPUT_DESC(x)},     {3, INPUT_DESC(dx)},
+                                       {4, INPUT_DESC(trans)}, {5, INPUT_DESC(lower)}, {6, INPUT_DESC(unit_diagonal)}};
+CUST_ATTR_MAP(SolveTriangularGrad) = EMPTY_ATTR_MAP;
+CUST_OUTPUT_MAP(SolveTriangularGrad) = {{0, OUTPUT_DESC(da)}, {1, OUTPUT_DESC(db)}};
+REG_ADPT_DESC(SolveTriangularGrad, prim::kPrimSolveTriangularGrad->name(), CUST_ADPT_DESC(SolveTriangularGrad));
 
 }  // namespace mindspore::transform

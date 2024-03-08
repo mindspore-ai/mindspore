@@ -375,8 +375,7 @@ class GradOperation(GradOperation_):
             @_wrap_func
             def after_grad(*args, **kwargs):
                 self._pynative_forward_run(fn, grad_, weights, args, kwargs)
-                _pynative_executor.grad(fn, grad_, weights, self.grad_position, *args, **kwargs)
-                out = _pynative_executor()
+                out = _pynative_executor.grad(fn, grad_, weights, self.grad_position, *args, **kwargs)
                 out = _grads_divided_by_device_num_if_recomputation(out)
                 return out
         else:
@@ -600,8 +599,7 @@ class _Grad(GradOperation_):
             @_wrap_func
             def after_grad(*args, **kwargs):
                 res = self._pynative_forward_run(fn, grad_, weights, args, kwargs)
-                _pynative_executor.grad(fn, grad_, weights, grad_position, *args, **kwargs)
-                out = _pynative_executor()
+                out = _pynative_executor.grad(fn, grad_, weights, grad_position, *args, **kwargs)
                 out = _grads_divided_by_device_num_if_recomputation(out)
                 if self.return_ids and out:
                     out = _combine_with_ids(grad_position, weights, out)

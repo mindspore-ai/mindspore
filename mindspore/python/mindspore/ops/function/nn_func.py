@@ -40,7 +40,7 @@ from mindspore.ops.operations.nn_ops import ChannelShuffle
 from mindspore.ops.operations.nn_ops import TripletMarginLoss
 from mindspore.ops.operations._sequence_ops import TupleToTensor, TensorToTuple, ListToTensor
 from mindspore.common.api import _function_forbid_reuse
-from mindspore.ops.auto_generate import log_softmax, prelu, celu, relu, fast_gelu, silu, elu, sigmoid, bias_add, relu6
+from mindspore.ops.auto_generate import log_softmax, prelu, celu, relu, fast_gelu, silu, elu, sigmoid, relu6
 
 abs_ = P.Abs()
 add_ = P.Add()
@@ -2691,6 +2691,7 @@ def softshrink(x, lambd=0.5):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
         >>> from mindspore import Tensor
         >>> from mindspore import ops
         >>> import numpy as np
@@ -2884,11 +2885,12 @@ def dense(input, weight, bias=None):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore
         >>> from mindspore import Tensor, ops
-        >>> input = mindspore.Tensor([[-1., 1., 2.], [-3., -3., 1.]], mindspore.float32)
-        >>> weight = mindspore.Tensor([[-2., -2., -2.], [0., -1., 0.]], mindspore.float32)
-        >>> bias = mindspore.Tensor([0., 1.], mindspore.float32)
-        >>> output = mindspore.ops.dense(input, weight, bias)
+        >>> input = Tensor([[-1., 1., 2.], [-3., -3., 1.]], mindspore.float32)
+        >>> weight = Tensor([[-2., -2., -2.], [0., -1., 0.]], mindspore.float32)
+        >>> bias = Tensor([0., 1.], mindspore.float32)
+        >>> output = ops.dense(input, weight, bias)
         >>> print(output)
         [[-4.  0.]
          [10.  4.]]
@@ -3720,6 +3722,7 @@ def l1_loss(input, target, reduction='mean'):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore as ms
         >>> from mindspore import Tensor, ops
         >>> from mindspore import dtype as mstype
         >>> x = ms.Tensor([[1, 2, 3], [4, 5, 6]], mstype.float32)
@@ -5007,7 +5010,7 @@ def conv1d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
         >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.arange(64).reshape((4, 4, 4)), mindspore.float32)
         >>> weight = Tensor(np.arange(8).reshape((2, 2, 2)), mindspore.float32)
-        >>> bias = Tensor([-0.12345, 2.7683], ms.float32)
+        >>> bias = Tensor([-0.12345, 2.7683], mindspore.float32)
         >>> output = ops.conv1d(x, weight, pad_mode='pad', padding=(1,), bias=bias, groups=2)
         >>> print(output.shape)
         (4, 2, 5)
@@ -5517,6 +5520,45 @@ def batch_norm(input_x, running_mean, running_var, weight, bias, training=False,
     batch_norm_op = _get_cache_prim(P.BatchNorm)(is_training=training, epsilon=eps, momentum=momentum)
     output = batch_norm_op(input_x, weight, bias, running_mean, running_var)
     return output[0]
+
+
+def bias_add(input_x, bias):
+    r"""
+    Returns the sum of the `input_x` and the `bias` Tensor. Before adding, the `bias` Tensor will be broadcasted to be
+    consistent with the shape of the `input_x` Tensor.
+
+    Args:
+        input_x (Tensor): The input tensor. The shape can be 2-5 dimensions. Supported dtypes:
+
+            - Ascend/CPU: all Number type.
+            - GPU: float16, float32, int8.
+
+        bias (Tensor): The bias tensor, with shape :math:`(C)`. C must be the same as channel dimension C of
+            `input_x`. It has the same type as `input_x`.
+
+    Returns:
+        Tensor, with the same shape and data type as `input_x`.
+
+    Raises:
+        TypeError: If `input_x` or `bias` is not a Tensor.
+        TypeError: If dtype of `input_x` and `bias` is inconsistent.
+        TypeError: If dimension of `input_x` is not in the range [2, 5].
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> input_x = Tensor(np.arange(6).reshape((2, 3)), mindspore.float32)
+        >>> bias = Tensor(np.random.random(3).reshape((3)), mindspore.float32)
+        >>> output = ops.bias_add(input_x, bias)
+        >>> print(output.shape)
+        (2, 3)
+    """
+    bias_add_op = _get_cache_prim(P.BiasAdd)(data_format="NCHW")
+    return bias_add_op(input_x, bias)
 
 
 def binary_cross_entropy(logits, labels, weight=None, reduction='mean'):
@@ -6149,7 +6191,7 @@ def multilabel_soft_margin_loss(input, target, weight=None, reduction='mean'):
     return _get_loss(loss, reduction, cls_name)
 
 
-def gelu(input_x, approximate='none'):
+def gelu(input, approximate='none'):
     r"""
     Gaussian Error Linear Units activation function.
 
@@ -6176,16 +6218,16 @@ def gelu(input_x, approximate='none'):
         :align: center
 
     Args:
-        input_x (Tensor): The input of the activation function GeLU, the data type is float16, float32 or float64.
+        input (Tensor): The input of the activation function GeLU, the data type is float16, float32 or float64.
         approximate (str): the gelu approximation algorithm to use. Acceptable vaslues are ``'none'`` and ``'tanh'`` .
             Default: ``'none'`` .
 
     Returns:
-        Tensor, with the same type and shape as `input_x`.
+        Tensor, with the same type and shape as `input`.
 
     Raises:
-        TypeError: If `input_x` is not a Tensor.
-        TypeError: If dtype of `input_x` is not float16, float32 or float64.
+        TypeError: If `input` is not a Tensor.
+        TypeError: If dtype of `input` is not float16, float32 or float64.
         ValueError: If `approximate` value is neither `none` or `tanh`.
 
     Supported Platforms:
@@ -6202,17 +6244,17 @@ def gelu(input_x, approximate='none'):
     if approximate not in ['none', 'tanh']:
         raise ValueError("For ops.gelu, approximate value should be either 'none' or 'tanh'.")
 
-    x_dtype = dtype_(input_x)
+    x_dtype = dtype_(input)
     if x_dtype not in [mstype.float16, mstype.float32, mstype.float64]:
         raise TypeError(f"For gelu, the input dtype must be float16, float32 or float64, "
                         f"but got {x_dtype}.")
     if approximate == 'tanh':
-        output = gelu_(input_x)
+        output = gelu_(input)
     else:
         output = sqrt_(Tensor(2.0, x_dtype))
-        output = div_(input_x, output)
+        output = div_(input, output)
         output = erf_(output) + Tensor(1.0, x_dtype)
-        output = input_x * output * Tensor(0.5, x_dtype)
+        output = input * output * Tensor(0.5, x_dtype)
 
     return output
 

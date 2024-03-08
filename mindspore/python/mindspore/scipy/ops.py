@@ -1,4 +1,4 @@
-# Copyright 2021-2023 Huawei Technologies Co., Ltd
+# Copyright 2021-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,77 +15,19 @@
 """Operators for scipy submodule"""
 from mindspore import _checkparam as validator
 from ..ops import PrimitiveWithInfer, prim_attr_register, Primitive
+from ..ops.auto_generate import solve_triangular
 from ..common import dtype as mstype
 
 
-class SolveTriangular(Primitive):
-    """
-    Solve the equation `a x = b` for `x`, assuming a is a triangular matrix.
-
-    Args:
-        a (Tensor): A triangular matrix of shape :math:`(..., N, N)`.
-        b (Tensor): A Tensor of shape :math:`(M,)` or :math:`(..., N, M)`.
-            Right-hand side matrix in :math:`a x = b`.
-        lower (bool, optional): Use only data contained in the lower triangle of `a`.
-            Default is to use upper triangle.
-        trans (0, 1, 2, 'N', 'T', 'C', optional):
-            Type of system to solve:
-            trans:        system:
-                0 or 'N'        a x  = b
-                1 or 'T'        a^T x = b
-                2 or 'C'        a^H x = b
-        unit_diagonal (bool, optional): If True, diagonal elements of :math:`a` are assumed to be 1 and
-            will not be referenced.
-        overwrite_b (bool, optional): Allow overwriting data in :math:`b` (may enhance performance)
-        check_finite (bool, optional): Whether to check that the input matrices contain only finite numbers.
-            Disabling may give a performance gain, but may result in problems
-            (crashes, non-termination) if the inputs do contain infinities or NaNs.
-
-    Returns:
-        Tensor of shape :math:`(..., M,)` or :math:`(..., M, N)`,
-        which is the solution to the system :math:`a x = b`.
-        Shape of :math:`x` matches :math:`b`.
-
-    Raises:
-        LinAlgError: If :math:`a` is singular
-
-    Supported Platforms:
-        ``GPU`` ``CPU``
-
-    Examples:
-        Solve the lower triangular system :math:`a x = b`, where:
-
-                 [3  0  0  0]       [4]
-            a =  [2  1  0  0]   b = [2]
-                 [1  0  1  0]       [4]
-                 [1  1  1  1]       [2]
-
-        >>> import numpy as onp
-        >>> from mindspore import Tensor
-        >>> import mindspore.numpy as mnp
-        >>> from mindspore.scipy.ops import SolveTriangular
-        >>> a = Tensor(onp.array([[3, 0, 0, 0], [2, 1, 0, 0], [1, 0, 1, 0], [1, 1, 1, 1]], onp.float64))
-        >>> b = Tensor(onp.array([4, 2, 4, 2], onp.float64))
-        >>> solve_triangular = SolveTriangular(lower=True, unit_diagonal=False, trans='N')
-        >>> x = solve_triangular(a, b)
-        >>> print(x)
-        [ 1.33333333 -0.66666667  2.66666667 -1.33333333]
-        >>> print(mnp.dot(a, x))  # Check the result
-        [4. 2. 4. 2.]
-    """
-
-    @prim_attr_register
+class SolveTriangular():
     def __init__(self, lower: bool = False, unit_diagonal: bool = False, trans: str = 'N'):
-        """Initialize SolveTriangular"""
-        super(SolveTriangular, self).__init__("SolveTriangular")
-        self.lower = validator.check_value_type(
-            "lower", lower, [bool], self.name)
-        self.unit_diagonal = validator.check_value_type(
-            "unit_diagonal", unit_diagonal, [bool], self.name)
-        self.trans = validator.check_value_type(
-            "trans", trans, [str], self.name)
+        self.lower = lower
+        self.unit_diagonal = unit_diagonal
+        trans_str_to_int = {'N': 0, 'T': 1, 'C': 2}
+        self.trans = trans_str_to_int.get(trans)
 
-        self.init_prim_io_names(inputs=['a', 'b'], outputs=['output'])
+    def __call__(self, a, b):
+        return solve_triangular(a, b, self.trans, self.lower, self.unit_diagonal)
 
 
 class Eig(PrimitiveWithInfer):
@@ -218,4 +160,4 @@ class LinearSumAssignment(Primitive):
         self.init_prim_io_names(inputs=['cost_matrix', 'dimension_limit', 'maximize'], outputs=['row_ind', 'col_ind'])
 
 # pylint: disable=C0413,W0611
-from .ops_grad import get_bprpo_eigh, get_bprpo_trsm
+from .ops_grad import get_bprpo_eigh

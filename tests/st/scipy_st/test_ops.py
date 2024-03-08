@@ -1,4 +1,4 @@
-# Copyright 2021-2023 Huawei Technologies Co., Ltd
+# Copyright 2021-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,12 +21,13 @@ import scipy as scp
 from scipy.linalg import solve_triangular, eig, eigvals
 
 import mindspore as ms
+import mindspore.scipy as mscp
 from mindspore import Tensor, context, nn
 from mindspore.common import dtype as mstype
 from mindspore.common.api import _pynative_executor
 from mindspore.ops.operations.math_ops import Cholesky
 from mindspore.ops.operations.linalg_ops import Eigh
-from mindspore.scipy.ops import Eig, SolveTriangular, LinearSumAssignment
+from mindspore.scipy.ops import Eig, LinearSumAssignment
 from mindspore.scipy.utils import _nd_transpose
 from tests.st.scipy_st.utils import create_sym_pos_matrix, create_random_rank_matrix, compare_eigen_decomposition
 
@@ -36,10 +37,13 @@ np.random.seed(0)
 class SolveTriangularNet(nn.Cell):
     def __init__(self, lower: bool = False, unit_diagonal: bool = False, trans: str = 'N'):
         super(SolveTriangularNet, self).__init__()
-        self.solve = SolveTriangular(lower, unit_diagonal, trans)
+        self.solve = mscp.linalg.solve_triangular
+        self.lower = lower
+        self.unit_diagonal = unit_diagonal
+        self.trans = trans
 
     def construct(self, a, b):
-        return self.solve(a, b)
+        return self.solve(a, b, self.trans, self.lower, self.unit_diagonal)
 
 
 class LinearSumAssignmentNet(nn.Cell):
@@ -308,8 +312,8 @@ def test_solve_triangular_2d(n: int, dtype, lower: bool, unit_diagonal: bool, tr
     a = (np.random.random((n, n)) + np.eye(n)).astype(dtype)
     b = np.random.random((n, 1)).astype(dtype)
     expect = solve_triangular(a, b, lower=lower, unit_diagonal=unit_diagonal, trans=trans)
-    solve = SolveTriangular(lower, unit_diagonal, trans)
-    output = solve(Tensor(a), Tensor(b)).asnumpy()
+    solve = mscp.linalg.solve_triangular
+    output = solve(Tensor(a), Tensor(b), lower=lower, unit_diagonal=unit_diagonal, trans=trans).asnumpy()
     np.testing.assert_almost_equal(expect, output, decimal=5)
 
 
@@ -332,8 +336,8 @@ def test_solve_triangular_1d(n: int, dtype, lower: bool, unit_diagonal: bool, tr
     a = (np.random.random((n, n)) + np.eye(n)).astype(dtype)
     b = np.random.random(n).astype(dtype)
     expect = solve_triangular(a, b, lower=lower, unit_diagonal=unit_diagonal, trans=trans)
-    solve = SolveTriangular(lower, unit_diagonal, trans)
-    output = solve(Tensor(a), Tensor(b)).asnumpy()
+    solve = mscp.linalg.solve_triangular
+    output = solve(Tensor(a), Tensor(b), lower=lower, unit_diagonal=unit_diagonal, trans=trans).asnumpy()
     np.testing.assert_almost_equal(expect, output, decimal=5)
 
 
@@ -396,7 +400,7 @@ def test_solve_triangular_batched(n: int, batch, dtype, lower: bool, unit_diagon
     b = create_random_rank_matrix(batch + (n,), dtype)
 
     # mindspore
-    output = SolveTriangular(lower, unit_diagonal, trans)(Tensor(a), Tensor(b)).asnumpy()
+    output = mscp.linalg.solve_triangular(Tensor(a), Tensor(b), trans, lower, unit_diagonal).asnumpy()
 
     # scipy
     batch_num = reduce(lambda x, y: x * y, batch)
@@ -424,20 +428,20 @@ def test_solve_triangular_error_dims():
     a = create_random_rank_matrix((10,), dtype=np.float32)
     b = create_random_rank_matrix((10,), dtype=np.float32)
     with pytest.raises(ValueError):
-        SolveTriangular()(Tensor(a), Tensor(b))
+        mscp.linalg.solve_triangular(Tensor(a), Tensor(b))
         _pynative_executor.sync()
 
     # matrix a is not square matrix
     a = create_random_rank_matrix((4, 5), dtype=np.float32)
     b = create_random_rank_matrix((10,), dtype=np.float32)
     with pytest.raises(ValueError):
-        SolveTriangular()(Tensor(a), Tensor(b))
+        mscp.linalg.solve_triangular(Tensor(a), Tensor(b))
         _pynative_executor.sync()
 
     a = create_random_rank_matrix((3, 5, 4, 5), dtype=np.float32)
     b = create_random_rank_matrix((3, 5, 10,), dtype=np.float32)
     with pytest.raises(ValueError):
-        SolveTriangular()(Tensor(a), Tensor(b))
+        mscp.linalg.solve_triangular(Tensor(a), Tensor(b))
         _pynative_executor.sync()
 
 
@@ -455,33 +459,33 @@ def test_solve_triangular_error_dims_mismatched():
     a = create_random_rank_matrix((3, 4, 5, 5), dtype=np.float32)
     b = create_random_rank_matrix((5, 10,), dtype=np.float32)
     with pytest.raises(ValueError):
-        SolveTriangular()(Tensor(a), Tensor(b))
+        mscp.linalg.solve_triangular(Tensor(a), Tensor(b))
         _pynative_executor.sync()
 
     # last two dimensions not matched
     a = create_random_rank_matrix((3, 4, 5, 5), dtype=np.float32)
     b = create_random_rank_matrix((5, 10, 4), dtype=np.float32)
     with pytest.raises(ValueError):
-        SolveTriangular()(Tensor(a), Tensor(b))
+        mscp.linalg.solve_triangular(Tensor(a), Tensor(b))
         _pynative_executor.sync()
 
     a = create_random_rank_matrix((3, 4, 5, 5), dtype=np.float32)
     b = create_random_rank_matrix((5, 10, 4, 1), dtype=np.float32)
     with pytest.raises(ValueError):
-        SolveTriangular()(Tensor(a), Tensor(b))
+        mscp.linalg.solve_triangular(Tensor(a), Tensor(b))
         _pynative_executor.sync()
 
     # batch dimensions not matched
     a = create_random_rank_matrix((3, 4, 5, 5), dtype=np.float32)
     b = create_random_rank_matrix((5, 10, 5), dtype=np.float32)
     with pytest.raises(ValueError):
-        SolveTriangular()(Tensor(a), Tensor(b))
+        mscp.linalg.solve_triangular(Tensor(a), Tensor(b))
         _pynative_executor.sync()
 
     a = create_random_rank_matrix((3, 4, 5, 5), dtype=np.float32)
     b = create_random_rank_matrix((5, 10, 5, 1), dtype=np.float32)
     with pytest.raises(ValueError):
-        SolveTriangular()(Tensor(a), Tensor(b))
+        mscp.linalg.solve_triangular(Tensor(a), Tensor(b))
         _pynative_executor.sync()
 
 

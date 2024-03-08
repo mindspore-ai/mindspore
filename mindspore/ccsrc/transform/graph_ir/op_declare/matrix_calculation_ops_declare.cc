@@ -106,6 +106,7 @@ INPUT_MAP(MatMul) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
 ATTR_MAP(MatMul) = {{"transpose_x1", ATTR_DESC(transpose_x1, AnyTraits<bool>())},
                     {"transpose_x2", ATTR_DESC(transpose_x2, AnyTraits<bool>())}};
 OUTPUT_MAP(MatMul) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(MatMul, kNameMatMul, ADPT_DESC(MatMulV2))
 
 // MatMulV2
 INPUT_MAP(MatMulV2) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}, {3, INPUT_DESC(bias)}};

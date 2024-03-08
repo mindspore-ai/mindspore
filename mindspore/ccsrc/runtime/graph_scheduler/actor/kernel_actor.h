@@ -39,7 +39,7 @@ namespace runtime {
 using mindspore::device::DeviceContext;
 using mindspore::device::KernelInfo;
 using mindspore::kernel::Address;
-using mindspore::kernel::KernelLaunchInfo;
+using mindspore::kernel::KernelLaunchAddr;
 using mindspore::kernel::KernelMod;
 using mindspore::kernel::KernelTensor;
 using mindspore::kernel::KernelTensorPtr;
@@ -80,7 +80,6 @@ class KernelActor : public DebugAwareActor {
         somas_info_(nullptr) {
     (void)device_contexts_.emplace_back(device_context);
     is_dynamic_shape_ = common::AnfAlgo::IsDynamicShape(kernel_) || common::AnfAlgo::IsDynamicSequence(kernel_);
-    enable_callback_ = common::GetEnv("GRAPH_OP_RUN") == "1";
 
     kernel_async_infer_aid_ = KernelAsyncInferActor::GetInstance()->GetAID();
     kernel_async_resize_aid_ = KernelAsyncResizeActor::GetInstance()->GetAID();
@@ -234,6 +233,9 @@ class KernelActor : public DebugAwareActor {
   // Whether skip the kernel launch.
   bool is_launch_skipped_;
 
+  // Recoreded mem info.
+  KernelLaunchAddr mem_info_;
+
   // The ignore input addresses when the kernel launch.
   std::vector<size_t> launch_ignored_inputs_;
 
@@ -245,7 +247,6 @@ class KernelActor : public DebugAwareActor {
   // The graph output node and index use somas info.
   std::set<size_t> somas_graph_output_indexes_;
 
-  bool enable_callback_{false};
   CallbackCounterPtr callback_counter_;
 
   // The stream resource of the KernelActor to launch kernel.

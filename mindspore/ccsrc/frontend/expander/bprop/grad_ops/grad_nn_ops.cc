@@ -29,7 +29,7 @@ namespace {
 const int kConstNumberTwo = 2;
 }  // namespace
 
-NodePtrList Dropout2DBpropExpander(BpropIRBuilder *ib) {
+NodePtrList Dropout2DBpropExpander(BpropBuilder *ib) {
   auto keep_prob = GetValue<float>(ib->GetAttr("keep_prob"));
   auto x = ib->GetInput(kIndex0);
   auto out = ib->GetInput(kIndex1);
@@ -45,7 +45,7 @@ NodePtrList Dropout2DBpropExpander(BpropIRBuilder *ib) {
   return {dy};
 }
 
-NodePtrList GeLUBpropExpander(BpropIRBuilder *ib) {
+NodePtrList GeLUBpropExpander(BpropBuilder *ib) {
   auto x = ib->GetInput(kIndex0);
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
@@ -53,44 +53,46 @@ NodePtrList GeLUBpropExpander(BpropIRBuilder *ib) {
   return {dx};
 }
 
-NodePtrList FastGeLUBpropExpander(BpropIRBuilder *ib) {
+NodePtrList FastGeLUBpropExpander(BpropBuilder *ib) {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);
   auto dx = ib->Emit("FastGeLUGrad", {dout, x});
   return {dx};
 }
 
-NodePtrList Conv2DTransposeBpropExpander(BpropIRBuilder *ib) {
+NodePtrList Conv2DTransposeBpropExpander(BpropBuilder *ib) {
   auto x = ib->GetInput(kIndex0);
   auto w = ib->GetInput(kIndex1);
   auto f_sizes = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex4);
   auto w_shape = ib->Shape(w);
-  auto dx = ib->Emit(kConv2DOpName, {dout, w},
-                     {{"pad_mode", ib->GetAttr("pad_mode")},
-                      {"pad", ib->GetAttr("pad")},
-                      {"dilation", ib->GetAttr("dilation")},
-                      {"stride", ib->GetAttr("stride")},
-                      {"group", ib->GetAttr("group")},
-                      {"groups", ib->GetAttr("group")},
-                      {"format", ib->GetAttr("format")},
-                      {"data_format", ib->GetAttr("format")},
-                      {"out_channel", ib->GetAttr("out_channel")},
-                      {"kernel_size", ib->GetAttr("kernel_size")},
-                      {"mode", MakeValue(1)}});
-  auto dw = ib->Emit(kConv2DBackpropFilterOpName, {x, dout, w_shape},
-                     {{"mode", ib->GetAttr("mode")},
-                      {"dilation", ib->GetAttr("dilation")},
-                      {"stride", ib->GetAttr("stride")},
-                      {"group", ib->GetAttr("group")},
-                      {"groups", ib->GetAttr("group")},
-                      {"format", ib->GetAttr("format")},
-                      {"data_format", ib->GetAttr("format")},
-                      {"out_channel", ib->GetAttr("out_channel")},
-                      {"kernel_size", ib->GetAttr("kernel_size")},
-                      {"pad_mode", ib->GetAttr("pad_mode")},
-                      {"pad", ib->GetAttr("pad")},
-                      {"pad_list", ib->GetAttr("pad_list")}});
+  auto dx = x->need_compute_grad_out() ? ib->Emit(kConv2DOpName, {dout, w},
+                                                  {{"pad_mode", ib->GetAttr("pad_mode")},
+                                                   {"pad", ib->GetAttr("pad")},
+                                                   {"dilation", ib->GetAttr("dilation")},
+                                                   {"stride", ib->GetAttr("stride")},
+                                                   {"group", ib->GetAttr("group")},
+                                                   {"groups", ib->GetAttr("group")},
+                                                   {"format", ib->GetAttr("format")},
+                                                   {"data_format", ib->GetAttr("format")},
+                                                   {"out_channel", ib->GetAttr("out_channel")},
+                                                   {"kernel_size", ib->GetAttr("kernel_size")},
+                                                   {"mode", MakeValue(1)}})
+                                       : ib->OutZeros(x);
+  auto dw = w->need_compute_grad_out() ? ib->Emit(kConv2DBackpropFilterOpName, {x, dout, w_shape},
+                                                  {{"mode", ib->GetAttr("mode")},
+                                                   {"dilation", ib->GetAttr("dilation")},
+                                                   {"stride", ib->GetAttr("stride")},
+                                                   {"group", ib->GetAttr("group")},
+                                                   {"groups", ib->GetAttr("group")},
+                                                   {"format", ib->GetAttr("format")},
+                                                   {"data_format", ib->GetAttr("format")},
+                                                   {"out_channel", ib->GetAttr("out_channel")},
+                                                   {"kernel_size", ib->GetAttr("kernel_size")},
+                                                   {"pad_mode", ib->GetAttr("pad_mode")},
+                                                   {"pad", ib->GetAttr("pad")},
+                                                   {"pad_list", ib->GetAttr("pad_list")}})
+                                       : ib->OutZeros(w);
   return {dx, dw, ib->OutZeros(f_sizes)};
 }
 
@@ -194,32 +196,35 @@ REG_BPROP_BUILDER("Conv2D").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto format = GetValue<std::string>(ib->GetAttr("format"));
   auto dilation = GetValue<ShapeVector>(ib->GetAttr("dilation"));
   auto stride = GetValue<ShapeVector>(ib->GetAttr("stride"));
-  auto dx = ib->Emit(kConv2DBackpropInputOpName, {dout, w, x_shape},
-                     {{"mode", ib->GetAttr("mode")},
-                      {"dilation", MakeValue(format == "NHWC" ? ConvToNHWC(dilation) : dilation)},
-                      {"stride", MakeValue(format == "NHWC" ? ConvToNHWC(stride) : stride)},
-                      {"group", ib->GetAttr("group")},
-                      {"groups", ib->GetAttr("group")},
-                      {"format", ib->GetAttr("format")},
-                      {"data_format", ib->GetAttr("format")},
-                      {"out_channel", ib->GetAttr("out_channel")},
-                      {"kernel_size", ib->GetAttr("kernel_size")},
-                      {"pad_mode", ib->GetAttr("pad_mode")},
-                      {"pad", ib->GetAttr("pad")},
-                      {"pad_list", ib->GetAttr("pad_list")}});
-  auto dw = ib->Emit("Conv2DBackpropFilter", {dout, x, w_shape},
-                     {{"mode", ib->GetAttr("mode")},
-                      {"dilation", MakeValue(dilation)},
-                      {"stride", MakeValue(stride)},
-                      {"group", ib->GetAttr("group")},
-                      {"groups", ib->GetAttr("group")},
-                      {"format", ib->GetAttr("format")},
-                      {"data_format", ib->GetAttr("format")},
-                      {"out_channel", ib->GetAttr("out_channel")},
-                      {"kernel_size", ib->GetAttr("kernel_size")},
-                      {"pad_mode", ib->GetAttr("pad_mode")},
-                      {"pad", ib->GetAttr("pad")},
-                      {"pad_list", ib->GetAttr("pad_list")}});
+  auto dx = x->need_compute_grad_out()
+              ? ib->Emit(kConv2DBackpropInputOpName, {dout, w, x_shape},
+                         {{"mode", ib->GetAttr("mode")},
+                          {"dilation", MakeValue(format == "NHWC" ? ConvToNHWC(dilation) : dilation)},
+                          {"stride", MakeValue(format == "NHWC" ? ConvToNHWC(stride) : stride)},
+                          {"group", ib->GetAttr("group")},
+                          {"groups", ib->GetAttr("group")},
+                          {"format", ib->GetAttr("format")},
+                          {"data_format", ib->GetAttr("format")},
+                          {"out_channel", ib->GetAttr("out_channel")},
+                          {"kernel_size", ib->GetAttr("kernel_size")},
+                          {"pad_mode", ib->GetAttr("pad_mode")},
+                          {"pad", ib->GetAttr("pad")},
+                          {"pad_list", ib->GetAttr("pad_list")}})
+              : ib->OutZeros(x);
+  auto dw = w->need_compute_grad_out() ? ib->Emit("Conv2DBackpropFilter", {dout, x, w_shape},
+                                                  {{"mode", ib->GetAttr("mode")},
+                                                   {"dilation", MakeValue(dilation)},
+                                                   {"stride", MakeValue(stride)},
+                                                   {"group", ib->GetAttr("group")},
+                                                   {"groups", ib->GetAttr("group")},
+                                                   {"format", ib->GetAttr("format")},
+                                                   {"data_format", ib->GetAttr("format")},
+                                                   {"out_channel", ib->GetAttr("out_channel")},
+                                                   {"kernel_size", ib->GetAttr("kernel_size")},
+                                                   {"pad_mode", ib->GetAttr("pad_mode")},
+                                                   {"pad", ib->GetAttr("pad")},
+                                                   {"pad_list", ib->GetAttr("pad_list")}})
+                                       : ib->OutZeros(w);
   return {dx, dw};
 });
 
@@ -244,24 +249,33 @@ REG_BPROP_BUILDER("MaxPool").SetBody(BODYFUNC(ib) {
 });
 
 REG_BPROP_BUILDER("BiasAdd").SetUnusedInputs({i0, i1, i3}).SetBody(BODYFUNC(ib) {
+  auto input_x = ib->GetInput(kIndex0);
+  auto bias = ib->GetInput(kIndex1);
   auto format = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex4);
   auto format_value = format->BuildValue();
   auto format_int_opt = ops::GetScalarValue<int64_t>(format_value);
-  if (format_int_opt.has_value()) {
-    if (format_int_opt.value() == Format::NCDHW) {
-      auto format_new = ib->EmitValue(MakeValue<int64_t>(Format::NCHW));
-      return {dout, ib->Emit(kBiasAddGradOpName, {dout, format_new}), ib->OutZeros(format)};
+  NodePtr dx = input_x->need_compute_grad_out() ? dout : ib->OutZeros(input_x);
+  NodePtr grad_bias;
+  if (bias->need_compute_grad_out()) {
+    if (format_int_opt.has_value()) {
+      if (format_int_opt.value() == Format::NCDHW) {
+        auto format_new = ib->EmitValue(MakeValue<int64_t>(Format::NCHW));
+        grad_bias = ib->Emit(kBiasAddGradOpName, {dout, format_new});
+      } else {
+        grad_bias = ib->Emit(kBiasAddGradOpName, {dout, format});
+      }
+    } else {
+      auto true_branch = [](Emitter *e) -> NodePtrList { return {e->EmitValue(MakeValue<int64_t>(Format::NCHW))}; };
+      auto false_branch = [&format](const Emitter *e) -> NodePtrList { return {format}; };
+      auto cond = ib->Equal(format, ib->Value<int64_t>(Format::NCDHW));
+      auto cond_block = ib->Conditional(cond, true_branch, false_branch);
+      grad_bias = ib->Emit(kBiasAddGradOpName, {dout, cond_block});
     }
-
-    return {dout, ib->Emit(kBiasAddGradOpName, {dout, format}), ib->OutZeros(format)};
+  } else {
+    grad_bias = ib->OutZeros(bias);
   }
-
-  auto true_branch = [](Emitter *e) -> NodePtrList { return {e->EmitValue(MakeValue<int64_t>(Format::NCHW))}; };
-  auto false_branch = [&format](const Emitter *e) -> NodePtrList { return {format}; };
-  auto cond = ib->Equal(format, ib->Value<int64_t>(Format::NCDHW));
-  auto cond_block = ib->Conditional(cond, true_branch, false_branch);
-  return {dout, ib->Emit(kBiasAddGradOpName, {dout, cond_block}), ib->OutZeros(format)};
+  return {dx, grad_bias, ib->OutZeros(format)};
 });
 
 DEF_PURE_SHAPE_CALC(g_dense_shapecalc0)
@@ -287,15 +301,26 @@ REG_BPROP_BUILDER("Dense").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
   NodePtr dx, dw, db;
   auto dout_shp = dout->shape();
   if (dout_shp.size() == 0) {
-    db = dout;
+    db = b->need_compute_grad_out() ? dout : ib->OutZeros(b);
     if (is_complex) {
       dout = ib->Emit("Conj", {dout});
     }
-    dw = ib->Mul(dout, x);
-    dx = ib->Mul(dout, w);
-    if (is_complex) {
-      dx = ib->Emit("Conj", {dx});
-      dw = ib->Emit("Conj", {dw});
+    if (w->need_compute_grad_out()) {
+      dw = ib->Mul(dout, x);
+      if (is_complex) {
+        dw = ib->Emit("Conj", {dw});
+      }
+    } else {
+      dw = ib->OutZeros(w);
+    }
+
+    if (x->need_compute_grad_out()) {
+      dx = ib->Mul(dout, w);
+      if (is_complex) {
+        dx = ib->Emit("Conj", {dx});
+      }
+    } else {
+      dx = ib->OutZeros(x);
     }
     return {dx, dw, db};
   }
@@ -308,26 +333,37 @@ REG_BPROP_BUILDER("Dense").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
   }
   dout = ib->Reshape(dout, dout_2d_shape);
   NodePtrList ret_shape = ib->ShapeCalc(g_dense_shapecalc0, {b});
-  db = ib->ReduceSum(dout, ret_shape[kIndex0]);
+  db = b->need_compute_grad_out() ? ib->ReduceSum(dout, ret_shape[kIndex0]) : ib->OutZeros(b);
   if (is_complex) {
     dout = ib->Emit("Conj", {dout});
   }
-  dx = ib->MatMul(dout, w, false, false);
-  if (is_complex) {
-    dx = ib->Emit("Conj", {dx});
-  }
-  if (x_shape.size() != 2) {
-    dx = ib->Reshape(dx, x_shape);
-    int64_t first_dim = 1;
-    for (size_t i = 0; i < x_shape.size() - 1; ++i) {
-      first_dim *= x_shape[i];
+  if (x->need_compute_grad_out()) {
+    dx = ib->MatMul(dout, w, false, false);
+    if (is_complex) {
+      dx = ib->Emit("Conj", {dx});
     }
-    ShapeVector x_2d_shape = {first_dim, x_shape.back()};
-    x = ib->Reshape(x, x_2d_shape);
+    if (x_shape.size() != 2) {
+      dx = ib->Reshape(dx, x_shape);
+    }
+  } else {
+    dx = ib->OutZeros(x);
   }
-  dw = ib->MatMul(dout, x, true, false);
-  if (is_complex) {
-    dw = ib->Emit("Conj", {dw});
+
+  if (w->need_compute_grad_out()) {
+    if (x_shape.size() != 2) {
+      int64_t first_dim = 1;
+      for (size_t i = 0; i < x_shape.size() - 1; ++i) {
+        first_dim *= x_shape[i];
+      }
+      ShapeVector x_2d_shape = {first_dim, x_shape.back()};
+      x = ib->Reshape(x, x_2d_shape);
+    }
+    dw = ib->MatMul(dout, x, true, false);
+    if (is_complex) {
+      dw = ib->Emit("Conj", {dw});
+    }
+  } else {
+    dw = ib->OutZeros(w);
   }
   return {dx, dw, db};
 });
@@ -555,7 +591,7 @@ REG_BPROP_BUILDER("LSTM").SetBody(BODYFUNC(ib) {
   auto dx = ib->TupleGetItem(res1, kIndex0);
   auto dhx = ib->TupleGetItem(res1, kIndex1);
   auto dcx = ib->TupleGetItem(res1, kIndex2);
-  auto dw = ib->Emit("LSTMGradWeight", {ib->Emit("Depend", {x, dx}), hx, y, reserve, state},
+  auto dw = ib->Emit("LSTMGradWeight", {ib->Depend(x, dx), hx, y, reserve, state},
                      {{"input_size", input_size},
                       {"hidden_size", hidden_size},
                       {"num_layers", num_layers},
@@ -592,13 +628,14 @@ REG_BPROP_BUILDER("CudnnGRU.NotReady").SetBody(BODYFUNC(ib) {
                         {"dropout", dropout}});
   auto dx = ib->TupleGetItem(res1, kIndex0);
   auto dhx = ib->TupleGetItem(res1, kIndex1);
-  auto dw = ib->Emit("GruGradWeight", {ib->Emit("Depend", {x, dx}), hx, y, reserve, state},
-                     {{"input_size", input_size},
-                      {"hidden_size", hidden_size},
-                      {"num_layers", num_layers},
-                      {"has_bias", has_bias},
-                      {"bidirectional", bidirectional},
-                      {"dropout", dropout}});
+  auto dw = w->need_compute_grad_out() ? ib->Emit("GruGradWeight", {ib->Depend(x, dx), hx, y, reserve, state},
+                                                  {{"input_size", input_size},
+                                                   {"hidden_size", hidden_size},
+                                                   {"num_layers", num_layers},
+                                                   {"has_bias", has_bias},
+                                                   {"bidirectional", bidirectional},
+                                                   {"dropout", dropout}})
+                                       : ib->OutZeros(w);
   return {dx, dhx, dw};
 });
 
@@ -754,11 +791,17 @@ REG_BPROP_BUILDER("SmoothL1Loss").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto target = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
   auto dx =
-    ib->Emit("SmoothL1LossGrad", {prediction, target, dout},
-             {{"beta", ib->GetAttr("beta")}, {"sigma", ib->GetAttr("beta")}, {"reduction", ib->GetAttr("reduction")}});
+    prediction->need_compute_grad_out()
+      ? ib->Emit(
+          "SmoothL1LossGrad", {prediction, target, dout},
+          {{"beta", ib->GetAttr("beta")}, {"sigma", ib->GetAttr("beta")}, {"reduction", ib->GetAttr("reduction")}})
+      : ib->OutZeros(prediction);
   auto dy =
-    ib->Emit("SmoothL1LossGrad", {target, prediction, dout},
-             {{"beta", ib->GetAttr("beta")}, {"sigma", ib->GetAttr("beta")}, {"reduction", ib->GetAttr("reduction")}});
+    target->need_compute_grad_out()
+      ? ib->Emit(
+          "SmoothL1LossGrad", {target, prediction, dout},
+          {{"beta", ib->GetAttr("beta")}, {"sigma", ib->GetAttr("beta")}, {"reduction", ib->GetAttr("reduction")}})
+      : ib->OutZeros(target);
   return {dx, dy};
 });
 
@@ -784,37 +827,43 @@ REG_BPROP_BUILDER("Conv3D").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex3);
   auto x_shape = ib->Shape(x);
   auto w_shape = ib->Shape(w);
-  auto dx = ib->Emit("Conv3DBackpropInput", {w, dout, x_shape},
-                     {{"pad_mode", ib->GetAttr("pad_mode")},
-                      {"pad", ib->GetAttr("pad")},
-                      {"strides", ib->GetAttr("strides")},
-                      {"dilations", ib->GetAttr("dilations")},
-                      {"stride", ib->GetAttr("strides")},
-                      {"dilation", ib->GetAttr("dilations")},
-                      {"group", ib->GetAttr("groups")},
-                      {"groups", ib->GetAttr("groups")},
-                      {"format", ib->GetAttr("format")},
-                      {"data_format", ib->GetAttr("format")},
-                      {"out_channel", ib->GetAttr("out_channel")},
-                      {"kernel_size", ib->GetAttr("kernel_size")},
-                      {"input_size", MakeValue(ib->GetShape(x))},
-                      {"mode", ib->GetAttr("mode")}});
-  auto dw = ib->Emit("Conv3DBackpropFilter", {x, dout, w_shape},
-                     {{"pad_mode", ib->GetAttr("pad_mode")},
-                      {"pad", ib->GetAttr("pad")},
-                      {"strides", ib->GetAttr("strides")},
-                      {"dilations", ib->GetAttr("dilations")},
-                      {"stride", ib->GetAttr("strides")},
-                      {"dilation", ib->GetAttr("dilations")},
-                      {"group", ib->GetAttr("groups")},
-                      {"groups", ib->GetAttr("groups")},
-                      {"format", ib->GetAttr("format")},
-                      {"data_format", ib->GetAttr("format")},
-                      {"out_channel", ib->GetAttr("out_channel")},
-                      {"kernel_size", ib->GetAttr("kernel_size")},
-                      {"filter_size", MakeValue(ib->GetShape(w))},
-                      {"mode", ib->GetAttr("mode")}});
-  dw = ib->Cast(dw, ib->GetDtype(x));
+  auto dx = x->need_compute_grad_out() ? ib->Emit("Conv3DBackpropInput", {w, dout, x_shape},
+                                                  {{"pad_mode", ib->GetAttr("pad_mode")},
+                                                   {"pad", ib->GetAttr("pad")},
+                                                   {"strides", ib->GetAttr("strides")},
+                                                   {"dilations", ib->GetAttr("dilations")},
+                                                   {"stride", ib->GetAttr("strides")},
+                                                   {"dilation", ib->GetAttr("dilations")},
+                                                   {"group", ib->GetAttr("groups")},
+                                                   {"groups", ib->GetAttr("groups")},
+                                                   {"format", ib->GetAttr("format")},
+                                                   {"data_format", ib->GetAttr("format")},
+                                                   {"out_channel", ib->GetAttr("out_channel")},
+                                                   {"kernel_size", ib->GetAttr("kernel_size")},
+                                                   {"input_size", MakeValue(ib->GetShape(x))},
+                                                   {"mode", ib->GetAttr("mode")}})
+                                       : ib->OutZeros(x);
+  NodePtr dw;
+  if (w->need_compute_grad_out()) {
+    dw = ib->Emit("Conv3DBackpropFilter", {x, dout, w_shape},
+                  {{"pad_mode", ib->GetAttr("pad_mode")},
+                   {"pad", ib->GetAttr("pad")},
+                   {"strides", ib->GetAttr("strides")},
+                   {"dilations", ib->GetAttr("dilations")},
+                   {"stride", ib->GetAttr("strides")},
+                   {"dilation", ib->GetAttr("dilations")},
+                   {"group", ib->GetAttr("groups")},
+                   {"groups", ib->GetAttr("groups")},
+                   {"format", ib->GetAttr("format")},
+                   {"data_format", ib->GetAttr("format")},
+                   {"out_channel", ib->GetAttr("out_channel")},
+                   {"kernel_size", ib->GetAttr("kernel_size")},
+                   {"filter_size", MakeValue(ib->GetShape(w))},
+                   {"mode", ib->GetAttr("mode")}});
+    dw = ib->Cast(dw, ib->GetDtype(x));
+  } else {
+    dw = ib->OutZeros(w);
+  }
   return {dx, dw};
 });
 
@@ -827,36 +876,38 @@ REG_BPROP_BUILDER("Conv3DTranspose").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) 
   auto w = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
   auto w_shape = ib->Shape(w);
-  auto dx = ib->Emit("Conv3D", {dout, w},
-                     {{"out_channel", ib->GetAttr("in_channel")},
-                      {"kernel_size", ib->GetAttr("kernel_size")},
-                      {"mode", ib->GetAttr("mode")},
-                      {"pad_mode", MakeValue("pad")},
-                      {"pad", ib->GetAttr("pad_list")},
-                      {"strides", ib->GetAttr("strides")},
-                      {"dilations", ib->GetAttr("dilations")},
-                      {"stride", MakeValue(stride)},
-                      {"dilation", MakeValue(dilation)},
-                      {"group", ib->GetAttr("groups")},
-                      {"groups", ib->GetAttr("groups")},
-                      {"offset_x", MakeValue<int64_t>(0)},
-                      {"format", ib->GetAttr("format")},
-                      {"data_format", ib->GetAttr("format")}});
-  auto dw = ib->Emit("Conv3DBackpropFilter", {dout, x, w_shape},
-                     {{"out_channel", ib->GetAttr("in_channel")},
-                      {"kernel_size", ib->GetAttr("kernel_size")},
-                      {"filter_size", MakeValue(ib->GetShape(w))},
-                      {"mode", ib->GetAttr("mode")},
-                      {"pad_mode", MakeValue("pad")},
-                      {"pad", ib->GetAttr("pad_list")},
-                      {"strides", ib->GetAttr("strides")},
-                      {"dilations", ib->GetAttr("dilations")},
-                      {"stride", ib->GetAttr("strides")},
-                      {"dilation", ib->GetAttr("dilations")},
-                      {"group", ib->GetAttr("groups")},
-                      {"groups", ib->GetAttr("groups")},
-                      {"format", ib->GetAttr("format")},
-                      {"data_format", ib->GetAttr("format")}});
+  auto dx = x->need_compute_grad_out() ? ib->Emit("Conv3D", {dout, w},
+                                                  {{"out_channel", ib->GetAttr("in_channel")},
+                                                   {"kernel_size", ib->GetAttr("kernel_size")},
+                                                   {"mode", ib->GetAttr("mode")},
+                                                   {"pad_mode", MakeValue("pad")},
+                                                   {"pad", ib->GetAttr("pad_list")},
+                                                   {"strides", ib->GetAttr("strides")},
+                                                   {"dilations", ib->GetAttr("dilations")},
+                                                   {"stride", MakeValue(stride)},
+                                                   {"dilation", MakeValue(dilation)},
+                                                   {"group", ib->GetAttr("groups")},
+                                                   {"groups", ib->GetAttr("groups")},
+                                                   {"offset_x", MakeValue<int64_t>(0)},
+                                                   {"format", ib->GetAttr("format")},
+                                                   {"data_format", ib->GetAttr("format")}})
+                                       : ib->OutZeros(x);
+  auto dw = w->need_compute_grad_out() ? ib->Emit("Conv3DBackpropFilter", {dout, x, w_shape},
+                                                  {{"out_channel", ib->GetAttr("in_channel")},
+                                                   {"kernel_size", ib->GetAttr("kernel_size")},
+                                                   {"filter_size", MakeValue(ib->GetShape(w))},
+                                                   {"mode", ib->GetAttr("mode")},
+                                                   {"pad_mode", MakeValue("pad")},
+                                                   {"pad", ib->GetAttr("pad_list")},
+                                                   {"strides", ib->GetAttr("strides")},
+                                                   {"dilations", ib->GetAttr("dilations")},
+                                                   {"stride", ib->GetAttr("strides")},
+                                                   {"dilation", ib->GetAttr("dilations")},
+                                                   {"group", ib->GetAttr("groups")},
+                                                   {"groups", ib->GetAttr("groups")},
+                                                   {"format", ib->GetAttr("format")},
+                                                   {"data_format", ib->GetAttr("format")}})
+                                       : ib->OutZeros(w);
   return {dx, dw};
 });
 
@@ -1140,8 +1191,7 @@ REG_BPROP_BUILDER("ExtractImagePatches").SetUnusedInputs({i0, i5}).SetBody(BODYF
     x_idx_patch = ib->Transpose(x_idx_patch, {0, 2, 3, 1});
     auto out_idx = ib->Cast(ib->Range(ib->TupleGetItem(res[2], 0)), kInt32);
     out_idx = ib->Reshape(out_idx, res[3]);
-    auto idx_tensor = ib->Emit("Concat", {ib->MakeTuple({ib->ExpandDims(x_idx_patch, -1), ib->ExpandDims(out_idx, -1)}),
-                                          ib->Value<int64_t>(-1)});
+    auto idx_tensor = ib->Concat({ib->ExpandDims(x_idx_patch, -1), ib->ExpandDims(out_idx, -1)}, -1);
     idx_tensor = ib->Reshape(idx_tensor, {-1, 2});
     auto ones = ib->Fill(1.0, res[2], ib->GetDtype(dout)->type_id());
     auto sp_tensor = ib->ScatterNd(idx_tensor, ones, res[4]);
@@ -1169,8 +1219,7 @@ REG_BPROP_BUILDER("ExtractImagePatches").SetUnusedInputs({i0, i5}).SetBody(BODYF
     auto out_indices_num = ((out_row * out_col) * ksizes_row) * ksizes_col;
     auto out_idx = ib->Tensor(Range(out_indices_num), kInt32);
     out_idx = ib->Reshape(out_idx, {1, out_row, out_col, ksizes_row * ksizes_col});
-    auto idx_tensor = ib->Emit("Concat", {ib->MakeTuple({ib->ExpandDims(x_idx_patch, -1), ib->ExpandDims(out_idx, -1)}),
-                                          ib->Value<int64_t>(-1)});
+    auto idx_tensor = ib->Concat({ib->ExpandDims(x_idx_patch, -1), ib->ExpandDims(out_idx, -1)}, -1);
     idx_tensor = ib->Reshape(idx_tensor, {-1, 2});
     std::vector<int64_t> sp_shape = {x_indices_num, out_indices_num};
     std::vector<int64_t> ones(out_indices_num, 1);
@@ -1221,9 +1270,11 @@ REG_BPROP_BUILDER("SigmoidGrad").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto y = ib->GetInput(kIndex0);
   auto grad = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
-  auto dy = ib->Mul((ib->Mul(dout, grad)),
-                    (ib->Sub(ib->Tensor(1, ib->GetDtype(grad)), (ib->Mul(ib->Tensor(2, ib->GetDtype(y)), y)))));
-  auto dgrad = ib->Emit("SigmoidGrad", {y, dout});
+  auto dy = y->need_compute_grad_out()
+              ? ib->Mul((ib->Mul(dout, grad)),
+                        (ib->Sub(ib->Tensor(1, ib->GetDtype(grad)), (ib->Mul(ib->Tensor(2, ib->GetDtype(y)), y)))))
+              : ib->OutZeros(y);
+  auto dgrad = grad->need_compute_grad_out() ? ib->Emit("SigmoidGrad", {y, dout}) : ib->OutZeros(grad);
   return {dy, dgrad};
 });
 
@@ -1246,9 +1297,11 @@ REG_BPROP_BUILDER("SoftplusGrad").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto dy = ib->GetInput(kIndex0);
   auto x = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
-  auto ddy = ib->Emit("SoftplusGrad", {dout, x});
-  auto d2x = ib->Div(ib->Mul(dout, dy),
-                     ib->Add(ib->Add(ib->Tensor(kConstNumberTwo, ib->GetDtype(dy)), ib->Exp(x)), ib->Exp(-x)));
+  auto ddy = dy->need_compute_grad_out() ? ib->Emit("SoftplusGrad", {dout, x}) : ib->OutZeros(dy);
+  auto d2x = x->need_compute_grad_out()
+               ? ib->Div(ib->Mul(dout, dy),
+                         ib->Add(ib->Add(ib->Tensor(kConstNumberTwo, ib->GetDtype(dy)), ib->Exp(x)), ib->Exp(-x)))
+               : ib->OutZeros(x);
   return {ddy, d2x};
 });
 
@@ -1281,8 +1334,10 @@ REG_BPROP_BUILDER("TanhGrad").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto y = ib->GetInput(kIndex0);
   auto grad = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
-  auto dy = ib->Mul((ib->Mul((ib->Mul(dout, ib->Tensor(-2.0, ib->GetDtype(dout)))), grad)), y);
-  auto dgrad = ib->TanhGrad(y, dout);
+  auto dy = y->need_compute_grad_out()
+              ? ib->Mul((ib->Mul((ib->Mul(dout, ib->Tensor(-2.0, ib->GetDtype(dout)))), grad)), y)
+              : ib->OutZeros(y);
+  auto dgrad = grad->need_compute_grad_out() ? ib->TanhGrad(y, dout) : ib->OutZeros(grad);
   return {dy, dgrad};
 });
 
@@ -1339,7 +1394,7 @@ REG_BPROP_BUILDER("BatchNorm").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
       [&out](Emitter *e) -> NodePtrList {
         return {e->TupleGetItem(out, 3), e->TupleGetItem(out, 4)};
       },
-      [&mean, &variance, &out](Emitter *e) -> NodePtrList {
+      [&mean, &variance](Emitter *e) -> NodePtrList {
         return {mean, variance};
       });
     saved_mean = ib->TupleGetItem(cond_out, 0);
@@ -1347,9 +1402,8 @@ REG_BPROP_BUILDER("BatchNorm").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   }
   auto reserve = ib->TupleGetItem(out, 2);
 
-  out = ib->Emit(
-    "BatchNormGrad",
-    {ib->TupleGetItem(dout, 0), x, scale, saved_mean, saved_variance, reserve, is_training, epsilon, data_format}, {});
+  out = ib->BatchNormGrad(
+    {ib->TupleGetItem(dout, 0), x, scale, saved_mean, saved_variance, reserve, is_training, epsilon, data_format});
   auto dx = ib->TupleGetItem(out, 0);
   auto dscale = ib->TupleGetItem(out, 1);
   auto dbias = ib->TupleGetItem(out, 2);
@@ -1434,11 +1488,8 @@ REG_BPROP_BUILDER("SparseSoftmaxCrossEntropyWithLogits").SetBody(BODYFUNC(ib) {
   // is_grad is false
   auto logits = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex3);
-  auto grad = ib->Emit(kSparseSoftmaxCrossEntropyWithLogitsOpName, {logits, labels}, {{kAttrIsGrad, MakeValue(true)}});
-  if (ib->IsGraphMode()) {
-    grad = ib->Depend(grad, out);
-  }
-  grad = ib->Mul(grad, dout);
+  auto grad = ib->SparseSoftmaxCrossEntropyWithLogits({logits, labels}, {{kAttrIsGrad, MakeValue(true)}}, out, dout,
+                                                      ib->IsGraphMode());
   return {grad, ib->OutZeros(labels)};
 });
 
@@ -1577,31 +1628,33 @@ REG_BPROP_BUILDER("Conv2DBackpropFilter").SetUnusedInputs({i2, i3}).SetBody(BODY
   auto filter_size = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex4);
   auto x_shape = ib->Shape(x);
-  auto dw_dx = ib->Emit(kConv2DBackpropInputOpName, {dy, dout, x_shape},
-                        {{"mode", ib->GetAttr("mode")},
-                         {"dilation", ib->GetAttr("dilation")},
-                         {"stride", ib->GetAttr("stride")},
-                         {"group", ib->GetAttr("group")},
-                         {"groups", ib->GetAttr("group")},
-                         {"format", ib->GetAttr("format")},
-                         {"data_format", ib->GetAttr("format")},
-                         {"out_channel", ib->GetAttr("out_channel")},
-                         {"kernel_size", ib->GetAttr("kernel_size")},
-                         {"pad_mode", ib->GetAttr("pad_mode")},
-                         {"pad", ib->GetAttr("pad")},
-                         {"pad_list", ib->GetAttr("pad_list")}});
-  auto dw_dy = ib->Emit(kConv2DOpName, {x, dout},
-                        {{"pad_mode", ib->GetAttr("pad_mode")},
-                         {"pad", ib->GetAttr("pad")},
-                         {"dilation", ib->GetAttr("dilation")},
-                         {"stride", ib->GetAttr("stride")},
-                         {"group", ib->GetAttr("group")},
-                         {"groups", ib->GetAttr("group")},
-                         {"format", ib->GetAttr("format")},
-                         {"data_format", ib->GetAttr("format")},
-                         {"out_channel", ib->GetAttr("out_channel")},
-                         {"kernel_size", ib->GetAttr("kernel_size")},
-                         {"mode", MakeValue(1)}});
+  auto dw_dx = dy->need_compute_grad_out() ? ib->Emit(kConv2DBackpropInputOpName, {dy, dout, x_shape},
+                                                      {{"mode", ib->GetAttr("mode")},
+                                                       {"dilation", ib->GetAttr("dilation")},
+                                                       {"stride", ib->GetAttr("stride")},
+                                                       {"group", ib->GetAttr("group")},
+                                                       {"groups", ib->GetAttr("group")},
+                                                       {"format", ib->GetAttr("format")},
+                                                       {"data_format", ib->GetAttr("format")},
+                                                       {"out_channel", ib->GetAttr("out_channel")},
+                                                       {"kernel_size", ib->GetAttr("kernel_size")},
+                                                       {"pad_mode", ib->GetAttr("pad_mode")},
+                                                       {"pad", ib->GetAttr("pad")},
+                                                       {"pad_list", ib->GetAttr("pad_list")}})
+                                           : ib->OutZeros(dy);
+  auto dw_dy = x->need_compute_grad_out() ? ib->Emit(kConv2DOpName, {x, dout},
+                                                     {{"pad_mode", ib->GetAttr("pad_mode")},
+                                                      {"pad", ib->GetAttr("pad")},
+                                                      {"dilation", ib->GetAttr("dilation")},
+                                                      {"stride", ib->GetAttr("stride")},
+                                                      {"group", ib->GetAttr("group")},
+                                                      {"groups", ib->GetAttr("group")},
+                                                      {"format", ib->GetAttr("format")},
+                                                      {"data_format", ib->GetAttr("format")},
+                                                      {"out_channel", ib->GetAttr("out_channel")},
+                                                      {"kernel_size", ib->GetAttr("kernel_size")},
+                                                      {"mode", MakeValue(1)}})
+                                          : ib->OutZeros(x);
   return {dw_dy, dw_dx, ib->OutZeros(filter_size)};
 });
 
@@ -1613,27 +1666,39 @@ REG_BPROP_BUILDER("BCEWithLogitsLoss").SetUnusedInputs({i4}).SetBody(BODYFUNC(ib
   auto pos_weight = ib->GetInput(kIndex3);
   auto dout = ib->GetInput(kIndex5);
   auto sigmoid_input = ib->Emit("Sigmoid", {predict});
-
-  auto t = ib->Mul(target, pos_weight);
-  auto dx =
-    ib->Mul(ib->Sub(ib->Mul(ib->Sub(ib->Add(t, ib->Tensor(1, ib->GetDtype(t))), target), sigmoid_input), t), dout);
-  auto grad_target = ib->Mul(ib->Sub(ib->Log(ib->Sub(ib->Tensor(1, ib->GetDtype(sigmoid_input)), sigmoid_input)),
-                                     ib->Mul(pos_weight, ib->Log(sigmoid_input))),
-                             dout);
-
-  dx = ib->Mul(dx, weight);
-  grad_target = ib->Mul(grad_target, weight);
-
-  if (reduction == "mean") {
-    if (IsDynamic(ib->GetShape(dx))) {
-      auto res = ib->DynSize(dx, ib->GetDtype(dx));
-      dx = ib->RealDiv(dx, res);
-      auto res2 = ib->DynSize(target, ib->GetDtype(grad_target));
-      grad_target = ib->RealDiv(grad_target, res2);
-    } else {
-      dx = ib->RealDiv(dx, ib->Tensor(ib->GetSize(dx), ib->GetDtype(dx)));
-      grad_target = ib->RealDiv(grad_target, ib->Tensor(ib->GetSize(target), ib->GetDtype(grad_target)));
+  NodePtr dx;
+  if (predict->need_compute_grad_out()) {
+    auto t = ib->Mul(target, pos_weight);
+    dx = ib->Mul(ib->Sub(ib->Mul(ib->Sub(ib->Add(t, ib->Tensor(1, ib->GetDtype(t))), target), sigmoid_input), t), dout);
+    dx = ib->Mul(dx, weight);
+    if (reduction == "mean") {
+      if (IsDynamic(ib->GetShape(dx))) {
+        auto res = ib->DynSize(dx, ib->GetDtype(dx));
+        dx = ib->RealDiv(dx, res);
+      } else {
+        dx = ib->RealDiv(dx, ib->Tensor(ib->GetSize(dx), ib->GetDtype(dx)));
+      }
     }
+  } else {
+    dx = ib->OutZeros(predict);
+  }
+
+  NodePtr grad_target;
+  if (target->need_compute_grad_out()) {
+    grad_target = ib->Mul(ib->Sub(ib->Log(ib->Sub(ib->Tensor(1, ib->GetDtype(sigmoid_input)), sigmoid_input)),
+                                  ib->Mul(pos_weight, ib->Log(sigmoid_input))),
+                          dout);
+    grad_target = ib->Mul(grad_target, weight);
+    if (reduction == "mean") {
+      if (IsDynamic(ib->GetShape(dx))) {
+        auto res2 = ib->DynSize(target, ib->GetDtype(grad_target));
+        grad_target = ib->RealDiv(grad_target, res2);
+      } else {
+        grad_target = ib->RealDiv(grad_target, ib->Tensor(ib->GetSize(target), ib->GetDtype(grad_target)));
+      }
+    }
+  } else {
+    grad_target = ib->OutZeros(target);
   }
   return {dx, grad_target, ib->OutZeros(weight), ib->OutZeros(pos_weight)};
 });
@@ -1677,8 +1742,12 @@ REG_BPROP_BUILDER("SoftMarginLoss").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto predict = ib->GetInput(kIndex0);
   auto label = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
-  auto dx = ib->Emit("SoftMarginLossGrad", {predict, label, dout}, {{"reduction", ib->GetAttr("reduction")}});
-  auto dy = ib->Emit("SoftMarginLossGrad", {label, predict, dout}, {{"reduction", ib->GetAttr("reduction")}});
+  auto dx = predict->need_compute_grad_out()
+              ? ib->Emit("SoftMarginLossGrad", {predict, label, dout}, {{"reduction", ib->GetAttr("reduction")}})
+              : ib->OutZeros(predict);
+  auto dy = label->need_compute_grad_out()
+              ? ib->Emit("SoftMarginLossGrad", {label, predict, dout}, {{"reduction", ib->GetAttr("reduction")}})
+              : ib->OutZeros(label);
   return {dx, dy};
 });
 
@@ -1696,16 +1765,18 @@ REG_BPROP_BUILDER("Dilation2D").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto _filter = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
-  auto dx = ib->Emit("Dilation2DBackpropInput", {x, _filter, dout},
-                     {{"stride", ib->GetAttr("stride")},
-                      {"dilation", ib->GetAttr("dilation")},
-                      {"pad_mode", ib->GetAttr("pad_mode")},
-                      {"format", ib->GetAttr("format")}});
-  auto dfilter = ib->Emit("Dilation2DBackpropFilter", {x, _filter, dout},
-                          {{"stride", ib->GetAttr("stride")},
-                           {"dilation", ib->GetAttr("dilation")},
-                           {"pad_mode", ib->GetAttr("pad_mode")},
-                           {"format", ib->GetAttr("format")}});
+  auto dx = x->need_compute_grad_out() ? ib->Emit("Dilation2DBackpropInput", {x, _filter, dout},
+                                                  {{"stride", ib->GetAttr("stride")},
+                                                   {"dilation", ib->GetAttr("dilation")},
+                                                   {"pad_mode", ib->GetAttr("pad_mode")},
+                                                   {"format", ib->GetAttr("format")}})
+                                       : ib->OutZeros(x);
+  auto dfilter = _filter->need_compute_grad_out() ? ib->Emit("Dilation2DBackpropFilter", {x, _filter, dout},
+                                                             {{"stride", ib->GetAttr("stride")},
+                                                              {"dilation", ib->GetAttr("dilation")},
+                                                              {"pad_mode", ib->GetAttr("pad_mode")},
+                                                              {"format", ib->GetAttr("format")}})
+                                                  : ib->OutZeros(_filter);
   return {dx, dfilter};
 });
 
@@ -2068,10 +2139,10 @@ REG_BPROP_BUILDER("WKV").SetBody(BODYFUNC(ib) {
   auto dy = ib->TupleGetItem(dout, kIndex0);
   auto grad = ib->Emit("WKVGrad", {w, u, k, v, dy});
   std::vector<int64_t> axis = {0};
-  auto gw = ib->ReduceSum(ib->TupleGetItem(grad, kIndex0), axis);
-  auto gu = ib->ReduceSum(ib->TupleGetItem(grad, kIndex1), axis);
-  auto gk = ib->TupleGetItem(grad, kIndex2);
-  auto gv = ib->TupleGetItem(grad, kIndex3);
+  auto gw = w->need_compute_grad_out() ? ib->ReduceSum(ib->TupleGetItem(grad, kIndex0), axis) : ib->OutZeros(w);
+  auto gu = u->need_compute_grad_out() ? ib->ReduceSum(ib->TupleGetItem(grad, kIndex1), axis) : ib->OutZeros(u);
+  auto gk = k->need_compute_grad_out() ? ib->TupleGetItem(grad, kIndex2) : ib->OutZeros(k);
+  auto gv = v->need_compute_grad_out() ? ib->TupleGetItem(grad, kIndex3) : ib->OutZeros(v);
   return {gw, gu, gk, gv, ib->ZerosLike(sp), ib->ZerosLike(sq), ib->ZerosLike(sm)};
 });
 

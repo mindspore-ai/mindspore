@@ -36,6 +36,7 @@ namespace kernel {
 namespace pyboost {
 using GradFunc = std::function<void()>;
 constexpr size_t kAbstractCacheSize = 8192;
+
 // OpRunner is a base class for operators.
 // OpRunner records the operator's input abstract,
 // output abstract and output Tensors for grad,

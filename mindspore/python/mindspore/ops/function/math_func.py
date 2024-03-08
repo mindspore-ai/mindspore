@@ -41,7 +41,7 @@ from mindspore.ops.auto_generate import (minimum, maximum, mul, sin, sinc, sinh,
                                          matrix_exp, sqrt, rsqrt, square, trace, nextafter, abs, acos, acosh, angle,
                                          asin, asinh, atan, atan2, atanh, ceil, equal, erf, erfc, erfinv, exp, expm1,
                                          floor, floor_divide, floor_mod, gcd, greater, greater_equal, less, less_equal,
-                                         log, log1p, logit, neg, not_equal, pow, round)
+                                         log, log1p, neg, not_equal, pow, round)
 from mindspore.nn import layer
 from mindspore._checkparam import check_is_number
 from mindspore import _checkparam as validator
@@ -108,7 +108,6 @@ def get_x_shape(x_shape):
 #####################################
 absolute_ = P.Abs()
 cast_ = P.Cast()
-neg_tensor = P.Neg()
 not_equal_ = P.NotEqual()
 tensor_add = P.Add()
 tensor_ceil = P.Ceil()
@@ -563,7 +562,7 @@ def negative(input):
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
     """
-    return neg_tensor(input)
+    return neg(input)
 
 
 def positive(input):
@@ -2999,6 +2998,49 @@ def ldexp(x, other):
     out = tensor_mul(x, tensor_pow(2.0, other))
     return out
 
+def logit(input, eps=None):
+    r"""
+    Calculate the logit of a tensor element-wise.
+
+    .. math::
+        \begin{align}
+        y_{i} & = \ln(\frac{z_{i}}{1 - z_{i}}) \\
+        z_{i} & = \begin{cases}
+        input_{i} & \text{if eps is None} \\
+        \text{eps} & \text{if } input_{i} \lt \text{eps} \\
+        input_{i} & \text{if } \text{eps} \leq input_{i} \leq 1 - \text{eps} \\
+        1 - \text{eps} & \text{if } input_{i} \gt 1 - \text{eps}
+        \end{cases}
+        \end{align}
+
+    Args:
+        input (Tensor): The input tensor of type float16, float32 or float64.
+        eps (float, optional): The epsilon. If eps is not None, the input clamp bound is defined as [eps, 1-eps],
+            otherwise, the `input` is not clamped. Default: ``None`` .
+
+    Returns:
+        Tensor, with the same shape and dtype as the `input`.
+
+    Raises:
+        TypeError: If `eps` is not a float.
+        TypeError: If `input` is not a Tensor.
+        TypeError: If dtype of `input` is not float16, float32 or float64.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> x = Tensor(np.array([0.1, 0.2, 0.3]).astype(np.float32))
+        >>> output = ops.logit(x, eps=1e-5)
+        >>> print(output)
+        [-2.1972246 -1.3862944 -0.8472978]
+    """
+    if eps is None:
+        eps = -1.0
+    logit_ = _get_cache_prim(Logit)(eps)
+    return logit_(input)
 
 #####################################
 # Comparison Operation Functions.
@@ -4127,7 +4169,7 @@ def logaddexp(input, other):
                         f"but got {input.dtype} and {other.dtype}.")
     m = maximum(input, other)
     abs_val = abs(input - other)
-    exp_val = tensor_exp(neg_tensor(abs_val))
+    exp_val = tensor_exp(neg(abs_val))
     y = m + log1p(exp_val)
     return y
 
@@ -4173,7 +4215,7 @@ def logaddexp2(input, other):
 
     m = maximum(input, other)
     abs_val = abs(input - other)
-    exp2_val = pows(2., neg_tensor(abs_val))
+    exp2_val = pows(2., neg(abs_val))
     y = m + log2(1. + exp2_val)
     return y
 
@@ -6332,7 +6374,7 @@ def copysign(x, other):
     )
     pos_tensor = absolute_(x_float)
     less_zero = tensor_lt(other, 0)
-    return select_(less_zero, neg_tensor(pos_tensor), pos_tensor)
+    return select_(less_zero, neg(pos_tensor), pos_tensor)
 
 
 def hann_window(window_length, periodic=True, *, dtype=None):
@@ -7629,7 +7671,7 @@ def gumbel_softmax(logits, tau=1.0, hard=False, dim=-1):
     uniform = C.uniform(sample_shape, scalar_to_tensor_(
         0.0, mstype.float32), scalar_to_tensor_(1.0, mstype.float32))
     uniform = cast_(uniform, logits_dtype)
-    gumbel = neg_tensor(log_(neg_tensor(log_(uniform))))
+    gumbel = neg(log_(neg(log_(uniform))))
     gumbel = (logits + gumbel) / tau
     y_soft = _get_cache_prim(P.Softmax)(dim)(gumbel)
     if hard:
@@ -7863,18 +7905,6 @@ def _check_value(items, max_size, msg_prefix, shape1, shape2):
 def _check_matmul_shapes(shape1, shape2, prim_name=None):
     """Checks shape1 and shape2 are valid to perform matmul, and returns output shape after broadcasting."""
     msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
-
-    def _check(shape1, shape2):
-        ndim1, ndim2 = len(shape1), len(shape2)
-        if ndim1 < 1 or ndim2 < 1:
-            raise ValueError(f"{msg_prefix} dimension of input operands must be at least 1, but got "
-                             f"the length of shape1: {ndim1}, the length of shape2: {ndim2}.")
-        if ndim2 >= 2 and shape1[-1] != shape2[-2]:
-            raise ValueError(f"{msg_prefix} shape1[-1] must be equal to shape2[-2] when the length of shape2 "
-                             f"is greater than or equal to 2, but got shape1[-1]: {shape1[-1]}, "
-                             f"shape2[-2]: {shape2[-2]}.")
-
-    _check(shape1, shape2)
     shape_out = list()
     r_shape1 = shape1[:-2]
     r_shape2 = shape2[:-2]
@@ -10873,6 +10903,7 @@ def count_nonzero(x, axis=(), keep_dims=False, dtype=mstype.int32):
     Examples:
         >>> from mindspore import Tensor, ops
         >>> import numpy as np
+        >>> import mindspore
         >>> # case 1: each value specified.
         >>> x = Tensor(np.array([[0, 1, 0], [1, 1, 0]]).astype(np.float32))
         >>> nonzero_num = ops.count_nonzero(x=x, axis=[0, 1], keep_dims=True, dtype=mindspore.int32)
@@ -11483,6 +11514,7 @@ def batch_dot(x1, x2, axes=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
         >>> from mindspore import Tensor, ops
         >>> import numpy as np
         >>> x1 = Tensor(np.ones(shape=[2, 2, 3]), mindspore.float32)
@@ -11580,7 +11612,6 @@ __all__ = [
     'arctan',
     'arctan2',
     'bincount',
-    'neg_tensor',
     'neg',
     'negative',
     'tensor_lt',

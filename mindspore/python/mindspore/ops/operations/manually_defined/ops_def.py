@@ -1315,6 +1315,15 @@ def infer_value_for_BroadcastTo(x, shape):
         return isinstance(x, (tuple, list)) and None in x
     if shape is None or none_in_tuple_or_list(shape) or x is None:
         return None
+
+    if isinstance(shape, (Tensor, Tensor_)):
+        validator.check_tensor_dtype_valid("shape", mstype.TensorType(shape.dtype),
+                                           [mstype.int32, mstype.int64], "BroadcastTo")
+        shape = shape.asnumpy().tolist()
+    else:
+        validator.check_value_type("shape", shape, [tuple], "BroadcastTo")
+        shape = list(shape)
+
     np_data = np.broadcast_to(x.asnumpy(), shape)
     if 0 in shape:
         init_func = Zero()

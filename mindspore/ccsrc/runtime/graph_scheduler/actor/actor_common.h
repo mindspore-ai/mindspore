@@ -226,6 +226,9 @@ class ActorDispatcher {
   }
   static bool is_multi_thread_execution() { return is_multi_thread_execution_; }
 
+  static void set_enable_multi_stream(bool enable_multi_stream) { enable_multi_stream_ = enable_multi_stream; }
+  static bool enable_multi_stream() { return enable_multi_stream_; }
+
   static bool is_memory_allocation_sync() { return is_memory_allocation_sync_; }
   static void set_is_memory_allocation_sync(bool is_memory_allocation_sync) {
     is_memory_allocation_sync_ = is_memory_allocation_sync;
@@ -263,6 +266,9 @@ class ActorDispatcher {
   // There are scenarios with small network and data, and the performance of multi thread execution is not as good as
   // that of single thread, so single thread execution is required at this time.
   static bool is_multi_thread_execution_;
+
+  // Indicate whether use multi stream to execute.
+  static bool enable_multi_stream_;
 
   // Decide whether alloc and free memory synchronously.
   // The memory manager actor will not send and recv message if true.

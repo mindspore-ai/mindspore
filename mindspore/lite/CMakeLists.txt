@@ -221,12 +221,7 @@ endif()
 if(MSLITE_TARGET_SITEAI)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/providers/siteai)
 else()
-    set(MSLITE_DEPS_EIGEN on)
     set(MSLITE_DEPS_CMSIS on)
-endif()
-
-if(MSLITE_DEPS_EIGEN)
-    add_compile_definitions(ENABLE_EIGEN)
 endif()
 
 if(DEFINED ENV{MSLITE_ENABLE_MODEL_ENCRYPTION})
@@ -890,6 +885,7 @@ if(MSLITE_ENABLE_CONVERTER OR MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENA
         set(MSLITE_DEPS_OPENCV on)
         add_definitions(-DMSLITE_DEPS_OPENCV)
     endif()
+    set(MSLITE_DEPS_EIGEN on)
 endif()
 
 if(NOT MSLITE_TARGET_SITEAI)

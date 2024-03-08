@@ -138,7 +138,7 @@ KernelGraphPtr OpCompiler::GenerateKernelGraph(const session::BackendOpRunInfoPt
     graph->set_attr(kAttrPackFunction, MakeValue(True));
   } else {
     graph = session_->ConstructSingleOpGraph(op_run_info, op_run_info->base_op_run_info.expanded_input_values,
-                                             op_run_info->base_op_run_info.input_masks);
+                                             op_run_info->base_op_run_info.input_types);
   }
   graph->set_is_from_single_op(true);
   return graph;
@@ -339,7 +339,7 @@ inline std::set<int64_t> GetDependList(const pynative::BaseOpRunInfo &op_info, c
           bias += op_info.dyn_input_sizes[idx];
         }
       }
-      depend_list.emplace(bias);
+      (void)depend_list.emplace(bias);
       MS_LOG(DEBUG) << "Adjust depend list from " << item << " to " << bias << " for op: " << op_prim->name();
     }
   }
@@ -350,9 +350,9 @@ inline std::set<int64_t> GetDependList(const pynative::BaseOpRunInfo &op_info, c
 std::string OpCompiler::GetSingleOpGraphInfo(const pynative::BaseOpRunInfo &op_info,
                                              const PrimitivePtr &op_prim) const {
   MS_EXCEPTION_IF_NULL(op_prim);
-  if (op_info.expanded_input_values.size() != op_info.input_masks.size()) {
+  if (op_info.expanded_input_values.size() != op_info.input_types.size()) {
     MS_LOG(EXCEPTION) << "Input tensors size " << op_info.expanded_input_values.size()
-                      << " should be equal to tensors mask size " << op_info.input_masks.size();
+                      << " should be equal to tensors mask size " << op_info.input_types.size();
   }
   std::string graph_info = op_info.device_target;
 
@@ -413,7 +413,7 @@ std::string OpCompiler::GetSingleOpGraphInfo(const pynative::BaseOpRunInfo &op_i
         graph_info += p_address->padding_type();
       }
 
-      if (op_info.input_masks[index] == kValueNodeMask || depend_list.find(index) != depend_list.end()) {
+      if (op_info.input_types[index] == InputType::kConstant || depend_list.find(index) != depend_list.end()) {
         graph_info += common::AnfAlgo::GetTensorValueString(input_tensor);
       }
     } else {

@@ -162,6 +162,9 @@ void GatherInfo(const ScalarPtr &scalar) {
   } else if (scalar->isa<FP64Imm>()) {
     auto value = GetValue<double>(scalar);
     MemcpyToBuf(&value, sizeof(double));
+  } else if (scalar->isa<BF16Imm>()) {
+    auto value = GetValue<bfloat16>(scalar);
+    MemcpyToBuf(&value, sizeof(int16_t));
   } else {
     MS_LOG(EXCEPTION) << "Currently not support value: " << scalar->ToString();
   }

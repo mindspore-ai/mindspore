@@ -366,7 +366,7 @@ def generate_parser_func(op_proto: OpProto) -> str:
     :param op_proto:
     :return: str
     """
-    convert_template = CppTemplate("auto $arg_name = converter.${convert_func}($arg_index);\n")
+    convert_template = CppTemplate("auto $arg_name = converter.${convert_func}(args, $arg_index);\n")
     parser_func_str = ''
     for index, arg in enumerate(op_proto.op_args):
         is_optional = is_optional_param(arg)
@@ -501,7 +501,8 @@ def convert_value_type(op_proto: OpProto) -> str:
     :param op_proto:
     :return: str
     """
-    convert_template = CppTemplate("auto $arg_name = ValueConverter::${convert_func}(inputs, $arg_index);\n")
+    convert_template = CppTemplate(
+        "auto $arg_name = ValueConverter::${convert_func}(op_runner_info->inputs, $arg_index);\n")
     parser_func_str = ''
     for index, arg in enumerate(op_proto.op_args):
         is_optional = is_optional_param(arg)
@@ -824,6 +825,8 @@ def gen_pyboost_py_func(work_path, op_yaml_data, doc_data):
             item = func_def.get("name")
             if item is not None:
                 func_name = item
+        if func_name.endswith("_ext"):
+            func_name = func_name[:-4]
         else:
             continue
         func_impl_name = func_name

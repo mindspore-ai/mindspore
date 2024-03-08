@@ -14,8 +14,7 @@
 # ============================================================================
 """Linear algebra submodule"""
 from __future__ import absolute_import
-from .ops import LU
-from .ops import SolveTriangular
+from .ops import LU, SolveTriangular
 from .utils import _nd_transpose, _value_check, _type_check, _dtype_check, _mstype_check, _square_check, _solve_check
 from .utils_const import _raise_value_error
 from .. import numpy as mnp
@@ -26,7 +25,74 @@ from ..ops.operations.linalg_ops import Eigh
 from ..ops import functional as F
 from ..ops import operations as P
 
-__all__ = ['block_diag', 'inv', 'cho_factor', 'cholesky', 'cho_solve', 'eigh', 'lu_factor', 'lu']
+__all__ = ['block_diag', 'inv', 'cho_factor', 'cholesky',
+           'cho_solve', 'eigh', 'lu_factor', 'lu', 'solve_triangular']
+
+
+def solve_triangular(a, b, trans=0, lower=False, unit_diagonal=False, overwrite_b=False, debug=None, check_finite=True):
+    """
+    Solve the linear system :math:`a x = b` for `x`, Assuming `a` is a triangular matrix.
+
+    Note:
+        - `solve_triangular` is currently only used in `mindscience` scientific computing scenarios and
+          dose not support other usage scenarios.
+        - `solve_triangular` is not supported on Windows platform yet.
+
+    Args:
+        a (Tensor): A triangular matrix of shape :math:`(*, M, M)` where :math:`*` is zero or more batch dimensions.
+        b (Tensor): A Tensor of shape :math:`(*, M)` or :math:`(*, M, N)`. Right-hand side matrix in :math:`a x = b`.
+        trans (Union[int, str], optional): Type of system to solve. Default: ``0``.
+
+            ========  =========
+            trans     system
+            ========  =========
+            0 or 'N'  a x  = b
+            1 or 'T'  a^T x = b
+            2 or 'C'  a^H x = b
+            ========  =========
+
+        lower (bool, optional): Use only data contained in the lower triangle of `a`. Default: ``False``.
+        unit_diagonal (bool, optional): If ``True``, diagonal elements of :math:`a` are assumed to be 1 and
+            will not be referenced. Default: ``False``.
+        overwrite_b (bool, optional): Not implemented now. Default: ``False``.
+        debug (Any, None): Not implemented now. Default: ``None``.
+        check_finite (bool, optional): Not implemented now. Default: ``True``.
+
+    Returns:
+        Tensor of shape :math:`(*, M)` or :math:`(*, M, N)`,
+        which is the solution to the system :math:`a x = b`.
+        Shape of :math:`x` matches :math:`b`.
+
+    Raises:
+        ValueError: If `a` is less than 2 dimension.
+        ValueError: if `a` is not square matrix.
+        TypeError: If dtype of `a` and `b` are not the same.
+        ValueError: If the shape of `a` and `b` are not matched.
+        ValueError: If `trans` is not in set {0, 1, 2, 'N', 'T', 'C'}.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> import numpy as onp
+        >>> import mindspore
+        >>> from mindspore import Tensor
+        >>> from mindspore.scipy.linalg import solve_triangular
+        >>> a = Tensor(onp.array([[3, 0, 0, 0], [2, 1, 0, 0], [1, 0, 1, 0], [1, 1, 1, 1]], onp.float32))
+        >>> b = Tensor(onp.array([3, 1, 3, 4], onp.float32))
+        >>> x = solve_triangular(a, b, lower=True, unit_diagonal=False, trans='N')
+        >>> print(x)
+        [ 1. -1.  2.  2.]
+        >>> print(a @ x)  # Check the result
+        [3. 1. 3. 4.]
+    """
+    trans_str_to_int = {'N': 0, 'T': 1, 'C': 2}
+    if isinstance(trans, str):
+        trans = trans_str_to_int.get(trans)
+        if trans is None:
+            _raise_value_error(
+                "For SolveTriangular, Augment[trans] must be one of [1, 2, 3,'N', 'T', 'C'].")
+    return ops.auto_generate.solve_triangular(a, b, trans=trans, lower=lower, unit_diagonal=unit_diagonal)
 
 
 def block_diag(*arrs):

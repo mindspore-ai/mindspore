@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2023 Huawei Technologies Co., Ltd
+ * Copyright 2020-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -647,12 +647,12 @@ class FloatDependGCall : public AnfVisitor {
     if (!node->isa<CNode>() || node->func_graph() == nullptr) {
       return nullptr;
     }
-
     auto &inputs = node->cast<CNodePtr>()->inputs();
     // as IsCNodeDup had checked the size of inputs must be greater or equal than 1, so no check here.
     if (IsPrimitiveCNode(inputs[0], prim::kPrimDepend)) {
       auto &depend_inputs = inputs[0]->cast<CNodePtr>()->inputs();
       constexpr auto number_three = 3;
+      constexpr auto number_two = 2;
       if (depend_inputs.size() != number_three) {
         return nullptr;
       }
@@ -663,7 +663,11 @@ class FloatDependGCall : public AnfVisitor {
       ScopePtr scope = node->scope();
       ScopeGuard scope_guard(scope);
       auto new_call_node = node->func_graph()->NewCNode(new_inputs);
-      auto new_node = node->func_graph()->NewCNode({depend_inputs[0], new_call_node, depend_inputs[2]});
+      auto new_node = node->func_graph()->NewCNode({depend_inputs[0], new_call_node, depend_inputs[number_two]});
+      const auto &abs = node->abstract();
+      if (abs != nullptr) {
+        new_node->set_abstract(abs);
+      }
       return new_node;
     }
     return nullptr;

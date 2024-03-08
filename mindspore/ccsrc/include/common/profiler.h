@@ -43,7 +43,7 @@ enum class ProfilerStage {
   kPython,
   kCapture,
   kRunGraph,
-  kRunGradGraph,
+  kRunGrad,
   kRunOp,
   kAsnumpy,
   kCompileGradGraph,

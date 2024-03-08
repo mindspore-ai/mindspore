@@ -2457,19 +2457,21 @@ class Cell(Cell_):
         Args:
             net_inputs (tuple): Inputs of the Cell object.
         """
-        set_inputs_len = len(set_inputs)
-        net_inputs_len = len(net_inputs)
-        if set_inputs_len != net_inputs_len:
-            raise ValueError("The length of 'set_inputs' or tuple(list) in 'set_inputs' must be equal to network's "
-                             f"inputs, but got 'set_inputs': {set_inputs_len} and network's input: {net_inputs_len}.")
+        if not getattr(set_inputs, '__ms_dynamic_len__', False):
+            set_inputs_len = len(set_inputs)
+            net_inputs_len = len(net_inputs)
+            if set_inputs_len != net_inputs_len:
+                raise ValueError(f"The length of 'set_inputs' or tuple(list) in 'set_inputs' "
+                                 f"must be equal to network's inputs, but got 'set_inputs': "
+                                 f"{set_inputs_len} and network's input: {net_inputs_len}.")
         for index, (set_input, net_input) in enumerate(zip(set_inputs, net_inputs)):
             if isinstance(set_input, Tensor):
                 self._check_dynamic_tensor(set_input, net_input, index)
             elif isinstance(set_input, (tuple, list)):
                 if not isinstance(net_input, (tuple, list)):
                     raise TypeError(
-                        f"The {index + 1}th input type of 'set_inputs' or tuple(list) in 'set_inputs' must be tuple or "
-                        f"list, but got {type(net_input)}.")
+                        f"The {index + 1}th input type of 'set_inputs' or tuple(list) in "
+                        f"'set_inputs' must be tuple or list, but got {type(net_input)}.")
                 self._check_compile_dynamic_shape(set_input, net_input)
 
     def _mixed_precision_cast(self, inputs):

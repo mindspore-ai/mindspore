@@ -37,7 +37,6 @@ tensor::TensorPtr UpsampleNearest1dAscendCustomize(const std::shared_ptr<OpRunne
                                                    const ValueTuplePtr &output_size,
                                                    const ValueTuplePtr &scale_factors) {
   OpRunner::InferOpOutput(op, input_tensor, output_size, scale_factors);
-
   std::vector<int64_t> output_size_vector = ConvertValueTupleToVector<int64_t>(output_size);
 
   PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor);

@@ -113,6 +113,17 @@ class QuantInfoBase : public ActivationOther {
   ~QuantInfoBase() override = default;
 };
 
+class AntiQuantInfo : public ArithmeticBase {
+ public:
+  AntiQuantInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+                const PrimitiveAttrs &attrs)
+      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<identityCost>()) {}
+  ~AntiQuantInfo() override = default;
+
+ protected:
+  Status InferTensorMap() override;
+};
+
 class QuantInfo : public QuantInfoBase {
  public:
   QuantInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,

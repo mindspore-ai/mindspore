@@ -33,6 +33,7 @@ namespace mindspore {
 using device::DeviceContext;
 using session::KernelWithIndex;
 namespace pynative {
+constexpr size_t kAlignSize = 64;
 struct OpCompilerInfo {
   OpCompilerInfo(GraphInfo graph_info, GraphId graph_id, KernelGraphPtr graph, DeviceContext *device_context,
                  bool need_erase, bool need_refresh_abstract, std::vector<KernelWithIndex> graph_output_nodes,
@@ -61,7 +62,7 @@ struct OpCompilerInfo {
   const std::vector<size_t> graph_outputs_tensor_num_;
   const std::vector<std::string> graph_outputs_padding_type_;
   const SimpleGraphPtr simple_graph_;
-  alignas(64) std::atomic<bool> ready_{true};
+  alignas(kAlignSize) std::atomic<bool> ready_{true};
 };
 using OpCompilerInfoPtr = std::shared_ptr<OpCompilerInfo>;
 

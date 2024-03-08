@@ -32,8 +32,8 @@
 namespace mindspore {
 namespace expander {
 namespace bprop {
-NodePtrList BpropIRBuilder::Run(const NodePtrList &inputs, const mindspore::HashMap<std::string, ValuePtr> &attrs,
-                                const BpropHandle &handle, const std::string &instance_name) {
+NodePtrList BpropBuilder::Run(const NodePtrList &inputs, const mindspore::HashMap<std::string, ValuePtr> &attrs,
+                              const BpropHandle &handle, const std::string &instance_name) {
   inputs_ptr_ = &inputs;
   attrs_ptr_ = &attrs;
   instance_name_ = instance_name;
@@ -69,7 +69,7 @@ class BroadcastGradientArgsShapeCalc : public ShapeCalcFunctor {
 };
 REG_FUNCTOR("ShapeCalc_BroadcastGradientArgs", BroadcastGradientArgsShapeCalc);
 
-NodePtrList BpropIRBuilder::BroadcastGradientArgs(const NodePtr &s0, const NodePtr &s1, size_t shift) {
+NodePtrList BpropBuilder::BroadcastGradientArgs(const NodePtr &s0, const NodePtr &s1, size_t shift) {
   auto check_shp_valid_func = [shift](size_t, const ShapeVector &shape) -> bool {
     return !(IsDynamicRank(shape) || IsDynamic(ShapeVector{shape.begin(), shape.end() - shift}));
   };
@@ -77,7 +77,7 @@ NodePtrList BpropIRBuilder::BroadcastGradientArgs(const NodePtr &s0, const NodeP
   return ShapeCalc(std::make_shared<BroadcastGradientArgsShapeCalc>(shift), {s0, s1}, {}, check_shp_valid_func);
 }
 
-ValuePtr BpropIRBuilder::GetAttr(const std::string &attr) const {
+ValuePtr BpropBuilder::GetAttr(const std::string &attr) const {
   auto iter = attrs_ptr_->find(attr);
   if (iter != attrs_ptr_->end()) {
     return iter->second;
@@ -86,7 +86,7 @@ ValuePtr BpropIRBuilder::GetAttr(const std::string &attr) const {
   return nullptr;
 }
 
-NodePtr BpropIRBuilder::GetInput(size_t i) const {
+NodePtr BpropBuilder::GetInput(size_t i) const {
   if (i >= inputs_ptr_->size()) {
     MS_LOG(EXCEPTION) << "For " << name_ << ", the index " << i << " is out of range of inputs size "
                       << inputs_ptr_->size();
@@ -94,30 +94,30 @@ NodePtr BpropIRBuilder::GetInput(size_t i) const {
   return (*inputs_ptr_)[i];
 }
 
-ValuePtr BpropIRBuilder::GetAttr(const NodePtr &node, const std::string &attr) const {
+ValuePtr BpropBuilder::GetAttr(const NodePtr &node, const std::string &attr) const {
   auto p = GetCNodePrimitive(node->get());
   MS_EXCEPTION_IF_NULL(p);
   return p->GetAttr(attr);
 }
 
-int64_t BpropIRBuilder::GetSize(const NodePtr &node) const {
+int64_t BpropBuilder::GetSize(const NodePtr &node) const {
   auto shape = GetShape(node);
   return std::accumulate(shape.begin(), shape.end(), 1LL, std::multiplies<int64_t>());
 }
 
-std::string BpropIRBuilder::GetTargetFromContext() const {
+std::string BpropBuilder::GetTargetFromContext() const {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   return context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
 }
 
-bool BpropIRBuilder::IsGraphMode() const {
+bool BpropBuilder::IsGraphMode() const {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   return (context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode);
 }
 
-NodePtr BpropIRBuilder::TensorGetItem(const NodePtr &node, int64_t idx) {
+NodePtr BpropBuilder::TensorGetItem(const NodePtr &node, int64_t idx) {
   auto data_shape = GetShape(node);
   auto n = data_shape.size();
   constexpr const size_t kMaxDims = 8;
@@ -139,7 +139,7 @@ NodePtr BpropIRBuilder::TensorGetItem(const NodePtr &node, int64_t idx) {
                       shrink_axis_mask);
 }
 
-NodePtr BpropIRBuilder::StridedSlice(const NodePtr &x, const std::map<int64_t, std::vector<int64_t>> &slices) {
+NodePtr BpropBuilder::StridedSlice(const NodePtr &x, const std::map<int64_t, std::vector<int64_t>> &slices) {
   auto data_shape = GetShape(x);
   auto n = data_shape.size();
   std::vector<int64_t> begin_strides(n, 0);
@@ -177,7 +177,7 @@ DEF_PURE_SHAPE_CALC(g_dyn_size)
   .SetInfer([](const ShapeArray &, const HashSet<size_t> &) -> ShapeVector { return {1}; });
 
 // This function will be removed, not recommended to use.
-NodePtr BpropIRBuilder::DynSize(const NodePtr &node) {
+NodePtr BpropBuilder::DynSize(const NodePtr &node) {
   if (!IsDynamic(GetShape(node))) {
     return Tensor(GetSize(node), kInt64);
   }
@@ -185,15 +185,20 @@ NodePtr BpropIRBuilder::DynSize(const NodePtr &node) {
 }
 
 // This function will be removed, not recommended to use.
-NodePtr BpropIRBuilder::DynSize(const NodePtr &node, const TypePtr &type) { return Cast(DynSize(node), type); }
+NodePtr BpropBuilder::DynSize(const NodePtr &node, const TypePtr &type) {
+  return Cast(SequenceToTensor(DynSize(node)), type);
+}
 
 // This function will be removed, not recommended to use.
-NodePtr BpropIRBuilder::DynSize(const NodePtr &node, TypeId type_id) { return Cast(DynSize(node), type_id); }
+NodePtr BpropBuilder::DynSize(const NodePtr &node, TypeId type_id) {
+  return Cast(SequenceToTensor(DynSize(node)), type_id);
+}
 
-NodePtr BpropIRBuilder::SequenceToTensor(const NodePtr &node, const TypePtr &dtype) {
+NodePtr BpropBuilder::SequenceToTensor(const NodePtr &node, const TypePtr &dtype) {
   auto abs = node->abstract();
+  MS_EXCEPTION_IF_NULL(abs);
   if (abs->isa<abstract::AbstractSequence>()) {
-    if (node->isa<ValueNode>()) {
+    if (node->input_type() == InputType::kConstant) {
       return Tensor(GetIntList(node), dtype);
     }
     if (abs->isa<abstract::AbstractTuple>()) {
@@ -205,15 +210,15 @@ NodePtr BpropIRBuilder::SequenceToTensor(const NodePtr &node, const TypePtr &dty
   return node;
 }
 
-NodePtr BpropIRBuilder::TensorToSequence(const NodePtr &node, const AbstractBasePtr &abs, const TypePtr &dtype) {
+NodePtr BpropBuilder::TensorToSequence(const NodePtr &node, const AbstractBasePtr &abs, const TypePtr &dtype) {
   if (node->abstract()->isa<abstract::AbstractTensor>()) {
     if (abs->isa<abstract::AbstractTuple>()) {
-      if (node->isa<ValueNode>()) {
+      if (node->input_type() == InputType::kConstant) {
         return EmitValue(MakeValue(GetIntList(node)));
       }
       return Emit(kTensorToTupleOpName, {node});
     } else {
-      if (node->isa<ValueNode>()) {
+      if (node->input_type() == InputType::kConstant) {
         auto vec = GetIntList(node);
         std::vector<ValuePtr> value_list;
         (void)std::transform(vec.begin(), vec.end(), std::back_inserter(value_list),
@@ -226,7 +231,7 @@ NodePtr BpropIRBuilder::TensorToSequence(const NodePtr &node, const AbstractBase
   return node;
 }
 
-NodePtr BpropIRBuilder::SequenceSetItem(const NodePtr &node, const NodePtr &index, const NodePtr &value) {
+NodePtr BpropBuilder::SequenceSetItem(const NodePtr &node, const NodePtr &index, const NodePtr &value) {
   auto abs = node->abstract();
   if (abs->isa<abstract::AbstractTuple>()) {
     return Emit(kTupleSetItemOpName, {node, index, value});
@@ -234,13 +239,13 @@ NodePtr BpropIRBuilder::SequenceSetItem(const NodePtr &node, const NodePtr &inde
   return Emit(kListSetItemOpName, {node, index, value});
 }
 
-NodePtr BpropIRBuilder::SequenceSlice(const NodePtr &node, const NodePtr &start, const NodePtr &stop,
-                                      const NodePtr &step) {
+NodePtr BpropBuilder::SequenceSlice(const NodePtr &node, const NodePtr &start, const NodePtr &stop,
+                                    const NodePtr &step) {
   return Emit(kSequenceSliceOpName, {node, start, stop, step});
 }
 
-NodePtr BpropIRBuilder::TensorToScalar(const NodePtr &node) {
-  if (node->isa<ValueNode>()) {
+NodePtr BpropBuilder::TensorToScalar(const NodePtr &node) {
+  if (node->input_type() == InputType::kConstant) {
     auto value = GetIntList(node);
     if (value.size() != 1) {
       MS_LOG(EXCEPTION) << "For TensorToScalar, the input value should have only one element, but got " << value.size();
@@ -248,6 +253,38 @@ NodePtr BpropIRBuilder::TensorToScalar(const NodePtr &node) {
     return Value(value[0]);
   }
   return Emit(ops::kNameTensorToScalar, {node});
+}
+
+NodePtr IrBuilder::EmitOp(const PrimitivePtr &prim, const NodePtrList &inputs) {
+  AnfNodePtrList cnode_inputs = {NewValueNode(prim)};
+  cnode_inputs.reserve(inputs.size() + 1);
+  (void)std::transform(inputs.cbegin(), inputs.cend(), std::back_inserter(cnode_inputs), [](const NodePtr &no) {
+    MS_EXCEPTION_IF_NULL(no);
+    return no->get();
+  });
+  auto cnode = func_graph_->NewCNode(cnode_inputs);
+  if (scope_ != nullptr) {
+    cnode->set_scope(scope_);
+  }
+  auto node = NewIrNode(cnode->cast<AnfNodePtr>());
+  infer_->Infer(node);
+  return node;
+}
+
+NodePtr IrBuilder::EmitValue(const ValuePtr &value) {
+  auto node = NewIrNode(NewValueNode(value));
+  infer_->Infer(node);
+  return node;
+}
+
+NodePtr IrBuilder::Conditional(const NodePtr &cond, const BlockFunc &true_case, const BlockFunc &false_case) {
+  CtrlFlowBlock cfb(this, this->func_graph());
+  return cfb.IfThenElse(cond, true_case, false_case);
+}
+
+NodePtr IrBuilder::While(const NodePtr &cond, const BlockFunc &body, const NodePtrList &init_list) {
+  CtrlFlowBlock cfb(this, this->func_graph());
+  return cfb.While(cond, body, init_list);
 }
 }  // namespace bprop
 }  // namespace expander

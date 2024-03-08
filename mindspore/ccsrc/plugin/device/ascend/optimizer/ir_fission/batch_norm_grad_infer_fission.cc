@@ -200,8 +200,11 @@ const AnfNodePtr BatchNormGradInferFission::Process(const FuncGraphPtr &func_gra
                                << kBNTrainingUpdateGradOutputNum << ", but it is "
                                << bn_training_update_grad_outputs.size() << trace::DumpSourceLines(node);
   }
-  return CreateMakeTupleNode(func_graph, std::vector<AnfNodePtr>{bn_infer_grad, bn_training_update_grad_outputs[0],
-                                                                 bn_training_update_grad_outputs[1]});
+  auto make_tuple = CreateMakeTupleNode(
+    func_graph,
+    std::vector<AnfNodePtr>{bn_infer_grad, bn_training_update_grad_outputs[0], bn_training_update_grad_outputs[1]});
+  make_tuple->set_scope(node->scope());
+  return make_tuple;
 }
 }  // namespace opt
 }  // namespace mindspore

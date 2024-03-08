@@ -15,6 +15,7 @@
  */
 #include "backend/common/graph_kernel/substitute_dropout.h"
 
+#include "ops/array_ops.h"
 #include "mindspore/core/ops/nn_ops.h"
 #include "mindspore/core/ops/op_utils.h"
 #include "include/common/utils/utils.h"
@@ -50,11 +51,20 @@ AnfNodePtr DropoutExpanderDeco::Run(const AnfNodePtr &node) {
     }
   }
   // Create a uniform_real kernel to generate random value.
-  auto tensor = std::make_shared<tensor::Tensor>(kNumberTypeInt64, ShapeVector(1, SizeToLong(shape.size())),
-                                                 static_cast<void *>(&shape[0]), kNumberTypeInt64);
-  AnfNodePtrList uniform_real_input = {NewValueNode(prim::kPrimCudnnUniformReal), NewValueNode(tensor)};
-  uniform_real_input[1]->set_abstract(tensor->ToAbstract());
-  uniform_real_input[1]->set_kernel_info(std::make_shared<device::KernelInfo>());
+  AnfNodePtr uniform_real_shape;
+  if (IsDynamic(shape)) {
+    uniform_real_shape = func_graph->NewCNode(prim::kPrimTensorShape, {cnode->input(1)});
+    int64_t rank = IsDynamicRank(shape) ? -1 : static_cast<int64_t>(shape.size());
+    uniform_real_shape->set_abstract(std::make_shared<abstract::AbstractTensor>(kInt64, ShapeVector{rank}));
+    Callback::Instance()->ResetKernelInfo(uniform_real_shape);
+  } else {
+    auto tensor = std::make_shared<tensor::Tensor>(kNumberTypeInt64, ShapeVector(1, SizeToLong(shape.size())),
+                                                   static_cast<void *>(&shape[0]), kNumberTypeInt64);
+    uniform_real_shape = NewValueNode(tensor);
+    uniform_real_shape->set_abstract(tensor->ToAbstract());
+    uniform_real_shape->set_kernel_info(std::make_shared<device::KernelInfo>());
+  }
+  AnfNodePtrList uniform_real_input = {NewValueNode(prim::kPrimCudnnUniformReal), uniform_real_shape};
   auto uniform_real_node = func_graph->NewCNode(uniform_real_input);
   SetNodeAttrSafely("seed", MakeValue(seed), uniform_real_node);
   common::AnfAlgo::SetNodeAttr("seed2", MakeValue(static_cast<int64_t>(0)), uniform_real_node);

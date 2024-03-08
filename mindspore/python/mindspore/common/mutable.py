@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,6 +17,9 @@ from __future__ import absolute_import
 
 from mindspore.common.tensor import Tensor
 from mindspore._c_expression import Tensor as Tensor_
+from mindspore import log as logger
+
+_check_elements_set = set()
 
 
 class _Int(int):
@@ -73,20 +76,36 @@ class _Bool(int):
     def __repr__(self):
         return repr(self.value)
 
+    def __ms_mutable_bool__(self):
+        pass
 
-def _check_element_type(value):
-    """Check if all the elements are Tensor."""
+
+def _check_element_type_recursion(value):
+    """Check if all the elements are valid or self reference."""
+    if id(value) in _check_elements_set:
+        return False
+    _check_elements_set.add(id(value))
+
     if isinstance(value, (tuple, list)):
         for element in value:
-            if not _check_element_type(element):
+            if not _check_element_type_recursion(element):
                 return False
+            _check_elements_set.remove(id(element))
         return True
     if isinstance(value, dict):
         for element in value.values():
-            if not _check_element_type(element):
+            if not _check_element_type_recursion(element):
                 return False
+            _check_elements_set.remove(id(element))
         return True
     return isinstance(value, (Tensor, Tensor_, int, float))
+
+
+def _check_element_type(value):
+    """Check if all the elements are valid."""
+    flag = _check_element_type_recursion(value)
+    _check_elements_set.clear()
+    return flag
 
 
 def mutable(input_data, dynamic_len=False):
@@ -111,7 +130,7 @@ def mutable(input_data, dynamic_len=False):
     the length of the tuple or list is different for each run, it does not need to be re-compiled.
 
     Args:
-        input_data (Union[Tensor, tuple, list, dict]): The input data to be made mutable. If
+        input_data (Union[Tensor, scalar, tuple, list, dict]): The input data to be made mutable. If
             'input_data' is list/tuple/dict, the type of each element should also in the valid types.
         dynamic_len (bool): Whether to set the whole sequence to be dynamic length. In graph compilation, if
             `dynamic_len` is ``True`` , the `input_data` must be list or tuple and the elements of `input_data` must
@@ -128,10 +147,10 @@ def mutable(input_data, dynamic_len=False):
         The origin input data which has been set mutable.
 
     Raises:
-        TypeError: If `input_data` is not one of Tensor, tuple, list, dict or their nested structure.
+        TypeError: If `input_data` is not one of Tensor, scalar, tuple, list, dict or their nested structure.
         TypeError: If `dynamic_len` is ``True`` and `input_data` is not tuple or list.
         ValueError: If `dynamic_len` is ``True`` , `input_data` is tuple or list but the elements within `input_data`
-        do not have the same shape and type.
+        do not have the same type.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -174,13 +193,16 @@ def mutable(input_data, dynamic_len=False):
     """
     if not _check_element_type(input_data):
         raise TypeError(
-            f"For 'mutable', the 'input_data' should be one of (int, float, bool, Tensor, tuple, list, dict) "
-            f"or their nested structures, but got {input_data}.")
+            f"For 'mutable', the 'input_data' should be one of (bool, int, float, Tensor, tuple, list, dict) "
+            f"or their nested structures with no self-reference, but got {type(input_data).__name__}: {input_data}.")
+
+    if not isinstance(dynamic_len, bool):
+        raise TypeError(f"For 'mutable', the second input should be bool, but got: {type(input_data).__name__}")
 
     if dynamic_len and not isinstance(input_data, (tuple, list)):
         raise TypeError(
-            f"For mutable, when the variable_len is True, the first input should be list or tuple,"
-            f" but got {input_data}")
+            f"For 'mutable', when the variable_len is True, the first input should be list or tuple, "
+            f"but got: {type(input_data).__name__}")
 
     ret = input_data
     if isinstance(input_data, bool):
@@ -196,12 +218,17 @@ def mutable(input_data, dynamic_len=False):
     elif isinstance(input_data, dict):
         ret = _Dict(input_data)
     elif isinstance(input_data, Tensor):
+        logger.info("For 'mutable', the Tensor in 'input_data' must not be constant. \
+                     We will add set_const_arg=False statement automatically.")
         ret.set_const_arg(False)
     elif isinstance(input_data, Tensor_):
         ret = Tensor(input_data, internal=True)
+        logger.info("For 'mutable', the Tensor_ in 'input_data' must not be constant. \
+                     We will add set_const_arg=False statement automatically.")
         ret.set_const_arg(False)
 
     setattr(ret, "__ms_mutable__", True)
     setattr(ret, "__ms_dynamic_len__", dynamic_len)
     setattr(ret, "__ms_origin_object__", input_data)
+    _check_elements_set.clear()
     return ret

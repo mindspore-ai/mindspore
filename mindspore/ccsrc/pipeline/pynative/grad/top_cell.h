@@ -37,7 +37,7 @@
 #include "frontend/operator/composite/composite.h"
 #include "pipeline/jit/ps/resource.h"
 #include "pipeline/pynative/base.h"
-#include "pipeline/pynative/grad/bprop_tensor_replace.h"
+#include "pipeline/pynative/grad/ir/bprop_tensor_replace.h"
 #include "utils/ms_context.h"
 
 namespace mindspore {
@@ -76,7 +76,7 @@ class TopCellInfo {
   inline void set_sub_cell_hook_changed(const std::string &sub_cell) { (void)sub_cell_hook_changed_.emplace(sub_cell); }
   inline const CellIdWithBackwardHookOp &cell_backward_hook_op() const { return cell_backward_hook_op_; }
   void RecordCellBackwardHookOp(const std::string &cell_order, const AnfNodePtr &hook_op);
-  void GetOpInfo(const FrontendOpRunInfoPtr &op_run_info) const;
+  void GetOpInfo(const FrontendOpRunInfoPtr &op_run_info, bool is_jit_graph) const;
   inline void ClearCellHookOp() { cell_backward_hook_op_.clear(); }
   inline bool forward_already_run() const { return forward_already_run_; }
   inline void set_forward_already_run(bool set_forward_already_run) { forward_already_run_ = set_forward_already_run; }
@@ -120,11 +120,11 @@ class TopCellInfo {
     graph_info_map_[fg] = graph_info;
   }
   inline const OrderedMap<FuncGraphPtr, GraphInfoPtr> &graph_info_map() const { return graph_info_map_; }
-  inline autograd::AutoGradCellImplPtr auto_grad_cell_ptr() const {
+  inline autograd::AutoGradPtr auto_grad_cell_ptr() const {
     MS_EXCEPTION_IF_NULL(auto_grad_cell_ptr_);
     return auto_grad_cell_ptr_;
   }
-  void set_auto_grad_cell_ptr(autograd::AutoGradCellImplPtr &&auto_grad_cell_ptr) {
+  void set_auto_grad_cell_ptr(autograd::AutoGradPtr &&auto_grad_cell_ptr) {
     runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative,
                                        runtime::ProfilerEvent::kPyNativeGradClearAutoGradCell,
                                        runtime::ProfilerRecorder::kNoName, true);
@@ -156,6 +156,8 @@ class TopCellInfo {
   inline void set_has_bprop_cut_op(bool has_bprop_cut_op) { has_bprop_cut_op_ = has_bprop_cut_op; }
   inline void set_resume_flag(bool resume_flag) { resume_flag_ = resume_flag; }
   bool resume_flag() const { return resume_flag_; }
+  inline void set_is_ir_grad(bool is_ir_grad) { is_ir_grad_ = is_ir_grad; }
+  bool is_ir_grad() const { return is_ir_grad_; }
   void SaveTensorIdWithOpInfo(const std::string &op_info, const ValuePtr &v) {
     SetIdWithOpInfo(v, op_info, kIndex0, &(replace_info_.id_with_op_info));
   }
@@ -199,7 +201,7 @@ class TopCellInfo {
   std::vector<std::string> output_ids_;
   pipeline::ResourcePtr resource_{nullptr};
   FuncGraphPtr fg_{nullptr};
-  autograd::AutoGradCellImplPtr auto_grad_cell_ptr_{nullptr};
+  autograd::AutoGradPtr auto_grad_cell_ptr_{nullptr};
   OrderedMap<FuncGraphPtr, GraphInfoPtr> graph_info_map_;
   // Record `register hook` or `remove hook` function has been called by sub cell
   // The record range between the begin and end of top cell.
@@ -214,6 +216,7 @@ class TopCellInfo {
   bool has_bprop_cut_op_{false};
   // Judge whether need resume param grad info.
   bool resume_flag_{false};
+  bool is_ir_grad_{false};
 };
 using TopCellInfoPtr = std::shared_ptr<TopCellInfo>;
 }  // namespace pynative

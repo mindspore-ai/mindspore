@@ -19,8 +19,10 @@
 
 #include <vector>
 #include <memory>
+#include <string>
 
 #include "ir/anf.h"
+#include "ir/functor.h"
 #include "utils/ms_utils.h"
 #include "include/backend/optimizer/optimizer.h"
 #include "include/backend/optimizer/helper.h"
@@ -70,5 +72,30 @@ class CustomActorNodeManager {
   DISABLE_COPY_AND_ASSIGN(CustomActorNodeManager)
   OrderedMap<AnfNodePtr, RelatedCustomActorNode> custom_nodes_map_;
 };
+
+/// \brief The class to implement an InferShape function, which is decoupled from the mindspore/core.
+class InferShapeFunctor : public Functor {
+ public:
+  /// \brief Constructor of InferShapeFunctor.
+  explicit InferShapeFunctor(const std::string &name) : Functor(name) {}
+
+  /// \brief Destructor of InferShapeFunctor.
+  ~InferShapeFunctor() override = default;
+  MS_DECLARE_PARENT(InferShapeFunctor, Functor)
+
+  /// \brief Infer output shape.
+  /// \param[in] args AbstractBasePtrList of the inputs.
+  /// \return Result BaseShapePtr.
+  virtual BaseShapePtr InferShape(const AbstractBasePtrList &args) = 0;
+
+  /// \brief Pack functor name to a Value
+  /// \return The name of this infershape functor.
+  ValuePtr ToValue() const override { return MakeValue(name_); };
+
+  /// \brief Rename the functor.
+  void FromValue(const ValuePtr &value) override { name_ = GetValue<std::string>(value); };
+};
+using InferShapeFunctorPtr = std::shared_ptr<InferShapeFunctor>;
+constexpr auto kAttrInferShapeFunctor = "infer_shape_functor";
 }  // namespace mindspore::opt::dynamic_shape
 #endif  // MINDSPORE_CCSRC_BACKEND_COMMON_OPTIMIZER_DYNAMIC_SHAPE_DYNAMIC_SHAPE_HELPER_H

@@ -20,26 +20,44 @@
 #include <map>
 #include <string>
 #include <vector>
+#include "kernel/pyboost/op_runner.h"
+#include "runtime/pynative/op_runner.h"
 #include "runtime/pynative/op_function/func_object.h"
+#include "backend/graph_compiler/backend.h"
 
 namespace mindspore::runtime {
-using Func = std::function<void(const PrimitivePtr &, const std::string &, const std::vector<ValuePtr> &, VectorRef *)>;
+using Func = std::function<void(OpRunnerInfo *, VectorRef *)>;
 
-class BACKEND_EXPORT PyBoostOpExecute {
+class PyBoostOpExecute {
  public:
-  static PyBoostOpExecute &GetInstance();
+  static COMMON_EXPORT PyBoostOpExecute &GetInstance();
 
   // Register pyboost grad op function
   void Register(const std::string &key, Func func) { grad_op_func_map_[key] = func; }
 
   // Check grad op have already registered
-  bool IsPyBoostOpRegistered(const std::string &op_name);
+  bool COMMON_EXPORT IsPyBoostOpRegistered(const std::string &op_name);
+
+  // Unified op run entry for pynative grad
+  void COMMON_EXPORT Execute(OpRunnerInfo *op_runner_info, VectorRef *op_outputs);
 
   // Api for outside call
-  void RunPyBoostCall(const PrimitivePtr &prim, const std::string &device_target, const vector<ValuePtr> &inputs,
-                      VectorRef *op_outputs);
+  void COMMON_EXPORT RunPyBoostCall(OpRunnerInfo *op_runner_info, VectorRef *op_outputs);
+
+  // Clear backend for fork process.
+  void ClearBackend() { backend_ = nullptr; }
 
  private:
+  // Run op by single op graph
+  void RunOpDeprecated(OpRunnerInfo *op_runner_info, VectorRef *op_outputs);
+
+  // RunOp in VM
+  void RunOpInVm(OpRunnerInfo *op_runner_info, VectorRef *op_outputs);
+
+  // Get backend
+  void GetMindRtBackend(const string &cur_device_target);
+
+  compile::MindRTBackendPtr backend_;
   std::map<std::string, FuncObject> grad_op_func_map_;
 };
 

@@ -22,7 +22,6 @@ from mindspore.ops import functional as F
 from mindspore.nn.cell import Cell
 from mindspore.common.tensor import Tensor
 from mindspore.common import dtype as mstype
-from mindspore.common.api import jit
 from mindspore.ops.primitive import _primexpr
 from mindspore.ops._primitive_cache import _get_cache_prim
 from mindspore import _checkparam as Validator
@@ -53,7 +52,6 @@ def _old_norm(norm_type, x):
     return out
 
 
-@jit
 def _cal_total_norm(x, norm_type):
     if norm_type == float('inf'):
         func = lambda data: data.abs().max()

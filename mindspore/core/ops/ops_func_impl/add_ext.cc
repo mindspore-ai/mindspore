@@ -20,11 +20,12 @@
 #include <string>
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
+#include "ops/ops_func_impl/prelu.h"
 
 namespace mindspore::ops {
-static inline bool isIntegralType(TypePtr t) {
-  return t == kInt8 || t == kInt16 || t == kInt32 || t == kInt64 || t == kUInt8 || t == kUInt16 || t == kUInt32 ||
-         t == kUInt64;
+static inline bool isIntegralType(TypeId t) {
+  return t == kNumberTypeInt8 || t == kNumberTypeInt16 || t == kNumberTypeInt32 || t == kNumberTypeInt64 ||
+         t == kNumberTypeUInt8 || t == kNumberTypeUInt16 || t == kNumberTypeUInt32 || t == kNumberTypeUInt64;
 }
 
 TypePtr AddExtFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
@@ -33,11 +34,32 @@ TypePtr AddExtFuncImpl::InferType(const PrimitivePtr &primitive, const std::vect
   (void)types.emplace("x", input_args[kInputIndex0]->GetType());
   (void)types.emplace("y", input_args[kInputIndex1]->GetType());
 
-  auto dtype = input_args[kInputIndex0]->GetType();
+  auto dtype1 = input_args[kInputIndex0]->GetType();
+  auto dtype2 = input_args[kInputIndex1]->GetType();
+
+  auto element1 = dtype1->cast<TensorTypePtr>()->element();
+  MS_EXCEPTION_IF_NULL(element1);
+  auto type_id1 = element1->type_id();
+
+  auto element2 = dtype2->cast<TensorTypePtr>()->element();
+  MS_EXCEPTION_IF_NULL(element2);
+  auto type_id2 = element2->type_id();
+
   auto alpha_type = input_args[kInputIndex2]->GetType();
 
-  if (isIntegralType(dtype) && alpha_type == kFloat32) {
-    MS_EXCEPTION(ValueError) << "For integral input tensors, argument alpha must not be a floating point number.";
+  if (alpha_type == kFloat32 && (isIntegralType(type_id1) || isIntegralType(type_id2))) {
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                             << "', floating alpha need floating input and other, but got " << dtype1->ToString()
+                             << " and " << dtype2->ToString();
+  }
+
+  if (IsAscend() && alpha_type == kBool) {
+    if (type_id1 != kNumberTypeBool || type_id2 != kNumberTypeBool) {
+      MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                               << "', boolean alpha need boolean input and other, but got " << dtype1->ToString()
+                               << " and " << dtype2->ToString();
+    }
+    return kBool;
   }
 
   return CheckAndConvertUtils::CheckMathBinaryOpTensorType(types, common_valid_types, primitive->name());

@@ -323,6 +323,7 @@ void UpdateReturnNode(const FuncGraphPtr &graph, const AnfNodePtr &origin_node, 
   MS_EXCEPTION_IF_NULL(g_output);
   auto abstract = std::make_shared<abstract::AbstractTuple>(abstract_list);
   g_output->set_abstract(abstract);
+  g_output->set_scope(new_node->scope());
   graph->set_output(g_output);
 }
 
@@ -608,6 +609,7 @@ const AnfNodePtr DropoutUnifyMindIR1::Process(const FuncGraphPtr &func_graph, co
   std::vector<AbstractBasePtr> abstract_list{dropout_do_mask->abstract(), dropout_gen_mask->abstract()};
   auto abstract = std::make_shared<abstract::AbstractTuple>(abstract_list);
   make_tuple->set_abstract(abstract);
+  make_tuple->set_scope(dropout_cnode->scope());
   UpdateReturnNode(func_graph, node, make_tuple);
   return make_tuple;
 }

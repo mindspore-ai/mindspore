@@ -51,16 +51,6 @@
 #undef OPAQUE
 #endif
 
-#ifndef MS_UNLIKELY
-#ifdef _MSC_VER
-#define MS_UNLIKELY(x) (x)
-#define MS_LIKELY(x) (x)
-#else
-#define MS_LIKELY(x) __builtin_expect(!!(x), 1)
-#define MS_UNLIKELY(x) __builtin_expect(!!(x), 0)
-#endif
-#endif
-
 namespace mindspore {
 enum KernelType : int {
   UNKNOWN_KERNEL_TYPE = 0,
@@ -230,6 +220,12 @@ using AddressPtrList = std::vector<AddressPtr>;
 using StreamType = void *;
 using abstract::AbstractBase;
 using device::DeviceSynchronizerPtr;
+// The memory info of kernel launch.
+struct KernelLaunchAddr {
+  AddressPtrList inputs_;
+  AddressPtrList outputs_;
+  AddressPtrList workspaces_;
+};
 struct TensorInfo {
   mindspore::Format format;
   abstract::AbstractTensorPtr base_;
@@ -812,6 +808,8 @@ inline T *GetDeviceAddress(const std::vector<KernelTensor *> &addr_list, size_t 
 }
 
 BACKEND_EXPORT std::vector<std::vector<int64_t>> GetShapes(const std::vector<KernelTensor *> &tensors);
+
+BACKEND_EXPORT void ConvertLaunchInfoToAddr(const KernelLaunchInfo &launch_info, KernelLaunchAddr *mem_info);
 
 template <typename T>
 inline bool CheckNullInput(const std::vector<T> &input_shape) {

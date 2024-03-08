@@ -67,8 +67,8 @@ std::vector<session::KernelWithIndex> GetGraphOutputs(const KernelGraphPtr &grap
   const auto &output_nodes = graph->outputs();
   std::vector<session::KernelWithIndex> outputs;
   outputs.reserve(output_nodes.size());
-  std::transform(output_nodes.begin(), output_nodes.end(), std::back_inserter(outputs),
-                 [](const AnfNodePtr &node) { return common::AnfAlgo::VisitKernel(node, 0); });
+  (void)std::transform(output_nodes.begin(), output_nodes.end(), std::back_inserter(outputs),
+                       [](const AnfNodePtr &node) { return common::AnfAlgo::VisitKernel(node, 0); });
   return outputs;
 }
 
@@ -202,8 +202,8 @@ SimpleGraphPtr IrConverter::Convert(const std::string &name, const KernelGraphPt
 
   std::vector<EdgePtr> all_edges;
   all_edges.reserve(address_to_edge.size());
-  std::transform(address_to_edge.begin(), address_to_edge.end(), std::back_inserter(all_edges),
-                 [](const auto &pair) { return pair.second; });
+  (void)std::transform(address_to_edge.begin(), address_to_edge.end(), std::back_inserter(all_edges),
+                       [](const auto &pair) { return pair.second; });
 
   return std::make_unique<SimpleGraph>(name, std::move(single_ops), std::move(graph_inputs_edges),
                                        std::move(graph_outputs_edges), std::move(all_edges));

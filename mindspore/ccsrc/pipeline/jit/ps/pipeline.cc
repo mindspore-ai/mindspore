@@ -88,6 +88,8 @@
 #include "kernel/graph_kernel/graph_kernel_builder_manager.h"
 #include "kernel/graph_kernel_info.h"
 #include "include/backend/data_queue/data_queue_mgr.h"
+#include "mindspore/core/ops/symbol_ops_impl/getnext.h"
+#include "include/common/symbol_engine/symbol_engine_impl.h"
 #include "pipeline/jit/ps/load_mindir.h"
 #include "load_mindir/infer_mindir.h"
 
@@ -898,10 +900,11 @@ bool IsPhaseLoadFromMindIR(const std::string &phase) {
   return phase.rfind(mindir_graph) != std::string::npos;
 }
 
-std::vector<ActionItem> GetPipeline(const ResourcePtr &resource, const std::string &phase, bool use_vm) {
+std::vector<ActionItem> GetPipeline(const ResourcePtr &resource, const std::string &phase, bool use_vm,
+                                    bool trace_flag = false) {
   MS_EXCEPTION_IF_NULL(resource);
   compile::SetMindRTEnable();
-  return VmPipeline(resource);
+  return VmPipeline(resource, trace_flag);
 }
 
 void GraphExecutorPy::InitCompileCacheInfo(const ResourcePtr &resource, const std::string &phase) {
@@ -968,7 +971,7 @@ void GraphExecutorPy::CleanCompileRes(const ResourcePtr &resource) {
 }
 
 bool GraphExecutorPy::CompileInner(const FuncGraphPtr &graph, const py::tuple &args, const py::dict &kwargs,
-                                   const std::string &phase, bool use_vm) {
+                                   const std::string &phase, bool use_vm, bool trace_flag) {
   PhaseManager::GetInstance().set_phase(phase);
   phase_ = phase;
 
@@ -979,7 +982,7 @@ bool GraphExecutorPy::CompileInner(const FuncGraphPtr &graph, const py::tuple &a
   bool use_compile_cache = resource->EnableCompileCache() && resource->func_graph();
   ConfigManager::GetInstance().ResetQueue(queue_name_);
 
-  auto actions = GetPipeline(resource, phase, use_vm);
+  auto actions = GetPipeline(resource, phase, use_vm, trace_flag);
   for (auto iter = actions.begin(); iter != actions.end();) {
     if (iter->first == "parse") {
       iter = actions.erase(iter);
@@ -1088,6 +1091,7 @@ bool GraphExecutorPy::CompileInner(const py::object &source, const py::tuple &ar
   bool is_auto_parallel = is_parallel_mode && !py::hasattr(source, parallel::kSkipAutoParallelCompile) &&
                           !py::hasattr(source, parallel::kKeepInputUnchanged);
   ConvertArgs(args, kwargs, is_auto_parallel, &args_abs, &arguments);
+  ConvertSymbolicShape(args, &args_abs);
   AddManagerForFuncGraphArgs(resource, arguments);
   resource->set_arguments(arguments);
   resource->set_args_abs(args_abs);
@@ -1164,6 +1168,61 @@ void GraphExecutorPy::ConvertArgs(const py::tuple &args, const py::dict &kwargs,
     auto keyword_arg_abs = std::make_shared<abstract::AbstractKeywordArg>(GetValue<std::string>(key), value_abs);
     (void)arguments->emplace_back(value);
     (void)args_abs->emplace_back(keyword_arg_abs);
+  }
+}
+
+void GraphExecutorPy::ConvertSymbolicShape(const py::tuple &args, AbstractBasePtrList *args_abs) {
+  std::vector<symshape::ops::SymbolInfoList> symbol_infos;
+  symbol_infos.reserve(args_abs->size());
+  for (size_t i = 0; i < args.size(); i++) {
+    auto iter = cur_convert_input_.find(args[i].ptr());
+    if (iter == cur_convert_input_.end()) {
+      continue;
+    }
+    auto &info_list = symbol_infos.emplace_back(symshape::ops::SymbolInfoList{});
+    if (!iter->second.first->isa<MetaTensor>()) {
+      continue;
+    }
+    constexpr char symbolic_shape_attr[] = "symbolic_shape";
+    if (!py::hasattr(args[i], symbolic_shape_attr)) {
+      continue;
+    }
+    auto symbolic_shape_obj = py::getattr(args[i], symbolic_shape_attr);
+    MS_EXCEPTION_IF_CHECK_FAIL(py::isinstance<py::list>(symbolic_shape_obj), "tensor.symbolic_shape should be a list");
+    auto obj_list = py::cast<py::list>(symbolic_shape_obj);
+    info_list.resize(obj_list.size());
+    for (size_t j = 0; j < obj_list.size(); j++) {
+      if (!py::isinstance<py::dict>(obj_list[j])) {
+        continue;
+      }
+      auto dict_obj = py::cast<py::dict>(obj_list[j]);
+      for (auto cfg_iter = dict_obj.begin(); cfg_iter != dict_obj.end(); ++cfg_iter) {
+        auto cfg_key = py::cast<std::string>(cfg_iter->first);
+        if (cfg_key == "max") {
+          info_list[j].max = py::cast<int64_t>(cfg_iter->second);
+        } else if (cfg_key == "min") {
+          info_list[j].min = py::cast<int64_t>(cfg_iter->second);
+        } else if (cfg_key == "divisor") {
+          info_list[j].divisor = py::cast<int64_t>(cfg_iter->second);
+        } else if (cfg_key == "remainder") {
+          info_list[j].remainder = py::cast<int64_t>(cfg_iter->second);
+        } else if (cfg_key == "id") {
+          info_list[j].id = py::cast<int64_t>(cfg_iter->second);
+        } else if (cfg_key == "name") {
+          info_list[j].name = py::cast<std::string>(cfg_iter->second);
+        }
+      }
+    }
+  }
+
+  auto symbolic_shape_list = symshape::ops::BuildSymbolicShapeBySymbolInfo(*args_abs, symbol_infos);
+  for (size_t i = 0; i < symbolic_shape_list.size(); i++) {
+    // when the same tensor object is used in set_inputs interface, the inputs may shared a same Abstract object.
+    // but for dynamic shape, the same "-1" in abstract can be different symbolic shape.
+    auto abs = symshape::CloneAbstractIfSymbolExists((*args_abs)[i]);
+    MS_EXCEPTION_IF_NULL(abs);
+    abs->SetSymbolicShape(symbolic_shape_list[i]);
+    (*args_abs)[i] = abs;
   }
 }
 
@@ -2247,7 +2306,6 @@ void MemoryRecycle() {
   parse::data_converter::ClearObjectCache();
   parse::Parser::CleanParserResource();
   trace::ClearTraceStack();
-  pynative::autograd::ClearPyNativeAutoGradStaticRes();
   pynative::PyNativeExecutor::GetInstance()->ClearRes();
   ConfigManager::GetInstance().ResetConfig();
   ScopeManager::GetInstance().ClearScope();

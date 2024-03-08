@@ -153,10 +153,12 @@ void ProcessSucceedTupleGetItem(const FuncGraphPtr &func_graph, const AnfNodePtr
       ++unfold_idx;
       tuplegetitem_node_inputs.push_back(new_axis_node);
       AnfNodePtr unfold_tuplegetitem_node = func_graph->NewCNode(tuplegetitem_node_inputs);
+      unfold_tuplegetitem_node->set_scope(node->scope());
       unfold_tuplegetitem_node->set_abstract(element);
       unfold_tuplegetitem_nodes.push_back(unfold_tuplegetitem_node);
     }
     AnfNodePtr new_maketuple_node = func_graph->NewCNode(unfold_tuplegetitem_nodes);
+    new_maketuple_node->set_scope(node->scope());
     new_maketuple_node->set_abstract(abs);
     manager->Replace(tuplegetitem_node, new_maketuple_node);
   } else {

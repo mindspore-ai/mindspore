@@ -1013,8 +1013,11 @@ STATUS OnnxModelParser::BuildCNode(const onnx::NodeProto &onnx_node, const FuncG
   CHECK_NULL_RETURN(anf_nodes_map);
   CHECK_NULL_RETURN(primitive_c);
   std::vector<AnfNodePtr> op_inputs;
-  for (const auto &input_name : onnx_node.input()) {
+  for (int i = 0; i < onnx_node.input_size(); i++) {
+    auto input_name = onnx_node.input(i);
     if (input_name.empty()) {
+      std::string empty_input_index = "empty_input_index";
+      primitive_c->AddAttr(empty_input_index, MakeValue<int>(i));
       continue;
     }
 

@@ -152,6 +152,7 @@ CNodePtr BnGradSplit::BNGradSplitForTBE(const FuncGraphPtr &func_graph, const CN
   }
   auto make_tuple = func_graph->NewCNode(make_tuple_inputs);
   MS_EXCEPTION_IF_NULL(make_tuple);
+  make_tuple->set_scope(cnode->scope());
   make_tuple->set_abstract(std::make_shared<abstract::AbstractTuple>(make_tuple_abstract));
   return make_tuple;
 }
@@ -182,8 +183,10 @@ CNodePtr SyncBnGradSplit::SyncBNGradSplitForTBE(const FuncGraphPtr &func_graph, 
                                << bn_reduce_grad_outputs.size() << trace::DumpSourceLines(cnode);
   }
 
-  return CreateMakeTupleNode(
+  auto make_tuple = CreateMakeTupleNode(
     func_graph, std::vector<AnfNodePtr>{bn_reduce_grad_outputs[0], allreduce_mul_outputs[0], allreduce_mul_outputs[1]});
+  make_tuple->set_scope(cnode->scope());
+  return make_tuple;
 }
 
 std::vector<std::string> BnGradSplit::MustExistPrimitiveName() const {

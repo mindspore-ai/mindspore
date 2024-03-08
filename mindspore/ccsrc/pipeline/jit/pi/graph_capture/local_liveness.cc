@@ -16,6 +16,7 @@
 #include "pipeline/jit/pi/graph_capture/local_liveness.h"
 #include <algorithm>
 #include <memory>
+#include <utility>
 #include "pipeline/jit/pi/graph_capture/graph.h"
 #include "utils/log_adapter.h"
 
@@ -98,27 +99,6 @@ void Liveness::Propagate(Block *cur, std::vector<Block *> *list) {
       list->push_back(i);
     }
   }
-}
-
-std::vector<ValueNode *> Liveness::CollectAliveNode(const Graph *graph, int bci, std::vector<int> *ids) const {
-  if (bci == -1) {
-    return {graph->GetRetVal()};
-  }
-
-  auto last_frame = graph->GetFrame(bci);
-  BitMap alive = CollectAlive(bci);
-  std::vector<ValueNode *> outputs = last_frame.GetStacks();
-  // collect alive locals
-  for (size_t i = 0; i < alive.size(); ++i) {
-    // exclude undefined locals
-    if (alive.Get(i) && last_frame.Local(i) != &ValueNode::kUnboundLocal) {
-      if (ids != nullptr) {
-        ids->push_back(i);
-      }
-      outputs.push_back(last_frame.Local(i));
-    }
-  }
-  return outputs;
 }
 
 }  // namespace pijit

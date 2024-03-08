@@ -19,9 +19,12 @@
 #include <cuda.h>
 #include <string>
 #include <vector>
+#include <unordered_set>
 #include <unordered_map>
 #include <map>
 #include <memory>
+#include <utility>
+#include "plugin/device/gpu/kernel/dynamic_akg/dynamic_utils.h"
 #include "kernel/kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_mod.h"
 #include "plugin/device/gpu/kernel/akg/akg_gpu_kernel_mod.h"
@@ -50,9 +53,10 @@ class DynamicAkgGpuKernelManager {
       }
     }
   }
+  CUresult GetCUResult(const char *kernel_content, bool force_reload, std::vector<uint32_t> *thread_info,
+                       CUfunction *func, const std::string kernel_name);
   CUresult GetFunction(const KernelPackPtr &kernel_pack, bool force_reload, std::vector<uint32_t> *thread_info,
-                       CUfunction *func, std::unordered_map<std::string, int64_t> map_info,
-                       const std::string kernel_name);
+                       CUfunction *func, const std::string kernel_name);
 
  private:
   std::unordered_map<std::string, GpuKernelMetaPtr> infotable_;
@@ -64,20 +68,18 @@ class DynamicAkgGpuKernelMod : public GpuKernelMod {
   explicit DynamicAkgGpuKernelMod(const KernelPackPtr &kernel_pack);
   virtual ~DynamicAkgGpuKernelMod() {}
 
-  bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override {
-    return true;
-  };
+  bool Init(const std::vector<KernelTensor *> &, const std::vector<KernelTensor *> &) override { return true; };
 
   int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
               const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
 
-  void InitMappingInfo();
-  void UpdateMappingInfo();
+  void Initialize();
+  void CheckJsonParsed();
+  void InitAkgKernelImpls();
+  void UpdateStaticShapeMappingInfo();
   void UpdateShapeList(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
-  std::vector<std::vector<int64_t>> GetArgSizeVec();
-
   void SetKernelDynamicStatus(bool is_dynamic) { is_dynamic_ = is_dynamic; }
 
   enum KernelModType GetKernelModType() const override { return KernelModType::DynamicAkgCpuKernelMod; }
@@ -92,33 +94,13 @@ class DynamicAkgGpuKernelMod : public GpuKernelMod {
   CUfunction kernel_addr_{nullptr};
   bool is_dynamic_{false};
   std::vector<std::vector<int64_t>> shape_list_;
-  std::vector<size_t> ndims_;
-  std::unordered_map<std::string, int64_t> map_info_;
-};
+  nlohmann::json parsed_js_;
+  std::vector<int64_t> arg_size_vec_;
 
-class DynamicAkgGpuKernelModDebug : public DynamicAkgGpuKernelMod {
- public:
-  explicit DynamicAkgGpuKernelModDebug(const KernelPackPtr &kernel_pack) : DynamicAkgGpuKernelMod(kernel_pack) {}
-  virtual ~DynamicAkgGpuKernelModDebug() {}
-  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
-              const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
-    auto ptr = reinterpret_cast<CUstream>(stream_ptr);
-    CUresult before_launch = cuStreamSynchronize(ptr);
-    const char *msg = nullptr;
-    if (before_launch != CUDA_SUCCESS) {
-      cuGetErrorName(before_launch, &msg);
-      MS_LOG(ERROR) << "before_launch sycn failed, Kernel name is : " << kernel_name_ << ", Error message: " << msg;
-    }
-    auto result = DynamicAkgGpuKernelMod::Launch(inputs, workspace, outputs, stream_ptr);
-    CUresult after_launch = cuStreamSynchronize(ptr);
-    if (after_launch != CUDA_SUCCESS) {
-      cuGetErrorName(after_launch, &msg);
-      MS_LOG(ERROR) << "after_launch sycn failed, Kernel name is : " << kernel_name_ << ", Error message: " << msg;
-    }
-    return result;
-  }
+  AkgKernelImplInfoPtr kernel_impl_;
+  std::unordered_map<std::string, AkgKernelImplInfoPtr> kernel_map_;
+  AkgKernelImplInfoPtr SelectKernelImpl();
 };
-using DynamicAkgGpuKernelModPtr = std::shared_ptr<DynamicAkgGpuKernelMod>;
 }  // namespace kernel
 }  // namespace mindspore
 

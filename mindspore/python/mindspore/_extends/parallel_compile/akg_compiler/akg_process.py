@@ -116,7 +116,7 @@ def create_akg_parallel_process(process_num, wait_time, platform):
 def _is_input_shape_dynamic(desc_d):
     input_lists = desc_d.get("input_desc", [])
     if input_lists is None:
-        return True
+        return False
     for input_desc in input_lists:
         shape = input_desc[0].get("shape", ())
         if -1 in shape or -2 in shape:

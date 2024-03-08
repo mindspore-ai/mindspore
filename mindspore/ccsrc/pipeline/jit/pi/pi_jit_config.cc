@@ -34,7 +34,7 @@ static const std::unordered_map<std::string, bool (GraphJitConfig::*)(PyObject *
   {"auto_grad", &GraphJitConfig::SetBool<GraphJitConfig::kAutoGrad>},
   // remove this config if 'strict_mode_cells' works well, and default inline all construct
   {"replace_nncell_by_construct", &GraphJitConfig::SetBool<GraphJitConfig::kReplaceNNCellByConstruct>},
-  {"trace_flag", &GraphJitConfig::SetBool<GraphJitConfig::kTraceFlag>},
+  {"compile_by_trace", &GraphJitConfig::SetBool<GraphJitConfig::kTraceFlag>},
   {"print_after_all", &GraphJitConfig::SetBool<GraphJitConfig::kPrintAfterAll>},
   {"print_tb", &GraphJitConfig::SetBool<GraphJitConfig::kPrintTraceback>},
   {"print_bb", &GraphJitConfig::SetBool<GraphJitConfig::kPrintBB>},

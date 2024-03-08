@@ -20,6 +20,7 @@
 #include "utils/util.h"
 #include "utils/linalg_ops_shape_fns.h"
 #include "utils/common_shape_fns.h"
+#include "op_proto/inc/linalg_ops.h"
 
 namespace ge {
 // ----------------MatrixSolve-------------------
@@ -562,4 +563,75 @@ CUST_IMPLEMT_INFERFUNC(LinearSumAssignment, LinearSumAssignmentInfer) {
 
 CUST_INFER_FUNC_REG(LinearSumAssignment, LinearSumAssignmentInfer);
 // -----------------------LinearSumAssignment END---------------------------------
+
+// -----------------------SolveTriangular---------------------------------
+CUST_IMPLEMT_INFERFUNC(SolveTriangular, SolveTriangularInfer) {
+  TensorDesc x_desc = op.GetOutputDescByName("x");
+  // infer type
+  DataType b_type = op.GetInputDescByName("b").GetDataType();
+  DataType x_type;
+  static const std::vector<DataType> type_to_float32 = {DT_INT16,  DT_INT32,  DT_INT8, DT_BOOL,
+                                                        DT_UINT16, DT_UINT32, DT_UINT8};
+  static const std::vector<DataType> type_to_float64 = {DT_INT64, DT_UINT64};
+  bool is_type_to_float32 = std::any_of(type_to_float32.begin(), type_to_float32.end(),
+                                        [&b_type](const DataType &dtype) { return b_type == dtype; });
+  bool is_type_to_float64 = std::any_of(type_to_float64.begin(), type_to_float64.end(),
+                                        [&b_type](const DataType &dtype) { return b_type == dtype; });
+  if (is_type_to_float32)
+    x_type = DT_FLOAT;
+  else if (is_type_to_float64)
+    x_type = DT_DOUBLE;
+  else
+    x_type = b_type;
+  x_desc.SetDataType(x_type);
+
+  // infer shape
+  Shape a_shape = op.GetInputDescByName("a").GetShape();
+  Shape b_shape = op.GetInputDescByName("b").GetShape();
+  x_desc.SetShape(b_shape);
+  if (op.UpdateOutputDesc("x", x_desc) != GRAPH_SUCCESS) {
+    OP_LOGE(TbeGetName(op).c_str(), "Failed to update output desc.");
+    return GRAPH_FAILED;
+  }
+  return GRAPH_SUCCESS;
+}
+
+CUST_INFER_FUNC_REG(SolveTriangular, SolveTriangularInfer);
+// -----------------------SolveTriangular END---------------------------------
+
+// -----------------------SolveTriangularGrad---------------------------------
+CUST_IMPLEMT_INFERFUNC(SolveTriangularGrad, SolveTriangularGradInfer) {
+  TensorDesc da_desc = op.GetOutputDescByName("da");
+  TensorDesc db_desc = op.GetOutputDescByName("db");
+  // infer type
+  DataType a_type = op.GetInputDescByName("a").GetDataType();
+  DataType grad_type;
+  static const std::vector<DataType> type_to_float32 = {DT_INT16, DT_INT32, DT_INT64, DT_INT8, DT_FLOAT16};
+  bool is_type_to_float32 = std::any_of(type_to_float32.begin(), type_to_float32.end(),
+                                        [&a_type](const DataType &dtype) { return a_type == dtype; });
+  if (is_type_to_float32)
+    grad_type = DT_FLOAT;
+  else
+    grad_type = a_type;
+  da_desc.SetDataType(grad_type);
+  db_desc.SetDataType(grad_type);
+
+  // infer shape
+  Shape a_shape = op.GetInputDescByName("a").GetShape();
+  da_desc.SetShape(a_shape);
+  if (op.UpdateOutputDesc("da", da_desc) != GRAPH_SUCCESS) {
+    OP_LOGE(TbeGetName(op).c_str(), "Failed to update output desc.");
+    return GRAPH_FAILED;
+  }
+  Shape b_shape = op.GetInputDescByName("b").GetShape();
+  db_desc.SetShape(b_shape);
+  if (op.UpdateOutputDesc("db", db_desc) != GRAPH_SUCCESS) {
+    OP_LOGE(TbeGetName(op).c_str(), "Failed to update output desc.");
+    return GRAPH_FAILED;
+  }
+  return GRAPH_SUCCESS;
+}
+
+CUST_INFER_FUNC_REG(SolveTriangularGrad, SolveTriangularGradInfer);
+// -----------------------SolveTriangularGrad END---------------------------------
 }  // namespace ge

@@ -32,6 +32,10 @@ AnfNodePtr TransThroughDepend(const AnfNodePtr &node) {
   auto cur_node = node;
   while (IsPrimitiveCNode(cur_node, prim::kPrimDepend)) {
     cur_node = cur_node->cast<CNodePtr>()->input(1);
+    const auto &abs = node->abstract();
+    if (abs != nullptr) {
+      cur_node->set_abstract(abs);
+    }
   }
   return cur_node;
 }
@@ -67,6 +71,10 @@ AnfNodePtr CastSameTypeEliminater::operator()(const OptimizerPtr &, const AnfNod
     if (IsPrimitiveCNode(node->cast<CNodePtr>()->input(2), prim::kPrimDepend)) {
       auto new_depend =
         node->func_graph()->NewCNode({NewValueNode(prim::kPrimDepend), src_, node->cast<CNodePtr>()->input(2)});
+      const auto &abs = src_->abstract();
+      if (abs != nullptr) {
+        new_depend->set_abstract(abs);
+      }
       return new_depend;
     }
     // Temporary patch for the output dtype mismatch, ResizeBilinear on Ascend always return Float32 tensor.
@@ -147,6 +155,13 @@ AnfNodePtr TwoCastEliminater::operator()(const OptimizerPtr &, const AnfNodePtr 
   AnfVisitor::Match(prim::kPrimCast, {IsCNode, IsNode})(node);
 
   if (x_ == nullptr || t_ == nullptr || y_ == nullptr) {
+    return nullptr;
+  }
+  // Sometimes the abstract information of the Depend node has not been derived.
+  // the type of X is nullptr, {prim::kPrimCast, {prim::kPrimCast, Depend(W, Z), Y}, T}
+  // In this case, we postpone the elimination of the two casts after the next renormalize.
+  auto x_type = x_->Type();
+  if (x_type == nullptr) {
     return nullptr;
   }
   if (CheckTypesIsIncreasingOrDecreasing()) {

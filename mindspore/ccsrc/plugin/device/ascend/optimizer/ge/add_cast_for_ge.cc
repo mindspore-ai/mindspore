@@ -86,6 +86,8 @@ const CNodePtr AddCastForGeInput(const FuncGraphPtr &graph, const CNodePtr &node
   auto kernel_graph = graph->cast<KernelGraphPtr>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto new_node = kernel_graph->NewCNodeWithInfos(new_inputs, node);
+  new_node->set_scope(node->scope());
+  new_node->set_fullname_with_scope(node->fullname_with_scope());
   new_node->set_abstract(node->abstract());
   new_node->set_inputs(new_inputs);
   return new_node;
@@ -123,7 +125,9 @@ const CNodePtr AddCastForGeOutput(const FuncGraphPtr &graph, const CNodePtr &nod
     }
     (void)new_outputs.emplace_back(std::move(tuple_getitem));
   }
-  return CreateMakeTupleNode(graph, new_outputs);
+  auto make_tuple = CreateMakeTupleNode(graph, new_outputs);
+  make_tuple->set_scope(node->scope());
+  return make_tuple;
 }
 }  // namespace
 

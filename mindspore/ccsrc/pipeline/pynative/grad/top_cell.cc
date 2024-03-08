@@ -27,9 +27,9 @@ void TopCellInfo::RecordCellBackwardHookOp(const std::string &cell_order, const 
   (void)cell_backward_hook_op_[cell_order].emplace_back(hook_op);
 }
 
-void TopCellInfo::GetOpInfo(const FrontendOpRunInfoPtr &op_run_info) const {
+void TopCellInfo::GetOpInfo(const FrontendOpRunInfoPtr &op_run_info, bool is_jit_graph) const {
   // Dynamic shape no need do value node replace
-  if (use_dynamic_shape_process()) {
+  if (use_dynamic_shape_process() && !is_jit_graph) {
     return;
   }
   MS_EXCEPTION_IF_NULL(op_run_info);

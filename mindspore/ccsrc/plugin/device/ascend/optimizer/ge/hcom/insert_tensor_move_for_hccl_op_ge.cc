@@ -196,6 +196,8 @@ void InsertTensorMoveForHcclOpGe::InsertTensorMove(const FuncGraphPtr &graph, co
     CNodePtr new_hccl_node = std::make_shared<CNode>(*hccl_node);
     new_hccl_node->CloneUserData(hccl_node);
     new_hccl_node->set_inputs(new_inputs);
+    new_hccl_node->set_scope(hccl_node->scope());
+    new_hccl_node->set_fullname_with_scope(hccl_node->fullname_with_scope());
     auto manager = graph->manager();
     MS_EXCEPTION_IF_NULL(manager);
     MS_LOG(DEBUG) << "start replace new_hccl_node to old hccl_node";

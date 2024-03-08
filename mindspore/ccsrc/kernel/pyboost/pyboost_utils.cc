@@ -166,6 +166,11 @@ void PyBoostUtils::CreateOutputTensor(const DeviceContext *device_context, const
     nullptr, input_device_address->GetSize(), Format::DEFAULT_FORMAT, output_tensor->data_type(),
     output_tensor->shape(), device_context->device_context_key().device_name_,
     device_context->device_context_key().device_id_);
+  if (input_device_address->GetDeviceType() != device::DeviceType::kAscend) {
+    // Not transmitting host shape information under Ascend for better performance.
+    kernel_tensor->SetType(std::make_shared<TensorType>(TypeIdToType(output_tensor->data_type())));
+    kernel_tensor->SetShape(std::make_shared<abstract::TensorShape>(output_tensor->shape()));
+  }
   kernel_tensor->set_tensor_storage_info(storage_info);
   kernel_tensor->set_size(input_device_address->GetSize());
   kernel_tensor->set_stream_id(input_device_address->stream_id());
@@ -199,14 +204,15 @@ AbstractBasePtr PyBoostUtils::InferByOpDef(const PrimitivePtr &prim, const std::
     auto shape = op_def->func_impl_.InferShape(prim, input_abs);
     auto type = op_def->func_impl_.InferType(prim, input_abs);
     output_abs = mindspore::abstract::MakeAbstract(shape, type);
-    MS_LOG(DEBUG) << "Pynative Infer by OpDef, got abstract: " << output_abs->ToString();
+    MS_LOG(DEBUG) << "Pynative Infer " << prim->name() << " by OpDef, got abstract: " << output_abs->ToString();
     return output_abs;
   } else {
     const auto &infer_map = abstract::GetPrimitiveInferMapPtr();
     const auto &iter = infer_map->find(prim);
     if (iter != infer_map->end()) {
       output_abs = iter->second.InferShapeAndType(nullptr, prim, input_abs);
-      MS_LOG(DEBUG) << "Pynative Infer by C++ PrimitiveInferMap, got abstract: " << output_abs->ToString();
+      MS_LOG(DEBUG) << "Pynative Infer " << prim->name()
+                    << " by C++ PrimitiveInferMap, got abstract: " << output_abs->ToString();
       return output_abs;
     } else {
       MS_LOG(EXCEPTION) << "Cannot found infer function for Op " << prim->name();

@@ -446,6 +446,18 @@ static void MarkBreak(Graph *g) {
   }
 }
 
+std::vector<py::object> GetAllArgs(JitCompileResults *jcr) {
+  auto all_args = PackArgs(jcr->origin_frame_);
+  auto args = py::cast<py::list>(all_args[0]);
+  if (all_args[1].ptr() != nullptr) {
+    PyList_Append(args.ptr(), all_args[1].ptr());  // args + vargs
+  }
+  if (all_args[2].ptr() != nullptr) {
+    PyList_Append(args.ptr(), all_args[2].ptr());  // args + kwargs
+  }
+  return args.cast<std::vector<py::object>>();
+}
+
 // preprocess before compile, split bytecode to sub-function
 // return whether the code should be modified
 static bool GraphCapture(JitCompileResults *jcr) {
@@ -455,7 +467,11 @@ static bool GraphCapture(JitCompileResults *jcr) {
 
   auto g = GraphBuilder::Creator(jcr->origin_frame_, conf.GetBoolConfig(GraphJitConfig::kTraceFlag));
 
-  (void)g->TraceRun(py::cast<py::list>(PackArgs(jcr->origin_frame_)[0]).cast<std::vector<py::object>>());
+  if (conf.GetBoolConfig(GraphJitConfig::kTraceFlag)) {
+    auto mg = std::dynamic_pointer_cast<MindGraphBuilder>(g);
+    mg->FGAddInputs(GetAllArgs(jcr));
+  }
+  (void)g->TraceRun();
 
   if (g->GetGraph()->IsBreakAtLoop() && !g->GetGraph()->RestoreLoopStatus()) {
     jcr->stat = JitCompileResults::NEVER_COMPILE;
@@ -463,8 +479,11 @@ static bool GraphCapture(JitCompileResults *jcr) {
     return false;
   }
 
-  BytecodeInliner inliner(g->GetGraph(), py::cast<py::dict>(jcr->origin_frame_->f_globals));
-  inliner.Run();
+  // One stage should skip inline process.
+  if (!conf.GetBoolConfig(GraphJitConfig::kTraceFlag)) {
+    BytecodeInliner inliner(g->GetGraph(), py::cast<py::dict>(jcr->origin_frame_->f_globals));
+    inliner.Run();
+  }
 
   auto analyzer = GraphAnalyzer::Creator(g);
   analyzer->Analyze();
@@ -508,7 +527,7 @@ static bool GraphCapture(JitCompileResults *jcr) {
   AObject::aobject_mem_pool_.Clear(__FILE__, __LINE__);
 
   bool captured = !analyzer->NeedInterpret() && !conf.GetBoolConfig(GraphJitConfig::kInterpretCapturedCode);
-  if (captured) {
+  if (captured && !jcr->conf->GetBoolConfig(GraphJitConfig::kTraceFlag)) {
     jcr->stat = JitCompileResults::GRAPH_CAPTURED;
   }
   return new_code.ptr() != reinterpret_cast<PyObject *>(jcr->origin_frame_->f_code);
@@ -790,6 +809,11 @@ static bool JitCompile(PyThreadState *tstate, JitCompileResults *c) {
       PyFrameObject *f = PrepareCallCompiledCallable(tstate, c->origin_frame_, c);
       frame = py::reinterpret_steal<py::object>(reinterpret_cast<PyObject *>(f));
     }
+    if (c->conf->GetBoolConfig(GraphJitConfig::kTraceFlag)) {
+      PyFrameObject *f = reinterpret_cast<PyFrameObject *>(frame.ptr());
+      GuardForFrame(f, c->code, *c->conf);
+      AddGuardForGlobals(f, c->code->GetGuard(), c->conf->GetBoolConfig(GraphJitConfig::kGuardDetachObject));
+    }
   }
 
   if (c->stat == JitCompileResults::GRAPH_CAPTURED) {
@@ -1008,6 +1032,9 @@ static bool CheckValidReturn(const JitCompileResults *c) {
 static bool PreferCallGraph(const JitCompileResults *c, py::object args) {
   if (c->code->GetNativeFunc() == nullptr) {
     return false;
+  }
+  if (c->conf->GetBoolConfig(GraphJitConfig::kTraceFlag)) {
+    return true;
   }
   if (!CheckValidReturn(c)) {
     return false;
@@ -1304,7 +1331,14 @@ PyObject *EvalFrame(PyThreadState *tstate, PyFrameObject *f, int exc) {
   }
   py::object res;
   try {
+    if (c->conf->GetBoolConfig(GraphJitConfig::kTraceFlag)) {
+      MS_LOG(INFO) << "Start run pijit with one stage mode";
+      common::SetEnv("MS_DEV_JIT_SYNTAX_LEVEL", "0");
+    }
     res = CodeHook(tstate, c, f);
+    if (c->conf->GetBoolConfig(GraphJitConfig::kTraceFlag)) {
+      common::SetEnv("MS_DEV_JIT_SYNTAX_LEVEL", "2");
+    }
   } catch (py::error_already_set &e) {
     MS_LOG(ERROR) << "execute failed with " << e.what() << " at "
                   << std::string(py::str(reinterpret_cast<PyObject *>(f->f_code)));

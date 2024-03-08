@@ -163,12 +163,15 @@ const AnfNodePtr BatchNorm2BNInfer::Process(const FuncGraphPtr &graph, const Anf
     std::vector<AnfNodePtr> make_tuple_inputs = {
       NewValueNode(prim::kPrimMakeTuple), bn_infer, mean, variance, scale, bias};
     auto make_tuple = graph->NewCNode(make_tuple_inputs);
+    make_tuple->set_scope(node->scope());
     return make_tuple;
   } else {
     if (IsUsedByOthers(graph, cnode)) {
       return nullptr;
     } else {
-      return CreateMakeTupleNode(graph, std::vector<AnfNodePtr>{bn_infer});
+      auto make_tuple = CreateMakeTupleNode(graph, std::vector<AnfNodePtr>{bn_infer});
+      make_tuple->set_scope(node->scope());
+      return make_tuple;
     }
   }
 }

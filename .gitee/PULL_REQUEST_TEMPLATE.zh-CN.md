@@ -6,11 +6,12 @@
 -->
 
 **What type of PR is this?**
-> Uncomment only one ` /kind <>` line, hit enter to put that in a new line, and remove leading whitespaces from that line:
->
-> /kind bug
-> /kind task
-> /kind feature
+<!-- 
+Choose one label from `bug`, `task`, `feature` and `refactor`, and replace `<label>` below the comment block. 
+
+If this pr is not only bugfix/task/feature and also a refactor, you can append `/kind refactor` label after `/kind bug`, `/kind task` and `/kind feature`.
+-->
+/kind <label>
 
 
 **What does this PR do / why do we need it**:
@@ -22,6 +23,7 @@
 Usage: `Fixes #<issue number>`, or `Fixes (paste link of issue)`.
 -->
 Fixes #
+
 
 **Code review checklist [【代码检视checklist说明】](https://gitee.com/mindspore/community/blob/master/security/code_review_checklist_mechanism.md)**:
 

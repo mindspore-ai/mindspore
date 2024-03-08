@@ -319,6 +319,7 @@ class COMMON_EXPORT AnfAlgo {
   static std::string GetInputName(const CNodePtr &origin_op, size_t input_index);
   static bool IsNoOuputNode(const AnfNodePtr &node);
   static ValuePtr ValueToScalar(const ValuePtr &value, TypeId type_id);
+  static std::vector<ValuePtr> TransformVectorRefToMultiValue(const VectorRef &base_ref);
 };
 
 inline AnfNodePtr CreateShapeVectorNode(const ShapeVector &value) {
@@ -335,6 +336,7 @@ inline CNodePtr CreateReshapeNode(const FuncGraphPtr &graph, const AnfNodePtr &i
   AnfNodePtrList reshape_inputs = {NewValueNode(std::make_shared<Primitive>(kReshapeOpName)), input_node, shape_node};
   auto reshape_node = NewCNode(reshape_inputs, graph);
   MS_EXCEPTION_IF_NULL(reshape_node);
+  reshape_node->set_scope(input_node->scope());
   common::AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), reshape_node);
   common::AnfAlgo::SetNodeAttr(kAttrShape, MakeValue(shape), reshape_node);
   auto data_type = common::AnfAlgo::GetOutputInferDataType(input_node, kIndex0);

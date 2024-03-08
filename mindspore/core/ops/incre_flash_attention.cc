@@ -196,7 +196,8 @@ void CheckPaddingAttenMaskShape(const PrimitivePtr &primitive, const std::vector
     }
   }
 
-  if (!IsOptionalInputNone(input_args[kIncreFlashAttentionInputAttnMaskIndex])) {
+  if (!IsOptionalInputNone(input_args[kIncreFlashAttentionInputAttnMaskIndex]) &&
+      IsOptionalInputNone(input_args[kIncreFlashAttentionInputBlockTable])) {
     std::vector<int64_t> atten_mask_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(
       input_args[kIncreFlashAttentionInputAttnMaskIndex]->BuildShape())[kShape];
     size_t len_pa = atten_mask_shape.size();
@@ -244,8 +245,6 @@ abstract::ShapePtr IncreFlashAttentionInferShapeBSH(const PrimitivePtr &primitiv
 
   if (IsDynamicRank(query_shape)) {
     query_shape = std::vector(kInputQueryBSHRank, abstract::Shape::kShapeDimAny);
-  } else if (query_shape[0] > 50) {
-    MS_LOG(EXCEPTION) << op_name << ": The batch must not be bigger than 50, but got " << query_shape[0];
   }
 
   if (CheckIsFrontend(input_args)) {
@@ -265,7 +264,12 @@ abstract::ShapePtr IncreFlashAttentionInferShapeBSH(const PrimitivePtr &primitiv
   }
 
   ShapeVector attention_out_shape(kInputQueryBSHRank, abstract::Shape::kShapeDimAny);
-  attention_out_shape[0] = GetDimension({query_shape[0], key_shape[0], value_shape[0]}, op_name, "B");
+  if (!IsOptionalInputNone(input_args[kIncreFlashAttentionInputBlockTable])) {
+    // kv: [num_blocks,block_size,hidden_size], q: [batch,seq_length,hidden_size]
+    attention_out_shape[0] = query_shape[0];
+  } else {
+    attention_out_shape[0] = GetDimension({query_shape[0], key_shape[0], value_shape[0]}, op_name, "B");
+  }
   attention_out_shape[1] = 1;
   attention_out_shape[2] = GetDimension({query_shape[2]}, op_name, "H");  // 2: h_index
   return std::make_shared<abstract::Shape>(attention_out_shape);

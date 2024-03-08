@@ -25,20 +25,20 @@
 #include "proto/debug_grpc.grpc.pb.h"
 
 using mindspore::device::DeviceContext;
-using mindspore::kernel::KernelLaunchInfo;
+using mindspore::kernel::KernelLaunchAddr;
 
 namespace mindspore {
 std::vector<size_t> CheckRealOutput(const std::string &node_name, const size_t &output_size);
 
-void LoadInputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info, uint32_t exec_order, uint32_t root_graph_id,
+void LoadInputs(const CNodePtr &cnode, const KernelLaunchAddr *launch_info, uint32_t exec_order, uint32_t root_graph_id,
                 const DeviceContext *device_context, const bool trans_flag);
 
-void LoadOutputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info, uint32_t exec_order,
+void LoadOutputs(const CNodePtr &cnode, const KernelLaunchAddr *launch_info, uint32_t exec_order,
                  uint32_t root_graph_id, const DeviceContext *device_context, const bool trans_flag);
 
 bool CheckReadData(const CNodePtr &cnode);
 
-void ReadDataAndDump(const CNodePtr &cnode, const KernelLaunchInfo *launch_info, uint32_t exec_order,
+void ReadDataAndDump(const CNodePtr &cnode, const KernelLaunchAddr *launch_info, uint32_t exec_order,
                      const DeviceContext *device_context);
 
 std::string CheckDatasetSinkMode(const KernelGraphPtr &graph_ptr);

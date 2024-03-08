@@ -1,5 +1,5 @@
 /**
- * Copyright 2022-2023 Huawei Technologies Co., Ltd
+ * Copyright 2022-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,10 +46,6 @@ std::string MsTensorDescString(const TensorParams &param) {
 bool AclKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   converter_ = std::make_shared<transform::AclConverter>();
   converter_->ConvertToAclOpType(kernel_name_);
-  converter_->ResizeAclOpInputs(primitive_);
-  converter_->ConvertInputMsIndexToAclIndex(primitive_, inputs);
-  converter_->ConvertAttrToAclInput(primitive_->attrs(), kernel_name_);
-  converter_->ConvertInputToAclAttr(inputs, kernel_name_);
   if (transform::AclHelper::IsPrintDebugString()) {
     ms_attr_str_.clear();
     converter_->ConvertToAclAttr(primitive_->attrs(), kernel_name_, &ms_attr_str_);
@@ -146,20 +142,18 @@ int AclKernelMod::GetOutputInfo(const std::vector<KernelTensor *> &outputs) {
   return ret;
 }
 
-void AclKernelMod::CreateAclConverter() {
+void AclKernelMod::RefreshAclConverter(const std::vector<KernelTensor *> &inputs) {
   MS_EXCEPTION_IF_NULL(converter_);
   converter_->Reset();
-  if (inputs_ != nullptr) {
-    converter_->ConvertInputToAclAttr(*inputs_, kernel_name_);
-  }
+  converter_->ConvertMsIdxToGeIdx(primitive_, inputs);
+  converter_->ConvertAttrToAclInput(primitive_->attrs(), kernel_name_);
+  converter_->ConvertInputToAclAttr(inputs, kernel_name_);
 }
 
 int AclKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  RefreshAclConverter(inputs);
   GetInputInfo(inputs);
   int ret = GetOutputInfo(outputs);
-  inputs_ = &inputs;
-  CreateAclConverter();
-
   return ret;
 }
 
@@ -203,7 +197,6 @@ bool AclKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::
     MS_LOG(ERROR) << "stream_ptr should not be nullptr.";
     return false;
   }
-  inputs_ = &inputs;
 
   // Process value depend arguments, value depend arguments reside both on device and host (which were synchronized at
   // type and shape inference stage). Inside the ACL internal, it may also need to sync there arguments to host for

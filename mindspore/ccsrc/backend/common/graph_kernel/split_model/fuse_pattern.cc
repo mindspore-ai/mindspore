@@ -116,6 +116,30 @@ bool FuseElemwiseBroadcastFwd::Match(const AreaPtr &dom) {
   return !fused_areas_.empty();
 }
 
+bool FuseDynElemwiseBroadcastFwd::Check(const AreaPtr &dom) {
+  if (dom->pattern() != NodePattern::ELEMWISE && dom->pattern() != NodePattern::BROADCAST) {
+    return false;
+  }
+  return fuse_type_ == FuseType::kWidth || dom->input_num() == 1;
+}
+
+bool FuseDynElemwiseBroadcastFwd::Match(const AreaPtr &dom) {
+  for (auto &[a, r] : dom->inputs_with_relation()) {
+    // depth match only support one to one pattern
+    if (fuse_type_ == FuseType::kDepth && a->user_num() != 1) {
+      continue;
+    }
+    if (a->pattern() <= NodePattern::BROADCAST && r <= EdgeRelation::BROADCAST) {
+      // it's unnecessary to check circle for depth match
+      if (fuse_type_ == FuseType::kWidth && HasCircle(a, dom)) {
+        continue;
+      }
+      (void)fused_areas_.emplace_back(a);
+    }
+  }
+  return !fused_areas_.empty();
+}
+
 bool FuseReduceFwd::Check(const AreaPtr &dom) {
   if (dom->pattern() != NodePattern::REDUCE) {
     return false;
@@ -132,6 +156,33 @@ bool FuseReduceFwd::Match(const AreaPtr &dom) {
       continue;
     }
     if (a->pattern() <= NodePattern::ELEMWISE && r == EdgeRelation::INJECTIVE) {
+      // it's unnecessary to check circle for depth match
+      if (fuse_type_ == FuseType::kWidth && HasCircle(a, dom)) {
+        continue;
+      }
+      (void)fused_areas_.emplace_back(a);
+    }
+  }
+  return !fused_areas_.empty();
+}
+
+bool FuseDynReduceFwd::Check(const AreaPtr &dom) {
+  if (dom->pattern() != NodePattern::REDUCE) {
+    return false;
+  }
+  return fuse_type_ == FuseType::kWidth || dom->input_num() == 1;
+}
+
+bool FuseDynReduceFwd::Match(const AreaPtr &dom) {
+  for (auto &input : dom->inputs_with_relation()) {
+    auto a = input.first;
+    if (fuse_type_ == FuseType::kDepth && a->user_num() != 1) {
+      continue;
+    }
+    if (a->size() > size_limit_) {
+      continue;
+    }
+    if (a->pattern() <= NodePattern::BROADCAST) {
       // it's unnecessary to check circle for depth match
       if (fuse_type_ == FuseType::kWidth && HasCircle(a, dom)) {
         continue;

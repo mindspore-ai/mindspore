@@ -44,7 +44,8 @@ class MultilabelMarginLossGpuKernelMod : public NativeGpuKernelMod {
  private:
   std::unique_ptr<cukernel::GpuKernelHelperBase> helper_ptr_{nullptr};
   std::shared_ptr<cukernel::MultilabelMarginLossAttr> attr_ptr_{nullptr};
-  int64_t batch_size_, class_num_;
+  int64_t batch_size_{0};
+  int64_t class_num_{0};
 };
 }  // namespace kernel
 }  // namespace mindspore

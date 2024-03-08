@@ -36,7 +36,7 @@ def test_bias_add_4d(mode):
     """
     @test_utils.run_with_cell
     def bias_add_forward_func(x, b):
-        return ops.bias_add(x, b, data_format="NCHW")
+        return ops.BiasAdd(data_format="NCHW")(x, b)
 
     ms.context.set_context(mode=mode)
     x_shape = [2, 3, 4, 5]

@@ -29,6 +29,8 @@
 #include "src/common/common.h"
 #include "common/log_adapter.h"
 
+bool SaveOM(const void *model, size_t length, const std::string &file_path) { return true; }
+
 namespace mindspore::kernel {
 namespace acl {
 CustomAscendKernelMod::CustomAscendKernelMod()
@@ -139,6 +141,9 @@ bool CustomAscendKernelMod::Init(const std::vector<KernelTensor *> &inputs,
     MS_LOG(ERROR) << "Load om data failed.";
     return false;
   }
+
+  SaveOM(om_data->addr, om_data->size, "./");
+
   if (is_multi_model_sharing_mem_prepare_) {
     MS_LOG(INFO) << "is multi model sharing mem prepare.";
     return true;

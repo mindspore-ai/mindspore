@@ -95,6 +95,10 @@ class _DataWrapper(nn.Cell):
         self.add_flags(**flags)
         self.get_next = P.GetNext(
             dataset_types, dataset_shapes, len(dataset_types), queue_name)
+        if network.get_inputs() is not None:
+            symbol_inputs = [getattr(inp, "symbolic_shape", None) for inp in network.get_inputs()]
+            if any((s is not None for s in symbol_inputs)):
+                self.get_next.add_prim_attr("symbols", symbol_inputs)
         self.network = network
         self._get_attr_from_cell(network)
 

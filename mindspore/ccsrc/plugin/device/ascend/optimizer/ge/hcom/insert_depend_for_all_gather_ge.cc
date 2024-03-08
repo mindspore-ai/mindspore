@@ -39,6 +39,7 @@ void ReplaceLoadToTensorMove(const FuncGraphPtr &graph, const CNodePtr &load_cno
   }
   std::vector<AnfNodePtr> inputs = {NewValueNode(prim::kPrimTensorMove), load_cnode->input(kIndex1)};
   auto tensor_move = graph->NewCNode(inputs);
+  tensor_move->set_scope(load_cnode->scope());
   manager->Replace(load_cnode, tensor_move);
 }
 
@@ -67,6 +68,7 @@ CNodePtr CreateDepend(const AnfNodePtr &first_input, const AnfNodePtr &second_in
                                     second_input};
   auto new_input = graph->NewCNode(inputs);
   new_input->set_abstract(first_input->abstract());
+  new_input->set_scope(first_input->scope());
   return new_input;
 }
 

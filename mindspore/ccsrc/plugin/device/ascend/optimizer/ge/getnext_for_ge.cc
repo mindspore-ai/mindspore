@@ -67,6 +67,7 @@ const AnfNodePtr ProcessGetNextForHeterogenous(const FuncGraphPtr &graph, const 
   common::AnfAlgo::CopyNodeAttr(kTypesAttrName, kOutputTypesAttrName, cnode, getnext_from_queue_node);
   common::AnfAlgo::CopyNodeAttr(kShapesAttrName, kOutputShapesAttrName, cnode, getnext_from_queue_node);
   getnext_from_queue_node->set_abstract(cnode->abstract());
+  getnext_from_queue_node->set_scope(cnode->scope());
 
   return getnext_from_queue_node;
 }
@@ -123,6 +124,7 @@ const AnfNodePtr ProcessGetNextForDynamicShape(const FuncGraphPtr &graph, const 
   common::AnfAlgo::SetNodeAttr(kInputsShapeRangeAttrName, MakeValue(GetShapesRange(input_shapes)),
                                dynamic_getnextv2_node);
   dynamic_getnextv2_node->set_abstract(cnode->abstract());
+  dynamic_getnextv2_node->set_scope(cnode->scope());
   return dynamic_getnextv2_node;
 }
 
