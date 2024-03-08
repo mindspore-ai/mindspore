@@ -91,7 +91,10 @@ class ProfilerInfoParser:
             raise RuntimeError("Failed to get msprof information!")
         result = json.loads(outs)
         cpu_info = result.get('data', {}).get('host_info', {}).get('cpu_info', [{}])[0]
-        cls._freq = float(cpu_info.get("Frequency", cls._freq))
+        try:
+            cls._freq = float(cpu_info.get("Frequency", cls._freq))
+        except ValueError:
+            pass
         cls._start_cnt = syscnt_stamp
         cls._time_offset = localtime_stamp
         start_ns = cls.__get_timestamp(syscnt)
