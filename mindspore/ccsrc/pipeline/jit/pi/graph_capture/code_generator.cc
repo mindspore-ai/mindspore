@@ -816,18 +816,32 @@ void CodeBreakGenerator::CallSideEffectCode(CodeGenerator *code_gen, Graph *grap
       code_gen->NewInstr(STORE_SUBSCR, 0);
       interpret_.outputs.erase(std::remove(interpret_.outputs.begin(), interpret_.outputs.end(), item),
                                interpret_.outputs.end());
+    } else if (item->GetOpcode() == CALL_FUNCTION) {
       for (auto input : item->getInputs()) {
-        interpret_.outputs.erase(std::remove(interpret_.outputs.begin(), interpret_.outputs.end(), input),
-                                 interpret_.outputs.end());
-      }
-
-    } else {
-      for (auto input : item->getInputs()) {
+        if (input->GetOpcode() == CALL_FUNCTION) {
+          continue;
+        }
         code_gen->LoadValue(input, true);
         interpret_.outputs.erase(std::remove(interpret_.outputs.begin(), interpret_.outputs.end(), input),
                                  interpret_.outputs.end());
       }
       code_gen->NewInstr(item->GetOpcode(), item->GetOparg());
+    }
+  }
+
+  if (graph->GetSideEffectReplacedList().size() != 0) {
+    for (auto item : graph->GetSideEffectReplacedList()) {
+      interpret_.outputs.erase(std::remove(interpret_.outputs.begin(), interpret_.outputs.end(), item),
+                               interpret_.outputs.end());
+    }
+  }
+  for (auto &item : graph->GetGlobalList()) {
+    if (item.getNode() != nullptr) {
+      code_gen->LoadValue(item.getNode(), false);
+      code_gen->GetCode().co_code.back()->set_name(item.getName());
+      code_gen->NewInstr(STORE_GLOBAL, 0);
+    } else {
+      code_gen->NewInstr(DELETE_GLOBAL, 0);
     }
   }
 }
@@ -1183,10 +1197,30 @@ void CodeBreakGenerator::Init(const Graph *graph, const GraphAnalyzer::CapturedI
   cfg_ = graph->GetCFG().get();
   std::vector<ValueNode *> alive_nodes = graph->CollectAliveNode(break_bci_, &alive_locals_);
 
-  std::transform(graph->GetSideEffectNodes().begin(), graph->GetSideEffectNodes().end(),
-                 std::back_inserter(alive_nodes), [](ValueNode *valueNode) { return valueNode; });
-  std::transform(graph->GetSideEffectReplacedList().begin(), graph->GetSideEffectReplacedList().end(),
-                 std::back_inserter(alive_nodes), [](ValueNode *valueNode) { return valueNode; });
+  for (auto item : graph->GetSideEffectNodes()) {
+    if (item->GetOpcode() == BUILD_LIST) {
+      alive_nodes.push_back(item);
+    } else if (item->GetOpcode() == CALL_FUNCTION) {
+      if (item->getInputs().size() != 0) {
+        for (auto input_item : item->getInputs()) {
+          if (input_item->GetOpcode() == CALL_FUNCTION) {
+            continue;
+          }
+          alive_nodes.push_back(input_item);
+        }
+      }
+    }
+  }
+  if (graph->GetSideEffectReplacedList().size() != 0) {
+    auto replace_list = graph->GetSideEffectReplacedList();
+    alive_nodes.insert(alive_nodes.end(), replace_list.begin(), replace_list.end());
+  }
+
+  for (auto item : graph->GetGlobalList()) {
+    if (item.getNode() != nullptr) {
+      alive_nodes.push_back(item.getNode());
+    }
+  }
 
   interpret_.inputs = graph->GetFrame(0).GetLocals();
   interpret_.outputs = std::move(alive_nodes);

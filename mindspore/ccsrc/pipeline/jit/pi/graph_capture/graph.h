@@ -175,8 +175,8 @@ class Graph {
   auto &GetSideEffect() const { return sideEffect_; }
 
   void SetSideEffectNode(ValueNode *node) { side_effect_nodes_.push_back(node); }
-  std::vector<ValueNode *> GetSideEffectNodes() { return side_effect_nodes_; }
-  std::vector<ValueNode *> GetSideEffectNodes() const { return side_effect_nodes_; }
+  std::vector<ValueNode *> &GetSideEffectNodes() { return side_effect_nodes_; }
+  std::vector<ValueNode *> const &GetSideEffectNodes() const { return side_effect_nodes_; }
 
   void SetSideEffectReplacedMap(ValueNode *newNode, ValueNode *old) { replace_map.insert({newNode, old}); }
   std::map<ValueNode *, ValueNode *> GetSideEffectReplacedMap() { return replace_map; }
@@ -188,6 +188,8 @@ class Graph {
     return replace_list;
   }
   std::map<ValueNode *, ValueNode *> GetSideEffectReplacedMap() const { return replace_map; }
+  void SetGlobalList(GlobalSideEffectNode node) { global_list.push_back(node); }
+  std::vector<GlobalSideEffectNode> GetGlobalList() const { return global_list; }
   void SetOldBreakBci(int bci) { old_break_bci_ = bci; }
   int GetOldBreakBci() { return old_break_bci_; }
 
@@ -234,6 +236,7 @@ class Graph {
   std::unique_ptr<SideEffect> sideEffect_;
   std::vector<ValueNode *> side_effect_nodes_;
   std::map<ValueNode *, ValueNode *> replace_map;
+  std::vector<GlobalSideEffectNode> global_list;
   int old_break_bci_;
 };
 }  // namespace pijit

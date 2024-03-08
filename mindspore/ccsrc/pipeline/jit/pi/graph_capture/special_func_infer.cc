@@ -54,6 +54,7 @@ static constexpr const char *kBuiltinNameOrd = "ord";                // convert 
 static constexpr const char *kBuiltinNameCallable = "callable";      // no side effects
 static constexpr const char *kBuiltinNameGetattr = "getattr";        // call __getattr__, or __getattribute__
 static constexpr const char *kBuiltinNameHasattr = "hasattr";        // call __getattr__, or __getattribute__
+static constexpr const char *kBuiltinNamePop = "pop";                // pop
 // ------------------------------builtins functions--------------------------------
 
 // ------------------------------builtins method--------------------------------
@@ -806,7 +807,7 @@ static const std::set<PyCFunction> &GenCFunctionMap() {
   // python object cfunction without sideeffect
   std::map<PyObject *, std::vector<std::string>> obj_cfunc_name = {
     {py::dict().inc_ref().ptr(),
-     {"__contains__", "__getitem__", "__sizeof__", "get", "keys", "items", "values", "fromkeys", "copy"}},
+     {"__contains__", "__getitem__", "__sizeof__", "get", "keys", "items", "values", "fromkeys", "copy", "pop"}},
     {py::list().inc_ref().ptr(), {"__getitem__", "__sizeof__", "copy", "index", "count"}},
     {py::tuple().inc_ref().ptr(), {"index", "count"}},
     {py::set().inc_ref().ptr(), {"__contains__", "copy", "issubset", "__sizeof__"}},
@@ -965,6 +966,39 @@ bool InferListAppend(CallNode *call_node) {
   return true;
 }
 
+static bool InferPopAsGet(CallNode *call_node) {
+  Graph *sub_graph = call_node->GetSubGraph();
+  py::object func = call_node->input(0)->GetVobj()->GetPyObject();
+  PyObject *fPtr = func.ptr();
+  if (func.ptr() == nullptr || PyMethod_Check(fPtr)) {
+    return SetCallResType<AObject::kTypeAnyValue>(call_node);
+  }
+
+  std::vector<py::object> args;
+  std::transform(call_node->getInputs().begin() + 1, call_node->getInputs().end(), std::back_inserter(args),
+                 [](ValueNode *n) { return n->GetVobj() ? n->GetVobj()->GetPyObject() : py::object(); });
+  auto pair = Utils::PackCallStackArgs(args, call_node->GetOpcode());
+  if (pair.first.ptr() == nullptr) {
+    return SetCallResType<AObject::kTypeAnyValue>(call_node);
+  }
+  func = py::cast<py::object>(PyMethod_GET_SELF(func.ptr())).attr("get");
+  PyObject *value = PyObject_Call(func.ptr(), pair.first.ptr(), pair.second.ptr());
+  if (PyErr_Occurred()) {
+    MS_LOG(ERROR) << "got an error " << py::error_already_set().what() << " at call the "
+                  << std::string(py::str(func.ptr()));
+    PyErr_Clear();
+  }
+  call_node->SetVobj(AObject::Convert(value));
+  call_node->SetSubGraph(nullptr);
+  Py_XDECREF(value);
+  // guard value node call->
+  if (!sub_graph->GuardValueNode(call_node)) {
+    return false;
+  }
+  call_node->GetGraph()->GetSideEffect()->setVariableMaps(call_node, nullptr);
+  return CallNodeReturnConst(call_node, sub_graph, call_node->GetVobj());
+}
+
 // special function list
 // special function that mindspore support and not inline,
 // the return values or type can be infer
@@ -990,6 +1024,7 @@ static const std::unordered_map<std::string, SpecialAction> kFuncWhiteListMap = 
   {kMindsporeNamePrimexpr, {CheckMSPrimexpr, InferMSConstexpr}},
   {kMindsporeNameTensorAsType, {CheckTensorAsType, InferTensorAsType}},
   {kBuiltinNameAppend, {CheckListAppend, InferListAppend}},
+  {kBuiltinNamePop, {CheckBuiltinFuncOrMethod, InferPopAsGet}},
 };
 
 static const std::vector<std::pair<CheckFunc, std::string>> kFuncWhiteListFuzzyMatcher = {

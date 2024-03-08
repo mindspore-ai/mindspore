@@ -143,9 +143,10 @@ void BytecodeInliner::Rebuild() {
   } else {
     ns.outputs.push_back(graph_->GetRetVal());
   }
+
   if (graph_->Config().GetBoolConfig(GraphJitConfig::kEnableEliminateUnusedOperation)) {
-    for (auto side_effect_node : graph_->GetSideEffectNodes()) {
-      for (auto item : side_effect_node->getInputs()) {
+    for (auto item : graph_->GetSideEffectNodes()) {
+      if (item->GetOpcode() == BUILD_LIST) {
         ns.outputs.push_back(item);
       }
     }
@@ -202,6 +203,9 @@ void BytecodeInliner::CollectTracedNodes(Graph *graph) {
     }
     for (auto side_effect_item : graph->GetSideEffect()->GetReplaceMaps()) {
       graph_->SetSideEffectReplacedMap(side_effect_item.first, side_effect_item.second);
+    }
+    for (auto item : graph->GetSideEffect()->GetGlobalList()) {
+      graph_->SetGlobalList(item);
     }
   }
 }

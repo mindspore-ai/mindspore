@@ -27,6 +27,25 @@
 namespace mindspore {
 namespace pijit {
 
+class GlobalSideEffectNode {
+ public:
+  explicit GlobalSideEffectNode(std::string node_name, ValueNode *node, const char *module_name)
+      : node_name_(node_name), node_(node), module_name_(module_name) {}
+  virtual ~GlobalSideEffectNode() {}
+  void setName(std::string node_name) { node_name_ = node_name; }
+  void setNode(ValueNode *node) { node_ = node; }
+  void setModule(const char *module_name) { module_name_ = module_name; }
+
+  std::string getName() { return node_name_; }
+  ValueNode *getNode() { return node_; }
+  const char *getModule() { return module_name_; }
+
+ private:
+  std::string node_name_;
+  ValueNode *node_;
+  const char *module_name_;
+};
+
 class SideEffect {
  public:
   void setVariableMaps(ValueNode *container, ValueNode *itemNode) {
@@ -38,11 +57,15 @@ class SideEffect {
   std::map<ValueNode *, ValueNode *> &GetSideEffectInstrs() { return VariableMutationMaps; }
   std::map<ValueNode *, ValueNode *> &GetReplaceMaps() { return replaceMaps; }
   void ReprocessVariableMutationMaps();
+  std::vector<GlobalSideEffectNode> &GetGlobalList() { return GlobalList; }
+
+  void setGlobalList(GlobalSideEffectNode global_side_effect) { GlobalList.push_back(global_side_effect); }
 
  private:
   std::map<ValueNode *, ValueNode *> VariableMutationMaps;
   std::map<ValueNode *, ValueNode *> replaceMaps;
   int StopBci;
+  std::vector<GlobalSideEffectNode> GlobalList;
 };
 
 }  // namespace pijit

@@ -57,7 +57,6 @@ static const int infer_primitive_create = 1;
 static const int infer_primitive_object = 2;
 static const int infer_primitive_func = 4;
 static int infer_func_count = 0;
-static const int store_subscr_handle_size = 3;
 static constexpr const char *kPIJitCopyFuncKey = ".<pijit.copy>.";
 
 const std::unordered_map<int, bool (GraphBuilder::*)(const Instr &)> GraphBuilder::bytecode_meth_map_ = {
@@ -635,27 +634,42 @@ bool GraphBuilder::DoGlobalAccess(const Instr &instr) {
   int oparg = instr.arg();
   switch (opcode) {
     case LOAD_GLOBAL: {
-      auto co = graph_->GetCodeObj();
-      PyObject *key = PyTuple_GET_ITEM(co->co_names, oparg);
-      // NOTE: will run __get__, __hash__ function
-      PyObject *obj = PyObject_GetItem(graph_->GetGlobals().ptr(), key);
-      if (obj == nullptr) {
-        PyErr_Clear();
-        obj = PyObject_GetItem(PyEval_GetBuiltins(), key);
+      if (!graph_->GetSideEffect()->GetGlobalList().empty()) {
+        for (auto global_side_effect : graph_->GetSideEffect()->GetGlobalList()) {
+          if (global_side_effect.getModule() == GetGraph()->GetModuleName() &&
+              global_side_effect.getName() == instr.name()) {
+            push(global_side_effect.getNode());
+          }
+        }
+        break;
+      } else {
+        auto co = graph_->GetCodeObj();
+        PyObject *key = PyTuple_GET_ITEM(co->co_names, oparg);
+        // NOTE: will run __get__, __hash__ function
+        PyObject *obj = PyObject_GetItem(graph_->GetGlobals().ptr(), key);
         if (obj == nullptr) {
           PyErr_Clear();
+          obj = PyObject_GetItem(PyEval_GetBuiltins(), key);
         }
+        py::object pyobj = py::reinterpret_steal<py::object>(obj);
+        auto n = NewValueNode(AObject::Convert(pyobj), instr, {});
+        n->SetName(PyUnicode_AsUTF8(key));
+        push(n);
+        break;
       }
-      py::object pyobj = py::reinterpret_steal<py::object>(obj);
-      auto n = NewValueNode(AObject::Convert(pyobj), instr, {});
-      n->SetName(PyUnicode_AsUTF8(key));
-      push(n);
+    }
+    case STORE_GLOBAL: {
+      auto global_node = pop();
+      GlobalSideEffectNode global_side_effect(instr.name(), global_node, GetGraph()->GetModuleName());
+      graph_->GetSideEffect()->setGlobalList(global_side_effect);
       break;
     }
-    case STORE_GLOBAL:
-    case DELETE_GLOBAL:
-      current_block_->SetTrackResult(Block::kHasGlobalSideEffect);
-      return false;
+    case DELETE_GLOBAL: {
+      GlobalSideEffectNode global_side_effect(instr.name(), nullptr, GetGraph()->GetModuleName());
+      graph_->GetSideEffect()->setGlobalList(global_side_effect);
+      break;
+    }
+
     default:
       return false;
   }
@@ -925,10 +939,10 @@ bool GraphBuilder::DoItemAccess(const Instr &instr) {
       if (DoSetItem(m, k, v) == true) {
         return true;
       }
-      if (instr.arg() != store_subscr_handle_size) {
-        return false;
-      }
       if (m->GetVobj()->GetType() == AObject::kTypeList) {
+        if (k->GetOpcode() == BUILD_SLICE) {
+          return false;
+        }
         DoSideEffect(instr, {k, m, v});
         break;
       } else {
