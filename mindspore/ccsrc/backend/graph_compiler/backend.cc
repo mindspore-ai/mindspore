@@ -425,7 +425,7 @@ ValuePtr GetInputofBpropCut(const std::shared_ptr<GraphCompiler> &graph_compiler
 ValuePtr GetFrontArgByParameter(const std::vector<AnfNodePtr> &origin_paramters, const VectorRef &front_args,
                                 const AnfNodePtr &front_node) {
   const auto &iter = std::find(origin_paramters.begin(), origin_paramters.end(), front_node);
-  const size_t index = iter - origin_paramters.begin();
+  const size_t index = static_cast<size_t>(iter - origin_paramters.begin());
   // If the parameter is not found in the parameters of the root graph, it means that it is the input of the subgraph,
   // and there is no need to input a tensor.
   if (index >= front_args.size()) {
@@ -467,41 +467,6 @@ void GetControlOpInput(const std::shared_ptr<GraphCompiler> &graph_compiler,
     MS_EXCEPTION_IF_NULL(value);
     (void)args->emplace_back(value);
   }
-}
-
-void ConvertPyObjectToTensor(const py::object &input_object, std::vector<ValuePtr> *tensors) {
-  MS_EXCEPTION_IF_NULL(tensors);
-  ValuePtr tensor_ptr = nullptr;
-  if (py::isinstance<tensor::Tensor>(input_object)) {
-    tensor_ptr = py::cast<tensor::TensorPtr>(input_object);
-  } else if (IsStubTensor(input_object)) {
-    tensor_ptr = ConvertStubTensor(input_object);
-  } else if (py::isinstance<py::float_>(input_object)) {
-    double input_value = py::cast<py::float_>(input_object);
-    tensor_ptr = std::make_shared<tensor::Tensor>(input_value, kFloat32);
-  } else if (py::isinstance<py::int_>(input_object)) {
-    tensor_ptr = std::make_shared<tensor::Tensor>(py::cast<int64_t>(input_object), kInt64);
-  } else if (py::isinstance<py::list>(input_object)) {
-    auto list_inputs = py::cast<py::list>(input_object);
-    for (size_t i = 0; i < list_inputs.size(); ++i) {
-      ConvertPyObjectToTensor(list_inputs[i], tensors);
-    }
-    return;
-  } else if (py::isinstance<py::tuple>(input_object)) {
-    auto tuple_inputs = py::cast<py::tuple>(input_object);
-    for (size_t i = 0; i < tuple_inputs.size(); ++i) {
-      ConvertPyObjectToTensor(tuple_inputs[i], tensors);
-    }
-    return;
-  } else if (py::isinstance<tensor::CSRTensor>(input_object)) {
-    tensor_ptr = py::cast<tensor::CSRTensorPtr>(input_object);
-  } else if (py::isinstance<tensor::COOTensor>(input_object)) {
-    tensor_ptr = py::cast<tensor::COOTensorPtr>(input_object);
-  } else {
-    MS_EXCEPTION(TypeError) << "Unreasonable data type: " << input_object.get_type() << ".";
-  }
-  MS_EXCEPTION_IF_NULL(tensor_ptr);
-  (void)tensors->emplace_back(tensor_ptr);
 }
 
 void RunControlOperator(const std::shared_ptr<GraphCompiler> &graph_compiler,
@@ -859,8 +824,9 @@ void MindRTBackend::RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_i
           MS_LOG(DEBUG) << "Run " << primitive->name() << " by pyboost";
           graph_compiler_->GetSingleOpInputTensors(kernel, op_output_map, parameter_index, inputs[graph_index], true,
                                                    &input_info);
-          runtime::PyBoostOpExecute::GetInstance().RunPyBoostCall(primitive, device_target, input_info.input_values,
-                                                                  &op_outputs);
+          runtime::OpRunnerInfo op_runner_info{
+            primitive, device_target, input_info.input_values, input_info.input_abs, {}, kernel->abstract()};
+          runtime::PyBoostOpExecute::GetInstance().RunPyBoostCall(&op_runner_info, &op_outputs);
         } else {
           MS_LOG(DEBUG) << "Run " << primitive->name() << " by single op graph";
           session::BackendOpRunInfoPtr op_run_info;

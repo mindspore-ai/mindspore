@@ -36,7 +36,8 @@ void LoadAclOpApiSymbol(const std::string &ascend_path) {
   std::string ascendcl_plugin_path = "lib64/libascendcl.so";
   auto handler = GetLibHandler(ascend_path + ascendcl_plugin_path);
   if (handler == nullptr) {
-    MS_LOG(EXCEPTION) << "Dlopen " << ascendcl_plugin_path << " failed!" << dlerror();
+    MS_LOG(WARNING) << "Dlopen " << ascendcl_plugin_path << " failed!" << dlerror();
+    return;
   }
   aclopCreateAttr_ = DlsymAscendFuncObj(aclopCreateAttr, handler);
   aclopSetAttrBool_ = DlsymAscendFuncObj(aclopSetAttrBool, handler);

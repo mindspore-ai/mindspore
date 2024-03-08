@@ -23,6 +23,8 @@
 #include "debug/data_dump/npy_header.h"
 #include "mindspore/core/utils/file_utils.h"
 #include "plugin/device/ascend/hal/device/ascend_data_queue.h"
+#include "transform/symbol/acl_tdt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace mindspore::device::ascend {
 namespace {
@@ -130,18 +132,18 @@ TensorDumpUtils &TensorDumpUtils::GetInstance() {
 }
 
 void TensorDumpUtils::AsyncSaveDatasetToNpyFile(acltdtDataset *acl_dataset) {
-  std::string tensor_name = std::string{acltdtGetDatasetName(acl_dataset)};
+  std::string tensor_name = std::string{CALL_ASCEND_API(acltdtGetDatasetName, acl_dataset)};
   MS_LOG(INFO) << "For 'TensorDump' ops, acltdt received Tensor name is " << tensor_name;
   if (tensor_name.empty()) {
     MS_LOG(ERROR) << "For 'TensorDump' ops, the args of 'file' is empty, skip this data.";
     return;
   }
-  size_t acl_dataset_size = acltdtGetDatasetSize(acl_dataset);
+  size_t acl_dataset_size = CALL_ASCEND_API(acltdtGetDatasetSize, acl_dataset);
 
   for (size_t i = 0; i < acl_dataset_size; i++) {
-    acltdtDataItem *item = acltdtGetDataItem(acl_dataset, i);
+    acltdtDataItem *item = CALL_ASCEND_API(acltdtGetDataItem, acl_dataset, i);
     MS_EXCEPTION_IF_NULL(item);
-    if (acltdtGetTensorTypeFromItem(item) == ACL_TENSOR_DATA_END_OF_SEQUENCE) {
+    if (CALL_ASCEND_API(acltdtGetTensorTypeFromItem, item) == ACL_TENSOR_DATA_END_OF_SEQUENCE) {
       MS_LOG(INFO) << "end of sequence" << std::endl;
       break;
     }

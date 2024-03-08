@@ -51,16 +51,6 @@
 #undef OPAQUE
 #endif
 
-#ifndef MS_UNLIKELY
-#ifdef _MSC_VER
-#define MS_UNLIKELY(x) (x)
-#define MS_LIKELY(x) (x)
-#else
-#define MS_LIKELY(x) __builtin_expect(!!(x), 1)
-#define MS_UNLIKELY(x) __builtin_expect(!!(x), 0)
-#endif
-#endif
-
 namespace mindspore {
 enum KernelType : int {
   UNKNOWN_KERNEL_TYPE = 0,

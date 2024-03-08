@@ -33,6 +33,7 @@ namespace mindspore {
 namespace parallel {
 const std::vector<std::string> filter_attrs = {RECOMPUTE, TARGET};
 const uint32_t kMinInputSize = 2;
+constexpr size_t kSize2 = 2;
 std::string ParameterName(const AnfNodePtr &node_ptr) {
   auto para_ptr = node_ptr->cast<ParameterPtr>();
   MS_EXCEPTION_IF_NULL(para_ptr);
@@ -158,7 +159,7 @@ size_t GetLengthOfDataType(const TypePtr &type) {
     case kNumberTypeUInt64:
       return sizeof(uint64_t);
     case kNumberTypeFloat16:
-      return sizeof(float) / 2;
+      return sizeof(float) / kSize2;
     case kNumberTypeFloat32:
       return sizeof(float);
     case kNumberTypeFloat64:
@@ -170,7 +171,9 @@ size_t GetLengthOfDataType(const TypePtr &type) {
     case kNumberTypeFloat:
       return sizeof(float);
     case kNumberTypeBFloat16:
-      return sizeof(float) / 2;
+      return sizeof(float) / kSize2;
+    case kNumberTypeComplex64:
+      return sizeof(float) * kSize2;
     default:
       MS_LOG(EXCEPTION) << "Unexpected type " << type->type_name();
   }

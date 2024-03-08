@@ -90,7 +90,6 @@ void CopyActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
   }
 
   {
-    WaitRuntimePipelineFinish();
     ProfilerRecorder profiler(ProfilerModule::kRuntime, ProfilerEvent::kCopyData, GetAID().Name());
     if (!Copy(output_device_tensor_[0], input_device_tensor_[0])) {
       std::string error_info = "Copy device tensor failed: " + GetAID().Name();

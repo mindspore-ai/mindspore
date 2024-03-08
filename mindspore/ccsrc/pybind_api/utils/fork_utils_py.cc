@@ -60,6 +60,10 @@ void RegisterForkCallbacks() {
   ForkUtils::GetInstance().RegisterCallbacks(
     &device::DeviceContextManager::GetInstance(), static_cast<void (device::DeviceContextManager::*)()>(nullptr),
     static_cast<void (device::DeviceContextManager::*)()>(nullptr), &device::DeviceContextManager::ChildAfterFork);
+  MS_LOG(DEBUG) << "Register GraphScheduler fork callbacks.";
+  ForkUtils::GetInstance().RegisterCallbacks(
+    &runtime::GraphScheduler::GetInstance(), static_cast<void (runtime::GraphScheduler::*)()>(nullptr),
+    static_cast<void (runtime::GraphScheduler::*)()>(nullptr), &runtime::GraphScheduler::ChildAfterFork);
 #endif
 }
 

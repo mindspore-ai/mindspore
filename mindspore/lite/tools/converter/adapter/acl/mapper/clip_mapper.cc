@@ -22,9 +22,14 @@
 #include "tools/optimizer/common/gllo_utils.h"
 #include "ops/op_utils.h"
 #include "src/common/log_util.h"
-
+#include "ops/array_ops.h"
 namespace mindspore {
 namespace lite {
+namespace {
+const size_t kNumInputIndex2 = 2;
+const size_t kNumInputIndex3 = 3;
+const size_t kNumInputSize3 = 3;
+}  // namespace
 STATUS ClipMapper::Mapper(const CNodePtr &cnode) {
   MS_ASSERT(cnode != nullptr);
   auto func_graph = cnode->func_graph();
@@ -48,13 +53,31 @@ STATUS ClipMapper::Mapper(const CNodePtr &cnode) {
   auto inputs = cnode->inputs();
   const size_t input_size_with_min = 3;  // prim, data, min
   const size_t input_size_with_max = 4;  // prim, data, min, max
-  if (inputs.size() < input_size_with_min) {
-    inputs.push_back(min_param);
+  auto value_ptr = prim->GetAttr("empty_input_index");
+  std::vector<AnfNodePtr> new_inputs;
+  if (value_ptr != nullptr && inputs.size() == kNumInputSize3 && GetValue<int>(value_ptr) == 1) {
+    MS_LOG(INFO) << "empty input index: " << GetValue<int>(value_ptr);
+    new_inputs = {inputs[0], inputs[1], min_param, inputs[kNumInputIndex2]};
+    cnode->set_inputs(new_inputs);
+    auto cast_int64_node_2 =
+      NewCNode(cnode, prim::kPrimCast, {cnode->input(kNumInputIndex2), NewValueNode(TypeIdToType(kNumberTypeInt32))},
+               cnode->input(1)->abstract(), cnode->fullname_with_scope() + "_input2_cast_int32");
+    cnode->set_input(kNumInputIndex2, cast_int64_node_2);
+
+    auto cast_int64_node_3 =
+      NewCNode(cnode, prim::kPrimCast, {cnode->input(kNumInputIndex3), NewValueNode(TypeIdToType(kNumberTypeInt32))},
+               cnode->input(1)->abstract(), cnode->fullname_with_scope() + "_input3_cast_int32");
+    cnode->set_input(kNumInputIndex3, cast_int64_node_3);
+  } else {
+    MS_LOG(INFO) << "clip cnode inputs size: " << cnode->inputs().size();
+    if (inputs.size() < input_size_with_min) {
+      inputs.push_back(min_param);
+    }
+    if (inputs.size() < input_size_with_max) {
+      inputs.push_back(max_param);
+    }
+    cnode->set_inputs(inputs);
   }
-  if (inputs.size() < input_size_with_max) {
-    inputs.push_back(max_param);
-  }
-  cnode->set_inputs(inputs);
   return RET_OK;
 }
 

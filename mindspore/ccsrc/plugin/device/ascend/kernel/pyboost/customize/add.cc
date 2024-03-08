@@ -40,7 +40,7 @@ tensor::TensorPtr AddAscendCustomize(const std::shared_ptr<OpRunner> &op, const 
     PyBoostUtils::MallocOpInputs(device_context, x_tensor, y_tensor);
     // Malloc for output tensors
     PyBoostUtils::MallocOpOutputs(device_context, outputs);
-    ScalarPtr alpha = std::make_shared<FP32Imm>(1);
+    ScalarPtr alpha = std::make_shared<Int64Imm>(1);
     LAUNCH_ACLNN(aclnnAdd, device_context, op->stream_id(), x_tensor, y_tensor, alpha, outputs[0]);
     MS_LOG(DEBUG) << "Run device task Add end";
   }));

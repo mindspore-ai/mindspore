@@ -26,6 +26,9 @@
 #include "include/backend/anf_runtime_algorithm.h"
 #include "ops/auto_generate/gen_ops_primitive.h"
 #include "transform/acl_ir/op_api_util.h"
+#include "transform/symbol/acl_base_symbol.h"
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace mindspore::transform {
 namespace {
@@ -379,8 +382,9 @@ bool AclConverter::IsNeedSkipExecute(const std::string &kernel_name, const std::
     auto func = acl_info.input_check_selector();
     auto is_real_skip = func(inputs);
     if (is_real_skip) {
-      aclError status = aclrtMemcpyAsync(outputs[0]->device_ptr(), outputs[0]->size(), inputs[0]->device_ptr(),
-                                         inputs[0]->size(), ACL_MEMCPY_DEVICE_TO_DEVICE, stream_ptr);
+      aclError status =
+        CALL_ASCEND_API(aclrtMemcpyAsync, outputs[0]->device_ptr(), outputs[0]->size(), inputs[0]->device_ptr(),
+                        inputs[0]->size(), ACL_MEMCPY_DEVICE_TO_DEVICE, stream_ptr);
       if (status != ACL_ERROR_NONE) {
         MS_LOG(EXCEPTION) << "MemCpyAsync op aclrtMemcpyAsync failed, ret:" << status
                           << " destMax:" << outputs[0]->size() << " count:" << inputs[0]->size();
@@ -542,7 +546,7 @@ void AclConverter::ConvertToAclInput(const PrimitivePtr &prim, const std::vector
             auto [acl_desc, acl_data] =
               ConvertTensorToAclDesc(host_input, input_params[ms_real_idx], arg_name, dump_str_pointer);
             if (set_const && host_input->is_const) {
-              (void)aclSetTensorConst(acl_desc, host_input->host_addr, host_input->size);
+              (void)CALL_ASCEND_API(aclSetTensorConst, acl_desc, host_input->host_addr, host_input->size);
             }
             runner_.SetInput(ge_real_idx, acl_desc, acl_data);
           }

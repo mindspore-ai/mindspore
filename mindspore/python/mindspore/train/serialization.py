@@ -667,7 +667,7 @@ def load(file_name, **kwargs):
             - dec_key (bytes): Byte-type key used for decryption. The valid length is 16, 24, or 32.
             - dec_mode (Union[str, function]): Specifies the decryption mode, to take effect when dec_key is set.
 
-              - Option: 'AES-GCM', 'AES-CBC', 'SM4-CBC' or customized decryption. Default: 'AES-GCM'.
+              - Option: 'AES-GCM', 'AES-CBC', 'SM4-CBC' or customized decryption. Default: ``'AES-GCM'``.
               - For details of using the customized decryption, please check the `tutorial
                 <https://mindspore.cn/mindarmour/docs/en/master/model_encrypt_protection.html>`_.
 
@@ -1540,7 +1540,7 @@ def export(net, *inputs, file_name, file_format, **kwargs):
               - For 'AIR' and 'ONNX' models, only customized encryption is supported.
               - For 'MINDIR', all options are supported. Option: 'AES-GCM', 'AES-CBC', 'SM4-CBC'
                 or Customized encryption.
-                Default: 'AES-GCM'.
+                Default: ``'AES-GCM'``.
               - For details of using the customized encryption, please check the `tutorial
                 <https://mindspore.cn/mindarmour/docs/en/master/model_encrypt_protection.html>`_.
 
@@ -1841,8 +1841,15 @@ def _split_save(net_dict, model, file_name, is_encrypt, **kwargs):
     data_file_name = os.path.join(dirname, external_local)
     f, parameter_size, offset = _get_data_file(is_encrypt, kwargs, data_file_name)
     try:
+        round = 0
+        names = []
         for param_proto in model.graph.parameter:
             name = param_proto.name[param_proto.name.find(":") + 1:]
+            names.append((name, param_proto))
+            names.sort(key=lambda x: x[0])
+        for pairs in names:
+            name = pairs[0]
+            param_proto = pairs[1]
             param = net_dict[name]
             raw_data = param.data.get_bytes()
             data_length = len(raw_data)
@@ -1862,6 +1869,8 @@ def _split_save(net_dict, model, file_name, is_encrypt, **kwargs):
             offset += (data_length + append_size)
             write_data = _encrypt_data(is_encrypt, write_data, kwargs)
             f.write(write_data)
+            round += 1
+            logger.debug(f"writing {round}th split data, name:{name}")
 
         graph_file_name = os.path.join(dirname, file_prefix + "_graph.mindir")
         if os.path.exists(graph_file_name):

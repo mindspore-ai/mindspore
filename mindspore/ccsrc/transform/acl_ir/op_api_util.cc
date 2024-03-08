@@ -22,6 +22,8 @@
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
+#include "transform/symbol/acl_compiler_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace mindspore::transform {
 namespace {
@@ -46,7 +48,7 @@ static const std::unordered_map<uint8_t, aclCubeMathType> kSelectMoreMathType = 
 
 std::mutex set_opt_mutex;
 
-aclError SetCompileopt(aclCompileOpt opt, const char *value) { return aclSetCompileopt(opt, value); }
+aclError SetCompileopt(aclCompileOpt opt, const char *value) { return CALL_ASCEND_API(aclSetCompileopt, opt, value); }
 
 void *GetAclFunc(const std::string &lib_path, const std::string &func_name) {
   static auto ascend_path = device::ascend::GetAscendPath();

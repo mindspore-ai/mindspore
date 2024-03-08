@@ -89,7 +89,7 @@ class AdadeltaGpuKernelMod : public NativeGpuKernelMod {
   int64_t t_size_{4};
   int64_t s_size_{4};
   int64_t g_size_{4};
-  int64_t input_elements_;
+  int64_t input_elements_{0};
 
   std::vector<KernelTensor *> outputs_ = {};
 

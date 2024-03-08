@@ -52,11 +52,13 @@ static const std::unordered_map<std::string, bool (GraphJitConfig::*)(PyObject *
   {"auto_clean_cache", &GraphJitConfig::SetBool<GraphJitConfig::kAutoCleanCache>},
   {"prune_case", &GraphJitConfig::SetBool<GraphJitConfig::kPruneCase>},
   {"loop_unrolling", &GraphJitConfig::SetBool<GraphJitConfig::kLoopUnrolling>},
+  {"infer_only", &GraphJitConfig::SetBool<GraphJitConfig::kInferOnly>},
   {"infer_primitive", &GraphJitConfig::SetBool<GraphJitConfig::kInferPrimitive>},
   {"strict_trace", &GraphJitConfig::SetBool<GraphJitConfig::kStrictTrace>},
   {"perf_statistics", &GraphJitConfig::SetBool<GraphJitConfig::kPerfStatistics>},
   {"LOG_GRAPH_BREAK", &GraphJitConfig::SetBool<GraphJitConfig::kLogGraphBreak>},
   {"LOG_PERF", &GraphJitConfig::SetBool<GraphJitConfig::kLogPerf>},
+  {"LOG_GUARD_PERF", &GraphJitConfig::SetBool<GraphJitConfig::kLogGuardPerf>},
   {"enable_dynamic_shape", &GraphJitConfig::SetBool<GraphJitConfig::kEnableDynamicShape>},
   {"test_graph_ir", &GraphJitConfig::SetBool<GraphJitConfig::kTestGraphIR>},
   {"kFeatureBreakAtInlinedFunction", &GraphJitConfig::SetBool<GraphJitConfig::kFeatureBreakAtInlinedFunction>},
@@ -74,6 +76,7 @@ static const std::unordered_map<std::string, bool (GraphJitConfig::*)(PyObject *
   {"PERF_STATISTICS_SCALE_10000X", &GraphJitConfig::SetInt<GraphJitConfig::kPerfStatisticsScale10000x>},
   {"limit_graph_size", &GraphJitConfig::SetInt<GraphJitConfig::kLimitGraphSize>},
   {"limit_graph_count", &GraphJitConfig::SetInt<GraphJitConfig::kLimitGraphCount>},
+  {"relax_guard_count", &GraphJitConfig::SetInt<GraphJitConfig::kGuardRelaxCount>},
   {"allowed_inline_modules", &GraphJitConfig::AddAllowedInlineModules},
   {"strict_mode_cells", &GraphJitConfig::AddPSJitStrictCells},
   {"pijit_forbidden", &GraphJitConfig::AddJitForbidden},
@@ -102,11 +105,14 @@ GraphJitConfig::GraphJitConfig() {
   bool_conf[kAutoCleanCache - kBoolConf] = false;
   bool_conf[kPruneCase - kBoolConf] = true;
   bool_conf[kLoopUnrolling - kBoolConf] = false;
+  bool_conf[kSkipException - kBoolConf] = false;
+  bool_conf[kInferOnly - kBoolConf] = false;
   bool_conf[kInferPrimitive - kBoolConf] = true;
   bool_conf[kStrictTrace - kBoolConf] = true;
   bool_conf[kPerfStatistics - kBoolConf] = false;
   bool_conf[kLogGraphBreak - kBoolConf] = false;
   bool_conf[kLogPerf - kBoolConf] = false;
+  bool_conf[kLogGuardPerf - kBoolConf] = false;
   bool_conf[kTestGraphIR - kBoolConf] = false;
   bool_conf[kEnableGeneratorExpressionToTuple - kBoolConf] = true;
   bool_conf[kEnableDynamicShape - kBoolConf] = false;
@@ -129,6 +135,7 @@ GraphJitConfig::GraphJitConfig() {
   int_conf[kPerfStatisticsScale10000x - kIntConf] = 1000;
   int_conf[kLimitGraphSize - kIntConf] = 0;
   int_conf[kLimitGraphCount - kIntConf] = 0;
+  int_conf[kGuardRelaxCount - kIntConf] = 0;
 
   set_conf[kAllowedInlineModules - kStrListConf] = {"mindspore"};
   set_conf[kPSJitStrictCells - kStrListConf] = {};

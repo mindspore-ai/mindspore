@@ -207,11 +207,11 @@ bool NeedDiscardTensorProperties(const std::string &op_device_target,
 }
 
 ParameterPtr ConstructRunOpParameter(const std::shared_ptr<KernelGraph> &graph, const tensor::TensorPtr &input_tensor,
-                                     const BackendOpRunInfoPtr &op_run_info, int64_t tensor_mask) {
+                                     const BackendOpRunInfoPtr &op_run_info, InputType input_type) {
   MS_EXCEPTION_IF_NULL(graph);
   auto param = graph->NewParameter();
   MS_EXCEPTION_IF_NULL(param);
-  if (tensor_mask == kParameterWeightTensorMask) {
+  if (input_type == InputType::kParameter) {
     param->set_default_param(input_tensor);
   }
 
@@ -356,41 +356,6 @@ void CheckInputTensorShape(const TensorPtr &tensor, const CNodePtr &kernel, size
   }
 }
 
-void IterateFindTensor(std::vector<ValuePtr> *msTensors, const VectorRef &ref_list) {
-  MS_EXCEPTION_IF_NULL(msTensors);
-  for (size_t i = 0; i < ref_list.size(); ++i) {
-    if (utils::isa<tensor::TensorPtr>(ref_list[i])) {
-      auto tensor_ptr = utils::cast<std::shared_ptr<tensor::Tensor>>(ref_list[i]);
-      MS_EXCEPTION_IF_NULL(tensor_ptr);
-      msTensors->emplace_back(tensor_ptr);
-    } else if (utils::isa<VectorRef>(ref_list[i])) {
-      auto ref_iter = utils::cast<VectorRef>(ref_list[i]);
-      IterateFindTensor(msTensors, ref_iter);
-    } else if (utils::isa<tensor::CSRTensorPtr>(ref_list[i])) {
-      auto csr_tensor = utils::cast<tensor::CSRTensorPtr>(ref_list[i]);
-      MS_EXCEPTION_IF_NULL(csr_tensor);
-      (void)msTensors->emplace_back(csr_tensor);
-    } else {
-      MS_LOG(EXCEPTION) << "The output is not a tensor/sparse tensor";
-    }
-  }
-}
-
-std::vector<ValuePtr> TransformVectorRefToMultiValue(const VectorRef &base_ref) {
-  std::vector<ValuePtr> msTensors;
-  if (utils::isa<VectorRef>(base_ref)) {
-    auto ref_list = utils::cast<VectorRef>(base_ref);
-    IterateFindTensor(&msTensors, ref_list);
-  } else if (utils::isa<tensor::Tensor>(base_ref)) {
-    auto tensor_ptr = utils::cast<std::shared_ptr<tensor::Tensor>>(base_ref);
-    MS_EXCEPTION_IF_NULL(tensor_ptr);
-    (void)msTensors.emplace_back(tensor_ptr);
-  } else {
-    MS_LOG(EXCEPTION) << "The output is not a base ref list or a tensor!";
-  }
-  return msTensors;
-}
-
 bool is_param_scalar(const size_t &param_shape_size, const size_t &input_shape_size) {
   if (param_shape_size == 1 && input_shape_size == 0) {
     return true;
@@ -480,7 +445,7 @@ BackendOpRunInfoPtr SessionBasic::GetSingleOpRunInfo(const CNodePtr &cnode, cons
   for (auto const &value : input_info.input_values) {
     base_op_run_info.expanded_input_values.emplace_back(value);
   }
-  base_op_run_info.input_masks = input_info.input_masks;
+  base_op_run_info.input_types = input_info.input_types;
   base_op_run_info.abstract = abstract;
   base_op_run_info.output_indexes = output_indexes;
   return std::make_shared<BackendOpRunInfo>(base_op_run_info, primitive, false, is_gradient_out);
@@ -684,7 +649,7 @@ void SessionBasic::HandleOpOutputs(const AnfNodePtr &kernel, const VectorRef &op
   MS_EXCEPTION_IF_NULL(op_output_map);
   MS_EXCEPTION_IF_NULL(graph_output_info);
   MS_EXCEPTION_IF_NULL(graph_output_info->graph_outputs);
-  auto output_values = TransformVectorRefToMultiValue(op_outputs);
+  auto output_values = common::AnfAlgo::TransformVectorRefToMultiValue(op_outputs);
   if (output_values.size() > op_outputs.size()) {
     MS_LOG(EXCEPTION) << "Op output contains tuple, node = " << kernel->DebugString();
   }
@@ -873,17 +838,16 @@ void SessionBasic::GetOpInputTensors(const CNodePtr &cnode,
 
       if (common::AnfAlgo::HasNodeAttr(kAttrMutableKernel, cnode)) {
         auto is_tensor = input_value->isa<tensor::Tensor>();
-        (void)input_info->input_masks.emplace_back(
-          ((is_value_node && !is_forward_output) || !is_tensor) ? kValueNodeMask : kParameterDataTensorMask);
+        (void)input_info->input_types.emplace_back(
+          ((is_value_node && !is_forward_output) || !is_tensor) ? InputType::kConstant : InputType::kOpOutput);
       } else {
-        (void)input_info->input_masks.emplace_back((is_value_node || !is_forward_output) ? kValueNodeMask
-                                                                                         : kParameterDataTensorMask);
+        (void)input_info->input_types.emplace_back((is_value_node || !is_forward_output) ? InputType::kConstant
+                                                                                         : InputType::kOpOutput);
       }
     } else if (real_input->isa<Parameter>()) {
       auto tensor = GetParameterOutputTensor(real_input, parameter_index, graph_inputs);
       input_value = tensor;
-      input_info->input_masks.emplace_back(tensor->is_parameter() ? kParameterWeightTensorMask
-                                                                  : kParameterDataTensorMask);
+      input_info->input_types.emplace_back(tensor->is_parameter() ? InputType::kParameter : InputType::kInput);
     } else if (real_input->isa<CNode>()) {
       auto tensor = GetCNodeOutputTensor(kernel_with_index, op_output);
       input_value = tensor;
@@ -891,8 +855,7 @@ void SessionBasic::GetOpInputTensors(const CNodePtr &cnode,
         CheckInputTensorShape(tensor, cnode, i - 1);
       }
       input_info->input_kernel.insert(kernel_with_index);
-      input_info->input_masks.emplace_back(tensor->is_parameter() ? kParameterWeightTensorMask
-                                                                  : kParameterDataTensorMask);
+      input_info->input_types.emplace_back(tensor->is_parameter() ? InputType::kParameter : InputType::kOpOutput);
     } else {
       MS_LOG(EXCEPTION) << "Invalid input node, node = " << real_input->DebugString();
     }
@@ -915,6 +878,7 @@ void SessionBasic::GetOpInputTensors(const CNodePtr &cnode,
       MS_EXCEPTION_IF_NULL(tensor);
       tensor->set_base_shape(base_shape);
     }
+    (void)input_info->input_abs.emplace_back(real_input->abstract());
     (void)input_info->input_values.emplace_back(input_value);
   }
 }
@@ -957,6 +921,7 @@ void SessionBasic::GetOpInputTensorsFromCNode(const CNodePtr &cnode,
 
   const auto input_num = common::AnfAlgo::GetInputTensorNum(cnode);
   input_info->input_values.resize(input_num);
+  input_info->input_abs.resize(input_num);
   for (size_t i = 1; i <= input_num; ++i) {
     const auto &input = cnode->input(i);
     KernelWithIndex kernel_with_index;
@@ -971,6 +936,7 @@ void SessionBasic::GetOpInputTensorsFromCNode(const CNodePtr &cnode,
     MS_LOG(DEBUG) << "Get" << i << "th input tensor of " << cnode->fullname_with_scope() << " from "
                   << kernel_with_index.first->fullname_with_scope() << "-" << kernel_with_index.second;
     input_info->input_values[i - 1] = input_value;
+    input_info->input_abs[i - 1] = kernel_with_index.first->abstract();
   }
 }
 
@@ -1241,7 +1207,7 @@ void SessionBasic::CreateOutputNode(const CNodePtr &cnode, const std::shared_ptr
 
 std::shared_ptr<KernelGraph> SessionBasic::ConstructSingleOpGraph(const BackendOpRunInfoPtr &op_run_info,
                                                                   const std::vector<ValuePtr> &input_values,
-                                                                  const std::vector<int64_t> &tensors_mask) {
+                                                                  const std::vector<InputType> &input_type) {
   auto graph = NewPynativeKernelGraph();
   std::vector<AnfNodePtr> inputs;
   // set input[0]
@@ -1254,18 +1220,18 @@ std::shared_ptr<KernelGraph> SessionBasic::ConstructSingleOpGraph(const BackendO
   }
   (void)inputs.emplace_back(std::make_shared<ValueNode>(new_prim));
   // set input parameter
-  if (input_values.size() != tensors_mask.size()) {
+  if (input_values.size() != input_type.size()) {
     MS_LOG(EXCEPTION) << "Input tensors size " << input_values.size() << " should be equal to tensors mask size "
-                      << tensors_mask.size();
+                      << input_type.size();
   }
   for (size_t i = 0; i < input_values.size(); ++i) {
-    if (tensors_mask[i] == kValueNodeMask) {
+    if (input_type[i] == InputType::kConstant) {
       auto value_node = graph->NewValueNode(input_values[i]);
       (void)inputs.emplace_back(value_node);
       continue;
     }
     auto parameter =
-      ConstructRunOpParameter(graph, input_values[i]->cast<tensor::TensorPtr>(), op_run_info, tensors_mask[i]);
+      ConstructRunOpParameter(graph, input_values[i]->cast<tensor::TensorPtr>(), op_run_info, input_type[i]);
     (void)inputs.emplace_back(parameter);
     auto mutable_inputs = graph->MutableInputs();
     MS_EXCEPTION_IF_NULL(mutable_inputs);
@@ -1378,16 +1344,16 @@ void SessionBasic::ProcessInputTensorsForHeterogeneous(const std::string &cur_ta
   }
 }
 
-void SessionBasic::EraseValueNodeTensor(const std::vector<int64_t> &tensors_mask,
+void SessionBasic::EraseValueNodeTensor(const std::vector<InputType> &input_types,
                                         std::vector<tensor::TensorPtr> *input_tensors) const {
   MS_EXCEPTION_IF_NULL(input_tensors);
-  if (input_tensors->size() != tensors_mask.size()) {
-    MS_LOG(EXCEPTION) << "Input tensors size " << input_tensors->size() << " should be equal to tensors mask size "
-                      << tensors_mask.size();
+  if (input_tensors->size() != input_types.size()) {
+    MS_LOG(EXCEPTION) << "Input tensors size " << input_tensors->size()
+                      << " should be equal to tensors input type size " << input_types.size();
   }
   std::vector<tensor::TensorPtr> new_input_tensors;
-  for (size_t index = 0; index < tensors_mask.size(); ++index) {
-    if (tensors_mask[index] != kValueNodeMask) {
+  for (size_t index = 0; index < input_types.size(); ++index) {
+    if (input_types[index] != InputType::kConstant) {
       (void)new_input_tensors.emplace_back(input_tensors->at(index));
     }
   }

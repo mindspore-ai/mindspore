@@ -20,7 +20,7 @@
 #include "include/common/utils/utils.h"
 
 namespace mindspore::expander::bprop {
-NodePtr MatrixDiag(BpropIRBuilder *ib, const NodePtr &x) {
+NodePtr MatrixDiag(BpropBuilder *ib, const NodePtr &x) {
   auto shape = ib->GetShape(x);
   NodePtr row = nullptr;
   if (IsDynamic(shape)) {
@@ -35,7 +35,7 @@ NodePtr MatrixDiag(BpropIRBuilder *ib, const NodePtr &x) {
   return out;
 }
 
-NodePtr DoMatMul(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &y) {
+NodePtr DoMatMul(BpropBuilder *ib, const NodePtr &x, const NodePtr &y) {
   auto shape = ib->GetShape(x);
   if (IsDynamicRank(shape)) {
     auto true_case = [&x, &y](Emitter *e) -> NodePtrList { return {e->BatchMatMul(x, y)}; };
@@ -50,7 +50,7 @@ NodePtr DoMatMul(BpropIRBuilder *ib, const NodePtr &x, const NodePtr &y) {
   return ib->MatMul(x, y);
 }
 
-NodePtr SafeReciprocal(BpropIRBuilder *ib, const NodePtr &x) {
+NodePtr SafeReciprocal(BpropBuilder *ib, const NodePtr &x) {
   return ib->Mul(x, ib->Reciprocal(ib->Cast(ib->Add(ib->Square(x), ib->Tensor(1e-20, ib->GetDtype(x))), kFloat32)));
 }
 

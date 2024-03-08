@@ -24,6 +24,8 @@
 #include "include/common/utils/python_adapter.h"
 #include "include/transform/graph_ir/types.h"
 #include "plugin/device/ascend/hal/device/mbuf_receive_manager.h"
+#include "transform/symbol/acl_tdt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace py = pybind11;
 
@@ -41,15 +43,15 @@ const std::map<string, string> channel_name_suffix = {{"ms_tensor_summary", "[:T
 void SummaryReceiveData(acltdtDataset *acl_dataset, const string &channel_name) {
   //  Acquire Python GIL
   py::gil_scoped_acquire gil_acquire;
-  std::string tensor_name = std::string{acltdtGetDatasetName(acl_dataset)};
+  std::string tensor_name = std::string{CALL_ASCEND_API(acltdtGetDatasetName, acl_dataset)};
   auto suffix = channel_name_suffix.find(channel_name)->second;
   std::string summary_name = tensor_name + suffix;
   MS_LOG(INFO) << "For " << channel_name << "channel, acltdt received Tensor name is " << tensor_name;
-  size_t acl_dataset_size = acltdtGetDatasetSize(acl_dataset);
+  size_t acl_dataset_size = CALL_ASCEND_API(acltdtGetDatasetSize, acl_dataset);
   for (size_t i = 0; i < acl_dataset_size; i++) {
-    acltdtDataItem *item = acltdtGetDataItem(acl_dataset, i);
+    acltdtDataItem *item = CALL_ASCEND_API(acltdtGetDataItem, acl_dataset, i);
     MS_EXCEPTION_IF_NULL(item);
-    if (acltdtGetTensorTypeFromItem(item) == ACL_TENSOR_DATA_END_OF_SEQUENCE) {
+    if (CALL_ASCEND_API(acltdtGetTensorTypeFromItem, item) == ACL_TENSOR_DATA_END_OF_SEQUENCE) {
       MS_LOG(INFO) << "end of sequence" << std::endl;
       break;
     }

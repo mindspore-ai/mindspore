@@ -46,7 +46,7 @@ static const char kDetailInfoFileName[] = "RuntimeProfilerDetail";
 static const std::map<ProfilerStage, std::string> kProfilerStageString = {
   {ProfilerStage::kDefault, "Default"},           {ProfilerStage::kPython, "Python"},
   {ProfilerStage::kCapture, "Capture"},           {ProfilerStage::kRunGraph, "RunGraph"},
-  {ProfilerStage::kRunGradGraph, "RunGradGraph"}, {ProfilerStage::kRunOp, "RunOp"},
+  {ProfilerStage::kRunGrad, "RunGrad"},           {ProfilerStage::kRunOp, "RunOp"},
   {ProfilerStage::kAsnumpy, "Asnumpy"},           {ProfilerStage::kCompileGradGraph, "CompileGradGraph"},
   {ProfilerStage::kWaitPipeline, "WaitPipeline"}, {ProfilerStage::kSyncStream, "SyncStream"},
 };

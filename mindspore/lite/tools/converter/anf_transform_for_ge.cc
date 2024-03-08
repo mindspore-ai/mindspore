@@ -48,6 +48,7 @@
 #include "tools/optimizer/graph/kvcache_quant_pass.h"
 #include "tools/optimizer/fusion/flash_attention_antiquant_fusion.h"
 #include "tools/optimizer/graph/concat_op_pass.h"
+#include "tools/optimizer/graph/quant_fusion_x_offset_to_bias_pass.h"
 
 namespace mindspore::lite {
 void EnableKVCacheFusion(std::vector<opt::PassPtr> *fusions) {
@@ -59,6 +60,7 @@ void EnableKVCacheFusion(std::vector<opt::PassPtr> *fusions) {
 
 void EnableMatMulAllReduceFusion(std::vector<opt::PassPtr> *fusions) {
   fusions->push_back(std::make_shared<opt::MatMulAllReduceFusion>());
+  fusions->push_back(std::make_shared<opt::QuantFusionXOffsetToBias>());
 }
 
 void EnableFlashAttentionFusion(std::vector<opt::PassPtr> *fusions) {

@@ -1,5 +1,4 @@
 MS_LOG(DEBUG) << op_name() << " call start";
-
 InferOutput(${call_args});
 
 ${tensor_list_convert}

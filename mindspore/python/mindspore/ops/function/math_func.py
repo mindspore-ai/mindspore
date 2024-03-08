@@ -108,7 +108,6 @@ def get_x_shape(x_shape):
 #####################################
 absolute_ = P.Abs()
 cast_ = P.Cast()
-neg_tensor = P.Neg()
 not_equal_ = P.NotEqual()
 tensor_add = P.Add()
 tensor_ceil = P.Ceil()
@@ -563,7 +562,7 @@ def negative(input):
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
     """
-    return neg_tensor(input)
+    return neg(input)
 
 
 def positive(input):
@@ -4170,7 +4169,7 @@ def logaddexp(input, other):
                         f"but got {input.dtype} and {other.dtype}.")
     m = maximum(input, other)
     abs_val = abs(input - other)
-    exp_val = tensor_exp(neg_tensor(abs_val))
+    exp_val = tensor_exp(neg(abs_val))
     y = m + log1p(exp_val)
     return y
 
@@ -4216,7 +4215,7 @@ def logaddexp2(input, other):
 
     m = maximum(input, other)
     abs_val = abs(input - other)
-    exp2_val = pows(2., neg_tensor(abs_val))
+    exp2_val = pows(2., neg(abs_val))
     y = m + log2(1. + exp2_val)
     return y
 
@@ -6375,7 +6374,7 @@ def copysign(x, other):
     )
     pos_tensor = absolute_(x_float)
     less_zero = tensor_lt(other, 0)
-    return select_(less_zero, neg_tensor(pos_tensor), pos_tensor)
+    return select_(less_zero, neg(pos_tensor), pos_tensor)
 
 
 def hann_window(window_length, periodic=True, *, dtype=None):
@@ -7672,7 +7671,7 @@ def gumbel_softmax(logits, tau=1.0, hard=False, dim=-1):
     uniform = C.uniform(sample_shape, scalar_to_tensor_(
         0.0, mstype.float32), scalar_to_tensor_(1.0, mstype.float32))
     uniform = cast_(uniform, logits_dtype)
-    gumbel = neg_tensor(log_(neg_tensor(log_(uniform))))
+    gumbel = neg(log_(neg(log_(uniform))))
     gumbel = (logits + gumbel) / tau
     y_soft = _get_cache_prim(P.Softmax)(dim)(gumbel)
     if hard:
@@ -7906,18 +7905,6 @@ def _check_value(items, max_size, msg_prefix, shape1, shape2):
 def _check_matmul_shapes(shape1, shape2, prim_name=None):
     """Checks shape1 and shape2 are valid to perform matmul, and returns output shape after broadcasting."""
     msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
-
-    def _check(shape1, shape2):
-        ndim1, ndim2 = len(shape1), len(shape2)
-        if ndim1 < 1 or ndim2 < 1:
-            raise ValueError(f"{msg_prefix} dimension of input operands must be at least 1, but got "
-                             f"the length of shape1: {ndim1}, the length of shape2: {ndim2}.")
-        if ndim2 >= 2 and shape1[-1] != shape2[-2]:
-            raise ValueError(f"{msg_prefix} shape1[-1] must be equal to shape2[-2] when the length of shape2 "
-                             f"is greater than or equal to 2, but got shape1[-1]: {shape1[-1]}, "
-                             f"shape2[-2]: {shape2[-2]}.")
-
-    _check(shape1, shape2)
     shape_out = list()
     r_shape1 = shape1[:-2]
     r_shape2 = shape2[:-2]
@@ -11625,7 +11612,6 @@ __all__ = [
     'arctan',
     'arctan2',
     'bincount',
-    'neg_tensor',
     'neg',
     'negative',
     'tensor_lt',

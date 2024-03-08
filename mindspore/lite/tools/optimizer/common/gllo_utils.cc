@@ -843,6 +843,7 @@ ParameterPtr BuildParameterNode(const FuncGraphPtr &func_graph, const tensor::Te
     data_type = kNumberTypeFloat32;
   }
   param_node->set_name(node_name);
+  param_node->debug_info()->set_name(node_name);
   auto tensor_info_new = std::make_shared<tensor::Tensor>(data_type, shape_vector);
   if (tensor_info_new == nullptr) {
     MS_LOG(ERROR) << "new tensor::Tensor failed.";

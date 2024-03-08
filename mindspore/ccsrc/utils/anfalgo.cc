@@ -76,7 +76,6 @@ void GetRealOutputRecursively(const AnfNodePtr &node, size_t output_index, std::
     MS_EXCEPTION_IF_NULL(tuple_get_item);
     auto input = AnfAlgo::GetTupleGetItemRealInput(tuple_get_item);
     auto index = AnfAlgo::GetTupleGetItemOutIndex(tuple_get_item);
-
     // Conceal MakeTuple + TupleGetItem pair.
     if (AnfAlgo::CheckPrimitiveType(input, prim::kPrimMakeTuple)) {
       auto make_tuple = input->cast<CNodePtr>();
@@ -2468,6 +2467,43 @@ ValuePtr AnfAlgo::ValueToScalar(const ValuePtr &value, TypeId type_id) {
       MS_LOG(DEBUG) << "Not support scalar type:" << type_id;
   }
   return nullptr;
+}
+
+namespace {
+void IterateFindTensor(ValuePtrList *value_list, const VectorRef &ref_list) {
+  MS_EXCEPTION_IF_NULL(value_list);
+  for (size_t i = 0; i < ref_list.size(); ++i) {
+    if (utils::isa<tensor::TensorPtr>(ref_list[i])) {
+      auto tensor_ptr = utils::cast<std::shared_ptr<tensor::Tensor>>(ref_list[i]);
+      MS_EXCEPTION_IF_NULL(tensor_ptr);
+      (void)value_list->emplace_back(tensor_ptr);
+    } else if (utils::isa<VectorRef>(ref_list[i])) {
+      auto ref_iter = utils::cast<VectorRef>(ref_list[i]);
+      IterateFindTensor(value_list, ref_iter);
+    } else if (utils::isa<tensor::CSRTensorPtr>(ref_list[i])) {
+      auto csr_tensor = utils::cast<tensor::CSRTensorPtr>(ref_list[i]);
+      MS_EXCEPTION_IF_NULL(csr_tensor);
+      (void)value_list->emplace_back(csr_tensor);
+    } else {
+      MS_LOG(EXCEPTION) << "The ref value " << ref_list[i].ToString() << " is not a vector ref or a tensor!";
+    }
+  }
+}
+}  // namespace
+
+ValuePtrList AnfAlgo::TransformVectorRefToMultiValue(const VectorRef &base_ref) {
+  ValuePtrList value_list;
+  if (utils::isa<VectorRef>(base_ref)) {
+    auto ref_list = utils::cast<VectorRef>(base_ref);
+    IterateFindTensor(&value_list, ref_list);
+  } else if (utils::isa<tensor::Tensor>(base_ref)) {
+    auto tensor_ptr = utils::cast<std::shared_ptr<tensor::Tensor>>(base_ref);
+    MS_EXCEPTION_IF_NULL(tensor_ptr);
+    (void)value_list.emplace_back(tensor_ptr);
+  } else {
+    MS_LOG(EXCEPTION) << "The ref value " << base_ref.ToString() << " is not a vector ref or a tensor!";
+  }
+  return value_list;
 }
 }  // namespace common
 }  // namespace mindspore

@@ -197,7 +197,7 @@ void TransformOutputValues(const FrontendOpRunInfoPtr &op_run_info) {
 
     if (op_run_info->requires_grad) {
       output_tensor->set_auto_grad_meta_data(std::make_shared<AutoGradMetaData>());
-      output_tensor->auto_grad_meta_data()->set_grad_type(TensorGradType::kOpOutput);
+      output_tensor->auto_grad_meta_data()->set_input_type(InputType::kOpOutput);
     }
     (void)output_values.emplace_back(output_tensor);
   }
@@ -457,15 +457,17 @@ void ForwardExecutor::CreateViewOpOutputs(const FrontendOpRunInfoPtr &op_run_inf
 
   if (is_single_tensor_output) {
     op_run_info->real_out = op_run_info->base_op_run_info.output_tensors[0];
+    op_run_info->op_grad_info->output_size = 1;
   } else {
     std::vector<ValuePtr> output_values;
-    std::transform(op_run_info->base_op_run_info.output_tensors.begin(),
-                   op_run_info->base_op_run_info.output_tensors.end(), std::back_inserter(output_values),
-                   [](const auto &t) {
-                     MS_EXCEPTION_IF_NULL(t);
-                     return t;
-                   });
+    (void)std::transform(op_run_info->base_op_run_info.output_tensors.begin(),
+                         op_run_info->base_op_run_info.output_tensors.end(), std::back_inserter(output_values),
+                         [](const auto &t) {
+                           MS_EXCEPTION_IF_NULL(t);
+                           return t;
+                         });
     op_run_info->real_out = std::make_shared<ValueTuple>(output_values);
+    op_run_info->op_grad_info->output_size = output_values.size();
   }
 
   UpdateOutputStubNodeValue(op_run_info);
@@ -561,7 +563,7 @@ ValuePtr ForwardExecutor::RunSliceOpFrontend(const std::vector<ValuePtr> &input_
       auto type_value = slice_op_info->slice_index_inputs[0];
       MS_EXCEPTION_IF_CHECK_FAIL(type_value->is_int(), "type_value should be int.");
       auto type_id = static_cast<TypeId>(type_value->int_value());
-      cast_operation()->DoNormalCast(op_run_info, intermediate_tensor[first_data_idx], type_id);
+      (void)cast_operation()->DoNormalCast(op_run_info, intermediate_tensor[first_data_idx], type_id);
     } else {
       EmplaceSliceInputs(op_run_info, intermediate_tensor, slice_op_info);
 
@@ -778,6 +780,7 @@ VectorRef ForwardExecutor::RunOpBackendInner(const FrontendOpRunInfoPtr &op_run_
       OpCompiler::GetInstance().IsInvalidInferResultOp(op_run_info->base_op_run_info.op_name)) {
     op_run_info->base_op_run_info.abstract = backend_op_run_info->base_op_run_info.abstract;
   }
+  op_run_info->op_grad_info->output_size = outputs.size();
   ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, false);
   MS_LOG(DEBUG) << "RunOpBackendInner end";
   return outputs;
@@ -830,7 +833,7 @@ ValuePtr ForwardExecutor::RunOpInVM(const FrontendOpRunInfoPtr &op_run_info) con
   if (op_run_info->requires_grad) {
     for (size_t i = 0; i < op_run_info->input_size; i++) {
       op_run_info->op_grad_info->input_value_grad_type[i] = PyNativeAlgo::Common::SetValueGradInfo(
-        op_run_info->op_grad_info->input_value[i], nullptr, TensorGradType::kConstant);
+        op_run_info->op_grad_info->input_value[i], nullptr, InputType::kConstant);
       (void)op_run_info->base_op_run_info.expanded_input_values.emplace_back(op_run_info->op_grad_info->input_value[i]);
     }
   }
@@ -841,7 +844,8 @@ ValuePtr ForwardExecutor::RunOpInVM(const FrontendOpRunInfoPtr &op_run_info) con
     }
     auto result_v = ConstructOutputInVM(op_run_info, result);
     if (op_run_info->requires_grad) {
-      (void)PyNativeAlgo::Common::SetValueGradInfo(result_v, nullptr, TensorGradType::kOpOutput);
+      op_run_info->op_grad_info->output_size = result.size();
+      (void)PyNativeAlgo::Common::SetValueGradInfo(result_v, nullptr, InputType::kOpOutput);
     }
     MS_LOG(DEBUG) << "RunOpInVM end";
     return result_v;
@@ -865,8 +869,9 @@ ValuePtr ForwardExecutor::RunOpInVM(const FrontendOpRunInfoPtr &op_run_info) con
     result_v = std::make_shared<ValueTuple>(std::vector{result_v});
   }
   if (op_run_info->requires_grad) {
-    (void)PyNativeAlgo::Common::SetValueGradInfo(result_v, nullptr, TensorGradType::kOpOutput);
+    (void)PyNativeAlgo::Common::SetValueGradInfo(result_v, nullptr, InputType::kOpOutput);
   }
+  op_run_info->op_grad_info->output_size = PyNativeAlgo::Common::GetValueSize(result_v);
   MS_LOG(DEBUG) << "RunOpInVM end";
   return result_v;
 }
@@ -1013,7 +1018,7 @@ void ForwardExecutor::CreateInputAddressForViewOp(const tensor::TensorPtr &input
   MS_EXCEPTION_IF_NULL(device_context);
 
   MS_LOG(DEBUG) << "Input_tensor address is nullptr, need create address.";
-  auto address_size = GetTypeByte(input_tensor->Dtype()) * input_tensor->ElementsNum();
+  auto address_size = GetTypeByte(input_tensor->Dtype()) * static_cast<size_t>(input_tensor->ElementsNum());
   auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
     nullptr, address_size, Format::DEFAULT_FORMAT, input_tensor->data_type(), input_tensor->shape(),
     device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
@@ -1078,6 +1083,11 @@ void ForwardExecutor::CreateViewOutputTensor(const FrontendOpRunInfoPtr &op_run_
   auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
     nullptr, input_device_address->GetSize(), Format::DEFAULT_FORMAT, output_tensor->data_type(),
     output_tensor->shape(), input_device_address->device_name(), input_device_address->device_id());
+  if (input_device_address->GetDeviceType() != device::DeviceType::kAscend) {
+    // Not transmitting host shape information under Ascend for better performance.
+    kernel_tensor->SetType(std::make_shared<TensorType>(TypeIdToType(output_tensor->data_type())));
+    kernel_tensor->SetShape(std::make_shared<abstract::TensorShape>(output_tensor->shape()));
+  }
   kernel_tensor->set_tensor_storage_info(storage_info);
   kernel_tensor->set_size(input_device_address->GetSize());
   kernel_tensor->set_stream_id(input_device_address->stream_id());
@@ -1091,7 +1101,7 @@ void ForwardExecutor::CreateViewOutputTensor(const FrontendOpRunInfoPtr &op_run_
   output_tensor->set_device_address(output_device_address);
   if (op_run_info->requires_grad) {
     output_tensor->set_auto_grad_meta_data(std::make_shared<AutoGradMetaData>());
-    output_tensor->auto_grad_meta_data()->set_grad_type(TensorGradType::kOpOutput);
+    output_tensor->auto_grad_meta_data()->set_input_type(InputType::kOpOutput);
   }
   (void)op_run_info->base_op_run_info.output_tensors.emplace_back(output_tensor);
 }

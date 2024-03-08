@@ -202,6 +202,8 @@ class RemoveExpandedDimsInfer : public abstract::OpInferBase {
                                     const std::vector<AbstractBasePtr> &input_args) const override {
     return RemoveExpandedDimsInner(primitive, input_args);
   }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {kInputIndex2, kInputIndex3, kInputIndex4}; }
 };
 REGISTER_PRIMITIVE_OP_INFER_IMPL(RemoveExpandedDims, prim::kPrimRemoveExpandedDims, RemoveExpandedDimsInfer, false);
 }  // namespace ops

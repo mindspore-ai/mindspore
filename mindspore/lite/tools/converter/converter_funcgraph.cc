@@ -72,6 +72,7 @@
 #include "tools/optimizer/fusion/ffn_antiquant_fusion.h"
 #include "tools/optimizer/common/pass_manager_extends.h"
 #include "load_mindir/infer_mindir.h"
+#include "tools/optimizer/fusion/matmul_allreduce_fusion.h"
 
 namespace mindspore {
 namespace lite {

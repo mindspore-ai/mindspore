@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 #include "transform/acl_ir/acl_allocator.h"
-#include "acl/acl_rt_allocator.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
+#include "transform/symbol/acl_rt_allocator_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace mindspore {
 namespace transform {
@@ -58,20 +59,20 @@ AclAllocatorPtr AclAllocatorRegister::NewAclAllocator(
   auto allocator_obj = std::make_shared<AclAllocator>(stream, mem_manager);
   MS_EXCEPTION_IF_NULL(allocator_obj);
 
-  auto allocator_desc = aclrtAllocatorCreateDesc();
+  auto allocator_desc = CALL_ASCEND_API2(aclrtAllocatorCreateDesc);
   MS_EXCEPTION_IF_NULL(allocator_desc);
   allocator_obj->set_allocator_desc(allocator_desc);
-  (void)aclrtAllocatorSetObjToDesc(allocator_desc, allocator_obj.get());
-  (void)aclrtAllocatorSetAllocFuncToDesc(allocator_desc, AclAllocator::AllocFunc);
-  (void)aclrtAllocatorSetFreeFuncToDesc(allocator_desc, AclAllocator::FreeFunc);
-  (void)aclrtAllocatorSetAllocAdviseFuncToDesc(allocator_desc, AclAllocator::AllocAdviseFunc);
-  (void)aclrtAllocatorSetGetAddrFromBlockFuncToDesc(allocator_desc, AclAllocator::GetAddrFromBlock);
+  (void)CALL_ASCEND_API(aclrtAllocatorSetObjToDesc, allocator_desc, allocator_obj.get());
+  (void)CALL_ASCEND_API(aclrtAllocatorSetAllocFuncToDesc, allocator_desc, AclAllocator::AllocFunc);
+  (void)CALL_ASCEND_API(aclrtAllocatorSetFreeFuncToDesc, allocator_desc, AclAllocator::FreeFunc);
+  (void)CALL_ASCEND_API(aclrtAllocatorSetAllocAdviseFuncToDesc, allocator_desc, AclAllocator::AllocAdviseFunc);
+  (void)CALL_ASCEND_API(aclrtAllocatorSetGetAddrFromBlockFuncToDesc, allocator_desc, AclAllocator::GetAddrFromBlock);
   return allocator_obj;
 }
 
 void AclAllocatorRegister::FreeAclAllocatorRes(const AclAllocatorPtr &allocator_obj) {
-  (void)aclrtAllocatorDestroyDesc(allocator_obj->allocator_desc());
-  (void)aclrtAllocatorUnregister(allocator_obj->stream());
+  (void)CALL_ASCEND_API(aclrtAllocatorDestroyDesc, allocator_obj->allocator_desc());
+  (void)CALL_ASCEND_API(aclrtAllocatorUnregister, allocator_obj->stream());
 }
 
 AclAllocatorRegister::~AclAllocatorRegister() {
@@ -97,7 +98,7 @@ void AclAllocatorRegister::RegisterAllocator(void *stream) {
       mem_manager_->Initialize();
     }
     const auto &allocator_obj = NewAclAllocator(stream, mem_manager_);
-    (void)aclrtAllocatorRegister(stream, allocator_obj->allocator_desc());
+    (void)CALL_ASCEND_API(aclrtAllocatorRegister, stream, allocator_obj->allocator_desc());
     allocator_map_[stream] = allocator_obj;
   }
 }

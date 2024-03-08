@@ -48,7 +48,7 @@ def _negative_tensor(x):
     Returns:
        Tensor, negative value of x by element-wise.
    """
-    return F.neg_tensor(x)
+    return F.neg(x)
 
 
 @negative.register("CSRTensor")
@@ -59,7 +59,7 @@ def _negative_csrtensor(x):
     Returns:
        CSRTensor, negative value of x by element-wise.
    """
-    return CSRTensor(x.indptr, x.indices, F.neg_tensor(x.values), x.shape)
+    return CSRTensor(x.indptr, x.indices, F.neg(x.values), x.shape)
 
 
 @negative.register("COOTensor")
@@ -70,7 +70,7 @@ def _negative_cootensor(x):
     Returns:
        COOTensor, negative value of x by element-wise.
    """
-    return COOTensor(x.indices, F.neg_tensor(x.values), x.shape)
+    return COOTensor(x.indices, F.neg(x.values), x.shape)
 
 
 @negative.register_default()

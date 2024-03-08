@@ -33,7 +33,8 @@ void LoadAclAllocatorApiSymbol(const std::string &ascend_path) {
   std::string allocator_plugin_path = "lib64/libascendcl.so";
   auto handler = GetLibHandler(ascend_path + allocator_plugin_path);
   if (handler == nullptr) {
-    MS_LOG(EXCEPTION) << "Dlopen " << allocator_plugin_path << " failed!" << dlerror();
+    MS_LOG(WARNING) << "Dlopen " << allocator_plugin_path << " failed!" << dlerror();
+    return;
   }
   aclrtAllocatorCreateDesc_ = DlsymAscendFuncObj(aclrtAllocatorCreateDesc, handler);
   aclrtAllocatorDestroyDesc_ = DlsymAscendFuncObj(aclrtAllocatorDestroyDesc, handler);

@@ -33,9 +33,9 @@ class SplitCoreMLOp : public CoreMLOp {
   int HandleAxis() override;
 
  private:
-  const schema::Split *split_prim_;
-  int axis_;
-  int split_num_;
+  const schema::Split *split_prim_{nullptr};
+  int axis_{0};
+  int split_num_{0};
   std::vector<int> split_sizes_{};
 };
 }  // namespace mindspore::lite

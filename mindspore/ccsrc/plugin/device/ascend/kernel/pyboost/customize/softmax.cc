@@ -37,7 +37,6 @@ void SoftmaxAscendCall(const std::shared_ptr<OpRunner> &op, const device::Device
 tensor::TensorPtr SoftmaxAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &logits_tensor,
                                          const ValueTuplePtr &axis) {
   OpRunner::InferOpOutput(op, logits_tensor, axis);
-
   // ValueTuple to std::vector
   auto axis_vector = ConvertValueTupleToVector<int64_t>(axis);
   auto dim = axis_vector[0];

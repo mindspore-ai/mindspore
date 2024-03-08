@@ -33,10 +33,10 @@ struct IRBuilderHandle {
   IRBuilderFunc func;
 };
 
-class FallbackIRBuilder : public Emitter {
+class FallbackIRBuilder : public IrEmitter {
  public:
   FallbackIRBuilder(const std::string &name, const FuncGraphPtr &fg, const SelectKernelFunc &func);
-  ~FallbackIRBuilder() = default;
+  ~FallbackIRBuilder() override = default;
 
   AnfNodePtr Run(const CNodePtr &cnode, const IRBuilderHandle &handle);
   ValuePtr GetAttr(const std::string &attr) const;

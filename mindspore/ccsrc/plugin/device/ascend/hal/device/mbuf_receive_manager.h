@@ -29,8 +29,9 @@
 #include <thread>
 #include <utility>
 #include <vector>
-#include "acl/acl_tdt.h"
 #include "ir/tensor.h"
+#include "transform/symbol/acl_tdt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 #ifndef SECUREC_MEM_MAX_LEN
 #define SECUREC_MEM_MAX_LEN 0x7fffffffUL
@@ -52,10 +53,10 @@ mindspore::tensor::TensorPtr acltdtDataItemToTensorPtr(acltdtDataItem *item);
 
 class ScopeAclTdtDataset {
  public:
-  ScopeAclTdtDataset() { acl_dataset_ = acltdtCreateDataset(); }
+  ScopeAclTdtDataset() { acl_dataset_ = CALL_ASCEND_API2(acltdtCreateDataset); }
   acltdtDataset *Get() const { return acl_dataset_; }
   ~ScopeAclTdtDataset() {
-    if (acl_dataset_ != nullptr && acltdtDestroyDataset(acl_dataset_) != ACL_SUCCESS) {
+    if (acl_dataset_ != nullptr && CALL_ASCEND_API(acltdtDestroyDataset, acl_dataset_) != ACL_SUCCESS) {
       MS_LOG(ERROR) << "AcltdtDestroyDataset failed.";
     } else {
       MS_LOG(INFO) << "AcltdtDestroyDataset succeed.";

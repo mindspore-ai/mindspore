@@ -31,17 +31,17 @@ mindspore.SummaryCollector
 
             - **landscape_size** (int) - 指定生成loss地形图的图像分辨率。例如：如果设置为128，则loss地形图的分辨率是128*128。注意：计算loss地形图的时间随着分辨率的增大而增加。默认值： ``40`` 。可选值：3-256。
             - **unit** (str) - 指定训练过程中保存checkpoint时，下方参数 `intervals` 以何种形式收集模型权重。例如：将 `intervals` 设置为[[1, 2, 3, 4]]，如果 `unit` 设置为 ``step`` ，则收集模型权重的频率单位为step，将保存1-4个step的模型权重，而 `unit` 设置为epoch，则将保存1-4个epoch的模型权重。默认值： ``step`` 。可选值：epoch/step。
-            - **create_landscape** (dict) - 选择创建哪种类型的loss地形图，分为训练过程loss地形图（train）和训练结果loss地形图（result）。默认值：{"train": True, "result": True}。可选值： ``True`` / ``False`` 。
+            - **create_landscape** (dict) - 选择创建哪种类型的loss地形图，分为训练过程loss地形图（train）和训练结果loss地形图（result）。默认值： ``{"train": True, "result": True}``。可选值： ``True`` / ``False`` 。
             - **num_samples** (int) - 创建loss地形图所使用的数据集的大小。例如：在图像数据集中，您可以设置 `num_samples` 是 ``128`` ，这意味着将有128张图片被用来创建loss地形图。注意：`num_samples` 越大，计算loss地形图时间越长。默认值： ``128`` 。
             - **intervals** (List[List[int]]) - 指定loss地形图的区间。例如：如果用户想要创建两张训练过程的loss地形图，分别为1-5epoch和6-10epoch，则用户可以设置[[1, 2, 3, 4, 5], [6, 7, 8, 9, 10]]。注意：每个区间至少包含3个epoch。
 
-        - **keep_default_action** (bool) - 此字段影响 `collect_specified_data` 字段的收集行为。 ``True`` ：表示设置指定数据后，其他数据按默认设置收集。 ``False`` ：表示设置指定数据后，只收集指定数据，不收集其他数据。默认值：``True`` 。
+        - **keep_default_action** (bool) - 此字段影响 `collect_specified_data` 字段的收集行为。 ``True`` ：表示设置指定数据后，其他数据按默认设置收集。 ``False`` ：表示设置指定数据后，只收集指定数据，不收集其他数据。默认值： ``True`` 。
         - **custom_lineage_data** (Union[dict, None]) - 允许您自定义数据并将数据显示在MindInsight的 `lineage页面 <https://www.mindspore.cn/mindinsight/docs/zh-CN/master/lineage_and_scalars_comparison.html>`_ 。在自定义数据中，key支持str类型，value支持str、int和float类型。默认值： ``None`` ，表示不存在自定义数据。
         - **collect_tensor_freq** (Optional[int]) - 语义与 `collect_freq` 的相同，但仅控制TensorSummary。由于TensorSummary数据太大，无法与其他summary数据进行比较，因此此参数用于降低收集量。默认情况下，收集TensorSummary数据的最大step数量为20，但不会超过收集其他summary数据的step数量。例如，给定 `collect_freq=10` ，当总step数量为600时，TensorSummary将收集20个step，而收集其他summary数据时会收集61个step。但当总step数量为20时，TensorSummary和其他summary将收集3个step。另外请注意，在并行模式下，会平均分配总的step数量，这会影响TensorSummary收集的step的数量。默认值： ``None`` ，表示要遵循上述规则。
         - **max_file_size** (Optional[int]) - 可写入磁盘的每个文件的最大大小（以字节为单位）。例如，如果不大于4GB，则设置 `max_file_size=4*1024**3` 。默认值： ``None`` ，表示无限制。
         - **export_options** (Union[None, dict]) - 表示对导出的数据执行自定义操作。注：导出的文件的大小不受 `max_file_size` 的限制。您可以使用字典自定义导出的数据。例如，您可以设置{'tensor_format':'npy'}将tensor导出为 `npy` 文件。支持控制的数据如下所示。默认值： ``None`` ，表示不导出数据。
 
-          - **tensor_format** (Union[str, None]) - 自定义导出的tensor的格式。支持["npy", None]。默认值：``None`` ，表示不导出tensor。
+          - **tensor_format** (Union[str, None]) - 自定义导出的tensor的格式。支持["npy", None]。默认值： ``None`` ，表示不导出tensor。
 
             - **npy** - 将tensor导出为NPY文件。
 

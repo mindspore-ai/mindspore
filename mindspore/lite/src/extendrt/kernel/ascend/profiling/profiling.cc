@@ -20,6 +20,8 @@
 #include <map>
 #include <nlohmann/json.hpp>
 #include "src/common/file_utils.h"
+#include "transform/symbol/acl_prof_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace mindspore::kernel {
 namespace acl {
@@ -113,15 +115,15 @@ bool Profiling::Init(const std::string &profiling_file, uint32_t device_id) {
 
 bool Profiling::StartProfiling(const aclrtStream &stream) {
   MS_LOG(INFO) << "Start to profile";
-  aclError ret = aclprofInit(output_path_.c_str(), output_path_.length());
+  aclError ret = CALL_ASCEND_API(aclprofInit, output_path_.c_str(), output_path_.length());
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "aclprofInit failed, ret = " << ret;
     return false;
   }
   uint32_t device_list[1] = {device_id_};
   uint32_t device_num = 1;
-  acl_config_ = aclprofCreateConfig(device_list, device_num, aic_metrics_, nullptr, profiling_mask_);
-  ret = aclprofStart(acl_config_);
+  acl_config_ = CALL_ASCEND_API(aclprofCreateConfig, device_list, device_num, aic_metrics_, nullptr, profiling_mask_);
+  ret = CALL_ASCEND_API(aclprofStart, acl_config_);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "aclprofStart start failed, ret = " << ret;
     return false;
@@ -131,17 +133,17 @@ bool Profiling::StartProfiling(const aclrtStream &stream) {
 
 bool Profiling::StopProfiling(const aclrtStream &stream) {
   MS_LOG(INFO) << "End to profile";
-  aclError ret = aclprofStop(acl_config_);
+  aclError ret = CALL_ASCEND_API(aclprofStop, acl_config_);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "aclprofDestroyConfig failed, ret = " << ret;
     return false;
   }
-  ret = aclprofDestroyConfig(acl_config_);
+  ret = CALL_ASCEND_API(aclprofDestroyConfig, acl_config_);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "aclprofDestroyConfig failed, ret = " << ret;
     return false;
   }
-  ret = aclprofFinalize();
+  ret = CALL_ASCEND_API2(aclprofFinalize);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "aclProfFinalize failed, ret = " << ret;
     return false;

@@ -21,7 +21,8 @@
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 #include "utils/log_adapter.h"
 #include "utils/convert_utils_base.h"
-#include "acl/acl_rt.h"
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace mindspore {
 namespace device {
@@ -144,7 +145,7 @@ DeviceMemPtr AscendMemoryPool::AllocOverflowTensorMem(size_t size, bool from_per
   }
   DeviceMemPtr overflow_memory_ptr = AllocTensorMem(align_size, from_persistent_mem);
   MS_EXCEPTION_IF_NULL(overflow_memory_ptr);
-  auto acl_ret = aclrtMemset(overflow_memory_ptr, align_size, 0, align_size);
+  auto acl_ret = CALL_ASCEND_API(aclrtMemset, overflow_memory_ptr, align_size, 0, align_size);
   if (acl_ret != ACL_RT_SUCCESS) {
     MS_LOG(EXCEPTION) << "Clear overflow memory failed, aclrtMemset size = " << align_size << ", ret = " << acl_ret;
   }
@@ -190,7 +191,7 @@ void AscendMemoryPool::ResetIdleMemBuf() const {
     for (const auto &idle_mem_buf : mem_mng->idle_mem_bufs_) {
       for (const auto &it : idle_mem_buf.second) {
         MS_EXCEPTION_IF_NULL(it.second);
-        (void)aclrtMemset(it.second->device_addr_, it.first, 0, it.first);
+        (void)CALL_ASCEND_API(aclrtMemset, it.second->device_addr_, it.first, 0, it.first);
       }
     }
   };

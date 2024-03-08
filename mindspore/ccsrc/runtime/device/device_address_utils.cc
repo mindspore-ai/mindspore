@@ -42,20 +42,6 @@ namespace mindspore {
 using tensor::TensorPtr;
 namespace runtime {
 namespace {
-// Whether device address of anf node is valid and device address type
-// is consistent with device type, for example, device address type
-// DeviceType::kGPU should be used on GPU device
-bool NodeDeviceAddressExist(const DeviceContext *device_context, const AnfNodePtr &node, size_t index) {
-  MS_EXCEPTION_IF_NULL(node);
-  MS_EXCEPTION_IF_NULL(device_context);
-  if (AnfAlgo::OutputAddrExist(node, index)) {
-    const auto &address = AnfAlgo::GetOutputAddr(node, index, false);
-    MS_EXCEPTION_IF_NULL(address);
-    return address->GetDeviceType() == device_context->GetDeviceType();
-  }
-  return false;
-}
-
 device::DeviceAddressPtr CreateDeviceAddressForScalarAndString(const DeviceContext *device_context,
                                                                const ValueNodePtr &value_node) {
   device::DeviceAddressPtr address = nullptr;
@@ -107,6 +93,20 @@ Format GetFormatByTensorShape(const DeviceContext *device_context, const ShapeVe
   }
 }
 }  // namespace
+
+bool DeviceAddressUtils::NodeDeviceAddressExist(const DeviceContext *device_context, const AnfNodePtr &node,
+                                                size_t index) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(device_context);
+  if (AnfAlgo::OutputAddrExist(node, index)) {
+    const auto &address = AnfAlgo::GetOutputAddr(node, index, false);
+    MS_EXCEPTION_IF_NULL(address);
+    // Fill host info if device address exist.
+    UpdateKernelTensorHostInfoByNode(address->kernel_tensor(), node, index);
+    return address->GetDeviceType() == device_context->GetDeviceType();
+  }
+  return false;
+}
 
 void DeviceAddressUtils::CopyNonTensorDataToDevice(const device::DeviceContext *device_context,
                                                    const device::DeviceAddressPtr &device_address) {
@@ -266,9 +266,12 @@ void DeviceAddressUtils::CreateParameterDeviceAddress(const DeviceContext *devic
 void DeviceAddressUtils::UpdateDeviceAddressHostInfoByNode(const device::DeviceAddressPtr &addr, const AnfNodePtr &node,
                                                            size_t output_idx) {
   MS_EXCEPTION_IF_NULL(addr);
-  MS_EXCEPTION_IF_NULL(node);
+  UpdateKernelTensorHostInfoByNode(addr->kernel_tensor(), node, output_idx);
+}
 
-  auto kernel_tensor = addr->kernel_tensor();
+void DeviceAddressUtils::UpdateKernelTensorHostInfoByNode(const kernel::KernelTensorPtr &kernel_tensor,
+                                                          const AnfNodePtr &node, size_t output_idx) {
+  MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(kernel_tensor);
   if (!kernel_tensor->host_info_exist()) {
     if (AnfAlgo::ExistOutputKernelTensor(node, output_idx)) {
@@ -415,8 +418,6 @@ void DeviceAddressUtils::CreateValueNodeDeviceAddress(const DeviceContext *devic
   for (const ValueNodePtr &value_node : graph->graph_value_nodes()) {
     MS_EXCEPTION_IF_NULL(value_node);
     if (NodeDeviceAddressExist(device_context, value_node, 0)) {
-      auto device_address = AnfAlgo::GetMutableOutputAddr(value_node, 0, false);
-      UpdateDeviceAddressHostInfoByNode(device_address, value_node, 0);
       continue;
     }
 

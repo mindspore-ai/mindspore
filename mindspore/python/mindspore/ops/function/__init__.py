@@ -185,7 +185,6 @@ from .math_func import (
     add,
     addcdiv,
     addcmul,
-    neg_tensor,
     neg,
     negative,
     tensor_lt,
@@ -434,10 +433,6 @@ from .math_func import (
     trace,
     zeta,
     histc,
-    fft2,
-    fftn,
-    ifft2,
-    ifftn,
     count_nonzero,
     tensor_dot,
     vecdot,
@@ -716,9 +711,15 @@ from .clip_func import (
 )
 from .fft_func import (
     fft,
+    fft2,
+    fftn,
     fftshift,
     ifft,
+    ifft2,
+    ifftn,
     ifftshift,
+    rfft,
+    irfft,
 )
 from .other_func import (
     depend,

@@ -38,23 +38,28 @@ typedef enum _GIType {
   GTRepr,
 } GIType;
 
-class GuardItem {
+class GuardItem : public std::enable_shared_from_this<GuardItem> {
  public:
   explicit GuardItem(TracePtr var);
   virtual ~GuardItem() = default;
-  virtual bool Check(const PyFrameObject *frame, std::map<std::string, PyObject *> *cache = nullptr) = 0;
+  virtual bool Check(const PyFrameObject *frame, std::map<size_t, PyObject *> *cache = nullptr, bool perf = false) = 0;
   virtual bool Check(PyObject *obj) = 0;
   virtual std::string ToString() = 0;
+  virtual const InfoPack &Info() = 0;
   virtual void Replace(TracePtr dst, TracePtr src);
   virtual TracePtr GetTrace();
   virtual bool operator==(const GuardItem &obj) const;
   virtual GIType GetType() { return type_; }
   virtual bool MatchDynamicShape(std::shared_ptr<GuardItem> other) { return false; }
   virtual PyObject *ApplyDynamicShape(PyObject *obj) { return nullptr; }
+  virtual std::shared_ptr<GuardItem> Optimize();
+  virtual std::shared_ptr<GuardItem> This() { return shared_from_this(); }
 
  protected:
   TracePtr var_;
   GIType type_;
+  InfoPackPtr info_;
+  std::string strGuard_;
 };
 using GuardItemPtr = std::shared_ptr<GuardItem>;
 

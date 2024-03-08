@@ -36,7 +36,8 @@ void LoadAclBaseApiSymbol(const std::string &ascend_path) {
   std::string aclbase_plugin_path = "lib64/libascendcl.so";
   auto base_handler = GetLibHandler(ascend_path + aclbase_plugin_path);
   if (base_handler == nullptr) {
-    MS_LOG(EXCEPTION) << "Dlopen " << aclbase_plugin_path << " failed!" << dlerror();
+    MS_LOG(WARNING) << "Dlopen " << aclbase_plugin_path << " failed!" << dlerror();
+    return;
   }
   aclCreateDataBuffer_ = DlsymAscendFuncObj(aclCreateDataBuffer, base_handler);
   aclCreateTensorDesc_ = DlsymAscendFuncObj(aclCreateTensorDesc, base_handler);

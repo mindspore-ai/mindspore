@@ -26,11 +26,12 @@
 #include <string>
 #include <vector>
 
-#include "acl/acl.h"
 #include "acl/ops/acl_dvpp.h"
 
 #include "minddata/dataset/kernels/image/dvpp/utils/AclLiteError.h"
 #include "minddata/dataset/kernels/image/dvpp/utils/AclLiteType.h"
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 /**
  * @brief calculate RGB 24bits image size
@@ -77,7 +78,7 @@
  * @return shared pointer of input buffer
  */
 #define SHARED_PTR_DEV_BUF(buf) \
-  (std::shared_ptr<uint8_t>(reinterpret_cast<uint8_t *>(buf), [](uint8_t *p) { aclrtFree(p); }))
+  (std::shared_ptr<uint8_t>(reinterpret_cast<uint8_t *>(buf), [](uint8_t *p) { CALL_ASCEND_API(aclrtFree, p); }))
 
 /**
  * @brief generate shared pointer of memory

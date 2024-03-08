@@ -198,7 +198,7 @@ std::vector<AnfNodePtr> RunOutputReplace(const CNodePtr &forward_node, const Fun
   auto output_vnode = GenNewTensor(cnode_morph);
   MS_EXCEPTION_IF_NULL(output_vnode);
   output_vnode->set_has_new_value(true);
-  manager->Replace(forward_node, output_vnode);
+  (void)manager->Replace(forward_node, output_vnode);
   MS_LOG(DEBUG) << "Replace: " << forward_node->DebugString() << " with " << output_vnode->ToString();
 
   // Save forward output node when it used in its bprop graph.
@@ -245,7 +245,7 @@ std::vector<AnfNodePtr> RunInputReplace(const FuncGraphPtr &bprop_graph, const F
     auto output_vnode_i = GenNewTensor(cnode_i);
     MS_EXCEPTION_IF_NULL(output_vnode_i);
     output_vnode_i->set_has_new_value(true);
-    manager->Replace(paras[i], output_vnode_i);
+    (void)manager->Replace(paras[i], output_vnode_i);
     if (IsPrimitiveCNode(cnode_i, prim::kPrimLoad)) {
       para_ref_size += 1;
     }

@@ -67,10 +67,10 @@ class PDistGpuKernelMod : public NativeGpuKernelMod {
                        const std::vector<kernel::KernelTensor *> &, const std::vector<kernel::KernelTensor *> &)>;
   float p_{0};
   size_t input_type_size_{1};
-  size_t x_size_;
-  size_t y_size_;
-  int64_t matrix_row_;
-  int64_t matrix_col_;
+  size_t x_size_{0};
+  size_t y_size_{0};
+  int64_t matrix_row_{0};
+  int64_t matrix_col_{0};
   PDistFunc kernel_func_{};
   bool is_null_input_{false};
   void *cuda_stream_{nullptr};

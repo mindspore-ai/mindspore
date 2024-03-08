@@ -28,7 +28,8 @@ void LoadAclApiSymbol(const std::string &ascend_path) {
   std::string acl_plugin_path = "lib64/libascendcl.so";
   auto base_handler = GetLibHandler(ascend_path + acl_plugin_path);
   if (base_handler == nullptr) {
-    MS_LOG(EXCEPTION) << "Dlopen " << acl_plugin_path << " failed!" << dlerror();
+    MS_LOG(WARNING) << "Dlopen " << acl_plugin_path << " failed!" << dlerror();
+    return;
   }
   aclInit_ = DlsymAscendFuncObj(aclInit, base_handler);
   aclGetRecentErrMsg_ = DlsymAscendFuncObj(aclGetRecentErrMsg, base_handler);

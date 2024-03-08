@@ -13,11 +13,11 @@ mindspore.nn.probability.distribution.LogNormal
     服从对数正态分布的随机变量的对数服从正态分布。它被构造为正态分布的指数变换。
 
     参数：
-        - **loc** (int, float, list, numpy.ndarray, Tensor) - 基础正态分布的平均值。默认值：None。
-        - **scale** (int, float, list, numpy.ndarray, Tensor) - 基础正态分布的标准差。默认值：None。
-        - **seed** (int) - 采样时使用的种子。如果为None，则使用全局种子。默认值：0。
-        - **dtype** (mindspore.dtype) - 分布类型。默认值：mstype.float32。
-        - **name** (str) - 分布的名称。默认值：'LogNormal'。
+        - **loc** (int, float, list, numpy.ndarray, Tensor) - 基础正态分布的平均值。默认值： ``None`` 。
+        - **scale** (int, float, list, numpy.ndarray, Tensor) - 基础正态分布的标准差。默认值： ``None`` 。
+        - **seed** (int) - 采样时使用的种子。如果为None，则使用全局种子。默认值： ``0`` 。
+        - **dtype** (mindspore.dtype) - 分布类型。默认值： ``mstype.float32`` 。
+        - **name** (str) - 分布的名称。默认值： ``'LogNormal'`` 。
 
     .. note:: 
         - `scale` 必须大于零。
@@ -49,8 +49,8 @@ mindspore.nn.probability.distribution.LogNormal
 
         参数：
             - **value** (Tensor) - 要计算的值。
-            - **loc** (Tensor) - 分布位置参数。默认值：None。
-            - **scale** (Tensor) - 分布比例参数。默认值：None。
+            - **loc** (Tensor) - 分布位置参数。默认值： ``None`` 。
+            - **scale** (Tensor) - 分布比例参数。默认值： ``None`` 。
 
         返回：
             Tensor，累积分布函数的值。
@@ -63,8 +63,8 @@ mindspore.nn.probability.distribution.LogNormal
             - **dist** (str) - 分布的类型。
             - **loc_b** (Tensor) - 对比分布位置参数。
             - **scale_b** (Tensor) - 对比分布比例参数。
-            - **loc** (Tensor) - 分布位置参数。默认值：None。
-            - **scale** (Tensor) - 分布比例参数。默认值：None。
+            - **loc** (Tensor) - 分布位置参数。默认值： ``None`` 。
+            - **scale** (Tensor) - 分布比例参数。默认值： ``None`` 。
 
         返回：
             Tensor，交叉熵的值。
@@ -74,8 +74,8 @@ mindspore.nn.probability.distribution.LogNormal
         计算熵。
 
         参数：
-            - **loc** (Tensor) - 分布位置参数。默认值：None。
-            - **scale** (Tensor) - 分布比例参数。默认值：None。
+            - **loc** (Tensor) - 分布位置参数。默认值： ``None`` 。
+            - **scale** (Tensor) - 分布比例参数。默认值： ``None`` 。
 
         返回：
             Tensor，熵的值。
@@ -88,8 +88,8 @@ mindspore.nn.probability.distribution.LogNormal
             - **dist** (str) - 分布的类型。
             - **loc_b** (Tensor) - 对比分布位置参数。
             - **scale_b** (Tensor) - 对比分布比例参数。
-            - **loc** (Tensor) - 分布位置参数。默认值：None。
-            - **scale** (Tensor) - 分布比例参数。默认值：None。
+            - **loc** (Tensor) - 分布位置参数。默认值： ``None`` 。
+            - **scale** (Tensor) - 分布比例参数。默认值： ``None`` 。
 
         返回：
             Tensor，KL散度。
@@ -100,8 +100,8 @@ mindspore.nn.probability.distribution.LogNormal
 
         参数：
             - **value** (Tensor) - 要计算的值。
-            - **loc** (Tensor) - 分布位置参数。默认值：None。
-            - **scale** (Tensor) - 分布比例参数。默认值：None。
+            - **loc** (Tensor) - 分布位置参数。默认值： ``None`` 。
+            - **scale** (Tensor) - 分布比例参数。默认值： ``None`` 。
 
         返回：
             Tensor，累积分布函数的对数。
@@ -112,8 +112,8 @@ mindspore.nn.probability.distribution.LogNormal
 
         参数：
             - **value** (Tensor) - 要计算的值。
-            - **loc** (Tensor) - 分布位置参数。默认值：None。
-            - **scale** (Tensor) - 分布比例参数。默认值：None。
+            - **loc** (Tensor) - 分布位置参数。默认值： ``None`` 。
+            - **scale** (Tensor) - 分布比例参数。默认值： ``None`` 。
 
         返回：
             Tensor，累积分布函数的对数。
@@ -124,8 +124,8 @@ mindspore.nn.probability.distribution.LogNormal
 
         参数：
             - **value** (Tensor) - 要计算的值。
-            - **loc** (Tensor) - 分布位置参数。默认值：None。
-            - **scale** (Tensor) - 分布比例参数。默认值：None。
+            - **loc** (Tensor) - 分布位置参数。默认值： ``None`` 。
+            - **scale** (Tensor) - 分布比例参数。默认值： ``None`` 。
 
         返回：
             Tensor，生存函数的对数。
@@ -135,8 +135,8 @@ mindspore.nn.probability.distribution.LogNormal
         计算期望。
 
         参数：
-            - **loc** (Tensor) - 分布位置参数。默认值：None。
-            - **scale** (Tensor) - 分布比例参数。默认值：None。
+            - **loc** (Tensor) - 分布位置参数。默认值： ``None`` 。
+            - **scale** (Tensor) - 分布比例参数。默认值： ``None`` 。
 
         返回：
             Tensor，概率分布的期望。
@@ -146,8 +146,8 @@ mindspore.nn.probability.distribution.LogNormal
         计算众数。
 
         参数：
-            - **loc** (Tensor) - 分布位置参数。默认值：None。
-            - **scale** (Tensor) - 分布比例参数。默认值：None。
+            - **loc** (Tensor) - 分布位置参数。默认值： ``None`` 。
+            - **scale** (Tensor) - 分布比例参数。默认值： ``None`` 。
 
         返回：
             Tensor，概率分布的众数。
@@ -158,8 +158,8 @@ mindspore.nn.probability.distribution.LogNormal
 
         参数：
             - **value** (Tensor) - 要计算的值。
-            - **loc** (Tensor) - 分布位置参数。默认值：None。
-            - **scale** (Tensor) - 分布比例参数。默认值：None。
+            - **loc** (Tensor) - 分布位置参数。默认值： ``None`` 。
+            - **scale** (Tensor) - 分布比例参数。默认值： ``None`` 。
 
         返回：
             Tensor，概率值。
@@ -170,8 +170,8 @@ mindspore.nn.probability.distribution.LogNormal
 
         参数：
             - **shape** (tuple) - 样本的shape。
-            - **loc** (Tensor) - 分布位置参数。默认值：None。
-            - **scale** (Tensor) - 分布比例参数。默认值：None。
+            - **loc** (Tensor) - 分布位置参数。默认值： ``None`` 。
+            - **scale** (Tensor) - 分布比例参数。默认值： ``None`` 。
 
         返回：
             Tensor，根据概率分布采样的样本。
@@ -181,8 +181,8 @@ mindspore.nn.probability.distribution.LogNormal
         计算标准差。
 
         参数：        
-            - **loc** (Tensor) - 分布位置参数。默认值：None。
-            - **scale** (Tensor) - 分布比例参数。默认值：None。
+            - **loc** (Tensor) - 分布位置参数。默认值： ``None`` 。
+            - **scale** (Tensor) - 分布比例参数。默认值： ``None`` 。
 
         返回：
             Tensor，概率分布的标准差。
@@ -193,8 +193,8 @@ mindspore.nn.probability.distribution.LogNormal
 
         参数：
             - **value** (Tensor) - 要计算的值。
-            - **loc** (Tensor) - 分布位置参数。默认值：None。
-            - **scale** (Tensor) - 分布比例参数。默认值：None。
+            - **loc** (Tensor) - 分布位置参数。默认值： ``None`` 。
+            - **scale** (Tensor) - 分布比例参数。默认值： ``None`` 。
 
         返回：
             Tensor，生存函数的值。
@@ -204,8 +204,8 @@ mindspore.nn.probability.distribution.LogNormal
         计算方差。
 
         参数：
-            - **loc** (Tensor) - 分布位置参数。默认值：None。
-            - **scale** (Tensor) - 分布比例参数。默认值：None。
+            - **loc** (Tensor) - 分布位置参数。默认值： ``None`` 。
+            - **scale** (Tensor) - 分布比例参数。默认值： ``None`` 。
 
         返回：
             Tensor，概率分布的方差。

@@ -62,9 +62,10 @@ class IncreFlashAttentionInfo : public OperatorInfo {
   size_t padding_mask_rank_ = 0;
   bool CheckStrategyOnIndex(int64_t strategy, int64_t true_value, const std::string &dim_name,
                             const std::string &input_name);
-  std::vector<Shape> optinal_tensor_map_ = {{}, {}, {}, {1, -1, -1, -1}, {1}, {1}, {1, -1, -1, -1}, {}, {}, {}, {}, {}};
-  std::vector<Shape> optinal_op_strategies_ = {{},           {},  {},  {1, 0, 0, 0}, {1}, {1},
-                                               {1, 0, 0, 0}, {0}, {0}, {0},          {0}, {0}};
+  std::vector<Shape> optinal_tensor_map_ = {{}, {}, {}, {1, -1, -1, -1}, {1}, {1}, {1, -1, -1, -1}, {}, {}, {},
+                                            {}, {}, {}, {1, -1}};
+  std::vector<Shape> optinal_op_strategies_ = {{},  {},  {},  {1, 0, 0, 0}, {1}, {1}, {1, 0, 0, 0},
+                                               {0}, {0}, {0}, {0},          {0}, {0}, {1, 0}};
   void SetOptinalInputs();
 };
 }  // namespace parallel

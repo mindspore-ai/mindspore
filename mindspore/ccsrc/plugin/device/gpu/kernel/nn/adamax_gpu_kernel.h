@@ -90,7 +90,7 @@ class AdamaxGpuKernelMod : public NativeGpuKernelMod {
   size_t t_size_{4};
   size_t s_size_{4};
   size_t g_size_{4};
-  size_t input_elements_;
+  size_t input_elements_{0};
 
   std::vector<KernelTensor *> outputs_ = {};
 

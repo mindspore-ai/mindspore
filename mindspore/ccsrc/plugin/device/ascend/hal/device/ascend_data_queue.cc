@@ -28,8 +28,8 @@
 #include "runtime/device/kernel_runtime_manager.h"
 #include "include/backend/distributed/ps/ps_cache/ps_data_prefetch.h"
 #include "include/backend/distributed/embedding_cache/embedding_cache_utils.h"
-#include "acl/acl_rt.h"
 #include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/acl_tdt_symbol.h"
 #include "transform/symbol/symbol_utils.h"
 
 namespace mindspore {
@@ -109,7 +109,7 @@ bool DestroyHandle() {
   for (auto &item : g_acl_handle_map) {
     acltdtChannelHandle **handle = reinterpret_cast<acltdtChannelHandle **>(item.first);
     if (*handle != nullptr) {
-      aclError stop_status = acltdtStopChannel(*handle);
+      aclError stop_status = CALL_ASCEND_API(acltdtStopChannel, *handle);
       if (stop_status != ACL_SUCCESS) {
         MS_LOG(ERROR) << "Failed stop acl data channel and the stop status is " << stop_status << std::endl;
         return false;
@@ -117,7 +117,7 @@ bool DestroyHandle() {
       if (item.second != nullptr && item.second->joinable()) {
         item.second->join();
       }
-      if (acltdtDestroyChannel(*handle) != ACL_SUCCESS) {
+      if (CALL_ASCEND_API(acltdtDestroyChannel, *handle) != ACL_SUCCESS) {
         MS_LOG(INFO) << "acltdtDestroyChannel failed.";
         destroy_all = false;
       } else {
@@ -160,9 +160,9 @@ DataQueueStatus AscendDataQueueDynamic::Push(std::vector<DataQueueItem> data) {
     if (addr == nullptr) {
       MS_LOG(ERROR) << "Allocate device memory of data queue failed";
     }
-    CheckRtRetWithError(
-      aclrtMemcpyAsync(addr, item.data_len, item.data_ptr, item.data_len, ACL_MEMCPY_HOST_TO_DEVICE, stream_),
-      "Rt Memcpy Error");
+    CheckRtRetWithError(CALL_ASCEND_API(aclrtMemcpyAsync, addr, item.data_len, item.data_ptr, item.data_len,
+                                        ACL_MEMCPY_HOST_TO_DEVICE, stream_),
+                        "Rt Memcpy Error");
     item.device_addr = addr;
   }
   CheckRtRetWithError(CALL_ASCEND_API(aclrtSynchronizeStreamWithTimeout, stream_, -1),
@@ -196,7 +196,7 @@ AscendTdtQueue::AscendTdtQueue(const std::string &channel_name) : DataQueue(chan
   MS_EXCEPTION_IF_NULL(MsContext::GetInstance());
   device_id_ = MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID);
 
-  aclError ret = aclrtSetDevice(device_id_);
+  aclError ret = CALL_ASCEND_API(aclrtSetDevice, device_id_);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Acl open device " << device_id_ << " failed.";
   }
@@ -224,13 +224,14 @@ AscendTdtQueue::AscendTdtQueue(const std::string &channel_name) : DataQueue(chan
       data_queue_capacity = env_capacity;
     }
     // Create device channel
-    acl_handle_ = acltdtCreateChannelWithCapacity(device_id_, channel_name_.c_str(), data_queue_capacity);
+    acl_handle_ =
+      CALL_ASCEND_API(acltdtCreateChannelWithCapacity, device_id_, channel_name_.c_str(), data_queue_capacity);
     if (acl_handle_ != nullptr) {
       MS_LOG(INFO) << "Select MBUF channel, the capacity of data queue is: " << data_queue_capacity;
       queue_type_ = "Ascend_MBUF";
     } else {
       MS_LOG(INFO) << "Select TDT channel.";
-      acl_handle_ = acltdtCreateChannel(device_id_, channel_name_.c_str());
+      acl_handle_ = CALL_ASCEND_API(acltdtCreateChannel, device_id_, channel_name_.c_str());
       queue_type_ = "Ascend_TDT";
       if (acl_handle_ == nullptr) {
         MS_LOG(EXCEPTION) << "Create channel for sending data failed.#umsg#User Help Message:#umsg#"
@@ -253,7 +254,7 @@ AscendTdtQueue::AscendTdtQueue(const std::string &channel_name) : DataQueue(chan
 
 AscendTdtQueue::~AscendTdtQueue() {
   if (acl_handle_ != nullptr) {
-    if (acltdtDestroyChannel(acl_handle_) != ACL_SUCCESS) {
+    if (CALL_ASCEND_API(acltdtDestroyChannel, acl_handle_) != ACL_SUCCESS) {
       MS_LOG(EXCEPTION) << "Failed to destroy channel for tdt queue. The details refer to 'Ascend Error Message'.";
     } else {
       tdt_handle::DelHandle(&acl_handle_);
@@ -263,7 +264,7 @@ AscendTdtQueue::~AscendTdtQueue() {
   if (DataQueueMgr::GetInstance().IsCreated(channel_name_)) {
     DataQueueMgr::GetInstance().Free(channel_name_);
   }
-  aclError rt_ret = aclrtResetDevice(device_id_);
+  aclError rt_ret = CALL_ASCEND_API(aclrtResetDevice, device_id_);
   if (rt_ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Reset device " << device_id_ << " failed.";
   }
@@ -275,7 +276,7 @@ size_t AscendTdtQueue::QueryQueueSize() const {
     MS_LOG(INFO) << "Mbuf channel has been closed, should not query size.";
     return 0;
   }
-  auto status = acltdtQueryChannelSize(acl_handle_, &size);
+  auto status = CALL_ASCEND_API(acltdtQueryChannelSize, acl_handle_, &size);
   if (status != ACL_SUCCESS) {
     MS_LOG(EXCEPTION) << "Unable to query real-time size of Mbuf channel: " << channel_name_
                       << ", error code: " << status;
@@ -296,12 +297,12 @@ DataQueueStatus AscendTdtQueue::Push(std::vector<DataQueueItem> data) {
   }
 
   // Data prefetch only when PS mode enables cache.
-  if (acltdtGetDatasetSize(acl_dataset) > 0) {
-    acltdtDataItem *item0 = acltdtGetDataItem(acl_dataset, 0);
+  if (CALL_ASCEND_API(acltdtGetDatasetSize, acl_dataset) > 0) {
+    acltdtDataItem *item0 = CALL_ASCEND_API(acltdtGetDataItem, acl_dataset, 0);
     std::string item_type;
-    ParseType(acltdtGetDataTypeFromItem(item0), &item_type);
+    ParseType(CALL_ASCEND_API(acltdtGetDataTypeFromItem, item0), &item_type);
   }
-  auto status = acltdtSendTensor(acl_handle_, acl_dataset, -1);
+  auto status = CALL_ASCEND_API(acltdtSendTensor, acl_handle_, acl_dataset, -1);
   DestroyAclDataset(acl_dataset);
   if (status != ACL_SUCCESS) {
     // if the device_queue thread had been interrupted by master, just print warning and return success
@@ -330,7 +331,7 @@ void AscendTdtQueue::ParseType(aclDataType acl_data_type, std::string *data_type
 }
 
 bool AscendTdtQueue::Translate(const std::vector<DataQueueItem> &data, acltdtDataset **output_acl_dataset) const {
-  auto acl_dataset = acltdtCreateDataset();
+  auto acl_dataset = CALL_ASCEND_API2(acltdtCreateDataset);
   if (acl_dataset == nullptr) {
     MS_LOG(ERROR) << "Create tdt dataset failed.";
     return false;
@@ -349,14 +350,14 @@ bool AscendTdtQueue::Translate(const std::vector<DataQueueItem> &data, acltdtDat
 bool AscendTdtQueue::AssembleTensor2AclDataset(const std::vector<DataQueueItem> &data,
                                                acltdtDataset *acl_dataset) const {
   if (data.empty()) {
-    acltdtDataItem *acl_data =
-      acltdtCreateDataItem(acltdtTensorType::ACL_TENSOR_DATA_END_OF_SEQUENCE, nullptr, 0, ACL_BOOL, nullptr, 0);
+    acltdtDataItem *acl_data = CALL_ASCEND_API(acltdtCreateDataItem, acltdtTensorType::ACL_TENSOR_DATA_END_OF_SEQUENCE,
+                                               nullptr, 0, ACL_BOOL, nullptr, 0);
     if (acl_data == nullptr) {
       MS_LOG(ERROR) << "Create data item failed when send empty data.";
       return false;
     }
-    if (acltdtAddDataItem(acl_dataset, acl_data) != ACL_SUCCESS) {
-      if (acltdtDestroyDataItem(acl_data) != ACL_SUCCESS) {
+    if (CALL_ASCEND_API(acltdtAddDataItem, acl_dataset, acl_data) != ACL_SUCCESS) {
+      if (CALL_ASCEND_API(acltdtDestroyDataItem, acl_data) != ACL_SUCCESS) {
         MS_LOG(ERROR) << "Destroy data item failed when send empty data.";
       }
       MS_LOG(ERROR) << "Add data item to tdt dataset failed when send data.";
@@ -384,14 +385,14 @@ bool AscendTdtQueue::AssembleTensor2AclDataset(const std::vector<DataQueueItem> 
     void *data_ptr = ts.data_ptr;
     size_t data_size = ts.data_len;
 
-    acl_data = acltdtCreateDataItem(acltdtTensorType::ACL_TENSOR_DATA_TENSOR, (shape.empty() ? nullptr : &shape[0]),
-                                    shape.size(), acl_type, data_ptr, data_size);
+    acl_data = CALL_ASCEND_API(acltdtCreateDataItem, acltdtTensorType::ACL_TENSOR_DATA_TENSOR,
+                               (shape.empty() ? nullptr : &shape[0]), shape.size(), acl_type, data_ptr, data_size);
     if (acl_data == nullptr) {
       MS_LOG(ERROR) << "Create data item failed when send data.";
       return false;
     }
-    if (acltdtAddDataItem(acl_dataset, acl_data) != ACL_SUCCESS) {
-      if (acltdtDestroyDataItem(acl_data) != ACL_SUCCESS) {
+    if (CALL_ASCEND_API(acltdtAddDataItem, acl_dataset, acl_data) != ACL_SUCCESS) {
+      if (CALL_ASCEND_API(acltdtDestroyDataItem, acl_data) != ACL_SUCCESS) {
         MS_LOG(ERROR) << "Destroy data item failed when send data with type ACL_TENSOR_DATA_TENSOR.";
       }
       MS_LOG(INFO) << "Add data item to tdt dataset failed when send data.";
@@ -407,14 +408,14 @@ bool AscendTdtQueue::AssembleTensor2AclDataset(const std::vector<DataQueueItem> 
 
 void AscendTdtQueue::DestroyAclDataset(acltdtDataset *acl_dataset, bool include_data_item) const {
   if (include_data_item) {
-    for (size_t i = 0; i < acltdtGetDatasetSize(acl_dataset); i++) {
-      if (acltdtDestroyDataItem(acltdtGetDataItem(acl_dataset, i)) != ACL_SUCCESS) {
+    for (size_t i = 0; i < CALL_ASCEND_API(acltdtGetDatasetSize, acl_dataset); i++) {
+      if (CALL_ASCEND_API(acltdtDestroyDataItem, CALL_ASCEND_API(acltdtGetDataItem, acl_dataset, i)) != ACL_SUCCESS) {
         MS_LOG(EXCEPTION) << "Destroy data item failed when send data.";
       }
     }
   }
 
-  if (acltdtDestroyDataset(acl_dataset) != ACL_SUCCESS) {
+  if (CALL_ASCEND_API(acltdtDestroyDataset, acl_dataset) != ACL_SUCCESS) {
     MS_LOG(EXCEPTION) << "Destroy tdt dataset failed when send data.";
   }
 }

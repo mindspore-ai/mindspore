@@ -14,22 +14,30 @@
  * limitations under the License.
  */
 #include "pipeline/jit/pi/graph_guard/guard.h"
+#include <chrono>
+#include <regex>
 #include "pybind11/pybind11.h"
 #include "pybind_api/ir/cell_py.h"
 #include "pybind_api/ir/primitive_py.h"
 #include "include/common/utils/convert_utils_py.h"
 #include "pipeline/jit/pi/utils/utils.h"
+#include "pipeline/jit/pi/graph_guard/strategy.h"
 
 namespace mindspore {
 namespace pijit {
 const char kSpecializeScalar[] = "specialize_scalar";
 const char kSpecializeContainer[] = "specialize_container";
 const char kSpecializeTensor[] = "specialize_tensor";
+const char kGuardRelaxCnt[] = "relax_guard_count";
 
-static std::map<std::string, bool> g_mapDefaultConfig = {
+static std::map<std::string, bool> g_mapBoolDefaultConfig = {
   {kSpecializeScalar, false},
   {kSpecializeContainer, false},
   {kSpecializeTensor, false},
+};
+
+static std::map<std::string, int> g_mapIntDefaultConfig = {
+  {kGuardRelaxCnt, 0},
 };
 
 static GuardItemPtr GuardOnGDeduce(TracePtr var, PyObject *obj, const std::map<std::string, bool> &config);
@@ -100,18 +108,204 @@ bool CheckOwnerIsCell(TracePtr var) {
   }
 }
 
-OptGuard::OptGuard() { config_ = g_mapDefaultConfig; }
+class OptGuardPerfImpl : public OptGuardPerf {
+ public:
+  virtual void GetGuardPerfInfo(std::map<std::string, std::pair<size_t, size_t>> *guard_info,
+                                std::map<std::string, std::pair<size_t, std::vector<size_t>>> *item_info,
+                                std::map<std::string, std::pair<size_t, size_t>> *trace_info,
+                                std::map<std::string, std::pair<size_t, size_t>> *guard_freq_info) const;
+  OptGuardPerfImpl() = default;
+  virtual ~OptGuardPerfImpl() = default;
+  virtual void LogGuardPerfStart(OptGuard *tag2, GuardItem *item);
+  virtual void LogGuardPerfEnd(GuardItem *item, bool res);
+  virtual void LogItemPerfStart(int total_stage);
+  virtual void LogItemPerfEnd(GuardItem *item, int stage);
+  virtual void LogTracePerfStart();
+  virtual void LogTracePerfEnd(Trace *trace, bool cache);
 
-OptGuard::OptGuard(const std::map<std::string, bool> &cfg) { UpdateConfig(cfg); }
+ protected:
+  OptGuard *cur_tag2_ = nullptr;
+  GuardItem *cur_guard_ = nullptr;
+  std::chrono::steady_clock::time_point guard_start_;
+  std::chrono::steady_clock::time_point trace_start_;
+  std::vector<std::chrono::steady_clock::time_point> item_stage_;
+  std::map<std::string, std::pair<size_t, size_t>> guard_info_;
+  std::map<std::string, std::pair<size_t, std::vector<size_t>>> item_info_;
+  std::map<std::string, std::pair<size_t, size_t>> trace_info_;
+  std::map<std::string, std::pair<size_t, size_t>> guard_freq_info_;
+};
 
-bool OptGuard::Check(const PyFrameObject *frame, bool print, std::map<std::string, PyObject *> *cache) {
+static OptGuardPerfImpl g_guard_perf;
+OptGuardPerf *OptGuardPerf::GetGuardPerf() { return &g_guard_perf; }
+
+void OptGuardPerfImpl::GetGuardPerfInfo(std::map<std::string, std::pair<size_t, size_t>> *guard_info,
+                                        std::map<std::string, std::pair<size_t, std::vector<size_t>>> *item_info,
+                                        std::map<std::string, std::pair<size_t, size_t>> *trace_info,
+                                        std::map<std::string, std::pair<size_t, size_t>> *guard_freq_info) const {
+  if (guard_info != nullptr) {
+    guard_info->clear();
+    guard_info->insert(guard_info_.begin(), guard_info_.end());
+  }
+  if (trace_info != nullptr) {
+    trace_info->clear();
+    trace_info->insert(trace_info_.begin(), trace_info_.end());
+  }
+  if (guard_freq_info != nullptr) {
+    guard_freq_info->clear();
+    guard_freq_info->insert(guard_freq_info_.begin(), guard_freq_info_.end());
+  }
+  if (item_info != nullptr) {
+    item_info->clear();
+    item_info->insert(item_info_.begin(), item_info_.end());
+  }
+}
+
+void OptGuardPerfImpl::LogGuardPerfStart(OptGuard *tag2, GuardItem *item) {
+  cur_guard_ = item;
+  cur_tag2_ = tag2;
+  guard_start_ = std::chrono::steady_clock::now();
+}
+
+void OptGuardPerfImpl::LogGuardPerfEnd(GuardItem *item, bool res) {
+  auto duration =
+    std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - guard_start_);
+  size_t dur = (size_t)(duration.count());
+  size_t inc = 1;
+  auto info = item->ToString();
+  std::stringstream s;
+  s << reinterpret_cast<void *>(cur_tag2_) << "=>" << reinterpret_cast<void *>(cur_guard_) << "=>";
+  info = s.str() + info;
+  auto iter = guard_info_.find(info);
+  if (iter != guard_info_.end()) {
+    iter->second.first += inc;
+    iter->second.second += dur;
+  } else {
+    guard_info_[info] = std::make_pair(inc, dur);
+  }
+  iter = guard_freq_info_.find(info);
+  if (iter != guard_freq_info_.end()) {
+    if (res) {
+      iter->second.first += 1;
+    } else {
+      iter->second.second += 1;
+    }
+  } else {
+    if (res) {
+      guard_freq_info_[info] = std::make_pair(1, 0);
+    } else {
+      guard_freq_info_[info] = std::make_pair(0, 1);
+    }
+  }
+}
+
+void OptGuardPerfImpl::LogItemPerfStart(int total_stage) {
+  item_stage_.clear();
+  item_stage_.resize(total_stage + 1);
+  item_stage_[0] = std::chrono::steady_clock::now();
+}
+
+void OptGuardPerfImpl::LogItemPerfEnd(GuardItem *item, int stage) {
+  size_t cur_stage = static_cast<size_t>(stage + 1);
+  if (item_stage_.size() > cur_stage) {
+    item_stage_[cur_stage] = std::chrono::steady_clock::now();
+  }
+  if (item_stage_.size() == (cur_stage + 1)) {
+    auto info = item->ToString();
+    std::stringstream s;
+    s << reinterpret_cast<void *>(cur_tag2_) << "=>" << reinterpret_cast<void *>(cur_guard_) << "=>";
+    info = s.str() + info;
+    std::vector<size_t> vecDur;
+    for (int idx = 0; idx <= stage; ++idx) {
+      auto duration = std::chrono::duration_cast<std::chrono::microseconds>(item_stage_[idx + 1] - item_stage_[idx]);
+      vecDur.push_back((size_t)(duration.count()));
+    }
+    auto iter = item_info_.find(info);
+    if (iter != item_info_.end()) {
+      iter->second.first += 1;
+      for (size_t i = 0; i < vecDur.size(); ++i) {
+        iter->second.second[i] += vecDur[i];
+      }
+    } else {
+      item_info_[info] = std::make_pair(1, vecDur);
+    }
+  }
+}
+
+void OptGuardPerfImpl::LogTracePerfStart() { trace_start_ = std::chrono::steady_clock::now(); }
+
+void OptGuardPerfImpl::LogTracePerfEnd(Trace *trace, bool cache) {
+  auto duration =
+    std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - trace_start_);
+  size_t dur = (size_t)(duration.count());
+  size_t inc = 1;
+  auto info = trace->ToString(true);
+  std::stringstream s;
+  s << reinterpret_cast<void *>(cur_guard_) << "=>";
+  if (cache) {
+    s << "cache:";
+  }
+  info = s.str() + info;
+  auto iter = trace_info_.find(info);
+  if (iter != trace_info_.end()) {
+    iter->second.first += inc;
+    iter->second.second += dur;
+  } else {
+    trace_info_[info] = std::make_pair(inc, dur);
+  }
+}
+
+OptGuard::OptGuard() {
+  bool_config_ = g_mapBoolDefaultConfig;
+  int_config_ = g_mapIntDefaultConfig;
+}
+
+void OptGuard::UpdateGuardList(GuardItemPtr item) {
+  // reorder list to speed up check on next run
   for (size_t i = 0; i < guardList_.size(); ++i) {
-    GuardItemPtr item = guardList_[i];
-    if (!item->Check(frame, cache)) {
-      // reorder list to speed up check on next run
-      GuardItemPtr tmp = item;
+    if (guardList_[i] == item) {
       guardList_.erase(guardList_.begin() + i);
-      guardList_.insert(guardList_.begin(), tmp);
+      guardList_.insert(guardList_.begin(), item);
+    }
+  }
+}
+
+bool OptGuard::Check(const PyFrameObject *frame, bool print, std::map<size_t, PyObject *> *cache,
+                     std::map<size_t, bool> *success, std::map<size_t, bool> *fail, bool perf) {
+  // filter failure case
+  if (fail != nullptr) {
+    for (auto item : guardMap_) {
+      if (fail->find(item.first) != fail->end()) {
+        return false;
+      }
+    }
+  }
+  std::vector<GuardItemPtr> list;
+  list.reserve(guardList_.size());
+  // filter success case
+  if (success != nullptr) {
+    for (auto item : guardList_) {
+      if (success->find(item->Info().Id()) == success->end()) {
+        list.push_back(item);
+      }
+    }
+  } else {
+    list = guardList_;
+  }
+  list = OptStrategy::MakeGuardItemListStrategyByFrame(frame, list);
+  for (size_t i = 0; i < list.size(); ++i) {
+    GuardItemPtr item = list[i];
+    if (perf) {
+      g_guard_perf.LogGuardPerfStart(this, item.get());
+    }
+    bool result = item->Check(frame, cache, perf);
+    if (perf) {
+      g_guard_perf.LogGuardPerfEnd(item.get(), result);
+    }
+    if (!result) {
+      UpdateGuardList(item);
+      if (fail != nullptr) {
+        fail->operator[](item->Info().Id()) = false;
+      }
       if (print) {
         auto trace = item->GetTrace();
         auto obj = GetObjectFromTrace(frame, trace);
@@ -122,6 +316,8 @@ bool OptGuard::Check(const PyFrameObject *frame, bool print, std::map<std::strin
         MS_LOG(DEBUG) << "Guard check fail:" << item->ToString();
       }
       return false;
+    } else if (success != nullptr) {
+      success->operator[](item->Info().Id()) = true;
     }
   }
   return true;
@@ -130,6 +326,9 @@ bool OptGuard::Check(const PyFrameObject *frame, bool print, std::map<std::strin
 bool OptGuard::GuardOn(TracePtr var, GuardLevel tp, bool needSpecialize, int recurseDepth) {
   // Now we have TypeGuard IdGuard NameGuard AttrGuard EqGuard, let's add guard to guardlist based on type
   PyObject *obj = var->GetObject();
+  if (int_config_.find(kGuardRelaxCnt) != int_config_.end()) {
+    var->SetRelaxCount(int_config_[kGuardRelaxCnt]);
+  }
   GuardItemPtr item = nullptr;
   if (obj != nullptr) {
     py::object py_obj = py::reinterpret_borrow<py::object>(obj);
@@ -138,7 +337,7 @@ bool OptGuard::GuardOn(TracePtr var, GuardLevel tp, bool needSpecialize, int rec
       obj = py_obj.ptr();
     }
     if (tp == GuardLevel::GDeduce) {
-      item = GuardOnGDeduce(var, obj, config_);
+      item = GuardOnGDeduce(var, obj, bool_config_);
     } else if (tp == GuardLevel::GId) {
       item = GuardId(var);
     } else if (tp == GuardLevel::GType) {
@@ -153,15 +352,29 @@ bool OptGuard::GuardOn(TracePtr var, GuardLevel tp, bool needSpecialize, int rec
     item = GuardEqual(var, 0);
   }
   if (item != nullptr) {
-    std::string strItem = item->ToString();
-    if (guardMap_.find(strItem) == guardMap_.end()) {
+    size_t szItem = item->Info().Id();
+    if (guardMap_.find(szItem) == guardMap_.end()) {
       guardList_.push_back(item);
-      guardMap_[strItem] = item;
+      guardMap_[szItem] = item;
     }
     return true;
   } else {
     return false;
   }
+}
+
+const InfoPack &OptGuard::Info() {
+  if (info_ == nullptr) {
+    InfoPack info;
+    info.Begin();
+    for (auto &item : guardList_) {
+      info << item->Info();
+    }
+    info.End();
+    info_ = std::make_shared<InfoPack>(info);
+    info_->Update();
+  }
+  return *info_;
 }
 
 static GuardItemPtr GuardOnGDeduce(TracePtr var, PyObject *obj, const std::map<std::string, bool> &config) {
@@ -342,10 +555,16 @@ std::string OptGuard::GetDescript() {
   return ret;
 }
 
-void OptGuard::UpdateConfig(const std::map<std::string, bool> &config) {
-  for (auto item : config) {
-    if (g_mapDefaultConfig.find(item.first) != g_mapDefaultConfig.end()) {
-      config_[item.first] = item.second;
+void OptGuard::UpdateConfig(const std::map<std::string, bool> &bool_config,
+                            const std::map<std::string, int> &int_config) {
+  for (auto item : bool_config) {
+    if (g_mapBoolDefaultConfig.find(item.first) != g_mapBoolDefaultConfig.end()) {
+      bool_config_[item.first] = item.second;
+    }
+  }
+  for (auto item : int_config) {
+    if (g_mapIntDefaultConfig.find(item.first) != g_mapIntDefaultConfig.end()) {
+      int_config_[item.first] = item.second;
     }
   }
 }
@@ -499,6 +718,27 @@ std::string OptGuard::ToString() const {
     s << "  guard [ " << i.first << " ] at [" << i.second.get() << "]\n";
   }
   return s.str();
+}
+
+OptGuardPtr OptGuard::Optimize() {
+  bool need_update = false;
+  for (size_t i = 0; i < guardList_.size(); ++i) {
+    auto old_item = guardList_[i];
+    auto new_item = old_item->Optimize();
+    if (new_item != nullptr) {
+      guardList_[i] = new_item;
+      guardMap_.erase(old_item->Info().Id());
+      guardMap_[new_item->Info().Id()] = new_item;
+      need_update = true;
+    }
+  }
+  if (need_update) {
+    info_ = nullptr;
+    Info();
+    return shared_from_this();
+  } else {
+    return nullptr;
+  }
 }
 
 }  // namespace pijit

@@ -319,6 +319,7 @@ class COMMON_EXPORT AnfAlgo {
   static std::string GetInputName(const CNodePtr &origin_op, size_t input_index);
   static bool IsNoOuputNode(const AnfNodePtr &node);
   static ValuePtr ValueToScalar(const ValuePtr &value, TypeId type_id);
+  static std::vector<ValuePtr> TransformVectorRefToMultiValue(const VectorRef &base_ref);
 };
 
 inline AnfNodePtr CreateShapeVectorNode(const ShapeVector &value) {

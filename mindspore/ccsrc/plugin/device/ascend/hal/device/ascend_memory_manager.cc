@@ -149,12 +149,14 @@ size_t AscendMemoryManager::GetAvailableMemSize() {
 
 void AscendMemoryManager::SwapIn(const void *host_ptr, void *device_ptr, size_t mem_size, void *stream) {
   if (stream == nullptr) {
-    auto ret_rt_memcpy = aclrtMemcpy(device_ptr, mem_size, host_ptr, mem_size, ACL_MEMCPY_HOST_TO_DEVICE);
+    auto ret_rt_memcpy =
+      CALL_ASCEND_API(aclrtMemcpy, device_ptr, mem_size, host_ptr, mem_size, ACL_MEMCPY_HOST_TO_DEVICE);
     if (ret_rt_memcpy != ACL_ERROR_NONE) {
       MS_EXCEPTION(DeviceProcessError) << "SwapIn aclrtMemcpy failed.";
     }
   } else {
-    auto ret_rt_memcpy = aclrtMemcpyAsync(device_ptr, mem_size, host_ptr, mem_size, ACL_MEMCPY_HOST_TO_DEVICE, stream);
+    auto ret_rt_memcpy =
+      CALL_ASCEND_API(aclrtMemcpyAsync, device_ptr, mem_size, host_ptr, mem_size, ACL_MEMCPY_HOST_TO_DEVICE, stream);
     if (ret_rt_memcpy != ACL_ERROR_NONE) {
       MS_EXCEPTION(DeviceProcessError) << "SwapIn aclrtMemcpyAsync failed.";
     }
@@ -166,12 +168,14 @@ void AscendMemoryManager::SwapIn(const void *host_ptr, void *device_ptr, size_t 
 
 void AscendMemoryManager::SwapOut(const void *device_ptr, void *host_ptr, size_t mem_size, void *stream) {
   if (stream == nullptr) {
-    auto ret_rt_memcpy = aclrtMemcpy(host_ptr, mem_size, device_ptr, mem_size, ACL_MEMCPY_DEVICE_TO_HOST);
+    auto ret_rt_memcpy =
+      CALL_ASCEND_API(aclrtMemcpy, host_ptr, mem_size, device_ptr, mem_size, ACL_MEMCPY_DEVICE_TO_HOST);
     if (ret_rt_memcpy != ACL_ERROR_NONE) {
       MS_EXCEPTION(DeviceProcessError) << "SwapOut aclrtMemcpy failed.";
     }
   } else {
-    auto ret_rt_memcpy = aclrtMemcpyAsync(host_ptr, mem_size, device_ptr, mem_size, ACL_MEMCPY_DEVICE_TO_HOST, stream);
+    auto ret_rt_memcpy =
+      CALL_ASCEND_API(aclrtMemcpyAsync, host_ptr, mem_size, device_ptr, mem_size, ACL_MEMCPY_DEVICE_TO_HOST, stream);
     if (ret_rt_memcpy != ACL_ERROR_NONE) {
       MS_EXCEPTION(DeviceProcessError) << "SwapOut aclrtMemcpyAsync failed.";
     }

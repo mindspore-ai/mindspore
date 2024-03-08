@@ -30,41 +30,40 @@ namespace pynative {
 class Converter {
  public:
   explicit Converter(ops::OpDef *op_def);
-  void Parse(py::list args);
-  ValuePtr ToTensor(size_t i);
-  std::optional<ValuePtr> ToTensorOptional(size_t i);
+  void Parse(const py::list &python_args);
+  ValuePtr ToTensor(const py::list &python_args, size_t i);
+  std::optional<ValuePtr> ToTensorOptional(const py::list &python_args, size_t i);
   template <typename T>
-  ValueTuplePtr ToTensorList(size_t i);
-  Int64ImmPtr ToInt(size_t i);
-  std::optional<Int64ImmPtr> ToIntOptional(size_t i);
+  ValueTuplePtr ToTensorList(const py::list &python_args, size_t i);
+  Int64ImmPtr ToInt(const py::list &python_args, size_t i);
+  std::optional<Int64ImmPtr> ToIntOptional(const py::list &python_args, size_t i);
   template <typename T>
-  ValueTuplePtr ToIntList(size_t i);
+  ValueTuplePtr ToIntList(const py::list &python_args, size_t i);
   template <typename T>
-  std::optional<ValueTuplePtr> ToIntListOptional(size_t i);
-  BoolImmPtr ToBool(size_t i);
-  std::optional<BoolImmPtr> ToBoolOptional(size_t i);
+  std::optional<ValueTuplePtr> ToIntListOptional(const py::list &python_args, size_t i);
+  BoolImmPtr ToBool(const py::list &python_args, size_t i);
+  std::optional<BoolImmPtr> ToBoolOptional(const py::list &python_args, size_t i);
   template <typename T>
-  ValueTuplePtr ToBoolList(size_t i);
+  ValueTuplePtr ToBoolList(const py::list &python_args, size_t i);
   template <typename T>
-  std::optional<ValueTuplePtr> ToBoolListOptional(size_t i);
-  FP32ImmPtr ToFloat(size_t i);
+  std::optional<ValueTuplePtr> ToBoolListOptional(const py::list &python_args, size_t i);
+  FP32ImmPtr ToFloat(const py::list &python_args, size_t i);
   template <typename T>
-  ValueTuplePtr ToFloatList(size_t i);
+  ValueTuplePtr ToFloatList(const py::list &python_args, size_t i);
   template <typename T>
-  std::optional<ValueTuplePtr> ToFloatListOptional(size_t i);
-  ScalarPtr ToScalar(size_t i);
-  std::optional<ScalarPtr> ToScalarOptional(size_t i);
-  StringImmPtr ToString(size_t i);
-  std::optional<StringImmPtr> ToStringOptional(size_t i);
-  Int64ImmPtr ToDtype(size_t i);
-  std::optional<Int64ImmPtr> ToDtypeOptional(size_t i);
+  std::optional<ValueTuplePtr> ToFloatListOptional(const py::list &python_args, size_t i);
+  ScalarPtr ToScalar(const py::list &python_args, size_t i);
+  std::optional<ScalarPtr> ToScalarOptional(const py::list &python_args, size_t i);
+  StringImmPtr ToString(const py::list &python_args, size_t i);
+  std::optional<StringImmPtr> ToStringOptional(const py::list &python_args, size_t i);
+  Int64ImmPtr ToDtype(const py::list &python_args, size_t i);
+  std::optional<Int64ImmPtr> ToDtypeOptional(const py::list &python_args, size_t i);
   ValuePtr ConvertByCastDtype(const py::object &input, const ops::OpInputArg &op_arg, size_t i);
+  ValueTuplePtr ConvertValueTupleByCastDtype(const py::list &python_args, const ops::OpInputArg &op_arg, size_t index);
   const std::vector<ops::OP_DTYPE> &source_type() const { return source_type_; }
 
  private:
-  void ThrowException(size_t i);
   ops::OpDefPtr op_def_;
-  py::list *python_args_;
   // If op not type cast, source_type is default type: DT_BEGIN, if op type cast, source_type is origin type.
   std::vector<ops::OP_DTYPE> source_type_;
 };
