@@ -19,7 +19,7 @@
     );
 
     // Stub tensor need output abstract
-    ${set_output_abs}
+    SetOutputAbstract();
   } else {
     MS_LOG_EXCEPTION << "View unsupported:" << primitive_->name() <<" or input ERROR";
   }
