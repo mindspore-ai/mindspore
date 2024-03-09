@@ -174,6 +174,11 @@ BACKEND_EXPORT void CollectHostInfo(
 #ifdef __linux__
 BACKEND_EXPORT void WriteHostDataToFile(const HostProfileData &host_profile_data, const std::string &output_path);
 #endif
+
+BACKEND_EXPORT uint64_t GetClockTime();
+
+BACKEND_EXPORT uint64_t GetClockSyscnt();
+
 }  // namespace profiler
 }  // namespace mindspore
 
