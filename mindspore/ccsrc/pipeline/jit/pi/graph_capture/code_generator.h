@@ -106,7 +106,9 @@ class CodeGenerator {
   void BuildOper(ValueNode *node, int index);
 
   // generator local operations of node
-  void LoadValue(ValueNode *node, bool is_side_effect = false);
+  void LoadValue(ValueNode *node);
+
+  void LoadConst(const py::object &);
 
   // add node to locals map
   int AllocLocal(ValueNode *node, int index = INT_MAX);
@@ -271,7 +273,6 @@ class MindCodeBreakGenerator : public CodeBreakGenerator {
   mindspore::FuncGraphBuilderPtr FGBuilder() const {
     return std::dynamic_pointer_cast<MindGraphBuilder>(builder_)->FGBuilder();
   }
-
 
   py::object MakeCapturedCode(std::vector<std::unique_ptr<Instr>> &&, int argc, int code_flag) const override;
 

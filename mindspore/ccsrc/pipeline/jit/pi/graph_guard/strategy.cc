@@ -186,10 +186,16 @@ static OptStrategy::CalcKind StubTensorComputable(PyObject *obj, ssize_t max_dim
 }
 
 static OptStrategy::CalcKind ObjectComputable(PyObject *obj, ssize_t max_dim = kMaxCalcDim) {
+  static const std::vector<bool (*)(PyObject *)> computable = {
+    [](PyObject *op) { return op == Py_None || op == Py_True || op == Py_False || op == Py_Ellipsis; },
+    CheckScalar,
+    CheckContainer,
+    [](PyObject *op) { return IsMsClass(reinterpret_cast<PyObject *>(Py_TYPE(op))); },
+    IsNumpyObject,
+  };
   if (obj == nullptr) {
     return OptStrategy::CalcKind::kCalcUnsupported;
-  } else if (obj == Py_None || obj == Py_True || obj == Py_False || obj == Py_Ellipsis || CheckScalar(obj) ||
-             CheckContainer(obj)) {
+  } else if (std::any_of(computable.begin(), computable.end(), [&obj](auto check) { return check(obj); })) {
     return OptStrategy::CalcKind::kCalcValue;
   } else if (IsTensorPyObject(obj)) {
     return TensorComputable(obj, max_dim);

@@ -429,9 +429,6 @@ static bool IsEliminate(ValueNode *v) {
     return true;
   }
   if (Utils::IsGeneralNoSideEffectOp(op)) {
-    if (Utils::IsBinaryMathOp(op) || op == COMPARE_OP) {
-      return v->input(0)->GetVobj()->GetType() != AObject::kTypeAnyValue;
-    }
     return true;
   }
   if (Utils::IsBinaryMathOp(op)) {

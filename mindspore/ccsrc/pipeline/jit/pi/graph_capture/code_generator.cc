@@ -545,14 +545,19 @@ void CodeGenerator::AddInstrs(std::vector<std::unique_ptr<Instr>> &&l) {
   code_.co_code.insert(code_.co_code.end(), std::make_move_iterator(l.begin()), std::make_move_iterator(l.end()));
 }
 
-void CodeGenerator::LoadValue(ValueNode *node, bool is_side_effect) {
+void CodeGenerator::LoadValue(ValueNode *node) {
   auto iter = locals_map_.find(node);
   if (iter != locals_map_.end()) {
     NewInstr(LOAD_FAST, iter->second);
     return;
   }
   if (node->GetType() == ValueNode::CellVar || node->GetType() == ValueNode::FreeVar) {
-    NewInstr(LOAD_CLOSURE, static_cast<CellVarNode *>(node)->GetIndex());
+    int index = static_cast<CellVarNode *>(node)->GetIndex();
+    if (index < 0) {
+      LoadConst(py::reinterpret_steal<py::object>(PyCell_New(nullptr)));
+    } else {
+      NewInstr(LOAD_CLOSURE, index);
+    }
     return;
   }
 
@@ -584,25 +589,23 @@ void CodeGenerator::LoadValue(ValueNode *node, bool is_side_effect) {
 
   py::object cnst = node->GetVobj()->GetPyObject();
   if (opcode == LOAD_CONST) {
-    MS_EXCEPTION_IF_NULL(cnst.ptr());
-    if (CheckConstPyObject(cnst.ptr())) {
-      NewInstr(LOAD_CONST);
-      code_.co_code.back()->set_cnst(cnst);
-      return;
-    }
-    key = GenerateObjectKey(cnst);
-    MapAdd(GetGlobals(), key, cnst);
-    NewInstr(LOAD_GLOBAL);
-    code_.co_code.back()->set_name(key);
+    LoadConst(cnst);
     return;
   }
   MS_LOG(INTERNAL_EXCEPTION) << "missing value, [" << node->ToString() << "]";
-  if (is_side_effect == true) {
-    auto it = locals_map_.find(node);
-    if (it != locals_map_.end()) {
-      locals_map_.erase(it);
-    }
+}
+
+void CodeGenerator::LoadConst(const py::object &cnst) {
+  MS_EXCEPTION_IF_NULL(cnst.ptr());
+  if (CheckConstPyObject(cnst.ptr())) {
+    NewInstr(LOAD_CONST);
+    code_.co_code.back()->set_cnst(cnst);
+    return;
   }
+  std::string key = GenerateObjectKey(cnst);
+  MapAdd(GetGlobals(), key, cnst);
+  NewInstr(LOAD_GLOBAL);
+  code_.co_code.back()->set_name(key);
 }
 
 void CodeGenerator::BuildOper(ValueNode *node, int index) {
@@ -808,7 +811,7 @@ void CodeBreakGenerator::CallSideEffectCode(CodeGenerator *code_gen, Graph *grap
   for (auto &item : graph->GetSideEffectNodes()) {
     if (item->GetOpcode() == BUILD_LIST) {
       code_gen->NewInstr(LOAD_FAST, 0);
-      code_gen->LoadValue(item, true);
+      code_gen->LoadValue(item);
       code_gen->NewInstr(LOAD_CONST, 0);
       code_gen->GetCode().co_code.back()->set_cnst(py::none());
       code_gen->NewInstr(LOAD_CONST, 0);
@@ -822,7 +825,7 @@ void CodeBreakGenerator::CallSideEffectCode(CodeGenerator *code_gen, Graph *grap
         if (input->GetOpcode() == CALL_FUNCTION) {
           continue;
         }
-        code_gen->LoadValue(input, true);
+        code_gen->LoadValue(input);
         interpret_.outputs.erase(std::remove(interpret_.outputs.begin(), interpret_.outputs.end(), input),
                                  interpret_.outputs.end());
       }
@@ -838,7 +841,7 @@ void CodeBreakGenerator::CallSideEffectCode(CodeGenerator *code_gen, Graph *grap
   }
   for (auto &item : graph->GetGlobalList()) {
     if (item.getNode() != nullptr) {
-      code_gen->LoadValue(item.getNode(), false);
+      code_gen->LoadValue(item.getNode());
       code_gen->GetCode().co_code.back()->set_name(item.getName());
       code_gen->NewInstr(STORE_GLOBAL, 0);
     } else {
