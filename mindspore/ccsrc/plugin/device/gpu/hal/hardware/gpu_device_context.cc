@@ -907,6 +907,12 @@ bool GPUDeviceResManager::CreateStreamWithPriority(size_t *stream_id, int32_t pr
   return GPUDeviceManager::GetInstance().CreateStreamWithPriority(stream_id, priority);
 }
 
+size_t GPUDeviceResManager::QueryStreamSize() const { return GPUDeviceManager::GetInstance().QueryStreamSize(); }
+
+std::vector<uint32_t> GPUDeviceResManager::GetStreamIds() const {
+  return GPUDeviceManager::GetInstance().GetStreamIds();
+}
+
 bool GPUDeviceResManager::single_op_multi_stream_enable() const {
   return GPUDeviceManager::GetInstance().single_op_multi_stream_enable();
 }
@@ -975,6 +981,17 @@ uint32_t GPUKernelExecutor::GetRankID() const {
     }
   }
   return rank_id;
+}
+
+// cudaEventRecordDefault 0x0 | cudaEventRecordExternal 0x1 | cudaEventWaitExternal 0x1, no need to set again.
+DeviceEventPtr GPUDeviceResManager::CreateRuntimeEvent(bool enable_blocking, bool enable_record_wait) {
+  if (!enable_blocking && !enable_record_wait) {
+    MS_LOG(INTERNAL_EXCEPTION) << "Bad parameters, enable_blocking is false and enable_record_wait is false.";
+  }
+  uint32_t flag = cudaEventDefault;
+  flag |= cudaEventDisableTiming;
+  flag |= cudaEventBlockingSync;
+  return std::make_shared<GpuEvent>(flag);
 }
 
 DeviceEventPtr GPUDeviceResManager::CreateEventWithFlag(bool enable_timing, bool blocking) {

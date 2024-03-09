@@ -93,9 +93,11 @@ class AclStreamAssign {
                     mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> *kernel_recv,
                     const AnfNodePtr &node_after_recv) const;
 
-  CNodePtr CreateSendApplyKernel(const NotNull<KernelGraphPtr> &graph_ptr, uint32_t event_id, uint32_t stream_id) const;
+  CNodePtr CreateSendApplyKernel(const NotNull<KernelGraphPtr> &graph_ptr, uint32_t event_id, uint32_t stream_id,
+                                 uint32_t event_generate_id) const;
 
-  CNodePtr CreateRecvApplyKernel(const NotNull<KernelGraphPtr> &graph_ptr, uint32_t event_id, uint32_t stream_id) const;
+  CNodePtr CreateRecvApplyKernel(const NotNull<KernelGraphPtr> &graph_ptr, uint32_t event_id, uint32_t record_stream_id,
+                                 uint32_t stream_id, uint32_t event_generate_id) const;
 };
 }  // namespace ascend
 }  // namespace device

@@ -38,6 +38,7 @@
 #include "ops/sparse_tensor_ops.h"
 #include "ops/nn_ops.h"
 #include "runtime/device/device_address_utils.h"
+#include "runtime/device/multi_stream_controller.h"
 #include "runtime/graph_scheduler/graph_compiler.h"
 #include "runtime/pynative/graph_adapter.h"
 #include "pybind_api/gil_scoped_long_running.h"
@@ -521,6 +522,11 @@ const ActorInfo &MindRTBackendBase::CompileGraphs(const FuncGraphPtr &func_graph
   const ActorInfo &actor_info = graph_compiler_info->name_;
   (void)actor_to_graph_compiler_info_.emplace(graph_compiler_info->name_, std::move(graph_compiler_info));
   PROF_END(compile_func_graph);
+
+  for (const auto &graph_id_to_context : graph_id_to_device_context_) {
+    auto context = graph_id_to_context.second;
+    device::MultiStreamController::GetInstance()->Refresh(context);
+  }
 
   (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageCompileGraphs, 1, 0, 1);
   MS_LOG(INFO) << "Status record: end compile function graph: " << func_graph->ToString()

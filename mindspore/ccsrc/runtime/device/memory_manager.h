@@ -22,6 +22,7 @@
 #include <map>
 #include <queue>
 #include "backend/common/mem_reuse/mem_reuse.h"
+#include "include/backend/mem_reuse/mem_dynamic_allocator.h"
 #include "runtime/device/common_somas_allocator.h"
 
 namespace mindspore {
@@ -57,9 +58,6 @@ class BACKEND_EXPORT MemoryManager {
   virtual void *MallocMemFromMemPool(size_t size, bool from_persistent_mem, bool need_recycle = false,
                                      uint32_t stream_id = kDefaultStreamIndex);
   virtual size_t GetMaxUsedMemorySize() const { return 0; }
-  virtual uint8_t *MallocCommunicationMemFromMemPool(size_t size, uint32_t stream_id = kDefaultStreamIndex) {
-    return nullptr;
-  }
   virtual void FreeMemFromMemPool(const DeviceAddressPtr address);
   virtual void FreeMemFromMemPool(void *device_ptr);
   virtual bool MallocContinuousMemFromMemPool(const DeviceAddressPtrList &addr_list, size_t total_size,
@@ -81,6 +79,37 @@ class BACKEND_EXPORT MemoryManager {
     return 0;
   }
 
+  bool RecordEvent(int64_t task_id_on_stream, uint32_t user_stream_id,
+                   const std::vector<std::pair<uint32_t, DeviceMemPtr>> &memory_stream_addresses,
+                   const DeviceEventPtr &event) {
+    if (memory_pool_ == nullptr) {
+      MS_LOG(WARNING) << "memory_pool_ is nullptr.";
+      return false;
+    }
+    return memory_pool_->RecordEvent(task_id_on_stream, user_stream_id, memory_stream_addresses, event);
+  }
+  bool WaitEvent(int64_t task_id_on_stream, uint32_t user_stream_id, uint32_t memory_stream_id) {
+    if (memory_pool_ == nullptr) {
+      MS_LOG(WARNING) << "memory_pool_ is nullptr.";
+      return false;
+    }
+    return memory_pool_->WaitEvent(task_id_on_stream, user_stream_id, memory_stream_id);
+  }
+  bool WaitEvent(int64_t task_id_on_stream, uint32_t memory_stream_id) {
+    if (memory_pool_ == nullptr) {
+      MS_LOG(WARNING) << "memory_pool_ is nullptr.";
+      return false;
+    }
+    return memory_pool_->WaitEvent(task_id_on_stream, memory_stream_id);
+  }
+  bool SyncAllEvents() {
+    if (memory_pool_ == nullptr) {
+      MS_LOG(WARNING) << "memory_pool_ is nullptr.";
+      return false;
+    }
+    return memory_pool_->SyncAllEvents();
+  }
+
  protected:
   virtual uint8_t *MallocStaticMem(size_t size, bool communication_mem, uint32_t graph_id) = 0;
   virtual uint8_t *MallocStaticMem(size_t size, bool communication_mem) {
@@ -88,6 +117,9 @@ class BACKEND_EXPORT MemoryManager {
   }
   virtual uint8_t *MallocDynamicMem(size_t size, bool communication_mem);
   SomasAllocatorPtr somas_allocator_ptr_{nullptr};
+
+  // Hold memory pool for common operations on memory.
+  DynamicMemPoolBestFit *memory_pool_{nullptr};
 };
 }  // namespace device
 }  // namespace mindspore

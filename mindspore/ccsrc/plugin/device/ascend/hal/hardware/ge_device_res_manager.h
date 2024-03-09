@@ -102,6 +102,8 @@ class GeDeviceResManager : public DeviceResManager {
 
   bool CreateStream(size_t *stream_id) const override;
   bool CreateStreamWithPriority(size_t *stream_id, int32_t priority) const override;
+  size_t QueryStreamSize() const override;
+  std::vector<uint32_t> GetStreamIds() const override;
   void *GetStream(size_t stream_id) const override;
   void SetCurrentStreamId(size_t stream_id) override;
   size_t GetCurrentStreamId() const override;
@@ -111,6 +113,7 @@ class GeDeviceResManager : public DeviceResManager {
   bool SyncNotDefaultStreams() const override;
   size_t DefaultStream() const override;
 
+  DeviceEventPtr CreateRuntimeEvent(bool enable_blocking, bool enable_record_wait);
   DeviceEventPtr CreateEventWithFlag(bool enable_timing, bool blocking) override;
 
   bool single_op_multi_stream_enable() const override;

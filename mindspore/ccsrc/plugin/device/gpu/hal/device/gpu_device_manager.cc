@@ -15,6 +15,9 @@
  */
 
 #include "plugin/device/gpu/hal/device/gpu_device_manager.h"
+
+#include <algorithm>
+
 #include "plugin/device/gpu/hal/device/gpu_common.h"
 #include "utils/log_adapter.h"
 #include "include/common/utils/convert_utils.h"
@@ -138,6 +141,21 @@ CudaDeviceStream GPUDeviceManager::GetStream(size_t stream_id) const {
     return nullptr;
   }
   return gpu_streams_[stream_id];
+}
+
+size_t GPUDeviceManager::QueryStreamSize() const {
+  return std::count_if(gpu_streams_.begin(), gpu_streams_.end(),
+                       [](CudaDeviceStream stream) { return stream != nullptr; });
+}
+
+std::vector<uint32_t> GPUDeviceManager::GetStreamIds() const {
+  std::vector<uint32_t> stream_ids;
+  for (size_t i = 0; i < gpu_streams_.size(); i++) {
+    if (gpu_streams_[i] != nullptr) {
+      (void)stream_ids.emplace_back(static_cast<uint32_t>(i));
+    }
+  }
+  return stream_ids;
 }
 
 void GPUDeviceManager::set_current_stream(size_t stream_id) { current_stream_id_ = stream_id; }

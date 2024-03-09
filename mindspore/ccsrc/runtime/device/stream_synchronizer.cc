@@ -15,9 +15,10 @@
  */
 
 #include "runtime/device/stream_synchronizer.h"
-#include "utils/ms_context.h"
+
 #include "include/backend/distributed/collective/collective_manager.h"
 #include "include/backend/distributed/recovery/recovery_context.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace device {

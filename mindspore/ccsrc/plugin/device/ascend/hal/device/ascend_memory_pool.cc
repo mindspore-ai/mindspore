@@ -188,10 +188,18 @@ void AscendMemoryPool::ResetIdleMemBuf() const {
     if (mem_mng->mem_block_list_.empty()) {
       return;
     }
-    for (const auto &idle_mem_buf : mem_mng->idle_mem_bufs_) {
-      for (const auto &it : idle_mem_buf.second) {
-        MS_EXCEPTION_IF_NULL(it.second);
-        (void)CALL_ASCEND_API(aclrtMemset, it.second->device_addr_, it.first, 0, it.first);
+    const auto &stream_ids = mem_mng->GetStreamIds();
+    for (const auto stream_id : stream_ids) {
+      auto key = std::make_pair(stream_id, DynamicMemBufStatus::kMemBufIdle);
+      const auto &&iter = mem_mng->mem_bufs_.find(key);
+      if (iter == mem_mng->mem_bufs_.end()) {
+        continue;
+      }
+      const auto &mem_buf_map = iter->second;
+      for (auto &&idle_iter = mem_buf_map.begin(); idle_iter != mem_buf_map.end(); idle_iter++) {
+        auto &mem_buf = idle_iter->second;
+        MS_EXCEPTION_IF_NULL(mem_buf);
+        (void)CALL_ASCEND_API(aclrtMemset, mem_buf->device_addr_, mem_buf->size_, 0, mem_buf->size_);
       }
     }
   };
