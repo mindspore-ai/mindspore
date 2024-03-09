@@ -70,6 +70,7 @@ AICORE_METRICS_DICT = {
     3: "MemoryL0",
     4: "ResourceConflictRatio",
     5: "MemoryUB",
+    6: "L2Cache",
     -1: "None"
 }
 
