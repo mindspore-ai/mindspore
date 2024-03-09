@@ -19,6 +19,7 @@
 #include <memory>
 #include <utility>
 #include <vector>
+#include <tuple>
 
 #include "ir/value.h"
 #include "frontend/parallel/auto_parallel/graph_costmodel.h"
@@ -26,6 +27,7 @@
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/step_parallel_utils.h"
+#include "frontend/parallel/graph_util/generate_graph.h"
 #include "mindspore/core/ops/flash_attention_score.h"
 #include "mindspore/core/ops/array_ops.h"
 #include "mindspore/core/ops/nn_ops.h"
@@ -42,6 +44,9 @@ constexpr size_t kInputQKVSeqDimBNSD = 2;
 constexpr size_t kInputQKVHeadSizeDimBNSD = 3;
 constexpr char kInputLayoutBSH[] = "BSH";
 constexpr char kInputLayoutBNSD[] = "BNSD";
+constexpr int64_t kLoadBalanceSplitNum = 2;
+const std::vector<int64_t> need_compress_attn_mask_mode = {ops::kSparseLeftDownCausal, ops::kSparseRightDownCausal,
+                                                           ops::kSparseBand};
 
 size_t GetNonMonadInputSize(const CNodePtr &cnode) {
   size_t cnode_non_monad_size = cnode->size();
@@ -155,15 +160,16 @@ void FlashAttentionScoreInfo::InitExpectedStrategies() {
   }
   if (is_input_passed_[ops::kFlashAttentionScoreInputAttnMaskIndex]) {
     auto attn_mask_shape = inputs_shape_.at(GetStrategyRealIndex(ops::kFlashAttentionScoreInputAttnMaskIndex));
+    int64_t s1_split_num_attn_mask = is_attn_mask_compressed_ ? 1 : s1_split_num_;
     if (attn_mask_shape.size() == kSizeTwo) {
       // attn_mask_shape: (S1, S2)
-      expect_strategies_[ops::kFlashAttentionScoreInputAttnMaskIndex] = {s1_split_num_, 1};
+      expect_strategies_[ops::kFlashAttentionScoreInputAttnMaskIndex] = {s1_split_num_attn_mask, 1};
     } else if (attn_mask_shape.size() == kSizeFour) {
       // attn_mask_shape: (B, N1, S1, S2) or (B, 1, S1, S2)
       auto attn_mask_n1_split_num = attn_mask_have_n1_dim_ ? n1_split_num_ : 1;
       auto attn_batch_split_num = attn_mask_have_batch_dim_ ? batch_split_num_ : 1;
       expect_strategies_[ops::kFlashAttentionScoreInputAttnMaskIndex] = {attn_batch_split_num, attn_mask_n1_split_num,
-                                                                         s1_split_num_, 1};
+                                                                         s1_split_num_attn_mask, 1};
     }
   }
   if (is_input_passed_[ops::kFlashAttentionScoreInputPrefixIndex]) {
@@ -203,15 +209,16 @@ void FlashAttentionScoreInfo::InitInputsTensorMap() {
   }
   if (is_input_passed_[ops::kFlashAttentionScoreInputAttnMaskIndex]) {
     auto attn_mask_shape = inputs_shape_.at(GetStrategyRealIndex(ops::kFlashAttentionScoreInputAttnMaskIndex));
+    int64_t dev_matrix_s1_dim_attn_mask = is_attn_mask_compressed_ ? -1 : dev_matrix_s1_dim_;
     if (attn_mask_shape.size() == kSizeTwo) {
       // attn_mask_shape: (S1, S2)
-      inputs_tensor_map_[ops::kFlashAttentionScoreInputAttnMaskIndex] = {dev_matrix_s1_dim_, -1};
+      inputs_tensor_map_[ops::kFlashAttentionScoreInputAttnMaskIndex] = {dev_matrix_s1_dim_attn_mask, -1};
     } else if (attn_mask_shape.size() == kSizeFour) {
       // attn_mask_shape: (B, N1, S1, S2) or (B, 1, S1, S2)
       auto attn_mask_batch_map = attn_mask_have_batch_dim_ ? dev_matrix_batch_dim_ : -1;
       auto attn_mask_n1_map = attn_mask_have_n1_dim_ ? dev_matrix_n1_dim_ : -1;
       inputs_tensor_map_[ops::kFlashAttentionScoreInputAttnMaskIndex] = {attn_mask_batch_map, attn_mask_n1_map,
-                                                                         dev_matrix_s1_dim_, -1};
+                                                                         dev_matrix_s1_dim_attn_mask, -1};
     }
   }
   if (is_input_passed_[ops::kFlashAttentionScoreInputPrefixIndex]) {
@@ -270,8 +277,14 @@ Status FlashAttentionScoreInfo::GetAttrs() {
   InitIsInputPassed();
   head_num_ = GetIntAttr(kAttrHeadNum);
   keep_prob_ = GetFloatAttr(kAttrKeepProb);
+  scale_value_ = GetFloatAttr(kAttrScaleValue);
+  pre_tokens_ = GetIntAttr(kAttrPreTokens);
+  next_tokens_ = GetIntAttr(kAttrNextTokens);
   input_layout_ = GetStringAttr(kAttrInputLayout);
   sparse_mode_ = GetIntAttr(kAttrSparseMode);
+  enable_load_balance_ = GetBoolAttr(kAttrEnableLoadBalance);
+  is_attn_mask_compressed_ = std::find(need_compress_attn_mask_mode.begin(), need_compress_attn_mask_mode.end(),
+                                       sparse_mode_) != need_compress_attn_mask_mode.end();
   if (input_layout_ == kInputLayoutBSH) {
     auto q_hidden_size = inputs_shape_[ops::kFlashAttentionScoreInputQueryIndex][kInputQKVHiddenDimBSH];
     auto k_hidden_size = inputs_shape_[ops::kFlashAttentionScoreInputKeyIndex][kInputQKVHiddenDimBSH];
@@ -348,16 +361,6 @@ Status FlashAttentionScoreInfo::CheckStrategy(const StrategyPtr &strategy) {
     s2_split_num = key_strategy[kInputQKVSeqDimBNSD];
   }
 
-  // Only DefaultMask and AllMask mode can split S1 dim currently
-  const std::vector<int64_t> s1_split_valid_mode_list = {ops::kSparseDefaultMask, ops::kSparseAllMask};
-  if (s1_split_num_ > 1 && std::find(s1_split_valid_mode_list.begin(), s1_split_valid_mode_list.end(), sparse_mode_) ==
-                             s1_split_valid_mode_list.end()) {
-    MS_LOG(ERROR) << name_ << ":The S-dimension of query can be split only when sparse_mode is one of "
-                  << s1_split_valid_mode_list << ", but got `sparse_mode` is " << sparse_mode_
-                  << ", and the strategy of `query` is " << query_strategy;
-    return FAILED;
-  }
-
   if (s2_split_num != 1) {
     MS_LOG(ERROR) << name_ << ": The S-Dimention of input 'key' cannot be split, but got the strategy of key is "
                   << key_strategy;
@@ -402,6 +405,59 @@ Status FlashAttentionScoreInfo::InferTensorMap() {
   return SUCCESS;
 }
 
+std::vector<int64_t> FlashAttentionScoreInfo::GetSplitIdAndRank() {
+  CheckGlobalDeviceManager();
+  int64_t rank = g_device_manager->global_rank();
+  DeviceMatrix dev_matrix(rank, stage_device_list_, dev_matrix_shape_);
+  RankList group_devices;
+  int64_t seq_dim = dev_matrix_shape_.size() - dev_matrix_s1_dim_ - 1;
+  if (dev_matrix.GetDevicesAlongDim(seq_dim, &group_devices) != SUCCESS) {
+    MS_LOG(ERROR) << name_ << " get group devices along dim " << seq_dim << " failed.";
+  }
+  auto iter = std::find(group_devices.begin(), group_devices.end(), rank);
+  if (iter == group_devices.end()) {
+    MS_LOG(EXCEPTION) << "FlashAttentionScore S1 sequence parallel get split id failed. "
+                      << "rank " << rank << " not in group " << group_devices;
+  }
+  int64_t split_id = iter - group_devices.begin();
+  int64_t target_split_id = s1_split_num_ - split_id - 1;
+  int64_t target_rank_id = group_devices[target_split_id];
+  return std::vector<int64_t>({rank, target_rank_id, split_id, target_split_id});
+}
+
+std::tuple<int64_t, int64_t> FlashAttentionScoreInfo::GetAttentionMaskAttrs(const int64_t split_id,
+                                                                            const int64_t split_num) {
+  int64_t kv_seq_length;
+  int64_t q_seq_length;
+  int64_t new_pre_tokens;
+  int64_t new_next_tokens;
+  if (input_layout_ == kInputLayoutBSH) {
+    kv_seq_length = inputs_shape_[ops::kFlashAttentionScoreInputKeyIndex][kInputQKVSeqDimBSH];
+    q_seq_length = inputs_shape_[ops::kFlashAttentionScoreInputQueryIndex][kInputQKVSeqDimBSH];
+  } else {
+    kv_seq_length = inputs_shape_[ops::kFlashAttentionScoreInputKeyIndex][kInputQKVSeqDimBNSD];
+    q_seq_length = inputs_shape_[ops::kFlashAttentionScoreInputQueryIndex][kInputQKVSeqDimBNSD];
+  }
+  switch (sparse_mode_) {
+    case ops::kSparseLeftDownCausal:
+      new_pre_tokens = kv_seq_length;
+      new_next_tokens = -kv_seq_length + (split_id + 1) * (q_seq_length / split_num);
+      break;
+    case ops::kSparseRightDownCausal:
+      new_pre_tokens = kv_seq_length;
+      new_next_tokens = -(split_num - split_id - 1) * (q_seq_length / split_num);
+      break;
+    case ops::kSparseBand:
+      new_pre_tokens = pre_tokens_ + (split_num - split_id - 1) * (q_seq_length / split_num);
+      new_next_tokens = next_tokens_ - (split_num - split_id - 1) * (q_seq_length / split_num);
+      break;
+    default:
+      MS_LOG(EXCEPTION) << "Invalid sparse mode " << sparse_mode_ << ", sparse mode should be one of "
+                        << need_compress_attn_mask_mode;
+  }
+  return std::make_tuple(new_pre_tokens, new_next_tokens);
+}
+
 void FlashAttentionScoreInfo::ReplaceNodeInputOrAttrs() {
   for (auto &cnode : cnodes_) {
     auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
@@ -409,6 +465,15 @@ void FlashAttentionScoreInfo::ReplaceNodeInputOrAttrs() {
     auto clone_prim = prim->Clone();
     MS_EXCEPTION_IF_NULL(clone_prim);
     clone_prim->set_attr(kAttrHeadNum, MakeValue(head_num_ / n1_split_num_));
+    if (s1_split_num_ > 1 && !enable_load_balance_ && is_attn_mask_compressed_) {
+      std::vector<int64_t> split_info = GetSplitIdAndRank();
+      int64_t split_id = split_info[kIndex3];
+      int64_t new_pre_tokens, new_next_tokens;
+      std::tie(new_pre_tokens, new_next_tokens) = GetAttentionMaskAttrs(split_id, s1_split_num_);
+      clone_prim->set_attr(kAttrSparseMode, MakeValue<int64_t>(ops::kSparseBand));
+      clone_prim->set_attr(kAttrPreTokens, MakeValue(new_pre_tokens));
+      clone_prim->set_attr(kAttrNextTokens, MakeValue(new_next_tokens));
+    }
     auto manager = cnode->func_graph()->manager();
     manager->SetEdge(cnode, 0, NewValueNode(clone_prim)->cast<AnfNodePtr>());
 
@@ -431,6 +496,268 @@ void FlashAttentionScoreInfo::ReplaceNodeInputOrAttrs() {
     // Update slice shape and seed for DropoutGenMask
     UpdateDropoutGenMaskSliceShapeAndSeed(dropout_gen_mask_cnode);
   }
+}
+
+void FlashAttentionScoreInfo::LoadBalanceSplitAlongSeqDim(size_t input_index, GenerateGraph *gen_g,
+                                                          AnfNodePtr *split_node, AnfNodePtr *keep_node,
+                                                          AnfNodePtr *exchange_node) {
+  OperatorAttrs split_attrs;
+  int64_t q_split_axis;
+  switch (input_index) {
+    case ops::kFlashAttentionScoreInputQueryIndex:
+      q_split_axis = (input_layout_ == kInputLayoutBSH) ? kInputQKVSeqDimBSH : kInputQKVSeqDimBNSD;
+      split_attrs = {std::make_pair(AXIS, MakeValue(q_split_axis)),
+                     std::make_pair(OUTPUT_NUM, MakeValue(kLoadBalanceSplitNum))};
+      *split_node = gen_g->PushBack({gen_g->NewOpInst(SPLIT, split_attrs), gen_g->virtual_input_node()});
+      *keep_node = gen_g->PushBack({gen_g->NewOpInst(TUPLE_GETITEM), *split_node, CreatInt64Imm(0)});
+      *exchange_node = gen_g->PushBack({gen_g->NewOpInst(TUPLE_GETITEM), *split_node, CreatInt64Imm(1)});
+      break;
+    case ops::kFlashAttentionScoreInputRealShiftIndex:
+      if (is_input_passed_[ops::kFlashAttentionScoreInputRealShiftIndex]) {
+        split_attrs = {std::make_pair(AXIS, MakeValue<int64_t>(kInputQKVSeqDimBNSD)),
+                       std::make_pair(OUTPUT_NUM, MakeValue(kLoadBalanceSplitNum))};
+        *split_node = gen_g->PushBack({gen_g->NewOpInst(SPLIT, split_attrs), gen_g->virtual_input_node()});
+        *keep_node = gen_g->PushBack({gen_g->NewOpInst(TUPLE_GETITEM), *split_node, CreatInt64Imm(0)});
+        *exchange_node = gen_g->PushBack({gen_g->NewOpInst(TUPLE_GETITEM), *split_node, CreatInt64Imm(1)});
+      } else {
+        *keep_node = gen_g->virtual_input_node();
+        *exchange_node = gen_g->virtual_input_node();
+      }
+      break;
+    case ops::kFlashAttentionScoreInputDropMaskIndex:
+      if (is_input_passed_[ops::kFlashAttentionScoreInputDropMaskIndex]) {
+        split_attrs = {std::make_pair(AXIS, MakeValue<int64_t>(kInputQKVSeqDimBNSD)),
+                       std::make_pair(OUTPUT_NUM, MakeValue(kLoadBalanceSplitNum))};
+        *split_node = gen_g->PushBack({gen_g->NewOpInst(SPLIT, split_attrs), gen_g->virtual_input_node()});
+        *keep_node = gen_g->PushBack({gen_g->NewOpInst(TUPLE_GETITEM), *split_node, CreatInt64Imm(0)});
+        *exchange_node = gen_g->PushBack({gen_g->NewOpInst(TUPLE_GETITEM), *split_node, CreatInt64Imm(1)});
+      } else {
+        *keep_node = gen_g->virtual_input_node();
+        *exchange_node = gen_g->virtual_input_node();
+      }
+      break;
+    case ops::kFlashAttentionScoreInputAttnMaskIndex:
+      if (is_input_passed_[ops::kFlashAttentionScoreInputAttnMaskIndex] && !is_attn_mask_compressed_) {
+        auto attn_mask_shape = inputs_shape_.at(GetStrategyRealIndex(ops::kFlashAttentionScoreInputAttnMaskIndex));
+        if (attn_mask_shape.size() == kSizeTwo) {
+          split_attrs = {std::make_pair(AXIS, MakeValue<int64_t>(0)),
+                         std::make_pair(OUTPUT_NUM, MakeValue(kLoadBalanceSplitNum))};
+        } else {
+          split_attrs = {std::make_pair(AXIS, MakeValue<int64_t>(2)),
+                         std::make_pair(OUTPUT_NUM, MakeValue(kLoadBalanceSplitNum))};
+        }
+        *split_node = gen_g->PushBack({gen_g->NewOpInst(SPLIT, split_attrs), gen_g->virtual_input_node()});
+        *keep_node = gen_g->PushBack({gen_g->NewOpInst(TUPLE_GETITEM), *split_node, CreatInt64Imm(0)});
+        *exchange_node = gen_g->PushBack({gen_g->NewOpInst(TUPLE_GETITEM), *split_node, CreatInt64Imm(1)});
+      } else {
+        *keep_node = gen_g->virtual_input_node();
+        *exchange_node = gen_g->virtual_input_node();
+      }
+      break;
+    default:
+      MS_LOG(EXCEPTION) << "Invalid input index. Only 0(query), 3(real_shift), 4(drop_mask) and 6(attn_mask)"
+                        << "support sequence dim parallel, but got " << input_index;
+  }
+}
+
+void FlashAttentionScoreInfo::LoadBalanceExchange(const int64_t all_gather_idx, const Group &group,
+                                                  const AnfNodePtr &input_node, AnfNodePtr *exchange_node,
+                                                  GenerateGraph *gen_g) {
+  OperatorAttrs all_gather_attrs = {std::make_pair(GROUP, MakeValue(group.name()))};
+  OperatorAttrs all_gather_split_attrs = {std::make_pair(AXIS, MakeValue<int64_t>(0)),
+                                          std::make_pair(OUTPUT_NUM, MakeValue(kLoadBalanceSplitNum))};
+  auto all_gather_node = gen_g->PushBack({gen_g->NewOpInst(ALL_GATHER, all_gather_attrs), input_node});
+  auto split_node = gen_g->PushBack({gen_g->NewOpInst(SPLIT, all_gather_split_attrs), all_gather_node});
+  *exchange_node = gen_g->PushBack({gen_g->NewOpInst(TUPLE_GETITEM), split_node, CreatInt64Imm(all_gather_idx)});
+}
+
+void FlashAttentionScoreInfo::GetFlashAttentionScoreOpNode(int64_t split_id, int64_t split_num, const AnfNodePtr &q,
+                                                           const AnfNodePtr &real_shift, const AnfNodePtr &drop_mask,
+                                                           const AnfNodePtr &attn_mask, AnfNodePtr *fa_op,
+                                                           GenerateGraph *gen_g) {
+  int64_t new_sparse_mode = is_attn_mask_compressed_ ? ops::kSparseBand : sparse_mode_;
+  int64_t new_pre_tokens, new_next_tokens;
+  if (!is_attn_mask_compressed_) {
+    new_pre_tokens = pre_tokens_;
+    new_next_tokens = next_tokens_;
+  } else {
+    std::tie(new_pre_tokens, new_next_tokens) = GetAttentionMaskAttrs(split_id, split_num);
+  }
+  OperatorAttrs fa_attrs = {std::make_pair(HEAD_NUM, MakeValue(head_num_ / n1_split_num_)),
+                            std::make_pair(KEEP_PROB, MakeValue(keep_prob_)),
+                            std::make_pair(SCALE_VALUE, MakeValue(scale_value_)),
+                            std::make_pair(PRE_TOKENS, MakeValue(new_pre_tokens)),
+                            std::make_pair(NEXT_TOKENS, MakeValue(new_next_tokens)),
+                            std::make_pair(INNER_PRECISE, MakeValue<int64_t>(0)),
+                            std::make_pair(INPUT_LAYOUT, MakeValue(input_layout_)),
+                            std::make_pair(SPARSE_MODE, MakeValue<int64_t>(new_sparse_mode))};
+  *fa_op = gen_g->PushBack({gen_g->NewOpInst(FLASH_ATTENTION_SCORE, fa_attrs), q, gen_g->virtual_input_node(),
+                            gen_g->virtual_input_node(), real_shift, drop_mask, gen_g->virtual_input_node(), attn_mask,
+                            gen_g->virtual_input_node()});
+}
+
+std::vector<std::pair<AnfNodePtr, int64_t>> FlashAttentionScoreInfo::ReplaceGraphGetInputNodes(
+  const AnfNodePtr &q_split, const AnfNodePtr &real_shift_split, const AnfNodePtr &drop_mask_split,
+  const AnfNodePtr &attn_mask_split, const AnfNodePtr &flash_attention_score_keep,
+  const AnfNodePtr &flash_attention_score_target) {
+  std::pair<AnfNodePtr, int64_t> real_shift_input;
+  if (is_input_passed_[ops::kFlashAttentionScoreInputRealShiftIndex]) {
+    real_shift_input = std::make_pair(real_shift_split, kIndex4);
+  } else {
+    real_shift_input = std::make_pair(flash_attention_score_keep, kIndex4);
+  }
+  std::pair<AnfNodePtr, int64_t> drop_mask_input;
+  if (is_input_passed_[ops::kFlashAttentionScoreInputDropMaskIndex]) {
+    drop_mask_input = std::make_pair(drop_mask_split, kIndex5);
+  } else {
+    drop_mask_input = std::make_pair(flash_attention_score_keep, kIndex5);
+  }
+  std::pair<AnfNodePtr, int64_t> attn_mask_input;
+  if (is_input_passed_[ops::kFlashAttentionScoreInputAttnMaskIndex] && !is_attn_mask_compressed_) {
+    attn_mask_input = std::make_pair(attn_mask_split, kIndex7);
+  } else {
+    attn_mask_input = std::make_pair(flash_attention_score_keep, kIndex7);
+  }
+
+  std::vector<std::pair<AnfNodePtr, int64_t>> inputs_nodes = {std::make_pair(q_split, kIndex1),
+                                                              std::make_pair(flash_attention_score_keep, kIndex2),
+                                                              std::make_pair(flash_attention_score_keep, kIndex3),
+                                                              real_shift_input,
+                                                              drop_mask_input,
+                                                              std::make_pair(flash_attention_score_keep, kIndex6),
+                                                              attn_mask_input,
+                                                              std::make_pair(flash_attention_score_keep, kIndex8),
+                                                              std::make_pair(flash_attention_score_target, kIndex2),
+                                                              std::make_pair(flash_attention_score_target, kIndex3)};
+  if (!is_input_passed_[ops::kFlashAttentionScoreInputRealShiftIndex]) {
+    inputs_nodes.push_back(std::make_pair(flash_attention_score_target, kIndex4));
+  }
+  if (!is_input_passed_[ops::kFlashAttentionScoreInputDropMaskIndex]) {
+    inputs_nodes.push_back(std::make_pair(flash_attention_score_target, kIndex5));
+  }
+  inputs_nodes.push_back(std::make_pair(flash_attention_score_target, kIndex6));
+  if (!is_input_passed_[ops::kFlashAttentionScoreInputAttnMaskIndex] || is_attn_mask_compressed_) {
+    inputs_nodes.push_back(std::make_pair(flash_attention_score_target, kIndex7));
+  }
+  inputs_nodes.push_back(std::make_pair(flash_attention_score_target, kIndex8));
+  return inputs_nodes;
+}
+
+Status FlashAttentionScoreInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
+  GenerateGraph gen_g = GenerateGraph(attrs_);
+  if (gen_g.Init(cnode) != SUCCESS) {
+    return FAILED;
+  }
+  CheckGlobalDeviceManager();
+  std::vector<int64_t> split_info = GetSplitIdAndRank();
+  int64_t rank_id = split_info[kIndex0];
+  int64_t target_rank_id = split_info[kIndex1];
+  int64_t split_id = split_info[kIndex2];
+  int64_t target_split_id = split_info[kIndex3];
+  Group group;
+  RankList swap_group_devices = {rank_id, target_rank_id};
+  if (g_device_manager->CreateGroup(swap_group_devices, &group) != SUCCESS) {
+    MS_LOG(ERROR) << "Create communication group for " << swap_group_devices << " failed";
+    return FAILED;
+  }
+
+  AnfNodePtr q_split, q_keep, q_exchange;
+  LoadBalanceSplitAlongSeqDim(ops::kFlashAttentionScoreInputQueryIndex, &gen_g, &q_split, &q_keep, &q_exchange);
+  AnfNodePtr real_shift_split, real_shift_keep, real_shift_exchange;
+  LoadBalanceSplitAlongSeqDim(ops::kFlashAttentionScoreInputRealShiftIndex, &gen_g, &real_shift_split, &real_shift_keep,
+                              &real_shift_exchange);
+  AnfNodePtr drop_mask_split, drop_mask_keep, drop_mask_exchange;
+  LoadBalanceSplitAlongSeqDim(ops::kFlashAttentionScoreInputDropMaskIndex, &gen_g, &drop_mask_split, &drop_mask_keep,
+                              &drop_mask_exchange);
+  AnfNodePtr attn_mask_split, attn_mask_keep, attn_mask_exchange;
+  LoadBalanceSplitAlongSeqDim(ops::kFlashAttentionScoreInputAttnMaskIndex, &gen_g, &attn_mask_split, &attn_mask_keep,
+                              &attn_mask_exchange);
+
+  AnfNodePtr flash_attention_score_keep;
+  GetFlashAttentionScoreOpNode(split_id * kLoadBalanceSplitNum, s1_split_num_ * kLoadBalanceSplitNum, q_keep,
+                               real_shift_keep, drop_mask_keep, attn_mask_keep, &flash_attention_score_keep, &gen_g);
+  auto softmax_max_keep = gen_g.PushBack({gen_g.NewOpInst(TUPLE_GETITEM), flash_attention_score_keep,
+                                          CreatInt64Imm(ops::kFlashAttentionScoreOutputSoftmaxMaxIndex)});
+  auto softmax_sum_keep = gen_g.PushBack({gen_g.NewOpInst(TUPLE_GETITEM), flash_attention_score_keep,
+                                          CreatInt64Imm(ops::kFlashAttentionScoreOutputSoftmaxSumIndex)});
+  auto softmax_out_keep = gen_g.PushBack({gen_g.NewOpInst(TUPLE_GETITEM), flash_attention_score_keep,
+                                          CreatInt64Imm(ops::kFlashAttentionScoreOutputSoftmaxOutIndex)});
+  auto attention_out_keep = gen_g.PushBack({gen_g.NewOpInst(TUPLE_GETITEM), flash_attention_score_keep,
+                                            CreatInt64Imm(ops::kFlashAttentionScoreOutputAttentionOutIndex)});
+
+  const int64_t all_gather_idx = (split_id < target_split_id) ? 1 : 0;
+  AnfNodePtr q_target;
+  LoadBalanceExchange(all_gather_idx, group, q_exchange, &q_target, &gen_g);
+  AnfNodePtr real_shift_target;
+  if (is_input_passed_[ops::kFlashAttentionScoreInputRealShiftIndex]) {
+    LoadBalanceExchange(all_gather_idx, group, real_shift_exchange, &real_shift_target, &gen_g);
+  } else {
+    real_shift_target = gen_g.virtual_input_node();
+  }
+  AnfNodePtr drop_mask_target;
+  if (is_input_passed_[ops::kFlashAttentionScoreInputDropMaskIndex]) {
+    LoadBalanceExchange(all_gather_idx, group, drop_mask_exchange, &drop_mask_target, &gen_g);
+  } else {
+    drop_mask_target = gen_g.virtual_input_node();
+  }
+  AnfNodePtr attn_mask_target;
+  if (is_input_passed_[ops::kFlashAttentionScoreInputAttnMaskIndex] && !is_attn_mask_compressed_) {
+    LoadBalanceExchange(all_gather_idx, group, attn_mask_exchange, &attn_mask_target, &gen_g);
+  } else {
+    attn_mask_target = gen_g.virtual_input_node();
+  }
+
+  AnfNodePtr flash_attention_score_target;
+  GetFlashAttentionScoreOpNode(target_split_id * kLoadBalanceSplitNum + 1, s1_split_num_ * kLoadBalanceSplitNum,
+                               q_target, real_shift_target, drop_mask_target, attn_mask_target,
+                               &flash_attention_score_target, &gen_g);
+  auto softmax_max_target = gen_g.PushBack({gen_g.NewOpInst(TUPLE_GETITEM), flash_attention_score_target,
+                                            CreatInt64Imm(ops::kFlashAttentionScoreOutputSoftmaxMaxIndex)});
+  auto softmax_sum_target = gen_g.PushBack({gen_g.NewOpInst(TUPLE_GETITEM), flash_attention_score_target,
+                                            CreatInt64Imm(ops::kFlashAttentionScoreOutputSoftmaxSumIndex)});
+  auto attention_out_target = gen_g.PushBack({gen_g.NewOpInst(TUPLE_GETITEM), flash_attention_score_target,
+                                              CreatInt64Imm(ops::kFlashAttentionScoreOutputAttentionOutIndex)});
+
+  AnfNodePtr softmax_max_exchange;
+  LoadBalanceExchange(all_gather_idx, group, softmax_max_target, &softmax_max_exchange, &gen_g);
+  AnfNodePtr softmax_sum_exchange;
+  LoadBalanceExchange(all_gather_idx, group, softmax_sum_target, &softmax_sum_exchange, &gen_g);
+  AnfNodePtr attention_out_exchange;
+  LoadBalanceExchange(all_gather_idx, group, attention_out_target, &attention_out_exchange, &gen_g);
+
+  int64_t softmax_concat_axis = kInputQKVSeqDimBNSD;
+  auto softmax_max_maketuple =
+    gen_g.PushBack({NewValueNode(prim::kPrimMakeTuple), softmax_max_keep, softmax_max_exchange});
+  auto softmax_max =
+    gen_g.PushBack({gen_g.NewOpInst(CONCAT), softmax_max_maketuple, CreatInt64Imm(softmax_concat_axis)});
+  auto softmax_sum_maketuple =
+    gen_g.PushBack({NewValueNode(prim::kPrimMakeTuple), softmax_sum_keep, softmax_sum_exchange});
+  auto softmax_sum =
+    gen_g.PushBack({gen_g.NewOpInst(CONCAT), softmax_sum_maketuple, CreatInt64Imm(softmax_concat_axis)});
+  int64_t attention_out_concat_axis = (input_layout_ == kInputLayoutBSH) ? kInputQKVSeqDimBSH : kInputQKVSeqDimBNSD;
+  auto attention_out_maketuple =
+    gen_g.PushBack({NewValueNode(prim::kPrimMakeTuple), attention_out_keep, attention_out_exchange});
+  auto attention_out =
+    gen_g.PushBack({gen_g.NewOpInst(CONCAT), attention_out_maketuple, CreatInt64Imm(attention_out_concat_axis)});
+  auto output_maketuple =
+    gen_g.PushBack({NewValueNode(prim::kPrimMakeTuple), softmax_max, softmax_sum, softmax_out_keep, attention_out});
+
+  std::vector<std::pair<AnfNodePtr, int64_t>> inputs_nodes =
+    ReplaceGraphGetInputNodes(q_split, real_shift_split, drop_mask_split, attn_mask_split, flash_attention_score_keep,
+                              flash_attention_score_target);
+
+  replace_graph_ = std::make_shared<std::pair<std::vector<std::pair<AnfNodePtr, int64_t>>, AnfNodePtr>>(
+    std::make_pair(inputs_nodes, output_maketuple));
+  return SUCCESS;
+}
+
+ReplaceGraphPtr FlashAttentionScoreInfo::replace_graph(const CNodePtr &cnode) {
+  if (s1_split_num_ > 1 && enable_load_balance_) {
+    if (ComputeReplaceGraph(cnode) != SUCCESS) {
+      MS_LOG(EXCEPTION) << "FlashAttentionScore S1 sequence parallel with load balance get replace graph failed";
+    }
+  }
+  return replace_graph_;
 }
 
 Status FlashAttentionScoreInfo::InferAsLossDivisor() {

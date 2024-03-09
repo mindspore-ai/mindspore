@@ -377,7 +377,11 @@ constexpr char kAttrInputLayout[] = "input_layout";
 constexpr char kAttrKeepProb[] = "keep_prob";
 constexpr char kAttrHeadNum[] = "head_num";
 constexpr auto kAttrFuncGraph = "func_graph";
+constexpr char kAttrScaleValue[] = "scale_value";
+constexpr char kAttrPreTokens[] = "pre_tokens";
+constexpr char kAttrNextTokens[] = "next_tokens";
 constexpr char kAttrSparseMode[] = "sparse_mode";
+constexpr char kAttrEnableLoadBalance[] = "enable_load_balance";
 
 // FuncGraph Flags
 constexpr auto kFlagIsPynativeBpropGraph = "is_pynative_bprop_graph";
