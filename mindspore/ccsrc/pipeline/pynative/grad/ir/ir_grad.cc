@@ -238,6 +238,7 @@ bool IrGrad::KPynativeOp(const GradParamPtr &grad_param) {
     PyNativeAlgo::Common::ClearDeviceAddress(cloned_value);
   }
 
+  PyNativeAlgo::Common::CheckAndSetAbstract(grad_param->op_grad_info);
   // construct zeroslike placeholder, if need use in bprop, we replace it in backprogate.
   AnfNodePtr dout =
     PyNativeAlgo::AutoGrad::BuildSpecialNode(ad_param()->tape_, PyNativeAlgo::AutoGrad::GetFakeZeroTensor(),
@@ -380,6 +381,9 @@ CNodePtr IrGrad::GetBpropGraphCNode(const GradParamPtr &grad_param, const AnfNod
                                     AnfNodePtr *const tape_dout) {
   MS_EXCEPTION_IF_NULL(grad_param);
   auto [cache_hit, bprop_graph] = ir_bprop_->GetBpropGraph(grad_param);
+  if (grad_param->is_control_flow || grad_param->is_jit_self_dynamic_shape) {
+    need_do_manager_replace_ = true;
+  }
   return GetBPropCNode(grad_param, args, bprop_graph, cache_hit, tape_dout);
 }
 

@@ -92,11 +92,13 @@ class BACKEND_EXPORT DeviceAddressUtils {
   static device::DeviceAddressPtr CreateInputAddress(const DeviceContext *device_context, size_t stream_id,
                                                      const abstract::AbstractBasePtr &abs, size_t index, const T &t) {
     MS_EXCEPTION_IF_NULL(device_context);
-    MS_EXCEPTION_IF_NULL(abs);
-
-    const auto &shape = abs->GetShape();
-    const auto &type = abs->GetType();
-    const auto &value = abs->GetValue();
+    auto tmp_abs = abs;
+    if (abs == nullptr) {
+      tmp_abs = t->ToAbstract()->Broaden();
+    }
+    auto shape = tmp_abs->GetShape();
+    auto type = tmp_abs->GetType();
+    auto value = tmp_abs->GetValue();
     auto kernel_tensor = std::make_shared<kernel::KernelTensor>(shape, type, value);
     auto device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
     device_address->set_from_persistent_mem(true);
@@ -104,7 +106,7 @@ class BACKEND_EXPORT DeviceAddressUtils {
     if (device_address->GetPtr() == nullptr) {
       CopyNoneTensorDataToDevice(device_context, device_address);
     }
-    MS_LOG(DEBUG) << "Create input " << abs->ToString() << " device address for " << index
+    MS_LOG(DEBUG) << "Create input " << tmp_abs->ToString() << " device address for " << index
                   << "th input, Shape: " << shape->ToString() << ", Type: " << type->ToString()
                   << ", Value: " << (value ? value->ToString() : "nullptr") << " device address:" << device_address;
     return device_address;

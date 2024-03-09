@@ -31,6 +31,7 @@
 #include "ir/tensor.h"
 #include "mindapi/base/shape_vector.h"
 #include "abstract/abstract_value.h"
+#include "mindspore/core/utils/simple_info.h"
 
 namespace mindspore {
 namespace stub {
@@ -55,12 +56,16 @@ class COMMON_EXPORT StubNode : public Value {
 
   AbstractBasePtr WaitAbstract();
   ValuePtr WaitValue();
+  void WaitValueSimpleInfo();
+  bool SetValueSimpleInfo(const ValueSimpleInfoPtr &output_value_simple_info);
+  void WaitPipeline();
 
-  AbstractBasePtr ToAbstract() override { return WaitAbstract(); }
+  AbstractBasePtr ToAbstract() override;
   bool operator==(const Value &other) const override { return other.isa<StubNode>() && &other == this; }
 
  protected:
   AbstractBasePtr abstract_;
+  ValueSimpleInfoPtr output_value_simple_info_;
   ValuePtr value_;
   std::condition_variable cond_var_;
   std::mutex mutex_;

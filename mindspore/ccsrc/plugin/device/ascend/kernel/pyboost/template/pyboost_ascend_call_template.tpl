@@ -15,18 +15,18 @@ PyBoostUtils::PrepareOpOutputs(device_context_, op->stream_id(), outputs_);
 PyBoostUtils::DispatchRun(
 std::make_shared<runtime::PyBoostDeviceTask>(
   [op, ${real_call_args}]() {
-      MS_LOG(DEBUG) << "Run device task " << op_name() << " end";
-      runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyBoostDeviceTask,
-                                         op_name(), false);
-      auto device_context = op->device_context();
-      const auto &outputs = op->outputs();
-      // Malloc for input tensors
-      ${malloc_inputs}
-      // Malloc for output tensors
-      PyBoostUtils::MallocOpOutputs(device_context, outputs);
-      ${get_cube_math_type}
-      LAUNCH_ACLNN(${aclnn_name}, device_context, op->stream_id(), ${real_call_args}${outputs}${cube_math_type});
-      MS_LOG(DEBUG) << "Run device task " << op_name() << " end";
+    MS_LOG(DEBUG) << "Run device task " << op_name() << " end";
+    runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyBoostDeviceTask,
+                                       op_name(), false);
+    auto device_context = op->device_context();
+    const auto &outputs = op->outputs();
+    // Malloc for input tensors
+    ${malloc_inputs}
+    // Malloc for output tensors
+    PyBoostUtils::MallocOpOutputs(device_context, outputs);
+    ${get_cube_math_type}
+    LAUNCH_ACLNN(${aclnn_name}, device_context, op->stream_id(), ${real_call_args}${outputs}${cube_math_type});
+    MS_LOG(DEBUG) << "Run device task " << op_name() << " end";
   }
 )
 );

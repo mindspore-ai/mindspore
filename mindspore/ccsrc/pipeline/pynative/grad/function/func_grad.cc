@@ -469,6 +469,7 @@ void FuncGrad::ConstructParameterNodes(const ValuePtrList &inputs) {
 
 BackwardNodePtr FuncGrad::BuildFuncBackwardNode(const PrimitivePtr &prim, const expander::bprop::BpropBuilderFunc &func,
                                                 const ValuePtrList &flatten_inputs, const OpGradInfoPtr &op_grad_info) {
+  PyNativeAlgo::Common::CheckAndSetAbstract(op_grad_info);
   auto fn = std::make_shared<FuncBackwardNode>(
     prim->name(), func, prim->attrs(), op_grad_info->input_value, op_grad_info->input_abs, op_grad_info->out_value,
     op_grad_info->output_size, op_grad_info->out_abs, op_grad_info->input_value_grad_type);

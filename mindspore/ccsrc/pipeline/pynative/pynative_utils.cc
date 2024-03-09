@@ -256,14 +256,12 @@ tensor::TensorPtr GetContiguousTensor(const tensor::TensorPtr &input_tensor, con
   if (requires_grad) {
     const auto &contiguous_run_info = std::make_shared<FrontendOpRunInfo>();
     contiguous_run_info->requires_grad = true;
-    contiguous_run_info->op_grad_info->input_value = {input_tensor};
-    PyNativeAlgo::PyBoost::UpdateOpRunInfo(contiguous_op, contiguous_run_info->op_grad_info->input_value,
-                                           contiguous_run_info);
+    PyNativeAlgo::PyBoost::UpdateOpRunInfo(contiguous_op, contiguous_run_info);
     contiguous_run_info->base_op_run_info.device_target = device_target;
     contiguous_run_info->input_size = 1;
     contiguous_run_info->base_op_run_info.op_name = ops::kNameContiguous;
     contiguous_run_info->op_grad_info->op_prim = prim::kPrimContiguous;
-    PyNativeAlgo::PyBoost::DoGrad(contiguous_run_info);
+    PyNativeAlgo::PyBoost::DoGrad(contiguous_op, contiguous_run_info, {input_tensor});
   }
   return contiguous_tensor;
 }
@@ -553,6 +551,37 @@ ShapeVector Common::GetShapeFromAbstract(const abstract::AbstractBasePtr &abs) {
   auto shape_ptr = shape->cast<abstract::ShapePtr>();
   MS_EXCEPTION_IF_NULL(shape_ptr);
   return shape_ptr->shape();
+}
+
+std::pair<TypePtr, TypeId> Common::GetTypeFromValue(const ValuePtr &v) {
+  MS_EXCEPTION_IF_NULL(v);
+  if (v->isa<tensor::Tensor>()) {
+    return std::make_pair(v->cast<tensor::TensorPtr>()->Dtype(), kObjectTypeTensorType);
+  } else if (v->isa<ValueTuple>()) {
+    return std::make_pair(v->type(), kObjectTypeTuple);
+  } else if (v->isa<ValueList>()) {
+    return std::make_pair(v->type(), kObjectTypeList);
+  } else {
+    return std::make_pair(v->type(), v->type()->object_type());
+  }
+}
+
+ShapeVector Common::GetShapeFromValue(const ValuePtr &v) {
+  MS_EXCEPTION_IF_NULL(v);
+  if (v->isa<tensor::Tensor>()) {
+    return v->cast<tensor::TensorPtr>()->shape_c();
+  } else if (v->isa<ValueSequence>()) {
+    const auto &v_seq = v->cast<ValueSequencePtr>()->value();
+    ShapeVector plant_shape_vector;
+    for (const auto &item : v_seq) {
+      const auto &shape = GetShapeFromValue(item);
+      (void)std::transform(shape.begin(), shape.end(), std::back_inserter(plant_shape_vector),
+                           [](int64_t s) { return s; });
+    }
+    return plant_shape_vector;
+  } else {
+    return ShapeVector{};
+  }
 }
 
 ValuePtr Common::CreatOutputTensorValueByAbstract(const abstract::AbstractBasePtr &abs) {
@@ -1043,6 +1072,70 @@ ValuePtr Common::CreateTensorByConstantValue(const ValuePtr &value) {
   return tensor_ptr;
 }
 
+namespace {
+void CacheOutputAbstract(const ValuePtr &v, const abstract::AbstractBasePtr &abs) {
+  MS_EXCEPTION_IF_NULL(v);
+  MS_EXCEPTION_IF_NULL(abs);
+
+  if (v->isa<tensor::Tensor>()) {
+    auto tensor = v->cast<tensor::TensorPtr>();
+    tensor->set_abstract(abs);
+    kernel::pyboost::AbstractConvertFunc::CacheAbstract(abs);
+  } else if (v->isa<ValueSequence>()) {
+    const auto &value_seq = v->cast<ValueSequencePtr>();
+    const auto &abs_seq = abs->cast<abstract::AbstractSequencePtr>();
+    if (abs_seq == nullptr) {
+      MS_LOG(EXCEPTION) << "Abstract is not abstract sequence, get " << abs->ToString();
+    }
+    size_t value_size = value_seq->size();
+    if (value_size != abs_seq->size()) {
+      MS_LOG(EXCEPTION) << "Abstract size " << abs_seq->size() << " is not equal to value size " << value_size;
+    }
+    for (size_t i = 0; i < value_size; ++i) {
+      CacheOutputAbstract(value_seq->value()[i], abs_seq->elements()[i]);
+    }
+  }
+}
+
+void ConvertSimpleInferInfoToAbstract(const OpGradInfoPtr &op_grad_info) {
+  MS_EXCEPTION_IF_NULL(op_grad_info);
+  // Get inputs abstract
+  for (const auto &v : op_grad_info->input_value) {
+    op_grad_info->input_abs.emplace_back(kernel::pyboost::AbstractConvertFunc::ConvertAbstract(v));
+  }
+
+  // Get output abstract
+  MS_EXCEPTION_IF_NULL(op_grad_info->output_value_simple_info);
+  op_grad_info->out_abs = TransformValueSimpleInfoToAbstract(*op_grad_info->output_value_simple_info);
+
+  // Set abstract to tensor
+  CacheOutputAbstract(op_grad_info->out_value, op_grad_info->out_abs);
+  MS_LOG(DEBUG) << "Get output abstract " << op_grad_info->out_abs->ToString();
+}
+}  // namespace
+
+void Common::CheckAndSetAbstract(const OpGradInfoPtr &op_grad_info) {
+  MS_EXCEPTION_IF_NULL(op_grad_info);
+  if (op_grad_info->output_value_simple_info != nullptr) {
+    MS_LOG(DEBUG) << "Convert op " << op_grad_info->op_prim->name() << " simple infer info to abstract";
+    ConvertSimpleInferInfoToAbstract(op_grad_info);
+    return;
+  }
+
+  // View op input abs and output abs maybe nullptr
+  if (MS_UNLIKELY(op_grad_info->input_abs.empty())) {
+    // Get inputs abstract
+    MS_LOG(DEBUG) << "Op " << op_grad_info->op_prim->name() << " inputs abstract not set, set it now";
+    for (const auto &v : op_grad_info->input_value) {
+      // For use abstract cache on tensor
+      op_grad_info->input_abs.emplace_back(kernel::pyboost::AbstractConvertFunc::ConvertAbstract(v));
+    }
+  }
+  if (op_grad_info->out_abs == nullptr) {
+    MS_LOG(EXCEPTION) << "Get output abs is nullptr";
+  }
+}
+
 std::string PyParser::GetIdByPyObj(const py::object &obj) {
   if (py::isinstance<tensor::Tensor>(obj)) {
     return obj.cast<tensor::TensorPtr>()->id();
@@ -1509,57 +1602,40 @@ void PyBoost::MakeOutputValue(const FrontendOpRunInfoPtr &op_run_info, const std
   op_run_info->real_out = std::make_shared<ValueTuple>(output_values);
 }
 
-void PyBoost::UpdateOutputTensorGradInfo(const std::vector<TensorPtr> &outputs) {
-  for (size_t i = 0; i < outputs.size(); ++i) {
-    const auto &output_tensor = outputs[i];
-    output_tensor->set_auto_grad_meta_data(std::make_shared<AutoGradMetaData>());
-    output_tensor->auto_grad_meta_data()->set_input_type(InputType::kOpOutput);
-  }
-}
-
-void PyBoost::UpdateStubOutput(const FrontendOpRunInfoPtr &op_run_info, const AbstractBasePtr &abstract) {
+void PyBoost::UpdateStubOutput(const FrontendOpRunInfoPtr &op_run_info, const AbstractBasePtr &abstract,
+                               const kernel::pyboost::OpPtr &op) {
+  MS_EXCEPTION_IF_NULL(op);
   if (op_run_info->stub_output == nullptr) {
     return;
   }
-
-  auto success = op_run_info->stub_output->SetAbstract(abstract);
-  if (!success) {
-    const auto &op_name = op_run_info->base_op_run_info.op_name;
-    MS_EXCEPTION(TypeError) << "The predict type and infer type is not match, predict type is "
-                            << PredictOutType(op_run_info) << ", infer type is " << abstract->BuildType()
-                            << ", the name of operator is [" << op_name
-                            << "]. Please modify or add predict type of operator in predict_out_type_map.h.";
+  if (MS_UNLIKELY(op->output_value_simple_info() != nullptr)) {
+    op_run_info->stub_output->SetValueSimpleInfo(op->output_value_simple_info());
+  } else {
+    MS_EXCEPTION_IF_NULL(abstract);
+    auto success = op_run_info->stub_output->SetAbstract(abstract);
+    if (!success) {
+      const auto &op_name = op_run_info->base_op_run_info.op_name;
+      MS_EXCEPTION(TypeError) << "The predict type and infer type is not match, predict type is "
+                              << PredictOutType(op_run_info) << ", infer type is " << abstract->BuildType()
+                              << ", the name of operator is [" << op_name
+                              << "]. Please modify or add predict type of operator in predict_out_type_map.h.";
+    }
+    MS_LOG(DEBUG) << "Update StubNode abstract " << abstract->ToString();
   }
-  MS_LOG(DEBUG) << "Update StubNode abstract " << abstract->ToString();
-
   op_run_info->stub_output->SetValue(op_run_info->real_out);
 }
 
-void PyBoost::UpdateOpRunInfo(const kernel::pyboost::OpPtr &op, const vector<ValuePtr> &op_inputs,
-                              const FrontendOpRunInfoPtr &op_run_info) {
+void PyBoost::UpdateOpRunInfo(const kernel::pyboost::OpPtr &op, const FrontendOpRunInfoPtr &op_run_info) {
   MS_EXCEPTION_IF_NULL(op);
   MS_EXCEPTION_IF_NULL(op_run_info);
-  // Set result to python
+  // Create output value
   MakeOutputValue(op_run_info, op->outputs());
-  UpdateStubOutput(op_run_info, op->output_abs());
 
-  // Update op run info for auto grad
-  if (op_run_info->requires_grad) {
-    if (op_inputs.size() != op->input_abs().size()) {
-      MS_LOG(EXCEPTION) << "Op input size " << op_inputs.size() << " not equal to input abstract num "
-                        << op->input_abs().size() << ". Please call GenerateAbstract in Xxx::Call().";
-    }
-    op_run_info->base_op_run_info.abstract = op->output_abs();
-    op_run_info->op_grad_info->input_value = op_inputs;
-    op_run_info->op_grad_info->input_abs = op->input_abs();
-    op_run_info->op_grad_info->out_value = op_run_info->real_out;
-    op_run_info->op_grad_info->out_abs = op->output_abs();
-    op_run_info->op_grad_info->output_size = op->outputs().size();
-    UpdateOutputTensorGradInfo(op->outputs());
-  }
+  // Set output value to python
+  UpdateStubOutput(op_run_info, op->output_abs(), op);
 }
 
-void PyBoost::DataSyncForGraph(const kernel::pyboost::OpPtr &op, const vector<ValuePtr> &op_inputs) {
+void PyBoost::DataSyncForGraph(const kernel::pyboost::OpPtr &op, ValuePtrList &&op_inputs) {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode) {
@@ -1607,11 +1683,31 @@ py::object PyBoost::RunPyFunction(const PrimitivePtr &prim, const py::list &args
   return pynative_executor->RunOpStub(wrap_args);
 }
 
-void PyBoost::DoGrad(const FrontendOpRunInfoPtr &op_run_info) {
+void PyBoost::DoGrad(const kernel::pyboost::OpPtr &op, const FrontendOpRunInfoPtr &op_run_info,
+                     ValuePtrList &&op_inputs) {
+  MS_EXCEPTION_IF_NULL(op);
+  // Update op grad info
+  op_run_info->op_grad_info->input_value = std::move(op_inputs);
+  op_run_info->op_grad_info->out_value = op_run_info->real_out;
+  op_run_info->op_grad_info->output_size = op->outputs().size();
+  if (op->output_value_simple_info() != nullptr) {
+    op_run_info->op_grad_info->output_value_simple_info = op->output_value_simple_info();
+  } else {
+    op_run_info->op_grad_info->input_abs = op->input_abs();
+    op_run_info->base_op_run_info.abstract = op->output_abs();
+  }
+
+  // Set auto grad meta data for outputs
+  for (const auto &output_tensor : op->outputs()) {
+    output_tensor->set_auto_grad_meta_data(std::make_shared<AutoGradMetaData>());
+    output_tensor->auto_grad_meta_data()->set_input_type(InputType::kOpOutput);
+  }
+
+  // Set input and output unused value and set grad type
+  PyParser::PrepareOpGradInfo(op_run_info);
+
   const auto &pynative_executor = PyNativeAlgo::Common::GetPyNativeExecutor();
   const auto &forward = pynative_executor->forward_executor();
-
-  PyParser::PrepareOpGradInfo(op_run_info);
   for (size_t index = 0; index < op_run_info->input_size; ++index) {
     // Inplace input_value with contiguous tensor.
     RefreshGradContiguousTensor(op_run_info, index);

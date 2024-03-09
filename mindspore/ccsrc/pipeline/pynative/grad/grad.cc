@@ -1833,8 +1833,13 @@ void GradExecutor::ProcessOpGradInfo(const FrontendOpRunInfoPtr &op_run_info) co
   top_cell()->GetOpInfo(op_run_info, false);
   UpdateTopCellForwardTensorInfoInBpropGraph(op_run_info->op_info, op_run_info->real_out,
                                              op_run_info->base_op_run_info.stream_id);
-  auto node_info = std::make_shared<DynamicDetectNodeInfo>(
-    op_run_info->op_grad_info->op_prim, op_run_info->op_grad_info->input_abs, op_run_info->op_grad_info->out_abs);
+  DynamicDetectNodeInfoPtr node_info;
+  if (op_run_info->op_grad_info->output_value_simple_info != nullptr) {
+    node_info = std::make_shared<DynamicDetectNodeInfo>(op_run_info->op_grad_info->op_prim);
+  } else {
+    node_info = std::make_shared<DynamicDetectNodeInfo>(
+      op_run_info->op_grad_info->op_prim, op_run_info->op_grad_info->input_abs, op_run_info->op_grad_info->out_abs);
+  }
   CheckBpropCutNode(top_cell(), op_run_info->op_grad_info->op_prim);
   (void)dynamic_shape()->CheckNodeDynamic(top_cell(), op_run_info->op_grad_info->input_value, node_info);
 }

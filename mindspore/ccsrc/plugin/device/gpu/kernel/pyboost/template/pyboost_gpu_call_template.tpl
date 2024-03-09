@@ -26,12 +26,13 @@ std::make_shared<runtime::PyBoostDeviceTask>([this, op, ${call_args_with_tensor}
   ${get_inputs_kernel_tensors}
 
   // Get outputs kernel tensors
-  const auto &output_address_info =
-    PyBoostUtils::GetAddressInfo(device_context, op->stream_id(), {op->output_abs()}, outputs);
+  const auto &output_address_info = PyBoostUtils::GetAddressInfo(device_context, op->stream_id(), {op->output_abs()}, outputs);
 
+  // Launch kernel
   auto stream = device::gpu::GPUDeviceManager::GetInstance().GetStream(op->stream_id());
-  PyBoostUtils::LaunchKernel(primitive(), op->device_context(),
-                             input_address_info, output_address_info, stream);
+  PyBoostUtils::LaunchKernel(primitive(), op->device_context(), input_address_info, output_address_info, stream);
+
+  // Data sync
   static auto sync = MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE);
   if (sync && !device_context->device_res_manager_->SyncAllStreams()) {
     MS_LOG(EXCEPTION) << "SyncStream failed for op " << op_name();
