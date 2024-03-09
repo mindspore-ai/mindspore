@@ -3025,16 +3025,54 @@ static void MoveMicroMirrorOutCallFunc(const FuncGraphPtr &root) {
   }
 }
 
+static void BroadcastMultiOutputs(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager, const Group &group) {
+  auto output = root->get_return()->input(1)->cast<CNodePtr>();
+  auto output_abstract = output->abstract();
+  MS_EXCEPTION_IF_NULL(output_abstract);
+  auto abstract_tuple = output_abstract->cast<abstract::AbstractTuplePtr>();
+  MS_EXCEPTION_IF_NULL(abstract_tuple);
+  auto abstract_list = abstract_tuple->elements();
+
+  AnfNodePtrList make_tuple_input = {NewValueNode(prim::kPrimMakeTuple)};
+  for (size_t i = 0; i < abstract_list.size(); i++) {
+    auto abstract = abstract_list[i];
+    MS_EXCEPTION_IF_NULL(abstract);
+
+    // TupleGetItem
+    auto idx = NewValueNode(SizeToLong(i));
+    CNodePtr tuple_getitem = root->NewCNode({NewValueNode(prim::kPrimTupleGetItem), output, idx});
+    MS_EXCEPTION_IF_NULL(tuple_getitem);
+    tuple_getitem->set_abstract(abstract);
+
+    // Depend: prevent disorder and CSE
+    if (i > 0) {
+      tuple_getitem = root->NewCNode({NewValueNode(prim::kPrimDepend), tuple_getitem, make_tuple_input[i]});
+      MS_EXCEPTION_IF_NULL(tuple_getitem);
+      tuple_getitem->set_abstract(abstract);
+    }
+
+    // Allreduce
+    CNodePtr allreduce = root->NewCNode({NewValueNode(prim::kPrimAllReduce), tuple_getitem});
+    MS_EXCEPTION_IF_NULL(allreduce);
+    allreduce->set_abstract(abstract);
+    common::AnfAlgo::SetNodeAttr(OP, MakeValue(REDUCE_OP_SUM), allreduce);
+    common::AnfAlgo::SetNodeAttr(GROUP, MakeValue(group.name()), allreduce);
+    // Disable GE allreduce fusion.
+    common::AnfAlgo::SetNodeAttr(FUSION, MakeValue(static_cast<int64_t>(0)), allreduce);
+
+    make_tuple_input.push_back(allreduce);
+  }
+
+  CNodePtr make_tuple_node = root->NewCNode(make_tuple_input);
+  MS_EXCEPTION_IF_NULL(make_tuple_node);
+  make_tuple_node->set_abstract(abstract_tuple);
+  (void)manager->Replace(output, make_tuple_node);
+}
+
 static void BroadcastLastResult(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager) {
   auto stage_num = parallel::ParallelContext::GetInstance()->pipeline_stage_split_num();
   auto pipeline_result_broadcast = parallel::ParallelContext::GetInstance()->pipeline_result_broadcast();
   if (IsTraining(manager) || stage_num <= 1 || pipeline_result_broadcast == false) {
-    return;
-  }
-
-  auto return_node = root->get_return();
-  const auto &abstract = return_node->abstract();
-  if (abstract->isa<abstract::AbstractTuple>()) {
     return;
   }
 
@@ -3043,6 +3081,12 @@ static void BroadcastLastResult(const FuncGraphPtr &root, const FuncGraphManager
   if (g_device_manager->CreateGroup(rank_list, &group) != SUCCESS) {
     MS_LOG(EXCEPTION) << "Create communication group between all pipeline stages failed, the rank_list is: "
                       << rank_list;
+  }
+
+  auto return_node = root->get_return();
+  const auto &abstract = return_node->abstract();
+  if (abstract->isa<abstract::AbstractTuple>()) {
+    return BroadcastMultiOutputs(root, manager, group);
   }
 
   InsertAllReduceToNodeInput(return_node, group.name(), PARALLEL_RESULT_BROADCAST);

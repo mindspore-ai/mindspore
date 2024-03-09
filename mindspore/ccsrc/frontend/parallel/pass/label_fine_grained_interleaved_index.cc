@@ -73,7 +73,7 @@ void SpreadFineGrainedInterleavedIndexForForwardCommNodes(const CNodePtr &cnode,
       if (pre_cnode == nullptr) {
         continue;
       }
-      // BFS end search contition
+      // BFS end search condition
       if (IsPrimitiveCNode(pre_cnode, prim::kPrimStridedSlice) &&
           GetCNodePrimitive(pre_cnode)->HasAttr(kAttrFineGrainedInterleavedBlockIndex)) {
         pre_cnode->AddAttr("fine_grained_interleaved_border", MakeValue<size_t>(0));
@@ -218,6 +218,10 @@ void LabelFineGrainedInterleavedIndex(const FuncGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
   auto manager = graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
+
+  if (!IsTraining(manager)) {
+    return;
+  }
 
   FuncGraphPtr forward_graph = graph;
   FuncGraphPtr backward_graph = graph;

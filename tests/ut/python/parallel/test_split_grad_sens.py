@@ -135,7 +135,10 @@ def test_grad_sens_parameter_type():
     b_layout = ([64], [-1, -1], [64, 64], 0, True, '')
     sens_layout = ([8, 8], [1, -1], [16, 64], 0, True, '')
     expect_dict = {'x': x_layout, 'y': y_layout, 'b': b_layout, 'sens': sens_layout}
-    assert net.parameter_layout_dict == expect_dict
+    assert net.parameter_layout_dict['x'][0:6] == expect_dict['x']
+    assert net.parameter_layout_dict['y'][0:6] == expect_dict['y']
+    assert net.parameter_layout_dict['b'][0:6] == expect_dict['b']
+    assert net.parameter_layout_dict['sens'][0:6] == expect_dict['sens']
 
 
 def test_grad_sens_tensor_type():

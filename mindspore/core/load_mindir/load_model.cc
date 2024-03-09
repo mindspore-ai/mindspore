@@ -2299,6 +2299,18 @@ const LayoutMap MSANFModelParser::ParseLayout(const mind_ir::ModelProto &model_p
     cur_layout->set_uniform_split(uniform_spilt);
     cur_layout->set_opt_shard_group(opt_shard_group);
 
+    // Check optional field for backward compatibility.
+    if (layout_proto.has_pipeline_shared()) {
+      bool pipeline_shared = layout_proto.pipeline_shared();
+      bool is_send = layout_proto.is_send();
+      int64_t peer_rank = layout_proto.peer_rank();
+      int64_t sr_tag = layout_proto.sr_tag();
+
+      cur_layout->set_pipeline_shared(pipeline_shared);
+      cur_layout->set_is_send(is_send);
+      cur_layout->set_peer_rank(peer_rank);
+      cur_layout->set_sr_tag(sr_tag);
+    }
     ret[name] = cur_layout;
   }
   return ret;

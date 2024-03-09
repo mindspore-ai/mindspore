@@ -111,9 +111,8 @@ def test_pipeline_inference_first_stage():
     x = Tensor(np.ones((batch_size, hidden_size)), mindspore.float32)
     phase = compile_infer_net(net, x)
     validator = ParallelValidator(net, phase)
-    assert validator.check_node_inputs_has('Send-0', ['network.fc0.weight'], graph_id=0)
-    assert validator.check_node_inputs_has('Send-1', ['pipeline_inference_SimpleNet_construct'], graph_id=0)
-    assert validator.check_node_inputs_has('Send-2', ['pipeline_inference_SimpleNet_construct'], graph_id=0)
+    assert validator.check_node_inputs_has('Send-0', ['pipeline_inference_SimpleNet_construct'], graph_id=1)
+    assert validator.check_node_inputs_has('Send-1', ['pipeline_inference_SimpleNet_construct'], graph_id=1)
 
 
 def test_pipeline_inference_last_stage():
@@ -133,8 +132,7 @@ def test_pipeline_inference_last_stage():
     x = Tensor(np.ones((batch_size, hidden_size)), mindspore.float32)
     phase = compile_infer_net(net, x)
     validator = ParallelValidator(net, phase)
-    assert validator.check_node_inputs_has('Receive-0', ['network.fc0.weight'], graph_id=1)
-    assert validator.check_node_inputs_has('call @graph_0', ['network.fc1.weight', 'Receive-0', 'Receive-2'],
+    assert validator.check_node_inputs_has('call @graph_0', ['network.fc1.weight', 'network.fc0.weight', 'Receive-1'],
                                            graph_id=1)
 
 
@@ -156,7 +154,6 @@ def test_pipeline_inference_result_broadcast():
     x = Tensor(np.ones((batch_size, hidden_size)), mindspore.float32)
     phase = compile_infer_net(net, x)
     validator = ParallelValidator(net, phase)
-    assert validator.check_node_inputs_has('Receive-0', ['network.fc0.weight'], graph_id=1)
-    assert validator.check_node_inputs_has('call @graph_0', ['network.fc1.weight', 'Receive-0', 'Receive-2'],
+    assert validator.check_node_inputs_has('call @graph_0', ['network.fc1.weight', 'network.fc0.weight', 'Receive-1'],
                                            graph_id=1)
     assert validator.check_node_inputs_has('AllReduce-0', ['Depend-0'], graph_id=1)
