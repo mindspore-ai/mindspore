@@ -262,6 +262,34 @@ bool ProfilerManager::NeedCollectHostMemory() const {
 
 bool ProfilerManager::EnableCollectHost() const { return profile_framework_ != "NULL"; }
 
+uint64_t GetClockTime() {
+  auto ts = std::chrono::system_clock::now();
+  int64_t system_t = std::chrono::duration_cast<std::chrono::microseconds>(ts.time_since_epoch()).count();
+  return static_cast<uint64_t>(system_t);
+}
+
+uint64_t GetClockSyscnt() {
+  uint64_t cycles;
+#if defined(__aarch64__)
+  asm volatile("mrs %0, cntvct_el0" : "=r"(cycles));
+#elif defined(__x86_64__)
+  constexpr uint32_t uint32Bits = 32U;
+  uint32_t hi = 0;
+  uint32_t lo = 0;
+  __asm__ __volatile__("rdtsc" : "=a"(lo), "=d"(hi));
+  cycles = (static_cast<uint64_t>(lo)) | ((static_cast<uint64_t>(hi)) << uint32Bits);
+#elif defined(__arm__)
+  const uint32_t uint32Bits = 32U;
+  uint32_t hi = 0;
+  uint32_t lo = 0;
+  asm volatile("mrrc p15, 1, %0, %1, c14" : "=r"(lo), "=r"(hi));
+  cycles = (static_cast<uint64_t>(lo)) | ((static_cast<uint64_t>(hi)) << uint32Bits);
+#else
+  cycles = 0;
+#endif
+  return cycles;
+}
+
 void CollectHostInfo(const std::string &module_name, const std::string &event, const std::string &stage, int level,
                      int profile_framework, int start_end, const std::map<std::string, std::string> &custom_info) {
 #ifndef ENABLE_SECURITY
