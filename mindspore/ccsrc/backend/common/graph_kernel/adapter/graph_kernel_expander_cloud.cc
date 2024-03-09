@@ -124,7 +124,11 @@ const std::vector<OpWithLevel> expand_ops_with_level_v2 = {
 };
 
 const std::vector<OpWithLevel> expand_ops_with_level_dvm = {
+  {kAscendDevice, OpLevel_0, prim::kPrimAdam},
   {kAscendDevice, OpLevel_0, prim::kPrimAddN},
+  {kAscendDevice, OpLevel_0, prim::kPrimBiasAdd},
+  {kAscendDevice, OpLevel_0, prim::kPrimBiasAddGrad},
+  {kAscendDevice, OpLevel_0, prim::kPrimFillV2},
   {kAscendDevice, OpLevel_0, prim::kPrimGeLU},
   {kAscendDevice, OpLevel_0, prim::kPrimGelu},
   {kAscendDevice, OpLevel_0, prim::kPrimGeLUGrad},
@@ -140,6 +144,7 @@ const std::vector<OpWithLevel> expand_ops_with_level_dvm = {
   {kAscendDevice, OpLevel_0, prim::kPrimZerosLike},
   {kAscendDevice, OpLevel_0, prim::kPrimReduceMean},
   {kAscendDevice, OpLevel_0, prim::kPrimSoftmaxBackward},
+  {kAscendDevice, OpLevel_0, prim::kPrimLogSoftmaxGrad},
   {kAscendDevice, OpLevel_0, prim::kPrimReLU},
   {kAscendDevice, OpLevel_0, prim::kPrimReluGrad},
   {kAscendDevice, OpLevel_1, prim::kPrimAssignAdd},
