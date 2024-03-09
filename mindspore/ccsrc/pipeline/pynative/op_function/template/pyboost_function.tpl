@@ -21,26 +21,25 @@ py::object ${func_name}_Base(const PrimitivePtr &prim, const py::list &args) {
 
           // Create op
           auto op = CREATE_PYBOOST_OP(${op_name}, op_run_info->base_op_run_info.device_target);
-          if (op_run_info->requires_grad) {
-            op->set_grad_func([op_run_info]() { PyNativeAlgo::PyBoost::DoGrad(op_run_info); });
-          }
-          op->set_stream_id(op_run_info->base_op_run_info.stream_id);
 
           // Do mixed precision and implicit cast
           static const std::vector<std::vector<size_t>> same_type_table{${same_type}};
           auto [${cast_args}] = PyNativeAlgo::PyBoost::SetPyBoostCastForInputs<${type_num}>(op_run_info, same_type_table, ${call_args});
 
           // Run op
+          op->set_stream_id(op_run_info->base_op_run_info.stream_id);
           (void)op->Call(${cast_args});
           ${optional_to_value}
-          vector<ValuePtr> op_inputs = {${grad_args}};
-          PyNativeAlgo::PyBoost::DataSyncForGraph(op, op_inputs);
+
+          // Data sync in mix mode(Graph and PyNative)
+          PyNativeAlgo::PyBoost::DataSyncForGraph(op, {${grad_args}});
+
           // Update op and op_run_info by op outputs
-          PyNativeAlgo::PyBoost::UpdateOpRunInfo(op, op_inputs, op_run_info);
+          PyNativeAlgo::PyBoost::UpdateOpRunInfo(op, op_run_info);
 
           // Do auto grad
           if (op_run_info->requires_grad) {
-            op->DoGrad();
+            PyNativeAlgo::PyBoost::DoGrad(op, op_run_info, {${grad_args}});
           }
 
           MS_LOG(DEBUG) << "Run frontend task ${func_name} end";

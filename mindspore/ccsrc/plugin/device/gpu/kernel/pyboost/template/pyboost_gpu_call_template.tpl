@@ -26,8 +26,7 @@ std::make_shared<runtime::PyBoostDeviceTask>([this, op, ${call_args_with_tensor}
   ${get_inputs_kernel_tensors}
 
   // Get outputs kernel tensors
-  const auto &output_address_info =
-    PyBoostUtils::GetAddressInfo(device_context, op->stream_id(), {op->output_abs()}, outputs);
+  const auto &output_address_info = PyBoostUtils::GetAddressInfo(device_context, op->stream_id(), {op->output_abs()}, outputs);
 
   // Launch kernel
   PyBoostUtils::LaunchKernel(primitive(), op->device_context(), input_address_info, output_address_info, op->stream_id());
