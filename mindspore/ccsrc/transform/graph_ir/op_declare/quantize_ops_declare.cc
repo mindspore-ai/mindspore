@@ -58,7 +58,7 @@ INPUT_MAP(AscendAntiQuantV2) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(scale)}, {3, 
 ATTR_MAP(AscendAntiQuantV2) = {{"sqrt_mode", ATTR_DESC(sqrt_mode, AnyTraits<bool>())},
                                {"dtype", ATTR_DESC(dst_type, AnyTraits<GEType>())}};
 OUTPUT_MAP(AscendAntiQuantV2) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(AscendAntiQuantV2, kNameAscendAntiQuant, ADPT_DESC(AscendAntiQuantV2))
+REG_ADPT_DESC(AscendAntiQuantV2, kNameAscendAntiQuantV2, ADPT_DESC(AscendAntiQuantV2))
 
 // WeightQuantBatchMatmulV2
 INPUT_MAP(WeightQuantBatchMatmulV2) = {{1, INPUT_DESC(x)},
