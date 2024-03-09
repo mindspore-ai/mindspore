@@ -853,6 +853,11 @@ FuncGraphPtr ConvertToFuncGraph(const py::object &obj, const ValuePtrList &args_
     // Return the clone graph because the graph may be set recomputed later.
     return BasicClone(func_graph);
   }
+
+  // Handle no_inline function
+  if (py::hasattr(obj, FUNC_GRAPH_FLAG_NO_INLINE)) {
+    func_graph->set_flag(FUNC_GRAPH_FLAG_NO_INLINE, true);
+  }
   return func_graph;
 }
 
