@@ -29,6 +29,7 @@
 #include "abstract/utils.h"
 #include "ir/graph_utils.h"
 #include "utils/log_adapter.h"
+#include "utils/compile_config.h"
 #include "pipeline/jit/ps/debug/trace.h"
 #include "pipeline/jit/ps/fallback.h"
 #include "include/common/fallback.h"
@@ -45,7 +46,7 @@ EvalResultPtr GetEvalResult(const AnfNodeConfigPtr &conf) {
     return eval_result;
   } catch (const std::exception &e) {
     constexpr int recursive_level = 2;
-    static const bool enable_pre_lift = (common::GetEnv("MS_DEV_PRE_LIFT") == "1");
+    static const bool enable_pre_lift = (common::GetCompileConfig("PRE_LIFT") == "1");
     if (enable_pre_lift && IsPrimitiveCNode(conf->node(), prim::kPrimPartial)) {
       MS_LOG(ERROR) << "node: " << conf->node()->DebugString(recursive_level);
       auto abs_res = std::make_shared<AbstractNone>();
@@ -113,7 +114,7 @@ void PurifyAbstractOfSequence(ProgramSpecializer *const specializer) {
 void EliminateCollectedSequenceNodes(ProgramSpecializer *const specializer) {
   MS_EXCEPTION_IF_NULL(specializer);
   // Call PurifyElements() to purify tuple/list elements.
-  static const auto enable_only_mark_unused_element = (common::GetEnv("MS_DEV_DDE_ONLY_MARK") == "1");
+  static const auto enable_only_mark_unused_element = (common::GetCompileConfig("DDE_ONLY_MARK") == "1");
   if (enable_only_mark_unused_element) {
     return;
   }
@@ -1018,7 +1019,7 @@ void FuncGraphSpecializer::ProcessNode(const AnfNodePtr &node) {
   if (!node->isa<CNode>()) {
     return;
   }
-  static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") != "0");
+  static const auto enable_eliminate_unused_element = (common::GetCompileConfig("ENABLE_DDE") != "0");
   auto attrs = conf_eval_result->attribute();
   auto c_old = node->cast_ptr<CNode>();
   auto c_new = new_node->cast_ptr<CNode>();
@@ -1522,8 +1523,8 @@ void FuncGraphSpecializer::ProcessCNodeEnd(const CNodePtr &cnode, const AnfNodeW
   cnode->set_weak_inputs(new_weak_inputs);
 
   // Eliminate the unused elements in the tuple/list.
-  static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") != "0");
-  static const auto enable_only_mark_unused_element = (common::GetEnv("MS_DEV_DDE_ONLY_MARK") == "1");
+  static const auto enable_eliminate_unused_element = (common::GetCompileConfig("ENABLE_DDE") != "0");
+  static const auto enable_only_mark_unused_element = (common::GetCompileConfig("DDE_ONLY_MARK") == "1");
   if (enable_eliminate_unused_element && !enable_only_mark_unused_element) {
     EliminateUnusedSequenceItem(cnode);
   }
@@ -1658,7 +1659,7 @@ bool FuncGraphSpecializer::ProcessCNode(const CNodePtr &cnode) {
   const AnfNodePtr &func = new_inputs[0].lock();
 
   // Deal with Switch App CNode.
-  static const bool enable_pre_lift = (common::GetEnv("MS_DEV_PRE_LIFT") == "1");
+  static const bool enable_pre_lift = (common::GetCompileConfig("PRE_LIFT") == "1");
   if (enable_pre_lift && IsPrimitiveCNode(func, prim::kPrimSwitch)) {
     return ProcessSwitchAppCNode(cnode);
   }

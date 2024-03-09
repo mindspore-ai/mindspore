@@ -36,6 +36,7 @@
 #include "pipeline/jit/ps/parse/resolve.h"
 #include "utils/hash_set.h"
 #include "utils/info.h"
+#include "utils/compile_config.h"
 
 namespace mindspore {
 namespace py = pybind11;
@@ -471,7 +472,7 @@ AnfNodePtr FunctionBlock::MakeResolve(const NameSpacePtr &name_space, const Symb
 
 AnfNodePtr FunctionBlock::DoResolve(const AnfNodePtr &node, const std::shared_ptr<NameSpace> &name_space,
                                     const std::shared_ptr<Symbol> &resolve_symbol) {
-  static const auto boost_parse = common::GetEnv("MS_DEV_GREED_PARSE");
+  static const auto boost_parse = common::GetCompileConfig("GREED_PARSE");
   if (Parser::defer_resolve() || boost_parse != "1") {
     return node;
   }

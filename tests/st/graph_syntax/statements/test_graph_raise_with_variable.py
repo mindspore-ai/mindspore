@@ -14,7 +14,6 @@
 # ============================================================================
 """ test graph raise """
 # pylint: disable=R1705
-import os
 import pytest
 import numpy as np
 import mindspore as ms
@@ -23,6 +22,7 @@ import mindspore.ops.operations as P
 from mindspore import Tensor, context, jit
 from mindspore import dtype as mstype
 from mindspore.ops.operations._inner_ops import TopTypeof
+from mindspore._extends.parse import compile_config
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -41,14 +41,14 @@ def test_raise_with_variable_1():
             if x > 10:
                 raise ValueError(f"The input can not be {x}.")
 
-    os.environ["MS_DEV_FALLBACK_SUPPORT_LIST_DICT_INPLACE"] = "1"
+    compile_config.FALLBACK_SUPPORT_LIST_DICT_INPLACE = 1
     with pytest.raises(ValueError) as raise_info_9:
         net = RaiseNet()
         x = Tensor(11)
         res = net(x)
         print("res:", res)
     assert "The input can not be 11." in str(raise_info_9.value)
-    os.environ["MS_DEV_FALLBACK_SUPPORT_LIST_DICT_INPLACE"] = "0"
+    compile_config.FALLBACK_SUPPORT_LIST_DICT_INPLACE = 0
 
 
 @pytest.mark.level1

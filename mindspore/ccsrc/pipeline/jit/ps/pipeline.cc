@@ -58,6 +58,7 @@
 #include "utils/info.h"
 #include "utils/crypto.h"
 #include "utils/phase.h"
+#include "utils/compile_config.h"
 #include "include/common/utils/comm_manager.h"
 #include "include/common/utils/stub_tensor.h"
 #include "utils/interpret_node_recorder.h"
@@ -2276,6 +2277,7 @@ void InitPipeline() {
   mindspore::python_adapter::set_python_env_flag(true);
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
+  CompileConfigManager::GetInstance().CollectCompileConfig();
 #ifdef WITH_BACKEND
   auto backend = ms_context->backend_policy();
   auto device_name = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
