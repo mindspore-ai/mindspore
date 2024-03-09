@@ -61,7 +61,8 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
 
         logger.info('Initiating timeline...')
         self._pretty = pretty
-
+        if op_summary.size < 1:
+            return
         timeline_list = op_summary[~np.isin(op_summary['Task Type'], ['AI_CPU', 'HCCL'])][
             ['Op Name', 'Stream ID', 'Task Start Time', 'Task Duration']]
 

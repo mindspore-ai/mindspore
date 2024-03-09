@@ -250,7 +250,8 @@ class AscendMsprofExporter:
                 op_statistic.add(summary_file)
 
         if not op_summary:
-            raise RuntimeError("The op_summary file was not found, perhaps the original data was not collected.")
+            logger.warning("The op_summary file was not found, perhaps the original data was not collected.")
+            return
         if not op_statistic:
             raise RuntimeError("The op_statistics file was not found, perhaps the original data was not collected.")
 
@@ -272,7 +273,8 @@ class AscendMsprofExporter:
                 op_statistic.add(summary_file)
 
         if not op_summary:
-            raise RuntimeError("The op_summary file was not found, perhaps the original data was not collected.")
+            logger.warning("The op_summary file was not found, perhaps the original data was not collected.")
+            return
         if not op_statistic:
             raise RuntimeError("The op_statistics file was not found, perhaps the original data was not collected.")
         logger.info("Finish checking files.")

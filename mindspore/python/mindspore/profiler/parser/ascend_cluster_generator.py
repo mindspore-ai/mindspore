@@ -56,7 +56,8 @@ class AscendClusterGenerator:
         Analyse msprof json generate cluster data.
         """
         self.read_msprof()
-
+        if self.msprof_data.size < 1:
+            return
         self.step_trace_time['Computing'] = np.sum(self.msprof_data[self.msprof_data['name'] == 'Computing']['dur'])
         self.step_trace_time['comunNotOverlp'] = np.sum(
             self.msprof_data[self.msprof_data['name'] == 'Communication(Not Overlapped)']['dur'])
