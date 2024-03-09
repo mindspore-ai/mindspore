@@ -23,6 +23,7 @@
 #include "mindspore/core/ops/array_ops.h"
 #include "mindspore/core/ops/arithmetic_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
+#include "include/common/utils/compile_cache_context.h"
 #include "ir/dtype.h"
 #include "pipeline/jit/ps/static_analysis/static_analysis.h"
 #include "pipeline/jit/ps/debug/trace.h"
@@ -703,11 +704,13 @@ void Resource::GetCompileCacheResource(const py::list &compile_cache_dep_files, 
                                        bool *compile_cache_consistent) {
   compile_cache_manager_ = std::make_shared<CompileCacheManager>(compile_cache_id);
   compile_cache_manager_->InitParallelGroupCkptSaveFile();
+  auto &context = CompileCacheContext::GetInstance();
   MS_EXCEPTION_IF_NULL(compile_cache_consistent);
   if (!*compile_cache_consistent) {
     MS_LOG(WARNING) << "Check the consistency of dependency files hash failed. Execute all the compilation actions.";
     return;
   }
+  context.set_init_compile_cache(true);
   compile_cache_manager_->InitCompileCacheHash(compile_cache_dep_files);
   *compile_cache_consistent = compile_cache_manager_->CheckDepFilesHashConsistency();
   if (!*compile_cache_consistent) {

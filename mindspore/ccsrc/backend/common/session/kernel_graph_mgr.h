@@ -85,6 +85,7 @@ class BACKEND_EXPORT KernelGraphMgr {
   virtual ParameterPtr CreateNewParameterFromParameter(const AnfNodePtr &anf, KernelGraph *graph);
   // create a new kernel graph and update the graph sum
   KernelGraphPtr NewKernelGraph();
+  KernelGraphPtr NewPynativeKernelGraph();
   void SetKernelGraphId(const KernelGraphPtr &kernel_graph);
   AnfNodePtr CreateParameterFromTuple(const AnfNodePtr &node, KernelGraph *graph) const;
 
@@ -141,6 +142,7 @@ class BACKEND_EXPORT KernelGraphMgr {
   mindspore::HashSet<AnfNodePtr> need_flatten_;
   mindspore::HashMap<AnfNodePtr, AnfNodePtr> need_flatten_tuple_map_;
   static GraphId graph_sum_;
+  static GraphId pynative_graph_sum_;
   // record all graphs's backend params unique name to its weak_ptr
   // graph can come from different frontend graph
   static mindspore::HashMap<std::string, std::weak_ptr<AnfNode>> name_to_params_;

@@ -1168,9 +1168,7 @@ std::shared_ptr<KernelGraph> SessionBasic::ConstructSingleOpGraph(const BackendO
                                                                   const std::vector<tensor::TensorPtr> &input_tensors,
                                                                   const std::vector<int64_t> &tensors_mask,
                                                                   bool is_ascend) {
-  auto graph = std::make_shared<KernelGraph>();
-  graph->set_graph_id(graph_sum_);
-  graph_sum_++;
+  auto graph = NewPynativeKernelGraph();
   std::vector<AnfNodePtr> inputs;
   // set input[0]
   auto op_prim = op_run_info->op_prim;

@@ -516,6 +516,8 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   void InferType();
   void PostNewCNode(const CNodePtr &cnode) const;
   void SetKernelInfoForNode(const AnfNodePtr &node) const;
+  void set_is_from_pynative(const bool &from_pynative) { from_pynative_ = from_pynative; }
+  bool is_from_pynative() const { return from_pynative_; }
 
  private:
   // remove value node form graph
@@ -637,6 +639,7 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   std::set<uint32_t> comm_sub_graph_ids_{};
   // graph info for single op
   std::string graph_info_;
+  bool from_pynative_{false};
 };
 }  // namespace session
 using KernelGraphPtr = std::shared_ptr<session::KernelGraph>;
