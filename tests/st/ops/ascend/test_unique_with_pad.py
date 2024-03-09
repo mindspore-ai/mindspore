@@ -35,6 +35,10 @@ class Net(nn.Cell):
         return self.unique_with_pad(x, self.pad_num)
 
 
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_unique_with_pad():
     x = Tensor(np.array([1, 1, 5, 5, 4, 4, 3, 3, 2, 2]), mstype.int32)
     pad_num = 8
@@ -67,6 +71,10 @@ def test_unique_with_pad_dynamic_shape():
     assert (output[1].asnumpy() == expect_idx_result).all()
 
 
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_unique_with_pad_vmap():
     """
     Feature: uniquewithpad vmap test in ascend.
