@@ -94,6 +94,8 @@ class FlashAttentionFusion : public MultiplePatternProcessPass {
                                                      const AnfNodePtr &node, const EquivPtr &equiv) const;
   CNodePtr CreateFlashAttentionNodeForBaiChuanPattern(const std::string &pattern_name, const FuncGraphPtr &func_graph,
                                                       const AnfNodePtr &node, const EquivPtr &equiv) const;
+  CNodePtr CreateFlashAttentionNodeForSDEinsum(const std::string &pattern_name, const FuncGraphPtr &func_graph,
+                                               const AnfNodePtr &node, const EquivPtr &equiv) const;
 
   CNodePtr CreatePadCNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, int32_t pad_size) const;
   CNodePtr CreateSliceCNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, int32_t slice_size) const;
@@ -142,6 +144,22 @@ class FlashAttentionFusion : public MultiplePatternProcessPass {
   const VectorRef DefineFlashAttentionPatternForLLAMAPatternV1() const;
   const VectorRef DefineFlashAttentionPatternForLLAMAPatternV2() const;
   const VectorRef DefineFlashAttentionPatternForBaiChuan() const;
+
+  /*
+   * --------------------------------------------------
+   *  Pattern SD with Einsum:                         |
+   *  (Node: Einsum is replaced by matmul             |
+   *         in the onnx parser)                      |
+   *                                          input[K]|
+   *                                          reshape |
+   * einsum input[0] is reshape[input[Q]] ->  einsum  |
+   *                                          mul     |
+   *                                          softMax |
+   * einsum input[1] is reshape[input[V]] ->  einsum  |
+   *                                          reshape |
+   * --------------------------------------------------
+   */
+  const VectorRef DefineFlashAttentionPatternForSDEinsum() const;
 };
 }  // namespace opt
 }  // namespace mindspore
