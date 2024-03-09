@@ -60,6 +60,11 @@ def assign_add():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_assign_add_gpu():
+    """
+    Feature: test graph kernel AssignAdd
+    Description: run test case on GPU
+    Expectation: the result match with expect
+    """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     assign_add()
 
@@ -68,6 +73,11 @@ def test_assign_add_gpu():
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 def test_assign_add_ascend():
+    """
+    Feature: test graph kernel AssignAdd
+    Description: run test case on Ascend
+    Expectation: the result match with expect
+    """
     os.environ["GRAPH_OP_RUN"] = "1"
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     assign_add()

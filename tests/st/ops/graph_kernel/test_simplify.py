@@ -64,7 +64,7 @@ class EmptyNet(Cell):
         return add_res2
 
 
-def test_basic():
+def run_basic():
     input_x = np.random.normal(0, 1, [2, 3, 4, 3]).astype(np.float32)
     input_y = np.random.normal(0, 1, [2, 3, 4, 3]).astype(np.float32)
     input_y = np.abs(input_y) + 3
@@ -87,7 +87,7 @@ def test_basic():
     assert res
 
 
-def test_empty_graph():
+def run_empty_graph():
     input_x = np.random.normal(0, 1, [2, 3, 4, 3]).astype(np.float32)
     input_y = np.random.normal(0, 1, [2, 3, 4, 3]).astype(np.float32)
     expect = input_y
@@ -104,17 +104,27 @@ def test_empty_graph():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_basic_gpu():
+    """
+    Feature: test graph kernel arithmetic simplify
+    Description: run test case on GPU
+    Expectation: the result match with expect
+    """
     context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="GPU")
-    test_basic()
-    test_empty_graph()
+    run_basic()
+    run_empty_graph()
 
 
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 def test_basic_ascend():
+    """
+    Feature: test graph kernel arithmetic simplify
+    Description: run test case on Ascend
+    Expectation: the result match with expect
+    """
     os.environ["GRAPH_OP_RUN"] = "1"
     context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="Ascend")
-    test_basic()
-    test_empty_graph()
+    run_basic()
+    run_empty_graph()
     del os.environ["GRAPH_OP_RUN"]

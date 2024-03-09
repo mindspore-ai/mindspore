@@ -45,7 +45,7 @@ def get_output(x0, x1, x2, x3, enable_graph_kernel=False):
     return output
 
 
-def test_clip_by_norm_no_div_sum(shape0, shape1, shape2, shape3, dtype):
+def run_clip_by_norm_no_div_sum(shape0, shape1, shape2, shape3, dtype):
     x0 = Tensor(np.random.normal(0, 1, shape0).astype(dtype))
     x1 = Tensor(np.zeros(shape1, dtype))
     x2 = Tensor(np.ones(shape2, dtype))
@@ -64,7 +64,12 @@ def test_clip_by_norm_no_div_sum(shape0, shape1, shape2, shape3, dtype):
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 def test_clip_by_norm_no_div_sum_ascend():
+    """
+    Feature: test graph kernel ClipByNormNoDivSum
+    Description: run test case on Ascend
+    Expectation: the result match with expect
+    """
     os.environ["GRAPH_OP_RUN"] = "1"
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    test_clip_by_norm_no_div_sum((1, 1), (1,), (1, 1), (1,), np.float32)
+    run_clip_by_norm_no_div_sum((1, 1), (1,), (1, 1), (1,), np.float32)
     del os.environ["GRAPH_OP_RUN"]
