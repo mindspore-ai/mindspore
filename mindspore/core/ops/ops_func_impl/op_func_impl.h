@@ -36,14 +36,19 @@ class OpFuncImpl {
   OpFuncImpl() = default;
   virtual ~OpFuncImpl() = default;
 
+  virtual BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
+    MS_LOG(EXCEPTION) << "Not implement exception";
+  }
+
   /// \brief Infer the output shape for target operator.
   ///
   /// \param[in] primitive Operator's primitive.
-  /// \param[in] input_args Operator's input arguments pointer list.
+  /// \param[in] input_values Operator's input value pointer list.
   ///
-  /// \return The inferred output shape.
-  virtual BaseShapePtr InferShape(const PrimitivePtr &primitive,
-                                  const std::vector<AbstractBasePtr> &input_args) const = 0;
+  /// \return The inferred output shape array.
+  virtual ShapeArray InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+    MS_LOG(EXCEPTION) << "Not implement exception";
+  }
 
   /// \brief Infer the output type for target operator.
   ///
@@ -51,7 +56,19 @@ class OpFuncImpl {
   /// \param[in] input_args Operator's input arguments pointer list.
   ///
   /// \return The inferred object type, such as TensorType, Tuple, List.
-  virtual TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const = 0;
+  virtual TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
+    MS_LOG(EXCEPTION) << "Not implement exception";
+  }
+
+  /// \brief Infer the output type for target operator.
+  ///
+  /// \param[in] primitive Operator's primitive.
+  /// \param[in] input_values Operator's input value pointer list.
+  ///
+  /// \return The inferred object type list, such as TensorType, Tuple, List.
+  virtual TypePtrList InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+    MS_LOG(EXCEPTION) << "Not implement exception";
+  }
 
   /// \brief The operator input shape and value check, the function only carries the check of the
   /// value of InferShape unrelated parameters.

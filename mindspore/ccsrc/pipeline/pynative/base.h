@@ -31,6 +31,7 @@
 #include "abstract/abstract_value.h"
 #include "include/common/utils/stub_tensor.h"
 #include "include/common/utils/tensor_future.h"
+#include "mindspore/core/utils/simple_info.h"
 #include "ops/op_def.h"
 
 namespace mindspore {
@@ -77,6 +78,7 @@ struct OpGradInfo {
   std::vector<InputType> input_value_grad_type{};
   size_t output_size;
   bool is_need_recompute{false};
+  ValueSimpleInfoPtr output_value_simple_info{nullptr};
 };
 using OpGradInfoPtr = std::shared_ptr<OpGradInfo>;
 

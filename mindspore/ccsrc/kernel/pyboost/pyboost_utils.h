@@ -26,6 +26,8 @@
 #include "mindspore/core/ops/view/view_strides_calculator.h"
 #include "runtime/device/device_address_utils.h"
 #include "kernel/pyboost/pyboost_kernel_extra_func.h"
+#include "mindspore/core/utils/simple_info.h"
+#include "kernel/pyboost/ring_buffer.h"
 
 namespace mindspore {
 namespace kernel {
@@ -34,6 +36,24 @@ using AddressInfoPair = std::pair<std::vector<kernel::KernelTensor *>, device::D
 using BaseTensor = tensor::BaseTensor;
 using BaseTensorPtr = tensor::BaseTensorPtr;
 AbstractBasePtr BACKEND_EXPORT ToAbstractNoValue(const BaseTensorPtr &tensor);
+
+// For get abstract from value and cache abstract
+class BACKEND_EXPORT AbstractConvertFunc {
+ public:
+  static void CacheAbstract(const AbstractBasePtr &abstract);
+  static AbstractBasePtr ConvertAbstract(const ValuePtr &t);
+  // Tensor is held by Abstract, may lead to memory leak.
+  static AbstractBasePtr ConvertAbstract(const TensorPtr &t);
+  static AbstractBasePtr ConvertAbstract(const ValueTuplePtr &t);
+
+  template <typename T>
+  static AbstractBasePtr ConvertAbstract(const std::optional<T> &t) {
+    if (!t.has_value()) {
+      return kNone->ToAbstract();
+    }
+    return ConvertAbstract(t.value());
+  }
+};
 
 class BACKEND_EXPORT PyBoostUtils {
  public:
@@ -54,6 +74,8 @@ class BACKEND_EXPORT PyBoostUtils {
   static void CreateOutputTensor(const DeviceContext *device_context, const tensor::BaseTensorPtr &input,
                                  const TensorStorageInfoPtrList &storage_info_list,
                                  std::vector<tensor::BaseTensorPtr> *outputs);
+  static void CreateOutputTensor(const ValueSimpleInfoPtr &output_value_simple_info,
+                                 std::vector<tensor::TensorPtr> *outputs);
 
   // Create input device address without kernel tensor
   template <typename... Args>
@@ -70,18 +92,30 @@ class BACKEND_EXPORT PyBoostUtils {
     (runtime::DeviceAddressUtils::MallocForInput(device_context, args), ...);
   }
 
+  template <typename... T, std::size_t... Index>
+  static void GetAddressInfoHelper(const DeviceContext *device_context, size_t stream_id,
+                                   const std::vector<AbstractBasePtr> &input_abs,
+                                   std::vector<kernel::KernelTensor *> *kernel_tensor_list,
+                                   device::DeviceAddressPtrList *device_address_list, std::index_sequence<Index...>,
+                                   const T &... args) {
+    (GetKernelTensor(device_context, stream_id, input_abs[Index], Index, kernel_tensor_list, device_address_list, args),
+     ...);
+  }
+
   template <typename... T>
   static AddressInfoPair GetAddressInfo(const DeviceContext *device_context, size_t stream_id,
                                         const std::vector<AbstractBasePtr> &input_abs, const T &... args) {
     std::vector<kernel::KernelTensor *> kernel_tensor_list;
     // Kernel tensor is a raw ppointer, device address need to be returned.
     device::DeviceAddressPtrList device_address_list;
-    size_t index = 0;
-    auto get_index = [&index]() { return index; };
-    auto add_index = [&index]() { return index++; };
-    (GetKernelTensor(device_context, stream_id, input_abs[add_index()], get_index(), &kernel_tensor_list,
-                     &device_address_list, args),
-     ...);
+    if (input_abs.empty()) {
+      std::vector<AbstractBasePtr> tmp_abs(sizeof...(args), nullptr);
+      GetAddressInfoHelper(device_context, stream_id, tmp_abs, &kernel_tensor_list, &device_address_list,
+                           std::make_index_sequence<sizeof...(T)>(), args...);
+    } else {
+      GetAddressInfoHelper(device_context, stream_id, input_abs, &kernel_tensor_list, &device_address_list,
+                           std::make_index_sequence<sizeof...(T)>(), args...);
+    }
     return std::make_pair(kernel_tensor_list, device_address_list);
   }
 
@@ -92,6 +126,12 @@ class BACKEND_EXPORT PyBoostUtils {
   static void GetKernelTensor(const DeviceContext *device_context, size_t stream_id, size_t index,
                               std::vector<kernel::KernelTensor *> *kernel_tensor_list,
                               device::DeviceAddressPtrList *device_address_list, const BaseTensorPtr &tensor) {
+    GetKernelTensor(device_context, stream_id, nullptr, index, kernel_tensor_list, device_address_list, tensor);
+  }
+
+  static void GetKernelTensor(const DeviceContext *device_context, size_t stream_id, size_t index,
+                              std::vector<kernel::KernelTensor *> *kernel_tensor_list,
+                              device::DeviceAddressPtrList *device_address_list, const TensorPtr &tensor) {
     GetKernelTensor(device_context, stream_id, nullptr, index, kernel_tensor_list, device_address_list, tensor);
   }
 
@@ -183,6 +223,18 @@ class BACKEND_EXPORT PyBoostUtils {
   // ValueTuple input
   static std::vector<tensor::BaseTensorPtr> CastTensor(const std::vector<tensor::BaseTensorPtr> &tensors,
                                                        TypeId type_id, const std::string &device_target);
+  template <typename... T>
+  static std::pair<bool, KernelAttr> SelectKernel(const DeviceContext *device_context, const std::string &op_name,
+                                                  const ValueSimpleInfoPtr &output_value_simple_info,
+                                                  const T &... args) {
+    // Get inputs abstract
+    std::vector<AbstractBasePtr> input_abs;
+    ((void)input_abs.emplace_back(AbstractConvertFunc::ConvertAbstract(args)), ...);
+
+    // Get output abstract
+    auto output_abs = TransformValueSimpleInfoToAbstract(*output_value_simple_info);
+    return SelectKernel(input_abs, output_abs, device_context, op_name);
+  }
   static ValueTuplePtr ConvertTensorVectorToTuple(const std::vector<BaseTensorPtr> &tensor_list) {
     vector<ValuePtr> value_vector;
     for (const auto &tensor : tensor_list) {
