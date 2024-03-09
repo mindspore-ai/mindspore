@@ -58,6 +58,7 @@
 #include "frontend/parallel/pass/handle_group_info.h"
 #include "frontend/parallel/pass/overlap_recompute_and_grad_model_parallel.h"
 #include "frontend/parallel/pass/overlap_gradmatmul_and_gradallreduce.h"
+#include "frontend/parallel/pass/begin_end_overlap_inline.h"
 #include "frontend/parallel/pass/split_matmul_comm_elementwise_fp.h"
 #include "frontend/parallel/pass/split_layernorm_comm_fp.h"
 #include "frontend/parallel/pipeline_transformer/pipeline_transformer.h"
@@ -835,6 +836,24 @@ bool OverlapOptShardInPipelinePass(const ResourcePtr &resource) {
   return true;
 }
 
+bool BeginEndOverlapInlinePass(const ResourcePtr &resource) {
+  auto ms_context = MsContext::GetInstance();
+  auto is_enable = ms_context->get_param<bool>(MS_CTX_ENABLE_BEGIN_END_INLINE_OPT);
+  if (!is_enable) {
+    return true;
+  }
+  MS_EXCEPTION_IF_NULL(resource);
+  FuncGraphPtr func_graph = resource->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  parallel::BeginEndOverlapInlineOpt(resource->func_graph());
+  opt::irpass::OptimizeIRPassLib irpass;
+  opt::OptPassConfig get_item_eliminator_pass = opt::OptPassConfig({irpass.tuple_list_get_item_eliminator_});
+  OptPassGroupMap map({{"get_item_eliminator", get_item_eliminator_pass}});
+  auto get_item_eliminator = opt::Optimizer::MakeOptimizer("get_item_eliminator", resource, map);
+  (void)get_item_eliminator->step(func_graph, false);
+  return true;
+}
+
 bool OverlapGradMatmulAndGradAllreduce(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   parallel::OverlapGradMatmulAndGradAllreduce(resource->func_graph());
@@ -1120,6 +1139,7 @@ std::vector<PassItem> kVmPasses = {{"py_interpret_to_execute", PyInterpretToExec
                                    {"grouped_pairwise_exchange_alltoall", GroupedPairwiseExchangeAllToAllPass},
                                    {"overlap_recompute_and_grad_model_parallel", OverlapRecomputeAndGradModelParallel},
                                    {"overlap_grad_matmul_and_grad_allreduce", OverlapGradMatmulAndGradAllreduce},
+                                   {"begin_end_overlap_inline", BeginEndOverlapInlinePass},
                                    {"split_matmul_comm_elemetwise", SplitMatmulCommElementwiseOpFpPass},
                                    {"split_layernorm_comm", SplitLayerNormCommFpPass},
                                    {"process_send_recv_for_ge", ProcessSendRecvForGE},

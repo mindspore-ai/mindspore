@@ -689,6 +689,8 @@ class _Context:
                             "enable_grad_comm_opt": ms_ctx_param.enable_grad_comm_opt,
                             "interleaved_matmul_comm": ms_ctx_param.interleaved_matmul_comm,
                             "enable_opt_shard_comm_opt": ms_ctx_param.enable_opt_shard_comm_opt,
+                            "enable_begin_end_inline_opt": ms_ctx_param.enable_begin_end_inline_opt,
+                            "enable_concat_eliminate_opt": ms_ctx_param.enable_concat_eliminate_opt,
                             "interleaved_layernorm_comm": ms_ctx_param.interleaved_layernorm_comm}
             with open(speedup_config_real_path, 'r') as f:
                 speedup_config = json.load(f)
