@@ -18,12 +18,8 @@
       )
     );
 
-    // Need input abstract to generate grad op.
-    if (grad_func_ != nullptr) {
-      GenerateAbstract(${call_args});
-    }
     // Stub tensor need output abstract
-    ${set_output_abs}
+    SetOutputAbstract();
   } else {
     MS_LOG_EXCEPTION << "View unsupported:" << primitive_->name() <<" or input ERROR";
   }
