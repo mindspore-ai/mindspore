@@ -22,6 +22,7 @@ from collections import defaultdict
 import numpy as np
 import mindspore as ms
 from mindspore.common import dtype as mstype
+from mindspore.parallel._utils import _is_in_auto_parallel_mode
 from mindspore.parallel._parallel_serialization import _rank_list_for_transform_parallel_checkpoint, \
     _transform_parallel_checkpoint, _get_device_num_from_strategy, _make_dir, \
     _extract_layout_map, _extract_src_dst_layout_map, _parameter_not_in_local_stage, _extract_pipeline_stage_num, \
@@ -29,7 +30,7 @@ from mindspore.parallel._parallel_serialization import _rank_list_for_transform_
 
 
 __all__ = ["merge_pipeline_strategys", "rank_list_for_transform", "transform_checkpoint_by_rank",
-           "transform_checkpoints"]
+           "transform_checkpoints", "sync_pipeline_shared_parameters"]
 
 
 def merge_pipeline_strategys(src_strategy_dirs, dst_strategy_file):
@@ -336,3 +337,121 @@ def transform_checkpoints(src_checkpoints_dir, dst_checkpoints_dir, ckpt_prefix,
             ms.save_checkpoint(transform_param_list, save_checkpoint_file_name)
             del param_total_dict_copy
         del param_total_dict
+
+
+def _sync_params(name, param, layout):
+    """synchronize single parameter"""
+    if len(layout) < 10:
+        ms.log.warning("The layout dict does not contain the pipeline_shared_param info %s", name)
+        return
+
+    pipeline_shared = layout[6]
+    if not pipeline_shared:
+        return
+
+    is_send = layout[7]
+    peer_rank = layout[8]
+    sr_tag = layout[9]
+
+    class SharedParameterSyncCell(ms.nn.Cell):
+        """synchronize cell"""
+        def __init__(self, param, is_send, peer_rank, sr_tag):
+            super().__init__()
+            self.param = param
+            self.is_send = is_send
+            self.ret = ms.Tensor([0])
+
+            from mindspore.ops.operations._inner_ops import Send, Receive
+            if self.is_send:
+                self.send = Send(sr_tag=sr_tag, dest_rank=peer_rank)
+            else:
+                self.receive = Receive(sr_tag=sr_tag, src_rank=peer_rank, shape=param.shape, dtype=param.dtype)
+
+        def construct(self):
+            if self.is_send:
+                out = self.send(self.param)
+                return ms.ops.functional.depend(self.ret, out)
+
+            self.param = self.receive(self.ret)
+            return ms.ops.functional.depend(self.ret, self.param)
+
+    sync_net = SharedParameterSyncCell(param, is_send, peer_rank, sr_tag)
+    sync_net()
+
+
+def sync_pipeline_shared_parameters(net):
+    """synchronize pipeline parallel stage shared parameters.
+    Parameters may be shared between different stages in pipeline parallel inference. For example, `embedding table` is
+    shared by `WordEmbedding` layer and `LMHead` layer, which are usually split into different stages. It is necessary
+    to perform synchronization after `embedding table` changes.
+
+    Note:
+        The network should be compiled before synchronize pipeline parallel stage shared parameters.
+
+    Args:
+        net (nn.Cell): the inference network.
+
+    Examples:
+        >>> import numpy as np
+        >>> import mindspore as ms
+        >>> from mindspore import nn, Parameter, Tensor
+        >>> class VocabEmbedding(nn.Cell):
+        ...     def __init__(self, vocab_size, embedding_size):
+        ...         super().__init__()
+        ...         self.embedding_table = Parameter(Tensor(np.ones([vocab_size, embedding_size])), name='embedding')
+        ...
+        ...     def construct(self, x):
+        ...         output = self.gather(self.embedding_table, x, 0)
+        ...         return output, self.embedding_table.value()
+        ...
+        >>> class LMHead(nn.Cell):
+        ...     def __init__(self):
+        ...         super().__init__()
+        ...         self.matmul = ops.MatMul(transpose_b=True)
+        ...
+        ...     def construct(self, state, embed):
+        ...         state = state.reshape(-1, state.shape[-1])
+        ...         return self.matmul(state, embed)
+        ...
+        >>> class Network(nn.Cell):
+        ...     @lazy_inline
+        ...     def __init__(self):
+        ...         super().__init__()
+        ...         self.word_embedding = VocabEmbedding(vocab_size=4, embedding_size=4)
+        ...         self.head = LMHead()
+        ...
+        ...     def construct(self, x):
+        ...         x, embed = self.word_embedding(x)
+        ...         x = self.head(x, embed)
+        ...         return x
+        >>>
+        >>> net = Network()
+        >>> net.word_embedding.pipeline_stage = 0
+        >>> net.head.pipeline_stage = 1
+        >>> x = Tensor(np.ones((8, 4))
+        >>> net.compile()
+        >>> ms.parallel.sync_pipeline_shared_parameters(net)
+        >>> print(net.word_embedding.embedding_table.asnumpy())
+        >>> [[1. 1. 1. 1.]
+             [1. 1. 1. 1.]
+             [1. 1. 1. 1.]
+             [1. 1. 1. 1.]]
+    """
+
+    layout_dict = net.parameter_layout_dict
+    if _is_in_auto_parallel_mode() and not layout_dict:
+        from mindspore.common.api import _get_parameter_layout
+        layout_dict = _get_parameter_layout()
+
+    # switch to standalone mode
+    parallel_mode = ms.context.get_auto_parallel_context("parallel_mode")
+    full_batch = ms.context.get_auto_parallel_context("full_batch")
+    ms.context.set_auto_parallel_context(parallel_mode="stand_alone", full_batch=False)
+
+    # synchronize shared parameter
+    for name, param in net.parameters_and_names():
+        if name in layout_dict:
+            _sync_params(name, param, layout_dict[name])
+
+    # restore parallel context
+    ms.context.set_auto_parallel_context(parallel_mode=parallel_mode, full_batch=full_batch)

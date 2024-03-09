@@ -91,6 +91,20 @@ enum StatusCode : uint32_t {
   kLiteLLMRepeatRequest = kLite | (0x0FFFFFFF & -105),           /**< repeat request. */
   kLiteLLMRequestAlreadyCompleted = kLite | (0x0FFFFFFF & -106), /**< request already complete!. */
   kLiteLLMEngineFinalized = kLite | (0x0FFFFFFF & -107),         /**< llm engine finalized. */
+  kLiteLLMNotYetLink = kLite | (0x0FFFFFFF & -108),              /**< decoder cluster is no link with prompt. */
+  kLiteLLMAlreadyLink = kLite | (0x0FFFFFFF & -109),  /**< decoder cluster is already linked with prompt cluster! */
+  kLiteLLMLinkFailed = kLite | (0x0FFFFFFF & -110),   /**< decoder cluster link with prompt cluster failed! */
+  kLiteLLMUnlinkFailed = kLite | (0x0FFFFFFF & -111), /**< decoder cluster unlink with prompt cluster failed */
+  kLiteLLMNofiryPromptUnlinkFailed =
+    kLite | (0x0FFFFFFF & -112), /**< decoder cluster notify prompt cluster do unlink failed */
+  kLiteLLMClusterNumExceedLimit = kLite | (0x0FFFFFFF & -113), /**< cluster num exceed limit */
+  kLiteLLMProcessingLink = kLite | (0x0FFFFFFF & -114),        /**< link is current processing. */
+  kLiteLLMOutOfMemory = kLite | (0x0FFFFFFF & -115),           /**< device out of memory. */
+  kLiteLLMPrefixAlreadyExist = kLite | (0x0FFFFFFF & -116),    /**< Prefix has already existed. */
+  kLiteLLMPrefixNotExist = kLite | (0x0FFFFFFF & -117),        /**< Prefix does not exist. */
+  kLiteLLMSeqLenOverLimit = kLite | (0x0FFFFFFF & -118),       /**< Sequence length exceed limit. */
+  kLiteLLMNoFreeBlock = kLite | (0x0FFFFFFF & -119),           /**< No free block. */
+  kLiteLLMBlockOutOfMemory = kLite | (0x0FFFFFFF & -120),      /**< Block is out of memory. */
 
   // Graph error code, range: [-200,-300)
   kLiteGraphFileError = kLite | (0x0FFFFFFF & -200), /**< Failed to verify graph file. */

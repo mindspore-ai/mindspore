@@ -20,11 +20,14 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <tuple>
+#include <utility>
 
 #include "utils/hash_map.h"
 #include "utils/ms_utils.h"
 #include "ir/value.h"
 #include "frontend/parallel/auto_parallel/operator_costmodel.h"
+#include "frontend/parallel/graph_util/generate_graph.h"
 #include "frontend/parallel/ops_info/operator_info.h"
 #include "frontend/parallel/strategy.h"
 
@@ -41,6 +44,7 @@ class FlashAttentionScoreInfo : public OperatorInfo {
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override { return SetCostUnderStrategyBase(strategy); }
   void ReplaceNodeInputOrAttrs() override;
   void ReComputeBatchSplitFlagList() override;
+  ReplaceGraphPtr replace_graph(const CNodePtr &cnode) override;
 
  protected:
   Status InferForwardCommunication() override { return SUCCESS; }
@@ -58,8 +62,29 @@ class FlashAttentionScoreInfo : public OperatorInfo {
   void InitSplittableInputs();
   void InitExpectedStrategies();
   size_t GetStrategyRealIndex(size_t index);
+  std::vector<int64_t> GetSplitIdAndRank();
+  std::tuple<int64_t, int64_t> GetAttentionMaskAttrs(const int64_t split_id, const int64_t split_num);
+  void LoadBalanceSplitAlongSeqDim(size_t input_index, GenerateGraph *gen_g, AnfNodePtr *split_node,
+                                   AnfNodePtr *keep_node, AnfNodePtr *exchange_node);
+  void LoadBalanceExchange(const int64_t all_gather_idx, const Group &group, const AnfNodePtr &input_node,
+                           AnfNodePtr *exchange_node, GenerateGraph *gen_g);
+  void GetFlashAttentionScoreOpNode(int64_t split_id, int64_t split_num, const AnfNodePtr &q,
+                                    const AnfNodePtr &real_shift, const AnfNodePtr &drop_mask,
+                                    const AnfNodePtr &attn_mask, AnfNodePtr *fa_op, GenerateGraph *gen_g);
+  std::vector<std::pair<AnfNodePtr, int64_t>> ReplaceGraphGetInputNodes(const AnfNodePtr &q_split,
+                                                                        const AnfNodePtr &real_shift_split,
+                                                                        const AnfNodePtr &drop_mask_split,
+                                                                        const AnfNodePtr &attn_mask_split,
+                                                                        const AnfNodePtr &flash_attention_score_keep,
+                                                                        const AnfNodePtr &flash_attention_score_target);
+  Status ComputeReplaceGraph(const CNodePtr &cnode);
   int64_t head_num_ = 1;
   float keep_prob_ = 1.0;
+  float scale_value_ = 1.0;
+  int64_t pre_tokens_;
+  int64_t next_tokens_;
+  std::string input_layout_;
+  int64_t sparse_mode_;
   int64_t batch_split_num_;
   int64_t n1_split_num_;
   int64_t n2_split_num_;
@@ -71,9 +96,9 @@ class FlashAttentionScoreInfo : public OperatorInfo {
   bool real_shift_have_batch_dim_ = false;  // true if real_shift have batch dim
   bool attn_mask_have_batch_dim_ = false;   // true if attn_mask have batch dim.
   bool attn_mask_have_n1_dim_ = false;      // true if attn_mask have n1 dim.
-  std::string input_layout_;
-  int64_t sparse_mode_;
+  bool enable_load_balance_ = false;
   bool kv_split_ = false;
+  bool is_attn_mask_compressed_ = false;
   std::vector<bool> is_input_passed_;
   std::vector<Shape> splittable_inputs_;
   Strategies expect_strategies_;

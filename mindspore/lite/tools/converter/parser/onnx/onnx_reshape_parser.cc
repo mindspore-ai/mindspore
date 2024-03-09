@@ -18,6 +18,7 @@
 #include <vector>
 #include <memory>
 #include "ops/auto_generate/gen_lite_ops.h"
+#include "include/registry/converter_context.h"
 #include "nnacl/op_base.h"
 
 namespace mindspore {
@@ -27,6 +28,8 @@ PrimitiveCPtr OnnxReshapeParser::Parse(const onnx::GraphProto &onnx_graph, const
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   auto prim_c = prim->GetPrim();
   MS_CHECK_TRUE_RET(prim_c != nullptr, nullptr);
+  int fmk_type = converter::FmkType::kFmkTypeOnnx;
+  (void)prim_c->AddAttr(ops::kFmkType, MakeValue(fmk_type));
   std::vector<int32_t> shape;
   shape.clear();
   if (onnx_node.input_size() != 2) {

@@ -66,6 +66,7 @@
 #include "utils/parallel_node_check.h"
 #include "utils/shape_utils.h"
 #include "utils/symbolic.h"
+#include "utils/compile_config.h"
 
 namespace mindspore {
 using ClassTypePtr = std::shared_ptr<parse::ClassType>;
@@ -2367,7 +2368,7 @@ TypePtr GetAnnotationType(const AnfNodePtr &node, const AbstractBasePtrList &arg
 
 TypePtr GetLocalArgsUniqueDtype(const AnfNodePtr &node, const AbstractBasePtrList &args_abs_list) {
   // If force to use ANY.
-  static const auto force_any = (common::GetEnv("MS_DEV_FALLBACK_FORCE_ANY") == "1");
+  static const auto force_any = (common::GetCompileConfig("FALLBACK_FORCE_ANY") == "1");
   if (force_any) {
     return nullptr;
   }
@@ -3003,7 +3004,7 @@ EvalResultPtr MakeTupleEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abst
       MS_EXCEPTION_IF_NULL(out_conf->node());
       MS_LOG(INFO) << "For MakeTuple, the inputs should not be empty. node: " << out_conf->node()->DebugString();
     }
-    static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") != "0");
+    static const auto enable_eliminate_unused_element = (common::GetCompileConfig("ENABLE_DDE") != "0");
     if (enable_eliminate_unused_element) {
       auto flags = GetSequenceNodeElementsUseFlags(out_conf->node());
       if (flags == nullptr) {
@@ -3020,11 +3021,13 @@ EvalResultPtr MakeTupleEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abst
   auto res = std::make_shared<EvalResult>(abs, std::make_shared<AttrValueMap>());
   evaluator_cache_mgr_->SetValue(args_abs_list, res);
   // pass the need_unpack tag from the AnfNode to the abstract
-  auto node = out_conf->node();
-  constexpr auto need_unpack_str = "need_unpack";
-  auto need_unpack = node->user_data<bool>(need_unpack_str);
-  if (need_unpack != nullptr && *need_unpack) {
-    abs->SetData<bool>(need_unpack_str, std::make_shared<bool>(true));
+  if (out_conf != nullptr) {
+    auto node = out_conf->node();
+    constexpr auto need_unpack_str = "need_unpack";
+    auto need_unpack = node->user_data<bool>(need_unpack_str);
+    if (need_unpack != nullptr && *need_unpack) {
+      abs->SetData<bool>(need_unpack_str, std::make_shared<bool>(true));
+    }
   }
   return res;
 }
@@ -3037,7 +3040,7 @@ EvalResultPtr MakeListEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abstr
     if (args_abs_list.empty()) {
       MS_LOG(INFO) << "For MakeList, the inputs should not be empty. node: " << out_conf->node()->DebugString();
     }
-    static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") != "0");
+    static const auto enable_eliminate_unused_element = (common::GetCompileConfig("ENABLE_DDE") != "0");
     if (enable_eliminate_unused_element) {
       auto flags = GetSequenceNodeElementsUseFlags(out_conf->node());
       if (flags == nullptr) {

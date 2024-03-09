@@ -58,6 +58,7 @@
 #include "utils/info.h"
 #include "utils/crypto.h"
 #include "utils/phase.h"
+#include "utils/compile_config.h"
 #include "include/common/utils/comm_manager.h"
 #include "include/common/utils/stub_tensor.h"
 #include "utils/interpret_node_recorder.h"
@@ -900,10 +901,11 @@ bool IsPhaseLoadFromMindIR(const std::string &phase) {
   return phase.rfind(mindir_graph) != std::string::npos;
 }
 
-std::vector<ActionItem> GetPipeline(const ResourcePtr &resource, const std::string &phase, bool use_vm) {
+std::vector<ActionItem> GetPipeline(const ResourcePtr &resource, const std::string &phase, bool use_vm,
+                                    bool trace_flag = false) {
   MS_EXCEPTION_IF_NULL(resource);
   compile::SetMindRTEnable();
-  return VmPipeline(resource);
+  return VmPipeline(resource, trace_flag);
 }
 
 void GraphExecutorPy::InitCompileCacheInfo(const ResourcePtr &resource, const std::string &phase) {
@@ -970,7 +972,7 @@ void GraphExecutorPy::CleanCompileRes(const ResourcePtr &resource) {
 }
 
 bool GraphExecutorPy::CompileInner(const FuncGraphPtr &graph, const py::tuple &args, const py::dict &kwargs,
-                                   const std::string &phase, bool use_vm) {
+                                   const std::string &phase, bool use_vm, bool trace_flag) {
   PhaseManager::GetInstance().set_phase(phase);
   phase_ = phase;
 
@@ -981,7 +983,7 @@ bool GraphExecutorPy::CompileInner(const FuncGraphPtr &graph, const py::tuple &a
   bool use_compile_cache = resource->EnableCompileCache() && resource->func_graph();
   ConfigManager::GetInstance().ResetQueue(queue_name_);
 
-  auto actions = GetPipeline(resource, phase, use_vm);
+  auto actions = GetPipeline(resource, phase, use_vm, trace_flag);
   for (auto iter = actions.begin(); iter != actions.end();) {
     if (iter->first == "parse") {
       iter = actions.erase(iter);
@@ -1512,6 +1514,18 @@ void Pipeline::Run() {
   if (context->CanDump(kIntroductory) && (user_graph != nullptr)) {
     if (context->CanDump(kFully)) {
       draw::DrawUserFuncGraph("ModelDigraph.dot", user_graph);
+    }
+  }
+  if (common::GetEnv("DUMP_PARALLEL_INFO") == "1") {
+    std::unordered_map<std::string, std::vector<uint32_t>> group_map;
+    if (distributed::collective::CollectiveManager::instance()->initialized()) {
+      group_map = distributed::collective::CollectiveManager::instance()->get_group_map();
+    }
+    if (parallel::g_device_manager != nullptr) {
+      MS_LOG(WARNING) << "parallel::g_device_manager is not initialized. Skip dump parallel info.";
+      auto global_rank_id = parallel::g_device_manager->global_rank();
+      DumpParallelJson("dump_parallel_info_" + std::to_string(global_rank_id) + ".json", resource_->func_graph(),
+                       global_rank_id, group_map);
     }
   }
 #endif
@@ -2263,6 +2277,7 @@ void InitPipeline() {
   mindspore::python_adapter::set_python_env_flag(true);
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
+  CompileConfigManager::GetInstance().CollectCompileConfig();
 #ifdef WITH_BACKEND
   auto backend = ms_context->backend_policy();
   auto device_name = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);

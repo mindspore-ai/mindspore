@@ -15,6 +15,10 @@
  */
 
 #include "plugin/device/gpu/kernel/nn/col2im_gpu_kernel.h"
+#include <unordered_map>
+#include <string>
+#include <algorithm>
+#include <limits>
 #include "mindspore/core/abstract/utils.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/col2im_impl.cuh"
@@ -95,6 +99,14 @@ int Col2ImFwdGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   auto dilation = GetValue<std::vector<int64_t>>(primitive_->GetAttr("dilation"));
   auto padding = GetValue<std::vector<int64_t>>(primitive_->GetAttr("padding"));
   auto stride = GetValue<std::vector<int64_t>>(primitive_->GetAttr("stride"));
+  std::unordered_map<std::string, std::vector<int64_t>> to_check{
+    {"kernel_size", kernel_size}, {"dilation", dilation}, {"padding", padding}, {"stride", stride}};
+  for (const auto &[name, vec] : to_check) {
+    if (std::any_of(vec.begin(), vec.end(), [](int64_t x) { return x > std::numeric_limits<uint32_t>::max(); })) {
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', " << name << " value overflow.";
+      return KRET_RESIZE_FAILED;
+    }
+  }
   pad_height_ = static_cast<uint32_t>(padding[kIndex0]);
   pad_width_ = static_cast<uint32_t>(padding[kIndex1]);
   kernel_height_ = static_cast<uint32_t>(kernel_size[kIndex0]);

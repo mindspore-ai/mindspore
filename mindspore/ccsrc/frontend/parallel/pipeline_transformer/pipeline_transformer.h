@@ -118,6 +118,7 @@ class PipelineTransformer {
   bool GetStageByArgument(const CNodePtr &node, size_t index, const std::vector<AnfNodePtr> &parameters,
                           const NodeUsersMap &node_users_map, std::set<int64_t> *const parameter_stage);
   size_t GetBatchAxisForInput(const AnfNodeIndexSet &input_node_users) const;
+  void UpdateParameterSharedInfo(const AnfNodePtr &node, const AnfNodePtr &communcate_op, bool is_send);
   FuncGraphManagerPtr manager_;
   int64_t stage_;
   FuncGraphPtr root_;

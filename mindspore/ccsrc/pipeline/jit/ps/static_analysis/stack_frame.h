@@ -24,6 +24,7 @@
 
 #include "pipeline/jit/ps/static_analysis/evaluator.h"
 #include "mindspore/core/ops/framework_ops.h"
+#include "utils/compile_config.h"
 
 namespace mindspore {
 namespace abstract {
@@ -50,7 +51,7 @@ class StackFrame final : public Base {
   void Load() {
     MS_EXCEPTION_IF_NULL(func_graph_);
     node_slots_ = TopoSort(func_graph_->get_return(), SuccIncoming, [](const AnfNodePtr &node) -> IncludeType {
-      static const bool enable_pre_lift = (common::GetEnv("MS_DEV_PRE_LIFT") == "1");
+      static const bool enable_pre_lift = (common::GetCompileConfig("PRE_LIFT") == "1");
       if (node->isa<ValueNode>() || node->isa<Parameter>() ||
           (enable_pre_lift && IsPrimitiveCNode(node, prim::kPrimPartial))) {
         return EXCLUDE;

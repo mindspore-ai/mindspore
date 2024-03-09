@@ -13,11 +13,11 @@
 # limitations under the License.
 # ============================================================================
 """ test map for lambda with fv. """
-import os
 import pytest
 import mindspore as ms
 import mindspore.nn as nn
 from mindspore import context
+from mindspore._extends.parse import compile_config
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -31,7 +31,8 @@ def test_map_lambda_with_fv():
     Description: Support map for lambda with FV.
     Expectation: No exception.
     """
-    os.environ['MS_DEV_PRE_LIFT'] = '1'
+    saved_config = compile_config.PRE_LIFT
+    compile_config.PRE_LIFT = 1
 
     @ms.jit()
     def map_lambda_with_fv(x, y, z):
@@ -39,7 +40,7 @@ def test_map_lambda_with_fv():
         return map(number_add, (x,), (y,))
 
     res = map_lambda_with_fv(1, 5, 9)
-    del os.environ['MS_DEV_PRE_LIFT']
+    compile_config.PRE_LIFT = saved_config
     assert res == (15,)
 
 

@@ -19,6 +19,7 @@
 #include <string>
 #include <memory>
 #include <vector>
+#include <unordered_map>
 #include "ir/dtype/type.h"
 #include "ir/anf.h"
 #include "include/common/debug/common.h"
@@ -57,7 +58,9 @@ COMMON_EXPORT void DumpIR(const std::string &filename, const FuncGraphPtr &graph
                           LocDumpMode dump_location = kOff, const std::string &target_file = "");
 COMMON_EXPORT void DumpIR(std::ostringstream &graph_buffer, const FuncGraphPtr &graph, bool dump_full_name = false,
                           LocDumpMode dump_location = kOff);
-
+COMMON_EXPORT void DumpParallelJson(const std::string &filename, const FuncGraphPtr &graph,
+                                    const int64_t global_rank_id,
+                                    const std::unordered_map<std::string, std::vector<uint32_t>> &group_map);
 COMMON_EXPORT void GatherInputAndOutputInferType(std::ostringstream &buffer, const AnfNodePtr &node);
 
 COMMON_EXPORT void DumpIRForRDR(const std::string &filename, const FuncGraphPtr &graph, bool dump_full_name = false,

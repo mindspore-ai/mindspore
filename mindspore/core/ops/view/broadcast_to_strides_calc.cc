@@ -114,7 +114,7 @@ TensorStorageInfoPtrList BroadCastToProcess(const PrimitivePtr &prim, const tens
   return {new_storage_info};
 }
 
-TensorStorageInfoPtrList BroadCastToCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs) {
+TensorStorageInfoPtrList BroadcastToCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs) {
   if (CheckInputsNull(inputs, kBroadCastToInputsNum) || !inputs[0]->isa<tensor::Tensor>()) {
     return {};
   }
@@ -125,5 +125,5 @@ TensorStorageInfoPtrList BroadCastToCalc(const PrimitivePtr &prim, const std::ve
   return BroadCastToProcess(prim, input_tensor, input_x);
 }
 
-REG_VIEW_STRIDES_CALC_FUN(BroadcastTo, BroadCastToCalc);
+REG_VIEW_STRIDES_CALC_FUN(BroadcastTo, BroadcastToCalc);
 }  // namespace mindspore::ops

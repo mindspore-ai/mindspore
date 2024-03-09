@@ -240,14 +240,28 @@ std::pair<std::string, bool> GraphKernelFlags::GetGraphKernelConfig() {
 void GraphKernelFlags::CheckSupport() const {
 #ifndef MSLITE_ENABLE_GRAPH_KERNEL
   if (IsEnableGraphKernel()) {
-#ifndef USE_LLVM
     auto context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context);
+#ifndef USE_LLVM
     auto is_cpu = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kCPUDevice);
     if (is_cpu && const_cast<GraphKernelFlags *>(this)->kernel_generator == "AKG") {
       MS_LOG(WARNING)
         << "Graph Kernel Fusion is not supported without LLVM on cpu platform, and it will be turned off now. Please "
            "refer to https://www.mindspore.cn/install and install the required version of LLVM.";
+      const_cast<GraphKernelFlags *>(this)->opt_level = OptLevel_0;
+      return;
+    }
+#endif
+#ifndef ENABLE_DVM
+    auto is_ascend = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
+    if (is_ascend) {
+      MS_LOG(WARNING) << "Graph Kernel Fusion is not supported without the prebuild binary file tracked by git lfs, "
+                         "and it will be turned off now. Please perform the following steps:\n\n"
+                         "1. Install git lfs, refer https://github.com/git-lfs/git-lfs/wiki/installation\n"
+                         "2. After installing git lfs, do not forget executing the following command:\n"
+                         "   git lfs install\n"
+                         "3. Re-clone the source codes, the files tracked by git lfs will be downloaded automatically\n"
+                         "4. Re-compile the source codes\n";
       const_cast<GraphKernelFlags *>(this)->opt_level = OptLevel_0;
       return;
     }
@@ -271,14 +285,6 @@ void GraphKernelFlags::Refresh() {
 #ifndef MSLITE_ENABLE_GRAPH_KERNEL
   if (IsEnableGraphKernel()) {
     CheckSupport();
-    auto context = MsContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(context);
-    auto is_ascend = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
-    if (is_ascend) {
-      MS_LOG(WARNING)
-        << "Graph Kernel Fusion on Ascend is recommended to turned off if getting some compiling or running error. For "
-           "more details, please refer to 'mindspore.context' at https://www.mindspore.cn.";
-    }
   }
 #endif
   // If enable graphkernel, Dump flags so that people can check the setting.
@@ -359,10 +365,19 @@ void GraphKernelFlags::RegisterFlags(std::map<std::string, std::string> *flag_ma
   reg.AddFlag("enable_cce_lib_ops_only", &enable_cce_lib_ops_only);
   reg.AddFlag("disable_cce_lib_ops", &disable_cce_lib_ops);
 
-  if (enable_dynamic_shape_fusion) {
-    // enable_dynamic_shape_fusion is only supported in akg_v2 generator
+  if (enable_dynamic_shape_fusion && !is_ascend) {
     kernel_generator = "AKG_V2";
+    return;
   }
+
+#ifndef MSLITE_ENABLE_GRAPH_KERNEL
+  if (is_ascend && flag_map->find("kernel_generator") == flag_map->end()) {
+    kernel_generator = "DVM";
+  }
+  if (kernel_generator == "DVM" && flag_map->find("enable_dynamic_shape_fusion") == flag_map->end()) {
+    enable_dynamic_shape_fusion = true;
+  }
+#endif
 }
 
 std::string GraphKernelFlags::DumpAllFlags() const {

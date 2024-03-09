@@ -22,6 +22,7 @@
 #include <functional>
 #include <string>
 #include "include/common/utils/python_adapter.h"
+#include "pipeline/jit/pi/common.h"
 
 namespace mindspore {
 namespace pijit {
@@ -33,6 +34,21 @@ class Compiler {
 
  private:
   Compiler() = default;
+};
+
+class MindCompiler {
+ public:
+  struct CompileInfo {
+    std::string co_name_;
+    int co_argcount_;
+    int co_kwonlyargcount_;
+    int co_flags_;
+  };
+  static CallableGraph Compile(const FuncGraphPtr &func_graph, const py::tuple &args, const py::dict &kwargs,
+                               const std::string &phase, const CompileInfo &compile_info);
+
+ private:
+  MindCompiler() = default;
 };
 }  // namespace pijit
 }  // namespace mindspore

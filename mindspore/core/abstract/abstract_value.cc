@@ -30,6 +30,7 @@
 #include "abstract/utils.h"
 #include "utils/ms_context.h"
 #include "utils/trace_base.h"
+#include "utils/compile_config.h"
 
 namespace mindspore {
 namespace abstract {
@@ -902,7 +903,7 @@ std::string AbstractSequence::ToString(bool verbose) const {
 
 AnfNodeWeakPtrList AbstractSequence::SequenceNodesJoin(const AbstractBasePtr &other) {
   AnfNodeWeakPtrList sequence_nodes;
-  static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") != "0");
+  static const auto enable_eliminate_unused_element = (common::GetCompileConfig("ENABLE_DDE") != "0");
   if (!enable_eliminate_unused_element || this->sequence_nodes() == nullptr) {
     return sequence_nodes;
   }

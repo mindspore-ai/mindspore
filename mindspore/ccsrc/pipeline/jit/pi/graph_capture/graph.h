@@ -148,6 +148,10 @@ class Graph {
   }
 
   bool GuardValueNode(ValueNode *);
+  bool GuardType(ValueNode *);
+  bool GuardSequenceNodeLength(ValueNode *, Py_ssize_t);
+  bool GuardInlinedFunc(CallNode *call_node);
+
   TracePtr TraceValueNode(ValueNode *, int max_trace_depth = -1);
   int GetPruneBranchCount() const { return prune_branch_count_; }
   void SetPruneBranchCount(int count) { prune_branch_count_ = count; }
@@ -163,7 +167,6 @@ class Graph {
 
   std::string ToString(int depth = 0) const;
 
-  std::string DumpLoops() const;
   std::string DumpBreakInfo() const;
 
   void SetParent(Graph *parent) { parent_ = parent; }
@@ -172,8 +175,8 @@ class Graph {
   auto &GetSideEffect() const { return sideEffect_; }
 
   void SetSideEffectNode(ValueNode *node) { side_effect_nodes_.push_back(node); }
-  std::vector<ValueNode *> GetSideEffectNodes() { return side_effect_nodes_; }
-  std::vector<ValueNode *> GetSideEffectNodes() const { return side_effect_nodes_; }
+  std::vector<ValueNode *> &GetSideEffectNodes() { return side_effect_nodes_; }
+  std::vector<ValueNode *> const &GetSideEffectNodes() const { return side_effect_nodes_; }
 
   void SetSideEffectReplacedMap(ValueNode *newNode, ValueNode *old) { replace_map.insert({newNode, old}); }
   std::map<ValueNode *, ValueNode *> GetSideEffectReplacedMap() { return replace_map; }
@@ -185,8 +188,16 @@ class Graph {
     return replace_list;
   }
   std::map<ValueNode *, ValueNode *> GetSideEffectReplacedMap() const { return replace_map; }
+  void SetGlobalList(GlobalSideEffectNode node) { global_list.push_back(node); }
+  std::vector<GlobalSideEffectNode> GetGlobalList() const { return global_list; }
   void SetOldBreakBci(int bci) { old_break_bci_ = bci; }
   int GetOldBreakBci() { return old_break_bci_; }
+
+  // collect alive node, output bitmap
+  std::vector<ValueNode *> CollectAliveNode(int bci, std::vector<int> * = nullptr, BitMap * = nullptr) const;
+
+  // collect alive node, clear the bit if alive local is unbound
+  static std::vector<ValueNode *> CollectAliveNode(const FrameStates &, BitMap *, std::vector<int> * = nullptr);
 
  private:
   std::unique_ptr<CFG> cfg_;
@@ -225,6 +236,7 @@ class Graph {
   std::unique_ptr<SideEffect> sideEffect_;
   std::vector<ValueNode *> side_effect_nodes_;
   std::map<ValueNode *, ValueNode *> replace_map;
+  std::vector<GlobalSideEffectNode> global_list;
   int old_break_bci_;
 };
 }  // namespace pijit

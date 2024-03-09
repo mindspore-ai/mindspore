@@ -30,6 +30,10 @@
 #include "pipeline/jit/pi/graph_build/func_graph_builder.h"
 #include "pipeline/jit/pi/graph_capture/abstract_object.h"
 #include "include/common/debug/anf_ir_dump.h"
+#include "pipeline/jit/pi/graph_compiler/utils.h"
+#include "ops/sequence_ops.h"
+#include "ops/framework_ops.h"
+#include "ops/structure_ops.h"
 
 #ifndef PY_MINOR_VERSION
 #define PY_MINOR_VERSION 3.7
@@ -45,6 +49,9 @@ namespace mindspore {
 namespace pijit {
 extern TracePtr GetTrace(ValueNode *node, bool strict, bool print, int depth, int max_depth);
 
+void LogGuardFailed(ValueNode *node, const GraphJitConfig &conf, const std::string &msg);
+static bool GuardLoopSequence(Graph *graph, ValueNode *seq_node, Py_ssize_t seq_size = -1);
+
 const char *GraphBuilder::ID___self__ = "__self__";
 const char *GraphBuilder::ID___globals__ = "__globals__";
 const char *GraphBuilder::ID___call__ = "__call__";
@@ -54,7 +61,6 @@ static const int infer_primitive_create = 1;
 static const int infer_primitive_object = 2;
 static const int infer_primitive_func = 4;
 static int infer_func_count = 0;
-static const int store_subscr_handle_size = 3;
 static constexpr const char *kPIJitCopyFuncKey = ".<pijit.copy>.";
 
 const std::unordered_map<int, bool (GraphBuilder::*)(const Instr &)> GraphBuilder::bytecode_meth_map_ = {
@@ -75,7 +81,7 @@ const std::unordered_map<int, bool (GraphBuilder::*)(const Instr &)> GraphBuilde
   {BINARY_MULTIPLY, &GraphBuilder::DoBinaryMul},
   {BINARY_MODULO, &GraphBuilder::DoBinary},
   {BINARY_POWER, &GraphBuilder::DoBinary},
-  {BINARY_ADD, &GraphBuilder::DoBinary},
+  {BINARY_ADD, &GraphBuilder::DoBinaryAdd},
   {BINARY_SUBTRACT, &GraphBuilder::DoBinary},
   {BINARY_FLOOR_DIVIDE, &GraphBuilder::DoBinary},
   {BINARY_TRUE_DIVIDE, &GraphBuilder::DoBinary},
@@ -88,7 +94,7 @@ const std::unordered_map<int, bool (GraphBuilder::*)(const Instr &)> GraphBuilde
   {INPLACE_MULTIPLY, &GraphBuilder::DoBinary},
   {INPLACE_MODULO, &GraphBuilder::DoBinary},
   {INPLACE_POWER, &GraphBuilder::DoBinary},
-  {INPLACE_ADD, &GraphBuilder::DoBinary},
+  {INPLACE_ADD, &GraphBuilder::DoInplaceAdd},
   {INPLACE_SUBTRACT, &GraphBuilder::DoBinary},
   {INPLACE_FLOOR_DIVIDE, &GraphBuilder::DoBinary},
   {INPLACE_TRUE_DIVIDE, &GraphBuilder::DoBinary},
@@ -97,8 +103,8 @@ const std::unordered_map<int, bool (GraphBuilder::*)(const Instr &)> GraphBuilde
   {INPLACE_AND, &GraphBuilder::DoBinary},
   {INPLACE_XOR, &GraphBuilder::DoBinary},
   {INPLACE_OR, &GraphBuilder::DoBinary},
-  {IS_OP, &GraphBuilder::DoBinary},
-  {CONTAINS_OP, &GraphBuilder::DoBinary},
+  {IS_OP, &GraphBuilder::DoIsOp},
+  {CONTAINS_OP, &GraphBuilder::DoIsOp},
   {BUILD_TUPLE, &GraphBuilder::DoBuildOp},
   {BUILD_LIST, &GraphBuilder::DoBuildOp},
   {BUILD_SET, &GraphBuilder::DoBuildOp},
@@ -272,6 +278,12 @@ static bool CheckValueValid(AObject *obj) {
   if (obj->GetType() == AObject::kTypeTensor) {
     AbstractTensor *tensor = static_cast<AbstractTensor *>(obj);
     return tensor->IsStubTensor() || CheckTensorDataInitialized(obj->GetPyObject());
+  } else if (obj->GetType() == AObject::kTypeTraceNode) {
+    auto py_obj = obj->GetPyObject();
+    if (!py::isinstance<tensor::Tensor>(py_obj)) {
+      return true;
+    }
+    return py_obj.cast<tensor::TensorPtr>()->data().const_data() != nullptr;
   } else {
     return true;
   }
@@ -301,6 +313,42 @@ static std::vector<AObject *> CollectObjects(const std::vector<ValueNode *> &nod
   return res;
 }
 
+std::vector<ValueNode *> GraphBuilder::UnpackConstObject(const py::object &iterable) {
+  std::vector<ValueNode *> outputs;
+  std::transform(iterable.begin(), iterable.end(), std::back_inserter(outputs), [this](const auto &item) {
+    return this->NewValueNode(AObject::Convert(item.ptr()), LOAD_CONST, -1, {});
+  });
+  return outputs;
+}
+
+bool GraphBuilder::UnpackSequenceElements(ValueNode *node) {
+  py::object seq = node->GetVobj()->GetPyObject();
+  if (seq.ptr() == nullptr || !PySequence_Check(seq.ptr()) || !GuardLoopSequence(this->graph_, node)) {
+    return false;
+  }
+
+  Py_ssize_t size = PySequence_Size(seq.ptr());
+  for (Py_ssize_t index = 0; index < size; ++index) {
+    push(node);
+    DoLoadConst({LOAD_CONST, -1, py::object(py::int_(index))});
+    DoItemAccess({BINARY_SUBSCR, 0});
+  }
+  return true;
+}
+
+bool GraphBuilder::UnpackElements(ValueNode *node) {
+  int opcode = node->GetOpcode();
+  if (opcode == BUILD_LIST || opcode == BUILD_TUPLE) {
+    std::for_each(node->getInputs().begin(), node->getInputs().end(), [this](ValueNode *i) { this->push(i); });
+  } else if (node->IsConstantValue()) {
+    std::vector<ValueNode *> nodes = UnpackConstObject(node->GetVobj()->GetPyObject());
+    std::for_each(nodes.begin(), nodes.end(), [this](ValueNode *i) { this->push(i); });
+  } else {
+    return UnpackSequenceElements(node);
+  }
+  return true;
+}
+
 static void GenUnpackValue(const std::function<void(int, int)> &gen_item, int cnt, int cnt_after, Py_ssize_t size) {
   if (cnt_after != -1) {
     const int end_pos = size - cnt_after;
@@ -312,35 +360,6 @@ static void GenUnpackValue(const std::function<void(int, int)> &gen_item, int cn
   for (; cnt > 0; --cnt) {
     gen_item(cnt - 1, -1);
   }
-}
-
-void GraphBuilder::GenIndexItemGeneral(ValueNode *iterable, int i, int end_pos) {
-  AObject *seq = iterable->GetVobj();
-  if (end_pos == -1) {
-    AObject *index = AObject::Convert(py::int_(i));
-    AObject *item = seq->GetItem(index);
-    ValueNode *index_node = this->NewValueNode(index, LOAD_CONST, -1, {});
-    ValueNode *item_node = this->NewValueNode(item, BINARY_SUBSCR, 0, {iterable, index_node});
-    this->graph_->GetTracedNodes().push_back(item_node);
-    item_node->set_bci(this->cur_bci_);
-    this->push(item_node);
-    return;
-  }
-  MS_EXCEPTION_IF_CHECK_FAIL(end_pos >= i, "check UNPACK_EX oparg");
-  std::vector<ValueNode *> p;
-  for (int k = i; k < end_pos; ++k) {
-    AObject *index = AObject::Convert(py::int_(k));
-    AObject *item = seq->GetItem(index);
-    ValueNode *index_node = this->NewValueNode(index, LOAD_CONST, -1, {});
-    ValueNode *item_node = this->NewValueNode(item, BINARY_SUBSCR, 0, {iterable, index_node});
-    this->graph_->GetTracedNodes().push_back(item_node);
-    item_node->set_bci(this->cur_bci_);
-    p.push_back(item_node);
-  }
-  AObject *vo = AObject::BuildOperations(CollectObjects(p), BUILD_LIST);
-  ValueNode *node = this->NewValueNode(vo, BUILD_LIST, end_pos - i, p);
-  this->graph_->GetTracedNodes().push_back(node);
-  this->push(node);
 }
 
 Py_ssize_t GetUnpackSize(ValueNode *iterable, int cnt, int cnt_after) {
@@ -372,49 +391,26 @@ bool GraphBuilder::DoUnpack(const Instr &instr) {
   }
   ValueNode *iterable = pop();
 
-  if (iterable->GetOpcode() == BUILD_LIST || iterable->GetOpcode() == BUILD_TUPLE) {
-    auto gen_item = [this, &iterable](int i, int j) {
-      if (j == -1) {
-        this->push(iterable->input(i));
-        return;
-      }
-      MS_EXCEPTION_IF_CHECK_FAIL(j >= i, "check UNPACK_EX oparg");
-      auto in_iter = iterable->getInputs().begin();
-      std::vector<ValueNode *> p(in_iter + i, in_iter + j);
-      AObject *vo = AObject::BuildOperations(CollectObjects(p), BUILD_LIST);
-      ValueNode *node = this->NewValueNode(vo, BUILD_LIST, j - i, p);
-      this->graph_->GetTracedNodes().push_back(node);
-      this->push(node);
-    };
-    GenUnpackValue(gen_item, cnt, cnt_after, size);
-    return true;
+  size_t elements_size = frame_.GetStacks().size();
+  if (!UnpackElements(iterable)) {
+    return false;
   }
+  elements_size = frame_.GetStacks().size() - elements_size;
+  std::vector<ValueNode *> elements(frame_.GetStacks().end() - elements_size, frame_.GetStacks().end());
+  popn(elements_size);
 
-  AObject *seq = iterable->GetVobj();
-  switch ((seq == nullptr) ? AObject::kTypeAnyValue : seq->GetType()) {
-    case AObject::kTypeString:
-    case AObject::kTypeTuple:
-    case AObject::kTypeList:
-    case AObject::kTypeNNCellList:
-    case AObject::kTypeTensor: {
-      const auto &cnst = iterable->GetConstantInfo();
-      // guard sequence length
-      if (cnst == nullptr || (cnst->value().ptr() == nullptr && cnst->len() == -1)) {
-        auto tr = this->graph_->TraceValueNode(iterable);
-        if (tr == nullptr) {
-          return false;
-        }
-        this->graph_->GetGuard()->GetGuard()->GuardOn(tr, GuardLevel::GDeduce, false);
-      }
-      auto gen_item = [this, iterable](int i, int j) { this->GenIndexItemGeneral(iterable, i, j); };
-      GenUnpackValue(gen_item, cnt, cnt_after, size);
-      return true;
+  auto gen_item = [this, &elements](int i, int j) {
+    if (j == -1) {
+      this->push(elements[i]);
+      return;
     }
-    case AObject::kTypeDict:
-    default:
-      break;
-  }
-  return false;
+    MS_EXCEPTION_IF_CHECK_FAIL(j >= i, "check UNPACK_EX oparg");
+    auto in_iter = elements.begin();
+    std::for_each(in_iter + i, in_iter + j, [this](ValueNode *i) { this->push(i); });
+    DoBuildOp({BUILD_LIST, j - i});
+  };
+  GenUnpackValue(gen_item, cnt, cnt_after, size);
+  return true;
 }
 
 bool GraphBuilder::DoCall(const Instr &instr) {
@@ -467,15 +463,15 @@ bool GraphBuilder::DoYieldValue(const Instr &instr) {
 
 bool GraphBuilder::DoReturn(const Instr &instr) {
   graph_->SetRetVal(pop());
-  if (graph_->GetGeneratorResult() != nullptr) {
-    ValueNode *tuple_node = graph_->GetGeneratorResult();
-    AObject *object_info = AObject::BuildOperations(CollectObjects(tuple_node->getInputs()), BUILD_TUPLE);
-    tuple_node->SetVobj(object_info);
-    tuple_node->SetOparg(tuple_node->getInputs().size());
-    graph_->GetTracedNodes().push_back(tuple_node);
-    graph_->SetRetVal(tuple_node);
-    ConstantInfo::CollectConstantInfo(tuple_node);
+  if (graph_->GetGeneratorResult() == nullptr) {
+    return true;
   }
+  const auto &inputs = graph_->GetGeneratorResult()->getInputs();
+  std::for_each(inputs.begin(), inputs.end(), [this](ValueNode *i) { this->push(i); });
+  DoBuildOp({BUILD_TUPLE, static_cast<int>(inputs.size())});
+  ValueNode *new_node = pop();
+  graph_->SetGeneratorResult(new_node);
+  graph_->SetRetVal(new_node);
   return true;
 }
 
@@ -513,6 +509,10 @@ bool GraphBuilder::DoCellAccess(const Instr &instr) {
       break;
     case STORE_DEREF:
       value = pop();
+      if (value->GetOpcode() == LOAD_DEREF && frame_.Closure(oparg) == frame_.Closure(value->GetOparg())) {
+        // same value, no side effect
+        break;
+      }
       node = NewValueNode(nullptr, instr, {value});
       frame_.Closure(oparg)->SetValue(value);
       frame_.Closure(oparg)->AddCellOper(node);
@@ -538,27 +538,13 @@ bool GraphBuilder::DoWith(const Instr &instr) {
     return false;
   }
   auto node = pop();
-  auto vobj = node->GetVobj();
-  auto func_enter = vobj->GetAttr("__enter__");
-  MS_EXCEPTION_IF_NULL(func_enter);
-  auto func_exit = vobj->GetAttr("__exit__");
-  MS_EXCEPTION_IF_NULL(func_exit);
+  push(node);
+  DoAttrAccess({LOAD_ATTR, 0, "__exit__"});
 
-  auto func_node_exit = NewValueNode(func_exit, LOAD_ATTR, -1, {node});
-  func_node_exit->SetName("__exit__");
-  func_node_exit->SetLineNo(instr.bci());
-  graph_->GetTracedNodes().push_back(func_node_exit);
-  push(func_node_exit);
+  push(node);
+  DoAttrAccess({LOAD_ATTR, 0, "__enter__"});
 
-  auto func_node_enter = NewValueNode(func_enter, LOAD_ATTR, -1, {node});
-  func_node_enter->SetName("__enter__");
-  func_node_enter->SetLineNo(instr.bci());
-  graph_->GetTracedNodes().push_back(func_node_enter);
-  push(func_node_enter);
-
-  auto newInstr = Instr(instr.bci(), CALL_FUNCTION, 0);
-  newInstr.set_line(instr.line());
-  if (!DoCall(newInstr)) {
+  if (!DoCall({CALL_FUNCTION, 0})) {
     MS_LOG(ERROR) << "function '__enter__' runs failed here, it should be successful!";
     return false;
   }
@@ -658,27 +644,42 @@ bool GraphBuilder::DoGlobalAccess(const Instr &instr) {
   int oparg = instr.arg();
   switch (opcode) {
     case LOAD_GLOBAL: {
-      auto co = graph_->GetCodeObj();
-      PyObject *key = PyTuple_GET_ITEM(co->co_names, oparg);
-      // NOTE: will run __get__, __hash__ function
-      PyObject *obj = PyObject_GetItem(graph_->GetGlobals().ptr(), key);
-      if (obj == nullptr) {
-        PyErr_Clear();
-        obj = PyObject_GetItem(PyEval_GetBuiltins(), key);
+      if (!graph_->GetSideEffect()->GetGlobalList().empty()) {
+        for (auto global_side_effect : graph_->GetSideEffect()->GetGlobalList()) {
+          if (global_side_effect.getModule() == GetGraph()->GetModuleName() &&
+              global_side_effect.getName() == instr.name()) {
+            push(global_side_effect.getNode());
+          }
+        }
+        break;
+      } else {
+        auto co = graph_->GetCodeObj();
+        PyObject *key = PyTuple_GET_ITEM(co->co_names, oparg);
+        // NOTE: will run __get__, __hash__ function
+        PyObject *obj = PyObject_GetItem(graph_->GetGlobals().ptr(), key);
         if (obj == nullptr) {
           PyErr_Clear();
+          obj = PyObject_GetItem(PyEval_GetBuiltins(), key);
         }
+        py::object pyobj = py::reinterpret_steal<py::object>(obj);
+        auto n = NewValueNode(AObject::Convert(pyobj), instr, {});
+        n->SetName(PyUnicode_AsUTF8(key));
+        push(n);
+        break;
       }
-      py::object pyobj = py::reinterpret_steal<py::object>(obj);
-      auto n = NewValueNode(AObject::Convert(pyobj), instr, {});
-      n->SetName(PyUnicode_AsUTF8(key));
-      push(n);
+    }
+    case STORE_GLOBAL: {
+      auto global_node = pop();
+      GlobalSideEffectNode global_side_effect(instr.name(), global_node, GetGraph()->GetModuleName());
+      graph_->GetSideEffect()->setGlobalList(global_side_effect);
       break;
     }
-    case STORE_GLOBAL:
-    case DELETE_GLOBAL:
-      current_block_->SetTrackResult(Block::kHasGlobalSideEffect);
-      return false;
+    case DELETE_GLOBAL: {
+      GlobalSideEffectNode global_side_effect(instr.name(), nullptr, GetGraph()->GetModuleName());
+      graph_->GetSideEffect()->setGlobalList(global_side_effect);
+      break;
+    }
+
     default:
       return false;
   }
@@ -690,39 +691,26 @@ bool GraphBuilder::HandleSuper(const Instr &instr, AObject *super) {
     return false;
   }
   ValueNode *self_super = SearchSelfPyObject(graph_->GetCodeObj()).second;
-  auto &nodes = this->graph_->GetTracedNodes();
-  auto mtype_obj = reinterpret_cast<PyObject *>(&PyMethod_Type);
-  py::object method = super->GetPyObject().attr(instr.name().c_str());
-  if (PyMethod_Check(method.ptr())) {
-    PyObject *m = PyMethod_GET_FUNCTION(method.ptr());
-    AObject *m_tp = AObject::Convert(mtype_obj);
-
-    // method type object
-    ValueNode *global_node = NewValueNode(m_tp, LOAD_CONST, -1, {});
-    nodes.push_back(global_node);
-
-    // function object
-    ValueNode *method_node = NewValueNode(AObject::Convert(m), LOAD_CONST, -1, {});
-    nodes.push_back(method_node);
-
-    // call method type
-    constexpr int second = 2;
-    py::tuple tuple_obj(second);
-    tuple_obj[0] = m;
-    tuple_obj[1] = self_super->GetVobj()->GetPyObject();
-    PyObject *ret = PyObject_Call(mtype_obj, tuple_obj.ptr(), nullptr);
-    py::object mh = py::reinterpret_steal<py::object>(ret);
-    PyErr_Clear();
-
-    AObject *mh_info = AObject::Convert(mh);
-    ValueNode *func_node = NewValueNode(mh_info, CALL_FUNCTION, 2, {global_node, method_node, self_super});
-    func_node->set_bci(instr.bci());
-    func_node->SetLineNo(instr.line());
-    nodes.push_back(func_node);
-    push(func_node);
-    return true;
+  if (self_super == nullptr) {
+    return false;
   }
-  return false;
+  py::object method = super->GetPyObject().attr(instr.name().c_str());
+  if (!PyMethod_Check(method.ptr())) {
+    return false;
+  }
+
+  // method type object
+  auto mtype_obj = reinterpret_cast<PyObject *>(&PyMethod_Type);
+  DoLoadConst({LOAD_CONST, -1, py::cast<py::object>(mtype_obj)});
+
+  // function object
+  PyObject *m = PyMethod_GET_FUNCTION(method.ptr());
+  DoLoadConst({LOAD_CONST, -1, py::cast<py::object>(m)});
+
+  push(self_super);
+
+  // call method type
+  return DoCall({CALL_FUNCTION, 2});
 }
 
 PyObject *SetLocalPyObject(ValueNode *node) {
@@ -797,17 +785,23 @@ bool GraphBuilder::DoAttrAccess(const Instr &instr) {
 }
 
 // for unpack call optimize
-static ValueNode *TupleDictItemAccess(ValueNode *container, ValueNode *index) {
-  PyObject *o = index->GetVobj() ? index->GetVobj()->GetPyObject().ptr() : nullptr;
-  if (o == nullptr) {
+static ValueNode *TupleDictGetItem(ValueNode *container, ValueNode *index_node) {
+  if (!index_node->IsConstantValue()) {
     return nullptr;
   }
-  if (container->GetOpcode() == BUILD_TUPLE && PyLong_Check(o)) {
-    size_t i = PyLong_AsLong(o);
-    return i < container->getInputs().size() ? container->input(i) : nullptr;
+  PyObject *index_object = index_node->GetVobj()->GetPyObject().ptr();
+  int opcode = container->GetOpcode();
+  if ((opcode == BUILD_TUPLE || opcode == BUILD_LIST) && PyLong_Check(index_object)) {
+    Py_ssize_t index = PyLong_AsSsize_t(index_object);
+    Py_ssize_t size = container->getInputs().size();
+    if (index < -size || index >= size) {
+      return nullptr;
+    }
+    index = index < 0 ? (size + index) : index;
+    return container->input(index);
   }
-  if (container->GetOpcode() == BUILD_MAP && PyUnicode_Check(o)) {
-    std::string k = PyUnicode_AsUTF8(o);
+  if (container->GetOpcode() == BUILD_MAP && PyUnicode_Check(index_object)) {
+    std::string k = PyUnicode_AsUTF8(index_object);
     size_t element_count = container->GetOparg() << 1;
     MS_EXCEPTION_IF_CHECK_FAIL(element_count == container->getInputs().size(), "check BUILD_MAP oparg");
     for (int i = 0; i < container->GetOparg(); ++i) {
@@ -826,7 +820,7 @@ bool GraphBuilder::DoGetItem(const Instr &instr) {
   constexpr const char *kNameGetItem = "__getitem__";
   auto r = pop();
   auto l = pop();
-  ValueNode *v = TupleDictItemAccess(l, r);
+  ValueNode *v = TupleDictGetItem(l, r);
   if (v != nullptr) {
     push(v);
     return true;
@@ -856,18 +850,13 @@ bool GraphBuilder::DoGetItem(const Instr &instr) {
     return true;
   }
 
-  ValueNode *meth_node = NewValueNode(meth, LOAD_ATTR, 0, {l}, kNameGetItem);
-  ValueNode *call_node = NewValueNode(AObject::MakeAObject(AObject::kTypeAnyValue), CALL_FUNCTION, 1, {meth_node, r});
-  this->graph_->GetTracedNodes().push_back(meth_node);
-  this->graph_->GetTracedNodes().push_back(call_node);
-  push(call_node);
-
-  (void)HandleCall(0);
-  return true;
+  push(l);
+  DoAttrAccess({LOAD_ATTR, 0, kNameGetItem});
+  push(r);
+  return DoCall({CALL_FUNCTION, 1});
 }
 
 bool GraphBuilder::DoSetItem(ValueNode *map, ValueNode *key, ValueNode *val) {
-  ValueNode *new_node;
   if (map->GetOpcode() == BUILD_LIST) {
     PyObject *index_object = key->GetVobj()->GetPyObject().ptr();
     if (index_object == nullptr || !PyLong_CheckExact(index_object)) {
@@ -881,22 +870,24 @@ bool GraphBuilder::DoSetItem(ValueNode *map, ValueNode *key, ValueNode *val) {
     index = index < 0 ? (size + index) : index;
     std::vector<ValueNode *> inputs = map->getInputs();
     inputs[index] = val;
-    AObject *object_info = AObject::BuildOperations(CollectObjects(inputs), BUILD_LIST);
-    new_node = NewValueNode(object_info, BUILD_LIST, inputs.size(), inputs);
+
+    std::for_each(inputs.begin(), inputs.end(), [this](ValueNode *i) { this->push(i); });
+    DoBuildOp({BUILD_LIST, static_cast<int>(inputs.size())});
   } else if (map->GetOpcode() == BUILD_MAP) {
     std::vector<ValueNode *> inputs = map->getInputs();
     inputs.push_back(key);
     inputs.push_back(val);
-    AObject *object_info = AObject::BuildOperations(CollectObjects(inputs), BUILD_MAP);
-    new_node = NewValueNode(object_info, BUILD_MAP, inputs.size() / 2, inputs);
+
+    std::for_each(inputs.begin(), inputs.end(), [this](ValueNode *i) { this->push(i); });
+    DoBuildOp({BUILD_MAP, static_cast<int>(inputs.size() / 2)});
   } else {
     return false;
   }
 
-  if (!ReplaceAll(map, new_node)) {
+  if (!ReplaceAll(map, pop())) {
+    graph_->GetTracedNodes().pop_back();
     return false;
   }
-  graph_->GetTracedNodes().push_back(new_node);
   return true;
 }
 
@@ -951,9 +942,6 @@ bool GraphBuilder::DoItemAccess(const Instr &instr) {
       break;
     }
     case STORE_SUBSCR: {
-      if (instr.arg() != store_subscr_handle_size) {
-        return false;
-      }
       // STORE_SUBSCR: k->index v->item m-> container
       auto k = pop();
       auto m = pop();
@@ -962,6 +950,9 @@ bool GraphBuilder::DoItemAccess(const Instr &instr) {
         return true;
       }
       if (m->GetVobj()->GetType() == AObject::kTypeList) {
+        if (k->GetOpcode() == BUILD_SLICE) {
+          return false;
+        }
         DoSideEffect(instr, {k, m, v});
         break;
       } else {
@@ -1024,19 +1015,17 @@ bool GraphBuilder::DoLoadConst(const Instr &instr) {
 
 bool GraphBuilder::DoListToTuple(const Instr &instr) {
   ValueNode *list = pop();
+  if (list->GetOpcode() == BUILD_LIST) {
+    std::for_each(list->getInputs().begin(), list->getInputs().end(), [this](ValueNode *i) { this->push(i); });
+    return DoBuildOp({BUILD_TUPLE, static_cast<int>(list->getInputs().size())});
+  }
   AObject *vo = list->GetVobj();
   if (vo && vo->GetType() == AObject::kTypeList) {
     vo = static_cast<AbstractList *>(vo)->ListToTuple();
   } else {
     vo = AObject::MakeAObject(AObject::kTypeAnyValue);
   }
-  ValueNode *tuple;
-  if (list->GetOpcode() == BUILD_LIST) {
-    tuple = NewValueNode(vo, BUILD_TUPLE, list->getInputs().size(), list->getInputs());
-    graph_->GetTracedNodes().push_back(tuple);
-  } else {
-    tuple = NewValueNode(vo, instr, {list});
-  }
+  ValueNode *tuple = NewValueNode(vo, instr, {list});
   push(tuple);
   return true;
 }
@@ -1063,58 +1052,143 @@ bool GraphBuilder::DoMakeFunction(const Instr &instr) {
   return true;
 }
 
+AObject *GraphBuilder::InferUnary(ValueNode *node, const Instr &instr) { return node->GetVobj()->Unary(instr.op()); }
+
 bool GraphBuilder::DoUnary(const Instr &instr) {
-  int opcode = instr.op();
-  auto o = pop();
-  auto t = o->GetVobj();
-  auto r = NewValueNode(t ? t->Unary(opcode) : AObject::MakeAObject(AObject::kTypeAnyValue), instr, {o});
-  push(r);
+  ValueNode *node = pop();
+
+  AObject *object_info = InferUnary(node, instr);
+  ValueNode *new_node = NewValueNode(object_info, instr, {node});
+  push(new_node);
   return true;
+}
+
+bool GraphBuilder::DoIsOp(const Instr &instr) { return DoBinary(instr); }
+
+AObject *GraphBuilder::InferBinary(ValueNode *left, ValueNode *right, const Instr &instr) {
+  AObject *object_info;
+  if (instr.op() == IS_OP || instr.op() == CONTAINS_OP) {
+    object_info = left->GetVobj()->Binary(right->GetVobj(), instr.op());
+    PyObject *object = object_info != nullptr ? object_info->GetPyObject().ptr() : nullptr;
+    if (object != nullptr) {
+      object_info = AObject::Convert(py::bool_((object == Py_True) ^ instr.arg()));
+    }
+  } else if (Utils::IsBinaryMathOp(instr.op())) {
+    if (left->IsConstantValue() && right->IsConstantValue()) {
+      // compute real tensor value, not infer fake value
+      AbstractObject *tensor = static_cast<AbstractObject *>(left->GetVobj());
+      object_info = tensor->AbstractObject::Binary(right->GetVobj(), instr.op());
+    } else {
+      object_info = left->GetVobj()->Binary(right->GetVobj(), instr.op());
+    }
+  } else {
+    return AObject::MakeAObject(AObject::kTypeAnyValue);
+  }
+  return object_info;
 }
 
 bool GraphBuilder::DoBinary(const Instr &instr) {
-  int opcode = instr.op();
-  int oparg = instr.arg();
-  auto r = pop();
-  auto l = pop();
-  AObject *o;
-  if (l->IsConstantValue() && r->IsConstantValue()) {
-    o = static_cast<AbstractObject *>(l->GetVobj())->AbstractObject::Binary(r->GetVobj(), opcode);
-  } else {
-    o = l->GetVobj() ? l->GetVobj()->Binary(r->GetVobj(), opcode) : AObject::MakeAObject(AObject::kTypeAnyValue);
-  }
-  if ((opcode == CONTAINS_OP || opcode == IS_OP) && o && o->GetPyObject().ptr()) {
-    bool res = (o->GetPyObject().ptr() == Py_True) ^ oparg;
-    o = AObject::Convert(py::bool_(res));
-  }
-  auto v = NewValueNode(o, instr, {l, r});
-  push(v);
+  ValueNode *right = pop();
+  ValueNode *left = pop();
+
+  AObject *object_info = InferBinary(left, right, instr);
+  ValueNode *new_node = NewValueNode(object_info, instr, {left, right});
+  push(new_node);
   return true;
 }
 
-bool GraphBuilder::DoBinaryMul(const Instr &instr) {
-  auto r = pop();
-  auto l = pop();
-  PyObject *r_object = r->IsConstantValue() ? r->GetVobj()->GetPyObject().ptr() : nullptr;
-  bool is_simplify = l->GetOpcode() == BUILD_LIST || l->GetOpcode() == BUILD_TUPLE;
-  if (is_simplify) {
-    is_simplify = r_object && PyLong_Check(r_object) && (Py_ABS(Py_SIZE(r_object)) < 2);
+static bool CheckTupleListMul(ValueNode *left, ValueNode *right) {
+  bool special = left->GetOpcode() == BUILD_LIST || left->GetOpcode() == BUILD_TUPLE || left->IsConstantValue();
+  if (special && right->IsConstantValue()) {
+    PyObject *mul = right->GetVobj()->GetPyObject().ptr();
+    const int max = 2;
+    return PyLong_Check(mul) && Py_ABS(Py_SIZE(mul)) < max;
   }
-  if (is_simplify) {
-    std::vector<ValueNode *> inputs;
-    Py_ssize_t mul = PyLong_AsSsize_t(r_object);
-    for (auto i = mul; i > 0; --i) {
-      inputs.insert(inputs.end(), l->getInputs().begin(), l->getInputs().end());
-    }
-    AObject *res = AObject::BuildOperations(CollectObjects(inputs), l->GetOpcode());
-    ValueNode *new_node = NewValueNode(res, l->GetOpcode(), inputs.size(), inputs);
-    graph_->GetTracedNodes().push_back(new_node);
+  return false;
+}
+
+bool GraphBuilder::DoBinaryMul(const Instr &instr) {
+  if (!CheckTupleListMul(seek(1), seek(0))) {
+    return DoBinary(instr);
+  }
+
+  ValueNode *right = pop();
+  ValueNode *left = pop();
+  int l_op = left->GetVobj()->GetType() == AObject::kTypeTuple ? BUILD_TUPLE : BUILD_LIST;
+
+  Py_ssize_t mul = PyLong_AsSsize_t(right->GetVobj()->GetPyObject().ptr());
+  for (auto i = mul; i > 0; --i) {
+    UnpackElements(left);
+  }
+  int oparg = left->getInputs().size() * (mul < 0 ? 0 : size_t(mul));
+  DoBuildOp({l_op, oparg});
+  return true;
+}
+
+static bool CheckTupleListAdd(ValueNode *left, ValueNode *right) {
+  // type must be same
+  AObject::Type l_type = left->GetVobj()->GetType();
+  AObject::Type r_type = right->GetVobj()->GetType();
+  bool support = l_type == AObject::kTypeTuple || l_type == AObject::kTypeList;
+  if (!support || l_type != r_type) {
+    return false;
+  }
+  // only handle BUILD_TUPLE and BUILD_LIST
+  int l_op = left->GetOpcode();
+  int r_op = right->GetOpcode();
+  bool special = l_op == BUILD_TUPLE || l_op == BUILD_LIST || l_op == LOAD_CONST;
+  bool accept = r_op == BUILD_TUPLE || r_op == BUILD_LIST || r_op == LOAD_CONST;
+  if (!special || !accept) {
+    return false;
+  }
+  return true;
+}
+
+bool GraphBuilder::DoInplaceAdd(const Instr &instr) {
+  AObject::Type l_type = seek(1)->GetVobj()->GetType();
+  if (l_type == AObject::kTypeTuple) {
+    return DoBinaryAdd(instr);
+  }
+  if (!CheckTupleListAdd(seek(1), seek(0))) {
+    return DoBinary(instr);
+  }
+
+  ValueNode *right = pop();
+  ValueNode *left = pop();
+  int l_op = BUILD_LIST;
+
+  int size = this->frame_.GetStacks().size();
+  UnpackElements(left);
+  UnpackElements(right);
+  size = this->frame_.GetStacks().size() - size;
+  DoBuildOp({l_op, size});
+
+  ValueNode *new_node = pop();
+  if (ReplaceAll(left, new_node)) {
     push(new_node);
     return true;
   }
-  push(l);
-  push(r);
+  graph_->GetTracedNodes().pop_back();
+  push(left);
+  push(right);
   return DoBinary(instr);
+}
+
+bool GraphBuilder::DoBinaryAdd(const Instr &instr) {
+  if (!CheckTupleListAdd(seek(1), seek(0))) {
+    return DoBinary(instr);
+  }
+
+  ValueNode *right = pop();
+  ValueNode *left = pop();
+  int l_op = left->GetVobj()->GetType() == AObject::kTypeTuple ? BUILD_TUPLE : BUILD_LIST;
+
+  int size = this->frame_.GetStacks().size();
+  UnpackElements(left);
+  UnpackElements(right);
+  size = this->frame_.GetStacks().size() - size;
+  DoBuildOp({l_op, size});
+  return true;
 }
 
 bool GraphBuilder::DoCompare(const Instr &instr) {
@@ -1210,10 +1284,7 @@ ValueNode *GraphBuilder::ReplaceMergeOp(int opcode, const std::vector<ValueNode 
       break;
     case LIST_EXTEND:
       if (arg->IsConstantValue()) {
-        for (auto item : arg->GetVobj()->GetPyObject()) {
-          ValueNode *v = NewValueNode(AObject::Convert(item.ptr()), LOAD_CONST, -1);
-          build_inputs.push_back(v);
-        }
+        build_inputs = UnpackConstObject(arg->GetConstantInfo()->value());
       } else if (arg->GetOpcode() == BUILD_LIST || arg->GetOpcode() == BUILD_TUPLE) {
         build_inputs.insert(build_inputs.end(), arg->getInputs().begin(), arg->getInputs().end());
       } else {
@@ -1225,11 +1296,10 @@ ValueNode *GraphBuilder::ReplaceMergeOp(int opcode, const std::vector<ValueNode 
     case DICT_MERGE:
       // NOTE: here not check duplicate key, will not exception if function call is inlined
     case DICT_UPDATE:
-      if (arg->GetOpcode() == BUILD_MAP) {
-        build_inputs.insert(build_inputs.end(), arg->getInputs().begin(), arg->getInputs().end());
-      } else {
+      if (arg->GetOpcode() != BUILD_MAP) {
         return nullptr;
       }
+      build_inputs.insert(build_inputs.end(), arg->getInputs().begin(), arg->getInputs().end());
       opcode = BUILD_MAP;
       break;
     case MAP_ADD:
@@ -1240,17 +1310,19 @@ ValueNode *GraphBuilder::ReplaceMergeOp(int opcode, const std::vector<ValueNode 
     default:
       return nullptr;
   }
-  AObject *object_info = AObject::BuildOperations(CollectObjects(build_inputs), opcode);
-  ValueNode *new_node = NewValueNode(object_info, opcode, build_inputs.size() / div, build_inputs);
-  // these opcode generally not side effect, check it
-  return new_node;
+  std::for_each(build_inputs.begin(), build_inputs.end(), [this](ValueNode *i) { this->push(i); });
+  int oparg = build_inputs.size() / div;
+  DoBuildOp({opcode, oparg});
+  return pop();
 }
 
 bool GraphBuilder::DoMergeOp(const Instr &instr) {
   int opcode = instr.op();
   int oparg = instr.arg();
+  int pos = oparg + (opcode == MAP_ADD);
 
-  auto &container = seek(oparg + (opcode == MAP_ADD));
+  int index = this->frame_.GetStacks().size() - 1 - pos;
+  ValueNode *container = seek(pos);
   std::vector<ValueNode *> inputs = {container, pop()};
   if (opcode == MAP_ADD) {
     inputs.insert(inputs.begin() + 1, pop());
@@ -1261,8 +1333,7 @@ bool GraphBuilder::DoMergeOp(const Instr &instr) {
   // ...
   ValueNode *new_node = ReplaceMergeOp(opcode, inputs);
   if (new_node != nullptr) {
-    container = new_node;
-    graph_->GetTracedNodes().push_back(new_node);
+    this->frame_.GetStacks()[index] = new_node;
     return true;
   }
 
@@ -1271,7 +1342,8 @@ bool GraphBuilder::DoMergeOp(const Instr &instr) {
     args_info.push_back(inputs[2]->GetVobj());
   }
   AObject *vo = AObject::MergeOperations(container->GetVobj(), args_info, opcode);
-  container = NewValueNode(vo, instr, inputs);
+  MS_EXCEPTION_IF_CHECK_FAIL(this->frame_.GetStacks()[index] == container, "stack error");
+  this->frame_.GetStacks()[index] = NewValueNode(vo, instr, inputs);
   return true;
 }
 
@@ -1482,26 +1554,6 @@ py::object GraphBuilder::GetFuncInfo(ValueNode *func_node) {
   return FindPyFunc(vobj);
 }
 
-bool MindGraphBuilder::WhiteListFuncCheckAndInfer(CallNode *call_node, const py::object &callable) {
-  std::string special_func_key;
-  if (IsFuncInWhiteList(callable, &special_func_key)) {
-    call_node->SetSubGraph(NewGraph(nullptr, nullptr));
-    call_node->GetSubGraph()->SetGuard(root_->GetGraph()->GetGuard());
-    bool has_sub_graph = HandleFuncInWhiteList(special_func_key, call_node);
-    if (!has_sub_graph) {
-      call_node->SetInlineReason(InlineReason::kInlineFuncSpecialize);
-      MS_ASSERT(!call_node->GetSubGraph());  // check infer function
-      return true;
-    }
-    call_node->SetInlineReason(InlineReason::kInline);
-    ValueNode *ret_node = call_node->GetSubGraph()->GetRetVal();
-    MS_EXCEPTION_IF_CHECK_FAIL(ret_node, "infer special function failed");
-    seek(0) = ret_node;
-    return true;
-  }
-  return false;
-}
-
 bool GraphBuilder::WhiteListFuncCheckAndInfer(CallNode *call_node, const py::object &callable) {
   const auto &conf = call_node->GetGraph()->Config();
 
@@ -1528,16 +1580,16 @@ bool GraphBuilder::WhiteListFuncCheckAndInfer(CallNode *call_node, const py::obj
   if (IsFuncInWhiteList(callable, &special_func_key, infer_primitive)) {
     call_node->SetSubGraph(NewGraph(nullptr, nullptr));
     call_node->GetSubGraph()->SetGuard(root_->GetGraph()->GetGuard());
-    bool has_sub_graph = HandleFuncInWhiteList(special_func_key, call_node);
-    if (!has_sub_graph) {
-      call_node->SetInlineReason(InlineReason::kInlineFuncSpecialize);
-      MS_ASSERT(!call_node->GetSubGraph());  // check infer function
-      return true;
+    if (!HandleFuncInWhiteList(special_func_key, call_node)) {
+      return false;
     }
-    call_node->SetInlineReason(InlineReason::kInline);
-    ValueNode *ret_node = call_node->GetSubGraph()->GetRetVal();
-    MS_EXCEPTION_IF_CHECK_FAIL(ret_node, "infer special function failed");
-    seek(0) = ret_node;
+    if (call_node->GetSubGraph() == nullptr) {
+      call_node->SetInlineReason(InlineReason::kInlineFuncSpecialize);
+    } else {
+      MS_EXCEPTION_IF_NULL(call_node->GetSubGraph()->GetRetVal());
+      call_node->SetInlineReason(InlineReason::kInline);
+      seek(0) = call_node->GetSubGraph()->GetRetVal();
+    }
     return true;
   }
 
@@ -1568,14 +1620,28 @@ bool UnsupportedCodeTypeCheck(PyCodeObject *co) {
   return false;
 }
 
-bool ApplyInlinePolicy(Graph *g) {
+bool ApplyInlinePolicy(CallNode *call_node) {
+  Graph *g = call_node->GetSubGraph();
+  if (g == nullptr || g->GetRetVal() == nullptr) {
+    return false;
+  }
+
   PyCodeObject *co = g->GetCodeObj();
   int ncells = PyTuple_GET_SIZE(co->co_cellvars);
   int nfrees = PyTuple_GET_SIZE(co->co_freevars);
-  if (ncells > 0) {
+
+  bool is_make_func = call_node->input(0)->GetOpcode() == MAKE_FUNCTION;
+  if (is_make_func) {
+    // inline MAKE_FUNCTION, need eliminate cell and free variable if the function is not dead local.
+    return ncells == 0;
+  }
+
+  const auto &closures = g->GetFrame(0).GetClosures();
+  if (std::any_of(closures.begin(), closures.begin() + ncells, [](auto n) { return !n->GetCellOper().empty(); })) {
     return false;
   }
   if (nfrees > 0) {
+    // if inline, guard free variable
     return nfrees == 1 && std::string("__class__") == PyUnicode_AsUTF8(PyTuple_GET_ITEM(co->co_freevars, 0));
   }
 
@@ -1584,8 +1650,20 @@ bool ApplyInlinePolicy(Graph *g) {
     return false;
   }
 
-  for (auto &i : g->GetCFG()->bb_pool()) {
-    if (i->HasUnresolvedSideEffect()) {
+  if (g->GetRetVal()->GetOpcode() == MAKE_FUNCTION) {
+    return false;
+  }
+  for (auto i : g->GetTracedNodes()) {
+    int op = i->GetOpcode();
+    if (op == STORE_GLOBAL || op == DELETE_GLOBAL) {
+      return false;
+    }
+    // check MAKE_FUNCTION is alive, it is incorrect that inline the function of different module with MAKE_FUNCTION
+    auto begin = i->getInputs().begin();
+    if (Utils::IsCallOp(i->GetOpcode()) && static_cast<CallNode *>(i)->GetInlineReason() == InlineReason::kInline) {
+      begin++;
+    }
+    if (std::any_of(begin, i->getInputs().end(), [](ValueNode *n) { return n->GetOpcode() == MAKE_FUNCTION; })) {
       return false;
     }
   }
@@ -1771,7 +1849,7 @@ bool GraphBuilder::HandleCallClass(CallNode *call_node) {
   }
   AbstractType *t = static_cast<AbstractType *>(vobj);
   AObject::Type type = t->GetTypeType();
-  if (ClassInstantiationFold(call_node, type)) {
+  if (!trace_flag() && ClassInstantiationFold(call_node, type)) {
     return true;
   }
 
@@ -1782,6 +1860,7 @@ bool GraphBuilder::HandleCallClass(CallNode *call_node) {
                   IsMsClass(t->GetPyObject().ptr());
   // create instance
   if (support_create_instance || constant) {
+    constant |= std::none_of(params.begin(), params.end(), [](ValueNode *i) { return !i->IsConstantValue(); });
     std::vector<py::object> args;
     std::transform(params.begin() + 1, params.end(), std::back_inserter(args), [](ValueNode *n) {
       AObject *i = n->GetVobj();
@@ -1789,36 +1868,23 @@ bool GraphBuilder::HandleCallClass(CallNode *call_node) {
     });
     py::object res = t->BuildInstance(args, call_node->GetOpcode());
     instance = res.ptr() ? AObject::Convert(res) : nullptr;
-  }
-
-  auto &nodes = this->graph_->GetTracedNodes();
-  PyTypeObject *super_tp = reinterpret_cast<PyTypeObject *>(static_cast<AbstractType *>(vobj)->GetPyObject().ptr());
-  if (super_tp == &PySuper_Type) {
-    nodes.pop_back();
-  }
-
-  // make instance is global
-  if (constant && instance != nullptr) {
-    // guard parameters
-    bool guard_success = GuardConstCallNodeParam(call_node, call_node->GetGraph(), INT_MAX);
-    if (guard_success) {
-      MS_EXCEPTION_IF_CHECK_FAIL(nodes.back() == call_node, "CallNode must be last when build sub graph");
-
-      nodes.pop_back();
-      ValueNode *new_node = NewValueNode(instance, LOAD_CONST, -1, {});
-      nodes.push_back(new_node);
-      seek(0) = new_node;
+  } else if (reinterpret_cast<PyTypeObject *>(vobj->GetPyObject().ptr()) == &PySuper_Type) {
+    // take super ptr and compare with PySuper_Type
+    instance = BuildSuperObject(graph_->GetCodeObj());
+    this->graph_->GetTracedNodes().pop_back();
+    if (PyErr_Occurred()) {
+      throw py::error_already_set();
     }
   }
 
-  // take super ptr and compare with PySuper_Type
-  AObject *cls_info = call_node->input(0)->GetVobj();
-  PyTypeObject *tp = reinterpret_cast<PyTypeObject *>(static_cast<AbstractType *>(cls_info)->GetPyObject().ptr());
-  if (tp != nullptr && tp == &PySuper_Type) {
-    instance = BuildSuperObject(graph_->GetCodeObj());
-  }
-
-  if (!instance) {
+  if (constant && instance != nullptr && GuardConstCallNodeParam(call_node, call_node->GetGraph(), INT_MAX)) {
+    // make instance is constant
+    auto iter = this->graph_->GetTracedNodes().end() - 1;
+    MS_EXCEPTION_IF_CHECK_FAIL(*iter == call_node, "CallNode must be last when build sub graph");
+    *iter = NewValueNode(instance, LOAD_CONST, -1, {});
+    seek(0) = *iter;
+  } else if (!instance) {
+    // create abstract instance
     instance = t->BuildAbstractInstance(CollectObjects({params.begin() + 1, params.end()}), call_node->GetOpcode());
   }
   call_node->SetVobj(instance);
@@ -1876,60 +1942,12 @@ ValueNode *GetSelfFromMethod(ValueNode *method) {
   return self;
 }
 
-static bool SkipGuardInlinedFunc(ValueNode *func_node) {
-  if (func_node->IsConstantValue()) {
-    return true;
-  }
-  AObject::Type value_type = func_node->GetVobj()->GetType();
-  if (func_node->GetOpcode() == LOAD_ATTR) {
-    AObject *src_info = func_node->input(0)->GetVobj();
-    if (src_info->GetType() == AObject::kTypeTensor && value_type == AObject::kTypeBoundMethod) {
-      // function from Tensor
-      return true;
-    }
-  }
-  return false;
-}
-
-bool GuardInlinedFunc(CallNode *call_node) {
-  if (SkipGuardInlinedFunc(call_node->input(0))) {
-    return true;
-  }
-  AObject::Type func_type = call_node->input(0)->GetVobj()->GetType();
-
-  // guard this function
-  TracePtr tr = call_node->GetGraph()->TraceValueNode(call_node->input(0));
-  if (tr == nullptr) {
-    return false;
-  }
-  PyObject *callable = call_node->input(0)->GetVobj()->GetPyObject().ptr();
-  bool strict = call_node->GetGraph()->Config().GetBoolConfig(GraphJitConfig::kStrictTrace);
-  if (func_type == AObject::kTypeBoundMethod) {
-    PyObject *func = PyMethod_GET_FUNCTION(callable);
-    tr = CreateOpTrace(func, LOAD_ATTR, 0, {tr}, "", "__func__", strict);
-    tr = CreateOpTrace(PyFunction_GET_CODE(func), LOAD_ATTR, 0, {tr}, "", "__code__", strict);
-    call_node->GetGraph()->GetGuard()->GetGuard()->GuardOn(tr, GuardLevel::GId);
-  } else if (func_type == AObject::kTypeCell || AObject::kTypeAnyValue) {
-    call_node->GetGraph()->GetGuard()->GetGuard()->GuardOn(tr, GuardLevel::GType, false);
-  } else if (func_type == AObject::kTypeFunction) {
-    PyObject *name = reinterpret_cast<PyFunctionObject *>(callable)->func_qualname;
-    if (std::string(PyUnicode_AsUTF8(name)).find(kPIJitCopyFuncKey) != std::string::npos) {
-      return true;
-    }
-    call_node->GetGraph()->GetGuard()->GetGuard()->GuardOn(tr, GuardLevel::GId);
-    call_node->input(0)->SetConstantValue(true);
-  } else {
-    return false;
-  }
-  return true;
-}
-
 bool GraphBuilder::ReplaceCall(CallNode *call_node, const py::object &old_func) {
   if (call_node->GetOpcode() == CALL_FUNCTION_EX && call_node->input(1)->GetOpcode() != BUILD_TUPLE) {
     // dynamic length variable arguments, user-defined unpack sequence
     return false;
   }
-  if (!GuardInlinedFunc(call_node)) {
+  if (!graph_->GuardInlinedFunc(call_node)) {
     return false;
   }
   auto jcr = getJitCompileResults(old_func.ptr(), false);
@@ -1995,46 +2013,74 @@ bool GraphBuilder::ReplaceCall(CallNode *call_node, const py::object &old_func) 
   return true;
 }
 
+namespace {
+std::string GetFuncGraphName(const py::object &func, const MindGraphBuilderPtr &subgraph) {
+  auto func_str = py::cast<std::string>(py::str(func));
+  std::vector<std::string> vec;
+  std::istringstream iss(func_str);
+  std::string str;
+  while (iss >> str) {
+    (void)vec.emplace_back(str);
+  }
+  if (vec.size() <= 1) {
+    return "";
+  }
+  auto func_name = vec[1];
+  std::replace(func_name.begin(), func_name.end(), '.', '_');
+  return func_name + "_" + std::to_string(subgraph->GetGraph()->GetCodeObj()->co_firstlineno);
+}
+}  // namespace
+
 StopTraceReason MindGraphBuilder::BuildSubGraph(CallNode *call_node, int depth, const py::object &func,
                                                 const GraphBuilderPtr &subgraph) {
+  auto sg = std::dynamic_pointer_cast<MindGraphBuilder>(subgraph);
   InlineReason stat = InlineReason::kInline;
   bool is_make_func = call_node->input(0)->GetOpcode() == MAKE_FUNCTION;
   if (is_make_func) {
     // inline MAKE_FUNCTION, need eliminate cell and free variable if the function is not dead local.
-    bool has_cell = PyTuple_GET_SIZE(subgraph->GetGraph()->GetCodeObj()->co_cellvars) != 0;
+    bool has_cell = PyTuple_GET_SIZE(sg->GetGraph()->GetCodeObj()->co_cellvars) != 0;
     stat = has_cell ? InlineReason::kInlinePolicyDisabled : stat;
   }
 
-  auto code = subgraph->GetGraph()->GetGuard();
+  auto code = sg->GetGraph()->GetGuard();
   MS_EXCEPTION_IF_NULL(code);
   code->GetGuard()->Backup();
 
   auto args = call_node->GetArgs();
+  if (PyFunction_Check(func.ptr())) {
+    args = GetNewArgs(call_node, AObject::Convert(func.ptr()));
+  }
 
-  MS_LOG(INFO) << "new subgraph->TraceRun";
-  subgraph->TraceRun(args);
-  MS_LOG(INFO) << "new subgraph->TraceRun end";
+  MS_LOG(INFO) << "new subgraph->TraceRun:" << py::str(func);
+  sg->FGAddInputs(args);
+  auto reason = sg->TraceRun();
+  MS_LOG(INFO) << "new subgraph->TraceRun end:" << py::str(func);
 
-  call_node->SetSubGraph(subgraph->GetGraph());
-  auto sg = std::dynamic_pointer_cast<MindGraphBuilder>(subgraph);
-  auto sub_ret = subgraph->GetGraph()->GetRetVal();
+  call_node->SetSubGraph(sg->GetGraph());
+  auto sub_ret = sg->GetGraph()->GetRetVal();
   if (sub_ret != nullptr) {
-    if (CheckConstPyObject(sub_ret->GetVobj()->GetPyObject().ptr())) {
+    if (sub_ret->GetVobj()->GetPyObject().ptr() == nullptr ||
+        CheckConstPyObject(sub_ret->GetVobj()->GetPyObject().ptr())) {
       call_node->SetVobj(sub_ret->GetVobj());
-    } else if (sg->FGBuilder()->graph() == nullptr) {
-      MS_LOG(ERROR) << "subgraph trace null";
-      return StopTraceReason::kTrace_Fail;
     } else {
-      auto res = FGBuilder()->AddNode(sg->FGBuilder()->graph(), args);
-      if (res.ptr()) {
-        MS_LOG(INFO) << "add fg node suc: ";
-        call_node->SetVobj(AObject::Convert(res));
+      sg->FGBuilder()->SetGraphName(GetFuncGraphName(func, sg));
+      sg->FGAddOutput();
+      if (sg->FGBuilder()->graph() == nullptr) {
+        MS_LOG(ERROR) << "subgraph trace null";
+        return StopTraceReason::kTrace_Fail;
       } else {
-        MS_LOG(ERROR) << "add fg node fail";
-        stat = InlineReason::kInlineInfer_Fail;
+        TraceGuard trace_guard(GetLocation(call_node));
+        auto res = FGBuilder()->AddNode(sg->FGBuilder()->graph(), args);
+        if (res.ptr()) {
+          MS_LOG(INFO) << "add fg node suc: ";
+          call_node->SetVobj(AbstractTraceNode::MakeAObject(res));
+        } else {
+          MS_LOG(ERROR) << "add fg node fail";
+          stat = InlineReason::kInlineInfer_Fail;
+        }
       }
     }
-    stat = is_make_func || ApplyInlinePolicy(subgraph->GetGraph()) ? stat : InlineReason::kInlinePolicyDisabled;
+    stat = is_make_func || ApplyInlinePolicy(call_node) ? stat : InlineReason::kInlinePolicyDisabled;
   } else {
     stat = InlineReason::kInlineInfer_Fail;
   }
@@ -2050,7 +2096,7 @@ StopTraceReason MindGraphBuilder::BuildSubGraph(CallNode *call_node, int depth, 
   } else {
     if (!is_make_func) {
       // exclude make function, because of function always a new function but code is constant
-      stat = GuardInlinedFunc(call_node) ? stat : InlineReason::kInlinePolicyDisabled;
+      stat = graph_->GuardInlinedFunc(call_node) ? stat : InlineReason::kInlinePolicyDisabled;
     }
     if (stat != InlineReason::kInline) {
       code->GetGuard()->Rollback();
@@ -2061,7 +2107,7 @@ StopTraceReason MindGraphBuilder::BuildSubGraph(CallNode *call_node, int depth, 
 
   // if stat == InlineReason::kInline, guard free variable
   call_node->SetInlineReason(stat);
-  return StopTraceReason::kNonStopTrace;
+  return reason;
 }
 
 // build sub-graph
@@ -2069,34 +2115,24 @@ StopTraceReason GraphBuilder::BuildSubGraph(CallNode *call_node, int depth, cons
                                             const GraphBuilderPtr &subgraph) {
   InlineReason stat = InlineReason::kInline;
   bool is_make_func = call_node->input(0)->GetOpcode() == MAKE_FUNCTION;
-  if (is_make_func) {
-    // inline MAKE_FUNCTION, need eliminate cell and free variable if the function is not dead local.
-    bool has_cell = PyTuple_GET_SIZE(subgraph->GetGraph()->GetCodeObj()->co_cellvars) != 0;
-    stat = has_cell ? InlineReason::kInlinePolicyDisabled : stat;
-  }
 
   auto code = subgraph->GetGraph()->GetGuard();
   MS_EXCEPTION_IF_NULL(code);
   code->GetGuard()->Backup();
 
   MS_LOG(INFO) << "old subgraph->TraceRun";
-  subgraph->TraceRun(call_node->GetArgs());
+  subgraph->TraceRun();
 
   call_node->SetSubGraph(subgraph->GetGraph());
   if (subgraph->GetGraph()->GetRetVal() != nullptr) {
     call_node->SetVobj(subgraph->GetGraph()->GetRetVal()->GetVobj());
   }
-  if (subgraph->GetGraph()->GetGeneratorResult() != nullptr &&
-      !subgraph->GetGraph()->Config().GetBoolConfig(GraphJitConfig::kEnableGeneratorExpressionToTuple)) {
+  bool gen_to_tuple = subgraph->GetGraph()->Config().GetBoolConfig(GraphJitConfig::kEnableGeneratorExpressionToTuple);
+  if (!gen_to_tuple && subgraph->GetGraph()->GetGeneratorResult() != nullptr) {
     subgraph->GetGraph()->SetRetVal(nullptr);
   }
 
-  if (subgraph->GetGraph()->GetRetVal() != nullptr) {
-    call_node->SetVobj(subgraph->GetGraph()->GetRetVal()->GetVobj());
-    stat = is_make_func || ApplyInlinePolicy(subgraph->GetGraph()) ? stat : InlineReason::kInlinePolicyDisabled;
-  } else {
-    stat = InlineReason::kInlineInfer_Fail;
-  }
+  stat = ApplyInlinePolicy(call_node) ? stat : InlineReason::kInlinePolicyDisabled;
   if (stat != InlineReason::kInline) {
     code->GetGuard()->Rollback();
     if (!is_make_func) {
@@ -2109,7 +2145,7 @@ StopTraceReason GraphBuilder::BuildSubGraph(CallNode *call_node, int depth, cons
   } else {
     if (!is_make_func) {
       // exclude make function, because of function always a new function but code is constant
-      stat = GuardInlinedFunc(call_node) ? stat : InlineReason::kInlinePolicyDisabled;
+      stat = graph_->GuardInlinedFunc(call_node) ? stat : InlineReason::kInlinePolicyDisabled;
     }
     if (stat != InlineReason::kInline) {
       code->GetGuard()->Rollback();
@@ -2355,9 +2391,9 @@ ValueNode *GetBoundSelf(CallNode *call_node) {
     case AObject::kTypeAnyValue:
       self = func_val;
       break;
-    case AObject::kTypeFunction: {
+    case AObject::kTypeTraceNode:
+    case AObject::kTypeFunction:
       break;
-    }
     default:
       MS_LOG(INTERNAL_EXCEPTION) << "unimplemented type " << vo->ToString();
       break;
@@ -2368,7 +2404,8 @@ ValueNode *GetBoundSelf(CallNode *call_node) {
 bool GraphBuilder::HandlePositionParams(const py::object &func, std::vector<ValueNode *> *params, FrameStates *frame) {
   CallNode *call_node = reinterpret_cast<CallNode *>(seek(0));
   PyCodeObject *co = reinterpret_cast<PyCodeObject *>(PyFunction_GET_CODE(func.ptr()));
-  AObject::Type callable_type = call_node->input(0)->GetVobj()->GetType();
+  auto vobj = trace_flag() ? AObject::Convert(func.ptr()) : call_node->input(0)->GetVobj();
+  AObject::Type callable_type = vobj->GetType();
 
   ValueNode *self = GetBoundSelf(call_node);
   if (self != nullptr) {
@@ -2422,6 +2459,9 @@ bool GraphBuilder::HandlePositionParams(const py::object &func, std::vector<Valu
 }
 
 bool GraphBuilder::HandleCallParameters(const py::object &func_info, CallNode *call_node, FrameStates *frame) {
+  if (func_info.ptr() == nullptr) {
+    MS_LOG(EXCEPTION) << "HandleCallParameters with empty func_info input.";
+  }
   PyCodeObject *co = reinterpret_cast<PyCodeObject *>(PyFunction_GET_CODE(func_info.ptr()));
   frame->ResizeLocal(co->co_nlocals);
 
@@ -2472,127 +2512,6 @@ bool GraphBuilder::HandleCallParameters(const py::object &func_info, CallNode *c
 
 static void SetGradFuncInfo(mindspore::pijit::CallNode *call_node);
 
-void MindGraphBuilder::FGAddInput(const std::vector<py::object> &args) {
-  for (size_t i = 0; i < args.size(); ++i) {
-    MS_LOG(INFO) << "try add input: " << py::str(args[i]);
-    FGBuilder()->AddInput(args[i]);
-    MS_LOG(INFO) << "add input suc";
-  }
-}
-
-void MindGraphBuilder::FGAddOutput() {
-  if (auto ret = GetGraph()->GetRetVal()) {
-    MS_LOG(INFO) << ret->GetVobj()->ToString();
-    auto out = ret->GetVobj()->GetPyObject();
-    MS_LOG(INFO) << "try add output: " << py::str(out) << " addr:" << out.ptr();
-    if (FGBuilder()->AddOutput(out)) {
-      MS_LOG(INFO) << "add output succuss";
-    } else {
-      MS_LOG(ERROR) << "add output fail";
-      // TODO(xiaruijie)
-    }
-  }
-}
-
-py::object MindGraphBuilder::FGAddNode(CallNode *call_node, const py::object &callable_info,
-                                       const std::vector<py::object> &args, StopTraceReason *stop_reason) {
-  MS_LOG(INFO) << "try add node: " << py::str(callable_info);
-  auto res = FGBuilder()->AddNode(callable_info, args);
-  if (res.ptr() == nullptr) {
-    MS_LOG(ERROR) << "add node fail";
-    *stop_reason = StopTraceReason::kTrace_Fail;
-  } else {
-    MS_LOG(INFO) << "add node suc";
-    auto node = AbstractTraceNode::MakeAObject(res);
-    MS_LOG(INFO) << py::str(node->GetPyObject());
-    MS_LOG(INFO) << node->ToString();
-    call_node->SetVobj(node);
-    *stop_reason = StopTraceReason::kNonStopTrace;
-  }
-  return py::object();
-}
-std::vector<py::object> GraphBuilder::GetNewArgs(CallNode *call_node) {
-  std::vector<py::object> new_args;
-  auto new_callable_info = GetFuncInfo(call_node->input(0));
-  FrameStates f;
-  if (!HandleCallParameters(new_callable_info, call_node, &f)) {
-    MS_LOG(ERROR) << "HandleCallParameters error" << std::endl;
-  }
-  PyCodeObject *co = reinterpret_cast<PyCodeObject *>(PyFunction_GET_CODE(new_callable_info.ptr()));
-  int argc = co->co_argcount + co->co_kwonlyargcount;
-  argc += (co->co_flags & CO_VARARGS) ? 1 : 0;
-  argc += (co->co_flags & CO_VARKEYWORDS) ? 1 : 0;
-  std::transform(f.GetLocals().begin(), f.GetLocals().begin() + argc, std::back_inserter(new_args),
-                 [](ValueNode *n) { return n->GetVobj() ? n->GetVobj()->GetPyObject() : py::object(); });
-  return new_args;
-}
-py::object MindGraphBuilder::ResolveCallable(CallNode *call_node, StopTraceReason *stop_reason) {
-  AObject *callable = call_node->input(0)->GetVobj();
-  py::object callable_info;
-  *stop_reason = StopTraceReason::kStopTraceInfer_Fail;
-  call_node->SetInlineReason(InlineReason::kInlineInfer_Fail);
-  if (!callable) {
-    return callable_info;
-  }
-  callable_info = callable->GetPyObject();
-  MS_LOG(INFO) << "trace_flag for: " << py::str(callable_info);
-  auto args = call_node->GetArgs();
-  auto method = FGBuilder()->ConvertMethod(callable_info);
-  if (method.ptr() != nullptr) {
-    MS_LOG(INFO) << "convert method :" << py::str(callable_info) << " to " << py::str(method);
-    callable_info = method;
-    args = GetNewArgs(call_node);
-  }
-  auto func = FGBuilder()->ConvertFunction(callable_info);
-  if (func.ptr() != nullptr) {
-    MS_LOG(INFO) << "convert function:" << py::str(callable_info) << " to " << py::str(func);
-    callable_info = func;
-  }
-  if (FGBuilder()->CheckCallable(callable_info)) {
-    return FGAddNode(call_node, callable_info, args, stop_reason);
-  }
-  if (FGBuilder()->CanConstantFoldFunc(callable_info)) {
-    MS_LOG(INFO) << "CanConstantFoldFunc for: " << py::str(callable_info);
-    JustCallAndSetRes(call_node);
-    *stop_reason = StopTraceReason::kNonStopTrace;
-    return py::object();
-  }
-  if (callable_info.ptr() == nullptr) {
-    callable_info = py::cast<py::object>(reinterpret_cast<PyObject *>(callable->GetTypeObject()));
-  }
-
-  AObject::Type callable_type = callable->GetType();
-  if (callable_info.ptr() == nullptr) {
-    if (callable->TestMsFlag(AObject::kMsFlagGradFunc | AObject::kMsFlagShardFunc | AObject::kMsFlagVmapFunc)) {
-      SetGradFuncInfo(call_node);
-      *stop_reason = StopTraceReason::kNonStopTrace;
-    }
-    return py::object();
-  }
-
-  *stop_reason = StopTraceReason::kNonStopTrace;
-  if (callable_type == AObject::kTypeType) {
-    call_node->SetInlineReason(InlineReason::kInlineFunc_ArgType_IsClass);
-    HandleCallClass(call_node);
-    if (static_cast<AbstractType *>(callable)->GetTypeType() == AObject::kTypeCell) {
-      *stop_reason = StopTraceReason::kStopTraceInfer_Fail;
-    }
-    return py::object();
-  }
-
-  if (WhiteListFuncCheckAndInfer(call_node, callable_info)) {
-    return py::object();
-  }
-
-  // find code object
-  callable_info = GetFuncInfo(call_node->input(0));
-  if (callable_info.ptr() == nullptr) {
-    *stop_reason = StopTraceReason::kStopTraceFunc_Type_Unsupported;
-    call_node->SetInlineReason(InlineReason::kInlineCFunction_Unsupported);
-  }
-  return callable_info;
-}
-
 py::object GraphBuilder::ResolveCallable(CallNode *call_node, StopTraceReason *stop_reason) {
   AObject *callable = call_node->input(0)->GetVobj();
   py::object callable_info;
@@ -2639,6 +2558,9 @@ py::object GraphBuilder::ResolveCallable(CallNode *call_node, StopTraceReason *s
 }
 
 void GraphBuilder::ResolveClosure(const py::object &func_info, ValueNode *callable_node, FrameStates *frame) {
+  if (func_info.ptr() == nullptr) {
+    MS_LOG(INTERNAL_EXCEPTION) << "When resolving closure, get func_info failed.";
+  }
   PyCodeObject *co = reinterpret_cast<PyCodeObject *>(PyFunction_GET_CODE(func_info.ptr()));
   PyObject *closure = PyFunction_GET_CLOSURE(func_info.ptr());
 
@@ -2663,7 +2585,7 @@ void GraphBuilder::ResolveClosure(const py::object &func_info, ValueNode *callab
       freevar = graph_->allocator().NewNode<CellVarNode>(CellVarNode::FreeVar);
       freevar->SetVobj(AObject::Convert(v));
 
-      // if inline, guard this variable
+      // if inline, guard free variable
       ValueNode *param = NewValueNode(AObject::Convert(PyCell_GET(v)), LOAD_DEREF, -1);
       param->SetGraph(graph_);
       freevar->SetValue(param);
@@ -2706,21 +2628,30 @@ StopTraceReason GraphBuilder::HandleCall(int depth) {
   stop_reason = BuildSubGraph(call_node, depth, callable_info, subgraph);
   CollectInlineInfo(call_node, depth);
 
-  if (call_node->GetSubGraph() && call_node->GetInlineReason() == InlineReason::kInline) {
+  if (!trace_flag() && call_node->GetSubGraph() && call_node->GetInlineReason() == InlineReason::kInline) {
     MS_EXCEPTION_IF_NULL(call_node->GetSubGraph()->GetRetVal());
     seek(0) = call_node->GetSubGraph()->GetRetVal();
   }
   return stop_reason;
 }
 
-static bool GuardLoopSequence(Graph *graph, ValueNode *seq_node) {
-  // guard type and length
-  TracePtr tr = graph->TraceValueNode(seq_node);
-  if (tr == nullptr) {
-    LogGuardFailed(seq_node, graph->Config(), "FOR_ITER guard failed");
+static bool GuardLoopSequence(Graph *graph, ValueNode *seq_node, Py_ssize_t seq_size) {
+  // guard length
+  PyObject *seq = seq_node->GetVobj()->GetPyObject().ptr();
+  if (seq != nullptr && seq_size == -1) {
+    seq_size = PySequence_Size(seq);
+  }
+  if (seq == nullptr || seq_size == -1) {
+    PyErr_Clear();
     return false;
   }
-  return graph->GetGuard()->GetGuard()->GuardOn(tr, GuardLevel::GDeduce, false);
+  if (!graph->GuardSequenceNodeLength(seq_node, seq_size)) {
+    return false;
+  }
+  if (!graph->GuardType(seq_node)) {
+    return false;
+  }
+  return true;
 }
 
 bool GraphBuilder::TraceRunForIterSequence(int jump_bci) {
@@ -2756,10 +2687,15 @@ bool GraphBuilder::TraceRunForIterSequence(int jump_bci) {
     PyErr_Clear();
     return false;
   }
-  ValueNode *index_node = NewValueNode(AObject::Convert(py::int_(index)), LOAD_CONST, -1, {});
-  ValueNode *item_node = NewValueNode(AObject::Convert(item), BINARY_SUBSCR, 0, {seq_node, index_node});
+
+  py::object index_object = py::int_(index);
+  ValueNode *index_node = NewValueNode(AObject::Convert(index_object), LOAD_CONST, -1, {});
+  ValueNode *item_node = TupleDictGetItem(seq_node, index_node);
+  if (item_node == nullptr) {
+    item_node = NewValueNode(AObject::Convert(item), BINARY_SUBSCR, 0, {seq_node, index_node});
+    graph_->GetTracedNodes().push_back(item_node);
+  }
   Py_DECREF(item);
-  graph_->GetTracedNodes().push_back(item_node);
 
   index++;
   push(item_node);
@@ -3040,8 +2976,57 @@ bool GraphBuilder::TraceRunControl(const Instr &instr) {
   return false;
 }
 
-StopTraceReason GraphBuilder::TraceRun(const std::vector<py::object> &args) {
-  args_ = args;
+static void EliminateCellAccess(Graph *g) {
+  PyCodeObject *co = g->GetCodeObj();
+  int ncells = PyTuple_GET_SIZE(co->co_cellvars);
+  if (ncells == 0) {
+    return;
+  }
+  ValueNode *ret_node = g->GetRetVal();
+  if (ret_node == nullptr) {
+    return;
+  }
+  std::set<ValueNode *> escaped;
+  auto CollectClosure = [&escaped](ValueNode *node) {
+    if (node->GetOpcode() == MAKE_FUNCTION && (node->GetOparg() & 0x08)) {
+      const auto &in = (*(node->getInputs().end() - 3))->getInputs();
+      escaped.insert(in.begin(), in.end());
+    }
+  };
+  for (auto i : g->GetTracedNodes()) {
+    int op = i->GetOpcode();
+    if (op == STORE_DEREF && i->GetOparg() < ncells) {
+      // exclude STORE_DEREF
+      continue;
+    }
+    auto begin = i->getInputs().begin();
+    if (Utils::IsCallOp(op) && static_cast<CallNode *>(i)->GetInlineReason() == InlineReason::kInline) {
+      begin++;
+    }
+    std::for_each(begin, i->getInputs().end(), CollectClosure);
+  }
+  CollectClosure(ret_node);
+  // collect STORE_DEREF with MAKE_FUNCTION ...
+
+  const auto &closures = g->GetFrame(0).GetClosures();
+  for (int i = 0; i < ncells; ++i) {
+    if (escaped.find(closures[i]) != escaped.end()) {
+      continue;
+    }
+    for (auto node : closures[i]->GetCellOper()) {
+      if (node->GetOpcode() != STORE_DEREF) {
+        // closure access before assign, raise UnboundLocalError
+        return;
+      }
+      node->SetOpcode(LOAD_CONST);
+      node->SetVobj(AObject::Convert(Py_None));
+      node->ClearInputs();
+    }
+    closures[i]->GetCellOper().clear();
+  }
+}
+
+StopTraceReason GraphBuilder::TraceRun() {
   current_block_ = graph_->GetCFG()->GetFirstBB();
   cur_bci_ = 0;
   const auto &instrs = graph_->GetCFG()->instr_pool();
@@ -3053,6 +3038,7 @@ StopTraceReason GraphBuilder::TraceRun(const std::vector<py::object> &args) {
       break;
     }
   }
+  EliminateCellAccess(this->graph_);
   return graph_->GetStopTraceReason();
 }
 
@@ -3093,7 +3079,7 @@ AObject *InferFuncResult(const py::object &callable, const py::object &args, con
   if (g == nullptr) {
     return nullptr;
   }
-  g->TraceRun(py::cast<py::list>(args).cast<std::vector<py::object>>());
+  g->TraceRun();
   if (clear_guard) {
     Graph *graph = g->GetGraph();
     auto jcr = getJitCompileResults(reinterpret_cast<PyObject *>(graph->GetCodeObj()));
@@ -3202,9 +3188,26 @@ bool GraphBuilder::IsFuncInWhiteList(const py::object &f, std::string *special_f
   return false;
 }
 
-bool GraphBuilder::HandleFuncInWhiteList(const std::string &key, CallNode *n) {
-  MS_LOG(DEBUG) << "specialize for " << key;
-  return GetFuncWhiteListMap().find(key)->second.infer(n);
+bool GraphBuilder::HandleFuncInWhiteList(const std::string &key, CallNode *call_node) {
+  const auto &infer_func = GetFuncWhiteListMap().find(key)->second.infer;
+  infer_func(call_node);
+
+  // handle white list side-effects
+  ValueNode *old_node = nullptr;
+  ValueNode *new_node = nullptr;
+  if (infer_func == InferListAppend && call_node->GetSubGraph() != nullptr) {
+    // InferListAppend check it is valid
+    old_node = call_node->input(0)->input(0);
+    new_node = call_node->GetSubGraph()->GetRetVal();
+  }
+  if (old_node != nullptr && new_node != nullptr) {
+    if (!ReplaceAll(old_node, new_node)) {
+      call_node->SetSubGraph(nullptr);
+      return false;
+    }
+    // if replace success, record sideeffect...
+  }
+  return true;
 }
 
 bool MindGraphBuilder::IsFuncInWhiteList(const py::object &f, std::string *special_func_key) {
@@ -3231,5 +3234,315 @@ bool MindGraphBuilder::HandleFuncInWhiteList(const std::string &key, CallNode *n
   MS_LOG(INFO) << "specialize for " << key;
   return GetFuncWhiteListMap(true).find(key)->second.infer(n);
 }
+
+LocationPtr MindGraphBuilder::GetLocation(CallNode *call_node) const {
+  auto file_name = py::cast<std::string>(graph_->GetCodeObj()->co_filename);
+  auto line_no = call_node->GetLineNo();
+  std::vector<std::string> comments;
+  return std::make_shared<Location>(file_name, line_no, 0, line_no, 0, "", std::move(comments));
+}
+
+bool MindGraphBuilder::WhiteListFuncCheckAndInfer(CallNode *call_node, const py::object &callable) {
+  std::string special_func_key;
+  if (IsFuncInWhiteList(callable, &special_func_key)) {
+    call_node->SetSubGraph(NewGraph(nullptr, nullptr));
+    call_node->GetSubGraph()->SetGuard(root_->GetGraph()->GetGuard());
+    bool has_sub_graph = HandleFuncInWhiteList(special_func_key, call_node);
+    if (!has_sub_graph) {
+      call_node->SetInlineReason(InlineReason::kInlineFuncSpecialize);
+      MS_ASSERT(!call_node->GetSubGraph());  // check infer function
+      return true;
+    }
+    call_node->SetInlineReason(InlineReason::kInline);
+    ValueNode *ret_node = call_node->GetSubGraph()->GetRetVal();
+    MS_EXCEPTION_IF_CHECK_FAIL(ret_node, "infer special function failed");
+    seek(0) = ret_node;
+    return true;
+  }
+  return false;
+}
+
+void MindGraphBuilder::FGAddInputs(const std::vector<py::object> &args) {
+  // Add function graph inputs.
+  for (size_t i = 0; i < args.size(); ++i) {
+    MS_LOG(INFO) << "try add input: " << py::str(args[i]);
+    FGBuilder()->AddInput(args[i]);
+    MS_LOG(INFO) << "add input suc";
+  }
+}
+
+void MindGraphBuilder::FGAddOutput() {
+  if (auto ret = GetGraph()->GetRetVal()) {
+    MS_LOG(INFO) << ret->GetVobj()->ToString();
+    auto out = ret->GetVobj()->GetPyObject();
+    MS_LOG(INFO) << "try add output: " << py::str(out) << " addr:" << out.ptr();
+    if (FGBuilder()->AddOutput(out)) {
+      MS_LOG(INFO) << "add output succuss";
+    } else {
+      MS_LOG(INFO) << "add output fail";
+    }
+  }
+}
+
+py::object MindGraphBuilder::FGAddNode(CallNode *call_node, const py::object &callable_info,
+                                       const std::vector<py::object> &args, StopTraceReason *stop_reason) {
+  MS_LOG(INFO) << "try add node: " << py::str(callable_info);
+  TraceGuard trace_guard(GetLocation(call_node));
+  auto res = FGBuilder()->AddNode(callable_info, args);
+  if (res.ptr() == nullptr) {
+    MS_LOG(INFO) << "add node fail";
+    *stop_reason = StopTraceReason::kTrace_Fail;
+  } else {
+    MS_LOG(INFO) << "add node suc";
+    auto node = AbstractTraceNode::MakeAObject(res);
+    MS_LOG(INFO) << py::str(node->GetPyObject());
+    MS_LOG(INFO) << node->ToString();
+    call_node->SetVobj(node);
+    *stop_reason = StopTraceReason::kNonStopTrace;
+  }
+  return py::object();
+}
+
+std::vector<py::object> MindGraphBuilder::GetNewArgs(CallNode *call_node, AObject *vobj) {
+  std::vector<py::object> new_args;
+  vobj = vobj ? vobj : call_node->input(0)->GetVobj();
+  if (vobj->GetType() == AObject::kTypeCFunction) {
+    MS_LOG(INFO) << "not support cfunction";
+  }
+  auto new_callable_info = FindPyFunc(vobj);
+  FrameStates f;
+  ResolveClosure(new_callable_info, call_node->input(0), &f);
+  if (!HandleCallParameters(new_callable_info, call_node, &f)) {
+    MS_LOG(INFO) << "HandleCallParameters error" << std::endl;
+  }
+  PyCodeObject *co = reinterpret_cast<PyCodeObject *>(PyFunction_GET_CODE(new_callable_info.ptr()));
+  int argc = co->co_argcount + co->co_kwonlyargcount;
+  argc += (co->co_flags & CO_VARARGS) ? 1 : 0;
+  argc += (co->co_flags & CO_VARKEYWORDS) ? 1 : 0;
+  for (auto it = f.GetLocals().begin(); it != f.GetLocals().begin() + argc; it++) {
+    std::set<AObject::Type> unsupported_parameter = {
+      AObject::kTypeAnyValue,  AObject::kTypeFunction,      AObject::kTypeBoundMethod,
+      AObject::kTypePrimitive, AObject::kTypeMetaFuncGraph, AObject::kTypeCell,
+    };
+    auto vobj = (*it)->GetVobj();
+    if (vobj != nullptr) {
+      auto pyobj = vobj->GetPyObject();
+      if (pyobj.ptr() != nullptr) {
+        if (unsupported_parameter.find(AbstractObjectBase::GetPyType(pyobj.ptr())) == unsupported_parameter.end()) {
+          new_args.push_back(pyobj);
+        }
+      }
+    }
+  }
+  return new_args;
+}
+
+py::object MindGraphBuilder::ResolveCallable(CallNode *call_node, StopTraceReason *stop_reason) {
+  AObject *callable = call_node->input(0)->GetVobj();
+  py::object callable_info;
+  *stop_reason = StopTraceReason::kStopTraceInfer_Fail;
+  call_node->SetInlineReason(InlineReason::kInlineInfer_Fail);
+  if (!callable) {
+    return callable_info;
+  }
+  callable_info = callable->GetPyObject();
+  if (callable_info.ptr() == nullptr) {
+    return py::object();
+  }
+  MS_LOG(INFO) << "trace_flag for: " << py::str(callable_info);
+  auto args = call_node->GetArgs();
+  auto method = FGBuilder()->ConvertMethod(callable_info);
+  if (method.ptr() != nullptr) {
+    MS_LOG(INFO) << "convert method :" << py::str(callable_info) << " to " << py::str(method);
+    callable_info = method;
+    if (!PyFunction_Check(callable_info.ptr())) {  // prim getnewargs here, func getnewargs in subgraph
+      args = GetNewArgs(call_node);
+    }
+  }
+  auto func = FGBuilder()->ConvertFunction(callable_info);
+  if (func.ptr() != nullptr) {
+    MS_LOG(INFO) << "convert function:" << py::str(callable_info) << " to " << py::str(func);
+    callable_info = func;
+  }
+  if (FGBuilder()->CheckCallable(callable_info)) {
+    if (PyFunction_Check(callable_info.ptr())) {
+      args = GetNewArgs(call_node);
+    }
+    return FGAddNode(call_node, callable_info, args, stop_reason);
+  }
+  if (FGBuilder()->CanConstantFoldFunc(callable_info)) {
+    MS_LOG(INFO) << "CanConstantFoldFunc for: " << py::str(callable_info);
+    JustCallAndSetRes(call_node);
+    *stop_reason = StopTraceReason::kNonStopTrace;
+    return py::object();
+  }
+  if (callable_info.ptr() == nullptr) {
+    callable_info = py::cast<py::object>(reinterpret_cast<PyObject *>(callable->GetTypeObject()));
+  }
+
+  AObject::Type callable_type = callable->GetType();
+  if (callable_info.ptr() == nullptr) {
+    if (callable->TestMsFlag(AObject::kMsFlagGradFunc | AObject::kMsFlagShardFunc | AObject::kMsFlagVmapFunc)) {
+      SetGradFuncInfo(call_node);
+      *stop_reason = StopTraceReason::kNonStopTrace;
+    }
+    return py::object();
+  }
+
+  *stop_reason = StopTraceReason::kNonStopTrace;
+  if (callable_type == AObject::kTypeType) {
+    call_node->SetInlineReason(InlineReason::kInlineFunc_ArgType_IsClass);
+    HandleCallClass(call_node);
+    if (static_cast<AbstractType *>(callable)->GetTypeType() == AObject::kTypeCell) {
+      *stop_reason = StopTraceReason::kStopTraceInfer_Fail;
+    }
+    return py::object();
+  }
+
+  if (WhiteListFuncCheckAndInfer(call_node, callable_info)) {
+    return py::object();
+  }
+
+  // find code object
+  auto vobj = AObject::Convert(callable_info.ptr());
+  callable_info = (vobj->GetType() == AObject::kTypeCFunction) ? py::object() : FindPyFunc(vobj);
+  if (callable_info.ptr() == nullptr) {
+    *stop_reason = StopTraceReason::kStopTraceFunc_Type_Unsupported;
+    call_node->SetInlineReason(InlineReason::kInlineCFunction_Unsupported);
+  }
+  return callable_info;
+}
+
+AObject *MindGraphBuilder::HandleMultiOp(const Instr &instr, const std::vector<ValueNode *> &p, bool is_compare) {
+  int opcode = instr.op();
+  int oparg = instr.arg();
+  std::vector<py::object> input_obj;
+  for (auto input : p) {
+    if (input->GetVobj() == nullptr) {
+      return AObject::MakeAObject(AObject::kTypeAnyValue);
+    }
+    (void)input_obj.emplace_back(input->GetVobj()->GetPyObject());
+  }
+  const auto &op_name =
+    is_compare ? pijit::GraphUtils::OpCompareArgToGraphName(oparg) : pijit::GraphUtils::OpCodeToGraphName(opcode);
+  MS_LOG(DEBUG) << "operation name is " << op_name;
+  if (op_name == "") {
+    return AObject::MakeAObject(AObject::kTypeAnyValue);
+  }
+  auto node = fg_builder_->AddMultiNode(op_name, input_obj);
+  if (node.ptr() == nullptr) {
+    return AObject::MakeAObject(AObject::kTypeAnyValue);
+  }
+  return AbstractTraceNode::MakeAObject(node);
+}
+
+AObject *MindGraphBuilder::HandleBuildOp(const Instr &instr, const std::vector<ValueNode *> &p) {
+  auto opcode = instr.op();
+  std::vector<py::object> input_obj;
+  for (auto input : p) {
+    if (input->GetVobj() == nullptr) {
+      return AObject::MakeAObject(AObject::kTypeAnyValue);
+    }
+    (void)input_obj.emplace_back(input->GetVobj()->GetPyObject());
+  }
+  auto primitive = pijit::GraphUtils::GetPrimitive(opcode);
+  if (primitive == nullptr) {
+    return AObject::MakeAObject(AObject::kTypeAnyValue);
+  }
+  if (primitive == prim::kPrimMakeDict) {
+    if (opcode == BUILD_CONST_KEY_MAP) {
+      MS_LOG(DEBUG) << "BUILD_CONST_KEY_MAP case, need to pack values.";
+      std::vector<py::object> value_inputs;
+      (void)std::transform(input_obj.begin(), input_obj.end() - 1, std::back_inserter(value_inputs),
+                           [](const py::object &obj) { return obj; });
+      auto value_node = fg_builder_->AddNode(prim::kPrimMakeTuple, value_inputs);
+      input_obj = {input_obj.back(), value_node};
+    } else {
+      MS_LOG(DEBUG) << "BUILD_KEY_MAP case, need to pack keys and values.";
+      size_t input_len = input_obj.size();
+      if (input_len % 2 != 0) {
+        MS_LOG(INTERNAL_EXCEPTION) << "BUILD_KEY_MAP should have even input, but got: " << input_len;
+      }
+      std::vector<py::object> key_obj;
+      std::vector<py::object> value_obj;
+      for (size_t i = 0; i < input_len / 2; ++i) {
+        key_obj.push_back(input_obj[2 * i]);
+        value_obj.push_back(input_obj[2 * i + 1]);
+      }
+      auto key_node = fg_builder_->AddNode(prim::kPrimMakeTuple, key_obj);
+      auto value_node = fg_builder_->AddNode(prim::kPrimMakeTuple, value_obj);
+      input_obj = {key_node, value_node};
+    }
+  }
+  if (primitive == prim::kPrimMakeSlice) {
+    constexpr size_t slice_without_step_len = 2;
+    if (input_obj.size() == slice_without_step_len) {
+      // Handle slice without step input scene, such as 0:2. MakeSlice can only handle slice with full inputs.
+      (void)input_obj.emplace_back(py::int_(1));
+    }
+  }
+  auto node = fg_builder_->AddNode(primitive, input_obj);
+  return AbstractTraceNode::MakeAObject(node);
+}
+
+bool MindGraphBuilder::DoGetItem(const Instr &instr) {
+  auto r = pop();
+  auto l = pop();
+  auto o = HandleMultiOp(instr, {l, r}, false);
+  auto v = NewValueNode(o, instr, {l, r});
+  push(v);
+  return true;
+}
+
+bool MindGraphBuilder::DoUnary(const Instr &instr) {
+  auto o = pop();
+  auto r = HandleMultiOp(instr, {o}, false);
+  auto v = NewValueNode(r, instr, {o});
+  push(v);
+  return true;
+}
+
+bool MindGraphBuilder::DoBinary(const Instr &instr) {
+  auto r = pop();
+  auto l = pop();
+  auto o = HandleMultiOp(instr, {l, r}, false);
+  auto v = NewValueNode(o, instr, {l, r});
+  push(v);
+  return true;
+}
+
+bool MindGraphBuilder::DoBinaryMul(const Instr &instr) {
+  auto r = pop();
+  auto l = pop();
+  auto o = HandleMultiOp(instr, {l, r}, false);
+  auto v = NewValueNode(o, instr, {l, r});
+  push(v);
+  return true;
+}
+
+bool MindGraphBuilder::DoCompare(const Instr &instr) {
+  auto r = pop();
+  auto l = pop();
+  auto o = HandleMultiOp(instr, {l, r}, true);
+  auto v = NewValueNode(o, instr, {l, r});
+  push(v);
+  return true;
+}
+
+bool MindGraphBuilder::DoBuildOp(const Instr &instr) {
+  int opcode = instr.op();
+  int oparg = instr.arg();
+  int tmp_arg = oparg;
+  tmp_arg += opcode == BUILD_CONST_KEY_MAP;
+  tmp_arg += opcode == BUILD_MAP ? tmp_arg : 0;
+  std::vector<ValueNode *> p(frame_.GetStacks().end() - tmp_arg, frame_.GetStacks().end());
+  auto o = HandleBuildOp(instr, p);
+  popn(tmp_arg);
+  auto v = NewValueNode(o, instr, p);
+  push(v);
+  return true;
+}
+
+bool MindGraphBuilder::DoIsOp(const Instr &instr) { return GraphBuilder::DoBinary(instr); }
 }  // namespace pijit
 }  // namespace mindspore

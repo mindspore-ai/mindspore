@@ -18,12 +18,13 @@
 
 #include <vector>
 #include <numeric>
+#include <limits>
 #include <algorithm>
 
 namespace mindspore {
 namespace pijit {
 
-constexpr int popcount(unsigned x) {
+constexpr int PopCount(unsigned x) {
 #ifdef __GNUC__
   return __builtin_popcount(x);
 #else
@@ -36,8 +37,47 @@ constexpr int popcount(unsigned x) {
 #endif
 }
 
+constexpr int CountTrailingZeros(size_t x) {
+  constexpr auto bits = std::numeric_limits<size_t>::digits;
+  constexpr auto limit = std::numeric_limits<unsigned>::digits;
+  if (x == 0) {
+    return bits;
+  }
+  int c = 0;
+  if ((x & std::numeric_limits<unsigned>::max()) == 0) {
+    c += limit;
+    x >>= limit;
+  }
+#ifdef __GNUC__
+  return bits == limit ? __builtin_ctz(x) : c + __builtin_ctzll(x);
+#else
+  while ((x & 1) == 0) {
+    c++;
+    x >>= 1;
+  }
+  return c;
+#endif
+}
+
 class BitMap {
  public:
+  // traverse the index of bit that is set
+  class Iter {
+   public:
+    Iter(const BitMap *map, bool begin);
+    bool operator!=(const Iter &o) const { return this->data_ != o.data_; }
+    size_t operator*() { return offset_; }
+    Iter &operator++();
+
+   private:
+    // advance to next one bit
+    void NextOne();
+
+    const size_t *end_;
+    const size_t *data_;
+    size_t offset_;
+  };
+
   BitMap() : size_(0), bits_() {}
   explicit BitMap(size_t size) : size_(size), bits_(count(), 0) {}
   size_t size() const { return size_; }
@@ -45,56 +85,30 @@ class BitMap {
   void Set(size_t i) { data()[i >> shf] |= (size_t(1) << (i & mod)); }
   void Clear(size_t i) { data()[i >> shf] &= ~(size_t(1) << (i & mod)); }
 
-  // logic and, operator &=()
-  void And(const BitMap &o) {
-    const size_t siz = std::min(count(), o.count());
-    for (size_t i = 0; i < siz; ++i) {
-      data()[i] &= o.data()[i];
-    }
-  }
+  // logic and, a &= b
+  void And(const BitMap &o);
 
-  // logic or, operator |=()
-  void Or(const BitMap &o) {
-    const size_t siz = std::min(count(), o.count());
-    for (size_t i = 0; i < siz; ++i) {
-      data()[i] |= o.data()[i];
-    }
-  }
+  // logic or, a |= b
+  void Or(const BitMap &o);
 
-  bool OrWithChange(const BitMap &o) {
-    const size_t siz = std::min(count(), o.count());
-    bool change = false;
-    for (size_t i = 0; i < siz; ++i) {
-      auto a = data()[i];
-      auto b = a | o.data()[i];
-      data()[i] = b;
-      change |= a != b;
-    }
-    return change;
-  }
+  // logic or, return true if any bit changed
+  bool OrWithChange(const BitMap &o);
 
-  void Diff(const BitMap &o) {
-    const size_t siz = std::min(count(), o.count());
-    for (size_t i = 0; i < siz; ++i) {
-      data()[i] &= ~o.data()[i];
-    }
-  }
+  // logic and not, a &= ~b
+  void Diff(const BitMap &o);
 
-  size_t CountBits() const {
-    const unsigned *begin = reinterpret_cast<const unsigned *>(data());
-    const unsigned *end = reinterpret_cast<const unsigned *>(data() + count());
-    return std::accumulate(begin, end, 0, [](size_t c, unsigned i) { return c + popcount(i); });
-  }
+  // count one bits
+  size_t CountBits() const;
 
  private:
-  static constexpr const int shf = 6;
+  static constexpr const int shf = CountTrailingZeros(std::numeric_limits<size_t>::digits);
   static constexpr const int mod = (1 << shf) - 1;
-  static_assert((1 << shf) == (sizeof(size_t) * 8));
 
   size_t count() const { return (size_ >> shf) + static_cast<bool>(size_ & mod); }
   size_t bytes() const { return count() * sizeof(size_t); }
   size_t *data() { return bits_.data(); }
   const size_t *data() const { return bits_.data(); }
+
   size_t size_;
   std::vector<size_t> bits_;
 };

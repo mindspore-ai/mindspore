@@ -16,3 +16,5 @@ reduce_any:
       dtype: tensor
   function:
     disable: True
+  dispatch:
+    enable: True

@@ -25,7 +25,7 @@ from mindspore_lite.tensor import Tensor
 from mindspore_lite.lib._c_lite_wrapper import LLMEngine_, LLMReq_, LLMRole_, StatusCode, LLMClusterInfo_
 from mindspore_lite.model import set_env
 
-__all__ = ['LLMReq', 'LLMEngineStatus', 'LLMRole', 'LLMEngine']
+__all__ = ['LLMReq', 'LLMEngineStatus', 'LLMRole', 'LLMEngine', 'LLMStatusCode', 'LLMException']
 
 
 class LLMReq:
@@ -121,6 +121,31 @@ class LLMEngineStatus:
         """Get empty count of prompt KV cache of this LLMEngine object"""
         return self.status_.empty_max_prompt_kv
 
+class LLMStatusCode(Enum):
+    """
+    LLM Error Code
+    """
+    LLM_SUCCESS = StatusCode.kSuccess
+    LLM_WAIT_PROC_TIMEOUT = StatusCode.kLiteLLMWaitProcessTimeOut
+    LLM_KV_CACHE_NOT_EXIST = StatusCode.kLiteLLMKVCacheNotExist
+    LLM_REPEAT_REQUEST = StatusCode.kLiteLLMRepeatRequest
+    LLM_REQUEST_ALREADY_COMPLETED = StatusCode.kLiteLLMRequestAlreadyCompleted
+    LLM_PARAM_INVALID = StatusCode.kLiteParamInvalid
+    LLM_ENGINE_FINALIZED = StatusCode.kLiteLLMEngineFinalized
+    LLM_NOT_YET_LINK = StatusCode.kLiteLLMNotYetLink
+    LLM_ALREADY_LINK = StatusCode.kLiteLLMAlreadyLink
+    LLM_LINK_FAILED = StatusCode.kLiteLLMLinkFailed
+    LLM_UNLINK_FAILED = StatusCode.kLiteLLMUnlinkFailed
+    LLM_NOTIFY_PROMPT_UNLINK_FAILED = StatusCode.kLiteLLMNofiryPromptUnlinkFailed
+    LLM_CLUSTER_NUM_EXCEED_LIMIT = StatusCode.kLiteLLMClusterNumExceedLimit
+    LLM_PROCESSING_LINK = StatusCode.kLiteLLMProcessingLink
+    LLM_DEVICE_OUT_OF_MEMORY = StatusCode.kLiteLLMOutOfMemory
+    LLM_PREFIX_ALREADY_EXIST = StatusCode.kLiteLLMPrefixAlreadyExist
+    LLM_PREFIX_NOT_EXIST = StatusCode.kLiteLLMPrefixNotExist
+    LLM_SEQ_LEN_OVER_LIMIT = StatusCode.kLiteLLMSeqLenOverLimit
+    LLM_NO_FREE_BLOCK = StatusCode.kLiteLLMNoFreeBlock
+    LLM_BLOCKS_OUT_OF_MEMORY = StatusCode.kLiteLLMBlockOutOfMemory
+
 
 class LLMRole(Enum):
     """
@@ -132,44 +157,130 @@ class LLMRole(Enum):
     Prompt = 0
     Decoder = 1
 
+class LLMException(RuntimeError):
+    """
+    Base Error class for LLM
+    """
+    def __init__(self, *args: object):
+        super().__init__(*args)
+        self._statusCode = LLMStatusCode.LLM_SUCCESS
 
-class LLMKVCacheNotExist(RuntimeError):
+    @property
+    def statusCode(self):
+        return self._statusCode
+
+    def StatusCode(self):
+        return self._statusCode
+
+class LLMKVCacheNotExist(LLMException):
     """
     Key & Value cache does not exist in Prompt cluster specified by parameter LLMReq.prompt_cluster_id, and the
     LLM request may have been released in Prompt cluster by calling method LLMEngine.complete_request.
     Raised in LLMEngine.predict.
     """
+    def __init__(self, *args: object):
+        super().__init__(*args)
+        self._statusCode = LLMStatusCode.LLM_KV_CACHE_NOT_EXIST
 
-
-class LLMWaitProcessTimeOut(RuntimeError):
+class LLMWaitProcessTimeOut(LLMException):
     """
     Request waiting for processing timed out. Raised in LLMEngine.predict.
     """
+    def __init__(self, *args: object):
+        super().__init__(*args)
+        self._statusCode = LLMStatusCode.LLM_WAIT_PROC_TIMEOUT
 
 
-class LLMRepeatRequest(RuntimeError):
+class LLMRepeatRequest(LLMException):
     """
     Request repeated . Raised in LLMEngine.predict.
     """
+    def __init__(self, *args: object):
+        super().__init__(*args)
+        self._statusCode = LLMStatusCode.LLM_WAIT_PROC_TIMEOUT
 
 
-class LLMRequestAlreadyCompleted(RuntimeError):
+class LLMRequestAlreadyCompleted(LLMException):
     """
     Request has already completed. Raised in LLMEngine.predict.
     """
+    def __init__(self, *args: object):
+        super().__init__(*args)
+        self._statusCode = LLMStatusCode.LLM_REQUEST_ALREADY_COMPLETED
 
 
-class LLMEngineFinalized(RuntimeError):
+class LLMEngineFinalized(LLMException):
     """
     LLMEngine has finalized. Raised in LLMEngine.predict.
     """
+    def __init__(self, *args: object):
+        super().__init__(*args)
+        self._statusCode = LLMStatusCode.LLM_ENGINE_FINALIZED
 
 
-class LLMParamInvalid(RuntimeError):
+class LLMParamInvalid(LLMException):
     """
     Parameters invalid. Raised in LLMEngine.predict.
     """
+    def __init__(self, *args: object):
+        super().__init__(*args)
+        self._statusCode = LLMStatusCode.LLM_PARAM_INVALID
 
+class LLMNotYetLink(LLMException):
+    """
+    Decoder cluster has no link with prompt.
+    """
+    def __init__(self, *args: object):
+        super().__init__(*args)
+        self._statusCode = LLMStatusCode.LLM_NOT_YET_LINK
+
+class LLMOutOfMemory(LLMException):
+    """
+    Device out of memory.
+    """
+    def __init__(self, *args: object):
+        super().__init__(*args)
+        self._statusCode = LLMStatusCode.LLM_DEVICE_OUT_OF_MEMORY
+
+class LLMPrefixAlreadyExist(LLMException):
+    """
+    Prefix has already existed.
+    """
+    def __init__(self, *args: object):
+        super().__init__(*args)
+        self._statusCode = LLMStatusCode.LLM_PREFIX_ALREADY_EXIST
+
+class LLMPrefixNotExist(LLMException):
+    """
+    Prefix does not exist.
+    """
+    def __init__(self, *args: object):
+        super().__init__(*args)
+        self._statusCode = LLMStatusCode.LLM_PREFIX_NOT_EXIST
+
+class LLMSeqLenOverLimit(LLMException):
+    """
+    Sequence length exceed limit.
+    """
+    def __init__(self, *args: object):
+        super().__init__(*args)
+        self._statusCode = LLMStatusCode.LLM_SEQ_LEN_OVER_LIMIT
+
+class LLMNoFreeBlocks(LLMException):
+    """
+    No free block.
+    """
+    def __init__(self, *args: object):
+        super().__init__(*args)
+        self._statusCode = LLMStatusCode.LLM_NO_FREE_BLOCK
+
+class LLMBlockOutOfMemory(LLMException):
+    """
+    Block is out of memory.
+    """
+    def __init__(self, *args: object):
+        super().__init__(*args)
+        self._statusCode = LLMStatusCode.LLM_BLOCKS_OUT_OF_MEMORY
 
 class LLMClusterInfo:
     """
@@ -311,19 +422,33 @@ class LLMClusterInfo:
 def _handle_llm_status(status, func_name, other_info):
     """Handle LLM error code"""
     status_code = status.StatusCode()
-    if status_code == StatusCode.kLiteLLMWaitProcessTimeOut:
-        raise LLMWaitProcessTimeOut(f"{func_name} failed: Waiting for processing timeout, {other_info}")
-    if status_code == StatusCode.kLiteLLMKVCacheNotExist:
-        raise LLMKVCacheNotExist(f"{func_name} failed: KV Cache not exist, {other_info}.")
-    if status_code == StatusCode.kLiteLLMRepeatRequest:
-        raise LLMRepeatRequest(f"{func_name} failed: Repeat request, {other_info}.")
-    if status_code == StatusCode.kLiteLLMRequestAlreadyCompleted:
-        raise LLMRequestAlreadyCompleted(f"{func_name} failed: Request has already completed, {other_info}.")
-    if status_code == StatusCode.kLiteLLMEngineFinalized:
-        raise LLMEngineFinalized(f"{func_name} failed: LLMEngine has finalized, {other_info}.")
-    if status_code == StatusCode.kLiteParamInvalid:
-        raise LLMParamInvalid(f"{func_name} failed: Parameters invalid, {other_info}.")
+    errorCodeMap = {
+        StatusCode.kLiteLLMWaitProcessTimeOut:
+        LLMWaitProcessTimeOut(f"{func_name} failed: Waiting for processing timeout, {other_info}"),
+        StatusCode.kLiteLLMKVCacheNotExist:
+        LLMKVCacheNotExist(f"{func_name} failed: KV Cache not exist, {other_info}."),
+        StatusCode.kLiteLLMRepeatRequest: LLMRepeatRequest(f"{func_name} failed: Repeat request, {other_info}."),
+        StatusCode.kLiteLLMRequestAlreadyCompleted:
+        LLMRequestAlreadyCompleted(f"{func_name} failed: Request has already completed, {other_info}."),
+        StatusCode.kLiteLLMEngineFinalized:
+        LLMEngineFinalized(f"{func_name} failed: LLMEngine has finalized, {other_info}."),
+        StatusCode.kLiteParamInvalid: LLMParamInvalid(f"{func_name} failed: Parameters invalid, {other_info}."),
+        StatusCode.kLiteLLMNotYetLink:
+        LLMNotYetLink(f"{func_name} failed: Decoder cluster is no link with prompt, {other_info}."),
+        StatusCode.kLiteLLMOutOfMemory: LLMOutOfMemory(f"{func_name} failed: Device out of memory, {other_info}."),
+        StatusCode.kLiteLLMPrefixAlreadyExist:
+        LLMPrefixAlreadyExist(f"{func_name} failed: Prefix has already existed, {other_info}."),
+        StatusCode.kLiteLLMPrefixNotExist:
+        LLMPrefixNotExist(f"{func_name} failed: Prefix does not exist, {other_info}."),
+        StatusCode.kLiteLLMSeqLenOverLimit:
+        LLMSeqLenOverLimit(f"{func_name} failed: Sequence length exceed limit, {other_info}."),
+        StatusCode.kLiteLLMNoFreeBlock: LLMNoFreeBlocks(f"{func_name} failed: No free block, {other_info}."),
+        StatusCode.kLiteLLMBlockOutOfMemory:
+        LLMBlockOutOfMemory(f"{func_name} failed: NBlock is out of memory, {other_info}."),
+    }
     if status_code != StatusCode.kSuccess:
+        if status_code in errorCodeMap:
+            raise errorCodeMap[status_code]
         raise RuntimeError(f"{func_name} failed, {other_info}.")
 
 

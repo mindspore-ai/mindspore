@@ -24,14 +24,6 @@
 namespace aicpu {
 enum SetOperation { A_MINUS_B = 0, B_MINUS_A = 1, INTERSECTION = 2, UNION = 3 };
 struct DataBank {
-  DataBank()
-      : set1(nullptr),
-        set2_indices(nullptr),
-        set2_values(nullptr),
-        set2_shape(nullptr),
-        result_indices(nullptr),
-        result_values(nullptr),
-        result_shape(nullptr) {}
   Tensor *set1;
   Tensor *set2_indices;
   Tensor *set2_values;

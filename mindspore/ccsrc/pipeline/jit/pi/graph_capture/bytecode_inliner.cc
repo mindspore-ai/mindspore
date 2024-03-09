@@ -27,11 +27,8 @@ namespace mindspore {
 namespace pijit {
 
 extern std::string PrintInstr(const std::vector<std::unique_ptr<Instr>> &list);
-extern std::vector<ValueNode *> CollectInterpretOutputs(const FrameStates &last_frame, const BitMap &alive,
-                                                        std::vector<int> *alive_locals);
 extern bool CheckMSConstexpr(const py::object &func);
 extern bool CheckJitConstexpr(const py::object &func);
-extern bool ApplyInlinePolicy(Graph *g);
 
 void BytecodeInliner::Run() {
   if (graph_->IsBreakAtLoop() && !graph_->RestoreLoopStatus()) {
@@ -142,13 +139,14 @@ void BytecodeInliner::Rebuild() {
   if (last_frame_ != nullptr) {
     BitMap alive = inline_partial_ ? cfg_->GetLiveness()->CollectAlive(0)
                                    : graph_->GetCFG()->GetLiveness()->CollectAlive(graph_->GetStopTraceBci());
-    ns.outputs = CollectInterpretOutputs(*last_frame_, alive, &alive_locals);
+    ns.outputs = Graph::CollectAliveNode(*last_frame_, &alive, &alive_locals);
   } else {
     ns.outputs.push_back(graph_->GetRetVal());
   }
+
   if (graph_->Config().GetBoolConfig(GraphJitConfig::kEnableEliminateUnusedOperation)) {
-    for (auto side_effect_node : graph_->GetSideEffectNodes()) {
-      for (auto item : side_effect_node->getInputs()) {
+    for (auto item : graph_->GetSideEffectNodes()) {
+      if (item->GetOpcode() == BUILD_LIST) {
         ns.outputs.push_back(item);
       }
     }
@@ -205,6 +203,9 @@ void BytecodeInliner::CollectTracedNodes(Graph *graph) {
     }
     for (auto side_effect_item : graph->GetSideEffect()->GetReplaceMaps()) {
       graph_->SetSideEffectReplacedMap(side_effect_item.first, side_effect_item.second);
+    }
+    for (auto item : graph->GetSideEffect()->GetGlobalList()) {
+      graph_->SetGlobalList(item);
     }
   }
 }
@@ -273,10 +274,19 @@ static bool CanIninePartial(Graph *top_graph, Graph *sub_graph) {
   if (sub_graph->IsBreakAtLoop()) {
     return false;
   }
+  if (top_graph->GetGlobals() == sub_graph->GetGlobals()) {
+    return true;
+  }
   if (!EliminateSideEffect(top_graph, sub_graph)) {
     return false;
   }
-  return ApplyInlinePolicy(sub_graph);
+  for (auto i : sub_graph->GetTracedNodes()) {
+    int op = i->GetOpcode();
+    if (op == MAKE_FUNCTION || op == STORE_GLOBAL || op == DELETE_GLOBAL) {
+      return false;
+    }
+  }
+  return true;
 }
 
 void BytecodeInliner::Reconstruct(ValueNode *node, int local_off) {

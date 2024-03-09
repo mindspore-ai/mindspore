@@ -45,9 +45,11 @@ FuncGraphPtr BpropFuncGraphManager::PrimBpropGraphPass(const FuncGraphPtr &prim_
 
 FuncGraphPtr BpropFuncGraphManager::GetAccumulateGraph(const ValuePtr &dout, const ValuePtr &factor) {
   auto func_graph = std::make_shared<FuncGraph>();
-  func_graph->debug_info()->set_name("Accumulate_" + dout->ToString());
+  auto abs = dout->ToAbstract();
+  auto name = "Accumulate_" + abs->GetTypeTrack()->ToString() + abs->GetShapeTrack()->ToString();
+  func_graph->debug_info()->set_name(name);
   auto param_dout = func_graph->add_parameter();
-  param_dout->set_abstract(dout->ToAbstract()->Broaden());
+  param_dout->set_abstract(abs->Broaden());
   auto param_factor = func_graph->add_parameter();
   param_factor->set_abstract(factor->ToAbstract()->Broaden());
   auto prim = prim::GetPythonOps("hyper_add");
@@ -78,17 +80,6 @@ FuncGraphPtr BpropFuncGraphManager::GetPrimBpropGraph(const PrimitivePtr &prim,
     MS_LOG(DEBUG) << "Cache hit for prim[" << prim_name << "] and key is " << key;
     return prim_to_bprop_.at(key);
   }
-  if (prim_to_bprop_.find(prim_name) != prim_to_bprop_.end()) {
-    MS_LOG(DEBUG) << "Cache hit for prim[" << prim_name << "].";
-    auto func_graph = BasicClone(prim_to_bprop_.at(prim_name));
-    MS_EXCEPTION_IF_CHECK_FAIL(func_graph->parameters().size() == args_abs.size(),
-                               "Arguments is not match parameters.");
-    for (size_t index = 0; index < args_abs.size(); index++) {
-      func_graph->parameters()[index]->set_abstract(args_abs[index]);
-    }
-    prim_to_bprop_[key] = PrimBpropGraphPass(func_graph);
-    return prim_to_bprop_.at(key);
-  }
   const expander::bprop::BpropHandle *handle = expander::bprop::BpropIRBuilderFactory::Instance().GetBuilder(prim_name);
   if (handle == nullptr) {
     MS_LOG(WARNING) << "Prim " << prim_name << " does not have a handle in bprop expander.";
@@ -96,8 +87,8 @@ FuncGraphPtr BpropFuncGraphManager::GetPrimBpropGraph(const PrimitivePtr &prim,
   }
   auto meta_graph = std::make_shared<expander::bprop::BpropMetaFuncGraph>(prim, handle);
   auto grad_graph = meta_graph->GenerateFuncGraph(args_abs);
-  prim_to_bprop_[prim_name] = PrimBpropGraphPass(grad_graph);
-  prim_to_bprop_[key] = prim_to_bprop_[prim_name];
+  prim_to_bprop_[key] = PrimBpropGraphPass(grad_graph);
+  prim_to_bprop_[key]->debug_info()->set_name("bprop_" + prim_name + "_" + key);
   MS_LOG(DEBUG) << "Create new graph for prim[" << prim_name << "].";
   return prim_to_bprop_.at(key);
 }

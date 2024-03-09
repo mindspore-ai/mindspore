@@ -245,7 +245,7 @@ bool CollectiveManager::CreateCommunicationGroup(const std::string &group_name,
     MS_LOG(WARNING) << "This rank: " << global_rank_id_ << " is not in the group ranks: " << group_ranks
                     << ". This may cause some exception when initializing the group.";
   }
-
+  group_map_[group_name] = group_ranks;
   MS_EXCEPTION_IF_NULL(device_comm_lib_instance_);
   if (!need_host_collective_ || !common::GetEnv(kSimulationLevel).empty()) {
     RETURN_IF_FALSE_WITH_LOG(device_comm_lib_instance_->CreateDeviceCommunicationGroup(group_name, group_ranks),

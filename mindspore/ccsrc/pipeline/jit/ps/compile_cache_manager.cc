@@ -28,6 +28,7 @@
 #include "utils/system/sha256.h"
 #include "include/common/utils/utils.h"
 #include "frontend/parallel/step_parallel.h"
+#include "frontend/parallel/tensor_layout/shared_parameter.h"
 #include "mindspore/core/utils/file_utils.h"
 
 #if defined(__linux__) && defined(WITH_BACKEND)
@@ -76,6 +77,13 @@ void BuildLayout(const FuncGraphPtr &func_graph, mind_ir::ModelProto *model) {
       layoutProto->set_field_size(field_size);
       layoutProto->set_uniform_split(uniform_split);
       layoutProto->set_opt_shard_group(opt_shard_group);
+      auto shared_param = para->user_data<parallel::SharedParameter>();
+      if (shared_param) {
+        layoutProto->set_pipeline_shared(shared_param->pipeline_shared());
+        layoutProto->set_is_send(shared_param->is_send());
+        layoutProto->set_peer_rank(shared_param->peer_rank());
+        layoutProto->set_sr_tag(shared_param->sr_tag());
+      }
     }
   }
 }

@@ -887,6 +887,13 @@ static std::vector<Expression> expressions = {
   {67, "Reshape(Reshape(A,B),C)=Reshape(A,C)", EXPR_PATTERN(ReshapePatternTree)},
   {68, "Transpose(Transpose(Reshape(A,B),C),D)=Reshape(A,E)", EXPR_PATTERN(RTTPatternTree)},
   {69, "StridedSlice(A,B,C,D)=Reshape(A,E)", EXPR_PATTERN(StridedSlicePatternTree)},
+  // cmp + logical
+  {70, "LogicalNot(Greater(A,B))=LessEqual(A,B)", EXPR_PATTERN(PatternTree)},
+  {71, "LogicalNot(LessEqual(A,B))=Greater(A,B)", EXPR_PATTERN(PatternTree)},
+  {72, "LogicalNot(GreaterEqual(A,B))=Less(A,B)", EXPR_PATTERN(PatternTree)},
+  {73, "LogicalNot(Less(A,B))=GreaterEqual(A,B)", EXPR_PATTERN(PatternTree)},
+  {74, "LogicalNot(NotEqual(A,B))=Equal(A,B)", EXPR_PATTERN(PatternTree)},
+  {75, "LogicalNot(Equal(A,B))=NotEqual(A,B)", EXPR_PATTERN(PatternTree)},
 };
 
 mindspore::HashMap<std::string, std::vector<PatternTreePtr>> GetExpressions() {

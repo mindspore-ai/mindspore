@@ -1,9 +1,24 @@
+# Copyright 2024 Huawei Technologies Co., Ltd
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ============================================================================
+
 import pytest
-import os
 import numpy as np
 import mindspore.context as context
 from mindspore import Tensor, jit
 from mindspore.nn import Cell
+from mindspore._extends.parse import compile_config
 
 
 @pytest.mark.level0
@@ -31,9 +46,9 @@ def test_for_half_unroll_basic():
     context.set_context(mode=context.PYNATIVE_MODE)
     net = ForLoopBasic()
     x = Tensor(np.array(10).astype(np.int32))
-    os.environ['MS_DEV_FOR_HALF_UNROLL'] = '1'
+    compile_config.FOR_HALF_UNROLL = 1
     res = net(x)
-    os.environ['MS_DEV_FOR_HALF_UNROLL'] = ''
+    compile_config.FOR_HALF_UNROLL = ''
     assert res == 25
 
 
@@ -63,7 +78,7 @@ def test_for_half_unroll_if():
     context.set_context(mode=context.PYNATIVE_MODE)
     net = ForLoopIf()
     x = Tensor(np.array(10).astype(np.int32))
-    os.environ['MS_DEV_FOR_HALF_UNROLL'] = '1'
+    compile_config.FOR_HALF_UNROLL = 1
     res = net(x)
-    os.environ['MS_DEV_FOR_HALF_UNROLL'] = ''
+    compile_config.FOR_HALF_UNROLL = ''
     assert res == 15

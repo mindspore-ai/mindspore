@@ -168,13 +168,14 @@ class CellVarNode : public ValueNode {
   auto GetValue() const { return val_; }
   void SetValue(ValueNode *v) { val_ = v; }
   const auto &GetCellOper() const { return cell_oper_; }
-  void AddCellOper(InstrNode *i) { cell_oper_.push_back(i); }
+  auto &GetCellOper() { return cell_oper_; }
+  void AddCellOper(ValueNode *i) { cell_oper_.push_back(i); }
   virtual ~CellVarNode() {}
   std::string ToString() const override;
 
  private:
   ValueNode *val_;
-  std::vector<InstrNode *> cell_oper_;  // record cell operation
+  std::vector<ValueNode *> cell_oper_;  // record cell operation
 };
 
 class ParamNode : public ValueNode {

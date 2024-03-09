@@ -66,7 +66,7 @@ class GraphBuilder {
                       : std::make_shared<GraphBuilder>(r, p, co, globals);
   }
 
-  virtual StopTraceReason TraceRun(const std::vector<py::object> &args);
+  StopTraceReason TraceRun();
   virtual bool trace_flag() { return false; }
 
   void CollectInlineInfo(CallNode *node, int depth);
@@ -87,7 +87,6 @@ class GraphBuilder {
   TryBlock &PopStack();
 
  protected:
-  std::vector<py::object> args_;  // inputs
   GraphBuilder *root_;
   GraphBuilder *parent_;
   Graph *graph_;
@@ -206,8 +205,14 @@ class GraphBuilder {
   // return false if has unsupported bytecode
   bool DoByteCode(const Instr &instr);
 
-  // general value node for UNPACK_SEQUENCE, UNPACK_EX
-  void GenIndexItemGeneral(ValueNode *iterable, int i, int j);
+  // unpack elements
+  bool UnpackElements(ValueNode *);
+
+  // unpack elements
+  bool UnpackSequenceElements(ValueNode *);
+
+  // unpack object elements as LOAD_CONST
+  std::vector<ValueNode *> UnpackConstObject(const py::object &);
 
   // return true if not inline
   virtual bool WhiteListFuncCheckAndInfer(CallNode *, const py::object &f);
@@ -250,18 +255,23 @@ class GraphBuilder {
   bool DoCellAccess(const Instr &instr);
   bool DoGlobalAccess(const Instr &instr);
   bool DoAttrAccess(const Instr &instr);
-  bool DoGetItem(const Instr &instr);
+  virtual bool DoGetItem(const Instr &instr);
   bool DoItemAccess(const Instr &instr);
   bool DoStackOp(const Instr &instr);
   bool DoLoadConst(const Instr &instr);
   bool DoListToTuple(const Instr &instr);
   bool DoGetIter(const Instr &instr);
   bool DoMakeFunction(const Instr &instr);
-  bool DoUnary(const Instr &instr);
-  bool DoBinary(const Instr &instr);
-  bool DoBinaryMul(const Instr &instr);
-  bool DoCompare(const Instr &instr);
-  bool DoBuildOp(const Instr &instr);
+  AObject *InferUnary(ValueNode *, const Instr &instr);
+  virtual bool DoUnary(const Instr &instr);
+  AObject *InferBinary(ValueNode *, ValueNode *, const Instr &instr);
+  virtual bool DoBinary(const Instr &instr);
+  virtual bool DoIsOp(const Instr &instr);
+  virtual bool DoBinaryMul(const Instr &instr);
+  bool DoBinaryAdd(const Instr &instr);
+  bool DoInplaceAdd(const Instr &instr);
+  virtual bool DoCompare(const Instr &instr);
+  virtual bool DoBuildOp(const Instr &instr);
   bool DoMergeOp(const Instr &instr);
   bool DoFormatValue(const Instr &instr);
   bool DoImport(const Instr &instr);
@@ -270,7 +280,6 @@ class GraphBuilder {
   bool DoWith(const Instr &instr);
   bool NotImplementBytecode(const Instr &instr);
   static const std::unordered_map<int, bool (GraphBuilder::*)(const Instr &)> bytecode_meth_map_;
-  std::vector<py::object> GetNewArgs(CallNode *call_node);
 
   // check the function is special function that mindspore support and not inline,
   // the return values or type can be infer
@@ -284,19 +293,27 @@ class GraphBuilder {
 
 class MindGraphBuilder : public GraphBuilder {
  public:
-  explicit MindGraphBuilder(const PyFrameObject *f)
-      : GraphBuilder(f), fg_builder_(std::make_shared<FuncGraphBuilder>()) {}
+  explicit MindGraphBuilder(const PyFrameObject *f) : GraphBuilder(f) {
+    std::vector<std::string> comments;
+    auto location = std::make_shared<Location>(py::cast<std::string>(f->f_code->co_filename), f->f_code->co_firstlineno,
+                                               0, f->f_code->co_firstlineno, 0, "", std::move(comments));
+    TraceGuard trace_guard(location);
+    fg_builder_ = std::make_shared<FuncGraphBuilder>(true);
+    fg_builder_->SetGraphName(py::cast<std::string>(f->f_code->co_name) + "_" +
+                              std::to_string(f->f_code->co_firstlineno));
+    co_name_ = py::cast<std::string>(f->f_code->co_name);
+  }
   MindGraphBuilder(GraphBuilder *r, GraphBuilder *p, PyCodeObject *co, PyObject *globals)
-      : GraphBuilder(r, p, co, globals), fg_builder_(std::make_shared<FuncGraphBuilder>()) {}
+      : GraphBuilder(r, p, co, globals) {
+    std::vector<std::string> comments;
+    auto location = std::make_shared<Location>(py::cast<std::string>(co->co_filename), co->co_firstlineno, 0,
+                                               co->co_firstlineno, 0, "", std::move(comments));
+    TraceGuard trace_guard(location);
+    fg_builder_ = std::make_shared<FuncGraphBuilder>();
+  }
   bool trace_flag() { return true; }
   mindspore::FuncGraphBuilderPtr FGBuilder() const { return fg_builder_; }
-  StopTraceReason TraceRun(const std::vector<py::object> &args) override {
-    FGAddInput(args);
-    auto res = GraphBuilder::TraceRun(args);
-    FGAddOutput();
-    return res;
-  }
-  void FGAddInput(const std::vector<py::object> &args);
+  void FGAddInputs(const std::vector<py::object> &args);
   py::object FGAddNode(CallNode *call_node, const py::object &callable_info, const std::vector<py::object> &args,
                        StopTraceReason *stop_reason);
   void FGAddOutput();
@@ -305,12 +322,27 @@ class MindGraphBuilder : public GraphBuilder {
   py::object ResolveCallable(CallNode *call_node, StopTraceReason *stop_reason) override;
   bool WhiteListFuncCheckAndInfer(CallNode *, const py::object &f) override;
 
+  LocationPtr GetLocation(CallNode *call_node) const;
+
+ protected:
+  bool DoGetItem(const Instr &instr) override;
+  bool DoUnary(const Instr &instr) override;
+  bool DoBinary(const Instr &instr) override;
+  bool DoIsOp(const Instr &instr) override;
+  bool DoBinaryMul(const Instr &instr) override;
+  bool DoCompare(const Instr &instr) override;
+  bool DoBuildOp(const Instr &instr) override;
+
  private:
+  std::vector<py::object> GetNewArgs(CallNode *call_node, AObject *vobj = nullptr);
   bool IsFuncInWhiteList(const py::object &f, std::string *special_func_key);
   bool HandleFuncInWhiteList(const std::string &key, CallNode *n) override;
 
  private:
   mindspore::FuncGraphBuilderPtr fg_builder_{nullptr};
+  std::string co_name_;
+  AObject *HandleMultiOp(const Instr &instr, const std::vector<ValueNode *> &p, bool is_compare);
+  AObject *HandleBuildOp(const Instr &instr, const std::vector<ValueNode *> &p);
 };
 }  // namespace pijit
 }  // namespace mindspore

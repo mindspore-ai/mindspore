@@ -27,6 +27,7 @@
 #include "ir/manager.h"
 #include "frontend/optimizer/optimizer.h"
 #include "utils/log_adapter.h"
+#include "utils/compile_config.h"
 
 namespace mindspore {
 /* namespace to support opt */
@@ -353,8 +354,8 @@ bool SubstitutionList::operator()(const FuncGraphPtr &func_graph, const Optimize
   manager->AddFuncGraph(func_graph);
   bool changes = false;
   static const auto traverse_mode =
-    (common::GetEnv("MS_DEV_TRAVERSE_SUBSTITUTIONS_MODE") != "1" ? kOptTraverseFromIRToSubstitutions
-                                                                 : kOptTraverseFromSubstitutionsToIR);
+    (common::GetCompileConfig("TRAVERSE_SUBSTITUTIONS_MODE") != "1" ? kOptTraverseFromIRToSubstitutions
+                                                                    : kOptTraverseFromSubstitutionsToIR);
   if (traverse_mode == kOptTraverseFromIRToSubstitutions &&
       MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode &&
       optimizer->traverse_nodes_first() && !is_once_ && !global_sensitive_) {

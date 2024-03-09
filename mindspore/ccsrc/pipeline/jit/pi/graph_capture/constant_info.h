@@ -41,8 +41,9 @@ class ConstantInfo {
   const py::object &value() const { return value_; }
   Py_ssize_t len() const { return len_; }
 
-  ConstantInfo *GetAttr(const std::string &key) { return &attrs_[key]; }
+  const py::object &GetAttr(const std::string &key) { return attrs_[key]; }
   bool HasAttr(const std::string &key) const { return attrs_.find(key) != attrs_.end(); }
+  void SetAttr(const std::string &key, const py::object &value) { attrs_[key] = value; }
 
   std::string ToString() const;
 
@@ -54,7 +55,7 @@ class ConstantInfo {
   py::object type_;
   py::object value_;
   Py_ssize_t len_;
-  std::map<std::string, ConstantInfo> attrs_;
+  std::map<std::string, py::object> attrs_;
 };
 
 }  // namespace pijit

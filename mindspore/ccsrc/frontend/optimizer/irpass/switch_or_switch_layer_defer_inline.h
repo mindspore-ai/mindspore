@@ -25,6 +25,7 @@
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/anf_visitor.h"
 #include "frontend/operator/ops.h"
+#include "utils/compile_config.h"
 
 namespace mindspore {
 namespace opt {
@@ -33,7 +34,7 @@ namespace irpass {
 class PartialDeferInline : public AnfVisitor {
  public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
-    static const bool enable_pre_lift = (common::GetEnv("MS_DEV_PRE_LIFT") == "1");
+    static const bool enable_pre_lift = (common::GetCompileConfig("PRE_LIFT") == "1");
     if (!enable_pre_lift) {
       return nullptr;
     }

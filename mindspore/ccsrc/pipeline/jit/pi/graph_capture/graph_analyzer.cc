@@ -16,6 +16,7 @@
 #include "pipeline/jit/pi/graph_capture/graph_analyzer.h"
 #include <algorithm>
 #include <unordered_set>
+#include <string>
 #include <vector>
 #include "pipeline/jit/pi/pi_jit_config.h"
 #include "pipeline/jit/pi/graph_guard/infer.h"
@@ -333,6 +334,13 @@ void GraphAnalyzer::Analyze() {
       graph_->GetSideEffect()->GetSideEffectInstrs().erase(item.first);
     }
   }
+  for (auto item : graph_->GetSideEffectNodes()) {
+    if (item->bci() >= graph_->GetStopTraceBci()) {
+      graph_->GetSideEffectNodes().erase(
+        std::remove(graph_->GetSideEffectNodes().begin(), graph_->GetSideEffectNodes().end(), item),
+        graph_->GetSideEffectNodes().end());
+    }
+  }
   CollectInputs();
 
   need_interpret_ = true;
@@ -355,6 +363,9 @@ void GraphAnalyzer::Analyze() {
   if (!graph_->GetSideEffect()->GetSideEffectInstrs().empty()) {
     need_interpret_ = true;
   }
+  if (!graph_->GetSideEffect()->GetGlobalList().empty()) {
+    need_interpret_ = true;
+  }
 }
 
 FrameStates buildLastFrame(Graph *g) { return g->GetFrame(g->GetStopTraceBci()); }
@@ -364,7 +375,7 @@ std::vector<ValueNode *> GraphAnalyzer::GetAliveLocals(Graph *g) {
   if (this->graph_->Config().GetBoolConfig(GraphJitConfig::kLogGraphBreak)) {
     GRAPH_JIT_LOG_F("UD analyze: enter GetAliveLocals bci %d", bci);
   }
-  std::vector<ValueNode *> outputs = g->GetCFG()->GetLiveness()->CollectAliveNode(g, bci);
+  std::vector<ValueNode *> outputs = g->CollectAliveNode(bci);
   std::set<ValueNode *> uniques(outputs.begin(), outputs.end());
   outputs.assign(uniques.begin(), uniques.end());
   return outputs;
@@ -421,17 +432,27 @@ bool GraphAnalyzer::AnalyzeAliveLocals(std::vector<ValueNode *> aliveNodes) {
   return isAllNodesSupportOutput;
 }
 
+static bool SkipSpecialFuncOrPrimitive(const py::object &callable) {
+  if (callable.ptr() == nullptr) {
+    return false;
+  }
+  if (CheckJitConstexpr(callable) || CheckMSConstexpr(callable)) {
+    return true;
+  }
+  if (IsPrimitiveType<true>(Py_TYPE(callable.ptr()))) {
+    std::string name = callable.attr("name").cast<std::string>();
+    return GetSpecialPrimitiveInferFunc().find(name) != GetSpecialPrimitiveInferFunc().end();
+  }
+  return false;
+}
+
 bool GraphAnalyzer::HasTensorOperation() const {
   bool has_tensor_cal = false;
   for (auto i : info_.captured_locals.values) {
     AObject *value = i->GetVobj();
     int op = i->GetOpcode();
     if (Utils::IsCallOp(op)) {
-      py::object callable = i->input(0)->GetVobj()->GetPyObject();
-      if (callable.ptr() == nullptr) {
-        return true;
-      }
-      if (CheckJitConstexpr(callable) || CheckMSConstexpr(callable)) {
+      if (SkipSpecialFuncOrPrimitive(i->input(0)->GetVobj()->GetPyObject())) {
         continue;
       }
       if (value->GetType() == AObject::kTypeCFunction) {
@@ -480,6 +501,146 @@ bool ValidateGraphParameters(ValueNode *node) {
     return false;
   }
   return unsupported_parameter.find(info->GetType()) == unsupported_parameter.end();
+}
+
+void MindGraphAnalyzer::CollectInputs() {
+  auto &inputs = GetCaptureInfo().captured_locals.inputs;
+  const FrameStates &enter_frame = graph_->GetFrame(0);
+  PyCodeObject *co = graph_->GetCodeObj();
+  int argc = co->co_argcount + co->co_kwonlyargcount;
+  argc += (co->co_flags & CO_VARARGS) ? 1 : 0;
+  argc += (co->co_flags & CO_VARKEYWORDS) ? 1 : 0;
+  for (Py_ssize_t m = 0; m < argc; ++m) {
+    auto local = enter_frame.Local(m);
+    if (local != &ValueNode::kUnboundLocal) {
+      inputs.insert(enter_frame.Local(m));
+    } else {
+      const Py_ssize_t ncells = PyTuple_GET_SIZE(co->co_cellvars);
+      for (Py_ssize_t i = 0; co->co_cell2arg && i < ncells; ++i) {
+        Py_ssize_t argi = co->co_cell2arg[i];
+        if (argi != CO_CELL_NOT_AN_ARG) {
+          auto cell = enter_frame.Closure(i)->GetValue();
+          inputs.insert(cell);
+        }
+      }
+    }
+  }
+}
+
+void MindGraphAnalyzer::Analyze() {
+  auto origin_stop_bci = graph_->GetStopTraceBci();
+  UseDefAnalyze();
+  CollectInputs();
+
+  const FrameStates &enter_frame = graph_->GetFrame(0);
+  GetCaptureInfo().escaped_locals.insert(enter_frame.GetLocals().begin(), enter_frame.GetLocals().end());
+
+  auto mind_graph_builder = std::static_pointer_cast<MindGraphBuilder>(graph_builder_);
+  MS_EXCEPTION_IF_NULL(mind_graph_builder);
+  auto func_graph_builder = mind_graph_builder->FGBuilder();
+  if (func_graph_builder->graph() == nullptr) {
+    // Graph build failed, add all nodes to ordered_escaped_locals.
+    MS_LOG(DEBUG) << "Failed to build graph";
+    GetCaptureInfo().ordered_escaped_locals.clear();
+    for (const auto &traced_node : graph_->GetTracedNodes()) {
+      if (origin_stop_bci != -1 && traced_node->bci() >= origin_stop_bci) {
+        break;
+      }
+      AddToEscaped(traced_node);
+    }
+    graph_->StopTraceAt(origin_stop_bci, StopTraceReason::kStopTraceDataDependsOnGraphOut);
+    need_interpret_ = true;
+    GetCaptureInfo().captured_locals.order.clear();
+    GetCaptureInfo().captured_locals.values.clear();
+    GetCaptureInfo().captured_locals.inputs.clear();
+    return;
+  }
+
+  need_interpret_ = true;
+  if (graph_->GetStopTraceBci() != -1 || !GetCaptureInfo().ordered_escaped_locals.empty()) {
+    return;
+  }
+  bool support_ret = graph_->GetRetVal()->GetVobj() && graph_->GetRetVal()->GetVobj()->IsMindSporeSupportedType();
+  if (!support_ret) {
+    return;
+  }
+  need_interpret_ = false;
+}
+
+bool MindGraphAnalyzer::AnalyzeAliveLocals(std::vector<ValueNode *> aliveNodes) {
+  bool isAllNodesSupportOutput = true;
+  for (auto node : aliveNodes) {
+    // If the value can get from local, no need to add to graph output.
+    if (IsNonLocalValue(node)) {
+      MS_LOG(DEBUG) << "Skip non local value used as graph return.";
+      continue;
+    }
+    auto capturedLocals = info_.captured_locals.order;
+    if (std::find(capturedLocals.begin(), capturedLocals.end(), node) == capturedLocals.end()) {
+      continue;
+    }
+    AObject *o = node->GetVobj();
+    auto out_py_obj = o->GetPyObject();
+    auto mind_graph_builder = std::static_pointer_cast<MindGraphBuilder>(graph_builder_);
+    MS_EXCEPTION_IF_NULL(mind_graph_builder);
+    auto func_graph_builder = mind_graph_builder->FGBuilder();
+    if (func_graph_builder->AddOutput(out_py_obj, false)) {
+      MS_LOG(DEBUG) << "Add output success.";
+      continue;
+    }
+    MS_LOG(DEBUG) << "Add output failed.";
+    //  reset break graph point
+    isAllNodesSupportOutput = false;
+    int new_break_point = node->bci();
+    auto curNode = node;
+    if (new_break_point == -1) {
+      // No node is unsupported output since no node in captured output.
+      isAllNodesSupportOutput = true;
+      break;
+    }
+    MS_EXCEPTION_IF_NULL(curNode->GetGraph());
+    if (this->graph_->Config().GetBoolConfig(GraphJitConfig::kLogGraphBreak)) {
+      GRAPH_JIT_LOG_F("reset break point: %d", new_break_point);
+    }
+    this->graph_->StopTraceAt(new_break_point, StopTraceReason::kStopTraceDataDependsOnGraphOut);
+    break;
+  }
+  return isAllNodesSupportOutput;
+}
+
+void MindGraphAnalyzer::UpdateCapturedOrder() {
+  const auto &traced_nodes = graph_->GetTracedNodes();
+  auto stop_bci = graph_->GetStopTraceBci();
+  if (stop_bci == -1) {
+    GetCaptureInfo().captured_locals.order = traced_nodes;
+  } else {
+    GetCaptureInfo().captured_locals.order.clear();
+    for (const auto &traced_node : traced_nodes) {
+      if (traced_node->bci() >= stop_bci) {
+        break;
+      }
+      GetCaptureInfo().captured_locals.order.push_back(traced_node);
+    }
+  }
+  const auto &captured_local_order = GetCaptureInfo().captured_locals.order;
+  std::set<ValueNode *> new_capture_local_values(captured_local_order.begin(), captured_local_order.end());
+  GetCaptureInfo().captured_locals.values = new_capture_local_values;
+}
+
+void MindGraphAnalyzer::UseDefAnalyze() {
+  // UD analyze: alive nodes analysis
+  std::vector<ValueNode *> aliveLocals = GetAliveLocals(graph_);
+  if (!aliveLocals.empty()) {
+    bool stop_analyze = false;
+    while (!stop_analyze) {
+      UpdateCapturedOrder();
+      // Add graph output according to leaf nodes.
+      stop_analyze = AnalyzeAliveLocals(aliveLocals);
+      if (!stop_analyze) {
+        aliveLocals = GetAliveLocals(graph_);
+      }
+    }
+  }
 }
 
 }  // namespace pijit
