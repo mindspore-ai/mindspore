@@ -42,6 +42,7 @@ constexpr auto kNameFlashAttentionPatternForLLAMAPatternV2 = "FlashAttentionPatt
 constexpr auto kNameFlashAttentionPatternForBaiChuan = "FlashAttentionPatternForBaiChuan";
 constexpr auto kNameFlashAttentionPatternForMsSDPseShift = "FlashAttentionPatternForMsSDPseShift";
 constexpr size_t high_inner_precise = 0;
+constexpr size_t high_performance = 1;
 constexpr size_t kNumIndex0 = 0;
 constexpr size_t kNumIndex1 = 1;
 constexpr size_t kNumIndex2 = 2;
@@ -1959,7 +1960,7 @@ CNodePtr FlashAttentionFusion::CreateFlashAttentionNodeForSDPreMul(const std::st
     MS_LOG(INFO) << "d_value: " << d_value;
     if (d_value == kNumDValue) {
       fa_node = CreateFAForSD15(func_graph, node, q_input, k_input, v_input, num_head, next_tokens, scale_value,
-                                high_inner_precise);
+                                high_performance);
       auto trans_k = mul_k->input(1)->cast<CNodePtr>()->input(1);  // trans_k input[2] = 0231
       MS_LOG(INFO) << "trans_k name: " << trans_k->fullname_with_scope();
       std::vector<int32_t> new_perm = {kNumIndex0, kNumIndex2, kNumIndex1, kNumIndex3};
@@ -1971,7 +1972,7 @@ CNodePtr FlashAttentionFusion::CreateFlashAttentionNodeForSDPreMul(const std::st
     }
   } else {
     fa_node = CreatePromptFlashAttentionCnodeForBNSD(func_graph, node, q_input, k_input, v_input, nullptr, num_head,
-                                                     next_tokens, scale_value, num_head, high_inner_precise);
+                                                     next_tokens, scale_value, num_head, high_performance);
     MS_LOG(INFO) << "fa_node: " << fa_node->fullname_with_scope();
     auto trans_k = fa_node->input(kNumIndex2);  // trans_k input[2] = 0231
     MS_LOG(INFO) << "trans_k name: " << trans_k->fullname_with_scope();
