@@ -21,8 +21,8 @@
 #include <vector>
 #include "include/backend/optimizer/helper.h"
 #include "utils/ms_context.h"
-#include "plugin/device/ascend/hal/device/ascend_stream_assign.h"
 #include "ops/framework_op_name.h"
+#include "mindspore/core/ops/framework_ops.h"
 
 namespace mindspore {
 namespace device {
@@ -100,7 +100,41 @@ void AclSomas::InitEventInfo(const session::KernelGraph &graph) {
   MS_LOG(DEBUG) << "Acl Somas InitEventInfo end.";
 }
 
-bool AclSomas::DevSpecNodeProcess(const session::KernelGraph &graph) { return true; }
+bool AclSomas::RuntimeNodeProcess(const session::KernelGraph &graph) {
+  auto &kernels = graph.execution_order();
+  for (auto &kernel : kernels) {
+    if (!IsPrimitiveCNode(kernel, {prim::kPrimConditionGather})) {
+      continue;
+    }
+    auto iter = nodes_map_.find(kernel.get());
+    if (iter != nodes_map_.end()) {
+      auto &node = iter->second.at(0);
+      MS_EXCEPTION_IF_NULL(node);
+      auto input_tensors = node->input_tensors_;
+      auto output_tensors = node->output_tensors_;
+      MS_EXCEPTION_IF_CHECK_FAIL(input_tensors.size() == output_tensors.size() * 2,
+                                 "Invalid input and output tensors size" + std::to_string(input_tensors.size()) + ", " +
+                                   std::to_string(output_tensors.size()));
+      std::vector<std::vector<size_t>> union_tensors;
+      for (auto &tensor : output_tensors) {
+        tensor->type_ = somas::kUnion;
+        union_tensors.push_back({tensor->GetId()});
+      }
+      for (size_t i = 0; i < output_tensors.size(); i++) {
+        input_tensors[i]->type_ = somas::kUnion;
+        input_tensors[i + output_tensors.size()]->type_ = somas::kUnion;
+        union_tensors[i].push_back(input_tensors[i]->GetId());
+        union_tensors[i].push_back(input_tensors[i + output_tensors.size()]->GetId());
+      }
+      union_tensors_list_.insert(union_tensors_list_.end(), union_tensors.begin(), union_tensors.end());
+    } else {
+      MS_LOG(EXCEPTION) << "Can't find somas node for inplace node " << kernel->fullname_with_scope();
+    }
+  }
+  return true;
+}
+
+bool AclSomas::DevSpecNodeProcess(const session::KernelGraph &graph) { return RuntimeNodeProcess(graph); }
 
 void AclSomas::CommunicationTensorProcess(const std::vector<somas::SomasTensorPtr> &tensors) const {
   if (tensors.size() != ALONE) {

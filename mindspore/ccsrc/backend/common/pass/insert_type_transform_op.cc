@@ -30,6 +30,7 @@
 #include "ops/arithmetic_ops.h"
 #include "ops/nn_ops.h"
 #include "ops/sequence_ops.h"
+#include "ops/framework_ops.h"
 #include "ops/op_def.h"
 #include "ops/op_utils.h"
 
@@ -492,6 +493,9 @@ const AnfNodePtr InsertTypeTransformOp::Process(const FuncGraphPtr &func_graph, 
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<CNode>()) {
+    return nullptr;
+  }
+  if (IsPrimitiveCNode(node, prim::kPrimSwitch)) {
     return nullptr;
   }
   if ((node->kernel_info() == nullptr) ||

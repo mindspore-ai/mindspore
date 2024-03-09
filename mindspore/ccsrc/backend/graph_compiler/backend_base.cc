@@ -26,6 +26,7 @@
 #include "pipeline/jit/ps/parse/data_converter.h"
 #include "backend/graph_compiler/transform.h"
 #include "backend/common/pass/erase_invalid_micro_depend.h"
+#include "backend/common/pass/switch_not_cut.h"
 #include "include/backend/distributed/recovery/recovery_context.h"
 #include "include/common/utils/callbacks.h"
 #include "include/common/utils/scoped_long_running.h"
@@ -530,6 +531,7 @@ namespace {
 void DoUnifyMindIRPass(const FuncGraphPtr &graph) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
+  MS_LOG(INFO) << "Do unify mindir pass for graph " << graph->ToString();
 #ifdef ENABLE_DUMP_IR
   if (context_ptr->CanDump(kIntroductory)) {
     std::string file_name = "hwopt_before_mindrt_unify_mindir_graph_" + graph->ToString() + ".ir";
@@ -539,6 +541,7 @@ void DoUnifyMindIRPass(const FuncGraphPtr &graph) {
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto unify_mindir_pm = std::make_shared<opt::PassManager>("unify_mindir_pm");
   unify_mindir_pm->AddPass(std::make_shared<opt::EraseInvalidMicroDepend>());
+  unify_mindir_pm->AddPass(std::make_shared<opt::SwitchNotCut>());
   optimizer->AddPassManager(unify_mindir_pm);
   (void)optimizer->Optimize(graph);
 #ifdef ENABLE_DUMP_IR
@@ -597,6 +600,11 @@ void MindRTBackendBase::UnifyMindIR(const FuncGraphPtr &root_graph) const {
     }
   }
   DoUnifyMindIRPass(root_graph);
+  const auto &sub_graphs = root_graph->manager()->func_graphs_used_total(root_graph);
+  for (const auto &sub_graph : sub_graphs) {
+    MS_EXCEPTION_IF_NULL(sub_graph);
+    DoUnifyMindIRPass(sub_graph);
+  }
 }
 
 void MindRTBackendBase::CompileSubGraph(const FuncGraphPtr &func_graph, device::RunMode run_mode) {
@@ -617,7 +625,8 @@ void MindRTBackendBase::CompileSubGraph(const FuncGraphPtr &func_graph, device::
   for (const auto &sub_graph : cand_graph) {
     MS_EXCEPTION_IF_NULL(sub_graph);
     bool skip_inline_graph =
-      sub_graph->has_flag(FUNC_GRAPH_FLAG_CELL_REUSE) && context->CellReuseLevel() == CellReuseLevel::kLazyInline;
+      (sub_graph->has_flag(FUNC_GRAPH_FLAG_CELL_REUSE) && context->CellReuseLevel() == CellReuseLevel::kLazyInline) ||
+      sub_graph->has_flag(kFlagSwitchInline);
     if (sub_graph != func_graph && sub_graph != nullptr && !sub_graph->has_flag(kFlagJitCallGraph) &&
         !skip_inline_graph) {
       MS_LOG(INFO) << "Compile sub graph " << sub_graph->ToString();

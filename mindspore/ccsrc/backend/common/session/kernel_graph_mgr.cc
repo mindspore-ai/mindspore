@@ -1957,7 +1957,7 @@ KernelGraphPtr KernelGraphMgr::ConstructKernelGraph(const AnfNodePtrList &lst, c
     // create a new cnode object
     auto new_cnode = CreateNewCNode(cnode, graph.get(), &other_graph_cnode);
     MS_EXCEPTION_IF_NULL(new_cnode);
-    if (IsPrimitiveCNode(new_cnode, prim::kPrimCall)) {
+    if (IsOneOfPrimitiveCNode(new_cnode, {prim::kPrimCall, prim::kPrimPartial})) {
       auto fn = new_cnode->input(kIndexOne);
       MS_EXCEPTION_IF_NULL(fn);
       auto child_kernel_graph = AnfRuntimeAlgorithm::GetValueNodeKernelGraph(fn);

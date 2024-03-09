@@ -41,6 +41,7 @@
 #include "plugin/device/ascend/optimizer/ge/unfold_nested_output.h"
 #include "plugin/device/ascend/optimizer/ge/resize_bilinear_add_attr.h"
 #include "plugin/device/ascend/optimizer/ge/process_call_inline.h"
+#include "plugin/device/ascend/optimizer/ge/process_partial_inline.h"
 #include "plugin/device/ascend/optimizer/format_type/deal_ref_output.h"
 #include "plugin/device/ascend/optimizer/ge/hcom/insert_load_for_allgather.h"
 #include "plugin/device/ascend/optimizer/format_type/set_fracz_group_attr.h"
@@ -125,6 +126,7 @@ void GEBackendOptimizeACL(const KernelGraphPtr &kernel_graph) {
   opt_acl_pm->AddPass(std::make_shared<InsertTensorMoveForCommunication>());
   opt_acl_pm->AddPass(std::make_shared<opt::TransDependValueToInt32>());
   opt_acl_pm->AddPass(std::make_shared<opt::ProcessCallInline>());
+  opt_acl_pm->AddPass(std::make_shared<opt::ProcessPartialInline>());
   opt_acl_pm->AddPass(std::make_shared<opt::ExpanderFallback>());
   optimizer->AddPassManager(opt_acl_pm);
   (void)optimizer->Optimize(kernel_graph);

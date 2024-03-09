@@ -43,6 +43,7 @@ class AclSomas : public somas::Somas {
 
   bool InitDevSpecControlTensors(const session::KernelGraph &graph) override;
   bool DevSpecNodeProcess(const session::KernelGraph &graph) override;
+  bool RuntimeNodeProcess(const session::KernelGraph &graph);
 
   void InitEventInfo(const session::KernelGraph &graph);
   std::map<uint32_t, somas::EventPair> event_map_;

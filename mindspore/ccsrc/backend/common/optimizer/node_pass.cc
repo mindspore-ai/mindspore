@@ -84,11 +84,14 @@ void ModifyOutputAndCallerToMap(const CNodePtr &cnode, const FuncGraphPtr &fg,
       auto partial_node = dyn_cast<CNode>(node);
       const auto &partial_inputs = partial_node->inputs();
       MS_EXCEPTION_IF_NULL(partial_inputs.at(0));
-      if (!IsPrimitive(partial_inputs.at(0), prim::kPrimPartial)) {
+      if (IsPrimitive(partial_inputs.at(0), prim::kPrimPartial)) {
+        MS_EXCEPTION_IF_NULL(partial_inputs.at(kPartialArgsIndex));
+        switch_subgraph = GetValueNode<FuncGraphPtr>(partial_inputs.at(kPartialArgsIndex));
+      } else if (IsPrimitive(partial_inputs.at(0), prim::kPrimPartialInline)) {
+        switch_subgraph = common::AnfAlgo::GetNodeAttr<KernelGraphPtr>(partial_node, kAttrKernelGraph);
+      } else {
         MS_LOG(EXCEPTION) << "Invalid switch node: " << cnode->DebugString();
       }
-      MS_EXCEPTION_IF_NULL(partial_inputs.at(kPartialArgsIndex));
-      switch_subgraph = GetValueNode<FuncGraphPtr>(partial_inputs.at(kPartialArgsIndex));
     } else if (node->isa<ValueNode>()) {
       switch_subgraph = GetValueNode<FuncGraphPtr>(node);
     } else {

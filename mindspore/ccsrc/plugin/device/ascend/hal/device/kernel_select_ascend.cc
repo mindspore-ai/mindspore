@@ -560,8 +560,9 @@ std::tuple<bool, std::string, ExceptionType> SelectKernelInfoWithMsg(const Kerne
   }
 
   // for backend inline
-  if (IsPrimitiveCNode(node, prim::kPrimCallInline)) {
-    GenerateKernelBuildInfo(node, KernelType::UNKNOWN_KERNEL_TYPE);
+  if (IsOneOfPrimitiveCNode(node, {prim::kPrimCallInline, prim::kPrimSwitch, prim::kPrimPartialInline,
+                                   prim::kPrimConditionSwitch, prim::kPrimConditionGather})) {
+    GenerateKernelBuildInfo(node, KernelType::RT_KERNEL);
     return result;
   }
 
