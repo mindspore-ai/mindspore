@@ -32,7 +32,6 @@
 #include "backend/common/graph_kernel/core/update_state_formatter.h"
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
 #include "backend/common/graph_kernel/core/graph_kernel_op_combiner.h"
-#include "backend/common/graph_kernel/core/split_reshape_and_cache.h"
 #include "backend/common/graph_kernel/core/cluster_cce_lib_ops.h"
 
 #include "tools/graph_kernel/converter/akg/utils.h"
@@ -52,6 +51,7 @@
 #include "tools/graph_kernel/converter/split_model_ascend.h"
 #include "tools/graph_kernel/converter/split_model_gpu.h"
 #include "tools/graph_kernel/converter/split_model_cpu.h"
+#include "tools/graph_kernel/converter/split_umonad.h"
 #include "utils/ms_context.h"
 
 namespace mindspore {
@@ -110,7 +110,7 @@ GkPassManagerPtr GraphKernelOptimizer::Cluster() const {
   // Expand complex basic kernels to composite kernels
   pm->Add(std::make_shared<GraphKernelExpanderLite>(), OptLevel_1);
 
-  pm->Add(std::make_shared<SplitReshapeAndCache>(), OptLevel_0, is_ascend);
+  pm->Add(std::make_shared<SplitReshapeAndCacheLite>(), OptLevel_0, is_ascend);
   if (graphkernel::GraphKernelFlags::GetInstance().enable_cce_lib) {
     // akg cce lib ops
     pm->Add(std::make_shared<ClusterCceLibOps>(), OptLevel_0, is_ascend);

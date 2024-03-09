@@ -56,5 +56,6 @@ class OpUMonadExpanderDeco : public ExpanderDecorator {
  protected:
   size_t input_idx_;
 };
+AnfNodePtr ProcessNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, size_t input_idx);
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_SPLIT_UMONAD_H_
