@@ -17,10 +17,11 @@
 #ifndef MINDSPORE_CCSRC_RUNTIME_HARDWARE_DEVICE_CONTEXT_H_
 #define MINDSPORE_CCSRC_RUNTIME_HARDWARE_DEVICE_CONTEXT_H_
 
+#include <map>
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
-#include <map>
+
 #include "include/backend/device_type.h"
 #include "include/backend/device_address.h"
 #include "runtime/device/gsm/swap_manager.h"
@@ -35,6 +36,7 @@
 #include "include/backend/optimizer/graph_optimizer.h"
 #include "runtime/pipeline/task/task.h"
 #include "ir/device_event.h"
+#include "utils/ms_context.h"
 #ifdef __APPLE__
 #include "mindrt/include/async/spinlock.h"
 #endif
@@ -215,6 +217,9 @@ class BACKEND_EXPORT DeviceResManager {
     return false;
   }
 
+  virtual size_t QueryStreamSize() const { return 0L; }
+  virtual std::vector<uint32_t> GetStreamIds() const { return {}; }
+
   // If multi-stream used in pynative mode, other streams must be sync before the graph
   // is executed. Otherwise, out-of-order occurs. Therefore this flag is added.
   // This solution is a temporary solution, this flag will be removed after multi-stream is
@@ -252,6 +257,9 @@ class BACKEND_EXPORT DeviceResManager {
   // Return default stream id. Normally it's 0.
   virtual size_t DefaultStream() const { return 0; }
 
+  // Create device event for runtime.
+  virtual DeviceEventPtr CreateRuntimeEvent(bool enable_blocking, bool enable_record_wait) { return nullptr; }
+
   // Create device event with flag.
   virtual DeviceEventPtr CreateEventWithFlag(bool enable_timing, bool blocking) { return nullptr; };
 
@@ -269,6 +277,8 @@ class BACKEND_EXPORT DeviceResManager {
   CollectiveCommunicationLib *collective_comm_lib() const { return collective_comm_lib_; }
 
   std::shared_ptr<SwapManager> swap_manager() const { return swap_manager_; }
+
+  std::shared_ptr<MemoryManager> mem_manager() const { return mem_manager_; }
 
  protected:
   // Ensure the thread safety for allocating device memory.

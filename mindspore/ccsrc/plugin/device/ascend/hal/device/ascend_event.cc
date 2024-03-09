@@ -15,6 +15,7 @@
  */
 
 #include "plugin/device/ascend/hal/device/ascend_event.h"
+#include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 
 #include "utils/log_adapter.h"
 #include "transform/symbol/acl_rt_symbol.h"
@@ -35,6 +36,7 @@ AscendEvent::AscendEvent(uint32_t flag) {
     MS_LOG(ERROR) << "aclrtCreateEventWithFlag failed, ret:" << ret;
     event_ = nullptr;
   }
+  MS_LOG(DEBUG) << "Create ascend event success, flat : " << flag << ".";
 }
 
 AscendTimeEvent::AscendTimeEvent() {
@@ -58,8 +60,22 @@ AscendEvent::~AscendEvent() {
   record_stream_ = nullptr;
 }
 
+bool AscendEvent::IsReady() const { return event_ != nullptr; }
+
 void AscendEvent::RecordEvent() {
   MS_EXCEPTION_IF_NULL(event_);
+  MS_EXCEPTION_IF_NULL(record_stream_);
+  auto ret = CALL_ASCEND_API(aclrtRecordEvent, event_, record_stream_);
+  if (ret != ACL_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "aclrtRecordEvent failed, ret:" << ret;
+  }
+  need_wait_ = true;
+}
+
+void AscendEvent::RecordEvent(uint32_t stream_id) {
+  MS_LOG(DEBUG) << "Ascend record event on stream id : " << stream_id << ".";
+  MS_EXCEPTION_IF_NULL(event_);
+  record_stream_ = AscendStreamMng::GetInstance().GetStream(stream_id);
   MS_EXCEPTION_IF_NULL(record_stream_);
   auto ret = CALL_ASCEND_API(aclrtRecordEvent, event_, record_stream_);
   if (ret != ACL_ERROR_NONE) {
@@ -80,6 +96,24 @@ void AscendEvent::WaitEvent() {
     MS_LOG(EXCEPTION) << "aclrtResetEvent failed, ret:" << ret;
   }
   need_wait_ = false;
+}
+
+bool AscendEvent::WaitEvent(uint32_t stream_id) {
+  MS_LOG(DEBUG) << "Ascend wait event on stream id : " << stream_id << ".";
+  MS_EXCEPTION_IF_NULL(event_);
+  wait_stream_ = AscendStreamMng::GetInstance().GetStream(stream_id);
+  MS_EXCEPTION_IF_NULL(wait_stream_);
+  auto ret = CALL_ASCEND_API(aclrtStreamWaitEvent, wait_stream_, event_);
+  if (ret != ACL_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "aclrtStreamWaitEvent failed, ret:" << ret;
+  }
+  // Reset event after wait so that event can be reused.
+  ret = CALL_ASCEND_API(aclrtResetEvent, event_, wait_stream_);
+  if (ret != ACL_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "aclrtResetEvent failed, ret:" << ret;
+  }
+  need_wait_ = false;
+  return true;
 }
 
 void AscendEvent::WaitEventWithoutReset() {

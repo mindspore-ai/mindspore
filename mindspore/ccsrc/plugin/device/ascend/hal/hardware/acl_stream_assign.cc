@@ -216,7 +216,7 @@ void AclStreamAssign::InsertEventsForOutputs(const NotNull<KernelGraphPtr> &kern
 }
 
 CNodePtr AclStreamAssign::CreateSendApplyKernel(const NotNull<KernelGraphPtr> &graph_ptr, uint32_t event_id,
-                                                uint32_t stream_id) const {
+                                                uint32_t stream_id, uint32_t event_generate_id) const {
   auto send_op = std::make_shared<Primitive>(kStreamSendOpName);
   MS_EXCEPTION_IF_NULL(send_op);
   auto send_apply = std::make_shared<ValueNode>(send_op);
@@ -224,12 +224,14 @@ CNodePtr AclStreamAssign::CreateSendApplyKernel(const NotNull<KernelGraphPtr> &g
   auto send_node_ptr = graph_ptr->NewCNode({send_apply});
   MS_EXCEPTION_IF_NULL(send_node_ptr);
   common::AnfAlgo::SetNodeAttr(kAttrEventId, MakeValue(event_id), send_node_ptr);
+  common::AnfAlgo::SetNodeAttr(kAttrRecrodEventStreamPair, MakeValue(event_generate_id), send_node_ptr);
   AnfAlgo::SetStreamId(stream_id, send_node_ptr.get());
   return send_node_ptr;
 }
 
 CNodePtr AclStreamAssign::CreateRecvApplyKernel(const NotNull<KernelGraphPtr> &graph_ptr, uint32_t event_id,
-                                                uint32_t stream_id) const {
+                                                uint32_t record_stream_id, uint32_t stream_id,
+                                                uint32_t event_generate_id) const {
   auto recv_op = std::make_shared<Primitive>(kStreamRecvOpName);
   MS_EXCEPTION_IF_NULL(recv_op);
   auto recv_apply = std::make_shared<ValueNode>(recv_op);
@@ -237,6 +239,8 @@ CNodePtr AclStreamAssign::CreateRecvApplyKernel(const NotNull<KernelGraphPtr> &g
   auto recv_node_ptr = graph_ptr->NewCNode({recv_apply});
   MS_EXCEPTION_IF_NULL(recv_node_ptr);
   common::AnfAlgo::SetNodeAttr(kAttrEventId, MakeValue(event_id), recv_node_ptr);
+  common::AnfAlgo::SetNodeAttr(kAttrRecordEventStream, MakeValue(record_stream_id), recv_node_ptr);
+  common::AnfAlgo::SetNodeAttr(kAttrRecrodEventStreamPair, MakeValue(event_generate_id), recv_node_ptr);
   AnfAlgo::SetStreamId(stream_id, recv_node_ptr.get());
   return recv_node_ptr;
 }
@@ -246,12 +250,15 @@ void AclStreamAssign::InsertEvents(const NotNull<KernelGraphPtr> &kernel_graph, 
                                    mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> *kernel_send,
                                    mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> *kernel_recv,
                                    const AnfNodePtr &node_after_recv) const {
+  static std::atomic<uint32_t> event_generate_id_ = 0;
   MS_EXCEPTION_IF_NULL(kernel_send);
   MS_EXCEPTION_IF_NULL(kernel_recv);
   AscendStreamMng &resource_manager = AscendStreamMng::GetInstance();
   uint32_t event_id = resource_manager.ApplyNewEvent();
   auto event = resource_manager.ApplyRtEvent();
-  auto send_cnode = CreateSendApplyKernel(kernel_graph, event_id, AnfAlgo::GetStreamId(node_before_send));
+  auto send_stream_id = AnfAlgo::GetStreamId(node_before_send);
+  auto event_generate_id = ++event_generate_id_;
+  auto send_cnode = CreateSendApplyKernel(kernel_graph, event_id, send_stream_id, event_generate_id);
   common::AnfAlgo::SetNodeAttr(kAttrRecordEvent, MakeValue(reinterpret_cast<uintptr_t>(event)), send_cnode);
   auto send_iter = kernel_send->find(node_before_send);
   if (send_iter == kernel_send->end()) {
@@ -267,7 +274,8 @@ void AclStreamAssign::InsertEvents(const NotNull<KernelGraphPtr> &kernel_graph, 
     send_iter->second.push_back(send_cnode);
   }
 
-  CNodePtr recv_cnode = CreateRecvApplyKernel(kernel_graph, event_id, AnfAlgo::GetStreamId(node_after_recv));
+  CNodePtr recv_cnode = CreateRecvApplyKernel(kernel_graph, event_id, send_stream_id,
+                                              AnfAlgo::GetStreamId(node_after_recv), event_generate_id);
   common::AnfAlgo::SetNodeAttr(kAttrWaitEvent, MakeValue(reinterpret_cast<uintptr_t>(event)), recv_cnode);
   auto process_iter = kernel_recv->find(node_after_recv);
   if (process_iter == kernel_recv->end()) {

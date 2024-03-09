@@ -85,6 +85,7 @@ void GPUMemoryManager::Initialize() {
     MS_LOG(EXCEPTION) << "Dynamic memory pool init error.";
   }
   FreeMemFromMemPool(device_addr);
+  memory_pool_ = &(GPUMemoryAllocator::GetInstance());
 }
 
 void GPUMemoryManager::Finalize() { GPUMemoryAllocator::GetInstance().ReleaseDeviceRes(); }

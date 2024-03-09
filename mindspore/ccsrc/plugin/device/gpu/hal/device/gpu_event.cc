@@ -16,6 +16,7 @@
 
 #include "plugin/device/gpu/hal/device/gpu_event.h"
 #include "plugin/device/gpu/hal/device/gpu_common.h"
+#include "plugin/device/gpu/hal/device/gpu_device_manager.h"
 
 namespace mindspore::device::gpu {
 GpuEvent::GpuEvent() {
@@ -44,11 +45,23 @@ GpuEvent::~GpuEvent() {
   record_stream_ = nullptr;
 }
 
+bool GpuEvent::IsReady() const { return event_ != nullptr; }
+
 void GpuEvent::WaitEvent() {
   MS_EXCEPTION_IF_NULL(wait_stream_);
   MS_EXCEPTION_IF_NULL(event_);
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamWaitEvent(wait_stream_, event_, 0), "cudaStreamWaitEvent failed");
   need_wait_ = false;
+}
+
+bool GpuEvent::WaitEvent(uint32_t stream_id) {
+  MS_LOG(DEBUG) << "Gpu wait event on stream id : " << stream_id << ".";
+  MS_EXCEPTION_IF_NULL(event_);
+  wait_stream_ = static_cast<cudaStream_t>(GPUDeviceManager::GetInstance().GetStream(stream_id));
+  MS_EXCEPTION_IF_NULL(wait_stream_);
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamWaitEvent(wait_stream_, event_, 0), "cudaStreamWaitEvent failed");
+  need_wait_ = false;
+  return true;
 }
 
 void GpuEvent::WaitEventWithoutReset() {
@@ -58,6 +71,15 @@ void GpuEvent::WaitEventWithoutReset() {
 
 void GpuEvent::RecordEvent() {
   MS_EXCEPTION_IF_NULL(event_);
+  MS_EXCEPTION_IF_NULL(record_stream_);
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaEventRecord(event_, record_stream_), "cudaEventRecord failed");
+  need_wait_ = true;
+}
+
+void GpuEvent::RecordEvent(uint32_t stream_id) {
+  MS_LOG(DEBUG) << "Gpu record event on stream id : " << stream_id << ".";
+  MS_EXCEPTION_IF_NULL(event_);
+  record_stream_ = static_cast<cudaStream_t>(GPUDeviceManager::GetInstance().GetStream(stream_id));
   MS_EXCEPTION_IF_NULL(record_stream_);
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaEventRecord(event_, record_stream_), "cudaEventRecord failed");
   need_wait_ = true;

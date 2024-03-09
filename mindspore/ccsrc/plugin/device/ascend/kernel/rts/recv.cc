@@ -35,11 +35,12 @@ bool RecvKernel::Init(const AnfNodePtr &anf_node) {
     MS_LOG(INTERNAL_EXCEPTION) << "RecvKernel has no attr kAttrEventId";
   }
   event_id_ = GetValue<uint32_t>(primitive->GetAttr(kAttrEventId));
+  record_stream_id_ = GetValue<uint32_t>(primitive->GetAttr(kAttrRecordEventStream));
 
   if (common::AnfAlgo::HasNodeAttr(kAttrWaitEvent, anf_node->cast<CNodePtr>())) {
     event_ = reinterpret_cast<aclrtEvent>(GetValue<uintptr_t>(primitive->GetAttr(kAttrWaitEvent)));
   }
-  MS_LOG(INFO) << "recv op event_id_:" << event_id_;
+  MS_LOG(INFO) << "recv op event_id_: " << event_id_ << ", record_stream_id_ : " << record_stream_id_ << ".";
   return true;
 }
 

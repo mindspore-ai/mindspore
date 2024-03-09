@@ -296,6 +296,10 @@ bool GeDeviceResManager::CreateStreamWithPriority(size_t *stream_id, int32_t pri
   return true;
 }
 
+size_t GeDeviceResManager::QueryStreamSize() const { return AscendStreamMng::GetInstance().QueryStreamSize(); }
+
+std::vector<uint32_t> GeDeviceResManager::GetStreamIds() const { return AscendStreamMng::GetInstance().GetStreamIds(); }
+
 bool GeDeviceResManager::single_op_multi_stream_enable() const {
   return AscendStreamMng::GetInstance().single_op_multi_stream_enable();
 }
@@ -366,6 +370,27 @@ size_t GeDeviceResManager::DefaultStream() const {
     return SIZE_MAX;
   }
   return AscendStreamMng::GetInstance().default_stream_id();
+}
+
+// ACL_EVENT_TIME_LINE: indicates that the number of created events is not limited, and the created events can be used
+//  to compute the elapsed time between events, which may cause lost some performance.
+// ACL_EVENT_SYNC: indicates that the number of created events is limited, and the created events can be used for
+//  synchronization between multiple streams.
+// ACL_EVENT_CAPTURE_STREAM_PROGRESS: indicates that the number of created events is not limited and high performance,
+//  and the created events can not be used for timing and synchronization.
+DeviceEventPtr GeDeviceResManager::CreateRuntimeEvent(bool enable_blocking, bool enable_record_wait) {
+  if (!enable_blocking && !enable_record_wait) {
+    MS_LOG(INTERNAL_EXCEPTION) << "Bad parameters, enable_blocking is false and enable_record_wait is false.";
+  }
+
+  uint32_t flag = 0;
+  if (enable_blocking) {
+    flag |= ACL_EVENT_SYNC;
+  }
+  if (enable_record_wait) {
+    flag |= ACL_EVENT_CAPTURE_STREAM_PROGRESS;
+  }
+  return std::make_shared<AscendEvent>(flag);
 }
 
 DeviceEventPtr GeDeviceResManager::CreateEventWithFlag(bool enable_timing, bool blocking) {
