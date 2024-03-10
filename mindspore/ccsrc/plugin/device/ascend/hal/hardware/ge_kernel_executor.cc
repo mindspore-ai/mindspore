@@ -374,9 +374,9 @@ void InlineSwitchGraph(const KernelGraphPtr &graph, std::set<KernelGraphPtr> *co
     std::vector<ValuePtr> branch_graph_names;
     branch_graph_names.emplace_back(std::make_shared<StringImm>(false_sub_graph->ToString()));
     branch_graph_names.emplace_back(std::make_shared<StringImm>(true_sub_graph->ToString()));
-    cond_switch_node->AddAttr("inline_sub_graph_name", std::make_shared<ValueTuple>(branch_graph_names));
+    cond_switch_node->AddAttr(kInlineSubGraphName, std::make_shared<ValueTuple>(branch_graph_names));
     reverse(branch_graph_names.begin(), branch_graph_names.end());
-    cond_gather_node->AddAttr("branch_graph_name", std::make_shared<ValueTuple>(branch_graph_names));
+    cond_gather_node->AddAttr(kAttrBranchGraphName, std::make_shared<ValueTuple>(branch_graph_names));
     graph->AddConditionGatherSwitchPair(cond_gather_node, cond_switch_node);
     MS_LOG(DEBUG) << "Add new condition gather node:" << cond_gather_node->fullname_with_scope()
                   << " and condition switch actor:" << cond_switch_node->fullname_with_scope()
@@ -533,9 +533,9 @@ CNodePtr FlattenConditionGatherNodeInput(const CNodePtr &kernel, const KernelGra
   if (output_num == SIZE_MAX) {
     MS_LOG(EXCEPTION) << "Invalid output size:" << output_num << " for kernel:" << kernel->fullname_with_scope();
   }
-  new_kernel->AddAttr("branch_output_num", MakeValue<size_t>(output_num));
-  if (kernel->HasAttr("branch_graph_name")) {
-    new_kernel->AddAttr("branch_graph_name", kernel->GetAttr("branch_graph_name"));
+  new_kernel->AddAttr(kAttrBranchOutputNum, MakeValue<size_t>(output_num));
+  if (kernel->HasAttr(kAttrBranchGraphName)) {
+    new_kernel->AddAttr(kAttrBranchGraphName, kernel->GetAttr(kAttrBranchGraphName));
   }
 
   // Rebuild the output construct for condition gather node.
@@ -574,7 +574,7 @@ void FlattenConditionNodeInput(const KernelGraphPtr &graph) {
     graph->RemoveConditionGatherSwitchPair(kernel);
     MS_LOG(INFO) << "Add new condition gather node:" << new_kernel->fullname_with_scope()
                  << " to replace node:" << kernel->fullname_with_scope() << " branch name:"
-                 << (kernel->HasAttr("branch_graph_name") ? new_kernel->GetAttr("branch_graph_name")->ToString()
+                 << (kernel->HasAttr(kAttrBranchGraphName) ? new_kernel->GetAttr(kAttrBranchGraphName)->ToString()
                                                           : " null");
   }
   graph->SetExecOrderByDefault();

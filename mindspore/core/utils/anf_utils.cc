@@ -602,7 +602,8 @@ bool AnfUtils::NeedJumpMonadOutput(const AnfNodePtr &node) {
     return false;
   }
 
-  std::vector<std::string> jump_monad_output_nodes = {kRpcRecvOpName};
+  std::vector<std::string> jump_monad_output_nodes = {kRpcRecvOpName, prim::kPrimConditionSwitch->name(),
+                                                      prim::kPrimConditionGather->name()};
   if (std::find(jump_monad_output_nodes.begin(), jump_monad_output_nodes.end(), GetCNodeName(cnode)) !=
       jump_monad_output_nodes.end()) {
     return true;

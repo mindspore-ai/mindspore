@@ -34,6 +34,32 @@ class ConditionSwitchActor : public KernelActor {
                        const std::set<size_t> &modifiable_ref_output_indexes,
                        const KernelTransformType &type = KernelTransformType::kConditionSwitchActor);
   ~ConditionSwitchActor() override = default;
+
+ protected:
+  void Init() override;
+  void Run(OpContext<DeviceTensor> *const context) override;
+  void FetchInput(OpContext<DeviceTensor> *const context);
+  void SendOutput(OpContext<DeviceTensor> *const context, size_t index);
+
+ private:
+  friend class InlineControlFlowScheduler;
+  // Collect memory free list, as the ref counts of different branches are superimposed on the output,
+  // so the excess reference counts of other branches need to be subtracted in advance.
+  void CollectMemoryFreeList(size_t index);
+
+  // Graph name of each branch,
+  std::vector<std::string> branch_names_;
+  // Ref count of each branch.
+  std::vector<std::vector<size_t>> branch_origin_ref_count_;
+  // Branch of data arrow and control arrow.
+  std::vector<size_t> output_data_branch_indexes_;
+  std::vector<size_t> output_control_branch_indexes_;
+
+  // Cache output data by output index to modify the output data effectively.
+  std::vector<std::vector<OpData<DeviceTensor> *>> output_data_by_output_index_;
+
+  // Switch needs to send current branch name to the corresponding gather actor to check its inputs.
+  AID *gather_aid_{nullptr};
 };
 
 using ConditionSwitchActorPtr = std::shared_ptr<ConditionSwitchActor>;

@@ -389,6 +389,9 @@ constexpr char kAttrTransposeX1[] = "transpose_x1";
 constexpr char kAttrTransposeX2[] = "transpose_x2";
 constexpr char kAttrCommTurn[] = "comm_turn";
 constexpr char kAttrGatherIndex[] = "gather_index";
+constexpr char kAttrBranchOutputNum[] = "branch_output_num";
+constexpr char kAttrBranchGraphName[] = "branch_graph_name";
+constexpr char kInlineSubGraphName[] = "inline_sub_graph_name";
 
 // FuncGraph Flags
 constexpr auto kFlagIsPynativeBpropGraph = "is_pynative_bprop_graph";
