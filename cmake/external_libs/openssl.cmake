@@ -44,6 +44,7 @@ if(BUILD_LITE)
                 PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2023-3446.patch
                 PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2023-3817.patch
                 PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2023-4807.patch
+                PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2023-5678.patch
                 PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2024-0727.patch
                 )
     elseif(PLATFORM_ARM32 AND ANDROID_NDK_TOOLCHAIN_INCLUDED)
@@ -77,6 +78,7 @@ if(BUILD_LITE)
                 PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2023-3446.patch
                 PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2023-3817.patch
                 PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2023-4807.patch
+                PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2023-5678.patch
                 PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2024-0727.patch
                 )
     elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR APPLE)
@@ -105,6 +107,7 @@ if(BUILD_LITE)
                 PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2023-3446.patch
                 PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2023-3817.patch
                 PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2023-4807.patch
+                PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2023-5678.patch
                 PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2024-0727.patch
                 )
     else()
@@ -140,6 +143,7 @@ else()
                 PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2023-3446.patch
                 PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2023-3817.patch
                 PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2023-4807.patch
+                PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2023-5678.patch
                 PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2024-0727.patch
                 )
         include_directories(${openssl_INC})
