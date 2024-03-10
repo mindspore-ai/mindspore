@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2023 Huawei Technologies Co., Ltd
+ * Copyright 2021-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,11 +26,11 @@
 #include "minddata/dataset/engine/opt/pre/epoch_ctrl_pass.h"
 #include "minddata/dataset/engine/opt/pre/getter_pass.h"
 #include "minddata/dataset/engine/opt/pre/input_validation_pass.h"
+#include "minddata/dataset/engine/opt/pre/insert_map_pass.h"
 #include "minddata/dataset/engine/opt/pre/node_removal_pass.h"
 
 namespace mindspore {
 namespace dataset {
-
 TreeAdapterLite::TreeAdapterLite(UsageFlag usage) : root_(nullptr), usage_(usage) {
   // Create ExecutionTree.
   tree_ = std::make_unique<ExecutionTree>();
@@ -97,6 +97,7 @@ Status TreeAdapterLite::PrePass(std::shared_ptr<DatasetNode> ir) {
   std::vector<std::unique_ptr<IRPass>> actions;
   MS_LOG(INFO) << "Prepare PrePass loops.";
   (void)actions.emplace_back(std::make_unique<InputValidationPass>());
+  (void)actions.emplace_back(std::make_unique<InsertMapPass>());
   (void)actions.emplace_back(std::make_unique<NodeRemovalPass>());
   (void)actions.emplace_back(std::make_unique<EpochCtrlPass>());
   if (usage_ == kDeGetter) {

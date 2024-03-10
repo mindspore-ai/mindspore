@@ -31,6 +31,7 @@
 
 using mindspore::Status;
 using mindspore::StatusCode;
+using CompressionType = mindspore::dataset::NonMappableLeafOp::CompressionType;
 
 #define ASSERT_OK(_s)                          \
   do {                                         \

@@ -118,7 +118,7 @@ std::shared_ptr<mindspore::dataset::TFReaderOp> DatasetOpTesting::TFReader(std::
   std::vector<std::string> files = {file};
   std::shared_ptr<mindspore::dataset::TFReaderOp> so = std::make_shared<mindspore::dataset::TFReaderOp>(
     num_works, worker_connector_size, 0, files, std::make_unique<mindspore::dataset::DataSchema>(), op_connector_size,
-    columns_to_load, false, 1, 0, false);
+    columns_to_load, false, 1, 0, false, CompressionType::NONE, true);
   (void)so->Init();
   return so;
 }

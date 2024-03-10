@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2020-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,7 +94,10 @@ class DATASET_API TensorShape {
 
   /// \brief Create a scalar Shape (i.e., empty shape with mKnown = true)
   /// \return TensorShape
-  static TensorShape CreateScalar() { return TensorShape({}); }
+  static TensorShape CreateScalar() {
+    static std::vector<dsize_t> empty_shape{};
+    return TensorShape(empty_shape);
+  }
 
   /// \brief Create a shape with an unknown rank.
   /// \return TensorShape

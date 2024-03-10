@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,9 +28,21 @@
 
 namespace mindspore {
 using VecChar = std::vector<char>;
-inline std::vector<char> StringToChar(const std::string &s) { return std::vector<char>(s.begin(), s.end()); }
+inline std::vector<char> StringToChar(const std::string &s) {
+  if (s.empty()) {
+    const auto empty = std::vector<char>();
+    return empty;
+  }
+  return std::vector<char>(s.begin(), s.end());
+}
 
-inline std::string CharToString(const std::vector<char> &c) { return std::string(c.begin(), c.end()); }
+inline std::string CharToString(const std::vector<char> &c) {
+  if (c.empty()) {
+    const auto empty = "";
+    return empty;
+  }
+  return std::string(c.begin(), c.end());
+}
 
 inline std::pair<std::vector<char>, int32_t> PairStringToChar(const std::pair<std::string, int32_t> &s) {
   return std::pair<std::vector<char>, int32_t>(std::vector<char>(s.first.begin(), s.first.end()), s.second);

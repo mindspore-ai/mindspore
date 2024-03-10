@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2023 Huawei Technologies Co., Ltd
+ * Copyright 2020-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -242,6 +242,7 @@ constexpr char kFillOp[] = "FillOp";
 constexpr char kMaskOp[] = "MaskOp";
 constexpr char kOneHotOp[] = "OneHotOp";
 constexpr char kPadEndOp[] = "PadEndOp";
+constexpr char kParseExampleOp[] = "ParseExampleOp";
 constexpr char kSliceOp[] = "SliceOp";
 constexpr char kToFloat16Op[] = "ToFloat16Op";
 constexpr char kTypeCastOp[] = "TypeCastOp";

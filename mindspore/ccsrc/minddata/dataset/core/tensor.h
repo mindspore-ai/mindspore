@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2023 Huawei Technologies Co., Ltd
+ * Copyright 2020-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -236,7 +236,7 @@ class DATASET_API Tensor {
     const size_t num_bytes = (kOffsetSize + 1) * (*out)->shape_.NumOfElements() + kOffsetSize + total_length;
 
     RETURN_IF_NOT_OK((*out)->AllocateBuffer(num_bytes));
-    const auto offset_arr = reinterpret_cast<offset_t *>((*out)->data_);
+    auto offset_arr = reinterpret_cast<offset_t *>((*out)->data_);
     const uchar *buf = (*out)->GetStringsBuffer();
 
     offset_t offset = buf - (*out)->data_;  // the first string will start here
@@ -362,7 +362,7 @@ class DATASET_API Tensor {
   }
 
   /// Fill tensor with zeros. Does not support string or bytes.
-  Status Zero() const {
+  Status Zero() {
     CHECK_FAIL_RETURN_UNEXPECTED(!type_.IsString(), "Can not fill zeros on tensor of type string or bytes.");
     dsize_t size = SizeInBytes();
     CHECK_FAIL_RETURN_UNEXPECTED(memset_sp(GetMutableBuffer(), size, 0, size) == 0,
@@ -658,18 +658,14 @@ class DATASET_API Tensor {
     }
 
     TensorIterator<T> operator+(const ptrdiff_t &inc) {
-      auto oldPtr = ptr_;
-      ptr_ += inc;
       auto temp(*this);
-      ptr_ = oldPtr;
+      temp.ptr_ += inc;
       return temp;
     }
 
     TensorIterator<T> operator-(const ptrdiff_t &inc) {
-      auto oldPtr = ptr_;
-      ptr_ -= inc;
       auto temp(*this);
-      ptr_ = oldPtr;
+      temp.ptr_ -= inc;
       return temp;
     }
 
@@ -748,18 +744,14 @@ class DATASET_API Tensor {
     }
 
     TensorIterator<std::string_view> operator+(const dsize_t &inc) {
-      const auto oldPtr = index_;
-      index_ += inc;
       auto temp(*this);
-      index_ = oldPtr;
+      temp.index_ += inc;
       return temp;
     }
 
     TensorIterator<std::string_view> operator-(const dsize_t &inc) {
-      const auto oldPtr = index_;
-      index_ -= inc;
       auto temp(*this);
-      index_ = oldPtr;
+      temp.index_ -= inc;
       return temp;
     }
 
@@ -794,7 +786,7 @@ class DATASET_API Tensor {
   /// Get the starting memory address for the data of the tensor.  This potentially
   /// drives an allocation if the data is null.
   /// \return unsigned char*
-  unsigned char *GetMutableBuffer() const { return data_; }
+  unsigned char *GetMutableBuffer() { return data_; }
 
  protected:
   /// Allocate memory for the tensor using the data_allocator

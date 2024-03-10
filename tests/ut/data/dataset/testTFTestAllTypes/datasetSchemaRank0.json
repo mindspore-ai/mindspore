@@ -34,7 +34,7 @@
       "shape": [2, 2, 2]
     },
     "col_binary": {
-      "type": "uint8",
+      "type": "string",
       "rank": 0
     }
   }

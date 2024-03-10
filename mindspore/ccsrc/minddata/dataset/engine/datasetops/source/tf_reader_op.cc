@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,6 @@
 
 #include "proto/example.pb.h"
 
-#include "minddata/dataset/core/config_manager.h"
-#include "minddata/dataset/core/global_context.h"
 #include "minddata/dataset/engine/data_schema.h"
 #include "minddata/dataset/engine/datasetops/source/io_block.h"
 #include "minddata/dataset/engine/execution_tree.h"
@@ -44,13 +42,14 @@ TFReaderOp::TFReaderOp(int32_t num_workers, int32_t worker_connector_size, int64
                        std::vector<std::string> dataset_files_list, std::unique_ptr<DataSchema> data_schema,
                        int32_t op_connector_size, std::vector<std::string> columns_to_load, bool shuffle_files,
                        int32_t num_devices, int32_t device_id, bool equal_rows_per_shard,
-                       const CompressionType &compression_type)
+                       const CompressionType &compression_type, bool decode)
     : NonMappableLeafOp(num_workers, worker_connector_size, total_num_rows, op_connector_size, shuffle_files,
                         num_devices, device_id, compression_type),
       dataset_files_list_(std::move(dataset_files_list)),
       columns_to_load_(std::move(columns_to_load)),
       data_schema_(std::move(data_schema)),
-      equal_rows_per_shard_(equal_rows_per_shard) {}
+      equal_rows_per_shard_(equal_rows_per_shard),
+      decode_(decode) {}
 
 // A print method typically used for debugging
 void TFReaderOp::Print(std::ostream &out, bool show_all) const {
@@ -121,9 +120,12 @@ Status TFReaderOp::RegisterAndLaunchThreads() {
 
   RETURN_IF_NOT_OK(tree_->LaunchWorkers(num_workers_, std::bind(&TFReaderOp::WorkerEntry, this, std::placeholders::_1),
                                         &worker_tasks_, Name() + "::WorkerEntry", id()));
-  RETURN_IF_NOT_OK(tree_->LaunchWorkers(num_workers_,
-                                        std::bind(&TFReaderOp::ParsingWorkerEntry, this, std::placeholders::_1),
-                                        Name() + "::ParsingWorkerEntry", id()));
+  // if decode is true, launch some workers to parse the protobuf
+  if (decode_) {
+    RETURN_IF_NOT_OK(tree_->LaunchWorkers(num_workers_,
+                                          std::bind(&TFReaderOp::ParsingWorkerEntry, this, std::placeholders::_1),
+                                          Name() + "::ParsingWorkerEntry", id()));
+  }
   RETURN_IF_NOT_OK(tree_->LaunchWorkers(1, std::bind(&TFReaderOp::Collector, this), Name() + "::Collector", id()));
 
   return Status::OK();
@@ -138,25 +140,34 @@ Status TFReaderOp::operator()() {
       std::unique_lock<std::mutex> lock(load_io_block_queue_mutex_);
       load_io_block_queue_ = true;
     }
-
+    TensorRow fetched_row;
     while (workers_done < num_workers_) {
-      TensorRow fetched_row;
       RETURN_IF_NOT_OK(jagged_rows_connector_->Pop(0, &fetched_row));
       if (fetched_row.eoe()) {
         workers_done++;
       } else if ((compression_type_ == CompressionType::NONE || compression_type_ == CompressionType::GZIP_WITH_COUNT ||
                   compression_type_ == CompressionType::ZLIB_WITH_COUNT) &&
                  (total_rows_ == 0 || rows_read < total_rows_)) {
-        // get record bytes from jagged_rows_connector and send them to workers for parsing
-        auto parse_worker_id = NextWorkerID();
-        RETURN_IF_NOT_OK(worker_in_queues_[parse_worker_id]->EmplaceBack(std::move(fetched_row)));
+        if (decode_) {
+          // get record bytes from jagged_rows_connector and send them to workers for parsing
+          const auto parse_worker_id = NextWorkerID();
+          RETURN_IF_NOT_OK(worker_in_queues_[parse_worker_id]->EmplaceBack(std::move(fetched_row)));
+        } else {
+          // get record bytes from jagged_rows_connector and send them to out_connector
+          RETURN_IF_NOT_OK(out_connector_->Add(std::move(fetched_row)));
+        }
         rows_read++;
       } else if ((compression_type_ == CompressionType::GZIP || compression_type_ == CompressionType::ZLIB) &&
                  (rows_read < total_rows_ * num_devices_)) {
         // for compressed version, total_rows_ is total rows that will be read per shard
-        // get record bytes from jagged_rows_connector and send them to workers for parsing
-        auto parse_worker_id = NextWorkerID();
-        RETURN_IF_NOT_OK(worker_in_queues_[parse_worker_id]->EmplaceBack(std::move(fetched_row)));
+        if (decode_) {
+          // get record bytes from jagged_rows_connector and send them to workers for parsing
+          const auto parse_worker_id = NextWorkerID();
+          RETURN_IF_NOT_OK(worker_in_queues_[parse_worker_id]->EmplaceBack(std::move(fetched_row)));
+        } else {
+          // get record bytes from jagged_rows_connector and send them to out_connector
+          RETURN_IF_NOT_OK(out_connector_->Add(std::move(fetched_row)));
+        }
         rows_read++;
       } else {
         // IOBlockQueue thread needs to:
@@ -185,19 +196,29 @@ Status TFReaderOp::operator()() {
       }
     }
 
-    // finish reading this epoch, send an EOE flag to next parsing worker
-    auto parse_worker_id = NextWorkerID();
-    RETURN_IF_NOT_OK(worker_in_queues_[parse_worker_id]->EmplaceBack(TensorRow(TensorRow::kFlagEOE)));
+    if (decode_) {
+      // finish reading this epoch, send an EOE flag to next parsing worker
+      const auto parse_worker_id = NextWorkerID();
+      RETURN_IF_NOT_OK(worker_in_queues_[parse_worker_id]->EmplaceBack(TensorRow(TensorRow::kFlagEOE)));
+    } else {
+      // finish reading this epoch, send an EOE flag to out_connector
+      RETURN_IF_NOT_OK(out_connector_->SendEOE());
+    }
 
     RETURN_IF_NOT_OK(ResetAndUpdateRepeat());
   }
 
-  // finish reading all the data, send an EOF flag to next parsing worker
-  auto parse_worker_id = NextWorkerID();
-  RETURN_IF_NOT_OK(worker_in_queues_[parse_worker_id]->EmplaceBack(TensorRow(TensorRow::kFlagEOF)));
-  // tell all the parsing workers to quit
-  for (auto i = 0; i < num_workers_; ++i) {
-    RETURN_IF_NOT_OK(worker_in_queues_[i]->EmplaceBack(TensorRow(TensorRow::kFlagQuit)));
+  if (decode_) {
+    // finish reading all the data, send an EOF flag to next parsing worker
+    auto parse_worker_id = NextWorkerID();
+    RETURN_IF_NOT_OK(worker_in_queues_[parse_worker_id]->EmplaceBack(TensorRow::kFlagEOF));
+    // tell all the parsing workers to quit
+    for (auto i = 0; i < num_workers_; ++i) {
+      RETURN_IF_NOT_OK(worker_in_queues_[i]->EmplaceBack(TensorRow::kFlagQuit));
+    }
+  } else {
+    // finish reading all the data, send an EOF flag to out_connector
+    RETURN_IF_NOT_OK(out_connector_->SendEOF());
   }
 
   RETURN_IF_NOT_OK(PostEndOfData());
@@ -883,7 +904,7 @@ Status TFReaderOp::CreateSchema(const std::string &tf_record_file, std::vector<s
     const dataengine::Feature::KindCase kind_case = feature.kind_case();
     switch (kind_case) {
       case dataengine::Feature::KindCase::kBytesList:
-        column_type = "uint8";
+        column_type = "string";
         break;
 
       case dataengine::Feature::KindCase::kFloatList:
@@ -1218,8 +1239,13 @@ void TFReaderOp::HelperCountZLIBRows(const std::string &realpath_value, const st
 Status TFReaderOp::ComputeColMap() {
   // Construct the column name map for this operator (base class field)
   if (column_name_id_map_.empty()) {
-    for (int32_t i = 0; i < data_schema_->NumColumns(); ++i) {
-      column_name_id_map_[data_schema_->Column(i).Name()] = i;
+    if (decode_) {
+      for (int32_t i = 0; i < data_schema_->NumColumns(); ++i) {
+        column_name_id_map_[data_schema_->Column(i).Name()] = i;
+      }
+    } else {
+      // if decode is false, the output will only have one column containing the record bytes
+      column_name_id_map_["proto"] = 0;
     }
   } else {
     MS_LOG(WARNING) << "Column name map is already set!";
@@ -1308,9 +1334,13 @@ Status TFReaderOp::HelperIOBlockFiller(int32_t *queue_index, int32_t *key_index,
 Status TFReaderOp::GetNextRowPullMode(TensorRow *const row) {
   RETURN_UNEXPECTED_IF_NULL(row);
   RETURN_IF_NOT_OK(NonMappableLeafOp::GetNextRowPullMode(row));
-  if (!row->empty()) {
-    // data got from jagged_rows_connector is raw bytes so we need to parse it before return
-    RETURN_IF_NOT_OK(ParseExample(*row, row));
+  if (decode_) {
+    if (!row->empty()) {
+      // data got from jagged_rows_connector is raw bytes so we need to parse it before return
+      TensorRow res;
+      RETURN_IF_NOT_OK(ParseExample(*row, &res));
+      *row = std::move(res);
+    }
   }
   return Status::OK();
 }

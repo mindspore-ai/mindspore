@@ -61,16 +61,16 @@ def test_TFRecord_Padded():
     """
     data_dir = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
     schema_dir = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
-    result_list = [[159109, 2], [192607, 3], [179251, 4], [1, 5]]
+    result_list = [[1, 2], [1, 3], [1, 4], [1, 5]]
     verify_list = []
     shard_num = 4
     for i in range(shard_num):
         data = ds.TFRecordDataset(data_dir, schema_dir, columns_list=["image"],
                                   shuffle=False, shard_equal_rows=True)
 
-        padded_samples = [{'image': np.zeros(1, np.uint8)}, {'image': np.zeros(2, np.uint8)},
-                          {'image': np.zeros(3, np.uint8)}, {'image': np.zeros(4, np.uint8)},
-                          {'image': np.zeros(5, np.uint8)}]
+        padded_samples = [{'image': np.zeros(1, np.bytes_)}, {'image': np.zeros(2, np.bytes_)},
+                          {'image': np.zeros(3, np.bytes_)}, {'image': np.zeros(4, np.bytes_)},
+                          {'image': np.zeros(5, np.bytes_)}]
 
         padded_ds = ds.PaddedDataset(padded_samples)
         concat_ds = data + padded_ds
