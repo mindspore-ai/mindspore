@@ -13,10 +13,11 @@
 # limitations under the License.
 # ==============================================================================
 import json
+import numpy as np
 import pytest
+
 import mindspore.dataset as ds
 from mindspore import log as logger
-from util import dataset_equal
 
 FILES = ["../data/dataset/testTFTestAllTypes/test.data"]
 DATASET_ROOT = "../data/dataset/testTFTestAllTypes/"
@@ -47,10 +48,13 @@ def test_schema_file_vs_string():
         schema2 = ds.Schema()
         schema2.from_json(json_obj)
 
-    ds1 = ds.TFRecordDataset(FILES, schema1)
-    ds2 = ds.TFRecordDataset(FILES, schema2)
+    dataset1 = ds.TFRecordDataset(FILES, schema1, shuffle=False)
+    dataset2 = ds.TFRecordDataset(FILES, schema2, shuffle=False)
 
-    dataset_equal(ds1, ds2, 0)
+    for row1, row2 in zip(dataset1.create_tuple_iterator(output_numpy=True),
+                          dataset2.create_tuple_iterator(output_numpy=True)):
+        for col1, col2 in zip(row1, row2):
+            np.testing.assert_equal(col1, col2)
 
 
 def test_schema_exception():
