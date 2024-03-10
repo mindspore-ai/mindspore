@@ -57,6 +57,12 @@ STATUS ConstantOfShapeMapper::Mapper(const CNodePtr &cnode) {
         value_param = opt::BuildIntVecParameterNode(func_graph, dst_values, cnode->fullname_with_scope() + "_values");
       }
     } break;
+    case kNumberTypeFloat16: {
+      if (values.size() == 1) {
+        value_param =
+          opt::BuildFloat16ValueParameterNode(func_graph, values[0], cnode->fullname_with_scope() + "_value", true);
+      }
+    } break;
     default:
       MS_LOG(ERROR) << "Unsupported data type: " << data_type;
       return RET_ERROR;
