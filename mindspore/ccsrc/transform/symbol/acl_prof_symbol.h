@@ -28,6 +28,9 @@ ORIGIN_METHOD(aclprofFinalize, aclError)
 ORIGIN_METHOD(aclprofInit, aclError, const char *, size_t)
 ORIGIN_METHOD(aclprofStart, aclError, const aclprofConfig *)
 ORIGIN_METHOD(aclprofStop, aclError, const aclprofConfig *)
+ORIGIN_METHOD(aclprofCreateStepInfo, aclprofStepInfo *)
+ORIGIN_METHOD(aclprofGetStepTimestamp, aclError, aclprofStepInfo *, aclprofStepTag, aclrtStream)
+ORIGIN_METHOD(aclprofDestroyStepInfo, void, aclprofStepInfo *)
 
 extern aclprofCreateConfigFunObj aclprofCreateConfig_;
 extern aclprofDestroyConfigFunObj aclprofDestroyConfig_;
@@ -35,6 +38,9 @@ extern aclprofFinalizeFunObj aclprofFinalize_;
 extern aclprofInitFunObj aclprofInit_;
 extern aclprofStartFunObj aclprofStart_;
 extern aclprofStopFunObj aclprofStop_;
+extern aclprofCreateStepInfoFunObj aclprofCreateStepInfo_;
+extern aclprofGetStepTimestampFunObj aclprofGetStepTimestamp_;
+extern aclprofDestroyStepInfoFunObj aclprofDestroyStepInfo_;
 
 void LoadProfApiSymbol(const std::string &ascend_path);
 }  // namespace transform

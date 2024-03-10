@@ -26,8 +26,8 @@ aclopSetCompileFlagFunObj aclopSetCompileFlag_ = nullptr;
 aclGenGraphAndDumpForOpFunObj aclGenGraphAndDumpForOp_ = nullptr;
 
 void LoadAclOpCompilerApiSymbol(const std::string &ascend_path) {
-  std::string complier_plugin_path = "lib64/libacl_op_compiler.so";
-  auto handler = GetLibHandler(ascend_path + complier_plugin_path);
+  std::string complier_plugin_path = ascend_path + "lib64/libacl_op_compiler.so";
+  auto handler = GetLibHandler(complier_plugin_path);
   if (handler == nullptr) {
     MS_LOG(WARNING) << "Dlopen " << complier_plugin_path << " failed!" << dlerror();
     return;

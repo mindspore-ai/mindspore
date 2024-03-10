@@ -210,20 +210,24 @@ struct aclprofStepInfoInner {
 
 void AscendProfiler::StepStart(uint64_t step_id, void *stream) {
   acl_stream_ = static_cast<aclrtStream>(stream);
-  acl_prof_step_info_ = aclprofCreateStepInfo();
+  acl_prof_step_info_ = CALL_ASCEND_API2(aclprofCreateStepInfo);
   aclprofStepInfoInner *ptr_info = reinterpret_cast<aclprofStepInfoInner *>(acl_prof_step_info_);
   ptr_info->indexId = step_id;
-  if (aclprofGetStepTimestamp(acl_prof_step_info_, (aclprofStepTag)kAclProfStepStartTag, acl_stream_) != ACL_SUCCESS) {
+  auto ret =
+    CALL_ASCEND_API(aclprofGetStepTimestamp, acl_prof_step_info_, (aclprofStepTag)kAclProfStepStartTag, acl_stream_);
+  if (ret != ACL_SUCCESS) {
     MS_LOG(WARNING) << "Failed to call aclprofGetStepTimestamp with tag " << kAclProfStepStartTag << ".";
   }
 }
 
 void AscendProfiler::StepStop() {
-  if (aclprofGetStepTimestamp(acl_prof_step_info_, (aclprofStepTag)kAclProfStepEndTag, acl_stream_) != ACL_SUCCESS) {
+  auto ret =
+    CALL_ASCEND_API(aclprofGetStepTimestamp, acl_prof_step_info_, (aclprofStepTag)kAclProfStepEndTag, acl_stream_);
+  if (ret != ACL_SUCCESS) {
     MS_LOG(WARNING) << "Failed to call aclprofGetStepTimestamp with tag " << kAclProfStepEndTag << ".";
   }
   if (acl_prof_step_info_ != nullptr) {
-    aclprofDestroyStepInfo(acl_prof_step_info_);
+    CALL_ASCEND_API(aclprofDestroyStepInfo, acl_prof_step_info_);
     acl_prof_step_info_ = nullptr;
   }
   acl_stream_ = nullptr;

@@ -33,8 +33,8 @@ aclopSetAttrListStringFunObj aclopSetAttrListString_ = nullptr;
 aclopSetAttrStringFunObj aclopSetAttrString_ = nullptr;
 
 void LoadAclOpApiSymbol(const std::string &ascend_path) {
-  std::string ascendcl_plugin_path = "lib64/libascendcl.so";
-  auto handler = GetLibHandler(ascend_path + ascendcl_plugin_path);
+  std::string ascendcl_plugin_path = ascend_path + "lib64/libascendcl.so";
+  auto handler = GetLibHandler(ascendcl_plugin_path);
   if (handler == nullptr) {
     MS_LOG(WARNING) << "Dlopen " << ascendcl_plugin_path << " failed!" << dlerror();
     return;

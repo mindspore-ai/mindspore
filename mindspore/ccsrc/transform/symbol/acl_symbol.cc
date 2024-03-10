@@ -25,8 +25,8 @@ aclGetRecentErrMsgFunObj aclGetRecentErrMsg_ = nullptr;
 aclFinalizeFunObj aclFinalize_ = nullptr;
 
 void LoadAclApiSymbol(const std::string &ascend_path) {
-  std::string acl_plugin_path = "lib64/libascendcl.so";
-  auto base_handler = GetLibHandler(ascend_path + acl_plugin_path);
+  std::string acl_plugin_path = ascend_path + "lib64/libascendcl.so";
+  auto base_handler = GetLibHandler(acl_plugin_path);
   if (base_handler == nullptr) {
     MS_LOG(WARNING) << "Dlopen " << acl_plugin_path << " failed!" << dlerror();
     return;

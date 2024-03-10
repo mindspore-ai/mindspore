@@ -43,8 +43,8 @@ acltdtSendTensorFunObj acltdtSendTensor_ = nullptr;
 acltdtStopChannelFunObj acltdtStopChannel_ = nullptr;
 
 void LoadAcltdtApiSymbol(const std::string &ascend_path) {
-  std::string aclrt_tdt_path = "lib64/libacl_tdt_channel.so";
-  auto handler = GetLibHandler(ascend_path + aclrt_tdt_path);
+  std::string aclrt_tdt_path = ascend_path + "lib64/libacl_tdt_channel.so";
+  auto handler = GetLibHandler(aclrt_tdt_path);
   if (handler == nullptr) {
     MS_LOG(WARNING) << "Dlopen " << aclrt_tdt_path << " failed!" << dlerror();
     return;

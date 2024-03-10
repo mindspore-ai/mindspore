@@ -23,8 +23,6 @@
 #include "transform/acl_ir/acl_allocator.h"
 #include "include/common/debug/common.h"
 #include "utils/file_utils.h"
-#include "acl/acl.h"
-#include "acl/acl_mdl.h"
 #include "include/common/profiler.h"
 #include "transform/acl_ir/op_api_util.h"
 #include "transform/symbol/acl_base_symbol.h"
@@ -236,8 +234,10 @@ void AclAttrMaker::SetAttr(const string &attr_name, const std::vector<::ge::Data
 AclRunner::~AclRunner() { Reset(); }
 
 void AclRunner::Reset() {
-  (void)std::for_each(acl_param_.output_desc.begin(), acl_param_.output_desc.end(), aclDestroyTensorDesc);
-  (void)std::for_each(acl_param_.output_buffer.begin(), acl_param_.output_buffer.end(), aclDestroyDataBuffer);
+  (void)std::for_each(acl_param_.output_desc.begin(), acl_param_.output_desc.end(),
+                      [&](const aclTensorDesc *desc) { CALL_ASCEND_API(aclDestroyTensorDesc, desc); });
+  (void)std::for_each(acl_param_.output_buffer.begin(), acl_param_.output_buffer.end(),
+                      [&](const aclDataBuffer *dataBuffer) { CALL_ASCEND_API(aclDestroyDataBuffer, dataBuffer); });
 
   acl_param_.output_desc.clear();
   acl_param_.output_buffer.clear();
