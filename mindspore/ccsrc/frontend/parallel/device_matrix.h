@@ -38,6 +38,7 @@ class DeviceMatrix {
   Status CreateGroupList();
   Status GetDevicesByTensorMap(const Shape &tensor_map, RankList *rank_list);
   Status GetDevicesAlongDim(const uint64_t &dim, RankList *devices);
+  Status GetDevicesAlongMultiDim(const std::vector<int64_t> &dims, RankList *devices);
 
  private:
   int64_t rank_ = -1;

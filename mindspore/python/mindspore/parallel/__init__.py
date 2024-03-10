@@ -19,8 +19,8 @@ from mindspore.parallel.algo_parameter_config import get_algo_parameters, reset_
     set_algo_parameters
 from mindspore.parallel.checkpoint_transform import rank_list_for_transform, transform_checkpoint_by_rank, \
     transform_checkpoints, merge_pipeline_strategys, sync_pipeline_shared_parameters
-from mindspore.parallel.shard import shard
+from mindspore.parallel.shard import shard, Layout
 
 __all__ = ["set_algo_parameters", "reset_algo_parameters", "get_algo_parameters", "rank_list_for_transform",
            "transform_checkpoint_by_rank", "transform_checkpoints", "merge_pipeline_strategys", "shard",
-           "sync_pipeline_shared_parameters"]
+           "sync_pipeline_shared_parameters", "Layout"]

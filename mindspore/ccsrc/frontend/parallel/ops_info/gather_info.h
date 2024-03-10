@@ -307,7 +307,9 @@ class GatherInfo : public OperatorInfo {
       : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<GatherCost>()),
         replace_op_name_(replace_op_name) {}
   ~GatherInfo() override = default;
-  Status Init(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy) override;
+  Status Init(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy,
+              const std::vector<std::shared_ptr<TensorLayout>> &in_tensor_layouts = {},
+              const std::vector<std::shared_ptr<TensorLayout>> &out_tensor_layouts = {}) override;
   Status InitForCostModel(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy) override;
 
   std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;

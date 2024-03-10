@@ -1316,7 +1316,9 @@ Status GatherInfo::ComputeReplaceOp() {
   return SUCCESS;
 }
 
-Status GatherInfo::Init(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy) {
+Status GatherInfo::Init(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy,
+                        const std::vector<std::shared_ptr<TensorLayout>> &in_tensor_layouts,
+                        const std::vector<std::shared_ptr<TensorLayout>> &out_tensor_layouts) {
   if (InitWithAutoRepeatCalc(in_strategy, out_strategy) != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": Init failed.";
     return FAILED;

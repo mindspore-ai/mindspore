@@ -73,11 +73,17 @@ class MatMul : public MatMulBase {
   Status CheckStrategy(const StrategyPtr &strategy) override;
   Status CheckOutputStrategy(const StrategyPtr &out_strategy) override;
   Status InferOutputTensorMap() override;
+  Status InferOutputTensorInfo() override;
+  Status InferForwardCommunicationByLayout() override;
   Status CheckLayoutConfig() override;
+  Status CheckInputLayout() override;
+  Status CheckOutputLayout() override;
 
  private:
   void CheckPCLMatMul(const Shape &mat_a_strategy, const Shape &mat_b_strategy);
   Status CheckInputStrategy(const Shape &mat_a_strategy, const Shape &mat_b_strategy);
+  TensorLayout InferOutputLayout();
+  TensorLayout output_infer_tensor_layout_;
 };
 
 class MatMulInfo : public MatMul {

@@ -63,6 +63,16 @@ class AddInfo : public ArithmeticBase {
   AddInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape, const PrimitiveAttrs &attrs)
       : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<TensorAddCost>()) {}
   ~AddInfo() override = default;
+
+ protected:
+  Status CheckInputLayout() override;
+  Status CheckOutputLayout() override;
+  Status InferOutputTensorInfo() override;
+  Status InferForwardCommunicationByLayout() override { return SUCCESS; }
+
+ private:
+  TensorLayout InferOutputLayout();
+  TensorLayout output_infer_tensor_layout_;
 };
 
 class MulInfo : public ArithmeticBase {

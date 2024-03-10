@@ -126,6 +126,7 @@ mindspore
 .. mscnautosummary::
     :toctree: mindspore
 
+    mindspore.Layout
     mindspore.shard
 
 即时编译

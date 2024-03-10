@@ -159,10 +159,36 @@ Status TensorRedistribution::InferReshape(const TensorLayout &from_layout, const
     }
   }
 
+  if (from_origin_.base_slice_shape().array() != from_origin_.slice_shape().array()) {
+    reshape_flag_ = true;
+    constructor.UpdateTensorShape(from_origin_.base_slice_shape().array());
+    Arrangement shape = from_origin_.slice_shape();
+    MS_LOG(DEBUG) << "reshape " << shape.ToString();
+    if (constructor.ReshapeOP(shape.array()) == Status::FAILED) {
+      return Status::FAILED;
+    } else {
+      (void)operator_vector->insert(operator_vector->cbegin(), constructor.GetOperator());
+      (void)output_info_vector->insert(output_info_vector->cbegin(), std::make_pair(false, 0));
+    }
+  }
+
   if (to_origin_.slice_shape().array() != to_layout.slice_shape().array()) {
     reshape_flag_ = true;
     constructor.UpdateTensorShape(to_layout.slice_shape().array());
     Arrangement shape = to_origin_.slice_shape();
+    MS_LOG(DEBUG) << "step_parallel to reshape " << shape.ToString();
+    if (constructor.ReshapeOP(shape.array()) == Status::FAILED) {
+      return Status::FAILED;
+    } else {
+      (void)operator_vector->insert(operator_vector->cend(), constructor.GetOperator());
+      (void)output_info_vector->insert(output_info_vector->cend(), std::make_pair(false, 0));
+    }
+  }
+
+  if (to_origin_.slice_shape().array() != to_origin_.base_slice_shape().array()) {
+    reshape_flag_ = true;
+    constructor.UpdateTensorShape(to_origin_.slice_shape().array());
+    Arrangement shape = to_origin_.base_slice_shape();
     MS_LOG(DEBUG) << "step_parallel to reshape " << shape.ToString();
     if (constructor.ReshapeOP(shape.array()) == Status::FAILED) {
       return Status::FAILED;

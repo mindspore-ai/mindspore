@@ -1463,7 +1463,7 @@ static std::string SetParallelShape(const AnfNodePtr &parameter, const std::pair
   }
   TensorInfo tensorinfo_in = distribute_operator->inputs_tensor_info()[LongToSize(res.second - 1)];
   TensorLayout tensor_layout = tensorinfo_in.tensor_layout();
-  Shape slice_shape = tensor_layout.slice_shape().array();
+  Shape slice_shape = tensor_layout.base_slice_shape().array();
 
   // generate shard group
   std::string opt_shard_group;
@@ -1527,7 +1527,7 @@ static void CoverSliceShape(const FuncGraphPtr &root) {
       if (parameter->has_user_data<TensorLayout>()) {
         auto param_abstract = parameter->abstract()->Clone();
         auto tensor_layout = parameter->user_data<TensorLayout>();
-        Shape slice_shape = tensor_layout->slice_shape().array();
+        Shape slice_shape = tensor_layout->base_slice_shape().array();
         param_abstract->set_shape(std::make_shared<abstract::Shape>(slice_shape));
         parameter->set_abstract(param_abstract);
       }
@@ -1652,9 +1652,15 @@ static void ExtractStrategyAndInit(const CNodePtr &cnode, const PrimitivePtr &pr
   } else {
     in_strategy = GenerateStandAloneStrategy(op_info->inputs_shape());
   }
-
+  std::vector<std::shared_ptr<TensorLayout>> in_tensor_layouts;
+  std::vector<std::shared_ptr<TensorLayout>> out_tensor_layouts;
+  if (ExtractUserConfigLayout(attrs, op_info->inputs_shape(), op_info->outputs_shape(), &in_tensor_layouts,
+                              &out_tensor_layouts) != SUCCESS) {
+    MS_LOG(EXCEPTION) << "Failure:operator " << prim->name() << " extract configured layout failed"
+                      << trace::DumpSourceLines(cnode);
+  }
   MS_EXCEPTION_IF_NULL(in_strategy);
-  if (op_info->Init(in_strategy, out_strategy) == FAILED) {
+  if (op_info->Init(in_strategy, out_strategy, in_tensor_layouts, out_tensor_layouts) == FAILED) {
     MS_LOG(EXCEPTION) << "Failure:operator " << prim->name() << " init failed" << trace::DumpSourceLines(cnode);
   }
 }
