@@ -71,6 +71,7 @@
 #include "backend/common/graph_kernel/convert_input_and_attr.h"
 #include "backend/common/graph_kernel/convert_bfloat16.h"
 #include "backend/common/graph_kernel/add_ref_pair.h"
+#include "backend/common/graph_kernel/fold_updatestate.h"
 #ifdef ENABLE_AKG
 #include "backend/common/graph_kernel/graph_kernel_build.h"
 #endif
@@ -239,6 +240,7 @@ PassManagerPtr GraphKernelOptimizer::Combine() const {
   MS_EXCEPTION_IF_NULL(context_ptr);
   auto target = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   auto level = GetPassLevelByFlag(GraphKernelFlags::GetInstance().enable_parallel_fusion);
+  pm->Add(std::make_shared<FoldUpdateState>(), level, is_gpu || is_ascend);
   // Atomic-add GraphKernel node may be linked directly to UpdateState, it should be spread before parallel fusion!
   pm->Add(std::make_shared<SpreadUpdateState>(), level);
   pm->Add(std::make_shared<ParallelOpFusion>(target, ParallelConfig(PARALLEL_OPS_LIMIT)), level, is_gpu || is_ascend);
