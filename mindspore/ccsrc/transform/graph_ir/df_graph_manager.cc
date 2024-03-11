@@ -88,7 +88,7 @@ Status DfGraphManager::AddGraph(const std::string &name, const DfGraphPtr &graph
   }
 
   if (graph_ptr == nullptr) {
-    MS_LOG(INFO) << "The new graph {" << name << "}'s pointer is null, add graph failed";
+    MS_LOG(INFO) << "The new graph {" << name << "}'s pointer is null, cannot add graph.";
     return Status::INVALID_ARGUMENT;
   }
 

@@ -341,7 +341,7 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
       (*ge_options)["ge.opsProtoLibPath"] = proto_lib_path;
     }
   } else {
-    MS_LOG(INFO) << "Set proto lib path failed!";
+    MS_LOG(INFO) << "Got empty proto lib path, cannot set ge.opsProtoLibPath.";
   }
 
   SetAscendConfig(ms_context_ptr, ge_options);
