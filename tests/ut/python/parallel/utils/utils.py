@@ -73,7 +73,7 @@ class ParallelValidator:
 
         if param_name not in self._parameter_layout_dict.keys():
             return False
-        return self._parameter_layout_dict[param_name] == layout
+        return self._parameter_layout_dict[param_name][:6] == layout
 
     def check_parameter_shape(self, param_name: str, shape: [tuple, list]) -> bool:
         """Verify parameter shape"""

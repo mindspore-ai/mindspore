@@ -165,7 +165,6 @@ def test_ops_fft_forward_dynamic_rank(mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3, atol=1e-5)
 
 
-@pytest.mark.skip(reason="No support ")
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
@@ -207,7 +206,6 @@ def test_ops_fft_backward_dynamic_shape(mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3, atol=1e-5)
 
 
-@pytest.mark.skip(reason="No support")
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu

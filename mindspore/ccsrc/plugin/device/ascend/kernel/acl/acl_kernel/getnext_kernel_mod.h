@@ -28,6 +28,12 @@ class GetNextAclKernelMod : public AclKernelMod {
   bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
   int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
+
+  bool IsNeedUpdateOutputShapeAndSize() override { return true; }
+
+  // Already update output shape and size in Resize, just skip UpdateOutputShapeAndSize impl.
+  void UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                const std::vector<KernelTensor *> &outputs) override {}
 };
 }  // namespace kernel
 }  // namespace mindspore

@@ -10,3 +10,6 @@ broadcast_to:
   returns:
     output:
       dtype: tensor
+  view: True
+  dispatch:
+    enable: True

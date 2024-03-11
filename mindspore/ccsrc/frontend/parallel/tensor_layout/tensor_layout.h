@@ -41,7 +41,8 @@ class TensorLayout {
   std::string OriginToString() const;
   Status Init(const Arrangement &device_arrangement, const Map &tensor_map, const Arrangement &tensor_shape);
   Status InitFromVector(const Shape &device_arrangement, const Shape &tensor_map, const Shape &tensor_shape);
-
+  Status InitFromExtendVector(const Shape &device_arrangement, const std::vector<Shape> &tensor_map,
+                              const Shape &tensor_shape);
   bool skip_redistribution() const { return skip_redistribution_; }
 
   void set_skip_redistribution(bool flag) { skip_redistribution_ = flag; }
@@ -96,6 +97,8 @@ class TensorLayout {
 
   Arrangement slice_shape() const;
 
+  Arrangement base_slice_shape() const;
+
   Shape shard_strategy() const;
 
   Status UpdateTensorMap(size_t index, int64_t value);
@@ -128,6 +131,13 @@ class TensorLayout {
 
   bool is_shared_param() const { return is_shared_param_; }
 
+  void set_tensor_shape_before(const Shape &tensor_shape_before) { tensor_shape_before_.Init(tensor_shape_before); }
+
+  RankList InferRepeatedGroup();
+
+  Arrangement tensor_shape_before() { return tensor_shape_before_; }
+
+  std::vector<Shape> tensor_map_before() { return tensor_map_before_; }
   // Key for user data.
   constexpr static char key[] = "TLayout";
 
@@ -146,8 +156,10 @@ class TensorLayout {
   Arrangement tensor_shape_origin_;
   Arrangement device_arrangement_;
   Arrangement tensor_shape_;
+  Arrangement tensor_shape_before_;
   Map tensor_map_;
   Map tensor_map_origin_;
+  std::vector<Shape> tensor_map_before_;
   bool skip_redistribution_ = false;
   bool uniform_split_ = true;
   bool layout_transfer_ = false;

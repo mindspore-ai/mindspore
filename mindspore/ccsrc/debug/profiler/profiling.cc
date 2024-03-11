@@ -33,7 +33,6 @@ constexpr auto HostDataHeader =
   "tid,pid,parent_pid,module_name,event,stage,level,start_end,custom_info,memory_usage(kB),time_stamp(us)\n";
 const auto kVmRSS = "VmRSS";
 std::mutex file_line_mutex;
-static bool log_once = false;
 static bool first_open_file = true;
 const int profile_all = 0;
 const int profile_memory = 1;
@@ -263,6 +262,34 @@ bool ProfilerManager::NeedCollectHostMemory() const {
 
 bool ProfilerManager::EnableCollectHost() const { return profile_framework_ != "NULL"; }
 
+uint64_t GetClockTime() {
+  auto ts = std::chrono::system_clock::now();
+  int64_t system_t = std::chrono::duration_cast<std::chrono::microseconds>(ts.time_since_epoch()).count();
+  return static_cast<uint64_t>(system_t);
+}
+
+uint64_t GetClockSyscnt() {
+  uint64_t cycles;
+#if defined(__aarch64__)
+  asm volatile("mrs %0, cntvct_el0" : "=r"(cycles));
+#elif defined(__x86_64__)
+  constexpr uint32_t uint32Bits = 32U;
+  uint32_t hi = 0;
+  uint32_t lo = 0;
+  __asm__ __volatile__("rdtsc" : "=a"(lo), "=d"(hi));
+  cycles = (static_cast<uint64_t>(lo)) | ((static_cast<uint64_t>(hi)) << uint32Bits);
+#elif defined(__arm__)
+  const uint32_t uint32Bits = 32U;
+  uint32_t hi = 0;
+  uint32_t lo = 0;
+  asm volatile("mrrc p15, 1, %0, %1, c14" : "=r"(lo), "=r"(hi));
+  cycles = (static_cast<uint64_t>(lo)) | ((static_cast<uint64_t>(hi)) << uint32Bits);
+#else
+  cycles = 0;
+#endif
+  return cycles;
+}
+
 void CollectHostInfo(const std::string &module_name, const std::string &event, const std::string &stage, int level,
                      int profile_framework, int start_end, const std::map<std::string, std::string> &custom_info) {
 #ifndef ENABLE_SECURITY
@@ -271,18 +298,9 @@ void CollectHostInfo(const std::string &module_name, const std::string &event, c
 #else
   auto profiler_manager = profiler::ProfilerManager::GetInstance();
   MS_EXCEPTION_IF_NULL(profiler_manager);
-  if (!log_once && !profiler_manager->GetProfilingEnableFlag()) {
-    MS_LOG(DEBUG) << "Profiler is not enabled, no need to record Host info.";
-    log_once = true;
-    return;
-  } else if (!profiler_manager->GetProfilingEnableFlag()) {
-    return;
-  }
-  if (!log_once && !profiler_manager->EnableCollectHost()) {
-    MS_LOG(DEBUG) << "Profiler profile_framework is not enabled, no need to record Host info.";
-    log_once = true;
-    return;
-  } else if (!profiler_manager->EnableCollectHost()) {
+  if (!profiler_manager->GetProfilingEnableFlag() || !profiler_manager->EnableCollectHost()) {
+    first_open_file = true;
+    MS_LOG(DEBUG) << "Profiler or profile_framework is not enabled, no need to record Host info.";
     return;
   }
   auto output_path = profiler_manager->ProfileDataPath();
@@ -383,6 +401,7 @@ void WriteHostDataToFile(const HostProfileData &host_profile_data, const std::st
   row.append(std::to_string(host_profile_data.time_stamp));
 
   csv.WriteToCsv(row, true);
+  csv.CloseFile();
 }
 #endif
 }  // namespace profiler

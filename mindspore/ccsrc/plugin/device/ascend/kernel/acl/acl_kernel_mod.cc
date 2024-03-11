@@ -22,6 +22,7 @@
 #include "ir/tensor.h"
 #include "runtime/device/kernel_runtime.h"
 #include "transform/acl_ir/acl_helper.h"
+#include "transform/acl_ir/acl_adapter_info.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "pybind_api/gil_scoped_long_running.h"
 #include "mindspore/core/ops/op_utils.h"
@@ -42,6 +43,37 @@ std::string MsTensorDescString(const TensorParams &param) {
   return ss.str();
 }
 }  // namespace
+
+void SetParamsDataTypeIfComplexInput(const PrimitivePtr &prim, std::vector<TensorParams> *input_params,
+                                     std::vector<TensorParams> *output_params) {
+  MS_EXCEPTION_IF_NULL(input_params);
+  MS_EXCEPTION_IF_NULL(output_params);
+  if (input_params->empty() || output_params->empty() || (*input_params)[0].data_type != TypeId::kNumberTypeComplex64) {
+    return;
+  }
+
+  auto info = transform::GeAdapterManager::GetInstance().GetInfo(prim->name(), true);
+  MS_EXCEPTION_IF_NULL(info);
+  if (!transform::AclAdapterManager::GetInstance().CheckAclAdapter(info->op_type())) {
+    return;
+  }
+  auto acl_info = transform::AclAdapterManager::GetInstance().GetOpInfo(info->op_type());
+  if (!acl_info.is_complex_parallel_concerned()) {
+    return;
+  }
+
+  for (size_t i = 0; i < input_params->size(); i++) {
+    if ((*input_params)[i].data_type == TypeId::kNumberTypeComplex64) {
+      (*input_params)[i].data_type = TypeId::kNumberTypeInt64;
+    }
+  }
+
+  for (size_t i = 0; i < output_params->size(); i++) {
+    if ((*output_params)[i].data_type == TypeId::kNumberTypeComplex64) {
+      (*output_params)[i].data_type = TypeId::kNumberTypeInt64;
+    }
+  }
+}
 
 bool AclKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   converter_ = std::make_shared<transform::AclConverter>();
@@ -207,6 +239,7 @@ bool AclKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::
   if (is_need_skip_execute) {
     return true;
   }
+  SetParamsDataTypeIfComplexInput(primitive_, &input_params_, &output_params_);
   converter_->ConvertValueDependToHostInput(kernel_name_, inputs, input_params_, value_depend_args_);
   converter_->ConvertToAclInput(primitive_, inputs, input_params_);
   converter_->ConvertToAclOutput(kernel_name_, outputs, output_params_);

@@ -34,6 +34,7 @@
 #include "pipeline/jit/ps/static_analysis/prim.h"
 #include "frontend/operator/ops.h"
 #include "utils/ms_exception.h"
+#include "utils/compile_config.h"
 #include "ir/func_graph_cloner.h"
 #include "pipeline/jit/ps/static_analysis/evaluator.h"
 #include "pipeline/jit/ps/debug/trace.h"
@@ -166,7 +167,7 @@ AbstractBasePtr BuildAsyncAbstractRecursively(const AbstractBasePtr &orig_abs,
         new_elements.push_back(orig_elements[i]);
       }
     }
-    static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") != "0");
+    static const auto enable_eliminate_unused_element = (common::GetCompileConfig("ENABLE_DDE") != "0");
     AbstractBasePtr new_abs;
     if (orig_abs->isa<AbstractTuple>()) {
       new_abs = std::make_shared<AbstractTuple>(
@@ -530,7 +531,7 @@ void AnalysisEngine::SaveEvalResultInCache(const AnfNodeConfigPtr &conf, const E
     MS_LOG(DEBUG) << "Found previous result for NodeConfig: " << conf->ToString()
                   << ", result: " << iter->second->abstract().get() << "/" << iter->second->abstract()->ToString();
     // Update sequence nodes info, if matched in cache.
-    static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") != "0");
+    static const auto enable_eliminate_unused_element = (common::GetCompileConfig("ENABLE_DDE") != "0");
     if (enable_eliminate_unused_element) {
       auto new_sequence = dyn_cast<AbstractSequence>(result->abstract());
       auto old_sequence = dyn_cast<AbstractSequence>(iter->second->abstract());
@@ -975,7 +976,7 @@ EvaluatorPtr GetPrimEvaluator(const PrimitivePtr &prim, const AnalysisEnginePtr 
   if (IsPrimitiveEquals(prim, prim::kPrimPyExecute)) {
     return std::make_shared<PyExecuteEvaluator>();
   }
-  static const bool enable_pre_lift = (common::GetEnv("MS_DEV_PRE_LIFT") == "1");
+  static const bool enable_pre_lift = (common::GetCompileConfig("PRE_LIFT") == "1");
   if (enable_pre_lift && IsPrimitiveEquals(prim, prim::kPrimSwitch)) {
     return std::make_shared<SwitchEvaluator>();
   }
@@ -1053,7 +1054,7 @@ EvaluatorPtr AnalysisEngine::_GetEvaluatorFor(const std::shared_ptr<PrimitiveAbs
   }
   auto prim_without_tracking_id = std::make_shared<PrimitiveAbstractClosure>(primitive, 0);
   EvaluatorPtr prim_evaluator = _GetEvaluatorFor(prim_without_tracking_id);
-  static const bool enable_pre_lift = (common::GetEnv("MS_DEV_PRE_LIFT") == "1");
+  static const bool enable_pre_lift = (common::GetCompileConfig("PRE_LIFT") == "1");
   if (enable_pre_lift && IsPrimitiveEquals(primitive, prim::kPrimSwitch)) {
     auto result = evaluators_.emplace(func, prim_evaluator);
     return result.first->second;
@@ -1206,7 +1207,7 @@ EvalResultPtr AnalysisEngine::ExecuteEvaluators(const std::vector<EvaluatorPtr> 
     MS_EXCEPTION_IF_NULL(eval);
     return eval->Run(shared_from_this(), args_conf_list, out_conf);
   }
-  static const bool enable_single_thread = (common::GetEnv("MS_DEV_SINGLE_EVAL") == "1");
+  static const bool enable_single_thread = (common::GetCompileConfig("SINGLE_EVAL") == "1");
   if (enable_single_thread) {
     return ExecuteMultipleEvaluators(evaluators, out_conf, args_conf_list);
   }
@@ -1651,7 +1652,7 @@ AbstractBasePtr ToAbstract(const ValuePtr &value, const AnalysisContextPtr &cont
     MS_LOG(DEBUG) << "Attach python list object " << fallback::GetPyObjectPtrStr(py_list_obj)
                   << " to new abstract: " << abs->ToString();
     // Set sequence node for new AbstractSequence.
-    static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") != "0");
+    static const auto enable_eliminate_unused_element = (common::GetCompileConfig("ENABLE_DDE") != "0");
     if (enable_eliminate_unused_element) {
       auto sequence_abs = abs->cast<AbstractSequencePtr>();
       MS_EXCEPTION_IF_NULL(sequence_abs);

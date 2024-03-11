@@ -28,10 +28,7 @@ namespace {
 void SquareAscendCall(const std::shared_ptr<OpRunner> &op, const device::DeviceContext *device_context,
                       const tensor::TensorPtr &input_tensor, const std::vector<tensor::TensorPtr> &outputs) {
   MS_LOG(DEBUG) << "Call start";
-  constexpr int64_t val = 2;
-  const auto exponent = std::dynamic_pointer_cast<Scalar>(MakeValue(val));
-  MS_EXCEPTION_IF_NULL(exponent);
-  LAUNCH_ACLNN(aclnnPowTensorScalar, device_context, op->stream_id(), input_tensor, exponent, outputs[0]);
+  LAUNCH_ACLNN(aclnnMul, device_context, op->stream_id(), input_tensor, input_tensor, outputs[0]);
   MS_LOG(DEBUG) << "Launch end";
 }
 }  // namespace

@@ -25,8 +25,9 @@
 #include "plugin/device/ascend/hal/profiler/parallel_strategy_profiling.h"
 #include "plugin/device/ascend/hal/profiler/profiling_framework_data.h"
 #include "runtime/hardware/device_context_manager.h"
-#include "acl/acl_rt.h"
-#include "acl/acl.h"
+#include "transform/symbol/acl_prof_symbol.h"
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 using mindspore::device::ascend::ErrorManagerAdapter;
 using mindspore::profiler::ascend::MemoryProfiling;
@@ -47,6 +48,7 @@ std::map<std::string, aclprofAicoreMetrics> kAicMetrics{{"ArithmeticUtilization"
                                                         {"MemoryL0", ACL_AICORE_L0B_AND_WIDTH},
                                                         {"ResourceConflictRatio", ACL_AICORE_RESOURCE_CONFLICT_RATIO},
                                                         {"MemoryUB", ACL_AICORE_MEMORY_UB},
+                                                        {"L2Cache", ACL_AICORE_L2_CACHE},
                                                         {"None", ACL_AICORE_NONE}};
 
 std::shared_ptr<AscendProfiler> AscendProfiler::GetInstance() {
@@ -78,7 +80,7 @@ void AscendProfiler::Init(const std::string &profiling_path, uint32_t device_id,
   } else {
     is_parallel_strategy = true;
   }
-  aclError ret = aclrtSetDevice(static_cast<int32_t>(device_id));
+  aclError ret = CALL_ASCEND_API(aclrtSetDevice, static_cast<int32_t>(device_id));
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Device " << device_id << " call aclrtSetDevice failed, ret[" << static_cast<int>(ret) << "]";
   }
@@ -88,16 +90,32 @@ void AscendProfiler::Init(const std::string &profiling_path, uint32_t device_id,
 
   MemoryProfiling::GetInstance().SetMemoryProfilingInitialize(profiling_options_);
 
-  aclError aclRet = aclprofInit(profile_data_path_.c_str(), profile_data_path_.length());
+  aclError aclRet = CALL_ASCEND_API(aclprofInit, profile_data_path_.c_str(), profile_data_path_.length());
   if (aclRet != ACL_SUCCESS) {
     MS_LOG(EXCEPTION) << "Failed to call aclprofInit function.";
+  }
+
+  if (options["hbm_ddr"] == "on") {
+    const char *hbmFreq = "100";
+    aclError hbmRet = aclprofSetConfig(ACL_PROF_SYS_HARDWARE_MEM_FREQ, hbmFreq, strlen(hbmFreq));
+    if (hbmRet != ACL_SUCCESS) {
+      MS_LOG(EXCEPTION) << "Failed to set hbm profiling config.";
+    }
+  }
+
+  if (options["pcie"] == "on") {
+    const char *pcieFreq = "50";
+    aclError pcieRet = aclprofSetConfig(ACL_PROF_SYS_INTERCONNECTION_FREQ, pcieFreq, strlen(pcieFreq));
+    if (pcieRet != ACL_SUCCESS) {
+      MS_LOG(EXCEPTION) << "Failed to set pcie profiling config.";
+    }
   }
 
   uint32_t device_list[1] = {device_id_};
   uint32_t device_num = 1;
   uint64_t mask = GetOptionsMask();
   aclprofAicoreMetrics aic_metrics = GetAicMetrics();
-  acl_config_ = aclprofCreateConfig(device_list, device_num, aic_metrics, nullptr, GetOptionsMask());
+  acl_config_ = CALL_ASCEND_API(aclprofCreateConfig, device_list, device_num, aic_metrics, nullptr, GetOptionsMask());
   if (acl_config_ == nullptr) {
     MS_LOG(EXCEPTION) << "Failed to call aclprofCreateConfig function.";
   }
@@ -156,7 +174,7 @@ aclprofAicoreMetrics AscendProfiler::GetAicMetrics() const {
 
 void AscendProfiler::Start() {
   MS_LOG(INFO) << "Begin to profiling.";
-  aclError aclRet = aclprofStart(acl_config_);
+  aclError aclRet = CALL_ASCEND_API(aclprofStart, acl_config_);
   if (aclRet != ACL_SUCCESS) {
     MS_LOG(EXCEPTION) << "Failed to call aclprofStart function.";
   }
@@ -191,7 +209,7 @@ void AscendProfiler::Stop() {
   }
 
   ProfilingDataDumper::GetInstance()->Stop();
-  aclError aclRet = aclprofStop(acl_config_);
+  aclError aclRet = CALL_ASCEND_API(aclprofStop, acl_config_);
   if (aclRet != ACL_SUCCESS) {
     MS_LOG(EXCEPTION) << "Failed to call aclprofStop function.";
   }
@@ -229,12 +247,12 @@ void AscendProfiler::StepStop() {
 }
 
 void AscendProfiler::Finalize() {
-  aclError aclRet = aclprofDestroyConfig(acl_config_);
+  aclError aclRet = CALL_ASCEND_API(aclprofDestroyConfig, acl_config_);
   if (aclRet != ACL_SUCCESS) {
     MS_LOG(EXCEPTION) << "Failed to call aclprofDestoryConfig function.";
   }
   MS_LOG(INFO) << "Begin to finalize profiling";
-  aclRet = aclprofFinalize();
+  aclRet = CALL_ASCEND_API2(aclprofFinalize);
   if (aclRet != ACL_SUCCESS) {
     MS_LOG(EXCEPTION) << "Failed to call aclprofDestroyConfig function.";
   }

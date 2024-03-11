@@ -48,6 +48,10 @@ class BiasAddInfo : public OperatorInfo {
   Status InferForwardCommunication() override { return SUCCESS; }
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
+  Status CheckInputLayout() override;
+  Status CheckOutputLayout() override;
+  Status InferOutputTensorInfo() override;
+  Status InferForwardCommunicationByLayout() override { return SUCCESS; }
 };
 }  // namespace parallel
 }  // namespace mindspore

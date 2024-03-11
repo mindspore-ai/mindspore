@@ -253,9 +253,23 @@ void OutputActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<De
 
 TensorPtr OutputActor::CreateOutputTensor(const AnfNodePtr &output_node, size_t output_index, size_t output_position) {
   MS_EXCEPTION_IF_NULL(output_node);
-  if (ActorDispatcher::enable_runtime_multi_pipeline()) {
-    runtime::WaitRuntimePipelineFinish();
+  // Note: In dynamic shape case, when actor thread number <= 3, maybe only enable async launch kernel, we should check
+  // weather enable async launch kernel rather than whether enable multi pipeline here.
+  if (ActorDispatcher::enable_async_launch_kernel()) {
+    // Need wait all kernel launch task finish to update output shape and size for computed depend kernel.
+    bool is_computed_depend_kernel = false;
+    if (!output_node->isa<CNode>()) {
+      is_computed_depend_kernel = false;
+    } else {
+      auto kernel_mod = AnfAlgo::GetKernelMod(output_node);
+      if (kernel_mod && kernel_mod->IsNeedUpdateOutputShapeAndSize()) {
+        is_computed_depend_kernel = true;
+      }
+    }
+
+    WaitRuntimePipelineFinish(is_computed_depend_kernel);
   }
+
   const auto &output_kernel_tensor = AnfAlgo::GetOutputKernelTensor(output_node, output_index);
   MS_EXCEPTION_IF_NULL(output_kernel_tensor);
   MS_LOG(DEBUG) << "Create output tensor, output node: " << output_node->fullname_with_scope()

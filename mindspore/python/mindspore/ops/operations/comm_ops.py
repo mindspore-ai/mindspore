@@ -1295,8 +1295,11 @@ class _GetTensorSlice(PrimitiveWithInfer):
         """Initialize _GetTensorSlice."""
         self.add_prim_attr('order_enforce_skip', True)
 
-    def infer_value(self, x, dev_mat, tensor_map):
+    def infer_value(self, x, dev_mat, tensor_map, slice_shape, full_shape):
         from mindspore.parallel._tensor import _load_tensor
         validator.check_value_type("dev_mat", dev_mat, [tuple], self.name)
         validator.check_value_type("tensor_map", tensor_map, [tuple], self.name)
-        return Tensor(_load_tensor(x, dev_mat, tensor_map), x.dtype)
+        tensor_slice = _load_tensor(x, dev_mat, tensor_map, full_shape)
+        if tensor_slice.shape != slice_shape:
+            tensor_slice = tensor_slice.reshape(slice_shape)
+        return Tensor(tensor_slice)

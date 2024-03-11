@@ -30,6 +30,8 @@
 #include "backend/common/session/session_basic.h"
 #include "runtime/hardware/device_context_manager.h"
 #include "include/backend/distributed/init.h"
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace mindspore {
 API_GRAPH_REG(kAscendDevice, AscendGraphImpl);
@@ -122,7 +124,7 @@ Status AscendGraphImpl::ExecuteModel(const std::vector<MSTensor> &request, std::
     MS_LOG(ERROR) << "rtCtx is nullptr";
     return kMCDeviceError;
   }
-  auto rt_ret = aclrtSetCurrentContext(context_);
+  auto rt_ret = CALL_ASCEND_API(aclrtSetCurrentContext, context_);
   if (rt_ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Set Ascend rtCtx failed";
     return kMCDeviceError;
@@ -256,7 +258,7 @@ Status AscendGraphImpl::Load(uint32_t device_id) {
     }
 
     // save d context
-    auto rt_ret = aclrtGetCurrentContext(&context_);
+    auto rt_ret = CALL_ASCEND_API(aclrtGetCurrentContext, &context_);
     if (rt_ret != ACL_ERROR_NONE || context_ == nullptr) {
       MS_LOG(ERROR) << "the ascend device context is null";
       return kMCDeviceError;
@@ -266,7 +268,7 @@ Status AscendGraphImpl::Load(uint32_t device_id) {
     load_flag_ = true;
   }
 
-  auto rt_ret = aclrtSetCurrentContext(context_);
+  auto rt_ret = CALL_ASCEND_API(aclrtSetCurrentContext, context_);
   if (rt_ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Set the ascend device context failed";
     return kMCDeviceError;
@@ -348,7 +350,7 @@ AscendGraphImpl::MsEnvGuard::MsEnvGuard(uint32_t device_id) : device_id_(device_
       }
     }
   } else {
-    auto ret = aclrtSetDevice(static_cast<int32_t>(device_id_));
+    auto ret = CALL_ASCEND_API(aclrtSetDevice, static_cast<int32_t>(device_id_));
     if (ret != ACL_ERROR_NONE) {
       MS_LOG(EXCEPTION) << "Device " << device_id_ << " call aclrtSetDevice failed, ret[" << static_cast<int>(ret)
                         << "]";
@@ -382,7 +384,7 @@ AscendGraphImpl::MsEnvGuard::~MsEnvGuard() {
         return;
       }
     } else {
-      auto ret = aclrtResetDevice(static_cast<int32_t>(device_id_));
+      auto ret = CALL_ASCEND_API(aclrtResetDevice, static_cast<int32_t>(device_id_));
       if (ret != ACL_ERROR_NONE) {
         MS_LOG(ERROR) << "Device " << device_id_ << " call aclrtResetDevice failed, ret[" << static_cast<int>(ret)
                       << "]";

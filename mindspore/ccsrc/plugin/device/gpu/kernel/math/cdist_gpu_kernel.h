@@ -71,15 +71,15 @@ class CdistGpuKernelMod : public NativeGpuKernelMod {
                        const std::vector<kernel::KernelTensor *> &, const std::vector<kernel::KernelTensor *> &)>;
 
  private:
-  int64_t batch_;
-  int64_t x_row_;
-  int64_t x_col_;
-  int64_t y_row_;
-  float p_ = 2.0;
+  int64_t batch_{0};
+  int64_t x_row_{0};
+  int64_t x_col_{0};
+  int64_t y_row_{0};
+  float p_{2.0};
   size_t unit_size_{1};
-  size_t out_elements_;
-  size_t x_elements_;
-  size_t y_elements_;
+  size_t out_elements_{0};
+  size_t x_elements_{0};
+  size_t y_elements_{0};
   CdistFunc kernel_func_{};
   bool is_null_input_{false};
   void *cuda_stream_{nullptr};

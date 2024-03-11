@@ -19,6 +19,7 @@
 #include "utils/log_adapter.h"
 #include "mindspore/core/utils/convert_utils_base.h"
 #include "cxx_api/acl_utils.h"
+#include "transform/symbol/acl_mdl_symbol.h"
 #include "transform/symbol/acl_rt_symbol.h"
 #include "transform/symbol/symbol_utils.h"
 
@@ -78,7 +79,7 @@ Status AclGraphImpl::LoadAclModel(const Buffer om_data) {
   MS_LOG(INFO) << "Start load acl model.";
   // acl load model
   uint32_t acl_model_id;
-  auto acl_ret = aclmdlLoadFromMem(om_data.Data(), om_data.DataSize(), &acl_model_id);
+  auto acl_ret = CALL_ASCEND_API(aclmdlLoadFromMem, om_data.Data(), om_data.DataSize(), &acl_model_id);
   if (acl_ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Call aclmdlLoadFromMem failed.";
     return kMCDeviceError;
@@ -88,7 +89,7 @@ Status AclGraphImpl::LoadAclModel(const Buffer om_data) {
   model_process_.set_model_id(acl_model_id);
   Status ret = model_process_.PreInitModelResource();
   if (ret != kSuccess) {
-    (void)aclmdlUnload(acl_model_id);
+    (void)CALL_ASCEND_API(aclmdlUnload, acl_model_id);
     MS_LOG(ERROR) << "Pre init model resource failed.";
     return ret;
   }
@@ -108,7 +109,7 @@ Status AclGraphImpl::InitEnv() {
     return kMCDeviceError;
   }
 
-  aclError ret = aclrtSetDevice(device_id_);
+  aclError ret = CALL_ASCEND_API(aclrtSetDevice, device_id_);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Device " << device_id_ << " call aclrtSetDevice failed, ret[" << static_cast<int>(ret) << "]";
   }
@@ -122,7 +123,7 @@ Status AclGraphImpl::InitEnv() {
   MS_LOG(INFO) << "Create context success";
 
   aclrtRunMode run_mode;
-  ret = aclrtGetRunMode(&run_mode);
+  ret = CALL_ASCEND_API(aclrtGetRunMode, &run_mode);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Acl get run mode failed";
     return kMCDeviceError;
@@ -141,7 +142,7 @@ Status AclGraphImpl::FinalizeEnv() {
     return kSuccess;
   }
 
-  aclError rt_ret = aclrtSetCurrentContext(context_);
+  aclError rt_ret = CALL_ASCEND_API(aclrtSetCurrentContext, context_);
   if (rt_ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Set the ascend device context failed";
     return kMCDeviceError;
@@ -154,7 +155,7 @@ Status AclGraphImpl::FinalizeEnv() {
   }
 
   if (context_ != nullptr) {
-    rt_ret = aclrtDestroyContext(context_);
+    rt_ret = CALL_ASCEND_API(aclrtDestroyContext, context_);
     if (rt_ret != ACL_ERROR_NONE) {
       MS_LOG(ERROR) << "Destroy context failed";
     }
@@ -162,7 +163,7 @@ Status AclGraphImpl::FinalizeEnv() {
   }
   MS_LOG(INFO) << "End to destroy context";
 
-  rt_ret = aclrtResetDevice(device_id_);
+  rt_ret = CALL_ASCEND_API(aclrtResetDevice, device_id_);
   if (rt_ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Reset device " << device_id_ << " failed";
   }
@@ -204,7 +205,7 @@ Status AclGraphImpl::Load(uint32_t device_id) {
     load_flag_ = true;
   }
 
-  aclError rt_ret = aclrtSetCurrentContext(context_);
+  aclError rt_ret = CALL_ASCEND_API(aclrtSetCurrentContext, context_);
   if (rt_ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Set the ascend device context failed";
     return kMCDeviceError;

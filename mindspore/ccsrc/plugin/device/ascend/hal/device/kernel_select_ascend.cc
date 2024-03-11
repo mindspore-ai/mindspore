@@ -642,6 +642,25 @@ void SetKernelInfoBeforeCreateKernel(const std::vector<CNodePtr> &nodes) {
     }
   }
 }
+
+class AscendGraphKernelInfo : public GraphKernelInfo {
+ public:
+  AscendGraphKernelInfo() = default;
+  virtual ~AscendGraphKernelInfo() = default;
+  void SetKernelInfo(const CNodePtr &kernel_node, KernelType) override {
+    MS_EXCEPTION_IF_NULL(kernel_node);
+    const auto &kernel_graph = AnfAlgo::FetchKernelGraph(kernel_node.get());
+    MS_EXCEPTION_IF_NULL(kernel_graph);
+    auto [select_res, msg, etype] = SelectKernelInfoWithMsg(kernel_graph, kernel_node);
+    if (select_res) {
+      return;
+    }
+    MS_LOG(INFO) << "node is " << kernel_node->fullname_with_scope() << " should backoff";
+    std::pair<std::string, ExceptionType> failure_info = std::make_pair(msg, etype);
+    HandleKernelSelectFailure(kernel_graph, kernel_node, failure_info);
+  }
+};
+REG_GRAPH_KERNEL_INFO(kAscendDevice, AscendGraphKernelInfo);
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

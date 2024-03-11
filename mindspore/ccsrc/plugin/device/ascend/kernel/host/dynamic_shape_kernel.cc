@@ -19,7 +19,8 @@
 #include "utils/trace_base.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
-#include "acl/acl_rt.h"
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -44,8 +45,8 @@ void TensorShapeKernelMod::Execute(const std::vector<KernelTensor *> &inputs,
       MS_EXCEPTION(DeviceProcessError) << "Sync stream error!";
     }
 
-    auto ret_rt_memcpy = aclrtMemcpy(outputs[0]->device_ptr(), outputs[0]->size(), shape.data(), LongToSize(size),
-                                     ACL_MEMCPY_DEVICE_TO_HOST);
+    auto ret_rt_memcpy = CALL_ASCEND_API(aclrtMemcpy, outputs[0]->device_ptr(), outputs[0]->size(), shape.data(),
+                                         LongToSize(size), ACL_MEMCPY_DEVICE_TO_HOST);
     if (ret_rt_memcpy != ACL_ERROR_NONE) {
       MS_EXCEPTION(DeviceProcessError) << "aclrtMemcpy failed";
     }

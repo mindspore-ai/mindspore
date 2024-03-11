@@ -29,6 +29,7 @@
 #include "tools/converter/parser/parser_utils.h"
 #include "tools/common/graph_util.h"
 #include "mindspore/core/utils/file_utils.h"
+#include "mindspore/core/utils/compile_config.h"
 #include "mindspore/core/ir/quantization_param.h"
 #include "mindspore/lite/tools/converter/quantizer/quant_params.h"
 #include "mindspore/lite/tools/converter/quantizer/quantize_util.h"
@@ -199,7 +200,7 @@ int MindIRSerializer::Save(const std::shared_ptr<ConverterPara> &param, const Fu
   }
 
   // Serialize to protobuf using unique parameter name label.
-  common::SetEnv("MS_DEV_TRACE_LABEL_WITH_UNIQUE_ID", "1", 0);
+  common::SetCompileConfig("TRACE_LABEL_WITH_UNIQUE_ID", "1", false);
 
   // Do preprocess on func_graph and check conditions for saving together.
   ret = PreProcSaveTogether(func_graph);

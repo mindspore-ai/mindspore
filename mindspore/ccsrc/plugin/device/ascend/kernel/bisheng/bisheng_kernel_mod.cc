@@ -22,9 +22,10 @@
 #include "utils/log_adapter.h"
 #include "utils/file_utils.h"
 #include "include/common/debug/common.h"
-#include "acl/acl_rt.h"
 #include "plugin/device/ascend/hal/device/ge_runtime/task_info.h"
 #include "plugin/device/ascend/hal/device/ascend_memory_manager.h"
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace mindspore::kernel {
 namespace {
@@ -139,8 +140,8 @@ void BiShengKernelMod::DoTiling(std::vector<void *> *workspace_addrs) {
   }
 
   // CopyHostToDevice
-  auto rt_ret =
-    aclrtMemcpy(tiling_addr_, tiling_data.size(), tiling_data.data(), tiling_data.size(), ACL_MEMCPY_HOST_TO_DEVICE);
+  auto rt_ret = CALL_ASCEND_API(aclrtMemcpy, tiling_addr_, tiling_data.size(), tiling_data.data(), tiling_data.size(),
+                                ACL_MEMCPY_HOST_TO_DEVICE);
   if (rt_ret != ACL_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Call rt api aclrtMemcpy failed, ret: " << rt_ret;
   }

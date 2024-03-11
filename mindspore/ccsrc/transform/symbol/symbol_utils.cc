@@ -28,6 +28,8 @@
 namespace mindspore {
 namespace transform {
 
+static bool load_ascend_api = false;
+
 void *GetLibHandler(const std::string &lib_path) {
   auto handler = dlopen(lib_path.c_str(), RTLD_LAZY | RTLD_LOCAL);
   if (handler == nullptr) {
@@ -52,6 +54,10 @@ std::string GetAscendLibPath() {
 }
 
 void LoadAscendApiSymbols() {
+  if (load_ascend_api) {
+    MS_LOG(INFO) << "Ascend api is already loaded.";
+    return;
+  }
   std::string ascend_path = GetAscendLibPath();
   LoadAclBaseApiSymbol(ascend_path);
   LoadAclOpCompilerApiSymbol(ascend_path);
@@ -62,6 +68,8 @@ void LoadAscendApiSymbols() {
   LoadAclRtApiSymbol(ascend_path);
   LoadAclApiSymbol(ascend_path);
   LoadAcltdtApiSymbol(ascend_path);
+  load_ascend_api = true;
+  MS_LOG(INFO) << "Load ascend api success!";
 }
 
 }  // namespace transform

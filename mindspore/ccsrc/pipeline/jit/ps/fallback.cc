@@ -32,6 +32,7 @@
 #include "include/common/utils/convert_utils_py.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_context.h"
+#include "utils/compile_config.h"
 #include "utils/interpret_node_recorder.h"
 #include "pipeline/jit/ps/debug/trace.h"
 #include "pipeline/jit/ps/parse/resolve.h"
@@ -476,7 +477,7 @@ py::object GeneratePyObj(const abstract::AbstractBasePtr &abs) {
 
 bool EnableFallbackListDictInplace() {
   const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
-  static const auto allow_inplace_ops = common::GetEnv("MS_DEV_FALLBACK_SUPPORT_LIST_DICT_INPLACE") != "0";
+  static const auto allow_inplace_ops = common::GetCompileConfig("FALLBACK_SUPPORT_LIST_DICT_INPLACE") != "0";
   return allow_fallback_runtime && allow_inplace_ops;
 }
 

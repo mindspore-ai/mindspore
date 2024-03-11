@@ -120,9 +120,9 @@ class FuncGraphBuilder {
 
   static AbstractBasePtr EvalValue(const ValuePtr &value, const AbstractBasePtrList &inputs_abs_list);
 
- private:
   static py::object ConvertToPyObj(const AbstractBasePtr &abs);
 
+ private:
   static bool CheckCallable(const ValuePtr &value, const AbstractBasePtr &abs);
 
   static bool CheckGraphOutput(const AbstractBasePtr &abs);

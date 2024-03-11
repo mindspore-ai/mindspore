@@ -57,14 +57,14 @@ class CombinedNonMaxSuppressionGpuKernelMod : public NativeGpuKernelMod {
   CombinedNonMaxSuppressionLaunchFunc kernel_func_;
   cudaStream_t cuda_stream_;
   void InitSizeLists();
-  size_t T;
-  int batch_size_;
-  int num_boxes_;
-  int q_;
-  int num_classes_;
-  int per_detections_;
-  bool pad_per_class_;
-  bool clip_boxes_;
+  size_t T{0};
+  int batch_size_{0};
+  int num_boxes_{0};
+  int q_{0};
+  int num_classes_{0};
+  int per_detections_{0};
+  bool pad_per_class_{false};
+  bool clip_boxes_{false};
 };
 }  // namespace kernel
 }  // namespace mindspore

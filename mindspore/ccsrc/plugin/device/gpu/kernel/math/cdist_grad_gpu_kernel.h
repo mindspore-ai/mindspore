@@ -67,21 +67,21 @@ class CdistGradGpuKernelMod : public NativeGpuKernelMod {
                        const std::vector<kernel::KernelTensor *> &, const std::vector<kernel::KernelTensor *> &)>;
 
  private:
-  int64_t batch_;
-  int64_t r0_;
-  int64_t m_;
-  int64_t r1_;
-  int64_t l1_size_;
-  int64_t l2_size_;
-  size_t grad_size_;
-  size_t input0_size_;
-  size_t input1_size_;
-  size_t dist_size_;
-  size_t out_size_;
-  float p_ = 2.0;
+  int64_t batch_{0};
+  int64_t r0_{0};
+  int64_t m_{0};
+  int64_t r1_{0};
+  int64_t l1_size_{0};
+  int64_t l2_size_{0};
+  size_t grad_size_{0};
+  size_t input0_size_{0};
+  size_t input1_size_{0};
+  size_t dist_size_{0};
+  size_t out_size_{0};
+  float p_{2.0};
 
   size_t unit_size_{1};
-  size_t input_elements_;
+  size_t input_elements_{0};
   CdistGradFunc kernel_func_{};
   bool is_null_input_{false};
   void *cuda_stream_{nullptr};

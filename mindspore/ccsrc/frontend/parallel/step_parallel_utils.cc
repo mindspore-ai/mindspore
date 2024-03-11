@@ -1969,6 +1969,105 @@ StrategyPtr ExtractStrategy(const ValuePtr &stra) {
   return strategyPtr;
 }
 
+Status GetLayoutFromAttrValue(const ValuePtr &layout_item, std::vector<int64_t> *device_matrix_vector,
+                              std::vector<std::vector<int64_t>> *tensor_map_vector) {
+  auto layout_dict_value = layout_item->cast<ValueDictionaryPtr>();
+  if (!layout_dict_value) {
+    MS_LOG(ERROR) << "The layout item configured for node is unreasonable";
+    return FAILED;
+  }
+  auto layout_dict = layout_dict_value->value();
+  ValuePtr device_matrix_value = nullptr;
+  ValuePtr tensor_map_value = nullptr;
+  for (const auto &value_pair : layout_dict) {
+    if ((*value_pair.first) == (*MakeValue<std::string>(DEVICE_MATRIX))) {
+      device_matrix_value = value_pair.second;
+    }
+    if ((*value_pair.first) == (*MakeValue<std::string>(TENSOR_MAP))) {
+      tensor_map_value = value_pair.second;
+    }
+  }
+  if (!device_matrix_value || !tensor_map_value) {
+    MS_LOG(ERROR) << "The layout item configured for node is unreasonable";
+    return FAILED;
+  }
+  *device_matrix_vector = GetValue<std::vector<int64_t>>(device_matrix_value);
+  auto tensor_map_value_tuple = tensor_map_value->cast<ValueTuplePtr>();
+  std::vector<ValuePtr> tensor_map_value_tuple_vector = tensor_map_value_tuple->value();
+  for (const auto &tensor_map_item : tensor_map_value_tuple_vector) {
+    if (tensor_map_item->isa<ValueSequence>()) {
+      auto tensor_map_item_v = GetValue<std::vector<int64_t>>(tensor_map_item);
+      tensor_map_vector->push_back(tensor_map_item_v);
+      continue;
+    }
+    auto tensor_map_item_i = GetValue<int64_t>(tensor_map_item);
+    tensor_map_vector->push_back({tensor_map_item_i});
+  }
+  return SUCCESS;
+}
+
+Status ExtractUserConfigLayout(const mindspore::HashMap<std::string, ValuePtr> &prim_attrs, const Shapes &inputs_shape,
+                               const Shapes &outputs_shape,
+                               std::vector<std::shared_ptr<TensorLayout>> *in_tensor_layouts,
+                               std::vector<std::shared_ptr<TensorLayout>> *out_tensor_layouts) {
+  if (prim_attrs.count(IN_LAYOUT) > 0) {
+    auto layout_value = prim_attrs.at(IN_LAYOUT);
+    if (!layout_value->isa<ValueSequence>()) {
+      MS_LOG(ERROR) << "The in_layout configured for node is not a tuple";
+      return FAILED;
+    }
+    auto layout_value_tuple = layout_value->cast<ValueTuplePtr>();
+    std::vector<ValuePtr> layout_value_vector = layout_value_tuple->value();
+    if (inputs_shape.size() != layout_value_vector.size()) {
+      MS_LOG(ERROR) << "The in_layout configured for node is not equal to its input nums";
+      return FAILED;
+    }
+
+    for (size_t i = 0; i < layout_value_vector.size(); ++i) {
+      auto layout_item = layout_value_vector[i];
+      std::vector<int64_t> device_matrix_vector;
+      std::vector<std::vector<int64_t>> tensor_map_vector;
+      if (GetLayoutFromAttrValue(layout_item, &device_matrix_vector, &tensor_map_vector) != SUCCESS) {
+        return FAILED;
+      }
+      auto in_layout = std::make_shared<TensorLayout>();
+      if (in_layout->InitFromExtendVector(device_matrix_vector, tensor_map_vector, inputs_shape[i]) != SUCCESS) {
+        MS_LOG(ERROR) << "The in_layout configured incorretc, device_matrix:" << device_matrix_vector
+                      << ", tensor_map:" << tensor_map_vector;
+        return FAILED;
+      }
+      in_tensor_layouts->push_back(in_layout);
+    }
+  }
+  if (prim_attrs.count(OUT_LAYOUT) > 0) {
+    auto layout_value = prim_attrs.at(OUT_LAYOUT);
+    if (!layout_value->isa<ValueSequence>()) {
+      MS_LOG(EXCEPTION) << "The in_layout configured for node is not a tuple";
+    }
+    auto layout_value_tuple = layout_value->cast<ValueTuplePtr>();
+    std::vector<ValuePtr> layout_value_vector = layout_value_tuple->value();
+    if (outputs_shape.size() != layout_value_vector.size()) {
+      MS_LOG(EXCEPTION) << "The out_layout configured for node is not equal to its output nums";
+    }
+    for (size_t i = 0; i < layout_value_vector.size(); ++i) {
+      auto layout_item = layout_value_vector[i];
+      std::vector<int64_t> device_matrix_vector;
+      std::vector<std::vector<int64_t>> tensor_map_vector;
+      if (GetLayoutFromAttrValue(layout_item, &device_matrix_vector, &tensor_map_vector) != SUCCESS) {
+        return FAILED;
+      }
+      auto out_layout = std::make_shared<TensorLayout>();
+      if (out_layout->InitFromExtendVector(device_matrix_vector, tensor_map_vector, outputs_shape[i]) != SUCCESS) {
+        MS_LOG(ERROR) << "The out_layout configured incorretc, device_matrix:" << device_matrix_vector
+                      << ", tensor_map:" << tensor_map_vector;
+        return FAILED;
+      }
+      out_tensor_layouts->push_back(out_layout);
+    }
+  }
+  return SUCCESS;
+}
+
 static bool IsCohesiveNode(const CNodePtr &cnode) {
   return IsPrimitiveCNode(cnode, prim::kPrimCast) || IsPrimitiveCNode(cnode, prim::kPrimLoad) ||
          IsPrimitiveCNode(cnode, prim::kPrimDepend) || IsPrimitiveCNode(cnode, prim::kPrimAllGather) ||

@@ -317,3 +317,23 @@ def get_options(options):
 def combine_stream_task_id(stream_id, task_id):
     """Combine Stream ID and task ID into unique values."""
     return f'{stream_id}_{task_id}'
+
+
+def get_newest_file(file_list):
+    '''
+    Find the newest files
+    :param file_list:
+    :return:
+    '''
+    newest_file_list = []
+    newest_timestamp = '0'
+    for file_path in file_list:
+        timestamp = file_path.split('.')[0].split('/')[-1].split('_')[-1]
+        newest_timestamp = max(timestamp, newest_timestamp)
+
+    for file_path in file_list:
+        if file_path.split('.')[0].split('/')[-1].split('_')[-1] == newest_timestamp:
+            newest_file_list.append(file_path)
+
+    newest_file_list.sort()
+    return newest_file_list

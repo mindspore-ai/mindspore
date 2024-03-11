@@ -40,19 +40,24 @@ typedef enum _GuardLevel {
 } GuardLevel;
 
 using GuardItemVector = std::vector<GuardItemPtr>;
-using GuardItemMap = std::map<std::string, GuardItemPtr>;
+using GuardItemMap = std::map<size_t, GuardItemPtr>;
 using GuardCheckPoint = std::pair<GuardItemVector, GuardItemMap>;
 
-class OptGuard {
+class OptGuard : public std::enable_shared_from_this<OptGuard> {
  public:
   OptGuard();
-  explicit OptGuard(const std::map<std::string, bool> &config);
   virtual ~OptGuard() = default;
   /// \brief check whether the variables guarded have been modified
   /// \param[in] frame python frame
   /// \param[in] print guard
+  /// \param[in] cache to reuse the guard result
+  /// \param[in] success to record the items to guard successfully
+  /// \param[in] fail to record the items which fail to guard
+  /// \param[in] perf to record the performance of guard
   /// \param[out] the variables have been modified
-  virtual bool Check(const PyFrameObject *frame, bool print, std::map<std::string, PyObject *> *cache = nullptr);
+  virtual bool Check(const PyFrameObject *frame, bool print, std::map<size_t, PyObject *> *cache = nullptr,
+                     std::map<size_t, bool> *success = nullptr, std::map<size_t, bool> *fail = nullptr,
+                     bool perf = false);
   /// \brief guard the variable which has trace to retrieve
   /// \param[in] frame python frame
   /// \param[in] var to trace the path to retrieve the object
@@ -68,7 +73,8 @@ class OptGuard {
   virtual void AddTraceFromGuard(const std::vector<TracePtr> &traces, std::shared_ptr<OptGuard> other);
   /// \brief return the description for the guard
   virtual std::string GetDescript();
-  virtual void UpdateConfig(const std::map<std::string, bool> &config);
+  virtual void UpdateConfig(const std::map<std::string, bool> &bool_config,
+                            const std::map<std::string, int> &int_config);
   virtual void Backup();
   virtual void Rollback();
   virtual void Pop();
@@ -78,18 +84,41 @@ class OptGuard {
   virtual void RevertDynamicShape(PyFrameObject *frame, const std::vector<PyObject *> &backup);
 
   std::string ToString() const;
+  virtual const InfoPack &Info();
+  virtual std::shared_ptr<OptGuard> Optimize();
 
  protected:
+  void UpdateGuardList(GuardItemPtr item);
   std::vector<GuardItemPtr> guardList_;
-  std::map<std::string, GuardItemPtr> guardMap_;
+  std::map<size_t, GuardItemPtr> guardMap_;
   std::stack<GuardCheckPoint> guardStack_;
-  std::map<std::string, bool> config_;
+  std::map<std::string, bool> bool_config_;
+  std::map<std::string, int> int_config_;
+  InfoPackPtr info_;
 };
 using OptGuardPtr = std::shared_ptr<OptGuard>;
+
+class OptGuardPerf {
+ public:
+  static OptGuardPerf *GetGuardPerf();
+  virtual void GetGuardPerfInfo(std::map<std::string, std::pair<size_t, size_t>> *guard_info,
+                                std::map<std::string, std::pair<size_t, std::vector<size_t>>> *item_info,
+                                std::map<std::string, std::pair<size_t, size_t>> *trace_info,
+                                std::map<std::string, std::pair<size_t, size_t>> *guard_freq_info) const = 0;
+  virtual void LogTracePerfStart() = 0;
+  virtual void LogTracePerfEnd(Trace *trace, bool cache) = 0;
+  virtual void LogItemPerfStart(int total_stage) = 0;
+  virtual void LogItemPerfEnd(GuardItem *item, int stage) = 0;
+
+ protected:
+  OptGuardPerf() = default;
+  virtual ~OptGuardPerf() = default;
+};
 
 extern const char kSpecializeScalar[];
 extern const char kSpecializeTensor[];
 extern const char kSpecializeContainer[];
+extern const char kGuardRelaxCnt[];
 
 }  // namespace pijit
 }  // namespace mindspore

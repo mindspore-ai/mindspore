@@ -20,6 +20,9 @@
 #include "acl/acl.h"
 #include "include/backend/debug/data_dump/acl_dump_json_writer.h"
 #include "include/backend/debug/data_dump/dump_json_parser.h"
+#include "transform/symbol/acl_mdl_symbol.h"
+#include "transform/symbol/acl_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace {
 bool g_acl_initialized = false;
@@ -31,7 +34,7 @@ void InitializeAcl() {
     return;
   }
 
-  if (aclInit(nullptr) != ACL_ERROR_NONE) {
+  if (CALL_ASCEND_API(aclInit, nullptr) != ACL_ERROR_NONE) {
     MS_LOG(INFO) << "Call aclInit failed, acl data dump function may be unusable.";
   } else {
     MS_LOG(DEBUG) << "Call aclInit successfully";
@@ -49,7 +52,7 @@ class AclDataDumper : public DataDumper {
     // before, so here call it once
     InitializeAcl();
 
-    if (aclmdlInitDump() != ACL_ERROR_NONE) {
+    if (CALL_ASCEND_API2(aclmdlInitDump) != ACL_ERROR_NONE) {
       MS_LOG(INFO) << "Call aclmdlInitDump failed, acl data dump function will be unusable.";
     }
   }
@@ -62,7 +65,7 @@ class AclDataDumper : public DataDumper {
       acl_json_writer.WriteToFile(device_id, step_id, is_init);
       auto acl_dump_file_path = acl_json_writer.GetAclDumpJsonPath();
       std::string json_file_name = acl_dump_file_path + +"/acl_dump_" + std::to_string(device_id) + ".json";
-      if (aclmdlSetDump(json_file_name.c_str()) != ACL_ERROR_NONE) {
+      if (CALL_ASCEND_API(aclmdlSetDump, json_file_name.c_str()) != ACL_ERROR_NONE) {
         MS_LOG(WARNING)
           << "Call aclmdlSetDump failed, acl data dump function will be unusable. Please check whether the config file"
           << json_file_name;
@@ -71,7 +74,7 @@ class AclDataDumper : public DataDumper {
   }
 
   void Finalize() override {
-    if (aclmdlFinalizeDump() != ACL_ERROR_NONE) {
+    if (CALL_ASCEND_API2(aclmdlFinalizeDump) != ACL_ERROR_NONE) {
       MS_LOG(WARNING) << "Call aclmdlFinalizeDump failed.";
     }
   }

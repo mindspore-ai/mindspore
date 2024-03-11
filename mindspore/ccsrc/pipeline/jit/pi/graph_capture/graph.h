@@ -26,6 +26,7 @@
 #include "pipeline/jit/pi/graph_capture/node.h"
 #include "pipeline/jit/pi/utils/allocator.h"
 #include "pipeline/jit/pi/graph_guard/trace.h"
+#include "pipeline/jit/pi/graph_capture/side_effect.h"
 
 namespace mindspore {
 namespace pijit {
@@ -134,7 +135,8 @@ class Graph {
   auto &GetFrames() { return frame_states_; }
   const auto &GetFrames() const { return frame_states_; }
   Allocator &allocator() { return alloc_; }
-  ValueNode *NewValueNode(AObject *, int op, int arg, const std::vector<ValueNode *> & = {});
+  ValueNode *NewValueNode(AObject *, int op, int arg, const std::vector<ValueNode *> & = {},
+                          const std::string &name = "");
   CallNode *NewCallNode(int op, int arg, const std::vector<ValueNode *> &);
   const std::vector<LoopInfo *> &loops() const { return loops_; }
   void AddLoop(LoopInfo *loop) { loops_.emplace_back(loop); }
@@ -146,6 +148,10 @@ class Graph {
   }
 
   bool GuardValueNode(ValueNode *);
+  bool GuardType(ValueNode *);
+  bool GuardSequenceNodeLength(ValueNode *, Py_ssize_t);
+  bool GuardInlinedFunc(CallNode *call_node);
+
   TracePtr TraceValueNode(ValueNode *, int max_trace_depth = -1);
   int GetPruneBranchCount() const { return prune_branch_count_; }
   void SetPruneBranchCount(int count) { prune_branch_count_ = count; }
@@ -161,11 +167,31 @@ class Graph {
 
   std::string ToString(int depth = 0) const;
 
-  std::string DumpLoops() const;
   std::string DumpBreakInfo() const;
 
   void SetParent(Graph *parent) { parent_ = parent; }
   Graph *GetParent() const { return parent_; }
+
+  auto &GetSideEffect() const { return sideEffect_; }
+
+  void SetSideEffectNode(ValueNode *node) { side_effect_nodes_.push_back(node); }
+  std::vector<ValueNode *> &GetSideEffectNodes() { return side_effect_nodes_; }
+  std::vector<ValueNode *> const &GetSideEffectNodes() const { return side_effect_nodes_; }
+
+  void SetSideEffectReplacedMap(ValueNode *newNode, ValueNode *old) { replace_map.insert({newNode, old}); }
+  std::map<ValueNode *, ValueNode *> GetSideEffectReplacedMap() { return replace_map; }
+  std::vector<ValueNode *> GetSideEffectReplacedList() const {
+    std::vector<ValueNode *> replace_list;
+    for (auto &item : replace_map) {
+      replace_list.push_back(item.second);
+    }
+    return replace_list;
+  }
+  std::map<ValueNode *, ValueNode *> GetSideEffectReplacedMap() const { return replace_map; }
+  void SetGlobalList(GlobalSideEffectNode node) { global_list.push_back(node); }
+  std::vector<GlobalSideEffectNode> GetGlobalList() const { return global_list; }
+  void SetOldBreakBci(int bci) { old_break_bci_ = bci; }
+  int GetOldBreakBci() { return old_break_bci_; }
 
   // collect alive node, output bitmap
   std::vector<ValueNode *> CollectAliveNode(int bci, std::vector<int> * = nullptr, BitMap * = nullptr) const;
@@ -207,6 +233,11 @@ class Graph {
   std::shared_ptr<OptCode> guard_;
   int prune_branch_count_;
   Graph *parent_{nullptr};
+  std::unique_ptr<SideEffect> sideEffect_;
+  std::vector<ValueNode *> side_effect_nodes_;
+  std::map<ValueNode *, ValueNode *> replace_map;
+  std::vector<GlobalSideEffectNode> global_list;
+  int old_break_bci_;
 };
 }  // namespace pijit
 }  // namespace mindspore

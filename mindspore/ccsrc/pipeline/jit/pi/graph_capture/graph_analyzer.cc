@@ -22,6 +22,8 @@
 #include "pipeline/jit/pi/graph_guard/infer.h"
 #include "pipeline/jit/pi/graph_capture/graph.h"
 #include "pipeline/jit/pi/graph_capture/special_func_infer.h"
+#include "pipeline/jit/pi/graph_capture/graph_build.h"
+#include "pipeline/jit/pi/graph_capture/side_effect.h"
 
 namespace mindspore {
 namespace pijit {
@@ -198,6 +200,8 @@ void GraphAnalyzer::AddToEscaped(ValueNode *v) {
   GetCaptureInfo().ordered_escaped_locals.push_back(v);
 }
 
+extern TracePtr GetTrace(ValueNode *node, bool strict, bool print, int depth, int max_depth);
+
 bool GraphAnalyzer::TryToCapture(AbstractNode *n) {
   ValueNode *v = static_cast<ValueNode *>(n);
   AObject *o = v->GetVobj();
@@ -314,6 +318,7 @@ void GraphAnalyzer::UseDefAnalyze() {
       aliveLocals = GetAliveLocals(graph_);
     }
   }
+  graph_->SetOldBreakBci(graph_->GetStopTraceBci());
 }
 
 void GraphAnalyzer::Analyze() {
@@ -324,6 +329,18 @@ void GraphAnalyzer::Analyze() {
     CleanCapturedValue();
   }
   UseDefAnalyze();
+  for (auto item : graph_->GetSideEffect()->GetSideEffectInstrs()) {
+    if (item.first->bci() > graph_->GetStopTraceBci() && (item.first->bci() < graph_->GetOldBreakBci())) {
+      graph_->GetSideEffect()->GetSideEffectInstrs().erase(item.first);
+    }
+  }
+  for (auto item : graph_->GetSideEffectNodes()) {
+    if (item->bci() >= graph_->GetStopTraceBci()) {
+      graph_->GetSideEffectNodes().erase(
+        std::remove(graph_->GetSideEffectNodes().begin(), graph_->GetSideEffectNodes().end(), item),
+        graph_->GetSideEffectNodes().end());
+    }
+  }
   CollectInputs();
 
   need_interpret_ = true;
@@ -342,6 +359,12 @@ void GraphAnalyzer::Analyze() {
   auto iter = std::find_if(args.begin(), end, [](ValueNode *i) { return !ValidateGraphParameters(i); });
   if (iter == end) {
     need_interpret_ = false;
+  }
+  if (!graph_->GetSideEffect()->GetSideEffectInstrs().empty()) {
+    need_interpret_ = true;
+  }
+  if (!graph_->GetSideEffect()->GetGlobalList().empty()) {
+    need_interpret_ = true;
   }
 }
 
@@ -409,17 +432,27 @@ bool GraphAnalyzer::AnalyzeAliveLocals(std::vector<ValueNode *> aliveNodes) {
   return isAllNodesSupportOutput;
 }
 
+static bool SkipSpecialFuncOrPrimitive(const py::object &callable) {
+  if (callable.ptr() == nullptr) {
+    return false;
+  }
+  if (CheckJitConstexpr(callable) || CheckMSConstexpr(callable)) {
+    return true;
+  }
+  if (IsPrimitiveType<true>(Py_TYPE(callable.ptr()))) {
+    std::string name = callable.attr("name").cast<std::string>();
+    return GetSpecialPrimitiveInferFunc().find(name) != GetSpecialPrimitiveInferFunc().end();
+  }
+  return false;
+}
+
 bool GraphAnalyzer::HasTensorOperation() const {
   bool has_tensor_cal = false;
   for (auto i : info_.captured_locals.values) {
     AObject *value = i->GetVobj();
     int op = i->GetOpcode();
     if (Utils::IsCallOp(op)) {
-      py::object callable = i->input(0)->GetVobj()->GetPyObject();
-      if (callable.ptr() == nullptr) {
-        return true;
-      }
-      if (CheckJitConstexpr(callable) || CheckMSConstexpr(callable)) {
+      if (SkipSpecialFuncOrPrimitive(i->input(0)->GetVobj()->GetPyObject())) {
         continue;
       }
       if (value->GetType() == AObject::kTypeCFunction) {

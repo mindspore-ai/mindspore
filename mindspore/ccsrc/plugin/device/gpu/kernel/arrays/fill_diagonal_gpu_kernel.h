@@ -75,13 +75,13 @@ class FillDiagonalGpuKernelMod : public NativeGpuKernelMod {
  private:
   float fill_value_{0.0};
   bool wrap_{false};
-  size_t num_diagonal_elements_;
+  size_t num_diagonal_elements_{0};
   int64_t step_{0};
   int64_t input_dims_{0};
-  int64_t matrix_row_;
-  int64_t matrix_col_;
+  int64_t matrix_row_{0};
+  int64_t matrix_col_{0};
   size_t unit_size_{1};
-  size_t input_elements_;
+  size_t input_elements_{0};
   FillDiagonalFunc kernel_func_{};
   bool is_null_input_{false};
   void *cuda_stream_{nullptr};

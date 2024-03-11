@@ -8791,11 +8791,8 @@ def any(input, axis=None, keep_dims=False):
         >>> print(output)
         [ True True]
     """
-    _check_is_tensor("input", input, "any")
     if axis is None:
         axis = ()
-    if input.dtype != mstype.bool_:
-        input = cast_(input, mstype.bool_)
     return _get_cache_prim(P.ReduceAny)(keep_dims)(input, axis)
 
 

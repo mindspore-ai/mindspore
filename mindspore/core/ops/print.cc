@@ -32,6 +32,7 @@
 #include "mindspore/core/ops/framework_ops.h"
 #include "ops/primitive_c.h"
 #include "utils/log_adapter.h"
+#include "utils/compile_config.h"
 
 namespace mindspore {
 namespace ops {
@@ -144,7 +145,7 @@ class PrintInfer : public abstract::OpInferBase {
     auto shape = InferShape(primitive, input_args);
     auto type = InferType(primitive, input_args);
     std::ostringstream buffer;
-    if (common::GetEnv("MS_DEV_COMPILE_PRINT") == "1") {
+    if (common::GetCompileConfig("COMPILE_PRINT") == "1") {
       for (const auto &input_arg : input_args) {
         buffer << PrintAbstractToString(input_arg);
       }

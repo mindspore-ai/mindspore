@@ -28,21 +28,20 @@ namespace grad {
 GradExecutorPtr GradExecutor::grad_executor_ = std::make_shared<GradExecutor>();
 
 FuncGraphPtr GradExecutor::PrimBpropGraphPass(const FuncGraphPtr &prim_grad_graph) {
-  return manager_->PrimBpropGraphPass(prim_grad_graph);
+  return func_graph_manager_->PrimBpropGraphPass(prim_grad_graph);
 }
 
-FuncGraphPtr GradExecutor::GetAccumulateGraph(const py::object &tensor) {
-  auto value = pynative::PyNativeAlgo::DataConvert::PyObjToValue(tensor);
-  return manager_->GetAccumulateGraph(value, value);
+FuncGraphPtr GradExecutor::GetAccumulateGraph(const ValuePtr &tensor) {
+  return func_graph_manager_->GetAccumulateGraph(tensor, tensor);
 }
 
 FuncGraphPtr GradExecutor::GetBpropGraph(const AnfNodePtr &func, const ValuePtrList &inputs, const ValuePtr &out,
                                          const ValuePtr &dout) {
   if (IsValueNode<Primitive>(func)) {
-    return manager_->GetPrimBpropGraph(GetValueNode<PrimitivePtr>(func), inputs, out, dout);
+    return func_graph_manager_->GetPrimBpropGraph(GetValueNode<PrimitivePtr>(func), inputs, out, dout);
   }
-  MS_EXCEPTION_IF_CHECK_FAIL(IsValueNode<FuncGraph>(func), "");
-  return manager_->GetFuncGraphBpropGraph(GetValueNode<FuncGraphPtr>(func), inputs, out, dout);
+  MS_EXCEPTION_IF_CHECK_FAIL(IsValueNode<FuncGraph>(func), "Must be a func graph.");
+  return func_graph_manager_->GetFuncGraphBpropGraph(GetValueNode<FuncGraphPtr>(func), inputs, out, dout);
 }
 
 ValuePtr GradExecutor::RunGraph(const FuncGraphPtr &func_graph, const ValuePtrList &inputs, const ValuePtr &out,
@@ -95,7 +94,7 @@ FuncGraphPtr GradExecutor::GetFuncGraphBpropGraph(const std::string &phase, cons
   std::transform(args.begin(), args.end(), std::back_inserter(inputs), [](const py::handle &arg) {
     return pynative::PyNativeAlgo::DataConvert::PyObjToValue(py::cast<py::object>(arg));
   });
-  return manager_->GetFuncGraphBpropGraph(forward_graph, inputs, nullptr, nullptr);
+  return func_graph_manager_->GetFuncGraphBpropGraph(forward_graph, inputs, nullptr, nullptr);
 }
 }  // namespace grad
 }  // namespace pijit

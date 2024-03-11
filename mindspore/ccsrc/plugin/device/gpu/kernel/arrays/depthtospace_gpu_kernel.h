@@ -43,7 +43,7 @@ class DepthToSpaceFwdKernelMod : public NativeGpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  void *stream_ptr_;
+  void *stream_ptr_{nullptr};
   std::unique_ptr<cukernel::GpuKernelHelperBase> helper_ptr_{nullptr};
   std::shared_ptr<cukernel::DepthToSpaceAttr> attr_ptr_{nullptr};
 };

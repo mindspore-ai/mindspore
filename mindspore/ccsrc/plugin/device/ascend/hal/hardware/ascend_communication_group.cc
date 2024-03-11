@@ -18,8 +18,9 @@
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "plugin/device/ascend/hal/hccl_adapter/hccl_adapter.h"
 #include "mindspore/core/utils/ms_context.h"
-#include "acl/acl_rt.h"
-#include "acl/acl.h"
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/acl_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace mindspore {
 namespace device {
@@ -45,7 +46,7 @@ bool AscendCommunicationGroup::Initialize(void *root_info) {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-  (void)aclrtSetDevice(device_id);
+  (void)CALL_ASCEND_API(aclrtSetDevice, device_id);
   unique_id_ = *(static_cast<HcclRootInfo *>(root_info));
   uint32_t group_rank = GetGroupRank(global_rank_);
   if (HcclCommInitRootInfo(static_cast<uint32_t>(size_), &unique_id_, static_cast<uint32_t>(group_rank), &comm_) !=
@@ -55,7 +56,7 @@ bool AscendCommunicationGroup::Initialize(void *root_info) {
     return false;
   }
   initialized_ = true;
-  (void)aclrtResetDevice(device_id);
+  (void)CALL_ASCEND_API(aclrtResetDevice, device_id);
   return true;
 }
 
@@ -74,10 +75,10 @@ bool AscendCommunicationGroup::Finalize() {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-  (void)aclrtSetDevice(device_id);
+  (void)CALL_ASCEND_API(aclrtSetDevice, device_id);
   RETURN_IF_FALSE_WITH_LOG(HcclCommDestroy(comm_) == static_cast<int32_t>(HCCL_SUCCESS),
                            "Failed to destroy HCCL communicator.");
-  (void)aclrtResetDevice(device_id);
+  (void)CALL_ASCEND_API(aclrtResetDevice, device_id);
   initialized_ = false;
   comm_ = nullptr;
   return true;
@@ -93,7 +94,7 @@ void *AscendCommunicationGroup::GenerateRootInfo(size_t *root_info_size) {
     }
 
     if (HcclGetRootInfo(&unique_id_) != static_cast<int32_t>(HCCL_SUCCESS)) {
-      MS_LOG(ERROR) << "Failed to get HCCL unique id: " << aclGetRecentErrMsg();
+      MS_LOG(ERROR) << "Failed to get HCCL unique id: " << CALL_ASCEND_API2(aclGetRecentErrMsg);
       return nullptr;
     }
   }

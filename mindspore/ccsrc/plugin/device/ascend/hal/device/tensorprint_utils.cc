@@ -29,6 +29,8 @@
 #include "ir/dtype/type.h"
 #include "proto/print.pb.h"
 #include "plugin/device/ascend/hal/device/ascend_data_queue.h"
+#include "transform/symbol/acl_tdt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace py = pybind11;
 namespace mindspore::device::ascend {
@@ -157,21 +159,21 @@ bool ConvertDataset2Tensor(acltdtDataset *acl_dataset) {
   std::ostringstream buf;
   bool ret_end_sequence = false;
 
-  size_t acl_dataset_size = acltdtGetDatasetSize(acl_dataset);
+  size_t acl_dataset_size = CALL_ASCEND_API(acltdtGetDatasetSize, acl_dataset);
 
   for (size_t i = 0; i < acl_dataset_size; i++) {
-    acltdtDataItem *item = acltdtGetDataItem(acl_dataset, i);
+    acltdtDataItem *item = CALL_ASCEND_API(acltdtGetDataItem, acl_dataset, i);
     MS_EXCEPTION_IF_NULL(item);
-    if (acltdtGetTensorTypeFromItem(item) == ACL_TENSOR_DATA_END_OF_SEQUENCE) {
+    if (CALL_ASCEND_API(acltdtGetTensorTypeFromItem, item) == ACL_TENSOR_DATA_END_OF_SEQUENCE) {
       ret_end_sequence = true;
       MS_LOG(INFO) << "end of sequence" << std::endl;
       break;
     }
 
-    size_t dim_num = acltdtGetDimNumFromItem(item);
-    void *acl_addr = acltdtGetDataAddrFromItem(item);
-    size_t acl_data_size = acltdtGetDataSizeFromItem(item);
-    aclDataType acl_data_type = acltdtGetDataTypeFromItem(item);
+    size_t dim_num = CALL_ASCEND_API(acltdtGetDimNumFromItem, item);
+    void *acl_addr = CALL_ASCEND_API(acltdtGetDataAddrFromItem, item);
+    size_t acl_data_size = CALL_ASCEND_API(acltdtGetDataSizeFromItem, item);
+    aclDataType acl_data_type = CALL_ASCEND_API(acltdtGetDataTypeFromItem, item);
     char *acl_data = reinterpret_cast<char *>(acl_addr);
     if (AclHandle::GetInstance().GetChannelType() != ChannelType::kMbuf) {
       acl_data = reinterpret_cast<std::string *>(acl_data)->data();
@@ -181,7 +183,7 @@ bool ConvertDataset2Tensor(acltdtDataset *acl_dataset) {
     ShapeVector tensor_shape;
     tensor_shape.resize(dim_num);
 
-    if (acltdtGetDimsFromItem(item, tensor_shape.data(), dim_num) != ACL_SUCCESS) {
+    if (CALL_ASCEND_API(acltdtGetDimsFromItem, item, tensor_shape.data(), dim_num) != ACL_SUCCESS) {
       MS_LOG(ERROR) << "ACL failed to get dim-size from acl channel data";
     }
 
@@ -216,10 +218,10 @@ bool SaveDataset2File(acltdtDataset *acl_dataset, const std::string &print_file_
                       std::fstream *output) {
   bool ret_end_thread = false;
 
-  for (size_t i = 0; i < acltdtGetDatasetSize(acl_dataset); i++) {
-    acltdtDataItem *item = acltdtGetDataItem(acl_dataset, i);
+  for (size_t i = 0; i < CALL_ASCEND_API(acltdtGetDatasetSize, acl_dataset); i++) {
+    acltdtDataItem *item = CALL_ASCEND_API(acltdtGetDataItem, acl_dataset, i);
     MS_EXCEPTION_IF_NULL(item);
-    acltdtTensorType acl_tensor_type = acltdtGetTensorTypeFromItem(item);
+    acltdtTensorType acl_tensor_type = CALL_ASCEND_API(acltdtGetTensorTypeFromItem, item);
     if (acl_tensor_type == ACL_TENSOR_DATA_END_OF_SEQUENCE) {
       MS_LOG(INFO) << "Acl channel received end-of-sequence for print op.";
       ret_end_thread = true;
@@ -233,10 +235,10 @@ bool SaveDataset2File(acltdtDataset *acl_dataset, const std::string &print_file_
     }
 
     prntpb::Print_Value *value = print.add_value();
-    size_t dim_num = acltdtGetDimNumFromItem(item);
-    void *acl_addr = acltdtGetDataAddrFromItem(item);
-    size_t acl_data_size = acltdtGetDataSizeFromItem(item);
-    aclDataType acl_data_type = acltdtGetDataTypeFromItem(item);
+    size_t dim_num = CALL_ASCEND_API(acltdtGetDimNumFromItem, item);
+    void *acl_addr = CALL_ASCEND_API(acltdtGetDataAddrFromItem, item);
+    size_t acl_data_size = CALL_ASCEND_API(acltdtGetDataSizeFromItem, item);
+    aclDataType acl_data_type = CALL_ASCEND_API(acltdtGetDataTypeFromItem, item);
     char *acl_data = reinterpret_cast<char *>(acl_addr);
     if (AclHandle::GetInstance().GetChannelType() != ChannelType::kMbuf) {
       acl_data = reinterpret_cast<std::string *>(acl_data)->data();
@@ -246,7 +248,7 @@ bool SaveDataset2File(acltdtDataset *acl_dataset, const std::string &print_file_
     ShapeVector tensor_shape;
     tensor_shape.resize(dim_num);
 
-    if (acltdtGetDimsFromItem(item, tensor_shape.data(), dim_num) != ACL_SUCCESS) {
+    if (CALL_ASCEND_API(acltdtGetDimsFromItem, item, tensor_shape.data(), dim_num) != ACL_SUCCESS) {
       MS_LOG(ERROR) << "ACL failed to get dim-size from acl channel data";
     }
 
@@ -289,14 +291,14 @@ void TensorPrintStdOut(const acltdtChannelHandle *acl_handle) {
 
   while (true) {
     do {
-      acl_dataset = acltdtCreateDataset();
+      acl_dataset = CALL_ASCEND_API2(acltdtCreateDataset);
       if (acl_dataset == nullptr) {
         ret = -1;
         MS_LOG(ERROR) << "Failed to create acl dateaset.";
         break;
       }
       // no timeout
-      ret = acltdtReceiveTensor(acl_handle, acl_dataset, -1);
+      ret = CALL_ASCEND_API(acltdtReceiveTensor, acl_handle, acl_dataset, -1);
       if (AclHandle::GetInstance().GetChannelType() == ChannelType::kMbuf && ret == ACL_ERROR_RT_QUEUE_EMPTY) {
         MS_LOG(DEBUG) << "queue is empty.";
         break;
@@ -312,7 +314,7 @@ void TensorPrintStdOut(const acltdtChannelHandle *acl_handle) {
       }
     } while (0);
 
-    if (acl_dataset != nullptr && acltdtDestroyDataset(acl_dataset) != ACL_SUCCESS) {
+    if (acl_dataset != nullptr && CALL_ASCEND_API(acltdtDestroyDataset, acl_dataset) != ACL_SUCCESS) {
       MS_LOG(ERROR) << "Std out: AcltdtDestroyDataset failed.";
       break;
     }
@@ -332,14 +334,14 @@ void TensorPrintOut2File(const acltdtChannelHandle *acl_handle, const std::strin
   acltdtDataset *acl_dataset;
   while (true) {
     do {
-      acl_dataset = acltdtCreateDataset();
+      acl_dataset = CALL_ASCEND_API2(acltdtCreateDataset);
       if (acl_dataset == nullptr) {
         MS_LOG(ERROR) << "Failed to create acl dateaset.";
         ret = -1;
         break;
       }
       // no timeout
-      ret = acltdtReceiveTensor(acl_handle, acl_dataset, -1);
+      ret = CALL_ASCEND_API(acltdtReceiveTensor, acl_handle, acl_dataset, -1);
       if (AclHandle::GetInstance().GetChannelType() == ChannelType::kMbuf && ret == ACL_ERROR_RT_QUEUE_EMPTY) {
         MS_LOG(INFO) << "queue is empty.";
         break;
@@ -355,7 +357,7 @@ void TensorPrintOut2File(const acltdtChannelHandle *acl_handle, const std::strin
       }
     } while (0);
 
-    if (acl_dataset != nullptr && acltdtDestroyDataset(acl_dataset) != ACL_SUCCESS) {
+    if (acl_dataset != nullptr && CALL_ASCEND_API(acltdtDestroyDataset, acl_dataset) != ACL_SUCCESS) {
       MS_LOG(ERROR) << "Out to file: AcltdtDestroyDataset failed.";
       break;
     }
@@ -395,11 +397,11 @@ AclHandle &AclHandle::GetInstance() {
 }
 
 bool AclHandle::CreateChannel(uint32_t deviceId, std::string name, size_t capacity) {
-  acl_handle_ = acltdtCreateChannelWithCapacity(deviceId, name.c_str(), capacity);
+  acl_handle_ = CALL_ASCEND_API(acltdtCreateChannelWithCapacity, deviceId, name.c_str(), capacity);
   if (acl_handle_ == nullptr) {
     MS_LOG(INFO) << "For Print ops, select TDT channel.";
     const std::string receive_prefix = "TF_RECEIVE_";
-    acl_handle_ = acltdtCreateChannel(deviceId, (receive_prefix + name).c_str());
+    acl_handle_ = CALL_ASCEND_API(acltdtCreateChannel, deviceId, (receive_prefix + name).c_str());
     channel_type_ = ChannelType::kTDT;
   } else {
     MS_LOG(INFO) << "For Print ops, select MBUF channel.";
@@ -441,7 +443,7 @@ void DestroyTensorPrintThread() {
     JoinAclPrintThread(&g_acl_tdt_print);
     return;
   }
-  aclError stop_status = acltdtStopChannel(acl_handle);
+  aclError stop_status = CALL_ASCEND_API(acltdtStopChannel, acl_handle);
   if (stop_status != ACL_SUCCESS) {
     MS_LOG(ERROR) << "Failed stop acl data channel and the stop_status is " << stop_status << std::endl;
     return;
@@ -451,7 +453,7 @@ void DestroyTensorPrintThread() {
   if (channel_type != ChannelType::kMbuf) {
     JoinAclPrintThread(&g_acl_tdt_print);
   }
-  aclError destroyed_status = acltdtDestroyChannel(acl_handle);
+  aclError destroyed_status = CALL_ASCEND_API(acltdtDestroyChannel, acl_handle);
   if (destroyed_status != ACL_SUCCESS) {
     MS_LOG(ERROR) << "Failed destroy acl channel and the destroyed_status is " << destroyed_status << std::endl;
     return;

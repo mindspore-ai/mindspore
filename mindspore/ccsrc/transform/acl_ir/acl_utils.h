@@ -21,11 +21,13 @@
 #include <memory>
 #include <utility>
 #include <map>
-#include "acl/acl_op_compiler.h"
 #include "acl/acl_base.h"
 #include "graph/def_types.h"
 #include "include/transform/graph_ir/types.h"
 #include "transform/acl_ir/ge_adapter_info.h"
+#include "transform/symbol/acl_base_symbol.h"
+#include "transform/symbol/acl_op_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace mindspore {
 namespace transform {
@@ -103,19 +105,19 @@ class AclTensorDescMaker {
   ~AclTensorDescMaker() = default;
 
   AclTensorDescMaker &Create(aclDataType data_type, const ShapeVector &shape, aclFormat format) {
-    acl_desc_ = aclCreateTensorDesc(data_type, shape.size(), shape.data(), format);
+    acl_desc_ = CALL_ASCEND_API(aclCreateTensorDesc, data_type, shape.size(), shape.data(), format);
     MS_EXCEPTION_IF_NULL(acl_desc_);
     return *this;
   }
 
   AclTensorDescMaker &Create(aclDataType data_type, aclFormat format) {
-    acl_desc_ = aclCreateTensorDesc(data_type, 0, nullptr, format);
+    acl_desc_ = CALL_ASCEND_API(aclCreateTensorDesc, data_type, 0, nullptr, format);
     MS_EXCEPTION_IF_NULL(acl_desc_);
     return *this;
   }
 
   AclTensorDescMaker &SetFormat(aclFormat format) {
-    auto ret = aclSetTensorFormat(acl_desc_, format);
+    auto ret = CALL_ASCEND_API(aclSetTensorFormat, acl_desc_, format);
     if (ret != ACL_SUCCESS) {
       MS_LOG(EXCEPTION) << "Acl set tensor format failed!";
     }
@@ -124,7 +126,7 @@ class AclTensorDescMaker {
 
   AclTensorDescMaker &SetShape(const ShapeVector &shape) {
     if (!shape.empty()) {
-      auto ret = aclSetTensorShape(acl_desc_, shape.size(), shape.data());
+      auto ret = CALL_ASCEND_API(aclSetTensorShape, acl_desc_, shape.size(), shape.data());
       if (ret != ACL_SUCCESS) {
         MS_LOG(EXCEPTION) << "Acl set tensor shape failed!";
       }
@@ -134,13 +136,13 @@ class AclTensorDescMaker {
 
   AclTensorDescMaker &SetName(const std::string &name) {
     if (!name.empty()) {
-      aclSetTensorDescName(acl_desc_, name.c_str());
+      CALL_ASCEND_API(aclSetTensorDescName, acl_desc_, name.c_str());
     }
     return *this;
   }
 
   AclTensorDescMaker &SetTensorPlaceMent(const aclMemType &mem_type) {
-    auto ret = aclSetTensorPlaceMent(acl_desc_, mem_type);
+    auto ret = CALL_ASCEND_API(aclSetTensorPlaceMent, acl_desc_, mem_type);
     if (ret != ACL_SUCCESS) {
       MS_LOG(EXCEPTION) << "ACL set host tensor failed!";
     }
@@ -162,19 +164,19 @@ class AclTensorBufferMaker {
     }
     auto real_size = type_size * size;
     if (type == kObjectTypeString) {
-      data_buffer_ = aclCreateDataBuffer(addr, size + sizeof(ge::StringHead));
+      data_buffer_ = CALL_ASCEND_API(aclCreateDataBuffer, addr, size + sizeof(ge::StringHead));
     } else if (addr == nullptr || real_size == 0) {
-      data_buffer_ = aclCreateDataBuffer(nullptr, 0);
+      data_buffer_ = CALL_ASCEND_API(aclCreateDataBuffer, nullptr, 0);
     } else {
-      data_buffer_ = aclCreateDataBuffer(addr, size);
+      data_buffer_ = CALL_ASCEND_API(aclCreateDataBuffer, addr, size);
     }
   }
 
   explicit AclTensorBufferMaker(const TensorPtr &tensor) {
     if (tensor->Size() == 0) {
-      data_buffer_ = aclCreateDataBuffer(nullptr, 0);
+      data_buffer_ = CALL_ASCEND_API(aclCreateDataBuffer, nullptr, 0);
     } else {
-      data_buffer_ = aclCreateDataBuffer(tensor->data_c(), tensor->Size());
+      data_buffer_ = CALL_ASCEND_API(aclCreateDataBuffer, tensor->data_c(), tensor->Size());
     }
   }
 
@@ -204,13 +206,13 @@ class AclRunner {
   void ResizeOpInputs(size_t size) {
     (void)std::for_each(acl_param_.input_desc.begin(), acl_param_.input_desc.end(), [](const aclTensorDesc *desc) {
       if (desc != nullptr) {
-        aclDestroyTensorDesc(desc);
+        CALL_ASCEND_API(aclDestroyTensorDesc, desc);
       }
     });
     (void)std::for_each(acl_param_.input_buffer.begin(), acl_param_.input_buffer.end(),
                         [](const aclDataBuffer *buffer) {
                           if (buffer != nullptr) {
-                            aclDestroyDataBuffer(buffer);
+                            CALL_ASCEND_API(aclDestroyDataBuffer, buffer);
                           }
                         });
     acl_param_.input_desc.clear();
@@ -225,10 +227,10 @@ class AclRunner {
     }
 
     if (acl_param_.input_desc[i] != nullptr) {
-      aclDestroyTensorDesc(acl_param_.input_desc[i]);
+      CALL_ASCEND_API(aclDestroyTensorDesc, acl_param_.input_desc[i]);
     }
     if (acl_param_.input_buffer[i] != nullptr) {
-      aclDestroyDataBuffer(acl_param_.input_buffer[i]);
+      CALL_ASCEND_API(aclDestroyDataBuffer, acl_param_.input_buffer[i]);
     }
 
     acl_param_.input_desc[i] = desc;
@@ -255,13 +257,13 @@ class AclRunner {
   void ResizeOpOutputs(size_t size) {
     (void)std::for_each(acl_param_.output_desc.begin(), acl_param_.output_desc.end(), [](const aclTensorDesc *desc) {
       if (desc != nullptr) {
-        aclDestroyTensorDesc(desc);
+        CALL_ASCEND_API(aclDestroyTensorDesc, desc);
       }
     });
     (void)std::for_each(acl_param_.output_buffer.begin(), acl_param_.output_buffer.end(),
                         [](const aclDataBuffer *buffer) {
                           if (buffer != nullptr) {
-                            aclDestroyDataBuffer(buffer);
+                            CALL_ASCEND_API(aclDestroyDataBuffer, buffer);
                           }
                         });
     acl_param_.output_desc.clear();
@@ -276,10 +278,10 @@ class AclRunner {
     }
 
     if (acl_param_.output_desc[i] != nullptr) {
-      aclDestroyTensorDesc(acl_param_.output_desc[i]);
+      CALL_ASCEND_API(aclDestroyTensorDesc, acl_param_.output_desc[i]);
     }
     if (acl_param_.output_buffer[i] != nullptr) {
-      aclDestroyDataBuffer(acl_param_.output_buffer[i]);
+      CALL_ASCEND_API(aclDestroyDataBuffer, acl_param_.output_buffer[i]);
     }
 
     acl_param_.output_desc[i] = desc;
@@ -318,7 +320,7 @@ class AclRunner {
  private:
   void InitAttr() {
     if (acl_param_.attr == nullptr) {
-      acl_param_.attr = aclopCreateAttr();
+      acl_param_.attr = CALL_ASCEND_API2(aclopCreateAttr);
     }
   }
 

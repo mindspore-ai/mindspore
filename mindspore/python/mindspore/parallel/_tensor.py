@@ -16,6 +16,7 @@
 from __future__ import division
 from __future__ import absolute_import
 
+import copy
 import numpy as np
 from mindspore.common.tensor import Tensor
 from mindspore.common import dtype as mstype
@@ -198,7 +199,7 @@ def _get_slice_index(dev_mat, tensor_map, opt_shard_group):
     return tensor_slice_index
 
 
-def _load_tensor(tensor, dev_mat, tensor_map, rank_id=-1):
+def _load_tensor(tensor, dev_mat, tensor_map, full_shape, rank_id=-1):
     """
     Get the tensor slice of the local device by the device matrix and the tensor map
 
@@ -214,7 +215,8 @@ def _load_tensor(tensor, dev_mat, tensor_map, rank_id=-1):
         >>> tensor = Tensor(np.ones([32, 32]))
         >>> dev_mat = [2, 4]
         >>> tensor_map = [1, -1]
-        >>> tensor_slice = _load_tensor(tensor, dev_mat, tensor_map)
+        >>> full_shape = [32, 32]
+        >>> tensor_slice = _load_tensor(tensor, dev_mat, tensor_map, full_shape)
     """
     if rank_id == -1:
         rank = get_rank()
@@ -227,6 +229,7 @@ def _load_tensor(tensor, dev_mat, tensor_map, rank_id=-1):
         cpu_cast = Cast().set_device("CPU")
         tensor = cpu_cast(tensor, mstype.float32)
     np_tensor = tensor.asnumpy()
+    np_tensor = np_tensor.reshape(full_shape)
     np_tensor_list = _chunk_tensor_by_strategy(np_tensor, tensor_strategy)
     np_tensor_slice = np_tensor_list[int(tensor_slice_index)]
     return np_tensor_slice
@@ -249,21 +252,29 @@ def _load_tensor_by_layout(tensor, layout, rank_id):
     """
     if not isinstance(layout, tuple):
         raise TypeError("The layout should be tuple! layout is {}".format(layout))
-    if len(layout) < 6:
-        raise ValueError("The length of layout must be larger than 5! layout is {}".format(layout))
+    if len(layout) < 7:
+        raise ValueError("The length of layout must be larger than 6! layout is {}".format(layout))
     dev_mat = layout[0]
     tensor_map = layout[1]
+    slice_shape = layout[2]
     if not tensor_map:
         return tensor
     uniform_split = layout[4]
     group = layout[5]
+    full_shape = layout[6]
     if uniform_split == 0:
         raise RuntimeError("The load tensor only support uniform split now")
-    tensor_slice = _load_tensor(tensor, dev_mat, tensor_map, rank_id)
+    tensor_slice = _load_tensor(tensor, dev_mat, tensor_map, full_shape, rank_id)
+    if tensor_slice.shape != slice_shape and not group:
+        tensor_slice = tensor_slice.reshape(slice_shape)
     if group:
         # get a totally shard tensor slice for parallel optimizer
         rank = get_rank(group)
         size = get_group_size(group)
+        if tensor_slice.shape != slice_shape and slice_shape:
+            slice_shape_extend = copy.deepcopy(slice_shape)
+            slice_shape_extend[0] = slice_shape[0] * size
+            tensor_slice = tensor_slice.reshape(slice_shape_extend)
         tensor_slice = np.split(tensor_slice, size)[rank]
     return Tensor(tensor_slice, tensor.dtype)
 

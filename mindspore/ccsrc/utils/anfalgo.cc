@@ -1497,17 +1497,6 @@ std::optional<string> AnfAlgo::GetDumpFlag(const AnfNodePtr &node) {
   return std::optional<string>{AnfAlgo::GetNodeAttr<string>(node, kAttrDump)};
 }
 
-bool AnfAlgo::HasDynamicShapeFlag(const PrimitivePtr &prim) {
-  auto get_bool_attr = [](const PrimitivePtr &primitive, const std::string &attr_name) -> bool {
-    MS_EXCEPTION_IF_NULL(primitive);
-    if (!primitive->HasAttr(attr_name)) {
-      return false;
-    }
-    return GetValue<bool>(primitive->GetAttr(attr_name));
-  };
-  return get_bool_attr(prim, kAttrInputIsDynamicShape) || get_bool_attr(prim, kAttrOutputIsDynamicShape);
-}
-
 bool IsNodeDynamicRank(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<CNode>()) {

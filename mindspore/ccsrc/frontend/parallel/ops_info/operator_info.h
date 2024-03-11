@@ -98,7 +98,9 @@ class OperatorInfo {
   // If output is tuple, outputs_type.size() is greater than 1.
   Status set_outputs_type(const std::vector<TypePtr> &outputs_type);
   const std::vector<TypePtr> &outputs_type() const { return outputs_type_; }
-  virtual Status Init(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy);
+  virtual Status Init(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy,
+                      const std::vector<std::shared_ptr<TensorLayout>> &in_tensor_layouts = {},
+                      const std::vector<std::shared_ptr<TensorLayout>> &out_tensor_layouts = {});
   // only init the necessary parts
   virtual Status InitForCostModel(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy);
 
@@ -241,12 +243,18 @@ class OperatorInfo {
   virtual Status CheckStrategy(const StrategyPtr &strategy) = 0;
   virtual Status InferTensorMap() = 0;
   virtual Status InferOutputTensorMap() { return SUCCESS; }
+  virtual Status InferOutputTensorInfo() { return SUCCESS; }
   virtual Status CheckLayoutConfig() { return SUCCESS; }
+  virtual Status CheckInputLayout() { return SUCCESS; }
+  virtual Status CheckOutputLayout() { return SUCCESS; }
+  virtual Status InferForwardCommunicationByLayout() { return SUCCESS; }
+  virtual Status InferMirrorOpsByLayout();
   virtual Status InferForwardCommunication() = 0;
   virtual Status GetAttrs() = 0;
   virtual Status InferDevMatrixShape() = 0;
   virtual Status InferMirrorOps();
   virtual Status InferTensorInfo();
+
   virtual void InferReplaceOps() {}
   virtual Status CheckOutputStrategy(const StrategyPtr &out_strategy);
   Status CheckStrategyByVector(const Shapes &strategy, const Shapes &inputs_shape);
@@ -257,6 +265,8 @@ class OperatorInfo {
   virtual Status InferAttrs();
   void ResetQueueMember();
   Status InitWithAutoRepeatCalc(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy);
+  Status InitWithTensorLayout(const std::vector<std::shared_ptr<TensorLayout>> &in_tensor_layouts,
+                              const std::vector<std::shared_ptr<TensorLayout>> &out_tensor_layouts);
   Status InitForCostModelWithAutoRepeatCalc(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy);
   Status InferRepeatedCalcInfo();
   Status InferVirtualDivOps();

@@ -367,7 +367,8 @@ constexpr const char kNameAscendQuant[] = "Quant";
 constexpr const char kNameAscendDequant[] = "Dequant";
 constexpr const char kNameQuantBatchMatmul[] = "QuantBatchMatmul";
 constexpr const char kNameWeightQuantBatchMatmul[] = "WeightQuantBatchMatmul";
-constexpr const char kNameAscendAntiQuant[] = "AntiQuant";
+constexpr const char kNameAscendAntiQuantV2[] = "AntiQuant";
+constexpr const char kNameAscendAntiQuant[] = "AscendAntiQuant";
 constexpr const char kNameCropAndResize[] = "CropAndResize";
 constexpr const char kNameReverseSequence[] = "ReverseSequence";
 constexpr const char kNameEditDistance[] = "EditDistance";
@@ -526,6 +527,8 @@ constexpr const char kNameLogUniformCandidateSampler[] = "LogUniformCandidateSam
 constexpr const char kNameCoalesce[] = "Coalesce";
 constexpr const char kNameFFTWithSize[] = "FFTWithSize";
 constexpr const char kNameCumulativeLogsumexp[] = "CumulativeLogsumexp";
+constexpr const char kNameMatmulReduceScatter[] = "MatmulReduceScatter";
+constexpr const char kNameAllGatherMatmul[] = "AllGatherMatmul";
 
 class OpAdapterDesc;
 

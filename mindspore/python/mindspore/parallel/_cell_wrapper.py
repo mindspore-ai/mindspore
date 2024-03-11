@@ -17,6 +17,7 @@ from __future__ import absolute_import
 from __future__ import division
 
 from mindspore.nn.cell import Cell
+from mindspore.ops import operations as P
 from mindspore.ops.operations.comm_ops import AllGather
 from mindspore.communication import GlobalComm
 from mindspore.common import jit
@@ -29,16 +30,18 @@ class AllGatherCell(Cell):
     Allgather cell, used in model parallel scenario.
     To allgather the selected parameter slice from each device.
     """
-    def __init__(self, group):
+    def __init__(self, group, do_reshape, after_reshape_slice_shape):
         super(AllGatherCell, self).__init__(auto_prefix=False)
-
         self.allgather = AllGather(group)
+        self.do_reshape = do_reshape
+        self.after_reshape_slice_shape = tuple(after_reshape_slice_shape)
         self.add_flags(skip_auto_parallel_compile=True)
 
     @jit()
     def construct(self, x):
+        if self.do_reshape:
+            x = P.Reshape()(x, self.after_reshape_slice_shape)
         x = self.allgather(x)
-
         return x
 
 
@@ -51,29 +54,33 @@ class SaveOptShardCkptCell(Cell):
     Note:
         This could be optimized later with less communication consumption.
     """
-    def __init__(self, group):
+    def __init__(self, group, do_reshape, after_reshape_slice_shape):
         super(SaveOptShardCkptCell, self).__init__(auto_prefix=False)
         self.allgather1 = AllGather(group)
         self.allgather2 = AllGather()
+        self.do_reshape = do_reshape
+        self.after_reshape_slice_shape = tuple(after_reshape_slice_shape)
         self.add_flags(skip_auto_parallel_compile=True)
 
     def construct(self, x):
         x = self.allgather1(x)
+        if self.do_reshape:
+            x = P.Reshape()(x, self.after_reshape_slice_shape)
         x = self.allgather2(x)
 
         return x
 
 
-def get_allgather_cell(group, need_merge_twice=False):
+def get_allgather_cell(group, need_merge_twice=False, do_reshape=False, after_reshape_slice_shape=()):
     """Get AllGatherCell object."""
     global _ALLGATHER_CELL
     if need_merge_twice:
-        _ALLGATHER_CELL = SaveOptShardCkptCell(group)
+        _ALLGATHER_CELL = SaveOptShardCkptCell(group, do_reshape, after_reshape_slice_shape)
     else:
         if group:
-            _ALLGATHER_CELL = AllGatherCell(group)
+            _ALLGATHER_CELL = AllGatherCell(group, do_reshape, after_reshape_slice_shape)
         else:
-            _ALLGATHER_CELL = AllGatherCell(GlobalComm.WORLD_COMM_GROUP)
+            _ALLGATHER_CELL = AllGatherCell(GlobalComm.WORLD_COMM_GROUP, do_reshape, after_reshape_slice_shape)
     return _ALLGATHER_CELL
 
 

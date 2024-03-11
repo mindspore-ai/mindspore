@@ -15,6 +15,7 @@
 
 import numpy as np
 import pytest
+import os
 import mindspore.context as context
 from mindspore import Tensor
 from mindspore.nn import Cell
@@ -36,7 +37,7 @@ def get_output(*tensors):
     return output
 
 
-def test_basic():
+def run_basic():
     np.random.seed(0)
     tensors = []
     expect = np.array([0], np.float32)
@@ -54,12 +55,25 @@ def test_basic():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_basic_gpu():
+    """
+    Feature: test graph kernel AddN
+    Description: run test case on GPU
+    Expectation: the result match with expect
+    """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU", enable_graph_kernel=True)
-    test_basic()
+    run_basic()
 
 
 @pytest.mark.level1
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 def test_basic_ascend():
+    """
+    Feature: test graph kernel AddN
+    Description: run test case on Ascend
+    Expectation: the result match with expect
+    """
+    os.environ["GRAPH_OP_RUN"] = "1"
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", enable_graph_kernel=True)
-    test_basic()
+    run_basic()
+    del os.environ["GRAPH_OP_RUN"]

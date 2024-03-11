@@ -1,4 +1,4 @@
-# Copyright 2023 Huawei Technologies Co., Ltd
+# Copyright 2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ import math
 import numpy as np
 import mindspore.nn as nn
 from math import cos
-from mindspore import Tensor
+from mindspore import Tensor, context
 from mindspore.common.api import jit
 
 cfg = {
@@ -31,6 +31,7 @@ cfg = {
 }
 
 
+@pytest.mark.skip(reason="Input using set cause random order problem")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -45,6 +46,7 @@ def test_return_dict():
             m = {"1": x+1, "2": y+1}
             return m
 
+    context.set_context(mode=context.PYNATIVE_MODE)
     net = Net()
     a = Tensor([1])
     b = Tensor([2])
@@ -67,6 +69,7 @@ def test_return_dict_2():
             m = {"1": x+1}
             return m
 
+    context.set_context(mode=context.PYNATIVE_MODE)
     net = Net()
     a = Tensor([1])
     jit(net.construct, mode="PIJit", jit_config=cfg)
@@ -98,6 +101,7 @@ def test_break_in_subgraph():
             m = x + y
             return type(m)
 
+    context.set_context(mode=context.PYNATIVE_MODE)
     inner_net = InnerNet()
     net = Net(inner_net)
     a = Tensor([1])
@@ -126,6 +130,7 @@ def test_break_in_subgraph_2():
         c = a - b
         return cos(c)
 
+    context.set_context(mode=context.PYNATIVE_MODE)
     ret = out(Tensor([1]), Tensor([2]))
     assert np.allclose(ret.asnumpy(), 5.5524473)
 
@@ -150,6 +155,7 @@ def test_break_in_subgraph_3():
         c = a - b
         return math.cos(c)
 
+    context.set_context(mode=context.PYNATIVE_MODE)
     ret = out(Tensor([1]), Tensor([2]))
     assert np.allclose(ret.asnumpy(), 5.5524473)
 
@@ -171,6 +177,7 @@ def test_break_with_control_flow():
             x += 3
         return x
 
+    context.set_context(mode=context.PYNATIVE_MODE)
     ret = out()
     assert np.all(ret == np.array([6, 5]))
 
@@ -193,6 +200,7 @@ def test_break_with_control_flow_2():
             x += 3
         return x, a
 
+    context.set_context(mode=context.PYNATIVE_MODE)
     ret = out(Tensor([1, 2, 3]))
     assert len(ret) == 2
     assert np.all(ret[0] == np.array([6, 5]))

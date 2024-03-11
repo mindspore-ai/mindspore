@@ -121,6 +121,8 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   set_param<bool>(MS_CTX_ENABLE_GRAD_COMM_OPT, false);
   set_param<bool>(MS_CTX_INTERLEAVED_MATMUL_COMM, false);
   set_param<bool>(MS_CTX_INTERLEAVED_LAYERNORM_COMM, false);
+  set_param<bool>(MS_CTX_ENABLE_BEGIN_END_INLINE_OPT, false);
+  set_param<bool>(MS_CTX_ENABLE_CONCAT_ELIMINATE_OPT, false);
   set_param<uint32_t>(MS_CTX_OP_TIMEOUT, kOpTimeout);
   set_param<int>(MS_CTX_JIT_SYNTAX_LEVEL, kLax);
   set_param<std::string>(MS_CTX_CONV_FPROP_ALGO, "normal");

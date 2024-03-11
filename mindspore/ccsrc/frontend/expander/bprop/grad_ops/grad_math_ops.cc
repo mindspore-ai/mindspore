@@ -285,6 +285,26 @@ NodePtrList FminFmaxGrad(BpropBuilder *ib, bool if_fmin) {
   return {brrx1, brrx2};
 }
 
+DEF_PURE_SHAPE_CALC(g_fft_shape)
+  .SetCalc([](const ShapeArray &inputs) -> ShapeArray {
+    constexpr int64_t input_num = 1;
+    if (inputs.size() != input_num) {
+      MS_LOG_EXCEPTION << "ShapeCalc[g_fft_shape] expect 1 inputs, but got " << inputs.size() << "inputs";
+    }
+    auto x_shape = inputs.at(kIndex0);
+
+    std::vector<int64_t> input_shape;
+    for (int64_t i = 0; i < SizeToLong(x_shape.size()); i++) {
+      input_shape.push_back(x_shape[i]);
+    }
+
+    return {input_shape};
+  })
+  .SetInfer([](const ShapeArray &inputs, const HashSet<size_t> &) -> std::vector<int64_t> {
+    auto x_shape = inputs.at(0);
+    return {IsDynamicRank(x_shape) ? -1 : SizeToLong(x_shape.size())};
+  });
+
 NodePtrList FFTGradCommon(BpropBuilder *ib, const std::string &op_name) {
   auto x = ib->GetInput(kIndex0);
   auto n = ib->GetInput(kIndex1);
@@ -293,24 +313,24 @@ NodePtrList FFTGradCommon(BpropBuilder *ib, const std::string &op_name) {
   auto out = ib->GetInput(kIndex4);
   auto dout = ib->GetInput(kIndex5);
 
-  constexpr int64_t norm_backward = 0;
-  constexpr int64_t norm_forward = 1;
-  constexpr int64_t norm_ortho = 2;
+  constexpr int64_t kNormBackward = 0;
+  constexpr int64_t kNormForward = 1;
+  constexpr int64_t kNormOrtho = 2;
 
   // step1：Get the inputs needed to solve for the gradient.
   auto norm_type = norm->abstract()->BuildType();
-  int64_t grad_norm_value = norm_forward;
+  int64_t grad_norm_value = kNormForward;
   if (!norm_type->isa<TypeNone>()) {
     auto norm_value = GetValue<int64_t>(norm->BuildValue());
     switch (norm_value) {
-      case norm_backward:
-        grad_norm_value = norm_forward;
+      case kNormBackward:
+        grad_norm_value = kNormForward;
         break;
-      case norm_forward:
-        grad_norm_value = norm_backward;
+      case kNormForward:
+        grad_norm_value = kNormBackward;
         break;
-      case norm_ortho:
-        grad_norm_value = norm_ortho;
+      case kNormOrtho:
+        grad_norm_value = kNormOrtho;
         break;
       default:
         break;
@@ -323,37 +343,8 @@ NodePtrList FFTGradCommon(BpropBuilder *ib, const std::string &op_name) {
   // step3：If given, the gradient will be zero-padded or trimmed to this length.
   auto n_type = n->abstract()->BuildType();
   if (!n_type->isa<TypeNone>()) {
-    auto input_shape = ib->GetShape(x);
-    int64_t dim_value = CheckRange(GetIntValue(dim), SizeToLong(input_shape.size()));
-
-    auto input_shape_node = ib->Shape(x);
-    auto output_shape_node = ib->Shape(dout);
-    auto input_dim_shape = ib->TupleGetItem(input_shape_node, dim_value);
-    ShapeVector begin;
-    ShapeVector strides;
-    for (size_t i = 0; i < input_shape.size(); i++) {
-      (void)begin.emplace_back(0LL);
-      (void)strides.emplace_back(1LL);
-    }
-    auto slice_dout =
-      ib->StridedSlice(grad_dout, ib->Value<ShapeVector>(begin), input_shape_node, ib->Value<ShapeVector>(strides));
-
-    auto slicegrad_dout = ib->Emit(
-      "StridedSliceGrad",
-      {grad_dout, input_shape_node, ib->Value<ShapeVector>(begin), output_shape_node, ib->Value<ShapeVector>(strides)},
-      {{kAttrBeginMask, MakeValue<int64_t>(0)},
-       {kAttrEndMask, MakeValue<int64_t>(0)},
-       {kAttrEllipsisMask, MakeValue<int64_t>(0)},
-       {kAttrNewAxisMask, MakeValue<int64_t>(0)},
-       {kAttrShrinkAxisMask, MakeValue<int64_t>(0)}});
-
-    int64_t n_value = GetIntValue(n);
-    int64_t dim_shape = GetIntValue(input_dim_shape);
-    if (dim_shape < n_value) {
-      grad_dout = slice_dout;
-    } else {
-      grad_dout = slicegrad_dout;
-    }
+    auto res = ib->ShapeCalc(g_fft_shape, {x});
+    grad_dout = ib->Emit("FFTShapeCopy", {grad_dout, res[0]});
   }
 
   // step4：Return gradient results.
@@ -627,7 +618,7 @@ REG_BPROP_BUILDER("Div").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
   NodePtr bc_dx = nullptr;
   NodePtr bc_dy = nullptr;
   auto x_dtype_id = ib->GetDtypeId(x);
-  bc_dx = ib->Emit(kDivOpName, {dout, y});
+  bc_dx = ib->Div(dout, y);
   if (y->need_compute_grad_out()) {
     bc_dy = -(bc_dx * out);
   }
@@ -2704,8 +2695,11 @@ REG_BPROP_BUILDER("TridiagonalSolve").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib)
 });
 
 REG_BPROP_BUILDER("FFT").SetBody(BODYFUNC(ib) { return FFTGradCommon(ib, "IFFT"); });
-
 REG_BPROP_BUILDER("IFFT").SetBody(BODYFUNC(ib) { return FFTGradCommon(ib, "FFT"); });
+REG_BPROP_BUILDER("FFT2").SetBody(BODYFUNC(ib) { return FFTGradCommon(ib, "IFFT2"); });
+REG_BPROP_BUILDER("IFFT2").SetBody(BODYFUNC(ib) { return FFTGradCommon(ib, "FFT2"); });
+REG_BPROP_BUILDER("FFTN").SetBody(BODYFUNC(ib) { return FFTGradCommon(ib, "IFFTN"); });
+REG_BPROP_BUILDER("IFFTN").SetBody(BODYFUNC(ib) { return FFTGradCommon(ib, "FFTN"); });
 
 REG_BPROP_BUILDER("FFTShift").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
   auto dim = ib->GetInput(kIndex1);
@@ -2875,6 +2869,32 @@ REG_BPROP_BUILDER("DCT").SetBody(BODYFUNC(ib) {
 
   return {grad_dout,          ib->OutZeros(type),    ib->OutZeros(n),   ib->OutZeros(axis),
           ib->OutZeros(norm), ib->OutZeros(forward), ib->OutZeros(grad)};
+});
+
+REG_BPROP_BUILDER("RFFT").SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto n = ib->GetInput(kIndex1);
+  auto dim = ib->GetInput(kIndex2);
+  auto norm = ib->GetInput(kIndex3);
+  auto out = ib->GetInput(kIndex4);
+  auto dout = ib->GetInput(kIndex5);
+
+  auto grad_dout = ib->Emit("RFFTGrad", {dout, x, n, dim, norm});
+
+  return {grad_dout, ib->OutZeros(n), ib->OutZeros(dim), ib->OutZeros(norm)};
+});
+
+REG_BPROP_BUILDER("IRFFT").SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto n = ib->GetInput(kIndex1);
+  auto dim = ib->GetInput(kIndex2);
+  auto norm = ib->GetInput(kIndex3);
+  auto out = ib->GetInput(kIndex4);
+  auto dout = ib->GetInput(kIndex5);
+
+  auto grad_dout = ib->Emit("IRFFTGrad", {dout, x, n, dim, norm});
+
+  return {grad_dout, ib->OutZeros(n), ib->OutZeros(dim), ib->OutZeros(norm)};
 });
 REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop

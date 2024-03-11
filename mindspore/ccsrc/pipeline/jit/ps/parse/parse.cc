@@ -36,6 +36,7 @@
 #include "frontend/operator/composite/composite.h"
 #include "utils/ms_context.h"
 #include "utils/log_adapter.h"
+#include "utils/compile_config.h"
 #include "utils/interpret_node_recorder.h"
 #include "pipeline/jit/ps/debug/trace.h"
 #include "mindspore/core/ir/cell.h"
@@ -406,7 +407,7 @@ bool CheckMiddleGraphOutputContainScalar(
       return false;
     }
 
-    static const auto transform_if_const_scalar = (common::GetEnv("MS_DEV_IF_PARALLEL_CALL") == "2");
+    static const auto transform_if_const_scalar = (common::GetCompileConfig("IF_PARALLEL_CALL") == "2");
     if (!transform_if_const_scalar && IsOutputContainScalar(middle_graph_output_cnode)) {
       MS_LOG(DEBUG) << "CNode's inputs contain const scalar, " << middle_graph_output_cnode->DebugString(recur_2);
       contains_scalar.push_back(true);
@@ -878,7 +879,7 @@ FunctionBlockPtr Parser::ParseStatements(const FunctionBlockPtr &block, const py
     }
     sub_block = next_block;
 
-    static const auto boost_parse = common::GetEnv("MS_DEV_BOOST_PARSE");
+    static const auto boost_parse = common::GetCompileConfig("BOOST_PARSE");
     if (boost_parse != "0" && sub_block->is_dead_block()) {
       break;
     }
@@ -2776,7 +2777,7 @@ bool Parser::GetConstantConditionFromComment(const FunctionBlockPtr &block, cons
 // Return true if it's constant condition and the condition value returned by is_true_cond, otherwise return false.
 bool Parser::CheckConstantCondition(const FunctionBlockPtr &block, const py::object &test_node, bool *is_true_cond,
                                     const py::object &if_node) const {
-  static const auto boost_parse = common::GetEnv("MS_DEV_BOOST_PARSE");
+  static const auto boost_parse = common::GetCompileConfig("BOOST_PARSE");
   if (boost_parse == "0") {
     return false;
   }
@@ -2907,7 +2908,7 @@ FunctionBlockPtr Parser::ParseIf(const FunctionBlockPtr &block, const py::object
     auto switch_app = block->ConditionalJump(bool_node, true_block, false_block);
 
     // Record the former, middle, latter graphs info.
-    static const auto transform_tail_call_to_parallel_call = (common::GetEnv("MS_DEV_IF_PARALLEL_CALL") != "0");
+    static const auto transform_tail_call_to_parallel_call = (common::GetCompileConfig("IF_PARALLEL_CALL") != "0");
     if (transform_tail_call_to_parallel_call && true_branch_graphs.second != nullptr &&
         false_branch_graphs.second != nullptr) {
       true_branch_graphs.first = block;
@@ -2920,7 +2921,7 @@ FunctionBlockPtr Parser::ParseIf(const FunctionBlockPtr &block, const py::object
       (void)parallel_call_graphs_.emplace_back(branch_graphs_vec);
     }
 
-    static const auto transform_for_half_unroll_call = (common::GetEnv("MS_DEV_FOR_HALF_UNROLL") == "1");
+    static const auto transform_for_half_unroll_call = (common::GetCompileConfig("FOR_HALF_UNROLL") == "1");
     if (transform_for_half_unroll_call) {
       // Lift the if branches in for statement.
       (void)if_branch_calls_.emplace_back(std::make_tuple(switch_app, true_block, false_block));
@@ -3025,7 +3026,7 @@ FunctionBlockPtr Parser::ParseFor(const FunctionBlockPtr &block, const py::objec
   }
   std::string for_block_name = "for";
   block->set_block_name(for_block_name);
-  static const auto transform_for_half_unroll_call = (common::GetEnv("MS_DEV_FOR_HALF_UNROLL") == "1");
+  static const auto transform_for_half_unroll_call = (common::GetCompileConfig("FOR_HALF_UNROLL") == "1");
   if (transform_for_half_unroll_call) {
     return ParseForRepeat(block, node);
   }
@@ -3207,7 +3208,7 @@ FunctionBlockPtr Parser::ParseForRepeat(const FunctionBlockPtr &block, const py:
   }
 
   // Record the former/middle/latter graphs for later transforming.
-  static const auto transform_for_half_unroll_call = (common::GetEnv("MS_DEV_FOR_HALF_UNROLL") == "1");
+  static const auto transform_for_half_unroll_call = (common::GetCompileConfig("FOR_HALF_UNROLL") == "1");
   if (transform_for_half_unroll_call) {
     std::pair<FunctionBlockPtr, FunctionBlockPtr> loop_graphs;
     loop_graphs.first = body_block;
@@ -4899,5 +4900,29 @@ bool Parser::IsSubscriptReferenceType(const py::object &obj) {
   auto node_name = node_type->node_name();
   return node_name != "Slice";
 }
+
+struct CompileConfigCollectRegister {
+  CompileConfigCollectRegister() noexcept {
+    CompileConfigManager::set_collect_func([]() {
+      std::map<std::string, std::string> compile_config;
+      const auto module_name = "mindspore._extends.parse.compile_config";
+      py::list config_list = py::cast<py::list>(python_adapter::GetPyFn(module_name, "__all__"));
+      for (size_t i = 0; i < config_list.size(); ++i) {
+        auto config_name = config_list[i].cast<std::string>();
+        auto config = python_adapter::GetPyFn(module_name, config_name);
+        if (py::isinstance<py::none>(config)) {
+          MS_LOG(INTERNAL_EXCEPTION) << config_name << " not found in " << module_name << ".";
+        }
+        if (py::isinstance<py::int_>(config)) {
+          compile_config[config_name] = std::to_string(py::cast<int64_t>(config));
+        } else {
+          compile_config[config_name] = config.cast<std::string>();
+        }
+      }
+      return compile_config;
+    });
+  }
+  ~CompileConfigCollectRegister() = default;
+} compile_config_collect_register;
 }  // namespace parse
 }  // namespace mindspore

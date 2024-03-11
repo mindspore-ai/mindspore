@@ -40,6 +40,7 @@
 #include "frontend/parallel/graph_util/pipeline_split_utils.h"
 #include "frontend/parallel/step_parallel_utils.h"
 #include "frontend/parallel/graph_util/graph_splitter.h"
+#include "frontend/parallel/tensor_layout/shared_parameter.h"
 #include "ir/anf.h"
 #include "ir/graph_utils.h"
 #include "include/common/utils/comm_manager.h"
@@ -69,6 +70,45 @@ static AbstractBasePtr GetRealAbstract(const AnfNodePtr &node) {
     return input->abstract();
   }
   return node->abstract();
+}
+
+void PipelineTransformer::UpdateParameterSharedInfo(const AnfNodePtr &node, const AnfNodePtr &communcate_op,
+                                                    bool is_send) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(communcate_op);
+
+  if (!node->isa<Parameter>()) {
+    return;
+  }
+  auto root_param = node;
+  if (node->func_graph() != root_) {
+    root_param = GetArgumentsByParameter(node);
+    MS_EXCEPTION_IF_NULL(root_param);
+  }
+
+  // get communication info from cnode.
+  auto prim = GetCNodePrimitive(communcate_op);
+  MS_EXCEPTION_IF_NULL(prim);
+
+  auto sr_tag_attr = prim->GetAttr(SR_TAG);
+  MS_EXCEPTION_IF_NULL(sr_tag_attr);
+  auto sr_tag = GetValue<int64_t>(sr_tag_attr);
+  auto peer_rank_attr = is_send ? prim->GetAttr(DEST_RANK) : prim->GetAttr(SRC_RANK);
+  MS_EXCEPTION_IF_NULL(peer_rank_attr);
+  auto peer_rank = GetValue<int64_t>(peer_rank_attr);
+  auto group_attr = prim->GetAttr(GROUP);
+  MS_EXCEPTION_IF_NULL(group_attr);
+  auto group = GetValue<std::string>(group_attr);
+
+  // Use global rank since local group may not exist after loading checkpoint.
+  auto rank_list = g_device_manager->FindRankListByHashName(group);
+  peer_rank = rank_list.at(peer_rank);
+
+  // update tensor layout.
+  auto param = root_param->cast<ParameterPtr>();
+  MS_EXCEPTION_IF_NULL(param);
+  auto shared_parameters = std::make_shared<SharedParameter>(true, is_send, peer_rank, sr_tag);
+  param->set_user_data<SharedParameter>(shared_parameters);
 }
 
 TensorInfo PipelineTransformer::GetTensorInfo(const std::pair<OperatorInfoPtr, int> &op_info_pair, bool is_param) {
@@ -310,7 +350,7 @@ size_t PipelineTransformer::GetBatchAxisForInput(const AnfNodeIndexSet &input_no
       }
     }
   }
-  if (batch_axis_count != kSizeOne) {
+  if (is_train_ && batch_axis_count != kSizeOne) {
     MS_LOG(EXCEPTION)
       << "For pipeline parallelism, micro_size partitioning of the input along a certain dimension is and "
       << "is only allowed, but it is found that " << batch_axis_count << " to be partitioned.";
@@ -1112,7 +1152,9 @@ AnfNodePtr PipelineTransformer::HandleParameterGraph(const AnfNodePtr &node, con
     }
     (void)parameter_color_map_[root_param].insert(user_stage);
     auto graph = enable_share_cell_ ? shared_cell_ : main_graph_;
-    return InsertReceive(graph, argument, use_node, SizeToInt(pos), user_stage, stage, micro, parameter);
+    auto recv_node = InsertReceive(graph, argument, use_node, SizeToInt(pos), user_stage, stage, micro, parameter);
+    UpdateParameterSharedInfo(root_param, recv_node, false);
+    return recv_node;
   }
   // insert send
   if (Reuse(argument, user_stage, ops, DEST_RANK)) {
@@ -1121,6 +1163,7 @@ AnfNodePtr PipelineTransformer::HandleParameterGraph(const AnfNodePtr &node, con
   auto send_out = InsertSend(argument, user_stage, stage_, micro);
   send_out.depend->set_user_data<Type>(DTYPE, send_out.type);
   send_out.depend->set_user_data<ValueList>(SHAPE, send_out.shape);
+  UpdateParameterSharedInfo(argument, send_out.depend, true);
   return send_out.depend;
 }
 
@@ -1374,7 +1417,7 @@ std::vector<AnfNodePtr> PipelineTransformer::FetchSend(const AnfNodePtr &node, b
   for (auto &user : shared_cell_users_) {
     auto cuser = user->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cuser);
-    auto value = cuser->GetPrimalAttr(MICRO);
+    auto value = shared_cell_users_.size() > 1 ? cuser->GetPrimalAttr(MICRO) : MakeValue(int64_t(0));
     MS_EXCEPTION_IF_NULL(value);
     send_input = single_pipeline_end ? user : CreateTupleGetItemNode(main_graph_, user, end_index);
     (void)(depends.emplace_back(GenNewSendFromOld(node, send_input, value)));
@@ -1388,6 +1431,11 @@ void PipelineTransformer::HandleGraphOutputs(const std::vector<AnfNodePtr> &node
   SeparateParamBorder(nodes, true, &pipeline_params, &pipeline_ends);
   std::vector<AnfNodePtr> sends;
   SetNodeAbstract(pipeline_ends);
+
+  // Create root graph output before modify subgraph(shared cell).
+  // This process order is crucial when the output of subgraph is directly used as root graph.
+  auto zero_outputs = GetZeroOutputs(main_graph_);
+
   size_t ends_size = pipeline_ends.size();
   bool single_pipeline_end = ends_size == 1;
   if (single_pipeline_end) {
@@ -1408,7 +1456,9 @@ void PipelineTransformer::HandleGraphOutputs(const std::vector<AnfNodePtr> &node
   }
   for (auto &node : pipeline_params) {
     auto params = FetchSend(node, true, false, 0);
-    (void)std::copy(params.begin(), params.end(), std::back_inserter(sends));
+    if (is_train_) {
+      (void)std::copy(params.begin(), params.end(), std::back_inserter(sends));
+    }
   }
   for (size_t i = 0; i < ends_size; i++) {
     auto node = pipeline_ends[i];
@@ -1416,7 +1466,6 @@ void PipelineTransformer::HandleGraphOutputs(const std::vector<AnfNodePtr> &node
     (void)std::copy(ends.begin(), ends.end(), std::back_inserter(sends));
   }
   auto make_tuple = CreateMakeTupleNode(main_graph_, sends);
-  auto zero_outputs = GetZeroOutputs(main_graph_);
   std::vector<AnfNodePtr> out = {NewValueNode(prim::kPrimDepend), zero_outputs, make_tuple};
   auto out_node = main_graph_->NewCNode(out);
   out_node->set_abstract(zero_outputs->abstract());
@@ -1486,7 +1535,11 @@ std::vector<AnfNodePtr> PipelineTransformer::FetchRecv(const AnfNodePtr &node, b
       recv_input = user->input(input_pos);
       recv = GenNewRecvFromOld(node, recv_input, value);
       for (auto &share_user : shared_cell_users_) {
-        manager_->SetEdge(share_user, input_pos, recv);
+        if (is_train_) {
+          manager_->SetEdge(share_user, input_pos, recv);
+        } else {
+          manager_->SetEdge(share_user, input_pos, recv_input);
+        }
       }
       node->set_user_data<bool>(ORIGIN_INPUT_IS_PARAM, std::make_shared<bool>(true));
     } else {
@@ -1501,7 +1554,7 @@ std::vector<AnfNodePtr> PipelineTransformer::FetchRecv(const AnfNodePtr &node, b
   for (auto &user : shared_cell_users_) {
     auto cuser = user->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cuser);
-    auto value = cuser->GetPrimalAttr(MICRO);
+    auto value = shared_cell_users_.size() > 1 ? cuser->GetPrimalAttr(MICRO) : MakeValue(int64_t(0));
     MS_EXCEPTION_IF_NULL(value);
     if (enable_share_cell_ || !is_train_) {
       auto recv_tensor = TensorConstructUtils::CreateZerosTensor(kFloat16, {1});
@@ -1549,6 +1602,7 @@ void PipelineTransformer::ResetSharedCellParamAndArgu(
   MS_LOG(DEBUG) << "The shared cell origin params size is " << params.size() << ", new params size is "
                 << new_params.size();
   manager_->SetParameters(shared_cell_, new_params);
+  shared_cell_->set_fv_param_count(new_params.size());
   // set call inputs
   size_t user_index = 0;
   for (auto &user : shared_cell_users_) {

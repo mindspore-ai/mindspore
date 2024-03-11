@@ -58,6 +58,7 @@
 #include "utils/info.h"
 #include "utils/crypto.h"
 #include "utils/phase.h"
+#include "utils/compile_config.h"
 #include "include/common/utils/comm_manager.h"
 #include "include/common/utils/stub_tensor.h"
 #include "utils/interpret_node_recorder.h"
@@ -1515,6 +1516,18 @@ void Pipeline::Run() {
       draw::DrawUserFuncGraph("ModelDigraph.dot", user_graph);
     }
   }
+  if (common::GetEnv("DUMP_PARALLEL_INFO") == "1") {
+    std::unordered_map<std::string, std::vector<uint32_t>> group_map;
+    if (distributed::collective::CollectiveManager::instance()->initialized()) {
+      group_map = distributed::collective::CollectiveManager::instance()->get_group_map();
+    }
+    if (parallel::g_device_manager != nullptr) {
+      MS_LOG(WARNING) << "parallel::g_device_manager is not initialized. Skip dump parallel info.";
+      auto global_rank_id = parallel::g_device_manager->global_rank();
+      DumpParallelJson("dump_parallel_info_" + std::to_string(global_rank_id) + ".json", resource_->func_graph(),
+                       global_rank_id, group_map);
+    }
+  }
 #endif
   MS_LOG(INFO) << "End";
 }
@@ -2264,6 +2277,7 @@ void InitPipeline() {
   mindspore::python_adapter::set_python_env_flag(true);
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
+  CompileConfigManager::GetInstance().CollectCompileConfig();
 #ifdef WITH_BACKEND
   auto backend = ms_context->backend_policy();
   auto device_name = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);

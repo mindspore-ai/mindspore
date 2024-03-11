@@ -30,7 +30,8 @@ void LoadProfApiSymbol(const std::string &ascend_path) {
   std::string profiler_plugin_path = "lib64/libmsprofiler.so";
   auto handler = GetLibHandler(ascend_path + profiler_plugin_path);
   if (handler == nullptr) {
-    MS_LOG(EXCEPTION) << "Dlopen " << profiler_plugin_path << " failed!" << dlerror();
+    MS_LOG(WARNING) << "Dlopen " << profiler_plugin_path << " failed!" << dlerror();
+    return;
   }
   aclprofCreateConfig_ = DlsymAscendFuncObj(aclprofCreateConfig, handler);
   aclprofDestroyConfig_ = DlsymAscendFuncObj(aclprofDestroyConfig, handler);

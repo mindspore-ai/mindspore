@@ -33,6 +33,7 @@
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
 #include "utils/log_adapter.h"
+#include "utils/compile_config.h"
 #include "ir/anf.h"
 #include "pybind_api/ir/primitive_py.h"
 #include "abstract/abstract_value.h"
@@ -259,7 +260,7 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
       : prim_constructors_(prim_evaluator_map),
         func_graph_manager_(func_graph_manager),
         forward_count_(0),
-        enable_recursive_eval_(common::GetEnv("MS_DEV_RECURSIVE_EVAL") == "1"),
+        enable_recursive_eval_(common::GetCompileConfig("RECURSIVE_EVAL") == "1"),
         check_side_effect_(false) {}
   virtual ~AnalysisEngine() = default;
 

@@ -27,6 +27,7 @@
 #include "pipeline/jit/pi/external.h"
 #include "pipeline/jit/pi/graph_capture/graph_build.h"
 #include "pipeline/jit/pi/graph_guard/infer.h"
+#include "pipeline/jit/pi/graph_capture/side_effect.h"
 
 namespace mindspore {
 namespace pijit {
@@ -53,11 +54,12 @@ static constexpr const char *kBuiltinNameOrd = "ord";                // convert 
 static constexpr const char *kBuiltinNameCallable = "callable";      // no side effects
 static constexpr const char *kBuiltinNameGetattr = "getattr";        // call __getattr__, or __getattribute__
 static constexpr const char *kBuiltinNameHasattr = "hasattr";        // call __getattr__, or __getattribute__
+static constexpr const char *kBuiltinNamePop = "pop";                // pop
 // ------------------------------builtins functions--------------------------------
 
 // ------------------------------builtins method--------------------------------
 // static constexpr const char *kBuiltinNameUpdate = "update";  // dict update
-// static constexpr const char *kBuiltinNameAppend = "append";  // list update
+static constexpr const char *kBuiltinNameAppend = "append";  // list update
 // ------------------------------builtins method--------------------------------
 
 // ------------------------------mindspore functions-------------------------------
@@ -162,10 +164,7 @@ bool CallNodeReturnConst(CallNode *call_node, Graph *sub_graph, AObject *value) 
 bool GuardConstCallNodeParam(CallNode *call_node, Graph *sub_graph, int max_guard_depth) {
   std::vector<std::pair<TracePtr, GuardLevel>> traces;
   for (auto i : call_node->getInputs()) {
-    if (i->is_constant()) {
-      continue;
-    }
-    if (i->GetOpcode() == LOAD_CONST) {
+    if (i->IsConstantValue()) {
       continue;
     }
     AObject::Type type = i->GetVobj() ? i->GetVobj()->GetType() : AObject::kTypeAnyValue;
@@ -347,6 +346,7 @@ bool InferPrimitive(CallNode *call_node) {
     {"Prim[DType]", AObject::kTypeAnyValue},
     {"Prim[Partial]<side_effect_propagate=1>", AObject::kTypeAnyValue},
   };
+  Graph *sub_graph = call_node->GetSubGraph();
   call_node->SetVobj(AObject::MakeAObject(AObject::kTypeTensor));
   call_node->SetSubGraph(nullptr);
   PyObject *prim = call_node->input(0)->GetVobj()->GetPyObject().ptr();
@@ -393,17 +393,23 @@ bool InferPrimitive(CallNode *call_node) {
   try {
     ret = inst->InferPrimitive(prim, list, &is_abstract);
   } catch (std::exception &e) {
-    MS_LOG(INFO) << "infer primitive failed. reason:";
-    MS_LOG(INFO) << e.what();
+    MS_LOG(ERROR) << "infer primitive failed. reason:";
+    MS_LOG(ERROR) << e.what();
     ret = nullptr;
   }
   if (ret == nullptr) {
     return false;
   }
+
   AObject::Type type = AObject::GetPyType(ret);
   AObject *type_info = is_abstract && type != AObject::kTypeTensor ? AObject::MakeAObject(type) : AObject::Convert(ret);
   call_node->SetVobj(type_info);
   Py_DECREF(ret);
+
+  ConstantInfo::CollectPrimitiveConstantInfo(call_node);
+  if (call_node->IsConstantValue()) {
+    return CallNodeReturnConst(call_node, sub_graph, call_node->GetVobj());
+  }
   return false;
 }
 
@@ -742,6 +748,30 @@ static bool InferMSConstexpr(CallNode *call_node) {
   return CallNodeReturnConst(call_node, g, call_node->GetVobj());
 }
 
+static bool GuardBuiltinFunc(CallNode *call_node) {
+  Graph *graph = call_node->GetGraph();
+  for (auto i : call_node->getInputs()) {
+    if (i->GetVobj() && i->GetVobj()->GetType() == AObject::kTypeTensor) {
+      AbstractTensor *tensor = static_cast<AbstractTensor *>(i->GetVobj());
+      if (!tensor->IsStubTensor() && !CheckTensorDataInitialized(tensor->GetPyObject())) {
+        // fake value
+        return false;
+      }
+    }
+  }
+  return graph->GuardValueNode(call_node);
+}
+
+static bool GuardIsInstance(CallNode *call_node) {
+  Graph *graph = call_node->GetGraph();
+  const auto &cnst = call_node->input(1)->GetConstantInfo();
+  if (cnst != nullptr && cnst->type() != nullptr) {
+    constexpr int second_arg = 2;
+    return graph->GuardValueNode(call_node->input(second_arg));
+  }
+  return graph->GuardValueNode(call_node);
+}
+
 #define DECLARE_BUILTIN_CFUNCTION(func_name)                 \
   p = PyDict_GetItemString(PyEval_GetBuiltins(), func_name); \
   MS_ASSERT(p &&PyCFunction_Check(p));                       \
@@ -777,7 +807,7 @@ static const std::set<PyCFunction> &GenCFunctionMap() {
   // python object cfunction without sideeffect
   std::map<PyObject *, std::vector<std::string>> obj_cfunc_name = {
     {py::dict().inc_ref().ptr(),
-     {"__contains__", "__getitem__", "__sizeof__", "get", "keys", "items", "values", "fromkeys", "copy"}},
+     {"__contains__", "__getitem__", "__sizeof__", "get", "keys", "items", "values", "fromkeys", "copy", "pop"}},
     {py::list().inc_ref().ptr(), {"__getitem__", "__sizeof__", "copy", "index", "count"}},
     {py::tuple().inc_ref().ptr(), {"index", "count"}},
     {py::set().inc_ref().ptr(), {"__contains__", "copy", "issubset", "__sizeof__"}},
@@ -799,6 +829,8 @@ static const std::set<PyCFunction> &GenCFunctionMap() {
   return kBuiltinFuncOrMethodWhileList;
 }
 
+#undef DECLARE_BUILTIN_CFUNCTION
+
 bool CheckBuiltinFuncOrMethod(const py::object &f) {
   PyObject *func = f.ptr();
   if (PyMethod_Check(func)) {
@@ -817,25 +849,25 @@ bool CheckBuiltinFuncOrMethod(const py::object &f) {
 static bool InferBuiltinFuncOrMethod(CallNode *call_node) {
   Graph *sub_graph = call_node->GetSubGraph();
   (void)JustCallAndSetRes(call_node);
+  ConstantInfo::CollectBuiltinFuncConstantInfo(call_node);
+  if (call_node->IsConstantValue()) {
+    return CallNodeReturnConst(call_node, sub_graph, call_node->GetVobj());
+  }
   if (call_node->GetVobj() == nullptr || call_node->GetVobj()->GetPyObject().ptr() == nullptr) {
     return false;
   }
-  for (auto i : call_node->getInputs()) {
-    if (i->GetVobj() && i->GetVobj()->GetType() == AObject::kTypeTensor) {
-      AbstractTensor *tensor = static_cast<AbstractTensor *>(i->GetVobj());
-      if (!tensor->IsStubTensor() && !CheckTensorDataInitialized(tensor->GetPyObject())) {
-        return false;
-      }
-    }
+
+  bool guard_success = false;
+  std::string name = GetFuncName(call_node->input(0)->GetVobj()->GetPyObject());
+  if (name == kBuiltinNameIsinstance) {
+    guard_success = GuardIsInstance(call_node);
+  } else {
+    guard_success = GuardBuiltinFunc(call_node);
   }
-  if (!sub_graph->GuardValueNode(call_node)) {
-    return false;
+  if (guard_success) {
+    return CallNodeReturnConst(call_node, sub_graph, call_node->GetVobj());
   }
-  py::object func = call_node->GetVobj()->GetPyObject();
-  if (func.ptr() == nullptr) {
-    return false;
-  }
-  return CallNodeReturnConst(call_node, sub_graph, call_node->GetVobj());
+  return false;
 }
 
 static bool CheckTensorAsType(const py::object &func) {
@@ -885,6 +917,88 @@ static bool InferTensorAsType(CallNode *call_node) {
   return true;
 }
 
+bool CheckListAppend(const py::object &func) {
+  static PyCFunction append = nullptr;
+  if (append == nullptr) {
+    append = PyCFunction_GET_FUNCTION(py::list().attr(kBuiltinNameAppend).ptr());
+  }
+  PyObject *op = func.ptr();
+  if (PyMethod_Check(op)) {
+    op = PyMethod_GET_FUNCTION(op);
+  }
+  /**
+   * this expression "list.append" will get type "method_descriptor"
+   * this expression "[].append" will get type "built-in function"
+   */
+  if (!PyCFunction_Check(op)) {
+    return false;
+  }
+  return PyCFunction_GET_FUNCTION(op) == append;
+}
+
+bool InferListAppend(CallNode *call_node) {
+  Graph *sub_graph = call_node->GetSubGraph();
+  call_node->SetSubGraph(nullptr);
+
+  ValueNode *method_node = call_node->input(0);
+  if (method_node->GetOpcode() != LOAD_ATTR) {
+    return false;
+  }
+  ValueNode *self = method_node->input(0);
+  if (self->GetOpcode() != BUILD_LIST) {
+    // guard old_list length, transform to "new_list = [old_list[0], old_list[1], ... , new_element]".
+    return false;
+  }
+  std::vector<ValueNode *> inputs = self->getInputs();
+  inputs.push_back(call_node->input(1));
+
+  std::vector<AObject *> tmp;
+  std::transform(inputs.begin(), inputs.end(), std::back_inserter(tmp), [](ValueNode *n) { return n->GetVobj(); });
+  AObject *list_info = AObject::BuildOperations(tmp, BUILD_LIST);
+  ValueNode *ret_node = sub_graph->NewValueNode(list_info, BUILD_LIST, inputs.size(), inputs);
+
+  sub_graph->GetTracedNodes().push_back(ret_node);
+  sub_graph->SetRetVal(ret_node);
+
+  call_node->SetSubGraph(sub_graph);
+  call_node->SetVobj(ret_node->GetVobj());
+  call_node->SetInlineReason(InlineReason::kInline);
+  return true;
+}
+
+static bool InferPopAsGet(CallNode *call_node) {
+  Graph *sub_graph = call_node->GetSubGraph();
+  py::object func = call_node->input(0)->GetVobj()->GetPyObject();
+  PyObject *fPtr = func.ptr();
+  if (func.ptr() == nullptr || PyMethod_Check(fPtr)) {
+    return SetCallResType<AObject::kTypeAnyValue>(call_node);
+  }
+
+  std::vector<py::object> args;
+  std::transform(call_node->getInputs().begin() + 1, call_node->getInputs().end(), std::back_inserter(args),
+                 [](ValueNode *n) { return n->GetVobj() ? n->GetVobj()->GetPyObject() : py::object(); });
+  auto pair = Utils::PackCallStackArgs(args, call_node->GetOpcode());
+  if (pair.first.ptr() == nullptr) {
+    return SetCallResType<AObject::kTypeAnyValue>(call_node);
+  }
+  func = py::cast<py::object>(PyMethod_GET_SELF(func.ptr())).attr("get");
+  PyObject *value = PyObject_Call(func.ptr(), pair.first.ptr(), pair.second.ptr());
+  if (PyErr_Occurred()) {
+    MS_LOG(ERROR) << "got an error " << py::error_already_set().what() << " at call the "
+                  << std::string(py::str(func.ptr()));
+    PyErr_Clear();
+  }
+  call_node->SetVobj(AObject::Convert(value));
+  call_node->SetSubGraph(nullptr);
+  Py_XDECREF(value);
+  // guard value node call->
+  if (!sub_graph->GuardValueNode(call_node)) {
+    return false;
+  }
+  call_node->GetGraph()->GetSideEffect()->setVariableMaps(call_node, nullptr);
+  return CallNodeReturnConst(call_node, sub_graph, call_node->GetVobj());
+}
+
 // special function list
 // special function that mindspore support and not inline,
 // the return values or type can be infer
@@ -909,6 +1023,8 @@ static const std::unordered_map<std::string, SpecialAction> kFuncWhiteListMap = 
   {kMindsporeNameConstexpr, {CheckMSConstexpr, InferMSConstexpr}},
   {kMindsporeNamePrimexpr, {CheckMSPrimexpr, InferMSConstexpr}},
   {kMindsporeNameTensorAsType, {CheckTensorAsType, InferTensorAsType}},
+  {kBuiltinNameAppend, {CheckListAppend, InferListAppend}},
+  {kBuiltinNamePop, {CheckBuiltinFuncOrMethod, InferPopAsGet}},
 };
 
 static const std::vector<std::pair<CheckFunc, std::string>> kFuncWhiteListFuzzyMatcher = {
@@ -942,14 +1058,14 @@ static const std::vector<std::pair<CheckFunc, std::string>> kMindFuncWhiteListFu
 
 const std::string GetMindsporeNamePrimitive() { return kMindsporeNamePrimitive; }
 
-std::unordered_map<std::string, SpecialAction> GetFuncWhiteListMap(bool trace_flag) {
+const std::unordered_map<std::string, SpecialAction> &GetFuncWhiteListMap(bool trace_flag) {
   if (trace_flag) {
     return kMindFuncWhiteListMap;
   } else {
     return kFuncWhiteListMap;
   }
 }
-std::vector<std::pair<CheckFunc, std::string>> GetFuncWhiteListFuzzyMatcher(bool trace_flag) {
+const std::vector<std::pair<CheckFunc, std::string>> &GetFuncWhiteListFuzzyMatcher(bool trace_flag) {
   if (trace_flag) {
     return kMindFuncWhiteListFuzzyMatcher;
   } else {

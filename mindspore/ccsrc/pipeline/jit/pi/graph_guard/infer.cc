@@ -16,8 +16,11 @@
 #include "pipeline/jit/pi/graph_guard/infer.h"
 #include <map>
 #include <string>
+#include <functional>
 #include <unordered_set>
+#include "base/base.h"
 #include "abstract/ops/primitive_infer_map.h"
+#include "ops/auto_generate/gen_ops_primitive.h"
 #include "include/common/utils/convert_utils_py.h"
 #include "include/common/utils/stub_tensor.h"
 #include "ir/anf.h"
@@ -30,6 +33,7 @@
 #include "pipeline/jit/pi/pydef.h"
 #include "pipeline/jit/pi/graph_guard/guard_utils.h"
 #include "pipeline/jit/ps/parse/data_converter.h"
+#include "pipeline/jit/pi/graph_build/func_graph_builder.h"
 
 namespace mindspore {
 namespace parse {
@@ -306,8 +310,39 @@ static bool HasTensor(py::object obj) {
   return false;
 }
 
-ValuePtr ConvertArgByCastDtype(py::object arg, ops::OpInputArg op_arg) {
-  ValuePtr value = nullptr;
+ValuePtr DtypeToEnum(const ValuePtr &value) {
+  if (!value->isa<mindspore::Type>()) {
+    return value;
+  }
+  auto type_id = value->cast<TypePtr>()->type_id();
+  return MakeValue<int64_t>(type_id);
+}
+
+using ArgHandlerFunc = std::function<ValuePtr(const ValuePtr &)>;
+
+ArgHandlerFunc GetOppArgHandlerFunc(const std::string &arg_handler) {
+  static const std::unordered_map<std::string, ArgHandlerFunc> opp_arg_handler_funcs = {
+    {"dtype_to_type_id", DtypeToEnum},
+  };
+  if (opp_arg_handler_funcs.find(arg_handler) != opp_arg_handler_funcs.end()) {
+    return opp_arg_handler_funcs.at(arg_handler);
+  } else {
+    return nullptr;
+  }
+}
+
+mindspore::ValuePtr ConvertArgByArgHandler(mindspore::ValuePtr value, ops::OpDef *op_def, size_t i) {
+  if (op_def != nullptr && value != nullptr) {
+    auto opp_arg_handler_func = GetOppArgHandlerFunc(op_def->args_[i].arg_handler_);
+    if (opp_arg_handler_func != nullptr) {
+      return opp_arg_handler_func(value);
+    }
+  }
+  return value;
+}
+
+mindspore::ValuePtr ConvertArgByCastDtype(py::object arg, ops::OpInputArg op_arg) {
+  mindspore::ValuePtr value = nullptr;
   parse::OpDefConvertFunc convert_func = parse::GetConverterByType(static_cast<int32_t>(op_arg.arg_dtype_));
   MS_EXCEPTION_IF_NULL(convert_func);
   value = convert_func(arg);
@@ -369,6 +404,7 @@ static AbstractBasePtrList ChangeAbstractArgList(PrimitivePyPtr prim, const std:
     }
     *has_tensor = HasTensor(param_obj);
     converted = convertData(param_obj, is_stub, op_def, i);
+    converted = ConvertArgByArgHandler(converted, op_def, i);
     auto arg = mindspore::abstract::ToAbstract(converted, nullptr, nullptr);
     list.push_back(arg);
   }
@@ -390,6 +426,36 @@ void FixOpDefAttributes(PrimitivePyPtr prim, std::vector<PyObject *> *list) {
       }
     }
   }
+}
+
+static py::object ConvertCppTensor(const py::object &any) {
+  PyObject *op = any.ptr();
+  PyTypeObject *cpp_tensor_type = GetPybindType<mindspore::tensor::Tensor>();
+
+  if (Py_IS_TYPE(op, cpp_tensor_type)) {
+    py::object tp = py::reinterpret_borrow<py::object>(GetMsTensorType());
+    return tp(any);
+  }
+
+  if (PyTuple_Check(op) || PyList_Check(op)) {
+    for (Py_ssize_t i = 0; i < Py_SIZE(op); ++i) {
+      PyObject **item = PyTuple_Check(op) ? &PyTuple_GET_ITEM(op, i) : &PyList_GET_ITEM(op, i);
+      PyObject *new_item = ConvertCppTensor(py::cast<py::object>(*item)).inc_ref().ptr();
+      Py_SETREF(*item, new_item);
+    }
+    return any;
+  }
+
+  if (PyDict_Check(op)) {
+    Py_ssize_t pos = 0;
+    PyObject *key, *value;
+    while (PyDict_Next(op, &pos, &key, &value)) {
+      py::object new_value = ConvertCppTensor(py::cast<py::object>(value));
+      PyDict_SetItem(op, key, new_value.ptr());
+    }
+    return any;
+  }
+  return any;
 }
 
 // return new reference
@@ -418,7 +484,16 @@ PyObject *InferEngine::InferPrimitive(PyObject *primitive, const std::vector<PyO
   std::optional<AbstractBasePtr> opt_res = mindspore::abstract::TryInferAbstract(prim, list);
   if (opt_res.has_value()) {
     auto abs = opt_res.value();
-    auto pyObj = MakeObjectFromAbstract(abs->BuildShape(), abs->BuildType(), is_abstract);
+    py::object pyObj;
+    if (abs != nullptr) {
+      pyObj = FuncGraphBuilder::ConvertToPyObj(abs);
+      if (pyObj.ptr() == nullptr) {
+        pyObj = MakeObjectFromAbstract(abs->BuildShape(), abs->BuildType(), is_abstract);
+      }
+      if (pyObj.ptr() != nullptr) {
+        pyObj = ConvertCppTensor(pyObj);
+      }
+    }
     return pyObj.inc_ref().ptr();
   } else if (prim->HasPyObj()) {
     if (py::hasattr(adapter_obj, PY_PRIM_METHOD_INFER)) {
@@ -493,7 +568,8 @@ static TypePtr GetDTypeForStubTensor(PyObject *stubtensor) {
   return dtype;
 }
 
-static PyObject *InferShape(PyObject *arg) {
+static PyObject *InferShape(PyObject *, const std::vector<PyObject *> &args) {
+  PyObject *arg = args[0];
   ShapeVector shape;
   if (IsStubTensor(arg)) {
     shape = GetShapeForStubTensor(arg);
@@ -511,7 +587,8 @@ static PyObject *InferShape(PyObject *arg) {
   return tuple;
 }
 
-static PyObject *InferDType(PyObject *arg) {
+static PyObject *InferDType(PyObject *, const std::vector<PyObject *> &args) {
+  PyObject *arg = args[0];
   mindspore::TypePtr dtype;
   if (IsStubTensor(arg)) {
     dtype = GetDTypeForStubTensor(arg);
@@ -530,7 +607,8 @@ static PyObject *InferDType(PyObject *arg) {
   return type;
 }
 
-static PyObject *InferRank(PyObject *arg) {
+static PyObject *InferRank(PyObject *, const std::vector<PyObject *> &args) {
+  PyObject *arg = args[0];
   ShapeVector shape;
   if (IsStubTensor(arg)) {
     shape = GetShapeForStubTensor(arg);
@@ -542,7 +620,8 @@ static PyObject *InferRank(PyObject *arg) {
   return PyLong_FromSize_t(shape.size());
 }
 
-static PyObject *InferSize(PyObject *arg) {
+static PyObject *InferSize(PyObject *, const std::vector<PyObject *> &args) {
+  PyObject *arg = args[0];
   ShapeVector shape;
   if (IsStubTensor(arg)) {
     shape = GetShapeForStubTensor(arg);
@@ -558,47 +637,37 @@ static PyObject *InferSize(PyObject *arg) {
   return PyLong_FromSize_t(elements);
 }
 
-static PyObject *InferValue(PyObject *primitive, const std::vector<PyObject *> &arglist, const PrimitivePyPtr &prim) {
-  static const std::unordered_set<std::string> specialize = {
-    "ListToTensor",
-    "TupleToTensor",
-    "ScalarToTensor",
-    "make_range",
+const SpecialPrimitiveInferFuncMap &GetSpecialPrimitiveInferFunc() {
+  constexpr const auto CallValue = [](PyObject *prim, const std::vector<PyObject *> &args) {
+    PyObject *res = PyObject_Vectorcall(prim, args.data(), args.size(), nullptr);
+    PyErr_Clear();
+    return res;
   };
-  if (specialize.find(prim->name()) == specialize.end()) {
-    return nullptr;
-  }
-  PyObject *res = PyObject_Vectorcall(primitive, arglist.data(), arglist.size(), nullptr);
-  PyErr_Clear();
-  return res;
+  static const SpecialPrimitiveInferFuncMap specialize = {
+    {"Size", InferSize},
+    {"Rank", InferRank},
+    {"DType", InferDType},
+    {"Shape", InferShape},
+    {"TileSize", CallValue},
+    {"ListToTensor", CallValue},
+    {"TupleToTensor", CallValue},
+    {"ScalarToTensor", CallValue},
+    {"make_range", CallValue},
+    {"ConvertToMsTensor", CallValue},
+    {"ConvertToAdapterTensor", CallValue},
+    {"IsShapeUnKnown", [](PyObject *, const std::vector<PyObject *> &) { Py_RETURN_FALSE; }},
+  };
+  return specialize;
 }
 
 PyObject *InferEngine::InferSpecialPrimitive(PyObject *primitive, const std::vector<PyObject *> &arglist,
                                              const PrimitivePyPtr &prim) {
-  if (prim->name() == "Shape" && arglist.size() == 1) {
-    return InferShape(arglist[0]);
-  } else if (prim->name() == "DType" && arglist.size() == 1) {
-    return InferDType(arglist[0]);
-  } else if (prim->name() == "Rank" && arglist.size() == 1) {
-    return InferRank(arglist[0]);
-  } else if (prim->name() == "TileSize" && arglist.size() == 3) {
-    py::tuple tuple(3);
-    tuple[0] = py::cast<py::object>(arglist[0]);
-    tuple[1] = py::cast<py::object>(arglist[1]);
-    tuple[2] = py::cast<py::object>(arglist[2]);
-    PyObject *t = PyObject_Call(primitive, tuple.ptr(), nullptr);
-    if (PyErr_Occurred()) {
-      PyObject *et, *ev, *tb;
-      PyErr_Fetch(&et, &ev, &tb);
-      MS_LOG(EXCEPTION) << "Shape infer [TileSize] failed " << std::string(py::str(ev));
-      PyErr_Clear();
-    }
-    return t;
-  } else if (prim->name() == "Size" && arglist.size() == 1) {
-    return InferSize(arglist[0]);
-  } else {
-    return InferValue(primitive, arglist, prim);
+  std::string name = py::cast<py::object>(primitive).attr("name").cast<std::string>();
+  auto iter = GetSpecialPrimitiveInferFunc().find(name);
+  if (iter != GetSpecialPrimitiveInferFunc().end()) {
+    return iter->second(primitive, arglist);
   }
+  return nullptr;
 }
 
 bool InferEngine::SupportInfer(PyObject *primitive) {
@@ -620,6 +689,9 @@ bool InferEngine::SupportInfer(PyObject *primitive) {
   auto frontend_func_impl = ops::GetOpFrontendFuncImplPtr(op_name);
   auto op_def = ops::GetOpDef(op_name);
   if (frontend_func_impl != nullptr || op_def != nullptr) {
+    return true;
+  }
+  if (GetSpecialPrimitiveInferFunc().find(prim->name()) != GetSpecialPrimitiveInferFunc().end()) {
     return true;
   }
   return false;

@@ -96,6 +96,11 @@ class ProfilerInfo:
         ProfilerInfo._profiler_info_dict["all_export"] = flag
 
     @staticmethod
+    def set_diff_time(diff_time):
+        """synchronize timestamps between different devices"""
+        ProfilerInfo._profiler_info_dict["diff_time"] = diff_time
+
+    @staticmethod
     def set_graph_ids(graph_ids):
         """Set the graph id list."""
         ProfilerInfo._profiler_info_dict["graph_ids"] = graph_ids

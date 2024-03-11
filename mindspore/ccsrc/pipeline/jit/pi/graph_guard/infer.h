@@ -19,6 +19,7 @@
 #include <memory>
 #include <vector>
 #include <string>
+#include <unordered_map>
 #include "pybind11/pybind11.h"
 #include "pybind_api/ir/primitive_py.h"
 
@@ -83,6 +84,10 @@ bool IsMSDTypeType(PyTypeObject *tp);
 bool FindTensorName(const std::string &name);
 
 bool CheckTensorDataInitialized(const py::object &tensor);
+
+using SpecialPrimitiveInferFuncMap =
+  std::unordered_map<std::string, PyObject *(*)(PyObject *, const std::vector<PyObject *> &)>;
+const SpecialPrimitiveInferFuncMap &GetSpecialPrimitiveInferFunc();
 
 }  // namespace pijit
 }  // namespace mindspore

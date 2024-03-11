@@ -63,6 +63,7 @@ from mindspore.parallel._parallel_serialization import _convert_to_list, _conver
     _restore_group_info_list
 from mindspore.parallel._ps_context import _set_checkpoint_load_status, _store_warm_up_ptr_by_tensor, \
     _store_warm_up_ptr_by_tensor_list, _cache_enable
+from mindspore.parallel.checkpoint_transform import sync_pipeline_shared_parameters
 from mindspore.train._utils import read_proto
 from mindspore._c_expression import load_mindir, _encrypt, _decrypt, _is_cipher_file, dynamic_obfuscate_mindir, \
     split_mindir, split_dynamic_mindir
@@ -92,6 +93,16 @@ TOTAL_SAVE = 1024 * 1024
 PARAMETER_SPLIT_SIZE = 1024 * 1024 * 1024
 ENCRYPT_BLOCK_SIZE = 64 * 1024
 INT_64_MAX = 9223372036854775807
+
+
+class ParamDictFuture:
+    def __init__(self, executor, param_dict_future):
+        self.executor = executor
+        self.param_dict_future = param_dict_future
+    def result(self):
+        param_dict = self.param_dict_future.result()
+        self.executor.shutdown()
+        return param_dict
 
 
 def _special_process_par(par, new_par):
@@ -559,6 +570,7 @@ def _convert_cell_param_and_names_to_dict(save_obj, choice_func):
 
 def _convert_cell_to_param_list(save_obj, integrated_save, append_dict, choice_func):
     """Convert nn.Cell to param_list."""
+    sync_pipeline_shared_parameters(save_obj)
     param_list = []
     parameter_layout_dict = save_obj.parameter_layout_dict
     if _is_in_auto_parallel_mode() and not parameter_layout_dict:
@@ -667,7 +679,7 @@ def load(file_name, **kwargs):
             - dec_key (bytes): Byte-type key used for decryption. The valid length is 16, 24, or 32.
             - dec_mode (Union[str, function]): Specifies the decryption mode, to take effect when dec_key is set.
 
-              - Option: 'AES-GCM', 'AES-CBC', 'SM4-CBC' or customized decryption. Default: 'AES-GCM'.
+              - Option: 'AES-GCM', 'AES-CBC', 'SM4-CBC' or customized decryption. Default: ``'AES-GCM'``.
               - For details of using the customized decryption, please check the `tutorial
                 <https://mindspore.cn/mindarmour/docs/en/master/model_encrypt_protection.html>`_.
 
@@ -1129,6 +1141,86 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
     return parameter_dict
 
 
+def load_checkpoint_async(ckpt_file_name, net=None, strict_load=False, filter_prefix=None, dec_key=None,
+                          dec_mode="AES-GCM", specify_prefix=None, choice_func=None):
+    """
+    Load checkpoint info from a specified file asyncly.
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
+    Note:
+        - `specify_prefix` and `filter_prefix` do not affect each other.
+        - If none of the parameters are loaded from checkpoint file, it will throw ValueError.
+        - `specify_prefix` and `filter_prefix` are in the process of being deprecated,
+          `choice_func` is recommended instead.
+          And using either of those two args will override `choice_func` at the same time.
+
+    Args:
+        ckpt_file_name (str): Checkpoint file name.
+        net (Cell, optional): The network where the parameters will be loaded. Default: ``None`` .
+        strict_load (bool, optional): Whether to strict load the parameter into net. If ``False`` , it will load
+                                      parameter into net when parameter name's suffix in checkpoint file is the
+                                      same as the parameter in the network. When the types are inconsistent
+                                      perform type conversion on the parameters of the same type, such as float32
+                                      to float16. Default: ``False`` .
+        filter_prefix (Union[str, list[str], tuple[str]], optional): Deprecated(see `choice_func`). Parameters
+            starting with the `filter_prefix` will not be loaded. Default: ``None`` .
+        dec_key (Union[None, bytes], optional): Byte type key used for decryption. If the value is ``None`` ,
+                                                the decryption is not required. Default: ``None`` .
+        dec_mode (str, optional): This parameter is valid only when dec_key is not set to ``None`` . Specifies
+                                  the decryption mode, currently supports ``"AES-GCM"`` and ``"AES-CBC"``
+                                  and ``"SM4-CBC"`` . Default: ``"AES-GCM"`` .
+        specify_prefix (Union[str, list[str], tuple[str]], optional): Deprecated(see `choice_func`). Parameters
+            starting with the specify_prefix will be loaded. Default: ``None`` .
+        choice_func (Union[None, function], optional): Input value of the function is a Parameter name of type
+            string, and the return value is a bool. If returns ``True`` , the Parameter
+            that matches the custom condition will be loaded. If returns ``False`` , the Parameter that
+            matches the custom condition will be removed. Default: ``None`` .
+
+    Returns:
+        ParamDictFuture, A custom class, calling its result method yields the load_checkpoint result.
+
+    Raises:
+        ValueError: Checkpoint file's format is incorrect.
+        ValueError: Parameter's dict is None after load checkpoint file.
+        TypeError: The type of `specify_prefix` or `filter_prefix` is incorrect.
+
+    Examples:
+        >>> import mindspore
+        >>> from mindspore import nn
+        >>> from mindspore.train import Model
+        >>> from mindspore.amp import FixedLossScaleManager
+        >>> from mindspore import context
+        >>> from mindspore.train.serialization import load_checkpoint_async
+        >>> from mindspore.train.serialization import load_param_into_net
+        >>> context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+        >>> # Create the dataset taking MNIST as an example. Refer to
+        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
+        >>> dataset = create_dataset()
+        >>> # Define the network structure of LeNet5. Refer to
+        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> ckpt_file = "./checkpoint/LeNet5-1_32.ckpt"
+        >>> net = LeNet5()
+        >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
+        >>> loss_scale_manager = FixedLossScaleManager()
+        >>> optim = nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
+        >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics=None,
+        ...               loss_scale_manager=loss_scale_manager)
+        >>> pd_future = load_checkpoint_async(ckpt_file)
+        >>> model.build(train_dataset=dataset, epoch=2)
+        >>> param_dict = pd_future.result()
+        >>> load_param_into_net(net, param_dict)
+        >>> model.train(2, dataset)
+        >>> print("param dict len: ", len(param_dict), flush=True)
+    """
+    from concurrent.futures import ThreadPoolExecutor
+    executor = ThreadPoolExecutor(max_workers=2)
+    param_dict_future = executor.submit(load_checkpoint, ckpt_file_name, net, strict_load, filter_prefix,
+                                        dec_key, dec_mode, specify_prefix, choice_func)
+    return ParamDictFuture(executor, param_dict_future)
+
+
 def _load_map_parameter(checkpoint_list, element, element_id, map_data_list,
                         map_shape_list, parameter_dict):
     """load map parameter."""
@@ -1449,6 +1541,11 @@ def _save_graph(network, file_name):
             os.chmod(file_name, stat.S_IRUSR | stat.S_IWUSR)
             f.write(graph_pb)
 
+def _reshape_tensor(tensor, dst_shape):
+    """reshape tensor to dst shape"""
+    np_tensor = tensor.asnumpy()
+    np_tensor = np_tensor.reshape(dst_shape)
+    return Tensor(np_tensor, tensor.dtype)
 
 def _get_merged_param_data(net, parameter_layout_dict, param_name, param_data, integrated_save):
     """
@@ -1463,7 +1560,7 @@ def _get_merged_param_data(net, parameter_layout_dict, param_name, param_data, i
         Tensor, the combined tensor which with the whole data value.
     """
     layout = parameter_layout_dict[param_name]
-    if len(layout) < 6:
+    if len(layout) < 8:
         logger.info("The layout dict does not contain the key %s", param_name)
         return param_data
 
@@ -1471,6 +1568,13 @@ def _get_merged_param_data(net, parameter_layout_dict, param_name, param_data, i
     tensor_map = layout[1]
     uniform_split = layout[4]
     opt_shard_group = layout[5]
+    before_reshape_slice_shape = layout[2]
+    before_reshape_full_shape = layout[6]
+    after_reshape_slice_shape = layout[7]
+    do_reshape = False
+    if before_reshape_full_shape and after_reshape_slice_shape\
+            and after_reshape_slice_shape != before_reshape_slice_shape:
+        do_reshape = True
 
     allgather_net = None
     mp_weight = False
@@ -1492,17 +1596,22 @@ def _get_merged_param_data(net, parameter_layout_dict, param_name, param_data, i
             # while any dim is not equal to -1, means param is split and needs to be merged
             # pipeline parallel need to be supported here later
             if mp_weight:
-                allgather_net = get_allgather_cell(opt_shard_group, bool(opt_shard_group))
+                allgather_net = get_allgather_cell(opt_shard_group, bool(opt_shard_group), do_reshape,
+                                                   tuple(after_reshape_slice_shape))
                 object.__setattr__(allgather_net, "keep_input_unchanged", True)
             elif opt_shard_group:
-                allgather_net = get_allgather_cell(opt_shard_group, False)
+                allgather_net = get_allgather_cell(opt_shard_group, False, do_reshape,
+                                                   tuple(after_reshape_slice_shape))
         elif opt_shard_group and context.get_auto_parallel_context("optimizer_weight_shard_aggregated_save"):
-            allgather_net = get_allgather_cell(opt_shard_group, False)
+            allgather_net = get_allgather_cell(opt_shard_group, False, do_reshape,
+                                               tuple(after_reshape_slice_shape))
         net.parallel_parameter_merge_net_dict[param_name] = allgather_net
     if allgather_net:
         param_data = allgather_net(param_data)
     if mp_weight and integrated_save:
         param_data = _reshape_param_data(param_data, dev_mat, tensor_map)
+        if do_reshape:
+            param_data = _reshape_tensor(param_data, before_reshape_full_shape)
     return param_data
 
 
@@ -1540,7 +1649,7 @@ def export(net, *inputs, file_name, file_format, **kwargs):
               - For 'AIR' and 'ONNX' models, only customized encryption is supported.
               - For 'MINDIR', all options are supported. Option: 'AES-GCM', 'AES-CBC', 'SM4-CBC'
                 or Customized encryption.
-                Default: 'AES-GCM'.
+                Default: ``'AES-GCM'``.
               - For details of using the customized encryption, please check the `tutorial
                 <https://mindspore.cn/mindarmour/docs/en/master/model_encrypt_protection.html>`_.
 

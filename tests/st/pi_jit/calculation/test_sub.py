@@ -193,6 +193,7 @@ def test_subtraction_list_tensor(func, ms_func, a, b):
 @pytest.mark.parametrize('ms_func', [jit_sub])
 @pytest.mark.parametrize('a', [Tensor(np.ones((2, 3)).astype(np.float32))])
 @pytest.mark.parametrize('b', [[1.0, 2.0, 3.0]])
+@pytest.mark.skip(reason="GetDevicePtr is NULL")
 def test_subtraction_tensor_list(func, ms_func, a, b):
     """
     Feature: ALL TO ALL

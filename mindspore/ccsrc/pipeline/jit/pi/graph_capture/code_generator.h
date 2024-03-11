@@ -64,6 +64,15 @@ class CodeGenerator {
   std::vector<std::unique_ptr<Instr>> MoveCode() { return std::move(code_.co_code); }
   const py::dict &GetGlobals() const { return globals_; }
   const std::unordered_map<ValueNode *, int> &GetLocalsMap() const { return locals_map_; }
+  bool EarseLocal(ValueNode *item) {
+    auto it = GetLocalsMap().find(item);
+    if (it != GetLocalsMap().end()) {
+      locals_map_.erase(it);
+    } else {
+      return false;
+    }
+    return true;
+  }
   const Code &GetCode() const { return code_; }
   void SetArgsInfo(int argcount, int kwonlyargcount) {
     code_.co_argcount = argcount;
@@ -97,7 +106,7 @@ class CodeGenerator {
   void BuildOper(ValueNode *node, int index);
 
   // generator local operations of node
-  void LoadValue(ValueNode *node);
+  void LoadValue(ValueNode *node, bool is_side_effect = false);
 
   // add node to locals map
   int AllocLocal(ValueNode *node, int index = INT_MAX);
@@ -184,7 +193,7 @@ class CodeBreakGenerator {
   // TODO(chaiyouheng): collect nodes inputs and outputs at graph analyze
   void Init(const Graph *, const GraphAnalyzer::CapturedInfo *);
 
-  virtual py::object MakeCode(bool make_graph);
+  virtual py::object MakeCode(bool make_graph, Graph *graph);
   const CFG *GetCFG() const;
 
  protected:
@@ -198,6 +207,9 @@ class CodeBreakGenerator {
   void CallCapturedCode(CodeGenerator *code_gen);
 
   void FixInterpretOuput(CodeGenerator *code_gen);
+
+  // make call operations of side effect bytecode
+  void CallSideEffectCode(CodeGenerator *code_gen, Graph *graph);
 
   // make function of untracked bytecode, build restore frame operations of untracked bytecode
   py::object MakeUntrackedCode(int untracked_bci, int untracked_stack_effect) const;
@@ -255,7 +267,7 @@ class MindCodeBreakGenerator : public CodeBreakGenerator {
  public:
   MindCodeBreakGenerator(const GraphBuilderPtr &builder, PyCodeObject *co)
       : CodeBreakGenerator(co), builder_(builder) {}
-  py::object MakeCode(bool make_graph) override;
+  py::object MakeCode(bool make_graph, Graph *graph) override;
   mindspore::FuncGraphBuilderPtr FGBuilder() const {
     return std::dynamic_pointer_cast<MindGraphBuilder>(builder_)->FGBuilder();
   }

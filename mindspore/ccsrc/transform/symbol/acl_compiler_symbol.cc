@@ -29,7 +29,8 @@ void LoadAclOpCompilerApiSymbol(const std::string &ascend_path) {
   std::string complier_plugin_path = "lib64/libacl_op_compiler.so";
   auto handler = GetLibHandler(ascend_path + complier_plugin_path);
   if (handler == nullptr) {
-    MS_LOG(EXCEPTION) << "Dlopen " << complier_plugin_path << " failed!" << dlerror();
+    MS_LOG(WARNING) << "Dlopen " << complier_plugin_path << " failed!" << dlerror();
+    return;
   }
   aclopCompileAndExecute_ = DlsymAscendFuncObj(aclopCompileAndExecute, handler);
   aclopCompileAndExecuteV2_ = DlsymAscendFuncObj(aclopCompileAndExecuteV2, handler);

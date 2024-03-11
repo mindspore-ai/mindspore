@@ -49,6 +49,7 @@ class GraphKernelOptimizer {
   bool is_ascend{false};
   bool is_cpu{false};
   bool is_ge{false};
+  bool is_dvm{false};
 };
 
 BACKEND_EXPORT void GraphKernelOptimize(const KernelGraphPtr &kernel_graph);

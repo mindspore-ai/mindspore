@@ -30,6 +30,16 @@ class GraphBuilder;
 class MindGraphBuilder;
 using GraphBuilderPtr = std::shared_ptr<GraphBuilder>;
 using MindGraphBuilderPtr = std::shared_ptr<MindGraphBuilder>;
+
+struct TryBlock {
+  int type;       /*what kind of block this is (SETUP_SETUP, SETUP_FINALLY, SETUP_EXCEPT)*/
+  int bci;        /*where to jump to find handler*/
+  int checkpoint; /*the handler to be rolled back*/
+  // int level;   /* value stack level to pop toe*/
+  bool IsFinallyBlock; /*record current block is in exception block or finally block*/
+};
+
+bool CheckSupportCreateInstance(CallNode *call_node);
 class GraphBuilder {
  public:
   static const char *ID___self__;
@@ -69,6 +79,13 @@ class GraphBuilder {
 
   static bool IsByteCodeImplemented(int bytecode);
 
+  // TryBlockStack operation
+  TryBlock &PeekStack(int p);
+  void PushStack(TryBlock tb) { tryBlockStacks_.push_back(tb); }
+  int StackSize() { return tryBlockStacks_.size(); }
+  std::vector<TryBlock> &GetTryBlockStacks() { return tryBlockStacks_; }
+  TryBlock &PopStack();
+
  protected:
   GraphBuilder *root_;
   GraphBuilder *parent_;
@@ -76,6 +93,7 @@ class GraphBuilder {
   FrameStates frame_;
   Block *current_block_;
   int cur_bci_;
+  std::vector<TryBlock> tryBlockStacks_{};
 
   // loop analyze
   void HandleLoop();
@@ -106,6 +124,7 @@ class GraphBuilder {
   void ResolveClosure(const py::object &func_info, ValueNode *callable_node, FrameStates *frame);
 
   std::pair<PyObject *, ValueNode *> SearchSelfPyObject(PyCodeObject *co);
+  bool HandleSuper(const Instr &instr, AObject *super);
   AObject *BuildSuperObject(PyCodeObject *co);
 
   /**
@@ -158,6 +177,15 @@ class GraphBuilder {
   bool PackKwParams(const py::object &func, std::vector<ValueNode *> *params, FrameStates *frame,
                     std::vector<ValueNode *> *kwvargs);
 
+  /**
+   * handle store subscr side effect
+   * Set parameters to frame
+   * \param[in] instr The function of call target
+   * \param[in] p This calling stack
+   * \return false if parameters is illegal
+   */
+  bool DoSideEffect(const Instr &instr, const std::vector<ValueNode *> &p);
+
   bool CheckAndSetDefaultParams(const py::object &func, FrameStates *frame, int pargc);
 
   /**
@@ -177,8 +205,14 @@ class GraphBuilder {
   // return false if has unsupported bytecode
   bool DoByteCode(const Instr &instr);
 
-  // general value node for UNPACK_SEQUENCE, UNPACK_EX
-  void GenIndexItemGeneral(ValueNode *iterable, int i, int j);
+  // unpack elements
+  bool UnpackElements(ValueNode *);
+
+  // unpack elements
+  bool UnpackSequenceElements(ValueNode *);
+
+  // unpack object elements as LOAD_CONST
+  std::vector<ValueNode *> UnpackConstObject(const py::object &);
 
   // return true if not inline
   virtual bool WhiteListFuncCheckAndInfer(CallNode *, const py::object &f);
@@ -199,7 +233,8 @@ class GraphBuilder {
 
   // pointers
   std::vector<Graph *> graph_pool_;
-  ValueNode *NewValueNode(AObject *o, int op, int arg, const std::vector<ValueNode *> &p = {});
+  ValueNode *NewValueNode(AObject *o, int op, int arg, const std::vector<ValueNode *> &p = {},
+                          const std::string &name = "");
   ValueNode *NewValueNode(AObject *o, const Instr &, const std::vector<ValueNode *> &p = {});
   Graph *NewGraph(PyCodeObject *co, PyObject *f_globals);
 
@@ -227,16 +262,22 @@ class GraphBuilder {
   bool DoListToTuple(const Instr &instr);
   bool DoGetIter(const Instr &instr);
   bool DoMakeFunction(const Instr &instr);
+  AObject *InferUnary(ValueNode *, const Instr &instr);
   virtual bool DoUnary(const Instr &instr);
+  AObject *InferBinary(ValueNode *, ValueNode *, const Instr &instr);
   virtual bool DoBinary(const Instr &instr);
   virtual bool DoIsOp(const Instr &instr);
   virtual bool DoBinaryMul(const Instr &instr);
+  bool DoBinaryAdd(const Instr &instr);
+  bool DoInplaceAdd(const Instr &instr);
   virtual bool DoCompare(const Instr &instr);
   virtual bool DoBuildOp(const Instr &instr);
   bool DoMergeOp(const Instr &instr);
   bool DoFormatValue(const Instr &instr);
   bool DoImport(const Instr &instr);
   bool DoYieldValue(const Instr &instr);
+  bool DoException(const Instr &instr);
+  bool DoWith(const Instr &instr);
   bool NotImplementBytecode(const Instr &instr);
   static const std::unordered_map<int, bool (GraphBuilder::*)(const Instr &)> bytecode_meth_map_;
 

@@ -286,7 +286,7 @@ class SummaryLandscape:
                   Default: ``40`` . Optional values: between 3 and 256.
                 - create_landscape (dict): Select how to create loss landscape.
                   Training process loss landscape(train) and training result loss landscape(result).
-                  Default: {"train": True, "result": True}. Optional: ``True`` / ``False`` .
+                  Default: ``{"train": True, "result": True}``. Optional: ``True`` / ``False`` .
                 - num_samples (int): The size of the dataset used to create the loss landscape.
                   For example, in image dataset, You can set num_samples is 2048,
                   which means that 2048 images are used to create loss landscape.

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "backend/common/graph_kernel/expander/mindir_adapter/mindir_emitter.h"
+#include <algorithm>
 #include "ir/primitive.h"
 #include "backend/common/graph_kernel/expander/mindir_adapter/anf_node_holder.h"
 #include "backend/common/graph_kernel/model/op_register.h"
@@ -56,6 +57,26 @@ NodePtr MindirEmitter::DefaultEmitFunc(const std::string &op_name, const NodePtr
                        [](const NodePtr &node) { return node->as<AnfNodePtr>(); });
   auto node = NewNode(NewCNode(inputs));
   infer_->InferOp(node, prim, args);
+  return node;
+}
+
+NodePtr MindirEmitter::ReduceEmitFunc(const std::string &op_name, const NodePtrList &args, const NodePtrDict &kargs) {
+  constexpr size_t keep_dims_idx = 2;
+  constexpr size_t skip_mode_idx = 3;
+  auto prim = std::make_shared<Primitive>(op_name);
+  HashMap<std::string, ValuePtr> attrs;
+  attrs["keep_dims"] = args[keep_dims_idx]->GetValue();
+  if (args.size() > skip_mode_idx) {
+    attrs["skip_mode"] = args[skip_mode_idx]->GetValue();
+  }
+  (void)prim->SetAttrs(attrs);
+  NodePtrList new_args{args[0], args[1]};
+  AnfNodePtrList inputs(new_args.size() + 1);
+  inputs[0] = NewValueNode(prim);
+  (void)std::transform(new_args.cbegin(), new_args.cend(), inputs.begin() + 1,
+                       [](const NodePtr &node) { return node->as<AnfNodePtr>(); });
+  auto node = NewNode(NewCNode(inputs));
+  infer_->InferOp(node, prim, new_args);
   return node;
 }
 }  // namespace mindspore::graphkernel::expander

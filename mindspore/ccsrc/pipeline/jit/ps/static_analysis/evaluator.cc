@@ -27,6 +27,7 @@
 #include "abstract/utils.h"
 #include "pipeline/jit/ps/debug/trace.h"
 #include "utils/ms_context.h"
+#include "utils/compile_config.h"
 #include "pipeline/jit/ps/static_analysis/stack_frame.h"
 #include "pipeline/jit/ps/static_analysis/async_eval_result.h"
 #include "frontend/expander/bprop/bprop_meta_func_graph.h"
@@ -399,7 +400,7 @@ AbstractBasePtr BaseFuncGraphEvaluator::LaunchRecursiveEval(const AnalysisEngine
   const AnfNodePtr &func_node = fg->get_return();
   const auto &all_nodes = TopoSort(func_node, SuccIncoming, [](const AnfNodePtr &node) -> IncludeType {
     MS_EXCEPTION_IF_NULL(node);
-    static const bool enable_pre_lift = (common::GetEnv("MS_DEV_PRE_LIFT") == "1");
+    static const bool enable_pre_lift = (common::GetCompileConfig("PRE_LIFT") == "1");
     if (node->isa<ValueNode>() || node->isa<Parameter>() ||
         (enable_pre_lift && IsPrimitiveCNode(node, prim::kPrimPartial))) {
       return EXCLUDE;
@@ -419,7 +420,7 @@ AbstractBasePtr BaseFuncGraphEvaluator::LaunchRecursiveEval(const AnalysisEngine
     } else {
       node_eval_result = ObtainEvalResultFromCache(node_conf);
       if (node_eval_result != nullptr) {
-        static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") != "0");
+        static const auto enable_eliminate_unused_element = (common::GetCompileConfig("ENABLE_DDE") != "0");
         if (enable_eliminate_unused_element) {
           const auto &cnode = node->cast<CNodePtr>();
           MS_EXCEPTION_IF_NULL(cnode);
@@ -716,7 +717,7 @@ EvalResultPtr Evaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args
     MS_LOG(DEBUG) << "[" << this << "/" << evaluator_name
                   << "] cache hit. result: " << eval_result->abstract()->ToString() << ", args: " << args_abs_list;
     // Update inputs sequence nodes info, if matched in cache.
-    static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") != "0");
+    static const auto enable_eliminate_unused_element = (common::GetCompileConfig("ENABLE_DDE") != "0");
     if (enable_eliminate_unused_element) {
       for (size_t i = 0; i < args_abs_list.size(); ++i) {
         auto new_sequence = dyn_cast<AbstractSequence>(args_abs_list[i]);
@@ -1174,7 +1175,7 @@ EvalResultPtr VirtualEvaluator::Eval(AnalysisEnginePtr, const AbstractBasePtrLis
   if (this->bound_node()->isa<CNode>()) {
     sense_param_flag = this->bound_node()->cast<CNodePtr>()->HasAttr("sens_param_");
   }
-  static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") != "0");
+  static const auto enable_eliminate_unused_element = (common::GetCompileConfig("ENABLE_DDE") != "0");
   // Check each parameter and argument match;
   for (std::size_t i = 0; i < args_abs_list.size(); i++) {
     MS_EXCEPTION_IF_NULL(args_abs_list[i]);

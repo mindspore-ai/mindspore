@@ -10,14 +10,14 @@ mindspore.experimental.optim.lr_scheduler.ReduceLROnPlateau
 
     参数：
         - **optimizer** (:class:`mindspore.experimental.optim.Optimizer`) - 优化器实例。
-        - **mode** (str, 可选) - 'min' 或 'max'。在 'min' 模式下，当监控指标不再下降，降低学习率；在 'max' 模式下，当监控指标不再上升，降低学习率。默认值：'min'。
-        - **factor** (float, 可选) - 学习率衰减因子。默认值：``0.1``。
-        - **patience** (int, 可选) - 评估指标无改善情况下等待的epoch数。例如，如果 `patience = 2`，则前2个无改善的epoch将被忽略，从第3个epoch降低学习率。默认值：``10``。
-        - **threshold** (float, 可选) - 衡量指标变好的最小阈值。默认值：``1e-4``。
+        - **mode** (str, 可选) - ``'min'`` 或 ``'max'``。在 ``'min'`` 模式下，当监控指标不再下降，降低学习率；在 ``'max'`` 模式下，当监控指标不再上升，降低学习率。默认值： ``'min'`` 。
+        - **factor** (float, 可选) - 学习率衰减因子。默认值： ``0.1``。
+        - **patience** (int, 可选) - 评估指标无改善情况下等待的epoch数。例如，如果 `patience = 2`，则前2个无改善的epoch将被忽略，从第3个epoch降低学习率。默认值： ``10``。
+        - **threshold** (float, 可选) - 衡量指标变好的最小阈值。默认值： ``1e-4``。
         - **threshold_mode** (str, 可选) - ``'rel'`` 或 ``'abs'``。每次评估指标是否变好的基准为 dynamic_threshold，在 ``'rel'`` 模式下，如果 `mode` 为 ``'max'``，则 dynamic_threshold = best * ( 1 + threshold )； 如果 `mode` 为 ``'min'``，则 best * ( 1 - threshold )。``'abs'`` 模式下，如果 `mode` 为 ``'max'``，则 dynamic_threshold = best + threshold；如果 `mode` 为 ``'min'``，则 best - threshold。默认值： ``'rel'``。
-        - **cooldown** (int, 可选) - 在降低学习率后恢复正常运行之前要等待的epoch数。默认值：``0``。
-        - **min_lr** (Union(float, list), 可选) - 标量或标量列表，所有参数组或每个组的学习率最小值。默认值：``0``。
-        - **eps** (float, 可选) - 应用于学习率的最小衰减。如果学习率变化的差异小于 `eps`，则忽略更新。默认值：``1e-8``。
+        - **cooldown** (int, 可选) - 在降低学习率后恢复正常运行之前要等待的epoch数。默认值： ``0``。
+        - **min_lr** (Union(float, list), 可选) - 标量或标量列表，所有参数组或每个组的学习率最小值。默认值： ``0``。
+        - **eps** (float, 可选) - 应用于学习率的最小衰减。如果学习率变化的差异小于 `eps`，则忽略更新。默认值： ``1e-8``。
 
 
     异常：

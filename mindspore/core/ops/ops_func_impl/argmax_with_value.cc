@@ -45,6 +45,11 @@ BaseShapePtr ArgMaxWithValueFuncImpl::InferShape(const PrimitivePtr &primitive,
     ShapeVector dynamic_rank_shape{abstract::TensorShape::kShapeRankAny};
     return GetOutputShape(dynamic_rank_shape);
   }
+  for (size_t i = 0; i < x_shape.size(); i++) {
+    if (x_shape[i] == 0) {
+      MS_EXCEPTION(TypeError) << primitive->name() << " cannot deal with empty input. Please try other inputs";
+    }
+  }
   auto keep_dims = keep_dims_opt.value();
   auto out_dim = keep_dims ? x_rank : x_rank - 1;
 
@@ -84,6 +89,8 @@ BaseShapePtr ArgMaxWithValueFuncImpl::InferShape(const PrimitivePtr &primitive,
 
 TypePtr ArgMaxWithValueFuncImpl::InferType(const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args) const {
+  TypePtr input_x_type = input_args[0]->GetType();
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_x_type, common_valid_types, primitive->name());
   return std::make_shared<Tuple>(TypePtrList{std::make_shared<TensorType>(kInt64), input_args[0]->GetType()});
 }
 }  // namespace ops

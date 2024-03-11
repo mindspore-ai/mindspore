@@ -20,6 +20,7 @@
 #include "ops/math_op_name.h"
 #include "ops/nn_optimizer_op_name.h"
 #include "utils/ms_context.h"
+#include "backend/common/graph_kernel/graph_kernel_flags.h"
 
 namespace mindspore::graphkernel::inner {
 namespace ascend {
@@ -40,6 +41,23 @@ class FuseReduceBwd : public FusePattern {
     }
     for (auto &[a, r] : dom->users_with_relation()) {
       if (a->pattern() <= NodePattern::BROADCAST && r == EdgeRelation::INJECTIVE && !HasCircle(dom, a)) {
+        (void)fused_areas_.emplace_back(a);
+      }
+    }
+    return !fused_areas_.empty();
+  }
+};
+
+class FuseSlice : public FusePattern {
+ public:
+  FuseSlice() : FusePattern("slice") { direction_ = FuseDirection::BACKWARD; }
+  ~FuseSlice() = default;
+
+ protected:
+  bool Check(const AreaPtr &dom) override { return dom->dom()->op() == "Slice" || dom->dom()->op() == "StridedSlice"; }
+  bool Match(const AreaPtr &dom) override {
+    for (auto &[a, r] : dom->users_with_relation()) {
+      if (a->pattern() < NodePattern::BROADCAST && r == EdgeRelation::INJECTIVE && !HasCircle(dom, a)) {
         (void)fused_areas_.emplace_back(a);
       }
     }
@@ -96,11 +114,29 @@ class FuseTransdata : public FusePattern {
            a->size() == 1 && a->dom()->op() == kCastOpName && !a->is_output();
   }
 };
+
+class FuseElemAny : public FusePattern {
+ public:
+  FuseElemAny() : FusePattern("elemany_addn") {}
+  ~FuseElemAny() = default;
+
+ protected:
+  bool Check(const AreaPtr &dom) override { return dom->dom()->op() == "ElemAny"; }
+  bool Match(const AreaPtr &dom) override {
+    for (auto &[a, r] : dom->inputs_with_relation()) {
+      if (a->pattern() <= NodePattern::BROADCAST && r == EdgeRelation::INJECTIVE && !HasCircle(dom, a)) {
+        (void)fused_areas_.emplace_back(a);
+      }
+    }
+    return !fused_areas_.empty();
+  }
+};
 }  // namespace ascend
 
 void SplitModelAscend::InitFusePatterns() {
+  is_dvm_ = (GraphKernelFlags::GetInstance().kernel_generator == "DVM");
   AddPattern(std::make_shared<FuseVirtualNode>(), true);
-  AddPattern(std::make_shared<FuseReshape>(), true);
+  AddPattern(std::make_shared<FuseReshape>(), !is_dvm_);
   AddPattern(FuseElemwiseBroadcastFwd::CreateDepthMatcher(), true);
   AddPattern(FuseElemwiseBroadcastFwd::CreateWidthMatcher(), true);
   AddPattern(FuseReduceFwd::CreateDepthMatcher(inner::ascend::kReduceFusionDepth), true);
@@ -110,11 +146,17 @@ void SplitModelAscend::InitFusePatterns() {
   AddPattern(std::make_shared<inner::ascend::FuseMatMul>(), true);
   AddPattern(std::make_shared<inner::ascend::FuseReduceBwd>(), true);
   AddPattern(std::make_shared<inner::ascend::FuseTransdata>(), true);
+  AddPattern(std::make_shared<inner::ascend::FuseElemAny>(), is_dvm_);
+  AddPattern(std::make_shared<inner::ascend::FuseSlice>(), is_dvm_);
 }
 
 AreaMode SplitModelAscend::GetDefaultAreaMode(const PrimOpPtr &node) const {
   if (node != nullptr) {
-    if (node->op() == kReshapeOpName || node->op() == kAssignOpName) {
+    auto node_name = node->op();
+    if (node_name == kReshapeOpName || node_name == kAssignOpName) {
+      return AreaMode::BASIC;
+    }
+    if (node_name == kTransposeOpName && is_dvm_) {
       return AreaMode::BASIC;
     }
   }

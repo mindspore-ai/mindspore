@@ -17,8 +17,9 @@
 #include "plugin/device/ascend/hal/device/ascend_device_synchronizer.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 #include "include/common/utils/utils.h"
-#include "acl/acl_rt.h"
 #include "utils/log_adapter.h"
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace mindspore {
 namespace device {
@@ -41,7 +42,7 @@ bool AscendDeviceSynchronizer::SyncDeviceToHost(void *host_ptr, const void *devi
     MS_LOG(WARNING) << "Bind device to current thread failed.";
   }
 
-  auto ret = aclrtMemcpyAsync(host_ptr, size, device_ptr, size, ACL_MEMCPY_DEVICE_TO_HOST, stream);
+  auto ret = CALL_ASCEND_API(aclrtMemcpyAsync, host_ptr, size, device_ptr, size, ACL_MEMCPY_DEVICE_TO_HOST, stream);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Call aclrtMemcpyAsync device to host failed, the error num[" << ret << "]";
     return false;
@@ -72,7 +73,7 @@ bool AscendDeviceSynchronizer::SyncHostToDevice(void *device_ptr, const void *ho
     MS_LOG(WARNING) << "Bind device to current thread failed.";
   }
 
-  auto ret = aclrtMemcpyAsync(device_ptr, size, host_ptr, size, ACL_MEMCPY_HOST_TO_DEVICE, stream);
+  auto ret = CALL_ASCEND_API(aclrtMemcpyAsync, device_ptr, size, host_ptr, size, ACL_MEMCPY_HOST_TO_DEVICE, stream);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Call aclrtMemcpyAsync device to host failed, the error num[" << ret << "]";
     return false;

@@ -22,7 +22,7 @@ add_library(ascend_kernel_plugin_mid OBJECT ${ASCEND_SRC} ${ACL_SRC})
 add_library(ascend_kernel_plugin SHARED $<TARGET_OBJECTS:ascend_kernel_plugin_mid>)
 add_dependencies(ascend_kernel_plugin fbs_inner_src)
 add_dependencies(ascend_kernel_plugin mindspore-extendrt)
-target_link_libraries(ascend_kernel_plugin mindspore-extendrt)
+target_link_libraries(ascend_kernel_plugin mindspore-extendrt _mindspore_transform_symbol_obj)
 
 if("${MSLITE_REGISTRY_DEVICE}" STREQUAL "SD3403" AND PLATFORM_ARM64)
     find_library(acl_retr libacl_retr.so ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})

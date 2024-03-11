@@ -1,4 +1,4 @@
-# Copyright 2023 Huawei Technologies Co., Ltd
+# Copyright 2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 import pytest
 import mindspore.nn as nn
 from mindspore import Tensor
+from mindspore import context
 from mindspore.common.api import jit
 
 cfg = {
@@ -41,6 +42,7 @@ def test_make_tuple():
         def construct(self, x):
             return (x, x+1, x+2)
 
+    context.set_context(mode=context.PYNATIVE_MODE)
     net = Net()
     a = Tensor([1])
     jit(net.construct, mode="PIJit", jit_config=cfg)
@@ -65,6 +67,7 @@ def test_make_list():
         def construct(self, x):
             return [x, x+1, x+2]
 
+    context.set_context(mode=context.PYNATIVE_MODE)
     net = Net()
     a = Tensor([1])
     jit(net.construct, mode="PIJit", jit_config=cfg)
@@ -91,6 +94,7 @@ def test_tuple_slice():
             m = (x, x+1, x+2)
             return m[0:2:1]
 
+    context.set_context(mode=context.PYNATIVE_MODE)
     net = Net()
     a = Tensor([1])
     jit(net.construct, mode="PIJit", jit_config=cfg)
@@ -101,10 +105,10 @@ def test_tuple_slice():
     assert ret[1] == Tensor([2])
 
 
+@pytest.mark.skip(reason="Graph strict mode handle slice wrong")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.skip
 def test_list_slice():
     """
     Feature: One stage basic operation.
@@ -116,6 +120,7 @@ def test_list_slice():
             m = [x, x+1, x+2]
             return m[0:2:1]
 
+    context.set_context(mode=context.PYNATIVE_MODE)
     net = Net()
     a = Tensor([1])
     jit(net.construct, mode="PIJit", jit_config=cfg)
@@ -126,10 +131,10 @@ def test_list_slice():
     assert ret[1] == Tensor([2])
 
 
+@pytest.mark.skip(reason="Graph strict mode handle slice wrong")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.skip
 def test_list_slice_with_default_parameter():
     """
     Feature: One stage basic operation.
@@ -141,6 +146,7 @@ def test_list_slice_with_default_parameter():
             m = [x, x+1, x+2]
             return m[0:2]
 
+    context.set_context(mode=context.PYNATIVE_MODE)
     net = Net()
     a = Tensor([1])
     jit(net.construct, mode="PIJit", jit_config=cfg)
@@ -151,10 +157,10 @@ def test_list_slice_with_default_parameter():
     assert ret[1] == Tensor([2])
 
 
+@pytest.mark.skip(reason="Graph strict mode handle slice wrong")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.skip
 def test_list_slice_with_default_parameter_2():
     """
     Feature: One stage basic operation.
@@ -166,6 +172,7 @@ def test_list_slice_with_default_parameter_2():
             m = [x, x+1, x+2]
             return m[::]
 
+    context.set_context(mode=context.PYNATIVE_MODE)
     net = Net()
     a = Tensor([1])
     jit(net.construct, mode="PIJit", jit_config=cfg)
@@ -177,10 +184,10 @@ def test_list_slice_with_default_parameter_2():
     assert ret[2] == Tensor([3])
 
 
+@pytest.mark.skip(reason="Graph strict mode handle slice wrong")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.skip
 def test_list_slice_with_default_parameter_3():
     """
     Feature: One stage basic operation.
@@ -192,6 +199,7 @@ def test_list_slice_with_default_parameter_3():
             m = [x, x+1, x+2]
             return m[:]
 
+    context.set_context(mode=context.PYNATIVE_MODE)
     net = Net()
     a = Tensor([1])
     jit(net.construct, mode="PIJit", jit_config=cfg)
@@ -217,6 +225,7 @@ def test_make_dict():
             m = {"x": x, "y": x+1}
             return m["x"]
 
+    context.set_context(mode=context.PYNATIVE_MODE)
     net = Net()
     a = Tensor([1])
     jit(net.construct, mode="PIJit", jit_config=cfg)
@@ -239,6 +248,7 @@ def test_make_dict_2():
             m["x"] = x
             return m["x"]
 
+    context.set_context(mode=context.PYNATIVE_MODE)
     net = Net()
     a = Tensor([1])
     jit(net.construct, mode="PIJit", jit_config=cfg)
@@ -260,6 +270,7 @@ def test_make_dict_3():
             m = {"x": x+1}
             return m["x"]
 
+    context.set_context(mode=context.PYNATIVE_MODE)
     net = Net()
     a = Tensor([1])
     jit(net.construct, mode="PIJit", jit_config=cfg)

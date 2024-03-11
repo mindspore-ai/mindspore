@@ -17,8 +17,6 @@
 #include <utility>
 #include <algorithm>
 #include "include/common/utils/parallel_context.h"
-#include "acl/acl_rt.h"
-#include "acl/acl_op_compiler.h"
 #include "include/common/profiler.h"
 #include "mindspore/core/ops/array_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
@@ -34,6 +32,10 @@
 #include "plugin/device/ascend/kernel/hccl/hccl_kernel_build.h"
 #include "plugin/device/ascend/kernel/pyboost/customize/customize_copy.h"
 
+#ifdef ENABLE_DVM
+#include "plugin/device/ascend/kernel/dvm/dvm_kernel_build.h"
+#endif
+
 #ifndef ENABLE_SECURITY
 #include "include/backend/debug/data_dump/dump_json_parser.h"
 #include "include/backend/optimizer/helper.h"
@@ -46,6 +48,9 @@
 #include "transform/acl_ir/acl_helper.h"
 #include "transform/acl_ir/op_api_util.h"
 #include "transform/acl_ir/ge_adapter_info.h"
+#include "transform/symbol/acl_compiler_symbol.h"
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "include/backend/debug/data_dump/overflow_dumper.h"
 #include "include/backend/debug/profiler/profiling.h"
@@ -65,14 +70,19 @@ bool GenerateKernelMod(const std::vector<CNodePtr> &kernels) {
       continue;
     }
     kernel::KernelModPtr kernel_mod_ptr = nullptr;
-    if (AnfAlgo::GetKernelType(kernel) == KernelType::ACL_KERNEL) {
+    auto kernel_type = AnfAlgo::GetKernelType(kernel);
+    if (kernel_type == KernelType::ACL_KERNEL) {
       kernel_mod_ptr = kernel::AclOpBuild(kernel);
-    } else if (AnfAlgo::GetKernelType(kernel) == KernelType::HOST_KERNEL) {
+    } else if (kernel_type == KernelType::HOST_KERNEL) {
       kernel_mod_ptr = kernel::HostOpBuild(kernel);
-    } else if (AnfAlgo::GetKernelType(kernel) == KernelType::HCCL_KERNEL) {
+    } else if (kernel_type == KernelType::HCCL_KERNEL) {
       kernel_mod_ptr = kernel::HcclOpBuild(kernel);
-    } else if (AnfAlgo::GetKernelType(kernel) == KernelType::OPAPI_KERNEL) {
+    } else if (kernel_type == KernelType::OPAPI_KERNEL) {
       kernel_mod_ptr = kernel::AclnnOpBuild(kernel);
+#ifdef ENABLE_DVM
+    } else if (kernel_type == KernelType::AKG_KERNEL) {
+      kernel_mod_ptr = kernel::DvmOpBuild(kernel);
+#endif
     } else {
       MS_LOG(EXCEPTION) << "The kernel: " << kernel->fullname_with_scope() << " kernel build failed, kernel type: "
                         << kernel::KernelTypeLabel(AnfAlgo::GetKernelType(kernel));
@@ -102,7 +112,7 @@ void SetAclOpPrecisionMode() {
     precision_mode = (transform::AclUtil::KeepOriginDType() == 1) ? "must_keep_origin_dtype" : "allow_fp32_to_fp16";
   }
   MS_LOG(INFO) << "Set aclop PRECISION_MODE: " << precision_mode;
-  auto ret = aclSetCompileopt(aclCompileOpt::ACL_PRECISION_MODE, precision_mode.c_str());
+  auto ret = CALL_ASCEND_API(aclSetCompileopt, aclCompileOpt::ACL_PRECISION_MODE, precision_mode.c_str());
   if (ret != ACL_SUCCESS) {
     MS_LOG(EXCEPTION) << "Acl set precision mode failed! Error flag is " << ret;
   }
@@ -112,7 +122,7 @@ void SetAclOpPrecisionMode() {
     return;
   }
   MS_LOG(INFO) << "Set aclop OP_PRECISION_MODE: " << op_precision_mode;
-  ret = aclSetCompileopt(aclCompileOpt::ACL_OP_PRECISION_MODE, op_precision_mode.c_str());
+  ret = CALL_ASCEND_API(aclSetCompileopt, aclCompileOpt::ACL_OP_PRECISION_MODE, op_precision_mode.c_str());
   if (ret != ACL_SUCCESS) {
     MS_LOG(EXCEPTION) << "Acl set op precision mode failed! Error flag is " << ret;
   }
@@ -430,8 +440,8 @@ bool GeKernelExecutor::MemoryCopyAsync(const CNodePtr &node, const vector<Kernel
 
   const auto stream = AscendStreamMng::GetInstance().GetStream(kDefaultStreamIndex);
   MS_EXCEPTION_IF_NULL(stream);
-  aclError status = aclrtMemcpyAsync(outputs[0]->device_ptr(), outputs[0]->size(), inputs[0]->device_ptr(),
-                                     inputs[0]->size(), ACL_MEMCPY_DEVICE_TO_DEVICE, stream);
+  aclError status = CALL_ASCEND_API(aclrtMemcpyAsync, outputs[0]->device_ptr(), outputs[0]->size(),
+                                    inputs[0]->device_ptr(), inputs[0]->size(), ACL_MEMCPY_DEVICE_TO_DEVICE, stream);
   if (status != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "MemCpyAsync op aclrtMemcpyAsync failed, ret:" << status << " destMax:" << outputs[0]->size()
                   << " count:" << inputs[0]->size();
@@ -486,8 +496,8 @@ bool GeKernelExecutor::LaunchCallback(CallbackFunc callback_func, size_t stream_
   }
   MS_EXCEPTION_IF_NULL(stream);
   auto callback_func_ptr = new CallbackFunc(callback_func);
-  aclError ret =
-    aclrtLaunchCallback(AclrtLaunchCallback, callback_func_ptr, aclrtCallbackBlockType::ACL_CALLBACK_NO_BLOCK, stream);
+  aclError ret = CALL_ASCEND_API(aclrtLaunchCallback, AclrtLaunchCallback, callback_func_ptr,
+                                 aclrtCallbackBlockType::ACL_CALLBACK_NO_BLOCK, stream);
   MS_LOG(DEBUG) << "Launch callback for stream_id : " << stream_id << ", ret : " << ret << ".";
   if (ret) {
     delete callback_func_ptr;

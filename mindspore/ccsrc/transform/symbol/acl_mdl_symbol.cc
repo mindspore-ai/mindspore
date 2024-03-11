@@ -51,7 +51,8 @@ void LoadAclMdlApiSymbol(const std::string &ascend_path) {
   std::string aclmdl_plugin_path = "lib64/libascendcl.so";
   auto handler = GetLibHandler(ascend_path + aclmdl_plugin_path);
   if (handler == nullptr) {
-    MS_LOG(EXCEPTION) << "Dlopen " << aclmdl_plugin_path << " failed!" << dlerror();
+    MS_LOG(WARNING) << "Dlopen " << aclmdl_plugin_path << " failed!" << dlerror();
+    return;
   }
   aclmdlAddDatasetBuffer_ = DlsymAscendFuncObj(aclmdlAddDatasetBuffer, handler);
   aclmdlCreateDataset_ = DlsymAscendFuncObj(aclmdlCreateDataset, handler);

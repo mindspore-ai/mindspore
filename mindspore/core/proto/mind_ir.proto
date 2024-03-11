@@ -233,6 +233,10 @@ message LayoutProto {
   optional int64 field_size = 5;
   optional bool uniform_split = 6;
   optional string opt_shard_group = 7;
+  optional bool pipeline_shared = 8;
+  optional bool is_send = 9;
+  optional int64 peer_rank = 10;
+  optional int64 sr_tag = 11;
 }
 
 message PrimitiveProto {

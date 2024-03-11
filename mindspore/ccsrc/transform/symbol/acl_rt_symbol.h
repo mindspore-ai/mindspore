@@ -33,6 +33,7 @@ ORIGIN_METHOD(aclrtEventElapsedTime, aclError, float *, aclrtEvent, aclrtEvent)
 ORIGIN_METHOD(aclrtFree, aclError, void *)
 ORIGIN_METHOD(aclrtFreeHost, aclError, void *)
 ORIGIN_METHOD(aclrtGetCurrentContext, aclError, aclrtContext *)
+ORIGIN_METHOD(aclrtGetDevice, aclError, int32_t *)
 ORIGIN_METHOD(aclrtGetDeviceCount, aclError, uint32_t *)
 ORIGIN_METHOD(aclrtGetDeviceIdFromExceptionInfo, uint32_t, const aclrtExceptionInfo *)
 ORIGIN_METHOD(aclrtGetErrorCodeFromExceptionInfo, uint32_t, const aclrtExceptionInfo *)
@@ -77,6 +78,7 @@ extern aclrtEventElapsedTimeFunObj aclrtEventElapsedTime_;
 extern aclrtFreeFunObj aclrtFree_;
 extern aclrtFreeHostFunObj aclrtFreeHost_;
 extern aclrtGetCurrentContextFunObj aclrtGetCurrentContext_;
+extern aclrtGetDeviceFunObj aclrtGetDevice_;
 extern aclrtGetDeviceCountFunObj aclrtGetDeviceCount_;
 extern aclrtGetDeviceIdFromExceptionInfoFunObj aclrtGetDeviceIdFromExceptionInfo_;
 extern aclrtGetErrorCodeFromExceptionInfoFunObj aclrtGetErrorCodeFromExceptionInfo_;

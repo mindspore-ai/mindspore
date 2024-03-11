@@ -683,23 +683,29 @@ class _Context:
                              f"{speedup_config_real_path} does not exist, please check whether the "
                              f"'parallel_speed_up_json_path' is correct.")
         try:
-            valid_option = {"recompute_comm_overlap": ms_ctx_param.recompute_comm_overlap,
-                            "matmul_grad_comm_overlap": ms_ctx_param.matmul_grad_comm_overlap,
-                            "enable_task_opt": ms_ctx_param.enable_task_opt,
-                            "enable_grad_comm_opt": ms_ctx_param.enable_grad_comm_opt,
-                            "interleaved_matmul_comm": ms_ctx_param.interleaved_matmul_comm,
-                            "enable_opt_shard_comm_opt": ms_ctx_param.enable_opt_shard_comm_opt,
-                            "interleaved_layernorm_comm": ms_ctx_param.interleaved_layernorm_comm}
+            valid_option = {"recompute_comm_overlap": (ms_ctx_param.recompute_comm_overlap, bool),
+                            "matmul_grad_comm_overlap": (ms_ctx_param.matmul_grad_comm_overlap, bool),
+                            "enable_task_opt": (ms_ctx_param.enable_task_opt, bool),
+                            "enable_grad_comm_opt": (ms_ctx_param.enable_grad_comm_opt, bool),
+                            "interleaved_matmul_comm": (ms_ctx_param.interleaved_matmul_comm, bool),
+                            "enable_opt_shard_comm_opt": (ms_ctx_param.enable_opt_shard_comm_opt, bool),
+                            "enable_begin_end_inline_opt": (ms_ctx_param.enable_begin_end_inline_opt, bool),
+                            "enable_concat_eliminate_opt": (ms_ctx_param.enable_concat_eliminate_opt, bool),
+                            "interleaved_layernorm_comm": (ms_ctx_param.interleaved_layernorm_comm, bool),
+                            "compute_communicate_fusion_level":
+                                (ms_ctx_param.compute_communicate_fusion_level, int)}
             with open(speedup_config_real_path, 'r') as f:
                 speedup_config = json.load(f)
-                for k, v in speedup_config.items():
-                    if not isinstance(k, str):
-                        raise TypeError("key {} is not a str".format(k))
-                    if k not in valid_option:
-                        raise ValueError("key {} should be one of {}.".format(k, valid_option.keys()))
-                    if not isinstance(v, bool):
-                        raise TypeError("value {} is not a bool".format(v))
-                    self.set_param(valid_option.get(k), v)
+                for key, value in speedup_config.items():
+                    if not isinstance(key, str):
+                        raise TypeError("key {} is not a str".format(key))
+                    if key not in valid_option:
+                        raise ValueError("key {} should be one of {}.".format(key, valid_option.keys()))
+                    set_func, valid_type = valid_option.get(key)
+                    if not isinstance(value, valid_type):
+                        raise TypeError(f"The value type of {key} must be {valid_type}, "
+                                        f"but got value is {value} and type is {type(value)}.")
+                    self.set_param(set_func, value)
         except (TypeError, ValueError) as exo:
             raise ValueError(str(exo) + "\nFor 'context.set_context', "
                                         "open or load the 'speedup_config_path' file {} "
@@ -894,11 +900,11 @@ def set_auto_parallel_context(**kwargs):
                         - load_file (str): The path to load parallel strategy checkpoint. If the file name extension is
                           `.json`, the file is loaded in JSON format. Otherwise, the file is loaded in ProtoBuf
                           format.
-                          Default: ''
+                          Default: ``''``
 
                         - save_file (str): The path to save parallel strategy checkpoint. If the file name extension is
                           `.json`, the file is saved in JSON format. Otherwise, the file is saved in ProtoBuf format.
-                          Default: ''
+                          Default: ``''``
 
                         - only_trainable_params (bool): Only save/load the strategy information for trainable parameter.
                           Default: ``True`` .
@@ -1192,7 +1198,7 @@ def set_context(**kwargs):
             When the `save_graphs` attribute is set as ``True`` , ``1`` , ``2`` or ``3`` , attribute of
             `save_graphs_path` is used to set the intermediate compilation graph storage path. By default, the graphs
             are saved in the current directory.
-        save_graphs_path (str): Path to save graphs. Default: ".".
+        save_graphs_path (str): Path to save graphs. Default: ``"."``.
             If the specified directory does not exist, the system will automatically create the directory.
             During distributed training, graphs will be saved to the directory of
             `save_graphs_path/rank_${rank_id}/`. `rank_id` is the ID of the current device in the cluster.
@@ -1312,7 +1318,7 @@ def set_context(**kwargs):
             the compile cache is loaded. Note that only limited automatic detection for the changes of
             python scripts is supported by now, which means that there is a correctness risk. Default: ``False`` .
             This is an experimental prototype that is subject to change and/or deletion.
-        compile_cache_path (str): Path to save the compile cache. Default: ".".
+        compile_cache_path (str): Path to save the compile cache. Default: ``"."``.
             If the specified directory does not exist, the system will automatically create the directory.
             The cache will be saved to the directory of `compile_cache_path/rank_${rank_id}/`. The `rank_id` is
             the ID of the current device in the cluster.
@@ -1329,7 +1335,7 @@ def set_context(**kwargs):
             of the interfaces would be compiled by MindSpore to the interfaces definition .py file that should be
             guaranteed to be writable. Then compile the .py file to the .pyc or .so file, and could run in Graph mode.
         memory_optimize_level (str): The memory optimize level.
-            Default: O0. The value must be in ['O0', 'O1'].
+            Default: ``O0``. The value must be in ['O0', 'O1'].
 
             - O0: priority performance option, disable SOMAS (Safe Optimized Memory Allocation Solver).
             - O1: priority memory option, enable SOMAS.
@@ -1394,17 +1400,25 @@ def set_context(**kwargs):
             - parallel_speed_up_json_path(Union[str, None]): The path to the parallel speed up json file, configuration
               can refer to `parallel_speed_up.json
               <https://gitee.com/mindspore/mindspore/blob/master/config/parallel_speed_up.json>`_ .
-              If its value is None or '', it does not take effect. Default None.
+              If its value is None or '', it does not take effect. Default: ``None``.
 
-              - recompute_comm_overlap (bool): Enable overlap between recompute ops and communication ops if True.
-                Default: False.
-              - matmul_grad_comm_overlap (bool): Enable overlap between grad ops and communication ops if True.
-                Default: False.
-              - enable_task_opt (bool): Enable the optimization of the number of tasks for each communication if True.
-                Default: False.
-              - interleaved_matmul_comm (bool): Enable interleaved optimization of Matmul-Comm if True. Default: False.
-              - interleaved_layernorm_comm (bool): Enable interleaved optimization of LayerNorm-Comm if True.
-                Default: False.
+              - recompute_comm_overlap (bool): Enable overlap between recompute ops and communication ops if ``True``.
+                Default: ``False``.
+              - matmul_grad_comm_overlap (bool): Enable overlap between grad ops and communication ops if ``True``.
+                Default: ``False``.
+              - enable_task_opt (bool): Enable the optimization of the number of tasks
+                for each communication if ``True``.
+                Default: ``False``.
+              - interleaved_matmul_comm (bool): Enable interleaved optimization of Matmul-Comm if ``True``.
+                Default: ``False``.
+              - interleaved_layernorm_comm (bool): Enable interleaved optimization of LayerNorm-Comm if ``True``.
+                Default: ``False``.
+              - compute_communicate_fusion_level (int): Enable the fusion between compute and communicate.
+                Default: ``0``.
+                - 0: Disable fusion.
+                - 1: Apply fusion to forward nodes.
+                - 2: Apply fusion to backward nodes.
+                - 3: Apply fusion to all nodes.
             - host_scheduling_max_threshold(int): The max threshold to control whether the dynamic shape process is
               used when run the static graph, the default value is 0. When the number of operations in the static graph
               is less than the max threshold, this graph will be executed in dynamic shape process. In large model
