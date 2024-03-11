@@ -1271,6 +1271,8 @@ class RandpermV2(Primitive):
         ``Ascend`` ``CPU``
 
     Examples:
+        >>> from mindspore import Tensor, ops
+        >>> from mindspore import dtype as mstype
         >>> n = Tensor([4], mstype.int64)
         >>> seed = 0
         >>> offset = 0

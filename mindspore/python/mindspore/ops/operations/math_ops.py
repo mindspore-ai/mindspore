@@ -520,6 +520,7 @@ class AssignAdd(Primitive):
         >>> import mindspore
         >>> import numpy as np
         >>> from mindspore import Tensor, ops, nn
+        >>> from mindspore.common.initializer import initializer
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
