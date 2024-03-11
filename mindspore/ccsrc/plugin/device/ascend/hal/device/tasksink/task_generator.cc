@@ -65,7 +65,9 @@ bool TaskGenerator::GenTasks(const std::vector<CNodePtr> &anf_node_list, std::ve
   (void)mindspore::RDR::RecordTaskDebugInfo(SUBMODULE_ID, task_info_name, task_debug_info_list_);
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  if (context->CanDump(kIntroductory)) {
+  static std::string interval_str = common::GetEnv("MS_DEV_DUMP_IR_INTERVAL");
+  static const auto input_name = common::GetEnv("MS_DEV_DUMP_IR_PASSES");
+  if (context->CanDump(kIntroductory) && interval_str.size() == 0 && input_name.size() == 0) {
 #ifndef ENABLE_SECURITY
     std::string file_path = GetSaveGraphsPathName("task_info_graph_" + std::to_string(graph_id) + ".ir");
     DumpTaskInfo(file_path);

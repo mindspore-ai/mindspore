@@ -207,7 +207,9 @@ bool Somas::GetEnableCacheFlag(const session::KernelGraph &graph) const {
 std::pair<bool, std::string> Somas::GetDebugConfig() const {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  auto enable_save_graphs = context_ptr->CanDump(kIntroductory);
+  static std::string interval_str = common::GetEnv("MS_DEV_DUMP_IR_INTERVAL");
+  static const auto input_name = common::GetEnv("MS_DEV_DUMP_IR_PASSES");
+  auto enable_save_graphs = context_ptr->CanDump(kIntroductory) && interval_str.size() == 0 && input_name.size() == 0;
   auto save_graphs_path = context_ptr->GetSaveGraphsPath();
   if (save_graphs_path.empty()) {
     save_graphs_path = ".";

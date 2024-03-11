@@ -405,16 +405,19 @@ uint64_t Common::GetTimeStamp() {
 
 bool Common::CheckInterval() {
   int interval = 1;
-  static std::string interval_str = common::GetEnv("MS_DEV_DUMPIR_INTERVAL");
+  static std::string interval_str = common::GetEnv("MS_DEV_DUMP_IR_INTERVAL");
   if (interval_str.size() >= 1) {
     try {
       interval = std::stoi(interval_str);
     } catch (const std::invalid_argument &ia) {
-      MS_LOG(DEBUG) << "Invalid argument: " << ia.what() << " when parse " << interval_str;
-      return true;
+      MS_LOG(EXCEPTION) << "Invalid argument: " << ia.what() << " when parse " << interval_str
+                        << ". Please set this env variable to int value.";
     }
   } else {
     return true;
+  }
+  if (interval < 1) {
+    MS_LOG(EXCEPTION) << "Dump IR interval should be greater than 0.";
   }
   const int check = g_id_ % interval;
   if (check == 0) {
