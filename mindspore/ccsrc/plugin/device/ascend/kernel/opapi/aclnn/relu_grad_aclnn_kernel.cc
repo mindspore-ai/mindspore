@@ -30,8 +30,7 @@ namespace kernel {
 void ReluGradAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                       const std::vector<KernelTensor *> &outputs) {
   MAKE_SCALAR(0, kNumberTypeFloat32, zero_);
-  auto return_value = GEN_EXECUTOR_BOOST(op_type_, hash_id_, inputs[kIndex0], inputs[kIndex1], zero_, outputs[kIndex0]);
-  UpdateWorkspace(return_value);
+  GetWorkspaceForResize(inputs[kIndex0], inputs[kIndex1], zero_, outputs[kIndex0]);
 }
 
 bool ReluGradAscend::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,

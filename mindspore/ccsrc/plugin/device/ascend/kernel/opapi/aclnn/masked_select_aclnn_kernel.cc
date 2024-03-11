@@ -25,7 +25,8 @@ namespace mindspore {
 namespace kernel {
 void MaskedSelectAclnnKernelMod::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                                   const std::vector<KernelTensor *> &outputs) {
-  auto return_value = GEN_EXECUTOR(op_type_, inputs[kIndex0], inputs[kIndex1], outputs[kIndex0]);
+  const bool use_huge_pages = false;
+  auto return_value = GEN_EXECUTOR_CUST(op_type_, use_huge_pages, inputs[kIndex0], inputs[kIndex1], outputs[kIndex0]);
   UpdateWorkspace(return_value);
 }
 
@@ -33,7 +34,8 @@ bool MaskedSelectAclnnKernelMod::Launch(const std::vector<KernelTensor *> &input
                                         const std::vector<KernelTensor *> &workspace,
                                         const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
-  auto res = GEN_EXECUTOR_CUST(op_type_, inputs[kIndex0], inputs[kIndex1], outputs[kIndex0]);
+  const bool use_huge_pages = true;
+  auto res = GEN_EXECUTOR_CUST(op_type_, use_huge_pages, inputs[kIndex0], inputs[kIndex1], outputs[kIndex0]);
   executor_ = std::get<1>(res);
   auto &all_tensor = std::get<2>(res);
   RunOpSync(stream_ptr, workspace);

@@ -33,6 +33,7 @@ class ReluGradAscend : public AclnnKernelMod {
   void GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
  private:
+  DEFINE_GET_WORKSPACE_FOR_RESIZE()
   ScalarPtr zero_ = nullptr;
 };
 }  // namespace kernel

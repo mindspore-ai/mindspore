@@ -40,6 +40,7 @@
 #include "backend/common/pass/convert_dynamic_broadcast_to.h"
 #include "backend/common/pass/broadcast_to_fusion.h"
 #include "backend/common/pass/add_attr_to_node/add_attr_to_node.h"
+#include "backend/common/pass/replace_addn_fusion.h"
 #include "utils/ms_context.h"
 #include "include/common/debug/anf_ir_dump.h"
 #ifdef ENABLE_DUMP_IR
@@ -70,6 +71,7 @@ PassManagerPtr GetBackendCommonOptimizationPassManagerPtr(const FuncGraphPtr &gr
   common_pm->AddPass(std::make_shared<AddInputStructuralForPyExecute>());
   common_pm->AddPass(std::make_shared<BroadcastToFusion>());
   common_pm->AddPass(std::make_shared<AddAttrToNode>());
+  common_pm->AddPass(std::make_shared<ReplaceAddNFusion>());
   return common_pm;
 }
 
