@@ -1578,7 +1578,8 @@ void AnfRuntimeAlgorithm::InsertMakeTupleForOutput(const NotNull<KernelGraphPtr>
     {NewValueNode(std::make_shared<Primitive>(prim::kPrimMakeTuple->name())), root_graph->output()});
   MS_EXCEPTION_IF_NULL(root_graph->output());
   MS_EXCEPTION_IF_NULL(make_tuple);
-  make_tuple->set_abstract({root_graph->output()->abstract()});
+  abstract::AbstractBasePtrList abs_list{root_graph->output()->abstract()};
+  make_tuple->set_abstract(std::make_shared<abstract::AbstractTuple>(abs_list));
   root_graph->set_output(make_tuple);
 }
 

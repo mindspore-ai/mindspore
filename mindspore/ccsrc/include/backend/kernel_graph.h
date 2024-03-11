@@ -536,6 +536,19 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   void InferType();
   void PostNewCNode(const CNodePtr &cnode) const;
   void SetKernelInfoForNode(const AnfNodePtr &node) const;
+  void AddInlineSubgraphKernel(const AnfNodePtr &node, const std::string &graph_name) {
+    inline_sub_graph_kernels_[node] = graph_name;
+  }
+  const mindspore::HashMap<AnfNodePtr, std::string> &inline_sub_graph_kernels() const {
+    return inline_sub_graph_kernels_;
+  }
+  mindspore::HashMap<AnfNodePtr, AnfNodePtr> condition_gather_to_switch() const { return condition_gather_to_switch_; }
+  void AddConditionGatherSwitchPair(const AnfNodePtr &condition_gather, const AnfNodePtr &condition_switch) {
+    condition_gather_to_switch_[condition_gather] = condition_switch;
+  }
+  void RemoveConditionGatherSwitchPair(const AnfNodePtr &condition_gather) {
+    condition_gather_to_switch_.erase(condition_gather);
+  }
 
   void set_is_from_pynative(const bool &from_pynative) { from_pynative_ = from_pynative; }
   bool is_from_pynative() const { return from_pynative_; }
@@ -577,6 +590,10 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   std::map<std::string, std::pair<AnfNodePtr, int>> summary_nodes_;
   // parameters that will be updated when graph is executed
   mindspore::HashSet<ParameterPtr> updated_parameters_;
+  // Kernel in inline subgraph for switch node.
+  mindspore::HashMap<AnfNodePtr, std::string> inline_sub_graph_kernels_;
+  // Record the relationship between condition gather and condition switch.
+  mindspore::HashMap<AnfNodePtr, AnfNodePtr> condition_gather_to_switch_;
 
   // graph needn't execute
   bool executable_{false};
@@ -628,6 +645,7 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   mindspore::HashMap<CNodePtr, std::vector<std::pair<CNodePtr, CNodePtr>>> send_recv_pairs_for_parallel_op_inputs_;
   // key:parallel op ptr, value:vector of <send op receive op > pairs
   mindspore::HashMap<CNodePtr, std::vector<std::pair<CNodePtr, CNodePtr>>> send_recv_pairs_for_parallel_op_outputs_;
+
   std::atomic<size_t> pre_graph_finished_count_{0};
   std::atomic<size_t> post_graph_finished_count_{0};
   bool first_step_{true};

@@ -119,7 +119,15 @@ bool IsMultiLayerTuple(const abstract::AbstractBasePtr &abstract) {
                      });
 }
 
-std::vector<KernelWithIndex> GetAllOutputWithIndexInner(const AnfNodePtr &node) {
+namespace {
+bool IsMultiOutput(const AnfNodePtr &node) {
+  return node != nullptr && node->abstract() != nullptr && node->abstract()->isa<abstract::AbstractSequence>() &&
+         node->abstract()->cast<abstract::AbstractSequencePtr>()->size() > 1;
+}
+}  // namespace
+
+std::vector<KernelWithIndex> GetAllOutputWithIndexInner(const AnfNodePtr &node,
+                                                        const std::vector<PrimitivePtr> &return_types) {
   MS_EXCEPTION_IF_NULL(node);
   MS_LOG(DEBUG) << "Output node: " << node->fullname_with_scope();
   std::vector<KernelWithIndex> ret;
@@ -129,17 +137,26 @@ std::vector<KernelWithIndex> GetAllOutputWithIndexInner(const AnfNodePtr &node) 
     auto make_tuple = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(make_tuple);
     for (size_t i = 1; i < make_tuple->size(); i++) {
-      auto make_tuple_output = GetAllOutputWithIndexInner(make_tuple->input(i));
+      auto make_tuple_output = GetAllOutputWithIndexInner(make_tuple->input(i), return_types);
       (void)std::copy(make_tuple_output.begin(), make_tuple_output.end(), std::back_inserter(ret));
     }
     return ret;
   }
-
+  if (std::any_of(return_types.begin(), return_types.end(), [&node](const PrimitivePtr &prim_type) -> bool {
+        return common::AnfAlgo::CheckPrimitiveType(node, prim_type);
+      })) {
+    if (IsMultiOutput(node)) {
+      MS_LOG(EXCEPTION) << "Invalid get all output with index node:" << node->DebugString()
+                        << " abstract:" << node->abstract()->ToString();
+    }
+    MS_LOG(DEBUG) << "Need node flatten output of node:" << node->DebugString();
+    return {KernelWithIndex(node, 0)};
+  }
   // The depend node need get the real node.
   if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimDepend)) {
     auto depend_node = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(depend_node);
-    auto real_output = GetAllOutputWithIndexInner(depend_node->input(kRealInputIndexInDepend));
+    auto real_output = GetAllOutputWithIndexInner(depend_node->input(kRealInputIndexInDepend), return_types);
     (void)std::copy(real_output.begin(), real_output.end(), std::back_inserter(ret));
     return ret;
   }
@@ -196,7 +213,7 @@ std::vector<KernelWithIndex> GetAllOutputWithIndexInner(const AnfNodePtr &node) 
 
     // The MakeTuple/MakeSparse node need recurse.
     if (IsOneOfPrimitiveCNode(output_with_index.first, expand_prims)) {
-      auto output_vector = GetAllOutputWithIndexInner(output_with_index.first);
+      auto output_vector = GetAllOutputWithIndexInner(output_with_index.first, return_types);
       if (output_vector.size() <= output_with_index.second) {
         MS_LOG(INTERNAL_EXCEPTION) << "Invalid index:" << output_with_index.second
                                    << " for outputs of node:" << output_with_index.first->DebugString();
@@ -438,8 +455,9 @@ std::vector<KernelWithIndex> AnfAlgo::GetAllOutputWithOutMonadAndParameter(const
   return real_output;
 }
 
-std::vector<KernelWithIndex> AnfAlgo::GetAllOutputWithIndex(const AnfNodePtr &node) {
-  auto ret = GetAllOutputWithIndexInner(node);
+std::vector<KernelWithIndex> AnfAlgo::GetAllOutputWithIndex(const AnfNodePtr &node,
+                                                            const std::vector<PrimitivePtr> &return_types) {
+  auto ret = GetAllOutputWithIndexInner(node, return_types);
   std::map<AnfNodePtr, size_t> value_node_index;
 
   // Unify the output of the front and back end to the ValueTuple

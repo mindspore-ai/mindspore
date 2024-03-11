@@ -161,6 +161,15 @@ bool IsRpcActor(const AnfNodePtr &node) {
   return false;
 }
 
+bool IsInnerControlFlowActor(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (IsKernelActor(node) && (common::AnfAlgo::GetCNodeName(node) == "ConditionSwitch" ||
+                              common::AnfAlgo::GetCNodeName(node) == "ConditionGather")) {
+    return true;
+  }
+  return false;
+}
+
 bool IsPersistentDeviceTensor(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   if (node->isa<ValueNode>()) {

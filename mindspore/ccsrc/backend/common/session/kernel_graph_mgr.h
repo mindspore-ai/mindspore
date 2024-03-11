@@ -104,7 +104,7 @@ class BACKEND_EXPORT KernelGraphMgr {
                              const AnfNodePtrList &func_graph_args, const ScopePtr &scope,
                              const uint32_t &target_graph_id,
                              const std::map<session::AnfWithOutIndex, session::AnfWithOutIndex> &ref_map,
-                             const KernelGraphPtr &graph);
+                             const KernelGraphPtr &graph, bool is_switch_inline);
 
  private:
   void GetCNodeInfo(const CNodePtr &cnode, std::vector<AnfNodePtr> *cnode_inputs) const;

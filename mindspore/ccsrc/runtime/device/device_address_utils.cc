@@ -524,20 +524,16 @@ void DeviceAddressUtils::CreateKernelOutputDeviceAddress(const DeviceContext *de
       kernel_tensor->set_stream_id(AnfAlgo::GetStreamId(kernel));
       MS_LOG(DEBUG) << "Kernel tensor created without set stream id, but set after device address created.";
       auto device_address = real_device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
-      if (user_data != nullptr) {
-        device_address->SetNodeIndex(kernel, i);
-      }
+      device_address->SetNodeIndex(kernel, i);
       if (is_from_persistent_mem) {
         device_address->set_from_persistent_mem(true);
-      }
-      if (find(outputs.begin(), outputs.end(), kernel) != outputs.end()) {
-        device_address->SetNodeIndex(kernel, i);
       }
       MS_LOG(DEBUG) << "Create addr for node:" << common::AnfAlgo::GetNodeDebugString(kernel)
                     << " addr:" << device_address << " type:" << device_address->type_id()
                     << ", kernel tensor addr:" << kernel_tensor.get()
                     << ", kernel tensor: " << kernel_tensor->ToString() << " addr size:" << address_size
-                    << " real size:" << device_address->GetSize();
+                    << " real size:" << device_address->GetSize()
+                    << " origin ref count:" << device_address->original_ref_count();
       device_address->set_stream_id(AnfAlgo::GetStreamId(kernel));
       AnfAlgo::SetOutputAddr(device_address, i, kernel.get());
     }
@@ -735,6 +731,8 @@ void DeviceAddressUtils::UpdateDeviceAddressForInplaceNode(const KernelGraphPtr 
       MS_EXCEPTION_IF_NULL(group_node_device_address);
       // Update the reference count of device address.
       device_address->IncreaseOriginalRefCount();
+      MS_LOG(DEBUG) << "After increase ref count for device address:" << device_address
+                    << " ref count:" << device_address->original_ref_count();
       device_address->ResetRefCount();
       group_node_device_address->set_pointer_ref_count(device_address->pointer_ref_count());
     }
@@ -798,6 +796,8 @@ void DeviceAddressUtils::UpdateDeviceAddress(const session::AnfWithOutIndex &cur
     cur_node_output_addr->DecreaseOriginalRefCount();
     cur_node_output_addr->ResetRefCount();
     origin_node_output_addr->IncreaseOriginalRefCount();
+    MS_LOG(DEBUG) << "After increase ref count for device address:" << origin_node_output_addr
+                  << " ref count:" << origin_node_output_addr->original_ref_count();
     origin_node_output_addr->ResetRefCount();
     cur_node_output_addr->set_pointer_ref_count(origin_node_output_addr->pointer_ref_count());
     cur_node_output_addr->UpdateFlag(device::kDeviceAddressFlagRefNode);

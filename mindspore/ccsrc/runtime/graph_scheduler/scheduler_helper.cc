@@ -717,7 +717,9 @@ void SchedulerHelper::AddMemorySign(AbstractActor *const from_actor, AbstractAct
 KernelGraphPtr SchedulerHelper::FetchKernelGraphByActor(AbstractActor *const actor) {
   MS_EXCEPTION_IF_NULL(actor);
   AnfNode *from_kernel = nullptr;
-  if (actor->type() == KernelTransformType::kKernelActor) {
+  if (actor->type() == KernelTransformType::kKernelActor ||
+      actor->type() == KernelTransformType::kConditionGatherActor ||
+      actor->type() == KernelTransformType::kConditionSwitchActor) {
     auto kernel_actor = dynamic_cast<KernelActor *>(actor);
     MS_EXCEPTION_IF_NULL(kernel_actor);
     from_kernel = kernel_actor->kernel().get();

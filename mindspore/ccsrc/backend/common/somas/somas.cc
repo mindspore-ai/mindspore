@@ -2239,6 +2239,14 @@ SomasNodePtr Somas::GetSomasNode(size_t node_id) const {
   }
 }
 
+namespace {
+bool IsNopMakeTuple(const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto input_num = common::AnfAlgo::GetInputNum(cnode);
+  return IsPrimitiveCNode(cnode, prim::kPrimMakeTuple) && input_num == 1;
+}
+}  // namespace
+
 common::KernelWithIndex Somas::GetVisitKernelWithReturnType(const AnfNodePtr &ori_node, size_t ori_index) {
   auto prenode = common::AnfAlgo::VisitKernelWithReturnType(ori_node, ori_index, false);
   MS_EXCEPTION_IF_NULL(prenode.first);
@@ -2247,7 +2255,7 @@ common::KernelWithIndex Somas::GetVisitKernelWithReturnType(const AnfNodePtr &or
     auto anf_node = prenode.first;
     auto cnode = anf_node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
-    if (!common::AnfAlgo::IsNopNode(cnode)) {
+    if (!common::AnfAlgo::IsNopNode(cnode) && !IsNopMakeTuple(cnode)) {
       MS_LOG(INTERNAL_EXCEPTION) << "Node[" << ori_node->fullname_with_scope() << "] find input node["
                                  << cnode->fullname_with_scope()
                                  << "] doesn't exist in nodes_map and is not a nop node!!!!";

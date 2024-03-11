@@ -78,7 +78,7 @@ bool IsNotHcclCommunicationOp(const std::string &op_name) {
 }
 
 void HcclMetadataInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<KernelBuildInfo>> *kernel_info_list) {
-  static const std::vector<TypeId> kHcclSupportTypes = {kNumberTypeInt8,    kNumberTypeInt32, kNumberTypeFloat16,
+  static const std::vector<TypeId> kHcclSupportTypes = {kNumberTypeInt8, kNumberTypeInt32, kNumberTypeFloat16,
                                                         kNumberTypeFloat32, kNumberTypeInt16, kNumberTypeBFloat16};
   MS_EXCEPTION_IF_NULL(kernel_info_list);
   MS_EXCEPTION_IF_NULL(kernel_node);

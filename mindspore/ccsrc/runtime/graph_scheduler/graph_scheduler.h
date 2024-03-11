@@ -29,6 +29,7 @@
 #include "utils/hash_set.h"
 #include "runtime/graph_scheduler/control_node_scheduler.h"
 #include "runtime/graph_scheduler/any_type_graph_scheduler.h"
+#include "runtime/graph_scheduler/inline_control_flow_scheduler.h"
 #include "runtime/graph_scheduler/mem_swap_scheduler.h"
 #include "runtime/graph_scheduler/actor/actor_set.h"
 #include "runtime/graph_scheduler/graph_compiler.h"
@@ -131,7 +132,11 @@ class BACKEND_EXPORT GraphScheduler {
   KernelActorPtr GenerateRpcActor(const CNodePtr &kernel, const DeviceContext *device_context,
                                   GraphExecutionStrategy strategy, const std::set<size_t> &modifiable_ref_input_indexes,
                                   const std::set<size_t> &modifiable_ref_output_indexes);
-
+  // Generate inner control flow actor in execution order.
+  KernelActorPtr GenerateInnerControlFlowActor(const CNodePtr &kernel, const DeviceContext *device_context,
+                                               GraphExecutionStrategy strategy,
+                                               const std::set<size_t> &ref_input_indexes,
+                                               const std::set<size_t> &ref_output_indexes);
   // Cache the information of graph output node to actor between “build” and “link”, for linking between the tail of
   // previous graph and the head of next graph.
   void CacheGraphOutputToActor(const GraphCompilerInfo &graph_compiler_info);
@@ -247,6 +252,8 @@ class BACKEND_EXPORT GraphScheduler {
   ControlNodeScheduler control_node_scheduler_;
   // If there is an any type input in graph, it will be used to transform it.
   AnyTypeGraphScheduler any_type_graph_scheduler_;
+  // If there is inline control flow in kernel graph, it will be used to transform it.
+  InlineControlFlowScheduler inline_control_flow_scheduler_;
 
   // Build and link swap actor when memory offload is enabled.
   MemSwapScheduler swap_node_scheduler_;
