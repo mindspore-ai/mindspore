@@ -32,8 +32,7 @@ namespace kernel {
 
 void MaskedFillAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                         const std::vector<KernelTensor *> &outputs) {
-  auto return_value = GEN_EXECUTOR_BOOST(op_type_, hash_id_, inputs[kIndex0], inputs[kIndex1], inputs[kIndex2]);
-  UpdateWorkspace(return_value);
+  GetWorkspaceForResize(inputs[kIndex0], inputs[kIndex1], inputs[kIndex2]);
 }
 
 bool MaskedFillAscend::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,

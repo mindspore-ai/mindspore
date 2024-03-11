@@ -213,40 +213,41 @@ class ApiCachePool {
   (aclnn_api, aclnn_api + "GetWorkspaceSize", __VA_ARGS__)
 
 // For custom generate executor.
-#define GEN_EXECUTOR_CUST(aclnn_api, ...)                                                                          \
-  [](const std::string &workspace_api_name, auto &... args) -> auto {                                              \
-    static const auto get_workspace_size_func_ptr = transform::GetOpApiFunc(workspace_api_name.c_str());           \
-    if (get_workspace_size_func_ptr == nullptr) {                                                                  \
-      MS_LOG(EXCEPTION) << workspace_api_name << " not in " << transform::GetOpApiLibName() << ", please check!";  \
-    }                                                                                                              \
-    static const auto init_cache_thread_local = transform::GetOpApiFunc("InitPTACacheThreadLocal");                \
-    static const auto set_hash_key = transform::GetOpApiFunc("SetPTAHashKey");                                     \
-    transform::InitCacheThreadLocal init_cache_thread_local_func =                                                 \
-      reinterpret_cast<transform::InitCacheThreadLocal>(init_cache_thread_local);                                  \
-    transform::SetHashKey set_hash_key_func = reinterpret_cast<transform::SetHashKey>(set_hash_key);               \
-    if (init_cache_thread_local_func && set_hash_key_func) {                                                       \
-      init_cache_thread_local_func();                                                                              \
-      set_hash_key_func(0);                                                                                        \
-    }                                                                                                              \
-    uint64_t workspace_size = 0;                                                                                   \
-    uint64_t *workspace_size_addr = &workspace_size;                                                               \
-    transform::aclOpExecutor *executor = nullptr;                                                                  \
-    transform::aclOpExecutor **executor_addr = &executor;                                                          \
-    auto init_mem_func = transform::OpApiDefaultResource::GetInstance().init_mem_func();                           \
-    if (init_mem_func) {                                                                                           \
-      init_mem_func(nullptr, false);                                                                               \
-    }                                                                                                              \
-    auto converted_params = transform::ConvertTypes(args..., workspace_size_addr, executor_addr);                  \
-    static auto get_workspace_size_func =                                                                          \
-      transform::ConvertToOpApiFunc(converted_params, get_workspace_size_func_ptr);                                \
-    auto workspace_status = transform::call(get_workspace_size_func, converted_params);                            \
-    if (workspace_status != 0) {                                                                                   \
-      MS_LOG(EXCEPTION) << workspace_api_name << " call failed, please check!";                                    \
-    }                                                                                                              \
-    return std::make_tuple(workspace_size, executor,                                                               \
-                           transform::OpApiParams<decltype(converted_params)>(std::move(converted_params)), true); \
-  }                                                                                                                \
-  (aclnn_api + "GetWorkspaceSize", __VA_ARGS__)
+#define GEN_EXECUTOR_CUST(aclnn_api, use_huge_pages, ...)                                                         \
+  [](const std::string &workspace_api_name, bool use_huge_pages, auto &... args) -> auto {                        \
+    static const auto get_workspace_size_func_ptr = transform::GetOpApiFunc(workspace_api_name.c_str());          \
+    if (get_workspace_size_func_ptr == nullptr) {                                                                 \
+      MS_LOG(EXCEPTION) << workspace_api_name << " not in " << transform::GetOpApiLibName() << ", please check!"; \
+    }                                                                                                             \
+    static const auto init_cache_thread_local = transform::GetOpApiFunc("InitPTACacheThreadLocal");               \
+    static const auto set_hash_key = transform::GetOpApiFunc("SetPTAHashKey");                                    \
+    transform::InitCacheThreadLocal init_cache_thread_local_func =                                                \
+      reinterpret_cast<transform::InitCacheThreadLocal>(init_cache_thread_local);                                 \
+    transform::SetHashKey set_hash_key_func = reinterpret_cast<transform::SetHashKey>(set_hash_key);              \
+    if (init_cache_thread_local_func && set_hash_key_func) {                                                      \
+      init_cache_thread_local_func();                                                                             \
+      set_hash_key_func(0);                                                                                       \
+    }                                                                                                             \
+    uint64_t workspace_size = 0;                                                                                  \
+    uint64_t *workspace_size_addr = &workspace_size;                                                              \
+    transform::aclOpExecutor *executor = nullptr;                                                                 \
+    transform::aclOpExecutor **executor_addr = &executor;                                                         \
+    auto init_mem_func = transform::OpApiDefaultResource::GetInstance().init_mem_func();                          \
+    if (use_huge_pages && init_mem_func) {                                                                        \
+      init_mem_func(nullptr, false);                                                                              \
+    }                                                                                                             \
+    auto converted_params = transform::ConvertTypes(args..., workspace_size_addr, executor_addr);                 \
+    static auto get_workspace_size_func =                                                                         \
+      transform::ConvertToOpApiFunc(converted_params, get_workspace_size_func_ptr);                               \
+    auto workspace_status = transform::call(get_workspace_size_func, converted_params);                           \
+    if (workspace_status != 0) {                                                                                  \
+      MS_LOG(EXCEPTION) << workspace_api_name << " call failed, please check!";                                   \
+    }                                                                                                             \
+    return std::make_tuple(workspace_size, executor,                                                              \
+                           transform::OpApiParams<decltype(converted_params)>(std::move(converted_params)),       \
+                           use_huge_pages);                                                                       \
+  }                                                                                                               \
+  (aclnn_api + "GetWorkspaceSize", use_huge_pages, __VA_ARGS__)
 
 // For speed up generate executor.
 #define GEN_EXECUTOR_BOOST(aclnn_api, hash_id, ...)                                                               \

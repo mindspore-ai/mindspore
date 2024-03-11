@@ -33,7 +33,6 @@ class HcomAllToAllKernel : public HcclKernel {
 
  protected:
   HcclDataType GetHcclDataType() const override { return data_type_; }
-  void CalLoopSize() override {}
 
  private:
   HcclDataType data_type_ = {};
