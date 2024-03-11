@@ -1030,6 +1030,7 @@ py::object GradExecutor::RunGrad(const prim::GradOperationPtr &grad, const py::o
     top_cell()->ClearParamGradInfo();
     return RunGradGraph();
   } else {
+    GilReleaseWithCheck gil_release;
     auto grads = RunBackward(grad_attr, w_args, p_args);
     top_cell()->ClearParamGradInfo();
     AsyncClearAutoGradCell(top_cell());
