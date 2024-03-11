@@ -957,7 +957,11 @@ bool MSANFModelParser::GetTensorDataFromExternal(const mind_ir::TensorProto &ten
       size_t file_size = static_cast<size_t>(fid.tellg());
       fid.clear();
       (void)fid.seekg(0);
-      auto plain_data = std::make_unique<char[]>(file_size);
+      std::unique_ptr<char[]> plain_data(new (std::nothrow) char[file_size]);
+      if (plain_data == nullptr) {
+        MS_LOG(ERROR) << "Failed to create file buffer, file size: " << file_size << " bytes";
+        return false;
+      }
       constexpr Byte is_little_endian = 1;
       constexpr int byte_order_index = 0;
       (void)fid.read(plain_data.get(), SizeToLong(file_size));
