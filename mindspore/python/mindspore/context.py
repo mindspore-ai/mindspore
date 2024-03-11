@@ -1400,25 +1400,25 @@ def set_context(**kwargs):
             - parallel_speed_up_json_path(Union[str, None]): The path to the parallel speed up json file, configuration
               can refer to `parallel_speed_up.json
               <https://gitee.com/mindspore/mindspore/blob/master/config/parallel_speed_up.json>`_ .
-              If its value is None or '', it does not take effect. Default: ``None``.
+              If its value is None or '', it does not take effect. Default None.
 
-              - recompute_comm_overlap (bool): Enable overlap between recompute ops and communication ops if ``True``.
-                Default: ``False``.
-              - matmul_grad_comm_overlap (bool): Enable overlap between grad ops and communication ops if ``True``.
-                Default: ``False``.
-              - enable_task_opt (bool): Enable the optimization of the number of tasks
-                for each communication if ``True``.
-                Default: ``False``.
-              - interleaved_matmul_comm (bool): Enable interleaved optimization of Matmul-Comm if ``True``.
-                Default: ``False``.
-              - interleaved_layernorm_comm (bool): Enable interleaved optimization of LayerNorm-Comm if ``True``.
-                Default: ``False``.
+              - recompute_comm_overlap (bool): Enable overlap between recompute ops and communication ops if True.
+                Default: False.
+              - matmul_grad_comm_overlap (bool): Enable overlap between dw matmul and
+                tensor parallel communication ops if True. Default: False.
+              - enable_task_opt (bool): Enable the optimization of the number of tasks for each communication if True.
+                Default: False.
+              - enable_grad_comm_opt (bool): Enable overlap between dx ops and data parallel communication ops if True.
+                Default: False.
+              - enable_opt_shard_comm_opt (bool): Enable overlap between forward ops
+                and optimizer parallel allgather communication if True. Default: False.
               - compute_communicate_fusion_level (int): Enable the fusion between compute and communicate.
                 Default: ``0``.
                 - 0: Disable fusion.
                 - 1: Apply fusion to forward nodes.
                 - 2: Apply fusion to backward nodes.
                 - 3: Apply fusion to all nodes.
+
             - host_scheduling_max_threshold(int): The max threshold to control whether the dynamic shape process is
               used when run the static graph, the default value is 0. When the number of operations in the static graph
               is less than the max threshold, this graph will be executed in dynamic shape process. In large model

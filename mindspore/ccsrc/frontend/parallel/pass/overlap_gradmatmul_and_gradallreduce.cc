@@ -207,12 +207,12 @@ void ExtractBackwardNodes(const std::vector<CNodePtr> &origin_nodes_topological,
         forward_matmul_unique_id_list.end()) {
       continue;
     }
-    auto pre_cnode = RealInputNode(matmul_cnode, 1)->cast<CNodePtr>();
-    if (pre_cnode == nullptr || !pre_cnode->HasPrimalAttr(kPrimalAttrForwardCommNodeUniqueId)) {
+
+    if (IsDwMatMul(matmul_cnode)) {
       (*backward_matmul_list).push_back(matmul_cnode);
       continue;
     }
-
+    auto pre_cnode = RealInputNode(matmul_cnode, 1)->cast<CNodePtr>();
     auto pre_cnode_forward_comm_unique_id =
       GetValue<std::string>(pre_cnode->GetPrimalAttr(kPrimalAttrForwardCommNodeUniqueId));
     if (std::find(forward_comm_node_unique_id_list.begin(), forward_comm_node_unique_id_list.end(),
@@ -241,29 +241,6 @@ void ExtractBackwardNodes(const std::vector<CNodePtr> &origin_nodes_topological,
                       forward_matmul_unique_id_list.begin();
       return index1 > index2;
     });
-}
-
-void ExtendDxDwMap(const std::vector<CNodePtr> &origin_nodes_topological,
-                   std::unordered_map<CNodePtr, CNodePtr> *backward_matmul_dx_dw_map) {
-  std::unordered_map<std::string, CNodePtr> unique_id_dw_map;
-  for (const auto &dx_dw : *backward_matmul_dx_dw_map) {
-    if (dx_dw.second->HasPrimalAttr(FORWARD_UNIQUE_ID_LIST)) {
-      auto unique_ids = GetValue<std::vector<std::string>>(dx_dw.second->GetPrimalAttr(FORWARD_UNIQUE_ID_LIST));
-      for (const auto &unique_id : unique_ids) {
-        unique_id_dw_map[unique_id] = dx_dw.second;
-      }
-    }
-  }
-  for (const auto &node : origin_nodes_topological) {
-    if (!node->HasPrimalAttr(kPrimalAttrForwardUniqueId)) {
-      continue;
-    }
-    auto forward_unique_id = GetValue<std::string>(node->GetPrimalAttr(kPrimalAttrForwardUniqueId));
-    if (unique_id_dw_map.count(forward_unique_id) == 0) {
-      continue;
-    }
-    (*backward_matmul_dx_dw_map)[node] = unique_id_dw_map[forward_unique_id];
-  }
 }
 
 void DoOverLapWay2(const FuncGraphManagerPtr &manager, const FuncGraphPtr &forward_graph,
@@ -345,7 +322,8 @@ void OverlapGradMatmulAndGradAllreduce(const FuncGraphPtr &graph) {
       break;
     }
   }
-  if (!parallel::ParallelContext::GetInstance()->enable_fine_grained_micro_interleaved()) {
+  if (!parallel::ParallelContext::GetInstance()->enable_fine_grained_micro_interleaved() &&
+      ms_context->CellReuseLevel() != CellReuseLevel::kNoCellReuse) {
     DoOverLap(manager, forward_graph, backward_graph);
     return;
   }
