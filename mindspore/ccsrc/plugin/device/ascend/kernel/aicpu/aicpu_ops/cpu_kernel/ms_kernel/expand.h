@@ -32,10 +32,10 @@ class ExpandCpuKernel : public CpuKernel {
 
  private:
   template <int32_t RANK, typename T, int32_t OPTION>
-  uint32_t BroadcastCompute(const CpuKernelContext &ctx, BCalcInfo &calc_info);
+  uint32_t BroadcastCompute(CpuKernelContext &ctx, BCalcInfo &calc_info);
   bool AlignedCheck(const BCalcInfo &calc_info);
   template <int32_t RANK, typename T>
-  uint32_t ExpandCalculateWithAlignedCheck(const CpuKernelContext &ctx, BCalcInfo &calc_info);
+  uint32_t ExpandCalculateWithAlignedCheck(CpuKernelContext &ctx, BCalcInfo &calc_info);
 
   template <typename T>
   uint32_t ExpandCompute(CpuKernelContext &ctx);

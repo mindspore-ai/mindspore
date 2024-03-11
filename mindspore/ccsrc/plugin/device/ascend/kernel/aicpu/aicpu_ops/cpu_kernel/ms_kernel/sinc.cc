@@ -32,7 +32,7 @@ const char *kSinc = "Sinc";
 
 namespace aicpu {
 template <typename T>
-uint32_t SincCpuKernel::SincTypeSameCompute(const CpuKernelContext &ctx) {
+uint32_t SincCpuKernel::SincTypeSameCompute(CpuKernelContext &ctx) {
   T *x_addr = static_cast<T *>(ctx.Input(0)->GetData());
   auto y_addr = static_cast<T *>(ctx.Output(0)->GetData());
   size_t x_size = ctx.Input(0)->NumElements();
@@ -65,14 +65,14 @@ uint32_t SincCpuKernel::SincTypeSameCompute(const CpuKernelContext &ctx) {
     if (max_core_num > date_size) {
       max_core_num = date_size;
     }
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, x_size, x_size / max_core_num, shard_sinc),
-                        "Sinc Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, x_size, x_size / max_core_num, shard_sinc),
+                             "Sinc Compute failed.");
   }
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t SincCpuKernel::SincTypeChangeCompute(const CpuKernelContext &ctx) {
+uint32_t SincCpuKernel::SincTypeChangeCompute(CpuKernelContext &ctx) {
   T *x_addr = static_cast<T *>(ctx.Input(0)->GetData());
   auto y_addr = static_cast<float *>(ctx.Output(0)->GetData());
   size_t x_size = ctx.Input(0)->NumElements();
@@ -105,14 +105,14 @@ uint32_t SincCpuKernel::SincTypeChangeCompute(const CpuKernelContext &ctx) {
     if (max_core_num > date_size) {
       max_core_num = date_size;
     }
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, x_size, x_size / max_core_num, shard_sinc),
-                        "Sinc Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, x_size, x_size / max_core_num, shard_sinc),
+                             "Sinc Compute failed.");
   }
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t SincCpuKernel::SincBoolCompute(const CpuKernelContext &ctx) {
+uint32_t SincCpuKernel::SincBoolCompute(CpuKernelContext &ctx) {
   bool *x_addr = static_cast<bool *>(ctx.Input(0)->GetData());
   auto y_addr = static_cast<float *>(ctx.Output(0)->GetData());
   size_t x_size = ctx.Input(0)->NumElements();
@@ -149,19 +149,19 @@ uint32_t SincCpuKernel::SincBoolCompute(const CpuKernelContext &ctx) {
     if (max_core_num > date_size) {
       max_core_num = date_size;
     }
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, x_size, x_size / max_core_num, shard_sinc),
-                        "Sinc Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, x_size, x_size / max_core_num, shard_sinc),
+                             "Sinc Compute failed.");
   }
   return KERNEL_STATUS_OK;
 }
 
-inline std::uint32_t SincExtraCheck(const CpuKernelContext &ctx) {
+inline std::uint32_t SincExtraCheck(CpuKernelContext &ctx) {
   if (ctx.Input(0)->GetData() == nullptr) {
-    KERNEL_LOG_ERROR("Get input data failed.");
+    CUST_KERNEL_LOG_ERROR(ctx, "Get input data failed.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (ctx.Output(0)->GetData() == nullptr) {
-    KERNEL_LOG_ERROR("Get output data failed.");
+    CUST_KERNEL_LOG_ERROR(ctx, "Get output data failed.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
   DataType in_dtype = ctx.Input(0)->GetDataType();
@@ -174,29 +174,31 @@ inline std::uint32_t SincExtraCheck(const CpuKernelContext &ctx) {
   dtypes.insert(DT_COMPLEX128);
   if (dtypes.count(in_dtype) == 1) {
     if (out_dtype != in_dtype) {
-      KERNEL_LOG_ERROR("The data type of the output need be the same as the input when input is [%s], but got [%s].",
-                       DTypeStr(in_dtype).c_str(), DTypeStr(out_dtype).c_str());
+      CUST_KERNEL_LOG_ERROR(
+        ctx, "The data type of the output need be the same as the input when input is [%s], but got [%s].",
+        DTypeStr(in_dtype).c_str(), DTypeStr(out_dtype).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
     }
   } else {
     if (out_dtype != DT_FLOAT) {
-      KERNEL_LOG_ERROR("The data type of the output must be float32 when the dtype of input is [%s], but got [%s].",
-                       DTypeStr(in_dtype).c_str(), DTypeStr(out_dtype).c_str());
+      CUST_KERNEL_LOG_ERROR(
+        ctx, "The data type of the output must be float32 when the dtype of input is [%s], but got [%s].",
+        DTypeStr(in_dtype).c_str(), DTypeStr(out_dtype).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
     }
   }
   std::vector<int64_t> input_dims = ctx.Input(0)->GetTensorShape()->GetDimSizes();
   std::vector<int64_t> output_dims = ctx.Output(0)->GetTensorShape()->GetDimSizes();
   if (input_dims.size() != output_dims.size()) {
-    KERNEL_LOG_ERROR(
-      "The data dim size of the input [%llu] need be the same as the output "
-      "[%llu].",
-      input_dims.size(), output_dims.size());
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "The data dim size of the input [%llu] need be the same as the output "
+                          "[%llu].",
+                          input_dims.size(), output_dims.size());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   for (size_t index = 0; index < input_dims.size(); index++) {
     if (input_dims[index] != output_dims[index]) {
-      KERNEL_LOG_ERROR("The data dim of the input need be the same as the output.");
+      CUST_KERNEL_LOG_ERROR(ctx, "The data dim of the input need be the same as the output.");
       return KERNEL_STATUS_PARAM_INVALID;
     }
   }
@@ -204,7 +206,7 @@ inline std::uint32_t SincExtraCheck(const CpuKernelContext &ctx) {
 }
 
 uint32_t SincCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kSincInputNum, kSincOutputNum), "[%s] check params failed.", kSinc);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kSincInputNum, kSincOutputNum), "[%s] check params failed.", kSinc);
   uint32_t res = KERNEL_STATUS_OK;
   res = SincExtraCheck(ctx);
   if (res != KERNEL_STATUS_OK) {
@@ -255,7 +257,7 @@ uint32_t SincCpuKernel::Compute(CpuKernelContext &ctx) {
       res = SincBoolCompute<bool>(ctx);
       break;
     default:
-      KERNEL_LOG_ERROR("Sinc invalid input type [%s]", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Sinc invalid input type [%s]", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   if (res != KERNEL_STATUS_OK) {

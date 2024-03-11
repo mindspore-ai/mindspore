@@ -40,7 +40,7 @@ class SplitCpuKernel : public CpuKernel {
    * @param ctx cpu kernel context
    * @return status if success
    */
-  uint32_t CheckAndInitParams(const CpuKernelContext &ctx);
+  uint32_t CheckAndInitParams(CpuKernelContext &ctx);
   /**
    * @brief split data when split num is 1
    * @param input_data_ptr ptr which store input data
@@ -48,7 +48,7 @@ class SplitCpuKernel : public CpuKernel {
    * @return status if success
    */
   template <typename T>
-  uint32_t SplitWithOneOutput(T *input_data_ptr, std::vector<T *> output_data_vec);
+  uint32_t SplitWithOneOutput(CpuKernelContext &ctx, T *input_data_ptr, std::vector<T *> output_data_vec);
   /**
    * @brief split data when split dim is 0
    * @param input_data_ptr ptr which store input data
@@ -56,7 +56,7 @@ class SplitCpuKernel : public CpuKernel {
    * @return status if success
    */
   template <typename T>
-  uint32_t SplitWithDimZero(T *input_data_ptr, std::vector<T *> output_data_vec);
+  uint32_t SplitWithDimZero(CpuKernelContext &ctx, T *input_data_ptr, std::vector<T *> output_data_vec);
   /**
    * @brief split data
    * @param input_data_ptr ptr which store input data
@@ -64,10 +64,10 @@ class SplitCpuKernel : public CpuKernel {
    * @return status if success
    */
   template <typename T>
-  uint32_t SplitCompute(T *input_data_ptr, std::vector<T *> output_data_vec);
+  uint32_t SplitCompute(CpuKernelContext &ctx, T *input_data_ptr, std::vector<T *> output_data_vec);
 
   template <typename T>
-  uint32_t DoCompute(const CpuKernelContext &ctx);
+  uint32_t DoCompute(CpuKernelContext &ctx);
 
  private:
   DataType data_type_;

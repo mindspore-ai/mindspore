@@ -32,14 +32,14 @@ uint32_t RandomUniformIntCpuKernel::Compute(CpuKernelContext &ctx) {
   auto output = ctx.Output(0);
   auto output_data = reinterpret_cast<int32_t *>(output->GetData());
   auto output_dtype = output->GetDataType();
-  KERNEL_CHECK_FALSE(output_dtype == DT_INT32, KERNEL_STATUS_INNER_ERROR,
-                     "Output only support data type int32_t, but got [%s].", DTypeStr(output_dtype).c_str());
+  CUST_KERNEL_CHECK_FALSE(ctx, output_dtype == DT_INT32, KERNEL_STATUS_INNER_ERROR,
+                          "Output only support data type int32_t, but got [%s].", DTypeStr(output_dtype).c_str());
   size_t output_size = output->GetDataSize() / output_dtype;
 
   auto input_min = ctx.Input(kMinIdx);
   auto input_max = ctx.Input(kMaxIdx);
-  KERNEL_CHECK_FALSE((input_min->GetDataType() == DT_INT32 && input_max->GetDataType() == DT_INT32),
-                     KERNEL_STATUS_INNER_ERROR, "Input 'min' and 'max' only support dtype int32_t.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (input_min->GetDataType() == DT_INT32 && input_max->GetDataType() == DT_INT32),
+                          KERNEL_STATUS_INNER_ERROR, "Input 'min' and 'max' only support dtype int32_t.");
   int min = *reinterpret_cast<int32_t *>(input_min->GetData());
   int max = *reinterpret_cast<int32_t *>(input_max->GetData());
 

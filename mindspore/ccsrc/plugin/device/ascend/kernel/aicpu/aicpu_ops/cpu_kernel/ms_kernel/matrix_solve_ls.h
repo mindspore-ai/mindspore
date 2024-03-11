@@ -36,27 +36,27 @@ class MatrixSolveLsCpuKernel : public CpuKernel {
   void RealCholeskySingleCompute(T *aptr, T *bptr, T *xptr, double *l2, int64_t m, int64_t k, int64_t n);
 
   template <typename T>
-  uint32_t RealCholesky(const CpuKernelContext &ctx);
+  uint32_t RealCholesky(CpuKernelContext &ctx);
 
   template <typename T>
   void RealQrSingleCompute(T *aptr, T *bptr, T *xptr, int64_t m, int64_t k, int64_t n);
 
   template <typename T>
-  uint32_t RealQr(const CpuKernelContext &ctx);
+  uint32_t RealQr(CpuKernelContext &ctx);
 
   template <typename T>
   void ComplexCholeskySingleCompute(std::complex<T> *aptr, std::complex<T> *bptr, std::complex<T> *xptr, double *l2,
                                     int64_t m, int64_t k, int64_t n);
 
   template <typename T>
-  uint32_t ComplexCholesky(const CpuKernelContext &ctx);
+  uint32_t ComplexCholesky(CpuKernelContext &ctx);
 
   template <typename T>
   void ComplexQrSingleCompute(std::complex<T> *aptr, std::complex<T> *bptr, std::complex<T> *xptr, int64_t m, int64_t k,
                               int64_t n);
 
   template <typename T>
-  uint32_t ComplexQr(const CpuKernelContext &ctx);
+  uint32_t ComplexQr(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

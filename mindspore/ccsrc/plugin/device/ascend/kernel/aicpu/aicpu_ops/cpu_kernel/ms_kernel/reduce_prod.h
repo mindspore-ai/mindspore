@@ -32,10 +32,10 @@ class ReduceProdCpuKernel : public CpuKernel {
   static T ComputeMul(T num_1, T num_2);
 
   template <typename T1, typename T2>
-  static uint32_t ReduceProdCompute(const CpuKernelContext &ctx);
+  static uint32_t ReduceProdCompute(CpuKernelContext &ctx);
 
   template <typename T1, typename T2>
-  static uint32_t ReduceProdCompute_Complex(const CpuKernelContext &ctx);
+  static uint32_t ReduceProdCompute_Complex(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

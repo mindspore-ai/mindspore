@@ -27,21 +27,22 @@ const uint32_t kIndex0 = 0;
 const uint32_t kFftShapeIndex = 1;
 const char *kFFTShapeCopy = "FFTShapeCopy";
 
-#define FFTSHAPECOPY_COMPUTE_CASE(DTYPE, TYPE, CTX)            \
-  case (DTYPE): {                                              \
-    uint32_t result = FFTShapeCopyCompute<TYPE>(CTX);          \
-    if (result != KERNEL_STATUS_OK) {                          \
-      KERNEL_LOG_ERROR("FFTShapeCopy kernel compute failed."); \
-      return result;                                           \
-    }                                                          \
-    break;                                                     \
+#define FFTSHAPECOPY_COMPUTE_CASE(DTYPE, TYPE, CTX)                      \
+  case (DTYPE): {                                                        \
+    uint32_t result = FFTShapeCopyCompute<TYPE>(CTX);                    \
+    if (result != KERNEL_STATUS_OK) {                                    \
+      CUST_KERNEL_LOG_ERROR(ctx, "FFTShapeCopy kernel compute failed."); \
+      return result;                                                     \
+    }                                                                    \
+    break;                                                               \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t FFTShapeCopyCpuKernel::Compute(CpuKernelContext &ctx) {
   op_name_ = GetOpName(ctx.GetOpType());
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.", op_name_.c_str());
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.",
+                           op_name_.c_str());
   auto x_type = ctx.Input(kIndex0)->GetDataType();
   switch (x_type) {
     FFTSHAPECOPY_COMPUTE_CASE(DT_INT16, int16_t, ctx)
@@ -53,7 +54,7 @@ uint32_t FFTShapeCopyCpuKernel::Compute(CpuKernelContext &ctx) {
     FFTSHAPECOPY_COMPUTE_CASE(DT_COMPLEX64, std::complex<float>, ctx)
     FFTSHAPECOPY_COMPUTE_CASE(DT_COMPLEX128, std::complex<double>, ctx)
     default:
-      KERNEL_LOG_ERROR("[%s] kernel data type [%s] not support.", op_name_.c_str(), DTypeStr(x_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "[%s] kernel data type [%s] not support.", op_name_.c_str(), DTypeStr(x_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
@@ -75,7 +76,7 @@ uint32_t FFTShapeCopyCpuKernel::FFTShapeCopyCompute(CpuKernelContext &ctx) {
 
   auto output_nums = ctx.Output(kIndex0)->NumElements();
   auto ret = memset_s(output_ptr, output_nums * sizeof(T), 0, output_nums * sizeof(T));
-  KERNEL_CHECK_FALSE((ret == EOK), KERNEL_STATUS_PARAM_INVALID, "FFTShapeCopy memset_s failed.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (ret == EOK), KERNEL_STATUS_PARAM_INVALID, "FFTShapeCopy memset_s failed.");
 
   ShapeCopy<T, T>(input_ptr, output_ptr, dout_shape, shape);
   return KERNEL_STATUS_OK;

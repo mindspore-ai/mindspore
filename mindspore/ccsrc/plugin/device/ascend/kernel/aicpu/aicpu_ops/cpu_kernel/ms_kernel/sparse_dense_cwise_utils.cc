@@ -39,9 +39,9 @@ const int64_t kParallelDataNumSameShape = 7 * 1024;
 }  // namespace
 
 template <typename Op>
-uint32_t SparseDenseCwiseOpKernel<Op>::CheckParams(const CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum_SparseDenseCwiseOp, kOutputNum_SparseDenseCwiseOp),
-                      "SparseDenseCwise%s normal check failed.", Op::Name().c_str());
+uint32_t SparseDenseCwiseOpKernel<Op>::CheckParams(CpuKernelContext &ctx) {
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum_SparseDenseCwiseOp, kOutputNum_SparseDenseCwiseOp),
+                           "SparseDenseCwise%s normal check failed.", Op::Name().c_str());
 
   Tensor *x1_indices = ctx.Input(0);
   Tensor *x1_values = ctx.Input(1);
@@ -54,16 +54,16 @@ uint32_t SparseDenseCwiseOpKernel<Op>::CheckParams(const CpuKernelContext &ctx) 
   DataType x1_shape_type = x1_shape->GetDataType();
   DataType x2_type = x2->GetDataType();
   DataType y_type = y->GetDataType();
-  KERNEL_CHECK_FALSE((x1_indices_type == x1_shape_type), KERNEL_STATUS_PARAM_INVALID,
-                     "The data type of x1_indices_type [%s] need be same with "
-                     "x1_shape [%s].",
-                     DTypeStr(x1_indices_type).c_str(), DTypeStr(x1_shape_type).c_str())
-  KERNEL_CHECK_FALSE(((x1_values_type == x2_type) && (x1_values_type == y_type)), KERNEL_STATUS_PARAM_INVALID,
-                     "The data type of x1_values_type [%s] need be same with "
-                     "x2_type[%s] and y_type [%s].",
-                     DTypeStr(x1_values_type).c_str(), DTypeStr(x2_type).c_str(), DTypeStr(y_type).c_str())
-  KERNEL_CHECK_FALSE((x1_indices_type == DT_INT64), KERNEL_STATUS_PARAM_INVALID,
-                     "The data type of x1_indices_type [%s] need be int_64.", DTypeStr(x1_indices_type).c_str())
+  CUST_KERNEL_CHECK_FALSE(ctx, (x1_indices_type == x1_shape_type), KERNEL_STATUS_PARAM_INVALID,
+                          "The data type of x1_indices_type [%s] need be same with "
+                          "x1_shape [%s].",
+                          DTypeStr(x1_indices_type).c_str(), DTypeStr(x1_shape_type).c_str())
+  CUST_KERNEL_CHECK_FALSE(ctx, ((x1_values_type == x2_type) && (x1_values_type == y_type)), KERNEL_STATUS_PARAM_INVALID,
+                          "The data type of x1_values_type [%s] need be same with "
+                          "x2_type[%s] and y_type [%s].",
+                          DTypeStr(x1_values_type).c_str(), DTypeStr(x2_type).c_str(), DTypeStr(y_type).c_str())
+  CUST_KERNEL_CHECK_FALSE(ctx, (x1_indices_type == DT_INT64), KERNEL_STATUS_PARAM_INVALID,
+                          "The data type of x1_indices_type [%s] need be int_64.", DTypeStr(x1_indices_type).c_str())
   int32_t input0_dims = x1_indices->GetTensorShape()->GetDims();
   int32_t input1_dims = x1_values->GetTensorShape()->GetDims();
   int32_t input2_dims = x1_shape->GetTensorShape()->GetDims();
@@ -72,13 +72,14 @@ uint32_t SparseDenseCwiseOpKernel<Op>::CheckParams(const CpuKernelContext &ctx) 
   int64_t shape_elements_nums = x1_shape->GetTensorShape()->NumElements();
   int64_t indices_0 = x1_indices->GetTensorShape()->GetDimSize(0);
   int64_t value_0 = x1_values->GetTensorShape()->GetDimSize(0);
-  KERNEL_CHECK_FALSE((int(input0_dims) == 2), KERNEL_STATUS_PARAM_INVALID, "The dims of input0 need be 2.")
-  KERNEL_CHECK_FALSE((input1_dims == 1), KERNEL_STATUS_PARAM_INVALID, "The dims of input1 need be 1 .")
-  KERNEL_CHECK_FALSE((input2_dims == 1), KERNEL_STATUS_PARAM_INVALID, "The dims of input2 need be 1.")
-  KERNEL_CHECK_FALSE((output_dims == 1), KERNEL_STATUS_PARAM_INVALID, "The dims of output need be 1.")
-  KERNEL_CHECK_FALSE((input3_dims <= shape_elements_nums), KERNEL_STATUS_PARAM_INVALID,
-                     "The dims of DenseTensor  is large than sparseTensor.")
-  KERNEL_CHECK_FALSE((indices_0 == value_0), KERNEL_STATUS_PARAM_INVALID, "The num of indices  is not equal to value.")
+  CUST_KERNEL_CHECK_FALSE(ctx, (int(input0_dims) == 2), KERNEL_STATUS_PARAM_INVALID, "The dims of input0 need be 2.")
+  CUST_KERNEL_CHECK_FALSE(ctx, (input1_dims == 1), KERNEL_STATUS_PARAM_INVALID, "The dims of input1 need be 1 .")
+  CUST_KERNEL_CHECK_FALSE(ctx, (input2_dims == 1), KERNEL_STATUS_PARAM_INVALID, "The dims of input2 need be 1.")
+  CUST_KERNEL_CHECK_FALSE(ctx, (output_dims == 1), KERNEL_STATUS_PARAM_INVALID, "The dims of output need be 1.")
+  CUST_KERNEL_CHECK_FALSE(ctx, (input3_dims <= shape_elements_nums), KERNEL_STATUS_PARAM_INVALID,
+                          "The dims of DenseTensor  is large than sparseTensor.")
+  CUST_KERNEL_CHECK_FALSE(ctx, (indices_0 == value_0), KERNEL_STATUS_PARAM_INVALID,
+                          "The num of indices  is not equal to value.")
 
   int64_t indices_num = x1_indices->GetTensorShape()->GetDimSize(0);
   int64_t dims = x1_indices->GetTensorShape()->GetDimSize(1);
@@ -86,9 +87,9 @@ uint32_t SparseDenseCwiseOpKernel<Op>::CheckParams(const CpuKernelContext &ctx) 
   auto x1_shape_data = reinterpret_cast<int64_t *>(x1_shape->GetData());
   for (int64_t i = 0; i < indices_num; ++i) {
     for (int64_t j = 0; j < dims; ++j) {
-      KERNEL_CHECK_FALSE((x1_indices_data[i * dims + j] >= 0 && x1_indices_data[i * dims + j] < x1_shape_data[j]),
-                         KERNEL_STATUS_PARAM_INVALID, "For SparseDenseCwise%s, indices go out of bounds.",
-                         Op::Name().c_str());
+      CUST_KERNEL_CHECK_FALSE(
+        ctx, (x1_indices_data[i * dims + j] >= 0 && x1_indices_data[i * dims + j] < x1_shape_data[j]),
+        KERNEL_STATUS_PARAM_INVALID, "For SparseDenseCwise%s, indices go out of bounds.", Op::Name().c_str());
     }
   }
   return KERNEL_STATUS_OK;
@@ -96,8 +97,7 @@ uint32_t SparseDenseCwiseOpKernel<Op>::CheckParams(const CpuKernelContext &ctx) 
 
 template <typename Op>
 template <typename T>
-uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpSpecialCompute(BcastShapeType type,
-                                                                        const CpuKernelContext &ctx) {
+uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpSpecialCompute(BcastShapeType type, CpuKernelContext &ctx) {
   auto sparse_indices_data = static_cast<int64_t *>(ctx.Input(0)->GetData());
   auto sparse_values_data = static_cast<T *>(ctx.Input(1)->GetData());
   auto sparse_shape_data = static_cast<int64_t *>(ctx.Input(2)->GetData());
@@ -121,7 +121,7 @@ uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpSpecialCompute(BcastSha
     uint32_t min_core_num = 1;
     uint32_t max_core_num = std::max(min_core_num, aicpu::CpuKernelUtils::GetCPUNum(ctx) - kResvCpuNum);
     if (max_core_num == 0) {
-      KERNEL_LOG_ERROR("max_core_num could not be 0");
+      CUST_KERNEL_LOG_ERROR(ctx, "max_core_num could not be 0");
     }
     if (max_core_num > value_nums) {
       max_core_num = value_nums;
@@ -145,7 +145,7 @@ uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpSpecialCompute(BcastSha
               output_data[i] = sparse_values_vec[i] + dense_data[index];
             } else if (name == "Div") {
               if (fabs(double(dense_data[index])) < 1e-6) {
-                KERNEL_LOG_ERROR("Cannot be divided by 0");
+                CUST_KERNEL_LOG_ERROR(ctx, "Cannot be divided by 0");
                 return KERNEL_STATUS_PARAM_INVALID;
               } else {
                 output_data[i] = sparse_values_vec[i] / dense_data[index];
@@ -163,7 +163,7 @@ uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpSpecialCompute(BcastSha
               output_data[i] = sparse_values_data[i] + *(dense_data);
             } else if (name == "Div") {
               if (fabs(double(*(dense_data))) < 1e-6) {
-                KERNEL_LOG_ERROR("Cannot be divided by 0");
+                CUST_KERNEL_LOG_ERROR(ctx, "Cannot be divided by 0");
                 return KERNEL_STATUS_PARAM_INVALID;
               } else {
                 output_data[i] = sparse_values_data[i] / *(dense_data);
@@ -174,14 +174,14 @@ uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpSpecialCompute(BcastSha
           }
           break;
         default:
-          KERNEL_LOG_WARN("Invalid type [%d]", static_cast<int32_t>(type));
+          CUST_KERNEL_LOG_WARN(ctx, "Invalid type [%d]", static_cast<int32_t>(type));
           break;
       }
       return KERNEL_STATUS_OK;
     };
 
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, value_nums, value_nums / max_core_num, sharder_Op),
-                        "Op Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, value_nums, value_nums / max_core_num, sharder_Op),
+                             "Op Compute failed.");
   } else {
     switch (type) {
       case BcastShapeType::SAME_SHAPE:
@@ -200,7 +200,7 @@ uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpSpecialCompute(BcastSha
             output_data[i] = sparse_values_vec[i] + dense_data[index];
           } else if (name == "Div") {
             if (fabs(double(dense_data[index])) < 1e-6) {
-              KERNEL_LOG_ERROR("Cannot be divided by 0");
+              CUST_KERNEL_LOG_ERROR(ctx, "Cannot be divided by 0");
               return KERNEL_STATUS_PARAM_INVALID;
             } else {
               output_data[i] = sparse_values_vec[i] / dense_data[index];
@@ -218,7 +218,7 @@ uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpSpecialCompute(BcastSha
             output_data[i] = sparse_values_data[i] + *(dense_data);
           } else if (name == "Div") {
             if (fabs(double(*(dense_data))) < 1e-6) {
-              KERNEL_LOG_ERROR("Cannot be divided by 0");
+              CUST_KERNEL_LOG_ERROR(ctx, "Cannot be divided by 0");
               return KERNEL_STATUS_PARAM_INVALID;
             } else {
               output_data[i] = sparse_values_data[i] / *(dense_data);
@@ -229,7 +229,7 @@ uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpSpecialCompute(BcastSha
         }
         break;
       default:
-        KERNEL_LOG_WARN("Invalid type [%d]", static_cast<int32_t>(type));
+        CUST_KERNEL_LOG_WARN(ctx, "Invalid type [%d]", static_cast<int32_t>(type));
         break;
     }
   }
@@ -239,7 +239,7 @@ uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpSpecialCompute(BcastSha
 
 template <typename Op>
 template <typename T>
-uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpNoBcastCompute(const CpuKernelContext &ctx) {
+uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpNoBcastCompute(CpuKernelContext &ctx) {
   auto *input2_tensor = ctx.Input(2);
   auto *input3_tensor = ctx.Input(3);
   int64_t dimension = input2_tensor->NumElements();
@@ -251,7 +251,7 @@ uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpNoBcastCompute(const Cp
 
 template <typename Op>
 template <typename T>
-uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpBcastCompute(const CpuKernelContext &ctx) {
+uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpBcastCompute(CpuKernelContext &ctx) {
   auto sparse_indices_data = static_cast<int64_t *>(ctx.Input(0)->GetData());
   auto sparse_values_data = static_cast<T *>(ctx.Input(1)->GetData());
   auto sparse_shape_data = static_cast<int64_t *>(ctx.Input(2)->GetData());
@@ -294,7 +294,7 @@ uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpBcastCompute(const CpuK
     uint32_t min_core_num = 1;
     uint32_t max_core_num = std::max(min_core_num, aicpu::CpuKernelUtils::GetCPUNum(ctx) - kResvCpuNum);
     if (max_core_num == 0) {
-      KERNEL_LOG_ERROR("max_core_num could not be 0");
+      CUST_KERNEL_LOG_ERROR(ctx, "max_core_num could not be 0");
     }
     if (max_core_num > value_nums) {
       max_core_num = value_nums;
@@ -315,7 +315,7 @@ uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpBcastCompute(const CpuK
           output_data[i] = sparse_values_vec[i] + Dense[index];
         } else if (name == "Div") {
           if (fabs(double(Dense[index])) < 1e-6) {
-            KERNEL_LOG_ERROR("Cannot be divided by 0");
+            CUST_KERNEL_LOG_ERROR(ctx, "Cannot be divided by 0");
             return KERNEL_STATUS_PARAM_INVALID;
           } else {
             output_data[i] = sparse_values_vec[i] / Dense[index];
@@ -327,8 +327,8 @@ uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpBcastCompute(const CpuK
       return KERNEL_STATUS_OK;
     };
 
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, value_nums, value_nums / max_core_num, sharder_Op),
-                        "Op Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, value_nums, value_nums / max_core_num, sharder_Op),
+                             "Op Compute failed.");
   } else {
     for (int64_t i = 0; i < value_nums; i++) {
       int index = 0;
@@ -345,7 +345,7 @@ uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpBcastCompute(const CpuK
         output_data[i] = sparse_values_vec[i] + Dense[index];
       } else if (name == "Div") {
         if (fabs(double(Dense[index])) < 1e-6) {
-          KERNEL_LOG_ERROR("Cannot be divided by 0");
+          CUST_KERNEL_LOG_ERROR(ctx, "Cannot be divided by 0");
           return KERNEL_STATUS_PARAM_INVALID;
         } else {
           output_data[i] = sparse_values_vec[i] / Dense[index];
@@ -361,7 +361,7 @@ uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpBcastCompute(const CpuK
 
 template <typename Op>
 template <typename T>
-uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpCompute(const CpuKernelContext &ctx) {
+uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpCompute(CpuKernelContext &ctx) {
   auto data_type = ctx.Input(1)->GetDataType();
   switch (data_type) {
     case DT_INT8:
@@ -391,14 +391,14 @@ uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpCompute(const CpuKernel
     case DT_COMPLEX128:
       return ComputeOpComplex<std::complex<double>>(ctx);
     default:
-      KERNEL_LOG_ERROR("sparse_dense_cwise kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "sparse_dense_cwise kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 }
 
 template <typename Op>
 template <typename T>
-uint32_t SparseDenseCwiseOpKernel<Op>::ComputeOp(const CpuKernelContext &ctx) {
+uint32_t SparseDenseCwiseOpKernel<Op>::ComputeOp(CpuKernelContext &ctx) {
   auto *input3_tensor = ctx.Input(3);
   auto dimension = ctx.Input(0)->GetTensorShape()->GetDimSize(1);
   int32_t dense_dims = input3_tensor->GetTensorShape()->GetDims();
@@ -431,7 +431,7 @@ uint32_t SparseDenseCwiseOpKernel<Op>::ComputeOp(const CpuKernelContext &ctx) {
 
 template <typename Op>
 template <typename T>
-uint32_t SparseDenseCwiseOpKernel<Op>::ComputeOpComplex(const CpuKernelContext &ctx) {
+uint32_t SparseDenseCwiseOpKernel<Op>::ComputeOpComplex(CpuKernelContext &ctx) {
   auto *input2_tensor = ctx.Input(2);
   auto *input3_tensor = ctx.Input(3);
   int64_t dense_num = ctx.Input(3)->GetTensorShape()->NumElements();
@@ -466,7 +466,7 @@ uint32_t SparseDenseCwiseOpKernel<Op>::ComputeOpComplex(const CpuKernelContext &
 template <typename Op>
 template <typename T>
 uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpSpecialComputeComplex(BcastShapeType type,
-                                                                               const CpuKernelContext &ctx) {
+                                                                               CpuKernelContext &ctx) {
   auto sparse_indices_data = reinterpret_cast<int64_t *>(ctx.Input(0)->GetData());
   auto sparse_values_data = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   auto sparse_shape_data = reinterpret_cast<int64_t *>(ctx.Input(2)->GetData());
@@ -489,7 +489,7 @@ uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpSpecialComputeComplex(B
     uint32_t min_core_num = 1;
     uint32_t max_core_num = std::max(min_core_num, aicpu::CpuKernelUtils::GetCPUNum(ctx) - kResvCpuNum);
     if (max_core_num == 0) {
-      KERNEL_LOG_ERROR("max_core_num could not be 0");
+      CUST_KERNEL_LOG_ERROR(ctx, "max_core_num could not be 0");
     }
     if (max_core_num > value_nums) {
       max_core_num = value_nums;
@@ -513,7 +513,7 @@ uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpSpecialComputeComplex(B
               output_data[i] = sparse_values_vec[i] + dense_data[index];
             } else if (name == "Div") {
               if (fabs(dense_data[index]) < 1e-6) {
-                KERNEL_LOG_ERROR("Cannot be divided by 0");
+                CUST_KERNEL_LOG_ERROR(ctx, "Cannot be divided by 0");
                 return KERNEL_STATUS_PARAM_INVALID;
               } else {
                 output_data[i] = sparse_values_vec[i] / dense_data[index];
@@ -531,7 +531,7 @@ uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpSpecialComputeComplex(B
               output_data[i] = sparse_values_data[i] + *(dense_data);
             } else if (name == "Div") {
               if (fabs(*(dense_data)) < 1e-6) {
-                KERNEL_LOG_ERROR("Cannot be divided by 0");
+                CUST_KERNEL_LOG_ERROR(ctx, "Cannot be divided by 0");
                 return KERNEL_STATUS_PARAM_INVALID;
               } else {
                 output_data[i] = sparse_values_data[i] / *(dense_data);
@@ -542,14 +542,14 @@ uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpSpecialComputeComplex(B
           }
           break;
         default:
-          KERNEL_LOG_WARN("Invalid type [%d]", static_cast<int32_t>(type));
+          CUST_KERNEL_LOG_WARN(ctx, "Invalid type [%d]", static_cast<int32_t>(type));
           break;
       }
       return KERNEL_STATUS_OK;
     };
 
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, value_nums, value_nums / max_core_num, sharder_Op),
-                        "Op Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, value_nums, value_nums / max_core_num, sharder_Op),
+                             "Op Compute failed.");
   } else {
     switch (type) {
       case BcastShapeType::SAME_SHAPE:
@@ -568,7 +568,7 @@ uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpSpecialComputeComplex(B
             output_data[i] = sparse_values_vec[i] + dense_data[index];
           } else if (name == "Div") {
             if (fabs(dense_data[index]) < 1e-6) {
-              KERNEL_LOG_ERROR("Cannot be divided by 0");
+              CUST_KERNEL_LOG_ERROR(ctx, "Cannot be divided by 0");
               return KERNEL_STATUS_PARAM_INVALID;
             } else {
               output_data[i] = sparse_values_vec[i] / dense_data[index];
@@ -586,7 +586,7 @@ uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpSpecialComputeComplex(B
             output_data[i] = sparse_values_data[i] + *(dense_data);
           } else if (name == "Div") {
             if (fabs(*(dense_data)) < 1e-6) {
-              KERNEL_LOG_ERROR("Cannot be divided by 0");
+              CUST_KERNEL_LOG_ERROR(ctx, "Cannot be divided by 0");
               return KERNEL_STATUS_PARAM_INVALID;
             } else {
               output_data[i] = sparse_values_data[i] / *(dense_data);
@@ -597,7 +597,7 @@ uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpSpecialComputeComplex(B
         }
         break;
       default:
-        KERNEL_LOG_WARN("Invalid type [%d]", static_cast<int32_t>(type));
+        CUST_KERNEL_LOG_WARN(ctx, "Invalid type [%d]", static_cast<int32_t>(type));
         break;
     }
   }
@@ -607,7 +607,7 @@ uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpSpecialComputeComplex(B
 
 template <typename Op>
 template <typename T>
-uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpNoBcastComputeComplex(const CpuKernelContext &ctx) {
+uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpNoBcastComputeComplex(CpuKernelContext &ctx) {
   auto *input2_tensor = ctx.Input(2);
   auto *input3_tensor = ctx.Input(3);
   int64_t dimension = input2_tensor->NumElements();
@@ -620,7 +620,7 @@ uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpNoBcastComputeComplex(c
 
 template <typename Op>
 template <typename T>
-uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpBcastComputeComplex(const CpuKernelContext &ctx) {
+uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpBcastComputeComplex(CpuKernelContext &ctx) {
   auto sparse_indices_data = reinterpret_cast<int64_t *>(ctx.Input(0)->GetData());
   auto sparse_values_data = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   auto sparse_shape_data = reinterpret_cast<int64_t *>(ctx.Input(2)->GetData());
@@ -664,7 +664,7 @@ uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpBcastComputeComplex(con
     uint32_t min_core_num = 1;
     uint32_t max_core_num = std::max(min_core_num, aicpu::CpuKernelUtils::GetCPUNum(ctx) - kResvCpuNum);
     if (max_core_num == 0) {
-      KERNEL_LOG_ERROR("max_core_num could not be 0");
+      CUST_KERNEL_LOG_ERROR(ctx, "max_core_num could not be 0");
     }
     if (max_core_num > value_nums) {
       max_core_num = value_nums;
@@ -686,7 +686,7 @@ uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpBcastComputeComplex(con
           output_data[i] = sparse_values_vec[i] + Dense[index];
         } else if (name == "Div") {
           if (fabs(Dense[index]) < 1e-6) {
-            KERNEL_LOG_ERROR("Cannot be divided by 0");
+            CUST_KERNEL_LOG_ERROR(ctx, "Cannot be divided by 0");
             return KERNEL_STATUS_PARAM_INVALID;
           } else {
             output_data[i] = sparse_values_vec[i] / Dense[index];
@@ -698,8 +698,8 @@ uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpBcastComputeComplex(con
       return KERNEL_STATUS_OK;
     };
 
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, value_nums, value_nums / max_core_num, sharder_Op),
-                        "Op Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, value_nums, value_nums / max_core_num, sharder_Op),
+                             "Op Compute failed.");
   } else {
     for (int64_t i = 0; i < value_nums; i++) {
       int index = 0;
@@ -716,7 +716,7 @@ uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpBcastComputeComplex(con
         output_data[i] = sparse_values_vec[i] + Dense[index];
       } else if (name == "Div") {
         if (fabs(Dense[index]) < 1e-6) {
-          KERNEL_LOG_ERROR("Cannot be divided by 0");
+          CUST_KERNEL_LOG_ERROR(ctx, "Cannot be divided by 0");
           return KERNEL_STATUS_PARAM_INVALID;
         } else {
           output_data[i] = sparse_values_vec[i] / Dense[index];
@@ -730,53 +730,53 @@ uint32_t SparseDenseCwiseOpKernel<Op>::SparseDenseCwiseOpBcastComputeComplex(con
 }
 
 template class SparseDenseCwiseOpKernel<AddOp>;
-template uint32_t SparseDenseCwiseOpKernel<AddOp>::SparseDenseCwiseOpCompute<int8_t>(const CpuKernelContext &ctx);
-template uint32_t SparseDenseCwiseOpKernel<AddOp>::SparseDenseCwiseOpCompute<int16_t>(const CpuKernelContext &ctx);
-template uint32_t SparseDenseCwiseOpKernel<AddOp>::SparseDenseCwiseOpCompute<int32_t>(const CpuKernelContext &ctx);
-template uint32_t SparseDenseCwiseOpKernel<AddOp>::SparseDenseCwiseOpCompute<int64_t>(const CpuKernelContext &ctx);
-template uint32_t SparseDenseCwiseOpKernel<AddOp>::SparseDenseCwiseOpCompute<uint8_t>(const CpuKernelContext &ctx);
-template uint32_t SparseDenseCwiseOpKernel<AddOp>::SparseDenseCwiseOpCompute<uint16_t>(const CpuKernelContext &ctx);
-template uint32_t SparseDenseCwiseOpKernel<AddOp>::SparseDenseCwiseOpCompute<uint32_t>(const CpuKernelContext &ctx);
-template uint32_t SparseDenseCwiseOpKernel<AddOp>::SparseDenseCwiseOpCompute<uint64_t>(const CpuKernelContext &ctx);
-template uint32_t SparseDenseCwiseOpKernel<AddOp>::SparseDenseCwiseOpCompute<Eigen::half>(const CpuKernelContext &ctx);
-template uint32_t SparseDenseCwiseOpKernel<AddOp>::SparseDenseCwiseOpCompute<float>(const CpuKernelContext &ctx);
-template uint32_t SparseDenseCwiseOpKernel<AddOp>::SparseDenseCwiseOpCompute<double>(const CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<AddOp>::SparseDenseCwiseOpCompute<int8_t>(CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<AddOp>::SparseDenseCwiseOpCompute<int16_t>(CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<AddOp>::SparseDenseCwiseOpCompute<int32_t>(CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<AddOp>::SparseDenseCwiseOpCompute<int64_t>(CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<AddOp>::SparseDenseCwiseOpCompute<uint8_t>(CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<AddOp>::SparseDenseCwiseOpCompute<uint16_t>(CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<AddOp>::SparseDenseCwiseOpCompute<uint32_t>(CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<AddOp>::SparseDenseCwiseOpCompute<uint64_t>(CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<AddOp>::SparseDenseCwiseOpCompute<Eigen::half>(CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<AddOp>::SparseDenseCwiseOpCompute<float>(CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<AddOp>::SparseDenseCwiseOpCompute<double>(CpuKernelContext &ctx);
 template uint32_t SparseDenseCwiseOpKernel<AddOp>::SparseDenseCwiseOpCompute<std::complex<float>>(
-  const CpuKernelContext &ctx);
+  CpuKernelContext &ctx);
 template uint32_t SparseDenseCwiseOpKernel<AddOp>::SparseDenseCwiseOpCompute<std::complex<double>>(
-  const CpuKernelContext &ctx);
+  CpuKernelContext &ctx);
 
 template class SparseDenseCwiseOpKernel<DivOp>;
-template uint32_t SparseDenseCwiseOpKernel<DivOp>::SparseDenseCwiseOpCompute<int8_t>(const CpuKernelContext &ctx);
-template uint32_t SparseDenseCwiseOpKernel<DivOp>::SparseDenseCwiseOpCompute<int16_t>(const CpuKernelContext &ctx);
-template uint32_t SparseDenseCwiseOpKernel<DivOp>::SparseDenseCwiseOpCompute<int32_t>(const CpuKernelContext &ctx);
-template uint32_t SparseDenseCwiseOpKernel<DivOp>::SparseDenseCwiseOpCompute<int64_t>(const CpuKernelContext &ctx);
-template uint32_t SparseDenseCwiseOpKernel<DivOp>::SparseDenseCwiseOpCompute<uint8_t>(const CpuKernelContext &ctx);
-template uint32_t SparseDenseCwiseOpKernel<DivOp>::SparseDenseCwiseOpCompute<uint16_t>(const CpuKernelContext &ctx);
-template uint32_t SparseDenseCwiseOpKernel<DivOp>::SparseDenseCwiseOpCompute<uint32_t>(const CpuKernelContext &ctx);
-template uint32_t SparseDenseCwiseOpKernel<DivOp>::SparseDenseCwiseOpCompute<uint64_t>(const CpuKernelContext &ctx);
-template uint32_t SparseDenseCwiseOpKernel<DivOp>::SparseDenseCwiseOpCompute<Eigen::half>(const CpuKernelContext &ctx);
-template uint32_t SparseDenseCwiseOpKernel<DivOp>::SparseDenseCwiseOpCompute<float>(const CpuKernelContext &ctx);
-template uint32_t SparseDenseCwiseOpKernel<DivOp>::SparseDenseCwiseOpCompute<double>(const CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<DivOp>::SparseDenseCwiseOpCompute<int8_t>(CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<DivOp>::SparseDenseCwiseOpCompute<int16_t>(CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<DivOp>::SparseDenseCwiseOpCompute<int32_t>(CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<DivOp>::SparseDenseCwiseOpCompute<int64_t>(CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<DivOp>::SparseDenseCwiseOpCompute<uint8_t>(CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<DivOp>::SparseDenseCwiseOpCompute<uint16_t>(CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<DivOp>::SparseDenseCwiseOpCompute<uint32_t>(CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<DivOp>::SparseDenseCwiseOpCompute<uint64_t>(CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<DivOp>::SparseDenseCwiseOpCompute<Eigen::half>(CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<DivOp>::SparseDenseCwiseOpCompute<float>(CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<DivOp>::SparseDenseCwiseOpCompute<double>(CpuKernelContext &ctx);
 template uint32_t SparseDenseCwiseOpKernel<DivOp>::SparseDenseCwiseOpCompute<std::complex<float>>(
-  const CpuKernelContext &ctx);
+  CpuKernelContext &ctx);
 template uint32_t SparseDenseCwiseOpKernel<DivOp>::SparseDenseCwiseOpCompute<std::complex<double>>(
-  const CpuKernelContext &ctx);
+  CpuKernelContext &ctx);
 
 template class SparseDenseCwiseOpKernel<MulOp>;
-template uint32_t SparseDenseCwiseOpKernel<MulOp>::SparseDenseCwiseOpCompute<int8_t>(const CpuKernelContext &ctx);
-template uint32_t SparseDenseCwiseOpKernel<MulOp>::SparseDenseCwiseOpCompute<int16_t>(const CpuKernelContext &ctx);
-template uint32_t SparseDenseCwiseOpKernel<MulOp>::SparseDenseCwiseOpCompute<int32_t>(const CpuKernelContext &ctx);
-template uint32_t SparseDenseCwiseOpKernel<MulOp>::SparseDenseCwiseOpCompute<int64_t>(const CpuKernelContext &ctx);
-template uint32_t SparseDenseCwiseOpKernel<MulOp>::SparseDenseCwiseOpCompute<uint8_t>(const CpuKernelContext &ctx);
-template uint32_t SparseDenseCwiseOpKernel<MulOp>::SparseDenseCwiseOpCompute<uint16_t>(const CpuKernelContext &ctx);
-template uint32_t SparseDenseCwiseOpKernel<MulOp>::SparseDenseCwiseOpCompute<uint32_t>(const CpuKernelContext &ctx);
-template uint32_t SparseDenseCwiseOpKernel<MulOp>::SparseDenseCwiseOpCompute<uint64_t>(const CpuKernelContext &ctx);
-template uint32_t SparseDenseCwiseOpKernel<MulOp>::SparseDenseCwiseOpCompute<Eigen::half>(const CpuKernelContext &ctx);
-template uint32_t SparseDenseCwiseOpKernel<MulOp>::SparseDenseCwiseOpCompute<float>(const CpuKernelContext &ctx);
-template uint32_t SparseDenseCwiseOpKernel<MulOp>::SparseDenseCwiseOpCompute<double>(const CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<MulOp>::SparseDenseCwiseOpCompute<int8_t>(CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<MulOp>::SparseDenseCwiseOpCompute<int16_t>(CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<MulOp>::SparseDenseCwiseOpCompute<int32_t>(CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<MulOp>::SparseDenseCwiseOpCompute<int64_t>(CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<MulOp>::SparseDenseCwiseOpCompute<uint8_t>(CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<MulOp>::SparseDenseCwiseOpCompute<uint16_t>(CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<MulOp>::SparseDenseCwiseOpCompute<uint32_t>(CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<MulOp>::SparseDenseCwiseOpCompute<uint64_t>(CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<MulOp>::SparseDenseCwiseOpCompute<Eigen::half>(CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<MulOp>::SparseDenseCwiseOpCompute<float>(CpuKernelContext &ctx);
+template uint32_t SparseDenseCwiseOpKernel<MulOp>::SparseDenseCwiseOpCompute<double>(CpuKernelContext &ctx);
 template uint32_t SparseDenseCwiseOpKernel<MulOp>::SparseDenseCwiseOpCompute<std::complex<float>>(
-  const CpuKernelContext &ctx);
+  CpuKernelContext &ctx);
 template uint32_t SparseDenseCwiseOpKernel<MulOp>::SparseDenseCwiseOpCompute<std::complex<double>>(
-  const CpuKernelContext &ctx);
+  CpuKernelContext &ctx);
 }  // namespace aicpu

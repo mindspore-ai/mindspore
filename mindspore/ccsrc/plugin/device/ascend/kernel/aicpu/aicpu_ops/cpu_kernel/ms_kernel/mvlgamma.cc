@@ -23,14 +23,14 @@
 namespace {
 const char *kMvlgamma = "Mvlgamma";
 
-#define MVLGAMMA_COMPUTE_CASE(DTYPE, TYPE, CTX)            \
-  case (DTYPE): {                                          \
-    uint32_t result = MvlgammaCompute<TYPE>(CTX);          \
-    if (result != KERNEL_STATUS_OK) {                      \
-      KERNEL_LOG_ERROR("Mvlgamma kernel compute failed."); \
-      return result;                                       \
-    }                                                      \
-    break;                                                 \
+#define MVLGAMMA_COMPUTE_CASE(DTYPE, TYPE, CTX)                      \
+  case (DTYPE): {                                                    \
+    uint32_t result = MvlgammaCompute<TYPE>(CTX);                    \
+    if (result != KERNEL_STATUS_OK) {                                \
+      CUST_KERNEL_LOG_ERROR(ctx, "Mvlgamma kernel compute failed."); \
+      return result;                                                 \
+    }                                                                \
+    break;                                                           \
   }
 
 constexpr double HALF = 0.5;
@@ -40,7 +40,7 @@ constexpr double QUARTER = 0.25;
 namespace aicpu {
 uint32_t MvlgammaCpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
-  KERNEL_HANDLE_ERROR(MvlgammaCheck(ctx), "Mvlgamma check params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, MvlgammaCheck(ctx), "Mvlgamma check params failed.");
 
   const Tensor *input_x = ctx.Input(0);
   auto data_type = input_x->GetDataType();
@@ -49,7 +49,7 @@ uint32_t MvlgammaCpuKernel::Compute(CpuKernelContext &ctx) {
     MVLGAMMA_COMPUTE_CASE(DT_FLOAT, float, ctx)
     MVLGAMMA_COMPUTE_CASE(DT_DOUBLE, double, ctx)
     default:
-      KERNEL_LOG_ERROR("Mvlgamma kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Mvlgamma kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 
@@ -58,32 +58,34 @@ uint32_t MvlgammaCpuKernel::Compute(CpuKernelContext &ctx) {
 
 uint32_t MvlgammaCpuKernel::MvlgammaCheck(CpuKernelContext &ctx) {
   // check input, output and attr not null
-  KERNEL_CHECK_NULLPTR(ctx.Input(0)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input data failed.")
-  KERNEL_CHECK_NULLPTR(ctx.Output(0)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output data failed")
-  KERNEL_CHECK_NULLPTR(ctx.GetAttr("p"), KERNEL_STATUS_PARAM_INVALID, "Get attr failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.Input(0)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.Output(0)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output data failed")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.GetAttr("p"), KERNEL_STATUS_PARAM_INVALID, "Get attr failed.")
   NormalCheck(ctx, 1, 1, {"p"});
 
   // check input and output datatype as the same
   DataType input_datatype = ctx.Input(0)->GetDataType();
   DataType output_datatype = ctx.Output(0)->GetDataType();
-  KERNEL_CHECK_FALSE((input_datatype == output_datatype), KERNEL_STATUS_PARAM_INVALID,
-                     "Input data type[%d] must be the same as Output data type[%d].", input_datatype, output_datatype)
+  CUST_KERNEL_CHECK_FALSE(ctx, (input_datatype == output_datatype), KERNEL_STATUS_PARAM_INVALID,
+                          "Input data type[%d] must be the same as Output data type[%d].", input_datatype,
+                          output_datatype)
 
   auto attr_value = ctx.GetAttr("p")->GetInt();
-  KERNEL_CHECK_FALSE((attr_value >= 1), KERNEL_STATUS_PARAM_INVALID, "p has to be greater than or equal to 1[%lld]",
-                     attr_value)  // 已经用GetAttr获取
+  CUST_KERNEL_CHECK_FALSE(ctx, (attr_value >= 1), KERNEL_STATUS_PARAM_INVALID,
+                          "p has to be greater than or equal to 1[%lld]",
+                          attr_value)  // 已经用GetAttr获取
 
-  KERNEL_LOG_INFO("MvlgammaCpuKernel[%s], input: size[%llu], output: size[%llu].", ctx.GetOpType().c_str(),
-                  ctx.Input(0)->GetDataSize(), ctx.Output(0)->GetDataSize());
+  CUST_KERNEL_LOG_INFO(ctx, "MvlgammaCpuKernel[%s], input: size[%llu], output: size[%llu].", ctx.GetOpType().c_str(),
+                       ctx.Input(0)->GetDataSize(), ctx.Output(0)->GetDataSize());
 
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-T MvlgammaCpuKernel::MvlgammaSingle(T &x, const int &p, bool &error) {
+T MvlgammaCpuKernel::MvlgammaSingle(CpuKernelContext &ctx, T &x, const int &p, bool &error) {
   if (!(x > HALF * (p - 1))) {
     error = true;
-    KERNEL_LOG_ERROR("All elements of `x` must be greater than (p-1)/2");
+    CUST_KERNEL_LOG_ERROR(ctx, "All elements of `x` must be greater than (p-1)/2");
     return KERNEL_STATUS_PARAM_INVALID;
   }
   const auto p2_sub_p = static_cast<T>(p * (p - 1));
@@ -111,15 +113,15 @@ uint32_t MvlgammaCpuKernel::MvlgammaCompute(CpuKernelContext &ctx) {
   bool error = false;
   auto shard_mvlgamma = [&](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      *(output_y + i) = MvlgammaSingle<T>(*(input_x + i), attr_p, error);
+      *(output_y + i) = MvlgammaSingle<T>(ctx, *(input_x + i), attr_p, error);
     }
   };
 
   if (max_core_num == 0) {
-    KERNEL_LOG_ERROR("max_core_num could not be 0,");
+    CUST_KERNEL_LOG_ERROR(ctx, "max_core_num could not be 0,");
   }
-  KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shard_mvlgamma),
-                      "Mvlgamma Compute failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shard_mvlgamma),
+                           "Mvlgamma Compute failed.");
   if (error == true) {
     return KERNEL_STATUS_PARAM_INVALID;
   } else {

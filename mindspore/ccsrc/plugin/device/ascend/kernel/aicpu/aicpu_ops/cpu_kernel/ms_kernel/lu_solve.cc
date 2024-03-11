@@ -35,20 +35,20 @@ const char *kLuSolve = "LuSolve";
 namespace aicpu {
 uint32_t LuSolveCpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "Check LuSolve params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "Check LuSolve params failed.");
   Tensor *input_0 = ctx.Input(0);
-  KERNEL_CHECK_NULLPTR(input_0->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input0 data failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input_0->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input0 data failed.");
   Tensor *input_1 = ctx.Input(1);
-  KERNEL_CHECK_NULLPTR(input_1->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input1 data failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input_1->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input1 data failed.");
   Tensor *input_2 = ctx.Input(2);
-  KERNEL_CHECK_NULLPTR(input_2->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input2 data failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input_2->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input2 data failed.");
   Tensor *output = ctx.Output(0);
   auto input_0_Shape = input_0->GetTensorShape();
-  KERNEL_CHECK_NULLPTR(input_0_Shape, KERNEL_STATUS_PARAM_INVALID, "Get input_0_Shape failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input_0_Shape, KERNEL_STATUS_PARAM_INVALID, "Get input_0_Shape failed.")
   auto input_1_Shape = input_1->GetTensorShape();
-  KERNEL_CHECK_NULLPTR(input_1_Shape, KERNEL_STATUS_PARAM_INVALID, "Get input_1_Shape failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input_1_Shape, KERNEL_STATUS_PARAM_INVALID, "Get input_1_Shape failed.")
   auto input_2_Shape = input_2->GetTensorShape();
-  KERNEL_CHECK_NULLPTR(input_2_Shape, KERNEL_STATUS_PARAM_INVALID, "Get input_2_Shape failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input_2_Shape, KERNEL_STATUS_PARAM_INVALID, "Get input_2_Shape failed.")
   int32_t b_dims = input_0_Shape->GetDims();
   int32_t lu_dims = input_1_Shape->GetDims();
   int32_t pivots_dims = input_2_Shape->GetDims();
@@ -58,51 +58,51 @@ uint32_t LuSolveCpuKernel::Compute(CpuKernelContext &ctx) {
   if (b_dims == lu_dims) {
     for (int32_t i = 0; i <= b_dims - 2; i++) {
       if (b_dims_vector[i] != lu_dims_vector[i]) {
-        KERNEL_LOG_ERROR("Incompatible matrix sizes for lu_solve!");
+        CUST_KERNEL_LOG_ERROR(ctx, "Incompatible matrix sizes for lu_solve!");
         return KERNEL_STATUS_PARAM_INVALID;
       }
     }
   } else if (lu_dims > b_dims) {
     for (int32_t i = 0; i < b_dims - 2; i++) {
       if (b_dims_vector[i] != lu_dims_vector[lu_dims - b_dims + i]) {
-        KERNEL_LOG_ERROR("Incompatible matrix sizes for lu_solve!");
+        CUST_KERNEL_LOG_ERROR(ctx, "Incompatible matrix sizes for lu_solve!");
         return KERNEL_STATUS_PARAM_INVALID;
       }
     }
   } else {
     for (int32_t i = 0; i < lu_dims - 2; i++) {
       if (lu_dims_vector[i] != b_dims_vector[b_dims - lu_dims + i]) {
-        KERNEL_LOG_ERROR("Incompatible matrix sizes for lu_solve!");
+        CUST_KERNEL_LOG_ERROR(ctx, "Incompatible matrix sizes for lu_solve!");
         return KERNEL_STATUS_PARAM_INVALID;
       }
     }
   }
   for (int32_t i = 0; i < pivots_dims; i++) {
     if (lu_dims_vector[i] != pivots_dims_vector[i]) {
-      KERNEL_LOG_ERROR("batch dimension of LU_pivots doesn't match batch dimension of LU_data!");
+      CUST_KERNEL_LOG_ERROR(ctx, "batch dimension of LU_pivots doesn't match batch dimension of LU_data!");
       return KERNEL_STATUS_PARAM_INVALID;
     }
   }
   auto data_type = ctx.Input(0)->GetDataType();
-  KERNEL_LOG_DEBUG(
-    "LuSolveCpuKernel[%s], input_0: size[%llu], input_1: size[%llu], input_2: size[%llu]"
-    "output: size[%llu].",
-    ctx.GetOpType().c_str(), input_0->GetDataSize(), input_1->GetDataSize(), input_2->GetDataSize(),
-    output->GetDataSize());
+  CUST_KERNEL_LOG_DEBUG(ctx,
+                        "LuSolveCpuKernel[%s], input_0: size[%llu], input_1: size[%llu], input_2: size[%llu]"
+                        "output: size[%llu].",
+                        ctx.GetOpType().c_str(), input_0->GetDataSize(), input_1->GetDataSize(), input_2->GetDataSize(),
+                        output->GetDataSize());
   switch (data_type) {
     case DT_FLOAT:
       return LuSolveCompute<float, float>(ctx);
     case DT_FLOAT16:
       return LuSolveCompute<float, Eigen::half>(ctx);
     default:
-      KERNEL_LOG_ERROR("LuSolve kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "LuSolve kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 
 template <typename T, typename T2>
-uint32_t LuSolveCpuKernel::LuSolve(const CpuKernelContext &ctx, T *b_working_ptr, T *lu_working_ptr,
+uint32_t LuSolveCpuKernel::LuSolve(CpuKernelContext &ctx, T *b_working_ptr, T *lu_working_ptr,
                                    int32_t *pivots_working_ptr, int64_t b_stride, int64_t a) {
   auto output_y = reinterpret_cast<T2 *>(ctx.Output(0)->GetData());
   auto input_0_Shape = ctx.Input(0)->GetTensorShape();
@@ -126,7 +126,7 @@ uint32_t LuSolveCpuKernel::LuSolve(const CpuKernelContext &ctx, T *b_working_ptr
 }
 
 template <typename T, typename T2>
-uint32_t LuSolveCpuKernel::LuSolveCompute(const CpuKernelContext &ctx) {
+uint32_t LuSolveCpuKernel::LuSolveCompute(CpuKernelContext &ctx) {
   auto input_x0 = reinterpret_cast<T2 *>(ctx.Input(0)->GetData());
   auto input_x1 = reinterpret_cast<T2 *>(ctx.Input(1)->GetData());
   auto input_x2 = reinterpret_cast<int32_t *>(ctx.Input(2)->GetData());
@@ -153,7 +153,7 @@ uint32_t LuSolveCpuKernel::LuSolveCompute(const CpuKernelContext &ctx) {
     b_shape.pop_back();
     lu_shape.pop_back();
   }
-  Bcast bcast(b_shape, lu_shape);
+  Bcast bcast(ctx, b_shape, lu_shape);
   int64_t batch_num = ctx.Output(0)->NumElements() / b_stride;
   if (batch_num < kParallelBatchNum1) {
     for (int64_t i = 0; i < batch_num; i++) {
@@ -177,8 +177,8 @@ uint32_t LuSolveCpuKernel::LuSolveCompute(const CpuKernelContext &ctx) {
         LuSolve<T, T2>(ctx, b_working_ptr, lu_working_ptr, pivots_working_ptr, b_stride, i);
       }
     };
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, batch_num, batch_num / max_core_num, sharder),
-                        "LuSolve Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, batch_num, batch_num / max_core_num, sharder),
+                             "LuSolve Compute failed.");
   }
   return KERNEL_STATUS_OK;
 }

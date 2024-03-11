@@ -36,32 +36,33 @@ const int64_t kParallelDataNumMid = 16 * 1024;
 const int64_t kParallelDataNumSameShape = 7 * 1024;
 const int64_t kParallelDataNumSameShapeMid = 35 * 1024;
 
-#define SQRTGRAD_COMPUTE_CASE(DTYPE, TYPE, CTX)            \
-  case (DTYPE): {                                          \
-    uint32_t result = SqrtGradCompute<TYPE>(CTX);          \
-    if (result != KERNEL_STATUS_OK) {                      \
-      KERNEL_LOG_ERROR("SqrtGrad kernel compute failed."); \
-      return result;                                       \
-    }                                                      \
-    break;                                                 \
+#define SQRTGRAD_COMPUTE_CASE(DTYPE, TYPE, CTX)                      \
+  case (DTYPE): {                                                    \
+    uint32_t result = SqrtGradCompute<TYPE>(CTX);                    \
+    if (result != KERNEL_STATUS_OK) {                                \
+      CUST_KERNEL_LOG_ERROR(ctx, "SqrtGrad kernel compute failed."); \
+      return result;                                                 \
+    }                                                                \
+    break;                                                           \
   }
 
-#define SQRTGRAD_COMPUTE_COMPLEX_CASE(DTYPE, TYPE, CTX)    \
-  case (DTYPE): {                                          \
-    uint32_t result = SqrtGradComputeComplex<TYPE>(CTX);   \
-    if (result != KERNEL_STATUS_OK) {                      \
-      KERNEL_LOG_ERROR("SqrtGrad kernel compute failed."); \
-      return result;                                       \
-    }                                                      \
-    break;                                                 \
+#define SQRTGRAD_COMPUTE_COMPLEX_CASE(DTYPE, TYPE, CTX)              \
+  case (DTYPE): {                                                    \
+    uint32_t result = SqrtGradComputeComplex<TYPE>(CTX);             \
+    if (result != KERNEL_STATUS_OK) {                                \
+      CUST_KERNEL_LOG_ERROR(ctx, "SqrtGrad kernel compute failed."); \
+      return result;                                                 \
+    }                                                                \
+    break;                                                           \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t SqrtGradCpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.", kSqrtGrad);
-  KERNEL_HANDLE_ERROR(SqrtGradParamCheck(ctx), "[%s] check params failed.", kSqrtGrad);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.",
+                           kSqrtGrad);
+  CUST_KERNEL_HANDLE_ERROR(ctx, SqrtGradParamCheck(ctx), "[%s] check params failed.", kSqrtGrad);
   auto data_type = ctx.Input(0)->GetDataType();
   switch (data_type) {
     SQRTGRAD_COMPUTE_COMPLEX_CASE(DT_COMPLEX64, std::complex<float>, ctx)
@@ -71,14 +72,14 @@ uint32_t SqrtGradCpuKernel::Compute(CpuKernelContext &ctx) {
     SQRTGRAD_COMPUTE_CASE(DT_DOUBLE, double, ctx)
 
     default:
-      KERNEL_LOG_ERROR("SqrtGrad kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "SqrtGrad kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 
   return KERNEL_STATUS_OK;
 }
 
-uint32_t SqrtGradCpuKernel::SqrtGradParamCheck(const CpuKernelContext &ctx) {
+uint32_t SqrtGradCpuKernel::SqrtGradParamCheck(CpuKernelContext &ctx) {
   // the non null of input_0, input_1, output has been verified in NormalCheck
   Tensor *input_0 = ctx.Input(0);
   Tensor *input_1 = ctx.Input(1);
@@ -86,14 +87,14 @@ uint32_t SqrtGradCpuKernel::SqrtGradParamCheck(const CpuKernelContext &ctx) {
 
   DataType input0_type = input_0->GetDataType();
   DataType input1_type = input_1->GetDataType();
-  KERNEL_CHECK_FALSE((input0_type == input1_type), KERNEL_STATUS_PARAM_INVALID,
-                     "The data type of input0 [%s] need be same with "
-                     "input1 [%s].",
-                     DTypeStr(input0_type).c_str(), DTypeStr(input1_type).c_str())
-  KERNEL_LOG_DEBUG(
-    "SqrtGradCpuKernel[%s], input0: size[%llu];"
-    "input1: size[%llu], output: size[%llu].",
-    ctx.GetOpType().c_str(), input_0->GetDataSize(), input_1->GetDataSize(), output->GetDataSize());
+  CUST_KERNEL_CHECK_FALSE(ctx, (input0_type == input1_type), KERNEL_STATUS_PARAM_INVALID,
+                          "The data type of input0 [%s] need be same with "
+                          "input1 [%s].",
+                          DTypeStr(input0_type).c_str(), DTypeStr(input1_type).c_str())
+  CUST_KERNEL_LOG_DEBUG(ctx,
+                        "SqrtGradCpuKernel[%s], input0: size[%llu];"
+                        "input1: size[%llu], output: size[%llu].",
+                        ctx.GetOpType().c_str(), input_0->GetDataSize(), input_1->GetDataSize(), output->GetDataSize());
 
   return KERNEL_STATUS_OK;
 }
@@ -106,7 +107,8 @@ special compute is used in the following situations.
 4. the shapes of input1 and input2 are different
 */
 template <typename T>
-void SqrtGradCpuKernel::SpecialCompute(int64_t start, int64_t end, T *input1, T *input2, T *output) {
+void SqrtGradCpuKernel::SpecialCompute(CpuKernelContext &ctx, int64_t start, int64_t end, T *input1, T *input2,
+                                       T *output) {
   int flag = 0;
   for (int64_t i = start; i < end; ++i) {
     if (*(input2 + i) == static_cast<T>(0)) {
@@ -118,11 +120,12 @@ void SqrtGradCpuKernel::SpecialCompute(int64_t start, int64_t end, T *input1, T 
     *(output + i) = *(input2 + i) * static_cast<T>(0.5) / *(input1 + i);
   }
 
-  if (flag == 1) KERNEL_LOG_WARN("divide by zero encountered");
+  if (flag == 1) CUST_KERNEL_LOG_WARN(ctx, "divide by zero encountered");
 }
 
 template <typename T>
-void SqrtGradCpuKernel::SpecialComputeComplex(int64_t start, int64_t end, T *input1, T *input2, T *output) {
+void SqrtGradCpuKernel::SpecialComputeComplex(CpuKernelContext &ctx, int64_t start, int64_t end, T *input1, T *input2,
+                                              T *output) {
   int flag = 0;
   for (int64_t i = start; i < end; ++i) {
     if (*(input2 + i) == static_cast<T>(0)) {
@@ -140,11 +143,11 @@ void SqrtGradCpuKernel::SpecialComputeComplex(int64_t start, int64_t end, T *inp
       *(output + i) = *(input2 + i) * static_cast<T>(0.5) / in1_conj;
     }
   }
-  if (flag == 1) KERNEL_LOG_WARN("divide by zero encountered");
+  if (flag == 1) CUST_KERNEL_LOG_WARN(ctx, "divide by zero encountered");
 }
 
 template <typename T>
-uint32_t SqrtGradCpuKernel::NoBcastCompute(const CpuKernelContext &ctx) {
+uint32_t SqrtGradCpuKernel::NoBcastCompute(CpuKernelContext &ctx) {
   auto in0 = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto in1 = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   auto out = reinterpret_cast<T *>(ctx.Output(0)->GetData());
@@ -163,18 +166,18 @@ uint32_t SqrtGradCpuKernel::NoBcastCompute(const CpuKernelContext &ctx) {
       max_core_num = data_num;
     }
 
-    auto sharder_sqrtgrad = [&](size_t start, size_t end) { SpecialCompute<T>(0, data_num, in0, in1, out); };
+    auto sharder_sqrtgrad = [&](size_t start, size_t end) { SpecialCompute<T>(ctx, 0, data_num, in0, in1, out); };
 
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_sqrtgrad),
-                        "SqrtGrad Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_sqrtgrad),
+                             "SqrtGrad Compute failed.");
   } else {
-    SpecialCompute<T>(0, data_num, in0, in1, out);
+    SpecialCompute<T>(ctx, 0, data_num, in0, in1, out);
   }
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t SqrtGradCpuKernel::NoBcastComputeComplex(const CpuKernelContext &ctx) {
+uint32_t SqrtGradCpuKernel::NoBcastComputeComplex(CpuKernelContext &ctx) {
   auto in0 = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto in1 = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   auto out = reinterpret_cast<T *>(ctx.Output(0)->GetData());
@@ -193,18 +196,20 @@ uint32_t SqrtGradCpuKernel::NoBcastComputeComplex(const CpuKernelContext &ctx) {
       max_core_num = data_num;
     }
 
-    auto sharder_sqrtgrad = [&](size_t start, size_t end) { SpecialComputeComplex<T>(0, data_num, in0, in1, out); };
+    auto sharder_sqrtgrad = [&](size_t start, size_t end) {
+      SpecialComputeComplex<T>(ctx, 0, data_num, in0, in1, out);
+    };
 
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_sqrtgrad),
-                        "SqrtGrad Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_sqrtgrad),
+                             "SqrtGrad Compute failed.");
   } else {
-    SpecialComputeComplex<T>(0, data_num, in0, in1, out);
+    SpecialComputeComplex<T>(ctx, 0, data_num, in0, in1, out);
   }
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t SqrtGradCpuKernel::SqrtGradCompute(const CpuKernelContext &ctx) {
+uint32_t SqrtGradCpuKernel::SqrtGradCompute(CpuKernelContext &ctx) {
   Tensor *input0_tensor = ctx.Input(0);
   int64_t input0_elements_nums = input0_tensor->NumElements();
 
@@ -212,8 +217,8 @@ uint32_t SqrtGradCpuKernel::SqrtGradCompute(const CpuKernelContext &ctx) {
   int64_t input1_elements_nums = input1_tensor->NumElements();
 
   if (input0_elements_nums != input1_elements_nums) {
-    KERNEL_LOG_WARN("Invalid element numbers, got[%d] and [%d]", static_cast<int32_t>(input0_elements_nums),
-                    static_cast<int32_t>(input1_elements_nums));
+    CUST_KERNEL_LOG_WARN(ctx, "Invalid element numbers, got[%d] and [%d]", static_cast<int32_t>(input0_elements_nums),
+                         static_cast<int32_t>(input1_elements_nums));
     return KERNEL_STATUS_PARAM_INVALID;
   } else {
     return NoBcastCompute<T>(ctx);
@@ -222,7 +227,7 @@ uint32_t SqrtGradCpuKernel::SqrtGradCompute(const CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t SqrtGradCpuKernel::SqrtGradComputeComplex(const CpuKernelContext &ctx) {
+uint32_t SqrtGradCpuKernel::SqrtGradComputeComplex(CpuKernelContext &ctx) {
   Tensor *input0_tensor = ctx.Input(0);
   int64_t input0_elements_nums = input0_tensor->NumElements();
 
@@ -230,8 +235,8 @@ uint32_t SqrtGradCpuKernel::SqrtGradComputeComplex(const CpuKernelContext &ctx) 
   int64_t input1_elements_nums = input1_tensor->NumElements();
 
   if (input0_elements_nums != input1_elements_nums) {
-    KERNEL_LOG_WARN("Invalid element numbers, got[%d] and [%d]", static_cast<int32_t>(input0_elements_nums),
-                    static_cast<int32_t>(input1_elements_nums));
+    CUST_KERNEL_LOG_WARN(ctx, "Invalid element numbers, got[%d] and [%d]", static_cast<int32_t>(input0_elements_nums),
+                         static_cast<int32_t>(input1_elements_nums));
     return KERNEL_STATUS_PARAM_INVALID;
   } else {
     return NoBcastComputeComplex<T>(ctx);

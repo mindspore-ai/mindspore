@@ -31,7 +31,7 @@ class SparseSegmentMeanWithNumSegmentsCpuKernel : public CpuKernel {
 
  private:
   template <typename T1, typename T2, typename T3, typename T4>
-  static uint32_t ComputeKernel(const CpuKernelContext &ctx);
+  static uint32_t ComputeKernel(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

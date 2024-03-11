@@ -35,34 +35,35 @@ const int64_t kParallelDataNumSameShape = 7 * 1024;
 const int64_t kParallelDataNumSameShapeMid = 16 * 1024;
 const char *kLogitGrad = "LogitGrad";
 
-#define LOGITGRAD_COMPUTE_CASE(DTYPE, TYPE, CTX)            \
-  case (DTYPE): {                                           \
-    uint32_t result = LogitGradCompute<TYPE>(CTX);          \
-    if (result != KERNEL_STATUS_OK) {                       \
-      KERNEL_LOG_ERROR("LogitGrad kernel compute failed."); \
-      return result;                                        \
-    }                                                       \
-    break;                                                  \
+#define LOGITGRAD_COMPUTE_CASE(DTYPE, TYPE, CTX)                      \
+  case (DTYPE): {                                                     \
+    uint32_t result = LogitGradCompute<TYPE>(CTX);                    \
+    if (result != KERNEL_STATUS_OK) {                                 \
+      CUST_KERNEL_LOG_ERROR(ctx, "LogitGrad kernel compute failed."); \
+      return result;                                                  \
+    }                                                                 \
+    break;                                                            \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t LogitGradCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.", kLogitGrad);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.",
+                           kLogitGrad);
   DataType data_type = ctx.Input(0)->GetDataType();
   switch (data_type) {
     LOGITGRAD_COMPUTE_CASE(DT_FLOAT16, Eigen::half, ctx)
     LOGITGRAD_COMPUTE_CASE(DT_FLOAT, float, ctx)
     LOGITGRAD_COMPUTE_CASE(DT_DOUBLE, double, ctx)
     default:
-      KERNEL_LOG_ERROR("LogitGrad kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "LogitGrad kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t LogitGradCpuKernel::LogitGradCompute(const CpuKernelContext &ctx) {
+uint32_t LogitGradCpuKernel::LogitGradCompute(CpuKernelContext &ctx) {
   auto input_y_grad_tensor = ctx.Input(0);
   auto input_x_tensor = ctx.Input(1);
   auto output_x_grad_tensor = ctx.Output(0);
@@ -106,8 +107,8 @@ uint32_t LogitGradCpuKernel::LogitGradCompute(const CpuKernelContext &ctx) {
         }
       }
     };
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shared_less),
-                        "LogitGrad Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shared_less),
+                             "LogitGrad Compute failed.");
   } else {
     T one = T(1);
     T zero = T(0);

@@ -27,7 +27,7 @@ class EnvironSetKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t ParseKernelParam(const CpuKernelContext &ctx);
+  uint32_t ParseKernelParam(CpuKernelContext &ctx);
   int64_t attr_value_type_{0};
   size_t value_size_{0};
 };

@@ -34,9 +34,9 @@ class FractionalMaxPoolWithFixedKsize : public CpuKernel {
                                                   const int output_h, const int output_w, const int pool_h,
                                                   const int pool_w, CpuKernelContext &ctx);
   template <typename T, typename SType>
-  uint32_t ComputeSingleBatch(T *x_addr, SType *random_samples_addr, T *y_addr, int64_t *argmax_addr, const int input_c,
-                              const int input_h, const int input_w, const int output_h, const int output_w,
-                              const int pool_h, const int pool_w);
+  uint32_t ComputeSingleBatch(CpuKernelContext &ctx, T *x_addr, SType *random_samples_addr, T *y_addr,
+                              int64_t *argmax_addr, const int input_c, const int input_h, const int input_w,
+                              const int output_h, const int output_w, const int pool_h, const int pool_w);
   template <typename SType>
   std::vector<int> FractionalMaxPoolWithFixedKsizeGenerateIntervals(SType sample, const int input_size,
                                                                     const int output_size, const int pool_size);

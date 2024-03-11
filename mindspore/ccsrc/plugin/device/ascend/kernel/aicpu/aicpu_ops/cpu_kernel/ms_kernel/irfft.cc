@@ -40,7 +40,7 @@ using NormMode = mindspore::NormMode;
   case (DTYPE): {                                                  \
     uint32_t result = IRFFTCompute<INTYPE, MIDTYPE, OUTTYPE>(CTX); \
     if (result != KERNEL_STATUS_OK) {                              \
-      KERNEL_LOG_ERROR("IRFFT kernel compute failed.");            \
+      CUST_KERNEL_LOG_ERROR(ctx, "IRFFT kernel compute failed.");  \
       return result;                                               \
     }                                                              \
     break;                                                         \
@@ -54,7 +54,8 @@ uint32_t IRFFTCpuKernel::Compute(CpuKernelContext &ctx) {
   if (op_name.find(op_prefix) == 0) {
     op_name.erase(op_name.begin(), op_name.begin() + op_prefix.size());
   }
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.", op_name.c_str());
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.",
+                           op_name.c_str());
   auto x_type = ctx.Input(kIndex0)->GetDataType();
   switch (x_type) {
     IRFFT_COMPUTE_CASE(DT_INT16, int16_t, complex64, float, ctx)
@@ -66,29 +67,29 @@ uint32_t IRFFTCpuKernel::Compute(CpuKernelContext &ctx) {
     IRFFT_COMPUTE_CASE(DT_COMPLEX64, complex64, complex64, float, ctx)
     IRFFT_COMPUTE_CASE(DT_COMPLEX128, complex128, complex128, double, ctx)
     default:
-      KERNEL_LOG_ERROR("IRFFT kernel data type [%s] not support.", DTypeStr(x_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "IRFFT kernel data type [%s] not support.", DTypeStr(x_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 
-#define SWITCH_DIM_CALCULATE(T1, T2)                                                  \
-  if (x_rank == 1) {                                                                  \
-    ComputeIRFFT<T1, T2, 1>(calculate_input, output_ptr, tensor_shape, n, dim, norm); \
-  } else if (x_rank == 2) {                                                           \
-    ComputeIRFFT<T1, T2, 2>(calculate_input, output_ptr, tensor_shape, n, dim, norm); \
-  } else if (x_rank == 3) {                                                           \
-    ComputeIRFFT<T1, T2, 3>(calculate_input, output_ptr, tensor_shape, n, dim, norm); \
-  } else if (x_rank == 4) {                                                           \
-    ComputeIRFFT<T1, T2, 4>(calculate_input, output_ptr, tensor_shape, n, dim, norm); \
-  } else if (x_rank == 5) {                                                           \
-    ComputeIRFFT<T1, T2, 5>(calculate_input, output_ptr, tensor_shape, n, dim, norm); \
-  } else if (x_rank == 6) {                                                           \
-    ComputeIRFFT<T1, T2, 6>(calculate_input, output_ptr, tensor_shape, n, dim, norm); \
-  } else if (x_rank == 7) {                                                           \
-    ComputeIRFFT<T1, T2, 7>(calculate_input, output_ptr, tensor_shape, n, dim, norm); \
-  } else {                                                                            \
-    ComputeIRFFT<T1, T2, 8>(calculate_input, output_ptr, tensor_shape, n, dim, norm); \
+#define SWITCH_DIM_CALCULATE(ctx, T1, T2)                                                  \
+  if (x_rank == 1) {                                                                       \
+    ComputeIRFFT<T1, T2, 1>(ctx, calculate_input, output_ptr, tensor_shape, n, dim, norm); \
+  } else if (x_rank == 2) {                                                                \
+    ComputeIRFFT<T1, T2, 2>(ctx, calculate_input, output_ptr, tensor_shape, n, dim, norm); \
+  } else if (x_rank == 3) {                                                                \
+    ComputeIRFFT<T1, T2, 3>(ctx, calculate_input, output_ptr, tensor_shape, n, dim, norm); \
+  } else if (x_rank == 4) {                                                                \
+    ComputeIRFFT<T1, T2, 4>(ctx, calculate_input, output_ptr, tensor_shape, n, dim, norm); \
+  } else if (x_rank == 5) {                                                                \
+    ComputeIRFFT<T1, T2, 5>(ctx, calculate_input, output_ptr, tensor_shape, n, dim, norm); \
+  } else if (x_rank == 6) {                                                                \
+    ComputeIRFFT<T1, T2, 6>(ctx, calculate_input, output_ptr, tensor_shape, n, dim, norm); \
+  } else if (x_rank == 7) {                                                                \
+    ComputeIRFFT<T1, T2, 7>(ctx, calculate_input, output_ptr, tensor_shape, n, dim, norm); \
+  } else {                                                                                 \
+    ComputeIRFFT<T1, T2, 8>(ctx, calculate_input, output_ptr, tensor_shape, n, dim, norm); \
   }
 
 double GetNormalizeWeight(int64_t element_nums, mindspore::NormMode norm_type_) {
@@ -151,7 +152,8 @@ Eigen::Tensor<T1, x_rank, Eigen::RowMajor> ReconstructTensor(
 }
 
 template <typename T1, typename T2, int x_rank>
-bool ComputeIRFFT(T1 *input_x, T2 *output_y, const std::vector<int64_t> &x_shape, int n, int dim, NormMode norm_type) {
+bool ComputeIRFFT(CpuKernelContext &ctx, T1 *input_x, T2 *output_y, const std::vector<int64_t> &x_shape, int n, int dim,
+                  NormMode norm_type) {
   Eigen::array<Eigen::DenseIndex, x_rank> tensor_shape;
   for (int i = 0; i < x_rank; ++i) {
     tensor_shape[i] = x_shape[i];
@@ -168,7 +170,7 @@ bool ComputeIRFFT(T1 *input_x, T2 *output_y, const std::vector<int64_t> &x_shape
   Eigen::array<Eigen::DenseIndex, x_rank> temp_tensor_shape(tensor_shape);
   // check the shape input.shape[dim] cannot be 1
   if (n == 0) {
-    KERNEL_LOG_ERROR("For 'IRFFT' input.shape[dim] cannot be 1 but got [%ld].", temp_tensor_shape[dim]);
+    CUST_KERNEL_LOG_ERROR(ctx, "For 'IRFFT' input.shape[dim] cannot be 1 but got [%ld].", temp_tensor_shape[dim]);
     return KERNEL_STATUS_PARAM_INVALID;
   }
   temp_tensor_shape[dim] = n;
@@ -227,13 +229,13 @@ uint32_t IRFFTCpuKernel::IRFFTCompute(CpuKernelContext &ctx) {
   if (memset_s(calculate_input, sizeof(T_mid) * input_element, 0, sizeof(T_mid) * input_element) != EOK) {
     free(calculate_input);
     calculate_input = nullptr;
-    KERNEL_LOG_ERROR("For 'IRFFT', memset_s failed. ");
+    CUST_KERNEL_LOG_ERROR(ctx, "For 'IRFFT', memset_s failed. ");
     return KERNEL_STATUS_INNER_ERROR;
   }
   GenerateCalculateInput<T_in, T_mid>(input_ptr, calculate_input, input_element);
 
   // step4：Run FFT according to parameters
-  SWITCH_DIM_CALCULATE(T_mid, T_out);
+  SWITCH_DIM_CALCULATE(ctx, T_mid, T_out);
 
   // step5: Release temporary memory
   free(calculate_input);

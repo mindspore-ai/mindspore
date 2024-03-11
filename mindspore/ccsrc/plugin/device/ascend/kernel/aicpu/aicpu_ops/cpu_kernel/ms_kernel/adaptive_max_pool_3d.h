@@ -30,10 +30,10 @@ class AdaptiveMaxPool3dCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t AdaptiveMaxPool3dCheckAndSetShape(const CpuKernelContext &ctx);
+  uint32_t AdaptiveMaxPool3dCheckAndSetShape(CpuKernelContext &ctx);
   template <typename T>
-  uint32_t AdaptiveMaxPool3dCompute(const CpuKernelContext &ctx);
-  int64_t ComputeStride(const std::vector<int64_t> &shape, size_t index);
+  uint32_t AdaptiveMaxPool3dCompute(CpuKernelContext &ctx);
+  int64_t ComputeStride(CpuKernelContext &ctx, const std::vector<int64_t> &shape, size_t index);
 };
 }  // namespace aicpu
 #endif

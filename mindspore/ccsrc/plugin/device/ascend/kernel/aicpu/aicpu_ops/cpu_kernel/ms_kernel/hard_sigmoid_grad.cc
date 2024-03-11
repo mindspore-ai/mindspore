@@ -27,25 +27,27 @@ const uint32_t kInputNum = 2;
 const char *const kHardSigmoidGrad = "HardSigmoidGrad";
 const int64_t kParallelDataNums = 16 * 1024;
 
-#define HARD_SIGMOID_GRAD_COMPUTE_CASE(DTYPE1, TYPE1, TYPE2, CTX) \
-  case (DTYPE1): {                                                \
-    uint32_t result = HardSigmoidGradCompute<TYPE1, TYPE2>(CTX);  \
-    if (result != KERNEL_STATUS_OK) {                             \
-      KERNEL_LOG_ERROR("HardSigmoidGrad kernel compute failed."); \
-      return result;                                              \
-    }                                                             \
-    break;                                                        \
+#define HARD_SIGMOID_GRAD_COMPUTE_CASE(DTYPE1, TYPE1, TYPE2, CTX)           \
+  case (DTYPE1): {                                                          \
+    uint32_t result = HardSigmoidGradCompute<TYPE1, TYPE2>(CTX);            \
+    if (result != KERNEL_STATUS_OK) {                                       \
+      CUST_KERNEL_LOG_ERROR(ctx, "HardSigmoidGrad kernel compute failed."); \
+      return result;                                                        \
+    }                                                                       \
+    break;                                                                  \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t HardSigmoidGradCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.", kHardSigmoidGrad);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.",
+                           kHardSigmoidGrad);
   DataType grads_type = ctx.Input(0)->GetDataType();
   DataType x_type = ctx.Input(1)->GetDataType();
   if (grads_type != x_type) {
-    KERNEL_LOG_ERROR("HardSigmoidGrad kernel input[0] data type [%s] must be the same as input[1] data type [%s].",
-                     DTypeStr(grads_type).c_str(), DTypeStr(x_type).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "HardSigmoidGrad kernel input[0] data type [%s] must be the same as input[1] data type [%s].",
+                          DTypeStr(grads_type).c_str(), DTypeStr(x_type).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   switch (grads_type) {
@@ -53,14 +55,15 @@ uint32_t HardSigmoidGradCpuKernel::Compute(CpuKernelContext &ctx) {
     HARD_SIGMOID_GRAD_COMPUTE_CASE(DT_FLOAT, float, float, ctx)
     HARD_SIGMOID_GRAD_COMPUTE_CASE(DT_DOUBLE, double, double, ctx)
     default:
-      KERNEL_LOG_ERROR("HardSigmoidGrad kernel inputs data type [%s] not support.", DTypeStr(grads_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "HardSigmoidGrad kernel inputs data type [%s] not support.",
+                            DTypeStr(grads_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 
 template <typename T1, typename T2>
-uint32_t HardSigmoidGradCpuKernel::HardSigmoidGradCompute(const CpuKernelContext &ctx) {
+uint32_t HardSigmoidGradCpuKernel::HardSigmoidGradCompute(CpuKernelContext &ctx) {
   auto grads = reinterpret_cast<T1 *>(ctx.Input(0)->GetData());
   auto input_x = reinterpret_cast<T2 *>(ctx.Input(1)->GetData());
   auto y = reinterpret_cast<T2 *>(ctx.Output(0)->GetData());
@@ -88,8 +91,8 @@ uint32_t HardSigmoidGradCpuKernel::HardSigmoidGradCompute(const CpuKernelContext
           (*(input_x + i) > neg_three && *(input_x + i) < three) ? static_cast<T2>(*(grads + i)) * one_sixth : zero;
       }
     };
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, perUnitSize, shard_hard_sigmoid_grad),
-                        "HardSigmoidGrad Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, data_num, perUnitSize, shard_hard_sigmoid_grad),
+                             "HardSigmoidGrad Compute failed.");
   }
   return KERNEL_STATUS_OK;
 }

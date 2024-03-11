@@ -45,17 +45,17 @@ class DenseToSparseSetOperationCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t NullptrAndMatVecCheck(const CpuKernelContext &ctx, DataBank &calc_info);
+  uint32_t NullptrAndMatVecCheck(CpuKernelContext &ctx, DataBank &calc_info);
 
   template <typename T>
-  uint32_t ComputeDenseToSparse(DataBank &databank);
+  uint32_t ComputeDenseToSparse(CpuKernelContext &ctx, DataBank &databank);
 
   template <typename T>
-  uint32_t CheckGroup(const Group &group, const std::vector<int64_t> &sparse_tensor_shape);
+  uint32_t CheckGroup(CpuKernelContext &ctx, const Group &group, const std::vector<int64_t> &sparse_tensor_shape);
 
   template <typename T>
-  uint32_t PopulateFromSparseGroup(const Group &group, const std::vector<int64_t> &sparse_tensor_shape,
-                                   std::set<T> &result);
+  uint32_t PopulateFromSparseGroup(CpuKernelContext &ctx, const Group &group,
+                                   const std::vector<int64_t> &sparse_tensor_shape, std::set<T> &result);
   template <typename T>
   uint32_t PopulateFromDenseGroup(Tensor *input_tensor, const std::vector<int64_t> &input_strides,
                                   const std::vector<int64_t> &group_indices, std::set<T> &result);
@@ -68,7 +68,7 @@ class DenseToSparseSetOperationCpuKernel : public CpuKernel {
                          SetOperation set_operation_);
 
   template <typename T>
-  uint32_t OutputSparseTensor(DataBank &databank, const std::vector<int64_t> &output_shape, const int64_t num_values,
-                              const std::map<std::vector<int64_t>, std::set<T>> &sets);
+  uint32_t OutputSparseTensor(CpuKernelContext &ctx, DataBank &databank, const std::vector<int64_t> &output_shape,
+                              const int64_t num_values, const std::map<std::vector<int64_t>, std::set<T>> &sets);
 };
 }  // namespace aicpu

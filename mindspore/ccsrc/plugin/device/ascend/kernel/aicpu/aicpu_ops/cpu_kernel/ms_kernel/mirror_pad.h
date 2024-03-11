@@ -52,7 +52,7 @@ class MirrorPadCpuKernel : public CpuKernel {
    * @return status if success
    */
   template <typename T>
-  uint32_t MirrorPadCompute(T *input_data_ptr, T *output_data_ptr);
+  uint32_t MirrorPadCompute(CpuKernelContext &ctx, T *input_data_ptr, T *output_data_ptr);
 
   template <typename T>
   uint32_t DoCompute(CpuKernelContext &ctx);

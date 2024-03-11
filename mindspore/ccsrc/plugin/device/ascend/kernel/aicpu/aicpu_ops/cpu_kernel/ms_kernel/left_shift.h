@@ -30,19 +30,19 @@ class LeftShiftCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t LeftShiftParamCheck(const CpuKernelContext &ctx);
+  uint32_t LeftShiftParamCheck(CpuKernelContext &ctx);
 
   template <typename T>
-  void SpecialCompute(BcastShapeType type, int64_t start, int64_t end, const CpuKernelContext &ctx);
+  void SpecialCompute(BcastShapeType type, int64_t start, int64_t end, CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t NoBcastCompute(const CpuKernelContext &ctx);
+  uint32_t NoBcastCompute(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t BcastCompute(const CpuKernelContext &ctx, const Bcast &bcast);
+  uint32_t BcastCompute(CpuKernelContext &ctx, const Bcast &bcast);
 
   template <typename T>
-  uint32_t LeftShiftCompute(const CpuKernelContext &ctx);
+  uint32_t LeftShiftCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

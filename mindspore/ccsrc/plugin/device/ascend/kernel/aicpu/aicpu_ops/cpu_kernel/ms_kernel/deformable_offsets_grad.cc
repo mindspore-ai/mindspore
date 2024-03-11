@@ -267,7 +267,7 @@ void DeformableOffsetGradKernel(const OffsetIndex &offset_index, const OffsetStr
 }
 
 template <typename T>
-uint32_t DeformableOffsetsGradKernel::DoComputeNHWC(const CpuKernelContext &ctx, size_t num_kernels,
+uint32_t DeformableOffsetsGradKernel::DoComputeNHWC(CpuKernelContext &ctx, size_t num_kernels,
                                                     const DeformableOffsetGradDims &dims, const T *input_x,
                                                     const T *input_offset, const T *input_grad, T *output_grad_x,
                                                     T *output_grad_offset) const {
@@ -317,12 +317,12 @@ uint32_t DeformableOffsetsGradKernel::DoComputeNHWC(const CpuKernelContext &ctx,
     }
   };
   const int64_t per_unit_size = static_cast<int64_t>(num_kernels / std::thread::hardware_concurrency());
-  KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, num_kernels, per_unit_size, task), "Compute failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, num_kernels, per_unit_size, task), "Compute failed.");
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t DeformableOffsetsGradKernel::DoComputeNCHW(const CpuKernelContext &ctx, size_t num_kernels,
+uint32_t DeformableOffsetsGradKernel::DoComputeNCHW(CpuKernelContext &ctx, size_t num_kernels,
                                                     const DeformableOffsetGradDims &dims, const T *input_x,
                                                     const T *input_offset, const T *input_grad, T *output_grad_x,
                                                     T *output_grad_offset) const {
@@ -373,17 +373,17 @@ uint32_t DeformableOffsetsGradKernel::DoComputeNCHW(const CpuKernelContext &ctx,
     }
   };
   const int64_t per_unit_size = static_cast<int64_t>(num_kernels / std::thread::hardware_concurrency());
-  KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, num_kernels, per_unit_size, task), "Compute failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, num_kernels, per_unit_size, task), "Compute failed.");
   return KERNEL_STATUS_OK;
 }
 
-uint32_t DeformableOffsetsGradKernel::ParseKernelParam(const CpuKernelContext &ctx) {
+uint32_t DeformableOffsetsGradKernel::ParseKernelParam(CpuKernelContext &ctx) {
   const size_t &num_input = ctx.GetInputsSize();
   const size_t &num_output = ctx.GetOutputsSize();
-  auto ret = CheckInOutNum(num_input, num_output);
+  auto ret = CheckInOutNum(ctx, num_input, num_output);
   if (ret != KERNEL_STATUS_OK) {
-    KERNEL_LOG_ERROR("It should get %zu inputs and %zu outputs, but got %zu input and %zu outputs.", kInputNum,
-                     kInputNum, num_input, num_output);
+    CUST_KERNEL_LOG_ERROR(ctx, "It should get %zu inputs and %zu outputs, but got %zu input and %zu outputs.",
+                          kInputNum, kInputNum, num_input, num_output);
     return KERNEL_STATUS_PARAM_INVALID;
   }
   auto grad_x_output_tensor = ctx.Output(kGradXIndex);
@@ -400,7 +400,7 @@ uint32_t DeformableOffsetsGradKernel::ParseKernelParam(const CpuKernelContext &c
   grad_output_shape_ = grad_output_shape->GetDimSizes();
   ret = SetDims(ctx);
   if (ret != KERNEL_STATUS_OK) {
-    KERNEL_LOG_ERROR("Set dims failed.");
+    CUST_KERNEL_LOG_ERROR(ctx, "Set dims failed.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
@@ -408,7 +408,7 @@ uint32_t DeformableOffsetsGradKernel::ParseKernelParam(const CpuKernelContext &c
 }
 
 template <typename T>
-uint32_t DeformableOffsetsGradKernel::DeformableOffsetsGradTask(const CpuKernelContext &ctx) {
+uint32_t DeformableOffsetsGradKernel::DeformableOffsetsGradTask(CpuKernelContext &ctx) {
   const size_t num_kernels =
     dims_.x_n * dims_.offset_h * dims_.offset_w * dims_.kernel_h * dims_.kernel_w * dims_.deformable_group;
 
@@ -439,27 +439,28 @@ uint32_t DeformableOffsetsGradKernel::DeformableOffsetsGradTask(const CpuKernelC
   return ret;
 }
 
-uint32_t DeformableOffsetsGradKernel::CheckInOutNum(size_t inputs_num, size_t outputs_num) const {
+uint32_t DeformableOffsetsGradKernel::CheckInOutNum(CpuKernelContext &ctx, size_t inputs_num,
+                                                    size_t outputs_num) const {
   if (inputs_num != kInputNum) {
-    KERNEL_LOG_ERROR("The number of inputs must be %d but got %d", kInputNum, inputs_num);
+    CUST_KERNEL_LOG_ERROR(ctx, "The number of inputs must be %d but got %d", kInputNum, inputs_num);
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (outputs_num != kOutputNum) {
-    KERNEL_LOG_ERROR("The number of outputs must be %d but got %d", kOutputNum, outputs_num);
+    CUST_KERNEL_LOG_ERROR(ctx, "The number of outputs must be %d but got %d", kOutputNum, outputs_num);
     return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 
-uint32_t DeformableOffsetsGradKernel::SetDims(const CpuKernelContext &ctx) {
+uint32_t DeformableOffsetsGradKernel::SetDims(CpuKernelContext &ctx) {
   dims_.deformable_group = static_cast<size_t>(ctx.GetAttr(kDeformableGroups)->GetInt());
   if (dims_.deformable_group == 0) {
-    KERNEL_LOG_ERROR("Deformable group must be greater than 0, but got 0");
+    CUST_KERNEL_LOG_ERROR(ctx, "Deformable group must be greater than 0, but got 0");
     return KERNEL_STATUS_PARAM_INVALID;
   }
   auto pad = ctx.GetAttr(kPads)->GetListInt();
   if (pad.size() != kPadNum) {
-    KERNEL_LOG_ERROR("the length of 'pad' must be %d but got %d", kPadNum, pad.size());
+    CUST_KERNEL_LOG_ERROR(ctx, "the length of 'pad' must be %d but got %d", kPadNum, pad.size());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   dims_.pad_top = static_cast<size_t>(pad[kPadTopIndex]);
@@ -467,7 +468,7 @@ uint32_t DeformableOffsetsGradKernel::SetDims(const CpuKernelContext &ctx) {
 
   auto stride = ctx.GetAttr(kStrides)->GetListInt();
   if (stride.size() != kStrideNum) {
-    KERNEL_LOG_ERROR("The length of 'stride' must be %d but got %d", kStrideNum, stride.size());
+    CUST_KERNEL_LOG_ERROR(ctx, "The length of 'stride' must be %d but got %d", kStrideNum, stride.size());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   dims_.stride_h = static_cast<size_t>(stride[kStrideHIndex]);
@@ -475,7 +476,7 @@ uint32_t DeformableOffsetsGradKernel::SetDims(const CpuKernelContext &ctx) {
 
   auto dilation = ctx.GetAttr(kDilations)->GetListInt();
   if (dilation.size() != kDilationNum) {
-    KERNEL_LOG_ERROR("The length of 'dilation' must be %d but got %d", kDilationNum, dilation.size());
+    CUST_KERNEL_LOG_ERROR(ctx, "The length of 'dilation' must be %d but got %d", kDilationNum, dilation.size());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   dims_.dilation_h = static_cast<size_t>(dilation[kDilationHIndex]);
@@ -483,13 +484,13 @@ uint32_t DeformableOffsetsGradKernel::SetDims(const CpuKernelContext &ctx) {
 
   auto ksize = ctx.GetAttr(kSize)->GetListInt();
   if (ksize.size() != kKernelSizeNum) {
-    KERNEL_LOG_ERROR("The length of 'ksize' must be %d but got %d", kKernelSizeNum, ksize.size());
+    CUST_KERNEL_LOG_ERROR(ctx, "The length of 'ksize' must be %d but got %d", kKernelSizeNum, ksize.size());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   dims_.kernel_h = static_cast<size_t>(ksize[kKernelHIndex]);
   dims_.kernel_w = static_cast<size_t>(ksize[kKernelWIndex]);
   if (dims_.kernel_h == 0 || dims_.kernel_w == 0) {
-    KERNEL_LOG_ERROR("The value of 'ksize' must be larger than 0.");
+    CUST_KERNEL_LOG_ERROR(ctx, "The value of 'ksize' must be larger than 0.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
   auto input_tensor = ctx.Input(kXIndex)->GetTensorShape();
@@ -519,7 +520,7 @@ uint32_t DeformableOffsetsGradKernel::SetDims(const CpuKernelContext &ctx) {
 }
 
 uint32_t DeformableOffsetsGradKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(ParseKernelParam(ctx), "DeformableOffsetsGrad normal check failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, ParseKernelParam(ctx), "DeformableOffsetsGrad normal check failed.");
   uint32_t ret = KERNEL_STATUS_OK;
   switch (index_type_) {
     case DT_FLOAT:
@@ -529,7 +530,7 @@ uint32_t DeformableOffsetsGradKernel::Compute(CpuKernelContext &ctx) {
       ret = DeformableOffsetsGradTask<Eigen::half>(ctx);
       break;
     default:
-      KERNEL_LOG_ERROR("Error type %s.", DTypeStr(index_type_).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Error type %s.", DTypeStr(index_type_).c_str());
       return KERNEL_STATUS_INNER_ERROR;
   }
   return ret;

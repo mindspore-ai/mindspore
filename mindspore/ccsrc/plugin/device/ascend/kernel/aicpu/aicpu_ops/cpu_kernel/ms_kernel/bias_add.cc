@@ -42,11 +42,11 @@ uint32_t BiasAddCpuKernel::Compute(CpuKernelContext &ctx) {
   auto input_shape_X = input_0->GetTensorShape();
   auto input_shape_B = input_1->GetTensorShape();
   if (input_shape_B->GetDims() != 1) {
-    KERNEL_LOG_ERROR("bias should be 1-D.");
+    CUST_KERNEL_LOG_ERROR(ctx, "bias should be 1-D.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (input_shape_X->GetDims() < 2) {
-    KERNEL_LOG_ERROR("Input tensor must be at least 2D");
+    CUST_KERNEL_LOG_ERROR(ctx, "Input tensor must be at least 2D");
     return KERNEL_STATUS_PARAM_INVALID;
   }
   auto attr_data_format = ctx.GetAttr("data_format");
@@ -55,20 +55,21 @@ uint32_t BiasAddCpuKernel::Compute(CpuKernelContext &ctx) {
   int32_t xsize = shapesize - 1;
   if (str_format == "NHWC") {
     if (input_shape_B->GetDimSize(0) != input_shape_X->GetDimSize(xsize)) {
-      KERNEL_LOG_ERROR(
-        "Must provide as many biases as the last dimension of the input "
-        "tensor");
+      CUST_KERNEL_LOG_ERROR(ctx,
+                            "Must provide as many biases as the last dimension of the input "
+                            "tensor");
       return KERNEL_STATUS_PARAM_INVALID;
     }
   } else if (str_format == "NCHW") {
     if (input_shape_B->GetDimSize(0) != input_shape_X->GetDimSize(1)) {
-      KERNEL_LOG_ERROR(
-        "Must provide as many biases as the last dimension of the input "
-        "tensor");
+      CUST_KERNEL_LOG_ERROR(ctx,
+                            "Must provide as many biases as the last dimension of the input "
+                            "tensor");
       return KERNEL_STATUS_PARAM_INVALID;
     }
   } else if (str_format == "NCDHW") {
-    KERNEL_LOG_ERROR("For BiasAdd, 'data_format' should be `NHWC` or `NCHW`, but got [%s].", str_format.c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "For BiasAdd, 'data_format' should be `NHWC` or `NCHW`, but got [%s].",
+                          str_format.c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
@@ -100,14 +101,14 @@ uint32_t BiasAddCpuKernel::Compute(CpuKernelContext &ctx) {
     case DT_COMPLEX128:
       return BiasAddCompute<std::complex<std::double_t>>(ctx);
     default:
-      KERNEL_LOG_ERROR("[%s] Data type of input is not support, input data type is [%s].", ctx.GetOpType().c_str(),
-                       DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "[%s] Data type of input is not support, input data type is [%s].",
+                            ctx.GetOpType().c_str(), DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 }
 
 template <typename T>
-uint32_t BiasAddCpuKernel::BiasAddCompute(const CpuKernelContext &ctx) {
+uint32_t BiasAddCpuKernel::BiasAddCompute(CpuKernelContext &ctx) {
   BCalcInfo calc_info;
   calc_info.input_0 = ctx.Input(kFirstInputIndex);
   calc_info.input_1 = ctx.Input(kSecondInputIndex);
@@ -147,8 +148,8 @@ uint32_t BiasAddCpuKernel::BiasAddCompute(const CpuKernelContext &ctx) {
         }
       };
 
-      KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, size, size / max_core_num, sharder_biadadd),
-                          "Biasadd Compute failed.");
+      CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, size, size / max_core_num, sharder_biadadd),
+                               "Biasadd Compute failed.");
     } else {
       for (int64_t i = 0; i < size; i++) {
         output_y[i] = input_x[i] + input_bias[i % step / area];
@@ -171,8 +172,8 @@ uint32_t BiasAddCpuKernel::BiasAddCompute(const CpuKernelContext &ctx) {
           output_y[i] = input_x[i] + input_bias[i % last];
         }
       };
-      KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, size, size / max_core_num, sharder_biadadd),
-                          "Biasadd Compute failed.");
+      CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, size, size / max_core_num, sharder_biadadd),
+                               "Biasadd Compute failed.");
     } else {
       for (int64_t i = 0; i < size; i++) {
         output_y[i] = input_x[i] + input_bias[i % last];

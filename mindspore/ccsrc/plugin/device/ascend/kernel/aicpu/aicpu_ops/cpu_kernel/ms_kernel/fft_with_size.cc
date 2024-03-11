@@ -43,16 +43,17 @@ const char *kFFTWithSize = "FFTWithSize";
 
 namespace aicpu {
 uint32_t FFTWithSizeCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "Check FFTWithSize params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "Check FFTWithSize params failed.");
   Tensor *input = ctx.Input(0);
-  KERNEL_CHECK_NULLPTR(input, KERNEL_STATUS_INNER_ERROR, "[%s] get input[%u] failed.", ctx.GetOpType().c_str(), 0);
-  KERNEL_CHECK_NULLPTR(input->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input0 data failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input, KERNEL_STATUS_INNER_ERROR, "[%s] get input[%u] failed.",
+                            ctx.GetOpType().c_str(), 0);
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input0 data failed.");
   auto input_x_Shape = input->GetTensorShape();
-  KERNEL_CHECK_NULLPTR(input_x_Shape, KERNEL_STATUS_PARAM_INVALID, "Get input_x_Shape failed.")
-  KERNEL_LOG_DEBUG(
-    "FFTWithSizeCpuKernel[%s] , input_0: size[%llu] "
-    "output: size[%llu].",
-    ctx.GetOpType().c_str(), ctx.Input(0)->GetDataSize(), ctx.Output(0)->GetDataSize());
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input_x_Shape, KERNEL_STATUS_PARAM_INVALID, "Get input_x_Shape failed.")
+  CUST_KERNEL_LOG_DEBUG(ctx,
+                        "FFTWithSizeCpuKernel[%s] , input_0: size[%llu] "
+                        "output: size[%llu].",
+                        ctx.GetOpType().c_str(), ctx.Input(0)->GetDataSize(), ctx.Output(0)->GetDataSize());
   AttrValue *attr1 = ctx.GetAttr("signal_ndim");
   uint64_t signal_ndim = attr1->GetInt();
   AttrValue *attr2 = ctx.GetAttr("inverse");
@@ -68,11 +69,11 @@ uint32_t FFTWithSizeCpuKernel::Compute(CpuKernelContext &ctx) {
   auto x_shape = input->GetTensorShape();
   uint32_t x_dims = x_shape->GetDims();
   if (signal_ndim > 3 || signal_ndim < 1) {
-    KERNEL_LOG_ERROR("signal_ndim should less than 4 and greater than 0");
+    CUST_KERNEL_LOG_ERROR(ctx, "signal_ndim should less than 4 and greater than 0");
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (signal_ndim > x_dims) {
-    KERNEL_LOG_ERROR("Input must have rank at least [%d] but got:[%d]", signal_ndim, x_dims);
+    CUST_KERNEL_LOG_ERROR(ctx, "Input must have rank at least [%d] but got:[%d]", signal_ndim, x_dims);
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
@@ -130,7 +131,7 @@ uint32_t FFTWithSizeCpuKernel::Compute(CpuKernelContext &ctx) {
                                        false);  // rfft
       break;
     default:
-      KERNEL_LOG_ERROR("FFTWithSize kernel data type [%s] not support.", DTypeStr(input_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "FFTWithSize kernel data type [%s] not support.", DTypeStr(input_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
@@ -192,7 +193,7 @@ inline Eigen::DSizes<Eigen::DenseIndex, signal_ndim + 1> GetFlatShape(std::vecto
 }
 
 template <unsigned int size, unsigned int from, unsigned int to>
-inline void change_axes(Eigen::array<unsigned int, size> *axes) {
+inline void change_axes(CpuKernelContext &ctx, Eigen::array<unsigned int, size> *axes) {
   for (unsigned i = from; i <= (unsigned)to; i++) {
     axes->operator[](i - 1) = i;
   }
@@ -202,12 +203,13 @@ inline void change_axes(Eigen::array<unsigned int, size> *axes) {
 template <typename T1, typename T2, int signal_ndim, bool is_real, bool real_inverse>
 class FFTInnerComputer {
  public:
-  uint32_t compute(bool onesided, Eigen::DSizes<Eigen::DenseIndex, signal_ndim + 1> &tensor_shape,
+  uint32_t compute(CpuKernelContext &ctx, bool onesided,
+                   Eigen::DSizes<Eigen::DenseIndex, signal_ndim + 1> &tensor_shape,
                    Eigen::TensorMap<Eigen::Tensor<T1, signal_ndim + 1, Eigen::RowMajor>, Eigen::RowMajor> &in,
                    Eigen::array<unsigned int, signal_ndim> &axes,
                    Eigen::Tensor<T2, signal_ndim + 1, Eigen::RowMajor> &out,
                    std::vector<int64_t> &checked_signal_size) {
-    KERNEL_LOG_ERROR("FFTWithSize kernel Inner Error");
+    CUST_KERNEL_LOG_ERROR(ctx, "FFTWithSize kernel Inner Error");
     return KERNEL_STATUS_PARAM_INVALID;
   }
 };
@@ -217,7 +219,7 @@ template <typename T1, typename T2, int signal_ndim>
 class FFTInnerComputer<T1, T2, signal_ndim, true, true> {
  public:
   uint32_t compute(  // irfft 1d-3d
-    const bool onesided, const bool inverse, const T1 *input_x,
+    CpuKernelContext &ctx, const bool onesided, const bool inverse, const T1 *input_x,
     Eigen::DSizes<Eigen::DenseIndex, signal_ndim + 1> &tensor_shape,
     Eigen::TensorMap<Eigen::Tensor<T1, signal_ndim + 1, Eigen::RowMajor>, Eigen::RowMajor> &in,
     Eigen::array<unsigned int, signal_ndim> &axes, Eigen::Tensor<T2, signal_ndim + 1, Eigen::RowMajor> &out,
@@ -232,10 +234,10 @@ class FFTInnerComputer<T1, T2, signal_ndim, true, true> {
         if (checked_signal_size.back() / kNum2 + 1 == temp_tensor_shape[signal_ndim]) {
           temp_tensor_shape[signal_ndim] = checked_signal_size.back();
         } else {
-          KERNEL_LOG_ERROR(
-            "FFTWithSize kernel IRFFT checked_signal_size [%s] not "
-            "support.",
-            VectorToString(checked_signal_size).c_str());
+          CUST_KERNEL_LOG_ERROR(ctx,
+                                "FFTWithSize kernel IRFFT checked_signal_size [%s] not "
+                                "support.",
+                                VectorToString(checked_signal_size).c_str());
           return KERNEL_STATUS_PARAM_INVALID;
         }
       }
@@ -254,7 +256,7 @@ class FFTInnerComputer<T1, T2, signal_ndim, true, true> {
         // do ifft at outer axes, then the data is symmetrical on the last axis
         if (signal_ndim > 1) {
           Eigen::array<unsigned int, signal_ndim - 1> outer_axes;
-          change_axes<signal_ndim - 1, 1, signal_ndim - 1>(&outer_axes);
+          change_axes<signal_ndim - 1, 1, signal_ndim - 1>(ctx, &outer_axes);
           temp_tensor = temp_tensor.template fft<Eigen::BothParts, Eigen::FFT_REVERSE>(outer_axes);
         }
 
@@ -292,7 +294,7 @@ template <typename T1, typename T2, int signal_ndim>
 class FFTInnerComputer<T1, T2, signal_ndim, true, false> {
  public:
   uint32_t compute(  // rfft 1d-3d
-    const bool onesided, const bool inverse, const T1 *input_x,
+    CpuKernelContext &ctx, const bool onesided, const bool inverse, const T1 *input_x,
     Eigen::DSizes<Eigen::DenseIndex, signal_ndim + 1> &tensor_shape,
     Eigen::TensorMap<Eigen::Tensor<T1, signal_ndim + 1, Eigen::RowMajor>, Eigen::RowMajor> &in,
     Eigen::array<unsigned int, signal_ndim> &axes, Eigen::Tensor<T2, signal_ndim + 1, Eigen::RowMajor> &out,
@@ -324,7 +326,7 @@ template <typename T1, typename T2, int signal_ndim, bool real_inverse>
 class FFTInnerComputer<T1, T2, signal_ndim, false, real_inverse> {
  public:
   uint32_t compute(  // fft and ifft 1d-3d
-    const bool onesided, const bool inverse, const T1 *input_x,
+    CpuKernelContext &ctx, const bool onesided, const bool inverse, const T1 *input_x,
     Eigen::DSizes<Eigen::DenseIndex, signal_ndim + 1> &tensor_shape,
     Eigen::TensorMap<Eigen::Tensor<T1, signal_ndim + 1, Eigen::RowMajor>, Eigen::RowMajor> &in,
     Eigen::array<unsigned int, signal_ndim> &axes, Eigen::Tensor<T2, signal_ndim + 1, Eigen::RowMajor> &out,
@@ -352,11 +354,11 @@ uint32_t FFTWithSizeCpuKernel::FFTWithSizeCompute(CpuKernelContext &ctx, bool on
   Eigen::DSizes<Eigen::DenseIndex, signal_ndim + 1> tensor_shape = GetFlatShape<signal_ndim>(x_shape, x_dims);
   Eigen::TensorMap<Eigen::Tensor<T1, signal_ndim + 1, Eigen::RowMajor>, Eigen::RowMajor> in(&input_x[0], tensor_shape);
   Eigen::array<unsigned int, signal_ndim> axes;
-  change_axes<signal_ndim, 1, signal_ndim>(&axes);
+  change_axes<signal_ndim, 1, signal_ndim>(ctx, &axes);
   Eigen::Tensor<T2, signal_ndim + 1, Eigen::RowMajor> out;
   FFTInnerComputer<T1, T2, signal_ndim, is_real, real_inverse> inner_computer;
   uint32_t status_code =
-    inner_computer.compute(onesided, inverse, input_x, tensor_shape, in, axes, out, checked_signal_size);
+    inner_computer.compute(ctx, onesided, inverse, input_x, tensor_shape, in, axes, out, checked_signal_size);
   if (status_code != KERNEL_STATUS_OK) {
     return status_code;
   }
@@ -372,10 +374,10 @@ uint32_t FFTWithSizeCpuKernel::FFTWithSizeCompute(CpuKernelContext &ctx, bool on
   std::copy(out_ptr, out_ptr + out_count, output_y);
   y_shape.back() = out.dimensions().back();
   y_shape_ptr->SetDimSizes(y_shape);
-  KERNEL_LOG_DEBUG(
-    "FFTWithSizeCpuKernel[%s] after, input_0: size[%llu] "
-    "output: size[%llu].",
-    ctx.GetOpType().c_str(), ctx.Input(0)->GetDataSize(), ctx.Output(0)->GetDataSize());
+  CUST_KERNEL_LOG_DEBUG(ctx,
+                        "FFTWithSizeCpuKernel[%s] after, input_0: size[%llu] "
+                        "output: size[%llu].",
+                        ctx.GetOpType().c_str(), ctx.Input(0)->GetDataSize(), ctx.Output(0)->GetDataSize());
   return KERNEL_STATUS_OK;
 }
 REGISTER_MS_CPU_KERNEL(kFFTWithSize, FFTWithSizeCpuKernel);

@@ -43,13 +43,13 @@ class LinearSumAssignmentCpuKernel : public CpuKernel {
   std::vector<uint64_t> remaining;
 
   template <typename T>
-  uint32_t LinearSumAssignmentCompute(const CpuKernelContext &ctx);
+  uint32_t LinearSumAssignmentCompute(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t SolveProblem(T *cost, int64_t *a, int64_t *b);
+  uint32_t SolveProblem(CpuKernelContext &ctx, T *cost, int64_t *a, int64_t *b);
 
   template <typename T>
-  uint32_t Solve(const T *cost, int64_t *a, int64_t *b);
+  uint32_t Solve(CpuKernelContext &ctx, const T *cost, int64_t *a, int64_t *b);
 
   template <typename T>
   int64_t AugmentingPath(const T *const cost, std::vector<T> &u, std::vector<T> &v, std::vector<T> &shortestPathCosts,

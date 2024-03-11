@@ -38,8 +38,9 @@ uint32_t MultiMarginLossCpuKernel::Compute(CpuKernelContext &ctx) {
   if (ctx.GetInputsSize() == SERV_TYPE_SET) {
     kInputNum = SERV_TYPE_SET;
   }
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "MultiMarginLoss check input and output number failed.");
-  KERNEL_HANDLE_ERROR(MultiMarginLossCheck(ctx), "MultiMarginLoss check params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "MultiMarginLoss check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, MultiMarginLossCheck(ctx), "MultiMarginLoss check params failed.");
   auto data_type = ctx.Input(0)->GetDataType();
   switch (data_type) {
     case DT_FLOAT16:
@@ -49,7 +50,7 @@ uint32_t MultiMarginLossCpuKernel::Compute(CpuKernelContext &ctx) {
     case DT_DOUBLE:
       return MultiMarginLossCompute<double>(ctx);
     default:
-      KERNEL_LOG_ERROR("MultiMarginLoss kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "MultiMarginLoss kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
@@ -64,28 +65,29 @@ uint32_t MultiMarginLossCpuKernel::MultiMarginLossCheck(CpuKernelContext &ctx) {
 
   DataType input0_type = input_0->GetDataType();
   DataType input1_type = input_1->GetDataType();
-  KERNEL_CHECK_FALSE((input1_type == DT_INT64), KERNEL_STATUS_PARAM_INVALID,
-                     "The data type of target [%s] should be int64.", DTypeStr(input1_type).c_str())
+  CUST_KERNEL_CHECK_FALSE(ctx, (input1_type == DT_INT64), KERNEL_STATUS_PARAM_INVALID,
+                          "The data type of target [%s] should be int64.", DTypeStr(input1_type).c_str())
   auto target = reinterpret_cast<int64_t *>(ctx.Input(1)->GetData());
   int64_t target_num = ctx.Input(0)->GetTensorShape()->GetDimSize(1);
   int64_t batch_size = ctx.Input(0)->GetTensorShape()->GetDimSize(0);
   if (ctx.GetInputsSize() == SERV_TYPE_QUERY) {
     auto input_weight = ctx.Input(2);
     DataType input2_type = input_weight->GetDataType();
-    KERNEL_CHECK_FALSE((input2_type == input0_type), KERNEL_STATUS_PARAM_INVALID,
-                       "weight should have the same dtype with x, but get [%s].", DTypeStr(input2_type).c_str())
+    CUST_KERNEL_CHECK_FALSE(ctx, (input2_type == input0_type), KERNEL_STATUS_PARAM_INVALID,
+                            "weight should have the same dtype with x, but get [%s].", DTypeStr(input2_type).c_str())
   }
-  KERNEL_CHECK_FALSE((ctx.Input(0)->GetTensorShape()->GetDims() == SERV_TYPE_SET), KERNEL_STATUS_PARAM_INVALID,
-                     "Rank of x should be 2.")
-  KERNEL_CHECK_FALSE((ctx.Input(1)->GetTensorShape()->GetDims() == 1), KERNEL_STATUS_PARAM_INVALID,
-                     "Rank of target should be 1.")
-  KERNEL_CHECK_FALSE((batch_size == ctx.Input(1)->GetTensorShape()->GetDimSize(0)), KERNEL_STATUS_PARAM_INVALID,
-                     "[%s] 's x's shape[0] should be the same as target's "
-                     "shape[0].",
-                     ctx.GetOpType().c_str())
+  CUST_KERNEL_CHECK_FALSE(ctx, (ctx.Input(0)->GetTensorShape()->GetDims() == SERV_TYPE_SET),
+                          KERNEL_STATUS_PARAM_INVALID, "Rank of x should be 2.")
+  CUST_KERNEL_CHECK_FALSE(ctx, (ctx.Input(1)->GetTensorShape()->GetDims() == 1), KERNEL_STATUS_PARAM_INVALID,
+                          "Rank of target should be 1.")
+  CUST_KERNEL_CHECK_FALSE(ctx, (batch_size == ctx.Input(1)->GetTensorShape()->GetDimSize(0)),
+                          KERNEL_STATUS_PARAM_INVALID,
+                          "[%s] 's x's shape[0] should be the same as target's "
+                          "shape[0].",
+                          ctx.GetOpType().c_str())
   for (int64_t i = 0; i < batch_size; i++) {
-    KERNEL_CHECK_FALSE(*(target + i) >= 0 && (*(target + i) < target_num), KERNEL_STATUS_PARAM_INVALID,
-                       "[%s]'s target out of range", ctx.GetOpType().c_str());
+    CUST_KERNEL_CHECK_FALSE(ctx, *(target + i) >= 0 && (*(target + i) < target_num), KERNEL_STATUS_PARAM_INVALID,
+                            "[%s]'s target out of range", ctx.GetOpType().c_str());
   }
   return KERNEL_STATUS_OK;
 }
@@ -115,7 +117,7 @@ uint32_t MultiMarginLossCpuKernel::MultiMarginLossCompute(CpuKernelContext &ctx)
   AttrValue *Attr_p = ctx.GetAttr("p");
   int p = (Attr_p == nullptr) ? 1 : Attr_p->GetInt();
   if (p != SERV_TYPE_BRWD && p != SERV_TYPE_SET) {
-    KERNEL_LOG_ERROR("MultiMarginLoss kernel attr p should be 1 or 2.");
+    CUST_KERNEL_LOG_ERROR(ctx, "MultiMarginLoss kernel attr p should be 1 or 2.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
   AttrValue *Attr_margin = ctx.GetAttr("margin");
@@ -135,7 +137,7 @@ uint32_t MultiMarginLossCpuKernel::MultiMarginLossCompute(CpuKernelContext &ctx)
     auto cacl_data = cacl.data();
     cacl.setZero();
     if (dims == 0) {
-      KERNEL_LOG_ERROR("dims could not be 0.");
+      CUST_KERNEL_LOG_ERROR(ctx, "dims could not be 0.");
     }
     for (int64_t m = 0; m < (once_compute_thread_size) / dims; m++) {
       int64_t i = start / dims;
@@ -183,7 +185,7 @@ uint32_t MultiMarginLossCpuKernel::MultiMarginLossCompute(CpuKernelContext &ctx)
     }
   } else {
     if (max_core_num == 0) {
-      KERNEL_LOG_ERROR("max_core_num could not be 0.");
+      CUST_KERNEL_LOG_ERROR(ctx, "max_core_num could not be 0.");
     }
     CpuKernelUtils::ParallelFor(ctx, ctx.Input(0)->NumElements(), dims * ADULT_AGE * (batch_size / max_core_num + 1),
                                 shard_multi_margin_loss);
@@ -227,7 +229,7 @@ uint32_t MultiMarginLossCpuKernel::MultiMarginLossComputeFP16(CpuKernelContext &
   AttrValue *Attr_p = ctx.GetAttr("p");
   int p = (Attr_p == nullptr) ? 1 : Attr_p->GetInt();
   if (p != SERV_TYPE_BRWD && p != SERV_TYPE_SET) {
-    KERNEL_LOG_ERROR("MultiMarginLoss kernel attr p should be 1 or 2.");
+    CUST_KERNEL_LOG_ERROR(ctx, "MultiMarginLoss kernel attr p should be 1 or 2.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
   AttrValue *Attr_margin = ctx.GetAttr("margin");
@@ -247,7 +249,7 @@ uint32_t MultiMarginLossCpuKernel::MultiMarginLossComputeFP16(CpuKernelContext &
     auto cacl_data = cacl.data();
     cacl.setZero();
     if (dims == 0) {
-      KERNEL_LOG_ERROR("dims could not be 0.");
+      CUST_KERNEL_LOG_ERROR(ctx, "dims could not be 0.");
     }
     for (int64_t m = 0; m < (once_compute_thread_size) / dims; m++) {
       int64_t i = start / dims;
@@ -297,7 +299,7 @@ uint32_t MultiMarginLossCpuKernel::MultiMarginLossComputeFP16(CpuKernelContext &
     }
   } else {
     if (max_core_num == 0) {
-      KERNEL_LOG_ERROR("max_core_num could not be 0.");
+      CUST_KERNEL_LOG_ERROR(ctx, "max_core_num could not be 0.");
     }
     CpuKernelUtils::ParallelFor(ctx, ctx.Input(0)->NumElements(), dims * ADULT_AGE * (batch_size / max_core_num + 1),
                                 shard_multi_margin_loss);

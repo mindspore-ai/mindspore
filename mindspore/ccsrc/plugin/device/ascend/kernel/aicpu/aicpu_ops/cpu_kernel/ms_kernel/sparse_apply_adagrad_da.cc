@@ -35,30 +35,32 @@ const uint32_t kOutputNum = 1;
 const uint32_t kInputNum = 9;
 constexpr size_t kNumTwo = 2;
 const char *kSparseApplyAdagradDA = "SparseApplyAdagradDA";
-#define DO_COMPUTE_CASE(DTYPE, TYPE, ITYPE, CTX)                       \
-  case (DTYPE): {                                                      \
-    uint32_t ret = KERNEL_STATUS_OK;                                   \
-    if ((ITYPE) == DT_INT32) {                                         \
-      ret = DoCompute<TYPE, int32_t>(CTX);                             \
-    } else {                                                           \
-      ret = DoCompute<TYPE, int64_t>(CTX);                             \
-    }                                                                  \
-    if (ret != KERNEL_STATUS_OK) {                                     \
-      KERNEL_LOG_ERROR("SparseApplyAdagradDA kernel compute failed."); \
-      return ret;                                                      \
-    }                                                                  \
-    break;                                                             \
+#define DO_COMPUTE_CASE(DTYPE, TYPE, ITYPE, CTX)                                 \
+  case (DTYPE): {                                                                \
+    uint32_t ret = KERNEL_STATUS_OK;                                             \
+    if ((ITYPE) == DT_INT32) {                                                   \
+      ret = DoCompute<TYPE, int32_t>(CTX);                                       \
+    } else {                                                                     \
+      ret = DoCompute<TYPE, int64_t>(CTX);                                       \
+    }                                                                            \
+    if (ret != KERNEL_STATUS_OK) {                                               \
+      CUST_KERNEL_LOG_ERROR(ctx, "SparseApplyAdagradDA kernel compute failed."); \
+      return ret;                                                                \
+    }                                                                            \
+    break;                                                                       \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t SparseApplyAdagradDACpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "SparseApplyAdagradDA check input or output is failed.");
-  KERNEL_HANDLE_ERROR(ValidParam(ctx), "[%s] check params failed.", kSparseApplyAdagradDA);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "SparseApplyAdagradDA check input or output is failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, ValidParam(ctx), "[%s] check params failed.", kSparseApplyAdagradDA);
   auto data_type = ctx.Input(0)->GetDataType();
   auto data_type_indices = ctx.Input(4)->GetDataType();
-  KERNEL_CHECK_FALSE((data_type_indices == DT_INT32 || data_type_indices == DT_INT64), KERNEL_STATUS_PARAM_INVALID,
-                     "indices data type[%s] is unsupported", DTypeStr(data_type_indices).c_str());
+  CUST_KERNEL_CHECK_FALSE(ctx, (data_type_indices == DT_INT32 || data_type_indices == DT_INT64),
+                          KERNEL_STATUS_PARAM_INVALID, "indices data type[%s] is unsupported",
+                          DTypeStr(data_type_indices).c_str());
 
   switch (data_type) {
     DO_COMPUTE_CASE(DT_DOUBLE, double, data_type_indices, ctx);
@@ -73,13 +75,13 @@ uint32_t SparseApplyAdagradDACpuKernel::Compute(CpuKernelContext &ctx) {
     DO_COMPUTE_CASE(DT_UINT32, uint32_t, data_type_indices, ctx);
     DO_COMPUTE_CASE(DT_UINT64, uint64_t, data_type_indices, ctx);
     default:
-      KERNEL_LOG_ERROR("SparseApplyAdagradDA kernel data type[%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "SparseApplyAdagradDA kernel data type[%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 
-uint32_t SparseApplyAdagradDACpuKernel::ValidParam(const CpuKernelContext &ctx) {
+uint32_t SparseApplyAdagradDACpuKernel::ValidParam(CpuKernelContext &ctx) {
   Tensor *var_tensor = ctx.Input(0);
   Tensor *accm_tensor = ctx.Input(1);
   Tensor *square_accum_tensor = ctx.Input(2);
@@ -112,9 +114,9 @@ uint32_t SparseApplyAdagradDACpuKernel::ValidParam(const CpuKernelContext &ctx) 
   tensor_types.insert({"output var", output_tensor});
 
   for (auto iter = tensor_types.begin(); iter != tensor_types.end(); iter++) {
-    KERNEL_CHECK_FALSE(var_tensor->GetDataType() == iter->second->GetDataType(), KERNEL_STATUS_PARAM_INVALID,
-                       "The data type of %s [%s] need be same with input var [%s].", iter->first.c_str(),
-                       DTypeStr(iter->second->GetDataType()).c_str(), DTypeStr(var_tensor->GetDataType()).c_str());
+    CUST_KERNEL_CHECK_FALSE(ctx, var_tensor->GetDataType() == iter->second->GetDataType(), KERNEL_STATUS_PARAM_INVALID,
+                            "The data type of %s [%s] need be same with input var [%s].", iter->first.c_str(),
+                            DTypeStr(iter->second->GetDataType()).c_str(), DTypeStr(var_tensor->GetDataType()).c_str());
   }
 
   std::map<std::string, std::shared_ptr<TensorShape>> tensor_shapes;
@@ -122,14 +124,14 @@ uint32_t SparseApplyAdagradDACpuKernel::ValidParam(const CpuKernelContext &ctx) 
   tensor_shapes.insert({"square_accum", square_accum_shape});
   tensor_shapes.insert({"output var", output_shape});
   for (auto iter = tensor_shapes.begin(); iter != tensor_shapes.end(); iter++) {
-    KERNEL_CHECK_FALSE(var_shape->GetDimSizes() == iter->second->GetDimSizes(), KERNEL_STATUS_PARAM_INVALID,
-                       "The %s shape size should be same as the input var shape size.", iter->first.c_str());
+    CUST_KERNEL_CHECK_FALSE(ctx, var_shape->GetDimSizes() == iter->second->GetDimSizes(), KERNEL_STATUS_PARAM_INVALID,
+                            "The %s shape size should be same as the input var shape size.", iter->first.c_str());
   }
 
   std::vector<int64_t> var_size = var_shape->GetDimSizes();
   for (size_t i = 1; i < var_size.size(); ++i) {
-    KERNEL_CHECK_FALSE(var_shape->GetDimSize(i) == grad_shape->GetDimSize(i), KERNEL_STATUS_PARAM_INVALID,
-                       "input grad should be equal in dimension %s with input var", i);
+    CUST_KERNEL_CHECK_FALSE(ctx, var_shape->GetDimSize(i) == grad_shape->GetDimSize(i), KERNEL_STATUS_PARAM_INVALID,
+                            "input grad should be equal in dimension %s with input var", i);
   }
 
   std::map<std::string, std::shared_ptr<TensorShape>> scalar_shapes;
@@ -138,26 +140,26 @@ uint32_t SparseApplyAdagradDACpuKernel::ValidParam(const CpuKernelContext &ctx) 
   scalar_shapes.insert({"l2", l2_shape});
   scalar_shapes.insert({"global_step", global_step_shape});
   for (auto iter = scalar_shapes.begin(); iter != scalar_shapes.end(); iter++) {
-    KERNEL_CHECK_FALSE(iter->second->GetDims() == 0, KERNEL_STATUS_PARAM_INVALID,
-                       "The input %s should be as scalar, got dim size [%d].", iter->first.c_str(),
-                       iter->second->GetDims());
+    CUST_KERNEL_CHECK_FALSE(ctx, iter->second->GetDims() == 0, KERNEL_STATUS_PARAM_INVALID,
+                            "The input %s should be as scalar, got dim size [%d].", iter->first.c_str(),
+                            iter->second->GetDims());
   }
 
-  KERNEL_CHECK_FALSE(var_shape->GetDims() >= 1, KERNEL_STATUS_PARAM_INVALID,
-                     "The input var must be at least 1 dimensional, got dims [%d].", var_shape->GetDims());
+  CUST_KERNEL_CHECK_FALSE(ctx, var_shape->GetDims() >= 1, KERNEL_STATUS_PARAM_INVALID,
+                          "The input var must be at least 1 dimensional, got dims [%d].", var_shape->GetDims());
 
-  KERNEL_CHECK_FALSE(indices_shape->GetDims() == 1, KERNEL_STATUS_PARAM_INVALID,
-                     "The input indices must be one-dimensional, but got dims [%d].", indices_shape->GetDims());
+  CUST_KERNEL_CHECK_FALSE(ctx, indices_shape->GetDims() == 1, KERNEL_STATUS_PARAM_INVALID,
+                          "The input indices must be one-dimensional, but got dims [%d].", indices_shape->GetDims());
 
-  KERNEL_CHECK_FALSE(grad_shape->GetDimSize(0) == indices_shape->GetDimSize(0), KERNEL_STATUS_PARAM_INVALID,
-                     "The input grad must be the same size as indices in the "
-                     "first dimension.");
+  CUST_KERNEL_CHECK_FALSE(ctx, grad_shape->GetDimSize(0) == indices_shape->GetDimSize(0), KERNEL_STATUS_PARAM_INVALID,
+                          "The input grad must be the same size as indices in the "
+                          "first dimension.");
 
   return KERNEL_STATUS_OK;
 }
 
 template <typename T, typename TI>
-uint32_t SparseApplyAdagradDACpuKernel::DoCompute(const CpuKernelContext &ctx) {
+uint32_t SparseApplyAdagradDACpuKernel::DoCompute(CpuKernelContext &ctx) {
   Tensor *var = ctx.Input(0);
   TI first_dim_size = var->GetTensorShape()->GetDimSize(0);
   auto var_shape = var->GetTensorShape();
@@ -200,16 +202,16 @@ uint32_t SparseApplyAdagradDACpuKernel::DoCompute(const CpuKernelContext &ctx) {
   int64_t global_step_scalar_int64 = *(reinterpret_cast<const int64_t *>(global_step->GetData()));
   T global_step_scalar = static_cast<T>(global_step_scalar_int64);
   for (int d = 1; d < var_shape->GetDims(); d++) {
-    KERNEL_CHECK_FALSE(var_shape->GetDimSize(d) == grad_shape->GetDimSize(d), KERNEL_STATUS_PARAM_INVALID,
-                       "var and grad must match in dimension [%d]", d);
+    CUST_KERNEL_CHECK_FALSE(ctx, var_shape->GetDimSize(d) == grad_shape->GetDimSize(d), KERNEL_STATUS_PARAM_INVALID,
+                            "var and grad must match in dimension [%d]", d);
   }
   TI indeces_dim1 = indices_tensor->GetTensorShape()->GetDimSize(0);
 
   const T gs_lr = global_step_scalar * lr_scalar;
   for (TI i = 0; i < indeces_dim1; i++) {
     const TI index = SubtleMustCopy(indices_vec(i));
-    KERNEL_CHECK_FALSE(index < first_dim_size, KERNEL_STATUS_PARAM_INVALID,
-                       "The value of indices[%d]:[%d] is out of range:[%d]", i, index, first_dim_size);
+    CUST_KERNEL_CHECK_FALSE(ctx, index < first_dim_size, KERNEL_STATUS_PARAM_INVALID,
+                            "The value of indices[%d]:[%d] is out of range:[%d]", i, index, first_dim_size);
     auto ga = grad_accum_flat.template chip<0>(index);
     auto da = grad_square_accum_flat.template chip<0>(index);
     auto g = grad_flat.template chip<0>(i);
@@ -229,8 +231,8 @@ uint32_t SparseApplyAdagradDACpuKernel::DoCompute(const CpuKernelContext &ctx) {
   auto output_data = ctx.Output(0)->GetData();
   auto copy_size = var->GetDataSize();
   auto mem_ret = memcpy_s(output_data, copy_size, var_data, copy_size);
-  KERNEL_CHECK_FALSE(mem_ret == EOK, KERNEL_STATUS_INNER_ERROR, "Memcpy size[%zu] from input var to output var failed.",
-                     copy_size);
+  CUST_KERNEL_CHECK_FALSE(ctx, mem_ret == EOK, KERNEL_STATUS_INNER_ERROR,
+                          "Memcpy size[%zu] from input var to output var failed.", copy_size);
   return KERNEL_STATUS_OK;
 }
 

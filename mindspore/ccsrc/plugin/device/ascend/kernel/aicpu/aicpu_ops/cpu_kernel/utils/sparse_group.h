@@ -66,12 +66,7 @@ class GroupIterable {
 
   IteratorStep begin() { return IteratorStep(this, 0); }
 
-  IteratorStep at(int64_t loc) {
-    if (!(loc >= 0 && loc <= static_cast<int64_t>(ix_->GetTensorShape()->GetDimSize(0)))) {
-      KERNEL_LOG_WARN("loc should in [0, %d], but got: %d", ix_->GetTensorShape()->GetDimSize(0), loc);
-    }
-    return IteratorStep(this, loc);
-  }
+  IteratorStep at(int64_t loc) { return IteratorStep(this, loc); }
 
   IteratorStep end() { return IteratorStep(this, ix_->GetTensorShape()->GetDimSize(0)); }
 

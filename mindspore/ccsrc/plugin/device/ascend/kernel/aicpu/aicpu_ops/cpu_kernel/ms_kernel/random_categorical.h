@@ -29,7 +29,7 @@ class RandomCategoricalCpuKernel : public CpuKernel {
 
  private:
   template <typename T, typename S>
-  uint32_t RandomCategoricalCompute(const CpuKernelContext &ctx);
+  uint32_t RandomCategoricalCompute(CpuKernelContext &ctx);
 
   int64_t batch_size_;
   int num_classes_;

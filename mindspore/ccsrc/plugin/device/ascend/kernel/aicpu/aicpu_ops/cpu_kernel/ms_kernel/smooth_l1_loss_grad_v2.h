@@ -31,14 +31,14 @@ class SmoothL1LossGradV2CpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t ParamCheck(const CpuKernelContext &ctx);
-  uint32_t AttributesCheck(const CpuKernelContext &ctx);
+  uint32_t ParamCheck(CpuKernelContext &ctx);
+  uint32_t AttributesCheck(CpuKernelContext &ctx);
   template <typename T>
-  uint32_t ComputeMean(const CpuKernelContext &ctx);
+  uint32_t ComputeMean(CpuKernelContext &ctx);
   template <typename T>
-  uint32_t ComputeSum(const CpuKernelContext &ctx);
+  uint32_t ComputeSum(CpuKernelContext &ctx);
   template <typename T>
-  uint32_t ComputeNone(const CpuKernelContext &ctx);
+  uint32_t ComputeNone(CpuKernelContext &ctx);
   std::string reduction{"mean"};
 };
 }  // namespace aicpu

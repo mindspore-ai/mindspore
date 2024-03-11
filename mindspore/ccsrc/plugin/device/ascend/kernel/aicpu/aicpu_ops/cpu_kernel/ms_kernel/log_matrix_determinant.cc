@@ -29,22 +29,22 @@ const uint32_t kIndexTwo = 2;
 const char *const kLogMatrixDeterminant = "LogMatrixDeterminant";
 constexpr int64_t kParallelDataNums = 8 * 1024;
 
-#define LOG_MATRIX_DETERMINANT_COMPUTE_CASE(DTYPE, TYPE, CTX)          \
-  case (DTYPE): {                                                      \
-    uint32_t result = LogMatrixDeterminantCompute<TYPE>(CTX);          \
-    if (result != KERNEL_STATUS_OK) {                                  \
-      KERNEL_LOG_ERROR("LogMatrixDeterminant kernel compute failed."); \
-      return result;                                                   \
-    }                                                                  \
-    break;                                                             \
+#define LOG_MATRIX_DETERMINANT_COMPUTE_CASE(DTYPE, TYPE, CTX)                    \
+  case (DTYPE): {                                                                \
+    uint32_t result = LogMatrixDeterminantCompute<TYPE>(CTX);                    \
+    if (result != KERNEL_STATUS_OK) {                                            \
+      CUST_KERNEL_LOG_ERROR(ctx, "LogMatrixDeterminant kernel compute failed."); \
+      return result;                                                             \
+    }                                                                            \
+    break;                                                                       \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t LogMatrixDeterminantCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.",
-                      kLogMatrixDeterminant);
-  KERNEL_HANDLE_ERROR(LogMatrixDeterminantCheck(ctx), "[%s] check params failed.", kLogMatrixDeterminant);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.",
+                           kLogMatrixDeterminant);
+  CUST_KERNEL_HANDLE_ERROR(ctx, LogMatrixDeterminantCheck(ctx), "[%s] check params failed.", kLogMatrixDeterminant);
   DataType data_type = ctx.Input(0)->GetDataType();
   switch (data_type) {
     LOG_MATRIX_DETERMINANT_COMPUTE_CASE(DT_FLOAT, float, ctx)
@@ -52,54 +52,58 @@ uint32_t LogMatrixDeterminantCpuKernel::Compute(CpuKernelContext &ctx) {
     LOG_MATRIX_DETERMINANT_COMPUTE_CASE(DT_COMPLEX64, std::complex<float>, ctx)
     LOG_MATRIX_DETERMINANT_COMPUTE_CASE(DT_COMPLEX128, std::complex<double>, ctx)
     default:
-      KERNEL_LOG_ERROR("LogMatrixDeterminant kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "LogMatrixDeterminant kernel data type [%s] not support.",
+                            DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 
-uint32_t LogMatrixDeterminantCpuKernel::LogMatrixDeterminantCheck(const CpuKernelContext &ctx) {
+uint32_t LogMatrixDeterminantCpuKernel::LogMatrixDeterminantCheck(CpuKernelContext &ctx) {
   auto input_0 = ctx.Input(0);
   auto output_0 = ctx.Output(0);
   auto output_1 = ctx.Output(1);
-  KERNEL_CHECK_NULLPTR(input_0->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input x data failed.")
-  KERNEL_CHECK_NULLPTR(output_0->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output sign data failed.")
-  KERNEL_CHECK_NULLPTR(output_1->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output y data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input_0->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input x data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, output_0->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output sign data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, output_1->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output y data failed.")
 
-  KERNEL_CHECK_NULLPTR(input_0->GetTensorShape(), KERNEL_STATUS_PARAM_INVALID, "Get input x tensor shape failed.")
-  KERNEL_CHECK_NULLPTR(output_0->GetTensorShape(), KERNEL_STATUS_PARAM_INVALID, "Get output sign tensor shape failed.")
-  KERNEL_CHECK_NULLPTR(output_1->GetTensorShape(), KERNEL_STATUS_PARAM_INVALID, "Get output y tensor shape failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input_0->GetTensorShape(), KERNEL_STATUS_PARAM_INVALID,
+                            "Get input x tensor shape failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, output_0->GetTensorShape(), KERNEL_STATUS_PARAM_INVALID,
+                            "Get output sign tensor shape failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, output_1->GetTensorShape(), KERNEL_STATUS_PARAM_INVALID,
+                            "Get output y tensor shape failed.")
   std::vector<int64_t> shape_x = input_0->GetTensorShape()->GetDimSizes();
   std::vector<int64_t> shape_sign = output_0->GetTensorShape()->GetDimSizes();
   std::vector<int64_t> shape_y = output_1->GetTensorShape()->GetDimSizes();
   size_t shape_size_x = shape_x.size();
   size_t shape_size_sign = shape_sign.size();
   size_t shape_size_y = shape_y.size();
-  KERNEL_CHECK_FALSE((shape_size_x > 1), KERNEL_STATUS_PARAM_INVALID, "Input x must be at least rank 2, got [%zu].",
-                     shape_size_x)
-  KERNEL_CHECK_FALSE((shape_x[shape_size_x - 1] > 0), KERNEL_STATUS_PARAM_INVALID,
-                     "Input x last dimension must be at least 1.")
-  KERNEL_CHECK_FALSE((shape_x[shape_size_x - kIndexTwo] == shape_x[shape_size_x - 1]), KERNEL_STATUS_PARAM_INVALID,
-                     "Input x dimensions must be equal, but are [%lld] and [%lld].", shape_x[shape_size_x - kIndexTwo],
-                     shape_x[shape_size_x - 1])
+  CUST_KERNEL_CHECK_FALSE(ctx, (shape_size_x > 1), KERNEL_STATUS_PARAM_INVALID,
+                          "Input x must be at least rank 2, got [%zu].", shape_size_x)
+  CUST_KERNEL_CHECK_FALSE(ctx, (shape_x[shape_size_x - 1] > 0), KERNEL_STATUS_PARAM_INVALID,
+                          "Input x last dimension must be at least 1.")
+  CUST_KERNEL_CHECK_FALSE(ctx, (shape_x[shape_size_x - kIndexTwo] == shape_x[shape_size_x - 1]),
+                          KERNEL_STATUS_PARAM_INVALID, "Input x dimensions must be equal, but are [%lld] and [%lld].",
+                          shape_x[shape_size_x - kIndexTwo], shape_x[shape_size_x - 1])
 
-  KERNEL_CHECK_FALSE((shape_size_sign <= shape_size_x - kIndexTwo + 1), KERNEL_STATUS_PARAM_INVALID,
-                     "Output sign must be rank [%zu], got [%zu].", shape_size_x - kIndexTwo, shape_size_sign)
-  KERNEL_CHECK_FALSE((shape_size_y <= shape_size_x - kIndexTwo + 1), KERNEL_STATUS_PARAM_INVALID,
-                     "Output y must be rank [%zu], got [%zu].", shape_size_x - kIndexTwo, shape_size_y)
+  CUST_KERNEL_CHECK_FALSE(ctx, (shape_size_sign <= shape_size_x - kIndexTwo + 1), KERNEL_STATUS_PARAM_INVALID,
+                          "Output sign must be rank [%zu], got [%zu].", shape_size_x - kIndexTwo, shape_size_sign)
+  CUST_KERNEL_CHECK_FALSE(ctx, (shape_size_y <= shape_size_x - kIndexTwo + 1), KERNEL_STATUS_PARAM_INVALID,
+                          "Output y must be rank [%zu], got [%zu].", shape_size_x - kIndexTwo, shape_size_y)
   for (size_t i = 0; i < shape_size_x - kIndexTwo; i++) {
-    KERNEL_CHECK_FALSE((shape_sign[i] == shape_x[i]), KERNEL_STATUS_PARAM_INVALID,
-                       "Output sign and Input x dimension [%zu] must be equal, got [%lld] and [%lld].", i,
-                       shape_sign[i], shape_x[i])
-    KERNEL_CHECK_FALSE((shape_y[i] == shape_x[i]), KERNEL_STATUS_PARAM_INVALID,
-                       "Output y and Input x dimension [%zu] must be equal, got [%lld] and [%lld].", i, shape_y[i],
-                       shape_x[i])
+    CUST_KERNEL_CHECK_FALSE(ctx, (shape_sign[i] == shape_x[i]), KERNEL_STATUS_PARAM_INVALID,
+                            "Output sign and Input x dimension [%zu] must be equal, got [%lld] and [%lld].", i,
+                            shape_sign[i], shape_x[i])
+    CUST_KERNEL_CHECK_FALSE(ctx, (shape_y[i] == shape_x[i]), KERNEL_STATUS_PARAM_INVALID,
+                            "Output y and Input x dimension [%zu] must be equal, got [%lld] and [%lld].", i, shape_y[i],
+                            shape_x[i])
   }
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t LogMatrixDeterminantCpuKernel::LogMatrixDeterminantCompute(const CpuKernelContext &ctx) {
+uint32_t LogMatrixDeterminantCpuKernel::LogMatrixDeterminantCompute(CpuKernelContext &ctx) {
   auto input_x = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto output_sign = reinterpret_cast<T *>(ctx.Output(0)->GetData());
   auto output_y = reinterpret_cast<T *>(ctx.Output(1)->GetData());
@@ -163,8 +167,8 @@ uint32_t LogMatrixDeterminantCpuKernel::LogMatrixDeterminantCompute(const CpuKer
           *(output_y + i) = log_abs_det;
         }
       };
-      KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, martix_num, martix_num / max_core_num, shard_work),
-                          "LogMatrixDeterminant Compute failed.");
+      CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, martix_num, martix_num / max_core_num, shard_work),
+                               "LogMatrixDeterminant Compute failed.");
     }
   }
   return KERNEL_STATUS_OK;

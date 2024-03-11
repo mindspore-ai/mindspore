@@ -27,10 +27,10 @@ class ConjCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t ConjCheck(const CpuKernelContext &ctx) const;
+  uint32_t ConjCheck(CpuKernelContext &ctx) const;
 
   template <typename T>
-  uint32_t ConjCompute(const CpuKernelContext &ctx) const;
+  uint32_t ConjCompute(CpuKernelContext &ctx) const;
 };
 }  // namespace aicpu
 #endif

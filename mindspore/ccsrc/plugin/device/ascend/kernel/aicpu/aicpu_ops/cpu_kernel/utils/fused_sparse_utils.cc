@@ -28,7 +28,7 @@ int Sign(float x) {
   return 0;
 }
 
-void WorkerForReduceSparseGradient(WorkerParamsForReduceSparseGradient param) {
+void WorkerForReduceSparseGradient(CpuKernelContext &ctx, WorkerParamsForReduceSparseGradient param) {
   auto outer_dim = param.outer_dim_;
   auto &sorted_indices = *(param.sorted_indices_);
   auto &slice_positions = *(param.slice_positions_);
@@ -41,7 +41,7 @@ void WorkerForReduceSparseGradient(WorkerParamsForReduceSparseGradient param) {
     auto ret_code = memcpy_s(unique_grad->value_ + start_index, (param.max_length_ - start_index) * sizeof(float),
                              param.src_value_ + sorted_indices[cur_pos].second, outer_dim * sizeof(float));
     if (ret_code != EOK) {
-      AICPU_LOGE("Failed to copy data!");
+      CUST_AICPU_LOGE(ctx, "Failed to copy data!");
     }
     cur_pos++;
     size_t end_pos;
@@ -59,8 +59,8 @@ void WorkerForReduceSparseGradient(WorkerParamsForReduceSparseGradient param) {
   }
 }
 
-void ReduceSparseGradient(const CpuKernelContext &ctx, const SparseGradient &origin_sparse_grad,
-                          SparseGradient *unique_grad, size_t first_dim, size_t outer_dim) {
+void ReduceSparseGradient(CpuKernelContext &ctx, const SparseGradient &origin_sparse_grad, SparseGradient *unique_grad,
+                          size_t first_dim, size_t outer_dim) {
   std::vector<std::pair<int, size_t>> sorted_indices;
   sorted_indices.reserve(origin_sparse_grad.indices_size_);
   for (size_t i = 0; i < origin_sparse_grad.indices_size_; ++i) {
@@ -106,7 +106,7 @@ void ReduceSparseGradient(const CpuKernelContext &ctx, const SparseGradient &ori
       params.src_value_ = origin_sparse_grad.value_;
       params.unique_grad_ = unique_grad;
 
-      WorkerForReduceSparseGradient(params);
+      WorkerForReduceSparseGradient(ctx, params);
     }
   };
   const int64_t per_unit_size = 1;
@@ -115,11 +115,12 @@ void ReduceSparseGradient(const CpuKernelContext &ctx, const SparseGradient &ori
   unique_grad->indices_size_ = slice_positions.size();
 }
 
-using MultiThreadComputeFunc = std::function<void(MultiThreadComputeParams *param, size_t start, size_t end)>;
-uint32_t MultiThreadCompute(const CpuKernelContext &ctx, const MultiThreadComputeFunc &func,
-                            MultiThreadComputeParams *params, size_t total_compute_size) {
+using MultiThreadComputeFunc =
+  std::function<void(CpuKernelContext &, MultiThreadComputeParams *param, size_t start, size_t end)>;
+uint32_t MultiThreadCompute(CpuKernelContext &ctx, const MultiThreadComputeFunc &func, MultiThreadComputeParams *params,
+                            size_t total_compute_size) {
   const size_t kThreadNum = 16;
-  auto shardComputeFunc = [&](size_t start, size_t end) { func(params, start, end); };
+  auto shardComputeFunc = [&](size_t start, size_t end) { func(ctx, params, start, end); };
   const int64_t once_compute_size = (total_compute_size + kThreadNum - 1) / kThreadNum;
   return CpuKernelUtils::ParallelFor(ctx, total_compute_size, once_compute_size, shardComputeFunc);
 }
@@ -138,13 +139,13 @@ void ReduceMultiSparseGradient(CpuKernelContext &ctx, std::vector<std::shared_pt
                              (tmp_grad->indices_size_ - unique_indices_size) * index_data_size, slice_grad->value_,
                              slice_grad->indices_size_ * index_data_size);
     if (ret_code != EOK) {
-      AICPU_LOGE("Failed to copy data!");
+      CUST_AICPU_LOGE(ctx, "Failed to copy data!");
     }
     ret_code =
       memcpy_s(tmp_grad->indices_ + unique_indices_size, (tmp_grad->indices_size_ - unique_indices_size) * sizeof(int),
                slice_grad->indices_, slice_grad->indices_size_ * sizeof(int));
     if (ret_code != EOK) {
-      AICPU_LOGE("Failed to copy data!");
+      CUST_AICPU_LOGE(ctx, "Failed to copy data!");
     }
     unique_indices_size += slice_grad->indices_size_;
   }

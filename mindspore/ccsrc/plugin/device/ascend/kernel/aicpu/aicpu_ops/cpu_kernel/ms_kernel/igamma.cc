@@ -28,22 +28,22 @@ const uint32_t kInputNum = 2;
 const char *kigamma = "Igamma";
 constexpr int64_t kParallelDataNums = 256;
 
-#define SWITCH_PARALLEL(SHARD, data_num, max_core_num)                                                    \
-  if ((data_num) <= kParallelDataNums) {                                                                  \
-    SHARD(0, data_num);                                                                                   \
-  } else {                                                                                                \
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, (data_num), (data_num) / (max_core_num), SHARD), \
-                        "Igamma SHARD Compute failed.");                                                  \
+#define SWITCH_PARALLEL(ctx, SHARD, data_num, max_core_num)                                                         \
+  if ((data_num) <= kParallelDataNums) {                                                                            \
+    SHARD(0, data_num);                                                                                             \
+  } else {                                                                                                          \
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, (data_num), (data_num) / (max_core_num), SHARD), \
+                             "Igamma SHARD Compute failed.");                                                       \
   }
 
-#define IGAMMA_COMPUTE_CASE(DTYPE, TYPE, CTX)            \
-  case (DTYPE): {                                        \
-    uint32_t result = IgammaCompute<TYPE>(CTX);          \
-    if (result != KERNEL_STATUS_OK) {                    \
-      KERNEL_LOG_ERROR("Igamma kernel compute failed."); \
-      return result;                                     \
-    }                                                    \
-    break;                                               \
+#define IGAMMA_COMPUTE_CASE(DTYPE, TYPE, CTX)                      \
+  case (DTYPE): {                                                  \
+    uint32_t result = IgammaCompute<TYPE>(CTX);                    \
+    if (result != KERNEL_STATUS_OK) {                              \
+      CUST_KERNEL_LOG_ERROR(ctx, "Igamma kernel compute failed."); \
+      return result;                                               \
+    }                                                              \
+    break;                                                         \
   }
 
 }  // namespace
@@ -51,52 +51,54 @@ constexpr int64_t kParallelDataNums = 256;
 namespace aicpu {
 uint32_t IgammaCpuKernel::Compute(CpuKernelContext &ctx) {
   // check param number
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "Igamma check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "Igamma check input and output number failed.");
 
-  KERNEL_HANDLE_ERROR(IgammaCheck(ctx), "Igamma check params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, IgammaCheck(ctx), "Igamma check params failed.");
 
   auto data_type = ctx.Input(0)->GetDataType();
   switch (data_type) {
     IGAMMA_COMPUTE_CASE(DT_FLOAT, float, ctx)
     IGAMMA_COMPUTE_CASE(DT_DOUBLE, double, ctx)
     default:
-      KERNEL_LOG_ERROR("Igamma kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Igamma kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 
   return KERNEL_STATUS_OK;
 }
 
-uint32_t IgammaCpuKernel::IgammaCheck(const CpuKernelContext &ctx) {
+uint32_t IgammaCpuKernel::IgammaCheck(CpuKernelContext &ctx) {
   auto input_0 = ctx.Input(kFirstInputIndex);
   auto input_1 = ctx.Input(kSecondInputIndex);
   auto output = ctx.Output(0);
 
   // check input datatype
   DataType input0_datatype = input_0->GetDataType();
-  KERNEL_CHECK_FALSE((input0_datatype == DT_DOUBLE || input0_datatype == DT_FLOAT), KERNEL_STATUS_PARAM_INVALID,
-                     "Input[0] data type must DT_FLOAT or DT_DOUBLE,"
-                     "but got data type[%s].",
-                     DTypeStr(input0_datatype).c_str());
+  CUST_KERNEL_CHECK_FALSE(ctx, (input0_datatype == DT_DOUBLE || input0_datatype == DT_FLOAT),
+                          KERNEL_STATUS_PARAM_INVALID,
+                          "Input[0] data type must DT_FLOAT or DT_DOUBLE,"
+                          "but got data type[%s].",
+                          DTypeStr(input0_datatype).c_str());
 
   DataType input1_datatype = input_1->GetDataType();
-  KERNEL_CHECK_FALSE((input0_datatype == input1_datatype), KERNEL_STATUS_PARAM_INVALID,
-                     "The data type of input1 [%s] need be same with "
-                     "input0 [%s].",
-                     DTypeStr(input1_datatype).c_str(), DTypeStr(input0_datatype).c_str())
+  CUST_KERNEL_CHECK_FALSE(ctx, (input0_datatype == input1_datatype), KERNEL_STATUS_PARAM_INVALID,
+                          "The data type of input1 [%s] need be same with "
+                          "input0 [%s].",
+                          DTypeStr(input1_datatype).c_str(), DTypeStr(input0_datatype).c_str())
 
   // check output dtype
   DataType output_datatype = output->GetDataType();
-  KERNEL_CHECK_FALSE((input0_datatype == output_datatype), KERNEL_STATUS_PARAM_INVALID,
-                     "The data type of output [%s] need be same with "
-                     "input0 [%s].",
-                     DTypeStr(output_datatype).c_str(), DTypeStr(input0_datatype).c_str())
+  CUST_KERNEL_CHECK_FALSE(ctx, (input0_datatype == output_datatype), KERNEL_STATUS_PARAM_INVALID,
+                          "The data type of output [%s] need be same with "
+                          "input0 [%s].",
+                          DTypeStr(output_datatype).c_str(), DTypeStr(input0_datatype).c_str())
 
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t BcastCompute(const CpuKernelContext &ctx, const Bcast &bcast) {
+uint32_t BcastCompute(CpuKernelContext &ctx, const Bcast &bcast) {
   auto input_x1 = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto input_x2 = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   auto output_y = reinterpret_cast<T *>(ctx.Output(0)->GetData());
@@ -131,8 +133,8 @@ uint32_t BcastCompute(const CpuKernelContext &ctx, const Bcast &bcast) {
         cur_output = cur_output + 1;
       }
     };
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shard_igamma),
-                        "Igamma SHARD Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shard_igamma),
+                             "Igamma SHARD Compute failed.");
   }
   return KERNEL_STATUS_OK;
 }
@@ -144,7 +146,8 @@ uint32_t BcastCompute(const CpuKernelContext &ctx, const Bcast &bcast) {
  * 4. the shapes of input1 and input2 are different
  **/
 template <typename T>
-void SpecialCompute(BcastShapeType type, int64_t start, int64_t end, const T *input1, const T *input2, T *output) {
+void SpecialCompute(CpuKernelContext &ctx, BcastShapeType type, int64_t start, int64_t end, const T *input1,
+                    const T *input2, T *output) {
   switch (type) {
     case BcastShapeType::SAME_SHAPE: {
       auto cur_input1 = input1 + start;
@@ -176,13 +179,13 @@ void SpecialCompute(BcastShapeType type, int64_t start, int64_t end, const T *in
       break;
     }
     default:
-      KERNEL_LOG_WARN("Invalid type [%d]", static_cast<int32_t>(type));
+      CUST_KERNEL_LOG_WARN(ctx, "Invalid type [%d]", static_cast<int32_t>(type));
       break;
   }
 }
 
 template <typename T>
-uint32_t NoBcastCompute(const CpuKernelContext &ctx) {
+uint32_t NoBcastCompute(CpuKernelContext &ctx) {
   auto in0 = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto in1 = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   auto out = reinterpret_cast<T *>(ctx.Output(0)->GetData());
@@ -201,27 +204,29 @@ uint32_t NoBcastCompute(const CpuKernelContext &ctx) {
   }
 
   if (data_num < kParallelDataNums) {
-    SpecialCompute<T>(type, 0, data_num, in0, in1, out);
+    SpecialCompute<T>(ctx, type, 0, data_num, in0, in1, out);
   } else {
-    auto shard_igamma = [&](int64_t start, int64_t end) { SpecialCompute<T>(type, start, end, in0, in1, out + start); };
+    auto shard_igamma = [&](int64_t start, int64_t end) {
+      SpecialCompute<T>(ctx, type, start, end, in0, in1, out + start);
+    };
 
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shard_igamma),
-                        "Igamma SHARD Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shard_igamma),
+                             "Igamma SHARD Compute failed.");
   }
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t IgammaCpuKernel::IgammaCompute(const CpuKernelContext &ctx) {
+uint32_t IgammaCpuKernel::IgammaCompute(CpuKernelContext &ctx) {
   Tensor *input0_tensor = ctx.Input(0);
   auto input0_shape_ptr = input0_tensor->GetTensorShape();
-  KERNEL_CHECK_NULLPTR(input0_shape_ptr, KERNEL_STATUS_INNER_ERROR, "%s: input0_shape is nullptr.", kigamma);
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input0_shape_ptr, KERNEL_STATUS_INNER_ERROR, "%s: input0_shape is nullptr.", kigamma);
   auto input0_shape = input0_shape_ptr->GetDimSizes();
   int64_t input0_elements_nums = input0_tensor->NumElements();
 
   Tensor *input1_tensor = ctx.Input(1);
   auto input1_shape_ptr = input1_tensor->GetTensorShape();
-  KERNEL_CHECK_NULLPTR(input1_shape_ptr, KERNEL_STATUS_INNER_ERROR, "%s: input1_shape is nullptr.", kigamma);
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input1_shape_ptr, KERNEL_STATUS_INNER_ERROR, "%s: input1_shape is nullptr.", kigamma);
   auto input1_shape = input1_shape_ptr->GetDimSizes();
   int64_t input1_elements_nums = input1_tensor->NumElements();
 
@@ -230,9 +235,9 @@ uint32_t IgammaCpuKernel::IgammaCompute(const CpuKernelContext &ctx) {
   if (isNeedBcast) {
     return NoBcastCompute<T>(ctx);
   } else {
-    Bcast bcast(input0_shape, input1_shape);
+    Bcast bcast(ctx, input0_shape, input1_shape);
     if (!bcast.IsValid()) {
-      KERNEL_LOG_ERROR("[%s] broadcast failed.", ctx.GetOpType().c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "[%s] broadcast failed.", ctx.GetOpType().c_str());
       return KERNEL_STATUS_PARAM_INVALID;
     }
 

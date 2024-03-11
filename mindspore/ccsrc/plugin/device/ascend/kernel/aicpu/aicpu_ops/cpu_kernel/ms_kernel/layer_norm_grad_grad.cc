@@ -29,24 +29,24 @@ const uint32_t kOutputNum = 3;
 const uint32_t kInputNum = 10;
 const char *kLayerNormGradGrad = "LayerNormGradGrad";
 
-#define LAYERNORMGRADGRAD_COMPUTE_CASE(DTYPE, TYPE, CTX, NUM)       \
-  case (DTYPE): {                                                   \
-    uint32_t result = LayerNormGradGradCompute<TYPE>(CTX, NUM);     \
-    if (result != KERNEL_STATUS_OK) {                               \
-      KERNEL_LOG_ERROR("LayerNormGradGrad kernel compute failed."); \
-      return result;                                                \
-    }                                                               \
-    break;                                                          \
+#define LAYERNORMGRADGRAD_COMPUTE_CASE(DTYPE, TYPE, CTX, NUM)                 \
+  case (DTYPE): {                                                             \
+    uint32_t result = LayerNormGradGradCompute<TYPE>(CTX, NUM);               \
+    if (result != KERNEL_STATUS_OK) {                                         \
+      CUST_KERNEL_LOG_ERROR(ctx, "LayerNormGradGrad kernel compute failed."); \
+      return result;                                                          \
+    }                                                                         \
+    break;                                                                    \
   }
 
-#define SWITCH_PARALLEL(SHARD, data_num, thread_num)                            \
-  if (data_num <= ParallelDataNums) {                                           \
-    for (size_t i = 0; i < thread_num; i++) {                                   \
-      SHARD(i, i + 1);                                                          \
-    }                                                                           \
-  } else {                                                                      \
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, thread_num, 1, SHARD), \
-                        "LayerNormGradGrad ParallelFor Compute failed.");       \
+#define SWITCH_PARALLEL(ctx, SHARD, data_num, thread_num)                                 \
+  if (data_num <= ParallelDataNums) {                                                     \
+    for (size_t i = 0; i < thread_num; i++) {                                             \
+      SHARD(i, i + 1);                                                                    \
+    }                                                                                     \
+  } else {                                                                                \
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, thread_num, 1, SHARD), \
+                             "LayerNormGradGrad ParallelFor Compute failed.");            \
   }
 
 Eigen::half sqrt(Eigen::half &data) { return Eigen::half_impl::sqrt(data); }
@@ -55,14 +55,14 @@ Eigen::half sqrt(Eigen::half &data) { return Eigen::half_impl::sqrt(data); }
 namespace aicpu {
 uint32_t LayerNormGradGradCpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum),
-                      "LayerNormGradGrad check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "LayerNormGradGrad check input and output number failed.");
   auto data_type = ctx.Input(0)->GetDataType();
   switch (data_type) {
     LAYERNORMGRADGRAD_COMPUTE_CASE(DT_FLOAT16, Eigen::half, ctx, 512)
     LAYERNORMGRADGRAD_COMPUTE_CASE(DT_FLOAT, float, ctx, 4 * 1024)
     default:
-      KERNEL_LOG_ERROR("LayerNormGradGrad kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "LayerNormGradGrad kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 
@@ -70,10 +70,9 @@ uint32_t LayerNormGradGradCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t SwitchParallelCompute0(const CpuKernelContext &ctx, size_t ParallelDataNums, const size_t &num,
-                                const size_t &g_num, const size_t &mean_num, T *input_x, T *input_dy, T *input_mean,
-                                T *input_gamma, T *input_d_dx, T *inv_std, T *x_hat, T *dy_gamma, T *sum1, T *sum2,
-                                T *sum3, T *sum4) {
+uint32_t SwitchParallelCompute0(CpuKernelContext &ctx, size_t ParallelDataNums, const size_t &num, const size_t &g_num,
+                                const size_t &mean_num, T *input_x, T *input_dy, T *input_mean, T *input_gamma,
+                                T *input_d_dx, T *inv_std, T *x_hat, T *dy_gamma, T *sum1, T *sum2, T *sum3, T *sum4) {
   auto shard_inner_mean = [&](size_t start, size_t end) {
     for (size_t sum_idx = start; sum_idx < end; sum_idx++) {
       for (size_t g_idx = 0; g_idx < g_num; g_idx++) {
@@ -92,15 +91,15 @@ uint32_t SwitchParallelCompute0(const CpuKernelContext &ctx, size_t ParallelData
       }
     }
   };
-  SWITCH_PARALLEL(shard_inner_mean, num, mean_num);
+  SWITCH_PARALLEL(ctx, shard_inner_mean, num, mean_num);
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t SwitchParallelCompute1(const CpuKernelContext &ctx, size_t ParallelDataNums, const size_t &num,
-                                const size_t &g_num, const size_t &mean_num, T *input_x, T *input_dy, T *input_mean,
-                                T *input_gamma, T *input_d_dx, T *input_d_dg, T *inv_std, T *x_hat, T *dy_gamma,
-                                T *sum2, T *sum3, T *sum4, T *sum5, T *sum6, T *sum7, T *part3) {
+uint32_t SwitchParallelCompute1(CpuKernelContext &ctx, size_t ParallelDataNums, const size_t &num, const size_t &g_num,
+                                const size_t &mean_num, T *input_x, T *input_dy, T *input_mean, T *input_gamma,
+                                T *input_d_dx, T *input_d_dg, T *inv_std, T *x_hat, T *dy_gamma, T *sum2, T *sum3,
+                                T *sum4, T *sum5, T *sum6, T *sum7, T *part3) {
   auto shard_outer_mean = [&](size_t start, size_t end) {
     for (size_t sum_idx = start; sum_idx < end; sum_idx++) {
       for (size_t g_idx = 0; g_idx < g_num; g_idx++) {
@@ -118,15 +117,15 @@ uint32_t SwitchParallelCompute1(const CpuKernelContext &ctx, size_t ParallelData
       }
     }
   };
-  SWITCH_PARALLEL(shard_outer_mean, num, mean_num);
+  SWITCH_PARALLEL(ctx, shard_outer_mean, num, mean_num);
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t SwitchParallelCompute2(const CpuKernelContext &ctx, size_t ParallelDataNums, const size_t &num,
-                                const size_t &g_num, const size_t &mean_num, T *input_gamma, T *input_d_dx,
-                                T *input_d_dg, T *input_d_db, T *inv_std, T *output_sopd_x, T *output_sopd_dy, T *x_hat,
-                                T *sum1, T *sum2, T *sum5, T *sum6, T *sum7, T *part3) {
+uint32_t SwitchParallelCompute2(CpuKernelContext &ctx, size_t ParallelDataNums, const size_t &num, const size_t &g_num,
+                                const size_t &mean_num, T *input_gamma, T *input_d_dx, T *input_d_dg, T *input_d_db,
+                                T *inv_std, T *output_sopd_x, T *output_sopd_dy, T *x_hat, T *sum1, T *sum2, T *sum5,
+                                T *sum6, T *sum7, T *part3) {
   auto shard_input_prop = [&](size_t start, size_t end) {
     for (size_t sum_idx = start; sum_idx < end; sum_idx++) {
       for (size_t g_idx = 0; g_idx < g_num; g_idx++) {
@@ -141,14 +140,14 @@ uint32_t SwitchParallelCompute2(const CpuKernelContext &ctx, size_t ParallelData
       }
     }
   };
-  SWITCH_PARALLEL(shard_input_prop, num, mean_num);
+  SWITCH_PARALLEL(ctx, shard_input_prop, num, mean_num);
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t SwitchParallelCompute3(const CpuKernelContext &ctx, size_t ParallelDataNums, const size_t &num,
-                                const size_t &g_num, const size_t &mean_num, T *input_dy, T *input_d_dx, T *inv_std,
-                                T *output_sopd_g, T *x_hat, T *sum1, T *sum2) {
+uint32_t SwitchParallelCompute3(CpuKernelContext &ctx, size_t ParallelDataNums, const size_t &num, const size_t &g_num,
+                                const size_t &mean_num, T *input_dy, T *input_d_dx, T *inv_std, T *output_sopd_g,
+                                T *x_hat, T *sum1, T *sum2) {
   auto shard_param_prop = [&](size_t start, size_t end) {
     for (size_t g_idx = start; g_idx < end; g_idx++) {
       for (size_t sum_idx = 0; sum_idx < mean_num; sum_idx++) {
@@ -160,12 +159,12 @@ uint32_t SwitchParallelCompute3(const CpuKernelContext &ctx, size_t ParallelData
       }
     }
   };
-  SWITCH_PARALLEL(shard_param_prop, num, g_num);
+  SWITCH_PARALLEL(ctx, shard_param_prop, num, g_num);
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t LayerNormGradGradCpuKernel::LayerNormGradGradCompute(const CpuKernelContext &ctx, size_t ParallelDataNums) {
+uint32_t LayerNormGradGradCpuKernel::LayerNormGradGradCompute(CpuKernelContext &ctx, size_t ParallelDataNums) {
   auto input_x = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto input_dy = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   auto input_var = reinterpret_cast<T *>(ctx.Input(2)->GetData());
@@ -182,13 +181,13 @@ uint32_t LayerNormGradGradCpuKernel::LayerNormGradGradCompute(const CpuKernelCon
   size_t mean_num = static_cast<size_t>(ctx.Input(3)->NumElements());
 
   uint32_t res = static_cast<uint32_t>(KERNEL_STATUS_OK);
-  KERNEL_CHECK_FALSE((g_num > 0), KERNEL_STATUS_PARAM_INVALID, "gamma should not be empty");
+  CUST_KERNEL_CHECK_FALSE(ctx, (g_num > 0), KERNEL_STATUS_PARAM_INVALID, "gamma should not be empty");
 
   T *inv_std = new T[mean_num];
   for (size_t i = 0; i < mean_num; i++) {
     if (input_var[i] <= T(0)) {
       delete[] inv_std;
-      KERNEL_LOG_ERROR("variance must be greater than zero");
+      CUST_KERNEL_LOG_ERROR(ctx, "variance must be greater than zero");
       return KERNEL_STATUS_PARAM_INVALID;
     }
     inv_std[i] = T(1) / sqrt(input_var[i]);
@@ -214,7 +213,7 @@ uint32_t LayerNormGradGradCpuKernel::LayerNormGradGradCompute(const CpuKernelCon
     delete[] sum2;
     delete[] sum3;
     delete[] sum4;
-    KERNEL_LOG_ERROR("LayerNormGradGrad kernel SwitchParallelCompute0 failed.");
+    CUST_KERNEL_LOG_ERROR(ctx, "LayerNormGradGrad kernel SwitchParallelCompute0 failed.");
     return res;
   }
 
@@ -240,7 +239,7 @@ uint32_t LayerNormGradGradCpuKernel::LayerNormGradGradCompute(const CpuKernelCon
     delete[] sum6;
     delete[] sum7;
     delete[] part3;
-    KERNEL_LOG_ERROR("LayerNormGradGrad kernel SwitchParallelCompute1 failed.");
+    CUST_KERNEL_LOG_ERROR(ctx, "LayerNormGradGrad kernel SwitchParallelCompute1 failed.");
     return res;
   }
 
@@ -256,7 +255,7 @@ uint32_t LayerNormGradGradCpuKernel::LayerNormGradGradCompute(const CpuKernelCon
     delete[] sum1;
     delete[] sum2;
     delete[] part3;
-    KERNEL_LOG_ERROR("LayerNormGradGrad kernel SwitchParallelCompute2 failed.");
+    CUST_KERNEL_LOG_ERROR(ctx, "LayerNormGradGrad kernel SwitchParallelCompute2 failed.");
     return res;
   }
 
@@ -269,7 +268,7 @@ uint32_t LayerNormGradGradCpuKernel::LayerNormGradGradCompute(const CpuKernelCon
   delete[] sum2;
   delete[] part3;
   if (res != static_cast<uint32_t>(KERNEL_STATUS_OK)) {
-    KERNEL_LOG_ERROR("LayerNormGradGrad kernel SwitchParallelCompute3 failed.");
+    CUST_KERNEL_LOG_ERROR(ctx, "LayerNormGradGrad kernel SwitchParallelCompute3 failed.");
     return res;
   }
   return KERNEL_STATUS_OK;

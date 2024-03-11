@@ -29,7 +29,7 @@ class HardSigmoidGradCpuKernel : public CpuKernel {
 
  private:
   template <typename T1, typename T2>
-  uint32_t HardSigmoidGradCompute(const CpuKernelContext &ctx);
+  uint32_t HardSigmoidGradCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

@@ -34,10 +34,11 @@ constexpr auto kDim2 = 2;
 constexpr auto kDim3 = 3;
 
 template <typename T, typename S>
-static uint32_t GatherGrad(const T *index, const S *grad, S *output, int64_t dim_before_axis, int64_t dim_at_axis_index,
-                           int64_t dim_at_axis_output, int64_t dim_after_axis) {
+static uint32_t GatherGrad(const WorkspaceInfo &workspace_info, const T *index, const S *grad, S *output,
+                           int64_t dim_before_axis, int64_t dim_at_axis_index, int64_t dim_at_axis_output,
+                           int64_t dim_after_axis) {
   if (dim_after_axis == 0) {
-    AICPU_LOGE("dim_after_axis cannot be 0.");
+    CUST_AICPU_LOGE(workspace_info, "dim_after_axis cannot be 0.");
     return kAicpuKernelStateFailed;
   }
   int64_t number = dim_before_axis * dim_at_axis_index * dim_after_axis;
@@ -49,7 +50,8 @@ static uint32_t GatherGrad(const T *index, const S *grad, S *output, int64_t dim
       T j_read = index[id];
       auto max_index = static_cast<T>(dim_at_axis_output);
       if (j_read >= max_index || j_read < -max_index) {
-        AICPU_LOGE("The value of 'dim' should be in [%d %d), but got %d", -max_index, max_index, j_read);
+        CUST_AICPU_LOGE(workspace_info, "The value of 'dim' should be in [%d %d), but got %d", -max_index, max_index,
+                        j_read);
         AtomicAdd<bool>(&status, true);
         return;
       }
@@ -77,7 +79,7 @@ static uint32_t GatherGrad(const T *index, const S *grad, S *output, int64_t dim
 template <typename T, typename S>
 uint32_t GatherDGradV2Kernel::GatherDGradV2Task() {
   if (io_addrs_.size() != kAddressSize) {
-    AICPU_LOGE("GatherDGradV2Kernel's address is invalid");
+    CUST_AICPU_LOGE(workspace_info_, "GatherDGradV2Kernel's address is invalid");
     return kAicpuKernelStateFailed;
   }
   T *index = reinterpret_cast<T *>(io_addrs_[kDim1]);
@@ -86,7 +88,8 @@ uint32_t GatherDGradV2Kernel::GatherDGradV2Task() {
 
   int64_t output_rank = static_cast<int64_t>(output_shape_.size());
   if (dim_ >= output_rank || dim_ < -output_rank) {
-    AICPU_LOGE("The value of 'dim' should be in [%d %d), but got %d", -output_rank, output_rank, dim_);
+    CUST_AICPU_LOGE(workspace_info_, "The value of 'dim' should be in [%d %d), but got %d", -output_rank, output_rank,
+                    dim_);
     return kAicpuKernelStateFailed;
   }
   if (dim_ < 0) {
@@ -94,7 +97,8 @@ uint32_t GatherDGradV2Kernel::GatherDGradV2Task() {
   }
   int64_t grad_rank = static_cast<int64_t>(grad_shape_.size());
   if (dim_ >= grad_rank) {
-    AICPU_LOGE("The value of 'dim' should be in [%d %d), but got %d", -grad_rank, grad_rank, dim_);
+    CUST_AICPU_LOGE(workspace_info_, "The value of 'dim' should be in [%d %d), but got %d", -grad_rank, grad_rank,
+                    dim_);
     return kAicpuKernelStateFailed;
   }
 
@@ -106,10 +110,11 @@ uint32_t GatherDGradV2Kernel::GatherDGradV2Task() {
     std::accumulate(output_shape_.begin() + dim_ + 1, output_shape_.end(), 1, std::multiplies<int64_t>());
   int64_t output_size = dim_before_axis * dim_at_axis_output * dim_after_axis * sizeof(S);
   if (memset_s(output, output_size, 0x0, output_size) != EOK) {
-    AICPU_LOGE("memset_s failed!");
+    CUST_AICPU_LOGE(workspace_info_, "memset_s failed!");
     return kAicpuKernelStateFailed;
   }
-  return GatherGrad(index, grad, output, dim_before_axis, dim_at_axis_grad, dim_at_axis_output, dim_after_axis);
+  return GatherGrad(workspace_info_, index, grad, output, dim_before_axis, dim_at_axis_grad, dim_at_axis_output,
+                    dim_after_axis);
 }
 
 uint32_t GatherDGradV2Kernel::ParseKernelParam() {
@@ -136,7 +141,7 @@ uint32_t GatherDGradV2Kernel::ParseKernelParam() {
     (void)grad_shape_.emplace_back(grad_shape.dim(i).size());
   }
   if (index_shape_ != grad_shape_) {
-    AICPU_LOGE("the shape of index and grad should be same!");
+    CUST_AICPU_LOGE(workspace_info_, "the shape of index and grad should be same!");
     return kAicpuKernelStateInvalid;
   }
 
@@ -147,7 +152,7 @@ uint32_t GatherDGradV2Kernel::ParseKernelParam() {
     (void)output_shape_.emplace_back(output_shape.dim(i).size());
   }
   if (output_shape_ != input_shape_) {
-    AICPU_LOGE("the shape of input and output should be same!");
+    CUST_AICPU_LOGE(workspace_info_, "the shape of input and output should be same!");
     return kAicpuKernelStateInvalid;
   }
 
@@ -211,7 +216,8 @@ uint32_t GatherDGradV2Kernel::DoCompute() {
     std::bind(&GatherDGradV2Kernel::GatherDGradV2Task<int64_t, bool>, this);
 
   if (calls.find(index_type_) == calls.end()) {
-    AICPU_LOGE("GatherDGradV2 op don't support index tensor types: %s", typeid(index_type_).name());
+    CUST_AICPU_LOGE(workspace_info_, "GatherDGradV2 op don't support index tensor types: %s",
+                    typeid(index_type_).name());
     return kAicpuKernelStateFailed;
   }
   return calls[index_type_][grad_type_]();

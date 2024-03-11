@@ -33,7 +33,7 @@ constexpr uint64_t kParallelDataNums = 32 * 1024;
   case (DTYPE): {                                                      \
     uint32_t result = NthElementCompute<TYPE>(X, Y, N, LAST_DIM, CTX); \
     if (result != KERNEL_STATUS_OK) {                                  \
-      KERNEL_LOG_ERROR("NthElement kernel compute failed.");           \
+      CUST_KERNEL_LOG_ERROR(ctx, "NthElement kernel compute failed."); \
       return result;                                                   \
     }                                                                  \
     break;                                                             \
@@ -44,27 +44,28 @@ namespace aicpu {
 uint32_t NthElement::Compute(CpuKernelContext &ctx) {
   Tensor *input_n = ctx.Input(1);
   auto shape_n = input_n->GetTensorShape();
-  KERNEL_CHECK_FALSE((shape_n->GetDimSizes().empty() || (shape_n->GetDims() == 1 && shape_n->GetDimSize(0) == 1)),
-                     KERNEL_STATUS_PARAM_INVALID, "Input n must be a scalar or a single 1-dimension number.");
+  CUST_KERNEL_CHECK_FALSE(ctx,
+                          (shape_n->GetDimSizes().empty() || (shape_n->GetDims() == 1 && shape_n->GetDimSize(0) == 1)),
+                          KERNEL_STATUS_PARAM_INVALID, "Input n must be a scalar or a single 1-dimension number.");
   DataType n_type = input_n->GetDataType();
-  KERNEL_CHECK_FALSE((n_type == DT_INT32), KERNEL_STATUS_PARAM_INVALID, "The type of input n must be int32.");
-  KERNEL_CHECK_NULLPTR(input_n->GetData(), KERNEL_STATUS_PARAM_INVALID, "NthElement Get input n failed.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (n_type == DT_INT32), KERNEL_STATUS_PARAM_INVALID, "The type of input n must be int32.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input_n->GetData(), KERNEL_STATUS_PARAM_INVALID, "NthElement Get input n failed.");
   int32_t *n_data = reinterpret_cast<int32_t *>(input_n->GetData());
   int32_t n = *n_data;
-  KERNEL_CHECK_FALSE((n >= 0), KERNEL_STATUS_PARAM_INVALID, "Input n must be non-negative but is [%d].", n);
+  CUST_KERNEL_CHECK_FALSE(ctx, (n >= 0), KERNEL_STATUS_PARAM_INVALID, "Input n must be non-negative but is [%d].", n);
 
   Tensor *x = ctx.Input(0);
-  KERNEL_CHECK_NULLPTR(x, KERNEL_STATUS_PARAM_INVALID, "NthElement Get input x failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, x, KERNEL_STATUS_PARAM_INVALID, "NthElement Get input x failed.");
   auto x_shape = x->GetTensorShape();
   int32_t dims = x_shape->GetDims();
-  KERNEL_CHECK_FALSE((dims >= 1), KERNEL_STATUS_PARAM_INVALID, "Input x must be at least rank 1 but is rank [%d]",
-                     dims);
+  CUST_KERNEL_CHECK_FALSE(ctx, (dims >= 1), KERNEL_STATUS_PARAM_INVALID,
+                          "Input x must be at least rank 1 but is rank [%d]", dims);
   const int32_t last_dim = x_shape->GetDimSize(dims - 1);
-  KERNEL_CHECK_FALSE((last_dim > n), KERNEL_STATUS_PARAM_INVALID, "Input x must have last dimension = [%d] > n = [%d]",
-                     last_dim, n);
+  CUST_KERNEL_CHECK_FALSE(ctx, (last_dim > n), KERNEL_STATUS_PARAM_INVALID,
+                          "Input x must have last dimension = [%d] > n = [%d]", last_dim, n);
 
   AttrValue *reverse_attr = ctx.GetAttr("reverse");
-  KERNEL_CHECK_NULLPTR(reverse_attr, KERNEL_STATUS_PARAM_INVALID, "NthElement get attr reverse failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, reverse_attr, KERNEL_STATUS_PARAM_INVALID, "NthElement get attr reverse failed.");
   bool reverse = reverse_attr->GetBool();
   if (reverse) {
     n = last_dim - n - 1;
@@ -84,8 +85,8 @@ uint32_t NthElement::Compute(CpuKernelContext &ctx) {
     NTHELEMENT_COMPUTE_CASE(DT_INT64, int64_t, x, y, n, last_dim, ctx)
     NTHELEMENT_COMPUTE_CASE(DT_DOUBLE, double, x, y, n, last_dim, ctx)
     default:
-      KERNEL_LOG_ERROR("[%s] Data type of input is not support, input data type is [%s].", ctx.GetOpType().c_str(),
-                       DTypeStr(x_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "[%s] Data type of input is not support, input data type is [%s].",
+                            ctx.GetOpType().c_str(), DTypeStr(x_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
@@ -126,10 +127,11 @@ uint32_t NthElement::NthElementCompute(Tensor *x, Tensor *y, const int32_t n, co
       }
     };
     if (max_core_num == 0) {
-      KERNEL_LOG_ERROR("max_core_num could not be 0");
+      CUST_KERNEL_LOG_ERROR(ctx, "max_core_num could not be 0");
     }
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, num_rows, num_rows / max_core_num, shard_nth_element),
-                        "NthElement Parallel Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx,
+                             CpuKernelUtils::ParallelFor(ctx, num_rows, num_rows / max_core_num, shard_nth_element),
+                             "NthElement Parallel Compute failed.");
   }
 
   return KERNEL_STATUS_OK;

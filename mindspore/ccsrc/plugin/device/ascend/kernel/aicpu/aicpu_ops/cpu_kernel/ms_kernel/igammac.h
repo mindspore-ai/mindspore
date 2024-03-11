@@ -34,7 +34,7 @@ class IgammacCpuKernel : public CpuKernel {
   static uint32_t IgammacCheckAndBroadCast(CpuKernelContext &ctx, BCalcInfo *calc_info);
 
   template <typename T>
-  static uint32_t IgammacCompute(const CpuKernelContext &ctx, const BCalcInfo &calc_info);
+  static uint32_t IgammacCompute(CpuKernelContext &ctx, const BCalcInfo &calc_info);
 };
 }  // namespace aicpu
 #endif

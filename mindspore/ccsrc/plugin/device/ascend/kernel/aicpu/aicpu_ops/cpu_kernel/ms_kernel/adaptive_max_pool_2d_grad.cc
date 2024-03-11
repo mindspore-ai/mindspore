@@ -69,7 +69,7 @@ void ComputeSingleThread(int64_t start, int64_t end, AdaptiveCalcArgs<SCALAR_T, 
 }
 
 template <typename SCALAR_T, typename INDICES_T>
-void AdaptiveMaxPool2dGradSingleOutFrame(const CpuKernelContext &ctx, AdaptiveCalcArgs<SCALAR_T, INDICES_T> args) {
+void AdaptiveMaxPool2dGradSingleOutFrame(CpuKernelContext &ctx, AdaptiveCalcArgs<SCALAR_T, INDICES_T> args) {
   auto data_num = ctx.Input(0)->GetTensorShape()->NumElements();
   if (data_num >= kParallelDataNumCHW) {
     uint32_t min_core_num = 1;
@@ -88,7 +88,7 @@ void AdaptiveMaxPool2dGradSingleOutFrame(const CpuKernelContext &ctx, AdaptiveCa
 }
 
 template <typename SCALAR_T, typename INDICES_T>
-void AdaptiveMaxPool2dGradOutFrame(const CpuKernelContext &ctx, AdaptiveCalcArgs<SCALAR_T, INDICES_T> args) {
+void AdaptiveMaxPool2dGradOutFrame(CpuKernelContext &ctx, AdaptiveCalcArgs<SCALAR_T, INDICES_T> args) {
   auto data_num = ctx.Input(0)->GetTensorShape()->NumElements();
   if (data_num >= kParallelDataNumNCHW) {
     uint32_t min_core_num = 1;
@@ -128,13 +128,13 @@ void AdaptiveMaxPool2dGradOutFrame(const CpuKernelContext &ctx, AdaptiveCalcArgs
 }
 
 template <typename SCALAR_T, typename INDICES_T>
-uint32_t AdaptiveMaxPool2dGradOutCpuTemplate(const CpuKernelContext &ctx) {
+uint32_t AdaptiveMaxPool2dGradOutCpuTemplate(CpuKernelContext &ctx) {
   int64_t dim_w = 2;
   int64_t dim_h = 1;
   int64_t size_b = 1;
   Tensor &input = *(ctx.Input(kSecondInputIndex));
   auto input_shape_ptr = input.GetTensorShape();
-  KERNEL_CHECK_NULLPTR(input_shape_ptr, KERNEL_STATUS_PARAM_INVALID, "Get input x0 shape failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input_shape_ptr, KERNEL_STATUS_PARAM_INVALID, "Get input x0 shape failed.");
   int32_t input_dims = input_shape_ptr->GetDims();
   if (input_dims == four) {
     size_b = input_shape_ptr->GetDimSize(0);
@@ -166,7 +166,7 @@ uint32_t AdaptiveMaxPool2dGradOutCpuTemplate(const CpuKernelContext &ctx) {
 }
 
 template <typename SCALAR_T>
-uint32_t AdaptiveMaxPool2dGrad::DoCompute(const CpuKernelContext &ctx, DataType indices_type) {
+uint32_t AdaptiveMaxPool2dGrad::DoCompute(CpuKernelContext &ctx, DataType indices_type) {
   // Compute by indices_type
   switch (indices_type) {
     case DT_INT32:
@@ -174,14 +174,15 @@ uint32_t AdaptiveMaxPool2dGrad::DoCompute(const CpuKernelContext &ctx, DataType 
     case DT_INT64:
       return AdaptiveMaxPool2dGradOutCpuTemplate<SCALAR_T, int64_t>(ctx);
     default:
-      KERNEL_LOG_ERROR("Output data_type [%s] must be in [{DT_INT32, DT_INT64}].", DTypeStr(indices_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Output data_type [%s] must be in [{DT_INT32, DT_INT64}].",
+                            DTypeStr(indices_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 }
 
 uint32_t AdaptiveMaxPool2dGrad::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum),
-                      "AdaptiveMaxPool2dGrad check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "AdaptiveMaxPool2dGrad check input and output number failed.");
 
   auto data_type = static_cast<DataType>(ctx.Input(1)->GetDataType());
   // Compute by data_type
@@ -194,7 +195,8 @@ uint32_t AdaptiveMaxPool2dGrad::Compute(CpuKernelContext &ctx) {
     case DT_FLOAT16:
       return DoCompute<Eigen::half>(ctx, indices_type);
     default:
-      KERNEL_LOG_ERROR("AdptetiveMaxPool2dGrad kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "AdptetiveMaxPool2dGrad kernel data type [%s] not support.",
+                            DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 

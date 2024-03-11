@@ -27,36 +27,37 @@ constexpr uint32_t kMaximumGradGradInputNum = 4;
 constexpr uint32_t kMaximumGradGradOutputNum = 3;
 const char *kMaximumGradGrad = "MaximumGradGrad";
 
-#define MAXIMUMGRADGRAD_COMPUTE_CASE(DTYPE, TYPE, CTX)            \
-  case (DTYPE): {                                                 \
-    uint32_t result = MaximumGradGradCompute<TYPE>(CTX);          \
-    if (result != KERNEL_STATUS_OK) {                             \
-      KERNEL_LOG_ERROR("MaximumGradGrad kernel compute failed."); \
-      return result;                                              \
-    }                                                             \
-    break;                                                        \
+#define MAXIMUMGRADGRAD_COMPUTE_CASE(DTYPE, TYPE, CTX)                      \
+  case (DTYPE): {                                                           \
+    uint32_t result = MaximumGradGradCompute<TYPE>(CTX);                    \
+    if (result != KERNEL_STATUS_OK) {                                       \
+      CUST_KERNEL_LOG_ERROR(ctx, "MaximumGradGrad kernel compute failed."); \
+      return result;                                                        \
+    }                                                                       \
+    break;                                                                  \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t MaximumGradGradCpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kMaximumGradGradInputNum, kMaximumGradGradOutputNum),
-                      "MaximumGradGrad check input and output number failed.");
-  KERNEL_HANDLE_ERROR(MaximumGradGradParamCheck(ctx), "MaximumGradGrad check params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kMaximumGradGradInputNum, kMaximumGradGradOutputNum),
+                           "MaximumGradGrad check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, MaximumGradGradParamCheck(ctx), "MaximumGradGrad check params failed.");
   auto data_type = ctx.Input(0)->GetDataType();
   switch (data_type) {
     MAXIMUMGRADGRAD_COMPUTE_CASE(DT_INT32, int32_t, ctx)
     MAXIMUMGRADGRAD_COMPUTE_CASE(DT_FLOAT, float, ctx)
     MAXIMUMGRADGRAD_COMPUTE_CASE(DT_FLOAT16, Eigen::half, ctx)
     default:
-      KERNEL_LOG_ERROR("The data type of input is not support, input data type is [%s].", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "The data type of input is not support, input data type is [%s].",
+                            DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 
-uint32_t MaximumGradGradCpuKernel::MaximumGradGradParamCheck(const CpuKernelContext &ctx) {
+uint32_t MaximumGradGradCpuKernel::MaximumGradGradParamCheck(CpuKernelContext &ctx) {
   // the non null of inputs and outputs has been verified in NormalCheck
   Tensor *x1 = ctx.Input(0);
   Tensor *x2 = ctx.Input(1);
@@ -67,40 +68,42 @@ uint32_t MaximumGradGradCpuKernel::MaximumGradGradParamCheck(const CpuKernelCont
   DataType grad_y2_type = grad_y2->GetDataType();
   DataType x1_type = x1->GetDataType();
   DataType x2_type = x2->GetDataType();
-  KERNEL_CHECK_FALSE(((grad_y1_type == grad_y2_type) && (grad_y2_type == x1_type) && (x1_type == x2_type)),
-                     KERNEL_STATUS_PARAM_INVALID,
-                     "The data type of grad_y1 [%s], grad_y2 [%s], x1 [%s] and "
-                     "x2 [%s] need to be same.",
-                     DTypeStr(grad_y1_type).c_str(), DTypeStr(grad_y2_type).c_str(), DTypeStr(x1_type).c_str(),
-                     DTypeStr(x2_type).c_str())
+  CUST_KERNEL_CHECK_FALSE(ctx, ((grad_y1_type == grad_y2_type) && (grad_y2_type == x1_type) && (x1_type == x2_type)),
+                          KERNEL_STATUS_PARAM_INVALID,
+                          "The data type of grad_y1 [%s], grad_y2 [%s], x1 [%s] and "
+                          "x2 [%s] need to be same.",
+                          DTypeStr(grad_y1_type).c_str(), DTypeStr(grad_y2_type).c_str(), DTypeStr(x1_type).c_str(),
+                          DTypeStr(x2_type).c_str())
   // shape check
   auto grad_y1_shape = grad_y1->GetTensorShape()->GetDimSizes();
   auto grad_y2_shape = grad_y2->GetTensorShape()->GetDimSizes();
   auto x1_shape = x1->GetTensorShape()->GetDimSizes();
   auto x2_shape = x2->GetTensorShape()->GetDimSizes();
-  KERNEL_CHECK_FALSE(grad_y1_shape == x1_shape, KERNEL_STATUS_PARAM_INVALID, "Mismatch in shape of grad_y1 and x1.");
-  KERNEL_CHECK_FALSE(grad_y2_shape == x2_shape, KERNEL_STATUS_PARAM_INVALID, "Mismatch in shape of grad_y2 and x2.");
+  CUST_KERNEL_CHECK_FALSE(ctx, grad_y1_shape == x1_shape, KERNEL_STATUS_PARAM_INVALID,
+                          "Mismatch in shape of grad_y1 and x1.");
+  CUST_KERNEL_CHECK_FALSE(ctx, grad_y2_shape == x2_shape, KERNEL_STATUS_PARAM_INVALID,
+                          "Mismatch in shape of grad_y2 and x2.");
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t MaximumGradGradCpuKernel::MaximumGradGradCompute(const CpuKernelContext &ctx) {
+uint32_t MaximumGradGradCpuKernel::MaximumGradGradCompute(CpuKernelContext &ctx) {
   Tensor *input0_tensor = ctx.Input(0);
   Tensor *input1_tensor = ctx.Input(1);
 
   auto input0_shape = input0_tensor->GetTensorShape()->GetDimSizes();
   auto input1_shape = input1_tensor->GetTensorShape()->GetDimSizes();
 
-  Bcast bcast(input0_shape, input1_shape);
+  Bcast bcast(ctx, input0_shape, input1_shape);
   if (!bcast.IsValid()) {
-    KERNEL_LOG_ERROR("[%s] broadcast failed.", ctx.GetOpType().c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "[%s] broadcast failed.", ctx.GetOpType().c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   return BcastCompute<T>(ctx, bcast);
 }
 
 template <typename T>
-uint32_t MaximumGradGradCpuKernel::BcastCompute(const CpuKernelContext &ctx, const Bcast &bcast) {
+uint32_t MaximumGradGradCpuKernel::BcastCompute(CpuKernelContext &ctx, const Bcast &bcast) {
   auto in0 = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto in1 = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   auto in2 = reinterpret_cast<T *>(ctx.Input(2)->GetData());

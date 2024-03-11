@@ -59,10 +59,10 @@ inline int64_t calc_target_idx(const std::vector<int64_t> &coord, const std::uno
 namespace aicpu {
 uint32_t ReverseV2CpuKernel::Compute(CpuKernelContext &ctx) {
   int x_max_dim = 8;
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "ReverseV2 check input or output is failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "ReverseV2 check input or output is failed.");
   DataType axis_type = ctx.Input(1)->GetDataType();
-  KERNEL_CHECK_FALSE((axis_type == DT_INT32 || axis_type == DT_INT64), KERNEL_STATUS_PARAM_INVALID,
-                     "The data type of [axis] need be DT_INT32 or DT_INT64.")
+  CUST_KERNEL_CHECK_FALSE(ctx, (axis_type == DT_INT32 || axis_type == DT_INT64), KERNEL_STATUS_PARAM_INVALID,
+                          "The data type of [axis] need be DT_INT32 or DT_INT64.")
   auto x_shape = ctx.Input(0)->GetTensorShape();
   auto axis_shape = ctx.Input(1)->GetTensorShape();
   DataType data_type = DataType(ctx.Input(0)->GetDataType());
@@ -70,22 +70,24 @@ uint32_t ReverseV2CpuKernel::Compute(CpuKernelContext &ctx) {
   if (x_shape->GetDims() == 0 || axis_shape->GetDims() == 0) {
     return ComputeDiffType(data_type, ctx);
   }
-  KERNEL_CHECK_FALSE((x_shape->GetDims() > 0 && x_shape->GetDims() <= x_max_dim), KERNEL_STATUS_PARAM_INVALID,
-                     "Shapes of x is not support.")
-  KERNEL_CHECK_FALSE((axis_shape->GetDims() == 1), KERNEL_STATUS_PARAM_INVALID, "Shapes of axis is not support.")
+  CUST_KERNEL_CHECK_FALSE(ctx, (x_shape->GetDims() > 0 && x_shape->GetDims() <= x_max_dim), KERNEL_STATUS_PARAM_INVALID,
+                          "Shapes of x is not support.")
+  CUST_KERNEL_CHECK_FALSE(ctx, (axis_shape->GetDims() == 1), KERNEL_STATUS_PARAM_INVALID,
+                          "Shapes of axis is not support.")
 
   auto input0_datasize = ctx.Input(0)->GetDataSize();
   auto output_datasize = ctx.Output(0)->GetDataSize();
-  KERNEL_CHECK_FALSE((input0_datasize == output_datasize), KERNEL_STATUS_PARAM_INVALID,
-                     "The data size of input0 [%d] need be same with "
-                     "output0 [%d].",
-                     input0_datasize, output_datasize)
+  CUST_KERNEL_CHECK_FALSE(ctx, (input0_datasize == output_datasize), KERNEL_STATUS_PARAM_INVALID,
+                          "The data size of input0 [%d] need be same with "
+                          "output0 [%d].",
+                          input0_datasize, output_datasize)
   int64_t dim = x_shape->GetDims();
   auto input_axis = reinterpret_cast<int64_t *>(ctx.Input(1)->GetData());
   int64_t axis_element = axis_shape->NumElements();
   for (int j = 0; j < axis_element; j++) {
     int64_t realdim = *(input_axis + j) < 0 ? dim + *(input_axis + j) : *(input_axis + j);
-    KERNEL_CHECK_FALSE((realdim >= 0 && realdim < dim), KERNEL_STATUS_PARAM_INVALID, "[%d] is invalid", realdim)
+    CUST_KERNEL_CHECK_FALSE(ctx, (realdim >= 0 && realdim < dim), KERNEL_STATUS_PARAM_INVALID, "[%d] is invalid",
+                            realdim)
   }
   uint32_t ret = ComputeDiffType(data_type, ctx);
   if (ret != KERNEL_STATUS_OK) {
@@ -94,7 +96,7 @@ uint32_t ReverseV2CpuKernel::Compute(CpuKernelContext &ctx) {
   return KERNEL_STATUS_OK;
 }
 
-uint32_t ReverseV2CpuKernel::ComputeDiffType(DataType data_type, const CpuKernelContext &ctx) {
+uint32_t ReverseV2CpuKernel::ComputeDiffType(DataType data_type, CpuKernelContext &ctx) {
   switch (data_type) {
     case DT_FLOAT16:
       return ComputeReverseV2<Eigen::half>(ctx);
@@ -123,14 +125,14 @@ uint32_t ReverseV2CpuKernel::ComputeDiffType(DataType data_type, const CpuKernel
     case DT_STRING:
       return ComputeReverseV2<std::string>(ctx);
     default:
-      KERNEL_LOG_ERROR("ReverseV2 invalid input type[%s]", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "ReverseV2 invalid input type[%s]", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t ReverseV2CpuKernel::ComputeReverseV2(const CpuKernelContext &ctx) {
+uint32_t ReverseV2CpuKernel::ComputeReverseV2(CpuKernelContext &ctx) {
   auto input = ctx.Input(0);
   auto input_shape = input->GetTensorShape()->GetDimSizes();
   auto input_data = reinterpret_cast<T *>(input->GetData());
@@ -169,8 +171,8 @@ uint32_t ReverseV2CpuKernel::ComputeReverseV2(const CpuKernelContext &ctx) {
   if (num_elem > kParallelDataNum) {
     uint32_t min_core_num = 1;
     int64_t max_core_num = std::max(min_core_num, aicpu::CpuKernelUtils::GetCPUNum(ctx) - kResvCpuNum);
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, num_elem, num_elem / max_core_num, sharder_reverse),
-                        "ReverseV2 compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, num_elem, num_elem / max_core_num, sharder_reverse),
+                             "ReverseV2 compute failed.");
   } else {
     sharder_reverse(0, num_elem);
   }

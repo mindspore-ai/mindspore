@@ -15,7 +15,74 @@
  */
 #ifndef AICPU_OPS_AICPU_COMMON_KERNEL_LOG_H_
 #define AICPU_OPS_AICPU_COMMON_KERNEL_LOG_H_
+#include "inc/cust_cpu_utils.h"
 
+namespace aicpu {
+#define CUST_AICPU_LOGD(ctx, fmt, ...)                                                                     \
+  CustCpuKernelUtils::CustLogDebug(ctx, "[%s:%d][%s:%d]:" fmt, __FILE__, __LINE__, __FUNCTION__, __LINE__, \
+                                   ##__VA_ARGS__)
+#define CUST_AICPU_LOGI(ctx, fmt, ...) \
+  CustCpuKernelUtils::CustLogInfo(ctx, "[%s:%d][%s:%d]:" fmt, __FILE__, __LINE__, __FUNCTION__, __LINE__, ##__VA_ARGS__)
+#define CUST_AICPU_LOGW(ctx, fmt, ...)                                                                       \
+  CustCpuKernelUtils::CustLogWarning(ctx, "[%s:%d][%s:%d]:" fmt, __FILE__, __LINE__, __FUNCTION__, __LINE__, \
+                                     ##__VA_ARGS__)
+#define CUST_AICPU_LOGE(ctx, fmt, ...)                                                                     \
+  CustCpuKernelUtils::CustLogError(ctx, "[%s:%d][%s:%d]:" fmt, __FILE__, __LINE__, __FUNCTION__, __LINE__, \
+                                   ##__VA_ARGS__)
+
+#define CUST_KERNEL_LOG_WARN(ctx, fmt, ...) CUST_KERNEL_LOG_WARNING(ctx, fmt, ##__VA_ARGS__)
+
+#define CUST_KERNEL_CHECK_NULLPTR_VOID(ctx, value, logText...) \
+  if (value == nullptr) {                                      \
+    CUST_AICPU_LOGE(ctx, logText);                             \
+    return;                                                    \
+  }
+
+#define CUST_KERNEL_CHECK_FALSE(ctx, condition, errorCode, logText...) \
+  if (!(condition)) {                                                  \
+    CUST_AICPU_LOGE(ctx, logText);                                     \
+    return errorCode;                                                  \
+  }
+
+#define CUST_KERNEL_CHECK_NULLPTR(ctx, value, errorCode, logText...) \
+  if (value == nullptr) {                                            \
+    CUST_AICPU_LOGE(ctx, logText);                                   \
+    return errorCode;                                                \
+  }
+
+#define CUST_KERNEL_CHECK_ASSIGN_64S_MULTI(ctx, A, B, result, errorCode)              \
+  do {                                                                                \
+    if ((A) != 0 && (B) != 0 && ((INT64_MAX) / (A)) <= (B)) {                         \
+      CUST_AICPU_LOGE(ctx, "Integer reversed multiA: %llu * multiB: %llu", (A), (B)); \
+      return errorCode;                                                               \
+    }                                                                                 \
+    (result) = ((A) * (B));                                                           \
+  } while (0)
+
+#define CUST_KERNEL_CHECK_FALSE_VOID(ctx, condition, logText...) \
+  if (!(condition)) {                                            \
+    CUST_AICPU_LOGE(ctx, logText);                               \
+    return;                                                      \
+  }
+
+#define CUST_KERNEL_HANDLE_ERROR(ctx, expression, logText...) \
+  ;                                                           \
+  do {                                                        \
+    uint32_t ret = expression;                                \
+    if (ret != static_cast<uint32_t>(KERNEL_STATUS_OK)) {     \
+      CUST_AICPU_LOGE(ctx, logText);                          \
+      return ret;                                             \
+    }                                                         \
+  } while (0)
+
+#define RETURN_IF_FAILURE(expr)    \
+  do {                             \
+    auto ret = (expr);             \
+    if (ret != KERNEL_STATUS_OK) { \
+      return ret;                  \
+    }                              \
+  } while (0)
+/*
 #include <unistd.h>
 #include <sys/syscall.h>
 #include <iostream>
@@ -137,5 +204,6 @@ namespace aicpu {
       return ret;                  \
     }                              \
   } while (0)
+*/
 }  // namespace aicpu
 #endif  // AICPU_OPS_AICPU_COMMON_KERNEL_LOG_H_

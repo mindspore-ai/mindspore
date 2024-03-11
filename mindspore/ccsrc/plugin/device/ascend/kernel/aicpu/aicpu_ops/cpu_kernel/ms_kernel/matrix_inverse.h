@@ -31,7 +31,7 @@ class MatrixInverseCpuKernel : public CpuKernel {
 
  private:
   template <typename T>
-  static uint32_t MatrixInverseCompute(const CpuKernelContext &ctx);
+  static uint32_t MatrixInverseCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

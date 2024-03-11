@@ -21,7 +21,6 @@
 #include <memory>
 
 #include "linear_sum_assignment.h"
-#include "log.h"
 #include "securec.h"
 #include "context/common/status.h"
 #include "utils/kernel_util.h"
@@ -57,14 +56,14 @@ inline bool CheckValue(const T *const cost, uint64_t nr, uint64_t nc) {
   return true;
 }
 
-#define LINEAR_SUM_ASSIGNMENT_COMPUTE_CASE(DTYPE, TYPE, CTX)          \
-  case (DTYPE): {                                                     \
-    ret = LinearSumAssignmentCompute<TYPE>(CTX);                      \
-    if (ret != KERNEL_STATUS_OK) {                                    \
-      KERNEL_LOG_ERROR("LinearSumAssignment kernel compute failed."); \
-      return ret;                                                     \
-    }                                                                 \
-    break;                                                            \
+#define LINEAR_SUM_ASSIGNMENT_COMPUTE_CASE(DTYPE, TYPE, CTX)                    \
+  case (DTYPE): {                                                               \
+    ret = LinearSumAssignmentCompute<TYPE>(CTX);                                \
+    if (ret != KERNEL_STATUS_OK) {                                              \
+      CUST_KERNEL_LOG_ERROR(CTX, "LinearSumAssignment kernel compute failed."); \
+      return ret;                                                               \
+    }                                                                           \
+    break;                                                                      \
   }
 
 #define LINEAR_SUM_ASSIGNMENT_COMPUTE_CASE_ALL(CTX)                \
@@ -85,13 +84,14 @@ inline bool CheckValue(const T *const cost, uint64_t nr, uint64_t nc) {
 
 namespace aicpu {
 uint32_t LinearSumAssignmentCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "Check LinearSumAssignment params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "Check LinearSumAssignment params failed.");
   auto matrix_data_type = ctx.Input(0)->GetDataType();
   auto maximize_data_type = ctx.Input(2)->GetDataType();
   auto row_ind_data_type = ctx.Output(0)->GetDataType();
   auto col_ind_data_type = ctx.Output(1)->GetDataType();
   if (maximize_data_type != DT_BOOL || row_ind_data_type != DT_INT64 || col_ind_data_type != DT_INT64) {
-    KERNEL_LOG_ERROR(
+    CUST_KERNEL_LOG_ERROR(
+      ctx,
       "[%s] Data type of input is not support, maximize data type is [%s], row_ind data type is [%s], col_ind data "
       "type is [%s].",
       ctx.GetOpType().c_str(), DTypeStr(maximize_data_type).c_str(), DTypeStr(row_ind_data_type).c_str(),
@@ -102,27 +102,28 @@ uint32_t LinearSumAssignmentCpuKernel::Compute(CpuKernelContext &ctx) {
   switch (matrix_data_type) {
     LINEAR_SUM_ASSIGNMENT_COMPUTE_CASE_ALL(ctx)
     default:
-      KERNEL_LOG_ERROR("LinearSumAssignment matrix data type [%s] not support.", DTypeStr(matrix_data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "LinearSumAssignment matrix data type [%s] not support.",
+                            DTypeStr(matrix_data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return ret;
 }
 
 template <typename T>
-uint32_t LinearSumAssignmentCpuKernel::SolveProblem(T *cost, int64_t *a, int64_t *b) {
+uint32_t LinearSumAssignmentCpuKernel::SolveProblem(CpuKernelContext &ctx, T *cost, int64_t *a, int64_t *b) {
   std::shared_ptr<float> cost_matrix_buf(new float[nr * raw_nc]);
   for (uint64_t i = 0; i < nr; i++) {
     for (uint64_t j = 0; j < raw_nc; j++) {
       *(cost_matrix_buf.get() + i * raw_nc + j) = static_cast<float>(*(cost + i * raw_nc + j));
     }
   }
-  return Solve<float>(cost_matrix_buf.get(), a, b);
+  return Solve<float>(ctx, cost_matrix_buf.get(), a, b);
 }
 
-#define SOLVE_PROBLEM_FLOAT(TYPE)                                                           \
-  template <>                                                                               \
-  uint32_t LinearSumAssignmentCpuKernel::SolveProblem(TYPE *cost, int64_t *a, int64_t *b) { \
-    return Solve<TYPE>(cost, a, b);                                                         \
+#define SOLVE_PROBLEM_FLOAT(TYPE)                                                                                  \
+  template <>                                                                                                      \
+  uint32_t LinearSumAssignmentCpuKernel::SolveProblem(CpuKernelContext &ctx, TYPE *cost, int64_t *a, int64_t *b) { \
+    return Solve<TYPE>(ctx, cost, a, b);                                                                           \
   }
 
 #define SOLVE_PROBLEM_FLOAT_ALL()  \
@@ -133,7 +134,7 @@ uint32_t LinearSumAssignmentCpuKernel::SolveProblem(T *cost, int64_t *a, int64_t
 SOLVE_PROBLEM_FLOAT_ALL()
 
 template <typename T>
-uint32_t LinearSumAssignmentCpuKernel::LinearSumAssignmentCompute(const CpuKernelContext &ctx) {
+uint32_t LinearSumAssignmentCpuKernel::LinearSumAssignmentCompute(CpuKernelContext &ctx) {
   Tensor *input1 = ctx.Input(0);
   Tensor *input2 = ctx.Input(1);
   Tensor *input3 = ctx.Input(2);
@@ -143,8 +144,9 @@ uint32_t LinearSumAssignmentCpuKernel::LinearSumAssignmentCompute(const CpuKerne
   auto input_shape = input1->GetTensorShape();
   ShapeVector dim_sizes = input_shape->GetDimSizes();
   if (!IsMatrix(dim_sizes)) {
-    KERNEL_LOG_ERROR("LinearSumAssignment first input is not a matrix. Expected dim size is 2, but got dim size [%u].",
-                     dim_sizes.size());
+    CUST_KERNEL_LOG_ERROR(
+      ctx, "LinearSumAssignment first input is not a matrix. Expected dim size is 2, but got dim size [%u].",
+      dim_sizes.size());
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
@@ -159,7 +161,8 @@ uint32_t LinearSumAssignmentCpuKernel::LinearSumAssignmentCompute(const CpuKerne
   int64_t *b = reinterpret_cast<int64_t *>(output2->GetData());
 
   if (nr_signed < 0 || nc_signed < 0 || nc_signed > raw_nc_signed) {
-    KERNEL_LOG_ERROR(
+    CUST_KERNEL_LOG_ERROR(
+      ctx,
       "LinearSumAssignment input param dimension is not correct. nr_signed: [%u], nc_signed: [%u], raw_nc_signed: "
       "[%u].",
       nr_signed, nc_signed, raw_nc_signed);
@@ -170,11 +173,11 @@ uint32_t LinearSumAssignmentCpuKernel::LinearSumAssignmentCompute(const CpuKerne
   raw_nc = static_cast<uint64_t>(raw_nc_signed);
   nc = static_cast<uint64_t>(nc_signed);
 
-  return SolveProblem<T>(input_cost, a, b);
+  return SolveProblem<T>(ctx, input_cost, a, b);
 }
 
 template <typename T>
-uint32_t LinearSumAssignmentCpuKernel::Solve(const T *cost, int64_t *a, int64_t *b) {
+uint32_t LinearSumAssignmentCpuKernel::Solve(CpuKernelContext &ctx, const T *cost, int64_t *a, int64_t *b) {
   if (nr == 0 || nc == 0) {
     return 0;
   }
@@ -191,7 +194,7 @@ uint32_t LinearSumAssignmentCpuKernel::Solve(const T *cost, int64_t *a, int64_t 
   cost = temp.data();
 
   if (!CheckValue(cost, nr, nc)) {
-    KERNEL_LOG_ERROR("CheckValue Error. cost can\'t be nan or -inf");
+    CUST_KERNEL_LOG_ERROR(ctx, "CheckValue Error. cost can\'t be nan or -inf");
     return KERNEL_STATUS_INNER_ERROR;
   }
 
@@ -210,7 +213,7 @@ uint32_t LinearSumAssignmentCpuKernel::Solve(const T *cost, int64_t *a, int64_t 
     T minVal;
     int64_t sink = AugmentingPath(cost, u, v, shortestPathCosts, &minVal);
     if (sink < 0) {
-      KERNEL_LOG_ERROR("sink can\'t be less than 0. sink value: [%d]", sink);
+      CUST_KERNEL_LOG_ERROR(ctx, "sink can\'t be less than 0. sink value: [%d]", sink);
       return KERNEL_STATUS_INNER_ERROR;
     }
 

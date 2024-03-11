@@ -27,14 +27,14 @@ const uint32_t kOutputNum = 1;
 const uint32_t kInputNum = 2;
 const char *kTile = "Tile";
 
-#define TILE_COMPUTE_CASE(DTYPE, TYPE1, TYPE2, CTX)    \
-  case (DTYPE): {                                      \
-    uint32_t result = TileCompute<TYPE1, TYPE2>(CTX);  \
-    if (result != KERNEL_STATUS_OK) {                  \
-      KERNEL_LOG_ERROR("Tile kernel compute failed."); \
-      return result;                                   \
-    }                                                  \
-    break;                                             \
+#define TILE_COMPUTE_CASE(DTYPE, TYPE1, TYPE2, CTX)              \
+  case (DTYPE): {                                                \
+    uint32_t result = TileCompute<TYPE1, TYPE2>(CTX);            \
+    if (result != KERNEL_STATUS_OK) {                            \
+      CUST_KERNEL_LOG_ERROR(ctx, "Tile kernel compute failed."); \
+      return result;                                             \
+    }                                                            \
+    break;                                                       \
   }
 
 #define TILE_COMPUTE_CASE_ALL(TYPE, CTX)                            \
@@ -56,22 +56,23 @@ const char *kTile = "Tile";
 namespace aicpu {
 uint32_t TileCpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "Tile check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "Tile check input and output number failed.");
   Tensor *input_x0 = ctx.Input(0);
   Tensor *input_x1 = ctx.Input(1);
   Tensor *output = ctx.Output(0);
   auto size_0 = ctx.Input(0)->GetTensorShape()->GetDims();
   auto size_1 = ctx.Input(1)->GetTensorShape()->GetDims();
-  KERNEL_CHECK_FALSE((size_0 >= 1), KERNEL_STATUS_PARAM_INVALID, "Dimension of x must be 1 or higher, but got[%zu].",
-                     size_0);
-  KERNEL_CHECK_FALSE((size_1 == 1), KERNEL_STATUS_PARAM_INVALID, "Dimension of multiples must be 1, but got[%zu].",
-                     size_1);
-  KERNEL_CHECK_FALSE((size_0 == input_x1->NumElements()), KERNEL_STATUS_PARAM_INVALID,
-                     "Multiples length must be the same as the number of dimensions in x.");
-  KERNEL_LOG_DEBUG(
-    "TileCpuKernel[%s], inputx0: size[%llu];"
-    "inputx1: size[%llu], output: size[%llu].",
-    ctx.GetOpType().c_str(), input_x0->GetDataSize(), input_x1->GetDataSize(), output->GetDataSize());
+  CUST_KERNEL_CHECK_FALSE(ctx, (size_0 >= 1), KERNEL_STATUS_PARAM_INVALID,
+                          "Dimension of x must be 1 or higher, but got[%zu].", size_0);
+  CUST_KERNEL_CHECK_FALSE(ctx, (size_1 == 1), KERNEL_STATUS_PARAM_INVALID,
+                          "Dimension of multiples must be 1, but got[%zu].", size_1);
+  CUST_KERNEL_CHECK_FALSE(ctx, (size_0 == input_x1->NumElements()), KERNEL_STATUS_PARAM_INVALID,
+                          "Multiples length must be the same as the number of dimensions in x.");
+  CUST_KERNEL_LOG_DEBUG(ctx,
+                        "TileCpuKernel[%s], inputx0: size[%llu];"
+                        "inputx1: size[%llu], output: size[%llu].",
+                        ctx.GetOpType().c_str(), input_x0->GetDataSize(), input_x1->GetDataSize(),
+                        output->GetDataSize());
 
   DataType data_type = ctx.Input(0)->GetDataType();
   DataType multiples_type = ctx.Input(1)->GetDataType();
@@ -80,7 +81,7 @@ uint32_t TileCpuKernel::Compute(CpuKernelContext &ctx) {
       switch (data_type) {
         TILE_COMPUTE_CASE_ALL(int32_t, ctx)
         default:
-          KERNEL_LOG_ERROR("Input[0] data type[%s] not supported.", DTypeStr(data_type).c_str());
+          CUST_KERNEL_LOG_ERROR(ctx, "Input[0] data type[%s] not supported.", DTypeStr(data_type).c_str());
           return KERNEL_STATUS_PARAM_INVALID;
       }
       break;
@@ -88,12 +89,12 @@ uint32_t TileCpuKernel::Compute(CpuKernelContext &ctx) {
       switch (data_type) {
         TILE_COMPUTE_CASE_ALL(int64_t, ctx)
         default:
-          KERNEL_LOG_ERROR("Input[0] data type[%s] not supported.", DTypeStr(data_type).c_str());
+          CUST_KERNEL_LOG_ERROR(ctx, "Input[0] data type[%s] not supported.", DTypeStr(data_type).c_str());
           return KERNEL_STATUS_PARAM_INVALID;
       }
       break;
     default:
-      KERNEL_LOG_ERROR("Input[1] data type[%s] not supported.", DTypeStr(multiples_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Input[1] data type[%s] not supported.", DTypeStr(multiples_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
@@ -143,7 +144,7 @@ std::pair<int64_t, int64_t> TileCpuKernel::TileOneDimension(const std::vector<in
 }
 
 template <typename T, typename M>
-uint32_t TileCpuKernel::TileCompute(const CpuKernelContext &ctx) {
+uint32_t TileCpuKernel::TileCompute(CpuKernelContext &ctx) {
   auto x = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto multiples = reinterpret_cast<M *>(ctx.Input(1)->GetData());
   auto y = reinterpret_cast<T *>(ctx.Output(0)->GetData());

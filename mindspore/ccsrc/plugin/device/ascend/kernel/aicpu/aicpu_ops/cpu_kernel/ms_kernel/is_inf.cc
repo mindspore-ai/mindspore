@@ -33,42 +33,42 @@ constexpr int64_t kParallelDataNumsFloat16 = 128 * 1024;
 constexpr int64_t kParallelDataNumsFloat = 128 * 1024;
 constexpr int64_t kParallelDataNumsDouble = 300 * 1024;
 
-#define ISINF_COMPUTE_CASE(DTYPE, TYPE, CTX)                 \
-  case (DTYPE): {                                            \
-    uint32_t result = IsInfCompute<TYPE>(CTX);               \
-    if (result != static_cast<uint32_t>(KERNEL_STATUS_OK)) { \
-      KERNEL_LOG_ERROR("IsInf kernel compute failed.");      \
-      return result;                                         \
-    }                                                        \
-    break;                                                   \
+#define ISINF_COMPUTE_CASE(DTYPE, TYPE, CTX)                      \
+  case (DTYPE): {                                                 \
+    uint32_t result = IsInfCompute<TYPE>(CTX);                    \
+    if (result != static_cast<uint32_t>(KERNEL_STATUS_OK)) {      \
+      CUST_KERNEL_LOG_ERROR(ctx, "IsInf kernel compute failed."); \
+      return result;                                              \
+    }                                                             \
+    break;                                                        \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t IsInfCpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.", kIsInf);
-  KERNEL_HANDLE_ERROR(IsInfCheck(ctx), "[%s] check params failed.", kIsInf);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.", kIsInf);
+  CUST_KERNEL_HANDLE_ERROR(ctx, IsInfCheck(ctx), "[%s] check params failed.", kIsInf);
   auto data_type = ctx.Input(0)->GetDataType();
   switch (data_type) {
     ISINF_COMPUTE_CASE(DT_FLOAT16, Eigen::half, ctx)
     ISINF_COMPUTE_CASE(DT_FLOAT, float, ctx)
     ISINF_COMPUTE_CASE(DT_DOUBLE, double, ctx)
     default:
-      KERNEL_LOG_ERROR("IsInf kernel data type [%s] not supports.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "IsInf kernel data type [%s] not supports.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return static_cast<uint32_t>(KERNEL_STATUS_OK);
 }
 
-uint32_t IsInfCpuKernel::IsInfCheck(const CpuKernelContext &ctx) const {
-  KERNEL_CHECK_NULLPTR(ctx.Input(0)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input data failed.")
-  KERNEL_CHECK_NULLPTR(ctx.Output(0)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output data failed.")
+uint32_t IsInfCpuKernel::IsInfCheck(CpuKernelContext &ctx) const {
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.Input(0)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.Output(0)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output data failed.")
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t IsInfCpuKernel::IsInfCompute(const CpuKernelContext &ctx) {
+uint32_t IsInfCpuKernel::IsInfCompute(CpuKernelContext &ctx) {
   auto input = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto output = reinterpret_cast<bool *>(ctx.Output(0)->GetData());
 
@@ -94,8 +94,8 @@ uint32_t IsInfCpuKernel::IsInfCompute(const CpuKernelContext &ctx) {
         *(output + index) = Eigen::numext::isinf(*(input + index));
       }
     };
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shard_isinf),
-                        "IsInf Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shard_isinf),
+                             "IsInf Compute failed.");
   }
 
   return static_cast<uint32_t>(KERNEL_STATUS_OK);

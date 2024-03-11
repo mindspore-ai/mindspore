@@ -17,24 +17,24 @@
 #include <algorithm>
 #include <vector>
 #include "context/inc/cpu_kernel_utils.h"
-#include "context/common/runtime_tensor_desc.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
+namespace aicpu {
 namespace {
 const uint32_t kInputNum = 2;
 const uint32_t kOutputNum = 1;
 const char *kSegmentMax = "SegmentMax";
 const int64_t kDataSize = 2 * 1024;
 
-#define SEGMENTMAX_COMPUTE_CASE(DTYPE, TYPE1, TYPE2, CTX)    \
-  case (DTYPE): {                                            \
-    uint32_t result = SegmentMaxCompute<TYPE1, TYPE2>(CTX);  \
-    if (result != KERNEL_STATUS_OK) {                        \
-      KERNEL_LOG_ERROR("SegmentMax kernel compute failed."); \
-      return result;                                         \
-    }                                                        \
-    break;                                                   \
+#define SEGMENTMAX_COMPUTE_CASE(DTYPE, TYPE1, TYPE2, CTX)              \
+  case (DTYPE): {                                                      \
+    uint32_t result = SegmentMaxCompute<TYPE1, TYPE2>(CTX);            \
+    if (result != KERNEL_STATUS_OK) {                                  \
+      CUST_KERNEL_LOG_ERROR(ctx, "SegmentMax kernel compute failed."); \
+      return result;                                                   \
+    }                                                                  \
+    break;                                                             \
   }
 
 #define SEGMENTMAX_COMPUTE_CASE_ALL(TYPE, CTX)                \
@@ -51,16 +51,16 @@ const int64_t kDataSize = 2 * 1024;
   SEGMENTMAX_COMPUTE_CASE(DT_DOUBLE, double, TYPE, CTX)
 
 template <typename T>
-uint32_t SegmentIdsCompute(const T *segment_ids_data_addr, const int64_t segment_ids_data_num,
+uint32_t SegmentIdsCompute(CpuKernelContext &ctx, const T *segment_ids_data_addr, const int64_t segment_ids_data_num,
                            std::vector<int64_t> *const segments_segment_ids) {
   if (segment_ids_data_addr[0] < 0) {
-    KERNEL_LOG_ERROR("Input[1] must be nonnegative data.");
+    CUST_KERNEL_LOG_ERROR(ctx, "Input[1] must be nonnegative data.");
     return aicpu::KERNEL_STATUS_PARAM_INVALID;
   }
   int64_t seg_tmp = 1;
   for (int64_t i = 0; i < segment_ids_data_num - 1; i++) {
     if (segment_ids_data_addr[i] > segment_ids_data_addr[i + 1]) {
-      KERNEL_LOG_ERROR("Input[1] must be an ascending ordered sequence.");
+      CUST_KERNEL_LOG_ERROR(ctx, "Input[1] must be an ascending ordered sequence.");
       return aicpu::KERNEL_STATUS_PARAM_INVALID;
     }
     if (segment_ids_data_addr[i] == segment_ids_data_addr[i + 1]) {
@@ -69,7 +69,7 @@ uint32_t SegmentIdsCompute(const T *segment_ids_data_addr, const int64_t segment
       segments_segment_ids->push_back(seg_tmp);
       seg_tmp = 1;
     }
-    if (i == segment_ids_data_num - ge::DIM_SIZE2) {
+    if (i == segment_ids_data_num - kInputNum) {
       segments_segment_ids->push_back(seg_tmp);
     }
   }
@@ -94,9 +94,9 @@ void InnerCompute(const int64_t start, const int64_t end, const int64_t input_ad
 }
 }  // namespace
 
-namespace aicpu {
 uint32_t SegmentMaxCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "SegmentMax check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "SegmentMax check input and output number failed.");
   auto data_type = ctx.Input(0)->GetDataType();
   auto segment_ids_type = ctx.Input(1)->GetDataType();
   switch (segment_ids_type) {
@@ -104,7 +104,7 @@ uint32_t SegmentMaxCpuKernel::Compute(CpuKernelContext &ctx) {
       switch (data_type) {
         SEGMENTMAX_COMPUTE_CASE_ALL(int32_t, ctx)
         default:
-          KERNEL_LOG_ERROR("Input[0] data type[%s] not supported.", DTypeStr(data_type).c_str());
+          CUST_KERNEL_LOG_ERROR(ctx, "Input[0] data type[%s] not supported.", DTypeStr(data_type).c_str());
           return KERNEL_STATUS_PARAM_INVALID;
       }
       break;
@@ -113,13 +113,13 @@ uint32_t SegmentMaxCpuKernel::Compute(CpuKernelContext &ctx) {
       switch (data_type) {
         SEGMENTMAX_COMPUTE_CASE_ALL(int64_t, ctx)
         default:
-          KERNEL_LOG_ERROR("Input[0] data type[%s] not supported.", DTypeStr(data_type).c_str());
+          CUST_KERNEL_LOG_ERROR(ctx, "Input[0] data type[%s] not supported.", DTypeStr(data_type).c_str());
           return KERNEL_STATUS_PARAM_INVALID;
       }
       break;
     }
     default: {
-      KERNEL_LOG_ERROR("Input[1] data type[%s] not supported.", DTypeStr(segment_ids_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Input[1] data type[%s] not supported.", DTypeStr(segment_ids_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
     }
   }
@@ -127,7 +127,7 @@ uint32_t SegmentMaxCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename T1, typename T2>
-uint32_t SegmentMaxCpuKernel::SegmentMaxCompute(const CpuKernelContext &ctx) {
+uint32_t SegmentMaxCpuKernel::SegmentMaxCompute(CpuKernelContext &ctx) {
   Tensor *input_x_data = ctx.Input(0);
   auto input_x_addr = reinterpret_cast<T1 *>(input_x_data->GetData());
   auto input_x_shape = input_x_data->GetTensorShape();
@@ -145,12 +145,12 @@ uint32_t SegmentMaxCpuKernel::SegmentMaxCompute(const CpuKernelContext &ctx) {
   output_data->GetTensorShape()->SetDimSizes(output_data_shape_sizes);
   auto output_data_shape = output_data->GetTensorShape();
   if (output_data_shape->GetDimSize(0) < input_x_dims[0]) {
-    KERNEL_LOG_ERROR("The number of segments of the segmentation result of segment_ids is too large.");
+    CUST_KERNEL_LOG_ERROR(ctx, "The number of segments of the segmentation result of segment_ids is too large.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
   output_data_shape->SetDimSizes(input_x_dims);
   if (!output_data->SetTensorShape(output_data_shape.get())) {
-    KERNEL_LOG_ERROR("Set output shape failed.");
+    CUST_KERNEL_LOG_ERROR(ctx, "Set output shape failed.");
     return KERNEL_STATUS_INNER_ERROR;
   }
   int64_t output_data_num = output_data->NumElements();
@@ -159,10 +159,10 @@ uint32_t SegmentMaxCpuKernel::SegmentMaxCompute(const CpuKernelContext &ctx) {
   }
   std::vector<int64_t> segments_segment_ids;
   if (segment_ids_data_num != (input_x_data->GetTensorShape()->GetDimSize(0))) {
-    KERNEL_LOG_ERROR("The amount of data for input[1] must be equal to the first dimension of input[0].");
+    CUST_KERNEL_LOG_ERROR(ctx, "The amount of data for input[1] must be equal to the first dimension of input[0].");
     return KERNEL_STATUS_PARAM_INVALID;
   }
-  if (auto status = SegmentIdsCompute(segment_ids_data_addr, segment_ids_data_num, &segments_segment_ids);
+  if (auto status = SegmentIdsCompute(ctx, segment_ids_data_addr, segment_ids_data_num, &segments_segment_ids);
       status != KERNEL_STATUS_OK) {
     return status;
   }
@@ -189,8 +189,8 @@ uint32_t SegmentMaxCpuKernel::SegmentMaxCompute(const CpuKernelContext &ctx) {
           InnerCompute(static_cast<int64_t>(start), static_cast<int64_t>(end), input_addr_base, input_x_addr,
                        output_data_addr, segment_ids_data_addr, count, num_compare_per, count_no);
         };
-        KERNEL_HANDLE_ERROR(
-          CpuKernelUtils::ParallelFor(ctx, num_compare_per, num_compare_per / max_core_num, shard_compute),
+        CUST_KERNEL_HANDLE_ERROR(
+          ctx, CpuKernelUtils::ParallelFor(ctx, num_compare_per, num_compare_per / max_core_num, shard_compute),
           "SegmentMax Compute failed.");
       }
     }
@@ -212,9 +212,11 @@ uint32_t SegmentMaxCpuKernel::SegmentMaxCompute(const CpuKernelContext &ctx) {
                      num_compare_per, count_no);
       }
     };
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, num_segments_segment_ids,
-                                                    num_segments_segment_ids / max_core_num_seg, shard_compute_seg),
-                        "SegmentMax Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(
+      ctx,
+      CpuKernelUtils::ParallelFor(ctx, num_segments_segment_ids, num_segments_segment_ids / max_core_num_seg,
+                                  shard_compute_seg),
+      "SegmentMax Compute failed.");
   }
   return KERNEL_STATUS_OK;
 }

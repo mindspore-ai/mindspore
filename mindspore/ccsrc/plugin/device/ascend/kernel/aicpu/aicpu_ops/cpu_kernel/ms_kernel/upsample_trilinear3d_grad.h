@@ -51,18 +51,18 @@ class UpsampleTrilinear3dGradCpuKernel : public CpuKernel {
                                 int64_t output_size, int64_t stride);
 
   template <typename S>
-  void ComputeHelper(const CpuKernelContext &ctx, std::vector<WeightsAndIndices<S>> &helper, S scale,
-                     int64_t input_size, int64_t output_size, int64_t stride);
+  void ComputeHelper(CpuKernelContext &ctx, std::vector<WeightsAndIndices<S>> &helper, S scale, int64_t input_size,
+                     int64_t output_size, int64_t stride);
 
   uint32_t UpsampleTrilinear3dGradParamCheck(CpuKernelContext &ctx);
 
   template <typename T, typename S>
-  uint32_t UpsampleTrilinear3dGradCompute(const CpuKernelContext &ctx);
+  uint32_t UpsampleTrilinear3dGradCompute(CpuKernelContext &ctx);
 
   template <typename T, typename S, typename R>
-  uint32_t RealCompute(const CpuKernelContext &ctx, T *const grad_output_ptr, R *const grad_input_ptr);
+  uint32_t RealCompute(CpuKernelContext &ctx, T *const grad_output_ptr, R *const grad_input_ptr);
 
-  int64_t FetchBlockSize(const CpuKernelContext &ctx, const int64_t parallel_num, const int64_t cost);
+  int64_t FetchBlockSize(CpuKernelContext &ctx, const int64_t parallel_num, const int64_t cost);
 
   int64_t channels;
   int64_t input_depth;

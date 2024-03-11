@@ -238,14 +238,14 @@ uint32_t ResizeBicubicGradCpuKernel::GetInputAndCheck(CpuKernelContext &ctx) {
   Tensor *input0_tensor = ctx.Input(0);
   Tensor *input1_tensor = ctx.Input(1);
   Tensor *output_tensor = ctx.Output(0);
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "ResizeBicubicGrad check params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "ResizeBicubicGrad check params failed.");
 
   shape_ = input0_tensor->GetTensorShape()->GetDimSizes();
   size_ = input1_tensor->GetTensorShape()->GetDimSizes();
-  KERNEL_CHECK_FALSE((shape_.size() == 4), KERNEL_STATUS_PARAM_INVALID, "Dim of input[0] must be 4, but got[%zu].",
-                     shape_.size());
-  KERNEL_CHECK_FALSE((size_.size() == 4), KERNEL_STATUS_PARAM_INVALID, "Dim of input[1] must be 4, but got[%zu].",
-                     size_.size());
+  CUST_KERNEL_CHECK_FALSE(ctx, (shape_.size() == 4), KERNEL_STATUS_PARAM_INVALID,
+                          "Dim of input[0] must be 4, but got[%zu].", shape_.size());
+  CUST_KERNEL_CHECK_FALSE(ctx, (size_.size() == 4), KERNEL_STATUS_PARAM_INVALID,
+                          "Dim of input[1] must be 4, but got[%zu].", size_.size());
   AttrValue *pattr_align_corners = ctx.GetAttr("align_corners");
   if (pattr_align_corners == nullptr) {
     align_corners_ = false;
@@ -262,11 +262,12 @@ uint32_t ResizeBicubicGradCpuKernel::GetInputAndCheck(CpuKernelContext &ctx) {
   dtype1_ = input1_tensor->GetDataType();
   dtype2_ = output_tensor->GetDataType();
 
-  KERNEL_CHECK_FALSE((dtype1_ == DT_FLOAT || dtype1_ == DT_DOUBLE), KERNEL_STATUS_PARAM_INVALID,
-                     "ResizeBicubicGrad op doesn't support input[1] tensor types: [%s]", DTypeStr(dtype1_).c_str());
+  CUST_KERNEL_CHECK_FALSE(ctx, (dtype1_ == DT_FLOAT || dtype1_ == DT_DOUBLE), KERNEL_STATUS_PARAM_INVALID,
+                          "ResizeBicubicGrad op doesn't support input[1] tensor types: [%s]",
+                          DTypeStr(dtype1_).c_str());
 
-  KERNEL_CHECK_FALSE((dtype1_ == dtype2_), KERNEL_STATUS_PARAM_INVALID,
-                     "The type of input[1] and output must be the same");
+  CUST_KERNEL_CHECK_FALSE(ctx, (dtype1_ == dtype2_), KERNEL_STATUS_PARAM_INVALID,
+                          "The type of input[1] and output must be the same");
 
   return KERNEL_STATUS_OK;
 }
@@ -293,7 +294,7 @@ static void ComputeGradientXWeightsAndIndices(const ResizerGradState &resizer_st
 
 template <typename T>
 inline void ResizeBicubicGrad(const T *input_grad, ResizerGradState &resizer_state, const bool half_pixel_centers,
-                              T *output_grad, const CpuKernelContext &ctx) {
+                              T *output_grad, CpuKernelContext &ctx) {
   const float height_scale = resizer_state.height_scale;
   const int64_t original_height = resizer_state.original_height;
   const int64_t channels = resizer_state.channels;
@@ -584,7 +585,7 @@ uint32_t ResizeBicubicGradCpuKernel::DoCompute(CpuKernelContext &ctx) {
   sta.CalculateSize(ctx);
 
   auto ret = memset_s(output_addr, ctx.Output(0)->GetDataSize(), 0, ctx.Output(0)->GetDataSize());
-  KERNEL_CHECK_FALSE((ret == EOK), ret, "Output buffer memset failed, ret: [%d].", ret);
+  CUST_KERNEL_CHECK_FALSE(ctx, (ret == EOK), ret, "Output buffer memset failed, ret: [%d].", ret);
   if (format_nchw_) {
     ResizeBicubicGrad(true, input0_addr, sta, half_pixel_centers_, output_addr, ctx);
   } else {
@@ -595,7 +596,7 @@ uint32_t ResizeBicubicGradCpuKernel::DoCompute(CpuKernelContext &ctx) {
 
 uint32_t ResizeBicubicGradCpuKernel::Compute(CpuKernelContext &ctx) {
   uint32_t res = GetInputAndCheck(ctx);
-  KERNEL_CHECK_FALSE((res == KERNEL_STATUS_OK), res, "GetInputAndCheck failed.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (res == KERNEL_STATUS_OK), res, "GetInputAndCheck failed.");
 
   if (dtype1_ == DT_DOUBLE) {
     res = DoCompute<double>(ctx);
@@ -604,7 +605,7 @@ uint32_t ResizeBicubicGradCpuKernel::Compute(CpuKernelContext &ctx) {
   } else {
     return KERNEL_STATUS_PARAM_INVALID;
   }
-  KERNEL_CHECK_FALSE((res == KERNEL_STATUS_OK), res, "ResizeBicubicGrad Compute failed.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (res == KERNEL_STATUS_OK), res, "ResizeBicubicGrad Compute failed.");
   return KERNEL_STATUS_OK;
 }
 REGISTER_MS_CPU_KERNEL(kResizeBicubicGrad, ResizeBicubicGradCpuKernel);

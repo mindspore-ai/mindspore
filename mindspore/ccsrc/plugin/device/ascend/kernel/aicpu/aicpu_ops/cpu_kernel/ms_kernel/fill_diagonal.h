@@ -28,7 +28,7 @@ class FillDiagonalCpuKernel : public CpuKernel {
 
  private:
   template <typename T>
-  uint32_t FillDiag(int64_t input_dims, int64_t stride, int64_t height, int64_t width, const CpuKernelContext &ctx);
+  uint32_t FillDiag(int64_t input_dims, int64_t stride, int64_t height, int64_t width, CpuKernelContext &ctx);
   float fill_value_;
 };
 }  // namespace aicpu

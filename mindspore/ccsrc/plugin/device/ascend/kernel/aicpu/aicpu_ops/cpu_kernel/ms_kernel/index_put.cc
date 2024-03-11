@@ -37,27 +37,27 @@ const uint32_t INPUT_NUM = 2;
 const size_t kParallelDataNumSameShape = 128 * 1024;
 const size_t kParallelDataNumMid = 512 * 1024;
 
-#define INDEXPUT_COMPUTE_CASE(DTYPE, TYPE, DTYPE0, CTX)    \
-  case (DTYPE): {                                          \
-    uint32_t result;                                       \
-    if ((DTYPE0) == DT_INT32) {                            \
-      result = IndexPutCompute<TYPE, int32_t>(CTX);        \
-    } else {                                               \
-      result = IndexPutCompute<TYPE, int64_t>(CTX);        \
-    }                                                      \
-    if (result != KERNEL_STATUS_OK) {                      \
-      KERNEL_LOG_ERROR("IndexPut kernel compute failed."); \
-      return result;                                       \
-    }                                                      \
-    break;                                                 \
+#define INDEXPUT_COMPUTE_CASE(DTYPE, TYPE, DTYPE0, CTX)              \
+  case (DTYPE): {                                                    \
+    uint32_t result;                                                 \
+    if ((DTYPE0) == DT_INT32) {                                      \
+      result = IndexPutCompute<TYPE, int32_t>(CTX);                  \
+    } else {                                                         \
+      result = IndexPutCompute<TYPE, int64_t>(CTX);                  \
+    }                                                                \
+    if (result != KERNEL_STATUS_OK) {                                \
+      CUST_KERNEL_LOG_ERROR(ctx, "IndexPut kernel compute failed."); \
+      return result;                                                 \
+    }                                                                \
+    break;                                                           \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t IndexPutCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, IndexPutInputNum, IndexPutOutputNum),
-                      "indexput check input and output number failed");
-  KERNEL_HANDLE_ERROR(IndexPutParmCheck(ctx), "indexput check params failed");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, IndexPutInputNum, IndexPutOutputNum),
+                           "indexput check input and output number failed");
+  CUST_KERNEL_HANDLE_ERROR(ctx, IndexPutParmCheck(ctx), "indexput check params failed");
 
   auto data_type = ctx.Input(0)->GetDataType();
   auto data_type_0 = ctx.Input(ctx.GetInputsSize() - 1)->GetDataType();
@@ -77,56 +77,57 @@ uint32_t IndexPutCpuKernel::Compute(CpuKernelContext &ctx) {
     INDEXPUT_COMPUTE_CASE(DT_UINT32, uint32_t, data_type_0, ctx)
     INDEXPUT_COMPUTE_CASE(DT_UINT64, uint64_t, data_type_0, ctx)
     default:
-      KERNEL_LOG_ERROR("indexput kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "indexput kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 
-uint32_t IndexPutCpuKernel::IndexPutParmCheck(const CpuKernelContext &ctx) {
+uint32_t IndexPutCpuKernel::IndexPutParmCheck(CpuKernelContext &ctx) {
   Tensor *input_0 = ctx.Input(0);
   Tensor *input_1 = ctx.Input(1);
   Tensor *indices_data = ctx.Input(2);
   Tensor *output = ctx.Output(0);
   AttrValue *accumulate_attr_ptr = ctx.GetAttr("accumulate");
   auto tensorshapes = ctx.Input(0)->GetTensorShape()->GetDimSizes();
-  KERNEL_CHECK_NULLPTR(input_0->GetData(), KERNEL_STATUS_PARAM_INVALID, "get input 0 data failed.")
-  KERNEL_CHECK_NULLPTR(input_1->GetData(), KERNEL_STATUS_PARAM_INVALID, "get input 1 data failed.")
-  KERNEL_CHECK_NULLPTR(indices_data->GetData(), KERNEL_STATUS_PARAM_INVALID, "get indices data failed.")
-  KERNEL_CHECK_NULLPTR(output->GetData(), KERNEL_STATUS_PARAM_INVALID, "get output  data failed.")
-  KERNEL_CHECK_NULLPTR(accumulate_attr_ptr, KERNEL_STATUS_PARAM_INVALID, "get accumulate  data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input_0->GetData(), KERNEL_STATUS_PARAM_INVALID, "get input 0 data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input_1->GetData(), KERNEL_STATUS_PARAM_INVALID, "get input 1 data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, indices_data->GetData(), KERNEL_STATUS_PARAM_INVALID, "get indices data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, output->GetData(), KERNEL_STATUS_PARAM_INVALID, "get output  data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, accumulate_attr_ptr, KERNEL_STATUS_PARAM_INVALID, "get accumulate  data failed.")
 
   DataType input0_type = input_0->GetDataType();
   DataType input1_type = input_1->GetDataType();
   DataType indices_type = indices_data->GetDataType();
-  KERNEL_CHECK_FALSE((input0_type == input1_type), KERNEL_STATUS_PARAM_INVALID,
-                     "the data type of input0[%s] need be same with"
-                     "input1[%s].",
-                     DTypeStr(input0_type).c_str(), DTypeStr(input1_type).c_str())
-  KERNEL_CHECK_FALSE((indices_type == DT_INT32 || indices_type == DT_INT64), KERNEL_STATUS_PARAM_INVALID,
-                     "the data type of indices[%s] need DT_INT32 or DT_INT64", DTypeStr(indices_type).c_str())
+  CUST_KERNEL_CHECK_FALSE(ctx, (input0_type == input1_type), KERNEL_STATUS_PARAM_INVALID,
+                          "the data type of input0[%s] need be same with"
+                          "input1[%s].",
+                          DTypeStr(input0_type).c_str(), DTypeStr(input1_type).c_str())
+  CUST_KERNEL_CHECK_FALSE(ctx, (indices_type == DT_INT32 || indices_type == DT_INT64), KERNEL_STATUS_PARAM_INVALID,
+                          "the data type of indices[%s] need DT_INT32 or DT_INT64", DTypeStr(indices_type).c_str())
   if (accumulate_attr_ptr) {
     int64_t accumulate_data = accumulate_attr_ptr->GetInt();
-    KERNEL_CHECK_FALSE((accumulate_data == 0 || accumulate_data == 1), KERNEL_STATUS_PARAM_INVALID,
-                       "accumulate must be 1 or 0.");
+    CUST_KERNEL_CHECK_FALSE(ctx, (accumulate_data == 0 || accumulate_data == 1), KERNEL_STATUS_PARAM_INVALID,
+                            "accumulate must be 1 or 0.");
   }
-  KERNEL_CHECK_FALSE(ctx.GetInputsSize() - INPUT_NUM <= tensorshapes.size(), KERNEL_STATUS_PARAM_INVALID,
-                     "too many indices for tensor of dimension [%d] (got [%d])", tensorshapes.size(),
-                     ctx.GetInputsSize() - INPUT_NUM);
+  CUST_KERNEL_CHECK_FALSE(ctx, ctx.GetInputsSize() - INPUT_NUM <= tensorshapes.size(), KERNEL_STATUS_PARAM_INVALID,
+                          "too many indices for tensor of dimension [%d] (got [%d])", tensorshapes.size(),
+                          ctx.GetInputsSize() - INPUT_NUM);
   int64_t maxnum = indices_data->NumElements();
   for (size_t i = 2; i < ctx.GetInputsSize(); ++i) {
     if (ctx.Input(i)->NumElements() > maxnum) {
       maxnum = ctx.Input(i)->NumElements();
     }
   }
-  KERNEL_CHECK_FALSE((input_1->NumElements() == 1 || input_1->NumElements() == maxnum ||
-                      input_1->NumElements() == tensorshapes[tensorshapes.size() - 1]),
-                     KERNEL_STATUS_PARAM_INVALID, "shape mismatch");
+  CUST_KERNEL_CHECK_FALSE(ctx,
+                          (input_1->NumElements() == 1 || input_1->NumElements() == maxnum ||
+                           input_1->NumElements() == tensorshapes[tensorshapes.size() - 1]),
+                          KERNEL_STATUS_PARAM_INVALID, "shape mismatch");
 
-  KERNEL_LOG_DEBUG(
-    "indexputcpukernel[%s],input0:size[%llu],"
-    "input1:size[%llu],output:size[%llu]",
-    ctx.GetOpType().c_str(), input_0->GetDataSize(), input_1->GetDataSize(), output->GetDataSize());
+  CUST_KERNEL_LOG_DEBUG(ctx,
+                        "indexputcpukernel[%s],input0:size[%llu],"
+                        "input1:size[%llu],output:size[%llu]",
+                        ctx.GetOpType().c_str(), input_0->GetDataSize(), input_1->GetDataSize(), output->GetDataSize());
   return KERNEL_STATUS_OK;
 }
 
@@ -151,13 +152,13 @@ int64_t IndexPutCpuKernel::Multiplicative(const std::vector<int64_t> &tensorshap
 }
 
 template <typename T>
-bool IndexPutCpuKernel::ComputeNospecial(std::vector<int64_t> x1_shape, T *x2, size_t x2_nums,
+bool IndexPutCpuKernel::ComputeNospecial(CpuKernelContext &ctx, std::vector<int64_t> x1_shape, T *x2, size_t x2_nums,
                                          std::vector<std::vector<int64_t>> indices_value, T *y, int accumulate) {
   size_t x1_shape_size = x1_shape.size();
   size_t idxli = indices_value.size();
   size_t idxcol = indices_value[0].size();
   if (x2_nums == 0) {
-    KERNEL_LOG_ERROR("invalid x2 input, please check!");
+    CUST_KERNEL_LOG_ERROR(ctx, "invalid x2 input, please check!");
     return false;
   }
   for (size_t i = 0; i < idxli; ++i) {
@@ -172,14 +173,14 @@ bool IndexPutCpuKernel::ComputeNospecial(std::vector<int64_t> x1_shape, T *x2, s
 }
 
 template <typename T>
-bool IndexPutCpuKernel::ComputeSpecial(std::vector<int64_t> x1_shape, T *x2, size_t x2_nums,
+bool IndexPutCpuKernel::ComputeSpecial(CpuKernelContext &ctx, std::vector<int64_t> x1_shape, T *x2, size_t x2_nums,
                                        std::vector<std::vector<int64_t>> indices_value, T *y, int accumulate) {
   size_t x1_shape_size = x1_shape.size();
   size_t idxli = indices_value.size();
   size_t idxcol = indices_value[0].size();
   size_t strides = Multiplicative(x1_shape, indices_value.size(), x1_shape_size);
   if (x2_nums == 0) {
-    KERNEL_LOG_ERROR("invalid x2 input, please check!");
+    CUST_KERNEL_LOG_ERROR(ctx, "invalid x2 input, please check!");
     return false;
   }
   for (size_t i = 0; i < idxcol; i++) {
@@ -195,7 +196,7 @@ bool IndexPutCpuKernel::ComputeSpecial(std::vector<int64_t> x1_shape, T *x2, siz
 }
 
 template <typename T, typename T0>
-uint32_t IndexPutCpuKernel::IndexPutCompute(const CpuKernelContext &ctx) {
+uint32_t IndexPutCpuKernel::IndexPutCompute(CpuKernelContext &ctx) {
   AttrValue *accumulata_data = ctx.GetAttr("accumulate");
   uint64_t accumulata_value = accumulata_data->GetInt();
   auto *x1 = reinterpret_cast<T *>(ctx.Input(0)->GetData());
@@ -213,7 +214,7 @@ uint32_t IndexPutCpuKernel::IndexPutCompute(const CpuKernelContext &ctx) {
     for (size_t j = 0; static_cast<int64_t>(j) < ctx.Input(i)->NumElements(); j++) {
       linetensor[j] = (linetensor[j] < 0) ? linetensor[j] + tensorshapes[i - INPUT_NUM] : linetensor[j];
       if (linetensor[j] < 0 || linetensor[j] >= tensorshapes[i - INPUT_NUM]) {
-        KERNEL_LOG_ERROR("invalid indices input[%d]", i - INPUT_NUM);
+        CUST_KERNEL_LOG_ERROR(ctx, "invalid indices input[%d]", i - INPUT_NUM);
         return KERNEL_STATUS_PARAM_INVALID;
       }
       iline[j] = linetensor[j];
@@ -239,24 +240,25 @@ uint32_t IndexPutCpuKernel::IndexPutCompute(const CpuKernelContext &ctx) {
       size_t length = (end - start) * sizeof(T);
       auto ret = memcpy_s(y + start, length, x1 + start, length);
       if (ret != EOK) {
-        KERNEL_LOG_ERROR("memcpy_s failed.");
+        CUST_KERNEL_LOG_ERROR(ctx, "memcpy_s failed.");
       }
     };
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_index_put),
-                        "IndexPut Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx,
+                             CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_index_put),
+                             "IndexPut Compute failed.");
   } else {
     auto ret = memcpy_s(y, data_num * sizeof(T), x1, data_num * sizeof(T));
     if (ret != EOK) {
-      KERNEL_LOG_ERROR("memcpy_s failed.");
+      CUST_KERNEL_LOG_ERROR(ctx, "memcpy_s failed.");
       return KERNEL_STATUS_INNER_ERROR;
     }
   }
   bool flag = true;
   if (indices_value.size() == shapes_size) {
     (void)Transpose(&indices_value);
-    flag = ComputeNospecial<T>(tensorshapes, x2, nums, indices_value, y, accumulata_value);
+    flag = ComputeNospecial<T>(ctx, tensorshapes, x2, nums, indices_value, y, accumulata_value);
   } else {
-    flag = ComputeSpecial<T>(tensorshapes, x2, nums, indices_value, y, accumulata_value);
+    flag = ComputeSpecial<T>(ctx, tensorshapes, x2, nums, indices_value, y, accumulata_value);
   }
   if (flag == false) {
     return KERNEL_STATUS_PARAM_INVALID;

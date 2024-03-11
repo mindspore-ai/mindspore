@@ -23,10 +23,10 @@ namespace {
 constexpr size_t kConcatOffsetOutputShapeRank = 2;
 const char *kConcatOffset = "ConcatOffset";
 }  // namespace
-bool ConcatOffsetKernel::CheckParams() {
+bool ConcatOffsetKernel::CheckParams(CpuKernelContext &ctx) {
   auto input_num = input_shapes_.size();
   if (input_num == 0) {
-    AICPU_LOGE("For 'ConcatOffset', input tensor number can not be 0.");
+    CUST_AICPU_LOGE(ctx, "For 'ConcatOffset', input tensor number can not be 0.");
     return false;
   }
 
@@ -34,7 +34,8 @@ bool ConcatOffsetKernel::CheckParams() {
   auto x_rank = input_shapes_[0].size();
   for (size_t i = 1; i < input_num; ++i) {
     if (input_shapes_[i].size() != x_rank) {
-      AICPU_LOGE(
+      CUST_AICPU_LOGE(
+        ctx,
         "For 'ConcatOffset', input tensors shape's rank must be equal, but got input[0] shape's rank = %lu, but got "
         "input[%lu] shape's rank = %lu",
         x_rank, i, input_shapes_[i].size());
@@ -45,7 +46,8 @@ bool ConcatOffsetKernel::CheckParams() {
   // check axis
   auto x_rank_i = static_cast<int64_t>(x_rank);
   if (axis_ < -x_rank_i || axis_ >= x_rank_i) {
-    AICPU_LOGE("For 'ConcatOffset', 'axis' must be in range [-%ld, %ld), but got %ld", x_rank_i, x_rank_i, axis_);
+    CUST_AICPU_LOGE(ctx, "For 'ConcatOffset', 'axis' must be in range [-%ld, %ld), but got %ld", x_rank_i, x_rank_i,
+                    axis_);
     return false;
   }
   if (axis_ < 0) {
@@ -54,14 +56,15 @@ bool ConcatOffsetKernel::CheckParams() {
 
   // check output shape
   if (output_shape_.size() != kConcatOffsetOutputShapeRank) {
-    AICPU_LOGE("For 'ConcatOffset', output tensor shape rank must be %lu, but got %lu", kConcatOffsetOutputShapeRank,
-               output_shape_.size());
+    CUST_AICPU_LOGE(ctx, "For 'ConcatOffset', output tensor shape rank must be %lu, but got %lu",
+                    kConcatOffsetOutputShapeRank, output_shape_.size());
     return false;
   }
   auto m = static_cast<size_t>(output_shape_[0]);
   if (m != input_num) {
-    AICPU_LOGE("For 'ConcatOffset', output tensor shape[0] must be equal to input tensor number, but got: %lu vs %lu",
-               m, input_num);
+    CUST_AICPU_LOGE(
+      ctx, "For 'ConcatOffset', output tensor shape[0] must be equal to input tensor number, but got: %lu vs %lu", m,
+      input_num);
     return false;
   }
   return true;
@@ -69,7 +72,7 @@ bool ConcatOffsetKernel::CheckParams() {
 
 uint32_t ConcatOffsetKernel::Compute(CpuKernelContext &ctx) {
   RETURN_IF_FAILURE(ParseKernelParam(ctx));
-  if (!CheckParams()) {
+  if (!CheckParams(ctx)) {
     return KERNEL_STATUS_INNER_ERROR;
   }
 
@@ -101,7 +104,7 @@ uint32_t ConcatOffsetKernel::Compute(CpuKernelContext &ctx) {
 uint32_t ConcatOffsetKernel::ParseKernelParam(CpuKernelContext &ctx) {
   // get value of attr axis
   auto axis = ctx.GetAttr("axis");
-  KERNEL_CHECK_NULLPTR(axis, KERNEL_STATUS_INNER_ERROR, "Failed to get attr 'axis'.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, axis, KERNEL_STATUS_INNER_ERROR, "Failed to get attr 'axis'.");
   axis_ = axis->GetInt();
 
   // get input tensors shape
@@ -112,7 +115,7 @@ uint32_t ConcatOffsetKernel::ParseKernelParam(CpuKernelContext &ctx) {
 
   // get output tensor shape
   if (ctx.GetOutputsSize() != 1) {
-    AICPU_LOGE("For 'ConcatOffset', output tensor number must be 1, but got %d", ctx.GetOutputsSize());
+    CUST_AICPU_LOGE(ctx, "For 'ConcatOffset', output tensor number must be 1, but got %d", ctx.GetOutputsSize());
     return KERNEL_STATUS_INNER_ERROR;
   }
   output_shape_ = ctx.Output(0)->GetTensorShape()->GetDimSizes();

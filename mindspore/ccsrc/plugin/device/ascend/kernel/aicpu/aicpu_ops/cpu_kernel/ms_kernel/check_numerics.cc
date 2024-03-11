@@ -46,8 +46,7 @@ template <>
 inline bool ScalarCheckNumerics(const Eigen::half x) {
   return !Eigen::half_impl::isfinite(x);
 }
-inline std::uint32_t ParallelForCheckNumerics(const CpuKernelContext &ctx, std::int64_t total,
-                                              std::int64_t per_unit_size,
+inline std::uint32_t ParallelForCheckNumerics(CpuKernelContext &ctx, std::int64_t total, std::int64_t per_unit_size,
                                               const std::function<void(std::int64_t, std::int64_t)> &work) {
   if (total > kCheckNumericsParallelNum)
     return aicpu::CpuKernelUtils::ParallelFor(ctx, total, per_unit_size, work);
@@ -56,7 +55,7 @@ inline std::uint32_t ParallelForCheckNumerics(const CpuKernelContext &ctx, std::
   return KERNEL_STATUS_OK;
 }
 template <typename T>
-inline std::uint32_t ComputeCheckNumericsKernel(const CpuKernelContext &ctx) {
+inline std::uint32_t ComputeCheckNumericsKernel(CpuKernelContext &ctx) {
   T *input0{static_cast<T *>(ctx.Input(0)->GetData())};
   T *output{static_cast<T *>(ctx.Output(0)->GetData())};
   std::int64_t total{ctx.Input(0)->NumElements()};
@@ -69,46 +68,47 @@ inline std::uint32_t ComputeCheckNumericsKernel(const CpuKernelContext &ctx) {
       auto ret = memcpy_s(output + begin, static_cast<size_t>((end - begin) * sizeof(T)), input0 + begin,
                           static_cast<size_t>((end - begin) * sizeof(T)));
       if (ret != EOK) {
-        KERNEL_LOG_ERROR("memcpy_s error");
+        CUST_KERNEL_LOG_ERROR(ctx, "memcpy_s error");
       }
     }
   });
   return flag ? KERNEL_STATUS_PARAM_INVALID : ret;
 }
 template <typename T>
-inline std::uint32_t ComputeCheckNumerics(const CpuKernelContext &ctx) {
+inline std::uint32_t ComputeCheckNumerics(CpuKernelContext &ctx) {
   std::uint32_t result{ComputeCheckNumericsKernel<T>(ctx)};
   if (result != KERNEL_STATUS_OK) {
-    KERNEL_LOG_ERROR("CheckNumerics compute failed.");
+    CUST_KERNEL_LOG_ERROR(ctx, "CheckNumerics compute failed.");
   }
   return result;
 }
 
-inline std::uint32_t ExtraCheckCheckNumerics(const CpuKernelContext &ctx) {
+inline std::uint32_t ExtraCheckCheckNumerics(CpuKernelContext &ctx) {
   if (ctx.Input(0)->GetData() == nullptr) {
-    KERNEL_LOG_ERROR("Get input data failed.");
+    CUST_KERNEL_LOG_ERROR(ctx, "Get input data failed.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (ctx.Output(0)->GetData() == nullptr) {
-    KERNEL_LOG_ERROR("Get output data failed.");
+    CUST_KERNEL_LOG_ERROR(ctx, "Get output data failed.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (ctx.Input(0)->GetDataType() != ctx.Output(0)->GetDataType()) {
-    KERNEL_LOG_ERROR("The data type of the input [%s] need be the same as the output [%s].",
-                     DTypeStr(ctx.Input(0)->GetDataType()).c_str(), DTypeStr(ctx.Output(0)->GetDataType()).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "The data type of the input [%s] need be the same as the output [%s].",
+                          DTypeStr(ctx.Input(0)->GetDataType()).c_str(),
+                          DTypeStr(ctx.Output(0)->GetDataType()).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (ctx.Input(0)->GetDataSize() != ctx.Output(0)->GetDataSize()) {
-    KERNEL_LOG_ERROR(
-      "The data size of the input [%llu] need be the same as the output "
-      "[%llu].",
-      ctx.Input(0)->GetDataSize(), ctx.Output(0)->GetDataSize());
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "The data size of the input [%llu] need be the same as the output "
+                          "[%llu].",
+                          ctx.Input(0)->GetDataSize(), ctx.Output(0)->GetDataSize());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 
-inline std::uint32_t ComputeCheckNumerics(const CpuKernelContext &ctx) {
+inline std::uint32_t ComputeCheckNumerics(CpuKernelContext &ctx) {
   DataType input_type{ctx.Input(0)->GetDataType()};
   switch (input_type) {
     case DT_FLOAT16:
@@ -118,7 +118,7 @@ inline std::uint32_t ComputeCheckNumerics(const CpuKernelContext &ctx) {
     case DT_DOUBLE:
       return ComputeCheckNumerics<std::double_t>(ctx);
     default:
-      KERNEL_LOG_ERROR("Unsupported input data type [%s].", DTypeStr(input_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Unsupported input data type [%s].", DTypeStr(input_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 }

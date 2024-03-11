@@ -46,7 +46,7 @@ void CorrelateCpuKernel::CorrelatePad(T *source_array, T *padded_array, int64_t 
 
 uint32_t CorrelateCpuKernel::Compute(CpuKernelContext &ctx) {
   Tensor *output = ctx.Output(0);
-  KERNEL_CHECK_NULLPTR(output, KERNEL_STATUS_PARAM_INVALID, "Get output failed")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, output, KERNEL_STATUS_PARAM_INVALID, "Get output failed")
   auto a_type = ctx.Input(0)->GetDataType();
   uint32_t ret = KERNEL_STATUS_OK;
   switch (a_type) {
@@ -78,8 +78,8 @@ uint32_t CorrelateCpuKernel::Compute(CpuKernelContext &ctx) {
       ret = CorrelateComputeComplex<std::complex<double>>(ctx);
       break;
     default:
-      KERNEL_LOG_ERROR("[%s] Data type of input is not support, input data type is [%s].", ctx.GetOpType().c_str(),
-                       DTypeStr(a_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "[%s] Data type of input is not support, input data type is [%s].",
+                            ctx.GetOpType().c_str(), DTypeStr(a_type).c_str());
       ret = KERNEL_STATUS_PARAM_INVALID;
   }
   return ret;
@@ -90,23 +90,24 @@ uint32_t CorrelateCpuKernel::CorrelateCompute(CpuKernelContext &ctx) {
   T_in *a_array = reinterpret_cast<T_in *>(ctx.Input(0)->GetData());
   T_in *v_array = reinterpret_cast<T_in *>(ctx.Input(1)->GetData());
   T_out *out_array = reinterpret_cast<T_out *>(ctx.Output(0)->GetData());
-  KERNEL_CHECK_NULLPTR(a_array, KERNEL_STATUS_PARAM_INVALID, "[Correlate] Get input a failed.");
-  KERNEL_CHECK_NULLPTR(v_array, KERNEL_STATUS_PARAM_INVALID, "[Correlate] Get input v failed.");
-  KERNEL_CHECK_NULLPTR(out_array, KERNEL_STATUS_PARAM_INVALID, "[Correlate] Get output failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, a_array, KERNEL_STATUS_PARAM_INVALID, "[Correlate] Get input a failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, v_array, KERNEL_STATUS_PARAM_INVALID, "[Correlate] Get input v failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, out_array, KERNEL_STATUS_PARAM_INVALID, "[Correlate] Get output failed.");
 
   AttrValue *attr = ctx.GetAttr("mode");
   std::string mode = attr->GetString();
   int64_t a_dims = ctx.Input(0)->GetTensorShape()->GetDimSizes().size();
   int64_t v_dims = ctx.Input(1)->GetTensorShape()->GetDimSizes().size();
   if (a_dims != 1 || v_dims != 1) {
-    KERNEL_LOG_ERROR("the dimension of 'a' and 'v' should be 1-D, but got 'a' at %ld-D and 'u' at %ld-D", a_dims,
-                     v_dims);
+    CUST_KERNEL_LOG_ERROR(ctx, "the dimension of 'a' and 'v' should be 1-D, but got 'a' at %ld-D and 'u' at %ld-D",
+                          a_dims, v_dims);
     return KERNEL_STATUS_INNER_ERROR;
   }
   int64_t a_size = ctx.Input(0)->GetTensorShape()->GetDimSizes()[0];
   int64_t v_size = ctx.Input(1)->GetTensorShape()->GetDimSizes()[0];
   if (a_size == 0 || v_size == 0) {
-    KERNEL_LOG_ERROR("input 'a' and 'v' should not be empty, but got 'a' at (%ld) and 'u' at (%ld)", a_size, v_size);
+    CUST_KERNEL_LOG_ERROR(ctx, "input 'a' and 'v' should not be empty, but got 'a' at (%ld) and 'u' at (%ld)", a_size,
+                          v_size);
     return KERNEL_STATUS_INNER_ERROR;
   }
   bool a_ge_v = a_size >= v_size;
@@ -119,11 +120,11 @@ uint32_t CorrelateCpuKernel::CorrelateCompute(CpuKernelContext &ctx) {
 
   // step0: cast input dtype to output dtype
   T_out *casted_a_array = static_cast<T_out *>(malloc(sizeof(T_out) * a_size));
-  KERNEL_CHECK_NULLPTR(casted_a_array, KERNEL_STATUS_PARAM_INVALID,
-                       "[Correlate] Malloc memory [casted_a_array] failed!")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, casted_a_array, KERNEL_STATUS_PARAM_INVALID,
+                            "[Correlate] Malloc memory [casted_a_array] failed!")
   T_out *casted_v_array = static_cast<T_out *>(malloc(sizeof(T_out) * v_size));
-  KERNEL_CHECK_NULLPTR(casted_v_array, KERNEL_STATUS_PARAM_INVALID,
-                       "[Correlate] Malloc memory [casted_v_array] failed!")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, casted_v_array, KERNEL_STATUS_PARAM_INVALID,
+                            "[Correlate] Malloc memory [casted_v_array] failed!")
   for (int64_t i = 0; i < a_size; i++) {
     casted_a_array[i] = static_cast<T_out>(a_array[i]);
   }
@@ -142,7 +143,8 @@ uint32_t CorrelateCpuKernel::CorrelateCompute(CpuKernelContext &ctx) {
     out_size = long_size + short_size - 1;
   }
   T_out *long_array = static_cast<T_out *>(malloc(sizeof(T_out) * padded_long_size));
-  KERNEL_CHECK_NULLPTR(long_array, KERNEL_STATUS_PARAM_INVALID, "[Correlate] Malloc memory [long_array] failed!")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, long_array, KERNEL_STATUS_PARAM_INVALID,
+                            "[Correlate] Malloc memory [long_array] failed!")
 
   T_out *short_array;
   if (a_ge_v) {
@@ -168,8 +170,8 @@ uint32_t CorrelateCpuKernel::CorrelateCompute(CpuKernelContext &ctx) {
       out_array[out_id] = sum_temp;
     }
   };
-  KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, out_size, out_size / maxCoreNum, shardConv),
-                      "Correlate Compute failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, out_size, out_size / maxCoreNum, shardConv),
+                           "Correlate Compute failed.");
   // step3: if a is shorter than v, then we should reverse the result
   if (!a_ge_v) {
     for (int i = 0; i < out_size / 2; i++) {
@@ -192,9 +194,9 @@ uint32_t CorrelateCpuKernel::CorrelateComputeComplex(CpuKernelContext &ctx) {
   T *a_array = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   T *v_array = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   T *out_array = reinterpret_cast<T *>(ctx.Output(0)->GetData());
-  KERNEL_CHECK_NULLPTR(a_array, KERNEL_STATUS_PARAM_INVALID, "[Correlate] Get input a failed.");
-  KERNEL_CHECK_NULLPTR(v_array, KERNEL_STATUS_PARAM_INVALID, "[Correlate] Get input v failed.");
-  KERNEL_CHECK_NULLPTR(out_array, KERNEL_STATUS_PARAM_INVALID, "[Correlate] Get output failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, a_array, KERNEL_STATUS_PARAM_INVALID, "[Correlate] Get input a failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, v_array, KERNEL_STATUS_PARAM_INVALID, "[Correlate] Get input v failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, out_array, KERNEL_STATUS_PARAM_INVALID, "[Correlate] Get output failed.");
 
   AttrValue *attr = ctx.GetAttr("mode");
   std::string mode = attr->GetString();
@@ -210,7 +212,8 @@ uint32_t CorrelateCpuKernel::CorrelateComputeComplex(CpuKernelContext &ctx) {
 
   // step0: get conjugate v
   T *conj_v_array = static_cast<T *>(malloc(sizeof(T) * v_size));
-  KERNEL_CHECK_NULLPTR(conj_v_array, KERNEL_STATUS_PARAM_INVALID, "[Correlate] Malloc memory [conj_v_array] failed!")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, conj_v_array, KERNEL_STATUS_PARAM_INVALID,
+                            "[Correlate] Malloc memory [conj_v_array] failed!")
   for (int64_t i = 0; i < v_size; i++) {
     conj_v_array[i] = static_cast<T>(std::conj(v_array[i]));
   }
@@ -226,7 +229,8 @@ uint32_t CorrelateCpuKernel::CorrelateComputeComplex(CpuKernelContext &ctx) {
     out_size = long_size + short_size - 1;
   }
   T *long_array = static_cast<T *>(malloc(sizeof(T) * padded_long_size));
-  KERNEL_CHECK_NULLPTR(long_array, KERNEL_STATUS_PARAM_INVALID, "[Correlate] Malloc memory [long_array] failed!")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, long_array, KERNEL_STATUS_PARAM_INVALID,
+                            "[Correlate] Malloc memory [long_array] failed!")
   T *short_array;
   if (a_ge_v) {
     short_array = conj_v_array;
@@ -251,8 +255,8 @@ uint32_t CorrelateCpuKernel::CorrelateComputeComplex(CpuKernelContext &ctx) {
       out_array[out_id] = sum_temp;
     }
   };
-  KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, out_size, out_size / maxCoreNum, shardConv),
-                      "Correlate Compute failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, out_size, out_size / maxCoreNum, shardConv),
+                           "Correlate Compute failed.");
   // step3: if a is shorter than v, then we should reverse the result
   if (a_ge_v == false) {
     for (int i = 0; i < out_size / 2; i++) {

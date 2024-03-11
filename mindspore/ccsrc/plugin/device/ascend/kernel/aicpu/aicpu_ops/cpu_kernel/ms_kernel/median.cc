@@ -27,30 +27,30 @@ const uint32_t kInputNum = 1;
 const uint32_t kOutputNum = 2;
 const char *kMedian = "Median";
 
-#define MEDIAN_COMPUTE_CASE(DTYPE, TYPE, CTX)            \
-  case (DTYPE): {                                        \
-    uint32_t result = MedianCompute<TYPE>(CTX);          \
-    if (result != KERNEL_STATUS_OK) {                    \
-      KERNEL_LOG_ERROR("Median kernel compute failed."); \
-      return result;                                     \
-    }                                                    \
-    break;                                               \
+#define MEDIAN_COMPUTE_CASE(DTYPE, TYPE, CTX)                      \
+  case (DTYPE): {                                                  \
+    uint32_t result = MedianCompute<TYPE>(CTX);                    \
+    if (result != KERNEL_STATUS_OK) {                              \
+      CUST_KERNEL_LOG_ERROR(ctx, "Median kernel compute failed."); \
+      return result;                                               \
+    }                                                              \
+    break;                                                         \
   }
 
-#define GLOBAL_MEDIAN_COMPUTE_CASE(DTYPE, TYPE, CTX)     \
-  case (DTYPE): {                                        \
-    uint32_t result = GlobalMedianCompute<TYPE>(CTX);    \
-    if (result != KERNEL_STATUS_OK) {                    \
-      KERNEL_LOG_ERROR("Median kernel compute failed."); \
-      return result;                                     \
-    }                                                    \
-    break;                                               \
+#define GLOBAL_MEDIAN_COMPUTE_CASE(DTYPE, TYPE, CTX)               \
+  case (DTYPE): {                                                  \
+    uint32_t result = GlobalMedianCompute<TYPE>(CTX);              \
+    if (result != KERNEL_STATUS_OK) {                              \
+      CUST_KERNEL_LOG_ERROR(ctx, "Median kernel compute failed."); \
+      return result;                                               \
+    }                                                              \
+    break;                                                         \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t MedianCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(MedianCheck(ctx), "Median check params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, MedianCheck(ctx), "Median check params failed.");
   auto data_type = ctx.Input(0)->GetDataType();
   AttrValue *global_ptr = ctx.GetAttr("global_median");
   bool global_median_bool = global_ptr->GetBool();
@@ -62,7 +62,7 @@ uint32_t MedianCpuKernel::Compute(CpuKernelContext &ctx) {
       MEDIAN_COMPUTE_CASE(DT_FLOAT, float, ctx)
       MEDIAN_COMPUTE_CASE(DT_DOUBLE, double, ctx)
       default:
-        KERNEL_LOG_ERROR("Median kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+        CUST_KERNEL_LOG_ERROR(ctx, "Median kernel data type [%s] not support.", DTypeStr(data_type).c_str());
         return KERNEL_STATUS_PARAM_INVALID;
     }
   } else {
@@ -73,7 +73,7 @@ uint32_t MedianCpuKernel::Compute(CpuKernelContext &ctx) {
       GLOBAL_MEDIAN_COMPUTE_CASE(DT_FLOAT, float, ctx)
       GLOBAL_MEDIAN_COMPUTE_CASE(DT_DOUBLE, double, ctx)
       default:
-        KERNEL_LOG_ERROR("Median kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+        CUST_KERNEL_LOG_ERROR(ctx, "Median kernel data type [%s] not support.", DTypeStr(data_type).c_str());
         return KERNEL_STATUS_PARAM_INVALID;
     }
   }
@@ -82,45 +82,47 @@ uint32_t MedianCpuKernel::Compute(CpuKernelContext &ctx) {
 
 uint32_t MedianCpuKernel::MedianCheck(CpuKernelContext &ctx) {
   auto global_median = ctx.GetAttr("global_median");
-  KERNEL_CHECK_NULLPTR(global_median, KERNEL_STATUS_PARAM_INVALID, "Get attr global_median failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, global_median, KERNEL_STATUS_PARAM_INVALID, "Get attr global_median failed.");
   bool global_median_value = global_median->GetBool();
   if (global_median_value == false) {
-    KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "Median check input and output number failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                             "Median check input and output number failed.");
     auto input_shape_ptr = ctx.Input(0)->GetTensorShape();
     int64_t input_shape_dims = input_shape_ptr->GetDims();
     int64_t dim_num = 0;
     AttrValue *dim_ptr = ctx.GetAttr("axis");
     if (dim_ptr != nullptr) dim_num = dim_ptr->GetInt();
     if (input_shape_dims != 0) {
-      KERNEL_CHECK_FALSE((dim_num >= (0 - input_shape_dims) && dim_num <= (input_shape_dims - 1)),
-                         KERNEL_STATUS_PARAM_INVALID,
-                         "IndexError: Dimension out of range "
-                         "(expected to be in range of [[%lld], [%lld]], but got [%lld])",
-                         (0 - input_shape_dims), (input_shape_dims - 1), dim_num);
+      CUST_KERNEL_CHECK_FALSE(ctx, (dim_num >= (0 - input_shape_dims) && dim_num <= (input_shape_dims - 1)),
+                              KERNEL_STATUS_PARAM_INVALID,
+                              "IndexError: Dimension out of range "
+                              "(expected to be in range of [[%lld], [%lld]], but got [%lld])",
+                              (0 - input_shape_dims), (input_shape_dims - 1), dim_num);
     } else {
-      KERNEL_CHECK_FALSE((dim_num >= -1 && dim_num <= 0), KERNEL_STATUS_PARAM_INVALID,
-                         "IndexError: Dimension out of range "
-                         "(expected to be in range of [[%lld], [%lld]], but got [%lld])",
-                         -1, 0, dim_num);
+      CUST_KERNEL_CHECK_FALSE(ctx, (dim_num >= -1 && dim_num <= 0), KERNEL_STATUS_PARAM_INVALID,
+                              "IndexError: Dimension out of range "
+                              "(expected to be in range of [[%lld], [%lld]], but got [%lld])",
+                              -1, 0, dim_num);
     }
   } else {
     Tensor *input_0 = ctx.Input(0);
-    KERNEL_CHECK_NULLPTR(input_0, KERNEL_STATUS_PARAM_INVALID, "Get input failed.");
-    KERNEL_CHECK_NULLPTR(input_0->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input data failed.");
+    CUST_KERNEL_CHECK_NULLPTR(ctx, input_0, KERNEL_STATUS_PARAM_INVALID, "Get input failed.");
+    CUST_KERNEL_CHECK_NULLPTR(ctx, input_0->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input data failed.");
     Tensor *output_0 = ctx.Output(0);
-    KERNEL_CHECK_NULLPTR(output_0, KERNEL_STATUS_PARAM_INVALID, "Get output_0 failed.");
-    KERNEL_CHECK_NULLPTR(output_0->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output data 0 failed.");
+    CUST_KERNEL_CHECK_NULLPTR(ctx, output_0, KERNEL_STATUS_PARAM_INVALID, "Get output_0 failed.");
+    CUST_KERNEL_CHECK_NULLPTR(ctx, output_0->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output data 0 failed.");
   }
   if (global_median_value == false) {
-    KERNEL_LOG_DEBUG(
-      "MedianCpuKernel[%s], input0: size[%llu];"
-      "output0: size[%llu], output1: size[%llu].",
-      ctx.GetOpType().c_str(), ctx.Input(0)->GetDataSize(), ctx.Output(0)->GetDataSize(), ctx.Output(1)->GetDataSize());
+    CUST_KERNEL_LOG_DEBUG(ctx,
+                          "MedianCpuKernel[%s], input0: size[%llu];"
+                          "output0: size[%llu], output1: size[%llu].",
+                          ctx.GetOpType().c_str(), ctx.Input(0)->GetDataSize(), ctx.Output(0)->GetDataSize(),
+                          ctx.Output(1)->GetDataSize());
   } else {
-    KERNEL_LOG_DEBUG(
-      "MedianCpuKernel[%s], input0: size[%llu];"
-      "output0: size[%llu].",
-      ctx.GetOpType().c_str(), ctx.Input(0)->GetDataSize(), ctx.Output(0)->GetDataSize());
+    CUST_KERNEL_LOG_DEBUG(ctx,
+                          "MedianCpuKernel[%s], input0: size[%llu];"
+                          "output0: size[%llu].",
+                          ctx.GetOpType().c_str(), ctx.Input(0)->GetDataSize(), ctx.Output(0)->GetDataSize());
   }
 
   return KERNEL_STATUS_OK;

@@ -33,16 +33,17 @@ class LessEqualCpuKernel : public CpuKernel {
   uint32_t LessEqualParamCheck(CpuKernelContext &ctx);
 
   template <typename T>
-  void SpecialCompute(BcastShapeType type, int64_t start, int64_t end, const T *input1, const T *input2, bool *output);
+  void SpecialCompute(CpuKernelContext &ctx, BcastShapeType type, int64_t start, int64_t end, const T *input1,
+                      const T *input2, bool *output);
 
   template <typename T>
-  uint32_t NoBcastCompute(const CpuKernelContext &ctx);
+  uint32_t NoBcastCompute(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t BcastCompute(const CpuKernelContext &ctx, const Bcast &bcast);
+  uint32_t BcastCompute(CpuKernelContext &ctx, const Bcast &bcast);
 
   template <typename T>
-  uint32_t LessEqualCompute(const CpuKernelContext &ctx);
+  uint32_t LessEqualCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

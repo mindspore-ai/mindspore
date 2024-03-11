@@ -50,7 +50,7 @@ bool isfinite(Eigen::half &data) { return Eigen::half_impl::isfinite(data); }
 
 namespace aicpu {
 template <typename T_in, typename T_out>
-uint32_t Generate(Tensor *input_0, Tensor *input_1, Tensor *output, const CpuKernelContext &ctx) {
+uint32_t Generate(Tensor *input_0, Tensor *input_1, Tensor *output, CpuKernelContext &ctx) {
   const auto &input_shape = input_0->GetTensorShape();
   const auto input_rank = input_shape->GetDims();
   int64_t batch_size = input_rank == 1 ? 1 : input_shape->GetDimSize(0);
@@ -164,41 +164,44 @@ void MultinomialCpuKernel::SetMap() {
 
 uint32_t MultinomialCpuKernel::Compute(CpuKernelContext &ctx) {
   // check input output size
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "Multinomial check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "Multinomial check input and output number failed.");
   Tensor *input_0 = ctx.Input(kFirstInputIndex);
   Tensor *input_1 = ctx.Input(kSecondInputIndex);
   Tensor *output = ctx.Output(kFirstOutputIndex);
 
   // check input datatype
   DataType input0_datatype = input_0->GetDataType();
-  KERNEL_CHECK_FALSE((input0_datatype == DT_FLOAT16 || input0_datatype == DT_DOUBLE || input0_datatype == DT_FLOAT),
-                     KERNEL_STATUS_PARAM_INVALID,
-                     "Input[0] data type must DT_FLOAT16 or DT_FLOAT or DT_DOUBLE,"
-                     "but got data type[%s].",
-                     DTypeStr(input0_datatype).c_str());
+  CUST_KERNEL_CHECK_FALSE(
+    ctx, (input0_datatype == DT_FLOAT16 || input0_datatype == DT_DOUBLE || input0_datatype == DT_FLOAT),
+    KERNEL_STATUS_PARAM_INVALID,
+    "Input[0] data type must DT_FLOAT16 or DT_FLOAT or DT_DOUBLE,"
+    "but got data type[%s].",
+    DTypeStr(input0_datatype).c_str());
   DataType input1_datatype = input_1->GetDataType();
-  KERNEL_CHECK_FALSE((input1_datatype == DT_INT32 || input1_datatype == DT_INT64), KERNEL_STATUS_PARAM_INVALID,
-                     "Input[1] data type must int32 or int64, but got data type[%s].",
-                     DTypeStr(input1_datatype).c_str());
+  CUST_KERNEL_CHECK_FALSE(ctx, (input1_datatype == DT_INT32 || input1_datatype == DT_INT64),
+                          KERNEL_STATUS_PARAM_INVALID, "Input[1] data type must int32 or int64, but got data type[%s].",
+                          DTypeStr(input1_datatype).c_str());
 
   // check input dimension
   const auto rank_0 = input_0->GetTensorShape()->GetDims();
-  KERNEL_CHECK_FALSE((rank_0 == kRankOne || rank_0 == kRankTwo), KERNEL_STATUS_PARAM_INVALID,
-                     "Rank of input[0] should be 1 or 2, but got rank [%d].", input_0->GetTensorShape()->GetDims());
+  CUST_KERNEL_CHECK_FALSE(ctx, (rank_0 == kRankOne || rank_0 == kRankTwo), KERNEL_STATUS_PARAM_INVALID,
+                          "Rank of input[0] should be 1 or 2, but got rank [%d].",
+                          input_0->GetTensorShape()->GetDims());
   // scalar input is converted to rank-zero tensor in the dynamic input scenario.
   // rank-zero tensor from ms has a dim of 1, so limit input1 dim so that it's smaller than 1.
-  KERNEL_CHECK_FALSE((input_1->GetTensorShape()->GetDims() <= 1), KERNEL_STATUS_PARAM_INVALID,
-                     "Input[1] should be a scalar, but got rank [%d].", input_1->GetTensorShape()->GetDims());
+  CUST_KERNEL_CHECK_FALSE(ctx, (input_1->GetTensorShape()->GetDims() <= 1), KERNEL_STATUS_PARAM_INVALID,
+                          "Input[1] should be a scalar, but got rank [%d].", input_1->GetTensorShape()->GetDims());
 
   // check num_classes positive
   auto num_classes = input_0->GetTensorShape()->GetDimSize(rank_0 - 1);  // int64_t
-  KERNEL_CHECK_FALSE((num_classes > 0), KERNEL_STATUS_PARAM_INVALID, "num_classes should be positive, but got [%d].",
-                     num_classes);
+  CUST_KERNEL_CHECK_FALSE(ctx, (num_classes > 0), KERNEL_STATUS_PARAM_INVALID,
+                          "num_classes should be positive, but got [%d].", num_classes);
 
   // check num_samples nonnegative
   auto *num_samples_ptr = reinterpret_cast<int32_t *>(input_1->GetData());  // int32_t
-  KERNEL_CHECK_FALSE((*num_samples_ptr >= 0), KERNEL_STATUS_PARAM_INVALID,
-                     "num_samples should be nonnegative, but got [%d].", *num_samples_ptr);
+  CUST_KERNEL_CHECK_FALSE(ctx, (*num_samples_ptr >= 0), KERNEL_STATUS_PARAM_INVALID,
+                          "num_samples should be nonnegative, but got [%d].", *num_samples_ptr);
 
   // set attr dtype to default val
   DataType data_type = DT_INT64;
@@ -206,18 +209,18 @@ uint32_t MultinomialCpuKernel::Compute(CpuKernelContext &ctx) {
   if (attr_dtype != nullptr) {
     // check attr dtype
     data_type = static_cast<DataType>(attr_dtype->GetDataType());
-    KERNEL_CHECK_FALSE((data_type == DT_INT32 || data_type == DT_INT64), KERNEL_STATUS_PARAM_INVALID,
-                       "attr[dtype] must DT_INT32 or DT_INT64,"
-                       "but got data type[%s].",
-                       DTypeStr(data_type).c_str());
+    CUST_KERNEL_CHECK_FALSE(ctx, (data_type == DT_INT32 || data_type == DT_INT64), KERNEL_STATUS_PARAM_INVALID,
+                            "attr[dtype] must DT_INT32 or DT_INT64,"
+                            "but got data type[%s].",
+                            DTypeStr(data_type).c_str());
   }
 
   // attr dtype & output type match
   if (data_type != output->GetDataType()) {
-    KERNEL_LOG_ERROR(
-      "Multinomial kernel data type not matched, dtype is [%s], "
-      "out_data_type is [%s].",
-      DTypeStr(data_type).c_str(), DTypeStr(output->GetDataType()).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "Multinomial kernel data type not matched, dtype is [%s], "
+                          "out_data_type is [%s].",
+                          DTypeStr(data_type).c_str(), DTypeStr(output->GetDataType()).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
 

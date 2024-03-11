@@ -27,9 +27,9 @@ class ReciprocalCpuKernel : public CpuKernel {
 
  private:
   template <typename T>
-  uint32_t ReciprocalCompute(Tensor *x, Tensor *y, uint64_t data_num, const CpuKernelContext &ctx);
+  uint32_t ReciprocalCompute(Tensor *x, Tensor *y, uint64_t data_num, CpuKernelContext &ctx);
   template <typename T>
-  uint32_t ReciprocalComputeComplex(Tensor *x, Tensor *y, uint64_t data_num, const CpuKernelContext &ctx);
+  uint32_t ReciprocalComputeComplex(Tensor *x, Tensor *y, uint64_t data_num, CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

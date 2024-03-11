@@ -45,7 +45,8 @@ const int LEN_B = 25;
 
 namespace aicpu {
 uint32_t BesselI0CpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.", kBesselI0);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.",
+                           kBesselI0);
   auto data_type = ctx.Input(0)->GetDataType();
   uint32_t ret;
   switch (data_type) {
@@ -59,16 +60,16 @@ uint32_t BesselI0CpuKernel::Compute(CpuKernelContext &ctx) {
       ret = ParallelForCompute(ctx);
       break;
     default:
-      KERNEL_LOG_ERROR("BesselI0 kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "BesselI0 kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   if (ret != KERNEL_STATUS_OK) {
-    KERNEL_LOG_ERROR("BesselI0 kernel compute failed.");
+    CUST_KERNEL_LOG_ERROR(ctx, "BesselI0 kernel compute failed.");
   }
   return ret;
 }
 
-uint32_t BesselI0CpuKernel::ParallelForCompute(const CpuKernelContext &ctx) {
+uint32_t BesselI0CpuKernel::ParallelForCompute(CpuKernelContext &ctx) {
   int64_t data_num = ctx.Output(0)->NumElements();
   auto data_type = ctx.Input(0)->GetDataType();
 
@@ -87,18 +88,21 @@ uint32_t BesselI0CpuKernel::ParallelForCompute(const CpuKernelContext &ctx) {
 
     if (data_type == DT_FLOAT16) {
       auto sharder_bessel_i0 = [&](int64_t start, int64_t end) { BesselI0ComputeFloat16(start, end, ctx); };
-      KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_bessel_i0),
-                          "BesselI0 Compute failed.");
+      CUST_KERNEL_HANDLE_ERROR(ctx,
+                               CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_bessel_i0),
+                               "BesselI0 Compute failed.");
     } else if (data_type == DT_FLOAT) {
       auto sharder_bessel_i0 = [&](int64_t start, int64_t end) { BesselI0Compute<float>(start, end, ctx); };
-      KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_bessel_i0),
-                          "BesselI0 Compute failed.");
+      CUST_KERNEL_HANDLE_ERROR(ctx,
+                               CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_bessel_i0),
+                               "BesselI0 Compute failed.");
     } else if (data_type == DT_DOUBLE) {
       auto sharder_bessel_i0 = [&](int64_t start, int64_t end) { BesselI0Compute<double>(start, end, ctx); };
-      KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_bessel_i0),
-                          "BesselI0 Compute failed.");
+      CUST_KERNEL_HANDLE_ERROR(ctx,
+                               CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_bessel_i0),
+                               "BesselI0 Compute failed.");
     } else {
-      KERNEL_LOG_ERROR("BesselI0 kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "BesselI0 kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
     }
   } else {
@@ -109,7 +113,7 @@ uint32_t BesselI0CpuKernel::ParallelForCompute(const CpuKernelContext &ctx) {
     } else if (data_type == DT_DOUBLE) {
       BesselI0Compute<double>(0, data_num, ctx);
     } else {
-      KERNEL_LOG_ERROR("BesselI0 kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "BesselI0 kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
     }
   }
@@ -117,7 +121,7 @@ uint32_t BesselI0CpuKernel::ParallelForCompute(const CpuKernelContext &ctx) {
 }
 
 template <typename T>
-void BesselI0CpuKernel::BesselI0Compute(int64_t start, int64_t end, const CpuKernelContext &ctx) {
+void BesselI0CpuKernel::BesselI0Compute(int64_t start, int64_t end, CpuKernelContext &ctx) {
   auto input_x = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto output_y = reinterpret_cast<T *>(ctx.Output(0)->GetData());
 
@@ -166,7 +170,7 @@ void BesselI0CpuKernel::BesselI0Compute(int64_t start, int64_t end, const CpuKer
   }
 }
 
-void BesselI0CpuKernel::BesselI0ComputeFloat16(int64_t start, int64_t end, const CpuKernelContext &ctx) {
+void BesselI0CpuKernel::BesselI0ComputeFloat16(int64_t start, int64_t end, CpuKernelContext &ctx) {
   auto input_x = reinterpret_cast<Eigen::half *>(ctx.Input(0)->GetData());
   auto output_y = reinterpret_cast<Eigen::half *>(ctx.Output(0)->GetData());
 

@@ -29,13 +29,13 @@ class MaximumGradGradCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t MaximumGradGradParamCheck(const CpuKernelContext &ctx);
+  uint32_t MaximumGradGradParamCheck(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t MaximumGradGradCompute(const CpuKernelContext &ctx);
+  uint32_t MaximumGradGradCompute(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t BcastCompute(const CpuKernelContext &ctx, const Bcast &bcast);
+  uint32_t BcastCompute(CpuKernelContext &ctx, const Bcast &bcast);
 };
 }  // namespace aicpu
 #endif
