@@ -62,6 +62,7 @@
 #include "frontend/parallel/pass/split_matmul_comm_elementwise_fp.h"
 #include "frontend/parallel/pass/split_layernorm_comm_fp.h"
 #include "frontend/parallel/pipeline_transformer/pipeline_transformer.h"
+#include "frontend/parallel/pass/overlap_grad_comm.h"
 #include "frontend/optimizer/recompute.h"
 #include "frontend/optimizer/irpass/recompute.h"
 #include "frontend/optimizer/slice_activation_in_recompute.h"
@@ -795,6 +796,12 @@ bool MicroInterLeavedOrderControlPass(const ResourcePtr &resource) {
   return true;
 }
 
+bool OverlapGradCommPass(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  parallel::OverlapGradComm(resource->func_graph());
+  return true;
+}
+
 bool FullMicroInterLeavedOrderControlPass(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   parallel::FullMicroInterleavedOrderControl(resource->func_graph());
@@ -1141,6 +1148,7 @@ std::vector<PassItem> kVmPasses = {{"py_interpret_to_execute", PyInterpretToExec
                                    {"overlap_recompute_and_grad_model_parallel", OverlapRecomputeAndGradModelParallel},
                                    {"overlap_grad_matmul_and_grad_allreduce", OverlapGradMatmulAndGradAllreduce},
                                    {"begin_end_overlap_inline", BeginEndOverlapInlinePass},
+                                   {"overlap_grad_comm", OverlapGradCommPass},
                                    {"split_matmul_comm_elemetwise", SplitMatmulCommElementwiseOpFpPass},
                                    {"split_layernorm_comm", SplitLayerNormCommFpPass},
                                    {"process_send_recv_for_ge", ProcessSendRecvForGE},

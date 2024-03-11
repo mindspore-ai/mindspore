@@ -424,6 +424,7 @@ constexpr auto kPrimalAttrSegmentMax = "segment_max";
 constexpr auto kPrimalAttrUniqueId = "unique_id";
 constexpr auto kPrimalAttrForwardUniqueId = "forward_unique_id";
 constexpr auto kPrimalAttrForwardCommNodeUniqueId = "forward_comm_node_unique_id";
+constexpr auto kPrimalAttrMirrorUserId = "mirror_user_id";
 
 // attr value
 constexpr auto kValueTargetSwitch = "target_switch";

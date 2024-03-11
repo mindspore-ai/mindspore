@@ -41,6 +41,8 @@ bool IsDwMatMul(const CNodePtr &matmul_node);
 void ExtractBackwardMatMul(const std::vector<CNodePtr> &origin_nodes_topological,
                            std::unordered_map<CNodePtr, CNodePtr> *backward_matmul_dx_dw_map);
 std::string AnfNodeInfo(const AnfNodePtr &anf_node);
+void ExtendDxDwMap(const std::vector<CNodePtr> &origin_nodes_topological,
+                   std::unordered_map<CNodePtr, CNodePtr> *backward_matmul_dx_dw_map);
 }  // namespace parallel
 }  // namespace mindspore
 
