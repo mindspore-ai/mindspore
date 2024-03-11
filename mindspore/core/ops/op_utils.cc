@@ -839,7 +839,9 @@ std::set<int64_t> GetInputDependValueList(const PrimitivePtr &op_prim) {
   // input as value depend.
   auto args = op_def->args_;
   for (size_t i = 0; i < args.size(); i++) {
-    if (args[i].arg_dtype_ != mindspore::ops::OP_DTYPE::DT_TENSOR) {
+    if (args[i].arg_dtype_ != mindspore::ops::OP_DTYPE::DT_TENSOR &&
+        args[i].arg_dtype_ != mindspore::ops::OP_DTYPE::DT_TUPLE_TENSOR &&
+        args[i].arg_dtype_ != mindspore::ops::OP_DTYPE::DT_LIST_TENSOR) {
       (void)depend_list.insert(i);
     }
   }
