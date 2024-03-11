@@ -453,8 +453,14 @@ Reduction函数
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.ops.ifftshift
+    mindspore.ops.fft
+    mindspore.ops.fft2
+    mindspore.ops.fftn
     mindspore.ops.fftshift
+    mindspore.ops.ifft
+    mindspore.ops.ifft2
+    mindspore.ops.ifftn
+    mindspore.ops.ifftshift
 
 Tensor操作函数
 ----------------

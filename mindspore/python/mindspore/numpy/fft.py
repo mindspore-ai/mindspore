@@ -83,20 +83,27 @@ def fft(a, n=None, axis=-1, norm=None):
 
     Args:
         a (Tensor): The input tensor.
-        n (int, optional): Length of the transformed `axis` of the result.
-            If given, the input will either be zero-padded or trimmed to this length before computing `fft`.
-            Default: ``None``, which does not need to process `a`.
+            Supported dtypes:
+
+            - Ascend/CPU: int16、int32、int64、float16、float32、float64、complex64、complex128.
+
+        n (int, optional): Length of the transformed `dim` of the result.
+            If given, the size of the `dim` axis will be zero-padded or truncated to `n` before calculating `fft`.
+            Default: ``None`` , which does not need to process `a`.
         axis (int, optional): Axis over which to compute the `fft`.
-            Default: ``-1``, which means the last axis of `a` is used.
-        norm (string, optional): Normalization mode. Default: ``None`` that means ``"backward"``.
+            Default: ``-1`` , which means the last axis of `a` is used.
+        norm (string, optional): Normalization mode. Default: ``None`` that means ``"backward"`` .
             Three modes are defined as,
 
-            - ``"backward"``(no normalization).
+            - ``"backward"`` (no normalization).
             - ``"forward"`` (normalize by :math:`1/n`).
             - ``"ortho"`` (normalize by :math:`1/\sqrt{n}`).
 
     Returns:
-        Tensor, The result of `fft()` function.
+        Tensor, The result of `fft()` function. The default is the same shape as `a`.
+        If `n` is given, the size of the `axis` is changed to `n`.
+        When the `a` is int16, int32, int64, float16, float32, complex64, the return value type is complex64.
+        When the `a` is float64 or complex128, the return value type is complex128.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -119,20 +126,28 @@ def ifft(a, n=None, axis=-1, norm=None):
 
     Args:
         a (Tensor): The input tensor.
+            Supported dtypes:
+
+            - Ascend/CPU: int16、int32、int64、float16、float32、float64、complex64、complex128.
+
+        n (int, optional): Length of the transformed `dim` of the result.
         n (int, optional): Signal length.
             If given, the input will either be zero-padded or trimmed to this length before computing `ifft`.
-            Default: ``None``, which does not need to process `a`.
+            Default: ``None`` , which does not need to process `a`.
         axis (int, optional): Axis over which to compute the `ifft`.
-            Default: ``-1``, which means the last axis of `a` is used.
-        norm (string, optional): Normalization mode. Default: ``None`` that means ``"backward"``.
+            Default: ``-1`` , which means the last axis of `a` is used.
+        norm (string, optional): Normalization mode. Default: ``None`` that means ``"backward"`` .
             Three modes are defined as,
 
-            - ``"backward"``(no normalization).
+            - ``"backward"`` (no normalization).
             - ``"forward"`` (normalize by :math:`1*n`).
             - ``"ortho"`` (normalize by :math:`1*\sqrt{n}`).
 
     Returns:
-        Tensor, The result of `ifft()` function.
+        Tensor, The result of `ifft()` function. The default is the same shape as `a`.
+        If `n` is given, the size of the `axis` is changed to `n`.
+        When the `a` is int16, int32, int64, float16, float32, complex64, the return value type is complex64.
+        When the `a` is float64 or complex128, the return value type is complex128.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -235,20 +250,27 @@ def fft2(a, s=None, axes=(-2, -1), norm=None):
 
     Args:
         a (Tensor): The input tensor.
+            Supported dtypes:
+
+            - Ascend/CPU: int16、int32、int64、float16、float32、float64、complex64、complex128.
+
         s (tuple[int], optional): Length of the transformed `axes` of the result.
             If given, the input will either be zero-padded or trimmed to this length before computing `fft2`.
-            Default: ``None``, which does not need to process `a`.
+            Default: ``None`` , which does not need to process `a`.
         axes (tuple[int], optional): The dimension along which to take the one dimensional `fft2`.
-            Default: ``(-2, -1)``, which means transform the last two dimension of `a`.
-        norm (string, optional): Normalization mode. Default: ``None`` that means ``"backward"``.
+            Default: ``(-2, -1)`` , which means transform the last two dimension of `a`.
+        norm (string, optional): Normalization mode. Default: ``None`` that means ``"backward"`` .
             Three modes are defined as,
 
-            - ``"backward"``(no normalization).
+            - ``"backward"`` (no normalization).
             - ``"forward"`` (normalize by :math:`1/n`).
             - ``"ortho"`` (normalize by :math:`1/\sqrt{n}`).
 
     Returns:
-        Tensor, The result of `fft2()` function.
+        Tensor, The result of `fft2()` function. The default is the same shape as `a`.
+        If `s` is given, the size of the `axes[i]` axis is changed to `s[i]`.
+        When the `a` is int16, int32, int64, float16, float32, complex64, the return value type is complex64.
+        When the `a` is float64 or complex128, the return value type is complex128.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -275,12 +297,16 @@ def ifft2(a, s=None, axes=(-2, -1), norm=None):
 
     Args:
         a (Tensor): The input tensor.
+            Supported dtypes:
+
+            - Ascend/CPU: int16、int32、int64、float16、float32、float64、complex64、complex128.
+
         s (tuple[int], optional): Length of the transformed `axes` of the result.
             If given, the input will either be zero-padded or trimmed to this length before computing `ifft2`.
-            Default: ``None``, which does not need to process `a`.
+            Default: ``None`` , which does not need to process `a`.
         axes (tuple[int], optional): The dimension along which to take the one dimensional `ifft2`.
-            Default: ``(-2, -1)``, which means transform the last two dimension of `a`.
-        norm (string, optional): Normalization mode. Default: ``None`` that means ``"backward"``.
+            Default: ``(-2, -1)`` , which means transform the last two dimension of `a`.
+        norm (string, optional): Normalization mode. Default: ``None`` that means ``"backward"`` .
             Three modes are defined as,
 
             - ``"backward"`` (no normalization).
@@ -288,7 +314,10 @@ def ifft2(a, s=None, axes=(-2, -1), norm=None):
             - ``"ortho"`` (normalize by :math:`1*\sqrt{n}`).
 
     Returns:
-        Tensor, The result of `ifft2()` function.
+        Tensor, The result of `ifft2()` function. The default is the same shape as `a`.
+        If `s` is given, the size of the `axes[i]` axis is changed to `s[i]`.
+        When the `a` is int16, int32, int64, float16, float32, complex64, the return value type is complex64.
+        When the `a` is float64 or complex128, the return value type is complex128.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -315,21 +344,28 @@ def fftn(a, s=None, axes=None, norm=None):
 
     Args:
         a (Tensor): The input tensor.
+            Supported dtypes:
+
+            - Ascend/CPU: int16、int32、int64、float16、float32、float64、complex64、complex128.
+
         s (tuple[int], optional): Length of the transformed `axes` of the result.
             If given, the input will either be zero-padded or trimmed to this length before computing `fftn`.
-            Default: ``None``, which does not need to process `a`.
+            Default: ``None`` , which does not need to process `a`.
         axes (tuple[int], optional): The dimension along which to take the one dimensional `fftn`.
-            Default: ``None``, which means transform the all dimension of `a`,
+            Default: ``None`` , which means transform the all dimension of `a`,
             or the last `len(s)` dimensions if s is given.
-        norm (string, optional): Normalization mode. Default: ``None`` that means ``"backward"``.
+        norm (string, optional): Normalization mode. Default: ``None`` that means ``"backward"`` .
             Three modes are defined as,
 
-            - ``"backward"``(no normalization).
+            - ``"backward"`` (no normalization).
             - ``"forward"`` (normalize by :math:`1/n`).
             - ``"ortho"`` (normalize by :math:`1/\sqrt{n}`).
 
     Returns:
-        Tensor, The result of `fft()` function.
+        Tensor, The result of `fft()` function. The default is the same shape as `a`.
+        If `s` is given, the size of the `axes[i]` axis is changed to `s[i]`.
+        When the `a` is int16, int32, int64, float16, float32, complex64, the return value type is complex64.
+        When the `a` is float64 or complex128, the return value type is complex128.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -356,13 +392,17 @@ def ifftn(a, s=None, axes=None, norm=None):
 
     Args:
         a (Tensor): The input tensor.
+            Supported dtypes:
+
+            - Ascend/CPU: int16、int32、int64、float16、float32、float64、complex64、complex128.
+
         s (tuple[int], optional): Length of the transformed `axes` of the result.
             If given, the input will either be zero-padded or trimmed to this length before computing `ifftn`.
-            Default: ``None``, which does not need to process `a`.
+            Default: ``None`` , which does not need to process `a`.
         axes (tuple[int], optional): The dimension along which to take the one dimensional `ifftn`.
-            Default: ``None``, which means transform the all dimension of `a`,
+            Default: ``None`` , which means transform the all dimension of `a`,
             or the last `len(s)` dimensions if s is given.
-        norm (string, optional): Normalization mode. Default: ``None`` that means ``"backward"``.
+        norm (string, optional): Normalization mode. Default: ``None`` that means ``"backward"`` .
             Three modes are defined as,
 
             - ``"backward"`` (no normalization).
@@ -370,7 +410,10 @@ def ifftn(a, s=None, axes=None, norm=None):
             - ``"ortho"`` (normalize by :math:`1*\sqrt{n}`).
 
     Returns:
-        Tensor, The result of `ifftn()` function.
+        Tensor, The result of `ifftn()` function. The default is the same shape as `a`.
+        If `s` is given, the size of the `axes[i]` axis is changed to `s[i]`.
+        When the `a` is int16, int32, int64, float16, float32, complex64, the return value type is complex64.
+        When the `a` is float64 or complex128, the return value type is complex128.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
