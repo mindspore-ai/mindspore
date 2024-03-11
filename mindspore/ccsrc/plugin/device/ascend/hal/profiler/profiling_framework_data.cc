@@ -115,7 +115,7 @@ std::vector<uint8_t> OpRangeData::encode() {
     resultTLV.push_back((length >> (i * 8)) & 0xff);
   }
   resultTLV.insert(resultTLV.end(), result->cbegin(), result->cend());
-  return std::move(resultTLV);
+  return resultTLV;
 }
 
 void ProfilingFrameworkData::RecordLaunchGETaskBegin(const CNodePtr &node) {
