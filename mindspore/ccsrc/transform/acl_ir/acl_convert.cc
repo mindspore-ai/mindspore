@@ -224,6 +224,8 @@ void AttrHelper<ConvertType>::ConvertValueToRealType(const ValuePtr &value, cons
       auto scalar_type = value->type();
       MS_EXCEPTION_IF_NULL(scalar_type);
       TypeId scalar_type_id = scalar_type->type_id();
+      trans_struct->ori_shape = {};
+      trans_struct->dev_shape = {};
       trans_struct->data_type = scalar_type_id;
     }
   }
@@ -625,7 +627,7 @@ void AclConverter::ConvertToAclOutput(const std::string &kernel_name, const std:
 }
 
 void AclConverter::ConvertAttrToAclInput(const mindspore::HashMap<std::string, ValuePtr> &attrs,
-                                         const std::string &kernel_name) {
+                                         const std::string &kernel_name, std::vector<TensorParams> *input_params) {
   MS_LOG(DEBUG) << "Start convert attr to acl input";
   auto info = GeAdapterManager::GetInstance().GetInfo(kernel_name, true);
   MS_EXCEPTION_IF_NULL(info);
@@ -653,7 +655,6 @@ void AclConverter::ConvertAttrToAclInput(const mindspore::HashMap<std::string, V
       MS_LOG(EXCEPTION) << kernel_name << " can't convert " << ms_attr_name << " attr to input index " << input_idx;
     }
     auto ms_real_idx = ms_and_ge_inputs_idx_info_[input_idx].ms_real_idx[kIndex0];
-    auto acl_real_input_idx = ms_and_ge_inputs_idx_info_[input_idx].ge_real_idx[kIndex0];
 
     AttrToInputConverter attr_coverter;
     TensorParams new_params;
@@ -663,8 +664,12 @@ void AclConverter::ConvertAttrToAclInput(const mindspore::HashMap<std::string, V
     auto acl_host_input = std::make_shared<AclHostInfo>(
       host_save_list_[ms_real_idx].data(), host_save_list_[ms_real_idx].size(), new_params.data_type, true);
     input_on_host_.emplace(ms_real_idx, acl_host_input);
-    MS_LOG(DEBUG) << "Fill acl real input " << acl_real_input_idx << " with attribute " << ms_attr_name
-                  << " of primitive " << kernel_name;
+    if (ms_real_idx >= input_params->size()) {
+      input_params->resize(ms_real_idx + 1);
+      (*input_params)[ms_real_idx] = new_params;
+    }
+    MS_LOG(DEBUG) << "Fill acl real input " << ms_real_idx << " with attribute " << ms_attr_name << " of primitive "
+                  << kernel_name;
   }
   MS_LOG(DEBUG) << "Convert attr to acl input over";
 }
@@ -776,13 +781,10 @@ void AclConverter::ConvertMsIdxToGeIdx(const PrimitivePtr &prim, const std::vect
   }
 
   size_t ms_real_idx = 0;
+  size_t attr_offset = 0;
   size_t num_real_inputs = inputs.size();
   bool dynamic_tuple_flag = false;
   for (int ms_idx = 0; ms_idx <= info->GetMaxMsProtoIndexOfInputMap(); ++ms_idx) {
-    if (ms_real_idx >= num_real_inputs) {
-      break;
-    }
-
     // Input to attr.
     auto opt_ge_input_info = info->GetOptGeInputByMsInputIndex(ms_idx);
     if (!opt_ge_input_info.has_value()) {
@@ -802,7 +804,13 @@ void AclConverter::ConvertMsIdxToGeIdx(const PrimitivePtr &prim, const std::vect
       ms_and_ge_inputs_sort_info_.emplace(std::make_pair(static_cast<size_t>(ms_idx), ge_input_info.index),
                                           std::make_pair(std::vector<size_t>{ms_real_idx}, std::vector<size_t>{0}));
       ms_real_idx++;
+      attr_offset++;
       continue;
+    }
+
+    size_t input_idx = ms_real_idx - attr_offset;
+    if (input_idx >= num_real_inputs) {
+      break;
     }
 
     if (mapping_flags & (GeTensorInfo::kDynamicParam | GeTensorInfo::kMultiDynParam)) {
@@ -810,13 +818,13 @@ void AclConverter::ConvertMsIdxToGeIdx(const PrimitivePtr &prim, const std::vect
         // Convert tuple/list input index to ge index.
         size_t ge_input_num = 1;
         if (ge_input_info.type == Ms2GeParamInfo::DYNAMIC) {
-          auto tensor = inputs[ms_real_idx];
+          auto tensor = inputs[input_idx];
           ge_input_num = GetTupleSize(tensor);
         }
 
         std::vector<size_t> ge_index(ge_input_num);
         ms_and_ge_inputs_sort_info_.emplace(std::make_pair(static_cast<size_t>(ms_idx), ge_input_info.index),
-                                            std::make_pair(std::vector<size_t>{ms_real_idx}, ge_index));
+                                            std::make_pair(std::vector<size_t>{input_idx}, ge_index));
         ms_real_idx++;
         dynamic_tuple_flag = true;
       } else {
@@ -830,25 +838,25 @@ void AclConverter::ConvertMsIdxToGeIdx(const PrimitivePtr &prim, const std::vect
           ms_input_num = dyn_input_sizes[ms_idx];
         }
         std::vector<size_t> ms_index(ms_input_num);
-        std::iota(ms_index.begin(), ms_index.end(), ms_real_idx);
+        std::iota(ms_index.begin(), ms_index.end(), input_idx);
         ms_and_ge_inputs_sort_info_.emplace(std::make_pair(static_cast<size_t>(ms_idx), ge_input_info.index),
                                             std::make_pair(ms_index, ms_index));
         ms_real_idx += ms_input_num;
       }
     } else {
       ms_and_ge_inputs_sort_info_.emplace(std::make_pair(static_cast<size_t>(ms_idx), ge_input_info.index),
-                                          std::make_pair(std::vector<size_t>{ms_real_idx}, std::vector<size_t>{0}));
-      ms_real_idx += 1;
+                                          std::make_pair(std::vector<size_t>{input_idx}, std::vector<size_t>{0}));
+      ms_real_idx++;
     }
   }
   for (const auto &input_attr : info->input_attr_map()) {
-    if (ms_real_idx >= num_real_inputs) {
+    if (ms_real_idx - attr_offset >= num_real_inputs) {
       break;
     }
     if (static_cast<int>(input_attr.first) > info->GetMaxMsProtoIndexOfInputMap()) {
       ms_and_ge_inputs_sort_info_.emplace(
         std::make_pair(static_cast<size_t>(input_attr.first), std::numeric_limits<size_t>::max()),
-        std::make_pair(std::vector<size_t>{ms_real_idx}, std::vector<size_t>{}));
+        std::make_pair(std::vector<size_t>{ms_real_idx - attr_offset}, std::vector<size_t>{}));
       ms_real_idx++;
     }
   }

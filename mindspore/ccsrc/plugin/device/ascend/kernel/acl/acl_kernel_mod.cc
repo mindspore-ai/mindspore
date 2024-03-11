@@ -178,7 +178,7 @@ void AclKernelMod::RefreshAclConverter(const std::vector<KernelTensor *> &inputs
   MS_EXCEPTION_IF_NULL(converter_);
   converter_->Reset();
   converter_->ConvertMsIdxToGeIdx(primitive_, inputs);
-  converter_->ConvertAttrToAclInput(primitive_->attrs(), kernel_name_);
+  converter_->ConvertAttrToAclInput(primitive_->attrs(), kernel_name_, &input_params_);
   converter_->ConvertInputToAclAttr(inputs, kernel_name_);
 }
 
