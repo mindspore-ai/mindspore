@@ -426,22 +426,22 @@ class Node:
         >>> from mindspore.rewrite import SymbolTree
         >>>
         >>> class SubNet(nn.Cell):
-        >>>     def __init__(self):
-        >>>         super().__init__()
-        >>>         self.relu = nn.ReLU()
-        >>>
-        >>>     def construct(self, x):
-        >>>         x = self.relu(x)
-        >>>         return x
-        >>>
-        >>> class Net(nn.Cell):
-        >>>     def __init__(self):
-        >>>         super().__init__()
-        >>>         self.subnet = SubNet()
-        >>>
-        >>>     def construct(self, x):
-        >>>         x = self.subnet(x)
-        >>>         return x
+        ...     def __init__(self):
+        ...         super().__init__()
+        ...         self.relu = nn.ReLU()
+        ...
+        ...     def construct(self, x):
+        ...         x = self.relu(x)
+        ...         return x
+        ...
+        ... class Net(nn.Cell):
+        ...     def __init__(self):
+        ...         super().__init__()
+        ...         self.subnet = SubNet()
+        ...
+        ...     def construct(self, x):
+        ...         x = self.subnet(x)
+        ...         return x
         >>>
         >>> net = Net()
         >>> stree = SymbolTree.create(net)
@@ -471,13 +471,13 @@ class Node:
             >>> from mindspore import nn
             >>>
             >>> class ReLUNet(nn.Cell):
-            >>>     def __init__(self):
-            >>>         super().__init__()
-            >>>         self.relu = nn.ReLU()
-            >>>
-            >>>     def construct(self, input):
-            >>>         output = self.relu(x=input)
-            >>>         return output
+            ...     def __init__(self):
+            ...         super().__init__()
+            ...         self.relu = nn.ReLU()
+            ...
+            ...     def construct(self, input):
+            ...         output = self.relu(x=input)
+            ...         return output
             >>>
             >>> net = ReLUNet()
             >>> stree = SymbolTree.create(net)
