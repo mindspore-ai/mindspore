@@ -1390,6 +1390,7 @@ void TargetInfoSetter::GetTargetInfo() {
     GetCpuInfo(&target_info_);
     return;
   }
+  // ascend
   target_info_[kJsonKeyArch] = target;
 }
 

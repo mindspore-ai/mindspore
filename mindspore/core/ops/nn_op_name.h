@@ -146,9 +146,13 @@ constexpr auto kFlashPromptFlashAttentionOpName = "PromptFlashAttention";
 constexpr auto kFlashIncreFlashAttentionOpName = "IncreFlashAttention";
 constexpr auto kFlashAttentionScoreOpName = "FlashAttentionScore";
 constexpr auto kFlashAttentionScoreGradOpName = "FlashAttentionScoreGrad";
+constexpr auto kPagedAttentionOpName = "PagedAttention";
+constexpr auto kPagedAttentionMaskOpName = "PagedAttentionMask";
+constexpr auto kReshapeAndCacheOpName = "ReshapeAndCache";
 constexpr auto kRmsNormOpName = "RmsNorm";
 constexpr auto kRmsNormGradOpName = "RmsNormGrad";
 constexpr auto kRNNTLossOpName = "RNNTLoss";
+constexpr auto kMatmulQkvOpName = "MatmulQkv";
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_BASE_NN_OP_NAME_H_

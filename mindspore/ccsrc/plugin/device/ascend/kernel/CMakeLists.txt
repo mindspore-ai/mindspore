@@ -23,6 +23,9 @@ file(GLOB_RECURSE D_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     file(GLOB_RECURSE AICPU_OPS_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "aicpu/aicpu_ops/*.cc"
     )
+    file(GLOB_RECURSE INTERNAL_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+        "internal/*.cc"
+    )
     list(REMOVE_ITEM D_SRC_LIST ${AICPU_OPS_SRC})
     add_compile_definitions(ENABLE_D)
 
@@ -43,6 +46,21 @@ file(GLOB_RECURSE SRC_IN_910B RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "pyboost/auto_generate/*.cc"
         "rts/*.cc"
         )
+file(GLOB_RECURSE INTERNAL_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+    "internal/*.cc"
+)
+
+if(DEFINED ENV{MS_INTERNAL_KERNEL_HOME})
+    include_directories($ENV{MS_INTERNAL_KERNEL_HOME})
+    include_directories($ENV{MS_INTERNAL_KERNEL_HOME}/include)
+    include_directories($ENV{MS_INTERNAL_KERNEL_HOME}/ascend-op-common-lib/output/asdops/include)
+
+    set(SRC_IN_910B ${SRC_IN_910B} ${INTERNAL_SRC_LIST})
+else()
+    set(SRC_IN_910B ${SRC_IN_910B}
+        "internal/internal_kernel_build.cc"
+    )
+endif()
 list(REMOVE_ITEM SRC_IN_910B ${AICPU_OPS_SRC})
 
 if(ENABLE_DVM)

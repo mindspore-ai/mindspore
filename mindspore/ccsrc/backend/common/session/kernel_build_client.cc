@@ -40,7 +40,7 @@ std::string GetPyExe() {
   return env;
 }
 
-bool KernelBuildClient::CompilerStart(int process_num, int wait_time) {
+bool KernelBuildClient::CompilerStart(int process_num, int wait_time, const std::string &platform) {
   // Start compiling..
   auto res = SendRequest(kCompilerStart);
   if (res != kAck) {
@@ -57,6 +57,11 @@ bool KernelBuildClient::CompilerStart(int process_num, int wait_time) {
   res = SendRequest(wait_time_str);
   if (res != kAck) {
     MS_LOG(ERROR) << "AKG/START(wait_time) responds failed, res: " << res;
+    return false;
+  }
+  res = SendRequest(platform);
+  if (res != kAck) {
+    MS_LOG(ERROR) << "AKG/START(platform) responds failed, res: " << res;
     return false;
   }
   return true;
