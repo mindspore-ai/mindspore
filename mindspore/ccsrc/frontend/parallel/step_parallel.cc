@@ -25,7 +25,6 @@
 #include <set>
 #include <string>
 #include <queue>
-#include <unordered_map>
 #include "mindspore/core/ops/sequence_ops.h"
 #include "mindspore/core/ops/other_ops.h"
 #include "mindspore/core/ops/array_ops.h"
