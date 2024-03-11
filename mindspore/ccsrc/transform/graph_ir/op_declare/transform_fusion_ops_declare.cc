@@ -56,9 +56,9 @@ REG_ADPT_DESC(FlashAttention, ops::kNameFlashAttention, ADPT_DESC(FlashAttention
 INPUT_MAP(FFN) = {{1, INPUT_DESC(x)},
                   {2, INPUT_DESC(weight1)},
                   {3, INPUT_DESC(weight2)},
-                  {4, INPUT_DESC(expert_tokens)},
-                  {5, INPUT_DESC(bias1)},
-                  {6, INPUT_DESC(bias2)},
+                  {4, INPUT_DESC(expert_tokens)},  // used under MoE
+                  {5, INPUT_DESC(bias1)},          // bias of first matmul
+                  {6, INPUT_DESC(bias2)},          // bias of second matmul
                   {7, INPUT_DESC(scale)},
                   {8, INPUT_DESC(offset)},
                   {9, INPUT_DESC(deq_scale1)},

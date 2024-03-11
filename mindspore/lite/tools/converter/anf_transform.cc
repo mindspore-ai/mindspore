@@ -139,6 +139,7 @@
 #include "tools/optimizer/fusion/tile_matmul_fusion.h"
 #include "tools/optimizer/fusion/flash_attention_fusion_for_custom.h"
 #include "tools/optimizer/fusion/gegluv2_fusion.h"
+#include "tools/optimizer/fusion/ffn_fusion.h"
 #include "tools/optimizer/graph/make_list_pass.h"
 #include "tools/optimizer/fusion/flash_attention_fusion.h"
 #include "tools/optimizer/fusion/groupnormsilu_fusion.h"
@@ -824,6 +825,7 @@ bool AnfTransform::StoreBuiltinPass(const std::shared_ptr<ConverterPara> &param)
     {"GroupNormSiluFusion", std::make_shared<opt::GroupNormSiluFusion>(), false},
     {"GeGluV2Fusion", std::make_shared<opt::GeGluV2Fusion>(), false},
     {"AddLayerNormFusion", std::make_shared<opt::AddLayerNormFusion>(), false},
+    {"FFNFusion", std::make_shared<opt::FFNFusion>(), false},
   };
   for (const auto &pass_info : pass_infos) {
     MS_CHECK_TRUE_RET(std::get<1>(pass_info) != nullptr, false);
