@@ -71,7 +71,8 @@ bool HasSpecialFormat(const AnfNodePtr &node) {
 }
 
 bool DvmSliceSupported(const AnfNodePtr &node, TypeId node_output_type) {
-  if (common::AnfAlgo::IsDynamicRankNode(node) || GetShape(node).size() > 3) {
+  constexpr size_t input_num = 3;
+  if (common::AnfAlgo::IsDynamicRankNode(node) || GetShape(node).size() > input_num) {
     return false;
   }
   if (IsPrimitiveCNode(node, prim::kPrimStridedSlice)) {
