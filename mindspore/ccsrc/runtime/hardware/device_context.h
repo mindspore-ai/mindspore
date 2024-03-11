@@ -31,6 +31,7 @@
 #include "include/common/utils/anfalgo.h"
 #include "runtime/hardware/deprecated_interface.h"
 #include "runtime/device/auto_mem_offload.h"
+#include "runtime/device/memory_manager.h"
 #include "include/backend/optimizer/graph_optimizer.h"
 #include "runtime/pipeline/task/task.h"
 #include "ir/device_event.h"
@@ -281,6 +282,8 @@ class BACKEND_EXPORT DeviceResManager {
   std::shared_ptr<SwapManager> swap_manager_{nullptr};
 
   DeviceEventPtrList device_events_{};
+
+  std::shared_ptr<MemoryManager> mem_manager_{nullptr};
 
  private:
   template <class... Args>

@@ -29,7 +29,7 @@ namespace device {
 namespace cpu {
 class CPUDeviceResManager : public DeviceResManager {
  public:
-  CPUDeviceResManager() : mem_manager_(nullptr) {}
+  CPUDeviceResManager() {}
   ~CPUDeviceResManager() override = default;
 
   void Initialize() override;
@@ -48,9 +48,6 @@ class CPUDeviceResManager : public DeviceResManager {
   void FreeMemory(void *ptr) const override;
   void FreePartMemorys(const std::vector<void *> &free_addrs, const std::vector<void *> &keep_addrs,
                        const std::vector<size_t> &keep_addr_sizes) const override;
-
- private:
-  std::shared_ptr<MemoryManager> mem_manager_;
 };
 
 class CPUKernelExecutor : public KernelExecutor {
