@@ -679,7 +679,6 @@ class Profiler:
 
         Raises:
             RuntimeError: If the profiler has already started.
-            RuntimeError: If MD profiling has stopped, repeated start action is not supported.
             RuntimeError: If the `start_profile` parameter is not set or is set to ``True``.
 
         Examples:
@@ -714,8 +713,7 @@ class Profiler:
             if not self._has_started_twice:
                 self._has_started = True
         else:
-            raise RuntimeError("The profiler has already started. Use profiler.start() only when start_profile value "
-                               "is set to False.")
+            raise RuntimeError("The profiler has already started. Do not turn on again in the open state.")
 
         # No need to start anything if parse profiling data offline
         if self._is_offline_parser():
