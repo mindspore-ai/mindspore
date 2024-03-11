@@ -18,8 +18,8 @@ import re
 import sys
 import subprocess
 import mindspore.log as logger
-from ._utils import _generate_cmd_args_list, _generate_url, _is_local_ip, _send_scale_num,\
-                    _get_status_and_params
+from ._utils import _generate_cmd_args_list, _generate_cmd_args_list_with_core, _generate_url,\
+                    _is_local_ip, _send_scale_num, _get_status_and_params
 
 class _Node:
     """
@@ -53,7 +53,6 @@ class _MetaServerNode(_Node):
         """
         Runs the MetaServerNode by setting environment variables, setting the MS_ROLE variable to
          "MS_SCHED",  and executing the entrypoint command or script.
-
         """
         super().run()
         os.environ["MS_ROLE"] = "MS_SCHED"
@@ -114,6 +113,7 @@ class _ProcessManager:
         self.log_dir = args.log_dir
         self.join = args.join
         self.cluster_time_out = args.cluster_time_out
+        self.bind_core = args.bind_core
 
         self.cmd = args.task_script
         self.cmd_args = args.task_script_args
@@ -194,8 +194,18 @@ class _ProcessManager:
                 logger.warning(f"Start worker process with rank id:{node_id}, log file:{log_name}. "
                                "Environment variable [RANK_ID] is exported.")
 
+            cpu_num = subprocess.getoutput("cat /proc/cpuinfo|grep processor|wc -l")
+            if not cpu_num.isdigit():
+                raise RuntimeError("Fail to get cpu number from /proc/cpuinfo.")
+            if self.bind_core:
+                avg = int(cpu_num) // self.local_worker_num
+                cpu_start = avg * i + 1
+                cpu_end = avg * (i + 1)
+                cmd = _generate_cmd_args_list_with_core(self.cmd, self.cmd_args, cpu_start, cpu_end)
+            else:
+                cmd = _generate_cmd_args_list(self.cmd, self.cmd_args)
             cgn = _ComputeGraphNode(self.worker_num, self.master_addr, self.master_port, self.cluster_time_out,
-                                    node_id, _generate_cmd_args_list(self.cmd, self.cmd_args), log_name)
+                                    node_id, cmd, log_name)
             process = cgn.run()
             self.cgn_processes.append(process)
 

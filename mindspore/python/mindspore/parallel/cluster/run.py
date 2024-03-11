@@ -85,6 +85,13 @@ def get_args():
              "If this value is negative, other processes will wait infinitely."
     )
     parser.add_argument(
+        "--bind_core",
+        default=False,
+        type=ast.literal_eval,
+        choices=[True, False],
+        help="specifies whether msrun should bind cpu cores to spawned processes."
+    )
+    parser.add_argument(
         "task_script",
         type=str,
         help="The full path to the script that will be launched in distributed manner, followed "
