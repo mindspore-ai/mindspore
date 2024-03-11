@@ -2823,10 +2823,6 @@ REG_BPROP_BUILDER("DCT").SetBody(BODYFUNC(ib) {
   auto temp_dout = ib->Emit("DCT", {dout, ib->Value(type_value), n, axis, ib->Value(grad_norm_value),
                                     ib->Value(grad_forward_value), ib->Value(true)});
   auto grad_dout = temp_dout;
-  if (forward_value && norm_value != 2) {
-    auto ones = ib->OnesLike(dout);
-    grad_dout = temp_dout + ones;
-  }
 
   auto output_shape_vec = ib->GetShape(out);
   auto x_rank = static_cast<int64_t>(input_shape_vec.size());

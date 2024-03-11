@@ -43,6 +43,7 @@
   }
 
 namespace {
+static constexpr int M_interleave = 2;
 static constexpr double M_pi = 3.141592653589793238462643383279;
 const uint32_t kOutputNum = 1;
 const uint32_t kInputNum = 1;
@@ -210,6 +211,9 @@ std::vector<T> TailZeroPadding(T *org_data, const std::vector<int64_t> &x_shape,
 template <typename T1, int x_rank>
 Eigen::Tensor<T1, x_rank, Eigen::RowMajor> Interleave(const Eigen::Tensor<T1, x_rank, Eigen::RowMajor> &in_tensor,
                                                       int axis, const std::vector<int64_t> &x_shape) {
+  if (in_tensor.dimension(axis) < M_interleave) {
+    return in_tensor;
+  }
   // construct even part tensor
   Eigen::array<Eigen::DenseIndex, x_rank> strides;
   Eigen::array<Eigen::DenseIndex, x_rank> offsets;
@@ -385,6 +389,9 @@ Eigen::Tensor<std::complex<T>, x_rank, Eigen::RowMajor> PromoteTypeToComplex(
 template <typename T1, int x_rank>
 Eigen::Tensor<T1, x_rank, Eigen::RowMajor> Deinterleave(const Eigen::Tensor<T1, x_rank, Eigen::RowMajor> &in_tensor,
                                                         int axis, const std::vector<int64_t> &x_shape) {
+  if (in_tensor.dimension(axis) < M_interleave) {
+    return in_tensor;
+  }
   // construct offsets and extends
   Eigen::array<Eigen::DenseIndex, x_rank> offsets_even;
   Eigen::array<Eigen::DenseIndex, x_rank> offsets_odd;
@@ -440,10 +447,11 @@ Eigen::Tensor<T2, x_rank, Eigen::RowMajor> InverseCompute(
   Eigen::TensorMap<Eigen::Tensor<T1, x_rank, Eigen::RowMajor>, Eigen::RowMajor> padded_tensor,
   std::vector<int64_t> padded_shape, int axis, int norm_type, bool grad) {
   // ortho-normalization
-  Eigen::Tensor<T1, x_rank, Eigen::RowMajor> norm_out = OrthoNormalize<T1, x_rank>(padded_tensor, padded_shape, axis);
-  if (grad) {
-    auto temp_out = OrthoNormalize<T1, x_rank>(norm_out, padded_shape, axis);
-    norm_out = temp_out;
+  Eigen::Tensor<T1, x_rank, Eigen::RowMajor> norm_out;
+  if (norm_type == 2) {
+    norm_out = OrthoNormalize<T1, x_rank>(padded_tensor, padded_shape, axis);
+  } else {
+    norm_out = padded_tensor;
   }
 
   Eigen::Tensor<std::complex<T1>, x_rank, Eigen::RowMajor> w4 = ConstructW4Tensor<T1, x_rank>(padded_shape[axis], axis);
@@ -468,11 +476,6 @@ Eigen::Tensor<T2, x_rank, Eigen::RowMajor> InverseCompute(
 
   // de-interleave the result of ifft
   Eigen::Tensor<T2, x_rank, Eigen::RowMajor> out = Deinterleave<T2, x_rank>(ifft_real, axis, padded_shape);
-  if (grad && norm_type != 2) {
-    T2 coeff = static_cast<T2>(2 * padded_shape[axis]);
-    auto temp = coeff * out;
-    out = temp;
-  }
   return out;
 }
 
