@@ -3039,7 +3039,7 @@ def logit(input, eps=None):
     """
     if eps is None:
         eps = -1.0
-    logit_ = _get_cache_prim(Logit)(eps)
+    logit_ = _get_cache_prim(P.Logit)(eps)
     return logit_(input)
 
 #####################################
