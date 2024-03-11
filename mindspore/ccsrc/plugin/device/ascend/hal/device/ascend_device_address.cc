@@ -19,7 +19,7 @@
 #include <unordered_map>
 #include <utility>
 #include <set>
-#include "graph/def_types.h"
+#include "graph/types.h"
 #include "pybind_api/gil_scoped_long_running.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "runtime/device/memory_manager.h"

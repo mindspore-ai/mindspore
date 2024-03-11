@@ -25,7 +25,7 @@
 #include "plugin/device/ascend/hal/device/ascend_event.h"
 #include "plugin/device/cpu/hal/device/cpu_device_synchronizer.h"
 #include "include/transform/graph_ir/utils.h"
-#include "graph/def_types.h"
+#include "graph/types.h"
 #include "transform/symbol/acl_rt_symbol.h"
 #include "transform/symbol/symbol_utils.h"
 

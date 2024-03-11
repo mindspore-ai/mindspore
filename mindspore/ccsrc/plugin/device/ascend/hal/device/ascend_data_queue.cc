@@ -18,7 +18,7 @@
 #include <string>
 #include <map>
 #include <utility>
-#include "graph/def_types.h"
+#include "graph/types.h"
 #include "include/backend/data_queue/data_queue_mgr.h"
 #include "include/common/utils/python_adapter.h"
 #include "utils/log_adapter.h"
