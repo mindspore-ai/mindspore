@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include <string>
+#include <vector>
 #include "transform/symbol/symbol_utils.h"
 #include "transform/symbol/acl_tdt_symbol.h"
 
@@ -37,6 +38,7 @@ acltdtGetDataTypeFromItemFunObj acltdtGetDataTypeFromItem_ = nullptr;
 acltdtGetDimNumFromItemFunObj acltdtGetDimNumFromItem_ = nullptr;
 acltdtGetDimsFromItemFunObj acltdtGetDimsFromItem_ = nullptr;
 acltdtGetTensorTypeFromItemFunObj acltdtGetTensorTypeFromItem_ = nullptr;
+acltdtGetSliceInfoFromItemFunObj acltdtGetSliceInfoFromItem_ = nullptr;
 acltdtQueryChannelSizeFunObj acltdtQueryChannelSize_ = nullptr;
 acltdtReceiveTensorFunObj acltdtReceiveTensor_ = nullptr;
 acltdtSendTensorFunObj acltdtSendTensor_ = nullptr;
@@ -71,6 +73,7 @@ void LoadAcltdtApiSymbol(const std::string &ascend_path) {
   acltdtGetDimNumFromItem_ = DlsymAscendFuncObj(acltdtGetDimNumFromItem, handler);
   acltdtGetDimsFromItem_ = DlsymAscendFuncObj(acltdtGetDimsFromItem, handler);
   acltdtGetTensorTypeFromItem_ = DlsymAscendFuncObj(acltdtGetTensorTypeFromItem, handler);
+  acltdtGetSliceInfoFromItem_ = DlsymAscendFuncObj(acltdtGetSliceInfoFromItem, handler);
   acltdtQueryChannelSize_ = DlsymAscendFuncObj(acltdtQueryChannelSize, handler);
   acltdtReceiveTensor_ = DlsymAscendFuncObj(acltdtReceiveTensor, handler);
   acltdtSendTensor_ = DlsymAscendFuncObj(acltdtSendTensor, handler);

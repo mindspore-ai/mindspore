@@ -287,10 +287,14 @@ bool AscendDeprecatedInterface::OpenTsd(const std::shared_ptr<MsContext> &ms_con
                       << "]. The details refer to 'Ascend Error Message'.";
   }
   ms_context_ptr->increase_param<uint32_t>(MS_CTX_TSD_REF);
-  auto thread_crt = [](const std::string &path, const acltdtChannelHandle *acl_handle) {
-    return std::thread(TensorPrint(path, acl_handle));
-  };
-  CreateTensorPrintThread(thread_crt);
+
+  if (!ms_context_ptr->get_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS)) {
+    std::string print_file_path = ms_context_ptr->get_param<std::string>(MS_CTX_PRINT_FILE_PATH);
+    MbufDataHandlerManager::GetInstance().AddHandler(
+      std::make_unique<MbufDataHandler>(std::bind(PrintReceiveData, std::placeholders::_1, print_file_path), device_id,
+                                        kChannelNameNpuLog, kPrintOpName));
+  }
+
   if (ms_context_ptr->backend_policy() == "ge") {
     MbufDataHandlerManager::GetInstance().AddHandler(std::make_unique<MbufDataHandler>(
       std::bind(&TensorDumpUtils::AsyncSaveDatasetToNpyFile, &TensorDumpUtils::GetInstance(), std::placeholders::_1),
@@ -315,7 +319,7 @@ bool AscendDeprecatedInterface::CloseTsd(const std::shared_ptr<MsContext> &ms_co
   if (force || ms_context_ptr->get_param<uint32_t>(MS_CTX_TSD_REF) == 0) {
     ms_context_ptr->set_param<uint32_t>(MS_CTX_TSD_REF, 0);
     pybind11::gil_scoped_release gil_release;
-    DestroyTensorPrintThread();
+    MbufDataHandlerManager::GetInstance().DestoryPrintHandler();
     if (ms_context_ptr->backend_policy() == "ge") {
       MbufDataHandlerManager::GetInstance().DestoryHandler();
     }
