@@ -7,7 +7,7 @@ from mindspore import jit, context
 import numpy as np
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_watch_get_func_graphs_from_abstract():

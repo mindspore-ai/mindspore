@@ -67,7 +67,7 @@ class InlineMulADD(nn.Cell):
         return self.mul_add(x, y) + x + self.param * y
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_grad_inline_mul_add():
