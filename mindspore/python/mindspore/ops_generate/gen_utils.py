@@ -20,7 +20,6 @@ import glob
 import hashlib
 import yaml
 
-
 py_licence_str = f"""# Copyright 2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -52,6 +51,7 @@ cc_license_str = f"""/**
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */"""
+
 
 def convert_dtype_str(dtype_str):
     """
@@ -171,3 +171,15 @@ def get_assign_str_by_type_it(class_name, arg_info, arg_name, dtype):
     else:
         assign_str = arg_name
     return assign_str
+
+
+def write_file(path, data):
+    """
+    write data to path
+    :param path:
+    :param data:
+    :return:
+    """
+    fd = os.open(path, os.O_RDWR | os.O_CREAT)
+    with os.fdopen(fd, "w") as f:
+        f.write(data)

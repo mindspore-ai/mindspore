@@ -27,7 +27,8 @@ from pyboost_utils import get_convert_type_str, get_input_dtype, get_return_type
 import template
 from template import CppTemplate
 from op_proto import OpProto
-from gen_utils import check_change_and_replace_file, py_licence_str
+from gen_utils import check_change_and_replace_file, py_licence_str, write_file
+
 
 @dataclass
 class FuncHeaderData:
@@ -50,8 +51,7 @@ def generate_pyboost_base_op_header_code(work_path, op_name_str, operator_name, 
     pathlib.Path(op_header_dir_path).mkdir(parents=True, exist_ok=True)
     tmp_op_file_path = os.path.join(op_header_dir_path, "tmp_" + operator_name + ".h")
     dst_op_file_path = os.path.join(op_header_dir_path, operator_name + ".h")
-    with open(tmp_op_file_path, "w") as f:
-        f.write(pyboost_op_header_str)
+    write_file(tmp_op_file_path, pyboost_op_header_str)
     check_change_and_replace_file(dst_op_file_path, tmp_op_file_path)
 
 
@@ -68,8 +68,7 @@ def generate_pyboost_op_header_code(header_data: FuncHeaderData):
         pathlib.Path(op_header_dir_path).mkdir(parents=True, exist_ok=True)
         tmp_op_file_path = os.path.join(op_header_dir_path, "tmp_" + header_data.operator_name + ".h")
         dst_op_file_path = os.path.join(op_header_dir_path, header_data.operator_name + ".h")
-        with open(tmp_op_file_path, "w") as f:
-            f.write(pyboost_op_str)
+        write_file(tmp_op_file_path, pyboost_op_str)
         check_change_and_replace_file(dst_op_file_path, tmp_op_file_path)
 
 
@@ -159,7 +158,7 @@ def generate_pyboost_op_source_code(work_path, op_proto, template_paths, convert
     operator_name = converter.functional_name
     call_args_tensor = []
     for type, arg_name in zip(converter.call_args_types, converter.call_args):
-        if type == "TensorPtr" or type == "std::optional<TensorPtr>":
+        if type in ("TensorPtr", "std::optional<TensorPtr>"):
             call_args_tensor.append(arg_name)
 
     for call_tpl, src_tpl, view_tpl, cus_tpl, gen_path in zip(template_paths.op_call_template_path,
@@ -251,8 +250,7 @@ def generate_pyboost_op_source_code(work_path, op_proto, template_paths, convert
         op_header_dir_path = os.path.join(work_path, gen_path)
         tmp_op_source_file_path = os.path.join(op_header_dir_path, "tmp_" + operator_name.lower() + ".cc")
         dst_op_source_file_path = os.path.join(op_header_dir_path, operator_name.lower() + ".cc")
-        with open(tmp_op_source_file_path, "w") as f:
-            f.write(pyboost_op_source_str)
+        write_file(tmp_op_source_file_path, pyboost_op_source_str)
         check_change_and_replace_file(dst_op_source_file_path, tmp_op_source_file_path)
 
 
@@ -270,8 +268,7 @@ def generate_pyboost_op_register_source_code(work_path, all_ops, all_operator_na
     pathlib.Path(op_register_dir_path).mkdir(parents=True, exist_ok=True)
     tmp_op_register_file_path = os.path.join(op_register_dir_path, "tmp_" + "op_register.cc")
     dst_op_register_file_path = os.path.join(op_register_dir_path, "op_register.cc")
-    with open(tmp_op_register_file_path, "w") as f:
-        f.write(op_register_file_str)
+    write_file(tmp_op_register_file_path, op_register_file_str)
     check_change_and_replace_file(dst_op_register_file_path, tmp_op_register_file_path)
 
 
@@ -355,8 +352,7 @@ def generate_ops_header_files(work_path, yaml_data):
     pathlib.Path(dir_path).mkdir(parents=True, exist_ok=True)
     dst_file_path = os.path.join(dir_path, "gen_ops_def.h")
     tmp_file_path = os.path.join(dir_path, "tmp_gen_ops_def.h")
-    with open(tmp_file_path, "w") as f:
-        f.write(ops_header_file)
+    write_file(tmp_file_path, ops_header_file)
     check_change_and_replace_file(dst_file_path, tmp_file_path)
 
 
@@ -490,8 +486,7 @@ def generate_pyboost_functions(work_path, yaml_data):
     pathlib.Path(dir_path).mkdir(parents=True, exist_ok=True)
     tmp_file_path = os.path.join(dir_path, "tmp_pyboost_functions.cc")
     dst_file_path = os.path.join(dir_path, "pyboost_functions.cc")
-    with open(tmp_file_path, "w") as f:
-        f.write(pyboost_func_file)
+    write_file(tmp_file_path, pyboost_func_file)
     check_change_and_replace_file(dst_file_path, tmp_file_path)
 
 
@@ -555,8 +550,7 @@ def generate_pyboost_grad_functions(work_path, yaml_data):
     pathlib.Path(dir_path).mkdir(parents=True, exist_ok=True)
     tmp_file_path = os.path.join(dir_path, "tmp_pyboost_grad_functions.cc")
     dst_file_path = os.path.join(dir_path, "pyboost_grad_functions.cc")
-    with open(tmp_file_path, "w") as f:
-        f.write(pyboost_func_file)
+    write_file(tmp_file_path, pyboost_func_file)
     check_change_and_replace_file(dst_file_path, tmp_file_path)
 
 
@@ -706,6 +700,7 @@ class OpTemplateConverter:
             value_tuple_convert.insert(0, '// ValueTuple to std::vector\n')
         return call_args_after_convert, value_tuple_convert, const_number_convert
 
+
 def delete_residual_files(work_path, all_operator_name, code_generate_path_list):
     """
     Delete residual files.
@@ -727,6 +722,7 @@ def delete_residual_files(work_path, all_operator_name, code_generate_path_list)
                     file_path = os.path.join(code_generate_path, file)
                     if os.path.exists(file_path):
                         os.remove(file_path)
+
 
 def generate_pyboost_op_cpp_code(work_path, yaml_data):
     """
@@ -797,9 +793,35 @@ def gen_pyboost_inner_prim(work_path, op_yaml_data):
     pathlib.Path(dir_path).mkdir(parents=True, exist_ok=True)
     dst_file_path = os.path.join(dir_path, "pyboost_inner_prim.py")
     tmp_file_path = os.path.join(dir_path, "tmp_pyboost_inner_prim.py")
-    with open(tmp_file_path, "w") as f:
-        f.write(gen_header + gen_py)
+    write_file(tmp_file_path, gen_header + gen_py)
     check_change_and_replace_file(dst_file_path, tmp_file_path)
+
+
+def process_args(args):
+    """
+    process args
+    :return: func args, input_args
+    """
+    func_args = []
+    input_args = []
+    for arg_name, arg_info in args.items():
+        init_value = arg_info.get('init')
+        arg_handler = arg_info.get('arg_handler')
+        input_arg = arg_name
+        if arg_handler is not None and arg_handler != 'dtype_to_type_id':
+            input_arg = 'converted_' + arg_name
+        if init_value is None:
+            default_key = 'default'
+            default_value = arg_info.get(default_key)
+            default_value = '=' + str(default_value) if default_key in arg_info else ''
+            func_args.append(arg_name + default_value)
+            input_args.append(input_arg)
+        else:
+            if init_value == 'NO_VALUE':
+                func_args.append(f"""{arg_name}""")
+            else:
+                func_args.append(f"""{arg_name}={init_value}""")
+    return func_args, input_args
 
 
 def gen_pyboost_py_func(work_path, op_yaml_data, doc_data):
@@ -811,7 +833,6 @@ def gen_pyboost_py_func(work_path, op_yaml_data, doc_data):
     for operator_name, operator_desc in doc_data.items():
         desc = operator_desc.get("description")
         op_desc_dict[operator_name] = desc
-    func_def = None
     for operator_name, operator_data in op_yaml_data.items():
         op_proto = OpProto.load_from_yaml(operator_name, operator_data)
         if not op_proto.is_pyboost:
@@ -834,25 +855,7 @@ def gen_pyboost_py_func(work_path, op_yaml_data, doc_data):
             func_impl_name = func_name[:-1]
         description = op_desc_dict.get(operator_name)
         args = operator_data.get('args')
-        func_args = []
-        input_args = []
-        for arg_name, arg_info in args.items():
-            init_value = arg_info.get('init')
-            arg_handler = arg_info.get('arg_handler')
-            input_arg = arg_name
-            if arg_handler is not None and arg_handler != 'dtype_to_type_id':
-                input_arg = 'converted_' + arg_name
-            if init_value is None:
-                default_key = 'default'
-                default_value = arg_info.get(default_key)
-                default_value = '=' + str(default_value) if default_key in arg_info else ''
-                func_args.append(arg_name + default_value)
-                input_args.append(input_arg)
-            else:
-                if init_value == 'NO_VALUE':
-                    func_args.append(f"""{arg_name}""")
-                else:
-                    func_args.append(f"""{arg_name}={init_value}""")
+        func_args, input_args = process_args(args)
         gen_py += template.PYBOOST_PY_FUNC_TEMPLATE.replace(func_name=func_name, description=description,
                                                             func_args=func_args,
                                                             func_impl_name=func_impl_name,

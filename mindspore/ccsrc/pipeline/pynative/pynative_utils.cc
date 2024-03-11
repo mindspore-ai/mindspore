@@ -683,28 +683,6 @@ tensor::TensorPtr Common::ConvertToContiguousTensor(const tensor::TensorPtr &ten
   return GetContiguousTensor(tensor, device_target, requires_grad);
 }
 
-ValuePtr CreateTensorByConstantValue(const ValuePtr &value) {
-  MS_EXCEPTION_IF_NULL(value);
-  auto type = value->type();
-  if (PyNativeAlgo::Common::IsTensor(value, true) || value->isa<Number>() || value->isa<None>() ||
-      (type != nullptr && type->isa<String>())) {
-    return value;
-  }
-  tensor::TensorPtr tensor_ptr = nullptr;
-  if (value->isa<Scalar>()) {
-    tensor_ptr = ScalarToTensor(value->cast<ScalarPtr>());
-  } else if (value->isa<ValueTuple>()) {
-    tensor_ptr = opt::CreateTupleTensor(value->cast<ValueTuplePtr>());
-  } else if (value->isa<ValueList>()) {
-    tensor_ptr = opt::CreateTupleTensor(std::make_shared<ValueTuple>(value->cast<ValueListPtr>()->value()));
-  } else {
-    MS_LOG(EXCEPTION) << "The value should be a scalar or value tuple, but get type " << value->type_name()
-                      << ", value " << value->ToString();
-  }
-  MS_EXCEPTION_IF_NULL(tensor_ptr);
-  return tensor_ptr;
-}
-
 TensorPtr Common::ConvertStubNodeToTensor(const ValuePtr &v, bool need_contiguous, bool requires_grad) {
   const auto &tensor = StubNodeToTensor(v);
   MS_EXCEPTION_IF_NULL(tensor);
@@ -2238,6 +2216,28 @@ CallBackFn AutoGrad::CreateGraphCallBack(const FuncGraphPtr &call_graph, const s
     return utils::cast<VectorRef>((*run)(arg_list));
   };
   return fn;
+}
+
+PrimitivePyPtr AutoGrad::BuildBpropCutPrim(const PrimitivePtr &prim) {
+  MS_EXCEPTION_IF_NULL(prim);
+  auto prim_py = prim->cast<PrimitivePyPtr>();
+  MS_EXCEPTION_IF_NULL(prim_py);
+  auto bprop_cut = std::make_shared<PrimitivePy>("bprop_cut");
+  bprop_cut->CopyHookFunction(prim_py);
+  prim_py->AddBpropCutPrim(bprop_cut);
+  if (prim->HasAttr("cell_id")) {
+    auto cell_id = GetValue<std::string>(prim->GetAttr("cell_id"));
+    if (!cell_id.empty()) {
+      (void)bprop_cut->AddAttr("cell_hook", MakeValue(true));
+      (void)bprop_cut->AddAttr("cell_id", MakeValue(cell_id));
+    }
+  }
+  // Only custom op need add this attr, hook function not need.
+  if (prim->HasAttr("custom_op_bprop")) {
+    (void)bprop_cut->AddAttr("custom_op_bprop", MakeValue(true));
+  }
+  (void)bprop_cut->AddAttr("custom_op_name", MakeValue(prim->name()));
+  return bprop_cut;
 }
 
 void AutoGrad::ClearAutoGradStaticCache() { jit_call_graph_compile_cache_.clear(); }

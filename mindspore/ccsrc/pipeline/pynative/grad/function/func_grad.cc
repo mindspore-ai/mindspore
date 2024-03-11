@@ -504,24 +504,7 @@ BackwardNodePtr FuncGrad::BuildCustomBackwardNode(const PrimitivePtr &prim, cons
 BackwardNodePtr FuncGrad::BuildHookBackwardNode(const PrimitivePtr &prim, const ValuePtrList &flatten_inputs,
                                                 const OpGradInfoPtr &op_grad_info) {
   MS_EXCEPTION_IF_NULL(prim);
-  auto prim_py = prim->cast<PrimitivePyPtr>();
-  MS_EXCEPTION_IF_NULL(prim_py);
-  auto bprop_cut = std::make_shared<PrimitivePy>("bprop_cut");
-  bprop_cut->CopyHookFunction(prim_py);
-  prim_py->AddBpropCutPrim(bprop_cut);
-  if (prim->HasAttr("cell_id")) {
-    auto cell_id = GetValue<std::string>(prim->GetAttr("cell_id"));
-    if (!cell_id.empty()) {
-      (void)bprop_cut->AddAttr("cell_hook", MakeValue(true));
-      (void)bprop_cut->AddAttr("cell_id", MakeValue(cell_id));
-    }
-  }
-  // Only custom op need add this attr, hook function not need.
-  if (prim->HasAttr("custom_op_bprop")) {
-    (void)bprop_cut->AddAttr("custom_op_bprop", MakeValue(true));
-  }
-  (void)bprop_cut->AddAttr("custom_op_name", MakeValue(prim->name()));
-
+  auto bprop_cut = PyNativeAlgo::AutoGrad::BuildBpropCutPrim(prim);
   VectorRef args = GeneratePythonArgs(op_grad_info->input_value, op_grad_info->out_value);
   auto fn = std::make_shared<HookBackwardNode>(prim->name(), bprop_cut, std::move(args), op_grad_info->output_size);
   fn->UpdateNextEdges(flatten_inputs);

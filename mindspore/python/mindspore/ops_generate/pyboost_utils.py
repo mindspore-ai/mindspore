@@ -187,7 +187,7 @@ def get_input_dtype(dtype: str, optional):
     Convert type
     """
     # add more type here
-    kValueTuplePtr = 'ValueTuplePtr'
+    value_tuple = 'ValueTuplePtr'
     type_convert = {
         'int': 'Int64ImmPtr',
         'float': 'FP32ImmPtr',
@@ -195,16 +195,16 @@ def get_input_dtype(dtype: str, optional):
         'number': 'ScalarPtr',
         'str': 'StringImmPtr',
         'tensor': 'TensorPtr',
-        'tuple[int]': kValueTuplePtr,
-        'tuple[float]': kValueTuplePtr,
-        'tuple[bool]': kValueTuplePtr,
-        'tuple[tensor]': kValueTuplePtr,
-        'list[int]': kValueTuplePtr,
-        'list[float]': kValueTuplePtr,
-        'list[bool]': kValueTuplePtr,
-        'list[tensor]': kValueTuplePtr,
+        'tuple[int]': value_tuple,
+        'tuple[float]': value_tuple,
+        'tuple[bool]': value_tuple,
+        'tuple[tensor]': value_tuple,
+        'list[int]': value_tuple,
+        'list[float]': value_tuple,
+        'list[bool]': value_tuple,
+        'list[tensor]': value_tuple,
     }
-    kValueTuplePtrOptional = 'std::optional<ValueTuplePtr>'
+    value_tuple_optional = 'std::optional<ValueTuplePtr>'
     optional_type_convert = {
         'int': 'std::optional<Int64ImmPtr>',
         'float': 'std::optional<FP32ImmPtr>',
@@ -212,9 +212,9 @@ def get_input_dtype(dtype: str, optional):
         'number': 'std::optional<ScalarPtr>',
         'str': 'std::optional<StringImmPtr>',
         'tensor': 'std::optional<TensorPtr>',
-        'tuple[int]': kValueTuplePtrOptional,
-        'tuple[float]': kValueTuplePtrOptional,
-        'tuple[bool]': kValueTuplePtrOptional,
+        'tuple[int]': value_tuple_optional,
+        'tuple[float]': value_tuple_optional,
+        'tuple[bool]': value_tuple_optional,
     }
     if optional:
         if dtype in optional_type_convert:
@@ -283,7 +283,6 @@ def convert_python_func_name_to_c(func_name: str) -> str:
 
 def get_const_number_convert(arg_name, op_arg):
     cpp_type = number_input_to_cpp_type(op_arg.arg_dtype)
-    print(arg_name, op_arg.is_type_id)
     if op_arg.is_type_id:
         return f"TypeId {arg_name}_imm = static_cast<TypeId>(GetValue<{cpp_type}>({arg_name}));\n"
     return f"auto {arg_name}_imm = GetValue<{cpp_type}>({arg_name});\n"

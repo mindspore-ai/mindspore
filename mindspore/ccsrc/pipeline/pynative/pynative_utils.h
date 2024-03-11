@@ -225,6 +225,7 @@ struct AutoGrad {
   static void BuildFakeBpropCNode(const CNodePtr &cnode, std::vector<CNodePtr> *outputs);
   static CallBackFn CreateGraphCallBack(const FuncGraphPtr &call_graph, const std::string &cache_key,
                                         const GraphCallCondition &graph_call_condition);
+  static PrimitivePyPtr BuildBpropCutPrim(const PrimitivePtr &prim);
   static void ClearAutoGradStaticCache();
 };
 

@@ -39,7 +39,6 @@ BaseShapePtr CalculateRangeShapeSize(const ValuePtr start_ptr, const ValuePtr li
   auto start = start_opt.value();
   auto limit = limit_opt.value();
   auto delta = delta_opt.value();
-
   if (delta == T(0)) {
     MS_EXCEPTION(ValueError) << "For RangeExt, delta cannot be equal to zero.";
   }

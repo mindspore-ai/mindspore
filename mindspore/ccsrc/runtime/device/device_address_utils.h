@@ -30,8 +30,8 @@ namespace runtime {
 // Extract the methods related to DeviceAddress in GraphCompiler to the DeviceAddressUtils class.
 class BACKEND_EXPORT DeviceAddressUtils {
  public:
-  static void CopyNonTensorDataToDevice(const device::DeviceContext *device_context,
-                                        const device::DeviceAddressPtr &device_address);
+  static void CopyNoneTensorDataToDevice(const device::DeviceContext *device_context,
+                                         const device::DeviceAddressPtr &device_address, const ShapeVector &shape = {});
   static void CreateParameterDeviceAddress(const DeviceContext *device_context, const KernelGraphPtr &graph);
   static device::DeviceAddressPtrList CreateDeviceAddressForTensorValue(const DeviceContext *device_context,
                                                                         const ValuePtr &node_value, size_t output_idx,
@@ -102,7 +102,7 @@ class BACKEND_EXPORT DeviceAddressUtils {
     device_address->set_from_persistent_mem(true);
 
     if (device_address->GetPtr() == nullptr) {
-      CopyNonTensorDataToDevice(device_context, device_address);
+      CopyNoneTensorDataToDevice(device_context, device_address);
     }
     MS_LOG(DEBUG) << "Create input " << abs->ToString() << " device address for " << index
                   << "th input, Shape: " << shape->ToString() << ", Type: " << type->ToString()

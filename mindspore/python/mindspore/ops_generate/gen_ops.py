@@ -19,9 +19,10 @@ import os
 import re
 import shutil
 import pathlib
+import logging
 import gen_utils
 from gen_utils import (py_licence_str, cc_license_str, check_change_and_replace_file, merge_files,
-                       safe_load_yaml, convert_dtype_str)
+                       safe_load_yaml, convert_dtype_str, write_file)
 from pyboost_utils import get_pyboost_name, is_pyboost_enable, AclnnUtils, get_dtypes
 import template
 from template import CppTemplate
@@ -264,8 +265,9 @@ def generate_cc_op_signature(args_signature, args_name):
     same_dtype_groups, _ = get_same_dtype_groups(args_signature, args_name)
     for arg_name in args_name:
         enum_rw = signature_get_rw_label_cc(arg_name, write_list, read_list, ref_list)
-        enum_dtype = signature_get_enum_dtype_cc(same_dtype_groups[arg_name])
-        signature = f"""Signature("{arg_name}", {enum_rw}, SignatureEnumKind::kKindPositionalKeyword, nullptr, {enum_dtype}),\n"""
+        enum_dtype = signature_get_enum_dtype_cc(same_dtype_groups.get(arg_name))
+        signature = f"""Signature("{arg_name}", {enum_rw}, \
+         SignatureEnumKind::kKindPositionalKeyword, nullptr, {enum_dtype}),\n """
         signature_code += signature
     return signature_code
 
@@ -712,8 +714,10 @@ namespace mindspore::ops {
             lite_ops_h_gen += f"""  void set_{arg_name}(const {dtype} &{arg_name});\n"""
             lite_ops_h_gen += f"""  {dtype} get_{arg_name}() const;\n"""
 
-            lite_ops_cc_gen += f"""void {op_name}::set_{arg_name}(const {dtype} &{arg_name}) {{ (void)this->AddAttr("{arg_name}", api::MakeValue({arg_name})); }}\n\n"""
-            lite_ops_cc_gen += f"""{dtype} {op_name}::get_{arg_name}() const {{ return GetValue<{dtype}>(GetAttr("{arg_name}")); }}\n\n"""
+            lite_ops_cc_gen += f"""void {op_name}::set_{arg_name}(const {dtype} &{arg_name}) \
+            {{ (void)this->AddAttr("{arg_name}", api::MakeValue({arg_name})); }}\n\n"""
+            lite_ops_cc_gen += f"""{dtype} {op_name}::get_{arg_name}() const \
+            {{ return GetValue<{dtype}>(GetAttr("{arg_name}")); }}\n\n"""
 
             op_name = _get_op_name(operator_name, operator_data)
         lite_ops_cc_gen += f"""REGISTER_PRIMITIVE_C(kName{op_name}, {op_name});\n"""
@@ -831,8 +835,7 @@ def generate_ops_prim_file(work_path, yaml_str, doc_str, file_pre):
     tmp_py_path = os.path.join(work_path, f'mindspore/python/mindspore/ops/auto_generate/tmp_{file_pre}_ops_prim.py')
     pyboost_import_header = generate_pyboost_import_header(yaml_str)
     py_prim = generate_py_primitive(yaml_str, doc_str)
-    with open(tmp_py_path, 'w') as py_file:
-        py_file.write(py_licence_str + ops_py_prim_header + pyboost_import_header + py_prim)
+    write_file(tmp_py_path, py_licence_str + ops_py_prim_header + pyboost_import_header + py_prim)
     check_change_and_replace_file(py_path, tmp_py_path)
 
 
@@ -840,9 +843,9 @@ def generate_ops_def_file(work_path, yaml_str, doc_str, file_pre):
     py_path = os.path.join(work_path, f'mindspore/python/mindspore/ops/auto_generate/{file_pre}_ops_def.py')
     tmp_py_path = os.path.join(work_path, f'mindspore/python/mindspore/ops/auto_generate/tmp_{file_pre}_ops_def.py')
     py_func = generate_py_op_func(yaml_str, doc_str)
-    with open(tmp_py_path, 'w') as py_file:
-        py_file.write(py_licence_str + ops_py_def_header + py_func)
+    write_file(tmp_py_path, py_licence_str + ops_py_def_header + py_func)
     check_change_and_replace_file(py_path, tmp_py_path)
+
 
 def generate_ops_py_files(work_path, yaml_str, doc_str, file_pre):
     """
@@ -860,39 +863,34 @@ def generate_ops_cc_files(work_path, yaml_str):
     op_cc_path = os.path.join(work_path, 'mindspore/core/ops/auto_generate/gen_ops_def.cc')
     tmp_op_cc_path = os.path.join(work_path, 'mindspore/core/ops/auto_generate/tmp_gen_ops_def.cc')
     cc_def_code = generate_cc_opdef(yaml_str)
-    with open(tmp_op_cc_path, 'w') as cc_file:
-        cc_file.write(cc_license_str + cc_def_code)
+    write_file(tmp_op_cc_path, cc_license_str + cc_def_code)
     check_change_and_replace_file(op_cc_path, tmp_op_cc_path)
 
     # ops_primitive
     op_prim_path = os.path.join(work_path, 'mindspore/core/ops/auto_generate/gen_ops_primitive.h')
     tmp_op_prim_path = os.path.join(work_path, 'mindspore/core/ops/auto_generate/tmp_gen_ops_primitive.h')
     op_prim_code = generate_op_prim_opdef(yaml_str)
-    with open(tmp_op_prim_path, 'w') as op_prim_file:
-        op_prim_file.write(cc_license_str + op_prim_code)
+    write_file(tmp_op_prim_path, cc_license_str + op_prim_code)
     check_change_and_replace_file(op_prim_path, tmp_op_prim_path)
 
     # lite_h_ops
     lite_ops_h_path = os.path.join(work_path, 'mindspore/core/ops/auto_generate/gen_lite_ops.h')
     tmp_lite_ops_h_path = os.path.join(work_path, 'mindspore/core/ops/auto_generate/tmp_gen_lite_ops.h')
     lite_ops_h_code, lite_ops_cc_code = generate_lite_ops(yaml_str)
-    with open(tmp_lite_ops_h_path, 'w') as lite_ops_h_file:
-        lite_ops_h_file.write(cc_license_str + lite_ops_h_code)
+    write_file(tmp_lite_ops_h_path, cc_license_str + lite_ops_h_code)
     check_change_and_replace_file(lite_ops_h_path, tmp_lite_ops_h_path)
 
     # lite_cc_ops
     lite_ops_cc_path = os.path.join(work_path, 'mindspore/core/ops/auto_generate/gen_lite_ops.cc')
     tmp_lite_ops_cc_path = os.path.join(work_path, 'mindspore/core/ops/auto_generate/tmp_gen_lite_ops.cc')
-    with open(tmp_lite_ops_cc_path, 'w') as lite_ops_cc_file:
-        lite_ops_cc_file.write(cc_license_str + lite_ops_cc_code)
+    write_file(tmp_lite_ops_cc_path, cc_license_str + lite_ops_cc_code)
     check_change_and_replace_file(lite_ops_cc_path, tmp_lite_ops_cc_path)
 
     # ops_names
     op_name_path = os.path.join(work_path, 'mindspore/core/ops/auto_generate/gen_ops_name.h')
     tmp_op_name_path = os.path.join(work_path, 'mindspore/core/ops/auto_generate/tmp_gen_ops_name.h')
     op_name_code = generate_op_name_opdef(yaml_str)
-    with open(tmp_op_name_path, 'w') as op_name_file:
-        op_name_file.write(cc_license_str + op_name_code)
+    write_file(tmp_op_name_path, cc_license_str + op_name_code)
     check_change_and_replace_file(op_name_path, tmp_op_name_path)
 
 
@@ -949,8 +947,7 @@ def generate_create_instance_helper_file(work_path, yaml_str):
     tmp_op_py_path = os.path.join(dst_dir, 'tmp_cpp_create_prim_instance_helper.py')
     py_labels = generate_op_labels(yaml_str)
     py_arg_default = generate_op_arg_default_value(yaml_str)
-    with open(tmp_op_py_path, 'w') as py_file:
-        py_file.write(py_licence_str + "\n" + py_arg_default + "\n\n" + py_labels + "\n")
+    write_file(tmp_op_py_path, py_licence_str + "\n" + py_arg_default + "\n\n" + py_labels + "\n")
     check_change_and_replace_file(op_py_path, tmp_op_py_path)
 
 
@@ -995,8 +992,7 @@ def generate_aclnn_reg_file(work_path, yaml_str):
     tmp_register_file = work_path + 'mindspore/ccsrc/plugin/device/ascend/kernel/opapi/tmp_aclnn_kernel_register.cc'
     register_file = work_path + 'mindspore/ccsrc/plugin/device/ascend/kernel/opapi/aclnn_kernel_register_auto.cc'
     reg_code = generate_aclnn_reg_code(yaml_str)
-    with open(tmp_register_file, 'w') as reg_file:
-        reg_file.write(cc_license_str + reg_code)
+    write_file(tmp_register_file, cc_license_str + reg_code)
     check_change_and_replace_file(register_file, tmp_register_file)
 
 
@@ -1060,7 +1056,6 @@ def main():
 if __name__ == "__main__":
     try:
         main()
-
+    # pylint: disable=broad-except
     except Exception as e:
-        print("Auto generate failed, err info:", e)
-        raise e
+        logging.critical("Auto generate failed, err info: %s", e)

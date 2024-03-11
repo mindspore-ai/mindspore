@@ -170,42 +170,6 @@ void CopyTensorDataToDevice(const tensor::TensorPtr &tensor, const AnfNodePtr &n
   }
 }
 
-void CopyNodeValueToDevice(const device::DeviceAddressPtr &device_address, const AnfNodePtr &node,
-                           const device::DeviceContext *device_context) {
-  MS_EXCEPTION_IF_NULL(device_address);
-  // Break copy data to device address if has the device_address has flag ignore.
-  if (TEST_FLAG(device_address->flag(), device::kDeviceAddressFlagIgnoreDevicePtr)) {
-    MS_LOG(DEBUG) << "Node " << node->DebugString() << " with address " << device_address
-                  << " has flag ignore device address, so skip copy tensor to device";
-    return;
-  }
-
-  MS_EXCEPTION_IF_NULL(device_context);
-  MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
-  if ((device_address->GetPtr() == nullptr) &&
-      (!device_context->device_res_manager_->AllocateMemory(device_address.get()))) {
-    MS_LOG(EXCEPTION) << "Allocate memory failed";
-  }
-
-  // Copy data from host to device.
-  const auto &kernel_tensor = device_address->kernel_tensor();
-  MS_EXCEPTION_IF_NULL(kernel_tensor);
-  auto data_size = kernel_tensor->size();
-  if (data_size == 0) {
-    MS_LOG(INFO) << "Node " << node->DebugString() << " is empty.";
-    return;
-  }
-  const void *node_value = kernel_tensor->GetValuePtr();
-  MS_EXCEPTION_IF_NULL(node_value);
-  auto data_type_id = kernel_tensor->dtype_id();
-  auto format = kernel_tensor->GetStringFormat();
-  MS_LOG(DEBUG) << "Copy to device, node:" << common::AnfAlgo::GetNodeDebugString(node);
-  if (!device_address->SyncHostToDevice(trans::GetRuntimePaddingShape(node, 0), data_size, data_type_id, node_value,
-                                        format)) {
-    MS_LOG(EXCEPTION) << "SyncHostToDevice failed";
-  }
-}
-
 void CopyValueNodeDataToDevice(const KernelGraphPtr &graph, const device::DeviceContext *device_context) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_LOG(DEBUG) << "Start";
@@ -226,8 +190,8 @@ void CopyValueNodeDataToDevice(const KernelGraphPtr &graph, const device::Device
     if (node_address->GetPtr() != nullptr) {
       continue;
     }
-
-    CopyNodeValueToDevice(node_address, value_node, device_context);
+    auto shape = trans::GetRuntimePaddingShape(value_node, 0);
+    runtime::DeviceAddressUtils::CopyNoneTensorDataToDevice(device_context, node_address, shape);
   }
   MS_LOG(DEBUG) << "End";
 }
