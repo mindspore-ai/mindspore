@@ -17,3 +17,7 @@
 	path = tests/st/networks/mindocr
 	url = https://gitee.com/mindspore-lab/mindocr.git
 	branch = overfit
+[submodule "tests/st/networks/mindone"]
+	path = tests/st/networks/mindone
+	url = https://gitee.com/mindspore-lab/mindone.git
+	branch = ms2.3

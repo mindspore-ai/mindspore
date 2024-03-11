@@ -32,9 +32,9 @@ import mindspore as ms
 from mindspore import load_checkpoint, set_context
 
 workspace = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.abspath(os.path.join(workspace, "mindocr")))
-os.system(f"git submodule init {os.path.join(workspace, 'mindocr')}")
-os.system(f"git submodule update {os.path.join(workspace, 'mindocr')}")
+if os.path.exists(os.path.join(workspace, "mindocr/tests")):
+    os.rename(os.path.join(workspace, "mindocr/tests"), os.path.join(workspace, "mindocr/mindocr_tests"))
+sys.path.insert(0, os.path.join(workspace, "mindocr"))
 
 data_dir = "/home/workspace/mindspore_dataset/overfit_test_data/"
 

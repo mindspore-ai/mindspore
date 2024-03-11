@@ -31,9 +31,9 @@ from mindspore.communication import get_group_size, get_rank, init
 from tests.st.utils import test_utils
 
 workspace = os.path.dirname(os.path.abspath(__file__))
+if os.path.exists(os.path.join(workspace, "mindcv/tests")):
+    os.rename(os.path.join(workspace, "mindcv/tests"), os.path.join(workspace, "mindcv/mindcv_tests"))
 sys.path.insert(0, os.path.join(workspace, "mindcv"))
-os.system(f"git submodule init {os.path.join(workspace, 'mindcv')}")
-os.system(f"git submodule update {os.path.join(workspace, 'mindcv')}")
 
 from mindcv.loss import create_loss
 from mindcv.models import create_model
