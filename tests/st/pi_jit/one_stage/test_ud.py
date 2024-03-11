@@ -31,7 +31,6 @@ cfg = {
 }
 
 
-@pytest.mark.skip(reason="Input using set cause random order problem")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
