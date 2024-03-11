@@ -79,7 +79,50 @@ def test_make_list():
     assert ret[2] == Tensor([3])
 
 
-@pytest.mark.skip(reason="DDE eliminate tuple input")
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_return_add_result_tuple():
+    """
+    Feature: One stage basic operation.
+    Description: Test one stage basic operation.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def construct(self, x, y):
+            return x + y
+
+    context.set_context(mode=context.PYNATIVE_MODE)
+    net = Net()
+    a = (1, 2, 3)
+    b = (4, 5, 6)
+    jit(net.construct, mode="PIJit", jit_config=cfg)
+    ret = net(a, b)
+    assert ret == (1, 2, 3, 4, 5, 6)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_return_add_result_list():
+    """
+    Feature: One stage basic operation.
+    Description: Test one stage basic operation.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def construct(self, x, y):
+            return x + y
+
+    context.set_context(mode=context.PYNATIVE_MODE)
+    net = Net()
+    a = [1, 2, 3]
+    b = [4, 5, 6]
+    jit(net.construct, mode="PIJit", jit_config=cfg)
+    ret = net(a, b)
+    assert ret == [1, 2, 3, 4, 5, 6]
+
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -105,7 +148,6 @@ def test_tuple_slice():
     assert ret[1] == Tensor([2])
 
 
-@pytest.mark.skip(reason="Graph strict mode handle slice wrong")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -131,7 +173,6 @@ def test_list_slice():
     assert ret[1] == Tensor([2])
 
 
-@pytest.mark.skip(reason="Graph strict mode handle slice wrong")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -157,7 +198,6 @@ def test_list_slice_with_default_parameter():
     assert ret[1] == Tensor([2])
 
 
-@pytest.mark.skip(reason="Graph strict mode handle slice wrong")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -184,7 +224,6 @@ def test_list_slice_with_default_parameter_2():
     assert ret[2] == Tensor([3])
 
 
-@pytest.mark.skip(reason="Graph strict mode handle slice wrong")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
