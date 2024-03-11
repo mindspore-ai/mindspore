@@ -247,10 +247,10 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
     MakeSubstitution(std::make_shared<VirtualOutputEliminater>(), "virtual_output_eliminate", prim::kPrimVirtualOutput);
 
   // PipelineSplit
-  parallel_virtual_node_ =
-    MakeSubstitution(std::make_shared<ParallelVirtualNodeEliminater>(), "parallel_virtual_node",
-                     {prim::kPrimVirtualAssignAdd, prim::kPrimVirtualPipelineEnd, prim::kPrimVirtualAccuGrad,
-                      prim::kPrimMirrorMicroStep, prim::kPrimVirtualAdd, prim::kPrimMirrorMiniStep});
+  parallel_virtual_node_ = MakeSubstitution(
+    std::make_shared<ParallelVirtualNodeEliminater>(), "parallel_virtual_node",
+    {prim::kPrimVirtualAssignAdd, prim::kPrimVirtualPipelineEnd, prim::kPrimVirtualAccuGrad, prim::kPrimMirrorMicroStep,
+     prim::kPrimVirtualAdd, prim::kPrimMirrorMiniStep, prim::kPrimMirrorSilentCheck});
 
   // Convert
   print_tuple_wrapper_ =

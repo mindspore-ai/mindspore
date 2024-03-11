@@ -165,6 +165,7 @@ GVAR_DEF(PrimitivePtr, kPrimMatrixBandPart, std::make_shared<Primitive>(kMatrixB
 GVAR_DEF(PrimitivePtr, kPrimNonZeroWithValue, std::make_shared<Primitive>("NonZeroWithValue"));
 GVAR_DEF(PrimitivePtr, kPrimNonZeroWithValueShape, std::make_shared<Primitive>("NonZeroWithValueShape"));
 GVAR_DEF(PrimitivePtr, kPrimNoRepeatNGram, std::make_shared<Primitive>("NoRepeatNGram"));
+GVAR_DEF(PrimitivePtr, kPrimGenerateEodMask, std::make_shared<Primitive>("GenerateEodMask"));
 GVAR_DEF(PrimitivePtr, kPrimRealInner, std::make_shared<Primitive>(kRealInnerOpName));
 GVAR_DEF(PrimitivePtr, kPrimFillV2, std::make_shared<Primitive>(kFillV2OpName));
 GVAR_DEF(PrimitivePtr, kPrimFills, std::make_shared<Primitive>(kFillsOpName));
