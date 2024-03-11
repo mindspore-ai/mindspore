@@ -700,7 +700,7 @@ Status DataQueueOp::SendRowToTdt(TensorRow curr_row, bool is_profiling_enable, i
     DATA_INFO data_info;
     (void)std::transform(curr_row.begin(), curr_row.end(), std::back_inserter(data_info),
                          [](const std::shared_ptr<Tensor> &ts) { return std::make_pair(ts->type(), ts->shape()); });
-    RETURN_IF_NOT_OK(data_info_queue_ptr_->Add(data_info));
+    RETURN_IF_NOT_OK(data_info_queue_ptr_->Add(std::move(data_info)));
   }
   return Status::OK();
 }

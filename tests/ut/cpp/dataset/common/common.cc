@@ -106,7 +106,7 @@ std::shared_ptr<mindspore::dataset::BatchOp> DatasetOpTesting::Batch(int32_t bat
 
 std::shared_ptr<mindspore::dataset::RepeatOp> DatasetOpTesting::Repeat(int repeat_cnt) {
   std::shared_ptr<mindspore::dataset::RepeatOp> op = std::make_shared<mindspore::dataset::RepeatOp>(repeat_cnt);
-  return std::move(op);
+  return op;
 }
 
 std::shared_ptr<mindspore::dataset::TFReaderOp> DatasetOpTesting::TFReader(std::string file, int num_works) {
@@ -118,9 +118,9 @@ std::shared_ptr<mindspore::dataset::TFReaderOp> DatasetOpTesting::TFReader(std::
   std::vector<std::string> files = {file};
   std::shared_ptr<mindspore::dataset::TFReaderOp> so = std::make_shared<mindspore::dataset::TFReaderOp>(
     num_works, worker_connector_size, 0, files, std::make_unique<mindspore::dataset::DataSchema>(), op_connector_size,
-    columns_to_load, false, 1, 0, false);
+    columns_to_load, false, 1, 0, false, CompressionType::NONE, true);
   (void)so->Init();
-  return std::move(so);
+  return so;
 }
 
 std::shared_ptr<mindspore::dataset::ExecutionTree> DatasetOpTesting::Build(
@@ -135,7 +135,7 @@ std::shared_ptr<mindspore::dataset::ExecutionTree> DatasetOpTesting::Build(
       tree->AssignRoot(ops[i]);
     }
   }
-  return std::move(tree);
+  return tree;
 }
 
 #ifdef __cplusplus

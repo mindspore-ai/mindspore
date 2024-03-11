@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,17 +34,27 @@ namespace dataset {
 
 MapNode::MapNode(std::shared_ptr<DatasetNode> child, std::vector<std::shared_ptr<TensorOperation>> operations,
                  std::vector<std::string> input_columns, std::vector<std::string> output_columns,
-                 std::shared_ptr<DatasetCache> cache, std::vector<std::shared_ptr<DSCallback>> callbacks,
+                 const std::shared_ptr<DatasetCache> &cache, std::vector<std::shared_ptr<DSCallback>> callbacks,
                  ManualOffloadMode offload, std::shared_ptr<PythonMultiprocessingRuntime> python_mp)
-    : operations_(operations),
-      input_columns_(input_columns),
-      output_columns_(output_columns),
-      DatasetNode(std::move(cache)),
-      callbacks_(callbacks),
+    : operations_(std::move(operations)),
+      input_columns_(std::move(input_columns)),
+      output_columns_(std::move(output_columns)),
+      DatasetNode(cache),
+      callbacks_(std::move(callbacks)),
       offload_(offload),
       python_mp_(std::move(python_mp)) {
-  this->AddChild(child);
+  this->AddChild(std::move(child));
 }
+
+MapNode::MapNode(std::vector<std::shared_ptr<TensorOperation>> operations, std::vector<std::string> input_columns,
+                 std::vector<std::string> output_columns)
+    : operations_(std::move(operations)),
+      input_columns_(std::move(input_columns)),
+      output_columns_(std::move(output_columns)),
+      DatasetNode(nullptr),
+      callbacks_({}),
+      offload_(ManualOffloadMode::kUnspecified),
+      python_mp_(nullptr) {}
 
 std::shared_ptr<DatasetNode> MapNode::Copy() {
   std::vector<std::shared_ptr<TensorOperation>> operations = operations_;

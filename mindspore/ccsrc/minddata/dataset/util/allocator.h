@@ -51,7 +51,7 @@ class Allocator {
   using propagate_on_container_move_assignment = std::true_type;
   using propagate_on_container_swap = std::true_type;
 
-  explicit Allocator(const std::shared_ptr<MemoryPool> &b) : pool_(b) {}
+  explicit Allocator(std::shared_ptr<MemoryPool> b) : pool_(std::move(b)) {}
 
   ~Allocator() = default;
 
@@ -89,6 +89,7 @@ class Allocator {
  private:
   std::shared_ptr<MemoryPool> pool_;
 };
+
 /// \brief It is a wrapper of unique_ptr with a custom Allocator class defined above
 template <typename T, typename C = std::allocator<T>, typename... Args>
 Status MakeUnique(std::unique_ptr<T[], std::function<void(T *)>> *out, C alloc, size_t n, Args &&... args) {

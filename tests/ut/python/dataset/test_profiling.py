@@ -194,7 +194,7 @@ class TestMinddataProfilingManager:
         with open(pipeline_file) as f:
             data = json.load(f)
             op_info = data["op_info"]
-            assert len(op_info) == 5
+            assert len(op_info) == 6
             for i in range(5):
                 if op_info[i]["op_type"] != "ZipOp":
                     assert "size" in op_info[i]["metrics"]["output_queue"]
@@ -203,8 +203,8 @@ class TestMinddataProfilingManager:
                     # Note: Zip is an inline op and hence does not have metrics information
                     assert op_info[i]["metrics"] is None
 
-        # Confirm CPU util JSON file content, when 5 ops are in the pipeline JSON file
-        self.confirm_cpuutil(cpu_util_file, 5)
+        # Confirm CPU util JSON file content, when 6 ops are in the pipeline JSON file
+        self.confirm_cpuutil(cpu_util_file, 6)
 
         # Confirm dataset iterator file content
         self.confirm_dataset_iterator_file(dataset_iterator_file, 12)

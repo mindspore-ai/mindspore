@@ -24,6 +24,7 @@ IMAGENET_TFFILE_DIR = ["../data/dataset/test_tf_file_3_images2/train-0000-of-000
 MNIST_DATA_DIR = "../data/dataset/testMnistData"
 MIND_CV_FILE_NAME = "../data/mindrecord/testMindDataSet/testImageNetData/imagenet.mindrecord"
 SCHEMA_FILE = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
+SCHEMA2_FILE = "../data/dataset/test_tf_file_3_images2/datasetSchema.json"
 MANIFEST_DATA_FILE = "../data/dataset/testManifestData/test.manifest"
 CIFAR10_DATA_DIR = "../data/dataset/testCifar10Data"
 CIFAR100_DATA_DIR = "../data/dataset/testCifar100Data"
@@ -77,7 +78,8 @@ def test_imagenet_tf_file_dataset_size():
     assert ds_shard_2_0.get_dataset_size() == 6
     assert len(ds_shard_2_0) == 6
 
-    ds_shard_3_0 = ds.TFRecordDataset(IMAGENET_TFFILE_DIR, num_shards=3, shard_id=0, shard_equal_rows=True)
+    ds_shard_3_0 = ds.TFRecordDataset(IMAGENET_TFFILE_DIR, schema=SCHEMA2_FILE, num_shards=3, shard_id=0,
+                                      shard_equal_rows=True)
     assert ds_shard_3_0.get_dataset_size() == 4
     assert len(ds_shard_3_0) == 4
 
@@ -88,7 +90,7 @@ def test_imagenet_tf_file_dataset_size():
     assert len(ds_shard_3_0) == count
 
     # shard_equal_rows is set to False therefore, get_dataset_size must return count
-    ds_shard_4_0 = ds.TFRecordDataset(IMAGENET_TFFILE_DIR, num_shards=4, shard_id=0)
+    ds_shard_4_0 = ds.TFRecordDataset(IMAGENET_TFFILE_DIR, schema=SCHEMA2_FILE, num_shards=4, shard_id=0)
     count = 0
     for _ in ds_shard_4_0.create_dict_iterator(num_epochs=1):
         count += 1

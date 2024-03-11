@@ -9,14 +9,15 @@ set(DATASET_ENGINE_OPT_SRC_FILES
     pre/add_skip_pass.cc
     pre/cache_transform_pass.cc
     pre/cache_validation_pass.cc
+    pre/debug_mode_pass.cc
     pre/deep_copy_pass.cc
     pre/epoch_ctrl_pass.cc
     pre/getter_pass.cc
     pre/input_validation_pass.cc
+    pre/insert_map_pass.cc
     pre/node_offload_pass.cc
     pre/node_removal_pass.cc
     pre/skip_pushdown_pass.cc
-    pre/debug_mode_pass.cc
     )
 
 if(ENABLE_PYTHON)

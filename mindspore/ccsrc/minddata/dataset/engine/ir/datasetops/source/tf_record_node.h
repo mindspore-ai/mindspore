@@ -49,7 +49,8 @@ class TFRecordNode : public NonMappableSourceNode {
         num_shards_(num_shards),
         shard_id_(shard_id),
         shard_equal_rows_(shard_equal_rows),
-        compression_type_(compression_type) {
+        compression_type_(compression_type),
+        decode_(true) {
     // Update the num_shards_ in global context. this number is only used for now by auto_num_worker_pass. User
     // discretion is advised. Auto_num_worker_pass is currently an experimental feature which can still work if the
     // num_shards_ isn't 100% correct. The reason behind is for now, PreBuildSampler doesn't offer a way to return
@@ -110,6 +111,14 @@ class TFRecordNode : public NonMappableSourceNode {
   /// \return Status of the function
   Status GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size_getter, bool estimate,
                         int64_t *dataset_size) override;
+
+  /// \brief Set whether to parse the protobuf in TFRecordOp
+  /// \param[in] decode Whether to decode.
+  void SetDecode(bool decode) { decode_ = decode; }
+
+  /// \brief Create DataSchema object with the input.
+  /// \param[out] data_schema The output data schema.
+  Status CreateDataSchema(DataSchema *data_schema);
 
   /// \brief Get the file list of the specific shard ID
   /// \param[out] shard_filenames the list of filenames for that specific shard ID
@@ -189,6 +198,7 @@ class TFRecordNode : public NonMappableSourceNode {
   int32_t shard_id_;
   bool shard_equal_rows_;
   std::string compression_type_;
+  bool decode_;  // whether to parse the proto
 
   static std::unordered_set<std::string> large_files_;
 };

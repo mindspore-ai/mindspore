@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2023 Huawei Technologies Co., Ltd
+ * Copyright 2020-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,9 @@
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_CORE_TENSOR_H_
 
 #include <algorithm>
-#include <deque>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 #if defined(_WIN32) || defined(_WIN64)
 #undef HAVE_STDDEF_H
@@ -49,15 +49,12 @@
 namespace py = pybind11;
 #endif
 
-namespace mindspore {
-namespace dataset {
+namespace mindspore::dataset {
 class Tensor;
 template <typename T>
 class Allocator;
 
-using CharAllocPtr = std::unique_ptr<Allocator<unsigned char>>;
-using TensorAllocPtr = std::shared_ptr<Allocator<Tensor>>;  // An allocator shared_ptr for Tensors
-using offset_t = uint32_t;                                  // type of offset values to store strings locations
+using offset_t = uint32_t;  // type of offset values to store strings locations
 using TensorPtr = std::shared_ptr<Tensor>;
 
 /// const of the size of the offset variable
@@ -74,7 +71,7 @@ class DATASET_API Tensor {
   /// \note The constructor does not allocate data
   /// \param shape TensorShape
   /// \param type DataType
-  Tensor(const TensorShape &shape, const DataType &type);
+  Tensor(TensorShape shape, DataType type);
 
   /// Move constructor
   /// \param other Tensor to be moved
@@ -119,7 +116,8 @@ class DATASET_API Tensor {
   }
 
   /// Create a copy of the input tensor
-  /// \param[in] MSTensor to create DETensorFrom
+  /// \param[in] in MSTensor to create DETensor from.
+  /// \param[in] out DETensor created.
   /// \return Status
   static Status CreateFromMSTensor(const MSTensor &in, TensorPtr *out);
 
@@ -158,7 +156,6 @@ class DATASET_API Tensor {
 #endif
 
   /// Create a Tensor from a given list of values.
-  /// \tparam type of the values to be inserted.
   /// \param[in] items elements of the tensor
   /// \param[in] shape shape of the output tensor
   /// \param[out] out output argument to hold the created Tensor
@@ -168,14 +165,13 @@ class DATASET_API Tensor {
     CHECK_FAIL_RETURN_UNEXPECTED(
       static_cast<dsize_t>(items.size()) == shape.NumOfElements(),
       "Number of elements in the vector does not match the number of elements of the shape required");
-    DataType type = DataType::FromCType<T>();
+    const DataType type = DataType::FromCType<T>();
     // if items is empty, items_ptr would be nullptr. CreateFromMemory will handle this case.
-    auto items_ptr = reinterpret_cast<const uchar *>(&items[0]);
+    const auto items_ptr = reinterpret_cast<const uchar *>(&items[0]);
     return CreateFromMemory(shape, type, items_ptr, out);
   }
 
   /// Create a 1D Tensor from a given list of values.
-  /// \tparam type of the values to be inserted.
   /// \param[in] items elements of the tensor
   /// \param[out] out output argument to hold the created Tensor
   /// \return Status Code
@@ -190,7 +186,7 @@ class DATASET_API Tensor {
   /// \param[out] out output argument to hold the created Tensor
   /// \return Status Code
   static Status CreateFromVector(const std::vector<bool> &items, const TensorShape &shape, TensorPtr *out) {
-    std::vector<uint8_t> temp(items.begin(), items.end());
+    const std::vector<uint8_t> temp(items.begin(), items.end());
     RETURN_IF_NOT_OK(CreateFromVector(temp, shape, out));
     (*out)->type_ = DataType(DataType::DE_BOOL);
     return Status::OK();
@@ -224,8 +220,7 @@ class DATASET_API Tensor {
                                    " does not match the number of elements: " + std::to_string(shape.NumOfElements()) +
                                    " the shape required.");
     CHECK_FAIL_RETURN_UNEXPECTED(type.IsString(), "Can not create a numeric Tensor from a string vector.");
-    const TensorAlloc *alloc = GlobalContext::Instance()->tensor_allocator();
-    *out = std::allocate_shared<Tensor>(*alloc, TensorShape({static_cast<dsize_t>(items.size())}), type);
+    *out = std::make_shared<Tensor>(TensorShape({static_cast<dsize_t>(items.size())}), type);
     CHECK_FAIL_RETURN_UNEXPECTED(out != nullptr, "Allocate memory failed.");
     if (items.empty()) {
       if (shape.known()) {
@@ -233,16 +228,16 @@ class DATASET_API Tensor {
       }
     }
     auto length_sum = [](size_t sum, const std::string &s) { return s.length() + sum; };
-    dsize_t total_length = std::accumulate(items.begin(), items.end(), 0, length_sum);
+    const dsize_t total_length = std::accumulate(items.begin(), items.end(), 0, length_sum);
 
     // total bytes needed = offset array + strings
     // offset array needs to store one offset var per element + 1 extra to get the length of the last string.
     // strings will be null-terminated --> need 1 extra byte per element
-    size_t num_bytes = (kOffsetSize + 1) * (*out)->shape_.NumOfElements() + kOffsetSize + total_length;
+    const size_t num_bytes = (kOffsetSize + 1) * (*out)->shape_.NumOfElements() + kOffsetSize + total_length;
 
     RETURN_IF_NOT_OK((*out)->AllocateBuffer(num_bytes));
     auto offset_arr = reinterpret_cast<offset_t *>((*out)->data_);
-    uchar *buf = (*out)->GetStringsBuffer();
+    const uchar *buf = (*out)->GetStringsBuffer();
 
     offset_t offset = buf - (*out)->data_;  // the first string will start here
     uint32_t i = 0;
@@ -250,7 +245,8 @@ class DATASET_API Tensor {
       //  insert the start index of the string.
       offset_arr[i++] = offset;
       // insert actual string
-      int ret_code = memcpy_s((*out)->data_ + offset, num_bytes - offset, common::SafeCStr(str), str.length() + 1);
+      const int ret_code =
+        memcpy_s((*out)->data_ + offset, num_bytes - offset, common::SafeCStr(str), str.length() + 1);
       if (ret_code != 0) {
         MS_LOG(ERROR) << "Cannot copy string into Tensor";
       }
@@ -281,8 +277,8 @@ class DATASET_API Tensor {
   /// \return Status code
   template <typename T>
   static Status CreateScalar(const T &item, TensorPtr *out) {
-    DataType type = DataType::FromCType<T>();
-    auto item_ptr = reinterpret_cast<const uchar *>(&item);
+    const DataType type = DataType::FromCType<T>();
+    const auto item_ptr = reinterpret_cast<const uchar *>(&item);
     return CreateFromMemory(TensorShape::CreateScalar(), type, item_ptr, out);
   }
 
@@ -338,7 +334,6 @@ class DATASET_API Tensor {
   Status GetFloatAt(T *o, const std::vector<dsize_t> &index) const;
 
   /// set item at location specified by index
-  /// \tparam `T`
   /// \param[in] index
   /// \param[in] value of type `T`
   template <typename T>
@@ -360,7 +355,7 @@ class DATASET_API Tensor {
     if (value.length() != length) {
       RETURN_STATUS_UNEXPECTED("Length of the new string does not match the item.");
     }
-    int ret_code = memcpy_s(reinterpret_cast<char *>(ptr), length, value.c_str(), length);
+    const int ret_code = memcpy_s(reinterpret_cast<char *>(ptr), length, value.c_str(), length);
     CHECK_FAIL_RETURN_UNEXPECTED(ret_code == 0, "Failed to set data into tensor.");
 
     return Status::OK();
@@ -381,7 +376,7 @@ class DATASET_API Tensor {
   template <typename T>
   Status Fill(const T &value) {
     CHECK_FAIL_RETURN_UNEXPECTED(!type_.IsString(), "Can not fill on tensor of type string or bytes.");
-    int64_t cellSize = type_.SizeInBytes();
+    const int64_t cellSize = type_.SizeInBytes();
     if ((data_ != nullptr) && type_.IsCompatible<T>()) {
       for (dsize_t i = 0; i < Size(); i++) {
         CHECK_FAIL_RETURN_UNEXPECTED(memcpy_s((data_ + i * cellSize), cellSize, &value, cellSize) == 0, "memcpy err");
@@ -391,7 +386,7 @@ class DATASET_API Tensor {
       std::string err;
       err += (data_ == nullptr) ? "data_ is nullptr \t" : "";
       err += type_.IsCompatible<T>() ? "data type not compatible\t" : "";
-      return Status(StatusCode::kMDUnexpectedError, err);
+      return {StatusCode::kMDUnexpectedError, err};
     }
   }
 
@@ -429,7 +424,7 @@ class DATASET_API Tensor {
   }
 
   /// Get the exact length of string / bytes
-  Status GetStringLength(uint32_t *length) {
+  Status GetStringLength(uint32_t *length) const {
     CHECK_FAIL_RETURN_UNEXPECTED(type().IsString(), "Only support to get the length of string or bytes Tensor.");
     *length = data_end_ - data_ - (Size() + 1) * kOffsetSize - Size();
     return Status::OK();
@@ -447,12 +442,12 @@ class DATASET_API Tensor {
   /// \return
   DataType type() const { return type_; }
 
-  /// Provide stream operator for displaying it
-  /// \param output stream
-  /// \param so the Tensor object to be printed
-  /// \return output stream
-  friend std::ostream &operator<<(std::ostream &out, const Tensor &so) {
-    so.Print(out);
+  /// Provide stream operator for displaying the Tensor.
+  /// \param out Output stream.
+  /// \param tensor Tensor object to be printed.
+  /// \return Output stream.
+  friend std::ostream &operator<<(std::ostream &out, const Tensor &tensor) {
+    tensor.Print(out);
     return out;
   }
 
@@ -473,10 +468,10 @@ class DATASET_API Tensor {
   /// Find the address of the given index. Used in InsertTensor.
   /// Example:
   ///      Tensor t= [[1,2],[3,4]] , StartAddrOfIndex({0}) -> &1
-  /// \param index  incomplete index
-  /// \param output: startAddrofIndex
-  /// \param output: remaining
-  /// \return Status code
+  /// \param[in] ind Element index.
+  /// \param[out] start_addr_of_index Starting address of the element index.
+  /// \param[out] remaining Remaining shape from the index.
+  /// \return Status code.
   Status StartAddrOfIndex(std::vector<dsize_t> ind, uchar **start_addr_of_index, TensorShape *remaining);
 
   /// Expand the shape of the Tensor with one extra dimension.
@@ -497,24 +492,24 @@ class DATASET_API Tensor {
   /// \return vector of integers
   std::vector<dsize_t> Strides() const;
 
-  std::string ToString() {
+  std::string ToString() const {
     std::stringstream ss;
     this->Print(ss);
     return ss.str();
   }
 
   /// Handle negative indices.
-  /// \param[out] out modified index
-  /// \param[in] index
-  /// \param[in] length axis length used to modify index
-  /// \return dsize_t modified index
+  /// \param[in] index Index to be handled.
+  /// \param[in] length Axis length of this index.
+  /// \return Handled index.
   static inline dsize_t HandleNeg(dsize_t index, dsize_t length) { return (index < 0) ? (index + length) : index; }
 
-  /// Handle negative indices for a vector of indices.
-  /// \param[out] out modified vector of indices
-  /// \param[in] index_vector vector of indices
-  /// \return std::vector<dsize_t> modified vector of indices
-  static inline std::vector<dsize_t> HandleNegIndices(std::vector<dsize_t> index_vector, std::vector<dsize_t> length) {
+  /// Handle negative indices.
+  /// \param[in] index_vector Vector of indices.
+  /// \param[in] length Length of each axis.
+  /// \return Modified vector of indices.
+  static inline std::vector<dsize_t> HandleNegIndices(const std::vector<dsize_t> &index_vector,
+                                                      const std::vector<dsize_t> &length) {
     if (length.size() < index_vector.size()) {
       MS_LOG(ERROR) << "The size of length should be greater than the shape of index_vector";
       return {};
@@ -580,7 +575,7 @@ class DATASET_API Tensor {
 
   Status SetYuvShape(const uint32_t &width, const uint32_t &widthStride, const uint32_t &height,
                      const uint32_t &heightStride) {
-    std::vector<uint32_t> tmp{width, widthStride, height, heightStride};
+    const std::vector<uint32_t> tmp{width, widthStride, height, heightStride};
     yuv_shape_ = tmp;
     return Status::OK();
   }
@@ -663,18 +658,14 @@ class DATASET_API Tensor {
     }
 
     TensorIterator<T> operator+(const ptrdiff_t &inc) {
-      auto oldPtr = ptr_;
-      ptr_ += inc;
       auto temp(*this);
-      ptr_ = oldPtr;
+      temp.ptr_ += inc;
       return temp;
     }
 
     TensorIterator<T> operator-(const ptrdiff_t &inc) {
-      auto oldPtr = ptr_;
-      ptr_ -= inc;
       auto temp(*this);
-      ptr_ = oldPtr;
+      temp.ptr_ -= inc;
       return temp;
     }
 
@@ -705,16 +696,18 @@ class DATASET_API Tensor {
 
     ~TensorIterator() = default;
 
-    bool operator==(const TensorIterator<std::string_view> &rhs) { return data_ == rhs.data_ && index_ == rhs.index_; }
+    bool operator==(const TensorIterator<std::string_view> &rhs) const {
+      return data_ == rhs.data_ && index_ == rhs.index_;
+    }
 
     bool operator!=(const TensorIterator<std::string_view> &rhs) { return !(*this == rhs); }
 
     operator bool() const { return data_ != nullptr; }
 
     std::string_view operator*() const {
-      auto offset_ = reinterpret_cast<const offset_t *>(data_);
-      offset_t start = offset_[index_];
-      offset_t end = offset_[index_ + 1];
+      const auto offset_ = reinterpret_cast<const offset_t *>(data_);
+      const offset_t start = offset_[index_];
+      const offset_t end = offset_[index_ + 1];
       return std::string_view{data_ + start, end - start - 1};  // -1 to skip the \0 at the end
     }
 
@@ -751,18 +744,14 @@ class DATASET_API Tensor {
     }
 
     TensorIterator<std::string_view> operator+(const dsize_t &inc) {
-      auto oldPtr = index_;
-      index_ += inc;
       auto temp(*this);
-      index_ = oldPtr;
+      temp.index_ += inc;
       return temp;
     }
 
     TensorIterator<std::string_view> operator-(const dsize_t &inc) {
-      auto oldPtr = index_;
-      index_ -= inc;
       auto temp(*this);
-      index_ = oldPtr;
+      temp.index_ -= inc;
       return temp;
     }
 
@@ -811,12 +800,12 @@ class DATASET_API Tensor {
   /// \param[in] cur_index
   void PrintRecursive(std::ostream &out, int32_t cur_dim, const std::vector<dsize_t> &cur_index) const;
 
-  /// A function that prints info about the tensor
-  /// \param[out] out output stream
+  /// Print the info and data of tensor.
+  /// \param[out] out Output stream.
   void Print(std::ostream &out) const;
 
-  /// A function that prints info about the tensor
-  /// \param[out] out output stream
+  /// Print the data of tensor.
+  /// \param[out] out Output stream.
   void PrintData(std::ostream &out) const;
 
   /// A function that print the value as specified by its index
@@ -829,17 +818,18 @@ class DATASET_API Tensor {
   /// \param[in] index vector<dsize_t>
   /// \return return a pointer to the item specified at index of type `T`
   template <typename T>
-  Status GetItemPtr(T **, const std::vector<dsize_t> &index) const;
+  Status GetItemPtr(T **ptr, const std::vector<dsize_t> &index) const;
 
   /// Get pointer to string located at `index` and the length of string
   /// \param[in] index vector<dsize_t>
   /// \return return a pointer to the string specified at index and the length of the string
-  Status GetItemPtr(uchar **, const std::vector<dsize_t> &index, offset_t *length = nullptr) const;
+  Status GetItemPtr(uchar **ptr, const std::vector<dsize_t> &index, offset_t *length = nullptr) const;
 
-  /// Given a flat index of an item string, return the start and length of the item
-  /// \param[in] index flat index of the item
-  /// \param[out] start address of the ths string
-  /// \param[out] length of the string
+  /// Given a flat index of an item string, return the start and length of the item.
+  /// \param[in] index Flat index of the item.
+  /// \param[out] string_start Starting address of the ths string.
+  /// \param[out] length Length of the string.
+  /// \return Status code.
   Status GetStringAt(dsize_t index, uchar **string_start, offset_t *length) const;
 
   /// Skip the offsets and returns the start of the buffer where the real strings is stored. Caller needs to check if
@@ -847,14 +837,17 @@ class DATASET_API Tensor {
   /// \return return the address of the first string of the tensor.
   uchar *GetStringsBuffer() const { return data_ + kOffsetSize * shape_.NumOfElements() + kOffsetSize; }
 
+  static const std::unique_ptr<Allocator<unsigned char>> &GetAllocator() {
+    static auto allocator = std::make_unique<Allocator<unsigned char>>(GlobalContext::Instance()->mem_pool());
+    return allocator;
+  }
+
   /// all access to shape_ should be via shape
   TensorShape shape_;
   /// data type of tensor
   DataType type_;
   /// pointer to the start of the physical data
   unsigned char *data_;
-  /// An allocator for data_
-  CharAllocPtr data_allocator_;
   /// pointer to the end of the physical data
   unsigned char *data_end_ = nullptr;
 
@@ -911,6 +904,5 @@ inline Status Tensor::CreateScalar<std::string>(const std::string &item, TensorP
   RETURN_UNEXPECTED_IF_NULL(out);
   return CreateFromVector({item}, TensorShape::CreateScalar(), DataType(DataType::DE_STRING), out);
 }
-}  // namespace dataset
-}  // namespace mindspore
+}  // namespace mindspore::dataset
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_CORE_TENSOR_H_

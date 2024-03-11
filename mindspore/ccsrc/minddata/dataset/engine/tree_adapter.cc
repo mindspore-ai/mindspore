@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2023 Huawei Technologies Co., Ltd
+ * Copyright 2020-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@
 #include "minddata/dataset/engine/opt/pre/epoch_ctrl_pass.h"
 #include "minddata/dataset/engine/opt/pre/getter_pass.h"
 #include "minddata/dataset/engine/opt/pre/input_validation_pass.h"
+#include "minddata/dataset/engine/opt/pre/insert_map_pass.h"
 #include "minddata/dataset/engine/opt/pre/node_removal_pass.h"
 #include "minddata/dataset/engine/opt/pre/skip_pushdown_pass.h"
 #include "minddata/dataset/engine/perf/info_collector.h"
@@ -60,6 +61,7 @@ Status TreeAdapter::PrePass(const std::shared_ptr<DatasetNode> &ir) {
   MS_LOG(INFO) << "Running pre pass loops.";
   (void)actions.emplace_back(std::make_unique<InputValidationPass>());
   (void)actions.emplace_back(std::make_unique<CacheValidationPass>());
+  (void)actions.emplace_back(std::make_unique<InsertMapPass>());
   if (usage_ == kDeReset) {
     (void)actions.emplace_back(std::make_unique<AddSkipPass>());
     if (GlobalContext::config_manager()->fast_recovery()) {

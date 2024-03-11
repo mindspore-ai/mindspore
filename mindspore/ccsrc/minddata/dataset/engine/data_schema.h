@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -171,6 +171,11 @@ class DataSchema {
   /// \param[in/out] out_column_name_map - The output map of columns names to column index
   /// \return Status The status code returned
   Status GetColumnNameMap(std::unordered_map<std::string, int32_t> *out_column_name_map);
+
+  /// \brief Get the column name list of the schema.
+  /// \param[out] column_names The column names in the schema.
+  /// \return The status code.
+  Status GetColumnName(std::vector<std::string> *column_names) const;
 
  private:
   /// \brief Internal helper function. Parses the json schema file in any order and produces a schema that

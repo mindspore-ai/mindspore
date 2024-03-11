@@ -16,16 +16,13 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_QUEUE_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_QUEUE_H_
 
-#include <atomic>
 #include <memory>
 #include <mutex>
 #include <string>
-#include <type_traits>
 #include <utility>
 #include <vector>
 
 #include "./securec.h"
-#include "utils/ms_utils.h"
 #include "minddata/dataset/util/allocator.h"
 #include "minddata/dataset/util/log_adapter.h"
 #include "minddata/dataset/util/services.h"
@@ -89,7 +86,7 @@ class Queue {
     Status rc =
       full_cv_.Wait(&_lock, [this]() -> bool { return (SizeWhileHoldingLock() != CapacityWhileHoldingLock()); });
     if (rc.IsOk()) {
-      RETURN_IF_NOT_OK(this->AddWhileHoldingLock(ele));
+      this->AddWhileHoldingLock(ele);
       empty_cv_.NotifyAll();
       _lock.unlock();
     } else {
@@ -104,7 +101,7 @@ class Queue {
     Status rc =
       full_cv_.Wait(&_lock, [this]() -> bool { return (SizeWhileHoldingLock() != CapacityWhileHoldingLock()); });
     if (rc.IsOk()) {
-      RETURN_IF_NOT_OK(this->AddWhileHoldingLock(std::forward<T>(ele)));
+      this->AddWhileHoldingLock(std::forward<T>(ele));
       empty_cv_.NotifyAll();
       _lock.unlock();
     } else {
@@ -136,7 +133,7 @@ class Queue {
     // Block when empty
     Status rc = empty_cv_.Wait(&_lock, [this]() -> bool { return !EmptyWhileHoldingLock(); });
     if (rc.IsOk()) {
-      RETURN_IF_NOT_OK(this->PopFrontWhileHoldingLock(p, true));
+      this->PopFrontWhileHoldingLock(p, true);
       full_cv_.NotifyAll();
       _lock.unlock();
     } else {
@@ -166,7 +163,7 @@ class Queue {
       if (head_ < tail_) {
         // if there are elements left in queue, pop out
         T temp;
-        RETURN_IF_NOT_OK(this->PopFrontWhileHoldingLock(&temp, true));
+        this->PopFrontWhileHoldingLock(&temp, true);
         queue.push_back(temp);
       } else {
         // if there is nothing left in queue, check extra_arr_
@@ -183,14 +180,14 @@ class Queue {
     // if there are extra elements in queue, put them to extra_arr_
     while (head_ < tail_) {
       T temp;
-      RETURN_IF_NOT_OK(this->PopFrontWhileHoldingLock(&temp, false));
+      this->PopFrontWhileHoldingLock(&temp, false);
       extra_arr_.push_back(temp);
     }
     this->ResetQue();
     RETURN_IF_NOT_OK(arr_.allocate(new_capacity));
     sz_ = new_capacity;
     for (int32_t i = 0; i < static_cast<int32_t>(queue.size()); ++i) {
-      RETURN_IF_NOT_OK(this->AddWhileHoldingLock(queue[i]));
+      this->AddWhileHoldingLock(queue[i]);
     }
     queue.clear();
     _lock.unlock();
@@ -210,28 +207,25 @@ class Queue {
   CondVar full_cv_;
 
   // Helper function for Add, must be called when holding a lock
-  Status AddWhileHoldingLock(const_reference ele) {
+  void AddWhileHoldingLock(const_reference ele) {
     auto k = tail_++ % sz_;
     *(arr_[k]) = ele;
-    return Status::OK();
   }
 
   // Helper function for Add, must be called when holding a lock
-  Status AddWhileHoldingLock(T &&ele) {
+  void AddWhileHoldingLock(T &&ele) {
     auto k = tail_++ % sz_;
     *(arr_[k]) = std::forward<T>(ele);
-    return Status::OK();
   }
 
   // Helper function for PopFront, must be called when holding a lock
-  Status PopFrontWhileHoldingLock(pointer p, bool clean_extra) {
+  void PopFrontWhileHoldingLock(pointer p, bool clean_extra) {
     auto k = head_++ % sz_;
     *p = std::move(*(arr_[k]));
     if (!extra_arr_.empty() && clean_extra) {
-      RETURN_IF_NOT_OK(this->AddWhileHoldingLock(std::forward<T>(extra_arr_[0])));
+      this->AddWhileHoldingLock(std::forward<T>(extra_arr_[0]));
       extra_arr_.erase(extra_arr_.begin());
     }
-    return Status::OK();
   }
 
   void ResetQue() noexcept {

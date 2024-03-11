@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2023 Huawei Technologies Co., Ltd
+ * Copyright 2020-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,22 +60,14 @@ namespace dataset {
     break;                                                                                      \
   }
 
-Tensor::Tensor(const TensorShape &shape, const DataType &type) : shape_(shape), type_(type), data_(nullptr) {
-  // grab the mem pool from global context and create the allocator for char data area
-  std::shared_ptr<MemoryPool> global_pool = GlobalContext::Instance()->mem_pool();
-  data_allocator_ = std::make_unique<Allocator<unsigned char>>(global_pool);
-}
+Tensor::Tensor(TensorShape shape, DataType type) : shape_(std::move(shape)), type_(type), data_(nullptr) {}
 
 Tensor::Tensor(Tensor &&other) noexcept
-    : shape_(other.shape()),
-      type_(other.type()),
-      data_(other.GetMutableBuffer()),
-      data_end_(other.data_end_),
-      data_allocator_(std::move(other.data_allocator_)) {
+    : shape_(std::move(other.shape_)), type_(other.type_), data_(other.data_), data_end_(other.data_end_) {
 #ifdef ENABLE_PYTHON
   if (type_.value() == DataType::DE_PYTHON) {
     py::gil_scoped_acquire gil_acquire;
-    python_dict_ = (other.python_dict_);
+    python_dict_ = std::move(other.python_dict_);
   }
   // If other.python_array_ has value, assign it to this->python_array_
   if (static_cast<bool>(other.python_array_)) {
@@ -88,16 +80,15 @@ Tensor::Tensor(Tensor &&other) noexcept
 
 Tensor &Tensor::operator=(Tensor &&other) noexcept {
   if (&other != this) {
-    shape_ = other.shape();
-    type_ = other.type();
-    data_ = other.GetMutableBuffer();
+    shape_ = std::move(other.shape_);
+    type_ = other.type_;
+    data_ = other.data_;
     data_end_ = other.data_end_;
-    data_allocator_ = std::move(other.data_allocator_);
-    yuv_shape_ = other.yuv_shape_;
+    yuv_shape_ = std::move(other.yuv_shape_);
 #ifdef ENABLE_PYTHON
     if (type_.value() == DataType::DE_PYTHON) {
       py::gil_scoped_acquire gil_acquire;
-      python_dict_ = (other.python_dict_);
+      python_dict_ = std::move(other.python_dict_);
     }
     // If other.python_array_ has value, assign it to this->python_array_
     if (static_cast<bool>(other.python_array_)) {
@@ -111,11 +102,10 @@ Tensor &Tensor::operator=(Tensor &&other) noexcept {
 }
 
 Status Tensor::CreateEmpty(const TensorShape &shape, const DataType &type, TensorPtr *out) {
+  RETURN_UNEXPECTED_IF_NULL(out);
   CHECK_FAIL_RETURN_UNEXPECTED(shape.known(), "Failed to create empty tensor, tensor shape is unknown.");
   CHECK_FAIL_RETURN_UNEXPECTED(type != DataType::DE_UNKNOWN, "Failed to create empty tensor, data type is unknown.");
-  RETURN_UNEXPECTED_IF_NULL(out);
-  const TensorAlloc *alloc = GlobalContext::Instance()->tensor_allocator();
-  *out = std::allocate_shared<Tensor>(*alloc, shape, type);
+  *out = std::make_shared<Tensor>(shape, type);
   CHECK_FAIL_RETURN_UNEXPECTED(out != nullptr, "Failed to create empty tensor, allocate memory failed.");
   // if it's a string tensor and it has no elements, Just initialize the shape and type.
   if (!type.IsNumeric()) {
@@ -164,8 +154,7 @@ Status Tensor::CreateFromMemory(const TensorShape &shape, const DataType &type, 
 Status Tensor::CreateFromMemory(const TensorShape &shape, const DataType &type, const uchar *src, const dsize_t &length,
                                 TensorPtr *out) {
   RETURN_UNEXPECTED_IF_NULL(out);
-  const TensorAlloc *alloc = GlobalContext::Instance()->tensor_allocator();
-  *out = std::allocate_shared<Tensor>(*alloc, shape, type);
+  *out = std::make_shared<Tensor>(shape, type);
   CHECK_FAIL_RETURN_UNEXPECTED(out != nullptr, "Allocate memory failed.");
   if (type.IsNumeric()) {
     dsize_t calculated_length = (*out)->SizeInBytes();
@@ -273,8 +262,7 @@ Status Tensor::CreateFromPythonObject(py::object obj, std::shared_ptr<Tensor> *o
   RETURN_UNEXPECTED_IF_NULL(out);
   std::vector<dsize_t> shape{};
   DataType type = DataType(DataType::DE_PYTHON);
-  const TensorAlloc *alloc = GlobalContext::Instance()->tensor_allocator();
-  *out = std::allocate_shared<Tensor>(*alloc, TensorShape({0}), type);
+  *out = std::make_shared<Tensor>(TensorShape({0}), type);
   {
     py::gil_scoped_acquire gil_acquire;
     (*out)->python_dict_ = obj;
@@ -288,16 +276,15 @@ Status Tensor::CreateFromPythonObject(py::object obj, std::shared_ptr<Tensor> *o
 #ifndef ENABLE_ANDROID
 Status Tensor::CreateFromByteList(const dataengine::BytesList &bytes_list, const TensorShape &shape, TensorPtr *out) {
   RETURN_UNEXPECTED_IF_NULL(out);
-  const TensorAlloc *alloc = GlobalContext::Instance()->tensor_allocator();
-  *out = std::allocate_shared<Tensor>(*alloc, TensorShape({static_cast<dsize_t>(bytes_list.value_size())}),
-                                      DataType(DataType::DE_STRING));
+  *out = std::make_shared<Tensor>(TensorShape({static_cast<dsize_t>(bytes_list.value_size())}),
+                                  DataType(DataType::DE_STRING));
   CHECK_FAIL_RETURN_UNEXPECTED(out != nullptr, "Allocate memory failed.");
   // total bytes needed = offset array + strings
   // offset array needs to store one offset var per element + 1 extra to get the length of the last string.
   // strings will be null-terminated --> need 1 extra byte per element
   dsize_t num_bytes = (kOffsetSize) * (*out)->shape_.NumOfElements() + kOffsetSize + bytes_list.ByteSizeLong();
 
-  (*out)->data_ = (*out)->data_allocator_->allocate(num_bytes);
+  (*out)->data_ = GetAllocator()->allocate(num_bytes);
 
   auto offset_arr = reinterpret_cast<offset_t *>((*out)->data_);
   uchar *buf = (*out)->GetStringsBuffer();
@@ -437,8 +424,8 @@ Tensor::~Tensor() {
   if (!static_cast<bool>(python_array_)) {  // the data is not np.ndarray from python layer
 #endif
     if (data_ != nullptr) {
-      if (data_allocator_ != nullptr) {
-        data_allocator_->deallocate(data_);
+      if (GetAllocator() != nullptr) {
+        GetAllocator()->deallocate(data_);
         data_ = nullptr;
         data_end_ = nullptr;
       } else {
@@ -593,9 +580,9 @@ void Tensor::PrintData(std::ostream &out) const {
 }
 
 Status Tensor::AllocateBuffer(const dsize_t &length) {
-  RETURN_UNEXPECTED_IF_NULL(data_allocator_);
+  RETURN_UNEXPECTED_IF_NULL(GetAllocator());
   if (data_ == nullptr) {
-    data_ = data_allocator_->allocate(length);
+    data_ = GetAllocator()->allocate(length);
     CHECK_FAIL_RETURN_UNEXPECTED(data_ != nullptr, "Failed to allocate memory for tensor.");
     data_end_ = data_ + length;
   }
@@ -617,7 +604,6 @@ void Tensor::Invalidate() {
   type_ = DataType(DataType::DE_UNKNOWN);
   data_ = nullptr;
   data_end_ = nullptr;
-  data_allocator_ = nullptr;
 #ifdef ENABLE_PYTHON
   if (type_.value() == DataType::DE_PYTHON) {
     py::gil_scoped_acquire gil_acquire;

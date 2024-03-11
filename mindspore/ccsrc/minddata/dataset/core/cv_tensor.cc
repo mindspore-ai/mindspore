@@ -26,8 +26,7 @@ CVTensor::CVTensor(std::shared_ptr<Tensor> tensor) : Tensor(std::move(*tensor)) 
 
 Status CVTensor::CreateEmpty(const TensorShape &shape, DataType type, CVTensorPtr *out) {
   RETURN_UNEXPECTED_IF_NULL(out);
-  const CVTensorAlloc *alloc = GlobalContext::Instance()->cv_tensor_allocator();
-  *out = std::allocate_shared<CVTensor>(*alloc, shape, type);
+  *out = std::make_shared<CVTensor>(shape, type);
   RETURN_UNEXPECTED_IF_NULL(*out);
   int64_t byte_size = (*out)->SizeInBytes();
   // Don't allocate if we have a tensor with no elements.
@@ -100,8 +99,7 @@ std::shared_ptr<CVTensor> CVTensor::AsCVTensor(std::shared_ptr<Tensor> t) {
   if (cv_t != nullptr) {
     return cv_t;
   } else {
-    const CVTensorAlloc *alloc = GlobalContext::Instance()->cv_tensor_allocator();
-    return std::allocate_shared<CVTensor>(*alloc, t);
+    return std::make_shared<CVTensor>(t);
   }
 }
 

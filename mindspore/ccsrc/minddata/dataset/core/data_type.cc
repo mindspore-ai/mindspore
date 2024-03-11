@@ -22,7 +22,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 uint8_t DataType::SizeInBytes() const {
   if (type_ < DataType::NUM_OF_TYPES) {
     return kTypeInfo[type_].sizeInBytes_;
