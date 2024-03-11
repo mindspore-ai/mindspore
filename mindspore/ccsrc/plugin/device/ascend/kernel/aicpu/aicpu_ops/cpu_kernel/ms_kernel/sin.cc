@@ -49,7 +49,7 @@ inline Eigen::half ScalarSin(Eigen::half x) {
 namespace aicpu {
 namespace detail {
 template <typename T>
-inline std::uint32_t ComputeSinKernel(const CpuKernelContext &ctx) {
+inline std::uint32_t ComputeSinKernel(CpuKernelContext &ctx) {
   using i64 = std::int64_t;
   const auto ParallelFor = aicpu::CpuKernelUtils::ParallelFor;
   const auto ScalarSin = internal::ScalarSin<T>;
@@ -72,47 +72,48 @@ inline std::uint32_t ComputeSinKernel(const CpuKernelContext &ctx) {
 }
 
 template <typename T>
-inline std::uint32_t ComputeSin(const CpuKernelContext &ctx) {
+inline std::uint32_t ComputeSin(CpuKernelContext &ctx) {
   uint32_t result = ComputeSinKernel<T>(ctx);
   if (result != 0) {
-    KERNEL_LOG_ERROR("Sin compute failed.");
+    CUST_KERNEL_LOG_ERROR(ctx, "Sin compute failed.");
   }
   return result;
 }
 
-inline std::uint32_t SinExtraCheck(const CpuKernelContext &ctx) {
+inline std::uint32_t SinExtraCheck(CpuKernelContext &ctx) {
   if (ctx.Input(0)->GetData() == nullptr) {
-    KERNEL_LOG_ERROR("Get input data failed.");
+    CUST_KERNEL_LOG_ERROR(ctx, "Get input data failed.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (ctx.Output(0)->GetData() == nullptr) {
-    KERNEL_LOG_ERROR("Get output data failed.");
+    CUST_KERNEL_LOG_ERROR(ctx, "Get output data failed.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (ctx.Input(0)->GetDataType() != ctx.Output(0)->GetDataType()) {
-    KERNEL_LOG_ERROR("The data type of the input [%s] need be the same as the output [%s].",
-                     DTypeStr(ctx.Input(0)->GetDataType()).c_str(), DTypeStr(ctx.Output(0)->GetDataType()).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "The data type of the input [%s] need be the same as the output [%s].",
+                          DTypeStr(ctx.Input(0)->GetDataType()).c_str(),
+                          DTypeStr(ctx.Output(0)->GetDataType()).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (ctx.Input(0)->GetDataSize() != ctx.Output(0)->GetDataSize()) {
-    KERNEL_LOG_ERROR(
-      "The data size of the input [%llu] need be the same as the output "
-      "[%llu].",
-      ctx.Input(0)->GetDataSize(), ctx.Output(0)->GetDataSize());
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "The data size of the input [%llu] need be the same as the output "
+                          "[%llu].",
+                          ctx.Input(0)->GetDataSize(), ctx.Output(0)->GetDataSize());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   std::vector<int64_t> input_dims = ctx.Input(0)->GetTensorShape()->GetDimSizes();
   std::vector<int64_t> output_dims = ctx.Output(0)->GetTensorShape()->GetDimSizes();
   if (input_dims.size() != output_dims.size()) {
-    KERNEL_LOG_ERROR(
-      "The data dim size of the input [%llu] need be the same as the output "
-      "[%llu].",
-      input_dims.size(), output_dims.size());
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "The data dim size of the input [%llu] need be the same as the output "
+                          "[%llu].",
+                          input_dims.size(), output_dims.size());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   for (size_t index = 0; index < input_dims.size(); index++) {
     if (input_dims[index] != output_dims[index]) {
-      KERNEL_LOG_ERROR("The data dim of the input need be the same as the output.");
+      CUST_KERNEL_LOG_ERROR(ctx, "The data dim of the input need be the same as the output.");
       return KERNEL_STATUS_PARAM_INVALID;
     }
   }
@@ -123,7 +124,7 @@ std::uint32_t SinCheck(CpuKernelContext &ctx, uint32_t inputs_num, uint32_t outp
   return NormalCheck(ctx, kSinInputNum, kSinOutputNum) ? KERNEL_STATUS_PARAM_INVALID : SinExtraCheck(ctx);
 }
 
-std::uint32_t SinCompute(const CpuKernelContext &ctx) {
+std::uint32_t SinCompute(CpuKernelContext &ctx) {
   DataType input_type{ctx.Input(0)->GetDataType()};
   switch (input_type) {
     case DT_FLOAT16:
@@ -137,7 +138,7 @@ std::uint32_t SinCompute(const CpuKernelContext &ctx) {
     case DT_COMPLEX128:
       return ComputeSin<std::complex<std::double_t>>(ctx);
     default:
-      KERNEL_LOG_ERROR("Unsupported input data type [%s].", DTypeStr(input_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Unsupported input data type [%s].", DTypeStr(input_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 }

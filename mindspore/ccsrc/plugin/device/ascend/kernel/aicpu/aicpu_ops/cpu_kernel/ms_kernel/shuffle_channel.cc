@@ -26,22 +26,23 @@ const uint32_t kOutputNum = 1;
 const char *kShuffleChannel = "ShuffleChannel";
 const int64_t minDimSize = 3;
 
-#define SHUFFLE_CHANNEL_COMPUTE_CASE(DTYPE, TYPE, CTX)            \
-  case (DTYPE): {                                                 \
-    uint32_t result = ShuffleChannelCompute<TYPE>(CTX);           \
-    if (result != KERNEL_STATUS_OK) {                             \
-      KERNEL_LOG_ERROR("Shuffle Channel kernel compute failed."); \
-      return result;                                              \
-    }                                                             \
-    break;                                                        \
+#define SHUFFLE_CHANNEL_COMPUTE_CASE(DTYPE, TYPE, CTX)                      \
+  case (DTYPE): {                                                           \
+    uint32_t result = ShuffleChannelCompute<TYPE>(CTX);                     \
+    if (result != KERNEL_STATUS_OK) {                                       \
+      CUST_KERNEL_LOG_ERROR(ctx, "Shuffle Channel kernel compute failed."); \
+      return result;                                                        \
+    }                                                                       \
+    break;                                                                  \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t ShuffleChannelCpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "ShuffleChannel check input and output number failed.");
-  KERNEL_HANDLE_ERROR(ShuffleChannelParamCheck(ctx), "ShuffleChannel check params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "ShuffleChannel check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, ShuffleChannelParamCheck(ctx), "ShuffleChannel check params failed.");
   auto data_type = ctx.Input(0)->GetDataType();
   switch (data_type) {
     SHUFFLE_CHANNEL_COMPUTE_CASE(DT_INT8, int8_t, ctx)
@@ -55,13 +56,13 @@ uint32_t ShuffleChannelCpuKernel::Compute(CpuKernelContext &ctx) {
     SHUFFLE_CHANNEL_COMPUTE_CASE(DT_FLOAT16, Eigen::half, ctx)
     SHUFFLE_CHANNEL_COMPUTE_CASE(DT_FLOAT, float, ctx)
     default:
-      KERNEL_LOG_ERROR("Shuffle kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Shuffle kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 
-uint32_t ShuffleChannelCpuKernel::ShuffleChannelParamCheck(const CpuKernelContext &ctx) {
+uint32_t ShuffleChannelCpuKernel::ShuffleChannelParamCheck(CpuKernelContext &ctx) {
   // the non null of input_0, input_1, output has been verified in NormalCheck
   Tensor *input = ctx.Input(0);
   auto group = 1;
@@ -69,20 +70,22 @@ uint32_t ShuffleChannelCpuKernel::ShuffleChannelParamCheck(const CpuKernelContex
     group = ctx.GetAttr("group")->GetInt();
   }
   int64_t c = input->GetTensorShape()->GetDimSize(1);
-  KERNEL_CHECK_FALSE(input->GetTensorShape()->GetDims() >= minDimSize, KERNEL_STATUS_PARAM_INVALID,
-                     "ShuffleChannel expect  input with > 2 dims.")
-  KERNEL_CHECK_FALSE(group > 0, KERNEL_STATUS_PARAM_INVALID, "Number of groups to divide channels in must be positive.")
-  KERNEL_CHECK_FALSE((c % group) == 0, KERNEL_STATUS_PARAM_INVALID, "Number of channels must be divisible by groups")
-  KERNEL_LOG_DEBUG(
-    "ShuffleChannelCpuKernel[%s], input: size[%llu];"
-    "output: size[%llu].",
-    ctx.GetOpType().c_str(), input->GetDataSize(), ctx.Output(0)->GetDataSize());
+  CUST_KERNEL_CHECK_FALSE(ctx, input->GetTensorShape()->GetDims() >= minDimSize, KERNEL_STATUS_PARAM_INVALID,
+                          "ShuffleChannel expect  input with > 2 dims.")
+  CUST_KERNEL_CHECK_FALSE(ctx, group > 0, KERNEL_STATUS_PARAM_INVALID,
+                          "Number of groups to divide channels in must be positive.")
+  CUST_KERNEL_CHECK_FALSE(ctx, (c % group) == 0, KERNEL_STATUS_PARAM_INVALID,
+                          "Number of channels must be divisible by groups")
+  CUST_KERNEL_LOG_DEBUG(ctx,
+                        "ShuffleChannelCpuKernel[%s], input: size[%llu];"
+                        "output: size[%llu].",
+                        ctx.GetOpType().c_str(), input->GetDataSize(), ctx.Output(0)->GetDataSize());
 
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t ShuffleChannelCpuKernel::ShuffleChannelCompute(const CpuKernelContext &ctx) {
+uint32_t ShuffleChannelCpuKernel::ShuffleChannelCompute(CpuKernelContext &ctx) {
   Tensor *input = ctx.Input(0);
   Tensor *output = ctx.Output(0);
   auto group = 1;
@@ -96,7 +99,7 @@ uint32_t ShuffleChannelCpuKernel::ShuffleChannelCompute(const CpuKernelContext &
   int64_t dims = shape->GetDims();
 
   if (group == 0) {
-    KERNEL_LOG_ERROR("group divided can not be zero");
+    CUST_KERNEL_LOG_ERROR(ctx, "group divided can not be zero");
     return KERNEL_STATUS_PARAM_INVALID;
   }
   int64_t oc = c / group;

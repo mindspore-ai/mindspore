@@ -61,13 +61,14 @@ struct WorkerParamsForReduceSparseGradient {
   SparseGradient *unique_grad_{nullptr};
 };
 
-void WorkerForReduceSparseGradient(WorkerParamsForReduceSparseGradient param);
+void WorkerForReduceSparseGradient(CpuKernelContext &ctx, WorkerParamsForReduceSparseGradient param);
 
-void ReduceSparseGradient(const CpuKernelContext &ctx, const SparseGradient &origin_sparse_grad,
-                          SparseGradient *unique_grad, size_t first_dim, size_t outer_dim);
-using MultiThreadComputeFunc = std::function<void(MultiThreadComputeParams *param, size_t start, size_t end)>;
-uint32_t MultiThreadCompute(const CpuKernelContext &ctx, const MultiThreadComputeFunc &func,
-                            MultiThreadComputeParams *params, size_t total_compute_size);
+void ReduceSparseGradient(CpuKernelContext &ctx, const SparseGradient &origin_sparse_grad, SparseGradient *unique_grad,
+                          size_t first_dim, size_t outer_dim);
+using MultiThreadComputeFunc =
+  std::function<void(CpuKernelContext &ctx, MultiThreadComputeParams *param, size_t start, size_t end)>;
+uint32_t MultiThreadCompute(CpuKernelContext &ctx, const MultiThreadComputeFunc &func, MultiThreadComputeParams *params,
+                            size_t total_compute_size);
 void ReduceMultiSparseGradient(CpuKernelContext &ctx, std::vector<std::shared_ptr<SparseGradient>> &unique_slice_grads,
                                SparseGradient *tmp_grad, SparseGradient *unique_grad, size_t first_dim,
                                size_t outer_dim);

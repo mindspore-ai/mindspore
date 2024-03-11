@@ -33,13 +33,13 @@ constexpr int64_t kParallelDataNums = 64 * 64;
 namespace aicpu {
 uint32_t HSVToRGBCpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
-  KERNEL_HANDLE_ERROR(HSVToRGBCheck(ctx), "HSVToRGB check params failed.", kHSVToRGB);
+  CUST_KERNEL_HANDLE_ERROR(ctx, HSVToRGBCheck(ctx), "HSVToRGB check params failed.", kHSVToRGB);
   auto data_type = ctx.Input(kFirstInputIndex)->GetDataType();
   switch (data_type) {
     case (DT_FLOAT16): {
       uint32_t result = HSVToRGBComputeHalf(ctx);
       if (result != KERNEL_STATUS_OK) {
-        KERNEL_LOG_ERROR("HSVToRGB kernel compute failed.");
+        CUST_KERNEL_LOG_ERROR(ctx, "HSVToRGB kernel compute failed.");
         return result;
       }
       break;
@@ -47,7 +47,7 @@ uint32_t HSVToRGBCpuKernel::Compute(CpuKernelContext &ctx) {
     case (DT_FLOAT): {
       uint32_t result = HSVToRGBCompute<float>(ctx);
       if (result != KERNEL_STATUS_OK) {
-        KERNEL_LOG_ERROR("HSVToRGB kernel compute failed.");
+        CUST_KERNEL_LOG_ERROR(ctx, "HSVToRGB kernel compute failed.");
         return result;
       }
       break;
@@ -55,13 +55,13 @@ uint32_t HSVToRGBCpuKernel::Compute(CpuKernelContext &ctx) {
     case (DT_DOUBLE): {
       uint32_t result = HSVToRGBCompute<double>(ctx);
       if (result != KERNEL_STATUS_OK) {
-        KERNEL_LOG_ERROR("HSVToRGB kernel compute failed.");
+        CUST_KERNEL_LOG_ERROR(ctx, "HSVToRGB kernel compute failed.");
         return result;
       }
       break;
     }
     default:
-      KERNEL_LOG_ERROR("HSVToRGB kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "HSVToRGB kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
@@ -129,23 +129,24 @@ void HSVToRGBCpuKernel::ConvertOnePixel(T h, T s, T v, T *r, T *g, T *b) {
 }
 
 uint32_t HSVToRGBCpuKernel::HSVToRGBCheck(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "Check HSVToRGB check failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "Check HSVToRGB check failed.");
   Tensor *input = ctx.Input(kFirstInputIndex);
   Tensor *output = ctx.Output(kFirstOutputIndex);
-  KERNEL_LOG_INFO(
-    "HSVToRGBCpuKernel[%s]"
-    "input: addr[%p], size[%llu]; "
-    "output: addr[%p], size[%llu]. "
-    "data type: [%s]",
-    ctx.GetOpType().c_str(), input->GetData(), input->GetDataSize(), output->GetData(), output->GetDataSize(),
-    DTypeStr(input->GetDataType()).c_str());
+  CUST_KERNEL_LOG_INFO(ctx,
+                       "HSVToRGBCpuKernel[%s]"
+                       "input: addr[%p], size[%llu]; "
+                       "output: addr[%p], size[%llu]. "
+                       "data type: [%s]",
+                       ctx.GetOpType().c_str(), input->GetData(), input->GetDataSize(), output->GetData(),
+                       output->GetDataSize(), DTypeStr(input->GetDataType()).c_str());
   const std::vector<int64_t> dims = input->GetTensorShape()->GetDimSizes();
-  KERNEL_CHECK_FALSE(dims.cend()[-1] == 3, KERNEL_STATUS_PARAM_INVALID, "Last dimension must be size 3.", kHSVToRGB);
+  CUST_KERNEL_CHECK_FALSE(ctx, dims.cend()[-1] == 3, KERNEL_STATUS_PARAM_INVALID, "Last dimension must be size 3.",
+                          kHSVToRGB);
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t HSVToRGBCpuKernel::HSVToRGBCompute(const CpuKernelContext &ctx) {
+uint32_t HSVToRGBCpuKernel::HSVToRGBCompute(CpuKernelContext &ctx) {
   Tensor *input = ctx.Input(kFirstInputIndex);
   Tensor *output = ctx.Output(kFirstOutputIndex);
   T *input_ptr = reinterpret_cast<T *>(input->GetData());
@@ -167,15 +168,15 @@ uint32_t HSVToRGBCpuKernel::HSVToRGBCompute(const CpuKernelContext &ctx) {
     }
   };
   if (data_num > kParallelDataNums) {
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, per_uint_size, shard_hsv_to_rgb),
-                        "HSVtoRGB compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, data_num, per_uint_size, shard_hsv_to_rgb),
+                             "HSVtoRGB compute failed.");
   } else {
     shard_hsv_to_rgb(0, data_num);
   }
   return KERNEL_STATUS_OK;
 }
 
-uint32_t HSVToRGBCpuKernel::HSVToRGBComputeHalf(const CpuKernelContext &ctx) {
+uint32_t HSVToRGBCpuKernel::HSVToRGBComputeHalf(CpuKernelContext &ctx) {
   Tensor *input = ctx.Input(kFirstInputIndex);
   Tensor *output = ctx.Output(kFirstOutputIndex);
   Eigen::half *input_ptr = reinterpret_cast<Eigen::half *>(input->GetData());
@@ -201,8 +202,8 @@ uint32_t HSVToRGBCpuKernel::HSVToRGBComputeHalf(const CpuKernelContext &ctx) {
     }
   };
   if (data_num > kParallelDataNums) {
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, per_uint_size, shard_hsv_to_rgb),
-                        "HSVtoRGB compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, data_num, per_uint_size, shard_hsv_to_rgb),
+                             "HSVtoRGB compute failed.");
   } else {
     shard_hsv_to_rgb(0, data_num);
   }

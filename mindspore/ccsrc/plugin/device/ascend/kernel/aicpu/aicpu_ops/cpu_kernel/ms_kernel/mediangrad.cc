@@ -30,31 +30,31 @@ const uint32_t kGlobalInputNum = 3;
 const int64_t kParallelDataNum = 2 * 1024;
 const int64_t kParallelDataNumMid = 16 * 1024;
 
-#define MEDIANGRAD_COMPUTE_CASE(DTYPE, TYPE, TYPE2, CTX)     \
-  case (DTYPE): {                                            \
-    uint32_t result = MedianGradCompute<TYPE, TYPE2>(CTX);   \
-    if (result != KERNEL_STATUS_OK) {                        \
-      KERNEL_LOG_ERROR("MedianGrad kernel compute failed."); \
-      return result;                                         \
-    }                                                        \
-    break;                                                   \
+#define MEDIANGRAD_COMPUTE_CASE(DTYPE, TYPE, TYPE2, CTX)               \
+  case (DTYPE): {                                                      \
+    uint32_t result = MedianGradCompute<TYPE, TYPE2>(CTX);             \
+    if (result != KERNEL_STATUS_OK) {                                  \
+      CUST_KERNEL_LOG_ERROR(ctx, "MedianGrad kernel compute failed."); \
+      return result;                                                   \
+    }                                                                  \
+    break;                                                             \
   }
 
-#define GLOBALMEDIANGRAD_COMPUTE_CASE(DTYPE, TYPE, TYPE2, CTX)     \
-  case (DTYPE): {                                                  \
-    uint32_t result = GlobalMedianGradCompute<TYPE, TYPE2>(CTX);   \
-    if (result != KERNEL_STATUS_OK) {                              \
-      KERNEL_LOG_ERROR("GlobalMedianGrad kernel compute failed."); \
-      return result;                                               \
-    }                                                              \
-    break;                                                         \
+#define GLOBALMEDIANGRAD_COMPUTE_CASE(DTYPE, TYPE, TYPE2, CTX)               \
+  case (DTYPE): {                                                            \
+    uint32_t result = GlobalMedianGradCompute<TYPE, TYPE2>(CTX);             \
+    if (result != KERNEL_STATUS_OK) {                                        \
+      CUST_KERNEL_LOG_ERROR(ctx, "GlobalMedianGrad kernel compute failed."); \
+      return result;                                                         \
+    }                                                                        \
+    break;                                                                   \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t MedianGradCpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
-  KERNEL_HANDLE_ERROR(MedianGradParamCheck(ctx), "MedianGrad check params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, MedianGradParamCheck(ctx), "MedianGrad check params failed.");
   auto data_type_x = ctx.Input(1)->GetDataType();
   AttrValue *global_median_ptr = ctx.GetAttr("global_median");
   bool global_median = global_median_ptr->GetBool();
@@ -66,7 +66,8 @@ uint32_t MedianGradCpuKernel::Compute(CpuKernelContext &ctx) {
       MEDIANGRAD_COMPUTE_CASE(DT_FLOAT, float, float, ctx)
       MEDIANGRAD_COMPUTE_CASE(DT_DOUBLE, double, double, ctx)
       default:
-        KERNEL_LOG_ERROR("MedianGrad kernel data type [%s] of input x not support.", DTypeStr(data_type_x).c_str());
+        CUST_KERNEL_LOG_ERROR(ctx, "MedianGrad kernel data type [%s] of input x not support.",
+                              DTypeStr(data_type_x).c_str());
         return KERNEL_STATUS_PARAM_INVALID;
     }
   } else {
@@ -77,8 +78,8 @@ uint32_t MedianGradCpuKernel::Compute(CpuKernelContext &ctx) {
       GLOBALMEDIANGRAD_COMPUTE_CASE(DT_FLOAT, float, float, ctx)
       GLOBALMEDIANGRAD_COMPUTE_CASE(DT_DOUBLE, double, double, ctx)
       default:
-        KERNEL_LOG_ERROR("GlobalMedianGrad kernel data type [%s] of input x not support.",
-                         DTypeStr(data_type_x).c_str());
+        CUST_KERNEL_LOG_ERROR(ctx, "GlobalMedianGrad kernel data type [%s] of input x not support.",
+                              DTypeStr(data_type_x).c_str());
         return KERNEL_STATUS_PARAM_INVALID;
     }
   }
@@ -87,14 +88,15 @@ uint32_t MedianGradCpuKernel::Compute(CpuKernelContext &ctx) {
 
 uint32_t MedianGradCpuKernel::MedianGradParamCheck(CpuKernelContext &ctx) {
   auto global_median_ptr = ctx.GetAttr("global_median");
-  KERNEL_CHECK_NULLPTR(global_median_ptr, KERNEL_STATUS_PARAM_INVALID, "Get attr global_median failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, global_median_ptr, KERNEL_STATUS_PARAM_INVALID, "Get attr global_median failed.");
   bool global_median = global_median_ptr->GetBool();
 
   if (global_median == false) {
-    KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "MedianGrad check input and output number failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                             "MedianGrad check input and output number failed.");
   } else {
-    KERNEL_HANDLE_ERROR(NormalCheck(ctx, kGlobalInputNum, kGlobalOutputNum),
-                        "GlobalMedianGrad check input and output number failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kGlobalInputNum, kGlobalOutputNum),
+                             "GlobalMedianGrad check input and output number failed.");
   }
 
   Tensor *input_y_grad = ctx.Input(0);
@@ -104,29 +106,29 @@ uint32_t MedianGradCpuKernel::MedianGradParamCheck(CpuKernelContext &ctx) {
 
   int64_t y_grad_num = ctx.Input(0)->GetTensorShape()->NumElements();
   int64_t y_num = ctx.Input(2)->GetTensorShape()->NumElements();
-  KERNEL_CHECK_FALSE((y_num == y_grad_num), KERNEL_STATUS_PARAM_INVALID,
-                     "The data num of input y_grad [%llu] is different from y [%llu].", y_grad_num, y_num)
+  CUST_KERNEL_CHECK_FALSE(ctx, (y_num == y_grad_num), KERNEL_STATUS_PARAM_INVALID,
+                          "The data num of input y_grad [%llu] is different from y [%llu].", y_grad_num, y_num)
   auto data_type_x = ctx.Input(1)->GetDataType();
   auto data_type_y_grad = ctx.Input(0)->GetDataType();
-  KERNEL_CHECK_FALSE((data_type_y_grad == data_type_x), KERNEL_STATUS_PARAM_INVALID,
-                     "The data type of input y_grad [%s] is different from x [%s].", DTypeStr(data_type_y_grad).c_str(),
-                     DTypeStr(data_type_x).c_str())
+  CUST_KERNEL_CHECK_FALSE(ctx, (data_type_y_grad == data_type_x), KERNEL_STATUS_PARAM_INVALID,
+                          "The data type of input y_grad [%s] is different from x [%s].",
+                          DTypeStr(data_type_y_grad).c_str(), DTypeStr(data_type_x).c_str())
 
   if (global_median == false) {
     Tensor *input_indices = ctx.Input(3);
-    KERNEL_LOG_DEBUG(
-      "MedianGradCpuKernel[%s], input_y_grad: size[%llu],"
-      "input_x: size[%llu], input_y: size[%llu],"
-      "input_indices: size[%llu], output_x_grad: size[%llu].",
-      ctx.GetOpType().c_str(), input_y_grad->GetDataSize(), input_x->GetDataSize(), input_y->GetDataSize(),
-      input_indices->GetDataSize(), output_x_grad->GetDataSize());
+    CUST_KERNEL_LOG_DEBUG(ctx,
+                          "MedianGradCpuKernel[%s], input_y_grad: size[%llu],"
+                          "input_x: size[%llu], input_y: size[%llu],"
+                          "input_indices: size[%llu], output_x_grad: size[%llu].",
+                          ctx.GetOpType().c_str(), input_y_grad->GetDataSize(), input_x->GetDataSize(),
+                          input_y->GetDataSize(), input_indices->GetDataSize(), output_x_grad->GetDataSize());
   } else {
-    KERNEL_LOG_DEBUG(
-      "MedianGradCpuKernel[%s], input_y_grad: size[%llu],"
-      "input_x: size[%llu], input_y: size[%llu],"
-      "output_x_grad: size[%llu].",
-      ctx.GetOpType().c_str(), input_y_grad->GetDataSize(), input_x->GetDataSize(), input_y->GetDataSize(),
-      output_x_grad->GetDataSize());
+    CUST_KERNEL_LOG_DEBUG(ctx,
+                          "MedianGradCpuKernel[%s], input_y_grad: size[%llu],"
+                          "input_x: size[%llu], input_y: size[%llu],"
+                          "output_x_grad: size[%llu].",
+                          ctx.GetOpType().c_str(), input_y_grad->GetDataSize(), input_x->GetDataSize(),
+                          input_y->GetDataSize(), output_x_grad->GetDataSize());
   }
 
   return KERNEL_STATUS_OK;
@@ -163,8 +165,8 @@ uint32_t MedianGradCpuKernel::GlobalMedianGradCompute(CpuKernelContext &ctx) {
         *(x_grad + i) = (*(x + i) == *y) ? (*y_grad / count_repeat) : 0;
       }
     };
-    KERNEL_HANDLE_ERROR(
-      CpuKernelUtils::ParallelFor(ctx, output_data_num, output_data_num / max_core_num, sharder_mediangrad),
+    CUST_KERNEL_HANDLE_ERROR(
+      ctx, CpuKernelUtils::ParallelFor(ctx, output_data_num, output_data_num / max_core_num, sharder_mediangrad),
       "MedianGrad Compute failed.");
   } else {
     for (int64_t i = 0; i < output_data_num; i++) {
@@ -248,8 +250,8 @@ uint32_t MedianGradCpuKernel::MedianGradCompute(CpuKernelContext &ctx) {
         *(x_grad + update_element_pos) = *(y_grad + nth_element);
       }
     };
-    KERNEL_HANDLE_ERROR(
-      CpuKernelUtils::ParallelFor(ctx, need_calculate_num, need_calculate_num / max_core_num, sharder_mediangrad),
+    CUST_KERNEL_HANDLE_ERROR(
+      ctx, CpuKernelUtils::ParallelFor(ctx, need_calculate_num, need_calculate_num / max_core_num, sharder_mediangrad),
       "MedianGrad Compute failed.");
   } else {
     std::vector<int64_t> dim_vec;

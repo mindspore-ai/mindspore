@@ -31,14 +31,14 @@ constexpr uint32_t kIndex4 = 4;
 const int64_t kParallelDataNum = 1024 * 1024;
 const char *kResizeArea = "ResizeArea";
 
-#define RESIZEAREA_COMPUTE_CASE(DTYPE, CHANNEL, TYPE, CTX)          \
-  case (DTYPE): {                                                   \
-    uint32_t result = DoCompute<TYPE>(st, x_interps, CHANNEL, CTX); \
-    if (result != KERNEL_STATUS_OK) {                               \
-      KERNEL_LOG_ERROR("ResizeArea kernel compute failed.");        \
-      return result;                                                \
-    }                                                               \
-    break;                                                          \
+#define RESIZEAREA_COMPUTE_CASE(DTYPE, CHANNEL, TYPE, CTX)             \
+  case (DTYPE): {                                                      \
+    uint32_t result = DoCompute<TYPE>(st, x_interps, CHANNEL, CTX);    \
+    if (result != KERNEL_STATUS_OK) {                                  \
+      CUST_KERNEL_LOG_ERROR(ctx, "ResizeArea kernel compute failed."); \
+      return result;                                                   \
+    }                                                                  \
+    break;                                                             \
   }
 
 inline int64_t Bound(int64_t val, int64_t limit) { return std::min(limit - 1, std::max(int64_t{0}, val)); }
@@ -50,7 +50,7 @@ float Scaling_(size_t in_size, size_t out_size, bool align_corners) {
 }  // namespace
 
 namespace aicpu {
-void ResizeAreaSt::CalSt(const CpuKernelContext &ctx, const std::vector<int64_t> &in_shape1, bool align_corners) {
+void ResizeAreaSt::CalSt(CpuKernelContext &ctx, const std::vector<int64_t> &in_shape1, bool align_corners) {
   Tensor *input_tensor2 = ctx.Input(1);
   auto outsize = reinterpret_cast<int32_t *>(input_tensor2->GetData());
   batch_size = in_shape1[0];
@@ -66,7 +66,7 @@ void ResizeAreaSt::CalSt(const CpuKernelContext &ctx, const std::vector<int64_t>
 uint32_t ResizeAreaCpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
   uint32_t res = GetInputAndCheck(ctx);
-  KERNEL_CHECK_FALSE(res == KERNEL_STATUS_OK, res, "GetInputAndCheck failed.");
+  CUST_KERNEL_CHECK_FALSE(ctx, res == KERNEL_STATUS_OK, res, "GetInputAndCheck failed.");
   ResizeAreaSt st;
   st.CalSt(ctx, in_shape1, align_corners);
   // compute the weight of pixels in rows
@@ -99,7 +99,7 @@ uint32_t ResizeAreaCpuKernel::Compute(CpuKernelContext &ctx) {
     RESIZEAREA_COMPUTE_CASE(DT_FLOAT16, channels_num, Eigen::half, ctx)
     RESIZEAREA_COMPUTE_CASE(DT_DOUBLE, channels_num, double, ctx)
     default:
-      KERNEL_LOG_ERROR("ResizeArea doesn't support input tensor types: [%s]", DTypeStr(dtype_).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "ResizeArea doesn't support input tensor types: [%s]", DTypeStr(dtype_).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
@@ -108,7 +108,7 @@ uint32_t ResizeAreaCpuKernel::Compute(CpuKernelContext &ctx) {
 template <typename T>
 uint32_t ResizeAreaCpuKernel::DoCompute(const ResizeAreaSt &st,
                                         const std::vector<ResizeAreaCachedInterpolation> &x_interps,
-                                        int64_t kKnownNumChannels, const CpuKernelContext &ctx) {
+                                        int64_t kKnownNumChannels, CpuKernelContext &ctx) {
   auto input_ptr = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto output_ptr = reinterpret_cast<float *>(ctx.Output(0)->GetData());
   int64_t data_num = ctx.Input(0)->NumElements();
@@ -298,7 +298,8 @@ void ResizeAreaCpuKernel::ComputePatchSum(float scale, const ResizeAreaSt &st, c
 
 // check params
 uint32_t ResizeAreaCpuKernel::GetInputAndCheck(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "ResizeArea check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "ResizeArea check input and output number failed.");
 
   Tensor *input_tensor1 = ctx.Input(0);
   Tensor *input_tensor2 = ctx.Input(1);
@@ -310,13 +311,14 @@ uint32_t ResizeAreaCpuKernel::GetInputAndCheck(CpuKernelContext &ctx) {
   in_shape2 = input_tensor2->GetTensorShape()->GetDimSizes();
   out_shape = std::vector<int64_t>{in_shape1[kIndex0], outsize[0], outsize[1], in_shape1[kIndex3]};
 
-  KERNEL_CHECK_FALSE(in_shape1.size() == kIndex4, KERNEL_STATUS_PARAM_INVALID,
-                     "Dim of input[0] must be 4,but got[%zu].", in_shape1.size());
-  KERNEL_CHECK_FALSE(in_shape2.size() == 1, KERNEL_STATUS_PARAM_INVALID, "Dim of input[1] must be 1,but got[%zu].",
-                     in_shape2.size());
-  KERNEL_CHECK_FALSE(out_shape.size() == kIndex4, KERNEL_STATUS_PARAM_INVALID,
-                     "Dim of output[0] must be 4,but got[%zu].", out_shape.size());
-  KERNEL_CHECK_FALSE(out_height > 0 && out_width > 0, KERNEL_STATUS_PARAM_INVALID, "outsize must be positive.");
+  CUST_KERNEL_CHECK_FALSE(ctx, in_shape1.size() == kIndex4, KERNEL_STATUS_PARAM_INVALID,
+                          "Dim of input[0] must be 4,but got[%zu].", in_shape1.size());
+  CUST_KERNEL_CHECK_FALSE(ctx, in_shape2.size() == 1, KERNEL_STATUS_PARAM_INVALID,
+                          "Dim of input[1] must be 1,but got[%zu].", in_shape2.size());
+  CUST_KERNEL_CHECK_FALSE(ctx, out_shape.size() == kIndex4, KERNEL_STATUS_PARAM_INVALID,
+                          "Dim of output[0] must be 4,but got[%zu].", out_shape.size());
+  CUST_KERNEL_CHECK_FALSE(ctx, out_height > 0 && out_width > 0, KERNEL_STATUS_PARAM_INVALID,
+                          "outsize must be positive.");
 
   AttrValue *attr_align_corners = ctx.GetAttr("align_corners");
   align_corners = (attr_align_corners == nullptr) ? false : (attr_align_corners->GetBool());

@@ -28,10 +28,10 @@ class LuSolveCpuKernel : public CpuKernel {
 
  private:
   template <typename T, typename T2>
-  static uint32_t LuSolve(const CpuKernelContext &ctx, T *b_working_ptr, T *lu_working_ptr, int32_t *pivots_working_ptr,
+  static uint32_t LuSolve(CpuKernelContext &ctx, T *b_working_ptr, T *lu_working_ptr, int32_t *pivots_working_ptr,
                           int64_t b_stride, int64_t i);
   template <typename T, typename T2>
-  static uint32_t LuSolveCompute(const CpuKernelContext &ctx);
+  static uint32_t LuSolveCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

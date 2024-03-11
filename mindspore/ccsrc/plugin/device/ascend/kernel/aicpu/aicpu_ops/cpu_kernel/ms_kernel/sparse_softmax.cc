@@ -38,14 +38,14 @@ const uint32_t kIndex2 = 2;
 const uint32_t kSize1 = 1;
 const uint32_t kSize2 = 2;
 const char *kSparseSoftmax = "SparseSoftmax";
-#define SPARSESOFTMAX_COMPUTE_CASE(DTYPE, TYPE, CTX)         \
-  case (DTYPE): {                                            \
-    uint32_t result = SparseSoftmaxCompute<TYPE>(CTX);       \
-    if (result != KERNEL_STATUS_OK) {                        \
-      KERNEL_LOG_ERROR("SparseSoft kernel compute failed."); \
-      return result;                                         \
-    }                                                        \
-    break;                                                   \
+#define SPARSESOFTMAX_COMPUTE_CASE(DTYPE, TYPE, CTX)                   \
+  case (DTYPE): {                                                      \
+    uint32_t result = SparseSoftmaxCompute<TYPE>(CTX);                 \
+    if (result != KERNEL_STATUS_OK) {                                  \
+      CUST_KERNEL_LOG_ERROR(CTX, "SparseSoft kernel compute failed."); \
+      return result;                                                   \
+    }                                                                  \
+    break;                                                             \
   }
 
 inline bool CompareIndices(const int64_t *a, const int64_t *b, const size_t &len) {
@@ -62,10 +62,7 @@ inline bool CompareIndices(const int64_t *a, const int64_t *b, const size_t &len
 template <typename T>
 inline void CopyIndicesAndValue(int64_t *dst_indices_addr, T *dst_values_addr, const int64_t *src_indices_addr,
                                 const T *src_values_addr, const size_t &indices_size) {
-  auto ret = memcpy_s(dst_indices_addr, indices_size, src_indices_addr, indices_size);
-  if (ret != EOK) {
-    KERNEL_LOG_ERROR("memcpy_s failed.");
-  }
+  (void)memcpy_s(dst_indices_addr, indices_size, src_indices_addr, indices_size);
   *dst_values_addr = *src_values_addr;
 }
 
@@ -129,48 +126,50 @@ void QuickSortIndicesAndValues(int64_t *__restrict indices_addr, T *__restrict v
 namespace aicpu {
 uint32_t SparseSoftmaxCpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kSparseSoftmaxInputNum, kSparseSoftmaxOutputNum),
-                      "[%s] check input and output failed.", kSparseSoftmax);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kSparseSoftmaxInputNum, kSparseSoftmaxOutputNum),
+                           "[%s] check input and output failed.", kSparseSoftmax);
   // parse params
-  KERNEL_HANDLE_ERROR(SparseSoftmaxCheck(ctx), "[%s] check params failed.", kSparseSoftmax);
+  CUST_KERNEL_HANDLE_ERROR(ctx, SparseSoftmaxCheck(ctx), "[%s] check params failed.", kSparseSoftmax);
   auto data_type = ctx.Input(1)->GetDataType();
   switch (data_type) {
     SPARSESOFTMAX_COMPUTE_CASE(DT_FLOAT, float, ctx)
     SPARSESOFTMAX_COMPUTE_CASE(DT_DOUBLE, double, ctx)
     default:
-      KERNEL_LOG_ERROR("SparseSoftmax kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "SparseSoftmax kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
-uint32_t SparseSoftmaxCpuKernel::SparseSoftmaxCheck(const CpuKernelContext &ctx) {
+uint32_t SparseSoftmaxCpuKernel::SparseSoftmaxCheck(CpuKernelContext &ctx) {
   std::vector<int64_t> shape_indices = ctx.Input(kIndex0)->GetTensorShape()->GetDimSizes();
   std::vector<int64_t> shape_values = ctx.Input(kIndex1)->GetTensorShape()->GetDimSizes();
   std::vector<int64_t> shape_shape = ctx.Input(kIndex2)->GetTensorShape()->GetDimSizes();
   std::vector<int64_t> shape_output = ctx.Output(kIndex0)->GetTensorShape()->GetDimSizes();
-  KERNEL_CHECK_FALSE((shape_indices.size() == kSize2), KERNEL_STATUS_PARAM_INVALID,
-                     "Indices must be rank 2D, got [%zu].", shape_indices.size())
-  KERNEL_CHECK_FALSE((shape_values.size() == kSize1), KERNEL_STATUS_PARAM_INVALID, "values must be rank 1D, got [%zu].",
-                     shape_values.size())
-  KERNEL_CHECK_FALSE((shape_shape.size() == kSize1), KERNEL_STATUS_PARAM_INVALID, "shape must be rank 1D, got [%zu].",
-                     shape_shape.size())
-  KERNEL_CHECK_FALSE((ctx.Input(kIndex2)->GetTensorShape()->NumElements() >= kSize2), KERNEL_STATUS_PARAM_INVALID,
-                     "shape number must be more than 1, got [%zu].", shape_shape.size())
-  KERNEL_CHECK_FALSE((shape_values.size() == shape_output.size()), KERNEL_STATUS_PARAM_INVALID,
-                     "The input shape size should be same as the output shape size")
+  CUST_KERNEL_CHECK_FALSE(ctx, (shape_indices.size() == kSize2), KERNEL_STATUS_PARAM_INVALID,
+                          "Indices must be rank 2D, got [%zu].", shape_indices.size())
+  CUST_KERNEL_CHECK_FALSE(ctx, (shape_values.size() == kSize1), KERNEL_STATUS_PARAM_INVALID,
+                          "values must be rank 1D, got [%zu].", shape_values.size())
+  CUST_KERNEL_CHECK_FALSE(ctx, (shape_shape.size() == kSize1), KERNEL_STATUS_PARAM_INVALID,
+                          "shape must be rank 1D, got [%zu].", shape_shape.size())
+  CUST_KERNEL_CHECK_FALSE(ctx, (ctx.Input(kIndex2)->GetTensorShape()->NumElements() >= kSize2),
+                          KERNEL_STATUS_PARAM_INVALID, "shape number must be more than 1, got [%zu].",
+                          shape_shape.size())
+  CUST_KERNEL_CHECK_FALSE(ctx, (shape_values.size() == shape_output.size()), KERNEL_STATUS_PARAM_INVALID,
+                          "The input shape size should be same as the output shape size")
   const int64_t nnz = shape_indices[0];
   const int64_t data_num = ctx.Input(kIndex1)->NumElements();
-  KERNEL_CHECK_FALSE((nnz == data_num), KERNEL_STATUS_PARAM_INVALID,
-                     "The values number should be same as the indices_size(0)");
+  CUST_KERNEL_CHECK_FALSE(ctx, (nnz == data_num), KERNEL_STATUS_PARAM_INVALID,
+                          "The values number should be same as the indices_size(0)");
   auto data_type_indices = ctx.Input(kIndex0)->GetDataType();
   auto data_type_shape = ctx.Input(kIndex2)->GetDataType();
-  KERNEL_CHECK_FALSE((data_type_indices == DT_INT64), KERNEL_STATUS_PARAM_INVALID,
-                     "data type of indices should be int64");
-  KERNEL_CHECK_FALSE((data_type_shape == DT_INT64), KERNEL_STATUS_PARAM_INVALID, "data type of shape should be int64");
+  CUST_KERNEL_CHECK_FALSE(ctx, (data_type_indices == DT_INT64), KERNEL_STATUS_PARAM_INVALID,
+                          "data type of indices should be int64");
+  CUST_KERNEL_CHECK_FALSE(ctx, (data_type_shape == DT_INT64), KERNEL_STATUS_PARAM_INVALID,
+                          "data type of shape should be int64");
   return KERNEL_STATUS_OK;
 }
 template <typename T>
-uint32_t SparseSoftmaxCpuKernel::SparseSoftmaxCompute(const CpuKernelContext &ctx) {
+uint32_t SparseSoftmaxCpuKernel::SparseSoftmaxCompute(CpuKernelContext &ctx) {
   int64_t data_num = ctx.Input(kIndex1)->NumElements();
 
   auto *indices_t = ctx.Input(kIndex0);
@@ -196,8 +195,8 @@ uint32_t SparseSoftmaxCpuKernel::SparseSoftmaxCompute(const CpuKernelContext &ct
   QuickSortIndicesAndValues(reinterpret_cast<int64_t *>(indices_t->GetData()),
                             reinterpret_cast<T *>(values_t->GetData()), shape_t->NumElements(), 0, data_num - 1);
 
-  if (st.CreateSparseTensor(indices_t, values_t, shape_flat, order) != KERNEL_STATUS_OK) {
-    KERNEL_LOG_ERROR("Create sparse tensor failed.");
+  if (st.CreateSparseTensor(ctx, indices_t, values_t, shape_flat, order) != KERNEL_STATUS_OK) {
+    CUST_KERNEL_LOG_ERROR(ctx, "Create sparse tensor failed.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
@@ -209,11 +208,11 @@ uint32_t SparseSoftmaxCpuKernel::SparseSoftmaxCompute(const CpuKernelContext &ct
   // All but the last dim -- the class dimension to be max-reduced along.
   std::vector<int64_t> kGroupByDims(rank - 1);
   std::iota(kGroupByDims.begin(), kGroupByDims.end(), 0);
-  st.Reorder<T>(kReorderDims);
+  st.Reorder<T>(ctx, kReorderDims);
 
   int64_t count = 0;
 
-  for (const auto &g : st.group(kGroupByDims)) {
+  for (const auto &g : st.group(ctx, kGroupByDims)) {
     const auto group_vals = g.values<T>();
     const int group_size = group_vals.size();
     Eigen::Tensor<T, 0, Eigen::RowMajor> tmp_scalar;

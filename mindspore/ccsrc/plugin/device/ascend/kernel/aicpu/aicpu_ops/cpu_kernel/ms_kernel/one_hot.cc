@@ -33,36 +33,37 @@ const uint32_t kInputNum = 4;
 const uint32_t kOutputNum = 1;
 const char *kOneHot = "OneHot";
 const int64_t kParallelDataNumSameShape = 100 * 1024;
-#define ONE_HOT_INPUT_COMPUTE_CASE(DTYPE, TYPE, ODTYPE, CTX)                                                      \
-  case (DTYPE): {                                                                                                 \
-    switch (ODTYPE) {                                                                                             \
-      ONE_HOT_OUTPUT_COMPUTE_CASE(DTYPE, TYPE, DT_COMPLEX64, std::complex<float>, CTX)                            \
-      ONE_HOT_OUTPUT_COMPUTE_CASE(DTYPE, TYPE, DT_COMPLEX128, std::complex<double>, CTX)                          \
-      ONE_HOT_OUTPUT_COMPUTE_CASE(DTYPE, TYPE, DT_DOUBLE, double, CTX)                                            \
-      ONE_HOT_OUTPUT_COMPUTE_CASE(DTYPE, TYPE, DT_FLOAT, float_t, CTX);                                           \
-      ONE_HOT_OUTPUT_COMPUTE_CASE(DTYPE, TYPE, DT_FLOAT16, Eigen::half, CTX)                                      \
-      ONE_HOT_OUTPUT_COMPUTE_CASE(DTYPE, TYPE, DT_INT8, int8_t, CTX)                                              \
-      ONE_HOT_OUTPUT_COMPUTE_CASE(DTYPE, TYPE, DT_INT16, int16_t, CTX)                                            \
-      ONE_HOT_OUTPUT_COMPUTE_CASE(DTYPE, TYPE, DT_INT32, int32_t, CTX)                                            \
-      ONE_HOT_OUTPUT_COMPUTE_CASE(DTYPE, TYPE, DT_INT64, int64_t, CTX)                                            \
-      ONE_HOT_OUTPUT_COMPUTE_CASE(DTYPE, TYPE, DT_UINT8, uint8_t, CTX)                                            \
-      ONE_HOT_OUTPUT_COMPUTE_CASE(DTYPE, TYPE, DT_UINT16, uint16_t, CTX)                                          \
-      ONE_HOT_OUTPUT_COMPUTE_CASE(DTYPE, TYPE, DT_UINT32, uint32_t, CTX)                                          \
-      ONE_HOT_OUTPUT_COMPUTE_CASE(DTYPE, TYPE, DT_UINT64, uint64_t, CTX)                                          \
-      ONE_HOT_OUTPUT_COMPUTE_CASE(DTYPE, TYPE, DT_BOOL, bool, CTX)                                                \
-      ONE_HOT_OUTPUT_COMPUTE_CASE(DTYPE, TYPE, DT_STRING, std::string, CTX)                                       \
-      default:                                                                                                    \
-        KERNEL_LOG_ERROR("OneHot kernel output data type [%s] not support.", DTypeStr(output_data_type).c_str()); \
-        return KERNEL_STATUS_PARAM_INVALID;                                                                       \
-    }                                                                                                             \
-    break;                                                                                                        \
+#define ONE_HOT_INPUT_COMPUTE_CASE(DTYPE, TYPE, ODTYPE, CTX)                             \
+  case (DTYPE): {                                                                        \
+    switch (ODTYPE) {                                                                    \
+      ONE_HOT_OUTPUT_COMPUTE_CASE(DTYPE, TYPE, DT_COMPLEX64, std::complex<float>, CTX)   \
+      ONE_HOT_OUTPUT_COMPUTE_CASE(DTYPE, TYPE, DT_COMPLEX128, std::complex<double>, CTX) \
+      ONE_HOT_OUTPUT_COMPUTE_CASE(DTYPE, TYPE, DT_DOUBLE, double, CTX)                   \
+      ONE_HOT_OUTPUT_COMPUTE_CASE(DTYPE, TYPE, DT_FLOAT, float_t, CTX);                  \
+      ONE_HOT_OUTPUT_COMPUTE_CASE(DTYPE, TYPE, DT_FLOAT16, Eigen::half, CTX)             \
+      ONE_HOT_OUTPUT_COMPUTE_CASE(DTYPE, TYPE, DT_INT8, int8_t, CTX)                     \
+      ONE_HOT_OUTPUT_COMPUTE_CASE(DTYPE, TYPE, DT_INT16, int16_t, CTX)                   \
+      ONE_HOT_OUTPUT_COMPUTE_CASE(DTYPE, TYPE, DT_INT32, int32_t, CTX)                   \
+      ONE_HOT_OUTPUT_COMPUTE_CASE(DTYPE, TYPE, DT_INT64, int64_t, CTX)                   \
+      ONE_HOT_OUTPUT_COMPUTE_CASE(DTYPE, TYPE, DT_UINT8, uint8_t, CTX)                   \
+      ONE_HOT_OUTPUT_COMPUTE_CASE(DTYPE, TYPE, DT_UINT16, uint16_t, CTX)                 \
+      ONE_HOT_OUTPUT_COMPUTE_CASE(DTYPE, TYPE, DT_UINT32, uint32_t, CTX)                 \
+      ONE_HOT_OUTPUT_COMPUTE_CASE(DTYPE, TYPE, DT_UINT64, uint64_t, CTX)                 \
+      ONE_HOT_OUTPUT_COMPUTE_CASE(DTYPE, TYPE, DT_BOOL, bool, CTX)                       \
+      ONE_HOT_OUTPUT_COMPUTE_CASE(DTYPE, TYPE, DT_STRING, std::string, CTX)              \
+      default:                                                                           \
+        CUST_KERNEL_LOG_ERROR(ctx, "OneHot kernel output data type [%s] not support.",   \
+                              DTypeStr(output_data_type).c_str());                       \
+        return KERNEL_STATUS_PARAM_INVALID;                                              \
+    }                                                                                    \
+    break;                                                                               \
   }
 
 #define ONE_HOT_OUTPUT_COMPUTE_CASE(DTYPE, TYPE, ODTYPE, OTYPE, CTX) \
   case (ODTYPE): {                                                   \
     uint32_t result = OneHotCompute<OTYPE, TYPE>(CTX);               \
     if (result != KERNEL_STATUS_OK) {                                \
-      KERNEL_LOG_ERROR("OneHot kernel compute failed.");             \
+      CUST_KERNEL_LOG_ERROR(ctx, "OneHot kernel compute failed.");   \
       return result;                                                 \
     }                                                                \
     break;                                                           \
@@ -71,7 +72,8 @@ const int64_t kParallelDataNumSameShape = 100 * 1024;
 
 namespace aicpu {
 uint32_t OneHotCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "OneHot check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "OneHot check input and output number failed.");
   auto input_data_type = ctx.Input(0)->GetDataType();
   auto output_data_type = ctx.Output(0)->GetDataType();
   switch (input_data_type) {
@@ -79,7 +81,7 @@ uint32_t OneHotCpuKernel::Compute(CpuKernelContext &ctx) {
     ONE_HOT_INPUT_COMPUTE_CASE(DT_INT32, int32_t, output_data_type, ctx);
     ONE_HOT_INPUT_COMPUTE_CASE(DT_INT64, int64_t, output_data_type, ctx);
     default:
-      KERNEL_LOG_ERROR("OneHot kernel input data type [%s] not support.", DTypeStr(input_data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "OneHot kernel input data type [%s] not support.", DTypeStr(input_data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;

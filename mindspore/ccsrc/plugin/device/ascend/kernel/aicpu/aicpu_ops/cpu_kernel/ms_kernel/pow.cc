@@ -31,22 +31,22 @@ const int64_t kParallelDataNumMid = 16 * 1024;
 const int64_t kParallelDataNumSameShape = 7 * 1024;
 const int64_t kParallelDataNumSameShapeMid = 35 * 1024;
 
-#define POW_COMPUTE_CASE(DTYPE, TYPE, CTX)            \
-  case (DTYPE): {                                     \
-    uint32_t result = PowCompute<TYPE>(CTX);          \
-    if (result != KERNEL_STATUS_OK) {                 \
-      KERNEL_LOG_ERROR("Pow kernel compute failed."); \
-      return result;                                  \
-    }                                                 \
-    break;                                            \
+#define POW_COMPUTE_CASE(DTYPE, TYPE, CTX)                      \
+  case (DTYPE): {                                               \
+    uint32_t result = PowCompute<TYPE>(CTX);                    \
+    if (result != KERNEL_STATUS_OK) {                           \
+      CUST_KERNEL_LOG_ERROR(ctx, "Pow kernel compute failed."); \
+      return result;                                            \
+    }                                                           \
+    break;                                                      \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t PowCpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "Pow check input and output number failed.");
-  KERNEL_HANDLE_ERROR(PowParamCheck(ctx), "Pow check params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "Pow check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, PowParamCheck(ctx), "Pow check params failed.");
   auto data_type = ctx.Input(0)->GetDataType();
   switch (data_type) {
     POW_COMPUTE_CASE(DT_INT8, int8_t, ctx)
@@ -58,7 +58,7 @@ uint32_t PowCpuKernel::Compute(CpuKernelContext &ctx) {
     POW_COMPUTE_CASE(DT_COMPLEX64, std::complex<float>, ctx)
     POW_COMPUTE_CASE(DT_COMPLEX128, std::complex<double>, ctx)
     default:
-      KERNEL_LOG_ERROR("Pow kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Pow kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
@@ -73,16 +73,16 @@ uint32_t PowCpuKernel::PowParamCheck(CpuKernelContext &ctx) {
   DataType input1_type = input_1->GetDataType();
   auto input0_Shape = input_0->GetTensorShape();
   auto input1_Shape = input_1->GetTensorShape();
-  KERNEL_CHECK_NULLPTR(input0_Shape, KERNEL_STATUS_PARAM_INVALID, "Get input0_Shape failed.")
-  KERNEL_CHECK_NULLPTR(input1_Shape, KERNEL_STATUS_PARAM_INVALID, "Get input1_Shape failed.")
-  KERNEL_CHECK_FALSE((input0_type == input1_type), KERNEL_STATUS_PARAM_INVALID,
-                     "The data type of input0 [%s] need be same with "
-                     "input1 [%s].",
-                     DTypeStr(input0_type).c_str(), DTypeStr(input1_type).c_str())
-  KERNEL_LOG_DEBUG(
-    "PowCpuKernel[%s], input0: size[%llu];"
-    "input1: size[%llu], output: size[%llu].",
-    ctx.GetOpType().c_str(), input_0->GetDataSize(), input_1->GetDataSize(), output->GetDataSize());
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input0_Shape, KERNEL_STATUS_PARAM_INVALID, "Get input0_Shape failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input1_Shape, KERNEL_STATUS_PARAM_INVALID, "Get input1_Shape failed.")
+  CUST_KERNEL_CHECK_FALSE(ctx, (input0_type == input1_type), KERNEL_STATUS_PARAM_INVALID,
+                          "The data type of input0 [%s] need be same with "
+                          "input1 [%s].",
+                          DTypeStr(input0_type).c_str(), DTypeStr(input1_type).c_str())
+  CUST_KERNEL_LOG_DEBUG(ctx,
+                        "PowCpuKernel[%s], input0: size[%llu];"
+                        "input1: size[%llu], output: size[%llu].",
+                        ctx.GetOpType().c_str(), input_0->GetDataSize(), input_1->GetDataSize(), output->GetDataSize());
 
   return KERNEL_STATUS_OK;
 }
@@ -134,8 +134,8 @@ uint32_t PowCpuKernel::NoBcastCompute(CpuKernelContext &ctx) {
 
     auto sharder_pow = [&](size_t start, size_t end) { SpecialCompute<T>(type, start, end, in0, in1, out); };
 
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_pow),
-                        "Pow Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_pow),
+                             "Pow Compute failed.");
   } else {
     SpecialCompute<T>(type, 0, data_num, in0, in1, out);
   }
@@ -170,8 +170,8 @@ uint32_t PowCpuKernel::BcastCompute(CpuKernelContext &ctx, Bcast &bcast) {
       }
     };
 
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_pow),
-                        "Pow Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_pow),
+                             "Pow Compute failed.");
   } else {
     for (int64_t i = 0; i < data_num; i++) {
       auto input1 = in0 + bcast.GetBroadcastXIndex(i);  // i-th value of input0
@@ -196,7 +196,7 @@ uint32_t PowCpuKernel::PowCompute(CpuKernelContext &ctx) {
   if (isNeedBcast) {
     return NoBcastCompute<T>(ctx);
   } else {
-    Bcast bcast(input0_shape, input1_shape);
+    Bcast bcast(ctx, input0_shape, input1_shape);
 
     return BcastCompute<T>(ctx, bcast);
   }

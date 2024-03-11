@@ -32,35 +32,36 @@ constexpr int64_t kParallelDataNums = 64 * 1024;
 namespace aicpu {
 template <typename input_t, typename segment_ids_t, typename num_segments_t>
 uint32_t UnsortedSegmentProdCpuKernel::UnsortedSegmentProdComputeTemplate(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, input_num, output_num), " node input size should be [%llu],  get [%llu]",
-                      input_num, ctx.GetInputsSize(), " node output size should be [%llu],  get [%llu]", output_num,
-                      ctx.GetOutputsSize());
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, input_num, output_num),
+                           " node input size should be [%llu],  get [%llu]", input_num, ctx.GetInputsSize(),
+                           " node output size should be [%llu],  get [%llu]", output_num, ctx.GetOutputsSize());
   if (ctx.Input(0)->GetDataType() != ctx.Output(0)->GetDataType()) {
-    KERNEL_LOG_ERROR("The data type of the input [%s] need be the same as the output [%s]",
-                     DTypeStr(ctx.Input(0)->GetDataType()).c_str(), DTypeStr(ctx.Output(0)->GetDataType()).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "The data type of the input [%s] need be the same as the output [%s]",
+                          DTypeStr(ctx.Input(0)->GetDataType()).c_str(),
+                          DTypeStr(ctx.Output(0)->GetDataType()).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (ctx.Input(0)->GetDataSize() != ctx.Output(0)->GetDataSize()) {
-    KERNEL_LOG_ERROR(
-      "The data size of the input [%llu] need be the same as the output "
-      "[%llu]",
-      ctx.Input(0)->GetDataSize(), ctx.Output(0)->GetDataSize());
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "The data size of the input [%llu] need be the same as the output "
+                          "[%llu]",
+                          ctx.Input(0)->GetDataSize(), ctx.Output(0)->GetDataSize());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   int64_t data_size = ctx.Input(0)->NumElements();
   int64_t id_size = ctx.Input(1)->NumElements();
 
   auto input_x = reinterpret_cast<input_t *>(ctx.Input(0)->GetData());
-  KERNEL_CHECK_NULLPTR(input_x, KERNEL_STATUS_PARAM_INVALID, "Get input data failed")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input_x, KERNEL_STATUS_PARAM_INVALID, "Get input data failed")
   auto output_y = reinterpret_cast<input_t *>(ctx.Output(0)->GetData());
-  KERNEL_CHECK_NULLPTR(output_y, KERNEL_STATUS_PARAM_INVALID, "Get output data failed")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, output_y, KERNEL_STATUS_PARAM_INVALID, "Get output data failed")
   auto segmentids = reinterpret_cast<segment_ids_t *>(ctx.Input(1)->GetData());
-  KERNEL_CHECK_NULLPTR(segmentids, KERNEL_STATUS_PARAM_INVALID, "Get segment_ids failed")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, segmentids, KERNEL_STATUS_PARAM_INVALID, "Get segment_ids failed")
   auto numsegments = reinterpret_cast<num_segments_t *>(ctx.Input(2)->GetData());
-  KERNEL_CHECK_NULLPTR(numsegments, KERNEL_STATUS_PARAM_INVALID, "Get num_segments failed")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, numsegments, KERNEL_STATUS_PARAM_INVALID, "Get num_segments failed")
 
   if (id_size <= 0) {
-    KERNEL_LOG_ERROR("segment_ids num elements should great than 0");
+    CUST_KERNEL_LOG_ERROR(ctx, "segment_ids num elements should great than 0");
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
@@ -94,8 +95,8 @@ uint32_t UnsortedSegmentProdCpuKernel::UnsortedSegmentProdComputeTemplate(CpuKer
         }
       }
     };
-    KERNEL_HANDLE_ERROR(
-      CpuKernelUtils::ParallelFor(ctx, reshapesize, reshapesize / max_core_num, shard_unsorted_segment_prod),
+    CUST_KERNEL_HANDLE_ERROR(
+      ctx, CpuKernelUtils::ParallelFor(ctx, reshapesize, reshapesize / max_core_num, shard_unsorted_segment_prod),
       "CpuKernelUtils::ParallelFor failed.");
   }
   return KERNEL_STATUS_OK;
@@ -110,7 +111,8 @@ uint32_t UnsortedSegmentProdCpuKernel::DoComputeWithNumSegmentsType(CpuKernelCon
       return UnsortedSegmentProdComputeTemplate<input_t, segment_ids_t, int64_t>(ctx);
 
     default:
-      KERNEL_LOG_ERROR("UnsortedSegmentProd invalid num_segments_type type [%s]", DTypeStr(num_segments_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "UnsortedSegmentProd invalid num_segments_type type [%s]",
+                            DTypeStr(num_segments_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 }
@@ -125,7 +127,8 @@ uint32_t UnsortedSegmentProdCpuKernel::DoComputeWithSegmentIdsType(CpuKernelCont
       return DoComputeWithNumSegmentsType<input_t, int64_t>(ctx, num_segments_type);
 
     default:
-      KERNEL_LOG_ERROR("UnsortedSegmentProd invalid segment_ids_type type [%s]", DTypeStr(segment_ids_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "UnsortedSegmentProd invalid segment_ids_type type [%s]",
+                            DTypeStr(segment_ids_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 }
@@ -161,7 +164,7 @@ uint32_t UnsortedSegmentProdCpuKernel::Compute(CpuKernelContext &ctx) {
     case DT_COMPLEX128:
       return DoComputeWithSegmentIdsType<std::complex<double>>(ctx, segment_ids_type);
     default:
-      KERNEL_LOG_ERROR("UnsortedSegmentProd invalid input type [%s]", DTypeStr(input_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "UnsortedSegmentProd invalid input type [%s]", DTypeStr(input_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;

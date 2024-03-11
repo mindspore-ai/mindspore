@@ -37,10 +37,10 @@ class SparseFillEmptyRowsGradCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t NullptrAndMatVecCheck(const CpuKernelContext &ctx, DataBank &calc_info);
+  uint32_t NullptrAndMatVecCheck(CpuKernelContext &ctx, DataBank &calc_info);
 
   template <typename T>
-  uint32_t ComputeSparseFillEmptyRowsGrad(const CpuKernelContext &ctx, DataBank &databank);
+  uint32_t ComputeSparseFillEmptyRowsGrad(CpuKernelContext &ctx, DataBank &databank);
 };
 }  // namespace aicpu
 #endif

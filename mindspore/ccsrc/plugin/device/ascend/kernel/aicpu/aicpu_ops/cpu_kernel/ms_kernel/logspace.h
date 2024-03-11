@@ -28,10 +28,10 @@ class LogSpaceCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t LogSpaceCheck(const CpuKernelContext &ctx);
+  uint32_t LogSpaceCheck(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t LogSpaceCompute(const CpuKernelContext &ctx);
+  uint32_t LogSpaceCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

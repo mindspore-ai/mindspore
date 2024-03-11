@@ -45,21 +45,22 @@ constexpr auto kUpsampleNearest3dGrad = "UpsampleNearest3dGrad";
 
 namespace aicpu {
 template <typename T>
-static uint32_t CheckPositiveVectorWithSpecifiedSize(const std::vector<T> &args_value, const std::string &args_name,
-                                                     size_t args_size, const std::string &op_name) {
-  KERNEL_CHECK_FALSE((args_value.size() == args_size), KERNEL_STATUS_PARAM_INVALID,
-                     "For [%s], [%s] should have %d "
-                     "positive number but only get %d number.",
-                     op_name.c_str(), args_name.c_str(), args_size, args_value.size());
+static uint32_t CheckPositiveVectorWithSpecifiedSize(CpuKernelContext &ctx, const std::vector<T> &args_value,
+                                                     const std::string &args_name, size_t args_size,
+                                                     const std::string &op_name) {
+  CUST_KERNEL_CHECK_FALSE(ctx, (args_value.size() == args_size), KERNEL_STATUS_PARAM_INVALID,
+                          "For [%s], [%s] should have %d "
+                          "positive number but only get %d number.",
+                          op_name.c_str(), args_name.c_str(), args_size, args_value.size());
   bool all_positive = true;
   for (auto const &num : args_value) {
     all_positive = (all_positive & (num > T(0)));
   }
   std::string args_str = VectorToString(args_value);
-  KERNEL_CHECK_FALSE(all_positive, KERNEL_STATUS_PARAM_INVALID,
-                     "For [%s], [%s] should have %d "
-                     "positive number. but get %s = (%s).",
-                     op_name.c_str(), args_name.c_str(), args_size, args_name.c_str(), args_str.c_str());
+  CUST_KERNEL_CHECK_FALSE(ctx, all_positive, KERNEL_STATUS_PARAM_INVALID,
+                          "For [%s], [%s] should have %d "
+                          "positive number. but get %s = (%s).",
+                          op_name.c_str(), args_name.c_str(), args_size, args_name.c_str(), args_str.c_str());
   return KERNEL_STATUS_OK;
 }
 
@@ -91,25 +92,28 @@ static inline int64_t NearestIdx(int64_t output_index, int64_t input_size, int64
 }
 
 uint32_t UpsampleNearest3dGradCpuKernel::UpsampleNearest3dGradParamCheck(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check params failed.", kUpsampleNearest3dGrad);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check params failed.",
+                           kUpsampleNearest3dGrad);
   grads_output_shape = ctx.Input(kIndex0)->GetTensorShape()->GetDimSizes();
-  KERNEL_HANDLE_ERROR(
-    CheckPositiveVectorWithSpecifiedSize(grads_output_shape, "grads_output_shape", kDims5, kUpsampleNearest3dGrad),
+  CUST_KERNEL_HANDLE_ERROR(
+    ctx,
+    CheckPositiveVectorWithSpecifiedSize(ctx, grads_output_shape, "grads_output_shape", kDims5, kUpsampleNearest3dGrad),
     "[%s] check grads_output_shape failed.", kUpsampleNearest3dGrad);
   grads_input_shape = ctx.Output(kIndex0)->GetTensorShape()->GetDimSizes();
-  KERNEL_HANDLE_ERROR(
-    CheckPositiveVectorWithSpecifiedSize(grads_input_shape, "grads_input_shape", kDims5, kUpsampleNearest3dGrad),
+  CUST_KERNEL_HANDLE_ERROR(
+    ctx,
+    CheckPositiveVectorWithSpecifiedSize(ctx, grads_input_shape, "grads_input_shape", kDims5, kUpsampleNearest3dGrad),
     "[%s] check grads_input_shape failed.", kUpsampleNearest3dGrad);
-  KERNEL_CHECK_FALSE(grads_output_shape.size() == kDims5, KERNEL_STATUS_PARAM_INVALID,
-                     "Upsample with NHWC format supports tensors with 5 "
-                     "dims. but got %d dim(s).",
-                     grads_output_shape.size());
+  CUST_KERNEL_CHECK_FALSE(ctx, grads_output_shape.size() == kDims5, KERNEL_STATUS_PARAM_INVALID,
+                          "Upsample with NHWC format supports tensors with 5 "
+                          "dims. but got %d dim(s).",
+                          grads_output_shape.size());
   auto none_list_ptr = ctx.GetAttr("none_list");
-  KERNEL_CHECK_NULLPTR(none_list_ptr, KERNEL_STATUS_PARAM_INVALID, "[%s] get attr 'none_list' failed.",
-                       ctx.GetOpType().c_str());
+  CUST_KERNEL_CHECK_NULLPTR(ctx, none_list_ptr, KERNEL_STATUS_PARAM_INVALID, "[%s] get attr 'none_list' failed.",
+                            ctx.GetOpType().c_str());
   none_list = none_list_ptr->GetListInt();
-  KERNEL_CHECK_FALSE(none_list.size() == 1, KERNEL_STATUS_PARAM_INVALID,
-                     "For 'UpsampleNearest3DGrad', only one of output_size or scales should be specified.");
+  CUST_KERNEL_CHECK_FALSE(ctx, none_list.size() == 1, KERNEL_STATUS_PARAM_INVALID,
+                          "For 'UpsampleNearest3DGrad', only one of output_size or scales should be specified.");
   return KERNEL_STATUS_OK;
 }
 
@@ -130,11 +134,11 @@ uint32_t UpsampleNearest3dGradCpuKernel::Compute(CpuKernelContext &ctx) {
       res = UpsampleNearest3dGradCompute<double, double>(ctx);
       break;
     default:
-      KERNEL_LOG_ERROR("UpsampleNearest3dGrad invalid input type [%s].", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "UpsampleNearest3dGrad invalid input type [%s].", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   if (res != KERNEL_STATUS_OK) {
-    KERNEL_LOG_ERROR("Failed launching UpsampleNearest3dGrad.");
+    CUST_KERNEL_LOG_ERROR(ctx, "Failed launching UpsampleNearest3dGrad.");
     return KERNEL_STATUS_INNER_ERROR;
   }
   return KERNEL_STATUS_OK;
@@ -157,7 +161,7 @@ void UpsampleNearest3dGradCpuKernel::InnerCompute(int64_t c, const T *grad_outpu
 }
 
 template <typename T, typename S>
-uint32_t UpsampleNearest3dGradCpuKernel::UpsampleNearest3dGradCompute(const CpuKernelContext &ctx) {
+uint32_t UpsampleNearest3dGradCpuKernel::UpsampleNearest3dGradCompute(CpuKernelContext &ctx) {
   // fetch scales
   scales = std::vector<float>{0, 0, 0};
   if (none_list[kIndex0] != static_cast<int64_t>(kIndex3)) {
@@ -195,8 +199,8 @@ uint32_t UpsampleNearest3dGradCpuKernel::UpsampleNearest3dGradCompute(const CpuK
     size_t y_size = sizeof(S) * total;
     grad_input_ptr = reinterpret_cast<S *>(grads_in->GetData());
     int ret = memset_s(grad_input_ptr, y_size, 0, y_size);
-    KERNEL_CHECK_FALSE(ret == EOK, KERNEL_STATUS_INNER_ERROR,
-                       "For 'UpsampleNearest3DGrad', memset_s error. Error no: %d.", ret);
+    CUST_KERNEL_CHECK_FALSE(ctx, ret == EOK, KERNEL_STATUS_INNER_ERROR,
+                            "For 'UpsampleNearest3DGrad', memset_s error. Error no: %d.", ret);
   }
   auto loop3d = [&](int64_t begin, int64_t end) {
     for (int64_t c = begin; c < end; ++c) {
@@ -214,7 +218,8 @@ uint32_t UpsampleNearest3dGradCpuKernel::UpsampleNearest3dGradCompute(const CpuK
     per_unit_size = std::max(per_unit_size, 1L);
     per_unit_size = std::min(channels, per_unit_size);
   }
-  KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, channels, per_unit_size, loop3d), "loop3d Compute failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, channels, per_unit_size, loop3d),
+                           "loop3d Compute failed.");
   // memcopy and cast for fp16
   if (is_fp16) {
     T *real_input_ptr = reinterpret_cast<T *>(grads_in->GetData());

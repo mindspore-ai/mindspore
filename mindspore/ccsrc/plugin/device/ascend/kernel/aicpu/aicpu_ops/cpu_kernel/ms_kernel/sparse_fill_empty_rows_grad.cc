@@ -40,8 +40,7 @@ bool isVector(const std::shared_ptr<aicpu::TensorShape> shape) { return shape->G
 
 namespace aicpu {
 template <typename T>
-uint32_t SparseFillEmptyRowsGradCpuKernel::ComputeSparseFillEmptyRowsGrad(const CpuKernelContext &ctx,
-                                                                          DataBank &databank) {
+uint32_t SparseFillEmptyRowsGradCpuKernel::ComputeSparseFillEmptyRowsGrad(CpuKernelContext &ctx, DataBank &databank) {
   EigenTensor reverse_index_map_e(databank.reverse_index_map, databank.reverse_index_map->GetData());
   EigenTensor grad_values_e(databank.grad_values, databank.grad_values->GetData());
   EigenTensor y_value_e(databank.y_value, databank.y_value->GetData());
@@ -59,8 +58,8 @@ uint32_t SparseFillEmptyRowsGradCpuKernel::ComputeSparseFillEmptyRowsGrad(const 
   if (N <= kParallelNum) {
     for (int64_t i = 0; i < N; ++i) {
       int64_t reverse_index = reverse_index_map(i);
-      KERNEL_CHECK_FALSE(0 <= reverse_index && reverse_index < N_full, KERNEL_STATUS_PARAM_INVALID,
-                         "Elements in reverse index must be in [0, [%d]) but got [%d]", N_full, reverse_index)
+      CUST_KERNEL_CHECK_FALSE(ctx, 0 <= reverse_index && reverse_index < N_full, KERNEL_STATUS_PARAM_INVALID,
+                              "Elements in reverse index must be in [0, [%d]) but got [%d]", N_full, reverse_index)
       y_value(i) = grad_values(reverse_index);
       visited[reverse_index] = true;
     }
@@ -71,13 +70,15 @@ uint32_t SparseFillEmptyRowsGradCpuKernel::ComputeSparseFillEmptyRowsGrad(const 
     uint32_t ret = CpuKernelUtils::ParallelFor(ctx, total, per_unit_size, [&](int64_t begin, int64_t end) {
       for (int64_t i = begin; i < end; ++i) {
         int64_t reverse_index = reverse_index_map(i);
-        KERNEL_CHECK_FALSE_VOID(0 <= reverse_index && reverse_index < N_full,
-                                "Elements in reverse index must be in [0, [%d]) but got [%d]", N_full, reverse_index);
+        CUST_KERNEL_CHECK_FALSE_VOID(ctx, 0 <= reverse_index && reverse_index < N_full,
+                                     "Elements in reverse index must be in [0, [%d]) but got [%d]", N_full,
+                                     reverse_index);
         y_value(i) = grad_values(reverse_index);
         visited[reverse_index] = true;
       }
     });
-    KERNEL_CHECK_FALSE((ret == KERNEL_STATUS_OK), KERNEL_STATUS_INNER_ERROR, "SparseFillEmptyRowsGrad compute failed.");
+    CUST_KERNEL_CHECK_FALSE(ctx, (ret == KERNEL_STATUS_OK), KERNEL_STATUS_INNER_ERROR,
+                            "SparseFillEmptyRowsGrad compute failed.");
   }
   for (int64_t j = 0; j < N_full; ++j) {
     if (!visited[j]) {
@@ -89,23 +90,23 @@ uint32_t SparseFillEmptyRowsGradCpuKernel::ComputeSparseFillEmptyRowsGrad(const 
   return KERNEL_STATUS_OK;
 }
 
-uint32_t SparseFillEmptyRowsGradCpuKernel::NullptrAndMatVecCheck(const CpuKernelContext &ctx, DataBank &databank) {
+uint32_t SparseFillEmptyRowsGradCpuKernel::NullptrAndMatVecCheck(CpuKernelContext &ctx, DataBank &databank) {
   databank.reverse_index_map = ctx.Input(0);
   databank.grad_values = ctx.Input(1);
   databank.y_value = ctx.Output(0);
   databank.y_default_value = ctx.Output(1);
-  KERNEL_CHECK_FALSE(isVector(databank.reverse_index_map->GetTensorShape()), KERNEL_STATUS_PARAM_INVALID,
-                     "Inputs reverse_index_map should be vectors")
-  KERNEL_CHECK_FALSE(isVector(databank.grad_values->GetTensorShape()), KERNEL_STATUS_PARAM_INVALID,
-                     "Inputs grad_values should be vectors")
+  CUST_KERNEL_CHECK_FALSE(ctx, isVector(databank.reverse_index_map->GetTensorShape()), KERNEL_STATUS_PARAM_INVALID,
+                          "Inputs reverse_index_map should be vectors")
+  CUST_KERNEL_CHECK_FALSE(ctx, isVector(databank.grad_values->GetTensorShape()), KERNEL_STATUS_PARAM_INVALID,
+                          "Inputs grad_values should be vectors")
   return KERNEL_STATUS_OK;
 }
 
 uint32_t SparseFillEmptyRowsGradCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum),
-                      "SparseFillEmptyRowsGrad check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "SparseFillEmptyRowsGrad check input and output number failed.");
   DataBank databank;
-  KERNEL_HANDLE_ERROR(NullptrAndMatVecCheck(ctx, databank), "SparseFillEmptyRowsGrad check params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NullptrAndMatVecCheck(ctx, databank), "SparseFillEmptyRowsGrad check params failed.");
   DataType dt = static_cast<DataType>(databank.y_value->GetDataType());
 
   uint32_t KERNEL_STATUS;
@@ -156,11 +157,11 @@ uint32_t SparseFillEmptyRowsGradCpuKernel::Compute(CpuKernelContext &ctx) {
       KERNEL_STATUS = ComputeSparseFillEmptyRowsGrad<std::complex<double>>(ctx, databank);
       break;
     default:
-      KERNEL_LOG_ERROR("SparseFillEmptyRowsGrad can't support this data type [%s].", DTypeStr(dt).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "SparseFillEmptyRowsGrad can't support this data type [%s].", DTypeStr(dt).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   if (KERNEL_STATUS != KERNEL_STATUS_OK) {
-    KERNEL_LOG_ERROR("SparseFillEmptyRowsGrad failed.");
+    CUST_KERNEL_LOG_ERROR(ctx, "SparseFillEmptyRowsGrad failed.");
     return KERNEL_STATUS;
   }
   return KERNEL_STATUS_OK;

@@ -29,10 +29,10 @@ class CumulativeLogsumexpCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t CumulativeLogsumexpCheck(const CpuKernelContext &ctx);
+  uint32_t CumulativeLogsumexpCheck(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t CumulativeLogsumexpCompute(const CpuKernelContext &ctx);
+  uint32_t CumulativeLogsumexpCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

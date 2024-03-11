@@ -35,7 +35,7 @@ const int64_t kParallelDataNum = 4 * 1024;
 
 namespace aicpu {
 uint32_t MatrixPowerCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "MatrixPower normal check failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "MatrixPower normal check failed.");
   auto x_type = ctx.Input(0)->GetDataType();
   AttrValue *power = ctx.GetAttr("n");
   powervalue_ = power->GetInt();
@@ -56,7 +56,7 @@ uint32_t MatrixPowerCpuKernel::Compute(CpuKernelContext &ctx) {
     case DT_DOUBLE:
       return ComputeKernel<double>(ctx);
     default:
-      KERNEL_LOG_ERROR("For MatrixPower, input type is not supported: %s", DTypeStr(x_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "For MatrixPower, input type is not supported: %s", DTypeStr(x_type).c_str());
       return KERNEL_STATUS_INNER_ERROR;
   }
 }
@@ -65,7 +65,7 @@ template <typename T>
 using Matrix = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
 
 template <typename T>
-uint32_t MatrixPowerCpuKernel::ComputeKernel(const CpuKernelContext &ctx) {
+uint32_t MatrixPowerCpuKernel::ComputeKernel(CpuKernelContext &ctx) {
   Tensor *input_x = ctx.Input(0);
   Tensor *output_y = ctx.Output(0);
   auto x_shape = input_x->GetTensorShape()->GetDimSizes();
@@ -81,15 +81,15 @@ uint32_t MatrixPowerCpuKernel::ComputeKernel(const CpuKernelContext &ctx) {
 
   std::function<aicpu::KernelStatus(Matrix<T> &)> inv;
   if constexpr (std::is_integral_v<T>) {
-    inv = [](auto &A) {
-      KERNEL_LOG_ERROR("For MatrixPower, n < 0 is not supported for input of integer type.");
+    inv = [&ctx](auto &A) {
+      CUST_KERNEL_LOG_ERROR(ctx, "For MatrixPower, n < 0 is not supported for input of integer type.");
       return KERNEL_STATUS_INNER_ERROR;
     };
   } else {
-    inv = [](auto &A) {
+    inv = [&ctx](auto &A) {
       Eigen::FullPivLU<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>> LU(A);
       if (!(LU.isInvertible())) {
-        KERNEL_LOG_ERROR("For MatrixPower, negative power can not apply to singular matrix.");
+        CUST_KERNEL_LOG_ERROR(ctx, "For MatrixPower, negative power can not apply to singular matrix.");
         return KERNEL_STATUS_INNER_ERROR;
       }
       A = LU.inverse();

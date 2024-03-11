@@ -32,19 +32,20 @@ namespace aicpu {
 // 实现自定义算子类的Compute函数
 uint32_t TraceGradCpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "Tracegrad check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "Tracegrad check input and output number failed.");
   Tensor *y_grad = ctx.Input(0);
   Tensor *x_shape = ctx.Input(1);
   Tensor *x_grad = ctx.Output(0);
-  KERNEL_CHECK_NULLPTR(y_grad->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 0 data failed.");
-  KERNEL_CHECK_NULLPTR(x_shape->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 1 data failed.");
-  KERNEL_CHECK_NULLPTR(x_grad->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output data failed");
-  KERNEL_CHECK_FALSE(ctx.Input(1)->NumElements() == 2, KERNEL_STATUS_PARAM_INVALID, "Expected matrix input.",
-                     ctx.Input(1)->NumElements());
-  KERNEL_LOG_DEBUG(
-    "TraceGradCpuKernel[%s], y_grad: size[%llu];"
-    "x_shape: size[%llu], x_grad: size[%llu].",
-    ctx.GetOpType().c_str(), y_grad->GetDataSize(), x_shape->GetDataSize(), x_grad->GetDataSize());
+  CUST_KERNEL_CHECK_NULLPTR(ctx, y_grad->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 0 data failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, x_shape->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 1 data failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, x_grad->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output data failed");
+  CUST_KERNEL_CHECK_FALSE(ctx, ctx.Input(1)->NumElements() == 2, KERNEL_STATUS_PARAM_INVALID, "Expected matrix input.",
+                          ctx.Input(1)->NumElements());
+  CUST_KERNEL_LOG_DEBUG(ctx,
+                        "TraceGradCpuKernel[%s], y_grad: size[%llu];"
+                        "x_shape: size[%llu], x_grad: size[%llu].",
+                        ctx.GetOpType().c_str(), y_grad->GetDataSize(), x_shape->GetDataSize(), x_grad->GetDataSize());
   DataType data_type = ctx.Input(0)->GetDataType();
   DataType shape_type = ctx.Input(1)->GetDataType();
 
@@ -149,14 +150,14 @@ uint32_t TraceGradCpuKernel::Compute(CpuKernelContext &ctx) {
           break;
       }
     default:
-      KERNEL_LOG_ERROR("TraceGrad kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "TraceGrad kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 
 template <typename T1, typename T2>
-uint32_t TraceGradCpuKernel::TraceGradCompute(const CpuKernelContext &ctx) {
+uint32_t TraceGradCpuKernel::TraceGradCompute(CpuKernelContext &ctx) {
   auto input_x1 = reinterpret_cast<T1 *>(ctx.Input(0)->GetData());
   auto input_x2 = reinterpret_cast<T2 *>(ctx.Input(1)->GetData());
   auto output_x = reinterpret_cast<T1 *>(ctx.Output(0)->GetData());

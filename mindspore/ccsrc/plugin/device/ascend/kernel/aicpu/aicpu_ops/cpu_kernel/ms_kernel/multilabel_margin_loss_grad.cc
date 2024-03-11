@@ -33,9 +33,9 @@ namespace aicpu {
 uint32_t MultilabelMarginLossGradCpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
   uint32_t kInputNum = 4;
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum),
-                      "MultilabelMarginLossGrad check input and output number failed.");
-  KERNEL_HANDLE_ERROR(MultilabelMarginLossGradCheck(ctx), "MultilabelMarginLossGrad check params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "MultilabelMarginLossGrad check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, MultilabelMarginLossGradCheck(ctx), "MultilabelMarginLossGrad check params failed.");
   auto data_type = ctx.Input(1)->GetDataType();
   switch (data_type) {
     case DT_FLOAT16:
@@ -43,7 +43,8 @@ uint32_t MultilabelMarginLossGradCpuKernel::Compute(CpuKernelContext &ctx) {
     case DT_FLOAT:
       return MultilabelMarginLossGradCompute<float>(ctx);
     default:
-      KERNEL_LOG_ERROR("MultilabelMarginLossGrad kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "MultilabelMarginLossGrad kernel data type [%s] not support.",
+                            DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
@@ -58,17 +59,18 @@ uint32_t MultilabelMarginLossGradCpuKernel::MultilabelMarginLossGradCheck(CpuKer
   AttrValue *Attr_red = ctx.GetAttr("reduction");
   std::string reduction = (Attr_red == nullptr) ? "mean" : Attr_red->GetString();
   for (size_t i = 0; i < data_num; i++) {
-    KERNEL_CHECK_FALSE(*(target + i) >= -1 && (*(target + i) < batch_size), KERNEL_STATUS_PARAM_INVALID,
-                       "[%s]'s target out of range.", ctx.GetOpType().c_str());
+    CUST_KERNEL_CHECK_FALSE(ctx, *(target + i) >= -1 && (*(target + i) < batch_size), KERNEL_STATUS_PARAM_INVALID,
+                            "[%s]'s target out of range.", ctx.GetOpType().c_str());
   }
   if (reduction == "none") {
     if (dims == 1) {
-      KERNEL_CHECK_FALSE(ctx.Input(0)->GetTensorShape()->GetDims() <= 1, KERNEL_STATUS_PARAM_INVALID,
-                         "[%s]'s y_grad should be a scalar "
-                         "when rank of x is 1.",
-                         ctx.GetOpType().c_str())
+      CUST_KERNEL_CHECK_FALSE(ctx, ctx.Input(0)->GetTensorShape()->GetDims() <= 1, KERNEL_STATUS_PARAM_INVALID,
+                              "[%s]'s y_grad should be a scalar "
+                              "when rank of x is 1.",
+                              ctx.GetOpType().c_str())
     } else {
-      KERNEL_CHECK_FALSE(
+      CUST_KERNEL_CHECK_FALSE(
+        ctx,
         ctx.Input(0)->GetTensorShape()->GetDims() == 1 &&
           ctx.Input(0)->GetTensorShape()->GetDimSize(0) == ctx.Input(1)->GetTensorShape()->GetDimSize(0),
         KERNEL_STATUS_PARAM_INVALID,
@@ -78,10 +80,10 @@ uint32_t MultilabelMarginLossGradCpuKernel::MultilabelMarginLossGradCheck(CpuKer
     }
   } else {
     // change condition "== 0" to "<= 0" as a hotfix that 0-dim tensor has a rank of 1 when dynamic shape
-    KERNEL_CHECK_FALSE(ctx.Input(0)->GetTensorShape()->GetDims() <= 1, KERNEL_STATUS_PARAM_INVALID,
-                       "[%s]'s y_grad should be a scalar "
-                       "when reduction is mean or sum.",
-                       ctx.GetOpType().c_str())
+    CUST_KERNEL_CHECK_FALSE(ctx, ctx.Input(0)->GetTensorShape()->GetDims() <= 1, KERNEL_STATUS_PARAM_INVALID,
+                            "[%s]'s y_grad should be a scalar "
+                            "when reduction is mean or sum.",
+                            ctx.GetOpType().c_str())
   }
   return KERNEL_STATUS_OK;
 }

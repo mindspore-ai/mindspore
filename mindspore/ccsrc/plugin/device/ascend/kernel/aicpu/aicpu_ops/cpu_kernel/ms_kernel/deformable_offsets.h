@@ -39,15 +39,15 @@ class DeformableOffsetsKernel : public CpuKernel {
  private:
   void ResetResource() noexcept;
 
-  uint32_t ParseKernelParam(const CpuKernelContext &ctx);
+  uint32_t ParseKernelParam(CpuKernelContext &ctx);
 
-  uint32_t ParseAttrs(const CpuKernelContext &ctx);
-  uint32_t SetDims(const CpuKernelContext &ctx);
+  uint32_t ParseAttrs(CpuKernelContext &ctx);
+  uint32_t SetDims(CpuKernelContext &ctx);
 
-  uint32_t GenPositionGrid(const CpuKernelContext &ctx, int64_t *position_grid);
+  uint32_t GenPositionGrid(CpuKernelContext &ctx, int64_t *position_grid);
 
   template <typename T>
-  uint32_t DoCompute(const CpuKernelContext &ctx, const int64_t *position_grid);
+  uint32_t DoCompute(CpuKernelContext &ctx, const int64_t *position_grid);
 
   std::vector<int64_t> strides_;
   std::vector<int64_t> pads_;

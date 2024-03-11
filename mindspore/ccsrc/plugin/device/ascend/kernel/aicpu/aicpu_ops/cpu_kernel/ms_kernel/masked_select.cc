@@ -26,7 +26,7 @@
 #include "securec/include/securec.h"
 #include "context/inc/cpu_kernel_utils.h"
 #include "cpu_types.h"
-#include "mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/common/kernel_log.h"
+#include "inc/kernel_log.h"
 #include "context/common/status.h"
 #include "utils/broadcast_iterator.h"
 #include "utils/kernel_util.h"
@@ -116,21 +116,21 @@ void UpdateIndexByCarry(std::vector<int64_t> *preIndex, const std::vector<int64_
 namespace aicpu {
 uint32_t MaskedSelectCpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kMaskedSelectInputNum, kMaskedSelectOutputNum), "[%s] check params failed.",
-                      kMaskedSelect);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kMaskedSelectInputNum, kMaskedSelectOutputNum),
+                           "[%s] check params failed.", kMaskedSelect);
 
   // choose compute function depend on dataType
   auto data_type0 = static_cast<DataType>(ctx.Input(kFirstInputIndex)->GetDataType());
   auto data_type1 = static_cast<DataType>(ctx.Input(kSecondInputIndex)->GetDataType());
   auto data_type2 = static_cast<DataType>(ctx.Output(kFirstOutputIndex)->GetDataType());
   if (data_type1 != DT_BOOL) {
-    KERNEL_LOG_ERROR("[%s] Data type of mask requires bool, but got data type [%s].", ctx.GetOpType().c_str(),
-                     DTypeStr(data_type1).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "[%s] Data type of mask requires bool, but got data type [%s].", ctx.GetOpType().c_str(),
+                          DTypeStr(data_type1).c_str());
     return static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID);
   }
   if (data_type0 != data_type2) {
-    KERNEL_LOG_ERROR("[%s] Data type of x and y requires same, but got data type [%s] and [%s].",
-                     ctx.GetOpType().c_str(), DTypeStr(data_type0).c_str(), DTypeStr(data_type2).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "[%s] Data type of x and y requires same, but got data type [%s] and [%s].",
+                          ctx.GetOpType().c_str(), DTypeStr(data_type0).c_str(), DTypeStr(data_type2).c_str());
     return static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID);
   }
   switch (data_type0) {
@@ -159,14 +159,14 @@ uint32_t MaskedSelectCpuKernel::Compute(CpuKernelContext &ctx) {
     case DT_BOOL:
       return MaskedSelectCompute<bool>(ctx);
     default:
-      KERNEL_LOG_ERROR("[%s] Data type of input is not support, input data type is [%s].", ctx.GetOpType().c_str(),
-                       DTypeStr(data_type0).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "[%s] Data type of input is not support, input data type is [%s].",
+                            ctx.GetOpType().c_str(), DTypeStr(data_type0).c_str());
       return static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID);
   }
 }
 
 template <typename T>
-uint32_t MaskedSelectCpuKernel::ParallelCompute(const CpuKernelContext &ctx, const std::vector<int64_t> &inputShapeX,
+uint32_t MaskedSelectCpuKernel::ParallelCompute(CpuKernelContext &ctx, const std::vector<int64_t> &inputShapeX,
                                                 const std::vector<int64_t> &inputShapeMask,
                                                 const std::vector<int64_t> &outputShape, int64_t dataNum) {
   T *x = reinterpret_cast<T *>(ctx.Input(0)->GetData());
@@ -181,16 +181,16 @@ uint32_t MaskedSelectCpuKernel::ParallelCompute(const CpuKernelContext &ctx, con
   std::vector<int64_t> indexStrideX = CalIndexStride(inputShapeX, outputShape);
   std::vector<int64_t> indexStrideMask = CalIndexStride(inputShapeMask, outputShape);
   std::vector<int64_t> indexStrideOutput = CalIndexStride(outputShape);
-  KERNEL_LOG_DEBUG("index stride of x[%s].", VectorToString(indexStrideX).c_str());
-  KERNEL_LOG_DEBUG("index stride of mask[%s].", VectorToString(indexStrideMask).c_str());
+  CUST_KERNEL_LOG_DEBUG(ctx, "index stride of x[%s].", VectorToString(indexStrideX).c_str());
+  CUST_KERNEL_LOG_DEBUG(ctx, "index stride of mask[%s].", VectorToString(indexStrideMask).c_str());
 
-  auto work = [=, &threadNum, &taskFlag, &outputIndexList](int64_t start, int64_t end) {
+  auto work = [=, &ctx, &threadNum, &taskFlag, &outputIndexList](int64_t start, int64_t end) {
     int64_t cnt = 0;
     int dimNum = outputShape.size();
     std::vector<int64_t> indexValue(dimNum, 0);
     if (!CalIndexInfo(indexStrideOutput, start, &indexValue, dimNum)) {
       taskFlag.store(false);
-      KERNEL_LOG_ERROR("Invalid index stride, please check.");
+      CUST_KERNEL_LOG_ERROR(ctx, "Invalid index stride, please check.");
       return;
     }
 
@@ -210,14 +210,15 @@ uint32_t MaskedSelectCpuKernel::ParallelCompute(const CpuKernelContext &ctx, con
     }
     outputIndexList[idx].startIdx = start;
     outputIndexList[idx].len = cnt;
-    KERNEL_LOG_DEBUG("outputIndexList[%d] startIdx is [%lld], len is  [%lld].", idx, outputIndexList[idx].startIdx,
-                     outputIndexList[idx].len);
+    CUST_KERNEL_LOG_DEBUG(ctx, "outputIndexList[%d] startIdx is [%lld], len is  [%lld].", idx,
+                          outputIndexList[idx].startIdx, outputIndexList[idx].len);
   };
   constexpr int perUnitSize = 1000;
-  KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, dataNum, perUnitSize, work), "MaskedSelect calculate failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, dataNum, perUnitSize, work),
+                           "MaskedSelect calculate failed.");
 
   if (!taskFlag.load()) {
-    KERNEL_LOG_ERROR("Invalid array.");
+    CUST_KERNEL_LOG_ERROR(ctx, "Invalid array.");
     return static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID);
   }
 
@@ -233,7 +234,7 @@ uint32_t MaskedSelectCpuKernel::ParallelCompute(const CpuKernelContext &ctx, con
     }
     int64_t byteLen = copyLen * static_cast<int64_t>(sizeof(T));
     ret = memmove_s(y + validOffset, byteLen, y + outputIndexList[i].startIdx, byteLen);
-    KERNEL_CHECK_FALSE((ret == EOK), KERNEL_STATUS_PARAM_INVALID, "Memmove failed, result = [%d].", ret);
+    CUST_KERNEL_CHECK_FALSE(ctx, (ret == EOK), KERNEL_STATUS_PARAM_INVALID, "Memmove failed, result = [%d].", ret);
     validOffset += copyLen;
   }
   ctx.Output(0)->GetTensorShape()->SetDimSizes({validOffset});
@@ -241,16 +242,16 @@ uint32_t MaskedSelectCpuKernel::ParallelCompute(const CpuKernelContext &ctx, con
 }
 
 template <typename T>
-uint32_t MaskedSelectCpuKernel::MaskedSelectCompute(const CpuKernelContext &ctx) {
+uint32_t MaskedSelectCpuKernel::MaskedSelectCompute(CpuKernelContext &ctx) {
   T *x = reinterpret_cast<T *>(ctx.Input(0)->GetData());
-  KERNEL_CHECK_NULLPTR(x, static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID), "[%s] get input_data[0] failed.",
-                       kMaskedSelect);
+  CUST_KERNEL_CHECK_NULLPTR(ctx, x, static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID),
+                            "[%s] get input_data[0] failed.", kMaskedSelect);
   bool *mask = reinterpret_cast<bool *>(ctx.Input(1)->GetData());
-  KERNEL_CHECK_NULLPTR(mask, static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID), "[%s] get input_data[1] failed.",
-                       kMaskedSelect);
+  CUST_KERNEL_CHECK_NULLPTR(ctx, mask, static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID),
+                            "[%s] get input_data[1] failed.", kMaskedSelect);
   T *y = reinterpret_cast<T *>(ctx.Output(0)->GetData());
-  KERNEL_CHECK_NULLPTR(y, static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID), "[%s] get output_data[0] failed.",
-                       kMaskedSelect);
+  CUST_KERNEL_CHECK_NULLPTR(ctx, y, static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID),
+                            "[%s] get output_data[0] failed.", kMaskedSelect);
 
   auto input_shape_a = ctx.Input(0)->GetTensorShape()->GetDimSizes();
   auto input_shape_b = ctx.Input(1)->GetTensorShape()->GetDimSizes();
@@ -265,8 +266,8 @@ uint32_t MaskedSelectCpuKernel::MaskedSelectCompute(const CpuKernelContext &ctx)
   }
   std::vector<int64_t> output_shape;
   auto ret = GetBroadcastShape(input_shape_a, input_shape_b, output_shape);
-  KERNEL_CHECK_FALSE(ret == KERNEL_STATUS_OK, static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID),
-                     "Shape of x and mask can't be broadcast.");
+  CUST_KERNEL_CHECK_FALSE(ctx, ret == KERNEL_STATUS_OK, static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID),
+                          "Shape of x and mask can't be broadcast.");
 
   int64_t tensor_size = std::accumulate(output_shape.begin(), output_shape.end(), 1, std::multiplies<int64_t>());
   if (tensor_size >= kParallelDataNums) {

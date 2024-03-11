@@ -28,10 +28,10 @@ class SpaceToDepthCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t STDParamCheck(const CpuKernelContext &ctx);
+  uint32_t STDParamCheck(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t DoCompute(const CpuKernelContext &ctx);
+  uint32_t DoCompute(CpuKernelContext &ctx);
   std::string data_format_;
 };  // SpaceToDepthCpuKernel
 }  // namespace aicpu

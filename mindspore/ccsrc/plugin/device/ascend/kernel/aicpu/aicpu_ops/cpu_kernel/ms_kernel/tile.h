@@ -39,7 +39,7 @@ class TileCpuKernel : public CpuKernel {
                                                const M *multipliers, T *out_data, int64_t dimension);
 
   template <typename T, typename M>
-  uint32_t TileCompute(const CpuKernelContext &ctx);
+  uint32_t TileCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

@@ -34,59 +34,59 @@ const int64_t ParallelFor_size_float16 = 16 * 1024;
 const int64_t ParallelFor_size_float32 = 32 * 1024;
 const int64_t ParallelFor_size_double = 64 * 1024;
 const char *KCumulativeLogsumexp = "CumulativeLogsumexp";
-#define CUMULATIVELOGSUMEXP_COMPUTE_CASE(DTYPE, IN_TYPE, CTX)         \
-  case (DTYPE): {                                                     \
-    uint32_t result = CumulativeLogsumexpCompute<IN_TYPE>(CTX);       \
-    if (result != KERNEL_STATUS_OK) {                                 \
-      KERNEL_LOG_ERROR("CumulativeLogsumexp kernel compute failed."); \
-      return result;                                                  \
-    }                                                                 \
-    break;                                                            \
+#define CUMULATIVELOGSUMEXP_COMPUTE_CASE(DTYPE, IN_TYPE, CTX)                   \
+  case (DTYPE): {                                                               \
+    uint32_t result = CumulativeLogsumexpCompute<IN_TYPE>(CTX);                 \
+    if (result != KERNEL_STATUS_OK) {                                           \
+      CUST_KERNEL_LOG_ERROR(ctx, "CumulativeLogsumexp kernel compute failed."); \
+      return result;                                                            \
+    }                                                                           \
+    break;                                                                      \
   }
 }  // namespace
 namespace aicpu {
 uint32_t CumulativeLogsumexpCpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, KCumulativeLogsumexpInputNum, KCumulativeLogsumexpOutputNum),
-                      "[%s] check input and output failed,", KCumulativeLogsumexp);
-  KERNEL_HANDLE_ERROR(CumulativeLogsumexpCheck(ctx), "[%s] check params failed.", KCumulativeLogsumexp);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, KCumulativeLogsumexpInputNum, KCumulativeLogsumexpOutputNum),
+                           "[%s] check input and output failed,", KCumulativeLogsumexp);
+  CUST_KERNEL_HANDLE_ERROR(ctx, CumulativeLogsumexpCheck(ctx), "[%s] check params failed.", KCumulativeLogsumexp);
   auto data_type = ctx.Input(0)->GetDataType();
   switch (data_type) {
     CUMULATIVELOGSUMEXP_COMPUTE_CASE(DT_FLOAT16, Eigen::half, ctx)
     CUMULATIVELOGSUMEXP_COMPUTE_CASE(DT_FLOAT, float, ctx)
     CUMULATIVELOGSUMEXP_COMPUTE_CASE(DT_DOUBLE, double, ctx)
     default:
-      KERNEL_LOG_ERROR("CumulativeLogsumexp kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "CumulativeLogsumexp kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
-uint32_t CumulativeLogsumexpCpuKernel::CumulativeLogsumexpCheck(const CpuKernelContext &ctx) {
-  KERNEL_CHECK_FALSE((ctx.Input(1)->GetDataType() == DT_INT16 || ctx.Input(1)->GetDataType() == DT_INT32),
-                     KERNEL_STATUS_PARAM_INVALID, "Data type of axis is not support, axis data type is [%u].",
-                     ctx.Input(1)->GetDataType())
-  KERNEL_CHECK_FALSE(ctx.Input(1)->NumElements() == 1, KERNEL_STATUS_PARAM_INVALID, "axis is out of shape");
+uint32_t CumulativeLogsumexpCpuKernel::CumulativeLogsumexpCheck(CpuKernelContext &ctx) {
+  CUST_KERNEL_CHECK_FALSE(ctx, (ctx.Input(1)->GetDataType() == DT_INT16 || ctx.Input(1)->GetDataType() == DT_INT32),
+                          KERNEL_STATUS_PARAM_INVALID, "Data type of axis is not support, axis data type is [%u].",
+                          ctx.Input(1)->GetDataType())
+  CUST_KERNEL_CHECK_FALSE(ctx, ctx.Input(1)->NumElements() == 1, KERNEL_STATUS_PARAM_INVALID, "axis is out of shape");
   int64_t axis;
   if (ctx.Input(1)->GetDataType() == DT_INT16) {
     axis = static_cast<int64_t>(*reinterpret_cast<int16_t *>(ctx.Input(1)->GetData()));
   } else {
     axis = static_cast<int64_t>(*reinterpret_cast<int32_t *>(ctx.Input(1)->GetData()));
   }
-  KERNEL_CHECK_FALSE((axis < ctx.Input(0)->GetTensorShape()->GetDims()), KERNEL_STATUS_PARAM_INVALID,
-                     "axis is larger than input dims - 1")
-  KERNEL_CHECK_FALSE((axis >= -ctx.Input(0)->GetTensorShape()->GetDims()), KERNEL_STATUS_PARAM_INVALID,
-                     "axis is lower than -input dims")
+  CUST_KERNEL_CHECK_FALSE(ctx, (axis < ctx.Input(0)->GetTensorShape()->GetDims()), KERNEL_STATUS_PARAM_INVALID,
+                          "axis is larger than input dims - 1")
+  CUST_KERNEL_CHECK_FALSE(ctx, (axis >= -ctx.Input(0)->GetTensorShape()->GetDims()), KERNEL_STATUS_PARAM_INVALID,
+                          "axis is lower than -input dims")
   std::vector<int64_t> shape_input = ctx.Input(0)->GetTensorShape()->GetDimSizes();
   std::vector<int64_t> shape_output = ctx.Output(0)->GetTensorShape()->GetDimSizes();
-  KERNEL_CHECK_FALSE((shape_input.size() != 0), KERNEL_STATUS_PARAM_INVALID,
-                     "Input must be at least rank 1, got [%zu].", shape_input.size())
-  KERNEL_CHECK_FALSE((shape_input.size() == shape_output.size()), KERNEL_STATUS_PARAM_INVALID,
-                     "The output shape size should be same as the output shape size")
+  CUST_KERNEL_CHECK_FALSE(ctx, (shape_input.size() != 0), KERNEL_STATUS_PARAM_INVALID,
+                          "Input must be at least rank 1, got [%zu].", shape_input.size())
+  CUST_KERNEL_CHECK_FALSE(ctx, (shape_input.size() == shape_output.size()), KERNEL_STATUS_PARAM_INVALID,
+                          "The output shape size should be same as the output shape size")
   DataType input0_type = ctx.Input(0)->GetDataType();
   DataType output0_type = ctx.Output(0)->GetDataType();
-  KERNEL_CHECK_FALSE((input0_type == output0_type), KERNEL_STATUS_PARAM_INVALID,
-                     "The data type of input0 [%s] need be same with output0 [%s] ", DTypeStr(input0_type).c_str(),
-                     DTypeStr(output0_type).c_str())
+  CUST_KERNEL_CHECK_FALSE(ctx, (input0_type == output0_type), KERNEL_STATUS_PARAM_INVALID,
+                          "The data type of input0 [%s] need be same with output0 [%s] ", DTypeStr(input0_type).c_str(),
+                          DTypeStr(output0_type).c_str())
   return KERNEL_STATUS_OK;
 }
 template <typename t>
@@ -154,7 +154,7 @@ void CumulativeProcess(uint32_t outer, uint32_t inner, uint32_t depth, bool reve
   }
 }
 template <typename T>
-uint32_t CumulativeLogsumexpCpuKernel::CumulativeLogsumexpCompute(const CpuKernelContext &ctx) {
+uint32_t CumulativeLogsumexpCpuKernel::CumulativeLogsumexpCompute(CpuKernelContext &ctx) {
   auto input_data = static_cast<T *>(ctx.Input(0)->GetData());
   bool exclusive = false;
   bool reverse = false;
@@ -209,8 +209,9 @@ uint32_t CumulativeLogsumexpCpuKernel::CumulativeLogsumexpCompute(const CpuKerne
     if (max_core_num == 0) {
       return KERNEL_STATUS_PARAM_INVALID;
     }
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, outer, outer / max_core_num, shard_cumulativelogsumexp),
-                        "CumulativeLogsumexp Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx,
+                             CpuKernelUtils::ParallelFor(ctx, outer, outer / max_core_num, shard_cumulativelogsumexp),
+                             "CumulativeLogsumexp Compute failed.");
   }  // end else
   return KERNEL_STATUS_OK;
 }

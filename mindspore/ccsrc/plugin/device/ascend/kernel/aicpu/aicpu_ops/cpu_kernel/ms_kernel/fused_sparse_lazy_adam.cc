@@ -22,7 +22,7 @@ namespace aicpu {
 namespace {
 const char *kFusedSparseLazyAdam = "FusedSparseLazyAdam";
 
-void ComputeLazyAdam(MultiThreadComputeParams *input_params, size_t start, size_t end) {
+void ComputeLazyAdam(CpuKernelContext &ctx, MultiThreadComputeParams *input_params, size_t start, size_t end) {
   auto var = input_params->var_;
   auto m = input_params->m_;
   auto v = input_params->v_;
@@ -37,7 +37,7 @@ void ComputeLazyAdam(MultiThreadComputeParams *input_params, size_t start, size_
   for (size_t i = start; i < end; ++i) {
     int index = unique_sparse_grad.indices_[i];
     if (index < 0 || static_cast<size_t>(index) >= var_first_dim_size) {
-      AICPU_LOGE("Index %d in indices is out of range", index);
+      CUST_AICPU_LOGE(ctx, "Index %d in indices is out of range", index);
     }
     size_t start_index = var_outer_dim_size * index;
     size_t end_index = start_index + var_outer_dim_size;
@@ -63,7 +63,7 @@ uint32_t FusedSparseLazyAdamKernel::Compute(CpuKernelContext &ctx) {
   auto v = reinterpret_cast<float *>(ctx.Input(2)->GetData());
   auto beta1_power = reinterpret_cast<float *>(ctx.Input(3)->GetData())[0];
   if (beta1_power == 1) {
-    AICPU_LOGE("The beta1_power should not be 1");
+    CUST_AICPU_LOGE(ctx, "The beta1_power should not be 1");
     return KERNEL_STATUS_INNER_ERROR;
   }
   auto beta2_power = reinterpret_cast<float *>(ctx.Input(4)->GetData())[0];
@@ -132,7 +132,7 @@ uint32_t FusedSparseLazyAdamKernel::Compute(CpuKernelContext &ctx) {
 
 uint32_t FusedSparseLazyAdamKernel::ParseKernelParam(CpuKernelContext &ctx) {
   auto use_nesterov = ctx.GetAttr("use_nesterov");
-  KERNEL_CHECK_NULLPTR(use_nesterov, KERNEL_STATUS_INNER_ERROR, "Failed to get attr 'use_nesterov'.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, use_nesterov, KERNEL_STATUS_INNER_ERROR, "Failed to get attr 'use_nesterov'.")
   use_nesterov_ = use_nesterov->GetBool();
 
   auto var_shape = ctx.Input(0)->GetTensorShape()->GetDimSizes();
@@ -140,7 +140,7 @@ uint32_t FusedSparseLazyAdamKernel::ParseKernelParam(CpuKernelContext &ctx) {
   auto indices_shape = ctx.Input(10)->GetTensorShape()->GetDimSizes();
 
   if (var_shape.empty()) {
-    AICPU_LOGE("var must be at least 1D");
+    CUST_AICPU_LOGE(ctx, "var must be at least 1D");
     return KERNEL_STATUS_INNER_ERROR;
   }
   if (grad_shape.empty()) {
@@ -149,18 +149,18 @@ uint32_t FusedSparseLazyAdamKernel::ParseKernelParam(CpuKernelContext &ctx) {
   var_first_dim_size_ = var_shape[0];
   for (size_t i = 1; i < var_shape.size(); ++i) {
     if (var_shape[i] != grad_shape[i]) {
-      AICPU_LOGE("The shape of var and grad must equal in dimension %d", i);
+      CUST_AICPU_LOGE(ctx, "The shape of var and grad must equal in dimension %d", i);
       return KERNEL_STATUS_INNER_ERROR;
     }
     var_outer_dim_size_ *= var_shape[i];
   }
   if (indices_shape.size() != 1) {
-    AICPU_LOGE("indices must be 1D");
+    CUST_AICPU_LOGE(ctx, "indices must be 1D");
     return KERNEL_STATUS_INNER_ERROR;
   }
   indices_size_ = indices_shape[0];
   if (grad_shape[0] != static_cast<int64_t>(indices_size_)) {
-    AICPU_LOGE("The first dimension of grad shape must be equal to indices");
+    CUST_AICPU_LOGE(ctx, "The first dimension of grad shape must be equal to indices");
     return KERNEL_STATUS_INNER_ERROR;
   }
 

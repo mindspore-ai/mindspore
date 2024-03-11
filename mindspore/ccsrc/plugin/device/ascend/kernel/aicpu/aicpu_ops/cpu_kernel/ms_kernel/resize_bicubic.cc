@@ -97,7 +97,7 @@ uint32_t ResizeBicubicCpuKernel::GetInputAndCheck(CpuKernelContext &ctx) {
   Tensor *input_tensor = ctx.Input(0);
   Tensor *input_size_tensor = ctx.Input(1);
   Tensor *output_tensor = ctx.Output(0);
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "ResizeBicubic check params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "ResizeBicubic check params failed.");
 
   auto format = input_tensor->GetTensorShape()->GetFormat();
   format_nchw_ = (format == Format::FORMAT_NCHW);
@@ -114,12 +114,12 @@ uint32_t ResizeBicubicCpuKernel::GetInputAndCheck(CpuKernelContext &ctx) {
   in_shape_ = input_tensor->GetTensorShape()->GetDimSizes();
   auto size_tensor = input_size_tensor->GetTensorShape()->GetDimSizes();
 
-  KERNEL_CHECK_FALSE((in_shape_.size() == 4), KERNEL_STATUS_PARAM_INVALID, "Dim of images must be 4, but got[%zu].",
-                     in_shape_.size());
-  KERNEL_CHECK_FALSE((size_tensor.size() == 1), KERNEL_STATUS_PARAM_INVALID, "Dim of size must be 1, but got[%zu].",
-                     size_tensor.size());
-  KERNEL_CHECK_FALSE((size_tensor[0] == 2), KERNEL_STATUS_PARAM_INVALID, "size.shape[0] must be 2, but got[%zu].",
-                     size_tensor[0]);
+  CUST_KERNEL_CHECK_FALSE(ctx, (in_shape_.size() == 4), KERNEL_STATUS_PARAM_INVALID,
+                          "Dim of images must be 4, but got[%zu].", in_shape_.size());
+  CUST_KERNEL_CHECK_FALSE(ctx, (size_tensor.size() == 1), KERNEL_STATUS_PARAM_INVALID,
+                          "Dim of size must be 1, but got[%zu].", size_tensor.size());
+  CUST_KERNEL_CHECK_FALSE(ctx, (size_tensor[0] == 2), KERNEL_STATUS_PARAM_INVALID,
+                          "size.shape[0] must be 2, but got[%zu].", size_tensor[0]);
 
   auto size_type = input_size_tensor->GetDataType();
   std::vector<int64_t> size_value{};
@@ -132,10 +132,10 @@ uint32_t ResizeBicubicCpuKernel::GetInputAndCheck(CpuKernelContext &ctx) {
     size_value.push_back(input_size[0]);
     size_value.push_back(input_size[1]);
   } else {
-    KERNEL_CHECK_FALSE(false, KERNEL_STATUS_PARAM_INVALID,
-                       "For primitive[ ResizeBicubic ], the input argument[size] must be a Tensor[Int64] or "
-                       "Tensor[Int32] type, but got[%zu].",
-                       size_type);
+    CUST_KERNEL_CHECK_FALSE(ctx, false, KERNEL_STATUS_PARAM_INVALID,
+                            "For primitive[ ResizeBicubic ], the input argument[size] must be a Tensor[Int64] or "
+                            "Tensor[Int32] type, but got[%zu].",
+                            size_type);
   }
 
   std::vector<int64_t> out_dims{in_shape_};
@@ -147,10 +147,10 @@ uint32_t ResizeBicubicCpuKernel::GetInputAndCheck(CpuKernelContext &ctx) {
   int64_t out_height = out_shape_[h_idx_];
   int64_t out_width = out_shape_[w_idx_];
 
-  KERNEL_CHECK_FALSE((out_shape_.size() == 4), KERNEL_STATUS_PARAM_INVALID, "Dim of output[0] must be 4, but got[%zu].",
-                     out_shape_.size());
-  KERNEL_CHECK_FALSE((out_height > 0 && out_width > 0), KERNEL_STATUS_PARAM_INVALID,
-                     "output dimensions must be positive.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (out_shape_.size() == 4), KERNEL_STATUS_PARAM_INVALID,
+                          "Dim of output[0] must be 4, but got[%zu].", out_shape_.size());
+  CUST_KERNEL_CHECK_FALSE(ctx, (out_height > 0 && out_width > 0), KERNEL_STATUS_PARAM_INVALID,
+                          "output dimensions must be positive.");
 
   AttrValue *pattr_align_corners = ctx.GetAttr("align_corners");
   if (pattr_align_corners == nullptr) {
@@ -473,7 +473,7 @@ inline void interpolate_with_caching(const T1 *input_data, const ResizerState &r
 }
 
 template <typename T1, typename T2>
-uint32_t DoCompute(const CpuKernelContext &ctx) {
+uint32_t DoCompute(CpuKernelContext &ctx) {
   auto input_addr = reinterpret_cast<T1 *>(ctx.Input(0)->GetData());
   auto output_addr = reinterpret_cast<T2 *>(ctx.Output(0)->GetData());
   ResizerState sta;
@@ -496,7 +496,7 @@ uint32_t DoCompute(const CpuKernelContext &ctx) {
 
 uint32_t ResizeBicubicCpuKernel::Compute(CpuKernelContext &ctx) {
   uint32_t res = GetInputAndCheck(ctx);
-  KERNEL_CHECK_FALSE((res == KERNEL_STATUS_OK), res, "GetInputAndCheck failed.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (res == KERNEL_STATUS_OK), res, "GetInputAndCheck failed.");
 
   if (dtype_ == DT_FLOAT16) {
     res = DoCompute<Eigen::half, Eigen::half>(ctx);
@@ -517,10 +517,10 @@ uint32_t ResizeBicubicCpuKernel::Compute(CpuKernelContext &ctx) {
   } else if (dtype_ == DT_DOUBLE) {
     res = DoCompute<double, double>(ctx);
   } else {
-    KERNEL_LOG_ERROR("ResizeBicubic doesn't support input tensor types: [%s]", DTypeStr(dtype_).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "ResizeBicubic doesn't support input tensor types: [%s]", DTypeStr(dtype_).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
-  KERNEL_CHECK_FALSE((res == KERNEL_STATUS_OK), res, "ResizeBicubic Compute failed.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (res == KERNEL_STATUS_OK), res, "ResizeBicubic Compute failed.");
   return KERNEL_STATUS_OK;
 }
 REGISTER_MS_CPU_KERNEL(kResizeBicubic, ResizeBicubicCpuKernel);

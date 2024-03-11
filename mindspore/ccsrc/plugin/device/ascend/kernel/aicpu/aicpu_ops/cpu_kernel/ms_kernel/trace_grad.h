@@ -30,7 +30,7 @@ class TraceGradCpuKernel : public CpuKernel {
 
  private:
   template <typename T1, typename T2>
-  static uint32_t TraceGradCompute(const CpuKernelContext &ctx);
+  static uint32_t TraceGradCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

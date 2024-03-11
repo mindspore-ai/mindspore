@@ -28,10 +28,10 @@ class SparseMatrixMatMulCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t ValidParam(const CpuKernelContext &ctx);
+  uint32_t ValidParam(CpuKernelContext &ctx);
   // check if the matrix can mul
   template <typename T>
-  uint32_t CheckMatMul(const CpuKernelContext &ctx);
+  uint32_t CheckMatMul(CpuKernelContext &ctx);
   // create eigen sparsematrix with eigen::map
   template <typename indiceT, typename valueT>
   Eigen::Ref<const Eigen::SparseMatrix<valueT, Eigen::RowMajor, indiceT> > CreateEigenSparseMatrix(
@@ -39,7 +39,7 @@ class SparseMatrixMatMulCpuKernel : public CpuKernel {
     bool transpose, bool adjoint);
   // do the actual ute
   template <typename indiceT, typename valueT>
-  uint32_t DoCompute(const CpuKernelContext &ctx);
+  uint32_t DoCompute(CpuKernelContext &ctx);
 };
 
 }  // namespace aicpu

@@ -35,7 +35,8 @@ const char *SparseSegmentSumWithNumSegments = "SparseSegmentSumWithNumSegments";
 
 namespace aicpu {
 uint32_t SparseSegmentSumWithNumSegmentsCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "SparseSegmentSumWithNumSegments normalcheck failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "SparseSegmentSumWithNumSegments normalcheck failed.");
   Tensor *x = ctx.Input(0);
   Tensor *indices = ctx.Input(1);
   Tensor *segment_ids = ctx.Input(2);
@@ -43,7 +44,7 @@ uint32_t SparseSegmentSumWithNumSegmentsCpuKernel::Compute(CpuKernelContext &ctx
 
   if (x->GetDataSize() == 0 || indices->GetDataSize() == 0 || segment_ids->GetDataSize() == 0 ||
       num_segments->GetDataSize() == 0) {
-    KERNEL_LOG_ERROR("[%s] Input is empty tensor.", ctx.GetOpType().c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "[%s] Input is empty tensor.", ctx.GetOpType().c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
@@ -53,12 +54,12 @@ uint32_t SparseSegmentSumWithNumSegmentsCpuKernel::Compute(CpuKernelContext &ctx
   auto num_segments_shape = num_segments->GetTensorShape();
 
   if (x_shape->GetDims() < 1) {
-    KERNEL_LOG_ERROR("[%s] Tensor x's rank less than 1.", ctx.GetOpType().c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "[%s] Tensor x's rank less than 1.", ctx.GetOpType().c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
   if (indices_shape->NumElements() != segment_ids_shape->NumElements()) {
-    KERNEL_LOG_ERROR("[%s] Tensor indices&segment_ids's ranks mismatch.", ctx.GetOpType().c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "[%s] Tensor indices&segment_ids's ranks mismatch.", ctx.GetOpType().c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
@@ -68,13 +69,13 @@ uint32_t SparseSegmentSumWithNumSegmentsCpuKernel::Compute(CpuKernelContext &ctx
   auto num_segments_data_type = num_segments->GetDataType();
 
   if (indices_data_type != DT_INT32 && indices_data_type != DT_INT64) {
-    KERNEL_LOG_ERROR("SparseSegmentSumWithNumSegments kernel data type [%s] not support.",
-                     DTypeStr(indices_data_type).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "SparseSegmentSumWithNumSegments kernel data type [%s] not support.",
+                          DTypeStr(indices_data_type).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
   if (segment_ids_data_type != indices_data_type || num_segments_data_type != indices_data_type) {
-    KERNEL_LOG_ERROR("SparseSegmentSumWithNumSegments kernel data type mismatch.");
+    CUST_KERNEL_LOG_ERROR(ctx, "SparseSegmentSumWithNumSegments kernel data type mismatch.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
@@ -89,8 +90,8 @@ uint32_t SparseSegmentSumWithNumSegmentsCpuKernel::Compute(CpuKernelContext &ctx
     COMPUTE_CASE(DT_FLOAT, float, indices_data_type, ctx)
     COMPUTE_CASE(DT_DOUBLE, double, indices_data_type, ctx)
     default:
-      KERNEL_LOG_ERROR("SparseSegmentSumWithNumSegments kernel data type [%s] not support.",
-                       DTypeStr(x_data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "SparseSegmentSumWithNumSegments kernel data type [%s] not support.",
+                            DTypeStr(x_data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
@@ -99,7 +100,7 @@ uint32_t SparseSegmentSumWithNumSegmentsCpuKernel::Compute(CpuKernelContext &ctx
 REGISTER_MS_CPU_KERNEL(SparseSegmentSumWithNumSegments, SparseSegmentSumWithNumSegmentsCpuKernel);
 
 template <typename dataT, typename indicesT>
-uint32_t SparseSegmentSumWithNumSegmentsCpuKernel::ComputeKernel(const CpuKernelContext &ctx) {
+uint32_t SparseSegmentSumWithNumSegmentsCpuKernel::ComputeKernel(CpuKernelContext &ctx) {
   size_t n = ctx.Input(0)->GetTensorShape()->NumElements() / ctx.Input(0)->GetTensorShape()->GetDimSize(0);
   size_t m = ctx.Input(2)->GetTensorShape()->NumElements();
   size_t num_elements = ctx.Output(0)->GetTensorShape()->NumElements();
@@ -115,18 +116,18 @@ uint32_t SparseSegmentSumWithNumSegmentsCpuKernel::ComputeKernel(const CpuKernel
 
   for (size_t i = 1; i < m; i++) {
     if (segment_ids_ptr[i] < segment_ids_ptr[i - 1]) {
-      KERNEL_LOG_ERROR("segment_ids should be sorted.");
+      CUST_KERNEL_LOG_ERROR(ctx, "segment_ids should be sorted.");
       return KERNEL_STATUS_PARAM_INVALID;
     }
   }
 
   for (size_t i = 0; i < m; i++) {
     if (indices_ptr[i] >= ctx.Input(0)->GetTensorShape()->GetDimSize(0)) {
-      KERNEL_LOG_ERROR("indices out of range.");
+      CUST_KERNEL_LOG_ERROR(ctx, "indices out of range.");
       return KERNEL_STATUS_PARAM_INVALID;
     }
     if (segment_ids_ptr[i] >= num_segments_ptr[0]) {
-      KERNEL_LOG_ERROR("segment_ids out of range.");
+      CUST_KERNEL_LOG_ERROR(ctx, "segment_ids out of range.");
       return KERNEL_STATUS_PARAM_INVALID;
     }
   }

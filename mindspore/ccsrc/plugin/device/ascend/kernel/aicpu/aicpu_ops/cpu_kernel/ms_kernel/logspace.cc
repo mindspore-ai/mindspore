@@ -25,18 +25,18 @@ constexpr uint32_t kLogSpaceInputNum = 2;
 constexpr uint32_t kLogSpaceOutputNum = 1;
 const char *kLogSpace = "LogSpace";
 
-#define LOGSPACE_COMPUTE_CASE(DTYPE, TYPE, CTX)            \
-  case (DTYPE): {                                          \
-    uint32_t result = LogSpaceCompute<TYPE>(CTX);          \
-    if (result != KERNEL_STATUS_OK) {                      \
-      KERNEL_LOG_ERROR("LogSpace kernel compute failed."); \
-      return result;                                       \
-    }                                                      \
-    break;                                                 \
+#define LOGSPACE_COMPUTE_CASE(DTYPE, TYPE, CTX)                      \
+  case (DTYPE): {                                                    \
+    uint32_t result = LogSpaceCompute<TYPE>(CTX);                    \
+    if (result != KERNEL_STATUS_OK) {                                \
+      CUST_KERNEL_LOG_ERROR(ctx, "LogSpace kernel compute failed."); \
+      return result;                                                 \
+    }                                                                \
+    break;                                                           \
   }
 
 template <typename S, typename T>
-void KernelCompute(const CpuKernelContext &ctx) {
+void KernelCompute(CpuKernelContext &ctx) {
   auto *input_start_ = reinterpret_cast<S *>(ctx.Input(0)->GetData());
   auto *input_end_ = reinterpret_cast<S *>(ctx.Input(1)->GetData());
   auto input_start = static_cast<double>(input_start_[0]);
@@ -69,33 +69,33 @@ void KernelCompute(const CpuKernelContext &ctx) {
 }  // namespace
 
 uint32_t LogSpaceCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kLogSpaceInputNum, kLogSpaceOutputNum), "[%s] check input and output failed.",
-                      kLogSpace);
-  KERNEL_HANDLE_ERROR(LogSpaceCheck(ctx), "[%s] check params failed.", kLogSpace);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kLogSpaceInputNum, kLogSpaceOutputNum),
+                           "[%s] check input and output failed.", kLogSpace);
+  CUST_KERNEL_HANDLE_ERROR(ctx, LogSpaceCheck(ctx), "[%s] check params failed.", kLogSpace);
   DataType data_type = ctx.Output(0)->GetDataType();
   switch (data_type) {
     LOGSPACE_COMPUTE_CASE(DT_FLOAT16, Eigen::half, ctx)
     LOGSPACE_COMPUTE_CASE(DT_FLOAT, float, ctx)
     default:
-      KERNEL_LOG_ERROR("LogSpace kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "LogSpace kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 
-uint32_t LogSpaceCpuKernel::LogSpaceCheck(const CpuKernelContext &ctx) {
+uint32_t LogSpaceCpuKernel::LogSpaceCheck(CpuKernelContext &ctx) {
   // get Attr steps_attr
   AttrValue *steps_attr_ptr = ctx.GetAttr("steps");
   if (steps_attr_ptr) {
     int64_t steps_data = steps_attr_ptr->GetInt();
-    KERNEL_CHECK_FALSE((steps_data >= 0), KERNEL_STATUS_PARAM_INVALID,
-                       "Attr [steps] data has to be greater than or equal to 0.");
+    CUST_KERNEL_CHECK_FALSE(ctx, (steps_data >= 0), KERNEL_STATUS_PARAM_INVALID,
+                            "Attr [steps] data has to be greater than or equal to 0.");
   }
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t LogSpaceCpuKernel::LogSpaceCompute(const CpuKernelContext &ctx) {
+uint32_t LogSpaceCpuKernel::LogSpaceCompute(CpuKernelContext &ctx) {
   DataType data_type_in = ctx.Input(0)->GetDataType();
   DataType data_type = ctx.Output(0)->GetDataType();
   if (data_type_in == data_type) {

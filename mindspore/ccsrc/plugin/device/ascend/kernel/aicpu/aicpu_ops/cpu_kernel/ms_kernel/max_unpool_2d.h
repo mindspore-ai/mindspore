@@ -28,13 +28,13 @@ class MaxUnpool2DCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  static uint32_t MaxUnpool2DCheck(const CpuKernelContext &ctx);
+  static uint32_t MaxUnpool2DCheck(CpuKernelContext &ctx);
 
   template <typename T>
-  static uint32_t MaxUnpool2D_COMPUTE_CASE(const CpuKernelContext &ctx, DataType indices_type);
+  static uint32_t MaxUnpool2D_COMPUTE_CASE(CpuKernelContext &ctx, DataType indices_type);
 
   template <typename T, typename S>
-  static uint32_t MaxUnpool2DCompute(const CpuKernelContext &ctx);
+  static uint32_t MaxUnpool2DCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif  // AICPU_KERNELS_NORMALIZED_MAX_UNPOOL2D_H_

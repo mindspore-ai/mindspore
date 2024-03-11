@@ -37,7 +37,8 @@ const int64_t kParallelDataNumMid = 128 * 1024;
 }  // namespace
 namespace aicpu {
 uint32_t LogNormalReverseCpuKernel::GetInputAndCheck(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kNumInput, kNumOutput), "LogNormalReverse check input and output failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kNumInput, kNumOutput),
+                           "LogNormalReverse check input and output failed.");
   // get and check input
   Tensor *input = ctx.Input(0);
   inputs_.push_back(input);
@@ -50,7 +51,7 @@ uint32_t LogNormalReverseCpuKernel::GetInputAndCheck(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t LogNormalReverseCpuKernel::DoCompute(const CpuKernelContext &ctx) {
+uint32_t LogNormalReverseCpuKernel::DoCompute(CpuKernelContext &ctx) {
   float input_mean = 1.0;
   float input_std = 2.0;
 
@@ -117,12 +118,12 @@ uint32_t LogNormalReverseCpuKernel::Compute(CpuKernelContext &ctx) {
       break;
     }
     default:
-      KERNEL_LOG_ERROR("[%s] Data type of input is not support, input data type is [%s].", ctx.GetOpType().c_str(),
-                       DTypeStr(input_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "[%s] Data type of input is not support, input data type is [%s].",
+                            ctx.GetOpType().c_str(), DTypeStr(input_type).c_str());
       res = KERNEL_STATUS_PARAM_INVALID;
   }
   if (res != KERNEL_STATUS_OK) {
-    KERNEL_LOG_ERROR("log normal reverse failed");
+    CUST_KERNEL_LOG_ERROR(ctx, "log normal reverse failed");
     return res;
   }
   return KERNEL_STATUS_OK;

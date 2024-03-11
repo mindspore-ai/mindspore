@@ -27,48 +27,48 @@ const char *kImag = "Imag";
 constexpr int64_t kFolatDataNums = 8 * 128 * 1024;
 constexpr int64_t kDoubleDataNums = 16 * 128 * 1024;
 
-#define Imag_COMPUTE_CASE(IN_DTYPE, IN_TYPE, OUT_DTYPE, CTX)                                             \
-  case (IN_DTYPE): {                                                                                     \
-    switch (OUT_DTYPE) {                                                                                 \
-      case (DT_FLOAT): {                                                                                 \
-        uint32_t result = ImagCompute<IN_TYPE, float>(CTX);                                              \
-        if (result != KERNEL_STATUS_OK) {                                                                \
-          KERNEL_LOG_ERROR("Imag kernel compute failed.");                                               \
-          return result;                                                                                 \
-        }                                                                                                \
-        break;                                                                                           \
-      }                                                                                                  \
-      case (DT_DOUBLE): {                                                                                \
-        uint32_t result = ImagCompute<IN_TYPE, double>(CTX);                                             \
-        if (result != KERNEL_STATUS_OK) {                                                                \
-          KERNEL_LOG_ERROR("Imag kernel compute failed.");                                               \
-          return result;                                                                                 \
-        }                                                                                                \
-        break;                                                                                           \
-      }                                                                                                  \
-      default:                                                                                           \
-        KERNEL_LOG_ERROR("Imag kernel output data type [%s] not support.", DTypeStr(OUT_DTYPE).c_str()); \
-        return KERNEL_STATUS_PARAM_INVALID;                                                              \
-    }                                                                                                    \
-    break;                                                                                               \
+#define Imag_COMPUTE_CASE(IN_DTYPE, IN_TYPE, OUT_DTYPE, CTX)                                                       \
+  case (IN_DTYPE): {                                                                                               \
+    switch (OUT_DTYPE) {                                                                                           \
+      case (DT_FLOAT): {                                                                                           \
+        uint32_t result = ImagCompute<IN_TYPE, float>(CTX);                                                        \
+        if (result != KERNEL_STATUS_OK) {                                                                          \
+          CUST_KERNEL_LOG_ERROR(ctx, "Imag kernel compute failed.");                                               \
+          return result;                                                                                           \
+        }                                                                                                          \
+        break;                                                                                                     \
+      }                                                                                                            \
+      case (DT_DOUBLE): {                                                                                          \
+        uint32_t result = ImagCompute<IN_TYPE, double>(CTX);                                                       \
+        if (result != KERNEL_STATUS_OK) {                                                                          \
+          CUST_KERNEL_LOG_ERROR(ctx, "Imag kernel compute failed.");                                               \
+          return result;                                                                                           \
+        }                                                                                                          \
+        break;                                                                                                     \
+      }                                                                                                            \
+      default:                                                                                                     \
+        CUST_KERNEL_LOG_ERROR(ctx, "Imag kernel output data type [%s] not support.", DTypeStr(OUT_DTYPE).c_str()); \
+        return KERNEL_STATUS_PARAM_INVALID;                                                                        \
+    }                                                                                                              \
+    break;                                                                                                         \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t ImagCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.", kImag);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.", kImag);
   DataType input_type = ctx.Input(0)->GetDataType();
   switch (input_type) {
     Imag_COMPUTE_CASE(DT_COMPLEX64, std::complex<float>, DT_FLOAT, ctx)
       Imag_COMPUTE_CASE(DT_COMPLEX128, std::complex<double>, DT_DOUBLE, ctx) default
-        : KERNEL_LOG_ERROR("Imag kernel input data type [%s] not support.", DTypeStr(input_type).c_str());
+        : CUST_KERNEL_LOG_ERROR(ctx, "Imag kernel input data type [%s] not support.", DTypeStr(input_type).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 
 template <typename T, typename t>
-uint32_t ImagCpuKernel::ImagCompute(const CpuKernelContext &ctx) {
+uint32_t ImagCpuKernel::ImagCompute(CpuKernelContext &ctx) {
   auto input = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto output = reinterpret_cast<t *>(ctx.Output(0)->GetData());
 
@@ -91,8 +91,8 @@ uint32_t ImagCpuKernel::ImagCompute(const CpuKernelContext &ctx) {
         *(output + index) = (*(input + index)).imag();
       }
     };
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shard_imag),
-                        "imag Compute failed");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shard_imag),
+                             "imag Compute failed");
   }
   return KERNEL_STATUS_OK;
 }

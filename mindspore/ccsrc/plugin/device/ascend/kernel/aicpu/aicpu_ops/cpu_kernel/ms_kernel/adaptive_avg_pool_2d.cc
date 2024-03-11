@@ -48,18 +48,21 @@ struct AdaptiveCalcArgs {
   int64_t in_stride_w = 0;
 };
 
-#define SWITCH_PARALLEL(SHARD, end_num, num)                                 \
-  if ((num) <= kParallelDataNums) {                                          \
-    for (size_t i = 0; i < size_t(end_num); i++) {                           \
-      SHARD(i, i + 1);                                                       \
-    }                                                                        \
-  } else {                                                                   \
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, end_num, 1, SHARD), \
-                        "AdaptiveAvgPool2D #SHARD Compute failed.");         \
+#define SWITCH_PARALLEL(ctx, SHARD, end_num, num)                                      \
+  if ((num) <= kParallelDataNums) {                                                    \
+    for (size_t i = 0; i < size_t(end_num); i++) {                                     \
+      SHARD(i, i + 1);                                                                 \
+    }                                                                                  \
+  } else {                                                                             \
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, end_num, 1, SHARD), \
+                             "AdaptiveAvgPool2D #SHARD Compute failed.");              \
   }
 }  // namespace
 
 namespace aicpu {
+
+void TestFunc(CpuKernelContext &ctx) { CUST_KERNEL_LOG_ERROR(ctx, "Test Func"); }
+
 template <typename SCALAR_T>
 SCALAR_T ComputeSum(int64_t span_h, int64_t span_w, SCALAR_T *in_point, const AdaptiveCalcArgs<SCALAR_T> &args) {
   SCALAR_T sum = static_cast<SCALAR_T>(0.);
@@ -101,28 +104,29 @@ void ComputeSingleThread(int64_t start, int64_t end, AdaptiveCalcArgs<SCALAR_T> 
 }
 
 template <typename SCALAR_T>
-uint32_t AdaptiveAvgPool2dOutFrame(const CpuKernelContext &ctx, AdaptiveCalcArgs<SCALAR_T> args, int64_t num) {
+uint32_t AdaptiveAvgPool2dOutFrame(CpuKernelContext &ctx, AdaptiveCalcArgs<SCALAR_T> args, int64_t num) {
+  TestFunc(ctx);
   auto shard_frame = [&](int64_t start, int64_t end) { ComputeSingleThread(start, end, args); };
-  SWITCH_PARALLEL(shard_frame, args.size_d, num);
+  SWITCH_PARALLEL(ctx, shard_frame, args.size_d, num);
   return KERNEL_STATUS_OK;
 }
 
 template <typename SCALAR_T>
-uint32_t AdaptiveAvgPool2dOutTemplate(const CpuKernelContext &ctx) {
+uint32_t AdaptiveAvgPool2dOutTemplate(CpuKernelContext &ctx) {
   Tensor &input = *(ctx.Input(kFirstInputIndex));
   auto input_shape_ptr = input.GetTensorShape();
-  KERNEL_CHECK_NULLPTR(input_shape_ptr, KERNEL_STATUS_PARAM_INVALID, "Get input 0 shape failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input_shape_ptr, KERNEL_STATUS_PARAM_INVALID, "Get input 0 shape failed.");
   int32_t input_dims = input_shape_ptr->GetDims();
 
-  KERNEL_CHECK_FALSE((input_dims == kthree || input_dims == kfour), KERNEL_STATUS_PARAM_INVALID,
-                     "Non-empty [3D] or [4D] (batch mode) tensor expected for input 0.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (input_dims == kthree || input_dims == kfour), KERNEL_STATUS_PARAM_INVALID,
+                          "Non-empty [3D] or [4D] (batch mode) tensor expected for input 0.");
 
   for (int32_t i = 0; i < input_dims; i++) {
-    KERNEL_CHECK_FALSE((input_shape_ptr->GetDimSize(i) > 0), KERNEL_STATUS_PARAM_INVALID,
-                       "AdaptiveAvgPool2D: expected input to have non-empty spatial "
-                       "dimensions, "
-                       "but input 0 has sizes [%d] with dimension [%d] being empty.",
-                       input_dims, i);
+    CUST_KERNEL_CHECK_FALSE(ctx, (input_shape_ptr->GetDimSize(i) > 0), KERNEL_STATUS_PARAM_INVALID,
+                            "AdaptiveAvgPool2D: expected input to have non-empty spatial "
+                            "dimensions, "
+                            "but input 0 has sizes [%d] with dimension [%d] being empty.",
+                            input_dims, i);
   }
 
   AdaptiveCalcArgs<SCALAR_T> args;
@@ -144,12 +148,12 @@ uint32_t AdaptiveAvgPool2dOutTemplate(const CpuKernelContext &ctx) {
     args.out_size_h = output_size_data[0] > 0 ? output_size_data[0] : input_dim_sizes.end()[-2];
     args.out_size_w = output_size_data[1] > 0 ? output_size_data[1] : input_dim_sizes.end()[-1];
   } else if (output_size_data.size() == 1) {
-    KERNEL_CHECK_FALSE((output_size_data[0] >= 0), KERNEL_STATUS_PARAM_INVALID,
-                       "AdaptiveAvgPool2D: output_size value should be non-negative");
+    CUST_KERNEL_CHECK_FALSE(ctx, (output_size_data[0] >= 0), KERNEL_STATUS_PARAM_INVALID,
+                            "AdaptiveAvgPool2D: output_size value should be non-negative");
     args.out_size_h = output_size_data[0];
     args.out_size_w = output_size_data[0];
   } else {
-    KERNEL_LOG_ERROR("output_size length should be 1 OR 2, but got [%d]", output_size_data.size());
+    CUST_KERNEL_LOG_ERROR(ctx, "output_size length should be 1 OR 2, but got [%d]", output_size_data.size());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   // indices will contain i,j locations for each output point
@@ -168,15 +172,15 @@ uint32_t AdaptiveAvgPool2dOutTemplate(const CpuKernelContext &ctx) {
         AdaptiveAvgPool2dOutFrame<SCALAR_T>(ctx, sub_args, num);
       }
     };
-    SWITCH_PARALLEL(shard_template, input_dim_sizes[0], num);
+    SWITCH_PARALLEL(ctx, shard_template, input_dim_sizes[0], num);
   }
   return KERNEL_STATUS_OK;
 }
 
 uint32_t AdaptiveAvgPool2d::Compute(CpuKernelContext &ctx) {
   // check params
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output number failed.",
-                      kAdaptiveAvgPool2d);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output number failed.",
+                           kAdaptiveAvgPool2d);
 
   Tensor *input_0 = ctx.Input(kFirstInputIndex);
   auto data_type = static_cast<DataType>(input_0->GetDataType());
@@ -189,7 +193,7 @@ uint32_t AdaptiveAvgPool2d::Compute(CpuKernelContext &ctx) {
     case DT_FLOAT16:
       return AdaptiveAvgPool2dOutTemplate<Eigen::half>(ctx);
     default:
-      KERNEL_LOG_ERROR("AdaptiveAvgPool2D kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "AdaptiveAvgPool2D kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;

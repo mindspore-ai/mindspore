@@ -28,13 +28,13 @@ class InstanceNormV2GradCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t InstanceNormV2GradParamCheck(const CpuKernelContext &ctx);
-  uint32_t InstanceNormV2GradShapeCheck(const CpuKernelContext &ctx);
-  uint32_t InstanceNormV2GradTypeCheck(const CpuKernelContext &ctx);
-  uint32_t InstanceNormV2GradAttrCheck(const CpuKernelContext &ctx);
+  uint32_t InstanceNormV2GradParamCheck(CpuKernelContext &ctx);
+  uint32_t InstanceNormV2GradShapeCheck(CpuKernelContext &ctx);
+  uint32_t InstanceNormV2GradTypeCheck(CpuKernelContext &ctx);
+  uint32_t InstanceNormV2GradAttrCheck(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t DoCompute(const CpuKernelContext &ctx);
+  uint32_t DoCompute(CpuKernelContext &ctx);
 
   bool is_training_ = true;
   float epsilon_ = 0.00001;

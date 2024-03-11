@@ -33,15 +33,16 @@ uint32_t GammaCpuKernel::Compute(CpuKernelContext &ctx) {
   auto output_dtype = output->GetDataType();
   auto output_shape = output->GetTensorShape()->GetDimSizes();
   auto output_rank = output_shape.size();
-  KERNEL_CHECK_FALSE((output_dtype == DT_FLOAT), KERNEL_STATUS_INNER_ERROR,
-                     "Output only support data type float, but got [%s].", DTypeStr(output_dtype).c_str());
+  CUST_KERNEL_CHECK_FALSE(ctx, (output_dtype == DT_FLOAT), KERNEL_STATUS_INNER_ERROR,
+                          "Output only support data type float, but got [%s].", DTypeStr(output_dtype).c_str());
   auto output_data = static_cast<float *>(output->GetData());
   size_t output_size = output->GetDataSize() / sizeof(output_dtype);
 
   auto input_alpha = ctx.Input(kAlphaIdx);
   auto input_beta = ctx.Input(kBetaIdx);
-  KERNEL_CHECK_FALSE((input_alpha->GetDataType() == DT_FLOAT && input_beta->GetDataType() == DT_FLOAT),
-                     KERNEL_STATUS_INNER_ERROR, "Input 'alpha' and 'beta' only support data type float, but got [%s].");
+  CUST_KERNEL_CHECK_FALSE(ctx, (input_alpha->GetDataType() == DT_FLOAT && input_beta->GetDataType() == DT_FLOAT),
+                          KERNEL_STATUS_INNER_ERROR,
+                          "Input 'alpha' and 'beta' only support data type float, but got [%s].");
   auto alpha_shape = input_alpha->GetTensorShape()->GetDimSizes();
   auto beta_shape = input_beta->GetTensorShape()->GetDimSizes();
   size_t alpha_size = input_alpha->GetDataSize() / sizeof(float);

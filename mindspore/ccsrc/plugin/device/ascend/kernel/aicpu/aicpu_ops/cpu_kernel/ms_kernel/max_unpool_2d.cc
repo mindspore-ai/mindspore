@@ -29,20 +29,21 @@ const uint32_t kInputNum = 2;
 constexpr int64_t kParallelDataNums = 1024;
 const char *kMaxUnpool2D = "MaxUnpool2D";
 
-#define SWITCH_PARALLEL(SHARD, end_num, ctx)                                                                        \
-  if (end_num <= kParallelDataNums) {                                                                               \
-    for (size_t i = 0; i < size_t(end_num); i++) {                                                                  \
-      SHARD(i, i + 1);                                                                                              \
-    }                                                                                                               \
-  } else {                                                                                                          \
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, end_num, 1, SHARD), "MaxUnpool2D #SHARD Compute failed."); \
+#define SWITCH_PARALLEL(SHARD, end_num, ctx)                                           \
+  if (end_num <= kParallelDataNums) {                                                  \
+    for (size_t i = 0; i < size_t(end_num); i++) {                                     \
+      SHARD(i, i + 1);                                                                 \
+    }                                                                                  \
+  } else {                                                                             \
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, end_num, 1, SHARD), \
+                             "MaxUnpool2D #SHARD Compute failed.");                    \
   }
 
 }  // namespace
 
 namespace aicpu {
 template <typename DATA_T>
-uint32_t MaxUnpool2DCpuKernel::MaxUnpool2D_COMPUTE_CASE(const CpuKernelContext &ctx, DataType indices_type) {
+uint32_t MaxUnpool2DCpuKernel::MaxUnpool2D_COMPUTE_CASE(CpuKernelContext &ctx, DataType indices_type) {
   // Compute by indices_type
   switch (indices_type) {
     case DT_INT32:
@@ -50,15 +51,17 @@ uint32_t MaxUnpool2DCpuKernel::MaxUnpool2D_COMPUTE_CASE(const CpuKernelContext &
     case DT_INT64:
       return MaxUnpool2DCompute<DATA_T, int64_t>(ctx);
     default:
-      KERNEL_LOG_ERROR("indices_type [%s] must be in [{DT_INT32, DT_INT64}].", DTypeStr(indices_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "indices_type [%s] must be in [{DT_INT32, DT_INT64}].",
+                            DTypeStr(indices_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 }
 
 uint32_t MaxUnpool2DCpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "MaxUnpool2D check input and output number failed.");
-  KERNEL_HANDLE_ERROR(MaxUnpool2DCheck(ctx), "MaxUnpool2D check params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "MaxUnpool2D check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, MaxUnpool2DCheck(ctx), "MaxUnpool2D check params failed.");
   auto data_type = ctx.Input(0)->GetDataType();
   auto indices_type = ctx.Input(1)->GetDataType();
   switch (data_type) {
@@ -85,30 +88,31 @@ uint32_t MaxUnpool2DCpuKernel::Compute(CpuKernelContext &ctx) {
     case DT_DOUBLE:
       return MaxUnpool2D_COMPUTE_CASE<double>(ctx, indices_type);
     default:
-      KERNEL_LOG_ERROR("MaxUnpool2D kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "MaxUnpool2D kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 
-uint32_t MaxUnpool2DCpuKernel::MaxUnpool2DCheck(const CpuKernelContext &ctx) {
+uint32_t MaxUnpool2DCpuKernel::MaxUnpool2DCheck(CpuKernelContext &ctx) {
   DataType input0Type = ctx.Input(0)->GetDataType();
   DataType outputType = ctx.Output(0)->GetDataType();
-  KERNEL_CHECK_FALSE((input0Type == outputType), KERNEL_STATUS_PARAM_INVALID,
-                     "The data type of output [%d] need be same with "
-                     "input0 [%d].",
-                     outputType, input0Type)
+  CUST_KERNEL_CHECK_FALSE(ctx, (input0Type == outputType), KERNEL_STATUS_PARAM_INVALID,
+                          "The data type of output [%d] need be same with "
+                          "input0 [%d].",
+                          outputType, input0Type)
 
-  KERNEL_LOG_INFO(
-    "MaxUnpool2DCpuKernel[%s], input0: size[%llu];"
-    "input1: size[%llu], output: size[%llu].",
-    ctx.GetOpType().c_str(), ctx.Input(0)->GetDataSize(), ctx.Input(1)->GetDataSize(), ctx.Output(0)->GetDataSize());
+  CUST_KERNEL_LOG_INFO(ctx,
+                       "MaxUnpool2DCpuKernel[%s], input0: size[%llu];"
+                       "input1: size[%llu], output: size[%llu].",
+                       ctx.GetOpType().c_str(), ctx.Input(0)->GetDataSize(), ctx.Input(1)->GetDataSize(),
+                       ctx.Output(0)->GetDataSize());
 
   return KERNEL_STATUS_OK;
 }
 
 template <typename DATA_T, typename INDICES_T>
-uint32_t MaxUnpool2DCpuKernel::MaxUnpool2DCompute(const CpuKernelContext &ctx) {
+uint32_t MaxUnpool2DCpuKernel::MaxUnpool2DCompute(CpuKernelContext &ctx) {
   Tensor *input = ctx.Input(0);
   Tensor *indices = ctx.Input(1);
   Tensor *output = ctx.Output(0);
@@ -157,12 +161,12 @@ uint32_t MaxUnpool2DCpuKernel::MaxUnpool2DCompute(const CpuKernelContext &ctx) {
               maxp = ind_p_k[i * inputWidth * numChannels + j * numChannels + k];
               if (maxp < 0 || maxp >= owidth * oheight) {
                 error = true;
-                KERNEL_LOG_ERROR(
-                  "MaxUnpool2D:  output_size H_out * W_out "
-                  "should be bigger than argmax, now H_out is [%ld], "
-                  "and W_out is [%ld], but one of the values in argmax is "
-                  "[%ld].",
-                  oheight, owidth, maxp);
+                CUST_KERNEL_LOG_ERROR(ctx,
+                                      "MaxUnpool2D:  output_size H_out * W_out "
+                                      "should be bigger than argmax, now H_out is [%ld], "
+                                      "and W_out is [%ld], but one of the values in argmax is "
+                                      "[%ld].",
+                                      oheight, owidth, maxp);
               } else {
                 output_p_k[maxp * numChannels + k] = input_p_k[i * inputWidth * numChannels + j * numChannels + k];
               }
@@ -211,12 +215,12 @@ uint32_t MaxUnpool2DCpuKernel::MaxUnpool2DCompute(const CpuKernelContext &ctx) {
               maxp = ind_p_k[i * inputWidth + j];
               if (maxp < 0 || maxp >= owidth * oheight) {
                 error = true;
-                KERNEL_LOG_ERROR(
-                  "MaxUnpool2D:  output_size H_out * W_out "
-                  "should be bigger than argmax, now H_out is [%ld], "
-                  "and W_out is [%ld], but one of the values in argmax is "
-                  "[%ld].",
-                  oheight, owidth, maxp);
+                CUST_KERNEL_LOG_ERROR(ctx,
+                                      "MaxUnpool2D:  output_size H_out * W_out "
+                                      "should be bigger than argmax, now H_out is [%ld], "
+                                      "and W_out is [%ld], but one of the values in argmax is "
+                                      "[%ld].",
+                                      oheight, owidth, maxp);
               } else {
                 output_p_k[maxp] = input_p_k[i * inputWidth + j];
               }

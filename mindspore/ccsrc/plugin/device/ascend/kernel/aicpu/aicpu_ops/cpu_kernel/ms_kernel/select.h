@@ -30,10 +30,10 @@ class SelectCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t SelectParamCheck(const CpuKernelContext &ctx);
+  uint32_t SelectParamCheck(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t SelectCompute(const CpuKernelContext &ctx);
+  uint32_t SelectCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

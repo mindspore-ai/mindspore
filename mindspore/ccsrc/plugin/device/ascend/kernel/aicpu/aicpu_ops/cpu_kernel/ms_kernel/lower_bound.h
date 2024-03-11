@@ -29,7 +29,7 @@ class LowerBoundCpuKernel : public CpuKernel {
 
  private:
   template <typename T1, typename T2>
-  static uint32_t LowerBoundCompute(const CpuKernelContext &ctx);
+  static uint32_t LowerBoundCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

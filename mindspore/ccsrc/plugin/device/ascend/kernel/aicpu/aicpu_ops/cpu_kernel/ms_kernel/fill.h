@@ -28,7 +28,7 @@ class FillCpuKernel : public CpuKernel {
 
  private:
   template <typename T>
-  uint32_t CalculateDims(const Tensor *dims_tensor, std::vector<int64_t> &dims);
+  uint32_t CalculateDims(CpuKernelContext &ctx, const Tensor *dims_tensor, std::vector<int64_t> &dims);
 
   template <typename T>
   void FillOutput(CpuKernelContext &ctx, const Tensor *value_tensor, Tensor *output);

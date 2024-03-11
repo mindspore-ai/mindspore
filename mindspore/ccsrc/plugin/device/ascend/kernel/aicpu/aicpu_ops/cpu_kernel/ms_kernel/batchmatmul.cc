@@ -35,27 +35,29 @@ const int64_t kParallelDataNum = 1024;
 
 namespace aicpu {
 template <typename T>
-uint32_t BatchMatMulCpuKernel::DoCompute(const CpuKernelContext &ctx) {
+uint32_t BatchMatMulCpuKernel::DoCompute(CpuKernelContext &ctx) {
   auto input0_tensor = ctx.Input(0);
   auto input0_tensor_shape = input0_tensor->GetTensorShape();
   int32_t input0_tensor_dims = input0_tensor_shape->GetDims();
-  KERNEL_CHECK_FALSE((input0_tensor_dims > 1), KERNEL_STATUS_PARAM_INVALID, "Input[x1] must be a matrix or higher.")
+  CUST_KERNEL_CHECK_FALSE(ctx, (input0_tensor_dims > 1), KERNEL_STATUS_PARAM_INVALID,
+                          "Input[x1] must be a matrix or higher.")
 
   auto input1_tensor = ctx.Input(1);
   auto input1_tensor_shape = input1_tensor->GetTensorShape();
   int32_t input1_tensor_dims = input1_tensor_shape->GetDims();
-  KERNEL_CHECK_FALSE((input1_tensor_dims > 1), KERNEL_STATUS_PARAM_INVALID, "Input[x2] must be a matrix or higher.")
+  CUST_KERNEL_CHECK_FALSE(ctx, (input1_tensor_dims > 1), KERNEL_STATUS_PARAM_INVALID,
+                          "Input[x2] must be a matrix or higher.")
 
   auto output_tensor = ctx.Output(0);
   DataType input0_data_type = input0_tensor->GetDataType();
   DataType input1_data_type = input1_tensor->GetDataType();
   DataType output_data_type = output_tensor->GetDataType();
-  KERNEL_CHECK_FALSE((input0_data_type == input1_data_type), KERNEL_STATUS_PARAM_INVALID,
-                     "Input[x1] data type[%s] and input[x2] data type[%s] must be same.",
-                     DTypeStr(input0_data_type).c_str(), DTypeStr(input1_data_type).c_str())
-  KERNEL_CHECK_FALSE((input0_data_type == output_data_type), KERNEL_STATUS_PARAM_INVALID,
-                     "Input data type[%s] and output data type[%s] must be same.", DTypeStr(input0_data_type).c_str(),
-                     DTypeStr(output_data_type).c_str())
+  CUST_KERNEL_CHECK_FALSE(ctx, (input0_data_type == input1_data_type), KERNEL_STATUS_PARAM_INVALID,
+                          "Input[x1] data type[%s] and input[x2] data type[%s] must be same.",
+                          DTypeStr(input0_data_type).c_str(), DTypeStr(input1_data_type).c_str())
+  CUST_KERNEL_CHECK_FALSE(ctx, (input0_data_type == output_data_type), KERNEL_STATUS_PARAM_INVALID,
+                          "Input data type[%s] and output data type[%s] must be same.",
+                          DTypeStr(input0_data_type).c_str(), DTypeStr(output_data_type).c_str())
   bool adj_x = false;
   bool adj_y = false;
   auto adj_x1 = ctx.GetAttr("adj_x1");
@@ -66,37 +68,38 @@ uint32_t BatchMatMulCpuKernel::DoCompute(const CpuKernelContext &ctx) {
   if (adj_x2 != nullptr) {
     adj_y = adj_x2->GetBool();
   }
-  KERNEL_LOG_DEBUG(
-    "%s Attr[adj_x1] value[%d], "
-    "Attr[adj_x2] value[%d].",
-    kBatchMatmul, adj_x, adj_y);
+  CUST_KERNEL_LOG_DEBUG(ctx,
+                        "%s Attr[adj_x1] value[%d], "
+                        "Attr[adj_x2] value[%d].",
+                        kBatchMatmul, adj_x, adj_y);
 
   int32_t x1_dim = adj_x ? input0_tensor_dims - 2 : input0_tensor_dims - 1;
   int32_t x2_dim = adj_y ? input1_tensor_dims - 1 : input1_tensor_dims - 2;
-  KERNEL_CHECK_FALSE((input0_tensor_shape->GetDimSize(x1_dim) == input1_tensor_shape->GetDimSize(x2_dim)),
-                     KERNEL_STATUS_PARAM_INVALID,
-                     "Matrix size incompatible, input[x1] dim[%d] value[%lld], "
-                     "input[x2] dim[%d] value[%lld]",
-                     x1_dim, input0_tensor_shape->GetDimSize(x1_dim), x2_dim, input1_tensor_shape->GetDimSize(x2_dim))
-  KERNEL_CHECK_FALSE((input0_tensor_dims == input1_tensor_dims), KERNEL_STATUS_PARAM_INVALID,
-                     "input0_tensor_dims value[%d] is not equal to "
-                     "input1_tensor_dims value[%d]",
-                     input0_tensor_dims, input1_tensor_dims)
+  CUST_KERNEL_CHECK_FALSE(ctx, (input0_tensor_shape->GetDimSize(x1_dim) == input1_tensor_shape->GetDimSize(x2_dim)),
+                          KERNEL_STATUS_PARAM_INVALID,
+                          "Matrix size incompatible, input[x1] dim[%d] value[%lld], "
+                          "input[x2] dim[%d] value[%lld]",
+                          x1_dim, input0_tensor_shape->GetDimSize(x1_dim), x2_dim,
+                          input1_tensor_shape->GetDimSize(x2_dim))
+  CUST_KERNEL_CHECK_FALSE(ctx, (input0_tensor_dims == input1_tensor_dims), KERNEL_STATUS_PARAM_INVALID,
+                          "input0_tensor_dims value[%d] is not equal to "
+                          "input1_tensor_dims value[%d]",
+                          input0_tensor_dims, input1_tensor_dims)
 
   auto input0_shape = input0_tensor_shape->GetDimSizes();
   auto input1_shape = input1_tensor_shape->GetDimSizes();
   auto output_shape = output_tensor->GetTensorShape()->GetDimSizes();
 
   for (int32_t i = 0; i < input0_tensor_dims - 2; i++) {
-    KERNEL_CHECK_FALSE((input0_shape[i] == input1_shape[i]), KERNEL_STATUS_PARAM_INVALID,
-                       "input0_shape dim[%d] value[%lld] is not equal to "
-                       "input1_shape dim[%d] value[%lld]",
-                       i, input0_shape[i], i, input1_shape[i])
+    CUST_KERNEL_CHECK_FALSE(ctx, (input0_shape[i] == input1_shape[i]), KERNEL_STATUS_PARAM_INVALID,
+                            "input0_shape dim[%d] value[%lld] is not equal to "
+                            "input1_shape dim[%d] value[%lld]",
+                            i, input0_shape[i], i, input1_shape[i])
 
-    KERNEL_CHECK_FALSE((input0_shape[i] == output_shape[i]), KERNEL_STATUS_PARAM_INVALID,
-                       "input0_shape dim[%d] value[%lld] is not equal to "
-                       "output_shape dim[%d] value[%lld]",
-                       i, input0_shape[i], i, output_shape[i])
+    CUST_KERNEL_CHECK_FALSE(ctx, (input0_shape[i] == output_shape[i]), KERNEL_STATUS_PARAM_INVALID,
+                            "input0_shape dim[%d] value[%lld] is not equal to "
+                            "output_shape dim[%d] value[%lld]",
+                            i, input0_shape[i], i, output_shape[i])
   }
 
   int32_t map1_l = input0_shape[input0_tensor_dims - 2];
@@ -165,8 +168,9 @@ uint32_t BatchMatMulCpuKernel::DoCompute(const CpuKernelContext &ctx) {
         }
       }
     };
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, num_batches, num_batches / max_core_num, shared_batchmatmul),
-                        "BatchMatMul Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(
+      ctx, CpuKernelUtils::ParallelFor(ctx, num_batches, num_batches / max_core_num, shared_batchmatmul),
+      "BatchMatMul Compute failed.");
   } else {
     for (uint64_t batch = 0; batch < num_batches; ++batch) {
       for (int64_t i = 0; i < map1_l; i++) {
@@ -203,9 +207,9 @@ uint32_t BatchMatMulCpuKernel::DoCompute(const CpuKernelContext &ctx) {
 }
 
 uint32_t BatchMatMulCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "Check BatchMatMul params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "Check BatchMatMul params failed.");
   DataType input0_data_type = ctx.Input(0)->GetDataType();
-  KERNEL_LOG_DEBUG("%s op input[x1] data type is [%s].", kBatchMatmul, DTypeStr(input0_data_type).c_str());
+  CUST_KERNEL_LOG_DEBUG(ctx, "%s op input[x1] data type is [%s].", kBatchMatmul, DTypeStr(input0_data_type).c_str());
   uint32_t ret = KERNEL_STATUS_OK;
   switch (input0_data_type) {
     case DT_FLOAT:
@@ -242,7 +246,7 @@ uint32_t BatchMatMulCpuKernel::Compute(CpuKernelContext &ctx) {
       ret = DoCompute<std::complex<std::double_t>>(ctx);
       break;
     default:
-      KERNEL_LOG_ERROR("Unsupported input[x1] data type[%s]", DTypeStr(input0_data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Unsupported input[x1] data type[%s]", DTypeStr(input0_data_type).c_str());
       ret = KERNEL_STATUS_PARAM_INVALID;
   }
   return ret;

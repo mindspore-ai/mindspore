@@ -32,7 +32,7 @@ class SparseSegmentSqrtNWithNumSegmentsCpuKernel : public CpuKernel {
 
  private:
   template <typename T1, typename T2, typename T3, typename T4>
-  uint32_t ComputeKernel(const CpuKernelContext &ctx);
+  uint32_t ComputeKernel(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

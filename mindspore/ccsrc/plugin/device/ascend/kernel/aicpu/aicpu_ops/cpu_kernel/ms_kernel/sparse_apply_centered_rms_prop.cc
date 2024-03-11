@@ -37,24 +37,24 @@ constexpr size_t kNumTwo = 2;
 const int32_t kInputNum = 10;
 const int32_t kOutputNum = 1;
 const char *kSparseApplyCenteredRMSProp = "SparseApplyCenteredRMSProp";
-#define DO_COMPUTE_CASE(DTYPE, TYPE, ITYPE, CTX)                             \
-  case (DTYPE): {                                                            \
-    uint32_t ret = KERNEL_STATUS_OK;                                         \
-    if ((ITYPE) == DT_INT32) {                                               \
-      ret = DoCompute<TYPE, int32_t>(CTX);                                   \
-    } else {                                                                 \
-      ret = DoCompute<TYPE, int64_t>(CTX);                                   \
-    }                                                                        \
-    if (ret != KERNEL_STATUS_OK) {                                           \
-      KERNEL_LOG_ERROR("SparseApplyCenteredRMSProp kernel compute failed."); \
-      return ret;                                                            \
-    }                                                                        \
-    break;                                                                   \
+#define DO_COMPUTE_CASE(DTYPE, TYPE, ITYPE, CTX)                                       \
+  case (DTYPE): {                                                                      \
+    uint32_t ret = KERNEL_STATUS_OK;                                                   \
+    if ((ITYPE) == DT_INT32) {                                                         \
+      ret = DoCompute<TYPE, int32_t>(CTX);                                             \
+    } else {                                                                           \
+      ret = DoCompute<TYPE, int64_t>(CTX);                                             \
+    }                                                                                  \
+    if (ret != KERNEL_STATUS_OK) {                                                     \
+      CUST_KERNEL_LOG_ERROR(ctx, "SparseApplyCenteredRMSProp kernel compute failed."); \
+      return ret;                                                                      \
+    }                                                                                  \
+    break;                                                                             \
   }
 }  // namespace
 
 namespace aicpu {
-uint32_t SparseApplyCenteredRMSPropCpuKernel::ValidParam(const CpuKernelContext &ctx) {
+uint32_t SparseApplyCenteredRMSPropCpuKernel::ValidParam(CpuKernelContext &ctx) {
   Tensor *var_tensor = ctx.Input(0);
   Tensor *mg_tensor = ctx.Input(1);
   Tensor *ms_tensor = ctx.Input(2);
@@ -90,9 +90,9 @@ uint32_t SparseApplyCenteredRMSPropCpuKernel::ValidParam(const CpuKernelContext 
   tensor_types.insert({"grad", grad_tensor});
   tensor_types.insert({"output var", output_tensor});
   for (auto iter = tensor_types.begin(); iter != tensor_types.end(); iter++) {
-    KERNEL_CHECK_FALSE(var_tensor->GetDataType() == iter->second->GetDataType(), KERNEL_STATUS_PARAM_INVALID,
-                       "The data type of %s [%s] need be same with input var [%s].", iter->first.c_str(),
-                       DTypeStr(iter->second->GetDataType()).c_str(), DTypeStr(var_tensor->GetDataType()).c_str());
+    CUST_KERNEL_CHECK_FALSE(ctx, var_tensor->GetDataType() == iter->second->GetDataType(), KERNEL_STATUS_PARAM_INVALID,
+                            "The data type of %s [%s] need be same with input var [%s].", iter->first.c_str(),
+                            DTypeStr(iter->second->GetDataType()).c_str(), DTypeStr(var_tensor->GetDataType()).c_str());
   }
 
   std::map<std::string, std::shared_ptr<TensorShape>> tensor_shapes;
@@ -101,13 +101,13 @@ uint32_t SparseApplyCenteredRMSPropCpuKernel::ValidParam(const CpuKernelContext 
   tensor_shapes.insert({"mom", mom_shape});
   tensor_shapes.insert({"output var", output_shape});
   for (auto iter = tensor_shapes.begin(); iter != tensor_shapes.end(); iter++) {
-    KERNEL_CHECK_FALSE(var_shape->GetDimSizes() == iter->second->GetDimSizes(), KERNEL_STATUS_PARAM_INVALID,
-                       "The %s shape size should be same as the input var shape size.", iter->first.c_str());
+    CUST_KERNEL_CHECK_FALSE(ctx, var_shape->GetDimSizes() == iter->second->GetDimSizes(), KERNEL_STATUS_PARAM_INVALID,
+                            "The %s shape size should be same as the input var shape size.", iter->first.c_str());
   }
   std::vector<int64_t> var_size = var_shape->GetDimSizes();
   for (size_t i = 1; i < var_size.size(); ++i) {
-    KERNEL_CHECK_FALSE(var_shape->GetDimSize(i) == grad_shape->GetDimSize(i), KERNEL_STATUS_PARAM_INVALID,
-                       "input grad should be equal in dimension %s with input var", i);
+    CUST_KERNEL_CHECK_FALSE(ctx, var_shape->GetDimSize(i) == grad_shape->GetDimSize(i), KERNEL_STATUS_PARAM_INVALID,
+                            "input grad should be equal in dimension %s with input var", i);
   }
 
   std::map<std::string, std::shared_ptr<TensorShape>> scalar_shapes;
@@ -116,33 +116,34 @@ uint32_t SparseApplyCenteredRMSPropCpuKernel::ValidParam(const CpuKernelContext 
   scalar_shapes.insert({"momentum", momentum_shape});
   scalar_shapes.insert({"epsilon", epsilon_shape});
   for (auto iter = scalar_shapes.begin(); iter != scalar_shapes.end(); iter++) {
-    KERNEL_CHECK_FALSE(
-      iter->second->GetDims() == 0 || (iter->second->GetDims() == 1 && iter->second->NumElements() == 1),
+    CUST_KERNEL_CHECK_FALSE(
+      ctx, iter->second->GetDims() == 0 || (iter->second->GetDims() == 1 && iter->second->NumElements() == 1),
       KERNEL_STATUS_PARAM_INVALID, "The input %s should be a scalar, got dim size [%d].", iter->first.c_str(),
       iter->second->GetDims());
   }
 
-  KERNEL_CHECK_FALSE(grad_shape->GetDims() >= 1, KERNEL_STATUS_PARAM_INVALID,
-                     "The input grad must be at least 1 dimensional, got dims [%d].", grad_shape->GetDims());
+  CUST_KERNEL_CHECK_FALSE(ctx, grad_shape->GetDims() >= 1, KERNEL_STATUS_PARAM_INVALID,
+                          "The input grad must be at least 1 dimensional, got dims [%d].", grad_shape->GetDims());
 
-  KERNEL_CHECK_FALSE(indices_shape->GetDims() == 1, KERNEL_STATUS_PARAM_INVALID,
-                     "The input indices must be one-dimensional, but got dims [%d].", indices_shape->GetDims());
+  CUST_KERNEL_CHECK_FALSE(ctx, indices_shape->GetDims() == 1, KERNEL_STATUS_PARAM_INVALID,
+                          "The input indices must be one-dimensional, but got dims [%d].", indices_shape->GetDims());
 
-  KERNEL_CHECK_FALSE(grad_shape->GetDimSize(0) == indices_shape->GetDimSize(0), KERNEL_STATUS_PARAM_INVALID,
-                     "The input grad must be the same size as indices in the "
-                     "first dimension.");
+  CUST_KERNEL_CHECK_FALSE(ctx, grad_shape->GetDimSize(0) == indices_shape->GetDimSize(0), KERNEL_STATUS_PARAM_INVALID,
+                          "The input grad must be the same size as indices in the "
+                          "first dimension.");
 
   return KERNEL_STATUS_OK;
 }
 
 uint32_t SparseApplyCenteredRMSPropCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum),
-                      "SparseApplyCenteredRMSProp check input or output is failed.");
-  KERNEL_HANDLE_ERROR(ValidParam(ctx), "[%s] check params failed.", kSparseApplyCenteredRMSProp);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "SparseApplyCenteredRMSProp check input or output is failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, ValidParam(ctx), "[%s] check params failed.", kSparseApplyCenteredRMSProp);
   auto data_type = ctx.Input(0)->GetDataType();
   auto data_type_indices = ctx.Input(9)->GetDataType();
-  KERNEL_CHECK_FALSE((data_type_indices == DT_INT32 || data_type_indices == DT_INT64), KERNEL_STATUS_PARAM_INVALID,
-                     "indices data type[%s] is unsupported", DTypeStr(data_type_indices).c_str());
+  CUST_KERNEL_CHECK_FALSE(ctx, (data_type_indices == DT_INT32 || data_type_indices == DT_INT64),
+                          KERNEL_STATUS_PARAM_INVALID, "indices data type[%s] is unsupported",
+                          DTypeStr(data_type_indices).c_str());
   switch (data_type) {
     DO_COMPUTE_CASE(DT_DOUBLE, double, data_type_indices, ctx);
     DO_COMPUTE_CASE(DT_FLOAT, float, data_type_indices, ctx);
@@ -156,14 +157,15 @@ uint32_t SparseApplyCenteredRMSPropCpuKernel::Compute(CpuKernelContext &ctx) {
     DO_COMPUTE_CASE(DT_UINT32, uint32_t, data_type_indices, ctx);
     DO_COMPUTE_CASE(DT_UINT64, uint64_t, data_type_indices, ctx);
     default:
-      KERNEL_LOG_ERROR("SparseApplyCenteredRMSProp kernel data type[%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "SparseApplyCenteredRMSProp kernel data type[%s] not support.",
+                            DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 
 template <typename T, typename TI>
-uint32_t SparseApplyCenteredRMSPropCpuKernel::DoCompute(const CpuKernelContext &ctx) {
+uint32_t SparseApplyCenteredRMSPropCpuKernel::DoCompute(CpuKernelContext &ctx) {
   Tensor *var = ctx.Input(0);
   auto var_shape = var->GetTensorShape();
   Tensor *mg = ctx.Input(1);
@@ -190,8 +192,8 @@ uint32_t SparseApplyCenteredRMSPropCpuKernel::DoCompute(const CpuKernelContext &
 
     for (TI i = 0; i < indeces_dim1; i++) {
       const TI index = SubtleMustCopy(indices_vec(i));
-      KERNEL_CHECK_FALSE(index >= 0 && index < first_dim_size, KERNEL_STATUS_PARAM_INVALID,
-                         "Index [%d] at offset [%d] in indices is out of range[%d].", index, i, first_dim_size);
+      CUST_KERNEL_CHECK_FALSE(ctx, index >= 0 && index < first_dim_size, KERNEL_STATUS_PARAM_INVALID,
+                              "Index [%d] at offset [%d] in indices is out of range[%d].", index, i, first_dim_size);
     }
 
     Eigen::TensorMap<Eigen::Tensor<T, kNumTwo, Eigen::RowMajor>> var_flat(
@@ -234,8 +236,8 @@ uint32_t SparseApplyCenteredRMSPropCpuKernel::DoCompute(const CpuKernelContext &
   auto output_data = ctx.Output(0)->GetData();
   auto copy_size = var->GetDataSize();
   auto mem_ret = memcpy_s(output_data, copy_size, var_data, copy_size);
-  KERNEL_CHECK_FALSE(mem_ret == EOK, KERNEL_STATUS_INNER_ERROR, "Memcpy size[%zu] from input var to output var failed.",
-                     copy_size);
+  CUST_KERNEL_CHECK_FALSE(ctx, mem_ret == EOK, KERNEL_STATUS_INNER_ERROR,
+                          "Memcpy size[%zu] from input var to output var failed.", copy_size);
   return KERNEL_STATUS_OK;
 }
 REGISTER_MS_CPU_KERNEL(kSparseApplyCenteredRMSProp, SparseApplyCenteredRMSPropCpuKernel);

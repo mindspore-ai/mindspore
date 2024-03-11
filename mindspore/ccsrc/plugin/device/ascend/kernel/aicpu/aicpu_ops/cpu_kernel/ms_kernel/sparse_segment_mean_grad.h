@@ -29,13 +29,13 @@ class SparseSegmentMeanGradCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  KernelStatus CheckDataPara(const CpuKernelContext &ctx) const;
-  KernelStatus CheckShapePara(const CpuKernelContext &ctx) const;
+  KernelStatus CheckDataPara(CpuKernelContext &ctx) const;
+  KernelStatus CheckShapePara(CpuKernelContext &ctx) const;
   template <typename T>
-  KernelStatus ComputeKernel(const CpuKernelContext &ctx);
+  KernelStatus ComputeKernel(CpuKernelContext &ctx);
 
   template <typename T, typename T1, typename T2>
-  KernelStatus ComputeKernelWithType(const CpuKernelContext &ctx);
+  KernelStatus ComputeKernelWithType(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

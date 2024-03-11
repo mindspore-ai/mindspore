@@ -25,14 +25,14 @@ const uint32_t kOutputNum = 1;
 const uint32_t kInputNum = 2;
 const char *kArgMin = "ArgMin";
 const uint32_t kDataSize = 4 * 1024;
-#define ARGMIN_COMPUTE_CASE(DTYPE, TYPE1, TYPE2, TYPE3, CTX)   \
-  case (DTYPE): {                                              \
-    uint32_t result = ArgMinCompute<TYPE1, TYPE2, TYPE3>(CTX); \
-    if (result != KERNEL_STATUS_OK) {                          \
-      KERNEL_LOG_ERROR("ArgMin kernel compute failed.");       \
-      return result;                                           \
-    }                                                          \
-    break;                                                     \
+#define ARGMIN_COMPUTE_CASE(DTYPE, TYPE1, TYPE2, TYPE3, CTX)       \
+  case (DTYPE): {                                                  \
+    uint32_t result = ArgMinCompute<TYPE1, TYPE2, TYPE3>(CTX);     \
+    if (result != KERNEL_STATUS_OK) {                              \
+      CUST_KERNEL_LOG_ERROR(ctx, "ArgMin kernel compute failed."); \
+      return result;                                               \
+    }                                                              \
+    break;                                                         \
   }
 
 #define ARGMIN_COMPUTE_CASE_ALL(TYPE1, TYPE2, CTX)                \
@@ -48,15 +48,16 @@ const uint32_t kDataSize = 4 * 1024;
   ARGMIN_COMPUTE_CASE(DT_UINT32, uint32_t, TYPE1, TYPE2, CTX)     \
   ARGMIN_COMPUTE_CASE(DT_UINT64, uint64_t, TYPE1, TYPE2, CTX)
 
-#define LOG_ERROR_DTYPE(STR1, STR2)                                    \
-  default:                                                             \
-    KERNEL_LOG_ERROR("[%s] data type[%s] not supported.", STR1, STR2); \
+#define LOG_ERROR_DTYPE(ctx, STR1, STR2)                                         \
+  default:                                                                       \
+    CUST_KERNEL_LOG_ERROR(ctx, "[%s] data type[%s] not supported.", STR1, STR2); \
     return KERNEL_STATUS_PARAM_INVALID;
 }  // namespace
 
 namespace aicpu {
 uint32_t ArgMinCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "ArgMin check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "ArgMin check input and output number failed.");
   Tensor *input_data = ctx.Input(0);
   Tensor *axes_data = ctx.Input(1);
   Tensor *output_data = ctx.Output(0);
@@ -69,16 +70,16 @@ uint32_t ArgMinCpuKernel::Compute(CpuKernelContext &ctx) {
         case DT_INT32:
           switch (data_type) {
             ARGMIN_COMPUTE_CASE_ALL(int32_t, int32_t, ctx)
-            LOG_ERROR_DTYPE("Input[0]", DTypeStr(data_type).c_str())
+            LOG_ERROR_DTYPE(ctx, "Input[0]", DTypeStr(data_type).c_str())
           }
           break;
         case DT_INT64:
           switch (data_type) {
             ARGMIN_COMPUTE_CASE_ALL(int64_t, int32_t, ctx)
-            LOG_ERROR_DTYPE("Input[0]", DTypeStr(data_type).c_str())
+            LOG_ERROR_DTYPE(ctx, "Input[0]", DTypeStr(data_type).c_str())
           }
           break;
-          LOG_ERROR_DTYPE("Input[1]", DTypeStr(axes_type).c_str())
+          LOG_ERROR_DTYPE(ctx, "Input[1]", DTypeStr(axes_type).c_str())
       }
       break;
     case DT_INT64:
@@ -86,28 +87,28 @@ uint32_t ArgMinCpuKernel::Compute(CpuKernelContext &ctx) {
         case DT_INT32:
           switch (data_type) {
             ARGMIN_COMPUTE_CASE_ALL(int32_t, int64_t, ctx)
-            LOG_ERROR_DTYPE("Input[0]", DTypeStr(data_type).c_str())
+            LOG_ERROR_DTYPE(ctx, "Input[0]", DTypeStr(data_type).c_str())
           }
           break;
         case DT_INT64:
           switch (data_type) {
             ARGMIN_COMPUTE_CASE_ALL(int64_t, int64_t, ctx)
-            LOG_ERROR_DTYPE("Input[0]", DTypeStr(data_type).c_str())
+            LOG_ERROR_DTYPE(ctx, "Input[0]", DTypeStr(data_type).c_str())
           }
           break;
-          LOG_ERROR_DTYPE("Input[1]", DTypeStr(axes_type).c_str())
+          LOG_ERROR_DTYPE(ctx, "Input[1]", DTypeStr(axes_type).c_str())
       }
       break;
-      LOG_ERROR_DTYPE("Output[0]", DTypeStr(output_type).c_str())
+      LOG_ERROR_DTYPE(ctx, "Output[0]", DTypeStr(output_type).c_str())
   }
   return KERNEL_STATUS_OK;
 }
 
 template <typename T1, typename T2, typename T3>
-uint32_t ArgMinCpuKernel::ArgMinCompute(const CpuKernelContext &ctx) {
+uint32_t ArgMinCpuKernel::ArgMinCompute(CpuKernelContext &ctx) {
   // get x
   Tensor *input_data = ctx.Input(0);
-  KERNEL_CHECK_NULLPTR(input_data->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 0 data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input_data->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 0 data failed.")
   auto input_data_addr = reinterpret_cast<T1 *>(input_data->GetData());
   auto input_shape = input_data->GetTensorShape();
   std::vector<int64_t> dims = input_shape->GetDimSizes();
@@ -120,11 +121,11 @@ uint32_t ArgMinCpuKernel::ArgMinCompute(const CpuKernelContext &ctx) {
   }
   // get dimension
   Tensor *axes_data = ctx.Input(1);
-  KERNEL_CHECK_NULLPTR(axes_data->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 1 data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, axes_data->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 1 data failed.")
   auto axes_data_addr = reinterpret_cast<T2 *>(axes_data->GetData());
   if (axes_data_addr[0] > kDimsNum - 1 || axes_data_addr[0] < -kDimsNum) {
-    KERNEL_LOG_ERROR("The value of axes must be in the range [[%d], [%d]], but got [%d]", -kDimsNum, kDimsNum - 1,
-                     axes_data_addr[0]);
+    CUST_KERNEL_LOG_ERROR(ctx, "The value of axes must be in the range [[%d], [%d]], but got [%d]", -kDimsNum,
+                          kDimsNum - 1, axes_data_addr[0]);
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (axes_data_addr[0] < 0) {
@@ -132,7 +133,7 @@ uint32_t ArgMinCpuKernel::ArgMinCompute(const CpuKernelContext &ctx) {
   }
   // get y
   Tensor *output_data = ctx.Output(0);
-  KERNEL_CHECK_NULLPTR(output_data->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output 0 data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, output_data->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output 0 data failed.")
   auto output_data_addr = reinterpret_cast<T3 *>(output_data->GetData());
   int64_t output_data_num = output_data->NumElements();
   if (output_data_num * sizeof(T3) < kDataSize) {
@@ -194,8 +195,8 @@ uint32_t ArgMinCpuKernel::ArgMinCompute(const CpuKernelContext &ctx) {
         output_data_addr[i] = min_loc;
       }
     };
-    KERNEL_HANDLE_ERROR(
-      CpuKernelUtils::ParallelFor(ctx, output_data_num, output_data_num / max_core_num, shard_compute),
+    CUST_KERNEL_HANDLE_ERROR(
+      ctx, CpuKernelUtils::ParallelFor(ctx, output_data_num, output_data_num / max_core_num, shard_compute),
       "ArgMin Compute failed.");
   }
   return KERNEL_STATUS_OK;

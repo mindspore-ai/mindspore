@@ -28,10 +28,10 @@ class CumprodCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t CumprodCheck(const CpuKernelContext &ctx);
+  uint32_t CumprodCheck(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t CumprodCompute(const CpuKernelContext &ctx);
+  uint32_t CumprodCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

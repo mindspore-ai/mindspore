@@ -31,7 +31,7 @@ class CropAndResizeCpuKernel : public CpuKernel {
 
  private:
   template <typename T1, typename T2>
-  uint32_t DoCompute(const CpuKernelContext &ctx);
+  uint32_t DoCompute(CpuKernelContext &ctx);
 
   uint32_t GetInputAndCheck(CpuKernelContext &ctx);
 

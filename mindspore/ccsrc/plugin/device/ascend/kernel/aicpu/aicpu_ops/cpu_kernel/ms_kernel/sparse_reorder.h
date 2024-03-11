@@ -42,12 +42,12 @@ class SparseReorderCpuKernel : public CpuKernel {
    * @return uint32_t: 0->success other->failed
    */
   template <typename ValueT>
-  uint32_t EigenSparseReorder(const CpuKernelContext &ctx, SparseTensor &st, Tensor *y_indices, Tensor *y_values) {
-    if (st.GetIndicesAndValues<int64_t, ValueT>(y_indices, y_values) != KERNEL_STATUS_OK) {
+  uint32_t EigenSparseReorder(CpuKernelContext &ctx, SparseTensor &st, Tensor *y_indices, Tensor *y_values) {
+    if (st.GetIndicesAndValues<int64_t, ValueT>(ctx, y_indices, y_values) != KERNEL_STATUS_OK) {
       return KERNEL_STATUS_PARAM_INVALID;
     }
     if (st.IndicesValid(ctx) != KERNEL_STATUS_OK) {
-      st.CreateSparseTensor(y_indices, y_values, st.Shape(), st.Order());
+      st.CreateSparseTensor(ctx, y_indices, y_values, st.Shape(), st.Order());
       st.Reorder<int64_t, ValueT>();
     }
     return KERNEL_STATUS_OK;
@@ -60,14 +60,14 @@ class SparseReorderCpuKernel : public CpuKernel {
    * @param y_values: y_values tensor
    * @return uint32_t: 0->success other->failed
    */
-  uint32_t SparseReorder(const CpuKernelContext &ctx, SparseTensor &st, Tensor *y_indices, Tensor *y_values);
+  uint32_t SparseReorder(CpuKernelContext &ctx, SparseTensor &st, Tensor *y_indices, Tensor *y_values);
 
   /*
    * valid sparse reorder param
    * @param ctx: cpu kernel context
    * @return uint32_t: 0->success other->failed
    */
-  uint32_t ValidParam(const CpuKernelContext &ctx);
+  uint32_t ValidParam(CpuKernelContext &ctx);
 };
 
 }  // namespace aicpu

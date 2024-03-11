@@ -29,21 +29,21 @@ const uint32_t kInputNum = 1;
 const char *const kConj = "Conj";
 constexpr int64_t kParallelDataNums = 512 * 1024;
 
-#define CONJ_COMPUTE_CASE(DTYPE, TYPE, CTX)            \
-  case (DTYPE): {                                      \
-    uint32_t result = ConjCompute<TYPE>(CTX);          \
-    if (result != KERNEL_STATUS_OK) {                  \
-      KERNEL_LOG_ERROR("Conj kernel compute failed."); \
-      return result;                                   \
-    }                                                  \
-    break;                                             \
+#define CONJ_COMPUTE_CASE(DTYPE, TYPE, CTX)                      \
+  case (DTYPE): {                                                \
+    uint32_t result = ConjCompute<TYPE>(CTX);                    \
+    if (result != KERNEL_STATUS_OK) {                            \
+      CUST_KERNEL_LOG_ERROR(ctx, "Conj kernel compute failed."); \
+      return result;                                             \
+    }                                                            \
+    break;                                                       \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t ConjCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(const_cast<CpuKernelContext &>(ctx), kInputNum, kOutputNum),
-                      "[%s] check input and output failed.", kConj);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(const_cast<CpuKernelContext &>(ctx), kInputNum, kOutputNum),
+                           "[%s] check input and output failed.", kConj);
   DataType dataType = ctx.Input(0)->GetDataType();
   switch (dataType) {
     CONJ_COMPUTE_CASE(DT_COMPLEX64, std::complex<float>, ctx)
@@ -60,22 +60,22 @@ uint32_t ConjCpuKernel::Compute(CpuKernelContext &ctx) {
     CONJ_COMPUTE_CASE(DT_FLOAT, float_t, ctx)
     CONJ_COMPUTE_CASE(DT_DOUBLE, double_t, ctx)
     default:
-      KERNEL_LOG_ERROR("Conj kernel data type [%s] not support.", DTypeStr(dataType).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Conj kernel data type [%s] not support.", DTypeStr(dataType).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 
-uint32_t ConjCpuKernel::ConjCheck(const CpuKernelContext &ctx) const {
+uint32_t ConjCpuKernel::ConjCheck(CpuKernelContext &ctx) const {
   auto input = ctx.Input(0);
   auto output = ctx.Output(0);
-  KERNEL_CHECK_NULLPTR(input->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input data failed.")
-  KERNEL_CHECK_NULLPTR(output->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output data failed")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, output->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output data failed")
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t ConjCpuKernel::ConjCompute(const CpuKernelContext &ctx) const {
+uint32_t ConjCpuKernel::ConjCompute(CpuKernelContext &ctx) const {
   auto inputX = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto outputY = reinterpret_cast<T *>(ctx.Output(0)->GetData());
   int64_t dataNum = ctx.Input(0)->NumElements();
@@ -101,8 +101,8 @@ uint32_t ConjCpuKernel::ConjCompute(const CpuKernelContext &ctx) const {
     auto shardConj = [&inputX, &outputY, conj_compute](size_t start, size_t end) {
       conj_compute(inputX + start, inputX + end, outputY + start);
     };
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, dataNum, dataNum / maxCoreNum, shardConj),
-                        "Conj Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, dataNum, dataNum / maxCoreNum, shardConj),
+                             "Conj Compute failed.");
   }
   return KERNEL_STATUS_OK;
 }

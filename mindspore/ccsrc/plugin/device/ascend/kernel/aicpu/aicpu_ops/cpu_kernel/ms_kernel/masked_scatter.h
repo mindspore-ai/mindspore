@@ -31,8 +31,8 @@ class MaskedScatterCpuKernel : public CpuKernel {
    * @return status if success
    */
   template <typename T>
-  uint32_t MaskedScatterCompute(const CpuKernelContext &ctx);
-  uint32_t InputCheck(const CpuKernelContext &ctx);
+  uint32_t MaskedScatterCompute(CpuKernelContext &ctx);
+  uint32_t InputCheck(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

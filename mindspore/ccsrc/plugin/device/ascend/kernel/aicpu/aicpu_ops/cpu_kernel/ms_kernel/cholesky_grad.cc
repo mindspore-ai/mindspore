@@ -30,45 +30,46 @@ const char *CholeskyGrad = "CholeskyGrad";
 
 namespace aicpu {
 uint32_t CholeskyGradCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "CholeskyGrad check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "CholeskyGrad check input and output number failed.");
   Tensor *input0 = ctx.Input(0);
   Tensor *input1 = ctx.Input(1);
   Tensor *output0 = ctx.Output(0);
   if (input0->GetDataSize() == 0 || input1->GetDataSize() == 0) {
-    KERNEL_LOG_ERROR("[%s] Input tensor is empty tensor.", ctx.GetOpType().c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "[%s] Input tensor is empty tensor.", ctx.GetOpType().c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   auto shape0 = input0->GetTensorShape();
   auto shape1 = input1->GetTensorShape();
   auto shape2 = output0->GetTensorShape();
   if (shape0->GetDims() != shape1->GetDims() || shape1->GetDims() != shape2->GetDims()) {
-    KERNEL_LOG_ERROR("[%s] Inputs and Output tensors should have same dims.", ctx.GetOpType().c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "[%s] Inputs and Output tensors should have same dims.", ctx.GetOpType().c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   auto dims = shape0->GetDims();
   if (shape0->GetDimSize(dims - 1) != shape0->GetDimSize(dims - 2)) {
-    KERNEL_LOG_ERROR("[%s] Tensor input0 is not square.", ctx.GetOpType().c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "[%s] Tensor input0 is not square.", ctx.GetOpType().c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if ((shape0->GetDimSize(dims - 1) != shape1->GetDimSize(dims - 1)) ||
       (shape0->GetDimSize(dims - 2) != shape1->GetDimSize(dims - 2))) {
-    KERNEL_LOG_ERROR("[%s] Tensor input0&input1's shape mismatch.", ctx.GetOpType().c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "[%s] Tensor input0&input1's shape mismatch.", ctx.GetOpType().c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if ((shape0->GetDimSize(dims - 1) != shape2->GetDimSize(dims - 1)) ||
       (shape0->GetDimSize(dims - 2) != shape2->GetDimSize(dims - 2))) {
-    KERNEL_LOG_ERROR("[%s] Tensor input0&output0's shape mismatch.", ctx.GetOpType().c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "[%s] Tensor input0&output0's shape mismatch.", ctx.GetOpType().c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   auto data_type_0 = input0->GetDataType();
   auto data_type_1 = input1->GetDataType();
   auto data_type_2 = output0->GetDataType();
   if (data_type_0 != data_type_1 || data_type_0 != data_type_2) {
-    KERNEL_LOG_ERROR("[%s] Tensor data type mismatch.", ctx.GetOpType().c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "[%s] Tensor data type mismatch.", ctx.GetOpType().c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (data_type_0 != DT_FLOAT && data_type_0 != DT_DOUBLE) {
-    KERNEL_LOG_ERROR("CholeskyGrad kernel data type [%u] not support.", data_type_0);
+    CUST_KERNEL_LOG_ERROR(ctx, "CholeskyGrad kernel data type [%u] not support.", data_type_0);
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
@@ -81,7 +82,7 @@ uint32_t CholeskyGradCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t CholeskyGradCpuKernel::ComputeKernel(const CpuKernelContext &ctx, const bool &reverse) {
+uint32_t CholeskyGradCpuKernel::ComputeKernel(CpuKernelContext &ctx, const bool &reverse) {
   auto dims = ctx.Input(0)->GetTensorShape()->GetDims();
   auto lptr = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto gradptr = reinterpret_cast<T *>(ctx.Input(1)->GetData());
@@ -106,8 +107,8 @@ uint32_t CholeskyGradCpuKernel::ComputeKernel(const CpuKernelContext &ctx, const
       }
     };
 
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, batch, batch / max_core_num, sharder_cholesky_grad),
-                        "CholeskyGrad Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, batch, batch / max_core_num, sharder_cholesky_grad),
+                             "CholeskyGrad Compute failed.");
 
   } else {
     for (int64_t i = 0; i < batch; i++) {

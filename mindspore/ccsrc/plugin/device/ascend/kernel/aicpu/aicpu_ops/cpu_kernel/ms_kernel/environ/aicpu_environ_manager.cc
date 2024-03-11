@@ -24,15 +24,15 @@ constexpr auto kScalarTensorShapeDim = 1;
 constexpr auto kScalarTensorShapeSize = 1;
 constexpr auto kEnvValueTypeAttr = "value_type";
 
-int64_t EnvironMgr::Create() {
+int64_t EnvironMgr::Create(CpuKernelContext &ctx) {
   std::unique_lock<std::mutex> lock(mutex);
   if (env_handles_count_ >= INT64_MAX) {
-    KERNEL_LOG_ERROR(" The handles number:%d is out of range: ", env_handles_count_);
+    CUST_KERNEL_LOG_ERROR(ctx, " The handles number:%d is out of range: ", env_handles_count_);
     return KERNEL_STATUS_INNER_ERROR;
   }
   int64_t ret_handle = ++env_handles_count_;
   auto env = std::make_shared<Environ>(ret_handle);
-  KERNEL_CHECK_NULLPTR(env, kAicpuKernelStateInvalid, "env is null.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, env, KERNEL_STATUS_INNER_ERROR, "env is null.");
   envs_[ret_handle] = env;
 
   return ret_handle;
@@ -48,56 +48,56 @@ EnvironPtr EnvironMgr::Get(int64_t handle) {
   return nullptr;
 }
 
-void EnvironMgr::Clear() {
+void EnvironMgr::Clear(CpuKernelContext &ctx) {
   std::unique_lock<std::mutex> lock(mutex);
   for (auto &env : envs_) {
-    KERNEL_CHECK_NULLPTR_VOID(env.second, "env is null.")
-    env.second->Clear();
+    CUST_KERNEL_CHECK_NULLPTR_VOID(ctx, env.second, "env is null.")
+    env.second->Clear(ctx);
   }
   envs_.clear();
 }
 
-bool EnvironMgr::IsScalarTensor(const Tensor *tensor) const {
-  KERNEL_CHECK_NULLPTR(tensor->GetData(), KERNEL_STATUS_PARAM_INVALID, "tensor is nullptr.");
+bool EnvironMgr::IsScalarTensor(CpuKernelContext &ctx, const Tensor *tensor) const {
+  CUST_KERNEL_CHECK_NULLPTR(ctx, tensor->GetData(), KERNEL_STATUS_PARAM_INVALID, "tensor is nullptr.");
   auto shape_ptr = tensor->GetTensorShape();
-  KERNEL_CHECK_NULLPTR(shape_ptr, KERNEL_STATUS_PARAM_INVALID, "Get tensor shape failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, shape_ptr, KERNEL_STATUS_PARAM_INVALID, "Get tensor shape failed.");
   auto shape = shape_ptr->GetDimSizes();
   if (shape.empty()) {
-    KERNEL_LOG_DEBUG("The shape is empty.");
+    CUST_KERNEL_LOG_DEBUG(ctx, "The shape is empty.");
     return true;
   }
 
   if ((shape.size() == kScalarTensorShapeDim) && (shape[0] == kScalarTensorShapeSize)) {
-    KERNEL_LOG_DEBUG("The tensor is scalar.");
+    CUST_KERNEL_LOG_DEBUG(ctx, "The tensor is scalar.");
     return true;
   }
   return false;
 }
 
-bool EnvironMgr::CheckEnvInput(const CpuKernelContext &ctx) const {
+bool EnvironMgr::CheckEnvInput(CpuKernelContext &ctx) const {
   auto *value_type_ptr = ctx.GetAttr(kEnvValueTypeAttr);
-  KERNEL_CHECK_NULLPTR(value_type_ptr, KERNEL_STATUS_PARAM_INVALID, "Get attr value_type failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, value_type_ptr, KERNEL_STATUS_PARAM_INVALID, "Get attr value_type failed.");
   auto value_type_attr = value_type_ptr->GetInt();
   if ((value_type_attr != kObjectTypeTensorType) && (value_type_attr != kObjectTypeEnvType)) {
-    KERNEL_LOG_ERROR("The value type is not supported: [%d]", value_type_attr);
+    CUST_KERNEL_LOG_ERROR(ctx, "The value type is not supported: [%d]", value_type_attr);
     return false;
   }
 
   // Check the input handle.
-  if (!IsScalarTensor(ctx.Input(kFirstInputIndex))) {
-    KERNEL_LOG_ERROR("The input handle checks invalid.");
+  if (!IsScalarTensor(ctx, ctx.Input(kFirstInputIndex))) {
+    CUST_KERNEL_LOG_ERROR(ctx, "The input handle checks invalid.");
     return false;
   }
 
   // Check the input key
-  if (!IsScalarTensor(ctx.Input(kSecondInputIndex))) {
-    KERNEL_LOG_ERROR("The input key checks invalid.");
+  if (!IsScalarTensor(ctx, ctx.Input(kSecondInputIndex))) {
+    CUST_KERNEL_LOG_ERROR(ctx, "The input key checks invalid.");
     return false;
   }
 
   // Check the input value
-  if ((value_type_attr == kObjectTypeEnvType) && (!IsScalarTensor(ctx.Input(kThirdInputIndex)))) {
-    KERNEL_LOG_ERROR("The input value checks invalid.");
+  if ((value_type_attr == kObjectTypeEnvType) && (!IsScalarTensor(ctx, ctx.Input(kThirdInputIndex)))) {
+    CUST_KERNEL_LOG_ERROR(ctx, "The input value checks invalid.");
     return false;
   }
 

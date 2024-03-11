@@ -110,9 +110,9 @@ class MySparseTensor {
     }
   };
   template <typename T>
-  uint32_t Reorder(const std::vector<int64_t> &order) {
-    KERNEL_CHECK_FALSE(order.size() == (std::size_t)dims_, KERNEL_STATUS_PARAM_INVALID,
-                       "Order length must be SparseTensor rank");
+  uint32_t Reorder(CpuKernelContext &ctx, const std::vector<int64_t> &order) {
+    CUST_KERNEL_CHECK_FALSE(ctx, order.size() == (std::size_t)dims_, KERNEL_STATUS_PARAM_INVALID,
+                            "Order length must be SparseTensor rank");
     auto ix_t = ix_->matrix<int64_t>();
     auto vals_t = vals_->vec<T>();
 
@@ -169,7 +169,8 @@ class MySparseTensor {
   }
 
   template <typename T>
-  static MySparseTensor *Concat(const std::vector<MySparseTensor *> &tensors, Tensor *output_ix, Tensor *output_vals) {
+  static MySparseTensor *Concat(CpuKernelContext &ctx, const std::vector<MySparseTensor *> &tensors, Tensor *output_ix,
+                                Tensor *output_vals) {
     const int dims = tensors[0]->dims_;
     auto order_0 = tensors[0]->order_;
     const int primary_dim = order_0[0];
@@ -229,7 +230,7 @@ class MySparseTensor {
 };
 
 template <typename T>
-uint32_t DoCompute(const CpuKernelContext &ctx) {
+uint32_t DoCompute(CpuKernelContext &ctx) {
   int64_t concat_dim_attr_ = ctx.GetAttr("concat_dim") != NULL ? ctx.GetAttr("concat_dim")->GetInt() : 0;
   int64_t N = ctx.GetAttr("N") != NULL ? ctx.GetAttr("N")->GetInt() : 1;
 
@@ -247,29 +248,31 @@ uint32_t DoCompute(const CpuKernelContext &ctx) {
 
     auto indice_shape = indice->GetTensorShape();
     const int indices_dim = 2;
-    KERNEL_CHECK_FALSE(indice_shape->GetDims() == indices_dim, KERNEL_STATUS_PARAM_INVALID,
-                       "Input indices should be a matrix but received shape %d at position %d", indice_shape->GetDims(),
-                       i);
+    CUST_KERNEL_CHECK_FALSE(ctx, indice_shape->GetDims() == indices_dim, KERNEL_STATUS_PARAM_INVALID,
+                            "Input indices should be a matrix but received shape %d at position %d",
+                            indice_shape->GetDims(), i);
 
     auto value_shape = value->GetTensorShape();
-    KERNEL_CHECK_FALSE(value_shape->GetDims() == 1, KERNEL_STATUS_PARAM_INVALID,
-                       "Input values should be a vector but received shape %d at position %d", value_shape->GetDims(),
-                       i);
+    CUST_KERNEL_CHECK_FALSE(ctx, value_shape->GetDims() == 1, KERNEL_STATUS_PARAM_INVALID,
+                            "Input values should be a vector but received shape %d at position %d",
+                            value_shape->GetDims(), i);
 
     auto shape_shape = shape->GetTensorShape();
-    KERNEL_CHECK_FALSE(shape_shape->GetDims() == 1, KERNEL_STATUS_PARAM_INVALID,
-                       "Input shapes should be a vector but received shape %d at position %d", shape_shape->GetDims(),
-                       i);
+    CUST_KERNEL_CHECK_FALSE(ctx, shape_shape->GetDims() == 1, KERNEL_STATUS_PARAM_INVALID,
+                            "Input shapes should be a vector but received shape %d at position %d",
+                            shape_shape->GetDims(), i);
 
     int64_t ind_dim0 = indice_shape->GetDimSize(0);
     int64_t ind_dim1 = indice_shape->GetDimSize(1);
     int64_t val_dim0 = value_shape->GetDimSize(0);
     int64_t shape_dim0 = shape_shape->GetDimSize(0);
 
-    KERNEL_CHECK_FALSE(ind_dim0 == val_dim0, KERNEL_STATUS_PARAM_INVALID,
-                       "indices dim_size_0 [%lld] != values dim_size_0 [%lld] at position %d", ind_dim0, val_dim0, i);
-    KERNEL_CHECK_FALSE(ind_dim1 == shape_dim0, KERNEL_STATUS_PARAM_INVALID,
-                       "indices dim_size_1 [%lld] != shapes dim_size_0 [%lld] at position %d", ind_dim1, shape_dim0, i);
+    CUST_KERNEL_CHECK_FALSE(ctx, ind_dim0 == val_dim0, KERNEL_STATUS_PARAM_INVALID,
+                            "indices dim_size_0 [%lld] != values dim_size_0 [%lld] at position %d", ind_dim0, val_dim0,
+                            i);
+    CUST_KERNEL_CHECK_FALSE(ctx, ind_dim1 == shape_dim0, KERNEL_STATUS_PARAM_INVALID,
+                            "indices dim_size_1 [%lld] != shapes dim_size_0 [%lld] at position %d", ind_dim1,
+                            shape_dim0, i);
 
     EigenTensor indiceET(indice, indice->GetData());
     EigenTensor valueET(value, value->GetData());
@@ -285,20 +288,21 @@ uint32_t DoCompute(const CpuKernelContext &ctx) {
   const typename TTypes<int64_t>::Vec input_shape = shapes_t[0];
   const int input_rank = input_shape.size();
   const int concat_dim = (concat_dim_attr_ < 0) ? input_rank + concat_dim_attr_ : concat_dim_attr_;
-  KERNEL_CHECK_FALSE(concat_dim >= 0 && concat_dim < input_rank, KERNEL_STATUS_PARAM_INVALID,
-                     "Concat dimension must be in range [%d,%d),got %d", -input_rank, input_rank, concat_dim_attr_);
+  CUST_KERNEL_CHECK_FALSE(ctx, concat_dim >= 0 && concat_dim < input_rank, KERNEL_STATUS_PARAM_INVALID,
+                          "Concat dimension must be in range [%d,%d),got %d", -input_rank, input_rank,
+                          concat_dim_attr_);
   for (int i = 1; i < N; i++) {
     const typename TTypes<int64_t>::Vec current_shape = shapes_t[i];
-    KERNEL_CHECK_FALSE(current_shape.size() == input_rank, KERNEL_STATUS_PARAM_INVALID,
-                       "Ranks of all input tensors must match: expected %d,but "
-                       "got %d at position %d",
-                       input_rank, current_shape.size(), i);
+    CUST_KERNEL_CHECK_FALSE(ctx, current_shape.size() == input_rank, KERNEL_STATUS_PARAM_INVALID,
+                            "Ranks of all input tensors must match: expected %d,but "
+                            "got %d at position %d",
+                            input_rank, current_shape.size(), i);
     for (int j = 0; j < input_rank; j++) {
       if (j != concat_dim) {
-        KERNEL_CHECK_FALSE(input_shape(j) == current_shape(j), KERNEL_STATUS_PARAM_INVALID,
-                           "Input shapes must match: expected %d for dimension "
-                           "%d but got %d at position %d",
-                           input_shape(j), j, current_shape(j), i);
+        CUST_KERNEL_CHECK_FALSE(ctx, input_shape(j) == current_shape(j), KERNEL_STATUS_PARAM_INVALID,
+                                "Input shapes must match: expected %d for dimension "
+                                "%d but got %d at position %d",
+                                input_shape(j), j, current_shape(j), i);
       }
     }
   }
@@ -320,13 +324,13 @@ uint32_t DoCompute(const CpuKernelContext &ctx) {
     MySparseTensor *tensor = new MySparseTensor();
     tensor->CreateSparseTensor(inds[i], vals[i], current_shape, std_order);
     sp_inputs.push_back(std::move(tensor));
-    sp_inputs[i]->Reorder<T>(concat_order);
+    sp_inputs[i]->Reorder<T>(ctx, concat_order);
   }
   Tensor *output_ix = ctx.Output(0);
   Tensor *output_vals = ctx.Output(1);
 
-  MySparseTensor *concat = MySparseTensor::Concat<T>(sp_inputs, output_ix, output_vals);
-  concat->Reorder<T>(std_order);
+  MySparseTensor *concat = MySparseTensor::Concat<T>(ctx, sp_inputs, output_ix, output_vals);
+  concat->Reorder<T>(ctx, std_order);
 
   Tensor *output_shape_out = ctx.Output(2);
   EigenTensor output_shapeET(output_shape_out, output_shape_out->GetData());
@@ -339,8 +343,8 @@ uint32_t DoCompute(const CpuKernelContext &ctx) {
 }
 uint32_t SparseConcatCpuKernel::Compute(CpuKernelContext &ctx) {
   int64_t N = ctx.GetAttr("N") != NULL ? ctx.GetAttr("N")->GetInt() : 1;
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, N * kInputNum, kOutputNum),
-                      "SparseConcat check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, N * kInputNum, kOutputNum),
+                           "SparseConcat check input and output number failed.");
   auto data_type = ctx.Input(N)->GetDataType();
   switch (data_type) {
     case DT_INT8:
@@ -372,7 +376,7 @@ uint32_t SparseConcatCpuKernel::Compute(CpuKernelContext &ctx) {
     case DT_COMPLEX128:
       return DoCompute<std::complex<double>>(ctx);
     default:
-      KERNEL_LOG_ERROR("SparseConcat kernel data type [%u] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "SparseConcat kernel data type [%u] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 }

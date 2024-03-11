@@ -20,9 +20,9 @@
 #include <vector>
 #include "Eigen/Core"
 #include "context/inc/cpu_kernel_utils.h"
-#include "cpu_kernel/utils/bcast.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
+#include "utils/bcast.h"
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
 
@@ -66,28 +66,28 @@ std::vector<int64_t> GetOutputSizeData(aicpu::DataType type_out_size, int64_t le
   return data_out_size;
 }
 
-#define AFFINEGRID_COMPUTE_CASE(DTYPE, TYPE, CTX)            \
-  case (DTYPE): {                                            \
-    uint32_t result = AffineGridCompute<TYPE>(CTX);          \
-    ;                                                        \
-    if (result != KERNEL_STATUS_OK) {                        \
-      KERNEL_LOG_ERROR("AffineGrid kernel compute failed."); \
-      return result;                                         \
-    }                                                        \
-    break;                                                   \
+#define AFFINEGRID_COMPUTE_CASE(DTYPE, TYPE, CTX)                      \
+  case (DTYPE): {                                                      \
+    uint32_t result = AffineGridCompute<TYPE>(CTX);                    \
+    ;                                                                  \
+    if (result != KERNEL_STATUS_OK) {                                  \
+      CUST_KERNEL_LOG_ERROR(ctx, "AffineGrid kernel compute failed."); \
+      return result;                                                   \
+    }                                                                  \
+    break;                                                             \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t AffineGridCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kAffineGridInputNum, kAffineGridOutputNum),
-                      "[%s] check input and output failed.", kAffineGrid);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kAffineGridInputNum, kAffineGridOutputNum),
+                           "[%s] check input and output failed.", kAffineGrid);
   DataType data_type = ctx.Output(0)->GetDataType();
   switch (data_type) {
     AFFINEGRID_COMPUTE_CASE(DT_FLOAT16, Eigen::half, ctx)
     AFFINEGRID_COMPUTE_CASE(DT_FLOAT, float, ctx)
     default:
-      KERNEL_LOG_ERROR("AffineGrid kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "AffineGrid kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
       break;
   }
@@ -175,11 +175,12 @@ uint32_t AffineGridCpuKernel::CommonCompute(CpuKernelContext &ctx, int64_t data_
     };
 
     if (max_core_num == 0) {
-      KERNEL_LOG_ERROR("max_core_num could not be 0.");
+      CUST_KERNEL_LOG_ERROR(ctx, "max_core_num could not be 0.");
       return KERNEL_STATUS_INNER_ERROR;
     }
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_affiregrid),
-                        "AffineGrid Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx,
+                             CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_affiregrid),
+                             "AffineGrid Compute failed.");
   } else {
     SpecialCompute<T>(theta_3D, all, data_theta, 0, data_num, result_row, output_y);
   }
@@ -193,7 +194,7 @@ uint32_t AffineGridCpuKernel::AffineGridCompute4D(CpuKernelContext &ctx, std::ve
   int64_t H = data_out_size[kColNum2];
   int64_t W = data_out_size[kColNum3];
   if (N > SIZE_BOUNDARY || H > SIZE_BOUNDARY || W > SIZE_BOUNDARY || N <= 0 || H <= 0 || W <= 0) {
-    KERNEL_LOG_ERROR("AffineGrid input size invalid.");
+    CUST_KERNEL_LOG_ERROR(ctx, "AffineGrid input size invalid.");
     return KERNEL_STATUS_INNER_ERROR;
   }
   Eigen::VectorXd vecX, vecY;
@@ -240,7 +241,7 @@ uint32_t AffineGridCpuKernel::AffineGridCompute5D(CpuKernelContext &ctx, std::ve
   int64_t W = data_out_size[kColNum4];
   if (N > SIZE_BOUNDARY || D > SIZE_BOUNDARY || H > SIZE_BOUNDARY || W > SIZE_BOUNDARY || N <= 0 || H <= 0 || D <= 0 ||
       W <= 0) {
-    KERNEL_LOG_ERROR("AffineGrid input size invalid.");
+    CUST_KERNEL_LOG_ERROR(ctx, "AffineGrid input size invalid.");
     return KERNEL_STATUS_INNER_ERROR;
   }
   Eigen::VectorXd vecX, vecY, vecZ;

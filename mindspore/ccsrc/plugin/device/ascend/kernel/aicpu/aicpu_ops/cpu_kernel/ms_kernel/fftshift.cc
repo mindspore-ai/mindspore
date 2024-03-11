@@ -28,14 +28,14 @@ const uint32_t kDimIndex = 1;
 const char *kFFTShift = "FFTShift";
 const char *kIFFTShift = "IFFTShift";
 
-#define FFTSHIFT_COMPUTE_CASE(DTYPE, TYPE, CTX)            \
-  case (DTYPE): {                                          \
-    uint32_t result = FFTShiftCompute<TYPE>(CTX);          \
-    if (result != KERNEL_STATUS_OK) {                      \
-      KERNEL_LOG_ERROR("FFTShift kernel compute failed."); \
-      return result;                                       \
-    }                                                      \
-    break;                                                 \
+#define FFTSHIFT_COMPUTE_CASE(DTYPE, TYPE, CTX)                      \
+  case (DTYPE): {                                                    \
+    uint32_t result = FFTShiftCompute<TYPE>(CTX);                    \
+    if (result != KERNEL_STATUS_OK) {                                \
+      CUST_KERNEL_LOG_ERROR(ctx, "FFTShift kernel compute failed."); \
+      return result;                                                 \
+    }                                                                \
+    break;                                                           \
   }
 }  // namespace
 
@@ -43,7 +43,8 @@ namespace aicpu {
 uint32_t FFTShiftCpuKernel::Compute(CpuKernelContext &ctx) {
   op_name = ctx.GetOpType();
   op_name.erase(op_name.begin(), op_name.begin() + std::size("Cust") - 1);
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.", op_name.c_str());
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.",
+                           op_name.c_str());
   auto x_type = ctx.Input(kIndex0)->GetDataType();
   switch (x_type) {
     FFTSHIFT_COMPUTE_CASE(DT_BOOL, bool, ctx)
@@ -61,7 +62,7 @@ uint32_t FFTShiftCpuKernel::Compute(CpuKernelContext &ctx) {
     FFTSHIFT_COMPUTE_CASE(DT_COMPLEX64, std::complex<float>, ctx)
     FFTSHIFT_COMPUTE_CASE(DT_COMPLEX128, std::complex<double>, ctx)
     default:
-      KERNEL_LOG_ERROR("[%s] kernel data type [%s] not support.", op_name.c_str(), DTypeStr(x_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "[%s] kernel data type [%s] not support.", op_name.c_str(), DTypeStr(x_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 
@@ -87,8 +88,8 @@ uint32_t FFTShiftCpuKernel::FFTShiftCompute(CpuKernelContext &ctx) {
     }
   } else {
     const std::map<std::string, DataType> types = {{"dim", ctx.Input(kDimIndex)->GetDataType()}};
-    KERNEL_HANDLE_ERROR(CheckTensorTypeSame(types, DT_INT64, op_name), "[%s] check dim data type failed.",
-                        op_name.c_str());
+    CUST_KERNEL_HANDLE_ERROR(ctx, CheckTensorTypeSame(ctx, types, DT_INT64, op_name),
+                             "[%s] check dim data type failed.", op_name.c_str());
     int64_t *dim_ptr = reinterpret_cast<int64_t *>(ctx.Input(kDimIndex)->GetData());
     int64_t dim_size = ctx.Input(kDimIndex)->NumElements();
     for (int64_t i = 0; i < dim_size; ++i) {

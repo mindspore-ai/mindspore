@@ -37,7 +37,7 @@ class CholeskyGradCpuKernel : public CpuKernel {
 
  private:
   template <typename T>
-  uint32_t ComputeKernel(const CpuKernelContext &ctx, const bool &reverse);
+  uint32_t ComputeKernel(CpuKernelContext &ctx, const bool &reverse);
 
   template <typename T>
   void ComputeMatrix(T *lptr, T *gradptr, T *outputptr, int64_t n);

@@ -36,9 +36,10 @@ const char *kTridiagonalMatMul = "TridiagonalMatMul";
 namespace aicpu {
 
 uint32_t TridiagonalMatMulCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "TridiagonalMatMul check input and output num failed.");
-  KERNEL_HANDLE_ERROR(TridiagonalMatMulDataAndTypeCheck(ctx),
-                      "TridiagonalMatMul check input and output params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "TridiagonalMatMul check input and output num failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, TridiagonalMatMulDataAndTypeCheck(ctx),
+                           "TridiagonalMatMul check input and output params failed.");
   auto data_type = ctx.Input(0)->GetDataType();
   switch (data_type) {
     case DT_FLOAT16:
@@ -52,7 +53,7 @@ uint32_t TridiagonalMatMulCpuKernel::Compute(CpuKernelContext &ctx) {
     case DT_COMPLEX128:
       return TridiagonalMatMulCompute<std::complex<double>>(ctx);
     default:
-      KERNEL_LOG_ERROR("Unsupported input data type[%s]", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Unsupported input data type[%s]", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
@@ -63,12 +64,13 @@ uint32_t TridiagonalMatMulCpuKernel::TridiagonalMatMulDataAndTypeCheck(CpuKernel
   DataType maindiag_type = ctx.Input(1)->GetDataType();
   DataType subdiag_type = ctx.Input(2)->GetDataType();
   DataType rhs_type = ctx.Input(3)->GetDataType();
-  KERNEL_CHECK_FALSE((superdiag_type == maindiag_type && maindiag_type == subdiag_type && subdiag_type == rhs_type),
-                     KERNEL_STATUS_PARAM_INVALID,
-                     "The data type of input0 [%s], input1 [%s],input2 [%s] and input3 [%s] "
-                     "need be same.",
-                     DTypeStr(superdiag_type).c_str(), DTypeStr(maindiag_type).c_str(), DTypeStr(subdiag_type).c_str(),
-                     DTypeStr(rhs_type).c_str())
+  CUST_KERNEL_CHECK_FALSE(
+    ctx, (superdiag_type == maindiag_type && maindiag_type == subdiag_type && subdiag_type == rhs_type),
+    KERNEL_STATUS_PARAM_INVALID,
+    "The data type of input0 [%s], input1 [%s],input2 [%s] and input3 [%s] "
+    "need be same.",
+    DTypeStr(superdiag_type).c_str(), DTypeStr(maindiag_type).c_str(), DTypeStr(subdiag_type).c_str(),
+    DTypeStr(rhs_type).c_str())
 
   return KERNEL_STATUS_OK;
 }
@@ -77,19 +79,20 @@ template <typename T>
 uint32_t TridiagonalMatMulCpuKernel::TridiagonalMatMulCompute(CpuKernelContext &ctx) {
   auto superdiag_tensor = ctx.Input(0);
   auto superdiag_tensor_shape = superdiag_tensor->GetTensorShape();
-  KERNEL_CHECK_FALSE((IsVector(superdiag_tensor_shape->GetDimSizes())), KERNEL_STATUS_PARAM_INVALID,
-                     "invalid Input[superdiag]")
+  CUST_KERNEL_CHECK_FALSE(ctx, (IsVector(superdiag_tensor_shape->GetDimSizes())), KERNEL_STATUS_PARAM_INVALID,
+                          "invalid Input[superdiag]")
   auto maindiag_tensor = ctx.Input(1);
   auto maindiag_tensor_shape = maindiag_tensor->GetTensorShape();
-  KERNEL_CHECK_FALSE((IsVector(maindiag_tensor_shape->GetDimSizes())), KERNEL_STATUS_PARAM_INVALID,
-                     "invalid Input[maindiag]")
+  CUST_KERNEL_CHECK_FALSE(ctx, (IsVector(maindiag_tensor_shape->GetDimSizes())), KERNEL_STATUS_PARAM_INVALID,
+                          "invalid Input[maindiag]")
   auto subdiag_tensor = ctx.Input(2);
   auto subdiag_tensor_shape = subdiag_tensor->GetTensorShape();
-  KERNEL_CHECK_FALSE((IsVector(subdiag_tensor_shape->GetDimSizes())), KERNEL_STATUS_PARAM_INVALID,
-                     "invalid Input[subdiag]")
+  CUST_KERNEL_CHECK_FALSE(ctx, (IsVector(subdiag_tensor_shape->GetDimSizes())), KERNEL_STATUS_PARAM_INVALID,
+                          "invalid Input[subdiag]")
   auto rhs_tensor = ctx.Input(3);
   auto rhs_tensor_shape = rhs_tensor->GetTensorShape();
-  KERNEL_CHECK_FALSE((IsMatrix(rhs_tensor_shape->GetDimSizes())), KERNEL_STATUS_PARAM_INVALID, "invalid Input[rhs]")
+  CUST_KERNEL_CHECK_FALSE(ctx, (IsMatrix(rhs_tensor_shape->GetDimSizes())), KERNEL_STATUS_PARAM_INVALID,
+                          "invalid Input[rhs]")
   auto superdiag_shape = superdiag_tensor_shape->GetDimSizes();
   auto maindiag_shape = maindiag_tensor_shape->GetDimSizes();
   auto subdiag_shape = subdiag_tensor_shape->GetDimSizes();
@@ -99,12 +102,12 @@ uint32_t TridiagonalMatMulCpuKernel::TridiagonalMatMulCompute(CpuKernelContext &
   int32_t subdiag_dims = subdiag_tensor_shape->GetDims();
   int32_t rhs_dims = rhs_tensor_shape->GetDims();
   int64_t length = rhs_shape[rhs_dims - 2];
-  KERNEL_CHECK_FALSE((superdiag_shape[superdiag_dims - 1] == length), KERNEL_STATUS_PARAM_INVALID,
-                     "invalid Input superdiag length")
-  KERNEL_CHECK_FALSE((maindiag_shape[maindiag_dims - 1] == length), KERNEL_STATUS_PARAM_INVALID,
-                     "invalid Input maindiag length")
-  KERNEL_CHECK_FALSE((subdiag_shape[subdiag_dims - 1] == length), KERNEL_STATUS_PARAM_INVALID,
-                     "invalid Input subdiag length")
+  CUST_KERNEL_CHECK_FALSE(ctx, (superdiag_shape[superdiag_dims - 1] == length), KERNEL_STATUS_PARAM_INVALID,
+                          "invalid Input superdiag length")
+  CUST_KERNEL_CHECK_FALSE(ctx, (maindiag_shape[maindiag_dims - 1] == length), KERNEL_STATUS_PARAM_INVALID,
+                          "invalid Input maindiag length")
+  CUST_KERNEL_CHECK_FALSE(ctx, (subdiag_shape[subdiag_dims - 1] == length), KERNEL_STATUS_PARAM_INVALID,
+                          "invalid Input subdiag length")
   using VectorMap = Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, 1>>;
   using MatrixMap = Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>;
   VectorMap superdiag(reinterpret_cast<T *>(superdiag_tensor->GetData()), superdiag_shape[superdiag_dims - 1], 1);

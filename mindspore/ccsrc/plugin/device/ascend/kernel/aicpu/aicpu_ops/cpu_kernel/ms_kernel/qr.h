@@ -28,10 +28,10 @@ class QrCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t QrCheck(const CpuKernelContext &ctx);
+  uint32_t QrCheck(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t QrCompute(const CpuKernelContext &ctx);
+  uint32_t QrCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif
