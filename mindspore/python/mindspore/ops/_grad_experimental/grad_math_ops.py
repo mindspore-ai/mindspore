@@ -1028,6 +1028,8 @@ def get_bprop_mirror_silent_check(self):
     out_tensor = Tensor([0.0], mstype.float32)
 
     def bporp(x, pre_val, min_val, max_val, n_step, loss_scale, out, dout):
+        if dout.dtype == mstype.float16:
+            return (dout, out_tensor, out_tensor, out_tensor, out_tensor, out_tensor)
         if loss_scale is not None:
             dout = dout / loss_scale
         grad = ops.norm(dout)
