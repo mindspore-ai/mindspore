@@ -666,19 +666,19 @@ void DumpJsonParser::ParseOpDebugMode(const nlohmann::json &content) {
     case static_cast<uint32_t>(DUMP_AICORE_OVERFLOW):
     case static_cast<uint32_t>(DUMP_ATOMIC_OVERFLOW):
     case static_cast<uint32_t>(DUMP_BOTH_OVERFLOW):
-      if (IsKernelByKernel()) {
-        MS_LOG(EXCEPTION) << "Overflow dump is not supported on KernelByKernel mode.";
+      if (IsAclDump()) {
+        MS_LOG(EXCEPTION) << "Overflow dump is not supported on ACL dump mode.";
       } else {
         break;
       }
     case static_cast<uint32_t>(DUMP_LITE_EXCEPTION):
-      if (IsKernelByKernel()) {
+      if (IsAclDump()) {
         break;
       } else {
         MS_LOG(EXCEPTION) << "Dump Json Parse Failed. op_debug_mode should be 0, 1, 2, 3";
       }
     default:
-      if (IsKernelByKernel()) {
+      if (IsAclDump()) {
         MS_LOG(EXCEPTION) << "Dump Json Parse Failed. op_debug_mode should be 0, 1, 2, 3, 4";
       } else {
         MS_LOG(EXCEPTION) << "Dump Json Parse Failed. op_debug_mode should be 0, 1, 2, 3";
@@ -923,13 +923,14 @@ bool DumpJsonParser::IsHCCLKernelInput(const std::string &kernel_name) const {
   }
   return false;
 }
-bool DumpJsonParser::IsKernelByKernel() {
-  bool is_kbk = false;
+
+bool DumpJsonParser::IsAclDump() {
+  bool is_acl_dump = false;
   auto env_enable_kbk = common::GetEnv("MS_ACL_DUMP_CFG_PATH");
-  auto kbk_enable_kbk = common::GetEnv("GRAPH_OP_RUN");
-  if ((!env_enable_kbk.empty() && env_enable_kbk == "1") || (!env_enable_kbk.empty() && kbk_enable_kbk == "1")) {
-    is_kbk = true;
+  auto dump_enable_kbk = common::GetEnv("MINDSPORE_DUMP_CONFIG");
+  if (!env_enable_kbk.empty() && env_enable_kbk == dump_enable_kbk) {
+    is_acl_dump = true;
   }
-  return is_kbk;
+  return is_acl_dump;
 }
 }  // namespace mindspore

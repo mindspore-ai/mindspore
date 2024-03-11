@@ -108,7 +108,7 @@ async_dump_dict_acl = {
         "dump_mode": 0,
         "path": "",
         "net_name": "Net",
-        "iteration": "all",
+        "iteration": "0",
         "input_output": 0,
         "kernels": [],
         "support_device": [0, 1, 2, 3, 4, 5, 6, 7],
