@@ -1302,4 +1302,4 @@ class _GetTensorSlice(PrimitiveWithInfer):
         tensor_slice = _load_tensor(x, dev_mat, tensor_map, full_shape)
         if tensor_slice.shape != slice_shape:
             tensor_slice = tensor_slice.reshape(slice_shape)
-        return Tensor(tensor_slice)
+        return Tensor(tensor_slice, x.dtype)
