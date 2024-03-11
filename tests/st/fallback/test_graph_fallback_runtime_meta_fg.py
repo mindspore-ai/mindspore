@@ -730,7 +730,7 @@ def test_fallback_meta_fg_not_support_type_aug_assign():
     net = InnerClass()
     with pytest.raises(TypeError) as err:
         net()
-    assert "For 'Sub', the 2th input var can not be implicitly converted" in str(err.value)
+    assert "Failed calling Sub with" in str(err.value)
 
 
 @pytest.mark.level2
@@ -1017,34 +1017,6 @@ def test_fallback_setitem_meta_2():
     assert ret == [10, 2, 3, 4]
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_fallback_setitem_meta_dict():
-    """
-    Feature: Support JIT Fallback runtime feature.
-    Description: Support JIT Fallback runtime feature.
-    Expectation: No exception.
-    """
-    class InnerClass(nn.Cell):
-        def __init__(self, x):
-            super(InnerClass, self).__init__()
-            self.dict = x
-
-        def construct(self):
-            self.dict['country'] = 'china'
-            return self.dict
-
-    input_dict = {'Name': 'a', 'Age': 7}
-    net = InnerClass(input_dict)
-    ret = net()
-    assert ret == {'Name': 'a', 'Age': 7, 'country': 'china'}
-
-
-
-
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -1315,3 +1287,29 @@ def test_multitype_funcgraph_with_slice_in_tuple():
     net = Net()
     res = net(x)
     assert np.allclose(res.asnumpy(), np.array([0, 1, 2, 2]))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_setitem_meta_dict():
+    """
+    Feature: Support JIT Fallback runtime feature.
+    Description: Support JIT Fallback runtime feature.
+    Expectation: No exception.
+    """
+    class InnerClass(nn.Cell):
+        def __init__(self, x):
+            super(InnerClass, self).__init__()
+            self.dict = x
+
+        def construct(self):
+            self.dict['country'] = 'china'
+            return self.dict
+
+    input_dict = {'Name': 'a', 'Age': 7}
+    net = InnerClass(input_dict)
+    ret = net()
+    assert ret == {'Name': 'a', 'Age': 7, 'country': 'china'}
