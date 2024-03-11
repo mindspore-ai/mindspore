@@ -51,7 +51,7 @@ const AnfNodePtr FloatStatusFusion::Process(const FuncGraphPtr &func_graph, cons
   auto input_vector = AnfAlgo::GetOutputDeviceShape(input_node, 0);
   if (!axis_vector.empty()) {
     std::sort(axis_vector.begin(), axis_vector.end());
-    size_t unique_size = std::unique(axis_vector.begin(), axis_vector.end()) - axis_vector.begin();
+    auto unique_size = static_cast<size_t>(std::unique(axis_vector.begin(), axis_vector.end()) - axis_vector.begin());
     if (unique_size != input_vector.size()) {
       return nullptr;
     }
