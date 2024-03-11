@@ -38,6 +38,7 @@ class GraphRunner {
                        std::vector<GeTensorPtr> *outputs);
   Status RunGraphWithStreamAsync(const RunOptions &options, void *stream, const std::vector<GeTensor> &inputs,
                                  std::vector<GeTensor> *outputs);
+  Status CompileGraph(const RunOptions &options);
   Status CompileGraph(const RunOptions &options, ::ge::CompiledGraphSummaryPtr *graph_summary);
   Status SetConstMemory(const RunOptions &options, const void *const memory, size_t size);
   Status UpdateFeatureMemory(const RunOptions &options, const void *const memory, size_t size);

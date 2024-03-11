@@ -962,7 +962,14 @@ bool GeGraphExecutor::CompileGraph(const KernelGraphPtr &graph,
   }
   // create loop var
   RunInitGraph(run_options.name);
-  if (!graph->is_dynamic_shape()) {
+  if (graph->is_dynamic_shape()) {
+    // Release GIL before calling into (potentially long-running) C++ code
+    GilReleaseWithCheck gil_release;
+    auto ret = graph_runner->CompileGraph(run_options);
+    if (ret != transform::Status::SUCCESS) {
+      MS_LOG(EXCEPTION) << "Compile graph " << run_options.name << " failed.";
+    }
+  } else {
     ::ge::CompiledGraphSummaryPtr ge_graph_summary = nullptr;
     {
       // Release GIL before calling into (potentially long-running) C++ code
@@ -1176,6 +1183,22 @@ void SetOutput(GeDeviceResManager *res_manager, GeTensor *ge_output, const AnfNo
                << ", type: " << TypeIdToString(output_addr->type_id()) << ", format: " << output_addr->format();
 }
 
+void SetDynamicOutputs(const std::vector<KernelWithIndex> &graph_outputs, std::vector<GeTensor> *ge_outputs,
+                       GeDeviceResManager *res_manager) {
+  MS_EXCEPTION_IF_NULL(res_manager);
+  for (size_t i = 0; i < graph_outputs.size(); ++i) {
+    const auto &[output_node, idx] = common::AnfAlgo::FetchRealNodeSkipMonadControl(graph_outputs[i]);
+    MS_EXCEPTION_IF_NULL(output_node);
+    if (HasAbstractMonad(output_node)) {
+      continue;
+    }
+    if (common::AnfAlgo::IsNoOuputNode(output_node)) {
+      continue;
+    }
+    SetOutput(res_manager, &((*ge_outputs)[i]), output_node, idx);
+  }
+}
+
 size_t GeGraphExecutor::GetGraphFeatureMemory(const FuncGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
   auto graph_name = GetGraphName(graph);
@@ -1266,7 +1289,10 @@ bool GeGraphExecutor::RunGraphRefMode(const FuncGraphPtr &graph, const std::vect
       MS_LOG(EXCEPTION) << "Exec graph failed";
     }
   }
+
   if (is_dynamic_shape) {
+    auto graph_outputs = common::AnfAlgo::GetAllOutputWithIndex(graph->output());
+    SetDynamicOutputs(graph_outputs, &ge_outputs, ResManager());
     auto sync_ret = ResManager()->SyncStream();
     if (!sync_ret) {
       MS_LOG(EXCEPTION) << "Sync stream failed";
