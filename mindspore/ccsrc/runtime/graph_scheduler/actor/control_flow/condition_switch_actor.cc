@@ -114,6 +114,7 @@ void ConditionSwitchActor::Run(OpContext<DeviceTensor> *const context) {
 void ConditionSwitchActor::CollectMemoryFreeList(size_t index) {
   memory_free_list_.clear();
   memory_free_list_.insert(memory_free_list_.end(), input_device_tensors_.begin(), input_device_tensors_.end());
+  memory_free_list_.insert(memory_free_list_.end(), input_device_tensors_.begin() + 1, input_device_tensors_.end());
   for (size_t i = 0; i < branch_origin_ref_count_.size(); ++i) {
     if (i == index) {
       continue;

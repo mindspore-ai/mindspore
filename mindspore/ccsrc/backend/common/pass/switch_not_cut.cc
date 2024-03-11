@@ -25,6 +25,20 @@
 
 namespace mindspore {
 namespace opt {
+bool IsValidInlineSwitch(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimSwitch)) {
+    return false;
+  }
+  const auto &cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (cnode->size() != kSwitchInputSize) {
+    MS_LOG(DEBUG) << "Invalid switch node" << cnode->DebugString();
+    return false;
+  }
+  return common::AnfAlgo::CheckPrimitiveType(cnode->input(kSwitchTrueBranchIndex), prim::kPrimPartial) &&
+         common::AnfAlgo::CheckPrimitiveType(cnode->input(kSwitchFalseBranchIndex), prim::kPrimPartial);
+}
 bool SwitchNotCut::Run(const FuncGraphPtr &func_graph) {
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
@@ -50,7 +64,7 @@ bool SwitchNotCut::Run(const FuncGraphPtr &func_graph) {
         continue;
       }
       if (!std::any_of(iter->second.begin(), iter->second.end(), [](const std::pair<AnfNodePtr, int> &node_index) {
-            return IsPrimitiveCNode(node_index.first, prim::kPrimSwitch);
+            return IsPrimitiveCNode(node_index.first, prim::kPrimSwitch) && IsValidInlineSwitch(node_index.first);
           })) {
         continue;
       }
@@ -60,6 +74,9 @@ bool SwitchNotCut::Run(const FuncGraphPtr &func_graph) {
       sub_graph->set_flag(kFlagSwitchInline, true);
     }
     if (IsOneOfPrimitiveCNode(node, {prim::kPrimPartial, prim::kPrimSwitch})) {
+      if (IsPrimitiveCNode(node, prim::kPrimSwitch) && (!IsValidInlineSwitch(node))) {
+        continue;
+      }
       auto cnode = node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
       cnode->AddPrimalAttr(kAttrNotCut, MakeValue(true));
@@ -67,7 +84,7 @@ bool SwitchNotCut::Run(const FuncGraphPtr &func_graph) {
       auto cnode = node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
       auto primitive_input = cnode->input(kAnfPrimitiveIndex);
-      if (IsPrimitiveCNode(primitive_input, prim::kPrimSwitch)) {
+      if (IsPrimitiveCNode(primitive_input, prim::kPrimSwitch) && IsValidInlineSwitch(primitive_input)) {
         cnode->AddPrimalAttr(kAttrNotCut, MakeValue(true));
       }
     }
