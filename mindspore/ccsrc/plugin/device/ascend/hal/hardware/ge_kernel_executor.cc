@@ -114,7 +114,7 @@ bool GenerateKernelMod(const std::vector<CNodePtr> &kernels) {
       MS_LOG(EXCEPTION) << "The kernel: " << kernel->fullname_with_scope() << " kernel build failed, kernel type: "
                         << kernel::KernelTypeLabel(AnfAlgo::GetKernelType(kernel));
     }
-    MS_LOG(WARNING) << "kernel opname:" << opname << ", kernel type:" << GetKernelTypeStr(kernel_type);
+    MS_LOG(INFO) << "kernel opname:" << opname << ", kernel type:" << GetKernelTypeStr(kernel_type);
     MS_EXCEPTION_IF_NULL(kernel_mod_ptr);
     AnfAlgo::SetKernelMod(kernel_mod_ptr, kernel.get());
   }
