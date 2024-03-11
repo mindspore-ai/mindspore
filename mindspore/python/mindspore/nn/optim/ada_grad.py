@@ -162,7 +162,7 @@ class Adagrad(Optimizer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import mindspore
+        >>> from mindspore import train
         >>> import mindspore.nn as nn
         >>>
         >>> # Define the network structure of LeNet5. Refer to
@@ -185,7 +185,7 @@ class Adagrad(Optimizer):
         >>> # The final parameters order in which the optimizer will be followed is the value of 'order_params'.
         >>>
         >>> loss = nn.SoftmaxCrossEntropyWithLogits()
-        >>> model = ms.Model(net, loss_fn=loss, optimizer=optim)
+        >>> model = train.Model(net, loss_fn=loss, optimizer=optim)
     """
 
     @opt_init_args_register

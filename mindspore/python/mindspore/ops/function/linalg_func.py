@@ -206,6 +206,8 @@ def geqrf(input):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> from mindspore import Tensor, ops
+        >>> import numpy as np
         >>> input_x = Tensor(np.array([[-2.0, -1.0], [1.0, 2.0]]).astype(np.float32))
         >>> y, tau = ops.geqrf(input_x)
         >>> print(y)
