@@ -241,7 +241,6 @@ EvalResultPtr ConvertToPyInterpretCall(const CNodePtr &cnode, const AnfNodeConfi
   auto out_node = conf->node();
   MS_EXCEPTION_IF_NULL(out_node);
   std::stringstream script_buffer;
-  const auto &cnode_inputs = cnode->inputs();
   AnfNodePtrList local_key_inputs = {NewValueNode(prim::kPrimMakeTuple)};
   AnfNodePtrList local_value_inputs = {NewValueNode(prim::kPrimMakeTuple)};
 
@@ -250,12 +249,12 @@ EvalResultPtr ConvertToPyInterpretCall(const CNodePtr &cnode, const AnfNodeConfi
   constexpr size_t call_func_index = 0;
   script_buffer << call_func_str << "(";
   (void)local_key_inputs.emplace_back(NewValueNode(call_func_str));
-  (void)local_value_inputs.emplace_back(cnode_inputs[call_func_index]);
+  (void)local_value_inputs.emplace_back(cnode->input(call_func_index));
 
   // Handle inputs.
   const std::string call_prefix = "__input_";
-  for (size_t i = 1; i < cnode_inputs.size(); ++i) {
-    auto cur_node = cnode_inputs[i];
+  for (size_t i = 1; i < cnode->size(); ++i) {
+    auto cur_node = cnode->input(i);
     if (IsPrimitiveCNode(cur_node, prim::kPrimMakeKeywordArg)) {
       const std::string value_cur_str = call_prefix + "_value_" + std::to_string(i - 1) + "__";
       constexpr size_t key_inputs_index = 1;
@@ -304,11 +303,10 @@ EvalResultPtr ParsePyObjToFunc(const py::object &py_fn, const CNodePtr &cnode, c
     MS_EXCEPTION_IF_NULL(fg);
     list_func_fg->set_manager(fg->manager());
 
-    auto &inputs = cnode->inputs();
     std::vector<AnfNodePtr> new_cnode_inputs;
     (void)new_cnode_inputs.emplace_back(NewValueNode(list_func_fg));
-    for (std::size_t i = 1; i < inputs.size(); ++i) {
-      (void)new_cnode_inputs.emplace_back(inputs[i]);
+    for (std::size_t i = 1; i < cnode->size(); ++i) {
+      (void)new_cnode_inputs.emplace_back(cnode->input(i));
     }
     auto new_cnode = fg->NewCNodeInOrder(new_cnode_inputs);
     new_cnode->set_debug_info(cnode->debug_info());
@@ -561,9 +559,8 @@ void SynchronizeSequenceElementsUseFlagsForFuncGraphArgs(const AnalysisEnginePtr
   MS_EXCEPTION_IF_NULL(evaluator);
 
   AbstractBasePtrList args_abs_list;
-  auto &inputs = cnode->inputs();
-  for (std::size_t i = 1; i < inputs.size(); i++) {
-    auto config = engine->MakeConfig(inputs[i], fg_context, fg);
+  for (std::size_t i = 1; i < cnode->size(); i++) {
+    auto config = engine->MakeConfig(cnode->input(i), fg_context, fg);
     auto result = config->ObtainEvalResult();
     MS_EXCEPTION_IF_NULL(result);
     auto abs = result->abstract();
@@ -665,13 +662,12 @@ AnfNodeConfigPtr AnalysisEngine::GetForwardConfig(const AnfNodeConfigPtr &conf) 
 
 EvalResultPtr AnalysisEngine::InterpretedNodeCall(const CNodePtr &cnode, const AnfNodeConfigPtr &conf) {
   MS_EXCEPTION_IF_NULL(cnode);
-  auto &inputs = cnode->inputs();
-  if (inputs.empty()) {
+  if (cnode->empty()) {
     MS_LOG(INTERNAL_EXCEPTION) << "CNode inputs should not be empty, CNode: " << cnode->DebugString();
   }
 
   // Check if the operator input is PyExecute CNode.
-  auto &func_node = inputs[0];
+  const auto &func_node = cnode->input(0);
   MS_EXCEPTION_IF_NULL(func_node);
   constexpr auto recursive_level = 2;
   MS_LOG(DEBUG) << "Current CNode: " << cnode->DebugString(recursive_level)
@@ -697,11 +693,10 @@ EvalResultPtr AnalysisEngine::InterpretedNodeCall(const CNodePtr &cnode, const A
 AbstractBasePtr AnalysisEngine::GetCNodeOperatorAbstract(const CNodePtr &cnode, const AnalysisContextPtr &context,
                                                          const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(cnode);
-  auto &inputs = cnode->inputs();
-  if (inputs.empty()) {
+  if (cnode->empty()) {
     MS_LOG(INTERNAL_EXCEPTION) << "CNode inputs should not be empty, CNode: " << cnode->DebugString();
   }
-  auto &func_node = inputs[0];
+  auto &func_node = cnode->input(0);
   MS_EXCEPTION_IF_NULL(func_node);
   MS_LOG(DEBUG) << "Current CNode function: " << func_node->DebugString();
   AnfNodeConfigPtr func_conf = MakeConfig(func_node, context, func_graph);
@@ -719,12 +714,11 @@ AbstractBasePtr AnalysisEngine::GetCNodeOperatorAbstract(const CNodePtr &cnode, 
 EvalResultPtr AnalysisEngine::ConvertClassTypeToFunc(const CNodePtr &cnode, const AbstractBasePtr &abs,
                                                      const AnfNodeConfigPtr &conf) {
   MS_EXCEPTION_IF_NULL(cnode);
-  auto &inputs = cnode->inputs();
-  const auto inputs_size = inputs.size();
+  const auto inputs_size = cnode->size();
   AbstractBasePtrList input_abs;
   input_abs.reserve(inputs_size - 1);
   for (std::size_t i = 1; i < inputs_size; ++i) {
-    const AnfNodePtr &node = inputs[i];
+    const AnfNodePtr &node = cnode->input(i);
     auto cur_config = MakeConfig(node, conf->context(), conf->func_graph());
     const auto &cur_eval_result = cur_config->ObtainEvalResult();
     MS_EXCEPTION_IF_NULL(cur_eval_result);
@@ -759,8 +753,8 @@ EvalResultPtr AnalysisEngine::ConvertClassTypeToFunc(const CNodePtr &cnode, cons
   list_func_fg->set_manager(fg->manager());
   std::vector<AnfNodePtr> new_cnode_inputs;
   (void)new_cnode_inputs.emplace_back(NewValueNode(list_func_fg));
-  for (std::size_t i = 1; i < inputs.size(); ++i) {
-    (void)new_cnode_inputs.emplace_back(inputs[i]);
+  for (std::size_t i = 1; i < cnode->size(); ++i) {
+    (void)new_cnode_inputs.emplace_back(cnode->input(i));
   }
   auto new_cnode = fg->NewCNodeInOrder(new_cnode_inputs);
   new_cnode->set_debug_info(cnode->debug_info());
@@ -818,13 +812,12 @@ EvalResultPtr AnalysisEngine::EvalCNode(const CNodePtr &cnode, const AnfNodeConf
 
   // Make arguments config list.
   bool contains_side_effect = false;
-  auto &inputs = cnode->inputs();
-  const auto inputs_size = inputs.size();
+  const auto inputs_size = cnode->size();
   ConfigPtrList args_conf_list;
   args_conf_list.reserve(inputs_size - 1);
   // Ignore the first node which is function name.
   for (std::size_t i = 1; i < inputs_size; ++i) {
-    const AnfNodePtr &node = inputs[i];
+    const AnfNodePtr &node = cnode->input(i);
     (void)args_conf_list.emplace_back(MakeConfig(node, conf->context(), conf->func_graph()));
     if (check_side_effect()) {
       auto input_cnode = dyn_cast_ptr<CNode>(node);
@@ -1319,33 +1312,35 @@ std::string JoinBranchesFailedInfo(const AbstractBasePtr &abs, const AbstractBas
          << abs->ToString() << ",\n and that of the previous branch is:\n"
          << last_out_abs->ToString() << ".\n"
          << "The node is " << node->DebugString(recursive_level);
-  if (node->isa<CNode>()) {
-    auto cnode = node->cast_ptr<CNode>()->input(0);
-    if (IsPrimitiveCNode(cnode, prim::kPrimSwitch)) {
-      // {prim::kPrimSwitch, cond, true_branch, false_branch}
-      const auto &inputs = cnode->cast_ptr<CNode>()->inputs();
-      auto true_out = GetFuncGraphFromBranchNode(inputs[kSwitchTrueBranchIndex])->get_return();
-      auto false_out = GetFuncGraphFromBranchNode(inputs[kSwitchFalseBranchIndex])->get_return();
-      buffer << ", true branch: " << inputs.at(kSwitchTrueBranchIndex)->ToString() << "\n"
-             << trace::GetDebugInfoStr(true_out->debug_info())
-             << "\n, false branch: " << inputs.at(kSwitchFalseBranchIndex)->ToString() << "\n"
-             << trace::GetDebugInfoStr(false_out->debug_info());
-    } else if (IsPrimitiveCNode(cnode, prim::kPrimSwitchLayer)) {
-      // {prim::kPrimSwitchLayer, X, {prim::kPrimMakeTuple, branch1, branch2, ...}}
-      constexpr int branch_index = 2;
-      const auto &tuple_node = cnode->cast_ptr<CNode>()->input(branch_index);
-      if (IsPrimitiveCNode(tuple_node, prim::kPrimMakeTuple)) {
-        const auto &tuple_inputs = tuple_node->cast_ptr<CNode>()->inputs();
-        for (size_t i = 1; i < tuple_inputs.size(); i++) {
-          auto out_node = GetValueNode<FuncGraphPtr>(tuple_inputs.at(i))->get_return();
-          MS_EXCEPTION_IF_NULL(out_node);
-          buffer << ", branch" << i << ": " << tuple_inputs.at(i)->ToString() << "\n"
-                 << trace::GetDebugInfoStr(out_node->debug_info());
-        }
+  if (!node->isa<CNode>()) {
+    buffer << "\n";
+    return buffer.str();
+  }
+  auto input_node = node->cast_ptr<CNode>()->input(0);
+  if (IsPrimitiveCNode(input_node, prim::kPrimSwitch)) {
+    // {prim::kPrimSwitch, cond, true_branch, false_branch}
+    const auto &cnode = input_node->cast_ptr<CNode>();
+    auto true_out = GetFuncGraphFromBranchNode(cnode->input(kSwitchTrueBranchIndex))->get_return();
+    auto false_out = GetFuncGraphFromBranchNode(cnode->input(kSwitchFalseBranchIndex))->get_return();
+    buffer << ", true branch: " << cnode->input(kSwitchTrueBranchIndex)->ToString() << "\n"
+           << trace::GetDebugInfoStr(true_out->debug_info())
+           << "\n, false branch: " << cnode->input(kSwitchFalseBranchIndex)->ToString() << "\n"
+           << trace::GetDebugInfoStr(false_out->debug_info());
+  } else if (IsPrimitiveCNode(input_node, prim::kPrimSwitchLayer)) {
+    // {prim::kPrimSwitchLayer, X, {prim::kPrimMakeTuple, branch1, branch2, ...}}
+    constexpr int branch_index = 2;
+    const auto &tuple_node = input_node->cast_ptr<CNode>()->input(branch_index);
+    if (IsPrimitiveCNode(tuple_node, prim::kPrimMakeTuple)) {
+      const auto &cnode = tuple_node->cast_ptr<CNode>();
+      for (size_t i = 1; i < cnode->size(); i++) {
+        auto out_node = GetValueNode<FuncGraphPtr>(cnode->input(i))->get_return();
+        MS_EXCEPTION_IF_NULL(out_node);
+        buffer << ", branch" << i << ": " << cnode->input(i)->ToString() << "\n"
+               << trace::GetDebugInfoStr(out_node->debug_info());
       }
-    } else {
-      buffer << trace::GetDebugInfoStr(node->debug_info());
     }
+  } else {
+    buffer << trace::GetDebugInfoStr(node->debug_info());
   }
   buffer << "\n";
   return buffer.str();
@@ -1719,8 +1714,8 @@ AbstractBasePtr EvalFunctionValue(const ValuePtr &func, const AbstractBasePtrLis
   } else {
     auto infer_graph = std::make_shared<FuncGraph>();
     std::vector<AnfNodePtr> inputs = {std::make_shared<ValueNode>(func)};
-    std::transform(args_spec.begin(), args_spec.end(), std::back_inserter(inputs),
-                   [infer_graph](const AbstractBasePtr &) -> AnfNodePtr { return infer_graph->add_parameter(); });
+    (void)std::transform(args_spec.begin(), args_spec.end(), std::back_inserter(inputs),
+                         [infer_graph](const AbstractBasePtr &) -> AnfNodePtr { return infer_graph->add_parameter(); });
     auto infer_node = infer_graph->NewCNode(inputs);
     infer_graph->set_return(infer_node);
     auto manager = Manage(infer_graph, true);
@@ -1738,14 +1733,9 @@ AnalysisContextPtr NewContext(const AnalysisContextPtr &current_context, const F
     FuncGraphPtr parent_graph = fg->parent();
     const auto no_parent = parent_graph == nullptr;
 #ifdef ENABLE_DUMP_IR
-    auto ms_context = MsContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(ms_context);
-    if (ms_context->CanDump(kIntroductory)) {
-      DumpIR(std::string("EXCEPTION_NEW_CONTEXT_CURRENT_") + (no_parent ? "0" : "1") + "_" + fg->ToString() + ".ir",
-             fg);
-      if (!no_parent) {
-        DumpIR("EXCEPTION_NEW_CONTEXT_PARENT_" + parent_graph->ToString() + ".ir", parent_graph);
-      }
+    DumpIR(std::string("EXCEPTION_NEW_CONTEXT_CURRENT_") + (no_parent ? "0" : "1") + "_" + fg->ToString() + ".ir", fg);
+    if (!no_parent) {
+      DumpIR("EXCEPTION_NEW_CONTEXT_PARENT_" + parent_graph->ToString() + ".ir", parent_graph);
     }
 #endif
     // If parent context is not found, we'll raise exception.

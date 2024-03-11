@@ -138,14 +138,19 @@ CNodePtr DoSignatureEvaluator::GenerateNewNodeBySignatures(const ValuePtr &func,
   MS_EXCEPTION_IF_NULL(out_cnode);
   auto fg = out_cnode->func_graph();
   MS_EXCEPTION_IF_NULL(fg);
-  const auto &out_node_inputs = out_cnode->inputs();
-  if (out_cnode->size() == 0 || (out_node_inputs.size() - 1) != args_abs_list.size()) {
+  if (out_cnode->size() == 0 || (out_cnode->size() - 1) != args_abs_list.size()) {
     MS_LOG(EXCEPTION) << "Op: " << func->ToString() << " args size should equal to inputs size minus 1, but args size "
-                      << args_abs_list.size() << ", inputs size " << out_node_inputs.size();
+                      << args_abs_list.size() << ", inputs size " << out_cnode->size();
   }
 
   // Handle primitive signatures.
-  AnfNodePtrList args_inputs{out_node_inputs.begin() + 1, out_node_inputs.end()};
+  AnfNodePtrList args_inputs;
+  (void)std::transform(out_cnode->weak_inputs().cbegin() + 1, out_cnode->weak_inputs().cend(),
+                       std::back_inserter(args_inputs), [](const AnfNodeWeakPtr &weak_node) {
+                         const auto &node = weak_node.lock();
+                         MS_EXCEPTION_IF_NULL(node);
+                         return node;
+                       });
   auto op_inputs = prim::GetNewInputsBySignatures(fg, prim_->ToString(), func, args_abs_list, args_inputs);
   AnfNodePtrList new_inputs{NewValueNode(func)};
   (void)std::copy(op_inputs.begin(), op_inputs.end(), std::back_inserter(new_inputs));
@@ -259,11 +264,10 @@ EvalResultPtr UnpackGraphEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
   MS_EXCEPTION_IF_NULL(unpack_graph);
   auto out_cnode = out_conf->node()->cast_ptr<CNode>();
   MS_EXCEPTION_IF_NULL(out_cnode);
-  const auto &out_node_inputs = out_cnode->inputs();
-  if (out_cnode->inputs().empty() || (out_node_inputs.size() - 1) != args_conf_list.size()) {
+  if (out_cnode->empty() || (out_cnode->size() - 1) != args_conf_list.size()) {
     MS_LOG(EXCEPTION) << "UnpackGraphPrimitive"
                       << " args size should equal to inputs size minus 1, but args size " << args_conf_list.size()
-                      << ", inputs size " << out_node_inputs.size();
+                      << ", inputs size " << out_cnode->size();
   }
   AbstractBasePtrList args_abs_list;
   (void)std::transform(args_conf_list.begin(), args_conf_list.end(), std::back_inserter(args_abs_list),
@@ -398,13 +402,12 @@ EvalResultPtr MixedPrecisionCastEvaluator::Run(AnalysisEnginePtr engine, const C
   if (out_conf->node() == nullptr || !out_conf->node()->isa<CNode>()) {
     MS_LOG(INTERNAL_EXCEPTION) << "Node of out_conf should be CNode";
   }
-  auto out_node = out_conf->node()->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(out_node);
-  const auto &out_node_inputs = out_node->inputs();
-  if (out_node->inputs().empty() || (out_node_inputs.size() - 1) != args_conf_list.size()) {
+  auto out_cnode = out_conf->node()->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(out_cnode);
+  if (out_cnode->empty() || (out_cnode->size() - 1) != args_conf_list.size()) {
     MS_LOG(EXCEPTION) << "MixedPrecisionCast"
                       << " args size should equal to inputs size minus 1, but args size " << args_conf_list.size()
-                      << ", inputs size " << out_node_inputs.size();
+                      << ", inputs size " << out_cnode->size();
   }
   (void)std::transform(args_conf_list.begin(), args_conf_list.end(), std::back_inserter(args_abs_list),
                        [](const ConfigPtr &ref) -> AbstractBasePtr {
@@ -417,19 +420,19 @@ EvalResultPtr MixedPrecisionCastEvaluator::Run(AnalysisEnginePtr engine, const C
   ScopeGuard scope_guard(out_conf->node()->scope());
   TraceGuard trace_guard(std::make_shared<TraceMixedPrecision>(out_conf->node()->debug_info()));
 
-  FuncGraphPtr func_graph = out_node->func_graph();
+  FuncGraphPtr func_graph = out_cnode->func_graph();
   constexpr size_t source_node_index = 2;
-  if (out_node_inputs.size() <= source_node_index) {
-    MS_LOG(EXCEPTION) << "Input size: " << out_node_inputs.size() << " should bigger than 2.";
+  if (out_cnode->size() <= source_node_index) {
+    MS_LOG(EXCEPTION) << "Input size: " << out_cnode->size() << " should bigger than 2.";
   }
 
   AnfNodePtr new_node =
-    MixedPrecisionCastHelper(out_node_inputs[source_node_index], args_abs_list[1], out_node_inputs[1], func_graph);
+    MixedPrecisionCastHelper(out_cnode->input(source_node_index), args_abs_list[1], out_cnode->input(1), func_graph);
   AnfNodeConfigPtr fn_conf = engine->MakeConfig(new_node, out_conf->context(), out_conf->func_graph());
 
   if (new_node->isa<CNode>()) {
     auto new_cnode = new_node->cast_ptr<CNode>();
-    new_cnode->CloneCNodeInfo(out_node);
+    new_cnode->CloneCNodeInfo(out_cnode);
   }
   return engine->ForwardConfig(out_conf, fn_conf);
 }
@@ -463,13 +466,12 @@ EvalResultPtr SwitchEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList
   if (!out_conf->node()->isa<CNode>()) {
     MS_LOG(INTERNAL_EXCEPTION) << "Node of out_conf should be CNode";
   }
-  auto out_node = out_conf->node()->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(out_node);
-  const auto &out_node_inputs = out_node->inputs();
-  if (out_node->inputs().empty() || (out_node_inputs.size() - 1) != args_conf_list.size()) {
+  auto out_cnode = out_conf->node()->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(out_cnode);
+  if (out_cnode->empty() || (out_cnode->size() - 1) != args_conf_list.size()) {
     MS_LOG(EXCEPTION) << "For 'Switch',"
                       << " the args size should equal to inputs size minus 1, but args size " << args_conf_list.size()
-                      << ", inputs size " << out_node_inputs.size();
+                      << ", inputs size " << out_cnode->size();
   }
 
   // Inputs: condition, true branch, false branch
@@ -533,13 +535,12 @@ EvalResultPtr SwitchLayerEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
   if (!out_conf->node()->isa<CNode>()) {
     MS_LOG(INTERNAL_EXCEPTION) << "Node of out_conf should be CNode";
   }
-  auto out_node = out_conf->node()->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(out_node);
-  const auto &out_node_inputs = out_node->inputs();
-  if (out_node->inputs().empty() || (out_node_inputs.size() - 1) != args_conf_list.size()) {
+  auto out_cnode = out_conf->node()->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(out_cnode);
+  if (out_cnode->empty() || (out_cnode->size() - 1) != args_conf_list.size()) {
     MS_LOG(EXCEPTION) << "For 'SwitchLayer',"
                       << " the args size should equal to inputs size minus 1, but args size " << args_conf_list.size()
-                      << ", inputs size " << out_node_inputs.size();
+                      << ", inputs size " << out_cnode->size();
   }
 
   // Inputs: condition, true branch, false branch
@@ -1762,7 +1763,7 @@ EvalResultPtr GetEvaluatedValueForNameSpaceString(const AbstractBasePtrList &arg
     auto out_cnode = out_node->cast_ptr<CNode>();
     MS_EXCEPTION_IF_NULL(out_cnode);
     constexpr auto default_index = 3;
-    auto default_node = out_cnode->inputs()[default_index];
+    auto default_node = out_cnode->input(default_index);
     auto eng = out_conf->engine();
     MS_EXCEPTION_IF_NULL(eng);
     auto fn_conf = eng->MakeConfig(default_node, out_conf->context(), out_conf->func_graph());
@@ -1822,16 +1823,15 @@ EvalResultPtr GenerateFuncGraphForOverriddenMethod(AnfNodePtr node, const ValueP
   MS_EXCEPTION_IF_NULL(cnode);
   FuncGraphPtr func_graph = node->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
-  const auto &inputs = cnode->inputs();
   const auto &interpreted_obj = std::make_shared<parse::InterpretedObject>(value_obj);
   const auto &value_node = NewValueNode(interpreted_obj);
   if (inner_fg == nullptr) {
     std::vector<AnfNodePtr> new_inputs;
-    for (size_t i = 0; i < inputs.size(); i++) {
+    for (size_t i = 0; i < cnode->size(); i++) {
       if (i == 1) {
         new_inputs.push_back(value_node);
       } else {
-        new_inputs.push_back(inputs[i]);
+        new_inputs.push_back(cnode->input(i));
       }
     }
     CNodePtr new_cnode = func_graph->NewCNode(new_inputs);
@@ -1841,9 +1841,9 @@ EvalResultPtr GenerateFuncGraphForOverriddenMethod(AnfNodePtr node, const ValueP
   AddToManager(eng, inner_fg);
   if (is_getattr) {
     std::vector<AnfNodePtr> new_inputs = {NewValueNode(inner_fg)};
-    for (size_t i = 0; i < inputs.size(); i++) {
+    for (size_t i = 0; i < cnode->size(); i++) {
       if (i > 0) {
-        new_inputs.push_back(inputs[i]);
+        new_inputs.push_back(cnode->input(i));
       }
     }
     CNodePtr new_cnode = func_graph->NewCNode(new_inputs);
@@ -1995,12 +1995,11 @@ EvalResultPtr GetEvaluatedValueForAttrOrMethodNotInMap(const AnalysisEnginePtr &
   MS_EXCEPTION_IF_NULL(eng);
   if (has_default) {
     constexpr auto default_index = 3;
-    auto default_node = out_cnode->inputs()[default_index];
+    auto default_node = out_cnode->input(default_index);
     auto fn_conf = eng->MakeConfig(default_node, out_conf->context(), out_conf->func_graph());
     return eng->ForwardConfig(out_conf, fn_conf);
   }
-  const auto &inputs = out_cnode->inputs();
-  auto vnode = inputs[1]->cast<ValueNodePtr>();
+  auto vnode = out_cnode->input(1)->cast<ValueNodePtr>();
   if (vnode != nullptr && vnode->value()->has_user_data("origin_object")) {
     std::vector<AnfNodePtr> new_inputs;
     py::object value_obj = *vnode->value()->user_data<py::object>("origin_object");
@@ -2010,13 +2009,13 @@ EvalResultPtr GetEvaluatedValueForAttrOrMethodNotInMap(const AnalysisEnginePtr &
     py::object check_res =
       python_adapter::CallPyModFn(mod1, parse::PYTHON_MOD_CHECK_IS_SUBCLASS, value_obj, obj_define);
     if (py::cast<bool>(check_res)) {
-      for (size_t i = 0; i < inputs.size(); i++) {
+      for (size_t i = 0; i < out_cnode->size(); i++) {
         if (i == 1) {
           const auto &interpreted_obj = std::make_shared<parse::InterpretedObject>(value_obj);
           const auto &value_node = NewValueNode(interpreted_obj);
           new_inputs.push_back(value_node);
         } else {
-          new_inputs.push_back(inputs[i]);
+          new_inputs.push_back(out_cnode->input(i));
         }
       }
       CNodePtr new_cnode = out_conf->func_graph()->NewCNode(new_inputs);
@@ -2140,9 +2139,8 @@ EvalResultPtr TransPropertyToFunc(const AnfNodeConfigPtr &out_conf, py::object p
   MS_EXCEPTION_IF_NULL(cnode);
   FuncGraphPtr func_graph = node->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
-  const auto &inputs = cnode->inputs();
   std::vector<AnfNodePtr> new_inputs = {NewValueNode(inner_fg)};
-  new_inputs.push_back(inputs[1]);
+  new_inputs.push_back(cnode->input(1));
   CNodePtr new_cnode = func_graph->NewCNode(new_inputs);
   MS_LOG(DEBUG) << "new_cnode:" << new_cnode->DebugString();
   auto fn_conf = eng->MakeConfig(new_cnode, out_conf->context(), out_conf->func_graph());
@@ -2653,7 +2651,7 @@ AnfNodePtr CheckAndConvertPrimitiveArgs(const PrimitivePtr &prim,
   return new_cnode;
 }
 
-AnfNodePtr ConvertArgsToInputs(const PrimitivePtr &prim, const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &fg,
+AnfNodePtr ConvertArgsToInputs(const PrimitivePtr &prim, const AnfNodeWeakPtrList &inputs, const FuncGraphPtr &fg,
                                const AnalysisEnginePtr &engine, const AnfNodeConfigPtr &out_conf) {
   // Append Primitive arguments to the inputs.
   std::vector<AnfNodePtr> prim_init_arg_nodes;
@@ -2677,7 +2675,13 @@ AnfNodePtr ConvertArgsToInputs(const PrimitivePtr &prim, const std::vector<AnfNo
     }
   }
   // Get call args.
-  AnfNodePtrList prim_call_arg_nodes(inputs.begin() + 1, inputs.end());
+  AnfNodePtrList prim_call_arg_nodes;
+  (void)std::transform(inputs.cbegin() + 1, inputs.cend(), std::back_inserter(prim_call_arg_nodes),
+                       [](const AnfNodeWeakPtr &weak_node) {
+                         const auto &node = weak_node.lock();
+                         MS_EXCEPTION_IF_NULL(node);
+                         return node;
+                       });
   // Create new node.
   auto new_prim = std::make_shared<Primitive>(*prim);
   auto args_pair = std::make_pair(prim_init_arg_nodes, prim_call_arg_nodes);
@@ -2701,25 +2705,28 @@ EvalResultPtr PrimitiveArgsToInputsEvaluator::EvalPrim(const AnalysisEnginePtr &
   AnfNodePtr new_node = nullptr;
   if (IsPrimitiveCNode(op_node, prim::kPrimPartial)) {
     // The input may be a Partial node, such as {{prim::kPrimPartial, prim::kPrimRank, x}} -> {prim::kPrimRank, x}.
-    std::vector<AnfNodePtr> partial_inputs;
+    AnfNodeWeakPtrList partial_inputs;
     auto op_cnode = op_node->cast<CNodePtr>();
-    (void)std::copy(op_cnode->inputs().begin() + index_data, op_cnode->inputs().end(),
+    (void)std::copy(op_cnode->weak_inputs().begin() + index_data, op_cnode->weak_inputs().end(),
                     std::back_inserter(partial_inputs));
-    (void)std::copy(cnode->inputs().begin() + index_data, cnode->inputs().end(), std::back_inserter(partial_inputs));
+    (void)std::copy(cnode->weak_inputs().begin() + index_data, cnode->weak_inputs().end(),
+                    std::back_inserter(partial_inputs));
     new_node = ConvertArgsToInputs(prim_, partial_inputs, fg, engine, out_conf);
   } else if (IsPrimitiveCNode(op_node, prim::kPrimGetAttr) ||
              IsPrimitiveCNodeWithoutDoSignature(op_node, prim::kPrimGetAttr)) {
     // The input may be a GetAttr node, such as x.abs(): {{prim::kPrimGetAttr, x, abs}} -> {prim::kPrimAbs, x}
     auto op_cnode = op_node->cast<CNodePtr>();
-    std::vector<AnfNodePtr> getattr_inputs;
+    AnfNodeWeakPtrList getattr_inputs;
     auto new_prim = std::make_shared<Primitive>(prim_->name());
-    (void)getattr_inputs.emplace_back(NewValueNode(new_prim));
+    auto new_prim_node = NewValueNode(new_prim);
+    (void)getattr_inputs.emplace_back(new_prim_node);
     (void)getattr_inputs.emplace_back(op_cnode->input(index_data));
-    (void)std::copy(cnode->inputs().begin() + index_data, cnode->inputs().end(), std::back_inserter(getattr_inputs));
+    (void)std::copy(cnode->weak_inputs().begin() + index_data, cnode->weak_inputs().end(),
+                    std::back_inserter(getattr_inputs));
     new_node = ConvertArgsToInputs(prim_, getattr_inputs, fg, engine, out_conf);
   } else {
     constexpr int recursive_level = 2;
-    new_node = ConvertArgsToInputs(prim_, cnode->inputs(), fg, engine, out_conf);
+    new_node = ConvertArgsToInputs(prim_, cnode->weak_inputs(), fg, engine, out_conf);
     MS_LOG(DEBUG) << "Convert args to inputs for Operator[" << prim_->name()
                   << "], node: " << cnode->DebugString(recursive_level);
   }
@@ -2730,6 +2737,14 @@ EvalResultPtr PrimitiveArgsToInputsEvaluator::EvalPrim(const AnalysisEnginePtr &
                << ", new node: " << new_node->DebugString();
   return engine->ForwardConfig(out_conf, new_conf);
 }
+
+namespace {
+AnfNodePtr ConvertWeakNode(const AnfNodeWeakPtr &weak_node) {
+  const auto &node = weak_node.lock();
+  MS_EXCEPTION_IF_NULL(node);
+  return node;
+}
+}  // namespace
 
 EvalResultPtr DoTransPrimitiveFunctionEvaluator::EvalPrim(const AnalysisEnginePtr &engine,
                                                           const AbstractBasePtrList &args_abs_list, const ConfigPtr &,
@@ -2783,15 +2798,17 @@ EvalResultPtr DoTransPrimitiveFunctionEvaluator::EvalPrim(const AnalysisEnginePt
   }
 
   // Get init args and call args.
-  const AnfNodePtrList &cnode_inputs = cnode->inputs();
-  AnfNodePtrList prim_init_arg_nodes(cnode_inputs.begin() + cnode_inputs.size() - init_args_size, cnode_inputs.end());
-  AnfNodePtrList prim_call_arg_nodes(cnode_inputs.begin() + 1, cnode_inputs.end() - init_args_size);
+  AnfNodePtrList prim_init_arg_nodes;
+  (void)std::transform(cnode->weak_inputs().cbegin() + cnode->size() - init_args_size, cnode->weak_inputs().cend(),
+                       std::back_inserter(prim_init_arg_nodes), ConvertWeakNode);
+  AnfNodePtrList prim_call_arg_nodes;
+  (void)std::transform(cnode->weak_inputs().cbegin() + 1, cnode->weak_inputs().cend() - init_args_size,
+                       std::back_inserter(prim_call_arg_nodes), ConvertWeakNode);
 
   auto args_pair = std::make_pair(prim_init_arg_nodes, prim_call_arg_nodes);
   auto new_cnode = CheckAndConvertPrimitiveArgs(prim_func, args_pair, engine, out_conf, false);
   auto new_conf = engine->MakeConfig(new_cnode, out_conf->context(), out_conf->func_graph());
-  MS_LOG(INFO) << "Convert DoTransPrimitiveFunction: " << prim_func->name() << ". node: " << cnode->DebugString()
-               << ", new_node: " << new_cnode->DebugString();
+  MS_LOG(INFO) << "Prim: " << prim_func->name() << ", " << cnode->DebugString() << ", " << new_cnode->DebugString();
   return engine->ForwardConfig(out_conf, new_conf);
 }
 
@@ -2914,9 +2931,14 @@ EvalResultPtr PartialToEndEvaluator::EvalPrim(const AnalysisEnginePtr &engine, c
   }
   if (IsValueNode<prim::UnpackCall>(partial_cnode->input(op_index))) {
     auto unpack_call_args = GetInitArgsFromUnpackCall(do_trans_prim, partial_cnode, engine, out_conf);
-    (void)std::copy(unpack_call_args.begin(), unpack_call_args.end(), std::back_inserter(new_inputs));
+    (void)std::copy(unpack_call_args.cbegin(), unpack_call_args.cend(), std::back_inserter(new_inputs));
   } else {
-    (void)std::copy(partial_cnode->inputs().begin() + 1, partial_cnode->inputs().end(), std::back_inserter(new_inputs));
+    (void)std::transform(partial_cnode->weak_inputs().cbegin() + 1, partial_cnode->weak_inputs().cend(),
+                         std::back_inserter(new_inputs), [](const auto &weak_node) {
+                           const auto &node = weak_node.lock();
+                           MS_EXCEPTION_IF_NULL(node);
+                           return node;
+                         });
   }
 
   auto fg = cnode->func_graph();
@@ -2961,8 +2983,13 @@ EvalResultPtr ConstexprEvaluator::EvalPrim(const AnalysisEnginePtr &engine, cons
     FuncGraphPtr func_graph = out_node->func_graph();
     MS_EXCEPTION_IF_NULL(func_graph);
     std::vector<AnfNodePtr> new_cnode_inputs = {NewValueNode(inner_fg)};
-    const auto &out_cnode_inputs = out_cnode->inputs();
-    (void)std::copy(out_cnode_inputs.begin() + 1, out_cnode_inputs.end(), std::back_inserter(new_cnode_inputs));
+    const auto &out_cnode_inputs = out_cnode->weak_inputs();
+    (void)std::transform(out_cnode_inputs.cbegin() + 1, out_cnode_inputs.cend(), std::back_inserter(new_cnode_inputs),
+                         [](const auto &weak_node) {
+                           const auto &node = weak_node.lock();
+                           MS_EXCEPTION_IF_NULL(node);
+                           return node;
+                         });
     auto new_node = func_graph->NewCNodeInOrder(new_cnode_inputs);
     AnalysisEnginePtr eng = out_conf->engine();
     MS_EXCEPTION_IF_NULL(eng);
@@ -3017,7 +3044,6 @@ EvalResultPtr MakeTupleEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abst
       (void)sequence_nodes->emplace_back(AnfNodeWeakPtr(out_conf->node()));
     }
   }
-
   auto res = std::make_shared<EvalResult>(abs, std::make_shared<AttrValueMap>());
   evaluator_cache_mgr_->SetValue(args_abs_list, res);
   // pass the need_unpack tag from the AnfNode to the abstract
@@ -3054,7 +3080,6 @@ EvalResultPtr MakeListEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abstr
       }
     }
   }
-
   MS_LOG(DEBUG) << "Generate python object for new value node.";
   if (fallback::EnableFallbackListDictInplace()) {
     py::object py_list_obj = fallback::GeneratePyObj(abs);
@@ -3504,12 +3529,11 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
                                    << local_cnode->size() << " and abstract size is " << local_abs_seq->size()
                                    << ". Size not matched.";
       }
-      const auto &local_cnode_inputs = local_cnode->inputs();
       const auto &local_elements_abs = local_abs_seq->elements();
       AnfNodePtrList new_inputs;
-      (void)new_inputs.emplace_back(local_cnode_inputs[0]);
-      for (size_t i = 1; i < local_cnode_inputs.size(); ++i) {
-        (void)new_inputs.emplace_back(ConvertLocalValueInputNode(local_cnode_inputs[i], local_elements_abs[i - 1]));
+      (void)new_inputs.emplace_back(local_cnode->input(0));
+      for (size_t i = 1; i < local_cnode->size(); ++i) {
+        (void)new_inputs.emplace_back(ConvertLocalValueInputNode(local_cnode->input(i), local_elements_abs[i - 1]));
       }
       auto fg = local_cnode->func_graph();
       MS_EXCEPTION_IF_NULL(fg);
@@ -3592,8 +3616,8 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
     MS_EXCEPTION_IF_NULL(local_node_abs_dict);
     const auto &elements_pair = local_node_abs_dict->elements();
     std::vector<abstract::AbstractBasePtr> element_abs{};
-    std::transform(elements_pair.begin(), elements_pair.end(), std::back_inserter(element_abs),
-                   [](const AbstractElementPair &pairs) { return pairs.second; });
+    (void)std::transform(elements_pair.begin(), elements_pair.end(), std::back_inserter(element_abs),
+                         [](const AbstractElementPair &pairs) { return pairs.second; });
     auto local_value_abs = std::make_shared<abstract::AbstractTuple>(element_abs);
     constexpr size_t value_index = 2;
     auto local_value_node = local_cnode->input(value_index);
@@ -4036,12 +4060,13 @@ class PartialEvaluator : public Evaluator {
 
     ScopeGuard scope_guard(out_conf->node()->scope());
     TraceGuard trace_guard(std::make_shared<TraceDoSignature>(out_conf->node()->debug_info()));
-    std::vector<AnfNodePtr> new_nodes_inputs = cnode->inputs();
+    auto new_nodes_inputs = cnode->weak_inputs();
     auto new_signature_value = std::make_shared<prim::DoSignatureMetaFuncGraph>("signature", signature_value);
-    new_nodes_inputs[1] = NewValueNode(new_signature_value);
+    auto new_sig_node = NewValueNode(new_signature_value);
+    new_nodes_inputs[1] = AnfNodeWeakPtr(new_sig_node);
     FuncGraphPtr func_graph = cnode->func_graph();
     MS_EXCEPTION_IF_NULL(func_graph);
-    CNodePtr new_cnode = func_graph->NewCNode(std::move(new_nodes_inputs));
+    CNodePtr new_cnode = func_graph->NewCNodeWeak(std::move(new_nodes_inputs));
     AnfNodeConfigPtr fn_conf = engine->MakeConfig(new_cnode, out_conf->context(), out_conf->func_graph());
     return engine->ForwardConfig(out_conf, fn_conf);
   }
@@ -4077,11 +4102,10 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
 
     // Return Any directly if meet variable condition or content.
     bool is_variable_condition = raiseutils::HasVariableCondition(cur_graph);
-    auto &inputs = cnode->inputs();
     bool has_variable = false;
     size_t index_begin = 2;
-    size_t index_end = inputs.size() - 1;
-    for (size_t index = index_begin; index < inputs.size(); ++index) {
+    size_t index_end = cnode->size() - 1;
+    for (size_t index = index_begin; index < cnode->size(); ++index) {
       if (raiseutils::CheckHasVariable(args_abs_list[index - 1])) {
         has_variable = true;
         break;
@@ -4098,15 +4122,16 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
 
     // Continue to handle raise in compile time.
     std::shared_ptr<raiseutils::KeyValueInfo> key_value = std::make_shared<raiseutils::KeyValueInfo>();
-    std::string exception_type = raiseutils::GetExceptionType(args_abs_list[0], inputs[index_end], key_value, false);
+    std::string exception_type =
+      raiseutils::GetExceptionType(args_abs_list[0], cnode->input(index_end), key_value, false);
     std::string exception_string;
     // Process raise ValueError()
     if (args_abs_list.size() == 1) {
       RaiseConstant(exception_type);
     }
     // Processed in units of nodes. Raise ValueError(xxxx)
-    for (size_t index = index_begin; index < inputs.size() - 1; ++index) {
-      const auto input = inputs[index];
+    for (size_t index = index_begin; index < cnode->size() - 1; ++index) {
+      const auto input = cnode->input(index);
       auto input_abs = args_abs_list[index - 1];
       MS_EXCEPTION_IF_NULL(input_abs);
       const bool need_symbol = raiseutils::CheckNeedSymbol(input_abs);
@@ -4119,11 +4144,11 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
         exception_string += "'";
       }
       constexpr auto end_index = 2;
-      if (index < inputs.size() - end_index) {
+      if (index < cnode->size() - end_index) {
         exception_string += ", ";
       }
     }
-    bool need_out_symbol = inputs.size() > 4;
+    bool need_out_symbol = cnode->size() > 4;
     if (need_out_symbol) {
       exception_string = "(" + exception_string + ")";
     }

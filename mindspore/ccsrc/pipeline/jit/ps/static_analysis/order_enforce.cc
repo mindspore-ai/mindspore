@@ -114,9 +114,12 @@ class OrderEnforcer {
   }
 
   bool HasLoadInput(const CNodePtr &cnode) const {
-    auto &inputs = cnode->inputs();
-    return std::any_of(inputs.begin() + 1, inputs.end(),
-                       [](const AnfNodePtr &input) { return IsPrimitiveCNode(input, prim::kPrimLoad); });
+    auto &weak_inputs = cnode->weak_inputs();
+    return std::any_of(weak_inputs.cbegin() + 1, weak_inputs.cend(), [](const auto &weak_input) {
+      const auto &input = weak_input.lock();
+      MS_EXCEPTION_IF_NULL(input);
+      return IsPrimitiveCNode(input, prim::kPrimLoad);
+    });
   }
 
   std::vector<AnfNodePtr> FindUpdateStateUsers(const AnfNodePtr &node) {
@@ -142,11 +145,10 @@ class OrderEnforcer {
   }
 
   AnfNodePtr FindLastUpdateState(const CNodePtr &cnode) {
-    auto &inputs = cnode->inputs();
     // Find all update_state nodes from the user of input load nodes.
     std::vector<AnfNodePtr> all_update_states;
-    for (size_t index = 1; index < inputs.size(); index++) {
-      auto &input = inputs[index];
+    for (size_t index = 1; index < cnode->size(); index++) {
+      auto &input = cnode->input(index);
       if (IsPrimitiveCNode(input, prim::kPrimLoad)) {
         std::vector<AnfNodePtr> update_states = FindUpdateStateUsers(input);
         (void)all_update_states.insert(all_update_states.end(), update_states.begin(), update_states.end());
@@ -231,9 +233,8 @@ class OrderEnforcer {
   void HandleSideEffectNode(const CNodePtr &cnode, const CNodePtr &update_state) {
     MS_EXCEPTION_IF_NULL(cnode);
     // Find refs from the cnode inputs.
-    auto &inputs = cnode->inputs();
-    for (size_t i = 1; i < inputs.size(); ++i) {
-      auto &input = inputs[i];
+    for (size_t i = 1; i < cnode->size(); ++i) {
+      auto &input = cnode->input(i);
       // Skip non-ref input and update_state.
       if (!IsRef(input) || input == update_state) {
         continue;
@@ -272,9 +273,11 @@ class OrderEnforcer {
       }
       if (IsPrimitiveCNode(attach, prim::kPrimMakeTuple)) {
         auto attach_cnode = attach->cast<CNodePtr>();
-        auto &inputs = attach_cnode->inputs();
-        auto iter = std::find(inputs.begin() + 1, inputs.end(), load_user);
-        if (iter != inputs.end()) {
+        auto &weak_inputs = attach_cnode->weak_inputs();
+        auto iter = std::find_if(weak_inputs.begin() + 1, weak_inputs.end(), [&load_user](const auto &weak_input) {
+          return weak_input.lock() != nullptr && weak_input.lock() == load_user;
+        });
+        if (iter != weak_inputs.end()) {
           return true;
         }
       }
@@ -460,8 +463,10 @@ class OrderEnforcer {
     if (!node->isa<CNode>()) {
       return false;
     }
-    const auto &inner_inputs = node->cast<CNodePtr>()->inputs();
-    return std::any_of(inner_inputs.begin(), inner_inputs.end(), [&](const AnfNodePtr &inner_input) {
+    const auto &inner_weak_inputs = node->cast<CNodePtr>()->weak_inputs();
+    return std::any_of(inner_weak_inputs.cbegin(), inner_weak_inputs.cend(), [&](const auto &inner_weak_input) {
+      const auto &inner_input = inner_weak_input.lock();
+      MS_EXCEPTION_IF_NULL(inner_input);
       return !HasAbstractMonad(inner_input) && HasRefKeyInput(inner_input, ref_key);
     });
   }
@@ -498,9 +503,11 @@ class OrderEnforcer {
       if (IsPrimitiveCNode(user_cnode, prim::kPrimUpdateState)) {
         continue;
       }
-      const auto &inputs = user_cnode->inputs();
+      const auto &weak_inputs = user_cnode->weak_inputs();
       size_t ref_key_times = 0;
-      for (auto &input : inputs) {
+      for (auto &weak_input : weak_inputs) {
+        const auto &input = weak_input.lock();
+        MS_EXCEPTION_IF_NULL(input);
         if (IsPrimitiveCNode(input, prim::kPrimLoad)) {
           auto key = GetRefKey(input->cast<CNodePtr>()->input(1));
           if (key == ref_key) {
@@ -514,8 +521,10 @@ class OrderEnforcer {
         if (!input->isa<CNode>()) {
           continue;
         }
-        const auto &inner_inputs = input->cast<CNodePtr>()->inputs();
-        for (auto inner_input : inner_inputs) {
+        const auto &inner_weak_inputs = input->cast<CNodePtr>()->weak_inputs();
+        for (auto inner_weak_input : inner_weak_inputs) {
+          const auto &inner_input = inner_weak_input.lock();
+          MS_EXCEPTION_IF_NULL(inner_input);
           if (IsPrimitiveCNode(inner_input, prim::kPrimUpdateState) || !HasRefKeyInput(inner_input, ref_key)) {
             continue;
           }
@@ -592,13 +601,12 @@ class OrderEnforcer {
     };
     if (IsPrimitiveCNode(return_input, prim::kPrimMakeTuple)) {
       const auto &make_tuple = return_input->cast<CNodePtr>();
-      const auto &make_tuple_inputs = make_tuple->inputs();
-      if (make_tuple_inputs.size() <= 1) {
+      if (make_tuple->size() <= 1) {
         return;
       }
-      for (size_t i = 1; i < make_tuple_inputs.size(); ++i) {
-        if (IsPrimitiveCNode(make_tuple_inputs[i], prim::kPrimLoad)) {
-          check_load(make_tuple_inputs[i]);
+      for (size_t i = 1; i < make_tuple->size(); ++i) {
+        if (IsPrimitiveCNode(make_tuple->input(i), prim::kPrimLoad)) {
+          check_load(make_tuple->input(i));
         }
       }
     } else if (IsPrimitiveCNode(return_input, prim::kPrimLoad)) {

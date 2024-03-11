@@ -26,9 +26,8 @@ AbstractBasePtrList StackFrame::GenerateArgsAbsList(const AnalysisEnginePtr &eng
   MS_EXCEPTION_IF_NULL(current_cnode);
   MS_EXCEPTION_IF_NULL(evaluator);
   AbstractBasePtrList args_abs_list;
-  auto &inputs = current_cnode->inputs();
-  for (std::size_t i = 1; i < inputs.size(); i++) {
-    auto config = engine->MakeConfig(inputs[i], current_context_, current_context_->func_graph());
+  for (std::size_t i = 1; i < current_cnode->size(); i++) {
+    auto config = engine->MakeConfig(current_cnode->input(i), current_context_, current_context_->func_graph());
     auto result = config->ObtainEvalResult();
     MS_EXCEPTION_IF_NULL(result);
     auto abs = result->abstract();
