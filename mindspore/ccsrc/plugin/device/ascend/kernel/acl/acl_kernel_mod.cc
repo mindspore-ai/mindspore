@@ -134,8 +134,8 @@ std::string AclKernelMod::GetFormatFromInput(const std::vector<KernelTensor *> &
 
 void AclKernelMod::GetInputInfo(const std::vector<KernelTensor *> &inputs) {
   if (input_params_.size() != inputs.size()) {
-    MS_LOG(INTERNAL_EXCEPTION) << "Acl kernel's input size is not equal with acl param's size:" << input_params_.size()
-                               << " - input's size:" << inputs.size();
+    MS_LOG(INFO) << "Acl kernel's input size is not equal with acl param's size:" << input_params_.size()
+                 << " - input's size:" << inputs.size();
   }
 
   std::string format = transform::AclHelper::GetFormatFromAttr(primitive_);
@@ -144,6 +144,9 @@ void AclKernelMod::GetInputInfo(const std::vector<KernelTensor *> &inputs) {
   }
 
   for (size_t i = 0; i < input_params_.size(); i++) {
+    if (i >= inputs.size()) {
+      continue;
+    }
     auto &input = inputs[i];
     MS_EXCEPTION_IF_NULL(input);
     auto shape = input->GetShapeVector();
