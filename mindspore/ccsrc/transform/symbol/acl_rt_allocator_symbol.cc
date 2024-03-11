@@ -30,8 +30,8 @@ aclrtAllocatorSetObjToDescFunObj aclrtAllocatorSetObjToDesc_ = nullptr;
 aclrtAllocatorUnregisterFunObj aclrtAllocatorUnregister_ = nullptr;
 
 void LoadAclAllocatorApiSymbol(const std::string &ascend_path) {
-  std::string allocator_plugin_path = "lib64/libascendcl.so";
-  auto handler = GetLibHandler(ascend_path + allocator_plugin_path);
+  std::string allocator_plugin_path = ascend_path + "lib64/libascendcl.so";
+  auto handler = GetLibHandler(allocator_plugin_path);
   if (handler == nullptr) {
     MS_LOG(WARNING) << "Dlopen " << allocator_plugin_path << " failed!" << dlerror();
     return;

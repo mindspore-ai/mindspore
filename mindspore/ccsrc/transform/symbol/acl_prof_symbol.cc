@@ -25,10 +25,13 @@ aclprofFinalizeFunObj aclprofFinalize_ = nullptr;
 aclprofInitFunObj aclprofInit_ = nullptr;
 aclprofStartFunObj aclprofStart_ = nullptr;
 aclprofStopFunObj aclprofStop_ = nullptr;
+aclprofCreateStepInfoFunObj aclprofCreateStepInfo_ = nullptr;
+aclprofGetStepTimestampFunObj aclprofGetStepTimestamp_ = nullptr;
+aclprofDestroyStepInfoFunObj aclprofDestroyStepInfo_ = nullptr;
 
 void LoadProfApiSymbol(const std::string &ascend_path) {
-  std::string profiler_plugin_path = "lib64/libmsprofiler.so";
-  auto handler = GetLibHandler(ascend_path + profiler_plugin_path);
+  std::string profiler_plugin_path = ascend_path + "lib64/libmsprofiler.so";
+  auto handler = GetLibHandler(profiler_plugin_path);
   if (handler == nullptr) {
     MS_LOG(WARNING) << "Dlopen " << profiler_plugin_path << " failed!" << dlerror();
     return;
@@ -39,6 +42,9 @@ void LoadProfApiSymbol(const std::string &ascend_path) {
   aclprofInit_ = DlsymAscendFuncObj(aclprofInit, handler);
   aclprofStart_ = DlsymAscendFuncObj(aclprofStart, handler);
   aclprofStop_ = DlsymAscendFuncObj(aclprofStop, handler);
+  aclprofCreateStepInfo_ = DlsymAscendFuncObj(aclprofCreateStepInfo, handler);
+  aclprofGetStepTimestamp_ = DlsymAscendFuncObj(aclprofGetStepTimestamp, handler);
+  aclprofDestroyStepInfo_ = DlsymAscendFuncObj(aclprofDestroyStepInfo, handler);
   MS_LOG(INFO) << "Load acl prof api success!";
 }
 

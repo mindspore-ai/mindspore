@@ -65,8 +65,8 @@ aclrtSynchronizeStreamFunObj aclrtSynchronizeStream_ = nullptr;
 aclrtSynchronizeStreamWithTimeoutFunObj aclrtSynchronizeStreamWithTimeout_ = nullptr;
 
 void LoadAclRtApiSymbol(const std::string &ascend_path) {
-  std::string aclrt_plugin_path = "lib64/libascendcl.so";
-  auto handler = GetLibHandler(ascend_path + aclrt_plugin_path);
+  std::string aclrt_plugin_path = ascend_path + "lib64/libascendcl.so";
+  auto handler = GetLibHandler(aclrt_plugin_path);
   if (handler == nullptr) {
     MS_LOG(WARNING) << "Dlopen " << aclrt_plugin_path << " failed!" << dlerror();
     return;

@@ -48,8 +48,8 @@ aclmdlSetDynamicBatchSizeFunObj aclmdlSetDynamicBatchSize_ = nullptr;
 aclmdlUnloadFunObj aclmdlUnload_ = nullptr;
 
 void LoadAclMdlApiSymbol(const std::string &ascend_path) {
-  std::string aclmdl_plugin_path = "lib64/libascendcl.so";
-  auto handler = GetLibHandler(ascend_path + aclmdl_plugin_path);
+  std::string aclmdl_plugin_path = ascend_path + "lib64/libascendcl.so";
+  auto handler = GetLibHandler(aclmdl_plugin_path);
   if (handler == nullptr) {
     MS_LOG(WARNING) << "Dlopen " << aclmdl_plugin_path << " failed!" << dlerror();
     return;
