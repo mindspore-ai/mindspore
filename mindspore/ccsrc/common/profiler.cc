@@ -152,7 +152,10 @@ ProfilerRecorder::~ProfilerRecorder() {
 }
 
 PythonProfilerRecorder::PythonProfilerRecorder(const std::string &record_name)
-    : record_name_(record_name), module_(ProfilerModule::kPython), event_(ProfilerEvent::kPythonObserved) {}
+    : start_time_(0),
+      record_name_(record_name),
+      module_(ProfilerModule::kPython),
+      event_(ProfilerEvent::kPythonObserved) {}
 
 void PythonProfilerRecorder::record_start() {
   if (runtime::ProfilerAnalyzer::GetInstance().profiler_enable()) {
