@@ -506,9 +506,9 @@ void UpdateCustomKernelBuildInfo(const CNodePtr &kernel_node, bool is_akg_op) {
 #endif
     kernel_attr = mindspore::kernel::OpLib::FindOp(op_name, kernel::OpImplyType::kImplyAKG);
     if (kernel_attr == nullptr) {
-      MS_LOG(WARNING) << "Not find operator information for Custom operator[" << op_name << "]. "
-                      << "Infer operator information from inputs. For more details, "
-                      << "please refer to 'mindspore.ops.Custom' at https://www.mindspore.cn.";
+      MS_LOG(INFO) << "Not find operator information for Custom operator[" << op_name << "]. "
+                   << "Infer operator information from inputs. For more details, "
+                   << "please refer to 'mindspore.ops.Custom' at https://www.mindspore.cn.";
     }
   } else {
     builder->SetKernelType(KernelType::CPU_KERNEL);
@@ -712,9 +712,9 @@ std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kerne
     // then infer info from inputs
     auto op_reg_info = mindspore::kernel::OpLib::FindOp(op_name, kernel::OpImplyType::kImplyCPU);
     if (op_reg_info == nullptr || op_reg_info->inputs_ptr().empty()) {
-      MS_LOG(WARNING) << "Not find operator information for Custom operator[" << op_name << "]. "
-                      << "Infer operator information from inputs. For more details, "
-                      << "please refer to 'mindspore.ops.Custom' at https://www.mindspore.cn.";
+      MS_LOG(INFO) << "Not find operator information for Custom operator[" << op_name << "]. "
+                   << "Infer operator information from inputs. For more details, "
+                   << "please refer to 'mindspore.ops.Custom' at https://www.mindspore.cn.";
       UpdateCustomKernelBuildInfo(kernel_node, false);
       return {};
     }
