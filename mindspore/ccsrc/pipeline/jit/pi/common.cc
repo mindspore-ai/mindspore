@@ -1383,21 +1383,35 @@ py::list CollectGradientArguments(const PyFrameObject &frame) {
 }
 
 void AutoGrad(PyFrameObject *f, PyObject *ret) {
+  // improve performance for infer
   if (kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kInferOnly)) {
     return;
   }
-  if (ret == nullptr) {
+  // must have a return value and prim must have argument
+  if (ret == nullptr || f->f_code->co_argcount <= 0) {
     return;
   }
-  if (py::cast<py::object>(f->f_code->co_name).cast<std::string>() == "__call__" && f->f_code->co_argcount > 0 &&
-      f->f_localsplus[0] != nullptr && py::isinstance<PrimitivePyAdapter>(f->f_localsplus[0])) {
-    if (!IsStubTensor(ret)) {
-      return;
-    }
-    MS_EXCEPTION_IF_CHECK_FAIL(f->f_code->co_kwonlyargcount == 0, "Must not have kw only args.");
-    auto inputs = CollectGradientArguments(*f);
-    grad::FunctionNode::RecordPrimitive(py::cast<py::object>(f->f_localsplus[0]), py::cast<py::object>(ret), inputs);
+  // the call function of primitive
+  if (py::cast<py::object>(f->f_code->co_name).cast<std::string>() != "__call__") {
+    return;
   }
+  // only record primitvie now
+  if (f->f_localsplus[0] == nullptr || !py::isinstance<PrimitivePyAdapter>(f->f_localsplus[0])) {
+    return;
+  }
+  // gradient info check
+  if (!IsStubTensor(ret)) {
+    return;
+  }
+  MS_EXCEPTION_IF_CHECK_FAIL(f->f_code->co_kwonlyargcount == 0, "Must not have kw only args.");
+  auto inputs = CollectGradientArguments(*f);
+  if (!std::any_of(inputs.begin(), inputs.end(), [](const auto &input) {
+        auto requires_grad = python_adapter::GetPyObjAttr(py::cast<py::object>(input), "requires_grad");
+        return !py::isinstance<py::none>(requires_grad) && py::bool_(requires_grad);
+      })) {
+    return;
+  }
+  grad::FunctionNode::RecordPrimitive(py::cast<py::object>(f->f_localsplus[0]), py::cast<py::object>(ret), inputs);
 }
 
 #if (PY_MAJOR_VERSION == 3) && (PY_MINOR_VERSION < 9)
@@ -1513,13 +1527,13 @@ py::bool_ pi_jit_should_compile(const py::object &funcHandle, const py::object &
 }
 #else
 
-py::bool_ pi_jit_enable() { return py::bool_(false); }
-py::bool_ pi_jit_disable() { return py::bool_(false); }
-py::bool_ pi_jit_should_compile(const py::object &func, const py::object &tag) {
-  MS_LOG(WARNING) << "GraphJit not support this python version " << PY_MAJOR_VERSION << '.' << PY_MINOR_VERSION
-                  << " only support on python3.9 or python3.7";
+py::bool_ pi_jit_enable() {
+  MS_LOG(ERROR) << "PiJit not support this python version " << PY_MAJOR_VERSION << '.' << PY_MINOR_VERSION
+                << " only support on python3.9 or python3.7";
   return py::bool_(false);
 }
+py::bool_ pi_jit_disable() { return py::bool_(false); }
+py::bool_ pi_jit_should_compile(const py::object &func, const py::object &tag) { return py::bool_(false); }
 
 #endif
 
