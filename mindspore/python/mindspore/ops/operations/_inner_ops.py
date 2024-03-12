@@ -16,6 +16,7 @@
 """Inner operators."""
 from types import FunctionType, MethodType
 from collections.abc import Iterable
+import os
 import numpy as np
 
 from mindspore.common import Tensor
@@ -2856,6 +2857,43 @@ class DecoderKVCache(Primitive):
                                         "new_max_seq_len", "cur_max_seq_len"],
                                 outputs=["out"])
         self.add_prim_attr('side_effect_mem', True)
+
+
+class _MirrorSilentCheck(PrimitiveWithInfer):
+    """
+    MirrorOperator for SilentCheck, do SilentCheck in backpropagator.
+    """
+    @prim_attr_register
+    def __init__(self, min_steps=8):
+        upper_thresh, sigma_thresh = self.get_thresh()
+        self.min_steps = min_steps
+        self.thresh_l1 = sigma_thresh[0]
+        self.coeff_l1 = sigma_thresh[1]
+        self.thresh_l2 = upper_thresh[0]
+        self.coeff_l2 = upper_thresh[1]
+        self.add_prim_attr('side_effect_mem', True)
+
+    def parse_thresh(self, env_var_name, default_value, min_value):
+        env_var = os.environ.get(env_var_name, default=default_value)
+        thresh = [value.strip() for value in env_var.split(",")]
+        if len(thresh) != 2 or not all(value.isdigit() for value in thresh):
+            thresh = default_value.split(",")
+        thresh = [float(max(int(value), min_value)) for value in thresh]
+        if thresh[0] <= thresh[1]:
+            thresh = [float(value) for value in default_value.split(",")]
+
+        return thresh
+
+    def get_thresh(self):
+        upper_thresh = self.parse_thresh("NPU_ASD_UPPER_THRESH", "1000000,10000", 3)
+        sigma_thresh = self.parse_thresh("NPU_ASD_SIGMA_THRESH", "100000,100", 3)
+        return upper_thresh, sigma_thresh
+
+    def infer_shape(self, x_shape, pre_shape, min_shape, max_shape, n_step, loss_scale_shape):
+        return x_shape
+
+    def infer_dtype(self, x_dtype, pre_dtype, min_dtype, max_dtype, n_dtype, loss_scale_dtype):
+        return x_dtype
 
 
 class PromptKVCache(Primitive):
