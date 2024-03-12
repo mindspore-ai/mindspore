@@ -35,7 +35,7 @@ from mindspore.communication.management import GlobalComm, get_rank, get_group_s
 import mindspore._c_expression as c_expression
 import mindspore._c_dataengine as cde
 from mindspore.profiler.common.exceptions.exceptions import ProfilerFileNotFoundException, \
-    ProfilerIOException, ProfilerException, ProfilerRawFileException
+    ProfilerIOException, ProfilerException, ProfilerRawFileException, ProfilerParamTypeErrorException
 from mindspore.profiler.common.exceptions.exceptions import ProfilerPathErrorException
 from mindspore.profiler.common.exceptions.exceptions import ProfilerDirNotFoundException
 from mindspore.profiler.common.util import get_file_path
@@ -708,10 +708,12 @@ class Profiler:
         """
         self._pretty_json = pretty
         model_iteration_dict = {}
-        if isinstance(step_list, list) and step_list:
-            for step in step_list:
-                if isinstance(step, int) and step >= 0:
-                    model_iteration_dict.setdefault(4294967295, []).append(step)
+        if step_list is not None and not isinstance(step_list, list):
+            raise ProfilerParamTypeErrorException("Parameter step_list must be a list.")
+        if step_list:
+            if not isinstance(step_list[0], int):
+                raise ProfilerParamTypeErrorException("The elements of the parameter step_list must be integers.")
+            model_iteration_dict.setdefault(4294967295, []).append(step_list[0])
         self._analyse(offline_path=offline_path, model_iteration_dict=model_iteration_dict)
 
     def _analyse(self, offline_path=None, model_iteration_dict=None):
