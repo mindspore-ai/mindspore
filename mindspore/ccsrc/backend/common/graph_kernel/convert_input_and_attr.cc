@@ -214,7 +214,7 @@ bool ConvertFrontEndToGraphKernel::Process(const CNodePtr &cnode, const ops::OpD
     cnode->set_inputs(new_inputs);
     auto cb = Callback::Instance();
     MS_EXCEPTION_IF_NULL(cb);
-    cb->ResetKernelInfoInputs(cnode);
+    cb->ResetKernelInfoInputs(cnode, false);
   }
   return changed;
 }
@@ -349,7 +349,7 @@ bool ConvertGraphKernelToFrontEnd::Process(const AnfNodePtr &node) {
   if (changed) {
     auto cb = Callback::Instance();
     MS_EXCEPTION_IF_NULL(cb);
-    cb->ResetKernelInfoInputs(cnode);
+    cb->ResetKernelInfoInputs(cnode, false);
   }
   return changed;
 }

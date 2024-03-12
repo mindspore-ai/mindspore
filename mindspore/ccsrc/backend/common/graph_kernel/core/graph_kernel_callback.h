@@ -161,8 +161,9 @@ class BACKEND_EXPORT Callback {
    * @brief Reset KernelInfo input msg for convert attr and input.
    *
    * @param node the AnfNodePtr
+   * @param overwrite if true, override all inputs kernel info, if false, use the original kernel info saved in node
    */
-  virtual void ResetKernelInfoInputs(const AnfNodePtr &node) = 0;
+  virtual void ResetKernelInfoInputs(const AnfNodePtr &node, bool overwrite) = 0;
 
   /**
    * @brief The Callback implementation use nodes' device info.
