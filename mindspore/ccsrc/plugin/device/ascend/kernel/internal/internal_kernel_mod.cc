@@ -100,7 +100,8 @@ int InternalKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const s
       return KRET_RESIZE_FAILED;
     }
   }
-  std::vector<internal::DIMS> input_shapes(inputs_.size()), output_shapes;
+  std::vector<internal::DIMS> input_shapes(inputs_.size());
+  std::vector<internal::DIMS> output_shapes;
   for (auto iter = inputsIdxMap_.begin(); iter != inputsIdxMap_.end(); iter++) {
     InternalKernelUtils::ToInternalTensor(inputs_[iter->second], inputs[iter->first]);
     input_shapes[iter->second] = inputs_[iter->second]->desc.dims;
