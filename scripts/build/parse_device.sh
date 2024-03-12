@@ -61,13 +61,13 @@ parse_device()
       if [[ "X$DEVICE_VERSION" == "X310" ]]; then
         ENABLE_ACL="on"
         export ENABLE_AKG="off"
-      # universal ascend package, building 910b package by giving specific -V 910b instruction
+      # universal ascend package
       elif [[ "X$DEVICE_VERSION" == "X910" || "X$DEVICE_VERSION" == "X910b" ]]; then
         export ENABLE_D="on"
         export ENABLE_ACL="on"
         ENABLE_CPU="on"
         export ENABLE_MPI="on"
-        export ASCEND_VERSION="$DEVICE_VERSION"
+        export ASCEND_VERSION="910"
       else
         echo "Invalid value ${DEVICE_VERSION} for option -V"
         usage
