@@ -52,4 +52,5 @@ Fast Fourier Transform(FFT) submodule.
     :nosignatures:
     :template: classtemplate_inherited.rst
 
+    mindspore.scipy.fft.dct
     mindspore.scipy.fft.idct
