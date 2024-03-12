@@ -1489,7 +1489,7 @@ def _check_fractional_output_size_ratio(output_size, output_ratio, cls_name):
 def fractional_max_pool2d(input, kernel_size, output_size=None, output_ratio=None, return_indices=False,
                           _random_samples=None):
     r"""
-    Applies the 2D FractionalMaxPool operatin over `input`. The output Tensor shape can be determined by either
+    Applies the 2D FractionalMaxPool operation over `input`. The output Tensor shape can be determined by either
     `output_size` or `output_ratio`, and the step size is determined by `_random_samples`. `output_size` will take
     effect when `output_size` and `output_ratio` are set at the same time.
     And `output_size` and `output_ratio` can not be ``None`` at the same time.
@@ -1601,7 +1601,7 @@ def fractional_max_pool2d(input, kernel_size, output_size=None, output_ratio=Non
 def fractional_max_pool3d(input, kernel_size, output_size=None, output_ratio=None, return_indices=False,
                           _random_samples=None):
     r"""
-    Applies the 3D FractionalMaxPool operatin over `input`. The output Tensor shape can be determined by either
+    Applies the 3D FractionalMaxPool operation over `input`. The output Tensor shape can be determined by either
     `output_size` or `output_ratio`, and the step size is determined by `_random_samples`. `output_size` will take
     effect when `output_size` and `output_ratio` are set at the same time.
     And `output_size` and `output_ratio` can not be ``None`` at the same time.
@@ -4380,8 +4380,8 @@ def grid_sample(input, grid, mode='bilinear', padding_mode='zeros', align_corner
         padding_mode (str): An optional string specifying the pad method. The optional values are "zeros", "border" or
             "reflection". Default: ``'zeros'`` .
         align_corners (bool): If set to `True`, the extrema (-1 and 1) are considered as referring to
-            the center points of the input’s corner pixels. If set to `False`, they are instead considered as referring
-            to the corner points of the input’s corner pixels, making the sampling more resolution agnostic. Default:
+            the center points of the input's corner pixels. If set to `False`, they are instead considered as referring
+            to the corner points of the input's corner pixels, making the sampling more resolution agnostic. Default:
             ``False`` .
 
     Returns:
@@ -5961,7 +5961,7 @@ def glu(x, axis=-1):
     See `Language Modeling with Gated Convluational Networks <https://arxiv.org/abs/1612.08083>`_.
 
     Args:
-        x (Tensor): Tensor to be splited. Its dtype is Number, and shape is :math:`(\ast_1, N, \ast_2)`
+        x (Tensor): Tensor to be split. Its dtype is Number, and shape is :math:`(\ast_1, N, \ast_2)`
             where `*` means, any number of additional dimensions.
         axis (int, optional): the axis to split the input. It must be int. Default: ``-1`` , the last axis of `x`.
 
