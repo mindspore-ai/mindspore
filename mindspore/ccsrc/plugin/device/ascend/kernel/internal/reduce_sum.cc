@@ -34,7 +34,7 @@ internal::OpParamPtr InternalReduceSum::CreateOpParam(const std::vector<KernelTe
   return param_ptr;
 }
 
-void InternalLayerNorm::SetInOutIdx() {
+void InternalReduceSum::SetInOutIdx() {
   inputsIdxMap_[0] = 0;
   outputsIdxMap_[0] = 0;
 }
