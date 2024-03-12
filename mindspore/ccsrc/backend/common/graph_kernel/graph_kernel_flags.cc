@@ -294,6 +294,8 @@ void GraphKernelFlags::Refresh() {
 }
 
 void GraphKernelFlags::RegisterFlags(std::map<std::string, std::string> *flag_map) {
+  bool has_kernel_generator = (flag_map->find("kernel_generator") != flag_map->end());
+  bool has_enable_dynamic_shape_fusion = (flag_map->find("enable_dynamic_shape_fusion") != flag_map->end());
   FlagRegister reg(flag_map);
   bool is_ascend{false};
   bool is_910bc{false};
@@ -370,14 +372,14 @@ void GraphKernelFlags::RegisterFlags(std::map<std::string, std::string> *flag_ma
     return;
   }
 
+  if (is_ascend && !has_kernel_generator) {
 #ifndef MSLITE_ENABLE_GRAPH_KERNEL
-  if (is_ascend && flag_map->find("kernel_generator") == flag_map->end()) {
     kernel_generator = "DVM";
+#endif
   }
-  if (kernel_generator == "DVM" && flag_map->find("enable_dynamic_shape_fusion") == flag_map->end()) {
+  if (kernel_generator == "DVM" && !has_enable_dynamic_shape_fusion) {
     enable_dynamic_shape_fusion = true;
   }
-#endif
 }
 
 std::string GraphKernelFlags::DumpAllFlags() const {
