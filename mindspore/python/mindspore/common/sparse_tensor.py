@@ -658,7 +658,7 @@ class CSRTensor(CSRTensor_):
     .. warning::
         - This is an experimental API that is subjected to change.
         - If the values given by `indptr` or `indices` are invalid, the results may be undefined. Invalid values include
-          when the length of `values` or `indices` exceeds the range indicated by indptr, and when the columns
+          when the length of `values` or `indices` exceeds the range indicated by `indptr`, and when the columns
           indicated by `indices` are repeated on the same row.
 
     Args:

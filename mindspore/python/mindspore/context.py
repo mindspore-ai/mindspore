@@ -1185,8 +1185,12 @@ def set_context(**kwargs):
             The format is "xxGB". Default: ``"1GB"`` . Minimum size is "1G". The actual used memory block size is the
             minimum of the available memory of the device and mempool_block_size.
         op_timeout (int): Set the maximum duration of executing an operator in seconds.
-            If the execution time exceeds this value, system will terminate the task. 0 means endless wait.
-            Default: ``1900`` .
+            If the execution time exceeds this value, system will terminate the task.
+            0 means endless wait. The defaults for AI Core and AICPU operators vary on different hardware.
+            For more information,
+            please refer to `Ascend Community
+            <https://www.hiascend.com/>`_.
+            Default: ``900`` .
         save_graphs (bool or int): Whether to save intermediate compilation graphs. Default: ``0`` .
             Available values are:
 
@@ -1726,9 +1730,7 @@ def get_ps_context(attr_key):
 
 def reset_ps_context():
     """
-    Reset parameter server training mode context attributes to the default values:
-
-    - enable_ps: False.
+    Reset parameter server training mode context attributes to the default values.
 
     Meaning of each field and its default value refer to :func:`mindspore.set_ps_context`.
 
