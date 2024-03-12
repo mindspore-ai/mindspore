@@ -33,37 +33,6 @@ DecomposeDim DecomposeDim::Decompose(int64_t dim, const std::vector<int64_t> &sr
   return decompose;
 }
 
-// AnfNodePtr CreateMulOp(const FuncGraphPtr &func_graph, const std::vector<AnfNodePtr> &inputs) {
-//   std::vector<AnfNodePtr> mul_input{NewValueNode(prim::kMul)};
-//   auto prim = std::make_shared<Primitive>("Mul");
-//   auto mul_op = func_graph->NewCNode(inputs);
-//   return mul_op;
-// }
-
-bool DecomposeDim::CreateShapeTracingGraph(const AssembledDynamicDimsMapping &mapping, const FuncGraphPtr &func_graph,
-                                           std::vector<AnfNodePtr> *anf_nodes) {
-  //   size_t arr_size = this->prime().size();
-  //   if (arr_size == 1) {
-  //     if (mapping.find(this->prime()[0]) == mapping.end()) {
-  //       return false;
-  //     }
-  //     // Have to consider dynamic axis consists of a dyn aix and a constant value.
-  //     anf_nodes.emplace_back(mapping.at(this->prime()[0]));
-  //     return true;
-  //   }
-  //   AnfNodePtr last_mul;
-  //   for (size_t i = 0; i < arr_size; ++i) {
-  //     auto get_shape_dim_op = mapping.at(this->prime()[i]);
-  //     if (i != 0) {
-  //       // no need to create mul
-  //       auto new_mul = CreateMulOp(func_graph, {last_mul, get_shape_dim_op});
-  //       last_mul = new_mul;
-  //     }
-  //   }
-  //
-  return true;
-}
-
 void get_prime_table(Shape *prime_arr, const size_t arr_size) {
   std::vector<bool> is_composite_num(arr_size, false);
   for (size_t i = 2; i <= arr_size; i++) {
