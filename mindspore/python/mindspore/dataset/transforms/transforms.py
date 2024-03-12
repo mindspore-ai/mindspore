@@ -262,50 +262,73 @@ class Compose(CompoundOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.transforms as transforms
         >>> import mindspore.dataset.vision as vision
+        >>> from mindspore.dataset.transforms import Relational
         >>>
+        >>> # Use the transform in dataset pipeline mode
         >>> # create a dataset that reads all files in dataset_dir with 8 threads
-        >>> image_folder_dataset_dir = "/path/to/image_folder_dataset_directory"
-        >>> image_folder_dataset = ds.ImageFolderDataset(image_folder_dataset_dir, num_parallel_workers=8)
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
         >>>
         >>> # create a list of transformations to be applied to the image data
-        >>> transform = transforms.Compose([vision.Decode(to_pil=True),
-        ...                                vision.RandomHorizontalFlip(0.5),
+        >>> transform = transforms.Compose([vision.RandomHorizontalFlip(0.5),
         ...                                vision.ToTensor(),
         ...                                vision.Normalize((0.491, 0.482, 0.447), (0.247, 0.243, 0.262), is_hwc=False),
         ...                                vision.RandomErasing()])
         >>> # apply the transform to the dataset through dataset.map function
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transform, input_columns=["image"])
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transform, input_columns=["image"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (3, 100, 100) float32
         >>>
         >>> # Compose is also be invoked implicitly, by just passing in a list of ops
         >>> # the above example then becomes:
-        >>> transforms_list = [vision.Decode(to_pil=True),
-        ...                    vision.RandomHorizontalFlip(0.5),
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> transforms_list = [vision.RandomHorizontalFlip(0.5),
         ...                    vision.ToTensor(),
         ...                    vision.Normalize((0.491, 0.482, 0.447), (0.247, 0.243, 0.262), is_hwc=False),
         ...                    vision.RandomErasing()]
         >>>
         >>> # apply the transform to the dataset through dataset.map()
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list, input_columns=["image"])
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (3, 100, 100) float32
         >>>
         >>> # Certain C++ and Python ops can be combined, but not all of them
         >>> # An example of combined operations
         >>> arr = [0, 1]
-        >>> dataset = ds.NumpySlicesDataset(arr, column_names=["cols"], shuffle=False)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(arr, column_names=["cols"], shuffle=False)
         >>> transformed_list = [transforms.OneHot(2),
         ...                     transforms.Mask(transforms.Relational.EQ, 1)]
-        >>> dataset = dataset.map(operations=transformed_list, input_columns=["cols"])
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transformed_list, input_columns=["cols"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["cols"].shape, item["cols"].dtype)
+        ...     break
+        (2,) bool
         >>>
         >>> # Here is an example of mixing vision ops
-        >>> import numpy as np
-        >>> op_list=[vision.Decode(),
-        ...          vision.Resize((224, 244)),
+        >>> op_list=[vision.Resize((224, 244)),
         ...          vision.ToPIL(),
         ...          np.array, # need to convert PIL image to a NumPy array to pass it to C++ operation
         ...          vision.Resize((24, 24))]
-        >>> image_folder_dataset = image_folder_dataset.map(operations=op_list,  input_columns=["image"])
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=op_list,  input_columns=["image"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (24, 24, 3) uint8
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.array([1, 2, 3])
+        >>> output = transforms.Compose([transforms.Fill(10), transforms.Mask(Relational.EQ, 100)])(data)
+        >>> print(output.shape, output.dtype)
+        (3,) bool
     """
 
     @check_random_transform_ops
@@ -417,17 +440,29 @@ class Concatenate(TensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.transforms as transforms
-        >>> import numpy as np
         >>>
+        >>> # Use the transform in dataset pipeline mode
         >>> # concatenate string
-        >>> prepend_tensor = np.array(["dw", "df"], dtype='S')
-        >>> append_tensor = np.array(["dwsdf", "df"], dtype='S')
+        >>> prepend_tensor = np.array(["dw", "df"])
+        >>> append_tensor = np.array(["dwsdf", "df"])
         >>> concatenate_op = transforms.Concatenate(0, prepend_tensor, append_tensor)
         >>> data = [["This","is","a","string"]]
-        >>> dataset = ds.NumpySlicesDataset(data)
-        >>> dataset = dataset.map(operations=concatenate_op)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data)
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=concatenate_op)
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["column_0"].shape, item["column_0"].dtype)
+        (8,) <U6
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.array([1, 2, 3])
+        >>> prepend_tensor = np.array([10, 20])
+        >>> append_tensor = np.array([100])
+        >>> output = transforms.Concatenate(0, prepend_tensor, append_tensor)(data)
+        >>> print(output.shape, output.dtype)
+        (6,) int64
     """
 
     @check_concat_type
@@ -453,8 +488,11 @@ class Duplicate(TensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.transforms as transforms
+        >>>
+        >>> # Use the transform in dataset pipeline mode
         >>> # Data before
         >>> # |  x      |
         >>> # +---------+
@@ -465,11 +503,22 @@ class Duplicate(TensorOperation):
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms.Duplicate(),
         ...                                                 input_columns=["x"],
         ...                                                 output_columns=["x", "y"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["x"].shape, item["x"].dtype)
+        ...     print(item["y"].shape, item["y"].dtype)
+        (3,) int64
+        (3,) int64
         >>> # Data after
         >>> # |  x      |  y      |
         >>> # +---------+---------+
         >>> # | [1,2,3] | [1,2,3] |
         >>> # +---------+---------+
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = [1, 2, 3]
+        >>> output = transforms.Duplicate()(data)
+        >>> print(np.array(output).shape, np.array(output).dtype)
+        (2, 3) int64
     """
 
     def __init__(self):
@@ -497,10 +546,11 @@ class Fill(TensorOperation):
 
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.transforms as transforms
-        >>> import numpy as np
         >>>
+        >>> # Use the transform in dataset pipeline mode
         >>> # generate a 1D integer numpy array from 0 to 4
         >>> def generator_1d():
         ...     for i in range(5):
@@ -509,7 +559,16 @@ class Fill(TensorOperation):
         >>> # [[0], [1], [2], [3], [4]]
         >>> fill_op = transforms.Fill(3)
         >>> generator_dataset = generator_dataset.map(operations=fill_op)
-        >>> # [[3], [3], [3], [3], [3]]
+        >>> for item in generator_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["col1"].shape, item["col1"].dtype)
+        ...     break
+        (1,) int64
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.array([1, 2, 3])
+        >>> output = transforms.Fill(100)(data)
+        >>> print(output.shape, output.dtype)
+        (3,) int64
     """
 
     @check_fill_value
@@ -546,6 +605,8 @@ class Mask(TensorOperation):
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.transforms as transforms
         >>> from mindspore.dataset.transforms import Relational
+        >>>
+        >>> # Use the transform in dataset pipeline mode
         >>> # Data before
         >>> # |  col   |
         >>> # +---------+
@@ -554,11 +615,20 @@ class Mask(TensorOperation):
         >>> data = [[1, 2, 3]]
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["col"])
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms.Mask(Relational.EQ, 2))
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["col"].shape, item["col"].dtype)
+        (3,) bool
         >>> # Data after
         >>> # |       col         |
         >>> # +--------------------+
         >>> # | [False,True,False] |
         >>> # +--------------------+
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = [1, 2, 3]
+        >>> output = transforms.Mask(Relational.EQ, 2)(data)
+        >>> print(output.shape, output.dtype)
+        (3,) bool
     """
 
     @check_mask_op_new
@@ -599,15 +669,27 @@ class OneHot(TensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.transforms as transforms
         >>>
-        >>> mnist_dataset_dir = "/path/to/mnist_dataset_directory"
-        >>> mnist_dataset = ds.MnistDataset(dataset_dir=mnist_dataset_dir)
+        >>> # Use the transform in dataset pipeline mode
+        >>> data = [1, 2, 3, 4, 5, 6, 7, 8]
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["label"])
         >>>
         >>> # Assume that dataset has 10 classes, thus the label ranges from 0 to 9
         >>> onehot_op = transforms.OneHot(num_classes=10)
-        >>> mnist_dataset = mnist_dataset.map(operations=onehot_op, input_columns=["label"])
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=onehot_op, input_columns=["label"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["label"].shape, item["label"].dtype)
+        ...     break
+        (10,) int64
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.array([1, 2, 3])
+        >>> output = transforms.OneHot(num_classes=5, smoothing_rate=0)(data)
+        >>> print(output.shape, output.dtype)
+        (3, 5) int64
     """
 
     @check_one_hot_op
@@ -643,6 +725,8 @@ class PadEnd(TensorOperation):
     Examples:
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.transforms as transforms
+        >>>
+        >>> # Use the transform in dataset pipeline mode
         >>> # Data before
         >>> # |   col   |
         >>> # +---------+
@@ -650,13 +734,22 @@ class PadEnd(TensorOperation):
         >>> # +---------|
         >>> data = [[1, 2, 3]]
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["col"])
-        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms.PadEnd(pad_shape=[4],
-        ...                                                                                pad_value=10))
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms.PadEnd(pad_shape=[4], pad_value=10))
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["col"].shape, item["col"].dtype)
+        ...     break
+        (4,) int64
         >>> # Data after
         >>> # |    col     |
         >>> # +------------+
         >>> # | [1,2,3,10] |
         >>> # +------------|
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = [1, 2, 3]
+        >>> output = transforms.PadEnd(pad_shape=[4], pad_value=10)(data)
+        >>> print(output.shape, output.dtype)
+        (4,) int64
     """
 
     @check_pad_end
@@ -728,20 +821,33 @@ class RandomApply(CompoundOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.transforms as transforms
         >>> import mindspore.dataset.vision as vision
         >>> from mindspore.dataset.transforms import Compose
         >>>
+        >>> # Use the transform in dataset pipeline mode
         >>> transforms_list = [vision.RandomHorizontalFlip(0.5),
         ...                    vision.Normalize((0.491, 0.482, 0.447), (0.247, 0.243, 0.262)),
         ...                    vision.RandomErasing()]
-        >>> composed_transform = Compose([vision.Decode(to_pil=True),
-        ...                               transforms.RandomApply(transforms_list, prob=0.6),
+        >>> composed_transform = Compose([transforms.RandomApply(transforms_list, prob=0.6),
         ...                               vision.ToTensor()])
         >>>
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> image_folder_dataset = image_folder_dataset.map(operations=composed_transform, input_columns=["image"])
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=composed_transform, input_columns=["image"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (3, 100, 100) float32
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+        >>> transform = [vision.HsvToRgb(is_hwc=True), vision.Crop((0, 0), 10), vision.ToTensor()]
+        >>> output = transforms.RandomApply(transform, prob=1.0)(data)
+        >>> print(output.shape, output.dtype)
+        (3, 10, 10) float32
     """
 
     @check_random_transform_ops
@@ -783,21 +889,32 @@ class RandomChoice(CompoundOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.transforms as transforms
         >>> import mindspore.dataset.vision as vision
         >>> from mindspore.dataset.transforms import Compose
         >>>
+        >>> # Use the transform in dataset pipeline mode
         >>> transforms_list = [vision.RandomHorizontalFlip(0.5),
         ...                    vision.Normalize((0.491, 0.482, 0.447), (0.247, 0.243, 0.262)),
         ...                    vision.RandomErasing()]
-        >>> composed_transform = Compose([vision.Decode(),
-        ...                               transforms.RandomChoice(transforms_list),
+        >>> composed_transform = Compose([transforms.RandomChoice(transforms_list),
         ...                               vision.ToTensor()])
         >>>
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> image_folder_dataset = image_folder_dataset.map(operations=composed_transform, input_columns=["image"])
-
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=composed_transform, input_columns=["image"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (3, 100, 100) float32
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.array([1, 2, 3])
+        >>> output = transforms.RandomChoice([transforms.Fill(100)])(data)
+        >>> print(output.shape, output.dtype)
+        (3,) int64
     """
 
     @check_random_transform_ops
@@ -839,20 +956,32 @@ class RandomOrder(PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
-        >>> import mindspore.dataset.vision as vision
         >>> import mindspore.dataset.transforms as transforms
-        >>> from mindspore.dataset.transforms import Compose
+        >>> import mindspore.dataset.vision as vision
+        >>> from mindspore.dataset.transforms import Compose, Relational
         >>>
+        >>> # Use the transform in dataset pipeline mode
         >>> transforms_list = [vision.RandomHorizontalFlip(0.5),
         ...                    vision.Normalize((0.491, 0.482, 0.447), (0.247, 0.243, 0.262)),
         ...                    vision.RandomErasing()]
-        >>> composed_transform = Compose([vision.Decode(to_pil=False),
-        ...                               transforms.RandomOrder(transforms_list),
+        >>> composed_transform = Compose([transforms.RandomOrder(transforms_list),
         ...                               vision.ToTensor()])
         >>>
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> image_folder_dataset = image_folder_dataset.map(operations=composed_transform, input_columns=["image"])
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=composed_transform, input_columns=["image"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (3, 100, 100) float32
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.array([1, 2, 3])
+        >>> output = transforms.RandomOrder([transforms.Mask(Relational.EQ, 100)])(data)
+        >>> print(output.shape, output.dtype)
+        (3,) bool
     """
 
     @check_random_transform_ops
@@ -955,8 +1084,11 @@ class Slice(TensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.transforms as transforms
+        >>>
+        >>> # Use the transform in dataset pipeline mode
         >>> # Data before
         >>> # |   col   |
         >>> # +---------+
@@ -966,11 +1098,21 @@ class Slice(TensorOperation):
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["col"])
         >>> # slice indices 1 and 2 only
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms.Slice(slice(1,3)))
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["col"].shape, item["col"].dtype)
+        ...     break
+        (2,) int64
         >>> # Data after
         >>> # |   col   |
         >>> # +---------+
         >>> # |  [2,3]  |
         >>> # +---------|
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.array([1, 2, 3])
+        >>> output = transforms.Slice(slice(1, 3))(data)
+        >>> print(output.shape, output.dtype)
+        (2,) int64
     """
 
     @check_slice_op
@@ -1004,19 +1146,30 @@ class TypeCast(TensorOperation):
         ``CPU`` ``GPU`` ``Ascend``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.transforms as transforms
-        >>> import numpy as np
         >>> from mindspore import dtype as mstype
         >>>
+        >>> # Use the transform in dataset pipeline mode
         >>> # Generate 1d int numpy array from 0 - 63
         >>> def generator_1d():
         ...     for i in range(64):
         ...         yield (np.array([i]),)
         >>>
-        >>> dataset = ds.GeneratorDataset(generator_1d, column_names='col')
+        >>> generator_dataset = ds.GeneratorDataset(generator_1d, column_names='col')
         >>> type_cast_op = transforms.TypeCast(mstype.int32)
-        >>> dataset = dataset.map(operations=type_cast_op)
+        >>> generator_dataset = generator_dataset.map(operations=type_cast_op)
+        >>> for item in generator_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["col"].shape, item["col"].dtype)
+        ...     break
+        (1,) int32
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.array([2.71606445312564e-03, 6.3476562564e-03]).astype(np.float64)
+        >>> output = transforms.TypeCast(np.float16)(data)
+        >>> print(output.shape, output.dtype)
+        (2,) float16
     """
 
     @check_type_cast
@@ -1054,23 +1207,39 @@ class Unique(TensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.transforms as transforms
+        >>>
+        >>> # Use the transform in dataset pipeline mode
         >>> # Data before
         >>> # |  x                 |
         >>> # +--------------------+
         >>> # | [[0,1,2], [1,2,3]] |
         >>> # +--------------------+
         >>> data = [[[0,1,2], [1,2,3]]]
-        >>> dataset = ds.NumpySlicesDataset(data, ["x"])
-        >>> dataset = dataset.map(operations=transforms.Unique(),
-        ...                       input_columns=["x"],
-        ...                       output_columns=["x", "y", "z"])
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["x"])
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms.Unique(),
+        ...                                                 input_columns=["x"],
+        ...                                                 output_columns=["x", "y", "z"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["x"].shape, item["y"].shape, item["z"].shape)
+        ...     print(item["x"].dtype, item["y"].dtype, item["z"].dtype)
+        (4,) (6,) (4,)
+        int64 int32 int32
         >>> # Data after
         >>> # |  x      |  y              |z        |
         >>> # +---------+-----------------+---------+
         >>> # | [0,1,2,3] | [0,1,2,1,2,3] | [1,2,2,1]
         >>> # +---------+-----------------+---------+
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = [[0, -1, -2, -1, 2], [2, -0, 2, 1, -3]]
+        >>> output = transforms.Unique()(data)
+        >>> print(output[0].shape, output[1].shape, output[2].shape)
+        (6,) (10,) (6,)
+        >>> print(output[0].dtype, output[1].dtype, output[2].dtype)
+        int64 int32 int32
     """
 
     def __init__(self):
