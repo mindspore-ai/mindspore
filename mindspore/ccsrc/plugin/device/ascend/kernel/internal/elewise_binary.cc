@@ -91,6 +91,19 @@ class InternalEqual : public ElewiseBinary {
   }
 };
 
+class InternalNotEqual : public ElewiseBinary {
+ public:
+  InternalNotEqual() : ElewiseBinary("NotEqual") {}
+  ~InternalNotEqual() = default;
+
+ protected:
+  void SetComputeType(internal::OpParamPtr param_ptr) override {
+    param_ptr->opId = internal::OpId::NotEqual;
+    return;
+  }
+};
+MS_INTERNAL_KERNEL_FACTORY_REG(NotEqual, InternalNotEqual);
+
 class InternalLess : public ElewiseBinary {
  public:
   InternalLess() : ElewiseBinary("Less") {}
