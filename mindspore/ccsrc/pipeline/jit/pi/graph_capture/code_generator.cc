@@ -560,13 +560,11 @@ void CodeGenerator::LoadValue(ValueNode *node) {
     }
     return;
   }
-
   int opcode = node->GetOpcode();
   if (opcode == LOAD_DEREF) {
     NewInstr(opcode, node->GetOparg());
     return;
   }
-
   std::string key = node->GetName();
   if (opcode == LOAD_GLOBAL) {
     PyObject *globals = node->GetGraph() ? node->GetGraph()->GetGlobals().ptr() : nullptr;
@@ -807,49 +805,6 @@ void CodeBreakGenerator::RestoreLocals(CodeGenerator *code_gen, bool only_load) 
   code_gen->AddInstrs(std::move(st));
 }
 
-void CodeBreakGenerator::CallSideEffectCode(CodeGenerator *code_gen, Graph *graph) {
-  for (auto &item : graph->GetSideEffectNodes()) {
-    if (item->GetOpcode() == BUILD_LIST) {
-      code_gen->NewInstr(LOAD_FAST, 0);
-      code_gen->LoadValue(item);
-      code_gen->NewInstr(LOAD_CONST, 0);
-      code_gen->GetCode().co_code.back()->set_cnst(py::none());
-      code_gen->NewInstr(LOAD_CONST, 0);
-      code_gen->GetCode().co_code.back()->set_cnst(py::none());
-      code_gen->NewInstr(BUILD_SLICE, 0);
-      code_gen->NewInstr(STORE_SUBSCR, 0);
-      interpret_.outputs.erase(std::remove(interpret_.outputs.begin(), interpret_.outputs.end(), item),
-                               interpret_.outputs.end());
-    } else if (item->GetOpcode() == CALL_FUNCTION) {
-      for (auto input : item->getInputs()) {
-        if (input->GetOpcode() == CALL_FUNCTION) {
-          continue;
-        }
-        code_gen->LoadValue(input);
-        interpret_.outputs.erase(std::remove(interpret_.outputs.begin(), interpret_.outputs.end(), input),
-                                 interpret_.outputs.end());
-      }
-      code_gen->NewInstr(item->GetOpcode(), item->GetOparg());
-    }
-  }
-
-  if (graph->GetSideEffectReplacedList().size() != 0) {
-    for (auto item : graph->GetSideEffectReplacedList()) {
-      interpret_.outputs.erase(std::remove(interpret_.outputs.begin(), interpret_.outputs.end(), item),
-                               interpret_.outputs.end());
-    }
-  }
-  for (auto &item : graph->GetGlobalList()) {
-    if (item.getNode() != nullptr) {
-      code_gen->LoadValue(item.getNode());
-      code_gen->GetCode().co_code.back()->set_name(item.getName());
-      code_gen->NewInstr(STORE_GLOBAL, 0);
-    } else {
-      code_gen->NewInstr(DELETE_GLOBAL, 0);
-    }
-  }
-}
-
 py::object CodeBreakGenerator::MakeUntrackedCode(int untracked_bci, int untracked_stack_effect) const {
   const int argc = interpret_.outputs.size() + untracked_stack_effect;
   int stack_count = argc - alive_locals_.size();
@@ -1068,8 +1023,11 @@ py::object CodeBreakGenerator::MakeCode(bool make_graph, Graph *graph) {
   FixInterpretOuput(&code_gen);
   // ... handle side effects
   if (make_graph == false) {
-    CallSideEffectCode(&code_gen, graph);
+    graph->GetSideEffect()->RestoreSideEffect(&code_gen);
+    auto vec = graph->GetSideEffect()->CollectSideEffectAliveNodes();
+    interpret_.outputs.resize(interpret_.outputs.size() - vec.size());
   }
+
   CallUntrackedCode(&code_gen);
   MakeReturn(&code_gen);
 
@@ -1146,35 +1104,11 @@ void CodeBreakGenerator::Init(const Graph *graph, const GraphAnalyzer::CapturedI
   cfg_ = graph->GetCFG().get();
   std::vector<ValueNode *> alive_nodes = graph->CollectAliveNode(break_bci_, &alive_locals_);
 
-  for (auto item : graph->GetSideEffectNodes()) {
-    if (item->GetOpcode() == BUILD_LIST) {
-      alive_nodes.push_back(item);
-    } else if (item->GetOpcode() == CALL_FUNCTION) {
-      if (item->getInputs().size() != 0) {
-        for (auto input_item : item->getInputs()) {
-          if (input_item->GetOpcode() == CALL_FUNCTION) {
-            continue;
-          }
-          alive_nodes.push_back(input_item);
-        }
-      }
-    }
-  }
-  if (graph->GetSideEffectReplacedList().size() != 0) {
-    auto replace_list = graph->GetSideEffectReplacedList();
-    alive_nodes.insert(alive_nodes.end(), replace_list.begin(), replace_list.end());
-  }
-
-  for (auto item : graph->GetGlobalList()) {
-    if (item.getNode() != nullptr) {
-      alive_nodes.push_back(item.getNode());
-    }
-  }
-
   interpret_.inputs = graph->GetFrame(0).GetLocals();
   interpret_.outputs = std::move(alive_nodes);
   interpret_.operations = info->ordered_escaped_locals;
-
+  auto vec = graph->GetSideEffect()->CollectSideEffectAliveNodes();
+  interpret_.outputs.insert(interpret_.outputs.end(), vec.begin(), vec.end());
   captured_.inputs = std::vector<ValueNode *>(info->captured_locals.inputs.begin(), info->captured_locals.inputs.end());
   captured_.outputs = CollectGraphOutputs(info->escaped_locals, interpret_.outputs);
   captured_.operations = info->captured_locals.order;

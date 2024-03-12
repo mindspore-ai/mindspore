@@ -210,9 +210,6 @@ class CodeBreakGenerator {
 
   void FixInterpretOuput(CodeGenerator *code_gen);
 
-  // make call operations of side effect bytecode
-  void CallSideEffectCode(CodeGenerator *code_gen, Graph *graph);
-
   // make function of untracked bytecode, build restore frame operations of untracked bytecode
   py::object MakeUntrackedCode(int untracked_bci, int untracked_stack_effect) const;
 

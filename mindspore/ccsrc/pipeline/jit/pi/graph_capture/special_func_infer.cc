@@ -968,7 +968,6 @@ bool InferListAppend(CallNode *call_node) {
 }
 
 static bool InferPopAsGet(CallNode *call_node) {
-  Graph *sub_graph = call_node->GetSubGraph();
   py::object func = call_node->input(0)->GetVobj()->GetPyObject();
   PyObject *fPtr = func.ptr();
   if (func.ptr() == nullptr || PyMethod_Check(fPtr)) {
@@ -982,22 +981,11 @@ static bool InferPopAsGet(CallNode *call_node) {
   if (pair.first.ptr() == nullptr) {
     return SetCallResType<AObject::kTypeAnyValue>(call_node);
   }
-  func = py::cast<py::object>(PyMethod_GET_SELF(func.ptr())).attr("get");
   PyObject *value = PyObject_Call(func.ptr(), pair.first.ptr(), pair.second.ptr());
-  if (PyErr_Occurred()) {
-    MS_LOG(ERROR) << "got an error " << py::error_already_set().what() << " at call the "
-                  << std::string(py::str(func.ptr()));
-    PyErr_Clear();
-  }
   call_node->SetVobj(AObject::Convert(value));
   call_node->SetSubGraph(nullptr);
-  Py_XDECREF(value);
-  // guard value node call->
-  if (!sub_graph->GuardValueNode(call_node)) {
-    return false;
-  }
-  call_node->GetGraph()->GetSideEffect()->setVariableMaps(call_node, nullptr);
-  return CallNodeReturnConst(call_node, sub_graph, call_node->GetVobj());
+  call_node->GetGraph()->GetSideEffect()->SetSideEffectNode(call_node);
+  return false;
 }
 
 // special function list

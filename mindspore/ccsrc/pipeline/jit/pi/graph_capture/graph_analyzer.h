@@ -74,6 +74,7 @@ class GraphAnalyzer {
   bool AnalyzeRecursive(Graph *g);
   bool AnalyzeCall(CallNode *);
   bool TryToCapture(AbstractNode *value);
+  bool HandleSideEffectNodeForCapture(AbstractNode *capture_node);
   bool AddToCaptured(ValueNode *value);
   bool HandleCallableToGraph(AObject *f);
   bool ProduceInterpretValue(ValueNode *v);

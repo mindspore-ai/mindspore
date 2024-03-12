@@ -14,8 +14,19 @@
 ''' test resolve of side effect in pijit , by break_count_ judge is support side effect handing'''
 import pytest
 from mindspore import jit, Tensor, context
+from mindspore.nn import Cell, ReLU
 from mindspore._c_expression import get_code_extra
 import dis
+
+class NetAssign0002(Cell):
+
+    def __init__(self):
+        super().__init__()
+        self.relu = ReLU()
+
+    def construct(self, x, y):
+        x[1] = y
+        return x
 
 tmp = 1
 
@@ -34,7 +45,13 @@ def test_store_subscr_side_effect_1():
         return x
     jit(fn=func, mode="PIJit")([Tensor([1]), Tensor([1])])
     jcr = get_code_extra(func)
+    new_code = jcr["code"]["compiled_code_"]
+    for i in dis.get_instructions(new_code):
+        if i.opname == "STORE_SUBSCR":
+            flag = True
+    assert flag
     context.set_context(mode=context.PYNATIVE_MODE)
+
     assert jcr["break_count_"] == 0
 
 
@@ -42,24 +59,6 @@ def test_store_subscr_side_effect_1():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_store_subscr_side_effect_2():
-    """
-    Feature: Test STORE SUBSCR + OPERATION
-    Description: wipe out graph_break in store subscr has args
-    Expectation: no exception
-    """
-    def func(x):
-        x[0] += 1
-        return x
-    jit(fn=func, mode="PIJit")([Tensor([1]), Tensor([1])])
-    jcr = get_code_extra(func)
-    context.set_context(mode=context.PYNATIVE_MODE)
-    assert jcr["break_count_"] == 0
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_store_subscr_side_effect_3():
     """
     Feature: STORE_SUBSCR + NO_ARGS + OPERATION
     Description: wipe out graph_break in store subscr no args
@@ -77,7 +76,7 @@ def test_store_subscr_side_effect_3():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_store_subscr_side_effect_4():
+def test_del_subscr_side_effect_3():
     """
     Feature: DEL_SUBSCR + NO_ARGS + OPERATION
     Description: wipe out graph_break in store subscr no args
@@ -100,7 +99,7 @@ def test_store_subscr_side_effect_4():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_store_subscr_side_effect_5():
+def test_dict_pop_side_effect_4():
     """
     Feature: DICT POP side effect
     Description: wipe out graph_break in dict pop no args
@@ -118,7 +117,24 @@ def test_store_subscr_side_effect_5():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_store_subscr_side_effect_6():
+def test_dict_pop_side_effect_5():
+    """
+    Feature: DICT POP side effect 2
+    Description: wipe out graph_break in dict pop as args
+    Expectation: no exception
+    """
+    def func(d):
+        d.pop("b")
+        return d
+    jit(fn=func, mode="PIJit")({"a": Tensor([1, 2]), "b": Tensor([1, 2])})
+    jcr = get_code_extra(func)
+    context.set_context(mode=context.PYNATIVE_MODE)
+    assert jcr["break_count_"] == 0
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_store_global_side_effect_6():
     """
     Feature: STORE_GLOBAL
     Description: wipe out graph_break in store global no args
@@ -137,7 +153,7 @@ def test_store_subscr_side_effect_6():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_store_subscr_side_effect_7():
+def test_del_global_side_effect_7():
     """
     Feature: DEL GLOBAL side effect
     Description: wipe out graph_break in dict pop no args
@@ -147,8 +163,31 @@ def test_store_subscr_side_effect_7():
         global tmp
         tmp = Tensor([1])
         tmp *= 2
+        del tmp
         return tmp
     jit(fn=func, mode="PIJit")
     jcr = get_code_extra(func)
     context.set_context(mode=context.PYNATIVE_MODE)
+    assert jcr["break_count_"] == 0
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_fix_bug_store_subscr_side_effect_1():
+    """
+    Feature: STORE SUBSCR + FIX BUGS
+    Description: wipe out graph_break in store subscr has args
+    Expectation: no exception
+    """
+    def func():
+        net = NetAssign0002()
+        x = [Tensor([1, 2]), Tensor([2, 3])]
+        y = Tensor([5, 6])
+        out = net(x, y)
+        print(out)
+        return x
+
+    jit(fn=func, mode="PIJit")
+    jcr = get_code_extra(func)
+
     assert jcr["break_count_"] == 0

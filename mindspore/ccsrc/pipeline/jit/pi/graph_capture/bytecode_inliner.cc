@@ -145,22 +145,12 @@ void BytecodeInliner::Rebuild() {
   }
 
   if (graph_->Config().GetBoolConfig(GraphJitConfig::kEnableEliminateUnusedOperation)) {
-    for (auto item : graph_->GetSideEffectNodes()) {
-      if (item->GetOpcode() == BUILD_LIST) {
-        ns.outputs.push_back(item);
-      }
-    }
-    for (auto replace_map : graph_->GetSideEffectReplacedMap()) {
-      ns.outputs.push_back(replace_map.second);
-      for (auto item : replace_map.second->getInputs()) {
-        ns.outputs.push_back(item);
-      }
-    }
     // erase dead local between inline and code rebuild
     EraseDeadLocal(ns.outputs);
     EliminateClosureSideEffect();
   }
   Rebuild(&cg);
+
   if (last_frame_ != nullptr) {
     std::for_each(ns.outputs.begin(), ns.outputs.end(), [&cg](ValueNode *i) { cg.LoadValue(i); });
     std::for_each(alive_locals.rbegin(), alive_locals.rend(), [&cg](int i) { cg.NewInstr(STORE_FAST, i); });
@@ -193,19 +183,9 @@ void BytecodeInliner::CollectTracedNodes(Graph *graph) {
     std::copy(call_node->GetParams().begin(), call_node->GetParams().end(), std::back_inserter(traced_nodes_));
     CollectTracedNodes(call_node->GetSubGraph());
   }
-  // collect side_effect_nodes // graph_ is top graph
-
-  if (graph->GetSideEffect() != nullptr) {
-    graph_->GetSideEffect()->ReprocessVariableMutationMaps();
-
-    for (auto side_effect_item : graph->GetSideEffect()->GetSideEffectInstrs()) {
-      graph_->SetSideEffectNode(side_effect_item.first);
-    }
-    for (auto side_effect_item : graph->GetSideEffect()->GetReplaceMaps()) {
-      graph_->SetSideEffectReplacedMap(side_effect_item.first, side_effect_item.second);
-    }
-    for (auto item : graph->GetSideEffect()->GetGlobalList()) {
-      graph_->SetGlobalList(item);
+  if (graph != graph_) {
+    if (graph->GetSideEffect() != nullptr) {
+      graph_->GetSideEffect()->Merge(graph->GetSideEffect());
     }
   }
 }
