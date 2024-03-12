@@ -173,7 +173,7 @@ class MatMulInfer : public abstract::OpInferBase {
     (void)types.emplace("x", input_args[kInputIndex0]->BuildType());
     (void)types.emplace("y", input_args[kInputIndex1]->BuildType());
     (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, primitive->name());
-    if (x_type->type_id() == TypeId::kNumberTypeInt8) {
+    if (x_type->type_id() == TypeId::kNumberTypeInt8 && device_target == kAscendDevice) {
       return kInt32;
     }
     return x_type;
