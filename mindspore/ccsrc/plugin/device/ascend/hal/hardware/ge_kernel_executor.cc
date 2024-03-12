@@ -34,6 +34,9 @@
 #include "plugin/device/ascend/kernel/pyboost/customize/customize_copy.h"
 #include "plugin/device/ascend/kernel/internal/internal_kernel_build.h"
 #include "kernel/graph_kernel/kernel_packet/kernel_packet_kernel_mod.h"
+#include "plugin/device/ascend/hal/device/profiling/profiling_utils.h"
+#include "include/backend/debug/profiler/profiling.h"
+
 #ifdef ENABLE_DVM
 #include "plugin/device/ascend/kernel/dvm/dvm_kernel_build.h"
 #endif
@@ -1062,11 +1065,22 @@ bool GeKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<KernelT
   } else {
     MS_EXCEPTION_IF_NULL(kernel_mod);
     MS_EXCEPTION_IF_NULL(stream);
+
+    auto ascend_profiler = profiler::Profiler::GetInstance(kAscendDevice);
+    MS_EXCEPTION_IF_NULL(ascend_profiler);
+    auto enable_profiler_flag = ascend_profiler->GetEnableFlag();
+    if (enable_profiler_flag) {
+      ProfilingUtils::InitReportNode(kernel, true);
+      ProfilingUtils::RecordLaunchTaskBegin(kernel->fullname_with_scope(), true);
+    }
     bool ret = kernel_mod->Launch(inputs, workspace, outputs, stream);
     if (!ret) {
       MS_LOG(ERROR) << "Launch kernel failed, kernel full name: " << kernel->fullname_with_scope();
       res_manager_->ResetStreamAndCtx();
       return false;
+    }
+    if (enable_profiler_flag) {
+      ProfilingUtils::ReportTask(kernel->fullname_with_scope(), true);
     }
   }
   profiler::ascend::ProfilingFrameworkData::RecordGETask(kernel->fullname_with_scope());
