@@ -91,6 +91,7 @@ constexpr auto kDelRedundantTranspose = "DeleteRedundantTranspose";
 constexpr auto kRemoveUnusedAddNodePass = "RemoveUnusedAddNodePass";
 constexpr auto kCustomOpFlashAttentionFusionForCustom = "FlashAttentionFusionForCustom";
 constexpr auto kCustomOpFlashAttentionFusion = "FlashAttentionFusion";
+constexpr auto kCustomOpGeGluV2Fusion = "GeGluV2Fusion";
 constexpr auto kScalarOpPass = "ScalarOpPass";
 constexpr auto kMakeListPass = "MakeListPass";
 constexpr auto kFuncType = "func_type";
@@ -611,6 +612,13 @@ STATUS AclPassImpl::PreProcGraph(const FuncGraphPtr &func_graph) {
           MS_LOG(ERROR) << kCustomOpFlashAttentionFusionForCustom << " op pass failed.";
           return lite::RET_ERROR;
         }
+      }
+    }
+    if (find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "All") != plugin_custom_ops.end()) {
+      MS_LOG(INFO) << "using GeGluV2";
+      if (!lite::RunOptimizerPass(func_graph, {kCustomOpGeGluV2Fusion})) {
+        MS_LOG(ERROR) << kCustomOpGeGluV2Fusion << " op pass failed.";
+        return lite::RET_ERROR;
       }
     }
   }

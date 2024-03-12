@@ -19,6 +19,10 @@
 #include "inc/ops/experiment_ops.h"
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
 
+// GeGluV2
+DECLARE_OP_ADAPTER(GeGluV2)
+DECLARE_OP_USE_OUTPUT(GeGluV2)
+
 // BlendFaceBgPartOne
 DECLARE_OP_ADAPTER(BlendFaceBgPartOne)
 DECLARE_OP_USE_OUTPUT(BlendFaceBgPartOne)
