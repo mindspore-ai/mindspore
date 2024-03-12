@@ -1653,6 +1653,11 @@ std::vector<ActionItem> VmPipeline(const ResourcePtr &resource) {
     }
 #endif
   }
+
+  if (common::GetEnv(kSimulationLevel) == kSimulationLevelCompileGraph) {
+    return actions;
+  }
+
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
 #ifndef WITH_BACKEND
