@@ -27,6 +27,7 @@
 #include "ops/structure_ops.h"
 #include "include/common/utils/convert_utils_py.h"
 #include "ir/tensor.h"
+#include "ir/anf.h"
 
 namespace mindspore {
 namespace {
@@ -466,6 +467,32 @@ FuncGraphPtr FuncGraphBuilder::graph() {
   graph_->set_output(output_node);
   has_set_output_ = true;
   return graph_;
+}
+
+void FuncGraphBuilder::ClearNodeAbstract() {
+  if (!has_set_output_) {
+    MS_LOG(INTERNAL_EXCEPTION) << "Graph not generated, can not clear abstract.";
+  }
+  // Clear all node abstract.
+  auto mng = Manage(graph_, false);
+  MS_EXCEPTION_IF_NULL(mng);
+  static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") != "0");
+  for (const auto &node : mng->all_nodes()) {
+    MS_EXCEPTION_IF_NULL(node);
+    const AbstractBasePtr &prev_inferred = node->abstract();
+    auto is_func =
+      node->isa<mindspore::ValueNode>() && prev_inferred != nullptr && prev_inferred->isa<abstract::AbstractFunction>();
+    // Keep previous inferred value for parameter and ValueNode if the inferred value is not AbstractFunction.
+    if (!node->isa<Parameter>() && !is_func) {
+      // Reset tuple/list abstract use flags.
+      if (enable_eliminate_unused_element && prev_inferred != nullptr &&
+          prev_inferred->isa<abstract::AbstractSequence>()) {
+        SetSequenceNodeElementsUseFlags(node, nullptr);
+      }
+      node->set_abstract(nullptr);
+      MS_LOG(DEBUG) << "Abstract of node " << node->DebugString() << " is set to nullptr";
+    }
+  }
 }
 
 py::object FuncGraphBuilder::AddFgCallNode(const FuncGraphPtr &fg, const vector<py::object> &inputs_obj) {

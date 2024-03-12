@@ -1524,6 +1524,7 @@ py::object MindCodeBreakGenerator::MakeCopyCode(const std::string &co_name, int 
   // Compile graph.
   auto b = std::dynamic_pointer_cast<MindGraphBuilder>(builder_);
   MS_EXCEPTION_IF_NULL(b);
+  FGBuilder()->ClearNodeAbstract();
   auto func_graph = FGBuilder()->graph();
   if (func_graph == nullptr) {
     MS_LOG(EXCEPTION) << "Get function graph from function graph builder failed.";

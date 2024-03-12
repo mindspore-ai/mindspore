@@ -111,6 +111,9 @@ class FuncGraphBuilder {
   /// \return The graph constructed.
   FuncGraphPtr graph();
 
+  /// \brief Clear abstract for nodes.
+  void ClearNodeAbstract();
+
   /// \brief Set the name of the func_graph.
   ///
   /// \param[in] name The func_graph name to set.
