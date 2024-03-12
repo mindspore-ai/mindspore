@@ -270,6 +270,7 @@ class BeforeOptARewriter : public BaseRewriter {
         continue;
       }
       auto new_node_and_abs = ConvertParameterDictAbstract(para, para->abstract());
+      new_node_and_abs.first->set_abstract(new_node_and_abs.second);
       if (new_node_and_abs.first == para) {
         continue;
       }
