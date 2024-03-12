@@ -316,6 +316,7 @@ inline size_t DataTypeSize(TypeId type) {
     case kNumberTypeUInt8:
       return sizeof(uint8_t);
     case kNumberTypeFloat16:
+    case kNumberTypeBFloat16:
     case kNumberTypeInt16:
       return sizeof(int16_t);
     case kNumberTypeInt32:

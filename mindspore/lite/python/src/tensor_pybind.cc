@@ -61,6 +61,7 @@ void TensorPyBind(const py::module &m) {
     .value("kNumberTypeUInt32", DataType::kNumberTypeUInt32)
     .value("kNumberTypeUInt64", DataType::kNumberTypeUInt64)
     .value("kNumberTypeFloat16", DataType::kNumberTypeFloat16)
+    .value("kNumberTypeBFloat16", DataType::kNumberTypeBFloat16)
     .value("kNumberTypeFloat32", DataType::kNumberTypeFloat32)
     .value("kNumberTypeFloat64", DataType::kNumberTypeFloat64)
     .value("kInvalidType", DataType::kInvalidType);
@@ -227,6 +228,8 @@ std::string GetPyTypeFormat(DataType data_type) {
     case DataType::kObjectTypeString:
       return py::format_descriptor<uint8_t>::format();
     case DataType::kNumberTypeFloat16:
+      return "e";
+    case DataType::kNumberTypeBFloat16:
       return "e";
     default:
       MS_LOG(ERROR) << "Unsupported DataType " << static_cast<int>(data_type) << ".";
