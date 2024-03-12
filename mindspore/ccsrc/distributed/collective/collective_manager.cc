@@ -76,7 +76,9 @@ std::shared_ptr<CollectiveManager> CollectiveManager::instance() {
 
 namespace {
 // The wrapper to provide a timeout mechanism for executing functions.
-bool ExecuteFuncInThread(const std::function<bool()> &func, const int64_t timeout) {
+// We also need to log the functionality of the function.
+bool ExecuteFuncInThread(const std::function<bool()> &func, const int64_t timeout, const std::string &func_name,
+                         const std::string &functionality) {
   bool execute_success = false;
   bool execute_fail = false;
   std::mutex exec_ret_mutex;
@@ -84,7 +86,8 @@ bool ExecuteFuncInThread(const std::function<bool()> &func, const int64_t timeou
 
   std::unique_ptr<std::thread> executive_thread = std::make_unique<std::thread>([&] {
     if (!func()) {
-      MS_LOG(ERROR) << "Failed to execute function asynchronously";
+      MS_LOG(ERROR) << "Failed to execute function: " << func_name << " " << functionality
+                    << ". Please check error log above.";
       std::unique_lock<std::mutex> lock(exec_ret_mutex);
       execute_fail = true;
       thread_blocker.notify_one();
@@ -106,7 +109,8 @@ bool ExecuteFuncInThread(const std::function<bool()> &func, const int64_t timeou
   if (!execute_success && !execute_fail) {
     std::string node_id = common::GetEnv("MS_NODE_ID");
 #if !defined(_WIN32) && !defined(_WIN64)
-    MS_LOG(WARNING) << "Execute function asynchronously timeout, node id: " << node_id << " exit process";
+    MS_LOG(ERROR) << "Execute function: " << func_name << " " << functionality << " timeout, this node id: " << node_id
+                  << " exit process";
     (void)kill(getpid(), SIGTERM);
 #endif
   }
@@ -303,7 +307,8 @@ bool CollectiveManager::CreateCommunicationGroup(const std::string &group_name,
   // Timeout limit 600 seconds to wait finish initializing device communication group.
   const int64_t kTimeToWait = 600;
   // Initialize communication group on the device side in thread with timeout limit.
-  ret = ExecuteFuncInThread(init_device_comm_group_func, kTimeToWait);
+  ret = ExecuteFuncInThread(init_device_comm_group_func, kTimeToWait, "init_device_comm_group_func",
+                            "to initialize communicator for group " + group_name);
   if (!ret) {
     MS_LOG(ERROR) << "Failed to create comm group on device side for " << group_name;
   }
@@ -375,7 +380,7 @@ bool CollectiveManager::Finalize() {
     return true;
   }
 
-  std::function<bool()> finalize_func = [&, this]() {
+  std::function<bool()> finalize_comm_lib_func = [&, this]() {
     if (need_host_collective_) {
       MS_EXCEPTION_IF_NULL(host_comm_lib_instance_);
       MS_LOG(INFO) << "Start finalizing host communication lib.";
@@ -404,7 +409,8 @@ bool CollectiveManager::Finalize() {
   // Timeout limit 30 seconds to wait to finish finalizing device communication group.
   const int64_t kTimeToWait = 30;
   // Finalize collective manager in thread with timeout limit.
-  bool ret = ExecuteFuncInThread(finalize_func, kTimeToWait);
+  bool ret = ExecuteFuncInThread(finalize_comm_lib_func, kTimeToWait, "finalize_comm_lib_func",
+                                 "to destroy communication groups and finalize communication lib");
 
   MS_LOG(INFO) << "End finalize collective manager.";
   return ret;
