@@ -1,0 +1,46 @@
+irfft:
+  description: |
+    Calculates the inverse of `rfft()`.
+    
+    Note:
+        - `irfft` is currently only used in `mindscience` scientific computing scenarios and
+          dose not support other usage scenarios.
+        - `irfft` is not supported on Windows platform yet.
+    
+    Args:
+        input (Tensor): The input tensor.
+        n (int, optional): Length of the transformed `dim` of the result.
+            If given, the input will either be zero-padded or trimmed to this length before computing `irfft`.
+            If n is not given, it is taken to be :math:`2*(input.shape[dim]-1)`.
+            Default: ``None``.
+        dim (int, optional): The dimension along which to take the one dimensional `irfft`.
+            Default: ``-1``, which means transform the last dimension of `input`.
+        norm (string, optional): Normalization mode. Default: ``None`` that means ``"backward"``.
+            Three modes are defined as,
+    
+            - ``"backward"`` (normalize by :math:`1/n`).
+            - ``"forward"`` (no normalization).
+            - ``"ortho"`` (normalize by :math:`1/\sqrt{n}`).
+    
+    Returns:
+        Tensor, the result of `irfft()` function, dtype of the result is float32/64, result.shape[dim] is :math:`n`.
+    
+    Raises:
+        TypeError: If the `input` type is not Tensor.
+        TypeError: If the `input` data type is not one of: int16, int32, int64, float32, float64, complex64, complex128.
+        TypeError: If `n` or `dim` type is not int.
+        ValueError: If `dim` is not in the range of "[ `-input.ndim` , `input.ndim` )".
+        ValueError: If `n` is less than 1.
+        ValueError: If `norm` is none of ``"backward"`` , ``"forward"`` or ``"ortho"``.
+    
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+    
+    Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
+        >>> input = Tensor([1, 2, 3, 4])
+        >>> y = ops.irfft(input)
+        >>> print(y)
+        [ 2.5000000e+00 -6.6666669e-01  1.2590267e-15 -1.6666667e-01
+        4.2470195e-16 -6.6666669e-01]
