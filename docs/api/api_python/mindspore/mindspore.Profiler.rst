@@ -21,6 +21,7 @@ mindspore.Profiler
           - 3: MemoryL0，包含l0a_read/write_bw、l0b_read/write_bw、l0c_read/write_bw等。
           - 4: ResourceConflictRatio，包含vec_bankgroup/bank/resc_cflt_ratio等。
           - 5: MemoryUB，包含ub\_read/write_bw_mte, ub\_read/write_bw_vector, ub\_/write_bw_scalar等。
+          - 6: L2Cache，包含write_cache_hit, write_cache_miss_allocate, r0_read_cache_hit, r1_read_cache_hit等。
 
         - **l2_cache** (bool, 可选) -（仅限Ascend）是否收集l2缓存数据，当值为 ``True`` 时，收集这些数据。默认值： ``False`` 。
         - **hbm_ddr** (bool, 可选) -（仅限Ascend）是否收集HBM/DDR内存读写速率数据，当值为 ``True`` 时，收集这些数据。默认值： ``False`` 。

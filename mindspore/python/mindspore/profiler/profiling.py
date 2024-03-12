@@ -360,6 +360,7 @@ class Profiler:
             - 3: MemoryL0 contains l0a_read/write_bw, l0b_read/write_bw, l0c_read/write_bw etc.
             - 4: ResourceConflictRatio contains vec_bankgroup/bank/resc_cflt_ratio etc.
             - 5: MemoryUB contains ub_read/write_bw_mte, ub_read/write_bw_vector, ub\_/write_bw_scalar etc.
+            - 6: L2Cache contains write_cache_hit, write_cache_miss_allocate, r0_read_cache_hit, r1_read_cache_hit etc.
 
         l2_cache (bool, optional): (Ascend only) Whether to collect l2 cache data, collect when True.
             Default: ``False`` .

@@ -185,6 +185,7 @@ class TestProfiler:
     def test_ascend_profiler(self):
         self._train_with_profiler(device_target="Ascend", profile_memory=True)
         self._check_d_profiling_file()
+        self._check_d_profiling_step_trace_on_multisubgraph()
         self._check_host_profiling_file()
 
     @pytest.mark.level1
@@ -265,6 +266,14 @@ class TestProfiler:
                             minddata_pipeline_file, queue_profiling_file)
         for file in d_profiler_files:
             assert os.path.isfile(file)
+
+    def _check_d_profiling_step_trace_on_multisubgraph(self):
+        step_trace_file = self.profiler_path + f'step_trace_raw_{self.rank_id}_detail_time.csv'
+        assert os.path.isfile(step_trace_file)
+        with open(step_trace_file, 'r') as csvfile:
+            reader = csv.DictReader(csvfile)
+            row_count = sum(1 for _ in reader)
+            assert row_count == 11
 
     def _check_cpu_profiling_file(self):
         op_detail_file = self.profiler_path + f'cpu_op_detail_info_{self.device_id}.csv'
