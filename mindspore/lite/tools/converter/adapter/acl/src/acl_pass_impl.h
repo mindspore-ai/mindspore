@@ -38,7 +38,7 @@ using mindspore::lite::STATUS;
 class AclPassImpl {
  public:
   explicit AclPassImpl(const std::shared_ptr<ConverterPara> &param);
-  ~AclPassImpl() = default;
+  virtual ~AclPassImpl() = default;
 
   virtual bool Run(const FuncGraphPtr &func_graph);
 
