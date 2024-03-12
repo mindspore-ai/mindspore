@@ -293,7 +293,7 @@ CNodePtr AllGatherMatmulFusion::CreateFusionCNode(const FuncGraphPtr &func_graph
 
   // Replace other node
   auto all_gather_cnode_users = manager->node_users()[all_gather_cnode];
-  if (all_gather_cnode_users.size() > 0) {
+  if (all_gather_cnode_users.size() > kSizeOne) {
     auto tuple_get_item_cnode_1 = func_graph->NewCNode(
       {NewValueNode(prim::kPrimTupleGetItem), all_gather_matmul_cnode, NewValueNode(MakeValue<int64_t>(1))});
     tuple_get_item_cnode_1->set_abstract(all_gather_cnode->abstract());
