@@ -120,6 +120,4 @@ AreaMode SplitModelAscend::GetDefaultAreaMode(const PrimOpPtr &node) const {
   }
   return AreaMode::COMPOSITE;
 }
-
-SPLIT_MODEL_REGISTER(kAscendDevice, SplitModelAscend);
 }  // namespace mindspore::graphkernel::inner

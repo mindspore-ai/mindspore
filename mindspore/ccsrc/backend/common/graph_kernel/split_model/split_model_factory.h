@@ -49,8 +49,12 @@ class SplitModelRegister {
   SplitModelFactory::RegFunc func_;
 };
 
-#define SPLIT_MODEL_REGISTER(processor, cls) \
-  const SplitModelRegister split_model(      \
-    processor, []() noexcept { return std::static_pointer_cast<SplitModel>(std::make_shared<cls>()); })
+#define SPLIT_MODEL_JOIN(x, y) x##y
+#define SPLIT_MODEL_UNIQUE_NAME(prefix, cnt) SPLIT_MODEL_JOIN(prefix, cnt)
+#define SPLIT_MODEL_REGISTER(processor, cls, ...)                                                                     \
+  const mindspore::graphkernel::inner::SplitModelRegister SPLIT_MODEL_UNIQUE_NAME(split_model_, __COUNTER__)(         \
+    processor, [__VA_ARGS__]() noexcept {                                                                             \
+      return std::static_pointer_cast<mindspore::graphkernel::inner::SplitModel>(std::make_shared<cls>(__VA_ARGS__)); \
+    })
 }  // namespace mindspore::graphkernel::inner
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_SPLIT_MODEL_SPLIT_MODEL_FACTORY_H_
