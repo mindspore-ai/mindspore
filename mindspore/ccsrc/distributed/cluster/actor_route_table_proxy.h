@@ -35,7 +35,7 @@ constexpr uint32_t kLookupInterval = 3000;
 
 // Actor route table proxy for nodes like workers and server. This class helps update actor route table in scheduler
 // across the network.
-class ActorRouteTableProxy {
+class BACKEND_EXPORT ActorRouteTableProxy {
  public:
   explicit ActorRouteTableProxy(const std::shared_ptr<topology::ComputeGraphNode> &cgn,
                                 uint32_t lookup_timeout = kDefaultLookupTimeout)

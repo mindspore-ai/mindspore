@@ -44,7 +44,7 @@ Status LinSpaceInfo::CheckStrategy(const StrategyPtr &strategy) {
                   << StrategyToString(strategies);
     return FAILED;
   }
-  if (output_size_ % split_num_ != 0) {
+  if (outputs_shape_[0][0] > 0 && (outputs_shape_[0][0] % split_num_ != 0)) {
     MS_LOG(ERROR) << name_ << ": The strategy is " << StrategyToString(strategies) << ", output size is  "
                   << output_size_ << " cannot be divisible by strategy value " << split_num_;
     return FAILED;
@@ -53,6 +53,17 @@ Status LinSpaceInfo::CheckStrategy(const StrategyPtr &strategy) {
     MS_LOG(ERROR) << name_ << ": The strategy is " << StrategyToString(strategies)
                   << ", the device size in this stage is " << stage_device_size_
                   << " cannot be divisible by the strategy value " << split_num_;
+    return FAILED;
+  }
+  return SUCCESS;
+}
+
+Status LinSpaceInfo::CheckStrategyForDynamicShape(const StrategyPtr &strategy) {
+  Strategies strategies = strategy->GetInputDim();
+  auto x_strategy = strategies[0];
+  if (x_strategy[0] != 1) {
+    MS_LOG(ERROR) << name_ << ": it can not be split if it's dynamic shape, the strategy is "
+                  << ShapesToString(strategies) << ", the output shape: " << ShapeToString(outputs_shape_[0]);
     return FAILED;
   }
   return SUCCESS;

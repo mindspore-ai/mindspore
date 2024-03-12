@@ -21,6 +21,8 @@
 #include <map>
 #include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/tensor_layout/tensor_info.h"
+#include "frontend/parallel/ops_info/ops_utils.h"
+#include "frontend/parallel/auto_parallel/costmodel.h"
 
 namespace mindspore {
 namespace parallel {

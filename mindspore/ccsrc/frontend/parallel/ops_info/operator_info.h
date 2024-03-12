@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2023 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "frontend/parallel/strategy.h"
 #include "frontend/parallel/tensor_layout/tensor_info.h"
+#include "frontend/parallel/tensor_layout/tensor_redistribution.h"
 #include "utils/log_adapter.h"
 #include "ops/op_utils.h"
 
@@ -50,6 +51,7 @@ using TensorLayouts = std::vector<TensorLayout>;
 using different_type = std::vector<int64_t>::difference_type;
 using PrimitiveAttrs = mindspore::HashMap<std::string, ValuePtr>;
 using ReplaceGraphPtr = std::shared_ptr<std::pair<std::vector<std::pair<AnfNodePtr, int64_t>>, AnfNodePtr>>;
+using TensorRedistributionPtr = std::shared_ptr<TensorRedistribution>;
 
 #define FILTER_LOG(x) (x) ? void(0) : MS_LOG(ERROR)
 
@@ -118,6 +120,9 @@ class OperatorInfo {
   void ComputeBatchSplitFlagList();
   Shapes inputs_shape() const { return inputs_shape_; }
   Shapes outputs_shape() const { return outputs_shape_; }
+  void set_inputs_divisor(const Shapes &in_divisor) { inputs_divisor_ = in_divisor; }
+  void set_outputs_divisor(const Shapes &out_divisor) { outputs_divisor_ = out_divisor; }
+  void set_dynamic_shape_flag(bool flag) { dynamic_shape_flag_ = flag; }
 
   double GetForwardMemoryCostFromCNode();
   // This is a common method for setting operator cost for a given strategy, in which the validity of this strategy
@@ -233,12 +238,41 @@ class OperatorInfo {
   bool repeated_num_in_dev_matrix_right() const { return repeated_num_in_dev_matrix_right_; }
   void set_repeated_num_in_dev_matrix_right(bool is_right) { repeated_num_in_dev_matrix_right_ = is_right; }
 
+  TensorRedistributionPtr CreateTensorRedistribution(bool construct_op_flag = true, bool keep_reshape = false) {
+    if (this->tensor_redistribution_ != nullptr) {
+      MS_LOG(WARNING) << "TensorRedistribution re-created.";
+    }
+    this->tensor_redistribution_ = std::make_shared<TensorRedistribution>(construct_op_flag, keep_reshape);
+    return this->tensor_redistribution_;
+  }
+  TensorRedistributionPtr CreateReshapeTensorRedistribution(bool construct_op_flag = true, bool keep_reshape = false) {
+    if (this->reshape_tensor_redistribution_ != nullptr) {
+      MS_LOG(WARNING) << "TensorRedistribution re-created.";
+    }
+    this->reshape_tensor_redistribution_ = std::make_shared<TensorRedistribution>(construct_op_flag, keep_reshape);
+    return this->reshape_tensor_redistribution_;
+  }
+
+  void SetTensorRedistribution(const TensorRedistributionPtr &tensor_redistribution) {
+    this->tensor_redistribution_ = tensor_redistribution;
+  }
+
+  void SetReshapeTensorRedistribution(const TensorRedistributionPtr &tensor_redistribution) {
+    this->reshape_tensor_redistribution_ = tensor_redistribution;
+  }
+
+  TensorRedistributionPtr tensor_redistribution() { return this->tensor_redistribution_; }
+
+  TensorRedistributionPtr reshape_tensor_redistribution() { return this->reshape_tensor_redistribution_; }
+
   // Key for user data.
   constexpr static char key[] = "OpInfo";
 
  protected:
   // needed by rec_parser
   std::string type_;
+  TensorRedistributionPtr tensor_redistribution_;
+  TensorRedistributionPtr reshape_tensor_redistribution_;
   bool is_last_node_ = false;
   virtual Status CheckStrategy(const StrategyPtr &strategy) = 0;
   virtual Status InferTensorMap() = 0;
@@ -257,12 +291,15 @@ class OperatorInfo {
 
   virtual void InferReplaceOps() {}
   virtual Status CheckOutputStrategy(const StrategyPtr &out_strategy);
+  virtual Status CheckStrategyForDynamicShape(const StrategyPtr &strategy) { return SUCCESS; }
   Status CheckStrategyByVector(const Shapes &strategy, const Shapes &inputs_shape);
   Status CheckStrategyValue(const StrategyPtr &strategy, const Shapes &inputs_shape);
+  void DivisorsReplaceShapes();  // in dynamic shape, using divisors replace to shapes before CheckStrategy and so on
+  void ResumeShapes();           // in dynamic shape, resume shapes after CheckStrategy and so on
   void SetRepeatedCalcDevMatrix();
   void ResetTensorMapIfRepeatedCalc();
   Status CreateGroupByDim(size_t axis, std::vector<Group> *group);
-  virtual Status InferAttrs();
+  Status InferAttrs();
   void ResetQueueMember();
   Status InitWithAutoRepeatCalc(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy);
   Status InitWithTensorLayout(const std::vector<std::shared_ptr<TensorLayout>> &in_tensor_layouts,
@@ -270,6 +307,8 @@ class OperatorInfo {
   Status InitForCostModelWithAutoRepeatCalc(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy);
   Status InferRepeatedCalcInfo();
   Status InferVirtualDivOps();
+  bool IsDynamicShape();
+  bool IsDynamicRank();
 
   // Calculate the number of repeated calculations for the output by the number of devices and the output tensor map.
   // The tensor map of Outputs[0] is used by default. If there are multiple outputs, need to identify which output
@@ -293,6 +332,11 @@ class OperatorInfo {
   std::string prim_name_;
   Shapes inputs_shape_;
   Shapes outputs_shape_;
+  Shapes inputs_divisor_;   // using for dynamic shape, the size is equal to inputs_shape_
+  Shapes outputs_divisor_;  // using for dynamic shape, the size is equal to outputs_shape_
+  Shapes inputs_shape_clone_;
+  Shapes outputs_shape_clone_;
+  bool dynamic_shape_flag_ = False;  // means this op in the dynamic shape graph
   mindspore::HashMap<std::string, ValuePtr> attrs_;
   std::vector<ValuePtr> input_value_;
   TypePtr outputs_dtype_;
@@ -319,6 +363,8 @@ class OperatorInfo {
   int64_t stage_device_size_ = 0;
   bool infer_attrs_completed_ = false;
   bool is_layout_config_ = false;
+  bool is_dynamic_shape_ = false;
+  bool is_dynamic_rank_ = false;
   Shapes strategy_from_layout_;
 
   bool is_auto_parallel_ = false;      // false: semi_auto_parallel; true: auto_parallel
@@ -379,6 +425,8 @@ Operator CreateReduceScatterOp(const std::string &reduce_op, const std::string &
 Operator CreateAllGatherOp(const std::string &group);
 Operator CreateCastOp(TypePtr type);
 Operator CreateDivOp(float scale);
+Operator CreateScalarFloorDivOp(int64_t div_num);
+Operator CreateScalarMulOp(int64_t scalar);
 void AddCNodePrimAttr(const CNodePtr &comm_node, const std::string &attr_name, const ValuePtr &attr_val);
 int32_t AddCommOpFusionType(const CNodePtr &comm_node, const AnfNodePtr &param_node);
 Operator CreateMicroStepAllGatherOp(const std::string &group);

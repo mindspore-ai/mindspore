@@ -34,6 +34,7 @@ from mindspore.communication.management import get_group_size
 from mindspore.parallel._utils import _get_enable_parallel_optimizer
 from mindspore.nn.wrap.cell_wrapper import PipelineCell
 from mindspore.nn.wrap.loss_scale import DynamicLossScaleUpdateCell
+from mindspore import Symbol
 
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
@@ -1120,13 +1121,17 @@ def test_pangu_alpha_batch_dim_dynamic_and_data_parallel():
     context.reset_auto_parallel_context()
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, full_batch=False)
     config = PANGUALPHAConfig(data_parallel_num=8, model_parallel_num=1, num_layers=2)
+    context.set_context(save_graphs=True)
     pangu_alpha = PanguAlpha(config)
     loss = CrossEntropyLoss(config)
     pangu_alpha_loss = PanguAlphaWithLoss(config, pangu_alpha, loss)
     net = _VirtualDatasetCell(pangu_alpha_loss)
-    input_ids = Tensor(shape=[None, 1025], dtype=mstype.int32)
-    input_position = Tensor(shape=[None, 1024], dtype=mstype.int32)
-    attention_mask = Tensor(shape=[None, 1024, 1024], dtype=mstype.float16)
+
+    s1 = Symbol(divisor=8, unique=True)
+    input_ids = Tensor(shape=[s1, 1025], dtype=mstype.int32)
+    input_position = Tensor(shape=[s1, 1024], dtype=mstype.int32)
+    attention_mask = Tensor(shape=[s1, 1024, 1024], dtype=mstype.float16)
+
     compile_net(net, input_ids, input_position, attention_mask)
 
 
@@ -1145,9 +1150,12 @@ def test_pangu_alpha_batch_dim_dynamic_and_dp_mp():
     pangu_alpha_loss = PanguAlphaWithLoss(config, pangu_alpha, loss)
     net = _VirtualDatasetCell(pangu_alpha_loss)
     net._virtual_dataset.add_prim_attr("repeat_dim_direct", "right")
-    input_ids = Tensor(shape=[None, 1025], dtype=mstype.int32)
-    input_position = Tensor(shape=[None, 1024], dtype=mstype.int32)
-    attention_mask = Tensor(shape=[None, 1024, 1024], dtype=mstype.float16)
+
+    s1 = Symbol(divisor=8, unique=True)
+    input_ids = Tensor(shape=[s1, 1025], dtype=mstype.int32)
+    input_position = Tensor(shape=[s1, 1024], dtype=mstype.int32)
+    attention_mask = Tensor(shape=[s1, 1024, 1024], dtype=mstype.float16)
+
     compile_net(net, input_ids, input_position, attention_mask)
 
 
@@ -1167,9 +1175,12 @@ def test_pangu_alpha_batch_dim_dynamic_and_dp_mp_op():
     pangu_alpha_loss = PanguAlphaWithLoss(config, pangu_alpha, loss)
     net = _VirtualDatasetCell(pangu_alpha_loss)
     net._virtual_dataset.add_prim_attr("repeat_dim_direct", "right")
-    input_ids = Tensor(shape=[None, 1025], dtype=mstype.int32)
-    input_position = Tensor(shape=[None, 1024], dtype=mstype.int32)
-    attention_mask = Tensor(shape=[None, 1024, 1024], dtype=mstype.float16)
+
+    s1 = Symbol(divisor=8, unique=True)
+    input_ids = Tensor(shape=[s1, 1025], dtype=mstype.int32)
+    input_position = Tensor(shape=[s1, 1024], dtype=mstype.int32)
+    attention_mask = Tensor(shape=[s1, 1024, 1024], dtype=mstype.float16)
+
     compile_net(net, input_ids, input_position, attention_mask)
 
 
@@ -1211,9 +1222,14 @@ def test_pangu_alpha_batch_and_seq_dims_dynamic_and_dp_mp_op():
     pangu_alpha_loss = PanguAlphaWithLoss(config, pangu_alpha, loss)
     net = _VirtualDatasetCell(pangu_alpha_loss)
     net._virtual_dataset.add_prim_attr("repeat_dim_direct", "right")
-    input_ids = Tensor(shape=[None, None], dtype=mstype.int32)
-    input_position = Tensor(shape=[None, None], dtype=mstype.int32)
-    attention_mask = Tensor(shape=[None, None, None], dtype=mstype.float16)
+
+    s1 = Symbol(divisor=1, unique=True)
+    s2 = Symbol(divisor=4, remainder=1)
+    s3 = Symbol(divisor=4)
+    input_ids = Tensor(shape=[s1, s2], dtype=mstype.int32)
+    input_position = Tensor(shape=[s1, s3], dtype=mstype.int32)
+    attention_mask = Tensor(shape=[s1, s3, s3], dtype=mstype.float16)
+
     compile_net(net, input_ids, input_position, attention_mask)
 
 
@@ -1490,9 +1506,12 @@ def test_pipeline_dp_mp_op_bs_and_seq_dynamic_stage0():
     net = _VirtualDatasetCell(pangu_alpha_loss)
     net._virtual_dataset.add_prim_attr("repeat_dim_direct", "right")
 
-    input_ids = Tensor(shape=[None, None], dtype=mstype.int32)
-    input_position = Tensor(shape=[None, None], dtype=mstype.int32)
-    attention_mask = Tensor(shape=[None, None, None], dtype=mstype.float16)
+    s1 = Symbol(divisor=8, unique=True)
+    s2 = Symbol(divisor=16, remainder=1)
+    s3 = Symbol(divisor=16)
+    input_ids = Tensor(shape=[s1, s2], dtype=mstype.int32)
+    input_position = Tensor(shape=[s1, s3], dtype=mstype.int32)
+    attention_mask = Tensor(shape=[s1, s3, s3], dtype=mstype.float16)
 
     compile_pipeline_net(net, input_ids, input_position, attention_mask)
     del os.environ['PIPELINE_SLICE_SKIP_REDISTRIBUTION']
@@ -1520,9 +1539,12 @@ def test_pipeline_dp_mp_op_bs_and_seq_dynamic_stage1():
     net = _VirtualDatasetCell(pangu_alpha_loss)
     net._virtual_dataset.add_prim_attr("repeat_dim_direct", "right")
 
-    input_ids = Tensor(shape=[None, None], dtype=mstype.int32)
-    input_position = Tensor(shape=[None, None], dtype=mstype.int32)
-    attention_mask = Tensor(shape=[None, None, None], dtype=mstype.float16)
+    s1 = Symbol(divisor=8, unique=True)
+    s2 = Symbol(divisor=16, remainder=1)
+    s3 = Symbol(divisor=16)
+    input_ids = Tensor(shape=[s1, s2], dtype=mstype.int32)
+    input_position = Tensor(shape=[s1, s3], dtype=mstype.int32)
+    attention_mask = Tensor(shape=[s1, s3, s3], dtype=mstype.float16)
 
     compile_pipeline_net(net, input_ids, input_position, attention_mask)
     del os.environ['PIPELINE_SLICE_SKIP_REDISTRIBUTION']
@@ -1559,9 +1581,12 @@ def test_pipeline_dp_mp_op_bs_and_seq_dynamic_cell_reuse_stage0():
     net = _VirtualDatasetCell(pangu_alpha_loss)
     net._virtual_dataset.add_prim_attr("repeat_dim_direct", "right")
 
-    input_ids = Tensor(shape=[None, None], dtype=mstype.int32)
-    input_position = Tensor(shape=[None, None], dtype=mstype.int32)
-    attention_mask = Tensor(shape=[None, None, None], dtype=mstype.float16)
+    s1 = Symbol(divisor=8, unique=True)
+    s2 = Symbol(divisor=16, remainder=1)
+    s3 = Symbol(divisor=16)
+    input_ids = Tensor(shape=[s1, s2], dtype=mstype.int32)
+    input_position = Tensor(shape=[s1, s3], dtype=mstype.int32)
+    attention_mask = Tensor(shape=[s1, s3, s3], dtype=mstype.float16)
 
     compile_pipeline_net(net, input_ids, input_position, attention_mask)
     del os.environ['PIPELINE_SLICE_SKIP_REDISTRIBUTION']
@@ -1589,9 +1614,12 @@ def test_pipeline_dp_mp_op_bs_and_seq_dynamic_cell_reuse_stage1():
     net = _VirtualDatasetCell(pangu_alpha_loss)
     net._virtual_dataset.add_prim_attr("repeat_dim_direct", "right")
 
-    input_ids = Tensor(shape=[None, None], dtype=mstype.int32)
-    input_position = Tensor(shape=[None, None], dtype=mstype.int32)
-    attention_mask = Tensor(shape=[None, None, None], dtype=mstype.float16)
+    s1 = Symbol(divisor=8, unique=True)
+    s2 = Symbol(divisor=16, remainder=1)
+    s3 = Symbol(divisor=16)
+    input_ids = Tensor(shape=[s1, s2], dtype=mstype.int32)
+    input_position = Tensor(shape=[s1, s3], dtype=mstype.int32)
+    attention_mask = Tensor(shape=[s1, s3, s3], dtype=mstype.float16)
 
     compile_pipeline_net(net, input_ids, input_position, attention_mask)
     del os.environ['PIPELINE_SLICE_SKIP_REDISTRIBUTION']

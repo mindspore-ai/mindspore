@@ -46,6 +46,7 @@ class PadV3Info : public OperatorInfo {
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
   Status InferMirrorOps() override;
+  void ComputePaddingsFlag();
   std::string mode_;
   Shape paddings_flag_;  // if flag is 1, the dimension can not be split
 };

@@ -55,6 +55,8 @@ std::string MsOpNameToHcomOpType(const std::string &ms_op_type) {
 
 namespace mindspore {
 namespace kernel {
+int64_t op_tag = 0;
+
 void CheckReduceOpUnderComplexInput(const std::vector<KernelTensor *> &inputs, const PrimitivePtr &prim,
                                     const HcclReduceOp &op_type) {
   MS_EXCEPTION_IF_NULL(prim);

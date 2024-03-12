@@ -54,6 +54,7 @@ class FlashAttentionScoreInfo : public OperatorInfo {
   Status InferAsLossDivisor() override;
   Status CheckStrategy(const StrategyPtr &strategy) override;
   Status InferMirrorOps() override;
+  Status CheckStrategyForDynamicShape(const StrategyPtr &strategy) override;
 
  private:
   void UpdateDropoutGenMaskSliceShapeAndSeed(const CNodePtr &reshape_cnode);

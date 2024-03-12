@@ -32,9 +32,10 @@
 namespace mindspore {
 namespace parallel {
 
-// maybe the input value is dynamic for these ops
-static const std::set<std::string> CANDIDATE_DYNAMIC_VALUE_OPS = {RESHAPE, STRIDED_SLICE, PAD_V3};
 bool IsDynamicShapeInput(const CNodePtr &node, const AnfNodePtr &input);
+// maybe the input value is dynamic for these ops
+static const std::set<std::string> CANDIDATE_DYNAMIC_VALUE_OPS = {RESHAPE, STRIDED_SLICE, PAD_V3,
+                                                                  TILE,    FILLV2,        UNIFORM_REAL};
 // split tensor only for first input
 static const std::set<std::string> SPLIT_TENSOR_ONLY_FOR_FIRST_INPUT_OPS = {PAD_V3};
 // the input is tuple or list
@@ -46,6 +47,7 @@ constexpr char KAttrAsLossDivisor[] = "as_loss_divisor";
 constexpr char KAttrDevMatrixShape[] = "dev_matrix_shape";
 constexpr char KAttrInputsTensorMap[] = "inputs_tensor_map";
 constexpr char KAttrOutputsTensorMap[] = "outputs_tensor_map";
+constexpr int64_t DYNAMIC_DIM_VAL = -1;
 
 extern size_t TOTAL_OPS;
 extern std::map<AnfNodePtr, std::pair<AnfNodePtr, int64_t>> g_RefMap;
@@ -69,14 +71,13 @@ bool IsAutoParallelCareNode(const CNodePtr &cnode);
 Shapes GetNodeShape(const AnfNodePtr &node);
 // Extract shape from anfnode
 std::vector<Shapes> ExtractShape(const CNodePtr &node);
+std::vector<Shapes> ExtractRealDivisor(const CNodePtr &node);
 // Generate and init parallel operator
 OperatorInfoPtr OperatorInstance(const PrimitivePtr &prim, const PrimitiveAttrs &attrs,
                                  const std::vector<Shapes> &shape_list);
 OperatorInfoPtr CreateOperatorInfo(const CNodePtr &cnode);
 std::string GetPrimName(const CNodePtr &node);
 std::shared_ptr<Value> GetAttrsFromAnfNode(const std::shared_ptr<AnfNode> &node, const string &key);
-std::vector<AnfNodePtr> ReplaceOpInput(const Operator &replace_op, const std::string &instance_name,
-                                       const CNodePtr &node);
 std::string CreateInstanceName(const CNodePtr &node, size_t index);
 TensorInfo GetInputsTensorInfo(const std::pair<AnfNodePtr, int64_t> &param_info);
 AnfNodePtr CheckMakeTupleSplit(const AnfNodePtr &node, const FuncGraphManagerPtr &manager);

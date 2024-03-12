@@ -38,6 +38,7 @@
 #include "frontend/optimizer/auto_monad_eliminate.h"
 #include "include/common/fallback.h"
 #include "include/common/utils/parallel_context.h"
+#include "frontend/parallel/dynamic_shape/dynamic_shape.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/step_auto_parallel.h"
 #include "frontend/parallel/pass/merge_comm.h"
@@ -950,10 +951,28 @@ bool CconvPass(const ResourcePtr &resource) {
 
 bool PipelineSplitPass(const ResourcePtr &resource) { return PipelineSplit(resource); }
 
+bool ParallelVirtualDatasetPass(const ResourcePtr &resource) { return ParallelVirtualDataset(resource); }
+
 bool AutoParallelPass(const ResourcePtr &resource) {
   auto func_graph = resource->func_graph();
   auto opt = opt::Optimizer::MakeEmptyOptimizer(resource);
   return parallel::StepAutoParallel(func_graph, opt);
+}
+
+bool AutoParallelSymbolPassWithReNormalize(const ResourcePtr &resource) {
+  // 1, auto parallel; 2, dynamic shape
+  auto func_graph = resource->func_graph();
+  if (!parallel::IsParallelDynamicShape(func_graph)) {
+    return true;
+  }
+  MS_LOG(INFO) << "symbol pass for parallel begin";
+  // must be bind with renormalize
+  OptPassGroupMap opt_map({{"renormalize", opt::OptPassConfig::Renormalize()},
+                           {"build", opt::OptPassConfig(opt::irpass::SymbolEngineBuilder())}});
+  auto opt = opt::Optimizer::MakeOptimizer("parallel-infer-symbol", resource, opt_map, true);
+  (void)opt->step(func_graph, false);
+  MS_LOG(INFO) << "symbol pass for parallel end";
+  return true;
 }
 
 bool ValidatePass(const ResourcePtr &resource) {

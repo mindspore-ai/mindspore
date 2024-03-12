@@ -50,6 +50,7 @@ class BroadcastToInfo : public OperatorInfo {
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
   Status ComputeReplaceGraph(const CNodePtr &cnode);
+  Status CheckStrategyForDynamicShape(const StrategyPtr &strategy) override;
 
  private:
   Shape out_shape_;

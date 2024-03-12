@@ -21,7 +21,6 @@ from mindspore.ops import operations as P
 from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer
 from mindspore.nn.wrap.grad_reducer import PipelineGradReducer
-import mindspore.common.lazy_inline as lazy_inline
 
 
 class DatasetLenet():
@@ -97,21 +96,6 @@ class Net(nn.Cell):
         return out
 
 
-class LazyInlineNet(nn.Cell):
-    @lazy_inline
-    def __init__(self, stra1, stra2, param=None):
-        super().__init__()
-        self.cell1 = MatMulCell(stra1, stra2)
-        self.cell1.pipeline_stage = 0
-        self.cell2 = MatMulCell2(stra1, stra2)
-        self.cell2.pipeline_stage = 1
-
-    def construct(self, x, label):
-        out, param = self.cell1(x)
-        out = self.cell2(out, param)
-        return out
-
-
 def test_pipeline_functional_stage0():
     """
     Feature: pipeline parallel functional
@@ -126,42 +110,6 @@ def test_pipeline_functional_stage0():
     strategy2 = ((8, 1), (1, 1))
 
     net = nn.PipelineCell(Net(strategy1, strategy2), 4)
-
-    def forward_fn(inputs, target):
-        loss = net(inputs, target)
-        return loss
-
-    params = net.network.cell1.trainable_params()
-    grad_fn = ops.value_and_grad(forward_fn, None, params)
-    optimizer = nn.SGD(params, learning_rate=0.01)
-    pp_grad_reducer = PipelineGradReducer(optimizer.parameters)
-
-    @ms.jit
-    def train_one_step(inputs, target):
-        loss, grads = grad_fn(inputs, target)
-        grads = pp_grad_reducer(grads)
-        optimizer(grads)
-        return loss, grads
-
-    dataset = DatasetLenet(data, label, 3)
-    for data, label in dataset:
-        train_one_step(data, label)
-
-
-def test_pipeline_functional_lazy_inline_stage0():
-    """
-    Feature: pipeline parallel functional
-    Description:  test pipeline parallel functional with lazy inline
-    Expectation: success
-    """
-    context.set_auto_parallel_context(device_num=32, global_rank=0, pipeline_stages=2)
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
-    data = Tensor(np.ones([32, 64]), dtype=ms.float32)
-    label = Tensor(np.ones([64, 64]), dtype=ms.float32)
-    strategy1 = ((16, 1), (1, 1))
-    strategy2 = ((8, 1), (1, 1))
-
-    net = nn.PipelineCell(LazyInlineNet(strategy1, strategy2), 4)
 
     def forward_fn(inputs, target):
         loss = net(inputs, target)

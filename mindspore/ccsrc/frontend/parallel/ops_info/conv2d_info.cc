@@ -395,6 +395,16 @@ Status Conv2DInfo::CheckStrategy(const StrategyPtr &strategy) {
   return SUCCESS;
 }
 
+Status Conv2DInfo::CheckStrategyForDynamicShape(const StrategyPtr &strategy) {
+  Strategies strategies = strategy->GetInputDim();
+  if (h_dim_need_exchange_overlap_ || w_dim_need_exchange_overlap_) {
+    MS_LOG(ERROR) << name_ << ": it does not support dynamic shape if it need to exchange overlap, the strategy is "
+                  << ShapesToString(strategies) << ", the inputs' shape: " << ShapesToString(inputs_shape_);
+    return FAILED;
+  }
+  return SUCCESS;
+}
+
 Status Conv2DInfo::InferDevMatrixShape() {
   // conv2d: the strategy is ((n, i, a, b), (o, i, 1, 1))
   // conv3d: the strategy is ((n, i, a, b, 1), (o, i, 1, 1, 1))
@@ -1178,6 +1188,12 @@ Status Conv2DBackpropInputInfo::CheckHWStrategy(int64_t h_strategy, int64_t w_st
   }
 
   return SUCCESS;
+}
+
+Status Conv2DBackpropInputInfo::CheckStrategyForDynamicShape(const StrategyPtr &) {
+  MS_LOG(ERROR) << name_
+                << ": it does not support dynamic shape now, the inputs' shape: " << ShapesToString(inputs_shape_);
+  return FAILED;
 }
 
 Status Conv2DBackpropInputInfo::InferDevMatrixShape() {

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,16 @@ class TensorLayout {
   Status InitFromVector(const Shape &device_arrangement, const Shape &tensor_map, const Shape &tensor_shape);
   Status InitFromExtendVector(const Shape &device_arrangement, const std::vector<Shape> &tensor_map,
                               const Shape &tensor_shape);
+
+  Status UpdateTensorShape(size_t index, int64_t update_value) {
+    return this->tensor_shape_.UpdateTensorShape(index, update_value);
+  }
+
+  bool IsDynamicShape() {
+    return std::find(this->tensor_shape_.array().begin(), this->tensor_shape_.array().end(), -1) !=
+           this->tensor_shape_.array().end();
+  }
+
   bool skip_redistribution() const { return skip_redistribution_; }
 
   void set_skip_redistribution(bool flag) { skip_redistribution_ = flag; }
@@ -138,6 +148,9 @@ class TensorLayout {
   Arrangement tensor_shape_before() { return tensor_shape_before_; }
 
   std::vector<Shape> tensor_map_before() { return tensor_map_before_; }
+
+  int64_t GetSliceNumByTensorDimensionIndex(uint64_t idx) const;
+
   // Key for user data.
   constexpr static char key[] = "TLayout";
 
@@ -148,7 +161,6 @@ class TensorLayout {
   bool IsValidTensorLayout() const;
   void RemoveElementEqualToOneInDeviceArrangement();
   int64_t GetSliceDeviceDimensionByTensorDimensionIndex(uint64_t idx) const;
-  int64_t GetSliceNumByTensorDimensionIndex(uint64_t idx) const;
   bool TensorShapeDimensionIsDividedBySplitDeviceDimension() const;
   int64_t GetTensorDimensionIndexByDeviceDimensionIndex(int64_t idx) const;
 

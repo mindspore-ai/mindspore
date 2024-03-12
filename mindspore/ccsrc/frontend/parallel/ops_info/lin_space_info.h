@@ -48,6 +48,7 @@ class LinSpaceInfo : public OperatorInfo {
   Status InferTensorMap() override;
   Status InferMirrorOps() override;
   Status InferForwardCommunication() override { return SUCCESS; }
+  Status CheckStrategyForDynamicShape(const StrategyPtr &strategy) override;
 
  private:
   void InferSliceId();

@@ -126,7 +126,7 @@ class Net(nn.Cell):
         if self.keep_prob < 1.0:
             drop_mask_bits = self.reshape(self.drop_gen_mask((bsz, self.head_num, seq_len, seq_len),
                                                              self.keep_prob),
-                                          (bsz, self.head_num, seq_len, -1))
+                                          (bsz, self.head_num, seq_len, 128))
         else:
             drop_mask_bits = None
         return self.fa_op(query, key, value, real_shift, drop_mask_bits, None, attn_mask, None)
@@ -303,3 +303,30 @@ def test_flash_attention_with_load_balance(input_layout, with_shift, sparse_mode
     net = Net(N, input_layout=input_layout, sparse_mode=sparse_mode,
               with_real_shift=with_shift, dp=dp, mp=mp, sp=sp, enable_load_balance=load_balance)
     compile_net(net, query, key, value, real_shift, attn_mask)
+
+
+def generate_dynamic_inputs(B, N, S, D):
+    H = N * D
+    query = Tensor(shape=[B, S, H], dtype=ms.float16)
+    key = Tensor(shape=[B, S, H], dtype=ms.float16)
+    value = Tensor(shape=[B, S, H], dtype=ms.float16)
+    attn_mask = Tensor(shape=[B, 1, S, S], dtype=ms.uint8)
+    return query, key, value, None, attn_mask
+
+
+@pytest.mark.parametrize('keep_prob', [0.9])
+def test_flash_attention_dynamic_shape_constraint(keep_prob):
+    """
+    Features: test FlashAttentionScoreInfo dynamic shape
+    Description: semi_auto_parallel with strategy
+    Expectation: compile failed
+    """
+    set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", full_batch=False)
+    dp = 2
+    mp = 4
+    B, N, S, D = None, 16, 1024, 128
+    inputs = generate_dynamic_inputs(B, N, S, D)
+    net = Net(N, keep_prob, dp=dp, mp=mp)
+    with pytest.raises(RuntimeError):
+        compile_net(net, *inputs)

@@ -26,6 +26,7 @@
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/step_parallel_utils.h"
+#include "frontend/parallel/dynamic_shape/dynamic_shape.h"
 #include "frontend/parallel/graph_util/fold_pipeline_split_utils.h"
 #include "include/common/utils/parallel_context.h"
 #include "ir/value.h"
@@ -312,7 +313,14 @@ void SetStridedSliceStrategy(const AnfNodePtr &node) {
   auto dev_num = g_device_manager->stage_device_num();
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  std::vector<Shapes> shape_list = ExtractShape(cnode);
+  std::vector<Shapes> shape_list;
+  if (InDynamicGraph(cnode)) {
+    shape_list = ExtractRealDivisor(cnode);
+    MS_LOG(INFO) << "the node is in dynamic shape graph, the divisor is " << ShapesToString(shape_list[0]);
+  } else {
+    shape_list = ExtractShape(cnode);
+  }
+
   if (shape_list.empty()) {
     MS_LOG(EXCEPTION) << "Failure:node " << cnode->ToString() << " failed to extract shape";
   }

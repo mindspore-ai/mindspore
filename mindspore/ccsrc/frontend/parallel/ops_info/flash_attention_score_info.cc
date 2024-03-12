@@ -23,11 +23,11 @@
 
 #include "ir/value.h"
 #include "frontend/parallel/auto_parallel/graph_costmodel.h"
-#include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/step_parallel_utils.h"
 #include "frontend/parallel/graph_util/generate_graph.h"
+#include "frontend/parallel/graph_util/graph_utils.h"
 #include "mindspore/core/ops/flash_attention_score.h"
 #include "mindspore/core/ops/array_ops.h"
 #include "mindspore/core/ops/nn_ops.h"
@@ -375,6 +375,24 @@ Status FlashAttentionScoreInfo::CheckStrategy(const StrategyPtr &strategy) {
   InitExpectedStrategies();
   if (strategies != expect_strategies_) {
     MS_LOG(ERROR) << name_ << ": The input strategy must be " << expect_strategies_ << ", but got " << strategies;
+    return FAILED;
+  }
+
+  return SUCCESS;
+}
+
+Status FlashAttentionScoreInfo::CheckStrategyForDynamicShape(const StrategyPtr &) {
+  for (auto &cnode : cnodes_) {
+    // If DropoutGenMask -> Reshape -> FlashAttentionScore
+    auto reshape_node = cnode->input(ops::kFlashAttentionScoreInputDropMaskIndex + 1);
+    MS_EXCEPTION_IF_NULL(reshape_node);
+    if (!IsPrimitiveCNode(reshape_node, prim::kPrimReshape)) {
+      continue;
+    }
+
+    MS_LOG(ERROR)
+      << name_ << ": it does not support dynamic shape if it need to replace dst-shape for reshape, the inputs' shape: "
+      << ShapesToString(inputs_shape_);
     return FAILED;
   }
 

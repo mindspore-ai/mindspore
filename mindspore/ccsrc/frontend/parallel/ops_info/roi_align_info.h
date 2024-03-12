@@ -45,6 +45,7 @@ class ROIAlignInfo : public OperatorInfo {
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
   Status InferForwardCommunication() override { return SUCCESS; }
+  Status CheckStrategyForDynamicShape(const StrategyPtr &strategy) override;
 
  private:
   Status InferBias();

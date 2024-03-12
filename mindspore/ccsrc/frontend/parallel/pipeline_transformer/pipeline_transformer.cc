@@ -47,6 +47,7 @@
 #include "utils/ms_context.h"
 #include "utils/tensor_construct_utils.h"
 #include "mindspore/core/utils/parallel_node_check.h"
+#include "include/common/debug/anf_ir_dump.h"
 
 namespace mindspore {
 namespace parallel {
@@ -169,7 +170,17 @@ bool PipelineTransformer::MainGraph() {
     MS_LOG(WARNING) << "Can't find main graph, possible reason is can't find virtual dataset.";
     return false;
   }
+  for (auto &fg : manager_->func_graphs()) {
+    if (fg->has_flag(FUNC_GRAPH_FLAG_CELL_REUSE)) {
+      shared_cell_ = fg;
+      break;
+    }
+  }
+  if (!shared_cell_) {
+    return true;
+  }
   auto value_nodes = main_graph_->value_nodes();
+  std::set<AnfNodePtr> shared_cell_nodes;
   for (auto value_pair = value_nodes.cbegin(); value_pair != value_nodes.cend(); ++value_pair) {
     auto node = (*value_pair).first;
     if (!IsValueNode<FuncGraph>(node)) {
@@ -177,24 +188,27 @@ bool PipelineTransformer::MainGraph() {
     }
     auto graph = GetValueNode<FuncGraphPtr>(node);
     MS_EXCEPTION_IF_NULL(graph);
-    if (!graph->has_flag(FUNC_GRAPH_FLAG_CELL_REUSE)) {
-      continue;
+    if (graph == shared_cell_) {
+      (void)(shared_cell_nodes.insert(node));
     }
-    shared_cell_ = graph;
+  }
+  if (shared_cell_nodes.empty()) {
+    return true;
+  }
+  for (auto node : shared_cell_nodes) {
     auto node_users = manager_->node_users()[node];
     for (auto &node_user : node_users) {
       auto user = node_user.first;
       if (user->func_graph() == main_graph_) {
-        shared_cell_users_.push_back(user);
+        if (std::find(shared_cell_users_.begin(), shared_cell_users_.end(), user) == shared_cell_users_.end()) {
+          shared_cell_users_.push_back(user);
+        }
       }
     }
-    break;
-  }
-  if (!shared_cell_) {
-    return true;
   }
   MS_LOG(INFO) << "Enable micro-fold, the folded cell is " << shared_cell_->ToString();
   enable_share_cell_ = true;
+
   return true;
 }
 
@@ -1258,8 +1272,18 @@ std::pair<std::vector<AnfNodePtr>, std::vector<AnfNodePtr>> PipelineTransformer:
 
 tensor::TensorPtr PipelineTransformer::CreateZeroseOutput(const AnfNodePtr &node, size_t index) {
   auto out_shapes = GetNodeShape(node);
-  auto out_shape_type = GetShapeType(node, out_shapes.at(index), index);
-  auto zero_tensor = TensorConstructUtils::CreateZerosTensor(out_shape_type.second, out_shapes.at(index));
+  if (out_shapes.size() <= index) {
+    MS_LOG(EXCEPTION) << "the index is out of range, the size of output_shapes is " << out_shapes.size()
+                      << ", but the index is " << index;
+  }
+  auto out_shape = out_shapes.at(index);
+  if (std::count(out_shape.cbegin(), out_shape.cend(), DYNAMIC_DIM_VAL) > 0) {
+    MS_LOG(EXCEPTION) << "it is not supported that loss is not a scalar in dynamic shape and pipeline parallel "
+                         "scenarios, the output shape is "
+                      << out_shape;
+  }
+  auto out_shape_type = GetShapeType(node, out_shape, index);
+  auto zero_tensor = TensorConstructUtils::CreateZerosTensor(out_shape_type.second, out_shape);
   return zero_tensor;
 }
 

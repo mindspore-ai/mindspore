@@ -107,6 +107,16 @@ Status ResizeBilinearV2Info::CheckStrategy(const StrategyPtr &strategy) {
   return SUCCESS;
 }
 
+Status ResizeBilinearV2Info::CheckStrategyForDynamicShape(const StrategyPtr &) {
+  if (inputs_shape_[0][2] == -1 || inputs_shape_[0][3] == -1 || outputs_shape_[0][2] == -1 ||
+      outputs_shape_[0][3] == -1) {
+    MS_LOG(ERROR) << name_ << ": it does not support H or W dimension dynamic shape now, the input shape is "
+                  << ShapeToString(inputs_shape_[0]) << ", the output shape is " << ShapeToString(outputs_shape_[0]);
+    return FAILED;
+  }
+  return SUCCESS;
+}
+
 Status ResizeBilinearV2Info::InferDevMatrixShape() {
   // the strategy is (n, c, h, w)
   // the dev matrix is (n, c, h, w)

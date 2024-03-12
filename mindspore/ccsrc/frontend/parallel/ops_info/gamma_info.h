@@ -44,7 +44,6 @@ class GammaInfo : public OperatorInfo {
   int64_t ComputeOpAndPrevEdgeParameterInvolved() override;
 
  protected:
-  Status InferAttrs() override;
   Status GetAttrs() override;
   Status CheckStrategy(const StrategyPtr &strategy) override;
   Status InferForwardCommunication() override { return SUCCESS; }

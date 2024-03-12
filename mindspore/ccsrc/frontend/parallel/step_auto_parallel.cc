@@ -41,6 +41,7 @@
 #include "frontend/parallel/parameter_manager.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/step_parallel_utils.h"
+#include "frontend/parallel/dynamic_shape/dynamic_shape.h"
 #include "frontend/parallel/strategy_checkpoint/parallel_strategy_checkpoint.h"
 #include "include/common/utils/parallel_context.h"
 #include "ir/anf.h"
@@ -140,6 +141,9 @@ bool StepAutoParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &) {
     return changes;
   }
   MS_LOG(INFO) << "search_mode: " << strategy_search_mode;
+
+  // tag dynamic shape graph
+  parallel::TagDynamicShapeFuncGraph(root);
 
   MSLogTime msTime;
   msTime.Start();

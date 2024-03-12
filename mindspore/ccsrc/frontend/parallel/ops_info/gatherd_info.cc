@@ -95,10 +95,22 @@ Status GatherDInfo::CheckStrategy(const StrategyPtr &strategy) {
     }
   }
 
+  axis_shard_ = false;
   if (input_strategy[dim_] != 1) {
     axis_shard_ = true;
   }
 
+  return SUCCESS;
+}
+
+Status GatherDInfo::CheckStrategyForDynamicShape(const StrategyPtr &strategy) {
+  std::vector<Dimensions> stra = strategy->GetInputDim();
+  if (axis_shard_ && (inputs_shape_[0][dim_] == -1)) {
+    MS_LOG(ERROR) << name_ << ": it does not support the dim-axis is split if the dim is dynamic, the strategy: "
+                  << ShapesToString(stra) << ", the inputs' shape: " << ShapesToString(inputs_shape_)
+                  << ", the axis: " << dim_;
+    return FAILED;
+  }
   return SUCCESS;
 }
 
@@ -200,9 +212,11 @@ void GatherDInfo::ReComputeBatchSplitFlagList() {
   }
 
   if (dim_ == 0) {
-    MS_LOG(EXCEPTION)
-      << name_
-      << ": Can not generate batch data parallel strategy since the dim is 0, please set others strategy for it";
+    for (size_t i = 0; i < inputs_shape_.size(); ++i) {
+      split_flag_list_[i] = false;
+    }
+    MS_LOG(INFO) << name_ << ": the dim is 0, can not split batch dim";
+    return;
   }
 
   for (size_t i = 0; i < inputs_shape_.size(); ++i) {

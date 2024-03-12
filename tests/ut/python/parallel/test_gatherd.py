@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import numpy as np
+import pytest
 
 import mindspore as ms
 from mindspore import context, Tensor, Parameter
@@ -102,3 +103,30 @@ def test_gathernd_axis():
     assert validator.check_node_inputs_has('AllReduce-0', ['Mul-0'], graph_id=1)
     assert validator.check_node_inputs_has('Mul-0', ['GatherD-0', 'Cast-0'], graph_id=1)
     assert validator.check_node_inputs_has('GatherD-0', ['Minimum-0'], graph_id=1)
+
+
+class Net2(Cell):
+    def __init__(self, dim, strategy1=None):
+        super().__init__()
+        self.gatherd = P.GatherD().shard(strategy1)
+        self.dim = dim
+
+    def construct(self, x, b):
+        out = self.gatherd(x, self.dim, b)
+        return out
+
+
+def test_gathernd_dynamic_shape_constraint():
+    """
+    Feature: GatherD parallel dynamic shape
+    Description: Split along dim axis
+    Expectation: compile failed
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0,
+                                      full_batch=False)
+    strategy1 = ((2, 8, 1), (1, 8, 1))
+    net = Net2(0, strategy1)
+    input_x = Tensor(shape=[None, 32, 64], dtype=ms.float32)
+    input_b = Tensor(np.ones([16, 32, 64]), dtype=ms.int32)
+    with pytest.raises(RuntimeError):
+        _cell_graph_executor.compile(net, input_x, input_b)

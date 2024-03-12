@@ -44,6 +44,7 @@ class GatherDInfo : public OperatorInfo {
  protected:
   Status GetAttrs() override;
   Status CheckStrategy(const StrategyPtr &strategy) override;
+  Status CheckStrategyForDynamicShape(const StrategyPtr &strategy) override;
   Status InferForwardCommunication() override { return SUCCESS; }
   Status InferMirrorOps() override;
   Status InferDevMatrixShape() override;

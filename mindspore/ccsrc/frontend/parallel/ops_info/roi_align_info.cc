@@ -59,6 +59,17 @@ Status ROIAlignInfo::CheckStrategy(const StrategyPtr &strategy) {
   return SUCCESS;
 }
 
+Status ROIAlignInfo::CheckStrategyForDynamicShape(const StrategyPtr &strategy) {
+  auto strategies = strategy->GetInputDim();
+  auto features_strategy = strategies[0];
+  if (features_strategy[0] != 1) {
+    MS_LOG(ERROR) << name_ << ": the dim-0 of first input can not be split if it's dynamic shape, the strategy is "
+                  << ShapesToString(strategies) << ", the inputs' shape: " << ShapesToString(inputs_shape_);
+    return FAILED;
+  }
+  return SUCCESS;
+}
+
 Status ROIAlignInfo::InferDevMatrixShape() {
   dev_matrix_shape_.clear();
 

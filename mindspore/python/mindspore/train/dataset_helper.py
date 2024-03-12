@@ -27,7 +27,7 @@ from mindspore.dataset.engine import offload
 from mindspore import context, nn
 from mindspore.train._utils import _exec_datagraph, _get_types_and_shapes, _construct_tensor_list
 from mindspore.parallel._utils import _get_device_num, _get_global_rank, _need_to_full, \
-    _to_full_shapes, _get_pipeline_stages
+    _to_full_shapes, _get_pipeline_stages, _change_symbols_for_parallel
 from mindspore.parallel._ps_context import _is_role_sched
 from mindspore.ops import operations as P
 from mindspore.common.auto_dynamic_shape import _auto_dynamic_shape
@@ -97,6 +97,7 @@ class _DataWrapper(nn.Cell):
             dataset_types, dataset_shapes, len(dataset_types), queue_name)
         if network.get_inputs() is not None:
             symbol_inputs = [getattr(inp, "symbolic_shape", None) for inp in network.get_inputs()]
+            symbol_inputs = _change_symbols_for_parallel(dataset_shapes, symbol_inputs)
             if any((s is not None for s in symbol_inputs)):
                 self.get_next.add_prim_attr("symbols", symbol_inputs)
         self.network = network

@@ -49,6 +49,7 @@ class DropoutDoMaskInfo : public OperatorInfo {
   Status InferTensorMap() override;
   Status GetAttrs() override { return SUCCESS; }
   Status InferDevMatrixShape() override;
+  Status CheckStrategyForDynamicShape(const StrategyPtr &strategy) override;
 };
 
 using DropoutDoMaskInfoPtr = std::shared_ptr<DropoutDoMaskInfo>;

@@ -284,6 +284,17 @@ using mindspore::abstract::AnalysisContextPtr;
 // Whether this process in a MindSpore cluster.
 static bool is_cluster_initialized = false;
 
+bool IsDynamicShapeGraph(const FuncGraphPtr &func_graph) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  std::vector<AnfNodePtr> node_list = TopoSort(func_graph->get_return(), SuccDeeperSimple);
+  return std::any_of(node_list.begin(), node_list.end(), [](const AnfNodePtr &node) {
+    if (common::AnfAlgo::IsCallNode(node)) {
+      return false;
+    }
+    return common::AnfAlgo::IsDynamicShape(node);
+  });
+}
+
 abstract::AnalysisResult AbstractAnalyze(const abstract::AnalysisEnginePtr &engine, const FuncGraphPtr &func_graph,
                                          const abstract::AbstractBasePtrList &args_abs, bool is_load_resoure,
                                          bool clear) {
@@ -1633,6 +1644,12 @@ bool RemoveValueNodeDuplicationsAction(const ResourcePtr &resource) {
 
 bool PipelineSplitAction(const ResourcePtr &resource) { return PipelineSplitPass(resource); }
 
+bool ParallelVirtualDatasetAction(const ResourcePtr &resource) { return ParallelVirtualDatasetPass(resource); }
+
+bool AutoParallelSymbolWithReNormalizeAction(const ResourcePtr &resource) {
+  return AutoParallelSymbolPassWithReNormalize(resource);
+}
+
 bool AutoParallelAction(const ResourcePtr &resource) { return AutoParallelPass(resource); }
 
 bool ValidateAction(const ResourcePtr &resource) {
@@ -1752,8 +1769,13 @@ static std::vector<ActionItem> CommonPipeline(bool trace_flag) {
   (void)actions.emplace_back(std::make_pair(kAutoMonad, AutoMonadAction));
   // Do data structure simplifications and inline.
   (void)actions.emplace_back(std::make_pair(kInline, OptInlineAction));
+
+  (void)actions.emplace_back(std::make_pair("parallel-infer-symbol", AutoParallelSymbolWithReNormalizeAction));
   // Do prepositive auto parallel.
   (void)actions.emplace_back(std::make_pair(kPreAutoParallel, AutoParallelAction));
+  // insert virtual dataset
+  (void)actions.emplace_back(std::make_pair("insert-virtual-dataset", ParallelVirtualDatasetAction));
+  (void)actions.emplace_back(std::make_pair("parallel-infer-symbol-second", AutoParallelSymbolWithReNormalizeAction));
   // Do PipelineSplit action.
   (void)actions.emplace_back(std::make_pair(kPipelineSplit, PipelineSplitAction));
 

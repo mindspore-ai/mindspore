@@ -26,6 +26,7 @@
 #include "frontend/parallel/auto_parallel/costmodel.h"
 #include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/graph_util/node_info.h"
+#include "frontend/parallel/graph_util/graph_utils.h"
 #include "frontend/parallel/step_parallel_utils.h"
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/strategy.h"
@@ -54,6 +55,12 @@ Status DropoutDoMaskInfo::CheckStrategy(const StrategyPtr &strategy) {
   // only check the input[0]
   Shapes input_shape = {inputs_shape_[0]};
   return CheckStrategyValue(strategy, input_shape);
+}
+
+Status DropoutDoMaskInfo::CheckStrategyForDynamicShape(const StrategyPtr &strategy) {
+  MS_LOG(ERROR) << name_
+                << ": it does not support dynamic shape now, the inputs's shape: " << ShapesToString(inputs_shape_);
+  return FAILED;
 }
 
 Status DropoutDoMaskInfo::InferDevMatrixShape() {

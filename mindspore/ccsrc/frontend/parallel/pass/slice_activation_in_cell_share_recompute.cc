@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2023-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,14 @@
  */
 
 #include "frontend/parallel/pass/slice_activation_in_cell_share_recompute.h"
-#include <list>
 #include <memory>
 #include <string>
 #include <vector>
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/step_parallel_utils.h"
+#include "frontend/parallel/graph_util/graph_utils.h"
 #include "frontend/parallel/tensor_layout/construct_operator.h"
 #include "include/common/utils/utils.h"
-#include "mindspore/core/ops/array_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
 #include "mindspore/core/ops/auto_generate/gen_ops_primitive.h"
 

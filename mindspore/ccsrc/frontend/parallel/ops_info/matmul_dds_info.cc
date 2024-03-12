@@ -46,7 +46,7 @@ namespace parallel {
  */
 constexpr size_t kLocalMaskDim2 = 2;
 constexpr size_t kLocalMaskDim3 = 3;
-Status MatmulDDSInfo::CheckStrategys(const Strategies &stras) {
+Status MatmulDDSInfo::CheckStrategies(const Strategies &stras) {
   if (stras.size() != MATMUL_DDS_INPUTS_SIZE) {
     MS_LOG(ERROR) << name_ << ": Invalid strategy. The strategys size should be 4.";
     return FAILED;
@@ -113,10 +113,16 @@ Status MatmulDDSInfo::CheckStrategy(const StrategyPtr &strategy) {
     return FAILED;
   }
   Strategies stras = strategy->GetInputDim();
-  if (CheckStrategys(stras) != SUCCESS) {
+  if (CheckStrategies(stras) != SUCCESS) {
     return FAILED;
   }
   return SUCCESS;
+}
+
+Status MatmulDDSInfo::CheckStrategyForDynamicShape(const StrategyPtr &) {
+  MS_LOG(ERROR) << name_
+                << ": it does not support dynamic shape now, the inputs' shape: " << ShapesToString(inputs_shape_);
+  return FAILED;
 }
 
 /*

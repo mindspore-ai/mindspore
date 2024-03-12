@@ -48,16 +48,15 @@ Status BroadcastToInfo::CheckStrategy(const StrategyPtr &strategy) {
     MS_LOG(ERROR) << name_ << ": Invalid strategy";
     return FAILED;
   }
-  auto input_dim = strategy->GetInputDim();
-  auto stra = input_dim.at(0);
-  auto in_shape = inputs_shape_.at(0);
-  for (size_t i = 0; i < stra.size(); ++i) {
-    if ((in_shape[i] == 1) && (stra[i] != 1)) {
-      MS_LOG(ERROR) << name_ << ": dimension with size 1 is not splitable.";
-      return FAILED;
-    }
-  }
+
   return SUCCESS;
+}
+
+Status BroadcastToInfo::CheckStrategyForDynamicShape(const StrategyPtr &) {
+  MS_LOG(ERROR) << name_
+                << ": it does not support dynamic shape now, the inputs's shape: " << ShapesToString(inputs_shape_)
+                << ", the outputs' shape: " << ShapesToString(outputs_shape_);
+  return FAILED;
 }
 
 Status BroadcastToInfo::InferDevMatrixShape() {

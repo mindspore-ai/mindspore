@@ -34,6 +34,7 @@ SymbolPtr MakeTupleBuilder(OperationBuilder *b) {
 }
 
 REG_SYMBOL_OP_BUILDER("MakeTuple").SetShapeFunc(MakeTupleBuilder).SetValueFunc(MakeTupleBuilder);
+REG_SYMBOL_OP_BUILDER("_VirtualDataset").SetShapeFunc(MakeTupleBuilder).SetValueFunc(MakeTupleBuilder);
 REG_SYMBOL_OP_BUILDER("RealMakeTuple").SetShapeFunc(MakeTupleBuilder).SetValueFunc(MakeTupleBuilder);
 REG_SYMBOL_OP_BUILDER("make_list").SetShapeFunc(MakeTupleBuilder).SetValueFunc(MakeTupleBuilder);
 }  // namespace ops

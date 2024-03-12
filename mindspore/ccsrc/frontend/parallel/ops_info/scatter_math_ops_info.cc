@@ -35,6 +35,7 @@ namespace parallel {
 // Thus, it can support row-split/column-split/row-column-split
 Status ScatterMathOpsInfo::CheckStrategy(const StrategyPtr &strategy) {
   MS_EXCEPTION_IF_NULL(strategy);
+  do_replace_graph_ = false;
   if (CheckStrategyValue(strategy, inputs_shape_) != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": Invalid strategy";
     return FAILED;
@@ -68,6 +69,17 @@ Status ScatterMathOpsInfo::CheckStrategy(const StrategyPtr &strategy) {
 
   if (stra[0][0] > 1) {
     do_replace_graph_ = true;
+  }
+  return SUCCESS;
+}
+
+Status ScatterMathOpsInfo::CheckStrategyForDynamicShape(const StrategyPtr &strategy) {
+  std::vector<Dimensions> stra = strategy->GetInputDim();
+  if (stra[0][0] > 1) {
+    MS_LOG(ERROR) << name_ << ": the dim 0 of first input can not be split in dynamic shape, the strategy is "
+                  << ShapesToString(stra) << ", the inputs' shape: " << ShapesToString(inputs_shape_)
+                  << ", the output shape: " << ShapeToString(outputs_shape_[0]);
+    return FAILED;
   }
   return SUCCESS;
 }

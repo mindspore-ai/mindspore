@@ -50,7 +50,10 @@ class GatherUtil {
       : name_(std::move(name)),
         inputs_shape_(std::move(inputs_shape)),
         outputs_shape_(std::move(outputs_shape)),
-        axis_(axis) {}
+        axis_(axis) {
+    inputs_shape_clone_ = inputs_shape_;
+    outputs_shape_clone_ = outputs_shape_;
+  }
   virtual ~GatherUtil() = default;
   virtual Status CheckStrategy(const Shape &param_strategy, const Shape &indices_strategy) = 0;
   virtual Status InferForwardCommunication() { return SUCCESS; }
@@ -63,6 +66,9 @@ class GatherUtil {
   void set_param_strategy(const Shape &a) { param_strategy_ = a; }
   void set_indices_strategy(const Shape &a) { indices_strategy_ = a; }
   void set_gather_mode(const GatherMode &a) { gather_mode_ = a; }
+  void set_inputs_divisor(const Shapes &a) { inputs_divisor_ = a; }
+  void set_outputs_divisor(const Shapes &a) { outputs_divisor_ = a; }
+  void set_dynamic_shape_flag(bool a) { dynamic_shape_flag_ = a; }
   GatherMode gather_mode() const { return gather_mode_; }
   Shape dev_matrix_shape() const { return dev_matrix_shape_; }
   void set_dev_matrix_shape(const Shape &a) { dev_matrix_shape_ = a; }
@@ -78,11 +84,17 @@ class GatherUtil {
   bool repeated_num_in_dev_matrix_right() const { return repeated_num_in_dev_matrix_right_; }
   Shape out_dev_matrix_shape() const { return out_dev_matrix_shape_; }
   std::string GatherModeToString() const { return gather_mode_string_[gather_mode_]; }
+  void DivisorsReplaceShapes();
+  void ResumeShapes();
 
  protected:
   std::string name_;
   Shapes inputs_shape_;
   Shapes outputs_shape_;
+  Shapes inputs_shape_clone_;
+  Shapes outputs_shape_clone_;
+  Shapes inputs_divisor_;
+  Shapes outputs_divisor_;
   int64_t axis_;
 
   Shape param_strategy_;
@@ -100,6 +112,7 @@ class GatherUtil {
   Status InferTensorInfoNoSplitAxis();
   bool repeated_num_in_dev_matrix_right_ = true;  // only for shard axis
   Shape out_dev_matrix_shape_;                    // only for shard axis
+  bool dynamic_shape_flag_ = False;
 
  private:
   const std::vector<std::string> gather_mode_string_ = {
@@ -322,6 +335,7 @@ class GatherInfo : public OperatorInfo {
  protected:
   Status CheckStrategy(const StrategyPtr &strategy) override;
   Status CheckOutputStrategy(const StrategyPtr &out_strategy) override;
+  Status CheckStrategyForDynamicShape(const StrategyPtr &strategy) override;
   Status InferMirrorOps() override;
   Status InferForwardCommunication() override;
   Status InferTensorInfo() override;

@@ -43,6 +43,7 @@ class BatchParallelInfo : public OperatorInfo {
 
  protected:
   Status CheckStrategy(const StrategyPtr &strategy) override;
+  Status CheckStrategyForDynamicShape(const StrategyPtr &strategy) override;
   Status InferForwardCommunication() override;
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;

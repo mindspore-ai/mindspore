@@ -28,6 +28,7 @@ namespace mindspore {
 namespace parallel {
 using RankList = std::vector<int64_t>;
 using Shape = std::vector<int64_t>;
+using Shapes = std::vector<Shape>;
 
 class DeviceMatrix {
  public:
@@ -49,6 +50,7 @@ class DeviceMatrix {
 };
 
 std::string ShapeToString(const Shape &shape);
+std::string ShapesToString(const Shapes &shapes);
 std::string ListToString(const RankList &list);
 }  // namespace parallel
 }  // namespace mindspore

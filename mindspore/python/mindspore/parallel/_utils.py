@@ -144,13 +144,13 @@ def _to_full_shapes(shapes, device_num):
             new_shapes.append(new_shape)
         return new_shapes
     for shape in shapes:
-        new_shape = ()
+        shape_v = []
         for i, item in enumerate(shape):
             if i == 0 and item > 0:
-                new_shape += (item * device_num,)  # only for static shape
+                shape_v += (item * device_num,)  # only for static shape
             else:
-                new_shape += (item,)
-        new_shapes.append(new_shape)
+                shape_v += (item,)
+        new_shapes.append(shape_v)
     return new_shapes
 
 
@@ -416,6 +416,81 @@ def _infer_rank_list(train_map, predict_map=None):
         else:
             ret[param_name] = (rank_list, False)
     return ret
+
+
+def _handle_symbol_inputs(symbol_inputs):
+    """handle symbol inputs"""
+    dataset_strategy = ()
+    divisor_key = "divisor"
+    # dataset strategy is set
+    if context.get_auto_parallel_context("dataset_strategy") not in ("data_parallel", "full_batch"):
+        dataset_strategy = context.get_auto_parallel_context("dataset_strategy")
+    if dataset_strategy:
+        if len(symbol_inputs) != len(dataset_strategy):
+            raise ValueError("The symbol_inputs size {} is not equal to "
+                             "dataset strategy size {}".format(len(symbol_inputs), len(dataset_strategy)))
+        for index, shape in enumerate(symbol_inputs):
+            dataset_ele_s = dataset_strategy[index]
+            if len(shape) != len(dataset_ele_s):
+                raise ValueError("The symbol_inputs item size {} is not equal to "
+                                 "dataset strategy item size {}".format(len(shape), len(dataset_ele_s)))
+
+            for i, item in enumerate(shape):
+                if isinstance(item, dict):  # symbol
+                    symbol_inputs[index][i][divisor_key] = symbol_inputs[index][i][divisor_key] * dataset_ele_s[i]
+                else:  # common shape
+                    symbol_inputs[index][i] = item * dataset_ele_s[i]
+
+        return symbol_inputs
+
+    # full batch is set
+    device_num = _get_device_num() // _get_pipeline_stages()
+    for index, shape in enumerate(symbol_inputs):
+        for i, item in enumerate(shape):
+            if i == 0 and isinstance(item, dict):  # symbol
+                symbol_inputs[index][i][divisor_key] = symbol_inputs[index][i][divisor_key] * device_num
+
+    return symbol_inputs
+
+
+def _change_symbols_for_parallel(shapes, symbol_inputs=None):
+    """create or modify symbol inputs"""
+    # no need to handle the symbol if full_batch is true or it's not parallel mode
+    if not _need_to_full():
+        return symbol_inputs
+
+    # the symbol_inputs is [[{'divisor': 8}, 16], [{'divisor': 8}, 16]]
+    # the dataset_shapes is [(-1, 16), (-1, 16)]
+
+    # if static shape, return
+    is_dynamic_shape = False
+    for shape in shapes:
+        if any(i < 0 for i in shape):
+            is_dynamic_shape = True
+            break
+    if is_dynamic_shape is False:
+        return symbol_inputs
+
+    # if symbol_inputs is [None, None, ..., None], reset it
+    if symbol_inputs is not None and all(s is None for s in symbol_inputs):
+        symbol_inputs = []
+
+    # if symbol inputs is none or empty, create default symbol inputs
+    # if symbol inputs is not none, handle the empty symbol
+    divisor_key = "divisor"
+    if symbol_inputs is None or bool(symbol_inputs) is False:
+        symbol_inputs = [list(shape) for shape in shapes]  # tuple to list
+        for i, s in enumerate(symbol_inputs):
+            for j, item in enumerate(s):
+                if item == -1:
+                    symbol_inputs[i][j] = {divisor_key: 1}
+    else:
+        for i, s in enumerate(symbol_inputs):
+            for j, item in enumerate(s):
+                if isinstance(item, dict) and bool(item) is False:
+                    symbol_inputs[i][j] = {divisor_key: 1}
+
+    return _handle_symbol_inputs(symbol_inputs)
 
 
 def _grads_divided_by_device_num_if_recomputation(grads):

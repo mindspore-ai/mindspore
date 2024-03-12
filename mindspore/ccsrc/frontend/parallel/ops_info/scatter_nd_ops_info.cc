@@ -80,6 +80,7 @@ Status ScatterNdOpsInfo::CheckStrategy(const StrategyPtr &strategy) {
     }
   }
 
+  do_replace_graph_ = false;
   for (size_t i = 0; i < gather_dims_size_; ++i) {
     if (stra[0][i] > 1) {
       do_replace_graph_ = true;
@@ -87,6 +88,25 @@ Status ScatterNdOpsInfo::CheckStrategy(const StrategyPtr &strategy) {
     }
   }
 
+  return SUCCESS;
+}
+
+Status ScatterNdOpsInfo::CheckStrategyForDynamicShape(const StrategyPtr &strategy) {
+  if (inputs_shape_[1].back() == -1) {
+    MS_LOG(ERROR) << name_
+                  << ": it does not support the last dim of second input is dynamic shape now, the inputs shape:"
+                  << ShapesToString(inputs_shape_);
+    return FAILED;
+  }
+
+  if (do_replace_graph_) {
+    Strategies strategies = strategy->GetInputDim();
+    MS_LOG(ERROR) << name_ << ": the first " << gather_dims_size_
+                  << " dimension of first input is split, it need to replace graph, now it do not support dynamic "
+                     "shape, the inputs shape: "
+                  << ShapesToString(inputs_shape_) << ", the strategy: " << ShapesToString(strategies);
+    return FAILED;
+  }
   return SUCCESS;
 }
 
