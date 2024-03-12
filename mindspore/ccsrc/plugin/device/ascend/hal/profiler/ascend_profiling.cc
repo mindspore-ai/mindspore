@@ -48,6 +48,7 @@ std::map<std::string, aclprofAicoreMetrics> kAicMetrics{{"ArithmeticUtilization"
                                                         {"MemoryL0", ACL_AICORE_L0B_AND_WIDTH},
                                                         {"ResourceConflictRatio", ACL_AICORE_RESOURCE_CONFLICT_RATIO},
                                                         {"MemoryUB", ACL_AICORE_MEMORY_UB},
+                                                        {"L2Cache", ACL_AICORE_L2_CACHE},
                                                         {"None", ACL_AICORE_NONE}};
 
 std::shared_ptr<AscendProfiler> AscendProfiler::GetInstance() {
@@ -92,6 +93,22 @@ void AscendProfiler::Init(const std::string &profiling_path, uint32_t device_id,
   aclError aclRet = CALL_ASCEND_API(aclprofInit, profile_data_path_.c_str(), profile_data_path_.length());
   if (aclRet != ACL_SUCCESS) {
     MS_LOG(EXCEPTION) << "Failed to call aclprofInit function.";
+  }
+
+  if (options["hbm_ddr"] == "on") {
+    const char *hbmFreq = "100";
+    aclError hbmRet = aclprofSetConfig(ACL_PROF_SYS_HARDWARE_MEM_FREQ, hbmFreq, strlen(hbmFreq));
+    if (hbmRet != ACL_SUCCESS) {
+      MS_LOG(EXCEPTION) << "Failed to set hbm profiling config.";
+    }
+  }
+
+  if (options["pcie"] == "on") {
+    const char *pcieFreq = "50";
+    aclError pcieRet = aclprofSetConfig(ACL_PROF_SYS_INTERCONNECTION_FREQ, pcieFreq, strlen(pcieFreq));
+    if (pcieRet != ACL_SUCCESS) {
+      MS_LOG(EXCEPTION) << "Failed to set pcie profiling config.";
+    }
   }
 
   uint32_t device_list[1] = {device_id_};

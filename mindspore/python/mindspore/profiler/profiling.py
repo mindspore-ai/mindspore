@@ -14,15 +14,18 @@
 # ============================================================================
 """Profiling api file."""
 import os
+import re
 import shutil
 import stat
 import time
 import json
+from json import JSONDecodeError
 import glob
 import subprocess
 import csv
 import socket
 from enum import Enum
+from multiprocessing import Process
 from typing import List
 import numpy as np
 
@@ -41,7 +44,7 @@ from mindspore.profiler.parser.framework_parser import GpuFrameWorkParser, Dynam
 from mindspore.profiler.parser.integrator import Integrator, DeviceTarget
 from mindspore.profiler.parser.ascend_analysis.function_event import CANNEvent
 from mindspore.profiler.parser.cpu_gpu_timeline_generator import GpuTimelineGenerator, CpuTimelineGenerator
-from mindspore.profiler.parser.ascend_timeline_generator import AscendTimelineGenerator, AscendTimelineGeneratorOld
+from mindspore.profiler.parser.ascend_timeline_generator import AscendTimelineGenerator
 from mindspore.profiler.parser.memory_usage_parser import MemoryUsageParser
 from mindspore.profiler.parser.minddata_parser import MinddataParser
 from mindspore.profiler.parser.minddata_analyzer import MinddataProfilingAnalyzer
@@ -52,13 +55,13 @@ from mindspore.profiler.parser.msadvisor_analyzer import Msadvisor
 from mindspore.profiler.parser.profiler_info import ProfilerInfo
 from mindspore.common.api import _pynative_executor
 from mindspore.profiler.parser.ascend_msprof_exporter import AscendMsprofExporter
-from mindspore.profiler.parser.ascend_msprof_generator import AscendMsprofDataGenerator, AscendMsprofDataGeneratorOld
+from mindspore.profiler.parser.ascend_msprof_generator import AscendMsprofDataGenerator
 from mindspore.profiler.parser.ascend_fpbp_generator import AscendFPBPGenerator
 from mindspore.profiler.parser.ascend_op_generator import AscendOPGenerator
 from mindspore.profiler.parser.ascend_steptrace_generator import AscendStepTraceGenerator
 from mindspore.profiler.parser.ascend_flops_generator import AscendFlopsGenerator
 from mindspore.profiler.parser.ascend_cluster_generator import AscendClusterGenerator
-from mindspore.profiler.parser.ascend_hccl_generator import AscendHCCLGenerator, AscendHCCLGeneratorOld
+from mindspore.profiler.parser.ascend_hccl_generator import AscendHCCLGenerator
 from mindspore.profiler.parser.ascend_communicate_generator import AscendCommunicationGenerator
 
 INIT_OP_NAME = 'Default/InitDataSetQueue'
@@ -70,6 +73,7 @@ AICORE_METRICS_DICT = {
     3: "MemoryL0",
     4: "ResourceConflictRatio",
     5: "MemoryUB",
+    6: "L2Cache",
     -1: "None"
 }
 
@@ -90,8 +94,8 @@ class DeviceSupportParam(Enum):
     ]
     ASCEND = [
         'start', 'start_profile', 'output_path', 'data_process', 'timeline_limit', 'profile_memory',
-        'parallel_strategy', 'profile_communication', 'aicore_metrics', 'l2_cache', 'op_time', 'ascend_job_id',
-        'profile_framework'
+        'parallel_strategy', 'profile_communication', 'aicore_metrics', 'l2_cache', 'hbm_ddr', 'pcie', 'op_time',
+        'ascend_job_id', 'profile_framework'
     ]
 
 
@@ -286,11 +290,11 @@ def _parse_host_info(input_file, output_timeline_file, output_memory_file, is_de
         logger.warning("No valid time_stamp is record in file: %s", input_file)
 
 
-def _ascend_graph_msprof_generator(source_path, model_iteration_dict):
+def _ascend_graph_msprof_generator(mindstudio_profiler_output, model_iteration_dict):
     """Executing the msprof export mode."""
     try:
         ProfilerInfo.set_export_start_time(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
-        msprof_exporter = AscendMsprofExporter(source_path)
+        msprof_exporter = AscendMsprofExporter(mindstudio_profiler_output)
         flag = msprof_exporter.export(model_iteration_dict)
         ProfilerInfo.set_export_end_time(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
         return flag
@@ -300,7 +304,7 @@ def _ascend_graph_msprof_generator(source_path, model_iteration_dict):
         return False
 
 
-def _ascend_graph_msprof_analyse(source_path, flag):
+def _ascend_graph_msprof_analyse(mindstudio_profiler_output):
     """
     Ascend graph model msprof data analyse.
 
@@ -309,14 +313,9 @@ def _ascend_graph_msprof_analyse(source_path, flag):
     """
     res = ([], [], [], [])
     try:
-        if flag:
-            msprof_analyser = AscendMsprofDataGenerator(os.path.join(source_path, 'summary'))
-            df_op_summary, df_op_statistic, df_step_trace, df_step_trace_model = msprof_analyser.parse()
-            res = (df_op_summary, df_op_statistic, df_step_trace, df_step_trace_model)
-        else:
-            msprof_analyser = AscendMsprofDataGeneratorOld(os.path.join(source_path, 'summary'))
-            df_op_summary, df_op_statistic, df_step_trace = msprof_analyser.parse()
-            res = (df_op_summary, df_op_statistic, df_step_trace, [])
+        msprof_analyser = AscendMsprofDataGenerator(mindstudio_profiler_output)
+        df_op_summary, df_op_statistic, df_step_trace, df_step_trace_model = msprof_analyser.parse()
+        res = (df_op_summary, df_op_statistic, df_step_trace, df_step_trace_model)
 
         return res
 
@@ -445,6 +444,8 @@ class Profiler:
     _has_initialized = False
     _ascend_profiling_options = ""
     _ascend_job_id = ""
+    ENABLE_STATUS = "on"
+    DISABLE_STATUS = "off"
 
     def __init__(self, **kwargs):
         self._dev_id = None
@@ -468,7 +469,9 @@ class Profiler:
         _environment_check()
         # default aicore_metrics type is ArithmeticUtilization
         self._aicore_metrics_id = 0
-        self._l2_cache = "off"
+        self._l2_cache = self.DISABLE_STATUS
+        self._hbm_ddr = self.DISABLE_STATUS
+        self._pcie = self.DISABLE_STATUS
         self._data_process = True
         self._op_time = True
         self._profile_communication = False
@@ -482,21 +485,40 @@ class Profiler:
         self._profile_framework = "all"
         self._msprof_enable = os.getenv("PROFILER_SAMPLECONFIG")
         self._pretty_json = False
+        self._analyse_only = kwargs.get("analyse_only", False)
         if self._msprof_enable:
             return
-        self._start_time = int(time.time() * 1000000)
+        self._start_time = int(time.time() * 1e6)  # us
+        self._monotonic_time = int(time.monotonic() * 1e6)  # us
         logger.info("Profiling: start time: %d", self._start_time)
         if kwargs.get("env_enable"):
             self._profiler_init(kwargs)
             return
         Profiler._has_initialized = True
         # get device_id and device_target
-        self._get_devid_rankid_and_devtarget()
-        self._parser_kwargs(kwargs)
-        self._get_output_path(kwargs)
-        self._decide_device_target(kwargs)
-        if self.start_profile:
-            self.start()
+        if self._analyse_only:
+            self._device_target = DeviceTarget.ASCEND.value
+        else:
+            self._get_devid_rankid_and_devtarget()
+            self._parser_kwargs(kwargs)
+            self._get_output_path(kwargs)
+            self._decide_device_target(kwargs)
+            if self.start_profile:
+                self.start()
+
+    @staticmethod
+    def _get_prof_rank(prof_path: str):
+        """get rank id."""
+        sub_dirs = os.listdir(os.path.realpath(prof_path))
+        info_json_path = ""
+        for sub_dir in sub_dirs:
+            if sub_dir.startswith("device_"):
+                device_id = sub_dir.split("_")[-1]
+                info_json_path = os.path.join(prof_path, sub_dir, f"info.json.{device_id}")
+        if not os.path.exists(info_json_path):
+            return -1
+        rank_id, _ = Profiler._parse_info_json(info_json_path)
+        return rank_id
 
     @staticmethod
     def _check_output_path(output_path):
@@ -512,9 +534,9 @@ class Profiler:
         return output_path
 
     @staticmethod
-    def _parse_start_log(input_file):
+    def _parse_job_start_time(prof_dir):
         """
-        Parse host start log file, get the start time of the job.
+        Get the start time of the job.
 
         Args:
              input_file (str): The file path of the host start log file.
@@ -522,12 +544,32 @@ class Profiler:
         Returns:
             str, job start time.
         """
+        AscendMsprofExporter.check_msprof_env()
+        script_path = AscendMsprofExporter.get_msprof_info_path()
+        if not script_path:
+            logger.warning("Can`t find get_msprof_info.py path, use single-export mode instead.")
+            return None
 
-        job_start_time = 0
-        with open(input_file) as f:
-            job_start_time = json.load(f).get("collectionTimeBegin")
-
-        return job_start_time
+        logger.info("get_msprof_info.py path is : %s", script_path)
+        host_dir = os.path.join(prof_dir, 'host')
+        cmd = ['python',
+               script_path,
+               '-dir', host_dir]
+        try:
+            outs, _ = AscendMsprofExporter.run_cmd(cmd)
+            if not outs:
+                logger.warning('Can`t find the msprof info result')
+                return None
+            result = json.loads(outs)
+            if result.get('status', 1) == 1:
+                return None
+            jor_start_time = result.get('data', {}).get('collection_info', {}).get('Collection start time', None)
+            if jor_start_time is not None:
+                return float(jor_start_time.strip())
+            return None
+        except (RuntimeError, JSONDecodeError, AttributeError) as err:
+            logger.warning('Get the drvVersion error, use single-export mode instead. detail : %s', err)
+            return None
 
     @staticmethod
     def _parse_info_json(info_file):
@@ -550,6 +592,43 @@ class Profiler:
                 rank_id = 0
 
             return str(rank_id), str(dev_id)
+
+    @classmethod
+    def offline_analyse(cls, path: str, pretty=False, step_list=None):
+        """
+        analyze training performance data. The example shows above.
+
+        Args:
+            path (str, required): The data path which has a profiler folder in the path
+            pretty (bool, optional): Whether to pretty json files. Default: ``False``.
+            step_list (list, optional): A list of steps that need to be parsed
+        """
+        profiler_path = os.path.join(path, "profiler")
+        if not os.path.exists(profiler_path):
+            raise ProfilerPathErrorException(f'There must be a profiler folder in the data path: {path}.')
+
+        job_id_dict = {}
+        sub_dirs = os.listdir(os.path.realpath(profiler_path))
+        for sub_dir in sub_dirs:
+            sub_path = os.path.join(profiler_path, sub_dir)
+            if os.path.isdir(sub_path) and re.match(r"^PROF_\d+_\d+_[a-zA-Z0-9]+", sub_dir):
+                rank = cls._get_prof_rank(sub_path)
+                job_id_dict.setdefault(rank, []).append(sub_path)
+        if not job_id_dict:
+            return
+
+        process_list = []
+        for job_id_list in job_id_dict.values():
+            job_id_list.sort(key=lambda x: x.split("_")[2])
+            profiler = cls(analyse_only=True)
+            profiler.set_ascend_job_id(job_id_list[-1])
+            process = Process(target=profiler.analyse,
+                              args=(path, pretty, step_list))
+            process.start()
+            process_list.append(process)
+
+        for process in process_list:
+            process.join()
 
     def op_analyse(self, op_name, device_id=None):
         """
@@ -625,6 +704,7 @@ class Profiler:
                 Offline mode isused in abnormal exit scenario. This parameter should be set to ``None``
                 for online mode. Default: ``None``.
             pretty (bool, optional): Whether to pretty json files. Default: ``False``.
+            step_list (list, optional): A list of steps that need to be parsed
         """
         self._pretty_json = pretty
         model_iteration_dict = {}
@@ -669,8 +749,6 @@ class Profiler:
         Profiler._has_initialized = False
         self._dynamic_status = self._profiler_manager.dynamic_status()
         _environment_check()
-
-        self._cpu_profiler.stop()
 
         cpu_op_file = glob.glob(os.path.join(self._output_path, 'cpu_op_type_info_*'))
         if self._device_target and self._device_target != DeviceTarget.CPU.value and cpu_op_file:
@@ -800,6 +878,7 @@ class Profiler:
         # Stop data collection after all operators are executed.
         _pynative_executor.sync()
 
+        self._cpu_profiler.stop()
         if self._data_process:
             self._md_profiler.stop()
             self._md_profiler.save(self._output_path)
@@ -812,8 +891,20 @@ class Profiler:
             self._stop_time = int(time.time() * 10000000)
         ProfilerInfo.set_profiling_stop_time(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
         self._init_profiler_info()
+        ProfilerInfo.set_diff_time(self._start_time - self._monotonic_time)
         ProfilerInfo.save(self._output_path)
         logger.info("Profiling: stop time: %d", self._stop_time)
+
+    def set_ascend_job_id(self, ascend_job_id):
+        """Set output_path for offline parsing performance data."""
+        if not ascend_job_id:
+            return
+        self._ascend_job_id = validate_and_normalize_path(ascend_job_id)
+        if not os.path.exists(self._ascend_job_id):
+            msg = f"Invalid ascend_job_id: {self._ascend_job_id}, Please pass the absolute path of the JOB dir"
+            logger.critical(msg)
+            raise ValueError(msg)
+        self._output_path, _ = os.path.split(self._ascend_job_id)
 
     def _profiler_init(self, kwargs):
         """Initialize variables when profiler is enabled by environment variables."""
@@ -933,15 +1024,17 @@ class Profiler:
             "output": self._output_path,
             "fp_point": fp_point,
             "bp_point": bp_point,
-            "training_trace": "on" if self._op_time else "off",
-            "task_trace": "on" if self._op_time else "off",
+            "training_trace": self.ENABLE_STATUS if self._op_time else self.DISABLE_STATUS,
+            "task_trace": self.ENABLE_STATUS if self._op_time else self.DISABLE_STATUS,
             "aic_metrics": AICORE_METRICS_DICT.get(self._aicore_metrics_id, "ArithmeticUtilization"),
-            "aicpu": "on" if self._data_process or self._op_time else "off",
-            "profile_memory": "on" if self._op_time and self._profile_memory else "off",
-            "hccl": "on" if self._op_time and self._profile_communication else "off",
+            "aicpu": self.ENABLE_STATUS if self._data_process or self._op_time else self.DISABLE_STATUS,
+            "profile_memory": self.ENABLE_STATUS if self._op_time and self._profile_memory else self.DISABLE_STATUS,
+            "hccl": self.ENABLE_STATUS if self._op_time and self._profile_communication else self.DISABLE_STATUS,
             "l2_cache": self._l2_cache,
-            "parallel_strategy": "on" if self._parallel_strategy else "off",
-            "op_time": "on" if self._op_time else "off",
+            "hbm_ddr": self._hbm_ddr,
+            "pcie": self._pcie,
+            "parallel_strategy": self.ENABLE_STATUS if self._parallel_strategy else self.DISABLE_STATUS,
+            "op_time": self.ENABLE_STATUS if self._op_time else self.DISABLE_STATUS,
             "profile_framework": self._profile_framework
         }
 
@@ -962,7 +1055,7 @@ class Profiler:
     def _parse_parameter_for_ascend(self, kwargs):
         """Parse parameter in Profiler when the device target is Ascend."""
         ascend_job_id = kwargs.pop("ascend_job_id", "")
-        self._set_ascend_job_id(ascend_job_id)
+        self.set_ascend_job_id(ascend_job_id)
         self.start_profile = kwargs.pop("start_profile", True)
         if not isinstance(self.start_profile, bool):
             raise TypeError(f"For '{self.__class__.__name__}', the parameter start_profile must be bool, "
@@ -975,7 +1068,7 @@ class Profiler:
             self._profile_communication = False
 
         if self._profile_communication:
-            hccl_option = {"output": self._output_path, "task_trace": "on"}
+            hccl_option = {"output": self._output_path, "task_trace": self.ENABLE_STATUS}
             os.environ['PROFILING_OPTIONS'] = json.dumps(hccl_option)
 
         self._profile_memory = kwargs.pop("profile_memory", False)
@@ -1000,10 +1093,21 @@ class Profiler:
             logger.warning(f"For '{self.__class__.__name__}', the parameter l2_cache must be bool, "
                            f"but got type {type(l2_cache_enable)}, it will be set to False.")
             l2_cache_enable = False
-        if l2_cache_enable:
-            self._l2_cache = "on"
-        else:
-            self._l2_cache = "off"
+        self._l2_cache = self.ENABLE_STATUS if l2_cache_enable else self.DISABLE_STATUS
+
+        hbm_ddr_enable = kwargs.pop("hbm_ddr", False)
+        if not isinstance(hbm_ddr_enable, bool):
+            logger.warning(f"For '{self.__class__.__name__}', the parameter hbm_ddr must be bool, "
+                           f"but got type {type(hbm_ddr_enable)}, it will be set to False.")
+            hbm_ddr_enable = False
+        self._hbm_ddr = self.ENABLE_STATUS if hbm_ddr_enable else self.DISABLE_STATUS
+
+        pcie_enable = kwargs.pop("pcie", False)
+        if not isinstance(pcie_enable, bool):
+            logger.warning(f"For '{self.__class__.__name__}', the parameter pcie must be bool, "
+                           f"but got type {type(pcie_enable)}, it will be set to False.")
+            pcie_enable = False
+        self._pcie = self.ENABLE_STATUS if pcie_enable else self.DISABLE_STATUS
 
         self._parallel_strategy = kwargs.pop("parallel_strategy", True)
         if not isinstance(self._parallel_strategy, bool):
@@ -1011,16 +1115,7 @@ class Profiler:
                            f"but got type {type(self._parallel_strategy)}, it will be set to True.")
             self._parallel_strategy = True
 
-    def _set_ascend_job_id(self, ascend_job_id):
-        """Set output_path for offline parsing performance data."""
-        if not ascend_job_id:
-            return
-        self._ascend_job_id = validate_and_normalize_path(ascend_job_id)
-        if not os.path.exists(self._ascend_job_id):
-            msg = f"Invalid ascend_job_id: {self._ascend_job_id}, Please pass the absolute path of the JOB dir"
-            logger.critical(msg)
-            raise ValueError(msg)
-        self._output_path, _ = os.path.split(self._ascend_job_id)
+
 
     def _ascend_analyse(self):
         """Collect and analyse ascend performance data."""
@@ -1145,23 +1240,17 @@ class Profiler:
         finally:
             pass
 
-    def _ascend_timeline_analyse(self, op_summary, steptrace, source_path, flag) -> List:
+    def _ascend_timeline_analyse(self, op_summary, steptrace, source_path, mindstudio_profiler_output) -> List:
         """Analyse timeline info."""
         try:
             logger.info("Profiling: analyzing the timeline data")
-            if flag:
-                timeline_analyser = AscendTimelineGenerator(self._output_path, source_path, self._rank_id,
-                                                            context.get_context('mode'))
-                timeline_analyser.parse_cluster_data(op_summary, steptrace)
-                timeline_analyser.parse_timeline_data(pretty=self._pretty_json)
-                timeline_analyser.write_timeline_display()
-                timeline_analyser.write_timeline_summary()
-            else:
-                timeline_analyser = AscendTimelineGeneratorOld(self._output_path, self._dev_id, self._rank_id,
-                                                               self._rank_size, context.get_context('mode'))
-                timeline_analyser.init_timeline(op_summary, steptrace, pretty=self._pretty_json)
-                timeline_analyser.write_timeline(self._timeline_size_limit_byte)
-                timeline_analyser.write_timeline_summary()
+            timeline_analyser = AscendTimelineGenerator(self._output_path, source_path, mindstudio_profiler_output,
+                                                        self._rank_id, context.get_context('mode'))
+            timeline_analyser.parse_cluster_data(op_summary, steptrace)
+            timeline_analyser.parse_timeline_data(pretty=self._pretty_json)
+            timeline_analyser.write_timeline_display()
+            timeline_analyser.write_timeline_summary()
+
         except (ProfilerIOException, ProfilerFileNotFoundException, RuntimeError) as err:
             logger.warning('Fail to write timeline data: %s', err)
         finally:
@@ -1278,7 +1367,7 @@ class Profiler:
         finally:
             pass
 
-    def _ascend_graph_hccl_analyse(self, source_path, steptrace, flag):
+    def _ascend_graph_hccl_analyse(self, mindstudio_profiler_output, steptrace):
         """Analyse hccl profiler info."""
         if not self._profile_communication:
             return
@@ -1292,10 +1381,7 @@ class Profiler:
 
             hccl_raw_path = os.path.join(self._output_path, f'hccl_raw_{dev_id}.csv')
             hccl_raw_path = validate_and_normalize_path(hccl_raw_path)
-            if flag:
-                hccl_analyse = AscendHCCLGenerator(os.path.join(source_path, 'timeline'), steptrace)
-            else:
-                hccl_analyse = AscendHCCLGeneratorOld(os.path.join(source_path, 'timeline'))
+            hccl_analyse = AscendHCCLGenerator(os.path.join(mindstudio_profiler_output, 'timeline'), steptrace)
             hccl_analyse.parse()
             hccl_analyse.write(hccl_raw_path)
 
@@ -1346,24 +1432,33 @@ class Profiler:
 
     def _ascend_graph_analyse(self, offline_path=None):
         """Ascend graph mode analyse."""
-        self._ascend_profiler.finalize()
+        if not offline_path:
+            self._ascend_profiler.finalize()
 
         job_id = self._get_profiling_job_id(offline_path)
         if not job_id:
             return
         logger.info("Profiling: job id is %s ", job_id)
 
+        if offline_path:
+            time_stamp = time.strftime("%Y%m%d%H%M%S", time.localtime(time.time()))
+            ascend_ms = f"rank-{self._rank_id}" if self._rank_id else f"{socket.gethostname()}--{os.getpid()}"
+            self._ascend_ms_path = os.path.join(self._output_path, f"{ascend_ms}_{time_stamp}_ascend_ms")
+
         self._check_output_path(output_path=self._output_path)
         source_path = os.path.join(self._output_path, job_id)
         self._minddata_analyse(source_path)
         if self._op_time:
-            flag = _ascend_graph_msprof_generator(source_path, self._model_iteration_dict)
+            mindstudio_profiler_output = os.path.abspath(os.path.join(source_path, os.path.pardir,
+                                                                      'mindstudio_profiler_output'))
+            flag = _ascend_graph_msprof_generator(mindstudio_profiler_output, self._model_iteration_dict)
             if not flag:
                 logger.warning('Current driver package not support all export mode, use single export mode, '
                                'this may lead to performance degradation. Suggest upgrading the driver package.')
             ProfilerInfo.set_export_flag(flag)
-            op_summary, op_statistic, steptrace, steptrace_model = _ascend_graph_msprof_analyse(source_path, flag)
-            kernels = self._ascend_timeline_analyse(op_summary, steptrace, source_path, flag)
+            op_summary, op_statistic, steptrace, steptrace_model \
+                = _ascend_graph_msprof_analyse(mindstudio_profiler_output)
+            kernels = self._ascend_timeline_analyse(op_summary, steptrace, source_path, mindstudio_profiler_output)
             launch_ops = self._get_kernel_op_map(op_summary, kernels)
             self._ascend_op_analyse(op_summary, op_statistic, self._dynamic_status, launch_ops)
             graph_ids = np.unique(op_summary['Model ID']).tolist()
@@ -1377,7 +1472,7 @@ class Profiler:
             self._ascend_flops_analyse(op_summary, launch_ops)
             self._ascend_graph_memory_analyse(points)
             self._ascend_ms_analyze(source_path)
-            self._ascend_graph_hccl_analyse(source_path, steptrace, flag)
+            self._ascend_graph_hccl_analyse(mindstudio_profiler_output, steptrace)
             self._ascend_graph_msadvisor_analyse(job_id)
             ProfilerInfo.set_graph_ids(graph_ids)
 
@@ -1586,8 +1681,7 @@ class Profiler:
                           if dir.startswith('device') and os.path.isdir(os.path.join(prof_dir, dir))]
             job_dir = os.path.join(self._output_path, dir_name, device_dir[0])
 
-            start_file_path = get_file_path(job_dir, "start_info")
-            if start_file_path is None:
+            if get_file_path(job_dir, "start_info") is None:
                 logger.warning("Find profiling job path %s, but host_start.log not exist, "
                                "profiler will ignore this job dir.", job_dir)
                 continue
@@ -1599,7 +1693,7 @@ class Profiler:
                 continue
 
             prof_rank_id, prof_device_id = self._parse_info_json(info_file_path)
-            job_start_time = self._parse_start_log(start_file_path)
+            job_start_time = self._parse_job_start_time(prof_dir)
 
             if offline_path:
                 self._dev_id = prof_device_id
@@ -1612,10 +1706,10 @@ class Profiler:
                                  "profiler will ignore this job dir.", job_dir, self._rank_id, prof_rank_id)
                     continue
 
-                if int(job_start_time) < self._start_time:
+                if job_start_time < self._start_time:
                     logger.warning("Find profiling job path %s, but start_time(%d) is earlier than this training "
                                    "start_time(%d), profiler will ignore this job dir.",
-                                   job_dir, int(job_start_time), self._start_time)
+                                   job_dir, job_start_time, self._start_time)
                     continue
 
             job_id = os.path.join(dir_name, device_dir[0])

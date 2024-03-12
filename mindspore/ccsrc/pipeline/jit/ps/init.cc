@@ -110,7 +110,9 @@ void RegProfilerManager(const py::module *m) {
 void RegHostProfile(py::module *m) {
   m->def("_collect_host_info", &CollectHostInfo, py::arg("module_name"), py::arg("event"), py::arg("stage"),
          py::arg("level") = py::int_(0), py::arg("profile_framework") = py::int_(0),
-         py::arg("start_end") = py::int_(PROFILER_RECORD_STAMP), py::arg("custom_info") = py::dict());
+         py::arg("start_end") = py::int_(PROFILER_RECORD_STAMP), py::arg("custom_info") = py::dict())
+    .def("get_clock_time", &GetClockTime)
+    .def("get_clock_syscnt", &GetClockSyscnt);
 }
 
 void RegFrameworkProfiler(py::module *m) {
