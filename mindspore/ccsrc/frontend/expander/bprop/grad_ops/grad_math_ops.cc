@@ -177,24 +177,17 @@ NodePtrList BpropAddcCommon(BpropBuilder *ib, const std::string &op_name, const 
   return {dinput_data, dx1, dx2, dvalue};
 }
 
-bool AlphaIsOne(const NodePtr &alpha) {
+std::optional<float> GetAlpha(const NodePtr &alpha) {
   auto alpha_value = alpha->BuildValue();
-  if (!alpha_value->ContainsValueAny()) {
-    MS_EXCEPTION_IF_NULL(alpha_value);
-    auto imm_int64 = alpha_value->cast_ptr<Int64Imm>();
-    if (imm_int64 != nullptr && imm_int64->value() == 1) {
-      return True;
-    }
-    auto imm_float = alpha_value->cast_ptr<FP32Imm>();
-    if (imm_float != nullptr && imm_float->value() == 1.) {
-      return True;
-    }
-    if (imm_int64 == nullptr && imm_float == nullptr) {
-      MS_LOG(INTERNAL_EXCEPTION) << "Invalid alpha type " << alpha_value->type_name()
-                                 << " , alpha type should be Int64 or Float32";
-    }
+  if (alpha_value->isa<Int64Imm>()) {
+    auto imm_int64 = alpha_value->cast_ptr<Int64Imm>()->value();
+    return std::make_optional(imm_int64);
+  } else if (alpha_value->isa<FP32Imm>()) {
+    auto imm_fp32 = alpha_value->cast_ptr<FP32Imm>()->value();
+    return std::make_optional(imm_fp32);
   }
-  return false;
+
+  return std::nullopt;
 }
 
 class ReduceStdShapeCalc : public ShapeCalcFunctor {
@@ -530,20 +523,23 @@ REG_BPROP_BUILDER("AddExt").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   }
   if (y->need_compute_grad_out()) {
     dy = dout;
-    if (!AlphaIsOne(alpha)) {
-      if (ib->GetDtypeId(x) == kNumberTypeComplex64 || ib->GetDtypeId(x) == kNumberTypeComplex128) {
-        alpha_tensor = ib->Cast(alpha_tensor, ib->GetDtype(x));
+    auto alpha_opt = GetAlpha(alpha);
+    if (!alpha_opt.has_value()) {
+      auto alpha_tensor = ib->ScalarToTensor(alpha, ib->GetDtype(x));
+      dy = ib->Mul(dy, alpha_tensor);
+    } else if (alpha_opt.value() != 1) {
+      if (ib->GetDtypeId(x) == kNumberTypeFloat16) {
+        auto alpha_tensor = ib->ScalarToTensor(alpha);
         dy = ib->Mul(dy, alpha_tensor);
-      } else if (ib->GetDtypeId(x) == kNumberTypeBFloat16) {
-        dy = ib->Cast(ib->Mul(ib->Cast(dy, ib->GetDtype(alpha_tensor)), alpha_tensor), kNumberTypeBFloat16);
       } else {
+        auto alpha_tensor = ib->Tensor(alpha_opt.value(), ib->GetDtype(x));
         dy = ib->Mul(dy, alpha_tensor);
       }
     }
   }
 
   std::vector<NodePtr> ret = BinopGradCommon(ib, x, y, dx, dy);
-  ret.emplace_back(ib->OutZeros(alpha_tensor));
+  ret.emplace_back(ib->Tensor(0, ib->GetDtype(alpha)));
   return ret;
 });
 
@@ -551,7 +547,6 @@ REG_BPROP_BUILDER("SubExt").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);
   auto alpha = ib->GetInput(kIndex2);
-  auto alpha_tensor = ib->ScalarToTensor(alpha, ib->GetDtype(x));
 
   auto dout = ib->GetInput(kIndex4);
   NodePtr dx = nullptr;
@@ -562,20 +557,23 @@ REG_BPROP_BUILDER("SubExt").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   }
   if (y->need_compute_grad_out()) {
     dy = ib->Emit(kNegOpName, {dout});
-    if (!AlphaIsOne(alpha)) {
-      if (ib->GetDtypeId(x) == kNumberTypeComplex64 || ib->GetDtypeId(x) == kNumberTypeComplex128) {
-        alpha_tensor = ib->Cast(alpha_tensor, ib->GetDtype(x));
+    auto alpha_opt = GetAlpha(alpha);
+    if (!alpha_opt.has_value()) {
+      auto alpha_tensor = ib->ScalarToTensor(alpha, ib->GetDtype(x));
+      dy = ib->Mul(dy, alpha_tensor);
+    } else if (alpha_opt.value() != 1) {
+      if (ib->GetDtypeId(x) == kNumberTypeFloat16) {
+        auto alpha_tensor = ib->ScalarToTensor(alpha);
         dy = ib->Mul(dy, alpha_tensor);
-      } else if (ib->GetDtypeId(x) == kNumberTypeBFloat16) {
-        dy = ib->Cast(ib->Mul(ib->Cast(dy, ib->GetDtype(alpha_tensor)), alpha_tensor), kNumberTypeBFloat16);
       } else {
+        auto alpha_tensor = ib->Tensor(alpha_opt.value(), ib->GetDtype(x));
         dy = ib->Mul(dy, alpha_tensor);
       }
     }
   }
 
   std::vector<NodePtr> ret = BinopGradCommon(ib, x, y, dx, dy);
-  ret.emplace_back(ib->OutZeros(alpha_tensor));
+  ret.emplace_back(ib->Tensor(0, ib->GetDtype(alpha)));
   return ret;
 });
 
