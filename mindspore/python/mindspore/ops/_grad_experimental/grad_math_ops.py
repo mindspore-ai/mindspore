@@ -765,6 +765,7 @@ def get_bprop_fft_with_size(self):
     to_tensor_op = P.ScalarToTensor()
     type_op = P.DType()
     concat_op = P.Concat()
+    concat_op_last = P.Concat(axis=-1)
     ones_op = P.Ones()
     zeros_op = P.Zeros()
     real_op = P.Real()
@@ -796,8 +797,7 @@ def get_bprop_fft_with_size(self):
                                  signal_sizes=offset_shape[-1:])
             irfft2d_ = FFTWithSize(signal_ndim=2, inverse=True, real=True, norm="backward", onesided=onesided,
                                    signal_sizes=offset_shape[-2:])
-            irfft3d_ = FFTWithSize(signal_ndim=3, inverse=True, real=True, norm="backward", onesided=onesided,
-                                   signal_sizes=offset_shape[-3:])
+            irfft3d_ = FFTWithSize(signal_ndim=3, inverse=True, real=False, norm="backward", onesided=onesided)
             if inverse is False:
                 if onesided is True:
                     terms = 0
@@ -813,6 +813,7 @@ def get_bprop_fft_with_size(self):
                         vec_mask = complex_op(1 - 2 * (mnp.arange(0, input_shape[-1], 1, input_type) % 2),
                                               zeros_op(input_shape[-1], input_type))
                         terms = real_op(dout_first) + is_even * real_op(dout_last * vec_mask)
+                        dx = to_tensor_op(0.5, input_type) * (dx * rfft_offset_size + terms) * rfft_norm_offset
                     elif signal_ndim == 2:
                         dx = irfft2d_(dout)
                         arange_inner = mnp.arange(0, input_shape[-2], 1, input_type)
@@ -854,26 +855,27 @@ def get_bprop_fft_with_size(self):
                                                         dout_shape, [input_shape[-1]])))
                         dout_last_term = dout_last_term * vec_mask
                         terms = real_op(dout_first_term) + is_even * real_op(dout_last_term)
+                        dx = to_tensor_op(0.5, input_type) * (dx * rfft_offset_size + terms) * rfft_norm_offset
                     elif signal_ndim == 3:
-                        dx = irfft3d_(dout) * real_op(offset_size)
-                    dx = to_tensor_op(0.5, input_type) * (dx * rfft_offset_size + terms) * rfft_norm_offset
+                        zeros_shape = offset_shape[:-1] + (offset_shape[-1] - dout_shape[-1],)
+                        zeros_values = zeros_op(zeros_shape, input_type)
+                        zeros_padding = complex_op(zeros_values, zeros_values)
+                        dout = concat_op_last((dout, zeros_padding))
+                        dx = real_op(irfft3d_(dout)) * real_op(offset_size)
                 else:
                     dx = irfft_fn(dout) * real_op(offset_size)
             else:
                 dx = rfft_fn(dout)
                 if onesided is True:
-                    if signal_ndim != 3:
-                        is_odd = dout_shape[-1] % 2
-                        last_shape = offset_shape[-1]
-                        mask = concat_op((ones_op(1, output_type), 2.0 * ones_op(
-                            (last_shape - 2 + is_odd,), output_type), ones_op((1 - is_odd,), output_type)))
-                        dx = dx * complex_op(mask, zeros_op(shape_op(mask), output_type))
-                        irfft_offset_size = to_tensor_op(
-                            _fft_with_size_back_norm(shape_op(dout), norm, inverse, signal_ndim),
-                            output_type)
-                        dx = dx * complex_op(irfft_offset_size, zeros_op(1, output_type))
-                    else:
-                        dx = dx * complex_op(offset_size, zeros_op(1, output_type))
+                    is_odd = dout_shape[-1] % 2
+                    last_shape = offset_shape[-1]
+                    mask = concat_op((ones_op(1, output_type), 2.0 * ones_op(
+                        (last_shape - 2 + is_odd,), output_type), ones_op((1 - is_odd,), output_type)))
+                    dx = dx * complex_op(mask, zeros_op(shape_op(mask), output_type))
+                    irfft_offset_size = to_tensor_op(
+                        _fft_with_size_back_norm(shape_op(dout), norm, inverse, signal_ndim),
+                        output_type)
+                    dx = dx * complex_op(irfft_offset_size, zeros_op(1, output_type))
                 else:
                     dx = dx * complex_op(offset_size, zeros_op(1, output_type))
         return (dx,)
