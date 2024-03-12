@@ -9,7 +9,10 @@ mindspore.ops.extend.gather
         output[(i_0, i_1, ..., i_{dim}, i_{dim+1}, ..., i_n)] = input[(i_0, i_1, ..., index[(i_0, i_1, ..., i_{dim}, i_{dim+1}, ..., i_n)], i_{dim+1}, ..., i_n)]
 
     .. warning::
-        在Ascend后端，当 `index` 的取值不在范围 `[-input.shape[dim], input.shape[dim])` 内，将导致不可预测的行为。
+        在Ascend后端，以下场景将导致不可预测的行为：
+
+          - 正向执行流程中, 当 `index` 的取值不在范围 `[-input.shape[dim], input.shape[dim])` 内；
+          - 反向执行流程中, 当 `index` 的取值不在范围 `[0, input.shape[dim])` 内。
 
     参数：
         - **input** (Tensor) - 待索引切片取值的原始Tensor。

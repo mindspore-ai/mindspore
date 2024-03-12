@@ -716,7 +716,7 @@ def tensor_index_by_tuple(data, tuple_index):
         judge_tuple_index_dim(data, tuple_index)
     tuple_index, zero_index, non_zero_shapes = _handle_bool_tensor(tuple_index)
     for non_zero_shape in non_zero_shapes:
-        if F.reduce_min(non_zero_shape) == 0:
+        if 0 in non_zero_shape:
             tuple_index = zero_index
             break
 
@@ -854,10 +854,14 @@ def sequence_to_tensor(value, dtype):
     if value_elements_type == const_utils.ALL_TENSOR:
         value = F.stack(value).astype(dtype)
     elif value_elements_type == const_utils.NO_TENSOR:
-        if isinstance(value, tuple):
-            value = TupleToTensor()(value, dtype)
+        if isinstance(value, list):
+            value = tuple(value)
+
+        if dtype == mstype.float16:
+            value = TupleToTensor()(value, mstype.float32)
+            value = F.cast(value, dtype)
         else:
-            value = TupleToTensor()(tuple(value), dtype)
+            value = TupleToTensor()(value, dtype)
     else:
         new_value = ()
         for ele in value:
@@ -1080,7 +1084,7 @@ def tensor_setitem_by_tuple_with_tensor(data, tuple_index, value):
     tuple_index, _, non_zero_shapes = _handle_bool_tensor(tuple_index)
 
     for non_zero_shape in non_zero_shapes:
-        if F.reduce_min(non_zero_shape) == 0:
+        if 0 in non_zero_shape:
             return data
     value = value.astype(data.dtype)
     special_index, tuple_index, new_value_shape, idx_advanced, _broadcast_data_shape \

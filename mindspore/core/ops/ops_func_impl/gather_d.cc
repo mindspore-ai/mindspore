@@ -74,8 +74,10 @@ int32_t GatherDFuncImpl::CheckValidation(const PrimitivePtr &primitive,
 
   auto dims_scalar = GetScalarValue<int64_t>(input_args[kInputIndex1]->GetValue());
   int64_t dim = 0;
+  int64_t raw_dim = 0;
   if (dims_scalar.has_value()) {
     dim = dims_scalar.value();
+    raw_dim = dim;
     if (dim < 0) {
       dim = dim + x_rank;
     }
@@ -83,8 +85,8 @@ int32_t GatherDFuncImpl::CheckValidation(const PrimitivePtr &primitive,
     return OP_CHECK_RETRY;
   }
 
-  MS_CHECK_VALUE(dim >= 0 && dim < x_rank, CheckAndConvertUtils::FormatCheckInRangeMsg("dim value", dim, kIncludeBoth,
-                                                                                       {-x_rank, x_rank}, primitive));
+  MS_CHECK_VALUE(dim >= 0 && dim < x_rank, CheckAndConvertUtils::FormatCheckInRangeMsg(
+                                             "dim value", raw_dim, kIncludeBoth, {-x_rank, x_rank}, primitive));
 
   for (int64_t i = 0; i < x_rank; ++i) {
     if (i == dim) {
