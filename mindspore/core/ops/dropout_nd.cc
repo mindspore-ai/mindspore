@@ -96,7 +96,7 @@ TypePtr DropoutNDInferType(const PrimitivePtr &primitive, const std::vector<Abst
   const int64_t input_num = 1;
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num, op_name);
   auto input_type = input_args[0]->GetType();
-  std::set<TypePtr> check_list = {kInt8, kInt16, kInt32, kInt64, kFloat16, kFloat32, kFloat64};
+  std::set<TypePtr> check_list = {kInt8, kInt16, kInt32, kInt64, kFloat16, kBFloat16, kFloat32, kFloat64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_type, check_list, op_name);
   return std::make_shared<Tuple>(std::vector<TypePtr>{input_type, kBool});
 }

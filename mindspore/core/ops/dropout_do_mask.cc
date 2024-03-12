@@ -108,7 +108,7 @@ TypePtr DropoutDoMaskInferType(const PrimitivePtr &primitive, const std::vector<
   auto keep_prop_type = keep_prop->GetType();
   MS_EXCEPTION_IF_NULL(keep_prop_type);
   if (CheckAndConvertUtils::IsTensor(input_args[kInputIndex2])) {
-    const std::set<TypePtr> keep_prop_valid_types = {kFloat16, kFloat32, kFloat64};
+    const std::set<TypePtr> keep_prop_valid_types = {kFloat16, kBFloat16, kFloat32, kFloat64};
     (void)CheckAndConvertUtils::CheckTensorTypeValid("keep prop", keep_prop->GetType(), keep_prop_valid_types, op_name);
     if (CheckAndConvertUtils::IsTensor(input_args[kInputIndex2]) && IsValueKnown(keep_prop_value)) {
       auto keep_prop_type_ptr = keep_prop_type->cast<TensorTypePtr>();

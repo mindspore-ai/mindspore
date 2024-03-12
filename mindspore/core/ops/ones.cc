@@ -67,8 +67,8 @@ TypePtr OnesInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePt
                             << "', 'dtype' must be Type(), but got an invalid type: " << dtype_value->ToString() << ".";
   }
   auto output_type = dtype_value->cast<TypePtr>();
-  const std::set<TypePtr> valid_types = {kBool,   kInt8,   kInt16,  kInt32,   kInt64,   kUInt8,
-                                         kUInt16, kUInt32, kUInt64, kFloat16, kFloat32, kFloat64};
+  const std::set<TypePtr> valid_types = {kBool,   kInt8,   kInt16,   kInt32,    kInt64,   kUInt8,  kUInt16,
+                                         kUInt32, kUInt64, kFloat16, kBFloat16, kFloat32, kFloat64};
   return CheckAndConvertUtils::CheckSubClass("dtype", output_type, valid_types, prim_name);
 }
 AbstractBasePtr OnesInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
