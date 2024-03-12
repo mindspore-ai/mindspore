@@ -21,7 +21,6 @@
 #include <string>
 #include <map>
 #include "runtime/hardware/device_context.h"
-#include "runtime/device/memory_manager.h"
 #include "utils/ms_context.h"
 #include "include/transform/graph_ir/types.h"
 #include "plugin/device/ascend/hal/hardware/ascend_collective_comm_lib.h"
@@ -56,7 +55,7 @@ class GeAllocator : public ::ge::Allocator {
 
 class GeDeviceResManager : public DeviceResManager {
  public:
-  GeDeviceResManager() : mem_manager_(nullptr) {}
+  GeDeviceResManager() {}
   ~GeDeviceResManager() override = default;
 
   void Initialize() override;
@@ -118,7 +117,6 @@ class GeDeviceResManager : public DeviceResManager {
   friend class GeGraphExecutor;
   static void GeSetContextOptions(const std::shared_ptr<MsContext> &ms_context_ptr, transform::SessionOptions *options);
   static void GeSetReuseOptions(const std::string &key, size_t num, transform::SessionOptions *options);
-  std::shared_ptr<MemoryManager> mem_manager_ = nullptr;
   KernelRuntime *runtime_instance_ = nullptr;
   // Only used in graph_mode with MS_DISABLE_REF_MODE, delete it when delete MS_DISABLE_REF_MODE
   bool is_use_cpu_memory_ = false;

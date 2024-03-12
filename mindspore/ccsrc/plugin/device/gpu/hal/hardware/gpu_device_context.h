@@ -23,7 +23,6 @@
 #include <string>
 #include "runtime/hardware/device_context.h"
 #include "runtime/hardware/device_context_manager.h"
-#include "runtime/device/memory_manager.h"
 #include "plugin/device/gpu/hal/hardware/gpu_deprecated_interface.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
@@ -33,7 +32,7 @@ namespace gpu {
 class GPUKernelExecutor;
 class GPUDeviceResManager : public DeviceResManager {
  public:
-  GPUDeviceResManager() : mem_manager_(nullptr) {}
+  GPUDeviceResManager() {}
   ~GPUDeviceResManager() override = default;
 
   // Set device id and initialize device resource, such as stream, cudnn and cublas handle.
@@ -84,7 +83,6 @@ class GPUDeviceResManager : public DeviceResManager {
  private:
   friend class GPUKernelExecutor;
   bool InitDevice();
-  std::shared_ptr<MemoryManager> mem_manager_;
 };
 
 class GPUKernelExecutor : public KernelExecutor {
