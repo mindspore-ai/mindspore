@@ -1119,6 +1119,7 @@ TypeId Tensor::set_data_type(TypeId data_type) {
 }
 
 size_t Tensor::set_shape(const ShapeVector &shape) {
+  abstract_.reset();
   if (DataSize() != SizeOf(shape)) {
     data_ = MakeTensorData(data_type_, shape);
   }

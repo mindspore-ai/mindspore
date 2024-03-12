@@ -112,6 +112,8 @@ class BACKEND_EXPORT DeviceAddressUtils {
 
   static void CreateOutputTensorAddress(const DeviceContext *device_context, size_t stream_id,
                                         const std::vector<tensor::TensorPtr> &outputs);
+  static void CreateOutputTensorAddress(const DeviceContext *device_context, size_t stream_id,
+                                        const tensor::TensorPtr &output_tensor, size_t size);
 
   static void MallocForOutputs(const DeviceContext *device_context, const std::vector<tensor::TensorPtr> &outputs);
 
