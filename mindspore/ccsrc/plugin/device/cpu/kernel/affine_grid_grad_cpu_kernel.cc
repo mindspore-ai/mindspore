@@ -72,7 +72,7 @@ int AffineGridGradCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs
   if (int ret = KernelMod::Resize(inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  x_size_dims_ = inputs[1]->GetDeviceShapeVector();
+  x_size_dims_ = inputs[1]->GetValueWithCheck<std::vector<int64_t>>().size();
   return KRET_OK;
 }
 
@@ -284,9 +284,9 @@ void AffineGridGradCpuKernelMod::DoCompute_4D(const std::vector<kernel::KernelTe
 template <typename T, typename T0>
 bool AffineGridGradCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
                                               const std::vector<kernel::KernelTensor *> &outputs) {
-  if (x_size_dims_[0] == kLenXSize3D) {
+  if (x_size_dims_ == kLenXSize3D) {
     LaunchKernel_3D<T, T0>(inputs, outputs);
-  } else if (x_size_dims_[0] == kLenXSize4D) {
+  } else if (x_size_dims_ == kLenXSize4D) {
     LaunchKernel_4D<T, T0>(inputs, outputs);
   }
   return true;
@@ -310,8 +310,16 @@ bool AffineGridGradCpuKernelMod::Launch(const std::vector<KernelTensor *> &input
 using AffineGridGradPair = std::pair<KernelAttr, AffineGridGradCpuKernelMod::KernelRunFunc>;
 const std::vector<AffineGridGradPair> &AffineGridGradCpuKernelMod::GetFuncList() const {
   static const std::vector<std::pair<KernelAttr, AffineGridGradCpuKernelMod::KernelRunFunc>> func_list = {
-    {KernelAttr().AddSkipCheckAttr(true), &AffineGridGradCpuKernelMod::Launch},
-  };
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeFloat32),
+     &AffineGridGradCpuKernelMod::Launch},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeFloat16),
+     &AffineGridGradCpuKernelMod::Launch}};
   return func_list;
 }
 

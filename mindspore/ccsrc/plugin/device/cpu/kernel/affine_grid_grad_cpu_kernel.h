@@ -69,7 +69,7 @@ class AffineGridGradCpuKernelMod : public NativeCpuKernelMod, public MatchKernel
     std::function<bool(AffineGridGradCpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
                        const std::vector<kernel::KernelTensor *> &, const std::vector<kernel::KernelTensor *> &)>;
 
-  std::vector<int64_t> x_size_dims_;
+  int64_t x_size_dims_;
   bool align_corners_{false};
   std::vector<TypeId> input_info_;
 };
