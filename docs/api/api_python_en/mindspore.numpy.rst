@@ -582,10 +582,12 @@ For example: 1-D to N-D discrete Fourier transform and its inverse transform, di
     mindspore.numpy.fft.fft2
     mindspore.numpy.fft.fftn
     mindspore.numpy.fft.fftshift
+    mindspore.numpy.fft.rfft
     mindspore.numpy.fft.ifft
     mindspore.numpy.fft.ifft2
     mindspore.numpy.fft.ifftn
     mindspore.numpy.fft.ifftshift
+    mindspore.numpy.fft.irfft
 
 Interact With MindSpore Functions
 ---------------------------------

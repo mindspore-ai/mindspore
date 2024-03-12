@@ -1,0 +1,45 @@
+rfft:
+  description: |
+    Calculates the one dimensional discrete Fourier transform for real input `input`.
+    
+    Note:
+        - `rfft` is currently only used in `mindscience` scientific computing scenarios and
+          dose not support other usage scenarios.
+        - `rfft` is not supported on Windows platform yet.
+    
+    Args:
+        input (Tensor): The input tensor.
+        n (int, optional): Number of points along `dim` in the input to use. 
+            If given, the input will either be zero-padded or trimmed to this length before computing `rfft`.
+            Default: ``None``.
+        dim (int, optional): The dimension along which to take the one dimensional `rfft`.
+            Default: ``-1``, which means transform the last dimension of `input`.
+        norm (string, optional): Normalization mode. Default: ``None`` that means ``"backward"``.
+            Three modes are defined as,
+    
+            - ``"backward"``(no normalization).
+            - ``"forward"`` (normalize by :math:`1/n`).
+            - ``"ortho"`` (normalize by :math:`1/\sqrt{n}`).
+    
+    Returns:
+        Tensor, the result of `rfft()` function, dtype of the result is complex64/128, result.shape[dim] 
+        is :math:`n // 2 + 1`.
+    
+    Raises:
+        TypeError: If the `input` type is not Tensor.
+        TypeError: If the `input` data type is not one of: int16, int32, int64, float32, float64.
+        TypeError: If `n` or `dim` type is not int.
+        ValueError: If `dim` is not in the range of "[ `-input.ndim` , `input.ndim` )".
+        ValueError: If `n` is less than 1.
+        ValueError: If `norm` is none of ``"backward"`` , ``"forward"`` or ``"ortho"``.
+    
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+    
+    Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
+        >>> input = Tensor([1, 2, 3, 4])
+        >>> y = ops.rfft(input)
+        >>> print(y)
+        [10.+0.j -2.+2.j -2.+0.j]

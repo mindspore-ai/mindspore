@@ -457,10 +457,12 @@ Fast Fourier Transform Functions
     mindspore.ops.fft2
     mindspore.ops.fftn
     mindspore.ops.fftshift
+    mindspore.ops.rfft
     mindspore.ops.ifft
     mindspore.ops.ifft2
     mindspore.ops.ifftn
     mindspore.ops.ifftshift
+    mindspore.ops.irfft
 
 Tensor Operation Functions
 --------------------------
