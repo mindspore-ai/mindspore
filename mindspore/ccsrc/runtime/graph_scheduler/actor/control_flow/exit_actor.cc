@@ -51,7 +51,10 @@ void ExitActor::FetchInput(OpContext<DeviceTensor> *const context) {
   auto counter = callback_counter();
   MS_EXCEPTION_IF_NULL(counter);
   counter->Wait();
-  WaitRuntimePipelineFinish();
+  if (!WaitRuntimePipelineFinish(context)) {
+    MS_LOG(INFO) << "Run failed and early stop.";
+    return;
+  }
   ControlActor::FetchInput(context);
 
   ProfilerRecorder profiler(ProfilerModule::kRuntime, ProfilerEvent::kPreLaunch, GetAID().Name());

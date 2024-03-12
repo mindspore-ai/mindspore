@@ -25,6 +25,7 @@
 #include "kernel/format_utils.h"
 #include "kernel/common_utils.h"
 #include "utils/ms_context.h"
+#include "include/backend/device_synchronizer_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -530,6 +531,8 @@ const void *KernelTensor::GetValuePtr() {
 }
 
 bool KernelTensor::SyncDataFromDeviceToHost() const {
+  WaitAsyncResizeAndLaunchFinish();
+
   void *device_ptr = this->device_ptr();
   if (device_ptr == nullptr) {
     MS_LOG(ERROR) << "Not malloc device memory yet, sync data from device to host side failed, size: "

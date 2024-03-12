@@ -828,15 +828,11 @@ bool GPUKernelExecutor::LaunchKernel(const CNodePtr &kernel, const std::vector<K
   if (!profiler_inst->GetEnableFlag() || !profiler_inst->GetOpTimeFlag()) {
 #endif
     auto lock = LockLaunchKernel(stream);
-    MS_LOG(DEBUG) << "Begin launch kernel: " << kernel->fullname_with_scope();
     ret = DoLaunchKernel(kernel, inputs, workspace, outputs, kernel_mod, stream);
-    MS_LOG(DEBUG) << "End launch kernel: " << kernel->fullname_with_scope();
 #ifndef ENABLE_SECURITY
   } else {
     auto lock = LockLaunchKernel(stream);
-    MS_LOG(DEBUG) << "Begin launch kernel: " << kernel->fullname_with_scope();
     ret = LaunchKernelWithProfiling(kernel, inputs, workspace, outputs, kernel_mod, stream);
-    MS_LOG(DEBUG) << "End launch kernel: " << kernel->fullname_with_scope();
   }
 #endif
   if (!ret) {

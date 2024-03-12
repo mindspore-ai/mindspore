@@ -19,6 +19,17 @@
 
 namespace mindspore {
 namespace runtime {
+std::shared_ptr<KernelAsyncLaunchActor> &KernelAsyncLaunchActor::GetInstance() {
+  static std::shared_ptr<KernelAsyncLaunchActor> instance =
+    std::shared_ptr<KernelAsyncLaunchActor>(new KernelAsyncLaunchActor());
+  return instance;
+}
+
+void KernelAsyncLaunchActor::Initialize() {
+  Async(this->GetAID(), &KernelAsyncLaunchActor::GetThreadId);
+  Wait();
+}
+
 void KernelAsyncLaunchActor::LaunchKernel(OpContext<DeviceTensor> *const context, KernelActor *kernel_actor) {
   try {
     kernel_actor->ExecuteLaunchKernelTask(context);
@@ -31,6 +42,10 @@ void KernelAsyncLaunchActor::LaunchKernel(OpContext<DeviceTensor> *const context
 }
 
 void KernelAsyncLaunchActor::Wait() {
+  // To prevent deadlocks, you cannot wait again inside the processing of all messages received by this actor.
+  if (thread_id_ == std::this_thread::get_id()) {
+    return;
+  }
   MS_LOG(DEBUG) << "Begin wait kernel launch finish";
   ProfilerRecorder profiler(ProfilerModule::kRuntime, ProfilerEvent::kWaitKernelsLaunchFinish, GetAID().Name());
   Future<bool> f = Async(this->GetAID(), &KernelAsyncLaunchActor::OnTaskFinish);

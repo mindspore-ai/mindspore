@@ -610,6 +610,9 @@ void GraphScheduler::SpawnMultiPipelineActor(ActorSet *const actor_set, ActorThr
 
   ActorDispatcher::set_enable_async_launch_kernel(EnableRuntimePipeline() && !actor_set->kernel_actors_.empty() &&
                                                   default_actor_thread_num_ > kAsyncLaunchThreadNum);
+  if (ActorDispatcher::enable_async_launch_kernel()) {
+    thread_pool->DisableOccupiedActorThread();
+  }
   if (ActorDispatcher::enable_async_launch_kernel() && !already_spawn_kernel_async_launch_actor_) {
     size_t current_actor_thread_num = thread_pool->GetActorThreadNum();
     MS_LOG(INFO) << "Enable runtime asynchronously launch kernel, default actor thread num "
@@ -623,6 +626,8 @@ void GraphScheduler::SpawnMultiPipelineActor(ActorSet *const actor_set, ActorThr
     MS_EXCEPTION_IF_NULL(kernel_async_launch_actor);
     (void)actor_manager->Spawn(kernel_async_launch_actor, false);
     already_spawn_kernel_async_launch_actor_ = true;
+
+    kernel_async_launch_actor->Initialize();
   }
 
   // If enable runtime multi pipeline, async launch kernel will be enabled.
@@ -647,6 +652,9 @@ void GraphScheduler::SpawnMultiPipelineActor(ActorSet *const actor_set, ActorThr
     (void)actor_manager->Spawn(kernel_async_resize_actor, false);
 
     already_spawn_kernel_async_infer_resize_actor_ = true;
+
+    kernel_async_infer_actor->Initialize();
+    kernel_async_resize_actor->Initialize();
   }
 }
 
@@ -786,11 +794,15 @@ void GraphScheduler::Run(ActorSet *const actor_set, const std::vector<std::vecto
     std::condition_variable thread_blocker;
     const int64_t kTimeToWait = 60;
     (void)thread_blocker.wait_for(locker, std::chrono::seconds(kTimeToWait));
+    ActorDispatcher::set_enable_async_launch_kernel(false);
+    ActorDispatcher::set_enable_runtime_multi_pipeline(false);
     // May set exception in the wait time, need throw the exception to avoid affecting the next execution.
     MsException::Instance().CheckException();
     MS_LOG(EXCEPTION) << op_context.error_info_;
   }
 
+  ActorDispatcher::set_enable_async_launch_kernel(false);
+  ActorDispatcher::set_enable_runtime_multi_pipeline(false);
   MsException::Instance().CheckException();
   double end_time = GetTime();
   const size_t kSecondsToMilliseconds = 1000;
@@ -3065,5 +3077,12 @@ bool GraphScheduler::HaveRpcActors(const ActorSet *actor_set) const {
   return false;
 }
 #endif
+
+bool GraphScheduler::EnableRuntimePipeline() {
+  static const char kEnableRuntimePipeline[] = "MS_ENABLE_RUNTIME_PIPELINE";
+  static bool ret = common::GetEnv(kEnableRuntimePipeline) == "1";
+  return ret;
+}
+
 }  // namespace runtime
 }  // namespace mindspore

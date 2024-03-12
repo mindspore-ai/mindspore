@@ -48,7 +48,9 @@ class MemoryFreeActor : public MemoryAwareActor {
 
  protected:
   void Run(OpContext<DeviceTensor> *const context) override {
-    WaitRuntimePipelineFinish();
+    if (!WaitRuntimePipelineFinish(context)) {
+      MS_LOG(INFO) << "Run graph failed and please check error log.";
+    }
     ProcessSomasCrossStreamMemorySynchronization(context);
     PostRun(context);
   }

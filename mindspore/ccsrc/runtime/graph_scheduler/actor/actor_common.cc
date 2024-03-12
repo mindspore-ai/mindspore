@@ -237,13 +237,7 @@ bool EnableAsyncInfer() {
   return ret;
 }
 
-bool EnableRuntimePipeline() {
-  static const char kEnableRuntimePipeline[] = "MS_ENABLE_RUNTIME_PIPELINE";
-  static bool ret = common::GetEnv(kEnableRuntimePipeline) == "1";
-  return ret;
-}
-
-void WaitRuntimePipelineFinish(bool wait_kernel_launch_finish) {
+bool WaitRuntimePipelineFinish(const OpContext<DeviceTensor> *context, bool wait_kernel_launch_finish) {
 #ifndef BUILD_LITE
   if (ActorDispatcher::enable_runtime_multi_pipeline()) {
     KernelAsyncInferActor::GetInstance()->Wait();
@@ -253,6 +247,13 @@ void WaitRuntimePipelineFinish(bool wait_kernel_launch_finish) {
   if (ActorDispatcher::enable_async_launch_kernel() && wait_kernel_launch_finish) {
     KernelAsyncLaunchActor::GetInstance()->Wait();
   }
+
+  if (ActorDispatcher::enable_async_launch_kernel() && IsRunningFailed(context)) {
+    return false;
+  }
+  return true;
+#else
+  return true;
 #endif
 }
 

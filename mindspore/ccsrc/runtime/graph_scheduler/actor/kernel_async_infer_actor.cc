@@ -19,6 +19,17 @@
 
 namespace mindspore {
 namespace runtime {
+std::shared_ptr<KernelAsyncInferActor> &KernelAsyncInferActor::GetInstance() {
+  static std::shared_ptr<KernelAsyncInferActor> instance =
+    std::shared_ptr<KernelAsyncInferActor>(new KernelAsyncInferActor());
+  return instance;
+}
+
+void KernelAsyncInferActor::Initialize() {
+  Async(this->GetAID(), &KernelAsyncInferActor::GetThreadId);
+  Wait();
+}
+
 void KernelAsyncInferActor::InferShape(OpContext<DeviceTensor> *const context, KernelActor *kernel_actor) {
   try {
     kernel_actor->ExecuteInferShapeTask(context);
@@ -31,6 +42,10 @@ void KernelAsyncInferActor::InferShape(OpContext<DeviceTensor> *const context, K
 }
 
 void KernelAsyncInferActor::Wait() {
+  // To prevent deadlocks, you cannot wait again inside the processing of all messages received by this actor.
+  if (thread_id_ == std::this_thread::get_id()) {
+    return;
+  }
   MS_LOG(DEBUG) << "Begin wait kernel infer finish";
   ProfilerRecorder profiler(ProfilerModule::kRuntime, ProfilerEvent::kWaitKernelsInferFinish, GetAID().Name());
   Future<bool> f = Async(this->GetAID(), &KernelAsyncInferActor::OnTaskFinish);

@@ -58,7 +58,9 @@ void LoopCountActor::IncreaseLoopCount(OpContext<DeviceTensor> *const context) {
   auto counter = callback_counter();
   MS_EXCEPTION_IF_NULL(counter);
   counter->Wait();
-  WaitRuntimePipelineFinish();
+  if (!WaitRuntimePipelineFinish(context)) {
+    MS_LOG(INFO) << "Run graph failed and please check error log.";
+  }
 
   // Debug actor is blocked, must wait debug actor callback message to process continue.
   if (debug_aid_ != nullptr) {
