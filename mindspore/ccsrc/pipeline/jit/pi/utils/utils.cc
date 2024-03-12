@@ -359,6 +359,15 @@ bool IsMsClass(PyObject *obj) {
   return py::hasattr(py_obj, kMsClassAttr) && py::cast<bool>(py::getattr(py_obj, kMsClassAttr));
 }
 
+bool IsNumpyObject(PyObject *op) {
+  if (op == nullptr) {
+    return false;
+  }
+  PyTypeObject *tp = Py_TYPE(op);
+  constexpr const char numpy[] = "numpy";
+  return tp->tp_name ? strncmp(tp->tp_name, numpy, sizeof(numpy) - 1) == 0 : false;
+}
+
 std::string GetTopModule(const py::object &o) {
   PyObject *mod = PyObject_GetAttrString(o.ptr(), "__module__");
   const char *module_name = "";

@@ -146,8 +146,12 @@ bool GraphAnalyzer::HandleCallableToGraph(AObject *f) {
   if (!is_known_func && !is_ms_support_func) {
     return false;
   }
-  if (f->GetType() == AObject::kTypePrimitive && std::string("Assign") == GetFuncName(f->GetPyObject())) {
-    return false;
+  if (f->GetType() == AObject::kTypePrimitive) {
+    PyTypeObject *tp = f->GetTypeObject();
+    std::string name = (tp && tp->tp_name ? tp->tp_name : "");
+    if (name == "Assign") {
+      return false;
+    }
   }
   return true;
 }
@@ -177,8 +181,12 @@ bool GraphAnalyzer::AddToCaptured(ValueNode *v) {
     bool produced_in_graph = values.find(i) != values.end() || IsNonLocalValue(i);
     MS_EXCEPTION_IF_CHECK_FAIL(produced_in_graph || locals.find(i) != locals.end(),
                                "check values order, all input must be generate before this value " + i->ToString());
-    AObject::Type type = i->GetVobj() ? i->GetVobj()->GetType() : AObject::kTypeAnyValue;
-    if (type == AObject::kTypeAnyValue) {
+    if (i->GetVobj() == nullptr) {
+      return false;
+    }
+    AObject::Type type = i->GetVobj()->GetType();
+    PyTypeObject *tp = i->GetVobj()->GetTypeObject();
+    if (type == AObject::kTypeAnyValue && !IsMsClass(reinterpret_cast<PyObject *>(tp))) {
       // don't pass unknown object to graph
       return false;
     }

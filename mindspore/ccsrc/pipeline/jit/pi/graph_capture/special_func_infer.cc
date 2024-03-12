@@ -97,6 +97,9 @@ static py::object GetGradClass() { return Utils::GetModuleAttr("mindspore._c_exp
 
 const char *GetFuncName(const py::object &f) {
   PyObject *func = f.ptr();
+  if (func == nullptr) {
+    return "";
+  }
   if (PyMethod_Check(func)) {
     func = PyMethod_GET_FUNCTION(func);
   }
@@ -719,14 +722,12 @@ bool CheckMSConstexpr(const py::object &func) {
   std::string tp_name = py::str(reinterpret_cast<PyObject *>(Py_TYPE(func.ptr())));
   constexpr const char name[] = ".<locals>.decorator.<locals>.ProxyOp'>";
   constexpr const int size = sizeof(name) - 1;
-  return tp_name.size() > size ? !tp_name.compare(tp_name.size() - size, size, name) : false;
-}
-
-bool CheckMSPrimexpr(const py::object &func) {
-  std::string tp_name = py::str(reinterpret_cast<PyObject *>(Py_TYPE(func.ptr())));
-  constexpr const char name[] = ".<locals>.deco.<locals>.CompileOp'>";
-  constexpr const int size = sizeof(name) - 1;
-  return tp_name.size() > size ? !tp_name.compare(tp_name.size() - size, size, name) : false;
+  if (tp_name.size() > size && !tp_name.compare(tp_name.size() - size, size, name)) {
+    return true;
+  }
+  constexpr const char name2[] = ".<locals>.deco.<locals>.CompileOp'>";
+  constexpr const int size2 = sizeof(name2) - 1;
+  return tp_name.size() > size ? !tp_name.compare(tp_name.size() - size2, size2, name2) : false;
 }
 
 static bool InferMSConstexpr(CallNode *call_node) {
@@ -1021,7 +1022,7 @@ static const std::unordered_map<std::string, SpecialAction> kFuncWhiteListMap = 
   {kJitForbidden, {CheckJitForbidden, SetCallResType<AObject::kTypeAnyValue>}},
   {kJitConstexpr, {CheckJitConstexpr, JustCallAndSetRes}},
   {kMindsporeNameConstexpr, {CheckMSConstexpr, InferMSConstexpr}},
-  {kMindsporeNamePrimexpr, {CheckMSPrimexpr, InferMSConstexpr}},
+  {kMindsporeNamePrimexpr, {CheckMSConstexpr, InferMSConstexpr}},
   {kMindsporeNameTensorAsType, {CheckTensorAsType, InferTensorAsType}},
   {kBuiltinNameAppend, {CheckListAppend, InferListAppend}},
   {kBuiltinNamePop, {CheckBuiltinFuncOrMethod, InferPopAsGet}},
