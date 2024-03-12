@@ -555,13 +555,37 @@ Fast Fourier Transforms (FFTs)
 FFTs submodule include basic and advanced FFT operations.
 For example: 1-D to N-D discrete Fourier transform and its inverse transform, discrete cosine transform, fast Hankel transform, etc.
 
+- One-dimensional fast Fourier transform
+
+  The following code implements a one-dimensional fast Fourier transform on the input `x`:
+
+  .. code-block:: python
+
+      import mindspore.numpy as np
+
+      x = np.array([1.6243454, -0.6117564, -0.5281718, -1.0729686])
+      output = np.fft.fft(x)
+      print(output)
+
+  The result is as follows:
+
+  .. code-block::
+
+      [-0.5885514+0j 2.1525172-0.4612122j 2.7808984+0j 2.1525172+0.4612122j]
+
 .. msplatformautosummary::
     :toctree: numpy
     :nosignatures:
     :template: classtemplate_inherited.rst
     
-    mindspore.numpy.fft.ifftshift
+    mindspore.numpy.fft.fft
+    mindspore.numpy.fft.fft2
+    mindspore.numpy.fft.fftn
     mindspore.numpy.fft.fftshift
+    mindspore.numpy.fft.ifft
+    mindspore.numpy.fft.ifft2
+    mindspore.numpy.fft.ifftn
+    mindspore.numpy.fft.ifftshift
 
 Interact With MindSpore Functions
 ---------------------------------

@@ -551,13 +551,37 @@ Array操作
 
 例如：1至N维的快速傅里叶变换及其逆变换、余弦变换以及快速汉克尔变换等等。
 
+- 一维快速傅里叶变换
+
+  以下代码实现了对输入 `x` 进行一维快速傅里叶变换：
+
+  .. code-block:: python
+
+      import mindspore.numpy as np
+
+      x = np.array([1.6243454, -0.6117564, -0.5281718, -1.0729686])
+      output = np.fft.fft(x)
+      print(output)
+
+  运行结果如下：
+
+  .. code-block::
+
+      [-0.5885514+0j 2.1525172-0.4612122j 2.7808984+0j 2.1525172+0.4612122j]
+
 .. msplatformautosummary::
     :toctree: numpy
     :nosignatures:
     :template: classtemplate_inherited.rst
 
-    mindspore.numpy.fft.ifftshift
+    mindspore.numpy.fft.fft
+    mindspore.numpy.fft.fft2
+    mindspore.numpy.fft.fftn
     mindspore.numpy.fft.fftshift
+    mindspore.numpy.fft.ifft
+    mindspore.numpy.fft.ifft2
+    mindspore.numpy.fft.ifftn
+    mindspore.numpy.fft.ifftshift
 
 MindSpore Numpy与MindSpore特性结合
 -----------------------------------------

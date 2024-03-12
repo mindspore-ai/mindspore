@@ -453,8 +453,14 @@ Fast Fourier Transform Functions
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.ops.ifftshift
+    mindspore.ops.fft
+    mindspore.ops.fft2
+    mindspore.ops.fftn
     mindspore.ops.fftshift
+    mindspore.ops.ifft
+    mindspore.ops.ifft2
+    mindspore.ops.ifftn
+    mindspore.ops.ifftshift
 
 Tensor Operation Functions
 --------------------------
