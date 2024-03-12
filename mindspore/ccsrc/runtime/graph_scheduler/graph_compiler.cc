@@ -58,6 +58,7 @@
 #include "include/common/utils/compile_cache_context.h"
 #include "utils/phase.h"
 #include "pipeline/jit/ps/base.h"
+#include "ops/framework_ops.h"
 
 namespace mindspore {
 namespace runtime {
@@ -164,10 +165,16 @@ void OptimizeNopNode(KernelGraph *graph) {
     MS_EXCEPTION_IF_NULL(cnode);
     if ((!common::AnfAlgo::IsNopNode(cnode)) || graph->IsInRefOutputMap({cnode, 0}) ||
         graph->IsRefOutputMapValue({cnode, 0}) ||
-        (std::find_if(graph_outputs.begin(), graph_outputs.end(), [&cnode](const KernelWithIndex &output) {
-           const auto &real_output = common::AnfAlgo::FetchRealNodeSkipMonadControl(output);
-           return real_output == KernelWithIndex(cnode, 0);
-         }) != graph_outputs.end())) {
+        (std::find_if(graph_outputs.begin(), graph_outputs.end(),
+                      [&cnode](const KernelWithIndex &output) {
+                        const auto &real_output = common::AnfAlgo::FetchRealNodeSkipMonadControl(output);
+                        return real_output == KernelWithIndex(cnode, 0);
+                      }) != graph_outputs.end()) ||
+        std::find_if(cnode->inputs().begin(), cnode->inputs().end(), [](const auto &input) {
+          return common::AnfAlgo::CheckPrimitiveType(input, prim::kPrimConditionGather) ||
+                 common::AnfAlgo::CheckPrimitiveType(common::AnfAlgo::VisitKernelWithReturnType(input, 0).first,
+                                                     prim::kPrimConditionGather);
+        }) != cnode->inputs().end()) {
       continue;
     }
     // NopNode that does not meet the above conditions is set to Ref Node and is not deleted from the graph to avoid

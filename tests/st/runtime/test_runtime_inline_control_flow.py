@@ -12,17 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import pytest
 from mindspore import context, Tensor, jit, ops, mutable
 from mindspore.common import dtype as mstype
 from mindspore.common.parameter import Parameter
 context.set_context(mode=context.GRAPH_MODE, save_graphs=True, save_graphs_path='./log/')
 
-
-@pytest.mark.skip(reason="No support")
-@pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_single_if():
     """
     Feature: Contrtol flow inline.
@@ -45,10 +39,6 @@ def test_single_if():
     assert ret2
 
 
-@pytest.mark.skip(reason="No support")
-@pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_return_parameter():
     """
     Feature: Contrtol flow inline.
@@ -68,10 +58,6 @@ def test_return_parameter():
     assert ret1
 
 
-@pytest.mark.skip(reason="No support")
-@pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_return_valuenode():
     """
     Feature: Contrtol flow inline.
@@ -80,19 +66,15 @@ def test_return_valuenode():
     """
 
     @jit
-    def foo(x, param_a, param_b):
+    def foo(x):
         if x < 3:
             return 1
         return 2
 
-    ret1 = foo(Tensor(1), param_a, param_b)
+    ret1 = foo(Tensor(1))
     assert ret1
 
 
-@pytest.mark.skip(reason="No support")
-@pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_return_input():
     """
     Feature: Contrtol flow inline.
@@ -110,10 +92,6 @@ def test_return_input():
     assert ret1
 
 
-@pytest.mark.skip(reason="No support")
-@pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_value_node_output_in_single_branch():
     """
     Feature: Contrtol flow inline.
@@ -138,10 +116,6 @@ def test_value_node_output_in_single_branch():
     assert ret3
 
 
-@pytest.mark.skip(reason="No support")
-@pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_diff_ref_count_in_branch():
     """
     Feature: Contrtol flow inline.
@@ -173,10 +147,6 @@ def test_diff_ref_count_in_branch():
     assert ret2
 
 
-@pytest.mark.skip(reason="No support")
-@pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_branch_kernel_backoff():
     """
     Feature: Contrtol flow inline.
@@ -185,7 +155,7 @@ def test_branch_kernel_backoff():
     """
 
     @jit
-    def BranchKernelBackOff(x, y, shape):
+    def foo(x, y, shape):
         x = x + Tensor(2, mstype.int32)
         if y < 5:
             z = ops.reshape(x, shape)
@@ -195,18 +165,14 @@ def test_branch_kernel_backoff():
 
     x = Tensor([2, 2, 2, 2, 2, 2], mstype.int32)
     y = Tensor(2, mstype.int32)
-    ret1 = BranchKernelBackOff(x, y, mutable((2, 3)))
-    ret2 = BranchKernelBackOff(x, y, mutable((2, 3)))
-    ret3 = BranchKernelBackOff(x, y, mutable((2, 3)))
-    assert ret1
-    assert ret2
-    assert ret3
+    ret1 = foo(x, y, mutable((2, 3)))
+    ret2 = foo(x, y, mutable((2, 3)))
+    ret3 = foo(x, y, mutable((2, 3)))
+    assert ret1[0][0]
+    assert ret2[0][0]
+    assert ret3[0][0]
 
 
-@pytest.mark.skip(reason="No support")
-@pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_update_parameter():
     """
     Feature: Contrtol flow inline.
@@ -233,10 +199,6 @@ def test_update_parameter():
     assert ret3
 
 
-@pytest.mark.skip(reason="No support")
-@pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_update_and_return_parameter():
     """
     Feature: Contrtol flow inline.
@@ -266,10 +228,6 @@ def test_update_and_return_parameter():
     assert ret3
 
 
-@pytest.mark.skip(reason="No support")
-@pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_return_switch_input_in_branch():
     """
     Feature: Contrtol flow inline.
@@ -299,10 +257,6 @@ def test_return_switch_input_in_branch():
     assert ret3
 
 
-@pytest.mark.skip(reason="No support")
-@pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_return_switch_input():
     """
     Feature: Contrtol flow inline.
@@ -332,10 +286,6 @@ def test_return_switch_input():
     assert ret3
 
 
-@pytest.mark.skip(reason="No support")
-@pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_tuple_args_to_dynamic_tuple_para():
     """
     Feature: Contrtol flow inline.
@@ -360,10 +310,6 @@ def test_tuple_args_to_dynamic_tuple_para():
     assert ret3
 
 
-@pytest.mark.skip(reason="No support")
-@pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_tuple_input_to_switch():
     """
     Feature: Contrtol flow inline.
@@ -385,15 +331,11 @@ def test_tuple_input_to_switch():
     ret1 = foo(Tensor(1), Tensor([[6, 12, 18], [24, 30, 36]]), mutable((2, 3)))
     ret2 = foo(Tensor(1), Tensor([[6, 12, 18], [24, 30, 36]]), mutable((2, 3)))
     ret3 = foo(Tensor(1), Tensor([[6, 12, 18], [24, 30, 36]]), mutable((2, 3)))
-    assert ret1
-    assert ret2
-    assert ret3
+    assert ret1[0]
+    assert ret2[0]
+    assert ret3[0]
 
 
-@pytest.mark.skip(reason="No support")
-@pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_dynamic_tuple_input_to_switch():
     """
     Feature: Contrtol flow inline.
@@ -417,10 +359,6 @@ def test_dynamic_tuple_input_to_switch():
     assert ret3
 
 
-@pytest.mark.skip(reason="No support")
-@pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_return_condition():
     """
     Feature: Contrtol flow inline.
@@ -444,10 +382,6 @@ def test_return_condition():
     assert ret3
 
 
-@pytest.mark.skip(reason="No support")
-@pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_return_include_other_output():
     """
     Feature: Contrtol flow inline.
@@ -476,10 +410,6 @@ def test_return_include_other_output():
     assert ret3
 
 
-@pytest.mark.skip(reason="No support")
-@pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_branch_output_include_refnode():
     """
     Feature: Contrtol flow inline.
@@ -499,15 +429,11 @@ def test_branch_output_include_refnode():
     ret1 = foo(Tensor(1), Tensor([[6, 12, 18], [24, 30, 36], [6, 18, 36]]), mutable((2, 3)))
     ret2 = foo(Tensor(1), Tensor([[6, 12, 18], [24, 30, 36]]), mutable((2, 3)))
     ret3 = foo(Tensor(1), Tensor([[6, 12, 18], [24, 30, 36]]), mutable((2, 3)))
-    assert ret1
-    assert ret2
-    assert ret3
+    assert ret1[0][0]
+    assert ret2[0][0]
+    assert ret3[0][0]
 
 
-@pytest.mark.skip(reason="No support")
-@pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_include_dynamic_shape():
     """
     Feature: Contrtol flow inline.
@@ -531,15 +457,12 @@ def test_include_dynamic_shape():
     ret1 = foo(Tensor(1), Tensor([[6, 12, 18], [24, 30, 36], [6, 18, 36]]))
     ret2 = foo(Tensor(1), Tensor([[6, 12, 18], [24, 30, 36], [12, 18, 30], [18, 24, 36]]))
     ret3 = foo(Tensor(1), Tensor([[6, 12, 18], [24, 30, 36]]))
-    assert ret1
-    assert ret2
-    assert ret3
+    print("*********************************", ret1)
+    assert ret1[0]
+    assert ret2[0]
+    assert ret3[0]
 
 
-@pytest.mark.skip(reason="No support")
-@pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_control_arrow_from_switch_to_gather():
     """
     Feature: Contrtol flow inline.
@@ -567,10 +490,6 @@ def test_control_arrow_from_switch_to_gather():
     assert ret3
 
 
-@pytest.mark.skip(reason="No support")
-@pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_branch_only_u_input():
     """
     Feature: Contrtol flow inline.
@@ -592,10 +511,6 @@ def test_branch_only_u_input():
     assert ret1
 
 
-@pytest.mark.skip(reason="No support")
-@pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_branch_u_input_and_input():
     """
     Feature: Contrtol flow inline.
@@ -617,10 +532,6 @@ def test_branch_u_input_and_input():
     assert ret1
 
 
-@pytest.mark.skip(reason="No support")
-@pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_branch_output_real_tuple():
     """
     Feature: Contrtol flow inline.
@@ -646,10 +557,6 @@ def test_branch_output_real_tuple():
     assert ret2
 
 
-@pytest.mark.skip(reason="No support")
-@pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_branch_output_dynamic_tuple():
     """
     Feature: Contrtol flow inline.
@@ -669,4 +576,4 @@ def test_branch_output_dynamic_tuple():
     x = Tensor([2, 2, 2, 2, 2, 2], mstype.int32)
     y = Tensor(2, mstype.int32)
     ret1 = foo(x, y, mutable((2, 3), dynamic_len=True))
-    assert ret1
+    assert ret1[0]

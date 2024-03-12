@@ -170,7 +170,7 @@ void InlineControlFlowScheduler::FixRefCountByConditionSwitchActor(ConditionSwit
   std::vector<size_t> total_ref_count;
   size_t output_num = AnfAlgo::GetOutputTensorNum(condition_switch_actor->kernel());
   for (size_t i = 0; i < output_num; ++i) {
-    const auto &device_address = AnfAlgo::GetMutableOutputAddr(condition_switch_actor->kernel(), i);
+    const auto &device_address = AnfAlgo::GetMutableOutputAddr(condition_switch_actor->kernel(), i, false);
     MS_EXCEPTION_IF_NULL(device_address);
     total_ref_count.emplace_back(device_address->original_ref_count());
     MS_LOG(DEBUG) << "For actor:" << condition_switch_actor->GetAID() << " output device address:" << device_address
@@ -182,21 +182,6 @@ void InlineControlFlowScheduler::FixRefCountByConditionSwitchActor(ConditionSwit
   if (input_num != output_num + 1) {
     MS_LOG(EXCEPTION) << "Invalid input num:" << input_num << " and output num:" << output_num
                       << " for actor:" << condition_switch_actor->GetAID();
-  }
-
-  // Add the ref count to the input of condition switch actor.
-  for (size_t i = 1; i < input_num; ++i) {
-    const auto &device_address = AnfAlgo::GetPrevNodeMutableOutputAddr(condition_switch_actor->kernel(), i);
-    MS_EXCEPTION_IF_NULL(device_address);
-    MS_LOG(DEBUG) << "For actor::" << condition_switch_actor->GetAID() << " input device address:" << device_address
-                  << " input index:" << i << " ref_count:" << device_address->original_ref_count();
-    if (device_address->original_ref_count() == SIZE_MAX) {
-      continue;
-    }
-    device_address->set_original_ref_count(device_address->original_ref_count() + total_ref_count[i - 1] - 1);
-    device_address->ResetRefCount();
-    MS_LOG(DEBUG) << "For actor::" << condition_switch_actor->GetAID() << " input device address:" << device_address
-                  << " input index:" << i << " ref_count:" << device_address->original_ref_count();
   }
   FixRefCountByKernelGraphRefMap(condition_switch_actor, kernel_graph);
 }
@@ -403,7 +388,7 @@ void InlineControlFlowScheduler::FixRefCountByConditionGatherActor(ConditionGath
   std::vector<size_t> total_ref_count;
   size_t output_num = AnfAlgo::GetOutputTensorNum(condition_gather_actor->kernel());
   for (size_t i = 0; i < output_num; ++i) {
-    const auto &device_address = AnfAlgo::GetMutableOutputAddr(condition_gather_actor->kernel(), i);
+    const auto &device_address = AnfAlgo::GetMutableOutputAddr(condition_gather_actor->kernel(), i, false);
     MS_EXCEPTION_IF_NULL(device_address);
     total_ref_count.emplace_back(device_address->original_ref_count());
     MS_LOG(DEBUG) << "For actor:" << condition_gather_actor->GetAID() << " output device address:" << device_address
@@ -416,7 +401,7 @@ void InlineControlFlowScheduler::FixRefCountByConditionGatherActor(ConditionGath
                       << " for actor:" << condition_gather_actor->GetAID();
   }
   for (size_t i = 0; i < input_num; ++i) {
-    const auto &device_address = AnfAlgo::GetPrevNodeMutableOutputAddr(condition_gather_actor->kernel(), i);
+    const auto &device_address = AnfAlgo::GetPrevNodeMutableOutputAddr(condition_gather_actor->kernel(), i, false);
     MS_EXCEPTION_IF_NULL(device_address);
     MS_LOG(DEBUG) << "For actor::" << condition_gather_actor->GetAID() << " input device address:" << device_address
                   << " input index:" << i << " ref_count:" << device_address->original_ref_count();
@@ -425,8 +410,12 @@ void InlineControlFlowScheduler::FixRefCountByConditionGatherActor(ConditionGath
     }
     size_t pre_origin_ref_count = device_address->original_ref_count();
     // The real ref count is the relative position of this branch output.
-    device_address->set_original_ref_count(device_address->original_ref_count() +
-                                           total_ref_count[i % condition_gather_actor->branch_output_num_] - 1);
+    if (total_ref_count[i % condition_gather_actor->branch_output_num_] == SIZE_MAX) {
+      device_address->set_original_ref_count(SIZE_MAX);
+    } else {
+      device_address->set_original_ref_count(device_address->original_ref_count() +
+                                             total_ref_count[i % condition_gather_actor->branch_output_num_] - 1);
+    }
     device_address->ResetRefCount();
     MS_LOG(DEBUG) << "For actor::" << condition_gather_actor->GetAID() << " input device address:" << device_address
                   << " input index:" << i << " fix ref count from:" << pre_origin_ref_count
