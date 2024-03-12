@@ -1,4 +1,4 @@
-# Copyright 2020-2023 Huawei Technologies Co., Ltd
+# Copyright 2020-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -1393,6 +1393,9 @@ def set_context(**kwargs):
             - ge_options (dict): Set options for CANN. The options are divided into two categories: global and session.
               This is an experimental prototype that is subject to change and/or deletion.
               For detailed information, please refer to `Ascend community <https://www.hiascend.com/document/detail/zh/canncommercial/70RC1/inferapplicationdev/graphdevg/atlasgeapi_07_0119.html>`_ .
+              The configuration options in `ge_options` may be duplicated with the options in `ascend_config`. If the
+              same configuration options are set in both `ascend_config` and `ge_options`, the one set in `ge_options`
+              shall prevail.
 
               - global (dict): Set global options.
               - session (dict): Set session options.
