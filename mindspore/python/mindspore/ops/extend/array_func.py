@@ -37,8 +37,8 @@ def gather(input, dim, index):
     .. warning::
         On Ascend, the behavior is unpredictable in the following cases:
 
-            - the value of `index` is not in the range `[-input.shape[dim], input.shape[dim])` in forward;
-            - the value of `index` is not in the range `[0, input.shape[dim])` in backward.
+        - the value of `index` is not in the range `[-input.shape[dim], input.shape[dim])` in forward;
+        - the value of `index` is not in the range `[0, input.shape[dim])` in backward.
 
     Args:
         input (Tensor): The target tensor to gather values.
