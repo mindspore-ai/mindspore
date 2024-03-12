@@ -22,6 +22,7 @@
 #include "include/backend/optimizer/helper.h"
 #include "include/backend/optimizer/op_adaptation_info_factory.h"
 #include "pybind_api/ir/primitive_py.h"
+#include "pybind_api/gil_scoped_long_running.h"
 #include "utils/ms_context.h"
 #include "ir/cell.h"
 #include "include/common/utils/utils.h"
@@ -143,34 +144,66 @@ void PlantTupleParam(const FuncGraphPtr &bprop_graph, const abstract::AbstractSe
   }
 }
 
+ValuePtr GetContiguousGradTensor(const ValuePtr &v) {
+  const auto &tensor = v->cast<tensor::TensorPtr>();
+  MS_EXCEPTION_IF_NULL(tensor);
+  if (tensor->storage_info() == nullptr) {
+    return nullptr;
+  }
+
+  auto old_device_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
+  MS_EXCEPTION_IF_NULL(old_device_address);
+  const auto &device_target = old_device_address->device_name();
+  if (device_target != kAscendDevice) {
+    // GPU/CPU contiguous tensor when convert stub node, contiguous before grad.
+    return nullptr;
+  }
+
+  MS_LOG(DEBUG) << "tensor id:" << tensor->id();
+  auto stream_id = old_device_address->stream_id();
+  const auto &old_storage_info = old_device_address->GetTensorStorageInfo();
+  MS_EXCEPTION_IF_NULL(old_storage_info);
+
+  const auto &device_context = runtime::OpRunner::GetDeviceContext(old_device_address->device_name());
+  MS_EXCEPTION_IF_NULL(device_context);
+  auto address_size = GetTypeByte(TypeIdToType(old_device_address->type_id())) * SizeOf(old_storage_info->shape);
+  auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
+    nullptr, address_size, Format::DEFAULT_FORMAT, old_device_address->type_id(), old_storage_info->shape,
+    device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+  kernel_tensor->SetType(std::make_shared<TensorType>(TypeIdToType(old_device_address->type_id())));
+  kernel_tensor->SetShape(std::make_shared<abstract::TensorShape>(old_storage_info->shape));
+  kernel_tensor->set_stream_id(stream_id);
+
+  auto new_device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
+  new_device_address->set_device_shape(old_storage_info->shape);
+  new_device_address->set_original_ref_count(SIZE_MAX);
+  new_device_address->ResetRefCount();
+
+  device::DeviceAddressPtrList input_addr_list{old_device_address};
+  device::DeviceAddressPtrList output_addr_list{new_device_address};
+  GilReleaseWithCheck release_gil;
+  if (!device_context->GetKernelExecutor(false)->ExecuteKernelTask(runtime::KernelTaskType::kCONTIGUOUS_TASK,
+                                                                   input_addr_list, output_addr_list, stream_id)) {
+    MS_LOG(EXCEPTION) << "ExecuteKernelTask failed, task_type:" << runtime::KernelTaskType::kCONTIGUOUS_TASK;
+  }
+
+  MS_LOG(DEBUG) << "Update contiguous address, old_device_address:" << old_device_address
+                << ", new_device_address:" << new_device_address;
+
+  auto new_tensor = std::make_shared<tensor::Tensor>(*tensor);
+  new_tensor->set_device_address(new_device_address);
+  return new_tensor;
+}
+
 void RefreshGradContiguousTensor(const FrontendOpRunInfoPtr &op_run_info, size_t index) {
   if (op_run_info->input_unused_in_bprop[index]) {
     // Input is not used in bprop, no need to contiguous.
     return;
   }
 
-  auto contiguous_tensor = [](const ValuePtr &v) -> ValuePtr {
-    const auto &tensor = v->cast<tensor::TensorPtr>();
-    MS_EXCEPTION_IF_NULL(tensor);
-    if (tensor->storage_info() == nullptr) {
-      return nullptr;
-    }
-
-    auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
-    MS_EXCEPTION_IF_NULL(device_address);
-    const auto &device_target = device_address->device_name();
-    if (device_target != kAscendDevice) {
-      // GPU/CPU contiguous tensor when convert stub node, contiguous before grad.
-      return nullptr;
-    }
-
-    auto contiguous_op = CREATE_PYBOOST_OP(Contiguous, device_target);
-    return contiguous_op->Call(tensor);
-  };
-
   const auto &v = op_run_info->op_grad_info->input_value[index];
   if (v->isa<tensor::Tensor>()) {
-    const auto &new_tensor = contiguous_tensor(v);
+    const auto &new_tensor = GetContiguousGradTensor(v);
     if (new_tensor != nullptr) {
       op_run_info->op_grad_info->input_value[index] = new_tensor;
     }
@@ -183,7 +216,7 @@ void RefreshGradContiguousTensor(const FrontendOpRunInfoPtr &op_run_info, size_t
     bool need_refresh_tuple = false;
     std::vector<ValuePtr> new_vec(vec.size());
     for (size_t i = 0; i < vec.size(); i++) {
-      const auto &new_tensor = contiguous_tensor(vec[i]);
+      const auto &new_tensor = GetContiguousGradTensor(vec[i]);
       if (new_tensor == nullptr) {
         new_vec[i] = vec[i];
       } else {
