@@ -596,5 +596,15 @@ TEST_F(TestOptLib, test_sparse_tensor) {
   ASSERT_TRUE(CheckOpt(before_get_values, after_get_values, patterns));
   ASSERT_TRUE(CheckOpt(before_get_dense_shape, after_get_dense_shape, patterns));
 }
+
+// Feature: Eliminate the unused args of partial inputs.
+// Description: Construct a partial call.
+// Expectation: The unused args are eliminated.
+TEST_F(TestOptLib, test_partial_unused_args_eliminate) {
+  FuncGraphPtr before_fg = getPyFun.CallAndParseRet("test_partial_unused_args_eliminate", "before");
+  FuncGraphPtr after_fg = getPyFun.CallAndParseRet("test_partial_unused_args_eliminate", "after");
+  auto patterns = std::vector<SubstitutionPtr>({irpass.partial_unused_args_eliminate_});
+  ASSERT_TRUE(CheckOpt(before_fg, after_fg, patterns));
+}
 }  // namespace opt
 }  // namespace mindspore
