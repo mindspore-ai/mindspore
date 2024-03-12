@@ -173,18 +173,28 @@ class SymbolTree(Observer, Observable, NodeManager):
     @staticmethod
     def _remove_unused_import(module_ast):
         """remove unused import in self._module_ast"""
-        str_checker = StrChecker(module_ast)
-        for body in module_ast.body[:]:
-            if not isinstance(body, (ast.Import, ast.ImportFrom)):
-                continue
-            for alias in body.names[:]:
-                name = alias.asname if alias.asname else alias.name
-                if name == '*':
-                    continue
-                if not str_checker.check(name):
-                    body.names.remove(alias)
-            if not body.names:
-                module_ast.body.remove(body)
+        import_nodes: List[Union[ast.Import, ast.ImportFrom]] = []
+
+        def is_divider(ast_node):
+            """judge if ast node is divider of new class or function by checking ast.Expr of '#'."""
+            return isinstance(ast_node, ast.Expr) and isinstance(ast_node.value, ast.Name) and ast_node.value.id == '#'
+
+        for ast_node in module_ast.body[:]:
+            if isinstance(ast_node, (ast.Import, ast.ImportFrom)):
+                import_nodes.append(ast_node)
+            if isinstance(ast_node, (ast.ClassDef, ast.FunctionDef)):
+                str_checker = StrChecker(ast_node)
+                for import_node in import_nodes:
+                    for alias in import_node.names[:]:
+                        name = alias.asname if alias.asname else alias.name
+                        if name == '*':
+                            continue
+                        if not str_checker.check(name):
+                            import_node.names.remove(alias)
+                    if not import_node.names:
+                        module_ast.body.remove(import_node)
+            if is_divider(ast_node):
+                import_nodes.clear()
 
     @staticmethod
     def _remove_duplicated_import(module_ast):
@@ -361,10 +371,10 @@ class SymbolTree(Observer, Observable, NodeManager):
         setattr(stree.get_origin_network(), new_node.get_name(), new_node.get_instance())
         # Insert ast to __init__ function
         if isinstance(new_node, TreeNode):
-            init_code = f"self.{new_node.get_name()} = " \
+            init_code = f"{new_node.get_func_name()} = " \
                         f"{new_node.symbol_tree.get_opt_cls_name()}(obj.{new_node.get_name()})"
         else:
-            init_code = f"self.{new_node.get_name()} = obj.{new_node.get_name()}"
+            init_code = f"{new_node.get_func_name()} = obj.{new_node.get_name()}"
         init_ast = ast.parse(init_code).body[0]
         AstModifier.insert_ast_to_function(stree.get_init_func_ast(), init_ast)
         # Insert ast to construct_function/class_internal_function
@@ -1296,15 +1306,18 @@ class SymbolTree(Observer, Observable, NodeManager):
     def init_code_bodies(self, code_bodies: list) -> int:
         """Init code bodied"""
         # Add basic imports
+        code_bodies.append(ast.Import([ast.alias(name='sys', asname=None)]))
         code_bodies.append(ast.Import([ast.alias(name='mindspore', asname=None)]))
         code_bodies.append(ast.ImportFrom(module='mindspore', names=[ast.alias(name='nn', asname=None)], level=0))
         code_bodies.append(ast.ImportFrom(module='mindspore.nn', names=[ast.alias(name='Cell', asname=None)], level=0))
         code_bodies.append(ast.ImportFrom(module='mindspore.ops',
                                           names=[ast.alias(name='functional', asname='F')], level=0))
+        code_bodies.append(ast.Expr(ast.Name("#", ast.Load())))
         # Add user custom codes into code_bodies
         custom_codes = self.get_custom_codes()
         for code_ast in custom_codes:
             code_bodies.append(code_ast)
+        code_bodies.append(ast.Expr(ast.Name("#", ast.Load())))
         return len(code_bodies)
 
     def convert_stree_to_code_bodies(self, stree: 'SymbolTree', code_bodies: list, dividing_pos=0) -> int:
@@ -1403,9 +1416,9 @@ class SymbolTree(Observer, Observable, NodeManager):
             gencode_module = ast.Module(body=code_bodies, type_ignores=[])
         else:
             gencode_module = ast.Module(body=code_bodies)
+        SymbolTree._remove_unused_import(gencode_module)
         self._process_duplicate_name_modules(gencode_module)
         SymbolTree._remove_duplicated_import(gencode_module)
-        SymbolTree._remove_unused_import(gencode_module)
         SymbolTree._remove_arg_annotations(gencode_module)
         ast.fix_missing_locations(self._module_ast)
         code = astunparse.unparse(gencode_module)
@@ -1575,15 +1588,6 @@ class SymbolTree(Observer, Observable, NodeManager):
         # add imports to import_asts of belonging_ast
         import_asts = self._get_imports_list_of_ast(belonging_ast)
         for import_node in import_nodes:
-            # remove unused imports
-            if isinstance(import_node, (ast.Import, ast.ImportFrom)):
-                str_checker = StrChecker(belonging_ast) if belonging_ast else StrChecker(self.get_class_ast())
-                for alias in import_node.names[:]:
-                    name = alias.asname if alias.asname else alias.name
-                    if name != '*' and not str_checker.check(name):
-                        import_node.names.remove(alias)
-                if not import_node.names:
-                    continue
             import_node = SymbolTree._process_relative_import(import_node, file_path)
             if import_node:
                 import_asts.append(import_node)
