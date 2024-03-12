@@ -679,7 +679,11 @@ bool IsGraphOutputValueNodeOrParameter(const AnfNodePtr &output, const py::tuple
       *ret_val = py::cast(tensor);
     }
     *ret_val = SetAdaptedAttrToTensor(*ret_val, output->abstract());
-    py::setattr(*ret_val, "__ms_parameter_output__", py::bool_(true));
+    auto abs = output->abstract();
+    MS_EXCEPTION_IF_NULL(abs);
+    if (abs->isa<abstract::AbstractTensor>()) {
+      py::setattr(*ret_val, "__ms_parameter_output__", py::bool_(true));
+    }
     return true;
   }
   return false;
