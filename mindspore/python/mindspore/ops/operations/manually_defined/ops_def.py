@@ -594,10 +594,13 @@ class BatchNorm(Primitive):
        Tuple of 5 Tensors, the normalized inputs and the updated parameters.
 
        - **output_x** (Tensor) - The same type and shape as the input_x. The shape is :math:`(N, C)`.
-       - **batch_mean** (Tensor) - Tensor of shape :math:`(C,)`.
-       - **batch_variance** (Tensor) - Tensor of shape :math:`(C,)`.
-       - **reserve_space_1** (Tensor) - Tensor of shape :math:`(C,)`.
-       - **reserve_space_2** (Tensor) - Tensor of shape :math:`(C,)`.
+       - **batch_mean** (Tensor) - The mean calculated per-dimension over the mini-batches, shape is :math:(C,).
+       - **batch_variance** (Tensor) - The variance calculated per-dimension over the mini-batches,
+           shape is :math:(C,).
+       - **reserve_space_1** (Tensor) - The mean that needs to be reused when calculating gradients,
+           one-dimensional Tensor. The shape is :math:`(C,)`.
+       - **reserve_space_2** (Tensor) - The variance that needs to be reused when calculating gradients,
+           one-dimensional Tensor. The shape is :math:`(C,)`.
 
     Raises:
        TypeError: If `is_training` is not a bool.
