@@ -359,6 +359,9 @@ Status LayoutTransfer::CalculateFromTensorShape(Shape *from_shape, const Array &
     // Existed dim in from_layout already satisfy to_layout_added_factor.
     to_layout_added_factor = -1;
   }
+  MS_LOG(DEBUG) << "from_shape=" << (*from_shape) << ", from_factors=" << from_factors.array()
+                << ", to_shape=" << to_shape << ", to_factors=" << to_factors.array()
+                << ", to_layout_added_factor=" << to_layout_added_factor;
   bool strict_mode = UseStrictMode(*from_shape, to_shape);
   std::vector<int64_t> known_dims;
   (void)std::copy_if(from_shape->begin(), from_shape->end(), std::back_inserter(known_dims),
@@ -379,6 +382,10 @@ Status LayoutTransfer::CalculateFromTensorShape(Shape *from_shape, const Array &
     (*from_shape)[i] = prime_num * from_factors.GetDimByIdx(i);
     if (strict_mode && from_shape->at(i) % to_factors.GetDimByIdx(i) != 0) {
       (*from_shape)[i] *= to_factors.GetDimByIdx(i);
+      if (to_layout_added_factor >= to_factors.GetDimByIdx(i) &&
+          to_layout_added_factor % to_factors.GetDimByIdx(i) == 0) {
+        to_layout_added_factor /= to_factors.GetDimByIdx(i);
+      }
     }
     if (i == last_dyn_dim && to_layout_added_factor > 0) {
       if (from_shape->at(i) % to_layout_added_factor != 0) {

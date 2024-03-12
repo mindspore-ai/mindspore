@@ -363,11 +363,11 @@ Status ActivationBase::InferMirrorOps() {
   }
 
   // No need to insert mirror ops
-  if (mirror_ops_.empty()) {
+  if (mirror_ops_.empty() || !ops::HasOpDef(this->prim_name_)) {
     return SUCCESS;
   }
 
-  int64_t to_be_append = ops::GetOpInputsNum(this->prim_name_) - mirror_ops_.size();
+  int64_t to_be_append = SizeToLong(ops::GetOpInputsNum(this->prim_name_)) - SizeToLong(mirror_ops_.size());
   if (to_be_append <= 0) {
     return SUCCESS;
   }
