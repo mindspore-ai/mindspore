@@ -691,6 +691,7 @@ ValuePtr UpdateValueByAttrDataType(const ValuePtr &value, const std::string &att
   return ret;
 }
 
+namespace {
 static const std::map<std::pair<TypeId, TypeId>, TypeId> tensor_tensor_convert_map = {
   // Bool
   {std::make_pair(kNumberTypeBool, kNumberTypeBool), kNumberTypeBool},
@@ -699,6 +700,9 @@ static const std::map<std::pair<TypeId, TypeId>, TypeId> tensor_tensor_convert_m
   {std::make_pair(kNumberTypeBool, kNumberTypeInt32), kNumberTypeInt32},
   {std::make_pair(kNumberTypeBool, kNumberTypeInt64), kNumberTypeInt64},
   {std::make_pair(kNumberTypeBool, kNumberTypeUInt8), kNumberTypeUInt8},
+  {std::make_pair(kNumberTypeBool, kNumberTypeUInt16), kNumberTypeUInt16},
+  {std::make_pair(kNumberTypeBool, kNumberTypeUInt32), kNumberTypeUInt32},
+  {std::make_pair(kNumberTypeBool, kNumberTypeUInt64), kNumberTypeUInt64},
   {std::make_pair(kNumberTypeBool, kNumberTypeFloat16), kNumberTypeFloat16},
   {std::make_pair(kNumberTypeBool, kNumberTypeBFloat16), kNumberTypeBFloat16},
   {std::make_pair(kNumberTypeBool, kNumberTypeFloat32), kNumberTypeFloat32},
@@ -855,5 +859,45 @@ TypeId ConvertTypeBetweenTensorAndScalar(const TypeId &tensor_type_id, const Typ
   }
   MS_EXCEPTION(TypeError) << "Type implicit conversion between Tensor[" << TypeIdToString(tensor_type_id) << "] and "
                           << TypeIdToString(scalar_type_id) << " is not supported.";
+}
+
+TypeId GetConversionType(const TypeId &current, const TypeId &saved_type_id, bool arg_is_tensor, bool has_tensor) {
+  if (current == saved_type_id) {
+    return current;
+  }
+  if (current == kTypeUnknown || saved_type_id == kTypeUnknown) {
+    return kTypeUnknown;
+  }
+  // Tensor + Scalar
+  if (arg_is_tensor && !has_tensor) {
+    return ConvertTypeBetweenTensorAndScalar(current, saved_type_id);
+  }
+  // Scalar + Tensor
+  if (!arg_is_tensor && has_tensor) {
+    return ConvertTypeBetweenTensorAndScalar(saved_type_id, current);
+  }
+  // Tensor + Tensor, Scalar + Scalar
+  return ConvertTypeForTensorsOrScalars(current, saved_type_id);
+}
+}  // namespace
+
+std::map<SignatureEnumDType, std::pair<TypeId, bool>> GetSignatureTypeMap(const std::vector<SignatureEnumDType> &dtypes,
+                                                                          const std::vector<TypeId> &args_type_id,
+                                                                          const std::vector<bool> &args_is_tensor) {
+  // {T0: (target_type_id=Int32, has_tensor=true), T1: (target_type_id=Float32, has_tensor=false), ...}
+  std::map<SignatureEnumDType, std::pair<TypeId, bool>> sig_type_map;
+  size_t args_size = args_type_id.size();
+  for (size_t i = 0; i < args_size; ++i) {
+    const auto &it = sig_type_map.find(dtypes[i]);
+    if (it == sig_type_map.end()) {
+      (void)sig_type_map.insert(std::make_pair(dtypes[i], std::make_pair(args_type_id[i], args_is_tensor[i])));
+    } else {
+      TypeId saved_type_id = (it->second).first;
+      bool has_tensor = (it->second).second;
+      TypeId target_type_id = GetConversionType(args_type_id[i], saved_type_id, args_is_tensor[i], has_tensor);
+      it->second = std::make_pair(target_type_id, args_is_tensor[i] || has_tensor);
+    }
+  }
+  return sig_type_map;
 }
 }  // namespace mindspore

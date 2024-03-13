@@ -87,44 +87,6 @@ void GetTypeInfo(const std::vector<TypePtr> &input_types, std::vector<TypeId> *a
   }
 }
 
-TypeId GetConversionType(const TypeId &current, const TypeId &saved_type_id, bool arg_is_tensor, bool contain_tensor) {
-  if (current == saved_type_id) {
-    return current;
-  }
-  if (current == kTypeUnknown || saved_type_id == kTypeUnknown) {
-    return kTypeUnknown;
-  }
-  // Tensor + Scalar
-  if (arg_is_tensor && !contain_tensor) {
-    return ConvertTypeBetweenTensorAndScalar(current, saved_type_id);
-  }
-  // Scalar + Tensor
-  if (!arg_is_tensor && contain_tensor) {
-    return ConvertTypeBetweenTensorAndScalar(saved_type_id, current);
-  }
-  // Tensor + Tensor, Scalar + Scalar
-  return ConvertTypeForTensorsOrScalars(current, saved_type_id);
-}
-
-std::map<SignatureEnumDType, std::pair<TypeId, bool>> GetSignatureTypeMap(const std::vector<SignatureEnumDType> &dtypes,
-                                                                          const std::vector<TypeId> &args_type_id,
-                                                                          const std::vector<bool> &args_has_tensor,
-                                                                          size_t args_size) {
-  std::map<SignatureEnumDType, std::pair<TypeId, bool>> sig_type_map;
-  for (size_t i = 0; i < args_size; ++i) {
-    const auto &it = sig_type_map.find(dtypes[i]);
-    if (it == sig_type_map.end()) {
-      (void)sig_type_map.insert(std::make_pair(dtypes[i], std::make_pair(args_type_id[i], args_has_tensor[i])));
-    } else {
-      TypeId saved_type_id = (it->second).first;
-      bool contain_tensor = (it->second).second;
-      TypeId target_type_id = GetConversionType(args_type_id[i], saved_type_id, args_has_tensor[i], contain_tensor);
-      it->second = std::make_pair(target_type_id, args_has_tensor[i] || contain_tensor);
-    }
-  }
-  return sig_type_map;
-}
-
 void DoAutoCast(const std::vector<Signature> &signature, const std::vector<TypePtr> &input_types,
                 const FuncGraphPtr &graph, const std::pair<ValuePtr, std::set<size_t>> &write_indices_pair,
                 std::vector<AnfNodePtr> *op_inputs) {
@@ -137,16 +99,19 @@ void DoAutoCast(const std::vector<Signature> &signature, const std::vector<TypeP
     return;
   }
   auto args_size = signature.size();
-  if (args_size != input_types.size() || args_size != op_inputs->size()) {
-    MS_LOG(INTERNAL_EXCEPTION) << "For auto type cast, the number of args should be " << args_size
-                               << ", but got input_types size: " << input_types.size()
+  if (args_size > input_types.size() || args_size > op_inputs->size()) {
+    // It is possible that op_inputs size is larger than signatures size in vmap.
+    MS_LOG(INTERNAL_EXCEPTION) << "For auto type cast, the number of args should be greater than or equal to "
+                               << args_size << ", but got input_types size: " << input_types.size()
                                << ", op_inputs size: " << op_inputs->size();
   }
+  auto func = write_indices_pair.first;
+  auto write_indices = write_indices_pair.second;
 
   std::vector<TypeId> args_type_id;
   std::vector<bool> args_has_tensor;
   GetTypeInfo(input_types, &args_type_id, &args_has_tensor);
-  auto sig_type_map = GetSignatureTypeMap(dtypes, args_type_id, args_has_tensor, args_size);
+  auto sig_type_map = GetSignatureTypeMap(dtypes, args_type_id, args_has_tensor);
   for (size_t i = 0; i < args_size; ++i) {
     auto it = sig_type_map.find(dtypes[i]);
     if (it == sig_type_map.end()) {
@@ -157,14 +122,12 @@ void DoAutoCast(const std::vector<Signature> &signature, const std::vector<TypeP
     if (current_type_id == kTypeUnknown || target_type_id == kTypeUnknown) {
       continue;
     }
+    if (write_indices.find(i) != write_indices.end() && current_type_id != target_type_id) {
+      RaiseExceptionForConvertRefDtype(func, TypeIdToString(current_type_id), TypeIdToString(target_type_id), i);
+    }
     bool arg_is_tensor = args_has_tensor[i];
     bool contain_tensor = (it->second).second;
     bool need_scalar_to_tensor = !arg_is_tensor && contain_tensor;
-    auto func = write_indices_pair.first;
-    auto write_indices = write_indices_pair.second;
-    if ((current_type_id != target_type_id || need_scalar_to_tensor) && write_indices.find(i) != write_indices.end()) {
-      RaiseExceptionForConvertRefDtype(func, TypeIdToString(current_type_id), TypeIdToString(target_type_id), i);
-    }
     auto param = (*op_inputs)[i];
     auto target_type_node = NewValueNode(static_cast<int64_t>(target_type_id));
     if (need_scalar_to_tensor) {

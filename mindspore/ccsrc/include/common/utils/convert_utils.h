@@ -22,6 +22,7 @@
 #include <stack>
 #include <string>
 #include <vector>
+#include <map>
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
 #include "utils/convert_utils_base.h"
@@ -95,8 +96,9 @@ COMMON_EXPORT ShapeVector BaseShapeToShape(const abstract::BaseShapePtr &base_sh
 
 COMMON_EXPORT ValuePtr UpdateValueByAttrDataType(const ValuePtr &value, const std::string &attr_data_type);
 
-COMMON_EXPORT TypeId ConvertTypeForTensorsOrScalars(const TypeId &current, const TypeId &other);
-COMMON_EXPORT TypeId ConvertTypeBetweenTensorAndScalar(const TypeId &tensor_type_id, const TypeId &scalar_type_id);
+COMMON_EXPORT std::map<SignatureEnumDType, std::pair<TypeId, bool>> GetSignatureTypeMap(
+  const std::vector<SignatureEnumDType> &dtypes, const std::vector<TypeId> &args_type_id,
+  const std::vector<bool> &args_is_tensor);
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CCSRC_INCLUDE_COMMON_UTILS_CONVERT_UTILS_H_
