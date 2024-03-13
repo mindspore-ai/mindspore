@@ -47,7 +47,6 @@ bool CopySameTypeMem(void *dst_ptr, size_t dst_size, const void *src_ptr, size_t
     return true;
   }
 }
-
 // Synchronize user data from host to device.
 bool SyncUserDataToDevice(const UserDataPtr &user_data, const void *host_ptr, size_t size) {
   MS_EXCEPTION_IF_NULL(user_data);

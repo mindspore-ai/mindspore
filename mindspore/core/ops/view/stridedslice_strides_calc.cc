@@ -112,15 +112,15 @@ TensorStorageInfoPtrList StridedSliceCalc(const PrimitivePtr &prim, const std::v
     return {};
   }
 
-  auto input_tensor = inputs[kInputIndex0]->cast<tensor::TensorPtr>();
+  auto input_tensor = inputs[kInputIndex0]->cast<tensor::BaseTensorPtr>();
   MS_EXCEPTION_IF_NULL(input_tensor);
   auto size = input_tensor->shape().size();
   auto old_tensor_info = GetOldTensorInfo(input_tensor);
   auto old_shape = old_tensor_info->old_shape;
   auto old_strides = old_tensor_info->old_strides;
   auto old_storage_offset = old_tensor_info->old_offset;
-  if (inputs[kInputIndex1]->isa<tensor::Tensor>() || inputs[kInputIndex2]->isa<tensor::Tensor>() ||
-      inputs[kInputIndex3]->isa<tensor::Tensor>()) {
+  if (inputs[kInputIndex1]->isa<tensor::BaseTensor>() || inputs[kInputIndex2]->isa<tensor::BaseTensor>() ||
+      inputs[kInputIndex3]->isa<tensor::BaseTensor>()) {
     return {};
   }
   auto begin = GetValue<std::vector<int64_t>>(inputs[kInputIndex1]);

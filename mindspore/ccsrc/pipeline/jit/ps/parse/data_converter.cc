@@ -47,6 +47,8 @@ struct PyDataToValueRegister {
 }  // namespace
 using Tensor = mindspore::tensor::Tensor;
 using TensorPtr = mindspore::tensor::TensorPtr;
+using BaseTensor = mindspore::tensor::BaseTensor;
+using BaseTensorPtr = mindspore::tensor::BaseTensorPtr;
 using MetaTensor = mindspore::tensor::MetaTensor;
 using MetaTensorPtr = mindspore::tensor::MetaTensorPtr;
 using CSRTensor = mindspore::tensor::CSRTensor;
@@ -733,6 +735,7 @@ static const std::vector<DataConvertFuncPtr> &GetDataConvertFuncs() {
     std::make_shared<ByFuncDataConvertFunc>(IsStubTensor, ConvertStubTensor),
     std::make_shared<ByFuncDataConvertFunc>(IsNamedTuple, ConvertNamedTuple),
     std::make_shared<ByTypeDataConvertFunc<Tensor>>(ObjCast<TensorPtr>),
+    std::make_shared<ByTypeDataConvertFunc<BaseTensor>>(ObjCast<BaseTensorPtr>),
     std::make_shared<ByTypeDataConvertFunc<py::tuple>>(ConvertTuple),
     std::make_shared<ByTypeDataConvertFunc<py::list>>(ConvertList),
     std::make_shared<ByTypeDataConvertFunc<py::bool_>>(PyCast<BoolImm, bool>),
@@ -1174,7 +1177,15 @@ TensorPtr ConvertTensorValue(const py::object &obj) {
       return py::getattr(obj, stub::PY_ATTR_TENSOR).cast<tensor::TensorPtr>();
     }
     auto value = stub->WaitValue();
-    return value->cast<tensor::TensorPtr>();
+    auto tensor = value->cast<TensorPtr>();
+    if (tensor == nullptr) {
+      // BaseTensor should convert to Tensor for Graph mode
+      auto base_tensor = value->cast<BaseTensorPtr>();
+      auto real_tensor = std::make_shared<Tensor>(*base_tensor);
+      stub->SetValue(real_tensor);
+      return real_tensor;
+    }
+    return tensor;
   }
   if (!py::isinstance<mindspore::tensor::Tensor>(obj)) {
     return nullptr;

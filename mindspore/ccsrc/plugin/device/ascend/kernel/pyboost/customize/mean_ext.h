@@ -26,9 +26,9 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr MeanExtAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                                         const std::optional<ValueTuplePtr> &axis, const BoolImmPtr &keep_dims,
-                                         const std::optional<Int64ImmPtr> &dtype);
+tensor::BaseTensorPtr MeanExtAscendCustomize(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &input_tensor,
+                                             const std::optional<ValueTuplePtr> &axis, const BoolImmPtr &keep_dims,
+                                             const std::optional<Int64ImmPtr> &dtype);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

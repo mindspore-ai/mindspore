@@ -24,8 +24,9 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr GatherDGradAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &x,
-                                             const Int64ImmPtr &dim, const TensorPtr &index, const TensorPtr &d_out) {
+tensor::BaseTensorPtr GatherDGradAscendCustomize(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &x,
+                                                 const Int64ImmPtr &dim, const BaseTensorPtr &index,
+                                                 const BaseTensorPtr &d_out) {
   MS_EXCEPTION_IF_NULL(dim);
   MS_EXCEPTION_IF_NULL(op);
   MS_EXCEPTION_IF_NULL(x);

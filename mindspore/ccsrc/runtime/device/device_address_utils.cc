@@ -303,8 +303,8 @@ device::DeviceAddressPtrList DeviceAddressUtils::CreateDeviceAddressForTensorVal
   MS_EXCEPTION_IF_NULL(ms_context);
 
   device::DeviceAddressPtrList address_list;
-  if (node_value->isa<tensor::Tensor>()) {
-    auto tensor = node_value->cast<tensor::TensorPtr>();
+  if (node_value->isa<tensor::BaseTensor>()) {
+    auto tensor = node_value->cast<tensor::BaseTensorPtr>();
     MS_EXCEPTION_IF_NULL(tensor);
     auto output_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
     if (output_address != nullptr) {
@@ -430,7 +430,7 @@ void DeviceAddressUtils::CreateValueNodeDeviceAddress(const DeviceContext *devic
     }
     const auto &node_value = value_node->value();
     MS_EXCEPTION_IF_NULL(node_value);
-    if (node_value->isa<tensor::Tensor>() || node_value->isa<ValueSequence>()) {
+    if (node_value->isa<tensor::BaseTensor>() || node_value->isa<ValueSequence>()) {
       auto address_list = CreateDeviceAddressForTensorValue(device_context, node_value, 0, value_node);
       // Deal with tensor and tuple
       if (value_nodes_without_init_args.find(value_node) == value_nodes_without_init_args.end()) {
@@ -862,7 +862,7 @@ device::DeviceAddressPtr DeviceAddressUtils::CloneEmptyDeviceAddress(const devic
 }
 
 void DeviceAddressUtils::CreateInputTensorAddress(const DeviceContext *device_context, size_t stream_id, size_t index,
-                                                  const tensor::TensorPtr &tensor) {
+                                                  const tensor::BaseTensorPtr &tensor) {
   MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(tensor);
 
@@ -897,7 +897,7 @@ void DeviceAddressUtils::CreateInputTensorAddress(const DeviceContext *device_co
                 << ", Type: " << TypeIdToType(tensor->data_type())->ToString();
 }
 
-void DeviceAddressUtils::MallocForInput(const DeviceContext *device_context, const tensor::TensorPtr &tensor) {
+void DeviceAddressUtils::MallocForInput(const DeviceContext *device_context, const tensor::BaseTensorPtr &tensor) {
   MS_EXCEPTION_IF_NULL(tensor);
   const auto &device_sync = tensor->device_address();
   MS_EXCEPTION_IF_NULL(device_sync);
@@ -920,14 +920,14 @@ void DeviceAddressUtils::MallocForInput(const DeviceContext *device_context, con
 }
 
 void DeviceAddressUtils::MallocForInput(const DeviceContext *device_context,
-                                        const std::vector<tensor::TensorPtr> &tensors) {
+                                        const std::vector<tensor::BaseTensorPtr> &tensors) {
   for (const auto &tensor : tensors) {
     MallocForInput(device_context, tensor);
   }
 }
 
 void DeviceAddressUtils::MallocForInput(const DeviceContext *device_context,
-                                        const std::optional<tensor::TensorPtr> &val) {
+                                        const std::optional<tensor::BaseTensorPtr> &val) {
   if (!val.has_value()) {
     return;
   }
@@ -935,7 +935,7 @@ void DeviceAddressUtils::MallocForInput(const DeviceContext *device_context,
 }
 
 void DeviceAddressUtils::CreateInputTensorAddress(const DeviceContext *device_context, size_t stream_id, size_t index,
-                                                  const std::optional<tensor::TensorPtr> &val) {
+                                                  const std::optional<tensor::BaseTensorPtr> &val) {
   if (!val.has_value()) {
     return;
   }
@@ -944,7 +944,7 @@ void DeviceAddressUtils::CreateInputTensorAddress(const DeviceContext *device_co
 
 device::DeviceAddressPtr DeviceAddressUtils::CreateInputAddress(const DeviceContext *device_context, size_t stream_id,
                                                                 const abstract::AbstractBasePtr &abs, size_t index,
-                                                                const tensor::TensorPtr &tensor) {
+                                                                const tensor::BaseTensorPtr &tensor) {
   MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(tensor);
   auto addr = tensor->device_address();
@@ -1014,7 +1014,7 @@ device::DeviceAddressPtr DeviceAddressUtils::CreateInputAddress(const DeviceCont
 
 device::DeviceAddressPtr DeviceAddressUtils::CreateInputAddress(const DeviceContext *device_context, size_t stream_id,
                                                                 const abstract::AbstractBasePtr &abs, size_t index,
-                                                                const std::optional<tensor::TensorPtr> &val) {
+                                                                const std::optional<tensor::BaseTensorPtr> &val) {
   if (!val.has_value()) {
     return nullptr;
   }
@@ -1076,7 +1076,7 @@ device::DeviceAddressPtr DeviceAddressUtils::CreateInputAddress(const DeviceCont
 }
 
 void DeviceAddressUtils::CreateOutputTensorAddress(const DeviceContext *device_context, size_t stream_id,
-                                                   const std::vector<tensor::TensorPtr> &outputs) {
+                                                   const std::vector<tensor::BaseTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(device_context);
   for (size_t i = 0; i < outputs.size(); ++i) {
     auto tensor = outputs[i];
@@ -1099,7 +1099,7 @@ void DeviceAddressUtils::CreateOutputTensorAddress(const DeviceContext *device_c
 }
 
 device::DeviceAddressPtr DeviceAddressUtils::CreateDeviceAddress(const DeviceContext *device_context,
-                                                                 const tensor::TensorPtr &tensor,
+                                                                 const tensor::BaseTensorPtr &tensor,
                                                                  const ShapeVector &real_shape,
                                                                  const size_t &stream_id) {
   MS_EXCEPTION_IF_NULL(device_context);
@@ -1117,7 +1117,7 @@ device::DeviceAddressPtr DeviceAddressUtils::CreateDeviceAddress(const DeviceCon
 }
 
 void DeviceAddressUtils::MallocForOutputs(const DeviceContext *device_context,
-                                          const std::vector<tensor::TensorPtr> &outputs) {
+                                          const std::vector<tensor::BaseTensorPtr> &outputs) {
   for (const auto &output : outputs) {
     auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(output->device_address());
     if (device_address->GetPtr() != nullptr) {
@@ -1152,7 +1152,7 @@ device::DeviceAddressPtr DeviceAddressUtils::CreateWorkspaceAddress(const Device
   return device_address;
 }
 
-void DeviceAddressUtils::ConvertContiguousTensorSync(const tensor::TensorPtr &tensor) {
+void DeviceAddressUtils::ConvertContiguousTensorSync(const tensor::BaseTensorPtr &tensor) {
   if (tensor == nullptr || tensor->storage_info() == nullptr) {
     return;
   }

@@ -77,7 +77,7 @@ void GatherInfo(const std::vector<mindspore::kernel::KernelTensor *> &tensor_lis
   }
 }
 
-void GatherInfo(const mindspore::tensor::TensorPtr &tensor) {
+void GatherInfo(const mindspore::tensor::BaseTensorPtr &tensor) {
   if (tensor == nullptr) {
     return;
   }
@@ -121,7 +121,7 @@ void GatherInfo(const mindspore::tensor::TensorPtr &tensor) {
   add_tensor_addr_to_cached_list_func(tensor->device_address()->GetMutablePtr());
 }
 
-void GatherInfo(const std::optional<TensorPtr> &tensor) {
+void GatherInfo(const std::optional<tensor::BaseTensorPtr> &tensor) {
   // "ot" for optional tensor
   MemcpyToBuf("ot", 2);
   if (tensor.has_value()) {
@@ -129,7 +129,23 @@ void GatherInfo(const std::optional<TensorPtr> &tensor) {
   }
 }
 
-void GatherInfo(const std::vector<TensorPtr> &tensors) {
+void GatherInfo(const std::vector<tensor::BaseTensorPtr> &tensors) {
+  for (const auto &tensor : tensors) {
+    GatherInfo(tensor);
+  }
+}
+
+void GatherInfo(const mindspore::tensor::TensorPtr &tensor) { GatherInfo(tensor->cast<tensor::BaseTensorPtr>()); }
+
+void GatherInfo(const std::optional<tensor::TensorPtr> &tensor) {
+  // "ot" for optional tensor
+  MemcpyToBuf("ot", 2);
+  if (tensor.has_value()) {
+    GatherInfo(tensor.value());
+  }
+}
+
+void GatherInfo(const std::vector<tensor::TensorPtr> &tensors) {
   for (const auto &tensor : tensors) {
     GatherInfo(tensor);
   }

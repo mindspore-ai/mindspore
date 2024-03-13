@@ -98,7 +98,7 @@ class GradExecutor {
   void SetHookChanged(const py::object &cell) const;
   py::object RunGrad(const prim::GradOperationPtr &grad, const py::object &obj, const py::object &weights,
                      const py::object &grad_position, const py::args &args);
-  py::object RunBackward(const autograd::GradAttr &grad_attr, const std::vector<tensor::TensorPtr> &w_args,
+  py::object RunBackward(const autograd::GradAttr &grad_attr, const std::vector<tensor::BaseTensorPtr> &w_args,
                          const std::vector<size_t> &p_args);
   py::object RunGradGraph();
   CNodePtr ConstructForwardGraph(const FrontendOpRunInfoPtr &op_run_info) const;
@@ -206,12 +206,12 @@ class GradExecutor {
   void GetCustomBpropPrim(const py::object &obj, const py::args &args, const InputArgsInfoPtr &input_args_info);
   void DoGradForCustomBprop(const InputArgsInfoPtr &input_args_info, const std::string &out_id) const;
   void CheckNeedCompileGraph(const InputArgsInfoPtr &input_args_info);
-  void GetGradGraph(const autograd::GradAttr &grad_attr, const std::vector<tensor::TensorPtr> &w_args,
+  void GetGradGraph(const autograd::GradAttr &grad_attr, const std::vector<tensor::BaseTensorPtr> &w_args,
                     const std::vector<size_t> &p_args);
-  FuncGraphPtr GetBpropGraph(const autograd::GradAttr &grad_attr, const std::vector<tensor::TensorPtr> &w_args,
+  FuncGraphPtr GetBpropGraph(const autograd::GradAttr &grad_attr, const std::vector<tensor::BaseTensorPtr> &w_args,
                              const std::vector<size_t> &p_args);
-  std::vector<tensor::TensorPtr> GetWeightsArgs(const py::object &weights, bool *weight_param_is_tuple) const;
-  std::vector<tensor::TensorPtr> GetDefaultWeights() const;
+  std::vector<tensor::BaseTensorPtr> GetWeightsArgs(const py::object &weights, bool *weight_param_is_tuple) const;
+  std::vector<tensor::BaseTensorPtr> GetDefaultWeights() const;
   void CheckParamShapeAndType(const ParameterPtr &param_node, const abstract::AbstractBasePtr &input_abs,
                               const abstract::AbstractBasePtr &ir_abs) const;
   void UpdateParamAbsByArgs(const std::vector<ValuePtr> &input_args, const FuncGraphPtr &bprop_graph) const;

@@ -37,7 +37,7 @@ TensorStorageInfoPtrList DiagonalCalc(const PrimitivePtr &prim, const std::vecto
   if (CheckInputsNull(inputs, kDiagonalInputsNum)) {
     MS_LOG(EXCEPTION) << "inputs num is invalid, num:" << inputs.size();
   }
-  auto input_tensor = inputs[0]->cast<tensor::TensorPtr>();
+  auto input_tensor = inputs[0]->cast<tensor::BaseTensorPtr>();
   MS_EXCEPTION_IF_NULL(input_tensor);
   auto input_type = input_tensor->Dtype();
   (void)CheckAndConvertUtils::CheckTypeValid("input", input_type, common_valid_types_with_complex_and_bool,

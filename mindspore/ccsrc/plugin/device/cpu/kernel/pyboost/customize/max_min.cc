@@ -23,7 +23,8 @@ namespace mindspore {
 namespace kernel {
 namespace pyboost {
 namespace {
-void MinOrMaxCPUCall(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor, const std::string &reduce_op) {
+void MinOrMaxCPUCall(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &input_tensor,
+                     const std::string &reduce_op) {
   MS_EXCEPTION_IF_NULL(op);
   OpRunner::InferOpOutput(op, input_tensor);
   auto axis = MakeValue<std::vector<int64_t>>({});
@@ -55,11 +56,11 @@ void MinOrMaxCPUCall(const std::shared_ptr<OpRunner> &op, const TensorPtr &input
 }
 }  // namespace
 
-void MinCPUCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor) {
+void MinCPUCustomize(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &input_tensor) {
   MinOrMaxCPUCall(op, input_tensor, prim::kPrimReduceMin->name());
 }
 
-void MaxCPUCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor) {
+void MaxCPUCustomize(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &input_tensor) {
   MinOrMaxCPUCall(op, input_tensor, prim::kPrimReduceMax->name());
 }
 }  // namespace pyboost

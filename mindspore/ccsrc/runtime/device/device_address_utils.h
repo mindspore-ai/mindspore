@@ -67,12 +67,12 @@ class BACKEND_EXPORT DeviceAddressUtils {
 
   // Overloading
   static void CreateInputTensorAddress(const DeviceContext *device_context, size_t stream_id, size_t index,
-                                       const tensor::TensorPtr &tensor);
-  static void MallocForInput(const DeviceContext *device_context, const tensor::TensorPtr &tensor);
-  static void MallocForInput(const DeviceContext *device_context, const std::optional<tensor::TensorPtr> &val);
-  static void MallocForInput(const DeviceContext *device_context, const std::vector<tensor::TensorPtr> &tensors);
+                                       const tensor::BaseTensorPtr &tensor);
+  static void MallocForInput(const DeviceContext *device_context, const tensor::BaseTensorPtr &tensor);
+  static void MallocForInput(const DeviceContext *device_context, const std::optional<tensor::BaseTensorPtr> &val);
+  static void MallocForInput(const DeviceContext *device_context, const std::vector<tensor::BaseTensorPtr> &tensors);
   static void CreateInputTensorAddress(const DeviceContext *device_context, size_t stream_id, size_t index,
-                                       const std::optional<tensor::TensorPtr> &val);
+                                       const std::optional<tensor::BaseTensorPtr> &val);
   template <typename T>
   static void CreateInputTensorAddress(const DeviceContext *device_context, size_t stream_id, size_t index,
                                        const std::vector<T> &inputs) {
@@ -83,10 +83,10 @@ class BACKEND_EXPORT DeviceAddressUtils {
 
   static device::DeviceAddressPtr CreateInputAddress(const DeviceContext *device_context, size_t stream_id,
                                                      const abstract::AbstractBasePtr &abs, size_t index,
-                                                     const tensor::TensorPtr &tensor);
+                                                     const tensor::BaseTensorPtr &tensor);
   static device::DeviceAddressPtr CreateInputAddress(const DeviceContext *device_context, size_t stream_id,
                                                      const abstract::AbstractBasePtr &abs, size_t index,
-                                                     const std::optional<tensor::TensorPtr> &val);
+                                                     const std::optional<tensor::BaseTensorPtr> &val);
   static device::DeviceAddressPtr CreateInputAddress(const DeviceContext *device_context, size_t stream_id,
                                                      const abstract::AbstractBasePtr &abs, size_t index,
                                                      const ScalarPtr &scalar_value);
@@ -119,9 +119,9 @@ class BACKEND_EXPORT DeviceAddressUtils {
   }
 
   static void CreateOutputTensorAddress(const DeviceContext *device_context, size_t stream_id,
-                                        const std::vector<tensor::TensorPtr> &outputs);
+                                        const std::vector<tensor::BaseTensorPtr> &outputs);
 
-  static void MallocForOutputs(const DeviceContext *device_context, const std::vector<tensor::TensorPtr> &outputs);
+  static void MallocForOutputs(const DeviceContext *device_context, const std::vector<tensor::BaseTensorPtr> &outputs);
 
   static device::DeviceAddressPtr CreateWorkspaceAddress(const DeviceContext *device_context, size_t stream_id,
                                                          const size_t &workspace_size);
@@ -129,11 +129,11 @@ class BACKEND_EXPORT DeviceAddressUtils {
   static void UpdateDeviceAddressHostInfoByNode(const device::DeviceAddressPtr &addr, const AnfNodePtr &node,
                                                 size_t output_idx);
   static device::DeviceAddressPtr CreateDeviceAddress(const DeviceContext *device_context,
-                                                      const tensor::TensorPtr &tensor, const ShapeVector &real_shape,
-                                                      const size_t &stream_id);
+                                                      const tensor::BaseTensorPtr &tensor,
+                                                      const ShapeVector &real_shape, const size_t &stream_id);
 
   // Convert tensor to contiguous tensor.
-  static void ConvertContiguousTensorSync(const tensor::TensorPtr &tensor);
+  static void ConvertContiguousTensorSync(const tensor::BaseTensorPtr &tensor);
 
   // Convert old_device_address to contiguous device address.
   static device::DeviceAddressPtr ConvertContiguousDeviceAddress(const DeviceContext *device_context,

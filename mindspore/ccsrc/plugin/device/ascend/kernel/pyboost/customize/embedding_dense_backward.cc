@@ -24,11 +24,9 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr EmbeddingDenseBackwardAscendCustomize(const std::shared_ptr<OpRunner> &op,
-                                                        const TensorPtr &grad_tensor, const TensorPtr &indices_tensor,
-                                                        const Int64ImmPtr &num_weights,
-                                                        const std::optional<Int64ImmPtr> &padding_idx,
-                                                        const BoolImmPtr &scale_grad_by_freq) {
+tensor::BaseTensorPtr EmbeddingDenseBackwardAscendCustomize(
+  const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &grad_tensor, const BaseTensorPtr &indices_tensor,
+  const Int64ImmPtr &num_weights, const std::optional<Int64ImmPtr> &padding_idx, const BoolImmPtr &scale_grad_by_freq) {
   MS_EXCEPTION_IF_NULL(op);
 
   OpRunner::InferOpOutput(op, grad_tensor, indices_tensor, num_weights, padding_idx, scale_grad_by_freq);
