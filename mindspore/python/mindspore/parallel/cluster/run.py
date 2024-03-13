@@ -92,6 +92,20 @@ def get_args():
         help="specifies whether msrun should bind cpu cores to spawned processes."
     )
     parser.add_argument(
+        "--sim_level",
+        default=-1,
+        type=int,
+        choices=[0, 1],
+        help="specifies simulation level. When this argument is set, msrun only spawns one process "
+             "but export RANK_SIZE with value worker_num and RANK_ID with value sim_rank_id."
+    )
+    parser.add_argument(
+        "--sim_rank_id",
+        default=0,
+        type=int,
+        help="specifies simulation process's rank id. Only one process is spawned in simulation scenario."
+    )
+    parser.add_argument(
         "task_script",
         type=str,
         help="The full path to the script that will be launched in distributed manner, followed "

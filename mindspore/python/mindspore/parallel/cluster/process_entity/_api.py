@@ -109,6 +109,7 @@ class _ProcessManager:
         self.worker_num = args.worker_num
         if self.worker_num <= 0:
             raise ValueError(f"worker_num must be greater than 0, but got {self.worker_num}.")
+        self.exported_rank_size = self.worker_num
         self.local_worker_num = args.local_worker_num
         self.node_rank = args.node_rank
 
@@ -116,6 +117,16 @@ class _ProcessManager:
         self.join = args.join
         self.cluster_time_out = args.cluster_time_out
         self.bind_core = args.bind_core
+
+        self.sim_level = args.sim_level
+        self.sim_rank_id = args.sim_rank_id
+        self.is_simulation = (self.sim_level != -1)
+        if self.is_simulation:
+            # If simulation level is set, reset the worker_num and local_worker_num to 1
+            # so that host cluster could be initialized.
+            self.worker_num = 1
+            self.local_worker_num = 1
+            os.environ["MS_SIMULATION_LEVEL"] = str(self.sim_level)
 
         self.cmd = args.task_script
         self.cmd_args = args.task_script_args
@@ -140,7 +151,7 @@ class _ProcessManager:
         Runs the process manager.
 
         """
-        os.environ["RANK_SIZE"] = str(self.worker_num)
+        os.environ["RANK_SIZE"] = str(self.exported_rank_size)
         if self.is_scale:
             response_message = _send_scale_num(self.scheduler_url, self.scale_num)
             is_first_manager = response_message
@@ -184,6 +195,9 @@ class _ProcessManager:
                            "You can access 'RANK_ID' environment variable after calling "
                            "'mindspore.communication.init()'")
 
+        if self.is_simulation and self.worker_num != 1:
+            raise ValueError(f"Simulation level is set, worker_num must be 1, but got {self.worker_num}.")
+
         for i in range(self.local_worker_num):
             node_id, log_name = self._get_node_id_and_log_path(i)
             if node_id is None:
@@ -195,6 +209,9 @@ class _ProcessManager:
                 os.environ["RANK_ID"] = str(node_id)
                 logger.warning(f"Start worker process with rank id:{node_id}, log file:{log_name}. "
                                "Environment variable [RANK_ID] is exported.")
+            if self.is_simulation:
+                # Reset RANK_ID env to sim_rank_id.
+                os.environ["RANK_ID"] = str(self.sim_rank_id)
 
             cpu_num = subprocess.getoutput("cat /proc/cpuinfo|grep processor|wc -l")
             if not cpu_num.isdigit():
