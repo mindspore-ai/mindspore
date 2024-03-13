@@ -67,6 +67,8 @@ def copy_shape(shape):
 class InfoGlobalConfig:
     # whether enable akg cce lib
     enable_cce_lib = False
+    # ascend arch type, for 910B and 910A
+    ascend_arch = ""
 
 
 class OpInfer:
@@ -326,9 +328,11 @@ class MatMul(OpInfer):
 
     def supported_format(self):
         input_num = len(self.input_desc)
+        # MatMul cce only support ND
         if InfoGlobalConfig.enable_cce_lib and input_num == 2:
-            # MatMul cce only support ND
             return ["ND,ND,ND"]
+        if InfoGlobalConfig.enable_cce_lib and input_num == 3:
+            return ["ND,ND,ND,ND"]
         if input_num == 2:
             return ["FRACTAL_NZ,FRACTAL_NZ,FRACTAL_NZ"]
         if input_num == 3:
@@ -378,6 +382,51 @@ class MatMul(OpInfer):
         self.op_desc[ATTR].append({DATA_TYPE: STR, NAME: "right_format", VALUE: self.input_desc[1][FORMAT]})
         self.op_desc[ATTR].append({DATA_TYPE: STR, NAME: "dst_type", VALUE: self.output_desc[0][DATA_TYPE]})
 
+    def infer_type(self):
+        """infer data type"""
+        if "910B" in InfoGlobalConfig.ascend_arch and not InfoGlobalConfig.enable_cce_lib:
+            self.output_desc[0][DATA_TYPE] = "float32"
+        else:
+            super().infer_type()
+
+    def supported_type(self):
+        if "910B" in InfoGlobalConfig.ascend_arch and not InfoGlobalConfig.enable_cce_lib:
+            support_types = "float16,float16,float32"
+            return [support_types]
+        return super().supported_type()
+
+class BatchMatMul(MatMul):
+    """BatchMatMul op. Only support cce lib"""
+    def __init__(self, op_desc):
+        super().__init__(op_desc)
+        if "910B" not in InfoGlobalConfig.ascend_arch or not InfoGlobalConfig.enable_cce_lib:
+            raise ValueError("BatchMatMul only support 910B cce lib")
+
+    def infer_shape(self):
+        sh0, sh1 = self.input_desc[0][SHAPE], self.input_desc[1][SHAPE]
+        format0, format1 = self.input_desc[0][FORMAT], self.input_desc[1][FORMAT]
+        trans_a, trans_b = self.get_attr("transpose_a"), self.get_attr("transpose_b")
+        # only support nd
+        if (format0 != FRACTAL_NZ and format1 != FRACTAL_NZ):
+            self.output_desc[0][SHAPE] = self.nd_infer(sh0, sh1, trans_a, trans_b)
+        else:
+            raise ValueError("For '{}', input '{}' and '{}' are not supported"
+                             .format(self.name, self.input_desc[0], self.input_desc[1]))
+
+    def nd_infer(self, sh0, sh1, trans_a, trans_b):
+        """infer shape with nd format"""
+        m = sh0[-2] if not trans_a else sh0[-1]
+        n = sh1[-1] if not trans_b else sh1[-2]
+        res = sh0[:-2] + [m, n]
+        return res
+
+    def infer_type(self):
+        """infer data type"""
+        self.output_desc[0][DATA_TYPE] = "float16"
+
+    def supported_type(self):
+        """supported type"""
+        return ["float16,float16,float16"]
 
 class Reduce(OpInfer):
     """Reduce op."""
@@ -636,7 +685,7 @@ prims = {
     "Maximum": ElemwiseBinary,
     "Minimum": ElemwiseBinary,
     "MatMul": MatMul,
-    "BatchMatMul": MatMul,
+    "BatchMatMul": BatchMatMul,
     "ReduceSum": Reduce,
     "Reshape": Reshape,
     "ExpandDims": ExpandDim,
@@ -788,6 +837,9 @@ def update_akg_info(args, info_path, kernel_name=None):
         cache_input_tensors(tensor_desc, desc.get(INPUT_DESC))
         # Update info global config
         InfoGlobalConfig.enable_cce_lib = desc.get("enable_cce_lib")
+        target_info = desc.get("target_info")
+        if target_info is not None:
+            InfoGlobalConfig.ascend_arch = target_info.get("arch")
 
         # Update op_desc
         for _, op_desc in enumerate(desc[OP_DESC]):

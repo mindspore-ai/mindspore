@@ -48,6 +48,10 @@
 #include "tools/graph_kernel/converter/basic_op_infer_shape.h"
 #include "tools/graph_kernel/converter/rename_fullname_with_scope.h"
 #include "tools/graph_kernel/converter/update_kernel_info.h"
+#include "tools/graph_kernel/converter/split_model_ascend.h"
+#include "tools/graph_kernel/converter/split_model_gpu.h"
+#include "tools/graph_kernel/converter/split_model_cpu.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace graphkernel {
@@ -65,6 +69,19 @@ class EmptyPass : public opt::Pass {
   ~EmptyPass() override = default;
   bool Run(const FuncGraphPtr &func_graph) override { return false; }
 };
+
+void GraphKernelOptimizer::Init() const {
+  // register call back
+  const CallbackImplRegister callback_reg(
+    [this]() { return std::static_pointer_cast<Callback>(std::make_shared<CallbackImpl>(converter_param_)); });
+
+  // register split model here to ensure that the correct split model will be invoked
+  // when import mindspore and lite in the same process
+  auto device = Callback::Instance()->GetTargetFromContext(true);
+  SPLIT_MODEL_REGISTER(kAscendDevice, inner::SplitModelAscend, device);
+  SPLIT_MODEL_REGISTER(kGPUDevice, inner::SplitModelGpu);
+  SPLIT_MODEL_REGISTER(kCPUDevice, inner::SplitModelCpu);
+}
 
 GkPassManagerPtr GraphKernelOptimizer::PreProcess() const {
   auto pm = std::make_shared<GraphKernelPassManagerLite>(kStagePreProcess, "preprocess");
@@ -123,7 +140,7 @@ GkPassManagerPtr GraphKernelOptimizer::Split() const {
   pm->Add(std::make_shared<ExtendOutputForUpdateState>(), OptLevel_1, is_cpu);
   std::vector<PrimitivePtr> duplicated_ops = {prim::kPrimReshape};
   pm->Add(std::make_shared<ShapeOpsSplitter>(duplicated_ops), OptLevel_1);
-  // Split kernel according to costmodel
+  // Split kernel according to costmodel and distinguish splitter patterns based on device
   pm->Add(std::make_shared<GraphKernelSplitterWithTuning>(), OptLevel_1);
 
   // After Simplify and Splitter, a lot of redundant getitem/maketuple
@@ -186,11 +203,10 @@ void GraphKernelOptimizer::Run(const FuncGraphPtr &func_graph) {
     converter_param_ = std::make_shared<ConverterPara>();
     converter_param_->device = "Ascend";
   }
-  const CallbackImplRegister callback_reg(
-    [this]() { return std::static_pointer_cast<Callback>(std::make_shared<CallbackImpl>(converter_param_)); });
   if (!CheckAkg()) {
     return;
   }
+  Init();
   auto akg_support_backend = CheckSupport();
   auto device = Callback::Instance()->GetTargetFromContext();
   if (akg_support_backend.find(device) == akg_support_backend.end()) {

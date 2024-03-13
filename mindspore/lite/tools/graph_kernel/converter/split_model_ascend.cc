@@ -18,8 +18,6 @@
 #include "utils/ms_context.h"
 
 namespace mindspore::graphkernel::inner {
-SPLIT_MODEL_REGISTER("Ascend", SplitModelAscend);
-
 constexpr size_t kReduceFusionDepth = 10;
 constexpr size_t kBroadcastFusionDepth = 6;
 
@@ -53,7 +51,10 @@ class FuseLayerNorm : public FusePattern {
 
 void SplitModelAscend::InitFusePatterns() {
   AddPattern(std::make_shared<FuseVirtualNode>(), true);
-  AddPattern(std::make_shared<ascend::FuseMatMul>(), true);
+  if (soc_version_.find("910B") == string::npos) {
+    // Ascend 910B do not fuse Matmul
+    AddPattern(std::make_shared<ascend::FuseMatMul>(), true);
+  }
   AddPattern(FuseElemwiseBroadcastFwd::CreateDepthMatcher(), true);
   AddPattern(FuseElemwiseBroadcastFwd::CreateWidthMatcher(), true);
   AddPattern(FuseReduceFwd::CreateDepthMatcher(kReduceFusionDepth), true);

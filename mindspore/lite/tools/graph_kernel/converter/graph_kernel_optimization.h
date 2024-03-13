@@ -32,6 +32,7 @@ class GraphKernelOptimizer {
   void Run(const FuncGraphPtr &func_graph);
 
  private:
+  void Init() const;
   // Pre-process
   GkPassManagerPtr PreProcess() const;
   // Cluster kernels
