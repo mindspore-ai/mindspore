@@ -50,6 +50,7 @@ class GraphBuilder {
   explicit GraphBuilder(const PyFrameObject *f);
   GraphBuilder(GraphBuilder *r, GraphBuilder *p, PyCodeObject *co, PyObject *globals)
       : root_(r), parent_(p), graph_(NewGraph(co, globals)), frame_(), current_block_(nullptr) {}
+  explicit GraphBuilder(GraphBuilder *r) : root_(r), parent_(nullptr), graph_(nullptr), current_block_(nullptr) {}
   ~GraphBuilder() {
     for (auto i : graph_pool_) {
       delete i;
@@ -293,16 +294,7 @@ class GraphBuilder {
 
 class MindGraphBuilder : public GraphBuilder {
  public:
-  explicit MindGraphBuilder(const PyFrameObject *f) : GraphBuilder(f) {
-    std::vector<std::string> comments;
-    auto location = std::make_shared<Location>(py::cast<std::string>(f->f_code->co_filename), f->f_code->co_firstlineno,
-                                               0, f->f_code->co_firstlineno, 0, "", std::move(comments));
-    TraceGuard trace_guard(location);
-    fg_builder_ = std::make_shared<FuncGraphBuilder>(true);
-    fg_builder_->SetGraphName(py::cast<std::string>(f->f_code->co_name) + "_" +
-                              std::to_string(f->f_code->co_firstlineno));
-    co_name_ = py::cast<std::string>(f->f_code->co_name);
-  }
+  explicit MindGraphBuilder(const PyFrameObject *f);
   MindGraphBuilder(GraphBuilder *r, GraphBuilder *p, PyCodeObject *co, PyObject *globals)
       : GraphBuilder(r, p, co, globals) {
     std::vector<std::string> comments;
