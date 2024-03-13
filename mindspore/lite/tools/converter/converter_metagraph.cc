@@ -142,7 +142,10 @@ STATUS ConverterToMetaGraph::Save(schema::MetaGraphT *meta_graph, const std::sha
     }
 
     status = MetaGraphSerializer::Save(*meta_graph, param->output_file, encKey, keyLen, param->encrypt_mode);
-    (void)memset_s(encKey, kEncMaxLen, 0, kEncMaxLen);
+    if (memset_s(encKey, kEncMaxLen, 0, kEncMaxLen) != EOK) {
+      MS_LOG(ERROR) << "memset_s failed.";
+      return RET_ERROR;
+    }
     if (status != RET_OK) {
       MS_LOG(ERROR) << "SAVE GRAPH FAILED:" << status << " " << GetErrorInfo(status);
       return status;
