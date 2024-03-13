@@ -157,7 +157,7 @@ def test_ops_backward(context_mode):
 
 @pytest.mark.level1
 @pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_bf16(context_mode):
     """
@@ -165,6 +165,7 @@ def test_ops_bf16(context_mode):
     Description: bf16
     Expectation: success
     """
+    os.environ["GRAPH_OP_RUN"] = "1"
     ms.context.set_context(mode=context_mode)
 
     add_cell = SubCell()
@@ -178,6 +179,7 @@ def test_ops_bf16(context_mode):
     expect = np.ones_like(y)
 
     np.testing.assert_allclose(output, expect, rtol=rtol)
+    del os.environ["GRAPH_OP_RUN"]
 
 
 @pytest.mark.level1

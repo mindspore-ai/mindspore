@@ -14,17 +14,20 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_SUB_EXT_H_
-#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_SUB_EXT_H_
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_BINARY_EXT_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_BINARY_EXT_H_
 
 #include <vector>
 #include "mindapi/base/macros.h"
-#include "ops/ops_func_impl/binary_ext_op.h"
+#include "ops/ops_func_impl/binary_op.h"
 
 namespace mindspore {
 namespace ops {
-class MIND_API SubExtFuncImpl : public BinaryExtOpFuncImpl {};
+class MIND_API BinaryExtOpFuncImpl : public BinaryOpFuncImpl {
+ public:
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+};
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_SUB_EXT_H_
+#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_BINARY_EXT_H_

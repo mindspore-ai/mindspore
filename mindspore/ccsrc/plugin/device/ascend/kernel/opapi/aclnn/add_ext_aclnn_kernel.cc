@@ -24,6 +24,11 @@ void AddExtAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                     const std::vector<KernelTensor *> &outputs) {
   auto alpha_dtype_id = inputs[kIndex2]->dtype_id();
   switch (alpha_dtype_id) {
+    case kNumberTypeBool: {
+      auto alpha_value = inputs[kIndex2]->GetValueWithCheck<bool>();
+      MAKE_SCALAR(alpha_value, inputs[0]->dtype_id(), alpha_);
+      break;
+    }
     case kNumberTypeFloat32: {
       auto alpha_value = inputs[kIndex2]->GetValueWithCheck<float>();
       MAKE_SCALAR(alpha_value, inputs[0]->dtype_id(), alpha_);
@@ -40,7 +45,7 @@ void AddExtAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
       break;
     }
     default:
-      MS_LOG(EXCEPTION) << "AddExt only support float32 and float64 and int64, but got " << alpha_dtype_id;
+      MS_LOG(EXCEPTION) << "AddExt only support bool, float32, float64 and int64, but got " << alpha_dtype_id;
   }
   GetWorkspaceForResize(inputs[kIndex0], inputs[kIndex1], alpha_, outputs[kIndex0]);
 }

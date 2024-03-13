@@ -42,14 +42,6 @@ sub_ext:
         >>> import mindspore
         >>> from mindspore import Tensor
         >>> from mindspore.ops.extend import sub
-        >>> # case 1: x, y and alpha are all Tensor.
-        >>> x = Tensor(np.array([4, 5, 6]).astype(np.float32))
-        >>> y = Tensor(np.array([1, 2, 3]).astype(np.float32))
-        >>> alpha = 2.0
-        >>> output = sub(x, y, alpha)
-        >>> print(output)
-        [2. 1. 0.]
-        >>> # case 2: x is a Tensor, y is a scalar and alpha is a scalar
         >>> x = Tensor(np.array([4, 5, 6]).astype(np.float32))
         >>> y = Tensor(1, mindspore.int32)
         >>> alpha = 0.5

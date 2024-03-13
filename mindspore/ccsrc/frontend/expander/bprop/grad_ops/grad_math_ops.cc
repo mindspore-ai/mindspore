@@ -177,6 +177,26 @@ NodePtrList BpropAddcCommon(BpropBuilder *ib, const std::string &op_name, const 
   return {dinput_data, dx1, dx2, dvalue};
 }
 
+bool AlphaIsOne(const NodePtr &alpha) {
+  auto alpha_value = alpha->BuildValue();
+  if (!alpha_value->ContainsValueAny()) {
+    MS_EXCEPTION_IF_NULL(alpha_value);
+    auto imm_int64 = alpha_value->cast_ptr<Int64Imm>();
+    if (imm_int64 != nullptr && imm_int64->value() == 1) {
+      return True;
+    }
+    auto imm_float = alpha_value->cast_ptr<FP32Imm>();
+    if (imm_float != nullptr && imm_float->value() == 1.) {
+      return True;
+    }
+    if (imm_int64 == nullptr && imm_float == nullptr) {
+      MS_LOG(INTERNAL_EXCEPTION) << "Invalid alpha type " << alpha_value->type_name()
+                                 << " , alpha type should be Int64 or Float32";
+    }
+  }
+  return false;
+}
+
 class ReduceStdShapeCalc : public ShapeCalcFunctor {
  public:
   // cppcheck-suppress unknownMacro
@@ -498,81 +518,64 @@ REG_BPROP_BUILDER("Add").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
 REG_BPROP_BUILDER("AddExt").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);
-  auto dout = ib->GetInput(kIndex4);
-
   auto alpha = ib->GetInput(kIndex2);
   auto alpha_tensor = ib->ScalarToTensor(alpha, ib->GetDtype(x));
-  auto alpha_value = alpha->BuildValue();
-  if (!alpha_value->ContainsValueAny()) {
-    MS_EXCEPTION_IF_NULL(alpha_value);
-    auto imm_int64 = alpha_value->cast_ptr<Int64Imm>();
-    if (imm_int64 != nullptr && imm_int64->value() == 1) {
-      return BinopGradCommon(ib, x, y, dout, dout);
-    }
 
-    auto imm_float = alpha_value->cast_ptr<FP32Imm>();
-    if (imm_float == nullptr) {
-      MS_LOG(INTERNAL_EXCEPTION) << "Invalid alpha type " << alpha_value->type_name()
-                                 << " , alpha type should be Int64 or Float32";
-    }
-    auto alpha_scalar_float = imm_float->value();
-    if (alpha_scalar_float == 1.0) {
-      return BinopGradCommon(ib, x, y, dout, dout);
+  auto dout = ib->GetInput(kIndex4);
+  NodePtr dx = nullptr;
+  NodePtr dy = nullptr;
+
+  if (x->need_compute_grad_out()) {
+    dx = dout;
+  }
+  if (y->need_compute_grad_out()) {
+    dy = dout;
+    if (!AlphaIsOne(alpha)) {
+      if (ib->GetDtypeId(x) == kNumberTypeComplex64 || ib->GetDtypeId(x) == kNumberTypeComplex128) {
+        alpha_tensor = ib->Cast(alpha_tensor, ib->GetDtype(x));
+        dy = ib->Mul(dy, alpha_tensor);
+      } else if (ib->GetDtypeId(x) == kNumberTypeBFloat16) {
+        dy = ib->Cast(ib->Mul(ib->Cast(dy, ib->GetDtype(alpha_tensor)), alpha_tensor), kNumberTypeBFloat16);
+      } else {
+        dy = ib->Mul(dy, alpha_tensor);
+      }
     }
   }
-  std::vector<NodePtr> ret = BinopGradCommon(ib, x, y, dout, dout);
-  ret.emplace_back(alpha);
 
-  if (ib->GetDtypeId(x) == kNumberTypeComplex64) {
-    alpha_tensor = ib->Cast(alpha_tensor, kNumberTypeComplex64);
-  } else if (ib->GetDtypeId(x) == kNumberTypeComplex128) {
-    alpha_tensor = ib->Cast(alpha_tensor, kNumberTypeComplex128);
-  } else if (ib->GetDtypeId(x) == kNumberTypeBFloat16) {
-    alpha_tensor = ib->Cast(alpha_tensor, kNumberTypeBFloat16);
-  }
-
-  ret[1] = ib->Mul(ret[1], alpha_tensor);
+  std::vector<NodePtr> ret = BinopGradCommon(ib, x, y, dx, dy);
+  ret.emplace_back(ib->OutZeros(alpha_tensor));
   return ret;
 });
 
 REG_BPROP_BUILDER("SubExt").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);
-  auto dout = ib->GetInput(kIndex4);
-
   auto alpha = ib->GetInput(kIndex2);
   auto alpha_tensor = ib->ScalarToTensor(alpha, ib->GetDtype(x));
 
-  auto alpha_value = alpha->BuildValue();
-  if (!alpha_value->ContainsValueAny()) {
-    MS_EXCEPTION_IF_NULL(alpha_value);
-    auto imm_int64 = alpha_value->cast_ptr<Int64Imm>();
-    if (imm_int64 != nullptr && imm_int64->value() == 1) {
-      return BinopGradCommon(ib, x, y, dout, ib->Emit(kNegOpName, {dout}));
-    }
+  auto dout = ib->GetInput(kIndex4);
+  NodePtr dx = nullptr;
+  NodePtr dy = nullptr;
 
-    auto imm_float = alpha_value->cast_ptr<FP32Imm>();
-    if (imm_float == nullptr) {
-      MS_LOG(INTERNAL_EXCEPTION) << "Invalid alpha type " << alpha_value->type_name()
-                                 << " , alpha type should be Int64 or Float32";
-    }
-    auto alpha_scalar_float = imm_float->value();
-    if (alpha_scalar_float == 1.0) {
-      return BinopGradCommon(ib, x, y, dout, ib->Emit(kNegOpName, {dout}));
+  if (x->need_compute_grad_out()) {
+    dx = dout;
+  }
+  if (y->need_compute_grad_out()) {
+    dy = ib->Emit(kNegOpName, {dout});
+    if (!AlphaIsOne(alpha)) {
+      if (ib->GetDtypeId(x) == kNumberTypeComplex64 || ib->GetDtypeId(x) == kNumberTypeComplex128) {
+        alpha_tensor = ib->Cast(alpha_tensor, ib->GetDtype(x));
+        dy = ib->Mul(dy, alpha_tensor);
+      } else if (ib->GetDtypeId(x) == kNumberTypeBFloat16) {
+        dy = ib->Cast(ib->Mul(ib->Cast(dy, ib->GetDtype(alpha_tensor)), alpha_tensor), kNumberTypeBFloat16);
+      } else {
+        dy = ib->Mul(dy, alpha_tensor);
+      }
     }
   }
-  std::vector<NodePtr> ret = BinopGradCommon(ib, x, y, dout, ib->Emit(kNegOpName, {dout}));
-  ret.emplace_back(alpha);
 
-  if (ib->GetDtypeId(x) == kNumberTypeComplex64) {
-    alpha_tensor = ib->Cast(alpha_tensor, kNumberTypeComplex64);
-  } else if (ib->GetDtypeId(x) == kNumberTypeComplex128) {
-    alpha_tensor = ib->Cast(alpha_tensor, kNumberTypeComplex128);
-  } else if (ib->GetDtypeId(x) == kNumberTypeBFloat16) {
-    alpha_tensor = ib->Cast(alpha_tensor, kNumberTypeBFloat16);
-  }
-
-  ret[1] = ib->Mul(ret[1], alpha_tensor);
+  std::vector<NodePtr> ret = BinopGradCommon(ib, x, y, dx, dy);
+  ret.emplace_back(ib->OutZeros(alpha_tensor));
   return ret;
 });
 
