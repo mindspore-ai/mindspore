@@ -11,7 +11,7 @@ fft:
           input (Tensor): The input tensor.
               Supported dtypes:
 
-              - Ascend/CPU: int16、int32、int64、float16、float32、float64、complex64、complex128.
+              - Ascend/CPU: int16, int32, int64, float16, float32, float64, complex64, complex128.
 
           n (int, optional): Length of the transformed `dim` of the result.
               If given, the size of the `dim` axis will be zero-padded or truncated to `n` before calculating `fft`.
