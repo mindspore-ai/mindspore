@@ -279,6 +279,7 @@ void CodeMSModelCreate(std::ofstream &ofs, const std::unique_ptr<CoderContext> &
       }
       ofs << kAlignedString << prefix << "_tensors[" << index << "]->name = \"" << tensor->tensor_name() << "\";\n";
       ofs << kAlignedString << prefix << "_tensors[" << index << "]->data = NULL;\n";
+      ofs << kAlignedString << prefix << "_tensors[" << index << "]->owned = false;\n";
     };
     std::vector<Tensor *> inputs = ctx->graph_inputs();
     std::vector<Tensor *> outputs = ctx->graph_outputs();

@@ -166,7 +166,11 @@ MSTensorHandle MSTensorCreate(const char *name, MSDataType type, const int64_t *
 
 void MSTensorDestroy(MSTensorHandle *tensor) {
   MicroTensor* micro_tensor = (MicroTensor*)(*tensor);
+  if (micro_tensor->data != NULL && micro_tensor->owned) {
+    free(micro_tensor->data);
+  }
   free(micro_tensor);
+  *tensor = NULL;
 }
 
 void MSTensorSetName(MSTensorHandle tensor, const char *name) {

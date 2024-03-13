@@ -56,6 +56,7 @@
 #include "nnacl/kernel/batch_norm.h"
 #include "nnacl/kernel/tile.h"
 #include "nnacl/kernel/slice.h"
+#include "nnacl/kernel/strided_slice.h"
 #include "coder/opcoders/nnacl/dynamic_parameter/transpose_dynamic_parameter.h"
 #include "coder/opcoders/nnacl/dynamic_parameter/dynamic_lstm_parameter.h"
 #include "coder/opcoders/nnacl/dynamic_parameter/slice_dynamic_parameter.h"
@@ -113,6 +114,8 @@ class NNaclFp32Serializer : public Serializer {
   void CodeStruct(const std::string &name, const SliceStruct &slice_parameter,
                   const SliceDynamicParameter &dynamic_slice_param);
   void CodeStruct(const std::string &name, const StridedSliceParameter &strided_slice_parameter,
+                  const StridedSliceDynamicParameter &dynamic_strided_slice_param);
+  void CodeStruct(const std::string &name, const StridedSliceStruct &param,
                   const StridedSliceDynamicParameter &dynamic_strided_slice_param);
   void CodeStruct(const std::string &name, const ScaleStruct &scale_struct,
                   const ScaleDynamicParameter &dynamic_scale_param);

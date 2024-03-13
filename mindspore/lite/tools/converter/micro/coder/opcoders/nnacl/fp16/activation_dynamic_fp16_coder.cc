@@ -77,7 +77,7 @@ int ActivationDynamicFP16Coder::DoCode(CoderContext *const context) {
       code.CodeFunction("HSigmoidFp16", input_data_, output_data_, count_);
       break;
     case schema::ActivationType_ELU:
-      code.CodeFunction("EluFp16", input_data_, output_data_, count_, activation_parameter->alpha_);
+      code.CodeFunction("EluFp16", input_data_, count_, output_data_, activation_parameter->alpha_);
       break;
     default:
       MS_LOG(ERROR) << "Activation type error";

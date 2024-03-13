@@ -65,9 +65,9 @@ int SoftmaxDynamicFP16Coder::DoCode(CoderContext *const context) {
   code << "    int input_shape[" << input_shape_.size() << "] = " << dynamic_param_.input_shape_ << ";\n";
   if (primitive_type == schema::PrimitiveType_Softmax) {
     code.CodeFunction("SoftmaxFp16", input_data, output_data, sum_data_str_, softmax_struct_.axis_,
-                      softmax_struct_.n_dim_, "&input_shape");
+                      softmax_struct_.n_dim_, "input_shape");
   } else {
-    code.CodeFunction("LogSoftmaxFp16", input_data, output_data, sum_data_str_, "&input_shape", softmax_struct_.n_dim_,
+    code.CodeFunction("LogSoftmaxFp16", input_data, output_data, sum_data_str_, "input_shape", softmax_struct_.n_dim_,
                       softmax_struct_.axis_);
   }
   context->AppendCode(code.str());

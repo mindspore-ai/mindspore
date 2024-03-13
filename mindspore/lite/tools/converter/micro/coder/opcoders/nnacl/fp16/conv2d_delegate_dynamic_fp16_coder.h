@@ -36,7 +36,7 @@ class ConvDelegateDynamicFP16Coder : public OperatorCoder {
  protected:
   std::unique_ptr<OperatorCoder> conv_coder_ = nullptr;
   ConvParameter *conv_param_{nullptr};
-  ConvDynamicParameter *dynamic_param_{nullptr};
+  ConvDynamicParameter dynamic_param_;
 
  private:
   void SetInputOutputShapeInfo(ConvParameter *conv_param, const lite::Tensor *input, const lite::Tensor *output);

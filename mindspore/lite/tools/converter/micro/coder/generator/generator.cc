@@ -578,7 +578,7 @@ int Generator::CodeRegKernelHFile() {
 }
 
 int Generator::CodeAllocatorFile() {
-  if (config_->target() == kCortex_M) {
+  if (config_->target() == kCortex_M || config_->dynamic_shape()) {
     return RET_OK;
   }
   // allocator header file

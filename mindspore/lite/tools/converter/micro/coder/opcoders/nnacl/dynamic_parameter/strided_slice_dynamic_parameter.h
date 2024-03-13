@@ -20,6 +20,7 @@
 
 typedef struct StridedSliceDynamicParameter {
   std::string in_shape_;
+  std::string end_;
 } StridedSliceDynamicParameter;
 
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_DYNAMIC_PARAMETER_STRIDED_SLICE_DYNAMIC_PARAMETER_H_

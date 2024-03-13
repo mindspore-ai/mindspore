@@ -182,7 +182,7 @@ int ReshapeInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC 
   size_t out_shape_size = 0;
   if (inputs_size == 2) {
     const TensorC *shape_tensor = inputs[1];
-    if (GetElementNum(input) == 1 && input->shape_size_ == 0) {
+    if (GetElementNum(input) == 1) {
       if (shape_tensor->data_ == NULL || (shape_tensor->shape_size_ == 1 && shape_tensor->shape_[0] == 0)) {
         SetShapeArray(output, out_shape, out_shape_size);
         return NNACL_OK;
