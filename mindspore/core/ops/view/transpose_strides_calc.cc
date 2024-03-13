@@ -23,7 +23,7 @@
 namespace mindspore::ops {
 constexpr size_t kTransposeCalcInputsNum = 2;
 
-TensorStorageInfoPtrList StridesCalc(const PrimitivePtr &prim, const tensor::TensorPtr &tensor,
+TensorStorageInfoPtrList StridesCalc(const PrimitivePtr &prim, const tensor::BaseTensorPtr &tensor,
                                      const std::vector<int64_t> &input_perm) {
   MS_EXCEPTION_IF_NULL(tensor);
   const auto &x_shape = tensor->shape();
@@ -64,11 +64,11 @@ TensorStorageInfoPtrList StridesCalc(const PrimitivePtr &prim, const tensor::Ten
 }
 
 TensorStorageInfoPtrList TransposeCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs) {
-  if (CheckInputsNull(inputs, kTransposeCalcInputsNum) || !inputs[0]->isa<tensor::Tensor>() ||
+  if (CheckInputsNull(inputs, kTransposeCalcInputsNum) || !inputs[0]->isa<tensor::BaseTensor>() ||
       !inputs[1]->isa<ValueSequence>()) {
     return {};
   }
-  auto tensor = inputs[0]->cast<tensor::TensorPtr>();
+  auto tensor = inputs[0]->cast<tensor::BaseTensorPtr>();
   const auto &dims = GetValue<std::vector<int64_t>>(inputs[1]);
   return StridesCalc(prim, tensor, dims);
 }

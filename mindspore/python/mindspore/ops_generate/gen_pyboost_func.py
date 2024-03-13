@@ -158,7 +158,7 @@ def generate_pyboost_op_source_code(work_path, op_proto, template_paths, convert
     operator_name = converter.functional_name
     call_args_tensor = []
     for type, arg_name in zip(converter.call_args_types, converter.call_args):
-        if type in ("TensorPtr", "std::optional<TensorPtr>"):
+        if type in ("BaseTensorPtr", "std::optional<BaseTensorPtr>"):
             call_args_tensor.append(arg_name)
 
     for call_tpl, src_tpl, view_tpl, cus_tpl, gen_path in zip(template_paths.op_call_template_path,
@@ -292,8 +292,16 @@ def generate_pyboost_op_return_code(op_proto):
 def generate_pyboost_op_func_return_type(op_proto):
     """ generate_pyboost_op_func_return_type """
     returns_type = []
+    type_convert_to_base = {
+        'std::vector<tensor::TensorPtr>': 'std::vector<tensor::BaseTensorPtr>',
+        'tensor::TensorPtr': 'tensor::BaseTensorPtr'
+    }
     for return_obj in op_proto.returns:
-        returns_type.append(get_return_type(return_obj.arg_dtype))
+        temp_return = get_return_type(return_obj.arg_dtype)
+        if temp_return in type_convert_to_base:
+            returns_type.append(type_convert_to_base[temp_return])
+        else:
+            raise Exception("Not return found")
     if len(returns_type) == 1:
         cpp_func_return = returns_type[0]
     elif len(returns_type) > 1:

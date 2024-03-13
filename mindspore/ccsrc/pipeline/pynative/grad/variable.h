@@ -275,18 +275,18 @@ class FuncVariable : public Variable {
 
   /// \brief Gradients of the variable if variable is left node, nullptr if not left node.
   ///
-  const tensor::TensorPtr &grad() const { return grad_; }
+  const tensor::BaseTensorPtr &grad() const { return grad_; }
 
   /// \brief Set gradients of the leaf variable.
   ///
   /// \param grad
-  void set_grad(const tensor::TensorPtr &grad) { grad_ = grad; }
+  void set_grad(const tensor::BaseTensorPtr &grad) { grad_ = grad; }
 
   std::string ToString() const override;
 
  private:
   // Grad for this variable, only leaf node has grad.
-  tensor::TensorPtr grad_;
+  tensor::BaseTensorPtr grad_;
 };
 using FuncVariablePtr = std::shared_ptr<FuncVariable>;
 

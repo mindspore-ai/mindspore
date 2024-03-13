@@ -21,7 +21,7 @@ namespace mindspore {
 namespace kernel {
 namespace pyboost {
 
-tensor::TensorPtr ContiguousGPUCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor) {
+tensor::BaseTensorPtr ContiguousGPUCustomize(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &input_tensor) {
   MS_LOG(DEBUG) << "Call start";
   auto output_tensor = ContiguousTensorOpProcess(op, input_tensor);
   if (output_tensor != nullptr) {

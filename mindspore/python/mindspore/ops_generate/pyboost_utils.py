@@ -179,7 +179,7 @@ def get_input_dtype(dtype: str, optional):
         'bool': 'BoolImmPtr',
         'number': 'ScalarPtr',
         'str': 'StringImmPtr',
-        'tensor': 'TensorPtr',
+        'tensor': 'BaseTensorPtr',
         'tuple[int]': value_tuple,
         'tuple[float]': value_tuple,
         'tuple[bool]': value_tuple,
@@ -196,7 +196,7 @@ def get_input_dtype(dtype: str, optional):
         'bool': 'std::optional<BoolImmPtr>',
         'number': 'std::optional<ScalarPtr>',
         'str': 'std::optional<StringImmPtr>',
-        'tensor': 'std::optional<TensorPtr>',
+        'tensor': 'std::optional<BaseTensorPtr>',
         'tuple[int]': value_tuple_optional,
         'tuple[float]': value_tuple_optional,
         'tuple[bool]': value_tuple_optional,
@@ -281,6 +281,8 @@ def get_tuple_input_convert(arg_name, arg_type):
     :return:
     """
     cpp_type = tuple_input_to_cpp_type(arg_type)
+    if cpp_type == "TensorPtr":
+        cpp_type = "BaseTensorPtr"
     return f"std::vector<{cpp_type}> {arg_name}_vector = ConvertValueTupleToVector<{cpp_type}>({arg_name});\n"
 
 

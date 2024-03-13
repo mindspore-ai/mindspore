@@ -32,8 +32,8 @@ bool IsValuePtrEqual(const ValuePtr &v1, const ValuePtr &v2) {
   if (v1 == nullptr || v2 == nullptr) {
     return false;
   }
-  if (v1->isa<tensor::Tensor>() && v2->isa<tensor::Tensor>()) {
-    return v1->cast<tensor::TensorPtr>()->ValueEqual(*(v2->cast<tensor::TensorPtr>()));
+  if (v1->isa<tensor::BaseTensor>() && v2->isa<tensor::BaseTensor>()) {
+    return v1->cast<tensor::BaseTensorPtr>()->ValueEqual(*(v2->cast<tensor::BaseTensorPtr>()));
   }
   return *v1 == *v2;
 }
@@ -72,9 +72,9 @@ bool IsNodeInfoChange(const NodeInfo &old_node_info, const NodeInfo &new_node_in
       (old_node_info.grad_type == InputType::kParameter || old_node_info.grad_type == InputType::kConstant)) {
     MS_EXCEPTION_IF_NULL(new_node_info.value);
     MS_EXCEPTION_IF_NULL(old_node_info.value);
-    auto new_tensor = new_node_info.value->cast<tensor::TensorPtr>();
+    auto new_tensor = new_node_info.value->cast<tensor::BaseTensorPtr>();
     MS_EXCEPTION_IF_NULL(new_tensor);
-    auto old_tensor = old_node_info.value->cast<tensor::TensorPtr>();
+    auto old_tensor = old_node_info.value->cast<tensor::BaseTensorPtr>();
     MS_EXCEPTION_IF_NULL(old_tensor);
     if (new_tensor->id() != old_tensor->id()) {
       MS_LOG(DEBUG) << "Graph is dynamic, new node info value: "
@@ -128,9 +128,9 @@ bool IsInputsNodeInfoChange(const std::vector<NodeInfo> &old_inputs_node_info,
 }
 
 NodeInfo GetNodeInfoFromValue(const ValuePtr &input) {
-  if (input->isa<tensor::Tensor>()) {
+  if (input->isa<tensor::BaseTensor>()) {
     NodeInfo node_info;
-    auto tensor = input->cast<tensor::TensorPtr>();
+    auto tensor = input->cast<tensor::BaseTensorPtr>();
     auto auto_meta_data = tensor->auto_grad_meta_data();
     // Scalar tensor
     if (auto_meta_data == nullptr) {
@@ -286,7 +286,7 @@ void UpdateAbsCache(const std::string &arg_id, const ValuePtr &v, const abstract
   auto update_abs = abs;
   if (update_abs == nullptr) {
     MS_EXCEPTION_IF_NULL(v);
-    auto input_tensor = v->cast<tensor::TensorPtr>();
+    auto input_tensor = v->cast<tensor::BaseTensorPtr>();
     // Just tensor work in unknown shape
     if (input_tensor == nullptr) {
       return;
@@ -359,9 +359,9 @@ py::object DynamicShape::GetDynamicInput(const py::object &actual_input) {
       dyn_shape_args.append(GetDynamicInput(list_actual_args[i]));
     }
     return dyn_shape_args;
-  } else if (py::isinstance<tensor::Tensor>(actual_input)) {
+  } else if (py::isinstance<tensor::BaseTensor>(actual_input)) {
     const auto &infer = PyNativeAlgo::Common::GetPyNativeExecutor()->forward_executor()->infer_operation();
-    auto tensor_ptr = py::cast<tensor::TensorPtr>(actual_input);
+    auto tensor_ptr = py::cast<tensor::BaseTensorPtr>(actual_input);
     MS_EXCEPTION_IF_NULL(tensor_ptr);
     auto dyn_compile_tensor = std::make_shared<tensor::Tensor>(tensor_ptr->data_type(), tensor_ptr->shape_c());
     const auto &abs = infer->GetNodeAbsById(PyNativeAlgo::PyParser::GetIdByPyObj(actual_input));
@@ -389,7 +389,7 @@ void DynamicShape::SaveUnknownShapeAbsFromJit(const ValuePtr &v, const AbstractB
     for (size_t i = 0; i < v_seq->size(); ++i) {
       SaveUnknownShapeAbsFromJit(v_seq->value()[i], abs_seq->elements()[i], index);
     }
-  } else if (v->isa<tensor::Tensor>() && abs->isa<abstract::AbstractTensor>()) {
+  } else if (v->isa<tensor::BaseTensor>() && abs->isa<abstract::AbstractTensor>()) {
     if (abs->BuildShape()->IsDynamic()) {
       UpdateAbsCache(PyNativeAlgo::Common::GetIdByValue(v), v, nullptr, abs, ++index);
     }

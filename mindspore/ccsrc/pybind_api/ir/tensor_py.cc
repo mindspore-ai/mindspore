@@ -415,9 +415,6 @@ void MemCopyFromCacheToHost(void *hashmap_addr, void *host_addr, void *cache_add
 
 void TensorPy::FlushFromCache(const Tensor &tensor) {
   py::gil_scoped_release gil_release;
-  if (tensor.NeedWait()) {
-    tensor.Wait();
-  }
   tensor.data_sync();
 
   if (tensor.cache_enable()) {
@@ -452,9 +449,6 @@ void TensorPy::FlushFromCache(const Tensor &tensor) {
 
 py::bytes TensorPy::GetBytes(const Tensor &tensor) {
   py::gil_scoped_acquire acquire;
-  if (tensor.NeedWait()) {
-    tensor.Wait();
-  }
   tensor.data_sync();
   return py::bytes(static_cast<const char *>(tensor.data_c()), tensor.Size());
 }
@@ -510,9 +504,6 @@ py::array TensorPy::SyncAsNumpy(const Tensor &tensor) {
   runtime::ProfilerStageRecorder recorder(runtime::ProfilerStage::kAsnumpy);
   {
     py::gil_scoped_release gil_release;
-    if (tensor.NeedWait()) {
-      tensor.Wait();
-    }
     tensor.data_sync();
 
     // Release device address of graph output tensor.
@@ -547,9 +538,6 @@ py::array TensorPy::AsNumpy(const Tensor &tensor) {
 
 void TensorPy::Offload(const Tensor &tensor) {
   py::gil_scoped_release gil_release;
-  if (tensor.NeedWait()) {
-    tensor.Wait();
-  }
   tensor.data_sync();
 
   // Release device address of graph output tensor.
@@ -603,9 +591,10 @@ void RegMetaTensor(const py::module *m) {
   (void)py::class_<TensorData, TensorDataPtr>(*m, "_TensorData");
   // Define python Tensor class.
   // dtype should define before Tensor, because Tensor init depend dtype
-  (void)py::class_<Tensor, MetaTensor, std::shared_ptr<Tensor>>(*m, "Tensor")
-    .def(py::init([](const Tensor &tensor) { return std::make_shared<Tensor>(tensor); }), py::arg("input"))
-    .def(py::init([](const Tensor &tensor, const TypePtr &type_ptr) {
+  (void)py::class_<BaseTensor, MetaTensor, std::shared_ptr<BaseTensor>>(*m, "BaseTensor");
+  (void)py::class_<Tensor, BaseTensor, std::shared_ptr<Tensor>>(*m, "Tensor")
+    .def(py::init([](const BaseTensor &tensor) { return std::make_shared<Tensor>(tensor); }), py::arg("input"))
+    .def(py::init([](const BaseTensor &tensor, const TypePtr &type_ptr) {
            TypeId data_type = type_ptr ? type_ptr->type_id() : kTypeUnknown;
            if (data_type == kTypeUnknown || tensor.data_type() == data_type) {
              return std::make_shared<Tensor>(tensor);
@@ -939,10 +928,11 @@ py::tuple CSRTensorPy::GetPyTupleShape(const CSRTensor &csr_tensor) { return Get
 void RegCSRTensor(const py::module *m) {
   // Define python CSRTensor class.
   (void)py::class_<CSRTensor, std::shared_ptr<CSRTensor>>(*m, "CSRTensor")
-    .def(py::init([](const Tensor &indptr, const Tensor &indices, const Tensor &values, const py::tuple &shape) {
-           return std::make_shared<CSRTensor>(std::make_shared<Tensor>(indptr), std::make_shared<Tensor>(indices),
-                                              std::make_shared<Tensor>(values), GetShapeFromTuple(shape));
-         }),
+    .def(py::init(
+           [](const BaseTensor &indptr, const BaseTensor &indices, const BaseTensor &values, const py::tuple &shape) {
+             return std::make_shared<CSRTensor>(std::make_shared<Tensor>(indptr), std::make_shared<Tensor>(indices),
+                                                std::make_shared<Tensor>(values), GetShapeFromTuple(shape));
+           }),
          py::arg("indptr"), py::arg("indices"), py::arg("values"), py::arg("shape"))
     .def(py::init([](const CSRTensor &csr_tensor) { return std::make_shared<CSRTensor>(csr_tensor); }),
          py::arg("input"))
@@ -960,7 +950,7 @@ py::tuple COOTensorPy::GetPyTupleShape(const COOTensor &coo_tensor) { return Get
 void RegCOOTensor(const py::module *m) {
   // Define python COOTensor class.
   (void)py::class_<COOTensor, std::shared_ptr<COOTensor>>(*m, "COOTensor")
-    .def(py::init([](const Tensor &indices, const Tensor &values, const py::tuple &shape) {
+    .def(py::init([](const BaseTensor &indices, const BaseTensor &values, const py::tuple &shape) {
            return std::make_shared<COOTensor>(std::make_shared<Tensor>(indices), std::make_shared<Tensor>(values),
                                               GetShapeFromTuple(shape));
          }),
@@ -980,7 +970,7 @@ py::tuple RowTensorPy::GetPyTupleShape(const RowTensor &row_tensor) { return Get
 void RegRowTensor(const py::module *m) {
   // Define python RowTensor class.
   (void)py::class_<RowTensor, std::shared_ptr<RowTensor>>(*m, "RowTensor")
-    .def(py::init([](const Tensor &indices, const Tensor &values, const py::tuple &shape) {
+    .def(py::init([](const BaseTensor &indices, const BaseTensor &values, const py::tuple &shape) {
            return std::make_shared<RowTensor>(std::make_shared<Tensor>(indices), std::make_shared<Tensor>(values),
                                               GetShapeFromTuple(shape));
          }),

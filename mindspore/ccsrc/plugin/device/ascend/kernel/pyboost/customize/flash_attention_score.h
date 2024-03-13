@@ -27,10 +27,10 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr FlashAttentionScoreAscendCustomize(
-  const std::shared_ptr<OpRunner> &op, const TensorPtr &query, const TensorPtr &key, const TensorPtr &value,
-  const std::optional<TensorPtr> &real_shift, const std::optional<TensorPtr> &drop_mask,
-  const std::optional<TensorPtr> &padding_mask, const std::optional<TensorPtr> &attn_mask,
+tensor::BaseTensorPtr FlashAttentionScoreAscendCustomize(
+  const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &query, const BaseTensorPtr &key, const BaseTensorPtr &value,
+  const std::optional<BaseTensorPtr> &real_shift, const std::optional<BaseTensorPtr> &drop_mask,
+  const std::optional<BaseTensorPtr> &padding_mask, const std::optional<BaseTensorPtr> &attn_mask,
   const std::optional<ValueTuplePtr> &prefix, const std::optional<ValueTuplePtr> &actual_seq_qlen,
   const std::optional<ValueTuplePtr> &actual_seq_kvlen, const Int64ImmPtr head_num, const FP32ImmPtr keep_prob,
   const FP32ImmPtr scale_value, const Int64ImmPtr pre_tokens, const Int64ImmPtr next_tokens,

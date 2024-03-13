@@ -37,7 +37,7 @@ namespace {
 constexpr auto kAttrBpropValueNodeRefCount = "bprop_value_node_ref_count";
 constexpr auto kAttrValueNodeForwardOuputFlags = "value_node_forward_output_flags";
 
-tensor::TensorPtr GetTensorFromValueNode(const AnfNodePtr &node) {
+tensor::BaseTensorPtr GetTensorFromValueNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<ValueNode>()) {
     return nullptr;
@@ -47,12 +47,12 @@ tensor::TensorPtr GetTensorFromValueNode(const AnfNodePtr &node) {
   auto value = value_node->value();
   MS_EXCEPTION_IF_NULL(value);
   // ValueTuple is already expanded into tensors in backend.
-  if (!value->isa<tensor::Tensor>()) {
+  if (!value->isa<tensor::BaseTensor>()) {
     MS_LOG(DEBUG) << "Only need to process forward output tensor. value:" << value->ToString();
     return nullptr;
   }
 
-  auto tensor = value->cast<tensor::TensorPtr>();
+  auto tensor = value->cast<tensor::BaseTensorPtr>();
   return tensor;
 }
 
@@ -108,7 +108,7 @@ device::DeviceAddressPtr CreateValueNodeAddress(const ValueNodePtr &value_node,
   return device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
 }
 
-bool CopyTensorData(const tensor::TensorPtr &tensor, const device::DeviceAddressPtr &device_address,
+bool CopyTensorData(const tensor::BaseTensorPtr &tensor, const device::DeviceAddressPtr &device_address,
                     const AnfNodePtr &node, const device::DeviceContext *device_context) {
   MS_EXCEPTION_IF_NULL(tensor);
   MS_EXCEPTION_IF_NULL(device_address);
@@ -142,7 +142,8 @@ bool CopyTensorData(const tensor::TensorPtr &tensor, const device::DeviceAddress
   return true;
 }
 
-device::DeviceAddressPtr HandleAddressForHeterogeneous(const tensor::TensorPtr &tensor, const ValueNodePtr &value_node,
+device::DeviceAddressPtr HandleAddressForHeterogeneous(const tensor::BaseTensorPtr &tensor,
+                                                       const ValueNodePtr &value_node,
                                                        const device::DeviceContext *device_context) {
   MS_EXCEPTION_IF_NULL(tensor);
   MS_EXCEPTION_IF_NULL(value_node);
@@ -189,8 +190,8 @@ void GraphAdapter::ClearForwardOutputValueNodeDeviceAddress(const KernelGraphPtr
     MS_EXCEPTION_IF_NULL(value_node);
     auto value = value_node->value();
     MS_EXCEPTION_IF_NULL(value);
-    if (value->isa<tensor::Tensor>()) {
-      auto tensor = value->cast<tensor::TensorPtr>();
+    if (value->isa<tensor::BaseTensor>()) {
+      auto tensor = value->cast<tensor::BaseTensorPtr>();
       MS_EXCEPTION_IF_NULL(tensor);
       if (!tensor->is_forward_output()) {
         continue;
@@ -483,7 +484,7 @@ bool GraphAdapter::PyNativeEnableTaskSink(const FuncGraphPtr &func_graph) {
   return !is_auto_parallel && !has_comm_op && !is_cut_graph;
 }
 
-void UpdateValueNodeAbstractFromTensor(const ValueNodePtr &value_node, const tensor::TensorPtr &tensor) {
+void UpdateValueNodeAbstractFromTensor(const ValueNodePtr &value_node, const tensor::BaseTensorPtr &tensor) {
   MS_EXCEPTION_IF_NULL(value_node);
   MS_EXCEPTION_IF_NULL(tensor);
   auto real_shape = tensor->shape();
@@ -507,8 +508,8 @@ void GraphAdapter::UpdateDynamicValueNodeAbstract(const KernelGraphPtr &graph) {
     MS_EXCEPTION_IF_NULL(value_node);
     const auto &value = value_node->value();
     MS_EXCEPTION_IF_NULL(value);
-    if (value->isa<tensor::Tensor>()) {
-      auto tensor = value->cast<tensor::TensorPtr>();
+    if (value->isa<tensor::BaseTensor>()) {
+      auto tensor = value->cast<tensor::BaseTensorPtr>();
       MS_EXCEPTION_IF_NULL(tensor);
       if (tensor->is_forward_output()) {
         UpdateValueNodeAbstractFromTensor(value_node, tensor);
@@ -527,7 +528,7 @@ void GraphAdapter::SensTensorToDevice(const KernelGraphPtr &graph, const device:
     MS_EXCEPTION_IF_NULL(value_node);
     auto value = value_node->value();
     MS_EXCEPTION_IF_NULL(value);
-    std::vector<tensor::TensorPtr> tensors;
+    std::vector<tensor::BaseTensorPtr> tensors;
     TensorValueToTensor(value, &tensors);
     for (const auto &tensor : tensors) {
       MS_EXCEPTION_IF_NULL(tensor);

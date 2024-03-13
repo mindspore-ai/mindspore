@@ -24,7 +24,7 @@ namespace mindspore {
 namespace kernel {
 namespace pyboost {
 namespace {
-void MeanExtGPUCall(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor, const ValuePtr &axis,
+void MeanExtGPUCall(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &input_tensor, const ValuePtr &axis,
                     const BoolImmPtr &keep_dims) {
   PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor);
   PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
@@ -57,7 +57,7 @@ void MeanExtGPUCall(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_
 }
 }  // namespace
 
-void MeanExtGPUCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
+void MeanExtGPUCustomize(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &input_tensor,
                          const std::optional<ValueTuplePtr> &axis, const BoolImmPtr &keep_dims,
                          const std::optional<Int64ImmPtr> &dtype) {
   OpRunner::InferOpOutput(op, input_tensor, axis, keep_dims, dtype);
@@ -73,7 +73,7 @@ void MeanExtGPUCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &i
   // Infer function has confirmed the actual dtype of output
   TypeId out_dtype = op->output_abs()->GetType()->cast<TensorTypePtr>()->element()->type_id();
 
-  TensorPtr act_tensor = input_tensor;
+  BaseTensorPtr act_tensor = input_tensor;
   // Call Cast before Launch ReduceMean
   if (input_tensor->data_type() != out_dtype) {
     MS_LOG(DEBUG) << "Call Cast gpu kernel, src dtype: " << TypeIdToString(input_tensor->data_type())

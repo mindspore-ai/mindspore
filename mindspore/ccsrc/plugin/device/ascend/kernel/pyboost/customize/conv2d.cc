@@ -35,12 +35,13 @@ std::vector<int64_t> ExpandVector(const std::vector<int64_t> &value, const size_
   return value;
 }
 
-tensor::TensorPtr Conv2DAscendCall(const std::shared_ptr<OpRunner> &op, const device::DeviceContext *device_context,
-                                   const tensor::TensorPtr &input_tensor, const tensor::TensorPtr &weight_tensor,
-                                   const std::optional<tensor::TensorPtr> &bias_tensor,
-                                   const std::vector<int64_t> &stride, const std::vector<int64_t> &padding,
-                                   const std::vector<int64_t> &dilation, const int64_t &groups,
-                                   const std::vector<tensor::TensorPtr> &outputs) {
+tensor::BaseTensorPtr Conv2DAscendCall(const std::shared_ptr<OpRunner> &op, const device::DeviceContext *device_context,
+                                       const tensor::BaseTensorPtr &input_tensor,
+                                       const tensor::BaseTensorPtr &weight_tensor,
+                                       const std::optional<tensor::BaseTensorPtr> &bias_tensor,
+                                       const std::vector<int64_t> &stride, const std::vector<int64_t> &padding,
+                                       const std::vector<int64_t> &dilation, const int64_t &groups,
+                                       const std::vector<tensor::BaseTensorPtr> &outputs) {
   MS_LOG(DEBUG) << "Call start";
   const size_t dim = 2;
   const auto &expand_stride = ExpandVector(stride, dim);
@@ -61,10 +62,12 @@ tensor::TensorPtr Conv2DAscendCall(const std::shared_ptr<OpRunner> &op, const de
 }
 }  // namespace
 
-tensor::TensorPtr Conv2DAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                                        const TensorPtr &weight_tensor, const std::optional<TensorPtr> &bias_tensor,
-                                        const ValueTuplePtr &stride, const ValueTuplePtr &padding,
-                                        const ValueTuplePtr &dilation, const Int64ImmPtr &groups) {
+tensor::BaseTensorPtr Conv2DAscendCustomize(const std::shared_ptr<OpRunner> &op,
+                                            const tensor::BaseTensorPtr &input_tensor,
+                                            const tensor::BaseTensorPtr &weight_tensor,
+                                            const std::optional<tensor::BaseTensorPtr> &bias_tensor,
+                                            const ValueTuplePtr &stride, const ValueTuplePtr &padding,
+                                            const ValueTuplePtr &dilation, const Int64ImmPtr &groups) {
   OpRunner::InferOpOutput(op, input_tensor, weight_tensor, bias_tensor, stride, padding, dilation, groups);
   // Convert ValueTuple to std::vector
   std::vector<int64_t> stride_vector = ConvertValueTupleToVector<int64_t>(stride);

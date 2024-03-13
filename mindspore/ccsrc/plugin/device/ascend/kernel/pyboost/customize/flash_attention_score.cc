@@ -41,14 +41,14 @@ bool CheckSeqList(const std::vector<int64_t> &seq_list, const ShapeVector &t_sha
   return is_increased && seq_list[num - 1] == t_shape[0];
 }
 void FlashAttentionScoreAscendCall(
-  const std::shared_ptr<OpRunner> &op, const device::DeviceContext *device_context, const TensorPtr &query,
-  const TensorPtr &key, const TensorPtr &value, const std::optional<TensorPtr> &real_shift,
-  const std::optional<TensorPtr> &drop_mask, const std::optional<TensorPtr> &padding_mask,
-  const std::optional<TensorPtr> &attn_mask, const std::optional<ValueTuplePtr> &prefix,
+  const std::shared_ptr<OpRunner> &op, const device::DeviceContext *device_context, const BaseTensorPtr &query,
+  const BaseTensorPtr &key, const BaseTensorPtr &value, const std::optional<BaseTensorPtr> &real_shift,
+  const std::optional<BaseTensorPtr> &drop_mask, const std::optional<BaseTensorPtr> &padding_mask,
+  const std::optional<BaseTensorPtr> &attn_mask, const std::optional<ValueTuplePtr> &prefix,
   const std::optional<ValueTuplePtr> &actual_seq_qlen, const std::optional<ValueTuplePtr> &actual_seq_kvlen,
   const Int64ImmPtr head_num, const FP32ImmPtr keep_prob, const FP32ImmPtr scale_value, const Int64ImmPtr pre_tokens,
   const Int64ImmPtr next_tokens, const Int64ImmPtr inner_precise, const Int64ImmPtr input_layout,
-  const Int64ImmPtr sparse_mode, const std::vector<tensor::TensorPtr> &outputs) {
+  const Int64ImmPtr sparse_mode, const std::vector<tensor::BaseTensorPtr> &outputs) {
   std::vector<int64_t> prefix_array;
   auto head_num_value = GetValue<int64_t>(head_num);
   auto keep_prob_value = static_cast<double>(GetValue<float>(keep_prob));
@@ -95,10 +95,10 @@ void FlashAttentionScoreAscendCall(
 }
 }  // namespace
 
-tensor::TensorPtr FlashAttentionScoreAscendCustomize(
-  const std::shared_ptr<OpRunner> &op, const TensorPtr &query, const TensorPtr &key, const TensorPtr &value,
-  const std::optional<TensorPtr> &real_shift, const std::optional<TensorPtr> &drop_mask,
-  const std::optional<TensorPtr> &padding_mask, const std::optional<TensorPtr> &attn_mask,
+tensor::BaseTensorPtr FlashAttentionScoreAscendCustomize(
+  const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &query, const BaseTensorPtr &key, const BaseTensorPtr &value,
+  const std::optional<BaseTensorPtr> &real_shift, const std::optional<BaseTensorPtr> &drop_mask,
+  const std::optional<BaseTensorPtr> &padding_mask, const std::optional<BaseTensorPtr> &attn_mask,
   const std::optional<ValueTuplePtr> &prefix, const std::optional<ValueTuplePtr> &actual_seq_qlen,
   const std::optional<ValueTuplePtr> &actual_seq_kvlen, const Int64ImmPtr head_num, const FP32ImmPtr keep_prob,
   const FP32ImmPtr scale_value, const Int64ImmPtr pre_tokens, const Int64ImmPtr next_tokens,

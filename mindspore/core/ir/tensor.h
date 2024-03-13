@@ -26,7 +26,7 @@
 #include <condition_variable>
 #include <utility>
 #include "ir/device_sync.h"
-#include "ir/meta_tensor.h"
+#include "ir/base_tensor.h"
 #include "utils/log_adapter.h"
 #include "base/float16.h"
 #include "base/bfloat16.h"
@@ -43,25 +43,6 @@
 // mindspore namespace is the top level namespace of MindSpore project.
 // Other namespace should be a sub namespace of mindspore namespace in the ME project.
 namespace mindspore {
-// brief mindspore::tensor namespace
-enum TensorSyncStatus {
-  kNoNeedSync,
-  kNeedSyncHostToDevice,
-  kNeedSyncHostToDeviceImmediately,
-  kNeedSyncDeviceToHost,
-  kNeedSyncDeviceToHostImmediately
-};
-
-enum TensorCompressionType {
-  kNoCompression = 0,
-  kIndexing = 1,
-  kSparse = 2,
-  kFSE = 3,
-  kBitPacking = 4,
-  kFSEInt = 5,
-  kFSEInfer = 6
-};
-
 // Pinned memory register interface.
 class MS_CORE_API PinnedMemRegister {
  public:
@@ -87,39 +68,6 @@ class MS_CORE_API PinnedMemRegister {
 
 // A sub namespace in ME to support tensor related definition.
 namespace tensor {
-class WaitEvent : public ExceptionListener {
- public:
-  ~WaitEvent() = default;
-
-  void OnException() override { set_need_wait(false); }
-
-  void Wait() const {
-    std::unique_lock<std::mutex> lock(mutex_);
-    if (!need_wait_) {
-      return;
-    }
-    MsException::Instance().SetExceptionListener(const_cast<WaitEvent *>(this));
-    cond_var_.wait(lock, [this] { return !need_wait_; });
-    MsException::Instance().SetExceptionListener(nullptr);
-    MsException::Instance().CheckException();
-  }
-
-  void set_need_wait(bool need_wait) {
-    std::unique_lock<std::mutex> lock(mutex_);
-    need_wait_ = need_wait;
-    if (!need_wait_) {
-      cond_var_.notify_all();
-    }
-  }
-
-  bool need_wait() const { return need_wait_; }
-
- private:
-  bool need_wait_{false};
-  mutable std::mutex mutex_;
-  mutable std::condition_variable cond_var_;
-};
-
 class Tensor;
 using TensorPtr = std::shared_ptr<Tensor>;
 using TensorPtrList = std::vector<std::shared_ptr<Tensor>>;
@@ -151,7 +99,7 @@ class FutureBase {
 };
 
 // Tensor entity class
-class MS_CORE_API Tensor : public MetaTensor {
+class MS_CORE_API Tensor : public BaseTensor {
  public:
   Tensor() = default;
 
@@ -164,6 +112,17 @@ class MS_CORE_API Tensor : public MetaTensor {
   /// \param[in] tensor [Tensor] The input tensor.
   /// \param[in] data_type [TypeId] The new tensor data type.
   Tensor(const Tensor &tensor, TypeId data_type);
+
+  /// \brief Create tensor with base tensor.
+  ///
+  /// \param[in] tensor [Tensor] The input base tensor.
+  explicit Tensor(const BaseTensor &tensor);
+
+  /// \brief Create tensor with given data type from another tensor.
+  ///
+  /// \param[in] tensor [Tensor] The input tensor.
+  /// \param[in] data_type [TypeId] The new tensor data type.
+  Tensor(const BaseTensor &tensor, TypeId data_type);
 
   /// \brief Create tensor with the given shared tensor data.
   ///
@@ -316,7 +275,7 @@ class MS_CORE_API Tensor : public MetaTensor {
   /// Destructor of Tensor.
   ~Tensor() override;
 
-  MS_DECLARE_PARENT(Tensor, MetaTensor);
+  MS_DECLARE_PARENT(Tensor, BaseTensor);
 
   /// \brief Compare two tensor objects to see if they have same data type, shape and data address.
   ///
@@ -328,19 +287,6 @@ class MS_CORE_API Tensor : public MetaTensor {
   ///
   /// \return Abstract of Tensor.
   abstract::AbstractBasePtr ToAbstract() override;
-
-  /// \brief Get Abstract cache. The value of the abstract is null.
-  /// Only used by InferShape in PyNative mode.
-  ///
-  /// \return Abstract of tensor.
-  abstract::AbstractBasePtr GetAbstractCache();
-
-  /// \brief It is different from 'operator==' which just compares shape/type/address,
-  /// it does real value comparison.
-  ///
-  /// \param[in] tensor The Tensor object to be compared.
-  /// \return True if it has the same value, otherwise false.
-  bool ValueEqual(const Tensor &tensor) const;
 
   /// \brief Assign value to this tensor.
   ///
@@ -356,39 +302,6 @@ class MS_CORE_API Tensor : public MetaTensor {
     return false;
   }
 
-  /// \brief Gets tensor's dimension.
-  ///
-  /// \return The number of dimensions of the tensor data.
-  int DataDim() const { return static_cast<int>(data().ndim()); }
-
-  /// \brief Getting tensor data size.
-  ///
-  /// \return The total number of elements of the tensor data.
-  size_t DataSize() const { return data().size(); }
-
-  /// \brief Get the data type of the tensor for C++
-  ///
-  /// \return [int] The tensor's data type will be cast to int to return.
-  int data_type_c() const { return static_cast<int>(data_type_); }
-
-  /// \brief Get the tensor's shape for C++
-  ///
-  /// \return [ShapeVector]
-  ShapeVector shape_c(void) const { return shape(); }
-
-  /// \brief Get Tensor data pointer for c++ type
-  ///
-  /// \return The pointer to the object
-  void *data_c() { return data().data(); }
-
-  /// \brief Get Tensor data byte-size for c++ type
-  ///
-  /// \return byte size of Tensor data
-  size_t Size() const { return static_cast<size_t>(data().nbytes()); }
-
-  /// \brief The pointer to the object
-  void *data_c() const { return data_->data(); }
-
   /// \brief To synchronize data with the device, you need to wait for the data to be valid.
   ///
   void data_sync(bool need_wait = true) const;
@@ -397,59 +310,6 @@ class MS_CORE_API Tensor : public MetaTensor {
   /// valid.
   ///
   void data_sync_directly(const DeviceSync *const device_sync, bool need_wait = true) const;
-
-  /// \brief Get the internal data object.
-  ///
-  /// \return The reference to internal data object.
-  TensorData &data() {
-    MS_EXCEPTION_IF_NULL(data_);
-    return *data_;
-  }
-
-  /// \brief Get the internal data shared pointer.
-  ///
-  /// return The reference to internal data object.
-  const TensorDataPtr &data_ptr() const { return data_; }
-
-  /// \brief Get the internal data object.
-  ///
-  /// \return The reference to internal data object.
-  const TensorData &data() const { return *data_; }
-
-  TypeId set_data_type(TypeId data_type) override;
-
-  size_t set_shape(const ShapeVector &shape) override;
-
-  /// \brief Get information about shape and data type.
-  ///
-  /// \return Information about shape and data type.
-  std::string GetShapeAndDataTypeInfo() const;
-
-  /// \brief Get display information of limit size.
-  ///
-  /// \param[in] limit_size The limit size.
-  /// \return The display information of limit size.
-  std::string ToStringInternal(size_t limit_size) const;
-
-  /// \brief Get display information with unlimited size.
-  ///
-  /// \return The display information with unlimited size.
-  std::string ToStringNoLimit() const;
-
-  /// \brief Get display information of this Tensor.
-  ///
-  /// \return The display information of this Tensor.
-  std::string ToString() const override;
-
-  /// \brief Get display information in repr form.
-  ///
-  /// \return The display information in repr form.
-  std::string ToStringRepr() const;
-
-  /// \brief Check the shape of this Tensor.
-  ///
-  /// \param[in] shape The input shape.
-  void CheckShape(const ShapeVector &shape) const;
 
   /// \brief Check if this Tensor is initialized.
   ///
@@ -471,28 +331,6 @@ class MS_CORE_API Tensor : public MetaTensor {
   /// \param[in] flag Whether this Tensor needs to be converted.
   void set_adapter_flag(bool flag) { adapter_flag_ = flag; }
 
-  /// \brief Check if this Tensor is forward output.
-  ///
-  /// \return Whether this Tensor is forward output.
-  bool is_forward_output() const { return is_forward_output_; }
-
-  /// \brief Set the forward output flag of this Tensor.
-  ///
-  /// \param[in] is_forward_output Whether this Tensor is forward output.
-  void set_is_forward_output(bool is_forward_output) { is_forward_output_ = is_forward_output; }
-
-  /// \brief Get the device address.
-  ///
-  /// \return The device address.
-  DeviceSyncPtr device_address() const;
-
-  /// \brief Set the device address.
-  ///
-  /// \param[in] device_sync The input Device synchronization.
-  /// \param[in] need_update_ref_count If need_update_ref_count is true, the device address cannot be released and
-  /// reused, so the feature map should set false when set device address of tensor.
-  void set_device_address(const DeviceSyncPtr &device_sync, bool need_update_ref_count = true);
-
   /// \brief Check whether to release device memory.
   ///
   /// \return Ture if need to release device memory, otherwise false.
@@ -502,11 +340,6 @@ class MS_CORE_API Tensor : public MetaTensor {
   ///
   /// \param[in] release_device_mem If release_device_mem is ture, the device memory will to be released.
   void set_need_release_device_mem(bool release_device_mem) { need_release_device_mem_ = release_device_mem; }
-
-  /// \brief Get the id of this Tensor.
-  ///
-  /// \return The id of this Tensor.
-  std::string id() const { return id_; }
 
   /// \brief Get the cast dtype of this Tensor.
   ///
@@ -552,96 +385,6 @@ class MS_CORE_API Tensor : public MetaTensor {
     cache_tensor_ptr_ = cache_tensor_ptr;
   }
 
-  /// \brief Get tensor's BaseShape.
-  ///
-  /// \return The BaseShape of this tensor.
-  const BaseShapePtr &base_shape_ptr() const { return base_shape_ptr_; }
-
-  /// \brief Set tensor's BaseShape.
-  ///
-  /// \param[in] BaseShapePtr The tensor's BaseShape.
-  void set_base_shape(const BaseShapePtr &base_shape) { base_shape_ptr_ = base_shape; }
-
-  /// \brief Set whether the event needs to wait.
-  ///
-  /// \param[in] need_wait Whether the event needs to wait.
-  void SetNeedWait(bool need_wait) {
-    need_wait_ = need_wait;
-    auto event = event_;
-    if (event != nullptr) {
-      event->set_need_wait(need_wait);
-    } else if (need_wait) {
-      event_ = std::make_shared<WaitEvent>();
-      event_->set_need_wait(need_wait);
-    }
-  }
-
-  /// \brief Check whether the event needs to wait.
-  ///
-  /// \return Whether the event needs to wait.
-  bool NeedWait() const { return need_wait_; }
-
-  /// \brief Require the event to wait.
-  void Wait() const {
-    auto event = event_;
-    if (event != nullptr) {
-      event->Wait();
-    }
-    event_ = nullptr;
-  }
-
-  /// \brief Set device event.
-  ///
-  /// \param[in] device_event The input device event.
-  void SetDeviceEvent(const std::shared_ptr<DeviceEvent> &device_event) { device_event_ = device_event; }
-
-  /// \brief Require the device event to wait.
-  void WaitDevice() {
-    if (device_event_ != nullptr) {
-      device_event_->WaitEvent();
-    }
-  }
-
-  /// \brief Set whether the device needs to wait.
-  ///
-  /// \return Whether the device needs to wait.
-  bool NeedWaitDevice() const {
-    if (device_event_ != nullptr) {
-      return device_event_->NeedWait();
-    }
-    return false;
-  }
-
-  /// \brief Set synchronization status.
-  ///
-  /// \param[in] sync_status The input synchronization status.
-  void set_sync_status(TensorSyncStatus sync_status) const { sync_status_ = sync_status; }
-
-  /// \brief Get synchronization status.
-  ///
-  /// \return The synchronization status.
-  TensorSyncStatus sync_status() const { return sync_status_; }
-
-  /// \brief Check the value of sync_status_.
-  ///
-  /// \return Ture if sync_status_ is kNeedSyncDeviceToHostImmediately.
-  bool NeedSyncDeviceToHostImmediately() const { return sync_status_ == kNeedSyncDeviceToHostImmediately; }
-
-  /// \brief Check the value of sync_status_.
-  ///
-  /// \return Ture if sync_status_ is kNeedSyncDeviceToHost.
-  bool NeedSyncDeviceToHost() const { return sync_status_ == kNeedSyncDeviceToHost; }
-
-  /// \brief Check the value of sync_status_.
-  ///
-  /// \return Ture if sync_status_ is kNeedSyncHostToDevice.
-  bool NeedSyncHostToDevice() const { return sync_status_ == kNeedSyncHostToDevice; }
-
-  /// \brief Check the value of sync_status_.
-  ///
-  /// \return Ture if sync_status_ is kNeedSyncHostToDeviceImmediately.
-  bool NeedSyncHostToDeviceImmediately() const { return sync_status_ == kNeedSyncHostToDeviceImmediately; }
-
   /// \brief Check if this Tensor is the output of graph.
   ///
   /// \return Whether this Tensor is the output of graph
@@ -657,18 +400,6 @@ class MS_CORE_API Tensor : public MetaTensor {
 
   /// \brief Set whether this Tensor is updated by the device.
   void SetIsUpdateByDevice() { updated_by_device_ = true; }
-
-  /// \brief Set lazy callback function to this Tensor
-  ///
-  /// \param[in] lazy_callback Wait for async tasks finish before data_sync.
-  static void RegisterLazyCallback(const std::function<void(void)> &lazy_callback) { lazy_callback_ = lazy_callback; }
-
-  /// \brief Set contiguous callback function to this Tensor
-  ///
-  /// \param[in] contiguous_callback The callback from backend when need to make tensor contiguous.
-  void set_contiguous_callback(const std::function<DeviceSyncPtr(const DeviceSyncPtr &)> &contiguous_callback) {
-    contiguous_callback_ = contiguous_callback;
-  }
 
   /// \brief Get callback need to execute when value is updated of Tensor.
   ///
@@ -686,16 +417,6 @@ class MS_CORE_API Tensor : public MetaTensor {
   ///
   /// \return The memory chunk pointer and offset, nullptr and 0 if no memory chunk exists.
   std::pair<void *, size_t> GetChunkOffset() const;
-
-  /// @brief Get Pynative auto_grad meta data.
-  /// @return Auto grad meta data
-  const AutoGradMetaDataPtr &auto_grad_meta_data() const { return auto_grad_meta_data_; }
-
-  /// @brief Set Pynative auto_grad meta data.
-  /// @param auto_grad_meta_data
-  void set_auto_grad_meta_data(const AutoGradMetaDataPtr &auto_grad_meta_data) {
-    auto_grad_meta_data_ = auto_grad_meta_data;
-  }
 
   /// \brief Reset tensors data so that they are using contiguous memory chunks grouped by data type.
   ///
@@ -753,18 +474,6 @@ class MS_CORE_API Tensor : public MetaTensor {
   /// \return tensor name.
   const std::string &name() const { return tensor_name_; }
 
-  /// \brief Set tensor future.
-  ///
-  /// \param[in] address_future The future to get device address.
-  void set_address_future(const std::shared_ptr<FutureBase<DeviceSync>> &address_future) {
-    address_future_ = address_future;
-  }
-
-  /// \brief Get tensor future.
-  ///
-  /// \return The future to get device address.
-  const std::shared_ptr<FutureBase<DeviceSync>> address_future() const { return address_future_; }
-
   /// \brief Set tensor quant param.
   ///
   /// \param[in] quant_param The tensor quant param.
@@ -787,11 +496,6 @@ class MS_CORE_API Tensor : public MetaTensor {
   /// \return offload file path, or empty string if tensor has not offload.
   const std::string GetOffloadFilePath() const;
 
-  /// \brief Get tensor storage info.
-  ///
-  /// \return Tensor storage info, the value is nullptr default.
-  const TensorStorageInfoPtr storage_info() const;
-
   /// \brief pin tensor memory.
   ///
   /// \param[in] register to pin tensor data.
@@ -800,60 +504,25 @@ class MS_CORE_API Tensor : public MetaTensor {
   /// \brief unpin tensor memory.
   void UnPinMemory();
 
-  /// \brief Determines whether the memory of tensor is contiguous.
-  ///
-  /// \return True if tensor memory is contiguous, false otherwise.
-  bool is_contiguous() const;
-
-  std::vector<int64_t> stride() const;
-
-  /// \brief Set tensor abstract.
-  ///
-  /// \param[in] abstract The abstract of tensor.
-  void set_abstract(const std::weak_ptr<abstract::AbstractBase> &abstract) { abstract_ = abstract; }
-
-  const int64_t storage_offset() const;
-
-  void set_need_pipeline_sync(bool need_pipeline_sync) { need_pipeline_sync_ = need_pipeline_sync; }
-
  private:
-  void ExecuteLazyTask() const;
-
   // Really execute callback function when host value is updated of Tensor.
   void ExecuteUpdateValueCallback() const;
 
   bool init_flag_{false};
   bool adapter_flag_{false};
-  bool is_forward_output_{false};
-  TensorDataPtr data_{nullptr};
-  std::string id_{""};
-  mutable std::shared_ptr<WaitEvent> event_{nullptr};
-  bool need_wait_{false};
-  mutable TensorSyncStatus sync_status_{kNeedSyncHostToDevice};
   bool graph_output_{false};
   bool updated_by_device_{false};
-  mutable DeviceSyncPtr device_sync_{nullptr};
   // Release device address of graph output tensor or not.
   bool need_release_device_mem_{false};
   bool cache_enable_{false};
-  bool need_pipeline_sync_{false};
-  // Tensor base shape which contain dynamic shape info.
-  BaseShapePtr base_shape_ptr_{nullptr};
   std::shared_ptr<Tensor> cache_tensor_ptr_{nullptr};
   std::shared_ptr<Tensor> hashmap_tensor_ptr_{nullptr};
   TypePtr cast_dtype_{nullptr};
-  std::shared_ptr<DeviceEvent> device_event_{nullptr};
-  inline static std::function<void(void)> lazy_callback_{nullptr};
-  std::function<DeviceSyncPtr(const DeviceSyncPtr &)> contiguous_callback_{nullptr};
   std::function<void(const Tensor *)> update_value_callback_{nullptr};
   PinnedMemRegister *pin_mem_register_{nullptr};
-  AutoGradMetaDataPtr auto_grad_meta_data_{nullptr};
   TensorCompressionType compression_type_{kNoCompression};
   std::vector<std::shared_ptr<QuantizationParam>> quant_params_;
   std::string tensor_name_;
-  mutable std::shared_ptr<FutureBase<DeviceSync>> address_future_{};
-  // Abstract cache for PyNative InferShape.
-  std::weak_ptr<abstract::AbstractBase> abstract_;
 };
 
 // CSRTensor entity class
@@ -1037,9 +706,6 @@ class MS_CORE_API RowTensor : public MetaSparseTensor {
   TensorPtr values_;
 };
 using RowTensorPtr = std::shared_ptr<RowTensor>;
-
-// Convert shape vector to string.
-MS_CORE_API std::string ShapeToString(const ShapeVector &shape);
 }  // namespace tensor
 }  // namespace mindspore
 

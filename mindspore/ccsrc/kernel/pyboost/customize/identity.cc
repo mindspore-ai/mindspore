@@ -22,7 +22,7 @@ namespace mindspore {
 namespace kernel {
 namespace pyboost {
 
-void IdentityCustomizeCallWithoutContigous(const std::shared_ptr<OpRunner> &op, const TensorPtr &x_tensor,
+void IdentityCustomizeCallWithoutContigous(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &x_tensor,
                                            void *stream) {
   // Async
   PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, x_tensor, stream]() {
@@ -58,7 +58,7 @@ void IdentityCustomizeCallWithoutContigous(const std::shared_ptr<OpRunner> &op, 
   }));
 }
 
-void IdentityCustomizeCall(const std::shared_ptr<OpRunner> &op, const TensorPtr &x_tensor, void *stream) {
+void IdentityCustomizeCall(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &x_tensor, void *stream) {
   // Async
   PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, x_tensor, stream]() {
     MS_LOG(DEBUG) << "Run device task Identity start";
@@ -83,7 +83,8 @@ void IdentityCustomizeCall(const std::shared_ptr<OpRunner> &op, const TensorPtr 
   }));
 }
 
-tensor::TensorPtr IdentityCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &x_tensor, void *stream) {
+tensor::BaseTensorPtr IdentityCustomize(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &x_tensor,
+                                        void *stream) {
   OpRunner::InferOpOutput(op, x_tensor);
 
   PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), x_tensor);

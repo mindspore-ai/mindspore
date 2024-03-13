@@ -279,7 +279,7 @@ std::string GetGraphInfoForAscendSpecial(const pynative::BaseOpRunInfo &op_info,
       std::vector<ShapeVector> input_shapes;
       (void)std::transform(op_info.expanded_input_values.begin(), op_info.expanded_input_values.end(),
                            std::back_inserter(input_shapes), [&first_dtype](const ValuePtr &value) -> ShapeVector {
-                             auto tensor = value->cast<tensor::TensorPtr>();
+                             auto tensor = value->cast<tensor::BaseTensorPtr>();
                              if (tensor != nullptr) {
                                if (first_dtype == TypeId::kTypeUnknown) {
                                  first_dtype = tensor->data_type();
@@ -292,20 +292,20 @@ std::string GetGraphInfoForAscendSpecial(const pynative::BaseOpRunInfo &op_info,
       auto in_func_map = acl_info.input_selector();
       for (auto [index, in_func] : in_func_map) {
         MS_EXCEPTION_IF_NULL(in_func);
-        auto tensor = op_info.expanded_input_values[index]->cast<tensor::TensorPtr>();
+        auto tensor = op_info.expanded_input_values[index]->cast<tensor::BaseTensorPtr>();
         MS_EXCEPTION_IF_NULL(tensor);
         ascend_special_info += in_func(tensor->data_type(), input_shapes);
       }
 
       auto out_func = acl_info.output_selector();
       if (out_func != nullptr) {
-        auto tensor = op_info.expanded_input_values[0]->cast<tensor::TensorPtr>();
+        auto tensor = op_info.expanded_input_values[0]->cast<tensor::BaseTensorPtr>();
         MS_EXCEPTION_IF_NULL(tensor);
         auto out_format = out_func(tensor->data_type(), input_shapes);
         ascend_special_info += out_format;
       }
       MS_EXCEPTION_IF_NULL(out_func);
-      auto tensor = op_info.expanded_input_values[0]->cast<tensor::TensorPtr>();
+      auto tensor = op_info.expanded_input_values[0]->cast<tensor::BaseTensorPtr>();
       MS_EXCEPTION_IF_NULL(tensor);
       auto out_format = out_func(tensor->data_type(), input_shapes);
       ascend_special_info += out_format;
@@ -375,8 +375,8 @@ std::string OpCompiler::GetSingleOpGraphInfo(const pynative::BaseOpRunInfo &op_i
   const auto &depend_list = GetDependList(op_info, op_prim);
   for (size_t index = 0; index < op_info.expanded_input_values.size(); ++index) {
     auto const &value = op_info.expanded_input_values[index];
-    if (value->isa<tensor::Tensor>()) {
-      const auto &input_tensor = value->cast<tensor::TensorPtr>();
+    if (value->isa<tensor::BaseTensor>()) {
+      const auto &input_tensor = value->cast<tensor::BaseTensorPtr>();
       MS_EXCEPTION_IF_NULL(input_tensor);
       if (op_info.use_dynamic_shape_process) {
         graph_info += GetNumString(static_cast<int>(input_tensor->shape().size()));

@@ -49,7 +49,7 @@ struct Common {
   static bool IsTensor(const ValuePtr &v, bool include_sequence = false);
   static bool IsControlFlowGraph(const FuncGraphPtr &func_graph);
   static ValuePtr FilterSensValues(const ValuePtr &value, bool dict_convert_to_tuple);
-  static tensor::TensorPtr GetTensorFromParam(const AnfNodePtr &param_node);
+  static tensor::BaseTensorPtr GetTensorFromParam(const AnfNodePtr &param_node);
   static void DumpGraphIR(const std::string &filename, const FuncGraphPtr &graph);
   static TypeId GetTypeFromAbstract(const abstract::AbstractBasePtr &abs);
   static ShapeVector GetShapeFromAbstract(const abstract::AbstractBasePtr &abs);
@@ -59,10 +59,10 @@ struct Common {
   static void ReplaceCNodeWithValueNode(const FuncGraphPtr &bprop_graph);
   static const std::shared_ptr<PyNativeExecutor> &GetPyNativeExecutor();
   static void StubNodeToValue(const FrontendOpRunInfoPtr &op_run_info);
-  static TensorPtr StubNodeToTensor(const ValuePtr &value);
-  static TensorPtr ConvertStubNodeToTensor(const ValuePtr &v, bool need_contiguous, bool requires_grad);
-  static std::optional<tensor::TensorPtr> ConvertStubNodeToTensor(const std::optional<ValuePtr> &v,
-                                                                  bool need_contiguous, bool requires_grad);
+  static tensor::BaseTensorPtr StubNodeToTensor(const ValuePtr &value);
+  static tensor::BaseTensorPtr ConvertStubNodeToTensor(const ValuePtr &v, bool need_contiguous, bool requires_grad);
+  static std::optional<tensor::BaseTensorPtr> ConvertStubNodeToTensor(const std::optional<ValuePtr> &v,
+                                                                      bool need_contiguous, bool requires_grad);
   static ValueTuplePtr ConvertStubNodeToValueTuple(const ValuePtr &v, bool need_contiguous, bool requires_grad);
   static void GetConstInputToAttr(const PrimitivePtr &op_prim, const std::string &op_name,
                                   const std::string &device_target, bool is_dynamic_shape,
@@ -76,13 +76,13 @@ struct Common {
   static void ClearDeviceAddress(const ValuePtr &value);
   static inline bool IsConstant(InputType grad_type) { return grad_type == InputType::kConstant; }
   static InputType SetValueGradInfo(const ValuePtr &value, const TopCellInfoPtr &top_cell, InputType grad_type);
-  static InputType SetTensorGradInfo(const tensor::TensorPtr &tensor, const TopCellInfoPtr &top_cell);
+  static InputType SetTensorGradInfo(const tensor::BaseTensorPtr &tensor, const TopCellInfoPtr &top_cell);
   static void SetGraphInputAndWeightsInfo(const FrontendOpRunInfoPtr &op_run_info, const FuncGraphPtr &func_graph,
                                           const TopCellInfoPtr &top_cell);
   static void ProcessTupleParam(const FuncGraphPtr &bprop_graph, size_t position);
   static void ProcessDictParam(const FuncGraphPtr &bprop_graph, size_t position);
   static void FreeFuncGraphForwardNodes(const FuncGraphPtr &func_graph);
-  static tensor::TensorPtr ConvertToContiguousTensor(const tensor::TensorPtr &tensor, bool requires_grad);
+  static tensor::BaseTensorPtr ConvertToContiguousTensor(const tensor::BaseTensorPtr &tensor, bool requires_grad);
   static ValuePtr ConvertToContiguousValue(const ValuePtr &v, bool requires_grad);
   static size_t GetValueSize(const ValuePtr &v);
   static ValuePtr CreateTensorByConstantValue(const ValuePtr &value);
@@ -98,8 +98,8 @@ struct Common {
         MS_LOG(DEBUG) << "The " << i << "'th item is nullptr!";
         continue;
       }
-      if (items[i]->template isa<tensor::Tensor>()) {
-        auto tensor = items[i]->template cast<tensor::TensorPtr>();
+      if (items[i]->template isa<tensor::BaseTensor>()) {
+        auto tensor = items[i]->template cast<tensor::BaseTensorPtr>();
         auto grad = std::make_shared<tensor::Tensor>(*tensor);
         grad->data_sync();
         buf << i << "th: "
@@ -166,7 +166,8 @@ struct PyBoost {
   static FrontendOpRunInfoPtr Init(const PrimitivePtr &prim, const py::list &args);
   static void DoGrad(const kernel::pyboost::OpPtr &op, const FrontendOpRunInfoPtr &op_run_info,
                      ValuePtrList &&op_inputs);
-  static void MakeOutputValue(const FrontendOpRunInfoPtr &op_run_info, const std::vector<TensorPtr> &outputs);
+  static void MakeOutputValue(const FrontendOpRunInfoPtr &op_run_info,
+                              const std::vector<tensor::BaseTensorPtr> &outputs);
   static void UpdateStubOutput(const FrontendOpRunInfoPtr &op_run_info, const AbstractBasePtr &abstract,
                                const kernel::pyboost::OpPtr &op);
   static void UpdateOpRunInfo(const kernel::pyboost::OpPtr &op, const FrontendOpRunInfoPtr &op_run_info);
@@ -216,7 +217,7 @@ struct AutoGrad {
   static bool NeedGrad(const std::vector<ValuePtr> &input_values);
   static bool IsZerosLikeNode(const AnfNodePtr &node);
   static ValuePtr GetFakeZeroTensor();
-  static ValuePtr BuildSpecialValueGrad(const ValuePtr &value, const tensor::TensorPtr &grad,
+  static ValuePtr BuildSpecialValueGrad(const ValuePtr &value, const tensor::BaseTensorPtr &grad,
                                         autograd::FuncBuilder *func_builder, const SpecialType &type);
   static AnfNodePtr BuildSpecialNode(const KernelGraphPtr &tape, const ValuePtr &value,
                                      const abstract::AbstractBasePtr &abs, const SpecialType &type);

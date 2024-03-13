@@ -820,7 +820,7 @@ void GraphCompiler::GetParamAndOutputIndex(
 }
 
 void GraphCompiler::GetSingleOpInputTensors(const CNodePtr &kernel,
-                                            const std::map<KernelWithIndex, TensorPtr> &op_output,
+                                            const std::map<KernelWithIndex, tensor::BaseTensorPtr> &op_output,
                                             const std::map<AnfNodePtr, size_t> &parameter_index,
                                             const std::vector<TensorPtr> &graph_inputs, bool is_run_pyboost,
                                             InputInfo *const input_info) {
@@ -832,11 +832,10 @@ void GraphCompiler::GetSingleOpInputTensors(const CNodePtr &kernel,
   }
 }
 
-TensorPtr GraphCompiler::GetSingleOpInputTensorByIndex(const CNodePtr &kernel,
-                                                       const std::map<KernelWithIndex, TensorPtr> &op_output,
-                                                       const std::map<AnfNodePtr, size_t> &parameter_index,
-                                                       const std::vector<TensorPtr> &graph_inputs,
-                                                       InputInfo *const input_info, size_t input_index) {
+tensor::BaseTensorPtr GraphCompiler::GetSingleOpInputTensorByIndex(
+  const CNodePtr &kernel, const std::map<KernelWithIndex, tensor::BaseTensorPtr> &op_output,
+  const std::map<AnfNodePtr, size_t> &parameter_index, const std::vector<TensorPtr> &graph_inputs,
+  InputInfo *const input_info, size_t input_index) {
   MS_EXCEPTION_IF_NULL(session_);
   return session_->GetOpInputTensorByIndex(kernel, op_output, parameter_index, graph_inputs, input_info, input_index);
 }
@@ -867,7 +866,7 @@ void GraphCompiler::CalculateForwardOpOutputCount(const KernelGraphPtr &graph,
 
 void GraphCompiler::UpdateRefCount(const std::set<KernelWithIndex> &input_kernels_with_index,
                                    std::map<KernelWithIndex, size_t> *ref_count,
-                                   std::map<KernelWithIndex, tensor::TensorPtr> *op_output_map) const {
+                                   std::map<KernelWithIndex, tensor::BaseTensorPtr> *op_output_map) const {
   MS_EXCEPTION_IF_NULL(session_);
   session_->HandleOpInputs(input_kernels_with_index, ref_count, op_output_map);
 }
@@ -881,7 +880,7 @@ void GraphCompiler::UpdateForwardOpOutputRefCount(const std::vector<ValuePtr> &i
 
 void GraphCompiler::RecoverGraphOutput(const AnfNodePtr &kernel, const VectorRef &op_outputs,
                                        const std::map<KernelWithIndex, size_t> &ref_count,
-                                       std::map<KernelWithIndex, TensorPtr> *op_output_map,
+                                       std::map<KernelWithIndex, tensor::BaseTensorPtr> *op_output_map,
                                        GraphOutputInfo *const graph_output_info) const {
   MS_EXCEPTION_IF_NULL(session_);
   session_->HandleOpOutputs(kernel, op_outputs, ref_count, op_output_map, graph_output_info);

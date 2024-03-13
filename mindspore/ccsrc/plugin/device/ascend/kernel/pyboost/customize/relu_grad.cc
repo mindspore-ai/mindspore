@@ -25,14 +25,14 @@ namespace kernel {
 namespace pyboost {
 namespace {
 void ReluGradAscendCall(const std::shared_ptr<OpRunner> &op, const device::DeviceContext *device_context,
-                        const TensorPtr &dy_tensor, const TensorPtr &y_tensor, const ScalarPtr &threshold,
-                        const std::vector<tensor::TensorPtr> &outputs) {
+                        const BaseTensorPtr &dy_tensor, const BaseTensorPtr &y_tensor, const ScalarPtr &threshold,
+                        const std::vector<tensor::BaseTensorPtr> &outputs) {
   LAUNCH_ACLNN(aclnnThresholdBackward, device_context, op->stream_id(), dy_tensor, y_tensor, threshold, outputs[0]);
 }
 }  // namespace
 
-tensor::TensorPtr ReluGradAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &dy_tensor,
-                                          const TensorPtr &y_tensor) {
+tensor::BaseTensorPtr ReluGradAscendCustomize(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &dy_tensor,
+                                              const BaseTensorPtr &y_tensor) {
   OpRunner::InferOpOutput(op, dy_tensor, y_tensor);
   // Create device address for input/output tensors
   PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), dy_tensor, y_tensor);
