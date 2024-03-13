@@ -40,7 +40,7 @@ from ..auto_generate import (Add, Addcdiv, Addcmul, ReduceMean, ReduceSum, Reduc
                              LinSpace, MatrixDeterminant, LogMatrixDeterminant, Erfinv, Conj,
                              Real, Complex, Angle, MatrixExp, CholeskyInverse, Trace, Cholesky,
                              FFTWithSize, NextAfter, NanToNum, Eig, Qr, Roll, Maximum, Div, CumProd,
-                             CumSum, Less, LessEqual, AssignAdd)
+                             CumSum, Less, LessEqual, AssignAdd, IsFinite)
 
 def _infer_shape_reduce(x, axis, keep_dims, prim_name):
     """Common infer for reduce operator"""
@@ -2235,32 +2235,6 @@ class IsInf(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize IsInf"""
-        self.init_prim_io_names(inputs=['x'], outputs=['output'])
-
-
-class IsFinite(Primitive):
-    r"""
-    Determines which elements are finite for each position.
-
-    Refer to :func:`mindspore.ops.isfinite` for more details.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> is_finite = ops.IsFinite()
-        >>> x = Tensor(np.array([np.log(-1), 1, np.log(0)]), mindspore.float32)
-        >>> output = is_finite(x)
-        >>> print(output)
-        [False  True False]
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize IsFinite"""
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
 
 

@@ -17,7 +17,6 @@
 
 namespace mindspore {
 namespace kernel {
-MS_ACLNN_COMMON_KERNEL_FACTORY_REG(IsFinite, aclnnIsFinite, 2)
 MS_ACLNN_COMMON_KERNEL_FACTORY_REG(LogicalXor, aclnnLogicalXor, 3)
 MS_ACLNN_COMMON_KERNEL_FACTORY_REG(Maximum, aclnnMaximum, 3)
 MS_ACLNN_COMMON_KERNEL_FACTORY_REG(Minimum, aclnnMinimum, 3)
