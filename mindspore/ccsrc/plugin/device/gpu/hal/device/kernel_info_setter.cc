@@ -238,7 +238,8 @@ bool SelectCustomKernel(const CNodePtr &kernel_node, const std::shared_ptr<Kerne
   // or the no info about inputs in reg info(the case of undetermined input size),
   // then infer info from inputs
   if (op_info_ptr == nullptr || op_info_ptr->inputs_ptr().size() == 0) {
-    MS_LOG(INFO) << "Not find operator information for op[" << op_name << "]. Infer operator information from inputs.";
+    MS_LOG(WARNING) << "Not find operator information for op[" << op_name
+                    << "]. Infer operator information from inputs.";
     return true;
   }
   std::vector<std::shared_ptr<KernelBuildInfo>> kernel_info_list;
