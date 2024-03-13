@@ -379,12 +379,8 @@ class Cell(Cell_):
             # while deepcopy a cell instance, the copied cell instance can't be added to cells_compile_cache
             # here using pop(id(self), None) to avoid KeyError exception
             cells_compile_cache.pop(id(self), None)
-        try:
-            if self.compile_cache:
-                _cell_graph_executor.del_net_res(self, self.compile_cache)
-        except AttributeError as e:
-            raise AttributeError(f"The '{type(self).__name__}' object does not inherit attribute from 'cell'. "
-                                 f"Please use 'super().__init__()'.") from e
+        if hasattr(self, "compile_cache") and self.compile_cache:
+            _cell_graph_executor.del_net_res(self, self.compile_cache)
 
     def __delattr__(self, name):
         if name in self._params:
