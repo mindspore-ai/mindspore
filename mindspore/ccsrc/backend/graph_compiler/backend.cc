@@ -916,7 +916,6 @@ void MindRTBackend::OpRunCallback(const std::shared_ptr<runtime::OpTaskContext> 
 
   // Reset PyNative infer flag.
   ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, infer_flag);
-  context->op_compiler_info()->UpdateStatus(true);
   MS_LOG(DEBUG) << "OpRunCallback end";
 }
 
@@ -939,7 +938,6 @@ void MindRTBackend::OpRunCallbackDynamic(const std::shared_ptr<runtime::OpTaskCo
   ClearOpInputOutput(context->op_compiler_info());
   // Reset PyNative infer flag.
   ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, infer_flag);
-  context->op_compiler_info()->UpdateStatus(true);
   MS_LOG(DEBUG) << "OpRunCallback end";
 }
 
@@ -966,8 +964,6 @@ void MindRTBackend::DispatchOpTask(bool single_op_cache_hit, VectorRef *outputs,
     CompileSingleOpGraph(op_compiler_info, op_compiler_info->device_context_);
   }
 
-  op_compiler_info->UpdateStatus(false);
-
   auto run_task = std::make_shared<runtime::DeviceOpRunTask>(
     run_op_context, [this](const std::shared_ptr<runtime::OpTaskContext> &ctx) { OpRunCallback(ctx); });
   run_task->set_task_id(op_compiler_info->graph_id_);
@@ -987,7 +983,6 @@ void MindRTBackend::DispatchOpTaskDynamic(VectorRef *outputs, const OpCompilerIn
   auto run_op_context =
     std::make_shared<runtime::OpTaskContext>(graph->graph_id(), graph, op_run_info, op_compiler_info, infer_flag);
 
-  op_compiler_info->UpdateStatus(false);
   auto &op_executor = runtime::OpExecutor::GetInstance();
   auto task = std::make_shared<runtime::DeviceOpRunTask>(
     run_op_context, [this](const std::shared_ptr<runtime::OpTaskContext> &ctx) { OpRunCallbackDynamic(ctx); });
