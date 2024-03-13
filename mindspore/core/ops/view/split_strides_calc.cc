@@ -40,11 +40,11 @@ void SplitInputsCheck(const PrimitivePtr &prim, const int64_t &output_num, const
 }
 
 TensorStorageInfoPtrList SplitCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs) {
-  if (CheckInputsNull(inputs, kSplitInputsNum) || !inputs[kInputIndex0]->isa<tensor::Tensor>()) {
+  if (CheckInputsNull(inputs, kSplitInputsNum) || !inputs[kInputIndex0]->isa<tensor::BaseTensor>()) {
     MS_LOG(EXCEPTION) << "inputs num is invalid, num:" << inputs.size();
   }
 
-  auto input_tensor = inputs[kInputIndex0]->cast<tensor::TensorPtr>();
+  auto input_tensor = inputs[kInputIndex0]->cast<tensor::BaseTensorPtr>();
   MS_EXCEPTION_IF_NULL(input_tensor);
   auto axis = GetValue<int64_t>(inputs[kInputIndex1]);
   auto output_num = GetValue<int64_t>(inputs[kInputIndex2]);

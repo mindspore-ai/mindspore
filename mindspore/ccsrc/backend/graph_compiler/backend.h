@@ -84,7 +84,7 @@ class BACKEND_EXPORT MindRTBackend : public MindRTBackendBase {
   void RunViewKernelTask(const pynative::BaseOpRunInfo &base_op_run_info, const runtime::KernelTaskType &task_type,
                          bool enable_async);
 
-  void RunAllocMemTask(DeviceContext *device_context, const tensor::TensorPtr &tensor, bool enable_async);
+  void RunAllocMemTask(DeviceContext *device_context, const tensor::BaseTensorPtr &tensor, bool enable_async);
   // Sync default stream in PyNative mode.
   void SyncStream();
 
@@ -125,8 +125,7 @@ class BACKEND_EXPORT MindRTBackend : public MindRTBackendBase {
 
   void RunMsGradGraph(const CNodePtr &kernel, const VectorRef &args, VectorRef *outputs) const;
 
-  void UpdateOutput(const session::BackendOpRunInfoPtr &op_run_info,
-                    const std::vector<session::KernelWithIndex> &output_nodes, VectorRef *const outputs) const;
+  void UpdateOutput(const std::vector<session::KernelWithIndex> &output_nodes, VectorRef *const outputs) const;
 
   void UpdateOutputDynamic(const session::BackendOpRunInfoPtr &op_run_info, const OpCompilerInfoPtr &op_compiler_info,
                            const vector<device::DeviceAddressPtr> &device_address_list, VectorRef *const outputs) const;

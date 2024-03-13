@@ -53,7 +53,7 @@ void TopCellInfo::ClearDeviceMemory() const {
     return;
   }
   // Get all tensors obj in value node of running graph
-  std::vector<tensor::TensorPtr> tensors_in_bprop_graph;
+  std::vector<tensor::BaseTensorPtr> tensors_in_bprop_graph;
   MS_EXCEPTION_IF_NULL(resource_);
   const auto &bprop_graph = resource_->func_graph();
   if (bprop_graph == nullptr) {
@@ -83,7 +83,8 @@ void TopCellInfo::ClearDeviceMemory() const {
   }
 }
 
-void TopCellInfo::AddParamGradInfo(const tensor::TensorPtr &tensor, const AutoGradMetaDataPtr &auto_grad_meta_data) {
+void TopCellInfo::AddParamGradInfo(const tensor::BaseTensorPtr &tensor,
+                                   const AutoGradMetaDataPtr &auto_grad_meta_data) {
   param_grad_info_[tensor] = auto_grad_meta_data;
 }
 
@@ -196,8 +197,8 @@ void TopCellInfo::SaveForwardOutputTensorInfoInBpropGraph(const FuncGraphPtr &fu
 
 void TopCellInfo::SetLastOutputValueForwardOutputFlag(const ValuePtr &value) {
   MS_EXCEPTION_IF_NULL(value);
-  if (value->isa<tensor::Tensor>()) {
-    auto tensor = value->cast<tensor::TensorPtr>();
+  if (value->isa<tensor::BaseTensor>()) {
+    auto tensor = value->cast<tensor::BaseTensorPtr>();
     const auto it = replace_info_.id_with_op_info.find(tensor->id());
     if (it != replace_info_.id_with_op_info.end()) {
       tensor->set_is_forward_output(true);
@@ -223,7 +224,7 @@ void TopCellInfo::ChangeTopCellInfo(const std::vector<BaseShapePtr> &args_new_sh
   is_unknown_shape_ = true;
 }
 
-bool TopCellInfo::IsOutputTensor(const tensor::TensorPtr &tensor) const {
+bool TopCellInfo::IsOutputTensor(const tensor::BaseTensorPtr &tensor) const {
   return std::any_of(output_ids().begin(), output_ids().end(),
                      [&tensor](const std::string &output_id) { return tensor->id() == output_id; });
 }

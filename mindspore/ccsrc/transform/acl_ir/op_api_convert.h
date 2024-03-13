@@ -299,7 +299,7 @@ inline aclTensor *ConvertType(std::pair<mindspore::kernel::KernelTensor *, bool>
 }
 
 inline std::tuple<std::vector<int64_t>, std::vector<int64_t>, int64_t, std::vector<int64_t>> GetViewShapeAndStride(
-  const tensor::TensorPtr &tensor, const device::DeviceAddressPtr &device_address) {
+  const tensor::BaseTensorPtr &tensor, const device::DeviceAddressPtr &device_address) {
   MS_EXCEPTION_IF_NULL(tensor);
   MS_EXCEPTION_IF_NULL(device_address);
 
@@ -335,7 +335,7 @@ inline std::tuple<std::vector<int64_t>, std::vector<int64_t>, int64_t, std::vect
   }
 }
 
-inline aclTensor *ConvertType(const tensor::TensorPtr &tensor) {
+inline aclTensor *ConvertType(const tensor::BaseTensorPtr &tensor) {
   MS_EXCEPTION_IF_NULL(tensor);
   static const auto aclCreateTensor = GET_OP_API_FUNC(aclCreateTensor);
   if (aclCreateTensor == nullptr) {
@@ -369,7 +369,7 @@ inline aclTensor *ConvertType(const tensor::TensorPtr &tensor) {
   return acl_tensor;
 }
 
-inline aclTensor *ConvertType(const std::optional<tensor::TensorPtr> &value) {
+inline aclTensor *ConvertType(const std::optional<tensor::BaseTensorPtr> &value) {
   if (value.has_value()) {
     return ConvertType(value.value());
   }
@@ -398,6 +398,28 @@ inline aclBoolArray *ConvertType(const std::vector<uint8_t> &bool_array) {
   }
   static OpApiTensorConverter converter;
   return converter.CreateBoolArray(bool_array);
+}
+
+inline aclTensorList *ConvertType(const std::vector<tensor::BaseTensorPtr> &tensor_list) {
+  if (tensor_list.empty()) {
+    MS_LOG(ERROR) << "tensor list is empty!";
+  }
+  static const auto aclCreateTensorList = GET_OP_API_FUNC(aclCreateTensorList);
+  std::vector<aclTensor *> tmp;
+  std::transform(tensor_list.begin(), tensor_list.end(), std::back_inserter(tmp),
+                 [](const tensor::BaseTensorPtr &tensor) { return ConvertType(tensor); });
+  return aclCreateTensorList(tmp.data(), tmp.size());
+}
+
+inline aclTensor *ConvertType(const tensor::TensorPtr &tensor) {
+  return ConvertType(tensor->cast<tensor::BaseTensorPtr>());
+}
+
+inline aclTensor *ConvertType(const std::optional<tensor::TensorPtr> &value) {
+  if (value.has_value()) {
+    return ConvertType(value.value());
+  }
+  return nullptr;
 }
 
 inline aclTensorList *ConvertType(const std::vector<tensor::TensorPtr> &tensor_list) {

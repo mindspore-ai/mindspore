@@ -40,7 +40,7 @@ class BACKEND_EXPORT ValueConverter {
   static FP32ImmPtr ToFloat(const ValuePtrList &inputs, size_t i);
   static BoolImmPtr ToBool(const ValuePtrList &inputs, size_t i);
   static ScalarPtr ToScalar(const ValuePtrList &inputs, size_t i);
-  static tensor::TensorPtr ToTensor(const ValuePtrList &inputs, size_t i);
+  static tensor::BaseTensorPtr ToTensor(const ValuePtrList &inputs, size_t i);
   static StringImmPtr ToString(const ValuePtrList &inputs, size_t i);
   static TypePtr ToDtype(const ValuePtrList &inputs, size_t i);
   static ValueTuplePtr ToValueTuple(const ValuePtrList &inputs, size_t i);
@@ -59,12 +59,12 @@ class BACKEND_EXPORT ValueConverter {
   static std::optional<FP32ImmPtr> ToFloatOptional(const ValuePtrList &inputs, size_t i);
   static std::optional<BoolImmPtr> ToBoolOptional(const ValuePtrList &inputs, size_t i);
   static std::optional<ScalarPtr> ToScalarOptional(const ValuePtrList &inputs, size_t i);
-  static std::optional<tensor::TensorPtr> ToTensorOptional(const ValuePtrList &inputs, size_t i);
+  static std::optional<tensor::BaseTensorPtr> ToTensorOptional(const ValuePtrList &inputs, size_t i);
   static std::optional<StringImmPtr> ToStringOptional(const ValuePtrList &inputs, size_t i);
   static std::optional<TypePtr> ToDtypeOptional(const ValuePtrList &inputs, size_t i);
   static std::optional<ValueTuplePtr> ToValueTupleOptional(const ValuePtrList &inputs, size_t i);
 
-  static tensor::TensorPtr ContiguousTensorValue(OpRunnerInfo *op_runner_info, const tensor::TensorPtr &tensor);
+  static tensor::BaseTensorPtr ContiguousTensorValue(OpRunnerInfo *op_runner_info, const tensor::BaseTensorPtr &tensor);
   static ValueTuplePtr ContiguousTensorValue(OpRunnerInfo *op_runner_info, const ValueTuplePtr &tuple);
   template <typename T>
   static std::optional<T> ContiguousTensorValue(OpRunnerInfo *op_runner_info, const std::optional<T> &val) {

@@ -27,20 +27,20 @@ namespace kernel {
 namespace pyboost {
 namespace {
 void WeightQuantBatchMatmulV2AscendCall(const std::shared_ptr<OpRunner> &op,
-                                        const device::DeviceContext *device_context, const TensorPtr &x_tensor,
-                                        const TensorPtr &weight_tensor, const TensorPtr &antiquant_scale_tensor,
-                                        const std::optional<TensorPtr> &antiquant_offset_tensor,
-                                        const std::optional<TensorPtr> &quant_scale_tensor,
-                                        const std::optional<TensorPtr> &quant_offset_tensor,
-                                        const std::optional<TensorPtr> &bias_tensor, int64_t antiquant_group_size,
-                                        const std::vector<tensor::TensorPtr> &outputs) {
+                                        const device::DeviceContext *device_context, const BaseTensorPtr &x_tensor,
+                                        const BaseTensorPtr &weight_tensor, const BaseTensorPtr &antiquant_scale_tensor,
+                                        const std::optional<BaseTensorPtr> &antiquant_offset_tensor,
+                                        const std::optional<BaseTensorPtr> &quant_scale_tensor,
+                                        const std::optional<BaseTensorPtr> &quant_offset_tensor,
+                                        const std::optional<BaseTensorPtr> &bias_tensor, int64_t antiquant_group_size,
+                                        const std::vector<tensor::BaseTensorPtr> &outputs) {
   MS_LOG(DEBUG) << "Call start";
   LAUNCH_ACLNN(aclnnWeightQuantBatchMatmulV2, device_context, op->stream_id(), x_tensor, weight_tensor,
                antiquant_scale_tensor, antiquant_offset_tensor, quant_scale_tensor, quant_offset_tensor, bias_tensor,
                antiquant_group_size, outputs[0]);
   MS_LOG(DEBUG) << "Launch end";
 }
-ValueTuplePtr GetTransposePerm(const TensorPtr &weight_tensor) {
+ValueTuplePtr GetTransposePerm(const BaseTensorPtr &weight_tensor) {
   const auto &shape = weight_tensor->shape();
   int64_t size = shape.size();
   std::vector<ValuePtr> perm(size);
@@ -57,11 +57,11 @@ ValueTuplePtr GetTransposePerm(const TensorPtr &weight_tensor) {
   return std::make_shared<ValueTuple>(perm);
 }
 }  // namespace
-tensor::TensorPtr WeightQuantBatchMatmulV2AscendCustomize(
-  const std::shared_ptr<OpRunner> &op, const TensorPtr &x_tensor, const TensorPtr &weight_tensor,
-  const TensorPtr &antiquant_scale_tensor, const std::optional<TensorPtr> &antiquant_offset_tensor,
-  const std::optional<TensorPtr> &quant_scale_tensor, const std::optional<TensorPtr> &quant_offset_tensor,
-  const std::optional<TensorPtr> &bias_tensor, const BoolImmPtr &transpose_x, const BoolImmPtr &transpose_weight,
+tensor::BaseTensorPtr WeightQuantBatchMatmulV2AscendCustomize(
+  const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &x_tensor, const BaseTensorPtr &weight_tensor,
+  const BaseTensorPtr &antiquant_scale_tensor, const std::optional<BaseTensorPtr> &antiquant_offset_tensor,
+  const std::optional<BaseTensorPtr> &quant_scale_tensor, const std::optional<BaseTensorPtr> &quant_offset_tensor,
+  const std::optional<BaseTensorPtr> &bias_tensor, const BoolImmPtr &transpose_x, const BoolImmPtr &transpose_weight,
   const Int64ImmPtr &antiquant_group_size) {
   OpRunner::InferOpOutput(op, x_tensor, weight_tensor, antiquant_scale_tensor, antiquant_offset_tensor,
                           quant_scale_tensor, quant_offset_tensor, bias_tensor, transpose_x, transpose_weight,
@@ -75,13 +75,13 @@ tensor::TensorPtr WeightQuantBatchMatmulV2AscendCustomize(
   PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
 
   auto device_context = op->device_context();
-  TensorPtr x_tensor_trans = x_tensor;
+  BaseTensorPtr x_tensor_trans = x_tensor;
   if (transpose_x_imm) {
     const auto &device_name = device_context->device_context_key_.device_name_;
     auto transpose_op = CREATE_PYBOOST_OP(Transpose, device_name);
     x_tensor_trans = transpose_op->Call(x_tensor_trans, GetTransposePerm(x_tensor_trans));
   }
-  TensorPtr weight_tensor_trans = weight_tensor;
+  BaseTensorPtr weight_tensor_trans = weight_tensor;
   if (transpose_weight_imm) {
     const auto &device_name = device_context->device_context_key_.device_name_;
     auto transpose_op = CREATE_PYBOOST_OP(Transpose, device_name);

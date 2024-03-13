@@ -163,9 +163,10 @@ bool CastBaseOperation::GetSignatureType(const std::vector<Signature> &signature
   return has_sig_dtype;
 }
 
-tensor::TensorPtr CastBaseOperation::TensorToDstDtypeValue(const ValuePtr &src_value, const TypeId &dst_type_id) const {
+tensor::BaseTensorPtr CastBaseOperation::TensorToDstDtypeValue(const ValuePtr &src_value,
+                                                               const TypeId &dst_type_id) const {
   MS_EXCEPTION_IF_NULL(src_value);
-  auto src_tensor = src_value->cast<tensor::TensorPtr>();
+  auto src_tensor = src_value->cast<tensor::BaseTensorPtr>();
   MS_EXCEPTION_IF_NULL(src_tensor);
   (void)src_tensor->set_data_type(dst_type_id);
   return src_tensor;
@@ -178,7 +179,7 @@ ValuePtr CastBaseOperation::ScalarToDstDtypeValue(const ValuePtr &src_value,
                                                   const std::pair<TypeId, bool> &dst_type) const {
   MS_EXCEPTION_IF_NULL(src_value);
   // Tensor not do scalar cast
-  if (src_value->isa<tensor::Tensor>()) {
+  if (src_value->isa<tensor::BaseTensor>()) {
     return nullptr;
   } else if (src_value->isa<Int64Imm>()) {
     const auto &int64_v = src_value->cast<Int64ImmPtr>();

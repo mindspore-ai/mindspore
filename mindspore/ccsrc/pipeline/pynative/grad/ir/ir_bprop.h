@@ -71,10 +71,10 @@ class IrBprop {
   AnfNodePtr MapParameter(const ValuePtr &value, const abstract::AbstractBasePtr &abs);
 
   // Create variable for parameter
-  ParameterPtr AddParameterNode(const tensor::TensorPtr &tensor, const abstract::AbstractBasePtr &abs);
+  ParameterPtr AddParameterNode(const tensor::BaseTensorPtr &tensor, const abstract::AbstractBasePtr &abs);
 
   // Create a new parameter
-  ParameterPtr CreateTapeParameter(const tensor::TensorPtr &tensor, const abstract::AbstractBasePtr &abs);
+  ParameterPtr CreateTapeParameter(const tensor::BaseTensorPtr &tensor, const abstract::AbstractBasePtr &abs);
 
   // Update cnode dout
   void UpdateNextEdges(const VariablePtr &variable, const std::vector<CNodePtr> &dins, const ValuePtrList &inputs_value,
@@ -149,12 +149,12 @@ class IrBprop {
 
   // Set din for corresponding input
   AnfNodePtr TraceInput(const IrFunctionNodePtr &fn, const ValuePtr &out_value,
-                        const abstract::AbstractBasePtr &out_abs, const tensor::TensorPtr &input_tensor,
+                        const abstract::AbstractBasePtr &out_abs, const tensor::BaseTensorPtr &input_tensor,
                         const AnfNodePtr &din);
 
   // Used for dict input
   AnfNodePtr TraceInputForDict(const IrFunctionNodePtr &fn, const ValuePtr &out_value,
-                               const abstract::AbstractBasePtr &out_abs, const tensor::TensorPtr &input_tensor,
+                               const abstract::AbstractBasePtr &out_abs, const tensor::BaseTensorPtr &input_tensor,
                                const AnfNodePtr &din);
 
   // Get last node variable

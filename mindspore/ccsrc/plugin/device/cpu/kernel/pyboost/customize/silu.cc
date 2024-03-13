@@ -25,7 +25,7 @@ namespace mindspore {
 namespace kernel {
 namespace pyboost {
 namespace {
-OpPtr SiLUCPUCall(const device::DeviceContext *device_context, const TensorPtr &x_tensor) {
+OpPtr SiLUCPUCall(const device::DeviceContext *device_context, const BaseTensorPtr &x_tensor) {
   MS_LOG(DEBUG) << "Call start";
   const auto &sigmoid = CREATE_PYBOOST_OP(Sigmoid, device_context->device_context_key_.device_name_);
   const auto &mul = CREATE_PYBOOST_OP(Mul, device_context->device_context_key_.device_name_);
@@ -36,7 +36,7 @@ OpPtr SiLUCPUCall(const device::DeviceContext *device_context, const TensorPtr &
 }
 }  // namespace
 
-void SiLUCPUCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &x_tensor) {
+void SiLUCPUCustomize(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &x_tensor) {
   auto device_context = op->device_context();
   const auto &output = SiLUCPUCall(device_context, x_tensor);
   op->set_input_abs({x_tensor->ToAbstract()});

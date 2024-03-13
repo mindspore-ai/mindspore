@@ -21,14 +21,14 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr CopyAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor) {
+tensor::BaseTensorPtr CopyAscendCustomize(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &input_tensor) {
   MS_LOG(DEBUG) << "Call start";
   auto input_abs = ToAbstractNoValue(input_tensor);
   auto output_abs = input_abs->Clone();
   op->set_input_abs({input_abs});
   op->set_output_abs(output_abs);
 
-  std::vector<tensor::TensorPtr> outputs;
+  std::vector<tensor::BaseTensorPtr> outputs;
   PyBoostUtils::CreateOutputTensor(output_abs, &outputs);
   op->set_outputs(outputs);
 

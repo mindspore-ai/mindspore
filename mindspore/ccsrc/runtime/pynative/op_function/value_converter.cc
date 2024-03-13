@@ -22,7 +22,7 @@
 
 namespace mindspore::runtime {
 namespace {
-tensor::TensorPtr GetContiguousTensor(OpRunnerInfo *op_runner_info, const tensor::TensorPtr &tensor) {
+tensor::BaseTensorPtr GetContiguousTensor(OpRunnerInfo *op_runner_info, const tensor::BaseTensorPtr &tensor) {
   MS_EXCEPTION_IF_NULL(tensor);
   auto device_address = tensor->device_address();
   if (device_address == nullptr || device_address->GetTensorStorageInfo() == nullptr) {
@@ -42,8 +42,8 @@ BoolImmPtr ValueConverter::ToBool(const ValuePtrList &inputs, size_t i) { return
 
 ScalarPtr ValueConverter::ToScalar(const ValuePtrList &inputs, size_t i) { return Convert<ScalarPtr>(inputs, i); }
 
-tensor::TensorPtr ValueConverter::ToTensor(const ValuePtrList &inputs, size_t i) {
-  return Convert<tensor::TensorPtr>(inputs, i);
+tensor::BaseTensorPtr ValueConverter::ToTensor(const ValuePtrList &inputs, size_t i) {
+  return Convert<tensor::BaseTensorPtr>(inputs, i);
 }
 
 StringImmPtr ValueConverter::ToString(const ValuePtrList &inputs, size_t i) { return Convert<StringImmPtr>(inputs, i); }
@@ -70,8 +70,8 @@ std::optional<ScalarPtr> ValueConverter::ToScalarOptional(const ValuePtrList &in
   return ConvertOptional<ScalarPtr>(inputs, i);
 }
 
-std::optional<tensor::TensorPtr> ValueConverter::ToTensorOptional(const ValuePtrList &inputs, size_t i) {
-  return ConvertOptional<tensor::TensorPtr>(inputs, i);
+std::optional<tensor::BaseTensorPtr> ValueConverter::ToTensorOptional(const ValuePtrList &inputs, size_t i) {
+  return ConvertOptional<tensor::BaseTensorPtr>(inputs, i);
 }
 
 std::optional<StringImmPtr> ValueConverter::ToStringOptional(const ValuePtrList &inputs, size_t i) {
@@ -86,7 +86,8 @@ std::optional<ValueTuplePtr> ValueConverter::ToValueTupleOptional(const ValuePtr
   return ConvertOptional<ValueTuplePtr>(inputs, i);
 }
 
-tensor::TensorPtr ValueConverter::ContiguousTensorValue(OpRunnerInfo *op_runner_info, const tensor::TensorPtr &tensor) {
+tensor::BaseTensorPtr ValueConverter::ContiguousTensorValue(OpRunnerInfo *op_runner_info,
+                                                            const tensor::BaseTensorPtr &tensor) {
   MS_EXCEPTION_IF_NULL(op_runner_info);
   if (op_runner_info->device_target == kAscendDevice) {
     return tensor;
@@ -112,12 +113,12 @@ ValueTuplePtr ValueConverter::ContiguousTensorValue(OpRunnerInfo *op_runner_info
   for (size_t i = 0; i < value_list.size(); i++) {
     auto val = value_list[i];
     MS_EXCEPTION_IF_NULL(val);
-    if (!val->isa<tensor::Tensor>()) {
+    if (!val->isa<tensor::BaseTensor>()) {
       // No need to contiguous, when tuple is not tensor tuple.
       break;
     }
 
-    const auto &tensor = val->cast<tensor::TensorPtr>();
+    const auto &tensor = val->cast<tensor::BaseTensorPtr>();
     auto contiguous_tensor = GetContiguousTensor(op_runner_info, tensor);
     if (contiguous_tensor != tensor) {
       need_rebuild_tuple = true;

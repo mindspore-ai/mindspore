@@ -132,15 +132,15 @@ std::string PrintKernelFormatAndType(const std::string &fmt, const TypeId &type,
   }
 } callback_register;
 
-tensor::TensorPtr GetForwardOutputTensor(const AnfNodePtr &node) {
+tensor::BaseTensorPtr GetForwardOutputTensor(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   if (node->isa<ValueNode>()) {
     auto value_node = node->cast<ValueNodePtr>();
     MS_EXCEPTION_IF_NULL(value_node);
     auto value = value_node->value();
     MS_EXCEPTION_IF_NULL(value);
-    if (value->isa<tensor::Tensor>()) {
-      auto tensor = value->cast<tensor::TensorPtr>();
+    if (value->isa<tensor::BaseTensor>()) {
+      auto tensor = value->cast<tensor::BaseTensorPtr>();
       MS_EXCEPTION_IF_NULL(tensor);
       // If output used as sens, output will create(clone) a fake tensor with device address is nullptr for memory
       // usage. It has is_forward_output flag, which will be used for tensor input mask, and affect single op graph
@@ -1344,7 +1344,7 @@ bool AnfRuntimeAlgorithm::IsFeatureMapOutput(const AnfNodePtr &node) {
     auto value_node = node->cast<ValueNodePtr>();
     MS_EXCEPTION_IF_NULL(value_node);
     ValuePtr value = value_node->value();
-    std::vector<tensor::TensorPtr> tensors;
+    std::vector<tensor::BaseTensorPtr> tensors;
     TensorValueToTensor(value, &tensors);
     auto ret = false;
     if (!tensors.empty()) {
@@ -2231,19 +2231,19 @@ tensor::TensorPtr AnfRuntimeAlgorithm::SequenceToTensor(const ValuePtr &value) {
     tensor->set_base_shape(base_shape);
     return tensor;
   }
-  if (values[0] == nullptr || ((!values[0]->isa<Scalar>()) && (!values[0]->isa<tensor::Tensor>()))) {
+  if (values[0] == nullptr || ((!values[0]->isa<Scalar>()) && (!values[0]->isa<tensor::BaseTensor>()))) {
     MS_LOG(WARNING) << "Empty sequence in sequence value:" << value->ToString();
     return std::make_shared<tensor::Tensor>();
   }
 
   ShapeVector shape_vector{SizeToLong(values.size())};
-  if (values[0]->isa<tensor::Tensor>()) {
+  if (values[0]->isa<tensor::BaseTensor>()) {
     MS_LOG(DEBUG) << "Check dynamic tuple tensor";
     if (!CheckValidTensorTuple(values)) {
       MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Invalid dynamic sequence tuple:"
                                  << value->ToString();
     }
-    const auto &tensor = values[0]->cast<tensor::TensorPtr>();
+    const auto &tensor = values[0]->cast<tensor::BaseTensorPtr>();
     MS_EXCEPTION_IF_NULL(tensor);
     size_t size = tensor->Size();
     const auto &type_id = tensor->data_type();
@@ -2324,6 +2324,8 @@ void AnfRuntimeAlgorithm::FlattenInputArg(const BaseRef &arg, const AnfNodePtr &
 
   if (utils::isa<tensor::Tensor>(arg)) {
     (void)flatten_tensors->emplace_back(utils::cast<tensor::TensorPtr>(arg));
+  } else if (utils::isa<tensor::BaseTensor>(arg)) {
+    (void)flatten_tensors->emplace_back(std::make_shared<tensor::Tensor>(*utils::cast<tensor::BaseTensorPtr>(arg)));
   } else if (utils::isa<Scalar>(arg)) {
     (void)flatten_tensors->emplace_back(ScalarToTensor(utils::cast<ScalarPtr>(arg)));
   } else if (utils::isa<Monad>(arg)) {

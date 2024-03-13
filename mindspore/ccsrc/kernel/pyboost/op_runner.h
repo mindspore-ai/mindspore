@@ -33,14 +33,14 @@
 
 namespace mindspore {
 namespace tensor {
-using BaseTensorPtr = tensor::TensorPtr;
+using BaseTensorPtr = tensor::BaseTensorPtr;
 }
 namespace kernel {
 namespace pyboost {
-using BaseTensorPtr = tensor::TensorPtr;
 using GradFunc = std::function<void()>;
 constexpr size_t kAbstractCacheSize = 8192;
 
+using BaseTensorPtr = tensor::BaseTensorPtr;
 // OpRunner is a base class for operators.
 // OpRunner records the operator's input abstract,
 // output abstract and output Tensors for grad,
@@ -63,12 +63,12 @@ class BACKEND_EXPORT OpRunner : public std::enable_shared_from_this<OpRunner> {
   void set_output_abs(const AbstractBasePtr &output_abs) { output_abs_ = output_abs; }
   const DeviceContext *device_context() const { return device_context_; }
   const std::vector<pynative::DeviceAddressPromisePtr> &device_sync_promises() const { return device_sync_promises_; }
-  const std::vector<tensor::TensorPtr> &outputs() const { return outputs_; }
-  void set_outputs(const std::vector<tensor::TensorPtr> &outputs) { outputs_ = outputs; }
+  const std::vector<tensor::BaseTensorPtr> &outputs() const { return outputs_; }
+  void set_outputs(const std::vector<tensor::BaseTensorPtr> &outputs) { outputs_ = outputs; }
   void set_stream_id(size_t stream_id) { stream_id_ = stream_id; }
   size_t stream_id() const { return stream_id_; }
 
-  const tensor::TensorPtr &output(const size_t &idx) {
+  const tensor::BaseTensorPtr &output(const size_t &idx) {
     if (idx >= outputs_.size()) {
       MS_LOG(EXCEPTION) << "idx is out of bounds, idx:" << idx << ", outputs_.size():" << outputs_.size();
     }
@@ -86,7 +86,7 @@ class BACKEND_EXPORT OpRunner : public std::enable_shared_from_this<OpRunner> {
   static AbstractBasePtr ConvertAbstract(const ValuePtr &t) { return t->ToAbstract(); }
 
   // Tensor is held by Abstract, may lead to memory leak.
-  static AbstractBasePtr ConvertAbstract(const TensorPtr &t) {
+  static AbstractBasePtr ConvertAbstract(const BaseTensorPtr &t) {
     auto abs = t->GetAbstractCache();
     abs->set_value(kValueAny);
     t->set_abstract(abs);
@@ -99,8 +99,8 @@ class BACKEND_EXPORT OpRunner : public std::enable_shared_from_this<OpRunner> {
     for (size_t i = 0; i < t->value().size(); ++i) {
       auto &val = t->value()[i];
       AbstractBasePtr abs = nullptr;
-      if (val->isa<tensor::Tensor>()) {
-        auto tensor = val->cast<tensor::TensorPtr>();
+      if (val->isa<tensor::BaseTensor>()) {
+        auto tensor = val->cast<tensor::BaseTensorPtr>();
         abs = ConvertAbstract(tensor);
       } else {
         abs = val->ToAbstract();
@@ -164,7 +164,7 @@ class BACKEND_EXPORT OpRunner : public std::enable_shared_from_this<OpRunner> {
   std::vector<AbstractBasePtr> input_abs_{};
   AbstractBasePtr output_abs_{nullptr};
   // Forward output for grad.
-  std::vector<tensor::TensorPtr> outputs_{};
+  std::vector<tensor::BaseTensorPtr> outputs_{};
   const DeviceContext *device_context_{nullptr};
   // Device address promise for multi-stage pipeline.
   std::vector<pynative::DeviceAddressPromisePtr> device_sync_promises_;

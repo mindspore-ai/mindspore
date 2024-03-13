@@ -24,11 +24,11 @@
 namespace mindspore::ops {
 constexpr size_t kUnstackCalcInputsNum = 1;
 TensorStorageInfoPtrList UnstackCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs) {
-  if (CheckInputsNull(inputs, kUnstackCalcInputsNum) || !inputs[0]->isa<tensor::Tensor>()) {
+  if (CheckInputsNull(inputs, kUnstackCalcInputsNum) || !inputs[0]->isa<tensor::BaseTensor>()) {
     return {};
   }
 
-  auto tensor = inputs[0]->cast<tensor::TensorPtr>();
+  auto tensor = inputs[0]->cast<tensor::BaseTensorPtr>();
   MS_EXCEPTION_IF_NULL(tensor);
   auto type = tensor->Dtype();
   (void)CheckAndConvertUtils::CheckTypeValid("input_x", type, common_valid_types_with_complex_and_bool, "Unstack");

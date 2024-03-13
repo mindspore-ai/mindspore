@@ -47,12 +47,32 @@ void SaveForwardTensorForReplace(const ValuePtr &value, const TensorIdWithOpInfo
     }
   }
 }
+void SaveForwardTensorForReplace(const ValueNodePtr &value_node, const TensorIdWithOpInfo &id_with_op_info,
+                                 bool need_save_tensor_info, OpInfoWithTensorObject *op_info_with_tensor_object) {
+  MS_EXCEPTION_IF_NULL(value_node);
+  const auto &value = value_node->value();
+  MS_EXCEPTION_IF_NULL(value);
+  if (value->isa<tensor::Tensor>()) {
+    SaveForwardTensorForReplace(value, id_with_op_info, need_save_tensor_info, op_info_with_tensor_object);
+  } else if (value->isa<tensor::BaseTensor>()) {
+    auto tensor = value->cast<tensor::BaseTensorPtr>();
+    auto real_tensor = std::make_shared<tensor::Tensor>(*tensor);
+    if (tensor->device_address() != nullptr) {
+      value_node->set_value(real_tensor);
+    }
+    SaveForwardTensorForReplace(real_tensor, id_with_op_info, need_save_tensor_info, op_info_with_tensor_object);
+  } else {
+    SaveForwardTensorForReplace(value, id_with_op_info, need_save_tensor_info, op_info_with_tensor_object);
+  }
+}
 
-tensor::TensorPtr GetTensorFromOutValue(size_t index, const ValuePtr &v) {
+tensor::BaseTensorPtr GetTensorFromOutValue(size_t index, const ValuePtr &v) {
   MS_EXCEPTION_IF_NULL(v);
   // Only one outpout
   if (index == kIndex0) {
-    return v->cast<tensor::TensorPtr>();
+    if (v->isa<tensor::BaseTensor>()) {
+      return v->cast<tensor::BaseTensorPtr>();
+    }
   }
   // Multi output
   const auto &v_seq = v->cast<ValueSequencePtr>();
@@ -60,10 +80,10 @@ tensor::TensorPtr GetTensorFromOutValue(size_t index, const ValuePtr &v) {
   if (v_seq->size() < index) {
     MS_LOG(EXCEPTION) << "Get wrong index " << index << " with multi output size " << v_seq->size();
   }
-  return v_seq->value()[index - kIndex1]->cast<tensor::TensorPtr>();
+  return v_seq->value()[index - kIndex1]->cast<tensor::BaseTensorPtr>();
 }
 
-void UpdatePreTensorInfo(const tensor::TensorPtr &new_tensor, const tensor::TensorPtr &old_tensor) {
+void UpdatePreTensorInfo(const tensor::BaseTensorPtr &new_tensor, const tensor::BaseTensorPtr &old_tensor) {
   MS_EXCEPTION_IF_NULL(new_tensor);
   MS_EXCEPTION_IF_NULL(old_tensor);
   MS_LOG(DEBUG) << "Replace old tensor id " << old_tensor->id() << " device_address: " << old_tensor->device_address()
@@ -136,9 +156,9 @@ void SetIdWithOpInfo(const ValuePtr &v, const std::string &op_info, size_t out_i
                      TensorIdWithOpInfo *id_with_op_info) {
   MS_EXCEPTION_IF_NULL(v);
   MS_EXCEPTION_IF_NULL(id_with_op_info);
-  if (v->isa<tensor::Tensor>()) {
+  if (v->isa<tensor::BaseTensor>()) {
     // Only one output, index will be 0
-    const auto t = v->cast<tensor::TensorPtr>();
+    const auto t = v->cast<tensor::BaseTensorPtr>();
     (*id_with_op_info)[t->id()] = std::make_pair(op_info, out_index);
   } else if (v->isa<ValueSequence>()) {
     const auto &v_seq = v->cast<ValueSequencePtr>();
@@ -170,7 +190,7 @@ void SaveForwardOutputTensorInfo(const FuncGraphPtr &func_graph, bool need_save_
   for (const auto &elem : value_node_list) {
     auto value_node = elem.first->cast<ValueNodePtr>();
     MS_EXCEPTION_IF_NULL(value_node);
-    SaveForwardTensorForReplace(value_node->value(), replace_info->id_with_op_info, need_save_tensor_info,
+    SaveForwardTensorForReplace(value_node, replace_info->id_with_op_info, need_save_tensor_info,
                                 &(replace_info->op_info_with_tensor_object));
   }
 }

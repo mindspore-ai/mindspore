@@ -27,11 +27,11 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr WeightQuantBatchMatmulV2AscendCustomize(
-  const std::shared_ptr<OpRunner> &op, const TensorPtr &x_tensor, const TensorPtr &weight_tensor,
-  const TensorPtr &antiquant_scale_tensor, const std::optional<TensorPtr> &antiquant_offset_tensor,
-  const std::optional<TensorPtr> &quant_scale_tensor, const std::optional<TensorPtr> &quant_offset_tensor,
-  const std::optional<TensorPtr> &bias_tensor, const BoolImmPtr &transpose_x, const BoolImmPtr &transpose_weight,
+tensor::BaseTensorPtr WeightQuantBatchMatmulV2AscendCustomize(
+  const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &x_tensor, const BaseTensorPtr &weight_tensor,
+  const BaseTensorPtr &antiquant_scale_tensor, const std::optional<BaseTensorPtr> &antiquant_offset_tensor,
+  const std::optional<BaseTensorPtr> &quant_scale_tensor, const std::optional<BaseTensorPtr> &quant_offset_tensor,
+  const std::optional<BaseTensorPtr> &bias_tensor, const BoolImmPtr &transpose_x, const BoolImmPtr &transpose_weight,
   const Int64ImmPtr &antiquant_group_size);
 }  // namespace pyboost
 }  // namespace kernel
