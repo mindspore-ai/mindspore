@@ -223,7 +223,10 @@ void OutputActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<De
   MS_EXCEPTION_IF_NULL(context);
   MS_LOG(DEBUG) << "Actor(" << GetAID().Name()
                 << ") receive the input op data and output position:" << input_data->index_
-                << " device tensor:" << input_data->data_ << " ptr:" << input_data->data_->GetPtr();
+                << " device tensor:" << input_data->data_ << " ptr:" << input_data->data_->GetPtr()
+                << " ref count:" << input_data->data_->ref_count()
+                << " origin ref count:" << input_data->data_->original_ref_count()
+                << " dynamic ref count:" << input_data->data_->dynamic_ref_count();
   auto output_position = IntToSize(input_data->index_);
   if (output_position >= outputs_.size()) {
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The input index is of range.");

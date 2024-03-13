@@ -559,6 +559,15 @@ CNodePtr FlattenConditionGatherNodeInput(const CNodePtr &kernel, const KernelGra
 // Flatten the tuple input of condition node.
 void FlattenConditionNodeInput(const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
+#ifdef ENABLE_DUMP_IR
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  bool save_graphs = context_ptr->CanDump(kIntroductory);
+  if (save_graphs) {
+    std::string file_name = "hwopt_d_before_flatten_gather_input_graph_" + std::to_string(graph->graph_id()) + ".ir";
+    DumpIR(file_name, graph, true, kWholeStack);
+  }
+#endif
   for (auto &kernel : graph->execution_order()) {
     if (!IsPrimitiveCNode(kernel, prim::kPrimConditionGather)) {
       continue;
@@ -585,9 +594,6 @@ void FlattenConditionNodeInput(const KernelGraphPtr &graph) {
   graph->SetExecOrderByDefault();
 
 #ifdef ENABLE_DUMP_IR
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  bool save_graphs = context_ptr->CanDump(kIntroductory);
   if (save_graphs) {
     std::string file_name = "hwopt_d_after_flatten_gather_input_graph_" + std::to_string(graph->graph_id()) + ".ir";
     DumpIR(file_name, graph, true, kWholeStack);

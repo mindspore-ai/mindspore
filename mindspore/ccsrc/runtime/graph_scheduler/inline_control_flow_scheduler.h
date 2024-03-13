@@ -22,6 +22,7 @@
 
 namespace mindspore {
 namespace runtime {
+bool IsInlineKernelActor(const AbstractActorPtr &actor);
 class InlineControlFlowScheduler {
  public:
   InlineControlFlowScheduler() = default;
@@ -64,7 +65,8 @@ class InlineControlFlowScheduler {
                                          const KernelGraphPtr &kernel_graph);
   void FixRefCountByKernelGraphRefMap(ConditionGatherActor *const condition_gather_actor,
                                       const KernelGraphPtr &kernel_graph);
-
+  void FixRefCountByConditionGatherActor(ConditionGatherActor *const condition_gather_actor, size_t input_index,
+                                         size_t ref_count);
   std::string GetBranchNameByConditionGatherActor(KernelActor *condition_switch_actor,
                                                   KernelActor *condition_gather_actor, DataArrow *data_arrow,
                                                   const KernelGraphPtr &kernel_graph);

@@ -128,7 +128,7 @@ void KernelActor::InitOutputInfo() {
 
     (void)output_device_tensors_.emplace_back(output_address.get());
     (void)output_kernel_tensors_.emplace_back(output_address->kernel_tensor().get());
-    MS_LOG(DEBUG) << "Init output[" << i << "] info for node:" << common::AnfAlgo::GetNodeDebugString(kernel_)
+    MS_LOG(DEBUG) << "Init output[" << i << "] info for node:" << kernel_->fullname_with_scope()
                   << " addr:" << output_address << " type:" << output_address->type_id()
                   << ", kernel tensor addr:" << output_address->kernel_tensor().get()
                   << ", kernel tensor: " << output_address->kernel_tensor()->ToString();
@@ -145,6 +145,7 @@ void KernelActor::InitOutputInfo() {
       }
       // Used to keep graph output address when somas block memory free, and reused by the ref conut in other graphs.
       if (somas_graph_output_indexes_.count(i) > 0) {
+        MS_LOG(DEBUG) << "Somas keep output device address:" << output_address << " ptr:" << output_address->GetPtr();
         (void)somas_info_->InsertGraphOutputInfo(output_address.get(), somas_outputs[i].first, somas_outputs[i].second);
       } else {
         UpdateRefCount(output_address.get(), true);
@@ -351,6 +352,7 @@ void KernelActor::SetSomasMemory(OpContext<DeviceTensor> *const context) const {
         MS_LOG(ERROR) << GetAID().Name() << " does not free address for graph output index: " << i;
         device_contexts_[0]->device_res_manager_->FreeMemory(output_device_tensors_[i]);
       }
+      MS_LOG(DEBUG) << "Set ptr:" << device_ptr << " to device address:" << output_device_tensors_[i];
       output_device_tensors_[i]->set_ptr(device_ptr);
     }
   }
