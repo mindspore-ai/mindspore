@@ -91,7 +91,7 @@ int64_t DynamicDimWrap(int64_t dim, int64_t dim_post_expr) {
   MS_EXCEPTION(ValueError) << "dim:" << dim << " dim_post_expr:" << dim_post_expr;
 }
 
-OldTensorInfoPtr GetOldTensorInfo(const tensor::TensorPtr &tensor) {
+OldTensorInfoPtr GetOldTensorInfo(const tensor::BaseTensorPtr &tensor) {
   if (tensor->storage_info() == nullptr) {
     auto old_strides = GetOriStrides(tensor->shape());
     return std::make_shared<OldTensorInfo>(tensor->shape(), old_strides, tensor->shape(), old_strides, 0);

@@ -526,7 +526,7 @@ void KernelRuntime::RunOpAssignOutputNodeMemory(const ValuePtr &pre_output_value
   if (pre_output_value == nullptr) {
     return;
   }
-  std::vector<tensor::TensorPtr> pre_output_tensors;
+  std::vector<tensor::BaseTensorPtr> pre_output_tensors;
   TensorValueToTensor(pre_output_value, &pre_output_tensors);
   auto output_nodes = graph.outputs();
   if (pre_output_tensors.size() != output_nodes.size()) {
@@ -1011,7 +1011,7 @@ void KernelRuntime::AssignValueNodeTensor(const ValueNodePtr &value_node, const 
   MS_EXCEPTION_IF_NULL(mem_manager_);
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  std::vector<tensor::TensorPtr> tensors;
+  std::vector<tensor::BaseTensorPtr> tensors;
   TensorValueToTensor(node_value, &tensors);
   // Graph id should be passed to record static memory if profiling is enabled.
   auto kernel_info = dynamic_cast<device::KernelInfo *>(value_node->kernel_info());

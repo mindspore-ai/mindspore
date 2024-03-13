@@ -48,7 +48,7 @@ class IrGrad : public AutoGrad {
   bool KPynativeWithFProp(const GradParamPtr &grad_param) override;
   // Update top cell output, record last_node
   void UpdateOutputNodeOfTopCell(const ValuePtr &sens_out) override;
-  FuncGraphPtr Finish(const tensor::TensorPtrList &weights, const std::vector<size_t> &grad_position,
+  FuncGraphPtr Finish(const tensor::BaseTensorPtrList &weights, const std::vector<size_t> &grad_position,
                       const GradAttr &grad_attr);
 
   // Grad for function graph
@@ -69,22 +69,22 @@ class IrGrad : public AutoGrad {
   // Construct input as cnode for expander
   CNodePtr ConstructBpropGraphInput(const GradParamPtr &grad_param, const AnfNodePtr &dout,
                                     const VariablePtr &variable_adjoint, const AnfNodePtr &k_node, bool is_custom_prim);
-  ParameterPtr ExtractParameter(const tensor::TensorPtr &tensor) const;
+  ParameterPtr ExtractParameter(const tensor::BaseTensorPtr &tensor) const;
   void UpdateSensParameter(const ValuePtr &value);
   // Replace input or weights parameter from primal funcgraph to parameters of tape_;
   void ReplacePrimalParameter(bool has_sens_arg);
-  void UpdateTapeParameter(const tensor::TensorPtr &tensor);
+  void UpdateTapeParameter(const tensor::BaseTensorPtr &tensor);
   void DoParameterReplaceByManager(bool has_sens_arg);
   void DoParameterReplaceByUser(bool has_sens_arg, expander::bprop::UserType *user);
   // Set sens and weights parameter nodes by user input info
-  void SetSensAndWeights(const tensor::TensorPtrList &weights, bool has_sens_arg);
+  void SetSensAndWeights(const tensor::BaseTensorPtrList &weights, bool has_sens_arg);
 
   // Set return node according to grad flag
-  void SetOutput(const tensor::TensorPtrList &weights, const std::vector<size_t> &grad_position,
+  void SetOutput(const tensor::BaseTensorPtrList &weights, const std::vector<size_t> &grad_position,
                  const GradAttr &grad_attr);
-  AnfNodePtr GetGradNodeByIndex(const tensor::TensorPtr &tensor);
+  AnfNodePtr GetGradNodeByIndex(const tensor::BaseTensorPtr &tensor);
   AnfNodePtr GetInputGrad(bool grad_all_inputs, bool get_by_position, const std::vector<size_t> &grad_position);
-  AnfNodePtr GetWeightGrad(bool grad_weights, const tensor::TensorPtrList &weights, bool weight_param_is_tuple);
+  AnfNodePtr GetWeightGrad(bool grad_weights, const tensor::BaseTensorPtrList &weights, bool weight_param_is_tuple);
   // To elimate tuplegetitem cnode
   void ElimateTupleGetItem();
 

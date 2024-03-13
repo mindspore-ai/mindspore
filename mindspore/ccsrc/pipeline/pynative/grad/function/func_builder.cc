@@ -42,8 +42,8 @@ std::string PrintDebugInfo(std::vector<T> items, const std::string &info_header 
       MS_LOG(DEBUG) << "The " << i << "'th item is nullptr!";
       continue;
     }
-    if (items[i]->template isa<tensor::Tensor>()) {
-      auto tensor = items[i]->template cast<tensor::TensorPtr>();
+    if (items[i]->template isa<tensor::BaseTensor>()) {
+      auto tensor = items[i]->template cast<tensor::BaseTensorPtr>();
       auto grad = std::make_shared<tensor::Tensor>(*tensor);
       grad->data_sync();
       buf << i << "th: "
@@ -97,7 +97,7 @@ void SetDependValue(const PrimitivePtr &primitive, const NodePtrList &inputs) {
     }
     const auto abstract = inputs[index]->abstract();
     const auto value = inputs[index]->Value();
-    auto tensor = value->cast<tensor::TensorPtr>();
+    auto tensor = value->cast<tensor::BaseTensorPtr>();
     if (tensor != nullptr) {
       tensor->data_sync();
     }
@@ -119,8 +119,8 @@ bool ParseCond(const NodePtr &cond) {
   auto cond_val = cond->Value();
   if (cond_val->isa<BoolImm>()) {
     return GetValue<bool>(cond_val);
-  } else if (cond_val->isa<tensor::Tensor>()) {
-    auto tensor = cond_val->cast<tensor::TensorPtr>();
+  } else if (cond_val->isa<tensor::BaseTensor>()) {
+    auto tensor = cond_val->cast<tensor::BaseTensorPtr>();
     tensor->data_sync();
     size_t data_size = tensor->DataSize();
     auto tensor_type = tensor->Dtype();

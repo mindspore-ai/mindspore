@@ -26,14 +26,14 @@ namespace kernel {
 namespace pyboost {
 namespace {
 void SquareAscendCall(const std::shared_ptr<OpRunner> &op, const device::DeviceContext *device_context,
-                      const tensor::TensorPtr &input_tensor, const std::vector<tensor::TensorPtr> &outputs) {
+                      const tensor::BaseTensorPtr &input_tensor, const std::vector<tensor::BaseTensorPtr> &outputs) {
   MS_LOG(DEBUG) << "Call start";
   LAUNCH_ACLNN(aclnnMul, device_context, op->stream_id(), input_tensor, input_tensor, outputs[0]);
   MS_LOG(DEBUG) << "Launch end";
 }
 }  // namespace
 
-tensor::TensorPtr SquareAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &x_tensor) {
+tensor::BaseTensorPtr SquareAscendCustomize(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &x_tensor) {
   OpRunner::InferOpOutput(op, x_tensor);
   // No need to convert input
   PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), x_tensor);

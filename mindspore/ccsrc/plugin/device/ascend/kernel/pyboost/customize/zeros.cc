@@ -24,8 +24,8 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr ZerosAscendCustomize(const std::shared_ptr<OpRunner> &op, const ValueTuplePtr &size,
-                                       const std::optional<Int64ImmPtr> &dtype) {
+tensor::BaseTensorPtr ZerosAscendCustomize(const std::shared_ptr<OpRunner> &op, const ValueTuplePtr &size,
+                                           const std::optional<Int64ImmPtr> &dtype) {
   OpRunner::InferOpOutput(op, size, dtype);
   PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
   // No need to convert input

@@ -43,8 +43,8 @@ NodePtrList ChangeInputToAttr(const PrimitivePtr &prim, const NodePtrList &input
       if (i >= input_names_vec.size()) {
         MS_LOG(EXCEPTION) << "Index " << i << " is larger than input names size [" << input_names_vec.size() << "]";
       }
-      if (value->isa<tensor::Tensor>()) {
-        auto tensor = value->cast<tensor::TensorPtr>();
+      if (value->isa<tensor::BaseTensor>()) {
+        auto tensor = value->cast<tensor::BaseTensorPtr>();
         if (tensor->data().const_data() == nullptr && !tensor->has_user_data(kTensorValueIsEmpty)) {
           return inputs;
         }

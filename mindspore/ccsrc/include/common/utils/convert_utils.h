@@ -80,7 +80,7 @@ std::vector<T> TensorValueToVector(const tensor::TensorPtr &tensor) {
   return value;
 }
 
-COMMON_EXPORT void TensorValueToTensor(const ValuePtr &value, std::vector<tensor::TensorPtr> *tensors);
+COMMON_EXPORT void TensorValueToTensor(const ValuePtr &value, std::vector<tensor::BaseTensorPtr> *tensors);
 
 COMMON_EXPORT size_t CountValueNum(const ValueSequencePtr &value_sequence);
 

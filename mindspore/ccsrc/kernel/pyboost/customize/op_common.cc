@@ -34,7 +34,7 @@ tensor::BaseTensorPtr CopyCustomizeCall(const std::shared_ptr<OpRunner> &op, con
   op->set_input_abs({input_abs});
   op->set_output_abs(output_abs);
 
-  std::vector<tensor::TensorPtr> outputs;
+  std::vector<tensor::BaseTensorPtr> outputs;
   PyBoostUtils::CreateOutputTensor(output_abs, &outputs);
   op->set_outputs(outputs);
 
@@ -84,7 +84,8 @@ tensor::BaseTensorPtr CopyCustomizeCall(const std::shared_ptr<OpRunner> &op, con
   return op->output(0);
 }
 
-tensor::TensorPtr ContiguousTensorOpProcess(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor) {
+tensor::BaseTensorPtr ContiguousTensorOpProcess(const std::shared_ptr<OpRunner> &op,
+                                                const BaseTensorPtr &input_tensor) {
   // If the tensor is continuous, return the cloned tensor and set the op information. If the tensor is not continuous,
   // return nullptr and do nothing.
   MS_EXCEPTION_IF_NULL(input_tensor);
@@ -93,7 +94,7 @@ tensor::TensorPtr ContiguousTensorOpProcess(const std::shared_ptr<OpRunner> &op,
     auto input_abs = input_tensor->ToAbstract();
     input_abs->set_value(kValueAny);
     op->set_input_abs({input_abs});
-    auto output_tensor = std::make_shared<tensor::Tensor>(*input_tensor);
+    auto output_tensor = std::make_shared<tensor::BaseTensor>(*input_tensor);
     op->set_outputs({output_tensor});
     op->set_output_abs(input_abs->Clone());
     MS_LOG(DEBUG) << "Input_tensor storage_info is nullptr, just return cloned tensor, input_tensor id:"
@@ -103,9 +104,10 @@ tensor::TensorPtr ContiguousTensorOpProcess(const std::shared_ptr<OpRunner> &op,
   return nullptr;
 }
 
-tensor::TensorPtr ClampTensorCustomizeCall(const std::shared_ptr<OpRunner> &op, const TensorPtr &x_tensor,
-                                           const std::optional<TensorPtr> &min, const std::optional<TensorPtr> &max,
-                                           const std::string &device_target) {
+tensor::BaseTensorPtr ClampTensorCustomizeCall(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &x_tensor,
+                                               const std::optional<BaseTensorPtr> &min,
+                                               const std::optional<BaseTensorPtr> &max,
+                                               const std::string &device_target) {
   MS_LOG(DEBUG) << "Call ClampTensor start";
   if (!min.has_value() && !max.has_value()) {
     MS_EXCEPTION(ValueError) << "For Clamp, at least one of 'min' or 'max' must not be None.";
@@ -115,7 +117,7 @@ tensor::TensorPtr ClampTensorCustomizeCall(const std::shared_ptr<OpRunner> &op, 
   std::vector<AbstractBasePtr> input_abs = {x_tensor->ToAbstract()};
   OpPtr final_node = nullptr;
 
-  TensorPtr output = x_tensor;
+  BaseTensorPtr output = x_tensor;
   if (min.has_value()) {
     input_abs.emplace_back(min.value()->ToAbstract());
     auto min_tensor = PyBoostUtils::CastTensor(min.value(), x_tensor->Dtype()->type_id(), device_target);
@@ -142,9 +144,9 @@ tensor::TensorPtr ClampTensorCustomizeCall(const std::shared_ptr<OpRunner> &op, 
   return output;
 }
 
-tensor::TensorPtr ClampScalarCustomizeCall(const std::shared_ptr<OpRunner> &op, const TensorPtr &x_tensor,
-                                           const std::optional<ScalarPtr> &min, const std::optional<ScalarPtr> &max,
-                                           const std::string &device_target) {
+tensor::BaseTensorPtr ClampScalarCustomizeCall(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &x_tensor,
+                                               const std::optional<ScalarPtr> &min, const std::optional<ScalarPtr> &max,
+                                               const std::string &device_target) {
   MS_LOG(DEBUG) << "Call ClampScalar start";
   if (!min.has_value() && !max.has_value()) {
     MS_EXCEPTION(ValueError) << "For Clamp, at least one of 'min' or 'max' must not be None.";
@@ -154,10 +156,10 @@ tensor::TensorPtr ClampScalarCustomizeCall(const std::shared_ptr<OpRunner> &op, 
   std::vector<AbstractBasePtr> input_abs = {x_tensor->ToAbstract()};
   OpPtr final_node = nullptr;
 
-  TensorPtr output = x_tensor;
+  BaseTensorPtr output = x_tensor;
   if (min.has_value()) {
     input_abs.emplace_back(min.value()->ToAbstract());
-    auto min_tensor = ScalarToTensor(min.value());
+    auto min_tensor = PyBoostUtils::ScalarToTensor(min.value());
     min_tensor = PyBoostUtils::CastTensor(min_tensor, x_tensor->Dtype()->type_id(), device_target);
     const auto &maximum = CREATE_PYBOOST_OP(Maximum, device_context->device_context_key_.device_name_);
     output = maximum->Call(output, min_tensor);
@@ -167,7 +169,7 @@ tensor::TensorPtr ClampScalarCustomizeCall(const std::shared_ptr<OpRunner> &op, 
   }
   if (max.has_value()) {
     input_abs.emplace_back(max.value()->ToAbstract());
-    auto max_tensor = ScalarToTensor(max.value());
+    auto max_tensor = PyBoostUtils::ScalarToTensor(max.value());
     max_tensor = PyBoostUtils::CastTensor(max_tensor, x_tensor->Dtype()->type_id(), device_target);
     const auto &minimum = CREATE_PYBOOST_OP(Minimum, device_context->device_context_key_.device_name_);
     output = minimum->Call(output, max_tensor);

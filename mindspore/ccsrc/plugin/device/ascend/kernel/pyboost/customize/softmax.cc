@@ -26,16 +26,16 @@ namespace kernel {
 namespace pyboost {
 namespace {
 void SoftmaxAscendCall(const std::shared_ptr<OpRunner> &op, const device::DeviceContext *device_context,
-                       const tensor::TensorPtr &logits_tensor, const int64_t dim,
-                       const std::vector<tensor::TensorPtr> &outputs) {
+                       const tensor::BaseTensorPtr &logits_tensor, const int64_t dim,
+                       const std::vector<tensor::BaseTensorPtr> &outputs) {
   MS_LOG(DEBUG) << "Call start";
   LAUNCH_ACLNN(aclnnSoftmax, device_context, op->stream_id(), logits_tensor, dim, outputs[0]);
   MS_LOG(DEBUG) << "Launch end";
 }
 }  // namespace
 
-tensor::TensorPtr SoftmaxAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &logits_tensor,
-                                         const ValueTuplePtr &axis) {
+tensor::BaseTensorPtr SoftmaxAscendCustomize(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &logits_tensor,
+                                             const ValueTuplePtr &axis) {
   OpRunner::InferOpOutput(op, logits_tensor, axis);
   // ValueTuple to std::vector
   auto axis_vector = ConvertValueTupleToVector<int64_t>(axis);

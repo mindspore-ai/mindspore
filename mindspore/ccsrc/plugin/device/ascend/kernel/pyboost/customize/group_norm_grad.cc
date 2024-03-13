@@ -29,9 +29,9 @@ namespace {
 constexpr size_t kNumberTwo = 2;
 }  // namespace
 
-void GroupNormGradAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &dout_tensor,
-                                  const TensorPtr &input_tensor, const TensorPtr &mean_tensor,
-                                  const TensorPtr &rstd_tensor, const TensorPtr &weight_opt_tensor,
+void GroupNormGradAscendCustomize(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &dout_tensor,
+                                  const BaseTensorPtr &input_tensor, const BaseTensorPtr &mean_tensor,
+                                  const BaseTensorPtr &rstd_tensor, const BaseTensorPtr &weight_opt_tensor,
                                   const Int64ImmPtr &num_groups, const BoolImmPtr &dx_is_require,
                                   const BoolImmPtr &dgamma_is_require, const BoolImmPtr &dbeta_is_require) {
   MS_LOG(DEBUG) << "Call start";

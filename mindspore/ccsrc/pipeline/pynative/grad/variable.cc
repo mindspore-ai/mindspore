@@ -25,8 +25,8 @@ void BackwardNode::UpdateNextEdges(const ValuePtrList &inputs) {
   gradient_index_.reserve(inputs.size());
   for (size_t i = 0; i < inputs.size(); ++i) {
     const auto &value = inputs[i];
-    if (value->isa<tensor::Tensor>()) {
-      auto tensor = value->cast<tensor::TensorPtr>();
+    if (value->isa<tensor::BaseTensor>()) {
+      auto tensor = value->cast<tensor::BaseTensorPtr>();
       auto auto_grad_meta_data = tensor->auto_grad_meta_data();
       MS_EXCEPTION_IF_NULL(auto_grad_meta_data);
       auto variable = auto_grad_meta_data->variable();
@@ -117,7 +117,7 @@ AnfNodePtr IrVariable::RealDout() {
   const auto &dout_abs = accumulate_dout->abstract();
   MS_EXCEPTION_IF_NULL(dout_abs);
   // For input, if it is a sparsetensor, we need return a sparsetensor.
-  if (out_value()->isa<tensor::Tensor>() || dout_abs->isa<abstract::AbstractSparseTensor>()) {
+  if (out_value()->isa<tensor::BaseTensor>() || dout_abs->isa<abstract::AbstractSparseTensor>()) {
     return accumulate_dout;
   } else if (out_value()->isa<tensor::MetaSparseTensor>()) {
     return PyNativeAlgo::AutoGrad::BuildSparseTensorNode(ir_function_node()->tape(), out_value(), accumulate_dout);

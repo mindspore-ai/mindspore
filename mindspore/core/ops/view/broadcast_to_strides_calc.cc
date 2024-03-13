@@ -73,7 +73,7 @@ bool BroadcastToCheck(const std::string &prim_name, const std::vector<int64_t> &
   return true;
 }
 
-TensorStorageInfoPtrList BroadCastToProcess(const PrimitivePtr &prim, const tensor::TensorPtr input_tensor,
+TensorStorageInfoPtrList BroadCastToProcess(const PrimitivePtr &prim, const tensor::BaseTensorPtr input_tensor,
                                             const std::vector<int64_t> &input_x) {
   auto old_tensor_info = GetOldTensorInfo(input_tensor);
   auto old_shape = old_tensor_info->old_shape;
@@ -115,11 +115,11 @@ TensorStorageInfoPtrList BroadCastToProcess(const PrimitivePtr &prim, const tens
 }
 
 TensorStorageInfoPtrList BroadcastToCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs) {
-  if (CheckInputsNull(inputs, kBroadCastToInputsNum) || !inputs[0]->isa<tensor::Tensor>()) {
+  if (CheckInputsNull(inputs, kBroadCastToInputsNum) || !inputs[0]->isa<tensor::BaseTensor>()) {
     return {};
   }
 
-  auto input_tensor = inputs[0]->cast<tensor::TensorPtr>();
+  auto input_tensor = inputs[0]->cast<tensor::BaseTensorPtr>();
   MS_EXCEPTION_IF_NULL(input_tensor);
   auto input_x = GetValue<std::vector<int64_t>>(inputs[1]);
   return BroadCastToProcess(prim, input_tensor, input_x);

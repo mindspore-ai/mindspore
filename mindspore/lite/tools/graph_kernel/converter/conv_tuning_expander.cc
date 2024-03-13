@@ -145,7 +145,7 @@ void TuneProcess(const std::string &json_file_name, const std::string &res_file_
          << flags.cpu_refer_thread_num << ")\n";
   std::string cmd = "python -c \"" + py_cmd.str() + "\"";
   MS_LOG(INFO) << "GraphKernel conv tuning content: \n" << cmd;
-  auto ret = system(cmd.c_str());
+  auto ret = std::system(cmd.c_str());
   if (!WIFEXITED(ret)) {
     MS_LOG(ERROR) << "Tune process start fail! process content is as follows:\n" << cmd;
   }

@@ -127,8 +127,8 @@ class FuncGrad : public AutoGrad {
   // Reverse connect jit or higher order sub bprop funcgraph
   bool KPynativeWithFProp(const GradParamPtr &grad_param) override;
 
-  ValuePtr Finish(const TensorPtrList &weights, const std::vector<size_t> &grad_position, const GradAttr &grad_attr,
-                  const ValuePtr &sens = nullptr);
+  ValuePtr Finish(const tensor::BaseTensorPtrList &weights, const std::vector<size_t> &grad_position,
+                  const GradAttr &grad_attr, const ValuePtr &sens = nullptr);
 
  private:
   void BackPropagate();
@@ -145,24 +145,24 @@ class FuncGrad : public AutoGrad {
   BackwardNodePtr BuildFakeBackwardNode(const PrimitivePtr &prim, const ValuePtrList &flatten_inputs,
                                         const OpGradInfoPtr &op_grad_info);
   BackwardNodePtr BuildGraphBackwardNode(const GradParamPtr &grad_param);
-  ValuePtr GetGrads(const tensor::TensorPtrList &weights, const std::vector<size_t> &grad_position,
+  ValuePtr GetGrads(const tensor::BaseTensorPtrList &weights, const std::vector<size_t> &grad_position,
                     const GradAttr &grad_attr);
   ValuePtr GetInputGrads(bool grad_all_inputs, bool get_by_position, const std::vector<size_t> &grad_position);
-  ValuePtr GetWeightGrads(bool grad_weights, const TensorPtrList &weights, bool weight_param_is_tuple);
-  ValuePtr GetWeightGrad(const tensor::TensorPtr &weight);
-  void ClearGrads(const TensorPtrList &weights);
+  ValuePtr GetWeightGrads(bool grad_weights, const tensor::BaseTensorPtrList &weights, bool weight_param_is_tuple);
+  ValuePtr GetWeightGrad(const tensor::BaseTensorPtr &weight);
+  void ClearGrads(const tensor::BaseTensorPtrList &weights);
   ValuePtrList OnsLike(const ValuePtr &value);
   void CheckSensShapeAndType(const ValuePtr &sens_gradient);
-  void PruningGradGraph(const TensorPtrList &weights, const GradAttr &grad_attr,
+  void PruningGradGraph(const tensor::BaseTensorPtrList &weights, const GradAttr &grad_attr,
                         const std::vector<size_t> &grad_position);
   void PruningInput(const GradAttr &grad_attr, const std::vector<size_t> &grad_position);
-  void PruningWeights(const TensorPtrList &weights, const GradAttr &grad_attr);
+  void PruningWeights(const tensor::BaseTensorPtrList &weights, const GradAttr &grad_attr);
 
   bool is_run_recompute_{false};
   std::shared_ptr<FuncBuilder> func_impl_;
   OrderedSet<FuncVariablePtr> variable_set_;
   std::vector<std::pair<ValuePtr, FuncVariablePtr>> cell_inputs_;
-  std::vector<tensor::TensorPtr> weights_used_in_graph_;
+  std::vector<tensor::BaseTensorPtr> weights_used_in_graph_;
   ValuePtr sens_value_{nullptr};
   FuncVariablePtr last_variable_{nullptr};
   ValuePtrList root_gradients_;

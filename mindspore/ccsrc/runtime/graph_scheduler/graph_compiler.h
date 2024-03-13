@@ -155,15 +155,17 @@ class GraphCompiler {
 
   // Get input tensors for single op compile and run, input tensors may convert from value node and parameter in graph
   // and prev kernel node's output.
-  void GetSingleOpInputTensors(const CNodePtr &kernel, const std::map<KernelWithIndex, TensorPtr> &op_output,
+  void GetSingleOpInputTensors(const CNodePtr &kernel,
+                               const std::map<KernelWithIndex, tensor::BaseTensorPtr> &op_output,
                                const std::map<AnfNodePtr, size_t> &parameter_index,
                                const std::vector<TensorPtr> &graph_inputs, bool is_run_pyboost,
                                InputInfo *const input_info);
   // Get one input tensor for single control op, such as bprop_cut.
-  TensorPtr GetSingleOpInputTensorByIndex(const CNodePtr &kernel, const std::map<KernelWithIndex, TensorPtr> &op_output,
-                                          const std::map<AnfNodePtr, size_t> &parameter_index,
-                                          const std::vector<TensorPtr> &graph_inputs, InputInfo *const input_info,
-                                          size_t input_index);
+  tensor::BaseTensorPtr GetSingleOpInputTensorByIndex(const CNodePtr &kernel,
+                                                      const std::map<KernelWithIndex, tensor::BaseTensorPtr> &op_output,
+                                                      const std::map<AnfNodePtr, size_t> &parameter_index,
+                                                      const std::vector<TensorPtr> &graph_inputs,
+                                                      InputInfo *const input_info, size_t input_index);
 
   // Get OpRunInfo and GraphInfo for single op compile and run.
   void GetSingleOpRunInfoAndGraphInfo(const CNodePtr &kernel, const InputInfo &input_info,
@@ -181,7 +183,7 @@ class GraphCompiler {
   // Update ref count of PyNative back propagation operators.
   void UpdateRefCount(const std::set<KernelWithIndex> &input_kernels_with_index,
                       std::map<KernelWithIndex, size_t> *ref_count,
-                      std::map<KernelWithIndex, tensor::TensorPtr> *op_output_map) const;
+                      std::map<KernelWithIndex, tensor::BaseTensorPtr> *op_output_map) const;
 
   // Update forward op output ref count of PyNative back graph.
   void UpdateForwardOpOutputRefCount(const std::vector<ValuePtr> &input_values,
@@ -190,7 +192,7 @@ class GraphCompiler {
   // Handle single op output tensor and recover output of original complete kernel graph.
   void RecoverGraphOutput(const AnfNodePtr &kernel, const VectorRef &op_outputs,
                           const std::map<KernelWithIndex, size_t> &ref_count,
-                          std::map<KernelWithIndex, TensorPtr> *op_output_map,
+                          std::map<KernelWithIndex, tensor::BaseTensorPtr> *op_output_map,
                           GraphOutputInfo *const graph_output_info) const;
 
   // Register a summary callback function, which is called in the final stages of summary.

@@ -17,6 +17,7 @@
 #include "plugin/device/gpu/kernel/pyboost/customize/matmul_ext.h"
 #include <string>
 #include <memory>
+#include <utility>
 #include <algorithm>
 #include "ops/auto_generate/gen_ops_primitive.h"
 #include "kernel/pyboost/pyboost_utils.h"
@@ -31,7 +32,7 @@ namespace mindspore {
 namespace kernel {
 namespace pyboost {
 namespace {
-size_t Rank(const TensorPtr &x) { return x->shape_c().size(); }
+size_t Rank(const BaseTensorPtr &x) { return x->shape_c().size(); }
 
 ValueTuplePtr ShapeVectorToValueTuple(ShapeVector shape_vector) {
   std::vector<ValuePtr> shape_out_vector;
@@ -40,7 +41,7 @@ ValueTuplePtr ShapeVectorToValueTuple(ShapeVector shape_vector) {
   return std::make_shared<ValueTuple>(std::move(shape_out_vector));
 }
 
-TensorPtr Expand(TensorPtr tensor, size_t ndim, const DeviceContext *device_context) {
+BaseTensorPtr Expand(BaseTensorPtr tensor, size_t ndim, const DeviceContext *device_context) {
   auto reshape = CREATE_PYBOOST_OP(Reshape, device_context->device_context_key_.device_name_);
   ShapeVector shape = tensor->shape();
   while (shape.size() < ndim) {
@@ -62,15 +63,15 @@ ValueTuplePtr ReduceTo3D(const ShapeVector &shape) {
   return ShapeVectorToValueTuple(ret);
 }
 }  // namespace
-void MatMulExtGPUCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
-                           const TensorPtr &mat2_tensor) {
+void MatMulExtGPUCustomize(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &input_tensor,
+                           const BaseTensorPtr &mat2_tensor) {
   MS_LOG(DEBUG) << "Call start";
 
   auto device_context = op->device_context();
 
-  // convert input_tensor into input, input is a TensorPtr
-  TensorPtr input = input_tensor;
-  TensorPtr other = mat2_tensor;
+  // convert input_tensor into input, input is a BaseTensorPtr
+  BaseTensorPtr input = input_tensor;
+  BaseTensorPtr other = mat2_tensor;
 
   auto input_rank = input->shape().size();
   auto other_rank = other->shape().size();
@@ -110,7 +111,7 @@ void MatMulExtGPUCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr 
   input = Expand(input, kDim2, device_context);
   other = Expand(other, kDim2, device_context);
 
-  TensorPtr res;
+  BaseTensorPtr res;
   if (Rank(other) == kDim2) {
     if (Rank(input) > kDim2) {
       int64_t new_shape_dim0 = 1;

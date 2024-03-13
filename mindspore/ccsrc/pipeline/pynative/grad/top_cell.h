@@ -143,9 +143,9 @@ class TopCellInfo {
   void UpdateTopCellInfo(bool forward_already_run, bool need_compile_graph, bool vm_compile);
   void ClearDeviceMemory() const;
   void Clear();
-  void AddParamGradInfo(const tensor::TensorPtr &tensor, const AutoGradMetaDataPtr &auto_grad_meta_data);
+  void AddParamGradInfo(const tensor::BaseTensorPtr &tensor, const AutoGradMetaDataPtr &auto_grad_meta_data);
   void ClearParamGradInfo();
-  const mindspore::OrderedMap<tensor::TensorPtr, AutoGradMetaDataPtr> &param_grad_info() const {
+  const mindspore::OrderedMap<tensor::BaseTensorPtr, AutoGradMetaDataPtr> &param_grad_info() const {
     return param_grad_info_;
   }
   inline bool use_dynamic_shape_process() const { return use_dynamic_shape_process_; }
@@ -167,7 +167,7 @@ class TopCellInfo {
   const std::vector<std::string> &output_ids() const { return output_ids_; }
   void set_outputs_ids(std::vector<std::string> output_ids) { output_ids_ = std::move(output_ids); }
   // Check whether the tensor is top cell output.
-  bool IsOutputTensor(const tensor::TensorPtr &tensor) const;
+  bool IsOutputTensor(const tensor::BaseTensorPtr &tensor) const;
 
  private:
   void SetMultipleOutputToGraphInfoMap(const string &id, const AnfNodePtr &node) const;
@@ -210,7 +210,7 @@ class TopCellInfo {
   // Each cell object has two backward hook ops.
   CellIdWithBackwardHookOp cell_backward_hook_op_;
   TensorReplaceInfo replace_info_;
-  mindspore::OrderedMap<tensor::TensorPtr, AutoGradMetaDataPtr> param_grad_info_;
+  mindspore::OrderedMap<tensor::BaseTensorPtr, AutoGradMetaDataPtr> param_grad_info_;
   InputArgsInfoPtr input_args_info_{nullptr};
   bool use_dynamic_shape_process_{false};
   bool has_bprop_cut_op_{false};

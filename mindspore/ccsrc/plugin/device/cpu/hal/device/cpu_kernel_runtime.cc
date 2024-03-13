@@ -236,7 +236,6 @@ tensor::TensorPtr CPUKernelRuntime::CreateTensorForOutput(session::KernelGraph *
     }
     (void)bound_addresses->insert(address);
   }
-  tensor->SetNeedWait(true);
   tensor->SetIsGraphOutput();
   return tensor;
 }
