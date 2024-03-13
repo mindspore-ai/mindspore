@@ -22,6 +22,7 @@
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
+#include "transform/symbol/acl_base_symbol.h"
 #include "transform/symbol/acl_compiler_symbol.h"
 #include "transform/symbol/symbol_utils.h"
 
@@ -51,7 +52,7 @@ std::mutex set_opt_mutex;
 aclError SetCompileopt(aclCompileOpt opt, const char *value) { return CALL_ASCEND_API(aclSetCompileopt, opt, value); }
 
 void *GetAclFunc(const std::string &lib_path, const std::string &func_name) {
-  static auto ascend_path = device::ascend::GetAscendPath();
+  static auto ascend_path = mindspore::transform::GetAscendPath();
   auto load_path = ascend_path + "/lib64/" + lib_path;
 
   auto handler = dlopen(load_path.c_str(), RTLD_LAZY);
@@ -124,7 +125,7 @@ uint8_t AclUtil::KeepOriginDType() {
   static std::string version = "";
   static uint8_t need_keep_dtype = 0;
   if (version.empty()) {
-    const char *soc_name_c = aclrtGetSocName();
+    const char *soc_name_c = CALL_ASCEND_API2(aclrtGetSocName);
     if (soc_name_c != nullptr) {
       version = soc_name_c;
     }

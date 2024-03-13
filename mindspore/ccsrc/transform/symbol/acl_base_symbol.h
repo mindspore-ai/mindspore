@@ -34,6 +34,7 @@ ORIGIN_METHOD(aclSetTensorDescName, void, aclTensorDesc *, const char *)
 ORIGIN_METHOD(aclSetTensorFormat, aclError, aclTensorDesc *, aclFormat)
 ORIGIN_METHOD(aclSetTensorPlaceMent, aclError, aclTensorDesc *, aclMemType)
 ORIGIN_METHOD(aclSetTensorShape, aclError, aclTensorDesc *, int, const int64_t *)
+ORIGIN_METHOD(aclrtGetSocName, const char *)
 
 extern aclCreateDataBufferFunObj aclCreateDataBuffer_;
 extern aclCreateTensorDescFunObj aclCreateTensorDesc_;
@@ -47,6 +48,7 @@ extern aclSetTensorDescNameFunObj aclSetTensorDescName_;
 extern aclSetTensorFormatFunObj aclSetTensorFormat_;
 extern aclSetTensorPlaceMentFunObj aclSetTensorPlaceMent_;
 extern aclSetTensorShapeFunObj aclSetTensorShape_;
+extern aclrtGetSocNameFunObj aclrtGetSocName_;
 
 void LoadAclBaseApiSymbol(const std::string &ascend_path);
 }  // namespace transform

@@ -28,7 +28,6 @@
 #include "framework/common/helper/model_helper.h"
 #include "transform/graph_ir/op_adapter_map.h"
 #include "plugin/device/ascend/hal/device/tensorprint_utils.h"
-#include "acl/acl_base.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "plugin/device/ascend/hal/profiler/parallel_strategy_profiling.h"
 #include "cxx_api/graph/acl/acl_env_guard.h"
@@ -38,6 +37,7 @@
 #include "plugin/device/ascend/hal/device/tensorsummary_utils.h"
 #include "plugin/device/ascend/hal/device/tensordump_utils.h"
 #include "plugin/device/ascend/hal/device/mbuf_receive_manager.h"
+#include "transform/symbol/acl_base_symbol.h"
 #include "transform/symbol/acl_rt_symbol.h"
 #include "transform/symbol/symbol_utils.h"
 
@@ -346,7 +346,7 @@ bool AscendDeprecatedInterface::IsTsdOpened(const std::shared_ptr<MsContext> &ms
 }
 
 bool AscendDeprecatedInterface::CheckIsAscend910Soc() {
-  const char *soc_name_c = aclrtGetSocName();
+  const char *soc_name_c = CALL_ASCEND_API2(aclrtGetSocName);
   if (soc_name_c == nullptr) {
     return false;
   }

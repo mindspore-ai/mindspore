@@ -20,7 +20,7 @@
 #include <map>
 #include "utils/dlopen_macro.h"
 #include "acl/error_codes/rt_error_codes.h"
-#include "acl/acl_base.h"
+#include "transform/symbol/acl_base_symbol.h"
 #include "transform/symbol/acl_rt_symbol.h"
 #include "transform/symbol/acl_symbol.h"
 #include "transform/symbol/symbol_utils.h"
@@ -136,21 +136,6 @@ void ErrorManagerAdapter::MessageHandler(std::ostringstream *oss) {
   if (!error_message.empty()) {
     *oss << error_message;
   }
-}
-
-std::string GetAscendPath() {
-  Dl_info info;
-  if (dladdr(reinterpret_cast<void *>(aclrtGetSocName), &info) == 0) {
-    MS_LOG(INFO) << "Get dladdr failed, skip.";
-    return "";
-  }
-  auto path_tmp = std::string(info.dli_fname);
-  const std::string kLib64 = "lib64";
-  auto pos = path_tmp.find(kLib64);
-  if (pos == std::string::npos) {
-    MS_EXCEPTION(ValueError) << "Get ascend path failed, please check the run package.";
-  }
-  return path_tmp.substr(0, pos);
 }
 
 std::string GetErrorMsg(uint32_t rt_error_code) {
