@@ -404,6 +404,7 @@ bool ReadAclnnEnableEnv(const AnfNodePtr &node) {
   }
 
   static auto read_config = !enable_aclnn_env.empty() && enable_aclnn_env != "0";
+  std::string op_name = common::AnfAlgo::GetCNodeName(node);
   if (read_config) {
     std::call_once(kAclnnEnableListInit, []() {
       std::ifstream in_file(enable_aclnn_env);
@@ -418,10 +419,14 @@ bool ReadAclnnEnableEnv(const AnfNodePtr &node) {
       in_file.close();
     });
 
-    std::string op_name = common::AnfAlgo::GetCNodeName(node);
     if (kAclnnEnableList.count(op_name) != 0) {
       return kernel::IsRegisteredAclnnOp(node);
     }
+  }
+
+  static std::set<std::string> kAscendcKernelList = {"AllFinite"};
+  if (kAscendcKernelList.count(op_name) != 0) {
+    return true;
   }
 
   return false;

@@ -179,6 +179,7 @@ GVAR_DEF(PrimitivePtr, kPrimPromptFlashAttention, std::make_shared<Primitive>(kF
 GVAR_DEF(PrimitivePtr, kPrimIncreFlashAttention, std::make_shared<Primitive>(kFlashIncreFlashAttentionOpName));
 GVAR_DEF(PrimitivePtr, kPrimRNNTLoss, std::make_shared<Primitive>(kRNNTLossOpName));
 GVAR_DEF(PrimitivePtr, kPrimMatmulQkv, std::make_shared<Primitive>(kMatmulQkvOpName));
+GVAR_DEF(PrimitivePtr, kPrimAllFinite, std::make_shared<Primitive>(kAllFiniteOpName));
 }  // namespace prim
 }  // namespace mindspore
 

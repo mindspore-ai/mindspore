@@ -10091,3 +10091,14 @@ class MatmulQkv(Primitive):
         """Initialize"""
         self.init_prim_io_names(inputs=['hidden_states', 'weight_q', 'weight_k', 'weight_v'],
                                 outputs=["output_q", "output_k", "output_v"])
+
+
+class AllFinite(Primitive):
+    r"""
+    Check all gradients is finite.
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize"""
+        self.init_prim_io_names(inputs=['gradients'],
+                                outputs=["is_finite"])

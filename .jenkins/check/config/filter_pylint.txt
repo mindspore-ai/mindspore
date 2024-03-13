@@ -114,6 +114,17 @@
 "mindspore/mindspore/python/mindspore/ops/composite/multitype_ops/bitwise_or_impl.py"                                    "too-many-function-args"
 "mindspore/mindspore/python/mindspore/ops_generate/gen_ops_inner_prim.py"                                                "super-init-not-called"
 "mindspore/mindspore/python/mindspore/ops_generate/arg_handler.py"                                                       "unused-import"
+"mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/ascendc/cmake/util"                                               "missing-docstring"
+"mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/ascendc/cmake/util"                                               "len-as-condition"
+"mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/ascendc/cmake/util"                                               "consider-using-ternary"
+"mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/ascendc/cmake/util"                                               "ungrouped-imports"
+"mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/ascendc/cmake/util"                                               "useless-super-delegation"
+"mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/ascendc/cmake/util"                                               "pointless-string-statement"
+"mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/ascendc/cmake/util"                                               "misplaced-comparison-constant"
+"mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/ascendc/cmake/util"                                               "singleton-comparison"
+"mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/ascendc/cmake/util"                                               "inconsistent-return-statements"
+"mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/ascendc/cmake/util"                                               "superfluous-parens"
+
 
 # MindData
 "mindspore/mindspore/python/mindspore/dataset/__init__.py"                                                               "redefined-builtin"
@@ -241,6 +252,7 @@
 "mindspore/tests/st/fallback/test_graph_fallback_runtime_is_isnot.py"                                   "iteral-comparison"
 "mindspore/tests/st/dump/dump_test_utils.py"                                                            "too-many-nested-blocks"
 "mindspore/tests/ut/python/parallel/test_graph_utils.py"                                                "too-many-function-args"
+"mindspore/tests/st/ops/ascend/test_aclnn_ops/test_all_finite.py"                                       "singleton-comparison"
 
 #MindSpore Lite
 "mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/experimental/HPC-generator/generator.py"                                         "redefined-builtin"
