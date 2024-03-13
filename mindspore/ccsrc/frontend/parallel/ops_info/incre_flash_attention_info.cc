@@ -106,6 +106,64 @@ Status IncreFlashAttentionInfo::GetAttrs() {
   return SUCCESS;
 }
 
+// The purpose of this function is to get the squeezed index of the optional inputs, e.g.
+// input_0   input_1   input_2   (opt_input_3)   (opt_input_4)   opt_input_5
+// 0         1         2          None               None              3
+// when input 3 and 4 are not provided, the squeezed index of input 5 is 3
+int IncreFlashAttentionInfo::GetSqueezedIndex(size_t original_index) {
+  if (original_index >= optinal_inputs_.size()) {
+    MS_LOG(WARNING) << "provided index [" << original_index << "] is out of range [" << optinal_inputs_.size() << "]";
+    return -1;
+  }
+  int id_counter = 0;
+  for (size_t index = 1; index <= original_index; index++) {
+    if (optinal_inputs_[index]) {
+      id_counter++;
+    }
+  }
+  return id_counter;
+}
+
+Status IncreFlashAttentionInfo::CheckAntiquantStrategy(const StrategyPtr &strategy, size_t input_index) {
+  auto strategies = strategy->GetInputDim();
+  if (!optinal_inputs_[input_index]) {
+    return SUCCESS;
+  }
+  auto antiquant_idx = GetSqueezedIndex(input_index);
+  if (antiquant_idx >= 0) {
+    if (input_layout_ == kAttrInputLayoutBSH) {
+      auto antiquant_strategy = strategies[antiquant_idx];
+      if (antiquant_strategy.size() != 2) {
+        MS_LOG(ERROR) << "antiquant strategy length should be strictly 2 in BSH layout.";
+        return FAILED;
+      }
+      if (antiquant_strategy[0] != 1) {
+        MS_LOG(ERROR) << "antiquant strategy first dim should be strictly 1 in BSH layout.";
+        return FAILED;
+      }
+      if (antiquant_strategy[1] != mp_) {
+        MS_LOG(ERROR) << "antiquant strategy second dim should be strictly mp in BSH layout.";
+        return FAILED;
+      }
+    } else if (input_layout_ == kAttrInputLayoutBNSD) {
+      auto antiquant_strategy = strategies[antiquant_idx];
+      if (antiquant_strategy.size() != 4) {
+        MS_LOG(ERROR) << "antiquant strategy length should be strictly 4 in BNSD layout.";
+        return FAILED;
+      }
+      if ((antiquant_strategy[0] != 1) || (antiquant_strategy[2] != 1) || (antiquant_strategy[3] != 1)) {
+        MS_LOG(ERROR) << "antiquant strategy first, third, and forth dim should be strictly 1 in BNSD layout.";
+        return FAILED;
+      }
+      if (antiquant_strategy[1] != mp_) {
+        MS_LOG(ERROR) << "antiquant strategy second dim should be strictly mp in BNSD layout.";
+        return FAILED;
+      }
+    }
+  }
+  return SUCCESS;
+}
+
 Status IncreFlashAttentionInfo::CheckStrategy(const StrategyPtr &strategy) {
   if (CheckStrategyValue(strategy, inputs_shape_) != SUCCESS) {
     return FAILED;
@@ -142,6 +200,14 @@ Status IncreFlashAttentionInfo::CheckStrategy(const StrategyPtr &strategy) {
     MS_LOG(ERROR) << "For" << name_ << ": The input layout" << input_layout_ << "is not supported.";
     return FAILED;
   }
+  if (CheckAntiquantStrategy(strategy, ops::kIncreFlashAttentionInputAntiquantScale) != SUCCESS) {
+    MS_LOG(ERROR) << "Check strategy for antiquant_scale failed";
+    return FAILED;
+  }
+  if (CheckAntiquantStrategy(strategy, ops::kIncreFlashAttentionInputAntiquantOffset) != SUCCESS) {
+    MS_LOG(ERROR) << "Check strategy for antiquant_offset failed";
+    return FAILED;
+  }
   if (optinal_inputs_.empty()) {
     SetOptinalInputs();
   }
@@ -171,6 +237,16 @@ Status IncreFlashAttentionInfo::InferTensorMap() {
   for (auto index = static_cast<size_t>(ops::kIncreFlashAttentionInputAttnMaskIndex); index < optinal_inputs_.size();
        index++) {
     if (optinal_inputs_[index]) {
+      if (index == ops::kIncreFlashAttentionInputAntiquantScale ||
+          index == ops::kIncreFlashAttentionInputAntiquantOffset) {
+        if (input_layout_ == kAttrInputLayoutBSH) {
+          (void)inputs_tensor_map_.emplace_back(Shape{-1, 1});
+          continue;
+        } else if (input_layout_ == kAttrInputLayoutBNSD) {
+          (void)inputs_tensor_map_.emplace_back(Shape{-1, 1, -1, -1});
+          continue;
+        }
+      }
       (void)inputs_tensor_map_.emplace_back(optinal_tensor_map_[index]);
     }
   }

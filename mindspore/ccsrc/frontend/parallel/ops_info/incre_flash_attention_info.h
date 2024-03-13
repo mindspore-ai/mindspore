@@ -67,6 +67,8 @@ class IncreFlashAttentionInfo : public OperatorInfo {
   std::vector<Shape> optinal_op_strategies_ = {{},  {},  {},  {1, 0, 0, 0}, {1}, {1}, {1, 0, 0, 0},
                                                {0}, {0}, {0}, {0},          {0}, {0}, {1, 0}};
   void SetOptinalInputs();
+  int GetSqueezedIndex(size_t original_index);
+  Status CheckAntiquantStrategy(const StrategyPtr &strategy, size_t input_index);
 };
 }  // namespace parallel
 }  // namespace mindspore
