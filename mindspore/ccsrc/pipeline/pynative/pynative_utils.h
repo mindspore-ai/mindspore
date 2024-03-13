@@ -166,11 +166,18 @@ struct DataConvert {
 struct PyBoost {
   static FrontendOpRunInfoPtr Init(const PrimitivePtr &prim, const py::list &args);
   static void MakeOutputValue(const FrontendOpRunInfoPtr &op_run_info, const kernel::pyboost::OpPtr &op);
+<<<<<<< HEAD
   static void DoGrad(const kernel::pyboost::OpPtr &op, const FrontendOpRunInfoPtr &op_run_info,
                      ValuePtrList &&op_inputs);
   static void UpdateStubOutput(const FrontendOpRunInfoPtr &op_run_info, const AbstractBasePtr &abstract,
                                const kernel::pyboost::OpPtr &op);
   static void UpdateOpRunInfo(const kernel::pyboost::OpPtr &op, const FrontendOpRunInfoPtr &op_run_info);
+=======
+  static void UpdateOutputTensorGradInfo(const std::vector<tensor::BaseTensorPtr> &outputs);
+  static void UpdateStubOutput(const FrontendOpRunInfoPtr &op_run_info, const AbstractBasePtr &abstract);
+  static void UpdateOpRunInfo(const kernel::pyboost::OpPtr &op, const vector<ValuePtr> &op_inputs,
+                              const FrontendOpRunInfoPtr &op_run_info);
+>>>>>>> dcbc6e39bf2 (Base Tensor)
   static PrimitivePtr ConvertPrimitive(const py::object &obj);
   static py::object RunPyFunction(const PrimitivePtr &prim, const py::list &args);
   template <typename T>
