@@ -21,7 +21,8 @@
 #include "transform/graph_ir/aoe_util.h"
 #include "utils/file_utils.h"
 #include "utils/ms_context.h"
-#include "acl/acl_base.h"
+#include "transform/symbol/acl_base_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace mindspore {
 namespace transform {
@@ -48,20 +49,9 @@ void AoeUtil::Initialize() {
     return;
   }
   if (IsAscendServer()) {
-    Dl_info info;
-    if (dladdr(reinterpret_cast<void *>(aclrtGetSocName), &info) == 0) {
-      MS_LOG(WARNING) << "Get dladdr failed, skip.";
-      return;
-    }
-    auto path_tmp = std::string(info.dli_fname);
-    const std::string kLib64 = "lib64";
-    auto pos = path_tmp.find(kLib64);
-    if (pos == std::string::npos) {
-      MS_LOG(WARNING) << "Get ascend path failed, please check the run package.";
-      return;
-    }
+    std::string ascend_path = GetAscendPath();
     std::string aoe_plugin_path = "lib64/libaoe_tuning.so";
-    auto plugin_path = path_tmp.substr(0, pos) + aoe_plugin_path;
+    auto plugin_path = ascend_path + aoe_plugin_path;
     auto ret = access(plugin_path.c_str(), F_OK);
     if (ret != 0) {
       MS_LOG(WARNING) << "plugin " << plugin_path << " not exist";

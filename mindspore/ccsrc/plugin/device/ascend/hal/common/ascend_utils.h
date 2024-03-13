@@ -59,7 +59,6 @@ class ErrorManagerAdapter {
   static bool initialized_;
 };
 
-std::string GetAscendPath();
 std::string GetErrorMsg(uint32_t rt_error_code);
 
 void *callback_thread_func(void *data);

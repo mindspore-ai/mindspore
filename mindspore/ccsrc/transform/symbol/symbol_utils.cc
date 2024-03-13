@@ -38,9 +38,9 @@ void *GetLibHandler(const std::string &lib_path) {
   return handler;
 }
 
-std::string GetAscendLibPath() {
+std::string GetAscendPath() {
   Dl_info info;
-  if (dladdr(reinterpret_cast<void *>(aclrtGetSocName), &info) == 0) {
+  if (dladdr(reinterpret_cast<void *>(aclrtMalloc), &info) == 0) {
     MS_LOG(INFO) << "Get dladdr failed, skip.";
     return "";
   }
@@ -58,7 +58,7 @@ void LoadAscendApiSymbols() {
     MS_LOG(INFO) << "Ascend api is already loaded.";
     return;
   }
-  std::string ascend_path = GetAscendLibPath();
+  std::string ascend_path = GetAscendPath();
   LoadAclBaseApiSymbol(ascend_path);
   LoadAclOpCompilerApiSymbol(ascend_path);
   LoadAclMdlApiSymbol(ascend_path);

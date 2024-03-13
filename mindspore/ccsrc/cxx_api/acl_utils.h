@@ -19,10 +19,12 @@
 
 #include <string>
 #include <unordered_map>
-#include "acl/acl_base.h"
+#include "transform/symbol/acl_base_symbol.h"
+#include "transform/symbol/symbol_utils.h"
+
 namespace mindspore {
 static inline bool IsAscend910Soc() {
-  const char *soc_name_c = aclrtGetSocName();
+  const char *soc_name_c = CALL_ASCEND_API2(aclrtGetSocName);
   if (soc_name_c == nullptr) {
     return false;
   }
@@ -34,7 +36,7 @@ static inline bool IsAscend910Soc() {
 }
 
 static inline bool IsAscendNo910Soc() {
-  const char *soc_name_c = aclrtGetSocName();
+  const char *soc_name_c = CALL_ASCEND_API2(aclrtGetSocName);
   if (soc_name_c == nullptr) {
     return false;
   }

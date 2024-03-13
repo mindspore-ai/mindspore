@@ -38,7 +38,7 @@
 #include "mindspore/core/utils/file_utils.h"
 #include "plugin/device/ascend/hal/device/dump/ascend_dump.h"
 #include "plugin/device/ascend/optimizer/ge_backend_optimization.h"
-#include "acl/acl_base.h"
+#include "transform/symbol/acl_base_symbol.h"
 #include "transform/symbol/acl_rt_symbol.h"
 #include "transform/symbol/symbol_utils.h"
 
@@ -523,14 +523,14 @@ uint32_t GeDeviceContext::GetDeviceCount() {
 }
 
 std::string GeDeviceContext::GetDeviceName(uint32_t) {
-  const char *name = aclrtGetSocName();
+  const char *name = CALL_ASCEND_API2(aclrtGetSocName);
   std::string device_name = (name == nullptr) ? "" : name;
   return device_name;
 }
 
 AscendDeviceProperties GeDeviceContext::GetDeviceProperties(uint32_t) {
   AscendDeviceProperties device_properties;
-  const char *name = aclrtGetSocName();
+  const char *name = CALL_ASCEND_API2(aclrtGetSocName);
   device_properties.name = (name == nullptr) ? "" : name;
 
   size_t free_size{0}, total_size{0};
@@ -553,7 +553,7 @@ void SetContextSocVersion(MsContext *ctx) {
     {"Ascend910B2", "ascend910b"},  {"Ascend910B2C", "ascend910b"}, {"Ascend910B3", "ascend910b"},
     {"Ascend910B4", "ascend910b"},  {"Ascend910C1", "ascend910c"},  {"Ascend910C2", "ascend910c"},
     {"Ascend910C3", "ascend910c"}};
-  const char *soc_name_c = aclrtGetSocName();
+  const char *soc_name_c = CALL_ASCEND_API2(aclrtGetSocName);
   if (soc_name_c == nullptr) {
     MS_LOG(ERROR) << "Get soc name failed.";
     return;
@@ -589,6 +589,7 @@ MSCONTEXT_REGISTER_INIT_FUNC(kAscendDevice, [](MsContext *ctx) -> void {
     common::SetEnv("MS_FORMAT_MODE", "1");
   }
 
+  transform::LoadAscendApiSymbols();
   SetContextSocVersion(ctx);
 });
 #endif
@@ -606,7 +607,6 @@ void PybindAscendStatelessFunc(py::module *m) {
         << "MB, free_memory=" << p.free_memory / (1024 * 1024) << "MB)";
       return s.str();
     });
-  transform::LoadAscendApiSymbols();
   (void)m->def("ascend_get_device_count", &GeDeviceContext::GetDeviceCount, "Get Ascend device count.");
   (void)m->def("ascend_get_device_name", &GeDeviceContext::GetDeviceName,
                "Get Ascend device name of specified device id.");

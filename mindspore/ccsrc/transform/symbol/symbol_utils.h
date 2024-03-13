@@ -40,6 +40,7 @@ namespace transform {
 
 #define CALL_ASCEND_API(func_name, ...) RunAscendApi(mindspore::transform::func_name##_, #func_name, __VA_ARGS__)
 #define CALL_ASCEND_API2(func_name) RunAscendApi(mindspore::transform::func_name##_, #func_name)
+std::string GetAscendPath();
 void *GetLibHandler(const std::string &lib_path);
 void LoadAscendApiSymbols();
 }  // namespace transform
