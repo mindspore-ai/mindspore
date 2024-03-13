@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_IS_FINITE_H_
-#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_IS_FINITE_H_
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_ISFINITE_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_ISFINITE_H_
 
 #include <memory>
 #include <vector>
@@ -32,4 +32,4 @@ class MIND_API IsFiniteFuncImpl : public OpFuncImpl {
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_IS_FINITE_H_
+#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_ISFINITE_H_

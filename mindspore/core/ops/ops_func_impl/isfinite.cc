@@ -17,7 +17,7 @@
 #include <map>
 #include <set>
 #include <string>
-#include "ops/ops_func_impl/is_finite.h"
+#include "ops/ops_func_impl/isfinite.h"
 #include "utils/check_convert_utils.h"
 #include "ops/op_utils.h"
 
