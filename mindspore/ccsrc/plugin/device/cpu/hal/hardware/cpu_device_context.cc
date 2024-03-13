@@ -67,6 +67,8 @@
 #endif
 #include "include/common/profiler.h"
 #include "plugin/device/cpu/hal/device/cpu_kernel_task.h"
+#include "ops/framework_ops.h"
+#include "kernel/oplib/oplib.h"
 
 namespace mindspore {
 namespace device {
@@ -250,6 +252,11 @@ void CPUKernelExecutor::UpdateKernelRefInfo(const KernelGraphPtr &graph) const {
   for (const auto &kernel : kernels) {
     MS_EXCEPTION_IF_NULL(kernel);
     const std::string &op_name = common::AnfAlgo::GetCNodeName(kernel);
+    if (IsPrimitiveCNode(kernel, prim::kPrimCustom) &&
+        mindspore::kernel::OpLib::FindOp(op_name, kernel::OpImplyType::kImplyCPU) == nullptr) {
+      MS_LOG(DEBUG) << "Not find operator information for Custom operator [" << op_name << "]";
+      return;
+    }
 
     auto kernel_attr_list = kernel::NativeCpuKernelMod::GetCpuSupportedList(op_name);
     if (kernel_attr_list.empty()) {

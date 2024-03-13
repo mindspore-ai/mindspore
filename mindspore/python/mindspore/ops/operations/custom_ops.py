@@ -1,4 +1,4 @@
-# Copyright 2021-2022 Huawei Technologies Co., Ltd
+# Copyright 2021-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -541,9 +541,9 @@ class Custom(ops.PrimitiveWithInfer):
         # deal with the case of ms script
         # enable auto infer function if any infer information is missing
         if self._is_ms_kernel and (infer_dtype is None or infer_shape is None):
-            logger.warning("{}, 'out_shape' or 'out_dtype' is None, infer the output shape and output dtype "
-                           "automatically. There might be some Python RuntimeWarning but it wouldn't influence the "
-                           "result.".format(self.log_prefix))
+            logger.info("{}, 'out_shape' or 'out_dtype' is None, infer the output shape and output dtype "
+                        "automatically. There might be some Python RuntimeWarning but it wouldn't influence the "
+                        "result.".format(self.log_prefix))
 
             auto_infer_result = self._auto_infer(*args)
 
@@ -634,9 +634,9 @@ class Custom(ops.PrimitiveWithInfer):
             file_path = os.path.abspath(file_name_list[0])
             if os.environ.get('MS_CUSTOM_AOT_WHITE_LIST') is None:
                 if Custom.custom_aot_warning:
-                    logger.warning("{}, no white list is set and it might cause problems. "
-                                   "Set the legal path of the file in MS_CUSTOM_AOT_WHITE_LIST"
-                                   .format(self.log_prefix))
+                    logger.info("{}, no white list is set and it might cause problems. "
+                                "Set the legal path of the file in MS_CUSTOM_AOT_WHITE_LIST"
+                                .format(self.log_prefix))
                     Custom.custom_aot_warning = False
             else:
                 legal_path = os.path.abspath(os.environ.get('MS_CUSTOM_AOT_WHITE_LIST'))

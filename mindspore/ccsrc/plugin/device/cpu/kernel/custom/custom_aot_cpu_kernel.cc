@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,8 +68,8 @@ void CustomAOTCpuKernelMod::SetKernelPath(const BaseOperatorPtr &base_operator) 
     if (value == nullptr) {
       static bool print_cpu_warning_once = true;
       if (print_cpu_warning_once) {
-        MS_LOG(WARNING) << "For '" << kernel_name_ << "' on CPU, no white list is set and it might cause problems. "
-                        << "Set the legal path of the file in MS_CUSTOM_AOT_WHITE_LIST.";
+        MS_LOG(INFO) << "For '" << kernel_name_ << "' on CPU, no white list is set and it might cause problems. "
+                     << "Set the legal path of the file in MS_CUSTOM_AOT_WHITE_LIST.";
         print_cpu_warning_once = false;
       }
     } else {
