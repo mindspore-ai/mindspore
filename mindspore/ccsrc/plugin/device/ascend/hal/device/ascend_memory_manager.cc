@@ -17,7 +17,6 @@
 #include "plugin/device/ascend/hal/device/ascend_memory_manager.h"
 #include "plugin/device/ascend/hal/device/ascend_memory_adapter.h"
 #include "utils/ms_context.h"
-#include "acl/acl_rt.h"
 #ifndef ENABLE_SECURITY
 #include "plugin/device/ascend/hal/profiler/memory_profiling.h"
 #include "transform/symbol/acl_rt_symbol.h"

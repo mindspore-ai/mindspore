@@ -15,8 +15,6 @@
  */
 
 #include "plugin/device/ascend/hal/device/ascend_dma_handle.h"
-#include "acl/acl_rt.h"
-#include "acl/acl.h"
 #if defined(RT_MEMORY_P2PDMA)
 #include <unistd.h>
 #include <fcntl.h>

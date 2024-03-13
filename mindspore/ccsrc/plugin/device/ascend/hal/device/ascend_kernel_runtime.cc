@@ -24,7 +24,6 @@
 #include "include/common/utils/signal_util.h"
 #include "plugin/device/ascend/hal/device/ascend_device_address.h"
 #include "utils/ms_context.h"
-#include "acl/acl_rt.h"
 #include "plugin/device/ascend/hal/hardware/ascend_collective_comm_lib.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 #include "include/backend/anf_runtime_algorithm.h"

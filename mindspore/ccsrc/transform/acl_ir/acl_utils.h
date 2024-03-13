@@ -21,7 +21,6 @@
 #include <memory>
 #include <utility>
 #include <map>
-#include "acl/acl_base.h"
 #include "graph/types.h"
 #include "include/transform/graph_ir/types.h"
 #include "transform/acl_ir/ge_adapter_info.h"

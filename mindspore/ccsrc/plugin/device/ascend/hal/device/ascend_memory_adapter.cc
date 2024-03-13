@@ -19,7 +19,6 @@
 #include <algorithm>
 #include <set>
 #include "ir/func_graph.h"
-#include "acl/acl_rt.h"
 #include "utils/ms_context.h"
 #include "utils/convert_utils_base.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"

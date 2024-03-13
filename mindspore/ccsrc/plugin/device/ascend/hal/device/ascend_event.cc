@@ -16,8 +16,6 @@
 
 #include "plugin/device/ascend/hal/device/ascend_event.h"
 
-#include "acl/acl.h"
-#include "acl/acl_rt.h"
 #include "utils/log_adapter.h"
 #include "transform/symbol/acl_rt_symbol.h"
 #include "transform/symbol/symbol_utils.h"

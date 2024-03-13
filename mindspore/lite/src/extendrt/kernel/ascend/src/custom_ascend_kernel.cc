@@ -17,7 +17,6 @@
 #include "extendrt/kernel/ascend/src/custom_ascend_kernel.h"
 #include <utility>
 #include <algorithm>
-#include "acl/acl_base.h"
 #include "include/registry/register_kernel.h"
 #include "include/api/types.h"
 #include "include/api/data_type.h"

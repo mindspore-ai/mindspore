@@ -19,7 +19,6 @@
 #include <utility>
 #include <string>
 #include <ios>
-#include "acl/acl_rt.h"
 #include "include/common/utils/utils.h"
 #include "utils/file_utils.h"
 #include "include/common/utils/anfalgo.h"
