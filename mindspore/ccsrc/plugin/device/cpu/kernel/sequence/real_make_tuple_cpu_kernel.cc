@@ -17,11 +17,15 @@
 #include "plugin/device/cpu/kernel/sequence/real_make_tuple_cpu_kernel.h"
 #include <algorithm>
 #include <cstdint>
+#include <memory>
 #include <utility>
 #include <complex>
+#include <vector>
+#include "kernel/kernel.h"
 #include "mindapi/base/type_id.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "include/common/thread_pool.h"
+#include "base/user_data.h"
 namespace mindspore {
 namespace kernel {
 namespace {
@@ -44,10 +48,44 @@ bool RealMakeTupleCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
 
 int RealMakeTupleCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
                                       const std::vector<KernelTensor *> &outputs) {
-  int ret = KernelMod::Resize(inputs, outputs);
-  if (ret != 0) {
-    return ret;
+  for (const auto &input : inputs) {
+    const auto &shape = input->GetShapeVector();
+    if (!IsValidShape(shape)) {
+      return static_cast<int>(KRET_UNKNOWN_SHAPE);
+    }
   }
+
+  workspace_size_list_.clear();
+  output_size_list_.clear();
+
+  if (inputs.empty() || outputs.empty()) {
+    return static_cast<int>(KRET_RESIZE_FAILED);
+  }
+
+  std::vector<size_t> real_sizes;
+  real_sizes.reserve(inputs.size());
+  bool element_all_same = true;
+  auto elem_size = inputs[0]->size();
+  for (size_t i = 1; i < inputs.size(); ++i) {
+    auto cur_input_size = inputs[i]->size();
+    real_sizes.push_back(cur_input_size);
+    if (elem_size < cur_input_size) {
+      elem_size = cur_input_size;
+      element_all_same = false;
+    }
+  }
+
+  output_size_list_ = std::vector<size_t>{inputs.size() * elem_size};
+
+  if (!element_all_same) {
+    auto user_data = outputs[0]->user_data();
+    if (user_data == nullptr) {
+      user_data = std::make_shared<UserData>();
+      outputs[0]->set_user_data(user_data);
+    }
+    user_data->set(kRealElementsSize, std::make_shared<std::vector<size_t>>(real_sizes));
+  }
+
   return KRET_OK;
 }
 
@@ -56,30 +94,20 @@ bool RealMakeTupleCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &
                                              const std::vector<KernelTensor *> &,
                                              const std::vector<KernelTensor *> &outputs) {
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
-  auto elem_size = inputs[0]->size();
-  for (size_t i = 1; i < inputs.size(); ++i) {
-    auto cur_input_size = inputs[i]->size();
-    if (elem_size != cur_input_size) {
-      MS_LOG(WARNING) << "For " << kernel_name_
-                      << ", element size is not match, skip launch, error may raise for latter memory use.";
-      return true;
-    }
-  }
-
-  if (elem_size == 0) {
-    return true;
-  }
-
-  size_t elem_offset = (elem_size / sizeof(T));
+  size_t elem_offset = (output_size_list_[0] / sizeof(T) / inputs.size());
   T *output_addr = GetDeviceAddress<T>(outputs, 0);
   for (size_t i = 0; i < inputs.size(); ++i) {
     T *input_addr = GetDeviceAddress<T>(inputs, i);
-    auto cp_ret = memcpy_s(output_addr, elem_size, input_addr, elem_size);
-    if (cp_ret != EOK) {
-      MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", memcpy error, errorno: " << cp_ret;
+    auto input_size = inputs[i]->size();
+    if (input_size != 0) {
+      auto cp_ret = memcpy_s(output_addr, input_size, input_addr, input_size);
+      if (cp_ret != EOK) {
+        MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", memcpy error, errorno: " << cp_ret;
+      }
     }
     output_addr += elem_offset;
   }
+
   return true;
 }
 

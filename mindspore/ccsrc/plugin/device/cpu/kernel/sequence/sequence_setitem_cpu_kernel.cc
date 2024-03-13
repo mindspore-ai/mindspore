@@ -49,6 +49,16 @@ int SequenceSetItemCpuKernelMod::Resize(const std::vector<KernelTensor *> &input
   if (ret != 0) {
     return ret;
   }
+
+  auto user_data = inputs[kDataIndex]->user_data();
+  if (user_data != nullptr && user_data->has(kRealElementsSize)) {
+    auto real_elem_sizes = user_data->get<std::vector<size_t>>(kRealElementsSize);
+    MS_EXCEPTION_IF_NULL(real_elem_sizes);
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << ", only support all same inner elements now, but got inner elements size: " << (*real_elem_sizes);
+    return KRET_RESIZE_FAILED;
+  }
+
   seq_shape_ = inputs[kDataIndex]->GetShapeVector();
   ele_shape_ = inputs[kValueIndex]->GetShapeVector();
   if (seq_shape_.empty()) {

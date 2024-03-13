@@ -41,6 +41,15 @@ int SequenceConcatGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs
     return ret;
   }
 
+  auto user_data = inputs[0]->user_data();
+  if (user_data != nullptr && user_data->has(kRealElementsSize)) {
+    auto real_elem_sizes = user_data->get<std::vector<size_t>>(kRealElementsSize);
+    MS_EXCEPTION_IF_NULL(real_elem_sizes);
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << ", only support all same inner elements now, but got inner elements size: " << (*real_elem_sizes);
+    return KRET_RESIZE_FAILED;
+  }
+
   tuple_shape_ = inputs[0]->GetShapeVector();
   if (tuple_shape_.empty()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << " the input tuple size must greater 0";

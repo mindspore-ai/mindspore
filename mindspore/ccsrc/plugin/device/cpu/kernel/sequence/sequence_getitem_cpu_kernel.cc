@@ -17,8 +17,12 @@
 #include "plugin/device/cpu/kernel/sequence/sequence_getitem_cpu_kernel.h"
 #include <algorithm>
 #include <functional>
+#include "kernel/kernel.h"
+#include "ops/op_utils.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "include/common/thread_pool.h"
+#include "utils/convert_utils_base.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace kernel {
@@ -42,10 +46,39 @@ int SequenceGetItemCpuKernelMod::Resize(const std::vector<KernelTensor *> &input
   if (inputs.empty() || inputs[0] == nullptr) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << " the input is invalid, input size:" << inputs.size();
   }
-  tuple_shape_ = inputs[0]->GetShapeVector();
-  if (tuple_shape_.empty()) {
+
+  auto tuple_shape = inputs[0]->GetShapeVector();
+  if (tuple_shape.empty()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << " the input tuple size must greater 0";
   }
+  auto length = static_cast<int64_t>(tuple_shape[0]);
+  if (length <= 0) {
+    MS_EXCEPTION(ValueError) << "For RealTupleGetItem, the element size of tuple input should great than 0, but got "
+                             << length << ".";
+  }
+
+  auto index_value = inputs[kIndex1]->GetValueWithCheck<int64_t>();
+  if (index_value >= length || index_value < -length) {
+    MS_EXCEPTION(ValueError) << "For RealTupleGetItem, index is out of range: [" << -length << ", " << length
+                             << "), but got " << index_value << ".";
+  }
+  if (index_value < 0) {
+    index_value += length;
+  }
+  auto index = LongToSize(index_value);
+
+  auto user_data = inputs[0]->user_data();
+  if (user_data == nullptr || !user_data->has(kRealElementsSize)) {
+    offset_size_ = inputs[0]->size() / length * index;
+    return KRET_OK;
+  }
+
+  // The input tuple contain different inner element size.
+  auto real_elements_size = user_data->get<std::vector<size_t>>(kRealElementsSize);
+  MS_EXCEPTION_IF_NULL(real_elements_size);
+  output_size_list_ = {(*real_elements_size)[index]};
+  offset_size_ = (*std::max_element(real_elements_size->begin(), real_elements_size->end())) * index;
+
   return KRET_OK;
 }
 
@@ -55,26 +88,11 @@ bool SequenceGetItemCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *>
                                                const std::vector<KernelTensor *> &outputs) {
   const auto input_addr = GetDeviceAddress<T>(inputs, 0);
   MS_EXCEPTION_IF_NULL(input_addr);
-  auto index = *(GetDeviceAddress<int64_t>(inputs, 1));
   auto output_addr = GetDeviceAddress<T>(outputs, 0);
   MS_EXCEPTION_IF_NULL(output_addr);
-  auto len = static_cast<int64_t>(tuple_shape_[0]);
-  if (index >= len || index < -len) {
-    MS_EXCEPTION(ValueError) << "index is out of range: " << -len << " <= index < " << len << ", but got " << index
-                             << ".";
-  }
-  if (index < 0) {
-    index += len;
-  }
-  if (tuple_shape_.size() == 1) {
-    *output_addr = input_addr[index];
-    return true;
-  }
   auto output_size = output_size_list_[0];
-  size_t element_index_size =
-    static_cast<size_t>(std::accumulate(tuple_shape_.begin() + 1, tuple_shape_.end(), 1, std::multiplies<int64_t>()));
-  size_t input_addr_offset = element_index_size * LongToSize(index);
-  auto cp_ret = memcpy_s(output_addr, output_size, input_addr + input_addr_offset, element_index_size * sizeof(T));
+  auto target_addr_base = reinterpret_cast<char *>(input_addr) + offset_size_;
+  auto cp_ret = memcpy_s(output_addr, output_size, target_addr_base, output_size);
   if (cp_ret != EOK) {
     MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", memcpy error, errorno: " << cp_ret;
   }
