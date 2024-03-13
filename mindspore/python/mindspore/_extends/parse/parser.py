@@ -1050,7 +1050,7 @@ def get_const_len(obj):
 
 def get_method_info(obj):
     """Get the class name of the object from its method."""
-    if not (inspect.ismethod(obj) or 'built-in method' in repr(obj) or 'method-wrapper' in repr(obj)):
+    if not (inspect.ismethod(obj) or 'built-in method' in repr(obj)):
         return None, None
     class_name_and_method_name = obj.__qualname__.split('.')
     return class_name_and_method_name[0], class_name_and_method_name[1]

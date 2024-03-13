@@ -329,6 +329,7 @@ class MindGraphBuilder : public GraphBuilder {
   std::vector<py::object> GetNewArgs(CallNode *call_node, AObject *vobj = nullptr);
   bool IsFuncInWhiteList(const py::object &f, std::string *special_func_key);
   bool HandleFuncInWhiteList(const std::string &key, CallNode *n) override;
+  bool AllConstantArgs(const std::vector<py::object> &args, const py::object &callable_info, CallNode *call_node);
 
  private:
   mindspore::FuncGraphBuilderPtr fg_builder_{nullptr};
