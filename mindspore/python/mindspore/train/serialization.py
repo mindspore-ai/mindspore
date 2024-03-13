@@ -895,7 +895,8 @@ def obfuscate_model(obf_config, **kwargs):
               when loading obfuscated model.
             - obf_random_seed (int): Obfuscation random seed, which should be in (0, 9223372036854775807]. The
               structure of obfuscated models corresponding to different random seeds is different. If
-              `obf_random_seed` is set, then it should be passed to :class:`nn.GraphCell()` interface when loading
+              `obf_random_seed` is set, then it should be passed to :class:`mindspore.nn.GraphCell`
+              interface when loading
               obfuscated model. It should be noted that at least one of `customized_func` or `obf_random_seed` should
               be set, and the latter mode would be applied if both of them are set.
 
@@ -903,7 +904,7 @@ def obfuscate_model(obf_config, **kwargs):
 
             - enc_key (bytes): Byte type key used for encryption. The valid length is 16, 24, or 32.
             - enc_mode (str): Specifies the encryption mode, to take effect when dec_key is set.
-              Option: 'AES-GCM' | 'AES-CBC' | 'SM4-CBC'. Default: 'AES-GCM'.
+              Options: ``'AES-GCM'`` | ``'AES-CBC'`` | ``'SM4-CBC'``. Default: ``'AES-GCM'``.
 
     Raises:
         TypeError: If `obf_config` is not a dict.
@@ -914,7 +915,7 @@ def obfuscate_model(obf_config, **kwargs):
         ValueError: If `obf_ratio` is not provided in `obf_config`.
         ValueError: If both `customized_func` and `obf_random_seed` are not provided in `obf_config`.
         ValueError: If `obf_random_seed` is not in (0, 9223372036854775807].
-        ValueError: If `original_model_path` is not exist or `original_model_path` is not end with '.mindir'.
+        ValueError: If `original_model_path` does not exist or `original_model_path` does not end with '.mindir'.
 
     Examples:
         >>> import mindspore as ms
@@ -1356,8 +1357,8 @@ def load_param_into_net(net, parameter_dict, strict_load=False):
                             on the parameters of the same type, such as float32 to float16. Default: ``False`` .
 
     Returns:
-        param_not_load (List), the parameter name in model which are not loaded into the network.
-        ckpt_not_load (List), the parameter name in checkpoint file which are not loaded into the network.
+        - param_not_load (List), the parameter name in model which are not loaded into the network.
+        - ckpt_not_load (List), the parameter name in checkpoint file which are not loaded into the network.
 
     Raises:
         TypeError: Argument is not a Cell, or parameter_dict is not a Parameter dictionary.
@@ -1621,7 +1622,8 @@ def export(net, *inputs, file_name, file_format, **kwargs):
 
     Note:
         1. When exporting AIR, ONNX format, the size of a single tensor can not exceed 2GB.
-        2. When file_name does not have a suffix, the system will automatically add one according to the file_format.
+        2. When `file_name` does not have a suffix, the system will automatically add one
+           according to the `file_format`.
         3. Exporting functions decorated with :func:`mindspore.jit` to mindir format is supported.
         4. When exporting a function decorated with :func:`mindspore.jit`, the function should not involve
            class properties in calculations.
@@ -1671,7 +1673,8 @@ def export(net, *inputs, file_name, file_format, **kwargs):
                 obfuscated model.
               - obf_random_seed (int): Obfuscation random seed, which should be in (0, 9223372036854775807]. The
                 structure of obfuscated models corresponding to different random seeds is different. If
-                `obf_random_seed` is set, then it should be passed to :class:`nn.GraphCell()` interface when loading
+                `obf_random_seed` is set, then it should be passed
+                to :class:`mindspore.nn.GraphCell` interface when loading
                 obfuscated model. It should be noted that at least one of `customized_func` or `obf_random_seed` should
                 be set, and the latter mode would be applied if both of them are set.
 
@@ -2510,7 +2513,7 @@ def load_distributed_checkpoint(network, checkpoint_filenames, predict_strategy=
                                        in at least one of them. Default: ``None`` .
         strict_load (bool): Whether to strict load the parameter into net. If ``False`` , it will load parameter
                             into net when parameter name's suffix in checkpoint file is the same as the
-                            parameter in the network. When the types are inconsistent perform type conversion
+                            parameter in the network. When the types are inconsistent, perform type conversion
                             on the parameters of the same type, such as float32 to float16. Default: ``False`` .
         dec_key (Union[None, bytes]): Byte type key used for decryption. If the value is ``None`` , the decryption
                                       is not required. Default: ``None`` .
@@ -2867,7 +2870,7 @@ def _get_mindir_inputs(file_name):
 
 def convert_model(mindir_file, convert_file, file_format):
     """
-    Convert mindir model to other format model. Current version only support convert to "ONNX" format.
+    Convert mindir model to other format model. The current version only supports conversion to ONNX models.
 
     .. warning::
         This is an experimental API that is subject to change or deletion.

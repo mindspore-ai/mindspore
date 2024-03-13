@@ -41,18 +41,18 @@ def set_seed(seed):
     Set global seed.
 
     Note:
-        The global seed is used by numpy.random, mindspore.common.Initializer and
-        mindspore.nn.probability.distribution.
+        - The global seed is used by numpy.random, mindspore.common.Initializer and
+          mindspore.nn.probability.distribution.
 
-        If global seed is not set, these packages will use their own default seed independently, numpy.random and
-        mindspore.common.Initializer will choose a random seed, mindspore.nn.probability.distribution will use zero.
+        - If global seed is not set, these packages will use their own default seed independently, numpy.random and
+          mindspore.common.Initializer will choose a random seed, mindspore.nn.probability.distribution will use zero.
 
-        Seed set by numpy.random.seed() only used by numpy.random, while seed set by this API will also used by
-        numpy.random, so just set all seed by this API is recommended.
+        - Seed set by numpy.random.seed() only used by numpy.random, while seed set by this API will also used by
+          numpy.random, so just set all seed by this API is recommended.
 
-        In semi_auto_parallel/auto_parallel mode, when using set_seed, weights with same shape and same sharding
-        strategy in the same device would be initialized to the same result, otherwise, they would be initialized to
-        the different result.
+        - In semi_auto_parallel/auto_parallel mode, when using set_seed, weights with same shape and same sharding
+          strategy in the same device would be initialized to the same result, otherwise, they would be initialized to
+          the different result.
 
     Args:
         seed (int): The seed to be set.

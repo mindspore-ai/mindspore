@@ -145,7 +145,9 @@ class Parameter(Tensor_):
     Args:
         default_input (Union[Tensor, int, float, numpy.ndarray, list]): Parameter data,
             to initialize the parameter data.
-        name (str): Name of the parameter. Default: ``None`` .
+        name (str): Name of the parameter. Default: ``None`` . If two or more `Parameter`
+            objects with the same name exist in a network,
+            you will be prompted to set a unique name when defining them.
 
             1) If the parameter is not given a name, the default name is its variable name. For example, the name of
             param_a below is name_a, and the name of param_b is the variable name param_b.

@@ -115,12 +115,12 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
     Tensor is a data structure that stores an n-dimensional array.
 
     Note:
-        If 'init' interface is used to initialize Tensor, the `Tensor.init_data` API needs to be called to load the
+        If `init` interface is used to initialize `Tensor`, the `Tensor.init_data` API needs to be called to load the
         actual data to `Tensor`.
 
     Warning:
-          To convert dtype of a Tensor, it is recommended to use `Tensor.astype()` rather than
-          Tensor(sourceTensor, dtype=newDtype)
+          To convert dtype of a `Tensor`, it is recommended to use `Tensor.astype()` rather than
+          `Tensor(sourceTensor, dtype=newDtype)`.
 
     Args:
         input_data (Union[Tensor, float, int, bool, tuple, list, numpy.ndarray]): The data to be stored. It can be
@@ -134,7 +134,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             doesn't need to be set; if None not in shape, a tensor of static shape is created, `input_data` or `init`
             must be set. Default: ``None`` .
         init (Initializer): The information of init data.
-            'init' is used for delayed initialization in parallel mode, when using init, `dtype` and `shape` must be
+            `init` is used for delayed initialization in parallel mode, when using init, `dtype` and `shape` must be
             set. Default: ``None`` .
         internal (bool): Whether it is created by the framework.
             ``'True'`` means that the tensor is created by framework.
@@ -147,9 +147,10 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         Tensor.
 
     Note:
-        The default value None of `input_data` works as a placeholder, it does not mean that we can create a NoneType
+        The default value ``None`` of `input_data` works as a placeholder,
+        it does not mean that we can create a NoneType
         Tensor.
-        Tensor with shape contains 0 is not fully tested and supported.
+        Tensor with `shape` contains 0 is not fully tested and supported.
 
     Examples:
         >>> import numpy as np

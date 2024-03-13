@@ -12,7 +12,7 @@ mindspore.obfuscate_model
           - **original_model_path** (str) - 待混淆的MindIR模型地址。如果该模型是加密文件的，则需要在 `kwargs` 中传入 `enc_key` 和 `enc_mode` 。
           - **save_model_path** (str) - 混淆模型的保存地址。
           - **model_inputs** (list[Tensor]) - 模型的推理输入，Tensor的值可以是随机的，和使用 :func:`mindspore.export` 接口类似。
-          - **obf_ratio** (Union[str, float]) - 全模型算子的混淆比例，可取浮点数(0, 1]或者字符串 ``"small"`` 、 ``"medium"`` 、 ``"large"`` 。``"small"`` 、``"medium"`` 、``"large"`` 分别对应于 0.1、0.3、0.6。
+          - **obf_ratio** (Union[str, float]) - 全模型算子的混淆比例，可取浮点数(0, 1]或者字符串 ``"small"`` 、 ``"medium"`` 、 ``"large"`` 。 ``"small"`` 、 ``"medium"`` 、 ``"large"`` 分别对应于 0.1、0.3、0.6。
           - **customized_func** (function) - 在自定义函数模式下需要设置的Python函数，用来控制混淆结构中的选择分支走向。它的返回值需要是bool类型，且是恒定的，用户可以参考不透明谓词进行设置（请查看 `动态混淆教程 <https://www.mindspore.cn/mindarmour/docs/zh-CN/master/dynamic_obfuscation_protection.html>`_　中的 `my_func()`）。如果设置了 `customized_func` ，那么在使用 :func:`mindspore.load` 接口导入模型的时候，需要把这个函数也传入。
           - **obf_random_seed** (int) - 混淆随机种子，是一个取值范围为(0, 9223372036854775807]的整数，不同的随机种子会使模型混淆后的结构不同。如果用户设置了 `obf_random_seed` ，那么在部署混淆模型的时候，需要在 :class:`mindspore.nn.GraphCell` 接口中传入 `obf_random_seed` 。需要注意的是，如果用户同时设置了 `customized_func` 和 `obf_random_seed` ，那么后一种模式将会被采用。
 
