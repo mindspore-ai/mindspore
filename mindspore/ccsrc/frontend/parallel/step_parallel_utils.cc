@@ -1851,8 +1851,8 @@ std::vector<std::string> ExtractInputsTensorName(const CNodePtr &node, const std
         prev_node = prev_cnode->input(1);
         prev_cnode = prev_node->cast<CNodePtr>();
 
-        if (common::AnfAlgo::GetCNodeName(prev_cnode) == kTupleGetItemOpName) {
-          break;
+        if (prev_cnode != nullptr && common::AnfAlgo::GetCNodeName(prev_cnode) == kTupleGetItemOpName) {
+          continue;
         }
 
         is_cross = CrossInterNode(&prev_cnode, &prev_prim_anf_node, &prev_prim);

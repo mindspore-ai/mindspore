@@ -91,6 +91,7 @@ const std::map<std::string, OperatorType> DictOpType{
   {SOFTSIGN, OperatorType::kRecReLU},
   {PRELU, OperatorType::kRecPReLU},
   // Elm-wise OP
+  {SPLIT, OperatorType::kRecElmWiseOp},
   {TRANSPOSE, OperatorType::kRecElmWiseOp},
   {L2_NORMALIZE, OperatorType::kRecElmWiseOp},
   {ADD, OperatorType::kRecElmWiseOp},
