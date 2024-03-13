@@ -4285,7 +4285,7 @@ def argmin(a, axis=None):
 
     Examples:
         >>> import mindspore.numpy as np
-        >>> a = np.arange(10, 16).reshape(2, 3)
+        >>> a = np.arange(10, 16).reshape(2, 3).astype(np.float32)
         >>> print(np.argmin(a))
         0
         >>> print(np.argmin(a, axis=0))
