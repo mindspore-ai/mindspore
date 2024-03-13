@@ -29,8 +29,6 @@ namespace opt {
 
 namespace {
 struct CastInfo {
-  // true: input; false: output
-  bool is_input;
   // input_index/output_index
   size_t idx;
   // If `src_dtypes` is empty, it represents all dtypes
@@ -42,15 +40,18 @@ const std::unordered_set<TypeId> int_type_with_bool = {kNumberTypeUInt8,  kNumbe
                                                        kNumberTypeUInt64, kNumberTypeInt8,   kNumberTypeInt16,
                                                        kNumberTypeInt32,  kNumberTypeInt64,  kNumberTypeBool};
 
-// prim_name | {is_input, input_index/output_index, src_dtypes, dst_dtype}
-const std::unordered_map<std::string, CastInfo> kNeedAddCastMap = {
-  {ops::kNameReciprocal, {true, 0, int_type_with_bool, kNumberTypeFloat32}},
-  {ops::kNameExp, {true, 0, int_type_with_bool, kNumberTypeFloat32}},
-  {ops::kNameSqrt, {true, 0, int_type_with_bool, kNumberTypeFloat32}},
-  {ops::kNameErfinv, {true, 0, int_type_with_bool, kNumberTypeFloat32}},
-  {ops::kNameReduceAny, {true, 0, {}, kNumberTypeBool}},
-  {ops::kNameArgMaxWithValue, {false, 0, {}, kNumberTypeInt32}},
-  {ops::kNameArgMinWithValue, {false, 0, {}, kNumberTypeInt32}}};
+// prim_name | (input_vector, output_vector) vector: {{input_index/output_index, src_dtypes, dst_dtype}}
+const std::unordered_map<std::string, std::pair<std::vector<CastInfo>, std::vector<CastInfo>>> kNeedAddCastMap = {
+  {ops::kNameReciprocal, {{{0, int_type_with_bool, kNumberTypeFloat32}}, {}}},
+  {ops::kNameExp, {{{0, int_type_with_bool, kNumberTypeFloat32}}, {}}},
+  {ops::kNameSqrt, {{{0, int_type_with_bool, kNumberTypeFloat32}}, {}}},
+  {ops::kNameErfinv, {{{0, int_type_with_bool, kNumberTypeFloat32}}, {}}},
+  {ops::kNameReduceAny, {{{0, {}, kNumberTypeBool}}, {}}},
+  {ops::kNameLogicalAnd, {{{0, {}, kNumberTypeBool}, {1, {}, kNumberTypeBool}}, {}}},
+  {ops::kNameLogicalOr, {{{0, {}, kNumberTypeBool}, {1, {}, kNumberTypeBool}}, {}}},
+  {ops::kNameLogicalNot, {{{0, {}, kNumberTypeBool}}, {}}},
+  {ops::kNameArgMaxWithValue, {{}, {{0, {}, kNumberTypeInt32}}}},
+  {ops::kNameArgMinWithValue, {{}, {{0, {}, kNumberTypeInt32}}}}};
 
 bool NeedAddCast(const BaseRef &ref) {
   if (utils::isa<AnfNodePtr>(ref)) {
@@ -73,17 +74,26 @@ bool NodeNeedCast(const TypeId node_dtype, const std::unordered_set<TypeId> &src
   return false;
 }
 
-const CNodePtr AddCastForGeInput(const FuncGraphPtr &graph, const CNodePtr &node, const CastInfo &cast_info) {
-  auto input_idx = cast_info.idx;
-  auto input_type_id = common::AnfAlgo::GetPrevNodeOutputInferDataType(node, input_idx);
-  if (!NodeNeedCast(input_type_id, cast_info.src_dtypes, cast_info.dst_dtype)) {
+const CNodePtr AddCastForGeInput(const FuncGraphPtr &graph, const CNodePtr &node,
+                                 const std::vector<CastInfo> &cast_info_vector) {
+  std::vector<AnfNodePtr> new_inputs(node->inputs());
+  bool tag = False;
+  for (size_t i = 0; i < cast_info_vector.size(); ++i) {
+    auto cast_info = cast_info_vector[i];
+    auto input_idx = cast_info.idx;
+    auto input_type_id = common::AnfAlgo::GetPrevNodeOutputInferDataType(node, input_idx);
+    if (NodeNeedCast(input_type_id, cast_info.src_dtypes, cast_info.dst_dtype)) {
+      tag = True;
+      auto cast_node = AddCastNode(graph, cast_info.dst_dtype, node, true, input_idx);
+      // In the process of calling function `AddCastNode`, it has been verified that
+      // `input_id + 1` is less than node->inputs().size().
+      new_inputs[input_idx + 1] = cast_node;
+    }
+  }
+  if (tag == False) {
     return node;
   }
-  auto cast_node = AddCastNode(graph, cast_info.dst_dtype, node, true, input_idx);
-  std::vector<AnfNodePtr> new_inputs(node->inputs());
-  // In the process of calling function `AddCastNode`, it has been verified that
-  // `input_id + 1` is less than node->inputs().size().
-  new_inputs[input_idx + 1] = cast_node;
+
   auto kernel_graph = graph->cast<KernelGraphPtr>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto new_node = kernel_graph->NewCNodeWithInfos(new_inputs, node);
@@ -94,7 +104,12 @@ const CNodePtr AddCastForGeInput(const FuncGraphPtr &graph, const CNodePtr &node
   return new_node;
 }
 
-const CNodePtr AddCastForGeOutput(const FuncGraphPtr &graph, const CNodePtr &node, const CastInfo &cast_info) {
+const CNodePtr AddCastForGeOutput(const FuncGraphPtr &graph, const CNodePtr &node,
+                                  const std::vector<CastInfo> &cast_info_vector) {
+  if (cast_info_vector.size() > 1) {
+    MS_LOG(EXCEPTION) << "Vector sizes larger than 1 are not currently not supported.";
+  }
+  auto cast_info = cast_info_vector[0];
   auto output_idx = cast_info.idx;
   auto output_type_id = common::AnfAlgo::GetOutputInferDataType(node, output_idx);
   if (!NodeNeedCast(output_type_id, cast_info.src_dtypes, cast_info.dst_dtype)) {
@@ -145,11 +160,13 @@ const AnfNodePtr AddCastForGe::Process(const FuncGraphPtr &graph, const AnfNodeP
   MS_EXCEPTION_IF_NULL(cnode);
   auto op_name = common::AnfAlgo::GetCNodeName(node);
   auto cast_info = kNeedAddCastMap.at(op_name);
-  if (cast_info.is_input) {
-    return AddCastForGeInput(graph, cnode, cast_info);
-  } else {
-    return AddCastForGeOutput(graph, cnode, cast_info);
+  if (!cast_info.first.empty()) {
+    cnode = AddCastForGeInput(graph, cnode, cast_info.first);
   }
+  if (!cast_info.second.empty()) {
+    cnode = AddCastForGeOutput(graph, cnode, cast_info.second);
+  }
+  return cnode;
 }
 }  // namespace opt
 }  // namespace mindspore

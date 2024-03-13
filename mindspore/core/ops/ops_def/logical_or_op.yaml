@@ -14,3 +14,5 @@ logical_or:
             dtype: tensor
     function:
         disable: True
+    dispatch:
+        enable: True

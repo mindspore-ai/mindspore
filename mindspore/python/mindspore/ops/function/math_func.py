@@ -1188,8 +1188,6 @@ def logical_not(input):
         >>> print(output)
         [False  True False]
     """
-    if isinstance(input, Tensor) and input.dtype != mstype.bool_:
-        input = input.astype(mstype.bool_)
     return logical_not_(input)
 
 
@@ -1250,10 +1248,6 @@ def logical_or(input, other):
         >>> print(output)
         [True True]
     """
-    if isinstance(input, Tensor) and input.dtype != mstype.bool_:
-        input = input.astype(mstype.bool_)
-    if isinstance(other, Tensor) and other.dtype != mstype.bool_:
-        other = other.astype(mstype.bool_)
     return logical_or_(input, other)
 
 
@@ -1317,10 +1311,6 @@ def logical_and(input, other):
         >>> print(output)
         [True False]
     """
-    if isinstance(input, Tensor) and input.dtype != mstype.bool_:
-        input = input.astype(mstype.bool_)
-    if isinstance(other, Tensor) and other.dtype != mstype.bool_:
-        other = other.astype(mstype.bool_)
     return logical_and_(input, other)
 
 

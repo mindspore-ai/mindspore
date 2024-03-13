@@ -25,7 +25,7 @@ BaseShapePtr LogicalNotFuncImpl::InferShape(const PrimitivePtr &primitive,
 
 TypePtr LogicalNotFuncImpl::InferType(const PrimitivePtr &primitive,
                                       const std::vector<AbstractBasePtr> &input_args) const {
-  return input_args[kIndex0]->GetType()->Clone();
+  return std::make_shared<TensorType>(kBool);
 }
 }  // namespace ops
 }  // namespace mindspore

@@ -247,8 +247,14 @@ std::map<std::string, std::vector<std::pair<KernelAttr, BroadcastOptGpuKernelMod
     {"GreaterEqual", {MS_REG_BROADCAST_COMPARE_OP_TYPE(BinaryOpType::kGreaterEqual)}},
     {"LessEqual", {MS_REG_BROADCAST_COMPARE_OP_TYPE(BinaryOpType::kLessEqual)}},
     {"NotEqual", {MS_REG_BROADCAST_COMPARE_OP_TYPE(BinaryOpType::kNotEqual)}},
-    {"LogicalAnd", {MS_REG_BROADCAST_OP_BOOL_TYPE(BinaryOpType::kLogicalAnd)}},
-    {"LogicalOr", {MS_REG_BROADCAST_OP_BOOL_TYPE(BinaryOpType::kLogicalOr)}},
+    {"LogicalAnd",
+     {MS_REG_BROADCAST_COMPARE_OP_TYPE(BinaryOpType::kLogicalAnd),
+      MS_REG_BROADCAST_COMP_OP_TYPE(BinaryOpType::kLogicalAnd, kNumberTypeComplex64, Complex<float>),
+      MS_REG_BROADCAST_COMP_OP_TYPE(BinaryOpType::kLogicalAnd, kNumberTypeComplex128, Complex<double>)}},
+    {"LogicalOr",
+     {MS_REG_BROADCAST_COMPARE_OP_TYPE(BinaryOpType::kLogicalOr),
+      MS_REG_BROADCAST_COMP_OP_TYPE(BinaryOpType::kLogicalOr, kNumberTypeComplex64, Complex<float>),
+      MS_REG_BROADCAST_COMP_OP_TYPE(BinaryOpType::kLogicalOr, kNumberTypeComplex128, Complex<double>)}},
 };
 
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, Add,
