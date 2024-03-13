@@ -6,7 +6,11 @@ add_compile_options(-fstack-protector-all -D_FORTIFY_SOURCE=2 -O2)
 cmake_minimum_required(VERSION 3.5.1)
 project(ascendc_opp)
 
-if(ENABLE_CROSS_COMPILE)
+if (NOT ${ASCEND_VERSION} STREQUAL "910")
+    return()
+endif()
+
+if(${ENABLE_CROSS_COMPILE})
     if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL x86_64)
         set(CROSS_COMPILE_PLATFORM aarch64)
     else()

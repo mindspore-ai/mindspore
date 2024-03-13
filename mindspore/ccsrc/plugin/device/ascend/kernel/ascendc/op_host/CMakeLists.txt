@@ -1,16 +1,15 @@
 set(SECUREC_INC_DIR ${TOP_DIR}/third_party/securec/include)
-
-set(OP_HOST_DIR ${CMAKE_SOURCE_DIR}/mindspore/lite/tools/kernel_builder/ascend/ascendc/op_host)
-aux_source_directory(${OP_HOST_DIR} ops_srcs)
+aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR} ops_srcs)
 opbuild(OPS_SRC ${ops_srcs} OUT_DIR ${ASCEND_AUTOGEN_PATH} INC_DIR " " SEC_INC ${SECUREC_INC_DIR})
 
 add_library(cust_ascendc_op_proto SHARED ${ops_srcs} ${ASCEND_AUTOGEN_PATH}/op_proto.cc)
 target_compile_definitions(cust_ascendc_op_proto PRIVATE OP_PROTO_LIB)
 target_compile_options(cust_ascendc_op_proto PRIVATE -fvisibility=hidden)
-target_link_directories(cust_ascendc_op_proto PRIVATE
-                        ${CMAKE_COMPILE_COMPILER_LIBRARY}
-                        ${CMAKE_COMPILE_RUNTIME_LIBRARY}
-)
+if(${ENABLE_CROSS_COMPILE})
+    target_link_directories(cust_op_proto PRIVATE
+                            ${CMAKE_COMPILE_COMPILER_LIBRARY}
+                            ${CMAKE_COMPILE_RUNTIME_LIBRARY})
+endif()
 target_link_libraries(
   cust_ascendc_op_proto
   PRIVATE intf_pub
@@ -39,14 +38,20 @@ target_link_libraries(
           rt2_registry
           -Wl,--no-whole-archive)
 set_target_properties(cust_optiling PROPERTIES OUTPUT_NAME cust_opmaster_rt2.0)
+if(${ENABLE_CROSS_COMPILE})
+    target_link_directories(cust_optiling PRIVATE
+                            ${CMAKE_COMPILE_COMPILER_LIBRARY}
+                            ${CMAKE_COMPILE_RUNTIME_LIBRARY})
+endif()
 
 file(GLOB aclnn_src ${ASCEND_AUTOGEN_PATH}/aclnn_*.cpp)
 file(GLOB aclnn_inc ${ASCEND_AUTOGEN_PATH}/aclnn_*.h)
 add_library(cust_opapi SHARED ${aclnn_src})
-target_link_directories(cust_opapi PRIVATE
-                        ${CMAKE_COMPILE_COMPILER_LIBRARY}
-                        ${CMAKE_COMPILE_RUNTIME_LIBRARY}
-)
+if(${ENABLE_CROSS_COMPILE})
+    target_link_directories(cust_opapi PRIVATE
+                            ${CMAKE_COMPILE_COMPILER_LIBRARY}
+                            ${CMAKE_COMPILE_RUNTIME_LIBRARY})
+endif()
 target_link_libraries(cust_opapi PRIVATE intf_pub ascendcl nnopbase)
 
 add_custom_target(

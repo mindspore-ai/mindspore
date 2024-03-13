@@ -397,13 +397,14 @@ bool IsEmptyTupleInput(const CNodePtr &kernel, const size_t i, const TypeId cur_
 
 static std::once_flag kAclnnEnableListInit;
 static std::unordered_set<std::string> kAclnnEnableList;
-bool ReadAclnnEnableEnv(const AnfNodePtr &node) {
+bool ReadAclnnEnableEnv(const CNodePtr &node) {
   static auto enable_aclnn_env = common::GetEnv("MS_ENABLE_ACLNN");
   if (enable_aclnn_env == "1") {
     return kernel::IsRegisteredAclnnOp(node);
   }
 
   static auto read_config = !enable_aclnn_env.empty() && enable_aclnn_env != "0";
+  std::string op_name = common::AnfAlgo::GetCNodeName(node);
   if (read_config) {
     std::call_once(kAclnnEnableListInit, []() {
       std::ifstream in_file(enable_aclnn_env);
@@ -418,10 +419,14 @@ bool ReadAclnnEnableEnv(const AnfNodePtr &node) {
       in_file.close();
     });
 
-    std::string op_name = common::AnfAlgo::GetCNodeName(node);
     if (kAclnnEnableList.count(op_name) != 0) {
       return kernel::IsRegisteredAclnnOp(node);
     }
+  }
+
+  static std::set<std::string> kAscendcKernelList = {kAllFiniteOpName};
+  if (kAscendcKernelList.count(op_name) != 0) {
+    return true;
   }
 
   return false;
@@ -639,7 +644,7 @@ std::tuple<bool, std::string, ExceptionType> SelectKernelInfoWithMsg(const Kerne
   return {false, msg, etype};
 }
 
-bool IsEnableAclnn(const KernelGraphPtr &kernel_graph, const AnfNodePtr &node) {
+bool IsEnableAclnn(const KernelGraphPtr &kernel_graph, const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   MS_EXCEPTION_IF_NULL(node);
   if (kernel_graph->is_from_single_op()) {

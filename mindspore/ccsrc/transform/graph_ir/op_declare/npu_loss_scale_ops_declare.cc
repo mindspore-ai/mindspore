@@ -46,4 +46,10 @@ INPUT_MAP(NPUClearFloatStatusV2) = EMPTY_INPUT_MAP;
 OUTPUT_MAP(NPUClearFloatStatusV2) = EMPTY_OUTPUT_MAP;
 ATTR_MAP(NPUClearFloatStatusV2) = EMPTY_ATTR_MAP;
 REG_ADPT_DESC(NPUClearFloatStatusV2, kNameNPUClearFloatStatusV2, ADPT_DESC(NPUClearFloatStatusV2))
+
+// AllFinite
+INPUT_MAP(AllFinite) = {{1, INPUT_DESC(gradient)}};
+OUTPUT_MAP(AllFinite) = {{0, OUTPUT_DESC(is_finite)}};
+ATTR_MAP(AllFinite) = EMPTY_ATTR_MAP;
+REG_ADPT_DESC(AllFinite, kNameAllFinite, ADPT_DESC(AllFinite))
 }  // namespace mindspore::transform
