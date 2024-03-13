@@ -661,8 +661,6 @@ bool IsEnableAclnn(const KernelGraphPtr &kernel_graph, const AnfNodePtr &node) {
 }
 
 void SetKernelInfoBeforeCreateKernel(const std::vector<CNodePtr> &nodes) {
-  std::string disable_name_list = common::GetEnv("MS_DISABLE_INTERNAL_KERNELS_LIST");
-  MS_LOG(WARNING) << "ms disable internal kernels list:" << disable_name_list;
   for (const auto &node : nodes) {
     MS_EXCEPTION_IF_NULL(node);
     auto build_info = AnfAlgo::GetSelectKernelBuildInfo(node);
