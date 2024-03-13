@@ -192,6 +192,7 @@ ValuePtrList HookBackwardNode::CallBackward(const ValuePtrList &grads) {
   MS_LOG(DEBUG) << "Begin HookBackwardNode CallBackward ";
   auto gradient = ValueListToValue(grads);
   (void)args_.emplace_back(gradient);
+  py::gil_scoped_acquire gil_acquire;
   auto out = prim_->RunHookFunction(args_);
   ValuePtrList gradient_values;
   if (utils::isa<PyObjectRef>(out)) {
