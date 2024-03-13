@@ -596,12 +596,18 @@ class Profiler:
     @classmethod
     def offline_analyse(cls, path: str, pretty=False, step_list=None):
         """
-        analyze training performance data. The example shows above.
+        Analyze training performance data offline, which is invoked after performance data collection is completed.
 
         Args:
-            path (str, required): The data path which has a profiler folder in the path
+            path (str, required): The profiling data path which need to be analyzed offline.
+                There needs to be a profiler directory in this path.
             pretty (bool, optional): Whether to pretty json files. Default: ``False``.
-            step_list (list, optional): A list of steps that need to be parsed
+            step_list (list, optional): A list of steps that need to be analyzed. Default: ``None``.
+                By default, all steps will be analyzed.
+
+        Examples:
+            >>> from mindspore import Profiler
+            >>> Profiler.offline_analyse("./profiling_path")
         """
         profiler_path = os.path.join(path, "profiler")
         if not os.path.exists(profiler_path):
@@ -700,11 +706,12 @@ class Profiler:
         Collect and analyze training performance data, support calls during and after training. The example shows above.
 
         Args:
-            offline_path (Union[str, None], optional): The data path which need to be analysed with offline mode.
+            offline_path (Union[str, None], optional): The data path which need to be analyzed with offline mode.
                 Offline mode isused in abnormal exit scenario. This parameter should be set to ``None``
                 for online mode. Default: ``None``.
             pretty (bool, optional): Whether to pretty json files. Default: ``False``.
-            step_list (list, optional): A list of steps that need to be parsed
+            step_list (list, optional): A list of steps that need to be analyzed. Default: ``None``.
+                By default, all steps will be analyzed.
         """
         self._pretty_json = pretty
         model_iteration_dict = {}
@@ -1114,8 +1121,6 @@ class Profiler:
             logger.warning(f"For '{self.__class__.__name__}', the parameter parallel_strategy must be bool, "
                            f"but got type {type(self._parallel_strategy)}, it will be set to True.")
             self._parallel_strategy = True
-
-
 
     def _ascend_analyse(self):
         """Collect and analyse ascend performance data."""

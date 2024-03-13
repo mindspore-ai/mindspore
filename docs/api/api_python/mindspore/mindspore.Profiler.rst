@@ -42,13 +42,23 @@ mindspore.Profiler
     异常：
         - **RuntimeError** - 当CANN的版本与MindSpore版本不匹配时，生成的ascend_job_id目录结构MindSpore无法解析。
 
-    .. py:method:: analyse(offline_path=None, pretty=False)
+    .. py:method:: analyse(offline_path=None, pretty=False, step_list=None)
 
         收集和分析训练的性能数据，支持在训练中和训练后调用。样例如上所示。
 
         参数：
             - **offline_path** (Union[str, None], 可选) - 需要使用离线模式进行分析的数据路径。离线模式用于非正常退出场景。对于在线模式，此参数应设置为 ``None`` 。默认值： ``None`` 。
-            - **pretty** (bool, 可选) - 对重要json文件进行format。此参数默认值为 ``False``，即不进行format。
+            - **pretty** (bool, 可选) - 对json文件进行格式化处理。此参数默认值为 ``False``，即不进行格式化。
+            - **step_list** (list, 可选) - 只分析指定step的性能数据。此参数默认值为 ``None``，即进行全解析。
+
+    .. py:method:: offline_analyse(path: str, pretty=False, step_list=None)
+
+        离线分析训练的性能数据，性能数据采集结束后调用。
+
+        参数：
+            - **path** (str, 必选) - 需要进行离线分析的profiling数据路径，指定到profiler上层目录。
+            - **pretty** (bool, 可选) - 对json文件进行格式化处理。此参数默认值为 ``False``，即不进行格式化。
+            - **step_list** (list, 可选) - 只分析指定step的性能数据。此参数默认值为 ``None``，即进行全解析。
 
     .. py:method:: op_analyse(op_name, device_id=None)
 
