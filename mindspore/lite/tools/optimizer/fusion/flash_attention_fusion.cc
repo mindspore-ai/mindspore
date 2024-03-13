@@ -42,6 +42,7 @@ constexpr auto kNameFlashAttentionPatternForLLAMAPatternV2 = "FlashAttentionPatt
 constexpr auto kNameFlashAttentionPatternForBaiChuan = "FlashAttentionPatternForBaiChuan";
 constexpr auto kNameFlashAttentionPatternForMsSDPseShift = "FlashAttentionPatternForMsSDPseShift";
 constexpr auto kNameFlashAttentionPatternForSDEinsum = "FlashAttentionPatternForSDEinsum";
+constexpr auto kNamePadNodeSuffix = "_fa_pad";
 constexpr size_t high_inner_precise = 0;
 constexpr size_t high_performance = 1;
 constexpr size_t kNumIndex0 = 0;
@@ -216,6 +217,10 @@ std::unordered_map<std::string, VectorRef> FlashAttentionFusion::DefinePatterns(
 CNodePtr FlashAttentionFusion::CreatePadCNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                               int32_t pad_size) const {
   MS_LOG(INFO) << "add pad node for prompt flash attention.";
+  if (node->fullname_with_scope().find(kNamePadNodeSuffix) != std::string::npos) {
+    MS_LOG(WARNING) << "node name contains " << kNamePadNodeSuffix << ", pad node is not created";
+    return node->cast<CNodePtr>();
+  }
   auto pad_prim = std::make_shared<ops::PadFusion>();
   if (pad_prim == nullptr) {
     MS_LOG(ERROR) << "new pad prim failed, prim is nullptr.";
@@ -243,7 +248,7 @@ CNodePtr FlashAttentionFusion::CreatePadCNode(const FuncGraphPtr &func_graph, co
     MS_LOG(ERROR) << "new pad cnode failed, cnode is nulpptr.";
     return nullptr;
   }
-  pad_cnode->set_fullname_with_scope(node->fullname_with_scope() + "_fa_pad");
+  pad_cnode->set_fullname_with_scope(node->fullname_with_scope() + kNamePadNodeSuffix);
   if (node->abstract() != nullptr) {
     pad_cnode->set_abstract(node->abstract()->Clone());
   }
