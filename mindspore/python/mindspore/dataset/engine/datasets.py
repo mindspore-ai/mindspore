@@ -4079,6 +4079,15 @@ class ConcatDataset(UnionBaseDataset):
 
             self._sampler = sampler
             self._children_sizes = [c.get_dataset_size() for c in self.children]
+
+            # Recursive access to other child concat nodes
+            def set_child(node):
+                for c in node.children:
+                    if isinstance(c, ConcatDataset):
+                        c.use_sampler(sampler)
+                    set_child(c)
+            set_child(self)
+
             return
 
         if sampler.is_shuffled():

@@ -253,35 +253,35 @@ Status ConcatOp::SampleInGlobal(TensorRow *row, bool is_pipeline_mode) {
     return Status::OK();
   } else if (row->eoe()) {
     // if one child has drained, sample from other children
-    MS_LOG(INFO) << "child " << child_id << " node has been drained.";
     children_exhausted_[child_id] = true;
-    if (std::accumulate(children_sizes_.begin(), children_sizes_.end(), 0) != 0) {
-      // we still have samples in other children
-      discrete_random_->param({children_sizes_.begin(), children_sizes_.end()});
-      s = is_pipeline_mode ? GetNextRow(row) : GetNextRowPullMode(row);
-      RETURN_IF_NOT_OK(s);
-    } else {
-      // check all children have been exhausted
-      MS_LOG(INFO) << "all children have been drained.";
-      for (auto c = 0; c < children_exhausted_.size(); c++) {
-        TensorRow eoe;
-        if (!children_exhausted_[c]) {
-          RETURN_IF_NOT_OK(CollectOpInfoStart(this->NameWithID(), "GetFromPreviousOp"));
-          s = is_pipeline_mode ? child_[c]->GetNextRow(&eoe) : child_[c]->GetNextRowPullMode(&eoe);
-          RETURN_IF_NOT_OK(s);
-          RETURN_IF_NOT_OK(
-            CollectOpInfoEnd(this->NameWithID(), "GetFromPreviousOp", {{"TensorRowFlags", eoe.FlagName()}}));
-          CHECK_FAIL_RETURN_UNEXPECTED(eoe.eoe(), "[Internal ERROR] Row must be an EOE.");
-        }
-      }
+    children_sizes_[child_id] = 0;
 
-      // reset distribution
-      MS_LOG(INFO) << "reset all children.";
-      children_sizes_ = children_sizes_ori_;
-      children_exhausted_ = std::vector<bool>(children_sizes_.size(), true);
-      discrete_random_->param({children_sizes_.begin(), children_sizes_.end()});
-      UpdateRepeatAndEpochCounter();
+    // check all children have been exhausted
+    MS_LOG(INFO) << "child " << child_id << " node has been drained, check all children status (next row is eoe).";
+    // always get eoe from child 0, since random {0, 0, 0} return 0, exhaust other children
+    for (auto c = 0; c < children_exhausted_.size(); c++) {
+      TensorRow eoe;
+      if (!children_exhausted_[c]) {
+        RETURN_IF_NOT_OK(CollectOpInfoStart(this->NameWithID(), "GetFromPreviousOp"));
+        s = is_pipeline_mode ? child_[c]->GetNextRow(&eoe) : child_[c]->GetNextRowPullMode(&eoe);
+        RETURN_IF_NOT_OK(s);
+        RETURN_IF_NOT_OK(
+          CollectOpInfoEnd(this->NameWithID(), "GetFromPreviousOp", {{"TensorRowFlags", eoe.FlagName()}}));
+        // for those variable dataset size, we cannot support currently
+        CHECK_FAIL_RETURN_UNEXPECTED(
+          eoe.eoe(),
+          "The actual size of dataset " + std::to_string(c) +
+            " does not match its defined size, maybe the dataset size is variable or `__len__` is incorrect.");
+        children_exhausted_[c] = true;
+      }
     }
+
+    // reset distribution
+    MS_LOG(INFO) << "reset all children.";
+    children_sizes_ = children_sizes_ori_;
+    children_exhausted_ = std::vector<bool>(children_sizes_.size(), false);
+    discrete_random_->param({children_sizes_.begin(), children_sizes_.end()});
+    UpdateRepeatAndEpochCounter();
   } else if (row->eof()) {
     // check all children have been drained
     MS_LOG(INFO) << "Get eof from child " << child_id << ", drain eof of other children";
