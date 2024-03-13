@@ -1648,5 +1648,54 @@ STATUS AdjustInputToCnode(const CNodePtr &cnode, size_t input_index) {
   manager->SetEdge(cnode, input_index, tensor_move_cnode);
   return RET_OK;
 }
+
+tensor::TensorPtr GetTensorFromParameterNode(const EquivPtr &equiv, const VarPtr &input) {
+  MS_CHECK_TRUE_RET(equiv != nullptr && input != nullptr, nullptr);
+  auto node = utils::cast<AnfNodePtr>((*equiv)[input]);
+  if (node == nullptr || !utils::isa<ParameterPtr>(node)) {
+    MS_LOG(ERROR) << "node is nullptr or node is not a parameter node.";
+    return nullptr;
+  }
+  auto parameter_node = node->cast<ParameterPtr>();
+  if (!parameter_node->has_default() || parameter_node->default_param() == nullptr) {
+    MS_LOG(ERROR) << "parameter_node has no default or its default_param() is nullptr.";
+    return nullptr;
+  }
+  auto param_value_lite = parameter_node->default_param()->cast<tensor::TensorPtr>();
+  return param_value_lite;
+}
+
+const int GetIntParameterValue(const EquivPtr &equiv, const VarPtr &input) {
+  MS_CHECK_TRUE_RET(equiv != nullptr && input != nullptr, INT_MIN);
+  auto param_value_lite = GetTensorFromParameterNode(equiv, input);
+  const int value = INT_MIN;
+  if (param_value_lite == nullptr) {
+    return value;
+  }
+  if (param_value_lite->data_type() != kNumberTypeInt32 && param_value_lite->data_type() != kNumberTypeInt) {
+    return value;
+  }
+  if (param_value_lite->Size() != sizeof(int)) {
+    return value;
+  }
+  return *static_cast<int *>(param_value_lite->data_c());
+}
+
+const float GetFloatParameterValue(const EquivPtr &equiv, const VarPtr &input) {
+  const float value = -1;
+  MS_CHECK_TRUE_RET(equiv != nullptr && input != nullptr, value);
+  auto param_value_lite = GetTensorFromParameterNode(equiv, input);
+  if (param_value_lite == nullptr) {
+    return value;
+  }
+  if (param_value_lite->data_type() != kNumberTypeFloat32 && param_value_lite->data_type() != kNumberTypeFloat) {
+    return value;
+  }
+  if (param_value_lite->Size() != sizeof(float)) {
+    return value;
+  }
+  return *static_cast<float *>(param_value_lite->data_c());
+}
+
 };  // namespace opt
 }  // namespace mindspore

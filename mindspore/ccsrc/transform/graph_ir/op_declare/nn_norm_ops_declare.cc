@@ -109,6 +109,24 @@ INPUT_ATTR_MAP(LayerNorm) = {{4, ATTR_DESC(begin_norm_axis, AnyTraits<int64_t>()
 OUTPUT_MAP(LayerNorm) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(mean)}, {2, OUTPUT_DESC(variance)}};
 REG_ADPT_DESC(LayerNorm, prim::kPrimLayerNorm->name(), ADPT_DESC(LayerNorm))
 
+// AddLayerNorm
+INPUT_MAP(AddLayerNorm) = {
+  {1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}, {3, INPUT_DESC(gamma)}, {4, INPUT_DESC(beta)}, {5, INPUT_DESC(bias)},
+};
+ATTR_MAP(AddLayerNorm) = {{"epsilon", ATTR_DESC(epsilon, AnyTraits<float>())},
+                          {"additional_output", ATTR_DESC(additional_output, AnyTraits<bool>())}};
+INPUT_ATTR_MAP(AddLayerNorm) = {
+  {6, ATTR_DESC(epsilon, AnyTraits<float>())},
+  {7, ATTR_DESC(additional_output, AnyTraits<bool>())},
+};
+OUTPUT_MAP(AddLayerNorm) = {
+  {0, OUTPUT_DESC(y)},
+  {1, OUTPUT_DESC(mean)},
+  {2, OUTPUT_DESC(rstd)},
+  {3, OUTPUT_DESC(x)},
+};
+REG_ADPT_DESC(AddLayerNorm, prim::kPrimAddLayerNorm->name(), ADPT_DESC(AddLayerNorm))
+
 // LayerNormGrad
 INPUT_MAP(LayerNormGrad) = {
   {1, INPUT_DESC(x)}, {2, INPUT_DESC(dy)}, {3, INPUT_DESC(variance)}, {4, INPUT_DESC(mean)}, {5, INPUT_DESC(gamma)}};

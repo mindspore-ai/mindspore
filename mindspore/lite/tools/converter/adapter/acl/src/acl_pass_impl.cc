@@ -70,6 +70,7 @@
 #include "pipeline/jit/ps/parse/resolve.h"
 #include "tools/optimizer/graph/scalar_op_pass.h"
 #include "tools/optimizer/graph/make_list_pass.h"
+#include "tools/optimizer/fusion/add_layernorm_fusion.h"
 #include "tools/common/custom_ascend_utils.h"
 #include "tools/optimizer/graph/attr_to_args_pass.h"
 #include "transform/symbol/symbol_utils.h"
@@ -94,6 +95,7 @@ constexpr auto kCustomOpFlashAttentionFusionForCustom = "FlashAttentionFusionFor
 constexpr auto kCustomOpFlashAttentionFusion = "FlashAttentionFusion";
 constexpr auto kCustomOpGroupNormSiluFusion = "GroupNormSiluFusion";
 constexpr auto kCustomOpGeGluV2Fusion = "GeGluV2Fusion";
+constexpr auto kAddLayerNormFusion = "AddLayerNormFusion";
 constexpr auto kScalarOpPass = "ScalarOpPass";
 constexpr auto kMakeListPass = "MakeListPass";
 constexpr auto kFuncType = "func_type";
@@ -627,6 +629,13 @@ STATUS AclPassImpl::PreProcGraph(const FuncGraphPtr &func_graph) {
       MS_LOG(INFO) << "using GroupNormSilu";
       if (!lite::RunOptimizerPass(func_graph, {kCustomOpGroupNormSiluFusion})) {
         MS_LOG(ERROR) << kCustomOpGroupNormSiluFusion << " op pass failed.";
+        return lite::RET_ERROR;
+      }
+    }
+    if (find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "All") != plugin_custom_ops.end()) {
+      MS_LOG(INFO) << "run " << kAddLayerNormFusion;
+      if (!lite::RunOptimizerPass(func_graph, {kAddLayerNormFusion})) {
+        MS_LOG(ERROR) << kAddLayerNormFusion << " op pass failed.";
         return lite::RET_ERROR;
       }
     }
