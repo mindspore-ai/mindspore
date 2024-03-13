@@ -269,64 +269,40 @@ bool HcclAdapter::FinalizeHccl() {
 
 HcclResult HcclAdapter::HcclBroadcast(void *buf, uint64_t count, HcclDataType dataType, uint32_t root,
                                       aclrtStream stream, HcclComm hccl_comm) const {
-  CheckExcutionMode();
-  CHECK_SYMBOL_NULL(launch_hccl_broadcast_);
-  MS_EXCEPTION_IF_NULL(hccl_comm);
   return launch_hccl_broadcast_(buf, count, dataType, root, hccl_comm, stream);
 }
 
 HcclResult HcclAdapter::HcclAllReduce(void *send_buf, void *recv_buf, uint64_t count, HcclDataType dataType,
                                       const HcclReduceOp op, const aclrtStream stream, HcclComm hccl_comm) const {
-  CheckExcutionMode();
-  CHECK_SYMBOL_NULL(launch_hccl_all_reduce_);
-  MS_EXCEPTION_IF_NULL(hccl_comm);
   return launch_hccl_all_reduce_(send_buf, recv_buf, count, dataType, op, hccl_comm, stream);
 }
 
 HcclResult HcclAdapter::HcclReduce(void *send_buf, void *recv_buf, uint64_t count, HcclDataType dataType,
                                    HcclReduceOp op, uint32_t root, const aclrtStream stream, HcclComm hccl_comm) const {
-  CheckExcutionMode();
-  CHECK_SYMBOL_NULL(launch_hccl_reduce_);
-  MS_EXCEPTION_IF_NULL(hccl_comm);
   return launch_hccl_reduce_(send_buf, recv_buf, count, dataType, op, root, hccl_comm, stream);
 }
 
 HcclResult HcclAdapter::HcclReduceScatter(void *send_buf, void *recv_buf, uint64_t count, HcclDataType dataType,
                                           const HcclReduceOp op, const aclrtStream stream, HcclComm hccl_comm) const {
-  CheckExcutionMode();
-  CHECK_SYMBOL_NULL(launch_hccl_reduce_scatter_);
-  MS_EXCEPTION_IF_NULL(hccl_comm);
   return launch_hccl_reduce_scatter_(send_buf, recv_buf, count, dataType, op, hccl_comm, stream);
 }
 
 HcclResult HcclAdapter::HcclAllGather(void *send_buf, void *recv_buf, uint64_t count, HcclDataType dataType,
                                       const aclrtStream stream, HcclComm hccl_comm) const {
-  CheckExcutionMode();
-  CHECK_SYMBOL_NULL(launch_hccl_all_gather_);
-  MS_EXCEPTION_IF_NULL(hccl_comm);
   return launch_hccl_all_gather_(send_buf, recv_buf, count, dataType, hccl_comm, stream);
 }
 
 HcclResult HcclAdapter::HcclSend(void *send_buf, uint64_t count, HcclDataType dataType, uint32_t destRank,
                                  const aclrtStream stream, HcclComm hccl_comm) const {
-  CheckExcutionMode();
-  CHECK_SYMBOL_NULL(launch_hccl_send_);
-  MS_EXCEPTION_IF_NULL(hccl_comm);
   return launch_hccl_send_(send_buf, count, dataType, destRank, hccl_comm, stream);
 }
 
 HcclResult HcclAdapter::HcclRecv(void *recv_buf, uint64_t count, HcclDataType dataType, uint32_t srcRank,
                                  const aclrtStream stream, HcclComm hccl_comm) const {
-  CheckExcutionMode();
-  CHECK_SYMBOL_NULL(launch_hccl_recv_);
-  MS_EXCEPTION_IF_NULL(hccl_comm);
   return launch_hccl_recv_(recv_buf, count, dataType, srcRank, hccl_comm, stream);
 }
 
 HcclResult HcclAdapter::HcclBarrier(const aclrtStream stream, HcclComm hccl_comm) const {
-  CheckExcutionMode();
-  CHECK_SYMBOL_NULL(launch_hccl_barrier_);
-  MS_EXCEPTION_IF_NULL(hccl_comm);
   return launch_hccl_barrier_(hccl_comm, stream);
 }
 
