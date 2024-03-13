@@ -19,11 +19,11 @@
 #include <utility>
 
 #include "plugin/device/gpu/kernel/nn/dropout_grad_kernel.h"
-#include "mindspore/core/ops/grad/dropout_grad.h"
+#include "mindspore/core/ops/ops_func_impl/dropout_grad.h"
 
 namespace mindspore {
 namespace kernel {
-constexpr size_t kDropoutGradInputNum = 2;
+constexpr size_t kDropoutGradInputNum = 3;
 constexpr size_t kDropoutGradOutputNum = 1;
 
 bool DropoutGradBwdGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
@@ -38,7 +38,7 @@ bool DropoutGradBwdGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  keep_prob_ = GetValue<float>(primitive_->GetAttr("keep_prob"));
+  keep_prob_ = inputs[kIndex2]->GetValueWithCheck<float>();
   return true;
 }
 
@@ -92,11 +92,23 @@ bool DropoutGradBwdGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> 
 }
 
 std::vector<std::pair<KernelAttr, DropoutGradBwdGpuKernelMod::DropoutGradFunc>> DropoutGradBwdGpuKernelMod::func_list_ =
-  {{KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+  {{KernelAttr()
+      .AddInputAttr(kNumberTypeFloat16)
+      .AddInputAttr(kNumberTypeFloat16)
+      .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+      .AddOutputAttr(kNumberTypeFloat16),
     &DropoutGradBwdGpuKernelMod::LaunchKernel<half>},
-   {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+   {KernelAttr()
+      .AddInputAttr(kNumberTypeFloat32)
+      .AddInputAttr(kNumberTypeFloat32)
+      .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+      .AddOutputAttr(kNumberTypeFloat32),
     &DropoutGradBwdGpuKernelMod::LaunchKernel<float>},
-   {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+   {KernelAttr()
+      .AddInputAttr(kNumberTypeFloat64)
+      .AddInputAttr(kNumberTypeFloat64)
+      .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+      .AddOutputAttr(kNumberTypeFloat64),
     &DropoutGradBwdGpuKernelMod::LaunchKernel<double>}};
 
 std::vector<KernelAttr> DropoutGradBwdGpuKernelMod::GetOpSupport() {

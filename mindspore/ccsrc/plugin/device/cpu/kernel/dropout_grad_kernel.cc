@@ -23,12 +23,12 @@
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 #include "plugin/device/cpu/kernel/nnacl/fp32_grad/dropout_grad.h"
-#include "mindspore/core/ops/grad/dropout_grad.h"
+#include "mindspore/core/ops/ops_func_impl/dropout_grad.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kDropoutGradInputsNum = 2;
+constexpr size_t kDropoutGradInputsNum = 3;
 constexpr size_t kDropoutGradOutputsNum = 1;
 }  // namespace
 
@@ -41,7 +41,7 @@ bool DropoutGradBwdCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                   << " and " << kDropoutGradOutputsNum << ", but got " << inputs.size() << " and " << outputs.size();
     return false;
   }
-  keep_prob_ = GetValue<float>(primitive_->GetAttr(ops::kKeepProb));
+  keep_prob_ = inputs[kIndex2]->GetValueWithCheck<float>();
   if (keep_prob_ <= 0.0 || keep_prob_ > 1.0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", the 'keep_prob' must be in (0.0, 1.0], but got " << keep_prob_;
   }
@@ -90,11 +90,23 @@ bool DropoutGradBwdCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTe
 
 FuncVec &DropoutGradBwdCpuKernelMod::GetFuncList() const {
   static const std::vector<std::pair<KernelAttr, DropoutGradBwdCpuKernelMod::KernelRunFunc>> func_list = {
-    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+       .AddOutputAttr(kNumberTypeFloat16),
      &DropoutGradBwdCpuKernelMod::LaunchKernel<float16>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+       .AddOutputAttr(kNumberTypeFloat32),
      &DropoutGradBwdCpuKernelMod::LaunchKernel<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeFloat32)
+       .AddOutputAttr(kNumberTypeFloat64),
      &DropoutGradBwdCpuKernelMod::LaunchKernel<double>},
   };
   return func_list;

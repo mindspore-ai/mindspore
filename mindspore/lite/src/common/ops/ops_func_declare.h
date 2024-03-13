@@ -111,7 +111,7 @@
 #include "ops/grad/binary_cross_entropy_grad.h"
 #include "ops/grad/de_conv2d_grad_filter.h"
 #include "ops/grad/div_grad.h"
-#include "ops/grad/dropout_grad.h"
+#include "ops/ops_func_impl/dropout_grad.h"
 #include "ops/grad/flatten_grad.h"
 #include "ops/grad/group_conv2d_grad_input.h"
 #include "ops/grad/log_grad.h"

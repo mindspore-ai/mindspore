@@ -135,7 +135,6 @@ GVAR_DEF(PrimitivePtr, kPrimDropOutDoMask, std::make_shared<Primitive>("DropOutD
 GVAR_DEF(PrimitivePtr, kPrimDropoutDoMaskV3, std::make_shared<Primitive>(kDropoutDoMaskV3OpName));
 GVAR_DEF(PrimitivePtr, kPrimDropOutDoMaskV3, std::make_shared<Primitive>("DropOutDoMaskV3"));
 GVAR_DEF(PrimitivePtr, kPrimDropOutDoMaskV3D, std::make_shared<Primitive>("DropOutDoMaskV3D"));
-GVAR_DEF(PrimitivePtr, kPrimDropoutGrad, std::make_shared<Primitive>(kDropoutGradOpName));
 GVAR_DEF(PrimitivePtr, kPrimDropout2D, std::make_shared<Primitive>(kDropout2DOpName));
 GVAR_DEF(PrimitivePtr, kPrimDropout3D, std::make_shared<Primitive>(kDropout3DOpName));
 GVAR_DEF(PrimitivePtr, kPrimUniformInt, std::make_shared<Primitive>("UniformInt"));

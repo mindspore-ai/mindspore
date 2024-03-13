@@ -508,7 +508,7 @@ REG_BPROP_BUILDER("Dropout").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex5);
   auto mask = ib->TupleGetItem(out, 1);
   auto dy = ib->TupleGetItem(dout, 0);
-  auto dx = ib->Emit(kDropoutGradOpName, {dy, mask}, {{"keep_prob", ib->GetInput(kIndex1)->BuildValue()}});
+  auto dx = ib->Emit(kDropoutGradOpName, {dy, mask, keep_prob});
   return {dx, ib->OutZeros(keep_prob), ib->OutZeros(seed0), ib->OutZeros(seed1)};
 });
 
@@ -521,12 +521,13 @@ REG_BPROP_BUILDER("BinaryCrossEntropy").SetUnusedInputs({i3}).SetBody(BODYFUNC(i
   return {dx, ib->OutZeros(y), ib->OutZeros(weight)};
 });
 
-REG_BPROP_BUILDER("DropoutGrad").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("DropoutGrad").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
   auto mask = ib->GetInput(kIndex1);
-  auto dout = ib->GetInput(kIndex3);
+  auto keep_prob = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex4);
   auto dy = dout;
-  auto dx = ib->Emit(kDropoutGradOpName, {dy, mask}, {{"keep_prob", ib->GetAttr("keep_prob")}});
-  return {dx, ib->OutZeros(mask)};
+  auto dx = ib->Emit(kDropoutGradOpName, {dy, mask, keep_prob});
+  return {dx, ib->OutZeros(mask), ib->OutZeros(keep_prob)};
 });
 
 REG_BPROP_BUILDER("DeformableOffsets").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {

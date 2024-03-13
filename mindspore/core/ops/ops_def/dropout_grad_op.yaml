@@ -1,0 +1,16 @@
+#operator dropout_grad
+dropout_grad:
+  args:
+    x:
+      dtype: tensor
+    mask:
+      dtype: tensor
+    keep_prob:
+      dtype: float
+      default: 0.5
+      prim_init: True
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True
