@@ -39,7 +39,7 @@ class GraphAnalyzer {
   // escaped_locals and captured.values do not intersect
   struct CapturedInfo {
     struct {
-      std::set<ValueNode *> inputs;
+      mindspore::CompactSet<ValueNode *> inputs;
       std::set<ValueNode *> values;
       std::vector<ValueNode *> order;
     } captured_locals;
