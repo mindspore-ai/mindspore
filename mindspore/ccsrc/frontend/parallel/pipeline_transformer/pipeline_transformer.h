@@ -97,7 +97,7 @@ class PipelineTransformer {
   bool IsRedundancyParameter(const AnfNodePtr &parameter, const std::vector<AnfNodePtr> &non_cloned_parameters);
   void ElimParameter();
   void FreezeGradient();
-  tensor::TensorPtr CreateZeroseOutput(const AnfNodePtr &node, size_t index);
+  AnfNodePtr CreateZeroseOutput(const AnfNodePtr &node, size_t index);
   AnfNodePtr GetZeroOutputs(const FuncGraphPtr &graph);
 
   std::pair<OperatorInfoPtr, int> GetOpInfoPair(const AnfNodePtr &node, const AnfNodePtr &graph_param,
