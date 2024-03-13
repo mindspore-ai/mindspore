@@ -531,7 +531,11 @@ const void *KernelTensor::GetValuePtr() {
 }
 
 bool KernelTensor::SyncDataFromDeviceToHost() const {
+  // Note: must release lock when wait async resize or launch kernel finish, because the kernels' resize and launch
+  // tasks which are waited maybe use this kernel's GetValue and try lock this mutex to avoid deadlock.
+  host_info_->value_mutex_.unlock();
   WaitAsyncResizeAndLaunchFinish();
+  host_info_->value_mutex_.lock();
 
   void *device_ptr = this->device_ptr();
   if (device_ptr == nullptr) {

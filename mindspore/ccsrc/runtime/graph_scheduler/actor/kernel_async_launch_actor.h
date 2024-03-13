@@ -42,6 +42,8 @@ class BACKEND_EXPORT KernelAsyncLaunchActor : public ActorBase {
 
   Future<bool> OnTaskFinish();
 
+  const std::thread::id &actor_thread_id() const { return thread_id_; }
+
  private:
   KernelAsyncLaunchActor() : ActorBase("KernelAsyncLaunchActor") {}
   DISABLE_COPY_AND_ASSIGN(KernelAsyncLaunchActor);

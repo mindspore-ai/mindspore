@@ -42,6 +42,8 @@ class BACKEND_EXPORT KernelAsyncResizeActor : public ActorBase {
 
   Future<bool> OnTaskFinish();
 
+  const std::thread::id &actor_thread_id() const { return thread_id_; }
+
  private:
   KernelAsyncResizeActor() : ActorBase("KernelAsyncResizeActor") {}
   DISABLE_COPY_AND_ASSIGN(KernelAsyncResizeActor);

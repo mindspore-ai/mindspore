@@ -79,7 +79,7 @@ void AnyTypeKernelActor::RunOpData(OpData<DeviceTensor> *const input_data, OpCon
     // Collect graph output data.
     graph_output_op_data_[sequential_num].emplace_back(input_data);
     if (CheckGraphOutputRunningCondition(context)) {
-      MS_LOG(DEBUG) << "End wait runtime pipeline to run for graph output for actor: " << GetAID().Name();
+      MS_LOG(DEBUG) << "Begin wait runtime pipeline to run for graph output for actor: " << GetAID().Name();
       if (!WaitRuntimePipelineFinish(context)) {
         MS_LOG(INFO) << "Run failed and early stop.";
         return;
