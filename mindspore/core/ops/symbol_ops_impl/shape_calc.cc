@@ -80,7 +80,8 @@ class MS_CORE_API ShapeCalcBroadcastGradientArgs : public InferValueOp {
 
 class MS_CORE_API ShapeCalcReduceSumGrad : public InferValueOp {
  public:
-  ShapeCalcReduceSumGrad(const SymbolPtr &inp, const SymbolPtr &axis) : InferValueOp({inp, axis}) {}
+  ShapeCalcReduceSumGrad(const SymbolPtr &inp, const SymbolPtr &axis, const SymbolPtr &skip_mode)
+      : InferValueOp({inp, axis, skip_mode}) {}
   ~ShapeCalcReduceSumGrad() override = default;
   MS_DECLARE_PARENT(ShapeCalcReduceSumGrad, InferValueOp)
 
@@ -92,7 +93,7 @@ class MS_CORE_API ShapeCalcReduceSumGrad : public InferValueOp {
     }
     auto axis = input(kIndex1);
     auto keep_dims = BoolSymbol::Make(true);
-    auto skip_mode = BoolSymbol::Make(false);
+    auto skip_mode = input(kIndex2);
     auto r_shape = Emit(std::make_shared<Reduce>(inp, axis, keep_dims, skip_mode));
     MS_EXCEPTION_IF_NULL(r_shape);
     MS_EXCEPTION_IF_CHECK_FAIL(r_shape->HasData(), "r_shape should not be dynamic-rank");
@@ -114,10 +115,11 @@ SymbolPtr ShapeCalcValueBuilder(OperationBuilder *b) {
   MS_EXCEPTION_IF_NULL(functor_attr);
   auto functor = functor_attr->cast_ptr<ShapeCalcBaseFunctor>();
   MS_EXCEPTION_IF_NULL(functor);
-  if (functor->name() == "ShapeCalc_reduce_shape_shapecalc") {
+  if (functor->name() == "ShapeCalc_ReduceShape") {
     auto input = b->GetInputShape(kIndex0);
     auto axis = b->GetInputValue(kIndex1);
-    return b->Emit(std::make_shared<ShapeCalcReduceSumGrad>(input, axis));
+    auto skip_mode = BoolSymbol::Make(GetValue<bool>(functor->ToValue()));
+    return b->Emit(std::make_shared<ShapeCalcReduceSumGrad>(input, axis, skip_mode));
   }
   if (functor->name() == "ShapeCalc_BroadcastGradientArgs") {
     auto inp1 = b->GetInputShape(kIndex0);

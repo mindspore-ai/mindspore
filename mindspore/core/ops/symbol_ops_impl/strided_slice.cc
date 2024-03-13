@@ -209,7 +209,8 @@ SymbolPtr StridedSliceValueBuilder(OperationBuilder *b) {
 }
 
 REG_SYMBOL_OP_BUILDER("StridedSlice")
-  .SetShapeDepend({DependOn::kShape, DependOn::kValue, DependOn::kValue, DependOn::kValue})
+  .SetShapeDepend({DependOn::kShape, DependOn::kValue, DependOn::kValue, DependOn::kValue, DependOn::kValue,
+                   DependOn::kValue, DependOn::kValue, DependOn::kValue, DependOn::kValue})
   .SetShapeFunc(StridedSliceShapeBuilder)
   .SetValueFunc(StridedSliceValueBuilder);
 }  // namespace ops
