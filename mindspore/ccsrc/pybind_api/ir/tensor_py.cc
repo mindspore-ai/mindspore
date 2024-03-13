@@ -113,8 +113,6 @@ static std::string GetPyTypeFormat(TypeId data_type) {
   switch (data_type) {
     case TypeId::kNumberTypeFloat16:
       return "e";
-    case TypeId::kNumberTypeBFloat16:
-      return "f";
     case TypeId::kNumberTypeFloat32:
       return py::format_descriptor<float>::format();
     case TypeId::kNumberTypeFloat64:
@@ -520,6 +518,12 @@ py::array TensorPy::SyncAsNumpy(const Tensor &tensor) {
     // Release device address of graph output tensor.
     if (tensor.need_release_device_mem()) {
       const_cast<Tensor &>(tensor).set_device_address(nullptr);
+    }
+
+    // BFloat16 is not supported in numpy.
+    if (tensor.data_type() == kNumberTypeBFloat16) {
+      MS_EXCEPTION(TypeError) << "For asnumpy, the type of tensor cannot be BFloat16, but got "
+                              << TypeIdLabel(tensor.data_type());
     }
   }
   return AsNumpy(tensor);
