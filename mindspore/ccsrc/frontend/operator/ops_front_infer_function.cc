@@ -858,6 +858,25 @@ AbstractBasePtr InferImplTaylor(const AnalysisEnginePtr &, const PrimitivePtr &p
   return AbstractFunction::MakeAbstractFunction(taylor_v);
 }
 
+AbstractBasePtr InferImplReusing(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                 const AbstractBasePtrList &args_abs_list) {
+  // args: An object of AbstractFunction.
+  CheckArgsSize(primitive->name(), args_abs_list, 1);
+  MS_LOG(DEBUG) << "evaluate Reusing: " << args_abs_list[0]->ToString();
+  AbstractFunctionPtr x = dyn_cast<AbstractFunction>(args_abs_list[0]);
+  MS_EXCEPTION_IF_NULL(x);
+  auto set_graph_no_inline = [](const AbstractFuncAtomPtr &func) {
+    auto fg_closure = dyn_cast<FuncGraphAbstractClosure>(func);
+    if (fg_closure != nullptr) {
+      fg_closure->func_graph()->set_flag(FUNC_GRAPH_FLAG_NO_INLINE, true);
+      MS_LOG(DEBUG) << " Reusing: " << func->ToString()
+                    << " no_inline: " << fg_closure->func_graph()->has_flag(FUNC_GRAPH_FLAG_NO_INLINE);
+    }
+  };
+  x->Visit(set_graph_no_inline);
+  return x;
+}
+
 AbstractBasePtr InferImplShard(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const AbstractBasePtrList &args_abs_list) {
   // Inputs: func, in_axes, out_axes, device, level.
@@ -1119,6 +1138,7 @@ REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(J, prim::kPrimJ, InferImplJ, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(BroadcastGradientArgs, prim::kPrimBroadcastGradientArgs,
                                    InferImplBroadcastGradientArgs, nullptr);
 // Other
+REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(Reusing, prim::kPrimReusing, InferImplReusing, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(Taylor, prim::kPrimTaylor, InferImplTaylor, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(Shard, prim::kPrimShard, InferImplShard, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(Vmap, prim::kPrimVmap, InferImplVmap, nullptr);

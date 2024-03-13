@@ -46,7 +46,6 @@ class SimpleNet(nn.Cell):
 
 
 class StageSimpleNet(nn.Cell):
-    @lazy_inline
     def __init__(self, w_l, micro, stage_num=2):
         super().__init__()
         self.micro_size = micro

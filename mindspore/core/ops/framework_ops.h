@@ -69,7 +69,7 @@ GVAR_DEF(PrimitivePtr, kPrimJ, std::make_shared<Primitive>(kJOpName, kSideEffect
 GVAR_DEF(PrimitivePtr, kPrimVmap, std::make_shared<Primitive>(kVmapOpName, kSideEffectPropagate));
 GVAR_DEF(PrimitivePtr, kPrimShard, std::make_shared<Primitive>("Shard", kSideEffectPropagate));
 GVAR_DEF(PrimitivePtr, kPrimTaylor, std::make_shared<Primitive>(kTaylorOpName));
-
+GVAR_DEF(PrimitivePtr, kPrimReusing, std::make_shared<Primitive>("Reusing"));
 // Control ops
 GVAR_DEF(PrimitivePtr, kPrimMerge, std::make_shared<Primitive>("Merge"));
 

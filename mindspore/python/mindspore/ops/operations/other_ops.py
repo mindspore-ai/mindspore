@@ -828,3 +828,49 @@ class PyFunc(PrimitiveWithInfer):
         logger.warning("The function output are empty tuple. Add a placeholder instead. "
                        "Do not use it as it could be any uninitialized data.")
         return (typing.TensorType(mstype.int32),)
+
+class Reusing(Primitive):
+    """
+    Make the function graph to be labeled as no inline.
+
+    Refer to :func:`mindspore.ops.Reusing` for more details.
+
+    Inputs:
+        - **input_x** (function) - the function will be labeled as no inline.
+
+    Outputs:
+         function, the function that has been labeled as no inline.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, jit
+        >>> from mindspore.common import dtype as mstype
+        >>> from mindspore import ops
+        >>> def for_body_fun(i,val):
+                x = i *3
+                x = x * val * val
+                return x
+        >>> def fori_loop(lower, upper, body_fun, init_val):
+                body_fun = ops.reusing(body_fun)
+                val = init_val
+                for i in range(lower, upper):
+                    val = body_fun(i, val)
+                return val
+        >>> @jit
+        >>> def call_fori_loop(x):
+                x = fori_loop(1,10,for_body_fun,x)
+                return x
+        >>> x = Tensor([1], mstype.int32)
+        >>> x = call_fori_loop(x)
+        >>> print(x)
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize Reusing"""
+
+    def __call__(self, x):
+        return x

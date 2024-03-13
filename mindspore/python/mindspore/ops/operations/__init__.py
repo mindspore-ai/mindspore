@@ -120,7 +120,7 @@ from .nn_ops import (LSTM, SGD, Adam, AdamWeightDecay, FusedSparseAdam, FusedSpa
                      GLU, MaxUnpool3D, Pdist, RmsNorm, PagedAttention, PagedAttentionMask, ReshapeAndCache,
                      ApplyRotaryPosEmb, MatmulQkv)
 from .other_ops import (Assign, IOU, BoundingBoxDecode, BoundingBoxEncode,
-                        ConfusionMatrix, UpdateState, Load, StopGradient,
+                        ConfusionMatrix, UpdateState, Load, StopGradient, Reusing,
                         CheckValid, Partial, Depend, Push, Pull, PyExecute, PyFunc, _DynamicLossScale,
                         SampleDistortedBoundingBoxV2)
 from .random_ops import (RandomChoiceWithMask, StandardNormal, Gamma, RandomGamma, Poisson, UniformInt, UniformReal,
@@ -142,6 +142,7 @@ __all__ = [
     'CeLU',
     'Ger',
     'Unique',
+    'Reusing',
     'ReverseSequence',
     'Sort',
     'EditDistance',
