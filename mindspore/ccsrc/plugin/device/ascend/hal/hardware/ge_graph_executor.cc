@@ -1041,6 +1041,13 @@ void GeGraphExecutor::AddRefCorrespondPairs(const KernelGraphPtr &graph,
                    << ", index: " << final_node.second;
       continue;
     }
+    // if input node is not abstract ref, set ref may cause memory reuse error
+    auto abs = origin_node.first->abstract();
+    if (!abs->isa<abstract::AbstractRefTensor>()) {
+      MS_LOG(INFO) << "The node is not abstract tensor: " << final_node.first->fullname_with_scope()
+                   << ", index: " << final_node.second;
+      continue;
+    }
 
     ref_out_in_map.emplace(final_node, origin_node);
     MS_LOG(INFO) << "Convert io_index [" << in_out_index.first << ", " << in_out_index.second
