@@ -305,7 +305,6 @@ void SuperKernelActor::SendDebugReq(OpContext<DeviceTensor> *const context) {
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(GraphExecutionStrategy::kPipeline, (*context),
                                                   "Invalid device context for super kernel actor:" + GetAID().Name());
   }
-  ActorDispatcher::SendSync(*debug_aid_, &DebugActor::DebugForGraph, graph_, device_contexts_[0], context, &GetAID());
   OnDebugFinish(context);
 }
 

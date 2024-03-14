@@ -111,7 +111,7 @@ void DumpJsonParser::CheckGEBackend() {
   std::string backend = context->backend_policy();
   if (backend == "ge") {
     if (e2e_dump_enabled()) {
-      MS_LOG(EXCEPTION) << "E2e dump is not supported on 1980B. Please use async dump.";
+      MS_LOG(WARNING) << "E2e dump only support kernel by kernel mode on Ascend platform.";
     }
     if (dump_mode_ == static_cast<uint32_t>(DUMP_KERNELS_WITH_FLAG)) {
       MS_LOG(EXCEPTION) << "Cell dump is not supported on 1980B. Please set dump_mode to 0 or 1.";

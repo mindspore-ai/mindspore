@@ -93,8 +93,19 @@ void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchAddr *launch_in
   MS_EXCEPTION_IF_NULL(cnode);
   MS_LOG(DEBUG) << "kernel by kernel debug for node: " << cnode->fullname_with_scope() << ".";
   if (device_context->GetDeviceType() == device::DeviceType::kAscend) {
-    MS_LOG(DEBUG) << "On ascend, this funct is not need now.";
-    return;
+#ifdef ENABLE_DEBUGGER
+    auto debugger = Debugger::GetInstance();
+    if (debugger != nullptr) {
+      auto kernel_graph = std::dynamic_pointer_cast<session::KernelGraph>(cnode->func_graph());
+      debugger->InsertExecutedGraph(kernel_graph);
+      debugger->SetAscendKernelByKernelFlag(true);
+      bool read_data = CheckReadData(cnode);
+      if (read_data && DumpJsonParser::GetInstance().e2e_dump_enabled()) {
+        ReadDataAndDump(cnode, launch_info, exec_order_, device_context);
+      }
+    }
+    exec_order_ += 1;
+#endif
   } else if (device_context->GetDeviceType() == device::DeviceType::kCPU) {
 #ifndef ENABLE_SECURITY
     if (DumpJsonParser::GetInstance().GetIterDumpFlag()) {
@@ -120,33 +131,6 @@ void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchAddr *launch_in
     exec_order_ += 1;
 #endif
   }
-}
-
-/*
- * Feature group: Dump, Online debugger.
- * Target device group: Ascend.
- * Runtime category: MindRT.
- * Description: Load data for online debugger and dump graph for e2e dump mode (Ascend super kernel mode).
- */
-void DebugActor::DebugForGraph(const KernelGraphPtr &graph, const DeviceContext *device_context,
-                               OpContext<DeviceTensor> *const op_context, const AID *) {
-  MS_EXCEPTION_IF_NULL(graph);
-  MS_EXCEPTION_IF_NULL(device_context);
-  MS_EXCEPTION_IF_NULL(op_context);
-  std::lock_guard<std::mutex> locker(debug_mutex_);
-
-  MS_LOG(DEBUG) << "Super kernel debug for graph: " << graph->graph_id() << ".";
-#ifdef ENABLE_DEBUGGER
-  auto debugger = Debugger::GetInstance();
-  if (debugger != nullptr) {
-    debugger->InsertExecutedGraph(graph);
-  }
-  LoadDataForDebugger(graph);
-  // This function updates graph history file and cur_dump_iter if dump is enabled.
-  // When e2e dump is enabled, this function dumps the graph.
-  SuperKernelE2eDump(graph);
-
-#endif
 }
 
 /*
@@ -279,8 +263,13 @@ void DebugActor::DebugOnStepEnd(OpContext<DeviceTensor> *const op_context, const
   }
   if (backend == "ge") {
     AscendStepEnd();
-    MS_LOG(INFO) << "On GE backend, debug_actor is not supported.";
-    return;
+#ifdef ENABLE_DEBUGGER
+    auto debugger = Debugger::GetInstance();
+    if (debugger != nullptr && !(debugger->GetAscendKernelByKernelFlag())) {
+      MS_LOG(INFO) << "On GE backend, debug_actor is not supported for graph mode.";
+      return;
+    }
+#endif
   }
   MS_EXCEPTION_IF_NULL(op_context);
   std::lock_guard<std::mutex> locker(debug_mutex_);
@@ -300,9 +289,8 @@ void DebugActor::DebugOnStepEnd(OpContext<DeviceTensor> *const op_context, const
     debugger->Debugger::PostExecuteGraphDebugger();
     debugger->Debugger::UpdateStepNumGPU();
   }
-#else
 #ifndef ENABLE_SECURITY
-  DumpJsonParser::GetInstance().UpdateDumpIter();
+  DumpJsonParser::GetInstance().UpdateDumpIter(step_count);
 #endif
 #endif
 }
