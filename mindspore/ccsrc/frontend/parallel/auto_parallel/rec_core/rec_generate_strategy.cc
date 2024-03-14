@@ -785,27 +785,27 @@ Strategies MakeRecSearchStrategy(Graph::NodeType *node, const std::vector<std::s
       MS_LOG(EXCEPTION) << "Failure: Strategy's InputDim out of range.";
     }
 
-    size_t output_size = ops[iter_ops]->inputs_shape()[iter_op_inputs].size();
+    size_t input_size = ops[iter_ops]->inputs_shape()[iter_op_inputs].size();
     Dimensions strategy;
-    if (output_size == SIZE_FOUR) {
+    if (input_size == SIZE_FOUR) {
       strategy.push_back(static_cast<int64_t>(1.0 / node->apply.arguments[iter_op_inputs].tensor_str.str_n));
       strategy.push_back(static_cast<int64_t>(1.0 / node->apply.arguments[iter_op_inputs].tensor_str.str_c));
       strategy.push_back(static_cast<int64_t>(1.0 / node->apply.arguments[iter_op_inputs].tensor_str.str_h));
       strategy.push_back(static_cast<int64_t>(1.0 / node->apply.arguments[iter_op_inputs].tensor_str.str_w));
-    } else if (output_size == SIZE_THREE) {
+    } else if (input_size == SIZE_THREE) {
       // Experimental support for 3D data.
       strategy.push_back(static_cast<int64_t>(1.0 / node->apply.arguments[iter_op_inputs].tensor_str.str_c));
       strategy.push_back(static_cast<int64_t>(1.0 / node->apply.arguments[iter_op_inputs].tensor_str.str_h));
       strategy.push_back(static_cast<int64_t>(1.0 / node->apply.arguments[iter_op_inputs].tensor_str.str_w));
-    } else if (output_size == SIZE_TWO) {
+    } else if (input_size == SIZE_TWO) {
       strategy.push_back(static_cast<int64_t>(1.0 / node->apply.arguments[iter_op_inputs].tensor_str.str_h));
       strategy.push_back(static_cast<int64_t>(1.0 / node->apply.arguments[iter_op_inputs].tensor_str.str_w));
-    } else if (output_size == SIZE_ONE) {
+    } else if (input_size == SIZE_ONE) {
       strategy.push_back(static_cast<int64_t>(1.0 / node->apply.arguments[iter_op_inputs].tensor_str.str_w));
-    } else if (output_size == SIZE_ZERO) {
+    } else if (input_size == SIZE_ZERO) {
       strategy = {};
     } else {
-      MS_LOG(EXCEPTION) << ops[iter_ops]->name() << ": Tensor's output size is unexcepted.";
+      MS_LOG(EXCEPTION) << ops[iter_ops]->name() << ": Tensor's input size is unexcepted.";
     }
     strategies.push_back(strategy);
   }
@@ -943,6 +943,7 @@ Strategies PrepareStrategy(Graph::NodeType *node, const std::vector<std::shared_
   MS_EXCEPTION_IF_NULL(ops[iter_ops]);
 
   auto type = ops[iter_ops]->type();
+  MS_LOG(INFO) << "Processing main operator " << ops[iter_ops]->name() << " (type=" << type << ")";
   if (type == MATMUL) {
     return PrepareMatMul(node, ops[iter_ops]);
   } else if (dyn_shape_tmp_fix && type == BATCH_MATMUL) {
@@ -1897,7 +1898,7 @@ size_t RecStrategyPropagator::GenerateEliminatedOperatorStrategyForward(size_t m
       ApplyStrategy(iter_ops, strategies);
       ++changes;
       MS_LOG(INFO) << ops_[iter_ops]->name() << " assigned strategies " << StrategyToString(strategies) << " from "
-                   << strategy;
+                   << ops_[incoming_op_index]->name() << " with strategy " << strategy;
     }
   }
   *no_stra_op_list_ = no_stra_op_list_bis;
@@ -1929,7 +1930,7 @@ size_t RecStrategyPropagator::GenerateEliminatedOperatorStrategyBackward(size_t 
       ApplyStrategy(iter_ops, strategies);
       ++changes;
       MS_LOG(INFO) << ops_[iter_ops]->name() << " assigned strategies " << StrategyToString(strategies) << " from "
-                   << strategy;
+                   << ops_[outgoing_op_index]->name() << " with strategy " << strategy;
     }
   }
   *no_stra_op_list_ = no_stra_op_list_bis;
@@ -1961,7 +1962,7 @@ size_t RecStrategyPropagator::GenerateRemainingOperatorStrategy() {
     ApplyStrategy(iter_ops, strategies);
     ++changes;
     MS_LOG(INFO) << ops_[iter_ops]->name() << " assigned default strategies " << StrategyToString(strategies)
-                 << " from " << strategy;
+                 << " with strategy  " << strategy;
   }
 
   return changes;

@@ -89,7 +89,6 @@ double CostRedis(const Graph::NodeType &node,
           SameShape(graph.nodes[node.node_in[i_node]].tensor_parm.tensor_shape,
                     node.apply.arguments[i_node].tensor_shape)) {
         bool is_search_forward = true;
-        MS_LOG(INFO) << "Node_in, index =  " << i_node << node_name_to_strategy[i_strategy].first;
         cost_redis +=
           CostRedisWithAdjacentNode(node_name_to_strategy, mode, i_strategy, i_node, input_tensor, is_search_forward);
       }
@@ -185,14 +184,8 @@ StrategyRec CostMatMul::GetOptimalStr(const Graph::NodeType &node,
   int64_t edge_k =
     static_cast<int64_t>(node.apply.arguments[0].tensor_shape.shape_w * node.apply.arguments[0].tensor_str.str_w);
 
-  double cost_if_cut_i = StrConcatDimI(edge_j, edge_k);
-  double cost_if_cut_j = StrConcatDimJ(edge_i, edge_k);
-  double cost_if_cut_k = StrReduceDimK(edge_i, edge_j);
-  double cost_if_no_cut = StrRecom(cost_if_cut_i, cost_if_cut_j, cost_if_cut_k);
-
   std::vector<double> cost_op;
 
-  MS_LOG(INFO) << "graph_batch" << graph.batch_size;
   if (node.apply.arguments[0].tensor_str.str_h == 0) {
     MS_LOG(EXCEPTION) << "str_h cannot be 0!";
   }
@@ -201,7 +194,12 @@ StrategyRec CostMatMul::GetOptimalStr(const Graph::NodeType &node,
     cost_op.push_back(DOUBLE_MAX);
   } else {
     std::vector<std::vector<float>> mode = {{1, 1, 0.5, 1}, {1, 1, 1, 1}, {1, 1, 0.5, 1}};
-    cost_op.push_back(cost_if_cut_i + CostRedis(node, node_name_to_strategy, mode, graph));
+    double cost_if_cut_i = StrConcatDimI(edge_j, edge_k);
+    double redist_if_cut_i = CostRedis(node, node_name_to_strategy, mode, graph);
+    double total_cost_if_cut_i = cost_if_cut_i + redist_if_cut_i;
+    MS_LOG(INFO) << "If the I-axis is cut, the op-cost is " << cost_if_cut_i << ", the redist-cost is "
+                 << redist_if_cut_i << ", and the total cost is " << total_cost_if_cut_i;
+    cost_op.push_back(total_cost_if_cut_i);
   }
 
   // Do not partition the J-axis and K-axis for the same MatMul
@@ -209,21 +207,37 @@ StrategyRec CostMatMul::GetOptimalStr(const Graph::NodeType &node,
     cost_op.push_back(DOUBLE_MAX);
   } else {
     std::vector<std::vector<float>> mode = {{1, 1, 1, 1}, {1, 1, 1, 0.5}, {1, 1, 1, 0.5}};
-    cost_op.push_back(cost_if_cut_j + CostRedis(node, node_name_to_strategy, mode, graph));
+    double cost_if_cut_j = StrConcatDimJ(edge_i, edge_k);
+    double redist_if_cut_j = CostRedis(node, node_name_to_strategy, mode, graph);
+    double total_cost_if_cut_j = cost_if_cut_j + redist_if_cut_j;
+    MS_LOG(INFO) << "If the J-axis is cut, the op-cost is " << cost_if_cut_j << ", the redist-cost is "
+                 << redist_if_cut_j << ", and the total cost is " << total_cost_if_cut_j;
+    cost_op.push_back(total_cost_if_cut_j);
   }
 
   if (edge_k < INT64_TWO || edge_k % INT64_TWO != 0 || node.apply.arguments[1].tensor_str.str_w < 1) {
     cost_op.push_back(DOUBLE_MAX);
   } else {
     std::vector<std::vector<float>> mode = {{1, 1, 1, 0.5}, {1, 1, 0.5, 1}, {1, 1, 1, 1}};
-    cost_op.push_back(cost_if_cut_k + CostRedis(node, node_name_to_strategy, mode, graph));
+    double cost_if_cut_k = StrReduceDimK(edge_i, edge_j);
+    double redist_if_cut_k = CostRedis(node, node_name_to_strategy, mode, graph);
+    double total_cost_if_cut_k = cost_if_cut_k + redist_if_cut_k;
+    MS_LOG(INFO) << "If the K-axis is cut, the op-cost is " << cost_if_cut_k << ", the redist-cost is "
+                 << redist_if_cut_k << ", and the total cost is " << total_cost_if_cut_k;
+    cost_op.push_back(total_cost_if_cut_k);
   }
 
   if (hasBeenSplitted(node, graph.dyn_shape_tmp_fix)) {
     cost_op.push_back(DOUBLE_MAX);
   } else {
     std::vector<std::vector<float>> mode = {{1, 1, 1, 1}, {1, 1, 1, 1}, {1, 1, 1, 1}};
-    cost_op.push_back(cost_if_no_cut + CostRedis(node, node_name_to_strategy, mode, graph));
+    double cost_if_no_cut =
+      StrRecom(StrConcatDimI(edge_j, edge_k), StrConcatDimJ(edge_i, edge_k), StrReduceDimK(edge_i, edge_j));
+    double redist_if_no_cut = CostRedis(node, node_name_to_strategy, mode, graph);
+    double total_cost_if_no_cut = cost_if_no_cut + redist_if_no_cut;
+    MS_LOG(INFO) << "If do NOT cut the axis, the op-cost is " << cost_if_no_cut << ", the redist-cost is "
+                 << redist_if_no_cut << ", and the total cost is " << total_cost_if_no_cut;
+    cost_op.push_back(total_cost_if_no_cut);
   }
 
   // If optimizer parallel is enabled, then MatMul must be cut at least once on the DP dimension
@@ -262,6 +276,7 @@ double CostMatMul::GetMaxCostIn(const OperatorRec &op) {
 
 // Chose strategy for MatMul
 StrategyRec CostMatMul::ChoseStr(const std::vector<double> &cost_op, StrategyRec str) const {
+  MS_LOG(INFO) << "The costs of cutting the I-axis/J-axis/K-axis/no_cut are : " << cost_op;
   uint64_t min_position = LongToUlong(min_element(cost_op.begin(), cost_op.end()) - cost_op.begin());
   if (cost_op[min_position] > (DOUBLE_MAX - 0.1)) {
     return str;
@@ -389,21 +404,36 @@ StrategyRec CostBatchMatMul::GetOptimalStr(
     cost_op.push_back(DOUBLE_MAX);
   } else {
     std::vector<std::vector<float>> mode = {{0.5, 1, 1, 1}, {0.5, 1, 1, 1}, {0.5, 1, 1, 1}};
-    cost_op.push_back(cost(B, node) + CostRedis(node, node_name_to_strategy, mode, graph));
+    double cost_if_cut_b = cost(B, node);
+    double redist_if_cut_b = CostRedis(node, node_name_to_strategy, mode, graph);
+    double total_cost_if_cut_b = cost_if_cut_b + redist_if_cut_b;
+    MS_LOG(INFO) << "If the Batch-axis is cut, the op-cost is " << cost_if_cut_b << ", the redist-cost is "
+                 << redist_if_cut_b << ", and the total cost is " << total_cost_if_cut_b;
+    cost_op.push_back(total_cost_if_cut_b);
   }
 
   if (!IsEdgeSplittable(edge_x)) {
     cost_op.push_back(DOUBLE_MAX);
   } else {
     std::vector<std::vector<float>> mode = {{1, 0.5, 1, 1}, {1, 0.5, 1, 1}, {1, 0.5, 1, 1}};
-    cost_op.push_back(cost(X, node) + CostRedis(node, node_name_to_strategy, mode, graph));
+    double cost_if_cut_x = cost(X, node);
+    double redist_if_cut_x = CostRedis(node, node_name_to_strategy, mode, graph);
+    double total_cost_if_cut_x = cost_if_cut_x + redist_if_cut_x;
+    MS_LOG(INFO) << "If the Expert-axis is cut, the op-cost is " << cost_if_cut_x << ", the redist-cost is "
+                 << redist_if_cut_x << ", and the total cost is " << total_cost_if_cut_x;
+    cost_op.push_back(total_cost_if_cut_x);
   }
 
   if (!IsEdgeSplittable(edge_i) || SplitOnlyOneDimension(graph, node.apply.arguments[0].tensor_str.str_c)) {
     cost_op.push_back(DOUBLE_MAX);
   } else {
     std::vector<std::vector<float>> mode = {{1, 1, 0.5, 1}, {1, 1, 1, 1}, {1, 1, 0.5, 1}};
-    cost_op.push_back(cost(I, node) + CostRedis(node, node_name_to_strategy, mode, graph));
+    double cost_if_cut_i = cost(I, node);
+    double redist_if_cut_i = CostRedis(node, node_name_to_strategy, mode, graph);
+    double total_cost_if_cut_i = cost_if_cut_i + redist_if_cut_i;
+    MS_LOG(INFO) << "If the I-axis is cut, the op-cost is " << cost_if_cut_i << ", the redist-cost is "
+                 << redist_if_cut_i << ", and the total cost is " << total_cost_if_cut_i;
+    cost_op.push_back(total_cost_if_cut_i);
   }
 
   if (!IsEdgeSplittable(edge_j) || node.apply.arguments[0].tensor_str.str_w < 1 ||
@@ -411,7 +441,12 @@ StrategyRec CostBatchMatMul::GetOptimalStr(
     cost_op.push_back(DOUBLE_MAX);
   } else {
     std::vector<std::vector<float>> mode = {{1, 1, 1, 1}, {1, 1, 1, 0.5}, {1, 1, 1, 0.5}};
-    cost_op.push_back((cost(J, node) + CostRedis(node, node_name_to_strategy, mode, graph)) / BMM_COEF);
+    double cost_if_cut_j = cost(J, node);
+    double redist_if_cut_j = CostRedis(node, node_name_to_strategy, mode, graph);
+    double total_cost_if_cut_j = cost_if_cut_j + redist_if_cut_j;
+    MS_LOG(INFO) << "If the J-axis is cut, the op-cost is " << cost_if_cut_j << ", the redist-cost is "
+                 << redist_if_cut_j << ", and the total cost is " << total_cost_if_cut_j;
+    cost_op.push_back(total_cost_if_cut_j / BMM_COEF);
   }
 
   if (!IsEdgeSplittable(edge_k) || node.apply.arguments[1].tensor_str.str_w < 1 ||
@@ -419,14 +454,24 @@ StrategyRec CostBatchMatMul::GetOptimalStr(
     cost_op.push_back(DOUBLE_MAX);
   } else {
     std::vector<std::vector<float>> mode = {{1, 1, 1, 0.5}, {1, 1, 0.5, 1}, {1, 1, 1, 1}};
-    cost_op.push_back((cost(K, node) + CostRedis(node, node_name_to_strategy, mode, graph)) / BMM_COEF);
+    double cost_if_cut_k = cost(K, node);
+    double redist_if_cut_k = CostRedis(node, node_name_to_strategy, mode, graph);
+    double total_cost_if_cut_k = cost_if_cut_k + redist_if_cut_k;
+    MS_LOG(INFO) << "If the K-axis is cut, the op-cost is " << cost_if_cut_k << ", the redist-cost is "
+                 << redist_if_cut_k << ", and the total cost is " << total_cost_if_cut_k;
+    cost_op.push_back(total_cost_if_cut_k / BMM_COEF);
   }
 
   if (hasBeenSplitted(node, graph.dyn_shape_tmp_fix)) {
     cost_op.push_back(DOUBLE_MAX);
   } else {
     std::vector<std::vector<float>> mode = {{1, 1, 1, 1}, {1, 1, 1, 1}, {1, 1, 1, 1}};
-    cost_op.push_back(cost(R, node) + CostRedis(node, node_name_to_strategy, mode, graph));
+    double cost_if_no_cut = cost(R, node);
+    double redist_if_no_cut = CostRedis(node, node_name_to_strategy, mode, graph);
+    double total_cost_if_no_cut = cost_if_no_cut + redist_if_no_cut;
+    MS_LOG(INFO) << "If do NOT cut the axis, the op-cost is " << cost_if_no_cut << ", the redist-cost is "
+                 << redist_if_no_cut << ", and the total cost is " << total_cost_if_no_cut;
+    cost_op.push_back(total_cost_if_no_cut);
   }
 
   for (auto &cost : cost_op) {
@@ -451,6 +496,7 @@ double CostBatchMatMul::GetMaxCostIn(const Graph::NodeType &node) {
 
 // Chose strategy for BatchMatMul
 StrategyRec CostBatchMatMul::ChoseStr(const std::vector<double> &cost_op, StrategyRec str) const {
+  MS_LOG(INFO) << "The costs of cutting the Batch-axis/Expert-axis/I-axis/J-axis/K-axis/no_cut are : " << cost_op;
   uint64_t min_position = min_element(cost_op.begin(), cost_op.end()) - cost_op.begin();
   if (cost_op[min_position] > (DOUBLE_MAX - 0.1)) {
     return str;
