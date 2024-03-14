@@ -14,6 +14,7 @@ endif()
 file(GLOB GE_EXECUTOR_SRC
     ${CCSRC_DIR}/runtime/device/ms_device_shape_transfer.cc
     ${CCSRC_DIR}/utils/config_manager.cc
+    ${CCSRC_DIR}/plugin/device/ascend/hal/common/ascend_utils.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/*.cc
     ${TOP_DIR}/mindspore/lite/tools/converter/adapter/acl/mapper/*.cc
     ${TOP_DIR}/mindspore/lite/tools/converter/adapter/acl/common/utils.cc
