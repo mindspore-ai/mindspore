@@ -43,11 +43,7 @@ TypePtr PowFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<
   auto x2_type = input_args[kInputIndex1]->GetType();
   MS_EXCEPTION_IF_NULL(x1_type);
   MS_EXCEPTION_IF_NULL(x2_type);
-  std::map<std::string, TypePtr> types;
-  (void)types.emplace("x1", x1_type);
-  (void)types.emplace("x2", x2_type);
-  (void)CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types_with_complex, primitive->name());
-  return x1_type->Clone();
+  return PromoteType(x1_type, x2_type, primitive->name());
 }
 }  // namespace ops
 }  // namespace mindspore
