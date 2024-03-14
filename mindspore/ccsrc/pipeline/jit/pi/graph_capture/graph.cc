@@ -248,6 +248,9 @@ std::vector<ValueNode *> Graph::CollectAliveNode(int bci, std::vector<int> *ids,
   if (map != nullptr) {
     *map = std::move(alive);
   }
+
+  auto vec = GetSideEffect()->CollectSideEffectAliveNodes();
+  result.insert(result.end(), vec.begin(), vec.end());
   return result;
 }
 

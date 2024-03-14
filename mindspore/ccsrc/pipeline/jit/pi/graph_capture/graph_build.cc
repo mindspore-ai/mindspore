@@ -671,12 +671,12 @@ bool GraphBuilder::DoGlobalAccess(const Instr &instr) {
     case STORE_GLOBAL: {
       auto global_node = pop();
       GlobalSideEffectNode global_side_effect(instr.name(), global_node, GetGraph()->GetModuleName());
-      graph_->GetSideEffect()->setGlobalList(global_side_effect);
+      graph_->GetSideEffect()->SetGlobalList(global_side_effect);
       break;
     }
     case DELETE_GLOBAL: {
       GlobalSideEffectNode global_side_effect(instr.name(), nullptr, GetGraph()->GetModuleName());
-      graph_->GetSideEffect()->setGlobalList(global_side_effect);
+      graph_->GetSideEffect()->SetGlobalList(global_side_effect);
       break;
     }
 
@@ -926,10 +926,9 @@ bool GraphBuilder::DoSideEffect(const Instr &instr, const std::vector<ValueNode 
   for (auto item : items) {
     graph_->GetTracedNodes().push_back(item);
   }
-
-  graph_->GetSideEffect()->setVariableMaps(new_node, value);
-  graph_->GetSideEffect()->setReplaceMaps(new_node, container);
-
+  NewValueNode(nullptr, instr, {value, container, key});
+  graph_->GetSideEffect()->SetSideEffectNode(new_node);
+  graph_->GetSideEffect()->SetReplaceMap(new_node, container);
   graph_->GetTracedNodes().push_back(new_node);
   return true;
 }

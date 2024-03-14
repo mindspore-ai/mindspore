@@ -16,6 +16,7 @@
 #include "pipeline/jit/pi/graph_capture/graph_analyzer.h"
 #include <algorithm>
 #include <unordered_set>
+#include <utility>
 #include <string>
 #include <vector>
 #include "pipeline/jit/pi/pi_jit_config.h"
@@ -210,7 +211,27 @@ void GraphAnalyzer::AddToEscaped(ValueNode *v) {
 
 extern TracePtr GetTrace(ValueNode *node, bool strict, bool print, int depth, int max_depth);
 
+bool GraphAnalyzer::HandleSideEffectNodeForCapture(AbstractNode *capture_node) {
+  auto &replace_map = graph_->GetSideEffect()->GetReplaceMap();
+  bool find =
+    std::any_of(replace_map.begin(), replace_map.end(),
+                [&capture_node](std::pair<ValueNode *, ValueNode *> item) { return capture_node == item.second; });
+  if (find) {
+    return true;
+  }
+  for (auto &side_effect_node : graph_->GetSideEffect()->GetSideEffectNodes()) {
+    if (capture_node == side_effect_node && side_effect_node->GetOpcode() == CALL_FUNCTION) {
+      return true;
+    }
+  }
+  return false;
+}
+
 bool GraphAnalyzer::TryToCapture(AbstractNode *n) {
+  if (HandleSideEffectNodeForCapture(n)) {
+    return true;
+  }
+
   ValueNode *v = static_cast<ValueNode *>(n);
   AObject *o = v->GetVobj();
   if (IsNonLocalValue(v)) {
@@ -326,7 +347,6 @@ void GraphAnalyzer::UseDefAnalyze() {
       aliveLocals = GetAliveLocals(graph_);
     }
   }
-  graph_->SetOldBreakBci(graph_->GetStopTraceBci());
 }
 
 void GraphAnalyzer::Analyze() {
@@ -337,21 +357,13 @@ void GraphAnalyzer::Analyze() {
     CleanCapturedValue();
   }
   UseDefAnalyze();
-  for (auto item : graph_->GetSideEffect()->GetSideEffectInstrs()) {
-    if (item.first->bci() > graph_->GetStopTraceBci() && (item.first->bci() < graph_->GetOldBreakBci())) {
-      graph_->GetSideEffect()->GetSideEffectInstrs().erase(item.first);
-    }
-  }
-  for (auto item : graph_->GetSideEffectNodes()) {
-    if (item->bci() >= graph_->GetStopTraceBci()) {
-      graph_->GetSideEffectNodes().erase(
-        std::remove(graph_->GetSideEffectNodes().begin(), graph_->GetSideEffectNodes().end(), item),
-        graph_->GetSideEffectNodes().end());
-    }
+  if (graph_->GetStopTraceBci() != -1) {
+    graph_->GetSideEffect()->CleanSideEffects(graph_->GetStopTraceBci());
   }
   CollectInputs();
 
   need_interpret_ = true;
+
   if (graph_->GetStopTraceBci() != -1 || !GetCaptureInfo().ordered_escaped_locals.empty()) {
     return;
   }
@@ -368,7 +380,7 @@ void GraphAnalyzer::Analyze() {
   if (iter == end) {
     need_interpret_ = false;
   }
-  if (!graph_->GetSideEffect()->GetSideEffectInstrs().empty()) {
+  if (!graph_->GetSideEffect()->GetSideEffectNodes().empty()) {
     need_interpret_ = true;
   }
   if (!graph_->GetSideEffect()->GetGlobalList().empty()) {
