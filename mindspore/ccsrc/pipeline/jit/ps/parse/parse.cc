@@ -47,17 +47,6 @@
 
 namespace mindspore {
 namespace parse {
-std::map<std::string, std::string> parseConfig_;
-void SetConfig(const std::string &key, const std::string &value) { parseConfig_[key] = value; }
-const std::string &GetConfig(const std::string &key) {
-  auto it = parseConfig_.find(key);
-  if (it != parseConfig_.end()) {
-    return it->second;
-  }
-  static std::string null_string = "";
-  return null_string;
-}
-
 FuncGraphPtr ParsePythonCode(const py::object &obj, const std::string &python_mod_get_parse_method,
                              const ValuePtrList &args_value_list) {
   (void)python_adapter::set_python_scoped();
@@ -749,6 +738,7 @@ FunctionBlockPtr Parser::ParseDefFunction(const py::object &node, const Function
   std::replace(function_name.begin(), function_name.end(), '.', '_');
   std::replace(function_name.begin(), function_name.end(), '<', '_');
   std::replace(function_name.begin(), function_name.end(), '>', '_');
+
   // Save the function node to block
   func_block->WriteVariable(function_name, NewValueNode(current_fg));
   MS_EXCEPTION_IF_NULL(current_fg->debug_info());
@@ -2916,13 +2906,7 @@ FunctionBlockPtr Parser::ParseIf(const FunctionBlockPtr &block, const py::object
   if (!is_bool_const_cond) {
     MS_EXCEPTION_IF_NULL(bool_node);
     auto switch_app = block->ConditionalJump(bool_node, true_block, false_block);
-    const std::string &cfg = parse::GetConfig(FUNC_GRAPH_FLAG_IF_DEFER_RESOLVE);
-    auto location = block_fg->debug_info()->location();
-    if ((cfg == "2") ||
-        ((cfg == "1") && (location != nullptr && location->file_name().find("mindspore") != std::string::npos))) {
-      true_block->func_graph()->set_flag(FUNC_GRAPH_FLAG_IF_DEFER_RESOLVE, true);
-      false_block->func_graph()->set_flag(FUNC_GRAPH_FLAG_IF_DEFER_RESOLVE, true);
-    }
+
     // Record the former, middle, latter graphs info.
     static const auto transform_tail_call_to_parallel_call = (common::GetCompileConfig("IF_PARALLEL_CALL") != "0");
     if (transform_tail_call_to_parallel_call && true_branch_graphs.second != nullptr &&
