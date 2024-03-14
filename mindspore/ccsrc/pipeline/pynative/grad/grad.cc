@@ -1103,6 +1103,7 @@ void GradExecutor::GetGradGraph(const autograd::GradAttr &grad_attr, const std::
   auto manager = resource->manager();
   MS_EXCEPTION_IF_NULL(manager);
   manager->AddFuncGraph(bprop_graph, true);
+  bprop_graph->ResetOwnNodes();
   if (top_cell()->has_control_flow()) {
     (void)opt::EnvironConversion(resource);
   }
