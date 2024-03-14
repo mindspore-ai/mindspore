@@ -85,7 +85,7 @@ def fft(a, n=None, axis=-1, norm=None):
         a (Tensor): The input tensor.
             Supported dtypes:
 
-            - Ascend/CPU: int16、int32、int64、float16、float32、float64、complex64、complex128.
+            - Ascend/CPU: int16, int32, int64, float16, float32, float64, complex64, complex128.
 
         n (int, optional): Length of the transformed `dim` of the result.
             If given, the size of the `dim` axis will be zero-padded or truncated to `n` before calculating `fft`.
@@ -128,7 +128,7 @@ def ifft(a, n=None, axis=-1, norm=None):
         a (Tensor): The input tensor.
             Supported dtypes:
 
-            - Ascend/CPU: int16、int32、int64、float16、float32、float64、complex64、complex128.
+            - Ascend/CPU: int16, int32, int64, float16, float32, float64, complex64, complex128.
 
         n (int, optional): Length of the transformed `dim` of the result.
         n (int, optional): Signal length.
@@ -252,7 +252,7 @@ def fft2(a, s=None, axes=(-2, -1), norm=None):
         a (Tensor): The input tensor.
             Supported dtypes:
 
-            - Ascend/CPU: int16、int32、int64、float16、float32、float64、complex64、complex128.
+            - Ascend/CPU: int16, int32, int64, float16, float32, float64, complex64, complex128.
 
         s (tuple[int], optional): Length of the transformed `axes` of the result.
             If given, the input will either be zero-padded or trimmed to this length before computing `fft2`.
@@ -299,7 +299,7 @@ def ifft2(a, s=None, axes=(-2, -1), norm=None):
         a (Tensor): The input tensor.
             Supported dtypes:
 
-            - Ascend/CPU: int16、int32、int64、float16、float32、float64、complex64、complex128.
+            - Ascend/CPU: int16, int32, int64, float16, float32, float64, complex64, complex128.
 
         s (tuple[int], optional): Length of the transformed `axes` of the result.
             If given, the input will either be zero-padded or trimmed to this length before computing `ifft2`.
@@ -346,7 +346,7 @@ def fftn(a, s=None, axes=None, norm=None):
         a (Tensor): The input tensor.
             Supported dtypes:
 
-            - Ascend/CPU: int16、int32、int64、float16、float32、float64、complex64、complex128.
+            - Ascend/CPU: int16, int32, int64, float16, float32, float64, complex64, complex128.
 
         s (tuple[int], optional): Length of the transformed `axes` of the result.
             If given, the input will either be zero-padded or trimmed to this length before computing `fftn`.
@@ -394,7 +394,7 @@ def ifftn(a, s=None, axes=None, norm=None):
         a (Tensor): The input tensor.
             Supported dtypes:
 
-            - Ascend/CPU: int16、int32、int64、float16、float32、float64、complex64、complex128.
+            - Ascend/CPU: int16, int32, int64, float16, float32, float64, complex64, complex128.
 
         s (tuple[int], optional): Length of the transformed `axes` of the result.
             If given, the input will either be zero-padded or trimmed to this length before computing `ifftn`.
