@@ -1702,7 +1702,9 @@ static std::vector<ActionItem> CommonPipeline(bool trace_flag) {
 
     // Resolve the python func
     static auto boost_parse = common::GetCompileConfig("GREED_PARSE");
-    if (boost_parse != "1") {
+
+    static const auto boost_infer = (common::GetEnv("MS_DEV_BOOST_INFER") == "1");
+    if (boost_parse != "1" && (!boost_infer)) {
       (void)actions.emplace_back(std::make_pair(kSymbolResolve, SymbolResolveAction));
     }
 
