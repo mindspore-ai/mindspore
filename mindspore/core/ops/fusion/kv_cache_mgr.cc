@@ -38,7 +38,7 @@ class MIND_API KVCacheMgrInfer : public abstract::OpInferBase {
   }
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    const std::set<TypePtr> valid_types = {kFloat16};
+    const std::set<TypePtr> valid_types = {kFloat16, kInt8};
     const std::set<TypePtr> indices_types = {kInt32};
     auto past_type = input_args[kInputIndex0]->GetType();
     auto cur_type = input_args[kInputIndex1]->GetType();

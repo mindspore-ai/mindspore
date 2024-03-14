@@ -57,6 +57,7 @@ CNodePtr FlashAttentionAntiquantFusion::NewFlashAttentionCNodeWithAntiquantFusio
   MS_EXCEPTION_IF_NULL(scale);
   MS_EXCEPTION_IF_NULL(offset);
   auto fa_inputs = fa_cnode->inputs();
+  MS_LOG(INFO) << fa_cnode->fullname_with_scope() << " fa_inputs " << fa_inputs.size();
 
   // Insert none value node, if option input is not set
   auto value = std::make_shared<None>();
@@ -65,10 +66,19 @@ CNodePtr FlashAttentionAntiquantFusion::NewFlashAttentionCNodeWithAntiquantFusio
   value_node->set_abstract(std::make_shared<abstract::AbstractNone>());
   func_graph->NewCNode({value_node});
   for (size_t i = fa_cnode->inputs().size(); i <= kFlashAttentionAntiquantScaleInputIndex; i++) {
+    MS_LOG(INFO) << fa_cnode->fullname_with_scope() << " index " << i << " is AbstractNone";
     fa_inputs.push_back(value_node);
   }
-  fa_inputs.push_back(scale);
-  fa_inputs.push_back(offset);
+  if (fa_inputs.size() <= kFlashAttentionAntiquantScaleInputIndex + 1) {
+    fa_inputs.push_back(scale);
+  } else {
+    fa_inputs.at(kFlashAttentionAntiquantScaleInputIndex + 1) = scale;
+  }
+  if (fa_inputs.size() <= kFlashAttentionAntiquantScaleInputIndex + 2) {
+    fa_inputs.push_back(offset);
+  } else {
+    fa_inputs.at(kFlashAttentionAntiquantScaleInputIndex + 2) = offset;
+  }
   auto fa_fusion_cnode = func_graph->NewCNode(fa_inputs);
   fa_fusion_cnode->set_fullname_with_scope(fa_cnode->fullname_with_scope() + "-AntiQuant-Fusion");
   fa_fusion_cnode->set_abstract(fa_cnode->abstract()->Clone());
@@ -159,8 +169,14 @@ int FlashAttentionAntiquantFusion::Process(const FuncGraphPtr &func_graph, const
 
   auto weight1_node = cnode->input(kInputIndexTwo);
   auto weight2_node = cnode->input(kInputIndexThree);
-  if (!lite::quant::IsAntiQuantModeNodes(weight1_node) || !lite::quant::IsAntiQuantModeNodes(weight2_node)) {
-    MS_LOG(INFO) << "There is no antiquant node on the IncreFlashAttention node: " << cnode->fullname_with_scope();
+  if (!lite::quant::IsAntiQuantModeNodes(weight1_node)) {
+    MS_LOG(INFO) << "There is no antiquant node on the IncreFlashAttention node: "
+                 << weight1_node->fullname_with_scope();
+    return lite::RET_OK;
+  }
+  if (!lite::quant::IsAntiQuantModeNodes(weight2_node)) {
+    MS_LOG(INFO) << "There is no antiquant node on the IncreFlashAttention node: "
+                 << weight2_node->fullname_with_scope();
     return lite::RET_OK;
   }
 
