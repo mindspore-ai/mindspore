@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
+import os
 import numpy as np
 import pytest
 import mindspore.context as context
@@ -47,7 +48,6 @@ def get_output(grad, inputv, inputm, input_param, beta_1, one_minus_beta_1, beta
 
 
 def lamb_apply_optimizer_assign():
-
     grad = np.array([0.01, 0.03, 0.05]).astype(np.float32)
     inputv = np.array([1.2, 3.4, 5.6]).astype(np.float32)
     inputm = np.array([0.11, 0.33, 0.55]).astype(np.float32)
@@ -75,7 +75,16 @@ def lamb_apply_optimizer_assign():
 
 
 @pytest.mark.level1
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 def test_lamb_apply_optimizer_assign_ascend():
+    """
+    Feature: test graph kernel LambApplyOptimizerAssign expander
+    Description: LambApplyOptimizerAssign expander
+    Expectation: the result match with the expected result
+    """
+    os.environ["GRAPH_OP_RUN"] = "1"
+    np.random.seed(1)
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     lamb_apply_optimizer_assign()
+    del os.environ["GRAPH_OP_RUN"]

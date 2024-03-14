@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
+import os
 import numpy as np
 import pytest
 import mindspore.context as context
@@ -40,7 +41,6 @@ def get_output(w_norm, g_norm, lr, update, param, enable_graph_kernel=False):
 
 
 def lamb_apply_weight_assign():
-
     w_norm = np.array([0.11]).astype(np.float32)
     g_norm = np.array([1.2]).astype(np.float32)
     lr = np.array([0.012]).astype(np.float32)
@@ -54,7 +54,16 @@ def lamb_apply_weight_assign():
 
 
 @pytest.mark.level1
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 def test_lamb_apply_weight_assign_ascend():
+    """
+    Feature: test graph kernel LambApplyWeightAssign expander
+    Description: LambApplyWeightAssign expander
+    Expectation: the result match with the expected result
+    """
+    os.environ["GRAPH_OP_RUN"] = "1"
+    np.random.seed(1)
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     lamb_apply_weight_assign()
+    del os.environ["GRAPH_OP_RUN"]

@@ -111,5 +111,6 @@ ValueNodePtr CreateScalarTensorValueNode(const DataInfo &info, T value, size_t d
 
 AbstractBasePtr GetOutputAbstract(const AnfNodePtr &node, size_t output_idx);
 bool IsBufferStitchNode(const AnfNodePtr &node);
+bool CheckDefaultFormat(const AnfNodePtr &node);
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_GRAPH_KERNEL_HELPER_H_

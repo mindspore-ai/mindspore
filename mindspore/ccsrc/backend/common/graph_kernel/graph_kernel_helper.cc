@@ -357,4 +357,23 @@ bool IsBufferStitchNode(const AnfNodePtr &node) {
 
   return false;
 }
+
+bool CheckDefaultFormat(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (node->kernel_info() == nullptr) {
+    return true;
+  }
+  auto build_info = AnfAlgo::GetSelectKernelBuildInfo(node);
+  if (build_info == nullptr) {
+    return true;
+  }
+  auto inputs_format = build_info->GetAllInputFormats();
+  if (!std::all_of(inputs_format.begin(), inputs_format.end(),
+                   [](const std::string &format) { return IsOneOfDefaultFormat(format); })) {
+    return false;
+  }
+  auto outputs_format = build_info->GetAllOutputFormats();
+  return std::all_of(outputs_format.begin(), outputs_format.end(),
+                     [](const std::string &format) { return IsOneOfDefaultFormat(format); });
+}
 }  // namespace mindspore::graphkernel

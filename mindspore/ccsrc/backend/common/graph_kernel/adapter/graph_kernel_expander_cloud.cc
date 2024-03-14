@@ -28,9 +28,19 @@
 #include "utils/ms_context.h"
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
+#include "backend/common/graph_kernel/graph_kernel_helper.h"
 namespace mindspore::graphkernel {
 namespace {
 bool DvmSupported(const AnfNodePtr &node) {
+  // check format
+  if (common::AnfAlgo::IsDynamicShape(node) && !CheckDefaultFormat(node)) {
+    // dvm kernel infer shape use inputs device shape, but the output abstract shape inferred from device shape is
+    // not unique if some shape value are not a multiple of 16
+    MS_LOG(DEBUG) << "skip node: " << node->fullname_with_scope()
+                  << " because only default format is supported in dynamic shape";
+    return false;
+  }
+  // check data type
   static std::set<TypeId> supported_types{kNumberTypeFloat16, kNumberTypeFloat32, kNumberTypeBool, kNumberTypeInt32,
                                           kNumberTypeBFloat16};
   if (IsPrimitiveCNode(node, prim::kPrimAddN)) {
@@ -140,18 +150,23 @@ const std::vector<OpWithLevel> expand_ops_with_level_dvm = {
   {kAscendDevice, OpLevel_0, prim::kFusedMulAdd},
   {kAscendDevice, OpLevel_0, prim::kPrimSigmoid},
   {kAscendDevice, OpLevel_0, prim::kPrimSigmoidGrad},
+  {kAscendDevice, OpLevel_0, prim::kPrimSigmoidCrossEntropyWithLogits},
+  {kAscendDevice, OpLevel_0, prim::kPrimSigmoidCrossEntropyWithLogitsGrad},
+  {kAscendDevice, OpLevel_0, prim::kPrimSquaredDifference},
+  {kAscendDevice, OpLevel_0, prim::kPrimTanhGrad},
   {kAscendDevice, OpLevel_0, prim::kPrimOnesLike},
   {kAscendDevice, OpLevel_0, prim::kPrimZerosLike},
   {kAscendDevice, OpLevel_0, prim::kPrimReduceMean},
   {kAscendDevice, OpLevel_0, prim::kPrimLogSoftmaxGrad},
   {kAscendDevice, OpLevel_0, prim::kPrimReLU},
   {kAscendDevice, OpLevel_0, prim::kPrimReluGrad},
-  {kAscendDevice, OpLevel_1, prim::kPrimAssignAdd},
+  {kAscendDevice, OpLevel_0, prim::kPrimAssignAdd},
+  {kAscendDevice, OpLevel_0, prim::kLambApplyOptimizerAssign},
+  {kAscendDevice, OpLevel_0, prim::kLambApplyWeightAssign},
+  {kAscendDevice, OpLevel_0, prim::kPrimAdamApplyOneWithDecay},
   {kAscendDevice, OpLevel_1, prim::kPrimExpandDims},
-  {kAscendDevice, OpLevel_1, prim::kLambApplyOptimizerAssign},
-  {kAscendDevice, OpLevel_1, prim::kLambApplyWeightAssign},
+  {kAscendDevice, OpLevel_1, prim::kPrimSqueeze},
   {kAscendDevice, OpLevel_1, prim::kSoftmaxGradExt},
-  {kAscendDevice, OpLevel_1, prim::kPrimAdamApplyOneWithDecay},
 };
 }  // namespace
 
