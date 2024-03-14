@@ -27,6 +27,7 @@ using complex128 = std::complex<double>;
 constexpr size_t kDepthToSpaceInputsNum = 1;
 constexpr size_t kDepthToSpaceOutputsNum = 1;
 constexpr size_t kDepthToSpaceInputDimension = 4;
+constexpr size_t kDepthToSpaceRank = 4;
 }  // namespace
 
 bool DepthToSpaceCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
@@ -54,6 +55,12 @@ int DepthToSpaceCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   }
   input_shape_ = inputs[0]->GetShapeVector();
   output_shape_ = outputs[0]->GetShapeVector();
+  if (input_shape_.size() != kDepthToSpaceRank || output_shape_.size() != kDepthToSpaceRank) {
+    MS_LOG(ERROR) << "For " << kernel_name_
+                  << ", the input shape and output shape should be 4-D, but got input_shape: " << input_shape_
+                  << ", output_shape: " << output_shape_;
+    return KRET_RESIZE_FAILED;
+  }
   return ret;
 }
 
