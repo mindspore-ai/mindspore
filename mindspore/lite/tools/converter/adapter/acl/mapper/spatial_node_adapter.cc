@@ -33,6 +33,7 @@
 #include "ops/op_name.h"
 #include "ops/tuple_get_item.h"
 #include "ops/make_tuple.h"
+#include "ops/group_norm_silu.h"
 #include "tools/common/tensor_util.h"
 #include "tools/converter/adapter/acl/common/utils.h"
 #include "tools/converter/adapter/acl/mapper/tbe_op_def.h"
@@ -46,7 +47,7 @@ constexpr auto kAnfPrimitiveIndex = 0;
 constexpr auto kNamewiEltwise = "Eltwise";
 const std::set<std::string> kCNodeWithMultiOutputs = {
   kBatchNormOpName,          ops::kNameFusedBatchNorm,  ops::kNameInstanceNorm, ops::kNameLayerNorm,
-  ops::kNameLayerNormFusion, ops::kNameArgMaxWithValue, ops::kNameGeGluV2};
+  ops::kNameLayerNormFusion, ops::kNameArgMaxWithValue, ops::kNameGeGluV2,      ops::kNameGroupNormSilu};
 
 const std::set<std::string> kCNodeWithDynamicInput = {kNamewiEltwise, ops::kNameConcat, ops::kNameStack,
                                                       acl::kNameConcatV2};

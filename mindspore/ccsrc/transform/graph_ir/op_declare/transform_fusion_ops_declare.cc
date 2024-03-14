@@ -87,4 +87,12 @@ ATTR_MAP(MatmulAllReduce) = {{"group", ATTR_DESC(group, AnyTraits<std::string>()
                              {"transpose_b", ATTR_DESC(is_trans_b, AnyTraits<bool>())},
                              {"comm_reuse", ATTR_DESC(comm_turn, AnyTraits<int>())}};
 REG_ADPT_DESC(MatMulAllReduce, kNameMatMulAllReduce, ADPT_DESC(MatmulAllReduce))
+
+// GroupNormSilu
+INPUT_MAP(GroupNormSilu) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(gamma)}, {3, INPUT_DESC(beta)}};
+ATTR_MAP(GroupNormSilu) = {{"activate_silu", ATTR_DESC(activate_silu, AnyTraits<bool>())},
+                           {"eps", ATTR_DESC(eps, AnyTraits<float>())},
+                           {"num_groups", ATTR_DESC(num_groups, AnyTraits<int64_t>())}};
+OUTPUT_MAP(GroupNormSilu) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(mean)}, {2, OUTPUT_DESC(rstd)}};
+REG_ADPT_DESC(GroupNormSilu, "GroupNormSilu", ADPT_DESC(GroupNormSilu))
 }  // namespace mindspore::transform
