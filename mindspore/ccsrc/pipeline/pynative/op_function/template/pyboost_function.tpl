@@ -33,9 +33,10 @@ py::object ${func_name}_Base(const PrimitivePtr &prim, const py::list &args) {
           // Run op
           (void)op->Call(${cast_args});
           ${optional_to_value}
-          PyNativeAlgo::PyBoost::DataSyncForGraph(op);
+          vector<ValuePtr> op_inputs = {${grad_args}};
+          PyNativeAlgo::PyBoost::DataSyncForGraph(op, op_inputs);
           // Update op and op_run_info by op outputs
-          PyNativeAlgo::PyBoost::UpdateOpRunInfo(op, {${grad_args}}, op_run_info);
+          PyNativeAlgo::PyBoost::UpdateOpRunInfo(op, op_inputs, op_run_info);
 
           // Do auto grad
           if (op_run_info->requires_grad) {
