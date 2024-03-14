@@ -841,7 +841,6 @@ bool GraphBuilder::DoGetItem(const Instr &instr) {
   }
   if (call_getitem) {
     /**
-     * TODO:
      * check safe callable of __getitem__ if user defined.
      */
     AObject *vo = l->binary_subscr(r);
@@ -1497,7 +1496,7 @@ void GraphBuilder::HandleLoop() {
     return;
   }
   /**
-   * TODO(chaiyouheng): before trace start, unrolling loop. avoid graph status is changed while trace loop
+   * (chaiyouheng): before trace start, unrolling loop. avoid graph status is changed while trace loop
    *       just unrolling a small loop that call nn.CellList.
    *
    * LoopUnrolling loopUnrollingExe = LoopUnrolling(*graph_);
@@ -1933,7 +1932,7 @@ ValueNode *GetSelfFromMethod(ValueNode *method) {
   }
   ValueNode *self = method->input(0);
   /**
-   * TODO(chaiyouheng):
+   * (chaiyouheng):
    * Check method is a generic attribute
    * descr = _PyType_Lookup(self->GetVobj()->GetTypeObject(), py::str(method->GetName()).ptr());
    * Check descr == nullptr || !PyFunction_Check(descr)

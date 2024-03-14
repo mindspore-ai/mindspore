@@ -866,7 +866,7 @@ void CodeBreakGenerator::ReconstructStack(CodeGenerator *code_gen, int untracked
     return;
   }
 
-  // TODO(chaiyouheng): replace function call, mark function to compile ...
+  // (chaiyouheng): replace function call, mark function to compile ...
   RestoreStack(code_gen);
   code_gen->NewInstr(instr->op(), instr->arg(), instr->line());
 }
@@ -927,7 +927,6 @@ void CodeBreakGenerator::BreakAtBlock(CodeGenerator *code_gen, int untracked_bci
   }
 
   /**
-   * TODO:
    * # check this bug for break at block
    * def func(x):
    *     try:
@@ -1182,7 +1181,6 @@ void GraphParameterBuilder::Build(const std::unordered_map<ValueNode *, int> &lo
   };
 
   /**
-   * TODO:
    * graph parameter treat tuple, list, dict as constant
    * must be unpack these parameters and pack it by graph
    * if param is tuple or param is list:
