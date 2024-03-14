@@ -334,13 +334,6 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
 
   (*ge_options)["device_id"] = "0";
 
-  auto profiler_manager = profiler::ProfilerManager::GetInstance();
-  MS_EXCEPTION_IF_NULL(profiler_manager);
-  (*ge_options)["ge.exec.profilingMode"] = std::to_string(static_cast<int>(profiler_manager->GetProfilingEnableFlag()));
-  if (profiler_manager->GetProfilingEnableFlag()) {
-    (*ge_options)["ge.exec.profilingOptions"] = profiler_manager->GetProfilingOptions();
-  }
-
   (*ge_options)["rank_table_file"] = "";
   auto env_ddk_version = common::GetEnv("DDK_VERSION");
   if (!env_ddk_version.empty()) {
