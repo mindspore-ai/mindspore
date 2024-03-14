@@ -74,6 +74,15 @@ void ConditionSwitchActor::SendOutput(OpContext<DeviceTensor> *const context, si
       ActorDispatcher::Send(output_data_arrows_[i]->to_op_id_, &OpActor::RunOpData, output_data_[i].first.get(),
                             context);
     }
+    if (TEST_FLAG(output_data_[i].second, kOutputDataFlagToFusion)) {
+      if (data_arrow_to_fusion_actor_indexs_.find(output_data_arrows_[i].get()) ==
+          data_arrow_to_fusion_actor_indexs_.end()) {
+        MS_LOG(EXCEPTION) << "Failed to get real from index by output data arrow from index:"
+                          << output_data_arrows_[i]->from_output_index_ << " to " << output_data_arrows_[i]->to_op_id_
+                          << " by actor:" << GetAID();
+      }
+      output_data_[i].first->index_ = SizeToInt(data_arrow_to_fusion_actor_indexs_.at(output_data_arrows_[i].get()));
+    }
   }
 
   if (output_control_arrows_.size() != output_control_branch_indexes_.size()) {

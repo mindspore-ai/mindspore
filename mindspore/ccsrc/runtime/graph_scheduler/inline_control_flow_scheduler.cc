@@ -21,11 +21,31 @@
 
 namespace mindspore {
 namespace runtime {
+bool IsInlineKernelActor(const AbstractActorPtr &actor) {
+  MS_EXCEPTION_IF_NULL(actor);
+  if (actor->type() != KernelTransformType::kKernelActor &&
+      actor->type() != KernelTransformType::kConditionGatherActor &&
+      actor->type() != KernelTransformType::kConditionSwitchActor) {
+    return false;
+  }
+  const auto &kernel_actor = dynamic_cast<KernelActor *>(actor.get());
+  MS_EXCEPTION_IF_NULL(kernel_actor);
+  MS_EXCEPTION_IF_NULL(kernel_actor->kernel());
+  const auto &func_graph = kernel_actor->kernel()->func_graph();
+  if (func_graph == nullptr || (!func_graph->isa<KernelGraph>())) {
+    return false;
+  }
+  const auto &kernel_graph = func_graph->cast<KernelGraphPtr>();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  return kernel_graph->inline_sub_graph_kernels().find(kernel_actor->kernel()) !=
+         kernel_graph->inline_sub_graph_kernels().end();
+}
+
 void InlineControlFlowScheduler::LinkControlArrowByExecutionOrder(const KernelGraphPtr &graph,
                                                                   const GraphCompilerInfo &graph_compiler_info) {
   MS_EXCEPTION_IF_NULL(graph);
   const auto &inline_sub_graph_kernels = graph->inline_sub_graph_kernels();
-  if (inline_sub_graph_kernels.empty()) {
+  if (graph->is_graph_run_mode() || graph->is_any_type_input() || inline_sub_graph_kernels.empty()) {
     return;
   }
   MS_LOG(DEBUG) << "Link control arrow for graph:" << graph->ToString();
@@ -67,6 +87,47 @@ void InlineControlFlowScheduler::LinkControlArrowByExecutionOrder(const KernelGr
       branch_last_actor[current_branch] = to_actor;
       MS_LOG(DEBUG) << "For branch:" << current_branch << " start actor:" << to_actor->GetAID();
     }
+  }
+  mindspore::HashMap<std::string, AbstractActor *> branch_name_to_gather_actor;
+  for (const auto &gather_to_switch : graph->condition_gather_to_switch()) {
+    MS_EXCEPTION_IF_NULL(gather_to_switch.first);
+    if (!common::AnfAlgo::CheckPrimitiveType(gather_to_switch.first, prim::kPrimConditionGather)) {
+      MS_LOG(EXCEPTION) << "Invalid condition gather node:" << gather_to_switch.first->DebugString();
+    }
+    const auto &gather = gather_to_switch.first->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(gather);
+    if (!gather->HasAttr(kAttrBranchGraphName)) {
+      MS_LOG(EXCEPTION) << "Failed to get inline graph name by node:" << gather->fullname_with_scope();
+    }
+    const auto &branch_graph_names = gather->GetAttr(kAttrBranchGraphName);
+    MS_EXCEPTION_IF_NULL(branch_graph_names);
+    MS_LOG(DEBUG) << "Branch graph name:" << branch_graph_names->ToString()
+                  << " for node:" << gather->fullname_with_scope();
+    if (!branch_graph_names->isa<ValueTuple>()) {
+      MS_LOG(EXCEPTION) << "Invalid branch group name:" << branch_graph_names->ToString()
+                        << " for node:" << gather->fullname_with_scope();
+    }
+    const auto &tuple_name = branch_graph_names->cast<ValueTuplePtr>();
+    MS_EXCEPTION_IF_NULL(tuple_name);
+    const auto &gather_actor = FetchActor(gather->fullname_with_scope());
+    MS_EXCEPTION_IF_NULL(gather_actor);
+    std::for_each(tuple_name->value().begin(), tuple_name->value().end(),
+                  [&branch_name_to_gather_actor, gather_actor](const auto &value) {
+                    branch_name_to_gather_actor[GetValue<std::string>(value)] = gather_actor;
+                  });
+  }
+  for (const auto &pair : branch_last_actor) {
+    const auto &branch_name = pair.first;
+    if (pair.second == nullptr || pair.second->type() != KernelTransformType::kKernelActor) {
+      continue;
+    }
+    const auto &iter = branch_name_to_gather_actor.find(branch_name);
+    if (iter == branch_name_to_gather_actor.end()) {
+      MS_LOG(INFO) << "Invalid branch name:" << branch_name << " in graph:" << graph->ToString();
+      continue;
+    }
+    SchedulerHelper::AddControlArrow(pair.second, iter->second);
+    MS_LOG(DEBUG) << "Add control arrow between:" << pair.second->GetAID() << " to:" << iter->second->GetAID();
   }
 }
 
@@ -202,7 +263,8 @@ void InlineControlFlowScheduler::InitOutputDataBranchInfoForConditionSwitchActor
       MS_LOG(EXCEPTION) << "Failed to get actor:" << data_arrow->to_op_id_.Name()
                         << " from actor:" << condition_switch_actor->GetAID();
     }
-    if (to_actor->type() != KernelTransformType::kConditionGatherActor &&
+    if (to_actor->type() != KernelTransformType::kConditionSwitchActor &&
+        to_actor->type() != KernelTransformType::kConditionGatherActor &&
         to_actor->type() != KernelTransformType::kKernelActor) {
       MS_LOG(EXCEPTION) << "Invalid to actor:" << to_actor->GetAID()
                         << " from actor:" << condition_switch_actor->GetAID();
@@ -217,7 +279,7 @@ void InlineControlFlowScheduler::InitOutputDataBranchInfoForConditionSwitchActor
         GetBranchNameByConditionGatherActor(condition_switch_actor, to_kernel_actor, data_arrow.get(), kernel_graph);
     } else {
       if (inline_sub_graph_kernels.find(to_kernel_actor->kernel()) == inline_sub_graph_kernels.end()) {
-        MS_LOG(EXCEPTION) << "Failed to get inline sub graph name by user node:"
+        MS_LOG(EXCEPTION) << "Failed to get inline sub graph name by data user node:"
                           << to_kernel_actor->kernel()->fullname_with_scope()
                           << " in actor:" << condition_switch_actor->GetAID();
       }
@@ -275,7 +337,7 @@ void InlineControlFlowScheduler::InitOutputControlBranchInfoForConditionSwitchAc
     MS_EXCEPTION_IF_NULL(to_kernel_actor);
     MS_EXCEPTION_IF_NULL(to_kernel_actor->kernel());
     if (inline_sub_graph_kernels.find(to_kernel_actor->kernel()) == inline_sub_graph_kernels.end()) {
-      MS_LOG(EXCEPTION) << "Failed to get inline sub graph name by user node:"
+      MS_LOG(EXCEPTION) << "Failed to get inline sub graph name by control user node:"
                         << to_kernel_actor->kernel()->fullname_with_scope()
                         << " in actor:" << condition_switch_actor->GetAID();
     }
@@ -384,6 +446,50 @@ void InlineControlFlowScheduler::FixRefCountByKernelGraphRefMap(ConditionGatherA
 }
 
 void InlineControlFlowScheduler::FixRefCountByConditionGatherActor(ConditionGatherActor *const condition_gather_actor,
+                                                                   size_t input_index, size_t ref_count) {
+  MS_EXCEPTION_IF_NULL(condition_gather_actor);
+  MS_EXCEPTION_IF_NULL(condition_gather_actor->kernel());
+  size_t input_num = common::AnfAlgo::GetInputNum(condition_gather_actor->kernel());
+  if (input_num == 0 || input_num % condition_gather_actor->branch_output_num_ != 0) {
+    MS_LOG(EXCEPTION) << "Invalid input num:" << input_num
+                      << " branch output num:" << condition_gather_actor->branch_output_num_
+                      << " for actor:" << condition_gather_actor->GetAID();
+  }
+  for (size_t i = input_index; i < input_num; i = i + condition_gather_actor->branch_output_num_) {
+    const auto &device_address = AnfAlgo::GetPrevNodeMutableOutputAddr(condition_gather_actor->kernel(), i, false);
+    MS_EXCEPTION_IF_NULL(device_address);
+    MS_LOG(DEBUG) << "For actor::" << condition_gather_actor->GetAID() << " input device address:" << device_address
+                  << " input index:" << i << " ref_count:" << device_address->original_ref_count();
+    if (device_address->original_ref_count() == SIZE_MAX) {
+      continue;
+    }
+    size_t pre_origin_ref_count = device_address->original_ref_count();
+    // The real ref count is the relative position of this branch output.
+    if (ref_count == SIZE_MAX) {
+      device_address->set_original_ref_count(ref_count);
+    } else {
+      device_address->set_original_ref_count(device_address->original_ref_count() + ref_count);
+    }
+    device_address->ResetRefCount();
+    MS_LOG(DEBUG) << "For actor:" << condition_gather_actor->GetAID() << " input device address:" << device_address
+                  << " input index:" << i << " fix ref count from:" << pre_origin_ref_count
+                  << " to:" << device_address->original_ref_count();
+    const auto &input_with_index =
+      common::AnfAlgo::VisitKernelWithReturnType(condition_gather_actor->kernel()->input(i + 1), 0);
+    if (common::AnfAlgo::CheckPrimitiveType(input_with_index.first, prim::kPrimConditionGather)) {
+      const auto &actor = FetchActor(input_with_index.first->fullname_with_scope());
+      MS_EXCEPTION_IF_NULL(actor);
+      MS_LOG(DEBUG) << "Condition gather actor:" << condition_gather_actor->GetAID() << " input index:" << i
+                    << " input node:" << input_with_index.first->DebugString()
+                    << " with index:" << input_with_index.second << " actor:" << actor->GetAID()
+                    << " need add ref count:" << ref_count;
+      FixRefCountByConditionGatherActor(dynamic_cast<ConditionGatherActor *>(actor), input_with_index.second,
+                                        ref_count);
+    }
+  }
+}
+
+void InlineControlFlowScheduler::FixRefCountByConditionGatherActor(ConditionGatherActor *const condition_gather_actor,
                                                                    const KernelGraphPtr &kernel_graph) {
   std::vector<size_t> total_ref_count;
   size_t output_num = AnfAlgo::GetOutputTensorNum(condition_gather_actor->kernel());
@@ -420,6 +526,20 @@ void InlineControlFlowScheduler::FixRefCountByConditionGatherActor(ConditionGath
     MS_LOG(DEBUG) << "For actor::" << condition_gather_actor->GetAID() << " input device address:" << device_address
                   << " input index:" << i << " fix ref count from:" << pre_origin_ref_count
                   << " to:" << device_address->original_ref_count();
+    const auto &input_with_index =
+      common::AnfAlgo::VisitKernelWithReturnType(condition_gather_actor->kernel()->input(i + 1), 0);
+    if (common::AnfAlgo::CheckPrimitiveType(input_with_index.first, prim::kPrimConditionGather)) {
+      const auto &actor = FetchActor(input_with_index.first->fullname_with_scope());
+      MS_EXCEPTION_IF_NULL(actor);
+      FixRefCountByConditionGatherActor(dynamic_cast<ConditionGatherActor *>(actor), input_with_index.second,
+                                        total_ref_count[i % condition_gather_actor->branch_output_num_] == SIZE_MAX
+                                          ? SIZE_MAX
+                                          : total_ref_count[i % condition_gather_actor->branch_output_num_] - 1);
+      MS_LOG(DEBUG) << "Condition gather actor:" << condition_gather_actor->GetAID() << " input index:" << i
+                    << " input node:" << input_with_index.first->DebugString()
+                    << " with index:" << input_with_index.second << " actor:" << actor->GetAID()
+                    << " need add ref count:" << total_ref_count[i % condition_gather_actor->branch_output_num_] - 1;
+    }
   }
   FixRefCountByKernelGraphRefMap(condition_gather_actor, kernel_graph);
 }
@@ -438,7 +558,8 @@ void InlineControlFlowScheduler::InitInputDataBranchInfoForConditionGatherActor(
       MS_LOG(EXCEPTION) << "Failed to get from actor:" << from_aid << " to actor:" << condition_gather_actor->GetAID();
     }
     if (from_actor->type() != KernelTransformType::kKernelActor &&
-        from_actor->type() != KernelTransformType::kConditionSwitchActor) {
+        from_actor->type() != KernelTransformType::kConditionSwitchActor &&
+        from_actor->type() != KernelTransformType::kConditionGatherActor) {
       MS_LOG(EXCEPTION) << "Invalid to actor:" << from_actor->GetAID()
                         << " from actor:" << condition_gather_actor->GetAID();
     }
@@ -451,7 +572,7 @@ void InlineControlFlowScheduler::InitInputDataBranchInfoForConditionGatherActor(
         GetBranchNameByConditionGatherActor(from_kernel_actor, condition_gather_actor, data_arrow, kernel_graph);
     } else {
       if (inline_sub_graph_kernels.find(from_kernel_actor->kernel()) == inline_sub_graph_kernels.end()) {
-        MS_LOG(EXCEPTION) << "Failed to get inline sub graph name by user node:"
+        MS_LOG(EXCEPTION) << "Failed to get inline sub graph name by data user node:"
                           << from_kernel_actor->kernel()->fullname_with_scope()
                           << " in actor:" << condition_gather_actor->GetAID();
       }
@@ -501,7 +622,7 @@ void InlineControlFlowScheduler::InitInputControlBranchInfoForConditionGatherAct
     MS_EXCEPTION_IF_NULL(from_kernel_actor);
     MS_EXCEPTION_IF_NULL(from_kernel_actor->kernel());
     if (inline_sub_graph_kernels.find(from_kernel_actor->kernel()) == inline_sub_graph_kernels.end()) {
-      MS_LOG(EXCEPTION) << "Failed to get inline sub graph name by user node:"
+      MS_LOG(EXCEPTION) << "Failed to get inline sub graph name by control user node:"
                         << from_kernel_actor->kernel()->fullname_with_scope()
                         << " in actor:" << condition_gather_actor->GetAID();
     }

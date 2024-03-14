@@ -528,7 +528,9 @@ const ActorInfo &MindRTBackendBase::CompileGraphs(const FuncGraphPtr &func_graph
 }
 
 namespace {
-void DoUnifyMindIRPass(const FuncGraphPtr &graph) {
+void DoUnifyMindIRPass(const FuncGraphPtr &graph, const std::shared_ptr<opt::GraphOptimizer> &optimizer) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(optimizer);
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   MS_LOG(INFO) << "Do unify mindir pass for graph " << graph->ToString();
@@ -538,11 +540,6 @@ void DoUnifyMindIRPass(const FuncGraphPtr &graph) {
     DumpIR(file_name, graph, true, kWholeStack);
   }
 #endif
-  auto optimizer = std::make_shared<opt::GraphOptimizer>();
-  auto unify_mindir_pm = std::make_shared<opt::PassManager>("unify_mindir_pm");
-  unify_mindir_pm->AddPass(std::make_shared<opt::EraseInvalidMicroDepend>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::SwitchNotCut>());
-  optimizer->AddPassManager(unify_mindir_pm);
   (void)optimizer->Optimize(graph);
 #ifdef ENABLE_DUMP_IR
   if (context_ptr->CanDump(kIntroductory)) {
@@ -550,6 +547,44 @@ void DoUnifyMindIRPass(const FuncGraphPtr &graph) {
     DumpIR(file_name, graph, true, kWholeStack);
   }
 #endif
+}
+bool IsEnableControlFlowInline(const FuncGraphPtr &graph) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (!context->IsKByKExecutorMode()) {
+    return false;
+  }
+  MS_EXCEPTION_IF_NULL(graph);
+  if (std::any_of(graph->func_graphs_used_total().cbegin(), graph->func_graphs_used_total().cend(),
+                  [](const auto &sub_graph) { return sub_graph->recursive(); })) {
+    return false;
+  }
+
+  if (context->CellReuseLevel() == CellReuseLevel::kLazyInline) {
+  } else {
+    auto is_include_no_switch_call = [](const FuncGraphPtr &graph) {
+      MS_EXCEPTION_IF_NULL(graph);
+      const auto &nodes = TopoSort(graph->get_return());
+      for (const auto &node : nodes) {
+        MS_EXCEPTION_IF_NULL(node);
+        if (common::AnfAlgo::IsCallNode(node)) {
+          const auto &cnode = node->cast<CNodePtr>();
+          if (!common::AnfAlgo::CheckPrimitiveType(cnode->input(0), prim::kPrimSwitch)) {
+            return true;
+          }
+        }
+      }
+      return false;
+    };
+    if (is_include_no_switch_call(graph)) {
+      return false;
+    }
+    if (std::any_of(graph->func_graphs_used_total().begin(), graph->func_graphs_used_total().end(),
+                    is_include_no_switch_call)) {
+      return false;
+    }
+  }
+  return true;
 }
 }  // namespace
 
@@ -599,11 +634,20 @@ void MindRTBackendBase::UnifyMindIR(const FuncGraphPtr &root_graph) const {
       }
     }
   }
-  DoUnifyMindIRPass(root_graph);
+
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
+  auto unify_mindir_pm = std::make_shared<opt::PassManager>("unify_mindir_pm");
+  unify_mindir_pm->AddPass(std::make_shared<opt::EraseInvalidMicroDepend>());
+  if (IsEnableControlFlowInline(root_graph)) {
+    unify_mindir_pm->AddPass(std::make_shared<opt::SwitchNotCut>());
+  }
+  optimizer->AddPassManager(unify_mindir_pm);
+
+  DoUnifyMindIRPass(root_graph, optimizer);
   const auto &sub_graphs = root_graph->manager()->func_graphs_used_total(root_graph);
   for (const auto &sub_graph : sub_graphs) {
     MS_EXCEPTION_IF_NULL(sub_graph);
-    DoUnifyMindIRPass(sub_graph);
+    DoUnifyMindIRPass(sub_graph, optimizer);
   }
 }
 

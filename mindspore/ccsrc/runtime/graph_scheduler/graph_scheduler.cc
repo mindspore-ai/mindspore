@@ -2502,6 +2502,9 @@ void GraphScheduler::LinkControlArrowForDataPrepareActor(DataPrepareActor *data_
     // Data prepare actor --> no input kernel actor.
     for (auto &no_input_kernel_actor : actor_set->no_input_kernel_actors_) {
       MS_EXCEPTION_IF_NULL(no_input_kernel_actor);
+      if (IsInlineKernelActor(no_input_kernel_actor)) {
+        continue;
+      }
       SchedulerHelper::AddControlArrow(data_prepare_actor, no_input_kernel_actor.get());
     }
   }
@@ -2545,7 +2548,7 @@ void GraphScheduler::LinkControlArrowForLoopCountActor(LoopCountActor *loop_coun
   for (auto &kernel_actor : actor_set->kernel_actors_) {
     MS_EXCEPTION_IF_NULL(kernel_actor);
     // The no output kernel control side in subgraph needs to be connected to the corresponding output switch actor.
-    if (is_no_output_actor(kernel_actor)) {
+    if (is_no_output_actor(kernel_actor) && (!IsInlineKernelActor(kernel_actor))) {
       (void)no_output_actors.emplace_back(kernel_actor.get());
     }
   }
