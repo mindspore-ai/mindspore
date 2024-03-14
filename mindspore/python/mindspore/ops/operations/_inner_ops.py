@@ -39,7 +39,6 @@ from mindspore.communication.management import GlobalComm, get_rank, _get_group,
 from mindspore.common.api import _pynative_executor
 from mindspore.common._register_for_adapter import ms_adapter_registry
 from mindspore import ops
-from mindspore.ops._tracefunc import PackFunc
 from ..auto_generate import TensorCopySlices, SiLU, Cummin, ExtractImagePatches, DecoderKVCache, PromptKVCache, \
     ApplyCamePart1, ApplyCamePart2, ApplyCamePart3, ApplyCamePart4
 
@@ -2426,8 +2425,6 @@ class ConvertToAdapterTensor(Primitive):
 
     def __call__(self, x):
         """Run in PyNative mode"""
-        if PackFunc.is_tracing() and not PackFunc.current.is_pynative_mode:
-            return super().__call__(x)
         return ms_adapter_registry.tensor(x, cast_tensor=True)
 
 
@@ -2461,8 +2458,6 @@ class ConvertToMsTensor(Primitive):
 
     def __call__(self, x):
         """Run in PyNative mode"""
-        if PackFunc.is_tracing() and not PackFunc.current.is_pynative_mode:
-            return super().__call__(x)
         if isinstance(x, StubTensor):
             return StubTensor(stub=x.stub, tensor=x.tensor)
         return ops.auto_generate.deepcopy(x)

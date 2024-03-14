@@ -48,7 +48,6 @@
 #include "frontend/parallel/pass/handle_group_info.h"
 #include "frontend/parallel/step_assigned_parallel.h"
 #include "frontend/parallel/dynamic_shape/dynamic_shape.h"
-#include "frontend/expander/pack/packfunc.h"
 #include "frontend/expander/utils.h"
 #include "include/common/utils/config_manager.h"
 #include "include/common/utils/convert_utils.h"
@@ -967,7 +966,6 @@ void GraphExecutorPy::CleanCompileRes(const ResourcePtr &resource) {
   FuncGraphLoopBreaker::Inst().CleanMetaFuncGraphs();
   (void)profiler::CollectHostInfo(kCompiler, kPipelineClean, kPipelineClean, 0, 0, 1);
   ProcessStatus::GetInstance().RecordEnd();
-  expander::ClearCompileAllCache();
   CompileCacheContext::GetInstance().Clear();
   MS_LOG(INFO) << "Clean compile resource end";
 }

@@ -129,17 +129,8 @@ KernelGraphPtr OpCompiler::GenerateKernelGraph(const session::BackendOpRunInfoPt
   MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(op_run_info->op_prim);
   KernelGraphPtr graph;
-  if (op_run_info->op_prim->name() == "PackFunc") {
-    auto recent_graph = op_run_info->op_prim->GetAttr("recent_graph");
-    MS_EXCEPTION_IF_NULL(recent_graph);
-    auto func_graph = recent_graph->cast<FuncGraphPtr>();
-    std::vector<KernelGraphPtr> all_out_graph;
-    graph = session_->ConstructPackKernelGraph(func_graph, &all_out_graph, device_context->GetDeviceType());
-    graph->set_attr(kAttrPackFunction, MakeValue(True));
-  } else {
-    graph = session_->ConstructSingleOpGraph(op_run_info, op_run_info->base_op_run_info.expanded_input_values,
-                                             op_run_info->base_op_run_info.input_types);
-  }
+  graph = session_->ConstructSingleOpGraph(op_run_info, op_run_info->base_op_run_info.expanded_input_values,
+                                           op_run_info->base_op_run_info.input_types);
   graph->set_is_from_single_op(true);
   return graph;
 }
