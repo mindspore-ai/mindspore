@@ -143,7 +143,6 @@ const std::vector<OpWithLevel> expand_ops_with_level_dvm = {
   {kAscendDevice, OpLevel_0, prim::kPrimOnesLike},
   {kAscendDevice, OpLevel_0, prim::kPrimZerosLike},
   {kAscendDevice, OpLevel_0, prim::kPrimReduceMean},
-  {kAscendDevice, OpLevel_0, prim::kPrimSoftmaxBackward},
   {kAscendDevice, OpLevel_0, prim::kPrimLogSoftmaxGrad},
   {kAscendDevice, OpLevel_0, prim::kPrimReLU},
   {kAscendDevice, OpLevel_0, prim::kPrimReluGrad},

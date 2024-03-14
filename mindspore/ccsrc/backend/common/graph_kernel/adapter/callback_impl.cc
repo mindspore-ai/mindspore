@@ -73,6 +73,22 @@ void GetTypeAndFormats(const device::KernelWithIndex &kernel_with_index, std::ve
   }
   (void)input_formats->emplace_back(kOpFormat_DEFAULT);
 }
+
+template <typename T>
+void UpdateToOriginalBuildInfo(const AnfNodePtr &node, std::vector<T> *cur_info, std::vector<T> *orig_info) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(cur_info);
+  MS_EXCEPTION_IF_NULL(orig_info);
+  for (size_t i = 0; i < std::min(cur_info->size(), orig_info->size()); ++i) {
+    auto &cur_value = (*cur_info)[i];
+    auto orig_value = (*orig_info)[i];
+    if (cur_value != orig_value) {
+      MS_LOG(INFO) << "Update node[" << node->fullname_with_scope() << "] input[" << i << "] " << cur_value << " --> "
+                   << orig_value;
+      cur_value = orig_value;
+    }
+  }
+}
 }  // namespace
 
 GRAPH_KERNEL_CALLBACK_REGISTER(CallbackImpl);
@@ -247,7 +263,7 @@ void CallbackImpl::SetBasicNodeKernelInfo(const AnfNodePtr &node, const std::vec
   AnfAlgo::SetSelectKernelBuildInfo(selected_info, node.get());
 }
 
-void CallbackImpl::ResetKernelInfoInputs(const AnfNodePtr &node) {
+void CallbackImpl::ResetKernelInfoInputs(const AnfNodePtr &node, bool overwrite) {
   MS_EXCEPTION_IF_NULL(node);
   auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
   if (kernel_info == nullptr) {
@@ -271,6 +287,14 @@ void CallbackImpl::ResetKernelInfoInputs(const AnfNodePtr &node) {
       CollectInputTypesAndFormats(inputs[i], &input_types, &input_formats, true);
     }
     opt::GenerateKernelObjectTypeForNewCNode(cnode, &input_obj_type, &output_obj_type);
+    if (!overwrite) {
+      auto orig_input_formats = build_info->GetAllInputFormats();
+      auto orig_input_types = build_info->GetAllInputDeviceTypes();
+      auto orig_input_obj_type = build_info->GetAllInputKernelObjectTypes();
+      UpdateToOriginalBuildInfo(node, &input_formats, &orig_input_formats);
+      UpdateToOriginalBuildInfo(node, &input_types, &orig_input_types);
+      UpdateToOriginalBuildInfo(node, &input_obj_type, &orig_input_obj_type);
+    }
   }
   auto input_num = AnfUtils::GetInputTensorNum(cnode);
   if (input_formats.size() > input_num) {
@@ -345,7 +369,7 @@ void CallbackImpl::ResetKernelInfo(const AnfNodePtr &node) {
   }
   if (need_convert) {
     ori_cnode->set_kernel_info(cnode->kernel_info_ptr());
-    ResetKernelInfoInputs(ori_cnode);
+    ResetKernelInfoInputs(ori_cnode, true);
   }
 }
 
