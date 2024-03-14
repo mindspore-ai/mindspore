@@ -314,5 +314,84 @@ inline int64_t PadModeStringToInt(const std::string &pad) {
     MS_LOG(EXCEPTION) << "Got an invalid pad_mode string: " << pad_mode << ".";
   }
 }
+
+static inline TypePtr PromoteType(TypePtr a, TypePtr b, const std::string &op_name) {
+  const auto f32 = kNumberTypeFloat32;
+  const auto f16 = kNumberTypeFloat16;
+  const auto f64 = kNumberTypeFloat64;
+  const auto bf16 = kNumberTypeBFloat16;
+  const auto s8 = kNumberTypeInt8;
+  const auto u8 = kNumberTypeUInt8;
+  const auto s16 = kNumberTypeInt16;
+  const auto u16 = kNumberTypeUInt16;
+  const auto s32 = kNumberTypeInt32;
+  const auto u32 = kNumberTypeUInt32;
+  const auto s64 = kNumberTypeInt64;
+  const auto u64 = kNumberTypeUInt64;
+  const auto b1 = kNumberTypeBool;
+  const auto c64 = kNumberTypeComplex64;
+  const auto c128 = kNumberTypeComplex128;
+  const auto ud = kTypeUnknown;
+
+  static std::unordered_map<TypeId, size_t> typeid_idx = {{f32, 0},  {f16, 1},  {f64, 2}, {bf16, 3}, {s8, 4},
+                                                          {u8, 5},   {s16, 6},  {u16, 7}, {s32, 8},  {u32, 9},
+                                                          {s64, 10}, {u64, 11}, {b1, 12}, {c64, 13}, {c128, 14}};
+  static std::unordered_map<TypeId, TypePtr> typeid_typeptr = {
+    {f32, kFloat32}, {f16, kFloat16}, {f64, kFloat64}, {bf16, kBFloat16}, {s8, kInt8},
+    {u8, kUInt8},    {s16, kInt16},   {u16, kUInt16},  {s32, kInt32},     {u32, kUInt32},
+    {s64, kInt64},   {u64, kUInt64},  {b1, kBool},     {c64, kComplex64}, {c128, kComplex128}};
+
+  auto a_tensor_type = a->cast<TensorTypePtr>();
+  MS_EXCEPTION_IF_NULL(a_tensor_type);
+  auto a_element = a_tensor_type->element();
+  MS_EXCEPTION_IF_NULL(a_element);
+  const TypeId &a_type_id = a_element->type_id();
+
+  auto b_tensor_type = b->cast<TensorTypePtr>();
+  MS_EXCEPTION_IF_NULL(b_tensor_type);
+  auto b_element = b_tensor_type->element();
+  MS_EXCEPTION_IF_NULL(b_element);
+  const TypeId &b_type_id = b_element->type_id();
+
+  if (typeid_idx.find(a_type_id) == typeid_idx.end()) {
+    MS_EXCEPTION(TypeError) << "For Op[" << op_name << "], the type " << a->ToString() << "is invalid";
+  }
+
+  if (typeid_idx.find(b_type_id) == typeid_idx.end()) {
+    MS_EXCEPTION(TypeError) << "For Op[" << op_name << "], the type " << b->ToString() << "is invalid";
+  }
+
+  if (a_type_id == b_type_id) {
+    return a->Clone();
+  }
+
+  static const std::vector<std::vector<TypeId>> promote_types_lookup = {
+    /*         f32  f16  f64  bf16  s8  u8  s16  u16  s32  u32  s64  u64  b1 c64  c128 */
+    /* f32 */ {f32, f32, f64, f32, f32, f32, f32, ud, f32, ud, f32, ud, f32, c64, c128},
+    /* f16 */ {f32, f16, f64, f32, f16, f16, f16, ud, f16, ud, f16, ud, f16, c64, c128},
+    /* f64 */ {f64, f64, f64, f64, f64, f64, f64, ud, f64, ud, f64, ud, f64, c64, c128},
+    /* bf16*/ {f32, f64, f64, bf16, bf16, bf16, bf16, ud, bf16, ud, bf16, ud, bf16, c64, c128},
+    /* s8  */ {f32, f16, f64, bf16, s8, s16, s16, ud, s32, ud, s64, ud, s8, c64, c128},
+    /* u8  */ {f32, f16, f64, bf16, s16, u8, s16, ud, s32, ud, s64, ud, u8, c64, c128},
+    /* s16 */ {f32, f16, f64, bf16, s16, s16, s16, ud, s32, ud, s64, ud, s16, c64, c128},
+    /* u16 */ {ud, ud, ud, ud, ud, ud, ud, u16, ud, ud, ud, ud, ud, ud, ud},
+    /* s32 */ {f32, f16, f64, bf16, s32, s32, s32, ud, s32, ud, s64, ud, s32, c64, c128},
+    /* u32 */ {ud, ud, ud, ud, ud, ud, ud, ud, ud, u32, ud, ud, ud, ud, ud},
+    /* s64 */ {f32, f16, f64, bf16, s64, s64, s64, ud, s64, ud, s64, ud, s64, c64, c128},
+    /* u64 */ {ud, ud, ud, ud, ud, ud, ud, ud, ud, ud, ud, u64, ud, ud, ud},
+    /* b1  */ {f32, f16, f64, bf16, s8, u8, s16, ud, s32, ud, s64, ud, b1, c64, c128},
+    /* c64 */ {c64, c64, c64, c64, c64, c64, c64, ud, c64, ud, c64, ud, c64, c64, c128},
+    /* c128*/ {c128, c128, c128, c128, c128, c128, c128, ud, c128, ud, c128, ud, c128, c128, c128},
+  };
+
+  auto return_type_id = promote_types_lookup[typeid_idx[a_type_id]][typeid_idx[b_type_id]];
+
+  if (return_type_id == ud) {
+    MS_EXCEPTION(TypeError) << "For Op[" << op_name << "], the promote output type is invalid";
+  }
+
+  return std::make_shared<TensorType>(typeid_typeptr[return_type_id]);
+}
+
 }  // namespace mindspore::ops
 #endif  // MINDSPORE_CORE_OPS_OP_UTILS_H
