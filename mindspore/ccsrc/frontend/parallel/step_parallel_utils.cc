@@ -2061,7 +2061,7 @@ Status ExtractUserConfigLayout(const mindspore::HashMap<std::string, ValuePtr> &
       }
       auto in_layout = std::make_shared<TensorLayout>();
       if (in_layout->InitFromExtendVector(device_matrix_vector, tensor_map_vector, inputs_shape[i]) != SUCCESS) {
-        MS_LOG(ERROR) << "The in_layout configured incorretc, device_matrix:" << device_matrix_vector
+        MS_LOG(ERROR) << "The in_layout configured incorrect, device_matrix:" << device_matrix_vector
                       << ", tensor_map:" << tensor_map_vector;
         return FAILED;
       }
@@ -2087,7 +2087,7 @@ Status ExtractUserConfigLayout(const mindspore::HashMap<std::string, ValuePtr> &
       }
       auto out_layout = std::make_shared<TensorLayout>();
       if (out_layout->InitFromExtendVector(device_matrix_vector, tensor_map_vector, outputs_shape[i]) != SUCCESS) {
-        MS_LOG(ERROR) << "The out_layout configured incorretc, device_matrix:" << device_matrix_vector
+        MS_LOG(ERROR) << "The out_layout configured incorrect, device_matrix:" << device_matrix_vector
                       << ", tensor_map:" << tensor_map_vector;
         return FAILED;
       }

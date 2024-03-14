@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import numpy as np
+import pytest
 
 import mindspore as ms
 import mindspore.nn as nn
@@ -280,3 +281,29 @@ def test_layout_extend_reduce_axis_multi_shard_reduce_scatter_including_reduce_a
     validator = ParallelValidator(net, phase)
     assert validator.check_parameter_shape('network.network.w', [512, 1024])
     assert validator.check_node_inputs_has('ReduceScatter-0', ['MatMul'])
+
+def test_layout_extend_error_case1():
+    """
+    Feature: test layout extend
+    Description: error case, the strategy is incorrect.
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    layout = Layout((2, 2, 2), ("dp", "sp", "mp"))
+    layout1 = (layout("dp", ("sp", "mp")), layout(("sp", "mp"), "dp"))
+    net = GradWrap(NetWithLoss(Net(w, layout1)))
+    with pytest.raises(RuntimeError):
+        compile_net(net, x)
+
+def test_layout_extend_error_case2():
+    """
+    Feature: test layout extend
+    Description: error case, the strategy is incorrect.
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    layout = Layout((2, 2, 2), ("dp", "sp", "mp"))
+    with pytest.raises(ValueError):
+        layout1 = (layout("dp", ("sp", "mp")), layout(("sp", "mp"), "mp"))
+        net = GradWrap(NetWithLoss(Net(w, layout1)))
+        compile_net(net, x)

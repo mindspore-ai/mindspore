@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -449,6 +449,30 @@ Status MatMul::CheckInputLayout() {
     MS_LOG(ERROR) << "The shard size of reduce_dim is not equal for input0 and input1";
     return FAILED;
   }
+  std::vector<int64_t> map_verify;
+  for (size_t i = 0; i < in_layout0.tensor_map_before().size(); ++i) {
+    if (i == axis0) {
+      continue;
+    }
+    auto m_v = in_layout0.tensor_map_before()[i];
+    (void)std::copy(m_v.begin(), m_v.end(), std::back_inserter(map_verify));
+  }
+  for (size_t j = 0; j < in_layout1.tensor_map_before().size(); ++j) {
+    if (j == axis1) {
+      continue;
+    }
+    auto m_v = in_layout1.tensor_map_before()[j];
+    (void)std::copy(m_v.begin(), m_v.end(), std::back_inserter(map_verify));
+  }
+  std::sort(map_verify.begin(), map_verify.end());
+  for (size_t i = 0; i + 1 < map_verify.size(); ++i) {
+    if (map_verify[i] == map_verify[i + 1]) {
+      MS_LOG(ERROR) << "The device_matrix " << in_layout0.device_arrangement_origin().array() << " axis "
+                    << in_layout0.device_arrangement_origin().array().size() - 1 - map_verify[i]
+                    << "has been shard for more than once and not sharding the reduce_dim for matmul.";
+      return FAILED;
+    }
+  }
   return SUCCESS;
 }
 
@@ -472,13 +496,13 @@ Status MatMul::CheckOutputLayout() {
   }
 
   auto input_layout0 = inputs_tensor_info_[kIndex0].tensor_layout();
-  int64_t axis0 = input_layout0.tensor_shape_before().array().size() - 1;
+  int64_t axis0 = SizeToLong(input_layout0.tensor_shape_before().array().size()) - 1;
   if (transpose_a_) {
     axis0 -= 1;
   }
   auto output_extended_tensor_map = output_infer_tensor_layout_.tensor_map_before();
   auto axis_map = input_layout0.tensor_map_before()[axis0];
-  output_extended_tensor_map[0].insert(output_extended_tensor_map[0].end(), axis_map.begin(), axis_map.end());
+  (void)output_extended_tensor_map[0].insert(output_extended_tensor_map[0].end(), axis_map.begin(), axis_map.end());
   TensorLayout reduce_scatter_out_layout;
   reduce_scatter_out_layout.InitFromExtendVector(output_infer_tensor_layout_.device_arrangement_origin().array(),
                                                  output_extended_tensor_map,

@@ -57,7 +57,7 @@ std::vector<CNodePtr> GetDwRelyNodes(const CNodePtr &dw_matmul) {
       if (std::find(visited.begin(), visited.end(), queue_front->input(i)) != visited.end()) {
         continue;
       }
-      visited.insert(queue_front->input(i));
+      (void)visited.insert(queue_front->input(i));
       if (!IsPrimitiveCNode(queue_front->input(i))) {
         continue;
       }
@@ -143,7 +143,6 @@ void InsertDependForDxAndGradComm(const FuncGraphPtr &backward_graph, const std:
     auto depend_node1 = backward_graph->NewCNode(depend1_inputs);
     depend_node1->set_abstract(dx_matmul_input->abstract()->Clone());
     depend_node1->AddAttr("grad_comm_depend1", MakeValue(true));
-    MS_EXCEPTION_IF_NULL(depend_node1);
     manager->SetEdge(dx_matmul, kIndex1, depend_node1);
     // dx_matmul -> grad comm output
     auto comm_output_users = manager->node_users()[grad_comm.back()];

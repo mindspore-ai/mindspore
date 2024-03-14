@@ -447,13 +447,11 @@ Arrangement TensorLayout::base_slice_shape() const {
       shape.push_back(num / axis_shard);
     }
   }
-
-  Arrangement new_tensor_shape;
-  if (new_tensor_shape.Init(shape) == Status::FAILED) {
-    ValuePtr ptr = MakeValue(shape);
-    MS_LOG(EXCEPTION) << "Can't get slice shape when initialize a new shape " << ptr->ToString();
+  Arrangement new_slice_shape;
+  if (new_slice_shape.Init(shape) == Status::FAILED) {
+    MS_LOG(EXCEPTION) << "Can't get slice shape when initialize a new shape " << shape;
   } else {
-    return new_tensor_shape;
+    return new_slice_shape;
   }
 }
 
