@@ -251,7 +251,7 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
             return process_list + thread_list + new_timeline, scope_data
 
         except (IOError, OSError, json.JSONDecodeError) as err:
-            print('parse_cann_data failed! please theck. detail: %s', err)
+            logger.error('parse_cann_data failed! please theck. detail: %s', err)
             return []
 
     def _wait_task_and_update(self, task_list: list, timeline_data: list):
@@ -347,7 +347,6 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
         for op in scope_data[1:]:
             if op[1] < layer_stack[0][2]:
                 # 并行算子只保留前面的
-                # print(op[0])
                 continue
             flag = True  # 判断上层是否合并， 上层不合并下层也不合并
             for layer_depth, layer_name in enumerate(op[0]):
