@@ -27,7 +27,6 @@ import java.nio.FloatBuffer;
 import java.lang.reflect.Array;
 import java.util.HashMap;
 import java.util.logging.Logger;
-import javax.xml.crypto.Data;
 
 /**
  * The MSTensor class defines a tensor in MindSpore.

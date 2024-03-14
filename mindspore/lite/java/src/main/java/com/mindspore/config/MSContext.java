@@ -71,7 +71,7 @@ public class MSContext {
 
     /**
      * Add device info to context.
-     * 
+     *
      * @param ascendDeviceInfo Device info for Ascend backend.
      * @return add status.
      */
