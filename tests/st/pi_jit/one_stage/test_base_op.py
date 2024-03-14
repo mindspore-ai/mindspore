@@ -14,6 +14,7 @@
 # ============================================================================
 """Test basic operation with one stage"""
 import pytest
+import numpy as np
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import context
@@ -315,3 +316,49 @@ def test_make_dict_3():
     jit(net.construct, mode="PIJit", jit_config=cfg)
     ret = net(a)
     assert ret == Tensor([2])
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_tuple_input():
+    """
+    Feature: One stage basic operation.
+    Description: Test one stage basic operation.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def construct(self, x, y):
+            return x/y
+
+    context.set_context(mode=context.PYNATIVE_MODE)
+    net = Net()
+    a = (1.0, 2.0, 3.0)
+    b = Tensor(np.ones([2, 3]).astype(np.float32))
+    jit(net.construct, mode="PIJit", jit_config=cfg)
+    ret = net(a, b)
+    expect = np.array([[1.0, 2.0, 3.0], [1.0, 2.0, 3.0]])
+    assert np.allclose(ret.asnumpy(), expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_list_input():
+    """
+    Feature: One stage basic operation.
+    Description: Test one stage basic operation.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def construct(self, x, y):
+            return x/y
+
+    context.set_context(mode=context.PYNATIVE_MODE)
+    net = Net()
+    a = [1.0, 2.0, 3.0]
+    b = Tensor(np.ones([2, 3]).astype(np.float32))
+    jit(net.construct, mode="PIJit", jit_config=cfg)
+    ret = net(a, b)
+    expect = np.array([[1.0, 2.0, 3.0], [1.0, 2.0, 3.0]])
+    assert np.allclose(ret.asnumpy(), expect)

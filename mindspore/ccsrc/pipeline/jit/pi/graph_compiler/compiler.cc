@@ -196,6 +196,28 @@ CallableGraph Compiler::Compile(const PyFunctionObject &func, const PyFrameObjec
   return callable;
 }
 
+namespace {
+py::tuple MergeArgsKwargs(PyObject *args, PyObject *kwargs) {
+  if (kwargs == nullptr) {
+    return py::cast<py::tuple>(args);
+  }
+  py::list new_args;
+  for (const auto &value : py::cast<py::tuple>(args)) {
+    new_args.append(value);
+  }
+  // Graph mode will convert dict input to tuple with values.
+  py::list converted_kwargs;
+  for (const auto &[key, value] : py::cast<py::dict>(kwargs)) {
+    (void)key;
+    converted_kwargs.append(value);
+  }
+  if (py::len(converted_kwargs) != 0) {
+    new_args.append(py::cast<py::tuple>(converted_kwargs));
+  }
+  return py::cast<py::tuple>(new_args);
+}
+}  // namespace
+
 CallableGraph MindCompiler::Compile(const FuncGraphPtr &func_graph, const py::tuple &args, const py::dict &kwargs,
                                     const std::string &phase, const CompileInfo &compile_info) {
   MS_EXCEPTION_IF_CHECK_FAIL(!phase.empty(),
@@ -206,8 +228,7 @@ CallableGraph MindCompiler::Compile(const FuncGraphPtr &func_graph, const py::tu
     MS_EXCEPTION_IF_CHECK_FAIL(((kwargs == nullptr) || PyDict_Check(kwargs)),
                                "Excepted nullptr or a Dict Object for run kwargs.");
 
-    py::tuple tuple = MergeAllArgments(args, kwargs);
-    tuple = ExpandVariableArgs(tuple, compile_info.co_flags_, compile_info.co_argcount_);
+    py::tuple tuple = MergeArgsKwargs(args, kwargs);
     tuple = EliminateSelf(tuple, compile_info.co_name_);
     tuple = EliminateStubTensor(tuple);
     MarkArgmentMutable(tuple);
@@ -240,10 +261,9 @@ CallableGraph MindCompiler::Compile(const FuncGraphPtr &func_graph, const py::tu
     return nullptr;
   }
   py::tuple new_arg = EliminateStubTensor(args);
-  new_arg = ExpandVariableArgs(new_arg, compile_info.co_flags_, compile_info.co_argcount_);
   new_arg = EliminateSelf(new_arg, compile_info.co_name_);
   MarkArgmentMutable(new_arg);
-  (void)graph_executor->CompileInner(func_graph, args, kwargs, phase, true, true);
+  (void)graph_executor->CompileInner(func_graph, new_arg, kwargs, phase, true, true);
 
   return callable;
 }

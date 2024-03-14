@@ -2013,6 +2013,60 @@ bool GraphBuilder::ReplaceCall(CallNode *call_node, const py::object &old_func) 
   return true;
 }
 
+MindGraphBuilder::MindGraphBuilder(const PyFrameObject *f) : GraphBuilder(this) {
+  PyCodeObject *co = f->f_code;
+  int argc = co->co_argcount + co->co_kwonlyargcount;
+  argc += (co->co_flags & CO_VARARGS) ? 1 : 0;
+  argc += (co->co_flags & CO_VARKEYWORDS) ? 1 : 0;
+  int ncells = PyTuple_GET_SIZE(co->co_cellvars);
+  int nfrees = PyTuple_GET_SIZE(co->co_freevars);
+
+  graph_ = NewGraph(co, f->f_globals);
+
+  frame_.ResizeLocal(co->co_nlocals);
+  frame_.ResizeClosure(ncells + nfrees);
+  for (int i = 0; i < argc; i++) {
+    if (f->f_localsplus[i] == nullptr) {
+      continue;
+    }
+    auto vo = AbstractTraceNode::MakeAObject(py::cast<py::object>(f->f_localsplus[i]));
+    ParamNode *n = graph_->allocator().NewNode<ParamNode>(vo, i);
+    n->SetName(PyUnicode_AsUTF8(PyTuple_GET_ITEM(co->co_varnames, i)));
+    frame_.SetLocal(i, n);
+  }
+  for (int i = 0; i < ncells + nfrees; i++) {
+    PyObject *cell = f->f_localsplus[co->co_nlocals + i];
+    PyObject *cell_contents = PyCell_GET(cell);
+    AbstractNode::Type t = i < ncells ? AbstractNode::CellVar : AbstractNode::FreeVar;
+    CellVarNode *n = graph_->allocator().NewNode<CellVarNode>(t);
+    n->SetVobj(AObject::Convert(cell));
+    n->SetIndex(i);
+    n->SetGraph(graph_);
+    frame_.SetClosure(i, n);
+    if (i < ncells && co->co_cell2arg != nullptr && co->co_cell2arg[i] != CO_CELL_NOT_AN_ARG) {
+      MS_EXCEPTION_IF_NULL(cell_contents);
+      n->SetFromParam(co->co_cell2arg[i]);
+    }
+    if (cell_contents == nullptr) {
+      n->SetValue(&ValueNode::kUnboundLocal);
+    } else {
+      ValueNode *param = NewValueNode(AObject::Convert(cell_contents), LOAD_DEREF, i);
+      param->SetGraph(graph_);
+      n->AddCellOper(param);
+      n->SetValue(param);
+    }
+  }
+
+  std::vector<std::string> comments;
+  auto location = std::make_shared<Location>(py::cast<std::string>(f->f_code->co_filename), f->f_code->co_firstlineno,
+                                             0, f->f_code->co_firstlineno, 0, "", std::move(comments));
+  TraceGuard trace_guard(location);
+  fg_builder_ = std::make_shared<FuncGraphBuilder>(true);
+  fg_builder_->SetGraphName(py::cast<std::string>(f->f_code->co_name) + "_" +
+                            std::to_string(f->f_code->co_firstlineno));
+  co_name_ = py::cast<std::string>(f->f_code->co_name);
+}
+
 namespace {
 std::string GetFuncGraphName(const py::object &func, const MindGraphBuilderPtr &subgraph) {
   auto func_str = py::cast<std::string>(py::str(func));
