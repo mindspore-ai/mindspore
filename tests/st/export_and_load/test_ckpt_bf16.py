@@ -117,7 +117,7 @@ def test_save_load_checkpoint_with_bf16_graph(mode):
             os.remove(file_name)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_arm_ascend910b_training
@@ -176,7 +176,7 @@ def test_save_load_checkpoint_with_bf16_pynative(mode):
             os.remove(file_name)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_arm_ascend910b_training
