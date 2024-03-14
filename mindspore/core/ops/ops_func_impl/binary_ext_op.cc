@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-#include "ops/ops_func_impl/add_ext.h"
+#include "ops/ops_func_impl/binary_ext_op.h"
 #include <vector>
 #include <map>
 #include <string>
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
-#include "ops/ops_func_impl/prelu.h"
 
 namespace mindspore::ops {
 static inline bool isIntegralType(TypeId t) {
@@ -28,7 +27,8 @@ static inline bool isIntegralType(TypeId t) {
          t == kNumberTypeUInt8 || t == kNumberTypeUInt16 || t == kNumberTypeUInt32 || t == kNumberTypeUInt64;
 }
 
-TypePtr AddExtFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
+TypePtr BinaryExtOpFuncImpl::InferType(const PrimitivePtr &primitive,
+                                       const std::vector<AbstractBasePtr> &input_args) const {
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]->GetType());
   std::map<std::string, TypePtr> types;
   (void)types.emplace("x", input_args[kInputIndex0]->GetType());
@@ -53,15 +53,13 @@ TypePtr AddExtFuncImpl::InferType(const PrimitivePtr &primitive, const std::vect
                              << " and " << dtype2->ToString();
   }
 
-  if (IsAscend() && alpha_type == kBool) {
-    if (type_id1 != kNumberTypeBool || type_id2 != kNumberTypeBool) {
-      MS_EXCEPTION(ValueError) << "For '" << primitive->name()
-                               << "', boolean alpha need boolean input and other, but got " << dtype1->ToString()
-                               << " and " << dtype2->ToString();
-    }
-    return kBool;
+  if (alpha_type == kBool && (type_id1 != kNumberTypeBool || type_id2 != kNumberTypeBool)) {
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                             << "', boolean alpha need boolean input and other, but got " << dtype1->ToString()
+                             << " and " << dtype2->ToString();
   }
 
-  return CheckAndConvertUtils::CheckMathBinaryOpTensorType(types, common_valid_types, primitive->name());
+  return CheckAndConvertUtils::CheckMathBinaryOpTensorType(types, common_valid_types_with_complex_and_bool,
+                                                           primitive->name());
 }
 }  // namespace mindspore::ops
