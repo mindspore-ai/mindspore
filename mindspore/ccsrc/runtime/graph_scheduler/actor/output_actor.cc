@@ -357,6 +357,7 @@ TensorPtr OutputActor::CreateOutputTensor(const AnfNodePtr &output_node, size_t 
 }
 
 void OutputActor::UpdateOutputDeviceAddress() {
+  ProfilerRecorder profiler(ProfilerModule::kRuntime, ProfilerEvent::kOutputProcess, "UpdateOutputDeviceAddress");
   // In the running end, when the device ptr of graph output node is set into host tensor, the graph output node
   // need be set new device ptr, to avoid that the device ptr context of host tensor be rewritten in the next
   // step or next loop. But the graph output nodes corresponding to device tensor store need to be skipped, because
@@ -409,6 +410,8 @@ void OutputActor::UpdateOutputDeviceAddress() {
                           << output_node->fullname_with_scope() << ", alloc size: " << tensor_device_address->GetSize()
                           << "B.";
       }
+      MS_LOG(DEBUG) << "Sync device data from device tensor: " << device_tensor
+                    << ", to device tensor: " << tensor_device_address << ", size: " << device_tensor->GetSize();
       if (!tensor_device_address->SyncDeviceToDevice(device_tensor)) {
         MS_LOG(EXCEPTION) << "Sync device to device failed, device type: " << tensor_device_address->GetDeviceType()
                           << ", output node: " << output_node->fullname_with_scope();
