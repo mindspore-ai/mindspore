@@ -19,13 +19,6 @@
 #include <string>
 
 typedef struct PoolingDynamicParameter {
-  int avg_mode_;
-  bool global_;
-  int window_w_;
-  int window_h_;
-  int stride_w_;
-  int stride_h_;
-
   std::string input_batch_;
   std::string output_batch_;
 } PoolingDynamicParameter;

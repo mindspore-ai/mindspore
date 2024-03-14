@@ -29,14 +29,15 @@ using mindspore::schema::PrimitiveType_Unsqueeze;
 
 namespace mindspore::lite::micro {
 int ReshapeDynamicBaseCoder::Prepare(CoderContext *const context) {
-  MS_CHECK_TRUE_MSG(input_tensors_.size() == C2NUM, RET_ERROR, "Reshape's input-num must be 2.");
   MS_CHECK_TRUE_MSG(input_tensors_[FIRST_INPUT]->data_type() == kNumberTypeFloat16, RET_INPUT_PARAM_INVALID,
                     "Input tensor data type is invalid.");
-  MS_CHECK_TRUE_MSG(input_tensors_[SECOND_INPUT]->IsConst(), RET_NOT_SUPPORT,
-                    "Currently, only support the first input of reshape is non-const when shape is dynamic.");
-  MS_CHECK_TRUE_MSG(input_tensors_[SECOND_INPUT]->data_type() == kNumberTypeInt32 ||
-                      input_tensors_[SECOND_INPUT]->data_type() == kNumberTypeInt,
-                    RET_ERROR, "The data-type of Reshape's second input must be int.");
+  if (input_tensors_.size() == C2NUM) {
+    MS_CHECK_TRUE_MSG(input_tensors_[SECOND_INPUT]->IsConst(), RET_NOT_SUPPORT,
+                      "Currently, only support the first input of reshape is non-const when shape is dynamic.");
+    MS_CHECK_TRUE_MSG(input_tensors_[SECOND_INPUT]->data_type() == kNumberTypeInt32 ||
+                        input_tensors_[SECOND_INPUT]->data_type() == kNumberTypeInt,
+                      RET_ERROR, "The data-type of Reshape's second input must be int.");
+  }
   MS_CHECK_TRUE_MSG(output_tensor_->data_type() == kNumberTypeFloat16, RET_INPUT_PARAM_INVALID,
                     "Output tensor data type is invalid.");
   return RET_OK;

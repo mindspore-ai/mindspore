@@ -40,7 +40,7 @@ class SliceDynamicFP16Coder final : public OperatorCoder {
  protected:
   int Init();
   void PadSliceParameterTo8D();
-  SliceStruct *param_{nullptr};
+  SliceStruct param_;
   SliceDynamicParameter dynamic_param_;
   std::vector<std::string> in_shapes_;
   std::vector<std::string> out_shapes_;
