@@ -83,6 +83,9 @@ tensor::TensorPtr PyBoostCastOperation::SetTensorMixPrecisionCast(const Frontend
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(t);
   const auto &signature = op_run_info->signatures;
+  if (index >= signature.size()) {
+    return t;
+  }
   if (t->is_parameter()) {
     // If parameter write(not kRWRead), no need cast
     if (signature[index].rw != SignatureEnumRW::kRWRead) {
