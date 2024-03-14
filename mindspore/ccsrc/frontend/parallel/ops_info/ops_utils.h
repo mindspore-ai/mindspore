@@ -114,6 +114,7 @@ constexpr char AUTO_PARALLEL_FINISH_PRE_ACTION[] = "auto_parallel_finish_pre_act
 constexpr char AUTO_PARALLEL_RUN_ONCE_ONLY[] = "auto_parallel_run_once_only";
 constexpr char SEMI_AUTO_PARALLEL_RUN_ONCE_ONLY[] = "semi_auto_parallel_run_once_only";
 constexpr char CHECK_SET_STRATEGY_VALID_ONCE_ONLY[] = "check_set_strategy_valid_once_only";
+constexpr char REPEATED_NUM_IN_DEV_MATRIX_RIGHT[] = "repeated_num_in_dev_matrix_right_";
 constexpr char IN_STRATEGY[] = "in_strategy";
 constexpr char OUT_STRATEGY[] = "out_strategy";
 constexpr char LAYOUT[] = "layout";
