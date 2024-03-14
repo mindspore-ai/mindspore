@@ -54,7 +54,6 @@ void IdentityCustomizeCallWithoutContigous(const std::shared_ptr<OpRunner> &op, 
 
     auto identity_kernel = std::make_shared<kernel::AclKernelMod>();
     auto input_x_address = std::dynamic_pointer_cast<device::DeviceAddress>(x_tensor->device_address());
-
     if (!input_x_address->kernel_tensor()->host_info_exist()) {
       input_x_address->kernel_tensor()->SetHostInfo(std::make_shared<abstract::TensorShape>(x_tensor->shape()),
                                                     std::make_shared<TensorType>(x_tensor->Dtype()), nullptr);
@@ -65,7 +64,6 @@ void IdentityCustomizeCallWithoutContigous(const std::shared_ptr<OpRunner> &op, 
     }
     auto input_kernel_tensors = {input_x_address->kernel_tensor().get()};
     auto output_kernel_tensors = {launch_device_address->kernel_tensor().get()};
-
     if (!std::static_pointer_cast<KernelMod>(identity_kernel)
            ->Init(prim::kPrimIdentity, input_kernel_tensors, output_kernel_tensors)) {
       MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#Initialize acl kernel op[Identity] failed.";
@@ -84,7 +82,6 @@ void IdentityCustomizeCallWithoutContigous(const std::shared_ptr<OpRunner> &op, 
 
     auto workspace_address = PyBoostUtils::CreateWorkSpaceDeviceAddress(identity_kernel, device_context, "Identity");
     auto workspaces = PyBoostUtils::GetKernelTensorFromAddress(workspace_address);
-
     if (!identity_kernel->Launch(input_kernel_tensors, workspaces, output_kernel_tensors, stream_ptr)) {
       MS_LOG(EXCEPTION) << "Launch kernel identity failed";
     }
@@ -113,7 +110,6 @@ void IdentityCustomizeCall(const std::shared_ptr<OpRunner> &op, const TensorPtr 
     auto output_address = std::dynamic_pointer_cast<device::DeviceAddress>(outputs[0]->device_address());
     auto input_kernel_tensors = {input_x_address->kernel_tensor().get()};
     auto output_kernel_tensors = {output_address->kernel_tensor().get()};
-
     if (!std::static_pointer_cast<KernelMod>(identity_kernel)
            ->Init(prim::kPrimIdentity, input_kernel_tensors, output_kernel_tensors)) {
       MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#Initialize acl kernel op[Identity] failed.";
@@ -132,7 +128,6 @@ void IdentityCustomizeCall(const std::shared_ptr<OpRunner> &op, const TensorPtr 
 
     auto workspace_address = PyBoostUtils::CreateWorkSpaceDeviceAddress(identity_kernel, device_context, "Identity");
     auto workspaces = PyBoostUtils::GetKernelTensorFromAddress(workspace_address);
-
     if (!identity_kernel->Launch(input_kernel_tensors, workspaces, output_kernel_tensors, stream_ptr)) {
       MS_LOG(EXCEPTION) << "Launch kernel identity failed";
     }

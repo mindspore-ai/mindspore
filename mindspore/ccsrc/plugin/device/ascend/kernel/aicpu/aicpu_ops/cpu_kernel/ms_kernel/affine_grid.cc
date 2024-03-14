@@ -308,7 +308,6 @@ uint32_t AffineGridCpuKernel::AffineGridCompute(CpuKernelContext &ctx) {
     align_corners = ctx.GetAttr("align_corners")->GetBool();
   }
   std::vector<long int> outputsize = calc_info.input_1->GetTensorShape()->GetDimSizes();
-
   if (outputsize[0] == kColNum4) {
     return AffineGridCompute4D<T>(ctx, data_out_size, align_corners);
   } else if (outputsize[0] == kColNum5) {

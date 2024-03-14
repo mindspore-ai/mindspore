@@ -392,14 +392,12 @@ std::string OpCompiler::GetSingleOpGraphInfo(const pynative::BaseOpRunInfo &op_i
       } else {
         if (input_tensor->base_shape_ptr() != nullptr) {
           graph_info += input_tensor->base_shape_ptr()->ToString();
-        } else {
-          if (!input_tensor->shape().empty()) {
-            const auto &shape_str =
-              std::accumulate(std::next(input_tensor->shape().begin()), input_tensor->shape().end(),
-                              std::to_string(input_tensor->shape()[0]),
-                              [](std::string cur, size_t n) { return cur.append("-").append(std::to_string(n)); });
-            graph_info += shape_str;
-          }
+        } else if (!input_tensor->shape().empty()) {
+          const auto &shape_str =
+            std::accumulate(std::next(input_tensor->shape().begin()), input_tensor->shape().end(),
+                            std::to_string(input_tensor->shape()[0]),
+                            [](std::string cur, size_t n) { return cur.append("-").append(std::to_string(n)); });
+          graph_info += shape_str;
         }
       }
 

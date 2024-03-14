@@ -357,7 +357,7 @@ std::bitset<kBitSize> MakeDimMask(std::vector<int64_t> dims, int64_t ndim) {
 abstract::ShapePtr ReduceExtInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto input_shape_ptr = input_args[0]->BuildShape();
   const auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_shape_ptr)[kShape];
-  int64_t ndim = input_shape.size();
+  int64_t ndim = static_cast<int64_t>(input_shape.size());
   auto dim = GetValue<std::vector<int64_t>>(input_args[1]->BuildValue());
   auto keepdim = GetValue<bool>(input_args[2]->BuildValue());
   std::bitset<kBitSize> mask = MakeDimMask(dim, ndim);

@@ -108,8 +108,9 @@ bool DeviceAddressUtils::NodeDeviceAddressExist(const DeviceContext *device_cont
   return false;
 }
 
-void DeviceAddressUtils::CopyNonTensorDataToDevice(const device::DeviceContext *device_context,
-                                                   const device::DeviceAddressPtr &device_address) {
+void DeviceAddressUtils::CopyNoneTensorDataToDevice(const device::DeviceContext *device_context,
+                                                    const device::DeviceAddressPtr &device_address,
+                                                    const ShapeVector &shape) {
   MS_EXCEPTION_IF_NULL(device_address);
   // Break copy data to device address if has the device_address has flag ignore.
   if (TEST_FLAG(device_address->flag(), device::kDeviceAddressFlagIgnoreDevicePtr)) {
@@ -136,7 +137,7 @@ void DeviceAddressUtils::CopyNonTensorDataToDevice(const device::DeviceContext *
   MS_EXCEPTION_IF_NULL(node_value);
   auto data_type_id = kernel_tensor->dtype_id();
   auto format = kernel_tensor->GetStringFormat();
-  if (!device_address->SyncHostToDevice({}, data_size, data_type_id, node_value, format)) {
+  if (!device_address->SyncHostToDevice(shape, data_size, data_type_id, node_value, format)) {
     MS_LOG(EXCEPTION) << "SyncHostToDevice failed";
   }
 }
@@ -1005,7 +1006,7 @@ device::DeviceAddressPtr DeviceAddressUtils::CreateInputAddress(const DeviceCont
   device_address->set_from_persistent_mem(true);
 
   if (device_address->GetPtr() == nullptr) {
-    CopyNonTensorDataToDevice(device_context, device_address);
+    CopyNoneTensorDataToDevice(device_context, device_address);
   }
   MS_LOG(DEBUG) << "Create input scalar device address " << device_address << " for " << index
                 << "th input, Shape: " << shape->ToString() << ", Type: " << type->ToString()
@@ -1043,7 +1044,7 @@ device::DeviceAddressPtr DeviceAddressUtils::CreateInputAddress(const DeviceCont
   device_address->set_from_persistent_mem(true);
 
   if (device_address->GetPtr() == nullptr) {
-    CopyNonTensorDataToDevice(device_context, device_address);
+    CopyNoneTensorDataToDevice(device_context, device_address);
   }
   MS_LOG(DEBUG) << "Create input string device address " << device_address << " for " << index
                 << "th input, Shape: " << shape->ToString() << ", Type: " << type->ToString()
@@ -1068,7 +1069,7 @@ device::DeviceAddressPtr DeviceAddressUtils::CreateInputAddress(const DeviceCont
   device_address->set_from_persistent_mem(true);
 
   if (device_address->GetPtr() == nullptr) {
-    CopyNonTensorDataToDevice(device_context, device_address);
+    CopyNoneTensorDataToDevice(device_context, device_address);
   }
   MS_LOG(DEBUG) << "Create input " << abs->ToString() << " device address for " << index
                 << "th input, Shape: " << shape->ToString() << ", Type: " << type->ToString()

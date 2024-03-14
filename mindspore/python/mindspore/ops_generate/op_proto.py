@@ -15,6 +15,7 @@
 """Op Proto."""
 from pyboost_utils import convert_python_func_name_to_c
 
+
 class Arg:
     def __init__(self, arg_name, arg_dtype, type_cast, is_type_id=False, as_init_arg=False, default=-1, inplace=''):
         self.arg_name = arg_name

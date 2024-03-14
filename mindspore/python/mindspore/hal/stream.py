@@ -198,11 +198,11 @@ class Stream(Stream_):
         # pylint: disable=useless-super-delegation
         return super().query()
 
-    def __eq__(self, o):
-        if not isinstance(o, Stream):
+    def __eq__(self, other):
+        if not isinstance(other, Stream):
             raise TypeError(f"For '__eq__', the argument 'other' should be Stream,"
-                            f" but got {type(o)}.")
-        return super().__eq__(o)
+                            f" but got {type(other)}.")
+        return super().__eq__(other)
 
     def __hash__(self):
         return hash((self.id, self.device_id))
@@ -230,6 +230,7 @@ def synchronize():
         >>> assert s1.query()
     """
     synchronize_()
+
 
 def set_cur_stream(stream):
     r"""
