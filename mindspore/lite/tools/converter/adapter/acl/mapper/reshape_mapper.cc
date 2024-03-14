@@ -74,7 +74,7 @@ STATUS ReshapeMapper::ShapeAttrAdjustTensor(const PrimitivePtr &src_prim, const 
   int fmk_type = attr_val != nullptr ? GetValue<int>(attr_val) : converter::kFmkTypeTf;
   if (fmk_type == converter::kFmkTypeOnnx) {
     if (std::find(shape.begin(), shape.end(), 0) != shape.end() && !dst_prim->HasAttr("allowzero")) {
-      dst_prim->AddAttr("allowzero", MakeValue(0));
+      dst_prim->AddAttr("allowzero", MakeValue(0));  // allowzero is an ops attribute in cann
     }
   } else {
     dst_prim->AddAttr("shape", MakeValue(shape));
