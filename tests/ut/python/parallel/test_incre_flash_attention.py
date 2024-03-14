@@ -38,6 +38,7 @@ def generate_inputs(
         input_layout,
         attn_mask=None,
         actual_seq_lengths=None,
+        antiquant=False
 ):
     assert input_layout == "BSH" or input_layout == "BNSD"
     q_shape = (B, 1, N * D) if input_layout == "BSH" else (B, N, 1, D)
@@ -47,6 +48,7 @@ def generate_inputs(
         else (B, num_key_value_heads, S, D)
     )
     attn_mask_shape = (B, 1, S) if input_layout == "BSH" else (B, 1, 1, S)
+    antiquant_shape = (2, N * D) if input_layout == "BSH" else (2, N, 1, D) # first dimension is a concat of kv, thus 2
     dtype = np.float16
     query = Tensor(np.ones(q_shape, dtype=dtype))
     key = Tensor(np.ones(kv_shape, dtype=dtype))
@@ -56,7 +58,20 @@ def generate_inputs(
         Tensor(np.ones((B,), dtype=np.int64)) if actual_seq_lengths else None
     )
     padding_mask = None
-    return [query, key, value, padding_mask, attn_mask, actual_seq_lengths]
+    dequant_scale1 = None
+    quant_scale1 = None
+    dequant_scale2 = None
+    quant_scale2 = None
+    quant_offset2 = None
+    if antiquant:
+        antiquant_scale = Tensor(np.ones(antiquant_shape, dtype=dtype))
+        antiquant_offset = Tensor(np.zeros(antiquant_shape, dtype=dtype))
+    else:
+        antiquant_scale = None
+        antiquant_offset = None
+    block_table = None
+    return [query, key, value, padding_mask, attn_mask, actual_seq_lengths, dequant_scale1, quant_scale1,
+            dequant_scale2, quant_scale2, quant_offset2, antiquant_scale, antiquant_offset, block_table]
 
 
 def compile_net(net, inputs):
@@ -163,10 +178,12 @@ def test_incre_flash_attention_semi_auto_parallel(input_layout, strategys):
         input_layout,
         attn_mask=True,
         actual_seq_lengths=True,
+        antiquant=True
     )
     qkv_stra = (dp, mp, 1, 1) if input_layout == "BNSD" else (dp, 1, mp)
     attn_stra = (dp, 1, 1, 1) if input_layout == "BNSD" else (dp, 1, 1)
-    strategies = (qkv_stra, qkv_stra, qkv_stra, attn_stra, (1,))
+    antiquant_stra = (1, mp, 1, 1) if input_layout == "BNSD" else (1, mp)
+    strategies = (qkv_stra, qkv_stra, qkv_stra, attn_stra, (1,), antiquant_stra, antiquant_stra)
     net = Net(
         N,
         input_layout=input_layout,
