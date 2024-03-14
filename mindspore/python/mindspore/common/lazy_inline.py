@@ -17,18 +17,19 @@
 from __future__ import absolute_import
 import inspect
 from functools import wraps
+from mindspore import log as logger
 
 
 def lazy_inline(fn=None, attrs=None):
     """
     Make the cell to be reusable. The corresponding sub graph will not be inline at first.
-
     Registering the decorator of the built-in function `__init__` of a cell, the decorator
     will add the parameters of `__init__` according to the `attrs` as the attributes of this cell.
 
+
     .. warning::
         This feature is only supported on Ascend and is not supported on other hardwares.
-
+        The construct parameters must be positional or key word arguments and have not default values.
     Args:
         fn (function): `__init__` function of a cell.
         attrs (Union[list[string], string]): The attributes list to add for the cell.
@@ -152,10 +153,49 @@ def lazy_inline(fn=None, attrs=None):
         ...
         >>> test_compile()
     """
+    if inspect.isclass(fn):
+        tips = "The lazy_inline should decorate the __init__ function, not the class {}.".format(fn.__name__) \
+               + " File: " + inspect.getfile(fn)
+        raise ValueError(tips)
+
+    if fn.__name__ != "__init__":
+        tips = "The lazy_inline should decorate the __init__ function, not the function: {}.".format(fn.__name__) \
+               + " line: " + str(fn.__code__.co_firstlineno) + " in " \
+               + fn.__code__.co_filename
+        raise ValueError(tips)
 
     def lazy_inline_wrap(fn):
         @wraps(fn)
         def lazy_inline_deco(self, *args, **kwargs):
+            if hasattr(self, "construct"):
+                params = inspect.signature(self.construct).parameters
+                err = False
+                tips = "The function construct's parameters: "
+                for name, parm in params.items():
+                    if parm.default != inspect.Parameter.empty:
+                        if err:
+                            tips += " , " + name
+                        else:
+                            err = True
+                            tips += " " + name
+
+                if err:
+                    tips += " must be  key word or positional arguments and can't have default values." \
+                            + " line: " + str(self.construct.__code__.co_firstlineno) \
+                            + " in " + self.construct.__code__.co_filename
+                    if hasattr(fn, "warning_time_"):
+                        fn.warning_time_ += 1
+                    else:
+                        fn.warning_time_ = 1
+
+                    if fn.warning_time_ < 2:
+                        logger.warning(tips)
+
+            else:
+                tips = "The " + self.__class__.__name__ + " must be a cell and must has a construct function." \
+                       + " line: " + str(fn.__code__.co_firstlineno) + " in " + fn.__code__.co_filename
+                logger.error(tips)
+
             new_args = []
             if attrs is None:
                 bound_args = inspect.signature(fn).bind(self, *args, **kwargs)
