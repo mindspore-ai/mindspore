@@ -1214,8 +1214,28 @@ static bool CheckGuard(JitCompileResults *c, const PyFrameObject *f) {
   return c->code != nullptr;
 }
 
+class JitSyntaxLevelScope {
+ public:
+  explicit JitSyntaxLevelScope(bool enable) : enable_(enable) {
+    if (enable_) {
+      MS_LOG(INFO) << "Start run pijit with one stage mode";
+      common::SetEnv("MS_DEV_JIT_SYNTAX_LEVEL", "0");
+    }
+  }
+  ~JitSyntaxLevelScope() {
+    if (enable_) {
+      common::SetEnv("MS_DEV_JIT_SYNTAX_LEVEL", "2");
+    }
+  }
+
+ private:
+  bool enable_;
+};
+
 static bool JitCompileWithTry(PyThreadState *tstate, JitCompileResults *c) {
   TimeRecorder _time_recorder(TimeRecorder::kTimeCompile, kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kLogPerf));
+
+  JitSyntaxLevelScope jit_syntax_level_scope(c->conf->GetBoolConfig(GraphJitConfig::kTraceFlag));
 
   if (!c->conf->GetBoolConfig(GraphJitConfig::kCompileWithTry)) {
     return JitCompile(tstate, c);
@@ -1225,16 +1245,12 @@ static bool JitCompileWithTry(PyThreadState *tstate, JitCompileResults *c) {
   try {
     compiled = JitCompile(tstate, c);
   } catch (std::exception &e) {
-    PyErr_SetString(PyExc_RuntimeError, e.what());
+    MS_LOG(ERROR) << "got an unexpected c++ error [" << e.what() << "]";
   }
   if (PyErr_Occurred()) {
-    compiled = false;
-  }
-  if (!compiled) {
-    MS_LOG(ERROR) << "compiled failed with " << py::error_already_set().what() << " at "
-                  << std::string(py::str(reinterpret_cast<PyObject *>(c->origin_frame_->f_code)));
-    c->stat = JitCompileResults::NEVER_COMPILE;
+    MS_LOG(ERROR) << "got an unexpected python error [" << py::error_already_set().what() << "]";
     PyErr_Clear();
+    compiled = false;
   }
   return compiled;
 }
@@ -1424,22 +1440,11 @@ PyObject *EvalFrame(PyThreadState *tstate, PyFrameObject *f, int exc) {
   }
   py::object res;
   try {
-    if (c->conf->GetBoolConfig(GraphJitConfig::kTraceFlag)) {
-      MS_LOG(INFO) << "Start run pijit with one stage mode";
-      common::SetEnv("MS_DEV_JIT_SYNTAX_LEVEL", "0");
-    }
     res = CodeHook(tstate, c, f);
-    if (c->conf->GetBoolConfig(GraphJitConfig::kTraceFlag)) {
-      common::SetEnv("MS_DEV_JIT_SYNTAX_LEVEL", "2");
-    }
   } catch (py::error_already_set &e) {
-    MS_LOG(ERROR) << "execute failed with " << e.what() << " at "
-                  << std::string(py::str(reinterpret_cast<PyObject *>(f->f_code)));
-
     e.restore();
-  }
-  if (PyErr_Occurred()) {
-    res = py::object();
+  } catch (py::builtin_exception &e) {
+    e.set_error();
   }
   return res.inc_ref().ptr();
 }
