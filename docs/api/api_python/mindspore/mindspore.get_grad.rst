@@ -12,7 +12,7 @@ mindspore.get_grad
 
     参数：
         - **gradients** (Union[tuple[int, Tensor], tuple[tuple, tuple]]) - :func:`mindspore.grad` 参数 `return_ids` 为True时的返回值。
-        - **identifier** (Union[int, Parameter]) - 指定求导输入位置的索引或者网络变量。
+        - **identifier** (Union[int, Parameter]) - 指定求导输入位置的索引或者在 :func:`mindspore.grad` 中被使用的网络变量。
 
     返回：
         `identifier` 所指定的求导输入位置的索引所对应的Tensor的梯度值，或者网络变量所对应的Tensor的梯度值。

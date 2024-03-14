@@ -618,10 +618,6 @@ def jit(fn=None, mode="PSJit", input_signature=None, hash_args=None, jit_config=
 
     This allows the MindSpore runtime to apply optimizations based on graph.
 
-    Note:
-        If `input_signature` is specified, each input of `fn` must be a Tensor. And the input arguments for `fn`
-        will not accept `**kwargs`.
-
     Args:
         fn (Function): The Python function that will be run as a graph. Default: ``None`` .
         mode (str): The type of jit used, the value of mode should be ``PIJit`` or ``PSJit``. Default: ``PSJit`` .
@@ -635,8 +631,12 @@ def jit(fn=None, mode="PSJit", input_signature=None, hash_args=None, jit_config=
         jit_config (JitConfig): Jit config for compile. Default: ``None`` .
         compile_once(bool): ``True``: The function would be compiled once when it was created many times.
             But it may be wrong if the free variables were changed. ``False`` : It would be recompiled when
-            it was created again
+            it was created again.
             Default: ``False`` .
+
+    Note:
+        If `input_signature` is specified, each input of `fn` must be a Tensor. And the input arguments for `fn`
+        will not accept `**kwargs`.
 
     Returns:
         Function, if `fn` is not None, returns a callable function that will execute the compiled function; If `fn` is
@@ -783,15 +783,14 @@ def ms_function(fn=None, input_signature=None, hash_args=None, jit_config=None):
     This allows the MindSpore runtime to apply optimizations based on graph.
 
     Note:
-        `ms_function` will be deprecated and removed in a future version. Please use `jit` instead.
-        If `input_signature` is specified, each input of `fn` must be a Tensor. And the input arguments for `fn`
+        - `ms_function` will be deprecated and removed in a future version. Please use :func:`mindspore.jit` instead.
+        - If `input_signature` is specified, each input of `fn` must be a Tensor. And the input arguments for `fn`
         will not accept `**kwargs`.
 
     Args:
         fn (Function): The Python function that will be run as a graph. Default: ``None`` .
         input_signature (Tensor): The Tensor which describes the input arguments. The shape and dtype of the Tensor
-            will be supplied to this function. If input_signature is specified, each input to `fn` must be a `Tensor`.
-            And the input parameters of `fn` cannot accept `**kwargs`. The shape and dtype of actual inputs should
+            will be supplied to this function. The shape and dtype of actual inputs of `fn` should
             keep the same as input_signature. Otherwise, TypeError will be raised. Default: ``None`` .
         hash_args (Union[Object, List or Tuple of Objects]): The local free variables used inside `fn`,
             like functions or objects of class defined outside `fn`. Calling `fn` again with change of `hash_args`
@@ -960,7 +959,7 @@ def ms_class(cls):
     This allows MindSpore to identify user-defined classes and thus obtain their attributes and methods.
 
     Note:
-        `ms_class` will be deprecated and removed in a future version. Please use `jit_class` instead.
+        `ms_class` will be deprecated and removed in a future version. Please use :func:`mindspore.jit_class` instead.
 
     Args:
         cls (Class): User-defined class.

@@ -36,10 +36,10 @@ def vmap(fn, in_axes=0, out_axes=0):
         This is an experimental API that is subject to change or deletion.
 
     Note:
-        1. The power of vmap comes from the implementation of VmapRules of primitives. Although we have designed a
+        - The power of vmap comes from the implementation of VmapRules of primitives. Although we have designed a
         generalized rule for user custom operators, we can not guarantee that it works well for all operators,
         unknown exceptions may occur, please be aware the risk of use.
-        2. When calling the random number generation methods within the scope of vmap, the same random number is
+        - When calling the random number generation methods within the scope of vmap, the same random number is
         generated among vector functions each time. If you expect each vector branch to use different random numbers,
         you need to generate batch random numbers externally in advance and then transfer them to vmap.
 
