@@ -19,7 +19,6 @@
 
 #include <memory>
 #include <string>
-#include "include/common/utils/convert_utils_py.h"
 #include "pipeline/jit/pi/auto_grad/edge.h"
 #include "pipeline/jit/pi/auto_grad/function_context.h"
 #include "pipeline/pynative/pynative_utils.h"
@@ -32,6 +31,8 @@ namespace grad {
 namespace py = pybind11;
 using Convert = pynative::PyNativeAlgo::DataConvert;
 
+tensor::TensorPtr CreateZerosTensorLike(const py::object &tensor);
+
 /// \brief FunctionNode is a class, which represent a way to calculate the gradient.
 class FunctionNode : public FunctionContext {
  public:
@@ -41,20 +42,17 @@ class FunctionNode : public FunctionContext {
   ///
   /// \return The instance of FunctionNode.
   explicit FunctionNode(const py::object &tensor)
-      : FunctionContext(
-          Convert::PyObjToValue(tensor),
-          TensorConstructUtils::CreateZerosTensor(GetStubTensorInfo(tensor).second, GetStubTensorInfo(tensor).first)),
-        tensor_(tensor) {}
+      : FunctionContext(Convert::PyObjToValue(tensor), CreateZerosTensorLike(tensor)), tensor_(tensor) {}
 
   /// \brief The constructor of FunctionNode.
   ///
   /// \param[in] tensor The tensor that is asked to calculate the gradient.
+  /// \param[in] prim The calculation that the tensor as input.
+  /// \param[in] out The output of the calculation that the tensor as input.
   ///
   /// \return The instance of FunctionNode.
   explicit FunctionNode(const py::object &tensor, const py::object &prim, const py::object &out)
-      : FunctionContext(
-          Convert::PyObjToValue(prim), Convert::PyObjToValue(out),
-          TensorConstructUtils::CreateZerosTensor(GetStubTensorInfo(tensor).second, GetStubTensorInfo(tensor).first)),
+      : FunctionContext(Convert::PyObjToValue(prim), Convert::PyObjToValue(out), CreateZerosTensorLike(tensor)),
         tensor_(tensor) {}
 
   /// \brief Destructor.

@@ -29,17 +29,19 @@
 namespace mindspore {
 namespace pijit {
 namespace grad {
+tensor::TensorPtr CreateZerosTensorLike(const py::object &tensor) {
+  auto tensor_abs = parse::ConvertTensorValue(tensor)->ToAbstract();
+  auto tensor_shape = dyn_cast<abstract::Shape>(tensor_abs->BuildShape())->shape();
+  return TensorConstructUtils::CreateZerosTensor(tensor_abs->BuildType(), tensor_shape);
+}
+
 bool IsRequiresGradient(const py::object &input) {
-  if (!IsStubTensor(input)) {
-    return false;
-  }
-  auto requires_grad = input.attr("requires_grad");
-  return !py::isinstance<py::none>(requires_grad) && PyObject_IsTrue(requires_grad.ptr());
+  auto requires_grad = python_adapter::GetPyObjAttr(input, "requires_grad");
+  return !py::isinstance<py::none>(requires_grad) && py::bool_(requires_grad);
 }
 
 FunctionNodePtr GetOrCreateFunctionNode(const py::object &obj, const py::object &prim, const py::object &out) {
-  MS_EXCEPTION_IF_CHECK_FAIL(IsStubTensor(obj), "Must be a stub tensor.");
-  py::object grad_fn = obj.attr("grad_fn");
+  py::object grad_fn = python_adapter::GetPyObjAttr(obj, "grad_fn");
   if (py::isinstance<py::none>(grad_fn)) {
     return std::move(std::make_shared<FunctionNode>(obj, prim, out));
   }
@@ -50,10 +52,7 @@ FunctionNodePtr GetOrCreateFunctionNode(const py::object &obj, const py::object 
 }
 
 void PostBpropFunctionToEdges(const py::object &tensor) {
-  if (!IsStubTensor(tensor)) {
-    return;
-  }
-  py::object grad_fn = tensor.attr("grad_fn");
+  py::object grad_fn = python_adapter::GetPyObjAttr(tensor, "grad_fn");
   if (py::isinstance<py::none>(grad_fn)) {
     return;
   }
@@ -186,9 +185,10 @@ void FunctionNode::GenerateBropFunction() {
 }
 
 void FunctionNode::SaveGradToPyObject(const py::object &grad) {
-  auto retains_grad = tensor_.attr("retains_grad");
+  auto retains_grad = python_adapter::GetPyObjAttr(tensor_, "retains_grad");
   if (edges_.empty() || (py::isinstance<py::bool_>(retains_grad) && py::cast<bool>(retains_grad))) {
-    py::setattr(tensor_, "grad", grad);
+    auto value = python_adapter::CallPyFn("mindspore.common.api", "_convert_python_data", grad);
+    py::setattr(tensor_, "grad", value);
   }
 }
 
@@ -209,7 +209,7 @@ void FunctionNode::ApplyInner(const ValuePtr &dout) {
       // gil for PyObject accessing
       py::gil_scoped_acquire gil_acquire;
       if (edges_.empty()) {
-        auto grad = tensor_.attr("grad");
+        auto grad = python_adapter::GetPyObjAttr(tensor_, "grad");
         if (!py::isinstance<py::none>(grad)) {
           SetGrad(GradExecutor::GetInstance()->RunGraph(acc_fn_, {Convert::PyObjToValue(grad), GetGrad()}));
         }
@@ -243,7 +243,7 @@ void FunctionNode::Dump(std::stringstream &ss, const std::string &prefix) const 
     ss << prefix << "-->";
   }
   ss << "FunctionNode(" << tensor_.ptr() << ", " << GetFunction()->ToString() << ", "
-     << py::bool_(tensor_.attr("is_leaf")) << ")";
+     << py::bool_(python_adapter::GetPyObjAttr(tensor_, "is_leaf")) << ")";
   std::for_each(edges_.begin(), edges_.end(),
                 [&ss, &prefix](const auto &edge) { edge->GetFunction()->Dump(ss, prefix + "   "); });
 }

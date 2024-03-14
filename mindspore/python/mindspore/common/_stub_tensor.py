@@ -66,10 +66,10 @@ class StubTensor:
     def __init__(self, stub=None, tensor=None):
         self.stub = stub
         self.tensor = tensor
-        self.grad_ = None
-        self.grad_fn_ = None
-        self.requires_grad_ = False
-        self.retain_grad_ = False
+        self._grad = None
+        self._grad_fn = None
+        self._requires_grad = False
+        self._retain_grad = False
 
     __str__ = _stub_method(Tensor.__str__)
     __repr__ = _stub_method(Tensor.__repr__)
@@ -148,42 +148,42 @@ class StubTensor:
         r"""
         The function for backward.
         """
-        return self.grad_fn_
+        return self._grad_fn
 
     @grad_fn.setter
     def grad_fn(self, grad_fn):
         r"""
         Set the function for backward.
         """
-        self.grad_fn_ = grad_fn
+        self._grad_fn = grad_fn
 
     @property
     def grad(self):
         r"""
         Get the gradient value.
         """
-        return _convert_python_data(self.grad_)
+        return self._grad
 
     @grad.setter
     def grad(self, grad):
         r"""
         Set the gradient value.
         """
-        self.grad_ = grad
+        self._grad = grad
 
     @property
     def requires_grad(self):
         r"""
         Whether the stub tensor need requires grad.
         """
-        return self.requires_grad_
+        return self._requires_grad
 
     @requires_grad.setter
     def requires_grad(self, requires_grad):
         r"""
         Mark the stub tensor whether need requires gradient.
         """
-        self.requires_grad_ = requires_grad
+        self._requires_grad = requires_grad
 
     @property
     def is_leaf(self):
@@ -192,22 +192,22 @@ class StubTensor:
         They will be a leaf if they have requires_grad and requires_grad is False,
         Or they were created by user.
         """
-        return self.requires_grad_ is False or self.grad_fn_ is None
+        return self._requires_grad is False or self._grad_fn is None
 
     def retain_grad(self):
         r"""
         Enable the stub tensor which is not non-leaf to have the grad during backward().
         """
-        if not self.requires_grad_:
+        if not self._requires_grad:
             RuntimeError("can't retain_grad on Tensor that has requires_grad = False.")
-        self.retain_grad_ = self.grad_fn_ is not None
+        self._retain_grad = self._grad_fn is not None
 
     @property
     def retains_grad(self):
         r"""
         Is True if the stub tensor is non-leaf and its grad is enabled to be populated during backward().
         """
-        return self.retain_grad_
+        return self._retain_grad
 
     def backward(self, grad=None):
         r"""
@@ -215,10 +215,10 @@ class StubTensor:
         """
         if grad is None:
             grad = Tensor(np.ones(self.shape), self.dtype)
-        if self.grad_fn_ is not None:
-            self.grad_fn_.apply(grad)
-        elif self.requires_grad_:
-            self.grad_ = grad
+        if self._grad_fn is not None:
+            self._grad_fn.apply(grad)
+        elif self._requires_grad:
+            self._grad_ = grad
 
     asnumpy = _stub_method(Tensor.asnumpy)
     is_persistent_data = _stub_method(Tensor.is_persistent_data)
