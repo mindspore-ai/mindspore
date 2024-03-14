@@ -65,7 +65,6 @@
 #include "include/backend/debug/profiler/profiling.h"
 #include "frontend/optimizer/fallback_rewriter.h"
 #include "pipeline/jit/ps/load_mindir.h"
-
 #if defined(__linux__) && defined(WITH_BACKEND)
 #include "include/backend/distributed/cluster/cluster_context.h"
 #include "include/backend/distributed/ps/ps_context.h"
@@ -448,22 +447,13 @@ bool ParseAction(const ResourcePtr &resource) {
   if (py::hasattr(input, PYTHON_CELL_AS_LIST)) {
     py::setattr(input, PYTHON_CELL_LIST_FROM_TOP, py::bool_(true));
   }
-
   parse::Parser::InitParserEnvironment(input);
   parse::Parser::EnableDeferResolve(false);
   py::module path = py::module::import("os.path");
   auto dir = path.attr("dirname")(py::globals()["__file__"]).cast<std::string>();
+
   python_adapter::set_python_env_flag(true);
   python_adapter::SetPythonPath(dir);
-
-  auto extends_module = python_adapter::GetPyModule("mindspore._extends.parse.compile_config");
-  if (py::hasattr(extends_module, FUNC_GRAPH_FLAG_IF_DEFER_RESOLVE)) {
-    auto value = py::cast<std::string>(py::getattr(extends_module, FUNC_GRAPH_FLAG_IF_DEFER_RESOLVE));
-    parse::SetConfig(FUNC_GRAPH_FLAG_IF_DEFER_RESOLVE, value);
-    MS_LOG(INFO) << "Control flow defer_resolve value: " << value;
-  } else {
-    parse::SetConfig(FUNC_GRAPH_FLAG_IF_DEFER_RESOLVE, "0");
-  }
 
   ValuePtrList args_value_list;
   (void)std::transform(resource->args_abs().begin(), resource->args_abs().end(), std::back_inserter(args_value_list),
@@ -905,7 +895,6 @@ bool AbstractSpecializeAction(const ResourcePtr &resource) {
   }
 
   UpdateFuncGraphParameter(new_fg, resource->arguments());
-  parse::SetConfig(FUNC_GRAPH_FLAG_IF_DEFER_RESOLVE, "0");
   MS_LOG(DEBUG) << "End graph: " << new_fg->ToString() << ", return: " << new_fg->get_return()->DebugString(true);
   return true;
 }

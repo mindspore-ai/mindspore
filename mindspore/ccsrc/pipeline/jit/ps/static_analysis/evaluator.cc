@@ -617,12 +617,6 @@ FuncGraphPtr FuncGraphEvaluator::GetFuncGraph(AnalysisEnginePtr engine, const Ab
   if (iter == func_graph_cache_.end()) {
     auto fg = func_graph();
     MS_EXCEPTION_IF_NULL(fg);
-    // Defer_resolve the function graph
-    if (fg->has_flag(FUNC_GRAPH_FLAG_IF_DEFER_RESOLVE)) {
-      MS_LOG(DEBUG) << "Defer resolve the graph: " << fg->ToString();
-      fg->erase_flag(FUNC_GRAPH_FLAG_IF_DEFER_RESOLVE);
-    }
-
     FuncGraphPtr generated_graph = fg->GenerateFuncGraph(args_abs_list);
     func_graph_cache_[args_abs_list] = generated_graph;
     MS_LOG(DEBUG) << "Generate special instance of function graph: " << ToString()
