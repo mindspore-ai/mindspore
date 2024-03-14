@@ -31,12 +31,44 @@
 #include "pipeline/jit/pi/utils/utils.h"
 #include "include/common/utils/python_adapter.h"
 #include "pipeline/jit/pi/graph_capture/abstract_object.h"
+#include "pipeline/jit/pi/pi_jit_config.h"
 
 namespace mindspore {
 namespace pijit {
 
+static constexpr size_t kParamCountOne = 1;
+static constexpr size_t kParamCountTwo = 2;
+static constexpr size_t kParamCountThree = 3;
+static constexpr size_t kParamIndexOne = 0;
+static constexpr size_t kParamIndexTwo = 1;
+static constexpr size_t kParamIndexThree = 2;
+static const char kCastPrimName[] = "Cast";
+static const char kLayerNormPrimName[] = "LayerNorm";
+static const char kReshapePrimName[] = "Reshape";
+static const char kShapePrimName[] = "Shape";
+static const char kShape_Name[] = "shape_";
+static const char kShapeName[] = "shape";
+static const char kCastToMSTensor[] = "cast_to_ms_tensor";
+static const char kCastToAdapterTensor[] = "cast_to_adapter_tensor";
+static const std::vector<std::string> kCastFunc = {kCastToMSTensor, kCastToAdapterTensor};
+static const char kIsInstance[] = "isinstance";
+static const char kTensorName[] = "Tensor";
+static const char kDTypeAttrName[] = "dtype";
+static const char kDTypePrimName[] = "DType";
+static const char kCodeName[] = "__code__";
+static const char kFuncName[] = "__func__";
+static const char kIsSeqValUnknown[] = "is_sequence_value_unknown";
+static const char kIsSeqShapeUnknown[] = "is_sequence_shape_unknown";
+static const char kMindTorchFlag[] = "mindtorch";
+static const char kTrainingFlag[] = "training";
+static const char kMindSporePackPrefix[] = "mindspore.";
+static const char kMindtorchPackPrefix[] = "mindtorch.";
 extern bool check_builtin_cfunc(const py::object &func);
 static PyObject *RichCompare(PyObject *left, PyObject *right, int oparg);
+
+static bool IsCastFunc(std::string name) {
+  return std::find(kCastFunc.begin(), kCastFunc.end(), name) != kCastFunc.end();
+}
 
 static TracePtr OptimizeTrace(TracePtr trace, bool *update) {
   if (trace != nullptr) {
@@ -49,6 +81,38 @@ static TracePtr OptimizeTrace(TracePtr trace, bool *update) {
     }
   }
   return trace;
+}
+
+template <typename T>
+std::shared_ptr<T> CastTrace(TracePtr trace) {
+  if (trace != nullptr && T::Support(trace->GetTraceType())) {
+    return std::static_pointer_cast<T>(trace);
+  }
+  return nullptr;
+}
+
+static ConstTracePtr CastConstTrace(TracePtr trace) {
+  ConstTracePtr ret = CastTrace<ConstTrace>(trace);
+  if (ret != nullptr && ret->GetIndex() != -1) {
+    return ret;
+  }
+  return nullptr;
+}
+
+static OpTracePtr CastOpTrace(TracePtr trace, int opcode) {
+  OpTracePtr ret = CastTrace<OpTrace>(trace);
+  if (ret != nullptr && ret->GetOpCode() == opcode) {
+    return ret;
+  }
+  return nullptr;
+}
+
+static OpTracePtr CastOpTrace(TracePtr trace, const std::string &name) {
+  OpTracePtr ret = CastTrace<OpTrace>(trace);
+  if (ret != nullptr && ret->GetName() == name) {
+    return ret;
+  }
+  return nullptr;
 }
 
 class TracePerf {
@@ -73,7 +137,14 @@ class TracePerf {
 };
 
 Trace::Trace(PyObject *pObj, std::shared_ptr<Trace> pOrigin)
-    : obj_(pObj), origin_(pOrigin), info_(nullptr), is_const_(false), relax_count_(-1), relax_limit_(0) {
+    : obj_(pObj),
+      origin_(pOrigin),
+      info_(nullptr),
+      is_const_(false),
+      relax_count_(-1),
+      relax_limit_(0),
+      is_specialized_(false),
+      depth_(0) {
   if (pOrigin != nullptr) {
     originType_ = pOrigin->GetOriginType();
     curType_ = pOrigin->GetTraceType();
@@ -165,7 +236,7 @@ void Trace::Cache(PTraceContext context, PyObject *obj) {
       (*(context->cache))[szTrace] = obj;
     }
   }
-  if (relax_count_ != -1 && obj != nullptr) {
+  if (RelaxEnabled() && obj != nullptr) {
     if (obj_ != nullptr) {
       auto cmp = RichCompare(obj_, obj, Py_EQ);
       if (cmp != Py_True) {
@@ -193,14 +264,37 @@ void Trace::SetRelaxCount(int cnt) {
   relax_limit_ = cnt;
 }
 
+int Trace::GetRelaxCount() const { return relax_limit_; }
+
+void Trace::EnableRelax() { relax_count_ = 0; }
+
+bool Trace::RelaxEnabled() const { return relax_count_ >= 0; }
+
+bool Trace::IsSpecialized() const { return is_specialized_; }
+
+int Trace::GetDepth() const { return depth_; }
+
 TracePtr Trace::Optimize() { return nullptr; }
 
 RootTrace::RootTrace(PyObject *pObj, TraceType tt, int index, std::string name, std::string module_name)
     : Trace(pObj, nullptr), idx_(index), name_(name), module_name_(module_name) {
+  depth_ = 1;
   originType_ = tt;
   curType_ = tt;
-  if (module_name.find("mindspore.") == 0 || module_name.find("mindtorch.") == 0) {
+  const auto &k = *kPIJitConfigDefault.getSetConfig(GraphJitConfig::kAllowedInlineModules);
+  for (auto n : k) {
+    if (module_name.find(n) == 0) {
+      is_const_ = true;
+      break;
+    }
+  }
+  if (!is_const_ && (module_name.find(kMindSporePackPrefix) == 0 || module_name.find(kMindtorchPackPrefix) == 0 ||
+                     name.find(kCastToAdapterTensor) == 0 || name.find(kCastToMSTensor) == 0)) {
     is_const_ = true;
+  }
+  if (py::isinstance<mindspore::tensor::MetaTensor>(pObj) || py::isinstance<mindspore::tensor::Tensor>(pObj) ||
+      IsStubTensor(py::cast<py::object>(pObj))) {
+    is_specialized_ = false;
   }
 }
 
@@ -461,10 +555,42 @@ bool RootTrace::operator==(const Trace &trace) {
   return ret;
 }
 
+bool RootTrace::Support(TraceType tt) {
+  switch (tt) {
+    case TraceType::Global:
+    case TraceType::Deref:
+    case TraceType::Closure:
+    case TraceType::BuiltIn:
+    case TraceType::Local:
+    case TraceType::Param:
+    case TraceType::Name:
+    case TraceType::ClassDeref:
+      return true;
+    default:
+      return false;
+  }
+}
+
 ItemTrace::ItemTrace(PyObject *pObj, TracePtr pOrigin, TracePtr pItem) : Trace(pObj, pOrigin), item_(pItem) {
   curType_ = TraceType::Item;
-  if (origin_ != nullptr && item_ != nullptr && origin_->IsConst() && item_->IsConst()) {
-    is_const_ = true;
+  if (origin_ != nullptr && item_ != nullptr) {
+    if (origin_->IsConst() && item_->IsConst()) {
+      is_const_ = true;
+    }
+    if (!origin_->IsSpecialized() && !item_->IsSpecialized()) {
+      is_specialized_ = false;
+    }
+  }
+  if (origin_ != nullptr) {
+    depth_ = origin_->GetDepth() + 1;
+  } else {
+    depth_ = 1;
+  }
+  if (item_ != nullptr) {
+    auto d = item_->GetDepth() + 1;
+    if (d > depth_) {
+      depth_ = d;
+    }
   }
 }
 
@@ -585,10 +711,17 @@ void ItemTrace::Detach() {
   }
 }
 
+bool ItemTrace::Support(TraceType tt) { return tt == TraceType::Item; }
+
 AttrTrace::AttrTrace(PyObject *pObj, TracePtr pOrigin, std::string strAttr) : Trace(pObj, pOrigin), attr_(strAttr) {
   curType_ = TraceType::Attr;
   if (origin_ != nullptr && origin_->IsConst()) {
     is_const_ = true;
+  }
+  if (origin_ != nullptr) {
+    depth_ = origin_->GetDepth() + 1;
+  } else {
+    depth_ = 1;
   }
 }
 
@@ -682,12 +815,15 @@ bool AttrTrace::operator==(const Trace &trace) {
   return false;
 }
 
+bool AttrTrace::Support(TraceType tt) { return tt == TraceType::Attr; }
+
 ConstTrace::ConstTrace(PyObject *pObj, int iIndex) : Trace(pObj, nullptr), index_(iIndex) {
   curType_ = TraceType::Const;
   originType_ = TraceType::Const;
   if (index_ == -1) {
     is_const_ = true;
   }
+  depth_ = 1;
 }
 
 int ConstTrace::GetIndex() { return index_; }
@@ -756,11 +892,18 @@ bool ConstTrace::operator==(const Trace &trace) {
 
 void ConstTrace::Detach() {}
 
+bool ConstTrace::Support(TraceType tt) { return tt == TraceType::Const; }
+
 TypeTrace::TypeTrace(PyObject *pObj, TracePtr pOrigin) : Trace(pObj, pOrigin) {
   pType_ = Py_TYPE(pObj);
   curType_ = TraceType::Type;
   if (origin_ != nullptr && origin_->IsConst()) {
     is_const_ = true;
+  }
+  if (origin_ != nullptr) {
+    depth_ = origin_->GetDepth() + 1;
+  } else {
+    depth_ = 1;
   }
 }
 
@@ -863,6 +1006,8 @@ void TypeTrace::Detach() {
     Trace::Detach();
   }
 }
+
+bool TypeTrace::Support(TraceType tt) { return tt == TraceType::Type; }
 
 static PyObject *RichCompare(PyObject *left, PyObject *right, int oparg) {
 #if (PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION < 9)
@@ -1684,10 +1829,21 @@ OpTrace::OpTrace(PyObject *obj, int opcode, int opargs, TraceVector params, std:
   curType_ = TraceType::Operation;
   if (!std::any_of(params.begin(), params.end(), [](const TracePtr &item) { return !item->IsConst(); })) {
     is_const_ = true;
-  } else if (name.find("is_sequence_value_unknown") != std::string::npos ||
-             name.find("is_sequence_shape_unknown") != std::string::npos) {
+  } else if (name.find(kIsSeqValUnknown) != std::string::npos || name.find(kIsSeqShapeUnknown) != std::string::npos) {
+    is_const_ = true;
+  } else if (kPIJitConfigDefault.getIntConfig(GraphJitConfig::kGuardRelaxCount) > 0 && opcode == LOAD_ATTR &&
+             name_ == kFuncName) {
     is_const_ = true;
   }
+  depth_ = std::accumulate(params.begin(), params.end(), 1, [](int depth, const TracePtr &i) {
+    int d = i->GetDepth() + 1;
+    if (d > depth) {
+      return d;
+    } else {
+      return depth;
+    }
+  });
+  CheckSpecialize();
 }
 
 int OpTrace::GetOpCode() { return opcode_; }
@@ -1829,195 +1985,161 @@ const InfoPack &OpTrace::Info() {
   return *info_;
 }
 
-static constexpr size_t kParamCountOne = 1;
-static constexpr size_t kParamCountTwo = 2;
-static constexpr size_t kParamCountThree = 3;
-static constexpr size_t kParamIndexOne = 0;
-static constexpr size_t kParamIndexTwo = 1;
-static constexpr size_t kParamIndexThree = 2;
-
 TracePtr OpTrace::RemoveCastDuplicatePatternPass() {
-  do {
-    if (opcode_ != CALL_FUNCTION || params_.size() < kParamCountTwo ||
-        params_[kParamIndexTwo]->GetTraceType() != TraceType::Operation) {
-      break;
-    }
-    OpTrace *cast_op = reinterpret_cast<OpTrace *>(params_[kParamIndexTwo].get());
-    if (cast_op->params_.size() < kParamCountTwo) {
-      break;
-    }
-    if ((name_ == "cast_to_ms_tensor" && cast_op->name_ == "cast_to_adapter_tensor") ||
-        (name_ == "cast_to_adapter_tensor" && cast_op->name_ == "cast_to_ms_tensor")) {
-      auto ret = cast_op->params_[kParamIndexTwo];
-      auto new_ret = ret->Optimize();
-      if (new_ret != nullptr) {
-        return new_ret;
-      } else {
-        return ret;
-      }
-    }
-  } while (false);
-  return nullptr;
+  OpTracePtr cast_op;
+  TracePtr next_op, this_op, ret_op;
+  if (opcode_ != CALL_FUNCTION || !IsCastFunc(name_) ||
+      (cast_op = CastTrace<OpTrace>(GetParam(kParamIndexTwo))) == nullptr || !IsCastFunc(cast_op->GetName()) ||
+      (next_op = cast_op->GetParam(kParamIndexTwo)) == nullptr) {
+    return nullptr;
+  }
+  // remove duplicate cast or contrary cast
+  if (name_ == cast_op->GetName()) {
+    this_op = cast_op;
+    ret_op = cast_op->Optimize();
+  } else {
+    this_op = next_op;
+    ret_op = next_op->Optimize();
+  }
+  if (ret_op != nullptr) {
+    return ret_op;
+  } else {
+    return this_op;
+  }
 }
 
 TracePtr OpTrace::RemovePrimOutIsTensorPass() {
-  do {
-    if (opcode_ != CALL_FUNCTION || !(name_ == "isinstance") || params_.size() < kParamCountThree ||
-        params_[1]->GetTraceType() != TraceType::Operation ||
-        params_[kParamIndexThree]->GetTraceType() != TraceType::Global) {
-      break;
+  RootTracePtr global_op;
+  OpTracePtr call_op;
+  TracePtr param_op;
+  if (opcode_ != CALL_FUNCTION || !(name_ == kIsInstance) ||
+      (global_op = CastTrace<RootTrace>(GetParam(kParamIndexThree))) == nullptr ||
+      global_op->GetTraceType() != TraceType::Global ||
+      (call_op = CastOpTrace(GetParam(kParamIndexTwo), CALL_FUNCTION)) == nullptr ||
+      (param_op = call_op->GetParam(kParamIndexOne)) == nullptr) {
+    return nullptr;
+  }
+  int idx;
+  std::string name, module_name;
+  global_op->GetParam(&idx, &name, &module_name);
+  // isinstance(cast_to_mstensor(...) or Primitive) should be Tensor
+  if ((name == kTensorName) && ((call_op->GetName() == kCastToMSTensor) ||
+                                (CastTrace<ConstTrace>(param_op) != nullptr &&
+                                 py::isinstance<mindspore::PrimitivePyAdapter>(param_op->GetObject())))) {
+    is_const_ = true;
+    if (obj_ == nullptr) {
+      obj_ = Py_True;
+      Py_INCREF(obj_);
     }
-    OpTrace *call_op = reinterpret_cast<OpTrace *>(params_[kParamIndexTwo].get());
-    RootTrace *global_op = reinterpret_cast<RootTrace *>(params_[kParamIndexThree].get());
-    int idx;
-    std::string name, module_name;
-    global_op->GetParam(&idx, &name, &module_name);
-    if (!(name == "Tensor") || call_op->params_.size() < kParamCountOne) {
-      break;
-    }
-    if ((call_op->params_[0]->GetTraceType() == TraceType::Const &&
-         py::isinstance<mindspore::PrimitivePyAdapter>(call_op->params_[kParamIndexOne]->GetObject())) ||
-        (call_op->opcode_ == CALL_FUNCTION && call_op->name_ == "cast_to_ms_tensor")) {
-      is_const_ = true;
-      if (obj_ == nullptr) {
-        obj_ = Py_True;
-        Py_INCREF(obj_);
-      }
-      return shared_from_this();
-    }
-  } while (false);
+    return shared_from_this();
+  }
   return nullptr;
 }
 
 TracePtr OpTrace::RemoveCastPass() {
-  if (opcode_ == CALL_FUNCTION && params_.size() > kParamCountOne && (name_ == "cast_to_ms_tensor")) {
-    auto ret = params_[kParamIndexTwo];
-    auto new_ret = ret->Optimize();
+  TracePtr next_op;
+  if (opcode_ == CALL_FUNCTION && name_ == kCastToMSTensor && (next_op = GetParam(kParamIndexTwo)) != nullptr) {
+    auto new_ret = next_op->Optimize();
     if (new_ret != nullptr) {
       return new_ret;
     } else {
-      return ret;
+      return next_op;
     }
   }
   return nullptr;
-}
-
-static OpTrace *GetSubScrTrace(TracePtr trace) {
-  if (trace->GetTraceType() == TraceType::Operation &&
-      (reinterpret_cast<OpTrace *>(trace.get()))->GetOpCode() == BINARY_SUBSCR) {
-    return reinterpret_cast<OpTrace *>(trace.get());
-  } else {
-    return nullptr;
-  }
-}
-
-static OpTrace *GetLoadAttrTrace(TracePtr trace) {
-  if (trace->GetTraceType() == TraceType::Operation &&
-      (reinterpret_cast<OpTrace *>(trace.get()))->GetOpCode() == LOAD_ATTR) {
-    return reinterpret_cast<OpTrace *>(trace.get());
-  } else {
-    return nullptr;
-  }
-}
-
-static OpTrace *GetCastAdapterTrace(TracePtr trace) {
-  if (trace->GetTraceType() == TraceType::Operation) {
-    OpTrace *cast_op = reinterpret_cast<OpTrace *>(trace.get());
-    if (cast_op->GetName() == "cast_to_adapter_tensor") {
-      return cast_op;
-    }
-  }
-  return nullptr;
-}
-
-static ConstTrace *GetConstTrace(TracePtr trace) {
-  if (trace->GetTraceType() == TraceType::Const && (reinterpret_cast<ConstTrace *>(trace.get()))->GetIndex() == -1) {
-    return reinterpret_cast<ConstTrace *>(trace.get());
-  } else {
-    return nullptr;
-  }
 }
 
 TracePtr OpTrace::RemoveEmptyTensorPass() {
-  do {
-    if (opcode_ != COMPARE_OP || params_.size() < kParamCountTwo) {
-      break;
+  OpTracePtr subscr_op, loadattr_op;
+  ConstTracePtr const_op, const2_op;
+  if (opcode_ != COMPARE_OP || params_.size() < kParamCountTwo) {
+    return nullptr;
+  }
+  for (size_t idx = 0; idx < kParamCountTwo; ++idx) {
+    TracePtr tmp = GetParam(idx);
+    if (subscr_op == nullptr) {
+      subscr_op = CastOpTrace(tmp, BINARY_SUBSCR);
     }
-    OpTrace *subscr_op = nullptr;
-    ConstTrace *const_op = nullptr;
-    for (size_t idx = 0; idx < kParamCountTwo; ++idx) {
-      subscr_op = GetSubScrTrace(params_[idx]);
-      const_op = GetConstTrace(params_[idx]);
+    if (const_op == nullptr) {
+      const_op = CastConstTrace(tmp);
     }
-    if (subscr_op == nullptr || const_op == nullptr || const_op->GetIndex() != -1) {
-      break;
-    }
-    ConstTrace *const2_op = nullptr;
-    OpTrace *loadattr_op = nullptr;
-    if (subscr_op->params_.size() < kParamCountTwo ||
-        (const2_op = GetConstTrace(subscr_op->params_[kParamIndexTwo])) == nullptr || const2_op->GetIndex() != -1 ||
-        (loadattr_op = GetLoadAttrTrace(subscr_op->params_[kParamIndexOne])) == nullptr) {
-      break;
-    }
-    OpTrace *cast_op = nullptr;
-    if (!(loadattr_op->name_ == "shape") || loadattr_op->params_.size() < kParamCountOne ||
-        (cast_op = GetCastAdapterTrace(loadattr_op->params_[kParamIndexOne])) == nullptr) {
-      break;
-    }
-    auto c1 = const_op->GetObject();
-    auto c2 = const2_op->GetObject();
-    if (!PyLong_CheckExact(c1) || !PyLong_CheckExact(c2)) {
-      break;
-    }
-    auto v1 = _PyLong_AsInt(c1);
-    auto v2 = _PyLong_AsInt(c2);
-    if (v1 == 0 && v2 == 0) {
-      is_const_ = true;
-      return shared_from_this();
-    }
-  } while (false);
+  }
+  if (subscr_op == nullptr || const_op == nullptr ||
+      (const2_op = CastConstTrace(subscr_op->GetParam(kParamIndexTwo))) == nullptr ||
+      (loadattr_op = CastOpTrace(subscr_op->GetParam(kParamIndexOne), kShapeName)) == nullptr ||
+      CastOpTrace(loadattr_op->GetParam(kParamIndexOne), kCastToAdapterTensor) == nullptr) {
+    return nullptr;
+  }
+  // make judgement shape[0] == 0 as const
+  auto c1 = const_op->GetObject();
+  auto c2 = const2_op->GetObject();
+  if (!PyLong_CheckExact(c1) || !PyLong_CheckExact(c2)) {
+    return nullptr;
+  }
+  auto v1 = _PyLong_AsInt(c1);
+  auto v2 = _PyLong_AsInt(c2);
+  if (v1 == 0 && v2 == 0) {
+    is_const_ = true;
+    return shared_from_this();
+  }
   return nullptr;
 }
 
 void OpTrace::JudgeDTypeChangePass() {
-  if (opcode_ != COMPARE_OP || params_.size() < kParamCountTwo) {
+  if (opcode_ != COMPARE_OP) {
     return;
   }
   for (size_t i = 0; i < kParamCountTwo; ++i) {
-    if (params_[i]->GetTraceType() == TraceType::Operation) {
-      OpTrace *trace = reinterpret_cast<OpTrace *>(params_[i].get());
-      if (trace->opcode_ == CALL_FUNCTION && trace->params_[kParamIndexOne]->GetTraceType() == TraceType::Const &&
-          trace->params_[kParamIndexOne]->GetObject() != nullptr &&
-          py::isinstance<mindspore::PrimitivePyAdapter>(trace->params_[kParamIndexOne]->GetObject()) &&
-          py::cast<mindspore::PrimitivePyAdapterPtr>(trace->params_[kParamIndexOne]->GetObject())->name() == "DType") {
-        continue;
-      } else if (trace->opcode_ == LOAD_ATTR && trace->name_ == "dtype") {
-        continue;
-      }
+    OpTracePtr trace;
+    ConstTracePtr const_op;
+    PyObject *const_param;
+    if ((trace = CastOpTrace(GetParam(i), CALL_FUNCTION)) != nullptr &&
+        (const_op = CastConstTrace(trace->GetParam(kParamIndexOne))) != nullptr &&
+        (const_param = const_op->GetObject()) != nullptr &&
+        py::isinstance<mindspore::PrimitivePyAdapter>(const_param) &&
+        py::cast<mindspore::PrimitivePyAdapterPtr>(const_param)->name() == kDTypePrimName) {
+      // Compare for output of DType primitive
+      continue;
+    } else if ((trace = CastOpTrace(GetParam(i), LOAD_ATTR)) != nullptr && trace->GetName() == kDTypeAttrName) {
+      // Compare for attribute dtype
+      continue;
     }
     return;
   }
-  relax_count_ = 0;
+  // data type comparison should be kept as const
+  EnableRelax();
 }
 
 void OpTrace::JudgeDTypeScopePass() {
-  if (opcode_ != CONTAINS_OP || params_.size() < kParamCountTwo) {
+  if (opcode_ != CONTAINS_OP) {
     return;
   }
-  if (params_[0]->GetTraceType() == TraceType::Operation) {
-    OpTrace *trace = reinterpret_cast<OpTrace *>(params_[kParamIndexOne].get());
-    if (trace->opcode_ == LOAD_ATTR && trace->name_ == "dtype") {
-      relax_count_ = 0;
-    }
+  OpTracePtr trace;
+  if ((trace = CastOpTrace(GetParam(kParamIndexOne), LOAD_ATTR)) != nullptr && trace->GetName() == kDTypeAttrName) {
+    // data type to check whether to be contained should be const
+    EnableRelax();
   }
 }
 
 void OpTrace::JudgeCodeChangePass() {
-  if (opcode_ != LOAD_ATTR || params_.size() < kParamCountOne) {
+  if (opcode_ != LOAD_ATTR || params_.size() < kParamCountOne || name_ != kCodeName) {
     return;
   }
-  if (name_ == "__code__") {
-    relax_count_ = 0;
+  if (params_[kParamIndexOne]->IsConst()) {
+    EnableRelax();
+  } else {
+    auto p1 = CastOpTrace(params_[kParamIndexOne], LOAD_ATTR);
+    if (p1 == nullptr) {
+      return;
+    }
+    auto p2 = p1->GetParam(kParamIndexOne)->GetObject();
+    std::string type_name;
+    if (p2 != nullptr) {
+      type_name = std::string(py::str(reinterpret_cast<PyObject *>(Py_TYPE(p2))));
+    }
+    if (type_name.find(kMindTorchFlag) != std::string::npos) {
+      EnableRelax();
+    }
   }
 }
 
@@ -2025,13 +2147,14 @@ void OpTrace::JudgeTrainFlagPass() {
   if (opcode_ != LOAD_ATTR || params_.size() < kParamCountOne) {
     return;
   }
-  if (name_ == "training") {
-    relax_count_ = 0;
+  if (name_ == kTrainingFlag) {
+    // training flag shouldn't be changed frequently
+    EnableRelax();
   }
 }
 
 void OpTrace::JudgeCompareConstPass() {
-  if (relax_count_ != -1) {
+  if (RelaxEnabled()) {
     return;
   }
   if (opcode_ != COMPARE_OP || params_.size() < kParamCountTwo) {
@@ -2040,11 +2163,11 @@ void OpTrace::JudgeCompareConstPass() {
   if (params_[kParamIndexOne]->GetObject() == nullptr || params_[kParamIndexTwo]->GetObject() == nullptr) {
     return;
   }
-  relax_count_ = 0;
+  EnableRelax();
 }
 
 void OpTrace::JudgeContainsConstPass() {
-  if (relax_count_ != -1) {
+  if (RelaxEnabled()) {
     return;
   }
   if (opcode_ != CONTAINS_OP || params_.size() < kParamCountTwo) {
@@ -2053,11 +2176,11 @@ void OpTrace::JudgeContainsConstPass() {
   if (params_[kParamIndexOne]->GetObject() == nullptr || params_[kParamIndexTwo]->GetObject() == nullptr) {
     return;
   }
-  relax_count_ = 0;
+  EnableRelax();
 }
 
 void OpTrace::JudgeInplaceAddConstPass() {
-  if (relax_count_ != -1) {
+  if (RelaxEnabled()) {
     return;
   }
   if (opcode_ != INPLACE_ADD || params_.size() < kParamCountTwo) {
@@ -2066,7 +2189,86 @@ void OpTrace::JudgeInplaceAddConstPass() {
   if (params_[kParamIndexOne]->GetObject() == nullptr || params_[kParamIndexTwo]->GetObject() == nullptr) {
     return;
   }
-  relax_count_ = 0;
+  EnableRelax();
+}
+
+void OpTrace::JudgeIsConstPass() {
+  if (RelaxEnabled()) {
+    return;
+  }
+  if (opcode_ != IS_OP || params_.size() < kParamCountTwo) {
+    return;
+  }
+  if (params_[kParamIndexOne]->GetObject() == nullptr || params_[kParamIndexTwo]->GetObject() == nullptr) {
+    return;
+  }
+  OpTracePtr subscr_op;
+  if ((subscr_op = CastTrace<OpTrace>(params_[kParamIndexOne])) != nullptr &&
+      CastConstTrace(params_[kParamIndexTwo]) != nullptr) {
+    if (subscr_op->params_.size() < kParamCountTwo) {
+      return;
+    }
+    auto tsr = subscr_op->GetParam(kParamIndexOne)->GetObject();
+    if (tsr == nullptr) {
+      return;
+    }
+    std::string type_name = std::string(py::str(reinterpret_cast<PyObject *>(Py_TYPE(tsr))));
+    if (type_name.find(kTensorName) == std::string::npos) {
+      return;
+    }
+    if (subscr_op->GetParam(kParamIndexTwo)->IsConst() && params_[kParamIndexTwo]->IsConst()) {
+      EnableRelax();
+    }
+  }
+}
+
+void OpTrace::JudgeBoundMethodPass() {
+  if (RelaxEnabled()) {
+    return;
+  }
+  if (opcode_ != LOAD_ATTR || params_.size() < kParamCountOne) {
+    return;
+  }
+  if (params_[kParamIndexOne]->GetObject() == nullptr) {
+    return;
+  }
+  if (name_ == kFuncName) {
+    EnableRelax();
+  }
+}
+
+void OpTrace::CheckSpecialize() {
+  bool any_params_specialized = false;
+  for (auto param : params_) {
+    if (!param->IsConst() && param->IsSpecialized()) {
+      any_params_specialized = true;
+      break;
+    }
+  }
+  switch (opcode_) {
+    case CALL_FUNCTION:
+      if ((name_ == kShape_Name || name_ == kCastToAdapterTensor || name_ == kCastToMSTensor) &&
+          !any_params_specialized) {
+        is_specialized_ = true;
+      } else if (params_.size() > kParamCountOne &&
+                 py::isinstance<mindspore::PrimitivePyAdapter>(params_[kParamIndexOne]->GetObject())) {
+        std::string prim_name =
+          py::cast<mindspore::PrimitivePyAdapterPtr>(params_[kParamIndexOne]->GetObject())->name();
+        if (prim_name == kCastPrimName) {
+          is_specialized_ = params_[kParamIndexTwo]->IsSpecialized();
+        } else if (prim_name == kLayerNormPrimName) {
+          is_specialized_ = params_[kParamIndexTwo]->IsSpecialized();
+        } else if (prim_name == kReshapePrimName) {
+          is_specialized_ = any_params_specialized || !params_[kParamIndexThree]->IsConst();
+        } else if (prim_name == kShapePrimName) {
+          is_specialized_ = params_[kParamIndexTwo]->IsSpecialized();
+        }
+      }
+      break;
+    default:
+      is_specialized_ = true;
+      break;
+  }
 }
 
 TracePtr OpTrace::Optimize() {
@@ -2085,6 +2287,9 @@ TracePtr OpTrace::Optimize() {
     JudgeCompareConstPass();
     JudgeContainsConstPass();
     JudgeInplaceAddConstPass();
+    JudgeIsConstPass();
+    JudgeCodeChangePass();
+    JudgeBoundMethodPass();
   }
   bool need_update = false;
   for (size_t i = 0; i < params_.size(); ++i) {
@@ -2146,6 +2351,8 @@ void OpTrace::Detach() {
     t->Detach();
   }
 }
+
+bool OpTrace::Support(TraceType tt) { return tt == TraceType::Operation; }
 
 static std::map<int, TraceType> kMapBytecodeToTraceType = {
   {LOAD_CLOSURE, TraceType::Closure}, {LOAD_DEREF, TraceType::Deref},           {LOAD_GLOBAL, TraceType::Global},
@@ -2209,6 +2416,7 @@ TracePtr CreateOpTrace(PyObject *obj, int opcode, int opargs, TraceVector params
 CustomizedTrace::CustomizedTrace(PyObject *obj, RetrieveFunc rfunc, ToStringFunc sfunc)
     : Trace(obj, nullptr), retrieve_(rfunc), tostring_(sfunc) {
   curType_ = TraceType::Customized;
+  depth_ = 1;
 }
 
 PyObject *CustomizedTrace::Retrieve(PTraceContext context, bool perf) {
@@ -2246,12 +2454,22 @@ const InfoPack &CustomizedTrace::Info() {
   return *info_;
 }
 
+bool CustomizedTrace::Support(TraceType tt) { return tt == TraceType::Customized; }
+
 UnsupportedTrace::UnsupportedTrace(PyObject *obj, TraceVector params, int op, int arg)
     : Trace(obj, nullptr), params_(params), op_(op), arg_(arg) {
   curType_ = TraceType::Unsupported;
   if (!std::any_of(params.begin(), params.end(), [](const TracePtr &item) { return !item->IsConst(); })) {
     is_const_ = true;
   }
+  depth_ = std::accumulate(params.begin(), params.end(), 1, [](int depth, const TracePtr &i) {
+    int d = i->GetDepth() + 1;
+    if (d > depth) {
+      return d;
+    } else {
+      return depth;
+    }
+  });
 }
 
 PyObject *UnsupportedTrace::Retrieve(PTraceContext context, bool perf) {
@@ -2356,6 +2574,8 @@ void UnsupportedTrace::Detach() {
   }
 }
 
+bool UnsupportedTrace::Support(TraceType tt) { return tt == TraceType::Unsupported; }
+
 PyObject *GetObjectFromTrace(const PyFrameObject *frame, TracePtr trace, std::map<size_t, PyObject *> *cache,
                              bool perf) {
   TraceContext context = {frame->f_globals,    frame->f_builtins, frame->f_locals,
@@ -2366,6 +2586,5 @@ PyObject *GetObjectFromTrace(const PyFrameObject *frame, TracePtr trace, std::ma
     return NULL;
   }
 }
-
 }  // namespace pijit
 }  // namespace mindspore

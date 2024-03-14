@@ -165,10 +165,40 @@ static bool PrepareTraceParam(ValueNode *node, TraceVector *tv, int depth, int m
 
 static bool CheckDepth(int depth, int max_depth) { return depth < max_depth || max_depth == -1; }
 
-TracePtr GetTrace(ValueNode *node, bool strict, bool print, int depth, int max_depth) {
+static bool CheckDepthForTrace(TracePtr *ret, ValueNode *node, int depth, int max_depth) {
   if (!CheckDepth(depth, max_depth)) {
     MS_LOG(DEBUG) << "too deep trace for guard";
-    return nullptr;
+    return false;
+  }
+  auto ct = node->GetTrace();
+  if (ct != nullptr) {
+    if (ct->GetDepth() + depth > max_depth) {
+      MS_LOG(DEBUG) << "too deep trace for guard";
+      return false;
+    } else {
+      *ret = ct;
+      return false;
+    }
+  }
+  return true;
+}
+
+static TracePtr CacheTrace(ValueNode *node, TracePtr ret, bool strict, TraceVector tv, int opcode, int oparg,
+                           PyObject *obj) {
+  if (ret == nullptr && !strict) {
+    return std::make_shared<UnsupportedTrace>(obj, tv, opcode, oparg);
+  } else {
+    if (ret != nullptr) {
+      node->SetTrace(ret);
+    }
+    return ret;
+  }
+}
+
+TracePtr GetTrace(ValueNode *node, bool strict, bool print, int depth, int max_depth) {
+  TracePtr ret = nullptr;
+  if (!CheckDepthForTrace(&ret, node, depth, max_depth)) {
+    return ret;
   }
   if (node->GetType() == AbstractNode::Type::Call) {
     Graph *sub_graph = static_cast<CallNode *>(node)->GetSubGraph();
@@ -188,7 +218,6 @@ TracePtr GetTrace(ValueNode *node, bool strict, bool print, int depth, int max_d
   if (!PrepareTraceParam(node, &tv, depth, max_depth, &has_unsupported, strict, print)) {
     return strict ? nullptr : std::make_shared<UnsupportedTrace>(nullptr, tv, opcode, oparg);
   }
-  TracePtr ret = nullptr;
   switch (node->GetType()) {
     case AbstractNode::Type::Value:
       if (!has_unsupported) {
@@ -202,16 +231,15 @@ TracePtr GetTrace(ValueNode *node, bool strict, bool print, int depth, int max_d
       }
       break;
     case AbstractNode::Type::Param:
-      return std::make_shared<RootTrace>(obj, mindspore::pijit::TraceType::Param, oparg, name);
     case AbstractNode::Type::CellVar: /* fall-through */
     case AbstractNode::Type::FreeVar:
-      return std::make_shared<RootTrace>(obj, mindspore::pijit::TraceType::Param, oparg, name);
-    case AbstractNode::Type::kUnbound:
+      ret = std::make_shared<RootTrace>(obj, mindspore::pijit::TraceType::Param, oparg, name);
       break;
+    case AbstractNode::Type::kUnbound:
     default:
       break;
   }
-  return (ret == nullptr && !strict) ? std::make_shared<UnsupportedTrace>(obj, tv, opcode, oparg) : ret;
+  return CacheTrace(node, ret, strict, tv, opcode, oparg, obj);
 }
 
 bool Graph::GuardValueNode(ValueNode *node) {
