@@ -27,6 +27,7 @@
 #include "include/common/utils/anfalgo.h"
 #include "include/backend/kernel_info.h"
 #include "transform/graph_ir/transform_util.h"
+#include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "ops/framework_op_name.h"
 
 namespace mindspore::transform {
@@ -68,7 +69,7 @@ bool StorageFormatConvertor::SetupStorageFormat(const AnfGraphPtr &anf_graph, co
   MS_EXCEPTION_IF_NULL(anf_graph);
   MS_EXCEPTION_IF_NULL(param);
   MS_EXCEPTION_IF_NULL(desc);
-  if (common::GetEnv("MS_FORMAT_MODE") == "1" || !IsEnableRefMode()) {
+  if (device::ascend::GetFormatMode() == "1" || !IsEnableRefMode()) {
     MS_LOG(INFO) << "Enable format mode or disable ref mode, no need to set storage format";
     return true;
   }
