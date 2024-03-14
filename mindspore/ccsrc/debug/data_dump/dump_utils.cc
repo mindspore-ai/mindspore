@@ -67,19 +67,33 @@ std::string GenerateDumpPath(uint32_t graph_id, uint32_t rank_id, bool is_cst) {
 }
 
 void GetFileKernelName(NotNull<std::string *> kernel_name) {
-  const std::string strsrc = "/";
-  const std::string strdst = "--";
-  std::string::size_type pos = 0;
-  std::string::size_type srclen = strsrc.size();
-  std::string::size_type dstlen = strdst.size();
-  while ((pos = kernel_name->find(strsrc, pos)) != std::string::npos) {
-    kernel_name->replace(pos, srclen, strdst);
-    pos += dstlen;
+  const std::string strsrc_to_replace[4] = {"/", "\\", ".", " "};
+  const std::string strdst = "_";
+  for (const std::string strsrc : strsrc_to_replace) {
+    std::string::size_type pos = 0;
+    std::string::size_type srclen = strsrc.size();
+    std::string::size_type dstlen = strdst.size();
+    while ((pos = kernel_name->find(strsrc, pos)) != std::string::npos) {
+      kernel_name->replace(pos, srclen, strdst);
+      pos += dstlen;
+    }
   }
 }
 
 void GetDumpIntShape(const AnfNodePtr &node, size_t index, NotNull<ShapeVector *> const int_shapes, bool trans_flag) {
   if (trans_flag) {
+    MS_EXCEPTION_IF_NULL(node);
+    if (node->isa<ValueNode>()) {
+      auto value_node = node->cast<ValueNodePtr>();
+      MS_EXCEPTION_IF_NULL(value_node);
+      auto node_value = value_node->value();
+      MS_EXCEPTION_IF_NULL(node_value);
+      auto tensor = node_value->cast<tensor::TensorPtr>();
+      if (tensor == nullptr) {
+        MS_LOG(WARNING) << " The node[ " << node->DebugString() << "]'s cannot convert, skip to GetDumpIntShape.";
+        return;
+      }
+    }
     *int_shapes = trans::GetRuntimePaddingShape(node, index);
   } else {
     *int_shapes = AnfAlgo::GetOutputDeviceShape(node, index);
@@ -112,15 +126,6 @@ void DumpMemToFile(const std::string &file_path, const device::DeviceAddress &ad
     MS_LOG(ERROR) << "DumpMemToFile Failed: flag:" << trans_flag << ", path:" << file_path << ", host_format:" << format
                   << ".!";
   }
-}
-
-std::string GetOpNameWithoutScope(const std::string &fullname_with_scope, const std::string &separator) {
-  std::size_t found = fullname_with_scope.rfind(separator);
-  std::string op_name;
-  if (found != std::string::npos) {
-    op_name = fullname_with_scope.substr(found + separator.length());
-  }
-  return op_name;
 }
 
 void DumpToFile(const std::string &file_name, const std::string &dump_str) {

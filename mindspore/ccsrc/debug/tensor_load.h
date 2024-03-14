@@ -258,6 +258,17 @@ class TensorLoader {
         MS_LOG(INFO) << "The byte size is 0 for tensor: " << tensor_loader_name;
         return false;
       }
+      auto type_string = node->GetTypeString();
+      if (type_string == "bfloat16") {
+        std::shared_ptr<tensor::Tensor> bfloat16_tensor = std::make_shared<tensor::Tensor>(
+          TypeId::kNumberTypeFloat16, node->GetShape(), static_cast<void *>(const_cast<char *>(node->GetDataPtr())),
+          node->GetByteSize());
+        std::shared_ptr<tensor::Tensor> float32_tensor =
+          std::make_shared<tensor::Tensor>(*bfloat16_tensor, TypeId::kNumberTypeFloat32);
+        return DumpJsonParser::DumpToFile(path, float32_tensor->data_c(), float32_tensor->Size(),
+                                          float32_tensor->shape_c(),
+                                          static_cast<TypeId>(float32_tensor->data_type_c()));
+      }
       return DumpJsonParser::DumpToFile(path, node->GetDataPtr(), node->GetByteSize(), node->GetShape(),
                                         StringToTypeId(node->GetTypeString()));
     }
