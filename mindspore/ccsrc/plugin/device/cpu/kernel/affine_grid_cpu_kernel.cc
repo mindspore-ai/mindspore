@@ -246,12 +246,7 @@ std::vector<std::pair<KernelAttr, AffineGridCpuKernelMod::AffineGridFunc>> Affin
      .AddInputAttr(kNumberTypeFloat32)
      .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
      .AddOutputAttr(kNumberTypeFloat32),
-   &AffineGridCpuKernelMod::LaunchKernel<float>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeFloat16)
-     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeFloat16),
-   &AffineGridCpuKernelMod::LaunchKernel<float16>}};
+   &AffineGridCpuKernelMod::LaunchKernel<float>}};
 
 std::vector<KernelAttr> AffineGridCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
