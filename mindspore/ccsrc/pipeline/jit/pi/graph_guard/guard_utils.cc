@@ -314,7 +314,6 @@ class ListData : public ItemData {
       if (list.listVar_.size() == listVar_.size()) {
         return CompareList(list);
       }
-      return true;
     }
     return false;
   }
