@@ -34,7 +34,11 @@ namespace opt {
 namespace irpass {
 inline SymbolEnginePtr GetSymbolEngine(const AnfNodePtr &node) { return node->func_graph()->symbol_engine(); }
 
-bool SymbolEngineBuilder::operator()(const FuncGraphPtr &func_graph, const OptimizerPtr &) {
+bool SymbolEngineBuilder::operator()(const FuncGraphPtr &func_graph, const OptimizerPtr &opt) {
+  if (only_dynshape_graph_ && !HasDynamicShapeNode(opt)) {
+    MS_LOG(INFO) << "There is no dynamic shape node, the SymbolEngineBuilder is disabled.";
+    return false;
+  }
   try {
     MS_LOG_TRY_CATCH_SCOPE;
     symshape::SymbolEngineImpl::Build(func_graph);
@@ -43,6 +47,24 @@ bool SymbolEngineBuilder::operator()(const FuncGraphPtr &func_graph, const Optim
     MS_LOG(WARNING) << "Build symbol engine failed. message: " << e.what();
   }
   return true;
+}
+
+bool SymbolEngineBuilder::HasDynamicShapeNode(const OptimizerPtr &opt) const {
+  auto mng = opt->manager();
+  if (mng == nullptr) {
+    return false;
+  }
+  auto &nodes = mng->all_nodes();
+  for (auto &node : nodes) {
+    if (!node->isa<CNode>()) {
+      continue;
+    }
+    auto abs = node->abstract();
+    if (abs != nullptr && abs->GetShape()->IsDynamic()) {
+      return true;
+    }
+  }
+  return false;
 }
 
 AnfNodePtr ElimShapeCalcOnBroadcastArgsGrad::operator()(const OptimizerPtr &opt, const AnfNodePtr &node) {
@@ -250,6 +272,9 @@ AnfNodePtr FoldConstSymbol::operator()(const OptimizerPtr &, const AnfNodePtr &n
 }
 
 bool ShapeOpCse::operator()(const FuncGraphPtr &func_graph, const OptimizerPtr &optimizer) {
+  if (func_graph->symbol_engine() == nullptr) {
+    return false;
+  }
   auto nodes = TopoSort(func_graph->get_return(), SuccDeeperSimple, AlwaysInclude);
   auto mng = optimizer->manager();
   MS_EXCEPTION_IF_NULL(mng);
