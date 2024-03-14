@@ -29,7 +29,6 @@ from mindspore.common._utils import is_shape_unknown, is_dim_unknown
 from mindspore.ops.primitive import Primitive, PrimitiveWithInfer, PrimitiveWithCheck, prim_attr_register, _run_op
 from mindspore import _checkparam as validator
 from mindspore._checkparam import _check_3d_int_or_tuple
-from mindspore.ops._tracefunc import PackFunc
 from mindspore.common import dtype as mstype
 from mindspore.common._decorator import deprecated
 from mindspore.common.parameter import Parameter

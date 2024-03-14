@@ -52,7 +52,6 @@
 #ifndef ENABLE_SECURITY
 #include "include/backend/debug/profiler/profiling.h"
 #endif
-#include "frontend/expander/pack/pack_expander.h"
 #include "include/common/profiler.h"
 
 #include "pipeline/jit/pi/external.h"
@@ -174,7 +173,6 @@ void RegModule(py::module *m) {
 #ifdef _MSC_VER
   mindspore::abstract::RegPrimitiveFrontEval();
 #endif
-  mindspore::expander::RegPackExpanderPy(m);
   mindspore::ops::RegOpEnum(m);
 }
 
