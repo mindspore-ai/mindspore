@@ -18,11 +18,11 @@
 #include <algorithm>
 #include <utility>
 #include <set>
-#include <unordered_set>
 #include "pipeline/jit/ps/static_analysis/static_analysis.h"
 #include "pipeline/jit/ps/action.h"
 #include "pipeline/jit/ps/parse/parse_base.h"
 #include "pipeline/jit/ps/parse/data_converter.h"
+#include "pipeline/jit/pi/pi_jit_config.h"
 #include "ops/arithmetic_ops.h"
 #include "ops/structure_ops.h"
 #include "include/common/utils/convert_utils_py.h"
@@ -182,6 +182,10 @@ py::object FuncGraphBuilder::ConvertToPyObj(const AbstractBasePtr &abs) {
   // Return none means failed converting.
   if (py::isinstance<py::none>(py_obj)) {
     return py::object();
+  }
+
+  if (pijit::kPIJitConfigDefault.GetBoolConfig(pijit::GraphJitConfig::kTraceFlag)) {
+    return ConvertToPythonTensor(py_obj);
   }
 
   return py_obj;

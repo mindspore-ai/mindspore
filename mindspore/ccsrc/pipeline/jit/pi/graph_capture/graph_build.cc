@@ -2444,6 +2444,7 @@ ValueNode *GetBoundSelf(CallNode *call_node) {
     case AObject::kTypeAnyValue:
       self = func_val;
       break;
+    case AObject::kTypeCFunction:
     case AObject::kTypeTraceNode:
     case AObject::kTypeFunction:
       break;
@@ -3358,7 +3359,7 @@ py::object MindGraphBuilder::FGAddNode(CallNode *call_node, const py::object &ca
 
 std::vector<py::object> MindGraphBuilder::GetNewArgs(CallNode *call_node, AObject *vobj) {
   std::vector<py::object> new_args;
-  vobj = vobj ? vobj : call_node->input(0)->GetVobj();
+  vobj = (vobj && vobj->GetType() != AObject::kTypePrimitive) ? vobj : call_node->input(0)->GetVobj();
   if (vobj->GetType() == AObject::kTypeCFunction) {
     MS_LOG(INFO) << "not support cfunction";
   }
@@ -3377,9 +3378,9 @@ std::vector<py::object> MindGraphBuilder::GetNewArgs(CallNode *call_node, AObjec
       AObject::kTypeAnyValue,  AObject::kTypeFunction,      AObject::kTypeBoundMethod,
       AObject::kTypePrimitive, AObject::kTypeMetaFuncGraph, AObject::kTypeCell,
     };
-    auto vobj = (*it)->GetVobj();
-    if (vobj != nullptr) {
-      auto pyobj = vobj->GetPyObject();
+    auto it_vobj = (*it)->GetVobj();
+    if (it_vobj != nullptr) {
+      auto pyobj = it_vobj->GetPyObject();
       if (pyobj.ptr() != nullptr) {
         if (unsupported_parameter.find(AbstractObjectBase::GetPyType(pyobj.ptr())) == unsupported_parameter.end()) {
           new_args.push_back(pyobj);
@@ -3388,6 +3389,16 @@ std::vector<py::object> MindGraphBuilder::GetNewArgs(CallNode *call_node, AObjec
     }
   }
   return new_args;
+}
+
+bool MindGraphBuilder::AllConstantArgs(const std::vector<py::object> &args, const py::object &callable_info,
+                                       CallNode *call_node) {
+  auto new_args = args;
+  if (PyFunction_Check(callable_info.ptr())) {
+    new_args = GetNewArgs(call_node);
+  }
+
+  return std::all_of(new_args.begin(), new_args.end(), [](const auto &arg) { return CheckConstPyObject(arg.ptr()); });
 }
 
 py::object MindGraphBuilder::ResolveCallable(CallNode *call_node, StopTraceReason *stop_reason) {
@@ -3404,12 +3415,18 @@ py::object MindGraphBuilder::ResolveCallable(CallNode *call_node, StopTraceReaso
   }
   MS_LOG(INFO) << "trace_flag for: " << py::str(callable_info);
   auto args = call_node->GetArgs();
+  if (FGBuilder()->CanConstantFoldFunc(callable_info) && AllConstantArgs(args, callable_info, call_node)) {
+    MS_LOG(INFO) << "CanConstantFoldFunc for: " << py::str(callable_info);
+    JustCallAndSetRes(call_node);
+    *stop_reason = StopTraceReason::kNonStopTrace;
+    return py::object();
+  }
   auto method = FGBuilder()->ConvertMethod(callable_info);
   if (method.ptr() != nullptr) {
     MS_LOG(INFO) << "convert method :" << py::str(callable_info) << " to " << py::str(method);
     callable_info = method;
     if (!PyFunction_Check(callable_info.ptr())) {  // prim getnewargs here, func getnewargs in subgraph
-      args = GetNewArgs(call_node);
+      args = GetNewArgs(call_node, AObject::Convert(callable_info.ptr()));
     }
   }
   auto func = FGBuilder()->ConvertFunction(callable_info);
@@ -3423,12 +3440,7 @@ py::object MindGraphBuilder::ResolveCallable(CallNode *call_node, StopTraceReaso
     }
     return FGAddNode(call_node, callable_info, args, stop_reason);
   }
-  if (FGBuilder()->CanConstantFoldFunc(callable_info)) {
-    MS_LOG(INFO) << "CanConstantFoldFunc for: " << py::str(callable_info);
-    JustCallAndSetRes(call_node);
-    *stop_reason = StopTraceReason::kNonStopTrace;
-    return py::object();
-  }
+
   if (callable_info.ptr() == nullptr) {
     callable_info = py::cast<py::object>(reinterpret_cast<PyObject *>(callable->GetTypeObject()));
   }
