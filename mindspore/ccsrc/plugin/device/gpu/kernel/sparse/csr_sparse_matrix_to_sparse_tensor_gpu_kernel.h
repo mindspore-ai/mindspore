@@ -85,7 +85,7 @@ class CSRSparseMatrixToSparseTensorGpuKernelMod : public NativeGpuKernelMod {
   std::vector<int64_t> output_values_shapes_;
   std::vector<int64_t> output_dense_shape_shapes_;
   bool is_batch_csr_{false};
-  int rank_;
+  int rank_{0};
 };
 }  // namespace kernel
 }  // namespace mindspore

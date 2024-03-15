@@ -79,7 +79,7 @@ class ActivationGradGpuKernelMod : public NativeGpuKernelMod {
   cudnnDataType_t cudnn_data_type_{CUDNN_DATA_FLOAT};
   void *cuda_stream_{nullptr};
   TypeId dtype_;
-  size_t elements_;  // used only when input dtype_ is Complex<double> or Complex<float>
+  size_t elements_{0};  // used only when input dtype_ is Complex<double> or Complex<float>
 };
 }  // namespace kernel
 }  // namespace mindspore
