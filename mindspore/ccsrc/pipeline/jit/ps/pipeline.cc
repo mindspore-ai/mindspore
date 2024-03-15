@@ -1480,6 +1480,12 @@ void Pipeline::Run() {
         MS_LOG(INFO) << "Status record: start " << action.first << " action.";
         result = action.second(resource_);
         MS_LOG(INFO) << "Status record: end " << action.first << " action.";
+        if (IS_OUTPUT_ON(mindspore::kInfo)) {
+          auto manager = resource_->func_graph()->manager();
+          MS_EXCEPTION_IF_NULL(manager);
+          MS_LOG(INFO) << "Extra status record: total func graphs: " << manager->func_graphs().size()
+                       << ", total nodes: " << manager->all_nodes().size();
+        }
       });
       (void)profiler::CollectHostInfo(kCompiler, action.first, action.first, 0, 0, 1);
       ProcessStatus::GetInstance().RecordEnd();

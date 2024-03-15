@@ -348,6 +348,12 @@ AnfNodePtr ResolveObjectAndAddToManager(const FuncGraphManagerPtr &manager, cons
   }
   if (IsValueNode<FuncGraph>(resolved_node)) {
     auto new_fg = GetValueNode<FuncGraphPtr>(resolved_node);
+    auto fg = node->func_graph();
+    MS_EXCEPTION_IF_NULL(fg);
+    // If it's the sub func graph resolved in a reserved func graph.
+    if (fg->reserved()) {
+      new_fg->set_reserved(true);
+    }
     manager->AddFuncGraph(new_fg);
   }
 
