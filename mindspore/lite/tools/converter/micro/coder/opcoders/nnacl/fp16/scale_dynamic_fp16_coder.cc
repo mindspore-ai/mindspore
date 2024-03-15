@@ -34,6 +34,7 @@ int ScaleDynamicFP16Coder::Prepare(CoderContext *const context) {
 
   scale_param_ = reinterpret_cast<ScaleParameter *>(parameter_);
   MS_CHECK_PTR(scale_param_);
+  MS_CHECK_RET_CODE(memset_s(&scale_struct_, sizeof(scale_struct_), 0, sizeof(scale_struct_)) == EOK, "memset_s fail.");
   scale_struct_.base_.param_ = parameter_;
   if (input_tensors_.size() < DIMENSION_2D || input_tensors_.size() > DIMENSION_3D) {
     MS_LOG(ERROR) << "inputs to Scale operator should be 2 or 3, but " << input_tensors_.size() << " is given.";
@@ -56,6 +57,10 @@ int ScaleDynamicFP16Coder::DoCode(CoderContext *const context) {
           });
 
   NNaclFp32Serializer code;
+  scale_struct_.scale_ = nullptr;
+  scale_struct_.offset_ = nullptr;
+  scale_struct_.input_ = nullptr;
+  scale_struct_.output_ = nullptr;
   code.CodeStruct("scale_struct", scale_struct_, dynamic_param_);
 
   auto scale = GetTensorAddr(scale_tensor_, const_scale_, dynamic_mem_manager_, allocator_);
@@ -108,9 +113,8 @@ int ScaleDynamicFP16Coder::CalculateParameter() {
   } else {
     scale_shape = shape_info_container_->GetTemplateShape(scale_tensor_);
   }
-  if (scale_param_->axis_ < 0) {
-    scale_struct_.axis_ = scale_param_->axis_ + in_shape.size();
-  }
+  scale_struct_.axis_ =
+    scale_param_->axis_ < 0 ? scale_param_->axis_ + static_cast<int>(in_shape.size()) : scale_param_->axis_;
   if (scale_shape.size() + scale_struct_.axis_ > in_shape.size()) {
     MS_LOG(ERROR) << "Scale tensor shape is incorrect.";
     return RET_ERROR;

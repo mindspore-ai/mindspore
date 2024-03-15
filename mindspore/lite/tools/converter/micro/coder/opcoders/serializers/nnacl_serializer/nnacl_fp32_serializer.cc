@@ -137,7 +137,9 @@ void NNaclFp32Serializer::CodeStruct(const std::string &name, const ScaleStruct 
                                      const ScaleDynamicParameter &dynamic_scale_param) {
   CodeBaseStruct<false>("ScaleStruct", name, "{}", scale_struct.axis_, scale_struct.data_type_,
                         dynamic_scale_param.axis_size_, dynamic_scale_param.outer_size_,
-                        dynamic_scale_param.inner_size_);
+                        dynamic_scale_param.inner_size_, scale_struct.malloc_scale_, scale_struct.malloc_offset_,
+                        scale_struct.scale_, scale_struct.offset_, scale_struct.input_, scale_struct.output_);
+  code << "    " << name << ".base_.thread_nr_ = 1;\n";
 }
 
 void NNaclFp32Serializer::CodeStruct(const std::string &name, const SplitParameter &split_parameter) {

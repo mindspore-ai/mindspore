@@ -33,6 +33,8 @@ int PoolingDynamicFP16Coder::Prepare(CoderContext *const context) {
   }
   param_ = reinterpret_cast<PoolingParameter *>(parameter_);
   MS_CHECK_PTR(param_);
+  MS_CHECK_RET_CODE(memset_s(&compute_, sizeof(compute_), 0, sizeof(compute_)) == EOK, "memset_s failed.");
+  param_->op_parameter_.thread_num_ = 1;
   dynamic_param_.input_batch_ = shape_info_container_->GetTemplateShape(input_tensor_)[0];
   compute_.input_channel_ = input_tensor_->Channel();
   compute_.input_h_ = input_tensor_->Height();
@@ -41,10 +43,22 @@ int PoolingDynamicFP16Coder::Prepare(CoderContext *const context) {
   compute_.output_channel_ = output_tensor_->Channel();
   compute_.output_h_ = output_tensor_->Height();
   compute_.output_w_ = output_tensor_->Width();
+  compute_.window_h_ = param_->window_h_;
+  compute_.window_w_ = param_->window_w_;
   if (param_->global_) {
-    param_->window_h_ = compute_.input_h_;
-    param_->window_w_ = compute_.input_w_;
+    compute_.window_h_ = compute_.input_h_;
+    compute_.window_w_ = compute_.input_w_;
   }
+  float minf = -FLT16_MAX;
+  float maxf = FLT16_MAX;
+  if (param_->act_type_ == ActType_Relu) {
+    minf = 0.f;
+  } else if (param_->act_type_ == ActType_Relu6) {
+    minf = 0.f;
+    maxf = 6.f;
+  }
+  compute_.minf = minf;
+  compute_.maxf = maxf;
   return RET_OK;
 }
 

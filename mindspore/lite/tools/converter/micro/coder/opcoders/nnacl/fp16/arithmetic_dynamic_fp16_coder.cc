@@ -250,28 +250,29 @@ int ArithmeticDynamicFP16Coder::DoBroadcast(NNaclFp32Serializer *const code) {
   dynamic_shape_info_.input_shape_ = dynamic_param_.in_shape1_;
   dynamic_shape_info_.output_shape_ = dynamic_param_.out_shape_;
   code->CodeStruct("in1_broadcast_info", broadcast_info_, dynamic_shape_info_);
-  MS_CHECK_TRUE_RET(input0_ptr_str_ == output_ptr_str_, RET_OK);
   auto temp = output_ptr_str_;
-  std::map<std::string, std::vector<int>> real_nums;
-  size_t scene_num = 0;
-  for (auto &dim_template : out_shape) {
-    auto dim_nums = shape_info_container_->GetRealNums(dim_template);
-    MS_CHECK_TRUE_MSG(!dim_nums.empty(), RET_ERROR, "Dynamic shape's num must be greater than 0.");
-    real_nums[dim_template] = dim_nums;
-    scene_num = std::max(scene_num, dim_nums.size());
-  }
-  for (size_t i = 0; i < scene_num; ++i) {
-    int out_element_num = 1;
-    for (size_t j = 0; j < out_shape.size(); ++j) {
-      if (IsNumber(out_shape[j])) {
-        out_element_num *= std::stoi(out_shape[j]);
-      } else {
-        out_element_num *= real_nums[out_shape[j]][i % real_nums[out_shape[j]].size()];
-      }
+  if (input0_ptr_str_ == output_ptr_str_) {
+    std::map<std::string, std::vector<int>> real_nums;
+    size_t scene_num = 0;
+    for (auto &dim_template : out_shape) {
+      auto dim_nums = shape_info_container_->GetRealNums(dim_template);
+      MS_CHECK_TRUE_MSG(!dim_nums.empty(), RET_ERROR, "Dynamic shape's num must be greater than 0.");
+      real_nums[dim_template] = dim_nums;
+      scene_num = std::max(scene_num, dim_nums.size());
     }
-    int workspace = out_element_num * DataTypeSize(kNumberTypeFloat16);
-    temp = dynamic_mem_manager_->AllocWorkSpace(workspace, i);
-    MS_CHECK_TRUE_MSG(!temp.empty(), RET_ERROR, "Arithmetic cannot alloc workspace.");
+    for (size_t i = 0; i < scene_num; ++i) {
+      int out_element_num = 1;
+      for (size_t j = 0; j < out_shape.size(); ++j) {
+        if (IsNumber(out_shape[j])) {
+          out_element_num *= std::stoi(out_shape[j]);
+        } else {
+          out_element_num *= real_nums[out_shape[j]][i % real_nums[out_shape[j]].size()];
+        }
+      }
+      int workspace = out_element_num * DataTypeSize(kNumberTypeFloat16);
+      temp = dynamic_mem_manager_->AllocWorkSpace(workspace, i);
+      MS_CHECK_TRUE_MSG(!temp.empty(), RET_ERROR, "Arithmetic cannot alloc workspace.");
+    }
   }
   code->CodeFunction("BroadcastToSize16", input1_ptr_str_, "&in1_broadcast_info", temp);
   input1_ptr_str_ = temp;

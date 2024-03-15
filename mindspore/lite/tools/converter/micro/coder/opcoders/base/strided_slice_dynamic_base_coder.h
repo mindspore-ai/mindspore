@@ -39,7 +39,7 @@ class StridedSliceDynamicBaseCoder final : public OperatorCoder {
 
  private:
   StridedSliceParameter *strided_slice_param_{nullptr};
-  StridedSliceStruct *struct_{nullptr};
+  StridedSliceStruct struct_;
   StridedSliceDynamicParameter dynamic_param_;
   size_t inner_{1};
   size_t inner_size_{1};
