@@ -1116,6 +1116,9 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         Returns:
             Int, the stride of tensor.
 
+        Raises:
+            TypeError: `dim` is not an int.
+
         Examples:
             >>> import mindspore as ms
             >>> x = ms.Tensor([[1, 2, 3, 4, 5], [6, 7, 8, 9, 10]], dtype=ms.float32)
@@ -1865,13 +1868,12 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         """
         Return a contiguous flattened tensor.
 
-        See also:
-            :func:`mindspore.Tensor.reshape`: Give a new shape to a tensor without changing its data.
-
-            :func:`mindspore.Tensor.flatten`: Return a copy of the tensor collapsed into one dimension.
-
         Returns:
             Tensor, a 1-D tensor, containing the same elements of the input.
+
+        See also:
+            - :func:`mindspore.Tensor.reshape`: Give a new shape to a tensor without changing its data.
+            - :func:`mindspore.Tensor.flatten`: Return a copy of the tensor collapsed into one dimension.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
@@ -2278,13 +2280,6 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         """
         Return the maximum of a tensor or maximum along an axis.
 
-        See also:
-            :func:`mindspore.Tensor.argmin`: Return the indices of the minimum values along an axis.
-
-            :func:`mindspore.Tensor.argmax`: Return the indices of the maximum values along an axis.
-
-            :func:`mindspore.Tensor.min`: Return the minimum of a tensor or minimum along an axis.
-
         Note:
             When `axis` is ``None``, `keepdims` and subsequent parameters
             have no effect. At the same time, the index is fixed to return 0.
@@ -2317,6 +2312,11 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         Raises:
             TypeError: If arguments have types not specified above.
 
+        See also:
+            - :func:`mindspore.Tensor.argmin`: Return the indices of the minimum values along an axis.
+            - :func:`mindspore.Tensor.argmax`: Return the indices of the maximum values along an axis.
+            - :func:`mindspore.Tensor.min`: Return the minimum of a tensor or minimum along an axis.
+
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
 
@@ -2347,13 +2347,6 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
     def min(self, axis=None, keepdims=False, *, initial=None, where=True, return_indices=False):
         """
         Return the minimum of a tensor or minimum along an axis.
-
-        See also:
-            :func:`mindspore.Tensor.argmin`: Return the indices of the minimum values along an axis.
-
-            :func:`mindspore.Tensor.argmax`: Return the indices of the maximum values along an axis.
-
-            :func:`mindspore.Tensor.max`: Return the minimum of a tensor or minimum along an axis.
 
         Note:
             When `axis` is ``None``, `keepdims` and subsequent parameters
@@ -2386,6 +2379,11 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
 
         Raises:
             TypeError: If arguments have types not specified above.
+
+        See also:
+            - :func:`mindspore.Tensor.argmin`: Return the indices of the minimum values along an axis.
+            - :func:`mindspore.Tensor.argmax`: Return the indices of the maximum values along an axis.
+            - :func:`mindspore.Tensor.max`: Return the minimum of a tensor or minimum along an axis.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
@@ -2736,11 +2734,6 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         with 0. And if the shape of the new tensor is smaller than the shape of the original tensor, the new tensor is
         filled with the elements of the original tensor in order.
 
-        See also:
-            :func:`mindspore.Tensor.reshape`: Give a new shape to a tensor without changing its data.
-
-            :func:`mindspore.Tensor.repeat`: Repeat elements of a tensor.
-
         Note:
             Instead of changing the size of the input tensor and returns nothing as in numpy,
             this method returns a new Tensor with the input size.
@@ -2751,6 +2744,10 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
 
         Returns:
             Tensor.
+
+        See also:
+            - :func:`mindspore.Tensor.reshape`: Give a new shape to a tensor without changing its data.
+            - :func:`mindspore.Tensor.repeat`: Repeat elements of a tensor.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
@@ -2849,9 +2846,6 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         """
         Return the sum along diagonals of the tensor.
 
-        See also:
-            :func:`mindspore.Tensor.diagonal`: Return specified diagonals.
-
         Args:
             offset (int, optional): Offset of the diagonal from the main diagonal.
                 Can be positive or negative. Defaults to main diagonal.
@@ -2869,6 +2863,9 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
 
         Raises:
             ValueError: If the input tensor has less than two dimensions.
+
+        See also:
+            - :func:`mindspore.Tensor.diagonal`: Return specified diagonals.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
@@ -3120,11 +3117,6 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         Return the variance, which is computed for the flattened array by default,
         otherwise over the specified axis.
 
-        See also:
-            :func:`mindspore.Tensor.mean`: Reduce a dimension of a tensor by averaging all elements in the dimension.
-
-            :func:`mindspore.Tensor.std`: Compute the standard deviation along the specified axis.
-
         Note:
             Numpy arguments `dtype`, `out` and `where` are not supported.
 
@@ -3137,6 +3129,10 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
 
         Returns:
             Variance tensor.
+
+        See also:
+            - :func:`mindspore.Tensor.mean`: Reduce a dimension of a tensor by averaging all elements in the dimension.
+            - :func:`mindspore.Tensor.std`: Compute the standard deviation along the specified axis.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
@@ -3185,9 +3181,6 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         """
         Return sum of tensor elements over a given axis.
 
-        See also:
-            :func:`mindspore.Tensor.cumsum`: Return the cumulative sum of the elements along a given axis.
-
         Note:
             Numpy arguments `out`, `where`, `casting`, `order`, `subok`, `signature`, and
             `extobj` are not supported.
@@ -3216,6 +3209,9 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             TypeError: If input is not array_like, or `axis` is not int, tuple of ints or list of ints,
                 or `keepdims` is not integer, or `initial` is not scalar.
             ValueError: If any axis is out of range or duplicate axes exist.
+
+        See also:
+            - :func:`mindspore.Tensor.cumsum`: Return the cumulative sum of the elements along a given axis.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
@@ -3305,11 +3301,6 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         """
         Repeat elements of a tensor.
 
-        See also:
-            :func:`mindspore.Tensor.reshape`: Give a new shape to a tensor without changing its data.
-
-            :func:`mindspore.Tensor.resize`: Changes shape and size of tensor in-place.
-
         Args:
             repeats (Union[int, tuple, list]): The number of repetitions for each element.
                 `repeats` is broadcasted to fit the shape of the given axis.
@@ -3322,6 +3313,10 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         Raises:
             ValueError: If the axis is out of range.
             TypeError: If arguments have types not specified above.
+
+        See also:
+            - :func:`mindspore.Tensor.reshape`: Give a new shape to a tensor without changing its data.
+            - :func:`mindspore.Tensor.resize`: Changes shape and size of tensor in-place.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``

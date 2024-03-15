@@ -29,4 +29,4 @@ mindspore.scipy.fft.dct
         - **TypeError** - 如果 `axis` 或 `n` 不是int类型。
         - **ValueError** - 如果 `axis` 的值超出： :math:`[-x.ndim, x.ndim)` 范围。
         - **ValueError** - 如果 `n` 的值小于1。
-        - **ValueError** - 如果 `norm` 的值不是 ``BACKWARD``、``FORWARD`` 或 ``ORTHO``。
+        - **ValueError** - 如果 `norm` 的值不是 ``BACKWARD``、 ``FORWARD`` 或 ``ORTHO``。

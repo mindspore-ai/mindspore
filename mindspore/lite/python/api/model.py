@@ -293,7 +293,7 @@ class Model(BaseModel):
         Update constant weight of the model node.
 
         Args:
-            weights (list(list[Tensor])): A list that includes all update weight Tensors.
+            weights (list[list[Tensor]]): A list that includes all update weight Tensors.
 
         Raises:
             RuntimeError: `weights` is not a list(list).
