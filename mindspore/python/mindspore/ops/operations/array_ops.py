@@ -227,7 +227,11 @@ class ExpandDims(PrimitiveWithCheck):
     def infer_value(self, input_x, axis):
         value = None
         if input_x is not None and axis is not None:
-            value = Tensor(np.expand_dims(input_x.asnumpy(), axis))
+            dtype = input_x.dtype
+            if input_x.dtype == mstype.bfloat16:
+                cpu_cast = Cast().set_device("CPU")
+                input_x = cpu_cast(input_x, mstype.float32)
+            value = Tensor(np.expand_dims(input_x.asnumpy(), axis), dtype)
         return value
 
 
@@ -375,6 +379,9 @@ class Cast(PrimitiveWithCheck):
         if isinstance(x, (int, float)):
             value = Tensor(np.array(x).astype(np_dst_type), dtype=dst_type)
         else:
+            if x.dtype == mstype.bfloat16:
+                cpu_cast = Cast().set_device("CPU")
+                x = cpu_cast(x, mstype.float32)
             value = Tensor(x.asnumpy().astype(np_dst_type), dtype=dst_type)
         return value
 
