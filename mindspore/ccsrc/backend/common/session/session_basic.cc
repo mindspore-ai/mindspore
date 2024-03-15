@@ -416,6 +416,7 @@ BackendOpRunInfoPtr SessionBasic::GetSingleOpRunInfo(const CNodePtr &cnode, cons
                                                      const GraphOutputInfo *const graph_output_info) const {
   MS_EXCEPTION_IF_NULL(cnode);
   auto primitive = common::AnfAlgo::GetCNodePrimitive(cnode);
+  MS_EXCEPTION_IF_NULL(primitive);
   const auto &abstract = cnode->abstract();
   if (abstract == nullptr) {
     MS_LOG(EXCEPTION) << "Abstract is nullptr, node = " << cnode->DebugString();
