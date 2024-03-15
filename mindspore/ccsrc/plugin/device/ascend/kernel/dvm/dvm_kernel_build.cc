@@ -22,6 +22,7 @@
 #include "plugin/device/ascend/kernel/dvm/dvm_kernel_mod.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/backend/anf_runtime_algorithm.h"
+#include "include/common/debug/anf_ir_dump.h"
 
 namespace mindspore {
 namespace kernel {
@@ -519,6 +520,10 @@ class DvmKernelBuilder {
     // FuncGraph --> Dvm Kernel
     auto func_graph = GetCNodeFuncGraph(cnode);
     Construct(func_graph);
+    if (kernel_mod_->EnableDump()) {
+      kernel_mod_->DumpBuffer() << "===================== func_graph =====================\n";
+      DumpIR(kernel_mod_->DumpBuffer(), func_graph, false);
+    }
     if (!is_dynamic_) {
       // Static shape need codegen
       std::vector<ShapeVector> inputs_shape(cnode->size() - 1);
