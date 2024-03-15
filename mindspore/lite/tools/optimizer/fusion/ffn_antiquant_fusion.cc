@@ -128,9 +128,10 @@ int FFNAntiquantFusion::GetExpertNumFromAntiQuantModeNodes(const AnfNodePtr &nod
     return -1;
   }
   auto ascend_antiquant_node = add_node->cast<CNodePtr>()->input(kInputIndexOne);
-  if (!utils::isa<CNodePtr>(ascend_antiquant_node) ||
-      !opt::CheckPrimitiveType(ascend_antiquant_node, prim::kPrimAntiQuant)) {
-    MS_LOG(ERROR) << "The node is not AscendAntiquant node, fail to get expert num";
+  if (!(opt::CheckPrimitiveType(ascend_antiquant_node, prim::kPrimAntiQuant) ||
+        GetCNodePrimitive(ascend_antiquant_node)->name() == "AscendAntiQuant")) {
+    MS_LOG(ERROR) << ascend_antiquant_node->fullname_with_scope()
+                  << " The node is not AscendAntiquant node, fail to get expert num";
     return -1;
   }
   auto weight_node = ascend_antiquant_node->cast<CNodePtr>()->input(kInputIndexOne);
@@ -278,7 +279,6 @@ int FFNAntiquantFusion::Process(const FuncGraphPtr &func_graph, const CNodePtr &
     MS_LOG(ERROR) << "Fail to Remove weight1 AntiQuantMode Nodes";
     return RET_ERROR;
   }
-
   ret = lite::quant::RemoveAntiQuantModeNodes(func_graph, cnode, kIndex3);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Fail to Remove weight2 AntiQuantMode Nodes";
@@ -300,10 +300,11 @@ int FFNAntiquantFusion::Process(const FuncGraphPtr &func_graph, const CNodePtr &
   if (primitive->HasAttr(IN_STRATEGY)) {
     ret = SetInStragety(cnode, ffn_fusion_cnode);
     if (ret != RET_OK) {
-      MS_LOG(ERROR) << "Fail to SetInStragety.";
+      MS_LOG(ERROR) << "Fail to Set InStragety.";
       return RET_ERROR;
     }
   }
+
   auto manager = Manage(func_graph);
   CHECK_NULL_RETURN(manager);
   (void)manager->Replace(cnode, ffn_fusion_cnode);
