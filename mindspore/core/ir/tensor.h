@@ -660,6 +660,18 @@ class MS_CORE_API Tensor : public MetaTensor {
     contiguous_callback_ = contiguous_callback;
   }
 
+  /// \brief Get callback need to execute when value is updated of Tensor.
+  ///
+  /// \return The callback need to execute when value is updated of Tensor.
+  const std::function<void(const Tensor *)> &update_value_callback() const { return update_value_callback_; }
+
+  /// \brief Set callback need to execute when value is updated of Tensor.
+  ///
+  /// \param[in] update_value_callback The callback need to execute when value is updated of Tensor.
+  void set_update_value_callback(const std::function<void(const Tensor *)> &update_value_callback) {
+    update_value_callback_ = update_value_callback;
+  }
+
   /// \brief Get the memory chunk pointer and offset if memory chunk for this tensor exists.
   ///
   /// \return The memory chunk pointer and offset, nullptr and 0 if no memory chunk exists.
@@ -795,6 +807,9 @@ class MS_CORE_API Tensor : public MetaTensor {
  private:
   void ExecuteLazyTask() const;
 
+  // Really execute callback function when host value is updated of Tensor.
+  void ExecuteUpdateValueCallback() const;
+
   bool init_flag_{false};
   bool adapter_flag_{false};
   bool is_forward_output_{false};
@@ -817,6 +832,7 @@ class MS_CORE_API Tensor : public MetaTensor {
   std::shared_ptr<DeviceEvent> device_event_{nullptr};
   std::function<void(void)> lazy_callback_{nullptr};
   std::function<DeviceSyncPtr(const DeviceSyncPtr &)> contiguous_callback_{nullptr};
+  std::function<void(const Tensor *)> update_value_callback_{nullptr};
   PinnedMemRegister *pin_mem_register_{nullptr};
   AutoGradMetaDataPtr auto_grad_meta_data_{nullptr};
   TensorCompressionType compression_type_{kNoCompression};
