@@ -39,6 +39,7 @@ class Symbol:
     """
 
     def __init__(self, max=0, min=1, divisor=1, remainder=0, unique=False, **kawgs):
+        self._check_args_type(max, min, divisor, remainder, unique)
         if min <= 0:
             raise ValueError("For 'Symbol', the 'min' value should be positive, but got {}".format(min))
         if divisor <= 0:
@@ -57,12 +58,25 @@ class Symbol:
     def __str__(self):
         return str(self.to_dict())
 
+    def _check_args_type(self, max, min, divisor, remainder, unique):
+        """Check the type of arguments."""
+        if not isinstance(max, int):
+            raise TypeError(f"For 'Symbol', the argument 'max' must be int, but got {type(max)}")
+        if not isinstance(min, int):
+            raise TypeError(f"For 'Symbol', the argument 'min' must be int, but got {type(min)}")
+        if not isinstance(divisor, int):
+            raise TypeError(f"For 'Symbol', the argument 'divisor' must be int, but got {type(divisor)}")
+        if not isinstance(remainder, int):
+            raise TypeError(f"For 'Symbol', the argument 'remainder' must be int, but got {type(remainder)}")
+        if not isinstance(unique, bool):
+            raise TypeError(f"For 'Symbol', the argument 'unique' must be bool, but got {type(unique)}")
+
     def to_dict(self):
         """Convert the symbolic info to dictionary."""
         res = {}
         if self.max > self.min:
             res["max"] = self.max
-        if self.min > 1:
+        if self.min > self.divisor + self.remainder:  # the symbol is "d * N + r" and N >= 1
             res["min"] = self.min
         if self.divisor != 1:
             res["divisor"] = self.divisor

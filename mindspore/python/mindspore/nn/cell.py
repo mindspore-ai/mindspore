@@ -946,6 +946,7 @@ class Cell(Cell_):
         if self._dynamic_shape_inputs is not None:
             logger.debug("Compiled Graph with dynamic shape")
             self._check_compile_dynamic_shape(self._dynamic_shape_inputs, args)
+            Validator.check_symbolic_shape(self._dynamic_shape_inputs, args)
             self.saved_dynamic_shape = self._dynamic_shape_inputs
             return self._dynamic_shape_inputs
         return args
