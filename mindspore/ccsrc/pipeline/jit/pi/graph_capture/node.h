@@ -27,6 +27,7 @@
 #include "pipeline/jit/pi/graph_capture/abstract_object.h"
 #include "pipeline/jit/pi/graph_capture/constant_info.h"
 #include "pipeline/jit/pi/utils/utils.h"
+#include "pipeline/jit/pi/graph_guard/trace.h"
 
 namespace mindspore {
 namespace pijit {
@@ -130,6 +131,9 @@ class ValueNode : public InstrNode {
   const std::unique_ptr<ConstantInfo> &MakeConstantInfo();
   const std::unique_ptr<ConstantInfo> &GetConstantInfo() const { return constant_info_; }
 
+  TracePtr GetTrace() { return trace_; }
+  void SetTrace(TracePtr t) { trace_ = t; }
+
  protected:
   ValueNode(Type type, AObject *vobj, int opcode, int oparg, const std::vector<ValueNode *> &inputs = {})
       : InstrNode(type, opcode, oparg), vobj_(vobj), inputs_(inputs), attr_(false), subscr_(false) {}
@@ -155,6 +159,9 @@ class ValueNode : public InstrNode {
 
   // recode relationship between local and CallNode
   std::optional<ValueNode *> parent_;
+
+  // Trace cache to be reused
+  TracePtr trace_;
 };
 
 // simulate PyCellObject, oparg is index

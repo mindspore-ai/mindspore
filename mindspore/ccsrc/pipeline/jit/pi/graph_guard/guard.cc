@@ -312,7 +312,7 @@ bool OptGuard::Check(const PyFrameObject *frame, bool print, std::map<size_t, Py
         GRAPH_JIT_LOG_F("Guard check fail: %s v.s. %s\n", item->ToString().c_str(),
                         std::string(py::str(py::cast<py::object>(obj))).c_str());
         Py_XDECREF(obj);
-      } else {
+      } else if (IS_OUTPUT_ON(mindspore::kDebug)) {
         MS_LOG(DEBUG) << "Guard check fail:" << item->ToString();
       }
       return false;

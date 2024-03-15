@@ -26,6 +26,31 @@
 
 namespace mindspore {
 namespace pijit {
+
+static PyObject *kPyAttrStub = nullptr;
+static PyObject *kPyAttrTensor = nullptr;
+static PyObject *kPyAttrReprCache = nullptr;
+static const char kPyAttrReprCacheStr[] = "__repr_cache__";
+static const char kPyMethodStubSync[] = "stub_sync";
+static PyObject *GetAttrStubStr() {
+  if (kPyAttrStub == nullptr) {
+    kPyAttrStub = PyUnicode_FromString(stub::PY_ATTR_STUB);
+  }
+  return kPyAttrStub;
+}
+static PyObject *GetAttrTensorStr() {
+  if (kPyAttrTensor == nullptr) {
+    kPyAttrTensor = PyUnicode_FromString(stub::PY_ATTR_TENSOR);
+  }
+  return kPyAttrTensor;
+}
+static PyObject *GetAttrReprCacheStr() {
+  if (kPyAttrReprCache == nullptr) {
+    kPyAttrReprCache = PyUnicode_FromString(kPyAttrReprCacheStr);
+  }
+  return kPyAttrReprCache;
+}
+
 static std::string GetObjectString(PyObject *objName) {
   std::string ret = "";
   if (objName == NULL) {
@@ -928,41 +953,32 @@ class MetaTensorData : public ItemData {
 
   MetaTensorData(PyObject *obj, bool needSpecialize, int recurseDepth)
       : ItemData(ItemType::MetaTensor, needSpecialize, recurseDepth) {
-    auto pyObj = py::cast<py::object>(obj);
-    constexpr char const_arg_attr[] = "const_arg";
-    if (!py::hasattr(pyObj, const_arg_attr) || !py::cast<bool>(py::getattr(obj, const_arg_attr))) {
-      specialized_ = needSpecialize;
-    } else {
-      specialized_ = true;
-    }
     mindspore::tensor::MetaTensorPtr tensor_ptr = nullptr;
-    if (py::isinstance<mindspore::tensor::MapTensor>(obj)) {
-      tensor_ptr = pyObj.cast<mindspore::tensor::MapTensorPtr>();
-    } else if (py::isinstance<mindspore::tensor::Tensor>(obj)) {
-      tensor_ptr = pyObj.cast<mindspore::tensor::TensorPtr>();
-    } else if (IsStubTensor(pyObj)) {
-      auto stub = PyObject_GetAttrString(obj, "stub");
-      if (stub != nullptr && stub != Py_None) {
+    PyObject *stubattr = GetAttrStubStr();
+    PyObject *stub = PyObject_HasAttr(obj, stubattr) ? PyObject_GetAttr(obj, stubattr) : nullptr;
+    if (stub != nullptr) {
+      if (stub != Py_None) {
         is_stubtensor_ = true;
-        Py_DECREF(stub);
       } else {
-        obj = PyObject_GetAttrString(obj, "tensor");
-        pyObj = py::cast<py::object>(obj);
+        PyObject *tensorattr = GetAttrTensorStr();
+        obj = PyObject_GetAttr(obj, tensorattr);
+        tensor_ptr = py::cast<mindspore::tensor::TensorPtr>(obj);
         Py_DECREF(obj);
-        tensor_ptr = pyObj.cast<mindspore::tensor::TensorPtr>();
       }
+    } else if (py::isinstance<mindspore::tensor::Tensor>(obj)) {
+      tensor_ptr = py::cast<mindspore::tensor::TensorPtr>(obj);
+    } else if (py::isinstance<mindspore::tensor::MapTensor>(obj)) {
+      tensor_ptr = py::cast<mindspore::tensor::MapTensorPtr>(obj);
     } else {
-      tensor_ptr = pyObj.cast<mindspore::tensor::MetaTensorPtr>();
+      tensor_ptr = py::cast<mindspore::tensor::MetaTensorPtr>(obj);
     }
     if (tensor_ptr != nullptr) {
       StoreTensor(tensor_ptr);
     } else {
-      obj = PyObject_GetAttrString(obj, "stub");
-      pyObj = py::cast<py::object>(obj);
-      auto ptr = pyObj.cast<mindspore::stub::StubNodePtr>();
+      auto ptr = py::cast<mindspore::stub::StubNodePtr>(stub);
       StoreStubTensor(ptr);
-      Py_DECREF(obj);
     }
+    Py_XDECREF(stub);
   }
 
   bool operator==(const ItemData &obj) const override {
@@ -1023,6 +1039,8 @@ class MetaTensorData : public ItemData {
   }
 
  protected:
+  MetaTensorData(bool needSpecialize, int recurseDepth)
+      : ItemData(ItemType::MetaTensor, needSpecialize, recurseDepth) {}
   virtual std::string ToStringIntern() {
     std::string param_desc = ParamInfoData::ToStringAttr(param_);
     std::string shape = "";
@@ -1047,7 +1065,7 @@ class MetaTensorData : public ItemData {
     host_format_ = info.host_format_;
     data_type_ = tensor_ptr->Dtype();
     is_parameter_ = tensor_ptr->is_parameter();
-    param_ = tensor_ptr->param_info() != nullptr ? tensor_ptr->param_info()->Clone() : nullptr;
+    param_ = tensor_ptr->param_info();
   }
 
   void StoreStubTensor(mindspore::stub::StubNodePtr stub_ptr) {
@@ -1076,7 +1094,7 @@ class MetaTensorData : public ItemData {
   std::string format_;
   std::string host_format_;
   TypePtr data_type_;
-  bool is_parameter_;
+  bool is_parameter_ = false;
   bool is_stubtensor_ = false;
   mindspore::ParamInfoPtr param_;
 };
@@ -1084,44 +1102,40 @@ class MetaTensorData : public ItemData {
 class TensorData : public MetaTensorData {
  public:
   TensorData(mindspore::tensor::TensorPtr tensor_ptr, bool needSpecialize, int recurseDepth)
-      : MetaTensorData(tensor_ptr, needSpecialize, recurseDepth) {
+      : MetaTensorData(needSpecialize, recurseDepth) {
     tp_ = ItemType::Tensor;
     StoreTensor(tensor_ptr);
   }
 
-  TensorData(PyObject *obj, bool needSpecialize, int recurseDepth) : MetaTensorData(obj, needSpecialize, recurseDepth) {
+  TensorData(PyObject *obj, bool needSpecialize, int recurseDepth) : MetaTensorData(needSpecialize, recurseDepth) {
     is_stubtensor_ = false;
     tp_ = ItemType::Tensor;
-    auto pyObj = py::cast<py::object>(obj);
     mindspore::tensor::TensorPtr tensor_ptr = nullptr;
-    if (py::isinstance<mindspore::tensor::MapTensor>(obj)) {
-      tensor_ptr = pyObj.cast<mindspore::tensor::MapTensorPtr>();
-    } else if (IsStubTensor(pyObj)) {
-      auto stub = PyObject_GetAttrString(obj, "stub");
-      if (stub != nullptr && stub != Py_None) {
-        if (OptStrategy::MakeCalcStrategyByShape(GetStubTensorInfo(py::cast<py::object>(obj)).first) !=
-            OptStrategy::CalcKind::kCalcValue) {
-          specialized_ = false;
-        }
+    PyObject *stubattr = GetAttrStubStr();
+    PyObject *stub = PyObject_HasAttr(obj, stubattr) ? PyObject_GetAttr(obj, stubattr) : nullptr;
+    if (stub != nullptr) {
+      if (stub != Py_None) {
+        specialized_ = false;
       }
       if (specialized_) {
-        pyObj = python_adapter::CallPyObjMethod(pyObj, "stub_sync");
-        tensor_ptr = pyObj.cast<mindspore::tensor::TensorPtr>();
+        auto pyObj = python_adapter::CallPyObjMethod(py::cast<py::object>(obj), kPyMethodStubSync);
+        tensor_ptr = py::cast<mindspore::tensor::TensorPtr>(pyObj.ptr());
       } else {
-        if (stub != nullptr && stub != Py_None) {
+        if (stub != Py_None) {
           is_stubtensor_ = true;
         } else {
-          obj = PyObject_GetAttrString(obj, "tensor");
-          pyObj = py::cast<py::object>(obj);
+          PyObject *tensorattr = GetAttrTensorStr();
+          obj = PyObject_GetAttr(obj, tensorattr);
+          tensor_ptr = py::cast<mindspore::tensor::TensorPtr>(obj);
           Py_DECREF(obj);
-          tensor_ptr = pyObj.cast<mindspore::tensor::TensorPtr>();
         }
       }
-      if (stub != nullptr && stub != Py_None) {
-        Py_DECREF(stub);
-      }
+    } else if (py::isinstance<mindspore::tensor::Tensor>(obj)) {
+      tensor_ptr = py::cast<mindspore::tensor::TensorPtr>(obj);
+    } else if (py::isinstance<mindspore::tensor::MapTensor>(obj)) {
+      tensor_ptr = py::cast<mindspore::tensor::MapTensorPtr>(obj);
     } else {
-      tensor_ptr = pyObj.cast<mindspore::tensor::TensorPtr>();
+      tensor_ptr = py::cast<mindspore::tensor::TensorPtr>(obj);
     }
     if (tensor_ptr != nullptr) {
       if (OptStrategy::MakeCalcStrategyByShape(tensor_ptr->shape()) != OptStrategy::CalcKind::kCalcValue) {
@@ -1129,12 +1143,10 @@ class TensorData : public MetaTensorData {
       }
       StoreTensor(tensor_ptr);
     } else {
-      obj = PyObject_GetAttrString(obj, "stub");
-      pyObj = py::cast<py::object>(obj);
-      auto ptr = pyObj.cast<mindspore::stub::StubNodePtr>();
+      auto ptr = py::cast<mindspore::stub::StubNodePtr>(stub);
       StoreStubTensor(ptr);
-      Py_DECREF(obj);
     }
+    Py_XDECREF(stub);
   }
 
   ~TensorData() override { data_ptr_.release(); }
@@ -1858,6 +1870,11 @@ class EqGuard : public GuardItem {
     if (var_->IsConst()) {
       return true;
     }
+    if (!var_->IsSpecialized() && var_->GetRelaxCount() > 0 && !RootTrace::Support(var_->GetTraceType()) &&
+        !specialized_) {
+      // it just needs to guard inputs instead of leaf node
+      return true;
+    }
     GuardItemPerfStart(perf, kGuardItemTotalStage);
     PyObject *obj = GetObjectFromTrace(frame, var_, cache, perf);
     GuardItemPerfStage(perf, this, kGuardItemRetrieveStage);
@@ -2111,8 +2128,14 @@ class ReprGuard : public GuardItem {
     if (obj == nullptr) {
       return ret;
     }
-
-    auto repr = PyObject_Repr(obj);
+    PyObject *repr_flag = GetAttrReprCacheStr();
+    PyObject *repr;
+    if (PyObject_HasAttr(obj, repr_flag)) {
+      repr = PyObject_GetAttr(obj, repr_flag);
+    } else {
+      repr = PyObject_Repr(obj);
+      PyObject_SetAttr(obj, repr_flag, repr);
+    }
     if (PyUnicode_Compare(repr, refRepr_)) {
       ret = false;
     } else {

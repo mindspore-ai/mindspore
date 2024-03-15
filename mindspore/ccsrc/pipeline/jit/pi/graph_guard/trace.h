@@ -38,12 +38,12 @@ typedef enum _TraceType {
   BuiltIn,
   Local,
   Param,
+  Name,
+  ClassDeref,
   Const,
   Item,
   Attr,
   Type,
-  Name,
-  ClassDeref,
   Operation,
   Customized,
   Unsupported,
@@ -84,6 +84,11 @@ class Trace : public std::enable_shared_from_this<Trace> {
   virtual std::shared_ptr<Trace> Optimize();
   virtual std::shared_ptr<Trace> This();
   virtual void SetRelaxCount(int cnt);
+  virtual int GetRelaxCount() const;
+  virtual void EnableRelax();
+  virtual bool RelaxEnabled() const;
+  virtual bool IsSpecialized() const;
+  virtual int GetDepth() const;
 
  protected:
   PyObject *obj_;
@@ -95,6 +100,8 @@ class Trace : public std::enable_shared_from_this<Trace> {
   bool is_const_;
   int relax_count_;
   int relax_limit_;
+  bool is_specialized_;
+  int depth_;
 };
 using TracePtr = std::shared_ptr<Trace>;
 using TraceVector = std::vector<TracePtr>;
@@ -109,6 +116,7 @@ class RootTrace : public Trace {
   virtual bool operator==(const Trace &trace);
   std::string FormatString() override { return ToString(); }
   virtual const InfoPack &Info();
+  static bool Support(TraceType tt);
 
  protected:
   PyObject *RetrieveGlobal(PTraceContext context);
@@ -140,6 +148,7 @@ class ItemTrace : public Trace {
   virtual const InfoPack &Info();
   virtual TracePtr Optimize();
   virtual void SetRelaxCount(int cnt);
+  static bool Support(TraceType tt);
 
  protected:
   TracePtr item_;
@@ -158,6 +167,7 @@ class AttrTrace : public Trace {
   virtual const InfoPack &Info();
   virtual TracePtr Optimize();
   virtual void SetRelaxCount(int cnt);
+  static bool Support(TraceType tt);
 
  protected:
   std::string attr_;
@@ -175,6 +185,7 @@ class ConstTrace : public Trace {
   virtual void Detach();
   std::string FormatString() override { return ToString(); }
   virtual const InfoPack &Info();
+  static bool Support(TraceType tt);
 
  protected:
   int index_;
@@ -194,6 +205,7 @@ class TypeTrace : public Trace {
   virtual void Detach();
   virtual TracePtr Optimize();
   virtual void SetRelaxCount(int cnt);
+  static bool Support(TraceType tt);
 
  protected:
   PyTypeObject *pType_;
@@ -218,8 +230,10 @@ class OpTrace : public Trace {
   virtual const InfoPack &Info();
   virtual TracePtr Optimize();
   virtual void SetRelaxCount(int cnt);
+  static bool Support(TraceType tt);
 
  protected:
+  virtual void CheckSpecialize();
   virtual TracePtr RemoveCastDuplicatePatternPass();
   virtual TracePtr RemovePrimOutIsTensorPass();
   virtual TracePtr RemoveEmptyTensorPass();
@@ -231,6 +245,8 @@ class OpTrace : public Trace {
   virtual void JudgeCompareConstPass();
   virtual void JudgeContainsConstPass();
   virtual void JudgeInplaceAddConstPass();
+  virtual void JudgeIsConstPass();
+  virtual void JudgeBoundMethodPass();
 
  protected:
   int opcode_;
@@ -253,6 +269,7 @@ class CustomizedTrace : public Trace {
   virtual std::string ToString(bool include_param = true);
   std::string FormatString() override { return ToString(); }
   virtual const InfoPack &Info();
+  static bool Support(TraceType tt);
 
  protected:
   RetrieveFunc retrieve_;
@@ -271,6 +288,7 @@ class UnsupportedTrace : public Trace {
   std::string FormatString() override;
   virtual const InfoPack &Info();
   virtual void SetRelaxCount(int cnt);
+  static bool Support(TraceType tt);
 
  protected:
   TraceVector params_;
