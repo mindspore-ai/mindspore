@@ -15,6 +15,7 @@
  */
 
 #include "op_proto/inc/image_ops.h"
+#include "custom_op_proto/cust_image_ops.h"
 #include "register/op_impl_registry.h"
 #include "utils/image_ops_shape_fns.h"
 #include "utils/op_const.h"
@@ -398,8 +399,9 @@ graphStatus CropAndResizeInputRankCheck(const ge::Operator &op, const TensorDesc
   }
   return GRAPH_SUCCESS;
 }
+
 // ---------------CropAndResize Op Start-------------------
-IMPLEMT_INFERFUNC(CropAndResize, CropAndResizeInfer) {
+CUST_IMPLEMT_INFERFUNC(CropAndResize, CropAndResizeInfer) {
   // unknown shape support
   std::vector<std::string> depend_names{"crop_size"};
   PREPARE_DYNAMIC_SHAPE(depend_names);
@@ -421,29 +423,26 @@ IMPLEMT_INFERFUNC(CropAndResize, CropAndResizeInfer) {
   int64_t crop_width = UNKNOWN_DIM;
   Tensor crop_size_tensor;
   if (op.GetInputConstData("crop_size", crop_size_tensor) == GRAPH_SUCCESS) {
-    auto size_data = reinterpret_cast<const int32_t *>(crop_size_tensor.GetData());
-    crop_height = static_cast<int64_t>(size_data[0]);
-    crop_width = static_cast<int64_t>(size_data[1]);
+    if (crop_size_desc.GetDataType() == DT_INT32) {
+      auto size_data = reinterpret_cast<const int32_t *>(crop_size_tensor.GetData());
+      crop_height = static_cast<int64_t>(size_data[0]);
+      crop_width = static_cast<int64_t>(size_data[1]);
+    } else {
+      auto size_data = reinterpret_cast<const int64_t *>(crop_size_tensor.GetData());
+      crop_height = size_data[0];
+      crop_width = size_data[1];
+    }
   }
   std::vector<int64_t> y_dims;
   Format input_format = static_cast<ge::Format>(ge::GetPrimaryFormat(op.GetInputDesc(0).GetFormat()));
-  if (input_format == FORMAT_NHWC && x_dims.size() > 3) {
+  if (x_dims.size() == 4) {
     y_dims.push_back(boxes_dims[0]);
     y_dims.push_back(crop_height);
     y_dims.push_back(crop_width);
     y_dims.push_back(x_dims[3]);
-  } else if (input_format == FORMAT_NCHW && x_dims.size() > 1) {
-    y_dims.push_back(boxes_dims[0]);
-    y_dims.push_back(x_dims[1]);
-    y_dims.push_back(crop_height);
-    y_dims.push_back(crop_width);
   } else {
     std::string str_input_format = GeFormatToString(input_format);
-    std::string err_msg = ConcatString(
-      "only supporting NCHW and NHWC, "
-      "current format is [",
-      str_input_format, "]");
-    AICPU_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), err_msg);
+    OP_LOGE(TbeGetName(op), "Only support 4D input.");
     return GRAPH_FAILED;
   }
   auto y_desc = op.GetOutputDesc(0);
@@ -457,14 +456,7 @@ IMPLEMT_INFERFUNC(CropAndResize, CropAndResizeInfer) {
       boxes_desc.GetShapeRange(boxes_range);
       y_range[0] = boxes_range[0];
     }
-    // NCHW x_dims[1] UNKNOWN_DIM
-    if (input_format == FORMAT_NCHW && y_dims[AXIS_NCHW_DIM_C] == UNKNOWN_DIM) {
-      std::vector<std::pair<int64_t, int64_t>> x_range;
-      x_desc.GetShapeRange(x_range);
-      y_range[AXIS_NCHW_DIM_C] = x_range[AXIS_NCHW_DIM_C];
-    }
-    // NHWC x_dims[3] UNKNOWN_DIM
-    if (input_format == FORMAT_NHWC && y_dims[AXIS_NHWC_DIM_C] == UNKNOWN_DIM) {
+    if (y_dims[AXIS_NHWC_DIM_C] == UNKNOWN_DIM) {
       std::vector<std::pair<int64_t, int64_t>> x_range;
       x_desc.GetShapeRange(x_range);
       y_range[AXIS_NHWC_DIM_C] = x_range[AXIS_NHWC_DIM_C];
@@ -477,6 +469,180 @@ IMPLEMT_INFERFUNC(CropAndResize, CropAndResizeInfer) {
   return GRAPH_SUCCESS;
 }
 
-INFER_FUNC_REG(CropAndResize, CropAndResizeInfer);
+CUST_INFER_FUNC_REG(CropAndResize, CropAndResizeInfer);
 // ----------------CropAndResize END-------------------
+
+// ----------------CropAndResizeGradImage-------------------
+CUST_IMPLEMT_INFERFUNC(CropAndResizeGradImage, CropAndResizeGradImageInfer) {
+  std::vector<std::string> input_infer_depends = {"image_size"};
+  PREPARE_DYNAMIC_SHAPE(input_infer_depends);
+
+  auto grads_desc = op.GetInputDesc(0);
+  Shape grads_shape;
+  if (WithRank(grads_desc, 4, grads_shape, op) != GRAPH_SUCCESS) {
+    std::string err_msg = GetShapeErrMsg(0, DebugString(grads_desc.GetShape().GetDims()), "4D");
+    err_msg = string("failed to call WithRank, ") + err_msg;
+    OP_LOGE(TbeGetName(op), err_msg);
+    return GRAPH_FAILED;
+  }
+
+  auto boxes_desc = op.GetInputDesc(1);
+  Shape boxes_shape;
+  if (WithRank(boxes_desc, 2, boxes_shape, op) != GRAPH_SUCCESS) {
+    std::string err_msg = GetShapeErrMsg(1, DebugString(boxes_desc.GetShape().GetDims()), "2D");
+    err_msg = string("failed to call WithRank, ") + err_msg;
+    OP_LOGE(TbeGetName(op), err_msg);
+    return GRAPH_FAILED;
+  }
+
+  auto box_index_desc = op.GetInputDesc(2);
+  Shape box_index_shape;
+  if (WithRank(box_index_desc, 1, box_index_shape, op) != GRAPH_SUCCESS) {
+    std::string err_msg = GetShapeErrMsg(2, DebugString(box_index_desc.GetShape().GetDims()), "1D");
+    err_msg = string("failed to call WithRank, ") + err_msg;
+    OP_LOGE(TbeGetName(op), err_msg);
+    return GRAPH_FAILED;
+  }
+
+  auto image_size_desc = op.GetInputDesc(3);
+  Shape image_size_shape;
+  if (WithRank(image_size_desc, 1, image_size_shape, op) != GRAPH_SUCCESS) {
+    std::string err_msg = GetShapeErrMsg(3, DebugString(image_size_desc.GetShape().GetDims()), "1D");
+    err_msg = string("failed to call WithRank, ") + err_msg;
+    OP_LOGE(TbeGetName(op), err_msg);
+    return GRAPH_FAILED;
+  }
+
+  auto grads_dims = grads_shape.GetDims();
+  auto boxes_dims = boxes_shape.GetDims();
+  auto box_index_dims = box_index_shape.GetDims();
+  CHECK(grads_dims.empty() || boxes_dims.empty() || box_index_dims.empty(),
+        OP_LOGE(TbeGetName(op), string("the 0th input[grads] , the 1st input[boxes] dims and the 2nd input[box_index], "
+                                       "must not be empty.")),
+        return GRAPH_FAILED);
+  if (!DimsAllEqualOrUnknown({grads_dims[0], boxes_dims[0], box_index_dims[0]})) {
+    std::string err_msg = ConcatString(
+      "the 0th dimension of the 0th input[grads], the 1st input[boxes]"
+      " and the 2nd input[box_index] must be equal. ",
+      grads_dims[0], ", ", boxes_dims[0], " and ", box_index_dims[0]);
+    OP_LOGE(TbeGetName(op), err_msg);
+    return GRAPH_FAILED;
+  }
+
+  auto image_size_dims = image_size_shape.GetDims();
+  CHECK(image_size_dims.empty(),
+        AICPU_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op), string("the 3rd input[image_size] dims must not be empty.")),
+        return GRAPH_FAILED);
+  if (image_size_dims[0] != 4 && image_size_dims[0] != UNKNOWN_DIM) {
+    std::string err_msg =
+      ConcatString("the 3rd input[image_size] must be a 1-D tensor with 4 elements, current image_size is ",
+                   DebugString(image_size_dims));
+    return GRAPH_FAILED;
+  }
+
+  DataType type;
+  if (op.GetAttr("T", type) != GRAPH_SUCCESS) {
+    OP_LOGE(TbeGetName(op), string("get attr[T] failed"));
+    return GRAPH_FAILED;
+  }
+
+  int64_t batch = UNKNOWN_DIM;
+  int64_t image_height = UNKNOWN_DIM;
+  int64_t image_width = UNKNOWN_DIM;
+  int64_t depth = UNKNOWN_DIM;
+  Tensor image_size_tensor;
+  if (op.GetInputConstData("image_size", image_size_tensor) == GRAPH_SUCCESS) {
+    const int32_t *size_data = reinterpret_cast<const int32_t *>(image_size_tensor.GetData());
+    CHECK(image_size_tensor.GetSize() / sizeof(int32_t) < 4,
+          OP_LOGE(TbeGetName(op), string("the 3rd input[image_size]'s data nums less then 4, current data num is ",
+                                         image_size_tensor.GetSize() / sizeof(int32_t))),
+          return GRAPH_FAILED);
+    batch = static_cast<int64_t>(size_data[0]);
+    image_height = static_cast<int64_t>(size_data[1]);
+    image_width = static_cast<int64_t>(size_data[2]);
+    depth = static_cast<int64_t>(size_data[3]);
+  }
+
+  std::vector<int64_t> y_dims;
+  y_dims.push_back(batch);
+  y_dims.push_back(image_height);
+  y_dims.push_back(image_width);
+  y_dims.push_back(depth);
+
+  auto y_desc = op.GetOutputDesc(0);
+  Shape y_shape(y_dims);
+  if (!ShapeFullyDefined(y_shape)) {
+    std::vector<std::pair<int64_t, int64_t>> y_range;
+    for (const int64_t &y_dim : y_dims) {
+      y_range.push_back(y_dim == UNKNOWN_DIM ? std::pair<int64_t, int64_t>{1, -1}
+                                             : std::pair<int64_t, int64_t>{y_dim, y_dim});
+    }
+    y_desc.SetShapeRange(y_range);
+  }
+  y_desc.SetShape(y_shape);
+  y_desc.SetDataType(type);
+  op.UpdateOutputDesc("y", y_desc);
+  return GRAPH_SUCCESS;
+}
+
+CUST_INFER_FUNC_REG(CropAndResizeGradImage, CropAndResizeGradImageInfer);
+// ----------------CropAndResizeGradImage-------------------
+
+// ----------------CropAndResizeGradBoxes-------------------
+CUST_IMPLEMT_INFERFUNC(CropAndResizeGradBoxes, CropAndResizeGradBoxesInfer) {
+  Shape shape;
+  auto ret = WithRank(op.GetInputDesc(0), 4, shape, op);
+  if (ret != GRAPH_SUCCESS) {
+    std::string err_msg = GetShapeErrMsg(0, DebugString(op.GetInputDesc(0).GetShape().GetDims()), "4D");
+    err_msg = string("failed to call WithRank, ") + err_msg;
+    OP_LOGE(TbeGetName(op), err_msg);
+    return GRAPH_FAILED;
+  }
+  ret = WithRank(op.GetInputDesc(1), 4, shape, op);
+  if (ret != GRAPH_SUCCESS) {
+    std::string err_msg = GetShapeErrMsg(1, DebugString(op.GetInputDesc(1).GetShape().GetDims()), "4D");
+    err_msg = string("failed to call WithRank, ") + err_msg;
+    OP_LOGE(TbeGetName(op), err_msg);
+    return GRAPH_FAILED;
+  }
+  ret = WithRank(op.GetInputDesc(2), 2, shape, op);
+  if (ret != GRAPH_SUCCESS) {
+    std::string err_msg = GetShapeErrMsg(2, DebugString(op.GetInputDesc(2).GetShape().GetDims()), "2D");
+    err_msg = string("failed to call WithRank, ") + err_msg;
+    OP_LOGE(TbeGetName(op), err_msg);
+    return GRAPH_FAILED;
+  }
+  ret = WithRank(op.GetInputDesc(3), 1, shape, op);
+  if (ret != GRAPH_SUCCESS) {
+    std::string err_msg = GetShapeErrMsg(3, DebugString(op.GetInputDesc(3).GetShape().GetDims()), "1D");
+    err_msg = string("failed to call WithRank, ") + err_msg;
+    OP_LOGE(TbeGetName(op), err_msg);
+    return GRAPH_FAILED;
+  }
+
+  auto grads_shape = op.GetInputDesc(0).GetShape().GetDims();
+  auto boxes_shape = op.GetInputDesc(2).GetShape().GetDims();
+  auto box_index_shape = op.GetInputDesc(3).GetShape().GetDims();
+
+  if (grads_shape[0] != boxes_shape[0] && boxes_shape[0] != box_index_shape[0]) {
+    std::string err_msg = ConcatString(
+      "the 0th dimension of the 2th input[boxes], 0th input[grads] and the 3rd"
+      " input [box_index] must be equal. ",
+      grads_shape[0], ", ", boxes_shape[0], " and ", box_index_shape[0]);
+    OP_LOGE(TbeGetName(op), err_msg);
+    return GRAPH_FAILED;
+  }
+
+  TensorDesc desc = op.GetOutputDescByName("y");
+  desc.SetShape(op.GetInputDesc(2).GetShape());
+  desc.SetDataType(DT_FLOAT);
+  if (op.UpdateOutputDesc("y", desc) != GRAPH_SUCCESS) {
+    return GRAPH_FAILED;
+  }
+
+  return GRAPH_SUCCESS;
+}
+
+CUST_INFER_FUNC_REG(CropAndResizeGradBoxes, CropAndResizeGradBoxesInfer);
+// ----------------CropAndResizeGradBoxes-------------------
 }  // namespace ge

@@ -85,4 +85,13 @@ ATTR_INPUT_MAP(SplitV) = {{"size_splits", "size_splits"}, {"split_dim", "split_d
 DYN_OUTPUT_MAP(SplitV) = {{0, DYN_OUTPUT_DESC(y)}};
 REG_ADPT_DESC(SplitV, prim::kPrimSplitV->name(), ADPT_DESC(SplitV))
 REG_ADPT_DESC(SplitVD, prim::kPrimSplitVD->name(), ADPT_DESC(SplitV))
+
+// ConcatOffset
+CUST_DYN_INPUT_MAP(ConcatOffset) = {{1, DYN_INPUT_DESC(x)}};
+CUST_INPUT_MAP(ConcatOffset) = EMPTY_INPUT_MAP;
+CUST_ATTR_MAP(ConcatOffset) = {{"axis", ATTR_DESC(axis, AnyTraits<int64_t>())},
+                               {kAttrDynInputSizes, ATTR_DESC(N, AnyTraits<std::vector<int64_t>>(), 0)}};
+CUST_DYN_OUTPUT_MAP(ConcatOffset) = {{0, DYN_OUTPUT_DESC(y)}};
+CUST_OUTPUT_MAP(ConcatOffset) = EMPTY_OUTPUT_MAP;
+REG_ADPT_DESC(ConcatOffset, prim::kPrimConcatOffset->name(), CUST_ADPT_DESC(ConcatOffset));
 }  // namespace mindspore::transform

@@ -16,21 +16,19 @@
 #ifndef AICPU_OPS_CONCAT_OFFSET_KERNEL_H_
 #define AICPU_OPS_CONCAT_OFFSET_KERNEL_H_
 
+#include "inc/ms_cpu_kernel.h"
 #include <vector>
 #include <random>
-#include "common/kernel_base.h"
 
 namespace aicpu {
-class ConcatOffsetKernel : public KernelBase {
+class ConcatOffsetKernel : public CpuKernel {
  public:
-  ConcatOffsetKernel() : KernelBase("ConcatOffsetKernel") {}
-  ~ConcatOffsetKernel() = default;
+  ConcatOffsetKernel() = default;
+  uint32_t Compute(CpuKernelContext &ctx) override;
 
- protected:
-  uint32_t ParseKernelParam() override;
-  uint32_t DoCompute() override;
+ private:
+  uint32_t ParseKernelParam(CpuKernelContext &ctx);
   bool CheckParams();
-  uint32_t ConcatOffsetTask();
 
   std::vector<std::vector<int64_t>> input_shapes_;
   std::vector<int64_t> output_shape_;

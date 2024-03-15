@@ -167,6 +167,8 @@ def test_gpu_net(mode):
 
 @pytest.mark.level1
 @pytest.mark.env_onecard
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_ascend_net(mode):
     """

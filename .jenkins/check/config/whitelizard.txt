@@ -433,6 +433,7 @@ mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/customize/
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/customize/op_proto/nn_pooling_ops_proto.cc:ge::CUST_IMPLEMT_VERIFIER
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/customize/op_proto/combined_non_max_suppression_proto.cc:ge::IMPLEMT_INFERFUNC
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/customize/op_proto/math_ops_proto.cc:ge::IMPLEMT_INFERFUNC
+mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/customize/op_proto/image_ops_proto.cc:ge::CUST_IMPLEMT_INFERFUNC
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/customize/op_proto/concat_proto.cc:ge::ConcatInferShapeCommon
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/customize/op_proto/combined_non_max_suppression_proto.cc:ge::IMPLEMT_INFERFUNC
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/customize/op_proto/im2col_proto.cc:ge::IMPLEMT_COMMON_INFERFUNC

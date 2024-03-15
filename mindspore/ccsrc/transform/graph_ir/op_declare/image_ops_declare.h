@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_IMAGE_OPS_DECLARE_H_
 #define MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_IMAGE_OPS_DECLARE_H_
 
+#include "transform/graph_ir/custom_op_proto/cust_image_ops.h"
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
 #include "utils/hash_map.h"
 #include "op_proto/inc/image_ops.h"
@@ -54,14 +55,17 @@ DECLARE_OP_USE_OUTPUT(UpsampleNearest3dGrad)
 DECLARE_OP_ADAPTER(Resize)
 DECLARE_OP_USE_OUTPUT(Resize)
 
+DECLARE_CUST_OP_ADAPTER(CropAndResize)
+DECLARE_CUST_OP_USE_OUTPUT(CropAndResize)
+
 DECLARE_OP_ADAPTER(CropAndResizeD)
 DECLARE_OP_USE_OUTPUT(CropAndResizeD)
 
-DECLARE_OP_ADAPTER(CropAndResizeGradBoxes)
-DECLARE_OP_USE_OUTPUT(CropAndResizeGradBoxes)
+DECLARE_CUST_OP_ADAPTER(CropAndResizeGradBoxes)
+DECLARE_CUST_OP_USE_OUTPUT(CropAndResizeGradBoxes)
 
-DECLARE_OP_ADAPTER(CropAndResizeGradImage)
-DECLARE_OP_USE_OUTPUT(CropAndResizeGradImage)
+DECLARE_CUST_OP_ADAPTER(CropAndResizeGradImage)
+DECLARE_CUST_OP_USE_OUTPUT(CropAndResizeGradImage)
 
 DECLARE_OP_ADAPTER(DecodeImage)
 DECLARE_OP_USE_OUTPUT(DecodeImage)
