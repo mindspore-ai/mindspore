@@ -313,13 +313,6 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
   MS_EXCEPTION_IF_NULL(ms_context_ptr);
   MS_EXCEPTION_IF_NULL(ge_options);
 
-  auto profiler_manager = profiler::ProfilerManager::GetInstance();
-  MS_EXCEPTION_IF_NULL(profiler_manager);
-  (*ge_options)["ge.exec.profilingMode"] = std::to_string(static_cast<int>(profiler_manager->GetProfilingEnableFlag()));
-  if (profiler_manager->GetProfilingEnableFlag()) {
-    (*ge_options)["ge.exec.profilingOptions"] = profiler_manager->GetProfilingOptions();
-  }
-
   SetHcclOptions(ms_context_ptr, ge_options);
   SetDumpOptions(ge_options);
 
