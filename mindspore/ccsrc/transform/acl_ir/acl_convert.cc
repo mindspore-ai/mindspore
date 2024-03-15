@@ -850,14 +850,13 @@ void AclConverter::ConvertMsIdxToGeIdx(const PrimitivePtr &prim, const std::vect
     }
   }
   for (const auto &input_attr : info->input_attr_map()) {
-    if (ms_real_idx - attr_offset >= num_real_inputs) {
+    auto input_idx = static_cast<size_t>(input_attr.first);
+    if (input_idx >= num_real_inputs) {
       break;
     }
-    if (static_cast<int>(input_attr.first) > info->GetMaxMsProtoIndexOfInputMap()) {
-      ms_and_ge_inputs_sort_info_.emplace(
-        std::make_pair(static_cast<size_t>(input_attr.first), std::numeric_limits<size_t>::max()),
-        std::make_pair(std::vector<size_t>{ms_real_idx - attr_offset}, std::vector<size_t>{}));
-      ms_real_idx++;
+    if (static_cast<int>(input_idx) > info->GetMaxMsProtoIndexOfInputMap()) {
+      ms_and_ge_inputs_sort_info_.emplace(std::make_pair(input_idx, std::numeric_limits<size_t>::max()),
+                                          std::make_pair(std::vector<size_t>{input_idx}, std::vector<size_t>{}));
     }
   }
 
