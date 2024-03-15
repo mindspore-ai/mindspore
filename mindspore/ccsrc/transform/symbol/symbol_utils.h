@@ -20,7 +20,8 @@
 #include "utils/log_adapter.h"
 
 template <typename Function, typename... Args>
-auto RunAscendApi(Function f, const char *func_name, Args... args) {
+auto RunAscendApi(Function f, const char *file, int line, const char *call_f, const char *func_name, Args... args) {
+  MS_LOG(DEBUG) << "Call ascend api <" << func_name << "> in <" << call_f << "> at " << file << ":" << line;
   if (f == nullptr) {
     MS_LOG(EXCEPTION) << func_name << " is null.";
   }
@@ -28,7 +29,8 @@ auto RunAscendApi(Function f, const char *func_name, Args... args) {
 }
 
 template <typename Function>
-auto RunAscendApi(Function f, const char *func_name) {
+auto RunAscendApi(Function f, const char *file, int line, const char *call_f, const char *func_name) {
+  MS_LOG(DEBUG) << "Call ascend api <" << func_name << "> in <" << call_f << "> at " << file << ":" << line;
   if (f == nullptr) {
     MS_LOG(EXCEPTION) << func_name << " is null.";
   }
@@ -38,8 +40,11 @@ auto RunAscendApi(Function f, const char *func_name) {
 namespace mindspore {
 namespace transform {
 
-#define CALL_ASCEND_API(func_name, ...) RunAscendApi(mindspore::transform::func_name##_, #func_name, __VA_ARGS__)
-#define CALL_ASCEND_API2(func_name) RunAscendApi(mindspore::transform::func_name##_, #func_name)
+#define CALL_ASCEND_API(func_name, ...) \
+  RunAscendApi(mindspore::transform::func_name##_, FILE_NAME, __LINE__, __FUNCTION__, #func_name, __VA_ARGS__)
+#define CALL_ASCEND_API2(func_name) \
+  RunAscendApi(mindspore::transform::func_name##_, FILE_NAME, __LINE__, __FUNCTION__, #func_name)
+
 std::string GetAscendPath();
 void *GetLibHandler(const std::string &lib_path);
 void LoadAscendApiSymbols();
