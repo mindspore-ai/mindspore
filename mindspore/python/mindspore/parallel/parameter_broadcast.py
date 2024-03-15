@@ -29,17 +29,18 @@ def parameter_broadcast(net, layout, cur_rank=0, initial_rank=0):
     Args:
         net (Cell): The network where the parameters will be broadcasted.
         layout (Dict): Parameter layout dictionary. Come from
-            :meth:`mindspore.nn.Cell.parameter_layout_dict`
-            or read from file(for example: "strategy.ckpt"). The key is param name,
-            the value is the layout of this parameter.
+            :func:`mindspore.nn.Cell.parameter_layout_dict`
+            or read from file(for example: "strategy.ckpt" saved by using the
+            `strategy_ckpt_config` parameter of :func:`mindspore.set_auto_parallel_context`).
+            The key is param name, the value is the layout of this parameter.
         cur_rank (int, optional): current rank id. Default: ``0``.
         initial_rank (int, optional): Start rank id for each pipeline. Default: ``0``.
 
     Raises:
-        ValueError: cur_rank is wrong.
-        ValueError: initial_rank is wrong.
+        ValueError: `cur_rank` is not rank id of current rank.
+        ValueError: `initial_rank` is not the start rank id of current pipeline stage.
         ValueError: Parameter name in `layout` can not be found in
-            :meth:`mindspore.nn.Cell.parameters_dict`.
+            :func:`mindspore.nn.Cell.parameters_dict`.
 
     Examples:
         >>> import os

@@ -204,6 +204,7 @@ Parallel
 
     mindspore.Layout
     mindspore.shard
+    mindspore.parameter_broadcast
 
 JIT
 ---
