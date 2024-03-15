@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
+import os
 import numpy as np
 import pytest
 
@@ -43,8 +44,15 @@ class NetSigmoidCrossEntropyWithLogitsGrad(nn.Cell):
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 def test_sigmoid_cross_entropy_with_logits():
+    """
+    Feature: test graph kernel SigmoidCrossEntropyWithLogits expander
+    Description: SigmoidCrossEntropyWithLogits expander
+    Expectation: the result match with the expected result
+    """
+    os.environ["GRAPH_OP_RUN"] = "1"
     logits = Tensor(np.array([[1, 1, 2],
                               [1, 2, 1],
                               [2, 1, 1]]).astype(np.float32))
@@ -54,23 +62,29 @@ def test_sigmoid_cross_entropy_with_logits():
 
     error = np.ones(shape=[3, 3]) * 1.0e-6
 
-    context.set_context(mode=context.GRAPH_MODE,
-                        enable_graph_kernel=True, device_target="GPU")
+    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True)
     sigmoid_cross_entropy_with_logits = NetSigmoidCrossEntropyWithLogits()
     result_open_gk = sigmoid_cross_entropy_with_logits(logits, labels)
 
-    context.set_context(mode=context.GRAPH_MODE,
-                        enable_graph_kernel=False, device_target="GPU")
+    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=False)
     sigmoid_cross_entropy_with_logits_beta = NetSigmoidCrossEntropyWithLogits()
     result_close_gk = sigmoid_cross_entropy_with_logits_beta(logits, labels)
     diff = result_open_gk.asnumpy() - result_close_gk.asnumpy()
+    del os.environ["GRAPH_OP_RUN"]
     assert np.all(abs(diff) < error)
 
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 def test_sigmoid_cross_entropy_with_logits_grad():
+    """
+    Feature: test graph kernel SigmoidCrossEntropyWithLogitsGrad expander
+    Description: SigmoidCrossEntropyWithLogitsGrad expander
+    Expectation: the result match with the expected result
+    """
+    os.environ["GRAPH_OP_RUN"] = "1"
     logits = Tensor(np.array([[1, 1, 2],
                               [1, 2, 1],
                               [2, 1, 1]]).astype(np.float32))
@@ -81,14 +95,13 @@ def test_sigmoid_cross_entropy_with_logits_grad():
 
     error = np.ones(shape=[3, 3]) * 1.0e-6
 
-    context.set_context(mode=context.GRAPH_MODE,
-                        enable_graph_kernel=True, device_target="GPU")
+    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True)
     sigmoid_cross_entropy_with_logits_grad = NetSigmoidCrossEntropyWithLogitsGrad()
     result_open_gk = sigmoid_cross_entropy_with_logits_grad(logits, labels, dout)
 
-    context.set_context(mode=context.GRAPH_MODE,
-                        enable_graph_kernel=False, device_target="GPU")
+    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=False)
     sigmoid_cross_entropy_with_logits_grad_beta = NetSigmoidCrossEntropyWithLogitsGrad()
     result_close_gk = sigmoid_cross_entropy_with_logits_grad_beta(logits, labels, dout)
     diff = result_open_gk.asnumpy() - result_close_gk.asnumpy()
+    del os.environ["GRAPH_OP_RUN"]
     assert np.all(abs(diff) < error)

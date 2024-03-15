@@ -38,13 +38,19 @@ namespace mindspore::graphkernel {
 namespace {
 std::set<TypeId> dvm_float_types{kNumberTypeFloat16, kNumberTypeFloat32, kNumberTypeBFloat16};
 
-bool HasSpecialFormat(const AnfNodePtr &node) {
+bool CheckFormat(const AnfNodePtr &node) {
+  if (common::AnfAlgo::IsDynamicShape(node) && !CheckDefaultFormat(node)) {
+    // dvm kernel infer shape use inputs device shape, but the output abstract shape inferred from device shape is
+    // not unique if some shape value are not a multiple of 16
+    MS_LOG(DEBUG) << "skip node: " << node->fullname_with_scope()
+                  << " because only default format is supported in dynamic shape";
+    return false;
+  }
   auto cb = Callback::Instance();
   MS_EXCEPTION_IF_NULL(cb);
   auto input_num = AnfUtils::GetInputTensorNum(node);
   if (input_num > 0) {
     bool has_special_format = false;
-    auto is_dynamic = common::AnfAlgo::IsDynamicShape(node);
     auto base_format = cb->GetInputFormat(node, 0);
     for (size_t i = 0; i < input_num; ++i) {
       auto input_format = cb->GetInputFormat(node, i);
@@ -52,22 +58,13 @@ bool HasSpecialFormat(const AnfNodePtr &node) {
           (input_format.find("FRACTAL") != std::string::npos || input_format.find("C0") != std::string::npos)) {
         has_special_format = true;
       }
-      if (has_special_format) {
-        if (input_format != base_format) {
-          // mixed special format and default format is not supported, because extra Reshape/TransData is needed
-          return true;
-        }
-        if (is_dynamic) {
-          // dvm kernel infer shape use inputs device shape, but the output abstract shape inferred from device shape is
-          // not unique if some shape value are not a multiple of 16
-          MS_LOG(DEBUG) << "skip node: " << node->fullname_with_scope()
-                        << " because only default format is supported in dynamic shape";
-          return true;
-        }
+      if (has_special_format && input_format != base_format) {
+        // mixed special format and default format is not supported, because extra Reshape/TransData is needed
+        return false;
       }
     }
   }
-  return false;
+  return true;
 }
 
 bool DvmSliceSupported(const AnfNodePtr &node, TypeId node_output_type) {
@@ -90,6 +87,10 @@ bool DvmSliceSupported(const AnfNodePtr &node, TypeId node_output_type) {
 }
 
 bool DvmSupported(const AnfNodePtr &node) {
+  // check format
+  if (!CheckFormat(node)) {
+    return false;
+  }
   auto cb = Callback::Instance();
   MS_EXCEPTION_IF_NULL(cb);
   auto node_output_type = cb->GetOutputType(node, 0);
@@ -111,10 +112,6 @@ bool DvmSupported(const AnfNodePtr &node) {
     if (skip_mode == true) {
       return false;
     }
-  }
-  // special format
-  if (HasSpecialFormat(node)) {
-    return false;
   }
   // compare op
   static std::vector<PrimitivePtr> compare_ops{prim::kPrimEqual,        prim::kPrimNotEqual, prim::kPrimGreater,
@@ -266,8 +263,8 @@ const std::vector<OpWithLevel> clusterable_ops_with_level_dvm = {
   {kAscendDevice, OpLevel_0, prim::kPrimLessEqual},    {kAscendDevice, OpLevel_0, prim::kPrimLogicalAnd},
   {kAscendDevice, OpLevel_0, prim::kPrimLogicalOr},    {kAscendDevice, OpLevel_0, prim::kPrimLogicalNot},
   {kAscendDevice, OpLevel_0, prim::kPrimSelect},       {kAscendDevice, OpLevel_0, prim::kPrimAssign},
-  {kAscendDevice, OpLevel_1, prim::kPrimReshape},      {kAscendDevice, OpLevel_1, prim::kPrimTranspose},
   {kAscendDevice, OpLevel_0, prim::kPrimReduceSum},    {kAscendDevice, OpLevel_0, prim::kPrimIsFinite},
+  {kAscendDevice, OpLevel_1, prim::kPrimReshape},
 };
 }  // namespace
 
