@@ -3757,7 +3757,7 @@ void DfGraphConvertor::AddCommAttrForHcclNode(const CNodePtr &node, const Operat
     MS_LOG(WARNING) << "Node " << node->fullname_with_scope() << " does not have attr " << kAttrGroup << " skip.";
     return;
   }
-  if (!common::IsNeedProfileMemory()) {
+  if (common::GetEnv(kSimulationLevel).empty() && !common::IsNeedProfileMemory()) {
     std::string group = common::AnfAlgo::GetNodeAttr<std::string>(node, kAttrGroup);
     auto comm = device::ascend::AscendCollectiveCommLib::GetInstance().HcclCommunicator(group);
     if (common::UseHostCollective() && !hccl::HcclAdapter::GetInstance().UseHcclCM()) {

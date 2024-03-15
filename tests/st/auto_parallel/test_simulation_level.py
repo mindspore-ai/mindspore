@@ -46,8 +46,8 @@ label_ = Tensor(np.zeros([32, 128]).astype(np.float32))
 
 def test_get_group_size_default():
     """
-    Feature: compile level.
-    Description: get group size default when set compile level 0.
+    Feature: simulation level.
+    Description: get group size default when set simulation level 0.
     Expectation: return default 1.
     """
     os.environ["MS_SIMULATION_LEVEL"] = "0"
@@ -58,8 +58,8 @@ def test_get_group_size_default():
 
 def test_get_group_size_env():
     """
-    Feature: compile level.
-    Description: get group size default when set compile level 0.
+    Feature: simulation level.
+    Description: get group size default when set simulation level 0.
     Expectation: return env rank size.
     """
     os.environ["MS_SIMULATION_LEVEL"] = "0"
@@ -71,8 +71,8 @@ def test_get_group_size_env():
 
 def test_get_rank_id_default():
     """
-    Feature: compile level.
-    Description: get rank id default when set compile level 0.
+    Feature: simulation level.
+    Description: get rank id default when set simulation level 0.
     Expectation: return default 0.
     """
     os.environ["MS_SIMULATION_LEVEL"] = "0"
@@ -83,8 +83,8 @@ def test_get_rank_id_default():
 
 def test_get_rank_id_env():
     """
-    Feature: compile level.
-    Description: get rank id default when set compile level 0.
+    Feature: simulation level.
+    Description: get rank id default when set simulation level 0.
     Expectation: return env rank id.
     """
     os.environ["MS_SIMULATION_LEVEL"] = "0"
@@ -96,8 +96,8 @@ def test_get_rank_id_env():
 
 def test_get_local_rank_id():
     """
-    Feature: compile level.
-    Description: get local rank id when set compile level 0.
+    Feature: simulation level.
+    Description: get local rank id when set simulation level 0.
     Expectation: return local rank id.
     """
     os.environ["MS_SIMULATION_LEVEL"] = "0"
@@ -110,8 +110,8 @@ def test_get_local_rank_id():
 
 def test_create_group():
     """
-    Feature: compile level.
-    Description: create group when set compile level 0.
+    Feature: simulation level.
+    Description: create group when set simulation level 0.
     Expectation: no exception.
     """
     os.environ["MS_SIMULATION_LEVEL"] = "0"
@@ -129,8 +129,8 @@ def test_create_group():
 
 def test_destroy_group():
     """
-    Feature: compile level.
-    Description: destroy group when set compile level 0.
+    Feature: simulation level.
+    Description: destroy group when set simulation level 0.
     Expectation: no exception.
     """
     os.environ["MS_SIMULATION_LEVEL"] = "0"
@@ -145,8 +145,8 @@ def test_destroy_group():
 
 def test_get_world_rank_from_group_rank():
     """
-    Feature: compile level.
-    Description: get world rank from group rank when set compile level 0.
+    Feature: simulation level.
+    Description: get world rank from group rank when set simulation level 0.
     Expectation: return world rank.
     """
     os.environ["MS_SIMULATION_LEVEL"] = "0"
@@ -162,8 +162,8 @@ def test_get_world_rank_from_group_rank():
 
 def test_get_group_rank_from_world_rank():
     """
-    Feature: compile level.
-    Description: get local rank id default when set compile level 0.
+    Feature: simulation level.
+    Description: get local rank id default when set simulation level 0.
     Expectation: return local rank id.
     """
     os.environ["MS_SIMULATION_LEVEL"] = "0"
@@ -177,10 +177,10 @@ def test_get_group_rank_from_world_rank():
     os.environ["MS_SIMULATION_LEVEL"] = ""
 
 
-def test_compile_graph():
+def test_simulation_graph():
     """
-    Feature: compile level.
-    Description: compile graph when set compile level 0.
+    Feature: simulation level.
+    Description: compile graph when set simulation level 0.
     Expectation: no exception.
     """
     os.environ["MS_SIMULATION_LEVEL"] = "0"
@@ -196,8 +196,8 @@ def test_compile_graph():
 
 def test_run_graph():
     """
-    Feature: compile level.
-    Description: run graph when set compile level 1.
+    Feature: simulation level.
+    Description: run graph when set simulation level 1.
     Expectation: no exception.
     """
     os.environ["MS_SIMULATION_LEVEL"] = "1"
@@ -213,4 +213,29 @@ def test_run_graph():
     train_net.set_train()
     train_net(input_, label_)
     context.reset_auto_parallel_context()
+    os.environ["MS_SIMULATION_LEVEL"] = ""
+
+def test_run_graph_kbk():
+    """
+    Feature: simulation level.
+    Description: run graph when set simulation level 1.
+    Expectation: no exception.
+    """
+    os.environ["MS_SIMULATION_LEVEL"] = "1"
+    os.environ["RANK_SIZE"] = "32"
+    os.environ["RANK_ID"] = "1"
+    os.environ["GRAPH_OP_RUN"] = "1"
+    os.environ["OMPI_COMMAND"] = "1"
+    os.environ["PMIX_RANK"] = "1"
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    net = DenseNet()
+    net.fc1.matmul.shard(((4, 1), (8, 1)))
+    optimizer = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
+    loss_fn = nn.SoftmaxCrossEntropyWithLogits()
+    net = WithLossCell(net, loss_fn)
+    train_net = TrainOneStepCell(net, optimizer)
+    train_net.set_train()
+    train_net(input_, label_)
+    context.reset_auto_parallel_context()
+    os.environ["GRAPH_OP_RUN"] = ""
     os.environ["MS_SIMULATION_LEVEL"] = ""

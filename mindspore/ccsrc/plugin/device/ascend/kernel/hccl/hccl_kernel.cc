@@ -129,7 +129,7 @@ bool HcclKernel::Init(const std::vector<KernelTensor *> &inputs, const std::vect
   if (!HcomUtil::GetHcomAttr<std::string>(primitive_, kAttrGroup, &group_)) {
     return false;
   }
-  if (!common::IsNeedProfileMemory()) {
+  if (common::GetEnv(kSimulationLevel).empty() && !common::IsNeedProfileMemory()) {
     // pynative with ranktable also need hccl_comm
     comm_ = AscendCollectiveCommLib::GetInstance().HcclCommunicator(group_);
     if (common::UseHostCollective() && !hccl::HcclAdapter::GetInstance().UseHcclCM()) {

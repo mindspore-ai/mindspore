@@ -70,7 +70,9 @@ class GeDeviceResManager : public DeviceResManager {
   static void CreateSessionAndGraphRunner();
 
   bool LoadCollectiveCommLib() override {
-    collective_comm_lib_ = &AscendCollectiveCommLib::GetInstance();
+    if (common::GetEnv(kSimulationLevel).empty()) {
+      collective_comm_lib_ = &AscendCollectiveCommLib::GetInstance();
+    }
     return true;
   }
 

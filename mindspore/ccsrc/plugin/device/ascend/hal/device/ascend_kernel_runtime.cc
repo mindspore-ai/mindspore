@@ -708,7 +708,7 @@ bool AscendKernelRuntime::DestroyHccl() {
     MS_LOG(INFO) << "Hccl is not enable, no need to close.";
     return true;
   }
-  if (!AscendCollectiveCommLib::GetInstance().DestroyHcclComm()) {
+  if (common::GetEnv(kSimulationLevel).empty() && !AscendCollectiveCommLib::GetInstance().DestroyHcclComm()) {
     MS_LOG(ERROR) << "Hccl destroy failed.";
     return false;
   }
