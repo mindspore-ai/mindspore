@@ -2,6 +2,27 @@
 
 [查看中文](./RELEASE_CN.md)
 
+## MindSpore 2.2.12 Release Notes
+
+### Major Features and Improvements
+
+- [Stable] Optimize scnarios where network parameters are initialized by fp32, and optimizer parallel mode is on, reducing the amount of Cast operator.
+- [Stable] Add detection and processing capabilities to silent fault detection. Silent faults may lead to error during training procedures, this helps users to prevent or lower the cost of fault location, which caused by silent faults.
+
+### Bug Fixes
+
+- [#I97D1L] Fix ReduceLROnPlateau, LRScheduler, CosineAnnealingWarmRestarts dynamic learning rate related interface sample error.
+- [#I970HV] Fix the problem where order of AllGather/ReduceScatter between two cards is not preserved.
+- [#I99JPI] Fix load checkpoint for bfloat16 parameter during vague load mode.
+
+### Contributors
+
+Thanks goes to these wonderful people:
+
+yao_yf, YijieChen, 冯一航, yuchaojie, 李良灿, YuJianfeng, huangxinjing, GuoZhibin, looop5
+
+Contributions of any kind are welcome!
+
 ## MindSpore 2.2.11 Release Notes
 
 ### Major Features and Improvements
