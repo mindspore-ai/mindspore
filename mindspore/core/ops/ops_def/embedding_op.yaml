@@ -1,0 +1,31 @@
+#Embedding
+embedding:
+    args:
+        input:
+            dtype: tensor
+        weight:
+            dtype: tensor
+        padding_idx:
+            dtype: int
+            default: None
+        max_norm:
+            dtype: float
+            default: None
+        norm_type:
+            dtype: float
+            default: 2.0
+        scale_grad_by_freq:
+            dtype: bool
+            default: False
+    args_signature:
+        rw_write: weight
+    labels:
+        side_effect_mem: True
+    returns:
+        output1:
+            dtype: tensor
+    dispatch:
+        enable: True
+        Ascend: EmbeddingAscend
+    function:
+        disable: True

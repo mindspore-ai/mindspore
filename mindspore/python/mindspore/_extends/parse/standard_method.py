@@ -1,6 +1,6 @@
 # This is the Python adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
 #
-# Copyright 2020-2023 Huawei Technologies Co., Ltd
+# Copyright 2020-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -2411,11 +2411,11 @@ def float_func(*data):
             tensor_shape = F.shape(data)
             tensor_shape_len = len(tensor_shape)
             if tensor_shape_len == 0 or (tensor_shape_len == 1 and tensor_shape[0] == 1):
-                data = F.cast(data, mstype.float64)
+                data = F.cast(data, mstype.float32)
                 return TensorToScalar()(data)
             raise ValueError(f"Can not convert Tensor with more than one element to Scalar, "
                              f"while the data's shape is: {tensor_shape}")
-        return F.scalar_cast(data, mstype.float64)
+        return F.scalar_cast(data, mstype.float32)
     if isinstance(data, (CSRTensor, COOTensor, RowTensorInner)):
         const_utils.raise_type_error(
             "float() does not support sparse tensor input.")

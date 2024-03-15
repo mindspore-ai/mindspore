@@ -37,6 +37,7 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
     mindspore.ops.dropout1d
     mindspore.ops.dropout2d
     mindspore.ops.dropout3d
+    mindspore.ops.embedding
     mindspore.ops.flatten
     mindspore.ops.fold
     mindspore.ops.fractional_max_pool3d

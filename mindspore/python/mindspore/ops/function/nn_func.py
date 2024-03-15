@@ -1,4 +1,4 @@
-# Copyright 2023 Huawei Technologies Co., Ltd
+# Copyright 2023-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import mindspore.common.dtype as mstype
 from mindspore.ops.function.math_func import logsumexp
 from mindspore.ops.function.random_func import _get_seed, _set_prim_op_user_data
 from mindspore.common.tensor import Tensor
+from mindspore.common.parameter import Parameter
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore.ops._primitive_cache import _get_cache_prim
 from mindspore import _checkparam as validator
@@ -41,6 +42,7 @@ from mindspore.ops.operations.nn_ops import TripletMarginLoss
 from mindspore.ops.operations._sequence_ops import TupleToTensor, TensorToTuple, ListToTensor
 from mindspore.common.api import _function_forbid_reuse
 from mindspore.ops.auto_generate import log_softmax, prelu, celu, relu, fast_gelu, silu, elu, sigmoid, relu6
+from mindspore.ops.auto_generate.gen_ops_prim import embedding_op
 
 abs_ = P.Abs()
 add_ = P.Add()
@@ -7179,6 +7181,60 @@ def incre_flash_attention(query, key, value, attn_mask, actual_seq_lengths, pse_
                 dequant_scale2, quant_scale2, quant_offset2, antiquant_scale, antiquant_offset, block_table)
 
 
+def embedding(input, weight, padding_idx=None, max_norm=None, norm_type=2.0, scale_grad_by_freq=False):
+    r"""
+    Retrieve the word embeddings in `weight` using indices specified in `input`.
+
+    .. warning::
+        On Ascend, the behavior is unpredictable when the value of input is invalid.
+
+    Args:
+        input (Tensor): The indices used to lookup in the `weight`. The data type must be mindspore.int32 or
+            mindspore.int64, and the value should be in range `[0, weight.shape[0])`.
+        weight (Parameter): The matrix where to lookup from. The shape must be 2D.
+        padding_idx (int, optional): If the value is not None, the corresponding row of `weight` will not be updated
+            in training. The value should be in range `[-weight.shape[0], weight.shape[0])` if it's not ``None``.
+            Default ``None``.
+        max_norm (float, optional): If not None, firstly get the p-norm result of the `weight` specified by `input`
+            where p is specified by `norm_type`; if the result is larger then `max_norm`, update the `weight`
+            with :math:`\frac{max\_norm}{result+1e^{-7}}` in-place. Default ``None``.
+        norm_type (float, optional): Indicates the value of p in p-norm. Default ``2.0``.
+        scale_grad_by_freq (bool, optional): If ``True`` the gradients will be scaled by the inverse of frequency of
+            the index in `input`. Default ``False``.
+
+    Returns:
+        Tensor, has the same data type as `weight`, the shape is :math:`(*input.shape, weight.shape[1])`.
+
+    Raises:
+        ValueError: If `padding_idx` is out of valid range.
+        ValueError: If the shape of `weight` is invalid.
+        TypeError: `weight` is not a :class:`mindspore.Parameter`.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, Parameter, ops
+        >>> input = Tensor([[1, 0, 1, 1], [0, 0, 1, 0]])
+        >>> weight = Parameter(np.random.randn(3, 3).astype(np.float32))
+        >>> output = ops.embedding(input, weight, max_norm=0.4)
+        >>> print(output)
+        [[[ 5.49015924e-02,  3.47811311e-01, -1.89771220e-01],
+          [ 2.09307984e-01, -2.24846993e-02,  3.40124398e-01],
+          [ 5.49015924e-02,  3.47811311e-01, -1.89771220e-01],
+          [ 5.49015924e-02,  3.47811311e-01, -1.89771220e-01]],
+         [[ 2.09307984e-01, -2.24846993e-02,  3.40124398e-01],
+          [ 2.09307984e-01, -2.24846993e-02,  3.40124398e-01],
+          [ 5.49015924e-02,  3.47811311e-01, -1.89771220e-01],
+          [ 2.09307984e-01, -2.24846993e-02,  3.40124398e-01]]]
+    """
+    if not isinstance(weight, Parameter):
+        raise TypeError(f"For Embedding, the weight must be a mindspore.Parameter, but got {type(weight)}.")
+    return embedding_op(input, weight, padding_idx, max_norm, norm_type, scale_grad_by_freq)
+
+
 __all__ = [
     'adaptive_avg_pool1d',
     'adaptive_avg_pool2d',
@@ -7204,6 +7260,7 @@ __all__ = [
     'dropout1d',
     'dropout2d',
     'dropout3d',
+    'embedding',
     'fast_gelu',
     'fractional_max_pool2d',
     'fractional_max_pool3d',

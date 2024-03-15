@@ -1,5 +1,5 @@
 /**
- * Copyright 2022-2023 Huawei Technologies Co., Ltd
+ * Copyright 2022-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@
 #include "ops/nn_optimizer_op_name.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
+#include "ops/auto_generate/gen_ops_name.h"
 
 namespace mindspore::expander::bprop {
 namespace {
@@ -254,6 +255,23 @@ REG_BPROP_BUILDER("MaxPool").SetBody(BODYFUNC(ib) {
                       {"data_format", ib->GetAttr("format")},
                       {"format", ib->GetAttr("format")}});
   return {dx};
+});
+
+REG_BPROP_BUILDER("Embedding").SetUnusedInputs({i3, i4, i6}).SetBody(BODYFUNC(ib) {
+  auto input = ib->GetInput(kIndex0);
+  auto weight = ib->GetInput(kIndex1);
+  auto padding_idx = ib->GetInput(kIndex2);
+  auto norm_type = ib->GetInput(kIndex4);
+  auto scale_grad_by_freq = ib->GetInput(kIndex5);
+
+  auto dout = ib->GetInput(kIndex7);
+
+  auto weight_shape = ib->Shape(weight);
+  auto num_weights = ib->TupleGetItem(weight_shape, 0);
+  auto dx = ib->Emit(ops::kNameEmbeddingDenseBackward, {dout, input, num_weights, padding_idx, scale_grad_by_freq});
+  return {ib->OutZeros(input),       dx,
+          ib->OutZeros(padding_idx), ib->OutZeros(norm_type),
+          ib->OutZeros(norm_type),   ib->OutZeros(scale_grad_by_freq)};
 });
 
 REG_BPROP_BUILDER("BiasAdd").SetUnusedInputs({i0, i1, i3}).SetBody(BODYFUNC(ib) {
