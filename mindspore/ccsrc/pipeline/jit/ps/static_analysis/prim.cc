@@ -3484,6 +3484,9 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
     auto val = abs->BuildValue();
     MS_EXCEPTION_IF_NULL(val);
     AbstractDictionaryPtr global_dict = nullptr;
+    // Some functions in global_dict are not used and will be released early,
+    // resulting in the func_graph pointer in AbstractClosure being released.
+    ValuePtr globals_converted_value = nullptr;
     py::object global_params_dict;
     if (abs->isa<abstract::AbstractDictionary>()) {
       global_dict = abs->cast<abstract::AbstractDictionaryPtr>();
@@ -3493,7 +3496,6 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
       auto global_dict_interpreted = dyn_cast<parse::InterpretedObject>(val);
       MS_EXCEPTION_IF_NULL(global_dict_interpreted);
       const py::object &global_params_dict_obj = global_dict_interpreted->obj();
-      ValuePtr globals_converted_value = nullptr;
       if (!parse::ConvertData(global_params_dict_obj, &globals_converted_value)) {
         MS_LOG(INTERNAL_EXCEPTION) << "Convert data failed";
       }
