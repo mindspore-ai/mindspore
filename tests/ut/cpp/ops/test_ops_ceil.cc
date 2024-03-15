@@ -23,7 +23,10 @@ namespace mindspore {
 namespace ops {
 OP_FUNC_IMPL_TEST_DECLARE(Ceil, EltwiseOpParams);
 
-OP_FUNC_IMPL_TEST_CASES(Ceil, testing::Values(EltwiseOpParams{{2, 3}, kFloat32, {2, 3}, kFloat32},
+OP_FUNC_IMPL_TEST_CASES(Ceil, testing::Values(EltwiseOpParams{{2, 3}, kFloat16, {2, 3}, kFloat16},
+                                              EltwiseOpParams{{2, 3}, kFloat32, {2, 3}, kFloat32},
+                                              EltwiseOpParams{{2, 3}, kFloat64, {2, 3}, kFloat64},
+                                              EltwiseOpParams{{2, 3}, kBFloat16, {2, 3}, kBFloat16},
                                               EltwiseOpParams{{-1, 3}, kFloat32, {-1, 3}, kFloat32},
                                               EltwiseOpParams{{-1, -1}, kFloat32, {-1, -1}, kFloat32},
                                               EltwiseOpParams{{-2}, kFloat32, {-2}, kFloat32}));

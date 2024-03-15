@@ -183,6 +183,16 @@ void LogicalNot(ArithmeticSelfCpuKernelFuncBool<T, S> *content, const T *in, S *
 }
 
 template <typename T, typename S>
+void Ceil(ArithmeticSelfCpuKernelFunc<T, S> *content, const T *in, S *out, size_t size) {
+  auto task = [&in, &out](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      out[i] = static_cast<S>(ceil(in[i]));
+    }
+  };
+  ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
+}
+
+template <typename T, typename S>
 void Floor(ArithmeticSelfCpuKernelFunc<T, S> *content, const T *in, S *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
@@ -821,41 +831,25 @@ void ArithmeticSelfCpuKernelFuncCommon<T, S>::LaunchKernel(const std::vector<Ker
   const size_t lens = outputs[0]->size() / sizeof(S);
   static const std::unordered_map<
     std::string, std::function<void(ArithmeticSelfCpuKernelFuncCommon<T, S> *, const T *, S *, size_t)>>
-    arithmeticSelfFuncMap{{prim::kPrimSquare->name(), Square<T, S>},
-                          {prim::kPrimSign->name(), Sign<T, S>},
-                          {prim::kPrimNeg->name(), Neg<T, S>},
-                          {prim::kPrimAtanh->name(), Atanh<T, S>},
-                          {prim::kPrimAcosh->name(), Acosh<T, S>},
-                          {prim::kPrimFloor->name(), Floor<T, S>},
-                          {prim::kPrimSin->name(), Sin<T, S>},
-                          {prim::kPrimGeLU->name(), Gelu<T, S>},
-                          {prim::kPrimCos->name(), Cos<T, S>},
-                          {prim::kPrimLog->name(), Log<T, S>},
-                          {prim::kPrimTan->name(), Tan<T, S>},
-                          {prim::kPrimAsin->name(), Asin<T, S>},
-                          {prim::kPrimACos->name(), ACos<T, S>},
-                          {prim::kPrimAtan->name(), Atan<T, S>},
-                          {prim::kPrimSinh->name(), Sinh<T, S>},
-                          {prim::kPrimCosh->name(), Cosh<T, S>},
-                          {prim::kPrimTanh->name(), Tanh<T, S>},
-                          {prim::kPrimAsinh->name(), Asinh<T, S>},
-                          {prim::kPrimReciprocal->name(), Reciprocal<T, S>},
-                          {prim::kPrimInv->name(), Inv<T, S>},
-                          {prim::kPrimInvert->name(), Invert<T, S>},
-                          {prim::kPrimRint->name(), Rint<T, S>},
-                          {prim::kPrimRound->name(), Round<T, S>},
-                          {prim::kPrimAbs->name(), Abs<T, S>},
-                          {prim::kPrimSqrt->name(), Sqrt<T, S>},
-                          {prim::kPrimRsqrt->name(), Rsqrt<T, S>},
-                          {prim::kPrimErf->name(), Erf<T, S>},
-                          {prim::kPrimErfc->name(), Erfc<T, S>},
-                          {prim::kPrimSoftsign->name(), Softsign<T, S>},
-                          {prim::kPrimReLU->name(), Relu<T, S>},
-                          {prim::kPrimReLU6->name(), Relu6<T, S>},
-                          {prim::kPrimSoftplus->name(), Softplus<T, S>},
-                          {prim::kPrimMish->name(), Mish<T, S>},
-                          {prim::kPrimSigmoid->name(), Sigmoid<T, S>},
-                          {prim::kPrimExp->name(), Exp<T, S>}};
+    arithmeticSelfFuncMap{
+      {prim::kPrimSquare->name(), Square<T, S>},     {prim::kPrimSign->name(), Sign<T, S>},
+      {prim::kPrimNeg->name(), Neg<T, S>},           {prim::kPrimAtanh->name(), Atanh<T, S>},
+      {prim::kPrimAcosh->name(), Acosh<T, S>},       {prim::kPrimCeil->name(), Ceil<T, S>},
+      {prim::kPrimFloor->name(), Floor<T, S>},       {prim::kPrimSin->name(), Sin<T, S>},
+      {prim::kPrimGeLU->name(), Gelu<T, S>},         {prim::kPrimCos->name(), Cos<T, S>},
+      {prim::kPrimLog->name(), Log<T, S>},           {prim::kPrimTan->name(), Tan<T, S>},
+      {prim::kPrimAsin->name(), Asin<T, S>},         {prim::kPrimACos->name(), ACos<T, S>},
+      {prim::kPrimAtan->name(), Atan<T, S>},         {prim::kPrimSinh->name(), Sinh<T, S>},
+      {prim::kPrimCosh->name(), Cosh<T, S>},         {prim::kPrimTanh->name(), Tanh<T, S>},
+      {prim::kPrimAsinh->name(), Asinh<T, S>},       {prim::kPrimReciprocal->name(), Reciprocal<T, S>},
+      {prim::kPrimInv->name(), Inv<T, S>},           {prim::kPrimInvert->name(), Invert<T, S>},
+      {prim::kPrimRint->name(), Rint<T, S>},         {prim::kPrimRound->name(), Round<T, S>},
+      {prim::kPrimAbs->name(), Abs<T, S>},           {prim::kPrimSqrt->name(), Sqrt<T, S>},
+      {prim::kPrimRsqrt->name(), Rsqrt<T, S>},       {prim::kPrimErf->name(), Erf<T, S>},
+      {prim::kPrimErfc->name(), Erfc<T, S>},         {prim::kPrimSoftsign->name(), Softsign<T, S>},
+      {prim::kPrimReLU->name(), Relu<T, S>},         {prim::kPrimReLU6->name(), Relu6<T, S>},
+      {prim::kPrimSoftplus->name(), Softplus<T, S>}, {prim::kPrimMish->name(), Mish<T, S>},
+      {prim::kPrimSigmoid->name(), Sigmoid<T, S>},   {prim::kPrimExp->name(), Exp<T, S>}};
 
   const auto func_pair = arithmeticSelfFuncMap.find(this->kernel_name_);
   if (arithmeticSelfFuncMap.find(this->kernel_name_) == arithmeticSelfFuncMap.end()) {
@@ -1029,6 +1023,11 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithFuncCreator>
      &CreateArithSelfFuncComplex<complex64, complex64>},
     {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
      &CreateArithSelfFuncComplex<complex128, complex128>}}},
+  {ops::kNameCeil,
+   {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &CreateArithSelfFuncCommon<float, float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     &CreateArithSelfFuncCommon<double, double>}}},
   {ops::kNameFloor,
    {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
      &CreateArithSelfFuncCommon<float, float>},
@@ -1476,6 +1475,7 @@ ARITHMETIC_SELF_CPU_REGISTER(Rsqrt, kRsqrt);
 ARITHMETIC_SELF_CPU_REGISTER(Square, kSquare);
 ARITHMETIC_SELF_CPU_REGISTER(Neg, kNeg);
 ARITHMETIC_SELF_CPU_REGISTER(Sign, kSign);
+ARITHMETIC_SELF_CPU_REGISTER(Ceil, ops::kNameCeil);
 ARITHMETIC_SELF_CPU_REGISTER(Floor, ops::kNameFloor);
 ARITHMETIC_SELF_CPU_REGISTER(Rint, kRint);
 ARITHMETIC_SELF_CPU_REGISTER(Round, kRound);

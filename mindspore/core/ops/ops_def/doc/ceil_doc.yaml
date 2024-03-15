@@ -6,14 +6,18 @@ ceil:
             out_i = \lceil x_i \rceil = \lfloor x_i \rfloor + 1
 
         Args:
-            input (Tensor): The input tensor with a dtype of float16 or float32.
+            input (Tensor): the input of Ceil.
+                Supported dtypes: 
+
+                - Ascend: float16, float32, float64 or bfloat16.
+                - GPU/CPU: float16, float32, float64.
 
         Returns:
             Tensor, has the same shape as `x`.
 
         Raises:
             TypeError: If `input` is not a Tensor.
-            TypeError: If dtype of `input` is not float16 or float32.
+            TypeError: If dtype of `input` is not float16, float32, float64 or bfloat16.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
