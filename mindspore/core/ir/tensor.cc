@@ -900,6 +900,12 @@ void Tensor::ExecuteLazyTask() const {
   }
 }
 
+void Tensor::ExecuteUpdateValueCallback() const {
+  if (update_value_callback_ != nullptr) {
+    update_value_callback_(this);
+  }
+}
+
 bool Tensor::is_contiguous() const {
   const auto &storage = storage_info();
   return storage == nullptr || storage->is_contiguous;
@@ -984,6 +990,9 @@ Tensor &Tensor::AssignValue(const Tensor &tensor) {
     need_wait_ = tensor.need_wait_;
     sync_status_ = tensor.sync_status_;
     device_event_ = tensor.device_event_;
+
+    // Need execute callback when update host value of Tensor.
+    ExecuteUpdateValueCallback();
   }
   return *this;
 }
