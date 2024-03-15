@@ -150,7 +150,7 @@ def mutable(input_data, dynamic_len=False):
         TypeError: If `input_data` is not one of Tensor, scalar, tuple, list, dict or their nested structure.
         TypeError: If `dynamic_len` is ``True`` and `input_data` is not tuple or list.
         ValueError: If `dynamic_len` is ``True`` , `input_data` is tuple or list but the elements within `input_data`
-        do not have the same type.
+            do not have the same type.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
