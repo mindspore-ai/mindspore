@@ -41,6 +41,9 @@ from mindspore.ops.auto_generate.gen_ops_prim import FlashAttentionScore
 dtype_to_type_id = DtypeToEnum()
 
 
+dtype_to_type_id = DtypeToEnum()
+
+
 class ScalarDiv(Primitive):
     r"""
     Computes the quotient of dividing the first input scalar by the second input scalar element-wise.
