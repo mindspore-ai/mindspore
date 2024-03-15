@@ -552,13 +552,7 @@ bool CombineLikeGraphs(const ResourcePtr &resource) {
 namespace {
 
 void GeneralizeReusingGraph(const FuncGraphPtr &func_graph, const FuncGraphPtr &top_func_graph) {
-  auto reusing_node = func_graph->output()->cast<CNodePtr>()->input(0);
-  FuncGraphPtr fg;
-  if (IsValueNode<FuncGraph>(reusing_node)) {
-    fg = GetValueNode<FuncGraphPtr>(reusing_node);
-  } else {
-    fg = GetValueNode<FuncGraphPtr>(reusing_node->cast<CNodePtr>()->input(1));
-  }
+  FuncGraphPtr fg = func_graph;
   FuncGraphVector func_graphs = {fg};
   Cloner cloner(func_graphs, false, false, true, std::make_shared<TraceCopy>(), std::make_shared<TraceGraphReusing>());
   cloner.Run();
@@ -1684,16 +1678,16 @@ bool SetMindIRGraphAction(const ResourcePtr &resource) {
 
 static std::vector<ActionItem> CommonPipeline(bool trace_flag) {
   std::vector<ActionItem> actions;
+  // Resolve the python func
+  static const bool enable_resolve_action =
+    (common::GetCompileConfig("GREED_PARSE") != "1") && (common::GetEnv("MS_DEV_BOOST_INFER") != "1");
 
   if (!trace_flag) {
     // Parse the python ast to ANF graph
     (void)actions.emplace_back(std::make_pair(kParse, ParseAction));
 
     // Resolve the python func
-    static auto boost_parse = common::GetCompileConfig("GREED_PARSE");
-
-    static const auto boost_infer = (common::GetEnv("MS_DEV_BOOST_INFER") == "1");
-    if (boost_parse != "1" && (!boost_infer)) {
+    if (enable_resolve_action) {
       (void)actions.emplace_back(std::make_pair(kSymbolResolve, SymbolResolveAction));
     }
 
@@ -1713,8 +1707,12 @@ static std::vector<ActionItem> CommonPipeline(bool trace_flag) {
     if (!is_cluster_initialized && (!is_parallel_mode || combine_like_graphs)) {
       (void)actions.emplace_back(std::make_pair(kCombineLikeGraphs, CombineLikeGraphs));
     }
+
     // Make the reusable cell to be the reusable function graph
-    (void)actions.emplace_back(std::make_pair(kGraphReusing, GraphReusingAction));
+    if (enable_resolve_action) {
+      (void)actions.emplace_back(std::make_pair(kGraphReusing, GraphReusingAction));
+    }
+
     (void)actions.emplace_back(std::make_pair(kMetaUnpackPrepare, MetaUnpackPrepareAction));
     // Pre-Lift the func graphs.
     (void)actions.emplace_back(std::make_pair(kPreCConv, PreCConvAction));
@@ -1724,6 +1722,10 @@ static std::vector<ActionItem> CommonPipeline(bool trace_flag) {
   // PackFunc Expand.
   if (common::GetEnv("MS_DEV_DISABLE_TRACE") != "on") {
     (void)actions.emplace_back(std::make_pair(kPackExpand, PackExpandAction));
+  }
+
+  if (!enable_resolve_action) {
+    (void)actions.emplace_back(std::make_pair(kGraphReusing, GraphReusingAction));
   }
   // Auto-monad for side-effects handling.
   (void)actions.emplace_back(std::make_pair(kAutoMonad, AutoMonadAction));
