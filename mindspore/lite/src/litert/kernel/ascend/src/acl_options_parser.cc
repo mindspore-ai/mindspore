@@ -20,7 +20,6 @@
 #include "common/log_adapter.h"
 #include "src/common/log_util.h"
 #include "src/common/utils.h"
-#include "acl/acl_base.h"
 #include "transform/symbol/acl_rt_symbol.h"
 #include "transform/symbol/symbol_utils.h"
 

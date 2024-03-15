@@ -16,7 +16,6 @@
 
 #include "src/litert/kernel/ascend/src/model_infer.h"
 #include "common/log_adapter.h"
-#include "acl/acl.h"
 #include "src/litert/kernel/ascend/src/acl_mem_manager.h"
 #include "transform/symbol/acl_mdl_symbol.h"
 #include "transform/symbol/acl_rt_symbol.h"

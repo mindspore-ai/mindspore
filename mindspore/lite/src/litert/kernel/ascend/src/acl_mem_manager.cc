@@ -19,7 +19,6 @@
 #include <algorithm>
 #include <map>
 #include <string>
-#include "acl/acl.h"
 #include "src/common/log_adapter.h"
 #include "transform/symbol/acl_rt_symbol.h"
 #include "transform/symbol/symbol_utils.h"
