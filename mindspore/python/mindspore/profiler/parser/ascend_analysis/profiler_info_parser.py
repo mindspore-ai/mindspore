@@ -36,6 +36,7 @@ class ProfilerInfoParser:
     _time_out = 1
     # profiler information related files
     _source_prof_path = None
+    _loaded_frequency = False
 
     @classmethod
     def init_source_path(cls, source_path: str):
@@ -50,26 +51,28 @@ class ProfilerInfoParser:
     @classmethod
     def get_local_time(cls, syscnt: int) -> Decimal:
         """Convert syscnt to local time."""
-        localtime_stamp = c_expression.get_clock_time()
-        syscnt_stamp = c_expression.get_clock_syscnt()
-        outs, _ = cls.__run_cmd(['which', cls._msprof_cmd])
-        if not outs:
-            raise FileNotFoundError("Failed to find msprof command!")
-        msprof_path = os.path.realpath(outs.strip())
-        sup_path = msprof_path.split('tools')[0]
-        script_path = os.path.join(sup_path, 'tools/profiler/profiler_tool/analysis/interface/get_msprof_info.py')
-        py_cmd = ['python', script_path, '-dir', os.path.join(cls._source_prof_path, 'host')]
-        outs, _ = cls.__run_cmd(py_cmd)
-        if not outs:
-            raise RuntimeError("Failed to get msprof information!")
-        result = json.loads(outs)
-        cpu_info = result.get('data', {}).get('host_info', {}).get('cpu_info', [{}])[0]
-        try:
-            cls._freq = float(cpu_info.get("Frequency", cls._freq))
-        except ValueError:
-            pass
-        cls._start_cnt = syscnt_stamp
-        cls._time_offset = localtime_stamp
+        if not cls._loaded_frequency:
+            localtime_stamp = c_expression.get_clock_time()
+            syscnt_stamp = c_expression.get_clock_syscnt()
+            outs, _ = cls.__run_cmd(['which', cls._msprof_cmd])
+            if not outs:
+                raise FileNotFoundError("Failed to find msprof command!")
+            msprof_path = os.path.realpath(outs.strip())
+            sup_path = msprof_path.split('tools')[0]
+            script_path = os.path.join(sup_path, 'tools/profiler/profiler_tool/analysis/interface/get_msprof_info.py')
+            py_cmd = ['python', script_path, '-dir', os.path.join(cls._source_prof_path, 'host')]
+            outs, _ = cls.__run_cmd(py_cmd)
+            if not outs:
+                raise RuntimeError("Failed to get msprof information!")
+            result = json.loads(outs)
+            cpu_info = result.get('data', {}).get('host_info', {}).get('cpu_info', [{}])[0]
+            try:
+                cls._freq = float(cpu_info.get("Frequency", cls._freq))
+            except ValueError:
+                pass
+            cls._start_cnt = syscnt_stamp
+            cls._time_offset = localtime_stamp
+            cls._loaded_frequency = True
         start_ns = cls.__get_timestamp(syscnt)
         start_us = Decimal(start_ns) / Constant.NS_TO_US
         return start_us
