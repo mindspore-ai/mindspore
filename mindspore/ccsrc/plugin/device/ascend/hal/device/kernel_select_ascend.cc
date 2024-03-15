@@ -192,7 +192,7 @@ bool RefreshCastAndParamWeightFormat(const AnfNodePtr &input_node, const string 
   auto info_builder =
     std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>(AnfAlgo::GetSelectKernelBuildInfo(input_node));
   MS_EXCEPTION_IF_NULL(info_builder);
-  info_builder->SetInputsFormat({format});
+  info_builder->SetInputsFormat({format, kOpFormat_DEFAULT});
   info_builder->SetOutputsFormat({format});
   AnfAlgo::SetSelectKernelBuildInfo(info_builder->Build(), cast_node.get());
   auto cast_input_node = common::AnfAlgo::VisitKernel(common::AnfAlgo::GetInputNode(cast_node, 0), 0);
