@@ -600,7 +600,7 @@ class Profiler:
         Analyze training performance data offline, which is invoked after performance data collection is completed.
 
         Args:
-            path (str, required): The profiling data path which need to be analyzed offline.
+            path (str): The profiling data path which need to be analyzed offline.
                 There needs to be a profiler directory in this path.
             pretty (bool, optional): Whether to pretty json files. Default: ``False``.
             step_list (list, optional): A list of steps that need to be analyzed. Default: ``None``.

@@ -13,3 +13,7 @@ mindspore.Tensor.resize
 
     返回：
         Tensor。
+
+    其他API参考：
+        - :func:`mindspore.Tensor.reshape` ：为Tensor指定新的shape，不改变其数据。
+        - :func:`mindspore.Tensor.repeat` ：重复Tensor的元素。

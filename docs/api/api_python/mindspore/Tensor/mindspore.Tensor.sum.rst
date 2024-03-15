@@ -20,3 +20,6 @@ mindspore.Tensor.sum
     异常：
         - **TypeError** - input不是Tensor，`axis` 不是整数、整数元组或整数列表，`keepdims` 不是整数，或者 `initial` 不是标量。
         - **ValueError** - 任意轴超出范围或存在重复的轴。
+
+    其他API参考：
+        - :func:`mindspore.Tensor.cumsum` ：返回沿给定轴的元素累加和。

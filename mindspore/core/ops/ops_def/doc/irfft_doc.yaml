@@ -15,7 +15,7 @@ irfft:
             Default: ``None``.
         dim (int, optional): The dimension along which to take the one dimensional `irfft`.
             Default: ``-1``, which means transform the last dimension of `input`.
-        norm (string, optional): Normalization mode. Default: ``None`` that means ``"backward"``.
+        norm (str, optional): Normalization mode. Default: ``None`` that means ``"backward"``.
             Three modes are defined as,
     
             - ``"backward"`` (normalize by :math:`1/n`).

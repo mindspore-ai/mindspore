@@ -1,9 +1,9 @@
-mindspore.scipy.linalg.solve_triaugular
+mindspore.scipy.linalg.solve_triangular
 =======================================
 
 .. py:function:: mindspore.scipy.linalg.solve_triangular(a, b, trans=0, lower=False, unit_diagonal=False, overwrite_b=False, debug=None, check_finite=True)
 
-    假设 `a` 是一个三角矩阵，求等式系统:math:`a x = b`的解 `x` 。
+    假设 `a` 是一个三角矩阵，求等式系统 :math:`a x = b` 的解 `x` 。
 
     .. note::
         - `solve_triangular` 目前仅用于 `mindscience` 科学计算场景，尚不支持其他使用场景。
@@ -23,7 +23,7 @@ mindspore.scipy.linalg.solve_triaugular
           ========  =========
 
         - **lower** (bool, 可选) - `a` 是否为下三角矩阵，默认值： ``False`` 。
-        - **unit_diagonal** (bool, 可选) - 如果为``True``，那么`a`的对角线会被全部置为1，默认值： ``False`` 。
+        - **unit_diagonal** (bool, 可选) - 如果为 ``True``，那么 `a` 的对角线会被全部置为1，默认值： ``False`` 。
         - **overwrite_b** (bool, 可选) - 在MindSpore中，当前这个参数不起作用。默认值： ``False`` 。
         - **debug** (Any, 可选) - 在MindSpore中，当前这个参数不起作用。默认值： ``None`` 。
         - **check_finite** (bool, 可选) - 在MindSpore中，当前这个参数不起作用。默认值： ``True`` 。
@@ -36,4 +36,4 @@ mindspore.scipy.linalg.solve_triaugular
         - **ValueError** - 如果 `a` 不是方阵。
         - **TypeError** - 如果 `a` 和 `b` 的数据类型不同。
         - **ValueError** - 如果 `a` 和 `b` 的shape不匹配。
-        - **ValueError** - 如果 `trans` 不是 ``0`` 、``1``、``2``、``'N'``、``'T'`` 或 ``'C'`` 。
+        - **ValueError** - 如果 `trans` 不是 ``0`` 、 ``1``、 ``2``、 ``'N'``、 ``'T'`` 或 ``'C'`` 。

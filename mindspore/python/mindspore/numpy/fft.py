@@ -178,7 +178,7 @@ def rfft(a, n=None, axis=-1, norm=None):
         norm (string, optional): Normalization mode. Default: ``None`` that means ``"backward"``.
             Three modes are defined as,
 
-            - ``"backward"``(no normalization).
+            - ``"backward"`` (no normalization).
             - ``"forward"`` (normalize by :math:`1/n`).
             - ``"ortho"`` (normalize by :math:`1/\sqrt{n}`).
 
@@ -218,7 +218,7 @@ def irfft(a, n=None, axis=-1, norm=None):
         norm (string, optional): Normalization mode. Default: ``None`` that means ``"backward"``.
             Three modes are defined as,
 
-            - ``"backward"``(no normalization).
+            - ``"backward"`` (no normalization).
             - ``"forward"`` (normalize by :math:`1/n`).
             - ``"ortho"`` (normalize by :math:`1/\sqrt{n}`).
 

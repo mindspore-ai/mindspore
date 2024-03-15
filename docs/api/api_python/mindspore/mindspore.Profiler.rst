@@ -57,7 +57,7 @@ mindspore.Profiler
         离线分析训练的性能数据，性能数据采集结束后调用。
 
         参数：
-            - **path** (str, 必选) - 需要进行离线分析的profiling数据路径，指定到profiler上层目录。
+            - **path** (str) - 需要进行离线分析的profiling数据路径，指定到profiler上层目录。
             - **pretty** (bool, 可选) - 对json文件进行格式化处理。此参数默认值为 ``False``，即不进行格式化。
             - **step_list** (list, 可选) - 只分析指定step的性能数据。此参数默认值为 ``None``，即进行全解析。
 
