@@ -159,7 +159,7 @@ class SummaryRecord:
     SummaryRecord is used to record the summary data and lineage data.
 
     The API will create a summary file and lineage files lazily in a given directory and writes data to them.
-    It writes the data to files by executing the 'record' method. In addition to recording the data bubbled up from
+    It writes the data to files by executing the `record` method. In addition to recording the data bubbled up from
     the network by defining the summary operators, SummaryRecord also supports to record extra data which
     can be added by calling add_value.
 

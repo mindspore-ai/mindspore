@@ -123,8 +123,8 @@ def grad(fn, grad_position=0, weights=None, has_aux=False, return_ids=False):
         Function, the gradient function to calculate gradient for the input function or cell.
         For example, as for `out1, out2 = fn(*args)`, when `has_aux` is set ``True`` , gradient function will return
         outputs like `(gradient, out2)` and `out2` does not contribute to the differentiation, otherwise `gradient`.
-        When return_ids is set to ``True`` , The format of the output will be the same with the output of grad when
-        return_ids is set to false, but every gradient in the output will be replaced by a tuple of position id or
+        When return_ids is set to ``True`` , the format of the output will be the same with the output of grad when
+        return_ids is set to ``False``, but every gradient in the output will be replaced by a tuple of position id or
         parameter name and its gradient.
 
     Raises:
@@ -262,7 +262,7 @@ def value_and_grad(fn, grad_position=0, weights=None, has_aux=False, return_ids=
     Returns:
         Function, returns the gradient function to calculate forward output and gradient for the input function or cell.
         For example, as for `out1, out2 = fn(*args)` , gradient function will return outputs like
-        `((out1, out2), gradient)` . When `has_aux` is set True, only `out1` contributes to the differentiation.
+        `((out1, out2), gradient)` . When `has_aux` is set to ``True``, only `out1` contributes to the differentiation.
 
     Raises:
         ValueError: If both `grad_position` and `weights` are None.
@@ -891,10 +891,11 @@ def vjp(fn, *inputs, weights=None, has_aux=False):
     Returns:
         Forward outputs and function to calculate vjp.
 
-        - **net_output** (Union[Tensor, tuple[Tensor]]) - The output of `fn(inputs)`. Specially, when `has_aux` is set
-          True, `netout` is the first output of `fn(inputs)`.
+        - **net_output** (Union[Tensor, tuple[Tensor]]) - The output of `fn(inputs)`.
+          Specially, when `has_aux` is set to
+          ``True``, `net_output` is the first output of `fn(inputs)`.
         - **vjp_fn** (Function) - To calculate vector-jacobian-product. Its inputs are the vectors whose shape and
-          type should be the same as `netout` .
+          type should be the same as `net_output` .
         - **aux_value** (Union[Tensor, tuple[Tensor]], optional) - When `has_aux` is True, `aux_value` will be returned.
           It means the second to last outputs of `fn(inputs)`. Specially, `aux_value` does not contribute to gradient.
 

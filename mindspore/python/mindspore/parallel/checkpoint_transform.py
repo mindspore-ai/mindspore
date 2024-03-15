@@ -83,20 +83,21 @@ def rank_list_for_transform(rank_id, src_strategy_file=None, dst_strategy_file=N
         rank_id (int): The rank of which distributed checkpoint needs to be obtained after conversion.
         src_strategy_file (str): Name of source sharding strategy file which saved by
                                  `mindspore.set_auto_parallel_context(strategy_ckpt_save_file)`.
-                                 when the 'src_strategy_file' is None, it means that the source sharding strategy is
-                                 without any sharing for each parameter. Default:None.
+                                 when the `src_strategy_file` is ``None``, it means that the source sharding strategy is
+                                 without any sharing for each parameter. Default: ``None``.
         dst_strategy_file (str): Name of destination sharding strategy file which saved by
                                  `mindspore.set_auto_parallel_context(strategy_ckpt_save_file)`.
-                                 when the 'dst_strategy_file' is None, it means that the destination sharding strategy
-                                 is without any sharing for each parameter. Default:None.
+                                 when the `dst_strategy_file` is ``None``,
+                                 it means that the destination sharding strategy
+                                 is without any sharing for each parameter. Default: ``None``.
 
     Returns:
         List, the rank list required for converting the distributed checkpoint of rank_id.
 
     Raises:
-        ValueError: `src_strategy_file` or dst_strategy_file is incorrect.
-        TypeError: `src_strategy_file` or dst_strategy_file is not a string.
-        TypeError: `rank_id` is not a int.
+        ValueError: `src_strategy_file` or `dst_strategy_file` is incorrect.
+        TypeError: `src_strategy_file` or `dst_strategy_file` is not a string.
+        TypeError: `rank_id` is not an int.
 
     Examples:
         >>> import mindspore as ms
@@ -148,12 +149,13 @@ def transform_checkpoint_by_rank(rank_id, checkpoint_files_map, save_checkpoint_
         save_checkpoint_file_name (str): The file name to save the converted checkpoint.
         src_strategy_file (str): Name of source sharding strategy file which saved by
                                  'mindspore.set_auto_parallel_context(strategy_ckpt_save_file)'.
-                                 when the 'src_strategy_file' is None, it means that the source sharding strategy is
-                                 without any sharing for each parameter. Default:None.
+                                 when the `src_strategy_file` is None, it means that the source sharding strategy is
+                                 without any sharing for each parameter. Default: ``None``.
         dst_strategy_file (str): Name of destination sharding strategy file which saved by
                                  'mindspore.set_auto_parallel_context(strategy_ckpt_save_file)'.
-                                 when the 'dst_strategy_file' is None, it means that the destination sharding strategy
-                                 is without any sharing for each parameter. Default:None.
+                                 when the `dst_strategy_file` is ``None``,
+                                 it means that the destination sharding strategy
+                                 is without any sharing for each parameter. Default: ``None``.
 
     Raises:
         ValueError: `src_strategy_file` or `dst_strategy_file` is incorrect.
@@ -161,7 +163,7 @@ def transform_checkpoint_by_rank(rank_id, checkpoint_files_map, save_checkpoint_
         ValueError: `save_checkpoint_file_name` is not end with ".ckpt".
         TypeError: `checkpoint_files_map` is not a dict.
         TypeError: `src_strategy_file` or `dst_strategy_file` is not a string.
-        TypeError: `rank_id` is not a int.
+        TypeError: `rank_id` is not an int.
         TypeError: `save_checkpoint_file_name` is not a string.
 
     Examples:
@@ -241,12 +243,13 @@ def transform_checkpoints(src_checkpoints_dir, dst_checkpoints_dir, ckpt_prefix,
         ckpt_prefix (str): The destination checkpoint name prefix.
         src_strategy_file (str): Name of source sharding strategy file which saved by
                                  'mindspore.set_auto_parallel_context(strategy_ckpt_save_file)'.
-                                 when the 'src_strategy_file' is None, it means that the source sharding strategy is
-                                 without any sharing for each parameter. Default:None.
+                                 when the `src_strategy_file` is ``None``, it means that the source sharding strategy is
+                                 without any sharing for each parameter. Default: ``None``.
         dst_strategy_file (str): Name of destination sharding strategy file which saved by
                                  'mindspore.set_auto_parallel_context(strategy_ckpt_save_file)'.
-                                 when the 'dst_strategy_file' is None, it means that the destination sharding strategy
-                                 is without any sharing for each parameter. Default:None.
+                                 when the `dst_strategy_file` is ``None``,
+                                 it means that the destination sharding strategy
+                                 is without any sharing for each parameter. Default: ``None``.
 
     Raises:
         ValueError: `src_strategy_file` or `dst_strategy_file` is incorrect.
