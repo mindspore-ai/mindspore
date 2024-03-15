@@ -19,7 +19,6 @@
 #include <memory>
 #include <unordered_map>
 #include <vector>
-#include "runtime/rt.h"
 #include "utils/log_adapter.h"
 #include "include/common/utils/convert_utils.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
