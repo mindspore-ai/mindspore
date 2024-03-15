@@ -203,7 +203,7 @@ struct PyBoost {
     }
     return ret;
   }
-  static void DataSyncForGraph(const kernel::pyboost::OpPtr &op);
+  static void DataSyncForGraph(const kernel::pyboost::OpPtr &op, const vector<ValuePtr> &op_inputs);
 };
 
 // Used for auto grad, like func_grad and ir grad

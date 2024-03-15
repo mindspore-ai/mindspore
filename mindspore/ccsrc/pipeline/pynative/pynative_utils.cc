@@ -268,6 +268,18 @@ tensor::TensorPtr GetContiguousTensor(const tensor::TensorPtr &input_tensor, con
   return contiguous_tensor;
 }
 
+void UnsetValueAbstractCache(const ValuePtr &value) {
+  if (value->isa<tensor::Tensor>()) {
+    auto tensor = value->cast<tensor::TensorPtr>();
+    tensor->set_abstract(std::weak_ptr<abstract::AbstractBase>());
+  } else if (value->isa<ValueSequence>()) {
+    const auto &seq = value->cast<ValueSequencePtr>();
+    auto elements = seq->value();
+    for (const auto &element : elements) {
+      UnsetValueAbstractCache(element);
+    }
+  }
+}
 }  // namespace
 
 AbstractBasePtr Common::SetAbstractValueToAnyValue(const AbstractBasePtr &abs) {
@@ -1547,7 +1559,7 @@ void PyBoost::UpdateOpRunInfo(const kernel::pyboost::OpPtr &op, const vector<Val
   }
 }
 
-void PyBoost::DataSyncForGraph(const kernel::pyboost::OpPtr &op) {
+void PyBoost::DataSyncForGraph(const kernel::pyboost::OpPtr &op, const vector<ValuePtr> &op_inputs) {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode) {
@@ -1555,6 +1567,10 @@ void PyBoost::DataSyncForGraph(const kernel::pyboost::OpPtr &op) {
     // Mode, if the graph contain no CNode after optimization, the tensor need sync to host.
     for (const auto &output : op->outputs()) {
       output->data_sync(true);
+      output->set_abstract(std::weak_ptr<abstract::AbstractBase>());
+    }
+    for (const auto &input : op_inputs) {
+      UnsetValueAbstractCache(input);
     }
   }
 }
