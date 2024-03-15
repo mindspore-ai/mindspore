@@ -13,10 +13,10 @@ fft2:
 
               - Ascend/CPU: int16, int32, int64, float16, float32, float64, complex64, complex128.
 
-          s (int, optional): Length of the transformed `dim` of the result.
+          s (tuple[int], optional): Length of the transformed `dim` of the result.
               If given, the size of the `dim[i]` axis will be zero-padded or truncated to `s[i]` before calculating `fft2`.
               Default: ``None`` , which does not need to process `input`.
-          dim (int, optional): The dimension along which to take the one dimensional `fft2`.
+          dim (tuple[int], optional): The dimension along which to take the one dimensional `fft2`.
               Default: ``(-2, -1)`` , which means transform the last two dimension of `input`.
           norm (string, optional): Normalization mode. Default: ``None`` that means ``"backward"`` .
               Three modes are defined as,
