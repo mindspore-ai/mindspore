@@ -109,7 +109,6 @@ BaseShapePtr AvgPoolFuncImpl::InferShape(const PrimitivePtr &primitive,
   auto kernel_size_array_opt = GetArrayValue<int64_t>(kernel_size);
   auto strides_array_opt = GetArrayValue<int64_t>(strides);
   auto pad_mode_opt = GetScalarValue<int64_t>(pad_mode_abs->GetValue());
-
   // If any of the above values is ValueAny, return a dynamic shape, only the Batch and Channel dimension can be
   // inferred.
   if (!kernel_size_array_opt.has_value() || !strides_array_opt.has_value() || !pad_mode_opt.has_value()) {

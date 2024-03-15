@@ -107,8 +107,6 @@ void OpBackendCommonOptimization(const std::shared_ptr<session::KernelGraph> &ke
   MS_LOG(INFO) << "Status record: start op common optimization. graph id: " << kernel_graph->graph_id();
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto common_pm = std::make_shared<PassManager>("op_common_pm");
-  // Disable const to tensor pass, ascend platform need to match the change in the future.
-  // common_pm->AddPass(std::make_shared<ConvertConstInputToTensorInput>());
   common_pm->AddPass(std::make_shared<ConvertConstInputToTensorInputForPrint>());
   common_pm->AddPass(std::make_shared<BroadcastToFusion>());
   common_pm->AddPass(std::make_shared<AddAttrToNode>());

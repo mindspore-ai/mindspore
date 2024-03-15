@@ -181,7 +181,6 @@ void AddControlArrows(KernelActor *kernel_actor, KernelInferActor *kernel_infer_
   bool need_add_control_arrow_for_infer_actor =
     input_data_arrow_aids.empty() ||
     (!input_control_arrow_aids.empty() && !abstract::GetValueDependArgIndices(kernel).empty());
-
   // Clone all control arrow of this kernel to kernel infer actor
   if (need_add_control_arrow_for_infer_actor) {
     for (const auto &input_pair : input_control_arrow_aids) {
