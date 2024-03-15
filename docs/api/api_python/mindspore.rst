@@ -128,6 +128,7 @@ mindspore
 
     mindspore.Layout
     mindspore.shard
+    mindspore.parameter_broadcast
 
 即时编译
 --------
