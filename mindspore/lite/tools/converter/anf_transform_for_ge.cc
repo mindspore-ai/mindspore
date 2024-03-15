@@ -49,6 +49,7 @@
 #include "tools/optimizer/fusion/flash_attention_antiquant_fusion.h"
 #include "tools/optimizer/graph/concat_op_pass.h"
 #include "tools/optimizer/graph/quant_fusion_x_offset_to_bias_pass.h"
+#include "tools/optimizer/graph/padv3_ge_pass.h"
 
 namespace mindspore::lite {
 void EnableKVCacheFusion(std::vector<opt::PassPtr> *fusions) {
@@ -81,7 +82,8 @@ int AnfTransformForGe::RunGeFusionPass(const FuncGraphPtr &old_graph, const std:
   auto fusion_pm = std::make_shared<opt::LitePassManager>("anf fusion pass manager", false);
   CHECK_NULL_RETURN(fusion_pm);
 
-  std::vector<opt::PassPtr> fusions{std::make_shared<opt::MakeListPass>(), std::make_shared<opt::ScalarOpPass>()};
+  std::vector<opt::PassPtr> fusions{std::make_shared<opt::MakeListPass>(), std::make_shared<opt::ScalarOpPass>(),
+                                    std::make_shared<opt::PadV3GePass>()};
   std::map<std::string, std::function<void(std::vector<opt::PassPtr> *)>> fusion_mappings = {
     {kFusionNameMatMulAllReduce, std::function<void(std::vector<opt::PassPtr> *)>(EnableMatMulAllReduceFusion)},
     {kFusionNameKVCache, std::function<void(std::vector<opt::PassPtr> *)>(EnableKVCacheFusion)},
