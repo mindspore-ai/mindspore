@@ -7446,8 +7446,8 @@ def max_pool2d(x, kernel_size, stride=None, padding=0, dilation=1, return_indice
     return out
 
 
-def prompt_flash_attention(query, key, value, padding_mask, attn_mask, actual_seq_lengths,
-                           actual_seq_lengths_kv, deq_scale1, quant_scale1,
+def prompt_flash_attention(query, key, value, attn_mask, actual_seq_lengths,
+                           actual_seq_lengths_kv, pse_shift, deq_scale1, quant_scale1,
                            deq_scale2, quant_scale2, quant_offset2, num_heads, scale_value=1.0, pre_tokens=2147483547,
                            next_tokens=0, input_layout='BSH',
                            num_key_value_heads=0, sparse_mode=0):
@@ -7470,11 +7470,11 @@ def prompt_flash_attention(query, key, value, padding_mask, attn_mask, actual_se
           Input tensor of shape :math:`(B, S, H)` / `(B, N, S, D)`.
         value (Tensor) - The value tensor with data type of float16 or float32.
           Input tensor of shape :math:`(B, S, H)` / `(B, N, S, D)`.
-        padding_mask (Tensor) - The padding mask tensor with data type of float16 or float32
         attn_mask (Tensor) - The attention mask tensor with data type of float16 or float32.
           For each element, 0 indicates retention and 1 indicates discard. Input tensor of shape :math:`(B, 1, S, S)`.
         actual_seq_lengths (list[int]): Describe actual sequence length of each input with data type of int.
         actual_seq_lengths_kv (list[int]): Describe actual sequence length of each input with data type of int.
+        pse_shift (Tensor) - The position encoding tensor with data type of float16 or float32.
         dep_scale1 (Tensor)
         quant_scale1 (Tensor)
         deq_scale2 (Tensor)
@@ -7518,7 +7518,7 @@ def prompt_flash_attention(query, key, value, padding_mask, attn_mask, actual_se
 
     pfa = _get_cache_prim(NN_OPS.PromptFlashAttention)(num_heads, scale_value, pre_tokens, next_tokens, input_layout,
                                                        num_key_value_heads, sparse_mode)
-    return pfa(query, key, value, padding_mask, attn_mask, actual_seq_lengths, actual_seq_lengths_kv, deq_scale1,
+    return pfa(query, key, value, attn_mask, actual_seq_lengths, actual_seq_lengths_kv, pse_shift, deq_scale1,
                quant_scale1, deq_scale2, quant_scale2, quant_offset2)
 
 
