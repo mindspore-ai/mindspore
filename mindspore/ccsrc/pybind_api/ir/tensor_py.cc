@@ -461,16 +461,50 @@ py::bytes TensorPy::GetBytes(const Tensor &tensor) {
   return py::bytes(static_cast<const char *>(tensor.data_c()), tensor.Size());
 }
 
+void CopyFromBuffer(char *dst, size_t dst_size, const char *src, size_t src_size, TypeId data_type) {
+  bool fp16_in_fp32 = (data_type == TypeId::kNumberTypeBFloat16) && (dst_size * 2 == src_size);
+  if (fp16_in_fp32) {
+    int elem_num = static_cast<int>(src_size / sizeof(float));
+    for (int i = 0; i < elem_num; ++i) {
+      auto dst_ptr = static_cast<char *>(dst + i * sizeof(bfloat16));
+      auto src_ptr = static_cast<const char *>(src + sizeof(bfloat16) + i * sizeof(float));
+      errno_t ret = memcpy_s(dst_ptr, sizeof(bfloat16), src_ptr, sizeof(bfloat16));
+      if (ret != EOK) {
+        MS_LOG(EXCEPTION) << "Failed to copy the memory to new tensor:" << ret;
+      }
+    }
+  } else {
+    size_t remain_size = src_size;
+    auto dst_ptr = dst;
+    auto src_ptr = src;
+    while (remain_size > SECUREC_MEM_MAX_LEN) {
+      auto ret = memcpy_s(dst_ptr, SECUREC_MEM_MAX_LEN, src_ptr, SECUREC_MEM_MAX_LEN);
+      if (ret != EOK) {
+        MS_LOG(EXCEPTION) << "Failed to copy the memory to new tensor" << ret;
+      }
+      remain_size -= SECUREC_MEM_MAX_LEN;
+      dst_ptr += SECUREC_MEM_MAX_LEN;
+      src_ptr += SECUREC_MEM_MAX_LEN;
+    }
+    if (remain_size != 0U) {
+      auto ret = memcpy_s(dst_ptr, remain_size, src_ptr, remain_size);
+      if (ret != EOK) {
+        MS_LOG(EXCEPTION) << "Failed to copy the memory to new tensor" << ret;
+      }
+    }
+  }
+}
+
 TensorPtr TensorPy::ConvertBytesToTensor(const py::bytes &bytes_obj, const py::tuple &dims, const TypePtr &type_ptr) {
   ShapeVector shape;
   for (size_t i = 0; i < dims.size(); ++i) {
     shape.push_back(dims[i].cast<int>());
   }
-  auto data_type = type_ptr ? type_ptr->type_id() : TypeId::kTypeUnknown;
+  TypeId data_type = type_ptr ? type_ptr->type_id() : TypeId::kTypeUnknown;
   tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(data_type, shape);
   const char *tensor_buf = PYBIND11_BYTES_AS_STRING(bytes_obj.ptr());
-  auto *tensor_data_buf = reinterpret_cast<uint8_t *>(tensor->data_c());
-  memcpy_s(tensor_data_buf, tensor->data().nbytes(), tensor_buf, PYBIND11_BYTES_SIZE(bytes_obj.ptr()));
+  char *tensor_data_buf = reinterpret_cast<char *>(tensor->data_c());
+  CopyFromBuffer(tensor_data_buf, tensor->Size(), tensor_buf, PYBIND11_BYTES_SIZE(bytes_obj.ptr()), data_type);
   return tensor;
 }
 
