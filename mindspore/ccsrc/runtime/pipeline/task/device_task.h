@@ -71,9 +71,8 @@ class BACKEND_EXPORT DeviceOpTask : public AsyncTask {
 class BACKEND_EXPORT DeviceOpRunTask : public DeviceOpTask {
  public:
   DeviceOpRunTask(std::shared_ptr<OpTaskContext> context,
-                  std::function<void(const std::shared_ptr<OpTaskContext> &context)> run_func)
-      : DeviceOpTask(std::move(context), kDeviceOpTask), run_func_(std::move(run_func)) {}
-  ~DeviceOpRunTask() override = default;
+                  std::function<void(const std::shared_ptr<OpTaskContext> &context)> run_func);
+  ~DeviceOpRunTask() override;
   void Run() override;
 
  private:

@@ -24,11 +24,20 @@ namespace {
 constexpr auto kProfilerNamePyboost = "pyboost";
 }
 
+DeviceOpRunTask::DeviceOpRunTask(std::shared_ptr<OpTaskContext> context,
+                                 std::function<void(const std::shared_ptr<OpTaskContext> &context)> run_func)
+    : DeviceOpTask(std::move(context), kDeviceOpTask), run_func_(std::move(run_func)) {
+  context_->op_compiler_info()->UpdateStatus(false);
+}
+
+DeviceOpRunTask::~DeviceOpRunTask() { context_->op_compiler_info()->UpdateStatus(true); }
+
 void DeviceOpRunTask::Run() {
   runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeDeviceTask,
                                      context_->op_run_info()->base_op_run_info.op_name, false);
   MS_EXCEPTION_IF_NULL(run_func_);
   run_func_(context_);
+  run_func_ = nullptr;
 }
 
 void PyBoostDeviceTask::Run() {
@@ -39,6 +48,7 @@ void PyBoostDeviceTask::Run() {
   } else {
     MS_LOG(EXCEPTION) << "No run function!";
   }
+  run_func_ = nullptr;
 }
 
 void PassthroughDeviceTask::Run() {
