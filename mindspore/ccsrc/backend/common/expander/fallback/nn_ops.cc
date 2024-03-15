@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2023-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,9 @@
 #include "include/common/utils/utils.h"
 #include "utils/shape_utils.h"
 #include "ops/op_utils.h"
+#include "ops/auto_generate/gen_ops_name.h"
+#include "ops/renorm.h"
+#include "ops/scatter_update.h"
 
 namespace mindspore {
 namespace expander {
@@ -331,6 +334,51 @@ REG_FALLBACK_BUILDER("ClampScalar").SetBody(BODYFUNC(ib) {
   }
 
   return {output};
+});
+
+REG_FALLBACK_BUILDER("Embedding").SetBody(BODYFUNC(ib) {
+  auto input = ib->GetInput(kIndex0);
+  auto weight = ib->GetInput(kIndex1);
+  auto padding_idx = ib->GetInput(kIndex2);
+  auto max_norm = ib->GetInput(kIndex3);
+  auto norm_type = ib->GetInput(kIndex4);
+
+  auto max_norm_value = max_norm->BuildValue();
+
+  if (max_norm_value != nullptr && !max_norm_value->isa<None>()) {
+    auto norm_type_value = norm_type->BuildValue();
+    if (!ops::IsValueKnown(max_norm_value) || !ops::IsValueKnown(norm_type_value)) {
+      MS_INTERNAL_EXCEPTION(ValueError) << "For `Embedding` op, max_norm and norm_type must be constant!";
+    }
+
+    auto max_norm_double = static_cast<double>(GetValue<float>(max_norm_value));
+    auto norm_type_double = static_cast<double>(GetValue<float>(norm_type_value));
+
+    // do EmbeddingRenorm
+    auto new_input = ib->Emit(ops::kNameReshape, {input, ib->Value(std::vector<int64_t>{-1})});
+    auto gather_out = ib->Emit(ops::kNameGather, {weight, new_input, ib->Value((int64_t)0), ib->Value((int64_t)0)});
+    auto renorm_out = ib->Emit(ops::kNameRenorm, {gather_out},
+                               {{"p", MakeValue<float>(norm_type_double)},
+                                {"dim", MakeValue<int64_t>(0)},
+                                {"maxnorm", MakeValue<float>(max_norm_double)}});
+
+    if (IsDynamic(input->shape())) {
+      MS_INTERNAL_EXCEPTION(ValueError)
+        << "For `Embedding` op, dynamic_shape is not support on Fallback path, but got input shape: " << input->shape()
+        << ".";
+    }
+
+    auto indices_size = SizeOf(input->shape());
+    constexpr int64_t kMaxRangeSize = 1000000;
+    auto indices = ib->Emit(ops::kNameRange, {ib->Value((int64_t)0), ib->Value(static_cast<int64_t>(indices_size)),
+                                              ib->Value((int64_t)1), ib->Value(kMaxRangeSize)});
+    auto gather_out2 = ib->Emit(ops::kNameGather, {renorm_out, indices, ib->Value((int64_t)0), ib->Value((int64_t)0)});
+    auto mul_out = ib->Emit(ops::kNameMul, {gather_out, gather_out2});
+    weight = ib->Emit(ops::kNameScatterUpdate, {weight, new_input, mul_out});
+  }
+
+  auto out = ib->Emit(ops::kNameGather, {weight, input, ib->Value((int64_t)0), ib->Value((int64_t)0)});
+  return {out};
 });
 }  // namespace expander
 }  // namespace mindspore

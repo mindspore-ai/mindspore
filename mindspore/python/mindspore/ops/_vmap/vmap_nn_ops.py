@@ -30,6 +30,7 @@ from mindspore.ops._vmap.vmap_base import vmap_rules_getters, vmap_general_prepr
     _vmap_clone_prim, _get_reduce_batch_axis
 from mindspore.ops.primitive import Primitive
 from mindspore.ops.auto_generate.gen_arg_handler import Format
+from mindspore.ops.auto_generate import Embedding
 
 
 @vmap_rules_getters.register(P.ApplyAdaMax)
@@ -2128,6 +2129,16 @@ def get_elu_vmap_rule(prim, axis_size):
         return out, dim
 
     return vmap_rule
+
+
+@vmap_rules_getters.register(Embedding)
+def get_embedding_vmap_rule(prim, axis_size):
+    """VmapRule for Embedding operations."""
+    if isinstance(prim, str):
+        prim_name = prim
+    else:
+        prim_name = prim.name
+    raise RuntimeError(f"THe {prim_name} does not support vmap.")
 
 
 # Unary vmap

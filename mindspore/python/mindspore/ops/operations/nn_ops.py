@@ -35,7 +35,7 @@ from ..auto_generate import (CeLU, Flatten, LogSoftmax, ReLU, ReLU6,
                              NLLLoss, OneHot, GeLU, FastGeLU, PReLU,
                              GridSampler3D, GridSampler2D, LayerNorm, HShrink, AdamWeightDecay, Dropout,
                              ApplyRotaryPosEmb, PagedAttention, PagedAttentionMask, ReshapeAndCache,
-                             FlashAttentionScore)
+                             FlashAttentionScore, Embedding)
 from .manually_defined import BatchNorm
 
 

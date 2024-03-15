@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2023-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,6 +48,7 @@ class Converter {
   template <typename T>
   std::optional<ValueTuplePtr> ToBoolListOptional(const py::list &python_args, size_t i);
   FP32ImmPtr ToFloat(const py::list &python_args, size_t i);
+  std::optional<FP32ImmPtr> ToFloatOptional(const py::list &python_args, size_t i);
   template <typename T>
   ValueTuplePtr ToFloatList(const py::list &python_args, size_t i);
   template <typename T>

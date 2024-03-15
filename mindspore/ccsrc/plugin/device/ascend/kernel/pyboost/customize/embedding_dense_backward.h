@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_GATHER_D_GRAD_H_
-#define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_GATHER_D_GRAD_H_
+#ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_EMBEDDING_DENSE_BACKWARD_H_
+#define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_EMBEDDING_DENSE_BACKWARD_H_
 #include <memory>
 #include "ir/tensor.h"
 #include "ir/value.h"
@@ -25,9 +25,12 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::TensorPtr GatherDGradAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &x,
-                                             const Int64ImmPtr &dim, const TensorPtr &index, const TensorPtr &d_out);
+tensor::TensorPtr EmbeddingDenseBackwardAscendCustomize(const std::shared_ptr<OpRunner> &op,
+                                                        const TensorPtr &grad_tensor, const TensorPtr &indices_tensor,
+                                                        const Int64ImmPtr &num_weights,
+                                                        const std::optional<Int64ImmPtr> &padding_idx,
+                                                        const BoolImmPtr &scale_grad_by_freq);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_GATHER_D_GRAD_H_
+#endif  // MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_EMBEDDING_DENSE_BACKWARD_H_

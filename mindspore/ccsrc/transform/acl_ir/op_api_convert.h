@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2023-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -251,7 +251,7 @@ inline aclTensor *ConvertType(const mindspore::kernel::KernelTensor *tensor) {
 }
 
 inline aclTensor *ConvertType(mindspore::kernel::KernelTensor *tensor) {
-  return ConvertType(reinterpret_cast<const mindspore::kernel::KernelTensor *>(tensor));
+  return ConvertType(static_cast<const mindspore::kernel::KernelTensor *>(tensor));
 }
 
 inline aclTensor *ConvertType(std::pair<mindspore::kernel::KernelTensor *, bool> tensor_and_trans) {
