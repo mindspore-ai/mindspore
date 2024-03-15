@@ -270,7 +270,7 @@ void GetGradUsers(const FuncGraphManagerPtr &manager, const CNodePtr &node, cons
 }
 
 void GetDependencies(const FuncGraphManagerPtr &manager, const CNodePtr &k_fg_caller, std::set<CNodePtr> *final_nodes,
-                     std::set<AnfNodePtr> *dependencies) {
+                     mindspore::CompactSet<AnfNodePtr> *dependencies) {
   if (final_nodes->find(k_fg_caller) != final_nodes->end()) {
     return;
   }
@@ -290,7 +290,7 @@ void GetDependencies(const FuncGraphManagerPtr &manager, const CNodePtr &k_fg_ca
         return;
       }
       (void)final_nodes->emplace(k_fg_caller);
-      (void)dependencies->emplace(bprop_caller->cast<CNodePtr>()->input(1));
+      (void)dependencies->insert(bprop_caller->cast<CNodePtr>()->input(1));
       return;
     }
     if (!HasRecomputedOutput(manager, forward_getter)) {
@@ -300,7 +300,7 @@ void GetDependencies(const FuncGraphManagerPtr &manager, const CNodePtr &k_fg_ca
       if (!grad_users.empty()) {
         for (auto &user : grad_users) {
           (void)final_nodes->emplace(k_fg_caller);
-          (void)dependencies->emplace(user);
+          (void)dependencies->insert(user);
         }
         return;
       }
@@ -310,7 +310,7 @@ void GetDependencies(const FuncGraphManagerPtr &manager, const CNodePtr &k_fg_ca
         return;
       }
       (void)final_nodes->emplace(k_fg_caller);
-      (void)dependencies->emplace(bprop_caller->cast<CNodePtr>()->input(1));
+      (void)dependencies->insert(bprop_caller->cast<CNodePtr>()->input(1));
       return;
     }
   }
@@ -461,19 +461,14 @@ void ReplaceFinalForwardGetter(const FuncGraphManagerPtr &manager, const FuncGra
 void AddDependNodes(const FuncGraphManagerPtr &manager, const FuncGraphPtr &fg, const CNodePtr &k_fg_caller_cnode) {
   // Get the nodes which the recomputed part should depend on;
   std::set<CNodePtr> final_nodes;
-  std::set<AnfNodePtr> dependencies;
-  std::vector<AnfNodePtr> dependencies_vector;
+  mindspore::CompactSet<AnfNodePtr> dependencies;
   GetDependencies(manager, k_fg_caller_cnode, &final_nodes, &dependencies);
   if (dependencies.empty()) {
     return;
   }
-  (void)std::copy(dependencies.begin(), dependencies.end(), std::back_inserter(dependencies_vector));
-  std::sort(dependencies_vector.begin(), dependencies_vector.end(), [](const AnfNodePtr &l, const AnfNodePtr &r) {
-    return l->fullname_with_scope() < r->fullname_with_scope();
-  });
   std::vector<AnfNodePtr> depend_inputs{NewValueNode(prim::kPrimMakeTuple)};
   (void)std::copy_if(
-    dependencies_vector.begin(), dependencies_vector.end(), std::back_inserter(depend_inputs),
+    dependencies.begin(), dependencies.end(), std::back_inserter(depend_inputs),
     [&manager, &final_nodes](const auto &dependency) { return FilterDependency(manager, final_nodes, dependency); });
 
   FuncGraphPtr bprop_fg;
