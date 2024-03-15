@@ -108,7 +108,7 @@ def get_x_shape(x_shape):
 #####################################
 absolute_ = P.Abs()
 cast_ = P.Cast()
-not_equal_ = P.NotEqual()
+not_equal_ = not_equal
 tensor_add = P.Add()
 tensor_ceil = P.Ceil()
 tensor_div = P.RealDiv()
@@ -3266,7 +3266,6 @@ def ne(input, other):
     Note:
         - Inputs of `input` and `other` comply with the implicit type conversion rules to make the data types
           consistent.
-        - The inputs must be two tensors or one tensor and one scalar.
         - When the inputs are two tensors, the shapes of them could be broadcast.
         - When the inputs are one tensor and one scalar, the scalar could only be a constant.
         - Broadcasting is supported.
@@ -3289,7 +3288,6 @@ def ne(input, other):
 
     Raises:
         TypeError: If `input` and `other` is not one of the following: Tensor, Number, bool.
-        TypeError: If neither `input` nor `other` is a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
