@@ -285,8 +285,6 @@ abstract::ShapePtr IncreFlashAttentionInferShapeBNSD(const PrimitivePtr &primiti
   std::vector<int64_t> value_shape = GetIFADynInputShape(primitive, input_args, kIncreFlashAttentionInputValueIndex);
   if (IsDynamicRank(query_shape)) {
     query_shape = std::vector(kInputQueryBNSDRank, abstract::Shape::kShapeDimAny);
-  } else if (query_shape[0] > 50) {
-    MS_LOG(EXCEPTION) << op_name << ": The batch must not be bigger than 50, but got " << query_shape[0];
   }
 
   if (CheckIsFrontend(input_args)) {
