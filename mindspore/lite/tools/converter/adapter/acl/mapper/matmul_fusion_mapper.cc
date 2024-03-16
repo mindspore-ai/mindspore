@@ -18,6 +18,7 @@
 #include <memory>
 #include <vector>
 #include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "tools/converter/adapter/acl/mapper/primitive_mapper_register.h"
 #include "tools/converter/adapter/acl/mapper/tbe_op_def.h"
 #include "tools/converter/adapter/acl/common/utils.h"
@@ -27,6 +28,7 @@
 #include "ops/batch_matmul.h"
 #include "ops/op_name.h"
 #include "ops/op_utils.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "nnacl/op_base.h"
 
 namespace mindspore {
@@ -39,6 +41,24 @@ constexpr size_t kInputSizeWithBias = 4;     // primitive, x1, x2, bias
 constexpr size_t kInputX1Idx = 1;
 constexpr size_t kInputX2Idx = 2;
 constexpr size_t kInputBiasIdx = 3;
+constexpr size_t kNumIndex0 = 0;
+constexpr size_t kNumIndex1 = 1;
+constexpr size_t kNumIndex2 = 2;
+
+std::vector<int64_t> GetTensorShape(CNodePtr cnode, size_t input_index) {
+  auto abstract = opt::GetCNodeInputAbstract(cnode, input_index);
+  if (abstract == nullptr) {
+    MS_LOG(ERROR) << "GetCNodeInputAbstract in promapt flash attention fusion.";
+    return {};
+  }
+  std::vector<int64_t> shape = {};
+  if (opt::FetchShapeFromAbstract(abstract, &shape) != lite::RET_OK) {
+    MS_LOG(ERROR) << "FetchShapeFromAbstract failed.";
+    return {};
+  }
+  return shape;
+}
+
 }  // namespace
 void MatMulFusionMapper::SetMatMulTransposeAttr(const PrimitivePtr &src_prim, const PrimitivePtr &dst_prim) {
   auto transpose_a = src_prim->GetAttr(mindspore::ops::kTransposeA);
@@ -57,6 +77,74 @@ void MatMulFusionMapper::SetMatMulTransposeAttr(const PrimitivePtr &src_prim, co
     dst_prim->AddAttr("transpose_x2", MakeValue(false));
     dst_prim->AddAttr("transpose_b", MakeValue(false));
   }
+}
+
+// BMM(x1=[a,b,c],x2=[c,d]) -> reshape(x1,[a*b,c]) + output=MM(x1=[a*b,c],x2=[c,d]) + reshape(output,[a,b,d])
+PrimitiveCPtr MatMulFusionMapper::BMMToMM(const CNodePtr &cnode, const std::vector<int64_t> &shape_vector) {
+  auto input_1_shape = GetTensorShape(cnode, kNumIndex1);
+  auto input_2_shape = GetTensorShape(cnode, kNumIndex2);
+  if (input_1_shape.size() != DIMENSION_3D || input_2_shape.size() != DIMENSION_2D ||
+      shape_vector.size() != DIMENSION_3D) {
+    MS_LOG(ERROR) << "This mapper is not BMM(3D,2D)";
+    return nullptr;
+  }
+  auto func_graph = cnode->func_graph();
+  if (func_graph == nullptr) {
+    MS_LOG(ERROR) << "Failed to get func graph from cnode " << cnode->fullname_with_scope();
+    return nullptr;
+  }
+  auto graph_manager = func_graph->manager();
+  if (graph_manager == nullptr) {
+    MS_LOG(ERROR) << "Failed to get func graph manager from cnode " << cnode->fullname_with_scope();
+    return nullptr;
+  }
+  auto x1_input = cnode->input(kInputX1Idx);
+  auto x2_input = cnode->input(kInputX2Idx);
+  ops::MatMul mat_mul;
+  PrimitiveCPtr dst_prim = mat_mul.GetPrim();
+
+  std::vector<int32_t> MM_shape = {-1, static_cast<int32_t>(input_1_shape[kNumIndex2])};
+  auto shape_parm_node =
+    opt::BuildIntVecParameterNode(func_graph, MM_shape, cnode->fullname_with_scope() + "_input_shape_perm");
+  MS_CHECK_TRUE_MSG(shape_parm_node != nullptr, nullptr, "create shape_parm_node return nullptr");
+  std::vector<AnfNodePtr> op_inputs = {x1_input, shape_parm_node};
+  auto reshape_prim = std::make_shared<ops::Reshape>();
+  MS_CHECK_TRUE_MSG(reshape_prim != nullptr, nullptr, "create reshape_prim return nullptr");
+  auto reshape_prim_c = reshape_prim->GetPrim();
+  MS_CHECK_TRUE_MSG(reshape_prim_c != nullptr, nullptr, "create prim_c return nullptr");
+  auto reshape_node = func_graph->NewCNode(reshape_prim_c, op_inputs);
+  MS_CHECK_TRUE_MSG(reshape_node != nullptr, nullptr, "create reshape_node return nullptr");
+  reshape_node->set_fullname_with_scope(cnode->fullname_with_scope() + "_input_reshape");
+  if (cnode->abstract() != nullptr) {
+    reshape_node->set_abstract(cnode->abstract()->Clone());
+  }
+  auto matmul = NewCNode(cnode, dst_prim, {reshape_node, x2_input}, cnode->abstract()->Clone(),
+                         cnode->fullname_with_scope() + "_matmul");
+  MS_CHECK_TRUE_MSG(matmul != nullptr, nullptr, "Failed to create MatMul node");
+
+  std::vector<int32_t> output_shape = {static_cast<int32_t>(shape_vector[kNumIndex0]),
+                                       static_cast<int32_t>(shape_vector[kNumIndex1]),
+                                       static_cast<int32_t>(shape_vector[kNumIndex2])};
+  auto shape_output_parm_node =
+    opt::BuildIntVecParameterNode(func_graph, output_shape, cnode->fullname_with_scope() + "_output_shape_perm");
+  MS_CHECK_TRUE_MSG(shape_output_parm_node != nullptr, nullptr, "create shape_parm_node return nullptr");
+  auto reshape_output_prim = std::make_shared<ops::Reshape>();
+  MS_CHECK_TRUE_MSG(reshape_output_prim != nullptr, nullptr, "create reshape_output_prim return nullptr");
+  auto reshape_output_prim_c = reshape_output_prim->GetPrim();
+  MS_CHECK_TRUE_MSG(reshape_output_prim_c != nullptr, nullptr, "create prim_c return nullptr");
+  auto reshape_output_node = func_graph->NewCNode(reshape_output_prim_c, {matmul, shape_output_parm_node});
+  MS_CHECK_TRUE_MSG(reshape_output_node != nullptr, nullptr, "create reshape_output_node return nullptr");
+  reshape_output_node->set_fullname_with_scope(cnode->fullname_with_scope() + "_output_reshape");
+  if (cnode->abstract() != nullptr) {
+    reshape_output_node->set_abstract(cnode->abstract()->Clone());
+  }
+  if (!graph_manager->Replace(cnode, reshape_output_node)) {
+    MS_LOG(ERROR) << "Failed to replace MatMul with BatchMatMul, cnode " << cnode->fullname_with_scope()
+                  << ", input size " << cnode->size();
+    return nullptr;
+  }
+  MS_LOG(INFO) << "BMM->MM SUCCESS";
+  return dst_prim;
 }
 
 STATUS MatMulFusionMapper::Mapper(const CNodePtr &cnode) {
@@ -97,13 +185,26 @@ STATUS MatMulFusionMapper::Mapper(const CNodePtr &cnode) {
     return RET_ERROR;
   }
   PrimitiveCPtr dst_prim = nullptr;
+  auto input_1_shape = GetTensorShape(cnode, 1);
+  auto input_2_shape = GetTensorShape(cnode, 2);
+  int64_t kNumDynShape = -1;
+  bool is_dyn_input_1 =
+    std::any_of(input_1_shape.begin(), input_1_shape.end(), [kNumDynShape](int y) { return kNumDynShape == y; });
+  bool is_dyn_input_2 =
+    std::any_of(input_2_shape.begin(), input_2_shape.end(), [kNumDynShape](int y) { return kNumDynShape == y; });
+
   if (shape_vector.size() == DIMENSION_2D) {
     dst_prim = std::make_shared<acl::MatMulV2>();
     value_node->set_value(dst_prim);
   } else if (cnode->size() == kInputSizeWithoutBias) {
-    ops::BatchMatMul mat_mul;
-    dst_prim = mat_mul.GetPrim();
-    value_node->set_value(dst_prim);
+    if (input_1_shape.size() == DIMENSION_3D && input_2_shape.size() == DIMENSION_2D && !is_dyn_input_1 &&
+        !is_dyn_input_2) {
+      dst_prim = BMMToMM(cnode, shape_vector);
+    } else {
+      ops::BatchMatMul mat_mul;
+      dst_prim = mat_mul.GetPrim();
+      value_node->set_value(dst_prim);
+    }
   } else {
     auto func_graph = cnode->func_graph();
     if (func_graph == nullptr) {
@@ -137,6 +238,10 @@ STATUS MatMulFusionMapper::Mapper(const CNodePtr &cnode) {
                     << ", input size " << cnode->size();
       return RET_ERROR;
     }
+  }
+  if (dst_prim == nullptr) {
+    MS_LOG(ERROR) << "dst_prim is nullptr.";
+    return RET_ERROR;
   }
   SetMatMulTransposeAttr(src_prim, dst_prim);
   dst_prim->SetAttrs(src_prim->attrs());
