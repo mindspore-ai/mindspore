@@ -1513,7 +1513,7 @@ Strategies CheckBroadcast(const std::shared_ptr<OperatorInfo> &op, Dimensions st
     if (s_dim == first_tensor_dim) {
       bool broadcast_first_tensor = false;
       strategies.push_back(strategy);
-      strategies.push_back(ApplyBroadcast(op, strategy, first_tensor_dim, second_tensor_dim, broadcast_first_tensor));
+      strategies.push_back(ApplyBroadcast(op, strategy, broadcast_first_tensor));
     } else {
       // When the strategy is from the smaller tensor, make the strategy all 1.
       Dimensions broadcast_revise_s(first_tensor_dim, 1);
@@ -1524,7 +1524,7 @@ Strategies CheckBroadcast(const std::shared_ptr<OperatorInfo> &op, Dimensions st
   } else if (second_tensor_dim > first_tensor_dim) {  // Do Broadcasting in the first tensor.
     if (s_dim == second_tensor_dim) {
       bool broadcast_first_tensor = true;
-      strategies.push_back(ApplyBroadcast(op, strategy, first_tensor_dim, second_tensor_dim, broadcast_first_tensor));
+      strategies.push_back(ApplyBroadcast(op, strategy, broadcast_first_tensor));
       strategies.push_back(strategy);
     } else {
       // When the strategy is from the smaller tensor, make the strategy all 1.
@@ -1597,50 +1597,23 @@ Strategies GenerateStrategiesFromStrategy(const std::vector<std::shared_ptr<Oper
   return CheckDivisible(ops[iter_ops], basic_stra);
 }
 
-Dimensions ApplyBroadcast(const std::shared_ptr<OperatorInfo> &op, const Dimensions &strategy, size_t first_tensor_dim,
-                          size_t second_tensor_dim, bool broadcast_first_tensor) {
-  Dimensions s_empty = {};
+Dimensions ApplyBroadcast(const std::shared_ptr<OperatorInfo> &op, const Dimensions &strategy,
+                          bool broadcast_first_tensor) {
   Dimensions s_broadcast;
   size_t target_tensor_index = 0;
-  size_t refer_tensor_index = 0;
-  size_t target_tensor_dim;
-  size_t refer_tensor_dim;
+  size_t target_tensor_dim = 1;
 
   // Indexing target and refer tensor.
-  if (broadcast_first_tensor) {
-    target_tensor_index = 0;
-    refer_tensor_index = 1;
-    target_tensor_dim = first_tensor_dim;
-    refer_tensor_dim = second_tensor_dim;
-  } else {
+  if (!broadcast_first_tensor) {
     target_tensor_index = 1;
-    refer_tensor_index = 0;
-    target_tensor_dim = second_tensor_dim;
-    refer_tensor_dim = first_tensor_dim;
   }
 
-  // When target tensor with an empty dim.
-  if (target_tensor_dim == 0) {
-    return s_empty;
-  } else if (target_tensor_dim == 1) {  // When target tensor with a single dim.
-    bool broadcast_dim_found = false;
-    for (int32_t iter = refer_tensor_dim - 1; iter >= 0; --iter) {
-      // Find and copy that dim's strategy from the refer tensor.
-      if ((op->inputs_shape()[refer_tensor_index][iter] == op->inputs_shape()[target_tensor_index][0]) &&
-          (op->inputs_shape()[refer_tensor_index][iter] > 1) && (refer_tensor_dim == strategy.size())) {
-        s_broadcast.push_back(strategy.at(iter));
-        broadcast_dim_found = true;
-        break;
-      }
-    }
-    // Cannot decide which dim it is, push back one.
-    if (broadcast_dim_found == false) {
-      s_broadcast.push_back(1);
-    }
-  } else {
-    // Cannot decide which dim needs to do broadcast, push back one(strategy).
-    for (size_t iter = 0; iter < target_tensor_dim; ++iter) {
-      s_broadcast.push_back(1);
+  target_tensor_dim = op->inputs_shape()[target_tensor_index].size();
+  for (size_t iter = 0; iter < target_tensor_dim; iter++) {
+    if (op->inputs_shape()[target_tensor_index][target_tensor_dim - 1 - iter] == 1) {
+      s_broadcast.insert(s_broadcast.begin(), 1);
+    } else {
+      s_broadcast.insert(s_broadcast.begin(), strategy[strategy.size() - 1 - iter]);
     }
   }
 
@@ -2409,12 +2382,29 @@ size_t RecStrategyPropagator::AssignStandaloneAndBatchParallelOpStrategy() {
       ApplyStrategy(iter_ops, strategies);
       changes++;
       MS_LOG(INFO) << ops_[iter_ops]->name() << " assigned strategy " << StrategyToString(strategies);
+      auto iter = find(no_stra_op_list_->begin(), no_stra_op_list_->end(), iter_ops);
+      if (iter != no_stra_op_list_->end()) {
+        no_stra_op_list_->erase(iter);
+      }
     }
     if (name == BATCH_PARALLEL) {
-      Strategies strategies = PrepareDataParallel(ops_[iter_ops], {}, false);
+      Strategies strategies;
+      auto split_flag_list = ops_[iter_ops]->split_flag_list();
+      auto inputs_shape = ops_[iter_ops]->inputs_shape();
+      for (size_t i = 0; i < inputs_shape.size(); i++) {
+        Shape temp(inputs_shape[i].size(), 1);
+        if (split_flag_list[i]) {
+          temp[0] = g_device_manager->stage_device_num();
+        }
+        strategies.push_back(temp);
+      }
       ApplyStrategy(iter_ops, strategies);
       changes++;
       MS_LOG(INFO) << ops_[iter_ops]->name() << " assigned strategy " << StrategyToString(strategies);
+      auto iter = find(no_stra_op_list_->begin(), no_stra_op_list_->end(), iter_ops);
+      if (iter != no_stra_op_list_->end()) {
+        no_stra_op_list_->erase(iter);
+      }
     }
   }
   return changes;

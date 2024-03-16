@@ -1295,10 +1295,10 @@ std::vector<std::vector<size_t>> GetIndexOfOpsSharingInputTensor(
   return param_users_ops_index;
 }
 
-void CalculateRealBatchSize(const std::shared_ptr<Graph> &graph, const FuncGraphPtr &root) {
+void CalculateMicroBatchSize(const std::shared_ptr<Graph> &graph, const FuncGraphPtr &root) {
   // The first dimension of an operator is its batch dimension.
   // However, the shape of the first dimension is not the batch_size assigned by users.
-  // This function helps to calculate the real batch size.
+  // This function helps to calculate the micro batch size in the pipeline scenario.
 
   auto manager = root->manager();
   auto ops = entire_costgraph->GetOperators();
@@ -1314,8 +1314,8 @@ void CalculateRealBatchSize(const std::shared_ptr<Graph> &graph, const FuncGraph
   if (!virtual_dataset_) {
     // Normally for auto parallel, virtual dataset is required in order to control the input's parallel strategy.
     // However, in some test cases or NN, there is no input data.
-    // This if condition aims to deal with these cases, and return -1 to indicate that input batch size is null.
-    graph->batch_size = -1;
+    // This if condition aims to deal with these cases, and return 1.
+    graph->micro_batch_size = 1;
     return;
   }
   auto node_user_map = manager->node_users();
@@ -1346,15 +1346,14 @@ void CalculateRealBatchSize(const std::shared_ptr<Graph> &graph, const FuncGraph
     }
   }
   if (data_user_size != 0) {
-    graph->batch_size = total_batch_size / data_user_size;
+    graph->micro_batch_size = total_batch_size / data_user_size;
+    MS_LOG(INFO) << "In the pipeline scenario, the micro_batch_size of each stage is " << graph->micro_batch_size;
   } else {
     MS_LOG(EXCEPTION) << "Data user size equals to 0, which could not be divided by the total batch size";
   }
 }
 
-void ReInitCostGraph(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root, bool dyn_shape_tmp_fix) {
-  InitCostGraph();
-
+void CreateNodesForCostGraph(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root) {
   if (CostModelContext::GetInstance()->is_multi_subgraphs()) {
     if (ConstructCostGraphNodesByUniqueIdTC(all_nodes, root) == SUCCESS) {
       MS_LOG(INFO) << "Constructing nodes for cost graph succeeded. There are "
@@ -1370,7 +1369,11 @@ void ReInitCostGraph(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPt
       MS_LOG(EXCEPTION) << "Constructing nodes for cost graph failed.";
     }
   }
+}
 
+void ReInitCostGraph(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root, bool dyn_shape_tmp_fix) {
+  InitCostGraph();
+  CreateNodesForCostGraph(all_nodes, root);
   if (!dyn_shape_tmp_fix) {
     ReshapeCostCompute(all_nodes);
   }
@@ -1437,26 +1440,7 @@ Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const
     dyn_shape_tmp_fix = true;
   }
 
-  InitCostGraph();
-  if (CostModelContext::GetInstance()->is_multi_subgraphs()) {
-    if (ConstructCostGraphNodesByUniqueIdTC(all_nodes, root) == SUCCESS) {
-      MS_LOG(INFO) << "Constructing nodes for cost graph succeeded. There are "
-                   << entire_costgraph->GetOperators().size() << " operators.";
-    } else {
-      MS_LOG(EXCEPTION) << "Constructing nodes for cost graph failed.";
-    }
-  } else {
-    if (ConstructCostGraphNodesByUniqueId(all_nodes, root) == SUCCESS) {
-      MS_LOG(INFO) << "Constructing nodes for cost graph succeeded. There are "
-                   << entire_costgraph->GetOperators().size() << " operators.";
-    } else {
-      MS_LOG(EXCEPTION) << "Constructing nodes for cost graph failed.";
-    }
-  }
-  if (!dyn_shape_tmp_fix) {
-    ReshapeCostCompute(all_nodes);
-  }
-
+  ReInitCostGraph(all_nodes, root, dyn_shape_tmp_fix);
   auto ops = entire_costgraph->GetOperators();
 
   if (dyn_shape_tmp_fix && HasUserConfiguredStrategy(ops)) {
@@ -1484,7 +1468,9 @@ Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const
     TmpInferForDynamicShapeInSAPP(graph);
   }
 
-  CalculateRealBatchSize(graph, root);
+  if (parallel::ParallelContext::GetInstance()->pipeline_stage_split_num() > 1) {
+    CalculateMicroBatchSize(graph, root);
+  }
 
   size_t num_device = g_device_manager->DeviceNum();
   const auto device_memory = CostModelContext::GetInstance()->device_memory_capacity();
@@ -1499,17 +1485,19 @@ Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const
   }
 
   // Needed when changing stage number
-  if (!graph->dyn_shape_tmp_fix) {
-    if (ParallelInit() != SUCCESS) {
-      MS_LOG(EXCEPTION) << "Parallel init failed after Rec search";
+  if (parallel::ParallelContext::GetInstance()->pipeline_stage_split_num() > 1) {
+    if (!graph->dyn_shape_tmp_fix) {
+      if (ParallelInit() != SUCCESS) {
+        MS_LOG(EXCEPTION) << "Parallel init failed after Rec search";
+      }
+    } else {
+      if (ParallelInit(rank_id, device_num) != SUCCESS) {
+        MS_LOG(EXCEPTION) << "Parallel init failed";
+      }
     }
-  } else {
-    if (ParallelInit(rank_id, device_num) != SUCCESS) {
-      MS_LOG(EXCEPTION) << "Parallel init failed";
-    }
+    ReInitCostGraph(all_nodes, root, graph->dyn_shape_tmp_fix);
+    ops = entire_costgraph->GetOperators();
   }
-  ReInitCostGraph(all_nodes, root, graph->dyn_shape_tmp_fix);
-  ops = entire_costgraph->GetOperators();
 
   GenerateStrategy(graph, ops, eli_list, input_tensor_names, index_list, isTraining, param_users_ops_index, root);
 

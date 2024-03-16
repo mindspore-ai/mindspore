@@ -147,8 +147,8 @@ Dimensions CopyIncomingOperatorInputStrategy(const std::vector<std::shared_ptr<O
 Strategies GenerateStrategiesFromStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
                                           Dimensions basic_stra, bool dyn_shape_tmp_fix);
 Strategies CheckBroadcast(const std::shared_ptr<OperatorInfo> &op, const Dimensions &strategy);
-Dimensions ApplyBroadcast(const std::shared_ptr<OperatorInfo> &op, const Dimensions &strategy, size_t first_tensor_dim,
-                          size_t second_tensor_dim, bool broadcast_first_tensor);
+Dimensions ApplyBroadcast(const std::shared_ptr<OperatorInfo> &op, const Dimensions &strategy,
+                          bool broadcast_first_tensor);
 Strategies CheckDivisible(const std::shared_ptr<OperatorInfo> &op, const Dimensions &strategy);
 Dimensions ModifyStrategyIfSqueezeOutgoing(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
                                            Dimensions strategy);

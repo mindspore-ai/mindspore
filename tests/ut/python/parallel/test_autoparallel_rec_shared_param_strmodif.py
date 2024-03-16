@@ -100,5 +100,5 @@ def test_rec_shared_param_strmodif():
     stras = _cell_graph_executor._get_shard_strategy(model._train_network)
     for (k, v) in stras.items():
         if re.search("Gather", k) is not None:
-            assert v == [[2, 1], [4, 1]]
+            assert v == [[1, 1], [8, 1]]
     context.reset_auto_parallel_context()

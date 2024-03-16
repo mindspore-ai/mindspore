@@ -207,6 +207,7 @@ class OperatorInfo {
   CNodePtr cnode() const { return cnode_; }
   bool is_alive() const { return is_alive_; }
   void SetNotAlive() { is_alive_ = false; }
+  std::vector<bool> split_flag_list() const { return split_flag_list_; }
   StrategyPtr strategy() const { return strategy_; }
   StrategyPtr out_strategy() const { return out_strategy_; }
   void set_out_strategy(const StrategyPtr &strategy) { out_strategy_ = strategy; }

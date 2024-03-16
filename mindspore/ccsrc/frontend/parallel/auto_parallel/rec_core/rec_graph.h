@@ -101,7 +101,7 @@ class Graph {
 
   bool dyn_shape_tmp_fix = false;
 
-  int64_t batch_size;
+  int64_t micro_batch_size = 1;
 
   std::vector<Graph::NodeType> nodes;  // Nodes of the graph. Public.
 };                                     // Define simplified dataflow Graph for partitioning

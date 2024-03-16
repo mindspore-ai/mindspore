@@ -184,13 +184,18 @@ StrategyRec CostMatMul::GetOptimalStr(const Graph::NodeType &node,
   int64_t edge_k =
     static_cast<int64_t>(node.apply.arguments[0].tensor_shape.shape_w * node.apply.arguments[0].tensor_str.str_w);
 
-  std::vector<double> cost_op;
+  bool isMicroBatchSizeLargeEnough = true;
+  if (parallel::ParallelContext::GetInstance()->pipeline_stage_split_num() > 1) {
+    if (graph.micro_batch_size * node.apply.arguments[0].tensor_str.str_h <= 1) {
+      isMicroBatchSizeLargeEnough = false;
+    }
+  }
 
+  std::vector<double> cost_op;
   if (node.apply.arguments[0].tensor_str.str_h == 0) {
     MS_LOG(EXCEPTION) << "str_h cannot be 0!";
   }
-  if (edge_i < INT64_TWO || edge_i % INT64_TWO != 0 ||
-      (1 / node.apply.arguments[0].tensor_str.str_h >= graph.batch_size && graph.batch_size != 0)) {
+  if (edge_i < INT64_TWO || edge_i % INT64_TWO != 0 || !isMicroBatchSizeLargeEnough) {
     cost_op.push_back(DOUBLE_MAX);
   } else {
     std::vector<std::vector<float>> mode = {{1, 1, 0.5, 1}, {1, 1, 1, 1}, {1, 1, 0.5, 1}};
@@ -238,13 +243,6 @@ StrategyRec CostMatMul::GetOptimalStr(const Graph::NodeType &node,
     MS_LOG(INFO) << "If do NOT cut the axis, the op-cost is " << cost_if_no_cut << ", the redist-cost is "
                  << redist_if_no_cut << ", and the total cost is " << total_cost_if_no_cut;
     cost_op.push_back(total_cost_if_no_cut);
-  }
-
-  // If optimizer parallel is enabled, then MatMul must be cut at least once on the DP dimension
-  // node.apply.arguments[0].tensor_str.str_h == 1 means that the batch dimension is not partitioned.
-  if (ParallelContext::GetInstance()->enable_parallel_optimizer() && node.apply.arguments[0].tensor_str.str_h == 1.0 &&
-      isTraining) {
-    cost_op[0] = DOUBLE_MIN;
   }
 
   for (auto &cost : cost_op) {
@@ -396,11 +394,18 @@ StrategyRec CostBatchMatMul::GetOptimalStr(
   int64_t edge_k =
     static_cast<int64_t>(node.apply.arguments[0].tensor_shape.shape_w * node.apply.arguments[0].tensor_str.str_w);
 
+  bool isMicroBatchSizeLargeEnough = true;
+  if (parallel::ParallelContext::GetInstance()->pipeline_stage_split_num() > 1) {
+    if (graph.micro_batch_size * node.apply.arguments[0].tensor_str.str_n <= 1) {
+      isMicroBatchSizeLargeEnough = false;
+    }
+  }
+
   std::vector<double> cost_op;
   if (node.apply.arguments[0].tensor_str.str_n == 0) {
     MS_LOG(EXCEPTION) << "str_n cannot be 0!";
   }
-  if (!IsEdgeSplittable(edge_b) || 1 / node.apply.arguments[0].tensor_str.str_n >= graph.batch_size) {
+  if (!IsEdgeSplittable(edge_b) || !isMicroBatchSizeLargeEnough) {
     cost_op.push_back(DOUBLE_MAX);
   } else {
     std::vector<std::vector<float>> mode = {{0.5, 1, 1, 1}, {0.5, 1, 1, 1}, {0.5, 1, 1, 1}};

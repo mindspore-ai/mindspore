@@ -42,7 +42,7 @@ def test_default_mem_coef():
                                       global_rank=0)
     input_x = Tensor(np.ones([32, 64]), dtype=ms.float32)
     net = Net()
-    assert abs(_get_rp_matmul_mem_coef() - 0.25) < 1e-5
+    assert abs(_get_rp_matmul_mem_coef() - 0.1) < 1e-5
     _set_rp_matmul_mem_coef(16)
     compile_net(net, input_x)
     assert abs(_get_rp_matmul_mem_coef() - 16) < 1e-5
