@@ -140,6 +140,7 @@
 #include "tools/optimizer/fusion/gegluv2_fusion.h"
 #include "tools/optimizer/graph/make_list_pass.h"
 #include "tools/optimizer/fusion/flash_attention_fusion.h"
+#include "tools/optimizer/fusion/groupnormsilu_fusion.h"
 
 using std::string;
 namespace mindspore::lite {
@@ -819,6 +820,7 @@ bool AnfTransform::StoreBuiltinPass(const std::shared_ptr<ConverterPara> &param)
      false},
     {"MakeListPass", std::make_shared<opt::MakeListPass>(), true},
     {"FlashAttentionFusion", std::make_shared<opt::FlashAttentionFusion>(), false},
+    {"GroupNormSiluFusion", std::make_shared<opt::GroupNormSiluFusion>(), false},
     {"GeGluV2Fusion", std::make_shared<opt::GeGluV2Fusion>(), false}};
   for (const auto &pass_info : pass_infos) {
     MS_CHECK_TRUE_RET(std::get<1>(pass_info) != nullptr, false);

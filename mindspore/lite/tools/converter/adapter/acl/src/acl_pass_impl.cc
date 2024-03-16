@@ -55,6 +55,7 @@
 #include "tools/optimizer/graph/remove_load_pass.h"
 #include "tools/optimizer/fusion/transpose_fusion.h"
 #include "tools/optimizer/fusion/batchnorm_to_scale_fusion.h"
+#include "tools/optimizer/fusion/groupnormsilu_fusion.h"
 #include "tools/converter/quantizer/quantization_optimizer.h"
 #include "tools/converter/quantizer/insert_quant_node_manager.h"
 #include "tools/converter/parser/unify_format.h"
@@ -91,6 +92,7 @@ constexpr auto kDelRedundantTranspose = "DeleteRedundantTranspose";
 constexpr auto kRemoveUnusedAddNodePass = "RemoveUnusedAddNodePass";
 constexpr auto kCustomOpFlashAttentionFusionForCustom = "FlashAttentionFusionForCustom";
 constexpr auto kCustomOpFlashAttentionFusion = "FlashAttentionFusion";
+constexpr auto kCustomOpGroupNormSiluFusion = "GroupNormSiluFusion";
 constexpr auto kCustomOpGeGluV2Fusion = "GeGluV2Fusion";
 constexpr auto kScalarOpPass = "ScalarOpPass";
 constexpr auto kMakeListPass = "MakeListPass";
@@ -618,6 +620,13 @@ STATUS AclPassImpl::PreProcGraph(const FuncGraphPtr &func_graph) {
       MS_LOG(INFO) << "using GeGluV2";
       if (!lite::RunOptimizerPass(func_graph, {kCustomOpGeGluV2Fusion})) {
         MS_LOG(ERROR) << kCustomOpGeGluV2Fusion << " op pass failed.";
+        return lite::RET_ERROR;
+      }
+    }
+    if (find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "All") != plugin_custom_ops.end()) {
+      MS_LOG(INFO) << "using GroupNormSilu";
+      if (!lite::RunOptimizerPass(func_graph, {kCustomOpGroupNormSiluFusion})) {
+        MS_LOG(ERROR) << kCustomOpGroupNormSiluFusion << " op pass failed.";
         return lite::RET_ERROR;
       }
     }

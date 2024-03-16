@@ -22,6 +22,7 @@
 #include "transform/graph_ir/custom_op_proto/cust_other_ops.h"
 #include "transform/graph_ir/custom_op_proto/flash_attention.h"
 #include "op_proto/inc/fusion_ops.h"
+#include "op_proto/inc/nn_norm.h"
 
 DECLARE_OP_ADAPTER(KVCacheMgr)
 DECLARE_OP_USE_OUTPUT(KVCacheMgr)
@@ -40,4 +41,7 @@ DECLARE_OP_USE_OUTPUT(PromptKvCache)
 
 DECLARE_OP_ADAPTER(MatmulAllReduce)
 DECLARE_OP_USE_OUTPUT(MatmulAllReduce)
+
+DECLARE_OP_ADAPTER(GroupNormSilu)
+DECLARE_OP_USE_OUTPUT(GroupNormSilu)
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_TRANSFORM_FUSION_OPS_DECLARE_H_
