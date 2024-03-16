@@ -216,6 +216,14 @@ STATUS PadV3GePass::ProcessPadV3ForGE(const FuncGraphPtr &func_graph, const Func
 
 bool PadV3GePass::Run(const FuncGraphPtr &func_graph) {
   MS_ASSERT(func_graph != nullptr);
+  std::string prim_func_key = "generated_from_mindir_with_prim_func";
+  if (func_graph->has_attr(prim_func_key)) {
+    bool has_prim_func = GetValue<bool>(func_graph->get_attr(prim_func_key));
+    if (!has_prim_func) {
+      MS_LOG(INFO) << "found previous mindir version, skip padv3 pass.";
+      return true;
+    }
+  }
   auto manager = func_graph->manager();
   MS_CHECK_TRUE_RET(manager != nullptr, false);
   auto status = ProcessPadV3ForGE(func_graph, manager);
