@@ -649,8 +649,8 @@ OptPassGroupMap GetAfterRecomputePass(const opt::irpass::OptimizeIRPassLib &) {
 }
 
 OptPassGroupMap GetSymbolEngineOptPass(const opt::irpass::OptimizeIRPassLib &irpass) {
-  if (common::GetEnv("MS_SYMBOL_ENGINE_OPTIMIZE") != "on") {
-    MS_LOG(INFO) << "SymbolEngine optimizer is disabled, use 'export MS_SYMBOL_ENGINE_OPTIMIZE=on' to enable it.";
+  if (common::GetEnv("MS_SYMBOL_ENGINE_OPTIMIZE") == "off") {
+    MS_LOG(INFO) << "SymbolEngineOptimizer is disabled.";
     return OptPassGroupMap();
   }
   OptPassGroupMap map({{"build", opt::OptPassConfig(opt::irpass::SymbolEngineBuilder())},

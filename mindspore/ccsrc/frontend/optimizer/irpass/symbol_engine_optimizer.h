@@ -27,9 +27,13 @@ namespace opt {
 namespace irpass {
 class SymbolEngineBuilder {
  public:
-  SymbolEngineBuilder() = default;
+  explicit SymbolEngineBuilder(bool only_dynshape_graph = true) : only_dynshape_graph_(only_dynshape_graph) {}
   ~SymbolEngineBuilder() = default;
-  bool operator()(const FuncGraphPtr &func_graph, const OptimizerPtr &);
+  bool operator()(const FuncGraphPtr &func_graph, const OptimizerPtr &opt);
+
+ protected:
+  bool HasDynamicShapeNode(const OptimizerPtr &opt) const;
+  bool only_dynshape_graph_{true};  // If true, only build SymbolEngine when dynamic shape node exists.
 };
 
 /**
