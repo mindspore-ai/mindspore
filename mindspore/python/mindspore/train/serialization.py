@@ -1641,6 +1641,8 @@ def export(net, *inputs, file_name, file_format, **kwargs):
         3. Exporting functions decorated with :func:`mindspore.jit` to mindir format is supported.
         4. When exporting a function decorated with :func:`mindspore.jit`, the function should not involve
            class properties in calculations.
+        5. AIR format is deprecated, and will be removed in a future version, please use other format or use
+           MindSpore Lite to do offline inference.
 
     Args:
         net (Union[Cell, function]): MindSpore network.
@@ -1731,6 +1733,9 @@ def export(net, *inputs, file_name, file_format, **kwargs):
     supported_formats = ['AIR', 'ONNX', 'MINDIR']
     if file_format not in supported_formats:
         raise ValueError(f"For 'export', 'file_format' must be one of {supported_formats}, but got {file_format}.")
+    if file_format == 'AIR':
+        logger.warning("AIR format is deprecated, and will be removed in a future version, please use other format or "
+                       "use MindSpore Lite to do offline inference")
     Validator.check_file_name_by_regular(file_name)
     logger.info("exporting model file:%s format:%s.", file_name, file_format)
 
