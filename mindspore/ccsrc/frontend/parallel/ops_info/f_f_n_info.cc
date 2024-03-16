@@ -252,6 +252,8 @@ Status FFNInfo::InferTensorMap() {
     Shape bias2_tensor_map{expert_pos, 1};
     // input scale: [expert]
     Shape input_scale_tensor_map{expert_pos};
+    // sm input scale: [expert]
+    Shape sm_input_scale_tensor_map{expert_pos, 0};
     // input offset: [expert]
     Shape input_offset_tensor_map{expert_pos};
     // input deqscale1: [expert, ffn_hidden_size]
@@ -279,7 +281,14 @@ Status FFNInfo::InferTensorMap() {
       inputs_tensor_map_.emplace_back(bias2_tensor_map);
     }
     if (inputs_shape_.size() > input_scale) {
-      inputs_tensor_map_.emplace_back(input_scale_tensor_map);
+      if (inputs_shape_[input_scale].size() == 1) {
+        inputs_tensor_map_.emplace_back(input_scale_tensor_map);
+      } else if (inputs_shape_[input_scale].size() == 2) {
+        inputs_tensor_map_.emplace_back(sm_input_scale_tensor_map);
+      } else {
+        MS_LOG(ERROR) << "MOE scale shape dims should be 1 or 2, but get " << inputs_shape_[input_scale].size();
+        return FAILED;
+      }
     }
     if (inputs_shape_.size() > input_offset) {
       inputs_tensor_map_.emplace_back(input_offset_tensor_map);
