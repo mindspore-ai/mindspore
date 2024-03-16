@@ -366,6 +366,7 @@ void GraphKernelFlags::RegisterFlags(std::map<std::string, std::string> *flag_ma
   reg.AddFlag("enable_cce_lib_ops", &enable_cce_lib_ops);
   reg.AddFlag("enable_cce_lib_ops_only", &enable_cce_lib_ops_only);
   reg.AddFlag("disable_cce_lib_ops", &disable_cce_lib_ops);
+  reg.AddFlag("cce_lib_splitter_pattern", &cce_lib_splitter_pattern);
 
   if (enable_dynamic_shape_fusion && !is_ascend) {
     kernel_generator = "AKG_V2";
@@ -431,6 +432,7 @@ std::string GraphKernelFlags::DumpAllFlags() const {
   json["enable_cce_lib_ops"] = enable_cce_lib_ops_only;
   json["enable_cce_lib_ops_only"] = enable_cce_lib_ops_only;
   json["disable_cce_lib_ops"] = disable_cce_lib_ops;
+  json["cce_lib_splitter_pattern"] = cce_lib_splitter_pattern;
 
   return json.dump();
 }

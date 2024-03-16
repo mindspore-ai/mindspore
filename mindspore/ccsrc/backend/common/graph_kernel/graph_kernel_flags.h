@@ -286,15 +286,32 @@ class BACKEND_EXPORT GraphKernelFlags {
   std::vector<std::string> disable_pass;
 
   /**
-   * Cluster ops to run akg cce lib.
+   * Enable cce ops.
    */
   bool enable_cce_lib{false};
 
+  /**
+   * Additional cce ops(case sensitive).
+   * The operators to be added into the default cce op list.
+   */
   std::vector<std::string> enable_cce_lib_ops;
 
+  /**
+   * Unlike the "enable_cce_lib_ops", the default list will be overwritten by this list.
+   * Note that the "enable_cce_lib_ops" and "disable_cce_lib_ops" will be ignored if this flag is set.
+   */
   std::vector<std::string> enable_cce_lib_ops_only;
 
+  /**
+   * Operators to be disabled to use cce libs (case sensitive).
+   * The behavior is undefined when this list overlaps with "enable_cce_lib_ops_only".
+   */
   std::vector<std::string> disable_cce_lib_ops;
+
+  /**
+   * Splitter patterns for fusion cce operator.
+   */
+  std::vector<std::string> cce_lib_splitter_pattern;
 
  private:
   GraphKernelFlags(const std::string &graph_kernel_flags, bool enable_graph_kernel)

@@ -80,10 +80,10 @@ class SplitModel {
   std::list<AreaPtr> areas_;  // use std::list to accelerate the "erase"
   std::shared_ptr<ReachTable> reach_table_{nullptr};
   HashMap<NodePtr, AreaPtr> node_area_map_;
+  std::vector<std::pair<FusePatternPtr, bool>> patterns_;
 
  private:
   size_t cur_area_id_{0};
-  std::vector<std::pair<FusePatternPtr, bool>> patterns_;
 };
 using SplitModelPtr = std::shared_ptr<SplitModel>;
 }  // namespace mindspore::graphkernel::inner

@@ -56,5 +56,6 @@ class SplitModelRegister {
     processor, [__VA_ARGS__]() noexcept {                                                                             \
       return std::static_pointer_cast<mindspore::graphkernel::inner::SplitModel>(std::make_shared<cls>(__VA_ARGS__)); \
     })
+constexpr const char kAscendCCE[] = "AscendCCE";
 }  // namespace mindspore::graphkernel::inner
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_SPLIT_MODEL_SPLIT_MODEL_FACTORY_H_

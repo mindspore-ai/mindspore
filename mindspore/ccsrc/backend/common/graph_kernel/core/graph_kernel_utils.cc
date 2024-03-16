@@ -442,7 +442,7 @@ AnfNodePtrList GkUtils::GetGraphKernelNodes(const FuncGraphPtr &func_graph) {
   return node_list;
 }
 
-bool GkUtils::UseAkgCceLib(const AnfNodePtr &node) {
+bool GkUtils::IsAkgCceLibNode(const AnfNodePtr &node) {
   if (node->isa<CNode>()) {
     auto cnode = dyn_cast_ptr<CNode>(node);
     if (cnode == nullptr) {
@@ -452,4 +452,26 @@ bool GkUtils::UseAkgCceLib(const AnfNodePtr &node) {
   }
   return false;
 }
+
+void GkUtils::SetCceOpNotFusion(const AnfNodePtr &node) {
+  if (node->isa<CNode>()) {
+    auto cnode = dyn_cast_ptr<CNode>(node);
+    if (cnode == nullptr) {
+      return;
+    }
+    cnode->AddAttr("cce_op_not_fusion", MakeValue(true));
+  }
+}
+
+bool GkUtils::CceOpNotFusion(const AnfNodePtr &node) {
+  if (node->isa<CNode>()) {
+    auto cnode = dyn_cast_ptr<CNode>(node);
+    if (cnode == nullptr) {
+      return false;
+    }
+    return cnode->HasAttr("cce_op_not_fusion");
+  }
+  return false;
+}
+
 }  // namespace mindspore::graphkernel

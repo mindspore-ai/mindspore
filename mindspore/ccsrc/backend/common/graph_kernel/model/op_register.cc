@@ -114,6 +114,7 @@ OP_REGISTER("BatchMatMul", OpaqueOp);
 OP_REGISTER("CumSum", OpaqueOp);
 OP_REGISTER("OneHot", OpaqueOp);
 OP_REGISTER("StridedSlice", StridedSliceOp);
+OP_REGISTER("StridedSliceV2", StridedSliceOp);
 OP_REGISTER("StridedSliceOnnx", StridedSliceOnnxOp);
 OP_REGISTER("Concat", ConcatOp);
 OP_REGISTER("Gather", GatherOp);
@@ -126,10 +127,11 @@ OP_REGISTER("Conv2D", Conv2dOp);
 OP_REGISTER("TransData", OpaqueOp);
 OP_REGISTER("ElemAny", ElemAnyOp);
 OP_REGISTER("Pool2D", Pool2DOp);
-// virtual ops
-OP_REGISTER("Assign", VirtualOp);
-OP_REGISTER("TupleGetItem", TupleGetItemOp);
 OP_REGISTER("PagedAttention", PagedAttentionOp);
 OP_REGISTER("PagedAttentionMask", PagedAttentionOp);
 OP_REGISTER("ReshapeAndCache", OpaqueOp);
+OP_REGISTER("LayerNorm", LayerNormOp);
+// virtual ops
+OP_REGISTER("Assign", VirtualOp);
+OP_REGISTER("TupleGetItem", TupleGetItemOp);
 }  // namespace mindspore::graphkernel::inner

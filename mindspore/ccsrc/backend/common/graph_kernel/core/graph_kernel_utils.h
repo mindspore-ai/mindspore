@@ -143,7 +143,14 @@ class GkUtils {
    */
   static AnfNodePtrList GetGraphKernelNodes(const FuncGraphPtr &func_graph);
 
-  static bool UseAkgCceLib(const AnfNodePtr &node);
+  /**
+   * @brief whether this node uses akg cce or not.
+   */
+  static bool IsAkgCceLibNode(const AnfNodePtr &node);
+
+  static void SetCceOpNotFusion(const AnfNodePtr &node);
+
+  static bool CceOpNotFusion(const AnfNodePtr &node);
 };
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_CORE_GRAPH_KERNEL_UTILS_H_

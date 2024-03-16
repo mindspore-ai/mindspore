@@ -905,6 +905,17 @@ ParameterPtr BuildIntValueParameterNode(const FuncGraphPtr &func_graph, const in
   return param_node;
 }
 
+ValueNodePtr BuildIntVecValueNode(const FuncGraphPtr &func_graph, const std::vector<int32_t> &data) {
+  MS_CHECK_TRUE_RET(func_graph != nullptr, nullptr);
+  auto value = MakeValue(data);
+  MS_CHECK_TRUE_RET(value != nullptr, nullptr);
+  auto value_node = std::make_shared<ValueNode>(value);
+  value_node->set_abstract(value->ToAbstract());
+  MS_EXCEPTION_IF_NULL(value_node);
+  func_graph->AddValueNode(value_node);
+  return value_node;
+}
+
 ParameterPtr BuildIntVecParameterNode(const FuncGraphPtr &func_graph, const std::vector<int32_t> &data,
                                       const std::string &node_name) {
   MS_CHECK_TRUE_RET(func_graph != nullptr, nullptr);
