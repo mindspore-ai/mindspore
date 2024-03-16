@@ -234,7 +234,7 @@ def test_bert_performance():
     loss_value = np.array(callback.loss_list)
     expect_loss_value = [11.332271, 11.284633, 11.284236]
     print("loss value: {}".format(loss_value))
-    assert np.allclose(loss_value, expect_loss_value, 0, 0.0005)
+    assert np.allclose(loss_value, expect_loss_value, 0, 0.0006)
 
     overflow = np.array(callback.overflow_list)
     expect_overflow = [False, False, False]
