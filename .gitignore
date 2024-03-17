@@ -8,6 +8,7 @@ st_tests
 kernel_meta/
 somas_meta/
 trace_code_graph_*
+ms_kernels_internal/
 
 # mindspore lite java
 mindspore/lite/java/.gradle/

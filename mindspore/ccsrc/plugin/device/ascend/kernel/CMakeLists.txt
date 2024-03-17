@@ -54,8 +54,8 @@ file(GLOB_RECURSE INTERNAL_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
 
 if(DEFINED ENV{MS_INTERNAL_KERNEL_HOME})
     include_directories($ENV{MS_INTERNAL_KERNEL_HOME})
-    include_directories($ENV{MS_INTERNAL_KERNEL_HOME}/include)
-    include_directories($ENV{MS_INTERNAL_KERNEL_HOME}/ascend-op-common-lib/output/asdops/include)
+    include_directories($ENV{MS_INTERNAL_KERNEL_HOME}/internal_kernel/include)
+    include_directories($ENV{MS_INTERNAL_KERNEL_HOME}/asdops/include)
 
     set(SRC_IN_910B ${SRC_IN_910B} ${INTERNAL_SRC_LIST})
 else()

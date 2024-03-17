@@ -1,5 +1,5 @@
 /**
- * Copyright 2023-2024 Huawei Technologies Co., Ltd
+ * Copyright 2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,27 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_INTERNAL_KERNEL_STRIDEDSLICE_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_INTERNAL_KERNEL_STRIDEDSLICE_H_
-
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_INTERNAL_KERNEL_PAGED_ATTENTION_MASK_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_INTERNAL_KERNEL_PAGED_ATTENTION_MASK_H_
 #include <vector>
-
 #include "plugin/device/ascend/kernel/internal/internal_kernel_mod.h"
-
 namespace mindspore {
 namespace kernel {
-class InternalStridedSlice : public InternalKernelMod {
+class InternalPagedAttentionMask : public InternalKernelMod {
  public:
-  InternalStridedSlice() : InternalKernelMod("StridedSlice") {}
-  ~InternalStridedSlice() = default;
+  InternalPagedAttentionMask() : InternalKernelMod("PagedAttentionMask") {}
+  ~InternalPagedAttentionMask() = default;
 
  protected:
-  bool CheckMasks(const std::vector<KernelTensor *> &inputs);
   internal::OpParamPtr CreateOpParam(const std::vector<KernelTensor *> &inputs,
                                      const std::vector<KernelTensor *> &outputs);
   void SetInOutIdx();
 };
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_INTERNAL_KERNEL_STRIDEDSLICE_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_INTERNAL_KERNEL_PAGED_ATTENTION_MASK_H_

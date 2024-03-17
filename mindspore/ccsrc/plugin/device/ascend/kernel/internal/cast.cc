@@ -19,7 +19,7 @@
 #include <memory>
 
 #include "plugin/device/ascend/kernel/internal/internal_kernel_utils.h"
-#include "include/param/cast_param.h"
+#include "param/cast_param.h"
 
 namespace mindspore {
 namespace kernel {

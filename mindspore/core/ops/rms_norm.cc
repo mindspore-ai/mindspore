@@ -44,7 +44,7 @@ constexpr int64_t kRmsNormInputNum = 2;
 
 BaseShapePtr RmsNormInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape())[kShape];
   auto rstd_shape = x_shape;
   rstd_shape[x_shape.size() - 1] = 1;
   auto y_output_ptr = std::make_shared<abstract::Shape>(x_shape);
