@@ -3760,9 +3760,13 @@ void DfGraphConvertor::AddCommAttrForHcclNode(const CNodePtr &node, const Operat
   if (common::GetEnv(kSimulationLevel).empty() && !common::IsNeedProfileMemory()) {
     std::string group = common::AnfAlgo::GetNodeAttr<std::string>(node, kAttrGroup);
     auto comm = device::ascend::AscendCollectiveCommLib::GetInstance().HcclCommunicator(group);
+    auto hccl_inner_comm_name = device::ascend::AscendCollectiveCommLib::GetInstance().HcclInnerCommName(group);
+    MS_LOG(INFO) << "Set comm handle and comm group name of the hccl node: " << node->fullname_with_scope()
+                 << ". Comm handle: " << comm << ", comm name:" << hccl_inner_comm_name;
     if (common::UseHostCollective() && !hccl::HcclAdapter::GetInstance().UseHcclCM()) {
       MS_EXCEPTION_IF_NULL(comm);
       (void)converted_op->SetAttr("comm", reinterpret_cast<int64_t>(comm));
+      (void)converted_op->SetAttr("group", hccl_inner_comm_name);
     }
   }
 #endif
