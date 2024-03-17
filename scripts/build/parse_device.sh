@@ -67,6 +67,9 @@ parse_device()
         export ENABLE_ACL="on"
         ENABLE_CPU="on"
         export ENABLE_MPI="on"
+        if [[ "X$DEVICE_VERSION" == "X910b" ]]; then
+          export ENABLE_INTERNAL_KERNELS="on"
+        fi
       else
         echo "Invalid value ${DEVICE_VERSION} for option -V"
         usage
@@ -93,5 +96,8 @@ parse_device()
   export ENABLE_DVM="off"
   if [[ "X$ENABLE_D" = "Xon" ]]; then
     source ${BASEPATH}/scripts/build/check_binary_file.sh
+  fi
+  if [[ "X$ENABLE_INTERNAL_KERNELS" == "Xon" ]]; then
+    source ${BASEPATH}/scripts/build/check_and_build_ms_kernels_internal.sh
   fi
 }
