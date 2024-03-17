@@ -311,7 +311,7 @@ void GraphScheduler::Clear(const ActorInfo &actor_info, const std::vector<Kernel
       return;
     }
     auto actor_set = actors_[actor_info];
-    auto base_actors = SchedulerHelper::CollectActors(actor_set.get());
+    const auto &base_actors = actor_set->all_actors_;
     for (auto &base_actor : base_actors) {
       MS_EXCEPTION_IF_NULL(base_actor);
       EraseActor(base_actor->GetAID().Name());
@@ -391,7 +391,7 @@ void GraphScheduler::ClearActorData(const ActorSet *actor_set) {
   control_node_scheduler_.ClearActorData(actor_set->control_actors_.get());
 
   // At the end of the step, the op data sent to the stack actor in each actor should be clear.
-  auto total_actors = SchedulerHelper::CollectActors(actor_set);
+  const auto &total_actors = actor_set->all_actors_;
   for (auto &actor : total_actors) {
     MS_EXCEPTION_IF_NULL(actor);
     actor->to_stack_data_.clear();
@@ -600,6 +600,7 @@ ActorSet *GraphScheduler::Transform(const GraphCompilerInfo &graph_compiler_info
     }
   }
 
+  actor_set->all_actors_ = SchedulerHelper::CollectActors(actor_set.get());
   (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageGraphTransform, 1, 0, 1);
   return actor_set.get();
 }
@@ -660,7 +661,7 @@ void GraphScheduler::SpawnMultiPipelineActor(ActorSet *const actor_set, ActorThr
 
 void GraphScheduler::Schedule(const ActorSet *actor_set) {
   MS_EXCEPTION_IF_NULL(actor_set);
-  auto actors = SchedulerHelper::CollectActors(actor_set);
+  const auto &actors = actor_set->all_actors_;
   // Schedule actors.
   auto actor_manager = ActorMgr::GetActorMgrRef();
   MS_EXCEPTION_IF_NULL(actor_manager);
