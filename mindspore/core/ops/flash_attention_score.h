@@ -49,7 +49,7 @@ enum FlashAttentionScoreOutputIndex : size_t {
 enum FlashAttentionScoreSparseMode : int64_t {
   kSparseDefaultMask = 0,
   kSparseAllMask,
-  kSparseLeftDownCausal,
+  kSparseLeftUpCausal,
   kSparseRightDownCausal,
   kSparseBand,
   kSparsePrefix,
