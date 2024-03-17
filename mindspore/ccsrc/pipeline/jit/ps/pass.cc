@@ -42,8 +42,8 @@
 #include "frontend/parallel/step_auto_parallel.h"
 #include "frontend/parallel/graph_util/pipeline_split_utils.h"
 #include "frontend/parallel/pipeline_transformer/pipeline_scheduler.h"
-#include "frontend/parallel/pipeline_transformer/gpipe_interleave_scheduler.h"
 #include "frontend/parallel/pipeline_transformer/pipeline_interleave.h"
+#include "frontend/parallel/pipeline_transformer/gpipe_interleave_scheduler.h"
 #include "frontend/parallel/pass/merge_comm.h"
 #include "frontend/parallel/cache_embedding/cache_embedding.h"
 #include "frontend/parallel/cache_embedding/ps_embedding_cache_inserter.h"
@@ -903,15 +903,29 @@ bool CconvPass(const ResourcePtr &resource) {
 bool PipelineSplitPass(const ResourcePtr &resource) { return PipelineSplit(resource); }
 
 bool PipelineParallelScheduler(const ResourcePtr &resource) {
-  auto context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context);
-  auto is_pp_interleave = context->get_param<bool>(MS_CTX_PP_INTERLEAVE);
+  MS_EXCEPTION_IF_NULL(resource);
   auto root = resource->func_graph();
-  if (is_pp_interleave) {
+  auto parallel_context = parallel::ParallelContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(parallel_context);
+  auto parallel_mode = parallel_context->parallel_mode();
+  if (parallel_mode != parallel::kSemiAutoParallel && parallel_mode != parallel::kAutoParallel) {
+    MS_LOG(INFO) << "Only auto_parallel and semi_auto_parallel support pipeline split.";
+    return true;
+  }
+  auto is_pp_interleave = parallel_context->pipeline_interleave();
+  auto stage_num = parallel_context->pipeline_stage_split_num();
+  if (is_pp_interleave && stage_num > 1) {
     auto manager = resource->manager();
-    auto stage_num = parallel::ParallelContext::GetInstance()->pipeline_stage_split_num();
     auto stage = parallel::InferStage();
-    auto scheduler = std::make_shared<parallel::InterleavedScheduler>(manager, root, stage, stage_num);
+    auto pp_scheduler = parallel_context->pipeline_scheduler();
+    std::shared_ptr<parallel::PipelineScheduler> scheduler = nullptr;
+    if (pp_scheduler == parallel::kPipeline1F1B) {
+      scheduler = std::make_shared<parallel::InterleavedScheduler>(manager, root, stage, stage_num);
+    } else if (pp_scheduler == parallel::kPipelineGpipe) {
+      scheduler = std::make_shared<parallel::GpipeInterleavedScheduler>(manager, root, stage, stage_num);
+    } else {
+      MS_LOG(EXCEPTION) << "Unsupported pipeline parallel scheduler: " << pp_scheduler;
+    }
     scheduler->GetBorderNode();
     scheduler->Reorder();
   }

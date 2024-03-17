@@ -3,6 +3,5 @@
   "matmul_grad_comm_overlap": false,
   "enable_task_opt": false,
   "interleaved_matmul_comm": false,
-  "enable_pipeline_interleave": false,
   "interleaved_layernorm_comm": false
 }

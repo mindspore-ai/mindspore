@@ -50,6 +50,9 @@ constexpr char kPynativeShard[] = "pynative_shard";
 constexpr char kSkipAutoParallelCompile[] = "skip_auto_parallel_compile";
 constexpr char kKeepInputUnchanged[] = "keep_input_unchanged";
 
+constexpr char kPipeline1F1B[] = "1f1b";
+constexpr char kPipelineGpipe[] = "gpipe";
+
 constexpr char kFusionAuto[] = "auto";
 constexpr char kFusionSize[] = "size";
 constexpr char kFusionIndex[] = "index";
@@ -101,6 +104,12 @@ class COMMON_EXPORT ParallelContext {
 
   void set_pipeline_stage_split_num(const int64_t stage_num);
   int64_t pipeline_stage_split_num() const { return pipeline_stage_split_num_; }
+
+  void set_pipeline_interleave(const bool pipeline_interleave);
+  bool pipeline_interleave() const { return pipeline_interleave_; }
+
+  void set_pipeline_scheduler(const std::string &pipeline_scheduler);
+  std::string pipeline_scheduler() const { return pipeline_scheduler_; }
 
   void set_global_rank(int64_t global_rank);
   int64_t global_rank() const { return global_rank_; }
@@ -231,6 +240,8 @@ class COMMON_EXPORT ParallelContext {
   std::string strategy_search_mode_;
   int64_t pipeline_stage_split_num_;
   int64_t pipeline_segment_split_num_;
+  bool pipeline_interleave_;
+  std::string pipeline_scheduler_;
   size_t pipeline_micro_size_;
   bool parameter_broadcast_;
   bool device_num_is_set_;

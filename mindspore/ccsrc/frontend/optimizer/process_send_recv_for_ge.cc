@@ -329,7 +329,7 @@ void ProcessSendRecvForGE(const FuncGraphPtr &graph) {
   // pipeline optimizer allgather exec before micro 0 recv;
   AddAllGatherRecvDepend(graph);
   // prev micro send exec before closure
-  auto is_pp_interleave = context->get_param<bool>(MS_CTX_PP_INTERLEAVE);
+  auto is_pp_interleave = parallel_context->pipeline_interleave();
   if (!is_pp_interleave) {
     AddSendClosureDepend(graph);
   }

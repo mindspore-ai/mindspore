@@ -83,6 +83,8 @@ void ParallelContext::Reset() {
   fusion_threshold_is_set_ = true;
   fusion_mode_ = kFusionAuto;
   stra_file_only_trainable_params_ = true;
+  pipeline_interleave_ = false;
+  pipeline_scheduler_ = kPipeline1F1B;
 }
 
 void ParallelContext::set_device_num(int64_t device_num) {
@@ -142,6 +144,14 @@ void ParallelContext::set_gradient_fp32_sync(bool gradient_fp32_sync) { gradient
 void ParallelContext::set_loss_repeated_mean(bool loss_repeated_mean) { loss_repeated_mean_ = loss_repeated_mean; }
 
 void ParallelContext::set_pipeline_stage_split_num(const int64_t stage_num) { pipeline_stage_split_num_ = stage_num; }
+
+void ParallelContext::set_pipeline_interleave(const bool pipeline_interleave) {
+  pipeline_interleave_ = pipeline_interleave;
+}
+
+void ParallelContext::set_pipeline_scheduler(const std::string &pipeline_scheduler) {
+  pipeline_scheduler_ = pipeline_scheduler;
+}
 
 void ParallelContext::set_pipeline_segment_split_num(const int64_t segment_num) {
   pipeline_segment_split_num_ = segment_num;

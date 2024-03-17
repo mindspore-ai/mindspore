@@ -250,6 +250,13 @@ AnfNodePtr CheckMakeTupleSplit(const AnfNodePtr &node, const FuncGraphManagerPtr
 
 bool IsParallelCareNode(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
+  // Not skip Send Receive in pp interleave
+  auto parallel_context = parallel::ParallelContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(parallel_context);
+  auto is_pp_interleave = parallel_context->pipeline_interleave();
+  if (is_pp_interleave && (IsPrimitiveCNode(cnode, prim::kPrimSend) || IsPrimitiveCNode(cnode, prim::kPrimReceive))) {
+    return false;
+  }
   ValueNodePtr prim_node = cnode->input(0)->cast<ValueNodePtr>();
   if (prim_node == nullptr) {
     return false;

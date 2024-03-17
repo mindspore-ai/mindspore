@@ -1707,7 +1707,8 @@ void ExtractInformation(const std::vector<AnfNodePtr> &all_nodes) {
 
 // if reshape's output connect to several primitive, return the first layout found
 static std::shared_ptr<TensorLayout> FindNextLayout(const AnfNodePtr &cnode, bool *next_is_reshape,
-                                                    mindspore::HashSet<AnfNodePtr> *visit, int make_tuple_index) {
+                                                    mindspore::HashSet<AnfNodePtr> *visit, int make_tuple_index,
+                                                    int tuple_get_index) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(next_is_reshape);
   MS_EXCEPTION_IF_NULL(visit);
@@ -1726,7 +1727,35 @@ static std::shared_ptr<TensorLayout> FindNextLayout(const AnfNodePtr &cnode, boo
       MS_EXCEPTION_IF_NULL(fg);
       auto fg_parameters = fg->parameters();
       auto param = fg_parameters[IntToSize(node_pair.second - 1)];
-      return FindNextLayout(param, next_is_reshape, visit, -1);
+      auto next_layout = FindNextLayout(param, next_is_reshape, visit, make_tuple_index, tuple_get_index);
+      if (next_layout != nullptr) {
+        return next_layout;
+      }
+    }
+
+    if (IsPrimitiveCNode(use_apply, prim::kPrimReturn)) {
+      auto fg = use_apply->func_graph();
+      auto fg_map = fg->func_graph_cnodes_index();
+      for (auto &fg_use : fg_map) {
+        auto fg_node = fg_use.first->first->cast<CNodePtr>();
+        MS_EXCEPTION_IF_NULL(fg_node);
+        auto next_layout = FindNextLayout(fg_node, next_is_reshape, visit, make_tuple_index, tuple_get_index);
+        if (next_layout != nullptr) {
+          return next_layout;
+        }
+      }
+    }
+
+    if (IsPrimitiveCNode(use_apply, prim::kPrimTupleGetItem)) {
+      auto temp = LongToInt(GetTupleGetItemIndex(use_apply));
+      if (temp != make_tuple_index - 1 && make_tuple_index > 0) {
+        continue;
+      }
+      temp = make_tuple_index > 0 ? -1 : temp;
+      auto next_layout = FindNextLayout(use_apply, next_is_reshape, visit, temp, -1);
+      if (next_layout != nullptr) {
+        return next_layout;
+      }
     }
 
     if (use_apply == nullptr || !IsValueNode<Primitive>(use_apply->input(0))) {
@@ -1741,13 +1770,13 @@ static std::shared_ptr<TensorLayout> FindNextLayout(const AnfNodePtr &cnode, boo
     }
     if (IsPrimitiveCNode(use_apply, prim::kPrimMakeTuple)) {
       make_tuple_index = node_pair.second;
-      auto next_layout = FindNextLayout(use_apply, next_is_reshape, visit, make_tuple_index);
+      auto next_layout = FindNextLayout(use_apply, next_is_reshape, visit, make_tuple_index, tuple_get_index);
       if (next_layout != nullptr) {
         return next_layout;
       }
     }
     if (IsParallelCareNode(use_apply) && use_apply->has_user_data<OperatorInfo>()) {
-      if (make_tuple_index != -1) {
+      if (make_tuple_index > 0) {
         node_pair.second = make_tuple_index;
       }
       MS_LOG(INFO) << "FindNextLayout success node " << use_apply->DebugString();
@@ -1758,7 +1787,7 @@ static std::shared_ptr<TensorLayout> FindNextLayout(const AnfNodePtr &cnode, boo
     MS_LOG(DEBUG) << "FindNextLayout failed node " << use_apply->DebugString() << "  " << IsParallelCareNode(use_apply)
                   << "   " << use_apply->has_user_data<OperatorInfo>();
 
-    auto layout_ptr = FindNextLayout(use_apply, next_is_reshape, visit, -1);
+    auto layout_ptr = FindNextLayout(use_apply, next_is_reshape, visit, make_tuple_index, tuple_get_index);
     if (layout_ptr) {
       return layout_ptr;
     }
@@ -1989,7 +2018,7 @@ static void ReshapeInit(const std::vector<AnfNodePtr> &all_nodes) {
 
     bool is_next_reshape = false;
     mindspore::HashSet<AnfNodePtr> visit;
-    auto next_layout_ptr = FindNextLayout(cnode, &is_next_reshape, &visit, -1);
+    auto next_layout_ptr = FindNextLayout(cnode, &is_next_reshape, &visit, -1, -1);
     if (!next_layout_ptr) {
       MS_LOG(INFO) << "FindNextLayout return nullptr, if reshape is not the last primitive, there must be some error";
     }
@@ -2358,9 +2387,9 @@ static void ParallelCommunication(const FuncGraphPtr &root, const std::vector<An
       }
 
       // skip Send Receive
-      auto context = MsContext::GetInstance();
-      MS_EXCEPTION_IF_NULL(context);
-      auto is_pp_interleave = context->get_param<bool>(MS_CTX_PP_INTERLEAVE);
+      auto parallel_context = parallel::ParallelContext::GetInstance();
+      MS_EXCEPTION_IF_NULL(parallel_context);
+      auto is_pp_interleave = parallel_context->pipeline_interleave();
       if (!cnode->HasPrimalAttr(PIPELINE_PARAM) || is_pp_interleave) {
         // insert forward ops
         if (!IsControlFlowNode(cnode)) {
@@ -2689,15 +2718,14 @@ bool CreateGroupsByCkptFile(const std::string &file) {
 
 static void ReorderForPipelineSplit(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager,
                                     int64_t pipeline_stages) {
-  auto context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context);
-  auto is_pp_interleave = context->get_param<bool>(MS_CTX_PP_INTERLEAVE);
+  auto parallel_context = parallel::ParallelContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(parallel_context);
+  auto is_pp_interleave = parallel_context->pipeline_interleave();
   if (is_pp_interleave) {
     return;
   }
   if (!root->has_flag(BACKWARD) && pipeline_stages > 1) {
     root->set_flag(BACKWARD, true);
-    auto parallel_context = parallel::ParallelContext::GetInstance();
     if (IsTraining(manager)) {
       if (parallel_context->enable_fold_pipeline()) {
         MS_LOG(INFO) << "Begin Fold Pipeline Reorder. ";
@@ -3068,9 +3096,9 @@ static void ParallelPartProcess(const std::vector<AnfNodePtr> &all_nodes, const 
     CheckpointStrategy(all_nodes, root);
   }
 
-  auto context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context);
-  auto is_pp_interleave = context->get_param<bool>(MS_CTX_PP_INTERLEAVE);
+  auto parallel_context = parallel::ParallelContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(parallel_context);
+  auto is_pp_interleave = parallel_context->pipeline_interleave();
   std::shared_ptr<PipelinePostProcess> pipeline_processor;
   auto pipeline_stages = ParallelContext::GetInstance()->pipeline_stage_split_num();
   if (pipeline_stages > 1 && is_pp_interleave) {

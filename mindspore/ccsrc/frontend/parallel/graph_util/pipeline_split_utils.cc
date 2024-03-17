@@ -397,6 +397,10 @@ void InsertVirtualAssignAdd(const std::pair<AnfNodePtr, int> &node_user, const F
   MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
   bool enable_parallel_optimizer = ParallelContext::GetInstance()->enable_parallel_optimizer();
   bool grad_accumulation_shard = ParallelContext::GetInstance()->grad_accumulation_shard();
+  auto is_pp_interleave = ParallelContext::GetInstance()->pipeline_interleave();
+  if (!is_pp_interleave && IsPrimitiveCNode(cnode, prim::kPrimMakeTuple)) {
+    return;
+  }
   if (IsPrimitiveCNode(cnode, prim::kPrimDepend) && enable_parallel_optimizer &&
       IsSourceUsedByMirror(cnode, node_user_map)) {
     return;
@@ -527,7 +531,7 @@ std::set<std::pair<AnfNodePtr, int>> FuncNodeUsersSet(const AnfNodePtr &paramete
 void HandleReceiveParam(const FuncGraphPtr &root) {
   auto parameters = root->parameters();
   auto node_users_map = root->manager()->node_users();
-  auto all_nodes = DeepScopedGraphSearch(root->get_return());
+  auto all_nodes = TopoSort(root->get_return(), SuccDeeperSimple);
   for (auto &node : all_nodes) {
     if (!IsPrimitiveCNode(node, prim::kPrimReceive)) {
       continue;
@@ -548,7 +552,7 @@ void HandleReceiveParam(const FuncGraphPtr &root) {
     auto prim = GetCNodePrimitive(cnode);
     std::vector<ValuePtr> element;
     (void)std::transform(slice_shape.begin(), slice_shape.end(), std::back_inserter(element),
-                         [](int elem) { return MakeValue(int64_t(elem)); });
+                         [](int64_t elem) { return MakeValue(elem); });
     auto value = std::make_shared<ValueList>(element);
     prim->set_attr(SHAPE, value);
     std::set<std::pair<AnfNodePtr, int>> all_node_users = FuncNodeUsersSet(node);

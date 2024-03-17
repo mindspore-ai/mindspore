@@ -339,6 +339,10 @@ PYBIND11_MODULE(_c_expression, m) {
          "Set pipeline segment split num.")
     .def("get_pipeline_segment_split_num", &ParallelContext::pipeline_segment_split_num,
          "Get pipeline segment split num.")
+    .def("set_pipeline_interleave", &ParallelContext::set_pipeline_interleave, "Set pipeline interleave.")
+    .def("get_pipeline_interleave", &ParallelContext::pipeline_interleave, "Get pipeline interleave.")
+    .def("set_pipeline_scheduler", &ParallelContext::set_pipeline_scheduler, "Set pipeline scheduler.")
+    .def("get_pipeline_scheduler", &ParallelContext::pipeline_scheduler, "Get pipeline scheduler.")
     .def("set_full_batch", &ParallelContext::set_full_batch, "Set whether load full batch on each device.")
     .def("get_full_batch", &ParallelContext::full_batch, "Get whether load full batch on each device.")
     .def("get_full_batch_is_set", &ParallelContext::full_batch_is_set, "Get whether attr full_batch is set.")

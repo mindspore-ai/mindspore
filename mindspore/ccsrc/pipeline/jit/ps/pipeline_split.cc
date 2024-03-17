@@ -280,15 +280,15 @@ bool PipelineSplit(const ResourcePtr &res) {
   if (parallel::ParallelInit() != parallel::SUCCESS) {
     MS_LOG(EXCEPTION) << "parallel init failed.";
   }
-  auto context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context);
-  auto is_pp_interleave = context->get_param<bool>(MS_CTX_PP_INTERLEAVE);
+  auto parallel_context = parallel::ParallelContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(parallel_context);
+  auto is_pp_interleave = parallel_context->pipeline_interleave();
   if (is_pp_interleave) {
     return PipelineInterleaved(manager, root, stage, gen_mask_not_fusion);
   }
   auto transformer =
     std::make_shared<parallel::PipelineTransformer>(manager, stage, root, global_rank, per_stage_rank_num);
-  auto parallel_context = parallel::ParallelContext::GetInstance();
+
   if (parallel_context->enable_fold_pipeline()) {
     MS_LOG(INFO) << "Begin Fold Pipeline Transformer ";
     transformer =

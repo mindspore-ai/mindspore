@@ -22,7 +22,6 @@
 #include "mindspore/core/ops/other_ops.h"
 #include "mindspore/core/ops/sequence_ops.h"
 #include "mindspore/core/ops/nn_ops.h"
-#include "utils/ms_context.h"
 #include "utils/parallel_node_check.h"
 
 namespace mindspore {
@@ -113,13 +112,6 @@ bool IsParallelConsiderCNode(const CNodePtr &cnode) {
   }
   // If match pattern DropoutGenMask -> ReShape -> FlashAttentionScore, skip ReShape
   if (IsReshapeBetweenDropoutGenMaskAndFlashAttentionScore(cnode)) {
-    return false;
-  }
-  // skip Send Receive in pp interleave
-  auto context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context);
-  auto is_pp_interleave = context->get_param<bool>(MS_CTX_PP_INTERLEAVE);
-  if (is_pp_interleave && (IsPrimitiveCNode(cnode, prim::kPrimSend) || IsPrimitiveCNode(cnode, prim::kPrimReceive))) {
     return false;
   }
   return !IsInParallelBlackList(prim);
