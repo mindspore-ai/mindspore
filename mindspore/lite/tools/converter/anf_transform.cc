@@ -75,6 +75,7 @@
 #include "tools/optimizer/fusion/mul_activation_fusion.h"
 #include "tools/optimizer/fusion/activation_fusion.h"
 #include "tools/optimizer/fusion/reshape_reduce_fusion.h"
+#include "tools/optimizer/fusion/add_layernorm_fusion.h"
 #include "tools/optimizer/graph/add_tensor_array.h"
 #include "tools/optimizer/graph/redundant_op_remove_pass.h"
 #include "tools/optimizer/graph/clip_convert_activation_pass.h"
@@ -821,7 +822,9 @@ bool AnfTransform::StoreBuiltinPass(const std::shared_ptr<ConverterPara> &param)
     {"MakeListPass", std::make_shared<opt::MakeListPass>(), true},
     {"FlashAttentionFusion", std::make_shared<opt::FlashAttentionFusion>(), false},
     {"GroupNormSiluFusion", std::make_shared<opt::GroupNormSiluFusion>(), false},
-    {"GeGluV2Fusion", std::make_shared<opt::GeGluV2Fusion>(), false}};
+    {"GeGluV2Fusion", std::make_shared<opt::GeGluV2Fusion>(), false},
+    {"AddLayerNormFusion", std::make_shared<opt::AddLayerNormFusion>(), false},
+  };
   for (const auto &pass_info : pass_infos) {
     MS_CHECK_TRUE_RET(std::get<1>(pass_info) != nullptr, false);
     PassStorage::StorePass(std::get<0>(pass_info), std::get<1>(pass_info), std::get<opt::kInputIndexTwo>(pass_info));
