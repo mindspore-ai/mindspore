@@ -312,22 +312,21 @@ class DeviceAddress : public mindspore::DeviceSync {
   using SyncUserDataHandler = void (*)(DeviceAddress *const device_address);
   // Return the valid device ptr.
   virtual void *GetValidPtr(size_t) {
-    auto device_ptr = GetDevicePtr();
     if (user_data() == nullptr || (!need_sync_user_data_)) {
       return GetDevicePtr();
     }
     std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
     if (!need_sync_user_data_) {
-      return device_ptr;
+      return GetDevicePtr();
     }
     auto sync_handler = user_data()->get<SyncUserDataHandler>(kSyncUserDataHandler);
     if (sync_handler == nullptr) {
       MS_LOG(WARNING) << "For device address:" << this << ", the sync user data handler is null.";
-      return device_ptr;
+      return GetDevicePtr();
     }
     (*sync_handler)(this);
     need_sync_user_data_ = false;
-    return device_ptr;
+    return GetDevicePtr();
   }
 
   // Offload data from device to host and free device memory
