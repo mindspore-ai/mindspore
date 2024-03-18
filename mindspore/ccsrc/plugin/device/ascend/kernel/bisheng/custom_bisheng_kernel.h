@@ -54,7 +54,7 @@ class CustomBiShengKernel : public AscendKernelMod {
   std::string file_path_;
   std::string func_name_;
   void *handle_;
-  int (*init_func_)(int *, int64_t **, const char **, AotExtraDualABI *);
+  int (*init_func_)(int *, int64_t **, const char **, AotExtraDualABI *) = nullptr;
   int (*aot_func_)(int, void **, int *, int64_t **, const char **, void *, void *);
 
   AotExtraDualABIImpl attrs_;
