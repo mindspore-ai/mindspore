@@ -19,7 +19,7 @@
 #include <memory>
 
 #include "plugin/device/ascend/kernel/internal/internal_kernel_utils.h"
-#include "include/param/add_param.h"
+#include "param/add_param.h"
 
 namespace mindspore {
 namespace kernel {
@@ -92,6 +92,19 @@ class InternalEqual : public ElewiseBinary {
     param_ptr->specificParam = op_param;
   }
 };
+
+class InternalNotEqual : public ElewiseBinary {
+ public:
+  InternalNotEqual() : ElewiseBinary("NotEqual") {}
+  ~InternalNotEqual() = default;
+
+ protected:
+  void SetComputeType(internal::OpParamPtr param_ptr) override {
+    param_ptr->opId = internal::OpId::NotEqual;
+    return;
+  }
+};
+MS_INTERNAL_KERNEL_FACTORY_REG(NotEqual, InternalNotEqual);
 
 class InternalLess : public ElewiseBinary {
  public:
