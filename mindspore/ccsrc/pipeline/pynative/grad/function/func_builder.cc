@@ -28,6 +28,7 @@
 #include "include/backend/optimizer/op_adaptation_info_factory.h"
 #include "pipeline/pynative/pynative_utils.h"
 #include "mindspore/core/ops/op_utils.h"
+#include "frontend/operator/cc_implementations.h"
 
 namespace mindspore::pynative::autograd {
 namespace {
@@ -108,6 +109,24 @@ std::vector<int64_t> BuildShape(const abstract::AbstractBasePtr &abs) {
   auto shape = base_shape->cast<abstract::ShapePtr>();
   MS_EXCEPTION_IF_NULL(shape);
   return shape->shape();
+}
+
+bool ParseCond(const NodePtr &cond) {
+  auto cond_val = cond->Value();
+  if (cond_val->isa<BoolImm>()) {
+    return GetValue<bool>(cond_val);
+  } else if (cond_val->isa<tensor::Tensor>()) {
+    auto tensor = cond_val->cast<tensor::TensorPtr>();
+    tensor->data_sync();
+    size_t data_size = tensor->DataSize();
+    auto tensor_type = tensor->Dtype();
+    if (tensor_type->type_id() == kNumberTypeBool) {
+      auto data_c = reinterpret_cast<bool *>(tensor->data_c());
+      MS_EXCEPTION_IF_NULL(data_c);
+      return std::all_of(data_c, data_c + data_size, [](const bool &data) { return static_cast<bool>(data); });
+    }
+  }
+  MS_LOG(EXCEPTION) << "For control flow, the cond should be Tensor[bool] or bool, but got: " << cond_val->ToString();
 }
 }  // namespace
 
@@ -236,6 +255,33 @@ NodePtr FuncBuilder::MakeTuple(const NodePtrList &inputs) {
 }
 
 NodePtr FuncBuilder::MakeList(const NodePtrList &inputs) { return MakeTuple(inputs); }
+
+NodePtr FuncBuilder::Conditional(const NodePtr &cond, const expander::Emitter::BlockFunc &true_case,
+                                 const expander::Emitter::BlockFunc &false_case) {
+  NodePtrList result;
+  if (ParseCond(cond)) {
+    result = true_case(this);
+  } else {
+    result = false_case(this);
+  }
+  if (result.size() == kSizeOne) {
+    return result[kIndex0];
+  }
+  return MakeTuple(result);
+}
+
+NodePtr FuncBuilder::ScalarEq(const NodePtr &lhs, const NodePtr &rhs, const TypePtr &dst_type) {
+  auto lhs_val = lhs->Value();
+  auto rhs_val = rhs->Value();
+  ValuePtr result;
+  if (lhs_val->isa<BoolImm>() && rhs_val->isa<BoolImm>()) {
+    result = MakeValue(GetValue<bool>(lhs_val) == GetValue<bool>(rhs_val));
+  } else {
+    result = prim::ScalarEq({lhs->Value(), rhs->Value()});
+  }
+  MS_LOG(DEBUG) << "ScalarEq op: lhs " << lhs_val->ToString() << ", rhs " << rhs_val->ToString();
+  return NewFuncNode(result, nullptr, InputType::kOpOutput);
+}
 
 void FuncBuilder::SetInputs(std::string instance_name, const std::vector<NodePtr> *inputs,
                             mindspore::HashMap<std::string, ValuePtr> *attrs_ptr) {

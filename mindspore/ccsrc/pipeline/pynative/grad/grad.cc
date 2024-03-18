@@ -1203,6 +1203,9 @@ FuncGraphPtr GradExecutor::GetBpropGraph(const autograd::GradAttr &grad_attr,
   } else {
     top_cell()->resource()->set_optimize_graph(bprop_graph);
   }
+  if (bprop_graph->has_flag(kFlagIsControlFlow)) {
+    top_cell()->set_has_control_flow(true);
+  }
   if (top_cell()->has_control_flow()) {
     bprop_graph = LiftingClone(bprop_graph);
   }

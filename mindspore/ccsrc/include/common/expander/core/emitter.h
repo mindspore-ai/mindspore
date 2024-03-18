@@ -133,9 +133,13 @@ class COMMON_EXPORT Emitter {
     if (abs->isa<abstract::AbstractTensor>()) {
       return CmpOpWithCast(kEqualOpName, lhs, rhs, dst_type);
     } else if (abs->isa<abstract::AbstractScalar>()) {
-      return CmpOpWithCast("ScalarEq", lhs, rhs, dst_type);
+      return ScalarEq(lhs, rhs, dst_type);
     }
     MS_LOG(EXCEPTION) << "'Equal' only support [Tensor] or [Scalar] input, but got: " << abs->ToString();
+  }
+  virtual NodePtr ScalarEq(const NodePtr &lhs, const NodePtr &rhs, const TypePtr &dst_type) {
+    auto node = UnifyDtypeAndEmit("ScalarEq", lhs, rhs);
+    return dst_type == nullptr ? node : Cast(node, dst_type);
   }
   NodePtr NotEqual(const NodePtr &lhs, const NodePtr &rhs, const TypePtr &dst_type = nullptr) {
     return CmpOpWithCast("NotEqual", lhs, rhs, dst_type);

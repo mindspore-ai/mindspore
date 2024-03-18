@@ -50,8 +50,9 @@ class FuncBuilder : public BpropBuilder {
   NodePtr TupleGetItem(const NodePtr &input, const NodePtr &index) override;
   NodePtr MakeTuple(const NodePtrList &inputs) override;
   NodePtr MakeList(const NodePtrList &inputs) override;
+  NodePtr Conditional(const NodePtr &cond, const BlockFunc &true_case, const BlockFunc &false_case) override;
+  NodePtr ScalarEq(const NodePtr &lhs, const NodePtr &rhs, const TypePtr &dst_type) override;
   NodePtr OutZeros(const NodePtr &node) override;
-
   ValuePtr Ones(const ValuePtr &value);
   ValuePtr Zeros(const ValuePtr &value);
   ValuePtr Add(const ValuePtr &input, const ValuePtr &other);
