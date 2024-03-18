@@ -1510,15 +1510,17 @@ FrontendOpRunInfoPtr PyBoost::Init(const PrimitivePtr &prim, const py::list &arg
   return op_run_info;
 }
 
-void PyBoost::MakeOutputValue(const FrontendOpRunInfoPtr &op_run_info, const std::vector<TensorPtr> &outputs) {
-  size_t size = outputs.size();
+void PyBoost::MakeOutputValue(const FrontendOpRunInfoPtr &op_run_info, const kernel::pyboost::OpPtr &op) {
+  size_t size = op->outputs().size();
   if (size == kSizeOne) {
-    op_run_info->real_out = outputs[0];
-    return;
+    if (op->output_abs() != nullptr && !op->output_abs()->isa<abstract::AbstractSequence>()) {
+      op_run_info->real_out = op->outputs()[0];
+      return;
+    }
   }
   std::vector<ValuePtr> output_values(size);
   for (size_t i = 0; i < size; ++i) {
-    const auto &output_tensor = outputs[i];
+    const auto &output_tensor = op->outputs()[i];
     MS_EXCEPTION_IF_NULL(output_tensor);
     output_values[i] = output_tensor;
   }
@@ -1556,7 +1558,7 @@ void PyBoost::UpdateOpRunInfo(const kernel::pyboost::OpPtr &op, const vector<Val
   MS_EXCEPTION_IF_NULL(op);
   MS_EXCEPTION_IF_NULL(op_run_info);
   // Set result to python
-  MakeOutputValue(op_run_info, op->outputs());
+  MakeOutputValue(op_run_info, op);
   UpdateStubOutput(op_run_info, op->output_abs());
 
   // Update op run info for auto grad
