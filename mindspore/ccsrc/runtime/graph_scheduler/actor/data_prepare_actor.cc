@@ -340,6 +340,9 @@ void UpdateDataNodeDeviceAddressSize(const AnfNodePtr &input_node, const TensorP
   device_address->SetSize(device_address_size);
 }
 }  // namespace
+
+mindspore::HashSet<const tensor::Tensor *> DataPrepareActor::tensors_need_reprepare_ = {};
+
 void DataPrepareActor::Init() {
   MS_EXCEPTION_IF_NULL(graph_compiler_info_);
   strategy_ = graph_compiler_info_->strategy_;
@@ -504,7 +507,7 @@ void DataPrepareActor::PrepareData(const std::vector<std::vector<TensorPtr>> &in
   }
   try {
     auto mode = MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE);
-    if (first_step_ || mode == kPynativeMode) {
+    if (first_step_ || mode == kPynativeMode || !tensors_need_reprepare_.empty()) {
       PrepareDataForDeviceTensorStore(input_tensors, args, context);
     }
     PrepareDataForHostTensorQueue(input_tensors, args, context);
@@ -625,6 +628,17 @@ TensorPtr DataPrepareActor::FetchInputTensorByArg(const VectorRef &args, size_t 
   // The tensor needs to be converted to contiguous before being given to the actors.
   // After the view feature is supported in the graph mode, the following code will be deleted.
   DeviceAddressUtils::ConvertContiguousTensorSync(tensor);
+
+  if (tensor != nullptr && tensor->update_value_callback() == nullptr && tensor->is_parameter()) {
+    static auto callback = [](const tensor::Tensor *tensor) { tensors_need_reprepare_.insert(tensor); };
+    tensor->set_update_value_callback(callback);
+  }
+
+  if (tensor != nullptr && !tensors_need_reprepare_.empty() && tensor->is_parameter()) {
+    auto erased_num = tensors_need_reprepare_.erase(tensor.get());
+    MS_LOG(DEBUG) << "Erase " << erased_num << " tensor which is reprepared.";
+  }
+
   return tensor;
 }
 
