@@ -44,7 +44,7 @@ mindspore.nn.GRU
 
     异常：
         - **TypeError** - `input_size` ， `hidden_size` 或 `num_layers` 不是整数。
-        - **TypeError** - `has_bias` ， `batch_first` 或 `bibound` 不是bool。
+        - **TypeError** - `has_bias` ， `batch_first` 或 `bidirectional` 不是bool。
         - **TypeError** - `dropout` 既不是浮点数也不是整数。
         - **ValueError** - `dropout` 不在[0.0, 1.0)范围内。
 
