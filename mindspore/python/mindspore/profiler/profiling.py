@@ -499,6 +499,7 @@ class Profiler:
         # get device_id and device_target
         if self._analyse_only:
             self._device_target = DeviceTarget.ASCEND.value
+            self._rank_id = kwargs.get("rank_id", 0)
         else:
             self._get_devid_rankid_and_devtarget()
             self._parser_kwargs(kwargs)
@@ -614,21 +615,19 @@ class Profiler:
         if not os.path.exists(profiler_path):
             raise ProfilerPathErrorException(f'There must be a profiler folder in the data path: {path}.')
 
-        job_id_dict = {}
+        rank_set = set()
         sub_dirs = os.listdir(os.path.realpath(profiler_path))
         for sub_dir in sub_dirs:
             sub_path = os.path.join(profiler_path, sub_dir)
             if os.path.isdir(sub_path) and re.match(r"^PROF_\d+_\d+_[a-zA-Z0-9]+", sub_dir):
                 rank = cls._get_prof_rank(sub_path)
-                job_id_dict.setdefault(rank, []).append(sub_path)
-        if not job_id_dict:
+                rank_set.add(rank)
+        if not rank_set:
             return
 
         process_list = []
-        for job_id_list in job_id_dict.values():
-            job_id_list.sort(key=lambda x: x.split("_")[2])
-            profiler = cls(analyse_only=True)
-            profiler.set_ascend_job_id(job_id_list[-1])
+        for rank_id in rank_set:
+            profiler = cls(analyse_only=True, rank_id=rank_id)
             process = Process(target=profiler.analyse,
                               args=(path, pretty, step_list))
             process.start()
@@ -905,7 +904,7 @@ class Profiler:
         ProfilerInfo.save(self._output_path)
         logger.info("Profiling: stop time: %d", self._stop_time)
 
-    def set_ascend_job_id(self, ascend_job_id):
+    def _set_ascend_job_id(self, ascend_job_id):
         """Set output_path for offline parsing performance data."""
         if not ascend_job_id:
             return
@@ -1065,7 +1064,7 @@ class Profiler:
     def _parse_parameter_for_ascend(self, kwargs):
         """Parse parameter in Profiler when the device target is Ascend."""
         ascend_job_id = kwargs.pop("ascend_job_id", "")
-        self.set_ascend_job_id(ascend_job_id)
+        self._set_ascend_job_id(ascend_job_id)
         self.start_profile = kwargs.pop("start_profile", True)
         if not isinstance(self.start_profile, bool):
             raise TypeError(f"For '{self.__class__.__name__}', the parameter start_profile must be bool, "
@@ -1343,7 +1342,7 @@ class Profiler:
             step_trace_time_path = os.path.join(ascend_profiler_output_path, f'step_trace_time.csv')
             step_trace_time_path = validate_and_normalize_path(step_trace_time_path)
 
-            cluster_analyse = AscendClusterGenerator(os.path.join(source_path, 'timeline'))
+            cluster_analyse = AscendClusterGenerator(source_path)
             cluster_analyse.parse()
             cluster_analyse.write(step_trace_time_path)
         except (ProfilerIOException, ProfilerFileNotFoundException, ProfilerRawFileException) as err:
@@ -1366,7 +1365,7 @@ class Profiler:
                                                           f"communication_matrix.json")
             communication_matrix_file_path = validate_and_normalize_path(communication_matrix_file_path)
 
-            analyze_path = os.path.join(os.path.dirname(source_path), 'analyze')
+            analyze_path = os.path.abspath(os.path.join(source_path, os.path.pardir, 'analyze'))
             communicate_analyser = AscendCommunicationGenerator(analyze_path)
             communicate_analyser.parse()
             communicate_analyser.write(communication_file_path, communication_matrix_file_path)
@@ -1389,7 +1388,7 @@ class Profiler:
 
             hccl_raw_path = os.path.join(self._output_path, f'hccl_raw_{dev_id}.csv')
             hccl_raw_path = validate_and_normalize_path(hccl_raw_path)
-            hccl_analyse = AscendHCCLGenerator(os.path.join(mindstudio_profiler_output, 'timeline'), steptrace)
+            hccl_analyse = AscendHCCLGenerator(mindstudio_profiler_output, steptrace)
             hccl_analyse.parse()
             hccl_analyse.write(hccl_raw_path)
 
@@ -1479,7 +1478,7 @@ class Profiler:
                 self._ascend_dynamic_net_analyse(op_summary)
             self._ascend_flops_analyse(op_summary, launch_ops)
             self._ascend_graph_memory_analyse(points)
-            self._ascend_ms_analyze(source_path)
+            self._ascend_ms_analyze(mindstudio_profiler_output)
             self._ascend_graph_hccl_analyse(mindstudio_profiler_output, steptrace)
             self._ascend_graph_msadvisor_analyse(job_id)
             ProfilerInfo.set_graph_ids(graph_ids)
@@ -1704,8 +1703,8 @@ class Profiler:
             job_start_time = self._parse_job_start_time(prof_dir)
 
             if offline_path:
-                self._dev_id = prof_device_id
-                self._rank_id = prof_rank_id
+                if self._rank_id != prof_rank_id:
+                    continue
                 self._start_time = int(job_start_time)
             else:
                 if self._dev_id != prof_device_id and self._rank_id != prof_rank_id:
