@@ -3750,25 +3750,34 @@ void DfGraphConvertor::ConvertHcclNode(const CNodePtr &node) {
 }
 
 void DfGraphConvertor::AddCommAttrForHcclNode(const CNodePtr &node, const OperatorPtr &converted_op) const {
-#ifdef ENABLE_D
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(converted_op);
   if (!common::AnfAlgo::HasNodeAttr(kAttrGroup, node)) {
     MS_LOG(WARNING) << "Node " << node->fullname_with_scope() << " does not have attr " << kAttrGroup << " skip.";
     return;
   }
+#ifdef ENABLE_D
   if (common::GetEnv(kSimulationLevel).empty() && !common::IsNeedProfileMemory()) {
     std::string group = common::AnfAlgo::GetNodeAttr<std::string>(node, kAttrGroup);
-    auto comm = device::ascend::AscendCollectiveCommLib::GetInstance().HcclCommunicator(group);
-    auto hccl_inner_comm_name = device::ascend::AscendCollectiveCommLib::GetInstance().HcclInnerCommName(group);
-    MS_LOG(INFO) << "Set comm handle and comm group name of the hccl node: " << node->fullname_with_scope()
-                 << ". Comm handle: " << comm << ", comm name:" << hccl_inner_comm_name;
     if (common::UseHostCollective() && !hccl::HcclAdapter::GetInstance().UseHcclCM()) {
+      // For HcclCommInitRootInfo manner, set 'group' and 'comm' attrs. 'group' attr value should be hccl's inner comm
+      // name.
+      auto comm = device::ascend::AscendCollectiveCommLib::GetInstance().HcclCommunicator(group);
+      auto hccl_inner_comm_name = device::ascend::AscendCollectiveCommLib::GetInstance().HcclInnerCommName(group);
+      MS_LOG(INFO) << "Set comm handle and comm group name of the hccl node: " << node->fullname_with_scope()
+                   << ". Comm handle: " << comm << ", comm name:" << hccl_inner_comm_name;
       MS_EXCEPTION_IF_NULL(comm);
       (void)converted_op->SetAttr("comm", reinterpret_cast<int64_t>(comm));
       (void)converted_op->SetAttr("group", hccl_inner_comm_name);
+    } else {
+      // For rank_table manner, 'group' attr should be user set group name.
+      MS_LOG(INFO) << "Set group name for ranktable manner: " << group;
+      (void)converted_op->SetAttr("group", group);
     }
   }
+#else
+  std::string group = common::AnfAlgo::GetNodeAttr<std::string>(node, kAttrGroup);
+  (void)converted_op->SetAttr("group", group);
 #endif
 }
 
