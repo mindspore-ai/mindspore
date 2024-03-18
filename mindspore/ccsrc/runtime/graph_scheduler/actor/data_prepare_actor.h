@@ -151,6 +151,11 @@ class DataPrepareActor : public DebugAwareActor {
   // Record the address modified input nodes to refresh the ref node.
   std::set<AnfNode *> address_modified_input_nodes_;
   bool first_step_;
+
+  // The tensor of parameter(weight) maybe update host value by Python phase and need re-prepare to sync new host value
+  // to device side. 'tensors_need_reprepare_' records all tensors whose host value has updated, this HashSet will be
+  // update by update value callback of tensors.
+  static mindspore::HashSet<const tensor::Tensor *> tensors_need_reprepare_;
 };  // namespace runtime
 
 using DataPrepareActorPtr = std::shared_ptr<DataPrepareActor>;
