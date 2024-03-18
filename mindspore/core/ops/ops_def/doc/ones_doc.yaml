@@ -1,0 +1,33 @@
+ones:
+    description: |
+        Creates a tensor filled with value ones.
+
+        Creates a tensor with shape described by the first argument and fills it with value ones in type of the second
+        argument.
+
+        .. warning::
+            For argument `shape`, Tensor type input will be deprecated in the future version.
+
+        Args:
+            shape (Union[tuple[int], List[int], int, Tensor]): The specified shape of output tensor. Only positive integer or
+                tuple or Tensor containing positive integers are allowed. If it is a Tensor,
+                it must be a 0-D or 1-D Tensor with int32 or int64 dtypes.
+            dtype (:class:`mindspore.dtype`): The specified type of output tensor. If `dtype` is ``None`` ,
+                `mindspore.float32` will be used. Default: ``None`` .
+
+        Returns:
+            Tensor, whose dtype and size are defined by input.
+
+        Raises:
+            TypeError: If `shape` is neither an int nor an tuple/list/Tensor of int.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore
+            >>> from mindspore import ops
+            >>> output = ops.ones((2, 2), mindspore.float32)
+            >>> print(output)
+            [[1. 1.]
+             [1. 1.]]
