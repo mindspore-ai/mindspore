@@ -28,7 +28,7 @@ from mindspore.parallel._tensor import _get_tensor_strategy, _construct_from_to_
 MAX_PATH_LENGTH = 1024
 
 
-def _convert_to_list(strategy):
+def _convert_to_list(strategy, rank_id=None):
     """Convert ParallelLayouts object to specified list."""
     train_map = {}
     for param_name in strategy.keys():
@@ -48,7 +48,21 @@ def _convert_to_list(strategy):
                 train_map[origin_param_name] = [dev_mat, tensor_map, param_split_shape, field_size, shard_stride,
                                                 shard_size, [int(pipeline_stage)]]
             else:
-                train_map.get(origin_param_name)[6].append(int(pipeline_stage))
+                update_pipeline_stage_list = train_map.get(origin_param_name)[6] + [int(pipeline_stage),]
+                if rank_id is not None:
+                    stage_device_num = np.prod(dev_mat)
+                    stage_id = rank_id // stage_device_num
+                    if (stage_id == 0 and pipeline_stage == 0) or (stage_id > 0 and pipeline_stage > 0):
+                        train_map[origin_param_name] = [dev_mat, tensor_map, param_split_shape, field_size,
+                                                        shard_stride, shard_size, update_pipeline_stage_list]
+                    else:
+                        train_map.get(origin_param_name)[6] = update_pipeline_stage_list
+                else:
+                    if np.all(pipeline_stage <= np.array(update_pipeline_stage_list)):
+                        train_map[origin_param_name] = [dev_mat, tensor_map, param_split_shape, field_size,
+                                                        shard_stride, shard_size, update_pipeline_stage_list]
+                    else:
+                        train_map.get(origin_param_name)[6] = update_pipeline_stage_list
         except BaseException as e:
             raise ValueError(f"{e.__str__()}. Convert layout strategy to list "
                              f"failed, please make sure that strategy matches the node_strategy.proto, you can "
@@ -219,12 +233,12 @@ def _parameter_not_in_local_stage(param_name, origin_strategy_list, strategy_lis
     return param_name in origin_strategy_list and param_name not in strategy_list
 
 
-def _extract_layout_map(strategy_file):
+def _extract_layout_map(strategy_file, rank_id=None):
     """Extract layout map"""
     layout_map = None
     if strategy_file is not None:
         src_strategy = _build_searched_strategy(strategy_file)
-        layout_map = _convert_to_list(src_strategy)
+        layout_map = _convert_to_list(src_strategy, rank_id)
     return layout_map
 
 
@@ -245,8 +259,8 @@ def _extract_pipeline_stage_num(strategy_file):
 
 def _extract_src_dst_layout_map(rank_id, src_strategy_file=None, dst_strategy_file=None):
     """Extract strategy list"""
-    src_layout_map = _extract_layout_map(src_strategy_file)
-    dst_layout_map = _extract_layout_map(dst_strategy_file)
+    src_layout_map = _extract_layout_map(src_strategy_file, None)
+    dst_layout_map = _extract_layout_map(dst_strategy_file, rank_id)
     if dst_layout_map is None:
         return src_layout_map, dst_layout_map
     dst_stage_device_num = np.prod(dst_layout_map.get(list(dst_layout_map.keys())[0])[0])
