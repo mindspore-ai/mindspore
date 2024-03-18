@@ -232,6 +232,11 @@ class ActorDispatcher {
   static void set_enable_multi_stream(bool enable_multi_stream) { enable_multi_stream_ = enable_multi_stream; }
   static bool enable_multi_stream() { return enable_multi_stream_; }
 
+  static bool has_kernel_need_user_data() { return has_kernel_need_user_data_; }
+  static void set_has_kernel_need_user_data(bool has_kernel_need_user_data) {
+    has_kernel_need_user_data_ = has_kernel_need_user_data;
+  }
+
   static bool is_memory_allocation_sync() { return is_memory_allocation_sync_; }
   static void set_is_memory_allocation_sync(bool is_memory_allocation_sync) {
     is_memory_allocation_sync_ = is_memory_allocation_sync;
@@ -272,6 +277,9 @@ class ActorDispatcher {
 
   // Indicate whether use multi stream to execute.
   static bool enable_multi_stream_;
+
+  // Indicate whether the actor set which is running contains kernel which need user data.
+  static bool has_kernel_need_user_data_;
 
   // Decide whether alloc and free memory synchronously.
   // The memory manager actor will not send and recv message if true.
