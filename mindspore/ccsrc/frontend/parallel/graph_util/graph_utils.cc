@@ -330,7 +330,7 @@ void MatchingAccordingToIndex(const Shape &shape_vec, const AssembledDynamicDims
       (void)shape_input->emplace_back(tuple_getitem_input_pair.second);
       continue;
     }
-    MS_LOG(ERROR) << "Cannot find " << dim << " in shape param.";
+    MS_LOG(DEBUG) << "Cannot find " << dim << " in shape param.";
     AnfNodePtr val = CreatInt64Imm(dim);
     (void)shape_input->emplace_back(val);
   }
