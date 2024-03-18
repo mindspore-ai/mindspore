@@ -785,7 +785,7 @@ def ms_function(fn=None, input_signature=None, hash_args=None, jit_config=None):
     Note:
         - `ms_function` will be deprecated and removed in a future version. Please use :func:`mindspore.jit` instead.
         - If `input_signature` is specified, each input of `fn` must be a Tensor. And the input arguments for `fn`
-        will not accept `**kwargs`.
+          will not accept `**kwargs`.
 
     Args:
         fn (Function): The Python function that will be run as a graph. Default: ``None`` .

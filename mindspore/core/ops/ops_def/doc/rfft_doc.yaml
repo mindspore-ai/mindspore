@@ -14,10 +14,10 @@ rfft:
             Default: ``None``.
         dim (int, optional): The dimension along which to take the one dimensional `rfft`.
             Default: ``-1``, which means transform the last dimension of `input`.
-        norm (string, optional): Normalization mode. Default: ``None`` that means ``"backward"``.
+        norm (str, optional): Normalization mode. Default: ``None`` that means ``"backward"``.
             Three modes are defined as,
     
-            - ``"backward"``(no normalization).
+            - ``"backward"`` (no normalization).
             - ``"forward"`` (normalize by :math:`1/n`).
             - ``"ortho"`` (normalize by :math:`1/\sqrt{n}`).
     
