@@ -188,6 +188,10 @@ inline bool IsSpecifiedNode(const BaseRef &n) {
   }
   return false;
 }
+
+tensor::TensorPtr GetTensorFromParameterNode(const EquivPtr &equiv, const VarPtr &input);
+const float GetFloatParameterValue(const EquivPtr &equiv, const VarPtr &input);
+const int GetIntParameterValue(const EquivPtr &equiv, const VarPtr &input);
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_COMMON_GLLO_UTILS_H_

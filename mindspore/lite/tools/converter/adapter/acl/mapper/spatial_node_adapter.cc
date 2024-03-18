@@ -28,6 +28,7 @@
 #include "ops/fusion/layer_norm_fusion.h"
 #include "ops/fusion/gegluv2.h"
 #include "ops/instance_norm.h"
+#include "ops/add_layernorm.h"
 #include "ops/nn_op_name.h"
 #include "ops/stack.h"
 #include "ops/op_name.h"
@@ -47,7 +48,9 @@ constexpr auto kAnfPrimitiveIndex = 0;
 constexpr auto kNamewiEltwise = "Eltwise";
 const std::set<std::string> kCNodeWithMultiOutputs = {
   kBatchNormOpName,          ops::kNameFusedBatchNorm,  ops::kNameInstanceNorm, ops::kNameLayerNorm,
-  ops::kNameLayerNormFusion, ops::kNameArgMaxWithValue, ops::kNameGeGluV2,      ops::kNameGroupNormSilu};
+  ops::kNameLayerNormFusion, ops::kNameArgMaxWithValue, ops::kNameGeGluV2,      ops::kNameGroupNormSilu,
+  ops::kNameAddLayerNorm,    ops::kNameLayerNormV3,
+};
 
 const std::set<std::string> kCNodeWithDynamicInput = {kNamewiEltwise, ops::kNameConcat, ops::kNameStack,
                                                       acl::kNameConcatV2};

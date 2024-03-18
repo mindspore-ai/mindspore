@@ -83,6 +83,12 @@ static const std::map<std::string, std::vector<string>> kAttrMapNeedAdjust = {
      "begin_params_axis",
      "epsilon",
    }},
+  {"LayerNormV3",
+   {
+     "begin_norm_axis",
+     "begin_params_axis",
+     "epsilon",
+   }},
   {"Range",
    {
      "maxlen",
