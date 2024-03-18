@@ -226,6 +226,9 @@ class PynativeIRBuilderWithCache : public PynativeIRBuilder {
       need_record_nodes_ = true;
       output_nodes = PynativeIRBuilder::Build(input_nodes, {}, attrs, handle);
       need_record_nodes_ = false;
+      if (has_ctrl_flow_) {
+        return output_nodes;
+      }
       // need not grad if grad depend input_values.
       for (size_t i = 0; i < input_nodes.size(); i++) {
         if (value_index[i] && input_nodes[i]->is_used_value()) {
@@ -263,6 +266,16 @@ class PynativeIRBuilderWithCache : public PynativeIRBuilder {
       }
     }
     return output_nodes;
+  }
+
+  NodePtr Conditional(const NodePtr &cond, const BlockFunc &true_case, const BlockFunc &false_case) override {
+    has_ctrl_flow_ = true;
+    return PynativeIRBuilder::Conditional(cond, true_case, false_case);
+  }
+
+  NodePtr While(const NodePtr &cond, const BlockFunc &body, const NodePtrList &init_list) override {
+    has_ctrl_flow_ = true;
+    return PynativeIRBuilder::While(cond, body, init_list);
   }
 
  protected:
@@ -310,6 +323,7 @@ class PynativeIRBuilderWithCache : public PynativeIRBuilder {
   }
 
   bool need_record_nodes_{false};
+  bool has_ctrl_flow_{false};
   std::vector<std::pair<NodePtr, NodePtrList>> bprop_nodes_;
 };
 
@@ -530,11 +544,18 @@ class GraphModeBuilder : public IrBuilder {
     return outputs;
   }
 
+  NodePtr Conditional(const NodePtr &cond, const BlockFunc &true_case, const BlockFunc &false_case) override {
+    has_ctrl_flow_ = true;
+    return IrBuilder::Conditional(cond, true_case, false_case);
+  }
+
+  NodePtr While(const NodePtr &cond, const BlockFunc &body, const NodePtrList &init_list) override {
+    has_ctrl_flow_ = true;
+    return IrBuilder::While(cond, body, init_list);
+  }
+
  protected:
   NodePtr EmitOp(const PrimitivePtr &prim, const NodePtrList &inputs) override {
-    if (prim->name() == "Switch") {
-      has_ctrl_flow_ = true;
-    }
     auto primpy = ConvertPrimToPrimPy(prim);
     AnfNodePtrList cnode_inputs = {NewValueNode(primpy ? primpy : prim)};
     cnode_inputs.reserve(inputs.size() + 1);
