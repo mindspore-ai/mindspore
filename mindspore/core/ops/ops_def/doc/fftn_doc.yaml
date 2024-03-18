@@ -13,10 +13,10 @@ fftn:
 
               - Ascend/CPU: int16, int32, int64, float16, float32, float64, complex64, complex128.
 
-          s (int, optional): Length of the transformed `dim` of the result.
+          s (tuple[int], optional): Length of the transformed `dim` of the result.
               If given, the size of the `dim[i]` axis will be zero-padded or truncated to `s[i]` before calculating `fftn`.
               Default: ``None`` , which does not need to process `input`.
-          dim (int, optional): The dimension along which to take the one dimensional `fftn`.
+          dim (tuple[int], optional): The dimension along which to take the one dimensional `fftn`.
               Default: ``None`` , which means transform the all dimension of `input`, or the last `len(s)` dimensions if s is given.
           norm (str, optional): Normalization mode. Default: ``None`` that means ``"backward"`` .
               Three modes are defined as,
@@ -38,6 +38,7 @@ fftn:
           ValueError: If `dim` is not in the range of "[ `-input.ndim` , `input.ndim` )".
           ValueError: If `dim` has duplicate values.
           ValueError: If `s` is less than 1.
+          ValueError: If `s` and `dim` are given but have different shapes.
           ValueError: If `norm` is none of ``"backward"`` , ``"forward"`` or ``"ortho"`` .
 
       Supported Platforms:
