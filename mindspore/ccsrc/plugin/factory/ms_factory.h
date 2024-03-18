@@ -50,7 +50,7 @@ class Factory : public FactoryBase {
 
   void Register(const std::string &name, CreatorFunc &&creator) {
     if (IsRegistered(name)) {
-      MS_LOG(ERROR) << "Kernel " << name << " is already registered!";
+      MS_LOG(EXCEPTION) << "Kernel " << name << " is already registered!";
     }
     (void)kernel_mod_creators_.emplace(name, creator);
   }
