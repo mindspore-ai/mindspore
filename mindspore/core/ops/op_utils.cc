@@ -877,6 +877,11 @@ std::string GetInputNameByIndex(const std::string &op_name, size_t index) {
   return input.arg_name_;
 }
 
+bool HasOpDef(const std::string &op_name) {
+  mindspore::ops::OpDefPtr op_def = mindspore::ops::GetOpDef(op_name);
+  return op_def != nullptr;
+}
+
 size_t GetOpInputsNum(const std::string &op_name) {
   mindspore::ops::OpDefPtr op_def = mindspore::ops::GetOpDef(op_name);
   if (op_def == nullptr) {

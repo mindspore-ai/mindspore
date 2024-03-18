@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <map>
 #include <vector>
 #include <string>
 #include <memory>
@@ -30,6 +31,19 @@
 #include "include/common/utils/anfalgo.h"
 
 namespace mindspore::parallel {
+int64_t GetPrimeFactor(int64_t value) {
+  static const std::vector<int64_t> prime_table = {3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47};
+  for (const auto &prime : prime_table) {
+    if (prime > value) {
+      return -1;
+    }
+    if (value % prime == 0) {
+      return prime;
+    }
+  }
+  return -1;
+}
+
 CNodePtr CreateShape(const AnfNodePtr &pre_cnode, const FuncGraphPtr &func_graph, const std::string &inst_name) {
   auto prim = std::make_shared<Primitive>(SHAPE_OP);
   prim->set_instance_name(inst_name);
@@ -183,14 +197,20 @@ CNodePtr CreateMakeTuple(const std::vector<AnfNodePtr> &tuple_inputs, const Func
   return make_tuple;
 }
 
-CNodePtr CreateDiv(const AnfNodePtr &input_node, const int64_t divisor, const FuncGraphPtr &func_graph,
-                   bool to_long = false) {
+AnfNodePtr CreateDiv(const AnfNodePtr &input_node, int64_t divisor, const FuncGraphPtr &func_graph, bool to_long,
+                     const std::string &inst_name) {
   MS_EXCEPTION_IF_NULL(input_node);
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_ZERO("div_divisor", divisor);
-  auto prim = NewValueNode(prim::kPrimScalarDiv);
+  if (divisor == 1) {
+    return input_node;
+  }
+  auto prim = std::make_shared<Primitive>(SCALAR_DIV);
+  if (!inst_name.empty()) {
+    prim->set_instance_name(inst_name);
+  }
   std::vector<AnfNodePtr> inputs(SIZE_THREE);
-  inputs[INDEX_ZERO] = prim;
+  inputs[INDEX_ZERO] = NewValueNode(prim);
   inputs[INDEX_ONE] = input_node;
   inputs[INDEX_TWO] = CreatInt64Imm(divisor);
   auto div = func_graph->NewCNode(inputs);
@@ -202,6 +222,40 @@ CNodePtr CreateDiv(const AnfNodePtr &input_node, const int64_t divisor, const Fu
     return cast;
   }
   return div;
+}
+
+CNodePtr CreateMul(const AnfNodePtr &input_node, const int64_t factor, const FuncGraphPtr &func_graph,
+                   bool to_long = false, const std::string &inst_name = "") {
+  MS_EXCEPTION_IF_NULL(input_node);
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_ZERO("mul_factor", factor);
+  auto prim = std::make_shared<Primitive>(SCALAR_MUL);
+  if (!inst_name.empty()) {
+    prim->set_instance_name(inst_name);
+  }
+  std::vector<AnfNodePtr> inputs(SIZE_THREE);
+  inputs[INDEX_ZERO] = NewValueNode(prim);
+  inputs[INDEX_ONE] = input_node;
+  inputs[INDEX_TWO] = CreatInt64Imm(factor);
+  auto mul = func_graph->NewCNode(inputs);
+  if (to_long) {
+    auto cast_prim = NewValueNode(prim::kPrimScalarCast);
+    auto type_val = MakeValue(static_cast<int64_t>(kInt64->type_id()));
+    auto type_id = NewValueNode(type_val);
+    auto cast = func_graph->NewCNode({cast_prim, mul, type_id});
+    return cast;
+  }
+  return mul;
+}
+
+bool MatchWithPrime(const AssembledDynamicDimsMapping &dyn_dims_mapping, int64_t prime) {
+  for (const auto &iter : dyn_dims_mapping) {
+    int64_t prime_base = GetPrimeFactor(iter.first);
+    if (prime_base == prime) {
+      return true;
+    }
+  }
+  return false;
 }
 
 bool HasDynamicDim(const Shape &shape_vec, const AssembledDynamicDimsMapping &dyn_dims_mapping,
@@ -218,6 +272,10 @@ bool HasDynamicDim(const Shape &shape_vec, const AssembledDynamicDimsMapping &dy
     if (iter != dyn_dims_mapping.end()) {
       return true;
     }
+    int64_t prime_of_dim = GetPrimeFactor(dim);
+    if (prime_of_dim != -1 && MatchWithPrime(dyn_dims_mapping, prime_of_dim)) {
+      return true;
+    }
     if (is_same_rank) {
       int64_t full_dim = to_layout.tensor_shape().GetDimByIdx(i);
       auto ret = dyn_dims_mapping.find(full_dim);
@@ -229,50 +287,48 @@ bool HasDynamicDim(const Shape &shape_vec, const AssembledDynamicDimsMapping &dy
   return false;
 }
 
-int64_t GetPrimeFactor(int64_t value) {
-  static const std::vector<int64_t> prime_table = {3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47};
-  for (const auto &prime : prime_table) {
-    if (prime > value) {
-      return -1;
-    }
-    if (value % prime == 0) {
-      return prime;
-    }
-  }
-  return -1;
-}
-
-void MatchingAccordingToPrime(const Shape &shape_vec, const AssembledDynamicDimsMapping &dyn_dims_mapping,
+void MatchingAccordingToIndex(const Shape &shape_vec, const AssembledDynamicDimsMapping &dyn_dims_mapping,
                               const TensorRedistributionPtr &tensor_redistribution, const FuncGraphPtr &func_graph,
                               std::vector<AnfNodePtr> *shape_input) {
   MS_EXCEPTION_IF_NULL(shape_input);
   TensorLayout to_layout = tensor_redistribution->layout_transfer().to_in();
+  TensorLayout from_layout = tensor_redistribution->layout_transfer().from_in();
+  // If the shape not changed, it means not reshape.
+  // So the dynamic dim can be matched according to index.
+  // {index, {prime_dim, AnfNode}}
+  std::map<size_t, std::pair<int64_t, AnfNodePtr>> mapping_table;
+  for (const auto &iter : dyn_dims_mapping) {
+    mapping_table.insert({iter.second.first, {iter.first, iter.second.second}});
+  }
   for (size_t i = 0; i < shape_vec.size(); ++i) {
     int64_t dim = shape_vec[i];
-    auto iter = dyn_dims_mapping.find(dim);
-    if (iter != dyn_dims_mapping.end()) {
-      auto tuple_getitem_input = dyn_dims_mapping.at(dim);
-      (void)shape_input->emplace_back(tuple_getitem_input);
-      continue;
-    }
-    int64_t prime = GetPrimeFactor(dim);
-    if (prime != -1) {
-      int64_t fake_dim = -1;
-      AnfNodePtr tuple_getitem_input = nullptr;
-      for (const auto &mapping_iter : dyn_dims_mapping) {
-        int64_t prime_factor = GetPrimeFactor(mapping_iter.first);
-        if (prime == prime_factor) {
-          fake_dim = mapping_iter.first;
-          tuple_getitem_input = mapping_iter.second;
-          break;
-        }
+    if (dim != -1 && mapping_table.find(i) != mapping_table.end()) {
+      std::pair<int64_t, AnfNodePtr> tuple_getitem_input_pair = mapping_table[i];
+      int64_t dim_value_in_graph = tuple_getitem_input_pair.first;
+      int64_t dim_prime = GetPrimeFactor(dim);
+      int64_t tuple_getitem_prime = GetPrimeFactor(tuple_getitem_input_pair.first);
+      if (dim_prime != tuple_getitem_prime) {
+        MS_LOG(EXCEPTION) << "Prime in dim and dynamic input are not matched, " << dim_prime << " for " << dim
+                          << " and " << tuple_getitem_prime << " for " << tuple_getitem_input_pair.first;
       }
-      if (fake_dim > 0) {
-        int64_t divisor = fake_dim / dim;
-        auto div_op = CreateDiv(tuple_getitem_input, divisor, func_graph, true);
+      // After matching with prime, fetch the real dim value in graph and
+      //  calculate whether it needs mul/div.
+      if (dim_value_in_graph > dim) {
+        int64_t divisor = dim_value_in_graph / dim;
+        AnfNodePtr div_op =
+          CreateDiv(tuple_getitem_input_pair.second, divisor, func_graph, true, "assemble_dynamic_shape_op");
         (void)shape_input->emplace_back(div_op);
         continue;
       }
+      if (dim_value_in_graph < dim) {
+        int64_t divisor = dim / dim_value_in_graph;
+        AnfNodePtr mul_op =
+          CreateMul(tuple_getitem_input_pair.second, divisor, func_graph, true, "assemble_dynamic_shape_op");
+        (void)shape_input->emplace_back(mul_op);
+        continue;
+      }
+      (void)shape_input->emplace_back(tuple_getitem_input_pair.second);
+      continue;
     }
     MS_LOG(ERROR) << "Cannot find " << dim << " in shape param.";
     AnfNodePtr val = CreatInt64Imm(dim);
@@ -280,49 +336,15 @@ void MatchingAccordingToPrime(const Shape &shape_vec, const AssembledDynamicDims
   }
 }
 
-void MatchingAccordingToFullShape(const Shape &shape_vec, const AssembledDynamicDimsMapping &dyn_dims_mapping,
-                                  const TensorRedistributionPtr &tensor_redistribution, const FuncGraphPtr &func_graph,
-                                  std::vector<AnfNodePtr> *shape_input) {
-  MS_EXCEPTION_IF_NULL(shape_input);
-  TensorLayout to_layout = tensor_redistribution->layout_transfer().to_in();
-  bool is_same_rank = to_layout.tensor_shape().array().size() == shape_vec.size();
-  for (size_t i = 0; i < shape_vec.size(); ++i) {
-    int64_t dim = shape_vec[i];
-    auto iter = dyn_dims_mapping.find(dim);
-    if (iter != dyn_dims_mapping.end()) {
-      auto tuple_getitem_input = dyn_dims_mapping.at(dim);
-      (void)shape_input->emplace_back(tuple_getitem_input);
-      continue;
-    }
-    if (is_same_rank) {
-      int64_t full_dim = to_layout.tensor_shape().GetDimByIdx(i);
-      auto ret = dyn_dims_mapping.find(full_dim);
-      if (ret != dyn_dims_mapping.end()) {
-        const auto &tuple_getitem_input = dyn_dims_mapping.at(full_dim);
-        int64_t divisor = full_dim / dim;
-        auto div_op = CreateDiv(tuple_getitem_input, divisor, func_graph, true);
-        (void)shape_input->emplace_back(div_op);
-        continue;
-      }
-    }
-    MS_LOG(ERROR) << "Cannot find " << dim << " in shape param.";
-    AnfNodePtr val = CreatInt64Imm(dim);
-    (void)shape_input->emplace_back(val);
-  }
-}
-
-/**
- * Convert Shape's SHAPE input and StridedSliceD's END input to dynamic.
- */
 AnfNodePtr ConvertConstParamToDynamic(const TensorRedistributionPtr &tensor_redistribution, const Param &param,
-                                      const FuncGraphPtr &func_graph) {
+                                      const FuncGraphPtr &func_graph, bool is_reshape) {
   MS_EXCEPTION_IF_NULL(tensor_redistribution);
   AssembledDynamicDimsMapping dyn_dims_mapping = tensor_redistribution->GetDynamicDimsMapping();
   if (dyn_dims_mapping.empty()) {
     MS_LOG(ERROR) << "Doesn't have dynamic dims mapping.";
     return nullptr;
   }
-  Shape shape_vec = GetValue<Shape>(param.first.second);
+  std::vector<int64_t> shape_vec = GetValue<std::vector<int64_t>>(param.first.second);
   if (shape_vec.empty()) {
     MS_LOG(ERROR) << "Cannot get shape from param.";
     return nullptr;
@@ -336,7 +358,7 @@ AnfNodePtr ConvertConstParamToDynamic(const TensorRedistributionPtr &tensor_redi
     return val;
   }
 
-  MatchingAccordingToPrime(shape_vec, dyn_dims_mapping, tensor_redistribution, func_graph, &shape_input);
+  MatchingAccordingToIndex(shape_vec, dyn_dims_mapping, tensor_redistribution, func_graph, &shape_input);
 
   if (shape_input.size() != shape_vec.size()) {
     MS_LOG(ERROR) << "shape size is not equal.";
@@ -353,14 +375,16 @@ Status ConvertStridedSliceInputs(const OperatorParams &params,
     if (param.first.first == BEGIN_MASK || param.first.first == END_MASK || param.first.first == ELLIPSIS_MASK ||
         param.first.first == NEW_AXIS_MASK || param.first.first == SHRINK_AXIS_MASK) {
       int64_t value = GetValue<int64_t>(param.first.second);
+      MS_LOG(DEBUG) << "STRIDEDSLICE: param=" << param.first.first << ", param.second=" << value;
       AnfNodePtr val = NewValueNode(value);
       val->set_abstract(param.first.second->ToAbstract());
       (void)new_node_input->emplace_back(val);
       continue;
     }
     Shape shape_vec = GetValue<Shape>(param.first.second);
+    MS_LOG(DEBUG) << "STRIDEDSLICE: param=" << param.first.first << ", " << shape_vec;
     if (param.first.first == END) {
-      auto dynamic_input = ConvertConstParamToDynamic(tensor_redistribution_from_cnode, param, func_graph);
+      auto dynamic_input = ConvertConstParamToDynamic(tensor_redistribution_from_cnode, param, func_graph, false);
       MS_ERROR_IF_NULL_W_RET_VAL(dynamic_input, FAILED);
       new_node_input->emplace_back(dynamic_input);
       continue;
@@ -381,7 +405,8 @@ Status ConvertReshapeInputs(const OperatorParams &params,
       continue;
     }
     Shape shape_vec = GetValue<Shape>(param.first.second);
-    auto dynamic_input = ConvertConstParamToDynamic(tensor_redistribution_from_cnode, param, func_graph);
+    MS_LOG(DEBUG) << "shape param = " << shape_vec;
+    auto dynamic_input = ConvertConstParamToDynamic(tensor_redistribution_from_cnode, param, func_graph, true);
     MS_ERROR_IF_NULL_W_RET_VAL(dynamic_input, FAILED);
     (void)new_node_input->emplace_back(dynamic_input);
   }
@@ -403,7 +428,7 @@ Status ConvertParamsToInputs(const Operator &op, const TensorRedistributionPtr &
       return FAILED;
     }
   } else {
-    MS_LOG(WARNING) << op.first << " is not supported.";
+    MS_LOG(DEBUG) << op.first << " is not supported.";
     return FAILED;
   }
   return SUCCESS;
@@ -416,6 +441,8 @@ std::vector<AnfNodePtr> CreateInput(const Operator &op, const AnfNodePtr &pre_no
   OperatorParams params = arg_forward.second;
 
   std::vector<AnfNodePtr> new_node_input = {pre_node};
+  MS_LOG(DEBUG) << "CreateInput param.empty=" << params.empty() << ", pre_node=" << pre_node->fullname_with_scope()
+                << ", op=" << op.first;
   bool is_done = false;
   if (cur_cnode != nullptr) {
     FuncGraphPtr func_graph = cur_cnode->func_graph();
@@ -428,8 +455,10 @@ std::vector<AnfNodePtr> CreateInput(const Operator &op, const AnfNodePtr &pre_no
       if (ConvertParamsToInputs(op, tensor_redistribution, func_graph, &new_node_input) == SUCCESS) {
         is_done = true;
       } else {
-        MS_LOG(WARNING) << "Convert params to inputs failed.";
+        MS_LOG(DEBUG) << "Convert params to inputs failed.";
       }
+    } else {
+      MS_LOG(DEBUG) << "cur_cnode=" << cur_cnode->fullname_with_scope() << " is not dynamic node.";
     }
   }
 

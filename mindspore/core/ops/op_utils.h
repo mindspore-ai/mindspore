@@ -283,6 +283,7 @@ MS_CORE_API std::string GetInputNameByIndex(const std::string &op_name, size_t i
 MS_CORE_API size_t GetOpInputsNum(const std::string &op_name);
 MS_CORE_API std::set<int64_t> GetInputDependValueList(const PrimitivePtr &op_prim);
 MS_CORE_API CNodePtr ConvertArgsToAttr(const CNodePtr &cnode);
+MS_CORE_API bool HasOpDef(const std::string &op_name);
 
 constexpr auto kCSRAvgRows = "csr_avg_rows";
 constexpr auto kIsCSR = "is_csr";
