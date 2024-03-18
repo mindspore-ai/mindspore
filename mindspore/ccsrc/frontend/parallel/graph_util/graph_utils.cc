@@ -197,6 +197,23 @@ CNodePtr CreateMakeTuple(const std::vector<AnfNodePtr> &tuple_inputs, const Func
   return make_tuple;
 }
 
+CNodePtr CreateSplit(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &func_graph,
+                     const std::string &inst_name) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_CHECK_FAIL(inputs.size() == SIZE_THREE, "inputs is empty.");
+  auto prim = std::make_shared<Primitive>(SPLIT);
+  if (!inst_name.empty()) {
+    prim->set_instance_name(inst_name);
+  }
+  std::vector<AnfNodePtr> split_inputs(SIZE_FOUR);
+  split_inputs[INDEX_ZERO] = NewValueNode(prim);
+  split_inputs[INDEX_ONE] = inputs[INDEX_ZERO];   // split_input
+  split_inputs[INDEX_TWO] = inputs[INDEX_ONE];    // split_axis
+  split_inputs[INDEX_THREE] = inputs[INDEX_TWO];  // split_size
+  auto split = func_graph->NewCNode(split_inputs);
+  return split;
+}
+
 AnfNodePtr CreateDiv(const AnfNodePtr &input_node, int64_t divisor, const FuncGraphPtr &func_graph, bool to_long,
                      const std::string &inst_name) {
   MS_EXCEPTION_IF_NULL(input_node);
@@ -413,9 +430,53 @@ Status ConvertReshapeInputs(const OperatorParams &params,
   return SUCCESS;
 }
 
+Status ConvertSplitInputs(const OperatorParams &params, const FuncGraphPtr &func_graph,
+                          std::vector<AnfNodePtr> *new_node_input) {
+  MS_EXCEPTION_IF_CHECK_FAIL(new_node_input->size() == 1,
+                             "new_node_input must and only contain the input of split for split.");
+  auto split_target = new_node_input[0];
+  std::vector<AnfNodePtr> split_inputs = {split_target};
+  ValuePtr output_index;
+  for (auto &param : params) {
+    if (param.first.first == SPLIT_OUTPUT_INDEX) {
+      output_index = param.first.second;
+      continue;
+    }
+    AnfNodePtr val = NewValueNode(param.first.second);
+    MS_EXCEPTION_IF_NULL(val);
+    val->set_abstract(param.first.second->ToAbstract());
+    (void)split_inputs.emplace_back(val);
+  }
+  constexpr char tag[] = "redistribution_allsplit";
+  auto split_op = CreateSplit(split_inputs, func_graph, tag);
+  auto split_output_index = NewValueNode(output_index);
+  auto tuple_get_item_prim = std::make_shared<Primitive>(TUPLE_GETITEM_OP);
+  auto prim_value_node = NewValueNode(tuple_get_item_prim);
+  tuple_get_item_prim->set_instance_name(tag);
+  new_node_input->resize(SIZE_THREE);
+  (*new_node_input)[0] = prim_value_node;
+  (*new_node_input)[1] = split_op;
+  (*new_node_input)[2] = split_output_index;
+  return SUCCESS;
+}
+
+bool IsToBeInsertedSplitOp(const Operator &op) {
+  // if split op has attr SPLIT_INSERT_LATER, then skip it in OptimizeTensorRedistributionOperatorList stage,
+  // and insert it in CreateInputs
+  if (op.first != SPLIT) {
+    return false;
+  }
+  OperatorAttrs op_attrs = op.second.first;
+  auto is_skip_func = [](const Attr &attr) -> bool {
+    return attr.first == SPLIT_INSERT_LATER && GetValue<bool>(attr.second);
+  };
+  return std::any_of(op_attrs.begin(), op_attrs.end(), is_skip_func);
+}
+
 Status ConvertParamsToInputs(const Operator &op, const TensorRedistributionPtr &tensor_redistribution_from_cnode,
                              const FuncGraphPtr &func_graph, std::vector<AnfNodePtr> *new_node_input) {
   MS_ERROR_IF_NULL_W_RET_VAL(tensor_redistribution_from_cnode, FAILED);
+  MS_EXCEPTION_IF_NULL(func_graph);
   OperatorArgs arg_forward = op.second;
   OperatorParams params = arg_forward.second;
 
@@ -425,6 +486,10 @@ Status ConvertParamsToInputs(const Operator &op, const TensorRedistributionPtr &
     }
   } else if (op.first == STRIDEDSLICE) {
     if (ConvertStridedSliceInputs(params, tensor_redistribution_from_cnode, func_graph, new_node_input) != SUCCESS) {
+      return FAILED;
+    }
+  } else if (IsToBeInsertedSplitOp(op)) {
+    if (ConvertSplitInputs(params, func_graph, new_node_input) != SUCCESS) {
       return FAILED;
     }
   } else {
@@ -445,14 +510,12 @@ std::vector<AnfNodePtr> CreateInput(const Operator &op, const AnfNodePtr &pre_no
                 << ", op=" << op.first;
   bool is_done = false;
   if (cur_cnode != nullptr) {
-    FuncGraphPtr func_graph = cur_cnode->func_graph();
-    MS_EXCEPTION_IF_NULL(func_graph);
     TensorRedistributionPtr tensor_redistribution = GetTensorRedistributionFromCNode(cur_cnode);
     // 1. Only deal with Reshape in user scripts.
     // 2. Deal with non-user Reshape. If only have StrideSliceD, Concat and Split cannot reach.
     if (tensor_redistribution != nullptr && tensor_redistribution->IsAssembledStaticShape()) {
       MS_LOG(DEBUG) << cur_cnode->fullname_with_scope() << " distribute_operator is not nullptr";
-      if (ConvertParamsToInputs(op, tensor_redistribution, func_graph, &new_node_input) == SUCCESS) {
+      if (ConvertParamsToInputs(op, tensor_redistribution, cur_cnode->func_graph(), &new_node_input) == SUCCESS) {
         is_done = true;
       } else {
         MS_LOG(DEBUG) << "Convert params to inputs failed.";
@@ -460,6 +523,13 @@ std::vector<AnfNodePtr> CreateInput(const Operator &op, const AnfNodePtr &pre_no
     } else {
       MS_LOG(DEBUG) << "cur_cnode=" << cur_cnode->fullname_with_scope() << " is not dynamic node.";
     }
+  }
+
+  if (IsToBeInsertedSplitOp(op) && !is_done && cur_cnode != nullptr) {
+    // it means Split on static shape scene.
+    auto ret = ConvertSplitInputs(params, cur_cnode->func_graph(), &new_node_input);
+    MS_EXCEPTION_IF_CHECK_FAIL(ret == SUCCESS, "Insert split op failed.");
+    is_done = true;
   }
 
   if (!is_done && !params.empty()) {
@@ -472,8 +542,9 @@ std::vector<AnfNodePtr> CreateInput(const Operator &op, const AnfNodePtr &pre_no
     }
   }
 
-  new_node_input = ConvertToRealInputs(op.first, instance_name, new_node_input, arg_forward.first);
-
+  if (!IsToBeInsertedSplitOp(op)) {
+    new_node_input = ConvertToRealInputs(op.first, instance_name, new_node_input, arg_forward.first);
+  }
   // if the op have 'group' attr, set the rank list name for the op
   SetCommunicationOpGroupLabel(new_node_input);
   return new_node_input;
@@ -482,6 +553,7 @@ std::vector<AnfNodePtr> CreateInput(const Operator &op, const AnfNodePtr &pre_no
 std::vector<AnfNodePtr> ReplaceOpInput(const Operator &replace_op, const std::string &instance_name,
                                        const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(node->func_graph());
   OperatorArgs arg_replace_op = replace_op.second;
   OperatorParams params = arg_replace_op.second;
   if (node->size() < SIZE_TWO) {
@@ -496,22 +568,21 @@ std::vector<AnfNodePtr> ReplaceOpInput(const Operator &replace_op, const std::st
   if (replace_op.first == EMBEDDING_LOOKUP) {
     replace_input = {node->input(1), node->input(2)};
   }
-  if (!params.empty() && (replace_op.first == STRIDEDSLICE || replace_op.first == RESHAPE) && IsDynamicOp(node)) {
+  if (!params.empty() && replace_op.first != SYNC_BATCH_NORM) {
+    Param param_first = *(params.begin());
+    int64_t first_position = param_first.second;
+    if (first_position == 1) {
+      replace_input.pop_back();
+    }
+  }
+  bool is_done = false;
+  bool to_be_converted = replace_op.first == SPLIT || replace_op.first == STRIDEDSLICE || replace_op.first == RESHAPE;
+  if (!params.empty() && to_be_converted && IsDynamicOp(node)) {
     TensorRedistributionPtr tensor_redistribution = GetTensorRedistributionFromCNode(node);
-    Param param_first = *(params.begin());
-    int64_t first_position = param_first.second;
-    if (first_position == 1) {
-      replace_input.pop_back();
-    }
-    if (ConvertParamsToInputs(replace_op, tensor_redistribution, node->func_graph(), &replace_input) != SUCCESS) {
-      MS_LOG(EXCEPTION) << "ConvertStridedSliceInputs failed.";
-    }
-  } else if (!params.empty()) {
-    Param param_first = *(params.begin());
-    int64_t first_position = param_first.second;
-    if (first_position == 1) {
-      replace_input.pop_back();
-    }
+    auto ret = ConvertParamsToInputs(replace_op, tensor_redistribution, node->func_graph(), &replace_input);
+    MS_EXCEPTION_IF_CHECK_FAIL(ret == SUCCESS, "ConvertStridedSliceInputs failed.");
+    is_done = true;
+  } else if (!params.empty() && !IsToBeInsertedSplitOp(replace_op)) {
     for (auto &param : params) {
       AnfNodePtr val = NewValueNode(param.first.second);
       if (val == nullptr) {
@@ -526,7 +597,13 @@ std::vector<AnfNodePtr> ReplaceOpInput(const Operator &replace_op, const std::st
     }
   }
 
-  replace_input = ConvertToRealInputs(replace_op.first, instance_name, replace_input, arg_replace_op.first);
+  if (!IsToBeInsertedSplitOp(replace_op)) {
+    replace_input = ConvertToRealInputs(replace_op.first, instance_name, replace_input, arg_replace_op.first);
+  } else if (IsToBeInsertedSplitOp(replace_op) && !is_done) {
+    // it means Split on static shape scene.
+    auto ret = ConvertSplitInputs(params, node->func_graph(), &replace_input);
+    MS_EXCEPTION_IF_CHECK_FAIL(ret == SUCCESS, "Insert split op failed.");
+  }
   SetCommunicationOpGroupLabel(replace_input);
   return replace_input;
 }

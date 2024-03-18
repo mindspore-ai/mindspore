@@ -19,16 +19,19 @@
 #include <functional>
 #include <numeric>
 #include <algorithm>
+#include <memory>
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "include/common/utils/parallel_context.h"
 
 namespace mindspore {
 namespace parallel {
-Status ConstructOperator::Init(const RankList &dev_list, const Shape &dev_matrix_shape, bool is_cost_model) {
+Status ConstructOperator::Init(const RankList &dev_list, const Shape &dev_matrix_shape, bool is_cost_model,
+                               bool is_dynamic_shape) {
   dev_size_ = dev_matrix_shape.size();
   dev_matrix_shape_ = dev_matrix_shape;
   dev_list_ = dev_list;
   is_cost_model_ = is_cost_model;
+  is_dynamic_shape_ = is_dynamic_shape;
   return Status::SUCCESS;
 }
 
@@ -96,6 +99,61 @@ Operator CreateStridedSliceOp(int64_t value, const Shape &begin, const Shape &en
   return std::make_pair(STRIDED_SLICE, op_args);
 }
 
+Operator CreateSplitOp(int64_t split_size_or_sections, int64_t axis, int64_t index) {
+  ValuePtr split_size_value_ptr = MakeValue(std::make_shared<Int64Imm>(split_size_or_sections));
+  Param split_size_param = std::make_pair(std::make_pair(SPLIT_SIZE, split_size_value_ptr), 1);
+
+  ValuePtr axis_value_ptr = MakeValue(std::make_shared<Int64Imm>(axis));
+  Param axis_param = std::make_pair(std::make_pair(SPLIT_DIM, axis_value_ptr), 2);
+
+  ValuePtr slice_index_value_ptr = MakeValue(std::make_shared<Int64Imm>(index));
+  Param slice_index_param = std::make_pair(std::make_pair(SPLIT_OUTPUT_INDEX, slice_index_value_ptr), 3);
+
+  ValuePtr skip_value = MakeValue(true);
+  Attr skip_attr = std::make_pair(SPLIT_INSERT_LATER, skip_value);
+
+  OperatorAttrs attrs = {skip_attr};
+  OperatorParams params = {axis_param, split_size_param, slice_index_param};
+  OperatorArgs op_args = std::make_pair(attrs, params);
+
+  return std::make_pair(SPLIT, op_args);
+}
+
+Status ConstructOperator::ReplaceStridedSliceOpToSplitOp(const Args &args) {
+  // Python api defines: split(tensor, split_size_or_sections, axis=0)
+  // In MindSpore ir, it looks like (tensor, axis, split_count)
+  // So we get axis to split, output number and index of current index.
+  // axis can be fetched here.
+  int64_t split_dim = args[TRANSFER_PERMUTE_SPLIT_DIM_INDEX];
+  // split_size_or_sections can be fetched here.
+  int64_t split_count = args[TRANSFER_PERMUTE_SPLIT_COUNT_INDEX];
+  int64_t dev_dim = args[TRANSFER_PERMUTE_CONCAT_DIM_INDEX];
+
+  if (split_dim >= SizeToLong(this->tensor_shape_.size()) || this->tensor_shape_[split_dim] % split_count != 0) {
+    MS_LOG(ERROR) << "Tensor with shape " << this->tensor_shape_ << " can not be split into " << split_count
+                  << " slices in the dimension " << split_dim << " when construct StridedSlice operator";
+    return Status::INVALID_ARGUMENT;
+  }
+
+  std::vector<Group> group_list;
+  if (CreateGroupByDim(dev_size_ - LongToSize(dev_dim) - 1, &group_list) != SUCCESS) {
+    MS_LOG(ERROR) << "stride slice op: create group failed";
+    return FAILED;
+  } else if (group_list.empty()) {  // this group only has one device, don't need do StridedSlice
+    MS_LOG(INFO) << "no need stride slice op";
+    return SUCCESS;
+  }
+
+  Group group = group_list[0];
+  size_t rank;
+  if (group.GetIndex(&rank) == Status::FAILED) {
+    MS_LOG(ERROR) << "Get rank from group failed.";
+    return Status::FAILED;
+  }
+  op_ = CreateSplitOp(split_count, split_dim, SizeToLong(rank));
+  return Status::SUCCESS;
+}
+
 Status ConstructOperator::StridedSliceOP(const Args &args) {
   if (args.size() < STRIDED_SLICE_ARGS_SIZE) {
     MS_LOG(ERROR) << "args size should not be less than 3!";
@@ -144,8 +202,16 @@ Status ConstructOperator::StridedSliceOP(const Args &args) {
     }
     index++;
   }
-
-  op_ = CreateStridedSliceOp(DEFAULT, begin, end, strides);
+  if (this->is_dynamic_shape_) {
+    // When it's dynamic shape scene, use Split instead of StridedSlice.
+    MS_LOG(DEBUG) << "StridedSlice: begin=" << begin << ", end=" << end;
+    if (ReplaceStridedSliceOpToSplitOp(args) != Status::SUCCESS) {
+      MS_LOG(ERROR) << "Replace StridedSlice to Split failed.";
+      return Status::FAILED;
+    }
+  } else {
+    op_ = CreateStridedSliceOp(DEFAULT, begin, end, strides);
+  }
 
   return Status::SUCCESS;
 }

@@ -357,7 +357,7 @@ static void Redistribution(const std::pair<AnfNodePtr, int64_t> &node_pair, cons
   }
   MS_LOG(DEBUG) << "Redistribution size " << redistribution_oplist_ptr->first.size();
   if (!redistribution_oplist_ptr->first.empty()) {
-    tensor_redistribution->CreateAssembledDynamicMapping(next_cnode, pre_cnode, func_graph);
+    tensor_redistribution->CreateAssembledDynamicMapping(next_cnode, pre_cnode, func_graph, node_pair.second);
     // insert node before next node
     InsertRedistribution(redistribution_oplist_ptr, next_cnode, func_graph, node_pair.second, pre_cnode,
                          tensor_redistribution);
