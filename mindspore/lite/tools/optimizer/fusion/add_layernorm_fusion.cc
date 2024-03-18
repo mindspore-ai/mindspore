@@ -39,6 +39,7 @@ constexpr auto kLayerNormV3Pattern = "LayerNormV3Fusion";
 constexpr int kReduceAxisNum = 1;
 constexpr int kInputIndex1 = 1;
 constexpr int kInputIndex2 = 2;
+constexpr int kInvalidDim = -1;
 
 std::vector<int64_t> GetTensorShape(CNodePtr cnode, size_t index) {
   auto abstract = GetCNodeInputAbstract(cnode, index);
@@ -56,15 +57,48 @@ std::vector<int64_t> GetTensorShape(CNodePtr cnode, size_t index) {
 
 int GetInputDims(const AnfNodePtr &node) {
   auto add3 = node->cast<CNodePtr>();
-  MS_CHECK_TRUE_RET(add3 != nullptr, -1);
+  MS_CHECK_TRUE_RET(add3 != nullptr, kInvalidDim);
   auto mul = add3->input(1)->cast<CNodePtr>();
-  MS_CHECK_TRUE_RET(mul != nullptr, -1);
+  MS_CHECK_TRUE_RET(mul != nullptr, kInvalidDim);
   auto div = mul->input(1)->cast<CNodePtr>();
-  MS_CHECK_TRUE_RET(div != nullptr, -1);
+  MS_CHECK_TRUE_RET(div != nullptr, kInvalidDim);
   auto sub = div->input(1)->cast<CNodePtr>();
-  MS_CHECK_TRUE_RET(sub != nullptr, -1);
+  MS_CHECK_TRUE_RET(sub != nullptr, kInvalidDim);
   auto sub_a_shape = GetTensorShape(sub, 1);
-  return sub_a_shape.size();
+  if (!(sub_a_shape.size() == 1 && sub_a_shape[0] == -1)) {
+    return sub_a_shape.size();
+  }
+  // In dynamic shape scene, sub_a_shape is {-1}. In order to get real dims,
+  // go backward from sub_a and find Reshape + Concat,
+  // the num of inputs of concat is just the dim of sub_a.
+  // Sub <-- [Add] <-- [Add] <-- Reshape <-- Concat
+  auto sub_input_0 = sub->input(1)->cast<CNodePtr>();
+  MS_CHECK_TRUE_RET(sub_input_0 != nullptr, kInvalidDim);
+  auto reshape = sub_input_0;
+  if (CheckPrimitiveType(sub_input_0, prim::kPrimAddFusion)) {
+    reshape = sub_input_0->input(kInputIndex2)->cast<CNodePtr>();
+  }
+
+  if (CheckPrimitiveType(reshape, prim::kPrimAddFusion)) {
+    reshape = reshape->input(kInputIndex2)->cast<CNodePtr>();
+  }
+
+  if (CheckPrimitiveType(reshape, prim::kPrimReshape)) {
+    auto concat = reshape->input(kInputIndex2)->cast<CNodePtr>();
+    MS_CHECK_TRUE_RET(concat != nullptr, kInvalidDim);
+    if (!CheckPrimitiveType(concat, prim::kPrimConcat)) {
+      MS_LOG(INFO) << "The second input of cnode " << reshape->fullname_with_scope() << " is not Concat.";
+      return kInvalidDim;
+    }
+    size_t dim = concat->size();
+    if (dim == 0) {
+      MS_LOG(ERROR) << "node " << concat->fullname_with_scope() << "has no inputs.";
+      return kInvalidDim;
+    }
+    return dim - 1;
+  }
+  MS_LOG(INFO) << "The first input of sub is " << sub_input_0->fullname_with_scope();
+  return kInvalidDim;
 }
 
 CNodePtr NewCNodeInner(const CNodePtr &cnode, const PrimitivePtr &primitive, const std::vector<AnfNodePtr> &inputs,
