@@ -526,16 +526,16 @@ class MultiFieldEmbeddingLookup(EmbeddingLookup):
     supports looking up embeddings using multi hot and one hot fields simultaneously.
 
     Note:
-        When 'target' is set to 'CPU', this module will use
-        P.EmbeddingLookup().set_device('CPU') which
-        specified 'offset = 0' to lookup table.
-        When 'target' is set to 'DEVICE', this module will use P.Gather() which
-        specified 'axis = 0' to lookup table.
-        The vectors with the same field_ids  will be combined by the `operator`, such as 'SUM', 'MAX' and
-        'MEAN'. Ensure the input_values of the padded id is zero, so that they can be ignored. The final
-        output will be zeros if the sum of absolute weight of the field is zero. This class only
-        supports ['table_row_slice', 'batch_slice' and 'table_column_slice']. For the operation 'MAX' on
-        device Ascend, there is a constraint where :math:`batch\_size * (seq\_length + field\_size) < 3500`.
+        - When 'target' is set to 'CPU', this module will use
+          P.EmbeddingLookup().set_device('CPU') which
+          specified 'offset = 0' to lookup table.
+        - When 'target' is set to 'DEVICE', this module will use P.Gather() which
+          specified 'axis = 0' to lookup table.
+        - The vectors with the same field_ids  will be combined by the `operator`, such as 'SUM', 'MAX' and
+          'MEAN'. Ensure the input_values of the padded id is zero, so that they can be ignored. The final
+          output will be zeros if the sum of absolute weight of the field is zero. This class only
+          supports ['table_row_slice', 'batch_slice' and 'table_column_slice']. For the operation 'MAX' on
+          device Ascend, there is a constraint where :math:`batch\_size * (seq\_length + field\_size) < 3500`.
 
     Args:
         vocab_size (int): The size of the dictionary of embeddings.

@@ -44,9 +44,9 @@ mindspore.nn.AvgPool2d
 
     异常：
         - **TypeError** - `kernel_size` 或 `strides` 既不是整数也不是元组。
-        - **ValueError** - `pad_mode` 既不是"valid"，也不是"same" 或者 "pad"，不区分大小写。
-        - **ValueError** - `data_format` 既不是'NCHW'，也不是'NHWC'。
-        - **ValueError** - `data_format` 为 'NHWC' 时，使用了 `padding` 或者 `ceil_mode` 或者 `count_include_pad` 或者 `divisor_override` 或者 `pad_mode` 为 `pad`。
+        - **ValueError** - `pad_mode` 既不是 ``"valid"``，也不是 ``"same"`` 或者 ``"pad"``，不区分大小写。
+        - **ValueError** - `data_format` 既不是 ``'NCHW'`` ，也不是 ``'NHWC'`` 。
+        - **ValueError** - `data_format` 为 ``'NHWC'`` 时，使用了 `padding` 或者 `ceil_mode` 或者 `count_include_pad` 或者 `divisor_override` 或者 `pad_mode` 为 `pad`。
         - **ValueError** - `kernel_size` 或 `stride` 小于1。
         - **ValueError** - `padding` 为tuple/list时长度不为1或2。
         - **ValueError** - `x` 的shape长度不等于3或4。

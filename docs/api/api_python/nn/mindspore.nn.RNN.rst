@@ -37,8 +37,8 @@ mindspore.nn.RNN
         - **hx_n** (Tensor) - shape为 :math:`(num\_directions * num\_layers, batch\_size, hidden\_size)` 的Tensor。
 
     异常：
-        - **TypeError** - `input_size` ， `hidden_size` 或 `num_layers` 不是int。
-        - **TypeError** - `has_bias` ， `batch_first` 或 `bidirectional` 不是bool。
+        - **TypeError** - `input_size` 、 `hidden_size` 或 `num_layers` 不是int。
+        - **TypeError** - `has_bias` 、 `batch_first` 或 `bidirectional` 不是bool。
         - **TypeError** - `dropout` 不是float。
         - **ValueError** - `dropout` 不在[0.0, 1.0)范围内。
         - **ValueError** - `nonlinearity` 不在['tanh', 'relu']中。
