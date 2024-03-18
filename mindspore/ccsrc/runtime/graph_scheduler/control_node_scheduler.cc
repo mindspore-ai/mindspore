@@ -18,6 +18,7 @@
 #include "mindspore/core/ops/sequence_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
 #include "runtime/graph_scheduler/control_node_parser.h"
+#include "runtime/graph_scheduler/inline_control_flow_scheduler.h"
 #include "runtime/graph_scheduler/scheduler_helper.h"
 
 namespace mindspore {
@@ -1379,61 +1380,16 @@ void ControlNodeScheduler::LinkControlArrowForLoopCountActor(const ActorSet *act
   }
 }
 
-void ControlNodeScheduler::LinkControlArrowForKernelActor(ActorSet *const actor_set,
+void ControlNodeScheduler::LinkOutputControlArrowForActor(ActorSet *const actor_set,
                                                           const GraphCompilerInfo &graph_compiler_info) const {
   MS_EXCEPTION_IF_NULL(actor_set);
   const auto &parser = graph_compiler_info.control_node_parser_;
   MS_EXCEPTION_IF_NULL(parser);
-
-  // Link control arrow from entrance actors or stack actors to no input kernel actors.
-  for (const auto &no_input_kernel_actor : actor_set->no_input_kernel_actors_) {
-    // In control flow, when the input of the kernel actor is a parameter, this input needs to be linked to the
-    // control actor, so the no-input kernel actor collected in the graph scheduler will also collect this actor,
-    // and it needs to be skipped here.
-    MS_EXCEPTION_IF_NULL(no_input_kernel_actor);
-    // Control arrow for custom actor will be linked in next step.
-    if ((no_input_kernel_actor->input_datas_num_ != 0) || (no_input_kernel_actor->input_controls_num_ != 0) ||
-        no_input_kernel_actor->type() == KernelTransformType::kCustomActor) {
-      continue;
-    }
-
-    KernelGraphPtr kernel_graph = nullptr;
-    if (no_input_kernel_actor->type_ == KernelTransformType::kSuperKernelActor) {
-      const auto &super_kernel_actor = dynamic_cast<SuperKernelActor *>(no_input_kernel_actor.get());
-      MS_EXCEPTION_IF_NULL(super_kernel_actor);
-      kernel_graph = super_kernel_actor->graph();
-    } else if (no_input_kernel_actor->type_ == KernelTransformType::kKernelActor) {
-      const auto &kernel_actor = dynamic_cast<KernelActor *>(no_input_kernel_actor.get());
-      MS_EXCEPTION_IF_NULL(kernel_actor);
-      kernel_graph = AnfAlgo::FetchKernelGraph(kernel_actor->kernel().get());
-    } else if (no_input_kernel_actor->type_ == KernelTransformType::kCustomActor) {
-      const auto &custom_actor = dynamic_cast<CustomActor *>(no_input_kernel_actor.get());
-      MS_EXCEPTION_IF_NULL(custom_actor);
-      auto custom_kernel = custom_actor->kernel().lock();
-      MS_EXCEPTION_IF_NULL(custom_kernel);
-      const auto &base_node = AnfUtils::GetCustomActorBaseNode(custom_kernel);
-      MS_EXCEPTION_IF_NULL(base_node);
-      kernel_graph = AnfAlgo::FetchKernelGraph(base_node.get());
-    } else {
-      MS_LOG(EXCEPTION) << "Invalid no input actor: " << no_input_kernel_actor->GetAID().Name();
-    }
-    MS_EXCEPTION_IF_NULL(kernel_graph);
-    auto actor_name = parser->FetchGroupNameByKernelGraph(kernel_graph) + kStackActorNameSuffix;
-    if (!parser->IsCallInputKernelGraph(kernel_graph.get())) {
-      const auto &func_graph = parser->FetchFuncGraphByKernelGraph(kernel_graph.get());
-      MS_EXCEPTION_IF_NULL(func_graph);
-      actor_name = func_graph->ToString() + kEntranceActorNameSuffix;
-    }
-
-    auto from_actor = FetchActor(actor_name);
-    MS_EXCEPTION_IF_NULL(from_actor);
-    SchedulerHelper::AddControlArrow(from_actor, no_input_kernel_actor.get());
-  }
-
   // Link control arrows from no output kernel actor to the corresponding exit actor.
   for (auto &kernel_actor : actor_set->kernel_actors_) {
     MS_EXCEPTION_IF_NULL(kernel_actor);
-    if ((kernel_actor->output_data_arrows_.size() == 0) && (kernel_actor->output_control_arrows_.size() == 0)) {
+    if ((kernel_actor->output_data_arrows_.size() == 0) && (kernel_actor->output_control_arrows_.size() == 0) &&
+        (!IsInlineKernelActor(kernel_actor))) {
       auto kernel_graph = AnfAlgo::FetchKernelGraph(kernel_actor->kernel().get());
       MS_EXCEPTION_IF_NULL(kernel_graph);
       auto to_actor_name = parser->FetchGroupNameByKernelGraph(kernel_graph) + kExitActorNameSuffix;
@@ -1469,6 +1425,60 @@ void ControlNodeScheduler::LinkControlArrowForKernelActor(ActorSet *const actor_
       SchedulerHelper::AddControlArrow(any_type_kernel_actor.get(), to_actor);
     }
   }
+}
+
+void ControlNodeScheduler::LinkControlArrowForKernelActor(ActorSet *const actor_set,
+                                                          const GraphCompilerInfo &graph_compiler_info) const {
+  MS_EXCEPTION_IF_NULL(actor_set);
+  const auto &parser = graph_compiler_info.control_node_parser_;
+  MS_EXCEPTION_IF_NULL(parser);
+
+  // Link control arrow from entrance actors or stack actors to no input kernel actors.
+  for (const auto &no_input_kernel_actor : actor_set->no_input_kernel_actors_) {
+    // In control flow, when the input of the kernel actor is a parameter, this input needs to be linked to the
+    // control actor, so the no-input kernel actor collected in the graph scheduler will also collect this actor,
+    // and it needs to be skipped here.
+    MS_EXCEPTION_IF_NULL(no_input_kernel_actor);
+    // Control arrow for custom actor will be linked in next step.
+    if ((no_input_kernel_actor->input_datas_num_ != 0) || (no_input_kernel_actor->input_controls_num_ != 0) ||
+        no_input_kernel_actor->type() == KernelTransformType::kCustomActor ||
+        IsInlineKernelActor(no_input_kernel_actor)) {
+      continue;
+    }
+
+    KernelGraphPtr kernel_graph = nullptr;
+    if (no_input_kernel_actor->type_ == KernelTransformType::kSuperKernelActor) {
+      const auto &super_kernel_actor = dynamic_cast<SuperKernelActor *>(no_input_kernel_actor.get());
+      MS_EXCEPTION_IF_NULL(super_kernel_actor);
+      kernel_graph = super_kernel_actor->graph();
+    } else if (no_input_kernel_actor->type_ == KernelTransformType::kKernelActor) {
+      const auto &kernel_actor = dynamic_cast<KernelActor *>(no_input_kernel_actor.get());
+      MS_EXCEPTION_IF_NULL(kernel_actor);
+      kernel_graph = AnfAlgo::FetchKernelGraph(kernel_actor->kernel().get());
+    } else if (no_input_kernel_actor->type_ == KernelTransformType::kCustomActor) {
+      const auto &custom_actor = dynamic_cast<CustomActor *>(no_input_kernel_actor.get());
+      MS_EXCEPTION_IF_NULL(custom_actor);
+      auto custom_kernel = custom_actor->kernel().lock();
+      MS_EXCEPTION_IF_NULL(custom_kernel);
+      const auto &base_node = AnfUtils::GetCustomActorBaseNode(custom_kernel);
+      MS_EXCEPTION_IF_NULL(base_node);
+      kernel_graph = AnfAlgo::FetchKernelGraph(base_node.get());
+    } else {
+      MS_LOG(EXCEPTION) << "Invalid no input actor: " << no_input_kernel_actor->GetAID().Name();
+    }
+    MS_EXCEPTION_IF_NULL(kernel_graph);
+    auto actor_name = parser->FetchGroupNameByKernelGraph(kernel_graph) + kStackActorNameSuffix;
+    if (!parser->IsCallInputKernelGraph(kernel_graph.get())) {
+      const auto &func_graph = parser->FetchFuncGraphByKernelGraph(kernel_graph.get());
+      MS_EXCEPTION_IF_NULL(func_graph);
+      actor_name = func_graph->ToString() + kEntranceActorNameSuffix;
+    }
+
+    auto from_actor = FetchActor(actor_name);
+    MS_EXCEPTION_IF_NULL(from_actor);
+    SchedulerHelper::AddControlArrow(from_actor, no_input_kernel_actor.get());
+  }
+  LinkOutputControlArrowForActor(actor_set, graph_compiler_info);
 }
 
 void ControlNodeScheduler::LinkControlArrowByAutoMonad(ControlActor *to_actor, const AnfNodePtr &from_node,

@@ -73,13 +73,13 @@ class KernelActor : public DebugAwareActor {
         enable_async_infer_(false),
         kernel_info_(nullptr),
         kernel_mod_(nullptr),
+        somas_info_(nullptr),
         real_input_num_(0),
         strategy_(strategy),
         modifiable_ref_input_indexes_(modifiable_ref_input_indexes),
         modifiable_ref_output_indexes_(modifiable_ref_output_indexes),
         is_launch_skipped_(false),
-        inputs_continuous_memory_(false),
-        somas_info_(nullptr) {
+        inputs_continuous_memory_(false) {
     (void)device_contexts_.emplace_back(device_context);
     is_dynamic_shape_ = common::AnfAlgo::IsDynamicShape(kernel_) || common::AnfAlgo::IsDynamicSequence(kernel_);
 
@@ -146,6 +146,9 @@ class KernelActor : public DebugAwareActor {
   // Update input_device_tensors by input op data.
   void UpdateInputDeviceTensor(const OpData<DeviceTensor> *input_data, OpContext<DeviceTensor> *const context);
 
+  // Set the memory address for the tensors which use the somas.
+  void SetSomasMemory(OpContext<DeviceTensor> *const context) const;
+
   // The info of kernel.
   CNodePtr kernel_;
   bool is_dynamic_shape_;
@@ -189,9 +192,15 @@ class KernelActor : public DebugAwareActor {
   // memory_free_list_.
   std::vector<DeviceTensor *> external_reference_tensors_;
 
+  // The information used for integration of dynamic and static memory.
+  SomasInfo *somas_info_;
+  // The graph output node and index use somas info.
+  std::set<size_t> somas_graph_output_indexes_;
+
  private:
   friend class GraphScheduler;
   friend class ControlNodeScheduler;
+  friend class InlineControlFlowScheduler;
   friend class SchedulerHelper;
 #ifdef ENABLE_RPC_ACTOR
   friend class RpcNodeScheduler;
@@ -216,8 +225,6 @@ class KernelActor : public DebugAwareActor {
   // Back refresh the dynamic device tensor stores that have been triggered copy.
   void RefreshDeviceTensorCopyStore(OpContext<DeviceTensor> *const context);
 
-  // Set the memory address for the tensors which use the somas.
-  void SetSomasMemory(OpContext<DeviceTensor> *const context) const;
   void *GetSomasDevicePtr(size_t offset) const;
 
   // The real input number of kernel launch.
@@ -243,11 +250,6 @@ class KernelActor : public DebugAwareActor {
 
   // Whether the inputs need continuous memory, used to check the inputs legitimacy.
   bool inputs_continuous_memory_;
-
-  // The information used for integration of dynamic and static memory.
-  SomasInfo *somas_info_;
-  // The graph output node and index use somas info.
-  std::set<size_t> somas_graph_output_indexes_;
 
   CallbackCounterPtr callback_counter_;
 
