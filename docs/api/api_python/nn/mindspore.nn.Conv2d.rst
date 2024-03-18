@@ -92,8 +92,8 @@ mindspore.nn.Conv2d
 
     异常：
         - **TypeError** - 如果 `in_channels` ， `out_channels` 或者 `group` 不是整数。
-        - **TypeError** - 如果 `kernel_size` ， `stride`，`padding` 或者 `dilation` 既不是整数也不是tuple。
-        - **ValueError** - 如果 `in_channels` ， `out_channels`，`kernel_size` ， `stride` 或者 `dilation` 小于1。
+        - **TypeError** - 如果 `kernel_size` ， `stride`， `padding` 或者 `dilation` 既不是整数也不是tuple。
+        - **ValueError** - 如果 `in_channels` ， `out_channels`， `kernel_size` ， `stride` 或者 `dilation` 小于1。
         - **ValueError** - 如果 `padding` 小于0。
         - **ValueError** - 如果 `pad_mode` 不是 ``"same"`` ， ``"valid"`` 或 ``"pad"`` 。
         - **ValueError** - 如果 `padding` 是一个长度不等于4的tuple。

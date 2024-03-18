@@ -6,11 +6,9 @@ mindspore.nn.MultiFieldEmbeddingLookup
     根据指定的索引和字段ID，返回输入Tensor的切片。此操作支持同时使用multi hot和one hot查找嵌入。
 
     .. note::
-        当'target'设置为 ``'CPU'`` 时，此模块将使用P.EmbeddingLookup().set_device('CPU')指定'offset = 0'的查找表。
-
-        当'target'设置为 ``'DEVICE'`` 时，此模块将使用P.Gather()指定'axis = 0'的查找表。
-
-        具有相同 `field_ids` 的向量将由'operator'组合，例如'SUM'、'MAX'和'MEAN'。确保填充ID的 `input_values` 为零，以便忽略它们。如果字段绝对权重之和为零，最终输出将为零。该类仅支持['table_row_slice', 'batch_slice', 'table_column_slice']。对于Ascend设备上的'MAX'操作，存在  :math:`batch\_size * (seq\_length + field\_size) < 3500` 的约束。
+        - 当'target'设置为 ``'CPU'`` 时，此模块将使用P.EmbeddingLookup().set_device('CPU')指定'offset = 0'的查找表。
+        - 当'target'设置为 ``'DEVICE'`` 时，此模块将使用P.Gather()指定'axis = 0'的查找表。
+        - 具有相同 `field_ids` 的向量将由'operator'组合，例如'SUM'、'MAX'和'MEAN'。确保填充ID的 `input_values` 为零，以便忽略它们。如果字段绝对权重之和为零，最终输出将为零。该类仅支持['table_row_slice', 'batch_slice', 'table_column_slice']。对于Ascend设备上的'MAX'操作，存在 :math:`batch\_size * (seq\_length + field\_size) < 3500` 的约束。
 
     参数：
         - **vocab_size** (int) - 嵌入词典的大小。

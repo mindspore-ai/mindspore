@@ -454,7 +454,7 @@ class GetNextSingleOp(Cell):
         queue_name (str): Queue name to fetch the data.
 
     Outputs:
-        tuple[Tensor], the data get from Dataset.
+        tuple[Tensor], the data gets from Dataset.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -619,7 +619,7 @@ class MicroBatchInterleaved(Cell):
 
 class PipelineCell(Cell):
     """
-    Wrap the network with Micro Batch.
+    Slice MiniBatch into finer-grained MicroBatch for use in pipeline-parallel training.
 
     Note:
         micro_size must be greater or equal to pipeline stages.
