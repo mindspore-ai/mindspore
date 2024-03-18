@@ -222,5 +222,27 @@ REG_FALLBACK_BUILDER("Scatter").SetBody(BODYFUNC(ib) {
                       {{"reduction", MakeValue<string>(reduce_string)}, {"axis", dim_val}});
   return {out};
 });
+
+REG_FALLBACK_BUILDER("Ones").SetBody(BODYFUNC(ib) {
+  auto size = ib->GetInput(kIndex0);
+  auto dtype = ib->GetInput(kIndex1);
+  auto dtype_ptr = dtype->BuildValue();
+  auto dtype_val = ops::GetValueWithCheck<int64_t>(dtype_ptr);
+  auto out_type = TypeIdToType(static_cast<TypeId>(dtype_val));
+  auto value = ib->Tensor(1, out_type);
+  auto out = ib->Emit("FillV2", {size, value});
+  return {out};
+});
+
+REG_FALLBACK_BUILDER("Zeros").SetBody(BODYFUNC(ib) {
+  auto size = ib->GetInput(kIndex0);
+  auto dtype = ib->GetInput(kIndex1);
+  auto dtype_ptr = dtype->BuildValue();
+  auto dtype_val = ops::GetValueWithCheck<int64_t>(dtype_ptr);
+  auto out_type = TypeIdToType(static_cast<TypeId>(dtype_val));
+  auto value = ib->Tensor(0, out_type);
+  auto out = ib->Emit("FillV2", {size, value});
+  return {out};
+});
 }  // namespace expander
 }  // namespace mindspore

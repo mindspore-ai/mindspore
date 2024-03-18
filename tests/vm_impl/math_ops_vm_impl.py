@@ -16,6 +16,8 @@
 import copy
 import numpy as np
 
+import mindspore.common.dtype as mstype
+from mindspore._c_expression import typing
 from mindspore.common.tensor import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops.vm_impl_registry import vm_impl_registry as vm_impl_getters
@@ -38,7 +40,7 @@ def vm_impl_zeroslike(self):
 @vm_impl_getters.register(P.Zeros)
 def vm_impl_zeros(self):
     def vm_impl(x, y):
-        out = np.zeros(x)
+        out = np.zeros(x, mstype.dtype_to_nptype(typing.type_id_to_type(y)))
         return Tensor(out)
 
     return vm_impl
@@ -47,7 +49,7 @@ def vm_impl_zeros(self):
 @vm_impl_getters.register(P.Ones)
 def vm_impl_ones(self):
     def vm_impl(x, y):
-        out = np.ones(x)
+        out = np.ones(x, mstype.dtype_to_nptype(typing.type_id_to_type(y)))
         return Tensor(out)
 
     return vm_impl

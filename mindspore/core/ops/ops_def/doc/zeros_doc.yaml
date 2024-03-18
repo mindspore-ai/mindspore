@@ -1,0 +1,30 @@
+zeros:
+    description: |
+        Creates a tensor filled with 0 with shape described by `size` and fills it with value 0 in type of `dtype`.
+
+        .. warning::
+            For argument `size`, Tensor type input will be deprecated in the future version.
+
+        Args:
+            size (Union[tuple[int], List[int], int, Tensor]): The specified shape of output tensor. Only positive integer or
+                tuple or Tensor containing positive integers are allowed. If it is a Tensor,
+                it must be a 0-D or 1-D Tensor with int32 or int64 dtypes.
+            dtype (:class:`mindspore.dtype`, optional): The specified type of output tensor. If `dtype` is ``None`` ,
+                mindspore.float32 will be used. Default: ``None`` .
+
+        Returns:
+            Tensor, whose dtype and size are defined by input.
+
+        Raises:
+            TypeError: If `size` is neither an int nor an tuple/list/Tensor of int.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore
+            >>> from mindspore import ops
+            >>> output = ops.zeros((2, 2), mindspore.float32)
+            >>> print(output)
+            [[0. 0.]
+             [0. 0.]]

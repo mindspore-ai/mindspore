@@ -440,7 +440,7 @@ class TensorToTuple(PrimitiveWithCheck):
     def infer_value(self, x):
         """Infer_value TensorToTuple"""
         value = None
-        if x is not None and isinstance(x, (Tensor, Tensor_)):
+        if x is not None and isinstance(x, (Tensor, Tensor_)) and len(x.asnumpy().shape) <= 1:
             value = tuple(x.asnumpy().tolist())
         return value
 
@@ -477,7 +477,7 @@ class TensorToList(PrimitiveWithCheck):
     def infer_value(self, x):
         """infer_value TensorToList"""
         value = None
-        if x is not None and isinstance(x, (Tensor, Tensor_)):
+        if x is not None and isinstance(x, (Tensor, Tensor_)) and len(x.asnumpy().shape) <= 1:
             value = x.asnumpy().tolist()
         return value
 
