@@ -596,7 +596,7 @@ class RNN(_RNNBase):
         input_size (int): Number of features of input.
         hidden_size (int):  Number of features of hidden layer.
         num_layers (int): Number of layers of stacked RNN. Default: ``1`` .
-        nonlinearity (str): The non-linearity to use. Can be either ``'tanh'`` or ``'relu'``. Default: ``'tanh'``
+        nonlinearity (str): The non-linearity to use. Can be either ``'tanh'`` or ``'relu'``. Default: ``'tanh'``.
         has_bias (bool): Whether the cell has bias :math:`b_{ih}` and :math:`b_{hh}`. Default: ``True`` .
         batch_first (bool): Specifies whether the first dimension of input `x` is batch_size. Default: ``False`` .
         dropout (float): If not 0.0, append `Dropout` layer on the outputs of each
@@ -708,7 +708,7 @@ class GRU(_RNNBase):
 
     Inputs:
         - **x** (Tensor) - Tensor of data type mindspore.float32 or mindspore.float16 and
-          shape (seq\_len, batch\_size, `input\_size`) or :math:`(batch\_size, seq\_len, input\_size)`.
+          shape :math:`(seq\_len, batch\_size, input\_size)` or :math:`(batch\_size, seq\_len, input\_size)`.
         - **hx** (Tensor) - Tensor of data type mindspore.float32 or mindspore.float16 and
           shape :math:`(num\_directions * num\_layers, batch\_size, hidden\_size)`.
         - **seq_length** (Tensor) - The length of each sequence in an input batch.

@@ -295,7 +295,7 @@ class Conv2d(_Conv):
         ValueError: If `pad_mode` is not one of 'same', 'valid', 'pad'.
         ValueError: If `padding` is a tuple whose length is not equal to 4.
         ValueError: If `pad_mode` is not equal to 'pad' and `padding` is not equal to (0, 0, 0, 0).
-        ValueError: If `data_format` is neither 'NCHW' not 'NHWC'.
+        ValueError: If `data_format` is neither 'NCHW' nor 'NHWC'.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -968,7 +968,7 @@ class Conv3dTranspose(_Conv):
     Raises:
         TypeError: If `in_channels`, `out_channels` or `group` is not an int.
         TypeError: If `kernel_size`, `stride`, `padding` , `dilation` or `output_padding`
-                   is neither an int not a tuple of three.
+                   is neither an int nor a tuple of three.
         TypeError: If input data type is not float16 or float32.
         ValueError: If `in_channels`, `out_channels`, `kernel_size`, `stride` or `dilation` is less than 1.
         ValueError: If `padding` is less than 0.
@@ -1183,7 +1183,7 @@ class Conv2dTranspose(_Conv):
 
     Raises:
         TypeError: If `in_channels`, `out_channels` or `group` is not an int.
-        TypeError: If `kernel_size`, `stride`, `padding` or `dilation` is neither an int not a tuple.
+        TypeError: If `kernel_size`, `stride`, `padding` or `dilation` is neither an int nor a tuple.
         ValueError: If `in_channels`, `out_channels`, `kernel_size`, `stride` or `dilation` is less than 1.
         ValueError: If `padding` is less than 0.
         ValueError: If `pad_mode` is not one of 'same', 'valid', 'pad'.
