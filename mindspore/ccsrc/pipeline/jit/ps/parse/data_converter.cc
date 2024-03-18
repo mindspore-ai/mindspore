@@ -663,6 +663,7 @@ ValuePtr ConvertNumberWithType(const T &obj, const TypePtr &dtype) {
 
 ValuePtr ConvertIntegerWithType(const py::object &obj, const TypePtr &dtype = nullptr) {
   auto obj_int64 = py::cast<int64_t>(obj);
+  // The mutable _Bool class inherits from int, because base class 'bool' is a marked final.
   if (py::hasattr(obj, "__ms_mutable_bool__")) {
     bool obj_bool = obj_int64 != 0;
     return std::make_shared<BoolImm>(obj_bool);
