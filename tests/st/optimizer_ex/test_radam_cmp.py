@@ -107,7 +107,7 @@ def allclose_nparray(data_expected, data_me, rtol, atol, equal_nan=True):
         assert np.array(data_expected).shape == np.array(data_me).shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -125,7 +125,7 @@ def test_radam_basic(mode):
     loss_expect = [[0.13302001, 0.36793998, 0.23806], [0.16604, 0.43787998, 0.27412]]
     allclose_nparray(loss_expect, out, 0.005, 0.005)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -144,7 +144,7 @@ def test_radam_group(mode):
     allclose_nparray(loss_expect, out, 0.005, 0.005)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -163,7 +163,7 @@ def test_radam_lr_dynamic(mode):
     allclose_nparray(loss_expect, out, 0.005, 0.005)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
