@@ -1042,9 +1042,9 @@ void AddRealDependencies(const FuncGraphManagerPtr &manager, const std::vector<C
       const auto &input_node = dest->input(j)->cast<CNodePtr>();
       std::vector<AnfNodePtr> depend_inputs{NewValueNode(prim::kPrimDepend), input_node, source};
       auto depend_node = dest->func_graph()->NewCNode(depend_inputs);
+      MS_EXCEPTION_IF_NULL(depend_node);
       depend_node->set_abstract(input_node->abstract()->Clone());
       depend_node->AddAttr("comp_comm_scheduling_depend", MakeValue(true));
-      MS_EXCEPTION_IF_NULL(depend_node);
       auto &nodes = manager->node_users()[input_node];
       auto it = std::find_if(nodes.begin(), nodes.end(), [dest](const auto &user) { return user.first == dest; });
       if (it != nodes.end()) {
