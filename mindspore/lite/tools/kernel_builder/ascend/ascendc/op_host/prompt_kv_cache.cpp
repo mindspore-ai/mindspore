@@ -105,7 +105,7 @@ static ge::graphStatus TilingFunc(gert::TilingContext *context) {
   platform.GetCoreMemSize(platform_ascendc::CoreMemType::UB, ub_size);
   int64_t remain_ub_size = ub_size - CeilRound(ub, kDivisor) * 2 * sizeof(int64_t);
 
-  int64_t bs = b * h;
+  int64_t bs = ub * h;
   int64_t former_each_core_bs_num = (bs + aiv_num - 1) / aiv_num;
   int64_t core_num = (bs + former_each_core_bs_num - 1) / former_each_core_bs_num;
   int64_t tail_each_core_bs_num = bs - (core_num - 1) * former_each_core_bs_num;
