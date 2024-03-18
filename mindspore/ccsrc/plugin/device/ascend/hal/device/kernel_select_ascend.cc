@@ -22,6 +22,7 @@
 #include <set>
 #include "mindspore/core/ops/array_ops.h"
 #include "plugin/device/ascend/kernel/hccl/hccl_kernel_metadata.h"
+#include "plugin/device/ascend/hal/common/ascend_utils.h"
 
 #ifndef ENABLE_SECURITY
 #include "include/backend/debug/data_dump/dump_json_parser.h"
@@ -644,7 +645,7 @@ bool IsEnableAclnn(const KernelGraphPtr &kernel_graph, const AnfNodePtr &node) {
     return false;
   }
 
-  static bool special_format = common::GetEnv("MS_FORMAT_MODE") == "0";
+  static bool special_format = GetFormatMode() == "0";
   if (special_format && !kernel_graph->is_dynamic_shape()) {
     return false;
   }
