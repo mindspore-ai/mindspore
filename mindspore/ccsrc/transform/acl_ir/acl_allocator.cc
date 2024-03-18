@@ -24,10 +24,10 @@ void *AclAllocator::AllocFunc(void *obj, size_t size) {
   MS_EXCEPTION_IF_NULL(obj);
   auto allocator = static_cast<AclAllocator *>(obj);
   MS_EXCEPTION_IF_NULL(allocator);
-  MS_EXCEPTION_IF_NULL(allocator->mem_manager_);
   auto stream_ptr = allocator->stream();
   auto stream_id = device::ascend::AscendStreamMng::GetInstance().GetStreamId(stream_ptr);
-  auto block = allocator->mem_manager_->MallocMemFromMemPool(size, false, false, stream_id);
+  MS_EXCEPTION_IF_NULL(allocator->device_context_->device_res_manager_);
+  auto block = allocator->device_context_->device_res_manager_->AllocateMemory(size, stream_id);
   if (block == nullptr) {
     MS_LOG(EXCEPTION) << "Malloc Mem From Mem Pool failed, size:" << size;
   }
@@ -45,8 +45,8 @@ void AclAllocator::FreeFunc(void *obj, void *block) {
   MS_EXCEPTION_IF_NULL(obj);
   auto allocator = static_cast<AclAllocator *>(obj);
   MS_EXCEPTION_IF_NULL(allocator);
-  MS_EXCEPTION_IF_NULL(allocator->mem_manager_);
-  allocator->mem_manager_->FreeMemFromMemPool(block);
+  MS_EXCEPTION_IF_NULL(allocator->device_context_->device_res_manager_);
+  allocator->device_context_->device_res_manager_->FreeMemory(block);
 }
 
 void *AclAllocator::GetAddrFromBlock(void *block) {
@@ -54,9 +54,8 @@ void *AclAllocator::GetAddrFromBlock(void *block) {
   return block;
 }
 
-AclAllocatorPtr AclAllocatorRegister::NewAclAllocator(
-  void *stream, std::shared_ptr<device::ascend::AscendMemoryManager> mem_manager) {
-  auto allocator_obj = std::make_shared<AclAllocator>(stream, mem_manager);
+AclAllocatorPtr AclAllocatorRegister::NewAclAllocator(void *stream) {
+  auto allocator_obj = std::make_shared<AclAllocator>(stream);
   MS_EXCEPTION_IF_NULL(allocator_obj);
 
   auto allocator_desc = CALL_ASCEND_API2(aclrtAllocatorCreateDesc);
@@ -79,10 +78,6 @@ AclAllocatorRegister::~AclAllocatorRegister() {
   for (const auto &allocator_iter : allocator_map_) {
     FreeAclAllocatorRes(allocator_iter.second);
   }
-
-  if (mem_manager_ != nullptr) {
-    mem_manager_->Finalize();
-  }
 }
 
 AclAllocatorRegister &AclAllocatorRegister::Instance() {
@@ -92,12 +87,7 @@ AclAllocatorRegister &AclAllocatorRegister::Instance() {
 
 void AclAllocatorRegister::RegisterAllocator(void *stream) {
   if (allocator_map_.find(stream) == allocator_map_.end()) {
-    if (mem_manager_ == nullptr) {
-      mem_manager_ = std::make_shared<device::ascend::AscendMemoryManager>();
-      MS_EXCEPTION_IF_NULL(mem_manager_);
-      mem_manager_->Initialize();
-    }
-    const auto &allocator_obj = NewAclAllocator(stream, mem_manager_);
+    const auto &allocator_obj = NewAclAllocator(stream);
     (void)CALL_ASCEND_API(aclrtAllocatorRegister, stream, allocator_obj->allocator_desc());
     allocator_map_[stream] = allocator_obj;
   }
