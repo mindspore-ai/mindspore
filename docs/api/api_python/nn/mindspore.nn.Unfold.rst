@@ -27,6 +27,6 @@ mindspore.nn.Unfold
         - :math:`out\_col = (in\_col - (ksize\_col + (ksize\_col - 1) * (rate\_col - 1))) // stride\_col + 1`
 
     异常：
-        - **TypeError** - `ksize` ， `strides` 或 `rates` 既不是tuple，也不是list。
-        - **ValueError** - `ksize` ， `strides` 或 `rates` 的shape不是 :math:`(1, x\_row, x\_col, 1)`。
-        - **ValueError** - `ksize` ， `strides` 或 `rates` 的第二个和第三个元素小于1。
+        - **TypeError** - `ksizes` ， `strides` 或 `rates` 既不是tuple，也不是list。
+        - **ValueError** - `ksizes` ， `strides` 或 `rates` 的shape不是 :math:`(1, x\_row, x\_col, 1)`。
+        - **ValueError** - `ksizes` ， `strides` 或 `rates` 的第二个和第三个元素小于1。

@@ -2525,7 +2525,7 @@ def soft_margin_loss(input, target, reduction='mean'):
 
     Args:
         input (Tensor): Predict data. Data type must be float16 or float32.
-        target (Tensor): Ground truth data, with the same type and shape as `logits`.
+        target (Tensor): Ground truth data, with the same type and shape as `input`.
         reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
             ``'sum'`` . Default: ``'mean'`` .
 
@@ -2534,7 +2534,7 @@ def soft_margin_loss(input, target, reduction='mean'):
             - ``'sum'``: the output elements will be summed.
 
     Outputs:
-        Tensor or Scalar. If `reduction` is ``'none'``, its shape is the same as `logits`.
+        Tensor or Scalar. If `reduction` is ``'none'``, its shape is the same as `input`.
         Otherwise, a scalar value will be returned.
 
     Raises:
@@ -3210,7 +3210,7 @@ def pad(input_x, padding, mode='constant', value=None):
         Tensor, the tensor after padding.
 
     Raises:
-        TypeError: If `paddings` is not an int of tuple or int of list.
+        TypeError: If `padding` is not an int of tuple or int of list.
         TypeError: If `input_x` is not a Tensor.
         ValueError: If length of `padding` is not even.
         ValueError: If length of `padding` is greater than 6.
