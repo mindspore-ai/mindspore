@@ -226,7 +226,8 @@ void OutputActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<De
                 << " device tensor:" << input_data->data_ << " ptr:" << input_data->data_->GetPtr()
                 << " ref count:" << input_data->data_->ref_count()
                 << " origin ref count:" << input_data->data_->original_ref_count()
-                << " dynamic ref count:" << input_data->data_->dynamic_ref_count();
+                << " dynamic ref count:" << input_data->data_->dynamic_ref_count()
+                << " from memory pool:" << input_data->data_->from_mem_pool();
   auto output_position = IntToSize(input_data->index_);
   if (output_position >= outputs_.size()) {
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The input index is of range.");
@@ -406,7 +407,7 @@ void OutputActor::UpdateOutputDeviceAddress() {
       device::DynamicMemAllocatorDebugInfo::SetDebugInfo(GetAID().Name(), device::AllocatorType::kOther);
       if (!device_context->device_res_manager_->AllocateMemory(tensor_device_address.get())) {
         MS_LOG(EXCEPTION) << "Device(id:" << device_context->device_context_key().device_id_
-                          << ") memory isn't enough and alloc failed, kernel name: "
+                          << ") memory isn't enough and alloc failed in output actor, kernel name: "
                           << output_node->fullname_with_scope() << ", alloc size: " << tensor_device_address->GetSize()
                           << "B.";
       }

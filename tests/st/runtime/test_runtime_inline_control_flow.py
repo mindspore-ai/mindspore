@@ -577,3 +577,51 @@ def test_branch_output_dynamic_tuple():
     y = Tensor(2, mstype.int32)
     ret1 = foo(x, y, mutable((2, 3), dynamic_len=True))
     assert ret1[0]
+
+
+def test_if_after_if():
+    """
+    Feature: Contrtol flow inline.
+    Description: Inline switch node into kernel graph.
+    Expectation: Not throw exception.
+    """
+    param_a = Parameter(Tensor(5, mstype.int32), name='a')
+    param_b = Parameter(Tensor(4, mstype.int32), name='b')
+
+    @jit
+    def foo(x, y, param_a, param_b):
+        if param_a > param_b:
+            param_b += 1
+        if param_a + param_b > 10:
+            param_a += 3
+        return x + param_b, y + param_b
+
+    x = Tensor(2, mstype.int32)
+    ret1 = foo(x, x, param_a, param_b)
+    ret2 = foo(x, x, param_a, param_b)
+    assert ret1 == (Tensor(7, mstype.int32), Tensor(7, mstype.int32))
+    assert ret2
+
+
+def test_if_in_if():
+    """
+    Feature: Contrtol flow inline.
+    Description: Inline switch node into kernel graph.
+    Expectation: Not throw exception.
+    """
+    param_a = Parameter(Tensor(5, mstype.int32), name='a')
+    param_b = Parameter(Tensor(4, mstype.int32), name='b')
+
+    @jit
+    def foo(x, y, param_a, param_b):
+        if param_a > param_b:
+            param_b += 1
+            if param_a + param_b > 10:
+                param_a += 3
+        return x + param_b, y + param_b
+
+    x = Tensor(2, mstype.int32)
+    ret1 = foo(x, x, param_a, param_b)
+    ret2 = foo(x, x, param_a, param_b)
+    assert ret1 == (Tensor(7, mstype.int32), Tensor(7, mstype.int32))
+    assert ret2
