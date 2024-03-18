@@ -16,12 +16,43 @@
 
 #include "plugin/device/ascend/kernel/dvm/dvm_kernel_mod.h"
 #include <algorithm>
+#include <vector>
+#include <string>
+#include "backend/common/graph_kernel/graph_kernel_flags.h"
+#include "utils/file_utils.h"
 
 namespace mindspore {
 namespace kernel {
+namespace {
+std::string ShapesStr(const std::vector<ShapeVector> &shapes) {
+  std::stringstream ss;
+  ss << "[";
+  for (size_t i = 0; i < shapes.size(); ++i) {
+    if (i != 0) {
+      ss << ", ";
+    }
+    ss << "[";
+    for (size_t j = 0; j < shapes[i].size(); ++j) {
+      if (j != 0) {
+        ss << ", ";
+      }
+      ss << shapes[i][j];
+    }
+    ss << "]";
+  }
+  ss << "]";
+  return ss.str();
+}
+}  // namespace
+
 BaseShapePtr DvmInfer::InferShape(const AbstractBasePtrList &args) { return kernel_->InferShape(args); }
 
-DvmKernelMod::DvmKernelMod(dvm::KernelType kernel_type) { kernel_.Reset(kernel_type); }
+std::mutex DvmKernelMod::lock_;
+
+DvmKernelMod::DvmKernelMod(dvm::KernelType kernel_type) {
+  kernel_.Reset(kernel_type);
+  dump_kernel_ = graphkernel::GraphKernelFlags::GetInstance().dump_as_text;
+}
 
 void DvmKernelMod::Initialize(const std::vector<TypeId> &inputs_type, const std::vector<TypeId> &outputs_type) {
   inputs_type_byte_.clear();
@@ -54,6 +85,10 @@ void DvmKernelMod::CodeGen(const std::vector<ShapeVector> &inputs_shape,
     }
   }
   kernel_.CodeGen();
+  if (dump_kernel_) {
+    dump_kernel_ = false;
+    DumpToFile();
+  }
 }
 
 BaseShapePtr DvmKernelMod::InferShape(const AbstractBasePtrList &inputs_abs) {
@@ -75,6 +110,11 @@ BaseShapePtr DvmKernelMod::InferShape(const AbstractBasePtrList &inputs_abs) {
   // update output shape
   UpdateOutputShapes();
 
+  if (dump_kernel_) {
+    dump_kernel_ = false;
+    DumpToFile();
+  }
+
   // update output abstract
   if (outputs_shape_.size() > 1) {
     abstract::BaseShapePtrList out_shapes(outputs_shape_.size());
@@ -89,6 +129,34 @@ BaseShapePtr DvmKernelMod::InferShape(const AbstractBasePtrList &inputs_abs) {
 }
 
 void DvmKernelMod::UpdateInputShapeRef(size_t input_idx, dvm::ShapeRef *ref) { inputs_shape_ref_[input_idx] = ref; }
+
+void DvmKernelMod::DumpToFile() {
+  dump_buf_ << "inputs shape list: " << ShapesStr(inputs_shape_) << "\n";
+  dump_buf_ << "outputs shape list: " << ShapesStr(outputs_shape_) << "\n";
+  dump_buf_ << "===================== kernel =====================\n";
+  dump_buf_ << kernel_.Dump() << "\n";
+  dump_buf_ << kernel_.Das() << "\n";
+  std::lock_guard<std::mutex> lock(lock_);
+  const std::string dump_dir = "./graph_kernel_dump";
+  auto dir_path = FileUtils::CreateNotExistDirs(dump_dir);
+  if (!dir_path.has_value()) {
+    MS_LOG(INFO) << "Failed to create directory: " << dump_dir;
+    return;
+  }
+  std::string file_name = "dvm_kernel_" + std::to_string(getpid()) + ".txt";
+  std::string file_path = dir_path.value() + "/" + file_name;
+  ChangeFileMode(file_path, S_IWUSR);
+  std::ofstream of(file_path, std::ios::app);
+  if (!of.is_open()) {
+    MS_LOG(INFO) << "Open dump file '" << file_path << "' failed!";
+    ChangeFileMode(file_path, S_IRUSR);
+    return;
+  }
+  of << dump_buf_.str() << "\n";
+  of.close();
+  ChangeFileMode(file_path, S_IRUSR);
+  dump_buf_.str("");
+}
 
 void SingleDvmKernelMod::CacheLoad(dvm::NDObject *obj, size_t idx) {
   inputs_.push_back(obj);
