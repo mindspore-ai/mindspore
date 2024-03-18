@@ -241,14 +241,15 @@ class OperatorInfo {
 
   TensorRedistributionPtr CreateTensorRedistribution(bool construct_op_flag = true, bool keep_reshape = false) {
     if (this->tensor_redistribution_ != nullptr) {
-      MS_LOG(WARNING) << "TensorRedistribution re-created.";
+      MS_LOG(DEBUG) << "TensorRedistribution re-created.";
     }
     this->tensor_redistribution_ = std::make_shared<TensorRedistribution>(construct_op_flag, keep_reshape);
     return this->tensor_redistribution_;
   }
+
   TensorRedistributionPtr CreateReshapeTensorRedistribution(bool construct_op_flag = true, bool keep_reshape = false) {
     if (this->reshape_tensor_redistribution_ != nullptr) {
-      MS_LOG(WARNING) << "TensorRedistribution re-created.";
+      MS_LOG(DEBUG) << "TensorRedistribution re-created.";
     }
     this->reshape_tensor_redistribution_ = std::make_shared<TensorRedistribution>(construct_op_flag, keep_reshape);
     return this->reshape_tensor_redistribution_;
