@@ -20,6 +20,7 @@
 #include <utility>
 #include <vector>
 #include <tuple>
+#include <map>
 
 #include "ir/value.h"
 #include "frontend/parallel/auto_parallel/graph_costmodel.h"
@@ -45,8 +46,17 @@ constexpr size_t kInputQKVHeadSizeDimBNSD = 3;
 constexpr char kInputLayoutBSH[] = "BSH";
 constexpr char kInputLayoutBNSD[] = "BNSD";
 constexpr int64_t kLoadBalanceSplitNum = 2;
-const std::vector<int64_t> need_compress_attn_mask_mode = {ops::kSparseLeftDownCausal, ops::kSparseRightDownCausal,
-                                                           ops::kSparseBand};
+enum OpAttrUpdateMode : int64_t {
+  kLeftUpToLeftUp = 0,
+  kLeftUpToRightDown = 1,
+  kRightDownToRightDown = 2,
+};
+const std::vector<int64_t> needCompressAttnMask = {ops::kSparseLeftUpCausal, ops::kSparseRightDownCausal,
+                                                   ops::kSparseBand};
+const std::map<int64_t, int64_t> opAttrUpdateMap = {{ops::kSparseDefaultMask, kLeftUpToLeftUp},
+                                                    {ops::kSparseLeftUpCausal, kLeftUpToRightDown},
+                                                    {ops::kSparseRightDownCausal, kRightDownToRightDown},
+                                                    {ops::kSparseBand, kRightDownToRightDown}};
 
 size_t GetNonMonadInputSize(const CNodePtr &cnode) {
   size_t cnode_non_monad_size = cnode->size();
@@ -62,6 +72,24 @@ int64_t NewSeedGeneration() {
   static int64_t seed_generation = 0;
   ++seed_generation;
   return seed_generation;
+}
+
+int64_t LongAdd(int64_t base, int64_t shift) {
+  int64_t result;
+  if (shift > 0) {
+    if (base > INT_MAX - shift) {
+      result = INT_MAX;
+    } else {
+      result = base + shift;
+    }
+  } else {
+    if (base < INT_MIN - shift) {
+      result = INT_MIN;
+    } else {
+      result = base + shift;
+    }
+  }
+  return result;
 }
 }  // namespace
 
@@ -283,8 +311,9 @@ Status FlashAttentionScoreInfo::GetAttrs() {
   input_layout_ = GetStringAttr(kAttrInputLayout);
   sparse_mode_ = GetIntAttr(kAttrSparseMode);
   enable_load_balance_ = GetBoolAttr(kAttrEnableLoadBalance);
-  is_attn_mask_compressed_ = std::find(need_compress_attn_mask_mode.begin(), need_compress_attn_mask_mode.end(),
-                                       sparse_mode_) != need_compress_attn_mask_mode.end();
+  is_attn_mask_compressed_ =
+    std::find(needCompressAttnMask.begin(), needCompressAttnMask.end(), sparse_mode_) != needCompressAttnMask.end();
+  need_update_op_attrs_mode_ = sparse_mode_ != ops::kSparseAllMask;
   if (input_layout_ == kInputLayoutBSH) {
     auto q_hidden_size = inputs_shape_[ops::kFlashAttentionScoreInputQueryIndex][kInputQKVHiddenDimBSH];
     auto k_hidden_size = inputs_shape_[ops::kFlashAttentionScoreInputKeyIndex][kInputQKVHiddenDimBSH];
@@ -428,7 +457,7 @@ std::vector<int64_t> FlashAttentionScoreInfo::GetSplitIdAndRank() {
   int64_t rank = g_device_manager->global_rank();
   DeviceMatrix dev_matrix(rank, stage_device_list_, dev_matrix_shape_);
   RankList group_devices;
-  int64_t seq_dim = dev_matrix_shape_.size() - dev_matrix_s1_dim_ - 1;
+  int64_t seq_dim = SizeToLong(dev_matrix_shape_.size()) - dev_matrix_s1_dim_ - 1;
   if (dev_matrix.GetDevicesAlongDim(seq_dim, &group_devices) != SUCCESS) {
     MS_LOG(ERROR) << name_ << " get group devices along dim " << seq_dim << " failed.";
   }
@@ -447,8 +476,6 @@ std::tuple<int64_t, int64_t> FlashAttentionScoreInfo::GetAttentionMaskAttrs(cons
                                                                             const int64_t split_num) {
   int64_t kv_seq_length;
   int64_t q_seq_length;
-  int64_t new_pre_tokens;
-  int64_t new_next_tokens;
   if (input_layout_ == kInputLayoutBSH) {
     kv_seq_length = inputs_shape_[ops::kFlashAttentionScoreInputKeyIndex][kInputQKVSeqDimBSH];
     q_seq_length = inputs_shape_[ops::kFlashAttentionScoreInputQueryIndex][kInputQKVSeqDimBSH];
@@ -456,22 +483,26 @@ std::tuple<int64_t, int64_t> FlashAttentionScoreInfo::GetAttentionMaskAttrs(cons
     kv_seq_length = inputs_shape_[ops::kFlashAttentionScoreInputKeyIndex][kInputQKVSeqDimBNSD];
     q_seq_length = inputs_shape_[ops::kFlashAttentionScoreInputQueryIndex][kInputQKVSeqDimBNSD];
   }
-  switch (sparse_mode_) {
-    case ops::kSparseLeftDownCausal:
-      new_pre_tokens = kv_seq_length;
-      new_next_tokens = -kv_seq_length + (split_id + 1) * (q_seq_length / split_num);
+  int64_t q_len_each_split = q_seq_length / split_num;
+  int64_t new_pre_tokens =
+    (sparse_mode_ == ops::kSparseDefaultMask || sparse_mode_ == ops::kSparseBand) ? pre_tokens_ : kv_seq_length;
+  int64_t new_next_tokens =
+    (sparse_mode_ == ops::kSparseDefaultMask || sparse_mode_ == ops::kSparseBand) ? next_tokens_ : 0;
+  switch (opAttrUpdateMap.at(sparse_mode_)) {
+    case kLeftUpToLeftUp:
+      new_pre_tokens = LongAdd(new_pre_tokens, -split_id * q_len_each_split);
+      new_next_tokens = LongAdd(new_next_tokens, split_id * q_len_each_split);
       break;
-    case ops::kSparseRightDownCausal:
-      new_pre_tokens = kv_seq_length;
-      new_next_tokens = -(split_num - split_id - 1) * (q_seq_length / split_num);
+    case kLeftUpToRightDown:
+      new_pre_tokens = LongAdd(new_pre_tokens, (kv_seq_length - (split_id + 1) * q_len_each_split));
+      new_next_tokens = LongAdd(new_next_tokens, -(kv_seq_length - (split_id + 1) * q_len_each_split));
       break;
-    case ops::kSparseBand:
-      new_pre_tokens = pre_tokens_ + (split_num - split_id - 1) * (q_seq_length / split_num);
-      new_next_tokens = next_tokens_ - (split_num - split_id - 1) * (q_seq_length / split_num);
+    case kRightDownToRightDown:
+      new_pre_tokens = LongAdd(new_pre_tokens, (split_num - split_id - 1) * (q_seq_length / split_num));
+      new_next_tokens = LongAdd(new_next_tokens, -(split_num - split_id - 1) * (q_seq_length / split_num));
       break;
     default:
-      MS_LOG(EXCEPTION) << "Invalid sparse mode " << sparse_mode_ << ", sparse mode should be one of "
-                        << need_compress_attn_mask_mode;
+      MS_LOG(EXCEPTION) << "Invalid sparse mode " << sparse_mode_ << ", sparse mode should be one of [0, 2, 3, 4].";
   }
   return std::make_tuple(new_pre_tokens, new_next_tokens);
 }
@@ -483,12 +514,13 @@ void FlashAttentionScoreInfo::ReplaceNodeInputOrAttrs() {
     auto clone_prim = prim->Clone();
     MS_EXCEPTION_IF_NULL(clone_prim);
     clone_prim->set_attr(kAttrHeadNum, MakeValue(head_num_ / n1_split_num_));
-    if (s1_split_num_ > 1 && !enable_load_balance_ && is_attn_mask_compressed_) {
+    if (s1_split_num_ > 1 && !enable_load_balance_ && need_update_op_attrs_mode_) {
       std::vector<int64_t> split_info = GetSplitIdAndRank();
-      int64_t split_id = split_info[kIndex3];
+      int64_t split_id = split_info[kIndex2];
       int64_t new_pre_tokens, new_next_tokens;
       std::tie(new_pre_tokens, new_next_tokens) = GetAttentionMaskAttrs(split_id, s1_split_num_);
-      clone_prim->set_attr(kAttrSparseMode, MakeValue<int64_t>(ops::kSparseBand));
+      int64_t new_sparse_mode = is_attn_mask_compressed_ ? ops::kSparseBand : sparse_mode_;
+      clone_prim->set_attr(kAttrSparseMode, MakeValue(new_sparse_mode));
       clone_prim->set_attr(kAttrPreTokens, MakeValue(new_pre_tokens));
       clone_prim->set_attr(kAttrNextTokens, MakeValue(new_next_tokens));
     }
@@ -595,7 +627,7 @@ void FlashAttentionScoreInfo::GetFlashAttentionScoreOpNode(int64_t split_id, int
                                                            GenerateGraph *gen_g) {
   int64_t new_sparse_mode = is_attn_mask_compressed_ ? ops::kSparseBand : sparse_mode_;
   int64_t new_pre_tokens, new_next_tokens;
-  if (!is_attn_mask_compressed_) {
+  if (!need_update_op_attrs_mode_) {
     new_pre_tokens = pre_tokens_;
     new_next_tokens = next_tokens_;
   } else {
@@ -736,20 +768,16 @@ Status FlashAttentionScoreInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
   auto attention_out_target = gen_g.PushBack({gen_g.NewOpInst(TUPLE_GETITEM), flash_attention_score_target,
                                               CreatInt64Imm(ops::kFlashAttentionScoreOutputAttentionOutIndex)});
 
-  AnfNodePtr softmax_max_exchange;
-  LoadBalanceExchange(all_gather_idx, group, softmax_max_target, &softmax_max_exchange, &gen_g);
-  AnfNodePtr softmax_sum_exchange;
-  LoadBalanceExchange(all_gather_idx, group, softmax_sum_target, &softmax_sum_exchange, &gen_g);
   AnfNodePtr attention_out_exchange;
   LoadBalanceExchange(all_gather_idx, group, attention_out_target, &attention_out_exchange, &gen_g);
 
   int64_t softmax_concat_axis = kInputQKVSeqDimBNSD;
   auto softmax_max_maketuple =
-    gen_g.PushBack({NewValueNode(prim::kPrimMakeTuple), softmax_max_keep, softmax_max_exchange});
+    gen_g.PushBack({NewValueNode(prim::kPrimMakeTuple), softmax_max_keep, softmax_max_target});
   auto softmax_max =
     gen_g.PushBack({gen_g.NewOpInst(CONCAT), softmax_max_maketuple, CreatInt64Imm(softmax_concat_axis)});
   auto softmax_sum_maketuple =
-    gen_g.PushBack({NewValueNode(prim::kPrimMakeTuple), softmax_sum_keep, softmax_sum_exchange});
+    gen_g.PushBack({NewValueNode(prim::kPrimMakeTuple), softmax_sum_keep, softmax_sum_target});
   auto softmax_sum =
     gen_g.PushBack({gen_g.NewOpInst(CONCAT), softmax_sum_maketuple, CreatInt64Imm(softmax_concat_axis)});
   int64_t attention_out_concat_axis = (input_layout_ == kInputLayoutBSH) ? kInputQKVSeqDimBSH : kInputQKVSeqDimBNSD;

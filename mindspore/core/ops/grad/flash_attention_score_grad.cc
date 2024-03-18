@@ -54,7 +54,7 @@ enum FlashAttentionScoreOutputIndex : size_t {
 enum FlashAttentionScoreGradSparseMode : int64_t {
   kSparseDefaultMask = 0,
   kSparseAllMask,
-  kSparseLeftDownCausal,
+  kSparseLeftUpCausal,
   kSparseRightDownCausal,
   kSparseBand,
   kSparsePrefix,
@@ -110,7 +110,7 @@ void CheckFlashAttentionScoreGradInputShape(const AbstractBasePtr &input,
 void CheckFlashAttentionScoreGradAttnMaskShape(const AbstractBasePtr &attn_mask, const std::string &op_name,
                                                int64_t sparse_mode, int64_t batch_size, int64_t q_head_num,
                                                int64_t q_seq_len, int64_t kv_seq_len) {
-  const std::vector<int64_t> need_compress_attn_mask_mode = {kSparseLeftDownCausal, kSparseRightDownCausal, kSparseBand,
+  const std::vector<int64_t> need_compress_attn_mask_mode = {kSparseLeftUpCausal, kSparseRightDownCausal, kSparseBand,
                                                              kSparsePrefix};
   if (std::find(need_compress_attn_mask_mode.begin(), need_compress_attn_mask_mode.end(), sparse_mode) !=
       need_compress_attn_mask_mode.end()) {

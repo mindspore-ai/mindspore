@@ -100,6 +100,7 @@ class FlashAttentionScoreInfo : public OperatorInfo {
   bool enable_load_balance_ = false;
   bool kv_split_ = false;
   bool is_attn_mask_compressed_ = false;
+  bool need_update_op_attrs_mode_ = false;
   std::vector<bool> is_input_passed_;
   std::vector<Shape> splittable_inputs_;
   Strategies expect_strategies_;
