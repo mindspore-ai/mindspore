@@ -133,7 +133,7 @@ bool InsertDepend(const FuncGraphPtr &graph, const std::vector<CNodePtr> &allgat
 
 bool InsertMemDependForAllGather(const FuncGraphPtr &graph, const std::vector<CNodePtr> &allgather_with_output_order) {
   auto manager = graph->manager();
-  auto node_usrs = manager->node_users();
+  const auto &node_usrs = manager->node_users();
   bool changed = false;
   for (const auto &ag : allgather_with_output_order) {
     for (const auto &ag_user : node_usrs.at(ag)) {
