@@ -22,6 +22,7 @@
 #include <string>
 #include "include/common/utils/parallel_context.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
+#include "frontend/parallel/graph_util//graph_utils.h"
 
 namespace mindspore {
 namespace parallel {
@@ -187,7 +188,7 @@ std::vector<std::pair<std::string, std::vector<int64_t>>> TensorTransform::Trans
   }
   auto operators_vector = redistribution_oplist_ptr->first;
   std::vector<std::pair<std::string, std::vector<int64_t>>> transform_op_list;
-  for (auto op_pair : operators_vector) {
+  for (const auto &op_pair : operators_vector) {
     auto op_name = op_pair.first;
     auto it = transform_operator_.find(op_name);
     if (it == transform_operator_.end()) {
@@ -275,10 +276,10 @@ RedistributionOpListPtr TensorTransform::OptimizeTensorRedistributionOperatorLis
   }
   auto operators_vector = redistribution_op_list->first;
   std::vector<std::pair<std::string, std::vector<int64_t>>> transform_op_list;
-  for (auto op_pair : operators_vector) {
+  for (const auto &op_pair : operators_vector) {
     auto op_name = op_pair.first;
     auto it = transform_operator_.find(op_name);
-    if (it == transform_operator_.end()) {
+    if (it == transform_operator_.end() || IsToBeInsertedSplitOp(op_pair)) {
       MS_LOG(INFO) << "The op:" << op_name << " would not be optimized.";
       return redistribution_op_list;
     }

@@ -89,7 +89,7 @@ class TensorRedistribution {
   }
   AssembledDynamicDimsMapping GetDynamicDimsMapping() const { return this->dynamic_dim_mapping_; }
   void CreateAssembledDynamicMapping(const CNodePtr &cur_cnode, const AnfNodePtr &pre_cnode,
-                                     const FuncGraphPtr &func_graph);
+                                     const FuncGraphPtr &func_graph, int64_t redistribution_index);
 
  private:
   void UnifyAssembledMapping();
