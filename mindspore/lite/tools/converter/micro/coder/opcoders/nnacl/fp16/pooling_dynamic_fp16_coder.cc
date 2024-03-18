@@ -33,7 +33,7 @@ int PoolingDynamicFP16Coder::Prepare(CoderContext *const context) {
   }
   param_ = reinterpret_cast<PoolingParameter *>(parameter_);
   MS_CHECK_PTR(param_);
-  MS_CHECK_RET_CODE(memset_s(&compute_, sizeof(compute_), 0, sizeof(compute_)) == EOK, "memset_s failed.");
+  MS_CHECK_TRUE_MSG(memset_s(&compute_, sizeof(compute_), 0, sizeof(compute_)) == EOK, RET_ERROR, "memset_s failed.");
   param_->op_parameter_.thread_num_ = 1;
   dynamic_param_.input_batch_ = shape_info_container_->GetTemplateShape(input_tensor_)[0];
   compute_.input_channel_ = input_tensor_->Channel();
