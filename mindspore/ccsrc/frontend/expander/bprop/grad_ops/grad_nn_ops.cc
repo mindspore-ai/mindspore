@@ -1376,6 +1376,7 @@ REG_BPROP_BUILDER("InstanceNorm").SetUnusedInputs({i2, i3, i4}).SetBody(BODYFUNC
 REG_BPROP_BUILDER("BatchNorm").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto scale = ib->GetInput(kIndex1);
+  auto bias = ib->GetInput(kIndex2);
   auto mean = ib->GetInput(kIndex3);
   auto variance = ib->GetInput(kIndex4);
   auto is_training = ib->GetInput(kIndex5);
@@ -1410,9 +1411,10 @@ REG_BPROP_BUILDER("BatchNorm").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
     saved_variance = ib->TupleGetItem(cond_out, 1);
   }
   auto reserve = ib->TupleGetItem(out, 2);
-
+  bool is_scale_or_bias_grad = (scale->need_compute_grad_out() || bias->need_compute_grad_out());
   out = ib->BatchNormGrad(
-    {ib->TupleGetItem(dout, 0), x, scale, saved_mean, saved_variance, reserve, is_training, epsilon, data_format});
+    {ib->TupleGetItem(dout, 0), x, scale, saved_mean, saved_variance, reserve, is_training, epsilon, data_format},
+    is_scale_or_bias_grad);
   auto dx = ib->TupleGetItem(out, 0);
   auto dscale = ib->TupleGetItem(out, 1);
   auto dbias = ib->TupleGetItem(out, 2);

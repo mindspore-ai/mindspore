@@ -220,6 +220,7 @@ void IrBprop::BuildBPropCutCNode(const CNodePtr &cnode, const PrimitivePtr &prim
   }
   bprop_cut_cnode->set_abstract(std::make_shared<abstract::AbstractTuple>(abs_list));
   ad_param_->tape_->set_flag(kFlagPyNativeBpropGraphWithBpropCut, true);
+  bprop_graph_run_by_single_op_ = true;
 }
 
 AnfNodePtr IrBprop::MapParameter(const ValuePtr &value, const abstract::AbstractBasePtr &abs) {

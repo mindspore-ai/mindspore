@@ -42,7 +42,7 @@ class FuncBuilder : public BpropBuilder {
   // Override Stack to flatten tuple input.
   NodePtr Stack(const NodePtr &x, const ValuePtr &axis) override;
   NodePtr Stack(const NodePtrList &x, int64_t axis) override;
-  NodePtr BatchNormGrad(const NodePtrList &inputs) override;
+  NodePtr BatchNormGrad(const NodePtrList &inputs, bool is_scale_or_bias_grad) override;
   NodePtr SparseSoftmaxCrossEntropyWithLogits(const NodePtrList &inputs, const expander::DAttr &attrs,
                                               const NodePtr &out, const NodePtr &dout, bool is_graph_mode) override;
   NodePtr Depend(const NodePtr &value, const NodePtr &expr) override;
