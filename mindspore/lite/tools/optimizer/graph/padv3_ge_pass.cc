@@ -119,7 +119,7 @@ const CNodePtr PadV3GePass::CreateConcatNode(const FuncGraphPtr &func_graph,
   auto concat_prim = std::make_shared<ops::Concat>();
   MS_CHECK_TRUE_RET(concat_prim != nullptr, nullptr);
   concat_prim->set_axis(0);
-  const int input_num = concat_input_vec.size();
+  const int input_num = static_cast<int>(concat_input_vec.size());
   (void)concat_prim->AddAttr("N", api::MakeValue(input_num));
   (void)concat_prim->AddAttr("inputNums", api::MakeValue(input_num));
   auto concat_prim_c = concat_prim->GetPrim();
@@ -135,10 +135,10 @@ const CNodePtr PadV3GePass::CreateConcatNode(const FuncGraphPtr &func_graph,
 }
 
 const CNodePtr PadV3GePass::ProcessSliceNConcat(const FuncGraphPtr &func_graph, const AnfNodePtr &pad_node,
-                                                const AnfNodePtr &input_node, int64_t fill_length,
+                                                const AnfNodePtr &input_node, int64_t padding_length,
                                                 std::string concat_node_name) {
   std::vector<AnfNodePtr> concat_input_vec;
-  for (int64_t i = 0; i < fill_length; i += 2) {
+  for (int64_t i = 0; i < padding_length; i += static_cast<int64_t>(kSizeTwo)) {
     // slice and insert to concat in reverse order
     auto slice_node_2 = CreateStridedSlice(func_graph, input_node, i + kSizeOne);
     slice_node_2->set_fullname_with_scope(pad_node->fullname_with_scope() + "_strided_slice_" +
@@ -154,14 +154,31 @@ const CNodePtr PadV3GePass::ProcessSliceNConcat(const FuncGraphPtr &func_graph, 
 }
 
 const int64_t PadV3GePass::GetPaddingLength(const FuncGraphPtr &func_graph, const CNodePtr &pad_node) {
+  // Get padding input rank
   auto padding_input_abstract = pad_node->input(kIndexOne)->abstract();
   MS_EXCEPTION_IF_NULL(padding_input_abstract);
   auto padding_input_shape_ptr = padding_input_abstract->GetShape();
   MS_EXCEPTION_IF_NULL(padding_input_shape_ptr);
   auto padding_input_shape_vec = padding_input_shape_ptr->GetShapeVector();
   MS_LOG(DEBUG) << "check padding_input_shape_vec: " << padding_input_shape_vec;
-  int64_t dst_length = padding_input_shape_vec.size() * 2;
-  return dst_length;
+  int64_t padding_input_rank = static_cast<int64_t>(padding_input_shape_vec.size());
+
+  // Get padding length
+  auto padding_abstract = pad_node->input(kIndexTwo)->abstract();
+  MS_EXCEPTION_IF_NULL(padding_abstract);
+  auto padding_shape_ptr = padding_abstract->GetShape();
+  MS_EXCEPTION_IF_NULL(padding_shape_ptr);
+  auto padding_shape_vec = padding_shape_ptr->GetShapeVector();
+  MS_LOG(DEBUG) << "check padding_shape_vec: " << padding_shape_vec;
+  int64_t padding_length = static_cast<int64_t>(padding_shape_vec.at(0));
+
+  if (padding_length != padding_input_rank * static_cast<int64_t>(kSizeTwo)) {
+    MS_LOG(ERROR) << "padding length [" << padding_length << "] should be twice of padding input rank ["
+                  << padding_input_rank << "]";
+    return -1;
+  }
+
+  return padding_length;
 }
 
 STATUS PadV3GePass::ProcessPadV3ForGE(const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &manager) {
@@ -194,8 +211,13 @@ STATUS PadV3GePass::ProcessPadV3ForGE(const FuncGraphPtr &func_graph, const Func
 
       auto padding = cnode->input(kIndexTwo);
       MS_EXCEPTION_IF_NULL(padding);
-      int64_t fill_length = GetPaddingLength(func_graph, cnode);
-      auto concat_node = ProcessSliceNConcat(func_graph, cnode, padding, fill_length,
+      int64_t padding_length = GetPaddingLength(func_graph, cnode);
+      if (padding_length < 0) {
+        MS_LOG(ERROR) << "Padding length check failed on cnode: " << node->fullname_with_scope();
+        status = lite::RET_ERROR;
+        break;
+      }
+      auto concat_node = ProcessSliceNConcat(func_graph, cnode, padding, padding_length,
                                              cnode->fullname_with_scope() + "_pad_slice_concat");
       MS_EXCEPTION_IF_NULL(concat_node);
 
@@ -205,11 +227,10 @@ STATUS PadV3GePass::ProcessPadV3ForGE(const FuncGraphPtr &func_graph, const Func
       cnode->AddAttr("ge_format", MakeValue(pass_run));
       manager->SetEdge(cnode, kInputIndexTwo, concat_node);
     }
-
-    if (status != lite::RET_OK && status != lite::RET_NO_CHANGE) {
-      MS_LOG(ERROR) << "Failed to run flip PadV3 at cnode: " << node->fullname_with_scope();
-      return lite::RET_ERROR;
-    }
+  }
+  if (status != lite::RET_OK && status != lite::RET_NO_CHANGE) {
+    MS_LOG(ERROR) << "Failed to run flip PadV3 pass";
+    return lite::RET_ERROR;
   }
   return lite::RET_OK;
 }
