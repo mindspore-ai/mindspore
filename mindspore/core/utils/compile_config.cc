@@ -26,10 +26,15 @@ CompileConfigManager &CompileConfigManager::GetInstance() noexcept {
 }
 
 void CompileConfigManager::CollectCompileConfig() {
+  if (collect_finished_) {
+    return;
+  }
   if (collect_func_ == nullptr) {
     MS_LOG(INTERNAL_EXCEPTION) << "Compile config not registered.";
   }
+  MS_LOG(DEBUG) << "To collect all compile configs.";
   compile_config_ = collect_func_();
+  collect_finished_ = true;
 }
 
 void CompileConfigManager::SetConfig(const std::string &config_name, const std::string &value, bool overwrite) {
@@ -41,12 +46,12 @@ void CompileConfigManager::SetConfig(const std::string &config_name, const std::
 
 std::string CompileConfigManager::GetConfig(const std::string &config_name) {
   if (compile_config_.empty()) {
-    MS_LOG(DEBUG) << "The compile config is empty when getting config '" << config_name << "'.";
+    MS_LOG(INFO) << "The compile config is empty when getting config '" << config_name << "'.";
     return "";
   }
   auto iter = compile_config_.find(config_name);
   if (iter == compile_config_.end()) {
-    MS_LOG(INTERNAL_EXCEPTION) << config_name << " is not a compile config.";
+    MS_LOG(INTERNAL_EXCEPTION) << "'" << config_name << "' is not a compile config.";
   }
   MS_LOG(DEBUG) << "Get Compile Config. " << config_name << ": " << iter->second;
   return iter->second;

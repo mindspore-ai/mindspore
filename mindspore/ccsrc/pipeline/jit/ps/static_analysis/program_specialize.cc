@@ -100,8 +100,8 @@ void PurifyAbstractOfSequence(ProgramSpecializer *const specializer) {
     MS_EXCEPTION_IF_NULL(sequence_abs);
     MS_EXCEPTION_IF_NULL(abstract_and_node.second);
     if (!sequence_abs->PurifyElements()) {
-      MS_LOG(ERROR) << "Purify elements failed, abstract: " << sequence_abs->ToString()
-                    << ", node: " << abstract_and_node.second->DebugString(recursive_level);
+      MS_LOG(INFO) << "Purify elements failed, abstract: " << sequence_abs->ToString()
+                   << ", node: " << abstract_and_node.second->DebugString(recursive_level);
     } else {
       MS_LOG(DEBUG) << "Purify elements, abstract: " << sequence_abs->ToString()
                     << ", node: " << abstract_and_node.second->DebugString(recursive_level);
@@ -701,8 +701,8 @@ void UpdateSequenceNode(const AnfNodePtr &new_node, const AnfNodePtr &old_node, 
       old_sequence_abs->InsertSequenceNode(new_node);
       return;
     }
-    MS_LOG(ERROR) << "Not found any valid sequence node, " << old_node->DebugString() << " --> "
-                  << new_node->DebugString();
+    MS_LOG(INFO) << "Not found any valid sequence node, " << old_node->DebugString() << " --> "
+                 << new_node->DebugString();
     return;
   }
 
