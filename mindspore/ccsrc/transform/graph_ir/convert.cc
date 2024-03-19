@@ -114,6 +114,7 @@ const std::map<std::string, std::vector<std::pair<size_t, TypeId>>> kTransInputD
   {kConv2DBackpropInputOpName, {{3, kNumberTypeInt32}}},
   {kOneHotOpName, {{2, kNumberTypeInt32}}},
   {kLinSpaceOpName, {{3, kNumberTypeInt32}}},
+  {kResizeNearestNeighborV2GradOpName, {{2, kNumberTypeInt32}}},
   {kResizeBilinearV2OpName, {{2, kNumberTypeInt32}}}};
 
 // {node name | {{attr_name, dst_type}...}}
