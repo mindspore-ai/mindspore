@@ -35,17 +35,20 @@ class PyBoostCastOperation : public CastBaseOperation {
   PyBoostCastOperation() = default;
   ~PyBoostCastOperation() = default;
 
+  template <typename... InputArgs, std::size_t... Index>
+  auto SetTensorMixPrecisionCastHelper(const FrontendOpRunInfoPtr &op_run_info, std::index_sequence<Index...>,
+                                       const InputArgs &... input_args) {
+    return std::make_tuple(SetTensorMixPrecisionCast(op_run_info, input_args, Index)...);
+  }
+
   template <typename... InputArgs>
   auto DoMixPrecisionCast(const FrontendOpRunInfoPtr &op_run_info, const InputArgs &... input_args) {
     // Mixed precision conversion tensors which has cast dtype
     if (op_run_info->async_status.disable_mix_precision) {
       return std::make_tuple(input_args...);
     }
-    size_t index = sizeof...(input_args);
-    auto decrease_index_fn = [&index]() { return --index; };
-    // Notice, the input_args of variadic template in make_tuple obtaining is reverse
-    auto ret = std::make_tuple(SetTensorMixPrecisionCast(op_run_info, input_args, decrease_index_fn())...);
-    return ret;
+    return SetTensorMixPrecisionCastHelper(op_run_info, std::make_index_sequence<sizeof...(InputArgs)>(),
+                                           input_args...);
   }
 
   template <typename T>
