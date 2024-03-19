@@ -34,8 +34,6 @@ void InternalFlashAttentionScore::SetInOutIdx() {
   inputsIdxMap_[kIndex0] = kIndex0;
   inputsIdxMap_[kIndex1] = kIndex1;
   inputsIdxMap_[kIndex2] = kIndex2;
-  inputsIdxMap_[kIndex3] = kIndex3;
-  inputsIdxMap_[kIndex6] = kIndex4;
   outputsIdxMap_[kIndex3] = kIndex0;
 }
 

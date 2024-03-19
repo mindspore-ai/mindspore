@@ -29,7 +29,6 @@ class InternalStridedSlice : public InternalKernelMod {
   ~InternalStridedSlice() = default;
 
  protected:
-  bool CheckMasks(const std::vector<KernelTensor *> &inputs);
   internal::OpParamPtr CreateOpParam(const std::vector<KernelTensor *> &inputs,
                                      const std::vector<KernelTensor *> &outputs);
   void SetInOutIdx();

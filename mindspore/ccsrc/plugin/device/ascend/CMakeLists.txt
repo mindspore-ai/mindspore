@@ -100,12 +100,11 @@ foreach(a_comp ${ASCEND_COMMON_SUB})
 endforeach()
 
 if(DEFINED ENV{MS_INTERNAL_KERNEL_HOME})
-    MESSAGE(STATUS "MS_INTERNAL_KERNEL_HOME=$ENV{MS_INTERNAL_KERNEL_HOME} found.")
     include_directories($ENV{MS_INTERNAL_KERNEL_HOME})
-    include_directories($ENV{MS_INTERNAL_KERNEL_HOME}/internal_kernel/include)
-    include_directories($ENV{MS_INTERNAL_KERNEL_HOME}/asdops/include)
+    include_directories($ENV{MS_INTERNAL_KERNEL_HOME}/include)
+    include_directories($ENV{MS_INTERNAL_KERNEL_HOME}/ascend-op-common-lib/output/asdops/include)
 
-    link_directories($ENV{MS_INTERNAL_KERNEL_HOME}/internal_kernel/lib)
+    link_directories($ENV{MS_INTERNAL_KERNEL_HOME}/build)
 endif()
 
 list(APPEND ASCEND_COMMON_OBJECTS_SRC $<TARGET_OBJECTS:_mindspore_transform_graph_ir_obj>)
@@ -117,16 +116,13 @@ list(APPEND ASCEND_910B_OBJ_SRC ${ASCEND_COMMON_OBJECTS_SRC})
 add_library(mindspore_ascend SHARED ${ASCEND_910B_OBJ_SRC})
 set_target_properties(mindspore_ascend PROPERTIES VERSION 2)
 
-set(MS_KERNELS_INTERNAL_LIB_PATH
-    ${ORIGIN_PATH}/ascend/ms_kernels_internal/internal_kernel/lib)
-
 target_link_libraries(mindspore_ascend PRIVATE mindspore_backend mindspore_core mindspore_common)
 target_link_libraries(mindspore_ascend PRIVATE mindspore_shared_lib)
 target_link_libraries(mindspore_ascend PRIVATE proto_input mindspore::protobuf)
 target_link_libraries(mindspore_ascend PRIVATE securec d_collective)
 target_link_libraries(mindspore_ascend PRIVATE mindspore::ssl mindspore::crypto)
 set_target_properties(mindspore_ascend PROPERTIES INSTALL_RPATH
-        ${ORIGIN_PATH}:${ORIGIN_PATH}/ascend:${ORIGIN_PATH}/../:${MS_KERNELS_INTERNAL_LIB_PATH}:${ASCEND_RPATH})
+        ${ORIGIN_PATH}:${ORIGIN_PATH}/ascend:${ORIGIN_PATH}/../:${ASCEND_RPATH})
 
 if(DVM_LIB)
     target_link_libraries(mindspore_ascend PRIVATE ${DVM_LIB})

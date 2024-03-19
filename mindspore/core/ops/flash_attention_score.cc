@@ -197,7 +197,7 @@ TuplePtr FlashAttentionScoreInferType(const PrimitivePtr &prim, const std::vecto
   }
   if (!IsFlashAttentionScoreOptionalInputNotPass(input_args[kFlashAttentionScoreInputAttnMaskIndex])) {
     auto attn_mask_type = input_args[kFlashAttentionScoreInputAttnMaskIndex]->GetType();
-    CheckAndConvertUtils::CheckTensorTypeValid("attn_mask", attn_mask_type, {kUInt8, kFloat16}, op_name);
+    CheckAndConvertUtils::CheckTensorTypeValid("attn_mask", attn_mask_type, {kUInt8}, op_name);
   }
   if (!IsFlashAttentionScoreOptionalInputNotPass(input_args[kFlashAttentionScoreInputPrefixIndex])) {
     auto prefix_type = input_args[kFlashAttentionScoreInputPrefixIndex]->GetType();

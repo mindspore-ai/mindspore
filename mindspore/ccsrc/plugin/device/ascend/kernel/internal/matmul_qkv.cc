@@ -19,7 +19,7 @@
 #include <memory>
 
 #include "plugin/device/ascend/kernel/internal/internal_kernel_utils.h"
-#include "param/matmul_qkv_param.h"
+#include "include/param/matmul_qkv_param.h"
 
 namespace mindspore {
 namespace kernel {

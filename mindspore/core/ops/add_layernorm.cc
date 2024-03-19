@@ -23,6 +23,7 @@
 #include "abstract/abstract_value.h"
 #include "abstract/dshape.h"
 #include "abstract/ops/op_infer.h"
+#include "abstract/ops/primitive_infer_map.h"
 #include "abstract/utils.h"
 #include "base/base.h"
 #include "ir/anf.h"
@@ -69,8 +70,7 @@ BaseShapePtr AddLayerNormInferShape(const PrimitivePtr &primitive, const std::ve
     return std::make_shared<abstract::TupleShape>(shapes_list);
   }
 
-  ShapeVector mean_var_shape = x_shape;
-  mean_var_shape[x_rank - 1] = 1;
+  ShapeVector mean_var_shape = {x_shape[x_rank - 1]};
   std::vector<BaseShapePtr> shapes_list = {x_shape_ptr};
   (void)shapes_list.emplace_back(std::make_shared<abstract::TensorShape>(mean_var_shape));
   (void)shapes_list.emplace_back(std::make_shared<abstract::TensorShape>(mean_var_shape));
@@ -83,6 +83,7 @@ TypePtr AddLayerNormInferType(const PrimitivePtr &primitive, const std::vector<A
   auto x_type = input_args[kInputIndex0]->GetType();
   auto gamma_type = input_args[kInputIndex2]->GetType();
   auto beta_type = input_args[kInputIndex3]->GetType();
+  // the beta and gama shape must be x_shape[begin_params_axis:]
 
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
