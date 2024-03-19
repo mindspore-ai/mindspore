@@ -168,8 +168,8 @@ NodePtr FuncBuilder::Stack(const NodePtrList &x, int64_t axis) {
   return Emit(kStackOpName, x, attrs);
 }
 
-NodePtr FuncBuilder::BatchNormGrad(const NodePtrList &inputs) {
-  return pass_forward_->BatchNormGradToBNInferGrad(inputs);
+NodePtr FuncBuilder::BatchNormGrad(const NodePtrList &inputs, bool is_scale_or_bias_grad) {
+  return pass_forward_->BatchNormGradToBNInferGrad(inputs, is_scale_or_bias_grad);
 }
 
 NodePtr FuncBuilder::SparseSoftmaxCrossEntropyWithLogits(const NodePtrList &inputs, const expander::DAttr &attrs,

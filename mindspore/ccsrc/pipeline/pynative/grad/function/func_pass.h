@@ -40,7 +40,7 @@ struct FuncPassForward {
 
   // Pass for expander outputs
   NodePtrList PassForOpInput(const PrimitivePtr &prim, const NodePtrList &inputs);
-  NodePtr BatchNormGradToBNInferGrad(const NodePtrList &inputs);
+  NodePtr BatchNormGradToBNInferGrad(const NodePtrList &inputs, bool is_scale_or_bias_grad);
   NodePtr GradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR(const NodePtrList &inputs, const expander::DAttr &attrs,
                                                              const NodePtr &out, const NodePtr &dout,
                                                              bool is_graph_mode);
