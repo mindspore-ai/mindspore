@@ -637,8 +637,9 @@ AbstractBasePtr TensorToSequenceInfer(const PrimitivePtr &primitive, const std::
     abs->CheckAndConvertToDynamicLenSequence();
     return abs;
   }
-
-  if (!x_shape.empty()) {
+  if (x_shape.empty()) {
+    abs_list.push_back(std::make_shared<abstract::AbstractScalar>(kValueAny, element_type));
+  } else {
     for (int64_t i = 0; i < x_shape[0]; i++) {
       abs_list.push_back(std::make_shared<abstract::AbstractScalar>(kValueAny, element_type));
     }

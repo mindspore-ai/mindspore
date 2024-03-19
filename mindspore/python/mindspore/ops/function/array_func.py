@@ -62,7 +62,7 @@ from mindspore.ops._utils.utils import ms_arrange
 
 from mindspore.ops.auto_generate import cat, range, scatter_nd, deepcopy, masked_fill, diagonal, expand_dims, \
     nonzero, reverse, transpose, unsorted_segment_sum, diag, gather, gather_d, gather_nd, reshape, broadcast_to, \
-    strided_slice
+    strided_slice, ones, zeros
 from mindspore.ops.operations.manually_defined import tile, rank, scalar_cast
 
 arg_max_with_value_ = ArgMaxWithValue()
@@ -853,52 +853,6 @@ def fills(x, value):
     return fills_(x, value_)
 
 
-def ones(shape, dtype=None):  # pylint: disable=redefined-outer-name
-    r"""
-    Creates a tensor filled with value ones.
-
-    Creates a tensor with shape described by the first argument and fills it with value ones in type of the second
-    argument.
-
-    Args:
-        shape (Union[tuple[int], int, Tensor]): The specified shape of output tensor. Only positive integer or
-            tuple or Tensor containing positive integers are allowed. If it is a Tensor,
-            it must be a 0-D or 1-D Tensor with int32 or int64 dtypes.
-        dtype (:class:`mindspore.dtype`): The specified type of output tensor. If `dtype` is ``None`` ,
-            `mindspore.float32` will be used. Default: ``None`` .
-
-    Returns:
-        Tensor, has the same type and shape as input shape value.
-
-    Raises:
-        TypeError: If `shape` is not tuple, int or Tensor.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> from mindspore import ops
-        >>> output = ops.ones((2, 2), mindspore.float32)
-        >>> print(output)
-        [[1. 1.]
-         [1. 1.]]
-    """
-    _dtype = mstype.float32 if dtype is None else dtype
-    value = Tensor(1, _dtype)
-    if isinstance(shape, int):
-        shape = tuple([shape])
-    elif isinstance(shape, list):
-        if not shape:
-            shape = Tensor_(shape, dtype=mstype.int64)
-        else:
-            shape = Tensor(shape, dtype=mstype.int64)
-    elif isinstance(shape, Tensor) and shape.ndim == 0 and shape.size == 1:
-        shape = shape.reshape(1)
-    output = fillv2_(shape, value)
-    return output
-
-
 def ones_like(input, *, dtype=None):
     """
     Returns a Tensor with a value of 1 and its shape is the same as the input.
@@ -931,49 +885,6 @@ def ones_like(input, *, dtype=None):
     output = ones_like_(input)
     _dtype = input.dtype if dtype is None else dtype
     output = cast_(output, _dtype)
-    return output
-
-
-def zeros(size, dtype=None):  # pylint: disable=redefined-outer-name
-    r"""
-    Creates a tensor filled with 0 with shape described by `shape` and fills it with value 0 in type of `dtype`.
-
-    Args:
-        size (Union[tuple[int], int, Tensor]): The specified shape of output tensor. Only positive integer or
-            tuple or Tensor containing positive integers are allowed. If it is a Tensor,
-            it must be a 0-D or 1-D Tensor with int32 or int64 dtypes.
-        dtype (:class:`mindspore.dtype`, optional): The specified type of output tensor. If `dtype` is ``None`` ,
-            mindspore.float32 will be used. Default: ``None`` .
-
-    Returns:
-        Tensor, has the same dtype and size as input.
-
-    Raises:
-        TypeError: If `size` is not tuple, int or Tensor.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> from mindspore import ops
-        >>> output = ops.zeros((2, 2), mindspore.float32)
-        >>> print(output)
-        [[0. 0.]
-         [0. 0.]]
-    """
-    _dtype = mstype.float32 if dtype is None else dtype
-    value = Tensor(0, _dtype)
-    if isinstance(size, int):
-        size = tuple([size])
-    elif isinstance(size, list):
-        if not size:
-            size = Tensor_(size, dtype=mstype.int64)
-        else:
-            size = Tensor(size, dtype=mstype.int64)
-    elif isinstance(size, Tensor) and size.ndim == 0 and size.size == 1:
-        size = size.reshape(1)
-    output = fillv2_(size, value)
     return output
 
 

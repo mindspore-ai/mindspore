@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,29 +14,24 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_ZEROS_H_
-#define MINDSPORE_CORE_OPS_ZEROS_H_
-#include <map>
-#include <memory>
-#include <string>
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_ZEROS_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_ZEROS_H_
 
-#include "mindapi/base/types.h"
+#include <set>
+#include <vector>
+#include "ops/ops_func_impl/op_func_impl.h"
 #include "ops/base_operator.h"
+#include "ops/op_name.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameZeros = "Zeros";
-
-/// \brief Creates a tensor filled with value zeros. Refer to Python API @ref mindspore.ops.Zeros for more details.
-class MIND_API Zeros : public BaseOperator {
+class MIND_API ZerosFuncImpl : public OpFuncImpl {
  public:
-  MIND_API_BASE_MEMBER(Zeros);
-  /// \brief Constructor.
-  Zeros() : BaseOperator(kNameZeros) {}
-  /// \brief Init.
-  void Init() const {}
+  BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+  std::set<int64_t> GetValueDependArgIndices() const override { return {kInputIndex0}; };
 };
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_ZEROS_H_
+#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_ZEROS_H_

@@ -26,9 +26,8 @@ from mindspore.ops.auto_generate import gen_arg_handler as handler
 from mindspore.common import Tensor, CSRTensor, COOTensor
 from mindspore.common._stub_tensor import _convert_stub
 from mindspore._c_expression import typing
-from mindspore._c_expression import pyboost_cast
 from mindspore._c_expression import Tensor as Tensor_
-from mindspore._c_expression import pyboost_tile
+from mindspore._c_expression import pyboost_cast, pyboost_tile, pyboost_zeros, pyboost_ones
 from mindspore.ops._tracefunc import PackFunc
 from mindspore.common import dtype as mstype
 from mindspore.common._utils import is_shape_unknown
@@ -1385,3 +1384,104 @@ def infer_value_for_Reshape(x, shape):
         else:
             out = Tensor(x.asnumpy().reshape(shape))
     return out
+
+
+class Ones(Primitive):
+    r"""
+    Creates a tensor filled with value ones.
+
+    Refer to :func:`mindspore.ops.ones` for more details.
+
+    .. warning::
+        For argument `size`, Tensor type input will be deprecated in the future version.
+
+    Inputs:
+        - **shape** (Union[tuple[int], List[int], int, Tensor]) - The specified shape of output tensor.
+        - **type** (:class:`mindspore.dtype`) - The specified type of output tensor.
+
+    Outputs:
+        Tensor, whose dtype and size are defined by input.
+
+    Raises:
+        TypeError: If `shape` is neither an int nor an tuple/list/Tensor of int.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> from mindspore import ops
+        >>> ones = ops.Ones()
+        >>> output = ones((2, 2), mindspore.float32)
+        >>> print(output)
+        [[1. 1.]
+         [1. 1.]]
+        >>> output = ones((3, 3), mindspore.float32)
+        >>> print(output)
+        [[1. 1. 1.]
+         [1. 1. 1.]
+         [1. 1. 1.]]
+    """
+
+    __mindspore_signature__ = (
+        sig.make_sig('size'),
+        sig.make_sig('type', default=None),
+    )
+
+    @prim_arg_register
+    def __init__(self):
+        pass
+
+    def __call__(self, size, type=None):
+        return _convert_stub(pyboost_ones(self, [size, type if type is None \
+            else handler.dtype_to_type_id('Ones', 'type', type)]))
+
+
+class Zeros(Primitive):
+    r"""
+    Zeros will be deprecated in the future. Please use class `mindspore.ops.zeros` instead.
+
+    Creates a tensor filled with value zeros.
+
+    Creates a tensor with shape described by the first argument and
+    fills it with value zeros in type of the second argument.
+
+    .. warning::
+        For argument `size`, Tensor type input will be deprecated in the future version.
+
+    Inputs:
+        - **shape** (tuple[int], List[int], int, Tensor) - The specified shape of output tensor.
+        - **type** (mindspore.dtype) - The specified type of output tensor.
+
+    Outputs:
+        Tensor, whose dtype and size are defined by input.
+
+    Raises:
+        TypeError: If `shape` is neither an int nor an tuple/list/Tensor of int.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> from mindspore import ops
+        >>> zeros = ops.Zeros()
+        >>> output = zeros((2, 2), mindspore.float32)
+        >>> print(output)
+        [[0. 0.]
+         [0. 0.]]
+
+    """
+
+    __mindspore_signature__ = (
+        sig.make_sig('size'),
+        sig.make_sig('type', default=None),
+    )
+
+    @prim_arg_register
+    def __init__(self):
+        pass
+
+    def __call__(self, size, type=None):
+        return _convert_stub(pyboost_zeros(self, [size, type if type is None else \
+            handler.dtype_to_type_id('Zeros', 'type', type)]))

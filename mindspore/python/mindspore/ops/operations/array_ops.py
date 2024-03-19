@@ -38,12 +38,13 @@ from mindspore.common import Tensor, CSRTensor, COOTensor
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore._c_expression import CSRTensor as CSRTensor_
 from mindspore._c_expression import COOTensor as COOTensor_
+from mindspore._c_expression import pyboost_zeros, pyboost_ones
 from ..auto_generate import (ExpandDims, Reshape, TensorShape, Transpose, Gather, OnesLike, ZerosLike, Argmax,
                              ReverseV2, Diag, Eye, ScatterNd, ResizeNearestNeighborV2, GatherNd, GatherD,
                              Range, MaskedFill, RightShift, NonZero, ResizeNearestNeighbor, Identity, Split,
                              CumSum, CumProd, Cummax, Cummin, Argmin, Concat, UnsortedSegmentSum, ScalarToTensor,
                              BroadcastTo, StridedSlice, Select)
-from .manually_defined import Rank, Shape, Tile, Cast
+from .manually_defined import Rank, Shape, Tile, Cast, Ones, Zeros
 from ..auto_generate import ArgMaxWithValue, ArgMinWithValue
 
 class _ScatterOp(PrimitiveWithInfer):
@@ -1290,81 +1291,6 @@ class FillV2(PrimitiveWithCheck):
             out = Tensor(shape=dims, dtype=x.dtype, init=init_func)
             return out
         return Tensor(np.full(dims, x.asnumpy()))
-
-
-class Ones(Primitive):
-    r"""
-    Creates a tensor filled with value ones.
-
-    Refer to :func:`mindspore.ops.ones` for more details.
-
-    Inputs:
-        - **shape** (Union[tuple[int], int]) - The specified shape of output tensor.
-        - **type** (:class:`mindspore.dtype`) - The specified type of output tensor.
-
-    Outputs:
-        Tensor, has the same type and shape as input shape value.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> from mindspore import ops
-        >>> ones = ops.Ones()
-        >>> output = ones((2, 2), mindspore.float32)
-        >>> print(output)
-        [[1. 1.]
-         [1. 1.]]
-        >>> output = ones((3, 3), mindspore.float32)
-        >>> print(output)
-        [[1. 1. 1.]
-         [1. 1. 1.]
-         [1. 1. 1.]]
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize Ones"""
-
-
-class Zeros(Primitive):
-    r"""
-    Zeros will be deprecated in the future. Please use class `mindspore.ops.zeros` instead.
-
-    Creates a tensor filled with value zeros.
-
-    Creates a tensor with shape described by the first argument and
-    fills it with value zeros in type of the second argument.
-
-    Inputs:
-        - **shape** (Union[tuple[int], int]) - The specified shape of output tensor.
-        - **type** (mindspore.dtype) - The specified type of output tensor.
-
-    Outputs:
-        Tensor, has the same type and shape as input shape value.
-
-    Raises:
-        TypeError: If `shape` is neither int nor tuple.
-        TypeError: If `shape` is a tuple whose elements are not all int.
-
-    Supported Platforms:
-        Deprecated
-
-    Examples:
-        >>> import mindspore
-        >>> from mindspore import ops
-        >>> zeros = ops.Zeros()
-        >>> output = zeros((2, 2), mindspore.float32)
-        >>> print(output)
-        [[0. 0.]
-         [0. 0.]]
-
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize Zeros"""
 
 
 class TupleToArray(PrimitiveWithInfer):

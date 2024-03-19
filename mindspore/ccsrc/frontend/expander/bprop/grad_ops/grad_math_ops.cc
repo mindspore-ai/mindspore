@@ -2670,7 +2670,8 @@ REG_BPROP_BUILDER("TridiagonalSolve").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib)
   auto diag_shape = ib->GetShape(diagonals);
   ShapeVector zeros1_shape(diag_shape.begin(), diag_shape.end() - i2);
   zeros1_shape.push_back(1);
-  auto zeros1 = ib->Emit("Zeros", {ib->Value<ShapeVector>(zeros1_shape), ib->EmitValue(ib->GetDtype(diagonals))});
+  auto zeros1 =
+    ib->Emit("Zeros", {ib->Value<ShapeVector>(zeros1_shape), ib->Value<int64_t>(ib->GetDtypeId(diagonals))});
   auto superdiag1 = ib->Concat({ib->StridedSlice(diagonals, {{kLast2, {k2}}, {-1, {1, LLONG_MAX}}}), zeros1}, -1);
   auto subdiag1 = ib->Concat({zeros1, ib->StridedSlice(diagonals, {{kLast2, {0}}, {-1, {0, -1}}})}, -1);
   auto diags_transposed = ib->Stack({superdiag1, diag1, subdiag1}, kLast2);
@@ -2682,7 +2683,8 @@ REG_BPROP_BUILDER("TridiagonalSolve").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib)
     if (zeros2_shape.size() > i1) {
       zeros2_shape[zeros2_shape.size() - i2] = 1;
     }
-    auto zeros2 = ib->Emit("Zeros", {ib->Value<ShapeVector>(zeros2_shape), ib->EmitValue(ib->GetDtype(grad_rhs))});
+    auto zeros2 =
+      ib->Emit("Zeros", {ib->Value<ShapeVector>(zeros2_shape), ib->Value<int64_t>(ib->GetDtypeId(grad_rhs))});
     auto superdiag2 = ib->ReduceSum(
       ib->Mul(grad_rhs, ib->Concat({ib->StridedSlice(out, {{kLast2, {1, LLONG_MAX}}}), zeros2}, -k2)), {-1});
     auto subdiag2 =
