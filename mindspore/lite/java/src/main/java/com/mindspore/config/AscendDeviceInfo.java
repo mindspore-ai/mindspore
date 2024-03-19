@@ -28,7 +28,7 @@ public class AscendDeviceInfo {
     /**
      * The device type of current class, which is Ascend.
      */
-    private static final int deviceType = DeviceType.DT_ASCEND;
+    private int deviceType = DeviceType.DT_ASCEND;
 
     /**
      * The target device ID.
@@ -123,11 +123,11 @@ public class AscendDeviceInfo {
         return deviceType;
     }
 
-     /**
-      * Get Ascend device provider.
-      *
-      * @return the provider
-      */
+    /**
+     * Get Ascend device provider.
+     *
+     * @return the provider
+     */
     public String getProvider() {
         return provider;
     }
