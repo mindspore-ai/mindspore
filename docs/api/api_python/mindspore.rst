@@ -127,8 +127,8 @@ mindspore
     :toctree: mindspore
 
     mindspore.Layout
-    mindspore.shard
     mindspore.parameter_broadcast
+    mindspore.shard
 
 即时编译
 --------

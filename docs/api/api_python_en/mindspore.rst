@@ -203,8 +203,8 @@ Parallel
     :template: classtemplate.rst
 
     mindspore.Layout
-    mindspore.shard
     mindspore.parameter_broadcast
+    mindspore.shard
 
 JIT
 ---
