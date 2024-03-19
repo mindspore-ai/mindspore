@@ -41,7 +41,7 @@ from mindspore.ops.auto_generate import (minimum, maximum, mul, sin, sinc, sinh,
                                          matrix_exp, sqrt, rsqrt, square, trace, nextafter, abs, acos, acosh, angle,
                                          asin, asinh, atan, atan2, atanh, ceil, equal, erf, erfc, erfinv, exp, expm1,
                                          floor, floor_divide, floor_mod, gcd, greater, greater_equal, less, less_equal,
-                                         log, log1p, neg, not_equal, pow, round)
+                                         log, log1p, neg, not_equal, pow, round, isfinite)
 from mindspore.nn import layer
 from mindspore._checkparam import check_is_number
 from mindspore import _checkparam as validator
@@ -181,7 +181,6 @@ igammac_ = Igammac()
 imag_ = P.Imag()
 inv_ = P.math_ops.Inv()
 invert_ = P.Invert()
-isfinite_ = P.IsFinite()
 isinf_ = P.IsInf()
 isnan_ = P.IsNan()
 lcm_ = Lcm()
@@ -3345,46 +3344,6 @@ def approximate_equal(x, y, tolerance=1e-5):
         [ True  False  False]
     """
     return _get_cache_prim(P.ApproximateEqual)(tolerance)(x, y)
-
-
-def isfinite(x):
-    r"""
-    Determines which elements are finite for each position. If elements are not ``NaN`` , ``-INF`` , ``INF``,
-    they are finite.
-
-    .. math::
-
-        out_i = \begin{cases}
-          & \text{ if } x_{i} = \text{Finite},\ \ True \\
-          & \text{ if } x_{i} \ne \text{Finite},\ \ False
-        \end{cases}
-
-    Args:
-        x (Tensor): The input tensor.
-
-    Returns:
-        Tensor, has the same shape of input, and the dtype is bool.
-
-    Raises:
-        TypeError: If `x` is not a Tensor.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.array([np.log(-1), 1, np.log(0)]), mindspore.float32)
-        >>> output = ops.isfinite(x)
-        >>> print(output)
-        [False  True False]
-        >>> x = Tensor(2.1, mindspore.float64)
-        >>> output = ops.isfinite(x)
-        >>> print(output)
-        True
-    """
-    return isfinite_(x)
 
 
 def isnan(input):
