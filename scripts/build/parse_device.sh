@@ -67,7 +67,9 @@ parse_device()
         export ENABLE_ACL="on"
         ENABLE_CPU="on"
         export ENABLE_MPI="on"
-        export ENABLE_INTERNAL_KERNELS="on"
+        if [[ "X$DEVICE_VERSION" == "X910b" ]]; then
+          export ENABLE_INTERNAL_KERNELS="on"
+        fi
       else
         echo "Invalid value ${DEVICE_VERSION} for option -V"
         usage
