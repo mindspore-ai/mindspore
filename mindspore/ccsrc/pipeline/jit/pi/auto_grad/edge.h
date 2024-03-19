@@ -34,7 +34,7 @@ class Edge {
   /// \param[in] fn The called function.
   ///
   /// \return The instance of Edge.
-  explicit Edge(const FunctionNodePtr &fn) : fn_(fn) {}
+  explicit Edge(const FunctionNodePtr &fn, size_t index) : fn_(fn), index_(index) {}
 
   /// \brief Destructor.
   virtual ~Edge() = default;
@@ -49,9 +49,16 @@ class Edge {
   /// \param[in] fn The called function.
   void SetFunction(const FunctionNodePtr &fn) { fn_ = fn; }
 
+  /// \brief Get the index.
+  ///
+  /// \return The index.
+  size_t GetIndex() const { return index_; }
+
  private:
   /// \brief The called function.
   FunctionNodePtr fn_;
+  /// \brief The index.
+  size_t index_;
 };
 
 using EdgePtr = std::shared_ptr<Edge>;

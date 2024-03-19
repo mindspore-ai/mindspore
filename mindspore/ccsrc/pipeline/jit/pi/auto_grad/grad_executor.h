@@ -54,9 +54,10 @@ class GradExecutor {
                     const ValuePtr &dout);
   ValuePtr RunGraph(const FuncGraphPtr &func_graph, const ValuePtrList &inputs);
   ValuePtr RunGraph(const FuncGraphPtr &func_graph, const VectorRef &inputs);
-  void DispatchRecordTask(const RecordTaskPtr &task) { async_task_manager_->DispatchRecordTask(task); }
-  void DispatchGenerateTask(const RunBpropTaskPtr &task) { async_task_manager_->DispatchGenerateTask(task); }
-  void DispatchRunTask(const RunBpropTaskPtr &task) { async_task_manager_->DispatchRunTask(task); }
+  void Clear() const { func_graph_manager_->Clear(); }
+  void DispatchRecordTask(const AsyncTaskPtr &task) { async_task_manager_->DispatchRecordTask(task); }
+  void DispatchGenerateTask(const AsyncTaskPtr &task) { async_task_manager_->DispatchGenerateTask(task); }
+  void DispatchRunTask(const AsyncTaskPtr &task) { async_task_manager_->DispatchRunTask(task); }
   const AsyncTaskManagerPtr &GetAsyncTaskManager() const { return async_task_manager_; }
 
  private:
