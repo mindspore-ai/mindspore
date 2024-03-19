@@ -1884,6 +1884,7 @@ void KernelGraphMgr::SetReturnNode(const AnfNodePtr &node, KernelGraph *graph) {
       size_t param_begin = 0;
       for (size_t i = 0; i < tuple_input_num - 1; i++) {
         auto input = common::AnfAlgo::GetInputNode(make_tuple, i);
+        MS_EXCEPTION_IF_NULL(input);
         auto node_abs = input->abstract();
         MS_EXCEPTION_IF_NULL(node_abs);
         if (node_abs->isa<abstract::AbstractSequence>()) {
