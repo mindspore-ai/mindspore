@@ -466,7 +466,7 @@ Status MatMul::CheckInputLayout() {
   }
   std::sort(map_verify.begin(), map_verify.end());
   for (size_t i = 0; i + 1 < map_verify.size(); ++i) {
-    if (map_verify[i] == map_verify[i + 1]) {
+    if (map_verify[i] == map_verify[i + 1] && map_verify[i] > 0) {
       MS_LOG(ERROR) << "The device_matrix " << in_layout0.device_arrangement_origin().array() << " axis "
                     << in_layout0.device_arrangement_origin().array().size() - 1 - map_verify[i]
                     << "has been shard for more than once and not sharding the reduce_dim for matmul.";
