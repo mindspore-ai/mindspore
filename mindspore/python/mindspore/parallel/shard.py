@@ -52,6 +52,8 @@ class Layout():
         for in_ele in alias_name:
             if not isinstance(in_ele, str):
                 raise TypeError(f'The element of alias_name must be str type, but got:{type(in_ele)}')
+            if not in_ele:
+                raise ValueError(f"The element of alias_name can not be empty.")
             if in_ele == "None":
                 raise ValueError(f"The element of alias_name can not set 'None', because 'None' means no sharding.")
         if len(set(alias_name)) != len(alias_name):
