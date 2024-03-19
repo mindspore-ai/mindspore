@@ -377,10 +377,10 @@ Status TensorRedistribution::InferReshape(const TensorLayout &from_layout, const
   MS_LOG(DEBUG) << "Start to infer reshape.";
   ConstructOperator constructor;
   if (operator_list_.empty()) {
-    if (from_origin_.slice_shape().array() != to_origin_.slice_shape().array() || keep_reshape_) {
+    if (from_origin_.base_slice_shape().array() != to_origin_.base_slice_shape().array() || keep_reshape_) {
       reshape_flag_ = true;
-      constructor.UpdateTensorShape(from_origin_.slice_shape().array());
-      Arrangement shape = to_origin_.slice_shape();
+      constructor.UpdateTensorShape(from_origin_.base_slice_shape().array());
+      Arrangement shape = to_origin_.base_slice_shape();
       MS_LOG(DEBUG) << "reshape " << shape.ToString();
       if (constructor.ReshapeOP(shape.array()) == Status::FAILED) {
         return Status::FAILED;

@@ -84,6 +84,32 @@ class Net1(nn.Cell):
         out1 = self.matmul1(y, self.w)
         return out1
 
+class Net2(nn.Cell):
+    def __init__(self, weight, in_layout, out_layout=None):
+        super().__init__()
+        self.add = P.Add()
+        self.matmul1 = P.MatMul().shard(in_strategy=in_layout, out_strategy=out_layout)
+        self.relu = P.ReLU()
+        self.w = Parameter(weight, "w1")
+
+    def construct(self, y):
+        y = self.add(y, y)
+        out1 = self.matmul1(y, self.w)
+        out1 = self.relu(out1)
+        return out1
+
+class Net3(nn.Cell):
+    def __init__(self, weight, in_layout1, in_layout2):
+        super().__init__()
+        self.matmul1 = P.BatchMatMul().shard(in_strategy=in_layout2)
+        self.gelu = P.GeLU().shard(in_strategy=in_layout1)
+        self.w = Parameter(weight, "w1")
+
+    def construct(self, y):
+        out1 = self.gelu(y)
+        out1 = self.matmul1(out1, self.w)
+        return out1
+
 x = Tensor(np.ones([1024, 1024]), dtype=ms.float32)
 w = Tensor(np.ones([1024, 1024]), dtype=ms.float32)
 
@@ -307,3 +333,35 @@ def test_layout_extend_error_case2():
         layout1 = (layout("dp", ("sp", "mp")), layout(("sp", "mp"), "mp"))
         net = GradWrap(NetWithLoss(Net(w, layout1)))
         compile_net(net, x)
+
+def test_layout_extend_only_reshape_redis():
+    """
+    Feature: test layout extend
+    Description: dev_num is 8, only reshape redistribution.
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    layout = Layout((4, 1, 2), ("dp", "sp", "mp"))
+    layout1 = (layout(("dp", "mp"), "sp"), layout("sp", "None"))
+    net = GradWrap(NetWithLoss(Net2(w, layout1)))
+    phase = compile_net(net, x)
+    validator = ParallelValidator(net, phase)
+    assert validator.check_parameter_shape('network.network.w', [1024, 1024])
+
+def test_layout_extend_moe():
+    """
+    Feature: test layout extend
+    Description: dev_num is 16, modify MOE.
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16,
+                                      global_rank=0, enable_alltoall=True)
+    layout = Layout((2, 2, 4), ("vp", "dp", "mp"))
+    layout1 = (layout("None", ("dp", "vp"), "None"),)
+    layout2 = (layout(("dp", "vp"), "None", "None"), layout(("dp", "vp"), "None", "mp"))
+    x1 = Tensor(np.ones([8, 1024, 1024]), dtype=ms.float32)
+    w1 = Tensor(np.ones([8, 1024, 1024]), dtype=ms.float32)
+    net = GradWrap(NetWithLoss(Net3(w1, layout1, layout2)))
+    phase = compile_net(net, x1)
+    validator = ParallelValidator(net, phase)
+    assert validator.check_parameter_shape('network.network.w', [2, 1024, 256])
