@@ -1054,6 +1054,7 @@ bool GraphExecutorPy::CompileInner(const py::object &source, const py::tuple &ar
   PhaseManager::GetInstance().set_phase(phase_);
   obj_desc_ = GetObjDesc(source);
   MS_LOG(INFO) << "Start compiling, phase: " << phase_;
+  PROF_START(compile_graph);
   MS_LOG(DEBUG) << "source: {" << source_ << "}\nargs: " << py::str(const_cast<py::tuple &>(args))
                 << "\nkwargs: " << py::str(const_cast<py::dict &>(kwargs));
   EventMessage::PrintCompileStartMsg(phase_, obj_desc_);
@@ -1116,6 +1117,7 @@ bool GraphExecutorPy::CompileInner(const py::object &source, const py::tuple &ar
   EventMessage::PrintCompileEndMsg(phase_, obj_desc_);
   PhaseManager::GetInstance().ClearPhase();
   MS_LOG(INFO) << "Finish compiling.";
+  PROF_END(compile_graph);
   return true;
 }
 
