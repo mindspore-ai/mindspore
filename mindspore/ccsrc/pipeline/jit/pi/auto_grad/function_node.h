@@ -52,7 +52,7 @@ class FunctionNode : public FunctionContext {
   ///
   /// \return The instance of FunctionNode.
   explicit FunctionNode(const py::object &tensor, const py::object &prim, const py::object &out)
-      : FunctionContext(Convert::PyObjToValue(prim), Convert::PyObjToValue(out), CreateZerosTensorLike(tensor)),
+      : FunctionContext(Convert::PyObjToValue(prim), Convert::PyObjToValue(out), CreateZerosTensorLike(out)),
         tensor_(tensor) {}
 
   /// \brief Destructor.
@@ -67,9 +67,8 @@ class FunctionNode : public FunctionContext {
 
   // \brief The method to init field of function node.
   ///
-  /// \param[in] prim The executed primitive.
   /// \param[in] inputs The inputs of the executed primitive.
-  void InitDataField(const py::object &prim, const py::list &inputs);
+  void InitDataField(const py::list &inputs);
 
   /// \brief Get the tensor that is asked to calculate the gradient.
   ///
@@ -103,12 +102,12 @@ class FunctionNode : public FunctionContext {
   ///
   /// \param[in] node The called function.
   /// \param[in] index The index of the input.
-  void AddNextEdge(const FunctionNodePtr &node) { edges_.push_back(std::make_shared<Edge>(node)); }
+  void AddNextEdge(const FunctionNodePtr &node, size_t index) { edges_.push_back(std::make_shared<Edge>(node, index)); }
 
   /// \brief Dump the function node and its children.
   ///
   /// \param[in] grad The grad value.
-  void SaveGradToPyObject(const py::object &grad);
+  void SyncGradToPyObject();
 
   /// \brief Generate the grad value of function.
   ///
@@ -126,6 +125,11 @@ class FunctionNode : public FunctionContext {
   /// \param[in] dout The gradient of the output.
   void ApplyInner(const ValuePtr &dout);
 
+  /// \brief Accumulate the delta of the gradient.
+  ///
+  /// \param[in] dout The delta of the gradient.
+  void AccumulateGradient(const ValuePtr &dout);
+
   /// \brief Dump the function node and its children.
   ///
   /// \param[in] ss The string stream.
@@ -140,8 +144,8 @@ class FunctionNode : public FunctionContext {
   FuncGraphPtr acc_fn_;
   /// \brief The called functions in the previous/next step.
   EdgePtrList edges_;
-  /// \brief The index.
-  size_t index_{0};
+  /// \brief The mutex for accumulate the delta of the gradient.
+  inline static std::mutex mutex_;
 };
 
 using FunctionNodePtr = std::shared_ptr<FunctionNode>;

@@ -27,13 +27,22 @@ void RecordTask::Run() {
   MS_LOG(DEBUG) << "Gradient record task finished.";
 }
 
+void RunGenerateBpropTask::Run() {
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeBpropTask,
+                                     runtime::ProfilerRecorder::kNoName, false);
+  MS_LOG(DEBUG) << "Generate bprop graph task start...";
+  run_task_();
+  run_task_ = nullptr;
+  MS_LOG(DEBUG) << "Generate bprop graph task finished.";
+}
+
 void RunBpropTask::Run() {
   runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeBpropTask,
                                      runtime::ProfilerRecorder::kNoName, false);
-  MS_LOG(DEBUG) << "Gradient bprop graph task start...";
-  run_task_();
+  MS_LOG(DEBUG) << "Run gradient bprop graph task start...";
+  run_task_(value_);
   run_task_ = nullptr;
-  MS_LOG(DEBUG) << "Gradient bprop graph task finished.";
+  MS_LOG(DEBUG) << "Run gradient bprop graph task finished.";
 }
 }  // namespace pijit
 }  // namespace mindspore
