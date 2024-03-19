@@ -57,6 +57,46 @@ void ConditionGatherActor::Init() {
   MS_EXCEPTION_IF_NULL(device_contexts_[0]);
   input_device_tensors_.resize(branch_output_num_);
   InitOutputData();
+
+  kernel_info_ = dynamic_cast<KernelInfo *>(kernel_->kernel_info());
+  MS_EXCEPTION_IF_NULL(kernel_info_);
+  const auto &output_addresses = kernel_info_->output_address_list();
+  const auto &somas_outputs = kernel_info_->somas_output_result();
+  if (output_addresses.size() != somas_outputs.size()) {
+    MS_LOG(DEBUG) << "Invalid output address size:" << output_addresses.size()
+                  << " and somas output size:" << somas_outputs.size() << " for actor:" << GetAID();
+  }
+  for (size_t i = 0; i < output_addresses.size(); ++i) {
+    auto &output_address = output_addresses[i];
+    MS_EXCEPTION_IF_NULL(output_address);
+    if (output_address->stream_id() != kernel_info_->stream_id()) {
+      MS_LOG(DEBUG) << "Output address : " << output_address << " stream id :" << output_address->stream_id()
+                    << " is not equal kernel info stream id : " << kernel_info_->stream_id() << ".";
+    }
+    (void)output_device_tensors_.emplace_back(output_address.get());
+    // The output taken over by soma does not need to allocate memory.
+    if (kernel_info_->IsTensorEnableSomas(somas_outputs, i)) {
+      // Somas outputs use the info of kernelMod, and output address use the info of device address.
+      if (somas_outputs[i].second < output_address->GetSize()) {
+        MS_LOG(DEBUG) << GetAID().Name() << " check somas size warning, output index:" << i
+                      << " somas aligned size:" << somas_outputs[i].second
+                      << " is smaller than address size:" << output_address->GetSize();
+      }
+      // Used to keep graph output address when somas block memory free, and reused by the ref conut in other graphs.
+      if (somas_graph_output_indexes_.count(i) > 0) {
+        MS_LOG(DEBUG) << "Somas keep output device address:" << output_address << " ptr:" << output_address->GetPtr();
+        MS_EXCEPTION_IF_NULL(somas_info_);
+        (void)somas_info_->InsertGraphOutputInfo(output_address.get(), somas_outputs[i].first, somas_outputs[i].second);
+        output_address->set_from_mem_pool(true);
+      } else {
+        UpdateRefCount(output_address.get(), true);
+      }
+    }
+  }
+  if (output_device_tensors_.size() != input_device_tensors_.size()) {
+    MS_LOG(EXCEPTION) << "Invalid input tensor size:" << input_device_tensors_.size()
+                      << " and output size:" << output_device_tensors_.size() << " for actor:" << GetAID();
+  }
 }
 
 void ConditionGatherActor::FetchInput(OpContext<DeviceTensor> *const context) {
@@ -83,6 +123,7 @@ void ConditionGatherActor::FetchInput(OpContext<DeviceTensor> *const context) {
       }
       MS_EXCEPTION_IF_NULL(input_data->data_);
       input_device_tensors_[IntToSize(input_data->index_) - start_index] = input_data->data_;
+
       memory_free_list_.emplace_back(input_data->data_);
     }
   }
@@ -124,6 +165,9 @@ void ConditionGatherActor::FetchInput(OpContext<DeviceTensor> *const context) {
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
     }
     output_data_[i].first->data_ = input_device_tensors_[from_index];
+    if (output_device_tensors_[from_index]->from_mem_pool()) {
+      input_device_tensors_[from_index]->set_from_mem_pool(true);
+    }
   }
 }
 
@@ -135,6 +179,10 @@ void ConditionGatherActor::Run(OpContext<DeviceTensor> *const context) {
     }
     MS_LOG(DEBUG) << "My executor order log launch kernel:" << kernel_->fullname_with_scope();
     EraseInput(context);
+    for (const auto &device_address : output_device_tensors_) {
+      device_address->set_ptr(nullptr);
+    }
+    SetSomasMemory(context);
     SendOutput(context);
   } catch (const std::exception &e) {
     MsException::Instance().SetException();

@@ -50,7 +50,7 @@ void DeviceResManager::FreeMemory(DeviceAddress *const &address) const {
     MS_LOG(DEBUG) << "device address:" << address << " ptr:" << address->GetMutablePtr() << " not from pool";
     return;
   }
-
+  MS_LOG(DEBUG) << "Free memory from device address:" << address << " ptr:" << address->GetMutablePtr();
   FreeMemory(address->GetMutablePtr());
   address->set_ptr(nullptr);
 }

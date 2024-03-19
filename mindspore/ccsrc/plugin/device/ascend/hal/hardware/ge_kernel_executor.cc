@@ -313,6 +313,40 @@ CNodePtr GetBranchNode(const KernelGraphPtr &graph, const CNodePtr &old_branch_n
   return branch_node;
 }
 
+void CollectInputByBranchCNode(const CNodePtr &true_branch_cnode, const CNodePtr &false_branch_cnode,
+                               std::map<AnfNodePtr, size_t> *branch_input) {
+  MS_EXCEPTION_IF_NULL(true_branch_cnode);
+  MS_EXCEPTION_IF_NULL(false_branch_cnode);
+  MS_EXCEPTION_IF_NULL(branch_input);
+  std::set<AnfNodePtr> monad_inputs;
+  auto now_input_cnt = 0;
+  for (size_t i = 0; i < common::AnfAlgo::GetInputNum(true_branch_cnode); i++) {
+    auto input = common::AnfAlgo::GetInputNode(true_branch_cnode, i);
+    if (branch_input->find(input) != branch_input->end() || monad_inputs.find(input) != monad_inputs.end()) {
+      continue;
+    }
+    if (HasAbstractMonad(input)) {
+      monad_inputs.emplace(input);
+      continue;
+    }
+    (*branch_input)[input] = now_input_cnt++;
+  }
+  for (size_t i = 0; i < common::AnfAlgo::GetInputNum(false_branch_cnode); i++) {
+    auto input = common::AnfAlgo::GetInputNode(false_branch_cnode, i);
+    if (branch_input->find(input) != branch_input->end() || monad_inputs.find(input) != monad_inputs.end()) {
+      continue;
+    }
+    if (HasAbstractMonad(input)) {
+      monad_inputs.emplace(input);
+      continue;
+    }
+    (*branch_input)[input] = now_input_cnt++;
+  }
+  for (const auto &monad_input : monad_inputs) {
+    (*branch_input)[monad_input] = now_input_cnt++;
+  }
+}
+
 void InlineSwitchGraph(const KernelGraphPtr &graph, std::set<KernelGraphPtr> *const memo) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
@@ -360,23 +394,8 @@ void InlineSwitchGraph(const KernelGraphPtr &graph, std::set<KernelGraphPtr> *co
     MS_EXCEPTION_IF_NULL(true_branch_cnode);
     MS_EXCEPTION_IF_NULL(false_branch_cnode);
     std::map<AnfNodePtr, size_t> branch_input;
+    CollectInputByBranchCNode(true_branch_cnode, false_branch_cnode, &branch_input);
     std::map<AnfNodePtr, AnfNodePtr> branch_tuple_getitem;
-    auto now_input_cnt = 0;
-    for (size_t i = 0; i < common::AnfAlgo::GetInputNum(true_branch_cnode); i++) {
-      auto input = common::AnfAlgo::GetInputNode(true_branch_cnode, i);
-      if (branch_input.find(input) != branch_input.end()) {
-        continue;
-      }
-      branch_input[input] = now_input_cnt++;
-    }
-    for (size_t i = 0; i < common::AnfAlgo::GetInputNum(false_branch_cnode); i++) {
-      auto input = common::AnfAlgo::GetInputNode(false_branch_cnode, i);
-      if (branch_input.find(input) != branch_input.end()) {
-        continue;
-      }
-      branch_input[input] = now_input_cnt++;
-    }
-
     auto cond_switch_node = GetCondSwitchNode(graph, branch_input, cond, &branch_tuple_getitem);
     auto true_branch_node = GetBranchNode(graph, true_branch_cnode, branch_tuple_getitem);
     auto false_branch_node = GetBranchNode(graph, false_branch_cnode, branch_tuple_getitem);

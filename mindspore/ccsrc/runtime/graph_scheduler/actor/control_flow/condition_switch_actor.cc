@@ -70,10 +70,6 @@ void ConditionSwitchActor::SendOutput(OpContext<DeviceTensor> *const context, si
                       << " index size:" << output_data_branch_indexes_.size() << " for actor:" << GetAID();
   }
   for (size_t i = 0; i < output_data_branch_indexes_.size(); ++i) {
-    if (output_data_branch_indexes_[i] == index) {
-      ActorDispatcher::Send(output_data_arrows_[i]->to_op_id_, &OpActor::RunOpData, output_data_[i].first.get(),
-                            context);
-    }
     if (TEST_FLAG(output_data_[i].second, kOutputDataFlagToFusion)) {
       if (data_arrow_to_fusion_actor_indexs_.find(output_data_arrows_[i].get()) ==
           data_arrow_to_fusion_actor_indexs_.end()) {
@@ -82,6 +78,10 @@ void ConditionSwitchActor::SendOutput(OpContext<DeviceTensor> *const context, si
                           << " by actor:" << GetAID();
       }
       output_data_[i].first->index_ = SizeToInt(data_arrow_to_fusion_actor_indexs_.at(output_data_arrows_[i].get()));
+    }
+    if (output_data_branch_indexes_[i] == index) {
+      ActorDispatcher::Send(output_data_arrows_[i]->to_op_id_, &OpActor::RunOpData, output_data_[i].first.get(),
+                            context);
     }
   }
 

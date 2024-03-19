@@ -41,8 +41,64 @@ bool IsInlineKernelActor(const AbstractActorPtr &actor) {
          kernel_graph->inline_sub_graph_kernels().end();
 }
 
-void InlineControlFlowScheduler::LinkControlArrowByExecutionOrder(const KernelGraphPtr &graph,
-                                                                  const GraphCompilerInfo &graph_compiler_info) {
+namespace {
+std::string GetBranchNameByKernelActor(const KernelActor *const kernel_actor) {
+  MS_EXCEPTION_IF_NULL(kernel_actor);
+  MS_EXCEPTION_IF_NULL(kernel_actor->kernel());
+  const auto &func_graph = kernel_actor->kernel()->func_graph();
+  if (func_graph == nullptr || (!func_graph->isa<KernelGraph>())) {
+    MS_LOG(EXCEPTION) << "Invalid funcgraph in kernel:" << kernel_actor->kernel()->fullname_with_scope();
+  }
+  const auto &kernel_graph = func_graph->cast<KernelGraphPtr>();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  return kernel_graph->inline_sub_graph_kernels().at(kernel_actor->kernel());
+}
+
+void GetBranchNameToCondtionActor(const KernelGraphPtr &graph,
+                                  mindspore::HashMap<std::string, AbstractActor *> *branch_name_to_switch_actor,
+                                  mindspore::HashMap<std::string, AbstractActor *> *branch_name_to_gather_actor) {
+  MS_EXCEPTION_IF_NULL(branch_name_to_gather_actor);
+  MS_EXCEPTION_IF_NULL(branch_name_to_switch_actor);
+  for (const auto &gather_to_switch : graph->condition_gather_to_switch()) {
+    MS_EXCEPTION_IF_NULL(gather_to_switch.first);
+    if (!common::AnfAlgo::CheckPrimitiveType(gather_to_switch.first, prim::kPrimConditionGather) ||
+        !common::AnfAlgo::CheckPrimitiveType(gather_to_switch.second, prim::kPrimConditionSwitch)) {
+      MS_LOG(EXCEPTION) << "Invalid condition gather node:" << gather_to_switch.first->DebugString()
+                        << " or condition switch node:" << gather_to_switch.second->DebugString();
+    }
+    const auto &gather_cnode = gather_to_switch.first->cast<CNodePtr>();
+    const auto &switch_cnode = gather_to_switch.second->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(gather_cnode);
+    MS_EXCEPTION_IF_NULL(switch_cnode);
+    if (!gather_cnode->HasAttr(kAttrBranchGraphName)) {
+      MS_LOG(EXCEPTION) << "Failed to get inline graph name by node:" << gather_cnode->fullname_with_scope();
+    }
+    const auto &branch_graph_names = gather_cnode->GetAttr(kAttrBranchGraphName);
+    MS_EXCEPTION_IF_NULL(branch_graph_names);
+    MS_LOG(DEBUG) << "Branch graph name:" << branch_graph_names->ToString()
+                  << " for node:" << gather_cnode->fullname_with_scope();
+    if (!branch_graph_names->isa<ValueTuple>()) {
+      MS_LOG(EXCEPTION) << "Invalid branch group name:" << branch_graph_names->ToString()
+                        << " for node:" << gather_cnode->fullname_with_scope();
+    }
+    const auto &tuple_name = branch_graph_names->cast<ValueTuplePtr>();
+    MS_EXCEPTION_IF_NULL(tuple_name);
+    const auto &gather_actor = FetchActor(gather_cnode->fullname_with_scope());
+    const auto &switch_actor = FetchActor(switch_cnode->fullname_with_scope());
+    MS_EXCEPTION_IF_NULL(gather_actor);
+    MS_EXCEPTION_IF_NULL(switch_actor);
+    for (const auto &value : tuple_name->value()) {
+      const auto &branch_name = GetValue<std::string>(value);
+      (*branch_name_to_gather_actor)[branch_name] = gather_actor;
+      (*branch_name_to_switch_actor)[branch_name] = switch_actor;
+    }
+  }
+}
+}  // namespace
+
+void InlineControlFlowScheduler::LinkControlArrowByExecutionOrder(
+  const KernelGraphPtr &graph, const GraphCompilerInfo &graph_compiler_info,
+  const mindspore::HashMap<std::string, AbstractActor *> &branch_name_to_gather_actor) {
   MS_EXCEPTION_IF_NULL(graph);
   const auto &inline_sub_graph_kernels = graph->inline_sub_graph_kernels();
   if (graph->is_graph_run_mode() || graph->is_any_type_input() || inline_sub_graph_kernels.empty()) {
@@ -88,34 +144,7 @@ void InlineControlFlowScheduler::LinkControlArrowByExecutionOrder(const KernelGr
       MS_LOG(DEBUG) << "For branch:" << current_branch << " start actor:" << to_actor->GetAID();
     }
   }
-  mindspore::HashMap<std::string, AbstractActor *> branch_name_to_gather_actor;
-  for (const auto &gather_to_switch : graph->condition_gather_to_switch()) {
-    MS_EXCEPTION_IF_NULL(gather_to_switch.first);
-    if (!common::AnfAlgo::CheckPrimitiveType(gather_to_switch.first, prim::kPrimConditionGather)) {
-      MS_LOG(EXCEPTION) << "Invalid condition gather node:" << gather_to_switch.first->DebugString();
-    }
-    const auto &gather = gather_to_switch.first->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(gather);
-    if (!gather->HasAttr(kAttrBranchGraphName)) {
-      MS_LOG(EXCEPTION) << "Failed to get inline graph name by node:" << gather->fullname_with_scope();
-    }
-    const auto &branch_graph_names = gather->GetAttr(kAttrBranchGraphName);
-    MS_EXCEPTION_IF_NULL(branch_graph_names);
-    MS_LOG(DEBUG) << "Branch graph name:" << branch_graph_names->ToString()
-                  << " for node:" << gather->fullname_with_scope();
-    if (!branch_graph_names->isa<ValueTuple>()) {
-      MS_LOG(EXCEPTION) << "Invalid branch group name:" << branch_graph_names->ToString()
-                        << " for node:" << gather->fullname_with_scope();
-    }
-    const auto &tuple_name = branch_graph_names->cast<ValueTuplePtr>();
-    MS_EXCEPTION_IF_NULL(tuple_name);
-    const auto &gather_actor = FetchActor(gather->fullname_with_scope());
-    MS_EXCEPTION_IF_NULL(gather_actor);
-    std::for_each(tuple_name->value().begin(), tuple_name->value().end(),
-                  [&branch_name_to_gather_actor, gather_actor](const auto &value) {
-                    branch_name_to_gather_actor[GetValue<std::string>(value)] = gather_actor;
-                  });
-  }
+
   for (const auto &pair : branch_last_actor) {
     const auto &branch_name = pair.first;
     if (pair.second == nullptr || pair.second->type() != KernelTransformType::kKernelActor) {
@@ -701,14 +730,40 @@ void InlineControlFlowScheduler::Link(ActorSet *actor_set, const GraphCompilerIn
   MS_EXCEPTION_IF_NULL(actor_set);
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
+  mindspore::HashMap<std::string, AbstractActor *> branch_name_to_switch_actor;
+  mindspore::HashMap<std::string, AbstractActor *> branch_name_to_gather_actor;
   if (context_ptr->get_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL) != kOptimizeO0) {
     for (const auto &graph : graph_compiler_info.graphs_) {
       MS_EXCEPTION_IF_NULL(graph);
-      LinkControlArrowByExecutionOrder(graph, graph_compiler_info);
+      GetBranchNameToCondtionActor(graph, &branch_name_to_switch_actor, &branch_name_to_gather_actor);
+      LinkControlArrowByExecutionOrder(graph, graph_compiler_info, branch_name_to_gather_actor);
     }
   }
   for (const auto &kernel_actor : actor_set->kernel_actors_) {
     MS_EXCEPTION_IF_NULL(kernel_actor);
+    if ((kernel_actor->input_datas_num_ == 0) && (kernel_actor->input_controls_num_ == 0) &&
+        IsInlineKernelActor(kernel_actor)) {
+      const auto &branch_name = GetBranchNameByKernelActor(kernel_actor.get());
+      const auto &iter = branch_name_to_switch_actor.find(branch_name);
+      if (iter == branch_name_to_switch_actor.end()) {
+        MS_LOG(EXCEPTION) << "Failed to get condition switch actor by branch name:" << branch_name;
+      }
+      MS_LOG(DEBUG) << "Inline control flow scheduler add control flow from switch actor:" << iter->second->GetAID()
+                    << " to kernel actor:" << kernel_actor->GetAID();
+      SchedulerHelper::AddControlArrow(iter->second, kernel_actor.get());
+    }
+    if (kernel_actor->output_data_arrows_.size() == 0 && kernel_actor->output_control_arrows_.size() == 0 &&
+        IsInlineKernelActor(kernel_actor)) {
+      const auto &branch_name = GetBranchNameByKernelActor(kernel_actor.get());
+      if (branch_name_to_gather_actor.find(branch_name) == branch_name_to_gather_actor.end()) {
+        MS_LOG(EXCEPTION) << "Failed to get condition gather actor by branch name:" << branch_name;
+      }
+      MS_LOG(DEBUG) << "Inline control flow scheduler add control flow from kernel actor:" << kernel_actor->GetAID()
+                    << " to gather actor:" << branch_name_to_gather_actor[branch_name]->GetAID();
+      SchedulerHelper::AddControlArrow(kernel_actor.get(), branch_name_to_gather_actor[branch_name]);
+    }
+  }
+  for (const auto &kernel_actor : actor_set->kernel_actors_) {
     if (kernel_actor->type() == KernelTransformType::kConditionSwitchActor) {
       HandleConditionSwitchActor(kernel_actor);
     } else if (kernel_actor->type() == KernelTransformType::kConditionGatherActor) {
