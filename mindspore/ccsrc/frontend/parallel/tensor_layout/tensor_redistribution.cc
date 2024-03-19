@@ -18,6 +18,7 @@
 #include <functional>
 #include <numeric>
 #include <memory>
+#include <set>
 #include <utility>
 #include <string>
 #include "frontend/parallel/status.h"
@@ -73,10 +74,128 @@ CNodePtr UpdateShapeNodeInput(const CNodePtr &current_cnode, const CNodePtr &dst
   return nullptr;
 }
 
+std::pair<int64_t, AnfNodePtr> GetDimMapping(const AssembledDynamicDimsMapping &mapping, int64_t index) {
+  for (const auto &iter : mapping) {
+    if (SizeToLong(iter.second.first) == index) {
+      return std::make_pair(iter.first, iter.second.second);
+    }
+  }
+  MS_LOG(EXCEPTION) << "Cannot find index " << index << " in AssembledDynamicDimsMapping.";
+}
+
+void TensorRedistribution::UnifyAssembledMappingWithSameSize(const std::set<int64_t> &index_mapping) {
+  Shape from_shape = this->assembled_static_origin_from_.tensor_shape().array();
+  Shape origin_slice_shape = this->assembled_static_origin_from_.slice_shape().array();
+  AssembledDynamicDimsMapping new_mapping;
+  for (int64_t i = SizeToLong(from_shape.size()) - 1; i >= 0; --i) {
+    if (index_mapping.find(i) == index_mapping.end()) {
+      continue;
+    }
+    auto dyn_dim = GetDimMapping(this->dynamic_dim_mapping_, i);
+    int64_t real_dim_value = origin_slice_shape[i];
+    new_mapping.insert({real_dim_value, {i, dyn_dim.second}});
+    MS_LOG(DEBUG) << "insert at " << i << " with " << real_dim_value;
+  }
+  this->dynamic_dim_mapping_ = new_mapping;
+}
+
+void TensorRedistribution::UnifyAssembledMappingWithDiffSize(const std::set<int64_t> &index_mapping) {
+  auto func_graph = this->next_cnode_->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+
+  Shape from_shape = this->assembled_static_origin_from_.tensor_shape().array();
+  Shape origin_slice_shape = this->assembled_static_origin_from_.slice_shape().array();
+  Shape unified_from_shape = this->layout_transfer_.from_in().tensor_shape().array();
+  Shape unified_slice_shape = this->layout_transfer_.from_in().slice_shape().array();
+
+  AssembledDynamicDimsMapping new_mapping;
+  // Assume length of unified_from_shape must be greater than from_shape.
+  int64_t unified_offset = SizeToLong(unified_from_shape.size()) - 1;
+  for (int64_t i = SizeToLong(from_shape.size()) - 1; i >= 0 && unified_offset >= 0; --i) {
+    int64_t real_dim_value = origin_slice_shape[i];
+    // It means it's a const dim.
+    if (index_mapping.find(i) == index_mapping.end()) {
+      MS_EXCEPTION_IF_CHECK_FAIL(real_dim_value >= unified_slice_shape[unified_offset] &&
+                                   real_dim_value % unified_slice_shape[unified_offset] == 0,
+                                 "Tensor layout tensor shape is illegal.");
+      int64_t left_size = real_dim_value / unified_slice_shape[unified_offset];
+      --unified_offset;
+      if (left_size == 1) {
+        continue;
+      }
+      while (left_size != 1 && unified_offset >= 0) {
+        MS_EXCEPTION_IF_CHECK_FAIL(left_size % unified_slice_shape[unified_offset] == 0,
+                                   "Tensor layout tensor shape is illegal, left_size is " + std::to_string(left_size) +
+                                     ", factor is " + std::to_string(unified_slice_shape[unified_offset]));
+        left_size = left_size / unified_slice_shape[unified_offset];
+        --unified_offset;
+      }
+      continue;
+    }
+    auto dyn_dim = GetDimMapping(this->dynamic_dim_mapping_, i);
+    // It means it's a dynamic dim.
+    if (from_shape[i] == unified_from_shape[unified_offset]) {
+      new_mapping.insert({real_dim_value, {unified_offset, dyn_dim.second}});
+      MS_LOG(DEBUG) << "insert at " << unified_offset << " with " << real_dim_value;
+      --unified_offset;
+    } else if (from_shape[i] > unified_slice_shape[unified_offset] &&
+               from_shape[i] % unified_slice_shape[unified_offset] == 0) {
+      // left_size must be greater than 1.
+      int64_t left_size = real_dim_value / unified_slice_shape[unified_offset];
+      MS_EXCEPTION_IF_CHECK_FAIL(left_size >= 1, "left_size must be greater than or equal to 1.");
+      int64_t divisor = real_dim_value / unified_slice_shape[unified_offset];
+      AnfNodePtr new_dim_node = CreateDiv(dyn_dim.second, divisor, func_graph, true, "assemble_dynamic_shape_op");
+      new_mapping.insert({unified_slice_shape[unified_offset], {unified_offset, new_dim_node}});
+      MS_LOG(DEBUG) << "insert at " << unified_offset << " with " << unified_slice_shape[unified_offset];
+      --unified_offset;
+      while (left_size != 1 && unified_offset >= 0) {
+        left_size = left_size / unified_slice_shape[unified_offset];
+        divisor = real_dim_value / unified_slice_shape[unified_offset];
+        new_dim_node = CreateDiv(dyn_dim.second, divisor, func_graph, true, "assemble_dynamic_shape_op");
+        new_mapping.insert({unified_slice_shape[unified_offset], {unified_offset, new_dim_node}});
+        MS_LOG(DEBUG) << "insert at " << unified_offset << " with " << unified_slice_shape[unified_offset];
+        --unified_offset;
+      }
+      if (left_size != 1 && unified_offset < 0) {
+        MS_LOG(EXCEPTION) << "Tensor shape cannot be unified.";
+      }
+    } else {
+      MS_LOG(EXCEPTION) << "Tensor shape cannot be unified.";
+    }
+  }
+  this->dynamic_dim_mapping_ = new_mapping;
+}
+
+void TensorRedistribution::UnifyAssembledMapping() {
+  // 12,10,2,2 -> 2,6,10,2,2, 12 and 10 are all dynamic.
+  //  4, 6,2,2 -> 2,2, 6,2,2, 4 is static and 6 is dynamic.
+  Shape from_shape = this->assembled_static_origin_from_.tensor_shape().array();
+  Shape origin_slice_shape = this->assembled_static_origin_from_.slice_shape().array();
+  Shape unified_from_shape = this->layout_transfer_.from_in().tensor_shape().array();
+  Shape unified_from_slice_shape = this->layout_transfer_.from_in().slice_shape().array();
+
+  std::set<int64_t> index_mapping;
+  for (const auto &iter : this->dynamic_dim_mapping_) {
+    index_mapping.insert(iter.second.first);
+  }
+
+  MS_LOG(DEBUG) << "from_shape=" << from_shape << ", origin_slice_shape=" << origin_slice_shape
+                << ", unified_from_shape=" << unified_from_shape
+                << ", unified_from_slice_shape=" << unified_from_slice_shape;
+  if (unified_from_shape.size() == from_shape.size()) {
+    this->UnifyAssembledMappingWithSameSize(index_mapping);
+  } else if (unified_from_shape.size() > from_shape.size()) {
+    this->UnifyAssembledMappingWithDiffSize(index_mapping);
+  } else {
+    MS_LOG(EXCEPTION) << "unified_from_shape.size() must be greater than from_shape.size().";
+  }
+}
+
 void TensorRedistribution::CreateAssembledDynamicMapping(const CNodePtr &cur_cnode, const AnfNodePtr &pre_cnode,
                                                          const FuncGraphPtr &func_graph) {
-  MS_LOG(DEBUG) << "Start to create assembled dynamic shape mapping.";
   MS_EXCEPTION_IF_NULL(func_graph);
+  MS_LOG(DEBUG) << "Start to create assembled dynamic shape mapping for " << pre_cnode->fullname_with_scope() << "->"
+                << cur_cnode->fullname_with_scope();
   this->dynamic_dim_mapping_.clear();
 
   AnfNodePtr shape_root = pre_cnode;
@@ -95,15 +214,16 @@ void TensorRedistribution::CreateAssembledDynamicMapping(const CNodePtr &cur_cno
   auto shape_cnode = CreateShape(shape_root, func_graph, "assemble_dynamic_shape_op");
   // 2. Create TupleGetItem node to get dim value and insert to mapping.
   for (const auto &iter : from_layout_memo) {
-    int64_t dim = UlongToLong(iter.first);
+    int64_t dim = SizeToLong(iter.first);
     int64_t replacement = iter.second;
     auto prim_tuple_get_item = std::make_shared<Primitive>(TUPLE_GETITEM_OP);
     AnfNodePtrList inputs{NewValueNode(prim_tuple_get_item), shape_cnode, NewValueNode(MakeValue(dim))};
     auto tuple_get_item_cnode = func_graph->NewCNode(inputs);
     tuple_get_item_cnode->set_fullname_with_scope("tuple_getitem_for_value_" + std::to_string(replacement));
-    this->dynamic_dim_mapping_.insert({replacement, tuple_get_item_cnode});
+    this->dynamic_dim_mapping_.insert({replacement, {iter.first, tuple_get_item_cnode}});
     MS_LOG(DEBUG) << "Create TupleGetItem for dim=" << dim << " to replace value=" << replacement;
   }
+  this->UnifyAssembledMapping();
 }
 
 void AppendOperatorVecStr(const OperatorVector &vec, std::string *res) {
@@ -191,6 +311,7 @@ RedistributionOpListPtr TensorRedistribution::InferTensorRedistributionOperatorL
     to_layout = this->layout_transfer_.to_in();
   } else {
     // init a new layout_transfer
+    this->assembled_static_origin_from_ = this->layout_transfer_.from_in();
     std::shared_ptr<ReshapeLayoutTransfer> ptr = this->layout_transfer_.UnifyDeviceArrangementAndTensorShape();
     if (ptr == nullptr) {
       MS_LOG(ERROR) << "Infer tensor layout return nullptr!";

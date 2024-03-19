@@ -345,9 +345,6 @@ Status ReshapeInfo::ComputeReplaceOp() {
       return SUCCESS;
     }
     auto output_shape = output_layout_.tensor_shape_origin().array();
-    if (output_shape.size() == 1 && output_shape.front() == DYNAMIC_DIM_VAL) {
-      return SUCCESS;
-    }
     if (std::count(output_shape.cbegin(), output_shape.cend(), DYNAMIC_DIM_VAL) > 1) {
       replace_op_.clear();
       replace_op_info_.clear();
@@ -376,7 +373,6 @@ Status ReshapeInfo::ComputeReplaceOp() {
     MS_LOG(DEBUG) << name_ << ": input " << input_layout_.ToString();
     MS_LOG(DEBUG) << name_ << ": output " << output_layout_.ToString();
     MS_LOG(DEBUG) << name_ << ": dev_list " << dev_list.size();
-
     RedistributionOpListPtr redistribution_oplist_ptr = tensor_redistribution->InferTensorRedistributionOperatorList();
     if (!is_generating_costs_) {
       redistribution_oplist_ptr = TensorTransform::GetInstance()->OptimizeTensorRedistributionOperatorList(
