@@ -105,11 +105,11 @@ class _AutoParallelContext:
             device_num (int): The device number.
 
         Raises:
-            ValueError: If the device num is not in [1, 4096].
+            ValueError: If the device num is not a positive integer.
         """
         self.check_context_handle()
-        if device_num < 1 or device_num > 4096:
-            raise ValueError("The context configuration parameter 'device_num' must be in [1, 4096], "
+        if device_num < 1:
+            raise ValueError("The context configuration parameter 'device_num' must be a positive integer, "
                              "but got the value of device_num : {}.".format(device_num))
         from mindspore.communication._comm_helper import _HCCL_TEST_AVAILABLE
         self._context_handle.set_hccl_test_avaible(_HCCL_TEST_AVAILABLE)
