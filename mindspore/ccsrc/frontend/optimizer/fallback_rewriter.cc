@@ -263,7 +263,10 @@ class BeforeOptARewriter : public BaseRewriter {
         auto kw_abs = abs->cast_ptr<abstract::AbstractKeywordArg>();
         para->set_abstract(kw_abs->get_arg());
       }
-      if (!allow_fallback_runtime || !is_dict_output_) {
+      // If the dict input is not used in graph, convert it to tuple directly.
+      auto dict_param_not_used =
+        abs->isa<abstract::AbstractDictionary>() && manager_->node_users().find(para) == manager_->node_users().end();
+      if ((!allow_fallback_runtime || !is_dict_output_) && !dict_param_not_used) {
         continue;
       }
       auto new_node_and_abs = ConvertParameterDictAbstract(para, para->abstract());

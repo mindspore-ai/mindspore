@@ -55,9 +55,9 @@ bool IsValidScalar(const AbstractBasePtr &abs) {
          build_value->isa<FloatImm>();
 }
 
-bool Mutable(const py::object &obj, const ValuePtr &value) {
+bool Mutable(const py::object &obj, const ValuePtr &value = nullptr) {
   // If a tensor has been set const arg, it should not be mutable.
-  if (value->isa<tensor::MetaTensor>()) {
+  if (value != nullptr && value->isa<tensor::MetaTensor>()) {
     constexpr char const_arg_attr[] = "const_arg";
     if (py::hasattr(obj, const_arg_attr) && py::cast<bool>(py::getattr(obj, const_arg_attr))) {
       return false;
@@ -65,6 +65,14 @@ bool Mutable(const py::object &obj, const ValuePtr &value) {
   }
   constexpr char mutable_attr[] = "__ms_mutable__";
   return py::hasattr(obj, mutable_attr) && py::cast<bool>(py::getattr(obj, mutable_attr));
+}
+
+bool IsConstant(const py::object &obj) {
+  if (obj.ptr() == nullptr || Mutable(obj)) {
+    return false;
+  }
+  return py::isinstance<py::int_>(obj) || py::isinstance<py::bool_>(obj) || py::isinstance<py::float_>(obj) ||
+         py::isinstance<py::str>(obj);
 }
 
 bool TensorArgMutable(const py::object &obj, const ValuePtr &value) {
@@ -305,8 +313,9 @@ bool FuncGraphBuilder::GetInputNodesAndAbstracts(const ValuePtr &callable_value,
       MS_LOG(DEBUG) << "The input python object of " << callable_value->ToString() << ", is NULL";
       return false;
     }
+    bool is_constant = IsConstant(input_obj);
     auto iter = py_obj_to_node_.find(input_obj.ptr());
-    if (iter == py_obj_to_node_.end()) {
+    if (is_constant || iter == py_obj_to_node_.end()) {
       auto node = ConvertInputObjToNode(input_obj);
       if (node == nullptr) {
         MS_LOG(DEBUG) << "Convert input python object " << py::str(input_obj) << " to anf node failed.";
