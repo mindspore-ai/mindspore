@@ -151,6 +151,7 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
     has_optimizer_ = graph.has_optimizer_;
     is_dynamic_shape_ = graph.is_dynamic_shape_;
     front_outputs_ = graph.front_outputs_;
+    has_kernel_need_user_data_ = graph.has_kernel_need_user_data_;
   }
 
   ~KernelGraph() override;
@@ -556,6 +557,11 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   bool enable_multi_stream() const { return enable_multi_stream_; }
   void set_enable_multi_stream(bool enable_multi_stream) { enable_multi_stream_ = enable_multi_stream; }
 
+  bool has_kernel_need_user_data() const { return has_kernel_need_user_data_; }
+  void set_has_kernel_need_user_data(bool has_kernel_need_user_data) {
+    has_kernel_need_user_data_ = has_kernel_need_user_data;
+  }
+
  private:
   AnfNodePtr MakeValueNode(const AnfNodePtr &node) const;
 
@@ -682,6 +688,8 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   bool from_pynative_{false};
 
   bool enable_multi_stream_{false};
+  // Whether this graph contains kernel which need user data.
+  bool has_kernel_need_user_data_{false};
 };
 }  // namespace session
 using KernelGraphPtr = std::shared_ptr<session::KernelGraph>;
