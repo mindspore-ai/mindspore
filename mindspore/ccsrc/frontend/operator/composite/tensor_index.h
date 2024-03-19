@@ -46,7 +46,7 @@ class TensorIndex : public MetaFuncGraph {
 
  protected:
   AnfNodePtrList ParseSlice(const AnfNodePtr &index_node, const abstract::AbstractSlicePtr &abs_slice_ptr,
-                            std::vector<int64_t> *init_by_one);
+                            std::vector<int64_t> *init_by_one, bool is_need_convert_to_scalar = false);
   IndexHandleLevel PreHandleIndex(const AbstractBasePtr &data, const abstract::AbstractTuplePtr &tuple_abs);
   AnfNodePtr IntIndexToTensor(const AnfNodePtr &data_node, const AnfNodePtr &index_node,
                               const AbstractBasePtr &int_index_abs, const std::vector<int64_t> &tuple_index_types,
