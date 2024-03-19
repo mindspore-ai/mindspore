@@ -837,11 +837,28 @@ void GenerateTopGraphParams(const FuncGraphPtr &fg, std::vector<AnfNodePtr> *par
   MS_LOG(DEBUG) << "finish GenerateTopGraphParams: " << fg->ToString();
 }
 
-FuncGraphPtr MakeReusingGraph(FuncGraphPtr base_graph) {
+FuncGraphPtr MakeReusingGraph(const FuncGraphPtr &base_graph) {
+  FuncGraphPtr func_graph = std::make_shared<FuncGraph>();
+  // Make the reusable graph to be the no_inline status.
+  func_graph->set_flag(FUNC_GRAPH_FLAG_NO_INLINE, true);
+  func_graph->set_flag(FUNC_GRAPH_FLAG_CELL_REUSE, true);
   static int order = 0;
-  base_graph->set_attr(FUNC_GRAPH_FLAG_CELL_LAZY_INLINE_ORDER, MakeValue(++order));
-  base_graph->debug_info()->set_name("CR_" + base_graph->debug_info()->name());
-  return base_graph;
+  func_graph->set_attr(FUNC_GRAPH_FLAG_CELL_LAZY_INLINE_ORDER, MakeValue(++order));
+  func_graph->debug_info()->set_name("CR_" + base_graph->debug_info()->name());
+  std::vector<AnfNodePtr> new_node_inputs;
+  new_node_inputs.push_back(NewValueNode(base_graph));
+  auto reusing_node = func_graph->NewCNode(prim::kPrimReusing, new_node_inputs);
+  new_node_inputs.clear();
+  new_node_inputs.push_back(reusing_node);
+  for (const auto &base_param : base_graph->parameters()) {
+    auto param = func_graph->add_parameter();
+    param->set_debug_info(base_param->debug_info());
+    new_node_inputs.push_back(param);
+  }
+  AnfNodePtr out = func_graph->NewCNodeInOrder(new_node_inputs);
+  func_graph->set_output(out);
+  MS_LOG(DEBUG) << "Cell: " << func_graph->ToString() << ", args: " << func_graph->parameters().size();
+  return func_graph;
 }
 
 FuncGraphPtr MakeCellFuncGraph(const py::object &obj, const std::string &obj_id, const FuncGraphPtr &reusing_graph) {
@@ -863,11 +880,6 @@ FuncGraphPtr MakeCellFuncGraph(const py::object &obj, const std::string &obj_id,
   for (auto origin_param : params) {
     auto param = func_graph->add_parameter();
     param->set_debug_info(origin_param->debug_info());
-    auto old_param = origin_param->cast_ptr<Parameter>();
-    if (old_param != nullptr && old_param->has_default()) {
-      // Default parameter can be shared since it is readonly.
-      param->set_default_param(old_param->default_param());
-    }
     new_node_inputs.push_back(param);
   }
   (void)new_node_inputs.insert(new_node_inputs.cend(), fvs.cbegin(), fvs.cend());
