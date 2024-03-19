@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import pytest
 import numpy as np
 from mindspore.nn import Cell
 from mindspore.common import Tensor, Parameter
@@ -212,6 +211,82 @@ def test_recompute_op_recompute2():
             return out
 
     x = Tensor(np.ones((8, 128, 16, 32)).astype(np.float32))
+    net = Net()
+    grad_net = Grad(net)
+    grad_net(x)
+
+
+def test_recompute_op_recompute3():
+    """
+    Feature: Recompute with lazy inline.
+    Description: Each block is set recompute by the primitive recompute api.
+    Expectation: Run successfully and the memory usage is reduced.
+    """
+
+    class Block1(Cell):
+        def __init__(self):
+            super(Block1, self).__init__()
+            self.transpose1 = P.Transpose()
+            self.transpose2 = P.Transpose()
+            self.transpose3 = P.Transpose()
+            self.transpose4 = P.Transpose()
+            self.real_div1 = P.RealDiv()
+            self.real_div2 = P.RealDiv()
+            self.batch_matmul1 = P.BatchMatMul()
+            self.batch_matmul2 = P.BatchMatMul()
+            self.add = P.Add()
+            self.softmax = P.Softmax(-1)
+            self.dropout = P.Dropout(0.9)
+            self.expand_dims = P.ExpandDims()
+            self.sub1 = P.Sub()
+            self.sub2 = P.Sub()
+            self.mul = P.Mul()
+            self.y = Parameter(Tensor(np.ones((8, 16, 128, 128)).astype(np.float32)))
+
+        def construct(self, x):
+            transpose1 = self.transpose1(x, (0, 2, 1, 3))
+            real_div1 = self.real_div1(transpose1, Tensor(2.37891))
+            sub1 = self.sub1(Tensor([1.0]), transpose1)
+            sub2 = self.sub2(Tensor([1.0]), sub1)
+            mul = self.mul(sub2, Tensor([-0.0001]))
+            add = self.add(mul, real_div1)
+            soft_max = self.softmax(add)
+            dropout = self.dropout(soft_max)
+            transpose3 = self.transpose3(x, (0, 2, 1, 3))
+            batch_matmul2 = self.batch_matmul2(dropout[0], transpose3)
+            transpose4 = self.transpose4(batch_matmul2, (0, 2, 1, 3))
+            return transpose4
+
+    class OuterBlock(Cell):
+        @lazy_inline
+        def __init__(self):
+            super(OuterBlock, self).__init__()
+            self.block = Block1()
+            self.block.mul.recompute()
+            self.block.real_div1.recompute()
+            self.block.transpose1.recompute()
+            self.block.sub1.recompute()
+            self.block.add.recompute()
+            self.block.softmax.recompute()
+
+        def construct(self, x):
+            return self.block(x)
+
+    class Net(Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.blocks = nn.CellList()
+            for _ in range(3):
+                b = OuterBlock()
+                self.blocks.append(b)
+
+        def construct(self, x):
+            out = x
+            for i in range(3):
+                out = self.blocks[i](out)
+            return out
+
+    x = Tensor(np.ones((8, 128, 16, 128)).astype(np.float32))
     net = Net()
     grad_net = Grad(net)
     grad_net(x)
