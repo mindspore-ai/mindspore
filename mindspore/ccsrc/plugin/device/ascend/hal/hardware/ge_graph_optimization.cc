@@ -97,7 +97,7 @@ void GEGraphOptimization::OptimizeACLGraphAfterKernelSelect(const KernelGraphPtr
     graph->set_executable(false);
     MS_LOG(DEBUG) << "Status record: end optimize acl graph after kernel select. graph id: " << graph->graph_id();
   }
-  if (graphkernel::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
+  if (!graph->is_from_single_op() && graphkernel::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
     graphkernel::GraphKernelOptimize(graph);
     graph->SetExecOrderByDefault();
   }
