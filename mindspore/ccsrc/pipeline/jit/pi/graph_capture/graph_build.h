@@ -93,8 +93,9 @@ class GraphBuilder {
   FrameStates frame_;
   Block *current_block_;
   int cur_bci_;
+  int loop_cur_bci_;
+  int loop_rolling_;
   std::vector<TryBlock> tryBlockStacks_{};
-
   // loop analyze
   void HandleLoop();
 
@@ -243,6 +244,7 @@ class GraphBuilder {
   bool TraceRunForIterSequence(int jump_bci);
   bool TraceRunForIterEnumerate(int jump_bci);
   bool TraceRunForIterZip(int jump_bci);
+  bool ProcessControlFlow(int cond, ValueNode *cond_node, const Instr &instr);
 
   // bytecode operations
   bool TraceRunControl(const Instr &instr);

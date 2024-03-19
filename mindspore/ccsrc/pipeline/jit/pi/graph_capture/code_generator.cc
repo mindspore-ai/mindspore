@@ -871,6 +871,8 @@ py::object CodeBreakGenerator::MakeUntrackedCode(int untracked_bci, int untracke
   std::move(untracked.begin(), untracked.end(), std::back_inserter(list));
 
   int nlocals = GetCFG()->GetLocalCount();
+  bool has_closure =
+    std::any_of(list.begin(), list.end(), [](const auto &i) { return Utils::IsCellAccessOp(i->op()); });
 
   CodeGenerator::Code ccode = {
     argc,
@@ -881,7 +883,7 @@ py::object CodeBreakGenerator::MakeUntrackedCode(int untracked_bci, int untracke
     std::move(list),
     py::cast<std::vector<std::string>>(co_->co_varnames),
     std::vector<std::string>(),
-    GetClosureNames(),
+    has_closure ? GetClosureNames() : std::vector<std::string>(),
     MakeBrkName(PyUnicode_AsUTF8(co_->co_name), untracked_bci),
     py::reinterpret_borrow<py::object>(co_->co_filename),
   };
