@@ -46,7 +46,7 @@ NodePtrList SequenceMaxMinGrad(BpropBuilder *ib) {
   auto x = ib->GetInput(kIndex0);
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
-  auto index = ib->Emit("SequenceIndex", {x, out});
+  auto index = ib->Emit("SequenceIndex", {x, out, ib->Value<int64_t>(0), ib->Len(x)});
   auto dx = ib->SequenceSetItem(ib->ZerosLike(x), index, dout);
   return {dx};
 }
