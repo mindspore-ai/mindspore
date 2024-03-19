@@ -176,7 +176,7 @@ def _update_param(param, new_param, strict_load):
 
 def _type_convert(param, new_param, strict_load):
     """Whether to convert parameter's type during load checkpoint into network."""
-    float_type = (mstype.float16, mstype.float32, mstype.float64)
+    float_type = (mstype.float16, mstype.float32, mstype.float64, mstype.bfloat16)
     int_type = (mstype.int8, mstype.int16, mstype.int32, mstype.int64)
     if not strict_load and ({param.data.dtype, new_param.data.dtype}.issubset(float_type) or
                             {param.data.dtype, new_param.data.dtype}.issubset(int_type)):
