@@ -375,13 +375,11 @@ bool Graph::GuardInlinedFunc(CallNode *call_node) {
   if (func_type == AObject::kTypeBoundMethod) {
     PyObject *func = PyMethod_GET_FUNCTION(callable);
     tr = CreateOpTrace(func, LOAD_ATTR, 0, {tr}, "", "__func__", strict);
-    tr = CreateOpTrace(PyFunction_GET_CODE(func), LOAD_ATTR, 0, {tr}, "", "__code__", strict);
     guard->GuardOn(tr, GuardLevel::GId);
   } else if (func_type == AObject::kTypeCell || func_type == AObject::kTypeAnyValue) {
     guard->GuardOn(tr, GuardLevel::GType, false);
     call_node->input(0)->MakeConstantInfo()->set_type(callable_info->GetTypeObject());
   } else if (func_type == AObject::kTypeFunction) {
-    tr = CreateOpTrace(PyFunction_GET_CODE(callable), LOAD_ATTR, 0, {tr}, "", "__code__", strict);
     guard->GuardOn(tr, GuardLevel::GId);
     call_node->input(0)->SetConstantValue(true);
   } else {
