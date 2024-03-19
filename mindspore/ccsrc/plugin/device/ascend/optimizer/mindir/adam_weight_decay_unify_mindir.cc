@@ -100,10 +100,10 @@ const AnfNodePtr AdamWeightDecayUnifyMindIR::Process(const FuncGraphPtr &func_gr
   input_list.push_back(beta2_sub);
   // Cast
   auto ori_param = input_list[kIndex1];
-  auto param_fp32 = CreateCastNode(func_graph, input_list[kIndex1], kNumberTypeFloat32);
-  input_list[kIndex1] = param_fp32;
-  auto grad_fp32 = CreateCastNode(func_graph, input_list[kIndex9], kNumberTypeFloat32);
-  input_list[kIndex9] = grad_fp32;
+  input_list[kIndex1] = CreateCastNode(func_graph, input_list[kIndex1], kNumberTypeFloat32);
+  input_list[kIndex2] = CreateCastNode(func_graph, input_list[kIndex2], kNumberTypeFloat32);
+  input_list[kIndex3] = CreateCastNode(func_graph, input_list[kIndex3], kNumberTypeFloat32);
+  input_list[kIndex9] = CreateCastNode(func_graph, input_list[kIndex9], kNumberTypeFloat32);
 
   // Mapping ms index to ge index.
   for (size_t i = 0; i < kdamWeightDecayIndexMapping.size(); ++i) {
