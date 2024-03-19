@@ -102,6 +102,10 @@ const AnfNodePtr AdamWeightDecayUnifyMindIR::Process(const FuncGraphPtr &func_gr
   auto ori_param = input_list[kIndex1];
   auto param_fp32 = CreateCastNode(func_graph, input_list[kIndex1], kNumberTypeFloat32);
   input_list[kIndex1] = param_fp32;
+  auto v_fp32 = CreateCastNode(func_graph, input_list[kIndex2], kNumberTypeFloat32);
+  input_list[kIndex2] = v_fp32;
+  auto m_fp32 = CreateCastNode(func_graph, input_list[kIndex3], kNumberTypeFloat32);
+  input_list[kIndex3] = m_fp32;
   auto grad_fp32 = CreateCastNode(func_graph, input_list[kIndex9], kNumberTypeFloat32);
   input_list[kIndex9] = grad_fp32;
 
