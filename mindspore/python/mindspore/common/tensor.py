@@ -277,6 +277,12 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         self.slice_num_of_persistent_data_ = None
         self.slice_shape_of_persistent_data_ = None
 
+        # the auto gradient information
+        self._grad = None
+        self._grad_fn = None
+        self._requires_grad = False
+        self._retain_grad = False
+
     @classmethod
     def __subclasshook__(cls, sub):
         """
@@ -565,6 +571,83 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             2
         """
         return len(self._shape)
+
+    @property
+    def grad(self):
+        r"""
+        Get the gradient value.
+        """
+        return self._grad
+
+    @grad.setter
+    def grad(self, grad):
+        r"""
+        Set the gradient value.
+        """
+        self._grad = grad
+
+    @property
+    def grad_fn(self):
+        r"""
+        The function for backward.
+        """
+        return self._grad_fn
+
+    @grad_fn.setter
+    def grad_fn(self, grad_fn):
+        r"""
+        Set the function for backward.
+        """
+        self._grad_fn = grad_fn
+
+    @property
+    def is_leaf(self):
+        r"""
+        Whether the stub tensor is leaf.
+        They will be a leaf if they have requires_grad and requires_grad is False,
+        Or they were created by user.
+        """
+        return self._requires_grad is False or self._grad_fn is None
+
+    @property
+    def requires_grad(self):
+        r"""
+        Whether the stub tensor need requires grad.
+        """
+        return self._requires_grad
+
+    @requires_grad.setter
+    def requires_grad(self, requires_grad):
+        r"""
+        Mark the stub tensor whether need requires gradient.
+        """
+        self._requires_grad = requires_grad
+
+    def retain_grad(self):
+        r"""
+        Enable the stub tensor which is not non-leaf to have the grad during backward().
+        """
+        if not self._requires_grad:
+            RuntimeError("can't retain_grad on Tensor that has requires_grad = False.")
+        self._retain_grad = self._grad_fn is not None
+
+    @property
+    def retains_grad(self):
+        r"""
+        Is True if the stub tensor is non-leaf and its grad is enabled to be populated during backward().
+        """
+        return self._retain_grad
+
+    def backward(self, grad=None):
+        r"""
+        Calculate the gradient.
+        """
+        if grad is None:
+            grad = Tensor(np.ones(self.shape), self.dtype)
+        if self._grad_fn is not None:
+            self._grad_fn.apply(grad)
+        elif self._requires_grad:
+            self._grad = grad
 
     @property
     def H(self):

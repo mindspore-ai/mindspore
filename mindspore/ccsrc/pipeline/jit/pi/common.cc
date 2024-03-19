@@ -1396,11 +1396,14 @@ void AutoGrad(PyFrameObject *f, PyObject *ret) {
     return;
   }
   // only record primitvie now
-  if (f->f_localsplus[0] == nullptr || !py::isinstance<PrimitivePyAdapter>(f->f_localsplus[0])) {
+  if (f->f_localsplus[0] == nullptr) {
+    return;
+  }
+  if (!py::isinstance<Primitive>(f->f_localsplus[0]) && !py::isinstance<PrimitivePyAdapter>(f->f_localsplus[0])) {
     return;
   }
   // gradient info check
-  if (!IsStubTensor(ret)) {
+  if (!IsStubTensor(ret) && !py::isinstance<tensor::Tensor>(ret)) {
     return;
   }
   MS_EXCEPTION_IF_CHECK_FAIL(f->f_code->co_kwonlyargcount == 0, "Must not have kw only args.");

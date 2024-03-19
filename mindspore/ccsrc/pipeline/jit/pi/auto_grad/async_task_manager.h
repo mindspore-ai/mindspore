@@ -20,6 +20,7 @@
 #include <functional>
 #include <memory>
 #include <utility>
+#include "ir/anf.h"
 #include "runtime/pipeline/async_rqueue.h"
 #include "pybind11/stl.h"
 
@@ -27,6 +28,7 @@ namespace mindspore {
 namespace pijit {
 namespace py = pybind11;
 using AsyncTask = runtime::AsyncTask;
+using AsyncTaskPtr = std::shared_ptr<runtime::AsyncTask>;
 using AsyncQueue = runtime::AsyncRQueue;
 using AsyncQueuePtr = AsyncRQueuePtr;
 using RecordFunc = std::function<void(const py::object &prim, const py::object &out, const py::list &inputs)>;
@@ -47,17 +49,32 @@ class RecordTask : public AsyncTask {
 
 using RecordTaskPtr = std::shared_ptr<RecordTask>;
 
-class RunBpropTask : public AsyncTask {
+class RunGenerateBpropTask : public AsyncTask {
  public:
-  explicit RunBpropTask(std::function<void()> task) : AsyncTask(runtime::kBpropTask), run_task_(std::move(task)) {}
-  ~RunBpropTask() override = default;
+  explicit RunGenerateBpropTask(std::function<void()> task)
+      : AsyncTask(runtime::kBpropTask), run_task_(std::move(task)) {}
+  ~RunGenerateBpropTask() override = default;
   void Run() override;
 
  private:
   std::function<void()> run_task_;
 };
 
-using RunBpropTaskPtr = std::shared_ptr<RunBpropTask>;
+using RunGenerateBpropTaskPtr = std::shared_ptr<RunGenerateBpropTask>;
+
+class RunBpropTask : public AsyncTask {
+ public:
+  explicit RunBpropTask(std::function<void(const ValuePtr &value)> task, const ValuePtr &value)
+      : AsyncTask(runtime::kBpropTask), run_task_(std::move(task)), value_(value) {}
+  ~RunBpropTask() override = default;
+  void Run() override;
+
+ private:
+  std::function<void(const ValuePtr &value)> run_task_;
+  ValuePtr value_;
+};
+
+using RunAccumulationTaskPtr = std::shared_ptr<RunBpropTask>;
 
 using Level = runtime::kThreadWaitLevel;
 class AsyncTaskManager {
@@ -71,9 +88,9 @@ class AsyncTaskManager {
   const AsyncQueuePtr &GetRecordTaskQueue() const { return record_task_queue_; }
   const AsyncQueuePtr &GetGenerateTaskQueue() const { return generate_task_queue_; }
   const AsyncQueuePtr &GetRunTaskQueue() const { return run_task_queue_; }
-  void DispatchRecordTask(const RecordTaskPtr &task) const { record_task_queue_->Push(task); }
-  void DispatchGenerateTask(const RunBpropTaskPtr &task) const { generate_task_queue_->Push(task); }
-  void DispatchRunTask(const RunBpropTaskPtr &task) const { run_task_queue_->Push(task); }
+  void DispatchRecordTask(const AsyncTaskPtr &task) const { record_task_queue_->Push(task); }
+  void DispatchGenerateTask(const AsyncTaskPtr &task) const { generate_task_queue_->Push(task); }
+  void DispatchRunTask(const AsyncTaskPtr &task) const { run_task_queue_->Push(task); }
 
  private:
   AsyncQueuePtr record_task_queue_;
