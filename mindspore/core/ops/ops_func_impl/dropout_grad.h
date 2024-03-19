@@ -14,25 +14,22 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_DROPOUT_GRAD_H_
-#define MINDSPORE_CORE_OPS_DROPOUT_GRAD_H_
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_DROPOUT_GRAD_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_DROPOUT_GRAD_H_
 #include <memory>
+#include <vector>
 
 #include "mindapi/base/types.h"
 #include "ops/base_operator.h"
+#include "ops/ops_func_impl/op_func_impl.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameDropoutGrad = "DropoutGrad";
-
-class MIND_API DropoutGrad : public BaseOperator {
+class MIND_API DropoutGradFuncImpl : public OpFuncImpl {
  public:
-  MIND_API_BASE_MEMBER(DropoutGrad);
-  DropoutGrad() : BaseOperator(kNameDropoutGrad) {}
-  void Init(const float keep_prob = 0.5);
-  void set_keep_prob(const float keep_prob);
-  float get_keep_prob() const;
+  BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
 };
 }  // namespace ops
 }  // namespace mindspore
-#endif  // MINDSPORE_CORE_OPS_DROPOUT_GRAD_H_
+#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_DROPOUT_GRAD_H_

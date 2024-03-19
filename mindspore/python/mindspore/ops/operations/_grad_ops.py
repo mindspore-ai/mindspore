@@ -30,7 +30,7 @@ from mindspore.common import dtype as mstype
 from mindspore.communication.management import GlobalComm
 from mindspore.common._utils import is_shape_unknown, is_dim_unknown
 from ..auto_generate import (AbsGrad, ACosGrad, LogitGrad, AcoshGrad,
-                             AsinGrad, AsinhGrad, ReciprocalGrad, RsqrtGrad,
+                             AsinGrad, AsinhGrad, ReciprocalGrad, RsqrtGrad, DropoutGrad,
                              SqrtGrad, BatchNormGrad, BatchNormGradGrad,
                              BiasAddGrad, GeLUGrad, FastGeLUGrad, AvgPoolGrad,
                              MinimumGrad, LogSoftmaxGrad, PReLUGrad, ReluGrad,
@@ -455,32 +455,6 @@ class DepthwiseConv2dNativeBackpropInput(PrimitiveWithInfer):
             'dtype': dout['dtype'],
         }
         return out
-
-
-class DropoutGrad(Primitive):
-    """
-    The gradient of Dropout. During training, randomly zeroes some of the elements
-    of the input tensor with probability.
-
-    Args:
-        keep_prob (float): The keep rate, between 0 and 1, e.g. keep_prob = 0.9,
-          means dropping out 10% of input units. Default: 0.5.
-
-    Inputs:
-        - **shape** (tuple[int]) - The shape of target mask.
-
-    Outputs:
-        Tensor, the value of generated mask for input shape.
-
-    Examples:
-        >>> dropout_grad = ops.DropoutGrad(keep_prob=0.5)
-        >>> in = Tensor((20, 16, 50, 50))
-        >>> out = dropout_grad(in)
-    """
-
-    @prim_attr_register
-    def __init__(self, keep_prob=0.5):
-        self.keep_prob = validator.check_float_range(keep_prob, 0, 1, validator.INC_RIGHT, "keep_prob", self.name)
 
 
 class FlattenGrad(PrimitiveWithInfer):

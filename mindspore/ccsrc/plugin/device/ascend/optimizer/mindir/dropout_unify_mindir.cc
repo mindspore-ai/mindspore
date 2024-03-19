@@ -46,11 +46,12 @@ constexpr auto kUint8BitSize = 8;
 constexpr int64_t kMaskAlignNum = 128;
 constexpr int64_t kMaskMultiNum = 16;
 constexpr int64_t kV3ShapeLimitSize = 1 << 30;
-constexpr size_t kDropoutGradInputTensorNum = 2;
+constexpr size_t kDropoutGradInputTensorNum = 3;
 constexpr size_t kFloat16Len = 2;  // size of float16
 constexpr size_t kInt64Len = 8;    // size of int64
 constexpr auto kX1 = "X1";
 constexpr auto kX2 = "X2";
+constexpr auto kX3 = "X3";
 constexpr auto kKeepProbValue = "KeepProbValue";
 constexpr auto kMDropoutGrad = "m_dropout_grad";
 constexpr auto kRDropoutDoMask = "r_dropout_do_mask";
@@ -80,6 +81,9 @@ ValueNodePtr CreateKeepProbValueNode(const FuncGraphPtr &func_graph, const AnfNo
   float keep_prob = 0.5;
   if (common::AnfAlgo::GetCNodeName(cnode) == kDropoutOpName) {
     auto keep_prob_v = cnode->input(kIndex2)->cast<ValueNodePtr>()->value();
+    keep_prob = ops::GetScalarValue<float>(keep_prob_v).value();
+  } else if (common::AnfAlgo::GetCNodeName(cnode) == kDropoutGradOpName) {
+    auto keep_prob_v = cnode->input(kIndex3)->cast<ValueNodePtr>()->value();
     keep_prob = ops::GetScalarValue<float>(keep_prob_v).value();
   } else {
     keep_prob = common::AnfAlgo::GetNodeAttr<float>(node, kAttrKeepProb);
@@ -618,7 +622,8 @@ void DropoutGradUnifyMindIR::DefineSrcPattern(SrcPattern *src_pattern) {
   (void)(*src_pattern)
     .AddVar(kX1)
     .AddVar(kX2)
-    .AddCNode(kMDropoutGrad, {std::make_shared<Primitive>(kDropoutGradOpName), kX1, kX2});
+    .AddVar(kX3)
+    .AddCNode(kMDropoutGrad, {std::make_shared<Primitive>(kDropoutGradOpName), kX1, kX2, kX3});
 }
 
 void DropoutGradUnifyMindIR::DefineDstPattern(DstPattern *dst_pattern) {
