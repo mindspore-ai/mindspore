@@ -2,6 +2,27 @@
 
 [View English](./RELEASE.md)
 
+## MindSpore 2.2.12 Release Notes
+
+### 主要特性及增强
+
+- [Stable] 针对网络参数以fp32初始化以及开启优化器并行的场景，降低Cast算子数目。
+- [Stable] 增加对静默故障的检测和处理能力；静默故障会导致训练过程异常，该特性帮助用户避免或大幅降低因静默故障导致的集群停机巡检进行故障定位带来的损失。
+
+### 问题修复
+
+- [#I97D1L] 修复 ReduceLROnPlateau、LRScheduler、CosineAnnealingWarmRestarts动态学习率相关接口样例错误。
+- [#I970HV] 修复多卡之间的allgather/reducescatter不保序问题。
+- [#I99JPI] 修复checkpoint在模糊匹配场景下加载类型为bfloat16 parameter的 bug。
+
+### 贡献者
+
+感谢以下人员做出的贡献:
+
+yao_yf, YijieChen, 冯一航, yuchaojie, 李良灿, YuJianfeng, huangxinjing, GuoZhibin, looop5
+
+欢迎以任何形式对项目提供贡献！
+
 ## MindSpore 2.2.11 Release Notes
 
 ### 主要特性及增强
