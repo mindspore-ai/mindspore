@@ -72,7 +72,7 @@ Tensor::Tensor(Tensor &&other) noexcept
   // If other.python_array_ has value, assign it to this->python_array_
   if (static_cast<bool>(other.python_array_)) {
     py::gil_scoped_acquire gil_acquire;
-    python_array_ = (other.python_array_);
+    python_array_ = std::move(other.python_array_);
   }
 #endif
   other.Invalidate();
@@ -93,7 +93,7 @@ Tensor &Tensor::operator=(Tensor &&other) noexcept {
     // If other.python_array_ has value, assign it to this->python_array_
     if (static_cast<bool>(other.python_array_)) {
       py::gil_scoped_acquire gil_acquire;
-      python_array_ = (other.python_array_);
+      python_array_ = std::move(other.python_array_);
     }
 #endif
     other.Invalidate();
