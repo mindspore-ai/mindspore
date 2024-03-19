@@ -47,5 +47,7 @@ void InternalLayerNorm::SetInOutIdx() {
   outputsIdxMap_[kIndex1] = kIndex1;
   outputsIdxMap_[kIndex2] = kIndex2;
 }
+
+MS_INTERNAL_KERNEL_FACTORY_REG(LayerNorm, InternalLayerNorm);
 }  // namespace kernel
 }  // namespace mindspore

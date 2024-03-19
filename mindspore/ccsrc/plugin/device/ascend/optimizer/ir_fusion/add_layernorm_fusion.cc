@@ -95,7 +95,7 @@ const BaseRef AddLayernormFusion::DefinePattern() const {
 
 const AnfNodePtr AddLayernormFusion::Process(const FuncGraphPtr &graph, const AnfNodePtr &node,
                                              const EquivPtr &equiv) const {
-  if (common::GetEnv("MS_ENABLE_INTERNAL_KERNELS") != "on") {
+  if (common::GetEnv("MS_ENABLE_INTERNAL_KERNELS") == "off") {
     return nullptr;
   }
 

@@ -42,9 +42,9 @@ TypePtr PagedAttentionMaskFuncImpl::InferType(const PrimitivePtr &primitive,
   auto type = CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, op_name);
 
   auto block_tables_type = input_args[kPagedAttentionMaskInputBlockTablesIndex]->GetType();
-  CheckAndConvertUtils::CheckTensorTypeValid("block_tables", block_tables_type, {kInt32, kInt64, kUInt64}, op_name);
+  CheckAndConvertUtils::CheckTensorTypeValid("block_tables", block_tables_type, {kInt32}, op_name);
   auto context_lens_type = input_args[kPagedAttentionMaskInputContextLensIndex]->GetType();
-  CheckAndConvertUtils::CheckTensorTypeValid("context_lens", context_lens_type, {kInt32, kInt64, kUInt64}, op_name);
+  CheckAndConvertUtils::CheckTensorTypeValid("context_lens", context_lens_type, {kInt32}, op_name);
 
   return type;  // attention_out dtype
 }

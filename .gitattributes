@@ -1,3 +1,2 @@
 mindspore/ccsrc/plugin/device/ascend/kernel/dvm/prebuild/aarch64/libdvm.a filter=lfs diff=lfs merge=lfs -text
 mindspore/ccsrc/plugin/device/ascend/kernel/dvm/prebuild/x86_64/libdvm.a filter=lfs diff=lfs merge=lfs -text
-ms_kernels_internal.tar.gz filter=lfs diff=lfs merge=lfs -text
