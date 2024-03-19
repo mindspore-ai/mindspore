@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "backend/common/pass/shape_reshape_fusion.h"
+#include "plugin/device/ascend/optimizer/ir_fusion/shape_reshape_fusion.h"
 #include <set>
 #include <queue>
 #include <memory>
