@@ -27,6 +27,9 @@
 namespace mindspore {
 namespace device {
 namespace ascend {
+// Confirmed by HCCL max length of hccl comm name is 128.
+constexpr int INNER_COMM_NAME_MAX_LENGTH = 128;
+
 class AscendCommunicationGroup : public CommunicationGroup {
  public:
   explicit AscendCommunicationGroup(const std::string &name, const std::vector<uint32_t> &group_ranks,
@@ -42,12 +45,17 @@ class AscendCommunicationGroup : public CommunicationGroup {
   // Return HCCL communicator because collective operations need it as a input.
   const HcclComm &hccl_communicator() const;
 
+  // Return communicator name maintained by HCCL. This is different from the group set by user.
+  std::string inner_comm_name() const;
+
  private:
   // The HCCL unique id for this group. Used to initialize this group's communicator.
   HcclRootInfo unique_id_;
 
   // HCCL communicator of this group.
   HcclComm comm_;
+
+  char inner_comm_name_[INNER_COMM_NAME_MAX_LENGTH];
 };
 using AscendCommunicationGroupPtr = std::shared_ptr<AscendCommunicationGroup>;
 }  // namespace ascend

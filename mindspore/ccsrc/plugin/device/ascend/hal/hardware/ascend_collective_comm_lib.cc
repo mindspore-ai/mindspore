@@ -230,6 +230,16 @@ HcclComm AscendCollectiveCommLib::HcclCommunicator(const std::string &group_name
   return group->hccl_communicator();
 }
 
+std::string AscendCollectiveCommLib::HcclInnerCommName(const std::string &group_name) {
+  if (!common::UseHostCollective() || hccl::HcclAdapter::GetInstance().UseHcclCM()) {
+    return "";
+  }
+  CHECK_RET((groups_.count(group_name) != 0), true, "The HCCL group " + group_name + " does not existed.");
+  auto group = std::dynamic_pointer_cast<AscendCommunicationGroup>(groups_[group_name]);
+  CHECK_IF_NULL(group);
+  return group->inner_comm_name();
+}
+
 uint32_t AscendCollectiveCommLib::GetRankId(const std::string &group_name) {
   uint32_t rank_id = 0;
   HCCL_RUN_CHECK(std::string("get rank_id"), group_name,

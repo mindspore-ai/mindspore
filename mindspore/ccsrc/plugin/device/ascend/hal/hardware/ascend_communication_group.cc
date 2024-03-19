@@ -30,7 +30,9 @@ AscendCommunicationGroup::AscendCommunicationGroup(const std::string &name, cons
                                                    uint32_t local_group_size)
     : CommunicationGroup(name, group_ranks, global_rank, local_group_rank, local_group_size),
       unique_id_({}),
-      comm_(nullptr) {}
+      comm_(nullptr) {
+  (void)memset_s(inner_comm_name_, INNER_COMM_NAME_MAX_LENGTH, 0x00, INNER_COMM_NAME_MAX_LENGTH);
+}
 
 bool AscendCommunicationGroup::Initialize(void *root_info) {
   if (initialized_) {
@@ -53,6 +55,12 @@ bool AscendCommunicationGroup::Initialize(void *root_info) {
       static_cast<int32_t>(HCCL_SUCCESS)) {
     const string &error_message = ErrorManagerAdapter::GetErrorMessage(true);
     MS_LOG(ERROR) << "HcclCommInitRootInfo failed. " + error_message;
+    return false;
+  }
+  // Get HCCL comm name which is used in graph sink mode for GE.
+  if (HcclGetCommName(comm_, inner_comm_name_) != static_cast<int32_t>(HCCL_SUCCESS)) {
+    const string &error_message = ErrorManagerAdapter::GetErrorMessage(true);
+    MS_LOG(ERROR) << "HcclGetCommName failed. " + error_message;
     return false;
   }
   initialized_ = true;
@@ -102,6 +110,8 @@ void *AscendCommunicationGroup::GenerateRootInfo(size_t *root_info_size) {
 }
 
 const HcclComm &AscendCommunicationGroup::hccl_communicator() const { return comm_; }
+
+std::string AscendCommunicationGroup::inner_comm_name() const { return inner_comm_name_; }
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore
