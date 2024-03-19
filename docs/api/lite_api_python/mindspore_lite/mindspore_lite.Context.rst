@@ -50,6 +50,15 @@ mindspore_lite.Context
                 [model_file]
                 mindir_path=[/home/user/model_graph.mindir]（大模型的存储路径）
 
+    .. py:method:: group_info_file
+        :property:
+
+        获取和设置分布式推理的通信分组信息。
+
+        在Pipeline并行场景下，不同Stage设备节点处于不同的通信分组中，在模型导出时，通过接口
+        [mindspore.set_auto_parallel_context](https://www.mindspore.cn/docs/zh-CN/r2.3/api_python/mindspore/mindspore.set_auto_parallel_context.html)
+        设置 `group_ckpt_save_file` 参数导出分组文件信息。另外，非Pipeline并行场景，如果存在通信算子涉及局部分组，同样需通过 `group_ckpt_save_file` 参数获取分组文件信息。
+
     .. py:method:: target
         :property:
 
