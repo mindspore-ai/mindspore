@@ -18,4 +18,4 @@
         Tensor，shape和dtype由输入定义。
 
     异常：
-        - **TypeError** - 如果 `size` 不是一个int，或元素为int的元组/列表/Tensor。
+        - **TypeError** - 如果 `shape` 不是一个int，或元素为int的元组/列表/Tensor。
