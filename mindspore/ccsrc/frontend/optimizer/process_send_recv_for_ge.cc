@@ -329,7 +329,10 @@ void ProcessSendRecvForGE(const FuncGraphPtr &graph) {
   // pipeline optimizer allgather exec before micro 0 recv;
   AddAllGatherRecvDepend(graph);
   // prev micro send exec before closure
-  AddSendClosureDepend(graph);
+  auto is_pp_interleave = parallel_context->pipeline_interleave();
+  if (!is_pp_interleave) {
+    AddSendClosureDepend(graph);
+  }
 
   AnfNodePtr last_need_depend = nullptr;
   MS_EXCEPTION_IF_NULL(graph);

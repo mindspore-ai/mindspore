@@ -30,11 +30,12 @@ using PipelinePairVector = std::vector<std::vector<mindspore::parallel::Pipeline
 AnfNodePtr FindAccuGrad(const CNodePtr &cnode);
 bool IsFirstStage();
 bool IsLastStage();
+int64_t InferStage();
 void InsertVirtualAssignAdd(const std::pair<AnfNodePtr, int> &node_user, const FuncGraphManagerPtr &manager,
                             const AnfNodePtr &accu_parameter, const NodeUsersMap &node_user_map);
 void InsertVirtualAccuGrad(const AnfNodePtr &recv, const FuncGraphManagerPtr &manager, const AnfNodePtr &param);
 AnfNodePtr FindGradAccuParameter(const std::vector<AnfNodePtr> &parameters, const std::string &name);
-void HandleReceiveParam(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_nodes);
+void HandleReceiveParam(const FuncGraphPtr &root);
 void AddVirtualAssignAdd(const FuncGraphPtr &root);
 void SetParameterStartForCellShare(const FuncGraphPtr &root);
 bool CompFunc(const AnfNodePtr &node1, const AnfNodePtr &node2);
@@ -76,6 +77,7 @@ PipelinePair GetForwardEndBeforePair(const PipelinePair &forward_end_pair);
 int64_t GetMicroMax(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &forward_end);
 int64_t GetSegment(const AnfNodePtr &node);
 std::string GetWorldGroup();
+int64_t GetRank();
 }  // namespace parallel
 }  // namespace mindspore
 

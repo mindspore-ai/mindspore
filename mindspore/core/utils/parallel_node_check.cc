@@ -22,7 +22,6 @@
 #include "mindspore/core/ops/other_ops.h"
 #include "mindspore/core/ops/sequence_ops.h"
 #include "mindspore/core/ops/nn_ops.h"
-
 #include "utils/parallel_node_check.h"
 
 namespace mindspore {

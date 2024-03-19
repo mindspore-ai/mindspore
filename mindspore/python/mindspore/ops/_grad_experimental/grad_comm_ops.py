@@ -92,7 +92,8 @@ def get_bprop_send(self):
     """Generate bprop for Send."""
     shape = self.get_attr_dict()["shape"]
     dtype = self.get_attr_dict()["dtype"]
-    send_grad = Receive(self.sr_tag, self.rank, shape, dtype, self.group_back)
+    tag = self.get_attr_dict()["sr_tag"]
+    send_grad = Receive(tag, self.rank, shape, dtype, self.group_back)
     virtual_input = Tensor(0.0, dtype)
 
     def bprop(x, out, dout):
@@ -105,7 +106,8 @@ def get_bprop_send(self):
 @bprop_getters.register(Receive)
 def get_bprop_receive(self):
     """Generate bprop for Receive."""
-    receive_grad = Send(self.tag, self.rank, self.group_back)
+    tag = self.get_attr_dict()["sr_tag"]
+    receive_grad = Send(tag, self.rank, self.group_back)
     depend = P.Depend()
     cast = P.Cast()
     out_tensor = Tensor(0.0, mstype.float16)

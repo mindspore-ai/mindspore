@@ -27,45 +27,19 @@
 #include "include/common/utils/comm_manager.h"
 #include "include/common/utils/parallel_context.h"
 #include "frontend/parallel/pipeline_transformer/pipeline_transformer.h"
+#include "frontend/parallel/pipeline_transformer/pipeline_interleave.h"
 #include "frontend/parallel/pipeline_transformer/fold_pipeline_transformer.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/step_parallel_utils.h"
+#include "frontend/parallel/graph_util/pipeline_split_utils.h"
 #include "frontend/parallel/parameter_manager.h"
 #if defined(__linux__) && defined(WITH_BACKEND)
 #include "include/backend/distributed/ps/util.h"
 #include "include/backend/distributed/ps/ps_context.h"
 #endif
-#include "frontend/parallel/graph_util/pipeline_split_utils.h"
 
 namespace mindspore {
 namespace pipeline {
-static int64_t GetRank() {
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  auto world_group = mindspore::parallel::GetWorldGroup();
-  int64_t global_rank = parallel::ParallelContext::GetInstance()->global_rank();
-  uint32_t rank_id = 0;
-  if (!parallel::ParallelContext::GetInstance()->global_rank_is_set()) {
-    if (!CommManager::GetInstance().GetRankID(world_group, &rank_id)) {
-      MS_LOG(EXCEPTION) << "Get rank id failed.";
-    }
-    global_rank = UintToInt(rank_id);
-  }
-  return global_rank;
-}
-
-static int64_t InferStage(int64_t rank_id, int64_t stage_num, int64_t device_num) {
-  if (stage_num == 0) {
-    MS_LOG(EXCEPTION) << "stage_num is zero";
-  }
-  if (device_num % stage_num != 0) {
-    MS_LOG(EXCEPTION) << "Device_num must be divisible by the stage_num, got device_num: " << device_num
-                      << "stage_num: " << stage_num;
-  }
-  auto per_stage_rank_num = device_num / stage_num;
-  return rank_id / per_stage_rank_num;
-}
-
 bool HasVirtualDataset(const std::vector<AnfNodePtr> &all_nodes) {
   for (auto &node : all_nodes) {
     if (IsPrimitiveCNode(node, prim::kPrimVirtualDataset)) {
@@ -220,6 +194,25 @@ void SetPynativeShardFlagIfHasShardNode(const FuncGraphPtr &root, const std::vec
   }
 }
 
+static bool PipelineInterleaved(const FuncGraphManagerPtr &mng, const FuncGraphPtr &root, int64_t stage,
+                                bool gen_mask_not_fusion) {
+  auto pipeline_interleave = std::make_shared<parallel::PipelineInterleave>(mng, stage, root);
+  pipeline_interleave->Init();
+  pipeline_interleave->Coloring();
+  if (!pipeline_interleave->MainGraph()) {
+    MS_LOG(EXCEPTION) << "Cannot find main graph with virtual_dataset in pipeline parallel";
+  }
+  pipeline_interleave->BroadCastColoring();
+  if (!gen_mask_not_fusion) {
+    pipeline_interleave->LabelGenMaskFusion();
+  }
+  pipeline_interleave->LabelMicroBatch();
+  pipeline_interleave->ParameterColoring();
+  pipeline_interleave->CutBorder();
+  pipeline_interleave->ElimParameter();
+  return true;
+}
+
 // Only auto_parallel and semi_auto_parallel support PipelineSplit
 bool PipelineSplit(const ResourcePtr &res) {
 #if defined(__linux__) && defined(WITH_BACKEND)
@@ -282,14 +275,20 @@ bool PipelineSplit(const ResourcePtr &res) {
     return true;
   }
 
-  auto stage = InferStage(global_rank, stage_num, device_num);
+  auto stage = parallel::InferStage();
   auto per_stage_rank_num = device_num / stage_num;
   if (parallel::ParallelInit() != parallel::SUCCESS) {
     MS_LOG(EXCEPTION) << "parallel init failed.";
   }
+  auto parallel_context = parallel::ParallelContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(parallel_context);
+  auto is_pp_interleave = parallel_context->pipeline_interleave();
+  if (is_pp_interleave) {
+    return PipelineInterleaved(manager, root, stage, gen_mask_not_fusion);
+  }
   auto transformer =
     std::make_shared<parallel::PipelineTransformer>(manager, stage, root, global_rank, per_stage_rank_num);
-  auto parallel_context = parallel::ParallelContext::GetInstance();
+
   if (parallel_context->enable_fold_pipeline()) {
     MS_LOG(INFO) << "Begin Fold Pipeline Transformer ";
     transformer =

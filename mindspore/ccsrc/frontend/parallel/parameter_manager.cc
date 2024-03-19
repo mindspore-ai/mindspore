@@ -855,18 +855,10 @@ static std::pair<AnfNodePtr, bool> FindParameterByFuncGraph(const AnfNodePtr &no
   MS_EXCEPTION_IF_NULL(cnode);
   auto fg = GetValueNode<FuncGraphPtr>(cnode->input(0));
   MS_EXCEPTION_IF_NULL(fg);
-  auto fg_parameters = fg->parameters();
 
   auto pre_node = GetRealKernelNode(fg->output(), -1, nullptr).first;
   auto pre_cnode = pre_node->cast<CNodePtr>();
-  for (size_t index = 1; index < pre_cnode->inputs().size(); ++index) {
-    auto res = FindParameter(pre_cnode->input(index), pre_cnode->func_graph());
-    if (!res.first) {
-      continue;
-    }
-    return res;
-  }
-  return std::make_pair(nullptr, false);
+  return FindParameter(pre_cnode, pre_cnode->func_graph());
 }
 
 // Only used for InsertMirrorOps

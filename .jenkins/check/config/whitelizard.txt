@@ -16,6 +16,7 @@ mindspore/mindspore/core/ir/tensor.cc:mindspore::tensor::MakeTensorData
 mindspore/mindspore/ccsrc/kernel/common_utils.cc:mindspore::kernel::UnitSizeInBytes
 mindspore/mindspore/ccsrc/frontend/optimizer/irpass.cc:mindspore::opt::irpass::OptimizeIRPassLib::OptimizeIRPassLib
 mindspore/mindspore/ccsrc/frontend/parallel/ops_info/gather_v2_p_info.cc:mindspore::parallel::GatherV2PInfo::CheckStrategy
+mindspore/mindspore/ccsrc/frontend/parallel/step_parallel.cc:mindspore::parallel::FindNextLayout
 mindspore/mindspore/ccsrc/plugin/device/gpu/hal/device/gpu_kernel_runtime.cc:mindspore::device::gpu::GPUKernelRuntime::LaunchKernelDynamic
 mindspore/mindspore/ccsrc/pipeline/jit/ps/init.cc:PYBIND11_MODULE
 mindspore/mindspore/ccsrc/pipeline/jit/ps/parse/resolve.cc:mindspore::parse::ResolveObjectToNode

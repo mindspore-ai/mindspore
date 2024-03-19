@@ -20,6 +20,7 @@
 #include <memory>
 #include <queue>
 #include <set>
+#include "include/common/utils/comm_manager.h"
 #include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/graph_util/generate_graph.h"
 #include "frontend/parallel/graph_util/node_info.h"
@@ -390,20 +391,18 @@ bool IsSourceUsedByMirror(const CNodePtr &node, const NodeUsersMap &node_user_ma
 void InsertVirtualAssignAdd(const std::pair<AnfNodePtr, int> &node_user, const FuncGraphManagerPtr &manager,
                             const AnfNodePtr &accu_parameter, const NodeUsersMap &node_user_map) {
   auto cnode = node_user.first->cast<CNodePtr>();
-  if (IsPrimitiveCNode(cnode, prim::kPrimReceive) || IsPrimitiveCNode(cnode, prim::kPrimMakeTuple) ||
-      !cnode->in_forward_flag()) {
+  if (IsPrimitiveCNode(cnode, prim::kPrimReceive) || !cnode->in_forward_flag()) {
     return;
   }
   MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
   bool enable_parallel_optimizer = ParallelContext::GetInstance()->enable_parallel_optimizer();
   bool grad_accumulation_shard = ParallelContext::GetInstance()->grad_accumulation_shard();
-  if (IsPrimitiveCNode(cnode, prim::kPrimDepend) && enable_parallel_optimizer &&
-      IsSourceUsedByMirror(cnode, node_user_map)) {
+  auto is_pp_interleave = ParallelContext::GetInstance()->pipeline_interleave();
+  if (!is_pp_interleave && IsPrimitiveCNode(cnode, prim::kPrimMakeTuple)) {
     return;
   }
-  auto prim = GetCNodePrimitive(cnode);
-  if (prim == nullptr) {
-    MS_LOG(WARNING) << cnode->DebugString() << " can not insert _VirtualAssignAdd.";
+  if (IsPrimitiveCNode(cnode, prim::kPrimDepend) && enable_parallel_optimizer &&
+      IsSourceUsedByMirror(cnode, node_user_map)) {
     return;
   }
   auto param_ptr = accu_parameter->cast<ParameterPtr>();
@@ -434,6 +433,9 @@ void InsertVirtualAssignAdd(const std::pair<AnfNodePtr, int> &node_user, const F
   auto attrs_prim = new_prim->attrs();
   attrs_prim[GROUP] = args1;
   attrs_prim[kAttrFusion] = args2;
+  if (cnode->HasPrimalAttr(PIPELINE_PARAM)) {
+    attrs_prim[PIPELINE_PARAM] = MakeValue(true);
+  }
   (void)new_prim->SetAttrs(attrs_prim);
 
   std::vector<AnfNodePtr> virtual_node_input = {value_node, cnode->input(IntToSize(node_user.second)), accu_parameter};
@@ -526,9 +528,10 @@ std::set<std::pair<AnfNodePtr, int>> FuncNodeUsersSet(const AnfNodePtr &paramete
   return all_node_users;
 }
 
-void HandleReceiveParam(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_nodes) {
+void HandleReceiveParam(const FuncGraphPtr &root) {
   auto parameters = root->parameters();
   auto node_users_map = root->manager()->node_users();
+  auto all_nodes = TopoSort(root->get_return(), SuccDeeperSimple);
   for (auto &node : all_nodes) {
     if (!IsPrimitiveCNode(node, prim::kPrimReceive)) {
       continue;
@@ -543,6 +546,15 @@ void HandleReceiveParam(const FuncGraphPtr &root, const std::vector<AnfNodePtr> 
     if (!accu_parameter) {
       continue;
     }
+    auto base_shape = accu_parameter->Shape();
+    auto shape_ptr = dyn_cast<abstract::Shape>(base_shape);
+    auto slice_shape = shape_ptr->shape();
+    auto prim = GetCNodePrimitive(cnode);
+    std::vector<ValuePtr> element;
+    (void)std::transform(slice_shape.begin(), slice_shape.end(), std::back_inserter(element),
+                         [](int64_t elem) { return MakeValue(elem); });
+    auto value = std::make_shared<ValueList>(element);
+    prim->set_attr(SHAPE, value);
     std::set<std::pair<AnfNodePtr, int>> all_node_users = FuncNodeUsersSet(node);
     for (auto &temp_user : all_node_users) {
       auto temp_node = temp_user.first;
@@ -1162,6 +1174,21 @@ void ReorderForPredict(const FuncGraphPtr &root, const FuncGraphManagerPtr &mana
   }
 }
 
+int64_t GetRank() {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto world_group = GetWorldGroup();
+  int64_t global_rank = parallel::ParallelContext::GetInstance()->global_rank();
+  uint32_t rank_id = 0;
+  if (!parallel::ParallelContext::GetInstance()->global_rank_is_set()) {
+    if (!CommManager::GetInstance().GetRankID(world_group, &rank_id)) {
+      MS_LOG(EXCEPTION) << "Get rank id failed.";
+    }
+    global_rank = UintToInt(rank_id);
+  }
+  return global_rank;
+}
+
 std::string GetWorldGroup() {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
@@ -1175,6 +1202,43 @@ std::string GetWorldGroup() {
     MS_LOG(EXCEPTION) << "Invalid backend: " << backend;
   }
   return world_group;
+}
+
+int64_t InferStage() {
+  auto global_rank = GetRank();
+  auto world_group = GetWorldGroup();
+  uint32_t world_rank_size = 0;
+  int64_t device_num = 0;
+  auto stage_num = parallel::ParallelContext::GetInstance()->pipeline_stage_split_num();
+  if (!parallel::ParallelContext::GetInstance()->device_num_is_set()) {
+    if (!CommManager::GetInstance().GetRankSize(world_group, &world_rank_size)) {
+      MS_LOG(EXCEPTION) << "Get rank size failed";
+    }
+    device_num = UintToInt(world_rank_size);
+    MS_LOG(INFO) << "Get device num from communication model, the device num is  " << device_num;
+  } else {
+    device_num = parallel::ParallelContext::GetInstance()->device_num();
+  }
+
+  if (device_num < 1) {
+    MS_LOG(ERROR) << "For 'PipelineSplit', the argument 'device_num' must be positive, "
+                     "but got the value of device_num: "
+                  << device_num;
+  }
+  if (global_rank < 0) {
+    MS_LOG(ERROR) << "For 'PipelineSplit', the argument 'global_rank' must be nonnegative, "
+                     "but got the value of global_rank: "
+                  << global_rank;
+  }
+  if (stage_num == 0) {
+    MS_LOG(EXCEPTION) << "stage_num is zero";
+  }
+  if (device_num % stage_num != 0) {
+    MS_LOG(EXCEPTION) << "Device_num must be divisible by the stage_num, got device_num: " << device_num
+                      << "stage_num: " << stage_num;
+  }
+  auto per_stage_rank_num = device_num / stage_num;
+  return global_rank / per_stage_rank_num;
 }
 }  // namespace parallel
 }  // namespace mindspore

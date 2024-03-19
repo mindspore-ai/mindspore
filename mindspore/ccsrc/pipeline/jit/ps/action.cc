@@ -1504,6 +1504,8 @@ bool RemoveValueNodeDuplicationsAction(const ResourcePtr &resource) {
 
 bool PipelineSplitAction(const ResourcePtr &resource) { return PipelineSplitPass(resource); }
 
+bool PipelineSchedulerAction(const ResourcePtr &resource) { return PipelineParallelScheduler(resource); }
+
 bool AutoParallelAction(const ResourcePtr &resource) { return AutoParallelPass(resource); }
 
 bool ValidateAction(const ResourcePtr &resource) { return ValidatePass(resource); }
@@ -1632,6 +1634,8 @@ std::vector<ActionItem> VmPipeline(const ResourcePtr &resource) {
 
     // Optimize
     (void)actions.emplace_back(std::make_pair(kOptimize, VmOptimizeAction));
+
+    (void)actions.emplace_back(std::make_pair(kPipelineParallelScheduler, PipelineSchedulerAction));
 
     (void)actions.emplace_back(std::make_pair(kAutoMonadReorder, OrderEnforceAction));
 

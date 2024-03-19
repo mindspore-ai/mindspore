@@ -857,9 +857,6 @@ std::pair<ValueListPtr, TypePtr> GetShapeType(const AnfNodePtr &node, const Shap
   }
   MS_EXCEPTION_IF_NULL(type);
 
-  std::vector<ValuePtr> element;
-  (void)std::transform(shape.begin(), shape.end(), std::back_inserter(element),
-                       [](int elem) { return MakeValue(elem); });
   TensorTypePtr tensor_type;
   if (type->isa<mindspore::TensorType>()) {
     tensor_type = type->cast<mindspore::TensorTypePtr>();
@@ -1184,10 +1181,6 @@ std::pair<std::vector<AnfNodePtr>, std::vector<AnfNodePtr>> PipelineTransformer:
   MS_EXCEPTION_IF_NULL(ret);
   std::vector<AnfNodePtr> all_nodes = DeepScopedGraphSearch(ret);
   std::reverse(all_nodes.begin(), all_nodes.end());
-  auto stage_num = g_device_manager->stage_num();
-  if (is_train_ && (stage_num > micro_size_)) {
-    MS_LOG(EXCEPTION) << "MicroBatch size: " << micro_size_ << " can't less than stage num: " << stage_num;
-  }
   for (auto &node : all_nodes) {
     auto stage_info = node->user_data<NodeStageInfo>();
     if (!node->isa<CNode>() || stage_info == nullptr || stage_info->stage() == -1 ||
@@ -1873,137 +1866,6 @@ void PipelineTransformer::ModifyParameterList() {
   auto del_num = parameters.size() - parameter_list.size();
   root_->set_fv_param_count(root_->fv_param_count() - del_num);
   manager_->SetParameters(root_, parameter_list);
-}
-
-static AnfNodePtr GetDout(const AnfNodePtr &node, const NodeUsersMap &node_users_map) {
-  auto node_usrs = node_users_map.at(node);
-  for (auto &node_user_pair : node_usrs) {
-    auto node_usr = node_user_pair.first->cast<CNodePtr>();
-    if (!IsPrimitiveCNode(node_usr, prim::kPrimTupleGetItem)) {
-      continue;
-    }
-    auto index = GetTupleGetItemIndex(node_usr);
-    if (index != 1) {
-      continue;
-    }
-    auto get_item_usrs = node_users_map.at(node_usr);
-    if (get_item_usrs.size() != 1) {
-      MS_LOG(WARNING) << "Get Multi grad usrs. Use first.";
-    }
-    return get_item_usrs.begin()->first;
-  }
-  return nullptr;
-}
-
-static bool NeedAttach(const FuncGraphManagerPtr &manager) {
-  std::string parallel_mode = ParallelContext::GetInstance()->parallel_mode();
-  if (parallel_mode != kAutoParallel && parallel_mode != kSemiAutoParallel) {
-    return false;
-  }
-  bool cell_reuse = false;
-  for (auto &fg : manager->func_graphs()) {
-    if (fg->has_flag(FUNC_GRAPH_FLAG_CELL_REUSE)) {
-      cell_reuse = true;
-      break;
-    }
-  }
-  auto stage_num = g_device_manager->stage_num();
-  if (!cell_reuse || stage_num <= 1) {
-    return false;
-  }
-  return true;
-}
-
-bool IsolatedNodeAttach(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) {
-  if (root->has_flag(HAS_ATTACHED)) {
-    return false;
-  }
-  root->set_flag(HAS_ATTACHED, true);
-  auto manager = root->manager();
-  if (!NeedAttach(manager)) {
-    return false;
-  }
-  auto ret_after = root->get_return();
-  MS_EXCEPTION_IF_NULL(ret_after);
-  auto all_nodes = DeepScopedGraphSearch(ret_after);
-  const auto &node_users_map = manager->node_users();
-  std::vector<AnfNodePtr> make_tuple_input = {NewValueNode(prim::kPrimMakeTuple)};
-  FuncGraphPtr main_graph;
-  FuncGraphPtr grad_graph;
-  for (auto &node : all_nodes) {
-    if (!node->isa<CNode>()) {
-      continue;
-    }
-    auto cnode = node->cast<CNodePtr>();
-    if (!IsValueNode<FuncGraph>(cnode->input(0))) {
-      continue;
-    }
-    auto graph = GetValueNode<FuncGraphPtr>(cnode->input(0));
-    auto sub_graph_output = graph->output();
-    if (!IsPrimitiveCNode(sub_graph_output, prim::kPrimMakeTuple)) {
-      continue;
-    }
-    auto csub_graph_output = sub_graph_output->cast<CNodePtr>();
-    if (!IsPrimitiveCNode(csub_graph_output->input(1), prim::kPrimReceive)) {
-      continue;
-    }
-    auto call_node_input = cnode->input(1);
-    if (!IsValueNode<tensor::Tensor>(call_node_input)) {
-      continue;
-    }
-    auto call_node_users = node_users_map.at(node);
-    if (call_node_users.size() != 1) {
-      continue;
-    }
-    auto usr_node = call_node_users.begin()->first;
-    if (!IsPrimitiveCNode(usr_node, prim::kPrimTupleGetItem)) {
-      continue;
-    }
-    auto get_item_usrs = node_users_map.at(usr_node);
-    std::vector<AnfNodePtr> addn_input = {NewValueNode(prim::kPrimAddN)};
-    main_graph = node->func_graph();
-    for (auto &get_item_usr_pair : get_item_usrs) {
-      auto get_item_usr = get_item_usr_pair.first;
-      auto grad_node = GetDout(get_item_usr, node_users_map);
-      if (grad_graph == nullptr) {
-        grad_graph = grad_node->func_graph();
-      } else {
-        if (grad_graph != grad_node->func_graph()) {
-          MS_LOG(EXCEPTION) << "Got Wrong Grad graph when attached Receive's grad, Maybe don't use lazy inline.";
-        }
-      }
-      std::vector<AnfNodePtr> new_get_item_input = {NewValueNode(prim::kPrimTupleGetItem), grad_node,
-                                                    NewValueNode(MakeValue(SizeToLong(get_item_usr_pair.second)))};
-      auto new_get_item = grad_graph->NewCNode(new_get_item_input);
-      addn_input.emplace_back(new_get_item);
-    }
-    AnfNodePtr temp;
-    if (addn_input.size() > SIZE_TWO) {
-      temp = grad_graph->NewCNode(addn_input);
-    } else {
-      temp = addn_input.at(1);
-    }
-    std::vector<AnfNodePtr> send_grad_fn_input = {NewValueNode(prim::kPrimTupleGetItem), node,
-                                                  NewValueNode(MakeValue(int64_t(1)))};
-    auto send_grad_fn = main_graph->NewCNode(send_grad_fn_input);
-    auto call_grad_node = grad_graph->NewCNode({send_grad_fn, temp});
-    std::vector<AnfNodePtr> call_grad_get_item_input = {NewValueNode(prim::kPrimTupleGetItem), call_grad_node,
-                                                        NewValueNode(MakeValue(int64_t(1)))};
-    auto call_grad_get_item = grad_graph->NewCNode(call_grad_get_item_input);
-    make_tuple_input.emplace_back(call_grad_get_item);
-  }
-  if (make_tuple_input.size() <= 1) {
-    return false;
-  }
-  auto make_tuple = grad_graph->NewCNode(make_tuple_input);
-  if (root->has_flag(NO_UPDATE)) {
-    manager->Replace(grad_graph->output(), make_tuple);
-    return true;
-  }
-  std::vector<AnfNodePtr> attach_node_input = {NewValueNode(prim::kPrimDepend), grad_graph->output(), make_tuple};
-  auto attach_node = grad_graph->NewCNode(attach_node_input);
-  manager->Replace(grad_graph->output(), attach_node);
-  return true;
 }
 }  // namespace parallel
 }  // namespace mindspore
