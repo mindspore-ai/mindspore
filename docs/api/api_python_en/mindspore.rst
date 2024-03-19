@@ -203,8 +203,9 @@ Parallel
     :template: classtemplate.rst
 
     mindspore.Layout
-    mindspore.shard
     mindspore.parameter_broadcast
+    mindspore.shard
+    mindspore.sync_pipeline_shared_parameters
 
 JIT
 ---
