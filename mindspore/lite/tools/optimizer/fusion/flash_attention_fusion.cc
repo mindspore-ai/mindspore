@@ -51,7 +51,6 @@ constexpr size_t kNumIndex2 = 2;
 constexpr size_t kNumIndex3 = 3;
 constexpr size_t kNumDimSize4 = 4;
 constexpr size_t kNumShapeSize4 = 4;
-constexpr int64_t kNumMinSeqLenSize = 1024;
 constexpr int64_t kNumMaxBatchLenSize = 50;
 constexpr int64_t kNumMaxNextTokenSize = 65535;
 constexpr int kNumMultiple32 = 32;
@@ -124,10 +123,6 @@ bool PFACheckShape(float scale_value, const std::vector<int64_t> &q_shape, const
         MS_LOG(INFO) << "for dynamic shape: now D value must be an integer multiple of 32, d value: " << d_value;
         return false;
       }
-    }
-    if (q_seq_len < kNumMinSeqLenSize || k_seq_len < kNumMinSeqLenSize) {
-      MS_LOG(INFO) << "input tensor seq len is less 1024, not need fusion.";
-      return false;
     }
   } else {
     // for dynamic shape, can not check seq len, so D value must be an integer multiple of 32.
