@@ -416,6 +416,7 @@ class OperatorInfo {
   std::vector<TypePtr> outputs_type_;
   int64_t swc_index_ = -1;
   Status GetLayoutConfig();
+  Status GetRepeatedNumInDevMatrixRight();
   Status CheckLayoutConfigBase();
 };
 
