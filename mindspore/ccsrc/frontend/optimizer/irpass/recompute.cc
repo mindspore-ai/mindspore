@@ -303,8 +303,8 @@ bool IsFromForwardGetter(const AnfNodePtr &forward_getter, const AnfNodePtr &dep
                      [&forward_getter](const auto &input) { return IsFromForwardGetter(forward_getter, input); });
 }
 
-void GetDependencies(const FuncGraphManagerPtr &manager, const CNodePtr &k_fg_caller, std::set<CNodePtr> *final_nodes,
-                     mindspore::CompactSet<AnfNodePtr> *dependencies) {
+void GetDependencies(const FuncGraphManagerPtr &manager, const CNodePtr &k_fg_caller,
+                     mindspore::CompactSet<CNodePtr> *final_nodes, mindspore::CompactSet<AnfNodePtr> *dependencies) {
   if (final_nodes->find(k_fg_caller) != final_nodes->end()) {
     return;
   }
@@ -323,7 +323,7 @@ void GetDependencies(const FuncGraphManagerPtr &manager, const CNodePtr &k_fg_ca
       if (bprop_caller == nullptr) {
         return;
       }
-      (void)final_nodes->emplace(k_fg_caller);
+      (void)final_nodes->insert(k_fg_caller);
       (void)dependencies->insert(bprop_caller->cast<CNodePtr>()->input(1));
       return;
     }
@@ -333,7 +333,7 @@ void GetDependencies(const FuncGraphManagerPtr &manager, const CNodePtr &k_fg_ca
       GetGradUsers(manager, forward_getter->cast<CNodePtr>(), k_fg_caller, &grad_users);
       if (!grad_users.empty()) {
         for (auto &user : grad_users) {
-          (void)final_nodes->emplace(k_fg_caller);
+          (void)final_nodes->insert(k_fg_caller);
           (void)dependencies->insert(user);
         }
         return;
@@ -343,7 +343,7 @@ void GetDependencies(const FuncGraphManagerPtr &manager, const CNodePtr &k_fg_ca
       if (bprop_caller == nullptr) {
         return;
       }
-      (void)final_nodes->emplace(k_fg_caller);
+      (void)final_nodes->insert(k_fg_caller);
       auto dout = bprop_caller->cast<CNodePtr>()->input(1);
       if (IsPrimitiveCNode(dout, prim::kPrimMakeTuple) && IsFromForwardGetter(forward_getter, dout)) {
         return;
@@ -463,23 +463,6 @@ CNodePtr GetKGraphCallerFromTupleGetitem(const AnfNodePtr &node) {
   return k_fg_caller->cast<CNodePtr>();
 }
 
-bool IsFromBpropCaller(const AnfNodePtr &bprop_caller, const AnfNodePtr &depend_node) {
-  if (bprop_caller == depend_node) {
-    return true;
-  }
-  if (!IsPrimitiveCNode(depend_node, prim::kPrimTupleGetItem)) {
-    return false;
-  }
-  return IsFromBpropCaller(depend_node->cast<CNodePtr>()->input(1), bprop_caller);
-}
-
-bool FilterDependency(const FuncGraphManagerPtr &manager, const std::set<CNodePtr> &final_nodes,
-                      const AnfNodePtr &depend_node) {
-  return std::all_of(final_nodes.begin(), final_nodes.end(), [&manager, &depend_node](const auto &final_node) {
-    return !IsFromBpropCaller(GetBpropCaller(manager, GetBpropGetter(manager, final_node)), depend_node);
-  });
-}
-
 void ReplaceFinalForwardGetter(const FuncGraphManagerPtr &manager, const FuncGraphPtr &fg,
                                const AnfNodePtr &origin_forward_getter, const AnfNodePtr &new_forward_getter) {
   auto node_users = manager->node_users()[origin_forward_getter];
@@ -507,28 +490,97 @@ void ReplaceFinalForwardGetter(const FuncGraphManagerPtr &manager, const FuncGra
   }
 }
 
+void GetAllRecomputeKFgCallers(const CNodePtr &final_node, mindspore::HashSet<CNodePtr> *recompute_k_fg_callers) {
+  for (const auto &input : final_node->inputs()) {
+    if (!input->isa<CNode>()) {
+      continue;
+    }
+    auto input_cnode = input->cast<CNodePtr>();
+    if (IsPrimitiveCNode(input_cnode, prim::kPrimTupleGetItem)) {
+      GetAllRecomputeKFgCallers(input_cnode, recompute_k_fg_callers);
+      continue;
+    }
+    // Only get the nodes visited in this round.
+    if (!input_cnode->HasAttr(kAttrReplacedWithPrimal) || !IsRecomputeKGraphCaller(input) ||
+        recompute_k_fg_callers->find(input_cnode) != recompute_k_fg_callers->end()) {
+      continue;
+    }
+    (void)recompute_k_fg_callers->insert(input_cnode);
+    GetAllRecomputeKFgCallers(input_cnode, recompute_k_fg_callers);
+  }
+}
+
+bool IsFromRecomputeKFgCaller(const FuncGraphPtr &bprop_fg, const mindspore::HashSet<CNodePtr> &recompute_k_fg_callers,
+                              const CNodePtr &node, mindspore::HashMap<CNodePtr, bool> *is_from_recompute_k_fg_caller) {
+  auto iter = is_from_recompute_k_fg_caller->find(node);
+  if (iter != is_from_recompute_k_fg_caller->end()) {
+    return iter->second;
+  }
+  if (recompute_k_fg_callers.find(node) != recompute_k_fg_callers.end()) {
+    (void)is_from_recompute_k_fg_caller->emplace(node, true);
+    return true;
+  }
+
+  for (const auto &input : node->inputs()) {
+    MS_EXCEPTION_IF_NULL(input);
+    if (!input->isa<CNode>()) {
+      continue;
+    }
+    auto input_cnode = input->cast<CNodePtr>();
+    if (input_cnode->func_graph() != bprop_fg) {
+      AnfNodePtr cur_node = input_cnode;
+      while (IsPrimitiveCNode(cur_node, prim::kPrimTupleGetItem)) {
+        cur_node = cur_node->cast<CNodePtr>()->input(1);
+      }
+      if (cur_node->isa<CNode>() &&
+          recompute_k_fg_callers.find(cur_node->cast<CNodePtr>()) != recompute_k_fg_callers.end()) {
+        (void)is_from_recompute_k_fg_caller->emplace(node, true);
+        return true;
+      }
+      continue;
+    }
+    if (IsFromRecomputeKFgCaller(bprop_fg, recompute_k_fg_callers, input_cnode, is_from_recompute_k_fg_caller)) {
+      (void)is_from_recompute_k_fg_caller->emplace(node, true);
+      return true;
+    }
+  }
+  (void)is_from_recompute_k_fg_caller->emplace(node, false);
+  return false;
+}
+
 void AddDependNodes(const FuncGraphManagerPtr &manager, const FuncGraphPtr &fg, const CNodePtr &k_fg_caller_cnode) {
   // Get the nodes which the recomputed part should depend on;
-  std::set<CNodePtr> final_nodes;
+  mindspore::CompactSet<CNodePtr> final_nodes;
   mindspore::CompactSet<AnfNodePtr> dependencies;
   GetDependencies(manager, k_fg_caller_cnode, &final_nodes, &dependencies);
   if (dependencies.empty()) {
     return;
   }
-  std::vector<AnfNodePtr> depend_inputs{NewValueNode(prim::kPrimMakeTuple)};
-  (void)std::copy_if(
-    dependencies.begin(), dependencies.end(), std::back_inserter(depend_inputs),
-    [&manager, &final_nodes](const auto &dependency) { return FilterDependency(manager, final_nodes, dependency); });
   FuncGraphPtr bprop_fg;
-  // Add the dependency nodes to the first recomputed nodes.
   auto bprop_caller = GetBpropCaller(manager, GetBpropGetter(manager, k_fg_caller_cnode));
   if (bprop_caller == nullptr) {
     bprop_fg = (*dependencies.begin())->func_graph();
   } else {
     bprop_fg = bprop_caller->func_graph();
   }
-
   MS_EXCEPTION_IF_NULL(bprop_fg);
+  // Filter the dependent nodes in case of producing loops.
+  mindspore::HashSet<CNodePtr> recompute_k_fg_callers;
+  for (const auto &final_node : final_nodes) {
+    (void)recompute_k_fg_callers.insert(final_node);
+    GetAllRecomputeKFgCallers(final_node, &recompute_k_fg_callers);
+  }
+  std::vector<AnfNodePtr> depend_inputs{NewValueNode(prim::kPrimMakeTuple)};
+  mindspore::HashMap<CNodePtr, bool> is_from_recompute_k_fg_caller;
+  (void)std::copy_if(dependencies.begin(), dependencies.end(), std::back_inserter(depend_inputs),
+                     [bprop_fg, &recompute_k_fg_callers, &is_from_recompute_k_fg_caller](const AnfNodePtr &dependency) {
+                       if (!dependency->isa<CNode>()) {
+                         return true;
+                       }
+                       return !IsFromRecomputeKFgCaller(bprop_fg, recompute_k_fg_callers, dependency->cast<CNodePtr>(),
+                                                        &is_from_recompute_k_fg_caller);
+                     });
+  // Add the dependency nodes to the first recomputed nodes.
   auto depend_nodes = bprop_fg->NewCNode(depend_inputs);
   if (bprop_fg == fg) {
     if (!IsRecomputeCell(GetValueNode<FuncGraphPtr>(k_fg_caller_cnode->input(0)))) {

@@ -88,6 +88,19 @@ def test_recompute_op_recompute2():
     run_testcase("test_recompute_op_recompute2", 49)
 
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
+def test_recompute_op_recompute3():
+    """
+    Feature: Recompute with lazy inline.
+    Description: Each block is set recompute by the primitive recompute api.
+    Expectation: Run successfully and the memory usage is reduced.
+    """
+    run_testcase("test_recompute_op_recompute3", 112)
+
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
