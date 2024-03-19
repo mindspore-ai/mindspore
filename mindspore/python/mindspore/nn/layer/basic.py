@@ -236,7 +236,7 @@ class Dropout1d(Cell):
         TypeError: If `x` is not a Tensor.
         TypeError: If the data type of `p` is not float.
         ValueError: If `p` is out of the range `[0.0, 1.0]`.
-        ValueError: If `x` shape is not `2D` or `3D`.
+        ValueError: If the shape of `x` is not `2D` or `3D`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

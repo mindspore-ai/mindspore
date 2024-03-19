@@ -33,7 +33,7 @@ mindspore.nn.LSTM
         - **has_bias** (bool) - Cell是否有偏置项 :math:`b_{ih}` 和 :math:`b_{fh}`。默认值： ``True`` 。
         - **batch_first** (bool) - 指定输入 `x` 的第一个维度是否为batch_size。默认值： ``False`` 。
         - **dropout** (float, int) - 指的是除第一层外每层输入时的dropout概率。默认值： ``0`` 。dropout的范围为[0.0, 1.0)。
-        - **bidirectional** (bool) - 是否为双向LSTM。默认值： ``False`` 。
+        - **bidirectional** (bool) - 是否为双向LSTM。 如果 `bidirectional` 是 ``True``，directions数量为2，否则directions数量为1。默认值： ``False`` 。
         - **dtype** (:class:`mindspore.dtype`) - Parameters的dtype。默认值： ``mstype.float32`` 。
 
     输入：

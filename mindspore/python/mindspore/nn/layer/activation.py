@@ -64,11 +64,15 @@ __all__ = ['Softmin',
 
 class CELU(Cell):
     r"""
+    CELU Activation Operator.
+
     Applies the continuously differentiable exponential linear units function element-wise.
 
     .. math::
 
         \text{CELU}(x) = \max(0,x) + \min(0, \alpha * (\exp(x/\alpha) - 1))
+
+    For more details, refer to `CELU <https://arxiv.org/abs/1704.07483>`_ .
 
     CELU Activation Function Graph:
 
@@ -89,7 +93,7 @@ class CELU(Cell):
         TypeError: If `alpha` is not a float.
         ValueError: If `alpha` has the value of 0.
         TypeError: If `x` is not a Tensor.
-        TypeError: If the dtype of 'input_x' is neither float16 nor float32.
+        TypeError: If the dtype of `x` is neither float16 nor float32.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -669,7 +673,7 @@ class SiLU(Cell):
 
     Inputs:
         - **input** (Tensor) - `input` is :math:`x` in the preceding formula.
-          Input with the data type float16 or float32.
+          Input with the data type float16 or float32. Tensor of any dimension.
 
     Outputs:
         Tensor, with the same type and shape as the `input`.
@@ -887,14 +891,14 @@ class GELU(Cell):
             :math:`x * P(X <= x) = 0.5 * x * (1 + erf(x / \sqrt(2)))`, where P(X) ~ N(0, 1).
 
     Inputs:
-        - **x** (Tensor) - The input of GELU with data type of float16 or float32.
+        - **x** (Tensor) - The input of GELU with data type of float16, float32, or float64.
           The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Outputs:
         Tensor, with the same type and shape as the `x`.
 
     Raises:
-        TypeError: If dtype of `x` is neither float16 nor float32.
+        TypeError: If dtype of `x` is not one of float16, float32, or float64.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1481,7 +1485,7 @@ class Threshold(Cell):
         - **input_x** (Tensor) - The input of Threshold with data type of float16 or float32.
 
     Outputs:
-        Tensor, the same shape and data type as the input.
+        Tensor, the same shape and data type as the `input_x`.
 
     Raises:
         TypeError: If `threshold` is not a float or an int.
