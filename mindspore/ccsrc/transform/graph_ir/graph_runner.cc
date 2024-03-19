@@ -409,6 +409,25 @@ Status GraphRunner::UnregisterExternalAllocator(const void *const stream) {
   return Status::SUCCESS;
 }
 
+Status GraphRunner::CompileGraph(const RunOptions &options) {
+  DfGraphWrapperPtr wrap_ptr = nullptr;
+  auto name = options.name;
+  auto ret = GetWrapper(name, &wrap_ptr);
+  if (ret != Status::SUCCESS) {
+    return ret;
+  }
+
+  MS_LOG(INFO) << "Start compile graph " << name;
+  ge::Status ge_ret = sess_->CompileGraph(static_cast<uint32_t>(wrap_ptr->id_));
+  if (ge_ret != ge::GRAPH_SUCCESS) {
+    MS_LOG(ERROR) << "Call GE CompileGraph Failed, ret is: " << ge_ret;
+    return Status::FAILED;
+  }
+
+  MS_LOG(INFO) << "Compile graph " << name << " success, start to get graph summary.";
+  return Status::SUCCESS;
+}
+
 Status GraphRunner::CompileGraph(const RunOptions &options, ::ge::CompiledGraphSummaryPtr *graph_summary) {
   MS_EXCEPTION_IF_NULL(graph_summary);
   DfGraphWrapperPtr wrap_ptr = nullptr;
