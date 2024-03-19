@@ -298,6 +298,7 @@ class OperatorInfo {
   Status CheckStrategyValue(const StrategyPtr &strategy, const Shapes &inputs_shape);
   void DivisorsReplaceShapes();  // in dynamic shape, using divisors replace to shapes before CheckStrategy and so on
   void ResumeShapes();           // in dynamic shape, resume shapes after CheckStrategy and so on
+  void DynamicShapeCheckStrategyLog();
   void SetRepeatedCalcDevMatrix();
   void ResetTensorMapIfRepeatedCalc();
   Status CreateGroupByDim(size_t axis, std::vector<Group> *group);
