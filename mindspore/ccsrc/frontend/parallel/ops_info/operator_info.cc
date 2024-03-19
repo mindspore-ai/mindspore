@@ -155,9 +155,21 @@ Status OperatorInfo::CheckStrategyByVector(const Shapes &stra, const Shapes &inp
 
       int64_t shape_value = sub_input_shape.at(j);
       if (shape_value != -1 && (shape_value % strategy_value) != 0) {
-        MS_LOG(ERROR) << name_ << ": The strategy is " << StrategyToString(stra) << ", shape " << shape_value << " at "
-                      << j << " cannot be divisible by strategy value " << strategy_value << ", shape is "
-                      << sub_input_shape;
+        if (dynamic_shape_flag_) {
+          Shapes origin_shapes = inputs_shape_clone_;
+          if (strategy_ != nullptr) {  // if strategy_ is not null, means that check output strategy
+            origin_shapes = outputs_shape_clone_;
+          }
+          MS_LOG(ERROR) << name_ << ": The strategy is " << StrategyToString(stra) << ", shape or divisor "
+                        << shape_value << " at " << j << " cannot be divisible by strategy value " << strategy_value
+                        << ", shape is " << ShapeToString(origin_shapes[i]) << ", divisor is "
+                        << ShapeToString(sub_input_shape);
+
+        } else {
+          MS_LOG(ERROR) << name_ << ": The strategy is " << StrategyToString(stra) << ", shape " << shape_value
+                        << " at " << j << " cannot be divisible by strategy value " << strategy_value << ", shape is "
+                        << ShapeToString(sub_input_shape);
+        }
         return FAILED;
       }
 
@@ -202,6 +214,8 @@ void OperatorInfo::ResetQueueMember() {
     inputs_tensor_map_.clear();
     dev_matrix_shape_.clear();
   }
+  strategy_ = nullptr;
+  out_strategy_ = nullptr;
 }
 
 Status OperatorInfo::CheckLayoutConfigBase() {
@@ -1101,6 +1115,14 @@ void OperatorInfo::ResumeShapes() {
   outputs_shape_ = outputs_shape_clone_;
 }
 
+void OperatorInfo::DynamicShapeCheckStrategyLog() {
+  if (!dynamic_shape_flag_) {
+    return;
+  }
+  MS_LOG(ERROR) << name_ << ": the origin shape of inputs is " << ShapesToString(inputs_shape_clone_)
+                << ", but the divisor info of inputs is " << ShapesToString(inputs_divisor_);
+}
+
 // auto insert repeated_calculation_num for dev_matrix_shape when repeated_calculation_num > 1
 Status OperatorInfo::InitForCostModelWithAutoRepeatCalc(const StrategyPtr &in_strategy,
                                                         const StrategyPtr &out_strategy) {
@@ -1123,6 +1145,7 @@ Status OperatorInfo::InitForCostModelWithAutoRepeatCalc(const StrategyPtr &in_st
     DivisorsReplaceShapes();  // in dynamic shape, using divisors replace to shapes before CheckStrategy
     // must be after InferAttrs()
     if (CheckStrategy(in_strategy) != SUCCESS) {
+      DynamicShapeCheckStrategyLog();
       FILTER_LOG(is_auto_parallel_) << name_ << ": CheckStrategy failed.";
       return FAILED;
     }

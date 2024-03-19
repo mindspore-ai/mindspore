@@ -533,7 +533,6 @@ def test_dynamic_fillv2():
     Description: no redistribution
     Expectation: compile success
     """
-
     class DynamicFillNet(Cell):
         def __init__(self, strategy1, strategy2, strategy3):
             super().__init__()
@@ -570,7 +569,6 @@ def test_dynamic_tile():
     Description: no redistribution
     Expectation: compile success
     """
-
     class DynamicTileNet(Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
@@ -606,7 +604,6 @@ def test_dynamic_mul_broadcast():
     Description: no redistribution
     Expectation: compile success
     """
-
     class DynamicMulNet(Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
@@ -633,3 +630,36 @@ def test_dynamic_mul_broadcast():
     phase = compile_net(net, x, y)
     validator = ParallelValidator(net, phase)
     assert validator.check_node_inputs_has('ReLU-0', ['Mul-0'])
+
+
+def test_dynamic_mul_broadcast_strategy_error():
+    """
+    Feature: test dynamic mul broadcast
+    Description: strategy error
+    Expectation: compile failed
+    """
+    class DynamicMulNet(Cell):
+        def __init__(self, strategy1, strategy2):
+            super().__init__()
+            self.mul = P.Mul().shard(strategy1)
+            self.relu = P.ReLU().shard(strategy2)
+
+        def construct(self, x, y):
+            out = self.mul(x, y)
+            out = self.relu(out)
+            return out
+
+    strategy1 = ((1, 8, 1, 1), (1, 1, 1, 1))
+    strategy2 = ((1, 2, 4, 1),)
+    context.set_auto_parallel_context(device_num=8, global_rank=0, gradients_mean=True, dataset_strategy=strategy1)
+    context.set_context(save_graphs=True)
+
+    net = DynamicMulNet(strategy1, strategy2)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+
+    x = Tensor(shape=[None, 64, None, 128], dtype=ms.float32)
+    y = Tensor(shape=[None, None, None, None], dtype=ms.float32)
+
+    net.set_inputs(x, y)
+    with pytest.raises(RuntimeError):
+        compile_net(net, x, y)
