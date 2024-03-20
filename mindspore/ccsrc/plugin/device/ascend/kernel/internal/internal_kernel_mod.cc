@@ -44,6 +44,15 @@ int InternalKernelMod::Build(const std::vector<KernelTensor *> &inputs, const st
     info.input_dtype_.emplace_back(InternalKernelUtils::ToInternalDType(inputs[iter->first]->dtype_id()));
     info.input_format_.emplace_back(InternalKernelUtils::ToInternalFormat(inputs[iter->first]->format()));
   }
+
+  if (op_type_ == "PagedAttention") {
+    info.input_num_ = 10;
+    for (int i = 0; i < 5; i++) {
+      info.input_dtype_.emplace_back(internal::TensorDType::TENSOR_DTYPE_FLOAT16);
+      info.input_format_.emplace_back(internal::TensorFormat::TENSOR_FORMAT_ND);
+    }
+  }
+
   for (auto iter = outputsIdxMap_.begin(); iter != outputsIdxMap_.end(); iter++) {
     info.output_dtype_.emplace_back(InternalKernelUtils::ToInternalDType(outputs[iter->first]->dtype_id()));
     info.output_format_.emplace_back(InternalKernelUtils::ToInternalFormat(outputs[iter->first]->format()));
