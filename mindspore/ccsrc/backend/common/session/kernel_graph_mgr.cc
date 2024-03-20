@@ -1246,6 +1246,7 @@ CNodePtr KernelGraphMgr::CreateNewCNode(const CNodePtr &cnode, KernelGraph *grap
     if (need_backend_inline) {
       new_cnode->AddPrimalAttr(kAttrNeedInline, MakeValue(true));
     }
+    MS_LOG(DEBUG) << "Create new call node:" << new_cnode->DebugString() << " by front node:" << cnode->DebugString();
     return new_cnode;
   }
   // get primitive of old node
@@ -2832,6 +2833,13 @@ void UpdateConditionNodePair(const KernelGraphPtr &kernel_graph, const KernelGra
       MS_LOG(INFO) << "Add condition node pair:" << gather_iter->second->fullname_with_scope()
                    << " and:" << switch_iter->second->fullname_with_scope()
                    << " for graph:" << target_kernel_graph->ToString();
+      const auto &front_node = kernel_graph->GetFrontAnfByBackendAnf(pair.second);
+      if (front_node == nullptr) {
+        MS_LOG(WARNING) << "Failed to get front node by backend node:" << pair.second->DebugString()
+                        << " in graph:" << kernel_graph->ToString();
+        continue;
+      }
+      target_kernel_graph->FrontBackendMapAdd(front_node, switch_iter->second);
     }
   }
 }

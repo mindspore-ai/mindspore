@@ -350,7 +350,8 @@ void KernelActor::SetSomasMemory(OpContext<DeviceTensor> *const context) const {
         MS_LOG(ERROR) << GetAID().Name() << " does not free address for graph output index: " << i;
         device_contexts_[0]->device_res_manager_->FreeMemory(output_device_tensors_[i]);
       }
-      MS_LOG(DEBUG) << "Set ptr:" << device_ptr << " to device address:" << output_device_tensors_[i];
+      MS_LOG(DEBUG) << "Set ptr:" << device_ptr << " to device address:" << output_device_tensors_[i]
+                    << " in actor:" << GetAID();
       output_device_tensors_[i]->set_ptr(device_ptr);
     }
   }

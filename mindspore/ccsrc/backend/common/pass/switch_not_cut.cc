@@ -92,6 +92,12 @@ bool IsValidAbstract(const abstract::AbstractBasePtr &abstract) {
     return false;
   }
 
+  const auto &base_shape = abstract->BuildShape();
+  if (base_shape != nullptr && base_shape->IsDynamic()) {
+    MS_LOG(DEBUG) << "Invalid abstract:" << abstract->ToString();
+    return false;
+  }
+
   if (!abstract->isa<abstract::AbstractSequence>()) {
     return true;
   }
@@ -108,6 +114,26 @@ bool IsValidAbstract(const abstract::AbstractBasePtr &abstract) {
     return false;
   }
   return true;
+}
+
+bool IsLazyInlineCall(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!IsPrimitiveCNode(node, prim::kPrimTupleGetItem)) {
+    return false;
+  }
+  const auto &get_item_node = common::AnfAlgo::GetTupleGetItemRealInput(node->cast<CNodePtr>());
+  if (get_item_node == nullptr || (!get_item_node->isa<CNode>())) {
+    return false;
+  }
+  const auto &get_item_cnode = get_item_node->cast<CNodePtr>();
+  if (get_item_cnode->size() == 0 || (!IsValueNode<FuncGraph>(get_item_cnode->input(0)))) {
+    return false;
+  }
+  const auto sub_graph = GetValueNode<FuncGraphPtr>(get_item_cnode->input(0));
+  if (sub_graph != nullptr && sub_graph->has_flag(FUNC_GRAPH_FLAG_CELL_REUSE)) {
+    return true;
+  }
+  return false;
 }
 
 bool IsValidFuncGraph(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *checked_graphs,
@@ -157,12 +183,20 @@ bool IsValidFuncGraph(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *ch
       continue;
     }
     if (common::AnfAlgo::HasIncorporateCallNode(cnode)) {
+      MS_LOG(DEBUG) << "Call node:" << cnode->DebugString() << " can be inline by cell reuse.";
       continue;
     }
     auto primitive_input = cnode->input(kAnfPrimitiveIndex);
+    MS_EXCEPTION_IF_NULL(primitive_input);
+    if (IsLazyInlineCall(primitive_input)) {
+      MS_LOG(DEBUG) << "Call node:" << cnode->DebugString() << " can be inline by lazy inline.";
+      continue;
+    }
+
     if (!IsPrimitiveCNode(primitive_input, prim::kPrimSwitch) ||
         (!IsValidInlineSwitch(primitive_input, checked_graphs)) || (!IsValidAbstract(cnode->abstract()))) {
-      MS_LOG(DEBUG) << "Invalid switch node:" << node->DebugString();
+      MS_LOG(DEBUG) << "Invalid switch node:" << primitive_input->DebugString()
+                    << " abstract:" << (cnode->abstract() == nullptr ? "null" : cnode->abstract()->ToString());
       return false;
     }
     if (inline_call_nodes != nullptr) {

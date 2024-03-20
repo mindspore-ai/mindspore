@@ -422,6 +422,12 @@ void InlineSwitchGraph(const KernelGraphPtr &graph, std::set<KernelGraphPtr> *co
     MS_LOG(DEBUG) << "Add new condition gather node:" << cond_gather_node->fullname_with_scope()
                   << " and condition switch actor:" << cond_switch_node->fullname_with_scope()
                   << " for graph:" << graph->ToString();
+    graph->FrontBackendlMapUpdate(kernel_cnode, cond_switch_node);
+    MS_LOG(DEBUG) << "Update backend from:" << kernel_cnode->DebugString() << " to:" << cond_switch_node->DebugString()
+                  << " for front node:"
+                  << (graph->GetFrontAnfByBackendAnf(cond_switch_node) == nullptr
+                        ? "null"
+                        : graph->GetFrontAnfByBackendAnf(cond_switch_node)->DebugString());
     (void)mng->Replace(kernel_cnode, cond_gather_node);
   }
 
@@ -445,30 +451,48 @@ void InlineSwitchGraph(const KernelGraphPtr &graph, std::set<KernelGraphPtr> *co
 
 // Flatten the input abstract, and record the index construct.
 // eg. tuple(tuple(1, 2), 3) -> {1, 2, 3}  ((-1, -1), -1)
-AbstractBasePtrList CollectAbstract(const abstract::AbstractBasePtr &abstract, ValuePtr *abstract_construct_index) {
+AbstractBasePtrList CollectAbstract(const abstract::AbstractBasePtr &abstract) {
   MS_EXCEPTION_IF_NULL(abstract);
-  MS_EXCEPTION_IF_NULL(abstract_construct_index);
   if (!abstract->isa<abstract::AbstractSequence>()) {
-    *abstract_construct_index = MakeValue(-1);
     return {abstract};
   }
   const auto &seq_abs = abstract->cast<abstract::AbstractSequencePtr>();
   MS_EXCEPTION_IF_NULL(seq_abs);
   if (seq_abs->dynamic_len()) {
-    *abstract_construct_index = MakeValue(-1);
     return {seq_abs};
   }
 
   AbstractBasePtrList abs_list;
+  for (const auto &sub_abs : seq_abs->elements()) {
+    AbstractBasePtrList sub_list = CollectAbstract(sub_abs);
+    abs_list.insert(abs_list.end(), sub_list.begin(), sub_list.end());
+  }
+  return abs_list;
+}
+
+size_t ConstructAbstructIndex(const abstract::AbstractBasePtr &abstract, ValuePtr *abstract_construct_index) {
+  MS_EXCEPTION_IF_NULL(abstract);
+  MS_EXCEPTION_IF_NULL(abstract_construct_index);
+  if (!abstract->isa<abstract::AbstractSequence>()) {
+    *abstract_construct_index = MakeValue(-1);
+    return 1;
+  }
+  const auto &seq_abs = abstract->cast<abstract::AbstractSequencePtr>();
+  MS_EXCEPTION_IF_NULL(seq_abs);
+  if (seq_abs->dynamic_len()) {
+    *abstract_construct_index = MakeValue(-1);
+    return 1;
+  }
+
   ValuePtrList construct_index_list;
+  size_t index_num = 0;
   for (const auto &sub_abs : seq_abs->elements()) {
     ValuePtr sub_construct_index = nullptr;
-    AbstractBasePtrList sub_list = CollectAbstract(sub_abs, &sub_construct_index);
-    abs_list.insert(abs_list.end(), sub_list.begin(), sub_list.end());
+    index_num += ConstructAbstructIndex(sub_abs, &sub_construct_index);
     construct_index_list.emplace_back(sub_construct_index);
   }
   *abstract_construct_index = std::make_shared<ValueTuple>(construct_index_list);
-  return abs_list;
+  return index_num;
 }
 
 // Rebuild the output construct by construct index.
@@ -565,13 +589,30 @@ CNodePtr FlattenConditionGatherNodeInput(const CNodePtr &kernel, const KernelGra
   auto new_kernel = graph->NewCNode(new_inputs);
   MS_EXCEPTION_IF_NULL(new_kernel);
   ValuePtr abstract_construct_index = nullptr;
-  AbstractBasePtrList new_abstract_list = CollectAbstract(kernel->abstract(), &abstract_construct_index);
+  AbstractBasePtrList new_abstract_list = CollectAbstract(kernel->abstract());
+  auto front_abs = kernel->abstract();
+  const auto &switch_iter = graph->condition_gather_to_switch().find(kernel);
+  if (switch_iter == graph->condition_gather_to_switch().end() || switch_iter->second == nullptr) {
+    MS_LOG(WARNING) << "Failed to get condition switch node by condition gather:" << kernel->DebugString();
+  } else {
+    const auto &front_call = graph->GetFrontAnfByBackendAnf(switch_iter->second);
+    if (front_call == nullptr || front_call->abstract() == nullptr) {
+      MS_LOG(WARNING) << "Failed to get front call node by switch node:" << switch_iter->second->DebugString();
+    } else {
+      front_abs = front_call->abstract();
+      MS_LOG(DEBUG) << "Rebuild output by front call node:" << front_call->DebugString()
+                    << " abstract:" << front_abs->ToString()
+                    << " by condition switch node:" << switch_iter->second->fullname_with_scope();
+    }
+  }
+  size_t index_num = ConstructAbstructIndex(front_abs, &abstract_construct_index);
   MS_EXCEPTION_IF_NULL(abstract_construct_index);
   MS_LOG(INFO) << "Abstract construct index:" << abstract_construct_index->ToString()
                << " for rebuild the abstract of kernel:" << new_kernel->DebugString();
-  if (new_abstract_list.size() != output_num) {
+  if (new_abstract_list.size() != output_num || output_num != index_num) {
     MS_LOG(EXCEPTION) << "Invalid abstract list size:" << new_abstract_list.size() << " and output size:" << output_num
-                      << " for kernel:" << kernel->DebugString() << " abstract:" << kernel->abstract()->ToString();
+                      << " output index size:" << index_num << " for kernel:" << kernel->DebugString()
+                      << " abstract:" << kernel->abstract()->ToString();
   }
   new_kernel->set_abstract(std::make_shared<abstract::AbstractTuple>(new_abstract_list));
   SelectKernelInfo(graph, new_kernel);
