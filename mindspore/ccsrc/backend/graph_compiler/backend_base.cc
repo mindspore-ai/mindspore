@@ -549,19 +549,27 @@ void DoUnifyMindIRPass(const FuncGraphPtr &graph, const std::shared_ptr<opt::Gra
 #endif
 }
 bool IsEnableControlFlowInline(const FuncGraphPtr &graph) {
-  auto context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context);
-  if (!context->IsKByKExecutorMode()) {
+  static const auto is_enable_switch_inline = (common::GetEnv("MS_ENABLE_SWITCH_INLINE") == "1");
+  if (!is_enable_switch_inline) {
     return false;
   }
+
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  // Only support ge backend, kernel by kernel mode and multi-funcgraph.
+  static const bool is_enable_ge = (context->backend_policy() == "ge");
+  if (!is_enable_ge || !context->IsKByKExecutorMode() || graph->func_graphs_used_total().empty()) {
+    return false;
+  }
+
   MS_EXCEPTION_IF_NULL(graph);
+  // Not support recursive.
   if (std::any_of(graph->func_graphs_used_total().cbegin(), graph->func_graphs_used_total().cend(),
                   [](const auto &sub_graph) { return sub_graph->recursive(); })) {
     return false;
   }
 
-  if (context->CellReuseLevel() == CellReuseLevel::kLazyInline) {
-  } else {
+  if (context->CellReuseLevel() != CellReuseLevel::kLazyInline) {
     auto is_include_no_switch_call = [](const FuncGraphPtr &graph) {
       MS_EXCEPTION_IF_NULL(graph);
       const auto &nodes = TopoSort(graph->get_return());

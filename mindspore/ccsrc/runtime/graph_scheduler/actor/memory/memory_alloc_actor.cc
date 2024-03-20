@@ -47,7 +47,8 @@ void MemoryAllocActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const contex
     return;
   }
 
-  MS_LOG(DEBUG) << GetAID().Name() << " alloc memory: " << somas_info_->base_address_;
+  MS_LOG(DEBUG) << GetAID().Name() << " alloc memory: " << somas_info_->base_address_
+                << " size:" << somas_info_->whole_block_size_;
 
   PostRun(context);
 }

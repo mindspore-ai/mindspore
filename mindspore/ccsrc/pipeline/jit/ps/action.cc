@@ -1038,111 +1038,6 @@ bool EliminateSpecialOpNode(const ResourcePtr &resource) {
   return EliminateSpecialOpOptPass(resource);
 }
 
-bool SupportInlinePartial(const AnfNodePtr &input0) {
-  // inline partial
-  if (IsPrimitiveCNode(input0, prim::kPrimTupleGetItem)) {
-    auto tuple_get_node = input0->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(tuple_get_node);
-    auto get_from_node = tuple_get_node->input(kFirstInput);
-    auto idx = common::AnfAlgo::GetTupleGetItemOutIndex(tuple_get_node);
-    MS_EXCEPTION_IF_NULL(get_from_node);
-    // tuple get item from a call subgraph output
-    if (get_from_node->isa<CNode>() && IsValueNode<FuncGraph>(get_from_node->cast<CNodePtr>()->input(0))) {
-      auto call_graph = GetValueNode<FuncGraphPtr>(get_from_node->cast<CNodePtr>()->input(0));
-      MS_EXCEPTION_IF_NULL(call_graph);
-      auto graph_out = call_graph->output();
-      MS_EXCEPTION_IF_NULL(graph_out);
-      size_t tuple_input_num = common::AnfAlgo::GetInputTensorNum(graph_out);
-      // the partial must be the last output
-      if (graph_out->isa<CNode>() && tuple_input_num == idx + 1) {
-        int partial_cnt = 0;
-        for (size_t i = 0; i < tuple_input_num; i++) {
-          auto input = graph_out->cast<CNodePtr>()->input(i + 1);
-          if (IsPrimitiveCNode(input, prim::kPrimPartial)) {
-            partial_cnt++;
-          }
-        }
-        auto partial = graph_out->cast<CNodePtr>()->input(idx + 1);
-        MS_EXCEPTION_IF_NULL(partial);
-        // we only support one partial func at the last return value now
-        if (partial_cnt != 1 || !IsPrimitiveCNode(partial, prim::kPrimPartial)) {
-          if (partial_cnt != 0) {
-            MS_LOG(INFO) << "Partial func cnt: " << partial_cnt
-                         << ", last return value: " << partial->fullname_with_scope();
-          }
-          return false;
-        }
-        auto partial_inputs = partial->cast<CNodePtr>()->inputs();
-        // the input of partial can't be FuncGraph/Partial
-        bool has_illegal_input =
-          std::any_of(partial_inputs.begin() + kSecondInput, partial_inputs.end(), [](const AnfNodePtr &partial_input) {
-            return IsValueNode<FuncGraph>(partial_input) || IsPrimitiveCNode(partial_input, prim::kPrimPartial);
-          });
-        return !has_illegal_input;
-      }
-    }
-  }
-  return false;
-}
-
-bool HasAbstractFunction(const AbstractBasePtr &abs) {
-  if (abs->isa<abstract::AbstractSequence>() && !abs->isa<abstract::AbstractSparseTensor>()) {
-    auto abs_seq = abs->cast<abstract::AbstractSequencePtr>();
-    if (abs_seq->dynamic_len()) {
-      return HasAbstractFunction(abs_seq->dynamic_len_element_abs());
-    }
-    return std::any_of(abs_seq->elements().cbegin(), abs_seq->elements().cend(), HasAbstractFunction);
-  }
-  // if abs it not AbstractSequence.
-  return abs->isa<abstract::AbstractFunction>();
-}
-
-bool IsCellReuse(const AnfNodePtr &input) {
-  if (IsValueNode<FuncGraph>(input)) {
-    auto fg = GetValueNode<FuncGraphPtr>(input);
-    MS_EXCEPTION_IF_NULL(fg);
-    auto debug_str = fg->ToString();
-    if (fg->has_flag(FUNC_GRAPH_FLAG_CELL_REUSE)) {
-      return true;
-    }
-  }
-  return false;
-}
-
-bool AcceptableReturnValue(const CNodePtr &cnode, const AnfNodePtr &input0) {
-  if (IsCellReuse(input0)) {
-    return true;
-  }
-  auto func_graphs = abstract::GetFuncGraphsFromCallNode(cnode);
-  auto graph_has_function_output = [](const FuncGraphPtr &fg) { return HasAbstractFunction(fg->output()->abstract()); };
-  if (std::all_of(func_graphs.cbegin(), func_graphs.cend(), std::not_fn(graph_has_function_output))) {
-    return true;
-  }
-  return false;
-}
-
-bool HasIncorporateCallNode(const CNodePtr &cnode) {
-  if (!IsValueNode<Primitive>(cnode->input(0))) {  // If cnode is a call node.
-    auto input0 = cnode->input(0);
-    if (IsPrimitiveCNode(input0, prim::kPrimSwitch) || IsPrimitiveCNode(input0, prim::kPrimSwitchLayer) ||
-        IsValueNode<FuncGraph>(input0)) {
-      if (IsCellReuse(input0) && IsEnableRefMode()) {
-        MS_LOG(INFO) << "Use cell reuse when enable ge mode: " << cnode->DebugString();
-        return true;
-      }
-      if (AcceptableReturnValue(cnode, input0)) {
-        return false;
-      }
-    }
-    if (SupportInlinePartial(input0)) {
-      return false;
-    }
-    MS_LOG(INFO) << "Call has indirect call: " << cnode->DebugString();
-    return true;
-  }
-  return false;
-}
-
 bool HasIncorporateCall(const std::vector<AnfNodePtr> &all_nodes) {
   for (const auto &node : all_nodes) {
     if (node == nullptr || !node->isa<CNode>()) {
@@ -1181,7 +1076,7 @@ bool HasIncorporateCall(const std::vector<AnfNodePtr> &all_nodes) {
       }
       continue;
     }
-    if (HasIncorporateCallNode(cnode)) {
+    if (common::AnfAlgo::HasIncorporateCallNode(cnode)) {
       return true;
     }
   }

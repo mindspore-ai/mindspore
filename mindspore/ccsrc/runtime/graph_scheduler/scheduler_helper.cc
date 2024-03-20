@@ -787,7 +787,9 @@ void SchedulerHelper::AddMemoryFreeSign(AbstractActor *const from_actor, Abstrac
 void SchedulerHelper::AddSomasInfo(AbstractActor *const actor) {
   MS_EXCEPTION_IF_NULL(actor);
   // Only the kernel actor supports somas.
-  if (actor->type() != KernelTransformType::kKernelActor) {
+  if (actor->type() != KernelTransformType::kKernelActor &&
+      actor->type() != KernelTransformType::kConditionGatherActor &&
+      actor->type() != KernelTransformType::kConditionSwitchActor) {
     return;
   }
   auto kernel_actor = dynamic_cast<KernelActor *>(actor);
@@ -821,7 +823,9 @@ void SchedulerHelper::AddSomasInfoForGraphOutput(AbstractActor *const output_act
   if (ms_context->get_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL) == kOptimizeO0) {
     return;
   }
-  if ((output_actor == nullptr) || (output_actor->type() != KernelTransformType::kKernelActor)) {
+  if ((output_actor == nullptr) || (output_actor->type() != KernelTransformType::kKernelActor &&
+                                    output_actor->type() != KernelTransformType::kConditionSwitchActor &&
+                                    output_actor->type() != KernelTransformType::kConditionGatherActor)) {
     return;
   }
 

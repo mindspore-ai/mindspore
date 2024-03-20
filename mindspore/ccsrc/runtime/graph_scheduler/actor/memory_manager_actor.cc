@@ -287,6 +287,8 @@ void MemoryManagerActor::FreeSomasMemory(SomasInfo *const somas_info, const Devi
   std::vector<void *> keep_addrs;
   for (auto &output_address : somas_info->graph_output_device_addresses_) {
     MS_EXCEPTION_IF_NULL(output_address);
+    MS_LOG(DEBUG) << "Keep address:" << output_address << " ptr:" << output_address->GetPtr()
+                  << " size:" << output_address->GetSize() << " for actor:" << from_aid;
     (void)keep_addrs.emplace_back(output_address->GetMutablePtr());
   }
 

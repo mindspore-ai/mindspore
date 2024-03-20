@@ -256,6 +256,13 @@ void AclStreamAssign::InsertEvents(const NotNull<KernelGraphPtr> &kernel_graph, 
   auto send_iter = kernel_send->find(node_before_send);
   if (send_iter == kernel_send->end()) {
     (*kernel_send)[node_before_send] = {send_cnode};
+    const auto &iter = kernel_graph->inline_sub_graph_kernels().find(node_before_send);
+    if (iter != kernel_graph->inline_sub_graph_kernels().end()) {
+      kernel_graph->AddInlineSubgraphKernel(send_cnode, iter->second);
+      MS_LOG(DEBUG) << "Add inline subgraph send kernel:" << send_cnode->fullname_with_scope()
+                    << " by before send node:" << node_before_send->fullname_with_scope()
+                    << " branch name:" << iter->second << " for kernel graph:" << kernel_graph->ToString();
+    }
   } else {
     send_iter->second.push_back(send_cnode);
   }
@@ -265,6 +272,13 @@ void AclStreamAssign::InsertEvents(const NotNull<KernelGraphPtr> &kernel_graph, 
   auto process_iter = kernel_recv->find(node_after_recv);
   if (process_iter == kernel_recv->end()) {
     (*kernel_recv)[node_after_recv] = {recv_cnode};
+    const auto &iter = kernel_graph->inline_sub_graph_kernels().find(node_after_recv);
+    if (iter != kernel_graph->inline_sub_graph_kernels().end()) {
+      kernel_graph->AddInlineSubgraphKernel(recv_cnode, iter->second);
+      MS_LOG(DEBUG) << "Add inline subgraph recv kernel:" << recv_cnode->fullname_with_scope()
+                    << " by after receive node:" << node_after_recv->fullname_with_scope()
+                    << " branch name:" << iter->second << " for kernel graph:" << kernel_graph->ToString();
+    }
   } else {
     process_iter->second.push_back(recv_cnode);
   }
