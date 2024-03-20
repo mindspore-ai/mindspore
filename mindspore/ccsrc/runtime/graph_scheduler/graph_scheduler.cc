@@ -442,6 +442,13 @@ void GraphScheduler::Initialize() {
   MS_LOG(INFO) << "The actor thread number: " << actor_thread_num
                << ", the kernel thread number: " << (actor_and_kernel_thread_num - actor_thread_num);
 
+  if (default_actor_thread_num_ <= kAsyncLaunchThreadNum) {
+    MS_LOG(WARNING)
+      << "The number of actor threads is only: " << default_actor_thread_num_
+      << ", and pipelined runtime optimization is not enabled, the performance may not reach the optimal level. Please "
+         "increase the value of `runtime_num_threads` in context or not set `runtime_num_threads`.";
+  }
+
 #ifdef ENABLE_RPC_ACTOR
   // Create and initialize RpcNodeScheduler.
   rpc_node_scheduler_ = std::make_unique<RpcNodeScheduler>();
@@ -616,7 +623,8 @@ void GraphScheduler::SpawnMultiPipelineActor(ActorSet *const actor_set, ActorThr
   auto actor_manager = ActorMgr::GetActorMgrRef();
   MS_EXCEPTION_IF_NULL(actor_manager);
 
-  ActorDispatcher::set_enable_async_launch_kernel(EnableRuntimePipeline() && !actor_set->kernel_actors_.empty() &&
+  bool enable_runtime_pipeline = EnableRuntimePipeline();
+  ActorDispatcher::set_enable_async_launch_kernel(enable_runtime_pipeline && !actor_set->kernel_actors_.empty() &&
                                                   default_actor_thread_num_ > kAsyncLaunchThreadNum);
   if (ActorDispatcher::enable_async_launch_kernel()) {
     thread_pool->DisableOccupiedActorThread();
@@ -639,7 +647,7 @@ void GraphScheduler::SpawnMultiPipelineActor(ActorSet *const actor_set, ActorThr
   }
 
   // If enable runtime multi pipeline, async launch kernel will be enabled.
-  ActorDispatcher::set_enable_runtime_multi_pipeline(EnableRuntimePipeline() && actor_set->has_dynamic_shape_ &&
+  ActorDispatcher::set_enable_runtime_multi_pipeline(enable_runtime_pipeline && actor_set->has_dynamic_shape_ &&
                                                      !actor_set->kernel_actors_.empty() &&
                                                      default_actor_thread_num_ > kMultiPipelineThreadNum);
   if (ActorDispatcher::enable_runtime_multi_pipeline() && !already_spawn_kernel_async_infer_resize_actor_) {
