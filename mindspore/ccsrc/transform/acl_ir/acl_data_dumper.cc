@@ -66,6 +66,8 @@ class AclDataDumper : public DataDumper {
         MS_LOG(WARNING)
           << "Call aclmdlSetDump failed, acl data dump function will be unusable. Please check whether the config file"
           << json_file_name;
+      } else {
+        MS_LOG(INFO) << "Call aclmdlSetDump successfully";
       }
     }
   }
@@ -73,6 +75,8 @@ class AclDataDumper : public DataDumper {
   void Finalize() override {
     if (aclmdlFinalizeDump() != ACL_ERROR_NONE) {
       MS_LOG(WARNING) << "Call aclmdlFinalizeDump failed.";
+    } else {
+      MS_LOG(INFO) << "Call aclmdlFinalizeDump successfully";
     }
   }
 };
