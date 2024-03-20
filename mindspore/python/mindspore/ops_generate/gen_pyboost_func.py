@@ -864,8 +864,7 @@ def gen_pyboost_py_func(work_path, op_yaml_data, doc_data):
     pathlib.Path(dir_path).mkdir(parents=True, exist_ok=True)
     dst_file_path = os.path.join(dir_path, "gen_extend_func.py")
     tmp_file_path = os.path.join(dir_path, "tmp_gen_extend_func.py")
-    with open(tmp_file_path, "w") as f:
-        f.write(py_header + gen_py)
+    write_file(tmp_file_path, py_header + gen_py)
     check_change_and_replace_file(dst_file_path, tmp_file_path)
 
 

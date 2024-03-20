@@ -18,7 +18,9 @@ Generate operator utils function
 import os
 import glob
 import hashlib
+import stat
 import yaml
+
 
 py_licence_str = f"""# Copyright 2023 Huawei Technologies Co., Ltd
 #
@@ -180,6 +182,8 @@ def write_file(path, data):
     :param data:
     :return:
     """
-    fd = os.open(path, os.O_RDWR | os.O_CREAT)
+    flags = os.O_RDWR | os.O_CREAT
+    mode = stat.S_IWUSR | stat.S_IRUSR
+    fd = os.open(path, flags, mode)
     with os.fdopen(fd, "w") as f:
         f.write(data)
