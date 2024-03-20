@@ -132,11 +132,11 @@ CNodePtr InplaceAssignBuilder::CreateCleanCompositeNode(const InplaceAssignerInf
   auto dtype = (dst_type == kNumberTypeFloat16) ? kNumberTypeFloat32 : dst_type;
   ValueNodePtr value_node;
   if (dtype == kNumberTypeFloat32) {
-    value_node =
-      CreateScalarTensorValueNode<float>({format, {1}, TypeIdToType(dtype)}, static_cast<float>(0), sizeof(float));
+    float val = 0;
+    value_node = CreateTensorValueNode({format, {1}, TypeIdToType(dtype)}, &val, sizeof(float));
   } else {
-    value_node =
-      CreateScalarTensorValueNode<double>({format, {1}, TypeIdToType(dtype)}, static_cast<double>(0), sizeof(double));
+    double val = 0;
+    value_node = CreateTensorValueNode({format, {1}, TypeIdToType(dtype)}, &val, sizeof(double));
   }
 
   // Create composite op's sub-graph.
@@ -155,9 +155,8 @@ CNodePtr InplaceAssignBuilder::CreateCleanCompositeNode(const InplaceAssignerInf
   // Create broadcast basic op.
   auto dst_shape_vec = GetShape(op_info.op_node);
   auto device_shape = GetDeviceShape(op_info.op_node);
-  auto shape_node = CreateScalarTensorValueNode<ShapeVector>(
-    {kOpFormat_DEFAULT, {SizeToLong(device_shape.size())}, TypeIdToType(kNumberTypeInt64)}, device_shape,
-    device_shape.size() * sizeof(int64_t));
+  auto shape_node = CreateTensorValueNode({kOpFormat_DEFAULT, {SizeToLong(device_shape.size())}, kInt64},
+                                          device_shape.data(), device_shape.size() * sizeof(int64_t));
 
   AnfNodePtrList clean_inputs = {NewValueNode(prim::kPrimBroadcastTo), broadcast_input_node, shape_node};
   auto broadcast_to_node_inner =
