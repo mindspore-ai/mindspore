@@ -109,12 +109,18 @@ void ConditionSwitchActor::Run(OpContext<DeviceTensor> *const context) {
     MS_EXCEPTION_IF_NULL(input_device_tensors_[0]->kernel_tensor());
     bool index = input_device_tensors_[0]->kernel_tensor()->GetValueWithCheck<bool>();
     MS_LOG(DEBUG) << "Index:" << index << " for actor:" << GetAID();
+    if (index >= branch_names_.size()) {
+      std::string error_info = "Invalid index:" + std::to_string(index) +
+                               " and branch size:" + std::to_string(branch_names_.size()) +
+                               " for actor:" + GetAID().Name();
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(GraphExecutionStrategy::kPipeline, (*context), error_info);
+    }
     EraseInput(context);
     CollectMemoryFreeList(index);
     if (memory_free_list_.size() > 0) {
       SendMemoryFreeReq(context);
     }
-    MS_LOG(DEBUG) << "Launch kernel:" << kernel_->fullname_with_scope();
+    MS_LOG(DEBUG) << "Launch kernel:" << kernel_->fullname_with_scope() << " by index:" << index;
     SendOutput(context, index);
   } catch (const std::exception &e) {
     MsException::Instance().SetException();

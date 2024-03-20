@@ -12,9 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from mindspore import context, Tensor, jit, ops, mutable
+from mindspore import context, Tensor, jit, ops, mutable, nn, lazy_inline
 from mindspore.common import dtype as mstype
 from mindspore.common.parameter import Parameter
+from mindspore.nn import Cell
+import mindspore.ops.operations as P
+import numpy as np
+
 context.set_context(mode=context.GRAPH_MODE, save_graphs=True, save_graphs_path='./log/')
 
 def test_single_if():
@@ -53,6 +57,31 @@ def test_return_parameter():
         if x < 3:
             return param_a
         return param_b
+
+    ret1 = foo(Tensor(1), param_a, param_b)
+    assert ret1
+
+
+def test_return_param_untail_call():
+    """
+    Feature: Contrtol flow inline.
+    Description: Control flow if.
+    Expectation: AttributeError.
+    """
+    param_a = Parameter(Tensor(5))
+    param_b = Parameter(Tensor(6))
+
+    @jit
+    def foo(x, param_a, param_b):
+        if x < 3:
+            z = param_a
+        else:
+            z = param_b
+        z = z + 1
+        z = z - 2
+        z = z * 3
+        z = z / 4
+        return z
 
     ret1 = foo(Tensor(1), param_a, param_b)
     assert ret1
@@ -625,3 +654,70 @@ def test_if_in_if():
     ret2 = foo(x, x, param_a, param_b)
     assert ret1 == (Tensor(7, mstype.int32), Tensor(7, mstype.int32))
     assert ret2
+
+
+def test_lazy_inline():
+    """
+    Feature: Switch inline with lazy inline.
+    Description: All inline in single graph.
+    Expectation: Run successfully and the memory usage is reduced.
+    """
+    class Grad(Cell):
+        def __init__(self, net):
+            super(Grad, self).__init__()
+            self.grad = ops.GradOperation()
+            self.net = net
+
+        def construct(self, x):
+            grad_net = self.grad(self.net)
+            return grad_net(x)
+
+    class Block(Cell):
+        def __init__(self):
+            super(Block, self).__init__()
+            self.batch_matmul = P.BatchMatMul()
+            self.expand_dims = P.ExpandDims()
+            self.y = Parameter(Tensor(np.ones((8)).astype(np.float32)))
+
+        def construct(self, x):
+            z1 = self.batch_matmul(x, x)
+            z2 = self.expand_dims(self.y, 1)
+            return z1 + z2
+
+    class BaseBlock(Cell):
+        @lazy_inline
+        def __init__(self):
+            super(BaseBlock, self).__init__()
+            self.block = Block()
+
+        def construct(self, x):
+            return self.block(x)
+
+    class Net(Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.blocks = nn.CellList()
+            b = BaseBlock()
+            self.blocks.append(b)
+
+        def construct(self, x):
+            out = x
+            for i in range(1):
+                out = self.blocks[i](out)
+            return out
+    class GradNet(Cell):
+        def __init__(self, net):
+            super(GradNet, self).__init__()
+            self.grad_net = Grad(net)
+
+        def construct(self, x, y):
+            out = self.grad_net(x)
+            if y > 3:
+                out = out * 2
+            return out
+
+    x = Tensor(np.ones((8, 8)).astype(np.float32))
+    y = Tensor(6)
+    net = Net()
+    grad_net = GradNet(net)
+    grad_net(x, y)
