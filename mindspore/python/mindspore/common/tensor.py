@@ -975,8 +975,6 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         """
         if self.has_init:
             self.init_data()
-        if self.dtype == mstype.bfloat16:
-            raise TypeError(f"For asnumpy, the type of tensor cannot be BFloat16, but got {self.dtype}.")
         return Tensor_.asnumpy(self)
 
     def numpy(self):
