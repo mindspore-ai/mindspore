@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@
 #include "transform/graph_ir/op_adapter_desc.h"
 #include "transform/graph_ir/op_adapter_util.h"
 #include "graph/operator.h"
+#include "graph/operator_factory.h"
 
 namespace ge {
 void Operator::InputRegister(char const *, char const *) {}
@@ -37,6 +38,16 @@ void Operator::OptionalInputRegister(char const *, char const *) {}
 void Operator::DynamicInputRegister(char const *, unsigned int, char const *, bool) {}
 void Operator::DynamicOutputRegister(char const *, unsigned int, char const *, bool) {}
 std::string Operator::GetOpType() const { return ""; }
+Operator OperatorFactory::CreateOperator(const std::string &operator_name, const std::string &operator_type) {
+  return Operator("", "");
+}
+Operator OperatorFactory::CreateOperator(const char_t *const operator_name, const char_t *const operator_type) {
+  return Operator("", "");
+}
+graphStatus OperatorFactory::GetOpsTypeList(std::vector<std::string> &all_ops) { return ge::SUCCESS; }
+graphStatus OperatorFactory::GetOpsTypeList(std::vector<AscendString> &all_ops) { return ge::SUCCESS; }
+bool OperatorFactory::IsExistOp(const std::string &operator_type) { return true; }
+bool OperatorFactory::IsExistOp(const char_t *const operator_type) { return true; }
 }  // namespace ge
 
 namespace mindspore {
@@ -52,7 +63,7 @@ static std::map<MeDataType, size_t> datatype_size_map = {
   {MeDataType::kNumberTypeUInt64, sizeof(uint64_t)},   {MeDataType::kNumberTypeBool, sizeof(bool)}};
 
 mindspore::HashMap<std::string, OpAdapterDescPtr> adpt_map_ = {
-  {kNameCustomOp, std::make_shared<OpAdapterDesc>(std::make_shared<OpAdapter<Operator>>())}};
+  {kNameCustomOp, std::make_shared<OpAdapterDesc>(std::make_shared<OpAdapter<Operator>>(""))}};
 }  // namespace
 
 AnfGraphPtr GetAnfGraph(uint32_t graph_id) { return nullptr; }

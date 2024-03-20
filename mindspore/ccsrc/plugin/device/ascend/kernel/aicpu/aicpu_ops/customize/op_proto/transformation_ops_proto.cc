@@ -4,8 +4,9 @@
  * limitations under the License.
  */
 
-#include "inc/ops/transformation_ops.h"
 #include <numeric>
+
+#include "op_proto/inc/transformation_ops.h"
 #include "register/op_impl_registry.h"
 #include "utils/util.h"
 #include "utils/op_const.h"
