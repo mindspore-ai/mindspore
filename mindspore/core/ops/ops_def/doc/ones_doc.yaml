@@ -9,7 +9,7 @@ ones:
             For argument `shape`, Tensor type input will be deprecated in the future version.
 
         Args:
-            shape (Union[tuple[int], List[int], int, Tensor]): The specified shape of output tensor. Only positive integer or
+            shape (Union[tuple[int], list[int], int, Tensor]): The specified shape of output tensor. Only positive integer or
                 tuple or Tensor containing positive integers are allowed. If it is a Tensor,
                 it must be a 0-D or 1-D Tensor with int32 or int64 dtypes.
             dtype (:class:`mindspore.dtype`): The specified type of output tensor. If `dtype` is ``None`` ,
