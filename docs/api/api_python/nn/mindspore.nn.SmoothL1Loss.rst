@@ -14,6 +14,8 @@ mindspore.nn.SmoothL1Loss
         |x_i - y_i| - 0.5 {\beta}, & \text{otherwise.}
         \end{cases}
 
+    其中，:math:`{\beta}` 代表阈值 `beta` 。
+
     当 `reduction` 不是设定为 `none` 时，计算如下：
 
     .. math::
@@ -22,8 +24,6 @@ mindspore.nn.SmoothL1Loss
             \operatorname{mean}(L_{i}), &  \text{if reduction} = \text{'mean';}\\
             \operatorname{sum}(L_{i}),  &  \text{if reduction} = \text{'sum'.}
         \end{cases}
-
-    其中，:math:`{\beta}` 代表阈值 `beta` 。
 
     .. note::
         - SmoothL1Loss可以看成 :class:`mindspore.nn.L1Loss` 的修改版本，也可以看成 :class:`mindspore.nn.L1Loss` 和 :class:`mindspore.ops.L2Loss` 的组合。
