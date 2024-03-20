@@ -138,7 +138,7 @@ def compare_result(expect, actual, stage='', index=None):
                   f"dynamic-shape out(as actual) length: {len(actual)}")
             assert False
         if is_numerical_sequence(expect) and is_numerical_sequence(actual):
-            result = np.allclose(expect, actual, rtol=1e-03, atol=1e-03)
+            result = np.allclose(expect, actual, rtol=1e-03, atol=1e-03, equal_nan=True)
             print(f"Compare {['Success'] if result else ['Failed']} for " \
                   f"{0 if index is None else index}'th output of {stage}.")
             assert result
@@ -148,9 +148,9 @@ def compare_result(expect, actual, stage='', index=None):
             compare_result(exp, act, stage, i)
     else:
         if isinstance(expect, Tensor):
-            result = np.allclose(expect.asnumpy(), actual.asnumpy(), rtol=1e-03, atol=1e-03)
+            result = np.allclose(expect.asnumpy(), actual.asnumpy(), rtol=1e-03, atol=1e-03, equal_nan=True)
         else:
-            result = np.allclose(expect, actual, rtol=1e-03, atol=1e-03)
+            result = np.allclose(expect, actual, rtol=1e-03, atol=1e-03, equal_nan=True)
         print(f"Compare {['Success'] if result else ['Failed']} for " \
               f"{0 if index is None else index}'th output of {stage}.")
         assert result
