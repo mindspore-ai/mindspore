@@ -235,7 +235,7 @@ kernel::LiteKernel *KernelRegistry::GetLiteKernel(const std::vector<Tensor *> &i
 
   auto *lite_kernel = nnacl::NNACLKernelRegistry(parameter, in_tensors, out_tensors, ctx, *key);
   if (lite_kernel == nullptr) {
-    MS_LOG(WARNING) << "Registry cpu kernel failed:  " << parameter->name_;
+    MS_LOG(INFO) << "Registry cpu kernel failed:  " << parameter->name_;
     return nullptr;
   }
   lite_kernel->set_registry_data_type(key->data_type);
@@ -271,7 +271,7 @@ int KernelRegistry::GetKernelExec(const std::vector<Tensor *> &in_tensors, const
       return RET_OK;
     }
   }
-  MS_LOG(WARNING) << "common cpu kernel registry failed";
+  MS_LOG(INFO) << "common cpu kernel registry failed";
   return RET_ERROR;
 }
 }  // namespace mindspore::lite

@@ -37,7 +37,7 @@ bool ConstFoldWithInferShape::Run(const FuncGraphPtr &func_graph) {
   MS_CHECK_TRUE_RET(const_fold_processor_ != nullptr, false);
   std::set<FuncGraphPtr> has_visited;
   if (HandleCommonFold(func_graph, &has_visited) != lite::RET_OK) {
-    MS_LOG(WARNING) << "do constant fold pass failed,";
+    MS_LOG(INFO) << "do constant fold pass failed,";
     return false;
   }
   if (HandleSpecialFold(func_graph) != lite::RET_OK) {
@@ -76,7 +76,7 @@ int ConstFoldWithInferShape::HandleCommonFold(const FuncGraphPtr &func_graph, st
       continue;
     }
     if (const_fold_processor_->DoConstantFold(func_graph, cnode) != lite::RET_OK) {
-      MS_LOG(WARNING) << "do constant fold failed.";
+      MS_LOG(INFO) << "do constant fold failed.";
       return lite::RET_ERROR;
     }
   }
