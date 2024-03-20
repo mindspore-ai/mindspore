@@ -174,6 +174,11 @@ FuncGraphPtr BpropFuncGraphManager::GetFuncGraphBpropGraph(const FuncGraphPtr &f
   func_graph_to_bprop_[forward_graph] = grad_graph;
   return grad_graph;
 }
+
+void BpropFuncGraphManager::Clear() {
+  prim_to_bprop_.clear();
+  func_graph_to_bprop_.clear();
+}
 }  // namespace grad
 }  // namespace pijit
 }  // namespace mindspore
