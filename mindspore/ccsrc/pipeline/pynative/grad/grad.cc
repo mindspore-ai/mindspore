@@ -1001,7 +1001,7 @@ py::object GradExecutor::RunGrad(const prim::GradOperationPtr &grad, const py::o
   // For async, top can not be change when run SetForwardLastNodeInfo; Change top cell after sync
   auto already_run_top_cell = already_run_top_cell_.at(top_cell()->already_run_cell_id());
   if (!already_run_top_cell->need_compile_graph()) {
-    MS_LOG(DEBUG) << "No need compile graph";
+    MS_LOG(DEBUG) << "No need compile graph, graph is ir_grad " << top_cell()->is_ir_grad();
     // If no need compile, we can clear construct bprop queue.
     (void)need_gc_top_cell_list_.emplace_back(top_cell());
     ClearBpropTask();
@@ -1011,7 +1011,7 @@ py::object GradExecutor::RunGrad(const prim::GradOperationPtr &grad, const py::o
     top_cell()->UpdateTopCellInfo(false, false, false);
     return RunGradGraph();
   }
-  MS_LOG(DEBUG) << "Need compile graph";
+  MS_LOG(DEBUG) << "Need compile graph, graph is ir_grad " << top_cell()->is_ir_grad();
   WaitBpropTask();
   set_top_cell(already_run_top_cell);
   AsyncClearTopCell();
@@ -1541,7 +1541,8 @@ void GradExecutor::SwitchTopCell() {
   // If inner graph compile graph, outer must be compile
   if (top_cell()->vm_compile()) {
     outer_top_cell->set_force_top_cell_compile(true);
-    outer_top_cell->set_use_dynamic_shape_process(top_cell()->use_dynamic_shape_process());
+    outer_top_cell->set_use_dynamic_shape_process(outer_top_cell->use_dynamic_shape_process() ||
+                                                  top_cell()->use_dynamic_shape_process());
   }
   ResumeParamGradInfo(outer_top_cell);
   set_top_cell(outer_top_cell);
