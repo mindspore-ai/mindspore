@@ -89,7 +89,7 @@ static std::vector<int64_t> EnumerateArray(int64_t base_n, size_t length = 100) 
   }
   std::vector<int64_t> array(length);
   for (size_t i = 1; i < length + 1; ++i) {
-    array[i - 1] = base_n * i;
+    array[i - 1] = base_n * SizeToLong(i);
   }
   return array;
 }
@@ -99,8 +99,9 @@ bool SolveCombination(const Shape &src_shape_arr, size_t src_index,
                       std::vector<int64_t> *candidates_values) {
   bool is_last = (enum_numbers.size() - offset - 1) == 0;
   if (src_index < src_shape_arr.size()) {
-    for (size_t factor = 1; factor < 8; ++factor) {
-      int64_t preferred_choose = factor * src_shape_arr[src_index];
+    constexpr size_t MAX_DIM = 8;
+    for (size_t factor = 1; factor < MAX_DIM; ++factor) {
+      int64_t preferred_choose = SizeToLong(factor) * src_shape_arr[src_index];
       if (std::find(enum_numbers[offset].begin(), enum_numbers[offset].end(), preferred_choose) !=
             enum_numbers[offset].end() &&
           preferred_choose <= target && target % preferred_choose == 0) {
@@ -169,7 +170,7 @@ void IntroduceConstraints(const Shape &expected_tgt_shape, Shape *tgt_shape) {
     if (tgt_shape->at(i) > expected_tgt_shape[i]) {
       if (tgt_shape->at(i) % expected_tgt_shape[i] == 0) {
         int64_t f = tgt_shape->at(i) / expected_tgt_shape[i];
-        for (int32_t j = tgt_shape->size() - 1; j >= 0; --j) {
+        for (int32_t j = static_cast<int32_t>(tgt_shape->size()) - 1; j >= 0; --j) {
           if (j == static_cast<int32_t>(i) || index.find(j) != index.end()) {
             continue;
           }
@@ -183,7 +184,7 @@ void IntroduceConstraints(const Shape &expected_tgt_shape, Shape *tgt_shape) {
     } else {
       if (expected_tgt_shape[i] % tgt_shape->at(i) == 0) {
         int64_t f = expected_tgt_shape[i] / tgt_shape->at(i);
-        for (int32_t j = tgt_shape->size() - 1; j >= 0; --j) {
+        for (int32_t j = static_cast<int32_t>(tgt_shape->size()) - 1; j >= 0; --j) {
           if (j == static_cast<int32_t>(i) || index.find(j) != index.end()) {
             continue;
           }
@@ -200,7 +201,7 @@ void IntroduceConstraints(const Shape &expected_tgt_shape, Shape *tgt_shape) {
         (*tgt_shape)[i] = expected_tgt_shape[i];
       } else {
         int64_t target_dim = expected_tgt_shape[i];  // 1024
-        for (int32_t j = tgt_shape->size() - 1; j >= 0; --j) {
+        for (int32_t j = static_cast<int32_t>(tgt_shape->size()) - 1; j >= 0; --j) {
           if (index.find(j) != index.end()) {
             continue;
           }
@@ -284,7 +285,7 @@ bool BackwardMatching(const Shape &expected_tgt_shape, Shape *tgt_shape, const A
   // Borrow the size from right dim.
   // Then borrow the size from left dim.
   int64_t ori_tensor_size = GetTensorSize(*tgt_shape);
-  int64_t dst_size = tgt_shape->size();
+  int64_t dst_size = SizeToLong(tgt_shape->size());
   std::set<size_t> fix_index;
   for (size_t i = 0; i < expected_tgt_shape.size(); ++i) {
     if (expected_tgt_shape[i] != -1) {
@@ -429,7 +430,7 @@ Status LayoutTransfer::CalculateToTensorShapeUsingEnumeration(const Shape &from_
      * from: c1, -1(32), c3, c4; to: c1/2, -1(32)*c3, c4
      */
     auto iter = std::find(to_tsr_shape->begin(), to_tsr_shape->end(), dyn_dim_val);
-    size_t index = iter - to_tsr_shape->begin();
+    size_t index = static_cast<size_t>(iter - to_tsr_shape->begin());
     if (left_size % factors.GetDimByIdx(index) != 0) {
       MS_LOG(ERROR) << "Generate static shape failed, the shape cannot be divided by factor. dim=" << left_size
                     << ", factor=" << factors.GetDimByIdx(index);
@@ -481,7 +482,6 @@ Status LayoutTransfer::CalculateToTensorShapeUsingEnumeration(const Shape &from_
 Status LayoutTransfer::CalculateToTensorShape(const Shape &from_shape, const Shape &origin_to_shape,
                                               const Array &to_in_factors, Shape *to_shape) {
   // Use forward and backward matching first, if failed, turn to enumeration.
-  // FIXME: record to_layout change
   bool flag_forward_match = ForwardMatching(from_shape, origin_to_shape, to_shape, to_in_factors);
   if (!flag_forward_match && !BackwardMatching(origin_to_shape, to_shape, to_in_factors)) {
     MS_LOG(DEBUG) << "Backward matching failed.";
@@ -575,7 +575,8 @@ Status LayoutTransfer::AssembleStaticTensorShape(const TensorLayout &from_in, co
     const Shape &f_in_tensor_shape = from_in.tensor_shape().array();
     auto last_dyn_dim_iter = std::find(f_in_tensor_shape.rbegin(), f_in_tensor_shape.rend(), -1);
     if (last_dyn_dim_iter != f_in_tensor_shape.rend()) {
-      size_t last_dyn_dim = f_in_tensor_shape.size() - (last_dyn_dim_iter - f_in_tensor_shape.rbegin()) - 1;
+      size_t last_dyn_dim =
+        f_in_tensor_shape.size() - static_cast<size_t>(last_dyn_dim_iter - f_in_tensor_shape.rbegin()) - 1;
       new_from_shape[static_cast<size_t>(last_dyn_dim)] *= acc_scalar;
     }
   }

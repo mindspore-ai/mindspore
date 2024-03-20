@@ -358,7 +358,6 @@ Status ReshapeInfo::ComputeReplaceOp() {
     }
 
     RankList dev_list = stage_device_list();
-    // TensorRedistribution tensor_redistribution(!is_generating_costs_, true);
     TensorRedistributionPtr tensor_redistribution =
       this->CreateReshapeTensorRedistribution(!is_generating_costs_, true);
     tensor_redistribution->SetPreAndNextCNode(reshape_input, this->cnode_);

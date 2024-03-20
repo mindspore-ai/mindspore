@@ -40,11 +40,11 @@ void get_prime_table(Shape *prime_arr, const size_t arr_size) {
       prime_arr->emplace_back(i);
     }
     for (size_t j = 0;; j++) {
-      if (j >= prime_arr->size() || prime_arr->at(j) * i > arr_size) {
+      if (j >= prime_arr->size() || LongToSize(prime_arr->at(j)) * i > arr_size) {
         break;
       }
       is_composite_num[prime_arr->at(j) * i] = true;
-      if (i % prime_arr->at(j) == 0) {
+      if (i % LongToSize(prime_arr->at(j)) == 0) {
         break;
       }
     }
