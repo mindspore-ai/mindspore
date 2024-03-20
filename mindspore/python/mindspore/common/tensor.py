@@ -128,11 +128,10 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         dtype (:class:`mindspore.dtype`): Used to indicate the data type of the output Tensor. The argument should
             be defined in `mindspore.dtype`. If it is ``None`` , the data type of the output Tensor will be the same
             as the `input_data`. Default: ``None`` .
-        shape (Union[tuple, list, int]): Used to indicate the shape of the output Tensor. The argument should be
-            a list of integers, a tuple of integers or an integer. If `input_data` is available,
-            `shape` doesn't need to be set. If None in shape, a tensor of dynamic shape is created, `input_data`
-            doesn't need to be set; if None not in shape, a tensor of static shape is created, `input_data` or `init`
-            must be set. Default: ``None`` .
+        shape (Union[tuple, list, int, :class:`mindspore.Symbol`]): Used to indicate the shape of the output Tensor.
+            If `input_data` is available, `shape` doesn't need to be set. If ``None`` or `Symbol` exists in `shape` ,
+            a tensor of dynamic shape is created, `input_data` doesn't need to be set; if only integers exist in
+            `shape`, a tensor of static shape is created, `input_data` or `init` must be set. Default: ``None`` .
         init (Initializer): The information of init data.
             `init` is used for delayed initialization in parallel mode, when using init, `dtype` and `shape` must be
             set. Default: ``None`` .
