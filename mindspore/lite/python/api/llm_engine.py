@@ -20,7 +20,7 @@ import sys
 import threading
 from enum import Enum
 from typing import Union, List, Tuple, Dict
-from mindspore_lite._checkparam import check_isinstance
+from mindspore_lite._checkparam import check_isinstance, check_uint32_number_range, check_uint64_number_range
 from mindspore_lite.tensor import Tensor
 from mindspore_lite.lib._c_lite_wrapper import LLMEngine_, LLMReq_, LLMRole_, StatusCode, LLMClusterInfo_
 from mindspore_lite.model import set_env
@@ -34,9 +34,9 @@ class LLMReq:
     """
 
     def __init__(self, prompt_cluster_id: int, req_id: int, prompt_length: int):
-        check_isinstance("prompt_cluster_id", prompt_cluster_id, int)
-        check_isinstance("req_id", req_id, int)
-        check_isinstance("prompt_length", prompt_length, int)
+        check_uint64_number_range("prompt_cluster_id", prompt_cluster_id)
+        check_uint64_number_range("req_id", req_id)
+        check_uint64_number_range("prompt_length", prompt_length)
         self.llm_request_ = LLMReq_()
         self.llm_request_.prompt_cluster_id = prompt_cluster_id
         self.llm_request_.req_id = req_id
@@ -60,7 +60,7 @@ class LLMReq:
     @req_id.setter
     def req_id(self, req_id: int):
         """Set request id of this inference task"""
-        check_isinstance("req_id", req_id, int)
+        check_uint64_number_range("req_id", req_id)
         self.llm_request_.req_id = req_id
 
     @property
@@ -71,7 +71,7 @@ class LLMReq:
     @prompt_length.setter
     def prompt_length(self, prompt_length: int):
         """Get prompt length of this inference task"""
-        check_isinstance("prompt_length", prompt_length, int)
+        check_uint64_number_range("prompt_length", prompt_length)
         self.llm_request_.prompt_length = prompt_length
 
     @property
@@ -82,7 +82,7 @@ class LLMReq:
     @prompt_cluster_id.setter
     def prompt_cluster_id(self, prompt_cluster_id: int):
         """Set prompt cluster id of this inference task in LLMEngine"""
-        check_isinstance("prompt_cluster_id", prompt_cluster_id, int)
+        check_uint64_number_range("prompt_cluster_id", prompt_cluster_id)
         self.llm_request_.prompt_cluster_id = prompt_cluster_id
 
     @property
@@ -93,7 +93,7 @@ class LLMReq:
     @decoder_cluster_id.setter
     def decoder_cluster_id(self, decoder_cluster_id: int):
         """Set decoder cluster id of this inference task in LLMEngine"""
-        check_isinstance("decoder_cluster_id", decoder_cluster_id, int)
+        check_uint64_number_range("decoder_cluster_id", decoder_cluster_id)
         self.llm_request_.decoder_cluster_id = decoder_cluster_id
 
     @property
@@ -104,7 +104,7 @@ class LLMReq:
     @prefix_id.setter
     def prefix_id(self, prefix_id: int):
         """Set decoder prefix id of this inference task in LLMEngine"""
-        check_isinstance("prefix_id", prefix_id, int)
+        check_uint64_number_range("prefix_id", prefix_id)
         self.llm_request_.prefix_id = prefix_id
 
 
@@ -306,7 +306,7 @@ class LLMClusterInfo:
         >>> llm_engine.link_clusters([cluster])
     """
     def __init__(self, remote_role: LLMRole, remote_cluster_id: int):
-        check_isinstance("remote_cluster_id", remote_cluster_id, int)
+        check_uint64_number_range("remote_cluster_id", remote_cluster_id)
         check_isinstance("remote_role", remote_role, LLMRole)
         self.llm_cluster_ = LLMClusterInfo_()
         self.llm_cluster_.remote_cluster_id = remote_cluster_id
@@ -334,7 +334,7 @@ class LLMClusterInfo:
     @remote_cluster_id.setter
     def remote_cluster_id(self, remote_cluster_id):
         """Set remote cluster id of this LLMClusterInfo object"""
-        check_isinstance("remote_cluster_id", remote_cluster_id, int)
+        check_uint64_number_range("remote_cluster_id", remote_cluster_id)
         self.llm_cluster_.remote_cluster_id = remote_cluster_id
 
     def append_local_ip_info(self, address):
@@ -481,6 +481,7 @@ class LLMModel:
     def __init__(self, model_obj, batch_mode):
         self.model_ = model_obj  # inited by LLMEngine
         self.batch_mode_ = batch_mode
+        self.inited_ = False
 
     def predict(self, llm_req: Union[LLMReq, List[LLMReq], Tuple[LLMReq]], inputs: Union[Tuple[Tensor], List[Tensor]]):
         """
@@ -508,7 +509,7 @@ class LLMModel:
             LLMEngineFinalized: LLMEngine has finalized.
             LLMParamInvalid: Parameters invalid.
         """
-        if not self.model_:
+        if not self.inited_:
             raise RuntimeError(f"LLMEngine is not inited or init failed")
         if not isinstance(inputs, (tuple, list)):
             raise TypeError(f"inputs must be list/tuple of Tensor, but got {type(inputs)}.")
@@ -569,7 +570,7 @@ class LLMModel:
                 by calling method LLMEngine.complete_request.
             LLMParamInvalid: Parameters invalid.
         """
-        if not self.model_:
+        if not self.inited_:
             raise RuntimeError(f"LLMEngine is not inited or init failed")
         if self.batch_mode_ != "manual":
             raise RuntimeError(f"LLMEngine.pull_kv is only support when batch_mode is \"manual\"")
@@ -592,13 +593,13 @@ class LLMModel:
             RuntimeError: Failed to merge KVCache.
             LLMParamInvalid: Parameters invalid.
         """
-        if not self.model_:
+        if not self.inited_:
             raise RuntimeError(f"LLMEngine is not inited or init failed")
         if self.batch_mode_ != "manual":
             raise RuntimeError(f"LLMEngine.merge_kv is only support when batch_mode is \"manual\"")
         check_isinstance("llm_req", llm_req, LLMReq)
-        check_isinstance("batch_index", batch_index, int)
-        check_isinstance("batch_id", batch_id, int)
+        check_uint32_number_range("batch_index", batch_index)
+        check_uint32_number_range("batch_id", batch_id)
         # pylint: disable=protected-access
         status = self.model_.merge_kv(llm_req.llm_request_, batch_index, batch_id)
         _handle_llm_status(status, "merge_kv", "llm_req " + _llm_req_str(llm_req))
@@ -619,7 +620,7 @@ class LLMModel:
             RuntimeError: this LLMEngine object has not been inited.
             LLMParamInvalid: Parameters invalid.
         """
-        if not self.model_:
+        if not self.inited_:
             raise RuntimeError(f"LLMEngine is not inited or init failed")
         if not isinstance(inputs, (tuple, list)):
             raise TypeError(f"inputs must be list/tuple of Tensor, but got {type(inputs)}.")
@@ -646,7 +647,7 @@ class LLMModel:
             RuntimeError: this LLMEngine object has not been inited.
             LLMParamInvalid: Parameters invalid.
         """
-        if not self.model_:
+        if not self.inited_:
             raise RuntimeError(f"LLMEngine is not inited or init failed")
         check_isinstance("llm_req", llm_req, LLMReq)
         # pylint: disable=protected-access
@@ -671,7 +672,7 @@ class LLMModel:
             >>> for i in range(len(inputs)):
             ...     print(f"Input name {inputs[i].name}, dtype {inputs[i].dtype}, shape: {inputs[i].shape}")
         """
-        if not self.model_:
+        if not self.inited_:
             raise RuntimeError(f"LLMEngine is not inited or init failed")
         inputs = []
         for _tensor in self.model_.get_inputs():
@@ -712,7 +713,7 @@ class LLMEngine:
 
     def __init__(self, role: LLMRole, cluster_id: int, batch_mode="auto"):
         check_isinstance("role", role, LLMRole)
-        check_isinstance("cluster_id", cluster_id, int)
+        check_uint64_number_range("cluster_id", cluster_id)
         check_isinstance("batch_mode", batch_mode, str)
         if batch_mode != "auto" and batch_mode != "manual":
             raise ValueError(f"batch_mode should be str \"auto\" or \"manual\", but got {batch_mode}")
@@ -807,6 +808,9 @@ class LLMEngine:
         """
         if self.inited_:
             raise RuntimeError(f"LLMEngine has been inited")
+        if not self.models_:
+            raise RuntimeError(f"At least one group of models need to be added through LLMEngine.add_model before call"
+                               f" LLMEngine.init.")
         check_isinstance("options", options, dict)
         for key, value in options.items():
             if not isinstance(key, str):
@@ -822,6 +826,8 @@ class LLMEngine:
             raise RuntimeError(f"Failed to init LLMEngine, role {role_str}, cluster id {self.cluster_id},"
                                f" options {options}")
         self.inited_ = True
+        for model in self.models_:
+            model.inited_ = True
 
     def complete_request(self, llm_req: LLMReq):
         """

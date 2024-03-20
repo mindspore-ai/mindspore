@@ -116,6 +116,13 @@ def test_lite_llm_engine_llm_engine_add_model_model_paths_type_check():
         llm_engine.add_model(["123.mindir"], {}, None)
     assert "model_paths 123.mindir at index 0 does not exist!" in str(raise_info.value)
 
+    with open("llm_tmp.mindir", "w") as fp:
+        fp.write("test mindir")
+    with pytest.raises(RuntimeError) as raise_info:
+        llm_engine = mslite.LLMEngine(mslite.LLMRole.Prompt, 0, "manual")
+        llm_engine.add_model(["llm_tmp.mindir"], {"123": "456"})
+    assert "Failed to add_model" in str(raise_info.value)
+
 
 def test_lite_llm_engine_llm_engine_add_model_options_type_check():
     with open("llm_tmp.mindir", "w") as fp:
@@ -129,6 +136,10 @@ def test_lite_llm_engine_llm_engine_add_model_options_type_check():
         llm_engine = mslite.LLMEngine(mslite.LLMRole.Prompt, 0, "manual")
         llm_engine.add_model(["llm_tmp.mindir"], {123: "456"}, None)
     assert "options key must be str, but got" in str(raise_info.value)
+    with pytest.raises(TypeError) as raise_info:
+        llm_engine = mslite.LLMEngine(mslite.LLMRole.Prompt, 0, "manual")
+        llm_engine.add_model(["llm_tmp.mindir"], {"123": 456}, None)
+    assert "options value must be str, but got" in str(raise_info.value)
     with pytest.raises(TypeError) as raise_info:
         llm_engine = mslite.LLMEngine(mslite.LLMRole.Prompt, 0, "manual")
         llm_engine.add_model(["llm_tmp.mindir"], {"123": 456}, None)
@@ -149,16 +160,25 @@ def test_lite_llm_engine_llm_engine_add_model_postprocess_model_type_check():
 
 
 def test_lite_llm_engine_llm_engine_init_options_type_check():
+    with open("llm_tmp.mindir", "w") as fp:
+        fp.write("test mindir")
+    with pytest.raises(RuntimeError) as raise_info:
+        llm_engine = mslite.LLMEngine(mslite.LLMRole.Prompt, 0, "manual")
+        llm_engine.init({"123": "456"})
+    assert "At least one group of models need to be added through LLMEngine.add_model before" in str(raise_info.value)
     with pytest.raises(TypeError) as raise_info:
         llm_engine = mslite.LLMEngine(mslite.LLMRole.Prompt, 0, "manual")
+        llm_engine.add_model(["llm_tmp.mindir"], ["123", "456"])
         llm_engine.init(123)
     assert "options must be dict, but got" in str(raise_info.value)
     with pytest.raises(TypeError) as raise_info:
         llm_engine = mslite.LLMEngine(mslite.LLMRole.Prompt, 0, "manual")
+        llm_engine.add_model(["llm_tmp.mindir"], {123: "456"})
         llm_engine.init({123: "456"})
     assert "options key must be str, but got" in str(raise_info.value)
     with pytest.raises(TypeError) as raise_info:
         llm_engine = mslite.LLMEngine(mslite.LLMRole.Prompt, 0, "manual")
+        llm_engine.add_model(["llm_tmp.mindir"], {"123": 456})
         llm_engine.init({"123": 456})
     assert "options value must be str, but got" in str(raise_info.value)
 
@@ -241,24 +261,34 @@ def test_lite_llm_engine_llm_model_predict_check():
     llm_req = mslite.LLMReq(cluster_id, req_id, prompt_length)
     inputs = [mslite.Tensor(np.ones((3, 224)))]
 
+    with pytest.raises(RuntimeError) as raise_info:
+        llm_model = mslite.llm_engine.LLMModel("fake_model_obj", "manual")
+        llm_model.predict([llm_req], inputs)
+    assert "LLMEngine is not inited or init failed" in str(raise_info.value)
+
     with pytest.raises(TypeError) as raise_info:
         llm_model = mslite.llm_engine.LLMModel("fake_model_obj", "manual")
+        llm_model.inited_ = True
         llm_model.predict(llm_req, inputs)
     assert "lm_req must be list/tuple of LLMReq when batch_mode is \"manual\"" in str(raise_info.value)
     with pytest.raises(TypeError) as raise_info:
         llm_model = mslite.llm_engine.LLMModel("fake_model_obj", "manual")
+        llm_model.inited_ = True
         llm_model.predict(["123"], inputs)
     assert "lm_req element must be LLMReq when batch_mode is \"manual\"," in str(raise_info.value)
     with pytest.raises(TypeError) as raise_info:
         llm_model = mslite.llm_engine.LLMModel("fake_model_obj", "auto")
+        llm_model.inited_ = True
         llm_model.predict([llm_req], inputs)
     assert "lm_req must be LLMReq when batch_mode is \"auto\", but got" in str(raise_info.value)
     with pytest.raises(TypeError) as raise_info:
         llm_model = mslite.llm_engine.LLMModel("fake_model_obj", "manual")
+        llm_model.inited_ = True
         llm_model.predict([llm_req], inputs[0])
     assert "inputs must be list/tuple of Tensor, but got " in str(raise_info.value)
     with pytest.raises(TypeError) as raise_info:
         llm_model = mslite.llm_engine.LLMModel("fake_model_obj", "manual")
+        llm_model.inited_ = True
         llm_model.predict([llm_req], ["1231"])
     assert "inputs element must be Tensor, but got" in str(raise_info.value)
 
@@ -270,10 +300,12 @@ def test_lite_llm_engine_llm_model_pull_kv_check():
     llm_req = mslite.LLMReq(cluster_id, req_id, prompt_length)
     with pytest.raises(TypeError) as raise_info:
         llm_model = mslite.llm_engine.LLMModel("fake_model_obj", "manual")
+        llm_model.inited_ = True
         llm_model.pull_kv([llm_req])
     assert "llm_req must be LLMReq, but got" in str(raise_info.value)
     with pytest.raises(RuntimeError) as raise_info:
         llm_model = mslite.llm_engine.LLMModel("fake_model_obj", "auto")
+        llm_model.inited_ = True
         llm_model.pull_kv(llm_req)
     assert "LLMEngine.pull_kv is only support when batch_mode is \"manual\"" in str(raise_info.value)
 
@@ -285,21 +317,37 @@ def test_lite_llm_engine_llm_model_merge_kv_check():
     llm_req = mslite.LLMReq(cluster_id, req_id, prompt_length)
     with pytest.raises(TypeError) as raise_info:
         llm_model = mslite.llm_engine.LLMModel("fake_model_obj", "manual")
+        llm_model.inited_ = True
         llm_model.merge_kv([llm_req], 0, 0)
     assert "llm_req must be LLMReq, but got" in str(raise_info.value)
     with pytest.raises(TypeError) as raise_info:
         llm_model = mslite.llm_engine.LLMModel("fake_model_obj", "manual")
+        llm_model.inited_ = True
         llm_model.merge_kv(llm_req, "0", 0)
     assert "batch_index must be int, but got" in str(raise_info.value)
     with pytest.raises(TypeError) as raise_info:
         llm_model = mslite.llm_engine.LLMModel("fake_model_obj", "manual")
+        llm_model.inited_ = True
         llm_model.merge_kv(llm_req, 0, "0")
     assert "batch_id must be int, but got" in str(raise_info.value)
 
     with pytest.raises(RuntimeError) as raise_info:
         llm_model = mslite.llm_engine.LLMModel("fake_model_obj", "auto")
+        llm_model.inited_ = True
         llm_model.merge_kv(llm_req, 0, 0)
     assert "LLMEngine.merge_kv is only support when batch_mode is \"manual\"" in str(raise_info.value)
+
+    with pytest.raises(ValueError) as raise_info:
+        llm_model = mslite.llm_engine.LLMModel("fake_model_obj", "manual")
+        llm_model.inited_ = True
+        llm_model.merge_kv(llm_req, -1, 0)
+    assert "batch_index value should be in range [0, UINT32_MAX], but got" in str(raise_info.value)
+
+    with pytest.raises(ValueError) as raise_info:
+        llm_model = mslite.llm_engine.LLMModel("fake_model_obj", "manual")
+        llm_model.inited_ = True
+        llm_model.merge_kv(llm_req, 0, -1)
+    assert "batch_id value should be in range [0, UINT32_MAX], but got" in str(raise_info.value)
 
 
 def test_lite_llm_engine_llm_model_preload_prompt_prefix_check():
@@ -310,14 +358,17 @@ def test_lite_llm_engine_llm_model_preload_prompt_prefix_check():
     inputs = [mslite.Tensor(np.ones((3, 224)))]
     with pytest.raises(TypeError) as raise_info:
         llm_model = mslite.llm_engine.LLMModel("fake_model_obj", "manual")
+        llm_model.inited_ = True
         llm_model.preload_prompt_prefix([llm_req], inputs)
     assert "llm_req must be LLMReq, but got" in str(raise_info.value)
     with pytest.raises(TypeError) as raise_info:
         llm_model = mslite.llm_engine.LLMModel("fake_model_obj", "manul")
+        llm_model.inited_ = True
         llm_model.preload_prompt_prefix(llm_req, inputs[0])
     assert "inputs must be list/tuple of Tensor, but got " in str(raise_info.value)
     with pytest.raises(TypeError) as raise_info:
         llm_model = mslite.llm_engine.LLMModel("fake_model_obj", "manul")
+        llm_model.inited_ = True
         llm_model.preload_prompt_prefix(llm_req, ["1231"])
     assert "inputs element must be Tensor, but got" in str(raise_info.value)
 
@@ -329,6 +380,7 @@ def test_lite_llm_engine_llm_model_release_prompt_prefix_check():
     llm_req = mslite.LLMReq(cluster_id, req_id, prompt_length)
     with pytest.raises(TypeError) as raise_info:
         llm_model = mslite.llm_engine.LLMModel("fake_model_obj", "manual")
+        llm_model.inited_ = True
         llm_model.release_prompt_prefix([llm_req])
     assert "llm_req must be LLMReq, but got" in str(raise_info.value)
 
@@ -340,3 +392,15 @@ def test_lite_llm_engine_llm_req_parameter_type_check():
         llm_req = mslite.LLMReq(0, 0, 0)
         llm_req.decoder_cluster_id = "123"
     assert "decoder_cluster_id must be int, but got" in str(raise_info.value)
+
+
+def test_lite_llm_engine_llm_req_parameter_num_range_check():
+    with pytest.raises(ValueError) as raise_info:
+        llm_req = mslite.LLMReq(0, 0, 0)
+        llm_req.decoder_cluster_id = -1
+    assert "decoder_cluster_id value should be in range [0, UINT64_MAX], but got" in str(raise_info.value)
+
+    with pytest.raises(ValueError) as raise_info:
+        llm_req = mslite.LLMReq(0, 0, 0)
+        llm_req.decoder_cluster_id = pow(2, 64)
+    assert "decoder_cluster_id value should be in range [0, UINT64_MAX], but got" in str(raise_info.value)
