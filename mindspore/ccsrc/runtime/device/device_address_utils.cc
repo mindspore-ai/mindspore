@@ -1108,6 +1108,32 @@ void DeviceAddressUtils::CreateOutputTensorAddress(const DeviceContext *device_c
   }
 }
 
+void DeviceAddressUtils::CreateOutputTensorAddress(const DeviceContext *device_context, size_t stream_id,
+                                                   const tensor::TensorPtr &output_tensor, size_t size) {
+  MS_EXCEPTION_IF_NULL(device_context);
+  MS_EXCEPTION_IF_NULL(output_tensor);
+  const auto &format = GetFormatByTensorShape(device_context, output_tensor->shape());
+  ShapeVector real_shape{static_cast<int64_t>(size / GetTypeByte(TypeIdToType(output_tensor->data_type())))};
+  kernel::KernelTensorPtr kernel_tensor;
+  if (device_context->GetDeviceType() == device::DeviceType::kAscend) {
+    // Not transmitting host shape information under Ascend for better performance.
+    kernel_tensor = std::make_shared<kernel::KernelTensor>(
+      nullptr, size, format, output_tensor->data_type(), real_shape, device_context->device_context_key().device_name_,
+      device_context->device_context_key().device_id_);
+  } else {
+    kernel_tensor = std::make_shared<kernel::KernelTensor>(
+      std::make_shared<abstract::TensorShape>(real_shape), std::make_shared<TensorType>(output_tensor->Dtype()),
+      nullptr, nullptr, size, kernel::GetFormatFromEnumToStr(format), output_tensor->data_type(), real_shape,
+      device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+  }
+  MS_EXCEPTION_IF_NULL(kernel_tensor);
+  kernel_tensor->set_stream_id(stream_id);
+  device::DeviceAddressPtr device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
+  output_tensor->set_device_address(device_address);
+  MS_LOG(DEBUG) << "Create output tensor device address " << device_address << "the output, Shape: " << real_shape
+                << ", Type: " << TypeIdToType(output_tensor->data_type())->ToString();
+}
+
 device::DeviceAddressPtr DeviceAddressUtils::CreateDeviceAddress(const DeviceContext *device_context,
                                                                  const tensor::TensorPtr &tensor,
                                                                  const ShapeVector &real_shape,

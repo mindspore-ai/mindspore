@@ -46,6 +46,32 @@
     }                                                                                                               \
   } while (false)
 
+#define LAUNCH_ACLNN_SYNC(aclnn_api, device_context, stream_id, ...)                                                \
+  [](const std::string &aclnn_name, const device::DeviceContext *device_context, size_t real_stream_id,             \
+     auto &... args) -> auto {                                                                                      \
+    runtime::ProfilerRecorder aclnn_profiler(runtime::ProfilerModule::kPynative,                                    \
+                                             runtime::ProfilerEvent::kPyBoostLaunchAclnn, aclnn_name, false);       \
+    auto stream_ptr = device_context->device_res_manager_->GetStream(real_stream_id);                               \
+    auto return_values = GEN_EXECUTOR_CUST(aclnn_name, args...);                                                    \
+    auto ws_size = std::get<0>(return_values);                                                                      \
+    auto executor_handle = std::get<1>(return_values);                                                              \
+    auto &all_acl_tensor = std::get<2>(return_values);                                                              \
+    if (ws_size == 0) {                                                                                             \
+      RUN_OP_API_SYNC(aclnn_name, nullptr, 0, executor_handle, stream_ptr);                                         \
+    } else {                                                                                                        \
+      auto workspace_device_address =                                                                               \
+        runtime::DeviceAddressUtils::CreateWorkspaceAddress(device_context, real_stream_id, ws_size);               \
+      RUN_OP_API_SYNC(aclnn_name, workspace_device_address->GetMutablePtr(), ws_size, executor_handle, stream_ptr); \
+    }                                                                                                               \
+    static auto sync = MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE);               \
+    if (sync) {                                                                                                     \
+      if (!device::ascend::AscendStreamMng::GetInstance().SyncAllStreams()) {                                       \
+        MS_LOG(EXCEPTION) << "SyncStream failed for op " << aclnn_name;                                             \
+      }                                                                                                             \
+    }                                                                                                               \
+    return &all_acl_tensor;                                                                                         \
+  }                                                                                                                 \
+  (#aclnn_api, device_context, stream_id, __VA_ARGS__)
 namespace mindspore {
 namespace kernel {
 namespace pyboost {

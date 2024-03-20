@@ -322,6 +322,9 @@ void PyBoostUtils::LaunchKernel(const PrimitivePtr &primitive, const DeviceConte
   if (!kernel_mod->Launch(input_address_info.first, workspace_kernel_tensors, output_address_info.first, stream_ptr)) {
     MS_LOG(EXCEPTION) << "Launch kernel failed, name: " << real_name;
   }
+  if (kernel_mod->IsNeedUpdateOutputShapeAndSize()) {
+    kernel_mod->UpdateOutputShapeAndSize(input_address_info.first, output_address_info.first);
+  }
   MS_LOG(DEBUG) << real_name << " Launch end";
 }
 
