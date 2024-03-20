@@ -84,30 +84,44 @@ NodePtrList IgammaBpropExpander(BpropBuilder *ib) {
   return {r1, r2};
 }
 
+inline NodePtr SelectScalar(BpropBuilder *ib, const NodePtr &cond, const NodePtr &x_scalar, const NodePtr &y,
+                            const NodePtr &input0, const NodePtr &input1) {
+  if (ib->IsGraphMode() && !(IsDynamic(ib->GetShape(input0)) || IsDynamic(ib->GetShape(input1)))) {
+    // Notice: This is just a temporary evasion! In order to avoid a fusion problem of the
+    // MaskedFill operator in the static shape of graph mode.
+    // this code will be deleted after the problem is fixed.
+    auto x = ib->Emit("FillV2", {ib->Shape(y), x_scalar});
+    return ib->Select(cond, x, y);
+  } else {
+    return ib->Emit("MaskedFill", {y, cond, x_scalar});
+  }
+}
+
 NodePtrList MinimumMaximumGrad(BpropBuilder *ib, const NodePtr &x, const NodePtr &y, const NodePtr &dout,
                                bool is_minimum) {
-  auto half_ratio = ib->Emit("FillV2", {ib->Shape(dout), ib->Tensor(2, ib->GetDtype(dout))});
-  auto half_dout = ib->Div(dout, half_ratio);
-  NodePtr equal_mask = ib->Equal(x, y);
-  auto zeros = ib->Emit("FillV2", {ib->Shape(dout), ib->Tensor(0, ib->GetDtype(dout))});
-  NodePtr is_less = ib->Less(x, y);
-  NodePtr is_greater = ib->Greater(x, y);
   NodePtr grad_x = nullptr;
   NodePtr grad_y = nullptr;
+  if (!x->need_compute_grad_out() && !y->need_compute_grad_out()) {
+    return {grad_x, grad_y};
+  }
+  auto half_dout = ib->Div(dout, ib->Tensor(2, ib->GetDtype(dout)));
+  auto equal_mask = ib->Equal(x, y);
+  auto zeros = ib->Tensor(0, ib->GetDtype(dout));
+  auto is_less = ib->Less(x, y);
+  auto is_greater = ib->Greater(x, y);
+  auto dout_sel = ib->Select(equal_mask, half_dout, dout);
   if (x->need_compute_grad_out()) {
-    grad_x = ib->Select(equal_mask, half_dout, dout);
     if (is_minimum) {
-      grad_x = ib->Select(is_greater, zeros, grad_x);
+      grad_x = SelectScalar(ib, is_greater, zeros, dout_sel, x, y);
     } else {
-      grad_x = ib->Select(is_less, zeros, grad_x);
+      grad_x = SelectScalar(ib, is_less, zeros, dout_sel, x, y);
     }
   }
   if (y->need_compute_grad_out()) {
-    grad_y = ib->Select(equal_mask, half_dout, dout);
     if (is_minimum) {
-      grad_y = ib->Select(is_less, zeros, grad_y);
+      grad_y = SelectScalar(ib, is_less, zeros, dout_sel, x, y);
     } else {
-      grad_y = ib->Select(is_greater, zeros, grad_y);
+      grad_y = SelectScalar(ib, is_greater, zeros, dout_sel, x, y);
     }
   }
   return BinopGradCommon(ib, x, y, grad_x, grad_y);

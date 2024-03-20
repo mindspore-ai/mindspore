@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace kernel {
-class MinimumCpuKernelMod : public NativeCpuKernelMod {
+class MinimumCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<MinimumCpuKernelMod> {
  public:
   MinimumCpuKernelMod() = default;
   ~MinimumCpuKernelMod() override = default;
@@ -33,10 +33,15 @@ class MinimumCpuKernelMod : public NativeCpuKernelMod {
 
   int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
-  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+  bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
               const std::vector<KernelTensor *> &outputs) override {
-    return kernel_func_(this, inputs, outputs);
+    return kernel_func_(this, inputs, workspace, outputs);
   }
+
+  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
+
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override { return MatchKernelHelper::OpSupport(); }
 
  private:
   bool IsBroadcast() const;
@@ -62,14 +67,10 @@ class MinimumCpuKernelMod : public NativeCpuKernelMod {
   void BroadcastArithTensors(const T *input_x, const T *input_y, T *output);
   template <typename T>
   void BroadcastArith(const T *input_x, const T *input_y, T *output);
-  template <typename T>
-  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs,
-                    const std::vector<kernel::KernelTensor *> &outputs);
 
-  using MinimumLaunchFunc = std::function<bool(MinimumCpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
-                                               const std::vector<kernel::KernelTensor *> &)>;
-  static std::vector<std::pair<KernelAttr, MinimumLaunchFunc>> func_list_;
-  MinimumLaunchFunc kernel_func_;
+  template <typename T>
+  bool LaunchKernel(const std::vector<kernel::KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
+                    const std::vector<kernel::KernelTensor *> &outputs);
 
   bool need_broadcast_{false};
   size_t input_x_num_{1};

@@ -13,4 +13,4 @@ maximum:
         output:
             dtype: tensor
     dispatch:
-        enable: False
+        enable: True
