@@ -90,7 +90,7 @@ Status DvppCropOp::OutputShape(const std::vector<TensorShape> &inputs, std::vect
     (void)outputs.emplace_back(out);
   }
   if (inputs[0].Rank() == kDefaultImageRank) {
-    (void)outputs.emplace_back(out.AppendDim(inputs[0][2]));
+    (void)outputs.emplace_back(out.AppendDim(inputs[0][kChannelIndexHWC]));
   }
   CHECK_FAIL_RETURN_UNEXPECTED(!outputs.empty(),
                                "DvppCrop: invalid input shape, expected 2D or 3D input, but got input dimension is:" +

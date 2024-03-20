@@ -71,6 +71,7 @@ class SoftmaxGrad(Primitive):
         """Initialize SoftmaxGrad"""
         self.init_prim_io_names(inputs=['y', 'dy'], outputs=['z'])
 
+
 class SyncBatchNormGrad(Primitive):
     """Performs grad of SyncBatchNorm operation."""
 
