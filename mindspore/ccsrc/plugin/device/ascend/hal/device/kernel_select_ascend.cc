@@ -287,13 +287,13 @@ std::pair<std::string, ExceptionType> CollectNotMatchMessage(
   switch (acl_err_type) {
     case transform::kUnknownOp: {
       ss << "The current operator needs to be supplemented with an adapter, please check in `transform` directory."
-         << " node is " << node->fullname_with_scope() << std::endl;
+         << " node is " << node->fullname_with_scope() << trace::DumpSourceLines(node) << std::endl;
       etype = NotSupportError;
       break;
     }
     case transform::kInValidType: {
       ss << "The supported input and output data types for the current operator are:"
-         << " node is " << node->fullname_with_scope() << std::endl;
+         << " node is " << node->fullname_with_scope() << trace::DumpSourceLines(node) << std::endl;
       std::string name = GetCNodeFuncName(node);
       const auto &info = transform::GeAdapterManager::GetInstance().GetInfo(name, true);
       const auto &input_supported_dtypes = info->input_supported_dtypes();
@@ -335,7 +335,7 @@ std::pair<std::string, ExceptionType> CollectNotMatchMessage(
     }
     case transform::kSpecialOp: {
       ss << "The current operator is specified not to select ACL. Please contact the relevant engineer for help."
-         << "node is " << node->fullname_with_scope() << std::endl;
+         << "node is " << node->fullname_with_scope() << trace::DumpSourceLines(node) << std::endl;
       etype = NotSupportError;
       break;
     }
@@ -345,13 +345,14 @@ std::pair<std::string, ExceptionType> CollectNotMatchMessage(
       auto build_info = kernel_info->select_kernel_build_info();
       MS_EXCEPTION_IF_NULL(build_info);
       ss << "Invalid Kernel Build Info! Kernel type: " << kernel::KernelTypeLabel(KernelType::HOST_KERNEL)
-         << ", node: " << node->fullname_with_scope() << KernelSelectDebugString(build_info, kernel_info_list);
+         << ", node: " << node->fullname_with_scope() << KernelSelectDebugString(build_info, kernel_info_list)
+         << trace::DumpSourceLines(node);
       etype = TypeError;
       break;
     }
     default: {
       ss << "The current [" << node->fullname_with_scope() << "] operator did not match any operator prototype library."
-         << std::endl;
+         << trace::DumpSourceLines(node) << std::endl;
       etype = NotSupportError;
       break;
     }
