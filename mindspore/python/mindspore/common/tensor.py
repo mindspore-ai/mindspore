@@ -4402,7 +4402,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             For argument `size`, Tensor type input will be deprecated in the future version.
 
         Args:
-            size (Union[int, tuple, list]): An int, list or tuple of integers defining the output shape.
+            size (Union[int, tuple, list, Tensor]): An int, list or tuple of integers defining the output shape.
             dtype (mindspore.dtype, optional): The desired dtype of the output tensor. If None, the returned tensor has
                 thesame dtype as `self`. Default: ``None``.
 
@@ -4435,7 +4435,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             For argument `size`, Tensor type input will be deprecated in the future version.
 
         Args:
-            size (Union[int, tuple, list]): An int, list or tuple of integers defining the output shape.
+            size (Union[int, tuple, list, Tensor]): An int, list or tuple of integers defining the output shape.
             dtype (mindspore.dtype, optional): The desired dtype of the output tensor. If None, the returned
                 tensor has the same dtype as `self`. Default: ``None``.
 
