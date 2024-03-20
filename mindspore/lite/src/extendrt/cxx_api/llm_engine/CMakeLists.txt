@@ -7,6 +7,7 @@ add_compile_definitions(ENABLE_SECURITY)
 file(GLOB LLM_ENGINE_PLUGIN_SRC
     ${CMAKE_CURRENT_SOURCE_DIR}/llm_engine_plugin.cc
     ${CCSRC_DIR}/utils/config_manager.cc
+    ${CCSRC_DIR}/plugin/device/ascend/hal/common/ascend_utils.cc
     )
 list(APPEND LLM_ENGINE_PLUGIN_SRC $<TARGET_OBJECTS:_mindspore_transform_graph_ir_obj>
     $<TARGET_OBJECTS:_mindspore_transform_symbol_obj>)

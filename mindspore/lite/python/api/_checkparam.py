@@ -41,6 +41,20 @@ def check_list_of_element(arg_name, arg_value, ele_classes, enable_none=False):
     return arg_value
 
 
+def check_uint32_number_range(arg_name, arg_value):
+    """Check arg uint32 number range"""
+    check_isinstance(arg_name, arg_value, int)
+    if arg_value < 0 or arg_value > pow(2, 32) - 1:
+        raise ValueError(f"{arg_name} value should be in range [0, UINT32_MAX], but got {arg_value}")
+
+
+def check_uint64_number_range(arg_name, arg_value):
+    """Check arg uint64 number range"""
+    check_isinstance(arg_name, arg_value, int)
+    if arg_value < 0 or arg_value > pow(2, 64) - 1:
+        raise ValueError(f"{arg_name} value should be in range [0, UINT64_MAX], but got {arg_value}")
+
+
 def check_input_shape(input_shape_name, input_shape, enable_none=False):
     """Check input_shape's type is dict{str: list[int]}"""
     if enable_none:
