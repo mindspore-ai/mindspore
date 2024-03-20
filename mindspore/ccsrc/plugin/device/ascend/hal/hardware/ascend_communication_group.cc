@@ -102,7 +102,7 @@ void *AscendCommunicationGroup::GenerateRootInfo(size_t *root_info_size) {
     }
 
     if (HcclGetRootInfo(&unique_id_) != static_cast<int32_t>(HCCL_SUCCESS)) {
-      MS_LOG(ERROR) << "Failed to get HCCL unique id: " << CALL_ASCEND_API2(aclGetRecentErrMsg);
+      MS_LOG(ERROR) << "Failed to get HCCL unique id: " << CALL_ASCEND_API(aclGetRecentErrMsg);
       return nullptr;
     }
   }

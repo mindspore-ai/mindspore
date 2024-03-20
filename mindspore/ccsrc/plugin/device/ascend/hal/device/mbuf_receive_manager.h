@@ -53,7 +53,7 @@ mindspore::tensor::TensorPtr acltdtDataItemToTensorPtr(acltdtDataItem *item);
 
 class ScopeAclTdtDataset {
  public:
-  ScopeAclTdtDataset() { acl_dataset_ = CALL_ASCEND_API2(acltdtCreateDataset); }
+  ScopeAclTdtDataset() { acl_dataset_ = CALL_ASCEND_API(acltdtCreateDataset); }
   acltdtDataset *Get() const { return acl_dataset_; }
   ~ScopeAclTdtDataset() {
     if (acl_dataset_ != nullptr && CALL_ASCEND_API(acltdtDestroyDataset, acl_dataset_) != ACL_SUCCESS) {

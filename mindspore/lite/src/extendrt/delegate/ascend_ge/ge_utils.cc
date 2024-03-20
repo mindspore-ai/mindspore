@@ -134,7 +134,7 @@ std::string GetSocVersion() {
   // Get default soc version.
   static std::string version;
   if (version.empty()) {
-    const char *soc_name_c = CALL_ASCEND_API2(aclrtGetSocName);
+    const char *soc_name_c = CALL_ASCEND_API(aclrtGetSocName);
     if (soc_name_c == nullptr) {
       return version;
     }

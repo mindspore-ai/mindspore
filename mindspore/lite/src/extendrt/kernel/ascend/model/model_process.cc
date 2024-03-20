@@ -100,7 +100,7 @@ aclError ModelProcess::AclrtMemcpy(void *dst, size_t destMax, const void *src, s
 }
 
 bool ModelProcess::PreInitModelResource() {
-  model_desc_ = CALL_ASCEND_API2(aclmdlCreateDesc);
+  model_desc_ = CALL_ASCEND_API(aclmdlCreateDesc);
   aclError acl_ret = CALL_ASCEND_API(aclmdlGetDesc, model_desc_, model_id_);
   if (acl_ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Read model desc failed, ret = " << acl_ret;
@@ -343,7 +343,7 @@ bool ModelProcess::CheckAndSetDynFlag() {
 
 bool ModelProcess::InitInputsBuffer() {
   aclError ret;
-  inputs_ = CALL_ASCEND_API2(aclmdlCreateDataset);
+  inputs_ = CALL_ASCEND_API(aclmdlCreateDataset);
   if (inputs_ == nullptr) {
     MS_LOG(ERROR) << "Create input dataset failed";
     return false;
@@ -393,7 +393,7 @@ bool ModelProcess::InitInputsBuffer() {
 
 bool ModelProcess::InitOutputsBuffer() {
   aclError ret;
-  outputs_ = CALL_ASCEND_API2(aclmdlCreateDataset);
+  outputs_ = CALL_ASCEND_API(aclmdlCreateDataset);
   if (outputs_ == nullptr) {
     MS_LOG(ERROR) << "Create output dataset failed";
     return false;
@@ -743,7 +743,7 @@ bool ModelProcess::ResizeDynamicInputShape(const std::vector<ShapeVector> &new_s
   ResetInputSize(new_shapes);
   FreeResourceInput(input_infos_);
   if (is_dynamic_resize_input_) {
-    inputs_ = CALL_ASCEND_API2(aclmdlCreateDataset);
+    inputs_ = CALL_ASCEND_API(aclmdlCreateDataset);
     if (inputs_ == nullptr) {
       MS_LOG(ERROR) << "Create input dataset failed";
       return false;
@@ -1209,7 +1209,7 @@ bool ModelProcess::PredictFromHost(const std::vector<KernelTensor *> &inputs,
   }
 
   if (acl_ret != ACL_ERROR_NONE) {
-    MS_LOG(ERROR) << "Execute Model Failed, ret = " << acl_ret << ", detail:" << CALL_ASCEND_API2(aclGetRecentErrMsg);
+    MS_LOG(ERROR) << "Execute Model Failed, ret = " << acl_ret << ", detail:" << CALL_ASCEND_API(aclGetRecentErrMsg);
     return false;
   }
   if (is_dynamic_output_) {
