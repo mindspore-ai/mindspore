@@ -996,7 +996,6 @@ void MindRTBackendBase::RunGraph(const ActorInfo &actor_info, const VectorRef &a
 
   MS_LOG(INFO) << "Status record: start run actor: " << actor_info;
   (void)profiler::CollectHostInfo(kModelNameRuntime, kEventRunGraph, kStageRunGraph, 1, 0, 0);
-  (void)profiler::CollectHostInfo(kModelNameRuntime, kEventRunGraph, kStageGetInputs, 1, 0, 0);
   std::vector<std::vector<tensor::TensorPtr>> input_tensors;
   if (graph_compiler_info.exist_flatten_concat_) {
     input_tensors = GetRunGraphInputs(graph_compiler_info, args);
@@ -1008,26 +1007,19 @@ void MindRTBackendBase::RunGraph(const ActorInfo &actor_info, const VectorRef &a
       });
     });
   }
-  (void)profiler::CollectHostInfo(kModelNameRuntime, kEventRunGraph, kStageGetInputs, 1, 0, 1);
   // Release python gil.
   mindspore::ScopedLongRunning long_running;
   // Run actor DAG.
   const auto &actor_set = runtime::GraphScheduler::GetInstance().Fetch(actor_info);
   MS_EXCEPTION_IF_NULL(actor_set);
-  (void)profiler::CollectHostInfo(kModelNameRuntime, kEventRunGraph, kStageRun, 1, 0, 0);
   runtime::GraphScheduler::GetInstance().Run(actor_set, input_tensors, args);
-  (void)profiler::CollectHostInfo(kModelNameRuntime, kEventRunGraph, kStageRun, 1, 0, 1);
 
   {
     uint64_t start_time = 0;
     PROFILER_START(start_time);
     MS_EXCEPTION_IF_NULL(graph_compiler_);
     graph_compiler_->Summary(graph_compiler_info.graphs_);
-
-    (void)profiler::CollectHostInfo(kModelNameRuntime, kEventRunGraph, kStageConstructOutputs, 1, 0, 0);
     ConstructOutputs(actor_set, outputs, root_graph_);
-    (void)profiler::CollectHostInfo(kModelNameRuntime, kEventRunGraph, kStageConstructOutputs, 1, 0, 1);
-
     actor_set->output_actor_->FreeSummaryNodeMem();
     runtime::GraphScheduler::GetInstance().ClearActorData(actor_set);
     PROFILER_END(start_time, runtime::ProfilerModule::kKernel, runtime::ProfilerEvent::kOutputProcess, actor_set->name_,
