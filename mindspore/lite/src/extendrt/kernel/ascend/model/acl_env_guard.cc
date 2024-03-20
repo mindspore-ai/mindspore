@@ -58,7 +58,7 @@ aclError AclInitAdapter::AclFinalize() {
   init_flag_ = false;
   if (!is_repeat_init_) {
     MS_LOG(INFO) << "AclInitAdapter::aclFinalize begin.";
-    auto rt_ret = CALL_ASCEND_API2(aclFinalize);
+    auto rt_ret = CALL_ASCEND_API(aclFinalize);
     if (rt_ret != ACL_ERROR_NONE) {
       MS_LOG(ERROR) << "aclFinalize failed.";
     }
@@ -75,7 +75,7 @@ aclError AclInitAdapter::ForceFinalize() {
   MS_LOG(INFO) << "Begin to force aclFinalize.";
   init_flag_ = false;
   if (!is_repeat_init_) {
-    auto rt_ret = CALL_ASCEND_API2(aclFinalize);
+    auto rt_ret = CALL_ASCEND_API(aclFinalize);
     if (rt_ret != ACL_ERROR_NONE) {
       MS_LOG(ERROR) << "aclFinalize failed.";
     }

@@ -346,7 +346,7 @@ bool AscendDeprecatedInterface::IsTsdOpened(const std::shared_ptr<MsContext> &ms
 }
 
 bool AscendDeprecatedInterface::CheckIsAscend910Soc() {
-  const char *soc_name_c = CALL_ASCEND_API2(aclrtGetSocName);
+  const char *soc_name_c = CALL_ASCEND_API(aclrtGetSocName);
   if (soc_name_c == nullptr) {
     return false;
   }

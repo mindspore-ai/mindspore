@@ -127,7 +127,7 @@ Status ModelProcess::ConstructTensors(const std::vector<AclTensorInfo> &acl_tens
 }
 
 Status ModelProcess::PreInitModelResource() {
-  model_desc_ = CALL_ASCEND_API2(aclmdlCreateDesc);
+  model_desc_ = CALL_ASCEND_API(aclmdlCreateDesc);
   aclError acl_ret = CALL_ASCEND_API(aclmdlGetDesc, model_desc_, model_id_);
   if (acl_ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Read model desc failed";
@@ -228,7 +228,7 @@ Status ModelProcess::CreateDataBuffer(void **data_mem_buffer, size_t buffer_size
 
 Status ModelProcess::InitOutputsBuffer() {
   aclError ret;
-  outputs_ = CALL_ASCEND_API2(aclmdlCreateDataset);
+  outputs_ = CALL_ASCEND_API(aclmdlCreateDataset);
   if (outputs_ == nullptr) {
     MS_LOG(ERROR) << "Create input dataset failed";
     return kMCDeviceError;
@@ -371,7 +371,7 @@ Status ModelProcess::SetBatchSize(const std::vector<MSTensor> &inputs) {
 
 Status ModelProcess::CheckAndInitInput(const std::vector<MSTensor> &inputs) {
   aclError ret;
-  inputs_ = CALL_ASCEND_API2(aclmdlCreateDataset);
+  inputs_ = CALL_ASCEND_API(aclmdlCreateDataset);
   constexpr size_t dynamic_batch_size = 1;
   constexpr size_t dynamic_image_size = 2;
   size_t dynamic_nums = GetDynamicDims(input_infos_);

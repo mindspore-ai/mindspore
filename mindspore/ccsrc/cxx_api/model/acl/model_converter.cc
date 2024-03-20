@@ -147,13 +147,13 @@ Buffer ModelConverter::BuildAirModel(const transform::DfGraphPtr &graph,
   ge::ModelBufferData model;
   auto ret = ge::aclgrphBuildInitialize(init_options);
   if (ret != ge::SUCCESS) {
-    MS_LOG(ERROR) << "Call aclgrphBuildInitialize fail: " << CALL_ASCEND_API2(aclGetRecentErrMsg);
+    MS_LOG(ERROR) << "Call aclgrphBuildInitialize fail: " << CALL_ASCEND_API(aclGetRecentErrMsg);
     return Buffer();
   }
 
   ret = ge::aclgrphBuildModel(*graph, build_options, model);
   if (ret != ge::SUCCESS) {
-    MS_LOG(ERROR) << "Call aclgrphBuildModel fail: " << CALL_ASCEND_API2(aclGetRecentErrMsg);
+    MS_LOG(ERROR) << "Call aclgrphBuildModel fail: " << CALL_ASCEND_API(aclGetRecentErrMsg);
     ge::aclgrphBuildFinalize();
     return Buffer();
   }

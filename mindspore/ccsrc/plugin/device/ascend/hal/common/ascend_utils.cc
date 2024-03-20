@@ -119,7 +119,7 @@ bool ErrorManagerAdapter::Init() {
 }
 
 std::string ErrorManagerAdapter::GetErrorMessage(bool add_title) {
-  const char *message = CALL_ASCEND_API2(aclGetRecentErrMsg);
+  const char *message = CALL_ASCEND_API(aclGetRecentErrMsg);
   const string error_message = message == nullptr ? "" : message;
   if (error_message.empty() || error_message.find(kUnknowErrorString) != string::npos) {
     return "";

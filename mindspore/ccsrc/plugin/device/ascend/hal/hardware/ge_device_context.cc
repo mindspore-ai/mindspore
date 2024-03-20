@@ -516,14 +516,14 @@ uint32_t GeDeviceContext::GetDeviceCount() {
 }
 
 std::string GeDeviceContext::GetDeviceName(uint32_t) {
-  const char *name = CALL_ASCEND_API2(aclrtGetSocName);
+  const char *name = CALL_ASCEND_API(aclrtGetSocName);
   std::string device_name = (name == nullptr) ? "" : name;
   return device_name;
 }
 
 AscendDeviceProperties GeDeviceContext::GetDeviceProperties(uint32_t) {
   AscendDeviceProperties device_properties;
-  const char *name = CALL_ASCEND_API2(aclrtGetSocName);
+  const char *name = CALL_ASCEND_API(aclrtGetSocName);
   device_properties.name = (name == nullptr) ? "" : name;
 
   size_t free_size{0}, total_size{0};
@@ -546,7 +546,7 @@ void SetContextSocVersion(MsContext *ctx) {
     {"Ascend910B2", "ascend910b"},  {"Ascend910B2C", "ascend910b"}, {"Ascend910B3", "ascend910b"},
     {"Ascend910B4", "ascend910b"},  {"Ascend910C1", "ascend910c"},  {"Ascend910C2", "ascend910c"},
     {"Ascend910C3", "ascend910c"}};
-  const char *soc_name_c = CALL_ASCEND_API2(aclrtGetSocName);
+  const char *soc_name_c = CALL_ASCEND_API(aclrtGetSocName);
   if (soc_name_c == nullptr) {
     MS_LOG(ERROR) << "Get soc name failed.";
     return;
