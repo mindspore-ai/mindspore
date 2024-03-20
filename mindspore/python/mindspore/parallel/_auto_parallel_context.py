@@ -242,6 +242,16 @@ class _AutoParallelContext:
         self.check_context_handle()
         return self._context_handle.get_pipeline_stage_split_num()
 
+    def get_pipeline_interleave(self):
+        """Get pipeline interleave flag"""
+        self.check_context_handle()
+        return self._context_handle.get_pipeline_interleave()
+
+    def get_pipeline_scheduler(self):
+        """Get pipeline scheduler"""
+        self.check_context_handle()
+        return self._context_handle.get_pipeline_scheduler()
+
     def set_pipeline_segments(self, segments):
         """Set the segments of the pipeline"""
         if isinstance(segments, bool) or not isinstance(segments, int):
@@ -815,6 +825,7 @@ class _AutoParallelContext:
         Raises:
             TypeError: If the type of `pipeline_config` is not `dict`.
             ValueError: If the key in `pipeline_config` not  in ["pipeline_interleave", "pipeline_scheduler"].
+            ValueError: If pipeline interleave is False, pipeline scheduler is not `1f1b`.
         """
         self.check_context_handle()
 
@@ -840,6 +851,9 @@ class _AutoParallelContext:
 
         Validator.check_string(pipeline_config[pp_scheduler], [_PipelineScheduler.PIPELINE_1F1B,
                                                                _PipelineScheduler.PIPELINE_GPIPE])
+        if not pipeline_config[pp_interleave] and pipeline_config[pp_scheduler] != _PipelineScheduler.PIPELINE_1F1B:
+            raise ValueError(f"When pipeline_interleave is False, {pp_scheduler} is not supported")
+
         self._context_handle.set_pipeline_scheduler(pipeline_config[pp_scheduler])
 
     def get_enable_parallel_optimizer(self):
@@ -1206,6 +1220,8 @@ _get_auto_parallel_context_func_map = {
     "gradient_fp32_sync": auto_parallel_context().get_gradient_fp32_sync,
     "loss_repeated_mean": auto_parallel_context().get_loss_repeated_mean,
     "pipeline_stages": auto_parallel_context().get_pipeline_stages,
+    "pipeline_interleave": auto_parallel_context().get_pipeline_interleave,
+    "pipeline_scheduler": auto_parallel_context().get_pipeline_scheduler,
     "parallel_mode": auto_parallel_context().get_parallel_mode,
     "search_mode": auto_parallel_context().get_strategy_search_mode,
     "auto_parallel_search_mode": auto_parallel_context().get_auto_parallel_search_mode,
