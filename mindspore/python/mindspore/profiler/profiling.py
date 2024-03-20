@@ -786,7 +786,7 @@ class Profiler:
         _pynative_executor.sync()
 
         self._cpu_profiler.stop()
-        if self._data_process:
+        if self._data_process and self._md_profiler is not None:
             self._md_profiler.stop()
             self._md_profiler.save(self._output_path)
 
@@ -1435,6 +1435,10 @@ class Profiler:
 
     def _cpu_analyse(self):
         """Collect and analyse cpu performance data."""
+        if self._has_started:
+            self.stop()
+        else:
+            logger.info("No need to stop profiler because profiler has been stopped or profiler has not been started.")
         if not self._op_time:
             return
         try:
