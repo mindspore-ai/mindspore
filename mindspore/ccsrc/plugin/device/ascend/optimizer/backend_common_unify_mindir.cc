@@ -56,6 +56,7 @@
 #include "plugin/device/ascend/optimizer/ir_fusion/adaptive_max_pool2d_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/flash_attention_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/add_layernorm_fusion.h"
+#include "plugin/device/ascend/optimizer/ir_fusion/add_rms_norm_fusion.h"
 #include "plugin/device/ascend/optimizer/ge/avg_pool_grad_for_ge.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/mc2_fusion.h"
 
@@ -130,6 +131,7 @@ void GetBackendCommonUnifyMindIRPassManager(PassManagerPtr *unify_mindir_pm) {
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::MatmulReduceScatterFusion>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::AllGatherMatmulFusion>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::AddLayernormFusion>());
+  (*unify_mindir_pm)->AddPass(std::make_shared<opt::AddRmsNormFusion>());
 }
 void AscendUnfoldInputsForSpecialNodes(const KernelGraphPtr &kernel_graph) {
   profiler::CollectHostInfo("Ascend", "Graph Optimization", "BackendOptimization_UnfoldInputsForSpecialNodes", 0, 0, 0);
