@@ -15,7 +15,8 @@ mindspore_add_pkg(c-ares
         -DCARES_SHARED:BOOL=OFF
         -DCARES_STATIC:BOOL=ON
         -DCARES_STATIC_PIC:BOOL=ON
-        -DHAVE_LIBNSL:BOOL=OFF)
+        -DHAVE_LIBNSL:BOOL=OFF
+        PATCHES ${TOP_DIR}/third_party/patch/c-ares/CVE-2024-25629.patch)
 
 include_directories(${c-ares_INC})
 add_library(mindspore::cares ALIAS c-ares::cares)
