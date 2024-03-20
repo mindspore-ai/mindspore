@@ -99,7 +99,7 @@ std::set<FuncGraphPtr> FindForwardGraphByRootNodes(const std::vector<AnfNodePtr>
     }
 
     auto cnode = node->cast<CNodePtr>();
-    if ((cnode->size() < 2) || !IsValueNode<Primitive>(cnode->input(0))) {
+    if ((cnode->size() < SIZE_TWO) || !IsValueNode<Primitive>(cnode->input(0))) {
       continue;
     }
     auto expect_prim = GetValueNode<PrimitivePtr>(cnode->input(0));
@@ -150,7 +150,6 @@ std::vector<AnfNodePtr> CreateMirrorInput(const FuncGraphPtr &root, const Operat
 
   int64_t grad_accumulation_step = ParallelContext::GetInstance()->grad_accumulation_step();
   int64_t split_stage_num = ParallelContext::GetInstance()->pipeline_stage_split_num();
-
   if (grad_accumulation_step > 1 || split_stage_num > 1) {
     auto parameters = root->parameters();
     grad_accu = GetAccuGrad(parameters, weight_name);

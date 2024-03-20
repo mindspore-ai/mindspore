@@ -707,7 +707,6 @@ Status CummaxInfo::GetAttrs() {
     return FAILED;
   }
   axis_ = axis_opt.value();
-
   if (axis_ < 0) {
     axis_ += SizeToLong(inputs_shape_[0].size());
   }
