@@ -880,18 +880,11 @@ void DeviceAddressUtils::CreateInputTensorAddress(const DeviceContext *device_co
 
   const auto &format = GetFormatByTensorShape(device_context, tensor->shape());
   auto tensor_size = LongToSize(tensor->data().nbytes());
-  kernel::KernelTensorPtr kernel_tensor;
-  if (device_context->GetDeviceType() == device::DeviceType::kAscend) {
-    // Not transmitting host shape information under Ascend for better performance.
-    kernel_tensor = std::make_shared<kernel::KernelTensor>(
-      nullptr, tensor_size, format, tensor->data_type(), tensor->shape(),
-      device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
-  } else {
-    kernel_tensor = std::make_shared<kernel::KernelTensor>(
-      std::make_shared<abstract::TensorShape>(tensor->shape()), std::make_shared<TensorType>(tensor->Dtype()), nullptr,
-      nullptr, tensor_size, kernel::GetFormatFromEnumToStr(format), tensor->data_type(), tensor->shape(),
-      device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
-  }
+  auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
+    std::make_shared<abstract::TensorShape>(tensor->shape()), std::make_shared<TensorType>(tensor->Dtype()), nullptr,
+    nullptr, tensor_size, kernel::GetFormatFromEnumToStr(format), tensor->data_type(), tensor->shape(),
+    device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+
   MS_EXCEPTION_IF_NULL(kernel_tensor);
   kernel_tensor->set_stream_id(stream_id);
   device::DeviceAddressPtr device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
@@ -1086,18 +1079,11 @@ void DeviceAddressUtils::CreateOutputTensorAddress(const DeviceContext *device_c
     MS_EXCEPTION_IF_NULL(tensor);
     auto tensor_size = LongToSize(tensor->data().nbytes());
     const auto &format = GetFormatByTensorShape(device_context, tensor->shape());
-    kernel::KernelTensorPtr kernel_tensor;
-    if (device_context->GetDeviceType() == device::DeviceType::kAscend) {
-      // Not transmitting host shape information under Ascend for better performance.
-      kernel_tensor = std::make_shared<kernel::KernelTensor>(
-        nullptr, tensor_size, format, tensor->data_type(), tensor->shape(),
-        device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
-    } else {
-      kernel_tensor = std::make_shared<kernel::KernelTensor>(
-        std::make_shared<abstract::TensorShape>(tensor->shape()), std::make_shared<TensorType>(tensor->Dtype()),
-        nullptr, nullptr, tensor_size, kernel::GetFormatFromEnumToStr(format), tensor->data_type(), tensor->shape(),
-        device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
-    }
+    auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
+      std::make_shared<abstract::TensorShape>(tensor->shape()), std::make_shared<TensorType>(tensor->Dtype()), nullptr,
+      nullptr, tensor_size, kernel::GetFormatFromEnumToStr(format), tensor->data_type(), tensor->shape(),
+      device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+
     MS_EXCEPTION_IF_NULL(kernel_tensor);
     kernel_tensor->set_stream_id(stream_id);
     device::DeviceAddressPtr device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
