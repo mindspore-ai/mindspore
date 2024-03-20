@@ -942,15 +942,15 @@ bool GeGraphExecutor::CompileGraph(const KernelGraphPtr &graph,
   auto &compile_cache_context = CompileCacheContext::GetInstance();
   auto use_compile_cache = compile_cache_context.UseCompileCache();
   std::map<std::string, ShapeVector> origin_shape;
-  std::set<KernelGraphPtr> memo;
-  GEGraphOptimization::GetInstance().OptimizeGEGraph(graph, &memo);
+  const auto &tensor_order_map = GetDefaultParams(graph, &origin_shape);
   if (use_compile_cache) {
     MS_LOG(INFO) << "Use ge compile cache, and skip specific optimization and ge_adapter execution";
+    std::set<KernelGraphPtr> memo;
+    GEGraphOptimization::GetInstance().OptimizeGEGraph(graph, &memo);
     if (!BuildFakeGraph(graph)) {
       return false;
     }
   } else {
-    const auto &tensor_order_map = GetDefaultParams(graph, &origin_shape);
     (void)BuildGraph(graph, tensor_order_map);
   }
   SetDynamicShapeAttr(graph);
@@ -1078,17 +1078,17 @@ bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map<str
     // delete SetCPUMemManager when delete env MS_DISABLE_REF_MODE
     ResManager()->SetCPUMemManager();
     std::map<std::string, ShapeVector> origin_shape;
+    const auto &tensor_order_map = GetDefaultParams(graph, &origin_shape);
     auto &compile_cache_context = CompileCacheContext::GetInstance();
     auto use_compile_cache = compile_cache_context.UseCompileCache();
-    std::set<KernelGraphPtr> memo;
-    GEGraphOptimization::GetInstance().OptimizeGEGraph(kg, &memo);
     if (use_compile_cache) {
       MS_LOG(INFO) << "Use ge compile cache, and skip specific optimization and ge_adapter execution";
+      std::set<KernelGraphPtr> memo;
+      GEGraphOptimization::GetInstance().OptimizeGEGraph(kg, &memo);
       if (!BuildFakeGraph(kg)) {
         return false;
       }
     } else {
-      const auto &tensor_order_map = GetDefaultParams(graph, &origin_shape);
       (void)BuildGraph(kg, tensor_order_map);
     }
     SetDynamicShapeAttr(kg);
