@@ -43,6 +43,11 @@ acltdtSendTensorFunObj acltdtSendTensor_ = nullptr;
 acltdtStopChannelFunObj acltdtStopChannel_ = nullptr;
 
 void LoadAcltdtApiSymbol(const std::string &ascend_path) {
+  const std::vector<std::string> depend_libs = {"libacl_tdt_queue.so"};
+  for (const auto &dep_lib : depend_libs) {
+    (void)GetLibHandler(ascend_path + "lib64/" + dep_lib);
+  }
+
   std::string aclrt_tdt_path = ascend_path + "lib64/libacl_tdt_channel.so";
   auto handler = GetLibHandler(aclrt_tdt_path);
   if (handler == nullptr) {
