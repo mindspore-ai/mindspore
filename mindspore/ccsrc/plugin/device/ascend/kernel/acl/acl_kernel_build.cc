@@ -20,6 +20,7 @@
 #include "include/common/utils/anfalgo.h"
 #include "transform/acl_ir/acl_helper.h"
 #include "kernel/framework_utils.h"
+#include "utils/trace_base.h"
 
 namespace mindspore {
 namespace kernel {
@@ -41,7 +42,7 @@ KernelModPtr AclOpBuild(const std::shared_ptr<AnfNode> &anf_node) {
   if (!std::static_pointer_cast<KernelMod>(kernel_mod_ptr)
          ->Init(primitive, input_kernel_tensors, output_kernel_tensors)) {
     MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#Initialize acl kernel op[" << anf_node->fullname_with_scope()
-                      << "] failed.";
+                      << "] failed." << trace::DumpSourceLines(anf_node);
   }
 
   auto build_info = AnfAlgo::GetSelectKernelBuildInfo(anf_node);
