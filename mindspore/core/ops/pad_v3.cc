@@ -45,6 +45,7 @@
 #include "utils/check_convert_utils.h"
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace ops {
@@ -230,6 +231,17 @@ TypePtr PadV3InferType(const PrimitivePtr &prim, const std::vector<AbstractBaseP
     MS_EXCEPTION_IF_NULL(item);
   }
 
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice) {
+    auto paddings_value = input_args[kInputIndex1]->GetValue();
+    MS_EXCEPTION_IF_NULL(paddings_value);
+    if (paddings_value->isa<ValueAny>() || paddings_value->isa<None>()) {
+      MS_LOG(WARNING)
+        << "For now, while running in Ascend, the input [paddings] of " << prim->name()
+        << " is required to be constant, make sure that paddings is a list or tensor with const_arg=True.";
+    }
+  }
   std::map<std::string, TypePtr> args = {{"x", input_args[0]->GetType()}};
   auto mode = GetValue<string>(prim->GetAttr("mode"));
   if (mode == kConstant) {

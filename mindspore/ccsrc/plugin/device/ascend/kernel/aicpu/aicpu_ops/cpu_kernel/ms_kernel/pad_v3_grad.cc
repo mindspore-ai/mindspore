@@ -121,7 +121,7 @@ uint32_t PadV3GradCpuKernel::PadV3GradCheck(CpuKernelContext &ctx) {
   } else {
     mode = ctx.GetAttr("mode")->GetString();
     const bool is_mode_available = std::find(mode_list.begin(), mode_list.end(), mode) != mode_list.end();
-    if (is_mode_available == false) {
+    if (!is_mode_available) {
       KERNEL_LOG_ERROR("Attr [mode] must be included in [reflect, edge], but got [%s]", mode.c_str());
       return KERNEL_STATUS_PARAM_INVALID;
     }
@@ -141,7 +141,7 @@ uint32_t PadV3GradCpuKernel::PadV3ReadPaddingsAndSetOutputShape(CpuKernelContext
   input_dim = ctx.Input(0)->GetTensorShape()->GetDims();
   const std::vector<int64_t> input_shape = ctx.Input(0)->GetTensorShape()->GetDimSizes();
   auto paddings_ptr = reinterpret_cast<T *>(ctx.Input(1)->GetData());
-  paddings = std::vector<int64_t>(k3DNum, 0);
+  paddings = std::vector<int64_t>(num_elem, 0);
 
   if (num_elem == 1) {
     num_elem = k2Num * (input_dim - k2Num);
@@ -153,13 +153,28 @@ uint32_t PadV3GradCpuKernel::PadV3ReadPaddingsAndSetOutputShape(CpuKernelContext
       paddings[i] = static_cast<int64_t>(paddings_ptr[i]);
     }
   }
+  // Find redundancy index in paddings
+  auto redundancy_paddings_num = num_elem - 2;
+  for (int64_t i = 2; i <= num_elem - 2; i += 2) {
+    if (std::any_of(paddings.begin(), paddings.begin() + i, [](const int64_t &val) { return val != 0; })) {
+      redundancy_paddings_num = i - 2;
+      break;
+    }
+  }
+  num_elem -= redundancy_paddings_num;
+
+  // (0, 0, 0, 0, 1, 2, 3, 4) -> (3, 4, 1, 2, 0, 0, 0, 0)
+  std::reverse(paddings.begin(), paddings.end());
+  for (size_t i = 1; i < paddings.size(); i += 2) {
+    std::swap(paddings[i - 1], paddings[i]);
+  }
 
   parallelSliceNum = 1;
   for (int64_t i = 0; i < input_dim - num_elem / k2Num; i++) {
     parallelSliceNum *= input_shape[i];
   }
 
-  if (padding_contiguous == false && num_elem == k3DNum) {
+  if (!padding_contiguous && num_elem == k3DNum) {
     std::vector<int64_t> tmp = paddings;
     paddings[1] = tmp[k3Num];
     paddings[k2Num] = tmp[1];
@@ -167,7 +182,7 @@ uint32_t PadV3GradCpuKernel::PadV3ReadPaddingsAndSetOutputShape(CpuKernelContext
     paddings[k4Num] = tmp[k2Num];
   }
 
-  if (padding_contiguous == false && num_elem == k2DNum) {
+  if (!padding_contiguous && num_elem == k2DNum) {
     std::vector<int64_t> tmp = paddings;
     paddings[1] = tmp[k2Num];
     paddings[k2Num] = tmp[1];
