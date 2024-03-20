@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2023-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,6 @@
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
 #include "transform/graph_ir/custom_op_proto/cust_other_ops.h"
 #include "transform/graph_ir/custom_op_proto/flash_attention.h"
-#include "op_proto/inc/fusion_ops.h"
-#include "op_proto/inc/nn_norm.h"
 
 DECLARE_OP_ADAPTER(KVCacheMgr)
 DECLARE_OP_USE_OUTPUT(KVCacheMgr)

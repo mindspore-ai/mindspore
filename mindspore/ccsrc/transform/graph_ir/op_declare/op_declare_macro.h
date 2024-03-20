@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,22 +38,14 @@
 #define DECLARE_OP_ADAPTER(T)                                              \
   DECLARE_CANN_OP_PROTO(T)                                                 \
   namespace mindspore::transform {                                         \
-  using T = ::ge::op::T;                                                   \
+  class cz##T {};                                                          \
+  using T = cz##T;                                                         \
   template <>                                                              \
   const mindspore::HashMap<int, InputDesc> OpAdapter<T>::input_map_;       \
   template <>                                                              \
   const mindspore::HashMap<std::string, AttrDesc> OpAdapter<T>::attr_map_; \
-  }
-
-#define DECLARE_OP_TYPE(T)         \
-  namespace mindspore::transform { \
-  using T = ::ge::op::T;           \
-  }
-
-#define DECLARE_OP_ATTR(T)                                                 \
-  namespace mindspore::transform {                                         \
   template <>                                                              \
-  const mindspore::HashMap<std::string, AttrDesc> OpAdapter<T>::attr_map_; \
+  const char OpAdapter<T>::op_type_[] = #T;                                \
   }
 
 #define DECLARE_OP_USE_OUTPUT(T)                             \
@@ -95,91 +87,74 @@
 #define SUBGRAPH_MAP(T) \
   template <>           \
   const mindspore::HashMap<int, SubGraphDesc> OpAdapter<T>::subgraph_map_
-#define SUBGRAPH_DESC(name)                                             \
-  {                                                                     \
-#name, [](const OperatorPtr op, const DfGraphPtr graph) {             \
-      auto p = std::static_pointer_cast<OpType>(op);                      \
-      (void)p->set_subgraph_builder_##name([graph]() { return *graph; }); \
-    } \
+#define SUBGRAPH_DESC(name)                                                                                       \
+  {                                                                                                               \
+#name, [](const OperatorPtr op,                                                                               \
+              const DfGraphPtr graph) { (void)op->SetSubgraphBuilder(#name, 0, ([graph]() { return *graph; })); } \
   }
 
 #define INPUT_INDEX(x) \
-  OpProtoStorage::GetInstance().GetOpProto(OpAdapter<OpAdapter::OpType>::getOp()->GetOpType()).GetInputIndexByName(#x)
+  OpProtoStorage::GetInstance().GetOpProto(OpAdapter<OpAdapter::OpType>::GetStaticOpType()).GetInputIndexByName(#x)
 #define OUTPUT_INDEX(x) \
-  OpProtoStorage::GetInstance().GetOpProto(OpAdapter<OpAdapter::OpType>::getOp()->GetOpType()).GetOutputIndexByName(#x)
-#define INPUT_OPTIONAL_TYPE(x)                                      \
-  OpProtoStorage::GetInstance()                                     \
-    .GetOpProto(OpAdapter<OpAdapter::OpType>::getOp()->GetOpType()) \
+  OpProtoStorage::GetInstance().GetOpProto(OpAdapter<OpAdapter::OpType>::GetStaticOpType()).GetOutputIndexByName(#x)
+#define INPUT_OPTIONAL_TYPE(x)                                   \
+  OpProtoStorage::GetInstance()                                  \
+    .GetOpProto(OpAdapter<OpAdapter::OpType>::GetStaticOpType()) \
     .IsInputOptionalTypeByName(#x)
 #define INPUT_DTYPES(x) \
-  OpProtoStorage::GetInstance().GetOpProto(OpAdapter<OpAdapter::OpType>::getOp()->GetOpType()).GetInputTypesByName(#x)
+  OpProtoStorage::GetInstance().GetOpProto(OpAdapter<OpAdapter::OpType>::GetStaticOpType()).GetInputTypesByName(#x)
 #define OUTPUT_DTYPES(x) \
-  OpProtoStorage::GetInstance().GetOpProto(OpAdapter<OpAdapter::OpType>::getOp()->GetOpType()).GetOutputTypesByName(#x)
-#define ATTR_OPTIONAL_TYPE(x)                                       \
-  OpProtoStorage::GetInstance()                                     \
-    .GetOpProto(OpAdapter<OpAdapter::OpType>::getOp()->GetOpType()) \
-    .IsAttrOptionalTypeByName(#x)
+  OpProtoStorage::GetInstance().GetOpProto(OpAdapter<OpAdapter::OpType>::GetStaticOpType()).GetOutputTypesByName(#x)
+#define ATTR_OPTIONAL_TYPE(x) \
+  OpProtoStorage::GetInstance().GetOpProto(OpAdapter<OpAdapter::OpType>::GetStaticOpType()).IsAttrOptionalTypeByName(#x)
 
 #define INPUT_MAP(T) \
   template <>        \
   const mindspore::HashMap<int, InputDesc> OpAdapter<T>::input_map_
 #define EMPTY_INPUT_MAP mindspore::HashMap<int, InputDesc>()
-#define INPUT_DESC(name)                                                                        \
-  {                                                                                             \
-#name, INPUT_INDEX(name),                                                                     \
-      [](const OperatorPtr op, const OperatorPtr input) {                                         \
-        auto p = std::static_pointer_cast<OpType>(op);                                            \
-        (void)p->set_input_##name(*input);                                                        \
-      },                                                                                          \
-      [](const OperatorPtr op, const OutHandler &handle) {                                        \
-        auto p = std::static_pointer_cast<OpType>(op);                                            \
-        (void)p->set_input_##name(*(handle.op), handle.out);                                      \
-      },                                                                                          \
-      [](const OperatorPtr op, const GeTensorDesc desc) {                                         \
-        auto p = std::static_pointer_cast<OpType>(op);                                            \
-        (void)p->update_input_desc_##name(desc);                                                  \
-      },                                                                                          \
+#define INPUT_DESC(name)                                                                                         \
+  {                                                                                                              \
+#name, INPUT_INDEX(name),                                                                                      \
+      [](const OperatorPtr op, const OperatorPtr input) { (void)op->SetInput(#name, (*input)); },                  \
+      [](const OperatorPtr op, const OutHandler &handle) { (void)op->SetInput(#name, *(handle.op), handle.out); }, \
+      [](const OperatorPtr op, const GeTensorDesc desc) { (void)op->UpdateInputDesc(#name, (desc)); },             \
       (INPUT_OPTIONAL_TYPE(name) ? InputDesc::OPTIONAL : InputDesc::DEFAULT), INPUT_DTYPES(name), \
   }
 
 #define DYN_INPUT_MAP(T) \
   template <>            \
   const mindspore::HashMap<int, DynInputDesc> OpAdapter<T>::dyn_input_map_
-#define DYN_INPUT_DESC(name)                                                 \
-  {                                                                          \
-#name, INPUT_INDEX(name),                                                  \
-      [](const OperatorPtr op, unsigned int num) {                             \
-        auto p = std::static_pointer_cast<OpType>(op);                         \
-        (void)p->create_dynamic_input_##name(num);                             \
-      },                                                                       \
-      [](const OperatorPtr op, unsigned int num, size_t index) {               \
-        auto p = std::static_pointer_cast<OpType>(op);                         \
-        (void)p->create_dynamic_input_byindex_##name(num, index);              \
-      },                                                                       \
-      [](const OperatorPtr op, unsigned int index, const OperatorPtr input) {  \
-        auto p = std::static_pointer_cast<OpType>(op);                         \
-        (void)p->set_dynamic_input_##name(index, *input);                      \
-      },                                                                       \
-      [](const OperatorPtr op, unsigned int index, const OutHandler &handle) { \
-        auto p = std::static_pointer_cast<OpType>(op);                         \
-        (void)p->set_dynamic_input_##name(index, *(handle.op), handle.out);    \
-      },                                                                       \
+#define DYN_INPUT_DESC(name)                                                                            \
+  {                                                                                                     \
+#name, INPUT_INDEX(name),                                                                             \
+      [](const OperatorPtr op, unsigned int num) {                                                        \
+        (void)op->DynamicInputRegister(#name, (num),                                                      \
+                                       "TensorType({DT_DOUBLE, DT_FLOAT, DT_FLOAT16, DT_INT8, DT_UINT8, " \
+                                       "DT_INT16, DT_UINT16, DT_INT32, DT_UINT32, DT_INT64, DT_UINT64, "  \
+                                       "DT_BOOL})",                                                       \
+                                       true);                                                             \
+      },                                                                                                  \
+      [](const OperatorPtr op, unsigned int num, size_t index) {                                          \
+        (void)op->DynamicInputRegisterByIndex(#name, num, index);                                         \
+      },                                                                                                  \
+      [](const OperatorPtr op, unsigned int index, const OperatorPtr input) {                             \
+        (void) op->SetInput(#name, index, *input);                                                        \
+      },                                                                                                  \
+      [](const OperatorPtr op, unsigned int index, const OutHandler &handle) {                            \
+        const std::string input_name = #name;                                                             \
+        (void)op->SetInput(input_name.c_str(), index, *(handle.op), handle.out.c_str());                  \
+      },                                                                                                  \
       INPUT_DTYPES(name), \
   }
 
 #define DYN_SUBGRAPH_MAP(T) \
   template <>               \
   const mindspore::HashMap<int, DynSubGraphDesc> OpAdapter<T>::dyn_subgraph_map_
-#define DYN_SUBGRAPH_DESC(name)                                                          \
-  {                                                                                      \
-#name,                                                                                 \
-      [](const OperatorPtr op, unsigned int num) {                                         \
-        auto p = std::static_pointer_cast<OpType>(op);                                     \
-        (void)p->create_dynamic_subgraph_##name(num);                                      \
-      },                                                                                   \
-      [](const OperatorPtr op, unsigned int index, const DfGraphPtr graph) {               \
-        auto p = std::static_pointer_cast<OpType>(op);                                     \
-        (void)p->set_dynamic_subgraph_builder_##name(index, [graph]() { return *graph; }); \
+#define DYN_SUBGRAPH_DESC(name)                                                                         \
+  {                                                                                                     \
+#name, [](const OperatorPtr op, unsigned int num) { (void)op->SubgraphCountRegister(#name, (num)); }, \
+      [](const OperatorPtr op, unsigned int index, const DfGraphPtr graph) {                              \
+        (void)op->SetSubgraphBuilder(#name, index, [graph]() { return *graph; });                         \
       } \
   }
 
@@ -187,23 +162,21 @@
   template <>       \
   const mindspore::HashMap<std::string, AttrDesc> OpAdapter<T>::attr_map_
 #define EMPTY_ATTR_MAP mindspore::HashMap<std::string, AttrDesc>()
-#define ATTR_DESC(name, ...)                                             \
-  {                                                                      \
-#name,                                                                 \
-      [](const OperatorPtr op, const ValuePtr &value) {                    \
-        auto p = std::static_pointer_cast<OpType>(op);                     \
-        (void)p->set_attr_##name(ConvertAny(value, __VA_ARGS__));          \
-      },                                                                   \
-      [](const OperatorPtr op, ValuePtr *ms_value) {                       \
-        if (ms_value == nullptr || *ms_value == nullptr) {                 \
-          auto p = std::static_pointer_cast<OpType>(op);                   \
-          auto real_value = p->get_attr_##name();                          \
-          *ms_value = GetRealValue<decltype(real_value)>(real_value);      \
-        } else {                                                           \
-          auto real_value = ConvertAny(*ms_value, __VA_ARGS__);            \
-          *ms_value = GetRealValue<decltype(real_value)>(real_value);      \
-        }                                                                  \
-      },                                                                   \
+#define ATTR_DESC(name, ...)                                                                                         \
+  {                                                                                                                  \
+#name,                                                                                                             \
+      [](const OperatorPtr op, const ValuePtr &value) { (void)op->SetAttr(#name, (ConvertAny(value, __VA_ARGS__))); }, \
+      [](const OperatorPtr op, ValuePtr *ms_value) {                                                                   \
+        if (ms_value == nullptr || *ms_value == nullptr) {                                                             \
+          auto ret = GetAttrType(__VA_ARGS__);                                                                         \
+          decltype(ret) attr_value;                                                                                    \
+          (void)op->GetAttr(#name, attr_value);                                                                        \
+          *ms_value = GetRealValue<decltype(attr_value)>(attr_value);                                                  \
+        } else {                                                                                                       \
+          auto real_value = ConvertAny(*ms_value, __VA_ARGS__);                                                        \
+          *ms_value = GetRealValue<decltype(real_value)>(real_value);                                                  \
+        }                                                                                                              \
+      },                                                                                                               \
       (ATTR_OPTIONAL_TYPE(name) ? AttrDesc::OPTIONAL : AttrDesc::REQUIRED) \
   }
 
@@ -219,41 +192,36 @@
   template <>         \
   const std::map<int, OutputDesc> OpAdapter<T>::output_map_
 #define EMPTY_OUTPUT_MAP std::map<int, OutputDesc>()
-#define OUTPUT_DESC(name)                               \
-  {                                                     \
-#name, OUTPUT_INDEX(name),                            \
-      [](const OperatorPtr op, const GeTensorDesc desc) { \
-        auto p = std::static_pointer_cast<OpType>(op);    \
-        (void)p->update_output_desc_##name(desc);         \
-      },                                                  \
-      OUTPUT_DTYPES(name), \
+#define OUTPUT_DESC(name)                                                                            \
+  {                                                                                                  \
+#name, OUTPUT_INDEX(name),                                                                       \
+      [](const OperatorPtr op,                                                                       \
+         const GeTensorDesc desc) { (void)op->UpdateOutputDesc(#name, desc); }, OUTPUT_DTYPES(name), \
   }
 
 #define DYN_OUTPUT_MAP(T) \
   template <>             \
   const mindspore::HashMap<int, DynOutputDesc> OpAdapter<T>::dyn_output_map_
 
-#define DYN_OUTPUT_DESC(name)                                                  \
-  {                                                                            \
-#name, OUTPUT_INDEX(name),                                                   \
-      [](const OperatorPtr op, unsigned int num) {                               \
-        auto p = std::static_pointer_cast<OpType>(op);                           \
-        (void)p->create_dynamic_output_##name(num);                              \
-      },                                                                         \
-      [](const OperatorPtr op, uint32_t index, const GeTensorDesc tensor_desc) { \
-        auto p = std::static_pointer_cast<OpType>(op);                           \
-        (void)p->UpdateDynamicOutputDesc(#name, index, tensor_desc);             \
-      },                                                                         \
+#define DYN_OUTPUT_DESC(name)                                                                                    \
+  {                                                                                                              \
+#name, OUTPUT_INDEX(name),                                                                                     \
+      [](const OperatorPtr op, unsigned int num) {                                                                 \
+        (void)op->DynamicOutputRegister(#name, num,                                                                \
+                                        "TensorType({DT_FLOAT, DT_FLOAT16, DT_INT8, DT_INT16, DT_UINT16, "         \
+                                        "DT_UINT8, DT_INT32, DT_INT64, DT_UINT32, DT_UINT64, DT_BOOL, DT_DOUBLE, " \
+                                        "DT_STRING})",                                                             \
+                                        true);                                                                     \
+      },                                                                                                           \
+      [](const OperatorPtr op, uint32_t index, const GeTensorDesc tensor_desc) {                                   \
+        (void)op->UpdateDynamicOutputDesc(#name, index, tensor_desc);                                              \
+      },                                                                                                           \
       OUTPUT_DTYPES(name), \
   }
 
-#define DYNAMIC_SHAPE_SUPPORT(T) \
-  template <>                    \
-  const bool OpAdapter<T>::dynamic_shape_support_
-
-#define ADPT_DESC_ONE(T) std::make_shared<OpAdapterDesc>(std::make_shared<OpAdapter<T>>())
+#define ADPT_DESC_ONE(T) std::make_shared<OpAdapterDesc>(std::make_shared<OpAdapter<T>>(#T))
 #define ADPT_DESC_TWO(T, I) \
-  std::make_shared<OpAdapterDesc>(std::make_shared<OpAdapter<T>>(), std::make_shared<OpAdapter<I>>())
+  std::make_shared<OpAdapterDesc>(std::make_shared<OpAdapter<T>>(#T), std::make_shared<OpAdapter<I>>(#I))
 #define GET_MACRO(_1, _2, DESC, ...) DESC
 #define ADPT_DESC(...) GET_MACRO(__VA_ARGS__, ADPT_DESC_TWO, ADPT_DESC_ONE, ...)(__VA_ARGS__)
 #define REG_ADPT_DESC(name, name_str, adpt_desc) \

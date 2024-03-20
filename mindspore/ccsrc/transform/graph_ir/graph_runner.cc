@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,8 @@
 #include "include/common/utils/callbacks.h"
 #if (defined ENABLE_D) || (defined ENABLE_LITE_ACL)
 #include "transform/graph_ir/callbacks_ge.h"
-#include "common/ge_inner_error_codes.h"
+#include "external/ge_common/ge_api_error_codes.h"
+#include "graph/graph.h"
 #endif
 #include "utils/ms_context.h"
 #include "include/common/utils/scoped_long_running.h"

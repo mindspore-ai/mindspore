@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -140,7 +140,7 @@ class BaseOpAdapter {
  public:
   virtual ~BaseOpAdapter() {}
   virtual OperatorPtr generate(const AnfNodePtr &anf) = 0;
-  virtual OperatorPtr generate(const std::string &type) { return std::make_shared<::ge::Operator>(type); }
+  virtual OperatorPtr generate(const std::string &type) const { return std::make_shared<::ge::Operator>(type); }
   virtual OperatorPtr generateDynOutputOp(const AnfNodePtr &anf) { return nullptr; }
   virtual void setDynamicOutputNum(const OperatorPtr &op, size_t dyn_output_size) { return; }
   virtual void setSubgraph(const OperatorPtr &op, std::shared_ptr<std::vector<DfGraph>> subgraphs) = 0;

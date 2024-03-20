@@ -1,5 +1,5 @@
 /**
- * Copyright 2022-2023 Huawei Technologies Co., Ltd
+ * Copyright 2022-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@
 #include "tools/graph_kernel/converter/graph_kernel_optimization.h"
 #endif
 #include "src/extendrt/utils/tensor_utils.h"
-#include "framework/common/ge_inner_error_codes.h"
+#include "external/ge_common/ge_api_error_codes.h"
 #include "src/extendrt/delegate/ascend_ge/aoe_api_tune_process.h"
 #include "extendrt/delegate/ascend_ge/ge_utils.h"
 #include "extendrt/delegate/ascend_ge/ge_dynamic_utils.h"
@@ -53,8 +53,6 @@
 #include "op_proto/inc/array_ops.h"
 #include "op_proto/inc/elewise_calculation_ops.h"
 #include "mindspore/lite/tools/optimizer/graph/attr_to_args_pass.h"
-#include "inc/ops/array_ops.h"
-#include "inc/ops/elewise_calculation_ops.h"
 #include "mindspore/core/ops/nn_ops.h"
 #include <nlohmann/json.hpp>
 
