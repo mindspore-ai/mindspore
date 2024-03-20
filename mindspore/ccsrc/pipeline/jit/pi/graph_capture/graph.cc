@@ -172,7 +172,7 @@ static bool CheckDepthForTrace(TracePtr *ret, ValueNode *node, int depth, int ma
   }
   auto ct = node->GetTrace();
   if (ct != nullptr) {
-    if (ct->GetDepth() + depth > max_depth) {
+    if (ct->GetDepth() + depth > max_depth && max_depth != -1) {
       MS_LOG(DEBUG) << "too deep trace for guard";
       return false;
     } else {
