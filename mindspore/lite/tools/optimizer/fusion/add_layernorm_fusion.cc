@@ -192,15 +192,19 @@ CNodePtr AddLayerNormFusion::CreateLayerNormV3Node(const FuncGraphPtr &func_grap
   // Insert cast to make the dtype of Add before LayerNormV3 is fp16,
   // otherwise, pattern (Add, LayerNormV3) will not work.
   auto add_in1 = add_cnode->input(kInputIndex1)->cast<CNodePtr>();
+  MS_CHECK_TRUE_RET(add_in1 != nullptr, nullptr);
   auto add_in2 = add_cnode->input(kInputIndex2)->cast<CNodePtr>();
+  MS_CHECK_TRUE_RET(add_in2 != nullptr, nullptr);
   auto add_input1_cast =
     NewCNodeInner(add_in1, prim::kPrimCast, {add_in1, NewValueNode(TypeIdToType(kNumberTypeFloat16))},
                   add_in1->abstract(), add_in1->fullname_with_scope() + "_input1_cast");
+  MS_CHECK_TRUE_RET(add_input1_cast != nullptr, nullptr);
   add_cnode->set_input(kInputIndex1, add_input1_cast);
 
   auto add_input2_cast =
     NewCNodeInner(add_in2, prim::kPrimCast, {add_in2, NewValueNode(TypeIdToType(kNumberTypeFloat16))},
                   add_in2->abstract(), add_in2->fullname_with_scope() + "_input2_cast");
+  MS_CHECK_TRUE_RET(add_input2_cast != nullptr, nullptr);
   add_cnode->set_input(kInputIndex2, add_input2_cast);
 
   return lnv3_cnode;
@@ -377,7 +381,7 @@ AnfNodePtr AddLayerNormFusion::Process(const std::string &pattern_name, const mi
   }
 
   if (cnode == nullptr) {
-    MS_LOG(ERROR) << "new fusion node failed under " << pattern_name;
+    MS_LOG(INFO) << "new fusion node failed under " << pattern_name;
     return nullptr;
   }
   MS_LOG(INFO) << pattern_name << " fusion success, fusion node name: " << cnode->fullname_with_scope();
