@@ -926,7 +926,7 @@ void DynamicOpRunner::RunSingleOpGraph(const session::BackendOpRunInfoPtr &op_ru
 }
 
 void DynamicOpRunner::UpdateInputDeviceAddress(const OpCompilerInfoPtr &op_compiler_info,
-                                               const std::vector<tensor::TensorPtr> &input_tensors) {
+                                               const std::vector<tensor::TensorPtr> &input_tensors, bool is_sync) {
   MS_LOG(DEBUG) << "Start update input device address for " << op_compiler_info->graph_info_;
   const auto &simple_graph = op_compiler_info->simple_graph_;
   auto input_tensors_num = input_tensors.size();
@@ -958,8 +958,9 @@ void DynamicOpRunner::UpdateInputDeviceAddress(const OpCompilerInfoPtr &op_compi
 
       if (device_address->GetTensorStorageInfo() != nullptr) {
         auto new_device_address =
-          DeviceAddressUtils::ConvertContiguousDeviceAddress(device_context, device_address, false);
+          DeviceAddressUtils::ConvertContiguousDeviceAddress(device_context, device_address, is_sync);
         input_edge->address_ = new_device_address;
+        input_tensor->set_device_address(new_device_address);
       } else {
         // Always use tensor address as kernel address.
         input_edge->address_ = device_address;

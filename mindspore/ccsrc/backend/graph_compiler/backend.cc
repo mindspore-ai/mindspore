@@ -1061,7 +1061,7 @@ void MindRTBackend::RunOpImplDynamic(bool single_op_cache_hit, const OpCompilerI
   if (!DisableRunOpAsync(op_compiler_info, op_run_info)) {
     MS_LOG(DEBUG) << "Async exec enabled, op: " << op_run_info->base_op_run_info.op_name;
     auto input_tensors = runtime::OpRunner::GetTensorWithoutValueMask(op_run_info);
-    runtime::DynamicOpRunner::UpdateInputDeviceAddress(op_compiler_info, input_tensors);
+    runtime::DynamicOpRunner::UpdateInputDeviceAddress(op_compiler_info, input_tensors, false);
     auto device_address_list = runtime::DeviceAddressUtils::CreateGraphOutputDeviceAddress(
       op_compiler_info, op_run_info->base_op_run_info.abstract, op_run_info->base_op_run_info.stream_id);
     // Create output tensor
@@ -1075,7 +1075,7 @@ void MindRTBackend::RunOpImplDynamic(bool single_op_cache_hit, const OpCompilerI
     WaitTaskFinish();
   }
   auto input_tensors = runtime::OpRunner::GetTensorWithoutValueMask(op_run_info);
-  runtime::DynamicOpRunner::UpdateInputDeviceAddress(op_compiler_info, input_tensors);
+  runtime::DynamicOpRunner::UpdateInputDeviceAddress(op_compiler_info, input_tensors, true);
   runtime::DynamicOpRunner::RunSingleOpGraph(op_run_info, op_compiler_info, input_tensors);
 
   if (!op_run_info->is_infer) {

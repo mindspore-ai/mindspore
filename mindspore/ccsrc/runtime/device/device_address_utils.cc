@@ -880,18 +880,11 @@ void DeviceAddressUtils::CreateInputTensorAddress(const DeviceContext *device_co
 
   const auto &format = GetFormatByTensorShape(device_context, tensor->shape());
   auto tensor_size = LongToSize(tensor->data().nbytes());
-  kernel::KernelTensorPtr kernel_tensor;
-  if (device_context->GetDeviceType() == device::DeviceType::kAscend) {
-    // Not transmitting host shape information under Ascend for better performance.
-    kernel_tensor = std::make_shared<kernel::KernelTensor>(
-      nullptr, tensor_size, format, tensor->data_type(), tensor->shape(),
-      device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
-  } else {
-    kernel_tensor = std::make_shared<kernel::KernelTensor>(
-      std::make_shared<abstract::TensorShape>(tensor->shape()), std::make_shared<TensorType>(tensor->Dtype()), nullptr,
-      nullptr, tensor_size, kernel::GetFormatFromEnumToStr(format), tensor->data_type(), tensor->shape(),
-      device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
-  }
+  auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
+    std::make_shared<abstract::TensorShape>(tensor->shape()), std::make_shared<TensorType>(tensor->Dtype()), nullptr,
+    nullptr, tensor_size, kernel::GetFormatFromEnumToStr(format), tensor->data_type(), tensor->shape(),
+    device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+
   MS_EXCEPTION_IF_NULL(kernel_tensor);
   kernel_tensor->set_stream_id(stream_id);
   device::DeviceAddressPtr device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
@@ -1086,18 +1079,11 @@ void DeviceAddressUtils::CreateOutputTensorAddress(const DeviceContext *device_c
     MS_EXCEPTION_IF_NULL(tensor);
     auto tensor_size = LongToSize(tensor->data().nbytes());
     const auto &format = GetFormatByTensorShape(device_context, tensor->shape());
-    kernel::KernelTensorPtr kernel_tensor;
-    if (device_context->GetDeviceType() == device::DeviceType::kAscend) {
-      // Not transmitting host shape information under Ascend for better performance.
-      kernel_tensor = std::make_shared<kernel::KernelTensor>(
-        nullptr, tensor_size, format, tensor->data_type(), tensor->shape(),
-        device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
-    } else {
-      kernel_tensor = std::make_shared<kernel::KernelTensor>(
-        std::make_shared<abstract::TensorShape>(tensor->shape()), std::make_shared<TensorType>(tensor->Dtype()),
-        nullptr, nullptr, tensor_size, kernel::GetFormatFromEnumToStr(format), tensor->data_type(), tensor->shape(),
-        device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
-    }
+    auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
+      std::make_shared<abstract::TensorShape>(tensor->shape()), std::make_shared<TensorType>(tensor->Dtype()), nullptr,
+      nullptr, tensor_size, kernel::GetFormatFromEnumToStr(format), tensor->data_type(), tensor->shape(),
+      device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
+
     MS_EXCEPTION_IF_NULL(kernel_tensor);
     kernel_tensor->set_stream_id(stream_id);
     device::DeviceAddressPtr device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
@@ -1201,15 +1187,23 @@ device::DeviceAddressPtr DeviceAddressUtils::ConvertContiguousDeviceAddress(
   if (is_sync) {
     // ExecuteKernelTask sync, need to wait until all tasks in queue are complete.
     runtime::OpExecutor::GetInstance().WaitAll();
+    if (!device_context->GetKernelExecutor(false)->ExecuteKernelTask(
+          runtime::KernelTaskType::kCONTIGUOUS_TASK, {old_device_address}, {new_device_address}, stream_id)) {
+      MS_LOG(EXCEPTION) << "ExecuteKernelTask failed, task_type:" << runtime::KernelTaskType::kCONTIGUOUS_TASK;
+    }
+    runtime::OpExecutor::GetInstance().WaitAll();
+  } else {
+    auto async_task = [device_context, old_device_address, new_device_address, stream_id]() {
+      if (!device_context->GetKernelExecutor(false)->ExecuteKernelTask(
+            runtime::KernelTaskType::kCONTIGUOUS_TASK, {old_device_address}, {new_device_address}, stream_id)) {
+        MS_LOG(EXCEPTION) << "ExecuteKernelTask failed, task_type:" << runtime::KernelTaskType::kCONTIGUOUS_TASK;
+      }
+    };
+
+    runtime::OpExecutor::GetInstance().PushSimpleOpRunTask(
+      std::make_shared<runtime::PassthroughDeviceTask>(async_task));
   }
 
-  if (!device_context->GetKernelExecutor(false)->ExecuteKernelTask(
-        runtime::KernelTaskType::kCONTIGUOUS_TASK, {old_device_address}, {new_device_address}, stream_id)) {
-    MS_LOG(EXCEPTION) << "ExecuteKernelTask failed, task_type:" << runtime::KernelTaskType::kCONTIGUOUS_TASK;
-  }
-  if (is_sync) {
-    runtime::OpExecutor::GetInstance().WaitAll();
-  }
   return new_device_address;
 }
 
