@@ -27,7 +27,7 @@ mindspore.nn.SampledSoftmaxLoss
         - **logits** (Tensor) - 输入预测值Tensor，其shape为 :math:`(N, dim)` 。
 
     输出：
-        Tensor或Scalar，如果 `reduction` 为'none'，则输出是shape为 :math:`(N,)` 的Tensor。否则，输出为Scalar。
+        Tensor或Scalar，如果 `reduction` 为 ``'none'`` ，则输出是shape为 :math:`(N,)` 的Tensor。否则，输出为Scalar。
 
     异常：
         - **TypeError** - `sampled_values` 不是list或tuple。

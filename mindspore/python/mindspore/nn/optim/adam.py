@@ -641,8 +641,8 @@ class Adam(Optimizer):
         ValueError: If `beta1`, `beta2` is not in range (0.0, 1.0).
         ValueError: If `weight_decay` is less than 0.
         ValueError: If `use_lazy` and `use_offload` are both ``true`` .
-        ValueError: If `use_amsgrad` is ``true`` and (`use_lazy` or `use_offload` is ``true`` ).
-        ValueError: If `use_amsgrad` while using distributed training.
+        ValueError: If `use_amsgrad` is ``true``, `use_lazy` or `use_offload` is ``true`` .
+        ValueError: If `use_amsgrad` is ``True`` while using distributed training.
 
     Supported Platforms:
         ``Ascend`` ``GPU``  ``CPU``
