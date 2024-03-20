@@ -15,14 +15,32 @@
  */
 
 #include "mindspore/ccsrc/debug/summary/summary.h"
-#include "utils/ms_context.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
+#include "mindspore/core/ops/structure_ops.h"
 #include "runtime/device/ms_device_shape_transfer.h"
+#include "utils/ms_context.h"
 #include "utils/trace_base.h"
 
 namespace mindspore::debug {
 constexpr int kSummaryGetItem = 2;
+
+namespace {
+string GetSummaryNameWithTag(CNodePtr cnode) {
+  std::string tag = GetValue<std::string>(GetValueNode(cnode->input(1)));
+  std::string name;
+  if (cnode->IsApply(prim::kPrimScalarSummary)) {
+    name = tag + "[:Scalar]";
+  } else if (cnode->IsApply(prim::kPrimImageSummary)) {
+    name = tag + "[:Image]";
+  } else if (cnode->IsApply(prim::kPrimHistogramSummary)) {
+    name = tag + "[:Histogram]";
+  } else {
+    name = tag + "[:Tensor]";
+  }
+  return name;
+}
+}  // namespace
 
 Summary &Summary::GetInstance() {
   static Summary instance;
@@ -73,7 +91,6 @@ void Summary::SummaryTensor(KernelGraph *graph) {
     return;
   }
 
-  SetSummaryNodes(graph);
   auto summary_outputs = graph->summary_nodes();
   std::map<std::string, tensor::TensorPtr> params_list;
   // fetch outputs apply kernel in session & run callback functions
@@ -133,7 +150,7 @@ void Summary::SetSummaryNodes(KernelGraph *graph) {
       if (!AnfUtils::IsRealKernel(item_with_index.first)) {
         MS_LOG(EXCEPTION) << "Unexpected node:" << item_with_index.first->DebugString();
       }
-      summary[n->fullname_with_scope()] = item_with_index;
+      summary[GetSummaryNameWithTag(cnode)] = item_with_index;
     }
   }
   graph->set_summary_nodes(summary);
