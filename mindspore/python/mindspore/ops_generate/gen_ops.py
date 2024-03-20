@@ -830,6 +830,7 @@ from mindspore.ops.operations.manually_defined.ops_def import *
 from mindspore.ops._primitive_cache import _get_cache_prim
 """
 
+
 def generate_ops_prim_file(work_path, yaml_str, doc_str, file_pre):
     py_path = os.path.join(work_path, f'mindspore/python/mindspore/ops/auto_generate/{file_pre}_ops_prim.py')
     tmp_py_path = os.path.join(work_path, f'mindspore/python/mindspore/ops/auto_generate/tmp_{file_pre}_ops_prim.py')
