@@ -175,9 +175,9 @@ void InsertSliceAllGatherNode(const std::vector<std::pair<std::shared_ptr<AnfNod
 
   std::vector<AnfNodePtr> depend_inputs{NewValueNode(prim::kPrimDepend), forward_node_user.first, slice_cnode};
   auto depend_node = node->func_graph()->NewCNode(depend_inputs);
+  MS_EXCEPTION_IF_NULL(depend_node);
   depend_node->set_abstract(forward_node_user.first->abstract()->Clone());
   depend_node->AddAttr("slice_forward_depend", MakeValue(true));
-  MS_EXCEPTION_IF_NULL(depend_node);
   (void)manager->Replace(forward_node_user.first, depend_node);
 }
 

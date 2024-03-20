@@ -731,6 +731,7 @@ Status CostGraph::SearchStrategyForMultiNodeFinalGraph(const std::vector<Operato
       MS_LOG(ERROR) << "No valid strategy can be found under the current device memory: " << device_mem_capacity << ".";
       return FAILED;
     }
+    MS_EXCEPTION_IF_NULL(selected_cost->decision_ptr_);
     MS_EXCEPTION_IF_NULL(connected_components[k]);
     if (connected_components[k]->GetOperators().size() == 1) {
       auto u = connected_components[k]->GetOperators()[0];
@@ -757,7 +758,6 @@ Status CostGraph::SearchStrategyForMultiNodeFinalGraph(const std::vector<Operato
       auto e = u->GetAliveSuccEdges()[0];
       MS_EXCEPTION_IF_NULL(v);
       MS_EXCEPTION_IF_NULL(e);
-      MS_EXCEPTION_IF_NULL(selected_cost->decision_ptr_);
       auto decision = selected_cost->decision_ptr_->cast<FinalDecisionPtr>();
       MS_EXCEPTION_IF_NULL(decision);
       u->SetSelectedStrategyAndCost(decision->u_strategy_, decision->left_cost_);

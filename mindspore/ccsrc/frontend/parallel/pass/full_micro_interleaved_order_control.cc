@@ -170,16 +170,16 @@ void InsertInterleavedNodesDepend(const FuncGraphManagerPtr &manager,
     // comm_node_b_input -> depend -> comm_node_a_output
     std::vector<AnfNodePtr> depend1_inputs{NewValueNode(prim::kPrimDepend), comm_node_a, comm_node_b_input_node};
     auto depend_node1 = comm_node_a_output_node->func_graph()->NewCNode(depend1_inputs);
+    MS_EXCEPTION_IF_NULL(depend_node1);
     depend_node1->set_abstract(comm_node_a->abstract()->Clone());
     depend_node1->AddAttr("micro_interleaved_depend1", MakeValue(true));
-    MS_EXCEPTION_IF_NULL(depend_node1);
     manager->SetEdge(comm_node_a_output_node, comm_node_a_node_users.front().second, depend_node1);
     // next_comm_node_a_input -> depend -> comm_node_b_output
     std::vector<AnfNodePtr> depend2_inputs{NewValueNode(prim::kPrimDepend), comm_node_b, next_comm_node_a_input_node};
     auto depend_node2 = next_comm_node_a_input_node->func_graph()->NewCNode(depend2_inputs);
+    MS_EXCEPTION_IF_NULL(depend_node2);
     depend_node2->AddAttr("micro_interleaved_depend2", MakeValue(true));
     depend_node2->set_abstract(comm_node_b->abstract()->Clone());
-    MS_EXCEPTION_IF_NULL(depend_node2);
     manager->SetEdge(comm_node_b_output_node, comm_node_b_node_users.front().second, depend_node2);
   }
 }

@@ -135,8 +135,14 @@ bool SparseAddGradCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTen
   const int64_t x2_indices_num = SizeToLong(inputs[kX2IndicesIdx]->size() / (sizeof(S) * size_t_indices_column));
   const int64_t out_indices_num = SizeToLong(inputs[kOutIndicesIdx]->size() / (sizeof(S) * size_t_indices_column));
 
-  memset_s(dx1, sizeof(T) * x1_indices_num, 0, sizeof(T) * x1_indices_num);
-  memset_s(dx2, sizeof(T) * x2_indices_num, 0, sizeof(T) * x2_indices_num);
+  auto ret_dx1 = memset_s(dx1, sizeof(T) * x1_indices_num, 0, sizeof(T) * x1_indices_num);
+  if (ret_dx1 != EOK) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', memset_s error. Error no: " << ret_dx1;
+  }
+  auto ret_dx2 = memset_s(dx2, sizeof(T) * x2_indices_num, 0, sizeof(T) * x2_indices_num);
+  if (ret_dx2 != EOK) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', memset_s error. Error no: " << ret_dx2;
+  }
 
   int64_t i = 0;
   int64_t j = 0;
