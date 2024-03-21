@@ -672,8 +672,8 @@ class LLMModel:
             >>> for i in range(len(inputs)):
             ...     print(f"Input name {inputs[i].name}, dtype {inputs[i].dtype}, shape: {inputs[i].shape}")
         """
-        if not self.inited_:
-            raise RuntimeError(f"LLMEngine is not inited or init failed")
+        if not self.model_:
+            raise RuntimeError(f"LLMModel is invalid, please return LLMModel from LLMEngine.add_model.")
         inputs = []
         for _tensor in self.model_.get_inputs():
             inputs.append(Tensor(_tensor))
