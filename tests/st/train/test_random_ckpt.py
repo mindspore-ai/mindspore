@@ -37,7 +37,7 @@ class Net(nn.Cell):
         return out0, out1
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE])
 def test_save_random_ckpt(mode):
