@@ -198,7 +198,7 @@ AnfNodePtr FuncGraphBuilder::ConvertInputObjToNode(const py::object &input_obj) 
   }
   auto val = ConvertPyObjToValue(input_obj);
   if (val == nullptr) {
-    MS_LOG(DEBUG) << "The input object " << py::str(input_obj) << " convert to value failed.";
+    MS_LOG(INFO) << "The input object " << py::str(input_obj) << " convert to value failed.";
     return nullptr;
   }
   // Constant value input scene, the object should be converted to value node.
@@ -226,7 +226,7 @@ AbstractBasePtr FuncGraphBuilder::EvalValue(const ValuePtr &value, const Abstrac
     }
     return nullptr;
   } catch (const std::exception &e) {
-    MS_LOG(DEBUG) << "Failed to EvalValue for value: " << value->ToString();
+    MS_LOG(INFO) << "Failed to EvalValue for value: " << value->ToString();
     return nullptr;
   }
 }
@@ -279,12 +279,12 @@ py::object FuncGraphBuilder::AddInput(const py::object &obj) {
 
 py::object FuncGraphBuilder::AddNode(const py::object &callable_obj, const std::vector<py::object> &inputs_obj) {
   if (!CheckCallable(callable_obj)) {
-    MS_LOG(DEBUG) << "The python obj " << py::str(callable_obj) << " is not callable.";
+    MS_LOG(INFO) << "The python obj " << py::str(callable_obj) << " is not callable.";
     return py::object();
   }
   auto callable_value = ConvertPyObjToValue(callable_obj);
   if (callable_value == nullptr) {
-    MS_LOG(DEBUG) << "Convert python object " << py::str(callable_obj) << " to value failed.";
+    MS_LOG(INFO) << "Convert python object " << py::str(callable_obj) << " to value failed.";
     return py::object();
   }
   if (FunctionShouldBeParseInAst(callable_obj)) {
@@ -302,21 +302,21 @@ bool FuncGraphBuilder::GetInputNodesAndAbstracts(const ValuePtr &callable_value,
   (void)input_node_list->emplace_back(NewValueNode(callable_value));
   for (const auto &input_obj : inputs_obj) {
     if (input_obj.ptr() == nullptr) {
-      MS_LOG(DEBUG) << "The input python object of " << callable_value->ToString() << ", is NULL";
+      MS_LOG(INFO) << "The input python object of " << callable_value->ToString() << ", is NULL";
       return false;
     }
     auto iter = py_obj_to_node_.find(input_obj.ptr());
     if (iter == py_obj_to_node_.end()) {
       auto node = ConvertInputObjToNode(input_obj);
       if (node == nullptr) {
-        MS_LOG(DEBUG) << "Convert input python object " << py::str(input_obj) << " to anf node failed.";
+        MS_LOG(INFO) << "Convert input python object " << py::str(input_obj) << " to anf node failed.";
         return false;
       }
       node->set_user_data(kPiJitPyObjKey, std::make_shared<py::object>(input_obj));
       (void)py_obj_to_node_.emplace(input_obj.ptr(), node);
       (void)input_node_list->emplace_back(node);
       (void)input_abs_list->emplace_back(node->abstract());
-      MS_LOG(DEBUG) << "Add python input " << py::str(input_obj) << " with new node " << node->DebugString();
+      MS_LOG(INFO) << "Add python input " << py::str(input_obj) << " with new node " << node->DebugString();
     } else {
       (void)input_node_list->emplace_back(iter->second);
       (void)input_abs_list->emplace_back(iter->second->abstract());
@@ -384,7 +384,7 @@ py::object FuncGraphBuilder::TryToAddNode(const ValuePtr &callable_value, const 
 
 py::object FuncGraphBuilder::AddNode(const ValuePtr &callable_value, const std::vector<py::object> &inputs_obj) {
   if (!callable_value->ToAbstract()->isa<abstract::AbstractFunction>()) {
-    MS_LOG(DEBUG) << "The value " << callable_value->ToString() << " is not callable.";
+    MS_LOG(INFO) << "The value " << callable_value->ToString() << " is not callable.";
     return py::object();
   }
   if (callable_value->isa<FuncGraph>()) {
@@ -397,7 +397,7 @@ py::object FuncGraphBuilder::AddMultiNode(const std::string &name, const std::ve
   const std::string mod_str = "mindspore.ops.composite.multitype_ops";
   py::module mod = py::module::import(mod_str.c_str());
   if (!py::hasattr(mod, name.c_str())) {
-    MS_LOG(DEBUG) << "Fail to find multitype function graph for name " << name;
+    MS_LOG(INFO) << "Fail to find multitype function graph for name " << name;
     return py::object();
   }
   py::object fn = mod.attr(name.c_str());
@@ -407,19 +407,19 @@ py::object FuncGraphBuilder::AddMultiNode(const std::string &name, const std::ve
 bool FuncGraphBuilder::AddOutput(const py::object &output_obj, bool add_repeat) {
   auto iter = py_obj_to_node_.find(output_obj.ptr());
   if (iter == py_obj_to_node_.end()) {
-    MS_LOG(DEBUG) << "The output python object " << py::str(output_obj) << " should have been added to the graph.";
+    MS_LOG(INFO) << "The output python object " << py::str(output_obj) << " should have been added to the graph.";
     return false;
   }
   auto node = iter->second;
   MS_EXCEPTION_IF_NULL(node);
   auto abs = node->abstract();
   if (!add_repeat && !CheckGraphOutput(abs)) {
-    MS_LOG(DEBUG) << "The output python object " << py::str(output_obj)
-                  << " should not be the graph output, abstract: " << (abs == nullptr ? "null" : abs->ToString());
+    MS_LOG(INFO) << "The output python object " << py::str(output_obj)
+                 << " should not be the graph output, abstract: " << (abs == nullptr ? "null" : abs->ToString());
     return false;
   }
   if (!add_repeat && std::find(output_nodes_.begin(), output_nodes_.end(), node) != output_nodes_.end()) {
-    MS_LOG(DEBUG) << "Output node " << node->DebugString() << " has already been set as output.";
+    MS_LOG(INFO) << "Output node " << node->DebugString() << " has already been set as output.";
     return true;
   }
   (void)output_nodes_.emplace_back(node);
@@ -509,7 +509,7 @@ py::object FuncGraphBuilder::AddFgCallNode(const FuncGraphPtr &fg, const vector<
     if (iter == py_obj_to_node_.end()) {
       auto node = ConvertInputObjToNode(input_obj);
       if (node == nullptr) {
-        MS_LOG(DEBUG) << "Convert input python object " << py::str(input_obj) << " to anf node failed.";
+        MS_LOG(INFO) << "Convert input python object " << py::str(input_obj) << " to anf node failed.";
         return py::object();
       }
       node->set_user_data(kPiJitPyObjKey, std::make_shared<py::object>(input_obj));
@@ -552,7 +552,7 @@ py::object FuncGraphBuilder::ConvertMethod(const py::object &obj) {
   py::tuple method_info = python_adapter::CallPyModFn(mod, parse::PYTHON_MOD_GET_METHOD_INFO, obj);
   py::object class_name_obj = method_info[0];
   if (py::isinstance<py::none>(class_name_obj)) {
-    MS_LOG(DEBUG) << "Can not get the method info of " << py::str(obj);
+    MS_LOG(INFO) << "Can not get the method info of " << py::str(obj);
     return py::object();
   }
   auto class_name = class_name_obj.cast<std::string>();
