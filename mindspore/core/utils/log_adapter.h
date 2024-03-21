@@ -197,6 +197,7 @@ enum SubModuleId : int {
   SM_GE,                 // GraphEngine
   SM_API,                // MindAPI
   SM_SYMBOLIC_SHAPE,     // symbolic shape
+  SM_GRAPH_KERNEL,       // graph kernel fusion
   NUM_SUBMODUES          // number of submodules
 };
 
