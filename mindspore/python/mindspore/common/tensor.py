@@ -1816,9 +1816,9 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
 
     def reverse(self, axis):
         """
-        For details, please refer to :func:`mindspore.ops.reverse`.
+        For details, please refer to :func:`mindspore.ops.flip`.
         """
-        return tensor_operator_registry.get('reverse')(self, axis)
+        return tensor_operator_registry.get('flip')(self, axis)
 
     def amax(self, axis=None, keepdims=False, *, initial=None, where=None):
         """

@@ -1,7 +1,7 @@
 #operator reverse_v2
 reverse_v2:
   args:
-    x:
+    input:
       dtype: tensor
     axis:
       dtype: tuple[int]
@@ -11,4 +11,8 @@ reverse_v2:
     output:
       dtype: tensor
   function:
-    name: reverse
+    name: flip
+  class:
+    name: ReverseV2
+  dispatch:
+    enable: True
