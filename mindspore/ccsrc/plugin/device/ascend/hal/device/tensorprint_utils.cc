@@ -291,7 +291,7 @@ void TensorPrintStdOut(const acltdtChannelHandle *acl_handle) {
 
   while (true) {
     do {
-      acl_dataset = CALL_ASCEND_API2(acltdtCreateDataset);
+      acl_dataset = CALL_ASCEND_API(acltdtCreateDataset);
       if (acl_dataset == nullptr) {
         ret = -1;
         MS_LOG(ERROR) << "Failed to create acl dateaset.";
@@ -334,7 +334,7 @@ void TensorPrintOut2File(const acltdtChannelHandle *acl_handle, const std::strin
   acltdtDataset *acl_dataset;
   while (true) {
     do {
-      acl_dataset = CALL_ASCEND_API2(acltdtCreateDataset);
+      acl_dataset = CALL_ASCEND_API(acltdtCreateDataset);
       if (acl_dataset == nullptr) {
         MS_LOG(ERROR) << "Failed to create acl dateaset.";
         ret = -1;

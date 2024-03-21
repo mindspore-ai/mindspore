@@ -143,7 +143,7 @@ bool Profiling::StopProfiling(const aclrtStream &stream) {
     MS_LOG(ERROR) << "aclprofDestroyConfig failed, ret = " << ret;
     return false;
   }
-  ret = CALL_ASCEND_API2(aclprofFinalize);
+  ret = CALL_ASCEND_API(aclprofFinalize);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "aclProfFinalize failed, ret = " << ret;
     return false;
