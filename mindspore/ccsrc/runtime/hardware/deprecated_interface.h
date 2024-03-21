@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,6 @@ class DeprecatedInterface {
   virtual bool IsTsdOpened(const std::shared_ptr<MsContext> &inst_context) { return true; }
   virtual void AclOptimizer(const FuncGraphPtr &graph) {}
   virtual bool CheckIsAscend910Soc() { return true; }
-  virtual void AclLoadModel(Buffer *om_data) {}
   // gpu
   virtual int GetGPUCapabilityMajor() { return -1; }
   virtual int GetGPUCapabilityMinor() { return -1; }

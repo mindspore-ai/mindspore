@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,12 +41,10 @@
 #include "transform/graph_ir/op_adapter.h"
 #include "graph/operator_reg.h"
 #include "ge/ge_api.h"
-#include "op_proto/inc/hcom_ops.h"
 
 namespace mindspore {
 namespace transform {
 class BaseOpAdapter;
-using HcomBroadcast = ::ge::op::HcomBroadcast;
 
 using ParamIndexMap = std::map<std::size_t, std::size_t>;
 using InputNameAndType = std::vector<std::pair<std::string, bool>>;
@@ -191,7 +189,7 @@ class DfGraphConvertor {
   void DrawOpInput(const AnfNodePtr &node, const AnfNodePtr &pred, size_t i);
   void SetOpInput(const OpAdapterPtr &adpt, const CNodePtr &node);
   void SetOpAttrToInput(const OpAdapterPtr &adpt, const CNodePtr &node);
-  void SetupBroadcast(const std::shared_ptr<HcomBroadcast> &broadcast, const std::vector<GeTensorDesc> &broadcast_desc,
+  void SetupBroadcast(const OperatorPtr &broadcast, const std::vector<GeTensorDesc> &broadcast_desc,
                       const DfGraphPtr &broadcast_graph, std::vector<::ge::Operator> broadcast_input);
   void SetupParamInitSubGraph(const TensorOrderMap &tensors, const std::vector<::ge::Operator> *init_input,
                               bool is_sink_size_repeat);

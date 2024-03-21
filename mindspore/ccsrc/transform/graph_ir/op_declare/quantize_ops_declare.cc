@@ -24,7 +24,7 @@ ATTR_MAP(AscendQuant) = {{"scale", ATTR_DESC(scale, AnyTraits<float>())},
                          {"offset", ATTR_DESC(offset, AnyTraits<float>())},
                          {"sqrt_mode", ATTR_DESC(sqrt_mode, AnyTraits<bool>())},
                          {"round_mode", ATTR_DESC(round_mode, AnyTraits<std::string>())},
-                         {"dst_type", ATTR_DESC(dst_type, AnyTraits<GEType>())}};
+                         {"dst_type", ATTR_DESC(dst_type, AnyTraits<GEType>(), AnyTraits<int64_t>())}};
 OUTPUT_MAP(AscendQuant) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(AscendQuant, kNameAscendQuant, ADPT_DESC(AscendQuant))
 
@@ -32,7 +32,7 @@ REG_ADPT_DESC(AscendQuant, kNameAscendQuant, ADPT_DESC(AscendQuant))
 INPUT_MAP(AscendDequant) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(deq_scale)}};
 ATTR_MAP(AscendDequant) = {{"sqrt_mode", ATTR_DESC(sqrt_mode, AnyTraits<bool>())},
                            {"relu_flag", ATTR_DESC(relu_flag, AnyTraits<bool>())},
-                           {"dtype", ATTR_DESC(dtype, AnyTraits<GEType>())}};
+                           {"dtype", ATTR_DESC(dtype, AnyTraits<GEType>(), AnyTraits<int64_t>())}};
 OUTPUT_MAP(AscendDequant) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(AscendDequant, kNameAscendDequant, ADPT_DESC(AscendDequant))
 
@@ -40,7 +40,7 @@ INPUT_MAP(AscendAntiQuant) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(AscendAntiQuant) = {{"scale", ATTR_DESC(scale, AnyTraits<float>())},
                              {"offset", ATTR_DESC(offset, AnyTraits<float>())},
                              {"sqrt_mode", ATTR_DESC(sqrt_mode, AnyTraits<bool>())},
-                             {"dtype", ATTR_DESC(dtype, AnyTraits<GEType>())}};
+                             {"dtype", ATTR_DESC(dtype, AnyTraits<GEType>(), AnyTraits<int64_t>())}};
 OUTPUT_MAP(AscendAntiQuant) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(AscendAntiQuant, kNameAscendAntiQuant, ADPT_DESC(AscendAntiQuant))
 
@@ -50,13 +50,13 @@ INPUT_MAP(QuantBatchMatmulV3) = {
 ATTR_MAP(QuantBatchMatmulV3) = EMPTY_ATTR_MAP;
 INPUT_ATTR_MAP(QuantBatchMatmulV3) = {{6, ATTR_DESC(transpose_x1, AnyTraits<bool>())},
                                       {7, ATTR_DESC(transpose_x2, AnyTraits<bool>())},
-                                      {8, ATTR_DESC(dtype, AnyTraits<GEType>())}};
+                                      {8, ATTR_DESC(dtype, AnyTraits<GEType>(), AnyTraits<int64_t>())}};
 OUTPUT_MAP(QuantBatchMatmulV3) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(QuantBatchMatmulV3, kNameQuantBatchMatmul, ADPT_DESC(QuantBatchMatmulV3))
 
 INPUT_MAP(AscendAntiQuantV2) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(scale)}, {3, INPUT_DESC(offset)}};
 ATTR_MAP(AscendAntiQuantV2) = {{"sqrt_mode", ATTR_DESC(sqrt_mode, AnyTraits<bool>())},
-                               {"dtype", ATTR_DESC(dst_type, AnyTraits<GEType>())}};
+                               {"dtype", ATTR_DESC(dst_type, AnyTraits<GEType>(), AnyTraits<int64_t>())}};
 OUTPUT_MAP(AscendAntiQuantV2) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(AscendAntiQuantV2, kNameAscendAntiQuantV2, ADPT_DESC(AscendAntiQuantV2))
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,10 @@
 #ifndef MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_ARRAY_OPS_DECLARE_H_
 #define MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_ARRAY_OPS_DECLARE_H_
 
-#include "op_proto/inc/array_ops.h"
-#include "op_proto/inc/selection_ops.h"
 #include "transform/graph_ir/custom_op_proto/cust_array_ops.h"
 #include "transform/graph_ir/custom_op_proto/cust_other_ops.h"
-#include "op_proto/inc/transformation_ops.h"
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
 #include "utils/hash_map.h"
-#include "op_proto/inc/data_flow_ops.h"
 
 DECLARE_OP_ADAPTER(Shape)
 DECLARE_OP_USE_OUTPUT(Shape)
@@ -97,7 +93,6 @@ DECLARE_OP_ADAPTER(Where)
 DECLARE_OP_USE_OUTPUT(Where)
 
 DECLARE_OP_ADAPTER(Unique)
-DECLARE_OP_ATTR(Unique)
 DECLARE_OP_USE_OUTPUT(Unique)
 
 DECLARE_OP_ADAPTER(BroadcastGradientArgs)
