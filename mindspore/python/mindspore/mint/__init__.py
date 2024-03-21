@@ -18,8 +18,9 @@ from mindspore.ops.extend import *
 from mindspore.ops.extend import array_func, math_func, nn_func
 from mindspore.mint.nn.functional import *
 from mindspore.mint.nn import functional
+from mindspore.ops import where
 
-__all__ = []
+__all__ = ['where']
 __all__.extend(array_func.__all__)
 __all__.extend(math_func.__all__)
 __all__.extend(nn_func.__all__)
