@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Huawei Technologies Co., Ltd. 2020-2021. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2020-2024. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,10 +63,10 @@ uint32_t PadV3CpuKernel::Compute(CpuKernelContext &ctx) {
   KERNEL_HANDLE_ERROR(CheckAndInitParams(ctx), "PadV3 check and init params failed.");
   auto paddings_type = ctx.Input(1)->GetDataType();
   if (paddings_type == DT_INT32) {
-    KERNEL_CHECK_FALSE((GetPaddingsAndSetOuputShape<int32_t>(ctx) == KERNEL_STATUS_OK), KERNEL_STATUS_PARAM_INVALID,
+    KERNEL_CHECK_FALSE((GetPaddingsAndSetOutputShape<int32_t>(ctx) == KERNEL_STATUS_OK), KERNEL_STATUS_PARAM_INVALID,
                        "Get paddings and set output shape failed.");
   } else if (paddings_type == DT_INT64) {
-    KERNEL_CHECK_FALSE((GetPaddingsAndSetOuputShape<int64_t>(ctx) == KERNEL_STATUS_OK), KERNEL_STATUS_PARAM_INVALID,
+    KERNEL_CHECK_FALSE((GetPaddingsAndSetOutputShape<int64_t>(ctx) == KERNEL_STATUS_OK), KERNEL_STATUS_PARAM_INVALID,
                        "Get paddings and set output shape failed.");
   } else {
     KERNEL_LOG_ERROR("PadV3 paddings data type [%s] not support.", DTypeStr(paddings_type).c_str());
@@ -503,16 +503,12 @@ uint32_t PadV3CpuKernel::DoCompute(CpuKernelContext &ctx) {
     } else {
       KERNEL_LOG_DEBUG("Get attr [constant_values] failed, use default value [0]");
     }
-    for (int64_t i = 0; i < input_dims / kNum2; ++i) {
-      int64_t u = paddings[i * kNum2];
-      int64_t v = paddings[i * kNum2 + 1];
-      paddings[i * kNum2] = paddings[kNum2 * (input_dims - i - 1)];
-      paddings[i * kNum2 + 1] = paddings[kNum2 * (input_dims - i - 1) + 1];
-      paddings[kNum2 * (input_dims - i - 1)] = u;
-      paddings[kNum2 * (input_dims - i - 1) + 1] = v;
-    }
     ConstantModeCompute<T>(ctx, constant_values);
   } else if (mode == "reflect") {
+    std::reverse(paddings.begin(), paddings.end());
+    for (size_t i = 1; i < paddings.size(); i += 2) {
+      std::swap(paddings[i - 1], paddings[i]);
+    }
     auto shard_padv3_reflcet = [&](int64_t start, int64_t end) {
       for (int p = start; p < end; p++) {
         ReflectModeCompute<T>(ctx, p);
@@ -530,6 +526,10 @@ uint32_t PadV3CpuKernel::DoCompute(CpuKernelContext &ctx) {
       shard_padv3_reflcet(0, data_num);
     }
   } else if (mode == "edge") {
+    std::reverse(paddings.begin(), paddings.end());
+    for (size_t i = 1; i < paddings.size(); i += 2) {
+      std::swap(paddings[i - 1], paddings[i]);
+    }
     auto shard_padv3_edge = [&](int64_t start, int64_t end) {
       for (int p = start; p < end; p++) {
         EdgeModeCompute<T>(ctx, p);
@@ -547,6 +547,10 @@ uint32_t PadV3CpuKernel::DoCompute(CpuKernelContext &ctx) {
       shard_padv3_edge(0, data_num);
     }
   } else if (mode == "circular") {
+    std::reverse(paddings.begin(), paddings.end());
+    for (size_t i = 1; i < paddings.size(); i += 2) {
+      std::swap(paddings[i - 1], paddings[i]);
+    }
     auto shard_padv3_reflcet = [&](int64_t start, int64_t end) {
       for (int p = start; p < end; p++) {
         CircularModeCompute<T>(ctx, p);
@@ -574,7 +578,7 @@ uint32_t PadV3CpuKernel::CheckAndInitParams(CpuKernelContext &ctx) {
   } else {
     mode = ctx.GetAttr("mode")->GetString();
     const bool is_mode_available = std::find(mode_list.begin(), mode_list.end(), mode) != mode_list.end();
-    if (is_mode_available == false) {
+    if (!is_mode_available) {
       KERNEL_LOG_ERROR(
         "Attr [mode] must be included in [constant, reflect, edge], but got "
         "[%s]",
@@ -594,21 +598,28 @@ uint32_t PadV3CpuKernel::CheckAndInitParams(CpuKernelContext &ctx) {
     return KERNEL_STATUS_PARAM_INVALID;
   }
   input_dims = ctx.Input(0)->GetTensorShape()->GetDims();
-  const std::vector<int64_t> paddings_shape = ctx.Input(1)->GetTensorShape()->GetDimSizes();
   paddings_num = ctx.Input(1)->NumElements();
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t PadV3CpuKernel::GetPaddingsAndSetOuputShape(CpuKernelContext &ctx) {
+uint32_t PadV3CpuKernel::GetPaddingsAndSetOutputShape(CpuKernelContext &ctx) {
   auto paddings_ptr = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   paddings = std::vector<int64_t>(input_dims * kNum2, 0);
   for (int64_t i = 0; i < paddings_num; ++i) {
     paddings[i] = static_cast<int64_t>(paddings_ptr[i]);
   }
-  if (paddings_contiguous == false) {
+  // find redundancy index in paddings.
+  auto redundancy_paddings_num = paddings_num - 2;
+  for (int64_t i = 2; i <= paddings_num - 2; i += 2) {
+    if (std::any_of(paddings.begin(), paddings.begin() + i, [](const int64_t &val) { return val != 0; })) {
+      redundancy_paddings_num = i - 2;
+      break;
+    }
+  }
+  if (!paddings_contiguous) {
     std::vector<int64_t> tmp = paddings;
-    for (int64_t i = 0; i < paddings_num; ++i) {
+    for (int64_t i = redundancy_paddings_num; i < paddings_num; ++i) {
       if (i % kNum2 == 0) {
         paddings[i] = tmp[i / kNum2];
       } else {
@@ -619,6 +630,7 @@ uint32_t PadV3CpuKernel::GetPaddingsAndSetOuputShape(CpuKernelContext &ctx) {
   input_shape = ctx.Input(0)->GetTensorShape()->GetDimSizes();
   output_shape = ctx.Output(0)->GetTensorShape()->GetDimSizes();
   parallelSliceNum = 1;
+  paddings_num -= redundancy_paddings_num;
   for (int64_t i = 0; i < input_dims - paddings_num / kNum2; ++i) {
     parallelSliceNum *= input_shape[i];
   }
