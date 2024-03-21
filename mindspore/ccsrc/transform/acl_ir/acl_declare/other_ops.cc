@@ -24,6 +24,9 @@ REGISTER_ACL_OP(RightShift).set_run_mode(false);
 
 REGISTER_ACL_OP(LeftShift).set_run_mode(false);
 
+REGISTER_ACL_OP(UpsampleTrilinear3d).set_run_mode(false);
+REGISTER_ACL_OP(UpsampleNearest3d).set_run_mode(false);
+
 REGISTER_ACL_OP(CheckValid).set_run_mode(false);
 
 REGISTER_ACL_OP(HistogramFixedWidth).set_extra_supported_datatype({ge::DT_DOUBLE});
