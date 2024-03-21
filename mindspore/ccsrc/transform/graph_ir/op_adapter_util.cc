@@ -276,7 +276,8 @@ GeTensor VectorToTensorImpl(const ValuePtr &value, const TypeId &type) {
   const auto &vec =
     value->isa<ValueTuple>() ? value->cast<ValueTuplePtr>()->value() : value->cast<ValueListPtr>()->value();
   auto data = ConvertAnyUtil(value, AnyTraits<T1>(), AnyTraits<std::vector<T2>>());
-  auto desc = TransformUtil::GetGeTensorDesc({static_cast<int>(vec.size())}, type, kOpFormat_NCHW);
+  auto format = vec.size() == kDim4 ? kOpFormat_NCHW : kOpFormat_ND;
+  auto desc = TransformUtil::GetGeTensorDesc({static_cast<int>(vec.size())}, type, format);
   if (desc == nullptr) {
     MS_LOG(EXCEPTION) << "Update conversion descriptor failed!";
   }
