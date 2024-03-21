@@ -78,6 +78,9 @@ class FuncGraphBuilder {
   /// \param[in] output_obj The output python object.
   void RemoveOutput(const py::object &output_obj);
 
+  /// \brief Clear all output node of the graph.
+  void ClearOutputNodes() { output_nodes_.clear(); }
+
   /// \brief Get the callable python primitive or function.
   ///
   /// \param[in] obj The method of a python object.
