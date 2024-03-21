@@ -177,7 +177,7 @@ void ConditionGatherActor::Run(OpContext<DeviceTensor> *const context) {
     if (memory_free_list_.size() > 0) {
       SendMemoryFreeReq(context);
     }
-    MS_LOG(DEBUG) << "My executor order log launch kernel:" << kernel_->fullname_with_scope();
+    MS_LOG(DEBUG) << "Launch kernel:" << kernel_->fullname_with_scope();
     EraseInput(context);
     for (const auto &device_address : output_device_tensors_) {
       device_address->set_ptr(nullptr);
