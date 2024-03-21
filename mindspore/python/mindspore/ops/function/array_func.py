@@ -61,7 +61,7 @@ from mindspore.ops._utils.utils import ms_arrange
 
 from mindspore.ops.auto_generate import cat, range, scatter_nd, deepcopy, masked_fill, diagonal, expand_dims, \
     nonzero, flip, transpose, unsorted_segment_sum, diag, gather, gather_d, gather_nd, reshape, broadcast_to, \
-    strided_slice, ones, zeros, max_, min_
+    strided_slice, ones, zeros, max_, min_, select
 from mindspore.ops.operations.manually_defined import tile, rank, scalar_cast
 
 arg_max_with_value_ = ArgMaxWithValue()
@@ -390,25 +390,25 @@ def hamming_window(window_length, periodic=True, alpha=0.54, beta=0.46, *, dtype
     return out
 
 
-def where(condition, x, y):
+def where(condition, input, other):
     r"""
-    Selects elements from `x` or `y` based on `condition` and returns a tensor.
+    Selects elements from `input` or `other` based on `condition` and returns a tensor.
 
     .. math::
-        output_i = \begin{cases} x_i,\quad &if\ condition_i \\ y_i,\quad &otherwise \end{cases}
+        output_i = \begin{cases} input_i,\quad &if\ condition_i \\ other_i,\quad &otherwise \end{cases}
 
     Args:
-        condition (Tensor[bool]): If True, yield `x`, otherwise yield `y`.
-        x (Union[Tensor, Scalar]): When `condition` is True, values to select from.
-        y (Union[Tensor, Scalar]): When `condition` is False, values to select from.
+        condition (Tensor[bool]): If True, yield `input`, otherwise yield `other`.
+        input (Union[Tensor, Scalar]): When `condition` is True, values to select from.
+        other (Union[Tensor, Scalar]): When `condition` is False, values to select from.
 
     Returns:
-        Tensor, elements are selected from `x` and `y`.
+        Tensor, elements are selected from `input` and `other`.
 
     Raises:
         TypeError: If `condition` is not a Tensor.
-        TypeError: If both `x` and `y` are scalars.
-        ValueError: If `condition`, `x` and `y` can not broadcast to each other.
+        TypeError: If both `input` and `other` are scalars.
+        ValueError: If `condition`, `input` and `other` can not broadcast to each other.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -425,25 +425,7 @@ def where(condition, x, y):
         [[0. 1.]
          [2. 1.]]
     """
-    if not isinstance(condition, Tensor):
-        raise TypeError(f"For 'where', 'condition' must be a Tensor, but got {type(condition)}.")
-    if isinstance(x, (int, float)):
-        if not isinstance(y, Tensor):
-            raise TypeError(
-                f"For 'where', at least one of 'x' and 'y' should be Tensor, but got x:{type(x)}, y:{type(y)}."
-            )
-        x = cast_(x, y.dtype)
-    elif isinstance(y, (int, float)):
-        if not isinstance(x, Tensor):
-            raise TypeError(
-                f"For 'where', at least one of 'x' and 'y' should be Tensor, but got x:{type(x)}, y:{type(y)}."
-            )
-        y = cast_(y, x.dtype)
-    output_shape = _calc_broadcast_shape(x.shape, y.shape, condition.shape)
-    condition = broadcast_to(condition, output_shape)
-    x = broadcast_to(x, output_shape)
-    y = broadcast_to(y, output_shape)
-    return tensor_select_(condition, x, y)
+    return tensor_select_(condition, input, other)
 
 
 def reverse(x, axis):
@@ -1433,171 +1415,6 @@ def flatten(input, order='C', *, start_dim=1, end_dim=-1):
         idx += 1
     new_shape = x_shape[:start_dim] + (dim_length,) + x_shape[end_dim + 1:]
     return reshape_(input, new_shape)
-
-
-@constexpr
-def _check_select_type_match(scalar, tensor_type, scalar_name, tensor_name):
-    if isinstance(scalar, int) and tensor_type != mstype.int32:
-        raise TypeError(f"For functional operator[select], the input[{scalar_name}] is int, "
-                        f"then the input[{tensor_name}] must be a Tensor of int32.")
-    if isinstance(scalar, float) and tensor_type != mstype.float32:
-        raise TypeError(f"For functional operator[select], the input[{scalar_name}] is float, "
-                        f"then the input[{tensor_name}] must be a Tensor of float32.")
-
-
-@_primexpr
-def _check_select_shape_match(input_shape, cond_shape, tensor_name):
-    if input_shape != cond_shape:
-        raise ValueError(f"For functional operator[select], the cond shape must be same as {tensor_name} shape.")
-
-
-@constexpr
-def _check_select_type(is_cond_tensor, is_x_scalar, is_y_scalar, is_x_tensor, is_y_tensor):
-    if not is_cond_tensor:
-        raise TypeError(f"For functional operator[select], the input[cond] must be a Tensor.")
-    if is_x_scalar and not is_y_tensor:
-        raise TypeError(f"For functional operator[select], the input[x] is int or float, "
-                        f"then the input[y] must be a Tensor.")
-    if is_y_scalar and not is_x_tensor:
-        raise TypeError(f"For functional operator[select], the input[y] is int or float, "
-                        f"then the input[x] must be a Tensor.")
-
-
-@constexpr
-def _check_select_shape_same(cond_shape, x_shape, y_shape):
-    """Check if input of select has same shape."""
-    return cond_shape == x_shape and x_shape == y_shape and cond_shape == y_shape
-
-
-@constexpr
-def get_max_value(x, y, z):
-    """Get the maximum value of x, y and z."""
-    if x >= y and x >= z:
-        return x
-    if y >= x and y >= z:
-        return y
-    return z
-
-
-@constexpr
-def _calc_broadcast_shape(cond_shape, x_shape, y_shape):
-    """Calculate broadcast shape for select"""
-    converted_shape = []
-    cond_reverse = cond_shape[::-1]
-    x_reverse = x_shape[::-1]
-    y_reverse = y_shape[::-1]
-    max_len = get_max_value(len(cond_reverse), len(x_reverse), len(y_reverse))
-    i = 0
-    while i < max_len:
-        cond_element = 1 if i >= len(cond_reverse) else cond_reverse[i]
-        x_element = 1 if i >= len(x_reverse) else x_reverse[i]
-        y_element = 1 if i >= len(y_reverse) else y_reverse[i]
-        broadcast_element = get_max_value(cond_element, x_element, y_element)
-        if cond_element not in (1, broadcast_element):
-            raise ValueError(f"For select, condition input can not broadcast at index {i}")
-        if x_element not in (1, broadcast_element):
-            raise ValueError(f"For select, x input can not broadcast at index {i}")
-        if y_element not in (1, broadcast_element):
-            raise ValueError(f"For select, y input can not broadcast at index {i}")
-        converted_shape.append(broadcast_element)
-        i = i + 1
-    converted_shape.reverse()
-    return tuple(converted_shape)
-
-
-def select(cond, x, y):
-    r"""
-    The conditional tensor determines whether the corresponding element in the output must be
-    selected from `x` (if true) or `y` (if false) based on the value of each element.
-
-    It can be defined as:
-
-    .. math::
-        out_i = \begin{cases}
-        x_i, & \text{if } cond_i \\
-        y_i, & \text{otherwise}
-        \end{cases}
-
-    Args:
-        cond (Tensor[bool]): The condition tensor, decides which element is chosen.
-          The shape is :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
-        x (Union[Tensor, int, float]): The first Tensor or number to be selected.
-          If x is a Tensor, the shape is or can be broadcadt to :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
-          If x is an int or a float, it will be cast to the type of int32 or float32,
-          and broadcast to the same shape as y. One of x and y must be a Tensor.
-        y (Union[Tensor, int, float]): The second Tensor or number to be selected.
-          If y is a Tensor, The shape is or can be broadcadt to :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
-          If y is an int or a float, it will be cast to the type of int32 or float32,
-          and broadcast to the same shape as x. One of x and y must be a Tensor.
-
-    Returns:
-        Tensor, has the same shape as `cond`.
-
-    Raises:
-        TypeError: If `x` or `y` is not a Tensor, int or float.
-        ValueError: The shapes of inputs can not be broadcast.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> from mindspore import Tensor, ops
-        >>> # 1) Both inputs are Tensor
-        >>>
-        >>> cond = Tensor([True, False])
-        >>> x = Tensor([2,3], mindspore.float32)
-        >>> y = Tensor([1,2], mindspore.float32)
-        >>> output = ops.select(cond, x, y)
-        >>> print(output)
-        [2. 2.]
-        >>> # 2) y is a float
-        >>> cond = Tensor([True, False])
-        >>> x = Tensor([2,3], mindspore.float32)
-        >>> y = 2.0
-        >>> output = ops.select(cond, x, y)
-        >>> print(output)
-        [2. 2.]
-    """
-    is_x_scalar = isinstance(x, (int, float))
-    is_y_scalar = isinstance(y, (int, float))
-    is_x_tensor = isinstance(x, Tensor)
-    is_y_tensor = isinstance(y, Tensor)
-    is_cond_tensor = isinstance(cond, Tensor)
-    _check_select_type(is_cond_tensor, is_x_scalar, is_y_scalar, is_x_tensor, is_y_tensor)
-    input_x = x
-    input_y = y
-    if is_x_scalar:
-        _check_select_shape_match(y.shape, cond.shape, "y")
-        _check_select_type_match(x, y.dtype, "x", "y")
-        input_x = zeros_like_(y) + x
-        if isinstance(x, int):
-            input_x = cast_(input_x, mstype.int32)
-        else:
-            input_x = cast_(input_x, mstype.float32)
-
-    if is_y_scalar:
-        _check_select_shape_match(x.shape, cond.shape, "x")
-        _check_select_type_match(y, x.dtype, "y", "x")
-        input_y = zeros_like_(x) + y
-        if isinstance(y, int):
-            input_y = cast_(input_y, mstype.int32)
-        else:
-            input_y = cast_(input_y, mstype.float32)
-
-    if is_x_tensor and is_y_tensor and is_cond_tensor:
-        x_shape = ops.shape(x)
-        y_shape = ops.shape(y)
-        cond_shape = ops.shape(cond)
-        all_constant = ops.isconstant(cond_shape) and ops.isconstant(x_shape) and ops.isconstant(y_shape)
-        if all_constant and not _check_select_shape_same(cond_shape, x_shape, y_shape):
-            broadcast_shape = _calc_broadcast_shape(cond_shape, x_shape, y_shape)
-            new_cond = ops.broadcast_to(cond, broadcast_shape)
-            new_x = ops.broadcast_to(x, broadcast_shape)
-            new_y = ops.broadcast_to(y, broadcast_shape)
-            return tensor_select_(new_cond, new_x, new_y)
-
-    return tensor_select_(cond, input_x, input_y)
 
 
 def slice(input_x, begin, size):
