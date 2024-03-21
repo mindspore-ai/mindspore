@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace parallel {
 Status RedistributionOperatorInfer::Init(const TensorLayout &tensor_layout, const Map &out_tensor_map,
-                                         RankList dev_list, bool is_cost_model) {
+                                         RankList dev_list, bool is_cost_model, bool is_dynamic_shape) {
   in_tensor_map_ = tensor_layout.tensor_map();
   dev_mat_ = tensor_layout.device_arrangement();
 
@@ -39,8 +39,7 @@ Status RedistributionOperatorInfer::Init(const TensorLayout &tensor_layout, cons
   operator_list_.clear();
   operator_vector_.clear();
   output_info_vector_.clear();
-
-  if (constructor_.Init(dev_list_, dev_mat_.array(), is_cost_model) != Status::SUCCESS) {
+  if (constructor_.Init(dev_list_, dev_mat_.array(), is_cost_model, is_dynamic_shape) != Status::SUCCESS) {
     MS_LOG(ERROR) << "Init constructor failed";
     return Status::FAILED;
   }

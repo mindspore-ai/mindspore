@@ -387,7 +387,7 @@ Status ReshapeInfo::ComputeReplaceOp() {
     }
     if (tensor_redistribution->IsAssembledStaticShape()) {
       auto func_graph = this->cnode_->func_graph();
-      tensor_redistribution->CreateAssembledDynamicMapping(this->cnode_, reshape_input, func_graph);
+      tensor_redistribution->CreateAssembledDynamicMapping(this->cnode_, reshape_input, func_graph, INDEX_ONE);
     }
     replace_op_ = redistribution_oplist_ptr->first;
     replace_op_info_ = redistribution_oplist_ptr->second;

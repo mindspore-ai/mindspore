@@ -34,10 +34,12 @@ class ConstructOperator {
   const int64_t DEFAULT = 0;
   ConstructOperator() : dev_size_(0) {}
   ~ConstructOperator() = default;
-  Status Init(const RankList &dev_list, const Shape &dev_matrix_shape, bool is_cost_model = false);
+  Status Init(const RankList &dev_list, const Shape &dev_matrix_shape, bool is_cost_model = false,
+              bool is_dynamic_shape = false);
   OperatorVector SkipRedisReshapeOP(const Shape &shape) const;
   Status ReshapeOP(const Shape &shape);
   Status StridedSliceOP(const Args &args);
+  Status ReplaceStridedSliceOpToSplitOp(const Args &args);
   Status AllGatherOP(int64_t dev_dim);
   Status SplitOP(int64_t split_count);
   Status ConcatOP(int64_t concat_dim);
@@ -52,6 +54,7 @@ class ConstructOperator {
   RankList dev_list_;
   Shape dev_matrix_shape_;
   bool is_cost_model_ = false;
+  bool is_dynamic_shape_ = false;
   Status CreateGroupByDim(size_t axis, std::vector<Group> *group);
 };
 }  // namespace parallel
