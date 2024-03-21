@@ -361,35 +361,14 @@ void PrepareDataForValueNode(const AnfNodePtr &node, const DeviceContext *const 
       MS_LOG(DEBUG) << "Device address:" << device_tensor << " already has ptr:" << device_tensor->GetPtr()
                     << " for value node:" << node->DebugString();
     }
-    const auto &value_node = node->cast<ValueNodePtr>();
-    MS_EXCEPTION_IF_NULL(value_node);
-    const auto &value = value_node->value();
-    MS_EXCEPTION_IF_NULL(value);
-    tensor::TensorPtr tensor = nullptr;
-    if (value->isa<tensor::Tensor>()) {
-      tensor = value->cast<TensorPtr>();
-    } else if (value->isa<Scalar>()) {
-      tensor = ScalarToTensor(value->cast<ScalarPtr>());
-    } else if (value->isa<StringImm>()) {
-      auto string_value = GetValue<std::string>(value);
-      size_t tensor_size = string_value.size();
-      ShapeVector shape = {1, SizeToLong(tensor_size)};
-      if (!device_tensor->SyncHostToDevice(shape, tensor_size, kObjectTypeString, string_value.data())) {
-        MS_LOG(EXCEPTION) << "Failed to sync data for value node:" << node->DebugString();
-      }
-      MS_LOG(DEBUG) << "Device address:" << device_tensor << " ptr:" << device_tensor->GetPtr()
-                    << " for value node:" << node->DebugString();
-      return;
-    } else if (value->isa<ValueSequence>()) {
-      tensor = SequenceToTensor(value->cast<ValueSequencePtr>());
-    } else {
-      MS_LOG(EXCEPTION) << "Invalid value:" << value->ToString();
-    }
 
-    if (!device_tensor->SyncHostToDevice(tensor->shape(), tensor->Size(), tensor->data_type(), kOpFormat_DEFAULT,
-                                         tensor->data_ptr())) {
+    const auto &kernel_tensor = device_tensor->kernel_tensor();
+    MS_EXCEPTION_IF_NULL(kernel_tensor);
+    if (!device_tensor->SyncHostToDevice(kernel_tensor->GetShapeVector(), kernel_tensor->size(),
+                                         kernel_tensor->dtype_id(), kernel_tensor->GetValuePtr())) {
       MS_LOG(EXCEPTION) << "Failed to sync data for value node:" << node->DebugString();
     }
+
     MS_LOG(DEBUG) << "Device address:" << device_tensor << " ptr:" << device_tensor->GetPtr()
                   << " for value node:" << node->DebugString();
   }
