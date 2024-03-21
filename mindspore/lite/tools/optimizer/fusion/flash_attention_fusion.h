@@ -97,7 +97,8 @@ class FlashAttentionFusion : public MultiplePatternProcessPass {
   CNodePtr CreateFlashAttentionNodeForSDEinsum(const std::string &pattern_name, const FuncGraphPtr &func_graph,
                                                const AnfNodePtr &node, const EquivPtr &equiv) const;
 
-  CNodePtr CreatePadCNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, int32_t pad_size) const;
+  CNodePtr CreatePadCNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, int32_t pad_size,
+                          const std::string &node_name = "") const;
   CNodePtr CreateSliceCNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, int32_t slice_size) const;
   CNodePtr GetSDDynamicShapeParam(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const;
   float GetScaleValueForDynamicShape(const AnfNodePtr &mul_const_input) const;

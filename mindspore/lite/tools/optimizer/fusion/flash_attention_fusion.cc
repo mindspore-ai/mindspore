@@ -50,6 +50,8 @@ constexpr size_t kNumIndex1 = 1;
 constexpr size_t kNumIndex2 = 2;
 constexpr size_t kNumIndex3 = 3;
 constexpr size_t kNumDimSize4 = 4;
+constexpr size_t kNumShapeSize2 = 2;
+constexpr size_t kNumShapeSize3 = 3;
 constexpr size_t kNumShapeSize4 = 4;
 constexpr int64_t kNumMinSeqLenSize = 1024;
 constexpr int64_t kNumMaxBatchLenSize = 50;
@@ -136,15 +138,15 @@ bool PFACheckShape(float scale_value, const std::vector<int64_t> &q_shape, const
       MS_LOG(INFO) << "cann not support, in dynamic rang shape";
       return false;
     }
-    if (static_cast<int>(d) % kNumMultiple32 != 0) {
-      MS_LOG(INFO) << "for dynamic shape: now D value must be an integer multiple of 32, d value: " << d;
+    if (static_cast<int>(d) % kNumMultiple16 != 0) {
+      MS_LOG(INFO) << "for dynamic shape: now D value must be an integer multiple of 16, d value: " << d;
       return false;
     }
   }
   return true;
 }
 
-int GetNumHeadForSD(const AnfNodePtr &q_trans_reshape) {
+int64_t GetNumHeadForSD(const AnfNodePtr &q_trans_reshape) {
   auto concat_cnode = q_trans_reshape->cast<CNodePtr>()->input(kNumIndex2)->cast<CNodePtr>();
   if (concat_cnode == nullptr) {
     MS_LOG(WARNING) << "concat_cnode is nullptr.";
@@ -169,16 +171,65 @@ int GetNumHeadForSD(const AnfNodePtr &q_trans_reshape) {
     MS_LOG(WARNING) << "concat value elements num is not 1, ElementsNum is: " << concat_value->ElementsNum();
     return -1;
   }
-  if (concat_value->data_type() != kNumberTypeInt32) {
-    MS_LOG(WARNING) << "head num is not int32, now not support other data type.";
+  if (concat_value->data_type() == kNumberTypeInt32) {
+    auto concat_data = static_cast<int32_t *>(concat_value->data_c());
+    if (concat_data == nullptr) {
+      MS_LOG(WARNING) << "concat_data is nullptr.";
+      return -1;
+    }
+    return static_cast<int64_t>(concat_data[0]);
+  } else if (concat_value->data_type() == kNumberTypeInt64) {
+    auto concat_data = static_cast<int64_t *>(concat_value->data_c());
+    if (concat_data == nullptr) {
+      MS_LOG(WARNING) << "concat_data is nullptr.";
+      return -1;
+    }
+    return static_cast<int64_t>(concat_data[0]);
+  } else {
+    MS_LOG(WARNING) << "head num is not int32 or int64, now not support other data type.";
     return -1;
   }
-  auto concat_data = static_cast<int32_t *>(concat_value->data_c());
-  if (concat_data == nullptr) {
-    MS_LOG(WARNING) << "concat_data is nullptr.";
-    return -1;
+}
+
+// reshape(matmul, concat)->trans(reshape)->FA
+bool CheckIpAdapterInput(const CNodePtr &input) {
+  auto trans = input;
+  MS_CHECK_TRUE_RET(trans != nullptr, false);
+  if (!CheckPrimitiveType(trans, prim::kPrimTranspose)) {
+    MS_LOG(INFO) << "node is not check op type: " << trans->fullname_with_scope();
+    return false;
   }
-  return static_cast<int64_t>(concat_data[0]);
+
+  if (trans->inputs().size() != kNumShapeSize3) {
+    return false;
+  }
+  auto reshape = trans->input(kNumIndex1)->cast<CNodePtr>();
+  MS_CHECK_TRUE_RET(reshape != nullptr, false);
+  if (!CheckPrimitiveType(reshape, prim::kPrimReshape)) {
+    MS_LOG(INFO) << "node is not check op type: " << reshape->fullname_with_scope();
+    return false;
+  }
+
+  if (reshape->inputs().size() != kNumShapeSize3) {
+    return false;
+  }
+  auto matmul = reshape->input(kNumIndex1)->cast<CNodePtr>();
+  MS_CHECK_TRUE_RET(matmul != nullptr, false);
+  if (!CheckPrimitiveType(matmul, prim::kPrimMatMulFusion)) {
+    MS_LOG(INFO) << "node is not check op type: " << matmul->fullname_with_scope();
+    return false;
+  }
+  auto concat = reshape->input(kNumIndex2)->cast<CNodePtr>();
+  MS_CHECK_TRUE_RET(concat != nullptr, false);
+  if (!CheckPrimitiveType(concat, prim::kPrimConcat)) {
+    MS_LOG(INFO) << "node is not check op type: " << concat->fullname_with_scope();
+    return false;
+  }
+  return true;
+}
+
+bool IpAdapterPattern(const CNodePtr q_input, const CNodePtr k_input) {
+  return CheckIpAdapterInput(q_input) && CheckIpAdapterInput(k_input);
 }
 
 std::vector<int64_t> GetTensorShape(CNodePtr cnode, size_t input_index) {
@@ -214,8 +265,8 @@ std::unordered_map<std::string, VectorRef> FlashAttentionFusion::DefinePatterns(
   return patterns;
 }
 
-CNodePtr FlashAttentionFusion::CreatePadCNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
-                                              int32_t pad_size) const {
+CNodePtr FlashAttentionFusion::CreatePadCNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, int32_t pad_size,
+                                              const std::string &node_name) const {
   MS_LOG(INFO) << "add pad node for prompt flash attention.";
   if (node->fullname_with_scope().find(kNamePadNodeSuffix) != std::string::npos) {
     MS_LOG(WARNING) << "node name contains " << kNamePadNodeSuffix << ", pad node is not created";
@@ -237,7 +288,7 @@ CNodePtr FlashAttentionFusion::CreatePadCNode(const FuncGraphPtr &func_graph, co
     return nullptr;
   }
   AnfNodePtr paddings_node =
-    BuildIntVec2DParameterNode(func_graph, paddings, node->fullname_with_scope() + "_paddings");
+    BuildIntVec2DParameterNode(func_graph, paddings, node_name + "_" + node->fullname_with_scope() + "_paddings");
   if (paddings_node == nullptr) {
     MS_LOG(WARNING) << "paddings_node is nullptr.";
     return nullptr;
@@ -248,12 +299,10 @@ CNodePtr FlashAttentionFusion::CreatePadCNode(const FuncGraphPtr &func_graph, co
     MS_LOG(ERROR) << "new pad cnode failed, cnode is nulpptr.";
     return nullptr;
   }
-  pad_cnode->set_fullname_with_scope(node->fullname_with_scope() + kNamePadNodeSuffix);
+  pad_cnode->set_fullname_with_scope(node_name + "_" + node->fullname_with_scope() + kNamePadNodeSuffix);
   if (node->abstract() != nullptr) {
     pad_cnode->set_abstract(node->abstract()->Clone());
   }
-  auto manager = Manage(func_graph);
-  (void)manager->Replace(node, pad_cnode);
   MS_LOG(INFO) << "create pad node end.";
   return pad_cnode;
 }
@@ -758,7 +807,21 @@ const VectorRef FlashAttentionFusion::DefineFlashAttentionPatternForSDPreMul() c
   auto is_matmul_2 = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimMatMulFusion>);
   MS_CHECK_TRUE_RET(is_matmul_2 != nullptr, {});
   auto matmul_2 = VectorRef({is_matmul_2, softmax, mul_v});
-  return matmul_2;
+
+  auto output_trans_input_2 = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(output_trans_input_2 != nullptr, {});
+  auto is_trans_output = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimTranspose>);
+  MS_CHECK_TRUE_RET(is_trans_output != nullptr, {});
+  auto transpose_output = VectorRef({is_trans_output, matmul_2, output_trans_input_2});
+  MS_CHECK_TRUE_RET(transpose_output != nullptr, {});
+
+  auto output_reshape_input_2 = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(output_reshape_input_2 != nullptr, {});
+  auto is_reshape_output = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimReshape>);
+  MS_CHECK_TRUE_RET(is_reshape_output != nullptr, {});
+  auto output_reshape = VectorRef({is_reshape_output, transpose_output, output_reshape_input_2});
+  MS_CHECK_TRUE_RET(output_reshape != nullptr, {});
+  return output_reshape;
 }
 
 const VectorRef FlashAttentionFusion::DefineFlashAttentionPatternForSDWithoutCast() const {
@@ -1460,17 +1523,17 @@ CNodePtr FlashAttentionFusion::CreateFAForSD15(const FuncGraphPtr &func_graph, c
                                                const AnfNodePtr &v_trans, int64_t num_head, int64_t next_token,
                                                float scale_value, int64_t inner_precise) const {
   MS_LOG(INFO) << "create flash attention for stable diffusion V1.5.";
-  auto q_pad_node = CreatePadCNode(func_graph, q_trans, kNumPadSize);
+  auto q_pad_node = CreatePadCNode(func_graph, q_trans, kNumPadSize, node->fullname_with_scope());
   if (q_pad_node == nullptr) {
     MS_LOG(WARNING) << "create q_pad_node failed.";
     return nullptr;
   }
-  auto k_pad_node = CreatePadCNode(func_graph, k_trans, kNumPadSize);
+  auto k_pad_node = CreatePadCNode(func_graph, k_trans, kNumPadSize, node->fullname_with_scope());
   if (k_pad_node == nullptr) {
     MS_LOG(WARNING) << "create q_pad_node failed.";
     return nullptr;
   }
-  auto v_pad_node = CreatePadCNode(func_graph, v_trans, kNumPadSize);
+  auto v_pad_node = CreatePadCNode(func_graph, v_trans, kNumPadSize, node->fullname_with_scope());
   if (v_pad_node == nullptr) {
     MS_LOG(WARNING) << "create q_pad_node failed.";
     return nullptr;
@@ -1608,7 +1671,6 @@ CNodePtr FlashAttentionFusion::CreateFlashAttentionNodeForMsSDXL(const std::stri
     MS_LOG(INFO) << "shape check failed.";
     return nullptr;
   }
-
   auto fa_node = CreatePromptFlashAttentionCnodeForBNSD(func_graph, node, q, k, v, nullptr, num_head, next_tokens,
                                                         scale_value, num_head);
   MS_CHECK_TRUE_MSG(fa_node != nullptr, nullptr, "create FA failed, fa_node is nullptr.");
@@ -1984,87 +2046,98 @@ CNodePtr FlashAttentionFusion::CreateFlashAttentionNodeForSDPreMul(const std::st
                                                                    const FuncGraphPtr &func_graph,
                                                                    const AnfNodePtr &node,
                                                                    const EquivPtr &equiv) const {
-  auto cnode = node->cast<CNodePtr>();
-  auto matmul_2 = cnode;
+  auto output_reshape = node->cast<CNodePtr>();
+  MS_CHECK_TRUE_RET(output_reshape != nullptr, nullptr);
+  auto output_trans = output_reshape->input(kNumIndex1)->cast<CNodePtr>();
+  MS_CHECK_TRUE_RET(output_trans != nullptr, nullptr);
+  auto matmul_2 = output_trans->input(kNumIndex1)->cast<CNodePtr>();
   MS_CHECK_TRUE_RET(matmul_2 != nullptr, nullptr);
   auto softmax = matmul_2->input(kNumIndex1)->cast<CNodePtr>();
   MS_CHECK_TRUE_RET(softmax != nullptr, nullptr);
   auto matmul_1 = softmax->input(kNumIndex1)->cast<CNodePtr>();
   MS_CHECK_TRUE_RET(matmul_1 != nullptr, nullptr);
-
   auto mul_q = matmul_1->input(kNumIndex1)->cast<CNodePtr>();
   MS_CHECK_TRUE_RET(mul_q != nullptr, nullptr);
-  auto q_input = mul_q->input(kNumIndex1)->cast<CNodePtr>();
-  MS_CHECK_TRUE_RET(q_input != nullptr, nullptr);
-
+  auto q_trans_BNSD = mul_q->input(kNumIndex1)->cast<CNodePtr>();
+  MS_CHECK_TRUE_RET(q_trans_BNSD != nullptr, nullptr);
   auto mul_k = matmul_1->input(kNumIndex2)->cast<CNodePtr>();
   MS_CHECK_TRUE_RET(mul_k != nullptr, nullptr);
-  auto k_input = mul_k->input(kNumIndex1)->cast<CNodePtr>();
-  MS_CHECK_TRUE_RET(k_input != nullptr, nullptr);
-
-  auto v_input = matmul_2->input(kNumIndex2)->cast<CNodePtr>();
-  MS_CHECK_TRUE_RET(v_input != nullptr, nullptr);
-
+  auto k_trans_BNDS = mul_k->input(kNumIndex1)->cast<CNodePtr>();
+  MS_CHECK_TRUE_RET(k_trans_BNDS != nullptr, nullptr);
+  auto v_trans_BNSD = matmul_2->input(kNumIndex2)->cast<CNodePtr>();
+  MS_CHECK_TRUE_RET(v_trans_BNSD != nullptr, nullptr);
   auto input_tensor_q_shape = GetTensorShape(mul_q, kNumIndex1);
   auto input_tensor_k_shape = GetTensorShape(mul_k, kNumIndex1);
   auto input_tensor_v_shape = GetTensorShape(matmul_2, kNumIndex2);
   MS_LOG(INFO) << "q shape: " << input_tensor_q_shape << " , k shape: " << input_tensor_k_shape
-               << " , v shape: " << input_tensor_v_shape;
-  MS_LOG(INFO) << "q name: " << q_input->fullname_with_scope() << ", k name: " << k_input->fullname_with_scope()
-               << ", v name: " << v_input->fullname_with_scope();
+               << " , v shape: " << input_tensor_v_shape << ". q name: " << q_trans_BNSD->fullname_with_scope()
+               << ", k name: " << k_trans_BNDS->fullname_with_scope()
+               << ", v name: " << v_trans_BNSD->fullname_with_scope();
 
   float scale_value = 0;
   int64_t num_head = 0;
   int64_t next_tokens = kNumMaxNextTokenSize;
   int64_t d_value = 0;
   if (input_tensor_q_shape.size() != kNumShapeSize4 || input_tensor_k_shape.size() != kNumShapeSize4) {
-    MS_LOG(WARNING) << "Dynamic shape is not supported, and need check Q or K input tensor shape: "
-                    << input_tensor_q_shape;
-    return nullptr;
+    if (IpAdapterPattern(q_trans_BNSD, k_trans_BNDS)) {
+      auto q_reshape_BSND = q_trans_BNSD->input(kNumIndex1)->cast<CNodePtr>();
+      MS_CHECK_TRUE_RET(q_reshape_BSND != nullptr, nullptr);
+      auto q_top_matmul = q_reshape_BSND->input(kNumIndex1)->cast<CNodePtr>();
+      MS_CHECK_TRUE_RET(q_top_matmul != nullptr, nullptr);
+      auto q_matmul_input_2_shape = GetTensorShape(q_top_matmul, kNumIndex2);
+      auto k_reshape_BSND = k_trans_BNDS->input(kNumIndex1)->cast<CNodePtr>();
+      MS_CHECK_TRUE_RET(k_reshape_BSND != nullptr, nullptr);
+      auto k_top_matmul = k_reshape_BSND->input(kNumIndex1)->cast<CNodePtr>();
+      MS_CHECK_TRUE_RET(k_top_matmul != nullptr, nullptr);
+      auto k_matmul_input_2_shape = GetTensorShape(k_top_matmul, kNumIndex2);
+      MS_LOG(INFO) << "q_top_matmul name: " << q_top_matmul->fullname_with_scope()
+                   << ", k_top_matmul name: " << k_top_matmul->fullname_with_scope()
+                   << ", q matmul input2 shape: " << q_matmul_input_2_shape
+                   << " ,k matmul input2 shape: " << k_matmul_input_2_shape;
+      if (q_matmul_input_2_shape.size() != kNumShapeSize2 || k_matmul_input_2_shape.size() != kNumShapeSize2) {
+        MS_LOG(INFO) << "Matmul input 2 shape is not 2D, can not fusion FA.";
+        return nullptr;
+      }
+      auto num_h = q_matmul_input_2_shape[kNumIndex1];
+      num_head = GetNumHeadForSD(q_reshape_BSND);
+      d_value = num_h / num_head;
+      scale_value = 1 / (pow(d_value, kNumPowerHalf));
+      std::vector<int32_t> new_shape = {0, 0, -1};
+      auto shape_node = BuildIntVecParameterNode(func_graph, new_shape, node->fullname_with_scope() + "_new_shape");
+      MS_CHECK_TRUE_RET(shape_node != nullptr, nullptr);
+      output_reshape->set_input(kNumIndex2, shape_node);
+    } else {
+      MS_LOG(WARNING) << "Dynamic shape is not supported. Can not fusion FA.";
+      return nullptr;
+    }
   } else {
     MS_LOG(INFO) << "get flash attention param for static shape.";
-    // for static shape: get scale value
     scale_value = 1 / (pow(input_tensor_q_shape[kNumIndex3], kNumPowerHalf));
     num_head = input_tensor_q_shape[kNumIndex1];
     d_value = input_tensor_q_shape[kNumIndex3];
+    std::swap(input_tensor_k_shape[kNumIndex2], input_tensor_k_shape[kNumIndex3]);
   }
   CNodePtr fa_node = nullptr;
-  std::swap(input_tensor_k_shape[kNumIndex2], input_tensor_k_shape[kNumIndex3]);
   if (!PFACheckShape(scale_value, input_tensor_q_shape, input_tensor_k_shape, input_tensor_v_shape)) {
-    d_value = input_tensor_q_shape.size() == kNumShapeSize4 ? d_value : 1 / pow(scale_value, kNumPowerTwo);
-    MS_LOG(INFO) << "d_value: " << d_value;
     if (d_value == kNumDValue) {
-      fa_node = CreateFAForSD15(func_graph, node, q_input, k_input, v_input, num_head, next_tokens, scale_value,
-                                high_performance);
-      auto trans_k = mul_k->input(1)->cast<CNodePtr>()->input(1);  // trans_k input[2] = 0231
-      MS_LOG(INFO) << "trans_k name: " << trans_k->fullname_with_scope();
-      std::vector<int32_t> new_perm = {kNumIndex0, kNumIndex2, kNumIndex1, kNumIndex3};
-      auto perm_node = BuildIntVecParameterNode(func_graph, new_perm, trans_k->fullname_with_scope() + "_new_perm");
-      if (perm_node == nullptr) {
-        return nullptr;
-      }
-      trans_k->cast<CNodePtr>()->set_input(kNumIndex2, perm_node);
+      fa_node = CreateFAForSD15(func_graph, node, q_trans_BNSD, k_trans_BNDS, v_trans_BNSD, num_head, next_tokens,
+                                scale_value, high_performance);
     }
   } else {
-    fa_node = CreatePromptFlashAttentionCnodeForBNSD(func_graph, node, q_input, k_input, v_input, nullptr, num_head,
-                                                     next_tokens, scale_value, num_head, high_performance);
-    MS_LOG(INFO) << "fa_node: " << fa_node->fullname_with_scope();
-    auto trans_k = fa_node->input(kNumIndex2);  // trans_k input[2] = 0231
-    MS_LOG(INFO) << "trans_k name: " << trans_k->fullname_with_scope();
-    std::vector<int32_t> new_perm = {kNumIndex0, kNumIndex2, kNumIndex1, kNumIndex3};
-    auto perm_node = BuildIntVecParameterNode(func_graph, new_perm, trans_k->fullname_with_scope() + "_new_perm");
-    if (perm_node == nullptr) {
-      return nullptr;
-    }
-    trans_k->cast<CNodePtr>()->set_input(kNumIndex2, perm_node);
+    fa_node =
+      CreatePromptFlashAttentionCnodeForBNSD(func_graph, node, q_trans_BNSD, k_trans_BNDS, v_trans_BNSD, nullptr,
+                                             num_head, next_tokens, scale_value, num_head, high_performance);
   }
-  if (fa_node == nullptr) {
-    return nullptr;
-  }
+  MS_CHECK_TRUE_MSG(fa_node != nullptr, nullptr,
+                    "The shape does not pass the verification, or the fa_node is nullptr. Can not fusion FA.");
+  std::vector<int32_t> new_perm = {kNumIndex0, kNumIndex2, kNumIndex1, kNumIndex3};
+  auto perm_node = BuildIntVecParameterNode(func_graph, new_perm, k_trans_BNDS->fullname_with_scope() + "_new_perm");
+  MS_CHECK_TRUE_RET(perm_node != nullptr, nullptr);
+  k_trans_BNDS->cast<CNodePtr>()->set_input(kNumIndex2, perm_node);
   auto manager = Manage(func_graph);
-  (void)manager->Replace(cnode, fa_node);
-  MS_LOG(INFO) << "create prompt flash attention success for stable diffusion.";
-
+  MS_CHECK_TRUE_RET(manager != nullptr, nullptr);
+  (void)manager->Replace(matmul_2, fa_node);
+  MS_LOG(INFO) << "create prompt flash attention success for pre-mul pattern.";
   return nullptr;
 }
 
@@ -2478,5 +2551,4 @@ AnfNodePtr FlashAttentionFusion::Process(const std::string &patten_name, const F
                << flash_attention_node->fullname_with_scope();
   return flash_attention_node;
 }
-
 }  // namespace mindspore::opt
