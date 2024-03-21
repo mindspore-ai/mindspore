@@ -25,7 +25,7 @@ mindspore.nn.MultiMarginLoss
 
     输入：
         - **x** (Tensor) - shape为 :math:`(N, C)`。数据类型只支持float32、float16或float64。即上述公式中的 :math:`x` 。
-        - **target** (Tensor) - 真实标签，shape为 :math:`(N,)`。数据类型只支持int64。值应为非负值，且小于C。`target` 即上述公式中的 :math:`y` 。
+        - **target** (Tensor) - 真实标签，shape为 :math:`(N,)`。数据类型只支持int64。值应为非负值，且小于C。 `target` 即上述公式中的 :math:`y` 。
 
     输出：
         Tensor，当 `reduction` 为 ``'none'`` 时，类型为Tensor，shape为 :math:`(N,)`，和 `target` 相同。否则为标量Tensor。
@@ -41,4 +41,4 @@ mindspore.nn.MultiMarginLoss
         - **ValueError** - `x` 的shape[0]和 `target` 的shape[0]不相等。
         - **ValueError** - `x` 的shape[1]和 `weight` 的shape[0]不相等。
         - **ValueError** - 如果 `weight` 的维度不是1。
-        - **ValueError** - 如果 `x` 的维度不是2或 'target' 的维度不是1。
+        - **ValueError** - 如果 `x` 的维度不是2或 `target` 的维度不是1。

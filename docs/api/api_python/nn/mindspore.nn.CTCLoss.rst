@@ -18,10 +18,10 @@ mindspore.nn.CTCLoss
         - **zero_infinity** (bool，可选) - 在损失无限大的时候，是否将无限损失和相关梯度置为零。默认值： ``False`` 。
 
     输入：
-        - **log_probs** (Tensor) - 预测值，shape :math:`(T, N, C)` 或 :math:`(T, C)` 。其中T表示输入长度，N表示批次大小，C是分类数。T，N，C均为正整数。
-        - **targets** (Tensor) - 目标值，shape :math:`(N, S)` 或 (sum( `target_lengths` ))。其中S表示最大目标长度。
-        - **input_lengths** (Union[tuple, Tensor]) - shape为N的Tensor或tuple。表示输入长度。
-        - **target_lengths** (Union[tuple, Tensor]) - shape为N的Tensor或tuple。表示目标长度。
+        - **log_probs** (Tensor) - 预测值，shape为 :math:`(T, N, C)` 或 :math:`(T, C)` 。其中T表示输入长度，N表示批次大小，C是分类数。T，N，C均为正整数。
+        - **targets** (Tensor) - 目标值，shape为 :math:`(N, S)` 或 (sum( `target_lengths` ))。其中S表示最大目标长度。
+        - **input_lengths** (Union[tuple, Tensor]) - shape为 :math:`(N)` 的Tensor或tuple。表示输入长度。
+        - **target_lengths** (Union[tuple, Tensor]) - shape为 :math:`(N)` 的Tensor或tuple。表示目标长度。
 
     输出：
         - **neg_log_likelihood** (Tensor) - 对每一个输入节点可微调的损失值。
