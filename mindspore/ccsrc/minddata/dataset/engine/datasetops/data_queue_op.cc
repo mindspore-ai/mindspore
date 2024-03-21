@@ -747,6 +747,17 @@ Status DataQueueOp::GetDataInfo(DATA_INFO *data_info) {
   return Status::OK();
 }
 
+Status DataQueueOp::GetMbufQueueSize(size_t *queue_size) {
+#ifdef WITH_BACKEND
+  if (device_type_ == DeviceType::Ascend) {
+    *queue_size = ascend_data_queue_->QueryQueueSize();
+  } else {
+    *queue_size = 1;
+  }
+#endif
+  return Status::OK();
+}
+
 std::vector<std::vector<double>> DataQueueOp::GetSendInfo() {
   std::vector<std::vector<double>> send_info_per_epoch;
   (void)std::transform(send_summary_.begin(), send_summary_.end(), std::back_inserter(send_info_per_epoch),

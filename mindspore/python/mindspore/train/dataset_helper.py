@@ -445,6 +445,11 @@ class DatasetHelper:
         return self.iter.get_data_info()
 
     # pylint: disable=missing-docstring
+    def get_mbuf_queue_size(self):
+        # In sink mode, it returns the element numbers inside mbuf channel.
+        return self.iter.get_mbuf_queue_size()
+
+    # pylint: disable=missing-docstring
     def get_send_info(self, run_context):
         # In sink mode, it returns the send information of dataset at this moment.
         # Send information includes number of send batches, time summary of fetching data on host
@@ -526,6 +531,7 @@ class _DatasetIter:
         self.release = dataset.__transfer_dataset__.release
         self.continue_send = dataset.__transfer_dataset__.continue_send
         self.get_data_info = dataset.__transfer_dataset__.get_data_info
+        self.get_mbuf_queue_size = dataset.__transfer_dataset__.get_mbuf_queue_size
         self.get_send_info = dataset.__transfer_dataset__.get_send_info
         if hasattr(dataset.__transfer_dataset__, "_reset"):
             self._reset = dataset.__transfer_dataset__._reset  # pylint: disable=protected-access
