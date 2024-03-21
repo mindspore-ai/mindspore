@@ -11,7 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License.
+ * limitations under the License.s
  */
 
 #include "transform/acl_ir/acl_adapter_info.h"
@@ -27,5 +27,7 @@ REGISTER_ACL_OP(LeftShift).set_run_mode(false);
 REGISTER_ACL_OP(CheckValid).set_run_mode(false);
 
 REGISTER_ACL_OP(HistogramFixedWidth).set_extra_supported_datatype({ge::DT_DOUBLE});
+
+REGISTER_ACL_OP(ResizeBilinearV2Grad).set_extra_supported_datatype({ge::DT_FLOAT16});
 }  // namespace transform
 }  // namespace mindspore
