@@ -80,6 +80,7 @@ static std::unordered_map<std::string, std::pair<OpType, int>> op_type_map = {
   {"Greater", {OP_BINARY, dvm::BinaryOpType::kGreater}},
   {"Maximum", {OP_BINARY, dvm::BinaryOpType::kMaximum}},
   {"Minimum", {OP_BINARY, dvm::BinaryOpType::kMinimum}},
+  {"Pow", {OP_BINARY, dvm::BinaryOpType::kPow}},
   {"BroadcastTo", {OP_BROADCAST, 0}},
   {"GreaterEqual", {OP_BINARY, dvm::BinaryOpType::kGreaterEqual}},
   {"Less", {OP_BINARY, dvm::BinaryOpType::kLess}},
