@@ -274,6 +274,11 @@ bool MatchWithPrime(const AssembledDynamicDimsMapping &dyn_dims_mapping, int64_t
   return false;
 }
 
+bool IsSameRank(const Shape &shape_vec, const TensorRedistributionPtr &tensor_redistribution) {
+  TensorLayout from_layout = tensor_redistribution->layout_transfer().from_in();
+  return shape_vec.size() == from_layout.tensor_shape().array().size();
+}
+
 bool HasDynamicDim(const Shape &shape_vec, const AssembledDynamicDimsMapping &dyn_dims_mapping,
                    const TensorRedistributionPtr &tensor_redistribution) {
   TensorLayout to_layout = tensor_redistribution->layout_transfer().to_in();
@@ -292,20 +297,59 @@ bool HasDynamicDim(const Shape &shape_vec, const AssembledDynamicDimsMapping &dy
     if (prime_of_dim != -1 && MatchWithPrime(dyn_dims_mapping, prime_of_dim)) {
       return true;
     }
-    if (is_same_rank) {
-      int64_t full_dim = to_layout.tensor_shape().GetDimByIdx(i);
-      auto ret = dyn_dims_mapping.find(full_dim);
-      if (ret != dyn_dims_mapping.end()) {
-        return true;
-      }
-    }
   }
   return false;
+}
+
+void MatchingAccordingToPrime(const Shape &shape_vec, const AssembledDynamicDimsMapping &dyn_dims_mapping,
+                              const TensorRedistributionPtr &tensor_redistribution, const FuncGraphPtr &func_graph,
+                              std::vector<AnfNodePtr> *shape_input) {
+  MS_LOG(INFO) << "Match with prime";
+  MS_EXCEPTION_IF_NULL(shape_input);
+  TensorLayout to_layout = tensor_redistribution->layout_transfer().to_in();
+  TensorLayout from_layout = tensor_redistribution->layout_transfer().from_in();
+  // If the shape not changed, it means not reshape.
+  // So the dynamic dim can be matched according to index.
+  MS_LOG(INFO) << "shape_vec=" << shape_vec;
+  for (size_t i = 0; i < shape_vec.size(); ++i) {
+    int64_t dim = shape_vec[i];
+    int64_t dim_prime = GetPrimeFactor(dim);
+    if (dim != -1 && dim_prime != -1) {
+      for (const auto &iter : dyn_dims_mapping) {
+        int64_t dim_value_in_graph = iter.first;
+        AnfNodePtr tuple_getitem = iter.second.second;
+        int64_t dyn_prime = GetPrimeFactor(dim_value_in_graph);
+        if (dyn_prime == dim_prime) {
+          if (dim_value_in_graph > dim) {
+            int64_t divisor = dim_value_in_graph / dim;
+            AnfNodePtr div_op = CreateDiv(tuple_getitem, divisor, func_graph, true, "assemble_dynamic_shape_op");
+            (void)shape_input->emplace_back(div_op);
+            MS_LOG(INFO) << "shape[" << i << "] match " << dim;
+            continue;
+          }
+          if (dim_value_in_graph < dim) {
+            int64_t divisor = dim / dim_value_in_graph;
+            AnfNodePtr mul_op = CreateMul(tuple_getitem, divisor, func_graph, true, "assemble_dynamic_shape_op");
+            (void)shape_input->emplace_back(mul_op);
+            MS_LOG(INFO) << "shape[" << i << "] match " << dim;
+            continue;
+          }
+          (void)shape_input->emplace_back(tuple_getitem);
+          MS_LOG(INFO) << "shape[" << i << "] match " << dim_value_in_graph;
+          continue;
+        }
+      }
+    }
+    MS_LOG(INFO) << "Cannot find " << dim << " in shape param.";
+    AnfNodePtr val = CreatInt64Imm(dim);
+    (void)shape_input->emplace_back(val);
+  }
 }
 
 void MatchingAccordingToIndex(const Shape &shape_vec, const AssembledDynamicDimsMapping &dyn_dims_mapping,
                               const TensorRedistributionPtr &tensor_redistribution, const FuncGraphPtr &func_graph,
                               std::vector<AnfNodePtr> *shape_input) {
+  MS_LOG(INFO) << "Match with index";
   MS_EXCEPTION_IF_NULL(shape_input);
   TensorLayout to_layout = tensor_redistribution->layout_transfer().to_in();
   TensorLayout from_layout = tensor_redistribution->layout_transfer().from_in();
@@ -374,8 +418,12 @@ AnfNodePtr ConvertConstParamToDynamic(const TensorRedistributionPtr &tensor_redi
     return val;
   }
 
-  MatchingAccordingToIndex(shape_vec, dyn_dims_mapping, tensor_redistribution, func_graph, &shape_input);
-
+  bool is_same_rank = IsSameRank(shape_vec, tensor_redistribution);
+  if (is_same_rank) {
+    MatchingAccordingToIndex(shape_vec, dyn_dims_mapping, tensor_redistribution, func_graph, &shape_input);
+  } else {
+    MatchingAccordingToPrime(shape_vec, dyn_dims_mapping, tensor_redistribution, func_graph, &shape_input);
+  }
   if (shape_input.size() != shape_vec.size()) {
     MS_LOG(ERROR) << "shape size is not equal.";
     return nullptr;
@@ -413,6 +461,23 @@ Status ConvertStridedSliceInputs(const OperatorParams &params,
   return SUCCESS;
 }
 
+bool WhetherMatchingIsNeededForReshape(const Shape &shape_vec, const TensorRedistributionPtr &tensor_redistribution) {
+  size_t user_specific_dynamic_dim_cnt = std::count(shape_vec.begin(), shape_vec.end(), -1);
+  TensorLayout to_layout = tensor_redistribution->layout_transfer().to_in();
+  Shape to_shape_in_layout = to_layout.slice_shape().array();
+  if (user_specific_dynamic_dim_cnt == 1 && shape_vec.size() == to_shape_in_layout.size()) {
+    size_t dyn_index = static_cast<size_t>(std::find(shape_vec.begin(), shape_vec.end(), -1) - shape_vec.begin());
+    for (size_t i = 0; i < shape_vec.size(); ++i) {
+      if (i != dyn_index && shape_vec[i] != to_shape_in_layout[i]) {
+        return true;
+      }
+    }
+    MS_LOG(INFO) << "No need to matching for shape: " << shape_vec << ", to_shape_in_layout: " << to_shape_in_layout;
+    return false;
+  }
+  return true;
+}
+
 Status ConvertReshapeInputs(const OperatorParams &params,
                             const TensorRedistributionPtr &tensor_redistribution_from_cnode,
                             const FuncGraphPtr &func_graph, std::vector<AnfNodePtr> *new_node_input) {
@@ -421,7 +486,13 @@ Status ConvertReshapeInputs(const OperatorParams &params,
       continue;
     }
     Shape shape_vec = GetValue<Shape>(param.first.second);
-    MS_LOG(DEBUG) << "shape param = " << shape_vec;
+    MS_LOG(INFO) << "shape param = " << shape_vec;
+    if (!WhetherMatchingIsNeededForReshape(shape_vec, tensor_redistribution_from_cnode)) {
+      AnfNodePtr val = NewValueNode(param.first.second);
+      val->set_abstract(param.first.second->ToAbstract());
+      (void)new_node_input->emplace_back(val);
+      return SUCCESS;
+    }
     auto dynamic_input = ConvertConstParamToDynamic(tensor_redistribution_from_cnode, param, func_graph, true);
     MS_ERROR_IF_NULL_W_RET_VAL(dynamic_input, FAILED);
     (void)new_node_input->emplace_back(dynamic_input);
