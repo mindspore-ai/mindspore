@@ -27,16 +27,12 @@ constexpr int index3 = 3;
 constexpr int index4 = 4;
 constexpr int index5 = 5;
 constexpr int index6 = 6;
-
+constexpr size_t kDim3 = 3;
+constexpr size_t kDim4 = 4;
 constexpr int32_t kSize1 = 1;
 constexpr int32_t kSize2 = 2;
 constexpr int32_t kSize4 = 4;
-
-constexpr int64_t kAxisOne = 1;
-constexpr int64_t kAxisTwo = 2;
-
 constexpr size_t k910bWS = 16 * 1024 * 1024;
-
 constexpr int64_t kBufferNum = 2;
 const int64_t kDivisor = 4;
 static inline int64_t CeilRound(int64_t value, int64_t divisor) {
@@ -52,26 +48,15 @@ static ge::graphStatus TilingFunc(gert::TilingContext *context) {
   auto past_input = context->GetInputDesc(index0);
   auto dtype = past_input->GetDataType();
   auto type_size = ge::GetSizeByDataType(dtype);
-  switch (type_size) {
-    case kSize1:
-      context->SetTilingKey(kSize1);
-      break;
-    case kSize2:
-      context->SetTilingKey(kSize2);
-      break;
-    case kSize4:
-      context->SetTilingKey(kSize4);
-      break;
-    default:
-      return ge::GRAPH_PARAM_INVALID;
+  if (type_size != kSize1 && type_size != kSize2 && type_size != kSize4) {
+    return ge::GRAPH_FAILED;
   }
+  context->SetTilingKey(type_size);
 
   const gert::StorageShape *cache_shape = context->GetInputShape(index0);
   const gert::StorageShape *update_shape = context->GetInputShape(index1);
 
   bool is_dim4 = true;
-  const size_t kDim3 = 3;
-  const size_t kDim4 = 4;
   if (update_shape->GetStorageShape().GetDimNum() == kDim4) {
     is_dim4 = true;
   } else if (update_shape->GetStorageShape().GetDimNum() == kDim3) {
