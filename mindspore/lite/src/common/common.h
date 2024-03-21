@@ -108,6 +108,7 @@ static const char *const kGraphCompilerCacheDirKey = "model_cache_dir";
 static const char *const kModifyMixList = "mixprecision_list_path";
 static const char *const kEnableCustomOp = "enable_custom_op";
 static const char *const kPluginCustomOps = "plugin_custom_ops";
+static const char *const kOpAttrs = "op_attrs";
 static const char *const kAoeMode = "aoe_mode";
 static const char *const kProvider = "provider";
 static const char *const kAscendProviderGe = "ge";
