@@ -37,7 +37,6 @@ namespace {
 void CreateTensor(const TypePtr &type, const ShapeVector &shape_vector, const AbstractBasePtr &abstract_tensor,
                   std::vector<tensor::TensorPtr> *outputs) {
   auto output_tensor = std::make_shared<tensor::Tensor>(type->type_id(), shape_vector);
-  output_tensor->set_lazy_callback([]() { runtime::OpExecutor::GetInstance().WaitAll(); });
   output_tensor->set_abstract(abstract_tensor);
   (void)outputs->emplace_back(output_tensor);
   MS_LOG(DEBUG) << "Create output tensor " << output_tensor->ToString();
@@ -152,7 +151,6 @@ void PyBoostUtils::CreateOutputTensor(const DeviceContext *device_context, const
                                      runtime::ProfilerEvent::kPyBoostCreateOutputTensor,
                                      runtime::ProfilerRecorder::kNoName, false);
   auto output_tensor = std::make_shared<tensor::Tensor>(input->data_type(), storage_info->shape);
-  output_tensor->set_lazy_callback([]() { runtime::OpExecutor::GetInstance().WaitAll(); });
   output_tensor->set_device_address(input->device_address());
   output_tensor->set_contiguous_callback(
     [](const DeviceSyncPtr &device_address) -> DeviceSyncPtr { return ContiguousByDeviceAddress(device_address); });

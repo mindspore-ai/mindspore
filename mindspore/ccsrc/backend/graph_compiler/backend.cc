@@ -1208,7 +1208,6 @@ void MindRTBackend::UpdateOutput(const session::BackendOpRunInfoPtr &op_run_info
     }
     auto output_tensor = CreateOutputTensor(item_with_index.first, item_with_index.second);
     MS_EXCEPTION_IF_NULL(output_tensor);
-    output_tensor->set_lazy_callback([]() { runtime::OpExecutor::GetInstance().WaitAll(); });
     outputs->emplace_back(output_tensor);
   }
 }
@@ -1249,7 +1248,6 @@ void MindRTBackend::UpdateOutputDynamic(const session::BackendOpRunInfoPtr &op_r
     TensorPtr output_tensor =
       CreateOutputTensorDynamicImpl(op_compiler_info, item_with_index.first, item_with_index.second, output_address, i);
     MS_EXCEPTION_IF_NULL(output_tensor);
-    output_tensor->set_lazy_callback([]() { runtime::OpExecutor::GetInstance().WaitAll(); });
     outputs->emplace_back(output_tensor);
   }
 }
