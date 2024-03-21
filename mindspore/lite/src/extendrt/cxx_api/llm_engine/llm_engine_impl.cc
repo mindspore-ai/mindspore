@@ -273,6 +273,10 @@ Status LLMEngineImpl::GetModelInfo(const FuncGraphPtr &func_graph, LLMEngineMode
   if (func_graph == nullptr || model_info == nullptr) {
     return kLiteNullptr;
   }
+  if (!CustomAscendUtils::IsCustomFuncGraph(func_graph)) {
+    MS_LOG(ERROR) << "LLMEngine model should be converted to offline compiled model by mindspore_lite.Converter";
+    return kLiteError;
+  }
   std::map<std::string, ValuePtr> attr_map;
   std::vector<std::pair<std::string, tensor::TensorPtr>> ref_datas;
   DynKVCacheSaveInfo kv_info;
@@ -334,7 +338,7 @@ FuncGraphPtr LLMEngineImpl::LoadMindIR(const std::string &model_path) {
   MindIRLoader mindir_loader(true, nullptr, 0, kDecModeAesGcm, false);
   auto func_graph = mindir_loader.LoadMindIR(buffer.Data(), buffer.DataSize(), weight_path);
   if (func_graph == nullptr) {
-    MS_LOG(ERROR) << "Failed to load MindIR model, please check the validity of the model: " << weight_path;
+    MS_LOG(ERROR) << "Failed to load MindIR model, please check the validity of the model: " << model_path;
     return nullptr;
   }
   return func_graph;
