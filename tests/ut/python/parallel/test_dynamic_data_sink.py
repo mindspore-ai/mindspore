@@ -1,9 +1,8 @@
 import numpy as np
 
 import mindspore as ms
-from mindspore import context, Tensor, Parameter
+from mindspore import context, Tensor, Parameter, Symbol
 from mindspore.nn import Cell, Momentum
-from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
 from mindspore.ops import operations as P
 from mindspore.train import Model
 from mindspore.communication.management import get_rank
@@ -157,57 +156,23 @@ class Lossfn(Cell):
 _w1 = Tensor(np.ones([1]), dtype=ms.float32)
 
 
-def compile_net_bak(net):
+def compile_net(net, static_shape=False):
     learning_rate = 0.1
     momentum = 0.9
     epoch_size = 1
     dataset = ds.GeneratorDataset(
         GeneratorFakeData(size=64, batch_size=8, image_size=(16,), use_parallel=True, num_classes=16),
         ["data", "label"])  # data: [batch_size, image_size], label: [batch_size, num_classes]
-    loss = SoftmaxCrossEntropyWithLogits(reduction='mean')
-    opt = Momentum(net.trainable_params(), learning_rate, momentum)
-
-    # input_x = Tensor(shape=[None, 16], dtype=ms.float32)
-    # label = Tensor(shape=[None, 16], dtype=ms.int32)
-
-
-    from mindspore import Symbol
-    s1 = Symbol(divisor=8)
-    input_x = Tensor(symbolic_shape=[s1, 16], dtype=ms.float32)
-    label = Tensor(symbolic_shape=[s1, 16], dtype=ms.int32)
-
-
-    net.set_inputs(input_x)
-    loss.set_inputs(None, label)
-
-    model = Model(net, loss, optimizer=opt)
-
-    model.train(epoch_size, dataset, dataset_sink_mode=True)
-    context.reset_auto_parallel_context()
-
-def compile_net(net):
-    learning_rate = 0.1
-    momentum = 0.9
-    epoch_size = 1
-    dataset = ds.GeneratorDataset(
-        GeneratorFakeData(size=64, batch_size=8, image_size=(16,), use_parallel=True, num_classes=16),
-        ["data", "label"])  # data: [batch_size, image_size], label: [batch_size, num_classes]
-    # loss = SoftmaxCrossEntropyWithLogits(reduction='mean')
     loss = Lossfn()
     opt = Momentum(net.trainable_params(), learning_rate, momentum)
 
-    # input_x = Tensor(shape=[None, 16], dtype=ms.float32)
-    # label = Tensor(shape=[None, 16], dtype=ms.float32)
+    if static_shape is not True:
+        s1 = Symbol(divisor=1)
+        input_x = Tensor(shape=[s1, 16], dtype=ms.float32)
+        label = Tensor(shape=[s1, 16], dtype=ms.float32)
 
-
-    from mindspore import Symbol
-    s1 = Symbol(divisor=1)
-    input_x = Tensor(shape=[s1, 16], dtype=ms.float32)
-    label = Tensor(shape=[s1, 16], dtype=ms.float32)
-
-
-    net.set_inputs(input_x)
-    loss.set_inputs(None, label)
+        net.set_inputs(input_x)
+        loss.set_inputs(None, label)
 
     model = Model(net, loss, optimizer=opt)
 
@@ -227,3 +192,35 @@ def test_neg_data_parallel_data_sink():
     strategy2 = ((8, 1),)
     net = Net(_w1, strategy1, strategy2)
     compile_net(net)
+
+
+def test_neg_data_parallel_data_sink_set_dataset_strategy():
+    '''
+    Feature: data sink
+    Description: dynamic shape
+    Expectation: compile success
+    '''
+    s = ((8, 1), (8, 1))
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0,
+                                      dataset_strategy=s)
+    context.set_context(save_graphs=True)
+    strategy1 = ((8, 1), (1,))
+    strategy2 = ((8, 1),)
+    net = Net(_w1, strategy1, strategy2)
+    compile_net(net)
+
+
+def test_neg_data_parallel_data_sink_set_dataset_strategy_static_shape():
+    '''
+    Feature: data sink
+    Description: static shape
+    Expectation: compile success
+    '''
+    s = ((8, 1), (8, 1))
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0,
+                                      dataset_strategy=s)
+    context.set_context(save_graphs=True)
+    strategy1 = ((8, 1), (1,))
+    strategy2 = ((8, 1),)
+    net = Net(_w1, strategy1, strategy2)
+    compile_net(net, static_shape=True)
