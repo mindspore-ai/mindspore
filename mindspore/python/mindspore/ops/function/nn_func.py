@@ -4949,7 +4949,7 @@ def conv1d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
 
     Note:
         On Ascend platform, only group convolution in depthwise convolution scenarios is supported.
-        That is, when `groups>1`, condition `C_{in}` = `C_{out}` = `groups` must be satisfied.
+        That is, when `groups>1`, condition :math:`C_{in}` = :math:`C_{out}` = `groups` must be satisfied.
 
     Args:
         input (Tensor): Input Tensor of shape :math:`(N, C_{in}, L_{in})`.
@@ -5101,7 +5101,7 @@ def conv2d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
 
     Note:
         On Ascend platform, only group convolution in depthwise convolution scenarios is supported.
-        That is, when `groups>1`, condition `C_{in}` = `C_{out}` = `groups` must be satisfied.
+        That is, when `groups>1`, condition :math:`C_{in}` = :math:`C_{out}` = `groups` must be satisfied.
 
     Args:
         input (Tensor): Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
