@@ -1878,12 +1878,11 @@ AnfNodePtr Parser::ParseMsTensor(const FunctionBlockPtr &block, const py::object
         AnfNodePtr interpret_node = MakeInterpretNode(block, value_node, script_text);
         interpret_node->set_interpret(true);
         interpret_node->set_interpret_internal_type(true);
-        if (module_str.find("module 'mindtorch") != std::string::npos ||
-            module_str.find("module 'msadapter") != std::string::npos) {
-          const py::tuple &info = ast()->CallParserObjMethod(PYTHON_PARSE_GET_NAMESPACE_SYMBOL, "Tensor");
-          constexpr size_t value_index = 2;
-          interpret_node->set_user_data<py::object>(kClassTensorObject,
-                                                    std::make_shared<py::object>(info[value_index]));
+        if ((module_str.find("module 'mindtorch") != std::string::npos ||
+             module_str.find("module 'msadapter") != std::string::npos) &&
+            py::hasattr(module_obj, "Tensor")) {
+          py::object tensor_obj = py::getattr(module_obj, "Tensor");
+          interpret_node->set_user_data<py::object>(kClassTensorObject, std::make_shared<py::object>(tensor_obj));
         }
         return interpret_node;
       }

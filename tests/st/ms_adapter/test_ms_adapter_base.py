@@ -199,7 +199,7 @@ def test_tensor_create_instance():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_adpater_tensor_size():
+def test_adapter_tensor_size():
     """
     Feature: MSAdapter
     Description: Test adapter tensor size
@@ -214,11 +214,10 @@ def test_adpater_tensor_size():
     assert out == (4,)
 
 
-@pytest.mark.skip(reason='Not support yet')
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_adpater_tensor_size_2():
+def test_adapter_tensor_size_2():
     """
     Feature: MSAdapter
     Description: Test adapter tensor size
