@@ -3756,9 +3756,11 @@ void DfGraphConvertor::AddCommAttrForHcclNode(const CNodePtr &node, const Operat
     MS_LOG(WARNING) << "Node " << node->fullname_with_scope() << " does not have attr " << kAttrGroup << " skip.";
     return;
   }
+  std::string group = common::AnfAlgo::GetNodeAttr<std::string>(node, kAttrGroup);
+  (void)converted_op->SetAttr("group", group);
+
 #ifdef ENABLE_D
   if (common::GetEnv(kSimulationLevel).empty() && !common::IsNeedProfileMemory()) {
-    std::string group = common::AnfAlgo::GetNodeAttr<std::string>(node, kAttrGroup);
     if (common::UseHostCollective() && !hccl::HcclAdapter::GetInstance().UseHcclCM()) {
       // For HcclCommInitRootInfo manner, set 'group' and 'comm' attrs. 'group' attr value should be hccl's inner comm
       // name.
@@ -3775,9 +3777,6 @@ void DfGraphConvertor::AddCommAttrForHcclNode(const CNodePtr &node, const Operat
       (void)converted_op->SetAttr("group", group);
     }
   }
-#else
-  std::string group = common::AnfAlgo::GetNodeAttr<std::string>(node, kAttrGroup);
-  (void)converted_op->SetAttr("group", group);
 #endif
 }
 
