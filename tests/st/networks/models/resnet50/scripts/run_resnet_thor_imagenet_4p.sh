@@ -20,7 +20,7 @@ export ASCEND_RT_VISIBLE_DEVICES=4,5,6,7
 export MS_WORKER_NUM=4
 export MS_SCHED_HOST=127.0.0.1
 export MS_SCHED_PORT=8119
-export GLOG_v=1
+export GLOG_v=3
 export MS_ROLE=MS_SCHED
 python $BASE_PATH/../train_resnet50_thor.py >scheduler_thor.log 2>&1 &
 
