@@ -39,12 +39,8 @@ bool GatherDGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs
   auto index_addr = reinterpret_cast<S *>(inputs.at(kIndex2)->device_ptr());
   auto output_addr = reinterpret_cast<T *>(outputs.at(kIndex0)->device_ptr());
   auto cuda_stream = reinterpret_cast<cudaStream_t>(stream_ptr);
-
-  auto out_size =
-    static_cast<size_t>(std::accumulate(index_shapes_.begin(), index_shapes_.end(), 1, std::multiplies<int64_t>()));
-
-  auto status = GatherD(input_addr, index_addr, output_addr, dims_[0], dims_[1], dims_[2], dims_[3], dims_[4], out_size,
-                        cuda_stream, GET_CTX_DEVICE_ID);
+  auto status = GatherD(input_addr, index_addr, output_addr, dim_, index_num_, rank_, input_shape_helper_,
+                        index_shape_helper_, cuda_stream, GET_CTX_DEVICE_ID);
   CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
@@ -78,37 +74,6 @@ std::vector<std::pair<KernelAttr, GatherDGpuKernelMod::GatherFwdFunc>> GatherDGp
   GATHER_D_GPU_REGISTER(kNumberTypeUInt64, uint64_t),
   GATHER_D_GPU_REGISTER(kNumberTypeBool, bool)};
 
-bool GatherDGpuKernelMod::SetDimParam(int64_t dim_value) {
-  int64_t x_rank = SizeToLong(input_shapes_.size());
-  if (dim_value < 0) {
-    dim_value += x_rank;
-  }
-
-  size_t dim_before_axis_index = 1;
-  for (size_t i = 0; i < LongToSize(dim_value); i++) {
-    dim_before_axis_index *= index_shapes_[i];
-  }
-  size_t dim_at_axis_input = input_shapes_[LongToSize(dim_value)];
-  size_t dim_at_axis_index = index_shapes_[LongToSize(dim_value)];
-  size_t dim_after_axis_index = 1;
-  for (size_t i = LongToSize(dim_value) + 1; i < index_shapes_.size(); i++) {
-    dim_after_axis_index *= index_shapes_[i];
-  }
-
-  size_t dim_after_axis_input = 1;
-  for (size_t i = LongToSize(dim_value) + 1; i < input_shapes_.size(); i++) {
-    dim_after_axis_input *= input_shapes_[i];
-  }
-
-  dims_[kIndex0] = dim_before_axis_index;
-  dims_[kIndex1] = dim_at_axis_index;
-  dims_[kIndex2] = dim_after_axis_index;
-  dims_[kIndex3] = dim_at_axis_input;
-  dims_[kIndex4] = dim_after_axis_input;
-
-  return true;
-}
-
 bool GatherDGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -128,32 +93,42 @@ int GatherDGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const
 
   auto input_shapes = inputs[0]->GetShapeVector();
   auto index_shapes = inputs[kIndex2]->GetShapeVector();
-  auto output_shapes = outputs[0]->GetShapeVector();
+  auto &output_shapes = outputs[0]->GetShapeVector();
 
-  input_shapes_.clear();
-  index_shapes_.clear();
-  output_shapes_.clear();
-  std::transform(input_shapes.cbegin(), input_shapes.cend(), std::back_inserter(input_shapes_), LongToSize);
-  std::transform(index_shapes.cbegin(), index_shapes.cend(), std::back_inserter(index_shapes_), LongToSize);
-  std::transform(output_shapes.cbegin(), output_shapes.cend(), std::back_inserter(output_shapes_), LongToSize);
-
-  is_null_input_ = CHECK_SHAPE_NULL(input_shapes_, kernel_name_, "input") ||
-                   CHECK_SHAPE_NULL(index_shapes_, kernel_name_, "input_indices") ||
-                   CHECK_SHAPE_NULL(output_shapes_, kernel_name_, "output");
+  is_null_input_ = CHECK_SHAPE_NULL(input_shapes, kernel_name_, "input") ||
+                   CHECK_SHAPE_NULL(index_shapes, kernel_name_, "input_indices") ||
+                   CHECK_SHAPE_NULL(output_shapes, kernel_name_, "output");
   if (is_null_input_) {
     return KRET_OK;
   }
 
-  if (input_shapes_.empty()) {
-    input_shapes_ = ShapeVector{1};
+  if (input_shapes.empty()) {
+    input_shapes = ShapeVector{1};
   }
 
-  if (index_shapes_.empty()) {
-    index_shapes_ = ShapeVector{1};
+  if (index_shapes.empty()) {
+    index_shapes = ShapeVector{1};
   }
 
   auto dim = inputs[kIndex1]->GetValueWithCheck<int64_t>();
-  SetDimParam(dim);
+  if (dim < 0) {
+    dim += index_shapes.size();
+  }
+  dim_ = static_cast<size_t>(dim);
+
+  rank_ = input_shapes.size();
+  index_num_ =
+    static_cast<size_t>(std::accumulate(index_shapes.begin(), index_shapes.end(), 1, std::multiplies<int64_t>()));
+
+  if (input_shapes.size() > kMaxShapeRank) {
+    MS_LOG(INTERNAL_EXCEPTION) << "The kernel GatherD only support Tensor whose rank is less than " << kMaxShapeRank
+                               << ", but got rank: " << input_shapes.size() << ".";
+  }
+
+  for (size_t i = 0; i < input_shapes.size(); i++) {
+    input_shape_helper_.shape[i] = static_cast<size_t>(input_shapes[i]);
+    index_shape_helper_.shape[i] = static_cast<size_t>(index_shapes[i]);
+  }
 
   return KRET_OK;
 }
