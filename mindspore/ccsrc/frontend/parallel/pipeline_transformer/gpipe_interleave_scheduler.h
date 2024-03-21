@@ -43,6 +43,9 @@ class GpipeInterleavedScheduler : public PipelineScheduler {
  private:
   std::vector<BorderPair> SortBetweenMicro(const std::vector<Border> &borders, bool is_backward);
   void GetBackwardBorderNode(const CNodePtr &cnode);
+  void ForwardReorder(int64_t bias, int64_t flag);
+  AbstractBasePtr GenerateTupleAbstract(const std::vector<AnfNodePtr> &nodes);
+  void OptimizerShardCommReorder();
   std::vector<Border> fwd_begin_;
   std::vector<Border> fwd_end_;
   std::vector<Border> bwd_begin_;

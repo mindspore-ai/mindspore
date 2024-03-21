@@ -706,10 +706,6 @@ void PipelineInterleave::CutBorder() {
   MS_EXCEPTION_IF_NULL(ret);
   std::vector<AnfNodePtr> all_nodes = DeepScopedGraphSearch(ret);
   std::reverse(all_nodes.begin(), all_nodes.end());
-  auto stage_num = g_device_manager->stage_num();
-  if (is_train_ && (stage_num > micro_size_)) {
-    MS_LOG(EXCEPTION) << "MicroBatch size: " << micro_size_ << " can't less than stage num: " << stage_num;
-  }
   int64_t order = 0;
   for (auto &node : all_nodes) {
     auto stage_info = node->user_data<NodeStageInfo>();
