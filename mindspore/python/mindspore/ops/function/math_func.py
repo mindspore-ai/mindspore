@@ -3772,6 +3772,8 @@ def nanmean(input, axis=None, keepdims=False, *, dtype=None):
     """
     _check_is_tensor("input", input, "nanmean")
     _check_repeat_in_axis(axis, input.ndim, "nanmean")
+    if input.dtype not in mstype.float_type:
+        raise TypeError(f"For 'nanmean', input should be floating point dtype, but got {type(input)}.")
     nan_sum = nansum(input, axis, keepdims)
     is_num = isnan(input).logical_not()
     is_num = is_num.sum(axis=axis, keepdims=keepdims)
