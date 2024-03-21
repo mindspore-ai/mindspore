@@ -619,7 +619,7 @@ void ComplexLog(ArithmeticSelfCpuKernelFuncComplex<T, S> *content, const T *in, 
 template <typename T, typename S>
 void Sqrt(ArithmeticSelfCpuKernelFunc<T, S> *content, const T *in, S *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
-    if constexpr (std::is_same_v<T, float>) {
+    if constexpr (std::is_same_v<T, float> && std::is_same_v<S, float>) {
       auto ret = ::ElementSqrt(in + start, out + start, SizeToInt(end - start));
       if (ret == NNACL_ERRCODE_SQRT_NEGATIVE) {
         for (size_t i = start; i < end; i++) {
@@ -818,6 +818,8 @@ void ArithmeticSelfCpuKernelFuncBool<T, S>::LaunchKernel(const std::vector<Kerne
     return LogicalNot<T, S>(this, input, output, lens);
   } else if (this->kernel_name_ == kReLU) {
     return ReluBool<T, S>(this, input, output, lens);
+  } else if (this->kernel_name_ == kSqrt) {
+    return Sqrt<T, S>(this, input, output, lens);
   } else {
     MS_LOG(EXCEPTION) << "For 'ArithmeticSelf', it does not support " << this->kernel_name_ << " with bool as input.";
   }
