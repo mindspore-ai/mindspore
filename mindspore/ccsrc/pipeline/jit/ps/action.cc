@@ -50,6 +50,7 @@
 #include "pipeline/jit/ps/static_analysis/program_specialize.h"
 #include "pipeline/jit/ps/resource.h"
 #include "pipeline/jit/ps/remove_value_node_dup.h"
+#include "pipeline/jit/ps/event_message_print.h"
 #include "pipeline/pynative/pynative_execute.h"
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/ad/grad.h"
@@ -796,6 +797,7 @@ abstract::AbstractBasePtrList GetArgsAbs(const ResourcePtr &resource) {
 }  // namespace
 
 bool AbstractSpecializeAction(const ResourcePtr &resource) {
+  EventMessage::PrintCompileStatusMessage("Start performing static analysis and type inference.");
   MS_EXCEPTION_IF_NULL(resource);
   if (resource->func_graph() == nullptr) {
     MS_LOG(INTERNAL_EXCEPTION) << "AbstractSpecialize error";
@@ -898,6 +900,7 @@ bool OptInlineAction(const ResourcePtr &resource) {
 }
 
 bool VmOptimizeAction(const ResourcePtr &resource) {
+  EventMessage::PrintCompileStatusMessage("Start performing graph optimization.");
 #if defined(__linux__) && defined(WITH_BACKEND)
   if (ps::PSContext::instance()->is_ps_mode()) {
     (void)kVmPasses.emplace_back(PassItem("server_communication_op_fusion", [](const ResourcePtr &res) -> bool {
@@ -1332,6 +1335,7 @@ void SetRunMode(const ResourcePtr &resource) {
 }
 
 bool TaskEmitAction(const ResourcePtr &resource) {
+  EventMessage::PrintCompileStatusMessage("Start generating kernels.");
   MS_EXCEPTION_IF_NULL(resource);
   FuncGraphPtr func_graph = resource->func_graph();
   if (func_graph == nullptr) {
