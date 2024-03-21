@@ -83,7 +83,7 @@ std::vector<AbstractBasePtr> AdamDecayInferOutputs(const PrimitivePtr &primitive
 
   auto mul0 = ops::AdamDecayMulInfer(primitive, mul0_x, input2);
   auto mul1 = ops::AdamDecayMulInfer(primitive, mul1_x, input0);
-  auto square0 = abstract::InferAbstractByFuncImpl(primitive, {input0});
+  auto square0 = abstract::InferAbstractByFuncImpl(prim::kPrimSquare, {input0});
   auto add0 = ops::AdamDecayAddInfer(nullptr, primitive, {mul0, mul1});
   auto mul2 = ops::AdamDecayMulInfer(primitive, mul2_x, input1);
   auto mul3 = ops::AdamDecayMulInfer(primitive, mul3_x, square0.value());
