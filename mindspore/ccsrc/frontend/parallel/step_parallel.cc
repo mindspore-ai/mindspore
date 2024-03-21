@@ -2573,7 +2573,7 @@ bool CreateGroupsByCkptFile(const std::string &file) {
 
 static void ReorderForPipelineSplit(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager,
                                     int64_t pipeline_stages) {
-  if (!root->has_flag(BACKWARD) && pipeline_stages > 1) {
+  if (!root->has_flag(kSkipAutoParallelCompile) && !root->has_flag(BACKWARD) && pipeline_stages > 1) {
     root->set_flag(BACKWARD, true);
     auto parallel_context = parallel::ParallelContext::GetInstance();
     if (IsTraining(manager)) {
@@ -2590,7 +2590,8 @@ static void ReorderForPipelineSplit(const FuncGraphPtr &root, const FuncGraphMan
 }
 
 static void ReorderForGradAccumulation(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager) {
-  if (!root->has_flag(BACKWARD) && ParallelContext::GetInstance()->grad_accumulation_step() > 1) {
+  if (!root->has_flag(kSkipAutoParallelCompile) && !root->has_flag(BACKWARD) &&
+      ParallelContext::GetInstance()->grad_accumulation_step() > 1) {
     root->set_flag(BACKWARD, true);
     auto context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context);
