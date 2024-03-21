@@ -49,7 +49,7 @@ constexpr size_t INPUT_OUTPUT_SYMBOLS_SIZE = 2;
 
 void PrintSymbolInfo(const std::vector<symshape::ops::SymbolInfoList> &symbol_infos);
 std::vector<symshape::ops::SymbolInfoList> ParallelSymbolInfo(
-  const std::vector<symshape::ops::SymbolInfoList> &symbol_infos);
+  const std::vector<symshape::ops::SymbolInfoList> &symbol_infos, bool has_dyn_shape);
 bool IsParallelDynamicShape(const FuncGraphPtr &func_graph);
 Symbols GetNodeSymbol(const AnfNodePtr &node);
 Symbols StaticShapesToSymbols(const Shapes &shapes);
@@ -64,6 +64,7 @@ bool InDynamicGraph(const CNodePtr &node);
 bool IsDynamicShapesList(const std::vector<Shapes> &shapes_list);
 bool IsDynamicShapes(const Shapes &shapes);
 bool IsDynamicShape(const Shape &shape);
+bool IsSemiOrAutoParallelMode();
 }  // namespace parallel
 }  // namespace mindspore
 

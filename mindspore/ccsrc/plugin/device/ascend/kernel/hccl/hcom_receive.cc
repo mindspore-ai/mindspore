@@ -73,9 +73,9 @@ int HcomReceiveKernel::ReceiveShapeForDynamic() {
     std::string inter_process_edge_name = std::to_string(src_rank_) + "_" + std::to_string(dst_rank) + "_tag_" +
                                           std::to_string(op_tag) + "_rpc_addr";  // rpc addr
     op_tag++;
-    MS_LOG(DEBUG) << "Start server for recv actor. Server address: " << server_url
-                  << ", remote function id: " << kRemoteFuncId
-                  << ", inter-process edge name: " << inter_process_edge_name;
+    MS_LOG(INFO) << "Start server for recv actor. Server address: " << server_url
+                 << ", remote function id: " << kRemoteFuncId
+                 << ", inter-process edge name: " << inter_process_edge_name;
     distributed::cluster::topology::ActorAddress recv_actor_addresss;
     recv_actor_addresss.set_actor_id(inter_process_edge_name);
     recv_actor_addresss.set_ip(ip);
@@ -95,8 +95,13 @@ int HcomReceiveKernel::ReceiveShapeForDynamic() {
   }
 
   // rpc 5. handle message
-  std::unique_lock<std::mutex> lock(mtx);
-  cv.wait(lock);
+  std::unique_lock<std::mutex> lock(mtx_);
+  if (!has_received_msg_) {  // handle message maybe before the resize
+    cv_.wait(lock);
+  }
+
+  real_shape_ = recv_shape_;
+  has_received_msg_ = false;  // reset the flag
 
   MS_LOG(DEBUG) << "handle msg done, the real shape is " << real_shape_;
   return KRET_OK;
@@ -159,10 +164,10 @@ MessageBase *HcomReceiveKernel::HandleMessage(MessageBase *const msg) {
     recv_shape.push_back(std::stoll(token));
   }
 
-  std::lock_guard<std::mutex> lock(mtx);
-  real_shape_ = recv_shape;
-
-  cv.notify_all();
+  std::lock_guard<std::mutex> lock(mtx_);
+  recv_shape_ = recv_shape;
+  has_received_msg_ = true;
+  cv_.notify_all();
   return distributed::rpc::NULL_MSG;
 }
 
