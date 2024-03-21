@@ -800,7 +800,7 @@ void DataPrepareActor::PrepareDataForHostTensorQueueNew(const VectorRef &args, O
 
     auto iter = graph_compiler_info_->origin_parameters_to_backend_parameters_.find(origin_parameter);
     if (iter == graph_compiler_info_->origin_parameters_to_backend_parameters_.end()) {
-      MS_LOG(WARNING) << "Not find the parameter in the origin parameters: " << origin_parameter->fullname_with_scope();
+      MS_LOG(DEBUG) << "Not find the parameter in the origin parameters: " << origin_parameter->fullname_with_scope();
       continue;
     }
 

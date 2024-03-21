@@ -16,7 +16,7 @@ import time
 import numpy as np
 import pytest
 import mindspore
-from mindspore import context, ops, nn, Tensor
+from mindspore import context, ops, nn, Tensor, Parameter
 
 
 class NetNonConcurrent(nn.Cell):
@@ -97,6 +97,17 @@ class NetConcurrentWithWhile(nn.Cell):
                 output2 = self.add(output2, 1)
 
         output = output1 + output2
+        return output
+
+
+class SubNet(nn.Cell):
+    def __init__(self, inputx):
+        super().__init__()
+        self.sub = ops.Sub()
+        self.inputx = Parameter(inputx, name="weight")
+
+    def construct(self, inputy):
+        output = self.sub(self.inputx, inputy)
         return output
 
 
@@ -190,3 +201,24 @@ def test_concurrent_with_while():
     net = NetConcurrentWithWhile()
     expect = np.array([202, 202])
     run_multi_actor_fusion("concurrent_with_while", net, input1, input_loop1, input2, input_loop2, expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_parameter_set_data():
+    """
+    Feature: Runtime performance optimize of data prepare.
+    Description: Test the interface set_data of parameter result.
+    Expectation: The value and shape of output are the expected values.
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    inputx = np.ones([2, 3]).astype(np.float32)
+    inputy = np.zeros([2, 3]).astype(np.float32)
+    net = SubNet(Tensor(inputx))
+    net(Tensor(inputy))
+
+    net.inputx.set_data(Tensor(inputy))
+    output = net(Tensor(inputy)).asnumpy()
+    expect = np.zeros([2, 3]).astype(np.float32)
+    assert (output == expect).all()
