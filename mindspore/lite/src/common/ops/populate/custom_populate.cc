@@ -22,6 +22,7 @@
 #include "nnacl/custom_masked_fill_parameter.h"
 #include "nnacl/custom_is_inf_parameter.h"
 #include "nnacl/scatter_nd_parameter.h"
+#include "nnacl/custom_gather_d_grad_v2_parameter.h"
 
 using mindspore::schema::PrimitiveType_Custom;
 
@@ -126,8 +127,39 @@ OpParameter *CreateCustomGruParameter() {
     MS_LOG(ERROR) << "malloc CustomGruParameter failed.";
     return nullptr;
   }
-  memset(param, 0, sizeof(CustomGruParameter));
+  (void)memset(param, 0, sizeof(CustomGruParameter));
   param->op_parameter_.type_ = PrimType_Inner_CustomGru;
+  return reinterpret_cast<OpParameter *>(param);
+}
+
+OpParameter *CreateCustomGatherDGradV2Parameter(const schema::Custom *value) {
+  if (value->attr()->size() < 1) {
+    return nullptr;
+  }
+  auto *param = static_cast<CustomGatherGradV2Parameter *>(malloc(sizeof(CustomGatherGradV2Parameter)));
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "malloc CustomGruParameter failed.";
+    return nullptr;
+  }
+
+  memset(param, 0, sizeof(CustomGatherGradV2Parameter));
+  std::string dim_str;
+  auto attrs = value->attr();
+  for (size_t i = 0; i < attrs->size(); i++) {
+    auto attr = attrs->Get(i);
+    if (attr == nullptr) {
+      MS_LOG(ERROR) << "attr is nullptr";
+      return nullptr;
+    }
+    if (attr->name()->str() == "dim") {
+      auto data = attr->data();
+      dim_str = std::string(reinterpret_cast<const char *>(data->Data()), data->size());
+      param->dim = std::stoi(dim_str.c_str());
+      break;
+    }
+  }
+
+  param->op_parameter_.type_ = PrimType_Inner_CustomGatherDGradV2;
   return reinterpret_cast<OpParameter *>(param);
 }
 
@@ -176,6 +208,8 @@ OpParameter *PopulateCustomParameter(const void *prim) {
     return CreateCustomTensorScatterMaxParameter();
   } else if (type == "IsInf") {
     return CreateCustomIsInfParameter();
+  } else if (type == "GatherDGradV2") {
+    return CreateCustomGatherDGradV2Parameter(value);
   } else {
     MS_LOG(ERROR) << "Unsupported custom type: " << type;
   }

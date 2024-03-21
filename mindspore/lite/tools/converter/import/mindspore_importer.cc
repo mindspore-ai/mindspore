@@ -37,6 +37,7 @@
 #include "tools/converter/parser/unify_format.h"
 #include "tools/converter/parser/lstm_adjust_pass.h"
 #include "tools/optimizer/graph/redundant_op_remove_pass.h"
+#include "tools/converter/import/to_custom_op_pass.h"
 #include "nnacl/op_base.h"
 #include "src/common/common.h"
 
@@ -86,6 +87,14 @@ STATUS MindsporeImporter::Mindir2AnfAdjust(const FuncGraphPtr &func_graph,
   mindir_control_flow_adjust->SetFmkType(param->fmk_type);
   if (!mindir_control_flow_adjust->Run(func_graph)) {
     MS_LOG(ERROR) << "MindIR control flow adjust failed.";
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
+    return RET_ERROR;
+  }
+
+  auto to_custom_op_pass = std::make_shared<mindspore::opt::ToCustomOpPass>();
+  MS_CHECK_TRUE_MSG(to_custom_op_pass != nullptr, RET_NULL_PTR, "to_custom_op_pass is nullptr.");
+  if (!to_custom_op_pass->Run(func_graph)) {
+    MS_LOG(ERROR) << "To custom op pass run failed!";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
     return RET_ERROR;
   }
