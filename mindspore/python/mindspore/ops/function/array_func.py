@@ -2800,7 +2800,7 @@ def gather_elements(input, dim, index):
             int32, int64. The value range of each index element is `[-input.shape(dim), input.shape(dim))`.
 
     Returns:
-        Tensor, has the same shape as `index` tensor and has the same data type with `input`.
+        Tensor, has the same shape as `index` and has the same data type with `input`.
 
     Raises:
         TypeError: If dtype of `dim` or `index` is neither int32 nor int64.
