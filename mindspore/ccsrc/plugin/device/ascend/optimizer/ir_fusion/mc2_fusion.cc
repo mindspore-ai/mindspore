@@ -249,10 +249,15 @@ CNodePtr AllGatherMatmulFusion::CreateFusionCNode(const FuncGraphPtr &func_graph
   auto rank_list_attr = all_gather_prim->GetAttr(kAttrRankList);
   MS_CHECK_TRUE_RET(rank_list_attr != nullptr, {});
   auto rank_list = GetValue<std::vector<uint32_t>>(rank_list_attr);
-  // Only support 8p comm group currently.
-  MS_CHECK_TRUE_RET(IsSingleNodeCommGroup(rank_list), {});
+
+  MS_CHECK_TRUE_RET(IsSingleNodeCommGroup(rank_list), {});  // Only support 8p comm group currently.
 
   auto matmul_prim = GetCNodePrimitive(matmul_cnode);
+  auto is_trans_a_attr = matmul_prim->GetAttr(kAttrIsTransA);
+  MS_CHECK_TRUE_RET(is_trans_a_attr != nullptr, {});
+  auto is_trans_a = GetValue<bool>(is_trans_a_attr);
+  MS_CHECK_TRUE_RET(!is_trans_a, {});  // Only support is_trans_a = false.
+
   all_gather_matmul_prim->AddAttr(kAttrGroup, all_gather_prim->GetAttr(kAttrGroup));
   all_gather_matmul_prim->AddAttr(kAttrRankSize, all_gather_prim->GetAttr(kAttrRankSize));
   all_gather_matmul_prim->AddAttr(kAttrRankList, rank_list_attr);
