@@ -51,7 +51,7 @@ class AclDataDumper : public DataDumper {
     // before, so here call it once
     InitializeAcl();
 
-    if (CALL_ASCEND_API2(aclmdlInitDump) != ACL_ERROR_NONE) {
+    if (CALL_ASCEND_API(aclmdlInitDump) != ACL_ERROR_NONE) {
       MS_LOG(INFO) << "Call aclmdlInitDump failed, acl data dump function will be unusable.";
     }
   }
@@ -73,7 +73,7 @@ class AclDataDumper : public DataDumper {
   }
 
   void Finalize() override {
-    if (CALL_ASCEND_API2(aclmdlFinalizeDump) != ACL_ERROR_NONE) {
+    if (CALL_ASCEND_API(aclmdlFinalizeDump) != ACL_ERROR_NONE) {
       MS_LOG(WARNING) << "Call aclmdlFinalizeDump failed.";
     }
   }

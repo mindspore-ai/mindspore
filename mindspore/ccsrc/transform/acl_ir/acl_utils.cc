@@ -101,7 +101,7 @@ class AclDumper {
     // before, so here call it once
     mindspore::device::ascend::InitializeAcl();
 
-    if (CALL_ASCEND_API2(aclmdlInitDump) != ACL_ERROR_NONE) {
+    if (CALL_ASCEND_API(aclmdlInitDump) != ACL_ERROR_NONE) {
       acl_dump_config_ = "";
       MS_LOG(WARNING) << "Call aclmdlInitDump failed, , acl data dump function will be unusable.";
     }
@@ -113,7 +113,7 @@ class AclDumper {
       return;
     }
 
-    if (CALL_ASCEND_API2(aclmdlFinalizeDump) != ACL_ERROR_NONE) {
+    if (CALL_ASCEND_API(aclmdlFinalizeDump) != ACL_ERROR_NONE) {
       MS_LOG(WARNING) << "Call aclmdlFinalizeDump failed.";
     }
   }

@@ -59,7 +59,7 @@ AclAllocatorPtr AclAllocatorRegister::NewAclAllocator(
   auto allocator_obj = std::make_shared<AclAllocator>(stream, mem_manager);
   MS_EXCEPTION_IF_NULL(allocator_obj);
 
-  auto allocator_desc = CALL_ASCEND_API2(aclrtAllocatorCreateDesc);
+  auto allocator_desc = CALL_ASCEND_API(aclrtAllocatorCreateDesc);
   MS_EXCEPTION_IF_NULL(allocator_desc);
   allocator_obj->set_allocator_desc(allocator_desc);
   (void)CALL_ASCEND_API(aclrtAllocatorSetObjToDesc, allocator_desc, allocator_obj.get());

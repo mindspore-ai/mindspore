@@ -227,7 +227,7 @@ struct aclprofStepInfoInner {
 
 void AscendProfiler::StepStart(uint64_t step_id, void *stream) {
   acl_stream_ = static_cast<aclrtStream>(stream);
-  acl_prof_step_info_ = CALL_ASCEND_API2(aclprofCreateStepInfo);
+  acl_prof_step_info_ = CALL_ASCEND_API(aclprofCreateStepInfo);
   aclprofStepInfoInner *ptr_info = reinterpret_cast<aclprofStepInfoInner *>(acl_prof_step_info_);
   ptr_info->indexId = step_id;
   auto ret =
@@ -256,7 +256,7 @@ void AscendProfiler::Finalize() {
     MS_LOG(EXCEPTION) << "Failed to call aclprofDestoryConfig function.";
   }
   MS_LOG(INFO) << "Begin to finalize profiling";
-  aclRet = CALL_ASCEND_API2(aclprofFinalize);
+  aclRet = CALL_ASCEND_API(aclprofFinalize);
   if (aclRet != ACL_SUCCESS) {
     MS_LOG(EXCEPTION) << "Failed to call aclprofDestroyConfig function.";
   }

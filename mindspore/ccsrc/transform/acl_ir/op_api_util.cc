@@ -125,7 +125,7 @@ uint8_t AclUtil::KeepOriginDType() {
   static std::string version = "";
   static uint8_t need_keep_dtype = 0;
   if (version.empty()) {
-    const char *soc_name_c = CALL_ASCEND_API2(aclrtGetSocName);
+    const char *soc_name_c = CALL_ASCEND_API(aclrtGetSocName);
     if (soc_name_c != nullptr) {
       version = soc_name_c;
     }
