@@ -254,11 +254,14 @@ def _exec_save(ckpt_file_name, data_list, enc_key=None, enc_mode="AES-GCM", map_
                         continue
                     if value[0] == "offload_parameter":
                         new_value = value[1:]
-                        new_value[2] = value[3].asnumpy().reshape(-1)
+                        new_value[2] = value[3]
                         _write_parameter_bytes_data(name, new_value, f, enc_key, plain_data)
                         _offload_if_config(value[3])
                         continue
                     if value[1] == "str":
+                        _write_parameter_data(name, value, f, enc_key, plain_data)
+                        continue
+                    if isinstance(value[2], np.ndarray):
                         _write_parameter_data(name, value, f, enc_key, plain_data)
                         continue
                     if isinstance(value[2], Tensor) and hasattr(value[2], "slice_num") and value[2].slice_num > 1:
