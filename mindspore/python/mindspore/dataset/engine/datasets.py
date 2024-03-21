@@ -4223,6 +4223,12 @@ class _ToDevice:
         """
         return self._to_device.GetDataInfo()
 
+    def get_mbuf_queue_size(self):
+        """
+        Get element numbers inside mbuf.
+        """
+        return self._to_device.GetMbufQueueSize()
+
     def get_send_info(self):
         """
         In sink mode, it returns the send information of dataset at this moment.
@@ -4336,6 +4342,14 @@ class TransferDataset(Dataset):
         if self._to_device is not None:
             return self._to_device.get_data_info()
         raise RuntimeError("Calling get_data_info with bad state.")
+
+    def get_mbuf_queue_size(self):
+        """
+        Get element numbers inside mbuf.
+        """
+        if self._to_device is not None:
+            return self._to_device.get_mbuf_queue_size()
+        raise RuntimeError("Device queue is not init, call get_mbuf_queue_size failed.")
 
     def get_send_info(self):
         """
