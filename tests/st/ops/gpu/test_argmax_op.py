@@ -47,7 +47,6 @@ class DynRankNet(nn.Cell):
 
 
 @pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_argmax_1d():
     for mode in [context.PYNATIVE_MODE, context.GRAPH_MODE]:
@@ -61,7 +60,6 @@ def test_argmax_1d():
 
 
 @pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_argmax_2d():
     for mode in [context.PYNATIVE_MODE, context.GRAPH_MODE]:
@@ -84,7 +82,6 @@ def test_argmax_2d():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_argmax_high_dims():
     for mode in [context.PYNATIVE_MODE, context.GRAPH_MODE]:
@@ -107,7 +104,6 @@ class ArgmaxFuncNet(nn.Cell):
 
 
 @pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_functional_argmax(mode):
@@ -125,7 +121,6 @@ def test_functional_argmax(mode):
 
 
 @pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_argmax_dynamic_shape():
     """
@@ -157,7 +152,6 @@ def test_argmax_dynamic_shape():
 
 
 @pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_argmax_support_types():
     """
@@ -227,7 +221,6 @@ def test_argmax_support_types():
 
 
 @pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_argmax_functional():
     """

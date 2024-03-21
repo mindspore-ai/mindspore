@@ -41,7 +41,7 @@ from mindspore.ops.auto_generate import (minimum, maximum, mul, sin, sinc, sinh,
                                          matrix_exp, sqrt, rsqrt, square, trace, nextafter, abs, acos, acosh, angle,
                                          asin, asinh, atan, atan2, atanh, ceil, equal, erf, erfc, erfinv, exp, expm1,
                                          floor, floor_divide, floor_mod, gcd, greater, greater_equal, less, less_equal,
-                                         log, log1p, neg, not_equal, pow, round, isfinite)
+                                         log, log1p, neg, not_equal, pow, round, isfinite, argmax)
 from mindspore.nn import layer
 from mindspore._checkparam import check_is_number
 from mindspore import _checkparam as validator
@@ -11550,6 +11550,7 @@ __all__ = [
     'addcdiv',
     'addcmul',
     'angle',
+    'argmax',
     'argmin',
     'arccosh',
     'arcsin',
