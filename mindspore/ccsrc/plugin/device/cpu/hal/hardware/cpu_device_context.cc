@@ -105,18 +105,19 @@ void CPUDeviceContext::Initialize() {
   }
   MS_EXCEPTION_IF_NULL(device_res_manager_);
   device_res_manager_->Initialize();
-
-#ifndef ENABLE_SECURITY
-  // Dump json config file if dump is enabled.
-  uint32_t rank_id = 0;
-  auto &json_parser = DumpJsonParser::GetInstance();
-  json_parser.Parse();
-  json_parser.CopyDumpJsonToDir(rank_id);
-  json_parser.CopyMSCfgJsonToDir(rank_id);
-#endif
-#ifdef __linux__
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
+#ifndef ENABLE_SECURITY
+  if (ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kCPUDevice) {
+    // Dump json config file if dump is enabled.
+    uint32_t rank_id = 0;
+    auto &json_parser = DumpJsonParser::GetInstance();
+    json_parser.Parse();
+    json_parser.CopyDumpJsonToDir(rank_id);
+    json_parser.CopyMSCfgJsonToDir(rank_id);
+  }
+#endif
+#ifdef __linux__
   if (ms_context->IsDefaultDeviceTarget() && ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kCPUDevice) {
     MS_LOG(INFO)
       << "No device_target set, set CPU as default. You can call mindspore.set_context(device_target=\"XXX\")";
