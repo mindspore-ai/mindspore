@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2023-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,5 +51,23 @@ REG_EXPANDER_FUNC("SoftmaxBackward").SetBody(BODYFUNC(ib) {
   ShapeVector axis{-1};
   auto result = ib->Mul(out, ib->Sub(dout, ib->ReduceSum(ib->Mul(out, dout), ib->Value(axis), ib->Value(true))));
   return {result};
+});
+
+REG_EXPANDER_FUNC("ApplyMomentum").SetBody(BODYFUNC(ib) {
+  auto weight = ib->input(kIndex0);
+  auto accumulate = ib->input(kIndex1);
+  auto lr = ib->input(kIndex2);
+  auto gradient = ib->input(kIndex3);
+  auto moment = ib->input(kIndex4);
+  auto mul1 = ib->Mul(accumulate, moment);
+  auto acc_new = ib->Add(mul1, gradient);
+  auto mul2 = ib->Mul(acc_new, lr);
+  auto weight_new = ib->Sub(weight, mul2);
+
+  auto assign1 = ib->Assign(accumulate, acc_new);
+  auto assign2 = ib->Assign(weight, weight_new);
+
+  auto result = {assign1, assign2};
+  return result;
 });
 }  // namespace mindspore::graphkernel::expander
