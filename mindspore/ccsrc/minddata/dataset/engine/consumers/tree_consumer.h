@@ -251,6 +251,10 @@ class ToDevice : public TreeConsumer {
   /// \return  Status error code
   virtual Status GetDataInfo(std::vector<DataType> *types, std::vector<TensorShape> *shapes);
 
+  /// Get data numbers from TDT
+  /// \return  Status error code
+  virtual Status GetMbufQueueSize(size_t *queue_size);
+
   /// Get send info in sink mode
   /// \return  Status error code
   virtual Status GetSendInfo(std::vector<std::vector<double>> *send_info);
