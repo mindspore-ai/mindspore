@@ -362,3 +362,87 @@ def test_list_input():
     ret = net(a, b)
     expect = np.array([[1.0, 2.0, 3.0], [1.0, 2.0, 3.0]])
     assert np.allclose(ret.asnumpy(), expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_handle_constant():
+    """
+    Feature: One stage basic operation.
+    Description: Test one stage basic operation.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def construct(self, x):
+            a, b = x
+            return (a, b)
+
+    context.set_context(mode=context.PYNATIVE_MODE)
+    net = Net()
+    m = (1, 2)
+    jit(net.construct, mode="PIJit", jit_config=cfg)
+    ret = net(m)
+    assert ret == (1, 2)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_handle_constant_2():
+    """
+    Feature: One stage basic operation.
+    Description: Test one stage basic operation.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def construct(self, x):
+            a, b = x
+            return (a, b)
+
+    context.set_context(mode=context.PYNATIVE_MODE)
+    net = Net()
+    m = [1, 2]
+    jit(net.construct, mode="PIJit", jit_config=cfg)
+    ret = net(m)
+    assert ret == (1, 2)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_handle_mutable_kwargs_args():
+    """
+    Feature: One stage basic operation.
+    Description: Test one stage basic operation.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def construct(self, a, *args, b=1, **kwargs):
+            return a + b + args[0] + kwargs["s"]
+
+    context.set_context(mode=context.PYNATIVE_MODE)
+    net = Net()
+    jit(net.construct, mode="PIJit", jit_config=cfg)
+    ret = net(1, 10, 100, s=1000)
+    assert ret == 1012
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_handle_mutable_kwargs_args_2():
+    """
+    Feature: One stage basic operation.
+    Description: Test one stage basic operation.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def construct(self, a, *args, b=1, **kwargs):
+            return a + b + args[0]
+
+    context.set_context(mode=context.PYNATIVE_MODE)
+    net = Net()
+    jit(net.construct, mode="PIJit", jit_config=cfg)
+    ret = net(1, 10, 100, s=1000)
+    assert ret == 12
