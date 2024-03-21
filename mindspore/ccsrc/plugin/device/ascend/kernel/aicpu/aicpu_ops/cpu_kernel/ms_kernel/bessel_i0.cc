@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Huawei Technologies Co., Ltd. 2020-2022.All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2020-2024.All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -170,61 +170,48 @@ void BesselI0CpuKernel::BesselI0ComputeFloat16(int64_t start, int64_t end, const
   auto input_x = reinterpret_cast<Eigen::half *>(ctx.Input(0)->GetData());
   auto output_y = reinterpret_cast<Eigen::half *>(ctx.Output(0)->GetData());
 
-  static const Eigen::half A[] = {
-    (Eigen::half)-4.41534164647933937950e-18, (Eigen::half) + 3.33079451882223809783e-17,
-    (Eigen::half)-2.43127984654795469359e-16, (Eigen::half) + 1.71539128555513303061e-15,
-    (Eigen::half)-1.16853328779934516808e-14, (Eigen::half) + 7.67618549860493561688e-14,
-    (Eigen::half)-4.85644678311192946090e-13, (Eigen::half) + 2.95505266312963983461e-12,
-    (Eigen::half)-1.72682629144155570723e-11, (Eigen::half) + 9.67580903537323691224e-11,
-    (Eigen::half)-5.18979560163526290666e-10, (Eigen::half) + 2.65982372468238665035e-09,
-    (Eigen::half)-1.30002500998624804212e-08, (Eigen::half) + 6.04699502254191894932e-08,
-    (Eigen::half)-2.67079385394061173391e-07, (Eigen::half) + 1.11738753912010371815e-06,
-    (Eigen::half)-4.41673835845875056359e-06, (Eigen::half) + 1.64484480707288970893e-05,
-    (Eigen::half)-5.75419501008210370398e-05, (Eigen::half) + 1.88502885095841655729e-04,
-    (Eigen::half)-5.76375574538582365885e-04, (Eigen::half) + 1.63947561694133579842e-03,
-    (Eigen::half)-4.32430999505057594430e-03, (Eigen::half) + 1.05464603945949983183e-02,
-    (Eigen::half)-2.37374148058994688156e-02, (Eigen::half) + 4.93052842396707084878e-02,
-    (Eigen::half)-9.49010970480476444210e-02, (Eigen::half) + 1.71620901522208775349e-01,
-    (Eigen::half)-3.04682672343198398683e-01, (Eigen::half) + 6.76795274409476084995e-01,
+  static const float A[] = {
+    -4.41534164647933937950e-18, +3.33079451882223809783e-17, -2.43127984654795469359e-16, +1.71539128555513303061e-15,
+    -1.16853328779934516808e-14, +7.67618549860493561688e-14, -4.85644678311192946090e-13, +2.95505266312963983461e-12,
+    -1.72682629144155570723e-11, +9.67580903537323691224e-11, -5.18979560163526290666e-10, +2.65982372468238665035e-09,
+    -1.30002500998624804212e-08, +6.04699502254191894932e-08, -2.67079385394061173391e-07, +1.11738753912010371815e-06,
+    -4.41673835845875056359e-06, +1.64484480707288970893e-05, -5.75419501008210370398e-05, +1.88502885095841655729e-04,
+    -5.76375574538582365885e-04, +1.63947561694133579842e-03, -4.32430999505057594430e-03, +1.05464603945949983183e-02,
+    -2.37374148058994688156e-02, +4.93052842396707084878e-02, -9.49010970480476444210e-02, +1.71620901522208775349e-01,
+    -3.04682672343198398683e-01, +6.76795274409476084995e-01,
   };
 
-  static const Eigen::half B[] = {
-    (Eigen::half)-7.23318048787475395456e-18,   (Eigen::half)-4.83050448594418207126e-18,
-    (Eigen::half) + 4.46562142029675999901e-17, (Eigen::half) + 3.46122286769746109310e-17,
-    (Eigen::half)-2.82762398051658348494e-16,   (Eigen::half)-3.42548561967721913462e-16,
-    (Eigen::half) + 1.77256013305652638360e-15, (Eigen::half) + 3.81168066935262242075e-15,
-    (Eigen::half)-9.55484669882830764870e-15,   (Eigen::half)-4.15056934728722208663e-14,
-    (Eigen::half) + 1.54008621752140982691e-14, (Eigen::half) + 3.85277838274214270114e-13,
-    (Eigen::half) + 7.18012445138366623367e-13, (Eigen::half)-1.79417853150680611778e-12,
-    (Eigen::half)-1.32158118404477131188e-11,   (Eigen::half)-3.14991652796324136454e-11,
-    (Eigen::half) + 1.18891471078464383424e-11, (Eigen::half) + 4.94060238822496958910e-10,
-    (Eigen::half) + 3.39623202570838634515e-09, (Eigen::half) + 2.26666899049817806459e-08,
-    (Eigen::half) + 2.04891858946906374183e-07, (Eigen::half) + 2.89137052083475648297e-06,
-    (Eigen::half) + 6.88975834691682398426e-05, (Eigen::half) + 3.36911647825569408990e-03,
-    (Eigen::half) + 8.04490411014108831608e-01,
+  static const float B[] = {
+    -7.23318048787475395456e-18, -4.83050448594418207126e-18, +4.46562142029675999901e-17, +3.46122286769746109310e-17,
+    -2.82762398051658348494e-16, -3.42548561967721913462e-16, +1.77256013305652638360e-15, +3.81168066935262242075e-15,
+    -9.55484669882830764870e-15, -4.15056934728722208663e-14, +1.54008621752140982691e-14, +3.85277838274214270114e-13,
+    +7.18012445138366623367e-13, -1.79417853150680611778e-12, -1.32158118404477131188e-11, -3.14991652796324136454e-11,
+    +1.18891471078464383424e-11, +4.94060238822496958910e-10, +3.39623202570838634515e-09, +2.26666899049817806459e-08,
+    +2.04891858946906374183e-07, +2.89137052083475648297e-06, +6.88975834691682398426e-05, +3.36911647825569408990e-03,
+    +8.04490411014108831608e-01,
   };
 
   for (int64_t i = start; i < end; i++) {
-    Eigen::half p;
-    Eigen::half q = (Eigen::half)0.0;
-    Eigen::half x = *(input_x + i);
-    if (Eigen::half_impl::abs(x) <= Eigen::half(NUMBER_8)) {
-      Eigen::half a = A[0];
+    float p;
+    float q = (float)0.0;
+    float x = (float)*(input_x + i);
+    if (std::abs(x) <= float(NUMBER_8)) {
+      float a = A[0];
       for (uint8_t index = 1; index < LEN_A; index++) {
         p = q;
         q = a;
-        a = ((Eigen::half_impl::abs(x) / Eigen::half(NUMBER_2)) - Eigen::half(NUMBER_2)) * q - p + A[index];
+        a = ((std::abs(x) / float(NUMBER_2)) - float(NUMBER_2)) * q - p + A[index];
       }
-      *(output_y + i) = Eigen::half_impl::exp(Eigen::half_impl::abs(x)) * (Eigen::half(NUMBER_HALF) * (a - p));
+      *(output_y + i) = static_cast<Eigen::half>(std::exp(std::abs(x)) * (float(NUMBER_HALF) * (a - p)));
     } else {
-      Eigen::half b = B[0];
+      float b = B[0];
       for (uint8_t index = 1; index < LEN_B; index++) {
         p = q;
         q = b;
-        b = (Eigen::half(NUMBER_32) / Eigen::half_impl::abs(x) - Eigen::half(NUMBER_2)) * q - p + B[index];
+        b = (float(NUMBER_32) / std::abs(x) - float(NUMBER_2)) * q - p + B[index];
       }
-      *(output_y + i) = Eigen::half_impl::exp(Eigen::half_impl::abs(x)) * (Eigen::half(NUMBER_HALF) * (b - p)) /
-                        Eigen::half_impl::sqrt(Eigen::half_impl::abs(x));
+      *(output_y + i) =
+        static_cast<Eigen::half>(std::exp(std::abs(x)) * (float(NUMBER_HALF) * (b - p)) / std::sqrt(std::abs(x)));
     }
   }
 }
