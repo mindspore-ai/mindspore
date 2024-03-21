@@ -956,6 +956,59 @@ AnfNodePtr Parser::ParseExprNode(const FunctionBlockPtr &block, const py::object
   }
 }
 
+// If self.attr.func is inplace operation, then
+//   self.attr.func(inputs)
+//   -->
+//   self.attr = self.attr.func(inputs)
+//   setattr(self, "attr", self.attr.func(inputs))
+bool Parser::HandleSetAttrClassMemberForInplace(const FunctionBlockPtr &block, const AnfNodePtr &node) {
+  if (!node->isa<CNode>()) {
+    return false;
+  }
+  auto cnode = node->cast<CNodePtr>();
+  auto call_node = cnode->input(0);
+  if (!IsPrimitiveCNode(call_node, prim::kPrimGetAttr)) {
+    return false;
+  }
+  // call_cnode: self.attr.func
+  auto call_cnode = call_node->cast<CNodePtr>();
+  MS_LOG(DEBUG) << "call cnode: " << call_cnode->DebugString(2);
+  const auto &call_cnode_inputs = call_cnode->inputs();
+  constexpr size_t attr_node_index = 1;
+  constexpr size_t func_str_index = 2;
+  auto func_str_node = call_cnode_inputs[func_str_index];
+  if (!IsValueNode<StringImm>(func_str_node)) {
+    return false;
+  }
+  const auto &func_str = GetValue<std::string>(GetValueNode(func_str_node));
+  std::vector<std::string> inplace_ops{"extend", "pop", "insert", "reverse"};
+  MS_LOG(DEBUG) << "func str: " << func_str;
+  if (std::all_of(inplace_ops.begin(), inplace_ops.end(),
+                  [&func_str](const std::string &ops) { return func_str != ops; })) {
+    return false;
+  }
+  auto attr_node = call_cnode_inputs[attr_node_index];
+  if (!attr_node->isa<CNode>()) {
+    return false;
+  }
+  // attr_cnode: self.attr
+  auto attr_cnode = attr_node->cast<CNodePtr>();
+  MS_LOG(DEBUG) << "attr cnode: " << attr_cnode->DebugString(2);
+  const auto &attr_cnode_inputs = attr_cnode->inputs();
+  constexpr size_t target_index = 1;
+  constexpr size_t attr_index = 2;
+  auto target_node = attr_cnode_inputs[target_index];
+  MS_LOG(DEBUG) << "target node: " << target_node->DebugString();
+  auto target_attr_node = attr_cnode_inputs[attr_index];
+  auto symbol_val = GetValueNode<SymbolPtr>(target_attr_node);
+  if (symbol_val == nullptr) {
+    return false;
+  }
+  const auto &target_symbol_str = symbol_val->symbol();
+  MakeSetAttrNode(block, target_node, cnode, "self", target_symbol_str);
+  return true;
+}
+
 // Process the expr statement and expand it
 FunctionBlockPtr Parser::ParseExpr(const FunctionBlockPtr &block, const py::object &node) {
   MS_LOG(DEBUG) << "Process ast Expr";
@@ -1018,8 +1071,10 @@ FunctionBlockPtr Parser::ParseExpr(const FunctionBlockPtr &block, const py::obje
       if (ast_->target_type() == PARSE_TARGET_OBJECT_INSTANCE && ast_->IsClassMemberRecursive(target_node)) {
         // self.x = [xx, xx]
         // self.x.append()
-        MS_LOG(DEBUG) << "The variables whose type is not parameter do not support assign operation.";
-        block->AddIsolatedNode(call_node);
+        const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() == kLax);
+        if (!allow_fallback_runtime || !HandleSetAttrClassMemberForInplace(block, call_node)) {
+          block->AddIsolatedNode(call_node);
+        }
       } else {
         WriteAssignVars(block, target_node, call_node);
       }
