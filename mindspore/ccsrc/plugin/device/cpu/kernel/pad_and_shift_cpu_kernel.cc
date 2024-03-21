@@ -80,7 +80,7 @@ void PadAndShiftCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &in
 void PadAndShiftCpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
                                                        const std::vector<KernelTensor *> &outputs) {
   ShapeVector output_shape(input_shape_.begin(), input_shape_.end());
-  output_shape[kIndex0] = output_size_;
+  output_shape[kIndex0] = static_cast<int64_t>(output_size_);
   outputs[kIndex0]->SetShapeVector(output_shape);
   outputs[kIndex0]->set_size(output_size_ * type_size_);
 }

@@ -257,6 +257,21 @@ bool PyFuncCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const
   return ExecuteKernel(inputs, outputs);
 }
 
+void GetTypeInfo(const PrimitivePtr &primitive, const std::vector<KernelTensor *> &inputs, const std::string &arg_name,
+                 std::vector<TypeId> *types) {
+  if (primitive->HasAttr(arg_name)) {
+    const auto &type_ptrs = GetValue<std::vector<TypePtr>>(primitive->GetAttr(arg_name));
+    (void)std::for_each(type_ptrs.begin(), type_ptrs.end(), [&types](auto p) {
+      MS_EXCEPTION_IF_NULL(p);
+      (void)types->emplace_back(p->type_id());
+    });
+  } else {
+    for (size_t i = 0; i < inputs.size(); ++i) {
+      types->emplace_back(inputs[i]->dtype_id());
+    }
+  }
+}
+
 void PyFuncCpuKernelMod::BuildFuncInfo(const PrimitivePtr &primitive, const std::vector<KernelTensor *> &inputs,
                                        const std::vector<KernelTensor *> &outputs) {
   std::vector<TypeId> in_types;
@@ -264,29 +279,8 @@ void PyFuncCpuKernelMod::BuildFuncInfo(const PrimitivePtr &primitive, const std:
   std::vector<std::vector<int64_t>> in_shapes;
   std::vector<std::vector<int64_t>> out_shapes;
 
-  if (primitive->HasAttr("in_types")) {
-    const auto &in_type_ptrs = GetValue<std::vector<TypePtr>>(primitive->GetAttr("in_types"));
-    (void)std::for_each(in_type_ptrs.begin(), in_type_ptrs.end(), [&in_types](auto p) {
-      MS_EXCEPTION_IF_NULL(p);
-      (void)in_types.emplace_back(p->type_id());
-    });
-  } else {
-    for (size_t i = 0; i < inputs.size(); ++i) {
-      in_types.emplace_back(inputs[i]->dtype_id());
-    }
-  }
-
-  if (primitive->HasAttr("out_types")) {
-    const auto &out_type_ptrs = GetValue<std::vector<TypePtr>>(primitive->GetAttr("out_types"));
-    (void)std::for_each(out_type_ptrs.begin(), out_type_ptrs.end(), [&out_types](auto p) {
-      MS_EXCEPTION_IF_NULL(p);
-      (void)out_types.emplace_back(p->type_id());
-    });
-  } else {
-    for (size_t i = 0; i < outputs.size(); ++i) {
-      out_types.emplace_back(outputs[i]->dtype_id());
-    }
-  }
+  GetTypeInfo(primitive, inputs, "in_types", &in_types);
+  GetTypeInfo(primitive, inputs, "out_types", &out_types);
 
   if (primitive->HasAttr("in_shapes")) {
     in_shapes = GetValue<std::vector<std::vector<int64_t>>>(primitive->GetAttr("in_shapes"));

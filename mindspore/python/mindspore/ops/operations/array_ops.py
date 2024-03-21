@@ -14,7 +14,6 @@
 # ============================================================================
 
 """Operators for array."""
-# pylint: disable=unused-import
 import copy
 import itertools
 import numbers
