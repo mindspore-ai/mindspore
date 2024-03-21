@@ -44,6 +44,11 @@
 
 namespace mindspore {
 namespace parse {
+static std::unordered_map<std::string, std::string> param_obj_ids;  // param_name : obj_id
+void CleanParameterNameCache() {
+  MS_LOG(DEBUG) << "Clean parameter name cache.";
+  param_obj_ids.clear();
+}
 namespace {
 std::string ReplaceSpecialChar(const std::string &str) {
   std::ostringstream oss;
@@ -873,7 +878,6 @@ AnfNodePtr ResolveParameterObj(const FuncGraphPtr &func_graph, const py::object 
     MS_LOG(EXCEPTION) << "Parameter object should have name attribute";
   }
   auto obj_id = GetPyObjId(obj);
-  static std::unordered_map<std::string, std::string> param_obj_ids;  // param_name : obj_id
   auto param_name = py::cast<std::string>(name_attr);
   auto top_func_graph = Parser::GetTopFuncGraph();
   // If the parameter node has been created , return it.
