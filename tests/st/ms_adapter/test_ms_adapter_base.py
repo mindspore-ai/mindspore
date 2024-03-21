@@ -259,3 +259,17 @@ def test_tensor_create_instance_2():
 
     out = func(Tensor([1]))
     assert out == 2
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_tensor_adapter_flag():
+    """
+    Feature: MSAdapter
+    Description: Test stub tensor
+    Expectation: No exception
+    """
+    x = Tensor([1])
+    y = convert_to_ms_tensor(x)
+    assert not y.adapter_flag

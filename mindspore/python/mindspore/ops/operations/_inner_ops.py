@@ -2464,7 +2464,9 @@ class ConvertToMsTensor(Primitive):
         if PackFunc.is_tracing() and not PackFunc.current.is_pynative_mode:
             return super().__call__(x)
         if isinstance(x, StubTensor):
-            return StubTensor(stub=x.stub, tensor=x.tensor)
+            stub_tensor = StubTensor(stub=x.stub, tensor=x.tensor)
+            setattr(stub_tensor, "adapter_flag", False)
+            return stub_tensor
         return ops.auto_generate.deepcopy(x)
 
 
