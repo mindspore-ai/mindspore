@@ -3271,7 +3271,7 @@ def pad(input_x, padding, mode='constant', value=None):
         return input_x
     if not isinstance(padding, Tensor):
         _check_pad_inputs(padding)
-        padding = Tensor(padding)
+        padding = Tensor(padding, const_arg=True)
     is_expand = False
     if mode == "constant":
         value = 0 if value is None else value
