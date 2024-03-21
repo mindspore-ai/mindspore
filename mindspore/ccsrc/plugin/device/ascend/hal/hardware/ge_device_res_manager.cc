@@ -215,6 +215,7 @@ void GeDeviceResManager::CreateSessionAndGraphRunner() {
     options["ge.exec.formatMode"] = "0";
     auto format_mode = common::GetEnv("MS_FORMAT_MODE");
     if (format_mode == "1" || (format_mode.empty() && ms_context->ascend_soc_version() != "ascend910")) {
+      MS_LOG(INFO) << "Set GE option ge.exec.formatMode to 1.";
       options["ge.exec.formatMode"] = "1";
     }
 
