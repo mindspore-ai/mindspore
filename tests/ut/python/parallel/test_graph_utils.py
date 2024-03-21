@@ -740,9 +740,9 @@ def test_semi_auto_parallel_argmaxwithvalue_keepdims_true_strategy():
                     self.mul2.shard(((1,), (1,)))
 
         def construct(self, inputs):
-            x = self.mul(inputs, self.mul_weight)  # (), (128, 96), shard: (4, 1), (4, 1)
+            x = self.mul(inputs, self.mul_weight)  # (128, 96), (1, 1), shard: (4, 1), (1, 1)
             x = self.arg_max_with_value(x)[1]  # shard: (4, 1)
-            x = self.mul2(x, self.mul2_weight)  # (), (128, 1)
+            x = self.mul2(x, self.mul2_weight)
             return x
 
     context.set_context(save_graphs=True,
@@ -752,11 +752,11 @@ def test_semi_auto_parallel_argmaxwithvalue_keepdims_true_strategy():
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
                                       global_rank=0, device_num=8,
                                       dataset_strategy=(dataset_shard,))
-    model = ParallelArgMaxWithValueNet(mul_size=(128, 96), mul2_size=(128, 1), keep_dims=True,
-                                       strategy=((4, 1),), strategy2=((4, 1), (4, 1))).to_float(mstype.float16)
+    model = ParallelArgMaxWithValueNet(mul_size=(1, 1), mul2_size=(128, 1), keep_dims=True,
+                                       strategy=((4, 1),), strategy2=((4, 1), (1, 1))).to_float(mstype.float16)
     model = _VirtualDatasetCell(model)
     model._virtual_dataset.add_prim_attr("repeat_dim_direct", "right")
-    d0 = Symbol(divisor=4)
+    d0 = Symbol(divisor=8)
     x = Tensor(shape=[d0, None], dtype=mstype.float32)
     model.set_inputs(x)
     phase = compile_net(model, x)
@@ -769,12 +769,15 @@ def test_semi_auto_parallel_argmaxwithvalue_keepdims_true_strategy():
     assert validator.check_node_inputs_has('Mul-0', ['TupleGetItem-1', 'Cast-1'])
     assert validator.check_node_inputs_has('ArgMaxWithValue-0', ['Mul-0', -1, True])
     assert validator.check_node_inputs_has('TupleGetItem-2', ['ArgMaxWithValue-0', 1])
-    assert validator.check_node_inputs_has('Reshape-0', ['TupleGetItem-2', '(32)'])
+    assert validator.check_node_inputs_has('Shape-0', ['TupleGetItem-2'])
+    assert validator.check_node_inputs_has('tuple_getitem_for_value_12-0', ['Shape-0', 0])
+    assert validator.check_node_inputs_has('MakeTuple-1', ['tuple_getitem_for_value_12-0'])
+    assert validator.check_node_inputs_has('Reshape-0', ['TupleGetItem-2', 'MakeTuple-1'])
     assert validator.check_node_inputs_has('AllGather-0', ['Reshape-0'])
-    assert validator.check_node_inputs_has('Reshape-1', ['AllGather-0', '(128, 1)'])
+    assert validator.check_node_inputs_has('Reshape-1', ['AllGather-0', '(-1, 1)'])
     assert validator.check_node_inputs_has('Cast-2', ['Load-1', 42])
     assert validator.check_node_inputs_has('Mul-1', ['Reshape-1', 'Cast-2'])
-    assert validator.check_node_inputs_has('MakeTuple-1', ['Load-1', 'Load-0'])
+    assert validator.check_node_inputs_has('MakeTuple-2', ['Load-1', 'Load-0'])
 
 
 def test_semi_auto_parallel_greaterequal_flatten_div_strategy():

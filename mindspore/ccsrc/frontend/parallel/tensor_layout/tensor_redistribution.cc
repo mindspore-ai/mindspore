@@ -220,8 +220,12 @@ void TensorRedistribution::CreateAssembledDynamicMapping(const CNodePtr &cur_cno
       shape_root = shape_input;
     }
   }
-  MS_LOG(DEBUG) << "Start to create assembled dynamic shape mapping: " << pre_cnode->fullname_with_scope() << "->"
-                << cur_cnode->fullname_with_scope() << ", shape_root=" << shape_root->fullname_with_scope();
+  if (pre_cnode->isa<CNode>() && IsPrimitiveCNode(pre_cnode, std::make_shared<Primitive>(ARGMAXWITHVALUE))) {
+    shape_root = cur_cnode->input(redistribution_index);
+    MS_LOG(INFO) << "change shape_root to " << shape_root->fullname_with_scope();
+  }
+  MS_LOG(INFO) << "Start to create assembled dynamic shape mapping: " << pre_cnode->fullname_with_scope() << "->"
+               << cur_cnode->fullname_with_scope() << ", shape_root=" << shape_root->fullname_with_scope();
   ReplacementMemo from_layout_memo = this->layout_transfer_.FromLayoutDimsReplacementMemo();
   // 1. New shape and set pre_cnode to its inputs.
   auto shape_cnode = CreateShape(shape_root, func_graph, "assemble_dynamic_shape_op");
