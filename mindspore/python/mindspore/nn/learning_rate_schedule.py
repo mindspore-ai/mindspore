@@ -214,7 +214,7 @@ class InverseDecayLR(LearningRateSchedule):
     .. math::
         p = \frac{current\_step}{decay\_steps}
 
-    If `is_stair` is True, The formula is :
+    If `is_stair` is True, the formula is :
 
     .. math::
         p = floor(\frac{current\_step}{decay\_steps})
