@@ -28,6 +28,21 @@
 
 namespace mindspore {
 namespace {
+std::string GetAscendPath() {
+  Dl_info info;
+  if (dladdr(reinterpret_cast<void *>(aclrtMalloc), &info) == 0) {
+    MS_LOG(ERROR) << "Get dladdr failed.";
+    return "";
+  }
+  auto path_tmp = std::string(info.dli_fname);
+  const std::string kLatest = "latest";
+  auto pos = path_tmp.find(kLatest);
+  if (pos == std::string::npos) {
+    MS_EXCEPTION(ValueError) << "Get ascend path failed, please check the run package.";
+  }
+  return path_tmp.substr(0, pos);
+}
+
 // todo: acl doesn't support to clear current context
 void ClearCurrentRtCtx() {
   aclrtContext tmp_ctx = nullptr;
@@ -187,17 +202,16 @@ Buffer ModelConverter::LoadMindIR(const FuncGraphPtr &func_graph) {
   MultiProcess multi_process;
   Buffer buffer_ret;
   ClearCurrentRtCtx();
-  {
-    // Release GIL before calling into (potentially long-running) C++ code
-    std::map<std::string, std::string> init_options;
-    std::map<std::string, std::string> build_options;
-    auto option = options_.lock();
-    if (option != nullptr) {
-      std::tie(init_options, build_options) = option->GenAclOptions();
-    }
-    if (::ge::GEInitialize(init_options) != ::ge::GRAPH_SUCCESS) {
-      MS_LOG(EXCEPTION) << "Initialize GE failed!";
-    }
+  auto ascend_path = GetAscendPath();
+#ifdef MACHINE_LINUX_ARM64
+  std::string lib_opsproto_file = ascend_path + "latest/opp/built-in/op_proto/lib/linux/aarch64/libopsproto.so";
+#else
+  std::string lib_opsproto_file = ascend_path + "latest/opp/built-in/op_proto/lib/linux/x86_64/libopsproto.so";
+#endif
+  static void *handler = dlopen(lib_opsproto_file.c_str(), RTLD_LAZY);
+  if (handler == nullptr) {
+    MS_LOG(ERROR) << "dlopen opsproto library failed: " << lib_opsproto_file;
+    return buffer_ret;
   }
   auto df_graph = ConvertFuncGraphToAIR(func_graph);
   if (df_graph == nullptr) {
