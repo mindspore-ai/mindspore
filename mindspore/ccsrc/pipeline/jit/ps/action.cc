@@ -372,23 +372,20 @@ FuncGraphPtr Renormalize(const ResourcePtr &resource, const FuncGraphPtr &func_g
   MS_EXCEPTION_IF_NULL(resource);
   MS_LOG(DEBUG) << "Renormalize start";
   auto engine = resource->engine();
-#ifdef ENABLE_PROFILE
-  double t1 = GetTime();
-#endif
-  abstract::AnalysisResult result = AbstractAnalyze(engine, func_graph, args_abs, resource->is_load(), true);
-#ifdef ENABLE_PROFILE
-  double t2 = GetTime();
-#endif
-  auto res = ProgramSpecialize(engine, func_graph, result.context);
-  resource->set_func_graph(res);
-#ifdef ENABLE_PROFILE
-  double t3 = GetTime();
-  MsProfile::StatTime("renormalize.infer", t2 - t1);
-  MsProfile::StatTime("renormalize.specialize", t3 - t2);
-#endif
+
+  abstract::AnalysisResult result;
+  {
+    MsProfileStatGuard stat_guard("renormalize.infer");
+    result = AbstractAnalyze(engine, func_graph, args_abs, resource->is_load(), true);
+  }
+  FuncGraphPtr res;
+  {
+    MsProfileStatGuard stat_guard("renormalize.specialize");
+    res = ProgramSpecialize(engine, func_graph, result.context);
+    resource->set_func_graph(res);
+  }
 
   MS_LOG(DEBUG) << "Renormalize end";
-
   return res;
 }
 
@@ -397,24 +394,22 @@ FuncGraphPtr Renormalize(const ValuePtr &func, const abstract::AbstractBasePtrLi
   if (!func_abs->isa<abstract::AbstractFunction>()) {
     MS_LOG(EXCEPTION) << "The value: " << func->ToString() << " is not a callable object.";
   }
-  auto infer_graph = ConstructGraphForEval(func, args_abs);
-  auto manager = Manage(infer_graph, true);
+  auto func_graph = ConstructGraphForEval(func, args_abs);
+  auto manager = Manage(func_graph, true);
   auto engine = std::make_shared<abstract::AnalysisEngine>(abstract::GetPrimEvaluatorConstructors(), manager);
-#ifdef ENABLE_PROFILE
-  double t1 = GetTime();
-#endif
-  auto res = AbstractAnalyze(engine, infer_graph, args_abs, false);
-#ifdef ENABLE_PROFILE
-  double t2 = GetTime();
-#endif
 
-  auto spec_graph = ProgramSpecialize(engine, infer_graph, res.context);
-#ifdef ENABLE_PROFILE
-  double t3 = GetTime();
-  MsProfile::StatTime("renormalize.infer", t2 - t1);
-  MsProfile::StatTime("renormalize.specialize", t3 - t2);
-#endif
-  return spec_graph;
+  abstract::AnalysisResult result;
+  {
+    MsProfileStatGuard stat_guard("renormalize.infer");
+    result = AbstractAnalyze(engine, func_graph, args_abs, false);
+  }
+  FuncGraphPtr res;
+  {
+    MsProfileStatGuard stat_guard("renormalize.specialize");
+    res = ProgramSpecialize(engine, func_graph, result.context);
+  }
+
+  return res;
 }
 
 void SetMindIRLoadFlag(const ResourcePtr &resource) {
@@ -1662,7 +1657,7 @@ std::vector<ActionItem> VmPipeline(const ResourcePtr &resource, bool trace_flag)
     (void)actions.emplace_back(std::make_pair(kValidate, ValidateAction));
 
 #if defined(__linux__) && defined(WITH_BACKEND)
-    (void)actions.emplace_back(std::make_pair(kDistribtuedSplit, DistributedSplitAction));
+    (void)actions.emplace_back(std::make_pair(kDistributedSplit, DistributedSplitAction));
     if (ps::PSContext::instance()->is_worker()) {
       if (distributed::cluster::ClusterContext::instance()->initialized()) {
         MS_LOG(INFO) << "This worker is initialized. No need to add worker action.";

@@ -10,7 +10,7 @@ option(ENABLE_LOAD_ANF_IR "Enable load ANF-IR as input of 'infer' stage of pipel
 option(ENABLE_COVERAGE "Enable code coverage report" OFF)
 option(USE_GLOG "Use glog to output log" OFF)
 option(ENABLE_SECURITY "Enable security, maintenance function will be disabled, default off" OFF)
-option(ENABLE_PROFILE "Enable pipeline profile, default off" OFF)
+option(ENABLE_PROFILE "Enable pipeline profile function by default, default off" OFF)
 option(ENABLE_TIMELINE "Enable time line record" OFF)
 option(ENABLE_DUMP_PROTO "Enable dump anf graph to file in ProtoBuffer format, default on" ON)
 option(ENABLE_DUMP_IR "Enable dump function graph ir, default on" ON)

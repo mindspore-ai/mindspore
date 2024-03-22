@@ -27,7 +27,7 @@ namespace mindspore {
 class TestProfile : public UT::Common {
  public:
   TestProfile() {}
-  virtual ~TestProfile() {}
+  virtual ~TestProfile() { SetEnabledProfile(true); }
 
   virtual void TearDown() {}
 };
