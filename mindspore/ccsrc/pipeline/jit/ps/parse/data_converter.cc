@@ -837,28 +837,11 @@ void GenerateTopGraphParams(const FuncGraphPtr &fg, std::vector<AnfNodePtr> *par
   MS_LOG(DEBUG) << "finish GenerateTopGraphParams: " << fg->ToString();
 }
 
-FuncGraphPtr MakeReusingGraph(const FuncGraphPtr &base_graph) {
-  FuncGraphPtr func_graph = std::make_shared<FuncGraph>();
-  // Make the reusable graph to be the no_inline status.
-  func_graph->set_flag(FUNC_GRAPH_FLAG_NO_INLINE, true);
-  func_graph->set_flag(FUNC_GRAPH_FLAG_CELL_REUSE, true);
+FuncGraphPtr MakeReusingGraph(FuncGraphPtr base_graph) {
   static int order = 0;
-  func_graph->set_attr(FUNC_GRAPH_FLAG_CELL_LAZY_INLINE_ORDER, MakeValue(++order));
-  func_graph->debug_info()->set_name("CR_" + base_graph->debug_info()->name());
-  std::vector<AnfNodePtr> new_node_inputs;
-  new_node_inputs.push_back(NewValueNode(base_graph));
-  auto reusing_node = func_graph->NewCNode(prim::kPrimReusing, new_node_inputs);
-  new_node_inputs.clear();
-  new_node_inputs.push_back(reusing_node);
-  for (const auto &base_param : base_graph->parameters()) {
-    auto param = func_graph->add_parameter();
-    param->set_debug_info(base_param->debug_info());
-    new_node_inputs.push_back(param);
-  }
-  AnfNodePtr out = func_graph->NewCNodeInOrder(new_node_inputs);
-  func_graph->set_output(out);
-  MS_LOG(DEBUG) << "Cell: " << func_graph->ToString() << ", args: " << func_graph->parameters().size();
-  return func_graph;
+  base_graph->set_attr(FUNC_GRAPH_FLAG_CELL_LAZY_INLINE_ORDER, MakeValue(++order));
+  base_graph->debug_info()->set_name("CR_" + base_graph->debug_info()->name());
+  return base_graph;
 }
 
 FuncGraphPtr MakeCellFuncGraph(const py::object &obj, const std::string &obj_id, const FuncGraphPtr &reusing_graph) {
@@ -871,18 +854,22 @@ FuncGraphPtr MakeCellFuncGraph(const py::object &obj, const std::string &obj_id,
   func_graph->debug_info()->set_name(function_name);
   PyObjectWrapperPtr python_obj = std::make_shared<PyObjectWrapper>(obj, "graph python obj");
   func_graph->set_python_obj(python_obj);
+  func_graph->set_flag(FUNC_GRAPH_FLAG_PROXY_GRAPH, true);
   std::vector<AnfNodePtr> new_node_inputs;
   new_node_inputs.push_back(NewValueNode(reusing_graph));
   std::vector<AnfNodePtr> fvs;
   GenerateTopGraphParams(func_graph, &fvs);
+  (void)new_node_inputs.insert(new_node_inputs.end(), fvs.rbegin(), fvs.rend());
   auto params = reusing_graph->parameters();
-  params.resize(params.size() - fvs.size());
-  for (auto origin_param : params) {
+  auto pars_size = params.size();
+  for (size_t i = fvs.size(); i < pars_size; ++i) {
+    const auto &origin_param = params[i];
     auto param = func_graph->add_parameter();
     param->set_debug_info(origin_param->debug_info());
+    std::string name = origin_param->debug_info()->name();
+    param->set_name(name);
     new_node_inputs.push_back(param);
   }
-  (void)new_node_inputs.insert(new_node_inputs.cend(), fvs.cbegin(), fvs.cend());
 
   AnfNodePtr out = func_graph->NewCNodeInOrder(new_node_inputs);
   func_graph->set_output(out);
@@ -916,7 +903,7 @@ FuncGraphPtr ProcessLazyInline(const py::object &obj, const ValuePtrList &args_v
     MS_LOG(DEBUG) << "Get Params: " << reusing_graph->ToString();
     GenerateTopGraphParams(base_graph, &fvs);
     for (auto &node : fvs) {
-      auto param = base_graph->add_parameter();
+      auto param = base_graph->InsertFrontParameter();
       std::string name = "CR_" + node->debug_info()->name();
       param->debug_info()->set_name(name);
       param->set_name(name);
