@@ -652,6 +652,7 @@ def tensor_index_by_tensor(data, tensor_index):
     if not F.is_sequence_value_unknown(F.shape(data)):
         const_utils.judge_data_dim(data.ndim, min_data_dim, max_data_dim)
     if const_utils.check_type_isinstance(F.dtype(tensor_index), mstype.Int):
+        tensor_index = F.select(tensor_index < 0, tensor_index + F.shape(data)[0], tensor_index)
         return F.gather(data, tensor_index, 0)
     if const_utils.check_type_isinstance(F.dtype(tensor_index), mstype.Bool):
         return tensor_index_by_bool_tensor(data, tensor_index)
