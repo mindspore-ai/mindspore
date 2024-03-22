@@ -21,7 +21,7 @@ export MS_WORKER_NUM=4
 export MS_SCHED_HOST=127.0.0.1
 export MS_SCHED_PORT=8118
 
-export GLOG_v=1
+export GLOG_v=3
 export MS_ROLE=MS_SCHED
 python $BASE_PATH/../train_resnet50.py >scheduler.log 2>&1 &
 
