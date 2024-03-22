@@ -33,6 +33,7 @@ class ReduceAxisUpdate : public PatternToPatternPass {
 
  private:
   bool IsAxisEmpty(const ValueNodePtr &axis_node) const;
+  bool IsAxisNone(const AnfNodePtr &cnode, const ValueNodePtr &axis_node) const;
   bool IsInputScalar(const AnfNodePtr &x_node) const;
   static bool IsReduce(const BaseRef &ref);
 };

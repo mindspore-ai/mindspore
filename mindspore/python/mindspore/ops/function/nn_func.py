@@ -3002,7 +3002,7 @@ def bidense(input1, input2, weight, bias=None):
     output = output.transpose(2, 0, 1) * input2
     output = output.sum(2).swapaxes(0, 1)
     if bias is not None:
-        output = bias_add_(output, bias)
+        output = bias_add_(output.astype(bias.dtype), bias)
     if len(input1_shape) != 2:
         output_shape = input1_shape[:-1] + (-1,)
         output = output.reshape(output_shape)

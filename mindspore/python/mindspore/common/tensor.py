@@ -1800,11 +1800,11 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         """
         return tensor_operator_registry.get('log2')(self)
 
-    def mean(self, axis=None, keep_dims=False):
+    def mean(self, axis=None, keep_dims=False, dtype=None):
         """
         For details, please refer to :func:`mindspore.ops.mean`.
         """
-        return tensor_operator_registry.get('mean')(self, axis, keep_dims)
+        return tensor_operator_registry.get('mean')(self, axis, keep_dims, dtype)
 
     def amin(self, axis=None, keepdims=False, *, initial=None, where=None):
         """
@@ -3307,14 +3307,9 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             >>> print(input_x.sum(axis=1))
             [10. 35.]
         """
-        if initial is not None and not isinstance(initial, (int, float, bool)):
-            raise TypeError(f"For Tensor.sum, initial must be int, float or bool, but got {type(initial)}.")
-        res = tensor_operator_registry.get("sum")(self, axis, keepdims)
-        if initial is not None:
-            res += initial
-        if dtype is not None:
-            res = res.astype(dtype)
-        return res
+        if initial is None:
+            return tensor_operator_registry.get("sum")(self, axis, keepdims, dtype=dtype)
+        return tensor_operator_registry.get("sum")(self, axis, keepdims, dtype=dtype) + initial
 
     def sum_to_size(self, *size):
         r"""

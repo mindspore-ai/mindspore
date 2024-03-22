@@ -2909,5 +2909,56 @@ REG_BPROP_BUILDER("IRFFT").SetBody(BODYFUNC(ib) {
 
   return {grad_dout, ib->OutZeros(n), ib->OutZeros(dim), ib->OutZeros(norm)};
 });
+
+REG_BPROP_BUILDER("MeanExt").SetUnusedInputs({i0, i4}).SetBody(BODYFUNC(ib) {
+  auto input = ib->GetInput(kIndex0);
+  auto input_dtype_id = ib->GetDtypeId(input);
+  if (input_dtype_id == kNumberTypeComplex64 || input_dtype_id == kNumberTypeComplex128) {
+    MS_EXCEPTION(TypeError) << "For 'MeanExt', gradient not support for complex type currently.";
+  }
+  auto axis = ib->GetInput(kIndex1);
+  auto keep_dims = ib->GetInput(kIndex2);
+  auto dtype = ib->GetInput(kIndex3);
+  auto out = ib->GetInput(kIndex4);
+  auto dout = ib->GetInput(kIndex5);
+
+  auto axis_type = axis->abstract()->BuildType();
+  MS_EXCEPTION_IF_NULL(axis_type);
+  if (axis_type->isa<TypeNone>()) {
+    axis = ib->Value<std::vector<int64_t>>({});
+  }
+  auto grad = SumGrad(ib, input, axis, dout, GetValue<bool>(keep_dims->BuildValue()));
+  NodePtr div_shape_node;
+  if (IsDynamic(ib->GetShape(input)) || IsDynamic(ib->GetShape(out))) {
+    auto shape_out_sz = ib->DynSize(out, kFloat32);
+    auto div_shape = ib->DynSize(input, kFloat32) / shape_out_sz;
+    div_shape_node = ib->Cast(div_shape, ib->GetDtype(grad));
+  } else {
+    auto shape_out_sz = ib->GetSize(out);
+    if (shape_out_sz == 0) {
+      MS_EXCEPTION(ValueError) << "For 'MeanExt', out shape size can not be 0";
+    }
+    auto div_shape = ib->GetSize(input) / shape_out_sz;
+    div_shape_node = ib->Tensor(div_shape, ib->GetDtype(grad));
+  }
+  auto dx = ib->Cast(ib->RealDiv(grad, div_shape_node), ib->GetDtype(input));
+  return {dx, ib->OutZeros(axis), ib->OutZeros(keep_dims), ib->OutZeros(dtype)};
+});
+
+REG_BPROP_BUILDER("SumExt").SetUnusedInputs({i0, i4}).SetBody(BODYFUNC(ib) {
+  auto input = ib->GetInput(kIndex0);
+  auto axis = ib->GetInput(kIndex1);
+  auto keep_dims = ib->GetInput(kIndex2);
+  auto dtype = ib->GetInput(kIndex3);
+  auto dout = ib->GetInput(kIndex5);
+
+  auto axis_type = axis->abstract()->BuildType();
+  MS_EXCEPTION_IF_NULL(axis_type);
+  if (axis_type->isa<TypeNone>()) {
+    axis = ib->Value<std::vector<int64_t>>({});
+  }
+  auto dx = ib->Cast(SumGrad(ib, input, axis, dout, GetValue<bool>(keep_dims->BuildValue())), ib->GetDtype(input));
+  return {dx, ib->OutZeros(axis), ib->OutZeros(keep_dims), ib->OutZeros(dtype)};
+});
 REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop

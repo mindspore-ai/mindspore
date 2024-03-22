@@ -1,0 +1,54 @@
+sum_ext:
+    description: |  
+        Calculate sum of Tensor elements over a given dim.
+
+        Args:
+            input (Tensor): The input tensor.
+            dim (Union[None, int, tuple(int), list(int)]): Dimensions along which a sum is performed.
+                If ``None``, sum all the elements of the input tensor.
+                If the `dim` is a tuple or list of ints, a sum is performed on all the dimensions specified in the tuple.
+                Must be in the range :math:`[-input.ndim, input.ndim)` . Default: ``None``.
+            keepdim (bool): Whether the output tensor has dim retained or not.
+                If ``True``, keep these reduced dimensions and the length is 1.
+                If ``False``, don't keep these dimensions. Default: ``False``.
+            dtype (:class:`mindspore.dtype`): The desired data type of returned Tensor. Default: ``None``.
+
+        Returns:
+            A Tensor, sum of elements over a given dim in `input`.
+
+        Raises:
+            TypeError: If `input` is not a Tensor.
+            TypeError: If `dim` is not an int, tulpe(int), list(int) or None.
+            ValueError: If `dim` is not in the range :math:`[-input.ndim, input.ndim)` .
+            TypeError: If `keepdim` is not a bool.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> from mindspore import dtype as mstype
+            >>> x = Tensor(np.array([[[1, 1, 1, 1, 1, 1], [2, 2, 2, 2, 2, 2], [3, 3, 3, 3, 3, 3]],
+            ...                      [[4, 4, 4, 4, 4, 4], [5, 5, 5, 5, 5, 5], [6, 6, 6, 6, 6, 6]],
+            ...                      [[7, 7, 7, 7, 7, 7], [8, 8, 8, 8, 8, 8], [9, 9, 9, 9, 9, 9]]]), mstype.float32)
+            >>> out = ops.sum(x)
+            >>> print(out)
+            270.0
+            >>> out = ops.sum(x, dim=2)
+            >>> print(out)
+            [[ 6. 12. 18.]
+            [24. 30. 36.]
+            [42. 48. 54.]]
+            >>> out = ops.sum(x, dim=2, keepdim=True)
+            >>> print(out)
+            [[[ 6.]
+            [12.]
+            [18.]]
+            [[24.]
+            [30.]
+            [36.]]
+            [[42.]
+            [48.]
+            [54.]]]
