@@ -30,7 +30,7 @@ ceil:
             >>> output = ops.ceil(input)
             >>> print(output)
             [ 2.  3. -1.]
-            >>> x = Tensor(2.1, mindspore.float32)
+            >>> input = Tensor(2.1, mindspore.float32)
             >>> output = ops.ceil(input)
             >>> print(output)
             3.0
