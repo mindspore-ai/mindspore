@@ -28,7 +28,6 @@ from mindspore.common._stub_tensor import _convert_stub
 from mindspore._c_expression import typing
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore._c_expression import pyboost_cast, pyboost_tile, pyboost_zeros, pyboost_ones
-from mindspore.ops._tracefunc import PackFunc
 from mindspore.common import dtype as mstype
 from mindspore.common._utils import is_shape_unknown
 from mindspore import _checkparam as validator
@@ -1001,8 +1000,6 @@ class Tile(Primitive):
         if not isinstance(base_tensor, Tensor):
             raise TypeError(f"For '{self.name}', the type of 'input' must be Tensor, "
                             f"but got {type(base_tensor).__name__}.")
-        if PackFunc.is_tracing() and not PackFunc.current.is_pynative_mode:
-            return (False, None)
         if not isinstance(dims, tuple):
             raise TypeError(f"For '{self.name}', the type of 'dims' must be tuple, "
                             f"but got {type(dims).__name__}.")
@@ -1162,7 +1159,7 @@ class Cast(Primitive):
                 data = x.data
                 if data.dtype == dtype:
                     return (True, x)
-            if isinstance(x, Tensor) and x.dtype == dtype and not PackFunc.is_tracing():
+            if isinstance(x, Tensor) and x.dtype == dtype:
                 x = Tensor(x)
                 x.set_cast_dtype()
                 return (True, x)

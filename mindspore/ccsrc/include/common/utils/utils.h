@@ -406,7 +406,6 @@ constexpr auto kFlagPyNativeWithJitCallGraph = "pynative_with_jit_call_graph";
 constexpr auto kFlagJitCallGraph = "jit_call_graph";
 constexpr auto kFlagJitGraph = "jit_graph";
 constexpr auto kFlagSwitchInline = "switch_inline_graph";
-constexpr auto kAttrPackFunction = "pack_func";
 
 // custom operator func type
 constexpr auto kCustomTypeAOT = "aot";

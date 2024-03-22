@@ -276,7 +276,6 @@ inline static PredictOutTypeMap out_type_prediction = {{"ActsULQ", kTupleTensor4
                                                        {"TensorToTuple", kTypeNone},
                                                        {"TopK", kTupleTensor2},
                                                        {"TupleGetItem", kTypeNone},
-                                                       {"PackFunc", kTypeAny},
                                                        {"UniformCandidateSampler", kTupleTensor3},
                                                        {"Unique", kTupleTensor2},
                                                        {"UniqueConsecutive", kTupleTensor3},

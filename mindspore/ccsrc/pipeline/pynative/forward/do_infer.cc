@@ -22,8 +22,6 @@
 #include "ops/nn_op_name.h"
 #include "ops/framework_op_name.h"
 #include "ops/ops_frontend_func_impl.h"
-#include "frontend/expander/pack/packfunc.h"
-#include "frontend/expander/pack/packfunc_grad.h"
 
 namespace mindspore {
 namespace pynative {
@@ -90,45 +88,6 @@ std::optional<abstract::StandardPrimitiveImplReg> GetPyNativePrimitiveInferImpl(
 
   return abstract::GetPrimitiveInferImpl(primitive);
 }
-
-void AddWeightsToInput(const FrontendOpRunInfoPtr &op_run_info, const FuncGraphPtr &graph) {
-  const auto &original_params = graph->parameters();
-  for (const auto &param_node : original_params) {
-    if (param_node->abstract()->isa<abstract::AbstractRefTensor>()) {
-      // Must weight param
-      const auto &param = param_node->cast<ParameterPtr>();
-      const auto tensor_value = PyNativeAlgo::Common::GetTensorFromParam(param_node);
-      MS_EXCEPTION_IF_NULL(tensor_value);
-      (void)op_run_info->op_grad_info->input_value.emplace_back(tensor_value);
-      op_run_info->input_value_id.push_back(PyNativeAlgo::Common::GetIdByValue(tensor_value));
-      if (op_run_info->requires_grad) {
-        (void)op_run_info->op_grad_info->input_value_grad_type.emplace_back(
-          PyNativeAlgo::Common::SetTensorGradInfo(tensor_value, nullptr));
-      }
-      (void)op_run_info->op_grad_info->input_abs.emplace_back(param->abstract());
-      MS_LOG(DEBUG) << "Set graph weight parameter " << param->DebugString() << ". Its default value is "
-                    << tensor_value->ToString() << ". Its name is: " << param->name();
-    }
-  }
-  op_run_info->input_size = op_run_info->op_grad_info->input_value.size();
-}
-
-void SetGradInfo(const FrontendOpRunInfoPtr &op_run_info, const FuncGraphPtr &graph) {
-  const auto &graph_id = graph->debug_info()->get_id();
-  op_run_info->op_grad_info->grad_graph_id = graph_id;
-  // SetInputUnusedInBprop
-  static mindspore::HashMap<int64_t, std::vector<bool>> graph_unused_inputs;
-  if (graph_unused_inputs.find(graph_id) != graph_unused_inputs.end()) {
-    op_run_info->input_unused_in_bprop = graph_unused_inputs[graph_id];
-    return;
-  }
-  const auto &unused_inputs = expander::GetUnusedInputs(graph);
-  op_run_info->input_unused_in_bprop.resize(op_run_info->input_size, false);
-  for (size_t i = 0; i < op_run_info->input_size; ++i) {
-    op_run_info->input_unused_in_bprop[i] = (unused_inputs.find(i) != unused_inputs.end());
-  }
-  graph_unused_inputs[graph_id] = op_run_info->input_unused_in_bprop;
-}
 }  // namespace
 
 bool InferByOpDef(const FrontendOpRunInfoPtr &op_run_info) {
@@ -166,21 +125,6 @@ void InferOperation::PynativeInfer(const FrontendOpRunInfoPtr &op_run_info) cons
   op_run_info->base_op_run_info.abstract = nullptr;
 
   prim->BeginRecordAddAttr();
-
-  if (prim->name() == kPackFuncOpName) {
-    const auto &func_graph =
-      expander::ExpandPackFuncPynative(prim, op_run_info->op_grad_info->input_abs, op_run_info->requires_grad);
-    MS_EXCEPTION_IF_NULL(func_graph);
-    op_run_info->base_op_run_info.abstract = func_graph->output()->abstract();
-    prim->set_attr("recent_graph", func_graph);
-    AddWeightsToInput(op_run_info, func_graph);
-    if (op_run_info->requires_grad) {
-      SetGradInfo(op_run_info, func_graph);
-    }
-
-    prim->EndRecordAddAttr();
-    return;
-  }
 
   if (InferByOpDef(op_run_info)) {
     prim->EndRecordAddAttr();
