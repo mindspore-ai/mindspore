@@ -43,6 +43,10 @@ namespace {
 constexpr size_t kMaxDepth = 128;
 constexpr size_t kFirstIndex = 1;
 constexpr int64_t kPairIdx1 = 1;
+// uint32_t max value is 4294967295
+// graph id in graph mode start from 0
+// graph id in pynative mode start from 4000000000
+constexpr uint32_t kPynativeGraphIdStart = 4000000000;
 
 bool IsGeReturnNode(const AnfNodePtr &node) {
   auto context = MsContext::GetInstance();
@@ -853,7 +857,7 @@ bool ExistSummaryNode(const KernelGraph *graph) {
 #endif
 
 GraphId KernelGraphMgr::graph_sum_ = 0;
-GraphId KernelGraphMgr::pynative_graph_sum_ = 0;
+GraphId KernelGraphMgr::pynative_graph_sum_ = kPynativeGraphIdStart;
 HashMap<std::string, std::weak_ptr<AnfNode>> KernelGraphMgr::name_to_params_ =
   HashMap<std::string, std::weak_ptr<AnfNode>>();
 
@@ -912,7 +916,7 @@ void KernelGraphMgr::ClearGraph() {
     graph_iter = graphs_.erase(graph_iter);
   }
   graph_sum_ = 0;
-  pynative_graph_sum_ = 0;
+  pynative_graph_sum_ = kPynativeGraphIdStart;
 }
 
 void KernelGraphMgr::InitInternalOutputParameter(const AnfNodePtr &out_node, const AnfNodePtr &parameter) const {
@@ -2762,6 +2766,10 @@ KernelGraphPtr KernelGraphMgr::NewKernelGraph() {
 
 void KernelGraphMgr::SetKernelGraphId(const KernelGraphPtr &kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
+  if (graph_sum_ >= kPynativeGraphIdStart) {
+    MS_LOG(EXCEPTION) << "The graph id in graph mode must be less than " << kPynativeGraphIdStart << ", but it is "
+                      << graph_sum_;
+  }
   kernel_graph->set_graph_id(graph_sum_);
   graphs_[graph_sum_++] = kernel_graph;
 }
