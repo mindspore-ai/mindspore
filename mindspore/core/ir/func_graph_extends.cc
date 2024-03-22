@@ -245,11 +245,11 @@ void FuncGraph::GenerateDefaultValue(const FuncGraphPtr &specialized_graph,
 }
 
 FuncGraphPtr FuncGraph::GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) {
-  if (has_attr("lazy_inline")) {
+  if (has_attr(FUNC_GRAPH_FLAG_PROXY_GRAPH)) {
     auto original_params_size = parameters().size();
     auto args_size = args_abs_list.size();
     if (args_size == original_params_size) {
-      MS_LOG(INFO) << "lazy_inline function graph: " << ToString();
+      MS_LOG(DEBUG) << "proxy function graph: " << ToString();
       return shared_from_base<FuncGraph>();
     } else if (args_size < original_params_size) {
       auto new_params = parameters();
@@ -262,15 +262,17 @@ FuncGraphPtr FuncGraph::GenerateFuncGraph(const AbstractBasePtrList &args_abs_li
       set_parameters(new_params);
       auto new_out = NewCNodeInOrder(new_inputs);
       set_output(new_out);
-      MS_LOG(INFO) << "lazy_inline resize parameters. fg: " << ToString() << " original args: " << original_params_size
-                   << " call args: " << args_size << " new args: " << parameters().size()
-                   << " call inputs: " << new_out->inputs().size();
+      MS_LOG(INFO) << "The proxy truncates the parameters to match the size. fg: " << ToString()
+                   << ", original args: " << original_params_size << ", call args: " << args_size
+                   << ", new args: " << parameters().size() << ", call inputs: " << new_out->inputs().size();
       return shared_from_base<FuncGraph>();
     }
-    MS_LOG(INTERNAL_EXCEPTION) << "lazy_inline  parameters . fg: " << ToString()
-                               << "  original parameters: " << original_params_size
-                               << " call parameters: " << args_size;
+    MS_LOG(WARNING) << "The number of parameter is wrong. The number of the construct function's parameter is "
+                    << original_params_size << ", but the number of call parameter is " << args_size
+                    << ". graph:" << ToString();
+    return shared_from_base<FuncGraph>();
   }
+
   std::vector<abstract::AbstractKeywordArgPtr> kwarg_list;
   std::vector<size_t> pos_arg_indexes;
   size_t arguments_count = args_abs_list.size();
