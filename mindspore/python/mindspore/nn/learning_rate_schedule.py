@@ -372,7 +372,7 @@ class PolynomialDecayLR(LearningRateSchedule):
             Default: ``False`` .
 
     Inputs:
-        - **global_step** (Tensor) - The current step number.
+        - **global_step** (Tensor) - The current step number. Shape is :math:`()`.
 
     Outputs:
         Tensor. The learning rate value for the current step with shape :math:`()`.
@@ -458,7 +458,7 @@ class WarmUpLR(LearningRateSchedule):
         warmup_steps (int): The warm up steps of learning rate.
 
     Inputs:
-        - **global_step** (Tensor) - The current step number.
+        - **global_step** (Tensor) - The current step number. Shape is :math:`()`.
 
     Outputs:
         Tensor. The learning rate value for the current step with shape :math:`()`.
