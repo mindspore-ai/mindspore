@@ -17,6 +17,7 @@
 #include "tools/optimizer/fusion/flash_attention_fusion.h"
 #include <memory>
 #include <utility>
+#include <string>
 #include "ops/op_utils.h"
 #include "ops/array_ops.h"
 #include "ops/nn_ops.h"
@@ -60,6 +61,7 @@ constexpr int64_t kNumDValue = 40;
 constexpr int64_t kNumPadSize = 8;
 constexpr int kNumPowerTwo = 2;
 constexpr float kNumPowerHalf = 0.5;
+bool goBSH = false;
 
 bool IsDivNode(const BaseRef &n) {
   if (utils::isa<AnfNodePtr>(n)) {
@@ -2108,12 +2110,26 @@ CNodePtr FlashAttentionFusion::CreateFlashAttentionNodeForSDWithoutCast(const st
   auto input_tensor_v_shape = GetTensorShape(v_reshape, kNumIndex1);
   MS_LOG(INFO) << "q shape: " << input_tensor_q_shape << " , k shape: " << input_tensor_k_shape
                << " , v shape: " << input_tensor_v_shape;
+  auto q_trans_reshape = q_trans->cast<CNodePtr>()->input(kNumIndex1);
+  MS_CHECK_TRUE_RET(q_trans_reshape != nullptr, nullptr);
+  auto k_trans_reshape = k_trans->cast<CNodePtr>()->input(kNumIndex1);
+  MS_CHECK_TRUE_RET(k_trans_reshape != nullptr, nullptr);
+  auto v_trans_reshape = v_trans->cast<CNodePtr>()->input(kNumIndex1);
+  MS_CHECK_TRUE_RET(v_trans_reshape != nullptr, nullptr);
+
+  auto top_matmul_q = q_trans_reshape->cast<CNodePtr>()->input(kNumIndex1);
+  MS_CHECK_TRUE_RET(top_matmul_q != nullptr, nullptr);
+  auto top_matmul_k = k_trans_reshape->cast<CNodePtr>()->input(kNumIndex1);
+  MS_CHECK_TRUE_RET(top_matmul_k != nullptr, nullptr);
+  auto top_matmul_v = v_trans_reshape->cast<CNodePtr>()->input(kNumIndex1);
+  MS_CHECK_TRUE_RET(top_matmul_v != nullptr, nullptr);
 
   float scale_value = 0;
   int64_t num_head = 0;
   int64_t next_tokens = kNumMaxNextTokenSize;
   int64_t d_value = 0;
   auto mul_const_input = mul->input(kNumIndex2);
+  bool actual_BSH = false;
 
   if (input_tensor_q_shape.size() != kNumShapeSize4) {
     scale_value = GetScaleValueForDynamicShape(mul_const_input);
@@ -2123,7 +2139,6 @@ CNodePtr FlashAttentionFusion::CreateFlashAttentionNodeForSDWithoutCast(const st
     auto shape_node = BuildIntVecParameterNode(func_graph, new_shape, node->fullname_with_scope() + "_new_shape");
     auto output_shape_node = node->cast<CNodePtr>();
     output_shape_node->set_input(kNumIndex2, shape_node);
-    auto q_trans_reshape = q_trans->cast<CNodePtr>()->input(kNumIndex1);
     num_head = GetNumHeadForSD(q_trans_reshape);
   } else if (input_tensor_q_shape.size() == kNumShapeSize4) {
     MS_LOG(INFO) << "get flash attention param for static shape.";
@@ -2142,16 +2157,23 @@ CNodePtr FlashAttentionFusion::CreateFlashAttentionNodeForSDWithoutCast(const st
     if (d_value == kNumDValue) {
       fa_node = CreateFAForSD15(func_graph, node, q_trans, k_trans, v_trans, num_head, next_tokens, scale_value);
     }
+  } else if (goBSH) {
+    fa_node = CreatePromptFlashAttentionCnodeForBSH(func_graph, node, top_matmul_q, top_matmul_k, top_matmul_v, nullptr,
+                                                    num_head, next_tokens, scale_value);
+    actual_BSH = true;
   } else {
     fa_node = CreatePromptFlashAttentionCnodeForBNSD(func_graph, node, q_trans, k_trans, v_trans, nullptr, num_head,
                                                      next_tokens, scale_value, num_head);
   }
-  if (fa_node == nullptr) {
-    return nullptr;
-  }
+  MS_CHECK_TRUE_RET(fa_node != nullptr, nullptr);
   auto manager = Manage(func_graph);
-  (void)manager->Replace(cnode, fa_node);
-  MS_LOG(INFO) << "create prompt flash attention success for stable diffusion.";
+  MS_CHECK_TRUE_RET(manager != nullptr, nullptr);
+  if (actual_BSH) {
+    (void)manager->Replace(node, fa_node);
+  } else {
+    (void)manager->Replace(cnode, fa_node);
+  }
+  MS_LOG(INFO) << "create prompt flash attention success for without cast, BSH: " << actual_BSH;
   return nullptr;
 }
 
@@ -2412,6 +2434,15 @@ CNodePtr FlashAttentionFusion::CreateFlashAttentionNodeForSDEinsum(const std::st
 AnfNodePtr FlashAttentionFusion::Process(const std::string &patten_name, const FuncGraphPtr &func_graph,
                                          const AnfNodePtr &node, const EquivPtr &equiv) const {
   MS_LOG(INFO) << "do flash attention fusion, pattern name: " << patten_name;
+  if (op_attrs_map_.find("FlashAttention") != op_attrs_map_.end()) {
+    if (op_attrs_map_.at("FlashAttention").find("input_layout") != op_attrs_map_.at("FlashAttention").end()) {
+      auto layout_str = op_attrs_map_.at("FlashAttention").at("input_layout");
+      if (strcmp(layout_str.c_str(), "BSH") == 0) {
+        MS_LOG(INFO) << "Use user config, FA layout is BSH";
+        goBSH = true;
+      }
+    }
+  }
   if (func_graph == nullptr || node == nullptr || equiv == nullptr) {
     MS_LOG(ERROR) << "function graph, node or equiv is nullptr.";
     return nullptr;
