@@ -569,6 +569,6 @@ def _add_cuda_path():
                 os.environ['PATH'] += os.pathsep + cuda_home_bin_path
 
 
-check_version_and_env_config()
 _set_pb_env()
+check_version_and_env_config()
 _add_cuda_path()
