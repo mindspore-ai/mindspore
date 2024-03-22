@@ -200,8 +200,7 @@ class FloatData : public ItemData {
   }
 
   bool operator==(const ItemData &obj) const override {
-    return ItemData::operator==(obj) &&
-           (!specialized_ || ((static_cast<const FloatData &>(obj)).floatVar_ == floatVar_));
+    return ItemData::operator==(obj) && (!specialized_ || (static_cast<const FloatData &>(obj)).floatVar_ == floatVar_);
   }
 
   std::string ToString() override { return DESC_STRING(floatVar_) + DESC_END; }
@@ -310,7 +309,7 @@ class ListData : public ItemData {
 
   bool operator==(const ItemData &obj) const override {
     if (ItemData::operator==(obj)) {
-      const ListData &list = (const ListData &)obj;
+      const ListData &list = static_cast<const ListData &>(obj);
       if (list.listVar_.size() == listVar_.size()) {
         return CompareList(list);
       }
