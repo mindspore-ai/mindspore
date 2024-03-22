@@ -528,6 +528,9 @@ void IrGrad::SetKNodeInfo(const ValuePtr &value, const AnfNodePtr &k_node, const
     const auto &value_sequence = value->cast<ValueSequencePtr>()->value();
     const auto &abs_seq = out_abs->cast<abstract::AbstractSequencePtr>();
     MS_EXCEPTION_IF_NULL(abs_seq);
+    if (abs_seq->dynamic_len()) {
+      return;
+    }
     if (value_sequence.size() != abs_seq->size()) {
       MS_LOG(EXCEPTION) << "Get value sequence size " << value_sequence.size() << " not equal to abstract size "
                         << abs_seq->size();
