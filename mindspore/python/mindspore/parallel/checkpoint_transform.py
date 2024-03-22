@@ -435,7 +435,7 @@ def sync_pipeline_shared_parameters(net):
         >>> net.head.pipeline_stage = 1
         >>> x = Tensor(np.ones((8, 4))
         >>> net.compile()
-        >>> ms.parallel.sync_pipeline_shared_parameters(net)
+        >>> ms.sync_pipeline_shared_parameters(net)
         >>> print(net.word_embedding.embedding_table.asnumpy())
         >>> [[1. 1. 1. 1.]
              [1. 1. 1. 1.]
