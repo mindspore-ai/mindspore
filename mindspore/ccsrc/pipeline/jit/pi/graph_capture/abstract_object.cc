@@ -102,14 +102,13 @@ static const int fast_type_mask = Py_TPFLAGS_LONG_SUBCLASS | Py_TPFLAGS_LIST_SUB
                                   Py_TPFLAGS_UNICODE_SUBCLASS | Py_TPFLAGS_DICT_SUBCLASS | Py_TPFLAGS_TYPE_SUBCLASS;
 
 const char *AbstractObjectBase::GetTypeDesc(AObject::Type type) {
-  switch (type) {
-#define ABSTRACT_TYPE_DEF(unit) \
-  case AObject::kType##unit:    \
-    return "kType" #unit;
+#define ABSTRACT_TYPE_DEF(unit)       \
+  if (type == AObject::kType##unit) { \
+    return "kType" #unit;             \
+  }
 #include "abstract_type_kind.def"
 #undef ABSTRACT_TYPE_DEF
-  }
-  return nullptr;
+  return "unknown type";
 }
 
 bool AbstractObjectBase::IsMindSporeSupportedType() {
