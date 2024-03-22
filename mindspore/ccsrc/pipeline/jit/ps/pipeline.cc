@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2023 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -967,6 +967,7 @@ void GraphExecutorPy::CleanCompileRes(const ResourcePtr &resource) {
   ProcessStatus::GetInstance().RecordEnd();
   expander::ClearCompileAllCache();
   CompileCacheContext::GetInstance().Clear();
+  parse::CleanParameterNameCache();
   MS_LOG(INFO) << "Clean compile resource end";
 }
 
