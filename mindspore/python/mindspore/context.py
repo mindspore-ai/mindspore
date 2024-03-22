@@ -693,7 +693,9 @@ class _Context:
                             "enable_concat_eliminate_opt": (ms_ctx_param.enable_concat_eliminate_opt, bool),
                             "interleaved_layernorm_comm": (ms_ctx_param.interleaved_layernorm_comm, bool),
                             "compute_communicate_fusion_level":
-                                (ms_ctx_param.compute_communicate_fusion_level, int)}
+                                (ms_ctx_param.compute_communicate_fusion_level, int),
+                            "enable_flash_attention_load_balance":
+                                (ms_ctx_param.enable_flash_attention_load_balance, bool)}
             with open(speedup_config_real_path, 'r') as f:
                 speedup_config = json.load(f)
                 for key, value in speedup_config.items():

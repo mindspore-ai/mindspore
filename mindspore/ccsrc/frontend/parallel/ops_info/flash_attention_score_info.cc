@@ -310,7 +310,9 @@ Status FlashAttentionScoreInfo::GetAttrs() {
   next_tokens_ = GetIntAttr(kAttrNextTokens);
   input_layout_ = GetStringAttr(kAttrInputLayout);
   sparse_mode_ = GetIntAttr(kAttrSparseMode);
-  enable_load_balance_ = GetBoolAttr(kAttrEnableLoadBalance);
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  enable_load_balance_ = ms_context->get_param<bool>(MS_CTX_ENABLE_FLASH_ATTENTION_LOAD_BALANCE);
   is_attn_mask_compressed_ =
     std::find(needCompressAttnMask.begin(), needCompressAttnMask.end(), sparse_mode_) != needCompressAttnMask.end();
   need_update_op_attrs_mode_ = sparse_mode_ != ops::kSparseAllMask;
