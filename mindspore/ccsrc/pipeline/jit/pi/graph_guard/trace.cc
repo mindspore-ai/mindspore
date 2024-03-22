@@ -382,7 +382,7 @@ PyObject *RootTrace::RetrieveDeref(PTraceContext context) {
   PyObject *ret = nullptr;
   PyObject *cell = context->f_localsplus[context->f_code->co_nlocals + idx_];
   if (cell != nullptr && cell != Py_None) {
-    ret = PyCell_GET(cell);
+    ret = reinterpret_cast<PyObject *>(PyCell_GET(cell));
     Py_XINCREF(ret);
   }
   return ret;
@@ -1987,7 +1987,9 @@ const InfoPack &OpTrace::Info() {
 
 TracePtr OpTrace::RemoveCastDuplicatePatternPass() {
   OpTracePtr cast_op;
-  TracePtr next_op, this_op, ret_op;
+  TracePtr next_op;
+  TracePtr this_op;
+  TracePtr ret_op;
   if (opcode_ != CALL_FUNCTION || !IsCastFunc(name_) ||
       (cast_op = CastTrace<OpTrace>(GetParam(kParamIndexTwo))) == nullptr || !IsCastFunc(cast_op->GetName()) ||
       (next_op = cast_op->GetParam(kParamIndexTwo)) == nullptr) {
@@ -2020,7 +2022,8 @@ TracePtr OpTrace::RemovePrimOutIsTensorPass() {
     return nullptr;
   }
   int idx;
-  std::string name, module_name;
+  std::string name;
+  std::string module_name;
   global_op->GetParam(&idx, &name, &module_name);
   // isinstance(cast_to_mstensor(...) or Primitive) should be Tensor
   if ((name == kTensorName) && ((call_op->GetName() == kCastToMSTensor) ||
@@ -2050,8 +2053,10 @@ TracePtr OpTrace::RemoveCastPass() {
 }
 
 TracePtr OpTrace::RemoveEmptyTensorPass() {
-  OpTracePtr subscr_op, loadattr_op;
-  ConstTracePtr const_op, const2_op;
+  OpTracePtr subscr_op;
+  OpTracePtr loadattr_op;
+  ConstTracePtr const_op;
+  ConstTracePtr const2_op;
   if (opcode_ != COMPARE_OP || params_.size() < kParamCountTwo) {
     return nullptr;
   }
@@ -2580,10 +2585,10 @@ PyObject *GetObjectFromTrace(const PyFrameObject *frame, TracePtr trace, std::ma
                              bool perf) {
   TraceContext context = {frame->f_globals,    frame->f_builtins, frame->f_locals,
                           frame->f_localsplus, frame->f_code,     cache};
-  if (trace != NULL) {
+  if (trace != nullptr) {
     return trace->Retrieve(&context, perf);
   } else {
-    return NULL;
+    return nullptr;
   }
 }
 }  // namespace pijit
