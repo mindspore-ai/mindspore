@@ -151,3 +151,49 @@ def test_ops_equal_forward_dynamic_rank(context_mode):
     output = test_cell(ms.Tensor(x2), ms.Tensor(other2))
     expect = generate_expect_forward_output(x2, other2)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
+
+
+class Net1(ms.nn.Cell):
+    def construct(self, a, b, start=None, end=None, step=None):
+        a[start:end:step] = b
+        return a
+
+
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE,])
+def test_a_is_variable_list_b_is_list_or_tuple(context_mode):
+    """
+    Feature: DT test: Graph mode Parameter[0] has not default param
+    Description: test equal result.
+    Expectation: expect correct result.
+    """
+    ms.context.set_context(mode=context_mode)
+    net = Net1()
+    x = ms.Tensor(1)
+    ma = net(a=[x, x, x, x, x], b=[11, 22, 33], start=None, end=1, step=None)
+    pa = [11, 22, 33, ms.Tensor(1), ms.Tensor(1), ms.Tensor(1), ms.Tensor(1)]
+    assert ma == pa
+
+    x = ms.Tensor(1)
+    ma = net(a=[x, x, x, x, x], b=[11, 22, 33], start=2, end=3, step=None)
+    pa = [ms.Tensor(1), ms.Tensor(1), ms.Tensor(11), ms.Tensor(22), ms.Tensor(33), ms.Tensor(1), ms.Tensor(1)]
+    assert ma == pa
+
+    ma = net(a=[x, x, x, x, x], b=(11, 22, 33), start=-1, end=None, step=None)
+    pa = [ms.Tensor(1), ms.Tensor(1), ms.Tensor(1), ms.Tensor(1), 11, 22, 33]
+    assert ma == pa
+
+    ma = net(a=[x, x, x, x, x], b=[ms.Tensor(11), ms.Tensor(22), ms.Tensor(33)], start=None, end=None, step=2)
+    pa = [ms.Tensor(11), ms.Tensor(1), ms.Tensor(22), ms.Tensor(1), ms.Tensor(33)]
+    assert ma == pa
+
+    ma = net(a=[x, x, x, x, x], b=[11, 22, 33], start=None, end=None, step=-2)
+    pa = [33, ms.Tensor(1), 22, ms.Tensor(1), 11]
+    assert ma == pa
+
+    with pytest.raises(ValueError):
+        net(a=[x, x, x, x, x], b=(11, 22, 33), start=-1, end=None, step=3)
