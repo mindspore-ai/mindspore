@@ -272,7 +272,7 @@ int AscendDistributeFakeQuantTransform::SetInputQuantParam(const FuncGraphPtr &f
     // ascend fake quant transform not support matmul input is parameter
     if (fq_cnode->input(kInputIndex + kPrimOffset)->isa<Parameter>()) {
       MS_LOG(INFO) << "Ascend fake quant transform not support input[0] is Parameter. MatMul "
-                   << cnode->fullname_with_scope() << " will not quant ";
+                   << cnode->fullname_with_scope() << " will not quantify";
       continue;
     }
 
