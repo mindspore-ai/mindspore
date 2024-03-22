@@ -513,7 +513,7 @@ class MS_CORE_API FP32Imm final : public FloatImm {
 
  private:
   float v_;
-  double prim_v_;
+  double prim_v_{0.0};
 };
 using FP32ImmPtr = std::shared_ptr<FP32Imm>;
 IMM_TRAITS(FP32ImmPtr, float)

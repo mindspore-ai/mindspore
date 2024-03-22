@@ -64,27 +64,27 @@ void DeConvWinogradFreeResizeBuf(DeConvWinogradStruct *deconv) {
 void DeConvWinogradFreeDeconvParam(DeConvWinogradStruct *deconv) {
   DeConvParam *param = &deconv->param_;
 
-  for (int i = 0; i < param->compute_size_; i++) {
-    DeConvComputeUnit *unit = &param->compute_units_[i];
-
-    if (unit->weight_ != NULL) {
-      free(unit->weight_);
-      unit->weight_ = NULL;
-    }
-
-    if (unit->use_winograd_) {
-      if (unit->winograd_.AT_ != NULL) {
-        free(unit->winograd_.AT_);
-        unit->winograd_.AT_ = NULL;
-      }
-      if (unit->winograd_.BT_ != NULL) {
-        free(unit->winograd_.BT_);
-        unit->winograd_.BT_ = NULL;
-      }
-    }
-  }
-
   if (param->compute_units_ != NULL) {
+    for (int i = 0; i < param->compute_size_; i++) {
+      DeConvComputeUnit *unit = &param->compute_units_[i];
+
+      if (unit->weight_ != NULL) {
+        free(unit->weight_);
+        unit->weight_ = NULL;
+      }
+
+      if (unit->use_winograd_) {
+        if (unit->winograd_.AT_ != NULL) {
+          free(unit->winograd_.AT_);
+          unit->winograd_.AT_ = NULL;
+        }
+        if (unit->winograd_.BT_ != NULL) {
+          free(unit->winograd_.BT_);
+          unit->winograd_.BT_ = NULL;
+        }
+      }
+    }
+
     free(param->compute_units_);
     param->compute_units_ = NULL;
   }

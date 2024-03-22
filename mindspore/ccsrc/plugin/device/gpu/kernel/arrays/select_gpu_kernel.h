@@ -60,7 +60,7 @@ class SelectGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelper<S
 
   bool is_null_input_;
   void *cuda_stream_{nullptr};
-  size_t output_size_;
+  size_t output_size_{1};
 };
 }  // namespace kernel
 }  // namespace mindspore
