@@ -350,8 +350,11 @@ static void Redistribution(const std::pair<AnfNodePtr, int64_t> &node_pair, cons
   if (redistribution_oplist_ptr == nullptr) {
     MS_LOG(INTERNAL_EXCEPTION) << "Infer tensor redistribution failed.";
   }
-  redistribution_oplist_ptr = TensorTransform::GetInstance()->OptimizeTensorRedistributionOperatorList(
-    redistribution_oplist_ptr, tensor_redistribution->input_shape());
+  if (!tensor_redistribution->IsAssembledStaticShape()) {
+    redistribution_oplist_ptr = TensorTransform::GetInstance()->OptimizeTensorRedistributionOperatorList(
+      redistribution_oplist_ptr, tensor_redistribution->input_shape());
+  }
+
   if (redistribution_oplist_ptr == nullptr) {
     MS_LOG(EXCEPTION) << "Failure:InferTensorRedistribution failed";
   }
@@ -2039,7 +2042,8 @@ static void SplitSens(const CNodePtr &grad_sens_node, const TensorLayout &loss_g
       sens_tensor_param->set_user_data<TensorLayout>(std::make_shared<TensorLayout>(loss_grad_layout));
       return;
     }
-    if (sens_tensor_node->isa<CNode>()) {
+    bool is_dynamic = InDynamicGraph(sens_tensor_node->cast<CNodePtr>());
+    if (sens_tensor_node->isa<CNode>() && !is_dynamic) {
       auto op_list_ptr = InferSensRedistribution(sens_tensor_node, loss_grad_layout);
       if (op_list_ptr == nullptr) {
         return;
@@ -2049,6 +2053,9 @@ static void SplitSens(const CNodePtr &grad_sens_node, const TensorLayout &loss_g
       MS_EXCEPTION_IF_NULL(func_graph);
       TensorRedistributionPtr tensor_redistribution = std::make_shared<TensorRedistribution>();
       InsertRedistribution(op_list_ptr, grad_sens_node, func_graph, 1, sens_tensor_cnode, tensor_redistribution);
+      return;
+    }
+    if (is_dynamic) {
       return;
     }
     MS_LOG(EXCEPTION) << "The type of sens node is not Tensor or Parameter or CNode, it is unsupported now.";
