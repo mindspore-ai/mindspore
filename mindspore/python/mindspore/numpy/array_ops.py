@@ -1137,7 +1137,7 @@ def _get_moved_perm(ndim, source, destination):
 @_primexpr
 def _get_moved_shape(shape, perm):
     """
-    Helper function for moveaxis, returns the permuated shape after
+    Helper function for moveaxis, returns the permuted shape after
     applying perm.
     """
     return tuple([shape[i] for i in perm])
@@ -1185,10 +1185,6 @@ def moveaxis(a, source, destination):
     if len(source) != len(destination):
         _raise_value_error('`source` and `destination` arguments must have the same number of elements')
     perm = _get_moved_perm(ndim, source, destination)
-
-    shape = F.shape(a)
-    if _is_shape_empty(shape):
-        return _empty(F.dtype(a), _get_moved_shape(shape, perm))
 
     return F.transpose(a, perm)
 
