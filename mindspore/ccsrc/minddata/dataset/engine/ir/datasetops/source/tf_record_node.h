@@ -73,7 +73,8 @@ class TFRecordNode : public NonMappableSourceNode {
         num_shards_(num_shards),
         shard_id_(shard_id),
         shard_equal_rows_(shard_equal_rows),
-        compression_type_(compression_type) {}
+        compression_type_(compression_type),
+        decode_(true) {}
 
   /// \brief Destructor
   ~TFRecordNode() override = default;
