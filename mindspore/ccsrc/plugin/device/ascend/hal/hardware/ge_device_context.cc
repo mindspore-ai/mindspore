@@ -485,7 +485,7 @@ void GeDeviceContext::InitDump() const {
     return;
   }
   if (dump_parser.FileFormatIsNpy()) {
-    (void)Adx::AdxRegDumpProcessCallBack(mindspore::ascend::DumpDataCallBack);
+    (void)acldumpRegCallback(mindspore::ascend::DumpDataCallBack, 0);
   }
 }
 
