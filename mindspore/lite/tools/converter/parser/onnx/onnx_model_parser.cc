@@ -163,7 +163,7 @@ STATUS AddIterNumsUpdateEdge(const FuncGraphPtr &anf_graph, std::vector<AnfNodeP
   }
   auto trip_cout_paramter_iter = anf_nodes_map.find(trip_cout_name);
   if (trip_cout_paramter_iter == anf_nodes_map.end()) {
-    MS_LOG(ERROR) << "can not find " << trip_cout_name;
+    MS_LOG(ERROR) << "cannot find " << trip_cout_name;
     return RET_ERROR;
   }
   auto &trip_cout_paramter = trip_cout_paramter_iter->second;
@@ -380,7 +380,7 @@ STATUS ConvertGraphInputs(const onnx::GraphProto &onnx_graph, const FuncGraphPtr
     std::vector<int64_t> shape_vector =
       ConverterInnerContext::GetInstance()->GetGraphInputTensorShape(input_value.name());
     if (ConverterInnerContext::GetInstance()->GetGraphInputTensorShapeMapSize() > 0 && shape_vector.empty()) {
-      MS_LOG(WARNING) << "Can not find name in map. name is " << input_value.name();
+      MS_LOG(WARNING) << "Cannot find name in map. name is " << input_value.name();
     }
     if (shape_vector.empty()) {
       auto onnx_shape = input_value.type().tensor_type().shape().dim();
@@ -557,7 +557,7 @@ FuncGraphPtr OnnxModelParser::BuildBodyGraph(const onnx::NodeProto &loop_node, c
     return nullptr;
   }
   auto root_while_node = GetCNodeFromControlFlowNodesMap(loop_node_name, control_nodes_map_);
-  MS_CHECK_TRUE_MSG(root_while_node != nullptr, nullptr, "can not find root_while_node is control_nodes_map");
+  MS_CHECK_TRUE_MSG(root_while_node != nullptr, nullptr, "cannot find root_while_node is control_nodes_map");
   std::vector<AnfNodePtr> body_graph_inputs;
   body_graph_inputs.reserve(subgraph_proto.input_size());
   for (int j = 0; j < subgraph_proto.input_size(); j++) {
@@ -630,7 +630,7 @@ STATUS CheckOnnxModel(const onnx::GraphProto &onnx_graph) {
     for (int i = 0; i < onnx_node.input_size(); i++) {
       auto &input = onnx_node.input(i);
       if (providers.count(input) == 0) {
-        MS_LOG(WARNING) << "Can not find node input: " << input << " of " << onnx_node.name();
+        MS_LOG(WARNING) << "Cannot find input: " << input << " of node: " << onnx_node.name();
       }
     }
   }
@@ -909,7 +909,7 @@ STATUS OnnxModelParser::ConvertIfSubgraph(const onnx::GraphProto &subgraph_proto
   for (int j = 0; j < subgraph_proto.input_size(); j++) {
     auto input_anode_iter = anf_nodes_map.find(subgraph_proto.input(j).name());
     if (input_anode_iter == anf_nodes_map.end()) {
-      MS_LOG(ERROR) << "can not find input anode";
+      MS_LOG(ERROR) << "cannot find input anode";
       return RET_ERROR;
     }
     auto input_parameter = input_anode_iter->second->cast<ParameterPtr>();
@@ -987,7 +987,7 @@ STATUS OnnxModelParser::ConvertIfOnnxNode(const onnx::NodeProto &onnx_node,
   auto else_value_node = NewValueNode(else_branch_graph);
   MS_CHECK_TRUE_MSG(else_value_node != nullptr, RET_NULL_PTR, "create else_value_node return nullptr");
   auto root_if_node = GetCNodeFromControlFlowNodesMap(if_node_name, control_nodes_map_);
-  MS_CHECK_TRUE_MSG(root_if_node != nullptr, RET_ERROR, "can not find root_if_node is control_nodes_map");
+  MS_CHECK_TRUE_MSG(root_if_node != nullptr, RET_ERROR, "cannot find root_if_node is control_nodes_map");
   auto if_new_inputs = root_if_node->inputs();
   if_new_inputs.insert(if_new_inputs.begin() + 1, {then_value_node, else_value_node});
 
@@ -1320,7 +1320,7 @@ STATUS OnnxModelParser::AddTensorListStackNode(const AnfNodePtr &root_while_node
       control_nodes_map_[loop_node_name]->find(loop_output_name) != control_nodes_map_[loop_node_name]->end(),
       RET_NULL_PTR);
     auto &while_output_node = control_nodes_map_[loop_node_name]->at(loop_output_name);
-    MS_CHECK_TRUE_MSG(while_output_node != nullptr, RET_ERROR, "can not find while_output_node is control_nodes_map");
+    MS_CHECK_TRUE_MSG(while_output_node != nullptr, RET_ERROR, "cannot find while_output_node is control_nodes_map");
     auto tensor_list_stack_prim = std::make_shared<ops::TensorListStack>();
     if (tensor_list_stack_prim == nullptr) {
       MS_LOG(ERROR) << "create stack failed";
@@ -1358,7 +1358,7 @@ STATUS OnnxModelParser::AddTensorArrayEdge(const FuncGraphPtr &anf_graph, std::v
   MS_CHECK_TRUE_RET(anf_graph != nullptr && return_new_inputs != nullptr && body_graph_inputs != nullptr, RET_NULL_PTR);
   // body graph output is  trip_count,cond_count,loop_var,placeholder,scan_outputs
   auto root_while_node = GetCNodeFromControlFlowNodesMap(loop_node_name, control_nodes_map_);
-  MS_CHECK_TRUE_MSG(root_while_node != nullptr, RET_ERROR, "can not find root_while_node is control_nodes_map");
+  MS_CHECK_TRUE_MSG(root_while_node != nullptr, RET_ERROR, "cannot find root_while_node is control_nodes_map");
   if (root_while_node == nullptr) {
     MS_LOG(ERROR) << "anf root node map cannot find loop node" << loop_node_name;
     return RET_ERROR;
@@ -1472,7 +1472,7 @@ STATUS OnnxModelParser::ConvertLoopOnnxNode(const onnx::NodeProto &onnx_node,
     auto loop_body_graph = BuildBodyGraph(onnx_node, subgraph_proto, &cond_graph_input_num);
     MS_CHECK_TRUE_MSG(loop_body_graph != nullptr, RET_NULL_PTR, "create loop_body_graph return nullptr");
     auto root_while_node = GetCNodeFromControlFlowNodesMap(onnx_node.name(), control_nodes_map_);
-    MS_CHECK_TRUE_MSG(root_while_node != nullptr, RET_ERROR, "can not find root_while_node");
+    MS_CHECK_TRUE_MSG(root_while_node != nullptr, RET_ERROR, "cannot find root_while_node");
     auto loop_cond_graph = BuildCondGraph(root_while_node, cond_graph_input_num, onnx_node.name() + "_cond_graph");
     MS_CHECK_TRUE_MSG(loop_cond_graph != nullptr, RET_NULL_PTR, "create loop_cond_graph return nullptr");
     all_subgraphs_.emplace_back(loop_body_graph);
