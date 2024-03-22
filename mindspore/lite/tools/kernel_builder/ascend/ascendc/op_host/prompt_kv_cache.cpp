@@ -26,15 +26,16 @@ constexpr int index3 = 3;
 constexpr int index4 = 4;
 constexpr int index5 = 5;
 constexpr int index6 = 6;
-
+constexpr size_t kDim3 = 3;
+constexpr size_t kDim4 = 4;
 constexpr int32_t kSize1 = 1;
 constexpr int32_t kSize2 = 2;
 constexpr int32_t kSize4 = 4;
-constexpr int64_t kAxisOne = 1;
-constexpr int64_t kAxisTwo = 2;
 constexpr size_t k910bWS = 16 * 1024 * 1024;
-
-constexpr int64_t kBufferNum = 2;
+constexpr int64_t kBufferNum = 1;
+constexpr int64_t kSmallBufferSize = 81920;
+constexpr int64_t kSmallCoreNum = 4;
+constexpr int64_t kMaxBlockLen = 65535;
 const int64_t kDivisor = 4;
 static inline int64_t CeilRound(int64_t value, int64_t divisor) {
   if (divisor == 0) {
@@ -45,101 +46,187 @@ static inline int64_t CeilRound(int64_t value, int64_t divisor) {
 }  // namespace
 
 namespace optiling {
-static ge::graphStatus TilingFunc(gert::TilingContext *context) {
-  auto past_input = context->GetInputDesc(index0);
-  auto dtype = past_input->GetDataType();
-  auto type_size = ge::GetSizeByDataType(dtype);
-  switch (type_size) {
-    case kSize1:
-      context->SetTilingKey(kSize1);
-      break;
-    case kSize2:
-      context->SetTilingKey(kSize2);
-      break;
-    case kSize4:
-      context->SetTilingKey(kSize4);
-      break;
-    default:
-      return ge::GRAPH_PARAM_INVALID;
-  }
-
-  const gert::StorageShape *cache_shape = context->GetInputShape(index0);
-  const gert::StorageShape *update_shape = context->GetInputShape(index1);
-
+struct PKVTilingInfo {
   bool is_dim4 = true;
-  const size_t kDim3 = 3;
-  const size_t kDim4 = 4;
-  if (cache_shape->GetStorageShape().GetDimNum() == kDim4) {
-    is_dim4 = true;
-  } else if (cache_shape->GetStorageShape().GetDimNum() == kDim3) {
-    is_dim4 = false;
-  } else {
-    return ge::GRAPH_PARAM_INVALID;
-  }
-
-  int64_t b = cache_shape->GetStorageShape().GetDim(index0);
-  int64_t ub = update_shape->GetStorageShape().GetDim(index0);
-  // s need get when run
+  bool if_copy_all = false;
+  int type_size = 0;
+  uint32_t aiv_num = 0;
+  uint64_t ub_size = 0;
+  int64_t core_num = 0;
+  int64_t b = 0;
   int64_t h = 0;
   int64_t s = 0;
-  int64_t us = 0;
   int64_t d = 0;
+  int64_t ub = 0;
+  int64_t us = 0;
+  int64_t former_each_core_bs_num = 0;
+  int64_t tail_each_core_bs_num = 0;
+  int64_t split_us = 0;
+  int64_t former_block_us = 0;
+  int64_t tail_block_us = 0;
+};
 
-  if (is_dim4) {
-    h = update_shape->GetStorageShape().GetDim(index1);
-    s = cache_shape->GetStorageShape().GetDim(index2);
-    us = update_shape->GetStorageShape().GetDim(index2);
-    d = update_shape->GetStorageShape().GetDim(index3);
+static void IfCopyAll(PKVTilingInfo *info) {
+  if (info->b != info->ub || info->s != info->us) {
+    info->if_copy_all = false;
+    return;
+  }
+  int64_t bs = info->b * info->h * info->s * info->d;
+  int64_t aiv_num = info->aiv_num;
+  if (bs <= kSmallBufferSize) {
+    aiv_num = kSmallCoreNum;
+  }
+  int64_t former_bs = (bs + aiv_num - 1) / aiv_num;
+  int64_t core_num = (bs + former_bs - 1) / former_bs;
+  int64_t tail_bs = bs - (core_num - 1) * former_bs;
+  if (former_bs != tail_bs) {
+    info->if_copy_all = false;
   } else {
-    h = 1;
-    s = cache_shape->GetStorageShape().GetDim(index1);
-    us = update_shape->GetStorageShape().GetDim(index1);
-    d = update_shape->GetStorageShape().GetDim(index2);
+    info->if_copy_all = true;
+  }
+  return;
+}
+
+static ge::graphStatus SetTilingKey(gert::TilingContext *context, PKVTilingInfo *info) {
+  auto past_input = context->GetInputDesc(index0);
+  auto dtype = past_input->GetDataType();
+  info->type_size = ge::GetSizeByDataType(dtype);
+  if (info->type_size != kSize1 && info->type_size != kSize2 && info->type_size != kSize4) {
+    return ge::GRAPH_FAILED;
   }
 
+  if (info->if_copy_all) {
+    context->SetTilingKey(info->type_size * 10);
+  } else {
+    context->SetTilingKey(info->type_size);
+  }
+  return ge::GRAPH_SUCCESS;
+}
+
+static void SetDimsValue(PKVTilingInfo *info, const gert::StorageShape *cache_shape,
+                         const gert::StorageShape *update_shape) {
+  info->is_dim4 = true;
+  if (cache_shape->GetStorageShape().GetDimNum() == kDim4) {
+    info->is_dim4 = true;
+  } else if (cache_shape->GetStorageShape().GetDimNum() == kDim3) {
+    info->is_dim4 = false;
+  }
+
+  info->b = cache_shape->GetStorageShape().GetDim(index0);
+  info->ub = update_shape->GetStorageShape().GetDim(index0);
+  if (info->is_dim4) {
+    info->h = update_shape->GetStorageShape().GetDim(index1);
+    info->s = cache_shape->GetStorageShape().GetDim(index2);
+    info->us = update_shape->GetStorageShape().GetDim(index2);
+    info->d = update_shape->GetStorageShape().GetDim(index3);
+  } else {
+    info->h = 1;
+    info->s = cache_shape->GetStorageShape().GetDim(index1);
+    info->us = update_shape->GetStorageShape().GetDim(index1);
+    info->d = update_shape->GetStorageShape().GetDim(index2);
+  }
+  return;
+}
+
+static void GetSysInfo(gert::TilingContext *context, PKVTilingInfo *info) {
   auto platform = platform_ascendc::PlatformAscendC(context->GetPlatformInfo());
-  auto aiv_num = platform.GetCoreNumAiv();
+  info->aiv_num = platform.GetCoreNumAiv();
 
-  // todo get ub size
-  uint64_t ub_size = 0;
-  platform.GetCoreMemSize(platform_ascendc::CoreMemType::UB, ub_size);
-  int64_t remain_ub_size = ub_size - CeilRound(ub, kDivisor) * 2 * sizeof(int64_t);
+  platform.GetCoreMemSize(platform_ascendc::CoreMemType::UB, info->ub_size);
+}
 
-  int64_t bs = ub * h;
-  int64_t former_each_core_bs_num = (bs + aiv_num - 1) / aiv_num;
-  int64_t core_num = (bs + former_each_core_bs_num - 1) / former_each_core_bs_num;
-  int64_t tail_each_core_bs_num = bs - (core_num - 1) * former_each_core_bs_num;
-  int64_t split_us = 1;
-  int64_t block_us = us / split_us;
-  while (kBufferNum * block_us * d * type_size >= remain_ub_size) {
-    split_us++;
-    block_us = (us + split_us - 1) / split_us;
-  }
-  int64_t former_block_us = block_us;
-  int64_t tail_block_us = us - (split_us - 1) * former_block_us;
-
+static ge::graphStatus FinishTiling(gert::TilingContext *context, const PKVTilingInfo *info) {
   // set workspace for 910B
   size_t *currentWorkspace = context->GetWorkspaceSizes(1);
   currentWorkspace[0] = k910bWS;
-
-  context->SetBlockDim(core_num);
+  context->SetBlockDim(info->core_num);
 
   PromptKvTilingData tiling;
-  tiling.set_core_num(core_num);
-  tiling.set_b(b);
-  tiling.set_h(h);
-  tiling.set_s(s);
-  tiling.set_d(d);
-  tiling.set_ub(ub);
-  tiling.set_us(us);
-  tiling.set_former_each_core_bs_num(former_each_core_bs_num);
-  tiling.set_tail_each_core_bs_num(tail_each_core_bs_num);
-  tiling.set_split_us(split_us);
-  tiling.set_former_block_us(former_block_us);
-  tiling.set_tail_block_us(tail_block_us);
+  tiling.set_core_num(info->core_num);
+  tiling.set_b(info->b);
+  tiling.set_h(info->h);
+  tiling.set_s(info->s);
+  tiling.set_d(info->d);
+  tiling.set_ub(info->ub);
+  tiling.set_us(info->us);
+  tiling.set_former_each_core_bs_num(info->former_each_core_bs_num);
+  tiling.set_tail_each_core_bs_num(info->tail_each_core_bs_num);
+  tiling.set_split_us(info->split_us);
+  tiling.set_former_block_us(info->former_block_us);
+  tiling.set_tail_block_us(info->tail_block_us);
   tiling.SaveToBuffer(context->GetRawTilingData()->GetData(), context->GetRawTilingData()->GetCapacity());
   context->GetRawTilingData()->SetDataSize(tiling.GetDataSize());
   return ge::GRAPH_SUCCESS;
+}
+
+static ge::graphStatus GeneralTiling(gert::TilingContext *context, PKVTilingInfo *info) {
+  int64_t bs = info->ub * info->h;
+  info->former_each_core_bs_num = (bs + info->aiv_num - 1) / info->aiv_num;
+  info->core_num = (bs + info->former_each_core_bs_num - 1) / info->former_each_core_bs_num;
+  info->tail_each_core_bs_num = bs - (info->core_num - 1) * info->former_each_core_bs_num;
+  info->split_us = 1;
+  int64_t block_us = info->us / info->split_us;
+  int64_t remain_ub_size = info->ub_size - CeilRound(info->ub, kDivisor) * 2 * sizeof(int64_t);
+  while (kBufferNum * block_us * info->d * info->type_size >= remain_ub_size || block_us > kMaxBlockLen) {
+    (info->split_us)++;
+    block_us = (info->us + info->split_us - 1) / info->split_us;
+  }
+  info->former_block_us = block_us;
+  info->tail_block_us = info->us - (info->split_us - 1) * info->former_block_us;
+
+  return FinishTiling(context, info);
+}
+
+static ge::graphStatus CopyAllTiling(gert::TilingContext *context, PKVTilingInfo *info) {
+  int64_t bs = info->b * info->h * info->s * info->d;
+  // set this according the test data. data_shape: (1,64,640)
+  // core_num   data_copy_len    profile_time(us)
+  //  1         40960            8.412
+  //  2         20480            6.76
+  //  4         10240            6.32
+  //  8         5120             6.92
+  //  16        2560             7.819
+  //  40        1024             14.386
+
+  if (bs <= kSmallBufferSize && info->aiv_num >= kSmallCoreNum) {
+    info->aiv_num = kSmallCoreNum;
+  }
+  info->former_each_core_bs_num = (bs + info->aiv_num - 1) / info->aiv_num;
+  info->core_num = (bs + info->former_each_core_bs_num - 1) / info->former_each_core_bs_num;
+
+  info->tail_each_core_bs_num = bs - (info->core_num - 1) * info->former_each_core_bs_num;
+
+  info->split_us = 1;
+  int64_t block_bs = info->former_each_core_bs_num / info->split_us;
+  while (kBufferNum * block_bs * info->type_size >= (int64_t)info->ub_size || block_bs > kMaxBlockLen) {
+    (info->split_us)++;
+    block_bs = (info->former_each_core_bs_num + info->split_us - 1) / info->split_us;
+  }
+  info->former_block_us = block_bs;
+  info->tail_block_us = info->former_each_core_bs_num - (info->split_us - 1) * info->former_block_us;
+
+  return FinishTiling(context, info);
+}
+
+static ge::graphStatus TilingFunc(gert::TilingContext *context) {
+  PKVTilingInfo info;
+  GetSysInfo(context, &info);
+
+  const gert::StorageShape *cache_shape = context->GetInputShape(index0);
+  const gert::StorageShape *update_shape = context->GetInputShape(index1);
+  SetDimsValue(&info, cache_shape, update_shape);
+
+  IfCopyAll(&info);
+
+  auto status = SetTilingKey(context, &info);
+  if (status != ge::GRAPH_SUCCESS) {
+    return status;
+  }
+
+  if (info.if_copy_all) {
+    return CopyAllTiling(context, &info);
+  }
+  return GeneralTiling(context, &info);
 }
 
 static ge::graphStatus CheckSupported(const ge::Operator &op, ge::AscendString &result) {
