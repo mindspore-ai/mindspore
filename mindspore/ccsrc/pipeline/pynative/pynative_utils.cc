@@ -1291,10 +1291,10 @@ void PyParser::PrintTypeCastError(const ops::OpDefPtr &op_def, const py::list &o
       return ss.str();
     };
     if (tensor != nullptr) {
-      MS_EXCEPTION(ValueError) << "For " << op_def->name_ << ", the " << idx << "'th input is a Tensor whose shape is "
-                               << PrintVectorFunc(tensor->shape()) << " and dtype is ["
-                               << TypeIdToString(tensor->data_type()) << "], which can not be converted to "
-                               << ops::EnumToString(op_arg.arg_dtype_) << ".";
+      MS_EXCEPTION(TypeError) << "For " << op_def->name_ << ", the " << idx << "'th input is a Tensor whose shape is "
+                              << PrintVectorFunc(tensor->shape()) << " and dtype is ["
+                              << TypeIdToString(tensor->data_type()) << "], which can not be converted to "
+                              << ops::EnumToString(op_arg.arg_dtype_) << ".";
     }
   }
   std::vector<std::string> op_type_list;
