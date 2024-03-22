@@ -316,11 +316,7 @@ EvalResultPtr ParsePyObjToFunc(const py::object &py_fn, const CNodePtr &cnode, c
     AnfNodeConfigPtr fn_conf = eng->MakeConfig(new_cnode, conf->context(), conf->func_graph());
     return eng->ForwardConfig(conf, fn_conf);
   } else {
-    const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() == kLax);
-    if (allow_fallback_runtime) {
-      return ConvertToPyInterpretCall(cnode, conf);
-    }
-    MS_LOG(EXCEPTION) << "The input parameter is a function which MindSpore cannot be compiled, please check the code.";
+    return ConvertToPyInterpretCall(cnode, conf);
   }
 }
 
@@ -797,10 +793,7 @@ EvalResultPtr AnalysisEngine::EvalCNode(const CNodePtr &cnode, const AnfNodeConf
   }
 
   if (possible_func->isa<AbstractAny>()) {
-    const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() == kLax);
-    if (allow_fallback_runtime) {
-      return ConvertToPyInterpretCall(cnode, conf);
-    }
+    return ConvertToPyInterpretCall(cnode, conf);
   }
 
   auto func = dyn_cast_ptr<AbstractFunction>(possible_func);
