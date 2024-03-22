@@ -221,17 +221,21 @@ bool IsParallelDynamicShape(const FuncGraphPtr &func_graph) {
   return pipeline::IsDynamicShapeGraph(func_graph);
 }
 
+bool IsSemiOrAutoParallelMode() {
+  MS_EXCEPTION_IF_NULL(parallel::ParallelContext::GetInstance());
+  std::string parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode();
+  return (parallel_mode == parallel::kAutoParallel || parallel_mode == parallel::kSemiAutoParallel);
+}
+
 // modify symbol info by dataset strategy
 // only for data sink is false
 std::vector<symshape::ops::SymbolInfoList> ParallelSymbolInfo(
-  const std::vector<symshape::ops::SymbolInfoList> &symbol_infos) {
-  auto parallel_symbol_infos = symbol_infos;
-  MS_EXCEPTION_IF_NULL(parallel::ParallelContext::GetInstance());
-  std::string parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode();
-  if (parallel_mode != parallel::kAutoParallel && parallel_mode != parallel::kSemiAutoParallel) {
-    return parallel_symbol_infos;
+  const std::vector<symshape::ops::SymbolInfoList> &symbol_infos, bool has_dyn_shape) {
+  if (!has_dyn_shape || !IsSemiOrAutoParallelMode()) {  // static shape or sink mode no need to handle symbol info here
+    return symbol_infos;
   }
 
+  auto parallel_symbol_infos = symbol_infos;
   parallel::Strategies dataset_strategy;
   if (!parallel::ParallelContext::GetInstance()->dataset_strategy().empty()) {
     dataset_strategy = parallel::ParallelContext::GetInstance()->dataset_strategy();
@@ -281,12 +285,15 @@ std::vector<symshape::ops::SymbolInfoList> ParallelSymbolInfo(
 
   MS_LOG(DEBUG) << "dataset strategy is " << dataset_strategy;
   if (dataset_strategy.size() != parallel_symbol_infos.size()) {
-    MS_LOG(EXCEPTION) << "Invalid dataset strategy size";
+    MS_LOG(EXCEPTION) << "The size of dataset strategy is " << dataset_strategy.size()
+                      << ", but the size of symbol info is " << parallel_symbol_infos.size();
   }
 
   for (size_t i = 0; i < dataset_strategy.size(); ++i) {
     if (dataset_strategy[i].size() != parallel_symbol_infos[i].size()) {
-      MS_LOG(EXCEPTION) << "Invalid dataset strategy size for index " << i;
+      MS_LOG(EXCEPTION) << "Invalid dataset strategy size for index " << i << ", the size of dataset strategy ele is "
+                        << dataset_strategy[i].size() << ", but the size of symbol info ele is "
+                        << parallel_symbol_infos[i].size();
     }
 
     for (size_t j = 0; j < dataset_strategy[i].size(); ++j) {

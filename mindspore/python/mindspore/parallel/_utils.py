@@ -135,7 +135,7 @@ def _to_full_shapes(shapes, device_num):
             if len(shape) != len(dataset_strategy[index]):
                 raise ValueError("The input shapes item size {} is not equal to "
                                  "dataset strategy item size {}".format(len(shape), len(dataset_strategy[index])))
-            new_shape = ()
+            new_shape = []
             for i, item in enumerate(shape):
                 if item > 0:
                     new_shape += (item * dataset_strategy[index][i],)  # static shape

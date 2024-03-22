@@ -1177,6 +1177,9 @@ void GraphExecutorPy::ConvertArgs(const py::tuple &args, const py::dict &kwargs,
 void GraphExecutorPy::ConvertSymbolicShape(const py::tuple &args, AbstractBasePtrList *args_abs) {
   std::vector<symshape::ops::SymbolInfoList> symbol_infos;
   symbol_infos.reserve(args_abs->size());
+  bool has_dyn_shape = false;
+  bool is_parallel = parallel::IsSemiOrAutoParallelMode();
+
   for (size_t i = 0; i < args.size(); i++) {
     auto iter = cur_convert_input_.find(args[i].ptr());
     if (iter == cur_convert_input_.end()) {
@@ -1186,14 +1189,13 @@ void GraphExecutorPy::ConvertSymbolicShape(const py::tuple &args, AbstractBasePt
     if (!iter->second.first->isa<MetaTensor>()) {
       continue;
     }
+    auto digital_shape = iter->second.second->GetShape();
+    if (digital_shape->IsDynamic()) {
+      has_dyn_shape = true;
+    }
     constexpr char symbolic_shape_attr[] = "symbolic_shape";
-    MS_EXCEPTION_IF_NULL(parallel::ParallelContext::GetInstance());
-    std::string parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode();
-    bool is_parallel = (parallel_mode == parallel::kAutoParallel || parallel_mode == parallel::kSemiAutoParallel);
-
     if (!py::hasattr(args[i], symbolic_shape_attr)) {
       if (is_parallel) {
-        auto digital_shape = iter->second.second->GetShape();
         if (digital_shape != nullptr && digital_shape->isa<abstract::TensorShape>()) {
           info_list.resize(digital_shape->GetShapeVector().size());
         }
@@ -1230,7 +1232,7 @@ void GraphExecutorPy::ConvertSymbolicShape(const py::tuple &args, AbstractBasePt
 
   MS_LOG(DEBUG) << "before parallel symbol";
   parallel::PrintSymbolInfo(symbol_infos);
-  symbol_infos = parallel::ParallelSymbolInfo(symbol_infos);
+  symbol_infos = parallel::ParallelSymbolInfo(symbol_infos, has_dyn_shape);
   MS_LOG(DEBUG) << "after parallel symbol";
   parallel::PrintSymbolInfo(symbol_infos);
 

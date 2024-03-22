@@ -45,13 +45,15 @@ class HcomReceiveKernel : public HcclKernel {
 
  private:
   std::vector<int64_t> real_shape_;
+  std::vector<int64_t> recv_shape_;
+  bool has_received_msg_ = false;
   bool is_dynamic_shape_ = false;
   bool get_shape_attr_flag_ = false;
   std::unique_ptr<mindspore::distributed::rpc::RPCServerBase> server_ = nullptr;
   MessageBase *HandleMessage(MessageBase *const msg);
   int ReceiveShapeForDynamic();
-  std::mutex mtx;
-  std::condition_variable cv;
+  std::mutex mtx_;
+  std::condition_variable cv_;
 };
 
 MS_HCCL_REG_KERNEL(Receive, HcomReceiveKernel);
