@@ -932,26 +932,22 @@ AnfNodePtr Cloner::CloneDisconnected(const AnfNodePtr &root) {
 }
 
 AnfNodePtr Cloner::operator[](const AnfNodePtr &node) {
-#ifdef ENABLE_PROFILE
-  double time = GetTime();
-#endif
-  Run();
-#ifdef ENABLE_PROFILE
-  MsProfile::StatTime("func_graph_cloner_run.FuncGraphClonerNode", GetTime() - time);
-#endif
+  {
+    MsProfileStatGuard stat_guard("func_graph_cloner_run.FuncGraphClonerNode");
+    Run();
+  }
+
   auto iter = replicated_node_.find(node);
   return ((iter == replicated_node_.end()) ? node : iter->second);
 }
 
 FuncGraphPtr Cloner::operator[](const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
-#ifdef ENABLE_PROFILE
-  double time = GetTime();
-#endif
-  Run();
-#ifdef ENABLE_PROFILE
-  MsProfile::StatTime("func_graph_cloner_run.FuncGraphClonerGraph", GetTime() - time);
-#endif
+  {
+    MsProfileStatGuard stat_guard("func_graph_cloner_run.FuncGraphClonerGraph");
+    Run();
+  }
+
   auto iter = replicated_func_graph_.find(func_graph);
   auto ret = ((iter == replicated_func_graph_.end()) ? func_graph : iter->second);
   ret->set_python_obj(func_graph->python_obj());
@@ -1031,13 +1027,10 @@ ClonerPtr SpecializerClone(const FuncGraphPtr &func_graph, const TraceInfoPtr &r
   FuncGraphVector func_graphs = {func_graph};
   ClonerPtr cloner =
     std::make_shared<Cloner>(func_graphs, false, false, false, std::make_shared<TraceCopy>(), relation);
-#ifdef ENABLE_PROFILE
-  double time = GetTime();
-#endif
-  cloner->Run();
-#ifdef ENABLE_PROFILE
-  MsProfile::StatTime("func_graph_cloner_run.FuncGraphSpecializer", GetTime() - time);
-#endif
+  {
+    MsProfileStatGuard stat_guard("func_graph_cloner_run.FuncGraphSpecializer");
+    cloner->Run();
+  }
   return cloner;
 }
 

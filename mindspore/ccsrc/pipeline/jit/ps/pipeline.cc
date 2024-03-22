@@ -914,16 +914,14 @@ void GraphExecutorPy::InitCompileCacheInfo(const ResourcePtr &resource, const st
   if (compile_cache_dep_files_.empty()) {
     return;
   }
-#ifdef ENABLE_PROFILE
-  double t1 = GetTime();
-#endif
-  static size_t idx = 0;
-  MS_EXCEPTION_IF_NULL(resource);
-  resource->GetCompileCacheResource(compile_cache_dep_files_, weights_, queue_name_, idx++, &compile_cache_consistent_);
-#ifdef ENABLE_PROFILE
-  double t2 = GetTime();
-  MsProfile::StatTime("LoadCachedFuncGraph", t2 - t1);
-#endif
+
+  {
+    MsProfileStatGuard stat_guard("LoadCachedFuncGraph");
+    static size_t idx = 0;
+    MS_EXCEPTION_IF_NULL(resource);
+    resource->GetCompileCacheResource(compile_cache_dep_files_, weights_, queue_name_, idx++,
+                                      &compile_cache_consistent_);
+  }
 }
 
 void GraphExecutorPy::ParallelPostProcess(const std::string &phase, bool use_compile_cache) {
@@ -1317,14 +1315,10 @@ void CacheFuncGraph(const ResourcePtr &resource) {
   if (!resource->EnableCompileCache()) {
     return;
   }
-#ifdef ENABLE_PROFILE
-  double t1 = GetTime();
-#endif
-  resource->CacheFuncGraph();
-#ifdef ENABLE_PROFILE
-  double t2 = GetTime();
-  MsProfile::StatTime("SaveCacheFuncGraph", t2 - t1);
-#endif
+  {
+    MsProfileStatGuard stat_guard("SaveCacheFuncGraph");
+    resource->CacheFuncGraph();
+  }
 }
 
 void CheckInterpretNodeLineInfos() {
@@ -1466,10 +1460,14 @@ void Pipeline::Run() {
   MS_LOG(INFO) << "Pipeline run";
   MS_EXCEPTION_IF_NULL(resource_);
   FuncGraphPtr user_graph = nullptr;
-  auto iter = std::find_if(actions_.begin(), actions_.end(),
-                           [](const ActionItem &item) { return item.first == kDistributedSplit; });
-  std::string cache_action = iter != actions_.end() ? kDistributedSplit : kValidate;
-  ProfileExecute(MsProfile::GetProfile(), [&user_graph, this, cache_action]() {
+#if defined(__linux__) && defined(WITH_BACKEND)
+  std::string last_compile_action = kDistributedSplit;
+#else
+  std::string last_compile_action = kValidate;
+#endif
+  bool already_print_profile = false;
+  static const auto compile_profile_finish_action = common::GetCompileConfig("COMPILE_PROFILE_FINISH_ACTION");
+  ProfileExecute(MsProfile::GetProfile(), [this, &user_graph, &last_compile_action, &already_print_profile]() {
     size_t i = 0;
     for (auto &action : actions_) {
 #ifdef ENABLE_TIMELINE
@@ -1492,9 +1490,19 @@ void Pipeline::Run() {
       });
       (void)profiler::CollectHostInfo(kCompiler, action.first, action.first, 0, 0, 1);
       ProcessStatus::GetInstance().RecordEnd();
-      if (action.first == "task_emit") {
+      if (!result) {
+        MS_LOG(INTERNAL_EXCEPTION) << "Pipeline running to end, failed in step:" << action.first;
+      }
+
+      if (EnabledProfile() && compile_profile_finish_action == action.first) {
+        ProfileExecuteBreak(MsProfile::GetProfile());
+        MsProfile::Print();
+        already_print_profile = true;
+      }
+
+      if (action.first == kTaskEmit) {
         SetLoopCount(resource_);
-      } else if (action.first == cache_action) {
+      } else if (action.first == last_compile_action) {
         CheckInterpretNodeLineInfos();
         CacheFuncGraph(resource_);
 #ifndef ENABLE_SECURITY
@@ -1509,9 +1517,6 @@ void Pipeline::Run() {
         }
 #endif
 #endif
-      }
-      if (!result) {
-        MS_LOG(INTERNAL_EXCEPTION) << "Pipeline running to end, failed in step:" << action.first;
       }
 
       FuncGraphPtr graph = resource_->func_graph();
@@ -1529,10 +1534,13 @@ void Pipeline::Run() {
 #endif
     }
   });
-#ifdef ENABLE_PROFILE
-  MsProfile::Print();
-  MsProfile::Reset();
-#endif
+
+  if (EnabledProfile()) {
+    if (!already_print_profile) {
+      MsProfile::Print();
+    }
+    MsProfile::Reset();
+  }
 
 #ifdef ENABLE_DUMP_IR
   auto context = MsContext::GetInstance();
@@ -1560,7 +1568,7 @@ void Pipeline::Run() {
 
 bool Pipeline::NeedCreateBackend() {
   return std::any_of(actions_.begin(), actions_.end(),
-                     [](const ActionItem &action) { return action.first == "task_emit" || action.first == "execute"; });
+                     [](const ActionItem &action) { return action.first == kTaskEmit || action.first == kExecute; });
 }
 
 void ProcessVmArgInner(const py::tuple &args, const ResourcePtr &res, VectorRef *const arg_list) {
