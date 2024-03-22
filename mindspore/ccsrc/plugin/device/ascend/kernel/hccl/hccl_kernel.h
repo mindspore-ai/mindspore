@@ -28,9 +28,20 @@
 #include "hccl/hcom.h"
 #include "hccl/hccl_types.h"
 #include "utils/ms_utils.h"
+#include "runtime/collective/collective_comm_lib_loader.h"
+#ifdef ENABLE_INTERNAL_KERNELS
+#include "plugin/device/ascend/hal/hardware/lowlatency_collective_comm_lib.h"
+#endif
 
 namespace mindspore {
 namespace kernel {
+#ifdef ENABLE_INTERNAL_KERNELS
+using LcclPtr = mindspore::device::ascend::LcclPtr;
+using LowlatencyCollectiveCommLib = mindspore::device::ascend::LowlatencyCollectiveCommLib;
+#endif
+
+using CollectiveCommunicationLib = mindspore::device::CollectiveCommunicationLib;
+using CollectiveCommLibLoader = mindspore::device::CollectiveCommLibLoader;
 class HcclKernel : public KernelMod {
  public:
   // =========================================New interface==========================================================
@@ -54,6 +65,7 @@ class HcclKernel : public KernelMod {
   virtual HcclDataType GetHcclDataType() const;
   virtual void CalLoopSize();
   bool CalcTypeShapeAndCount(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
+  void LoadHcclLibrary();
   std::vector<std::vector<int64_t>> hccl_kernel_input_shape_list_;
   std::vector<std::vector<int64_t>> hccl_kernel_output_shape_list_;
   std::vector<HcclDataType> hccl_data_type_list_;
@@ -69,6 +81,13 @@ class HcclKernel : public KernelMod {
   std::condition_variable cond_;
   ulong loop_size_{0};
   bool is_graph_mode_{false};
+
+#ifdef ENABLE_INTERNAL_KERNELS
+  // The LCCL collective communication library.
+  void LoadLcclLibrary();
+  LowlatencyCollectiveCommLib *collective_comm_lib_{nullptr};
+  LcclPtr lccl_comm_{nullptr};
+#endif
 };
 
 extern int64_t op_tag;

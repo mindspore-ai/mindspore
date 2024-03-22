@@ -30,12 +30,30 @@ bool HcomAllGatherKernel::Launch(const std::vector<KernelTensor *> &inputs, cons
   MS_EXCEPTION_IF_NULL(inputs[0]);
   MS_EXCEPTION_IF_NULL(outputs[0]);
   MS_EXCEPTION_IF_NULL(stream_ptr);
+
+#ifdef ENABLE_INTERNAL_KERNELS
+  if (!common::GetEnv("ENABLE_LCCL").empty()) {
+    auto lccl_result = lccl_comm_->AllGather(inputs[0]->device_ptr(), outputs[0]->device_ptr(), hccl_count_,
+                                             hccl_data_type_list_[0], stream_ptr);
+    if (lccl_result != Lcal::LCAL_SUCCESS) {
+      MS_LOG(EXCEPTION) << "LCCL AllGather failed.";
+    }
+  } else {
+    auto hccl_result = hccl::HcclAdapter::GetInstance().HcclAllGather(
+      inputs[0]->device_ptr(), outputs[0]->device_ptr(), hccl_count_, hccl_data_type_list_[0], stream_ptr, comm_);
+    if (hccl_result != HCCL_SUCCESS) {
+      MS_LOG(ERROR) << "HcclAllGather failed, ret:" << hccl_result;
+      return false;
+    }
+  }
+#else
   auto hccl_result = hccl::HcclAdapter::GetInstance().HcclAllGather(
     inputs[0]->device_ptr(), outputs[0]->device_ptr(), hccl_count_, hccl_data_type_list_[0], stream_ptr, comm_);
   if (hccl_result != HCCL_SUCCESS) {
     MS_LOG(ERROR) << "HcclAllGather failed, ret:" << hccl_result;
     return false;
   }
+#endif
   return true;
 }
 }  // namespace kernel
