@@ -559,8 +559,8 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', boost_leve
             - 'O1': Cast the operators in white_list to float16, the remaining operators are kept in float32.
               The operators in the whitelist: [Conv1d, Conv2d, Conv3d, Conv1dTranspose, Conv2dTranspose,
               Conv3dTranspose, Dense, LSTMCell, RNNCell, GRUCell, MatMul, BatchMatMul, PReLU, ReLU, Ger].
-            - 'O2': Cast network to float16, keep batchnorm and `loss_fn` (if set) run in float32,
-              using dynamic loss scale.
+            - 'O2': Cast network to float16, keep :class:`mindspore.nn.BatchNorm`, :class:`mindspore.nn.LayerNorm` and
+              `loss_fn` (if set) run in float32, using dynamic loss scale.
             - 'O3': Cast network to float16, with additional property `keep_batchnorm_fp32=False` .
             - 'auto': Set to level to recommended level in different devices. Set level to 'O2' on GPU, Set
               level to 'O3' Ascend. The recommended level is chosen by the export experience, not applicable to all
@@ -591,8 +591,8 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', boost_leve
             take no effect on this property.
 
     Raises:
-        ValueError: If device is CPU, property `loss_scale_manager` is not `None` or `FixedLossScaleManager`
-            (with property `drop_overflow_update=False` ).
+        ValueError: If device is CPU, property `loss_scale_manager` is not `None` or
+            :class:`mindspore.amp.FixedLossScaleManager` (with property `drop_overflow_update=False` ).
 
     Examples:
         >>> from mindspore import amp, nn
