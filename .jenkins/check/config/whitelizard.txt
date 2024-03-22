@@ -7,6 +7,7 @@ mindspore/mindspore/core/mindrt/src/thread/actor_threadpool.cc:mindspore::ActorW
 mindspore/mindspore/lite/src/common/ops/primitive_c.cc:mindspore::lite::PrimitiveC::Create
 mindspore/mindspore/lite/src/extendrt/convert/runtime_convert.cc:RuntimeConvert
 mindspore/mindspore/lite/tools/converter/parser/onnx/onnx_inputs_adjust.cc:mindspore::lite::OnnxInputAdjust::Adjust
+mindspore/mindspore/lite/tools/converter/adapter/acl/mapper/matmul_fusion_mapper.cc:mindspore::lite::MatMulFusionMapper::Mapper
 mindspore/mindspore/lite/tools/optimizer/fusion/flash_attention_fusion.cc:mindspore::opt::FlashAttentionFusion::Process
 mindspore/mindspore/ccsrc/minddata/dataset/engine/datasetops/source/csv_op.cc:mindspore::dataset::CsvOp::CsvParser::InitCsvParser
 mindspore/mindspore/ccsrc/minddata/dataset/engine/datasetops/data_queue_op.cc:mindspore::dataset::DataQueueOp::SendDataToAscend
