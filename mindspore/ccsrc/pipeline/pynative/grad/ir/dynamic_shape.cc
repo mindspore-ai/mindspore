@@ -15,6 +15,7 @@
  */
 
 #include "pipeline/pynative/grad/ir/dynamic_shape.h"
+#include <algorithm>
 #include "pipeline/pynative/pynative_utils.h"
 
 namespace mindspore {
@@ -37,38 +38,6 @@ bool IsValuePtrEqual(const ValuePtr &v1, const ValuePtr &v2) {
   return *v1 == *v2;
 }
 
-bool IsDynamicDetectAbsChange(const AbstractBasePtr &old_abs, const AbstractBasePtr &new_abs) {
-  if (old_abs == new_abs) {
-    return false;
-  }
-  if (old_abs == nullptr || new_abs == nullptr) {
-    MS_LOG(DEBUG) << "Graph is dynamic, old_abs is different with new_abs";
-    return true;
-  }
-  if (!common::IsEqual(old_abs->BuildType(), new_abs->BuildType()) ||
-      !common::IsEqual(old_abs->BuildShape(), new_abs->BuildShape())) {
-    MS_LOG(DEBUG) << "Graph is dynamic, old_abs is different with new_abs, old abs: " << old_abs->ToString()
-                  << ", new abs: " << new_abs->ToString();
-    return true;
-  }
-  return false;
-}
-
-bool IsDynamicDetectAbsChange(const abstract::AbstractBasePtrList &node_abs,
-                              const abstract::AbstractBasePtrList &old_node_abs) {
-  if (node_abs.size() != old_node_abs.size()) {
-    MS_LOG(DEBUG) << "Graph is dynamic, node_abs size: " << node_abs.size()
-                  << ", old_node_abs size: " << old_node_abs.size();
-    return true;
-  }
-  for (size_t i = 0; i < node_abs.size(); ++i) {
-    if (IsDynamicDetectAbsChange(node_abs[i], old_node_abs[i])) {
-      return true;
-    }
-  }
-  return false;
-}
-
 bool IsDynamicDetectPrimChange(const PrimitivePtr &old_prim, const PrimitivePtr &new_prim) {
   if (old_prim == nullptr && new_prim == nullptr) {
     return false;
@@ -85,7 +54,20 @@ bool IsDynamicDetectPrimChange(const PrimitivePtr &old_prim, const PrimitivePtr 
   return true;
 }
 
-bool IsDynamicDetectNodeInfoChange(const NodeInfo &old_node_info, const NodeInfo &new_node_info) {
+bool IsNodeInfoChange(const NodeInfo &old_node_info, const NodeInfo &new_node_info) {
+  size_t input_size = old_node_info.seq_node.size();
+  if (input_size != new_node_info.seq_node.size()) {
+    MS_LOG(DEBUG) << "Graph is dynamic, input is tuple, but old seq node info size " << input_size
+                  << ", new seq node info size " << new_node_info.seq_node.size();
+    return true;
+  } else {
+    for (size_t i = 0; i < input_size; ++i) {
+      if (IsNodeInfoChange(old_node_info.seq_node[i], new_node_info.seq_node[i])) {
+        return true;
+      }
+    }
+  }
+
   if (new_node_info.grad_type == InputType::kParameter &&
       (old_node_info.grad_type == InputType::kParameter || old_node_info.grad_type == InputType::kConstant)) {
     MS_EXCEPTION_IF_NULL(new_node_info.value);
@@ -129,78 +111,175 @@ bool IsDynamicDetectNodeInfoChange(const NodeInfo &old_node_info, const NodeInfo
   return false;
 }
 
-void BuildDynamicDetectNodeInput(const ValuePtr &input, std::vector<std::pair<std::string, NodeInfo>> *node_inputs,
-                                 const std::string &value_idx) {
-  if (input->isa<tensor::Tensor>()) {
-    NodeInfo node_info;
-    auto tensor = input->cast<tensor::TensorPtr>();
-    MS_EXCEPTION_IF_NULL(tensor);
-    auto auto_meta_data = tensor->auto_grad_meta_data();
-    if (auto_meta_data == nullptr) {
-      node_info.value = input;
-      node_info.grad_type = InputType::kConstant;
-      (void)node_inputs->emplace_back(std::make_pair(value_idx, node_info));
-      return;
-    }
-    node_info.grad_type = auto_meta_data->input_type();
-    node_info.op_index = auto_meta_data->op_index();
-    if (node_info.grad_type == InputType::kConstant || node_info.grad_type == InputType::kParameter) {
-      node_info.value = input;
-    }
-    (void)node_inputs->emplace_back(std::make_pair(value_idx, node_info));
-  } else if (input->isa<ValueSequence>()) {
-    auto value_sequence = input->cast<ValueSequencePtr>();
-    for (size_t i = 0; i < value_sequence->value().size(); ++i) {
-      const string &cur_idx = value_idx + std::to_string(i);
-      BuildDynamicDetectNodeInput(value_sequence->value()[i], node_inputs, cur_idx);
-    }
-  } else if (input->isa<stub::StubNode>()) {
-    auto stub_node = input->cast<stub::StubNodePtr>();
-    MS_EXCEPTION_IF_NULL(stub_node);
-    BuildDynamicDetectNodeInput(stub_node->WaitValue(), node_inputs, value_idx);
-  } else {
-    NodeInfo node_info;
-    node_info.grad_type = InputType::kConstant;
-    node_info.value = input;
-    (void)node_inputs->emplace_back(std::make_pair(value_idx, node_info));
-  }
-}
-
-std::vector<std::pair<std::string, NodeInfo>> BuildDynamicDetectNodeInputs(const ValuePtrList &inputs) {
-  std::vector<std::pair<std::string, NodeInfo>> node_inputs;
-  for (size_t i = 0; i < inputs.size(); ++i) {
-    const string &tensor_idx = std::to_string(i);
-    BuildDynamicDetectNodeInput(inputs[i], &node_inputs, tensor_idx);
-  }
-  return node_inputs;
-}
-
-bool IsDynamicDetectInputChange(const std::vector<std::pair<std::string, NodeInfo>> &old_inputs,
-                                const std::vector<std::pair<std::string, NodeInfo>> &new_inputs) {
-  if (old_inputs.size() != new_inputs.size()) {
-    MS_LOG(DEBUG) << "Graph is dynamic, old_inputs size: " << old_inputs.size()
-                  << "new_inputs size: " << new_inputs.size();
+bool IsInputsNodeInfoChange(const std::vector<NodeInfo> &old_inputs_node_info,
+                            const std::vector<NodeInfo> &new_inputs_node_info) {
+  size_t input_size = old_inputs_node_info.size();
+  if (input_size != new_inputs_node_info.size()) {
+    MS_LOG(DEBUG) << "Graph is dynamic, old_inputs size: " << input_size
+                  << "new_inputs size: " << new_inputs_node_info.size();
     return true;
   }
-  for (size_t i = 0; i < old_inputs.size(); ++i) {
-    std::string old_tensor_idx = old_inputs[i].first;
-    auto old_node_info = old_inputs[i].second;
-    std::string new_tensor_idx = new_inputs[i].first;
-    auto new_node_info = new_inputs[i].second;
-    if (old_tensor_idx != new_tensor_idx) {
-      MS_LOG(DEBUG) << "Graph is dynamic, old_tensor_idx: " << old_tensor_idx << ", new_tensor_idx: " << new_tensor_idx;
-      return true;
-    }
-    if (IsDynamicDetectNodeInfoChange(old_node_info, new_node_info)) {
-      MS_LOG(DEBUG) << "Graph is dynamic, old_node op index is: " << old_node_info.op_index
-                    << ", value is: " << (old_node_info.value != nullptr ? old_node_info.value->ToString() : "")
-                    << ", new_node op index is: " << new_node_info.op_index
-                    << ", value is: " << (new_node_info.value != nullptr ? new_node_info.value->ToString() : "");
+  for (size_t i = 0; i < input_size; ++i) {
+    if (IsNodeInfoChange(old_inputs_node_info[i], new_inputs_node_info[i])) {
       return true;
     }
   }
   return false;
 }
+
+NodeInfo GetNodeInfoFromValue(const ValuePtr &input) {
+  if (input->isa<tensor::Tensor>()) {
+    NodeInfo node_info;
+    auto tensor = input->cast<tensor::TensorPtr>();
+    auto auto_meta_data = tensor->auto_grad_meta_data();
+    // Scalar tensor
+    if (auto_meta_data == nullptr) {
+      node_info.grad_type = InputType::kConstant;
+      node_info.value = input;
+      return node_info;
+    }
+
+    // Tensor
+    node_info.grad_type = auto_meta_data->input_type();
+    node_info.op_index = auto_meta_data->op_index();
+    if (node_info.grad_type == InputType::kConstant || node_info.grad_type == InputType::kParameter) {
+      node_info.value = input;
+    }
+    return node_info;
+  } else if (input->isa<ValueSequence>()) {
+    NodeInfo node_info;
+    const auto &value_sequence = input->cast<ValueSequencePtr>();
+    for (const auto &i : value_sequence->value()) {
+      node_info.seq_node.emplace_back(GetNodeInfoFromValue(i));
+    }
+  } else if (input->isa<stub::StubNode>()) {
+    auto stub_node = input->cast<stub::StubNodePtr>();
+    MS_EXCEPTION_IF_NULL(stub_node);
+    GetNodeInfoFromValue(stub_node->WaitValue());
+  } else {
+    NodeInfo node_info;
+    node_info.grad_type = InputType::kConstant;
+    node_info.value = input;
+    return node_info;
+  }
+  return NodeInfo{};
+}
+
+struct CompareBasedOnAbstract {
+  static bool IsNodeChange(const ValuePtrList &inputs, const DynamicDetectNodeInfoPtr &old_node,
+                           const DynamicDetectNodeInfoPtr &new_node) {
+    // Compare input abs
+    if (IsDynamicDetectAbsChange(old_node->abs_compare_info.input_abs, new_node->abs_compare_info.input_abs)) {
+      return true;
+    }
+
+    // Compare out abs
+    if (IsDynamicDetectAbsChange(old_node->abs_compare_info.out_abs, new_node->abs_compare_info.out_abs)) {
+      return true;
+    }
+
+    // Get input
+    BuildDynamicDetectInputsNodeInfo(new_node, inputs);
+
+    // Compare input
+    return IsInputsNodeInfoChange(old_node->abs_compare_info.inputs, new_node->abs_compare_info.inputs);
+  }
+
+  static bool IsDynamicDetectAbsChange(const AbstractBasePtr &old_abs, const AbstractBasePtr &new_abs) {
+    if (old_abs == new_abs) {
+      return false;
+    }
+    if (old_abs == nullptr || new_abs == nullptr) {
+      MS_LOG(DEBUG) << "Graph is dynamic, old_abs is different with new_abs";
+      return true;
+    }
+    if (!common::IsEqual(old_abs->BuildType(), new_abs->BuildType()) ||
+        !common::IsEqual(old_abs->BuildShape(), new_abs->BuildShape())) {
+      MS_LOG(DEBUG) << "Graph is dynamic, old_abs is different with new_abs, old abs: " << old_abs->ToString()
+                    << ", new abs: " << new_abs->ToString();
+      return true;
+    }
+    return false;
+  }
+
+  static bool IsDynamicDetectAbsChange(const abstract::AbstractBasePtrList &node_abs,
+                                       const abstract::AbstractBasePtrList &old_node_abs) {
+    if (node_abs.size() != old_node_abs.size()) {
+      MS_LOG(DEBUG) << "Graph is dynamic, node_abs size: " << node_abs.size()
+                    << ", old_node_abs size: " << old_node_abs.size();
+      return true;
+    }
+    for (size_t i = 0; i < node_abs.size(); ++i) {
+      if (IsDynamicDetectAbsChange(node_abs[i], old_node_abs[i])) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  static void BuildDynamicDetectInputsNodeInfo(const DynamicDetectNodeInfoPtr &node, const ValuePtrList &inputs) {
+    std::transform(inputs.begin(), inputs.end(), std::back_inserter(node->abs_compare_info.inputs),
+                   [](const auto &item) { return GetNodeInfoFromValue(item); });
+  }
+};
+
+struct CompareBasedOnValueSimpleInfo {
+  static bool IsNodeChange(const ValuePtrList &inputs, const DynamicDetectNodeInfoPtr &old_node,
+                           const DynamicDetectNodeInfoPtr &new_node) {
+    BuildInputsValueSimpleInfo(new_node, inputs);
+    return IsInputsChange(old_node->value_compare_info, new_node->value_compare_info);
+  }
+
+  static void BuildInputsValueSimpleInfo(const DynamicDetectNodeInfoPtr &node, const ValuePtrList &inputs) {
+    size_t input_size = inputs.size();
+    node->value_compare_info.input_value_simple_info.size = input_size;
+    node->value_compare_info.input_value_simple_info.shape_vector_.reserve(input_size);
+    node->value_compare_info.input_value_simple_info.dtype_vector_.reserve(input_size);
+    node->value_compare_info.input_value_simple_info.object_type_vector_.reserve(input_size);
+    for (const auto &input : inputs) {
+      node->value_compare_info.inputs.emplace_back(GetNodeInfoFromValue(input));
+
+      (void)node->value_compare_info.input_value_simple_info.shape_vector_.emplace_back(
+        PyNativeAlgo::Common::GetShapeFromValue(input));
+      auto [dtype, obj_type] = PyNativeAlgo::Common::GetTypeFromValue(input);
+      (void)node->value_compare_info.input_value_simple_info.dtype_vector_.emplace_back(dtype);
+      (void)node->value_compare_info.input_value_simple_info.object_type_vector_.emplace_back(obj_type);
+    }
+  }
+
+  static bool IsInputsChange(const ValueCompareInfo &old_value_compare_info,
+                             const ValueCompareInfo &new_value_compare_info) {
+    if (IsInputsNodeInfoChange(old_value_compare_info.inputs, new_value_compare_info.inputs)) {
+      return true;
+    }
+    return IsValueSimpleInfoChange(old_value_compare_info.input_value_simple_info,
+                                   new_value_compare_info.input_value_simple_info);
+  }
+
+  template <typename T1, typename T2>
+  static bool IsNotEuqal(const T1 &old_input, const T2 &new_input) {
+    return old_input != new_input;
+  }
+
+  static bool IsValueSimpleInfoChange(const ValueSimpleInfo &old_input_simple_info,
+                                      const ValueSimpleInfo &new_input_simple_info) {
+    if (old_input_simple_info.size != new_input_simple_info.size) {
+      MS_LOG(DEBUG) << "Graph is dynamic, old_input_simple_info size: " << old_input_simple_info.size
+                    << ", new_input_simple_info size: " << new_input_simple_info.size;
+      return true;
+    }
+    for (size_t i = 0; i < old_input_simple_info.size; ++i) {
+      if (IsNotEuqal(old_input_simple_info.shape_vector_[i], new_input_simple_info.shape_vector_[i]) ||
+          IsNotEuqal(old_input_simple_info.dtype_vector_[i], new_input_simple_info.dtype_vector_[i]) ||
+          IsNotEuqal(old_input_simple_info.object_type_vector_[i], new_input_simple_info.object_type_vector_[i])) {
+        MS_LOG(DEBUG) << "Graph is dynamic, old input simple info: " << ValueSimpleInfoToString(old_input_simple_info)
+                      << ", new input simple info: " << ValueSimpleInfoToString(new_input_simple_info);
+        return true;
+      }
+    }
+    return false;
+  }
+};
 
 void UpdateAbsCache(const std::string &arg_id, const ValuePtr &v, const abstract::BaseShapePtr &base_shape,
                     const abstract::AbstractBasePtr &abs, size_t index) {
@@ -377,12 +456,13 @@ bool NodeDynamicDetect::IsNodeDynamic(const TopCellInfoPtr &top_cell, const Valu
     if (!old_node_info->is_graph_node || node->graph_phase != old_node_info->graph_phase) {
       MS_LOG(DEBUG) << "Graph is dynamic, old is_graph_node: " << old_node_info->is_graph_node
                     << ", new is_graph_node: " << node->is_graph_node << ", old graph_phase "
-                    << old_node_info->graph_phase << ", new graph_phase: " << node->graph_phase;
+                    << old_node_info->is_graph_node << ", new graph_phase: " << node->graph_phase;
       return true;
     }
     return false;
   }
 
+  // 2.Detect prim
   if (IsDynamicDetectPrimChange(old_node_info->op_prim, node->op_prim)) {
     MS_LOG(DEBUG) << "Graph is dynamic, old node prim: "
                   << (old_node_info->op_prim != nullptr
@@ -395,30 +475,22 @@ bool NodeDynamicDetect::IsNodeDynamic(const TopCellInfoPtr &top_cell, const Valu
     return true;
   }
 
-  // Compare input abs
-  if (IsDynamicDetectAbsChange(old_node_info->input_abs, node->input_abs)) {
-    return true;
+  // 3.Detect inputs
+  if (node->is_value_compare) {
+    return CompareBasedOnValueSimpleInfo::IsNodeChange(inputs, old_node_info, node);
+  } else {
+    return CompareBasedOnAbstract::IsNodeChange(inputs, old_node_info, node);
   }
-
-  // Compare out abs
-  if (IsDynamicDetectAbsChange(old_node_info->out_abs, node->out_abs)) {
-    return true;
-  }
-
-  // Get input
-  node->inputs = BuildDynamicDetectNodeInputs(inputs);
-
-  // Compare input
-  if (IsDynamicDetectInputChange(old_node_info->inputs, node->inputs)) {
-    return true;
-  }
-  return false;
 }
 
 void NodeDynamicDetect::SaveDynamicDetectNodeInfoInFirstTime(const TopCellInfoPtr &top_cell, const ValuePtrList &inputs,
                                                              const DynamicDetectNodeInfoPtr &node, size_t node_idx) {
   MS_EXCEPTION_IF_NULL(node);
-  node->inputs = BuildDynamicDetectNodeInputs(inputs);
+  if (node->is_value_compare) {
+    CompareBasedOnValueSimpleInfo::BuildInputsValueSimpleInfo(node, inputs);
+  } else {
+    CompareBasedOnAbstract::BuildDynamicDetectInputsNodeInfo(node, inputs);
+  }
   (void)cell_id_with_dynamic_detect_nodes_[top_cell->obj_id_with_grad_order()][top_cell->cell_id()].emplace_back(node);
   MS_LOG(DEBUG) << "Save node " << (node->op_prim != nullptr ? node->op_prim->name() : "")
                 << " firstly, node_idx: " << node_idx << ", is_jit_node: " << node->is_graph_node

@@ -3,8 +3,12 @@ InferOutput(${call_args});
 
 ${tensor_list_convert}
 MS_EXCEPTION_IF_NULL(primitive());
-auto kernel_attr_pair =
-  PyBoostUtils::SelectKernel(input_abs(), output_abs(), device_context(), primitive()->name());
+std::pair<bool, KernelAttr> kernel_attr_pair;
+if (output_value_simple_info_ == nullptr) {
+  kernel_attr_pair = PyBoostUtils::SelectKernel(input_abs_, output_abs_, device_context_, primitive_->name());
+} else {
+  kernel_attr_pair = PyBoostUtils::SelectKernel(device_context_, primitive_->name(), output_value_simple_info_, ${call_args});
+}
 if (kernel_attr_pair.first || op_name() == "Cast") {
   // Create device address for input tensors
   auto op = get_op();
@@ -28,11 +32,10 @@ if (kernel_attr_pair.first || op_name() == "Cast") {
     ${get_inputs_kernel_tensors}
 
     // Get outputs kernel tensors
-    const auto &output_address_info =
-      PyBoostUtils::GetAddressInfo(device_context, op->stream_id(), {op->output_abs()}, outputs);
+    const auto &output_address_info = PyBoostUtils::GetAddressInfo(device_context, op->stream_id(), {op->output_abs()}, outputs);
 
-    PyBoostUtils::LaunchKernel(primitive(), op->device_context(),
-                               input_address_info, output_address_info);
+    // Launch kernel
+    PyBoostUtils::LaunchKernel(primitive(), op->device_context(), input_address_info, output_address_info);
   }));
   MS_LOG(DEBUG) << op_name() << " call end";
   return ${return_values};

@@ -29,6 +29,7 @@
 #include "pipeline/pynative/grad/function/func_builder.h"
 #include "pipeline/jit/ps/parse/data_converter.h"
 #include "include/common/utils/primfunc_utils.h"
+
 namespace mindspore {
 namespace pynative {
 class PyNativeExecutor;
@@ -52,6 +53,8 @@ struct Common {
   static void DumpGraphIR(const std::string &filename, const FuncGraphPtr &graph);
   static TypeId GetTypeFromAbstract(const abstract::AbstractBasePtr &abs);
   static ShapeVector GetShapeFromAbstract(const abstract::AbstractBasePtr &abs);
+  static std::pair<TypePtr, TypeId> GetTypeFromValue(const ValuePtr &v);
+  static ShapeVector GetShapeFromValue(const ValuePtr &v);
   static ValuePtr CreatOutputTensorValueByAbstract(const abstract::AbstractBasePtr &abs);
   static void ReplaceCNodeWithValueNode(const FuncGraphPtr &bprop_graph);
   static const std::shared_ptr<PyNativeExecutor> &GetPyNativeExecutor();
@@ -82,8 +85,9 @@ struct Common {
   static tensor::TensorPtr ConvertToContiguousTensor(const tensor::TensorPtr &tensor, bool requires_grad);
   static ValuePtr ConvertToContiguousValue(const ValuePtr &v, bool requires_grad);
   static size_t GetValueSize(const ValuePtr &v);
-  static tensor::TensorPtr ConvertToContiguousTensor(const tensor::TensorPtr &tensor);
   static ValuePtr CreateTensorByConstantValue(const ValuePtr &value);
+  static void CheckAndSetAbstract(const OpGradInfoPtr &op_grad_info);
+
   template <typename T>
   static std::string PrintDebugInfo(std::vector<T> items, const std::string &info_header = "") {
     static constexpr size_t end_char_size = 2;
@@ -160,12 +164,12 @@ struct DataConvert {
 
 struct PyBoost {
   static FrontendOpRunInfoPtr Init(const PrimitivePtr &prim, const py::list &args);
-  static void DoGrad(const FrontendOpRunInfoPtr &op_run_info);
+  static void DoGrad(const kernel::pyboost::OpPtr &op, const FrontendOpRunInfoPtr &op_run_info,
+                     ValuePtrList &&op_inputs);
   static void MakeOutputValue(const FrontendOpRunInfoPtr &op_run_info, const std::vector<TensorPtr> &outputs);
-  static void UpdateOutputTensorGradInfo(const std::vector<TensorPtr> &outputs);
-  static void UpdateStubOutput(const FrontendOpRunInfoPtr &op_run_info, const AbstractBasePtr &abstract);
-  static void UpdateOpRunInfo(const kernel::pyboost::OpPtr &op, const vector<ValuePtr> &op_inputs,
-                              const FrontendOpRunInfoPtr &op_run_info);
+  static void UpdateStubOutput(const FrontendOpRunInfoPtr &op_run_info, const AbstractBasePtr &abstract,
+                               const kernel::pyboost::OpPtr &op);
+  static void UpdateOpRunInfo(const kernel::pyboost::OpPtr &op, const FrontendOpRunInfoPtr &op_run_info);
   static PrimitivePtr ConvertPrimitive(const py::object &obj);
   static py::object RunPyFunction(const PrimitivePtr &prim, const py::list &args);
   template <typename T>
@@ -203,7 +207,7 @@ struct PyBoost {
     }
     return ret;
   }
-  static void DataSyncForGraph(const kernel::pyboost::OpPtr &op, const vector<ValuePtr> &op_inputs);
+  static void DataSyncForGraph(const kernel::pyboost::OpPtr &op, ValuePtrList &&op_inputs);
 };
 
 // Used for auto grad, like func_grad and ir grad

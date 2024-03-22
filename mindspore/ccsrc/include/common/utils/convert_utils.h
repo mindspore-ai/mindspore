@@ -33,6 +33,7 @@
 #include "ir/func_graph.h"
 #include "ir/kernel_tensor_value.h"
 #include "include/common/visible.h"
+#include "mindspore/core/utils/simple_info.h"
 
 namespace mindspore {
 namespace tensor {
@@ -99,6 +100,9 @@ COMMON_EXPORT ValuePtr UpdateValueByAttrDataType(const ValuePtr &value, const st
 COMMON_EXPORT std::map<SignatureEnumDType, std::pair<TypeId, bool>> GetSignatureTypeMap(
   const std::vector<SignatureEnumDType> &dtypes, const std::vector<TypeId> &args_type_id,
   const std::vector<bool> &args_is_tensor);
+
+COMMON_EXPORT std::string ValueSimpleInfoToString(const ValueSimpleInfo &value_simple_info);
+COMMON_EXPORT abstract::AbstractBasePtr TransformValueSimpleInfoToAbstract(const ValueSimpleInfo &value_simple_info);
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CCSRC_INCLUDE_COMMON_UTILS_CONVERT_UTILS_H_

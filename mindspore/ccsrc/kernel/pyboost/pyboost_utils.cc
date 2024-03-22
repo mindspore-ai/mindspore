@@ -41,6 +41,12 @@ void CreateTensor(const TypePtr &type, const ShapeVector &shape_vector, const Ab
   (void)outputs->emplace_back(output_tensor);
   MS_LOG(DEBUG) << "Create output tensor " << output_tensor->ToString();
 }
+
+void CreateTensor(const TypePtr &type, const ShapeVector &shape_vector, std::vector<tensor::TensorPtr> *outputs) {
+  auto output_tensor = std::make_shared<tensor::Tensor>(type->type_id(), shape_vector);
+  (void)outputs->emplace_back(output_tensor);
+  MS_LOG(DEBUG) << "Create output tensor " << output_tensor->ToString();
+}
 }  // namespace
 
 void PyBoostUtils::CreateOutputTensor(const AbstractBasePtr &abstract, std::vector<tensor::TensorPtr> *outputs) {
@@ -71,6 +77,20 @@ void PyBoostUtils::CreateOutputTensor(const AbstractBasePtr &abstract, std::vect
     CreateTensor(type, {}, nullptr, outputs);
   } else {
     MS_LOG(EXCEPTION) << "Not support abstract " << abstract->ToString();
+  }
+}
+
+void PyBoostUtils::CreateOutputTensor(const ValueSimpleInfoPtr &output_value_simple_info,
+                                      std::vector<tensor::TensorPtr> *outputs) {
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative,
+                                     runtime::ProfilerEvent::kPyBoostCreateOutputTensor,
+                                     runtime::ProfilerRecorder::kNoName, false);
+  MS_EXCEPTION_IF_NULL(output_value_simple_info);
+  size_t elem_size = output_value_simple_info->dtype_vector_.size();
+  for (size_t i = 0; i < elem_size; ++i) {
+    MS_LOG(DEBUG) << "Get tensor shape " << output_value_simple_info->shape_vector_[i] << ", type "
+                  << TypeIdToType(output_value_simple_info->dtype_vector_[i]->type_id())->ToString();
+    CreateTensor(output_value_simple_info->dtype_vector_[i], output_value_simple_info->shape_vector_[i], outputs);
   }
 }
 
@@ -326,6 +346,7 @@ void PyBoostUtils::LaunchKernel(const PrimitivePtr &primitive, const DeviceConte
   MS_LOG(DEBUG) << real_name << " Launch end";
 }
 
+namespace {
 TypeId GetTypeIdFromAbstractTensor(const AbstractBasePtr &abs_base) {
   if (abs_base->isa<abstract::AbstractTensor>()) {
     auto abs_tensor = std::dynamic_pointer_cast<abstract::AbstractTensor>(abs_base);
@@ -440,6 +461,43 @@ bool IsObjectStrictlyMatched(const std::vector<TypeId> &object_types, const std:
   return true;
 }
 
+std::pair<bool, KernelAttr> GetKernelAttr(
+  const std::string &op_name, const kernel::KernelModPtr &kernel_mod,
+  const std::pair<std::vector<TypeId>, std::vector<TypeId>> &inputs_types_dtypes,
+  const std::pair<std::vector<TypeId>, std::vector<TypeId>> &outputs_types_dtypes) {
+  const auto &support_list = kernel_mod->GetOpSupport();
+  for (auto &cur_kernel_attr : support_list) {
+    auto data_pair = kernel::GetInOutDataTypesFromKernelAttr(cur_kernel_attr);
+    const auto &[input_data_types, output_data_types] = kernel::GetInOutDataTypesFromKernelAttr(cur_kernel_attr);
+    if (IsObjectStrictlyMatched(inputs_types_dtypes.first, inputs_types_dtypes.second, input_data_types) &&
+        IsObjectStrictlyMatched(outputs_types_dtypes.first, outputs_types_dtypes.second, output_data_types)) {
+      return std::make_pair(true, cur_kernel_attr);
+    }
+  }
+
+  for (auto &cur_kernel_attr : support_list) {
+    auto data_pair = kernel::GetInOutDataTypesFromKernelAttr(cur_kernel_attr);
+    const auto &[input_data_types, output_data_types] = kernel::GetInOutDataTypesFromKernelAttr(cur_kernel_attr);
+    if (IsObjectDtypeWeaklyMatched(inputs_types_dtypes.second, input_data_types) &&
+        IsObjectDtypeWeaklyMatched(outputs_types_dtypes.second, output_data_types)) {
+      return std::make_pair(false, cur_kernel_attr);
+    }
+  }
+  std::vector<std::string> inputs;
+  std::vector<std::string> outputs;
+  for (auto &input_type : inputs_types_dtypes.second) {
+    (void)inputs.emplace_back(TypeIdToString(input_type));
+  }
+  for (auto &output_type : outputs_types_dtypes.second) {
+    (void)outputs.emplace_back(TypeIdToString(output_type));
+  }
+  MS_EXCEPTION(TypeError)
+    << "Unsupported op [" << op_name << "] on CPU, input_type:" << inputs << " ,output_type:" << outputs
+    << ". Please confirm whether the device target setting is correct, "
+    << "or refer to 'mindspore.ops' at https://www.mindspore.cn to query the operator support list.";
+}
+}  // namespace
+
 std::pair<bool, KernelAttr> PyBoostUtils::SelectKernel(const std::vector<AbstractBasePtr> &inputs_abs,
                                                        const AbstractBasePtr &outputs_abs,
                                                        const DeviceContext *device_context,
@@ -449,38 +507,8 @@ std::pair<bool, KernelAttr> PyBoostUtils::SelectKernel(const std::vector<Abstrac
   if (kernel_mod == nullptr) {
     MS_LOG(EXCEPTION) << "The kernel " << op_name << " unregistered.";
   }
-  const auto &support_list = kernel_mod->GetOpSupport();
-  const auto &[inputs_types, inputs_dtypes] = GetInputTypeFromAbstractBase(inputs_abs);
-  const auto &[output_types, output_dtypes] = GetOutputTypeFromAbstractBase(outputs_abs);
-  for (auto &cur_kernel_attr : support_list) {
-    auto data_pair = kernel::GetInOutDataTypesFromKernelAttr(cur_kernel_attr);
-    const auto &[input_data_types, output_data_types] = kernel::GetInOutDataTypesFromKernelAttr(cur_kernel_attr);
-    if (IsObjectStrictlyMatched(inputs_types, inputs_dtypes, input_data_types) &&
-        IsObjectStrictlyMatched(output_types, output_dtypes, output_data_types)) {
-      return std::make_pair(true, cur_kernel_attr);
-    }
-  }
-
-  for (auto &cur_kernel_attr : support_list) {
-    auto data_pair = kernel::GetInOutDataTypesFromKernelAttr(cur_kernel_attr);
-    const auto &[input_data_types, output_data_types] = kernel::GetInOutDataTypesFromKernelAttr(cur_kernel_attr);
-    if (IsObjectDtypeWeaklyMatched(inputs_dtypes, input_data_types) &&
-        IsObjectDtypeWeaklyMatched(output_dtypes, output_data_types)) {
-      return std::make_pair(false, cur_kernel_attr);
-    }
-  }
-  std::vector<std::string> inputs;
-  std::vector<std::string> outputs;
-  for (auto &input_type : inputs_dtypes) {
-    (void)inputs.emplace_back(TypeIdToString(input_type));
-  }
-  for (auto &output_type : output_dtypes) {
-    (void)outputs.emplace_back(TypeIdToString(output_type));
-  }
-  MS_EXCEPTION(TypeError)
-    << "Unsupported op [" << op_name << "] on CPU, input_type:" << inputs << " ,output_type:" << outputs
-    << ". Please confirm whether the device target setting is correct, "
-    << "or refer to 'mindspore.ops' at https://www.mindspore.cn to query the operator support list.";
+  return GetKernelAttr(op_name, kernel_mod, GetInputTypeFromAbstractBase(inputs_abs),
+                       GetOutputTypeFromAbstractBase(outputs_abs));
 }
 
 tensor::TensorPtr PyBoostUtils::CastTensor(const tensor::TensorPtr &tensor, const TypeId &type_id,
@@ -516,6 +544,41 @@ std::vector<tensor::TensorPtr> PyBoostUtils::CastTensor(const std::vector<tensor
     (void)output_tensors.emplace_back(output);
   }
   return output_tensors;
+}
+
+namespace {
+constexpr size_t kAbstractCacheSize = 8192;
+using AbstractCache = RingBuffer<AbstractBasePtr, kAbstractCacheSize>;
+AbstractCache kAbstractCache;
+}  // namespace
+
+void AbstractConvertFunc::CacheAbstract(const AbstractBasePtr &abstract) { kAbstractCache.Push(abstract); }
+
+AbstractBasePtr AbstractConvertFunc::ConvertAbstract(const ValuePtr &t) { return t->ToAbstract(); }
+
+// Tensor is held by Abstract, may lead to memory leak.
+AbstractBasePtr AbstractConvertFunc::ConvertAbstract(const TensorPtr &t) {
+  auto abs = t->ToAbstract();
+  abs->set_value(kValueAny);
+  t->set_abstract(abs);
+  kAbstractCache.Push(abs);
+  return abs;
+}
+
+AbstractBasePtr AbstractConvertFunc::ConvertAbstract(const ValueTuplePtr &t) {
+  AbstractBasePtrList abs_list(t->value().size());
+  for (size_t i = 0; i < t->value().size(); ++i) {
+    auto &val = t->value()[i];
+    auto abs = val->ToAbstract();
+    if (val->isa<tensor::Tensor>()) {
+      abs->set_value(kValueAny);
+      auto tensor = val->cast<tensor::TensorPtr>();
+      tensor->set_abstract(abs);
+      kAbstractCache.Push(abs);
+    }
+    abs_list[i] = abs;
+  }
+  return std::make_shared<abstract::AbstractTuple>(abs_list);
 }
 }  // namespace pyboost
 }  // namespace kernel
