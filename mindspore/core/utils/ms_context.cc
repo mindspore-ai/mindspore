@@ -131,6 +131,7 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   set_param<bool>(MS_CTX_CONV_ALLOW_TF32, true);
   set_param<bool>(MS_CTX_MATMUL_ALLOW_TF32, false);
   set_param<int>(MS_CTX_COMPUTE_COMMUNICATE_FUSION_LEVEL, 0);
+  set_param<int>(MS_CTX_JIT_DEBUG_LEVEL, kJitRelease);
 
   uint32_t kDefaultInterOpParallelThreads = 0;
   uint32_t kDefaultRuntimeNumThreads = 30;
