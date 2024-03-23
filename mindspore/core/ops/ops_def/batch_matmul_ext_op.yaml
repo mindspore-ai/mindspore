@@ -1,0 +1,16 @@
+#operator batch_matmul
+batch_mat_mul_ext:
+  args:
+    input:
+      dtype: tensor
+    mat2:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor
+  dispatch:
+    enable: True
+    Ascend: BatchMatMulExtAscend
+
+
+

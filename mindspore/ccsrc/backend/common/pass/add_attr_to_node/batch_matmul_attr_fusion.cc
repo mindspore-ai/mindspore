@@ -18,22 +18,11 @@
 namespace mindspore {
 namespace opt {
 const AnfNodePtr BatchMatMulAttrFusionProcess(const FuncGraphPtr &graph, const AnfNodePtr &node) {
-  constexpr auto kTransposeA = "transpose_a";
-  constexpr auto kTransposeB = "transpose_b";
-  constexpr auto kTransposeX1 = "transpose_x1";
-  constexpr auto kTransposeX2 = "transpose_x2";
-
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
 
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-
-  bool transpose_a = common::AnfAlgo::GetNodeAttr<bool>(cnode, kTransposeA);
-  bool transpose_b = common::AnfAlgo::GetNodeAttr<bool>(cnode, kTransposeB);
-
-  common::AnfAlgo::SetNodeAttr(kTransposeX1, MakeValue(transpose_a), cnode);
-  common::AnfAlgo::SetNodeAttr(kTransposeX2, MakeValue(transpose_b), cnode);
 
   return cnode;
 }

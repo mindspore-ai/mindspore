@@ -1,0 +1,27 @@
+#operator batch_matmul
+batch_mat_mul:
+  args:
+    x:
+      dtype: tensor
+    y:
+      dtype: tensor
+    transpose_a:
+      dtype: bool
+      default: False
+      prim_init: True
+    transpose_b:
+      dtype: bool
+      default: False
+      prim_init: True
+  args_signature:
+    dtype_group: (x, y)
+  returns:
+    output:
+      dtype: tensor
+  dispatch:
+    enable: True
+    Ascend: BatchMatMulAscend
+
+
+
+

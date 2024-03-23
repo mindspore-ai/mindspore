@@ -57,7 +57,7 @@ class COMMON_EXPORT BpropBuilder : public Emitter {
   NodePtr GetInput(size_t i) const;
   const NodePtrList &GetInputs() const { return *inputs_ptr_; }
 
-  NodePtrList BroadcastGradientArgs(const NodePtr &s0, const NodePtr &s1, size_t shift = 0);
+  NodePtrList BroadcastGradientArgs(const NodePtr &s0, const NodePtr &s1, size_t shift = 0LL);
 
   // For node that has single output
   ShapeVector GetShape(const NodePtr &node) const { return node->shape(); }

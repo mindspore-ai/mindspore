@@ -17,17 +17,28 @@
 #ifndef MINDSPORE_CORE_OPS_FUSION_MATMUL_ALLREDUCE_H_
 #define MINDSPORE_CORE_OPS_FUSION_MATMUL_ALLREDUCE_H_
 #include "ops/base_operator.h"
-#include "ops/mat_mul.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kMatMulAllReduce = "MatMulAllReduce";
-class MIND_API MatMulAllReduce : public MatMul {
+class MIND_API MatMulAllReduce : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(MatMulAllReduce);
   /// \brief Constructor.
-  MatMulAllReduce() : MatMul(kMatMulAllReduce) {}
+  MatMulAllReduce() : BaseOperator(kMatMulAllReduce) {}
   void Init() const {}
+  /// \brief Set transpose_a.
+  void set_transpose_a(bool transpose_a);
+  /// \brief Set transpose_b.
+  void set_transpose_b(bool transpose_b);
+  /// \brief Get transpose_a.
+  ///
+  /// \return transpose_a.
+  bool get_transpose_a() const;
+  /// \brief Get transpose_b.
+  ///
+  /// \return transpose_b.
+  bool get_transpose_b() const;
 };
 }  // namespace ops
 }  // namespace mindspore

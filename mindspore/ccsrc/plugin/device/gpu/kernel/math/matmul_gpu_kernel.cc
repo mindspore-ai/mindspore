@@ -20,7 +20,6 @@
 #include <utility>
 #include <memory>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
-#include "ops/batch_matmul.h"
 #include "ops/math_op_name.h"
 #include "utils/ms_context.h"
 #include "plugin/device/gpu/kernel/math/matmul/matmul_wrapper.h"
@@ -29,6 +28,19 @@ namespace mindspore {
 namespace kernel {
 namespace {
 inline bool IsComplex(cudaDataType_t type) { return type == CUDA_C_32F || type == CUDA_C_64F; }
+inline int GetTransposeOperation(const std::vector<KernelTensor *> &inputs, int trans_index_offset,
+                                 cublasOperation_t *trans_a, cublasOperation_t *trans_b,
+                                 const std::string &kernel_name) {
+  auto transpose_x1_opt = inputs[kIndex2 + trans_index_offset]->GetOptionalValueWithCheck<bool>();
+  auto transpose_x2_opt = inputs[kIndex3 + trans_index_offset]->GetOptionalValueWithCheck<bool>();
+  if (!transpose_x1_opt.has_value() || !transpose_x2_opt.has_value()) {
+    MS_LOG(ERROR) << "For '" << kernel_name << "', transpose_a and transpose_b should be specified.";
+    return false;
+  }
+  *trans_a = transpose_x1_opt.value() ? CUBLAS_OP_T : CUBLAS_OP_N;
+  *trans_b = transpose_x2_opt.value() ? CUBLAS_OP_T : CUBLAS_OP_N;
+  return KRET_OK;
+}
 }  // namespace
 
 bool MatMulGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
@@ -60,26 +72,6 @@ bool MatMulGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const s
     MS_LOG(INFO) << "input and output type is float16, allow to use Tensor Core operations if possible";
     algo_ = CUBLAS_GEMM_DEFAULT_TENSOR_OP;
   }
-
-  transpose_x1_ = GetValue<bool>(primitive_->GetAttr("transpose_a")) ? CUBLAS_OP_T : CUBLAS_OP_N;
-  transpose_x2_ = GetValue<bool>(primitive_->GetAttr("transpose_b")) ? CUBLAS_OP_T : CUBLAS_OP_N;
-  if (transpose_x1_ != CUBLAS_OP_N && IsComplex(dtype_a_)) {
-    if (kernel_name_ == kBatchMatMulOpName) {
-      transpose_x1_ = CUBLAS_OP_C;
-    } else {
-      transpose_x1_ = CUBLAS_OP_T;
-    }
-  }
-  if (transpose_x2_ != CUBLAS_OP_N && IsComplex(dtype_b_)) {
-    if (kernel_name_ == kBatchMatMulOpName) {
-      transpose_x2_ = CUBLAS_OP_C;
-    } else {
-      transpose_x2_ = CUBLAS_OP_T;
-    }
-  }
-  if (kernel_name_ == kFusedMatMulBiasAddOpName) {
-    is_fused_matmul_biasadd_ = true;
-  }
   return true;
 }
 
@@ -87,6 +79,35 @@ int MatMulGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const 
   int ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     return ret;
+  }
+
+  if (kernel_name_ == kBatchMatMulExtOpName) {
+    transpose_x1_ = CUBLAS_OP_N;
+    transpose_x2_ = CUBLAS_OP_N;
+  } else {
+    int trans_index_offset = 0;
+    if (kernel_name_ == kFusedMatMulBiasAddOpName) {
+      is_fused_matmul_biasadd_ = true;
+      trans_index_offset = 1;
+    }
+    ret = GetTransposeOperation(inputs, trans_index_offset, &transpose_x1_, &transpose_x2_, kernel_name_);
+    if (ret != KRET_OK) {
+      return ret;
+    }
+  }
+  if (transpose_x1_ != CUBLAS_OP_N && IsComplex(dtype_a_)) {
+    if (kernel_name_ == kBatchMatMulOpName || kernel_name_ == kBatchMatMulExtOpName) {
+      transpose_x1_ = CUBLAS_OP_C;
+    } else {
+      transpose_x1_ = CUBLAS_OP_T;
+    }
+  }
+  if (transpose_x2_ != CUBLAS_OP_N && IsComplex(dtype_b_)) {
+    if (kernel_name_ == kBatchMatMulOpName || kernel_name_ == kBatchMatMulExtOpName) {
+      transpose_x2_ = CUBLAS_OP_C;
+    } else {
+      transpose_x2_ = CUBLAS_OP_T;
+    }
   }
 
   auto output_shape_signed = outputs[kIndex0]->GetShapeVector();
@@ -176,20 +197,82 @@ std::map<std::string, std::vector<std::pair<KernelAttr, MatMulGpuKernelMod::MatM
      {{KernelAttr()
          .AddInputAttr(kNumberTypeComplex64)
          .AddInputAttr(kNumberTypeComplex64)
+         .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+         .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
          .AddOutputAttr(kNumberTypeComplex64),
        &MatMulGpuKernelMod::LaunchKernel<Complex<float>, Complex<float>>},
       {KernelAttr()
          .AddInputAttr(kNumberTypeComplex128)
          .AddInputAttr(kNumberTypeComplex128)
+         .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+         .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
          .AddOutputAttr(kNumberTypeComplex128),
        &MatMulGpuKernelMod::LaunchKernel<Complex<double>, Complex<double>>},
-      {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeFloat64)
+         .AddInputAttr(kNumberTypeFloat64)
+         .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+         .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+         .AddOutputAttr(kNumberTypeFloat64),
        &MatMulGpuKernelMod::LaunchKernel<double, double>},
-      {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeFloat32)
+         .AddInputAttr(kNumberTypeFloat32)
+         .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+         .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+         .AddOutputAttr(kNumberTypeFloat32),
        &MatMulGpuKernelMod::LaunchKernel<float, float>},
-      {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeFloat16)
+         .AddInputAttr(kNumberTypeFloat16)
+         .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+         .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+         .AddOutputAttr(kNumberTypeFloat16),
        &MatMulGpuKernelMod::LaunchKernel<half, float>}}},
     {kBatchMatMulOpName,
+     {{KernelAttr()
+         .AddInputAttr(kNumberTypeFloat64)
+         .AddInputAttr(kNumberTypeFloat64)
+         .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+         .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+         .AddOutputAttr(kNumberTypeFloat64),
+       &MatMulGpuKernelMod::LaunchKernel<double, double>},
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeFloat32)
+         .AddInputAttr(kNumberTypeFloat32)
+         .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+         .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+         .AddOutputAttr(kNumberTypeFloat32),
+       &MatMulGpuKernelMod::LaunchKernel<float, float>},
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeFloat16)
+         .AddInputAttr(kNumberTypeFloat16)
+         .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+         .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+         .AddOutputAttr(kNumberTypeFloat16),
+       &MatMulGpuKernelMod::LaunchKernel<half, float>},
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeInt8)
+         .AddInputAttr(kNumberTypeInt8)
+         .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+         .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+         .AddOutputAttr(kNumberTypeInt32),
+       &MatMulGpuKernelMod::LaunchKernel<int8_t, int32_t>},
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeComplex64)
+         .AddInputAttr(kNumberTypeComplex64)
+         .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+         .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+         .AddOutputAttr(kNumberTypeComplex64),
+       &MatMulGpuKernelMod::LaunchKernel<Complex<float>, Complex<float>>},
+      {KernelAttr()
+         .AddInputAttr(kNumberTypeComplex128)
+         .AddInputAttr(kNumberTypeComplex128)
+         .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+         .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+         .AddOutputAttr(kNumberTypeComplex128),
+       &MatMulGpuKernelMod::LaunchKernel<Complex<double>, Complex<double>>}}},
+    {kBatchMatMulExtOpName,
      {{KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
        &MatMulGpuKernelMod::LaunchKernel<double, double>},
       {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
@@ -213,18 +296,24 @@ std::map<std::string, std::vector<std::pair<KernelAttr, MatMulGpuKernelMod::MatM
          .AddInputAttr(kNumberTypeFloat64)
          .AddInputAttr(kNumberTypeFloat64)
          .AddInputAttr(kNumberTypeFloat64)
+         .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+         .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
          .AddOutputAttr(kNumberTypeFloat64),
        &MatMulGpuKernelMod::LaunchKernel<double, double>},
       {KernelAttr()
          .AddInputAttr(kNumberTypeFloat32)
          .AddInputAttr(kNumberTypeFloat32)
          .AddInputAttr(kNumberTypeFloat32)
+         .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+         .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
          .AddOutputAttr(kNumberTypeFloat32),
        &MatMulGpuKernelMod::LaunchKernel<float, float>},
       {KernelAttr()
          .AddInputAttr(kNumberTypeFloat16)
          .AddInputAttr(kNumberTypeFloat16)
          .AddInputAttr(kNumberTypeFloat16)
+         .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+         .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
          .AddOutputAttr(kNumberTypeFloat16),
        &MatMulGpuKernelMod::LaunchKernel<half, float>}}}};
 
@@ -247,6 +336,8 @@ MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, MatMul,
                                  []() { return std::make_shared<MatMulGpuKernelMod>(kMatMulOpName); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, BatchMatMul,
                                  []() { return std::make_shared<MatMulGpuKernelMod>(kBatchMatMulOpName); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, BatchMatMulExt,
+                                 []() { return std::make_shared<MatMulGpuKernelMod>(kBatchMatMulExtOpName); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, FusedMatMulBiasAdd,
                                  []() { return std::make_shared<MatMulGpuKernelMod>(kFusedMatMulBiasAddOpName); });
 }  // namespace kernel

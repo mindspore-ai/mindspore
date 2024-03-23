@@ -31,13 +31,14 @@ from mindspore.ops import composite as C
 from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
 from mindspore.ops.primitive import constexpr, _primexpr
 from mindspore.ops.operations._inner_ops import TileSize
-from mindspore.ops.auto_generate import Cummin
+from mindspore.ops.auto_generate import Cummin, BatchMatMul
+from mindspore.ops import auto_generate
 from mindspore.ops.operations.math_ops import STFT
 from mindspore.ops.operations.math_ops import LuUnpack
 from mindspore.ops.operations.math_ops import Roll
 from mindspore.ops.operations.math_ops import Ormqr
 from mindspore.ops.operations.array_ops import MatrixSetDiagV3, Transpose
-from mindspore.ops.auto_generate import (minimum, maximum, mul, sin, sinc, sinh, cummax, real, conj, add, cos, cosh,
+from mindspore.ops.auto_generate import (minimum, maximum, mul, sin, sinc, sinh, cummax, real, conj, add, batch_mat_mul, cos, cosh,
                                          matrix_exp, sqrt, rsqrt, square, trace, nextafter, abs, acos, acosh, angle,
                                          asin, asinh, atan, atan2, atanh, ceil, equal, erf, erfc, erfinv, exp, expm1,
                                          floor, floor_divide, floor_mod, gcd, greater, greater_equal, less, less_equal,
@@ -144,7 +145,7 @@ asinh_ = P.Asinh()
 atan2_ = P.Atan2()
 atan_ = P.Atan()
 atanh_ = P.Atanh()
-batch_matmul_ = P.BatchMatMul()
+batch_matmul_ = BatchMatMul()
 bessel_i0_ = BesselI0()
 bessel_i0e_ = P.BesselI0e()
 bessel_i1_ = BesselI1()
@@ -7863,42 +7864,7 @@ def matmul(input, other):
         >>> print(output.shape)
         (1,)
     """
-    if not (isinstance(input, Tensor) and isinstance(other, Tensor)):
-        raise TypeError("For matmul op, inputs must be all tensors.")
-
-    input_rank, other_rank = rank_(input), rank_(other)
-    if input_rank == 2 and other_rank == 2:
-        _matmul = _get_cache_prim(P.MatMul)(False, False)
-        return _matmul(input, other)
-
-    ndim1_orig, ndim2_orig = rank_(input), rank_(other)
-    shape1_orig, shape2_orig = shape_(input), shape_(other)
-    transpose_b = ndim2_orig == 1
-    shape_backbone = _check_matmul_shapes(shape1_orig, shape2_orig, 'matmul')
-    # infers the shape of the output
-    shape_out = shape_backbone + _infer_shape_rem(shape1_orig, shape2_orig,
-                                                  ndim1_orig, ndim2_orig, transpose_b)
-
-    _matmul = _get_cache_prim(P.MatMul)(False, transpose_b)
-    _batch_matmul = _get_cache_prim(P.BatchMatMul)(False, transpose_b)
-
-    input = _expand(input, 2)
-    other = _expand(other, 2)
-    if rank_(other) == 2:
-        if rank_(input) > 2:
-            input = reshape_(input, (-1, shape1_orig[-1]))
-        res = _matmul(input, other)
-    else:
-        # broadcasts input.shape[:-2] with other.shape[:-2]
-        ndim_aligned = _max(ndim1_orig, ndim2_orig)
-        input = _expand(input, ndim_aligned)
-        other = _expand(other, ndim_aligned)
-        shape1_aligned, shape2_aligned = shape_(input), shape_(other)
-        input = _broadcast_to(input, shape1_aligned[:-2], shape_backbone, ndim_aligned)
-        other = _broadcast_to(other, shape2_aligned[:-2], shape_backbone, ndim_aligned)
-        res = _batch_matmul(input, other)
-
-    return reshape_(res, shape_out)
+    return auto_generate.matmul_ext(input, other)
 
 
 def inner(input, other):
@@ -8015,10 +7981,7 @@ def bmm(input_x, mat2):
           [[3255. 3312. 3369.]]
           [[4362. 4428. 4494.]]]]
     """
-    if not (isinstance(input_x, Tensor) and isinstance(mat2, Tensor)):
-        raise TypeError("For bmm op, inputs input_x and mat2 must be all tensors.")
-
-    return batch_matmul_(input_x, mat2)
+    return auto_generate.batch_mat_mul(input_x, mat2)
 
 
 def quantile(input, q, axis=None, keepdims=False):
@@ -8182,7 +8145,7 @@ def baddbmm(input, batch1, batch2, beta=1, alpha=1):
           [5. 5. 5.]
           [5. 5. 5.]]]
     """
-    bmmop = _get_cache_prim(P.BatchMatMul)(False, False)
+    bmmop = _get_cache_prim(BatchMatMul)(False, False)
     if not (isinstance(input, Tensor) and isinstance(batch1, Tensor) and isinstance(batch2, Tensor)):
         raise TypeError("For Baddbmm, inputs must be all tensors.")
     input_dtype = dtype_(input)

@@ -20,7 +20,7 @@
 #include <memory>
 #include <string>
 
-#include "mindspore/core/ops/mat_mul.h"
+#include "mindspore/core/ops/ops_func_impl/matmul.h"
 #include "include/common/utils/utils.h"
 #include "kernel/common_utils.h"
 #include "mkldnn/mkl_cpu_kernel.h"
@@ -28,13 +28,14 @@
 #include "oneapi/dnnl/dnnl_types.h"
 #include "ops/base_operator.h"
 #include "utils/log_adapter.h"
+#include "ops/math_op_name.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kMatMulInputsNum = 2;
-constexpr size_t kMatMulWithBiasAddInputsNum = 3;
-constexpr size_t kBiasAddInputIndex = kMatMulWithBiasAddInputsNum - 1;
+constexpr size_t kMatMulInputsNum = 4;
+constexpr size_t kMatMulWithBiasAddInputsNum = 5;
+constexpr size_t kBiasAddInputIndex = kMatMulWithBiasAddInputsNum - 3;
 constexpr size_t kMatMulOutputsNum = 1;
 constexpr size_t kIndexOffset = 2;
 constexpr size_t kRankMin = 2;
@@ -44,21 +45,33 @@ using dims = dnnl::memory::dims;
 void MatMulCpuKernelFunc::InitFunc(const PrimitivePtr &primitive, const std::vector<KernelTensor *> &inputs,
                                    const std::vector<KernelTensor *> &outputs) {
   prim_ = primitive;
-  trans_a_ = GetValue<bool>(primitive->GetAttr(ops::kTransposeA));
-  trans_b_ = GetValue<bool>(primitive->GetAttr(ops::kTransposeB));
 }
 
+void MatMulCpuKernelFunc::ProcessTranspose(const std::vector<KernelTensor *> &inputs) {
+  auto input_size = inputs.size();
+  if (prim_->name() == kBatchMatMulExtOpName) {
+    trans_a_ = false;
+    trans_b_ = false;
+  } else {
+    auto transpose_x1_opt = inputs[input_size - 2]->GetOptionalValueWithCheck<bool>();
+    auto transpose_x2_opt = inputs[input_size - 1]->GetOptionalValueWithCheck<bool>();
+    if (!transpose_x1_opt.has_value() || !transpose_x2_opt.has_value()) {
+      MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', transpose_a and transpose_b should be specified.";
+    }
+    trans_a_ = transpose_x1_opt.value();
+    trans_b_ = transpose_x2_opt.value();
+  }
+}
 int MatMulCpuKernelFunc::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  if (prim_->GetAttr(kAttrWithRelu) != nullptr) {
+    with_relu_ = GetValue<bool>(prim_->GetAttr(kAttrWithRelu));
+  }
+  MatMulCpuKernelFunc::ProcessTranspose(inputs);
   auto a_shape = inputs[kIndex0]->GetShapeVector();
   auto b_shape = inputs[kIndex1]->GetShapeVector();
   if (prim_->GetAttr(kAttrWithBiasAdd) != nullptr) {
     with_bias_add_ = GetValue<bool>(prim_->GetAttr(kAttrWithBiasAdd));
   }
-
-  if (prim_->GetAttr(kAttrWithRelu) != nullptr) {
-    with_relu_ = GetValue<bool>(prim_->GetAttr(kAttrWithRelu));
-  }
-
   auto o_shape = outputs[kIndex0]->GetShapeVector();
   bool flag = a_shape.size() < kRankMin || b_shape.size() < kRankMin || o_shape.size() < kRankMin;
   if (flag) {
@@ -143,6 +156,8 @@ bool MatMulCpuKernelFunc::RunFunc(const std::vector<KernelTensor *> &inputs,
   if (with_bias_add_) {
     CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMatMulWithBiasAddInputsNum, kernel_name_);
     SetArgumentHandle(DNNL_ARG_BIAS, reinterpret_cast<float *>(inputs[kBiasAddInputIndex]->device_ptr()));
+  } else if (prim_->name() == kBatchMatMulExtOpName) {
+    CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMatMulInputsNum - kIndexOffset, kernel_name_);
   } else {
     CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMatMulInputsNum, kernel_name_);
   }

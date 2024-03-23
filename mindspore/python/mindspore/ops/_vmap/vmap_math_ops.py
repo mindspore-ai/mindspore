@@ -290,23 +290,20 @@ def get_matmul_vmap_rule(prim, axis_size):
     """VmapRule for `*MatMul` operation."""
     if isinstance(prim, str):
         prim = Primitive(prim)
-        transpose_a = False
-        transpose_b = False
-    else:
-        transpose_a = prim.transpose_a
-        transpose_b = prim.transpose_b
-    batch_matmul = P.BatchMatMul(transpose_a, transpose_b)
 
-    def vmap_rule(a_bdim, b_bdim):
-        is_all_none, result = vmap_general_preprocess(prim, a_bdim, b_bdim)
+    def vmap_rule(a_bdim, b_bdim, trans_a_bdim, trans_b_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, a_bdim, b_bdim, trans_a_bdim, trans_b_bdim)
         if is_all_none:
             return result
 
         a, a_dim = a_bdim
         b, b_dim = b_bdim
+        trans_a, _ = trans_a_bdim
+        trans_b, _ = trans_b_bdim
         a = _bdim_at_front(a, a_dim, axis_size)
         b = _bdim_at_front(b, b_dim, axis_size)
 
+        batch_matmul = P.BatchMatMul(trans_a, trans_b)
         out = batch_matmul(a, b)
         return out, 0
 

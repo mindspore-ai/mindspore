@@ -1,0 +1,22 @@
+#operator matmul_ext
+matmul_ext:
+  args:
+    input:
+      dtype: tensor
+    mat2:
+      dtype: tensor
+  args_signature:
+    dtype_group: (input, mat2)
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: MatMulExt
+  dispatch:
+    enable: True
+    Ascend: MatMulExtAscend
+    GPU: MatMulExtGPU
+    CPU: MatMulExtCPU
+
+
+

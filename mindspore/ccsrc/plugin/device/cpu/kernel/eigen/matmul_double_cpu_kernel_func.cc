@@ -19,12 +19,12 @@
 #include <vector>
 #include <map>
 #include "mindspore/core/ops/math_ops.h"
-#include "mindspore/core/ops/mat_mul.h"
+#include "mindspore/core/ops/ops_func_impl/matmul.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kMatMulInputsNum = 2;
+constexpr size_t kMatMulInputsNum = 4;
 constexpr size_t kMatMulOutputsNum = 1;
 constexpr auto kAMatrixDimNum = 2;
 const size_t kIndexOffset = 2;
@@ -55,7 +55,7 @@ void MatmulDoubleCpuKernelFunc::ComputeMatMulOutput(T *a_addr, T *b_addr, T *out
         output.noalias() = input0 * input1;
       }
     }
-  } else if (kernel_name_ == prim::kPrimBatchMatMul->name()) {
+  } else if (kernel_name_ == prim::kPrimBatchMatMul->name() || kernel_name_ == prim::kPrimBatchMatMulExt->name()) {
     if (trans_a_) {
       if (trans_b_) {
         output.noalias() = input0.adjoint() * input1.adjoint();
@@ -70,14 +70,19 @@ void MatmulDoubleCpuKernelFunc::ComputeMatMulOutput(T *a_addr, T *b_addr, T *out
       }
     }
   } else {
-    MS_LOG(EXCEPTION) << "MatmulDoubleCpuKernelFunc support MatMul and BatchMatMul, but got " << kernel_name_ << ".";
+    MS_LOG(EXCEPTION) << "MatmulDoubleCpuKernelFunc support MatMul, BatchMatMul and BatchMatMulExt, but got "
+                      << kernel_name_ << ".";
   }
 }
 
 template <typename T>
 void MatmulDoubleCpuKernelFunc::MatMul(const std::vector<kernel::KernelTensor *> &inputs,
                                        const std::vector<kernel::KernelTensor *> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMatMulInputsNum, kernel_name_);
+  if (kernel_name_ == prim::kPrimBatchMatMulExt->name()) {
+    CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMatMulInputsNum - kIndexOffset, kernel_name_);
+  } else {
+    CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMatMulInputsNum, kernel_name_);
+  }
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMatMulOutputsNum, kernel_name_);
   if (batch_ > 1) {
     for (size_t index = 0; index < batch_; ++index) {
@@ -97,12 +102,22 @@ void MatmulDoubleCpuKernelFunc::MatMul(const std::vector<kernel::KernelTensor *>
 void MatmulDoubleCpuKernelFunc::InitFunc(const PrimitivePtr &primitive, const std::vector<KernelTensor *> &inputs,
                                          const std::vector<KernelTensor *> &outputs) {
   kernel_name_ = primitive->name();
-  trans_a_ = GetValue<bool>(primitive->GetAttr(ops::kTransposeA));
-  trans_b_ = GetValue<bool>(primitive->GetAttr(ops::kTransposeB));
 }
 
 int MatmulDoubleCpuKernelFunc::Resize(const std::vector<KernelTensor *> &inputs,
                                       const std::vector<KernelTensor *> &outputs) {
+  if (kernel_name_ == kBatchMatMulExtOpName) {
+    trans_a_ = false;
+    trans_b_ = false;
+  } else {
+    auto transpose_x1_opt = inputs[kIndex2]->GetOptionalValueWithCheck<bool>();
+    auto transpose_x2_opt = inputs[kIndex3]->GetOptionalValueWithCheck<bool>();
+    if (!transpose_x1_opt.has_value() || !transpose_x2_opt.has_value()) {
+      MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', transpose_a and transpose_b should be specified.";
+    }
+    trans_a_ = transpose_x1_opt.value();
+    trans_b_ = transpose_x2_opt.value();
+  }
   const auto &a_shape = inputs[kIndex0]->GetShapeVector();
   const auto &b_shape = inputs[kIndex1]->GetShapeVector();
   auto out_shape = outputs[kIndex0]->GetShapeVector();

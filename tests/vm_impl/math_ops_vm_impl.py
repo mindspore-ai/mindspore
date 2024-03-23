@@ -91,12 +91,12 @@ def vm_impl_logical_not(self):
 def vm_impl_mat_mul(self):
     """Generate vm_impl function for MatMul."""
 
-    def vm_impl(x, w):
+    def vm_impl(x, w, transpose_a, transpose_b):
         x = x.asnumpy()
         w = w.asnumpy()
-        if self.transpose_a:
+        if transpose_a:
             x = x.transpose()
-        if self.transpose_b:
+        if transpose_b:
             w = w.transpose()
         z = x @ w
         return Tensor(z)

@@ -20,7 +20,7 @@
 #include <unordered_map>
 #include "nnacl/op_base.h"
 #include "ops/op_utils.h"
-#include "ops/batch_matmul.h"
+#include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/fusion/flash_attention.h"
 #include "ops/array_ops.h"
 #include "ops/nn_ops.h"

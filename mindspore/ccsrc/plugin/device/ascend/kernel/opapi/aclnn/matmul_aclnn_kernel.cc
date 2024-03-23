@@ -23,13 +23,9 @@ namespace mindspore {
 namespace kernel {
 void MMAclnnKernelMod::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                         const std::vector<KernelTensor *> &outputs) {
-  const auto &attr_list = primitive()->attrs();
-  bool trans_a = false;
-  bool trans_b = false;
-  if (attr_list.at("transpose_a") && attr_list.at("transpose_b")) {
-    trans_a = GetValue<bool>(attr_list.at("transpose_a"));
-    trans_b = GetValue<bool>(attr_list.at("transpose_b"));
-  }
+  bool trans_a = inputs[kIndex2]->GetValueWithCheck<bool>();
+  bool trans_b = inputs[kIndex3]->GetValueWithCheck<bool>();
+
   auto shape_a = inputs[kIndex0]->GetShapeVector();
   auto shape_b = inputs[kIndex1]->GetShapeVector();
   if ((shape_a.size() == shape_b.size()) && (shape_a.size() == kIndex2)) {

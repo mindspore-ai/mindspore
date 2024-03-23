@@ -15,6 +15,16 @@ Element-wise Operations
     mindspore.ops.extend.add
     mindspore.ops.extend.sub
 
+Linear Algebraic Functions
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. msplatwarnautosummary::
+    :toctree: ops
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.ops.extend.bmm
+
 Array Functions
 ---------------
 

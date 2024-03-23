@@ -30,7 +30,7 @@ from mindspore.ops._utils import get_broadcast_shape
 from mindspore.ops.primitive import Primitive, PrimitiveWithInfer, PrimitiveWithCheck, prim_attr_register, _run_op
 from mindspore._c_expression import Tensor as Tensor_
 from ..auto_generate import (Add, Addcdiv, Addcmul, ReduceMean, ReduceSum, ReduceAll, ReduceAny,
-                             ReduceMax, ReduceMin, ReduceProd, Betainc, Neg,
+                             ReduceMax, ReduceMin, ReduceProd, Betainc, Neg, MatMul, BatchMatMul,
                              Mul, Square, Rsqrt, Sqrt, Reciprocal, Pow, Exp,
                              Logit, ReduceStd, Expm1, Log, Log1p, Erf, Erfc,
                              Minimum, RealDiv, FloorDiv, Floor, FloorMod, Ceil,
@@ -715,129 +715,6 @@ class LpNorm(Primitive):
         self.init_prim_io_names(inputs=['input'], outputs=['output'])
 
 
-class MatMul(Primitive):
-    r"""
-    Multiplies matrix `a` and matrix `b`.
-
-    .. math::
-
-        (Output)_{i j}=\sum_{k=1}^{p} a_{i k} b_{k j}=a_{i 1} b_{1 j}+a_{i 2} b_{2 j}+\cdots+a_{i p} b_{p j}, p\in N
-
-    where the :math:`i,j` indicates the output of the i-th row and j-th column element.
-
-    Note:
-        If :math:`N * M` cannot be divided by 16, the performance will be poor in ascend environment.
-        The dtype of inputs must be same.
-
-    Args:
-        transpose_a (bool): If ``True`` , `a` is transposed before multiplication. Default: ``False`` .
-        transpose_b (bool): If ``True`` , `b` is transposed before multiplication. Default: ``False`` .
-
-    Inputs:
-        - **a** (Tensor) - The first tensor to be multiplied. The shape of the tensor is :math:`(N, C)`. If
-          `transpose_a` is ``True`` , its shape must be :math:`(C, N)` after transpose.
-        - **b** (Tensor) - The second tensor to be multiplied. The shape of the tensor is :math:`(C, M)`. If
-          `transpose_b` is ``True`` , its shape must be :math:`(M, C)` after transpose.
-
-    Outputs:
-        Tensor, the shape of the output tensor is :math:`(N, M)`.
-
-    Raises:
-        TypeError: If `transpose_a` or `transpose_b` is not a bool.
-        TypeError: If the dtype of `a` and the dtype of `b` are not the same.
-        ValueError: If the column of matrix dimensions of `a` is not equal to
-                    the row of matrix dimensions of `b`.
-        ValueError: If length of shape of `a` or `b` is not equal to 2.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> a = Tensor(np.ones(shape=[1, 3]), mindspore.float32)
-        >>> b = Tensor(np.ones(shape=[3, 4]), mindspore.float32)
-        >>> matmul = ops.MatMul()
-        >>> output = matmul(a, b)
-        >>> print(output)
-        [[3. 3. 3. 3.]]
-    """
-
-    @prim_attr_register
-    def __init__(self, transpose_a=False, transpose_b=False):
-        """Initialize MatMul."""
-        self.init_prim_io_names(inputs=['x1', 'x2'], outputs=['output'])
-        cls_name = self.name
-        validator.check_value_type("transpose_a", transpose_a, [bool], cls_name)
-        validator.check_value_type("transpose_b", transpose_b, [bool], cls_name)
-        self.add_prim_attr('transpose_x1', self.transpose_a)
-        self.add_prim_attr('transpose_x2', self.transpose_b)
-
-
-class BatchMatMul(Primitive):
-    r"""
-    Computes matrix multiplication between two tensors by batch.
-
-    .. math::
-
-        \text{output}[..., :, :] = \text{matrix}(x[..., :, :]) * \text{matrix}(y[..., :, :])
-
-    The rank of both two input tensors must be same and not less than `2`.
-
-    Args:
-        transpose_a (bool): If ``True`` , the last two dimensions of `x` is transposed before multiplication.
-            Default: ``False`` .
-        transpose_b (bool): If ``True`` , the last two dimensions of `y` is transposed before multiplication.
-            Default: ``False`` .
-
-    Inputs:
-        - **x** (Tensor) - The first tensor to be multiplied. The shape of the tensor is :math:`(*B, N, C)`,
-          where :math:`*B` represents the batch size which can be multidimensional, :math:`N` and :math:`C` are the
-          size of the last two dimensions. If `transpose_a` is ``True`` , its shape must be :math:`(*B, C, N)`.
-        - **y** (Tensor) - The second tensor to be multiplied. The shape of the tensor is :math:`(*B, C, M)`. If
-          `transpose_b` is ``True`` , its shape must be :math:`(*B, M, C)`.
-
-    Outputs:
-        Tensor, the shape of the output tensor is :math:`(*B, N, M)`.
-
-    Raises:
-        TypeError: If `transpose_a` or `transpose_b` is not a bool.
-        ValueError: If length of shape of `x` is not equal to length of shape of `y` or
-                    length of shape of inputs is less than 2.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.ones(shape=[2, 4, 1, 3]), mindspore.float32)
-        >>> y = Tensor(np.ones(shape=[2, 4, 3, 4]), mindspore.float32)
-        >>> batmatmul = ops.BatchMatMul()
-        >>> output = batmatmul(x, y)
-        >>> print(output.shape)
-        (2, 4, 1, 4)
-        >>> x = Tensor(np.ones(shape=[2, 4, 3, 1]), mindspore.float32)
-        >>> y = Tensor(np.ones(shape=[2, 4, 3, 4]), mindspore.float32)
-        >>> batmatmul = ops.BatchMatMul(transpose_a=True)
-        >>> output = batmatmul(x, y)
-        >>> print(output.shape)
-        (2, 4, 1, 4)
-    """
-
-    @prim_attr_register
-    def __init__(self, transpose_a=False, transpose_b=False):
-        """Initialize BatchMatMul."""
-        self.init_prim_io_names(inputs=['x1', 'x2'], outputs=['output'])
-        cls_name = self.name
-        validator.check_value_type("transpose_a", transpose_a, [bool], cls_name)
-        validator.check_value_type("transpose_b", transpose_b, [bool], cls_name)
-        self.add_prim_attr('adj_x1', self.transpose_a)
-        self.add_prim_attr('adj_x2', self.transpose_b)
-
-
 class AddN(Primitive):
     """
     Computes addition of all input tensors element-wise.
@@ -1507,7 +1384,7 @@ class Heaviside(Primitive):
             0, & \text { if x }<0 \\
             \text { values, } & \text { if x }==0 \\
             1, & \text { if x }>0
-            \end{array}\right.
+            \end{array}\right
 
     .. warning::
         This is an experimental API that is subject to change or deletion.
@@ -2764,7 +2641,7 @@ class SquareSumAll(Primitive):
     .. math::
         \left\{\begin{matrix}out_{x} = {\textstyle \sum_{0}^{N}} (x_{i})^2
         \\out_{y} = {\textstyle \sum_{0}^{N}} (y_{i})^2
-        \end{matrix}\right.
+        \end{matrix}\right
 
     Note:
         SquareSumAll only supports float16 and float32 data type.
