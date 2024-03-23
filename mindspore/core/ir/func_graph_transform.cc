@@ -29,10 +29,5 @@ FuncGraphTransform::FuncGraphTransform(const FuncGraphPtr &func_graph, const Pri
                                        const CNodePtr &primal_cnode)
     : prim_(prim), func_graph_(FuncGraphWeakPtr(func_graph)), primal_cnode_(primal_cnode) {
   func_graph->set_reserved(true);
-  auto manager = Manage({func_graph}, false);
-  const auto &total_used_fg = manager->func_graphs_used_total(func_graph);
-  for (const auto &used_fg : total_used_fg) {
-    used_fg->set_reserved(true);
-  }
 }
 }  // namespace mindspore
