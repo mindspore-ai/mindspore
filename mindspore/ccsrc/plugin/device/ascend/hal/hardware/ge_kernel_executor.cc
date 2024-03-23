@@ -1007,6 +1007,9 @@ bool GeKernelExecutor::ExecuteKernelTask(const runtime::KernelTaskType &task_typ
     kernel::pyboost::CustomizeCopyAscend(device_context_, input_addr_list[0], output_addr_list[0], stream_id);
   }
 
-  return true;
+  auto stream = AscendStreamMng::GetInstance().GetStream(stream_id);
+  // for PyNative Sync Run mode
+  auto ret = PySyncRuning(stream);
+  return ret;
 }
 }  // namespace mindspore::device::ascend
