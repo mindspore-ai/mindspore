@@ -117,6 +117,15 @@ def test_all2all_static():
     phase = compile_net(model, input_ids)
     validator = ParallelValidator(model, phase)
     context.reset_auto_parallel_context()
+    assert validator.check_node_inputs_has('TupleGetItem-0', ['MakeTuple-0', 0])
+    assert validator.check_node_inputs_has('ReLU-0', ['TupleGetItem-0'])
+    assert validator.check_node_inputs_has('AllGather-0', ['ReLU-0'])
+    assert validator.check_node_inputs_has('Split-0', ['AllGather-0', 0, 2])
+    assert validator.check_node_inputs_has('TupleGetItem-1', ['Split-0', 0])
+    assert validator.check_node_inputs_has('TupleGetItem-2', ['Split-0', 1])
+    assert validator.check_node_inputs_has('MakeTuple-1', ['TupleGetItem-1', 'TupleGetItem-2'])
+    assert validator.check_node_inputs_has('Concat-0', ['MakeTuple-1', 1])
+    assert validator.check_node_inputs_has('StridedSlice-0', ['Concat-0', '(3, 1536, 1, 2)'])
     assert validator.check_node_inputs_has('ReLU-1', ['StridedSlice-0'])
 
 
@@ -157,7 +166,17 @@ def test_all2all_dyn():
     phase = compile_net(model, input_ids)
     validator = ParallelValidator(model, phase)
     context.reset_auto_parallel_context()
-    assert validator.check_node_inputs_has('ReLU-1', ['StridedSlice-0'])
+    assert validator.check_node_inputs_has('TupleGetItem-0', ['MakeTuple-0', 0])
+    assert validator.check_node_inputs_has('ReLU-0', ['TupleGetItem-0'])
+    assert validator.check_node_inputs_has('AllGather-0', ['ReLU-0'])
+    assert validator.check_node_inputs_has('Split-0', ['AllGather-0', 0, 2])
+    assert validator.check_node_inputs_has('TupleGetItem-1', ['Split-0', 0])
+    assert validator.check_node_inputs_has('TupleGetItem-2', ['Split-0', 1])
+    assert validator.check_node_inputs_has('MakeTuple-1', ['TupleGetItem-1', 'TupleGetItem-2'])
+    assert validator.check_node_inputs_has('Concat-0', ['MakeTuple-1', 1])
+    assert validator.check_node_inputs_has('Split-1', ['Concat-0', 2, 2])
+    assert validator.check_node_inputs_has('TupleGetItem-3', ['Split-1', 0])
+    assert validator.check_node_inputs_has('ReLU-1', ['TupleGetItem-3'])
 
 
 def test_allconcat_static():
@@ -166,7 +185,6 @@ def test_allconcat_static():
     Description: Test allconcat ir compiling with static shape.
     Expectation: Compile success.
     """
-    # allconcat: Reshape->AllGather->Reshape
     context.reset_auto_parallel_context()
     from_shard = (1, 2, 1, 1)
     to_shard = (1, 1, 1, 1)
@@ -174,7 +192,6 @@ def test_allconcat_static():
     context.set_context(save_graphs=True, save_graphs_path="./allconcat_ir_static")
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL, global_rank=0, device_num=8,
                                       dataset_strategy=(from_shard,))
-    # _VirtualDataset，一定要做数据数据并行？(8,1,1,1)
     model = TestRedistribution(from_shard, to_shard).to_float(mstype.float16)
     model = _VirtualDatasetCell(model)
     model._virtual_dataset.add_prim_attr("repeat_dim_direct", "right")
@@ -191,9 +208,6 @@ def test_allconcat_dyn():
     Description: Test allconcat ir compiling with dynamic shape.
     Expectation: Compile success.
     """
-    # allconcat: Reshape->AllGather->Reshape
-    # AllGather->PrimFunc_ReLU
-    # AllGather->PrimFunc_Split->TupleGetItem->MakeTuple->PrimFunc_Concat->PrimFunc_ReLU
     context.reset_auto_parallel_context()
     from_shard = (1, 2, 1, 1)
     to_shard = (1, 1, 1, 1)
@@ -201,7 +215,6 @@ def test_allconcat_dyn():
     context.set_context(save_graphs=True, save_graphs_path="./allconcat_ir_dyn")
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL, global_rank=0, device_num=8,
                                       dataset_strategy=(from_shard,))
-    # _VirtualDataset，一定要做数据数据并行？(8,1,1,1)
     model = TestRedistribution(from_shard, to_shard).to_float(mstype.float16)
     model = _VirtualDatasetCell(model)
     model._virtual_dataset.add_prim_attr("repeat_dim_direct", "right")
@@ -218,7 +231,6 @@ def test_allsplit_static():
     Description: Test allsplit ir compiling with static shape.
     Expectation: Compile success.
     """
-    # allsplit: Reshape->StridedSlice->Reshape
     context.reset_auto_parallel_context()
     from_shard = (1, 1, 1, 1)
     to_shard = (1, 2, 1, 1)
@@ -226,7 +238,6 @@ def test_allsplit_static():
     context.set_context(save_graphs=True, save_graphs_path="./allsplit_ir_static")
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL, global_rank=0, device_num=8,
                                       dataset_strategy=(from_shard,))
-    # _VirtualDataset，一定要做数据数据并行？(8,1,1,1)
     model = TestRedistribution(from_shard, to_shard).to_float(mstype.float16)
     model = _VirtualDatasetCell(model)
     model._virtual_dataset.add_prim_attr("repeat_dim_direct", "right")
@@ -234,8 +245,12 @@ def test_allsplit_static():
     phase = compile_net(model, input_ids)
     validator = ParallelValidator(model, phase)
     context.reset_auto_parallel_context()
+    assert validator.check_node_inputs_has('TupleGetItem-0', ['MakeTuple-0', 0])
+    assert validator.check_node_inputs_has('ReLU-0', ['TupleGetItem-0'])
+    assert validator.check_node_inputs_has('Reshape-0', ['ReLU-0', '(768, 2, 2)'])
+    assert validator.check_node_inputs_has('StridedSlice-0', ['Reshape-0', '(384, 2, 2)'])
+    assert validator.check_node_inputs_has('Reshape-1', ['StridedSlice-0', '(1, 384, 2, 2)'])
     assert validator.check_node_inputs_has('ReLU-1', ['Reshape-1'])
-    assert validator.check_node_inputs_has('Reshape-1', ['StridedSlice-0'])
 
 
 def test_allsplit_dyn():
@@ -244,8 +259,6 @@ def test_allsplit_dyn():
     Description: Test allsplit ir compiling with dynamic shape.
     Expectation: Compile success.
     """
-    # allsplit: Reshape->StridedSlice->Reshape
-    # StridedSlice的End位置有问题
     context.reset_auto_parallel_context()
     from_shard = (1, 1, 1, 1)
     to_shard = (1, 2, 1, 1)
@@ -253,7 +266,6 @@ def test_allsplit_dyn():
     context.set_context(save_graphs=True, save_graphs_path="./allsplit_ir_dyn")
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL, global_rank=0, device_num=8,
                                       dataset_strategy=(from_shard,))
-    # _VirtualDataset，一定要做数据数据并行？(8,1,1,1)
     model = TestRedistribution(from_shard, to_shard).to_float(mstype.float16)
     model = _VirtualDatasetCell(model)
     model._virtual_dataset.add_prim_attr("repeat_dim_direct", "right")
@@ -261,7 +273,11 @@ def test_allsplit_dyn():
     phase = compile_net(model, input_ids)
     validator = ParallelValidator(model, phase)
     context.reset_auto_parallel_context()
-    assert validator.check_node_inputs_has('ReLU-1', ['StridedSlice-0'])
+    assert validator.check_node_inputs_has('TupleGetItem-0', ['MakeTuple-0', 0])
+    assert validator.check_node_inputs_has('ReLU-0', ['TupleGetItem-0'])
+    assert validator.check_node_inputs_has('Split-0', ['ReLU-0', 1, 2])
+    assert validator.check_node_inputs_has('TupleGetItem-1', ['Split-0', 0])
+    assert validator.check_node_inputs_has('ReLU-1', ['TupleGetItem-1'])
 
 
 def test_allsplit_parallel_on_dynamic_dim():
@@ -270,7 +286,6 @@ def test_allsplit_parallel_on_dynamic_dim():
     Description: Test allsplit ir compiling with dynamic shape.
     Expectation: Compile success.
     """
-    # allsplit: Reshape->StridedSlice->Reshape
     context.reset_auto_parallel_context()
     from_shard = (1, 1, 1, 1)
     to_shard = (2, 1, 1, 1)
@@ -287,7 +302,11 @@ def test_allsplit_parallel_on_dynamic_dim():
     phase = compile_net(model, input_ids)
     validator = ParallelValidator(model, phase)
     context.reset_auto_parallel_context()
-    assert validator.check_node_inputs_has('ReLU-1', ['StridedSlice-0'])
+    assert validator.check_node_inputs_has('TupleGetItem-0', ['MakeTuple-0', 0])
+    assert validator.check_node_inputs_has('ReLU-0', ['TupleGetItem-0'])
+    assert validator.check_node_inputs_has('Split-0', ['ReLU-0', 0, 2])
+    assert validator.check_node_inputs_has('TupleGetItem-1', ['Split-0', 0])
+    assert validator.check_node_inputs_has('ReLU-1', ['TupleGetItem-1'])
 
 
 def test_allsplit_parallel_on_static_batch_dim():
@@ -312,6 +331,9 @@ def test_allsplit_parallel_on_static_batch_dim():
     phase = compile_net(model, input_ids)
     validator = ParallelValidator(model, phase)
     context.reset_auto_parallel_context()
+    assert validator.check_node_inputs_has('TupleGetItem-0', ['MakeTuple-0', 0])
+    assert validator.check_node_inputs_has('ReLU-0', ['TupleGetItem-0'])
+    assert validator.check_node_inputs_has('StridedSlice-0', ['ReLU-0', '(4, 768, 2, 2)'])
     assert validator.check_node_inputs_has('ReLU-1', ['StridedSlice-0'])
 
 
@@ -364,7 +386,6 @@ def test_allconcat_parallel_on_static_seq_dim():
     assert validator.check_node_inputs_has('ReLU-1', ['Concat-0'])
 
 
-# @pytest.mark.skip(reason="offline this testcase for tensor redistribution temporarily.")
 def test_all2all_parallel_on_dynamic_seq_dim():
     """
     Feature: Tensor distribution with dynamic shape.
@@ -386,7 +407,17 @@ def test_all2all_parallel_on_dynamic_seq_dim():
     phase = compile_net(model, input_ids)
     validator = ParallelValidator(model, phase)
     context.reset_auto_parallel_context()
-    assert validator.check_node_inputs_has('ReLU-1', ['StridedSlice-0'])
+    assert validator.check_node_inputs_has('TupleGetItem-0', ['MakeTuple-0', 0])
+    assert validator.check_node_inputs_has('ReLU-0', ['TupleGetItem-0'])
+    assert validator.check_node_inputs_has('AllGather-0', ['ReLU-0'])
+    assert validator.check_node_inputs_has('Split-0', ['AllGather-0', 0, 2])
+    assert validator.check_node_inputs_has('TupleGetItem-1', ['Split-0', 0])
+    assert validator.check_node_inputs_has('TupleGetItem-2', ['Split-0', 1])
+    assert validator.check_node_inputs_has('MakeTuple-1', ['TupleGetItem-1', 'TupleGetItem-2'])
+    assert validator.check_node_inputs_has('Concat-0', ['MakeTuple-1', 1])
+    assert validator.check_node_inputs_has('Split-1', ['Concat-0', 2, 2])
+    assert validator.check_node_inputs_has('TupleGetItem-3', ['Split-1', 0])
+    assert validator.check_node_inputs_has('ReLU-1', ['TupleGetItem-3'])
 
 
 def test_all2all_parallel_on_static_seq_dim():
@@ -410,6 +441,15 @@ def test_all2all_parallel_on_static_seq_dim():
     phase = compile_net(model, input_ids)
     validator = ParallelValidator(model, phase)
     context.reset_auto_parallel_context()
+    assert validator.check_node_inputs_has('TupleGetItem-0', ['MakeTuple-0', 0])
+    assert validator.check_node_inputs_has('ReLU-0', ['TupleGetItem-0'])
+    assert validator.check_node_inputs_has('AllGather-0', ['ReLU-0'])
+    assert validator.check_node_inputs_has('Split-0', ['AllGather-0', 0, 2])
+    assert validator.check_node_inputs_has('TupleGetItem-1', ['Split-0', 0])
+    assert validator.check_node_inputs_has('TupleGetItem-2', ['Split-0', 1])
+    assert validator.check_node_inputs_has('MakeTuple-1', ['TupleGetItem-1', 'TupleGetItem-2'])
+    assert validator.check_node_inputs_has('Concat-0', ['MakeTuple-1', 1])
+    assert validator.check_node_inputs_has('StridedSlice-0', ['Concat-0', '(8, 1536, 1, 2)'])
     assert validator.check_node_inputs_has('ReLU-1', ['StridedSlice-0'])
 
 
