@@ -532,8 +532,7 @@ bool GraphBuilder::DoCellAccess(const Instr &instr) {
 
 // Parse byteCode -- SETUP_WITH
 bool GraphBuilder::DoWith(const Instr &instr) {
-  auto state = py::error_already_set();
-  if (graph_->Config().GetBoolConfig(GraphJitConfig::kSkipException) || state.type().ptr() == PyExc_RuntimeError) {
+  if (graph_->Config().GetBoolConfig(GraphJitConfig::kSkipException) || PyErr_Occurred()) {
     graph_->StopTraceAt(cur_bci_, StopTraceReason::kStopTraceSkip_Exception);
     return false;
   }
@@ -596,9 +595,7 @@ bool GraphBuilder::DoException(const Instr &instr) {
       // run exit func
       push(exc);
       push(exc);
-      auto newInstr = Instr(instr.bci(), CALL_FUNCTION, 3);
-      newInstr.set_line(instr.line());
-      if (!DoCall(newInstr)) {
+      if (!DoCall({CALL_FUNCTION, 3})) {
         MS_LOG(ERROR) << "function '__exit__' runs failed here, it should be successful!";
         return false;
       }
@@ -660,6 +657,9 @@ bool GraphBuilder::DoGlobalAccess(const Instr &instr) {
         if (obj == nullptr) {
           PyErr_Clear();
           obj = PyObject_GetItem(PyEval_GetBuiltins(), key);
+          if (obj == nullptr) {
+            PyErr_Clear();
+          }
         }
         py::object pyobj = py::reinterpret_steal<py::object>(obj);
         auto n = NewValueNode(AObject::Convert(pyobj), instr, {});
