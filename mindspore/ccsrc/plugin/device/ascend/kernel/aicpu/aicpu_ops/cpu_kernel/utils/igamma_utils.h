@@ -409,7 +409,7 @@ T IgammacSingle(const T &a, const T &x) {
   output = x < 0 || a <= 0 || std::isnan(x) || (std::isinf(x) && (x > 0)) || std::isnan(a)
              ? std::numeric_limits<T>::quiet_NaN()
              : output;
-  output = std::isinf(x) && x > 0 && a > 0 ? 0 : output;
+  output = std::isinf(x) && x > 0 && a > 0 ? std::numeric_limits<T>::quiet_NaN() : output;
 
   return output;
 }
