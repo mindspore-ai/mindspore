@@ -879,7 +879,7 @@ size_t GetFromIndexInHostQueueDataSourceActor(AbstractActor *input_actor, const 
                  << " in host data source actor:" << input_actor->GetAID();
     return IntToSize(data_arrow->from_output_index_);
   }
-  size_t node_index = iter - host_ds_actor->output_data_arrows().begin();
+  size_t node_index = LongToSize(iter - host_ds_actor->output_data_arrows().begin());
   if (node_index >= host_ds_actor->output_data_nodes().size()) {
     MS_LOG(INFO) << "Invalid node index:" << node_index << " total:" << host_ds_actor->output_data_nodes().size()
                  << " for actor:" << input_actor->GetAID();
@@ -916,7 +916,7 @@ size_t GetFromIndexInSuperKernelActor(AbstractActor *input_actor, const Abstract
                  << " in host data source actor:" << input_actor->GetAID();
     return IntToSize(data_arrow->from_output_index_);
   }
-  size_t node_index = data_iter - input_actor->output_data_arrows().begin();
+  size_t node_index = LongToSize(data_iter - input_actor->output_data_arrows().begin());
   if (node_index >= input_actor->output_data_nodes().size() ||
       input_actor->output_data_nodes()[node_index] == nullptr) {
     MS_LOG(INFO) << "Invalid node index:" << node_index << " total:" << input_actor->output_data_nodes().size()

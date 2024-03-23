@@ -106,7 +106,7 @@ void ConditionGatherActor::FetchInput(OpContext<DeviceTensor> *const context) {
     MS_LOG(EXCEPTION) << "Invalid current branch name:" << current_branch_name_ << " total:" << branch_names_
                       << " for actor:" << GetAID();
   }
-  size_t start_index = branch_output_num_ * (iter - branch_names_.begin());
+  size_t start_index = branch_output_num_ * LongToSize(iter - branch_names_.begin());
 
   memory_free_list_.clear();
   // Fetch input device tensor from input data.
