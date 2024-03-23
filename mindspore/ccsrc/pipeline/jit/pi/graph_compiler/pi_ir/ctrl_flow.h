@@ -449,7 +449,7 @@ class FunctionNode : public Node {
    *
    * \param[in] line_no the number of the first line.
    */
-  void SetFirstLineNo(uint32_t line_no) { first_line_no_ = line_no; }
+  void SetFirstLineNo(int line_no) { first_line_no_ = line_no; }
 
   /**
    * \brief Get the stack size of function.
