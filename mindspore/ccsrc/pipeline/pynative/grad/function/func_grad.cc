@@ -19,6 +19,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include "pybind_api/gil_scoped_long_running.h"
 #include "include/common/utils/primitive_utils.h"
 #include "pipeline/pynative/pynative_utils.h"
 #include "ops/framework_ops.h"
@@ -747,6 +748,7 @@ ValuePtr FuncGrad::Finish(const TensorPtrList &weights, const std::vector<size_t
   BuildForwardLastNode(sens);
   PruningGradGraph(weights, grad_attr, grad_position);
   if (last_variable_->is_need_grad()) {
+    GilReleaseWithCheck gil_release;
     BackPropagate();
   }
   ValuePtr gradients = GetGrads(weights, grad_position, grad_attr);
