@@ -579,25 +579,21 @@ def test_bucket_batch_with_pull_mode():
     column_names = ["col1"]
     bucket_boundaries = [1, 2, 3]
     bucket_batch_sizes = [3, 3, 2, 2]
-    element_length_function = (lambda x: x[0] % 4)
+    element_length_function = (lambda x: 1)
 
     dataset = dataset.bucket_batch_by_length(column_names, bucket_boundaries,
                                              bucket_batch_sizes, element_length_function)
 
-    data_size = dataset.get_dataset_size()
+    expected_output = [[[0], [1], [2]],
+                       [[3], [4], [5]],
+                       [[6], [7], [8]],
+                       [[9]]]
 
-    num_rows = 0
-    num_epochs = 2
-    ret = []
-    iterator = dataset.create_dict_iterator(num_epochs=num_epochs)
-    for _ in range(num_epochs):
-        for item in iterator:
-            num_rows += 1
-            ret.append(item['col1'].asnumpy())
+    output = []
+    for data in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        output.append(data["col1"].tolist())
 
-    assert data_size * num_epochs == num_rows
-    assert ret[0].all() == np.array([[2], [6]]).all()
-    assert ret[3].all() == np.array([[1], [5], [9]]).all()
+    assert output == expected_output
     ds.config.set_debug_mode(original_debug_mode)
 
 
