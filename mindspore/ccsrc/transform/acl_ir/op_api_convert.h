@@ -530,6 +530,7 @@ ConvertKernelTensor<std::vector<mindspore::kernel::KernelTensor *>>(mindspore::k
 
   for (int i = 0; i < split_num; ++i) {
     auto new_tensor = new KernelTensor(*tensor);
+    new_tensor->SetType(std::make_shared<TensorType>(TypeIdToType(tensor->dtype_id())));
     auto tensor_shape = std::make_shared<abstract::TensorShape>();
     tensor_shape->SetShapeVector(new_shape);
     new_tensor->SetShape(tensor_shape);
