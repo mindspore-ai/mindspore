@@ -442,6 +442,17 @@ py::object GetPyParameterObj(const ParamInfoPtr &param_info, const std::string &
   return python_adapter::GetPyObjAttr(py_obj, obj);
 }
 
+static bool IsAccuGradObj(const py::object &py_obj) {
+  auto name = python_adapter::GetPyObjAttr(py_obj, PARAM_NAME);
+  if (py::isinstance<py::none>(name)) {
+    return false;
+  }
+  if (py::cast<std::string>(name).find(ACCU_GRADS) == 0) {
+    return true;
+  }
+  return false;
+}
+
 void SliceParameterObj(const ParameterPtr &parameter, const TensorLayoutPtr &tensor_layout) {
   auto param_info = parameter->param_info();
   if (param_info == nullptr) {
@@ -478,6 +489,7 @@ void SliceParameterObj(const ParameterPtr &parameter, const TensorLayoutPtr &ten
   (void)python_adapter::CallPyFn(SLICE_PARAMETER_FN_PATH, SLICE_PARAMETER_FN_NAME, py_obj, py::str(phase), layout);
 
   // handle cloned parameter, like accu_grad and optimizer param
+  auto grad_accumulation_shard = ParallelContext::GetInstance()->grad_accumulation_shard();
   auto cloned_py_obj = GetPyParameterObj(param_info, CLONED_OBJ);
   if (!py::isinstance<py::none>(cloned_py_obj)) {
     if (!py::isinstance<py::list>(cloned_py_obj)) {
@@ -486,8 +498,16 @@ void SliceParameterObj(const ParameterPtr &parameter, const TensorLayoutPtr &ten
     auto obj_list = py::cast<py::list>(cloned_py_obj);
     for (size_t i = 0; i < obj_list.size(); ++i) {
       py::object each_cloned_obj = obj_list[i];
+      auto cloned_param_slice_shape = tensor_layout->slice_shape().array();
+      if (!opt_shard_group.empty()) {
+        if (!IsAccuGradObj(each_cloned_obj) || grad_accumulation_shard) {
+          cloned_param_slice_shape = tensor_layout->opt_shard_slice_shape();
+        }
+      }
+      py::tuple cloned_param_layout = py::make_tuple(device_arrangement, tensor_map, cloned_param_slice_shape,
+                                                     field_size, uniform_split, opt_shard_group);
       (void)python_adapter::CallPyFn(SLICE_PARAMETER_FN_PATH, SLICE_PARAMETER_FN_NAME, each_cloned_obj, py::str(phase),
-                                     layout);
+                                     cloned_param_layout);
     }
   }
 }
