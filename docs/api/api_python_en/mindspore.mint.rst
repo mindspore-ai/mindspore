@@ -55,6 +55,17 @@ mindspore.mint.nn
 mindspore.mint.nn.functional
 -----------------------------
 
+Neural Network Layer Functions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. msplatwarnautosummary::
+    :toctree: mint.nn.functional
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.nn.functional.batch_norm
+
+
 Convolution functions
 ^^^^^^^^^^^^^^^^^^^^^^^
 

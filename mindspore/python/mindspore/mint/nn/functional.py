@@ -87,7 +87,7 @@ from mindspore.ops.functional import softmax as softmax_ex
 # 33
 
 # 34
-from mindspore.ops.functional import batch_norm as batch_norm_ex
+from mindspore.ops.function.nn_func import batch_norm_ext as batch_norm
 
 # 35
 
@@ -225,10 +225,6 @@ from mindspore.ops.auto_generate import binary_cross_entropy_ext as binary_cross
 
 # 100
 from mindspore.ops.function import binary_cross_entropy_with_logits_ext as binary_cross_entropy_with_logits
-
-
-def batch_norm(input_x, running_mean, running_var, weight=None, bias=None, training=False, momentum=0.1, eps=1e-5):
-    return batch_norm_ex(input_x, running_mean, running_var, weight, bias, training, momentum, eps)
 
 
 def linear(input, weight, bias=None):

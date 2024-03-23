@@ -20,6 +20,7 @@
 #include "utils/check_convert_utils.h"
 #include "mindapi/base/types.h"
 #include "ops/op_utils.h"
+#include "ops/nn_ops.h"
 #include "ops/auto_generate/gen_ops_name.h"
 #include "ops/renorm.h"
 #include "ops/scatter_update.h"
@@ -858,7 +859,93 @@ REG_FALLBACK_BUILDER("Embedding").SetBody(BODYFUNC(ib) {
   return {out};
 });
 
+REG_FALLBACK_BUILDER("BatchNormExt").SetBody(BODYFUNC(ib) {
+  auto input = ib->GetInput(kIndex0);
+  auto weight = ib->GetInput(kIndex1);
+  auto bias = ib->GetInput(kIndex2);
+  auto running_mean = ib->GetInput(kIndex3);
+  auto running_var = ib->GetInput(kIndex4);
+  auto training = ib->GetInput(kIndex5);
+  auto momentum = ib->GetInput(kIndex6);
+  auto eps = ib->GetInput(kIndex7);
+  auto format = ib->EmitValue(MakeValue<int64_t>(Format::NCHW));
+
+  auto eps_ptr = eps->BuildValue();
+  auto training_ptr = training->BuildValue();
+  auto momentum_ptr = momentum->BuildValue();
+  if (!ops::IsValueKnown(eps_ptr) || !ops::IsValueKnown(training_ptr) || !ops::IsValueKnown(momentum_ptr)) {
+    MS_EXCEPTION(ValueError) << "For `BatchNormExt` op, the `momentum` , `training` and `eps` must be a constant!";
+  }
+  auto eps_value = GetValue<float>(eps_ptr);
+  auto training_value = GetValue<bool>(training_ptr);
+  auto momentum_value = GetValue<float>(momentum_ptr);
+
+  NodePtrList res{};
+  auto bn_update_outputs = ib->Emit(prim::kPrimBNTrainingReduce->name(), {input, format}, {});
+  auto sum = ib->TupleGetItem(bn_update_outputs, 0);
+  auto square_sum = ib->TupleGetItem(bn_update_outputs, 1);
+
+  if (training_value) {
+    auto bn_training_outputs = ib->Emit(prim::kPrimBNTrainingUpdate->name(),
+                                        {input, sum, square_sum, weight, bias, running_mean, running_var, format},
+                                        {{"factor", MakeValue(momentum_value)}, {"epsilon", MakeValue(eps_value)}});
+    (void)res.emplace_back(ib->TupleGetItem(bn_training_outputs, 0));
+    (void)res.emplace_back(ib->TupleGetItem(bn_training_outputs, 3));
+    (void)res.emplace_back(ib->TupleGetItem(bn_training_outputs, 4));
+  } else {
+    auto bn_infer_outputs = ib->Emit(prim::kPrimBNInfer->name(), {input, weight, bias, running_mean, running_var},
+                                     {{"epsilon", MakeValue(eps_value)}});
+    (void)res.emplace_back(std::move(bn_infer_outputs));
+    (void)res.emplace_back(sum);
+    (void)res.emplace_back(square_sum);
+  }
+  return {ib->MakeTuple(res)};
+});
+
+REG_FALLBACK_BUILDER("BatchNormGradExt").SetBody(BODYFUNC(ib) {
+  auto dout = ib->GetInput(kIndex0);
+  auto input = ib->GetInput(kIndex1);
+  auto weight = ib->GetInput(kIndex2);
+  auto running_var = ib->GetInput(kIndex4);
+  auto saved_mean = ib->GetInput(kIndex5);
+  auto saved_rstd = ib->GetInput(kIndex6);
+  auto training = ib->GetInput(kIndex7);
+  auto eps = ib->GetInput(kIndex8);
+
+  auto eps_ptr = eps->BuildValue();
+  auto training_ptr = training->BuildValue();
+
+  if (!ops::IsValueKnown(eps_ptr) || !ops::IsValueKnown(training_ptr)) {
+    MS_EXCEPTION(ValueError) << "For `BatchNormGradExt` op, the  `training` and `eps` must be a constant!";
+  }
+  auto eps_value = GetValue<float>(eps_ptr);
+  auto training_value = GetValue<bool>(training_ptr);
+
+  NodePtrList res{};
+  auto bn_update_grad_outputs = ib->Emit(prim::kPrimBNTrainingUpdateGrad->name(), {dout, input, saved_mean, saved_rstd},
+                                         {{"epsilon", MakeValue(eps_value)}});
+  auto diff_scale = ib->TupleGetItem(bn_update_grad_outputs, 0);
+  auto diff_offset = ib->TupleGetItem(bn_update_grad_outputs, 1);
+
+  if (training_value) {
+    auto bn_reduce_grad_outputs = ib->Emit(prim::kPrimBNTrainingReduceGrad->name(),
+                                           {dout, input, diff_scale, diff_offset, weight, saved_mean, saved_rstd},
+                                           {{"epsilon", MakeValue(eps_value)}});
+    (void)res.emplace_back(std::move(bn_reduce_grad_outputs));
+    (void)res.emplace_back(diff_scale);
+    (void)res.emplace_back(diff_offset);
+  } else {
+    auto bn_infer_grad_outputs =
+      ib->Emit(prim::kPrimBNInferGrad->name(), {dout, weight, running_var}, {{"epsilon", MakeValue(eps_value)}});
+    (void)res.emplace_back(std::move(bn_infer_grad_outputs));
+    (void)res.emplace_back(diff_scale);
+    (void)res.emplace_back(diff_offset);
+  }
+  return {ib->MakeTuple(res)};
+});
+
 REG_FALLBACK_BUILDER("GroupNorm").SetBody(BODYFUNC(ib) {
+  constexpr const size_t kNumberTwo = 2;
   auto input = ib->GetInput(kIndex0);
   auto x = ib->Cast(input, kFloat32);
   auto groups = ib->GetInput(kIndex1);
@@ -880,8 +967,9 @@ REG_FALLBACK_BUILDER("GroupNorm").SetBody(BODYFUNC(ib) {
   auto x_shape = x->shape();
   const int64_t batch = x_shape[0];
   const int64_t channel = x_shape[1];
-  const int64_t HxW =
-    (x_shape.size() == 2) ? 1 : std::accumulate(x_shape.begin() + 2, x_shape.end(), 1, std::multiplies<int64_t>());
+  const int64_t HxW = (x_shape.size() == kNumberTwo)
+                        ? 1
+                        : std::accumulate(x_shape.begin() + kIndex2, x_shape.end(), 1, std::multiplies<int64_t>());
   const int64_t g = channel / num_groups;
 
   auto x_reshape = ib->Reshape(x, ShapeVector{batch, num_groups, g * HxW});
@@ -891,8 +979,8 @@ REG_FALLBACK_BUILDER("GroupNorm").SetBody(BODYFUNC(ib) {
   auto bias_reshape = ib->Reshape(bias, weight_and_bias_reshape);
   auto factor = ib->Tensor(HxW * g, kFloat32);
 
-  auto mean = ib->Emit("ReduceMean", {x_reshape, ib->Value<std::vector<int64_t>>({2}), ib->Value(true)});
-  auto variance = ib->Div(ib->ReduceSum(ib->Square(ib->Sub(x_reshape, mean)), ShapeVector{2}, true), factor);
+  auto mean = ib->Emit("ReduceMean", {x_reshape, ib->Value<std::vector<int64_t>>({kNumberTwo}), ib->Value(true)});
+  auto variance = ib->Div(ib->ReduceSum(ib->Square(ib->Sub(x_reshape, mean)), ShapeVector{kNumberTwo}, true), factor);
   auto rstd = ib->Reciprocal(ib->Sqrt(ib->Add(variance, eps_value)));
   auto tmp1 = ib->Reshape(ib->Mul(ib->Sub(x_reshape, mean), rstd), x_shape);
   auto output = ib->Cast(ib->Add(ib->Mul(tmp1, weight_reshape), bias_reshape), input->dtype());
@@ -902,6 +990,8 @@ REG_FALLBACK_BUILDER("GroupNorm").SetBody(BODYFUNC(ib) {
 });
 
 REG_FALLBACK_BUILDER("GroupNormGrad").SetBody(BODYFUNC(ib) {
+  constexpr const size_t kNumber2 = 2;
+  constexpr float kFloatThree = 3.0;
   auto dy = ib->Cast(ib->GetInput(kIndex0), kFloat32);
   auto input = ib->GetInput(kIndex1);
   auto x = ib->Cast(input, kFloat32);
@@ -924,11 +1014,12 @@ REG_FALLBACK_BUILDER("GroupNormGrad").SetBody(BODYFUNC(ib) {
   auto num_groups = GetValue<int64_t>(groups->BuildValue());
   const int64_t batch = x_shape[0];
   const int64_t channel = x_shape[1];
-  const int64_t HxW =
-    (x_shape.size() == 2) ? 1 : std::accumulate(x_shape.begin() + 2, x_shape.end(), 1, std::multiplies<int64_t>());
+  const int64_t HxW = (x_shape.size() == kNumber2)
+                        ? 1
+                        : std::accumulate(x_shape.begin() + kIndex2, x_shape.end(), 1, std::multiplies<int64_t>());
   const int64_t g = channel / num_groups;
-  auto ds = ib->ReduceSum(ib->Reshape(ib->Mul(dy, x), ShapeVector{batch, channel, HxW}), ShapeVector{2});
-  auto db = ib->ReduceSum(ib->Reshape(dy, ShapeVector{batch, channel, HxW}), ShapeVector{2});
+  auto ds = ib->ReduceSum(ib->Reshape(ib->Mul(dy, x), ShapeVector{batch, channel, HxW}), ShapeVector{kNumber2});
+  auto db = ib->ReduceSum(ib->Reshape(dy, ShapeVector{batch, channel, HxW}), ShapeVector{kNumber2});
 
   auto ds_reshape = ib->Reshape(ds, ShapeVector{batch, num_groups, g});
   auto db_reshape = ib->Reshape(db, ShapeVector{batch, num_groups, g});
@@ -937,15 +1028,15 @@ REG_FALLBACK_BUILDER("GroupNormGrad").SetBody(BODYFUNC(ib) {
   auto dy_reshape = ib->Reshape(dy, ShapeVector{batch, num_groups, g, HxW});
   auto x_reshape = ib->Reshape(x, ShapeVector{batch, num_groups, g, HxW});
 
-  auto three = ib->Tensor(3.0, kFloat32);
+  auto three = ib->Tensor(kFloatThree, kFloat32);
   auto factor = ib->Tensor(HxW * g, kFloat32);
 
   auto ds_val = ib->ReduceSum(
     ib->Reshape(ib->Mul(ds, ib->Reshape(gamma, ShapeVector{1, channel})), ShapeVector{batch, num_groups, g}),
-    ShapeVector{2});
+    ShapeVector{kNumber2});
   auto db_val = ib->ReduceSum(
     ib->Reshape(ib->Mul(db, ib->Reshape(gamma, ShapeVector{1, channel})), ShapeVector{batch, num_groups, g}),
-    ShapeVector{2});
+    ShapeVector{kNumber2});
 
   auto tmp1 = ib->Mul(rstd_reshape, ib->Reshape(gamma, ShapeVector{1, num_groups, g}));
   auto tmp2 = ib->Div(ib->Mul(ib->Sub(ib->Mul(db_val, mean), ds_val), ib->Pow(rstd, three)), factor);
