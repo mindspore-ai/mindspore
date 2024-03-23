@@ -19,7 +19,6 @@ import glob
 import json
 import stat
 from decimal import Decimal
-from concurrent.futures import ThreadPoolExecutor
 import numpy as np
 from mindspore import log as logger
 from mindspore.profiler.common.exceptions.exceptions import ProfilerIOException
@@ -146,48 +145,44 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
         logger.info("Start parse timeline data...")
         self._pretty = pretty
         timeline_data = []
-        task_list = []
 
-        with ThreadPoolExecutor() as pool:
+        all_scope_data = []  # 所有带scope的算子
 
-            all_scope_data = []  # 所有带scope的算子
+        # get msprof data
+        msprof_file_name = fr'{self._mindstudio_profiler_output}/msprof_*.json'
+        file_list_msprof = glob.glob(msprof_file_name)
+        if not file_list_msprof:
+            logger.error('Could not find msprof_*.json file in %s', self._mindstudio_profiler_output)
+        else:
+            msprof_timeline = self._parse_msprof_data(get_newest_file(file_list_msprof))
+            timeline_data.extend(msprof_timeline)
 
-            # get msprof data
-            msprof_file_name = fr'{self._mindstudio_profiler_output}/msprof_*.json'
-            file_list_msprof = glob.glob(msprof_file_name)
-            if not file_list_msprof:
-                logger.error('Could not find msprof_*.json file in %s', self._mindstudio_profiler_output)
-            else:
-                msprof_timeline = self._parse_msprof_data(get_newest_file(file_list_msprof))
-                timeline_data.extend(msprof_timeline)
+        # get Ascend Hardware for scope
+        scope_data = self._parse_ascend_hardware_scope(msprof_timeline)
+        all_scope_data.extend(scope_data)
 
-            # get Ascend Hardware for scope
-            scope_data = self._parse_ascend_hardware_scope(msprof_timeline)
+        # get cpu op
+        cpu_op_file_name = fr'{self._profiling_dir}/cpu_op_execute_timestamp_{self._rank_id}.txt'
+        file_list = glob.glob(cpu_op_file_name)
+        if not file_list:
+            logger.warning('Could not find cpu op file in %s', self._profiling_dir)
+        else:
+            cpu_timeline, scope_data = self.parse_cpu_timeline(file_list)
+            timeline_data.extend(cpu_timeline)
             all_scope_data.extend(scope_data)
 
-            # get cpu op
-            cpu_op_file_name = fr'{self._profiling_dir}/cpu_op_execute_timestamp_{self._rank_id}.txt'
-            file_list = glob.glob(cpu_op_file_name)
-            if not file_list:
-                logger.warning('Could not find cpu op file in %s', self._profiling_dir)
-            else:
-                cpu_timeline, scope_data = self.parse_cpu_timeline(file_list)
-                timeline_data.extend(cpu_timeline)
-                all_scope_data.extend(scope_data)
+        # parse scope info
+        scope_timeline = self._parse_scope_info(all_scope_data)
+        timeline_data.extend(scope_timeline)
 
-            # parse scope info
-            task_list.append(pool.submit(self._parse_scope_info, all_scope_data))
-
-            oprange_name = self._op_range_name.format(self._rank_id)
-            fwk_file_path = fr'{self._profiling_dir}/{self._framework_dir}/{oprange_name}'
-            if os.path.exists(fwk_file_path):
-                # It is faster not to submit to the pool
-                msprof_side_data = msprof_timeline
-                result = self._parse_fwk_device_data(msprof_side_data)
-                timeline_data.extend(result.get("trace_data", []))
-                self._kernel_events = result.get("kernels", [])
-
-            self._wait_task_and_update(task_list, timeline_data)
+        oprange_name = self._op_range_name.format(self._rank_id)
+        fwk_file_path = fr'{self._profiling_dir}/{self._framework_dir}/{oprange_name}'
+        if os.path.exists(fwk_file_path):
+            # It is faster not to submit to the pool
+            msprof_side_data = msprof_timeline
+            result = self._parse_fwk_device_data(msprof_side_data)
+            timeline_data.extend(result.get("trace_data", []))
+            self._kernel_events = result.get("kernels", [])
 
         logger.info("All timeline data parse complete.")
         self._timeline_data = timeline_data
@@ -253,17 +248,6 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
         except (IOError, OSError, json.JSONDecodeError) as err:
             logger.error('parse_cann_data failed! please theck. detail: %s', err)
             return []
-
-    def _wait_task_and_update(self, task_list: list, timeline_data: list):
-        """
-        Wait the tasks to finish and get result
-        """
-        all_done = list(range(len(task_list)))
-        while all_done:
-            for ind, t in enumerate(task_list):
-                if ind in all_done and t.done():
-                    timeline_data.extend(t.result())
-                    all_done.remove(ind)
 
     def _parse_fwk_device_data(self, cann_kernel_data):
         """
