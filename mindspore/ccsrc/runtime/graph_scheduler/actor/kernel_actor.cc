@@ -645,6 +645,11 @@ void KernelActor::PreLaunchKernel(OpContext<DeviceTensor> *) {
 
 void KernelActor::ExecuteInferShapeTask(OpContext<DeviceTensor> *const context) {
   ProfilerRecorder profiler(ProfilerModule::kKernel, ProfilerEvent::kKernelInfer, GetAID().Name());
+  if (IsRunningFailed(context)) {
+    MS_LOG(INFO) << "Run failed and early stop infer shape for kernel: " << kernel_->fullname_with_scope();
+    return;
+  }
+
   if (is_dynamic_type_) {
     InferShapeAndType();
   } else if (is_dynamic_shape_) {
@@ -656,6 +661,11 @@ void KernelActor::ExecuteInferShapeTask(OpContext<DeviceTensor> *const context) 
 
 void KernelActor::ExecuteResizeKernelModTask(OpContext<DeviceTensor> *const context) {
   ProfilerRecorder profiler(ProfilerModule::kKernel, ProfilerEvent::kKernelResize, GetAID().Name());
+  if (IsRunningFailed(context)) {
+    MS_LOG(INFO) << "Run failed and early stop resize for kernel: " << kernel_->fullname_with_scope();
+    return;
+  }
+
   if (has_dynamic_) {
     device_contexts_[0]->device_res_manager_->BindDeviceToCurrentThread(false);
     ResizeKernelMod();
