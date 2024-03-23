@@ -35,7 +35,7 @@ void AclStreamAssign::AssignStream(const NotNull<KernelGraphPtr> &kernel_graph) 
   if (kernels.empty()) {
     return;
   }
-  if (kernel_graph->is_from_single_op()) {
+  if (kernel_graph->is_from_single_op() || kernel_graph->has_flag(kFlagPyNativeRunInGraph)) {
     MS_LOG(INFO) << "Not stream assign when pynative forward.";
     return;
   }
