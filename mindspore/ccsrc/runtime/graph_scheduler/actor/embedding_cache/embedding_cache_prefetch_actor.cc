@@ -547,8 +547,8 @@ void EmbeddingCachePrefetchActor::AnalyseCacheTask(const std::string &channel_na
 
     // Push analyse result to update cache queue
     CacheAnalysis *cache_analysis =
-      new CacheAnalysis(embedding_device_cache, embedding_host_cache, statistics_info, unique_ids, indices,
-                        unique_ids->end_of_epoch_, unique_ids->end_of_file_);
+      new (std::nothrow) CacheAnalysis(embedding_device_cache, embedding_host_cache, statistics_info, unique_ids,
+                                       indices, unique_ids->end_of_epoch_, unique_ids->end_of_file_);
     MS_EXCEPTION_IF_NULL(cache_analysis);
     cache_analysis_queue->Push(cache_analysis);
   }
