@@ -41,8 +41,6 @@ BaseShapePtr GridSampler2DGradFuncImpl::InferShape(const PrimitivePtr &primitive
   auto grid_base_shape = input_args[kInputIndex2]->GetShape();
   MS_EXCEPTION_IF_NULL(grid_base_shape);
   auto grid_shape = grid_base_shape->GetShapeVector();
-
-  // dynamic rank
   if (IsDynamicRank(input_x_shape) && IsDynamicRank(grid_shape)) {
     return std::make_shared<abstract::TupleShape>(abstract::BaseShapePtrList{
       std::make_shared<abstract::TensorShape>(

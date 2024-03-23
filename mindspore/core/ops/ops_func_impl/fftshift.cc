@@ -39,7 +39,6 @@ int32_t FFTShiftFuncImpl::CheckValidation(const PrimitivePtr &primitive,
   // Check dim_value
   auto check_status = OP_CHECK_SUCCESS;
   auto x_shape_vec = input_args[kIndex0]->GetShape()->GetShapeVector();
-
   if (MS_UNLIKELY(IsDynamicRank(x_shape_vec))) {
     check_status = OP_CHECK_RETRY;
   }

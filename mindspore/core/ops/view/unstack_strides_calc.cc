@@ -52,7 +52,7 @@ TensorStorageInfoPtrList UnstackCalc(const PrimitivePtr &prim, const std::vector
   for (int64_t d = 0; d < size; d++) {
     ShapeVector newShape(oldShape.begin(), oldShape.end());
     StridesVecotr newStrides(oldStrides.begin(), oldStrides.end());
-    auto newStorageOffset = oldStorageOffset + d * newStrides[dim];
+    auto newStorageOffset = oldStorageOffset + LongToSize(d * newStrides[dim]);
 
     newShape.erase(newShape.begin() + dim);
     newStrides.erase(newStrides.begin() + dim);
