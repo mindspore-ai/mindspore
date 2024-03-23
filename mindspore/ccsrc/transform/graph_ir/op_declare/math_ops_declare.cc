@@ -545,4 +545,11 @@ ATTR_MAP(SilentCheck) = {{"c_min_steps", ATTR_DESC(c_min_steps, AnyTraits<int64_
                          {"c_thresh_l2", ATTR_DESC(c_thresh_l2, AnyTraits<float>())},
                          {"c_coeff_l2", ATTR_DESC(c_coeff_l2, AnyTraits<float>())}};
 REG_ADPT_DESC(SilentCheck, prim::kPrimSilentCheck->name(), ADPT_DESC(SilentCheck))
+
+
+// Cross
+INPUT_MAP(Cross) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
+ATTR_MAP(Cross) = {{"dim", ATTR_DESC(dim, AnyTraits<int64_t>())}};
+OUTPUT_MAP(Cross) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Cross, prim::kPrimCross->name(), ADPT_DESC(Cross))
 }  // namespace mindspore::transform
