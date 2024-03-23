@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@
 #include <vector>
 
 #include "include/backend/kernel_graph.h"
+#include "mindspore/core/utils/ms_context.h"
 
 namespace mindspore {
 namespace device {
@@ -86,6 +87,8 @@ struct CallbackThread {
 using CallbackThreadPtr = std::shared_ptr<CallbackThread>;
 
 void InitializeAcl();
+
+std::string GetFormatMode();
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

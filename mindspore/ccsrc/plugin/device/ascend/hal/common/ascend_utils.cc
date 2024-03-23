@@ -177,6 +177,21 @@ void InitializeAcl() {
   }
   g_acl_initialized = true;
 }
+
+std::string GetFormatMode() {
+  auto format_mode = common::GetEnv("MS_FORMAT_MODE");
+  if (format_mode.empty()) {
+    // default set "0" for 910a graph sink, otherwise "1"
+    auto ms_context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(ms_context);
+    if (ms_context->ascend_soc_version() == "ascend910" && ms_context->get_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK)) {
+      format_mode = "0";
+    } else {
+      format_mode = "1";
+    }
+  }
+  return format_mode;
+}
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

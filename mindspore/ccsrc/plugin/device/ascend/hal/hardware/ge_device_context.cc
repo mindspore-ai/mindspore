@@ -576,12 +576,6 @@ MSCONTEXT_REGISTER_INIT_FUNC(kAscendDevice, [](MsContext *ctx) -> void {
     common::SetEnv("MS_FORMAT_MODE", format_mode.c_str());
   }
 
-  // if format not set, user default format.
-  format_mode = common::GetEnv("MS_FORMAT_MODE");
-  if (format_mode.empty()) {
-    common::SetEnv("MS_FORMAT_MODE", "1");
-  }
-
   transform::LoadAscendApiSymbols();
   SetContextSocVersion(ctx);
 });
