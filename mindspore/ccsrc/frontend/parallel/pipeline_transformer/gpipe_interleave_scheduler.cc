@@ -25,6 +25,7 @@
 #include "frontend/parallel/step_parallel_utils.h"
 #include "frontend/parallel/node_check.h"
 #include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/other_ops.h"
 #include "ir/anf.h"
 #include "ir/graph_utils.h"
 
@@ -146,30 +147,36 @@ std::vector<BorderPair> GpipeInterleavedScheduler::SortBetweenMicro(const std::v
   return sorted_borders;
 }
 
-void GpipeInterleavedScheduler::Reorder() {
+void GpipeInterleavedScheduler::ForwardReorder(int64_t bias, int64_t flag) {
   auto sorted_fwd_begin = SortBetweenMicro(fwd_begin_, false);
   auto sorted_fwd_end = SortBetweenMicro(fwd_end_, false);
-  auto sorted_bwd_begin = SortBetweenMicro(bwd_begin_, true);
-  auto sorted_bwd_end = SortBetweenMicro(bwd_end_, true);
   auto sorted_fwd_cell = SortBetweenMicro(fwd_cell_, false);
-  auto sorted_bwd_cell = SortBetweenMicro(bwd_cell_, true);
-  int64_t bias = 0;
-  if (micro_size_ > stage_num_) {
-    bias = micro_size_ - stage_num_;
-  }
-
   // Sort forward
   for (size_t i = 0; i < LongToSize(micro_size_ * chunk_num_ - 1); ++i) {
     if (stage_ != stage_num_ - 1 || micro_size_ < stage_num_ || sorted_fwd_end[i].second.chunk == chunk_num_ - 1) {
+      if (flag != 0 && stage_ != stage_num_ - 1) {
+        auto prior = sorted_fwd_cell[i].second;
+        auto last = sorted_fwd_begin[i + 1].first;
+        ControlOrder(prior, last);
+        auto prior1 = sorted_fwd_begin[i + 1].second;
+        auto last1 = sorted_fwd_end[i].first;
+        ControlOrder(prior1, last1);
+        auto prior2 = sorted_fwd_end[i].second;
+        auto last2 = sorted_fwd_cell[i + 1].first;
+        ControlOrder(prior2, last2);
+        continue;
+      }
       auto prior = sorted_fwd_end[i].second;
       auto last = sorted_fwd_begin[i + 1].first;
       ControlOrder(prior, last);
       continue;
     }
-    auto prior = sorted_fwd_cell[i].second;
-    auto last = sorted_fwd_begin[i + 1].first;
-    ControlOrder(prior, last);
     if (bias > 0) {
+      auto prior = sorted_fwd_cell[i].second;
+      auto last = sorted_fwd_begin[i + 1].first;
+      ControlOrder(prior, last);
+    }
+    if (flag != 0) {
       auto prior1 = sorted_fwd_cell[i + bias].second;
       auto last1 = sorted_fwd_begin[i + bias + 1].first;
       ControlOrder(prior1, last1);
@@ -179,15 +186,31 @@ void GpipeInterleavedScheduler::Reorder() {
       auto prior3 = sorted_fwd_end[i].second;
       auto last3 = sorted_fwd_cell[i + bias + 1].first;
       ControlOrder(prior3, last3);
-    } else {
-      auto prior1 = sorted_fwd_begin[i + 1].second;
-      auto last1 = sorted_fwd_end[i].first;
-      ControlOrder(prior1, last1);
-      auto prior2 = sorted_fwd_end[i].second;
-      auto last2 = sorted_fwd_cell[i + 1].first;
-      ControlOrder(prior2, last2);
+      continue;
     }
+    auto prior1 = sorted_fwd_cell[i + bias].second;
+    auto last1 = sorted_fwd_end[i].first;
+    ControlOrder(prior1, last1);
+    auto prior2 = sorted_fwd_end[i].second;
+    auto last2 = sorted_fwd_begin[i + bias + 1].first;
+    ControlOrder(prior2, last2);
   }
+}
+
+void GpipeInterleavedScheduler::Reorder() {
+  auto sorted_fwd_begin = SortBetweenMicro(fwd_begin_, false);
+  auto sorted_fwd_end = SortBetweenMicro(fwd_end_, false);
+  auto sorted_bwd_begin = SortBetweenMicro(bwd_begin_, true);
+  auto sorted_bwd_end = SortBetweenMicro(bwd_end_, true);
+  auto sorted_bwd_cell = SortBetweenMicro(bwd_cell_, true);
+  int64_t bias = 0;
+  if (micro_size_ > stage_num_) {
+    bias = micro_size_ - stage_num_;
+  }
+
+  // Sort forward
+  int64_t flag = stage_ % 2;
+  ForwardReorder(bias, flag);
 
   auto prior_back = sorted_fwd_end.back().second;
   auto last_front = sorted_bwd_begin.front().first;
@@ -196,15 +219,29 @@ void GpipeInterleavedScheduler::Reorder() {
   // Sort backward
   for (size_t i = 0; i < LongToSize(micro_size_ * chunk_num_ - 1); ++i) {
     if (stage_ != 0 || micro_size_ < stage_num_ || sorted_bwd_end[i].second.chunk == 0) {
-      auto prior = sorted_bwd_end[i].second;
+      if (flag == 0 || (stage_ == stage_num_ - 1 && sorted_bwd_end[i].second.chunk == chunk_num_ - 1)) {
+        auto prior = sorted_bwd_end[i].second;
+        auto last = sorted_bwd_begin[i + 1].first;
+        ControlOrder(prior, last);
+        continue;
+      }
+      auto prior = sorted_bwd_cell[i].second;
       auto last = sorted_bwd_begin[i + 1].first;
       ControlOrder(prior, last);
+      auto prior1 = sorted_bwd_begin[i + 1].second;
+      auto last1 = sorted_bwd_end[i].first;
+      ControlOrder(prior1, last1);
+      auto prior2 = sorted_bwd_end[i].second;
+      auto last2 = sorted_bwd_cell[i + 1].first;
+      ControlOrder(prior2, last2);
       continue;
     }
-    auto prior = sorted_bwd_cell[i].second;
-    auto last = sorted_bwd_begin[i + 1].first;
-    ControlOrder(prior, last);
     if (bias > 0) {
+      auto prior = sorted_bwd_cell[i].second;
+      auto last = sorted_bwd_begin[i + 1].first;
+      ControlOrder(prior, last);
+    }
+    if (flag != 0) {
       auto prior1 = sorted_bwd_cell[i + bias].second;
       auto last1 = sorted_bwd_begin[i + bias + 1].first;
       ControlOrder(prior1, last1);
@@ -214,14 +251,14 @@ void GpipeInterleavedScheduler::Reorder() {
       auto prior3 = sorted_bwd_end[i].second;
       auto last3 = sorted_bwd_cell[i + bias + 1].first;
       ControlOrder(prior3, last3);
-    } else {
-      auto prior1 = sorted_bwd_begin[i + 1].second;
-      auto last1 = sorted_bwd_end[i].first;
-      ControlOrder(prior1, last1);
-      auto prior2 = sorted_bwd_end[i].second;
-      auto last2 = sorted_bwd_cell[i + 1].first;
-      ControlOrder(prior2, last2);
+      continue;
     }
+    auto prior1 = sorted_bwd_cell[i + bias].second;
+    auto last1 = sorted_bwd_end[i].first;
+    ControlOrder(prior1, last1);
+    auto prior2 = sorted_bwd_end[i].second;
+    auto last2 = sorted_bwd_begin[i + bias + 1].first;
+    ControlOrder(prior2, last2);
   }
 
   // Parameters phase
@@ -234,6 +271,63 @@ void GpipeInterleavedScheduler::Reorder() {
     auto prior2 = sorted_bwd_end.back().second;
     auto last2 = bwd_params_.front();
     ControlOrder(prior2, last2);
+  }
+
+  OptimizerShardCommReorder();
+}
+
+AbstractBasePtr GpipeInterleavedScheduler::GenerateTupleAbstract(const std::vector<AnfNodePtr> &nodes) {
+  AbstractBasePtr abs;
+  if (nodes.size() == 2) {
+    auto cnode = nodes.back()->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    abs = cnode->abstract();
+  } else {
+    AbstractBasePtrList abstract_list;
+    abstract_list.resize(nodes.size() - 1);
+    (void)std::transform(nodes.begin() + 1, nodes.end(), abstract_list.begin(), [](const AnfNodePtr &node) {
+      auto cnode = node->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(cnode);
+      return cnode->abstract();
+    });
+    abs = std::make_shared<abstract::AbstractTuple>(abstract_list);
+  }
+  return abs;
+}
+
+void GpipeInterleavedScheduler::OptimizerShardCommReorder() {
+  auto enable_opt_shard = ParallelContext::GetInstance()->enable_parallel_optimizer();
+  if (!enable_opt_shard) {
+    return;
+  }
+  auto sorted_fwd_begin = SortBetweenMicro(fwd_begin_, false);
+  auto sorted_fwd_cell = SortBetweenMicro(fwd_cell_, false);
+  std::vector<AnfNodePtr> make_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple)};
+  for (int64_t chunk = 1; chunk < chunk_num_; ++chunk) {
+    for (const auto &border : sorted_fwd_cell) {
+      if (border.first.chunk == chunk) {
+        auto cnode = border.first.border;
+        for (const auto &input : cnode->inputs()) {
+          if (!IsPrimitiveCNode(input, prim::kPrimAllGather)) {
+            continue;
+          }
+          make_tuple_inputs.emplace_back(input);
+        }
+      }
+    }
+  }
+  if (make_tuple_inputs.size() > 1) {
+    auto make_tuple = root_->NewCNode(make_tuple_inputs);
+    auto abs = GenerateTupleAbstract(make_tuple_inputs);
+    make_tuple->set_abstract(abs);
+    auto begin_node = sorted_fwd_begin.front().first.border;
+    if (begin_node->inputs().size() < 2) {
+      return;
+    }
+    std::vector<AnfNodePtr> depend_inputs = {NewValueNode(prim::kPrimDepend), begin_node->input(1), make_tuple};
+    auto depend = root_->NewCNode(depend_inputs);
+    depend->set_abstract(begin_node->input(1)->abstract());
+    manager_->SetEdge(begin_node, 1, depend);
   }
 }
 }  // namespace parallel
