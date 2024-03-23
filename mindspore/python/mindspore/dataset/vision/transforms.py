@@ -4546,6 +4546,9 @@ class ResizedCrop(ImageTensorOperation):
               <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
         """
         self.device_target = device_target
+        if self.interpolation == Inter.ANTIALIAS and self.device_target == "Ascend":
+            raise ValueError("The current InterpolationMode is not supported by DVPP. It is {}."
+                             .format(self.interpolation))
         return self
 
     def parse(self):
