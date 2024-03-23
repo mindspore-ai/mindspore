@@ -782,8 +782,8 @@ void GraphScheduler::Run(ActorSet *const actor_set, const std::vector<std::vecto
   ActorDispatcher::set_enable_multi_stream(actor_set->enable_multi_stream_);
   ActorDispatcher::set_has_kernel_need_user_data(actor_set->has_kernel_need_user_data_);
   double start_time = GetTime();
-  ActorDispatcher::Send(actor_set->data_prepare_actor_->GetAID(), &DataPrepareActor::PrepareData, input_tensors, args,
-                        &op_context, GraphExecutionStrategy::kPipeline);
+  ActorDispatcher::SendSync(actor_set->data_prepare_actor_->GetAID(), &DataPrepareActor::PrepareData, input_tensors,
+                            args, &op_context, GraphExecutionStrategy::kPipeline);
 
   // Get the run result.
   auto result_future = result[0].GetFuture();
