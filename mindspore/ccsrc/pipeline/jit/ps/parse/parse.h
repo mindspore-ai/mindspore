@@ -343,6 +343,9 @@ class Parser {
   bool HandleAssignClassParameterMember(const FunctionBlockPtr &block, const py::object &target,
                                         const AnfNodePtr &value_node);
 
+  // Handle set attribute change for class member.
+  bool HandleSetAttrClassMemberForInplace(const FunctionBlockPtr &block, const AnfNodePtr &node);
+
   // Assign value to class member.
   void HandleAssignClassMember(const FunctionBlockPtr &block, const py::object &target, const AnfNodePtr &value_node);
 
