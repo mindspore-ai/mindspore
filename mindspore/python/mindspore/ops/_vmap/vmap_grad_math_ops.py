@@ -233,6 +233,7 @@ def get_median_grad_vmap_rule(prim, axis_size):
         return x_grad, dim_new
     return vmap_rule
 
+
 @vmap_rules_getters.register(G.LogitGrad)
 def get_logit_grad_vmap_rule(prim_func, axis_size):
     """VmapRule for `LogitGrad`."""

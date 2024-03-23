@@ -64,8 +64,8 @@ int CorrelateCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   std::vector<int64_t> v_shape = inputs[kIndex1]->GetShapeVector();
   auto mode = inputs[kIndex2]->GetValueWithCheck<int64_t>();
   mode_type_ = static_cast<mindspore::PadMode>(mode);
-  int64_t a_dims = a_shape.size();
-  int64_t v_dims = v_shape.size();
+  auto a_dims = a_shape.size();
+  auto v_dims = v_shape.size();
   if (a_dims != kIndex1 || v_dims != kIndex1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'a' and 'v' should be 1-D, but got 'a' at"
                       << a_dims << "-D and 'v' at " << v_dims << "-D.";

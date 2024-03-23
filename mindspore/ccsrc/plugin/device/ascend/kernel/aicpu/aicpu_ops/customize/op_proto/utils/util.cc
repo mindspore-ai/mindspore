@@ -287,7 +287,6 @@ bool InferBroadcastshapeForStatic(const Shape &shape_x, const Shape &shape_y, Sh
     // when inputx len >= inputy len
     // input_x = [128, 128, 128] Vs input_y = [128]
     auto len_sub = shape_x_len - shape_y_len;
-    //    shape_output.SetDimNum(shape_x_len);
     for (size_t i = 0; i < len_sub; i++) {
       (void)output_shape.emplace_back(shape_x.GetDim(i));
     }

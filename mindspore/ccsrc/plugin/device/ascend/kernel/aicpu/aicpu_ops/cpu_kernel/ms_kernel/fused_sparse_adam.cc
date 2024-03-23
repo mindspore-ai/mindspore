@@ -104,13 +104,13 @@ uint32_t FusedSparseAdamKernel::Compute(CpuKernelContext &ctx) {
   new_grad = (float *)malloc(indices_size_ * var_outer_dim_size_ * sizeof(float));
   new_indices = (int *)malloc(indices_size_ * sizeof(int));
   m_t = (float *)malloc(var_first_dim_size_ * var_outer_dim_size_ * sizeof(float));
-  if (new_grad == NULL || new_indices == NULL || m_t == NULL) {
+  if (new_grad == nullptr || new_indices == nullptr || m_t == nullptr) {
     free(new_grad);
     free(new_indices);
     free(m_t);
-    new_grad = NULL;
-    new_indices = NULL;
-    m_t = NULL;
+    new_grad = nullptr;
+    new_indices = nullptr;
+    m_t = nullptr;
     return KERNEL_STATUS_INNER_ERROR;
   }
 
@@ -145,9 +145,9 @@ uint32_t FusedSparseAdamKernel::Compute(CpuKernelContext &ctx) {
   free(new_grad);
   free(new_indices);
   free(m_t);
-  new_grad = NULL;
-  new_indices = NULL;
-  m_t = NULL;
+  new_grad = nullptr;
+  new_indices = nullptr;
+  m_t = nullptr;
   return KERNEL_STATUS_OK;
 }
 

@@ -40,7 +40,7 @@ BaseShapePtr FFTInferShape(const PrimitivePtr &primitive, const std::vector<Abst
     if (n_opt.has_value()) {
       auto n = n_opt.value();
       auto dim_opt = GetScalarValue<int64_t>(input_args[kInputIndex2]->GetValue());
-      auto x_rank = input_shape.size();
+      auto x_rank = SizeToLong(input_shape.size());
 
       int64_t tmp_pos;
       if (dim_opt.has_value()) {
