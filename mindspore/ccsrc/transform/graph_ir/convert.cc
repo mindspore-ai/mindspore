@@ -2215,11 +2215,13 @@ DfGraphConvertor &DfGraphConvertor::BuildGraph(const std::string &name) {
   GetCallNodeInputs(cur_while_node_);
   // branch node set input.
   bool is_initdata_graph = false;
+  bool is_branch = false;
   std::vector<AnfNodePtr> nodes = GetOrderedCNodes(anf_graph_);
   for (auto &it : nodes) {
     if (IsBranchNode(it)) {
       auto node = it->cast<CNodePtr>();
       GetBranchNodeInput(node);
+      is_branch = true;
     }
     if (IsInitDataSetQueueNode(it)) {
       is_initdata_graph = true;
@@ -2231,7 +2233,6 @@ DfGraphConvertor &DfGraphConvertor::BuildGraph(const std::string &name) {
     MS_EXCEPTION_IF_NULL(new_manager);
     new_manager->AddFuncGraph(anf_graph_);
     anf_graph_->set_manager(new_manager);
-    manager = new_manager;
   }
 
   if (is_initdata_graph) {
@@ -2260,10 +2261,12 @@ DfGraphConvertor &DfGraphConvertor::BuildGraph(const std::string &name) {
     SetGraphInputs(&inputs);
   }
 
-  // Add const nodes as graph input for some operator work with constant
-  MS_LOG(INFO) << "Graph const input size: " << graph_const_inputs_.size();
-  (void)std::transform(graph_const_inputs_.begin(), graph_const_inputs_.end(), std::back_inserter(inputs),
-                       [](const OperatorPtr &x) { return *x; });
+  if (!ref_mode_ || !is_branch) {
+    // Add const nodes as graph input for some operator work with constant
+    MS_LOG(INFO) << "Graph const input size: " << graph_const_inputs_.size();
+    (void)std::transform(graph_const_inputs_.begin(), graph_const_inputs_.end(), std::back_inserter(inputs),
+                         [](const OperatorPtr &x) { return *x; });
+  }
 
   FillEmptyInputsWithNoInputOp(&inputs);
 
