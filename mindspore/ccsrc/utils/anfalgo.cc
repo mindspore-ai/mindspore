@@ -121,13 +121,6 @@ bool IsMultiLayerTuple(const abstract::AbstractBasePtr &abstract) {
                      });
 }
 
-namespace {
-bool IsMultiOutput(const AnfNodePtr &node) {
-  return node != nullptr && node->abstract() != nullptr && node->abstract()->isa<abstract::AbstractSequence>() &&
-         node->abstract()->cast<abstract::AbstractSequencePtr>()->size() > 1;
-}
-}  // namespace
-
 std::vector<KernelWithIndex> GetAllOutputWithIndexInner(const AnfNodePtr &node,
                                                         const std::vector<PrimitivePtr> &return_types) {
   MS_EXCEPTION_IF_NULL(node);
@@ -143,16 +136,6 @@ std::vector<KernelWithIndex> GetAllOutputWithIndexInner(const AnfNodePtr &node,
       (void)std::copy(make_tuple_output.begin(), make_tuple_output.end(), std::back_inserter(ret));
     }
     return ret;
-  }
-  if (std::any_of(return_types.begin(), return_types.end(), [&node](const PrimitivePtr &prim_type) -> bool {
-        return common::AnfAlgo::CheckPrimitiveType(node, prim_type);
-      })) {
-    if (IsMultiOutput(node)) {
-      MS_LOG(EXCEPTION) << "Invalid get all output with index node:" << node->DebugString()
-                        << " abstract:" << node->abstract()->ToString();
-    }
-    MS_LOG(DEBUG) << "Need node flatten output of node:" << node->DebugString();
-    return {KernelWithIndex(node, 0)};
   }
   // The depend node need get the real node.
   if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimDepend)) {
