@@ -1355,7 +1355,7 @@ bool KernelGraph::IsDatasetGraph() const {
 }
 
 std::string KernelGraph::ToString() const {
-  std::string prefix = is_from_pynative() ? "pynative_kernel_graph" : "kernel_graph";
+  std::string prefix = is_from_pynative() ? "pynative_kernel_graph_" : "kernel_graph_";
   return prefix.append(std::to_string(graph_id_));
 }
 
