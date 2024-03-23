@@ -93,7 +93,6 @@ ValuePtr ConvertPrimToPrimPy(const PrimitivePtr &primc) {
       }
     }
   }
-  // TODO(dyn_shape): need deleted after moving all python infer to c++ infer.
   auto new_prim = parallel::CreateOpInstance(attrs, primc->name(), "");
   MS_EXCEPTION_IF_NULL(new_prim);
   (void)new_prim->cast<PrimitivePtr>()->SetAttrs(primc->attrs());
