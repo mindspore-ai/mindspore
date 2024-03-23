@@ -354,7 +354,7 @@ class ListData : public ItemData {
       (*info) << v->Info();
     }
   }
-  bool CompareList(const ListData &list) const{
+  bool CompareList(const ListData &list) const {
     if (!inOrder_) {
       std::vector<ItemDataPtr> listCpy = list.listVar_;
       for (size_t i = 0, j; i < listVar_.size(); ++i) {
@@ -598,7 +598,7 @@ class DictData : public ItemData {
       (*info) << i->Info();
     }
   }
-  bool CompareKV(const DictData &other) const{
+  bool CompareKV(const DictData &other) const {
     std::vector<ItemDataPtr> listCpK = other.listK_;
     std::vector<ItemDataPtr> listCpV = other.listV_;
     size_t listSize = listK_.size();
