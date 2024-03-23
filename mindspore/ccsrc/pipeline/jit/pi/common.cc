@@ -650,6 +650,9 @@ void AddGuardForParam(const PyFrameObject *f, OptGuardPtr guard, bool detach) {
     kwargs = reinterpret_cast<PyDictObject *>(f->f_localsplus[argc + (vargs ? 1 : 0)]);
   }
   for (int i = 0; i < argc; ++i) {
+    if (f->f_localsplus[i] == nullptr) {
+      continue;
+    }
     RootTracePtr ptr = std::make_shared<RootTrace>(f->f_localsplus[i], mindspore::pijit::TraceType::Param, i);
     guard->GuardOn(ptr, mindspore::pijit::GuardLevel::GDeduce, false);
     if (detach) {
