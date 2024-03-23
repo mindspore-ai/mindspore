@@ -564,7 +564,7 @@ void DFunctor::MapMorphism() {
 
 FuncGraphPtr DFunctor::KUserDefined(const FuncGraphPtr &primal) {
   // K user defined cell bprop.
-  auto bprop = primal->transforms().find(parse::CUSTOM_BPROP_NAME);
+  auto bprop = primal->transforms().find("bprop");
   if (bprop != primal->transforms().end()) {
     FuncGraphPtr bprop_graph = bprop->second.func_graph();
     resources_->manager()->AddFuncGraph(bprop_graph);
