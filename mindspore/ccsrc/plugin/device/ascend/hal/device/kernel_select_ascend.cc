@@ -645,7 +645,7 @@ bool IsEnableAclnn(const KernelGraphPtr &kernel_graph, const AnfNodePtr &node) {
     return false;
   }
 
-  static bool special_format = GetFormatMode() == "0";
+  static bool special_format = GetFormatMode(node) == "0";
   if (special_format && !kernel_graph->is_dynamic_shape()) {
     return false;
   }
