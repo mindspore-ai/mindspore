@@ -558,9 +558,9 @@ std::tuple<bool, std::string, ExceptionType> SelectKernelInfoWithMsg(const Kerne
   static std::set<std::string> kInternalKernelSelectedSet;
   transform::ErrorAclType acl_err_type = transform::ErrorAclType::kNormalOp;
   std::tuple<bool, std::string, ExceptionType> result = std::make_tuple(true, "", NoExceptionType);
-  auto enable_internal = true;
-  if (common::GetEnv("MS_ENABLE_INTERNAL_KERNELS") == "off") {
-    enable_internal = false;
+  auto enable_internal = false;
+  if (common::GetEnv("MS_ENABLE_INTERNAL_KERNELS") == "on") {
+    enable_internal = true;
   }
 
   std::string op_name = common::AnfAlgo::GetCNodeName(node);
