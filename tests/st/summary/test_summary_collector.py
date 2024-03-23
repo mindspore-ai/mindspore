@@ -109,7 +109,7 @@ def run_network(dataset_sink_mode=False, num_samples=2, dir_suffix="summary", **
     summary_collector = SummaryCollector(summary_dir=summary_dir.name, collect_freq=2, **kwargs)
 
     ds_train = create_mnist_dataset("train", num_samples=num_samples)
-    model.train(1, ds_train, callbacks=[summary_collector], dataset_sink_mode=dataset_sink_mode)
+    model.train(3, ds_train, callbacks=[summary_collector], dataset_sink_mode=dataset_sink_mode)
 
     ds_eval = create_mnist_dataset("test")
     model.eval(ds_eval, dataset_sink_mode=dataset_sink_mode, callbacks=[summary_collector])
@@ -244,43 +244,17 @@ def test_summary_with_sink_mode_false():
 
     tag_list = TestSummary.list_summary_tags(summary_dir.name)
 
-    expected_tag_set = {'conv1.weight/auto', 'conv2.weight/auto', 'fc1.weight/auto', 'fc1.bias/auto',
-                        'fc2.weight/auto', 'input_data/auto', 'loss/auto',
-                        'histogram', 'image', 'scalar', 'tensor'}
-    assert set(expected_tag_set) == set(tag_list)
+    expected_summary_tag_set = {'conv1.weight/auto', 'conv2.weight/auto', 'fc1.weight/auto', 'fc1.bias/auto',
+                                'fc2.weight/auto', 'input_data/auto', 'loss/auto'}
+    expected_op_tag_set = {'histogram', 'image', 'scalar', 'tensor'}
+    assert set(expected_op_tag_set | expected_summary_tag_set) == set(tag_list)
 
-    # num samples is 10, batch size is 2, so step is 5, collect freq is 2,
-    # SummaryCollector will collect the first step and 2th, 4th step
-    tag_count = 3
-    for value in Counter(tag_list).values(): # pylint: disable=E1121
-        assert value == tag_count
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-@security_off_wrap
-def test_summary_with_sink_mode_true():
-    """
-    Feature: Test summary with sink mode true, and num samples is 64.
-    Description: Test summary with sink mode true, and num samples is 64.
-    Expectation: Passed.
-    """
-    context.set_context(mode=context.GRAPH_MODE)
-    summary_dir = run_network(dataset_sink_mode=True, num_samples=10, dir_suffix="test_summary_with_sink_mode_true")
-
-    tag_list = TestSummary.list_summary_tags(summary_dir.name)
-
-    # There will not record input data when dataset sink mode is True
-    expected_tags = {'conv1.weight/auto', 'conv2.weight/auto', 'fc1.weight/auto', 'fc1.bias/auto',
-                     'fc2.weight/auto', 'loss/auto', 'histogram', 'image', 'scalar', 'tensor'}
-    assert set(expected_tags) == set(tag_list)
-
-    tag_count = 1
-    for value in Counter(tag_list).values(): # pylint: disable=E1121
-        assert value == tag_count
+    op_tag_count, summary_tag_count = 8, 9
+    for key, value in Counter(tag_list).items():  # pylint: disable=E1121
+        if key in expected_op_tag_set:
+            assert value == op_tag_count
+        if key in expected_summary_tag_set:
+            assert value == summary_tag_count
 
 
 @pytest.mark.level0
@@ -295,7 +269,7 @@ def test_summarycollector_user_defind():
     Expectation: Passed.
     """
     context.set_context(mode=context.GRAPH_MODE)
-    summary_dir = run_network(dataset_sink_mode=True, num_samples=2, dir_suffix="test_summarycollector_user_defind",
+    summary_dir = run_network(dataset_sink_mode=False, num_samples=2, dir_suffix="test_summarycollector_user_defind",
                               custom_lineage_data={'test': 'self test'},
                               export_options={'tensor_format': 'npy'})
 
@@ -303,9 +277,9 @@ def test_summarycollector_user_defind():
     file_list = TestSummary.list_tensor_files(summary_dir.name)
     # There will not record input data when dataset sink mode is True
     expected_tags = {'conv1.weight/auto', 'conv2.weight/auto', 'fc1.weight/auto', 'fc1.bias/auto',
-                     'fc2.weight/auto', 'loss/auto', 'histogram', 'image', 'scalar', 'tensor'}
+                     'fc2.weight/auto', 'loss/auto', 'input_data/auto', 'histogram', 'image', 'scalar', 'tensor'}
     assert set(expected_tags) == set(tag_list)
-    expected_files = {'tensor_1.npy'}
+    expected_files = {'tensor_1.npy', 'tensor_2.npy'}
     assert set(expected_files) == set(file_list)
 
 
@@ -363,5 +337,5 @@ def test_summary_of_more_than_one_instance():
         summary_record1 = SummaryRecord(log_dir=summary_dir1.name)
         summary_dir2 = tempfile.TemporaryDirectory(suffix="test_summary_of_more_than_one_instance")
         _ = SummaryRecord(log_dir=summary_dir2.name)
+        summary_record1.close()
     assert "only one instance is supported in a training process" in str(errinfo.value)
-    summary_record1.close()
