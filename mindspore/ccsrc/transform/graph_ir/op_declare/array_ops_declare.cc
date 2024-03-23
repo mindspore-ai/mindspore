@@ -19,6 +19,7 @@
 #include <vector>
 #include "mindspore/core/ops/array_ops.h"
 #include "mindspore/core/ops/other_ops.h"
+#include "mindspore/core/ops/nn_ops.h"
 #include "mindspore/core/ops/structure_ops.h"
 
 namespace mindspore::transform {
@@ -381,4 +382,10 @@ INPUT_MAP(MatrixBandPart) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(num_lower)}, {3,
 ATTR_MAP(MatrixBandPart) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(MatrixBandPart) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(MatrixBandPart, prim::kPrimMatrixBandPart->name(), ADPT_DESC(MatrixBandPart));
+
+// EmbeddingLookup
+INPUT_MAP(EmbeddingLookup) = {{1, INPUT_DESC(param)}, {2, INPUT_DESC(indices)}, {3, INPUT_DESC(offset)}};
+ATTR_MAP(EmbeddingLookup) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(EmbeddingLookup) = {{0, OUTPUT_DESC(output)}};
+REG_ADPT_DESC(EmbeddingLookup, prim::kPrimEmbeddingLookup->name(), ADPT_DESC(EmbeddingLookup));
 }  // namespace mindspore::transform
