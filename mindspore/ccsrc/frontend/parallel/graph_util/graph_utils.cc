@@ -461,6 +461,23 @@ Status ConvertStridedSliceInputs(const OperatorParams &params,
   return SUCCESS;
 }
 
+bool WhetherMatchingIsNeededForReshape(const Shape &shape_vec, const TensorRedistributionPtr &tensor_redistribution) {
+  size_t user_specific_dynamic_dim_cnt = std::count(shape_vec.begin(), shape_vec.end(), -1);
+  TensorLayout to_layout = tensor_redistribution->layout_transfer().to_in();
+  Shape to_shape_in_layout = to_layout.slice_shape().array();
+  if (user_specific_dynamic_dim_cnt == 1 && shape_vec.size() == to_shape_in_layout.size()) {
+    size_t dyn_index = static_cast<size_t>(std::find(shape_vec.begin(), shape_vec.end(), -1) - shape_vec.begin());
+    for (size_t i = 0; i < shape_vec.size(); ++i) {
+      if (i != dyn_index && shape_vec[i] != to_shape_in_layout[i]) {
+        return true;
+      }
+    }
+    MS_LOG(INFO) << "No need to matching for shape: " << shape_vec << ", to_shape_in_layout: " << to_shape_in_layout;
+    return false;
+  }
+  return true;
+}
+
 Status ConvertReshapeInputs(const OperatorParams &params,
                             const TensorRedistributionPtr &tensor_redistribution_from_cnode,
                             const FuncGraphPtr &func_graph, std::vector<AnfNodePtr> *new_node_input) {
@@ -469,7 +486,13 @@ Status ConvertReshapeInputs(const OperatorParams &params,
       continue;
     }
     Shape shape_vec = GetValue<Shape>(param.first.second);
-    MS_LOG(DEBUG) << "shape param = " << shape_vec;
+    MS_LOG(INFO) << "shape param = " << shape_vec;
+    if (!WhetherMatchingIsNeededForReshape(shape_vec, tensor_redistribution_from_cnode)) {
+      AnfNodePtr val = NewValueNode(param.first.second);
+      val->set_abstract(param.first.second->ToAbstract());
+      (void)new_node_input->emplace_back(val);
+      return SUCCESS;
+    }
     auto dynamic_input = ConvertConstParamToDynamic(tensor_redistribution_from_cnode, param, func_graph, true);
     MS_ERROR_IF_NULL_W_RET_VAL(dynamic_input, FAILED);
     (void)new_node_input->emplace_back(dynamic_input);
