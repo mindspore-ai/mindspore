@@ -24,6 +24,7 @@
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/step_parallel_utils.h"
+#include "mindspore/ccsrc/include/common/utils/utils.h"
 #include "mindspore/core/ops/incre_flash_attention.h"
 #include "mindspore/core/ops/array_ops.h"
 #include "frontend/parallel/ops_info/incre_flash_attention_info.h"
@@ -45,6 +46,8 @@ constexpr char kAttrInputLayoutBNSD[] = "BNSD";
 constexpr size_t kRank4 = 4;
 constexpr size_t kRank3 = 3;
 constexpr size_t kRank2 = 2;
+constexpr int64_t kAntiquantStratDimBSHLayout = 1;
+constexpr int64_t kAntiquantStratDimBNSDLayout = 1;
 }  // namespace
 
 bool IncreFlashAttentionInfo::CheckStrategyOnIndex(int64_t strategy, int64_t true_value, const std::string &dim_name,
@@ -110,13 +113,13 @@ Status IncreFlashAttentionInfo::GetAttrs() {
 // input_0   input_1   input_2   (opt_input_3)   (opt_input_4)   opt_input_5
 // 0         1         2          None               None              3
 // when input 3 and 4 are not provided, the squeezed index of input 5 is 3
-int IncreFlashAttentionInfo::GetSqueezedIndex(size_t original_index) {
+size_t IncreFlashAttentionInfo::GetSqueezedIndex(size_t original_index) {
   if (original_index >= optinal_inputs_.size()) {
     MS_LOG(WARNING) << "provided index [" << original_index << "] is out of range [" << optinal_inputs_.size() << "]";
     return -1;
   }
-  int id_counter = 0;
-  for (size_t index = 1; index <= original_index; index++) {
+  size_t id_counter = 0;
+  for (size_t index = kIndex1; index <= original_index; index++) {
     if (optinal_inputs_[index]) {
       id_counter++;
     }
@@ -137,11 +140,11 @@ Status IncreFlashAttentionInfo::CheckAntiquantStrategy(const StrategyPtr &strate
         MS_LOG(ERROR) << "antiquant strategy length should be strictly 2 in BSH layout.";
         return FAILED;
       }
-      if (antiquant_strategy[0] != 1) {
+      if (antiquant_strategy[kIndex0] != kAntiquantStratDimBSHLayout) {
         MS_LOG(ERROR) << "antiquant strategy first dim should be strictly 1 in BSH layout.";
         return FAILED;
       }
-      if (antiquant_strategy[1] != mp_) {
+      if (antiquant_strategy[kIndex1] != mp_) {
         MS_LOG(ERROR) << "antiquant strategy second dim should be strictly equal to the strategy value of the third "
                          "dim of Query in BSH layout.";
         return FAILED;
@@ -152,11 +155,13 @@ Status IncreFlashAttentionInfo::CheckAntiquantStrategy(const StrategyPtr &strate
         MS_LOG(ERROR) << "antiquant strategy length should be strictly 4 in BNSD layout.";
         return FAILED;
       }
-      if ((antiquant_strategy[0] != 1) || (antiquant_strategy[2] != 1) || (antiquant_strategy[3] != 1)) {
+      if ((antiquant_strategy[kIndex0] != kAntiquantStratDimBNSDLayout) ||
+          (antiquant_strategy[kIndex2] != kAntiquantStratDimBNSDLayout) ||
+          (antiquant_strategy[kIndex3] != kAntiquantStratDimBNSDLayout)) {
         MS_LOG(ERROR) << "antiquant strategy first, third, and forth dim should be strictly 1 in BNSD layout.";
         return FAILED;
       }
-      if (antiquant_strategy[1] != mp_) {
+      if (antiquant_strategy[kIndex1] != mp_) {
         MS_LOG(ERROR) << "antiquant strategy second dim should be strictly to the strategy value of the third dim of "
                          "Query in BNSD layout.";
         return FAILED;
@@ -174,12 +179,12 @@ Status IncreFlashAttentionInfo::CheckAttenMaskStrategy(const StrategyPtr &strate
   auto atten_mask_idx = GetSqueezedIndex(input_index);
   auto atten_mask_strategy = strategies[atten_mask_idx];
   auto query_strategy = strategies[ops::kIncreFlashAttentionInputQueryIndex];
-  if (atten_mask_idx >= 0) {
+  if (atten_mask_idx >= kIndex0) {
     if (atten_mask_strategy[kInputBatchDim] != query_strategy[kInputBatchDim]) {
       MS_LOG(ERROR) << "atten_mask strategy batch dim should be same.";
       return FAILED;
     }
-    for (size_t index = 1; index < atten_mask_strategy.size(); index++) {
+    for (size_t index = kIndex1; index < atten_mask_strategy.size(); index++) {
       if (!CheckStrategyOnIndex(atten_mask_strategy[index], 1, "dims except batch", "atten_mask")) {
         return FAILED;
       }

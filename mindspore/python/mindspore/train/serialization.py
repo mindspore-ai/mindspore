@@ -1577,6 +1577,16 @@ def _reshape_tensor(tensor, dst_shape):
     return Tensor(np_tensor, tensor.dtype)
 
 
+def _check_param_for_integrate_save(pipeline_stages, uniform_split):
+    """check whether current settings and parameters are supported in integrated save checkpoint mode"""
+    if pipeline_stages > 1:
+        raise RuntimeError("Pipeline Parallel don't support Integrated save checkpoint now.")
+    if uniform_split == 0:
+        raise RuntimeError("For 'save_checkpoint' and in automatic model parallel scene, when set "
+                           "'integrated_save' to True, the checkpoint will be integrated save, it "
+                           "is only supports uniform split tensor now.")
+
+
 def _get_merged_param_data(net, parameter_layout_dict, param_name, param_data, integrated_save):
     """
     Gets the merged data(tensor) from tensor slice, by device arrangement and tensor map.
@@ -1617,12 +1627,7 @@ def _get_merged_param_data(net, parameter_layout_dict, param_name, param_data, i
     else:
         logger.info("Need to create allgather net for %s", param_name)
         if integrated_save:
-            if context.get_auto_parallel_context("pipeline_stages") > 1:
-                raise RuntimeError("Pipeline Parallel don't support Integrated save checkpoint now.")
-            if uniform_split == 0:
-                raise RuntimeError("For 'save_checkpoint' and in automatic model parallel scene, when set "
-                                   "'integrated_save' to True, the checkpoint will be integrated save, it "
-                                   "is only supports uniform split tensor now.")
+            _check_param_for_integrate_save(context.get_auto_parallel_context("pipeline_stages"), uniform_split)
             # while any dim is not equal to -1, means param is split and needs to be merged
             # pipeline parallel need to be supported here later
             if mp_weight:

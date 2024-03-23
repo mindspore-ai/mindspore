@@ -23,6 +23,7 @@
 #include "mindspore/core/ops/framework_ops.h"
 #include "mindspore/core/ops/array_ops.h"
 #include "mindspore/core/ops/other_ops.h"
+#include "mindspore/core/utils/convert_utils_base.h"
 #include "frontend/parallel/step_parallel.h"
 #include "include/common/debug/anf_ir_dump.h"
 
@@ -194,7 +195,7 @@ AnfNodeIndex FindNodeLastInput(const CNodePtr &node, const FuncGraphPtr &graph, 
   auto last_input = std::max_element(node_inputs.begin(), node_inputs.end(), comp_func);
   if (last_input != node_inputs.end()) {
     const auto &inputs = node->inputs();
-    size_t index = std::distance(inputs.begin(), std::find(inputs.begin(), inputs.end(), *last_input));
+    size_t index = IntToSize(std::distance(inputs.begin(), std::find(inputs.begin(), inputs.end(), *last_input)));
     ret = std::make_pair(*last_input, index);
   }
   return ret;
@@ -266,7 +267,6 @@ bool ReorderCandidateOverlapBlock(const FuncGraphPtr &graph, const std::vector<A
     return changed;
   }
   // divide block into small block(cal block, comm clock)
-  // const auto &grad_small_block = DivideIntoCommAndCalBlock(grad_block);
   const auto &recompute_small_block = DivideIntoCommAndCalBlock(recompute_block);
 
   size_t recompute_small_block_size = recompute_small_block.size();

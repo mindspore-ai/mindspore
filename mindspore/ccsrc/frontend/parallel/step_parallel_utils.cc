@@ -1105,8 +1105,10 @@ static Shapes GetRefKeyNodeShape(const AnfNodePtr &node, const FuncGraphPtr &fun
 
 std::pair<std::vector<Shapes>, std::vector<Symbols>> ExtractShapeAndSymbol(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  Shapes shape_inputs, shape_outputs;
-  Symbols symbol_inputs, symbol_outputs;
+  Shapes shape_inputs;
+  Shapes shape_outputs;
+  Symbols symbol_inputs;
+  Symbols symbol_outputs;
   std::vector<Shapes> shape_all;
   std::vector<Symbols> symbol_all;
   std::vector<AnfNodePtr> all_inputs = node->inputs();
@@ -1195,7 +1197,8 @@ std::vector<Shapes> ExtractRealDivisor(const CNodePtr &node) {
   auto inputs_symbol = symbols[0];
   auto outputs_symbol = symbols[1];
 
-  Shapes in_divisor_symbols, out_divisor_symbols;
+  Shapes in_divisor_symbols;
+  Shapes out_divisor_symbols;
   MS_LOG(DEBUG) << "the node is " << node->ToString() << ", the divisor of inputs is "
                 << DivisorOfSymbolsToString(inputs_symbol) << ", the inputs shape is " << ShapesToString(inputs_shape);
   in_divisor_symbols = GetRealDivisorSymbols(inputs_shape, inputs_symbol);
@@ -1595,7 +1598,8 @@ OperatorInfoPtr CreateOperatorInfo(const CNodePtr &cnode) {
   (*op_info).set_outputs_dtype(cnode->Type());
   (*op_info).set_cnode(cnode);
   if (InDynamicGraph(cnode) && IsDynamicShapesList(shape_list)) {
-    Shapes in_real_divisors, out_real_divisors;
+    Shapes in_real_divisors;
+    Shapes out_real_divisors;
     in_real_divisors = GetRealDivisorSymbols(shape_list[INPUT_SYMBOLS_INDEX], symbol_list[INPUT_SYMBOLS_INDEX]);
     out_real_divisors = GetRealDivisorSymbols(shape_list[OUTPUT_SYMBOLS_INDEX], symbol_list[OUTPUT_SYMBOLS_INDEX]);
     (*op_info).set_dynamic_shape_flag(True);

@@ -604,10 +604,10 @@ Strategies GatherForDynamicShape(const std::shared_ptr<OperatorInfo> &op, const 
     MS_LOG(EXCEPTION) << "Failure: Gather's axis out of range.";
   }
   Dimensions gather_input_0_strategy(gather_input_0_shape.size(), 1);
-  size_t num_device = LongToSize(g_device_manager->stage_device_num());
+  int64_t num_device = g_device_manager->stage_device_num();
   if (gather_input_0_shape[dim] % num_device == 0) {
     size_t cut = 1;
-    while (gather_input_0_shape[dim] > 0 && gather_input_0_shape[dim] % SIZE_TWO == 0 && cut < num_device) {
+    while (gather_input_0_shape[dim] > 0 && gather_input_0_shape[dim] % SIZE_TWO == 0 && cut < LongToSize(num_device)) {
       gather_input_0_shape[dim] /= SIZE_TWO;
       cut *= SIZE_TWO;
       gather_input_0_strategy[dim] *= SIZE_TWO;
@@ -1080,8 +1080,8 @@ Dimensions PrepareReshape(std::vector<int64_t> from_shape, std::vector<int64_t> 
   while (from_idx < from_shape.size() && to_idx < to_shape.size()) {
     if (from_shape[from_idx] > to_shape[to_idx]) {
       size_t d = std::gcd(from_strat[from_idx], to_shape[to_idx]);
-      to_strat[to_idx] *= d;
-      from_strat[from_idx] /= d;
+      to_strat[to_idx] *= SizeToLong(d);
+      from_strat[from_idx] /= SizeToLong(d);
       from_shape[from_idx] /= to_shape[to_idx];
       to_idx++;
     } else if (from_shape[from_idx] < to_shape[to_idx]) {
@@ -2411,9 +2411,9 @@ size_t RecStrategyPropagator::AssignStandaloneAndBatchParallelOpStrategy() {
 }
 
 static size_t CalMatmulBatchDimFactor(size_t num_device, const StrategyRec &str) {
-  size_t max_shard_num = FloatToLong(1 / str.inputTensor[0].str_h) * FloatToLong(1 / str.inputTensor[0].str_w);
+  size_t max_shard_num = FloatToSize(1 / str.inputTensor[0].str_h) * FloatToSize(1 / str.inputTensor[0].str_w);
   max_shard_num = max_shard_num < num_device ? max_shard_num : num_device;
-  return max_shard_num / (FloatToLong(1 / str.outputTensor.str_h) * FloatToLong(1 / str.outputTensor.str_w));
+  return max_shard_num / (FloatToSize(1 / str.outputTensor.str_h) * FloatToSize(1 / str.outputTensor.str_w));
 }
 
 void RecStrategyPropagator::ExtraShardMatmulOnBatchDim() {

@@ -209,7 +209,7 @@ void ReorderForFoldPipelineForward(const std::vector<PipelinePair> &pair_vector,
       post_node_begin = FindNodeFirstUser(root, post_node_begin);
 
       MS_EXCEPTION_IF_NULL(post_node_begin);
-      auto insert_idx = i - (micro_max + 1) + (stage_num - 1);
+      auto insert_idx = i - LongToSize(micro_max + 1) + LongToSize(stage_num - 1);
       auto send_node_begin = pair_vector[3].first[insert_idx];
       auto send_node_end = pair_vector[3].second[insert_idx];
       InsertDepend(post_node_end, send_node_begin, manager, root);
@@ -329,7 +329,7 @@ void ReorderForBackwardOtherSeg(const PipelinePair &backward_start_pair, const P
                                 int64_t micro_max, int64_t stage_num, const FuncGraphPtr &root) {
   MS_EXCEPTION_IF_NULL(root);
   auto manager = root->manager();
-  for (size_t i = micro_max + 1; i < backward_start_pair.first.size(); ++i) {
+  for (size_t i = LongToSize(micro_max) + 1; i < backward_start_pair.first.size(); ++i) {
     auto prior_node_begin = backward_end_pair.first[i - 1];
     auto prior_node_end = backward_end_pair.second[i - 1];
     auto post_node_begin = backward_start_pair.first[i];
@@ -416,7 +416,7 @@ void ReorderForFoldPipelineBackward(const std::vector<PipelinePair> &pair_vector
     if (IsLastStage() && (i > IntToSize(micro_max))) {
       auto receive_node = post_node_begin;
       post_node_begin = FindNodeFirstUser(root, post_node_begin);
-      auto insert_idx = i - (micro_max + 1) + (stage_num - 1);
+      auto insert_idx = i - (IntToSize(micro_max) + 1) + (IntToSize(stage_num) - 1);
       auto send_node_begin = pair_vector[1].first[insert_idx];
       auto send_node_end = pair_vector[1].second[insert_idx];
 

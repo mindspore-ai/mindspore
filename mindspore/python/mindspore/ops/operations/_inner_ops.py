@@ -2737,6 +2737,7 @@ class CollectiveScatter(Primitive):
         self.add_prim_attr('rank_size', self.rank_size)
         self.add_prim_attr('group', _get_group(group))
 
+
 class _MirrorSilentCheck(PrimitiveWithInfer):
     """
     MirrorOperator for SilentCheck, do SilentCheck in backpropagator.
