@@ -911,7 +911,9 @@ def test_tensor_assign_slice_value_2():
     assert np.all(z == out.asnumpy())
 
 
-@pytest.mark.level2
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tensor_assign_exception():
@@ -977,7 +979,9 @@ def test_tensor_assign_exception():
         net(Ta4d, b, Ta4d_ck)
 
 
-@pytest.mark.level2
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tensor_assign_exception_2():
