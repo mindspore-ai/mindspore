@@ -46,7 +46,11 @@ class NameSpace final : public Named {
         module_(module),
         namespace_obj_(namespace_obj),
         module_obj_(module_obj) {}
-  ~NameSpace() override = default;
+  ~NameSpace() override {
+    py::gil_scoped_acquire gil_acquire;
+    namespace_obj_ = py::none();
+    module_obj_ = py::none();
+  }
   MS_DECLARE_PARENT(NameSpace, Named);
 
   const py::object &namespace_obj() const { return namespace_obj_; }

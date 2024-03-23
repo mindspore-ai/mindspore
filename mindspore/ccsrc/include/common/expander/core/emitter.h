@@ -240,7 +240,9 @@ class COMMON_EXPORT Emitter {
   NodePtr GatherD(const NodePtr &x, const NodePtr &dim, const NodePtr &index) {
     return Emit("GatherD", {x, dim, index});
   }
-  virtual NodePtr BatchNormGrad(const NodePtrList &inputs) { return Emit("BatchNormGrad", inputs); }
+  virtual NodePtr BatchNormGrad(const NodePtrList &inputs, bool is_scale_or_bias_grad) {
+    return Emit("BatchNormGrad", inputs);
+  }
   virtual NodePtr SparseSoftmaxCrossEntropyWithLogits(const NodePtrList &inputs, const DAttr &attrs, const NodePtr &out,
                                                       const NodePtr &dout, bool is_graph_mode);
   /// \brief Emit a value node
