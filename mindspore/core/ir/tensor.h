@@ -650,8 +650,8 @@ class MS_CORE_API Tensor : public MetaTensor {
 
   /// \brief Set lazy callback function to this Tensor
   ///
-  /// \param[in] lazy_callback The callback from backend when lazy build is enabled
-  void set_lazy_callback(const std::function<void(void)> &lazy_callback) { lazy_callback_ = lazy_callback; }
+  /// \param[in] lazy_callback Wait for async tasks finish before data_sync.
+  static void RegisterLazyCallback(const std::function<void(void)> &lazy_callback) { lazy_callback_ = lazy_callback; }
 
   /// \brief Set contiguous callback function to this Tensor
   ///
@@ -830,7 +830,7 @@ class MS_CORE_API Tensor : public MetaTensor {
   std::shared_ptr<Tensor> hashmap_tensor_ptr_{nullptr};
   TypePtr cast_dtype_{nullptr};
   std::shared_ptr<DeviceEvent> device_event_{nullptr};
-  std::function<void(void)> lazy_callback_{nullptr};
+  inline static std::function<void(void)> lazy_callback_{nullptr};
   std::function<DeviceSyncPtr(const DeviceSyncPtr &)> contiguous_callback_{nullptr};
   std::function<void(const Tensor *)> update_value_callback_{nullptr};
   PinnedMemRegister *pin_mem_register_{nullptr};

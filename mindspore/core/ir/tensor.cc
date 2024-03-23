@@ -685,7 +685,6 @@ Tensor::Tensor(const Tensor &tensor)
       cache_tensor_ptr_(tensor.cache_tensor_ptr_),
       hashmap_tensor_ptr_(tensor.hashmap_tensor_ptr_),
       device_event_(tensor.device_event_),
-      lazy_callback_(tensor.lazy_callback_),
       contiguous_callback_(tensor.contiguous_callback_),
       pin_mem_register_(tensor.pin_mem_register_),
       auto_grad_meta_data_(tensor.auto_grad_meta_data_),
@@ -712,7 +711,6 @@ Tensor::Tensor(const Tensor &tensor, TypeId data_type)
       cache_tensor_ptr_(tensor.cache_tensor_ptr_),
       hashmap_tensor_ptr_(tensor.hashmap_tensor_ptr_),
       device_event_(tensor.device_event_),
-      lazy_callback_(tensor.lazy_callback_),
       contiguous_callback_(tensor.contiguous_callback_),
       pin_mem_register_(tensor.pin_mem_register_),
       auto_grad_meta_data_(tensor.auto_grad_meta_data_),
@@ -741,7 +739,6 @@ Tensor &Tensor::operator=(const Tensor &tensor) {
   cache_tensor_ptr_ = tensor.cache_tensor_ptr_;
   hashmap_tensor_ptr_ = tensor.hashmap_tensor_ptr_;
   device_event_ = tensor.device_event_;
-  lazy_callback_ = tensor.lazy_callback_;
   pin_mem_register_ = tensor.pin_mem_register_;
   contiguous_callback_ = tensor.contiguous_callback_;
   user_data_ = tensor.user_data_;
@@ -966,7 +963,6 @@ void Tensor::set_device_address(const DeviceSyncPtr &device_sync, bool need_upda
 // Assign value to this tensor.
 Tensor &Tensor::AssignValue(const Tensor &tensor) {
   if (this != &tensor) {
-    lazy_callback_ = tensor.lazy_callback_;
     ExecuteLazyTask();
     contiguous_callback_ = tensor.contiguous_callback_;
     MetaTensor::operator=(tensor);
