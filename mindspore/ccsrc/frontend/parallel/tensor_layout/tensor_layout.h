@@ -121,6 +121,8 @@ class TensorLayout {
 
   Shape opt_shard_slice_shape() { return opt_shard_slice_shape_; }
 
+  void set_opt_shard_slice_shape(Shape opt_slice_shape) { opt_shard_slice_shape_ = std::move(opt_slice_shape); }
+
   void set_opt_shard_group(std::string name) { opt_shard_group_ = std::move(name); }
 
   std::string opt_shard_group() const { return opt_shard_group_; }
