@@ -94,6 +94,12 @@ bool PipelineInterleave::MainGraph() {
   }
   if (!shared_cell_) {
     MS_LOG(ERROR) << "Pipeline parallel now only support shared_cell.";
+    auto parallel_context = parallel::ParallelContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(parallel_context);
+    auto is_pp_interleave = parallel_context->pipeline_interleave();
+    if (is_pp_interleave) {
+      MS_LOG(EXCEPTION) << "Using pipeline parallel with interleave, should enable lazy_inline.";
+    }
     return false;
   }
   return true;
