@@ -39,6 +39,9 @@ from mindspore.common.initializer import Zero
 from mindspore.common.parameter import Parameter
 
 
+dtype_to_type_id = DtypeToEnum()
+
+
 class ScalarDiv(Primitive):
     r"""
     Computes the quotient of dividing the first input scalar by the second input scalar element-wise.
@@ -1175,7 +1178,7 @@ class Cast(Primitive):
         should_elim, output = self.check_elim(input_x, dtype)
         if should_elim:
             return output
-        return _convert_stub(pyboost_cast(self, [input_x, DtypeToEnum()('Cast', 'dtype', dtype)]))
+        return _convert_stub(pyboost_cast(self, [input_x, dtype_to_type_id('Cast', 'dtype', dtype)]))
 
 # Following is Python Infer Value.
 # A valid infer value function should be:
