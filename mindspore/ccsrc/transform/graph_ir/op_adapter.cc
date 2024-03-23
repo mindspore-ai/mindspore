@@ -605,7 +605,6 @@ Status OpAdapterImpl::UpdateMultiOutputDesc(const OperatorPtr &op, const abstrac
     auto tuple_type = dyn_cast<Tuple>(type);
     MS_EXCEPTION_IF_NULL(tuple_type);
     TypePtr type_elem = tuple_type->elements()[i];
-
     if (type_elem == nullptr) {
       MS_LOG(ERROR) << "Type ptr is nullptr";
       return FAILED;

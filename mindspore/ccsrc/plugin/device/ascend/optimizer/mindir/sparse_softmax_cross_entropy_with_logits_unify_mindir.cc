@@ -633,7 +633,8 @@ const AnfNodePtr GradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR::Process(con
   new_depend->set_scope(depend_node->scope());
   (void)manager->Replace(sparse_softmax_node_grad, new_depend);
 
-  int64_t batch_size, depth;
+  int64_t batch_size;
+  int64_t depth;
   GetDepthAndBatchSizeFromSparseSoftmaxNode(sparse_softmax_node, &batch_size, &depth);
   auto is_dynamic = common::AnfAlgo::IsDynamicShape(sparse_softmax_node);
   ShapeVector shape = is_dynamic ? ShapeVector{-1, depth} : ShapeVector{batch_size, depth};
