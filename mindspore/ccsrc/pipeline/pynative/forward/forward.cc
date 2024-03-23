@@ -1047,7 +1047,7 @@ device::DeviceAddressPtr ForwardExecutor::TensorContiguousCallback(const DeviceS
   }
 
   // as_numpy sync promise contiguous run_sync
-  return runtime::DeviceAddressUtils::ConvertContiguousDeviceAddressSync(device_addr);
+  return runtime::DeviceAddressUtils::ConvertContiguousDeviceAddress(nullptr, device_addr, true);
 }
 
 void ForwardExecutor::PrepareOpInputs(const FrontendOpRunInfoPtr &op_run_info) {
