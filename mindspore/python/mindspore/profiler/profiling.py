@@ -1318,6 +1318,14 @@ class Profiler:
     def _ascend_ms_analyze(self, source_path):
         """Ascend ms generate"""
 
+        timestamp = time.strftime("%Y%m%d%H%M%S", time.localtime(time.time()))
+        if self._rank_id:
+            ascend_ms_path = f"rank-{self._rank_id}_{timestamp}_ascend_ms"
+        else:
+            ascend_ms_path = f"{socket.gethostname()}--{os.getpid()}_{timestamp}_ascend_ms"
+        if self._ascend_ms_path is None:
+            self._ascend_ms_path = os.path.join(self._output_path, ascend_ms_path)
+
         dev_id = self._rank_id if self._device_target == DeviceTarget.ASCEND.value else self._dev_id
         ascend_profiler_output_path = os.path.join(self._ascend_ms_path, 'ASCEND_PROFILER_OUTPUT')
         os.makedirs(ascend_profiler_output_path, exist_ok=True)

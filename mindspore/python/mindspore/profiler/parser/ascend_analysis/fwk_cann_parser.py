@@ -60,8 +60,7 @@ class FwkCANNParser:
         for (ts, tid), event_list in self._acl_to_npu.items():
             acl_to_npu_by_tid.setdefault(tid, defaultdict(list))[ts].extend(event_list)
         if op_data_by_tid.keys() != acl_to_npu_by_tid.keys():
-            logger.error("Failed to create link between mindspore operator and kernels.")
-            return trace_data
+            logger.warning("Failed to create link between mindspore operator and kernels.")
 
         for tid in op_data_by_tid:
             op_idx = 0
