@@ -529,6 +529,8 @@ class Model:
                 while mbuf_size == 0:
                     time.sleep(10)
                     mbuf_size = train_dataset.__transfer_dataset__.get_mbuf_queue_size()
+                    if mbuf_size != 0:
+                        break
                     logger.warning(f"Failover mode, waiting for dataset recover to specify step, "
                                    f"current device queue size: {mbuf_size}")
 
