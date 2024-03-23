@@ -498,7 +498,7 @@ PyObject *InferEngine::InferPrimitive(PyObject *primitive, const std::vector<PyO
     return pyObj.inc_ref().ptr();
   } else if (prim->HasPyObj()) {
     if (py::hasattr(adapter_obj, PY_PRIM_METHOD_INFER)) {
-      size_t list_count = arglist.size() - reinterpret_cast<size_t>(monad_count);
+      size_t list_count = arglist.size() - size_t(monad_count);
       py::tuple py_vals(list_count);
       for (size_t i = 0; i < list_count; ++i) {
         py_vals[i] = py::reinterpret_borrow<py::object>(arglist[i]);
@@ -634,7 +634,7 @@ static PyObject *InferSize(PyObject *, const std::vector<PyObject *> &args) {
   }
   size_t elements = 1;
   for (size_t i = 0; i < shape.size(); i++) {
-    elements *= reinterpret_cast<size_t>(shape[i]);
+    elements *= size_t(shape[i]);
   }
   return PyLong_FromSize_t(elements);
 }
