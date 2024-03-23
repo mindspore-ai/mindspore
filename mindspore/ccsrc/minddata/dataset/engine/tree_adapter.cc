@@ -62,13 +62,13 @@ Status TreeAdapter::PrePass(const std::shared_ptr<DatasetNode> &ir) {
   (void)actions.emplace_back(std::make_unique<InputValidationPass>());
   (void)actions.emplace_back(std::make_unique<CacheValidationPass>());
   (void)actions.emplace_back(std::make_unique<InsertMapPass>());
+  (void)actions.emplace_back(std::make_unique<NodeRemovalPass>());
   if (usage_ == kDeReset) {
     (void)actions.emplace_back(std::make_unique<AddSkipPass>());
     if (GlobalContext::config_manager()->fast_recovery()) {
       (void)actions.emplace_back(std::make_unique<SkipPushdownPass>());
     }
   }
-  (void)actions.emplace_back(std::make_unique<NodeRemovalPass>());
   (void)actions.emplace_back(std::make_unique<EpochCtrlPass>());
   if (usage_ == kDeGetter) {
     (void)actions.emplace_back(std::make_unique<GetterPass>());
