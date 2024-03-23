@@ -1,3 +1,4 @@
+#operator batch_norm
 batch_norm:
     args:
         input_x:

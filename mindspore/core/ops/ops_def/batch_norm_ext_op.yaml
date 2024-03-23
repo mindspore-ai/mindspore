@@ -1,0 +1,36 @@
+#operator batch_norm_ext
+batch_norm_ext:
+    args:
+        input:
+            dtype: tensor
+        weight:
+            dtype: tensor
+        bias:
+            dtype: tensor
+        running_mean:
+            dtype: tensor
+        runnning_var:
+            dtype: tensor
+        training:
+            dtype: bool
+            default: False
+        momentum:
+            dtype: float
+            default: 0.1
+        epsilon:
+            dtype: float
+            default: 1e-5
+    returns:
+        output:
+            dtype: tensor
+        saved_mean:
+            dtype: tensor
+        saved_variance:
+            dtype: tensor
+    class:
+        name: BatchNormExt
+    function:
+        disable: True
+    dispatch:
+        enable: True
+        Ascend: BatchNormExtAscend

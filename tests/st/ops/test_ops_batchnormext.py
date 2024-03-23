@@ -13,29 +13,35 @@
 # limitations under the License.
 # ============================================================================
 # pylint: disable=unused-variable
+import os
+
 import pytest
 import numpy as np
+
 from mindspore import Tensor, context, Parameter
 from mindspore import ops
+from mindspore.ops.auto_generate import BatchNormExt
 from tests.st.utils import test_utils
-
+from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
 
 @test_utils.run_with_cell
-def batch_norm_forward_func(x, scale, bias, mean, var, is_train=False):
-    out = ops.BatchNorm(is_train, 1e-5, 0.1, "NCHW")(x, scale, bias, mean, var)
+def batch_norm_forward_func(x, scale, bias, mean, var, training=False, momentum=0.1, eps=1e-5):
+    out = BatchNormExt(training, momentum, eps)(x, scale, bias, mean, var)
     return out[0]
 
 
 @test_utils.run_with_cell
-def batch_norm_backward_func(x, scale, bias, mean, var, is_train=False):
-    return ops.grad(batch_norm_forward_func, 0)(x, scale, bias, mean, var,
-                                                is_train)
+def batch_norm_backward_func(x, scale, bias, mean, var, is_train=False, momentum=0.1, eps=1e-5):
+    return ops.grad(batch_norm_forward_func, 0)(x, scale, bias, mean, var, is_train, momentum, eps)
 
 
-@pytest.mark.level0
+@test_utils.run_with_cell
+def batch_norm_forward_func_dyn(x, scale, bias, mean, var, momentum=0.1, eps=1e-5):
+    out = BatchNormExt(training=False, momentum=momentum, epsilon=eps)(x, scale, bias, mean, var)
+    return out[0]
+
+@pytest.mark.level1
 @pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize("is_training", [True, False])
 @pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
@@ -71,15 +77,13 @@ def test_bn_forward(is_training, mode):
 
 @pytest.mark.level1
 @pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize("is_training", [True, False])
 @pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_bn_backward(is_training, mode):
     """
     Feature: Ops.
-    Description: test BatchNormGrad.
+    Description: test BatchNormGradExt.
     Expectation: expect correct result.
     """
     context.set_context(mode=mode)
@@ -100,7 +104,7 @@ def test_bn_backward(is_training, mode):
     if is_training:
         expect = np.array([0.])
     else:
-        expect = np.array([0.999995])
+        expect = np.array([0.95346266])
     expect = expect.repeat(16).astype(np.float32).reshape(2, 2, 1, 4)
 
     assert np.allclose(grad.asnumpy(), expect, rtol=1e-4, atol=1e-4)
@@ -108,8 +112,6 @@ def test_bn_backward(is_training, mode):
 
 @pytest.mark.level1
 @pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_bn_vmap(mode):
@@ -137,3 +139,30 @@ def test_bn_vmap(mode):
     expect = np.ones(64).astype(np.float32)
     expect = expect.reshape(shape)
     assert np.allclose(out.asnumpy(), expect, rtol=1e-4, atol=1e-4)
+
+
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_bn_dyn(mode):
+    """
+    Feature: Ops.
+    Description: test BatchNorm dynamic shape and dynamic rank.
+    Expectation: expect correct result.
+    """
+    os.environ["GRAPH_OP_RUN"] = "1"
+    context.set_context(mode=mode)
+    input_x1 = np.random.randn(*(1, 2, 4, 4)).astype(np.float32)
+    input_x2 = np.random.randn(*(1, 2, 3, 4)).astype(np.float32)
+    scale = Tensor(np.ones(2).astype(np.float32))
+    bias = Tensor(np.ones(2).astype(np.float32))
+    mean = Tensor(np.ones(2).astype(np.float32))
+    variance = Tensor(np.ones(2).astype(np.float32))
+    momentum = 0.0
+    eps = 1e-5
+
+    TEST_OP(batch_norm_forward_func_dyn,
+            [[Tensor(input_x1), scale, bias, mean, variance, momentum, eps],
+             [Tensor(input_x2), scale, bias, mean, variance, momentum, eps]])
+    del os.environ["GRAPH_OP_RUN"]

@@ -49,6 +49,10 @@ BaseShapePtr GroupNormFuncImpl::InferShape(const PrimitivePtr &primitive,
     MS_LOG(EXCEPTION) << "For '" << primitive->name()
                       << "', The dim of input must be between 2 and 8. But got: " << x_rank << ".";
   }
+  if (weight_shape.size() == 0 || bias_shape.size() == 0) {
+    MS_EXCEPTION(TypeError) << "For " << primitive->name()
+                            << ", the weight and bias must be a tensor, but got a number.";
+  }
   MS_CHECK_VALUE(weight_shape.size() == 1, CheckAndConvertUtils::FormatCheckIntegerMsg(
                                              "rank of weight", SizeToLong(weight_shape.size()), kEqual, 1, primitive));
   MS_CHECK_VALUE(bias_shape.size() == 1, CheckAndConvertUtils::FormatCheckIntegerMsg(
@@ -76,20 +80,6 @@ TypePtr GroupNormFuncImpl::InferType(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(primitive);
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
   auto x_type = input_args[kInputIndex0]->GetType();
-  auto weight_type = input_args[kInputIndex2]->GetType();
-  auto bias_type = input_args[kInputIndex3]->GetType();
-  if (!CheckAndConvertUtils::IsTensor(input_args[kInputIndex0])) {
-    MS_EXCEPTION(TypeError) << "For " << primitive->name()
-                            << ", the input must be a tensor, but got: " << x_type->ToString() << ".";
-  }
-  if (!CheckAndConvertUtils::IsTensor(input_args[kInputIndex2])) {
-    MS_EXCEPTION(TypeError) << "For " << primitive->name()
-                            << ", the weight must be a tensor, but got: " << weight_type->ToString() << ".";
-  }
-  if (!CheckAndConvertUtils::IsTensor(input_args[kInputIndex3])) {
-    MS_EXCEPTION(TypeError) << "For " << primitive->name()
-                            << ", the bias must be a tensor, but got: " << bias_type->ToString() << ".";
-  }
   MS_EXCEPTION_IF_NULL(x_type);
   std::vector<TypePtr> types_list;
   types_list = {x_type, x_type, x_type};

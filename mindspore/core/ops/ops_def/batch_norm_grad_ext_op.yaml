@@ -1,0 +1,37 @@
+#operator batch_norm_grad_ext
+batch_norm_grad_ext:
+  args:
+    dout:
+      dtype: tensor
+    input:
+      dtype: tensor
+    weight:
+      dtype: tensor
+    running_mean:
+      dtype: tensor
+    running_var:
+      dtype: tensor
+    saved_mean:
+      dtype: tensor
+    saved_rstd:
+      dtype: tensor
+    training:
+      dtype: bool
+      default: False
+      prim_init: True
+    eps:
+      dtype: float
+      default: 1e-5
+      prim_init: True
+  returns:
+    dx:
+      dtype: tensor
+    dweight:
+      dtype: tensor
+    dbias:
+      dtype: tensor
+  function:
+    disable: True
+  dispatch:
+    enable: True
+    Ascend: BatchNormGradExtAscend
