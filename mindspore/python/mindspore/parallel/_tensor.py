@@ -271,7 +271,7 @@ def _load_tensor_by_layout(tensor, layout, rank_id):
         # get a totally shard tensor slice for parallel optimizer
         rank = get_rank(group)
         size = get_group_size(group)
-        if tensor_slice.shape != slice_shape and slice_shape:
+        if tensor_slice.shape != tuple(slice_shape) and slice_shape:
             slice_shape_extend = copy.deepcopy(slice_shape)
             slice_shape_extend[0] = slice_shape[0] * size
             tensor_slice = tensor_slice.reshape(slice_shape_extend)
