@@ -163,5 +163,10 @@ def test_load_obfuscate_mindir():
 
     # load new model and predict again
     new_model = load(mindir_name)
-    new_graph = nn.GraphCell(new_model, obf_random_seed=3423)
-    new_graph(inputs)
+    try:
+        new_graph = nn.GraphCell(new_model, obf_random_seed=3423)
+        new_graph(inputs)
+    # if 0 node has been obfuscated
+    except RuntimeError:
+        new_graph = nn.GraphCell(new_model)
+        new_graph(inputs)

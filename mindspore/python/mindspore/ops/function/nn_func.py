@@ -3423,6 +3423,21 @@ def _innner_log_softmax(inputs, axis):
     return inputs - logsumexp(inputs, axis, True)
 
 
+def _check_cross_entropy_inputs(input, target, weight, ignore_index, reduction, label_smoothing):
+    """
+    Check inputs for cross_entropy().
+    """
+    _check_is_tensor('input', input, "cross_entropy_loss")
+    _check_is_tensor('target', target, "cross_entropy_loss")
+    _check_is_tensor('weight', weight, "cross_entropy_loss")
+    check_int_const(ignore_index, 'ignore_index', "cross_entropy_loss")
+    check_non_negative_float_const(label_smoothing, 'label_smoothing', "cross_entropy_loss")
+    check_string_const(reduction, ['none', 'mean', 'sum'], 'reduction', "cross_entropy_loss")
+    if input.dtype not in [mstype.float64, mstype.float32, mstype.float16]:
+        raise TypeError(f'For cross_entropy, the input dtype should be mstype.float64, mstype.float32 or'
+                        f'mstype.float16, but got dtype:{input.dtype}.')
+
+
 def cross_entropy(input, target, weight=None, ignore_index=-100, reduction='mean', label_smoothing=0.0):
     r"""
     The cross entropy loss between input and target.
@@ -3480,7 +3495,7 @@ def cross_entropy(input, target, weight=None, ignore_index=-100, reduction='mean
             `input` is expected to be log-probabilities, data type must be float16 or float32.
         target (Tensor): For class indices, tensor of shape :math:`()`, :math:`(N)` or
             :math:`(N, d_1, d_2, ..., d_K)` , data type must be int32. For probabilities, tensor of shape :math:`(C,)` ,
-            :math:`(N, C)` or :math:`(N, C, d_1, d_2, ..., d_K)` , data type must be float16 or float32.
+            :math:`(N, C)` or :math:`(N, C, d_1, d_2, ..., d_K)` , data type must be float16 or float32 or float64.
         weight (Tensor): A rescaling weight applied to the loss of each batch element.
             If not None, the shape is :math:`(C,)`, data type must be float16 or float32. Default: ``None`` .
         ignore_index (int): Specifies a target value that is ignored
@@ -3513,12 +3528,7 @@ def cross_entropy(input, target, weight=None, ignore_index=-100, reduction='mean
         >>> target = ms.Tensor(np.random.randn(3, 5), ms.float32)
         >>> output = ms.ops.cross_entropy(inputs, target)
     """
-    _check_is_tensor('input', input, "cross_entropy_loss")
-    _check_is_tensor('target', target, "cross_entropy_loss")
-    _check_is_tensor('weight', weight, "cross_entropy_loss")
-    check_int_const(ignore_index, 'ignore_index', "cross_entropy_loss")
-    check_non_negative_float_const(label_smoothing, 'label_smoothing', "cross_entropy_loss")
-    check_string_const(reduction, ['none', 'mean', 'sum'], 'reduction', "cross_entropy_loss")
+    _check_cross_entropy_inputs(input, target, weight, ignore_index, reduction, label_smoothing)
     class_dim = 0 if input.ndim == 1 else 1
     if target.dtype in [mstype.float32, mstype.float16]:
         return _cross_entropy(input, target, class_dim, weight, reduction, label_smoothing)
