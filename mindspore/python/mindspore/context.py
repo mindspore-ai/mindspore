@@ -1341,10 +1341,12 @@ def set_context(**kwargs):
             of the interfaces would be compiled by MindSpore to the interfaces definition .py file that should be
             guaranteed to be writable. Then compile the .py file to the .pyc or .so file, and could run in Graph mode.
         memory_optimize_level (str): The memory optimize level.
-            Default: ``O0``. The value must be in ['O0', 'O1'].
+            On Ascend hardware platform, default: ``O1``, on other hardware platforms, default: ``O0``.
+            The value must be in ['O0', 'O1'].
 
-            - O0: priority performance option, disable SOMAS (Safe Optimized Memory Allocation Solver).
-            - O1: priority memory option, enable SOMAS.
+            - O0: priority performance option, disable SOMAS (Safe Optimized Memory Allocation Solver)
+              and some other memory optimizations.
+            - O1: priority memory option, enable SOMAS and some other memory optimizations.
         memory_offload (str): Whether to enable the memory offload function. When it is enabled, the idle data will be
             temporarily copied to the host side in the case of insufficient device memory. The value must be in the
             range of ['ON', 'OFF'], and the default value is ``'OFF'`` .
