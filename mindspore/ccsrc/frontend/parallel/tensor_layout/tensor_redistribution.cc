@@ -451,10 +451,10 @@ Status TensorRedistribution::InferReshape(const TensorLayout &from_layout, const
     constructor.UpdateTensorShape(to_layout.slice_shape().array());
     // If to_origin_ is all -1, it can not be reshape.
     Arrangement shape = to_origin_.slice_shape();
-    MS_LOG(WARNING) << "to_origin_.slice_shape is not same with to_layout.slice_shape: "
-                    << "to_origin_.slice_shape=" << to_origin_.slice_shape().array()
-                    << ", to_layout.slice_shape=" << to_layout.slice_shape().array() << ", reshape to "
-                    << shape.ToString();
+    MS_LOG(INFO) << "to_origin_.slice_shape is not same with to_layout.slice_shape: "
+                 << "to_origin_.slice_shape=" << to_origin_.slice_shape().array()
+                 << ", to_layout.slice_shape=" << to_layout.slice_shape().array() << ", reshape to "
+                 << shape.ToString();
     if (constructor.ReshapeOP(shape.array()) == Status::FAILED) {
       return Status::FAILED;
     } else {
