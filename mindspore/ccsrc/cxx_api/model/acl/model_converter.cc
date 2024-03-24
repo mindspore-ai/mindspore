@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2023 Huawei Technologies Co., Ltd
+ * Copyright 2020-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@
 #include <memory>
 #include "include/transform/graph_ir/utils.h"
 #include "cxx_api/model/model_converter_utils/multi_process.h"
-#include "graph/model.h"
-#include "graph/utils/graph_utils_ex.h"
+#include "graph/graph_buffer.h"
+#include "graph/graph.h"
 #include "cxx_api/model/aoe/auto_tune_process.h"
 #include "plugin/device/ascend/optimizer/ge_optimization.h"
 #include "transform/symbol/acl_rt_symbol.h"
@@ -28,6 +28,21 @@
 
 namespace mindspore {
 namespace {
+std::string GetAscendPath() {
+  Dl_info info;
+  if (dladdr(reinterpret_cast<void *>(aclrtMalloc), &info) == 0) {
+    MS_LOG(ERROR) << "Get dladdr failed.";
+    return "";
+  }
+  auto path_tmp = std::string(info.dli_fname);
+  const std::string kLatest = "latest";
+  auto pos = path_tmp.find(kLatest);
+  if (pos == std::string::npos) {
+    MS_EXCEPTION(ValueError) << "Get ascend path failed, please check the run package.";
+  }
+  return path_tmp.substr(0, pos);
+}
+
 // todo: acl doesn't support to clear current context
 void ClearCurrentRtCtx() {
   aclrtContext tmp_ctx = nullptr;
@@ -187,24 +202,33 @@ Buffer ModelConverter::LoadMindIR(const FuncGraphPtr &func_graph) {
   MultiProcess multi_process;
   Buffer buffer_ret;
   ClearCurrentRtCtx();
+  auto ascend_path = GetAscendPath();
+#ifdef MACHINE_LINUX_ARM64
+  std::string lib_opsproto_file = ascend_path + "latest/opp/built-in/op_proto/lib/linux/aarch64/libopsproto.so";
+#else
+  std::string lib_opsproto_file = ascend_path + "latest/opp/built-in/op_proto/lib/linux/x86_64/libopsproto.so";
+#endif
+  static void *handler = dlopen(lib_opsproto_file.c_str(), RTLD_LAZY);
+  if (handler == nullptr) {
+    MS_LOG(ERROR) << "dlopen opsproto library failed: " << lib_opsproto_file;
+    return buffer_ret;
+  }
   auto df_graph = ConvertFuncGraphToAIR(func_graph);
   if (df_graph == nullptr) {
     MS_LOG(ERROR) << "Convert FuncGraph to AscendIR failed.";
     return buffer_ret;
   }
-  auto parent_process = [&df_graph, &buffer_ret, this](MultiProcess *multi_process) -> Status {
+  auto parent_process = [&df_graph, &buffer_ret](MultiProcess *multi_process) -> Status {
     MS_EXCEPTION_IF_NULL(multi_process);
-    ge::Model model;
-    ge::Buffer model_data;
-    model.SetGraph(::ge::GraphUtilsEx::GetComputeGraph(*df_graph));
-    auto ge_ret = model.Save(model_data);
+    ge::GraphBuffer model_data;
+    auto ge_ret = df_graph->SaveToMem(model_data);
     if (ge_ret != ge::SUCCESS) {
       MS_LOG(ERROR) << "Save ge model to buffer failed.";
       return kMCFailed;
     }
 
     // send original model to child
-    auto status = multi_process->SendMsg(model_data.data(), model_data.size());
+    auto status = multi_process->SendMsg(model_data.GetData(), model_data.GetSize());
     if (status != kSuccess) {
       MS_LOG_ERROR << "Send original model to child process failed";
       return status;
@@ -257,18 +281,14 @@ Buffer ModelConverter::LoadMindIR(const FuncGraphPtr &func_graph) {
 }
 
 Buffer ModelConverter::LoadAscendIRInner(const Buffer &model_data) {
-  ge::Model load_model = ge::Model("loadmodel", "version2");
-  ge::Status ret = ge::Model::Load(static_cast<const uint8_t *>(model_data.Data()), model_data.DataSize(), load_model);
-  if (ret != ge::GRAPH_SUCCESS) {
-    MS_LOG(ERROR) << "Load AscendIR failed, ret = " << ret;
-    return Buffer();
-  }
-
-  transform::DfGraphPtr df_graph =
-    std::make_shared<transform::DfGraph>(::ge::GraphUtilsEx::CreateGraphFromComputeGraph(load_model.GetGraph()));
+  transform::DfGraphPtr df_graph = std::make_shared<transform::DfGraph>("tmp");
   if (df_graph == nullptr) {
     MS_LOG(ERROR) << "Convert FuncGraph to AscendIR failed.";
-    return Buffer();
+    return {};
+  }
+  auto ret = df_graph->LoadFromMem(static_cast<const uint8_t *>(model_data.Data()), model_data.DataSize());
+  if (ret != ge::GRAPH_SUCCESS) {
+    MS_LOG(ERROR) << "Convert FuncGraph to AscendIR failed.";
   }
 
   std::map<std::string, std::string> init_options;
