@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,10 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <unordered_set>
 #include "utils/dlopen_macro.h"
+#include "utils/anf_utils.h"
+#include "ops/math_op_name.h"
 #include "acl/error_codes/rt_error_codes.h"
 #include "transform/symbol/acl_base_symbol.h"
 #include "transform/symbol/acl_rt_symbol.h"
@@ -178,16 +181,19 @@ void InitializeAcl() {
   g_acl_initialized = true;
 }
 
-std::string GetFormatMode() {
+std::string GetFormatMode(const AnfNodePtr &node) {
   auto format_mode = common::GetEnv("MS_FORMAT_MODE");
   if (format_mode.empty()) {
-    // default set "0" for 910a graph sink, otherwise "1"
+    // default set "1", except graph sink or matmul in 910a
+    format_mode = "1";
     auto ms_context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(ms_context);
-    if (ms_context->ascend_soc_version() == "ascend910" && ms_context->get_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK)) {
-      format_mode = "0";
-    } else {
-      format_mode = "1";
+    if (ms_context->ascend_soc_version() == "ascend910") {
+      std::string op_type = node != nullptr && node->isa<CNode>() ? AnfUtils::GetCNodeName(node) : "";
+      std::unordered_set<std::string> matmul_ops = {kMatMulOpName, kMatMulV2OpName, kBatchMatMulOpName};
+      if (ms_context->get_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK) || matmul_ops.find(op_type) != matmul_ops.end()) {
+        format_mode = "0";
+      }
     }
   }
   return format_mode;

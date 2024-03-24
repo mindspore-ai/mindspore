@@ -88,7 +88,7 @@ using CallbackThreadPtr = std::shared_ptr<CallbackThread>;
 
 void InitializeAcl();
 
-std::string GetFormatMode();
+std::string GetFormatMode(const AnfNodePtr &node = nullptr);
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

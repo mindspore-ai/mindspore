@@ -183,7 +183,7 @@ void GetInputBuildInfo(const AnfNodePtr &node, const size_t input_num, const Acl
                        const GeAdapterInfoPtr &ge_info, std::vector<std::string> *input_formats,
                        std::vector<std::string> *input_reshape_types) {
   auto input_info = acl_info.inputs();
-  static bool default_format = device::ascend::GetFormatMode() == "1";
+  static bool default_format = device::ascend::GetFormatMode(node) == "1";
   std::vector<size_t> special_inputs;
   for (size_t i = 0; i < input_num; ++i) {
     auto kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(node, i);
@@ -228,7 +228,7 @@ void GetOutputBuildInfo(const AnfNodePtr &node, const size_t output_num, const A
                         const std::vector<std::string> &input_formats, std::vector<std::string> *output_formats) {
   // First use output func.
   auto input_num = common::AnfAlgo::GetInputTensorNum(node);
-  static bool default_format = device::ascend::GetFormatMode() == "1";
+  static bool default_format = device::ascend::GetFormatMode(node) == "1";
   if (!default_format && acl_info.output_selector() != nullptr) {
     auto data_type = common::AnfAlgo::GetOutputInferDataType(node, 0);
     std::vector<ShapeVector> input_shapes;
