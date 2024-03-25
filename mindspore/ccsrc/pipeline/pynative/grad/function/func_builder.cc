@@ -96,6 +96,10 @@ void SetDependValue(const PrimitivePtr &primitive, const NodePtrList &inputs) {
     }
     const auto abstract = inputs[index]->abstract();
     const auto value = inputs[index]->Value();
+    auto tensor = value->cast<tensor::TensorPtr>();
+    if (tensor != nullptr) {
+      tensor->data_sync();
+    }
     abstract->set_value(value);
   }
 }
