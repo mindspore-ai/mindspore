@@ -1305,7 +1305,7 @@ AnfNodePtr PipelineTransformer::CreateZeroseOutput(const AnfNodePtr &node, size_
     MS_LOG(EXCEPTION) << "Device num must be larger than 0, but get 0.";
   }
 
-  if (!is_train_ && !out_shape.empty() && out_shape[0] % dev_num != 0) {
+  if (!is_train_ && !out_shape.empty() && out_shape[0] % dev_num == 0) {
     out_shape[0] /= dev_num;
   }
 
@@ -1317,15 +1317,15 @@ AnfNodePtr PipelineTransformer::CreateZeroseOutput(const AnfNodePtr &node, size_
   MS_EXCEPTION_IF_NULL(value_node);
 
   // Build abstract from node to prevent confusion between Scalar and 0D-Tensor.
-  auto abs = node->abstract();
+  auto abs = node->abstract()->Clone();
   MS_EXCEPTION_IF_NULL(abs);
   if (abs->isa<abstract::AbstractSequence>()) {
     auto elements = abs->cast<abstract::AbstractSequencePtr>()->elements();
     abs = elements.at(index)->Clone();
     MS_EXCEPTION_IF_NULL(abs);
-    abs->set_shape(std::make_shared<abstract::Shape>(out_shape));
   }
 
+  abs->set_shape(std::make_shared<abstract::Shape>(out_shape));
   value_node->set_abstract(abs);
   return value_node;
 }
