@@ -56,11 +56,15 @@ AnfNodePtr CreateSubCNode(const FuncGraphPtr &graph, const AnfNodePtr &src_node,
   return CreateNodeBase(graph, new_node_inputs, dst_node);
 }
 
-AnfNodePtr CreateAssignCNode(const FuncGraphPtr &graph, const AnfNodePtr &src_node, const AnfNodePtr &dst_node) {
+AnfNodePtr CreateAssignCNode(const FuncGraphPtr &graph, const AnfNodePtr &src_node, const AnfNodePtr &dst_node,
+                             const AnfNodePtr &u_node) {
   MS_EXCEPTION_IF_NULL(src_node);
   MS_EXCEPTION_IF_NULL(dst_node);
   std::vector<AnfNodePtr> new_node_inputs = {NewValueNode(std::make_shared<Primitive>(kAssignOpName)), src_node,
                                              dst_node};
+  if (u_node != nullptr) {
+    (void)new_node_inputs.emplace_back(u_node);
+  }
   return CreateNodeBase(graph, new_node_inputs, dst_node);
 }
 }  // namespace
@@ -139,9 +143,9 @@ const AnfNodePtr AdamWeightDecayUnifyMindIR::CreateAdamApplyOneWithDecay(const F
   // Create assign.
   auto update_param =
     CreateCastNode(func_graph, new_cnode_outputs[kIndex2], common::AnfAlgo::GetOutputInferDataType(ori_param, 0));
-  auto assign_param = CreateAssignCNode(func_graph, ori_param, update_param);
-  auto assign_m = CreateAssignCNode(func_graph, input_list[kIndex2], new_cnode_outputs[kIndex1]);
-  auto assign_v = CreateAssignCNode(func_graph, input_list[kIndex3], new_cnode_outputs[kIndex0]);
+  auto assign_param = CreateAssignCNode(func_graph, ori_param, update_param, input_list[kIndex11]);
+  auto assign_m = CreateAssignCNode(func_graph, input_list[kIndex2], new_cnode_outputs[kIndex1], input_list[kIndex11]);
+  auto assign_v = CreateAssignCNode(func_graph, input_list[kIndex3], new_cnode_outputs[kIndex0], input_list[kIndex11]);
   auto make_tuple = CreateMakeTupleNode(func_graph, std::vector<AnfNodePtr>{assign_param, assign_m, assign_v});
   make_tuple->set_scope(node->scope());
   return make_tuple;
