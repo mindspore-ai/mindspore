@@ -1065,7 +1065,7 @@ class CyclicLR(LRScheduler):
 
         if last_epoch == -1:
             for lr, group in zip(base_lrs, optimizer.param_groups):
-                group['lr'] = Parameter(lr)
+                ops.assign(group['lr'], Parameter(lr))
 
         self.max_lrs = self._preprocess_input_param(optimizer, max_lr, 'max_lr')
         self.max_lrs = [Tensor(lr) for lr in self.max_lrs]
