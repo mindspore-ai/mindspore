@@ -277,7 +277,7 @@ def get_bprop_matrix_solve_ls(self):
             else:
                 l2_regularizer = cast(l2, matrix.dtype)
             chol = cast(regularized_gramian_cholesky(matrix, l2_regularizer, first_kind=True), matrix.dtype)
-            #CholeskySolve not support complex dtype and just support 2D or 3D matrices for now
+            # CholeskySolve not support complex dtype and just support 2D or 3D matrices for now
             z = cholesky_solve(dout, chol)
 
             matrix_dim = rank(matrix)
@@ -431,7 +431,7 @@ def _norm_enum_to_string(norm_mode):
     norm_mode_str = ""
     if norm_mode == 0:
         norm_mode_str = "backward"
-    elif  norm_mode == 1:
+    elif norm_mode == 1:
         norm_mode_str = "forward"
     elif norm_mode == 2:
         norm_mode_str = "ortho"
@@ -547,6 +547,25 @@ def get_bprop_fft_with_size(self):
     conj_op = P.Conj()
     batch_matmul_op = P.BatchMatMul()
 
+    def reverse_branch(dx, onesided, dout_shape, offset_shape,
+                       output_type, dout, norm, inverse, signal_ndim, offset_size):
+        if onesided is True:
+            is_odd = dout_shape[-1] % 2
+            last_shape = offset_shape[-1]
+            mask = concat_op((ones_op(1, output_type), 2.0 * ones_op(
+                (last_shape - 2 + is_odd,), output_type), ones_op((1 - is_odd,), output_type)))
+            dx = dx * \
+                complex_op(mask, zeros_op(shape_op(mask), output_type))
+            irfft_offset_size = to_tensor_op(
+                _fft_with_size_back_norm(
+                    shape_op(dout), norm, inverse, signal_ndim),
+                output_type)
+            dx = dx * complex_op(irfft_offset_size,
+                                 zeros_op(1, output_type))
+        else:
+            dx = dx * complex_op(offset_size, zeros_op(1, output_type))
+        return dx
+
     def bprop(x, signal_ndim, inverse, real, norm_enum, onesided, signal_sizes, out, dout):
         norm = _norm_enum_to_string(norm_enum)
         fft_fn = FFTWithSize(signal_ndim=signal_ndim, inverse=False, real=False, norm=norm)
@@ -639,18 +658,8 @@ def get_bprop_fft_with_size(self):
                     dx = irfft_fn(dout) * real_op(offset_size)
             else:
                 dx = rfft_fn(dout)
-                if onesided is True:
-                    is_odd = dout_shape[-1] % 2
-                    last_shape = offset_shape[-1]
-                    mask = concat_op((ones_op(1, output_type), 2.0 * ones_op(
-                        (last_shape - 2 + is_odd,), output_type), ones_op((1 - is_odd,), output_type)))
-                    dx = dx * complex_op(mask, zeros_op(shape_op(mask), output_type))
-                    irfft_offset_size = to_tensor_op(
-                        _fft_with_size_back_norm(shape_op(dout), norm, inverse, signal_ndim),
-                        output_type)
-                    dx = dx * complex_op(irfft_offset_size, zeros_op(1, output_type))
-                else:
-                    dx = dx * complex_op(offset_size, zeros_op(1, output_type))
+                dx = reverse_branch(dx, onesided, dout_shape, offset_shape,
+                                    output_type, dout, norm, inverse, signal_ndim, offset_size)
         return (dx,)
 
     return bprop
