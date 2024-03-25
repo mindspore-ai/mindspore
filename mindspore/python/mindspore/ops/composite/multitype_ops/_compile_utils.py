@@ -562,6 +562,7 @@ def _convert_list_index_to_tensor(list_index):
 
     return None
 
+
 class _TensorIndexGetitem(base.TensorIndexGetitem_):
     """
     Getting item of Tensor.
