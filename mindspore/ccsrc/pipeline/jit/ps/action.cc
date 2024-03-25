@@ -582,8 +582,12 @@ void GeneralizeReusingGraph(const FuncGraphPtr &func_graph, const FuncGraphPtr &
       repl_n->set_input(IntToSize(n.second), node);
     }
   }
-  reusing_graph->set_flag(FUNC_GRAPH_FLAG_NO_INLINE, true);
-  reusing_graph->set_flag(FUNC_GRAPH_FLAG_CELL_REUSE, true);
+  if (func_graph->has_attr(FUNC_GRAPH_FLAG_NO_INLINE)) {
+    reusing_graph->set_flag(FUNC_GRAPH_FLAG_NO_INLINE, func_graph->has_flag(FUNC_GRAPH_FLAG_NO_INLINE));
+  } else {
+    reusing_graph->set_flag(FUNC_GRAPH_FLAG_NO_INLINE, true);
+    reusing_graph->set_flag(FUNC_GRAPH_FLAG_CELL_REUSE, true);
+  }
   auto cnodes_index = func_graph->func_graph_cnodes_index();
   auto tr = manager->Transact();
   for (auto &cnode_index : cnodes_index) {
