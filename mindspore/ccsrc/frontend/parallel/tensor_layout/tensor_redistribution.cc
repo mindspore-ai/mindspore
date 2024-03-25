@@ -391,14 +391,16 @@ Status TensorRedistribution::InferReshape(const TensorLayout &from_layout, const
                                           OutPutInfoVector *const output_info_vector) {
   MS_EXCEPTION_IF_NULL(operator_vector);
   MS_EXCEPTION_IF_NULL(output_info_vector);
-  MS_LOG(DEBUG) << "Start to infer reshape.";
   ConstructOperator constructor;
   if (operator_list_.empty()) {
     if (from_origin_.base_slice_shape().array() != to_origin_.base_slice_shape().array() || keep_reshape_) {
       reshape_flag_ = true;
       constructor.UpdateTensorShape(from_origin_.base_slice_shape().array());
       Arrangement shape = to_origin_.base_slice_shape();
-      MS_LOG(DEBUG) << "reshape " << shape.ToString();
+      MS_LOG(INFO) << "from_origin_.base_slice_shape is not same with to_origin_.base_slice_shape: "
+                   << "from_origin_.base_slice_shape=" << from_origin_.base_slice_shape().array()
+                   << ", to_origin_.base_slice_shape=" << to_origin_.base_slice_shape().array() << ", reshape to "
+                   << shape.ToString();
       if (constructor.ReshapeOP(shape.array()) == Status::FAILED) {
         return Status::FAILED;
       } else {
@@ -416,7 +418,10 @@ Status TensorRedistribution::InferReshape(const TensorLayout &from_layout, const
     reshape_flag_ = true;
     constructor.UpdateTensorShape(from_origin_.slice_shape().array());
     Arrangement shape = from_layout.slice_shape();
-    MS_LOG(DEBUG) << "reshape " << shape.ToString();
+    MS_LOG(INFO) << "from_origin.slice_shape is not same with from_layout.slice_shape: "
+                 << "from_origin_.slice_shape=" << from_origin_.slice_shape().array()
+                 << ", from_layout.slice_shape=" << from_layout.slice_shape().array() << ", reshape to "
+                 << shape.ToString();
     if (constructor.ReshapeOP(shape.array()) == Status::FAILED) {
       return Status::FAILED;
     } else {
@@ -429,7 +434,10 @@ Status TensorRedistribution::InferReshape(const TensorLayout &from_layout, const
     reshape_flag_ = true;
     constructor.UpdateTensorShape(from_origin_.base_slice_shape().array());
     Arrangement shape = from_origin_.slice_shape();
-    MS_LOG(DEBUG) << "reshape " << shape.ToString();
+    MS_LOG(INFO) << "from_origin_.base_slice_shape is not same with from_origin_.slice_shape: "
+                 << "from_origin_.base_slice_shape=" << from_origin_.base_slice_shape().array()
+                 << ", from_origin_.slice_shape=" << from_origin_.slice_shape().array() << ", reshape to "
+                 << shape.ToString();
     if (constructor.ReshapeOP(shape.array()) == Status::FAILED) {
       return Status::FAILED;
     } else {
@@ -441,8 +449,12 @@ Status TensorRedistribution::InferReshape(const TensorLayout &from_layout, const
   if (!IsSameShape(to_origin_.slice_shape().array(), to_layout.slice_shape().array())) {
     reshape_flag_ = true;
     constructor.UpdateTensorShape(to_layout.slice_shape().array());
+    // If to_origin_ is all -1, it can not be reshape.
     Arrangement shape = to_origin_.slice_shape();
-    MS_LOG(DEBUG) << "step_parallel to reshape " << shape.ToString();
+    MS_LOG(INFO) << "to_origin_.slice_shape is not same with to_layout.slice_shape: "
+                 << "to_origin_.slice_shape=" << to_origin_.slice_shape().array()
+                 << ", to_layout.slice_shape=" << to_layout.slice_shape().array() << ", reshape to "
+                 << shape.ToString();
     if (constructor.ReshapeOP(shape.array()) == Status::FAILED) {
       return Status::FAILED;
     } else {
@@ -455,7 +467,10 @@ Status TensorRedistribution::InferReshape(const TensorLayout &from_layout, const
     reshape_flag_ = true;
     constructor.UpdateTensorShape(to_origin_.slice_shape().array());
     Arrangement shape = to_origin_.base_slice_shape();
-    MS_LOG(DEBUG) << "step_parallel to reshape " << shape.ToString();
+    MS_LOG(INFO) << "to_origin_.slice_shape is not same with to_origin_.base_slice_shape: "
+                 << "to_origin_.slice_shape=" << to_origin_.slice_shape().array()
+                 << ", to_origin_.base_slice_shape=" << to_origin_.base_slice_shape().array() << ", reshape to "
+                 << shape.ToString();
     if (constructor.ReshapeOP(shape.array()) == Status::FAILED) {
       return Status::FAILED;
     } else {
