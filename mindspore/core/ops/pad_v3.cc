@@ -50,9 +50,10 @@
 namespace mindspore {
 namespace ops {
 namespace {
-constexpr int64_t nTwo = 2;
-constexpr int64_t kPaddingsSizeTwo = 2;
-constexpr int64_t kPaddingsSizeFour = 4;
+constexpr auto nTwo = 2;
+constexpr auto kPaddingsSizeTwo = 2;
+constexpr auto kPaddingsSizeFour = 4;
+constexpr auto kConstantInput = 3;
 void PaddingsSizeCheck(const PrimitivePtr &primitive, const int64_t paddings_size, const int64_t size) {
   constexpr int64_t kPaddingsSizeSix = 6;
   constexpr int64_t nThree = 3;
@@ -177,14 +178,6 @@ abstract::ShapePtr PadV3InferShape(const PrimitivePtr &primitive, const std::vec
   if (mode != kConstant) {
     (void)CheckAndConvertUtils::CheckInteger("input dims for edge, reflect or circular mode", size, kGreaterEqual,
                                              kOtherMinDims, prim_name);
-    auto type_constant_value = input_args[kIndex2]->GetType();
-    if (!type_constant_value->isa<TypeNone>()) {
-      MS_EXCEPTION(ValueError)
-        << "For '" << prim_name
-        << "', the input[constant_value] is only valid when the attribute[mode] is `constant`. DO NOT set "
-           "it in ["
-        << mode << "] mode.";
-    }
     if (mode == kReflect) {
       ReflectModeCheck(prim_name, paddings_size, x_shape, paddings_arg, size);
     } else {
@@ -261,13 +254,21 @@ TypePtr PadV3InferType(const PrimitivePtr &prim, const std::vector<AbstractBaseP
 
 AbstractBasePtr PadV3Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                            const std::vector<AbstractBasePtr> &input_args) {
-  constexpr int64_t kConstantInput = 3;
   constexpr int64_t kOtherInput = 2;
   auto mode = GetValue<string>(primitive->GetAttr("mode"));
   if (mode == kConstant) {
     CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kConstantInput, primitive->name());
   } else {
     CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kOtherInput, primitive->name());
+    if (input_args.size() == kConstantInput) {
+      auto type_constant_value = input_args[kIndex2]->GetType();
+      if (!type_constant_value->isa<TypeNone>()) {
+        MS_EXCEPTION(ValueError)
+          << "For '" << primitive->name()
+          << "', the input[constant_value] is only valid when the attribute[mode] is `constant`. DO NOT set it in ["
+          << mode << "] mode.";
+      }
+    }
   }
   auto infer_type = PadV3InferType(primitive, input_args);
   auto infer_shape = PadV3InferShape(primitive, input_args);
