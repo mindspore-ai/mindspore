@@ -2987,6 +2987,7 @@ def ldexp(x, other):
     out = tensor_mul(x, tensor_pow(2.0, other))
     return out
 
+
 def logit(input, eps=None):
     r"""
     Calculate the logit of a tensor element-wise.
