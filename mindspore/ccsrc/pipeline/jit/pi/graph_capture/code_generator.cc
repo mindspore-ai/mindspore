@@ -925,6 +925,7 @@ void CodeBreakGenerator::BreakAtBlock(CodeGenerator *code_gen, int untracked_bci
   for (BitMap::Iter iter(&alive, true), end(&alive, false); iter != end; ++iter) {
     alive_locals_.push_back(*iter);
   }
+
   interpret_.outputs.resize(alive_locals_.size(), &ValueNode::kUnboundLocal);
   untracked_stack_effect = 0;
 
