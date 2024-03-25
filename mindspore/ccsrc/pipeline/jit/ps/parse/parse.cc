@@ -75,6 +75,12 @@ FuncGraphPtr ParsePythonCode(const py::object &obj, const std::string &python_mo
     return nullptr;
   }
 
+  // Handle no_inline function
+  auto no_inline_value = py::getattr(obj, FUNC_GRAPH_FLAG_NO_INLINE, py::none());
+  if (no_inline_value != py::none()) {
+    func_graph->set_flag(FUNC_GRAPH_FLAG_NO_INLINE, py::cast<bool>(no_inline_value));
+  }
+
   MS_LOG(DEBUG) << "Finish Parsing " << py::str(obj);
   return func_graph;
 }

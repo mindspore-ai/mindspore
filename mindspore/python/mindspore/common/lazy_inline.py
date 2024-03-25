@@ -165,8 +165,11 @@ def lazy_inline(fn=None, attrs=None):
         raise ValueError(tips)
 
     def lazy_inline_wrap(fn):
-        @wraps(fn)
-        def lazy_inline_deco(self, *args, **kwargs):
+
+        def check_parameters(self):
+            if hasattr(fn, "has_tips_"):
+                return
+
             if hasattr(self, "construct"):
                 params = inspect.signature(self.construct).parameters
                 err = False
@@ -183,19 +186,18 @@ def lazy_inline(fn=None, attrs=None):
                     tips += " must be  key word or positional arguments and can't have default values." \
                             + " line: " + str(self.construct.__code__.co_firstlineno) \
                             + " in " + self.construct.__code__.co_filename
-                    if hasattr(fn, "warning_time_"):
-                        fn.warning_time_ += 1
-                    else:
-                        fn.warning_time_ = 1
-
-                    if fn.warning_time_ < 2:
-                        logger.info(tips)
+                    logger.info(tips)
+                    fn.has_tips_ = True
 
             else:
                 tips = "The " + self.__class__.__name__ + " must be a cell and must has a construct function." \
                        + " line: " + str(fn.__code__.co_firstlineno) + " in " + fn.__code__.co_filename
                 logger.warning(tips)
+                fn.has_tips_ = True
 
+        @wraps(fn)
+        def lazy_inline_deco(self, *args, **kwargs):
+            check_parameters(self)
             new_args = []
             if attrs is None:
                 bound_args = inspect.signature(fn).bind(self, *args, **kwargs)
