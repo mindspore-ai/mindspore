@@ -936,8 +936,15 @@ void DynamicOpRunner::UpdateInputDeviceAddress(const OpCompilerInfoPtr &op_compi
         kernel_tensor->SetHostInfo(std::make_shared<abstract::TensorShape>(input_tensor->shape()),
                                    std::make_shared<TensorType>(input_tensor->Dtype()), nullptr);
       }
-      // Always use tensor address as kernel address.
-      input_edge->address_ = device_address;
+
+      if (device_address->GetTensorStorageInfo() != nullptr) {
+        auto new_device_address =
+          DeviceAddressUtils::ConvertContiguousDeviceAddress(device_context, device_address, false);
+        input_edge->address_ = new_device_address;
+      } else {
+        // Always use tensor address as kernel address.
+        input_edge->address_ = device_address;
+      }
     } else {
       UpdateAddressInfoByInputTensor(op_compiler_info, input_tensor, input_edge, input_node);
       if (input_edge->ignore_h2d_) {
