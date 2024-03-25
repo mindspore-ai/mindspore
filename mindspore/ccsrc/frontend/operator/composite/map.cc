@@ -337,7 +337,6 @@ abstract::AbstractBasePtrList Map::NormalizeArgs(const AbstractBasePtrList &args
       MS_EXCEPTION_IF_NULL(abs);
       return abs->isa<abstract::AbstractAny>() || abs->BuildValue()->isa<parse::InterpretedObject>();
     });
-
   if (convert_to_interpret) {
     // If the map operation has interpreted object or any object, the map will be converted to PyInterpret node.
     // So, we can not broaden the args, since the broaden will convert PyInterpret node to PyExecute automatically.

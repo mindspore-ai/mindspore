@@ -142,7 +142,7 @@ void FuncGraph::GenerateKwParams(const FuncGraphPtr &specialized_graph,
     if (param_node == nullptr) {
       if (!has_kwarg()) {
         MS_LOG(DEBUG) << "Not found parameter by name '" << kw_param_name << "'";
-        if (pos_args_input_count + i < specialized_graph->parameters().size()) {
+        if (IntToSize(pos_args_input_count) + i < specialized_graph->parameters().size()) {
           auto kw_param = dyn_cast<Parameter>(specialized_graph->parameters()[IntToSize(pos_args_input_count) + i]);
           if (kw_param != nullptr && (specialized_graph->has_flag(FUNC_GRAPH_FLAG_ARGS_NO_EXPAND) ||
                                       kw_param->name() == "kwargs[" + kw_param_name + "]")) {
