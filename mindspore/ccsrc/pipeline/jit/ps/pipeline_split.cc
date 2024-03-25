@@ -237,7 +237,7 @@ bool PipelineSplit(const ResourcePtr &res) {
   if (!HasVirtualDataset(all_nodes)) {
     InsertVirtualDataset(root, all_nodes);
   }
-  auto global_rank = GetRank();
+  auto global_rank = parallel::GetRank();
   auto world_group = mindspore::parallel::GetWorldGroup();
   uint32_t world_rank_size = 0;
   int64_t device_num = 0;
