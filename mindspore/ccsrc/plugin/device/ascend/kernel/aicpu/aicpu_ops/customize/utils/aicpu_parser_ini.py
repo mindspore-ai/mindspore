@@ -136,6 +136,7 @@ cust_op_lists = [
     "log",
     "log1p",
     "logicalxor",
+    "logit",
     "lognormalreverse",
     "logspace",
     "loguniformcandidatesampler",
