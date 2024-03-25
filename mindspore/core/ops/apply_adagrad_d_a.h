@@ -36,7 +36,7 @@ class MIND_API ApplyAdagradDA : public BaseOperator {
   /// \brief Constructor.
   ApplyAdagradDA() : BaseOperator(kNameApplyAdagradDA) {
     InitIOName({"var", "gradient_accumulator", "gradient_squared_accumulator", "grad", "lr", "l1", "l2", "global_step"},
-               {"var", "gradient_accumulator", "gradient_squared_accumulator"});
+               {"var"});
   }
 };
 
