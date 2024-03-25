@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_COMMON_PASS_SHAPE_RESHAPE_FUSION_H_
-#define MINDSPORE_CCSRC_BACKEND_COMMON_PASS_SHAPE_RESHAPE_FUSION_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_SHAPE_RESHAPE_FUSION_H_
+#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_SHAPE_RESHAPE_FUSION_H_
 
 #include <memory>
 #include "include/backend/optimizer/optimizer.h"
@@ -35,4 +35,4 @@ class BACKEND_EXPORT ShapeReshapeFusion : public PatternProcessPass {
 };
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_COMMON_PASS_SHAPE_RESHAPE_FUSION_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_SHAPE_RESHAPE_FUSION_H_
