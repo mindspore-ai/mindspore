@@ -1180,16 +1180,19 @@ void DeviceAddressUtils::ConvertContiguousTensorSync(const tensor::TensorPtr &te
   }
 
   MS_LOG(DEBUG) << "Tensor storage_info is not nullptr, need to contiguous, id:" << tensor->id();
-  const auto &new_device_address =
-    ConvertContiguousDeviceAddressSync(std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address()));
+  const auto &new_device_address = ConvertContiguousDeviceAddress(
+    nullptr, std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address()), true);
   MS_EXCEPTION_IF_NULL(new_device_address);
   tensor->set_device_address(new_device_address);
 }
 
-device::DeviceAddressPtr DeviceAddressUtils::ConvertContiguousDeviceAddressSync(
-  const device::DeviceAddressPtr &old_device_address) {
+device::DeviceAddressPtr DeviceAddressUtils::ConvertContiguousDeviceAddress(
+  const DeviceContext *input_device_context, const device::DeviceAddressPtr &old_device_address, bool is_sync) {
   MS_EXCEPTION_IF_NULL(old_device_address);
-  const auto &device_context = runtime::OpRunner::GetDeviceContext(old_device_address->device_name());
+
+  const DeviceContext *device_context = input_device_context == nullptr
+                                          ? runtime::OpRunner::GetDeviceContext(old_device_address->device_name())
+                                          : input_device_context;
   MS_EXCEPTION_IF_NULL(device_context);
   auto stream_id = device_context->device_res_manager_->GetCurrentStreamId();
 
@@ -1210,14 +1213,18 @@ device::DeviceAddressPtr DeviceAddressUtils::ConvertContiguousDeviceAddressSync(
   new_device_address->set_original_ref_count(SIZE_MAX);
   new_device_address->ResetRefCount();
 
-  // ExecuteKernelTask sync, need to wait until all tasks in queue are complete.
-  runtime::OpExecutor::GetInstance().WaitAll();
+  if (is_sync) {
+    // ExecuteKernelTask sync, need to wait until all tasks in queue are complete.
+    runtime::OpExecutor::GetInstance().WaitAll();
+  }
+
   if (!device_context->GetKernelExecutor(false)->ExecuteKernelTask(
         runtime::KernelTaskType::kCONTIGUOUS_TASK, {old_device_address}, {new_device_address}, stream_id)) {
     MS_LOG(EXCEPTION) << "ExecuteKernelTask failed, task_type:" << runtime::KernelTaskType::kCONTIGUOUS_TASK;
   }
-
-  runtime::OpExecutor::GetInstance().WaitAll();
+  if (is_sync) {
+    runtime::OpExecutor::GetInstance().WaitAll();
+  }
   return new_device_address;
 }
 
