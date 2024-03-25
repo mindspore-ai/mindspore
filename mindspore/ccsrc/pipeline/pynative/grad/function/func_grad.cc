@@ -748,6 +748,7 @@ ValuePtr FuncGrad::Finish(const TensorPtrList &weights, const std::vector<size_t
   if (last_variable_->is_need_grad()) {
     BackPropagate();
   }
+  python_adapter::PyAdapterCallback::ProcessUnPairedCellHook(true);
   ValuePtr gradients = GetGrads(weights, grad_position, grad_attr);
   ClearGrads(weights);
   return gradients;
