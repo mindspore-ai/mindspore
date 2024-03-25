@@ -751,6 +751,7 @@ ValuePtr FuncGrad::Finish(const TensorPtrList &weights, const std::vector<size_t
     GilReleaseWithCheck gil_release;
     BackPropagate();
   }
+  python_adapter::PyAdapterCallback::ProcessUnPairedCellHook(true);
   ValuePtr gradients = GetGrads(weights, grad_position, grad_attr);
   ClearGrads(weights);
   return gradients;
