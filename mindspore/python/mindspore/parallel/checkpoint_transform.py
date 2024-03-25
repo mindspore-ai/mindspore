@@ -443,6 +443,12 @@ def sync_pipeline_shared_parameters(net):
              [1. 1. 1. 1.]]
     """
 
+    if not isinstance(net, ms.nn.Cell):
+        ms.log.critical("Failed to synchronize pipeline shared parameters.")
+        msg = ("For 'sync_pipeline_shared_parameters', the argument 'net' should be a Cell, "
+               "but got {}.".format(type(net)))
+        raise TypeError(msg)
+
     layout_dict = net.parameter_layout_dict
     if _is_in_auto_parallel_mode() and not layout_dict:
         from mindspore.common.api import _get_parameter_layout
