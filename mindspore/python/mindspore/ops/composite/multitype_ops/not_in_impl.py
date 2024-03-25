@@ -192,7 +192,5 @@ def _mstype_not_in_tuple(x, y):
 
 @not_in_.register_default()
 def default_not_in(x, y):
-    """
-    Default function for not in.
-   """
+    """Default function for not in."""
     return x not in y

@@ -107,7 +107,5 @@ def _less_equal_list(x, y):
 
 @less_equal.register_default()
 def default_less_equal(x, y):
-    """
-    Default function for less equal.
-   """
+    """Default function for less equal."""
     return x <= y
