@@ -1127,9 +1127,13 @@ class Conv2dTranspose(_Conv):
             respectively. If `output_padding` is not equal to 0, `pad_mode` must be `pad`.
             The value should be in range of `[0, max(stride, dilation))` . Default: ``0`` .
         dilation (Union[int, tuple[int]]): Dilation size of 2D convolution kernel.
-            The data type is an integer or a tuple of two integers. If :math:`k > 1`, the kernel is sampled
-            every `k` elements. The value of `k` on the height and width directions is in range of [1, H]
-            and [1, W] respectively. Default: ``1`` .
+            It can be a single int or a tuple of 2 integers. A single int means the dilation size is the same
+            in both the height and width directions. A tuple of two ints represents the dilation size in
+            the height and width directions, respectively.
+            Assuming :math:`dilation=(d0, d1)`, the convolutional kernel samples the input with a
+            spacing of :math:`d0-1` elements in the height direction and :math:`d1-1` elements in the width direction.
+            The values in the height and width dimensions are in the ranges [1, H] and [1, W], respectively.
+            Default: ``1`` .
         group (int): Splits filter into groups, `in_channels` and `out_channels` must be divisible by `group`.
             Default: ``1`` .
         has_bias (bool): Whether the Conv2dTranspose layer has a bias parameter. Default: ``False`` .
