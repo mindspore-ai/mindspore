@@ -24,7 +24,7 @@ from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.nn.optim import Adam
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_adam_bporp_with_cache():
@@ -33,7 +33,7 @@ def test_adam_bporp_with_cache():
     Description: Verify if the loss is converged
     Expectation: success
     """
-    ms.set_context(mode=ms.PYNATIVE_MODE)
+    ms.set_context(mode=ms.PYNATIVE_MODE, pynative_synchronize=True)
 
     class NetAdam(nn.Cell):
         def __init__(self):

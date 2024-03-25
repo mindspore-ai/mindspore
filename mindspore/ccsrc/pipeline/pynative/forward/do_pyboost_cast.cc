@@ -30,10 +30,10 @@ ValuePtr PyBoostCastOperation::DoAutoCast(const FrontendOpRunInfoPtr &op_run_inf
     MS_LOG(DEBUG) << "Source value: " << v->ToString() << " cast to value: " << dst_value->ToString();
     return dst_value;
   }
-  if (v->isa<tensor::Tensor>()) {
-    return DoAutoCast(op_run_info, dst_type, index, v->cast<tensor::TensorPtr>());
+  if (!v->isa<tensor::Tensor>()) {
+    return v;
   }
-  return v;
+  return DoAutoCast(op_run_info, dst_type, index, v->cast<tensor::TensorPtr>());
 }
 
 tensor::TensorPtr PyBoostCastOperation::DoAutoCast(const FrontendOpRunInfoPtr &op_run_info,
