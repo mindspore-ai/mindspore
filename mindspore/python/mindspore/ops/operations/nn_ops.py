@@ -9978,6 +9978,7 @@ class PromptFlashAttention(Primitive):
                                         "deq_scale2", "quant_scale2", "quant_offset2"],
                                 outputs=["attention_out"])
 
+
 class IncreFlashAttention(Primitive):
     r"""
     The interface for fully inference.

@@ -149,7 +149,7 @@ bool CorrelateCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor 
     for (size_t out_id = start; out_id < end; ++out_id) {
       T_out sum_temp = static_cast<T_out>(0);
       for (int64_t dot_id = 0; dot_id < short_size_; dot_id++) {
-        sum_temp += long_array[out_id + dot_id] * short_array[dot_id];
+        sum_temp += long_array[SizeToLong(out_id) + dot_id] * short_array[dot_id];
       }
       out_array[out_id] = sum_temp;
     }
@@ -226,7 +226,7 @@ bool CorrelateCpuKernelMod::LaunchComplexKernel(const std::vector<kernel::Kernel
     for (size_t out_id = start; out_id < end; ++out_id) {
       T sum_temp = static_cast<T>(0);
       for (int64_t dot_id = 0; dot_id < short_size_; dot_id++) {
-        sum_temp += long_array[out_id + dot_id] * short_array[dot_id];
+        sum_temp += long_array[SizeToLong(out_id) + dot_id] * short_array[dot_id];
       }
       out_array[out_id] = sum_temp;
     }
