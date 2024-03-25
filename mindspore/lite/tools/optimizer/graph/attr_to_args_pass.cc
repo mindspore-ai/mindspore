@@ -40,6 +40,11 @@ static const std::map<std::string, std::vector<string>> kAttrMapNeedAdjust = {
      "axis",
      "output_type",
    }},
+  {"ArgMaxWithValue",
+   {
+     "axis",
+     "keep_dims",
+   }},
   {"AvgPool",
    {
      "kernel_size",
