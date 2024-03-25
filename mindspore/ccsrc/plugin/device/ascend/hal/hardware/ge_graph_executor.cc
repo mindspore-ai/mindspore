@@ -678,9 +678,6 @@ void GeGraphExecutor::AllocParameterMemory(const KernelGraphPtr &kernel_graph, s
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id);
   MS_EXCEPTION_IF_NULL(runtime_instance);
   runtime_instance->AssignStaticMemoryInput(*kernel_graph.get());
-  for (auto &child_graph : kernel_graph->child_graph_order()) {
-    AllocParameterMemory(child_graph.lock(), memo);
-  }
 }
 
 void GeGraphExecutor::BuildInputDataGeTensor(const KernelGraphPtr &kernel_graph) {
