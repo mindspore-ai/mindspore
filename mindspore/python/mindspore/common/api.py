@@ -545,6 +545,7 @@ class _MindsporeFunctionExecutor:
             for i, elem in enumerate(compile_args):
                 if isinstance(elem, PythonTensor):
                     Validator.check_dynamic_shape(compile_args[i], args_list[i], i)
+            Validator.check_symbolic_shape(compile_args, args_list)
 
         # Case: If dynamic shape tensors have been assigned to `input_signature`, they are preferred as compile args.
         if self.input_signature is not None:
@@ -556,6 +557,7 @@ class _MindsporeFunctionExecutor:
                 if isinstance(elem, PythonTensor) and is_shape_unknown(elem.shape):
                     Validator.check_dynamic_shape(self.input_signature[i], args_list[i], i)
                     dyn_shape = True
+            Validator.check_symbolic_shape(self.input_signature, args_list)
             if dyn_shape:
                 # Checkout whether the `sens` has been added to args_list.
                 if len(self.input_signature) == len(args_list) - 1:
