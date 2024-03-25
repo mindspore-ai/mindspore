@@ -51,6 +51,21 @@
 
 namespace mindspore {
 namespace parallel {
+namespace {
+void SetMakeTupleAbstract(const CNodePtr &node) {
+  if (!IsPrimitiveCNode(node, prim::kPrimMakeTuple)) {
+    return;
+  }
+
+  AbstractBasePtrList abstract_list;
+  for (size_t i = 1; i < node->inputs().size(); i++) {
+    abstract_list.emplace_back(node->input(i)->abstract());
+  }
+  auto abs = std::make_shared<abstract::AbstractTuple>(abstract_list);
+  node->set_abstract(abs);
+}
+}  // namespace
+
 mindspore::HashMap<int64_t, int64_t> send_tag_map;
 mindspore::HashMap<int64_t, int64_t> recv_tag_map;
 const std::set<PrimitivePtr> WHITE_LIST = {prim::kPrimTupleGetItem, prim::kPrimMakeTuple, prim::kPrimCast};
@@ -1270,7 +1285,7 @@ std::pair<std::vector<AnfNodePtr>, std::vector<AnfNodePtr>> PipelineTransformer:
   return std::make_pair(send_ops, receive_ops);
 }
 
-tensor::TensorPtr PipelineTransformer::CreateZeroseOutput(const AnfNodePtr &node, size_t index) {
+AnfNodePtr PipelineTransformer::CreateZeroseOutput(const AnfNodePtr &node, size_t index) {
   auto out_shapes = GetNodeShape(node);
   if (out_shapes.size() <= index) {
     MS_LOG(EXCEPTION) << "the index is out of range, the size of output_shapes is " << out_shapes.size()
@@ -1282,9 +1297,37 @@ tensor::TensorPtr PipelineTransformer::CreateZeroseOutput(const AnfNodePtr &node
                          "scenarios, the output shape is "
                       << out_shape;
   }
+
+  // Modify output dimension when enable data parallel since only the last stage enable VirtualOutput redistribution.
+  bool full_batch = ParallelContext::GetInstance()->full_batch();
+  int64_t dev_num = full_batch ? 1 : g_device_manager->stage_device_num();
+  if (dev_num == 0) {
+    MS_LOG(EXCEPTION) << "Device num must be larger than 0, but get 0.";
+  }
+
+  if (!is_train_ && !out_shape.empty() && out_shape[0] % dev_num != 0) {
+    out_shape[0] /= dev_num;
+  }
+
   auto out_shape_type = GetShapeType(node, out_shape, index);
   auto zero_tensor = TensorConstructUtils::CreateZerosTensor(out_shape_type.second, out_shape);
-  return zero_tensor;
+  MS_EXCEPTION_IF_NULL(zero_tensor);
+
+  auto value_node = NewValueNode(zero_tensor);
+  MS_EXCEPTION_IF_NULL(value_node);
+
+  // Build abstract from node to prevent confusion between Scalar and 0D-Tensor.
+  auto abs = node->abstract();
+  MS_EXCEPTION_IF_NULL(abs);
+  if (abs->isa<abstract::AbstractSequence>()) {
+    auto elements = abs->cast<abstract::AbstractSequencePtr>()->elements();
+    abs = elements.at(index)->Clone();
+    MS_EXCEPTION_IF_NULL(abs);
+    abs->set_shape(std::make_shared<abstract::Shape>(out_shape));
+  }
+
+  value_node->set_abstract(abs);
+  return value_node;
 }
 
 AnfNodePtr PipelineTransformer::GetZeroOutputs(const FuncGraphPtr &graph) {
@@ -1303,12 +1346,12 @@ AnfNodePtr PipelineTransformer::GetZeroOutputs(const FuncGraphPtr &graph) {
         (void)out_tuple_inputs.emplace_back(temp_tuple);
         continue;
       }
-      (void)out_tuple_inputs.emplace_back(NewValueNode(CreateZeroseOutput(real_out_cnode->input(i), 0)));
+      (void)out_tuple_inputs.emplace_back(CreateZeroseOutput(real_out_cnode->input(i), 0));
     }
   }
   if (out_tuple_inputs.size() > INDEX_ONE) {
     auto out_tuple = main_graph_->NewCNode(out_tuple_inputs);
-    out_tuple->set_abstract(real_out->abstract());
+    SetMakeTupleAbstract(out_tuple);
     return out_tuple;
   } else {
     auto real_out_shapes = GetNodeShape(real_out);
@@ -1317,9 +1360,8 @@ AnfNodePtr PipelineTransformer::GetZeroOutputs(const FuncGraphPtr &graph) {
     if (real_out_shapes.size() > 1 && real_kernel.second == -1) {
       out_tensor = CreateTupleZeroTensor(real_out, real_out_shapes.size());
     } else {
-      out_tensor = NewValueNode(CreateZeroseOutput(real_out, 0));
+      out_tensor = CreateZeroseOutput(real_out, 0);
     }
-    out_tensor->set_abstract(real_out->abstract());
     return out_tensor;
   }
   return nullptr;
@@ -1727,9 +1769,10 @@ AnfNodePtr PipelineTransformer::CreateTupleZeroTensor(const AnfNodePtr &node, si
   std::vector<AnfNodePtr> temp_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple)};
   auto out_shapes = GetNodeShape(node);
   for (size_t ele = 0; ele < out_shapes.size(); ++ele) {
-    temp_tuple_inputs.emplace_back(NewValueNode(CreateZeroseOutput(node, ele)));
+    temp_tuple_inputs.emplace_back(CreateZeroseOutput(node, ele));
   }
   auto temp_tuple = main_graph_->NewCNode(temp_tuple_inputs);
+  SetMakeTupleAbstract(temp_tuple);
   return temp_tuple;
 }
 
@@ -1932,8 +1975,7 @@ void PipelineTransformer::ElimParameter() {
         continue;
       }
       if (root_->has_flag(NO_UPDATE) && IsPrimitiveCNode(make_tuple_user, prim::kPrimAddN)) {
-        auto zeros = CreateZeroseOutput(input, 0);
-        new_inputs.push_back(NewValueNode(zeros));
+        new_inputs.push_back(CreateZeroseOutput(input, 0));
       }
     }
     auto new_make_tuple = fg->NewCNode(new_inputs);

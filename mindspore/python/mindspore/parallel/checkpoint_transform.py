@@ -384,7 +384,7 @@ def _sync_params(name, param, layout):
 
 def sync_pipeline_shared_parameters(net):
     """synchronize pipeline parallel stage shared parameters.
-    Parameters may be shared between different stages in pipeline parallel inference. For example, `embedding table` is
+    Parameters may be shared between different stages. For example, `embedding table` is
     shared by `WordEmbedding` layer and `LMHead` layer, which are usually split into different stages. It is necessary
     to perform synchronization after `embedding table` changes.
 
@@ -397,14 +397,17 @@ def sync_pipeline_shared_parameters(net):
     Examples:
         >>> import numpy as np
         >>> import mindspore as ms
-        >>> from mindspore import nn, Parameter, Tensor
+        >>> from mindspore import nn, ops, Parameter, Tensor
         >>> class VocabEmbedding(nn.Cell):
         ...     def __init__(self, vocab_size, embedding_size):
         ...         super().__init__()
-        ...         self.embedding_table = Parameter(Tensor(np.ones([vocab_size, embedding_size])), name='embedding')
+        ...         self.embedding_table = Parameter(Tensor(np.ones([vocab_size, embedding_size]), ms.float32),
+        ...                                          name='embedding')
+        ...         self.gather = ops.Gather()
         ...
         ...     def construct(self, x):
         ...         output = self.gather(self.embedding_table, x, 0)
+        ...         output = output.squeeze(1)
         ...         return output, self.embedding_table.value()
         ...
         >>> class LMHead(nn.Cell):
@@ -413,7 +416,6 @@ def sync_pipeline_shared_parameters(net):
         ...         self.matmul = ops.MatMul(transpose_b=True)
         ...
         ...     def construct(self, state, embed):
-        ...         state = state.reshape(-1, state.shape[-1])
         ...         return self.matmul(state, embed)
         ...
         >>> class Network(nn.Cell):
@@ -433,7 +435,7 @@ def sync_pipeline_shared_parameters(net):
         >>> net.head.pipeline_stage = 1
         >>> x = Tensor(np.ones((8, 4))
         >>> net.compile()
-        >>> ms.parallel.sync_pipeline_shared_parameters(net)
+        >>> ms.sync_pipeline_shared_parameters(net)
         >>> print(net.word_embedding.embedding_table.asnumpy())
         >>> [[1. 1. 1. 1.]
              [1. 1. 1. 1.]
