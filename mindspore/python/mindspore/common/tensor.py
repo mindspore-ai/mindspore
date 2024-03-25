@@ -1203,7 +1203,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         Examples:
             >>> import mindspore as ms
             >>> x = ms.Tensor([[1, 2, 3, 4, 5], [6, 7, 8, 9, 10]], dtype=ms.float32)
-            >>> ret = x.stride()
+            >>> x.stride()
             [5, 1]
         """
         stride = Tensor_.stride(self)
