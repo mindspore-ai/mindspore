@@ -74,6 +74,9 @@ class MindData:
     def get_data_info(self):
         pass
 
+    def get_mbuf_queue_size(self):
+        pass
+
     def get_send_info(self):
         pass
 

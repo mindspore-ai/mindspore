@@ -30,6 +30,8 @@ class SkipFirstEpochSamplerRT : public SequentialSamplerRT {
   // Destructor.
   ~SkipFirstEpochSamplerRT() = default;
 
+  Status GetNextSample(TensorRow *out) override;
+
   /// \brief Reset for next epoch.
   /// \param[in] failover_reset A boolean to show whether we are resetting the pipeline
   /// \return Status The status code returned

@@ -22,6 +22,7 @@ import os
 import math
 import copy
 import importlib
+import time
 import numpy as np
 
 import mindspore
@@ -523,6 +524,16 @@ class Model:
                                                                         dataset_sink_mode=True,
                                                                         sink_size=sink_size)
             self._warmup_dataset(epoch, train_dataset, sink_size)
+            if train_dataset.get_init_step() > 0:
+                mbuf_size = train_dataset.__transfer_dataset__.get_mbuf_queue_size()
+                while mbuf_size == 0:
+                    time.sleep(10)
+                    mbuf_size = train_dataset.__transfer_dataset__.get_mbuf_queue_size()
+                    if mbuf_size != 0:
+                        break
+                    logger.warning(f"Failover mode, waiting for dataset recover to specify step, "
+                                   f"current device queue size: {mbuf_size}")
+
             if context.get_auto_parallel_context("pipeline_stages") > 1 and valid_dataset:
                 train_network.add_flags_recursive(is_first_iteration=True)
             for inputs in train_dataset_helper:
