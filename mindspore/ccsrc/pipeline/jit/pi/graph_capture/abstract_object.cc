@@ -189,6 +189,9 @@ std::string AbstractObjectBase::ToString() const {
 }
 
 AbstractObjectBase::Type AbstractObjectBase::GetPyType(PyTypeObject *tp) {
+  if (tp == nullptr) {
+    return kTypeAnyValue;
+  }
   FIND_MAP_CACHE(exact_type_map, tp);
   // fast sub type check
   // __builtin_clz(tp->tp_flags & fast_type_mask), or std::countl_zero
@@ -219,6 +222,10 @@ AbstractObjectBase::Type AbstractObjectBase::GetPyType(PyTypeObject *tp) {
 AbstractObjectBase::Type AbstractObjectBase::GetPyType(PyObject *o) {
   if (o == nullptr) {
     return kTypeAnyValue;
+  }
+  py::object obj = py::cast<py::object>(o);
+  if (py::hasattr(obj, PYTHON_PRIMITIVE_FUNCTION_FLAG)) {
+    return kTypePrimitiveFunction;
   }
   FIND_MAP_CACHE(const_object_type_map, o);
   if (PyLong_Check(o)) {
@@ -1583,6 +1590,9 @@ AObject *AbstractTensor::GetItem(AObject *key) {
 }
 
 AObject *AbstractTensor::Unary(int op) const {
+  if (this->value_.ptr() != nullptr) {
+    return this->AbstractObject::UnaryValue(op);
+  }
   switch (op) {
     case UNARY_POSITIVE:
       return const_cast<AbstractTensor *>(this);

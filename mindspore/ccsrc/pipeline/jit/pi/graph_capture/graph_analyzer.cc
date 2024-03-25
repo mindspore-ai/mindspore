@@ -138,12 +138,18 @@ static bool CheckSideEffectedFunc(ValueNode *v) {
 }
 
 bool GraphAnalyzer::HandleCallableToGraph(AObject *f) {
+  static bool known_type[AObject::kTypeCount] = {false};
+  if (known_type[AObject::kTypePrimitive] == false) {
+    known_type[AObject::kTypePrimitive] = true;
+    known_type[AObject::kTypeCell] = true;
+    known_type[AObject::kTypeMetaFuncGraph] = true;
+    known_type[AObject::kTypePrimitiveFunction] = true;
+  }
   if (f == nullptr) {
     return false;
   }
   // don't pass unknown callable to graph
-  bool is_known_func = f->GetType() == AObject::kTypeCell || f->GetType() == AObject::kTypePrimitive ||
-                       f->GetType() == AObject::kTypeMetaFuncGraph || CheckJitConstexpr(f->GetPyObject());
+  bool is_known_func = known_type[f->GetType()] || CheckJitConstexpr(f->GetPyObject());
   bool is_ms_support_func = f->TestMsFlag(kMsFlagSet);
   if (!is_known_func && !is_ms_support_func) {
     return false;

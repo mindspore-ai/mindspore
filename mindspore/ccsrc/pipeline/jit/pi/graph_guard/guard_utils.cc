@@ -1973,7 +1973,7 @@ class TypeGuard : public GuardItem {
     } else {
       refType_ = Py_TYPE(obj->GetObject());
     }
-    if (obj->GetRelaxCount() >= 0) {
+    if (obj->GetRelaxCount() > 0) {
       check_count_ = 0;
     } else {
       check_count_ = -1;
