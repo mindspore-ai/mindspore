@@ -341,7 +341,11 @@ static bool InferRegistryGet(CallNode *call_node) {
   return false;
 }
 
-bool CheckPrimitive(const py::object &func) { return AObject::GetPyType(func.ptr()) == AObject::kTypePrimitive; }
+bool CheckPrimitive(const py::object &func) {
+  bool isPrimitiveType = AObject::GetPyType(func.ptr()) == AObject::kTypePrimitive;
+  bool isPrimitiveFunction = py::hasattr(func, PYTHON_PRIMITIVE_FUNCTION_FLAG);
+  return isPrimitiveType || isPrimitiveFunction;
+}
 
 bool InferPrimitive(CallNode *call_node) {
   static const std::unordered_map<std::string, AObject::Type> not_ret_tensor_prim = {

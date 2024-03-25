@@ -340,7 +340,6 @@ static void MakePrimitiveConstantInfoCommon(ValueNode *node) {
 }
 
 void ConstantInfo::CollectPrimitiveConstantInfo(CallNode *node) {
-  MS_EXCEPTION_IF_CHECK_FAIL(node->input(0)->GetVobj()->GetType() == AObject::kTypePrimitive, "must be primitive");
   MakePrimitiveConstantInfoCommon(node);
 
   std::string prim_key = node->input(0)->GetVobj()->GetPyObject().attr("name").cast<std::string>();
