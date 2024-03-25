@@ -5851,7 +5851,7 @@ class SparseApplyFtrl(Primitive):
     Examples:
         >>> import mindspore
         >>> import numpy as np
-        >>> from mindspore import Tensor, nn, Parameter
+        >>> from mindspore import Tensor, nn, Parameter, ops
         >>> class SparseApplyFtrlNet(nn.Cell):
         ...     def __init__(self):
         ...         super(SparseApplyFtrlNet, self).__init__()
