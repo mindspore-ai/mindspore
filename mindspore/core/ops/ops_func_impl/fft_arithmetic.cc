@@ -83,7 +83,7 @@ BaseShapePtr FFTNInferShape(const PrimitivePtr &primitive, const std::vector<Abs
     if (dim_opt.has_value()) {
       dim = dim_opt.value().ToVector();
       for (size_t i = 0; i < s.size(); i++) {
-        dim[i] = dim[i] < 0 ? x_rank + dim[i] : dim[i];
+        dim[i] = dim[i] < 0 ? SizeToLong(x_rank) + dim[i] : dim[i];
       }
     }
   }

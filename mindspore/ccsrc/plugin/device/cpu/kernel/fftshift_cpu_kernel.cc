@@ -65,7 +65,7 @@ int FFTShiftCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
     (void)std::for_each(dim_.begin(), dim_.end(), [this](auto &axis) { axis = axis < 0 ? x_rank_ + axis : axis; });
   }
   forward_ = (kernel_name_ == prim::kPrimFFTShift->name()) ? true : false;
-  element_nums_ = SizeOf(tensor_shape_);
+  element_nums_ = SizeToLong(SizeOf(tensor_shape_));
 
   return KRET_OK;
 }

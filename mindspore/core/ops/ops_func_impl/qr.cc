@@ -42,8 +42,8 @@ BaseShapePtr QrFuncImpl::InferShape(const PrimitivePtr &primitive,
   std::vector<int64_t> out_q_dims(input_shape.begin(), input_shape.end());
   std::vector<int64_t> out_r_dims(input_shape.begin(), input_shape.end());
   const int64_t penultimate = 2;
-  const int64_t last_dimension = input_shape.size() - 1;
-  const int64_t penultimate_dimension = input_shape.size() - penultimate;
+  const int64_t last_dimension = SizeToLong(input_shape.size()) - 1;
+  const int64_t penultimate_dimension = SizeToLong(input_shape.size()) - penultimate;
   if (full_matrices_opt.value()) {
     out_q_dims[last_dimension] = out_q_dims[penultimate_dimension];
   } else {
