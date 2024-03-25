@@ -78,7 +78,7 @@ CNodePtr UpdateShapeNodeInput(const CNodePtr &current_cnode, const CNodePtr &dst
     }
     bool found = IsVirtualDatasetNextInput(prev_cnode, dst_cnode);
     if (found) {
-      MS_LOG(DEBUG) << "change input to " << current_cnode->input(1)->fullname_with_scope();
+      MS_LOG(INFO) << "change input to " << current_cnode->input(1)->fullname_with_scope();
       return prev_cnode;
     }
   }
@@ -105,7 +105,7 @@ void TensorRedistribution::UnifyAssembledMappingWithSameSize(const std::set<int6
     auto dyn_dim = GetDimMapping(this->dynamic_dim_mapping_, i);
     int64_t real_dim_value = origin_slice_shape[i];
     new_mapping.insert({real_dim_value, {i, dyn_dim.second}});
-    MS_LOG(DEBUG) << "insert at " << i << " with " << real_dim_value;
+    MS_LOG(INFO) << "insert at " << i << " with " << real_dim_value;
   }
   this->dynamic_dim_mapping_ = new_mapping;
 }
@@ -147,7 +147,7 @@ void TensorRedistribution::UnifyAssembledMappingWithDiffSize(const std::set<int6
     // It means it's a dynamic dim.
     if (from_shape[i] == unified_from_shape[unified_offset]) {
       new_mapping.insert({real_dim_value, {unified_offset, dyn_dim.second}});
-      MS_LOG(DEBUG) << "insert at " << unified_offset << " with " << real_dim_value;
+      MS_LOG(INFO) << "insert at " << unified_offset << " with " << real_dim_value;
       --unified_offset;
     } else if (from_shape[i] > unified_slice_shape[unified_offset] &&
                from_shape[i] % unified_slice_shape[unified_offset] == 0) {
@@ -157,14 +157,14 @@ void TensorRedistribution::UnifyAssembledMappingWithDiffSize(const std::set<int6
       int64_t divisor = real_dim_value / unified_slice_shape[unified_offset];
       AnfNodePtr new_dim_node = CreateDiv(dyn_dim.second, divisor, func_graph, true, "assemble_dynamic_shape_op");
       new_mapping.insert({unified_slice_shape[unified_offset], {unified_offset, new_dim_node}});
-      MS_LOG(DEBUG) << "insert at " << unified_offset << " with " << unified_slice_shape[unified_offset];
+      MS_LOG(INFO) << "insert at " << unified_offset << " with " << unified_slice_shape[unified_offset];
       --unified_offset;
       while (left_size != 1 && unified_offset >= 0) {
         left_size = left_size / unified_slice_shape[unified_offset];
         divisor = real_dim_value / unified_slice_shape[unified_offset];
         new_dim_node = CreateDiv(dyn_dim.second, divisor, func_graph, true, "assemble_dynamic_shape_op");
         new_mapping.insert({unified_slice_shape[unified_offset], {unified_offset, new_dim_node}});
-        MS_LOG(DEBUG) << "insert at " << unified_offset << " with " << unified_slice_shape[unified_offset];
+        MS_LOG(INFO) << "insert at " << unified_offset << " with " << unified_slice_shape[unified_offset];
         --unified_offset;
       }
       if (left_size != 1 && unified_offset < 0) {
@@ -190,9 +190,9 @@ void TensorRedistribution::UnifyAssembledMapping() {
     index_mapping.insert(iter.second.first);
   }
 
-  MS_LOG(DEBUG) << "from_shape=" << from_shape << ", origin_slice_shape=" << origin_slice_shape
-                << ", unified_from_shape=" << unified_from_shape
-                << ", unified_from_slice_shape=" << unified_from_slice_shape;
+  MS_LOG(INFO) << "from_shape=" << from_shape << ", origin_slice_shape=" << origin_slice_shape
+               << ", unified_from_shape=" << unified_from_shape
+               << ", unified_from_slice_shape=" << unified_from_slice_shape;
 
   if (unified_from_shape.size() == from_shape.size()) {
     this->UnifyAssembledMappingWithSameSize(index_mapping);
@@ -254,17 +254,14 @@ void AppendOperatorVecStr(const OperatorVector &vec, std::string *res) {
 
 RedistributionOpListPtr TensorRedistribution::InferTensorRedistributionOperatorListUnExpand(bool is_cost_model) {
   MS_LOG(DEBUG) << "Start to infer tensor redistribution with unexpanded.";
-  TensorLayout from_origin = this->IsAssembledStaticShape() ? this->assembled_from_layout() : from_origin_;
-  TensorLayout to_origin = this->IsAssembledStaticShape() ? this->assembled_to_layout() : to_origin_;
-  TensorLayout from_layout = this->from_;
-  TensorLayout to_layout = this->to_;
+  TensorLayout from_origin = this->from_origin_;
+  TensorLayout to_origin = this->to_origin_;
   TensorLayout from_repeat = from_origin.TransferRepeatLayout();
   TensorLayout to_repeat = to_origin.TransferRepeatLayout();
-
   MS_LOG(DEBUG) << "reshape from_origin_ " << from_origin.ToString();
   MS_LOG(DEBUG) << "reshape to_origin_ " << to_origin.ToString();
-  MS_LOG(DEBUG) << "reshape from_ " << from_layout.ToString();
-  MS_LOG(DEBUG) << "reshape to_ " << to_layout.ToString();
+  MS_LOG(DEBUG) << "reshape from_repeat " << from_repeat.ToString();
+  MS_LOG(DEBUG) << "reshape to_repeat " << to_repeat.ToString();
 
   OperatorVector operator_vector;
   OutPutInfoVector output_info_vector;
@@ -283,7 +280,10 @@ RedistributionOpListPtr TensorRedistribution::InferTensorRedistributionOperatorL
     ConstructOperator constructor;
     constructor.UpdateTensorShape(from_repeat.slice_shape().array());
     Arrangement shape = to_repeat.slice_shape();
-    MS_LOG(DEBUG) << "reshape " << shape.ToString();
+    MS_LOG(INFO) << "from_repeat.slice_shape is not same with to_repeat.slice_shape: "
+                 << "from_repeat.slice_shape=" << from_repeat.slice_shape().array()
+                 << ", to_repeat.slice_shape=" << to_repeat.slice_shape().array() << ", reshape to "
+                 << shape.ToString();
     if (constructor.ReshapeOP(shape.array()) == Status::FAILED) {
       return nullptr;
     } else {

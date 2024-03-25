@@ -76,14 +76,14 @@ class TensorRedistribution {
   TensorLayout assembled_from_layout() const {
     if (!this->IsAssembledStaticShape()) {
       MS_LOG(WARNING) << "TensorRedistribution didn't assemble static shape but call assembled_from_layout().";
-      return this->from_;
+      return this->from_origin_;
     }
     return this->layout_transfer_.from_in();
   }
   TensorLayout assembled_to_layout() const {
     if (!this->IsAssembledStaticShape()) {
       MS_LOG(WARNING) << "TensorRedistribution didn't assemble static shape but call assembled_to_layout().";
-      return this->to_;
+      return this->to_origin_;
     }
     return this->layout_transfer_.to_in();
   }
@@ -92,6 +92,7 @@ class TensorRedistribution {
                                      const FuncGraphPtr &func_graph, int64_t redistribution_index);
 
  private:
+  void GetAssembledOriginLayout(TensorLayout *from_origin, TensorLayout *to_origin);
   void UnifyAssembledMapping();
   void UnifyAssembledMappingWithSameSize(const std::set<int64_t> &index_mapping);
   void UnifyAssembledMappingWithDiffSize(const std::set<int64_t> &index_mapping);
