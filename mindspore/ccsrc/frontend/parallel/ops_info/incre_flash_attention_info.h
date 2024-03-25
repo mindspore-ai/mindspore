@@ -69,6 +69,7 @@ class IncreFlashAttentionInfo : public OperatorInfo {
   void SetOptinalInputs();
   int GetSqueezedIndex(size_t original_index);
   Status CheckAntiquantStrategy(const StrategyPtr &strategy, size_t input_index);
+  Status CheckAttenMaskStrategy(const StrategyPtr &strategy, size_t input_index);
 };
 }  // namespace parallel
 }  // namespace mindspore
