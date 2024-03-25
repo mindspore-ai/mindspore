@@ -49,8 +49,6 @@ class GatherDGpuKernelMod : public NativeGpuKernelMod {
   bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
                     const std::vector<KernelTensor *> &outputs, void *stream_ptr);
 
-  bool SetDimParam(int64_t dim_value);
-
   using GatherFwdFunc = std::function<bool(GatherDGpuKernelMod *, const std::vector<kernel::KernelTensor *> &,
                                            const std::vector<kernel::KernelTensor *> &,
                                            const std::vector<kernel::KernelTensor *> &, void *)>;
@@ -58,12 +56,12 @@ class GatherDGpuKernelMod : public NativeGpuKernelMod {
   GatherFwdFunc kernel_func_;
   static std::vector<std::pair<KernelAttr, GatherFwdFunc>> func_list_;
 
-  ShapeVector input_shapes_;
-  ShapeVector index_shapes_;
-  ShapeVector output_shapes_;
-
   bool is_null_input_{false};
-  size_t dims_[kHelperDimsNum] = {};
+  ShapeHelper input_shape_helper_;
+  ShapeHelper index_shape_helper_;
+  size_t dim_{0};
+  size_t index_num_{0};
+  size_t rank_{0};
 };
 }  // namespace kernel
 }  // namespace mindspore

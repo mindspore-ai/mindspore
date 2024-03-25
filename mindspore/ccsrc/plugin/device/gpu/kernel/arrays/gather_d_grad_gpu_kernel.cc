@@ -38,10 +38,8 @@ bool GatherDGradGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &in
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemsetAsync(output_addr, 0, outputs[kIndex0]->size(), cuda_stream),
                                     "GatherGrad cudaMemSet Failed");
 
-  auto index_size =
-    static_cast<size_t>(std::accumulate(index_shapes_.begin(), index_shapes_.end(), 1, std::multiplies<int64_t>()));
-  auto status = GatherGrad(index_addr, grad_addr, output_addr, dims_[0], dims_[1], dims_[2], dims_[3], dims_[4],
-                           index_size, cuda_stream);
+  auto status = GatherGrad(index_addr, grad_addr, output_addr, dim_, index_num_, rank_, output_shape_helper_,
+                           index_shape_helper_, cuda_stream);
   CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
@@ -54,53 +52,33 @@ bool GatherDGradGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
   return true;
 }
 
-void GatherDGradGpuKernelMod::CalculateDim(int64_t dim_value) {
-  int64_t rank = SizeToLong(output_shapes_.size());
-
-  if (dim_value < 0) {
-    dim_value += rank;
-  }
-  auto dim_size = static_cast<size_t>(dim_value);
-  int64_t dim_before_axis_index = 1;
-  for (size_t i = 0; i < dim_size; i++) {
-    dim_before_axis_index *= index_shapes_[i];
-  }
-  auto dim_at_axis_index = static_cast<size_t>(index_shapes_[dim_size]);
-  auto dim_at_axis_out = static_cast<size_t>(output_shapes_[dim_size]);
-  int64_t dim_after_axis_out = 1;
-  for (size_t i = dim_size + 1; i < output_shapes_.size(); i++) {
-    dim_after_axis_out *= output_shapes_[i];
-  }
-
-  int64_t dim_after_axis_index = 1;
-  for (size_t i = dim_size + 1; i < index_shapes_.size(); i++) {
-    dim_after_axis_index *= index_shapes_[i];
-  }
-
-  dims_[kIndex0] = static_cast<size_t>(dim_before_axis_index);
-  dims_[kIndex1] = dim_at_axis_index;
-  dims_[kIndex2] = static_cast<size_t>(dim_after_axis_index);
-  dims_[kIndex3] = dim_at_axis_out;
-  dims_[kIndex4] = static_cast<size_t>(dim_after_axis_out);
-}
-
 int GatherDGradGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
                                     const std::vector<KernelTensor *> &outputs) {
   auto ret = KernelMod::Resize(inputs, outputs);
-  index_shapes_ = inputs.at(kIndex2)->GetShapeVector();
-  output_shapes_ = outputs.at(kIndex0)->GetShapeVector();
-  grad_shapes_ = inputs.at(kIndex3)->GetShapeVector();
+  auto index_shapes = inputs.at(kIndex2)->GetShapeVector();
+  auto output_shapes = outputs.at(kIndex0)->GetShapeVector();
 
-  if (output_shapes_.empty()) {
-    output_shapes_ = ShapeVector{1};
+  if (output_shapes.empty()) {
+    output_shapes = ShapeVector{1};
   }
 
-  if (index_shapes_.empty()) {
-    index_shapes_ = ShapeVector{1};
+  if (index_shapes.empty()) {
+    index_shapes = ShapeVector{1};
   }
 
+  rank_ = output_shapes.size();
   auto dim = inputs[kIndex1]->GetValueWithCheck<int64_t>();
-  CalculateDim(dim);
+  if (dim < 0) {
+    dim += rank_;
+  }
+  dim_ = static_cast<size_t>(dim);
+  index_num_ =
+    static_cast<size_t>(std::accumulate(index_shapes.begin(), index_shapes.end(), 1, std::multiplies<int64_t>()));
+
+  for (size_t i = 0; i < output_shapes.size(); i++) {
+    output_shape_helper_.shape[i] = static_cast<size_t>(output_shapes[i]);
+    index_shape_helper_.shape[i] = static_cast<size_t>(index_shapes[i]);
+  }
   return static_cast<int>(ret);
 }
 

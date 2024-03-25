@@ -2783,21 +2783,24 @@ def gather_elements(input, dim, index):
 
         output[i][j][k] = x[i][j][index[i][j][k]]  # if dim == 2
 
-    `input` and `index` have the same length of dimensions, and all dimensions except `dim` have the same size.
-    If `dim` = i, `input` is an n-D tensor with shape :math:`(z_0, z_1, ..., z_i, ..., z_{n-1})`,
-    the `index` must be an n-D tensor with shape :math:`(z_0, z_1, ..., y, ..., z_{n-1})`
-    where `y`>=1 and the output will have the same shape with `index`.
+    `input` and `index` have the same length of dimensions, and `index.shape[axis] <= input.shape[axis]`
+    where axis goes through all dimensions of `input` except `dim`.
+
+    .. warning::
+        On Ascend, the behavior is unpredictable in the following cases:
+
+        - the value of `index` is not in the range `[-input.shape[dim], input.shape[dim])` in forward;
+        - the value of `index` is not in the range `[0, input.shape[dim])` in backward.
 
     Args:
         input (Tensor): The input tensor.
-        dim (int): The axis along which to index. It must be int32 or int64. The value range is [-input.ndim,
-            input.ndim).
+        dim (int): The axis along which to index. It must be int32 or int64. The value range is `[-input.ndim,
+            input.ndim)`.
         index (Tensor): The indices of elements to gather. It can be one of the following data types:
-            int32, int64. The value range of each index element is [-input.shape(dim), input.shape(dim)).
+            int32, int64. The value range of each index element is `[-input.shape(dim), input.shape(dim))`.
 
     Returns:
-        Tensor, has the same shape as index tensor, the shape of tensor is :math:`(z_0, z_1, ..., y, ..., z_{n-1})`,
-        and has the same data type with `input`.
+        Tensor, has the same shape as `index` and has the same data type with `input`.
 
     Raises:
         TypeError: If dtype of `dim` or `index` is neither int32 nor int64.

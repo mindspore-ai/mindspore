@@ -283,3 +283,49 @@ def test_gather_ext_grad(mode):
     else:
         ms_out = (jit(gather_ext_backward_func, jit_config=JitConfig(jit_level="O2")))(ms_data, dim, ms_indices)
     assert np.allclose(ms_out.asnumpy(), expect, rtol=1e-4)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_gpu_training
+def test_gather_ext_unmatch_shape():
+    """
+    Feature: Test gather .
+    Description: index shape is not equal to input shape when axis != dim.
+    Expectation: return the correct value.
+    """
+    shape = (3, 2, 3, 2, 3)
+    ms_data = Tensor(np.arange(3 * 2 * 3 * 2 * 3).reshape(shape).astype(np.float32))
+    ms_indices = Tensor([[[[[1, 1]],
+                           [[1, 0]]]],
+                         [[[[0, 1]],
+                           [[1, 1]]]]])
+    expect_fw = [[[[[6., 7.]],
+                   [[6., 1.]]]],
+                 [[[[36., 43.]],
+                   [[42., 43.]]]]]
+    dim = 2
+
+    fw_out = call_gather(ms_data, dim, ms_indices)
+    assert np.allclose(fw_out.asnumpy(), expect_fw, rtol=1e-4)
+
+    expect_bw = [[[[[0., 1., 0.], [0., 0., 0.]],
+                   [[2., 1., 0.], [0., 0., 0.]],
+                   [[0., 0., 0.], [0., 0., 0.]]],
+                  [[[0., 0., 0.], [0., 0., 0.]],
+                   [[0., 0., 0.], [0., 0., 0.]],
+                   [[0., 0., 0.], [0., 0., 0.]]]],
+                 [[[[1., 0., 0.], [0., 0., 0.]],
+                   [[1., 2., 0.], [0., 0., 0.]],
+                   [[0., 0., 0.], [0., 0., 0.]]],
+                  [[[0., 0., 0.], [0., 0., 0.]],
+                   [[0., 0., 0.], [0., 0., 0.]],
+                   [[0., 0., 0.], [0., 0., 0.]]]],
+                 [[[[0., 0., 0.], [0., 0., 0.]],
+                   [[0., 0., 0.], [0., 0., 0.]],
+                   [[0., 0., 0.], [0., 0., 0.]]],
+                  [[[0., 0., 0.], [0., 0., 0.]],
+                   [[0., 0., 0.], [0., 0., 0.]],
+                   [[0., 0., 0.], [0., 0., 0.]]]]]
+    bw_out = gather_ext_backward_func(ms_data, dim, ms_indices)
+    assert np.allclose(bw_out.asnumpy(), expect_bw, rtol=1e-4)
