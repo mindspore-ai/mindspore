@@ -2205,6 +2205,7 @@ bool AnfAlgo::IsNodeMutableScalar(const AnfNodePtr &node) {
     return false;
   };
   bool is_output_mutable_scalar = is_mutable_scalar_func(node);
+  bool is_scalar_to_tensor = IsPrimitiveCNode(node, prim::kPrimScalarToTensor);
   if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimDepend)) {
     const auto &cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
@@ -2212,7 +2213,7 @@ bool AnfAlgo::IsNodeMutableScalar(const AnfNodePtr &node) {
       return false;
     }
   }
-  return is_output_mutable_scalar;
+  return is_output_mutable_scalar || is_scalar_to_tensor;
 }
 
 bool AnfAlgo::IsDynamicSequence(const AnfNodePtr &node) {

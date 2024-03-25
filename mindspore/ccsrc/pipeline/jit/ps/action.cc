@@ -192,21 +192,8 @@ bool IsDynamicGraph(const FuncGraphPtr &func_graph) {
 bool IsNeedBackoffGraph(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   std::vector<AnfNodePtr> node_list = TopoSort(func_graph->get_return(), SuccDeeperSimple);
-  return std::any_of(node_list.begin(), node_list.end(), [](const AnfNodePtr &node) {
-    MS_EXCEPTION_IF_NULL(node);
-    if (!node->isa<CNode>()) {
-      MS_LOG(DEBUG) << "Node is not a cnode.";
-      return false;
-    }
-    auto abs = node->abstract();
-    if (abs == nullptr) {
-      MS_LOG(DEBUG) << "Node " << node->fullname_with_scope()
-                    << " has no abstract, Debug String: " << node->DebugString();
-      return false;
-    }
-    return abs->isa<abstract::AbstractScalar>() && abs->BuildValue()->ContainsValueAny() &&
-           !IsPrimitiveCNode(node, prim::kPrimDepend);
-  });
+  return std::any_of(node_list.begin(), node_list.end(),
+                     [](const AnfNodePtr &node) { return common::AnfAlgo::IsNodeMutableScalar(node); });
 }
 
 // Disable mindRT in the heterogeneous scenario + dynamic_shape scenario.
