@@ -15,8 +15,9 @@
 """Operations for sequence"""
 
 from mindspore.ops.primitive import Primitive, prim_attr_register
-from .manually_defined import ScalarAdd, ScalarBool, ScalarDiv, ScalarMul, ScalarEq, ScalarFloorDiv, ScalarGe,\
+from .manually_defined import ScalarAdd, ScalarBool, ScalarDiv, ScalarMul, ScalarEq, ScalarFloorDiv, ScalarGe, \
     ScalarGt, ScalarLe, ScalarLog, ScalarLt, ScalarMod, ScalarPow, ScalarSub, ScalarUadd, ScalarUsub
+
 
 class bool_not(Primitive):
     r"""
@@ -38,6 +39,7 @@ class bool_not(Primitive):
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
     """
+
     @prim_attr_register
     def __init__(self):
         """Initialize bool_not"""
@@ -71,6 +73,7 @@ class bit_and(Primitive):
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
     """
+
     @prim_attr_register
     def __init__(self):
         """Initialize ScalarMod"""
@@ -97,6 +100,7 @@ class bit_or(Primitive):
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
     """
+
     @prim_attr_register
     def __init__(self):
         """Initialize ScalarMod"""
