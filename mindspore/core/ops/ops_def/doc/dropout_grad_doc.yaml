@@ -1,4 +1,4 @@
-dropout:
+dropout_grad:
   description: |
     The gradient of Dropout. During training, randomly zeroes some of the elements
     of the input tensor with probability.
