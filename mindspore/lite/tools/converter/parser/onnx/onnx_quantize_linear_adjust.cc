@@ -174,7 +174,7 @@ int OnnxQuantizeLinearAdjust::DoParameterQuantDeQuant(const CNodePtr &cnode, con
     return RET_NULL_PTR;
   }
   if (tensor_info->data_type() != kNumberTypeFloat32) {
-    MS_LOG(INFO) << cnode->fullname_with_scope() << " is not float32, data will not quant dequant.";
+    MS_LOG(INFO) << cnode->fullname_with_scope() << " is not float32, data will not quantify or dequantify.";
     return RET_OK;
   }
   int preferred_dim =
