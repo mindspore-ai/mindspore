@@ -224,7 +224,6 @@ void BytecodeInliner::ProcessGraph(Graph *graph, int local_off) {
 
 static bool EliminateSideEffect(Graph *top_graph, Graph *sub_graph) {
   /**
-   * TODO:
    * kFeatureBreakAtInlinedFunc
    * eliminate untracked bytecode side effect after graph break
    * 1. eliminate MAKE_FUNCTION if it has global access and globals is not same as top func
@@ -301,7 +300,7 @@ void BytecodeInliner::Reconstruct(ValueNode *node, int local_off) {
   reconstructed_value_ = node;
 
   /**
-   * TODO: if the node not match the instruction opcode, check it's sideeffect
+   * if the node not match the instruction opcode, check it's sideeffect
    */
 }
 
@@ -350,7 +349,6 @@ void BytecodeInliner::FixInstr(Graph *graph, int local_off, std::vector<std::uni
 }
 
 /**
- * TODO:
  * unify the implementations of cfg initialization
  */
 void BytecodeInliner::InitCFG() {

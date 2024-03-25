@@ -52,12 +52,13 @@ inline PyObject *PyObject_CallOneArg(PyObject *func, PyObject *arg) {
 
 #if (PY_MINOR_VERSION == 7)
 
-inline _PyFrameEvalFunction _PyInterpreterState_GetEvalFrameFunc(PyInterpreterState *interp) {
-  return interp->eval_frame;
+inline _PyFrameEvalFunction _PyInterpreterState_GetEvalFrameFunc(PyInterpreterState *interp_state) {
+  return interp_state->eval_frame;
 }
 
-inline void _PyInterpreterState_SetEvalFrameFunc(PyInterpreterState *interp, _PyFrameEvalFunction eval_frame) {
-  interp->eval_frame = eval_frame;
+inline void _PyInterpreterState_SetEvalFrameFunc(PyInterpreterState *interp_state,
+                                                 _PyFrameEvalFunction eval_frame_function) {
+  interp_state->eval_frame = eval_frame_function;
 }
 
 inline PyObject *PyObject_Vectorcall(PyObject *func, PyObject *const *stack, Py_ssize_t nargs, PyObject *kwnames) {

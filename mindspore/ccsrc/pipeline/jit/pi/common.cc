@@ -45,16 +45,6 @@
 #include "pipeline/jit/pi/graph_capture/code_generator.h"
 #include "pipeline/jit/pi/graph_capture/bytecode_inliner.h"
 
-#ifndef PY_MINOR_VERSION
-#define PY_MINOR_VERSION 3.7
-#error "undefined PY_MINOR_VERSION"
-#endif  // PY_MINOR_VERSION
-
-#ifndef PY_MAJOR_VERSION
-#define PY_MAJOR_VERSION 3.9
-#error "undefined PY_MAJOR_VERSION"
-#endif  // PY_MAJOR_VERSION
-
 namespace mindspore {
 namespace pijit {
 static Py_tss_t *tss = NULL;
@@ -335,14 +325,14 @@ JitCompileResults *getJitCompileResults(PyObject *code, bool alloc) {
     code = PyFunction_GET_CODE(code);
   }
   if (!PyCode_Check(code)) {
-    return NULL;
+    return nullptr;
   }
   ensureInitialize();
   Py_ssize_t index = (Py_ssize_t)PyThread_tss_get(tss);
   if (index == 0) {
     index = _PyEval_RequestCodeExtraIndex(freeJitCompileResults);
     if (index == -1) {
-      return NULL;
+      return nullptr;
     }
     // ensure index is not 0
     PyThread_tss_set(tss, reinterpret_cast<void *>(index + 1));
@@ -350,17 +340,17 @@ JitCompileResults *getJitCompileResults(PyObject *code, bool alloc) {
     index = index - 1;
   }
 
-  JitCompileResults *c = NULL;
+  JitCompileResults *c = nullptr;
   if (!_PyCode_GetExtra(code, index, reinterpret_cast<void **>(&c))) {
-    if (c != NULL) {
+    if (c != nullptr) {
       return c;
     }
     if (!alloc) {
-      return NULL;
+      return nullptr;
     }
     c = allocJitCompileResults();
-    if (c == NULL) {
-      return NULL;
+    if (c == nullptr) {
+      return nullptr;
     }
     if (!_PyCode_SetExtra(code, index, c)) {
       MS_LOG(DEBUG) << "allocJitCompileResults " << c << " for " << std::string(py::str(code));
@@ -369,7 +359,7 @@ JitCompileResults *getJitCompileResults(PyObject *code, bool alloc) {
     freeJitCompileResults(c);
   }
   PyErr_Clear();
-  return NULL;
+  return nullptr;
 }
 
 static PyFrameObject *RebuildFrame(PyThreadState *tstate, PyCodeObject *co, const PyFrameObject *f) {
@@ -728,7 +718,6 @@ void AddGuardForGlobals(const PyFrameObject *f, OptGuardPtr guard, bool detach) 
       level = GuardLevel::GId;
     } else if (t == AObject::kTypeTuple || t == AObject::kTypeList || t == AObject::kTypeDict) {
       /**
-       * TODO:
        * graph treat tuple, list, dict as constant variable.
        * add container guard and check it, check contains Tensor
        */

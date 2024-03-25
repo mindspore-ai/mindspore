@@ -448,7 +448,8 @@ static py::object ConvertCppTensor(const py::object &any) {
 
   if (PyDict_Check(op)) {
     Py_ssize_t pos = 0;
-    PyObject *key, *value;
+    PyObject *key;
+    PyObject *value;
     while (PyDict_Next(op, &pos, &key, &value)) {
       py::object new_value = ConvertCppTensor(py::cast<py::object>(value));
       PyDict_SetItem(op, key, new_value.ptr());

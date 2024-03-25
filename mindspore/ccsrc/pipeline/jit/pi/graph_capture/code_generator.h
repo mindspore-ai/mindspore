@@ -192,7 +192,7 @@ class CodeBreakGenerator {
   void SetGlobals(const py::dict &dict) { globals_ = dict; }
   const py::dict &GetGlobals() const { return globals_; }
 
-  // TODO(chaiyouheng): collect nodes inputs and outputs at graph analyze
+  // (chaiyouheng): collect nodes inputs and outputs at graph analyze
   void Init(const Graph *, const GraphAnalyzer::CapturedInfo *);
 
   virtual py::object MakeCode(bool make_graph, Graph *graph);

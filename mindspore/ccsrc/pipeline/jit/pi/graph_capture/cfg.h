@@ -163,7 +163,7 @@ class Block {
   bool is_loop_head_ = false;
   bool is_dead_ = true;
 
-  // TODO(chaiyouheng): remove
+  // (chaiyouheng): remove
   Instrs instrs_;
   int track_result_ = (1 << kNotTrack);
 };

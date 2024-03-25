@@ -21,12 +21,12 @@ namespace pijit {
 BitMap::Iter::Iter(const BitMap *map, bool begin) {
   data_ = map->data() + (begin ? 0 : map->count());
   end_ = map->data() + map->count();
-  offset_ = (data_ - map->data()) << shf;
+  offset_ = static_cast<size_t>(data_ - map->data()) << shf;
   NextOne();
 }
 
 BitMap::Iter &BitMap::Iter::operator++() {
-  size_t tail = offset_ & mod;
+  size_t tail = offset_ & static_cast<size_t>(mod);
   size_t mask = (*data_) >> (tail + 1);
   if (tail == mod || mask == 0) {
     offset_ = offset_ - tail + CountTrailingZeros(0);

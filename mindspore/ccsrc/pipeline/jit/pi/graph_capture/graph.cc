@@ -86,7 +86,7 @@ CallNode *Graph::NewCallNode(int op, int arg, const std::vector<ValueNode *> &in
 }
 
 /**
- * TODO: FindLoopEnd, FindLoopBegin, reset break bci
+ * FindLoopEnd, FindLoopBegin, reset break bci
  * restore graph status. clean the variable that loop produced
  * restore frame status of break bci that override by loop analyze
  */

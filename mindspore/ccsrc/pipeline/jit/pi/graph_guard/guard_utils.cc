@@ -182,7 +182,8 @@ class IntData : public ItemData {
   }
 
   bool operator==(const ItemData &obj) const override {
-    return ItemData::operator==(obj) && (!specialized_ || (((const IntData &)obj).intVar_ == intVar_));
+    return ItemData::operator==(obj) &&
+           (!specialized_ || ((reinterpret_cast<const IntData &>(obj)).intVar_ == intVar_));
   }
 
   std::string ToString() override { return DESC_STRING(intVar_) + DESC_END; }
@@ -282,7 +283,8 @@ class StringData : public ItemData {
 
   bool operator==(const ItemData &obj) const override {
     return ItemData::operator==(obj) &&
-           ((specialized_ && ((const StringData &)obj).strVal_.compare(strVal_) == 0) || (!specialized_));
+           ((specialized_ && (reinterpret_cast<const StringData &>(obj)).strVal_.compare(strVal_) == 0) ||
+            (!specialized_));
   }
 
   std::string ToString() override { return DESC(strVal_) + DESC_END; }
@@ -350,34 +352,32 @@ class ListData : public ItemData {
   }
 
   bool operator==(const ItemData &obj) const override {
-    if (ItemData::operator==(obj)) {
-      const ListData &list = (const ListData &)obj;
-      if (list.listVar_.size() == listVar_.size()) {
-        if (!inOrder_) {
-          std::vector<ItemDataPtr> listCpy = list.listVar_;
-          for (size_t i = 0, j; i < listVar_.size(); ++i) {
-            size_t lenList = listCpy.size();
-            for (j = 0; j < lenList; ++j) {
-              if (*(listCpy[j]) == *(listVar_[i])) {
-                listCpy.erase(listCpy.begin() + j);
-                break;
-              }
-            }
-            if (j == lenList) {
-              return false;
+    const ListData &list = (const ListData &)obj;
+    if (ItemData::operator==(obj) && list.listVar_.size() == listVar_.size()) {
+      if (!inOrder_) {
+        std::vector<ItemDataPtr> listCpy = list.listVar_;
+        for (size_t i = 0, j; i < listVar_.size(); ++i) {
+          size_t lenList = listCpy.size();
+          for (j = 0; j < lenList; ++j) {
+            if (*(listCpy[j]) == *(listVar_[i])) {
+              listCpy.erase(listCpy.begin() + j);
+              break;
             }
           }
-        } else {
-          for (size_t i = 0; i < listVar_.size(); ++i) {
-            if (*(list.listVar_[i]) == *(listVar_[i])) {
-              continue;
-            } else {
-              return false;
-            }
+          if (j == lenList) {
+            return false;
           }
         }
-        return true;
+      } else {
+        for (size_t i = 0; i < listVar_.size(); ++i) {
+          if (*(list.listVar_[i]) == *(listVar_[i])) {
+            continue;
+          } else {
+            return false;
+          }
+        }
       }
+      return true;
     }
     return false;
   }
@@ -1172,10 +1172,9 @@ class TensorData : public MetaTensorData {
       return ret;
     }
     ret = ret && other.init_flag_ == init_flag_ && other.is_forward_output_ == is_forward_output_ &&
-          /*other.id_.compare(id_) == 0 &&*/ other.graph_output_ == graph_output_ &&
-          other.specialized_ == specialized_ && IsBaseShapePtr(other) && IsCastDtype(other) &&
-          other.compression_type_ == compression_type_ && other.quant_params_.size() == quant_params_.size() &&
-          other.tensor_name_.compare(tensor_name_) == 0;
+          other.graph_output_ == graph_output_ && other.specialized_ == specialized_ && IsBaseShapePtr(other) &&
+          IsCastDtype(other) && other.compression_type_ == compression_type_ &&
+          other.quant_params_.size() == quant_params_.size() && other.tensor_name_.compare(tensor_name_) == 0;
     if (!ret) {
       return ret;
     }
@@ -1272,16 +1271,8 @@ class TensorData : public MetaTensorData {
   size_t data_len_;
   std::string id_;
   bool graph_output_;
-  // bool updated_by_device_{false};
-  // DeviceSyncPtr device_sync_{nullptr};
-  // bool need_release_device_mem_{false};
-  // bool cache_enable_{false};
   mindspore::abstract::BaseShapePtr base_shape_ptr_;
-  // std::shared_ptr<Tensor> cache_tensor_ptr_{nullptr};
-  // std::shared_ptr<Tensor> hashmap_tensor_ptr_{nullptr};
   mindspore::TypePtr cast_dtype_;
-  // std::shared_ptr<DeviceEvent> device_event_{nullptr};
-  // UserData user_data_;
   mindspore::TensorCompressionType compression_type_;
   std::vector<QuantizationParamPtr> quant_params_;
   std::string tensor_name_;
