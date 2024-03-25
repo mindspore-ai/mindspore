@@ -1425,11 +1425,14 @@ def set_context(**kwargs):
                 and optimizer parallel allgather communication if True. Default: False.
               - compute_communicate_fusion_level (int): Enable the fusion between compute and communicate.
                 Default: ``0``.
-                - 0: Disable fusion.
-                - 1: Apply fusion to forward nodes.
-                - 2: Apply fusion to backward nodes.
-                - 3: Apply fusion to all nodes.
 
+                - 0: Disable fusion.
+
+                - 1: Apply fusion to forward nodes.
+
+                - 2: Apply fusion to backward nodes.
+
+                - 3: Apply fusion to all nodes.
             - host_scheduling_max_threshold(int): The max threshold to control whether the dynamic shape process is
               used when run the static graph, the default value is 0. When the number of operations in the static graph
               is less than the max threshold, this graph will be executed in dynamic shape process. In large model
