@@ -21,7 +21,6 @@
 #include <string>
 #include <unordered_map>
 #include "pybind11/pybind11.h"
-#include "pybind_api/ir/primitive_py.h"
 
 namespace mindspore {
 namespace pijit {
@@ -30,8 +29,7 @@ class InferEngine : public std::enable_shared_from_this<InferEngine> {
  public:
   static std::shared_ptr<InferEngine> GetInstance();
   PyObject *InferPrimitive(PyObject *primitive, const std::vector<PyObject *> &args, bool *is_abstract);
-  PyObject *InferSpecialPrimitive(PyObject *primitive, const std::vector<PyObject *> &arglist,
-                                  const PrimitivePyPtr &prim);
+  PyObject *InferSpecialPrimitive(PyObject *primitive, const std::vector<PyObject *> &arglist);
   bool SupportInfer(PyObject *primitive);
   bool Init();
   bool Deinit();
