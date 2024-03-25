@@ -121,6 +121,7 @@ class LLMEngineStatus:
         """Get empty count of prompt KV cache of this LLMEngine object"""
         return self.status_.empty_max_prompt_kv
 
+
 class LLMStatusCode(Enum):
     """
     LLM Error Code
@@ -157,20 +158,28 @@ class LLMRole(Enum):
     Prompt = 0
     Decoder = 1
 
+
 class LLMException(RuntimeError):
     """
     Base Error class for LLM
     """
     def __init__(self, *args: object):
         super().__init__(*args)
-        self._statusCode = LLMStatusCode.LLM_SUCCESS
+        self._status_code = LLMStatusCode.LLM_SUCCESS
 
     @property
     def statusCode(self):
-        return self._statusCode
+        """
+        LLMException status code property
+        """
+        return self._status_code
 
     def StatusCode(self):
-        return self._statusCode
+        """
+        get LLMException status code
+        """
+        return self._status_code
+
 
 class LLMKVCacheNotExist(LLMException):
     """
@@ -180,7 +189,8 @@ class LLMKVCacheNotExist(LLMException):
     """
     def __init__(self, *args: object):
         super().__init__(*args)
-        self._statusCode = LLMStatusCode.LLM_KV_CACHE_NOT_EXIST
+        self._status_code = LLMStatusCode.LLM_KV_CACHE_NOT_EXIST
+
 
 class LLMWaitProcessTimeOut(LLMException):
     """
@@ -188,7 +198,7 @@ class LLMWaitProcessTimeOut(LLMException):
     """
     def __init__(self, *args: object):
         super().__init__(*args)
-        self._statusCode = LLMStatusCode.LLM_WAIT_PROC_TIMEOUT
+        self._status_code = LLMStatusCode.LLM_WAIT_PROC_TIMEOUT
 
 
 class LLMRepeatRequest(LLMException):
@@ -197,7 +207,7 @@ class LLMRepeatRequest(LLMException):
     """
     def __init__(self, *args: object):
         super().__init__(*args)
-        self._statusCode = LLMStatusCode.LLM_REPEAT_REQUEST
+        self._status_code = LLMStatusCode.LLM_REPEAT_REQUEST
 
 
 class LLMRequestAlreadyCompleted(LLMException):
@@ -206,7 +216,7 @@ class LLMRequestAlreadyCompleted(LLMException):
     """
     def __init__(self, *args: object):
         super().__init__(*args)
-        self._statusCode = LLMStatusCode.LLM_REQUEST_ALREADY_COMPLETED
+        self._status_code = LLMStatusCode.LLM_REQUEST_ALREADY_COMPLETED
 
 
 class LLMEngineFinalized(LLMException):
@@ -215,7 +225,7 @@ class LLMEngineFinalized(LLMException):
     """
     def __init__(self, *args: object):
         super().__init__(*args)
-        self._statusCode = LLMStatusCode.LLM_ENGINE_FINALIZED
+        self._status_code = LLMStatusCode.LLM_ENGINE_FINALIZED
 
 
 class LLMParamInvalid(LLMException):
@@ -224,7 +234,8 @@ class LLMParamInvalid(LLMException):
     """
     def __init__(self, *args: object):
         super().__init__(*args)
-        self._statusCode = LLMStatusCode.LLM_PARAM_INVALID
+        self._status_code = LLMStatusCode.LLM_PARAM_INVALID
+
 
 class LLMNotYetLink(LLMException):
     """
@@ -232,7 +243,8 @@ class LLMNotYetLink(LLMException):
     """
     def __init__(self, *args: object):
         super().__init__(*args)
-        self._statusCode = LLMStatusCode.LLM_NOT_YET_LINK
+        self._status_code = LLMStatusCode.LLM_NOT_YET_LINK
+
 
 class LLMOutOfMemory(LLMException):
     """
@@ -240,7 +252,8 @@ class LLMOutOfMemory(LLMException):
     """
     def __init__(self, *args: object):
         super().__init__(*args)
-        self._statusCode = LLMStatusCode.LLM_DEVICE_OUT_OF_MEMORY
+        self._status_code = LLMStatusCode.LLM_DEVICE_OUT_OF_MEMORY
+
 
 class LLMPrefixAlreadyExist(LLMException):
     """
@@ -248,7 +261,8 @@ class LLMPrefixAlreadyExist(LLMException):
     """
     def __init__(self, *args: object):
         super().__init__(*args)
-        self._statusCode = LLMStatusCode.LLM_PREFIX_ALREADY_EXIST
+        self._status_code = LLMStatusCode.LLM_PREFIX_ALREADY_EXIST
+
 
 class LLMPrefixNotExist(LLMException):
     """
@@ -256,7 +270,8 @@ class LLMPrefixNotExist(LLMException):
     """
     def __init__(self, *args: object):
         super().__init__(*args)
-        self._statusCode = LLMStatusCode.LLM_PREFIX_NOT_EXIST
+        self._status_code = LLMStatusCode.LLM_PREFIX_NOT_EXIST
+
 
 class LLMSeqLenOverLimit(LLMException):
     """
@@ -264,7 +279,8 @@ class LLMSeqLenOverLimit(LLMException):
     """
     def __init__(self, *args: object):
         super().__init__(*args)
-        self._statusCode = LLMStatusCode.LLM_SEQ_LEN_OVER_LIMIT
+        self._status_code = LLMStatusCode.LLM_SEQ_LEN_OVER_LIMIT
+
 
 class LLMNoFreeBlocks(LLMException):
     """
@@ -272,7 +288,8 @@ class LLMNoFreeBlocks(LLMException):
     """
     def __init__(self, *args: object):
         super().__init__(*args)
-        self._statusCode = LLMStatusCode.LLM_NO_FREE_BLOCK
+        self._status_code = LLMStatusCode.LLM_NO_FREE_BLOCK
+
 
 class LLMBlockOutOfMemory(LLMException):
     """
@@ -280,7 +297,8 @@ class LLMBlockOutOfMemory(LLMException):
     """
     def __init__(self, *args: object):
         super().__init__(*args)
-        self._statusCode = LLMStatusCode.LLM_BLOCKS_OUT_OF_MEMORY
+        self._status_code = LLMStatusCode.LLM_BLOCKS_OUT_OF_MEMORY
+
 
 class LLMClusterInfo:
     """
@@ -422,7 +440,7 @@ class LLMClusterInfo:
 def _handle_llm_status(status, func_name, other_info):
     """Handle LLM error code"""
     status_code = status.StatusCode()
-    errorCodeMap = {
+    error_code_map = {
         StatusCode.kLiteLLMWaitProcessTimeOut:
         LLMWaitProcessTimeOut(f"{func_name} failed: Waiting for processing timeout, {other_info}"),
         StatusCode.kLiteLLMKVCacheNotExist:
@@ -447,8 +465,8 @@ def _handle_llm_status(status, func_name, other_info):
         LLMBlockOutOfMemory(f"{func_name} failed: NBlock is out of memory, {other_info}."),
     }
     if status_code != StatusCode.kSuccess:
-        if status_code in errorCodeMap:
-            raise errorCodeMap[status_code]
+        if status_code in error_code_map:
+            raise error_code_map[status_code]
         raise RuntimeError(f"{func_name} failed, {other_info}.")
 
 
