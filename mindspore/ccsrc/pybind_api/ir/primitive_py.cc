@@ -438,8 +438,10 @@ BaseRef PrimitivePy::RunCellHookFunction(const py::tuple &py_args) const {
 }
 
 BaseRef PrimitivePy::RunVariableHookFunction(const py::tuple &py_args) const {
+  py::tuple converted_args(py_args.size());
+  ConvertCTensorToPyTensor(py_args, &converted_args);
   constexpr size_t grad_output_index = 2;
-  py::object grad_output = py_args[grad_output_index];
+  py::object grad_output = converted_args[grad_output_index];
   for (const auto &elem : backward_hook_fn_) {
     py::object code_obj = py::getattr(elem.second, "__code__");
     py::object co_name = py::getattr(code_obj, "co_name");
