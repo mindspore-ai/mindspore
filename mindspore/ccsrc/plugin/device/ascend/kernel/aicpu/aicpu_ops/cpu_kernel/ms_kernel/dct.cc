@@ -447,8 +447,9 @@ Eigen::Tensor<T2, x_rank, Eigen::RowMajor> InverseCompute(
   Eigen::TensorMap<Eigen::Tensor<T1, x_rank, Eigen::RowMajor>, Eigen::RowMajor> padded_tensor,
   std::vector<int64_t> padded_shape, int axis, int norm_type, bool grad) {
   // ortho-normalization
+  constexpr int kTwo = 2;
   Eigen::Tensor<T1, x_rank, Eigen::RowMajor> norm_out;
-  if (norm_type == 2) {
+  if (norm_type == kTwo) {
     norm_out = OrthoNormalize<T1, x_rank>(padded_tensor, padded_shape, axis);
   } else {
     norm_out = padded_tensor;

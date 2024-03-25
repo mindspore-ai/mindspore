@@ -86,15 +86,15 @@ uint32_t FusedSparseLazyAdamKernel::Compute(CpuKernelContext &ctx) {
   new_indices = (int *)malloc(indices_size_ * sizeof(int));
   tmp_grad = (float *)malloc(indices_size_ * var_outer_dim_size_ * sizeof(float));
   tmp_indices = (int *)malloc(indices_size_ * sizeof(int));
-  if (new_grad == NULL || new_indices == NULL || tmp_grad == NULL || tmp_indices == NULL) {
+  if (new_grad == nullptr || new_indices == nullptr || tmp_grad == nullptr || tmp_indices == nullptr) {
     free(new_grad);
     free(new_indices);
     free(tmp_grad);
     free(tmp_indices);
-    new_grad = NULL;
-    new_indices = NULL;
-    tmp_grad = NULL;
-    tmp_indices = NULL;
+    new_grad = nullptr;
+    new_indices = nullptr;
+    tmp_grad = nullptr;
+    tmp_indices = nullptr;
     return KERNEL_STATUS_INNER_ERROR;
   }
 
@@ -122,10 +122,10 @@ uint32_t FusedSparseLazyAdamKernel::Compute(CpuKernelContext &ctx) {
   free(new_indices);
   free(tmp_grad);
   free(tmp_indices);
-  new_grad = NULL;
-  new_indices = NULL;
-  tmp_grad = NULL;
-  tmp_indices = NULL;
+  new_grad = nullptr;
+  new_indices = nullptr;
+  tmp_grad = nullptr;
+  tmp_indices = nullptr;
 
   return KERNEL_STATUS_OK;
 }

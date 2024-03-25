@@ -52,7 +52,7 @@ uint32_t NonDeterministicIntsCpuKernel::DoCompute(CpuKernelContext &ctx) {
     out_put_dims.push_back(input_data[i]);
   }
   if (output_nums <= kParallelDataNums) {
-    std::default_random_engine seed(time(0));
+    std::default_random_engine seed(time(nullptr));
     std::uniform_int_distribution<T1> u(-max_data, max_data);
     for (auto j = 0; j < output_nums; j++) {
       *(output_data + j) = u(seed);
@@ -64,7 +64,7 @@ uint32_t NonDeterministicIntsCpuKernel::DoCompute(CpuKernelContext &ctx) {
       max_core_num = output_nums;
     }
     auto shard_non_deterministic_ints = [&](int64_t start, int64_t end) {
-      std::default_random_engine seed(time(0));
+      std::default_random_engine seed(time(nullptr));
       std::uniform_int_distribution<T1> u(-max_data, max_data);
       for (auto j = start; j < end; j++) {
         *(output_data + j) = u(seed);

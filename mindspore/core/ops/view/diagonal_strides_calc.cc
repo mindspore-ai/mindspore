@@ -49,7 +49,7 @@ TensorStorageInfoPtrList DiagonalCalc(const PrimitivePtr &prim, const std::vecto
   auto offset = GetValue<int64_t>(inputs[1]);
   auto dim1 = GetValue<int64_t>(inputs[2]);
   auto dim2 = GetValue<int64_t>(inputs[3]);
-  int64_t dim_size = old_shape.size();
+  int64_t dim_size = SizeToLong(old_shape.size());
   (void)CheckAndConvertUtils::CheckInRange<int64_t>("dim1", dim1, kIncludeBoth, {-dim_size, dim_size - 1},
                                                     prim->name());
   (void)CheckAndConvertUtils::CheckInRange<int64_t>("dim2", dim2, kIncludeBoth, {-dim_size, dim_size - 1},
@@ -67,7 +67,6 @@ TensorStorageInfoPtrList DiagonalCalc(const PrimitivePtr &prim, const std::vecto
   auto new_shape = old_shape;
   auto new_strides = old_strides;
   int64_t diag_size = ComputeData(offset, dim1, dim2, old_shape);
-
   if (diag_size == 0) {
     // skip
   } else if (offset >= 0) {

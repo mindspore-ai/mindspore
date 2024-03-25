@@ -23,22 +23,18 @@ from mindspore.ops.operations.nn_ops import _check_positive_int_or_tuple
 from mindspore.ops import signature as sig
 from mindspore.ops._utils import get_concat_offset
 from mindspore.ops.primitive import Primitive, PrimitiveWithInfer, prim_attr_register
-from mindspore.ops.auto_generate import MaximumGrad, MaximumGradGrad
 import mindspore.context as context
 from mindspore import _checkparam as validator
 from mindspore.common import dtype as mstype
 from mindspore.communication.management import GlobalComm
 from mindspore.common._utils import is_shape_unknown, is_dim_unknown
-from ..auto_generate import (AbsGrad, ACosGrad, LogitGrad, AcoshGrad,
-                             AsinGrad, AsinhGrad, ReciprocalGrad, RsqrtGrad,
-                             SqrtGrad, BatchNormGrad, BatchNormGradGrad,
-                             BiasAddGrad, GeLUGrad, FastGeLUGrad, AvgPoolGrad,
-                             MinimumGrad, LogSoftmaxGrad, PReLUGrad, ReluGrad,
-                             ReLU6Grad, EluGrad, GatherDGradV2, ResizeBilinearGrad,
-                             ResizeLinear1DGrad, ResizeNearestNeighborV2Grad,
-                             SigmoidGrad, HSwishGrad, NLLLossGrad, AtanGrad, GridSampler3DGrad,
-                             GridSampler2DGrad, ResizeBicubicGrad, HSigmoidGrad, CholeskyGrad,
-                             ResizeNearestNeighborGrad, LayerNormGrad, HShrinkGrad, LayerNormGradGrad, SiLUGrad)
+from ..auto_generate import (AbsGrad, ACosGrad, LogitGrad, AcoshGrad, AsinGrad, AsinhGrad, ReciprocalGrad, RsqrtGrad,
+                             SqrtGrad, BatchNormGrad, BatchNormGradGrad, BiasAddGrad, GeLUGrad, FastGeLUGrad,
+                             AvgPoolGrad, MinimumGrad, LogSoftmaxGrad, PReLUGrad, ReluGrad, ReLU6Grad, EluGrad,
+                             GatherDGradV2, ResizeBilinearGrad, ResizeLinear1DGrad, ResizeNearestNeighborV2Grad,
+                             SigmoidGrad, HSwishGrad, NLLLossGrad, AtanGrad, GridSampler3DGrad, GridSampler2DGrad,
+                             ResizeBicubicGrad, HSigmoidGrad, CholeskyGrad, ResizeNearestNeighborGrad, LayerNormGrad,
+                             HShrinkGrad, LayerNormGradGrad, SiLUGrad, MaximumGrad, MaximumGradGrad)
 
 
 class SparseFillEmptyRowsGrad(Primitive):

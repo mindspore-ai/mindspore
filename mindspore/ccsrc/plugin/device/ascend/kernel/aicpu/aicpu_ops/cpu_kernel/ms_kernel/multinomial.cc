@@ -65,18 +65,6 @@ uint32_t Generate(Tensor *input_0, Tensor *input_1, Tensor *output, const CpuKer
   }
   // get random seed and setup generator
   RNG_Engine rng;
-  /*
-  uint32_t kernel_ret = 0;
-  AttrValue *seed_ptr = ctx.GetAttr("seed");
-  AttrValue *seed2_ptr = ctx.GetAttr("seed2");
-  uint64_t seed = (seed_ptr == nullptr) ? static_cast<uint64_t>(0) : static_cast<uint64_t>(seed_ptr->GetInt());
-  uint64_t seed2 = (seed2_ptr == nullptr) ? static_cast<uint64_t>(0) : static_cast<uint64_t>(seed2_ptr->GetInt());
-  uint64_t rng_seed =
-    random::GetCpuKernelRandomStates(ctx, kCountsIndex, kStatesIndex, seed, seed2, "Multinomial", &kernel_ret);
-  if (kernel_ret != KERNEL_STATUS_OK) {
-    return KERNEL_STATUS_INNER_ERROR;
-  }
-  */
   uint64_t rng_seed = std::random_device()();
   rng.seed(rng_seed);
 
