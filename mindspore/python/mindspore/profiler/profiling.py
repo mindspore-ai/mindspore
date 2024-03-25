@@ -101,7 +101,7 @@ class DeviceSupportParam(Enum):
 
 ALWAYS_VALID_PARAM = [
     'start', 'start_profile', 'output_path', 'data_process', 'parallel_strategy', 'l2_cache',
-    'ascend_job_id', 'op_time', 'profile_framework'
+    'hbm_ddr', 'pcie', 'ascend_job_id', 'op_time', 'profile_framework'
 ]
 
 
