@@ -15,6 +15,7 @@
  */
 
 #include "include/backend/mem_reuse/mem_dynamic_allocator.h"
+#include "include/backend/mem_reuse/mem_tracker.h"
 #include <string>
 #include <algorithm>
 #include <numeric>
@@ -54,6 +55,27 @@ DynamicMemPoolBestFit::~DynamicMemPoolBestFit() {
   common_mem_->Clear();
 }
 
+void DynamicMemBlock::update_border_addr(DeviceMemPtr left_addr, DeviceMemPtr right_addr) {
+  if (min_addr_ == nullptr) {
+    min_addr_ = left_addr;
+  } else {
+    min_addr_ = std::min(min_addr_, left_addr);
+  }
+  if (max_addr_ == nullptr) {
+    max_addr_ = right_addr;
+  } else {
+    max_addr_ = std::max(max_addr_, right_addr);
+  }
+}
+
+size_t DynamicMemBlock::get_actual_peak() {
+  if (min_addr_ == nullptr || max_addr_ == nullptr) {
+    return 0;
+  }
+  int64_t actual_memory = reinterpret_cast<uint8_t *>(max_addr_) - reinterpret_cast<uint8_t *>(min_addr_);
+  return actual_memory;
+}
+
 DeviceMemPtr DynamicMemPoolBestFit::AllocTensorMem(size_t size, bool from_persistent_mem, bool need_recycle,
                                                    uint32_t stream_id) {
   if (stream_id == UINT32_MAX) {
@@ -89,6 +111,7 @@ DeviceMemPtr DynamicMemPoolBestFit::AllocTensorMem(size_t size, bool from_persis
                     << ", device address addr: " << device_addr << ", size: " << size
                     << ", from persistent mem: " << from_persistent_mem << ", need recycle: " << need_recycle;
   }
+  device::tracker::CALL_MEMORY_TRACKER(AllocMemBlock, device_addr, size, GetMemoryPoolType(), stream_id);
 
   if (IsMemoryPoolRecycle()) {
     (void)mem_bufs_.insert(device_addr);
@@ -96,7 +119,8 @@ DeviceMemPtr DynamicMemPoolBestFit::AllocTensorMem(size_t size, bool from_persis
   MS_LOG(DEBUG) << "Alloc memory details, name:" << DynamicMemAllocatorDebugInfo::GetDebugInfo().name_
                 << ", persistent_mem:" << from_persistent_mem << ", stream id: " << stream_id
                 << ", address:" << device_addr << ", size:" << size << "B, total allocated mem:" << TotalMemStatistics()
-                << "B, peak used mem:" << UsedMemPeakStatistics() << "B, in used mem:" << TotalUsedMemStatistics()
+                << "B, peak used mem:" << UsedMemPeakStatistics()
+                << "B, actual peak used mem:" << ActualPeakStatistics() << "B, in used mem:" << TotalUsedMemStatistics()
                 << "B, total idle mem:" << (TotalMemStatistics() - TotalUsedMemStatistics()) << "B.";
   return device_addr;
 }
@@ -143,6 +167,7 @@ std::vector<DeviceMemPtr> DynamicMemPoolBestFit::AllocContinuousTensorMem(const 
                                                          DynamicMemAllocatorDebugInfo::GetDebugInfo().type_);
     MS_EXCEPTION_IF_NULL(continuous_mem_buf);
     (void)mem_block->block_all_mem_buf_map_.emplace(buf_addr, continuous_mem_buf);
+    mem_block->update_border_addr(mem_buf->device_addr_, AddressOffset(mem_buf->device_addr_, mem_buf->size_));
     device_addr_list.emplace_back(buf_addr);
     buf_addr = AddressOffset(buf_addr, i);
   }
@@ -219,6 +244,9 @@ DeviceMemPtr DynamicMemPoolBestFit::FindMemBufInSpecifiedMng(size_t size, bool f
     if (IsSplit(size, mem_buf->size_)) {
       SplitMemBuf(size, mem_buf, mem_mng, stream_id);
     }
+    auto mem_block = FindMemBlock(mem_buf->device_addr_, mem_mng);
+    MS_EXCEPTION_IF_NULL(mem_block);
+    mem_block->update_border_addr(mem_buf->device_addr_, AddressOffset(mem_buf->device_addr_, mem_buf->size_));
     mem_buf->status_ = DynamicMemBufStatus::kMemBufUsed;
     // Memory statistics
     mem_mng->mps_.total_used_mem_size_ += mem_buf->size_;
@@ -246,7 +274,7 @@ void DynamicMemPoolBestFit::SetMemAllocUintSize(size_t common_size, size_t persi
   MS_LOG(INFO) << "Set mem alloc unit size, common " << common_size << " persistent " << persist_size;
 }
 
-void *DynamicMemPoolBestFit::GetMinUsedMemoryAddr() const {
+void *DynamicMemPoolBestFit::GetMinUsingMemoryAddr() const {
   if (mem_bufs_.empty()) {
     return nullptr;
   }
@@ -363,6 +391,8 @@ DeviceMemPtr DynamicMemPoolBestFit::CreateMemBlockAndMemBuf(size_t size, bool fr
   if (IsSplit(size, mem_buf->size_)) {
     SplitMemBuf(size, mem_buf, mem_mng, stream_id);
   }
+  MS_EXCEPTION_IF_NULL(mem_block);
+  mem_block->update_border_addr(mem_buf->device_addr_, AddressOffset(mem_buf->device_addr_, mem_buf->size_));
   mem_buf->status_ = DynamicMemBufStatus::kMemBufUsed;
   // Memory statistics
   mem_mng->mps_.total_mem_size_ += mem_block->size();
@@ -495,7 +525,8 @@ void DynamicMemPoolBestFit::FreeTensorMemInner(const DeviceMemPtr &device_addr) 
   }
   MS_LOG(DEBUG) << "Free memory details, name:" << DynamicMemAllocatorDebugInfo::GetDebugInfo().name_
                 << ", address:" << device_addr << ", total allocated mem:" << TotalMemStatistics()
-                << "B, peak used mem:" << UsedMemPeakStatistics() << "B, in used mem:" << TotalUsedMemStatistics()
+                << "B, peak used mem:" << UsedMemPeakStatistics()
+                << "B, actual peak used mem:" << ActualPeakStatistics() << "B, in used mem:" << TotalUsedMemStatistics()
                 << "B, total idle mem:" << (TotalMemStatistics() - TotalUsedMemStatistics()) << "B.";
 }
 
@@ -517,6 +548,7 @@ void DynamicMemPoolBestFit::CombineMemBuf(const DeviceMemPtr &device_addr, Dynam
                     << ", peak mem: " << UsedMemPeakStatistics() << ", in use mem: " << TotalUsedMemStatistics()
                     << ", device address addr: " << mem_buf->device_addr_ << ", size: " << mem_buf->size_;
   }
+  device::tracker::CALL_MEMORY_TRACKER(FreeMemBlock, device_addr);
 
   if (mem_buf->status_ != origin_status) {
     DumpDynamicMemPoolDebugInfo();
@@ -655,6 +687,7 @@ void DynamicMemPoolBestFit::KeepTensorMemByAddr(const DeviceMemPtr &device_addr,
   MS_EXCEPTION_IF_NULL(device_addr);
   // Fetch the memblock and membuf by the device address.
   auto [mem_block, mem_buf, mem_mng] = FindByKeepAddr(device_addr);
+  device::tracker::CALL_MEMORY_TRACKER(AllocMemBlock, device_addr, size, GetMemoryPoolType(), mem_block->stream_id_);
   MS_EXCEPTION_IF_NULL(mem_block);
   MS_EXCEPTION_IF_NULL(mem_buf);
   MS_EXCEPTION_IF_NULL(mem_mng);
@@ -703,7 +736,8 @@ void DynamicMemPoolBestFit::KeepTensorMemByAddr(const DeviceMemPtr &device_addr,
   mem_mng->mps_.total_idle_mem_size_ -= size;
   MS_LOG(DEBUG) << "Keep memory details, name:" << DynamicMemAllocatorDebugInfo::GetDebugInfo().name_
                 << ", address:" << device_addr << ", size:" << size << "B, total allocated mem:" << TotalMemStatistics()
-                << "B, peak used mem:" << UsedMemPeakStatistics() << "B, in used mem:" << TotalUsedMemStatistics()
+                << "B, peak used mem:" << UsedMemPeakStatistics()
+                << "B, actual peak used mem:" << ActualPeakStatistics() << "B, in used mem:" << TotalUsedMemStatistics()
                 << "B, total idle mem:" << (TotalMemStatistics() - TotalUsedMemStatistics()) << "B.";
 }
 
@@ -771,6 +805,8 @@ void DynamicMemPoolBestFit::ReleaseDeviceRes() {
   };
   fn(common_mem_);
   fn(persistent_mem_);
+
+  tracker::MemTrackerManager::GetInstance().Dump();
 }
 
 void DynamicMemPoolBestFit::DumpDynamicMemPoolStateInfo() {
@@ -811,6 +847,7 @@ void DynamicMemPoolBestFit::DumpDynamicMemPoolStateInfo() {
   fn(persistent_mem_, std::string(kPersistentParamMem));
   MS_LOG(INFO) << "The dynamic memory pool total allocated mem:" << TotalMemStatistics() / kMBToByte
                << "M, peak used mem:" << UsedMemPeakStatistics() / kMBToByte
+               << "M, actual peak used mem:" << ActualPeakStatistics() / kMBToByte
                << "M, in used mem:" << TotalUsedMemStatistics() / kMBToByte
                << "M, total idle mem:" << TotalIdleMemStatistics() / kMBToByte
                << "M, total eager free mem:" << TotalEagerFreeMemStatistics() / kMBToByte
@@ -922,6 +959,25 @@ size_t DynamicMemPoolBestFit::TotalEagerFreeMemStatistics() const {
 size_t DynamicMemPoolBestFit::UsedMemPeakStatistics() const {
   return common_mem_->mps_.used_mem_peak_size_ + persistent_mem_->mps_.used_mem_peak_size_;
 }
+size_t DynamicMemPoolBestFit::ActualPeakStatistics() const {
+  return common_mem_->CalActualPeak() + persistent_mem_->CalActualPeak();
+}
+
+size_t MemStatusManager::CalActualPeak() {
+  if (mem_block_insertion_order_.empty()) {
+    return 0;
+  }
+  size_t actual_peak = 0;
+  for (auto it = mem_block_insertion_order_.begin(); it != mem_block_insertion_order_.end(); ++it) {
+    MS_EXCEPTION_IF_NULL(*it);
+    if (it == mem_block_insertion_order_.end() - 1) {
+      actual_peak += (*it)->get_actual_peak();
+    } else {
+      actual_peak += (*it)->size();
+    }
+  }
+  return actual_peak;
+}
 
 void MemStatusManager::AddMemBlock(const DynamicMemBlockPtr &mem_block, uint32_t stream_id) {
   auto iter = mem_blocks_.find(stream_id);
@@ -932,6 +988,7 @@ void MemStatusManager::AddMemBlock(const DynamicMemBlockPtr &mem_block, uint32_t
   }
 
   DoAddMemBlock(mem_block, &mem_block_list_);
+  mem_block_insertion_order_.emplace_back(mem_block);
 }
 
 void MemStatusManager::DoAddMemBlock(const DynamicMemBlockPtr &mem_block,

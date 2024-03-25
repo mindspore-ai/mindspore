@@ -16,6 +16,7 @@
 
 #include <set>
 #include <algorithm>
+#include "include/backend/mem_reuse/mem_tracker.h"
 #include "runtime/graph_scheduler/actor/super_kernel_actor.h"
 #include "runtime/graph_scheduler/actor/output_actor.h"
 #include "runtime/graph_scheduler/actor/memory_manager_actor.h"
@@ -182,6 +183,7 @@ void SuperKernelActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *const con
 void SuperKernelActor::Run(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(graph_);
+  device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, GetAID().Name(), "", graph_->ToString());
   if (device_contexts_.empty() || device_contexts_[0] == nullptr) {
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "Invalid device context for super kernel actor:" + GetAID().Name());
   }
@@ -196,9 +198,18 @@ void SuperKernelActor::Run(OpContext<DeviceTensor> *const context) {
     return;
   }
   FetchInputDeviceTensor(context);
+  for (auto &device_addr : input_device_tensors_) {
+    if (device_addr == nullptr || !device_addr->IsPtrValid()) {
+      continue;
+    }
+    device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(UseMemBlock, GetAID().Name(), device_addr->GetPtr());
+  }
   if (memory_alloc_list_.size() > 0) {
-    if (common::IsNeedProfileMemory()) {
-      for (auto &device_tensor : memory_alloc_list_) {
+    for (auto &device_tensor : memory_alloc_list_) {
+      if (device_tensor->IsNotNeedAlloc()) {
+        continue;
+      }
+      if (common::IsNeedProfileMemory()) {
         MS_EXCEPTION_IF_NULL(device_tensor);
         auto &info = device_address_to_node_[device_tensor];
         auto output_address = reinterpret_cast<std::uintptr_t>(device_tensor);
@@ -206,6 +217,9 @@ void SuperKernelActor::Run(OpContext<DeviceTensor> *const context) {
                         << ", kernel graph: " << graph_->ToString() << ", node: " << info.node_full_name
                         << ", device address class ptr: " << output_address << ", device address size: " << info.size;
       }
+      device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddMemInfo, GetAID().Name(),
+                                                     device::tracker::MemType::kGraphOutput, device_tensor->GetSize(),
+                                                     device_tensor->kernel_tensor().get());
     }
     SendMemoryAllocReq(context);
   } else {

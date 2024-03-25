@@ -44,7 +44,7 @@ void SwitchActor::FetchInput(OpContext<DeviceTensor> *const context) {
   size_t index = GetIndex(context);
   if (common::IsNeedProfileMemory()) {
     // dry run switch index is always 0.
-    index = 0;
+    index = input_partials_.size() - kSwitchCondPos - 1;
   }
   if (!output_partial_arrows_.empty()) {
     if (index + kSwitchCondPos >= input_partials_.size()) {

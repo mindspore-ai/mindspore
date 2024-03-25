@@ -31,6 +31,7 @@
 #include "include/common/utils/callbacks.h"
 #include "include/common/utils/scoped_long_running.h"
 #include "include/common/debug/anf_ir_dump.h"
+#include "include/backend/mem_reuse/mem_tracker.h"
 #include "ir/anf.h"
 #include "ops/framework_ops.h"
 #include "ops/sequence_ops.h"
@@ -1196,6 +1197,10 @@ void MindRTBackendBase::ConstructOutputByTupleTensor(tensor::TensorPtr output_te
     MS_LOG(DEBUG) << "Create device tensor:" << split_device_tensor << " type:" << device_tensor->type_id();
     // Copy data from origin tensor to the split tensor.
     device::DynamicMemAllocatorDebugInfo::SetDebugInfo("Split tuple outputs", device::AllocatorType::kOther);
+    device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, "ConstructOutputByTupleTensor", "", "");
+    device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddMemInfo, "ConstructOutputByTupleTensor",
+                                                   device::tracker::MemType::kOther, split_device_tensor->GetSize(),
+                                                   split_device_tensor->kernel_tensor().get());
     if (!device_context->device_res_manager_->AllocateMemory(split_device_tensor.get())) {
       MS_LOG(EXCEPTION) << "#umsg#Memory not enough:#umsg#Device(id:" << device_context->device_context_key().device_id_
                         << ") memory isn't enough and alloc failed, kernel name: Split tuple outputs, alloc size: "
