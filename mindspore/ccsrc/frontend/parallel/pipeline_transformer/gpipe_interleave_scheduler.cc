@@ -219,7 +219,8 @@ void GpipeInterleavedScheduler::Reorder() {
   // Sort backward
   for (size_t i = 0; i < LongToSize(micro_size_ * chunk_num_ - 1); ++i) {
     if (stage_ != 0 || micro_size_ < stage_num_ || sorted_bwd_end[i].second.chunk == 0) {
-      if (flag == 0 || (stage_ == stage_num_ - 1 && sorted_bwd_end[i].second.chunk == chunk_num_ - 1)) {
+      if (flag == 0 || (stage_ == stage_num_ - 1 && sorted_bwd_begin[i + 1].first.chunk == chunk_num_ - 1) ||
+          micro_size_ < stage_num_) {
         auto prior = sorted_bwd_end[i].second;
         auto last = sorted_bwd_begin[i + 1].first;
         ControlOrder(prior, last);
