@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #include "plugin/device/ascend/kernel/opapi/aclnn/sigmoid_grad_aclnn_kernel.h"
-#include <vector>
 #include <map>
 #include <memory>
 #include <functional>
