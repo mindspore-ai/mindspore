@@ -158,7 +158,7 @@ int QuantNodePass::DoParameterNodeQuant(const CNodePtr &cnode, const ParameterPt
       return RET_NULL_PTR;
     }
     if (tensor_info->data_type() != kNumberTypeFloat32) {
-      MS_LOG(INFO) << cnode->fullname_with_scope() << " is not float32, data will not quant.";
+      MS_LOG(INFO) << cnode->fullname_with_scope() << " is not float32, data will not quantify.";
       return RET_OK;
     }
     int preferred_dim = GetPreferredDim(cnode, input_index - 1, ConvertShapeVectorToInt32(tensor_info->shape()));
@@ -191,7 +191,7 @@ int QuantNodePass::DoValueNodeQuant(const CNodePtr &cnode, const ValueNodePtr &i
     return RET_NULL_PTR;
   }
   if (tensor_info->data_type() != kNumberTypeFloat32) {
-    MS_LOG(INFO) << cnode->fullname_with_scope() << " is not float32, data will not quant.";
+    MS_LOG(INFO) << cnode->fullname_with_scope() << " is not float32, data will not quantify.";
     return RET_OK;
   }
   int preferred_dim = GetPreferredDim(cnode, input_index - 1, ConvertShapeVectorToInt32(tensor_info->shape()));

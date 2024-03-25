@@ -313,7 +313,7 @@ int MindIRSerializer::ConvertParameterNode(const CNodePtr &cnode, const Paramete
   auto input_quant_params = quant_params_holder->get_input_quant_params();
   CHECK_NULL_RETURN(parameter_ptr);
   if (!parameter_ptr->has_default()) {
-    MS_LOG(WARNING) << input->fullname_with_scope() << " is parameter but don't have default.";
+    MS_LOG(WARNING) << input->fullname_with_scope() << " is parameter but don't have a default.";
     return RET_NO_CHANGE;
   }
   CHECK_NULL_RETURN(parameter_ptr->default_param());

@@ -157,7 +157,7 @@ bool QuantStrategy::CheckAscendSpec(const FuncGraphManagerPtr &manager, const CN
     }
     if (weight_shape[0] < static_cast<int>(min_quant_weight_channel)) {
       MS_LOG(WARNING) << weight->fullname_with_scope() << " preferred_dim shape:" << weight_shape[0]
-                      << " less min_quant_weight_channel_ " << min_quant_weight_channel << " will not quant.";
+                      << " less min_quant_weight_channel_ " << min_quant_weight_channel << " will not quantify.";
       return false;
     }
   }
