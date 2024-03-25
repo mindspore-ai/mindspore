@@ -58,6 +58,9 @@ class BufferGetCpuKernelMod : public NativeCpuKernelMod {
     auto count_addr = GetDeviceAddress<int>(inputs, element_nums_);
     auto head_addr = GetDeviceAddress<int>(inputs, element_nums_ + 1);
     auto index_addr = GetDeviceAddress<int>(inputs, element_nums_ + kSecondInputIndex);
+    MS_EXCEPTION_IF_NULL(count_addr);
+    MS_EXCEPTION_IF_NULL(head_addr);
+    MS_EXCEPTION_IF_NULL(index_addr);
     int index = index_addr[0];
     if (index_addr[0] < 0) {
       index += count_addr[0];

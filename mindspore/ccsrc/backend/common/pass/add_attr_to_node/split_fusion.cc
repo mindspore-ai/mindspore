@@ -31,7 +31,6 @@ const AnfNodePtr SplitFusionProcess(const FuncGraphPtr &graph, const AnfNodePtr 
 
   size_t axis_idx = ops::GetInputIndexByName(common::AnfAlgo::GetCNodeName(cnode), kAxis);
   size_t out_num_idx = ops::GetInputIndexByName(common::AnfAlgo::GetCNodeName(cnode), kOutputNum);
-
   if (axis_idx == SIZE_MAX || out_num_idx == SIZE_MAX) {
     MS_LOG(ERROR) << "For '" << cnode->fullname_with_scope() << "', can't not find input of axis and output_num.";
     return cnode;

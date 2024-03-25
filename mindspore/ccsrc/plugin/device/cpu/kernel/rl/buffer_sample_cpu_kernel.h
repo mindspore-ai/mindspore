@@ -67,6 +67,8 @@ class BufferCPUSampleKernelMod : public NativeCpuKernelMod {
               const std::vector<KernelTensor *> &outputs) override {
     auto count_addr = GetDeviceAddress<int>(inputs, element_nums_);
     auto head_addr = GetDeviceAddress<int>(inputs, element_nums_ + 1);
+    MS_EXCEPTION_IF_NULL(count_addr);
+    MS_EXCEPTION_IF_NULL(head_addr);
     if ((head_addr[0] > 0 && SizeToLong(batch_size_) > capacity_) ||
         (head_addr[0] == 0 && SizeToLong(batch_size_) > count_addr[0])) {
       MS_LOG(ERROR) << "The batch size " << batch_size_ << " is larger than total buffer size "
