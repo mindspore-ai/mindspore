@@ -1168,7 +1168,7 @@ def logical_not(input):
         out_{i} = \\neg input_{i}
 
     Args:
-        input (Tensor): The input tensor, the dtype must be bool.
+        input (Tensor): The input tensor.
 
     Returns:
         Tensor, the shape is the same as the `input`, and the dtype is bool.
@@ -1198,11 +1198,9 @@ def logical_or(input, other):
     Inputs of `input` and `other` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one bool.
 
-    When the inputs are two tensors, the shapes of them could be broadcast,
-    and the data types of them must be bool.
+    When the inputs are two tensors, the shapes of them could be broadcast.
 
-    When the inputs are one tensor and one bool, the bool object could only be a constant,
-    and the data type of the tensor must be bool.
+    When the inputs are one tensor and one bool, the bool object could only be a constant.
 
     .. math::
 
@@ -1258,11 +1256,9 @@ def logical_and(input, other):
     Inputs of `input` and `other` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one bool.
 
-    When the inputs are two tensors, the shapes of them could be broadcast,
-    and the data types of them must be bool.
+    When the inputs are two tensors, the shapes of them could be broadcast.
 
-    When the inputs are one tensor and one bool, the bool object could only be a constant,
-    and the data type of the tensor must be bool.
+    When the inputs are one tensor and one bool, the bool object could only be a constant.
 
     .. math::
 
