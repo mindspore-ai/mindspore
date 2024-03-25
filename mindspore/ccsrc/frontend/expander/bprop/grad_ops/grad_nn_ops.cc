@@ -1898,7 +1898,8 @@ REG_BPROP_BUILDER("MaxPool3DWithArgmax").SetBody(BODYFUNC(ib) {
                       {"pads", ib->GetAttr("pads")},
                       {"dilation", ib->GetAttr("dilation")},
                       {"ceil_mode", ib->GetAttr("ceil_mode")},
-                      {"format", ib->GetAttr("format")}});
+                      {"format", ib->GetAttr("format")},
+                      {"argmax_type", ib->GetAttr("argmax_type")}});
   return {dx};
 });
 
