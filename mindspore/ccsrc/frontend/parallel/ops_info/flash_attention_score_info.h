@@ -59,9 +59,11 @@ class FlashAttentionScoreInfo : public OperatorInfo {
  private:
   void UpdateDropoutGenMaskSliceShapeAndSeed(const CNodePtr &reshape_cnode);
   void InitIsInputPassed();
-  void InitInputsTensorMap();
-  void InitSplittableInputs();
-  void InitExpectedStrategies();
+  Status InitQKVTensorMap();
+  Status InitInputsTensorMap();
+  Status InitSplittableInputs();
+  Status InitExpectedStrategies();
+  Status InitQKVHeadAndSeqDimFromInputLayout();
   size_t GetStrategyRealIndex(size_t index);
   std::vector<int64_t> GetSplitIdAndRank();
   std::tuple<int64_t, int64_t> GetAttentionMaskAttrs(const int64_t split_id, const int64_t split_num);
@@ -82,10 +84,11 @@ class FlashAttentionScoreInfo : public OperatorInfo {
   int64_t head_num_ = 1;
   float keep_prob_ = 1.0;
   float scale_value_ = 1.0;
+  size_t qkv_batch_dim_;
+  size_t qkv_head_dim_;
+  size_t qkv_seq_dim_;
   int64_t pre_tokens_;
   int64_t next_tokens_;
-  std::string input_layout_;
-  int64_t sparse_mode_;
   int64_t batch_split_num_;
   int64_t n1_split_num_;
   int64_t n2_split_num_;
@@ -98,8 +101,11 @@ class FlashAttentionScoreInfo : public OperatorInfo {
   bool attn_mask_have_batch_dim_ = false;   // true if attn_mask have batch dim.
   bool attn_mask_have_n1_dim_ = false;      // true if attn_mask have n1 dim.
   bool enable_load_balance_ = false;
+  int64_t input_layout_;  // "BSH": 0; "BNSD": 1;
+  int64_t sparse_mode_;
   bool kv_split_ = false;
   bool is_attn_mask_compressed_ = false;
+  bool need_update_op_attrs_mode_ = false;
   std::vector<bool> is_input_passed_;
   std::vector<Shape> splittable_inputs_;
   Strategies expect_strategies_;

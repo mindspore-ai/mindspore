@@ -533,6 +533,13 @@ constexpr size_t kIndex13 = 13;
 constexpr size_t kIndex14 = 14;
 constexpr size_t kIndex15 = 15;
 constexpr size_t kIndex16 = 16;
+constexpr size_t kIndex17 = 17;
+constexpr size_t kIndex18 = 18;
+constexpr size_t kIndex19 = 19;
+constexpr size_t kIndex20 = 20;
+constexpr size_t kIndex21 = 21;
+constexpr size_t kIndex22 = 22;
+constexpr size_t kIndex23 = 23;
 // dim of shape
 constexpr size_t kDim0 = 0;
 constexpr size_t kDim1 = 1;

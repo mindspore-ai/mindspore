@@ -35,6 +35,7 @@ from mindspore.ops.operations.manually_defined._inner import ScalarCast
 from mindspore.ops_generate.gen_ops_inner_prim import DtypeToEnum
 from mindspore.common.initializer import Zero
 from mindspore.common.parameter import Parameter
+from mindspore.ops.auto_generate.gen_ops_prim import FlashAttentionScore
 
 
 class ScalarDiv(Primitive):
@@ -1522,3 +1523,107 @@ class Zeros(Primitive):
     def __call__(self, size, type=None):
         return _convert_stub(pyboost_zeros(self, [size, type if type is None else \
             handler.dtype_to_type_id('Zeros', 'type', type)]))
+
+
+def flash_attention_score(query, key, value, head_num, real_shift=None, drop_mask=None, padding_mask=None,
+                          attn_mask=None, prefix=None, actual_seq_qlen=None, actual_seq_kvlen=None, keep_prob=1.0,
+                          scalar_value=1.0, pre_tokens=2147483647, next_tokens=2147483647, inner_precise=0,
+                          input_layout='BSH', sparse_mode=0):
+    r"""
+    The interface is not open to the public, just for internal use,
+
+    .. math::
+        \begin{array}{ll} \\
+            y = Dropout(Softmax(Mask(scale_value \mul (real_shift + query * key), attn_mask), -1), keep_prob) \\
+            \mul value \\
+        \end{array}
+
+    B -- Batch size
+    S1 -- Sequence length of query.
+    S2 -- Sequence length of key and value.
+    N1 -- Num heads of query.
+    N2 -- Num heads of key and value, and N2 must be a factor of N1.
+    D -- Head size. The value ranges is a multiple of 16.
+    H1 -- Hidden size of query, which equals to N1 * D.
+    H2 -- Hidden size of key and value, which equals to N2 * D.
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
+    Args:
+        query (Tensor[float16, bfloat16]): The query tensor. Input tensor of shape :math:`(B, S1, H1)`,
+            `(B, N1, S1, D)`, `(S1, B, H1)`, `(B, S1, N1, D)` or `(T1, N1, D)`.
+        key (Tensor[float16, bfloat16]): The key tensor. Input tensor of shape :math:`(B, S2, H2)`,
+            `(B, N2, S2, D)`, `(S2, B, H2)`, `(B, S2, N2, D)` or `(T2, N2, D)`.
+        value (Tensor[float16, bfloat16]): The value tensor. Input tensor of shape :math:`(B, S2, H2)`,
+            `(B, N2, S2, D)`, `(S2, B, H2)`, `(B, S2, N2, D)` or `(T2, N2, D)`.
+        head_num (int): The head num of query.
+        real_shift (Union[Tensor[float16, bfloat16], None]): The position embedding code. If S is greater than 1024
+            and the mask of the lower triangle is used, enter only the inverse 1024 lines of the lower triangle for
+            memory optimization. Input tensor of shape :math: `(B, N1, S1, S2)`, `(1, N1, S1, S2)`,
+            `(B, N1, 1024, S2)`, `(1, N1, 1024, S2)` or (1024, 1024).
+        drop_mask (Union[Tensor[uint8], None]): The dropout mask tensor. Input tensor of shape :math:
+            `(B, N1, S1, S2 // 8) or None`.
+        padding_mask (None): Reserved parameter. Not implemented yet.
+        attn_mask (Union[Tensor[uint8], None]): The attention mask tensor. For each element, 0 indicates retention
+            and 1 indicates discard. Input tensor of shape :math:`(B, N1, S1, S2)`, `(B, 1, S1, S2)`, `(S1, S2)` or
+            (2048, 2048).
+        prefix (Union[List[int64], Tuple[int64] None]): N value of each Batch in the prefix sparse calculation
+            scenario. Input tensor of shape :math:`(B,)`.
+        actual_seq_qlen (Union[List[int64], Tuple[int64], None]): Size of query corresponding to each batch, array
+            with increasing values and the last value equal to T1.
+        actual_seq_kvlen (Union[List[int64], Tuple[int64], None]): Size of key and value corresponding to each batch,
+            array with increasing values and the last value equal to T2.
+        keep_prob (float): The keep probability of dropout. Default: 1.0.
+        scale_value (float): The scale factor of score. Default: 1.0.
+        pre_tokens (int): Parameter for sparse computation, represents how many tokens are counted forward.
+            When sparse_mode is set to 1, 2, 3, or 5, this parameter does not take effect. Default: 2147483647.
+        next_tokens (int): Parameter for sparse computation, represents how many tokens are counted backward.
+            When sparse_mode is set to 1, 2, 3, or 5, this parameter does not take effect. Default: 2147483647.
+        inner_precise (int): The parameter is reserved and not implemented yet. Default: 0.
+        input_layout (str): Specifies the layout of input `query`, key and value. The value can be "BSH", "BNSD",
+            "SBH", "BSND" or "TND". Default: "BSH".
+        sparse_mode (int): Indicates sparse mode. Default 0.
+
+            - 0: Indicates the defaultMask mode. If attn_mask is not passed, the mask operation is not performed,
+              and preTokens and nextTokens(internally assigned as INT_MAX) are ignored. If passed in, the full
+              attn_mask matrix (S1 * S2) needs to be passed in, indicating that the part between preTokens and
+              nextTokens needs to be calculated.
+            - 1: Represents allMask, that is, passing in the complete attn_mask matrix.
+            - 2: Representing the leftUpCausal mode corresponds to the lower triangle scenario divided by the left
+              vertex, and the optimized attn_mask matrix (2048*2048) is required.
+            - 3: Representing the rightDownCausal model corresponds to the lower triangle scene divided by the lower
+              right vertex, and the optimized attn_mask matrix (2048*2048) is required.
+            - 4: Represents the band scenario, that is, the part between counting preTokens and nextTokens, and the
+              optimized attn_mask matrix (2048*2048) is required..
+            - 5: Represents the prefix scenario, that is, on the basis of rightDownCasual, a matrix with length S1 and
+              width N is added to the left side. The value of N is obtained by the new input prefix, and the N value
+              of each Batch axis is different. Not implemented yet.
+            - 6: Represents the global scenario, not implemented yet.
+            - 7: Represents the dilated scenario, not implemented yet.
+            - 8: Represents the block_local scenario, not implemented yet.
+
+    Returns:
+        attention_out (Tensor[float16, bfloat16]), The output of attention, its shape, and data type are the same
+        as the query.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import mindspore
+        >>> import mindspore.common.dtype as mstype
+        >>> import numpy as np
+        >>> from mindspore import ops, Tensor
+        >>> query = Tensor(np.ones([2, 4, 64]), dtype=mstype.float16)
+        >>> key = Tensor(np.ones([2, 4, 64]), dtype=mstype.float16)
+        >>> value = Tensor(np.ones([2, 4, 64]), dtype=mstype.float16)
+        >>> head_num = 4
+        >>> output = ops.flash_attention_score(query, key, value, head_num)
+        >>> print(output.shape)
+        (2, 4, 64)
+    """
+    rank_op = _get_cache_prim(FlashAttentionScore)(head_num, keep_prob, scalar_value, pre_tokens, next_tokens,
+                                                   inner_precise, input_layout, sparse_mode)
+    return rank_op(query, key, value, real_shift, drop_mask, padding_mask, attn_mask, prefix, actual_seq_qlen,
+                   actual_seq_kvlen)[3]

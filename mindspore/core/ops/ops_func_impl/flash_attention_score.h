@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CORE_OPS_FLASH_ATTENTION_SCORE_H_
-#define MINDSPORE_CORE_OPS_FLASH_ATTENTION_SCORE_H_
-#include <map>
-#include <vector>
-#include <memory>
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_FLASH_ATTENTION_SCORE_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_FLASH_ATTENTION_SCORE_H_
 
-#include "ops/base_operator.h"
-#include "mindapi/base/types.h"
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "mindspore/core/ops/op_name.h"
+#include <vector>
+#include "ops/ops_func_impl/op_func_impl.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameFlashAttentionScore = "FlashAttentionScore";
 enum FlashAttentionScoreInputIndex : size_t {
   kFlashAttentionScoreInputQueryIndex = 0,
   kFlashAttentionScoreInputKeyIndex,
@@ -37,6 +30,16 @@ enum FlashAttentionScoreInputIndex : size_t {
   kFlashAttentionScoreInputPaddingMaskIndex,
   kFlashAttentionScoreInputAttnMaskIndex,
   kFlashAttentionScoreInputPrefixIndex,
+  kFlashAttentionScoreInputActualSeqQlenIndex,
+  kFlashAttentionScoreInputActualSeqKVlenIndex,
+  kFlashAttentionScoreInputHeadNumIndex,
+  kFlashAttentionScoreInputKeepProbIndex,
+  kFlashAttentionScoreInputScaleValueIndex,
+  kFlashAttentionScoreInputPreTokensIndex,
+  kFlashAttentionScoreInputNextTokensIndex,
+  kFlashAttentionScoreInputInnerPreciseIndex,
+  kFlashAttentionScoreInputLayoutIndex,
+  kFlashAttentionScoreInputSparseModeIndex,
   kFlashAttentionScoreInputsNum,
 };
 enum FlashAttentionScoreOutputIndex : size_t {
@@ -49,7 +52,7 @@ enum FlashAttentionScoreOutputIndex : size_t {
 enum FlashAttentionScoreSparseMode : int64_t {
   kSparseDefaultMask = 0,
   kSparseAllMask,
-  kSparseLeftDownCausal,
+  kSparseLeftUpCausal,
   kSparseRightDownCausal,
   kSparseBand,
   kSparsePrefix,
@@ -57,21 +60,11 @@ enum FlashAttentionScoreSparseMode : int64_t {
   kSparseDilated,
   kSparseBlockLocal,
 };
-/// \brief FlashAttentionScore.
-/// Refer to Python API @ref mindspore.ops.FlashAttentionScore for more details.
-class MIND_API FlashAttentionScore : public BaseOperator {
+class MIND_API FlashAttentionScoreFuncImpl : public OpFuncImpl {
  public:
-  MIND_API_BASE_MEMBER(FlashAttentionScore);
-  /// \brief Constructor.
-  FlashAttentionScore() : BaseOperator(kNameFlashAttentionScore) {
-    InitIOName({"query", "key", "value", "real_shift", "drop_mask", "padding_mask", "attn_mask", "prefix"},
-               {"softmax_max", "softmax_sum", "softmax_out", "attention_out"});
-  }
+  BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
 };
-AbstractBasePtr FlashAttentionScoreInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                         const std::vector<AbstractBasePtr> &input_args);
-using FlashAttentionScorePtr = std::shared_ptr<FlashAttentionScore>;
 }  // namespace ops
 }  // namespace mindspore
-
-#endif  // MINDSPORE_CORE_OPS_FLASH_ATTENTION_SCORE_H_
+#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_FLASH_ATTENTION_SCORE_H_

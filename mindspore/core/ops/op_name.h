@@ -427,6 +427,7 @@ constexpr auto KTableLog = "table_log";
 constexpr auto kIgnoreIndex = "ignore_index";
 constexpr auto kLiteQuantAttrName = "quant_params";
 constexpr auto kPreferAxes = "prefer_axes";
+constexpr auto kInputLayout = "input_layout";
 
 constexpr size_t kInputIndex0 = 0;
 constexpr size_t kInputIndex1 = 1;
