@@ -169,26 +169,27 @@ std::string InlineControlFlowScheduler::GetBranchNameByConditionGatherActor(Kern
   MS_EXCEPTION_IF_NULL(condition_gather_actor);
   MS_EXCEPTION_IF_NULL(data_arrow);
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  MS_EXCEPTION_IF_NULL(condition_gather_actor->kernel());
-  const auto &condition_pair_iter = kernel_graph->condition_gather_to_switch().find(condition_gather_actor->kernel());
+  const auto &condition_gather_kernel = condition_gather_actor->kernel();
+  MS_EXCEPTION_IF_NULL(condition_gather_kernel);
+  const auto &condition_pair_iter = kernel_graph->condition_gather_to_switch().find(condition_gather_kernel);
   if (condition_pair_iter == kernel_graph->condition_gather_to_switch().end() ||
       condition_pair_iter->second != condition_switch_actor->kernel()) {
     MS_LOG(EXCEPTION) << "Condition switch actor:" << condition_switch_actor->GetAID()
                       << " and gather actor:" << condition_gather_actor << " is not match.";
   }
-  if (!condition_gather_actor->kernel()->HasAttr(kAttrBranchOutputNum)) {
+  if (!condition_gather_kernel->HasAttr(kAttrBranchOutputNum)) {
     MS_LOG(EXCEPTION) << "Failed to get branch output num by actor:" << condition_gather_actor->GetAID();
   }
   // Get the output branch index in condition gather actor.
-  const auto &output_value = condition_gather_actor->kernel()->GetAttr(kAttrBranchOutputNum);
+  const auto &output_value = condition_gather_kernel->GetAttr(kAttrBranchOutputNum);
   MS_EXCEPTION_IF_NULL(output_value);
-  size_t branch_index = data_arrow->to_input_index_ / GetValue<size_t>(output_value);
-  if (!condition_gather_actor->kernel()->HasAttr(kAttrBranchGraphName)) {
+  size_t branch_index = IntToSize(data_arrow->to_input_index_) / GetValue<size_t>(output_value);
+  if (!condition_gather_kernel->HasAttr(kAttrBranchGraphName)) {
     MS_LOG(EXCEPTION) << "Failed to get branch graph name by actor:" << condition_gather_actor->GetAID();
   }
 
   // Get output branch name by branch index.
-  const auto &branch_graph_names = condition_gather_actor->kernel()->GetAttr(kAttrBranchGraphName);
+  const auto &branch_graph_names = condition_gather_kernel->GetAttr(kAttrBranchGraphName);
   MS_EXCEPTION_IF_NULL(branch_graph_names);
   MS_LOG(DEBUG) << "Branch graph name:" << branch_graph_names->ToString()
                 << " for actor:" << condition_gather_actor->GetAID();
@@ -236,8 +237,7 @@ void InlineControlFlowScheduler::FixRefCountByKernelGraphRefMap(ConditionSwitchA
                           << " total branch name:" << condition_switch_actor->branch_names_
                           << " for actor:" << condition_switch_actor->GetAID();
       }
-      size_t branch_index = iter - condition_switch_actor->branch_names_.begin();
-
+      size_t branch_index = LongToSize(iter - condition_switch_actor->branch_names_.begin());
       if (recursive_origin_pair.second >= output_num || branch_index >= condition_switch_actor->branch_names_.size()) {
         MS_LOG(EXCEPTION) << "Invalid output index:" << recursive_origin_pair.second << " total:" << output_num
                           << " and branch index:" << branch_index
@@ -327,7 +327,7 @@ void InlineControlFlowScheduler::InitOutputDataBranchInfoForConditionSwitchActor
                         << " total branch name:" << condition_switch_actor->branch_names_
                         << " from actor:" << condition_switch_actor->GetAID() << " to actor:" << to_actor->GetAID();
     }
-    size_t branch_index = iter - condition_switch_actor->branch_names_.begin();
+    size_t branch_index = LongToSize(iter - condition_switch_actor->branch_names_.begin());
     if (IntToSize(data_arrow->from_output_index_) >= output_num ||
         branch_index >= condition_switch_actor->branch_names_.size()) {
       MS_LOG(EXCEPTION) << "Invalid output index:" << data_arrow->from_output_index_ << " total:" << output_num
@@ -381,7 +381,7 @@ void InlineControlFlowScheduler::InitOutputControlBranchInfoForConditionSwitchAc
                         << " total branch name:" << condition_switch_actor->branch_names_
                         << " for actor:" << condition_switch_actor->GetAID();
     }
-    size_t branch_index = iter - condition_switch_actor->branch_names_.begin();
+    size_t branch_index = LongToSize(iter - condition_switch_actor->branch_names_.begin());
     condition_switch_actor->output_control_branch_indexes_[i] = branch_index;
   }
 }

@@ -793,7 +793,7 @@ bool NeedConvertValueNodeToParameter(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  if (ms_context->backend_policy() != "ge") {
+  if (ms_context->backend_policy() != "ge" || ms_context->IsKByKExecutorMode()) {
     return false;
   }
   if (!node->isa<ValueNode>()) {
