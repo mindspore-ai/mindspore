@@ -129,7 +129,8 @@ Status ConstructOperator::ReplaceStridedSliceOpToSplitOp(const Args &args) {
   int64_t split_count = args[TRANSFER_PERMUTE_SPLIT_COUNT_INDEX];
   int64_t dev_dim = args[TRANSFER_PERMUTE_CONCAT_DIM_INDEX];
 
-  if (split_dim >= SizeToLong(this->tensor_shape_.size()) || this->tensor_shape_[split_dim] % split_count != 0) {
+  if (split_dim >= SizeToLong(this->tensor_shape_.size()) ||
+      (this->tensor_shape_[split_dim] != -1 && this->tensor_shape_[split_dim] % split_count != 0)) {
     MS_LOG(ERROR) << "Tensor with shape " << this->tensor_shape_ << " can not be split into " << split_count
                   << " slices in the dimension " << split_dim << " when construct StridedSlice operator";
     return Status::INVALID_ARGUMENT;
@@ -155,6 +156,14 @@ Status ConstructOperator::ReplaceStridedSliceOpToSplitOp(const Args &args) {
 }
 
 Status ConstructOperator::StridedSliceOP(const Args &args) {
+  if (this->is_dynamic_shape_) {
+    // When it's dynamic shape scene, use Split instead of StridedSlice.
+    if (ReplaceStridedSliceOpToSplitOp(args) != Status::SUCCESS) {
+      MS_LOG(ERROR) << "Replace StridedSlice to Split failed.";
+      return Status::FAILED;
+    }
+    return Status::SUCCESS;
+  }
   if (args.size() < STRIDED_SLICE_ARGS_SIZE) {
     MS_LOG(ERROR) << "args size should not be less than 3!";
     return Status::FAILED;
@@ -202,16 +211,7 @@ Status ConstructOperator::StridedSliceOP(const Args &args) {
     }
     index++;
   }
-  if (this->is_dynamic_shape_) {
-    // When it's dynamic shape scene, use Split instead of StridedSlice.
-    MS_LOG(DEBUG) << "StridedSlice: begin=" << begin << ", end=" << end;
-    if (ReplaceStridedSliceOpToSplitOp(args) != Status::SUCCESS) {
-      MS_LOG(ERROR) << "Replace StridedSlice to Split failed.";
-      return Status::FAILED;
-    }
-  } else {
-    op_ = CreateStridedSliceOp(DEFAULT, begin, end, strides);
-  }
+  op_ = CreateStridedSliceOp(DEFAULT, begin, end, strides);
 
   return Status::SUCCESS;
 }

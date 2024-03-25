@@ -68,7 +68,7 @@ def test_no_need_to_accomplish():
     assert validator.check_node_inputs_has('TupleGetItem-1', ['Split-0', 0])
     assert validator.check_node_inputs_has('Split-1', ['TupleGetItem-1', 2, 2])
     assert validator.check_node_inputs_has('TupleGetItem-2', ['Split-1', 0])
-    assert validator.check_node_inputs_has('Reshape-0', ['TupleGetItem-2', 'ValueNode_48((-1, 2))'])
+    assert validator.check_node_inputs_has('Reshape-0', ['TupleGetItem-2', '(-1, 2)'])
     assert validator.check_node_inputs_has('ReLU-0', ['Reshape-0'])
 
 
@@ -740,7 +740,7 @@ def test_dataset_shard_is_same_with_first_op():
                     self.mul2.shard(((1,), (1,)))
 
         def construct(self, inputs):
-            x = self.mul(inputs, self.mul_weight)  # shard: (4, 1), (1, 1)
+            x = self.mul(inputs, self.mul_weight)  # (128, 96), (1, 1), shard: (4, 1), (1, 1)
             x = self.arg_max_with_value(x)[1]  # shard: (4, 1)
             x = self.mul2(x, self.mul2_weight)
             return x
@@ -916,12 +916,10 @@ def test_two_matmul_with_different_layout():
     class MatMulNet(nn.Cell):
         def __init__(self):
             super(MatMulNet, self).__init__()
-            self.matmul1 = P.MatMul()
-            self.matmul2 = P.MatMul()
+            self.matmul1 = P.MatMul().shard(((4, 1), (1, 2)))
+            self.matmul2 = P.MatMul().shard(((2, 2), (2, 2)))
             self.matmul1_weight = Parameter(np.full((64, 32), 0.5, dtype=np.float32), name="weight1")
             self.matmul2_weight = Parameter(np.full((32, 32), 0.8, dtype=np.float32), name="weight2")
-            self.matmul1.shard(((4, 1), (1, 2)))
-            self.matmul2.shard(((2, 2), (2, 2)))
             self.relu = nn.ReLU()
 
         def construct(self, x):
@@ -938,7 +936,7 @@ def test_two_matmul_with_different_layout():
     model = MatMulNet()
     model = _VirtualDatasetCell(model)
     model._virtual_dataset.add_prim_attr("repeat_dim_direct", "right")
-    d0 = Symbol(divisor=8)
+    d0 = Symbol(divisor=4)  # if divisor=8, cannot be supported.
     x = Tensor(shape=[d0, 64], dtype=mstype.float32)
     model.set_inputs(x)
     phase = compile_net(model, x)
@@ -969,12 +967,8 @@ def test_two_matmul_with_different_layout():
     assert validator.check_node_inputs_has('MatMul-1', ['Reshape-1', 'Load-1'])
     assert validator.check_node_inputs_has('AllReduce-0', ['MatMul-1'])
     assert validator.check_node_inputs_has('Shape-1', ['MatMul-1'])
-    assert validator.check_node_inputs_has('tuple_getitem_for_value_48-0', ['Shape-1', 0])
-    assert validator.check_node_inputs_has('ScalarDiv-0', ['tuple_getitem_for_value_48-0', 12])
-    assert validator.check_node_inputs_has('ScalarCast-0', ['ScalarDiv-0', 35])
-    assert validator.check_node_inputs_has('ScalarDiv-1', ['tuple_getitem_for_value_48-0', 2])
-    assert validator.check_node_inputs_has('ScalarCast-1', ['ScalarDiv-1', 35])
-    assert validator.check_node_inputs_has('MakeTuple-4', [1, 'ScalarCast-0', 'ScalarCast-1', 16])
+    assert validator.check_node_inputs_has('tuple_getitem_for_value_24-0', ['Shape-1', 0])
+    assert validator.check_node_inputs_has('MakeTuple-4', [1, 'tuple_getitem_for_value_24-0', 16])
     assert validator.check_node_inputs_has('Reshape-2', ['AllReduce-0', 'MakeTuple-4'])
     assert validator.check_node_inputs_has('Split-4', ['Reshape-2', 1, 2])
     assert validator.check_node_inputs_has('TupleGetItem-7', ['Split-4', 0])
@@ -983,10 +977,8 @@ def test_two_matmul_with_different_layout():
     assert validator.check_node_inputs_has('TupleGetItem-8', ['Split-5', 0])
     assert validator.check_node_inputs_has('TupleGetItem-9', ['Split-5', 1])
     assert validator.check_node_inputs_has('MakeTuple-5', ['TupleGetItem-8', 'TupleGetItem-9'])
-    assert validator.check_node_inputs_has('Concat-2', ['MakeTuple-5', 3])
-    assert validator.check_node_inputs_has('Split-6', ['Concat-2', 2, 2])
-    assert validator.check_node_inputs_has('TupleGetItem-10', ['Split-6', 0])
-    assert validator.check_node_inputs_has('Reshape-3', ['TupleGetItem-10', '(-1, 32)'])
+    assert validator.check_node_inputs_has('Concat-2', ['MakeTuple-5', 2])
+    assert validator.check_node_inputs_has('Reshape-3', ['Concat-2', '(-1, 32)'])
     assert validator.check_node_inputs_has('ReLU-0', ['Reshape-3'])
 
 
@@ -1047,12 +1039,10 @@ def test_shrink_four_dims_into_two_dims():
     assert validator.check_node_inputs_has('TupleGetItem-7', ['Split-4', 1])
     assert validator.check_node_inputs_has('MakeTuple-2', ['TupleGetItem-6', 'TupleGetItem-7'])
     assert validator.check_node_inputs_has('Concat-1', ['MakeTuple-2', 2])
-    assert validator.check_node_inputs_has('Reshape-0', ['Concat-1', '(2, 96, 256)'])
-    assert validator.check_node_inputs_has('Split-5', ['Reshape-0', 0, 2])
+    assert validator.check_node_inputs_has('Reshape-0', ['Concat-1', '(-1, 256)'])
+    assert validator.check_node_inputs_has('Split-5', ['Reshape-0', 0, 4])
     assert validator.check_node_inputs_has('TupleGetItem-8', ['Split-5', 0])
-    assert validator.check_node_inputs_has('Split-6', ['TupleGetItem-8', 1, 2])
-    assert validator.check_node_inputs_has('TupleGetItem-9', ['Split-6', 0])
-    assert validator.check_node_inputs_has('ReLU-0', ['TupleGetItem-9'])
+    assert validator.check_node_inputs_has('ReLU-0', ['TupleGetItem-8'])
 
 
 def test_pangu_multi_batch_qkv_reshape_scene_without_constant_folding():
