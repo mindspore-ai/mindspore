@@ -417,14 +417,8 @@ Status ModelImpl::UpdateConfig(const std::string &section, const std::pair<std::
 Status ModelImpl::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
                           const MSKernelCallBack &before, const MSKernelCallBack &after) {
   std::lock_guard<std::recursive_mutex> lock(mutex_);
-  if (session_ == nullptr) {
-    MS_LOG(ERROR) << "Model has not been called Build, or Model Build has failed";
-    return kLiteNullptr;
-  }
-  if (outputs == nullptr) {
-    MS_LOG(ERROR) << "outputs is nullptr.";
-    return kLiteError;
-  }
+  MS_CHECK_TRUE_MSG(session_ != nullptr, kLiteNullptr, "Model has not been called Build, or Model Build has failed.");
+  MS_CHECK_TRUE_MSG(outputs != nullptr, kLiteError, "outputs is nullptr.");
   auto input_tensors = session_->GetInputs();
   if (input_tensors.empty()) {
     MS_LOG(ERROR) << "Failed to get input tensor.";
@@ -484,7 +478,16 @@ Status ModelImpl::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
           input->set_shape(truncate_shape);
 #endif
         }
-        input->set_data(user_input.MutableData());
+        // Mali GPU tensor can't manipulate CPU memory which the user provides.
+        // When model input is GPU tensor and user input is NOT GPU data,
+        if (IS_OPENCL_ALLOCATOR(input->allocator()) && (!IS_OPENCL_ALLOCATOR(user_input.allocator()))) {
+          // Use outside CPU data to fill GPU Tensor.
+          auto dst_data = input->MutableData();
+          auto src_data = user_input.MutableData();
+          (void)memcpy(dst_data, src_data, input->Size());
+        } else {
+          input->set_data(user_input.MutableData());
+        }
       }
     }
   }
