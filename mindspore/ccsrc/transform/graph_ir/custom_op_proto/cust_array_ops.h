@@ -117,6 +117,7 @@ REG_CUST_OP(LogSpace)
   .OUTPUT(y, TensorType({DT_FLOAT, DT_FLOAT16}))
   .REQUIRED_ATTR(steps, Int)
   .REQUIRED_ATTR(base, Int)
+  .REQUIRED_ATTR(dtype, Type)
   .CUST_OP_END_FACTORY_REG(LogSpace)
 
 REG_CUST_OP(Expand)
