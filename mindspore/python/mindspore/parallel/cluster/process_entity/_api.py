@@ -107,6 +107,8 @@ class _ProcessManager:
         self.master_port = args.master_port
 
         self.worker_num = args.worker_num
+        if self.worker_num <= 0:
+            raise ValueError(f"worker_num must be greater than 0, but got {self.worker_num}.")
         self.local_worker_num = args.local_worker_num
         self.node_rank = args.node_rank
 
