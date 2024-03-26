@@ -26,8 +26,14 @@ from data import Feature
 from model import MegaFold, compute_confidence
 
 
-def fold_infer(mixed_precision, crop_size):
+def fold_infer(crop_size):
     '''mega fold inference'''
+    os.environ["MS_ASCEND_CHECK_OVERFLOW_MODE"] = "SATURATION_MODE"
+    context.set_context(mode=context.GRAPH_MODE,
+                        device_target="Ascend",
+                        memory_optimize_level="O1",
+                        max_call_depth=6000)
+    mixed_precision = 1
     data_config = "./config/data.yaml"
     model_config = "./config/model.yaml"
     checkpoint_path = "/home/workspace/mindspore_ckpt/ckpt/MEGA_Fold_1.ckpt"
@@ -73,20 +79,50 @@ def test_910B_Ascend_fold():
     Description: test train and eval
     Expectation: success
     """
-    os.environ["MS_ASCEND_CHECK_OVERFLOW_MODE"] = "SATURATION_MODE"
-    context.set_context(mode=context.GRAPH_MODE,
-                        device_target="Ascend",
-                        memory_optimize_level="O1",
-                        max_call_depth=6000)
-    mixed_precision = 1
     crop_size = 1536
-    confidence, time_list = fold_infer(mixed_precision, crop_size)
+    confidence, time_list = fold_infer(crop_size)
     compile_time, exectue_time = time_list
     compile_time = compile_time - exectue_time
     os.environ.pop("MS_ASCEND_CHECK_OVERFLOW_MODE")
     assert confidence > 0.9
     assert compile_time < 500
     assert exectue_time < 100
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+def test_910B_Ascend_fold_256():
+    """
+    Feature: 910B Megaflod
+    Description: test train and eval
+    Expectation: success
+    """
+    crop_size = 256
+    confidence, time_list = fold_infer(crop_size)
+    compile_time, exectue_time = time_list
+    compile_time = compile_time - exectue_time
+    os.environ.pop("MS_ASCEND_CHECK_OVERFLOW_MODE")
+    assert confidence > 0.9
+    assert compile_time < 350
+    assert exectue_time < 2.5
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+def test_910B_Ascend_fold_512():
+    """
+    Feature: 910B Megaflod
+    Description: test train and eval
+    Expectation: success
+    """
+    crop_size = 512
+    confidence, time_list = fold_infer(crop_size)
+    compile_time, exectue_time = time_list
+    compile_time = compile_time - exectue_time
+    os.environ.pop("MS_ASCEND_CHECK_OVERFLOW_MODE")
+    assert confidence > 0.9
+    assert compile_time < 350
+    assert exectue_time < 8
 
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
@@ -97,13 +133,8 @@ def test_910A_Ascend_fold():
     Description: test train and eval
     Expectation: success
     """
-    context.set_context(mode=context.GRAPH_MODE,
-                        device_target="Ascend",
-                        memory_optimize_level="O1",
-                        max_call_depth=6000)
-    mixed_precision = 1
     crop_size = 1024
-    confidence, time_list = fold_infer(mixed_precision, crop_size)
+    confidence, time_list = fold_infer(crop_size)
     compile_time, exectue_time = time_list
     compile_time = compile_time - exectue_time
     assert confidence > 0.9
