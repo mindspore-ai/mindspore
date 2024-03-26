@@ -1207,7 +1207,7 @@ def load_checkpoint_async(ckpt_file_name, net=None, strict_load=False, filter_pr
             matches the custom condition will be removed. Default: ``None`` .
 
     Returns:
-        ParamDictFuture, A custom class, calling its result method yields the load_checkpoint result.
+        A custom inner class, calling its `result` method yields the :func:`load_checkpoint` result.
 
     Raises:
         ValueError: Checkpoint file's format is incorrect.
@@ -1220,8 +1220,8 @@ def load_checkpoint_async(ckpt_file_name, net=None, strict_load=False, filter_pr
         >>> from mindspore.train import Model
         >>> from mindspore.amp import FixedLossScaleManager
         >>> from mindspore import context
-        >>> from mindspore.train.serialization import load_checkpoint_async
-        >>> from mindspore.train.serialization import load_param_into_net
+        >>> from mindspore import load_checkpoint_async
+        >>> from mindspore import load_param_into_net
         >>> context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
         >>> # Create the dataset taking MNIST as an example. Refer to
         >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
