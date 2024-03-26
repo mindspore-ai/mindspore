@@ -21,6 +21,7 @@
 
 #include "ops/sequence_ops.h"
 #include "ops/array_ops.h"
+#include "ops/framework_ops.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "include/common/expander/core/infer.h"
 #include "include/common/profiler.h"
@@ -232,6 +233,11 @@ class PynativeIRBuilderWithCache : public PynativeIRBuilder {
       // need not grad if grad depend input_values.
       for (size_t i = 0; i < input_nodes.size(); i++) {
         if (value_index[i] && input_nodes[i]->is_used_value()) {
+          return output_nodes;
+        }
+      }
+      for (auto &node_pair : bprop_nodes_) {
+        if (IsPrimitiveCNode(node_pair.first->get(), prim::kPrimSwitch)) {
           return output_nodes;
         }
       }

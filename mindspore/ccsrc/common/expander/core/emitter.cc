@@ -568,7 +568,7 @@ NodePtr CtrlFlowBlock::IfThenElse(const NodePtr &cond, const BlockFunc &true_cas
   auto fb = BuildSubgraph(false_case);
   auto s = emitter_->Emit("Switch", {cond, tb, fb});
 
-  auto cnode = func_graph_->NewCNode({s->get()});
+  auto cnode = func_graph_->FuncGraph::NewCNode({s->get()});
   cnode->set_abstract(out_abstract_);
   auto node = emitter_->NewIrNode(cnode->cast<AnfNodePtr>());
   return node;
@@ -653,7 +653,7 @@ NodePtr CtrlFlowBlock::While(const NodePtr &cond, const BlockFunc &while_body_fu
   cnode->set_abstract(out_abstract_);
   while_fg->set_output(cnode);
 
-  auto main_cnode = func_graph_->NewCNode(main_while_fg_inputs);
+  auto main_cnode = func_graph_->FuncGraph::NewCNode(main_while_fg_inputs);
   main_cnode->set_abstract(out_abstract_);
   return emitter_->NewIrNode(main_cnode);
 }

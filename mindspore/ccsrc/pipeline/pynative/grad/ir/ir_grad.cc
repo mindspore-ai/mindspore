@@ -828,7 +828,7 @@ void IrGrad::DoParameterReplaceByUser(bool has_sens_arg, expander::bprop::UserTy
 
 void IrGrad::ReplacePrimalParameter(bool has_sens_arg) {
   PyNativeAlgo::Common::DumpGraphIR("replace_param.ir", ad_param()->tape_);
-  if (need_do_manager_replace_) {
+  if (need_do_manager_replace_ || ad_param()->tape_->has_flag(kFlagIsControlFlow)) {
     MS_LOG(DEBUG) << "Do parameter replace by manager.";
     DoParameterReplaceByManager(has_sens_arg);
     need_do_manager_replace_ = false;
