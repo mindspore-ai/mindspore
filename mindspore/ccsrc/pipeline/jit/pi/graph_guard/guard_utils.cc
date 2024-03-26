@@ -1718,9 +1718,10 @@ template <typename T>
 ItemDataPtr CreateMutablePyData(PyObject *obj, bool need_specialize, int recurse_depth) {
   return std::make_shared<T>(obj, false, recurse_depth);
 }
-static bool CheckTensorObject(PyObject *obj) {
-  return py::isinstance<mindspore::tensor::Tensor>(obj) || IsStubTensor(py::cast<py::object>(obj));
+static bool CheckMetaTensorObject(PyObject *obj) {
+  return py::isinstance<mindspore::tensor::MetaTensor>(obj) || IsStubTensor(py::cast<py::object>(obj));
 }
+static bool CheckTensorObject(PyObject *obj) { return py::isinstance<mindspore::tensor::Tensor>(obj); }
 static bool CheckDictKeyValueItemObject(PyObject *obj) {
   return !!PyDict_Check(obj) || !!PyDictKeys_Check(obj) || !!PyDictValues_Check(obj) || !!PyDictItems_Check(obj);
 }
@@ -1745,10 +1746,9 @@ static const std::vector<std::pair<CheckPyObjectFunc, CreatePyObjectFunc>> kFunc
   {[](PyObject *obj) -> bool { return py::isinstance<mindspore::Type>(obj); }, CreatePyData<TensorTypeData>},
   {[](PyObject *obj) -> bool { return py::isinstance<mindspore::tensor::MapTensor>(obj); },
    CreatePyData<MapTensorData>},
-  {[](PyObject *obj) -> bool { return CheckTensorObject(obj); }, CreatePyData<TensorData>},
   {[](PyObject *obj) -> bool { return py::isinstance<mindspore::ParamInfo>(obj); }, CreatePyData<ParamInfoData>},
-  {[](PyObject *obj) -> bool { return py::isinstance<mindspore::tensor::MetaTensor>(obj); },
-   CreatePyData<MetaTensorData>},
+  {[](PyObject *obj) -> bool { return CheckMetaTensorObject(obj); }, CreatePyData<MetaTensorData>},
+  {[](PyObject *obj) -> bool { return CheckTensorObject(obj); }, CreatePyData<TensorData>},
   {[](PyObject *obj) -> bool { return py::isinstance<mindspore::tensor::TensorData>(obj); },
    CreatePyData<TensorDataData>},
   {[](PyObject *obj) -> bool { return py::isinstance<mindspore::PrimitivePyAdapter>(obj); },
@@ -1855,6 +1855,7 @@ class EqGuard : public GuardItem {
         specialized_(needSpecialize),
         recurse_(recurseDepth) {
     type_ = GIType::GTEqual;
+    last_ = obj->GetObject();
   }
 
   virtual bool Check(const PyFrameObject *frame, std::map<size_t, PyObject *> *cache, bool perf) {
@@ -1869,7 +1870,7 @@ class EqGuard : public GuardItem {
     GuardItemPerfStart(perf, kGuardItemTotalStage);
     PyObject *obj = GetObjectFromTrace(frame, var_, cache, perf);
     GuardItemPerfStage(perf, this, kGuardItemRetrieveStage);
-    bool ret = Check(obj);
+    bool ret = obj == last_ || Check(obj);
     GuardItemPerfStage(perf, this, kGuardItemCompareStage);
     if (obj != NULL) {
       Py_DECREF(obj);
@@ -1940,21 +1941,28 @@ class EqGuard : public GuardItem {
   ItemDataPtr dp_;
   bool specialized_;
   int recurse_;
+  PyObject *last_;
 };
 
 class TypeGuard : public GuardItem {
  public:
   explicit TypeGuard(TracePtr obj) : GuardItem(obj) {
     type_ = GIType::GTType;
+    is_const_ = false;
     if (obj->GetTraceType() == TraceType::Type) {
       refType_ = std::dynamic_pointer_cast<TypeTrace>(obj)->GetType();
     } else {
       refType_ = Py_TYPE(obj->GetObject());
     }
+    if (obj->GetRelaxCount() >= 0) {
+      check_count_ = 0;
+    } else {
+      check_count_ = -1;
+    }
   }
 
   virtual bool Check(const PyFrameObject *frame, std::map<size_t, PyObject *> *cache, bool perf) {
-    if (var_->IsConst()) {
+    if (var_->IsConst() || is_const_) {
       return true;
     }
     GuardItemPerfStart(perf, kGuardItemTotalStage);
@@ -1964,6 +1972,16 @@ class TypeGuard : public GuardItem {
     GuardItemPerfStage(perf, this, kGuardItemCompareStage);
     if (var_->GetTraceType() != TraceType::Type && obj != NULL) {
       Py_DECREF(obj);
+    }
+    if (check_count_ >= 0) {
+      if (!ret) {
+        check_count_ = -1;
+      } else {
+        check_count_++;
+        if (check_count_ > var_->GetRelaxCount()) {
+          is_const_ = true;
+        }
+      }
     }
     return ret;
   }
@@ -2020,6 +2038,8 @@ class TypeGuard : public GuardItem {
 
  protected:
   PyTypeObject *refType_;
+  int check_count_;
+  bool is_const_;
 };
 
 class IdGuard : public GuardItem {
