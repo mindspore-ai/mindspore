@@ -373,7 +373,7 @@ Status ReshapeInfo::ComputeReplaceOp() {
     MS_LOG(DEBUG) << name_ << ": output " << output_layout_.ToString();
     MS_LOG(DEBUG) << name_ << ": dev_list " << dev_list.size();
     RedistributionOpListPtr redistribution_oplist_ptr = tensor_redistribution->InferTensorRedistributionOperatorList();
-    if (!is_generating_costs_) {
+    if (!is_generating_costs_ && !tensor_redistribution->IsAssembledStaticShape()) {
       redistribution_oplist_ptr = TensorTransform::GetInstance()->OptimizeTensorRedistributionOperatorList(
         redistribution_oplist_ptr, tensor_redistribution->input_shape());
     }

@@ -43,7 +43,7 @@ void get_prime_table(Shape *prime_arr, const size_t arr_size) {
       if (j >= prime_arr->size() || LongToSize(prime_arr->at(j)) * i > arr_size) {
         break;
       }
-      is_composite_num[prime_arr->at(j) * i] = true;
+      is_composite_num[LongToSize(prime_arr->at(j)) * i] = true;
       if (i % LongToSize(prime_arr->at(j)) == 0) {
         break;
       }
