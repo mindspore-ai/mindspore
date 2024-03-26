@@ -232,11 +232,11 @@ def test_bert_precision(enable_graph_kernel=False):
         expect_loss_value = [12.206627, 11.840489, 11.798470, 11.796345, 11.790964, 12.366766, 11.971539, 12.576565,
                              12.185522, 12.386192]
     else:
-        assert np.allclose(loss_value[0], 12.2066, 0, 0.0006)
-        expect_loss_value = [12.206556, 11.9409492, 11.9313538, 11.9378898, 11.931268, 12.5562848, 12.1305126,
-                             12.7837258, 12.3600269, 12.5784592]
+        assert np.allclose(loss_value[0], 12.2072, 0, 0.0005)
+        expect_loss_value = [12.2072, 11.941728, 11.931803, 11.93857, 11.931982, 12.556978, 12.131189, 12.784796,
+                             12.360739, 12.57966]
     print("loss value: {}".format(loss_value))
-    assert np.allclose(loss_value, expect_loss_value, 0, 0.0006)
+    assert np.allclose(loss_value, expect_loss_value, 0, 0.0005)
 
     overflow = np.array(callback.overflow_list)
     expect_overflow = [False, False, False, False, False, False, False, False, False, True]
@@ -250,7 +250,7 @@ def test_bert_precision(enable_graph_kernel=False):
     assert np.allclose(loss_scale, expect_loss_scale, 0, 0)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
