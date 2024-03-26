@@ -36,6 +36,7 @@ mindspore::HashMap<std::string, std::string> IOFormatMap::io_format_map_ = {{"BN
                                                                             {"PReLU", "NCHW"},
                                                                             {"Scale", "NCHW"},
                                                                             {"GridSampler2D", "NCHW"},
+                                                                            {"GridSampler3D", "NCDHW"},
                                                                             {"ResizeBilinearV2", "NCHW"},
                                                                             {"ResizeNearestNeighborV2", "NCHW"},
                                                                             {"Conv3D", "format"},
