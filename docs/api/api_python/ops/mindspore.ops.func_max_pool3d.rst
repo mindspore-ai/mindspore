@@ -23,6 +23,8 @@ mindspore.ops.max_pool3d
         - **return_indices** (bool) - 是否输出最大值的索引。默认为 ``False`` 。
 
     返回：
+        如果 `return_indices` 是False，返回Tensor `output`，否则返回tuple (`output`, `argmax`)。
+
         - **output** (Tensor) - 输出的池化后的最大值，shape 为 :math:`(N_{out}, C_{out}, D_{out}, H_{out}, W_{out})` 。其数据类型与 `x` 相同。
 
         .. math::

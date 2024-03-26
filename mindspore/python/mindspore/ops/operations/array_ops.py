@@ -1006,7 +1006,7 @@ class MatrixDiagPartV3(Primitive):
 class MatrixSetDiagV3(Primitive):
     r"""
     Updates the diagonal part of a batched tensor.
-    It takes an Tensor `x` and `diagonal` as input and returns a Tensor in which
+    It takes a Tensor `x` and `diagonal` as input and returns a Tensor in which
     the specified diagonal values in the innermost matrices will be replaced
     by the values in the `diagonal`.
 
@@ -2784,7 +2784,7 @@ class Triu(Primitive):
         - **y** (Tensor) - A tensor has the same shape and data type as input.
 
     Raises:
-        TypeError: If `x` is not an Tensor.
+        TypeError: If `x` is not a Tensor.
         TypeError: If `diagonal` is not an int.
         ValueError: If the dimension of `input` is less than 2.
 

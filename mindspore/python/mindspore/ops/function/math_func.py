@@ -5694,7 +5694,7 @@ def diff(x, n=1, axis=-1, prepend=None, append=None):
 
     Note:
         Zero-shaped Tensor is not supported, a value error is raised if
-        an empty Tensor is encountered. Any dimension of an Tensor is 0 is considered
+        an empty Tensor is encountered. Any dimension of a Tensor is 0 is considered
         an empty Tensor. Tensor with shape of :math:`(0,)`, :math:`(1, 2, 0, 4)` are all
         empty Tensor.
 

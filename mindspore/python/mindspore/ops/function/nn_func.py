@@ -309,7 +309,7 @@ def avg_pool1d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
         Tensor of shape :math:`(N, C_{out}, L_{out})`.
 
     Raises:
-        TypeError: If `input_x` is not an Tensor.
+        TypeError: If `input_x` is not a Tensor.
         TypeError: If `kernel_size` or `stride` is not an int.
         TypeError: If `ceil_mode` or `count_include_pad` is not a bool.
         ValueError: If length of shape of `input_x` is not equal to `3`.
@@ -459,7 +459,7 @@ def avg_pool2d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
         Tensor, with shape :math:`(N, C_{out}, H_{out}, W_{out})`.
 
     Raises:
-        TypeError: If `input_x` is not an Tensor.
+        TypeError: If `input_x` is not a Tensor.
         TypeError: If `kernel_size` or `stride` is neither int nor tuple.
         TypeError: If `ceil_mode` or `count_include_pad` is not a bool.
         TypeError: If `divisor_override` is not an int.
@@ -562,7 +562,7 @@ def avg_pool3d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
         Tensor, with shape :math:`(N, C, D_{out}, H_{out}, W_{out})`. Has the same data type with `input_x`.
 
     Raises:
-        TypeError: If `input_x` is not an Tensor.
+        TypeError: If `input_x` is not a Tensor.
         TypeError: If `kernel_size`, `stride` or `padding` is neither an int not a tuple.
         TypeError: If `ceil_mode` or `count_include_pad` is not a bool.
         TypeError: If `divisor_override` is not an int.
@@ -1622,7 +1622,7 @@ def fractional_max_pool3d(input, kernel_size, output_size=None, output_ratio=Non
             is an int number that represents depth, height and width of the kernel, or a tuple
             of three int numbers that represent depth, height and width respectively.
             The value must be a positive integer.
-        output_size (Union[int, tuple[int]], optional): The Shape of the target `output_size`,
+        output_size (Union[int, tuple[int]], optional): The shape of the target `output_size`,
             is an int number that represents depth, height and width, or a tuple
             of three int numbers that represent depth, height and width respectively.
             The value must be a positive integer.
@@ -3071,7 +3071,7 @@ def deformable_conv2d(x, weight, offsets, kernel_size, strides, padding, bias=No
         TypeError: If `strides`, `padding`, `kernel_size` or `dilations` is not a tuple with integer elements.
         TypeError: If `modulated` is not a bool.
         ValueError: If the tuple size of `strides`, `padding`, `kernel_size` or `dilations` is not expected.
-        ValueError: The N or C dimensions of 'strides' or `dilations` is not set to 1.
+        ValueError: The N or C dimensions of `strides` or `dilations` is not set to 1.
         ValueError: If `modulated` is not set to True.
 
     .. warning::
@@ -4301,7 +4301,7 @@ def max_pool3d(x, kernel_size, stride=None, padding=0, dilation=1, ceil_mode=Fal
             W_{out} = \left\lfloor\frac{W_{in} + 2 \times \text{padding}[2] - \text{dilation}[2] \times
             (\text{kernel_size}[2] - 1) - 1}{\text{stride}[2]} + 1\right\rfloor
 
-        - **argmax** (Tensor) - Index corresponding to the maximum value. Data type is int64. It will be return
+        - **argmax** (Tensor) - Index corresponding to the maximum value. Data type is int64. It will be returned
           only when `return_indices` is ``True`` .
 
     Raises:
@@ -5644,7 +5644,7 @@ def conv3d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
         \sum_{k = 0}^{C_{in} - 1} \text{ccor}({\text{weight}(C_{\text{out}_j}, k), \text{X}(N_i, k)})
 
     where :math:`bias` is the output channel bias, :math:`ccor` is
-    the `cross-correlation <https://en.wikipedia.org/wiki/Cross-correlation>`_,
+    the `cross-correlation <https://en.wikipedia.org/wiki/Cross-correlation>`_
     , :math:`weight` is the convolution kernel value and :math:`X` represents the input feature map.
 
     Here are the indices' meanings:
@@ -6338,7 +6338,7 @@ def lp_pool1d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
               L_{out} = \left\lfloor\frac{L_{in} - \text{kernel_size}}{\text{stride}} + 1\right\rfloor
 
     Raises:
-        TypeError: If `x` is not an Tensor.
+        TypeError: If `x` is not a Tensor.
         TypeError: If `kernel_size` or `stride` is not an int.
         TypeError: If `ceil_mode` is not a bool.
         TypeError: If `norm_type` is neither float nor int.
@@ -6422,7 +6422,7 @@ def lp_pool2d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
               W_{out} = \left\lfloor\frac{W_{in} - \text{kernel_size}[1]}{\text{stride}[1]} + 1\right\rfloor
 
     Raises:
-        TypeError: If `x` is not an Tensor.
+        TypeError: If `x` is not a Tensor.
         TypeError: If `kernel_size` or `stride` is neither int nor tuple.
         TypeError: If `ceil_mode` is not a bool.
         TypeError: If `norm_type` is neither float nor int.
