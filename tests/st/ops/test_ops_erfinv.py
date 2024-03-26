@@ -99,4 +99,4 @@ def test_ops_erfinv_vmap(context_mode):
     x = Tensor([0, 0.5, -0.9], ms.float32)
     output = erfinv_vmap_func(ms.Tensor(x))
     expect = generate_expect_forward_output(x)
-    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
+    np.testing.assert_allclose(output.asnumpy(), expect.asnumpy(), rtol=1e-3)
