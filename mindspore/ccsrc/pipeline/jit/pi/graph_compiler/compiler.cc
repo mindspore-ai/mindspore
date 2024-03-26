@@ -55,7 +55,7 @@ bool CanbeMutable(const py::object &arg) {
   }
   if (py::isinstance<py::dict>(arg) || py::isinstance<py::list>(arg) || py::isinstance<py::tuple>(arg)) {
     py::object o = python_adapter::CallPyFn("mindspore.common.mutable", "_check_element_type", arg);
-    return o.ptr() == Py_True;
+    return py::isinstance<py::bool_>(o) && py::bool_(o);
   }
   return false;
 }
@@ -102,7 +102,8 @@ py::tuple EliminateInvalidArgs(const py::tuple &args, int co_flags, bool enable_
   py::list new_args;
   for (size_t idx = 0; idx < args.size(); idx++) {
     if (IsValidRunArg(args[idx], enable_tuple_broaden)) {
-      if ((idx < (args.size() - 1) || (co_flags & CO_VARKEYWORDS) == 0) && py::isinstance<py::dict>(args[idx])) {
+      if ((idx < (args.size() - 1) || ((unsigned)co_flags & CO_VARKEYWORDS) == 0) &&
+          py::isinstance<py::dict>(args[idx])) {
         new_args.append(py::reinterpret_steal<py::tuple>(PyDict_Values(args[idx].ptr())));
       } else {
         new_args.append(args[idx]);
@@ -113,7 +114,7 @@ py::tuple EliminateInvalidArgs(const py::tuple &args, int co_flags, bool enable_
 }
 
 py::tuple ExpandVariableArgs(const py::tuple &args, int co_flags, int co_argcount) {
-  if ((co_flags & CO_VARARGS) == 0x0) {
+  if (((unsigned)co_flags & CO_VARARGS) == 0x0) {
     return args;
   }
   py::tuple var_args = py::cast<py::tuple>(args[co_argcount]);
@@ -124,10 +125,35 @@ py::tuple ExpandVariableArgs(const py::tuple &args, int co_flags, int co_argcoun
   for (const auto &var_arg : var_args) {
     new_args.append(var_arg);
   }
-  for (size_t index = co_argcount + 1; index < args.size(); index++) {
+  for (size_t index = (size_t)co_argcount + 1; index < args.size(); index++) {
     new_args.append(args[index]);
   }
   return py::cast<py::tuple>(new_args);
+}
+
+PyObject *RunGraph(const std::string &phase, const py::tuple &args, const std::string &name, int co_flags,
+                   bool enable_tuple_broaden) {
+  py::tuple args_tuple = EliminateSelf(args, name);
+  args_tuple = EliminateStubTensor(args_tuple);
+  MarkArgmentMutable(args_tuple);
+  args_tuple = EliminateInvalidArgs(args_tuple, co_flags, enable_tuple_broaden);
+  auto graph_executor = pipeline::GraphExecutorPy::GetInstance();
+  MS_EXCEPTION_IF_NULL(graph_executor);
+  py::object ret = graph_executor->Run(args_tuple, py::str(phase));
+  int mode = MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE);
+  auto executor = pynative::PyNativeExecutor::GetInstance();
+  if (mode == kPynativeMode && executor->grad_flag()) {
+    executor->grad_executor()->jit()->set_graph_phase(phase);
+    executor->GradJit(ret, args_tuple);
+  }
+  FuncGraphPtr ms_func_graph = graph_executor->GetFuncGraph(phase);
+  MS_EXCEPTION_IF_NULL(ms_func_graph);
+  if (ms_func_graph->modify_output()) {
+    ret = py::cast<py::tuple>(ret)[0];
+  }
+  ret = python_adapter::CallPyFn("mindspore.common.api", "_convert_python_data", ret);
+  ret.inc_ref();
+  return ret.ptr();
 }
 }  // namespace
 
@@ -146,27 +172,7 @@ CallableGraph Compiler::Compile(const PyFunctionObject &func, const PyFrameObjec
     py::tuple tuple = MergeAllArgments(args, kwargs);
     tuple = ExpandVariableArgs(tuple, code->co_flags, code->co_argcount);
     std::string name = py::cast<std::string>(code->co_name);
-    tuple = EliminateSelf(tuple, name);
-    tuple = EliminateStubTensor(tuple);
-    MarkArgmentMutable(tuple);
-    tuple = EliminateInvalidArgs(tuple, code->co_flags, enable_tuple_broaden);
-    auto graph_executor = pipeline::GraphExecutorPy::GetInstance();
-    MS_EXCEPTION_IF_NULL(graph_executor);
-    py::object ret = graph_executor->Run(tuple, py::str(phase));
-    int mode = MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE);
-    auto executor = pynative::PyNativeExecutor::GetInstance();
-    if (mode == kPynativeMode && executor->grad_flag()) {
-      executor->grad_executor()->jit()->set_graph_phase(phase);
-      executor->GradJit(ret, tuple);
-    }
-    FuncGraphPtr ms_func_graph = graph_executor->GetFuncGraph(phase);
-    MS_EXCEPTION_IF_NULL(ms_func_graph);
-    if (ms_func_graph->modify_output()) {
-      ret = py::cast<py::tuple>(ret)[0];
-    }
-    ret = python_adapter::CallPyFn("mindspore.common.api", "_convert_python_data", ret);
-    ret.inc_ref();
-    return ret.ptr();
+    return RunGraph(phase, tuple, name, code->co_flags, enable_tuple_broaden);
   };
 
   auto graph_executor = mindspore::pipeline::GraphExecutorPy::GetInstance();
@@ -175,12 +181,13 @@ CallableGraph Compiler::Compile(const PyFunctionObject &func, const PyFrameObjec
   }
 
   int arg_cnt = code->co_argcount + code->co_kwonlyargcount;
-  if (code->co_flags & CO_VARARGS) {
+  if ((unsigned)code->co_flags & CO_VARARGS) {
     arg_cnt++;
   }
   py::list locals = py::reinterpret_steal<py::list>(PyDict_Values(frame.f_locals));
   py::tuple args = py::reinterpret_steal<py::tuple>(PyList_AsTuple(PyList_GetSlice(locals.ptr(), 0, arg_cnt)));
-  py::dict kwargs = (code->co_flags & CO_VARKEYWORDS) == 0x0 ? py::dict() : py::cast<py::dict>(locals[arg_cnt]);
+  py::dict kwargs =
+    ((unsigned)code->co_flags & CO_VARKEYWORDS) == 0x0 ? py::dict() : py::cast<py::dict>(locals[arg_cnt]);
   args = EliminateStubTensor(args);
   auto byteCodeParser = std::make_shared<ByteCodeParser>(func);
   ir::FunctionNodePtr func_node = byteCodeParser->Parse();
@@ -229,27 +236,7 @@ CallableGraph MindCompiler::Compile(const FuncGraphPtr &func_graph, const py::tu
                                "Excepted nullptr or a Dict Object for run kwargs.");
 
     py::tuple tuple = MergeArgsKwargs(args, kwargs);
-    tuple = EliminateSelf(tuple, compile_info.co_name_);
-    tuple = EliminateStubTensor(tuple);
-    MarkArgmentMutable(tuple);
-    tuple = EliminateInvalidArgs(tuple, compile_info.co_flags_, false);  // need adapt for optimizer
-    auto graph_executor = pipeline::GraphExecutorPy::GetInstance();
-    MS_EXCEPTION_IF_NULL(graph_executor);
-    py::object ret = graph_executor->Run(tuple, py::str(phase));
-    int mode = MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE);
-    auto executor = pynative::PyNativeExecutor::GetInstance();
-    if (mode == kPynativeMode && executor->grad_flag()) {
-      executor->grad_executor()->jit()->set_graph_phase(phase);
-      executor->GradJit(ret, tuple);
-    }
-    FuncGraphPtr ms_func_graph = graph_executor->GetFuncGraph(phase);
-    MS_EXCEPTION_IF_NULL(ms_func_graph);
-    if (ms_func_graph->modify_output()) {
-      ret = py::cast<py::tuple>(ret)[0];
-    }
-    ret = python_adapter::CallPyFn("mindspore.common.api", "_convert_python_data", ret);
-    ret.inc_ref();
-    return ret.ptr();
+    return RunGraph(phase, tuple, compile_info.co_name_, compile_info.co_flags_, false);  // need adapt for optimizer
   };
 
   auto graph_executor = mindspore::pipeline::GraphExecutorPy::GetInstance();

@@ -53,7 +53,7 @@ size_t StoreVector(uint8_t *buf, size_t ptr, const std::vector<T> &val) {
   T *pVal = const_cast<T *>(val.data());
   size_t szVal = val.size() * sizeof(T);
   ptr = StoreScalar(buf, ptr, szVal);
-  memcpy(buf + ptr, pVal, szVal);
+  memcpy_s(buf + ptr, szVal, reinterpret_cast<uint8_t *>(pVal), szVal);
   return ptr + szVal;
 }
 
@@ -70,7 +70,7 @@ InfoPack::InfoPack() : id_(kInvalidId), buf_(std::make_unique<uint8_t[]>(kInitLi
 
 InfoPack::InfoPack(const InfoPack &dup)
     : id_(dup.id_), buf_(std::make_unique<uint8_t[]>(dup.ptr_)), ptr_(dup.ptr_), limit_(dup.ptr_) {
-  memcpy(buf_.get(), dup.buf_.get(), dup.ptr_);
+  memcpy_s(buf_.get(), dup.ptr_, dup.buf_.get(), dup.ptr_);
 }
 
 InfoPack::~InfoPack() { buf_.reset(nullptr); }
@@ -367,7 +367,7 @@ class Buffer2Id {
   ~Buffer2Id() = default;
   size_t Insert(uint8_t *buf, size_t sz) {
     std::vector<uint8_t> vec(sz);
-    memcpy(vec.data(), buf, sz);
+    memcpy_s(vec.data(), sz, buf, sz);
     auto it = map_.find(vec);
     if (it == map_.end()) {
       size_t ret = map_.size();
@@ -392,7 +392,7 @@ void InfoPack::AllocIfNeed(size_t need) {
       limit_ += kInitLimit;
     } while (limit_ < need + ptr_);
     auto buf = std::make_unique<uint8_t[]>(limit_);
-    memcpy(buf.get(), buf_.get(), ptr_ * sizeof(uint8_t));
+    memcpy_s(buf.get(), limit_, buf_.get(), ptr_ * sizeof(uint8_t));
     buf_.reset(buf.release());
   }
 }

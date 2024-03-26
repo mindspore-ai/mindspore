@@ -22,7 +22,7 @@
 namespace mindspore {
 namespace pijit {
 // the number of bits per byte
-constexpr int bits_per_byte = 8;
+constexpr unsigned int bits_per_byte = 8;
 
 #ifndef MAKE_BYTE_CODE_UNIT
 #ifdef WORDS_BIGENDIAN
@@ -74,7 +74,7 @@ void ByteCodeGenerator::Visit_(const ir::ParameterPtr &node) {
   const std::string name = node->GetName();
   MS_EXCEPTION_IF_CHECK_FAIL((co_var_names_map_.find(name) == co_var_names_map_.end()),
                              "Duplicate parameter name " + name + ".");
-  co_var_names_map_[name] = co_var_names_.size();
+  co_var_names_map_[name] = static_cast<int>(co_var_names_.size());
   co_var_names_.append(py::str(name));
   ir::NodePtr default_value = node->GetDefaultValue();
   if (default_value != nullptr) {
@@ -183,12 +183,12 @@ void ByteCodeGenerator::Visit_(const ir::StoreNodePtr &node) {
 void ByteCodeGenerator::Visit_(const ir::JumpNodePtr &node) {
   ir::IRVisitor::Visit_(node);
   ir::OpCode op = node->GetOpCode();
-  int arg = node->GetRightArg()->GetOffset() * 2;
+  size_t arg = node->GetRightArg()->GetOffset() * 2;
   if (op == JUMP_FORWARD || op == FOR_ITER) {
     arg -= (node->GetOffset() + 1) * 2;
   }
   CheckInstrOffset(node);
-  GenerateInstr(node->GetOpCode(), arg);
+  GenerateInstr(node->GetOpCode(), static_cast<int>(arg));
   SetStartsLine(node);
 }
 
@@ -227,22 +227,22 @@ void ByteCodeGenerator::Visit_(const ir::LoadFieldNodePtr &node) {
 void ByteCodeGenerator::Visit_(const ir::BuildNodePtr &node) {
   VISIT_NODE_LIST(node->GetArgs())
   CheckInstrOffset(node);
-  int arg = node->GetArgsCnt();
+  size_t arg = node->GetArgsCnt();
   if (node->GetOpCode() == BUILD_CONST_KEY_MAP) {
     arg--;
   }
-  GenerateInstr(node->GetOpCode(), arg);
+  GenerateInstr(node->GetOpCode(), static_cast<int>(arg));
   SetStartsLine(node);
 }
 
 void ByteCodeGenerator::Visit_(const ir::CallNodePtr &node) {
   VISIT_NODE_LIST(node->GetArgs())
-  int arg = node->GetArgsCnt() - 1;
+  size_t arg = node->GetArgsCnt() - 1;
   if (node->GetOpCode() == CALL_FUNCTION_KW || node->GetOpCode() == CALL_FUNCTION_EX) {
     arg--;
   }
   CheckInstrOffset(node);
-  GenerateInstr(node->GetOpCode(), arg);
+  GenerateInstr(node->GetOpCode(), static_cast<int>(arg));
   SetStartsLine(node);
 }
 
@@ -263,11 +263,10 @@ int ByteCodeGenerator::GetValueIndex(const ir::ValuePtr &node) {
     return name_map->at(name);
   }
   auto values = scope_value_list_.at(scope);
+  (*name_map)[name] = static_cast<int>(values.first.size());
   if (values.first.is(values.second)) {
-    (*name_map)[name] = values.first.size();
     values.first.append(node->GetValue());
   } else {
-    (*name_map)[name] = values.first.size();
     auto obj = py::str(name);
     values.first.append(obj);
     if (scope == ir::kScopeClousre) {
@@ -285,13 +284,13 @@ void ByteCodeGenerator::CheckInstrOffset(const ir::NodePtr &node) {
     "The offset of " + node->GetNodeName() + "(%" + std::to_string(node->GetNodeId()) + ") is not expected.");
 }
 
-bool IsExtendedArg(int arg) { return (arg >> bits_per_byte) > 0; }
+bool IsExtendedArg(int arg) { return ((unsigned)arg >> bits_per_byte) > 0; }
 
 void ByteCodeGenerator::GenerateInstr(ir::OpCode op, int arg) {
   if (IsExtendedArg(arg)) {
-    int ext_arg = arg >> bits_per_byte;
+    int ext_arg = static_cast<int>(((unsigned)arg >> bits_per_byte));
     co_code_.push_back(MAKE_BYTE_CODE_UNIT(EXTENDED_ARG, ext_arg));
-    arg &= 0xff;
+    arg = static_cast<int>(((unsigned)arg & 0xff));
   }
   co_code_.push_back(MAKE_BYTE_CODE_UNIT(op, arg));
 }
@@ -314,7 +313,7 @@ void ByteCodeGenerator::SetStartsLine(const ir::NodePtr &node) {
   if (new_line_no == 0) {
     return;
   }
-  int dis = 0;
+  size_t dis = 0;
   int inc = new_line_no;
   if (co_lnotab_.empty()) {
     inc -= first_line_no_;
@@ -324,7 +323,7 @@ void ByteCodeGenerator::SetStartsLine(const ir::NodePtr &node) {
     inc -= last_starts_instr_->GetDebugInfo()->GetLineNo();
   }
   last_starts_instr_ = node;
-  co_lnotab_.push_back(dis);
+  co_lnotab_.push_back(static_cast<int>(dis));
   co_lnotab_.push_back(inc);
 }
 }  // namespace pijit

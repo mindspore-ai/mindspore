@@ -81,6 +81,7 @@ static const std::unordered_map<std::string, bool (GraphJitConfig::*)(PyObject *
   {"strict_mode_cells", &GraphJitConfig::AddPSJitStrictCells},
   {"pijit_forbidden", &GraphJitConfig::AddJitForbidden},
   {"pijit_constexpr", &GraphJitConfig::AddJitConstexpr},
+  {"relax_guard_func", &GraphJitConfig::AddJitRelaxGuard},
 };
 
 GraphJitConfig::GraphJitConfig() {
@@ -314,6 +315,47 @@ bool GraphJitConfig::CheckJitConstexpr(const py::object &code) {
     return false;
   }
   PyObject *set = PyDict_GetItemString(map.ptr(), "<constexpr>");
+  if (set == nullptr) {
+    return false;
+  }
+  int res = PySet_Contains(set, code.ptr());
+  if (res < 0) {
+    PyErr_Clear();
+    return false;
+  }
+  return res;
+}
+
+bool GraphJitConfig::AddJitRelaxGuard(PyObject *list) {
+  py::set relax_guard_callable;
+  for (const py::handle &i : py::iter(list)) {
+    if (!PyCallable_Check(i.ptr())) {
+      MS_LOG(WARNING) << "config pijit_constexpr, all values must be function";
+      return false;
+    }
+    relax_guard_callable.add(i);
+  }
+  py::object map = GetObjectsMap();
+  if (map.ptr() == nullptr) {
+    return false;
+  }
+  PyDict_SetItemString(map.ptr(), "<relax guard func>", relax_guard_callable.ptr());
+  return true;
+}
+
+bool GraphJitConfig::CheckJitRelaxGuard(const py::object &code) {
+  if (code.ptr() == nullptr || !PyCallable_Check(code.ptr())) {
+    return false;
+  }
+  PyTypeObject *tp = Py_TYPE(code.ptr());
+  if (tp->tp_hash == nullptr || tp->tp_hash == PyObject_HashNotImplemented) {
+    return false;
+  }
+  py::object map = GetObjectsMap();
+  if (map.ptr() == nullptr) {
+    return false;
+  }
+  PyObject *set = PyDict_GetItemString(map.ptr(), "<relax guard func>");
   if (set == nullptr) {
     return false;
   }

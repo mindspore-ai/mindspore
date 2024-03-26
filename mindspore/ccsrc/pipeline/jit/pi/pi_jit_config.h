@@ -96,6 +96,7 @@ class GraphJitConfig {
   bool ShouldAutoJit(PyFrameObject *f);
   bool CheckJitForbidden(const py::object &callable);
   bool CheckJitConstexpr(const py::object &code);
+  bool CheckJitRelaxGuard(const py::object &code);
 
   void AddAllowedInlineModules(const std::string &module_name);
   void AddPSJitStrictCells(const std::string &type_str);
@@ -105,6 +106,7 @@ class GraphJitConfig {
   bool AddAllowedInlineModules(PyObject *list);
   bool AddPSJitStrictCells(PyObject *list);
   bool SetAutoJitFilter(PyObject *callable);
+  bool AddJitRelaxGuard(PyObject *list);
 
   template <Options o>
   bool SetBool(PyObject *value) {
