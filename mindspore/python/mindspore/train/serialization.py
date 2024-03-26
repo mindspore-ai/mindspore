@@ -2841,7 +2841,7 @@ def _merge_and_split(sliced_params, train_strategy, predict_strategy):
     param_name = merged_param.name
     tensor_layout = predict_strategy[param_name]
     rank = get_rank()
-    split_tensor = _load_tensor(merged_param.data, tensor_layout[0], tensor_layout[1], rank)
+    split_tensor = _load_tensor(merged_param.data, tensor_layout[0], tensor_layout[1], rank_id=rank)
     requires_grad = merged_param.requires_grad
     layerwise_parallel = merged_param.layerwise_parallel
     if merged_param.data.dtype == mstype.bfloat16:

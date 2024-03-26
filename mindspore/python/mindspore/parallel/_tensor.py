@@ -199,7 +199,7 @@ def _get_slice_index(dev_mat, tensor_map, opt_shard_group):
     return tensor_slice_index
 
 
-def _load_tensor(tensor, dev_mat, tensor_map, full_shape, rank_id=-1):
+def _load_tensor(tensor, dev_mat, tensor_map, full_shape=None, rank_id=-1):
     """
     Get the tensor slice of the local device by the device matrix and the tensor map
 
@@ -229,7 +229,8 @@ def _load_tensor(tensor, dev_mat, tensor_map, full_shape, rank_id=-1):
         cpu_cast = Cast().set_device("CPU")
         tensor = cpu_cast(tensor, mstype.float32)
     np_tensor = tensor.asnumpy()
-    np_tensor = np_tensor.reshape(full_shape)
+    if full_shape:
+        np_tensor = np_tensor.reshape(full_shape)
     np_tensor_list = _chunk_tensor_by_strategy(np_tensor, tensor_strategy)
     np_tensor_slice = np_tensor_list[int(tensor_slice_index)]
     return np_tensor_slice
