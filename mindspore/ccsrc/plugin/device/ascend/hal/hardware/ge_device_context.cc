@@ -282,6 +282,8 @@ void GeDeviceContext::SetAscendConfig(const std::shared_ptr<MsContext> &ms_conte
     topo_sorting_mode = "2";
   }
   (*ge_options)["ge.topoSortingMode"] = topo_sorting_mode;
+  // disable RemoveSameConstPass, it will be caused the communication failed on multi-card.
+  (*ge_options)["ge.disableOptimizations"] = "RemoveSameConstPass";
 
   (*ge_options)["ge.exec.memoryOptimizationPolicy"] = "MemoryPriority";
   MS_LOG(INFO) << "Set GE topo mode to memory-priority.";
