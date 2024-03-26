@@ -180,7 +180,10 @@ const char *MSDeviceInfoGetProvider(const MSDeviceInfoHandle device_info) {
     MS_LOG(ERROR) << "malloc provider is null.";
     return nullptr;
   }
-  memcpy(provider, impl->GetProvider().c_str(), impl->GetProvider().size() + 1);
+  for (size_t i = 0; i < impl->GetProvider().size(); i++) {
+    provider[i] = impl->GetProvider()[i];
+  }
+  provider[impl->GetProvider().size()] = '\0';
   return provider;
 }
 
@@ -204,7 +207,10 @@ const char *MSDeviceInfoGetProviderDevice(const MSDeviceInfoHandle device_info) 
     MS_LOG(ERROR) << "malloc provider_device is null.";
     return nullptr;
   }
-  memcpy(provider_device, impl->GetProviderDevice().c_str(), impl->GetProviderDevice().size() + 1);
+  for (size_t i = 0; i < impl->GetProviderDevice().size(); i++) {
+    provider_device[i] = impl->GetProviderDevice()[i];
+  }
+  provider_device[impl->GetProviderDevice().size()] = '\0';
   return provider_device;
 }
 
