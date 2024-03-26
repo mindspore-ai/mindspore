@@ -31,6 +31,7 @@ import time
 
 from mindspore import log as logger
 from mindspore._c_expression import _encrypt, _decrypt_data
+from .shardutils import MIN_FILE_SIZE
 
 
 __all__ = ['set_enc_key',
@@ -342,9 +343,12 @@ def calculate_file_hash(filename, whole=True):
         file_size = os.path.getsize(filename)
     else:
         len_hash_offset = os.path.getsize(filename) - LEN_HASH_WITH_END_FLAG
-        if f.seek(len_hash_offset) == -1:
+        try:
+            f.seek(len_hash_offset)
+        except Exception as e:  # pylint: disable=W0703
             f.close()
-            raise RuntimeError("Seek the file: {} to position: {} failed.".format(filename, len_hash_offset))
+            raise RuntimeError("Seek the file: {} to position: {} failed. Error: {}"
+                               .format(filename, len_hash_offset, str(e)))
 
         len_hash = int.from_bytes(f.read(4), byteorder='big')  # length of hash value is 4 bytes
         file_size = os.path.getsize(filename) - LEN_HASH_WITH_END_FLAG - len_hash
@@ -363,9 +367,12 @@ def calculate_file_hash(filename, whole=True):
             # have read the entire file
             break
 
-        if f.seek(current_offset) == -1:
+        try:
+            f.seek(current_offset)
+        except Exception as e:  # pylint: disable=W0703
             f.close()
-            raise RuntimeError("Seek the file: {} to position: {} failed.".format(filename, current_offset))
+            raise RuntimeError("Seek the file: {} to position: {} failed. Error: {}"
+                               .format(filename, current_offset, str(e)))
 
         data = f.read(read_size)
         if callable(m):
@@ -434,9 +441,11 @@ def get_hash_end_flag(filename):
     f = open(filename, 'rb')
 
     # get the hash end flag which is HASH_END_FLAG
-    if f.seek(offset) == -1:
+    try:
+        f.seek(offset)
+    except Exception as e:  # pylint: disable=W0703
         f.close()
-        raise RuntimeError("Seek the file: {} to position: {} failed.".format(filename, offset))
+        raise RuntimeError("Seek the file: {} to position: {} failed. Error: {}".format(filename, offset, str(e)))
 
     data = f.read(len(HASH_END_FLAG))
     f.close()
@@ -460,17 +469,22 @@ def get_hash_value(filename):
     f = open(filename, 'rb')
 
     # seek the position for the length of hash value
-    if f.seek(offset) == -1:
+    try:
+        f.seek(offset)
+    except Exception as e:  # pylint: disable=W0703
         f.close()
-        raise RuntimeError("Seek the file: {} to position: {} failed.".format(filename, offset))
+        raise RuntimeError("Seek the file: {} to position: {} failed. Error: {}".format(filename, offset, str(e)))
 
     len_hash = int.from_bytes(f.read(4), byteorder='big')  # length of hash value is 4 bytes
     hash_value_offset = file_size - len_hash - LEN_HASH_WITH_END_FLAG
 
     # seek the position for the hash value
-    if f.seek(hash_value_offset) == -1:
+    try:
+        f.seek(hash_value_offset)
+    except Exception as e:  # pylint: disable=W0703
         f.close()
-        raise RuntimeError("Seek the file: {} to position: {} failed.".format(filename, hash_value_offset))
+        raise RuntimeError("Seek the file: {} to position: {} failed. Error: {}"
+                           .format(filename, hash_value_offset, str(e)))
 
     # read the hash value
     data = f.read(len_hash)
@@ -562,10 +576,13 @@ def encrypt(filename, enc_key, enc_mode):
                     # have read the entire file
                     break
 
-                if f.seek(current_offset) == -1:
+                try:
+                    f.seek(current_offset)
+                except Exception as e:  # pylint: disable=W0703
                     f.close()
                     f_encrypt.close()
-                    raise RuntimeError("Seek the file: {} to position: {} failed.".format(filename, current_offset))
+                    raise RuntimeError("Seek the file: {} to position: {} failed. Error: {}"
+                                       .format(filename, current_offset, str(e)))
 
                 data = f.read(read_size)
                 encode_data = _encrypt(data, len(data), enc_key, len(enc_key), enc_mode)
@@ -626,9 +643,11 @@ def _get_encrypt_end_flag(filename):
     f = open(filename, 'rb')
 
     # get the encrypt end flag which is 'ENCRYPT'
-    if f.seek(offset) == -1:
+    try:
+        f.seek(offset)
+    except Exception as e:  # pylint: disable=W0703
         f.close()
-        raise RuntimeError("Seek the file: {} to position: {} failed.".format(filename, offset))
+        raise RuntimeError("Seek the file: {} to position: {} failed. Error: {}".format(filename, offset, str(e)))
 
     data = f.read(len(ENCRYPT_END_FLAG))
     f.close()
@@ -651,9 +670,11 @@ def _get_enc_mode_from_file(filename):
     f = open(filename, 'rb')
 
     # get the encrypt end flag which is 'ENCRYPT'
-    if f.seek(offset) == -1:
+    try:
+        f.seek(offset)
+    except Exception as e:  # pylint: disable=W0703
         f.close()
-        raise RuntimeError("Seek the file: {} to position: {} failed.".format(filename, offset))
+        raise RuntimeError("Seek the file: {} to position: {} failed. Error: {}".format(filename, offset, str(e)))
 
     # read the enc_mode str which length is 7
     data = f.read(7)
@@ -669,6 +690,13 @@ def decrypt(filename, enc_key, dec_mode):
 
     if not os.path.isfile(filename):
         raise RuntimeError("The input: {} should be a regular file.".format(filename))
+
+    whole_file_size = os.path.getsize(filename)
+    if whole_file_size < MIN_FILE_SIZE:
+        raise RuntimeError("Invalid file, the size of mindrecord file: " + str(whole_file_size) +
+                           " is smaller than the lower limit: " + str(MIN_FILE_SIZE) +
+                           ".\n Please check file path: " + filename +
+                           " and use 'FileWriter' to generate valid mindrecord files.")
 
     global DECRYPT_DIRECTORY_LIST
 
@@ -732,9 +760,12 @@ def decrypt(filename, enc_key, dec_mode):
             while length != 0:
                 # current_offset is the encrypted data
                 current_offset += 4
-                if f.seek(current_offset) == -1:
+                try:
+                    f.seek(current_offset)
+                except Exception as e:  # pylint: disable=W0703
                     f.close()
-                    raise RuntimeError("Seek the file: {} to position: {} failed.".format(filename, current_offset))
+                    raise RuntimeError("Seek the file: {} to position: {} failed. Error: {}"
+                                       .format(filename, current_offset, str(e)))
 
                 data = f.read(length)
                 decode_data = _decrypt_data(data, len(data), enc_key, len(enc_key), dec_mode)
@@ -748,9 +779,12 @@ def decrypt(filename, enc_key, dec_mode):
 
                 # current_offset is the length of next encrypted data block
                 current_offset += length
-                if f.seek(current_offset) == -1:
+                try:
+                    f.seek(current_offset)
+                except Exception as e:  # pylint: disable=W0703
                     f.close()
-                    raise RuntimeError("Seek the file: {} to position: {} failed.".format(filename, current_offset))
+                    raise RuntimeError("Seek the file: {} to position: {} failed. Error: {}"
+                                       .format(filename, current_offset, str(e)))
 
                 length = int().from_bytes(f.read(4), byteorder='big', signed=True)
     except Exception as e:

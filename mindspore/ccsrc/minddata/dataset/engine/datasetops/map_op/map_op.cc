@@ -267,8 +267,8 @@ Status MapOp::WorkerEntry(int32_t worker_id) {
     if (ret != APP_ERR_OK) {
       RETURN_STATUS_UNEXPECTED("Get Soc Version failed.");
     }
-    if (soc_version.find("Ascend910B") == std::string::npos) {
-      std::string err_msg = "The SoC: " + soc_version + " is not Ascend910B";
+    if (soc_version.find("Ascend910B") == std::string::npos && soc_version.find("Ascend910C") == std::string::npos) {
+      std::string err_msg = "The SoC: " + soc_version + " is not Ascend910B / Ascend910C";
       RETURN_STATUS_UNEXPECTED(err_msg);
     }
 
