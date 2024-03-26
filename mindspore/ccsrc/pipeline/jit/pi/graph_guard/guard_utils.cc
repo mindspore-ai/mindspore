@@ -182,8 +182,7 @@ class IntData : public ItemData {
   }
 
   bool operator==(const ItemData &obj) const override {
-    return ItemData::operator==(obj) &&
-           (!specialized_ || ((reinterpret_cast<const IntData &>(obj)).intVar_ == intVar_));
+    return ItemData::operator==(obj) && (!specialized_ || ((static_cast<const IntData &>(obj)).intVar_ == intVar_));
   }
 
   std::string ToString() override { return DESC_STRING(intVar_) + DESC_END; }
@@ -201,7 +200,7 @@ class FloatData : public ItemData {
   }
 
   bool operator==(const ItemData &obj) const override {
-    return ItemData::operator==(obj) && (!specialized_ || ((const FloatData &)obj).floatVar_ == floatVar_);
+    return ItemData::operator==(obj) && (!specialized_ || (static_cast<const FloatData &>(obj)).floatVar_ == floatVar_);
   }
 
   std::string ToString() override { return DESC_STRING(floatVar_) + DESC_END; }
@@ -219,7 +218,7 @@ class BoolData : public ItemData {
   }
 
   bool operator==(const ItemData &obj) const override {
-    return ItemData::operator==(obj) && (!specialized_ || ((const BoolData &)obj).boolVar_ == boolVar_);
+    return ItemData::operator==(obj) && (!specialized_ || (static_cast<const BoolData &>(obj)).boolVar_ == boolVar_);
   }
 
   std::string ToString() override { return DESC_STRING(boolVar_) + DESC_END; }
@@ -236,9 +235,9 @@ class BytesData : public ItemData {
     if (needSpecialize) {
       buf_ = std::make_unique<uint8_t[]>(len_);
       if (buf_ != nullptr) {
-        char *pBuf = PyBytes_AS_STRING(obj);
+        char *pBuf = PyBytes_AS_STRING(reinterpret_cast<PyBytesObject *>(obj));
         if (pBuf != nullptr) {
-          memcpy(buf_.get(), pBuf, len_);
+          memcpy_s(buf_.get(), len_, reinterpret_cast<uint8_t *>(pBuf), len_);
         } else {
           buf_.release();
         }
@@ -252,7 +251,7 @@ class BytesData : public ItemData {
 
   bool operator==(const ItemData &obj) const override {
     if (ItemData::operator==(obj)) {
-      const BytesData &other = (const BytesData &)obj;
+      const BytesData &other = static_cast<const BytesData &>(obj);
       return len_ == other.len_ &&
              ((specialized_ && (len_ == 0 || (buf_ != nullptr && other.buf_ != nullptr &&
                                               memcmp(buf_.get(), other.buf_.get(), len_) == 0))) ||
@@ -283,8 +282,7 @@ class StringData : public ItemData {
 
   bool operator==(const ItemData &obj) const override {
     return ItemData::operator==(obj) &&
-           ((specialized_ && (reinterpret_cast<const StringData &>(obj)).strVal_.compare(strVal_) == 0) ||
-            (!specialized_));
+           ((specialized_ && (static_cast<const StringData &>(obj)).strVal_.compare(strVal_) == 0) || (!specialized_));
   }
 
   std::string ToString() override { return DESC(strVal_) + DESC_END; }
@@ -299,85 +297,22 @@ class ListData : public ItemData {
   ListData(PyObject *obj, bool needSpecialize, int recurseDepth)
       : ItemData(ItemType::PyList, needSpecialize, recurseDepth) {
     if (PyList_Check(obj)) {
-      tp_ = ItemType::PyList;
-      for (Py_ssize_t i = 0; i < PyList_Size(obj); ++i) {
-        PyObject *item = PyList_GetItem(obj, i);
-        if (item != NULL) {
-          if (recurseDepth > 0 || needSpecialize) {
-            listVar_.push_back(CreateItem(item, needSpecialize, recurseDepth));
-          } else {
-            listVar_.push_back(CreateItem(reinterpret_cast<PyObject *>(Py_TYPE(item)), false, false));
-          }
-        }
-      }
+      InitList(obj, needSpecialize, recurseDepth);
     } else if (PyTuple_Check(obj)) {
-      tp_ = ItemType::PyTuple;
-      for (Py_ssize_t i = 0; i < PyTuple_GET_SIZE(obj); ++i) {
-        PyObject *item = PyTuple_GET_ITEM(obj, i);
-        if (item != NULL) {
-          if (recurseDepth > 0 || needSpecialize) {
-            listVar_.push_back(CreateItem(item, needSpecialize, recurseDepth));
-          } else {
-            listVar_.push_back(CreateItem(reinterpret_cast<PyObject *>(Py_TYPE(item)), false, false));
-          }
-        }
-      }
+      InitTuple(obj, needSpecialize, recurseDepth);
     } else if (PySet_Check(obj)) {
-      tp_ = ItemType::PySet;
-      Py_ssize_t pos = 0;
-      PyObject *item;
-      Py_hash_t hash;
-      while (_PySet_NextEntry(obj, &pos, &item, &hash)) {
-        if (recurseDepth > 0 || needSpecialize) {
-          listVar_.push_back(CreateItem(item, needSpecialize, recurseDepth));
-        } else {
-          listVar_.push_back(CreateItem(reinterpret_cast<PyObject *>(Py_TYPE(item)), false, false));
-        }
-      }
-      inOrder_ = false;
+      InitSet(obj, needSpecialize, recurseDepth);
     } else if (PyFrozenSet_Check(obj)) {
-      tp_ = ItemType::PyFrozenSet;
-      Py_ssize_t pos = 0;
-      PyObject *item;
-      Py_hash_t hash;
-      while (_PySet_NextEntry(obj, &pos, &item, &hash)) {
-        if (recurseDepth > 0 || needSpecialize) {
-          listVar_.push_back(CreateItem(item, needSpecialize, recurseDepth));
-        } else {
-          listVar_.push_back(CreateItem(reinterpret_cast<PyObject *>(Py_TYPE(item)), false, false));
-        }
-      }
-      inOrder_ = false;
+      InitFrozenSet(obj, needSpecialize, recurseDepth);
     }
   }
 
   bool operator==(const ItemData &obj) const override {
-    const ListData &list = (const ListData &)obj;
-    if (ItemData::operator==(obj) && list.listVar_.size() == listVar_.size()) {
-      if (!inOrder_) {
-        std::vector<ItemDataPtr> listCpy = list.listVar_;
-        for (size_t i = 0, j; i < listVar_.size(); ++i) {
-          size_t lenList = listCpy.size();
-          for (j = 0; j < lenList; ++j) {
-            if (*(listCpy[j]) == *(listVar_[i])) {
-              listCpy.erase(listCpy.begin() + j);
-              break;
-            }
-          }
-          if (j == lenList) {
-            return false;
-          }
-        }
-      } else {
-        for (size_t i = 0; i < listVar_.size(); ++i) {
-          if (*(list.listVar_[i]) == *(listVar_[i])) {
-            continue;
-          } else {
-            return false;
-          }
-        }
+    if (ItemData::operator==(obj)) {
+      const ListData &list = static_cast<const ListData &>(obj);
+      if (list.listVar_.size() == listVar_.size()) {
+        return CompareList(list);
       }
-      return true;
     }
     return false;
   }
@@ -419,6 +354,86 @@ class ListData : public ItemData {
       (*info) << v->Info();
     }
   }
+  bool CompareList(const ListData &list) const {
+    if (!inOrder_) {
+      std::vector<ItemDataPtr> listCpy = list.listVar_;
+      for (size_t i = 0, j; i < listVar_.size(); ++i) {
+        size_t lenList = listCpy.size();
+        for (j = 0; j < lenList; ++j) {
+          if (*(listCpy[j]) == *(listVar_[i])) {
+            listCpy.erase(listCpy.begin() + j);
+            break;
+          }
+        }
+        if (j == lenList) {
+          return false;
+        }
+      }
+    } else {
+      for (size_t i = 0; i < listVar_.size(); ++i) {
+        if (*(list.listVar_[i]) == *(listVar_[i])) {
+          continue;
+        } else {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+  void InitList(PyObject *obj, bool needSpecialize, int recurseDepth) {
+    tp_ = ItemType::PyList;
+    for (Py_ssize_t i = 0; i < PyList_Size(obj); ++i) {
+      PyObject *item = PyList_GetItem(obj, i);
+      if (item != NULL) {
+        if (recurseDepth > 0 || needSpecialize) {
+          listVar_.push_back(CreateItem(item, needSpecialize, recurseDepth));
+        } else {
+          listVar_.push_back(CreateItem(reinterpret_cast<PyObject *>(Py_TYPE(item)), false, false));
+        }
+      }
+    }
+  }
+  void InitTuple(PyObject *obj, bool needSpecialize, int recurseDepth) {
+    tp_ = ItemType::PyTuple;
+    for (Py_ssize_t i = 0; i < PyTuple_GET_SIZE(obj); ++i) {
+      PyObject *item = PyTuple_GET_ITEM(obj, i);
+      if (item != NULL) {
+        if (recurseDepth > 0 || needSpecialize) {
+          listVar_.push_back(CreateItem(item, needSpecialize, recurseDepth));
+        } else {
+          listVar_.push_back(CreateItem(reinterpret_cast<PyObject *>(Py_TYPE(item)), false, false));
+        }
+      }
+    }
+  }
+  void InitSet(PyObject *obj, bool needSpecialize, int recurseDepth) {
+    tp_ = ItemType::PySet;
+    Py_ssize_t pos = 0;
+    PyObject *item;
+    Py_hash_t hash;
+    while (_PySet_NextEntry(obj, &pos, &item, &hash)) {
+      if (recurseDepth > 0 || needSpecialize) {
+        listVar_.push_back(CreateItem(item, needSpecialize, recurseDepth));
+      } else {
+        listVar_.push_back(CreateItem(reinterpret_cast<PyObject *>(Py_TYPE(item)), false, false));
+      }
+    }
+    inOrder_ = false;
+  }
+  void InitFrozenSet(PyObject *obj, bool needSpecialize, int recurseDepth) {
+    tp_ = ItemType::PyFrozenSet;
+    Py_ssize_t pos = 0;
+    PyObject *item;
+    Py_hash_t hash;
+    while (_PySet_NextEntry(obj, &pos, &item, &hash)) {
+      if (recurseDepth > 0 || needSpecialize) {
+        listVar_.push_back(CreateItem(item, needSpecialize, recurseDepth));
+      } else {
+        listVar_.push_back(CreateItem(reinterpret_cast<PyObject *>(Py_TYPE(item)), false, false));
+      }
+    }
+    inOrder_ = false;
+  }
   std::vector<ItemDataPtr> listVar_;
   bool inOrder_ = true;
 };
@@ -433,7 +448,8 @@ class ComplexData : public ItemData {
   }
 
   bool operator==(const ItemData &obj) const override {
-    return ItemData::operator==(obj) && (!specialized_ || ((const ComplexData &)obj).complexVar_ == complexVar_);
+    return ItemData::operator==(obj) &&
+           (!specialized_ || (static_cast<const ComplexData &>(obj)).complexVar_ == complexVar_);
   }
 
   std::string ToString() override {
@@ -460,7 +476,7 @@ class SliceData : public ItemData {
 
   bool operator==(const ItemData &obj) const override {
     if (ItemData::operator==(obj)) {
-      const SliceData &other = (const SliceData &)obj;
+      const SliceData &other = static_cast<const SliceData &>(obj);
       return (!specialized_ || (other.sliceVar_[0] == sliceVar_[0] && other.sliceVar_[1] == sliceVar_[1] &&
                                 other.sliceVar_[2] == sliceVar_[2]));
     }
@@ -536,37 +552,13 @@ class DictData : public ItemData {
 
   bool operator==(const ItemData &obj) const override {
     if (ItemData::operator==(obj)) {
-      const DictData &other = (const DictData &)obj;
+      const DictData &other = static_cast<const DictData &>(obj);
       if (dt_ != other.dt_) {
         return false;
       }
       if ((dt_ == DictType::DtValues || other.listK_.size() == listK_.size()) &&
           (dt_ == DictType::DtKeys || other.listV_.size() == listV_.size())) {
-        std::vector<ItemDataPtr> listCpK = other.listK_;
-        std::vector<ItemDataPtr> listCpV = other.listV_;
-        size_t listSize = listK_.size();
-        if (listSize < listV_.size()) {
-          listSize = listV_.size();
-        }
-        for (size_t i = 0, j = 0; i < listSize; ++i) {
-          size_t cpListSize = dt_ == DictType::DtValues ? listCpV.size() : listCpK.size();
-          for (; j < cpListSize; ++j) {
-            if ((dt_ == DictType::DtValues || *(listK_[i]) == *(listCpK[j])) &&
-                (dt_ == DictType::DtKeys || *(listV_[i]) == *(listCpV[j]))) {
-              if (dt_ != DictType::DtValues) {
-                listCpK.erase(listCpK.begin() + j);
-              }
-              if (dt_ != DictType::DtKeys) {
-                listCpV.erase(listCpV.begin() + j);
-              }
-              break;
-            }
-          }
-          if (j == cpListSize) {
-            return false;
-          }
-        }
-        return true;
+        return CompareKV(other);
       }
     }
     return false;
@@ -606,6 +598,33 @@ class DictData : public ItemData {
       (*info) << i->Info();
     }
   }
+  bool CompareKV(const DictData &other) const {
+    std::vector<ItemDataPtr> listCpK = other.listK_;
+    std::vector<ItemDataPtr> listCpV = other.listV_;
+    size_t listSize = listK_.size();
+    if (listSize < listV_.size()) {
+      listSize = listV_.size();
+    }
+    for (size_t i = 0, j = 0; i < listSize; ++i) {
+      size_t cpListSize = dt_ == DictType::DtValues ? listCpV.size() : listCpK.size();
+      for (; j < cpListSize; ++j) {
+        if ((dt_ == DictType::DtValues || *(listK_[i]) == *(listCpK[j])) &&
+            (dt_ == DictType::DtKeys || *(listV_[i]) == *(listCpV[j]))) {
+          if (dt_ != DictType::DtValues) {
+            listCpK.erase(listCpK.begin() + j);
+          }
+          if (dt_ != DictType::DtKeys) {
+            listCpV.erase(listCpV.begin() + j);
+          }
+          break;
+        }
+      }
+      if (j == cpListSize) {
+        return false;
+      }
+    }
+    return true;
+  }
   DictType dt_;
   std::vector<ItemDataPtr> listK_;
   std::vector<ItemDataPtr> listV_;
@@ -636,7 +655,7 @@ class FunctionData : public ItemData {
 
   bool operator==(const ItemData &obj) const override {
     if (ItemData::operator==(obj)) {
-      const FunctionData &other = (const FunctionData &)obj;
+      const FunctionData &other = static_cast<const FunctionData &>(obj);
       return code_ == other.code_ && *defaults_ == *(other.defaults_) && *kwdefaults_ == *(other.kwdefaults_) &&
              *closure_ == *(other.closure_);
     }
@@ -678,7 +697,7 @@ class MethodData : public ItemData {
 
   bool operator==(const ItemData &obj) const override {
     if (ItemData::operator==(obj)) {
-      const MethodData &other = (const MethodData &)obj;
+      const MethodData &other = static_cast<const MethodData &>(obj);
       return *refFunc_ == *(other.refFunc_) && *refSelf_ == *(other.refSelf_);
     }
     return false;
@@ -712,7 +731,7 @@ class InstanceMethodData : public ItemData {
 
   bool operator==(const ItemData &obj) const override {
     if (ItemData::operator==(obj)) {
-      const InstanceMethodData &other = (const InstanceMethodData &)obj;
+      const InstanceMethodData &other = static_cast<const InstanceMethodData &>(obj);
       return *refFunc_ == *(other.refFunc_);
     }
     return false;
@@ -742,7 +761,7 @@ class TypeData : public ItemData {
 
   bool operator==(const ItemData &obj) const override {
     if (ItemData::operator==(obj)) {
-      PyTypeObject *otherType = ((const TypeData &)obj).refType_;
+      PyTypeObject *otherType = (static_cast<const TypeData &>(obj)).refType_;
       bool ret = refType_ == otherType;
       if (!ret) {
         ret = PyType_IsSubtype(refType_, otherType) || PyType_IsSubtype(otherType, refType_);
@@ -780,7 +799,7 @@ class NumpyData : public ItemData {
       if (needSpecialize) {
         buf_ = std::make_unique<uint8_t[]>(nbytes_);
         if (buf_ != NULL) {
-          memcpy(buf_.get(), arr.data(), nbytes_);
+          memcpy_s(buf_.get(), nbytes_, reinterpret_cast<uint8_t *>(arr.mutable_data()), nbytes_);
         }
       } else {
         buf_.reset(nullptr);
@@ -794,7 +813,7 @@ class NumpyData : public ItemData {
 
   bool operator==(const ItemData &obj) const override {
     if (ItemData::operator==(obj)) {
-      const NumpyData &other = (const NumpyData &)obj;
+      const NumpyData &other = static_cast<const NumpyData &>(obj);
       return dtype_ == other.dtype_ && size_ == other.size_ && ndim_ == other.ndim_ && nbytes_ == other.nbytes_ &&
              shape_ == other.shape_ && strides_ == other.strides_ &&
              (!specialized_ ||
@@ -837,7 +856,7 @@ class TensorTypeData : public ItemData {
   }
 
   bool operator==(const ItemData &obj) const override {
-    return ItemData::operator==(obj) && (!specialized_ || *(((const TensorTypeData &)obj).tpp_) == *tpp_);
+    return ItemData::operator==(obj) && (!specialized_ || *((static_cast<const TensorTypeData &>(obj)).tpp_) == *tpp_);
   }
 
   std::string ToString() override {
@@ -864,7 +883,7 @@ class ParamInfoData : public ItemData {
       if (!specialized_) {
         return true;
       }
-      const ParamInfoData &other = (const ParamInfoData &)obj;
+      const ParamInfoData &other = static_cast<const ParamInfoData &>(obj);
       return Equal(param_, other.param_);
     }
     return false;
@@ -983,7 +1002,7 @@ class MetaTensorData : public ItemData {
 
   bool operator==(const ItemData &obj) const override {
     if (ItemData::operator==(obj)) {
-      const MetaTensorData &other = (const MetaTensorData &)obj;
+      const MetaTensorData &other = static_cast<const MetaTensorData &>(obj);
       bool ret;
       if (is_stubtensor_ || other.is_stubtensor_) {
         ret = CheckShape(shape_, other.shape_) && CheckDataType(other);
@@ -1089,7 +1108,7 @@ class MetaTensorData : public ItemData {
     ParamInfoData::SubInfo(info, param_);
   }
 
-  mindspore::TypeId tid_;
+  mindspore::TypeId tid_ = TypeId::kTypeUnknown;
   ShapeVector shape_;
   std::string format_;
   std::string host_format_;
@@ -1244,14 +1263,14 @@ class TensorData : public MetaTensorData {
     if (specialized_) {
       tensor_ptr->data_sync(true);
       auto data = tensor_ptr->data_ptr();
-      data_len_ = data->nbytes();
+      data_len_ = size_t(data->nbytes());
       data_ptr_ = std::make_unique<uint8_t[]>(data_len_);
       if (data_ptr_ != nullptr) {
-        memcpy(data_ptr_.get(), data->data(), data_len_);
+        memcpy_s(data_ptr_.get(), data_len_, reinterpret_cast<uint8_t *>(data->data()), data_len_);
       }
     } else {
       data_ptr_.reset(nullptr);
-      data_len_ = tensor_ptr->data_ptr()->nbytes();
+      data_len_ = size_t(tensor_ptr->data_ptr()->nbytes());
     }
   }
 
@@ -1395,7 +1414,7 @@ class RowTensorData : public ItemData {
 
   bool operator==(const ItemData &obj) const override {
     if (ItemData::operator==(obj)) {
-      const RowTensorData &other = (const RowTensorData &)obj;
+      const RowTensorData &other = static_cast<const RowTensorData &>(obj);
       return other.data_type_ == data_type_ && other.shape_ == shape_ &&
              Equal(indices_, other.indices_, recurseDepth_) && Equal(values_, other.values_, recurseDepth_);
     }
@@ -1429,7 +1448,7 @@ class COOTensorData : public ItemData {
 
   bool operator==(const ItemData &obj) const override {
     if (ItemData::operator==(obj)) {
-      const COOTensorData &other = (const COOTensorData &)obj;
+      const COOTensorData &other = static_cast<const COOTensorData &>(obj);
       return other.data_type_ == data_type_ && other.shape_ == shape_ &&
              Equal(indices_, other.indices_, recurseDepth_) && Equal(values_, other.values_, recurseDepth_);
     }
@@ -1464,7 +1483,7 @@ class CSRTensorData : public ItemData {
 
   bool operator==(const ItemData &obj) const override {
     if (ItemData::operator==(obj)) {
-      const CSRTensorData &other = (const CSRTensorData &)obj;
+      const CSRTensorData &other = static_cast<const CSRTensorData &>(obj);
       return other.data_type_ == data_type_ && other.shape_ == shape_ &&
              Equal(indices_, other.indices_, recurseDepth_) && Equal(values_, other.values_, recurseDepth_) &&
              Equal(indptr_, other.indptr_, recurseDepth_);
@@ -1502,7 +1521,7 @@ class TensorDataData : public ItemData {
     if (specialized_) {
       data_ptr_ = std::make_unique<uint8_t[]>(nbytes_);
       if (data_ptr_ != nullptr) {
-        memcpy(data_ptr_.get(), data->data(), nbytes_);
+        memcpy_s(data_ptr_.get(), nbytes_, reinterpret_cast<uint8_t *>(data->data()), nbytes_);
       }
     } else {
       data_ptr_.reset(nullptr);
@@ -1513,7 +1532,7 @@ class TensorDataData : public ItemData {
 
   bool operator==(const ItemData &obj) const override {
     if (ItemData::operator==(obj)) {
-      const TensorDataData &other = (const TensorDataData &)obj;
+      const TensorDataData &other = static_cast<const TensorDataData &>(obj);
       if (specialized_) {
         return data_ptr_ != nullptr && other.data_ptr_ != nullptr && nbytes_ == other.nbytes_ &&
                memcmp(data_ptr_.get(), other.data_ptr_.get(), nbytes_) == 0;
@@ -1567,7 +1586,7 @@ class PrimitiveData : public ItemData {
 
   bool operator==(const ItemData &obj) const override {
     if (ItemData::operator==(obj)) {
-      const PrimitiveData &other = (const PrimitiveData &)obj;
+      const PrimitiveData &other = static_cast<const PrimitiveData &>(obj);
       if (other.listK_.size() == listK_.size() && other.listV_.size() == listV_.size()) {
         for (size_t i = 0; i < listK_.size(); ++i) {
           if (*(listK_[i]) == *(other.listK_[i]) && *(listV_[i]) == *(other.listV_[i])) {
@@ -1649,7 +1668,7 @@ class CellData : public ItemData {
 
   bool operator==(const ItemData &obj) const override {
     if (ItemData::operator==(obj)) {
-      const CellData &other = (const CellData &)obj;
+      const CellData &other = static_cast<const CellData &>(obj);
       for (size_t i = 0; i < listK_.size(); ++i) {
         if (*(listK_[i]) == *(other.listK_[i]) && *(listV_[i]) == *(other.listV_[i])) {
           continue;
@@ -1694,7 +1713,7 @@ class UnknownData : public ItemData {
 
   bool operator==(const ItemData &obj) const override {
     if (ItemData::operator==(obj)) {
-      return refId_ == ((const UnknownData &)obj).refId_;
+      return refId_ == (static_cast<const UnknownData &>(obj)).refId_;
     }
     return false;
   }
@@ -1907,7 +1926,7 @@ class EqGuard : public GuardItem {
 
   bool operator==(const GuardItem &obj) const override {
     if (GuardItem::operator==(obj)) {
-      auto other = (const EqGuard &)obj;
+      auto other = static_cast<const EqGuard &>(obj);
       return specialized_ == other.specialized_ && recurse_ == other.recurse_ && *dp_ == *(other.dp_);
     }
     return false;
@@ -2031,7 +2050,7 @@ class TypeGuard : public GuardItem {
 
   bool operator==(const GuardItem &obj) const override {
     if (GuardItem::operator==(obj)) {
-      return refType_ == ((const TypeGuard &)obj).refType_;
+      return refType_ == (static_cast<const TypeGuard &>(obj)).refType_;
     }
     return false;
   }
@@ -2101,7 +2120,7 @@ class IdGuard : public GuardItem {
 
   bool operator==(const GuardItem &obj) const override {
     if (GuardItem::operator==(obj)) {
-      return refId_ == ((const IdGuard &)obj).refId_;
+      return refId_ == (static_cast<const IdGuard &>(obj)).refId_;
     }
     return false;
   }
@@ -2167,7 +2186,7 @@ class ReprGuard : public GuardItem {
 
   bool operator==(const GuardItem &obj) const override {
     if (GuardItem::operator==(obj)) {
-      return refRepr_ == ((const ReprGuard &)obj).refRepr_;
+      return refRepr_ == (static_cast<const ReprGuard &>(obj)).refRepr_;
     }
     return false;
   }
@@ -2282,7 +2301,8 @@ class AttrGuard : public GuardItem {
 
   bool operator==(const GuardItem &obj) const override {
     if (GuardItem::operator==(obj)) {
-      return hasAttr_ == ((const AttrGuard &)obj).hasAttr_ && nameAttr_ == ((const AttrGuard &)obj).nameAttr_;
+      return hasAttr_ == (static_cast<const AttrGuard &>(obj)).hasAttr_ &&
+             nameAttr_ == (static_cast<const AttrGuard &>(obj)).nameAttr_;
     }
     return false;
   }
