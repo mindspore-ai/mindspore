@@ -22,10 +22,12 @@
 #include <map>
 #include <unordered_map>
 #include <algorithm>
+#include <array>
 #include "ops/structure_op_name.h"
 #include "utils/log_adapter.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/backend/optimizer/helper.h"
+#include "include/backend/device_type.h"
 #include "include/common/utils/convert_utils.h"
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "runtime/device/device_address_utils.h"
@@ -46,7 +48,9 @@ using EdgePtr = mindspore::pynative::EdgePtr;
 
 namespace mindspore::runtime {
 namespace {
-std::unordered_map<std::string, DeviceContext *> g_device_contexts;
+constexpr size_t kContextSize = 4;
+std::unique_ptr<std::mutex> kDeviceContextMutex = std::make_unique<std::mutex>();
+std::array<DeviceContext *, kContextSize> kDeviceContexts = {nullptr, nullptr, nullptr, nullptr};
 
 // 1. Device type is different in heterogeneous scenes.
 // 2. The device address format is different.
@@ -808,10 +812,19 @@ void OpRunner::LaunchKernelTask(const runtime::KernelTaskType &task_type, Device
 }
 
 DeviceContext *OpRunner::GetDeviceContext(const std::string &device_type) {
-  auto iter = g_device_contexts.find(device_type);
-  if (iter != g_device_contexts.end()) {
-    return iter->second;
+  auto type_iter = device::device_name_to_type_map.find(device_type);
+  if (type_iter == device::device_name_to_type_map.end()) {
+    MS_LOG(EXCEPTION) << "Invalid device_type " << device_type;
   }
+
+  auto index = static_cast<size_t>(type_iter->second);
+  auto cached_device_context = kDeviceContexts[index];
+
+  if (cached_device_context != nullptr) {
+    return cached_device_context;
+  }
+
+  std::unique_lock<std::mutex> lock(*kDeviceContextMutex);
 
   auto device_id = MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID);
   auto device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_type, device_id});
@@ -820,14 +833,14 @@ DeviceContext *OpRunner::GetDeviceContext(const std::string &device_type) {
 
   MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
   (void)device_context->device_res_manager_->BindDeviceToCurrentThread(false);
-  g_device_contexts[device_type] = device_context;
+  kDeviceContexts[index] = device_context;
   MS_LOG(DEBUG) << "Get device context of " << device_type << " id " << device_id;
   return device_context;
 }
 
 void OpRunner::ChildAfterFork() {
-  MS_LOG(DEBUG) << "Clear device context " << g_device_contexts.size();
-  g_device_contexts.clear();
+  kDeviceContexts.fill(nullptr);
+  kDeviceContextMutex = std::make_unique<std::mutex>();
 }
 
 void DynamicOpRunner::RunSingleOpGraph(const session::BackendOpRunInfoPtr &op_run_info,
