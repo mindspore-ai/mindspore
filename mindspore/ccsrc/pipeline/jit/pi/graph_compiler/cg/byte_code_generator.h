@@ -25,6 +25,7 @@
 #include <utility>
 #include <vector>
 #include "pipeline/jit/pi/graph_compiler/pi_ir/ir_visitor.h"
+#include "utils/convert_utils_base.h"
 
 namespace mindspore {
 namespace pijit {

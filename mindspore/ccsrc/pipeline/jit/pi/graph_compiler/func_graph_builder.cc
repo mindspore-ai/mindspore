@@ -102,7 +102,7 @@ ir::NodePtr FuncGraphBuilder::Mutate_(const ir::ParameterPtr &node) {
   auto index = node->GetIndex();
   param_name_to_index_[name] = index;
   if (!func_->NeedGenParameters()) {
-    MS_EXCEPTION_IF_CHECK_FAIL(static_cast<size_t>(index) < args_.size(), "Invalid paramete[" + name + "].");
+    MS_EXCEPTION_IF_CHECK_FAIL(IntToSize(index) < args_.size(), "Invalid paramete[" + name + "].");
     assigned_vars_[name] = args_[index];
     return node;
   }
