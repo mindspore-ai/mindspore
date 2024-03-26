@@ -136,13 +136,13 @@ class Block {
   void RemoveInstr(Instr *instr);
   void RemoveInstrs();
 
-  bool IsTrackBreak() const { return track_result_ & (1 << kTrackBreak); }
-  bool HasPrimitive() const { return track_result_ & (1 << kTrackHasOpsPrimitive); }
-  bool HasTensor() const { return track_result_ & (1 << kTrackHasTensor); }
-  bool HasUnresolvedSideEffect() const { return track_result_ & (1 << kHasGlobalSideEffect); }
-  bool HasAttrSideEffect() const { return track_result_ & (1 << kHasAttrSideEffect); }
-  bool HasClosureSideEffect() const { return track_result_ & (1 << kHasClosureSideEffect); }
-  void SetTrackResult(TrackResult r) { track_result_ = (track_result_ & ~(1 << kNotTrack)) | (1 << r); }
+  bool IsTrackBreak() const { return track_result_ & (1 << (unsigned)kTrackBreak); }
+  bool HasPrimitive() const { return track_result_ & (1 << (unsigned)kTrackHasOpsPrimitive); }
+  bool HasTensor() const { return track_result_ & (1 << (unsigned)kTrackHasTensor); }
+  bool HasUnresolvedSideEffect() const { return track_result_ & (1 << (unsigned)kHasGlobalSideEffect); }
+  bool HasAttrSideEffect() const { return track_result_ & (1 << (unsigned)kHasAttrSideEffect); }
+  bool HasClosureSideEffect() const { return track_result_ & (1 << (unsigned)kHasClosureSideEffect); }
+  void SetTrackResult(TrackResult r) { track_result_ = (track_result_ & ~(1 << (unsigned)kNotTrack)) | (1 << r); }
 
   void AddSuccBB(Block *bb);
   bool RemoveEdge(Block *bb);

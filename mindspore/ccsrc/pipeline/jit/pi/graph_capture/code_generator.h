@@ -78,7 +78,7 @@ class CodeGenerator {
     code_.co_argcount = argcount;
     code_.co_kwonlyargcount = kwonlyargcount;
   }
-  void SetCodeFlags(int flags) { code_.co_flags |= flags; }
+  void SetCodeFlags(unsigned flags) { code_.co_flags |= flags; }
   void SetLocalsCount(int nlocals) { code_.co_nlocals = std::max(nlocals, code_.co_nlocals); }
   void SetFirstLineNumber(int line) { code_.co_firstlineno = line; }
   void SetVariableNames(const std::vector<std::string> &names) { code_.co_varnames = names; }
@@ -203,7 +203,7 @@ class CodeBreakGenerator {
   void BuildGraphParameters(const std::unordered_map<ValueNode *, int> &locals, GraphParameterBuilder *);
 
   // rebuild captured nodes to bytecode, build parameters load operations
-  virtual py::object MakeCapturedCode(std::vector<std::unique_ptr<Instr>> &&sort, int argc, int flag) const;
+  virtual py::object MakeCapturedCode(std::vector<std::unique_ptr<Instr>> &&sort, int argc, unsigned flag) const;
 
   // make call operations of graph, build parameters load operations
   void CallCapturedCode(CodeGenerator *code_gen);
@@ -271,7 +271,7 @@ class MindCodeBreakGenerator : public CodeBreakGenerator {
     return std::dynamic_pointer_cast<MindGraphBuilder>(builder_)->FGBuilder();
   }
 
-  py::object MakeCapturedCode(std::vector<std::unique_ptr<Instr>> &&, int argc, int code_flag) const override;
+  py::object MakeCapturedCode(std::vector<std::unique_ptr<Instr>> &&, int argc, unsigned code_flag) const override;
 
  private:
   py::object MakeCopyCode(const std::string &co_name, int co_argcount, int co_kwonlyargcount, int co_flags,

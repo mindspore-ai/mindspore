@@ -25,11 +25,11 @@
 #include "pipeline/jit/pi/external.h"
 #include "pipeline/jit/pi/graph_compiler/compiler.h"
 
-#ifndef _Py_MAKECODEUNIT
+#ifndef PY_MAKECODEUNIT
 #ifdef WORDS_BIGENDIAN
-#define _Py_MAKECODEUNIT(opcode, oparg) (MS_ASSERT((opcode) < NO_IMPL_OPCODE), ((opcode) << 8) | (oparg))
+#define PY_MAKECODEUNIT(opcode, oparg) (MS_ASSERT((opcode) < NO_IMPL_OPCODE), ((opcode) << 8) | (oparg))
 #else
-#define _Py_MAKECODEUNIT(opcode, oparg) (MS_ASSERT((opcode) < NO_IMPL_OPCODE), (opcode) | ((oparg) << 8))
+#define PY_MAKECODEUNIT(opcode, oparg) (MS_ASSERT((opcode) < NO_IMPL_OPCODE), (opcode) | ((oparg) << 8))
 #endif
 #endif
 
@@ -190,9 +190,9 @@ std::pair<py::bytes, py::bytes> CodeGenerator::ConvertToCodeBytes(const std::vec
     }
     int oparg = i->arg();
     for (unsigned c = 0, exa = (unsigned)oparg >> 8; exa > 0; exa >>= 8, ++c) {
-      co_code.insert(co_code.end() - c, _Py_MAKECODEUNIT(EXTENDED_ARG, exa & 0xff));
+      co_code.insert(co_code.end() - c, PY_MAKECODEUNIT(EXTENDED_ARG, exa & 0xff));
     }
-    co_code.push_back(_Py_MAKECODEUNIT(i->op(), oparg & 0xff));
+    co_code.push_back(PY_MAKECODEUNIT(i->op(), (signed)oparg & 0xff));
   }
   const char *code_data = reinterpret_cast<const char *>(co_code.data());
   const size_t code_size = co_code.size() * sizeof(co_code[0]);
@@ -284,7 +284,7 @@ static py::tuple FillVariableName(const std::vector<std::string> &varnames, int 
   MS_EXCEPTION_IF_CHECK_FAIL(varnames.size() <= static_cast<size_t>(nlocals), "too small local count !!");
   std::set<std::string> vars;
   py::tuple co_varnames(nlocals);
-  int size = varnames.size();
+  int size = static_cast<int>(varnames.size());
   for (int i = 0; i < nlocals; ++i) {
     std::string n;
     if (i < size) {
@@ -376,7 +376,7 @@ std::vector<std::unique_ptr<Instr>> CodeGenerator::CopyInstr(const std::vector<s
   size_t size = std::min(list.size(), end_bci);
   for (size_t bci = start_bci; bci < size; ++bci) {
     const auto &i = list[bci];
-    size_t index = i->bci() - start_bci;
+    size_t index = (size_t)i->bci() - start_bci;
     instrs.emplace_back(std::make_unique<Instr>(i->op(), i->arg(), index, i->line()));
     instrs.back()->set_name(i->name());
     instrs.back()->set_cnst(i->cnst());
@@ -642,7 +642,7 @@ void CodeGenerator::BuildOper(ValueNode *node, int index) {
 }
 
 void CodeGenerator::Init() {
-  const int size = nodes_->inputs.size();
+  const int size = static_cast<int>(nodes_->inputs.size());
   code_.co_nlocals = size;
   for (int i = 0; i < size; ++i) {
     ValueNode *param = nodes_->inputs[i];
@@ -690,7 +690,7 @@ static std::vector<std::unique_ptr<Instr>> MakeFunc(const py::object &code, cons
   for (int i = 0; i < closures; ++i) {
     instrs.emplace_back(std::make_unique<Instr>(LOAD_CLOSURE, i));
   }
-  int make_oparg = 0;
+  unsigned make_oparg = 0;
   if (closures != 0) {
     make_oparg |= 0x08;
     instrs.emplace_back(std::make_unique<Instr>(BUILD_TUPLE, closures));
@@ -713,7 +713,7 @@ std::vector<std::string> CodeBreakGenerator::GetClosureNames() const {
 }
 
 py::object CodeBreakGenerator::MakeCapturedCode(std::vector<std::unique_ptr<Instr>> &&load_oper,  // prepare parameters
-                                                int argc, int code_flag) const {
+                                                int argc, unsigned code_flag) const {
   CodeGenerator code_gen(&captured_);
   code_gen.SetGlobals(GetGlobals());
   code_gen.Init();
@@ -721,7 +721,7 @@ py::object CodeBreakGenerator::MakeCapturedCode(std::vector<std::unique_ptr<Inst
   code_gen.Build();
   code_gen.GenReturn();
 
-  int flags = co_->co_flags & ~(CO_VARARGS | CO_VARKEYWORDS);
+  unsigned flags = co_->co_flags & ~(CO_VARARGS | CO_VARKEYWORDS);
   code_gen.SetArgsInfo(argc, 0);
   code_gen.SetCodeFlags(flags | code_flag);
   code_gen.SetFirstLineNumber(captured_.operations[0]->GetLineNo());
@@ -806,8 +806,8 @@ void CodeBreakGenerator::RestoreLocals(CodeGenerator *code_gen, bool only_load) 
 }
 
 py::object CodeBreakGenerator::MakeUntrackedCode(int untracked_bci, int untracked_stack_effect) const {
-  const int argc = interpret_.outputs.size() + untracked_stack_effect;
-  int stack_count = argc - alive_locals_.size();
+  const int argc = static_cast<int>(interpret_.outputs.size()) + untracked_stack_effect;
+  int stack_count = argc - static_cast<int>(alive_locals_.size());
 
   std::vector<std::unique_ptr<Instr>> ld;
   std::vector<std::unique_ptr<Instr>> st;
@@ -834,7 +834,7 @@ py::object CodeBreakGenerator::MakeUntrackedCode(int untracked_bci, int untracke
     argc,
     0,
     std::max(argc, nlocals),
-    co_->co_flags & ~(CO_VARARGS | CO_VARKEYWORDS),
+    (signed)co_->co_flags & ~(CO_VARARGS | CO_VARKEYWORDS),
     first_line,
     std::move(list),
     py::cast<std::vector<std::string>>(co_->co_varnames),
@@ -875,7 +875,7 @@ void CodeBreakGenerator::BreakAtIf(CodeGenerator *code_gen) const {
   const auto &list = GetCFG()->instr_pool();
   int op = list[break_bci_]->op();
   int stack_effect = -1;
-  int stack_count = interpret_.outputs.size() - alive_locals_.size();
+  int stack_count = static_cast<int>(interpret_.outputs.size() - alive_locals_.size());
   int closures = PyTuple_GET_SIZE(co_->co_cellvars) + PyTuple_GET_SIZE(co_->co_freevars);
   py::object code;
 
@@ -925,18 +925,6 @@ void CodeBreakGenerator::BreakAtBlock(CodeGenerator *code_gen, int untracked_bci
   for (BitMap::Iter iter(&alive, true), end(&alive, false); iter != end; ++iter) {
     alive_locals_.push_back(*iter);
   }
-
-  /**
-   * TODO:
-   * # check this bug for break at block
-   * def func(x):
-   *     try:
-   *         if x == 1:
-   *             y = 1
-   *     except Exception:
-   *         pass
-   *     return y
-   */
   interpret_.outputs.resize(alive_locals_.size(), &ValueNode::kUnboundLocal);
   untracked_stack_effect = 0;
 
@@ -1037,7 +1025,7 @@ py::object CodeBreakGenerator::MakeCode(bool make_graph, Graph *graph) {
   }
   co_name = std::to_string(jcr->IncCodeCount()) + "R." + co_name;
 
-  int nlocals = code_gen.GetLocalsMap().size();
+  int nlocals = static_cast<int>(code_gen.GetLocalsMap().size());
   nlocals = std::max(nlocals, co_->co_nlocals);
   nlocals = std::max(nlocals, cfg_->GetLocalCount());
 
@@ -1128,8 +1116,8 @@ void CodeBreakGenerator::BuildGraphParameters(const std::unordered_map<ValueNode
   if ((co_->co_flags & CO_VARARGS) && interpret_.inputs[arg_index] != &ValueNode::kUnboundLocal) {
     vargs = interpret_.inputs[arg_index];
   }
-  arg_index += (co_->co_flags & CO_VARARGS) != 0;
-  if ((co_->co_flags & CO_VARKEYWORDS) && interpret_.inputs[arg_index] != &ValueNode::kUnboundLocal) {
+  arg_index += ((unsigned)co_->co_flags & CO_VARARGS) != 0;
+  if (((unsigned)co_->co_flags & CO_VARKEYWORDS) && interpret_.inputs[arg_index] != &ValueNode::kUnboundLocal) {
     kwargs = interpret_.inputs[arg_index];
   }
 
@@ -1192,7 +1180,7 @@ void GraphParameterBuilder::Build(const std::unordered_map<ValueNode *, int> &lo
    **/
   std::transform(args_.begin(), args_.end(), std::back_inserter(load_), Load);
 
-  const int argc = args_.size() + (vargs_ != nullptr) + (kwargs_ != nullptr);
+  const int argc = static_cast<int>(args_.size()) + (vargs_ != nullptr) + (kwargs_ != nullptr);
   for (size_t i = 0; i < globals_.size(); ++i) {
     std::string name = GraphParameterBuilder::Key(i, globals_[i]);
     load_.emplace_back(Load(globals_[i]));
@@ -1323,7 +1311,7 @@ static bool FindBlock(int start_bci, const CFG *cfg, int *end_bci, int *stack_ef
 
 static int FindWithBlockEnd(int start_bci, const CFG *cfg) {
   const auto &list = cfg->instr_pool();
-  size_t tar = list[start_bci]->extra_jump()->bci();
+  size_t tar = (size_t)list[start_bci]->extra_jump()->bci();
   bool validate = tar + 1 < list.size() && list[tar]->op() == WITH_EXCEPT_START && list[tar + 1]->extra_jump();
   MS_EXCEPTION_IF_CHECK_FAIL(validate, "can't find with block");
   return list[tar - 1]->extra_jump()->bci() - 1;
@@ -1348,7 +1336,7 @@ static int FindTryBlockEnd(int start, const CFG *cfg) {
   Instr *tar = list[start]->extra_jump();
   MS_EXCEPTION_IF_NULL(tar);
 
-  size_t res = tar->bci();
+  size_t res = (size_t)tar->bci();
   if (tar->op() == DUP_TOP) {
     // try block without finally
     MS_EXCEPTION_IF_CHECK_FAIL(res + 2 < list.size(), "can't find try block");
@@ -1361,7 +1349,7 @@ static int FindTryBlockEnd(int start, const CFG *cfg) {
   int reraise_finally_block_start = tar->bci();
   MS_EXCEPTION_IF_CHECK_FAIL(start + 1 < static_cast<int>(list.size()) && list[start + 1]->op() == SETUP_FINALLY,
                              "can't find finally block");
-  res = list[start + 1]->extra_jump()->bci();
+  res = (unsigned)list[start + 1]->extra_jump()->bci();
   while (res < list.size() && list[res]->op() != RERAISE) {
     res = list[res + 2]->extra_jump()->bci();
   }
@@ -1442,8 +1430,8 @@ std::string PrintNodeSet(const NodeSet &nodes) {
 }
 
 py::object MindCodeBreakGenerator::MakeCapturedCode(std::vector<std::unique_ptr<Instr>> &&, int argc,
-                                                    int code_flag) const {
-  int flags = co_->co_flags & ~(CO_VARARGS | CO_VARKEYWORDS);
+                                                    unsigned code_flag) const {
+  unsigned flags = (unsigned)co_->co_flags & ~(CO_VARARGS | CO_VARKEYWORDS);
   return MakeCopyCode(AttachCodeID(MakeCompiledName(py::str(co_->co_name))), argc, 0, flags | code_flag);
 }
 
@@ -1518,13 +1506,12 @@ py::object MindCodeBreakGenerator::MakeCode(bool make_graph, Graph *graph) {
 
   CallCapturedCode(&code_gen);
   FixInterpretOuput(&code_gen);
-  // ... handle side effects
   CallUntrackedCode(&code_gen);
   MakeReturn(&code_gen);
 
   co_name = std::to_string(jcr->IncCodeCount()) + "R." + co_name;
 
-  int nlocals = code_gen.GetLocalsMap().size();
+  int nlocals = static_cast<int>(code_gen.GetLocalsMap().size());
   nlocals = std::max(nlocals, co_->co_nlocals);
   nlocals = std::max(nlocals, cfg_->GetLocalCount());
 
