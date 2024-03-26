@@ -61,6 +61,8 @@ class BufferAppendCpuKernelMod : public NativeCpuKernelMod {
               const std::vector<KernelTensor *> &) override {
     auto count_addr = GetDeviceAddress<int>(inputs, kSecondInputIndex * element_nums_);
     auto head_addr = GetDeviceAddress<int>(inputs, kSecondInputIndex * element_nums_ + 1);
+    MS_EXCEPTION_IF_NULL(count_addr);
+    MS_EXCEPTION_IF_NULL(head_addr);
     int index = 0;
     if (count_addr[0] <= capacity_ - 1 && head_addr[0] == 0) {
       index = count_addr[0];
