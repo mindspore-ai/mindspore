@@ -451,7 +451,7 @@ void TensorPy::FlushFromCache(const Tensor &tensor) {
 }
 
 py::bytes TensorPy::GetBytes(const Tensor &tensor) {
-  py::gil_scoped_release gil_release;
+  py::gil_scoped_acquire acquire;
   if (tensor.NeedWait()) {
     tensor.Wait();
   }
