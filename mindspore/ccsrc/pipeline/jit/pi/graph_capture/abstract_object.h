@@ -42,8 +42,8 @@ class AbstractObjectBase {
 #include "abstract_ms_flag.def"
 #undef ABSTRACT_MS_FLAG_DEF
   };
-  static_assert(static_cast<int>(kTypeSlice) + 8 == static_cast<int>(kTypeType));  // builtin type
-  static_assert(static_cast<int>(kTypeAnyValue) == 0);
+  static_assert(kTypeSlice + 8 == kTypeType);  // builtin type
+  static_assert(kTypeAnyValue == 0);
 
   enum BoolCache {
     kBoolFalse = 0,

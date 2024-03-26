@@ -110,7 +110,7 @@ void BytecodeInliner::Rebuild(CodeGenerator *cg) {
 
     // reset bci
     int last_op = cg->GetCode().co_code.back()->op();
-    new_bci = static_cast<int>(cg->GetCode().co_code.size()) - 1 - (last_op == POP_TOP || last_op == STORE_FAST);
+    new_bci = SizeToInt(cg->GetCode().co_code.size()) - 1 - (last_op == POP_TOP || last_op == STORE_FAST);
     node->set_bci(new_bci);
 
     // reset frame status
@@ -118,7 +118,7 @@ void BytecodeInliner::Rebuild(CodeGenerator *cg) {
     new_frames_[new_bci] = std::make_unique<FrameStates>(new_f);
     if (last_op == STORE_FAST) {
       int arg = cg->GetCode().co_code.back()->arg();
-      new_f.ResizeLocal(std::max(new_f.GetLocals().size(), static_cast<size_t>(arg + 1)));
+      new_f.ResizeLocal(std::max(new_f.GetLocals().size(), IntToSize(arg + 1)));
       new_f.SetLocal(arg, node);
     }
   }
@@ -162,7 +162,7 @@ void BytecodeInliner::Rebuild() {
   if (last_frame_ != nullptr) {
     MS_EXCEPTION_IF_CHECK_FAIL(new_frames_.find(cg.GetCode().co_code.size()) == new_frames_.end(),
                                "duplicate frame status");
-    new_break_bci_ = static_cast<int>(cg.GetCode().co_code.size());
+    new_break_bci_ = SizeToInt(cg.GetCode().co_code.size());
     new_frames_[new_break_bci_] = std::move(last_frame_);
   }
 
@@ -219,7 +219,7 @@ void BytecodeInliner::ProcessGraph(Graph *graph, int local_off) {
     FixInstr(graph, local_off, &list);
   }
   std::move(list.begin(), list.end(), std::back_inserter(cfg_->instr_pool()));
-  cfg_->SetLocalCount(std::max(static_cast<size_t>(cfg_->GetLocalCount()), local_off + f.GetLocals().size()));
+  cfg_->SetLocalCount(std::max(IntToSize(cfg_->GetLocalCount()), local_off + f.GetLocals().size()));
 }
 
 static bool EliminateSideEffect(Graph *top_graph, Graph *sub_graph) {
@@ -385,7 +385,7 @@ void BytecodeInliner::InitCFG() {
     if (iter != blocks.end()) {
       back = iter->first;
     } else {
-      back = static_cast<int>(list.size());
+      back = SizeToInt(list.size());
     }
     cur->set_begin_ci(head);
     cur->set_end_ci(back);

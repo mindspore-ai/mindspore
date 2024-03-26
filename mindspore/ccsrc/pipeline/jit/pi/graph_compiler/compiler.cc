@@ -102,7 +102,7 @@ py::tuple EliminateInvalidArgs(const py::tuple &args, int co_flags, bool enable_
   py::list new_args;
   for (size_t idx = 0; idx < args.size(); idx++) {
     if (IsValidRunArg(args[idx], enable_tuple_broaden)) {
-      if ((idx < (args.size() - 1) || ((unsigned)co_flags & CO_VARKEYWORDS) == 0) &&
+      if ((idx < (args.size() - 1) || (IntToSize(co_flags) & CO_VARKEYWORDS) == 0) &&
           py::isinstance<py::dict>(args[idx])) {
         new_args.append(py::reinterpret_steal<py::tuple>(PyDict_Values(args[idx].ptr())));
       } else {
@@ -114,7 +114,7 @@ py::tuple EliminateInvalidArgs(const py::tuple &args, int co_flags, bool enable_
 }
 
 py::tuple ExpandVariableArgs(const py::tuple &args, int co_flags, int co_argcount) {
-  if (((unsigned)co_flags & CO_VARARGS) == 0x0) {
+  if ((IntToSize(co_flags) & CO_VARARGS) == 0x0) {
     return args;
   }
   py::tuple var_args = py::cast<py::tuple>(args[co_argcount]);
@@ -181,13 +181,13 @@ CallableGraph Compiler::Compile(const PyFunctionObject &func, const PyFrameObjec
   }
 
   int arg_cnt = code->co_argcount + code->co_kwonlyargcount;
-  if ((unsigned)code->co_flags & CO_VARARGS) {
+  if (IntToSize(code->co_flags) & CO_VARARGS) {
     arg_cnt++;
   }
   py::list locals = py::reinterpret_steal<py::list>(PyDict_Values(frame.f_locals));
   py::tuple args = py::reinterpret_steal<py::tuple>(PyList_AsTuple(PyList_GetSlice(locals.ptr(), 0, arg_cnt)));
   py::dict kwargs =
-    ((unsigned)code->co_flags & CO_VARKEYWORDS) == 0x0 ? py::dict() : py::cast<py::dict>(locals[arg_cnt]);
+    (IntToSize(code->co_flags) & CO_VARKEYWORDS) == 0x0 ? py::dict() : py::cast<py::dict>(locals[arg_cnt]);
   args = EliminateStubTensor(args);
   auto byteCodeParser = std::make_shared<ByteCodeParser>(func);
   ir::FunctionNodePtr func_node = byteCodeParser->Parse();

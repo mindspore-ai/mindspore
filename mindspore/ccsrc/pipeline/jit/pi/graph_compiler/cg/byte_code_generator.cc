@@ -18,6 +18,7 @@
 #include <string>
 #include <algorithm>
 #include "utils/log_adapter.h"
+#include "utils/convert_utils_base.h"
 
 namespace mindspore {
 namespace pijit {
@@ -74,7 +75,7 @@ void ByteCodeGenerator::Visit_(const ir::ParameterPtr &node) {
   const std::string name = node->GetName();
   MS_EXCEPTION_IF_CHECK_FAIL((co_var_names_map_.find(name) == co_var_names_map_.end()),
                              "Duplicate parameter name " + name + ".");
-  co_var_names_map_[name] = static_cast<int>(co_var_names_.size());
+  co_var_names_map_[name] = SizeToInt(co_var_names_.size());
   co_var_names_.append(py::str(name));
   ir::NodePtr default_value = node->GetDefaultValue();
   if (default_value != nullptr) {
@@ -188,7 +189,7 @@ void ByteCodeGenerator::Visit_(const ir::JumpNodePtr &node) {
     arg -= (node->GetOffset() + 1) * 2;
   }
   CheckInstrOffset(node);
-  GenerateInstr(node->GetOpCode(), static_cast<int>(arg));
+  GenerateInstr(node->GetOpCode(), SizeToInt(arg));
   SetStartsLine(node);
 }
 
@@ -231,7 +232,7 @@ void ByteCodeGenerator::Visit_(const ir::BuildNodePtr &node) {
   if (node->GetOpCode() == BUILD_CONST_KEY_MAP) {
     arg--;
   }
-  GenerateInstr(node->GetOpCode(), static_cast<int>(arg));
+  GenerateInstr(node->GetOpCode(), SizeToInt(arg));
   SetStartsLine(node);
 }
 
@@ -242,7 +243,7 @@ void ByteCodeGenerator::Visit_(const ir::CallNodePtr &node) {
     arg--;
   }
   CheckInstrOffset(node);
-  GenerateInstr(node->GetOpCode(), static_cast<int>(arg));
+  GenerateInstr(node->GetOpCode(), SizeToInt(arg));
   SetStartsLine(node);
 }
 
@@ -263,7 +264,7 @@ int ByteCodeGenerator::GetValueIndex(const ir::ValuePtr &node) {
     return name_map->at(name);
   }
   auto values = scope_value_list_.at(scope);
-  (*name_map)[name] = static_cast<int>(values.first.size());
+  (*name_map)[name] = SizeToInt(values.first.size());
   if (values.first.is(values.second)) {
     values.first.append(node->GetValue());
   } else {
@@ -284,13 +285,13 @@ void ByteCodeGenerator::CheckInstrOffset(const ir::NodePtr &node) {
     "The offset of " + node->GetNodeName() + "(%" + std::to_string(node->GetNodeId()) + ") is not expected.");
 }
 
-bool IsExtendedArg(int arg) { return ((unsigned)arg >> bits_per_byte) > 0; }
+bool IsExtendedArg(int arg) { return (IntToSize(arg) >> bits_per_byte) > 0; }
 
 void ByteCodeGenerator::GenerateInstr(ir::OpCode op, int arg) {
   if (IsExtendedArg(arg)) {
-    int ext_arg = static_cast<int>(((unsigned)arg >> bits_per_byte));
+    int ext_arg = SizeToInt((IntToSize(arg) >> bits_per_byte));
     co_code_.push_back(MAKE_BYTE_CODE_UNIT(EXTENDED_ARG, ext_arg));
-    arg = static_cast<int>(((unsigned)arg & 0xff));
+    arg = SizeToInt((IntToSize(arg) & 0xff));
   }
   co_code_.push_back(MAKE_BYTE_CODE_UNIT(op, arg));
 }
@@ -323,7 +324,7 @@ void ByteCodeGenerator::SetStartsLine(const ir::NodePtr &node) {
     inc -= last_starts_instr_->GetDebugInfo()->GetLineNo();
   }
   last_starts_instr_ = node;
-  co_lnotab_.push_back(static_cast<int>(dis));
+  co_lnotab_.push_back(SizeToInt(dis));
   co_lnotab_.push_back(inc);
 }
 }  // namespace pijit

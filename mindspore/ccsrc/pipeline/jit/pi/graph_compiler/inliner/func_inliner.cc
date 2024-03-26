@@ -21,6 +21,7 @@
 #include "pipeline/jit/pi/graph_compiler/parser/byte_code_parser.h"
 #include "pybind11/pytypes.h"
 #include "utils/log_adapter.h"
+#include "utils/convert_utils_base.h"
 
 namespace mindspore {
 namespace pijit {
@@ -91,7 +92,7 @@ const ir::NodePtr &UnpackKwargsShell(const ir::NodePtr &kwargs) {
 void UnpackArgsInTuple(const py::object &func, ir::NodePtrList *args) {
   MS_EXCEPTION_IF_CHECK_FAIL(py::isinstance<py::function>(func), "Should be a function object.");
   const auto code = reinterpret_cast<const PyCodeObject *>(PyFunction_GET_CODE(func.ptr()));
-  if (((unsigned)code->co_flags & CO_VARKEYWORDS) != 0) {
+  if ((IntToSize(code->co_flags) & CO_VARKEYWORDS) != 0) {
     args->back() = UnpackKwargsShell(args->back());
   }
   if (code->co_argcount == 0) {
@@ -100,7 +101,7 @@ void UnpackArgsInTuple(const py::object &func, ir::NodePtrList *args) {
   const auto &inner_args = UnpackArgShell(args->front());
   args->erase(args->begin());
   args->insert(args->begin(), inner_args.begin(), inner_args.end());
-  if (((unsigned)code->co_flags & CO_VARARGS) != 0) {
+  if ((IntToSize(code->co_flags) & CO_VARARGS) != 0) {
     const auto &pos_args = UnpackArgShell(args->front());
     args->erase(args->begin());
     args->insert(args->begin(), pos_args.begin(), pos_args.end());

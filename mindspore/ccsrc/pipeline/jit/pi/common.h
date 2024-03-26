@@ -81,9 +81,9 @@ class Tracebackes {
     for (auto item : stop_trace_res_) {
       std::string item_str;
       if (res.size() == 0) {
-        res += std::string("\"") + item.first + "\":" + std::to_string(static_cast<int>(item.second));
+        res += std::string("\"") + item.first + "\":" + std::to_string(SizeToInt(item.second));
       } else {
-        res += std::string("\"") + item.first + "\":" + std::to_string(static_cast<int>(item.second));
+        res += std::string("\"") + item.first + "\":" + std::to_string(SizeToInt(item.second));
       }
     }
     res = std::string("{") + res + std::string("}");

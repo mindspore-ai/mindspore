@@ -177,7 +177,7 @@ bool GuardConstCallNodeParam(CallNode *call_node, Graph *sub_graph, int max_guar
     }
     TracePtr tr = sub_graph->TraceValueNode(i, max_guard_depth);
     if (tr == nullptr) {
-      if (static_cast<size_t>(max_guard_depth) >= INT_MAX) {
+      if (IntToSize(max_guard_depth) >= INT_MAX) {
         LogGuardFailed(i, sub_graph->Config(), "GuardConstCannNodeParm failed");
       }
       return false;

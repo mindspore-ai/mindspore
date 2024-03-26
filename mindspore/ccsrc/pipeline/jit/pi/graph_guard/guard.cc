@@ -205,7 +205,7 @@ void OptGuardPerfImpl::LogItemPerfStart(int total_stage) {
 }
 
 void OptGuardPerfImpl::LogItemPerfEnd(GuardItem *item, int stage) {
-  size_t cur_stage = static_cast<size_t>(stage + 1);
+  size_t cur_stage = IntToSize(stage + 1);
   if (item_stage_.size() > cur_stage) {
     item_stage_[cur_stage] = std::chrono::steady_clock::now();
   }

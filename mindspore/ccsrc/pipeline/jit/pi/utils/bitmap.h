@@ -20,6 +20,7 @@
 #include <numeric>
 #include <limits>
 #include <algorithm>
+#include "utils/convert_utils_base.h"
 
 namespace mindspore {
 namespace pijit {
