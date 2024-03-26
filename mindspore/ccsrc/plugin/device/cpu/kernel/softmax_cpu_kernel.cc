@@ -88,20 +88,23 @@ bool SoftmaxCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const 
   return true;
 }
 
-void SoftmaxCpuKernelMod::CheckAndRectifyAxis(KernelTensor *axis_kernel_tensor) noexcept {
+bool SoftmaxCpuKernelMod::CheckAndRectifyAxis(KernelTensor *axis_kernel_tensor) noexcept {
   auto axis_list = axis_kernel_tensor->GetValueWithCheck<std::vector<int64_t>>();
   if (axis_list.size() != kSoftmaxAxisNum) {
-    MS_LOG(EXCEPTION) << "For Softmax, the parameter 'axis' only support int type on CPU, but got tuple.";
+    MS_LOG(ERROR) << "For Softmax, the parameter 'axis' only support int type on CPU, but got tuple.";
+    return false;
   }
   axis_ = axis_list[0];
   if (axis_ < -input_dims_ || axis_ >= input_dims_) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'axis' must be in range [" << -input_dims_ << ", "
-                      << input_dims_ << "), but got " << axis_;
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the 'axis' must be in range [" << -input_dims_ << ", "
+                  << input_dims_ << "), but got " << axis_;
+    return false;
   }
   if (axis_ < 0) {
     axis_ += input_dims_;
   }
   last_axis_ = axis_ == input_dims_ - 1;
+  return true;
 }
 
 int SoftmaxCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
@@ -121,7 +124,9 @@ int SoftmaxCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const
     return KRET_OK;
   }
 
-  CheckAndRectifyAxis(inputs[kIndex1]);
+  if (!CheckAndRectifyAxis(inputs[kIndex1])) {
+    return KRET_RESIZE_FAILED;
+  }
   dim_axis_ = input_shape_[axis_];
   output_elements_ = input_elements_ / static_cast<size_t>(dim_axis_);
   inner_size_ =

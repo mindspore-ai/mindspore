@@ -52,7 +52,7 @@ class SoftmaxCpuKernelMod final : public NativeCpuKernelMod {
   bool LaunchKernel(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
                     const std::vector<KernelTensor *> &outputs) noexcept;
 
-  void CheckAndRectifyAxis(KernelTensor *axis_kernel_tensor) noexcept;
+  bool CheckAndRectifyAxis(KernelTensor *axis_kernel_tensor) noexcept;
 
   int64_t axis_{0};
   int64_t input_dims_{0};
