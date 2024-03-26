@@ -676,10 +676,35 @@ void OpAdapterImpl::UpdateNormalOpInputDesc(const OperatorPtr &op, const AnfNode
     return;
   }
   MS_EXCEPTION_IF_NULL(node);
+  std::map<size_t, size_t> real_input_map;
+  if (!dyn_input_map_.empty() && common::AnfAlgo::HasNodeAttr(kAttrDynInputSizes, node->cast<CNodePtr>())) {
+    std::vector<int64_t> dyn_input_sizes = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, kAttrDynInputSizes);
+    if (!dyn_input_sizes.empty()) {
+      size_t input_index = kIndex1;
+      for (size_t i = 0; i < dyn_input_sizes.size(); ++i) {
+        int64_t dyn_input_size = dyn_input_sizes[i];
+        if (dyn_input_size < 0) {
+          real_input_map[input_index] = i + kIndex1;
+          input_index += 1;
+        } else {
+          input_index += dyn_input_size;
+        }
+      }
+    }
+  }
 
   auto inputs = node->cast<CNodePtr>()->inputs();
   for (size_t i = 1; i < inputs.size(); ++i) {
-    auto it = input_map_.find(i);
+    size_t real_input_index = i;
+    if (!real_input_map.empty()) {
+      auto iter = real_input_map.find(i);
+      if (iter != real_input_map.end()) {
+        real_input_index = iter->second;
+      } else {
+        continue;
+      }
+    }
+    auto it = input_map_.find(real_input_index);
     if (it != input_map_.end()) {
       auto desc = CreateNodeDesc(inputs[i], format);
       if (desc == nullptr) {
