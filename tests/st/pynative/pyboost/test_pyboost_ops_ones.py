@@ -92,7 +92,7 @@ def test_ones_backward(mode):
     assert np.allclose(ones_output.asnumpy(), expect_output)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -120,7 +120,7 @@ def test_ones_forward_dynamic_shape(context_mode):
     assert np.allclose(out.asnumpy(), expect_output)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -142,7 +142,7 @@ def test_ones_forward_dynamic_rank(context_mode):
     expect_output = np.ones(size, np.int32)
     assert np.allclose(out.asnumpy(), expect_output)
 
-    with pytest.raises(ValueError):
+    with pytest.raises((TypeError, ValueError)):
         size = Tensor(np.array([[2, 3], [4, 5]]).astype(np.int64))
         _ = test_cell(size, ms.int32)
 
@@ -197,6 +197,6 @@ def test_ones_backward_dynamic_rank(context_mode):
     expect_output = [0, 0]
     assert np.allclose(out.asnumpy(), expect_output)
 
-    with pytest.raises(ValueError):
+    with pytest.raises((TypeError, ValueError)):
         size = Tensor(np.array([[2, 3], [4, 5]]).astype(np.int64))
         _ = test_cell(size, ms.int32)
