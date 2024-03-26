@@ -53,7 +53,7 @@ BaseShapePtr ArgMaxWithValueFuncImpl::InferShape(const PrimitivePtr &primitive,
   }
   for (size_t i = 0; i < x_shape.size(); i++) {
     if (x_shape[i] == 0) {
-      MS_EXCEPTION(TypeError) << primitive->name() << " cannot deal with empty input. Please try other inputs";
+      MS_EXCEPTION(ValueError) << primitive->name() << " cannot deal with empty input. Please try other inputs";
     }
   }
   auto keep_dims = keep_dims_opt.value();
