@@ -664,7 +664,7 @@ class Cell(Cell_):
 
         # Run in PyNative mode.
         self._self_check()
-        if self._init_flag:
+        if not self._init_flag:
             self._init_check()
             self._init_flag = True
 
