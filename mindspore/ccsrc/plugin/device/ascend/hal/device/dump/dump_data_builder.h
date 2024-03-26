@@ -22,9 +22,9 @@
 #include <algorithm>
 #include "utils/log_adapter.h"
 #include "proto/dump_data.pb.h"
-#include "toolchain/adx_datadump_callback.h"
+#include "acl/acl_dump.h"
 
-using Adx::DumpChunk;
+using DumpChunk = acldumpChunk;
 
 // This class is for building dump data receiving from adx server. Tensor Data for each kernel will be divided in pieces
 // and each piece would be wrapped into DumpChunk struct. This class provides function to merge dump chunks and
@@ -63,7 +63,7 @@ class DumpDataBuilder {
    * parse and construct the dump data for dumping. It does the these steps: 1) merge all chunks for the node; 2)
    * parse header and protobuf string; 3) memcpy tensor data to contiguous memory segment.
    */
-  bool ConstructDumpData(debugger::dump::DumpData *dump_data_proto, std::vector<char> *data_ptr) {
+  bool ConstructDumpData(toolkit::dumpdata::DumpData *dump_data_proto, std::vector<char> *data_ptr) {
     if (chunk_list_.empty()) {
       return false;
     }
