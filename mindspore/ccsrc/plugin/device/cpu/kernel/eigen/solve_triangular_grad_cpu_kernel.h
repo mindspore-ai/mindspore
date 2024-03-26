@@ -51,7 +51,8 @@ class SolveTriangularGradCpuKernelMod : public NativeCpuKernelMod,
                     const std::vector<KernelTensor *> &outputs);
 
   template <typename Derived_a, typename Derived_b, typename T>
-  void solve(const Eigen::MatrixBase<Derived_a> &a, const Eigen::MatrixBase<Derived_b> &b, T *output_addr, bool lower);
+  void solve(const Eigen::MatrixBase<Derived_a> &a, const Eigen::MatrixBase<Derived_b> &b, T *x_addr,
+             bool lower_triangular);
 
   void set_attr(const std::vector<KernelTensor *> &inputs);
 

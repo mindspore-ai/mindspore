@@ -16,7 +16,6 @@
 #include "solve_triangular.h"
 #include <cstdint>
 #include <string.h>
-#include "Eigen/Dense"
 #include "securec.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
@@ -79,25 +78,6 @@ uint32_t SolveTriangularCpuKernel::Compute(CpuKernelContext &ctx) {
       ret = KERNEL_STATUS_PARAM_INVALID;
   }
   return ret;
-}
-
-template <typename Derived_a, typename Derived_b, typename T>
-inline void solve(const Eigen::MatrixBase<Derived_a> &a, const Eigen::MatrixBase<Derived_b> &b, T *output_addr, int m,
-                  int n, bool lower, bool unit_diagonal) {
-  Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> output(output_addr, m, n);
-  if (unit_diagonal) {
-    if (lower) {
-      output.noalias() = a.template triangularView<Eigen::UnitLower>().solve(b);
-    } else {
-      output.noalias() = a.template triangularView<Eigen::UnitUpper>().solve(b);
-    }
-  } else {
-    if (lower) {
-      output.noalias() = a.template triangularView<Eigen::Lower>().solve(b);
-    } else {
-      output.noalias() = a.template triangularView<Eigen::Upper>().solve(b);
-    }
-  }
 }
 
 uint32_t SolveTriangularCpuKernel::SolveTriangularCheck(CpuKernelContext &ctx) {
