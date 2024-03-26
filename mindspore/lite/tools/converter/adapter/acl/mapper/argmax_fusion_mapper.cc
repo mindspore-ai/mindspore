@@ -42,17 +42,32 @@ STATUS ArgMaxFusionMapper::Mapper(const CNodePtr &cnode) {
   }
   // ArgMaxV2 doesn't have keep_dims attr, replace by ArgMaxWithValue
   auto keep_dims_ptr = src_prim->GetAttr(ops::kKeepDims);
-  if (keep_dims_ptr != nullptr) {
-    auto keep_dims = GetValue<bool>(keep_dims_ptr);
-    if (keep_dims) {
-      auto argmax = std::make_shared<ops::ArgMaxWithValue>();
-      CHECK_NULL_RETURN(argmax);
-      auto dst_prim = argmax->GetPrim();
-      CHECK_NULL_RETURN(dst_prim);
-      dst_prim->SetAttrs(src_prim->attrs());
-      value_node->set_value(dst_prim);
-      return lite::RET_OK;
-    }
+  if (keep_dims_ptr != nullptr && GetValue<bool>(keep_dims_ptr)) {
+    // adjust axis and keep_dims to input to adapt mindir.
+    auto axis_ptr = src_prim->GetAttr(ops::kAxis);
+    CHECK_NULL_RETURN(axis_ptr);
+    auto axis_value_node = NewValueNode<int64_t>(GetValue<int64_t>(axis_ptr));
+    MS_CHECK_TRUE_MSG(axis_value_node != nullptr, lite::RET_ERROR, "New value node for axis failed.");
+    std::vector<int64_t> shape_vec = {};
+    auto axis_abstract = std::make_shared<abstract::AbstractTensor>(kInt64, shape_vec);
+    CHECK_NULL_RETURN(axis_abstract);
+    axis_value_node->set_abstract(axis_abstract);
+    cnode->add_input(axis_value_node);
+
+    auto keep_dims_value_node = NewValueNode<bool>(GetValue<bool>(keep_dims_ptr));
+    MS_CHECK_TRUE_MSG(keep_dims_value_node != nullptr, lite::RET_ERROR, "New value node for keep_dims failed.");
+    auto keep_dims_abstract = std::make_shared<abstract::AbstractTensor>(kBool, shape_vec);
+    CHECK_NULL_RETURN(keep_dims_abstract);
+    keep_dims_value_node->set_abstract(keep_dims_abstract);
+    cnode->add_input(keep_dims_value_node);
+
+    auto argmax = std::make_shared<ops::ArgMaxWithValue>();
+    CHECK_NULL_RETURN(argmax);
+    auto dst_prim = argmax->GetPrim();
+    CHECK_NULL_RETURN(dst_prim);
+    dst_prim->SetAttrs(src_prim->attrs());
+    value_node->set_value(dst_prim);
+    return lite::RET_OK;
   }
 
   auto dst_prim = std::make_shared<acl::ArgMaxV2>();
