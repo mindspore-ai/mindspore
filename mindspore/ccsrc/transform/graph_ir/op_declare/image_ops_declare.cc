@@ -294,8 +294,9 @@ REG_ADPT_DESC(ScaleAndTranslateGrad, prim::kPrimScaleAndTranslateGrad->name(), A
 
 // ResizeBicubicGrad
 INPUT_MAP(ResizeBicubicGrad) = {{1, INPUT_DESC(grads)}, {2, INPUT_DESC(original_image)}};
-ATTR_MAP(ResizeBicubicGrad) = {{"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())},
-                               {"half_pixel_centers", ATTR_DESC(half_pixel_centers, AnyTraits<bool>())}};
+INPUT_ATTR_MAP(ResizeBicubicGrad) = {{3, ATTR_DESC(align_corners, AnyTraits<bool>())},
+                                     {4, ATTR_DESC(half_pixel_centers, AnyTraits<bool>())}};
+ATTR_MAP(ResizeBicubicGrad) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(ResizeBicubicGrad) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ResizeBicubicGrad, prim::kPrimResizeBicubicGrad->name(), ADPT_DESC(ResizeBicubicGrad));
 

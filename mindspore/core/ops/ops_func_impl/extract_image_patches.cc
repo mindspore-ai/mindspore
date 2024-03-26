@@ -19,6 +19,8 @@
 #include <memory>
 #include "ops/op_name.h"
 #include "ops/op_utils.h"
+#include "utils/ms_context.h"
+#include "utils/check_convert_utils.h"
 #include "mindapi/base/types.h"
 #include "abstract/dshape.h"
 #include "include/common/utils/utils.h"
@@ -133,6 +135,15 @@ BaseShapePtr ExtractImagePatchesFuncImpl::InferShape(const PrimitivePtr &primiti
 
 TypePtr ExtractImagePatchesFuncImpl::InferType(const PrimitivePtr &primitive,
                                                const std::vector<AbstractBasePtr> &input_args) const {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  bool is_ascend = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
+  if (is_ascend) {
+    const auto &prim_name = primitive->name();
+    std::set<TypePtr> valid_types = {kFloat16, kFloat32};
+    auto x_type = input_args[0]->GetType();
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", x_type, valid_types, prim_name);
+  }
   return input_args[0]->GetType()->Clone();
 }
 }  // namespace ops
