@@ -15,6 +15,7 @@
  */
 
 #include "ops/ops_func_impl/exp.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -26,6 +27,12 @@ TypePtr ExpFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<
   auto input_type = input_args[kIndex0]->GetType();
   MS_EXCEPTION_IF_NULL(input_type);
   auto input_type_id = input_type->cast<TensorTypePtr>()->element()->type_id();
+
+  const auto &op_name = primitive->name();
+  const std::set<TypePtr> valid_types = {kInt64,   kBool,      kFloat16,    kFloat32,
+                                         kFloat64, kComplex64, kComplex128, kBFloat16};
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("input", input_type, valid_types, op_name);
+
   static const std::vector<TypeId> int_or_bool = {kNumberTypeUInt8,  kNumberTypeUInt16, kNumberTypeUInt32,
                                                   kNumberTypeUInt64, kNumberTypeInt8,   kNumberTypeInt16,
                                                   kNumberTypeInt32,  kNumberTypeInt64,  kNumberTypeBool};
