@@ -5,7 +5,7 @@ logical_not:
         Refer to :func:`mindspore.ops.logical_not` for more details.
 
         Inputs:
-            - **x** (Tensor) - The input tensor, the dtype must be bool.
+            - **x** (Tensor) - The input tensor.
 
         Outputs:
             Tensor, the shape is the same as the `x`, and the dtype is bool.
