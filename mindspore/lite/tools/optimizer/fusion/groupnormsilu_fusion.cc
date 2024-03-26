@@ -307,7 +307,7 @@ CNodePtr GroupNormSiluFusion::CreateGroupNormSiluNodeForSD15(const std::string &
   auto conv_output_shape = GetTensorShape(reshape_1, kNumIndex1);
   MS_LOG(INFO) << "num_groups: " << num_groups << ", conv_output_shape: " << conv_output_shape;
   if (std::find(conv_output_shape.begin(), conv_output_shape.end(), -1) != conv_output_shape.end()) {
-    MS_LOG(WARNING) << "GroupNormSilu is not support dynamic shape in CANN";
+    MS_LOG(INFO) << "GroupNormSilu is not support dynamic shape in CANN";
     return nullptr;
   }
 

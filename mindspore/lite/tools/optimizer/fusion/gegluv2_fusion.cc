@@ -89,7 +89,6 @@ CNodePtr GeGluV2Fusion::CreateGeGluV2Node(const FuncGraphPtr &func_graph, const 
   }
   CNodePtr gegluv2_cnode = nullptr;
   gegluv2_cnode = func_graph->NewCNode(gegluv2_prim_c, {add_output});
-
   if (gegluv2_cnode == nullptr) {
     MS_LOG(ERROR) << "new cnode failed.";
     return nullptr;
