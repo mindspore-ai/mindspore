@@ -274,8 +274,8 @@ std::string Tracebackes::DumpSummary() const {
 int Tracebackes::FindMaxNameLength(const std::list<Tracebacke> &tbs) const {
   int max_length = 15;
   for (const auto &tb : tbs) {
-    int len1 = tb.func_name_.length();
-    int len2 = tb.changed_func_.length();
+    int len1 = static_cast<int>(tb.func_name_.length());
+    int len2 = static_cast<int>(tb.changed_func_.length());
     max_length = std::max(max_length, std::max(len1, len2)) + 2;
   }
   max_length = std::min(max_length, 35);
@@ -367,8 +367,8 @@ static PyFrameObject *RebuildFrame(PyThreadState *tstate, PyCodeObject *co, cons
   MS_ASSERT(co != nullptr && argc == co->co_argcount + co->co_kwonlyargcount);
   MS_ASSERT((f->f_code->co_flags & CO_VARARGS) == (co->co_flags & CO_VARARGS));
   MS_ASSERT((f->f_code->co_flags & CO_VARKEYWORDS) == (co->co_flags & CO_VARKEYWORDS));
-  argc += (f->f_code->co_flags & CO_VARARGS) ? 1 : 0;
-  argc += (f->f_code->co_flags & CO_VARKEYWORDS) ? 1 : 0;
+  argc += (static_cast<unsigned int>(f->f_code->co_flags) & CO_VARARGS) ? 1 : 0;
+  argc += (static_cast<unsigned int>(f->f_code->co_flags) & CO_VARKEYWORDS) ? 1 : 0;
 
   PyFrameObject *frame = PyFrame_New(tstate, co, f->f_globals, NULL);
   // copy arguments
@@ -487,12 +487,15 @@ static void MarkBreak(Graph *g) {
 
 std::vector<py::object> GetAllArgs(JitCompileResults *jcr) {
   auto all_args = PackArgs(jcr->origin_frame_);
-  auto args = py::cast<py::list>(all_args[0]);
-  if (all_args[1].ptr() != nullptr) {
-    PyList_Append(args.ptr(), all_args[1].ptr());  // args + vargs
+  int argIndex = 0;
+  auto args = py::cast<py::list>(all_args[argIndex]);
+  argIndex = 1;
+  if (all_args[argIndex].ptr() != nullptr) {
+    PyList_Append(args.ptr(), all_args[argIndex].ptr());  // args + vargs
   }
-  if (all_args[2].ptr() != nullptr) {
-    PyList_Append(args.ptr(), all_args[2].ptr());  // args + kwargs
+  argIndex = 2;
+  if (all_args[argIndex].ptr() != nullptr) {
+    PyList_Append(args.ptr(), all_args[argIndex].ptr());  // args + kwargs
   }
   return args.cast<std::vector<py::object>>();
 }
@@ -633,10 +636,10 @@ void AddGuardForParam(const PyFrameObject *f, OptGuardPtr guard, bool detach) {
   int argc = f->f_code->co_argcount + f->f_code->co_kwonlyargcount;
   PyTupleObject *vargs = NULL;
   PyDictObject *kwargs = NULL;
-  if (f->f_code->co_flags & CO_VARARGS) {
+  if (static_cast<unsigned int>(f->f_code->co_flags) & CO_VARARGS) {
     vargs = _PyTuple_CAST(f->f_localsplus[argc]);
   }
-  if (f->f_code->co_flags & CO_VARKEYWORDS) {
+  if (static_cast<unsigned int>(f->f_code->co_flags) & CO_VARKEYWORDS) {
     kwargs = reinterpret_cast<PyDictObject *>(f->f_localsplus[argc + (vargs ? 1 : 0)]);
   }
   for (int i = 0; i < argc; ++i) {
@@ -689,8 +692,8 @@ void AddGuardForParam(const PyFrameObject *f, OptGuardPtr guard, bool detach) {
 void AddGuardForGlobals(const PyFrameObject *f, OptGuardPtr guard, bool detach) {
   PyCodeObject *co = f->f_code;
   const _Py_CODEUNIT *bytecodes = reinterpret_cast<_Py_CODEUNIT *>(PyBytes_AsString(co->co_code));
-  int size = (PyBytes_GET_SIZE(co->co_code)) / sizeof(_Py_CODEUNIT);
-  int exarg = 0;
+  int size = (PyBytes_GET_SIZE(co->co_code)) / static_cast<int>(sizeof(_Py_CODEUNIT));
+  unsigned int exarg = 0;
   for (int bci = 0; bci < size; ++bci) {
     int opcode = _Py_OPCODE(bytecodes[bci]);
     int oparg = (exarg << 8) | _Py_OPARG(bytecodes[bci]);
@@ -920,7 +923,7 @@ static bool JitCompile(PyThreadState *tstate, JitCompileResults *c) {
 
 std::vector<py::object> PackArgs(const PyFrameObject *frame) {
   const Py_ssize_t argc = frame->f_code->co_argcount + frame->f_code->co_kwonlyargcount;
-  bool has_varg = frame->f_code->co_flags & CO_VARARGS;
+  bool has_varg = static_cast<unsigned int>(frame->f_code->co_flags) & CO_VARARGS;
   py::list args(argc);
   py::object vargs;
   py::object kwvargs;
@@ -930,7 +933,7 @@ std::vector<py::object> PackArgs(const PyFrameObject *frame) {
   if (has_varg) {
     vargs = py::reinterpret_borrow<py::object>(frame->f_localsplus[argc]);
   }
-  if (frame->f_code->co_flags & CO_VARKEYWORDS) {
+  if (static_cast<unsigned int>(frame->f_code->co_flags) & CO_VARKEYWORDS) {
     kwvargs = py::reinterpret_borrow<py::object>(frame->f_localsplus[argc + has_varg]);
   }
 
@@ -1268,20 +1271,21 @@ py::object test_graph_ir_code_gen(PyFrameObject *frame) {
   auto inliner = std::make_shared<mindspore::pijit::FuncInliner>(func_node);
   inliner->Run();
   int arg_cnt = frame->f_code->co_argcount + frame->f_code->co_kwonlyargcount;
-  if (frame->f_code->co_flags & CO_VARARGS) {
+  if (static_cast<unsigned int>(frame->f_code->co_flags) & CO_VARARGS) {
     arg_cnt++;
   }
   py::list locals = py::reinterpret_steal<py::list>(PyDict_Values(frame->f_locals));
   py::tuple args = py::reinterpret_steal<py::tuple>(PyList_AsTuple(PyList_GetSlice(locals.ptr(), 0, arg_cnt)));
-  py::dict kwargs =
-    (frame->f_code->co_flags & CO_VARKEYWORDS) == 0x0 ? py::dict() : py::cast<py::dict>(locals[arg_cnt]);
+  py::dict kwargs = (static_cast<unsigned int>(frame->f_code->co_flags) & CO_VARKEYWORDS) == 0x0
+                      ? py::dict()
+                      : py::cast<py::dict>(locals[arg_cnt]);
   args = EliminateStubTensor(args);
   mindspore::pijit::AbstractTypeDeducer::Deduce(func_node, args, kwargs);
   func_node->Sort();
   std::cout << func_node->ToString() << std::endl;
   auto func_obj = mindspore::pijit::ByteCodeGenerator::GenFunction(func_node);
   mindspore::pijit::Utils::DisFuncObject(func_obj.ptr());
-  if ((func_node->GetFlags() & CO_VARARGS) != 0) {
+  if ((static_cast<unsigned int>(func_node->GetFlags()) & CO_VARARGS) != 0) {
     auto pos_cnt = args.size() - 1;
     auto var_vargs = py::cast<py::tuple>(args[pos_cnt]);
     auto new_args = py::reinterpret_steal<py::tuple>(PyTuple_New(pos_cnt + var_vargs.size()));
@@ -1378,13 +1382,13 @@ py::list CollectGradientArguments(const PyFrameObject &frame) {
   }
 
   // Collect Variable Arguments
-  if ((frame.f_code->co_flags & CO_VARARGS) != 0x0) {
+  if ((static_cast<unsigned int>(frame.f_code->co_flags) & CO_VARARGS) != 0x0) {
     auto var_args = py::cast<py::tuple>(frame.f_localsplus[frame.f_code->co_argcount]);
     std::for_each(var_args.begin(), var_args.end(), [&arguments](const auto &arg) { arguments.append(arg); });
   }
 
   // Collect Variable Arguments
-  if ((frame.f_code->co_flags & CO_VARKEYWORDS) != 0x0) {
+  if ((static_cast<unsigned int>(frame.f_code->co_flags) & CO_VARKEYWORDS) != 0x0) {
     auto kw_args = py::cast<py::dict>(frame.f_localsplus[frame.f_code->co_argcount + 1]);
     std::for_each(kw_args.begin(), kw_args.end(), [&arguments](const auto &item) { arguments.append(item.second); });
   }
@@ -1459,7 +1463,6 @@ PyObject *EvalFrame(PyThreadState *tstate, PyFrameObject *f, int exc) {
   }
   return res.inc_ref().ptr();
 }
-
 }  // namespace pijit
 }  // namespace mindspore
 
@@ -1510,7 +1513,7 @@ py::bool_ pi_jit_should_compile(const py::object &funcHandle, const py::object &
     return true;
   }
 
-  int raw_code_size = (PyBytes_GET_SIZE(reinterpret_cast<PyCodeObject *>(code)->co_code)) / sizeof(_Py_CODEUNIT);
+  auto raw_code_size = (PyBytes_GET_SIZE(reinterpret_cast<PyCodeObject *>(code)->co_code)) / sizeof(_Py_CODEUNIT);
   std::string raw_func_info_name = py::str(code).cast<std::string>();
   std::string raw_func_name = "";
   if (PyFunction_Check(func)) {
