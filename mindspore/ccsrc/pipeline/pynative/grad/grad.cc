@@ -38,7 +38,6 @@
 #include "frontend/expander/utils.h"
 #include "pipeline/jit/ps/pass.h"
 #include "pybind_api/gil_scoped_long_running.h"
-#include "frontend/expander/pack/packfunc_grad.h"
 #include "frontend/optimizer/fallback_rewriter.h"
 #include "runtime/pynative/op_function/pyboost_grad_functions.h"
 
@@ -374,75 +373,6 @@ GradParamPtr CreateOpGradParam(const FrontendOpRunInfoPtr &op_run_info, const To
   auto grad_param = std::make_shared<GradParam>(op_run_info->op_grad_info, top_cell->use_dynamic_shape_process());
   grad_param->out_used_in_bporp_graph = out_used_in_bporp_graph;
   return grad_param;
-}
-
-GradParamPtr CreateGradParam(const FrontendOpRunInfoPtr &op_run_info, const TopCellInfoPtr &top_cell,
-                             const expander::GraphGradInfoPtr &graph_grad_info, ValuePtrList *forward_vnodes_values) {
-  MS_LOG_DEBUG << "start CreateGradParam";
-  MS_EXCEPTION_IF_NULL(op_run_info);
-  op_run_info->op_grad_info->out_value = op_run_info->real_out;
-  *forward_vnodes_values = expander::GetForwardNodesValue(op_run_info->op_grad_info->out_value, graph_grad_info);
-  // The required output in the bprop has been saved by the forward_vnodes_values, free all out_value
-  op_run_info->op_grad_info->out_value =
-    PyNativeAlgo::Common::CreateFakeValueWithoutDeviceAddress(op_run_info->op_grad_info->out_value);
-  // original output abs
-  op_run_info->op_grad_info->out_abs = graph_grad_info->ori_output_abs;
-  auto grad_param = std::make_shared<GradParam>(op_run_info->op_grad_info, top_cell->use_dynamic_shape_process());
-  MS_LOG_DEBUG << "end CreateGradParam";
-  return grad_param;
-}
-
-void RunReplace(const expander::GraphGradInfoPtr &graph_grad_info, const ValuePtrList &values) {
-  MS_LOG_DEBUG << "start RunReplace";
-  const auto &vnodes = graph_grad_info->forward_vnodes;
-  size_t values_index = 0;
-  for (const auto &[vnode, output_num] : vnodes) {
-    if (values_index + output_num > values.size()) {
-      MS_LOG_EXCEPTION << "vnode output is greater than values.size:" << values_index + output_num << " vs "
-                       << values.size();
-    }
-    if (output_num == 1) {
-      vnode->set_value(values[values_index]);
-    } else {
-      auto values_begin = values.begin() + values_index;
-      auto value = std::make_shared<ValueTuple>(std::vector<ValuePtr>(values_begin, values_begin + output_num));
-      vnode->set_value(value);
-    }
-    values_index += output_num;
-  }
-  if (values_index != values.size()) {
-    MS_LOG_EXCEPTION << "output_num is not equal";
-  }
-  MS_LOG_DEBUG << "end RunReplace";
-}
-
-void KPynativeGraph(const autograd::AutoGradPtr &auto_grad_cell_ptr, const GradParamPtr &grad_param,
-                    const expander::GraphGradInfoPtr &graph_grad_info, const ValuePtrList &forward_vnodes_values) {
-  // Replace vnode in ad_graph by current output value
-  RunReplace(graph_grad_info, forward_vnodes_values);
-  // recover output for original output
-  const auto &op_grad_info = grad_param->op_grad_info;
-  auto added_value_size = graph_grad_info->added_output_size;
-  if (added_value_size > 0) {
-    const auto &out_v_tuple = op_grad_info->out_value->cast<ValueTuplePtr>();
-    MS_EXCEPTION_IF_NULL(out_v_tuple);
-    const auto &out_v_vec = out_v_tuple->value();
-    auto ori_size = out_v_vec.size() - added_value_size;
-    if (ori_size == 1) {
-      op_grad_info->out_value = out_v_vec[0];
-    } else {
-      const ValuePtrList ori_out_vec(out_v_vec.begin(), out_v_vec.begin() + ori_size);
-      op_grad_info->out_value = std::make_shared<ValueTuple>(ori_out_vec);
-    }
-  }
-  // Temporarily use the `is_jit_graph`, represented as func_graph
-  grad_param->is_jit_graph = true;
-  grad_param->fg = graph_grad_info->graph_set_forward;
-  grad_param->source_fg = graph_grad_info->ori_graph;
-  grad_param->graph_cache_key = std::to_string(graph_grad_info->graph_id);
-  MS_EXCEPTION_IF_NULL(auto_grad_cell_ptr);
-  op_grad_info->output_size = PyNativeAlgo::Common::GetValueSize(op_grad_info->out_value);
-  (void)auto_grad_cell_ptr->KPynativeWithFProp(grad_param);
 }
 
 void CheckBpropCutNode(const TopCellInfoPtr &top_cell, const PrimitivePtr &op_prim) {
@@ -1820,12 +1750,7 @@ void GradExecutor::SetHookChanged(const py::object &cell) const {
 void GradExecutor::ProcessOpGradInfo(const FrontendOpRunInfoPtr &op_run_info) const {
   MS_EXCEPTION_IF_NULL(op_run_info);
   RecordForwardGraph(op_run_info);
-  // -1: means invalid grad_graph_id
-  if (op_run_info->op_grad_info->grad_graph_id == -1) {
-    DoOpGrad(op_run_info);
-  } else {
-    DoGraphGrad(op_run_info);
-  }
+  DoOpGrad(op_run_info);
   if (op_run_info->stub_output != nullptr) {
     op_run_info->stub_output->SetValue(op_run_info->real_out);
   }
@@ -1868,24 +1793,6 @@ void GradExecutor::DoOpGrad(const FrontendOpRunInfoPtr &op_run_info) const {
   } else {
     (void)top_cell()->auto_grad_cell_ptr()->KPynativeOp(grad_param);
   }
-}
-
-void GradExecutor::DoGraphGrad(const FrontendOpRunInfoPtr &op_run_info) const {
-  MS_EXCEPTION_IF_NULL(op_run_info);
-  const auto &graph_grad_info = expander::GetGraphGradInfo(op_run_info->op_grad_info->grad_graph_id);
-  ValuePtrList forward_vnodes_values;
-  auto &&grad_param = CreateGradParam(op_run_info, top_cell(), graph_grad_info, &forward_vnodes_values);
-  if (forward()->enable_async()) {
-    auto auto_grad_cell_ptr = top_cell()->auto_grad_cell_ptr();
-    auto fn = [auto_grad_cell_ptr, grad_param, graph_grad_info, forward_vnodes_values]() {
-      KPynativeGraph(auto_grad_cell_ptr, grad_param, graph_grad_info, forward_vnodes_values);
-    };
-    (void)bprop_queue_->Push(new (std::nothrow) BpropTask(std::move(fn)));
-  } else {
-    KPynativeGraph(top_cell()->auto_grad_cell_ptr(), grad_param, graph_grad_info, forward_vnodes_values);
-  }
-  // Because the ad_graph is a subgraph, inline optimization is necessary
-  top_cell()->set_need_do_final_opt(true);
 }
 
 void GradExecutor::UpdateTopCellForwardTensorInfoInBpropGraph(const std::string &op_info, const ValuePtr &v,

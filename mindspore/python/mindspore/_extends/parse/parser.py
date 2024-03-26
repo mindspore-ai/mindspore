@@ -45,7 +45,6 @@ from mindspore.common.parameter import Parameter
 from mindspore.common import mutable
 from mindspore.common._register_for_adapter import ms_adapter_registry
 from mindspore._checkparam import is_stub_tensor
-from mindspore.ops._tracefunc import _PackSourceBuilder
 from .namespace import Namespace, CellNamespace, ClosureNamespace, ClassMemberNamespace
 from .resources import parse_object_map, ops_symbol_map, convert_object_map, convert_class_to_function_map, trope_ns
 from .resources import SYMBOL_UNDEFINE, constant_fold_functions
@@ -1081,7 +1080,6 @@ class Parser:
 
     def __init__(self, fn: (types.FunctionType, types.MethodType), parse_method=None) -> None:
         self.fn = inspect.unwrap(fn.__func__ if isinstance(fn, types.MethodType) else fn)
-        self.pack_builder = _PackSourceBuilder(fn) if hasattr(fn, "pack_fn") else None
         self.parse_method = parse_method
         self.line_offset = 0
         self.filename: str = self.fn.__code__.co_filename
@@ -1211,8 +1209,6 @@ class Parser:
                 logger.debug("Get source: %s", src)
                 self.check_lambda(src)
                 try:
-                    if self.pack_builder:
-                        src = self.pack_builder.get_code_source()
                     ast_tokens = asttokens.ASTTokens(src, parse=True)
                 except IndentationError as idt_err:
                     idt_err.filename = self.filename
