@@ -14,37 +14,6 @@
  * limitations under the License.
  */
 
-#ifndef ENABLE_INTERNAL_KERNELS
-#include "plugin/device/ascend/optimizer/ir_fusion/add_layernorm_fusion.h"
-
-#include <vector>
-#include <string>
-
-#include "mindspore/core/ops/nn_optimizer_ops.h"
-#include "mindspore/core/ops/math_ops.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
-#include "ir/primitive.h"
-#include "include/common/utils/utils.h"
-#include "include/backend/optimizer/helper.h"
-#include "include/backend/optimizer/optimizer.h"
-
-namespace mindspore {
-namespace opt {
-const BaseRef AddLayernormFusion::DefinePattern() const {
-  VectorRef add_layer_norm = VectorRef({prim::kPrimLayerNorm, VectorRef({prim::kPrimAdd, x1_, x2_}), gamma_, beta_,
-                                        begin_norm_axis_, begin_params_axis_, eps_});
-  return add_layer_norm;
-}
-
-const AnfNodePtr AddLayernormFusion::Process(const FuncGraphPtr &graph, const AnfNodePtr &node,
-                                             const EquivPtr &equiv) const {
-  return nullptr;
-}
-}  // namespace opt
-}  // namespace mindspore
-
-#else
 #include "plugin/device/ascend/optimizer/ir_fusion/add_layernorm_fusion.h"
 
 #include <vector>
@@ -172,4 +141,3 @@ const AnfNodePtr AddLayernormFusion::Process(const FuncGraphPtr &graph, const An
 }
 }  // namespace opt
 }  // namespace mindspore
-#endif
