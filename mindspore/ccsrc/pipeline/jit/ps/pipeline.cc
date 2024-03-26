@@ -1555,8 +1555,9 @@ void Pipeline::Run() {
     if (distributed::collective::CollectiveManager::instance()->initialized()) {
       group_map = distributed::collective::CollectiveManager::instance()->get_group_map();
     }
-    if (parallel::g_device_manager != nullptr) {
+    if (parallel::g_device_manager == nullptr) {
       MS_LOG(WARNING) << "parallel::g_device_manager is not initialized. Skip dump parallel info.";
+    } else {
       auto global_rank_id = parallel::g_device_manager->global_rank();
       DumpParallelJson("dump_parallel_info_" + std::to_string(global_rank_id) + ".json", resource_->func_graph(),
                        global_rank_id, group_map);
