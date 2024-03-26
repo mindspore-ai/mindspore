@@ -727,8 +727,9 @@ class MatMul(Primitive):
     where the :math:`i,j` indicates the output of the i-th row and j-th column element.
 
     Note:
-        If :math:`N * M` cannot be divided by 16, the performance will be poor in ascend environment.
-        The dtype of inputs must be same.
+        - If :math:`N * M` cannot be divided by 16, the performance will be poor in ascend environment.
+        - The dtype of inputs must be same.
+        - On Ascend, float64 doesn't be supported.
 
     Args:
         transpose_a (bool): If ``True`` , `a` is transposed before multiplication. Default: ``False`` .
