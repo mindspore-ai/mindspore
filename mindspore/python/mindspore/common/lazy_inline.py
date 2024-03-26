@@ -26,10 +26,10 @@ def lazy_inline(fn=None, attrs=None):
     Registering the decorator of the built-in function `__init__` of a cell, the decorator
     will add the parameters of `__init__` according to the `attrs` as the attributes of this cell.
 
-
     .. warning::
         This feature is only supported on Ascend and is not supported on other hardwares.
         The construct parameters must be positional or key word arguments and have not default values.
+
     Args:
         fn (function): `__init__` function of a cell.
         attrs (Union[list[string], string]): The attributes list to add for the cell.
