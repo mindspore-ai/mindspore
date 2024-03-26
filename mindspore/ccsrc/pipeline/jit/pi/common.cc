@@ -598,7 +598,7 @@ static void CollectTraceBack(JitCompileResults *c, PyCodeObject *code, bool is_g
   }
   std::string name = Utils::GetPyName(c->origin_frame_->f_code->co_name);
   std::string changed_name = Utils::GetPyName(code->co_name);
-  int code_size = (PyBytes_GET_SIZE(code->co_code)) / sizeof(_Py_CODEUNIT);
+  int code_size = static_cast<int>((PyBytes_GET_SIZE(code->co_code)) / sizeof(_Py_CODEUNIT));
   c->tbs->PushTbs({name, changed_name, code_size, is_graph_mode});
 }
 
