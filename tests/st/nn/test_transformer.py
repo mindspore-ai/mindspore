@@ -303,7 +303,7 @@ def test_transformerdecoder_cpu(dtype, training, jit):
     assert result.shape == tgt.shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -401,7 +401,7 @@ def test_transformer_gpu(dtype, training, jit):
     assert result.shape == tgt.shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

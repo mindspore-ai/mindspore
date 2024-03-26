@@ -35,7 +35,7 @@ def scatter_nd_vmap_func(indices, updates, shape):
     return ops.vmap(scatter_nd_forward_func, in_axes=(0, 0, None), out_axes=0)(indices, updates, shape)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training

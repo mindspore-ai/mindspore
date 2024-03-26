@@ -131,7 +131,7 @@ def test_load_mindir_with_custom_func():
     assert mindir_model.user_info["version"] == "1.0"
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
