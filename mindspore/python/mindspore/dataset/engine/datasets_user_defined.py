@@ -360,7 +360,8 @@ class SamplerFn:
         """
         if multi_process is True and platform.system().lower() != 'windows':
             _clean_worker_func = _PythonMultiprocessing._clean_process  # pylint: disable=W0212
-            self.cleaning_process = multiprocessing.Process(target=_clean_worker_func, args=(self.ppid, self.workers))
+            self.cleaning_process = multiprocessing.Process(target=_clean_worker_func,
+                                                            args=(self.ppid, self.workers, self.eof))
             self.cleaning_process.daemon = True
             self.cleaning_process.start()
 
@@ -381,11 +382,10 @@ class SamplerFn:
     def _stop_subprocess(self):
         """Only the main process can call join."""
         if self.need_join is True and self.ppid == os.getpid():
-            # close the watch dog first
-            self._abort_watchdog()
-
             if hasattr(self, 'eof') and self.eof is not None and not self.eof.is_set():
                 self.eof.set()
+            # close the watch dog first
+            self._abort_watchdog()
             self.need_join = False
             for w in self.workers:
                 if self.multi_process is True and hasattr(w, '_closed') and w._closed is False:  # pylint: disable=W0212
