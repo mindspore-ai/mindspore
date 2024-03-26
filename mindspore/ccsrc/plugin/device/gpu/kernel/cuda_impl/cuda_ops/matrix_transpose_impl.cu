@@ -24,7 +24,16 @@ using Complex = mindspore::utils::Complex<T>;
 
 template <typename T>
 __global__ void MatrixTransposeKernel(const T *input, int elements, int row, int col, T *output) {
+template <typename T>
+cudaError_t MatrixTranspose(const T *input, int elements, int row, int col, T *output, uint32_t device_id,
+                            cudaStream_t cuda_stream) {
   if (col < 0 || row < 0 ) {
+    return cudaErrorInvalidValue;
+  }
+  MatrixTransposeKernel<<<CUDA_BLOCKS(device_id, elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+    input, elements, row, col, output);
+  return GetCudaStatus();
+}
     return;
   }
   const int matrix_size = row * col;
