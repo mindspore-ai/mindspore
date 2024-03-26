@@ -24,7 +24,7 @@ using Complex = mindspore::utils::Complex<T>;
 
 template <typename T>
 __global__ void MatrixTransposeKernel(const T *input, int elements, int row, int col, T *output) {
-  if (col <= 0 || row <= 0 || row != col) {
+  if (col < 0 || row < 0 ) {
     return;
   }
   const int matrix_size = row * col;
