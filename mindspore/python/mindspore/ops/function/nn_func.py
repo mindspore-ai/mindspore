@@ -1728,10 +1728,10 @@ def kl_div(logits, labels, reduction='mean'):
 
     .. math::
         \ell(x, target) = \begin{cases}
-        L, & \text{if reduction} = \text{'none';}\\
-        \operatorname{mean}(L), & \text{if reduction} = \text{'mean';}\\
-        \operatorname{batchmean}(L), & \text{if reduction} = \text{'batchmean';}\\
-        \operatorname{sum}(L),  & \text{if reduction} = \text{'sum'.}
+        L(x, target), & \text{if reduction} = \text{'none';}\\
+        \operatorname{mean}(L(x, target)), & \text{if reduction} = \text{'mean';}\\
+        \operatorname{sum}(L(x, target)) / x.\operatorname{shape}[0], & \text{if reduction} = \text{'batchmean';}\\
+        \operatorname{sum}(L(x, target)),  & \text{if reduction} = \text{'sum'.}
         \end{cases}
 
     where :math:`x` represents `logits`.
@@ -1761,7 +1761,7 @@ def kl_div(logits, labels, reduction='mean'):
     Raises:
         TypeError: If `reduction` is not a str.
         TypeError: If neither `logits` nor `labels` is a Tensor.
-        TypeError: If dtype of `logits` or `labels` is not float32.
+        TypeError: If dtype of `logits` or `labels` is not the supported type.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
