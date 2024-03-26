@@ -916,7 +916,6 @@ bool GraphBuilder::DoSideEffect(const Instr &instr, const std::vector<ValueNode 
     return false;
   }
   index = index < 0 ? (size + index) : index;
-  items[index] = value;
   AObject *object_info = AObject::BuildOperations(CollectObjects(items), BUILD_LIST);
   new_node = NewValueNode(object_info, BUILD_LIST, items.size(), items);
   if (!ReplaceAll(container, new_node)) {
@@ -925,6 +924,7 @@ bool GraphBuilder::DoSideEffect(const Instr &instr, const std::vector<ValueNode 
   for (auto item : items) {
     graph_->GetTracedNodes().push_back(item);
   }
+  items[index] = value;
   NewValueNode(nullptr, instr, {value, container, key});
   graph_->GetSideEffect()->SetSideEffectNode(new_node);
   graph_->GetSideEffect()->SetReplaceMap(new_node, container);
