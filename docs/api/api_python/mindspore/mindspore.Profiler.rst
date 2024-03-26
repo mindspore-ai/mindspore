@@ -53,6 +53,7 @@ mindspore.Profiler
             - **step_list** (list, 可选) - 只分析指定step的性能数据。此参数默认值为 ``None``，即进行全解析。
 
     .. py:method:: offline_analyse(path: str, pretty=False, step_list=None)
+        :classmethod:
 
         离线分析训练的性能数据，性能数据采集结束后调用。
 
