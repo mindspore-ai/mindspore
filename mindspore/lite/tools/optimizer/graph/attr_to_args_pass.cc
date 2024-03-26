@@ -172,6 +172,18 @@ static const std::map<std::string, std::vector<string>> kAttrMapNeedAdjust = {
    {
      "axis",
    }},
+  {"GridSampler3D",
+   {
+     "interpolation_mode",
+     "padding_mode",
+     "align_corners",
+   }},
+  {"GridSampler2D",
+   {
+     "interpolation_mode",
+     "padding_mode",
+     "align_corners",
+   }},
 };
 
 int ConvertAttrToArgsForNode(const AnfNodePtr &node, const FuncGraphManagerPtr &manager) {
