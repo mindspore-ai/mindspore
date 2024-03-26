@@ -1,4 +1,3 @@
-# pylint: disable=broad-except
 # Copyright 2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -67,10 +66,8 @@ class {kernelmod_name} : public AclnnKernelMod {{
 """
     temp_file = kernelmod_h_path + "_tmp.h"
     old_file = kernelmod_h_path + ".h"
-    fd = os.open(temp_file, os.O_WRONLY | os.O_CREAT, 0o644)
-    h_file = os.fdopen(fd, 'w')
-    h_file.write(gen_utils.cc_license_str + h_head + h_body)
-    h_file.close()
+    with open(temp_file, 'w') as h_file:
+        h_file.write(gen_utils.cc_license_str + h_head + h_body)
     gen_utils.check_change_and_replace_file(old_file, temp_file)
 
 
@@ -158,10 +155,8 @@ MS_ACLNN_KERNEL_FACTORY_REG({class_name}, {kernelmod_name});
     """
     temp_file = kernelmod_cc_path + "_tmp.cc"
     old_file = kernelmod_cc_path + ".cc"
-    fd = os.open(temp_file, os.O_WRONLY | os.O_CREAT, 0o644)
-    cc_file = os.fdopen(fd, 'w')
-    cc_file.write(gen_utils.cc_license_str + cc_head + workspace_info + launch + update_shape + reg)
-    cc_file.close()
+    with open(temp_file, 'w') as cc_file:
+        cc_file.write(gen_utils.cc_license_str + cc_head + workspace_info + launch + update_shape + reg)
     gen_utils.check_change_and_replace_file(old_file, temp_file)
 
 
@@ -262,5 +257,6 @@ if __name__ == "__main__":
             raise ValueError("Please provide op name to generate aclnn kernelmod.")
         is_need_update_shape = options.need_update_shape
         main(name, is_need_update_shape)
-    except Exception as e:  # pylint: disable=W0703
+    # pylint: disable=broad-except
+    except Exception as e:
         logging.exception("Generate aclnn kernelmod failed, err info: %s", e)
