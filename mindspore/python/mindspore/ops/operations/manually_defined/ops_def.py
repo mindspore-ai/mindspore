@@ -996,6 +996,7 @@ class Tile(Primitive):
         return _convert_stub(pyboost_tile(self, [input, dims]))
 
     def check_elim(self, *args):
+        """check for elimination."""
         base_tensor, dims = args
         if not isinstance(base_tensor, Tensor):
             raise TypeError(f"For '{self.name}', the type of 'input' must be Tensor, "
@@ -1190,9 +1191,11 @@ def infer_value_for_Tile(input, dims):
 
 def infer_value_for_Concat(tensors, axis):
     """Infer value for Concat op."""
-    if tensors is None or None in tensors or axis is None:
+    if not tensors or None in tensors or axis is None:
         return None
-    return Tensor(np.concatenate([x.asnumpy() for x in tensors], axis))
+
+    tensor_to_concat = [x.asnumpy() if x.dtype != mstype.bfloat16 else x.float().asnumpy() for x in tensors]
+    return Tensor(np.concatenate(tensor_to_concat, axis), dtype=tensors[0].dtype)
 
 
 def infer_value_for_ReduceSum(input_x, axis, keep_dims, skip_mode):
