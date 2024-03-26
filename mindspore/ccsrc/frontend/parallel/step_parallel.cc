@@ -1878,9 +1878,11 @@ static void ReshapeInit(const std::vector<AnfNodePtr> &all_nodes) {
     bool is_next_reshape = false;
     mindspore::HashSet<AnfNodePtr> visit;
     auto next_layout_ptr = FindNextLayout(cnode, &is_next_reshape, &visit, -1);
-    if (!next_layout_ptr) {
-      MS_LOG(WARNING)
-        << "FindNextLayout return nullptr, if reshape is not the last primitive, there must be some error";
+    if (next_layout_ptr == nullptr) {
+      std::string is_reshape = is_next_reshape ? "true" : "false";
+      MS_LOG(WARNING) << "FindNextLayout for " << cnode->fullname_with_scope()
+                      << " return nullptr, and is_next_reshape is " << is_next_reshape
+                      << ". If reshape is not the last primitive, there must be some error.";
     }
     if (next_layout_ptr) {
       auto reshape_info_ptr = std::dynamic_pointer_cast<ReshapeInfo>(operator_info);
