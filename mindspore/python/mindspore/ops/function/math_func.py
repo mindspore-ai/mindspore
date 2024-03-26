@@ -109,7 +109,6 @@ def get_x_shape(x_shape):
 #####################################
 absolute_ = P.Abs()
 cast_ = P.Cast()
-not_equal_ = not_equal
 tensor_add = P.Add()
 tensor_ceil = P.Ceil()
 tensor_div = P.RealDiv()
@@ -3296,7 +3295,7 @@ def ne(input, other):
         >>> print(output)
         [False False  True]
     """
-    return not_equal_(input, other)
+    return not_equal(input, other)
 
 
 def approximate_equal(x, y, tolerance=1e-5):
@@ -10750,7 +10749,7 @@ def count_nonzero(x, axis=(), keep_dims=False, dtype=mstype.int32):
     reduce_sum = _get_cache_prim(P.ReduceSum)(keep_dims)
 
     tensor_0 = ops.zeros(x.shape, x.dtype)
-    nonzero_bool = not_equal_(x, tensor_0)
+    nonzero_bool = not_equal(x, tensor_0)
     # ReduceSum only support float16 or float32 tensor.
     nonzero_val = cast_(nonzero_bool, mstype.float32)
     nonzero_num = cast_(reduce_sum(nonzero_val, axis), dtype)
