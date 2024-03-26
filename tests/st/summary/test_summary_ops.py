@@ -91,7 +91,7 @@ class TestSummaryOps:
         if os.path.exists(cls.base_summary_dir):
             shutil.rmtree(cls.base_summary_dir)
 
-    @pytest.mark.level0
+    @pytest.mark.level1
     @pytest.mark.platform_x86_ascend_training
     @pytest.mark.platform_arm_ascend_training
     @pytest.mark.platform_x86_gpu_training
@@ -122,7 +122,7 @@ class TestSummaryOps:
         assert np.allclose(expected_data, histogram_data)
         assert not np.allclose(0, x_fc3)
 
-    @pytest.mark.level0
+    @pytest.mark.level1
     @pytest.mark.platform_x86_ascend_training
     @pytest.mark.platform_arm_ascend_training
     @pytest.mark.platform_x86_gpu_training
@@ -152,7 +152,7 @@ class TestSummaryOps:
         assert np.allclose(expected_data, histogram_data)
         assert not np.allclose(0, x_fc3)
 
-    @pytest.mark.level0
+    @pytest.mark.level1
     @pytest.mark.platform_x86_ascend_training
     @pytest.mark.platform_arm_ascend_training
     @pytest.mark.platform_x86_gpu_training
@@ -185,7 +185,7 @@ class TestSummaryOps:
 
         del os.environ['GRAPH_OP_RUN']
 
-    @pytest.mark.level0
+    @pytest.mark.level1
     @pytest.mark.platform_x86_ascend_training
     @pytest.mark.platform_arm_ascend_training
     @pytest.mark.platform_x86_gpu_training
@@ -214,7 +214,7 @@ class TestSummaryOps:
         assert np.allclose(expected_data, histogram_data)
         assert not np.allclose(0, x_fc3)
 
-    @pytest.mark.level0
+    @pytest.mark.level1
     @pytest.mark.platform_x86_ascend_training
     @pytest.mark.platform_arm_ascend_training
     @pytest.mark.platform_x86_gpu_training
