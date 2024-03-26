@@ -144,49 +144,6 @@ void UpdateFuncGraphParameter(const FuncGraphPtr &func_graph, const std::vector<
   func_graph->set_parameters(new_paras);
 }
 
-// Dynamic shape node or PyExecute node exist in graph.
-bool IsDynamicGraph(const FuncGraphPtr &func_graph) {
-  MS_EXCEPTION_IF_NULL(func_graph);
-  std::vector<AnfNodePtr> node_list = TopoSort(func_graph->get_return(), SuccDeeperSimple);
-  AnfNodePtr dynamic_node = nullptr;
-  AnfNodePtr pyexecute_node = nullptr;
-  for (const auto &node : node_list) {
-    if (node->abstract() == nullptr) {
-      MS_LOG(INFO) << "Null abstract of node: " << node->DebugString();
-      continue;
-    }
-    if (node->abstract() != nullptr) {
-      auto shape = node->abstract()->GetShape();
-      // Dynamic shape tensor.
-      if (shape->isa<abstract::TensorShape>() && IsDynamic(shape->GetShapeVector())) {
-        dynamic_node = node;
-        break;
-      }
-      // Dynamic len sequence.
-      if (node->abstract()->isa<abstract::AbstractSequence>() &&
-          node->abstract()->cast<abstract::AbstractSequencePtr>()->dynamic_len()) {
-        dynamic_node = node;
-        break;
-      }
-      // PyExecute node exist
-      if (IsPrimitiveCNode(node, prim::kPrimPyExecute)) {
-        pyexecute_node = node;
-      }
-    }
-  }
-  if (dynamic_node != nullptr) {
-    MS_LOG(INFO) << "Func graph:" << func_graph->ToString()
-                 << " is dynamic shape graph, because find dynamic shape node:" << dynamic_node->DebugString()
-                 << ", abstract: " << dynamic_node->abstract()->ToString();
-    return true;
-  }
-  if (pyexecute_node != nullptr) {
-    MS_LOG(INFO) << "Func graph:" << func_graph->ToString() << " has pyexecute node:" << pyexecute_node->DebugString();
-    return true;
-  }
-  return false;
-}
-
 // Exist ScalarAdd ScalarSub etc OPS which will backoff to CPU
 bool IsNeedBackoffGraph(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
@@ -1237,7 +1194,7 @@ void SetRunMode(const FuncGraphPtr &func_graph, compile::Backend *backend_ptr, s
   }
 
   // GRAPH | Dynamic Shape : KernelByKernel path in MindRT.
-  if (IsDynamicGraph(func_graph) && (context_ptr->backend_policy() != "ge")) {
+  if (common::AnfAlgo::IsDynamicGraph(func_graph) && (context_ptr->backend_policy() != "ge")) {
     if (kbk_reason != nullptr) {
       *kbk_reason =
         "Run graph mode with kernel by kernel because graph exist dynamic shape. Call "
@@ -1249,7 +1206,7 @@ void SetRunMode(const FuncGraphPtr &func_graph, compile::Backend *backend_ptr, s
   }
 
   // GRAPH | Dynamic Scalar : Dynamic scalar ops in graph.
-  if (IsNeedBackoffGraph(func_graph) && !IsDynamicGraph(func_graph)) {
+  if (IsNeedBackoffGraph(func_graph) && !common::AnfAlgo::IsDynamicGraph(func_graph)) {
     if (kbk_reason != nullptr) {
       *kbk_reason = "Run graph mode with kernel by kernel because graph exist dynamic scalar ops.";
       MS_LOG(INFO) << *kbk_reason;
@@ -1330,7 +1287,7 @@ void SetRunMode(const ResourcePtr &resource) {
          "because 'MS_HCCL_CM_INIT' means running in sink mode, but 'GRAPH_OP_RUN' means running kernel by kernel. "
          "Please unset either of them and rerun the task.";
   }
-  if ((!is_task_sink || IsDynamicGraph(resource->func_graph())) && mode == kGraphMode && enable_hccl &&
+  if ((!is_task_sink || common::AnfAlgo::IsDynamicGraph(resource->func_graph())) && mode == kGraphMode && enable_hccl &&
       (!common::UseHostCollective() || using_cm)) {
     MS_LOG(INTERNAL_EXCEPTION) << "Current execution mode is 'kernelbykernel', reason: " << kbk_reason
                                << ", but you're launching job using 'ranktable', which "
