@@ -153,7 +153,6 @@ class FutureBase {
 // Tensor entity class
 class MS_CORE_API Tensor : public MetaTensor {
  public:
-  abstract::AbstractBasePtr ToAbstract() override;
   Tensor() = default;
 
   /// \brief Create tensor from another tensor, data is shared.
@@ -324,6 +323,17 @@ class MS_CORE_API Tensor : public MetaTensor {
   /// \param[in] tensor The Tensor object to be compared.
   /// \return True if having same type, shape and data address, otherwise false.
   bool operator==(const Tensor &tensor) const;
+
+  /// \brief Create Abstract for Tensor.
+  ///
+  /// \return Abstract of Tensor.
+  abstract::AbstractBasePtr ToAbstract() override;
+
+  /// \brief Get Abstract cache. The value of the abstract is null.
+  /// Only used by InferShape in PyNative mode.
+  ///
+  /// \return Abstract of tensor.
+  abstract::AbstractBasePtr GetAbstractCache();
 
   /// \brief It is different from 'operator==' which just compares shape/type/address,
   /// it does real value comparison.
@@ -839,6 +849,7 @@ class MS_CORE_API Tensor : public MetaTensor {
   std::vector<std::shared_ptr<QuantizationParam>> quant_params_;
   std::string tensor_name_;
   mutable std::shared_ptr<FutureBase<DeviceSync>> address_future_{};
+  // Abstract cache for PyNative InferShape.
   std::weak_ptr<abstract::AbstractBase> abstract_;
 };
 
