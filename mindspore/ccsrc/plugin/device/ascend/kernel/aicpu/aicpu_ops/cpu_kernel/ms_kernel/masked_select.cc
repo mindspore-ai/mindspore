@@ -39,10 +39,7 @@ const char *const kMaskedSelect = "MaskedSelect";
 struct OutputInfo {
   int64_t startIdx;
   int64_t len;
-  OutputInfo() {
-    startIdx = 0;
-    len = 0;
-  }
+  OutputInfo() : startIdx(0), len(0) {}
 };
 
 bool CompareFunc(const OutputInfo &a, const OutputInfo &b) { return a.startIdx <= b.startIdx; }

@@ -70,7 +70,6 @@ TypePtr MaskedFillFuncImpl::InferType(const PrimitivePtr &primitive,
   auto value_type_ptr = value_tensor_type->element();
   MS_EXCEPTION_IF_NULL(value_type_ptr);
   auto value_type = value_type_ptr->type_id();
-
   if (input_type != value_type) {
     MS_EXCEPTION(TypeError) << "For MaskedFill, "
                             << "the dtype of input and value should be same, but got: input's type "

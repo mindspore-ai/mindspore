@@ -851,6 +851,7 @@ def get_fft_with_size_vmap_rule(prim, axis_size):
 
     return vmap_rule
 
+
 @vmap_rules_getters.register(math_ops.Logit)
 def get_logit_vmap_rule(prim_func, axis_size):
     """VmapRule for `Logit` operation"""

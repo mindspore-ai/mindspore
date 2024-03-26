@@ -43,8 +43,8 @@ int32_t ReverseV2FuncImpl::CheckValidation(const PrimitivePtr &primitive,
     return OP_CHECK_RETRY;
   }
 
-  constexpr int32_t kBitOne = 1;
-  int32_t axis_bitmap = 0;
+  constexpr uint32_t kBitOne = 1;
+  uint32_t axis_bitmap = 0;
   const auto &axis = axis_array.ToVector();
   for (size_t i = 0; i < axis.size(); ++i) {
     auto real_dim = axis[i] < 0 ? axis[i] + x_rank : axis[i];

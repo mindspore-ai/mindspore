@@ -60,9 +60,8 @@ void FillTaskTensorInput(Distribution dist, PhiloxRandom gen, T1 *input, T2 *out
 template <typename Distribution>
 class PhiloxRandomDist {
  public:
-  PhiloxRandomDist(int64_t seed, int64_t offset, int64_t parallelLimit) : generator_(seed, offset) {
-    kParallelDataNumSameShape_ = parallelLimit;
-  }
+  PhiloxRandomDist(int64_t seed, int64_t offset, int64_t parallelLimit)
+      : kParallelDataNumSameShape_(parallelLimit), generator_(seed, offset) {}
 
   template <typename T1, typename T2>
   uint32_t DistCompute(const CpuKernelContext &ctx, T1 *input, T2 *output, int64_t input_size, int64_t output_size) {
