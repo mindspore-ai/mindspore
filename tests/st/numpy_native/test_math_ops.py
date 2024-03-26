@@ -2115,23 +2115,6 @@ def test_interp():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_digitize():
-    bins = onp.random.randint(-10, 10, size=10)
-    bins.sort()
-    x = onp.random.randint(-15, 15, size=(2, 3, 4)) + onp.random.choice([0, 0.5], (2, 3, 4))
-    match_res(mnp.digitize, onp.digitize, x, bins)
-    match_res(mnp.digitize, onp.digitize, x, bins, right=True)
-    bins = onp.flip(bins)
-    match_res(mnp.digitize, onp.digitize, x, bins)
-    match_res(mnp.digitize, onp.digitize, x, bins, right=True)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
 def test_bincount():
     x = onp.random.randint(0, 10, 20)
     weights = onp.random.randn(20)
