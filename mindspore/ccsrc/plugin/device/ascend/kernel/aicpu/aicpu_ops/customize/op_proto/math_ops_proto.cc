@@ -560,4 +560,15 @@ IMPLEMT_COMMON_INFERFUNC(CholeskyInverseInferShape) {
 CUST_COMMON_INFER_FUNC_REG(CholeskyInverse, CholeskyInverseInferShape);
 
 // -----------------------CholeskyInverse END---------------------
+
+// ----------------Logit-------------------
+CUST_IMPLEMT_INFERFUNC(Logit, LogitInfer) {
+  TensorDesc out_desc = op.GetInputDescByName("x");
+  if (op.UpdateOutputDesc("output", out_desc) != GRAPH_SUCCESS) {
+    return GRAPH_FAILED;
+  }
+  return GRAPH_SUCCESS;
+}
+CUST_INFER_FUNC_REG(Logit, LogitInfer);
+// ----------------Logit END-------------------
 }  // namespace ge
