@@ -427,11 +427,6 @@ bool GraphAdapter::IsPynativeGeGraphSink(const FuncGraphPtr &func_graph) {
     return false;
   }
 
-  auto enable_ge = common::GetEnv("MS_PYNATIVE_GE");
-  if (enable_ge != "1") {
-    return false;
-  }
-
   MS_EXCEPTION_IF_NULL(func_graph);
   if (func_graph->has_flag(kFlagEnableRunGraphBySingleOp)) {
     return false;

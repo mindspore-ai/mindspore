@@ -536,8 +536,8 @@ bool MsContext::IsKByKExecutorMode() const {
 
   auto mode = get_param<int>(MS_CTX_EXECUTION_MODE);
   if (mode == kPynativeMode) {
-    if (common::GetEnv("MS_PYNATIVE_GE") == "1" || jit_level == "O2") {
-      MS_LOG(INFO) << "The pynative mode enable ge executor mode by MS_PYNATIVE_GE or JitLevelO2.";
+    if (jit_level == "O2") {
+      MS_LOG(INFO) << "The pynative mode enable ge executor mode by JitLevelO2.";
       return false;
     }
     MS_LOG(INFO) << "The pynative mode enable kbyk executor mode.";
