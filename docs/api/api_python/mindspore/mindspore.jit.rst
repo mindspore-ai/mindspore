@@ -1,7 +1,7 @@
 mindspore.jit
 =============
 
-.. py:function:: mindspore.jit(fn=None, input_signature=None, hash_args=None, jit_config=None, compile_once=False)
+.. py:function:: mindspore.jit(fn=None, mode="PSJit", input_signature=None, hash_args=None, jit_config=None, compile_once=False)
 
     将Python函数编译为一张可调用的MindSpore图。
 
@@ -9,6 +9,11 @@ mindspore.jit
 
     参数：
         - **fn** (Function) - 要编译成图的Python函数。默认值： ``None`` 。
+        - **mode** (str) - 使用jit的类型，可选值有 ``"PSJit"`` 和 ``"PIJit"`` 。默认值： ``"PSJit"``。
+
+          - `PSJit <https://www.mindspore.cn/docs/zh-CN/r2.3/note/static_graph_syntax_support.html>`_ ：MindSpore 静态图模式。
+          - `PIJit <https://www.mindspore.cn/docs/zh-CN/r2.3/design/dynamic_graph_and_static_graph.html>`_ ：MindSpore 动态图模式。
+
         - **input_signature** (Tensor) - 用于表示输入参数的Tensor。Tensor的shape和dtype将作为函数的输入shape和dtype。默认值： ``None`` 。
         - **hash_args** (Union[Object, List or Tuple of Objects]) - `fn` 里面用到的自由变量，比如外部函数或类对象，再次调用时若 `hash_args` 出现变化会触发重新编译。默认值： ``None`` 。
         - **jit_config** (JitConfig) - 编译时所使用的JitConfig配置项，详细可参考 :class:`mindspore.JitConfig`。默认值： ``None`` 。
