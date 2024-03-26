@@ -3091,11 +3091,6 @@ static void ParallelPartProcess(const std::vector<AnfNodePtr> &all_nodes, const 
   auto adasum_param_tensor_layout_map = AdaSumParamTensorLayout(root);
   bool is_apply_adasum = HandleAdaSum(root, all_nodes, &adasum_param_tensor_layout_map);
 
-  // save strategy as checkpoint for multi-train
-  if (StrategyCheckpoint::GetInstance().SaveCheckPointOn()) {
-    CheckpointStrategy(all_nodes, root);
-  }
-
   auto parallel_context = parallel::ParallelContext::GetInstance();
   MS_EXCEPTION_IF_NULL(parallel_context);
   auto is_pp_interleave = parallel_context->pipeline_interleave();
@@ -3120,6 +3115,12 @@ static void ParallelPartProcess(const std::vector<AnfNodePtr> &all_nodes, const 
     pipeline_processor->ModifyParameterList();
     pipeline_processor->HandleSendParam();
     MarkForwardCNode(root);
+  }
+
+  // save strategy as checkpoint for multi-train
+  auto all_nodes_after_pp = TopoSort(root->get_return(), SuccDeeperSimple);
+  if (StrategyCheckpoint::GetInstance().SaveCheckPointOn()) {
+    CheckpointStrategy(all_nodes_after_pp, root);
   }
   return;
 }
