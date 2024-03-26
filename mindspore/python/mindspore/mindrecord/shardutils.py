@@ -40,6 +40,7 @@ MIN_SHARD_COUNT = ms.MIN_SHARD_COUNT
 MAX_SHARD_COUNT = ms.MAX_SHARD_COUNT
 MIN_CONSUMER_COUNT = ms.MIN_CONSUMER_COUNT
 MAX_CONSUMER_COUNT = ms.get_max_thread_num
+MIN_FILE_SIZE = ms.MIN_FILE_SIZE
 
 VALUE_TYPE_MAP = {"int": ["int32", "int64"], "float": ["float32", "float64"], "str": "string", "bytes": "bytes",
                   "int32": "int32", "int64": "int64", "float32": "float32", "float64": "float64",

@@ -1376,9 +1376,9 @@ def test_file_writer_parallel(file_name=None, remove_file=True):
         writer.write_raw_data([])
 
     # multi files
-    # len(data) > FILES_NUM which is parallel size
-    remove_multi_files(file_name, FILES_NUM)
-    writer = FileWriter(file_name, FILES_NUM)
+    # len(data) > 2 which is parallel size
+    remove_multi_files(file_name, 2)
+    writer = FileWriter(file_name, 2)
     data = get_data("../data/mindrecord/testImageNetData/")
     cv_schema_json = {"file_name": {"type": "string"},
                       "label": {"type": "int64"}, "data": {"type": "bytes"}}
@@ -1388,16 +1388,14 @@ def test_file_writer_parallel(file_name=None, remove_file=True):
         writer.write_raw_data(data, True)
     writer.commit()
     reader = FileReader([file_name + '0',
-                         file_name + '1',
-                         file_name + '2',
-                         file_name + '3'])
+                         file_name + '1'])
     assert reader.len() == 100
     if remove_file:
-        remove_multi_files(file_name, FILES_NUM)
+        remove_multi_files(file_name, 2)
 
-    # len(data) < FILES_NUM which is parallel size
-    remove_multi_files(file_name, FILES_NUM)
-    writer = FileWriter(file_name, FILES_NUM)
+    # len(data) < 2 which is parallel size
+    remove_multi_files(file_name, 2)
+    writer = FileWriter(file_name, 2)
     data = get_data("../data/mindrecord/testImageNetData/")
     cv_schema_json = {"file_name": {"type": "string"},
                       "label": {"type": "int64"}, "data": {"type": "bytes"}}
@@ -1407,12 +1405,10 @@ def test_file_writer_parallel(file_name=None, remove_file=True):
         writer.write_raw_data(data[0:2], True)
     writer.commit()
     reader = FileReader([file_name + '0',
-                         file_name + '1',
-                         file_name + '2',
-                         file_name + '3'])
+                         file_name + '1'])
     assert reader.len() == 4
     if remove_file:
-        remove_multi_files(file_name, FILES_NUM)
+        remove_multi_files(file_name, 2)
 
     # write_raw_data(.., True) and write_raw_data(.., False)
     remove_multi_files(file_name, FILES_NUM)
@@ -1938,7 +1934,6 @@ def test_file_writer_encode_integrity_check(file_name=None, remove_file=True):
     file_writer_encode_and_integrity_check(file_name, True, "0123456780abcdef", encrypt, udf_hash, decrypt)
 
 
-@pytest.mark.skip(reason="random failures")
 def test_file_writer_encode_integrity_check_with_exception(file_name=None, remove_file=True):
     """
     Feature: FileWriter
@@ -2436,3 +2431,50 @@ def test_file_writer_encode_integrity_check_with_exception_invalid_key(file_name
     set_enc_mode()
     set_dec_mode(None)
     set_hash_mode(None)
+
+
+def create_empty_file(file_name):
+    """Create empty file"""
+    remove_one_file(file_name)
+
+    f = open(file_name, 'w')
+    f.close()
+    assert os.path.exists(file_name)
+
+
+def test_read_empty_file(file_name=None, remove_file=True):
+    """
+    Feature: FileReader
+    Description: Read empty file
+    Expectation: With exception
+    """
+    if not file_name:
+        file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+
+    # single file
+    create_empty_file(file_name)
+    create_empty_file(file_name + ".db")
+
+    with pytest.raises(RuntimeError) as err:
+        _ = FileReader(file_name)
+    assert "Invalid file, the size of mindrecord file: " in str(err.value)
+
+    remove_one_file(file_name)
+    remove_one_file(file_name + ".db")
+
+    # multi files
+    file_name1 = file_name + "1"
+    create_empty_file(file_name1)
+    create_empty_file(file_name1 + ".db")
+    file_name2 = file_name + "2"
+    create_empty_file(file_name2)
+    create_empty_file(file_name2 + ".db")
+
+    with pytest.raises(RuntimeError) as err:
+        _ = FileReader([file_name1, file_name2])
+    assert "Invalid file, the size of mindrecord file: " in str(err.value)
+
+    remove_one_file(file_name1)
+    remove_one_file(file_name1 + ".db")
+    remove_one_file(file_name2)
+    remove_one_file(file_name2 + ".db")
