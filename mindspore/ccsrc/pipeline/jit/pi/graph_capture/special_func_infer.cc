@@ -55,6 +55,7 @@ static constexpr const char *kBuiltinNameCallable = "callable";      // no side 
 static constexpr const char *kBuiltinNameGetattr = "getattr";        // call __getattr__, or __getattribute__
 static constexpr const char *kBuiltinNameHasattr = "hasattr";        // call __getattr__, or __getattribute__
 static constexpr const char *kBuiltinNamePop = "pop";                // pop
+static constexpr const char *kBuiltinNameRound = "round";
 // ------------------------------builtins functions--------------------------------
 
 // ------------------------------builtins method--------------------------------
@@ -800,11 +801,19 @@ static const std::set<PyCFunction> &GenCFunctionMap() {
   DECLARE_BUILTIN_CFUNCTION(kBuiltinNameGetattr);
   DECLARE_BUILTIN_CFUNCTION(kBuiltinNameHasattr);
 
-  // math.log
-  py::object math_builtin = Utils::GetModuleAttr("math", kBuiltinNameLog, false, false);
-  c_function_obj = PyCFunction_GET_FUNCTION(math_builtin.ptr());
-  kBuiltinFuncOrMethodWhileList.emplace(c_function_obj);
-
+  // builtin math
+  std::vector<std::string> math_builtin_funcs = {
+    "acos",      "acosh",     "asin",  "asinh",   "atan",      "atan2", "atanh", "ceil",   "comb",
+    "copysign",  "cos",       "cosh",  "degrees", "dist",      "erf",   "erfc",  "exp",    "expm1",
+    "fabs",      "factorial", "floor", "fmod",    "frexp",     "fsum",  "gamma", "gcd",    "hypot",
+    "isclose",   "isfinite",  "isinf", "isnan",   "isqrt",     "lcm",   "ldexp", "lgamma", "log",
+    "log10",     "log1p",     "log2",  "modf",    "nextafter", "perm",  "pow",   "prod",   "radians",
+    "remainder", "sin",       "sinh",  "sqrt",    "tan",       "tanh",  "trunc", "ulp"};
+  for (auto &math_func_name : math_builtin_funcs) {
+    auto math_func_obj = Utils::GetModuleAttr("math", math_func_name, false, false);
+    auto math_c_function_obj = PyCFunction_GET_FUNCTION(math_func_obj.ptr());
+    kBuiltinFuncOrMethodWhileList.emplace(math_c_function_obj);
+  }
   // python object cfunction without sideeffect
   std::map<PyObject *, std::vector<std::string>> obj_cfunc_name = {
     {py::dict().inc_ref().ptr(),
@@ -886,6 +895,24 @@ static bool CheckTensorAsType(const py::object &func) {
   std::string name = PyUnicode_AsUTF8(func_ptr->func_module);
   bool is_func = name == "mindspore.common.tensor";
   return is_func;
+}
+
+static bool CheckBuiltinRound(const py::object &func) {
+  auto p = PyDict_GetItemString(PyEval_GetBuiltins(), "round");
+  MS_ASSERT(p && PyCFunction_Check(p));
+  auto round_function_obj = PyCFunction_GET_FUNCTION(p);
+  PyObject *op = func.ptr();
+  if (op == nullptr) {
+    return false;
+  }
+  if (PyMethod_Check(op)) {
+    op = PyMethod_GET_FUNCTION(op);
+  }
+  if (!PyCFunction_Check(op)) {
+    return false;
+  }
+  auto round_op = PyCFunction_GET_FUNCTION(op);
+  return round_op == round_function_obj;
 }
 
 static bool InferTensorAsType(CallNode *call_node) {
@@ -988,6 +1015,31 @@ static bool InferPopAsGet(CallNode *call_node) {
   return false;
 }
 
+static bool InferRoundAsMSRound(CallNode *call_node) {
+  Graph *sub_graph = call_node->GetSubGraph();
+  call_node->SetSubGraph(nullptr);
+  if (call_node->getInputs().size() != 2) {
+    return false;
+  }
+  auto arg_node = call_node->input(1);
+  if (arg_node->GetVobj()->GetType() != AObject::kTypeTensor) {
+    return false;
+  }
+  py::object prim_round = Utils::GetModuleAttr("mindspore.ops.auto_generate.gen_ops_prim", "round_op", false, true);
+  ValueNode *prim_node = sub_graph->NewValueNode(AObject::Convert(prim_round), LOAD_CONST, -1, {});
+  std::vector<ValueNode *> round_args = {prim_node, arg_node};
+  CallNode *ret_node = sub_graph->NewCallNode(CALL_FUNCTION, round_args.size() - 1, round_args);
+  ret_node->SetGraph(sub_graph);
+  (void)InferPrimitive(ret_node);
+  sub_graph->GetTracedNodes().push_back(prim_node);
+  sub_graph->GetTracedNodes().push_back(ret_node);
+  sub_graph->SetRetVal(ret_node);
+  call_node->SetSubGraph(sub_graph);
+  call_node->SetVobj(ret_node->GetVobj());
+  call_node->SetInlineReason(InlineReason::kInline);
+  return true;
+}
+
 // special function list
 // special function that mindspore support and not inline,
 // the return values or type can be infer
@@ -1014,6 +1066,7 @@ static const std::unordered_map<std::string, SpecialAction> kFuncWhiteListMap = 
   {kMindsporeNameTensorAsType, {CheckTensorAsType, InferTensorAsType}},
   {kBuiltinNameAppend, {CheckListAppend, InferListAppend}},
   {kBuiltinNamePop, {CheckBuiltinFuncOrMethod, InferPopAsGet}},
+  {kBuiltinNameRound, {CheckBuiltinRound, InferRoundAsMSRound}},
 };
 
 static const std::vector<std::pair<CheckFunc, std::string>> kFuncWhiteListFuzzyMatcher = {
