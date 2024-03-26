@@ -197,7 +197,7 @@ class LLMRepeatRequest(LLMException):
     """
     def __init__(self, *args: object):
         super().__init__(*args)
-        self._statusCode = LLMStatusCode.LLM_WAIT_PROC_TIMEOUT
+        self._statusCode = LLMStatusCode.LLM_REPEAT_REQUEST
 
 
 class LLMRequestAlreadyCompleted(LLMException):
@@ -913,11 +913,8 @@ class LLMEngine:
                 raise TypeError(f"clusters element must be LLMClusterInfo, but got {type(element)} at index {i}.")
         clusters_inners = [item.llm_cluster_ for item in clusters]
         ret, rets = self.engine_.link_clusters(clusters_inners, timeout)
-        status_code = ret.StatusCode()
-        if status_code == StatusCode.kLiteParamInvalid:
-            raise LLMParamInvalid("Parameters invalid")
         if not rets:
-            raise RuntimeError(f"Failed to call link_clusters")
+            _handle_llm_status(ret, "link_clusters", "")
         return ret, rets
 
     def unlink_clusters(self, clusters: Union[List[LLMClusterInfo], Tuple[LLMClusterInfo]], timeout=-1):
@@ -964,9 +961,7 @@ class LLMEngine:
                 raise TypeError(f"clusters element must be LLMClusterInfo, but got {type(element)} at index {i}.")
         clusters_inners = [item.llm_cluster_ for item in clusters]
         ret, rets = self.engine_.unlink_clusters(clusters_inners, timeout)
-        status_code = ret.StatusCode()
-        if status_code == StatusCode.kLiteParamInvalid:
-            raise LLMParamInvalid("Parameters invalid")
         if not rets:
+            _handle_llm_status(ret, "unlink_clusters", "")
             raise RuntimeError(f"Failed to call unlink_clusters")
         return ret, rets
