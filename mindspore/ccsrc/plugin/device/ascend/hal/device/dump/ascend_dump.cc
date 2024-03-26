@@ -557,7 +557,7 @@ void AscendAsyncDumpManager::ClearDumpDataBuilder(const std::string &node_name) 
  * for 500ms and check again.
  */
 void AscendAsyncDumpManager::WaitForWriteFileFinished() const {
-  const int kRetryTimeInMilliseconds = 500;
+  const int kRetryTimeInMilliseconds = 3000;
   const int kMaxRecheckCount = 10;
   int recheck_cnt = 0;
   while (recheck_cnt < kMaxRecheckCount && !dump_data_construct_map_.empty()) {
@@ -566,6 +566,9 @@ void AscendAsyncDumpManager::WaitForWriteFileFinished() const {
                  << std::to_string(kMaxRecheckCount);
     std::this_thread::sleep_for(std::chrono::milliseconds(kRetryTimeInMilliseconds));
     recheck_cnt++;
+  }
+  if (!dump_data_construct_map_.empty()) {
+    MS_LOG(WARNING) << "There's still some dump data processing not finished, please wait until all of them is saved.";
   }
 }
 }  // namespace ascend
