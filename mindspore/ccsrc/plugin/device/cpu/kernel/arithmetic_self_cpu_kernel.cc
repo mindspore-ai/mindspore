@@ -694,7 +694,7 @@ template <typename T, typename S>
 void ReluBool(ArithmeticSelfCpuKernelFuncBool<T, S> *content, const T *in, S *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      out[i] = in[i] ? true : false;
+      out[i] = in[i];
     }
   };
   ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
