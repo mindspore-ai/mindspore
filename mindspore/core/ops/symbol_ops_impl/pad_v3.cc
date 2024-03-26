@@ -78,9 +78,7 @@ REG_SYMBOL_OP_BUILDER("PadV3")
     auto input = b->GetInputShape(kIndex0);
     auto padding = b->GetInputValue(kIndex1);
     auto contiguous = b->GetAttr("paddings_contiguous");
-    if (contiguous == nullptr) {
-      contiguous = BoolSymbol::Make(true);
-    }
+    MS_EXCEPTION_IF_NULL(contiguous);
     return b->Emit(std::make_shared<PadV3>(input, padding, contiguous));
   });
 }  // namespace ops

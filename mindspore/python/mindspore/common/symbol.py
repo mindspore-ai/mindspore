@@ -71,7 +71,7 @@ class Symbol:
     """
 
     def __init__(self, max=0, min=1, divisor=1, remainder=0, unique=False, **kawgs):
-        self._check_args_type(max, min, divisor, remainder, unique)
+        Symbol._check_args_type(max, min, divisor, remainder, unique)
         if min <= 0:
             raise ValueError("For 'Symbol', the 'min' value should be positive, but got {}".format(min))
         if divisor <= 0:
@@ -90,12 +90,13 @@ class Symbol:
     def __str__(self):
         return str(self.to_dict())
 
-    def _check_args_type(self, max, min, divisor, remainder, unique):
+    @staticmethod
+    def _check_args_type(maxv, minv, divisor, remainder, unique):
         """Check the type of arguments."""
-        if not isinstance(max, int):
-            raise TypeError(f"For 'Symbol', the argument 'max' must be int, but got {type(max)}")
-        if not isinstance(min, int):
-            raise TypeError(f"For 'Symbol', the argument 'min' must be int, but got {type(min)}")
+        if not isinstance(maxv, int):
+            raise TypeError(f"For 'Symbol', the argument 'max' must be int, but got {type(maxv)}")
+        if not isinstance(minv, int):
+            raise TypeError(f"For 'Symbol', the argument 'min' must be int, but got {type(minv)}")
         if not isinstance(divisor, int):
             raise TypeError(f"For 'Symbol', the argument 'divisor' must be int, but got {type(divisor)}")
         if not isinstance(remainder, int):
@@ -103,8 +104,10 @@ class Symbol:
         if not isinstance(unique, bool):
             raise TypeError(f"For 'Symbol', the argument 'unique' must be bool, but got {type(unique)}")
 
+    # pylint: disable=missing-docstring
     def to_dict(self):
-        """Convert the symbolic info to dictionary."""
+        # Convert the symbolic info to dictionary.
+        # This method is not necessary to show in public api document, use comment instead of docstring.
         res = {}
         if self.max > self.min:
             res["max"] = self.max
