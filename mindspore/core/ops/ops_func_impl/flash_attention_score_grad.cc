@@ -236,7 +236,7 @@ BaseShapePtr FlashAttentionScoreGradFuncImpl::InferShape(const PrimitivePtr &pri
   output_shape_ptr_list[kFASGradOutputDkIndex] = std::make_shared<abstract::Shape>(key_shape);
   auto value_shape = input_args[kFASGradInputValueIndex]->GetShape()->GetShapeVector();
   output_shape_ptr_list[kFASGradOutputDvIndex] = std::make_shared<abstract::Shape>(value_shape);
-  ShapeVector pse_shape{};
+  ShapeVector pse_shape{0};
   if (!IsFlashAttentionScoreGradOptionalInputNotPass(input_args[kFASGradInputPseShiftIndex])) {
     pse_shape = input_args[kFASGradInputPseShiftIndex]->GetShape()->GetShapeVector();
   }
@@ -374,7 +374,7 @@ TypePtr FlashAttentionScoreGradFuncImpl::InferType(const PrimitivePtr &prim,
   output_type_ptr_list[kFASGradOutputDqIndex] = std::make_shared<TensorType>(type);
   output_type_ptr_list[kFASGradOutputDkIndex] = std::make_shared<TensorType>(type);
   output_type_ptr_list[kFASGradOutputDvIndex] = std::make_shared<TensorType>(type);
-  output_type_ptr_list[kFASGradOutputDpseIndex] = input_args[kFASGradInputPseShiftIndex]->GetType();
+  output_type_ptr_list[kFASGradOutputDpseIndex] = std::make_shared<TensorType>(type);
   return std::make_shared<Tuple>(output_type_ptr_list);
 }
 
