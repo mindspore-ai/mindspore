@@ -82,8 +82,11 @@ bool RemakeTupleIndexCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *
     for (size_t pos = start; pos < end; ++pos) {
       size_t cur_input_index = pos % valid_tensor_num_;
       size_t local_idx = pos / valid_tensor_num_;
-      (void)memcpy_s(output_attr + sizeof(int64_t) * pos, sizeof(int64_t),
-                     inputs_host[cur_input_index] + sizeof(int64_t) * local_idx, sizeof(int64_t));
+      auto ret = memcpy_s(output_attr + sizeof(int64_t) * pos, sizeof(int64_t),
+                          inputs_host[cur_input_index] + sizeof(int64_t) * local_idx, sizeof(int64_t));
+      if (ret != EOK) {
+        MS_LOG(ERROR) << "memcpy_s failed: " << ret;
+      }
     }
   };
   CPUKernelUtils::ParallelForAutoSearch(task, copy_time, &parallel_search_info_);

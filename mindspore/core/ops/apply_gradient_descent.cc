@@ -60,6 +60,7 @@ abstract::ShapePtr ApplyGradientDescentInferShape(const PrimitivePtr &primitive,
   // var and delta must have the same shape when is not dynamic
   auto var_shape_ptr = var_shape->cast<abstract::ShapePtr>();
   auto delta_shape_ptr = delta_shape->cast<abstract::ShapePtr>();
+  MS_EXCEPTION_IF_NULL(var_shape_ptr);
   if (!var_shape_ptr->IsDynamic() && !delta_shape_ptr->IsDynamic()) {
     if (*var_shape != *delta_shape) {
       MS_EXCEPTION(ValueError) << "For '" << prim_name
@@ -83,7 +84,6 @@ abstract::ShapePtr ApplyGradientDescentInferShape(const PrimitivePtr &primitive,
       (void)CheckAndConvertUtils::CheckInteger("alpha_shape[0]", alpha_shape[0], kEqual, kShapeSize, primitive->name());
     }
   }
-  MS_EXCEPTION_IF_NULL(var_shape_ptr);
   return var_shape_ptr;
 }
 

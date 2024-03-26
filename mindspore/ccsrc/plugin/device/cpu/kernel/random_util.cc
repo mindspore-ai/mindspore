@@ -64,7 +64,10 @@ double Uint64ToDouble(uint32_t x0, uint32_t x1) {
   const uint64_t mantissa = (static_cast<uint64_t>(m_hi) << kBitShift32) | m_lo;
   const uint64_t val = (ex << kFp64ManLen) | mantissa;
   double d_result;
-  (void)memcpy_s(&d_result, sizeof(val), &val, sizeof(val));
+  auto ret = memcpy_s(&d_result, sizeof(val), &val, sizeof(val));
+  if (ret != 0) {
+    MS_LOG(EXCEPTION) << "Uint64ToDouble failed, memcpy_s errorno: " << ret;
+  }
   return d_result - 1.0;
 }
 
