@@ -313,7 +313,8 @@ REG_ADPT_DESC(MvlgammaGrad, prim::kPrimMvlgammaGrad->name(), CUST_ADPT_DESC(Mvlg
 // LogSpace
 CUST_INPUT_MAP(LogSpace) = {{1, INPUT_DESC(start)}, {2, INPUT_DESC(end)}};
 CUST_ATTR_MAP(LogSpace) = {{"steps", ATTR_DESC(steps, AnyTraits<int64_t>())},
-                           {"base", ATTR_DESC(base, AnyTraits<int64_t>())}};
+                           {"base", ATTR_DESC(base, AnyTraits<int64_t>())},
+                           {"dtype", ATTR_DESC(dtype, AnyTraits<GEType>())}};
 CUST_OUTPUT_MAP(LogSpace) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(LogSpace, prim::kPrimLogSpace->name(), CUST_ADPT_DESC(LogSpace));
 
