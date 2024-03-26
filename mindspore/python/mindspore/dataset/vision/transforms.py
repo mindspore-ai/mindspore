@@ -121,13 +121,26 @@ class AdjustBrightness(ImageTensorOperation, PyTensorOperation):
         ``CPU`` ``Ascend``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>>
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> transforms_list = [vision.Decode(), vision.AdjustBrightness(brightness_factor=2.0)]
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns=["image"])
+        >>> # Use the transform in dataset pipeline mode
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> transforms_list = [vision.AdjustBrightness(brightness_factor=2.0)]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (100, 100, 3) uint8
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.random.randint(0, 256, (20, 20, 3)) / 255.0
+        >>> data = data.astype(np.float32)
+        >>> output = vision.AdjustBrightness(2.666)(data)
+        >>> print(output.shape, output.dtype)
+        (20, 20, 3) float32
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -156,12 +169,26 @@ class AdjustBrightness(ImageTensorOperation, PyTensorOperation):
             ``CPU`` ``Ascend``
 
         Examples:
+            >>> import numpy as np
             >>> import mindspore.dataset as ds
             >>> import mindspore.dataset.vision as vision
             >>>
-            >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-            >>> transforms_list = [vision.Decode(), vision.AdjustBrightness(2.0).device("Ascend")]
-            >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list, input_columns=["image"])
+            >>> # Use the transform in dataset pipeline mode
+            >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+            >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+            >>> transforms_list = [vision.AdjustBrightness(2.0).device("Ascend")]
+            >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+            >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+            ...     print(item["image"].shape, item["image"].dtype)
+            ...     break
+            (100, 100, 3) uint8
+            >>>
+            >>> # Use the transform in eager mode
+            >>> data = np.random.randint(0, 256, (20, 20, 3)) / 255.0
+            >>> data = data.astype(np.float32)
+            >>> output = vision.AdjustBrightness(2.666).device("Ascend")(data)
+            >>> print(output.shape, output.dtype)
+            (20, 20, 3) float32
 
         Tutorial Examples:
             - `Illustration of vision transforms
@@ -206,13 +233,25 @@ class AdjustContrast(ImageTensorOperation, PyTensorOperation):
         ``CPU`` ``Ascend``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>>
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> transforms_list = [vision.Decode(), vision.AdjustContrast(contrast_factor=2.0)]
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns=["image"])
+        >>> # Use the transform in dataset pipeline mode
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> transforms_list = [vision.AdjustContrast(contrast_factor=2.0)]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (100, 100, 3) uint8
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.array([[0, 1, 2, 3, 4, 5], [0, 1, 2, 3, 4, 5]], dtype=np.uint8).reshape((2, 2, 3))
+        >>> output = vision.AdjustContrast(2.0)(data)
+        >>> print(output.shape, output.dtype)
+        (2, 2, 3) uint8
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -241,12 +280,25 @@ class AdjustContrast(ImageTensorOperation, PyTensorOperation):
             ``CPU`` ``Ascend``
 
         Examples:
+            >>> import numpy as np
             >>> import mindspore.dataset as ds
             >>> import mindspore.dataset.vision as vision
             >>>
-            >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-            >>> transforms_list = [vision.Decode(), vision.AdjustContrast(0).device("Ascend")]
-            >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list, input_columns=["image"])
+            >>> # Use the transform in dataset pipeline mode
+            >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+            >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+            >>> transforms_list = [vision.AdjustContrast(0).device("Ascend")]
+            >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+            >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+            ...     print(item["image"].shape, item["image"].dtype)
+            ...     break
+            (100, 100, 3) uint8
+            >>>
+            >>> # Use the transform in eager mode
+            >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+            >>> output = vision.AdjustContrast(2.0).device("Ascend")(data)
+            >>> print(output.shape, output.dtype)
+            (100, 100, 3) uint8
 
         Tutorial Examples:
             - `Illustration of vision transforms
@@ -299,13 +351,25 @@ class AdjustGamma(ImageTensorOperation, PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>>
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> transforms_list = [vision.Decode(), vision.AdjustGamma(gamma=10.0, gain=1.0)]
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns=["image"])
+        >>> # Use the transform in dataset pipeline mode
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> transforms_list = [vision.AdjustGamma(gamma=10.0, gain=1.0)]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (100, 100, 3) uint8
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.array([[0, 1, 2, 3, 4, 5], [0, 1, 2, 3, 4, 5]], dtype=np.uint8).reshape((2, 2, 3))
+        >>> output = vision.AdjustGamma(gamma=0.1, gain=1.0)(data)
+        >>> print(output.shape, output.dtype)
+        (2, 2, 3) uint8
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -354,13 +418,25 @@ class AdjustHue(ImageTensorOperation, PyTensorOperation):
         ``CPU`` ``Ascend``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>>
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> transforms_list = [vision.Decode(), vision.AdjustHue(hue_factor=0.2)]
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns=["image"])
+        >>> # Use the transform in dataset pipeline mode
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> transforms_list = [vision.AdjustHue(hue_factor=0.2)]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (100, 100, 3) uint8
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.array([[0, 1, 2, 3, 4, 5], [0, 1, 2, 3, 4, 5]], dtype=np.uint8).reshape((2, 2, 3))
+        >>> output = vision.AdjustHue(hue_factor=0.2)(data)
+        >>> print(output.shape, output.dtype)
+        (2, 2, 3) uint8
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -389,12 +465,25 @@ class AdjustHue(ImageTensorOperation, PyTensorOperation):
             ``CPU`` ``Ascend``
 
         Examples:
+            >>> import numpy as np
             >>> import mindspore.dataset as ds
             >>> import mindspore.dataset.vision as vision
             >>>
-            >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-            >>> transforms_list = [vision.Decode(), vision.AdjustHue(0.5).device("Ascend")]
-            >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list, input_columns=["image"])
+            >>> # Use the transform in dataset pipeline mode
+            >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+            >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+            >>> transforms_list = [vision.AdjustHue(0.5).device("Ascend")]
+            >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+            >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+            ...     print(item["image"].shape, item["image"].dtype)
+            ...     break
+            (100, 100, 3) uint8
+            >>>
+            >>> # Use the transform in eager mode
+            >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+            >>> output = vision.AdjustHue(hue_factor=0.2).device("Ascend")(data)
+            >>> print(output.shape, output.dtype)
+            (100, 100, 3) uint8
 
         Tutorial Examples:
             - `Illustration of vision transforms
@@ -440,13 +529,25 @@ class AdjustSaturation(ImageTensorOperation, PyTensorOperation):
         ``CPU`` ``Ascend``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>>
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> transforms_list = [vision.Decode(), vision.AdjustSaturation(saturation_factor=2.0)]
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns=["image"])
+        >>> # Use the transform in dataset pipeline mode
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> transforms_list = [vision.AdjustSaturation(saturation_factor=2.0)]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (100, 100, 3) uint8
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.array([[0, 1, 2, 3, 4, 5], [0, 1, 2, 3, 4, 5]], dtype=np.uint8).reshape((2, 2, 3))
+        >>> output = vision.AdjustSaturation(saturation_factor=2.0)(data)
+        >>> print(output.shape, output.dtype)
+        (2, 2, 3) uint8
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -475,12 +576,25 @@ class AdjustSaturation(ImageTensorOperation, PyTensorOperation):
             ``CPU`` ``Ascend``
 
         Examples:
+            >>> import numpy as np
             >>> import mindspore.dataset as ds
             >>> import mindspore.dataset.vision as vision
             >>>
-            >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-            >>> transforms_list = [vision.Decode(), vision.AdjustSaturation(2.0).device("Ascend")]
-            >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list, input_columns=["image"])
+            >>> # Use the transform in dataset pipeline mode
+            >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+            >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+            >>> transforms_list = [vision.AdjustSaturation(2.0).device("Ascend")]
+            >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+            >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+            ...     print(item["image"].shape, item["image"].dtype)
+            ...     break
+            (100, 100, 3) uint8
+            >>>
+            >>> # Use the transform in eager mode
+            >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+            >>> output = vision.AdjustSaturation(saturation_factor=2.0).device("Ascend")(data)
+            >>> print(output.shape, output.dtype)
+            (100, 100, 3) uint8
 
         Tutorial Examples:
             - `Illustration of vision transforms
@@ -523,13 +637,26 @@ class AdjustSharpness(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>>
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> transforms_list = [vision.Decode(), vision.AdjustSharpness(sharpness_factor=2.0)]
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns=["image"])
+        >>> # Use the transform in dataset pipeline mode
+        >>> # create a dataset that reads all files in dataset_dir with 8 threads
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> transforms_list = [vision.AdjustSharpness(sharpness_factor=2.0)]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (100, 100, 3) uint8
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.array([[0, 1, 2, 3, 4, 5], [0, 1, 2, 3, 4, 5]], dtype=np.uint8).reshape((3, 4))
+        >>> output = vision.AdjustSharpness(sharpness_factor=0)(data)
+        >>> print(output.shape, output.dtype)
+        (3, 4) uint8
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -577,17 +704,28 @@ class Affine(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>> from mindspore.dataset.vision import Inter
         >>>
-        >>> decode_op = vision.Decode()
+        >>> # Use the transform in dataset pipeline mode
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
         >>> affine_op = vision.Affine(degrees=15, translate=[0.2, 0.2], scale=1.1, shear=[1.0, 1.0],
         ...                           resample=Inter.BILINEAR)
-        >>> affine_list = [decode_op, affine_op]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=[affine_op], input_columns=["image"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (100, 100, 3) uint8
         >>>
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> image_folder_dataset = image_folder_dataset.map(operations=affine_list, input_columns=["image"])
+        >>> # Use the transform in eager mode
+        >>> data = np.array([[0, 1, 2, 3, 4, 5], [0, 1, 2, 3, 4, 5]], dtype=np.uint8).reshape((2, 2, 3))
+        >>> output = vision.Affine(degrees=15, translate=[0.2, 0.2], scale=1.1,
+        ...                        shear=[1.0, 1.0], resample=Inter.BILINEAR)(data)
+        >>> print(output.shape, output.dtype)
+        (2, 2, 3) uint8
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -629,14 +767,28 @@ class Affine(ImageTensorOperation):
             ``CPU`` ``Ascend``
 
         Examples:
+            >>> import numpy as np
             >>> import mindspore.dataset as ds
             >>> import mindspore.dataset.vision as vision
+            >>> from mindspore.dataset.vision import Inter
             >>>
-            >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-            >>> decode_op = vision.Decode()
-            >>> affine_op = vision.Affine(degrees=15, translate=[0.2, 0.2], scale=1.1, shear=[1, 1]).device("Ascend")
-            >>> transforms_list = [decode_op, affine_op]
-            >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list, input_columns=["image"])
+            >>> # Use the transform in dataset pipeline mode
+            >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+            >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+            >>> affine_op = vision.Affine(degrees=15, translate=[0.2, 0.2], scale=1.1,
+            ...                           shear=[1.0, 1.0], resample=Inter.BILINEAR).device("Ascend")
+            >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=[affine_op], input_columns=["image"])
+            >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+            ...     print(item["image"].shape, item["image"].dtype)
+            ...     break
+            (100, 100, 3) uint8
+            >>>
+            >>> # Use the transform in eager mode
+            >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+            >>> output = vision.Affine(degrees=15, translate=[0.2, 0.2], scale=1.1,
+            ...                        shear=[1.0, 1.0], resample=Inter.BILINEAR).device("Ascend")(data)
+            >>> print(output.shape, output.dtype)
+            (100, 100, 3) uint8
 
         Tutorial Examples:
             - `Illustration of vision transforms
@@ -685,17 +837,28 @@ class AutoAugment(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>> from mindspore.dataset.vision import AutoAugmentPolicy, Inter
         >>>
-        >>> transforms_list = [vision.Decode(), vision.AutoAugment(policy=AutoAugmentPolicy.IMAGENET,
-        ...                                                        interpolation=Inter.NEAREST,
-        ...                                                        fill_value=0)]
+        >>> # Use the transform in dataset pipeline mode
+        >>> transforms_list = [vision.AutoAugment(policy=AutoAugmentPolicy.IMAGENET,
+        ...                                       interpolation=Inter.NEAREST,
+        ...                                       fill_value=0)]
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (100, 100, 3) uint8
         >>>
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns=["image"])
+        >>> # Use the transform in eager mode
+        >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+        >>> output = vision.AutoAugment()(data)
+        >>> print(output.shape, output.dtype)
+        (100, 100, 3) uint8
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -739,13 +902,25 @@ class AutoContrast(ImageTensorOperation, PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>>
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> transforms_list = [vision.Decode(), vision.AutoContrast(cutoff=10.0, ignore=[10, 20])]
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns=["image"])
+        >>> # Use the transform in dataset pipeline mode
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> transforms_list = [vision.AutoContrast(cutoff=10.0, ignore=[10, 20])]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (100, 100, 3) uint8
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.array([[0, 1, 2, 3, 4, 5], [0, 1, 2, 3, 4, 5]], dtype=np.uint8).reshape((2, 2, 3))
+        >>> output = vision.AutoContrast(cutoff=10.0, ignore=[10, 20])(data)
+        >>> print(output.shape, output.dtype)
+        (2, 2, 3) uint8
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -799,16 +974,40 @@ class BoundingBoxAugment(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>>
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
+        >>> # Use the transform in dataset pipeline mode
+        >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.float32)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> func = lambda img: (data, np.array([[0, 0, data.shape[1], data.shape[0]]]).astype(np.float32))
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=[func],
+        ...                                                 input_columns=["image"],
+        ...                                                 output_columns=["image", "bbox"])
         >>> # set bounding box operation with ratio of 1 to apply rotation on all bounding boxes
         >>> bbox_aug_op = vision.BoundingBoxAugment(vision.RandomRotation(90), 1)
         >>> # map to apply ops
-        >>> image_folder_dataset = image_folder_dataset.map(operations=[bbox_aug_op],
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=[bbox_aug_op],
         ...                                                 input_columns=["image", "bbox"],
         ...                                                 output_columns=["image", "bbox"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     print(item["bbox"].shape, item["bbox"].dtype)
+        ...     break
+        (100, 100, 3) float32
+        (1, 4) float32
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.array([[0, 1, 2, 3, 4, 5], [0, 1, 2, 3, 4, 5]], dtype=np.uint8).reshape((3, 4))
+        >>> data = data.astype(np.float32)
+        >>> func = lambda img, bboxes: (data, np.array([[0, 0, data.shape[1], data.shape[0]]]).astype(bboxes.dtype))
+        >>> func_data, func_bboxes = func(data, data)
+        >>> output = vision.BoundingBoxAugment(transforms.Fill(100), 1.0)(func_data, func_bboxes)
+        >>> print(output[0].shape, output[0].dtype)
+        (3, 4) float32
+        >>> print(output[1].shape, output[1].dtype)
+        (1, 4) float32
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -850,19 +1049,36 @@ class CenterCrop(ImageTensorOperation, PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>>
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
+        >>> # Use the transform in dataset pipeline mode
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
         >>>
         >>> # crop image to a square
-        >>> transforms_list1 = [vision.Decode(), vision.CenterCrop(50)]
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list1,
-        ...                                                 input_columns=["image"])
+        >>> transforms_list1 = [vision.CenterCrop(50)]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list1, input_columns=["image"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (50, 50, 3) uint8
+        >>>
         >>> # crop image to portrait style
-        >>> transforms_list2 = [vision.Decode(), vision.CenterCrop((60, 40))]
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list2,
-        ...                                                 input_columns=["image"])
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> transforms_list2 = [vision.CenterCrop((60, 40))]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list2, input_columns=["image"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (60, 40, 3) uint8
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.array([[0, 1, 2, 3, 4, 5], [0, 1, 2, 3, 4, 5]], dtype=np.uint8).reshape((2, 2, 3))
+        >>> output = vision.CenterCrop(1)(data)
+        >>> print(output.shape, output.dtype)
+        (1, 1, 3) uint8
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -948,19 +1164,35 @@ class ConvertColor(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>>
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
+        >>> # Use the transform in dataset pipeline mode
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
         >>>
         >>> # Convert RGB images to GRAY images
         >>> convert_op = vision.ConvertColor(vision.ConvertMode.COLOR_RGB2GRAY)
-        >>> image_folder_dataset = image_folder_dataset.map(operations=convert_op,
-        ...                                                 input_columns=["image"])
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=convert_op, input_columns=["image"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (100, 100) uint8
         >>> # Convert RGB images to BGR images
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
         >>> convert_op = vision.ConvertColor(vision.ConvertMode.COLOR_RGB2BGR)
-        >>> image_folder_dataset = image_folder_dataset.map(operations=convert_op,
-        ...                                                 input_columns=["image"])
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=convert_op, input_columns=["image"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (100, 100, 3) uint8
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.array([[0, 1, 2, 3, 4, 5], [0, 1, 2, 3, 4, 5]], dtype=np.uint8).reshape((2, 2, 3))
+        >>> output = vision.ConvertColor(vision.ConvertMode.COLOR_RGB2GRAY)(data)
+        >>> print(output.shape, output.dtype)
+        (2, 2) uint8
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -1000,15 +1232,26 @@ class Crop(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>>
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> decode_op = vision.Decode()
+        >>> # Use the transform in dataset pipeline mode
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
         >>> crop_op = vision.Crop((0, 0), 32)
-        >>> transforms_list = [decode_op, crop_op]
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns=["image"])
+        >>> transforms_list = [crop_op]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (32, 32, 3) uint8
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.array([[0, 1, 2, 3, 4, 5], [0, 1, 2, 3, 4, 5]], dtype=np.uint8).reshape((2, 2, 3))
+        >>> output = vision.Crop((0, 0), 1)(data)
+        >>> print(output.shape, output.dtype)
+        (1, 1, 3) uint8
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -1041,14 +1284,26 @@ class Crop(ImageTensorOperation):
             ``CPU`` ``Ascend``
 
         Examples:
+            >>> import numpy as np
             >>> import mindspore.dataset as ds
             >>> import mindspore.dataset.vision as vision
             >>>
-            >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-            >>> decode_op = vision.Decode()
+            >>> # Use the transform in dataset pipeline mode
+            >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+            >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
             >>> crop_op = vision.Crop((0, 0), (100, 75)).device("Ascend")
-            >>> transforms_list = [decode_op, crop_op]
-            >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list, input_columns=["image"])
+            >>> transforms_list = [crop_op]
+            >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+            >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+            ...     print(item["image"].shape, item["image"].dtype)
+            ...     break
+            (100, 75, 3) uint8
+            >>>
+            >>> # Use the transform in eager mode
+            >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+            >>> output = vision.Crop((0, 0), 64).device("Ascend")(data)
+            >>> print(output.shape, output.dtype)
+            (64, 64, 3) uint8
 
         Tutorial Examples:
             - `Illustration of vision transforms
@@ -1085,19 +1340,40 @@ class CutMixBatch(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
-        >>> import mindspore.dataset.vision as vision
         >>> import mindspore.dataset.transforms as transforms
+        >>> import mindspore.dataset.vision as vision
         >>> from mindspore.dataset.vision import ImageBatchFormat
         >>>
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
+        >>> # Use the transform in dataset pipeline mode
+        >>> data = np.random.randint(0, 255, size=(28, 28, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(
+        ...                      operations=lambda img: (data, np.random.randint(0, 5, (3, 1))),
+        ...                      input_columns=["image"],
+        ...                      output_columns=["image", "label"])
         >>> onehot_op = transforms.OneHot(num_classes=10)
-        >>> image_folder_dataset= image_folder_dataset.map(operations=onehot_op,
-        ...                                                input_columns=["label"])
+        >>> numpy_slices_dataset= numpy_slices_dataset.map(operations=onehot_op, input_columns=["label"])
         >>> cutmix_batch_op = vision.CutMixBatch(ImageBatchFormat.NHWC, 1.0, 0.5)
-        >>> image_folder_dataset = image_folder_dataset.batch(5)
-        >>> image_folder_dataset = image_folder_dataset.map(operations=cutmix_batch_op,
+        >>> numpy_slices_dataset = numpy_slices_dataset.batch(5)
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=cutmix_batch_op,
         ...                                                 input_columns=["image", "label"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     print(item["label"].shape, item["label"].dtype)
+        ...     break
+        (5, 28, 28, 3) uint8
+        (5, 3, 10) float32
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.random.randint(0, 255, (3, 3, 10, 10)).astype(np.uint8)
+        >>> label = np.array([[0, 1], [1, 0], [1, 0]])
+        >>> output = vision.CutMixBatch(vision.ImageBatchFormat.NCHW, 1.0, 1.0)(data, label)
+        >>> print(output[0].shape, output[0].dtype)
+        (3, 3, 10, 10) uint8
+        >>> print(output[1].shape, output[1].dtype)
+        (3, 2) float32
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -1138,13 +1414,25 @@ class CutOut(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>>
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> transforms_list = [vision.Decode(), vision.CutOut(80, num_patches=10)]
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns=["image"])
+        >>> # Use the transform in dataset pipeline mode
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> transforms_list = [vision.CutOut(80, num_patches=10)]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (100, 100, 3) uint8
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+        >>> output = vision.CutOut(20)(data)
+        >>> print(output.shape, output.dtype)
+        (100, 100, 3) uint8
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -1185,19 +1473,49 @@ class Decode(ImageTensorOperation, PyTensorOperation):
         ``CPU`` ``Ascend``
 
     Examples:
+        >>> import os
+        >>> import numpy as np
+        >>> from PIL import Image, ImageDraw
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>>
-        >>> # Eager usage
-        >>> import numpy as np
-        >>> raw_image = np.fromfile("/path/to/image/file", np.uint8)
-        >>> decoded_image = vision.Decode()(raw_image)
+        >>> # Use the transform in dataset pipeline mode
+        >>> class MyDataset:
+        ...     def __init__(self):
+        ...         self.data = []
+        ...         img = Image.new("RGB", (300, 300), (255, 255, 255))
+        ...         draw = ImageDraw.Draw(img)
+        ...         draw.ellipse(((0, 0), (100, 100)), fill=(255, 0, 0), outline=(255, 0, 0), width=5)
+        ...         img.save("./1.jpg")
+        ...         data = np.fromfile("./1.jpg", np.uint8)
+        ...         self.data.append(data)
+        ...
+        ...     def __getitem__(self, index):
+        ...         return self.data[0]
+        ...
+        ...     def __len__(self):
+        ...         return 5
         >>>
-        >>> # Pipeline usage
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
+        >>> my_dataset = MyDataset()
+        >>> generator_dataset = ds.GeneratorDataset(my_dataset, column_names="image")
         >>> transforms_list = [vision.Decode(), vision.RandomHorizontalFlip()]
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns=["image"])
+        >>> generator_dataset = generator_dataset.map(operations=transforms_list, input_columns=["image"])
+        >>> for item in generator_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (300, 300, 3) uint8
+        >>> os.remove("./1.jpg")
+        >>>
+        >>> # Use the transform in eager mode
+        >>> img = Image.new("RGB", (300, 300), (255, 255, 255))
+        >>> draw = ImageDraw.Draw(img)
+        >>> draw.polygon([(50, 50), (150, 50), (100, 150)], fill=(0, 255, 0), outline=(0, 255, 0))
+        >>> img.save("./2.jpg")
+        >>> data = np.fromfile("./2.jpg", np.uint8)
+        >>> output = vision.Decode()(data)
+        >>> print(output.shape, output.dtype)
+        (300, 300, 3) uint8
+        >>> os.remove("./2.jpg")
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -1245,16 +1563,52 @@ class Decode(ImageTensorOperation, PyTensorOperation):
             ``CPU`` ``Ascend``
 
         Examples:
+            >>> import os
+            >>> import numpy as np
+            >>> from PIL import Image, ImageDraw
             >>> import mindspore.dataset as ds
             >>> import mindspore.dataset.vision as vision
             >>> from mindspore.dataset.vision import Inter
             >>>
+            >>> # Use the transform in dataset pipeline mode
+            >>> class MyDataset:
+            ...     def __init__(self):
+            ...         self.data = []
+            ...         img = Image.new("RGB", (300, 300), (255, 255, 255))
+            ...         draw = ImageDraw.Draw(img)
+            ...         draw.ellipse(((0, 0), (100, 100)), fill=(255, 0, 0), outline=(255, 0, 0), width=5)
+            ...         img.save("./1.jpg")
+            ...         data = np.fromfile("./1.jpg", np.uint8)
+            ...         self.data.append(data)
+            ...
+            ...     def __getitem__(self, index):
+            ...         return self.data[0]
+            ...
+            ...     def __len__(self):
+            ...         return 5
+            >>>
+            >>> my_dataset = MyDataset()
+            >>> generator_dataset = ds.GeneratorDataset(my_dataset, column_names="image")
             >>> decode_op = vision.Decode().device("Ascend")
             >>> resize_op = vision.Resize([100, 75], Inter.BICUBIC)
             >>> transforms_list = [decode_op, resize_op]
-            >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-            >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-            ...                                                 input_columns=["image"])
+            >>> generator_dataset = generator_dataset.map(operations=transforms_list, input_columns=["image"])
+            >>> for item in generator_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+            ...     print(item["image"].shape, item["image"].dtype)
+            ...     break
+            (100, 75, 3) uint8
+            >>> os.remove("./1.jpg")
+            >>>
+            >>> # Use the transform in eager mode
+            >>> img = Image.new("RGB", (300, 300), (255, 255, 255))
+            >>> draw = ImageDraw.Draw(img)
+            >>> draw.polygon([(50, 50), (150, 50), (100, 150)], fill=(0, 255, 0), outline=(0, 255, 0))
+            >>> img.save("./2.jpg")
+            >>> data = np.fromfile("./2.jpg", np.uint8)
+            >>> output = vision.Decode().device("Ascend")(data)
+            >>> print(output.shape, output.dtype)
+            (300, 300, 3) uint8
+            >>> os.remove("./2.jpg")
 
         Tutorial Examples:
             - `Illustration of vision transforms
@@ -1294,13 +1648,25 @@ class Equalize(ImageTensorOperation, PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>>
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> transforms_list = [vision.Decode(), vision.Equalize()]
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns=["image"])
+        >>> # Use the transform in dataset pipeline mode
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> transforms_list = [vision.Equalize()]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (100, 100, 3) uint8
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.array([[0, 1, 2, 3, 4, 5], [0, 1, 2, 3, 4, 5]], dtype=np.uint8).reshape((2, 2, 3))
+        >>> output = vision.Equalize()(data)
+        >>> print(output.shape, output.dtype)
+        (2, 2, 3) uint8
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -1360,13 +1726,25 @@ class Erase(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>>
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> transforms_list = [vision.Decode(), vision.Erase(10,10,10,10)]
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns=["image"])
+        >>> # Use the transform in dataset pipeline mode
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> transforms_list = [vision.Erase(10,10,10,10)]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (100, 100, 3) uint8
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.array([[0, 1, 2, 3, 4, 5], [0, 1, 2, 3, 4, 5]], dtype=np.uint8).reshape((2, 2, 3))
+        >>> output = vision.Erase(0, 0, 2, 1)(data)
+        >>> print(output.shape, output.dtype)
+        (2, 2, 3) uint8
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -1406,19 +1784,55 @@ class FiveCrop(PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import os
+        >>> import numpy as np
+        >>> from PIL import Image, ImageDraw
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
-        >>> import numpy
         >>> from mindspore.dataset.transforms import Compose
         >>>
+        >>> # Use the transform in dataset pipeline mode
+        >>> class MyDataset:
+        ...     def __init__(self):
+        ...         self.data = []
+        ...         img = Image.new("RGB", (300, 300), (255, 255, 255))
+        ...         draw = ImageDraw.Draw(img)
+        ...         draw.ellipse(((0, 0), (100, 100)), fill=(255, 0, 0), outline=(255, 0, 0), width=5)
+        ...         img.save("./1.jpg")
+        ...         data = np.fromfile("./1.jpg", np.uint8)
+        ...         self.data.append(data)
+        ...
+        ...     def __getitem__(self, index):
+        ...         return self.data[0]
+        ...
+        ...     def __len__(self):
+        ...         return 5
+        >>>
+        >>> my_dataset = MyDataset()
+        >>> generator_dataset = ds.GeneratorDataset(my_dataset, column_names="image")
         >>> transforms_list = Compose([vision.Decode(to_pil=True),
         ...                            vision.FiveCrop(size=200),
         ...                            # 4D stack of 5 images
-        ...                            lambda *images: numpy.stack([vision.ToTensor()(image) for image in images])])
+        ...                            lambda *images: np.stack([vision.ToTensor()(image) for image in images])])
         >>> # apply the transform to dataset through map function
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns="image")
+        >>> generator_dataset = generator_dataset.map(operations=transforms_list, input_columns="image")
+        >>> for item in generator_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (5, 3, 200, 200) float32
+        >>> os.remove("./1.jpg")
+        >>>
+        >>> # Use the transform in eager mode
+        >>> img = Image.new("RGB", (300, 300), (255, 255, 255))
+        >>> draw = ImageDraw.Draw(img)
+        >>> draw.polygon([(50, 50), (150, 50), (100, 150)], fill=(0, 255, 0), outline=(0, 255, 0))
+        >>> img.save("./2.jpg")
+        >>> data = Image.open("./2.jpg")
+        >>> output = vision.FiveCrop(size=20)(data)
+        >>> print(np.array(output).shape, np.array(output).dtype)
+        (5,) object
+        >>> os.remove("./2.jpg")
+
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -1474,13 +1888,25 @@ class GaussianBlur(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>>
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> transforms_list = [vision.Decode(to_pil=True), vision.GaussianBlur(3, 3)]
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns=["image"])
+        >>> # Use the transform in dataset pipeline mode
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> transforms_list = [vision.GaussianBlur(3, 3)]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (100, 100, 3) uint8
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.array([[0, 1, 2, 3, 4, 5], [0, 1, 2, 3, 4, 5]], dtype=np.uint8).reshape((2, 2, 3))
+        >>> output = vision.GaussianBlur(3, 3)(data)
+        >>> print(output.shape, output.dtype)
+        (2, 2, 3) uint8
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -1517,14 +1943,26 @@ class GaussianBlur(ImageTensorOperation):
             ``CPU`` ``Ascend``
 
         Examples:
+            >>> import numpy as np
             >>> import mindspore.dataset as ds
             >>> import mindspore.dataset.vision as vision
             >>>
-            >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-            >>> decode_op = vision.Decode()
+            >>> # Use the transform in dataset pipeline mode
+            >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+            >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
             >>> blur_op = vision.GaussianBlur(3, 3).device("Ascend")
-            >>> transforms_list = [decode_op, blur_op]
-            >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list, input_columns=["image"])
+            >>> transforms_list = [blur_op]
+            >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+            >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+            ...     print(item["image"].shape, item["image"].dtype)
+            ...     break
+            (100, 100, 3) uint8
+            >>>
+            >>> # Use the transform in eager mode
+            >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+            >>> output = vision.GaussianBlur(3, 3).device("Ascend")(data)
+            >>> print(output.shape, output.dtype)
+            (100, 100, 3) uint8
 
         Tutorial Examples:
             - `Illustration of vision transforms
@@ -1553,17 +1991,53 @@ class Grayscale(PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import os
+        >>> import numpy as np
+        >>> from PIL import Image, ImageDraw
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>> from mindspore.dataset.transforms import Compose
         >>>
+        >>> # Use the transform in dataset pipeline mode
+        >>> class MyDataset:
+        ...     def __init__(self):
+        ...         self.data = []
+        ...         img = Image.new("RGB", (300, 300), (255, 255, 255))
+        ...         draw = ImageDraw.Draw(img)
+        ...         draw.ellipse(((0, 0), (100, 100)), fill=(255, 0, 0), outline=(255, 0, 0), width=5)
+        ...         img.save("./1.jpg")
+        ...         data = np.fromfile("./1.jpg", np.uint8)
+        ...         self.data.append(data)
+        ...
+        ...     def __getitem__(self, index):
+        ...         return self.data[0]
+        ...
+        ...     def __len__(self):
+        ...         return 5
+        >>>
+        >>> my_dataset = MyDataset()
+        >>> generator_dataset = ds.GeneratorDataset(my_dataset, column_names="image")
         >>> transforms_list = Compose([vision.Decode(to_pil=True),
         ...                            vision.Grayscale(3),
         ...                            vision.ToTensor()])
         >>> # apply the transform to dataset through map function
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns="image")
+        >>> generator_dataset = generator_dataset.map(operations=transforms_list, input_columns="image")
+        >>> for item in generator_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (3, 300, 300) float32
+        >>> os.remove("./1.jpg")
+        >>>
+        >>> # Use the transform in eager mode
+        >>> img = Image.new("RGB", (300, 300), (255, 255, 255))
+        >>> draw = ImageDraw.Draw(img)
+        >>> draw.polygon([(50, 50), (150, 50), (100, 150)], fill=(0, 255, 0), outline=(0, 255, 0))
+        >>> img.save("./2.jpg")
+        >>> data = Image.open("./2.jpg")
+        >>> output = vision.Grayscale(3)(data)
+        >>> print(np.array(output).shape, np.array(output).dtype)
+        (300, 300, 3) uint8
+        >>> os.remove("./2.jpg")
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -1601,13 +2075,25 @@ class HorizontalFlip(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>>
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> transforms_list = [vision.Decode(to_pil=True), vision.HorizontalFlip()]
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns=["image"])
+        >>> # Use the transform in dataset pipeline mode
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> transforms_list = [vision.HorizontalFlip()]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (100, 100, 3) uint8
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.array([[0, 1, 2, 3, 4, 5], [0, 1, 2, 3, 4, 5]], dtype=np.uint8).reshape((2, 2, 3))
+        >>> output = vision.HorizontalFlip()(data)
+        >>> print(output.shape, output.dtype)
+        (2, 2, 3) uint8
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -1635,14 +2121,26 @@ class HorizontalFlip(ImageTensorOperation):
             ``CPU`` ``Ascend``
 
         Examples:
+            >>> import numpy as np
             >>> import mindspore.dataset as ds
             >>> import mindspore.dataset.vision as vision
             >>>
-            >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-            >>> decode_op = vision.Decode(to_pil=True)
+            >>> # Use the transform in dataset pipeline mode
+            >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+            >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
             >>> horizontal_flip_op = vision.HorizontalFlip().device("Ascend")
-            >>> transforms_list = [decode_op, horizontal_flip_op]
-            >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list, input_columns=["image"])
+            >>> transforms_list = [horizontal_flip_op]
+            >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+            >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+            ...     print(item["image"].shape, item["image"].dtype)
+            ...     break
+            (100, 100, 3) uint8
+            >>>
+            >>> # Use the transform in eager mode
+            >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+            >>> output = vision.HorizontalFlip().device("Ascend")(data)
+            >>> print(output.shape, output.dtype)
+            (100, 100, 3) uint8
 
         Tutorial Examples:
             - `Illustration of vision transforms
@@ -1670,18 +2168,29 @@ class HsvToRgb(PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>> from mindspore.dataset.transforms import Compose
         >>>
-        >>> transforms_list = Compose([vision.Decode(to_pil=True),
-        ...                            vision.CenterCrop(20),
+        >>> # Use the transform in dataset pipeline mode
+        >>> transforms_list = Compose([vision.CenterCrop(20),
         ...                            vision.ToTensor(),
         ...                            vision.HsvToRgb()])
         >>> # apply the transform to dataset through map function
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns="image")
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns="image")
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (3, 20, 20) float64
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.array([[0, 1, 2, 3, 4, 5], [0, 1, 2, 3, 4, 5]], dtype=np.uint8).reshape((2, 2, 3))
+        >>> output = vision.HsvToRgb(is_hwc=True)(data)
+        >>> print(output.shape, output.dtype)
+        (2, 2, 3) float64
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -1724,16 +2233,27 @@ class HWC2CHW(ImageTensorOperation):
         ``CPU`` ``GPU`` ``Ascend``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>>
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> transforms_list = [vision.Decode(),
-        ...                    vision.RandomHorizontalFlip(0.75),
-        ...                    vision.RandomCrop(512),
+        >>> # Use the transform in dataset pipeline mode
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> transforms_list = [vision.RandomHorizontalFlip(0.75),
+        ...                    vision.RandomCrop(64),
         ...                    vision.HWC2CHW()]
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns=["image"])
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (3, 64, 64) uint8
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.array([[0, 1, 2, 3, 4, 5], [0, 1, 2, 3, 4, 5]], dtype=np.uint8).reshape((2, 2, 3))
+        >>> output = vision.HWC2CHW()(data)
+        >>> print(output.shape, output.dtype)
+        (3, 2, 2) uint8
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -1763,13 +2283,25 @@ class Invert(ImageTensorOperation, PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>>
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> transforms_list = [vision.Decode(), vision.Invert()]
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns=["image"])
+        >>> # Use the transform in dataset pipeline mode
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> transforms_list = [vision.Invert()]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (100, 100, 3) uint8
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.array([[0, 1, 2, 3, 4, 5], [0, 1, 2, 3, 4, 5]], dtype=np.uint8).reshape((2, 2, 3))
+        >>> output = vision.Invert()(data)
+        >>> print(output.shape, output.dtype)
+        (2, 2, 3) uint8
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -1817,23 +2349,35 @@ class LinearTransformation(PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
-        >>> import numpy as np
         >>> from mindspore.dataset.transforms import Compose
         >>>
+        >>> # Use the transform in dataset pipeline mode
         >>> height, width = 32, 32
         >>> dim = 3 * height * width
         >>> transformation_matrix = np.ones([dim, dim])
         >>> mean_vector = np.zeros(dim)
-        >>> transforms_list = Compose([vision.Decode(to_pil=True),
-        ...                            vision.Resize((height,width)),
+        >>> transforms_list = Compose([vision.Resize((height,width)),
         ...                            vision.ToTensor(),
         ...                            vision.LinearTransformation(transformation_matrix, mean_vector)])
         >>> # apply the transform to dataset through map function
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns="image")
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns="image")
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (3, 32, 32) float64
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.random.randn(10, 10, 3)
+        >>> transformation_matrix = np.random.randn(300, 300)
+        >>> mean_vector = np.random.randn(300,)
+        >>> output = vision.LinearTransformation(transformation_matrix, mean_vector)(data)
+        >>> print(output.shape, output.dtype)
+        (10, 10, 3) float64
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -1887,24 +2431,40 @@ class MixUp(PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>> import mindspore.dataset.transforms as transforms
         >>>
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> # first decode the image
-        >>> image_folder_dataset = image_folder_dataset.map(operations=vision.Decode(),
-        ...                                                 input_columns="image")
-        >>> # then ont hot decode the label
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms.OneHot(10),
-        ...                                                 input_columns="label")
+        >>> # Use the transform in dataset pipeline mode
+        >>> data = np.random.randint(0, 255, size=(64, 64, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=lambda img: (data, np.random.randint(0, 5, (3, 1))),
+        ...                                                 input_columns=["image"],
+        ...                                                 output_columns=["image", "label"])
+        >>> # ont hot decode the label
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms.OneHot(10), input_columns="label")
         >>> # batch the samples
-        >>> batch_size = 4
-        >>> image_folder_dataset = image_folder_dataset.batch(batch_size=batch_size)
+        >>> numpy_slices_dataset = numpy_slices_dataset.batch(batch_size=4)
         >>> # finally mix up the images and labels
-        >>> image_folder_dataset = image_folder_dataset.map(
-        ...     operations=vision.MixUp(batch_size=batch_size, alpha=0.2),
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(
+        ...     operations=vision.MixUp(batch_size=1, alpha=0.2),
         ...     input_columns=["image", "label"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     print(item["label"].shape, item["label"].dtype)
+        ...     break
+        (4, 64, 64, 3) float64
+        (4, 3, 10) float64
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+        >>> label = np.array([[0, 1]])
+        >>> output = vision.MixUp(batch_size=2, alpha=0.2, is_single=False)(data, label)
+        >>> print(output[0].shape, output[0].dtype)
+        (2, 100, 100, 3) float64
+        >>> print(output[1].shape, output[1].dtype)
+        (2, 2) float64
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -1966,18 +2526,39 @@ class MixUpBatch(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>> import mindspore.dataset.transforms as transforms
         >>>
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
+        >>> # Use the transform in dataset pipeline mode
+        >>> data = np.random.randint(0, 255, size=(64, 64, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=lambda img: (data, np.random.randint(0, 5, (3, 1))),
+        ...                                                 input_columns=["image"],
+        ...                                                 output_columns=["image", "label"])
         >>> onehot_op = transforms.OneHot(num_classes=10)
-        >>> image_folder_dataset= image_folder_dataset.map(operations=onehot_op,
+        >>> numpy_slices_dataset= numpy_slices_dataset.map(operations=onehot_op,
         ...                                                input_columns=["label"])
         >>> mixup_batch_op = vision.MixUpBatch(alpha=0.9)
-        >>> image_folder_dataset = image_folder_dataset.batch(5)
-        >>> image_folder_dataset = image_folder_dataset.map(operations=mixup_batch_op,
+        >>> numpy_slices_dataset = numpy_slices_dataset.batch(5)
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=mixup_batch_op,
         ...                                                 input_columns=["image", "label"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     print(item["label"].shape, item["label"].dtype)
+        ...     break
+        (5, 64, 64, 3) uint8
+        (5, 3, 10) float32
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.random.randint(0, 255, (2, 10, 10, 3)).astype(np.uint8)
+        >>> label = np.array([[0, 1], [1, 0]])
+        >>> output = vision.MixUpBatch(1)(data, label)
+        >>> print(output[0].shape, output[0].dtype)
+        (2, 10, 10, 3) uint8
+        >>> print(output[1].shape, output[1].dtype)
+        (2, 2) float32
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -2025,15 +2606,26 @@ class Normalize(ImageTensorOperation):
         ``CPU`` ``GPU`` ``Ascend``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>>
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> decode_op = vision.Decode() ## Decode output is expected to be HWC format
+        >>> # Use the transform in dataset pipeline mode
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
         >>> normalize_op = vision.Normalize(mean=[121.0, 115.0, 100.0], std=[70.0, 68.0, 71.0], is_hwc=True)
-        >>> transforms_list = [decode_op, normalize_op]
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=[normalize_op],
         ...                                                 input_columns=["image"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (100, 100, 3) float32
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+        >>> output = vision.Normalize(mean=[121.0, 115.0, 100.0], std=[70.0, 68.0, 71.0])(data)
+        >>> print(output.shape, output.dtype)
+        (100, 100, 3) float32
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -2066,18 +2658,29 @@ class Normalize(ImageTensorOperation):
             ``CPU`` ``Ascend``
 
         Examples:
+            >>> import numpy as np
             >>> import mindspore.dataset as ds
             >>> import mindspore.dataset.vision as vision
             >>> from mindspore.dataset.vision import Inter
             >>>
-            >>> decode_op = vision.Decode()
+            >>> # Use the transform in dataset pipeline mode
+            >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+            >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
             >>> resize_op = vision.Resize([100, 75], Inter.BICUBIC)
-            >>> transforms_list = [decode_op, resize_op]
-            >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-            >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-            ...                                                 input_columns=["image"])
+            >>> transforms_list = [resize_op]
+            >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
             >>> normalize_op = vision.Normalize(mean=[121.0, 115.0, 100.0], std=[70.0, 68.0, 71.0]).device("Ascend")
-            >>> image_folder_dataset = image_folder_dataset.map(operations=normalize_op, input_columns=["image"])
+            >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=normalize_op, input_columns=["image"])
+            >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+            ...     print(item["image"].shape, item["image"].dtype)
+            ...     break
+            (100, 75, 3) float32
+            >>>
+            >>> # Use the transform in eager mode
+            >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+            >>> output = vision.Normalize(mean=[121.0, 115.0, 100.0], std=[70.0, 68.0, 71.0]).device("Ascend")(data)
+            >>> print(output.shape, output.dtype)
+            (100, 100, 3) float32
 
         Tutorial Examples:
             - `Illustration of vision transforms
@@ -2116,17 +2719,28 @@ class NormalizePad(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>>
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> decode_op = vision.Decode()
+        >>> # Use the transform in dataset pipeline mode
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
         >>> normalize_pad_op = vision.NormalizePad(mean=[121.0, 115.0, 100.0],
         ...                                        std=[70.0, 68.0, 71.0],
         ...                                        dtype="float32")
-        >>> transforms_list = [decode_op, normalize_pad_op]
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns=["image"])
+        >>> transforms_list = [normalize_pad_op]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (100, 100, 4) float32
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+        >>> output = vision.NormalizePad(mean=[121.0, 115.0, 100.0], std=[70.0, 68.0, 71.0], dtype="float32")(data)
+        >>> print(output.shape, output.dtype)
+        (100, 100, 4) float32
     """
 
     @check_normalizepad
@@ -2184,13 +2798,25 @@ class Pad(ImageTensorOperation, PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>>
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> transforms_list = [vision.Decode(), vision.Pad([100, 100, 100, 100])]
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns=["image"])
+        >>> # Use the transform in dataset pipeline mode
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> transforms_list = [vision.Pad([100, 100, 100, 100])]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (300, 300, 3) uint8
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+        >>> output = vision.Pad([100, 100, 100, 100])(data)
+        >>> print(output.shape, output.dtype)
+        (300, 300, 3) uint8
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -2225,14 +2851,26 @@ class Pad(ImageTensorOperation, PyTensorOperation):
             ``CPU`` ``Ascend``
 
         Examples:
+            >>> import numpy as np
             >>> import mindspore.dataset as ds
             >>> import mindspore.dataset.vision as vision
             >>>
-            >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-            >>> decode_op = vision.Decode()
+            >>> # Use the transform in dataset pipeline mode
+            >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+            >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
             >>> pad_op = vision.Pad([100, 100, 100, 100]).device("Ascend")
-            >>> transforms_list = [decode_op, pad_op]
-            >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list, input_columns=["image"])
+            >>> transforms_list = [pad_op]
+            >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+            >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+            ...     print(item["image"].shape, item["image"].dtype)
+            ...     break
+            (300, 300, 3) uint8
+            >>>
+            >>> # Use the transform in eager mode
+            >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+            >>> output = vision.Pad([100, 100, 100, 100]).device("Ascend")(data)
+            >>> print(output.shape, output.dtype)
+            (300, 300, 3) uint8
 
         Tutorial Examples:
             - `Illustration of vision transforms
@@ -2295,13 +2933,25 @@ class PadToSize(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>>
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> transforms_list = [vision.Decode(), vision.PadToSize([256, 256])]
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns=["image"])
+        >>> # Use the transform in dataset pipeline mode
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> transforms_list = [vision.PadToSize([256, 256])]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (256, 256, 3) uint8
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+        >>> output = vision.PadToSize([256, 256])(data)
+        >>> print(output.shape, output.dtype)
+        (256, 256, 3) uint8
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -2348,19 +2998,31 @@ class Perspective(ImageTensorOperation, PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
-        >>> from mindspore.dataset.transforms import Compose
         >>> from mindspore.dataset.vision import Inter
         >>>
+        >>> # Use the transform in dataset pipeline mode
         >>> start_points = [[0, 63], [63, 63], [63, 0], [0, 0]]
         >>> end_points = [[0, 32], [32, 32], [32, 0], [0, 0]]
-        >>> transforms_list = Compose([vision.Decode(),
-        ...                            vision.Perspective(start_points, end_points, Inter.BILINEAR)])
+        >>> transforms_list = [vision.Perspective(start_points, end_points, Inter.BILINEAR)]
         >>> # apply the transform to dataset through map function
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns="image")
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns="image")
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (100, 100, 3) uint8
+        >>>
+        >>> # Use the transform in eager mode
+        >>> start_points = [[0, 63], [63, 63], [63, 0], [0, 0]]
+        >>> end_points = [[0, 32], [32, 32], [32, 0], [0, 0]]
+        >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+        >>> output = vision.Perspective(start_points, end_points, Inter.BILINEAR)(data)
+        >>> print(output.shape, output.dtype)
+        (100, 100, 3) uint8
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -2396,16 +3058,31 @@ class Perspective(ImageTensorOperation, PyTensorOperation):
             ``CPU`` ``Ascend``
 
         Examples:
+            >>> import numpy as np
             >>> import mindspore.dataset as ds
             >>> import mindspore.dataset.vision as vision
+            >>> from mindspore.dataset.vision import Inter
             >>>
-            >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
+            >>> # Use the transform in dataset pipeline mode
+            >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+            >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
             >>> start_points = [[0, 63], [63, 63], [63, 0], [0, 0]]
             >>> end_points = [[0, 32], [32, 32], [32, 0], [0, 0]]
-            >>> decode_op = vision.Decode(to_pil=True)
             >>> perspective_op = vision.Perspective(start_points, end_points).device("Ascend")
-            >>> transforms_list = [decode_op, perspective_op]
-            >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list, input_columns=["image"])
+            >>> transforms_list = [perspective_op]
+            >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+            >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+            ...     print(item["image"].shape, item["image"].dtype)
+            ...     break
+            (100, 100, 3) uint8
+            >>>
+            >>> # Use the transform in eager mode
+            >>> start_points = [[0, 63], [63, 63], [63, 0], [0, 0]]
+            >>> end_points = [[0, 32], [32, 32], [32, 0], [0, 0]]
+            >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+            >>> output = vision.Perspective(start_points, end_points, Inter.BILINEAR).device("Ascend")(data)
+            >>> print(output.shape, output.dtype)
+            (100, 100, 3) uint8
 
         Tutorial Examples:
             - `Illustration of vision transforms
@@ -2449,13 +3126,25 @@ class Posterize(ImageTensorOperation):
         RuntimeError: If shape of the input image is not <H, W> or <H, W, C>.
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>>
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> transforms_list = [vision.Decode(), vision.Posterize(4)]
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns=["image"])
+        >>> # Use the transform in dataset pipeline mode
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> transforms_list = [vision.Posterize(4)]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (100, 100, 3) uint8
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+        >>> output = vision.Posterize(4)(data)
+        >>> print(output.shape, output.dtype)
+        (100, 100, 3) uint8
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -2509,12 +3198,26 @@ class RandAugment(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
+        >>> from mindspore.dataset.vision import Inter
         >>>
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> transforms_list = [vision.Decode(), vision.RandAugment()]
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list, input_columns=["image"])
+        >>> # Use the transform in dataset pipeline mode
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> transforms_list = [vision.RandAugment()]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (100, 100, 3) uint8
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+        >>> output = vision.RandAugment(interpolation=Inter.BILINEAR, fill_value=255)(data)
+        >>> print(output.shape, output.dtype)
+        (100, 100, 3) uint8
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -2560,13 +3263,25 @@ class RandomAdjustSharpness(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>>
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> transforms_list = [vision.Decode(), vision.RandomAdjustSharpness(2.0, 0.5)]
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns=["image"])
+        >>> # Use the transform in dataset pipeline mode
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> transforms_list = [vision.RandomAdjustSharpness(2.0, 0.5)]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (100, 100, 3) uint8
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+        >>> output = vision.RandomAdjustSharpness(2.0, 1.0)(data)
+        >>> print(output.shape, output.dtype)
+        (100, 100, 3) uint8
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -2636,19 +3351,31 @@ class RandomAffine(ImageTensorOperation, PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>> from mindspore.dataset.vision import Inter
         >>>
-        >>> decode_op = vision.Decode()
+        >>> # Use the transform in dataset pipeline mode
         >>> random_affine_op = vision.RandomAffine(degrees=15,
         ...                                        translate=(-0.1, 0.1, 0, 0),
         ...                                        scale=(0.9, 1.1),
         ...                                        resample=Inter.NEAREST)
-        >>> transforms_list = [decode_op, random_affine_op]
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns=["image"])
+        >>> transforms_list = [random_affine_op]
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (100, 100, 3) uint8
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+        >>> output = vision.RandomAffine(degrees=15, translate=(-0.1, 0.1, 0, 0),
+        ...                              scale=(0.9, 1.1), resample=Inter.NEAREST)(data)
+        >>> print(output.shape, output.dtype)
+        (100, 100, 3) uint8
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -2749,13 +3476,25 @@ class RandomAutoContrast(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>>
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> transforms_list = [vision.Decode(), vision.RandomAutoContrast(cutoff=0.0, ignore=None, prob=0.5)]
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns=["image"])
+        >>> # Use the transform in dataset pipeline mode
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> transforms_list = [vision.RandomAutoContrast(cutoff=0.0, ignore=None, prob=0.5)]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (100, 100, 3) uint8
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+        >>> output = vision.RandomAutoContrast(cutoff=0.0, ignore=None, prob=1.0)(data)
+        >>> print(output.shape, output.dtype)
+        (100, 100, 3) uint8
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -2797,13 +3536,25 @@ class RandomColor(ImageTensorOperation, PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>>
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> transforms_list = [vision.Decode(), vision.RandomColor((0.5, 2.0))]
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns=["image"])
+        >>> # Use the transform in dataset pipeline mode
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> transforms_list = [vision.RandomColor((0.5, 2.0))]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (100, 100, 3) uint8
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+        >>> output = vision.RandomColor((0.1, 1.9))(data)
+        >>> print(output.shape, output.dtype)
+        (100, 100, 3) uint8
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -2872,17 +3623,28 @@ class RandomColorAdjust(ImageTensorOperation, PyTensorOperation):
         ``CPU`` ``GPU`` ``Ascend``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>>
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> decode_op = vision.Decode()
+        >>> # Use the transform in dataset pipeline mode
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
         >>> transform_op = vision.RandomColorAdjust(brightness=(0.5, 1),
         ...                                         contrast=(0.4, 1),
         ...                                         saturation=(0.3, 1))
-        >>> transforms_list = [decode_op, transform_op]
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns=["image"])
+        >>> transforms_list = [transform_op]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (100, 100, 3) uint8
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+        >>> output = vision.RandomColorAdjust(brightness=(0.5, 1), contrast=(0.4, 1), saturation=(0.3, 1))(data)
+        >>> print(output.shape, output.dtype)
+        (100, 100, 3) uint8
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -2983,16 +3745,27 @@ class RandomCrop(ImageTensorOperation, PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>> from mindspore.dataset.vision import Border
         >>>
-        >>> decode_op = vision.Decode()
-        >>> random_crop_op = vision.RandomCrop(512, [200, 200, 200, 200], padding_mode=Border.EDGE)
-        >>> transforms_list = [decode_op, random_crop_op]
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns=["image"])
+        >>> # Use the transform in dataset pipeline mode
+        >>> random_crop_op = vision.RandomCrop(64, [16, 16, 16, 16], padding_mode=Border.EDGE)
+        >>> transforms_list = [random_crop_op]
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (64, 64, 3) uint8
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+        >>> output = vision.RandomCrop(8, [10, 10, 10, 10], padding_mode=Border.EDGE)(data)
+        >>> print(output.shape, output.dtype)
+        (8, 8, 3) uint8
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -3069,18 +3842,55 @@ class RandomCropDecodeResize(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import os
+        >>> import numpy as np
+        >>> from PIL import Image, ImageDraw
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>> from mindspore.dataset.vision import Inter
         >>>
+        >>> # Use the transform in dataset pipeline mode
+        >>> class MyDataset:
+        ...     def __init__(self):
+        ...         self.data = []
+        ...         img = Image.new("RGB", (300, 300), (255, 255, 255))
+        ...         draw = ImageDraw.Draw(img)
+        ...         draw.ellipse(((0, 0), (100, 100)), fill=(255, 0, 0), outline=(255, 0, 0), width=5)
+        ...         img.save("./1.jpg")
+        ...         data = np.fromfile("./1.jpg", np.uint8)
+        ...         self.data.append(data)
+        ...
+        ...     def __getitem__(self, index):
+        ...         return self.data[0]
+        ...
+        ...     def __len__(self):
+        ...         return 5
+        >>>
+        >>> my_dataset = MyDataset()
+        >>> generator_dataset = ds.GeneratorDataset(my_dataset, column_names="image")
         >>> resize_crop_decode_op = vision.RandomCropDecodeResize(size=(50, 75),
         ...                                                       scale=(0.25, 0.5),
         ...                                                       interpolation=Inter.NEAREST,
         ...                                                       max_attempts=5)
         >>> transforms_list = [resize_crop_decode_op]
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns=["image"])
+        >>> generator_dataset = generator_dataset.map(operations=transforms_list, input_columns=["image"])
+        >>> for item in generator_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (50, 75, 3) uint8
+        >>> os.remove("./1.jpg")
+        >>>
+        >>> # Use the transform in eager mode
+        >>> img = Image.new("RGB", (300, 300), (255, 255, 255))
+        >>> draw = ImageDraw.Draw(img)
+        >>> draw.polygon([(50, 50), (150, 50), (100, 150)], fill=(0, 255, 0), outline=(0, 255, 0))
+        >>> img.save("./2.jpg")
+        >>> data = np.fromfile("./2.jpg", np.uint8)
+        >>> output = vision.RandomCropDecodeResize(size=(50, 75), scale=(0, 10.0), ratio=(0.5, 0.5),
+        ...                                        interpolation=Inter.BILINEAR, max_attempts=1)(data)
+        >>> print(np.array(output).shape, np.array(output).dtype)
+        (50, 75, 3) uint8
+        >>> os.remove("./2.jpg")
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -3165,15 +3975,36 @@ class RandomCropWithBBox(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>>
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> decode_op = vision.Decode()
-        >>> random_crop_with_bbox_op = vision.RandomCropWithBBox([512, 512], [200, 200, 200, 200])
-        >>> transforms_list = [decode_op, random_crop_with_bbox_op]
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns=["image"])
+        >>> # Use the transform in dataset pipeline mode
+        >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.float32)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> func = lambda img: (data, np.array([[0, 0, data.shape[1], data.shape[0]]]).astype(np.float32))
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=[func],
+        ...                                                 input_columns=["image"],
+        ...                                                 output_columns=["image", "bbox"])
+        >>> random_crop_with_bbox_op = vision.RandomCropWithBBox([64, 64], [20, 20, 20, 20])
+        >>> transforms_list = [random_crop_with_bbox_op]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image", "bbox"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     print(item["bbox"].shape, item["bbox"].dtype)
+        ...     break
+        (64, 64, 3) float32
+        (1, 4) float32
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.float32)
+        >>> func = lambda img: (data, np.array([[0, 0, data.shape[1], data.shape[0]]]).astype(data.dtype))
+        >>> func_data, func_bboxes = func(data)
+        >>> output = vision.RandomCropWithBBox([64, 64], [20, 20, 20, 20])(func_data, func_bboxes)
+        >>> print(output[0].shape, output[0].dtype)
+        (64, 64, 3) float32
+        >>> print(output[1].shape, output[1].dtype)
+        (1, 4) float32
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -3223,13 +4054,25 @@ class RandomEqualize(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>>
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> transforms_list = [vision.Decode(), vision.RandomEqualize(0.5)]
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns=["image"])
+        >>> # Use the transform in dataset pipeline mode
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> transforms_list = [vision.RandomEqualize(0.5)]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (100, 100, 3) uint8
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+        >>> output = vision.RandomEqualize(1.0)(data)
+        >>> print(output.shape, output.dtype)
+        (100, 100, 3) uint8
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -3286,17 +4129,28 @@ class RandomErasing(PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>> from mindspore.dataset.transforms import Compose
         >>>
-        >>> transforms_list = Compose([vision.Decode(to_pil=True),
-        ...                            vision.ToTensor(),
+        >>> # Use the transform in dataset pipeline mode
+        >>> transforms_list = Compose([vision.ToTensor(),
         ...                            vision.RandomErasing(value='random')])
         >>> # apply the transform to dataset through map function
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns="image")
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns="image")
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (3, 100, 100) float32
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.random.randint(254, 255, size=(3, 100, 100)).astype(np.uint8)
+        >>> output = vision.RandomErasing(prob=1.0, max_attempts=1)(data)
+        >>> print(output.shape, output.dtype)
+        (3, 100, 100) uint8
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -3348,17 +4202,53 @@ class RandomGrayscale(PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import os
+        >>> import numpy as np
+        >>> from PIL import Image, ImageDraw
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>> from mindspore.dataset.transforms import Compose
         >>>
+        >>> # Use the transform in dataset pipeline mode
+        >>> class MyDataset:
+        ...     def __init__(self):
+        ...         self.data = []
+        ...         img = Image.new("RGB", (300, 300), (255, 255, 255))
+        ...         draw = ImageDraw.Draw(img)
+        ...         draw.ellipse(((0, 0), (100, 100)), fill=(255, 0, 0), outline=(255, 0, 0), width=5)
+        ...         img.save("./1.jpg")
+        ...         data = np.fromfile("./1.jpg", np.uint8)
+        ...         self.data.append(data)
+        ...
+        ...     def __getitem__(self, index):
+        ...         return self.data[0]
+        ...
+        ...     def __len__(self):
+        ...         return 5
+        >>>
+        >>> my_dataset = MyDataset()
+        >>> generator_dataset = ds.GeneratorDataset(my_dataset, column_names="image")
         >>> transforms_list = Compose([vision.Decode(to_pil=True),
         ...                            vision.RandomGrayscale(0.3),
         ...                            vision.ToTensor()])
         >>> # apply the transform to dataset through map function
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns="image")
+        >>> generator_dataset = generator_dataset.map(operations=transforms_list, input_columns="image")
+        >>> for item in generator_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (3, 300, 300) float32
+        >>> os.remove("./1.jpg")
+        >>>
+        >>> # Use the transform in eager mode
+        >>> img = Image.new("RGB", (300, 300), (255, 255, 255))
+        >>> draw = ImageDraw.Draw(img)
+        >>> draw.polygon([(50, 50), (150, 50), (100, 150)], fill=(0, 255, 0), outline=(0, 255, 0))
+        >>> img.save("./2.jpg")
+        >>> data = Image.open("./2.jpg")
+        >>> output = vision.RandomGrayscale(1.0)(data)
+        >>> print(np.array(output).shape, np.array(output).dtype)
+        (300, 300, 3) uint8
+        >>> os.remove("./2.jpg")
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -3410,13 +4300,25 @@ class RandomHorizontalFlip(ImageTensorOperation, PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>>
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> transforms_list = [vision.Decode(), vision.RandomHorizontalFlip(0.75)]
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns=["image"])
+        >>> # Use the transform in dataset pipeline mode
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> transforms_list = [vision.RandomHorizontalFlip(0.75)]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (100, 100, 3) uint8
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+        >>> output = vision.RandomHorizontalFlip(1.0)(data)
+        >>> print(output.shape, output.dtype)
+        (100, 100, 3) uint8
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -3461,13 +4363,36 @@ class RandomHorizontalFlipWithBBox(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>>
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> transforms_list = [vision.Decode(), vision.RandomHorizontalFlipWithBBox(0.70)]
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns=["image"])
+        >>> # Use the transform in dataset pipeline mode
+        >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.float32)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> func = lambda img: (data, np.array([[0, 0, data.shape[1], data.shape[0]]]).astype(np.float32))
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=[func],
+        ...                                                 input_columns=["image"],
+        ...                                                 output_columns=["image", "bbox"])
+        >>> transforms_list = [vision.RandomHorizontalFlipWithBBox(0.70)]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list,
+        ...                                                 input_columns=["image", "bbox"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     print(item["bbox"].shape, item["bbox"].dtype)
+        ...     break
+        (100, 100, 3) float32
+        (1, 4) float32
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.float32)
+        >>> func = lambda img: (data, np.array([[0, 0, data.shape[1], data.shape[0]]]).astype(data.dtype))
+        >>> func_data, func_bboxes = func(data)
+        >>> output = vision.RandomHorizontalFlipWithBBox(1)(func_data, func_bboxes)
+        >>> print(output[0].shape, output[0].dtype)
+        (100, 100, 3) float32
+        >>> print(output[1].shape, output[1].dtype)
+        (1, 4) float32
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -3501,13 +4426,25 @@ class RandomInvert(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>>
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> transforms_list = [vision.Decode(), vision.RandomInvert(0.5)]
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns=["image"])
+        >>> # Use the transform in dataset pipeline mode
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> transforms_list = [vision.RandomInvert(0.5)]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (100, 100, 3) uint8
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+        >>> output = vision.RandomInvert(1.0)(data)
+        >>> print(output.shape, output.dtype)
+        (100, 100, 3) uint8
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -3541,13 +4478,25 @@ class RandomLighting(ImageTensorOperation, PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>>
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> transforms_list = [vision.Decode(), vision.RandomLighting(0.1)]
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns=["image"])
+        >>> # Use the transform in dataset pipeline mode
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> transforms_list = [vision.RandomLighting(0.1)]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (100, 100, 3) uint8
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+        >>> output = vision.RandomLighting(0.1)(data)
+        >>> print(output.shape, output.dtype)
+        (100, 100, 3) uint8
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -3598,17 +4547,53 @@ class RandomPerspective(PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import os
+        >>> import numpy as np
+        >>> from PIL import Image, ImageDraw
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>> from mindspore.dataset.transforms import Compose
         >>>
+        >>> # Use the transform in dataset pipeline mode
+        >>> class MyDataset:
+        ...     def __init__(self):
+        ...         self.data = []
+        ...         img = Image.new("RGB", (300, 300), (255, 255, 255))
+        ...         draw = ImageDraw.Draw(img)
+        ...         draw.ellipse(((0, 0), (100, 100)), fill=(255, 0, 0), outline=(255, 0, 0), width=5)
+        ...         img.save("./1.jpg")
+        ...         data = np.fromfile("./1.jpg", np.uint8)
+        ...         self.data.append(data)
+        ...
+        ...     def __getitem__(self, index):
+        ...         return self.data[0]
+        ...
+        ...     def __len__(self):
+        ...         return 5
+        >>>
+        >>> my_dataset = MyDataset()
+        >>> generator_dataset = ds.GeneratorDataset(my_dataset, column_names="image")
         >>> transforms_list = Compose([vision.Decode(to_pil=True),
         ...                            vision.RandomPerspective(prob=0.1),
         ...                            vision.ToTensor()])
         >>> # apply the transform to dataset through map function
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns="image")
+        >>> generator_dataset = generator_dataset.map(operations=transforms_list, input_columns="image")
+        >>> for item in generator_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (3, 300, 300) float32
+        >>> os.remove("./1.jpg")
+        >>>
+        >>> # Use the transform in eager mode
+        >>> img = Image.new("RGB", (300, 300), (255, 255, 255))
+        >>> draw = ImageDraw.Draw(img)
+        >>> draw.polygon([(50, 50), (150, 50), (100, 150)], fill=(0, 255, 0), outline=(0, 255, 0))
+        >>> img.save("./2.jpg")
+        >>> data = Image.open("./2.jpg")
+        >>> output = vision.RandomPerspective(prob=1.0)(data)
+        >>> print(np.array(output).shape, np.array(output).dtype)
+        (300, 300, 3) uint8
+        >>> os.remove("./2.jpg")
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -3665,13 +4650,25 @@ class RandomPosterize(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>>
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> transforms_list = [vision.Decode(), vision.RandomPosterize((6, 8))]
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns=["image"])
+        >>> # Use the transform in dataset pipeline mode
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> transforms_list = [vision.RandomPosterize((6, 8))]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (100, 100, 3) uint8
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+        >>> output = vision.RandomPosterize(1)(data)
+        >>> print(output.shape, output.dtype)
+        (100, 100, 3) uint8
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -3727,17 +4724,28 @@ class RandomResizedCrop(ImageTensorOperation, PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>> from mindspore.dataset.vision import Inter
         >>>
-        >>> decode_op = vision.Decode()
+        >>> # Use the transform in dataset pipeline mode
         >>> resize_crop_op = vision.RandomResizedCrop(size=(50, 75), scale=(0.25, 0.5),
         ...                                           interpolation=Inter.BILINEAR)
-        >>> transforms_list = [decode_op, resize_crop_op]
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns=["image"])
+        >>> transforms_list = [resize_crop_op]
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (50, 75, 3) uint8
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+        >>> output = vision.RandomResizedCrop(size=(50, 75), scale=(0.25, 0.5), interpolation=Inter.BILINEAR)(data)
+        >>> print(output.shape, output.dtype)
+        (50, 75, 3) uint8
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -3815,16 +4823,38 @@ class RandomResizedCropWithBBox(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>> from mindspore.dataset.vision import Inter
         >>>
-        >>> decode_op = vision.Decode()
+        >>> # Use the transform in dataset pipeline mode
+        >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.float32)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> func = lambda img: (data, np.array([[0, 0, data.shape[1], data.shape[0]]]).astype(np.float32))
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=[func],
+        ...                                                 input_columns=["image"],
+        ...                                                 output_columns=["image", "bbox"])
         >>> bbox_op = vision.RandomResizedCropWithBBox(size=50, interpolation=Inter.NEAREST)
-        >>> transforms_list = [decode_op, bbox_op]
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns=["image"])
+        >>> transforms_list = [bbox_op]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list,
+        ...                                                 input_columns=["image", "bbox"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     print(item["bbox"].shape, item["bbox"].dtype)
+        ...     break
+        (50, 50, 3) float32
+        (1, 4) float32
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.float32)
+        >>> func = lambda img: (data, np.array([[0, 0, data.shape[1], data.shape[0]]]).astype(data.dtype))
+        >>> func_data, func_bboxes = func(data)
+        >>> output = vision.RandomResizedCropWithBBox((16, 64), (0.5, 0.5), (0.5, 0.5))(func_data, func_bboxes)
+        >>> print(output[0].shape, output[0].dtype)
+        (16, 64, 3) float32
+        >>> print(output[1].shape, output[1].dtype)
+        (1, 4) float32
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -3868,18 +4898,34 @@ class RandomResize(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>>
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
+        >>> # Use the transform in dataset pipeline mode
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
         >>> # 1) randomly resize image, keeping aspect ratio
-        >>> transforms_list1 = [vision.Decode(), vision.RandomResize(50)]
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list1,
-        ...                                                 input_columns=["image"])
+        >>> transforms_list1 = [vision.RandomResize(50)]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list1, input_columns=["image"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (50, 50, 3) uint8
         >>> # 2) randomly resize image to landscape style
-        >>> transforms_list2 = [vision.Decode(), vision.RandomResize((40, 60))]
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list2,
-        ...                                                 input_columns=["image"])
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> transforms_list2 = [vision.RandomResize((40, 60))]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list2, input_columns=["image"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (40, 60, 3) uint8
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+        >>> output = vision.RandomResize(10)(data)
+        >>> print(output.shape, output.dtype)
+        (10, 10, 3) uint8
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -3920,20 +4966,51 @@ class RandomResizeWithBBox(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import copy
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>>
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
+        >>> # Use the transform in dataset pipeline mode
+        >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.float32)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> func = lambda img: (data, np.array([[0, 0, data.shape[1], data.shape[0]]]).astype(np.float32))
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=[func],
+        ...                                                 input_columns=["image"],
+        ...                                                 output_columns=["image", "bbox"])
+        >>> numpy_slices_dataset2 = copy.deepcopy(numpy_slices_dataset)
         >>>
         >>> # 1) randomly resize image with bounding boxes, keeping aspect ratio
-        >>> transforms_list1 = [vision.Decode(), vision.RandomResizeWithBBox(60)]
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list1,
-        ...                                                 input_columns=["image"])
+        >>> transforms_list1 = [vision.RandomResizeWithBBox(60)]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list1,
+        ...                                                 input_columns=["image", "bbox"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     print(item["bbox"].shape, item["bbox"].dtype)
+        ...     break
+        (60, 60, 3) float32
+        (1, 4) float32
         >>>
         >>> # 2) randomly resize image with bounding boxes to portrait style
-        >>> transforms_list2 = [vision.Decode(), vision.RandomResizeWithBBox((80, 60))]
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list2,
-        ...                                                 input_columns=["image"])
+        >>> transforms_list2 = [vision.RandomResizeWithBBox((80, 60))]
+        >>> numpy_slices_dataset2 = numpy_slices_dataset2.map(operations=transforms_list2,
+        ...                                                   input_columns=["image", "bbox"])
+        >>> for item in numpy_slices_dataset2.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     print(item["bbox"].shape, item["bbox"].dtype)
+        ...     break
+        (80, 60, 3) float32
+        (1, 4) float32
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.float32)
+        >>> func = lambda img: (data, np.array([[0, 0, data.shape[1], data.shape[0]]]).astype(data.dtype))
+        >>> func_data, func_bboxes = func(data)
+        >>> output = vision.RandomResizeWithBBox(64)(func_data, func_bboxes)
+        >>> print(output[0].shape, output[0].dtype)
+        (64, 64, 3) float32
+        >>> print(output[1].shape, output[1].dtype)
+        (1, 4) float32
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -3987,17 +5064,29 @@ class RandomRotation(ImageTensorOperation, PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>> from mindspore.dataset.vision import Inter
         >>>
-        >>> transforms_list = [vision.Decode(),
-        ...                    vision.RandomRotation(degrees=5.0,
-        ...                    resample=Inter.NEAREST,
-        ...                    expand=True)]
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns=["image"])
+        >>> # Use the transform in dataset pipeline mode
+        >>> seed = ds.config.get_seed()
+        >>> ds.config.set_seed(12345)
+        >>> transforms_list = [vision.RandomRotation(degrees=5.0, resample=Inter.NEAREST, expand=True)]
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (107, 107, 3) uint8
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+        >>> output = vision.RandomRotation(degrees=90, resample=Inter.NEAREST, expand=True)(data)
+        >>> print(output.shape, output.dtype)
+        (119, 119, 3) uint8
+        >>> ds.config.set_seed(seed)
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -4072,17 +5161,31 @@ class RandomSelectSubpolicy(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>>
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
+        >>> # Use the transform in dataset pipeline mode
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
         >>> policy = [[(vision.RandomRotation((45, 45)), 0.5),
         ...            (vision.RandomVerticalFlip(), 1),
         ...            (vision.RandomColorAdjust(), 0.8)],
         ...           [(vision.RandomRotation((90, 90)), 1),
         ...            (vision.RandomColorAdjust(), 0.2)]]
-        >>> image_folder_dataset = image_folder_dataset.map(operations=vision.RandomSelectSubpolicy(policy),
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=vision.RandomSelectSubpolicy(policy),
         ...                                                 input_columns=["image"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (100, 100, 3) uint8
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+        >>> policy = [[(vision.RandomRotation((90, 90)), 1), (vision.RandomColorAdjust(), 1)]]
+        >>> output = vision.RandomSelectSubpolicy(policy)(data)
+        >>> print(output.shape, output.dtype)
+        (100, 100, 3) uint8
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -4127,13 +5230,25 @@ class RandomSharpness(ImageTensorOperation, PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>>
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> transforms_list = [vision.Decode(), vision.RandomSharpness(degrees=(0.2, 1.9))]
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns=["image"])
+        >>> # Use the transform in dataset pipeline mode
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> transforms_list = [vision.RandomSharpness(degrees=(0.2, 1.9))]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (100, 100, 3) uint8
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+        >>> output = vision.RandomSharpness(degrees=(0, 0.6))(data)
+        >>> print(output.shape, output.dtype)
+        (100, 100, 3) uint8
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -4182,13 +5297,25 @@ class RandomSolarize(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>>
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> transforms_list = [vision.Decode(), vision.RandomSolarize(threshold=(10,100))]
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns=["image"])
+        >>> # Use the transform in dataset pipeline mode
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> transforms_list = [vision.RandomSolarize(threshold=(10,100))]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (100, 100, 3) uint8
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+        >>> output = vision.RandomSolarize(threshold=(1, 10))(data)
+        >>> print(output.shape, output.dtype)
+        (100, 100, 3) uint8
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -4222,13 +5349,25 @@ class RandomVerticalFlip(ImageTensorOperation, PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>>
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> transforms_list = [vision.Decode(), vision.RandomVerticalFlip(0.25)]
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns=["image"])
+        >>> # Use the transform in dataset pipeline mode
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> transforms_list = [vision.RandomVerticalFlip(0.25)]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (100, 100, 3) uint8
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.array([[0, 1, 2, 3, 4, 5]], dtype=np.uint8).reshape((2, 3))
+        >>> output = vision.RandomVerticalFlip(1.0)(data)
+        >>> print(output.shape, output.dtype)
+        (2, 3) uint8
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -4273,13 +5412,35 @@ class RandomVerticalFlipWithBBox(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>>
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> transforms_list = [vision.Decode(), vision.RandomVerticalFlipWithBBox(0.20)]
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns=["image"])
+        >>> # Use the transform in dataset pipeline mode
+        >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.float32)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> func = lambda img: (data, np.array([[0, 0, data.shape[1], data.shape[0]]]).astype(np.float32))
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=[func],
+        ...                                                 input_columns=["image"],
+        ...                                                 output_columns=["image", "bbox"])
+        >>> transforms_list = [vision.RandomVerticalFlipWithBBox(0.20)]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image", "bbox"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     print(item["bbox"].shape, item["bbox"].dtype)
+        ...     break
+        (100, 100, 3) float32
+        (1, 4) float32
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.float32)
+        >>> func = lambda img: (data, np.array([[0, 0, data.shape[1], data.shape[0]]]).astype(data.dtype))
+        >>> func_data, func_bboxes = func(data)
+        >>> output = vision.RandomVerticalFlipWithBBox(1)(func_data, func_bboxes)
+        >>> print(output[0].shape, output[0].dtype)
+        (100, 100, 3) float32
+        >>> print(output[1].shape, output[1].dtype)
+        (1, 4) float32
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -4317,13 +5478,25 @@ class Rescale(ImageTensorOperation):
         ``CPU`` ``GPU`` ``Ascend``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>>
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> transforms_list = [vision.Decode(), vision.Rescale(1.0 / 255.0, -1.0)]
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns=["image"])
+        >>> # Use the transform in dataset pipeline mode
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> transforms_list = [vision.Rescale(1.0 / 255.0, -1.0)]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (100, 100, 3) float32
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+        >>> output = vision.Rescale(1.0 / 255.0, -1.0)(data)
+        >>> print(output.shape, output.dtype)
+        (100, 100, 3) float32
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -4365,16 +5538,27 @@ class Resize(ImageTensorOperation, PyTensorOperation):
         ``CPU`` ``Ascend``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>> from mindspore.dataset.vision import Inter
         >>>
-        >>> decode_op = vision.Decode()
+        >>> # Use the transform in dataset pipeline mode
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
         >>> resize_op = vision.Resize([100, 75], Inter.BICUBIC)
-        >>> transforms_list = [decode_op, resize_op]
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns=["image"])
+        >>> transforms_list = [resize_op]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (100, 75, 3) uint8
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+        >>> output = vision.Resize([5, 5], Inter.BICUBIC)(data)
+        >>> print(output.shape, output.dtype)
+        (5, 5, 3) uint8
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -4412,16 +5596,27 @@ class Resize(ImageTensorOperation, PyTensorOperation):
             ``CPU`` ``Ascend``
 
         Examples:
+            >>> import numpy as np
             >>> import mindspore.dataset as ds
             >>> import mindspore.dataset.vision as vision
             >>> from mindspore.dataset.vision import Inter
             >>>
-            >>> decode_op = vision.Decode()
+            >>> # Use the transform in dataset pipeline mode
             >>> resize_op = vision.Resize([100, 75], Inter.BICUBIC).device("Ascend")
-            >>> transforms_list = [decode_op, resize_op]
-            >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-            >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-            ...                                                 input_columns=["image"])
+            >>> transforms_list = [resize_op]
+            >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+            >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+            >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+            >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+            ...     print(item["image"].shape, item["image"].dtype)
+            ...     break
+            (100, 75, 3) uint8
+            >>>
+            >>> # Use the transform in eager mode
+            >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+            >>> output = vision.Resize([25, 25], Inter.BICUBIC).device("Ascend")(data)
+            >>> print(output.shape, output.dtype)
+            (25, 25, 3) uint8
 
         Tutorial Examples:
             - `Illustration of vision transforms
@@ -4487,14 +5682,26 @@ class ResizedCrop(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>> from mindspore.dataset.vision import Inter
         >>>
-        >>> transforms_list = [vision.Decode(), vision.ResizedCrop(0, 0, 128, 128, (100, 75), Inter.BILINEAR)]
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns=["image"])
+        >>> # Use the transform in dataset pipeline mode
+        >>> transforms_list = [vision.ResizedCrop(0, 0, 64, 64, (100, 75), Inter.BILINEAR)]
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (100, 75, 3) uint8
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+        >>> output = vision.ResizedCrop(0, 0, 1, 1, (5, 5), Inter.BILINEAR)(data)
+        >>> print(output.shape, output.dtype)
+        (5, 5, 3) uint8
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -4532,14 +5739,27 @@ class ResizedCrop(ImageTensorOperation):
             ``CPU`` ``Ascend``
 
         Examples:
+            >>> import numpy as np
             >>> import mindspore.dataset as ds
             >>> import mindspore.dataset.vision as vision
+            >>> from mindspore.dataset.vision import Inter
             >>>
-            >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-            >>> decode_op = vision.Decode()
-            >>> resize_crop_op = vision.ResizedCrop(0, 0, 128, 128, (100, 75)).device("Ascend")
-            >>> transforms_list = [decode_op, resize_crop_op]
-            >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list, input_columns=["image"])
+            >>> # Use the transform in dataset pipeline mode
+            >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+            >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+            >>> resize_crop_op = vision.ResizedCrop(0, 0, 64, 64, (100, 75)).device("Ascend")
+            >>> transforms_list = [resize_crop_op]
+            >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+            >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+            ...     print(item["image"].shape, item["image"].dtype)
+            ...     break
+            (100, 75, 3) uint8
+            >>>
+            >>> # Use the transform in eager mode
+            >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+            >>> output = vision.ResizedCrop(0, 0, 64, 64, (32, 16), Inter.BILINEAR).device("Ascend")(data)
+            >>> print(output.shape, output.dtype)
+            (32, 16, 3) uint8
 
         Tutorial Examples:
             - `Illustration of vision transforms
@@ -4575,16 +5795,37 @@ class ResizeWithBBox(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>> from mindspore.dataset.vision import Inter
         >>>
-        >>> decode_op = vision.Decode()
+        >>> # Use the transform in dataset pipeline mode
+        >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.float32)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> func = lambda img: (data, np.array([[0, 0, data.shape[1], data.shape[0]]]).astype(np.float32))
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=[func],
+        ...                                                 input_columns=["image"],
+        ...                                                 output_columns=["image", "bbox"])
         >>> bbox_op = vision.ResizeWithBBox(50, Inter.NEAREST)
-        >>> transforms_list = [decode_op, bbox_op]
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns=["image"])
+        >>> transforms_list = [bbox_op]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image", "bbox"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     print(item["bbox"].shape, item["bbox"].dtype)
+        ...     break
+        (50, 50, 3) float32
+        (1, 4) float32
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.float32)
+        >>> func = lambda img: (data, np.array([[0, 0, data.shape[1], data.shape[0]]]).astype(data.dtype))
+        >>> func_data, func_bboxes = func(data)
+        >>> output = vision.ResizeWithBBox(100)(func_data, func_bboxes)
+        >>> print(output[0].shape, output[0].dtype)
+        (100, 100, 3) float32
+        >>> print(output[1].shape, output[1].dtype)
+        (1, 4) float32
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -4620,18 +5861,29 @@ class RgbToHsv(PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>> from mindspore.dataset.transforms import Compose
         >>>
-        >>> transforms_list = Compose([vision.Decode(to_pil=True),
-        ...                            vision.CenterCrop(20),
+        >>> # Use the transform in dataset pipeline mode
+        >>> transforms_list = Compose([vision.CenterCrop(20),
         ...                            vision.ToTensor(),
         ...                            vision.RgbToHsv()])
         >>> # apply the transform to dataset through map function
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns="image")
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns="image")
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (3, 20, 20) float64
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+        >>> output = vision.RgbToHsv(is_hwc=True)(data)
+        >>> print(output.shape, output.dtype)
+        (100, 100, 3) float64
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -4690,17 +5942,26 @@ class Rotate(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>> from mindspore.dataset.vision import Inter
         >>>
-        >>> transforms_list = [vision.Decode(),
-        ...                    vision.Rotate(degrees=30.0,
-        ...                    resample=Inter.NEAREST,
-        ...                    expand=True)]
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns=["image"])
+        >>> # Use the transform in dataset pipeline mode
+        >>> transforms_list = [vision.Rotate(degrees=30.0, resample=Inter.NEAREST, expand=True)]
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (137, 137, 3) uint8
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+        >>> output = vision.Rotate(degrees=30.0, resample=Inter.NEAREST, expand=True)(data)
+        >>> print(output.shape, output.dtype)
+        (137, 137, 3) uint8
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -4760,20 +6021,32 @@ class SlicePatches(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>>
+        >>> # Use the transform in dataset pipeline mode
         >>> # default padding mode
-        >>> decode_op = vision.Decode()
         >>> num_h, num_w = (1, 4)
         >>> slice_patches_op = vision.SlicePatches(num_h, num_w)
-        >>> transforms_list = [decode_op, slice_patches_op]
+        >>> transforms_list = [slice_patches_op]
         >>> cols = ['img' + str(x) for x in range(num_h*num_w)]
         >>>
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"],
         ...                                                 output_columns=cols)
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(len(item), item["img0"].shape, item["img0"].dtype)
+        ...     break
+        4 (100, 25, 3) uint8
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+        >>> output = vision.SlicePatches(1, 2)(data)
+        >>> print(np.array(output).shape, np.array(output).dtype)
+        (2, 100, 50, 3) uint8
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -4812,13 +6085,25 @@ class Solarize(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>>
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> transforms_list = [vision.Decode(), vision.Solarize(threshold=(10, 100))]
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns=["image"])
+        >>> # Use the transform in dataset pipeline mode
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> transforms_list = [vision.Solarize(threshold=(10, 100))]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (100, 100, 3) uint8
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+        >>> output = vision.Solarize(threshold=(1, 10))(data)
+        >>> print(output.shape, output.dtype)
+        (100, 100, 3) uint8
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -4857,19 +6142,54 @@ class TenCrop(PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import os
+        >>> import numpy as np
+        >>> from PIL import Image, ImageDraw
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
-        >>> import numpy
         >>> from mindspore.dataset.transforms import Compose
         >>>
+        >>> # Use the transform in dataset pipeline mode
+        >>> class MyDataset:
+        ...     def __init__(self):
+        ...         self.data = []
+        ...         img = Image.new("RGB", (300, 300), (255, 255, 255))
+        ...         draw = ImageDraw.Draw(img)
+        ...         draw.ellipse(((0, 0), (100, 100)), fill=(255, 0, 0), outline=(255, 0, 0), width=5)
+        ...         img.save("./1.jpg")
+        ...         data = np.fromfile("./1.jpg", np.uint8)
+        ...         self.data.append(data)
+        ...
+        ...     def __getitem__(self, index):
+        ...         return self.data[0]
+        ...
+        ...     def __len__(self):
+        ...         return 5
+        >>>
+        >>> my_dataset = MyDataset()
+        >>> generator_dataset = ds.GeneratorDataset(my_dataset, column_names="image")
         >>> transforms_list = Compose([vision.Decode(to_pil=True),
         ...                            vision.TenCrop(size=200),
         ...                            # 4D stack of 10 images
-        ...                            lambda *images: numpy.stack([vision.ToTensor()(image) for image in images])])
+        ...                            lambda *images: np.stack([vision.ToTensor()(image) for image in images])])
         >>> # apply the transform to dataset through map function
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns="image")
+        >>> generator_dataset = generator_dataset.map(operations=transforms_list, input_columns="image")
+        >>> for item in generator_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (10, 3, 200, 200) float32
+        >>> os.remove("./1.jpg")
+        >>>
+        >>> # Use the transform in eager mode
+        >>> img = Image.new("RGB", (300, 300), (255, 255, 255))
+        >>> draw = ImageDraw.Draw(img)
+        >>> draw.polygon([(50, 50), (150, 50), (100, 150)], fill=(0, 255, 0), outline=(0, 255, 0))
+        >>> img.save("./2.jpg")
+        >>> data = Image.open("./2.jpg")
+        >>> output = vision.TenCrop(size=200)(data)
+        >>> print(len(output), np.array(output[0]).shape, np.array(output[0]).dtype)
+        10 (200, 200, 3) uint8
+        >>> os.remove("./2.jpg")
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -4908,19 +6228,30 @@ class ToNumpy(PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>> from mindspore.dataset.transforms import Compose
         >>>
+        >>> # Use the transform in dataset pipeline mode
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
         >>> # Use ToNumpy to explicitly select C++ implementation of subsequent op
-        >>> transforms_list = Compose([vision.Decode(True),
-        ...                            vision.RandomHorizontalFlip(0.5),
+        >>> transforms_list = Compose([vision.RandomHorizontalFlip(0.5),
         ...                            vision.ToNumpy(),
-        ...                            vision.Resize((100, 120))])
+        ...                            vision.Resize((50, 60))])
         >>> # apply the transform to dataset through map function
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns="image")
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns="image")
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (50, 60, 3) uint8
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = list(np.random.randint(0, 255, size=(32, 32, 3, 3)).astype(np.int32))
+        >>> output = vision.ToNumpy()(data)
+        >>> print(type(output), output.shape, output.dtype)
+        <class 'numpy.ndarray'> (32, 32, 3, 3) int32
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -4957,18 +6288,30 @@ class ToPIL(PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>> from mindspore.dataset.transforms import Compose
         >>>
+        >>> # Use the transform in dataset pipeline mode
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
         >>> # data is already decoded, but not in PIL Image format
         >>> transforms_list = Compose([vision.ToPIL(),
         ...                            vision.RandomHorizontalFlip(0.5),
         ...                            vision.ToTensor()])
         >>> # apply the transform to dataset through map function
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns="image")
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns="image")
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (3, 100, 100) float32
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+        >>> output = vision.ToPIL()(data)
+        >>> print(type(output), np.array(output).shape, np.array(output).dtype)
+        <class 'PIL.Image.Image'> (100, 100, 3) uint8
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -5010,18 +6353,29 @@ class ToTensor(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>> from mindspore.dataset.transforms import Compose
         >>>
+        >>> # Use the transform in dataset pipeline mode
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
         >>> # create a list of transformations to be applied to the "image" column of each data row
-        >>> transforms_list = Compose([vision.Decode(to_pil=True),
-        ...                            vision.RandomHorizontalFlip(0.5),
+        >>> transforms_list = Compose([vision.RandomHorizontalFlip(0.5),
         ...                            vision.ToTensor()])
         >>> # apply the transform to dataset through map function
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns="image")
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns="image")
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (3, 100, 100) float32
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+        >>> output = vision.ToTensor()(data)
+        >>> print(output.shape, output.dtype)
+        (3, 100, 100) float32
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -5064,19 +6418,30 @@ class ToType(TypeCast):
         ``CPU`` ``GPU`` ``Ascend``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>> import numpy as np
         >>> from mindspore.dataset.transforms import Compose
         >>>
-        >>> transforms_list = Compose([vision.Decode(to_pil=True),
-        ...                            vision.RandomHorizontalFlip(0.5),
+        >>> # Use the transform in dataset pipeline mode
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> transforms_list = Compose([vision.RandomHorizontalFlip(0.5),
         ...                            vision.ToTensor(),
         ...                            vision.ToType(np.float32)])
         >>> # apply the transform to dataset through map function
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns="image")
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns="image")
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (3, 100, 100) float32
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.array([2.71606445312564e-03, 6.3476562564e-03]).astype(np.float64)
+        >>> output = vision.ToType(np.float32)(data)
+        >>> print(output, output.dtype)
+        [0.00271606 0.00634766] float32
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -5115,16 +6480,28 @@ class TrivialAugmentWide(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>> from mindspore.dataset.vision import Inter
         >>>
-        >>> transforms_list = [vision.Decode(), vision.TrivialAugmentWide(num_magnitude_bins=31,
-        ...                                                               interpolation=Inter.NEAREST,
-        ...                                                               fill_value=0)]
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns=["image"])
+        >>> # Use the transform in dataset pipeline mode
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> transforms_list = [vision.TrivialAugmentWide(num_magnitude_bins=31,
+        ...                                              interpolation=Inter.NEAREST,
+        ...                                              fill_value=0)]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (100, 100, 3) uint8
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+        >>> output = vision.TrivialAugmentWide()(data)
+        >>> print(output.shape, output.dtype)
+        (100, 100, 3) uint8
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -5169,21 +6546,37 @@ class UniformAugment(CompoundOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>> from mindspore.dataset.transforms import Compose
         >>>
-        >>> transforms = [vision.CenterCrop(64),
-        ...               vision.RandomColor(),
-        ...               vision.RandomSharpness(),
-        ...               vision.RandomRotation(30)]
-        >>> transforms_list = Compose([vision.Decode(to_pil=True),
-        ...                            vision.UniformAugment(transforms),
+        >>> # Use the transform in dataset pipeline mode
+        >>> seed = ds.config.get_seed()
+        >>> ds.config.set_seed(12345)
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> transform = [vision.CenterCrop(64),
+        ...              vision.RandomColor(),
+        ...              vision.RandomSharpness(),
+        ...              vision.RandomRotation(30)]
+        >>> transforms_list = Compose([vision.UniformAugment(transform),
         ...                            vision.ToTensor()])
         >>> # apply the transform to dataset through map function
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns="image")
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns="image")
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (3, 100, 100) float32
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+        >>> transform = [vision.RandomCrop(size=[20, 40], padding=[32, 32, 32, 32]),
+        ...              vision.RandomCrop(size=[20, 40], padding=[32, 32, 32, 32])]
+        >>> output = vision.UniformAugment(transform)(data)
+        >>> print(output.shape, output.dtype)
+        (20, 40, 3) uint8
+        >>> ds.config.set_seed(seed)
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -5224,13 +6617,25 @@ class VerticalFlip(ImageTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
         >>>
-        >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-        >>> transforms_list = [vision.Decode(), vision.VerticalFlip()]
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
-        ...                                                 input_columns=["image"])
+        >>> # Use the transform in dataset pipeline mode
+        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
+        >>> transforms_list = [vision.VerticalFlip()]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["image"].shape, item["image"].dtype)
+        ...     break
+        (100, 100, 3) uint8
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+        >>> output = vision.VerticalFlip()(data)
+        >>> print(output.shape, output.dtype)
+        (100, 100, 3) uint8
 
     Tutorial Examples:
         - `Illustration of vision transforms
@@ -5258,14 +6663,26 @@ class VerticalFlip(ImageTensorOperation):
             ``CPU`` ``Ascend``
 
         Examples:
+            >>> import numpy as np
             >>> import mindspore.dataset as ds
             >>> import mindspore.dataset.vision as vision
             >>>
-            >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
-            >>> decode_op = vision.Decode(to_pil=True)
+            >>> # Use the transform in dataset pipeline mode
+            >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
+            >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
             >>> vertical_flip_op = vision.VerticalFlip().device("Ascend")
-            >>> transforms_list = [decode_op, vertical_flip_op]
-            >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list, input_columns=["image"])
+            >>> transforms_list = [vertical_flip_op]
+            >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
+            >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+            ...     print(item["image"].shape, item["image"].dtype)
+            ...     break
+            (100, 100, 3) uint8
+            >>>
+            >>> # Use the transform in eager mode
+            >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
+            >>> output = vision.VerticalFlip().device("Ascend")(data)
+            >>> print(output.shape, output.dtype)
+            (100, 100, 3) uint8
 
         Tutorial Examples:
             - `Illustration of vision transforms

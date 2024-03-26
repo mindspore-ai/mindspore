@@ -116,19 +116,29 @@ class AddToken(TextTensorOperation):
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.text as text
         >>>
-        >>> dataset = ds.NumpySlicesDataset(data={"text": [['a', 'b', 'c', 'd', 'e']]})
+        >>> # Use the transform in dataset pipeline mode
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=[['a', 'b', 'c', 'd', 'e']], column_names=["text"])
         >>> # Data before
         >>> # |           text            |
         >>> # +---------------------------+
         >>> # | ['a', 'b', 'c', 'd', 'e'] |
         >>> # +---------------------------+
         >>> add_token_op = text.AddToken(token='TOKEN', begin=True)
-        >>> dataset = dataset.map(operations=add_token_op)
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=add_token_op)
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["text"])
+        ['TOKEN' 'a' 'b' 'c' 'd' 'e']
         >>> # Data after
         >>> # |           text            |
         >>> # +---------------------------+
         >>> # | ['TOKEN', 'a', 'b', 'c', 'd', 'e'] |
         >>> # +---------------------------+
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = ["happy", "birthday", "to", "you"]
+        >>> output = text.AddToken(token='TOKEN', begin=True)(data)
+        >>> print(output)
+        ['TOKEN' 'happy' 'birthday' 'to' 'you']
 
     Tutorial Examples:
         - `Illustration of text transforms
@@ -176,20 +186,36 @@ class JiebaTokenizer(TextTensorOperation):
         >>> import mindspore.dataset.text as text
         >>> from mindspore.dataset.text import JiebaMode
         >>>
-        >>> text_file_list = ["/path/to/text_file_dataset_file"]
-        >>> text_file_dataset = ds.TextFileDataset(dataset_files=text_file_list)
+        >>> # Use the transform in dataset pipeline mode
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=["床前明月光"], column_names=["text"])
         >>>
         >>> # 1) If with_offsets=False, return one data column {["text", dtype=str]}
-        >>> jieba_hmm_file = "/path/to/jieba/hmm/file"
-        >>> jieba_mp_file = "/path/to/jieba/mp/file"
+        >>> # The paths to jieba_hmm_file and jieba_mp_file can be downloaded directly from the mindspore repository.
+        >>> # Refer to https://gitee.com/mindspore/mindspore/blob/r2.3/tests/ut/data/dataset/jiebadict/hmm_model.utf8
+        >>> # and https://gitee.com/mindspore/mindspore/blob/r2.3/tests/ut/data/dataset/jiebadict/jieba.dict.utf8
+        >>> jieba_hmm_file = "tests/ut/data/dataset/jiebadict/hmm_model.utf8"
+        >>> jieba_mp_file = "tests/ut/data/dataset/jiebadict/jieba.dict.utf8"
         >>> tokenizer_op = text.JiebaTokenizer(jieba_hmm_file, jieba_mp_file, mode=JiebaMode.MP, with_offsets=False)
-        >>> text_file_dataset = text_file_dataset.map(operations=tokenizer_op)
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=tokenizer_op)
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["text"])
+        ['床' '前' '明月光']
         >>>
         >>> # 2) If with_offsets=True, return three columns {["token", dtype=str], ["offsets_start", dtype=uint32],
         >>> #                                                ["offsets_limit", dtype=uint32]}
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=["床前明月光"], column_names=["text"])
         >>> tokenizer_op = text.JiebaTokenizer(jieba_hmm_file, jieba_mp_file, mode=JiebaMode.MP, with_offsets=True)
-        >>> text_file_dataset = text_file_dataset.map(operations=tokenizer_op, input_columns=["text"],
-        ...                                           output_columns=["token", "offsets_start", "offsets_limit"])
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=tokenizer_op, input_columns=["text"],
+        ...                                                 output_columns=["token", "offsets_start", "offsets_limit"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["token"], item["offsets_start"], item["offsets_limit"])
+        ['床' '前' '明月光'] [0 3 6] [ 3  6 15]
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = "床前明月光"
+        >>> output = text.JiebaTokenizer(jieba_hmm_file, jieba_mp_file, mode=JiebaMode.MP)(data)
+        >>> print(output)
+        ['床' '前' '明月光']
 
     Tutorial Examples:
         - `Illustration of text transforms
@@ -362,14 +388,24 @@ class Lookup(TextTensorOperation):
     Examples:
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.text as text
+        >>>
+        >>> # Use the transform in dataset pipeline mode
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=["with"], column_names=["text"])
         >>> # Load vocabulary from list
-        >>> vocab = text.Vocab.from_list(['深', '圳', '欢', '迎', '您'])
+        >>> vocab = text.Vocab.from_list(["?", "##", "with", "the", "test", "符号"])
         >>> # Use Lookup operation to map tokens to ids
         >>> lookup = text.Lookup(vocab)
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=[lookup])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["text"])
+        2
         >>>
-        >>> text_file_list = ["/path/to/text_file_dataset_file"]
-        >>> text_file_dataset = ds.TextFileDataset(dataset_files=text_file_list)
-        >>> text_file_dataset = text_file_dataset.map(operations=[lookup])
+        >>> # Use the transform in eager mode
+        >>> vocab = text.Vocab.from_list(["?", "##", "with", "the", "test", "符号"])
+        >>> data = "with"
+        >>> output = text.Lookup(vocab=vocab, unknown_token="test")(data)
+        >>> print(output)
+        2
 
     Tutorial Examples:
         - `Illustration of text transforms
@@ -420,17 +456,27 @@ class Ngram(TextTensorOperation):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.text as text
-        >>> ngram_op = text.Ngram(3, separator="-")
-        >>> output = ngram_op(["WildRose Country", "Canada's Ocean Playground", "Land of Living Skies"])
-        >>> # output
-        >>> # ["WildRose Country-Canada's Ocean Playground-Land of Living Skies"]
         >>>
-        >>> # same ngram_op called through map
-        >>> text_file_list = ["/path/to/text_file_dataset_file"]
-        >>> text_file_dataset = ds.TextFileDataset(dataset_files=text_file_list)
-        >>> text_file_dataset = text_file_dataset.map(operations=ngram_op)
+        >>> # Use the transform in dataset pipeline mode
+        >>> def gen(texts):
+        ...     for line in texts:
+        ...         yield(np.array(line.split(" "), dtype=str),)
+        >>> data = ["WildRose Country", "Canada's Ocean Playground", "Land of Living Skies"]
+        >>> generator_dataset = ds.GeneratorDataset(gen(data), ["text"])
+        >>> ngram_op = text.Ngram(3, separator="-")
+        >>> generator_dataset = generator_dataset.map(operations=ngram_op)
+        >>> for item in generator_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["text"])
+        ...     break
+        ['']
+        >>>
+        >>> # Use the transform in eager mode
+        >>> output = ngram_op(data)
+        >>> print(output)
+        ["WildRose Country-Canada's Ocean Playground-Land of Living Skies"]
 
     Tutorial Examples:
         - `Illustration of text transforms
@@ -463,15 +509,25 @@ class PythonTokenizer:
         ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.text as text
         >>>
+        >>> # Use the transform in dataset pipeline mode
         >>> def my_tokenizer(line):
         ...     return line.split()
         >>>
-        >>> text_file_list = ["/path/to/text_file_dataset_file"]
-        >>> text_file_dataset = ds.TextFileDataset(dataset_files=text_file_list)
-        >>> text_file_dataset = text_file_dataset.map(operations=text.PythonTokenizer(my_tokenizer))
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=['Hello world'], column_names=["text"])
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=text.PythonTokenizer(my_tokenizer))
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["text"])
+        ['Hello' 'world']
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = np.array('Hello world'.encode())
+        >>> output = text.PythonTokenizer(my_tokenizer)(data)
+        >>> print(output)
+        ['Hello' 'world']
 
     Tutorial Examples:
         - `Illustration of text transforms
@@ -528,14 +584,26 @@ class SentencePieceTokenizer(TextTensorOperation):
         >>> import mindspore.dataset.text as text
         >>> from mindspore.dataset.text import SentencePieceModel, SPieceTokenizerOutType
         >>>
-        >>> sentence_piece_vocab_file = "/path/to/sentence/piece/vocab/file"
-        >>> vocab = text.SentencePieceVocab.from_file([sentence_piece_vocab_file], 5000, 0.9995,
-        ...                                           SentencePieceModel.UNIGRAM, {})
+        >>> # Use the transform in dataset pipeline mode
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=['Hello world'], column_names=["text"])
+        >>> # The paths to sentence_piece_vocab_file can be downloaded directly from the mindspore repository. Refer to
+        >>> # https://gitee.com/mindspore/mindspore/blob/r2.3/tests/ut/data/dataset/test_sentencepiece/vocab.txt
+        >>> sentence_piece_vocab_file = "tests/ut/data/dataset/test_sentencepiece/vocab.txt"
+        >>> vocab = text.SentencePieceVocab.from_file([sentence_piece_vocab_file], 512, 0.9995,
+        ...                                            SentencePieceModel.UNIGRAM, {})
         >>> tokenizer = text.SentencePieceTokenizer(vocab, out_type=SPieceTokenizerOutType.STRING)
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=tokenizer)
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["text"])
+        ['▁H' 'e' 'l' 'lo' '▁w' 'o' 'r' 'l' 'd']
         >>>
-        >>> text_file_list = ["/path/to/text_file_dataset_file"]
-        >>> text_file_dataset = ds.TextFileDataset(dataset_files=text_file_list)
-        >>> text_file_dataset = text_file_dataset.map(operations=tokenizer)
+        >>> # Use the transform in eager mode
+        >>> data = "Hello world"
+        >>> vocab = text.SentencePieceVocab.from_file([sentence_piece_vocab_file], 100, 0.9995,
+        ...                                           SentencePieceModel.UNIGRAM, {})
+        >>> output = text.SentencePieceTokenizer(vocab, out_type=SPieceTokenizerOutType.STRING)(data)
+        >>> print(output)
+        ['▁' 'H' 'e' 'l' 'l' 'o' '▁' 'w' 'o' 'r' 'l' 'd']
 
     Tutorial Examples:
         - `Illustration of text transforms
@@ -574,13 +642,17 @@ class SlidingWindow(TextTensorOperation):
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.text as text
         >>>
-        >>> dataset = ds.NumpySlicesDataset(data=[[1, 2, 3, 4, 5]], column_names="col1")
+        >>> # Use the transform in dataset pipeline mode
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=[[1, 2, 3, 4, 5]], column_names=["col1"])
         >>> # Data before
         >>> # |     col1     |
         >>> # +--------------+
         >>> # | [[1, 2, 3, 4, 5]] |
         >>> # +--------------+
-        >>> dataset = dataset.map(operations=text.SlidingWindow(3, 0))
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=text.SlidingWindow(3, 0))
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["col1"])
+        [[1 2 3] [2 3 4] [3 4 5]]
         >>> # Data after
         >>> # |     col1     |
         >>> # +--------------+
@@ -588,6 +660,12 @@ class SlidingWindow(TextTensorOperation):
         >>> # |   [2, 3, 4], |
         >>> # |   [3, 4, 5]] |
         >>> # +--------------+
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = ["happy", "birthday", "to", "you"]
+        >>> output = text.SlidingWindow(2, 0)(data)
+        >>> print(output)
+        [['happy' 'birthday'] ['birthday' 'to'] ['to' 'you']]
 
     Tutorial Examples:
         - `Illustration of text transforms
@@ -628,10 +706,19 @@ class ToNumber(TextTensorOperation):
         >>> import mindspore.dataset.text as text
         >>> from mindspore import dtype as mstype
         >>>
-        >>> data = [["1", "2", "3"]]
-        >>> dataset = ds.NumpySlicesDataset(data)
+        >>> # Use the transform in dataset pipeline mode
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=[["1", "2", "3"]], column_names=["text"])
         >>> to_number_op = text.ToNumber(mstype.int8)
-        >>> dataset = dataset.map(operations=to_number_op)
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=to_number_op)
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["text"])
+        [1 2 3]
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = ["1", "2", "3"]
+        >>> output = text.ToNumber(mstype.uint32)(data)
+        >>> print(output)
+        [1 2 3]
 
     Tutorial Examples:
         - `Illustration of text transforms
@@ -673,14 +760,26 @@ class ToVectors(TextTensorOperation):
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.text as text
         >>>
+        >>> # Use the transform in dataset pipeline mode
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=["happy", "birthday", "to", "you"], column_names=["text"])
         >>> # Load vectors from file
-        >>> vectors = text.Vectors.from_file("/path/to/vectors/file")
+        >>> # The paths to vectors_file can be downloaded directly from the mindspore repository. Refer to
+        >>> # https://gitee.com/mindspore/mindspore/blob/r2.3/tests/ut/data/dataset/testVectors/vectors.txt
+        >>> vectors_file = "tests/ut/data/dataset/testVectors/vectors.txt"
+        >>> vectors = text.Vectors.from_file(vectors_file)
         >>> # Use ToVectors operation to map tokens to vectors
         >>> to_vectors = text.ToVectors(vectors)
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=[to_vectors])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["text"])
+        ...     break
+        [0. 0. 0. 0. 0. 0.]
         >>>
-        >>> text_file_list = ["/path/to/text_file_dataset_file"]
-        >>> text_file_dataset = ds.TextFileDataset(dataset_files=text_file_list)
-        >>> text_file_dataset = text_file_dataset.map(operations=[to_vectors])
+        >>> # Use the transform in eager mode
+        >>> data = ["happy", "birthday", "to", "you"]
+        >>> output = text.ToVectors(vectors)(data)
+        >>> print(output)
+        [[0. 0. 0. 0. 0. 0.] [0. 0. 0. 0. 0. 0.] [0. 0. 0. 0. 0. 0.] [0. 0. 0. 0. 0. 0.]]
 
     Tutorial Examples:
         - `Illustration of text transforms
@@ -717,19 +816,30 @@ class Truncate(TextTensorOperation):
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.text as text
         >>>
-        >>> dataset = ds.NumpySlicesDataset(data=[['a', 'b', 'c', 'd', 'e']], column_names=["text"], shuffle=False)
+        >>> # Use the transform in dataset pipeline mode
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=[['a', 'b', 'c', 'd', 'e']], column_names=["text"],
+        ...                                              shuffle=False)
         >>> # Data before
         >>> # |           col1            |
         >>> # +---------------------------+
         >>> # | ['a', 'b', 'c', 'd', 'e'] |
         >>> # +---------------------------+
         >>> truncate = text.Truncate(4)
-        >>> dataset = dataset.map(operations=truncate, input_columns=["text"])
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=truncate, input_columns=["text"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["text"])
+        ['a' 'b' 'c' 'd']
         >>> # Data after
         >>> # |          col1          |
         >>> # +------------------------+
         >>> # |  ['a', 'b', 'c', 'd']  |
         >>> # +------------------------+
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = ["happy", "birthday", "to", "you"]
+        >>> output = text.Truncate(2)(data)
+        >>> print(output)
+        ['happy' 'birthday']
 
     Tutorial Examples:
         - `Illustration of text transforms
@@ -764,19 +874,30 @@ class TruncateSequencePair(TextTensorOperation):
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.text as text
         >>>
-        >>> dataset = ds.NumpySlicesDataset(data={"col1": [[1, 2, 3]], "col2": [[4, 5]]})
+        >>> # Use the transform in dataset pipeline mode
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=([[1, 2, 3]], [[4, 5]]), column_names=["col1", "col2"])
         >>> # Data before
         >>> # |   col1    |   col2    |
         >>> # +-----------+-----------|
         >>> # | [1, 2, 3] |  [4, 5]   |
         >>> # +-----------+-----------+
         >>> truncate_sequence_pair_op = text.TruncateSequencePair(max_length=4)
-        >>> dataset = dataset.map(operations=truncate_sequence_pair_op)
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=truncate_sequence_pair_op,
+        ...                                                 input_columns=["col1", "col2"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["col1"], item["col2"])
+        [1 2] [4 5]
         >>> # Data after
         >>> # |   col1    |   col2    |
         >>> # +-----------+-----------+
         >>> # |  [1, 2]   |  [4, 5]   |
         >>> # +-----------+-----------+
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = [["1", "2", "3"], ["4", "5"]]
+        >>> output = text.TruncateSequencePair(4)(*data)
+        >>> print(output)
+        (array(['1', '2'], dtype='<U1'), array(['4', '5'], dtype='<U1'))
 
     Tutorial Examples:
         - `Illustration of text transforms
@@ -810,18 +931,37 @@ class UnicodeCharTokenizer(TextTensorOperation):
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.text as text
         >>>
-        >>> text_file_list = ["/path/to/text_file_dataset_file"]
-        >>> text_file_dataset = ds.TextFileDataset(dataset_files=text_file_list)
+        >>> # Use the transform in dataset pipeline mode
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=['Welcome     To   BeiJing!'], column_names=["text"])
         >>>
         >>> # If with_offsets=False, default output one column {["text", dtype=str]}
         >>> tokenizer_op = text.UnicodeCharTokenizer(with_offsets=False)
-        >>> text_file_dataset = text_file_dataset.map(operations=tokenizer_op)
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=tokenizer_op)
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["text"])
+        ...     break
+        ['W' 'e' 'l' 'c' 'o' 'm' 'e' ' ' ' ' ' ' ' ' ' ' 'T' 'o' ' ' ' ' ' ' 'B' 'e' 'i' 'J' 'i' 'n' 'g' '!']
         >>>
         >>> # If with_offsets=True, then output three columns {["token", dtype=str], ["offsets_start", dtype=uint32],
-        >>> #                                                   ["offsets_limit", dtype=uint32]}
+        >>> #                                                  ["offsets_limit", dtype=uint32]}
         >>> tokenizer_op = text.UnicodeCharTokenizer(with_offsets=True)
-        >>> text_file_dataset = text_file_dataset.map(operations=tokenizer_op, input_columns=["text"],
-        ...                                           output_columns=["token", "offsets_start", "offsets_limit"])
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=['Welcome     To   BeiJing!'], column_names=["text"])
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=tokenizer_op, input_columns=["text"],
+        ...                                                 output_columns=["token", "offsets_start", "offsets_limit"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["token"], item["offsets_start"], item["offsets_limit"])
+        ['W' 'e' 'l' 'c' 'o' 'm' 'e' ' ' ' ' ' ' ' ' ' ' 'T' 'o' ' ' ' ' ' ' 'B' 'e' 'i' 'J' 'i' 'n' 'g' '!'] [ 0  1  2
+        3  4  5  6  7  8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24] [ 1  2  3  4  5  6  7  8  9 10 11 12 13 14 15
+        16 17 18 19 20 21 22 23 24 25]
+        >>>
+        >>> # Use the transform in eager mode
+        >>> data = 'Welcome     To   BeiJing!'
+        >>> output = text.UnicodeCharTokenizer(with_offsets=True)(data)
+        >>> print(output)
+        (array(['W', 'e', 'l', 'c', 'o', 'm', 'e', ' ', ' ', ' ', ' ', ' ', 'T', 'o', ' ', ' ', ' ', 'B', 'e', 'i', 'J',
+        'i', 'n', 'g', '!'], dtype='<U1'), array([ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15, 16,
+        17, 18, 19, 20, 21, 22, 23, 24], dtype=uint32), array([ 1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14,
+        15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25], dtype=uint32))
 
     Tutorial Examples:
         - `Illustration of text transforms
@@ -867,8 +1007,10 @@ class WordpieceTokenizer(TextTensorOperation):
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.text as text
         >>>
-        >>> text_file_list = ["/path/to/text_file_dataset_file"]
-        >>> text_file_dataset = ds.TextFileDataset(dataset_files=text_file_list)
+        >>> # Use the transform in dataset pipeline mode
+        >>> seed = ds.config.get_seed()
+        >>> ds.config.set_seed(12345)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=["happy", "birthday", "to", "you"], column_names=["text"])
         >>>
         >>> vocab_list = ["book", "cholera", "era", "favor", "##ite", "my", "is", "love", "dur", "##ing", "the"]
         >>> vocab = text.Vocab.from_list(vocab_list)
@@ -876,15 +1018,32 @@ class WordpieceTokenizer(TextTensorOperation):
         >>> # If with_offsets=False, default output one column {["text", dtype=str]}
         >>> tokenizer_op = text.WordpieceTokenizer(vocab=vocab, unknown_token='[UNK]',
         ...                                        max_bytes_per_token=100, with_offsets=False)
-        >>> text_file_dataset = text_file_dataset.map(operations=tokenizer_op)
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=tokenizer_op)
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["text"])
+        ...     break
+        ['[UNK]']
         >>>
         >>> # If with_offsets=True, then output three columns {["token", dtype=str], ["offsets_start", dtype=uint32],
-        >>> #                                                   ["offsets_limit", dtype=uint32]}
+        >>> #                                                  ["offsets_limit", dtype=uint32]}
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=["happy", "birthday", "to", "you"], column_names=["text"])
         >>> tokenizer_op = text.WordpieceTokenizer(vocab=vocab, unknown_token='[UNK]',
-        ...                                       max_bytes_per_token=100, with_offsets=True)
+        ...                                        max_bytes_per_token=100, with_offsets=True)
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=tokenizer_op, input_columns=["text"],
+        ...                                                 output_columns=["token", "offsets_start", "offsets_limit"])
+        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     print(item["token"], item["offsets_start"], item["offsets_limit"])
+        ...     break
+        ['[UNK]'] [0] [5]
         >>>
-        >>> text_file_dataset = text_file_dataset.map(operations=tokenizer_op, input_columns=["text"],
-        ...                                           output_columns=["token", "offsets_start", "offsets_limit"])
+        >>> # Use the transform in eager mode
+        >>> data = ["happy", "birthday", "to", "you"]
+        >>> vocab_list = ["book", "cholera", "era", "favor", "**ite", "my", "is", "love", "dur", "**ing", "the"]
+        >>> vocab = text.Vocab.from_list(vocab_list)
+        >>> output = text.WordpieceTokenizer(vocab=vocab, suffix_indicator="y", unknown_token='[UNK]')(data)
+        >>> print(output)
+        ['[UNK]' '[UNK]' '[UNK]' '[UNK]']
+        >>> ds.config.set_seed(seed)
 
     Tutorial Examples:
         - `Illustration of text transforms
@@ -952,8 +1111,8 @@ if platform.system().lower() != 'windows':
             >>> import mindspore.dataset.text as text
             >>> from mindspore.dataset.text import NormalizeForm
             >>>
-            >>> text_file_list = ["/path/to/text_file_dataset_file"]
-            >>> text_file_dataset = ds.TextFileDataset(dataset_files=text_file_list)
+            >>> # Use the transform in dataset pipeline mode
+            >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=['Welcome     To   BeiJing!'], column_names=["text"])
             >>>
             >>> # 1) If with_offsets=False, default output one column {["text", dtype=str]}
             >>> tokenizer_op = text.BasicTokenizer(lower_case=False,
@@ -961,17 +1120,32 @@ if platform.system().lower() != 'windows':
             ...                                    normalization_form=NormalizeForm.NONE,
             ...                                    preserve_unused_token=True,
             ...                                    with_offsets=False)
-            >>> text_file_dataset = text_file_dataset.map(operations=tokenizer_op)
+            >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=tokenizer_op)
+            >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+            ...     print(item["text"])
+            ['Welcome' 'To' 'BeiJing' '!']
+            >>>
             >>> # 2) If with_offsets=True, then output three columns {["token", dtype=str],
             >>> #                                                     ["offsets_start", dtype=uint32],
             >>> #                                                     ["offsets_limit", dtype=uint32]}
+            >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=['Welcome     To   BeiJing!'], column_names=["text"])
             >>> tokenizer_op = text.BasicTokenizer(lower_case=False,
             ...                                    keep_whitespace=False,
             ...                                    normalization_form=NormalizeForm.NONE,
             ...                                    preserve_unused_token=True,
             ...                                    with_offsets=True)
-            >>> text_file_dataset = text_file_dataset.map(operations=tokenizer_op, input_columns=["text"],
-            ...                                           output_columns=["token", "offsets_start", "offsets_limit"])
+            >>> numpy_slices_dataset = numpy_slices_dataset.map(
+            ...                      operations=tokenizer_op, input_columns=["text"],
+            ...                      output_columns=["token", "offsets_start", "offsets_limit"])
+            >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+            ...     print(item["token"], item["offsets_start"], item["offsets_limit"])
+            ['Welcome' 'To' 'BeiJing' '!'] [ 0 12 17 24] [ 7 14 24 25]
+            >>>
+            >>> # Use the transform in eager mode
+            >>> data = 'Welcome     To   BeiJing!'
+            >>> output = text.BasicTokenizer()(data)
+            >>> print(output)
+            ['Welcome' 'To' 'BeiJing' '!']
 
         Tutorial Examples:
             - `Illustration of text transforms
@@ -1041,35 +1215,52 @@ if platform.system().lower() != 'windows':
             ``CPU``
 
         Examples:
+            >>> import numpy as np
             >>> import mindspore.dataset as ds
             >>> import mindspore.dataset.text as text
             >>> from mindspore.dataset.text import NormalizeForm
             >>>
-            >>> text_file_list = ["/path/to/text_file_dataset_file"]
-            >>> text_file_dataset = ds.TextFileDataset(dataset_files=text_file_list)
+            >>> # Use the transform in dataset pipeline mode
+            >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=["床前明月光"], column_names=["text"])
             >>>
             >>> # 1) If with_offsets=False, default output one column {["text", dtype=str]}
             >>> vocab_list = ["床", "前", "明", "月", "光", "疑", "是", "地", "上", "霜", "举", "头", "望", "低",
-            ...               "思", "故", "乡","繁", "體", "字", "嘿", "哈", "大", "笑", "嘻", "i", "am", "mak",
-            ...               "make", "small", "mistake", "##s", "during", "work", "##ing", "hour", "😀", "😃",
-            ...               "😄", "😁", "+", "/", "-", "=", "12", "28", "40", "16", " ", "I", "[CLS]", "[SEP]",
-            ...               "[UNK]", "[PAD]", "[MASK]", "[unused1]", "[unused10]"]
+            ...               "思", "故", "乡", "繁", "體", "字", "嘿", "哈", "大", "笑", "嘻", "i", "am", "mak",
+            ...               "make", "small", "mistake", "##s", "during", "work", "##ing", "hour", "+", "/",
+            ...               "-", "=", "12", "28", "40", "16", " ", "I", "[CLS]", "[SEP]", "[UNK]", "[PAD]", "[MASK]"]
             >>> vocab = text.Vocab.from_list(vocab_list)
             >>> tokenizer_op = text.BertTokenizer(vocab=vocab, suffix_indicator='##', max_bytes_per_token=100,
             ...                                   unknown_token='[UNK]', lower_case=False, keep_whitespace=False,
             ...                                   normalization_form=NormalizeForm.NONE, preserve_unused_token=True,
             ...                                   with_offsets=False)
-            >>> text_file_dataset = text_file_dataset.map(operations=tokenizer_op)
+            >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=tokenizer_op)
+            >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+            ...     print(item["text"])
+            ['床' '前' '明' '月' '光']
+            >>>
             >>> # 2) If with_offsets=True, then output three columns {["token", dtype=str],
             >>> #                                                     ["offsets_start", dtype=uint32],
             >>> #                                                     ["offsets_limit", dtype=uint32]}
+            >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=["床前明月光"], column_names=["text"])
             >>> tokenizer_op = text.BertTokenizer(vocab=vocab, suffix_indicator='##', max_bytes_per_token=100,
             ...                                   unknown_token='[UNK]', lower_case=False, keep_whitespace=False,
             ...                                   normalization_form=NormalizeForm.NONE, preserve_unused_token=True,
             ...                                   with_offsets=True)
-            >>> text_file_dataset = text_file_dataset.map(operations=tokenizer_op, input_columns=["text"],
-            ...                                               output_columns=["token", "offsets_start",
-            ...                                                               "offsets_limit"])
+            >>> numpy_slices_dataset = numpy_slices_dataset.map(
+            ...                      operations=tokenizer_op,
+            ...                      input_columns=["text"],
+            ...                      output_columns=["token", "offsets_start", "offsets_limit"])
+            >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+            ...     print(item["token"], item["offsets_start"], item["offsets_limit"])
+            ['床' '前' '明' '月' '光'] [ 0  3  6  9 12] [ 3  6  9 12 15]
+            >>>
+            >>> # Use the transform in eager mode
+            >>> data = "床前明月光"
+            >>> vocab = text.Vocab.from_list(vocab_list)
+            >>> tokenizer_op = text.BertTokenizer(vocab=vocab)
+            >>> output = tokenizer_op(data)
+            >>> print(output)
+            ['床' '前' '明' '月' '光']
 
         Tutorial Examples:
             - `Illustration of text transforms
@@ -1115,10 +1306,20 @@ if platform.system().lower() != 'windows':
         Examples:
             >>> import mindspore.dataset as ds
             >>> import mindspore.dataset.text as text
+            >>>
+            >>> # Use the transform in dataset pipeline mode
+            >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=['Welcome     To   BeiJing!'], column_names=["text"])
             >>> case_op = text.CaseFold()
-            >>> text_file_list = ["/path/to/text_file_dataset_file"]
-            >>> text_file_dataset = ds.TextFileDataset(dataset_files=text_file_list)
-            >>> text_file_dataset = text_file_dataset.map(operations=case_op)
+            >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=case_op)
+            >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+            ...     print(item["text"])
+            welcome     to   beijing!
+            >>>
+            >>> # Use the transform in eager mode
+            >>> data = 'Welcome     To   BeiJing!'
+            >>> output = text.CaseFold()(data)
+            >>> print(output)
+            welcome     to   beijing!
 
         Tutorial Examples:
             - `Illustration of text transforms
@@ -1144,10 +1345,21 @@ if platform.system().lower() != 'windows':
             >>> import mindspore.dataset as ds
             >>> import mindspore.dataset.text as text
             >>>
+            >>> # Use the transform in dataset pipeline mode
+            >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=["Welcome    to    China", "!!!", "ABC"],
+            ...                                              column_names=["text"], shuffle=False)
             >>> replace_op = text.FilterWikipediaXML()
-            >>> text_file_list = ["/path/to/text_file_dataset_file"]
-            >>> text_file_dataset = ds.TextFileDataset(dataset_files=text_file_list)
-            >>> text_file_dataset = text_file_dataset.map(operations=replace_op)
+            >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=replace_op)
+            >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+            ...     print(item["text"])
+            ...     break
+            welcome to china
+            >>>
+            >>> # Use the transform in eager mode
+            >>> data = ["Welcome    to    China", "!!!", "ABC"]
+            >>> output = [replace_op(i) for i in data]
+            >>> print(output)
+            [array('welcome to china', dtype='<U16'), array('', dtype='<U1'), array('abc', dtype='<U3')]
 
         Tutorial Examples:
             - `Illustration of text transforms
@@ -1181,10 +1393,21 @@ if platform.system().lower() != 'windows':
             >>> import mindspore.dataset.text as text
             >>> from mindspore.dataset.text import NormalizeForm
             >>>
+            >>> # Use the transform in dataset pipeline mode
+            >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=["ṩ", "ḍ̇", "q̇", "ﬁ", "2⁵", "ẛ"],
+            ...                                              column_names=["text"], shuffle=False)
             >>> normalize_op = text.NormalizeUTF8(normalize_form=NormalizeForm.NFC)
-            >>> text_file_list = ["/path/to/text_file_dataset_file"]
-            >>> text_file_dataset = ds.TextFileDataset(dataset_files=text_file_list)
-            >>> text_file_dataset = text_file_dataset.map(operations=normalize_op)
+            >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=normalize_op)
+            >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+            ...     print(item["text"])
+            ...     break
+            ṩ
+            >>>
+            >>> # Use the transform in eager mode
+            >>> data = ["ṩ", "ḍ̇", "q̇", "ﬁ", "2⁵", "ẛ"]
+            >>> output = text.NormalizeUTF8(NormalizeForm.NFKC)(data)
+            >>> print(output)
+            ['ṩ' 'ḍ̇' 'q̇' 'fi' '25' 'ṡ']
 
         Tutorial Examples:
             - `Illustration of text transforms
@@ -1230,10 +1453,20 @@ if platform.system().lower() != 'windows':
             >>> import mindspore.dataset as ds
             >>> import mindspore.dataset.text as text
             >>>
+            >>> # Use the transform in dataset pipeline mode
+            >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=['apple orange apple orange apple'],
+            ...                                              column_names=["text"])
             >>> regex_replace = text.RegexReplace('apple', 'orange')
-            >>> text_file_list = ["/path/to/text_file_dataset_file"]
-            >>> text_file_dataset = ds.TextFileDataset(dataset_files=text_file_list)
-            >>> text_file_dataset = text_file_dataset.map(operations=regex_replace)
+            >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=regex_replace)
+            >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+            ...     print(item["text"])
+            orange orange orange orange orange
+            >>>
+            >>> # Use the transform in eager mode
+            >>> data = 'onetwoonetwoone'
+            >>> output = text.RegexReplace(pattern="one", replace="two", replace_all=True)(data)
+            >>> print(output)
+            twotwotwotwotwo
 
         Tutorial Examples:
             - `Illustration of text transforms
@@ -1281,20 +1514,38 @@ if platform.system().lower() != 'windows':
             >>> import mindspore.dataset as ds
             >>> import mindspore.dataset.text as text
             >>>
-            >>> text_file_list = ["/path/to/text_file_dataset_file"]
-            >>> text_file_dataset = ds.TextFileDataset(dataset_files=text_file_list)
+            >>> # Use the transform in dataset pipeline mode
+            >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=['Welcome  |,  To  |,  BeiJing!'],
+            ...                                              column_names=["text"])
             >>>
             >>> # 1) If with_offsets=False, default output is one column {["text", dtype=str]}
             >>> delim_pattern = r"[ |,]"
             >>> tokenizer_op = text.RegexTokenizer(delim_pattern, with_offsets=False)
-            >>> text_file_dataset = text_file_dataset.map(operations=tokenizer_op)
+            >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=tokenizer_op)
+            >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+            ...     print(item["text"])
+            ['Welcome' 'To' 'BeiJing!']
             >>>
             >>> # 2) If with_offsets=True, then output three columns {["token", dtype=str],
             >>> #                                                     ["offsets_start", dtype=uint32],
             >>> #                                                     ["offsets_limit", dtype=uint32]}
+            >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=['Welcome  |,  To  |,  BeiJing!'],
+            ...                                              column_names=["text"])
             >>> tokenizer_op = text.RegexTokenizer(delim_pattern, with_offsets=True)
-            >>> text_file_dataset = text_file_dataset.map(operations=tokenizer_op, input_columns=["text"],
-            ...                                           output_columns=["token", "offsets_start", "offsets_limit"])
+            >>> numpy_slices_dataset = numpy_slices_dataset.map(
+            ...                      operations=tokenizer_op,
+            ...                      input_columns=["text"],
+            ...                      output_columns=["token", "offsets_start", "offsets_limit"])
+            >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+            ...     print(item["token"], item["offsets_start"], item["offsets_limit"])
+            ['Welcome' 'To' 'BeiJing!'] [ 0 13 21] [ 7 15 29]
+            >>>
+            >>> # Use the transform in eager mode
+            >>> data = 'Welcome     To   BeiJing!'
+            >>> output = text.RegexTokenizer(delim_pattern="To", keep_delim_pattern="To", with_offsets=True)(data)
+            >>> print(output)
+            (array(['Welcome     ', 'To', '   BeiJing!'], dtype='<U12'),
+            array([ 0, 12, 14], dtype=uint32), array([12, 14, 25], dtype=uint32))
 
         Tutorial Examples:
             - `Illustration of text transforms
@@ -1335,19 +1586,40 @@ if platform.system().lower() != 'windows':
             >>> import mindspore.dataset as ds
             >>> import mindspore.dataset.text as text
             >>>
-            >>> text_file_list = ["/path/to/text_file_dataset_file"]
-            >>> text_file_dataset = ds.TextFileDataset(dataset_files=text_file_list)
+            >>> # Use the transform in dataset pipeline mode
+            >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=["北 京", "123", "欢 迎", "你"],
+            ...                                              column_names=["text"], shuffle=False)
             >>>
             >>> # 1) If with_offsets=False, default output one column {["text", dtype=str]}
             >>> tokenizer_op = text.UnicodeScriptTokenizer(keep_whitespace=True, with_offsets=False)
-            >>> text_file_dataset = text_file_dataset.map(operations=tokenizer_op)
+            >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=tokenizer_op)
+            >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+            ...     print(item["text"])
+            ...     break
+            ['北' ' ' '京']
             >>>
             >>> # 2) If with_offsets=True, then output three columns {["token", dtype=str],
             >>> #                                                     ["offsets_start", dtype=uint32],
             >>> #                                                     ["offsets_limit", dtype=uint32]}
+            >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=["北 京", "123", "欢 迎", "你"],
+            ...                                              column_names=["text"], shuffle=False)
             >>> tokenizer_op = text.UnicodeScriptTokenizer(keep_whitespace=True, with_offsets=True)
-            >>> text_file_dataset = text_file_dataset.map(operations=tokenizer_op, input_columns=["text"],
-            ...                                           output_columns=["token", "offsets_start", "offsets_limit"])
+            >>> numpy_slices_dataset = numpy_slices_dataset.map(
+            ...                      operations=tokenizer_op,
+            ...                      input_columns=["text"],
+            ...                      output_columns=["token", "offsets_start", "offsets_limit"])
+            >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+            ...     print(item["token"], item["offsets_start"], item["offsets_limit"])
+            ...     break
+            ['北' ' ' '京'] [0 3 4] [3 4 7]
+            >>>
+            >>> # Use the transform in eager mode
+            >>> data = ["北 京", "123", "欢 迎", "你"]
+            >>> unicode_script_tokenizer_op = text.UnicodeScriptTokenizer(keep_whitespace=True, with_offsets=False)
+            >>> output = [unicode_script_tokenizer_op(i) for i in data]
+            >>> print(output)
+            [array(['北', ' ', '京'], dtype='<U1'), array(['123'], dtype='<U3'), array(['欢', ' ', '迎'], dtype='<U1'),
+            array(['你'], dtype='<U1')]
 
         Tutorial Examples:
             - `Illustration of text transforms
@@ -1388,19 +1660,35 @@ if platform.system().lower() != 'windows':
             >>> import mindspore.dataset as ds
             >>> import mindspore.dataset.text as text
             >>>
-            >>> text_file_list = ["/path/to/text_file_dataset_file"]
-            >>> text_file_dataset = ds.TextFileDataset(dataset_files=text_file_list)
+            >>> # Use the transform in dataset pipeline mode
+            >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=['Welcome     To   BeiJing!'], column_names=["text"])
             >>>
             >>> # 1) If with_offsets=False, default output one column {["text", dtype=str]}
             >>> tokenizer_op = text.WhitespaceTokenizer(with_offsets=False)
-            >>> text_file_dataset = text_file_dataset.map(operations=tokenizer_op)
+            >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=tokenizer_op)
+            >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+            ...     print(item["text"])
+            ['Welcome' 'To' 'BeiJing!']
             >>>
             >>> # 2) If with_offsets=True, then output three columns {["token", dtype=str],
-            >>> #                                                   ["offsets_start", dtype=uint32],
-            >>> #                                                   ["offsets_limit", dtype=uint32]}
+            >>> #                                                     ["offsets_start", dtype=uint32],
+            >>> #                                                     ["offsets_limit", dtype=uint32]}
+            >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=['Welcome     To   BeiJing!'], column_names=["text"])
             >>> tokenizer_op = text.WhitespaceTokenizer(with_offsets=True)
-            >>> text_file_dataset = text_file_dataset.map(operations=tokenizer_op, input_columns=["text"],
-            ...                                           output_columns=["token", "offsets_start", "offsets_limit"])
+            >>> numpy_slices_dataset = numpy_slices_dataset.map(
+            ...                      operations=tokenizer_op,
+            ...                      input_columns=["text"],
+            ...                      output_columns=["token", "offsets_start", "offsets_limit"])
+            >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+            ...     print(item["token"], item["offsets_start"], item["offsets_limit"])
+            ['Welcome' 'To' 'BeiJing!'] [ 0 12 17] [ 7 14 25]
+            >>>
+            >>> # Use the transform in eager mode
+            >>> data = 'Welcome     To   BeiJing!'
+            >>> output = text.WhitespaceTokenizer(with_offsets=True)(data)
+            >>> print(output)
+            (array(['Welcome', 'To', 'BeiJing!'], dtype='<U8'), array([ 0, 12, 17], dtype=uint32),
+            array([ 7, 14, 25], dtype=uint32))
 
         Tutorial Examples:
             - `Illustration of text transforms
