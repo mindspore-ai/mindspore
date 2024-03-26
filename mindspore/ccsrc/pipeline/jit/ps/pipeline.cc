@@ -1594,7 +1594,7 @@ void ProcessVmArgInner(const py::tuple &args, const ResourcePtr &res, VectorRef 
   MS_EXCEPTION_IF_NULL(res);
   auto graph = res->func_graph();
   MS_EXCEPTION_IF_NULL(graph);
-  std::vector<AnfNodePtr> graph_params = graph->parameters();
+  const std::vector<AnfNodePtr> &graph_params = graph->parameters();
   std::size_t graph_params_size = graph_params.size();
   if ((*arg_list).size() != graph_params_size) {
     // Maybe some default parameter
