@@ -27,8 +27,6 @@ namespace ops {
 BaseShapePtr FFTInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto input_shape_ptr = input_args[kIndex0]->GetShape();
   auto input_shape = input_shape_ptr->GetShapeVector();
-
-  // When input is a dynamic rank, it needs to be processed in the kernel
   if (IsDynamicRank(input_shape)) {
     ShapeVector dyn_output{abstract::TensorShape::kShapeRankAny};
     return std::make_shared<abstract::TensorShape>(dyn_output);
@@ -59,14 +57,13 @@ BaseShapePtr FFTInferShape(const PrimitivePtr &primitive, const std::vector<Abst
 BaseShapePtr FFTNInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto input_shape_ptr = input_args[kIndex0]->GetShape();
   auto input_shape = input_shape_ptr->GetShapeVector();
-
   if (IsDynamicRank(input_shape)) {
     ShapeVector dyn_output{abstract::TensorShape::kShapeRankAny};
     return std::make_shared<abstract::TensorShape>(dyn_output);
   }
 
   auto y_shape = input_shape;
-  auto x_rank = input_shape.size();
+  auto x_rank = SizeToLong(input_shape.size());
   if (input_args[kInputIndex1]->GetType()->isa<TypeNone>()) {
     return std::make_shared<abstract::TensorShape>(y_shape);
   }
@@ -87,13 +84,11 @@ BaseShapePtr FFTNInferShape(const PrimitivePtr &primitive, const std::vector<Abs
       }
     }
   }
-
-  if (dim.size() == 0) {
+  if (dim.empty()) {
     for (size_t i = 0; i < s.size(); i++) {
       (void)dim.emplace_back(x_rank - s.size() + i);
     }
   }
-
   for (size_t i = 0; i < s.size(); i++) {
     y_shape[dim[i]] = s[i];
   }
@@ -114,6 +109,19 @@ TypePtr FFTInferType(const PrimitivePtr &primitive, const std::vector<AbstractBa
   }
 }
 
+void FFTCheckInputShape(const PrimitivePtr &primitive, std::vector<int64_t> x_shape_vec, int64_t x_rank) {
+  const int64_t kMinRank = 1;
+  const int64_t kMaxRank = 8;
+
+  if (x_shape_vec.size() < kMinRank || x_shape_vec.size() > kMaxRank) {
+    MS_EXCEPTION(ValueError) << CheckAndConvertUtils::FormatCheckInRangeMsg("rank of input", x_rank, kIncludeBoth,
+                                                                            {kMinRank, kMaxRank}, primitive);
+  }
+  if (std::find(x_shape_vec.begin(), x_shape_vec.end(), 0) != x_shape_vec.end()) {
+    MS_EXCEPTION(ValueError) << "Unsupported input shape dimension. The shape should not be empty.";
+  }
+}
+
 /*
   Error list:
   1) `input.ndim` is not in the range of "[1, 8]".
@@ -124,23 +132,11 @@ int32_t FFTCheckValidation(const PrimitivePtr &primitive, const std::vector<Abst
   auto check_status = OP_CHECK_SUCCESS;
   const auto &input_x_shape = input_args[kIndex0]->GetShape();
   auto x_shape_vec = input_x_shape->GetShapeVector();
-
   if (MS_UNLIKELY(IsDynamicRank(x_shape_vec))) {
     check_status = OP_CHECK_RETRY;
   }
-
-  const int64_t kMinRank = 1;
-  const int64_t kMaxRank = 8;
   int64_t x_rank = SizeToLong(x_shape_vec.size());
-
-  if (x_shape_vec.size() < kMinRank || x_shape_vec.size() > kMaxRank) {
-    MS_EXCEPTION(ValueError) << CheckAndConvertUtils::FormatCheckInRangeMsg("rank of input", x_rank, kIncludeBoth,
-                                                                            {kMinRank, kMaxRank}, primitive);
-  }
-
-  if (std::accumulate(x_shape_vec.begin(), x_shape_vec.end(), 0) == 0) {
-    MS_EXCEPTION(ValueError) << "Unsupported input shape dimension. The shape should not be empty.";
-  }
+  FFTCheckInputShape(primitive, x_shape_vec, x_rank);
 
   if (!input_args[kInputIndex1]->GetType()->isa<TypeNone>()) {
     auto n_opt = GetScalarValue<int64_t>(input_args[kInputIndex1]->GetValue());
@@ -158,7 +154,6 @@ int32_t FFTCheckValidation(const PrimitivePtr &primitive, const std::vector<Abst
                                                                               {-x_rank, x_rank - 1}, primitive);
     }
   }
-
   return check_status;
 }
 
@@ -174,22 +169,11 @@ int32_t FFTNCheckValidation(const PrimitivePtr &primitive, const std::vector<Abs
   auto check_status = OP_CHECK_SUCCESS;
   const auto &input_x_shape = input_args[kIndex0]->GetShape();
   auto x_shape_vec = input_x_shape->GetShapeVector();
-
   if (MS_UNLIKELY(IsDynamicRank(x_shape_vec))) {
     check_status = OP_CHECK_RETRY;
   }
-  const int64_t kMinRank = 1;
-  const int64_t kMaxRank = 8;
   int64_t x_rank = SizeToLong(x_shape_vec.size());
-
-  if (x_shape_vec.size() < kMinRank || x_shape_vec.size() > kMaxRank) {
-    MS_EXCEPTION(ValueError) << CheckAndConvertUtils::FormatCheckInRangeMsg("rank of input", x_rank, kIncludeBoth,
-                                                                            {kMinRank, kMaxRank}, primitive);
-  }
-
-  if (std::accumulate(x_shape_vec.begin(), x_shape_vec.end(), 0) == 0) {
-    MS_EXCEPTION(ValueError) << "Unsupported input shape dimension. The shape should not be empty.";
-  }
+  FFTCheckInputShape(primitive, x_shape_vec, x_rank);
 
   std::vector<int64_t> s;
   if (!input_args[kInputIndex1]->GetType()->isa<TypeNone>()) {
@@ -214,11 +198,12 @@ int32_t FFTNCheckValidation(const PrimitivePtr &primitive, const std::vector<Abs
       }
     }
   }
-
-  if (!s.empty() && !dim.empty() && s.size() != dim.size()) {
-    MS_EXCEPTION(ValueError) << "Unsupported input shape dimension. The shape should not be empty.";
+  if (std::set<int64_t>(dim.begin(), dim.end()).size() != dim.size()) {
+    MS_EXCEPTION(ValueError) << "The dims must be unique.";
   }
-
+  if (!s.empty() && !dim.empty() && s.size() != dim.size()) {
+    MS_EXCEPTION(ValueError) << "When givec, dim and s arguuments must have the same length.";
+  }
   return check_status;
 }
 }  // namespace ops
