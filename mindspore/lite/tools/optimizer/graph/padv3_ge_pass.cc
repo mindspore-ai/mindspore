@@ -171,7 +171,6 @@ const int64_t PadV3GePass::GetPaddingLength(const FuncGraphPtr &func_graph, cons
   auto padding_shape_vec = padding_shape_ptr->GetShapeVector();
   MS_LOG(DEBUG) << "check padding_shape_vec: " << padding_shape_vec;
   int64_t padding_length = static_cast<int64_t>(padding_shape_vec.at(0));
-
   if (padding_length != padding_input_rank * static_cast<int64_t>(kSizeTwo)) {
     MS_LOG(ERROR) << "padding length [" << padding_length << "] should be twice of padding input rank ["
                   << padding_input_rank << "]";

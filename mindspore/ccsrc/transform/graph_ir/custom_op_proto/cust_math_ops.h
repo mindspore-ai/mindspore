@@ -299,5 +299,11 @@ REG_CUST_OP(FFTWithSize)
   .REQUIRED_ATTR(onesided, Bool)
   .REQUIRED_ATTR(real, Bool)
   .CUST_OP_END_FACTORY_REG(FFTWithSize)
+
+REG_CUST_OP(Logit)
+  .INPUT(x, TensorType({DT_FLOAT16, DT_FLOAT, DT_DOUBLE}))
+  .ATTR(eps, Float, -1.0)
+  .OUTPUT(output, TensorType({DT_FLOAT16, DT_FLOAT, DT_DOUBLE}))
+  .CUST_OP_END_FACTORY_REG(Logit)
 }  // namespace ge
 #endif  // MINDSPORE_CCSRC_GRAPH_IR_CUSTOM_OP_PROTO_CUST_MATH_OPS_H_
