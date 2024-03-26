@@ -258,7 +258,7 @@ void GetOutputBuildInfo(const AnfNodePtr &node, const size_t output_num, const A
 }
 
 void SetOutputIdentityFlag(const AnfNodePtr &node, const std::vector<std::string> &output_formats) {
-  if (device::ascend::GetFormatMode() == "1" && AclHelper::NeedIdentityFlag(output_formats)) {
+  if (device::ascend::GetFormatMode(node) == "1" && AclHelper::NeedIdentityFlag(output_formats)) {
     common::AnfAlgo::SetNodeAttr(kAttrAclSpecialFormat, MakeValue(true), node);
   }
 }
