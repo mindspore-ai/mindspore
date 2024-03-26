@@ -57,7 +57,7 @@ void Liveness::BuildRW(const Instr &instr, BitMap *read, BitMap *write) {
 
 void Liveness::Init() {
   const auto &bb = cfg_->bb_pool();
-  int block_count = bb.size();
+  int block_count = static_cast<int>(bb.size());
   read_.resize(block_count, BitMap(cfg_->GetLocalCount()));
   write_.resize(block_count, BitMap(cfg_->GetLocalCount()));
   alive_.resize(block_count, BitMap(cfg_->GetLocalCount()));
@@ -65,7 +65,7 @@ void Liveness::Init() {
 
   // generate read write for each block
   for (const auto &block : cfg_->bb_pool()) {
-    int id = block->id();
+    int id = static_cast<int>(block->id());
     for (int bci = block->begin_ci(); bci != block->end_ci(); ++bci) {
       Liveness::BuildRW(*cfg_->instr_pool()[bci], &read_[id], &write_[id]);
     }
@@ -88,13 +88,13 @@ void Liveness::Init() {
  * it is current block start alive.
  */
 void Liveness::Propagate(Block *cur, std::vector<Block *> *list) {
-  int index = cur->id();
+  int index = static_cast<int>(cur->id());
   alive_[index].Or(alive_effect_[index]);
   alive_[index].Diff(write_[index]);
   alive_[index].Or(read_[index]);
 
   for (auto i : cur->pred_bbs()) {
-    int next = i->id();
+    int next = static_cast<int>(i->id());
     if (alive_effect_[next].OrWithChange(alive_[index])) {
       list->push_back(i);
     }

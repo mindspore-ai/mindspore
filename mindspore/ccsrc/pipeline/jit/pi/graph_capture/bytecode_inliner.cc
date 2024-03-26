@@ -110,7 +110,7 @@ void BytecodeInliner::Rebuild(CodeGenerator *cg) {
 
     // reset bci
     int last_op = cg->GetCode().co_code.back()->op();
-    new_bci = cg->GetCode().co_code.size() - 1 - (last_op == POP_TOP || last_op == STORE_FAST);
+    new_bci = static_cast<int>(cg->GetCode().co_code.size()) - 1 - (last_op == POP_TOP || last_op == STORE_FAST);
     node->set_bci(new_bci);
 
     // reset frame status
@@ -162,7 +162,7 @@ void BytecodeInliner::Rebuild() {
   if (last_frame_ != nullptr) {
     MS_EXCEPTION_IF_CHECK_FAIL(new_frames_.find(cg.GetCode().co_code.size()) == new_frames_.end(),
                                "duplicate frame status");
-    new_break_bci_ = cg.GetCode().co_code.size();
+    new_break_bci_ = static_cast<int>(cg.GetCode().co_code.size());
     new_frames_[new_break_bci_] = std::move(last_frame_);
   }
 
@@ -363,10 +363,10 @@ void BytecodeInliner::InitCFG() {
   for (const auto &i : list) {
     size_t bci = list.size();
     if (Utils::IsNonFall(i->op())) {
-      bci = i->bci() + 1;
+      bci = (size_t)i->bci() + 1;
     }
     if (i->extra_jump() != nullptr) {
-      bci = i->bci() + 1;
+      bci = (size_t)i->bci() + 1;
       if (blocks.find(i->extra_jump()->bci()) == blocks.end()) {
         blocks.insert({i->extra_jump()->bci(), cfg_->NewBBAppend()});
       }
@@ -385,7 +385,7 @@ void BytecodeInliner::InitCFG() {
     if (iter != blocks.end()) {
       back = iter->first;
     } else {
-      back = list.size();
+      back = static_cast<int>(list.size());
     }
     cur->set_begin_ci(head);
     cur->set_end_ci(back);
@@ -465,7 +465,7 @@ void BytecodeInliner::EliminateClosureSideEffect() {
 
   if (last_frame_ != nullptr) {
     auto iter = std::find_if(cfg_->instr_pool().begin(), cfg_->instr_pool().end(), [](const std::unique_ptr<Instr> &i) {
-      return i->op() == LOAD_DEREF || (i->op() == MAKE_FUNCTION && (i->arg() & 0x08));
+      return i->op() == LOAD_DEREF || (i->op() == MAKE_FUNCTION && ((signed)i->arg() & 0x08));
     });
     if (iter != cfg_->instr_pool().end()) {
       return;
