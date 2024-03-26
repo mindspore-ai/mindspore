@@ -21,5 +21,9 @@ namespace transform {
 REGISTER_ACL_OP(WKV).set_run_mode(false);
 
 REGISTER_ACL_OP(WKVGrad).set_run_mode(false);
+
+REGISTER_ACL_OP(DynamicGRUV2).set_run_mode(false);
+
+REGISTER_ACL_OP(DynamicGRUV2Grad).set_run_mode(false);
 }  // namespace transform
 }  // namespace mindspore
