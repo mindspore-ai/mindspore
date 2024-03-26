@@ -453,14 +453,10 @@ def _handle_symbol_inputs(symbol_inputs):
     return symbol_inputs
 
 
-def _change_symbols_for_parallel(shapes, symbol_inputs=None):
-    """create or modify symbol inputs"""
-    # no need to handle the symbol if full_batch is true or it's not parallel mode
+def _no_need_to_change_symbols(shapes):
+    """no need to handle the symbol if full_batch is true or it's not parallel mode"""
     if not _need_to_full():
-        return symbol_inputs
-
-    # the symbol_inputs is [[{'divisor': 8}, 16], [{'divisor': 8}, 16]]
-    # the dataset_shapes is [(-1, 16), (-1, 16)]
+        return True
 
     # if static shape, return
     is_dynamic_shape = False
@@ -469,8 +465,17 @@ def _change_symbols_for_parallel(shapes, symbol_inputs=None):
             is_dynamic_shape = True
             break
     if is_dynamic_shape is False:
-        return symbol_inputs
+        return True
 
+    return False
+
+
+def _change_symbols_for_parallel(shapes, symbol_inputs=None):
+    """create or modify symbol inputs"""
+    if _no_need_to_change_symbols(shapes) is True:
+        return symbol_inputs
+    # the symbol_inputs is [[{'divisor': 8}, 16], [{'divisor': 8}, 16]]
+    # the dataset_shapes is [(-1, 16), (-1, 16)]
     # if symbol_inputs is [None, None, ..., None], reset it
     if symbol_inputs is not None and all(s is None for s in symbol_inputs):
         symbol_inputs = []
@@ -486,8 +491,16 @@ def _change_symbols_for_parallel(shapes, symbol_inputs=None):
                     symbol_inputs[i][j] = {divisor_key: 1}
     else:
         for i, s in enumerate(symbol_inputs):
+            # the symbol_inputs may be [None, [{'divisor': 8}, 16]]
+            # and the dataset_shapes is [(-1, 16), (-1, 16)], need to handle None
+            if s is None:
+                symbol_inputs[i] = shapes[i]
+                for k, item in enumerate(symbol_inputs[i]):
+                    if item == -1:
+                        symbol_inputs[i][k] = {divisor_key: 1}
+                s = symbol_inputs[i]
             for j, item in enumerate(s):
-                if isinstance(item, dict) and bool(item) is False:
+                if isinstance(item, dict) and bool(item) is False:  # the item is empty
                     symbol_inputs[i][j] = {divisor_key: 1}
 
     return _handle_symbol_inputs(symbol_inputs)
