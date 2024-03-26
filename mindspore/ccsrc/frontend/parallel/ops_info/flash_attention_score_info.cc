@@ -486,8 +486,14 @@ std::tuple<int64_t, int64_t> FlashAttentionScoreInfo::GetAttentionMaskAttrs(cons
     q_seq_length = inputs_shape_[ops::kFlashAttentionScoreInputQueryIndex][kInputQKVSeqDimBNSD];
   }
   int64_t q_len_each_split = q_seq_length / split_num;
-  int64_t new_pre_tokens =
-    (sparse_mode_ == ops::kSparseDefaultMask || sparse_mode_ == ops::kSparseBand) ? pre_tokens_ : kv_seq_length;
+  int64_t new_pre_tokens;
+  if (sparse_mode_ == ops::kSparseDefaultMask || sparse_mode_ == ops::kSparseBand) {
+    new_pre_tokens = pre_tokens_;
+  } else if (sparse_mode_ == ops::kSparseLeftUpCausal) {
+    new_pre_tokens = q_seq_length;
+  } else {
+    new_pre_tokens = kv_seq_length;
+  }
   int64_t new_next_tokens =
     (sparse_mode_ == ops::kSparseDefaultMask || sparse_mode_ == ops::kSparseBand) ? next_tokens_ : 0;
   switch (opAttrUpdateMap.at(sparse_mode_)) {
