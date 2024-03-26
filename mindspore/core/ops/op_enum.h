@@ -34,7 +34,7 @@ MIND_API int64_t StringToEnumImpl(const std::string &op_name, const std::string 
 // represented by `int`. The `enum` is more convenient than `enum class` compare with int.
 enum Direction : int64_t { UNIDIRECTIONAL = 0 };
 
-enum CellType : int64_t { LSTM = 0 };
+enum CellType : int64_t { CELL_TYPE_LSTM = 0 };
 
 enum Group : int64_t { SYNC_BN_GROUP0 = 0 };
 
