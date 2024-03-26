@@ -337,35 +337,35 @@ GeTensor ConvertAnyUtil(const ValuePtr &value, const AnyTraits<ValueAny>) {
   } else if (value->isa<Int32Imm>()) {
     // convert scalar Int to GeTensor
     MS_LOG(INFO) << "convert scalar to tensor with data type = Int32";
-    GeTensorDesc desc(GeShape(), ::ge::FORMAT_NCHW, ::ge::DT_INT32);
+    GeTensorDesc desc(GeShape(), ::ge::FORMAT_ND, ::ge::DT_INT32);
     auto v = GetValue<int32_t>(value);
     desc.SetRealDimCnt(0);
     return GeTensor(desc, reinterpret_cast<uint8_t *>(&v), sizeof(int32_t));
   } else if (value->isa<UInt32Imm>()) {
     // convert scalar UInt to GeTensor
     MS_LOG(INFO) << "Convert scalar to tensor with data type = UInt32";
-    GeTensorDesc desc(GeShape(), ::ge::FORMAT_NCHW, ::ge::DT_UINT32);
+    GeTensorDesc desc(GeShape(), ::ge::FORMAT_ND, ::ge::DT_UINT32);
     auto v = GetValue<uint32_t>(value);
     desc.SetRealDimCnt(0);
     return GeTensor(desc, reinterpret_cast<uint8_t *>(&v), sizeof(uint32_t));
   } else if (value->isa<Int64Imm>()) {
     // convert scalar Int64 to GeTensor
     MS_LOG(INFO) << "convert scalar to tensor with data type = Int64";
-    GeTensorDesc desc(GeShape(), ::ge::FORMAT_NCHW, ::ge::DT_INT64);
+    GeTensorDesc desc(GeShape(), ::ge::FORMAT_ND, ::ge::DT_INT64);
     auto v = GetValue<int64_t>(value);
     desc.SetRealDimCnt(0);
     return GeTensor(desc, reinterpret_cast<uint8_t *>(&v), sizeof(int64_t));
   } else if (value->isa<FP32Imm>()) {
     // convert scalar FP32 to GeTensor
     MS_LOG(INFO) << "convert scalar to tensor with data type = FP32";
-    GeTensorDesc desc(GeShape(), ::ge::FORMAT_NCHW, ::ge::DT_FLOAT);
+    GeTensorDesc desc(GeShape(), ::ge::FORMAT_ND, ::ge::DT_FLOAT);
     auto v = GetValue<float>(value);
     desc.SetRealDimCnt(0);
     return GeTensor(desc, reinterpret_cast<uint8_t *>(&v), sizeof(float));
   } else if (value->isa<BoolImm>()) {
     // convert scalar FP32 to GeTensor
     MS_LOG(INFO) << "convert scalar to tensor with data type = Bool";
-    GeTensorDesc desc(GeShape(), ::ge::FORMAT_NCHW, ::ge::DT_BOOL);
+    GeTensorDesc desc(GeShape(), ::ge::FORMAT_ND, ::ge::DT_BOOL);
     auto v = GetValue<bool>(value);
     desc.SetRealDimCnt(0);
     return GeTensor(desc, reinterpret_cast<uint8_t *>(&v), sizeof(bool));
@@ -375,7 +375,7 @@ GeTensor ConvertAnyUtil(const ValuePtr &value, const AnyTraits<ValueAny>) {
     std::string v = GetValue<std::string>(value);
     std::vector<int64_t> ge_shape;
     GeShape shape(ge_shape);
-    GeTensorDesc desc(shape, ::ge::FORMAT_NCHW, ::ge::DT_STRING);
+    GeTensorDesc desc(shape, ::ge::FORMAT_ND, ::ge::DT_STRING);
     GeTensor str_tensor(desc);
     (void)str_tensor.SetData(v);
     return str_tensor;
