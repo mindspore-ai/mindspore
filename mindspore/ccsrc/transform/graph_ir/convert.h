@@ -96,8 +96,11 @@ class DfGraphConvertor {
   explicit DfGraphConvertor(const AnfGraphPtr &anf_graph, const std::string &phase_prefix,
                             RefModeFlag ref_mode_type = RefModeFlag::kRefModeEnv,
                             const std::vector<std::string> &extra_variables_names = {},
-                            SetDynRefDataFunc dyn_ref_data_func = nullptr)
-      : anf_graph_(anf_graph), extra_variables_names_(extra_variables_names), phase_prefix_(phase_prefix) {
+                            SetDynRefDataFunc dyn_ref_data_func = nullptr, bool offline_convert = false)
+      : anf_graph_(anf_graph),
+        extra_variables_names_(extra_variables_names),
+        phase_prefix_(phase_prefix),
+        offline_convert_(offline_convert) {
     MS_EXCEPTION_IF_NULL(anf_graph);
     if (ref_mode_type == RefModeFlag::kRefModeEnv) {
       ref_mode_ = IsEnableRefMode();
@@ -395,6 +398,7 @@ class DfGraphConvertor {
   bool is_kernel_graph_ = false;
 
   std::string phase_prefix_;
+  bool offline_convert_ = false;
   void AddInputInDataSink(std::vector<Operator> *inputs);
 };
 }  // namespace transform
