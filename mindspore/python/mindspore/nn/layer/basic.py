@@ -1290,8 +1290,7 @@ class Roll(Cell):
 
 class Unflatten(Cell):
     r"""
-    Summary:
-        Unflattens a Tensor dim according to `axis` and `unflattened_size`.
+    Unflattens a Tensor dim according to `axis` and `unflattened_size`.
 
     Args:
         axis (int): specifies the dimension of the input Tensor to be unflattened.

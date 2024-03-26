@@ -20,10 +20,10 @@ mindspore.nn.WarmUpLR
         - **warmup_steps** (int) - 学习率warmup的step数。
 
     输入：
-        - **global_step** (Tensor) - 当前step数，即current_step，shape为 :math:`()`。
+        - **global_step** (Tensor) - 当前step数，即current_step。shape为 :math:`()`。
 
     输出：
-        标量Tensor。当前step的学习率值。
+        标量Tensor。当前step的学习率值，shape为 :math:`()`。
 
     异常：
         - **TypeError** - `learning_rate` 不是float。
