@@ -109,9 +109,8 @@ int64_t GetUnfoldIndex(const CNodePtr &cnode, int64_t origin_index) {
   return begin_idx;
 }
 
-void UnfoldNestedOutputNode(const AnfNodePtr &node) {
+void UnfoldNestedOutputNode(const AnfNodePtr &node, std::vector<AbstractBasePtr> *unfold_abs_elements) {
   MS_EXCEPTION_IF_NULL(node);
-  std::vector<AbstractBasePtr> unfold_abs_elements;
   auto abs = node->abstract();
   MS_EXCEPTION_IF_NULL(abs);
   if (!abs->isa<abstract::AbstractTuple>()) {
@@ -121,10 +120,7 @@ void UnfoldNestedOutputNode(const AnfNodePtr &node) {
   auto abs_tuple = abs->cast<abstract::AbstractTuplePtr>();
   MS_EXCEPTION_IF_NULL(abs_tuple);
   // Unfold the nested tuple.
-  GetUnfoldElements(abs_tuple, &unfold_abs_elements);
-  // Unfold the output, because GE converter cannot process the nested output.
-  // If input is neated MakeTuple, the next unfold_maketuple pass will unfold the input.
-  node->set_abstract(std::make_shared<abstract::AbstractTuple>(unfold_abs_elements));
+  GetUnfoldElements(abs_tuple, unfold_abs_elements);
 }
 
 void ProcessSucceedTupleGetItem(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
@@ -223,8 +219,12 @@ bool UnfoldNestedOutput::Run(const FuncGraphPtr &func_graph) {
   std::vector<AnfNodePtr> node_list = TopoSort(func_graph->get_return(), SuccDeeperSimple);
   for (auto node : node_list) {
     if (node != nullptr && node->isa<CNode>() && IsNestedTuple(node)) {
-      UnfoldNestedOutputNode(node);
+      std::vector<AbstractBasePtr> unfold_abs_elements;
+      UnfoldNestedOutputNode(node, &unfold_abs_elements);
       ProcessSucceedNode(func_graph, node);
+      // Unfold the output, because GE converter cannot process the nested output.
+      // If input is neated MakeTuple, the next unfold_maketuple pass will unfold the input.
+      node->set_abstract(std::make_shared<abstract::AbstractTuple>(unfold_abs_elements));
     }
   }
   return true;
