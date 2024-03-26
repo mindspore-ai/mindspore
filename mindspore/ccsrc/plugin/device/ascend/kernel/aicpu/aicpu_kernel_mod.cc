@@ -285,7 +285,6 @@ int AicpuOpKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const st
 
     return false;
   }();
-
   if (need_skip_execute_) {
     return KRET_OK;
   }
