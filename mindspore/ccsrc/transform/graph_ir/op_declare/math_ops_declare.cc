@@ -161,6 +161,12 @@ ATTR_MAP(Pdist) = {
 OUTPUT_MAP(Pdist) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Pdist, prim::kPrimPdist->name(), ADPT_DESC(Pdist))
 
+// PdistGrad
+CUST_INPUT_MAP(PdistGrad) = {{1, INPUT_DESC(y_grad)}, {2, INPUT_DESC(x)}, {3, INPUT_DESC(pdist)}};
+CUST_ATTR_MAP(PdistGrad) = {{"p", ATTR_DESC(p, AnyTraits<float>())}};
+CUST_OUTPUT_MAP(PdistGrad) = {{0, OUTPUT_DESC(x_grad)}};
+REG_ADPT_DESC(PdistGrad, prim::kPrimPdistGrad->name(), CUST_ADPT_DESC(PdistGrad));
+
 // SoftMarginLossGrad
 INPUT_MAP(SoftMarginLossGrad) = {{1, INPUT_DESC(predict)}, {2, INPUT_DESC(label)}, {3, INPUT_DESC(dout)}};
 ATTR_MAP(SoftMarginLossGrad) = {
