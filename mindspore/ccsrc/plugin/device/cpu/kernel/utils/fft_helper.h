@@ -36,11 +36,11 @@ bool IsForwardOp(const std::string &);
 template <typename T_in, typename T_out>
 bool ShapeCopy(T_in *input, T_out *output, const std::vector<int64_t> input_shape,
                const std::vector<int64_t> output_shape) {
-  auto x_rank = static_cast<int64_t>(input_shape.size());
+  auto x_rank = input_shape.size();
   std::vector<int64_t> shape_min(x_rank, 0);
   std::vector<int64_t> input_pos(x_rank, 0);
   std::vector<int64_t> output_pos(x_rank, 0);
-  for (int64_t i = 0; i < x_rank; i++) {
+  for (size_t i = 0; i < x_rank; i++) {
     shape_min[i] = std::min(input_shape[i], output_shape[i]);
   }
 
@@ -48,7 +48,7 @@ bool ShapeCopy(T_in *input, T_out *output, const std::vector<int64_t> input_shap
   int64_t output_nums = std::accumulate(output_shape.begin(), output_shape.end(), 1, std::multiplies<int64_t>());
   std::vector<int64_t> input_buffer(x_rank + 1, input_nums);
   std::vector<int64_t> output_buffer(x_rank + 1, output_nums);
-  for (int64_t i = 1; i < x_rank; i++) {
+  for (size_t i = 1; i < x_rank; i++) {
     input_buffer[i] = input_buffer[i - 1] / input_shape[i - 1];
     output_buffer[i] = output_buffer[i - 1] / output_shape[i - 1];
   }
@@ -59,7 +59,7 @@ bool ShapeCopy(T_in *input, T_out *output, const std::vector<int64_t> input_shap
   int64_t output_index = 0;
   for (int64_t i = 0; i < copy_num; ++i) {
     output[output_index] = static_cast<T_out>(input[input_index]);
-    int64_t j = x_rank - 1;
+    size_t j = x_rank - 1;
     input_pos[j]++;
     input_index++;
     while (j > 0 && input_pos[j] == shape_min[j]) {

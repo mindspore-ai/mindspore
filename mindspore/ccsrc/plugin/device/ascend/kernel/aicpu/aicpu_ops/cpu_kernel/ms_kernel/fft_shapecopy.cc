@@ -44,13 +44,18 @@ uint32_t FFTShapeCopyCpuKernel::Compute(CpuKernelContext &ctx) {
   KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.", op_name_.c_str());
   auto x_type = ctx.Input(kIndex0)->GetDataType();
   switch (x_type) {
+    FFTSHAPECOPY_COMPUTE_CASE(DT_INT16, int16_t, ctx)
+    FFTSHAPECOPY_COMPUTE_CASE(DT_INT32, int32_t, ctx)
+    FFTSHAPECOPY_COMPUTE_CASE(DT_INT64, int64_t, ctx)
+    FFTSHAPECOPY_COMPUTE_CASE(DT_FLOAT16, Eigen::half, ctx)
+    FFTSHAPECOPY_COMPUTE_CASE(DT_FLOAT, float, ctx)
+    FFTSHAPECOPY_COMPUTE_CASE(DT_DOUBLE, double, ctx)
     FFTSHAPECOPY_COMPUTE_CASE(DT_COMPLEX64, std::complex<float>, ctx)
     FFTSHAPECOPY_COMPUTE_CASE(DT_COMPLEX128, std::complex<double>, ctx)
     default:
       KERNEL_LOG_ERROR("[%s] kernel data type [%s] not support.", op_name_.c_str(), DTypeStr(x_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
-
   return KERNEL_STATUS_OK;
 }
 
