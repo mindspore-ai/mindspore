@@ -23,9 +23,12 @@
 namespace mindspore {
 namespace ops {
 BaseShapePtr FFTInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args);
-TypePtr FFTInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args);
-int32_t FFTCheckValidation(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args);
 BaseShapePtr FFTNInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args);
+
+TypePtr FFTInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args);
+
+void FFTCheckInputShape(const PrimitivePtr &primitive, std::vector<int64_t> x_shape_vec, int64_t x_rank);
+int32_t FFTCheckValidation(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args);
 int32_t FFTNCheckValidation(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
