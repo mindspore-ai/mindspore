@@ -3495,7 +3495,7 @@ def cross_entropy(input, target, weight=None, ignore_index=-100, reduction='mean
             `input` is expected to be log-probabilities, data type must be float16 or float32.
         target (Tensor): For class indices, tensor of shape :math:`()`, :math:`(N)` or
             :math:`(N, d_1, d_2, ..., d_K)` , data type must be int32. For probabilities, tensor of shape :math:`(C,)` ,
-            :math:`(N, C)` or :math:`(N, C, d_1, d_2, ..., d_K)` , data type must be float16 or float32.
+            :math:`(N, C)` or :math:`(N, C, d_1, d_2, ..., d_K)` , data type must be float16 or float32 or float64.
         weight (Tensor): A rescaling weight applied to the loss of each batch element.
             If not None, the shape is :math:`(C,)`, data type must be float16 or float32. Default: ``None`` .
         ignore_index (int): Specifies a target value that is ignored
