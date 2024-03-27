@@ -49,8 +49,8 @@ void ScalarDiv::UpdateMathInfo() {
   auto input2 = input_as_sptr<IntSymbol>(1);
   auto out = output_as<IntSymbol>();
   int64_t min1 = input1->range_min();
-  int64_t max1 = input1->range_max();
   int64_t min2 = input2->range_min();
+  int64_t max1 = input1->range_max();
   int64_t max2 = input2->range_max();
   std::vector<int64_t> v;
   v.push_back(RangeDiv(min1, min2));
