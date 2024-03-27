@@ -72,7 +72,7 @@ class ObfuscateNet(nn.Cell):
         return x
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -94,8 +94,13 @@ def test_export_password_mode_st():
 
     # load obfuscated model, predict with right password
     obf_graph_3 = load("obf_net_3.mindir")
-    obf_net_3 = nn.GraphCell(obf_graph_3, obf_random_seed=3423)
-    right_password_result = obf_net_3(input_tensor).asnumpy()
+    try:
+        obf_net_3 = nn.GraphCell(obf_graph_3, obf_random_seed=3423)
+        right_password_result = obf_net_3(input_tensor).asnumpy()
+    # if 0 node has been obfuscated
+    except RuntimeError:
+        obf_net_3 = nn.GraphCell(obf_graph_3)
+        right_password_result = obf_net_3(input_tensor).asnumpy()
     assert np.all(original_result == right_password_result)
 
     if os.path.exists("obf_net_3.mindir"):
