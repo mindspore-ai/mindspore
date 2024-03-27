@@ -981,6 +981,24 @@ int GetNodeMaxNum(const AnfNodeSet nodes) {
   return node_max_num;
 }
 
+bool NodePrepareCheck(const mindspore::AnfNodePtr &node, const int &branch_control_input) {
+  std::string ignore_name = "down_sample_layer";
+  if (node == nullptr) {
+    MS_LOG(INFO) << "Find null node!" << std::endl;
+    return false;
+  }
+  if (!node->isa<CNode>()) {
+    MS_LOG(INFO) << "Not a Cnode." << std::endl;
+    return false;
+  }
+  // Ignore ResNet's down_sample_layer node for customized func mode.
+  if ((branch_control_input == 0) && (node->fullname_with_scope().find(ignore_name) != std::string::npos)) {
+    MS_LOG(INFO) << "Find down_sample_layer node: " << node->fullname_with_scope() << std::endl;
+    return false;
+  }
+  return true;
+}
+
 bool DynamicObfuscator::IsValidOpNum(const int &current_num, const int &compa_num) const {
   if (branch_control_input_ != 0) {
     return true;
@@ -1012,12 +1030,7 @@ void DynamicObfuscator::SubGraphFakeBranch(const FuncGraphPtr func_graph) {
   }
   std::reverse(sorted_nodes.begin(), sorted_nodes.end());
   for (auto node : sorted_nodes) {
-    if (node == nullptr) {
-      MS_LOG(INFO) << "Find null node!" << std::endl;
-      continue;
-    }
-    if (!node->isa<CNode>()) {
-      MS_LOG(INFO) << "Not a Cnode." << std::endl;
+    if (!NodePrepareCheck(node, branch_control_input_)) {
       continue;
     }
     std::string cnode_name = get_node_prim_name(node);
