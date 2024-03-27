@@ -870,7 +870,7 @@ void DynamicMemPoolBestFit::DumpDynamicMemPoolStateInfo() {
     }
 
     // Dump all the memory buf info
-    MS_LOG(INFO) << mem_type << " pool info: Total allocated mem:" << mem_mng->mps_.total_mem_size_ / kMBToByte
+    MS_LOG(WARNING) << mem_type << " pool info: Total allocated mem:" << mem_mng->mps_.total_mem_size_ / kMBToByte
                  << "M, peak used mem:" << mem_mng->mps_.used_mem_peak_size_ / kMBToByte
                  << "M, in used mem:" << mem_mng->mps_.total_used_mem_size_ / kMBToByte
                  << "M, total use by event mem:" << mem_mng->mps_.total_used_by_event_mem_size_ / kMBToByte
@@ -881,7 +881,7 @@ void DynamicMemPoolBestFit::DumpDynamicMemPoolStateInfo() {
 
   fn(common_mem_, std::string(kCommonMem));
   fn(persistent_mem_, std::string(kPersistentParamMem));
-  MS_LOG(INFO) << "The dynamic memory pool total allocated mem:" << TotalMemStatistics() / kMBToByte
+  MS_LOG(WARNING) << "The dynamic memory pool total allocated mem:" << TotalMemStatistics() / kMBToByte
                << "M, peak used mem:" << UsedMemPeakStatistics() / kMBToByte
                << "M, actual peak used mem:" << ActualPeakStatistics() / kMBToByte
                << "M, in used mem:" << TotalUsedMemStatistics() / kMBToByte

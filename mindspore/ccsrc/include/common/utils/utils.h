@@ -735,7 +735,7 @@ static inline double GetCurrentUSec() {
 #define PROF_END(stage)                                                                           \
   do {                                                                                            \
     double end_usec_##stage = mindspore::GetCurrentUSec();                                        \
-    MS_LOG(INFO) << "[PROF]" << #stage << " costs "                                               \
+    MS_LOG(WARNING) << "[PROF]" << #stage << " costs "                                               \
                  << (end_usec_##stage - start_usec_##stage) / kBasicTimeTransferUnit << " msec."; \
   } while (0)
 

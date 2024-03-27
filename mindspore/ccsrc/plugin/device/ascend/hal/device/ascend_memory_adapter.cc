@@ -131,7 +131,7 @@ bool AscendMemAdapter::DeInitialize() {
 
   auto ret = FreeToRts(device_mem_base_addr_, ms_used_hbm_size_);
   if (ret) {
-    MS_LOG(INFO) << " Ascend Memory Adapter deinitialize success, statistics:" << DevMemStatistics();
+    MS_LOG(WARNING) << " Ascend Memory Adapter deinitialize success, statistics:" << DevMemStatistics();
     if (common::IsNeedProfileMemory() || common::IsNeedMemoryStatistic()) {
       MS_LOG(WARNING) << " Ascend Memory Adapter deinitialize success, statistics:" << DevMemStatistics();
     }
