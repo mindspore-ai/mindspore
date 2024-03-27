@@ -63,6 +63,7 @@ class BACKEND_EXPORT SomasTensor {
   bool contiguous_;
   bool is_peak_;
   size_t can_reuse_peak_mem_;
+  bool is_graph_output_;
 
   lifetime_t lifetime_;
   TensorType type_;

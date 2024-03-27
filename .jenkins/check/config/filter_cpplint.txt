@@ -45,6 +45,7 @@
 "mindspore/mindspore/ccsrc/runtime/pynative/op_function/func_object.h"
 "mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/dct_cpu_kernel.cc"
 "mindspore/mindspore/ccsrc/debug/data_dump/npy_header.h"
+"mindspore/mindspore/ccsrc/backend/common/mem_reuse/mem_tracker.cc"                                 "whitespace/indent"
 
 # Modelzoo
 "mindspore/model_zoo/official/cv/yolov4_tiny/infer/mxbase/src/Yolov4TinyDetection.h"                 "runtime/references"
