@@ -958,15 +958,6 @@ IMPLEMT_COMMON_INFERFUNC(FractionalMaxPool3DWithFixedKsizeInferShape) {
     return GRAPH_FAILED;
   }
 
-  // set  shape
-  if ((input_format == FORMAT_NCDHW && data_format != "NCDHW") ||
-      (input_format == FORMAT_NDHWC && data_format != "NDHWC")) {
-    string expected_format = ConcatString("Format of input must be same with data_format! input_format:", input_format,
-                                          ", data_format:", data_format);
-    std::string err_msg = OtherErrMsg(expected_format);
-    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op).c_str(), err_msg);
-    return GRAPH_FAILED;
-  }
   std::vector<int64_t> output_size;
   int64_t n_dim = 0;
   int64_t c_dim = 0;
