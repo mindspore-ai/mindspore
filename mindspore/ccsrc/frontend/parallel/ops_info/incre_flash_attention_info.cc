@@ -31,10 +31,9 @@
 namespace mindspore {
 namespace parallel {
 namespace {
-constexpr size_t kInputQueryBatchDimBSH = 0;
+constexpr size_t kInputBatchDim = 0;
 constexpr size_t kInputQuerySeqDimBSH = 1;
 constexpr size_t kInputQueryHiddenDimBSH = 2;
-constexpr size_t kInputQueryBatchDimBNSD = 0;
 constexpr size_t kInputQueryNDimBNSD = 1;
 constexpr size_t kInputQuerySeqDimBNSD = 2;
 constexpr size_t kInputQueryHiddenDimBNSD = 3;
@@ -45,6 +44,7 @@ constexpr char kAttrInputLayoutBSH[] = "BSH";
 constexpr char kAttrInputLayoutBNSD[] = "BNSD";
 constexpr size_t kRank4 = 4;
 constexpr size_t kRank3 = 3;
+constexpr size_t kRank2 = 2;
 }  // namespace
 
 bool IncreFlashAttentionInfo::CheckStrategyOnIndex(int64_t strategy, int64_t true_value, const std::string &dim_name,
@@ -85,12 +85,12 @@ void IncreFlashAttentionInfo::SetOptinalInputs() {
   Shape padding_mask_tensor_map(padding_mask_rank_, -1);
   Shape padding_mask_strategy_map(padding_mask_rank_, 0);
   if (atten_mask_rank_ >= kRank3) {
-    atten_mask_tensor_map[kInputQueryBatchDimBNSD] = 1;
-    atten_mask_strategy_map[kInputQueryBatchDimBNSD] = 1;
+    atten_mask_tensor_map[kInputBatchDim] = 1;
+    atten_mask_strategy_map[kInputBatchDim] = 1;
   }
   if (padding_mask_rank_ >= kRank3) {
-    padding_mask_tensor_map[kInputQueryBatchDimBNSD] = 1;
-    padding_mask_strategy_map[kInputQueryBatchDimBNSD] = 1;
+    padding_mask_tensor_map[kInputBatchDim] = 1;
+    padding_mask_strategy_map[kInputBatchDim] = 1;
   }
   optinal_tensor_map_[ops::kIncreFlashAttentionInputAttnMaskIndex] = atten_mask_tensor_map;
   optinal_tensor_map_[ops::kIncreFlashAttentionInputPseShiftIndex] = padding_mask_tensor_map;
@@ -133,7 +133,7 @@ Status IncreFlashAttentionInfo::CheckAntiquantStrategy(const StrategyPtr &strate
   if (antiquant_idx >= 0) {
     if (input_layout_ == kAttrInputLayoutBSH) {
       auto antiquant_strategy = strategies[antiquant_idx];
-      if (antiquant_strategy.size() != 2) {
+      if (antiquant_strategy.size() != kRank2) {
         MS_LOG(ERROR) << "antiquant strategy length should be strictly 2 in BSH layout.";
         return FAILED;
       }
@@ -142,12 +142,13 @@ Status IncreFlashAttentionInfo::CheckAntiquantStrategy(const StrategyPtr &strate
         return FAILED;
       }
       if (antiquant_strategy[1] != mp_) {
-        MS_LOG(ERROR) << "antiquant strategy second dim should be strictly mp in BSH layout.";
+        MS_LOG(ERROR) << "antiquant strategy second dim should be strictly equal to the strategy value of the third "
+                         "dim of Query in BSH layout.";
         return FAILED;
       }
     } else if (input_layout_ == kAttrInputLayoutBNSD) {
       auto antiquant_strategy = strategies[antiquant_idx];
-      if (antiquant_strategy.size() != 4) {
+      if (antiquant_strategy.size() != kRank4) {
         MS_LOG(ERROR) << "antiquant strategy length should be strictly 4 in BNSD layout.";
         return FAILED;
       }
@@ -156,7 +157,30 @@ Status IncreFlashAttentionInfo::CheckAntiquantStrategy(const StrategyPtr &strate
         return FAILED;
       }
       if (antiquant_strategy[1] != mp_) {
-        MS_LOG(ERROR) << "antiquant strategy second dim should be strictly mp in BNSD layout.";
+        MS_LOG(ERROR) << "antiquant strategy second dim should be strictly to the strategy value of the third dim of "
+                         "Query in BNSD layout.";
+        return FAILED;
+      }
+    }
+  }
+  return SUCCESS;
+}
+
+Status IncreFlashAttentionInfo::CheckAttenMaskStrategy(const StrategyPtr &strategy, size_t input_index) {
+  auto strategies = strategy->GetInputDim();
+  if (!optinal_inputs_[input_index]) {
+    return SUCCESS;
+  }
+  auto atten_mask_idx = GetSqueezedIndex(input_index);
+  auto atten_mask_strategy = strategies[atten_mask_idx];
+  auto query_strategy = strategies[ops::kIncreFlashAttentionInputQueryIndex];
+  if (atten_mask_idx >= 0) {
+    if (atten_mask_strategy[kInputBatchDim] != query_strategy[kInputBatchDim]) {
+      MS_LOG(ERROR) << "atten_mask strategy batch dim should be same.";
+      return FAILED;
+    }
+    for (size_t index = 1; index < atten_mask_strategy.size(); index++) {
+      if (!CheckStrategyOnIndex(atten_mask_strategy[index], 1, "dims except batch", "atten_mask")) {
         return FAILED;
       }
     }
@@ -173,8 +197,8 @@ Status IncreFlashAttentionInfo::CheckStrategy(const StrategyPtr &strategy) {
   auto key_strategy = strategies[ops::kIncreFlashAttentionInputKeyIndex];
   auto value_strategy = strategies[ops::kIncreFlashAttentionInputValueIndex];
 
-  if (key_strategy != value_strategy) {
-    MS_LOG(ERROR) << "For " << name_ << " : The in_strategy among  'key' and 'value' must be same.";
+  if (query_strategy != key_strategy || query_strategy != value_strategy) {
+    MS_LOG(ERROR) << "For " << name_ << " : The in_strategy among 'query' , 'key' and 'value' must be same.";
     return FAILED;
   }
 
@@ -187,14 +211,14 @@ Status IncreFlashAttentionInfo::CheckStrategy(const StrategyPtr &strategy) {
                     << "(head_num) and " << query_strategy[kInputQueryHiddenDimBSH] << "(query_strategy[2])";
       return FAILED;
     }
-    dp_ = query_strategy[kInputQueryBatchDimBSH];
+    dp_ = query_strategy[kInputBatchDim];
     mp_ = query_strategy[kInputQueryHiddenDimBSH];
   } else if (input_layout_ == kAttrInputLayoutBNSD) {
     if (!CheckStrategyOnIndex(query_strategy[kInputQuerySeqDimBNSD], 1, "S-Dimention", "query") ||
         !CheckStrategyOnIndex(query_strategy[kInputQueryHiddenDimBNSD], 1, "D-Dimention", "query")) {
       return FAILED;
     }
-    dp_ = query_strategy[kInputQueryBatchDimBNSD];
+    dp_ = query_strategy[kInputBatchDim];
     mp_ = query_strategy[kInputQueryNDimBNSD];
   } else {
     MS_LOG(ERROR) << "For" << name_ << ": The input layout" << input_layout_ << "is not supported.";
@@ -206,6 +230,10 @@ Status IncreFlashAttentionInfo::CheckStrategy(const StrategyPtr &strategy) {
   }
   if (CheckAntiquantStrategy(strategy, ops::kIncreFlashAttentionInputAntiquantOffset) != SUCCESS) {
     MS_LOG(ERROR) << "Check strategy for antiquant_offset failed";
+    return FAILED;
+  }
+  if (CheckAttenMaskStrategy(strategy, ops::kIncreFlashAttentionInputAttnMaskIndex) != SUCCESS) {
+    MS_LOG(ERROR) << "Check strategy for atten mask failed";
     return FAILED;
   }
   if (optinal_inputs_.empty()) {
@@ -240,10 +268,10 @@ Status IncreFlashAttentionInfo::InferTensorMap() {
       if (index == ops::kIncreFlashAttentionInputAntiquantScale ||
           index == ops::kIncreFlashAttentionInputAntiquantOffset) {
         if (input_layout_ == kAttrInputLayoutBSH) {
-          (void)inputs_tensor_map_.emplace_back(Shape{-1, 1});
+          (void)inputs_tensor_map_.emplace_back(Shape{-1, 0});
           continue;
         } else if (input_layout_ == kAttrInputLayoutBNSD) {
-          (void)inputs_tensor_map_.emplace_back(Shape{-1, 1, -1, -1});
+          (void)inputs_tensor_map_.emplace_back(Shape{-1, 0, -1, -1});
           continue;
         }
       }
