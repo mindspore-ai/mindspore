@@ -118,7 +118,7 @@ def parameter_broadcast(net, layout, cur_rank=0, initial_rank=0):
     stage_num = ms.get_auto_parallel_context("pipeline_stages")
     check_num = initial_rank % (device_num / stage_num)
     if check_num != 0:
-        raise ValueError("For parameter broadcast, the initial_rank: {initial_rank} is wrong.")
+        raise ValueError(f"For parameter broadcast, the initial_rank: {initial_rank} is wrong.")
     param_redundancy = get_parameter_redundancy(layout, initial_rank)
     if not param_redundancy:
         return
@@ -145,7 +145,7 @@ def parameter_broadcast(net, layout, cur_rank=0, initial_rank=0):
         allreduce_input = []
         for param in params:
             if not param in net_param_dict:
-                raise ValueError("For parameter broadcast, the param: {param} can not be found.")
+                raise ValueError(f"For parameter broadcast, the param: {param} can not be found.")
             real_param = net_param_dict[param]
             if not param in cur_params:
                 real_param.set_data(Tensor(np.zeros(real_param.shape), dtype=real_param.dtype))
