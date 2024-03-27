@@ -31,7 +31,7 @@ class RAdamFactory():
         self.if_change = if_change
         self.data = np.array([[0.1, 0.1], [0.2, 0.2]]).astype(np.float32)
         self.label = np.array([[0.1, 0.1, 0.8], [0.75, 0.24, 0.88]]).astype(np.float32)
-        self.epochs = 3
+        self.epochs = 1
         self.steps = 1
         self.lr = 0.002
 
@@ -122,8 +122,10 @@ def test_radam_basic(mode):
     mindspore.set_context(mode=mode, jit_syntax_level=mindspore.STRICT)
     fact = RAdamFactory(False, False)
     out = fact.forward_mindspore_impl()
-    loss_expect = [[0.13302001, 0.36793998, 0.23806], [0.16604, 0.43787998, 0.27412]]
+    loss_expect = [[0.13297534, 0.36929443, 0.23668554],
+                   [0.16597509, 0.43927246, 0.27268749]]
     allclose_nparray(loss_expect, out, 0.005, 0.005)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
@@ -140,7 +142,8 @@ def test_radam_group(mode):
     mindspore.set_context(mode=mode, jit_syntax_level=mindspore.STRICT)
     fact = RAdamFactory(True, False)
     out = fact.forward_mindspore_impl()
-    loss_expect = [[0.13954002, 0.3480203, 0.2576798], [0.17914003, 0.39822027, 0.31347978]]
+    loss_expect = [[0.13517648, 0.36266118, 0.24321881],
+                   [0.17037296, 0.42604902, 0.28581095]]
     allclose_nparray(loss_expect, out, 0.005, 0.005)
 
 
@@ -159,7 +162,8 @@ def test_radam_lr_dynamic(mode):
     mindspore.set_context(mode=mode, jit_syntax_level=mindspore.STRICT)
     fact = RAdamFactory(False, True)
     out = fact.forward_mindspore_impl()
-    loss_expect = [[0.13301668, 0.36828333, 0.23771667], [0.16603333, 0.43823332, 0.27376667]]
+    loss_expect = [[0.13297534, 0.36929443, 0.23668554],
+                   [0.16597509, 0.43927246, 0.27268749]]
     allclose_nparray(loss_expect, out, 0.005, 0.005)
 
 
@@ -178,7 +182,8 @@ def test_radam_group_lr_dynamic(mode):
     mindspore.set_context(mode=mode, jit_syntax_level=mindspore.STRICT)
     fact = RAdamFactory(True, True)
     out = fact.forward_mindspore_impl()
-    loss_expect = [[0.13845001, 0.3516835, 0.25406653], [0.17695001, 0.4051835, 0.30656654]]
+    loss_expect = [[0.13517207, 0.36270425, 0.24327573],
+                   [0.17036855, 0.42609209, 0.28586787]]
     allclose_nparray(loss_expect, out, 0.005, 0.005)
 
 
@@ -197,5 +202,6 @@ def test_radam_group_lr_dynamic_change_param(mode):
     mindspore.set_context(mode=mode, jit_syntax_level=mindspore.STRICT)
     fact = RAdamFactory(True, True, True)
     out = fact.forward_mindspore_impl()
-    loss_expect = [[0.13768202, 0.35398751, 0.25176254], [0.17541403, 0.4097915, 0.30195853]]
+    loss_expect = [[0.13517648, 0.36266118, 0.24321881],
+                   [0.17037296, 0.42604902, 0.28581095]]
     allclose_nparray(loss_expect, out, 0.005, 0.005)

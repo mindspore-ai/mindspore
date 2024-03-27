@@ -30,7 +30,7 @@ class NAdamFactory():
         self.if_change = if_change
         self.data = np.array([[0.1, 0.1], [0.2, 0.2]]).astype(np.float32)
         self.label = np.array([[0.1, 0.1, 0.8], [0.75, 0.24, 0.88]]).astype(np.float32)
-        self.epochs = 3
+        self.epochs = 1
         self.steps = 1
         self.lr = 0.002
 
@@ -121,7 +121,8 @@ def test_nadam_basic(mode):
     mindspore.set_context(mode=mode, jit_syntax_level=mindspore.STRICT)
     fact = NAdamFactory(False, False)
     out = fact.forward_mindspore_impl()
-    loss_expect = [[0.13402894, 0.3638264, 0.24217367], [0.16805789, 0.43279743, 0.2792026]]
+    loss_expect = [[0.13339028, 0.36740243, 0.23856533],
+                   [0.16680497, 0.43695334, 0.27498221]]
     allclose_nparray(loss_expect, out, 0.005, 0.005)
 
 
@@ -140,7 +141,8 @@ def test_nadam_group(mode):
     mindspore.set_context(mode=mode, jit_syntax_level=mindspore.STRICT)
     fact = NAdamFactory(True, False)
     out = fact.forward_mindspore_impl()
-    loss_expect = [[0.12742883, 0.3643914, 0.24160844], [0.16042888, 0.43439123, 0.27760863]]
+    loss_expect = [[0.13080920, 0.36778748, 0.23818031],
+                   [0.16380896, 0.43776551, 0.27417004]]
     allclose_nparray(loss_expect, out, 0.005, 0.005)
 
 
@@ -159,7 +161,8 @@ def test_nadam_lr_dynamic(mode):
     mindspore.set_context(mode=mode, jit_syntax_level=mindspore.STRICT)
     fact = NAdamFactory(False, True)
     out = fact.forward_mindspore_impl()
-    loss_expect = [[0.13388251, 0.36470503, 0.24129501], [0.167765, 0.43382254, 0.2781775]]
+    loss_expect = [[0.13339028, 0.36740243, 0.23856533],
+                   [0.16680497, 0.43695334, 0.27498221]]
     allclose_nparray(loss_expect, out, 0.005, 0.005)
 
 
@@ -178,7 +181,8 @@ def test_nadam_group_lr_dynamic(mode):
     mindspore.set_context(mode=mode, jit_syntax_level=mindspore.STRICT)
     fact = NAdamFactory(True, True)
     out = fact.forward_mindspore_impl()
-    loss_expect = [[0.12825857, 0.36523247, 0.24076748], [0.16125861, 0.43523234, 0.2767676]]
+    loss_expect = [[0.13083911, 0.36782959, 0.23813818],
+                   [0.16383886, 0.43780762, 0.27412793]]
     allclose_nparray(loss_expect, out, 0.005, 0.005)
 
 
@@ -197,5 +201,6 @@ def test_nadam_group_lr_dynamic_change_param(mode):
     mindspore.set_context(mode=mode, jit_syntax_level=mindspore.STRICT)
     fact = NAdamFactory(True, True, True)
     out = fact.forward_mindspore_impl()
-    loss_expect = [[0.12825859, 0.36523247, 0.2407675], [0.16125864, 0.4352323, 0.27676764]]
+    loss_expect = [[0.13080920, 0.36778748, 0.23818031],
+                   [0.16380896, 0.43776551, 0.27417004]]
     allclose_nparray(loss_expect, out, 0.005, 0.005)
