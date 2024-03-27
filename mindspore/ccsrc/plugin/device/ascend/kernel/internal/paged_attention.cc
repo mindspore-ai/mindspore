@@ -40,8 +40,8 @@ void InternalPagedAttention::SetInOutIdx() {
   inputsIdxMap_[kIndex0] = kIndex0;
   inputsIdxMap_[kIndex1] = kIndex1;
   inputsIdxMap_[kIndex2] = kIndex2;
-  inputsIdxMap_[kIndex3] = kIndex3;
-  inputsIdxMap_[kIndex4] = kIndex4;
+  inputsIdxMap_[kIndex3] = kIndex4;
+  inputsIdxMap_[kIndex4] = kIndex3;
   outputsIdxMap_[kIndex0] = kIndex0;
 }
 
