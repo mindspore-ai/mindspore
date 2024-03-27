@@ -51,9 +51,9 @@ class Namespace:
         return f'Namespace:{self.name}'
 
 
-class CellNamespace(Namespace):
+class ModuleNamespace(Namespace):
     """
-    Namespace for Cell object.
+    Namespace for global object.
 
     Args:
         name (str): Valid module name, it can be imported.

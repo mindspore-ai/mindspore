@@ -20,9 +20,9 @@
 
 namespace mindspore {
 namespace python_adapter {
-// python scoped env, should only have one scoped_ instance
+// Python scoped env, should only have one scoped_ instance
 static std::shared_ptr<py::scoped_interpreter> scoped_ = nullptr;
-//  true: start process from python, false: start process from c++
+// Python env: true: start process from python, false: start process from c++
 static bool python_env_ = false;
 static bool use_signature_in_resolve_ = true;
 void ResetPythonScope() { scoped_ = nullptr; }
@@ -31,12 +31,12 @@ bool UseSignatureInResolve() { return use_signature_in_resolve_; }
 void set_python_env_flag(bool python_env) noexcept { python_env_ = python_env; }
 bool IsPythonEnv() { return python_env_; }
 void SetPythonPath(const std::string &path) {
-  // load the python module path
+  // Load the python module path
   (void)python_adapter::set_python_scoped();
   py::module sys = py::module::import("sys");
   py::list sys_path = sys.attr("path");
 
-  // check the path is exist?
+  // Check the path is exist?
   bool is_exist = false;
   for (size_t i = 0; i < sys_path.size(); i++) {
     if (!py::isinstance<py::str>(sys_path[i])) {
@@ -53,7 +53,7 @@ void SetPythonPath(const std::string &path) {
 }
 
 std::shared_ptr<py::scoped_interpreter> set_python_scoped() {
-  // if start process from python, no need set the python scope.
+  // If start process from python, no need set the python scope.
   if (!python_env_) {
     if ((Py_IsInitialized() == 0) && (scoped_ == nullptr)) {
       scoped_ = std::make_shared<py::scoped_interpreter>();
@@ -62,7 +62,7 @@ std::shared_ptr<py::scoped_interpreter> set_python_scoped() {
   return scoped_;
 }
 
-// return the module of python
+// Return the module of python
 py::module GetPyModule(const std::string &module) {
   if (!module.empty()) {
     return py::module::import(module.c_str());

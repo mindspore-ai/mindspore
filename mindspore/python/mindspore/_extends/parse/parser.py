@@ -45,7 +45,7 @@ from mindspore.common.parameter import Parameter
 from mindspore.common import mutable
 from mindspore.common._register_for_adapter import ms_adapter_registry
 from mindspore._checkparam import is_stub_tensor
-from .namespace import Namespace, CellNamespace, ClosureNamespace, ClassMemberNamespace
+from .namespace import Namespace, ModuleNamespace, ClosureNamespace, ClassMemberNamespace
 from .resources import parse_object_map, ops_symbol_map, convert_object_map, convert_class_to_function_map, trope_ns
 from .resources import SYMBOL_UNDEFINE, constant_fold_functions
 from ...common.api import _convert_python_data
@@ -546,7 +546,7 @@ def get_module_namespace(obj):
     logger.debug("get module namespace, module: %r", obj)
     mod_namespace = None
     if isinstance(obj, types.ModuleType):
-        mod_namespace = CellNamespace(obj.__name__)
+        mod_namespace = ModuleNamespace(obj.__name__)
     else:
         logger.warning("Module(%r) is invalid, get namespace failure!", obj)
     return mod_namespace
@@ -1085,7 +1085,7 @@ class Parser:
         self.filename: str = self.fn.__code__.co_filename
 
         # Used to resolve the function's globals namespace.
-        self.global_namespace = CellNamespace(self.fn.__module__)
+        self.global_namespace = ModuleNamespace(self.fn.__module__)
         self.global_namespace.dicts[0]["__ms_tensor_func__"] = tensor
 
         self.function_module = self.fn.__module__

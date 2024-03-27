@@ -13,6 +13,15 @@
 # limitations under the License.
 # ============================================================================
 """
+Name: BOOTSTRAP
+Function: Whether to use bootstrap action.
+Value Range:
+    1: Enable.
+    Default: Disable.
+"""
+BOOTSTRAP = ''
+
+"""
 Name: COMPILE_PROFILE
 Function: Whether to do profile and print profile log.
 Value Range:
@@ -205,6 +214,7 @@ TRACE_LABEL_WITH_UNIQUE_ID = ''
 
 
 __all__ = [
+    "BOOTSTRAP",
     "COMPILE_PROFILE",
     "COMPILE_PROFILE_FINISH_ACTION",
     "FALLBACK_SUPPORT_LIST_DICT_INPLACE",
