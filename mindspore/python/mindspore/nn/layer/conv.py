@@ -1480,8 +1480,6 @@ class Conv1dTranspose(_Conv):
         return self
 
     def construct(self, x):
-        x_shape = self.shape(x)
-        _check_input_3d(x_shape, self.cls_name)
         x = self.expand_dims(x, 2)
         n, _, h, w = self.shape(x)
         h_out = _deconv_output_length(self.is_valid, self.is_same, self.is_pad, h, self.kernel_size[0],

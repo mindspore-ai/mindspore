@@ -44,7 +44,7 @@ def _check_padding_dimension(dimension, padding):
             raise ValueError(f"For padding with length {len(padding) * 2}, the dimension of the tensor should "
                              f"be at least {len(padding)}, but got {dimension}")
     _check_padding(dimension, padding)
-    # add place holders
+    # add place-holders
     if dimension > len(padding):
         padding = [(0, 0) for _ in range(dimension - len(padding))] + [x for x in padding]
     return padding

@@ -45,6 +45,7 @@ def _check_dim(val, target, cls_name):
     def _check(val, target, cls_name):
         if val != target:
             raise ValueError(f"For '{cls_name}', the in_shape must have {target} dims, but got {val}.")
+
     _check(val, target, cls_name)
 
 
@@ -128,13 +129,7 @@ class _BatchNorm(Cell):
         self.assign_sub_mean = P.AssignSub().shard(data_parallel_strategy)
         self.assign_sub_var = P.AssignSub().shard(data_parallel_strategy)
 
-    @staticmethod
-    @_primexpr
-    def _check_input_dim(shape, cls_name):
-        raise NotImplementedError
-
     def construct(self, x):
-        self._check_input_dim(self.shape(x), self.cls_name)
         if self.use_batch_statistics is None:
             if self.training:
                 return self.bn_train(x,
@@ -245,15 +240,6 @@ class BatchNorm1d(_BatchNorm):
          [ 0.4999975   0.399998   0.59999704 0.89999545 ]]
     """
 
-    @staticmethod
-    @_primexpr
-    def _check_input_dim(shape, cls_name):
-        def _check(dim):
-            if dim not in (2, 3):
-                raise ValueError(f"For '{cls_name}', the must have 2 dims or 3 dims, but got {dim}.")
-        dim = len(shape)
-        _check(dim)
-
 
 class BatchNorm2d(_BatchNorm):
     r"""
@@ -347,12 +333,6 @@ class BatchNorm2d(_BatchNorm):
           [[ 0.999995 0.999995 ]
            [ 0.999995 0.999995 ]]]]
     """
-
-    @staticmethod
-    @_primexpr
-    def _check_input_dim(shape, cls_name):
-        dim = len(shape)
-        _check_dim(dim, 4, cls_name)
 
 
 class BatchNorm3d(Cell):
@@ -452,15 +432,8 @@ class BatchNorm3d(Cell):
         self.shape = P.Shape()
         self.reshape = P.Reshape()
 
-    @staticmethod
-    @_primexpr
-    def _check_input_dim(shape, cls_name):
-        dim = len(shape)
-        _check_dim(dim, 5, cls_name)
-
     def construct(self, x):
         x_shape = self.shape(x)
-        self._check_input_dim(x_shape, self.cls_name)
         x = self.reshape(x, (x_shape[0], x_shape[1], x_shape[2] * x_shape[3], x_shape[4]))
         bn2d_out = self.bn2d(x)
         bn3d_out = self.reshape(bn2d_out, x_shape)
@@ -576,6 +549,7 @@ class SyncBatchNorm(_BatchNorm):
           [[ 0.999995 0.999995 ]
            [ 0.999995 0.999995 ]]]]
     """
+
     @cell_attr_register(attrs=['num_features', 'process_groups'])
     def __init__(self,
                  num_features,
@@ -661,6 +635,7 @@ class SyncBatchNorm(_BatchNorm):
         def _check(dim):
             if dim not in (2, 4):
                 raise ValueError(f"For '{cls_name}', the must have 2 dims or 4 dims, but got {dim}.")
+
         dim = len(shape)
         _check(dim)
 
@@ -764,6 +739,7 @@ class LayerNorm(Cell):
 
 class _InstanceNorm(Cell):
     """Instance Normalization base class."""
+
     @cell_attr_register
     def __init__(self,
                  num_features,
@@ -899,7 +875,6 @@ class InstanceNorm1d(_InstanceNorm):
     def _check_input_dim(shape, cls_name):
         dim = len(shape)
         _check_dim(dim, 3, cls_name)
-
 
 
 class InstanceNorm2d(_InstanceNorm):
@@ -1170,6 +1145,7 @@ class GroupNorm(Cell):
             if channel != num_channel:
                 raise ValueError(f"{msg_prefix} channel(the second dim of the input 'x') must be equal to "
                                  f"num_channels, but got channel: {channel}, num_channels: {num_channel}.")
+
         _check()
 
     @staticmethod

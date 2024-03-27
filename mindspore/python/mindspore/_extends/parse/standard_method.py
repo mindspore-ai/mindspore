@@ -2091,13 +2091,6 @@ def sum(input, axis=None, dtype=None, keepdims=False, initial=None):  # pylint: 
 
 
 @_primexpr
-def _check_sum_to_size(size, input_dim, shape_input):
-    """Check the length of size of sum_to_size."""
-    if len(size) > input_dim:
-        raise ValueError(f"For sum_to_size, size {size} is not expandable to the tensor size {shape_input}.")
-
-
-@_primexpr
 def _count_axes(size, input_shape, shape_input):
     """Count the sum axes for sum_to_size."""
     axes = []
@@ -2117,7 +2110,6 @@ def sum_to_size(input, *size):
     if len(size) == 1 and isinstance(size[0], tuple):
         size = size[0]
     shape_input = input.shape
-    _check_sum_to_size(size, input.ndim, shape_input)
     if len(size) < input.ndim:
         pre_axis = tuple(axis for axis in range(input.ndim - len(size)))
         input = input.sum(pre_axis)
@@ -2197,7 +2189,6 @@ def repeat(x, repeats, axis=None):
         axis = 0
     if not isinstance(axis, int):
         const_utils.raise_type_error('axes should be integers')
-    check_axis_in_range(axis, x.ndim)
     axis = axis + x.ndim if axis < 0 else axis
 
     if len(repeats) == 1:
@@ -2206,9 +2197,6 @@ def repeat(x, repeats, axis=None):
             return empty_tensor(x.dtype)
         return repeat_elements(x, repeats, axis)
     size = x.shape[axis]
-    if len(repeats) != size:
-        const_utils.raise_value_error(
-            'operands could not be broadcast together')
     subs = P.Split(axis, size)(x)
     repeated_subs = []
     for sub_item, rep in zip(subs, repeats):
