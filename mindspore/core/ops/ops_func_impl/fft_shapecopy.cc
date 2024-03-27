@@ -24,8 +24,6 @@ BaseShapePtr FFTShapeCopyFuncImpl::InferShape(const PrimitivePtr &primitive,
                                               const std::vector<AbstractBasePtr> &input_args) const {
   auto dout_shape_ptr = input_args[kIndex0]->GetShape();
   auto dout_shape = dout_shape_ptr->GetShapeVector();
-
-  // When input is a dynamic rank, it needs to be processed in the kernel
   if (IsDynamicRank(dout_shape)) {
     ShapeVector dyn_output{abstract::TensorShape::kShapeRankAny};
     return std::make_shared<abstract::TensorShape>(dyn_output);

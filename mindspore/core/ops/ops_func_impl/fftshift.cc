@@ -57,7 +57,6 @@ int32_t FFTShiftFuncImpl::CheckValidation(const PrimitivePtr &primitive,
       }
     }
   }
-
   return check_status;
 }
 }  // namespace ops
