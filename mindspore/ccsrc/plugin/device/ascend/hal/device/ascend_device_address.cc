@@ -603,7 +603,7 @@ bool AscendDeviceAddress::SyncHostToDeviceImpl(const ShapeVector &shape, size_t 
     (void)host_shape.emplace_back(1);
   }
   std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
-  if (basic_format.find(DeviceAddress::format()) != basic_format.end() || DeviceAddress::format() == format) {
+  if (DeviceAddress::format() == format || basic_format.find(DeviceAddress::format()) != basic_format.end()) {
     if (type_id() == type) {
       CopyHostToDevice(host_ptr, size, tensor_data);
       sync_ok = true;
@@ -765,6 +765,31 @@ bool AscendDeviceAddress::AsyncDeviceToDevice(const ShapeVector & /* shape */, s
   }
   return ret;
 }
+
+
+bool AscendDeviceAddress::AsyncHostToDevice(size_t size, TypeId /* type */,
+                                            const void *host_ptr) const {
+  MS_ERROR_IF_NULL(host_ptr);
+  BindDevice();
+  if (!MoveToDevice(false)) {
+    MS_LOG(WARNING) << "Move data to device failed, check previous log for details.";
+  }
+  MS_ERROR_IF_NULL(GetDevicePtr());
+
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+  auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id);
+  MS_EXCEPTION_IF_NULL(runtime_instance);
+
+  auto ret = CALL_ASCEND_API(aclrtMemcpyAsync, GetDevicePtr(), size, host_ptr, size, ACL_MEMCPY_HOST_TO_DEVICE, runtime_instance->compute_stream());
+  if (ret != ACL_ERROR_NONE) {
+    MS_LOG(ERROR) << "Call aclrtMemcpyAsync host to device failed, the error num[" << ret << "]";
+    return false;
+  }
+  return true;
+}
+
 
 bool AscendDeviceAddress::AsyncHostToDevice(const ShapeVector & /* shape */, size_t size, TypeId /* type */,
                                             const void *host_ptr, size_t stream_id) const {

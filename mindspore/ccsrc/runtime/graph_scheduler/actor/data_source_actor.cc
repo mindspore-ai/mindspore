@@ -327,11 +327,10 @@ void HostQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *cons
         MS_LOG(INFO) << "Empty tuple sync";
         continue;
       }
-      // Sync data from host_tensor to device_tensor.
-      if (!device_tensor->SyncHostToDevice(
-            trans::GetRuntimePaddingShape(data_node_with_indexs_[i].first, data_node_with_indexs_[i].second),
-            LongToSize(host_tensor->data().nbytes()), host_tensor->data_type(), host_tensor->device_info().host_format_,
-            host_tensor->data_ptr())) {
+
+
+      if (!device_tensor->AsyncHostToDevice(LongToSize(host_tensor->data().nbytes()), host_tensor->data_type(), 
+            host_tensor->data_ptr()->data())) {
         SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "SyncHostToDevice failed.");
       }
       if (IsDynamic(device_tensor->host_shape())) {
