@@ -31,6 +31,8 @@ mindspore.dataset.vision.GaussianBlur
 
         指定该变换执行的设备。
 
+        - 当执行设备是 Ascend 时，参数 `kernel_size` 仅支持取值1、3、5。输入数据的维度限制为[4, 6]和[8192, 4096]之间。
+
         参数：
             - **device_target** (str, 可选) - 算子将在指定的设备上运行。当前支持 ``CPU`` 和 ``Ascend`` 。默认值： ``CPU`` 。
 

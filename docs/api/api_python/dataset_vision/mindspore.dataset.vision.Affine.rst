@@ -9,7 +9,7 @@ mindspore.dataset.vision.Affine
 
     参数：
         - **degrees** (float) - 顺时针的旋转角度，取值需为-180到180之间。
-        - **translate** (Sequence[float, float]) - 水平和垂直方向上的平移长度，需为2元素序列。
+        - **translate** (Sequence[float, float]) - 水平和垂直方向上的平移长度，需为2元素序列，取值在-1和1之间。
         - **scale** (float) - 放缩因子，需为正数。
         - **shear** (Union[float, Sequence[float, float]]) - 裁切度数，取值需为-180到180之间。
           若输入单个数值，表示平行于X轴的裁切角度，不进行Y轴上的裁切；
@@ -35,6 +35,8 @@ mindspore.dataset.vision.Affine
     .. py:method:: device(device_target="CPU")
 
         指定该变换执行的设备。
+
+        - 当执行设备是 Ascend 时，输入数据的维度限制为[4, 6]和[32768, 32768]之间。
 
         参数：
             - **device_target** (str, 可选) - 算子将在指定的设备上运行。当前支持 ``CPU`` 和 ``Ascend`` 。默认值： ``CPU`` 。
