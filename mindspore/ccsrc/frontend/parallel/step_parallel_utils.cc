@@ -1914,7 +1914,7 @@ StrategyPtr ExtractStrategy(const ValuePtr &stra) {
 static bool IsCohesiveNode(const CNodePtr &cnode) {
   return IsPrimitiveCNode(cnode, prim::kPrimCast) || IsPrimitiveCNode(cnode, prim::kPrimLoad) ||
          IsPrimitiveCNode(cnode, prim::kPrimDepend) || IsPrimitiveCNode(cnode, prim::kPrimAllGather) ||
-         IsPrimitiveCNode(cnode, prim::kPrimMiniStepAllGather) ||
+         IsPrimitiveCNode(cnode, prim::kPrimMiniStepAllGather) || IsPrimitiveCNode(cnode, prim::kPrimMirrorMicroStep) ||
          IsPrimitiveCNode(cnode, prim::kPrimMicroStepAllGather);
 }
 
