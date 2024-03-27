@@ -835,29 +835,30 @@ void DynamicMemPoolBestFit::DumpDynamicMemPoolStateInfo() {
     }
 
     // Dump all the memory buf info
-    MS_LOG(INFO) << mem_type << " pool info: Total allocated mem:" << mem_mng->mps_.total_mem_size_ / kMBToByte
-                 << "M, peak used mem:" << mem_mng->mps_.used_mem_peak_size_ / kMBToByte
-                 << "M, in used mem:" << mem_mng->mps_.total_used_mem_size_ / kMBToByte << "M, total idle mem:"
-                 << (mem_mng->mps_.total_mem_size_ - mem_mng->mps_.total_used_mem_size_) / kMBToByte
-                 << "M. Block unit size:" << mem_mng->unit_size_ / kMBToByte
-                 << "M, block counts:" << mem_mng->mem_block_list_.size() << buf.str();
+    MS_LOG(WARNING) << mem_type << " pool info: Total allocated mem:" << mem_mng->mps_.total_mem_size_ / kMBToByte
+                    << "M, peak used mem:" << mem_mng->mps_.used_mem_peak_size_ / kMBToByte
+                    << "M, acltual peak used mem: " << mem_mng->CalActualPeak() / kMBToByte
+                    << "M, in used mem:" << mem_mng->mps_.total_used_mem_size_ / kMBToByte << "M, total idle mem:"
+                    << (mem_mng->mps_.total_mem_size_ - mem_mng->mps_.total_used_mem_size_) / kMBToByte
+                    << "M. Block unit size:" << mem_mng->unit_size_ / kMBToByte
+                    << "M, block counts:" << mem_mng->mem_block_list_.size() << buf.str();
   };
 
   fn(common_mem_, std::string(kCommonMem));
   fn(persistent_mem_, std::string(kPersistentParamMem));
-  MS_LOG(INFO) << "The dynamic memory pool total allocated mem:" << TotalMemStatistics() / kMBToByte
-               << "M, peak used mem:" << UsedMemPeakStatistics() / kMBToByte
-               << "M, actual peak used mem:" << ActualPeakStatistics() / kMBToByte
-               << "M, in used mem:" << TotalUsedMemStatistics() / kMBToByte
-               << "M, total idle mem:" << TotalIdleMemStatistics() / kMBToByte
-               << "M, total eager free mem:" << TotalEagerFreeMemStatistics() / kMBToByte
-               << "M. Weight used size:" << total_used_size_list[static_cast<int>(AllocatorType::kWeight)] / kMBToByte
-               << "M, constant value used size:"
-               << total_used_size_list[static_cast<int>(AllocatorType::kConstantValue)] / kMBToByte
-               << "M, kernel output used size:"
-               << total_used_size_list[static_cast<int>(AllocatorType::kKernelOutput)] / kMBToByte
-               << "M, other used size:" << total_used_size_list[static_cast<int>(AllocatorType::kOther)] / kMBToByte
-               << "M.";
+  MS_LOG(WARNING) << "The dynamic memory pool total allocated mem:" << TotalMemStatistics() / kMBToByte
+                  << "M, peak used mem:" << UsedMemPeakStatistics() / kMBToByte
+                  << "M, actual peak used mem:" << ActualPeakStatistics() / kMBToByte
+                  << "M, in used mem:" << TotalUsedMemStatistics() / kMBToByte
+                  << "M, total idle mem:" << TotalIdleMemStatistics() / kMBToByte
+                  << "M, total eager free mem:" << TotalEagerFreeMemStatistics() / kMBToByte << "M. Weight used size:"
+                  << total_used_size_list[static_cast<int>(AllocatorType::kWeight)] / kMBToByte
+                  << "M, constant value used size:"
+                  << total_used_size_list[static_cast<int>(AllocatorType::kConstantValue)] / kMBToByte
+                  << "M, kernel output used size:"
+                  << total_used_size_list[static_cast<int>(AllocatorType::kKernelOutput)] / kMBToByte
+                  << "M, other used size:" << total_used_size_list[static_cast<int>(AllocatorType::kOther)] / kMBToByte
+                  << "M.";
 }
 
 void DynamicMemPoolBestFit::DumpDynamicMemPoolDebugInfo() {
