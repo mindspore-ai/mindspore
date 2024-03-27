@@ -824,6 +824,7 @@ class PyFunc(PrimitiveWithInfer):
                        "Do not use it as it could be any uninitialized data.")
         return (typing.TensorType(mstype.int32),)
 
+
 class Reusing(Primitive):
     r"""
     Make the function graph to be labeled as no inline.
