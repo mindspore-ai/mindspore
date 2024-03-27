@@ -830,7 +830,12 @@ void InsertVirtualOutput(const FuncGraphPtr &root, const std::vector<AnfNodePtr>
   OperatorAttrs attrs;
   OperatorArgs args = std::make_pair(attrs, params);
   Operator op = std::make_pair(VIRTUAL_OUTPUT, args);
-  if (IsPrimitiveCNode(out_node, prim::kPrimMakeTuple)) {
+  // Temporarily circumvent the MatmulQkv problem, and then modify it
+  auto cnode = dyn_cast_ptr<CNode>(out_node);
+  const auto &input = cnode->input(0);
+  MS_EXCEPTION_IF_NULL(input);
+  auto prim = GetValuePtr<Primitive>(input);
+  if (IsPrimitiveCNode(out_node, prim::kPrimMakeTuple) || prim->name() == "MatmulQkv") {
     auto tuple = out_node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(tuple);
     for (size_t i = 1; i < tuple->size(); ++i) {
