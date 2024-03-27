@@ -60,25 +60,23 @@ BaseShapePtr MatMulFuncImpl::InferShape(const PrimitivePtr &primitive,
     return std::make_shared<abstract::Shape>(ret_shape);
   }
 
-  const size_t SHAPE_SIZE = 2;
-  if (x_shp.size() == SHAPE_SIZE && y_shp.size() == SHAPE_SIZE) {
-    return InferShape2D(x_shp, y_shp, transpose_a, transpose_b);
-  }
-
-  if (x_shp.size() != y_shp.size() && x_shp.size() == kDim3) {
-    ShapeVector ret_shape{x_shp[0], x_shp[1], y_shp[y_shp.size() - 1]};
-    return std::make_shared<abstract::Shape>(ret_shape);
-  }
-  return nullptr;
+  return InferShape2D(x_shp, y_shp, transpose_a, transpose_b);
 }
+
 BaseShapePtr MatMulFuncImpl::InferShape2D(const ShapeVector &x_shp, const ShapeVector &y_shp, bool transpose_a,
-                                          bool transpose_b) const {
+                                          bool transpose_b) {
+  const size_t SHAPE_SIZE = 2;
+
+  if (x_shp.size() != SHAPE_SIZE || y_shp.size() != SHAPE_SIZE) {
+    MS_EXCEPTION(ValueError) << "MatMul inputs should have the same dimension size and equal to 2.";
+  }
   auto x_col = x_shp[(transpose_a ? 0 : 1)];
   auto y_row = y_shp[(transpose_b ? 1 : 0)];
   if (x_col != y_row && x_col >= 0 && y_row >= 0) {
     MS_EXCEPTION(ValueError) << "For 'MatMul' the input dimensions must be equal, but got 'x1_col': " << x_col
                              << " and 'x2_row': " << y_row << ".";
   }
+
   ShapeVector ret_shape;
   auto make_shape = [&transpose_a, &transpose_b](ShapeVector &output, const ShapeVector xshp,
                                                  const ShapeVector yshp) -> void {
