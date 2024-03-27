@@ -40,6 +40,7 @@ class FallbackIRBuilder : public IrEmitter {
 
   AnfNodePtr Run(const CNodePtr &cnode, const IRBuilderHandle &handle);
   ValuePtr GetAttr(const std::string &attr) const;
+  TypePtr GetDtype(const NodePtr &node) const { return node->dtype(); }
   template <typename S>
   S GetAttr(const std::string &attr) const {
     return GetValue<S>(GetAttr(attr));

@@ -19,6 +19,7 @@
 
 #include <vector>
 #include <memory>
+#include <string>
 #include "ir/tensor.h"
 #include "ir/value.h"
 #include "runtime/hardware/device_context_manager.h"
@@ -34,6 +35,16 @@ tensor::TensorPtr BACKEND_EXPORT CopyCustomizeCall(const std::shared_ptr<OpRunne
 // return nullptr and do nothing.
 tensor::TensorPtr BACKEND_EXPORT ContiguousTensorOpProcess(const std::shared_ptr<OpRunner> &op,
                                                            const TensorPtr &input_tensor);
+tensor::TensorPtr BACKEND_EXPORT ClampTensorCustomizeCall(const std::shared_ptr<OpRunner> &op,
+                                                          const TensorPtr &x_tensor,
+                                                          const std::optional<TensorPtr> &min,
+                                                          const std::optional<TensorPtr> &max,
+                                                          const std::string &device_target);
+tensor::TensorPtr BACKEND_EXPORT ClampScalarCustomizeCall(const std::shared_ptr<OpRunner> &op,
+                                                          const TensorPtr &x_tensor,
+                                                          const std::optional<ScalarPtr> &min,
+                                                          const std::optional<ScalarPtr> &max,
+                                                          const std::string &device_target);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

@@ -16,6 +16,8 @@
 #include "frontend/expander/bprop/bprop_irbuilder.h"
 #include "frontend/expander/bprop/grad_ops/common_utils.h"
 #include "include/common/utils/utils.h"
+#include "ops/array_op_name.h"
+#include "ops/array_ops.h"
 
 namespace mindspore::expander::bprop {
 REG_BPROP_BUILDERS_BEGIN(GradClipOps)
@@ -53,6 +55,80 @@ REG_BPROP_BUILDER("ClipByNorm").SetBody(BODYFUNC(ib) {
   auto x_dout = ib->Cast(ib->Add(mul_dout_x, square_dout_x), ib->GetDtype(x));
   auto clip_norm_dout = ib->Cast(ib->Add(mul_dout_y, max_dout_y), ib->GetDtype(clip_norm));
   return {x_dout, clip_norm_dout};
+});
+
+REG_BPROP_BUILDER("ClampTensor").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto min = ib->GetInput(kIndex1);
+  auto max = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex4);
+  auto zero = ib->Fill(static_cast<int64_t>(0), ib->Shape(dout), ib->GetDtype(dout)->type_id());
+  bool min_type_none = ib->GetDtype(min)->isa<TypeNone>();
+  bool max_type_none = ib->GetDtype(max)->isa<TypeNone>();
+
+  if (!min_type_none) {
+    if (ib->GetDtype(x)->type_id() != ib->GetDtype(min)->type_id()) {
+      min = ib->Cast(min, ib->GetDtype(x)->type_id());
+    }
+  }
+  if (!max_type_none) {
+    if (ib->GetDtype(x)->type_id() != ib->GetDtype(max)->type_id()) {
+      max = ib->Cast(max, ib->GetDtype(x)->type_id());
+    }
+  }
+
+  if (!min_type_none && !max_type_none) {
+    auto is_in_Interval = ib->LogicalAnd(ib->GreaterEqual(x, min), ib->LessEqual(x, max));
+    auto is_lt_min = ib->LogicalAnd(ib->LessEqual(x, min), ib->LessEqual(min, max));
+    auto is_gt_max = ib->LogicalOr(ib->GreaterEqual(x, max), ib->LessEqual(max, min));
+    return {ib->Select(is_in_Interval, dout, zero), ib->Select(is_lt_min, dout, zero),
+            ib->Select(is_gt_max, dout, zero)};
+  }
+  if (!min_type_none) {
+    return {ib->Select(ib->GreaterEqual(x, min), dout, zero), ib->Select(ib->LessEqual(x, min), dout, zero),
+            ib->OutZeros(max)};
+  }
+  if (!max_type_none) {
+    return {ib->Select(ib->LessEqual(x, max), dout, zero), ib->OutZeros(min),
+            ib->Select(ib->GreaterEqual(x, max), dout, zero)};
+  }
+  return {dout, ib->OutZeros(min), ib->OutZeros(max)};
+});
+
+REG_BPROP_BUILDER("ClampScalar").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto min = ib->GetInput(kIndex1);
+  auto max = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex4);
+  auto zero = ib->Fill(static_cast<int64_t>(0), ib->Shape(dout), ib->GetDtype(dout)->type_id());
+  bool min_type_none = ib->GetDtype(min)->isa<TypeNone>();
+  bool max_type_none = ib->GetDtype(max)->isa<TypeNone>();
+
+  if (!min_type_none) {
+    min = ib->ScalarToTensor(min, ib->GetDtype(min));
+    if (ib->GetDtype(x)->type_id() != ib->GetDtype(min)->type_id()) {
+      min = ib->Cast(min, ib->GetDtype(x)->type_id());
+    }
+  }
+  if (!max_type_none) {
+    max = ib->ScalarToTensor(max, ib->GetDtype(min));
+    if (ib->GetDtype(x)->type_id() != ib->GetDtype(max)->type_id()) {
+      max = ib->Cast(max, ib->GetDtype(x)->type_id());
+    }
+  }
+
+  if (!min_type_none && !max_type_none) {
+    auto is_in_Interval = ib->LogicalAnd(ib->GreaterEqual(x, min), ib->LessEqual(x, max));
+    return {ib->Select(is_in_Interval, dout, zero), ib->OutZeros(min), ib->OutZeros(max)};
+  }
+  if (!min_type_none) {
+    return {ib->Select(ib->GreaterEqual(x, min), dout, zero), ib->OutZeros(min), ib->OutZeros(max)};
+  }
+  if (!max_type_none) {
+    return {ib->Select(ib->LessEqual(x, max), dout, zero), ib->OutZeros(min), ib->OutZeros(max)};
+  }
+
+  return {dout, ib->OutZeros(min), ib->OutZeros(max)};
 });
 REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop
