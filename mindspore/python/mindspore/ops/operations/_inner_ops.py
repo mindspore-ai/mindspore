@@ -2459,9 +2459,7 @@ class ConvertToMsTensor(Primitive):
     def __call__(self, x):
         """Run in PyNative mode"""
         if isinstance(x, StubTensor):
-            stub_tensor = StubTensor(stub=x.stub, tensor=x.tensor)
-            setattr(stub_tensor, "adapter_flag", False)
-            return stub_tensor
+            return StubTensor(stub=x.stub, tensor=x.tensor)
         return ops.auto_generate.deepcopy(x)
 
 
