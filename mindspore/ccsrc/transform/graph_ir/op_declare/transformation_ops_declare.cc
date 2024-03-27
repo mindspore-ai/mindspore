@@ -37,11 +37,11 @@ REG_ADPT_DESC(Unpack, mindspore::kUnpackOpName, ADPT_DESC(Unpack))
 
 // ExtractImagePatches
 INPUT_MAP(ExtractImagePatches) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(ExtractImagePatches) = {
-  {"ksizes", ATTR_DESC(ksizes, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
-  {"strides", ATTR_DESC(strides, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
-  {"rates", ATTR_DESC(rates, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
-  {"padding", ATTR_DESC(padding, AnyTraits<std::string>())}};
+INPUT_ATTR_MAP(ExtractImagePatches) = {{2, ATTR_DESC(ksizes, AnyTraits<std::vector<int64_t>>(), 4L, 1L)},
+                                       {3, ATTR_DESC(strides, AnyTraits<std::vector<int64_t>>(), 4L, 1L)},
+                                       {4, ATTR_DESC(rates, AnyTraits<std::vector<int64_t>>(), 4L, 1L)},
+                                       {5, ATTR_DESC(padding, AnyTraits<GEPadMod>())}};
+ATTR_MAP(ExtractImagePatches) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(ExtractImagePatches) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ExtractImagePatches, kNameExtractImagePatches, ADPT_DESC(ExtractImagePatches))
 
