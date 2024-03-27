@@ -15,6 +15,7 @@
  */
 
 #include "op_proto/inc/random_ops.h"
+#include "op_proto/inc/math_ops.h"
 #include "op_proto/inc/stateful_random_ops.h"
 #include "custom_op_proto/cust_random_ops.h"
 #include "register/op_impl_registry.h"
@@ -354,33 +355,42 @@ CUST_INFER_FUNC_REG(RandomUniformInt, RandomUniformIntInfer);
 // ----------------RandomUniformInt End-------------------
 
 // ----------------Igamma-------------------
-CUST_IMPLEMT_INFERFUNC(Igamma, IgammaInfer) {
-  DataType a_type = op.GetInputDescByName("a").GetDataType();
-  TensorDesc z_desc = op.GetOutputDescByName("z");
-  z_desc.SetDataType(a_type);
-  if (op.UpdateOutputDesc("z", z_desc) != GRAPH_SUCCESS) {
-    return GRAPH_FAILED;
-  }
-  auto a_desc = op.GetInputDescByName("a");
-  auto a_shape = a_desc.GetShape();
-  if (IsUnknownRankShape(a_shape)) {
-    std::vector<int64_t> out_dim{ge::UNKNOWN_DIM_NUM};
-    z_desc.SetShape(ge::Shape(out_dim));
-    return op.UpdateOutputDesc("z", z_desc);
-  }
-  if (IsUnknown(a_shape.GetDims())) {
-    int64_t x_rank = a_shape.GetDims().size();
-    std::vector<int64_t> out_dim(x_rank);
-    for (int64_t di = 0; di < x_rank; di++) {
-      out_dim[di] = UNKNOWN_DIM;
-    }
-    z_desc.SetShape(ge::Shape(out_dim));
-    return op.UpdateOutputDesc("z", z_desc);
-  }
-  return BROADCAST_INFER("a", "x", "z")(op);
-}
 
+#define IGAMMA_INFER()                                          \
+  do {                                                          \
+    DataType a_type = op.GetInputDescByName("a").GetDataType(); \
+    TensorDesc z_desc = op.GetOutputDescByName("z");            \
+    z_desc.SetDataType(a_type);                                 \
+    if (op.UpdateOutputDesc("z", z_desc) != GRAPH_SUCCESS) {    \
+      return GRAPH_FAILED;                                      \
+    }                                                           \
+    auto a_desc = op.GetInputDescByName("a");                   \
+    auto a_shape = a_desc.GetShape();                           \
+    if (IsUnknownRankShape(a_shape)) {                          \
+      std::vector<int64_t> out_dim{ge::UNKNOWN_DIM_NUM};        \
+      z_desc.SetShape(ge::Shape(out_dim));                      \
+      return op.UpdateOutputDesc("z", z_desc);                  \
+    }                                                           \
+    if (IsUnknown(a_shape.GetDims())) {                         \
+      int64_t x_rank = a_shape.GetDims().size();                \
+      std::vector<int64_t> out_dim(x_rank);                     \
+      for (int64_t di = 0; di < x_rank; di++) {                 \
+        out_dim[di] = UNKNOWN_DIM;                              \
+      }                                                         \
+      z_desc.SetShape(ge::Shape(out_dim));                      \
+      return op.UpdateOutputDesc("z", z_desc);                  \
+    }                                                           \
+    return BROADCAST_INFER("a", "x", "z")(op);                  \
+  } while (false)
+
+CUST_IMPLEMT_INFERFUNC(Igamma, IgammaInfer) { IGAMMA_INFER(); }
 CUST_INFER_FUNC_REG(Igamma, IgammaInfer);
+
+IMPLEMT_INFERFUNC(Igammac, IgammacInfer) { IGAMMA_INFER(); }
+INFER_FUNC_REG(Igammac, IgammacInfer);
+
+IMPLEMT_INFERFUNC(IgammaGradA, IgammaGradAInfer) { IGAMMA_INFER(); }
+INFER_FUNC_REG(IgammaGradA, IgammaGradAInfer);
 // ----------------Igamma END-------------------
 
 // ----------------Poisson-------------------
