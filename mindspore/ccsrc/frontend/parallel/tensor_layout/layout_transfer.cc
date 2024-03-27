@@ -360,9 +360,9 @@ Status LayoutTransfer::CalculateFromTensorShape(Shape *from_shape, const Array &
     // Existed dim in from_layout already satisfy to_layout_added_factor.
     to_layout_added_factor = -1;
   }
-  MS_LOG(DEBUG) << "from_shape=" << (*from_shape) << ", from_factors=" << from_factors.array()
-                << ", to_shape=" << to_shape << ", to_factors=" << to_factors.array()
-                << ", to_layout_added_factor=" << to_layout_added_factor;
+  MS_LOG(INFO) << "from_shape=" << (*from_shape) << ", from_factors=" << from_factors.array()
+               << ", to_shape=" << to_shape << ", to_factors=" << to_factors.array()
+               << ", to_layout_added_factor=" << to_layout_added_factor;
   bool strict_mode = UseStrictMode(*from_shape, to_shape);
   std::vector<int64_t> known_dims;
   (void)std::copy_if(from_shape->begin(), from_shape->end(), std::back_inserter(known_dims),
