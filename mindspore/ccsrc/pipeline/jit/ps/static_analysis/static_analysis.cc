@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2023 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -297,7 +297,11 @@ EvalResultPtr ConvertToPyInterpretCall(const CNodePtr &cnode, const AnfNodeConfi
 }
 
 EvalResultPtr ParsePyObjToFunc(const py::object &py_fn, const CNodePtr &cnode, const AnfNodeConfigPtr &conf) {
-  auto list_func_fg = parse::ParsePythonCode(py_fn);
+  FuncGraphPtr list_func_fg = nullptr;
+  {
+    MS_LOG_TRY_CATCH_SCOPE;
+    list_func_fg = parse::ParsePythonCode(py_fn);
+  }
   if (list_func_fg != nullptr) {
     auto fg = cnode->func_graph();
     MS_EXCEPTION_IF_NULL(fg);
