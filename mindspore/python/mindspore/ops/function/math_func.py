@@ -31,7 +31,7 @@ from mindspore.ops import composite as C
 from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
 from mindspore.ops.primitive import constexpr, _primexpr
 from mindspore.ops.operations._inner_ops import TileSize
-from mindspore.ops.auto_generate import Cummin, BatchMatMul, ArgMaxExt
+from mindspore.ops.auto_generate import Cummin, BatchMatMul
 from mindspore.ops import auto_generate
 from mindspore.ops.operations.math_ops import STFT
 from mindspore.ops.operations.math_ops import LuUnpack
@@ -42,7 +42,7 @@ from mindspore.ops.auto_generate import (minimum, maximum, mul, sin, sinc, sinh,
                                          matrix_exp, sqrt, rsqrt, square, trace, nextafter, abs, acos, acosh, angle,
                                          asin, asinh, atan, atan2, atanh, ceil, equal, erf, erfc, erfinv, exp, expm1,
                                          floor, floor_divide, floor_mod, gcd, greater, greater_equal, less, less_equal,
-                                         log, log1p, neg, not_equal, pow, round, isfinite, mean, sum_ext)
+                                         log, log1p, neg, not_equal, pow, round, isfinite, argmax, mean, sum_ext)
 from mindspore.nn import layer
 from mindspore._checkparam import check_is_number
 from mindspore import _checkparam as validator
@@ -144,7 +144,6 @@ asinh_ = P.Asinh()
 atan2_ = P.Atan2()
 atan_ = P.Atan()
 atanh_ = P.Atanh()
-argmax_ext_ = ArgMaxExt()
 batch_matmul_ = BatchMatMul()
 bessel_i0_ = BesselI0()
 bessel_i0e_ = P.BesselI0e()
@@ -510,39 +509,6 @@ def exp2(input):
         tensor_2 = Tensor(np.array(2.0).astype(np.float16))
     return exp2_(tensor_2, input)
 
-def argmax(input, dim=None, keepdim=False):
-    r"""
-    Return the indices of the maximum values of a tensor across a dimension.
-
-    Args:
-        input (Tensor): Input tensor.
-        dim (Union[int, None], optional): The dimension to reduce. If `dim` is ``None`` , the indices of the maximum
-            value within the flattened input will be returned. Default: ``None`` .
-        keepdim (bool, optional): Whether the output tensor retains the specified
-            dimension. Ignored if `dim` is None. Default: ``False`` .
-
-    Returns:
-        Tensor, indices of the maximum values across a dimension.
-
-    Raises:
-        TypeError: If `keepdim` is not bool.
-        ValueError: If `dim` is out of range.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.array([[1, 20, 5], [67, 8, 9], [130, 24, 15]]).astype(np.float32))
-        >>> output = ops.argmax(x, dim=-1)
-        >>> print(output)
-        [1 0 0]
-    """
-    if dim is not None and not isinstance(dim, int):
-        raise TypeError(f'dim should be integers, not {type(dim)}')
-    out = argmax_ext_(input, dim, keepdim)
-    return out
 
 def argmin(input, axis=None, keepdims=False):
     """

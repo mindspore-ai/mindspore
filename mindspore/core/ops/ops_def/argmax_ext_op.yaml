@@ -15,7 +15,7 @@ argmax_ext:
   class:
     name: ArgMaxExt
   function:
-    disable: True
+    name: argmax
   dispatch:
     enable: True
     Ascend: ArgMaxAscend
