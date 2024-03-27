@@ -1,7 +1,7 @@
 mindspore.JitConfig
 ====================
 
-.. py:class:: mindspore.JitConfig(jit_level="O1", exc_mode="auto", jit_syntax_level="", **kwargs)
+.. py:class:: mindspore.JitConfig(jit_level="O1", exc_mode="auto", jit_syntax_level="", debug_level="RELEASE", **kwargs)
 
     编译时所使用的JitConfig配置项。
 
@@ -25,5 +25,10 @@ mindspore.JitConfig
 		  
           - ``"STRICT"``: 仅支持基础语法，且执行性能最佳。可用于MindIR导入导出。
           - ``"LAX"``: 最大程度地兼容Python所有语法。执行性能可能会受影响，不是最佳。由于存在可能无法导出的语法，不能用于MindIR导入导出。
+
+        - **debug_level** (int) - 设置调试过程的配置。其值必须为 ``RELEASE`` 或 `` DEBUG`` 。默认值： ``RELEASE`` 。
+
+          - ``RELEASE`` : 正常场景下使用，一些调试信息会被丢弃以获取一个较好的编译性能。
+          - ``DEBUG`` : 当错误发生时，用来调试，在编译过程中，更多的调试信息会被记录下来。
 
         - **kwargs** (dict) - 关键字参数字典。

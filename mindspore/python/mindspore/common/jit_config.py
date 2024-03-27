@@ -49,6 +49,13 @@ class JitConfig:
               affected and not optimal. Cannot be used for MindIR load and export due to some syntax that may not be
               able to be exported.
 
+        debug_level (str, optional): Set debugging level for graph compiling.
+            The value must be ``"RELEASE"`` or ``"DEBUG"``. Default value: ``RELEASE``.
+
+            - ``RELEASE``: Used for normally running, and some debug information will be discard to get a better
+              compiling performance.
+            - ``DEBUG``: Used for debugging when errors occur, more information will be record in compiling process.
+
         **kwargs (dict): A dictionary of keyword arguments that the class needs.
 
     Examples:
@@ -62,14 +69,17 @@ class JitConfig:
         >>>
         >>> net.set_jit_config(jitconfig)
     """
-    def __init__(self, jit_level="O1", exc_mode="auto", jit_syntax_level="", **kwargs):
+    def __init__(self, jit_level="O1", exc_mode="auto", jit_syntax_level="", debug_level="RELEASE", **kwargs):
         if jit_level not in ["O0", "O1", "O2"]:
             raise ValueError("For 'jit_level' must be one of ['O0', 'O1', 'O2'].")
         if exc_mode not in ['auto', 'sink', 'no_sink']:
             raise ValueError("For 'exc_mode' must be one of '['auto', 'sink', 'no_sink']'.")
         if jit_syntax_level != "" and jit_syntax_level not in ['STRICT', 'COMPATIBLE', 'LAX']:
             raise ValueError("For 'jit_syntax_level' must be one of '['STRICT', 'LAX']'.")
+        if debug_level not in ['RELEASE', 'DEBUG']:
+            raise ValueError("For 'debug_level' must be one of '['RELEASE', 'DEBUG']'.")
         self.jit_config_dict = kwargs
         self.jit_config_dict["jit_level"] = jit_level
         self.jit_config_dict["exc_mode"] = exc_mode
         self.jit_config_dict["jit_syntax_level"] = jit_syntax_level
+        self.jit_config_dict["debug_level"] = debug_level

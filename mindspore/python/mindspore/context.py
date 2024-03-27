@@ -50,6 +50,10 @@ STRICT = 0
 COMPATIBLE = 1
 LAX = 2
 
+# Enumerate for the property 'debug_level'.
+RELEASE = 0
+DEBUG = 1
+
 
 def _make_directory(path):
     """Make directory."""
@@ -213,6 +217,14 @@ class _Context:
             raise ValueError(f"For 'context.set_jit_syntax_level', the argument 'level' should be context.STRICT "
                              f"or context.LAX, but got {level}.")
         self.set_param(ms_ctx_param.jit_syntax_level, level)
+
+    def set_debug_level(self, level):
+        """"Set the debug level for graph compiling"""
+        if level != RELEASE and level != DEBUG:
+            raise ValueError(f"For 'context.set_debug_level', the argument 'level' should be context.RELEASE "
+                             f"or context.DEBUG, but got {level}.")
+        self.set_param(ms_ctx_param.debug_level, level)
+
 
     def set_memory_optimize_level(self, memory_optimize_level):
         """
@@ -572,6 +584,7 @@ class _Context:
         'deterministic': set_deterministic,
         'ascend_config': set_ascend_config,
         'jit_syntax_level': set_jit_syntax_level,
+        'debug_level': set_debug_level,
         'gpu_config': set_gpu_config,
         'aoe_config': set_aoe_config,
     }
@@ -1081,7 +1094,7 @@ def _check_target_specific_cfgs(device, arg_key):
                  max_device_memory=str, print_file_path=str, max_call_depth=int, env_config_path=str,
                  graph_kernel_flags=str, save_compile_cache=bool, runtime_num_threads=int, load_compile_cache=bool,
                  grad_for_scalar=bool, pynative_synchronize=bool, mempool_block_size=str, disable_format_transform=bool,
-                 op_timeout=int, deterministic=str, ascend_config=dict, jit_syntax_level=int,
+                 op_timeout=int, deterministic=str, ascend_config=dict, jit_syntax_level=int, debug_level=int,
                  jit_enable_inplace_ops=bool, gpu_config=dict)
 def set_context(**kwargs):
     """
@@ -1131,6 +1144,8 @@ def set_context(**kwargs):
     |                         |  reserve_class_name_in_scope |  CPU/GPU/Ascend            |
     |                         +------------------------------+----------------------------+
     |                         |  pynative_synchronize        |  CPU/GPU/Ascend            |
+    |                         +------------------------------+----------------------------+
+    |                         |  debug_level                 |  CPU/GPU/Ascend            |
     +-------------------------+------------------------------+----------------------------+
     | Executive Control       |   mode                       |   CPU/GPU/Ascend           |
     |                         +------------------------------+----------------------------+
@@ -1448,6 +1463,12 @@ def set_context(**kwargs):
               affected and not optimal. Cannot be used for MindIR load and export due to some syntax that may not be
               able to be exported.
 
+        debug_level (int): Set config for debugging. Default value: `RELEASE``.
+
+            - ``RELEASE``: Used for normally running, and some debug information will be discard to get a better
+              compiling performance.
+            - ``DEBUG``: Used for debugging when errors occur, more information will be record in compiling process.
+
         gpu_config (dict): Set the parameters specific to gpu hardware platform. It is not set by default.
             Currently, only setting `conv_fprop_algo` and `conv_dgrad_algo` and `conv_wgrad_algo` and `conv_allow_tf32`
             and `matmul_allow_tf32` are supported on GPU hardware platform.
@@ -1556,6 +1577,7 @@ def set_context(**kwargs):
         ...                "ge_options": {"global": {"ge.opSelectImplmode": "high_precision"},
         ...                               "session": {"ge.exec.atomicCleanPolicy": "0"}}})
         >>> ms.set_context(jit_syntax_level=ms.STRICT)
+        >>> ms.set_context(debug_level=ms.DEBUG)
         >>> ms.set_context(gpu_config={"conv_fprop_algo": "performance", "conv_allow_tf32": True,
         ...                "matmul_allow_tf32": True})
     """
@@ -1586,6 +1608,9 @@ def set_context(**kwargs):
         if key == 'jit_syntax_level' and value not in (STRICT, COMPATIBLE, LAX):
             raise ValueError(f"For 'jit_syntax_level', the value should be context.STRICT"
                              f" or context.LAX, but got {value}.")
+        if key == 'debug_level' and value not in (RELEASE, DEBUG):
+            raise ValueError(f"For 'debug_level', the value should be context.DEBUG"
+                             f" or context.RELEASE, but got {value}.")
         if not _check_target_specific_cfgs(device, key):
             continue
         if hasattr(ctx, key):
