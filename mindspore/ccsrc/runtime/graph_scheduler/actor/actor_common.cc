@@ -38,6 +38,7 @@ bool ActorDispatcher::is_memory_allocation_sync_ = true;
 bool ActorDispatcher::is_memory_free_sync_ = true;
 bool ActorDispatcher::enable_runtime_multi_pipeline_ = false;
 bool ActorDispatcher::enable_async_launch_kernel_ = false;
+bool ActorDispatcher::enable_static_shape_ = false;
 
 bool IsRunningFailed(const OpContext<DeviceTensor> *context) { return (context->error_info_ != ""); }
 
@@ -236,6 +237,17 @@ bool EnableAsyncInfer() {
   static const char kEnableAsyncInferdEnv[] = "MS_ENABLE_ASYNC_INFER";
   static bool ret = common::GetEnv(kEnableAsyncInferdEnv) == "1";
   return ret;
+}
+
+bool EnableKbkSubGraphExecute() {
+  static const char kEnableKbkSubGraphExecutedEnv[] = "MS_ENABLE_KBK_SUBGRAPH_EXECUTE";
+  static bool disable_sub_graph_execute_mode = common::GetEnv(kEnableKbkSubGraphExecutedEnv) == "0";
+  if (disable_sub_graph_execute_mode) {
+    return false;
+  }
+  // Only support sub graph execution mode for inference.
+  static const bool enable_internal_kernels = common::GetEnv("MS_ENABLE_INTERNAL_KERNELS") == "on";
+  return enable_internal_kernels;
 }
 
 bool WaitRuntimePipelineFinish(const OpContext<DeviceTensor> *context, bool wait_kernel_launch_finish) {

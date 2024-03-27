@@ -819,7 +819,8 @@ void DataPrepareActor::PrepareDataForHostTensorQueueNew(const VectorRef &args, O
   size_t current_data_num = 0;
   std::vector<TensorPtr> host_tensors;
   host_tensors.resize(host_data_size);
-
+  host_tensors_.resize(host_data_size);
+  bool isDyn = false;
   // Fill host tensors.
   for (size_t i = 0; i < graph_compiler_info_->origin_parameters_order_.size(); ++i) {
     if (current_data_num == host_data_size) {
@@ -857,6 +858,13 @@ void DataPrepareActor::PrepareDataForHostTensorQueueNew(const VectorRef &args, O
       }
       MS_LOG(INFO) << "Set host tensor position:" << tensor_position
                    << " for input parameter:" << origin_parameter->fullname_with_scope();
+
+      if (!isDyn) {
+         if(host_tensors_[tensor_position] != input_tensor->shape()) {
+             isDyn = true;
+         }
+      }
+      host_tensors_[tensor_position] = input_tensor->shape();
       host_tensors[tensor_position] = input_tensor;
       ++current_data_num;
 
@@ -871,6 +879,7 @@ void DataPrepareActor::PrepareDataForHostTensorQueueNew(const VectorRef &args, O
     }
   }
 
+  ActorDispatcher::set_enable_static_shape(!isDyn);
   host_tensor_queue_->Push(host_tensors);
 }
 
