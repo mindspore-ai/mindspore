@@ -15,8 +15,6 @@
  */
 
 #include "tools/benchmark_train/net_train_base.h"
-#define __STDC_FORMAT_MACROS
-#undef __STDC_FORMAT_MACROS
 #include <algorithm>
 #include <cstring>
 #ifdef ENABLE_NEON
