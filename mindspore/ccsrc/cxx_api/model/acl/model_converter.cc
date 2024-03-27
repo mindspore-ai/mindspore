@@ -81,7 +81,7 @@ transform::DfGraphPtr ModelConverter::ConvertFuncGraphToAIR(const FuncGraphPtr &
 #ifndef BUILD_LITE
   opt::ReduceOptimization(anf_graph);
 #endif
-  auto converter = transform::NewConverter(anf_graph, "", transform::RefModeFlag::kRefModeNone);
+  auto converter = transform::NewConverter(anf_graph, "", transform::RefModeFlag::kRefModeNone, true);
   std::string compute_graph_name = anf_graph->ToString();
   auto option = options_.lock();
   if (option != nullptr && !option->GetDumpModelName().empty()) {
