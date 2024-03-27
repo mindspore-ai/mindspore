@@ -7,7 +7,7 @@ layer_norm_grad_v3:
     Inputs:
         x (Tensor): The inputs of layer norm operator.
         dy (Tensor): The gradient of outputs of layer norm operator.
-        variance (Tensor): The variance of x.
+        rstd (Tensor): The rstd of x.
         mean (Tensor): The mean of x.
         gamma (Tensor): The weights of normalized elements.
         begin_norm_axis (int): The begin axis for the input to apply LayerNormV3. Default: 1.

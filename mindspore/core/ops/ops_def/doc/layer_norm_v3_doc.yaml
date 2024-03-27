@@ -31,7 +31,7 @@ layer_norm_v3:
           and the remaining dimensions are 1. Suppose the shape of the `input_x` is :math:`(x_1, x_2, \ldots, x_R)`,
           the shape of the `mean` is :math:`(x_1, \ldots, x_{begin_params_axis}, 1, \ldots, 1)`
           (when `begin_params_axis=0`, the shape of `mean` is :math:`(1, \ldots, 1)` ).
-        - **variance** (Tensor) - Shape is the same as `mean` .
+        - **rstd** (Tensor) - Shape is the same as `mean` .
 
     Raises:
         TypeError: If `begin_norm_axis` or `begin_params_axis` is not an int.
@@ -39,7 +39,7 @@ layer_norm_v3:
         TypeError: If `input_x`, `gamma` or `beta` is not a Tensor.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``Ascend`` 
 
     Examples:
         >>> import mindspore
