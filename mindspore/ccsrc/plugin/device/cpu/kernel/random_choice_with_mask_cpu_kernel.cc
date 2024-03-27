@@ -85,7 +85,7 @@ void UpdateOutput(const std::vector<int32_t> &dims_, const int32_t &non_zero_num
 
 bool RandomChoiceWithMaskCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                             const std::vector<KernelTensor *> &outputs) {
-  batch_rank_ = ops::get_batch_rank(primitive_);
+  batch_rank_ = LongToSize(ops::get_batch_rank(primitive_));
   constexpr size_t input_num = 1;
   constexpr size_t output_num = 2;
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
