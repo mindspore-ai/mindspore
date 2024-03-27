@@ -17,14 +17,14 @@ import os
 import sys
 import inspect
 import types
-from mindspore._extends.parse.namespace import CellNamespace
+from mindspore._extends.parse.namespace import ModuleNamespace
 from mindspore.nn import CellList, SequentialCell
 
 
-_ms_common_ns = CellNamespace('mindspore.common')
-_ms_nn_ns = CellNamespace('mindspore.nn')
-_ms_ops_ns = CellNamespace('mindspore.ops.operations')
-_ms_functional_ns = CellNamespace('mindspore.ops.functional')
+_ms_common_ns = ModuleNamespace('mindspore.common')
+_ms_nn_ns = ModuleNamespace('mindspore.nn')
+_ms_ops_ns = ModuleNamespace('mindspore.ops.operations')
+_ms_functional_ns = ModuleNamespace('mindspore.ops.functional')
 
 # Elements in _subtree_black_list will not be converted to symbol tree.
 # Only str and types are stored in _subtree_black_list.

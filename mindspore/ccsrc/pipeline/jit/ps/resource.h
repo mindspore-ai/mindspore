@@ -54,6 +54,7 @@ const char kOutput[] = "output";
 const char kPynativeGraphId[] = "graph_id";
 const char kActorInfo[] = "actor_info";
 const char kCompiler[] = "Compiler";
+const char kBootstrap[] = "bootstrap";
 const char kParse[] = "parse";
 const char kSymbolResolve[] = "symbol_resolve";
 const char kSetMixedPrecisionFlag[] = "set_mixed_precision_flag";
