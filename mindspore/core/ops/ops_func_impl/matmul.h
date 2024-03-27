@@ -28,8 +28,8 @@ class MIND_API MatMulFuncImpl : public OpFuncImpl {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
-  BaseShapePtr InferShape2D(const ShapeVector &x_shp, const ShapeVector &y_shp, bool transpose_a,
-                            bool transpose_b) const;
+  static BaseShapePtr InferShape2D(const ShapeVector &x_shp, const ShapeVector &y_shp, bool transpose_a,
+                                   bool transpose_b);
 };
 }  // namespace ops
 }  // namespace mindspore
