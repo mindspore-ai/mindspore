@@ -246,7 +246,10 @@ bool EnableKbkSubGraphExecute() {
     return false;
   }
   // Only support sub graph execution mode for inference.
-  static const bool enable_internal_kernels = common::GetEnv("MS_ENABLE_INTERNAL_KERNELS") == "on";
+  // static const bool enable_internal_kernels = common::GetEnv("MS_ENABLE_INTERNAL_KERNELS") == "on";
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  static const bool enable_internal_kernels = ms_context->IsEnableInferBoost();
   return enable_internal_kernels;
 }
 
