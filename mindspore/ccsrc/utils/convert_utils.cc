@@ -707,8 +707,6 @@ static const std::map<std::pair<TypeId, TypeId>, TypeId> tensor_tensor_convert_m
   {std::make_pair(kNumberTypeBool, kNumberTypeBFloat16), kNumberTypeBFloat16},
   {std::make_pair(kNumberTypeBool, kNumberTypeFloat32), kNumberTypeFloat32},
   {std::make_pair(kNumberTypeBool, kNumberTypeFloat64), kNumberTypeFloat64},
-  {std::make_pair(kNumberTypeBool, kNumberTypeComplex64), kNumberTypeComplex64},
-  {std::make_pair(kNumberTypeBool, kNumberTypeComplex128), kNumberTypeComplex128},
   // Int8
   {std::make_pair(kNumberTypeInt8, kNumberTypeInt8), kNumberTypeInt8},
   {std::make_pair(kNumberTypeInt8, kNumberTypeInt16), kNumberTypeInt16},
@@ -719,8 +717,6 @@ static const std::map<std::pair<TypeId, TypeId>, TypeId> tensor_tensor_convert_m
   {std::make_pair(kNumberTypeInt8, kNumberTypeBFloat16), kNumberTypeBFloat16},
   {std::make_pair(kNumberTypeInt8, kNumberTypeFloat32), kNumberTypeFloat32},
   {std::make_pair(kNumberTypeInt8, kNumberTypeFloat64), kNumberTypeFloat64},
-  {std::make_pair(kNumberTypeInt8, kNumberTypeComplex64), kNumberTypeComplex64},
-  {std::make_pair(kNumberTypeInt8, kNumberTypeComplex128), kNumberTypeComplex128},
   // Int16
   {std::make_pair(kNumberTypeInt16, kNumberTypeInt16), kNumberTypeInt16},
   {std::make_pair(kNumberTypeInt16, kNumberTypeInt32), kNumberTypeInt32},
@@ -730,8 +726,6 @@ static const std::map<std::pair<TypeId, TypeId>, TypeId> tensor_tensor_convert_m
   {std::make_pair(kNumberTypeInt16, kNumberTypeBFloat16), kNumberTypeBFloat16},
   {std::make_pair(kNumberTypeInt16, kNumberTypeFloat32), kNumberTypeFloat32},
   {std::make_pair(kNumberTypeInt16, kNumberTypeFloat64), kNumberTypeFloat64},
-  {std::make_pair(kNumberTypeInt16, kNumberTypeComplex64), kNumberTypeComplex64},
-  {std::make_pair(kNumberTypeInt16, kNumberTypeComplex128), kNumberTypeComplex128},
   // Int32
   {std::make_pair(kNumberTypeInt32, kNumberTypeInt32), kNumberTypeInt32},
   {std::make_pair(kNumberTypeInt32, kNumberTypeInt64), kNumberTypeInt64},
@@ -740,8 +734,6 @@ static const std::map<std::pair<TypeId, TypeId>, TypeId> tensor_tensor_convert_m
   {std::make_pair(kNumberTypeInt32, kNumberTypeBFloat16), kNumberTypeBFloat16},
   {std::make_pair(kNumberTypeInt32, kNumberTypeFloat32), kNumberTypeFloat32},
   {std::make_pair(kNumberTypeInt32, kNumberTypeFloat64), kNumberTypeFloat64},
-  {std::make_pair(kNumberTypeInt32, kNumberTypeComplex64), kNumberTypeComplex64},
-  {std::make_pair(kNumberTypeInt32, kNumberTypeComplex128), kNumberTypeComplex128},
   // Int64
   {std::make_pair(kNumberTypeInt64, kNumberTypeInt64), kNumberTypeInt64},
   {std::make_pair(kNumberTypeInt64, kNumberTypeUInt8), kNumberTypeInt64},
@@ -749,16 +741,12 @@ static const std::map<std::pair<TypeId, TypeId>, TypeId> tensor_tensor_convert_m
   {std::make_pair(kNumberTypeInt64, kNumberTypeBFloat16), kNumberTypeBFloat16},
   {std::make_pair(kNumberTypeInt64, kNumberTypeFloat32), kNumberTypeFloat32},
   {std::make_pair(kNumberTypeInt64, kNumberTypeFloat64), kNumberTypeFloat64},
-  {std::make_pair(kNumberTypeInt64, kNumberTypeComplex64), kNumberTypeComplex64},
-  {std::make_pair(kNumberTypeInt64, kNumberTypeComplex128), kNumberTypeComplex128},
   // UInt8
   {std::make_pair(kNumberTypeUInt8, kNumberTypeUInt8), kNumberTypeUInt8},
   {std::make_pair(kNumberTypeUInt8, kNumberTypeFloat16), kNumberTypeFloat16},
   {std::make_pair(kNumberTypeUInt8, kNumberTypeBFloat16), kNumberTypeBFloat16},
   {std::make_pair(kNumberTypeUInt8, kNumberTypeFloat32), kNumberTypeFloat32},
   {std::make_pair(kNumberTypeUInt8, kNumberTypeFloat64), kNumberTypeFloat64},
-  {std::make_pair(kNumberTypeUInt8, kNumberTypeComplex64), kNumberTypeComplex64},
-  {std::make_pair(kNumberTypeUInt8, kNumberTypeComplex128), kNumberTypeComplex128},
   // UInt16
   {std::make_pair(kNumberTypeUInt16, kNumberTypeUInt16), kNumberTypeUInt16},
   // UInt32
@@ -770,28 +758,15 @@ static const std::map<std::pair<TypeId, TypeId>, TypeId> tensor_tensor_convert_m
   {std::make_pair(kNumberTypeFloat16, kNumberTypeBFloat16), kNumberTypeFloat32},
   {std::make_pair(kNumberTypeFloat16, kNumberTypeFloat32), kNumberTypeFloat32},
   {std::make_pair(kNumberTypeFloat16, kNumberTypeFloat64), kNumberTypeFloat64},
-  {std::make_pair(kNumberTypeFloat16, kNumberTypeComplex64), kNumberTypeComplex64},
-  {std::make_pair(kNumberTypeFloat16, kNumberTypeComplex128), kNumberTypeComplex128},
   // BFloat16
   {std::make_pair(kNumberTypeBFloat16, kNumberTypeBFloat16), kNumberTypeBFloat16},
   {std::make_pair(kNumberTypeBFloat16, kNumberTypeFloat32), kNumberTypeFloat32},
   {std::make_pair(kNumberTypeBFloat16, kNumberTypeFloat64), kNumberTypeFloat64},
-  {std::make_pair(kNumberTypeBFloat16, kNumberTypeComplex64), kNumberTypeComplex64},
-  {std::make_pair(kNumberTypeBFloat16, kNumberTypeComplex128), kNumberTypeComplex128},
   // Float32
   {std::make_pair(kNumberTypeFloat32, kNumberTypeFloat32), kNumberTypeFloat32},
   {std::make_pair(kNumberTypeFloat32, kNumberTypeFloat64), kNumberTypeFloat64},
-  {std::make_pair(kNumberTypeFloat32, kNumberTypeComplex64), kNumberTypeComplex64},
-  {std::make_pair(kNumberTypeFloat32, kNumberTypeComplex128), kNumberTypeComplex128},
   // Float64
   {std::make_pair(kNumberTypeFloat64, kNumberTypeFloat64), kNumberTypeFloat64},
-  {std::make_pair(kNumberTypeFloat64, kNumberTypeComplex64), kNumberTypeComplex128},
-  {std::make_pair(kNumberTypeFloat64, kNumberTypeComplex128), kNumberTypeComplex128},
-  // Complex64
-  {std::make_pair(kNumberTypeComplex64, kNumberTypeComplex64), kNumberTypeComplex64},
-  {std::make_pair(kNumberTypeComplex64, kNumberTypeComplex128), kNumberTypeComplex128},
-  // Complex128
-  {std::make_pair(kNumberTypeComplex128, kNumberTypeComplex128), kNumberTypeComplex128},
 };
 
 static const std::map<std::pair<TypeId, TypeId>, TypeId> scalar_tensor_convert_map = {
@@ -809,8 +784,6 @@ static const std::map<std::pair<TypeId, TypeId>, TypeId> scalar_tensor_convert_m
   {std::make_pair(kNumberTypeBool, kNumberTypeBFloat16), kNumberTypeBFloat16},
   {std::make_pair(kNumberTypeBool, kNumberTypeFloat32), kNumberTypeFloat32},
   {std::make_pair(kNumberTypeBool, kNumberTypeFloat64), kNumberTypeFloat64},
-  {std::make_pair(kNumberTypeBool, kNumberTypeComplex64), kNumberTypeComplex64},
-  {std::make_pair(kNumberTypeBool, kNumberTypeComplex128), kNumberTypeComplex128},
   // Scalar is int.
   {std::make_pair(kNumberTypeInt64, kNumberTypeBool), kNumberTypeInt64},
   {std::make_pair(kNumberTypeInt64, kNumberTypeInt8), kNumberTypeInt8},
@@ -822,8 +795,6 @@ static const std::map<std::pair<TypeId, TypeId>, TypeId> scalar_tensor_convert_m
   {std::make_pair(kNumberTypeInt64, kNumberTypeBFloat16), kNumberTypeBFloat16},
   {std::make_pair(kNumberTypeInt64, kNumberTypeFloat32), kNumberTypeFloat32},
   {std::make_pair(kNumberTypeInt64, kNumberTypeFloat64), kNumberTypeFloat64},
-  {std::make_pair(kNumberTypeInt64, kNumberTypeComplex64), kNumberTypeComplex64},
-  {std::make_pair(kNumberTypeInt64, kNumberTypeComplex128), kNumberTypeComplex128},
   // Scalar is float.
   {std::make_pair(kNumberTypeFloat32, kNumberTypeBool), kNumberTypeFloat32},
   {std::make_pair(kNumberTypeFloat32, kNumberTypeInt8), kNumberTypeFloat32},
@@ -835,8 +806,6 @@ static const std::map<std::pair<TypeId, TypeId>, TypeId> scalar_tensor_convert_m
   {std::make_pair(kNumberTypeFloat32, kNumberTypeBFloat16), kNumberTypeBFloat16},
   {std::make_pair(kNumberTypeFloat32, kNumberTypeFloat32), kNumberTypeFloat32},
   {std::make_pair(kNumberTypeFloat32, kNumberTypeFloat64), kNumberTypeFloat64},
-  {std::make_pair(kNumberTypeFloat32, kNumberTypeComplex64), kNumberTypeComplex64},
-  {std::make_pair(kNumberTypeFloat32, kNumberTypeComplex128), kNumberTypeComplex128},
 };
 
 TypeId ConvertTypeForTensorsOrScalars(const TypeId &current, const TypeId &other) {
@@ -865,7 +834,9 @@ TypeId GetConversionType(const TypeId &current, const TypeId &saved_type_id, boo
   if (current == saved_type_id) {
     return current;
   }
-  if (current == kTypeUnknown || saved_type_id == kTypeUnknown) {
+  if (current == kTypeUnknown || saved_type_id == kTypeUnknown || current == kNumberTypeComplex64 ||
+      current == kNumberTypeComplex128 || saved_type_id == kNumberTypeComplex64 ||
+      saved_type_id == kNumberTypeComplex128) {
     return kTypeUnknown;
   }
   // Tensor + Scalar
