@@ -33,6 +33,7 @@ constexpr auto kDim0 = 0;
 constexpr auto kDim1 = 1;
 constexpr auto kDim2 = 2;
 constexpr auto kDim3 = 3;
+constexpr auto kNStepSizeThresh = 2;
 }  // namespace
 namespace aicpu {
 uint32_t GenerateEodMaskCpuKernel::Compute(CpuKernelContext &ctx) {
@@ -61,7 +62,7 @@ uint32_t GenerateEodMaskCpuKernel::Compute(CpuKernelContext &ctx) {
   int64_t circle = -1;
 
   if (error_mode.compare("circle") == 0) {
-    if (n_step.size() >= 2 || n_step[0] <= 0) {
+    if (n_step.size() >= kNStepSizeThresh || n_step[0] <= 0) {
       return KERNEL_STATUS_PARAM_INVALID;
     }
     circle = n_step[0];

@@ -67,18 +67,18 @@ class Layout():
         writed_map = ()
         for ele in tensor_map:
             if isinstance(ele, tuple):
-                map = ()
+                ele_map = ()
                 for item in ele:
                     if item == "None":
-                        map += (-1,)
+                        ele_map += (-1,)
                         continue
                     if item not in self._alias_name:
                         raise ValueError(f'The axis {item} is not found in {self._alias_name}')
                     if item in writed_map:
                         raise ValueError(f'The axis {item} has been set more than one in {self._alias_name}')
-                    map += (len(self._alias_name) - 1 - self._alias_name.index(item),)
+                    ele_map += (len(self._alias_name) - 1 - self._alias_name.index(item),)
                     writed_map += (item,)
-                self._tensor_map += (map,)
+                self._tensor_map += (ele_map,)
                 continue
             if ele == "None":
                 self._tensor_map += (-1,)

@@ -29,6 +29,7 @@
 #include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/pass/pass_utils.h"
 #include "mindspore/core/ops/framework_ops.h"
+#include "mindspore/core/utils/convert_utils_base.h"
 #include "mindspore/ccsrc/pipeline/jit/ps/static_analysis/static_analysis.h"
 
 namespace mindspore {
@@ -55,11 +56,11 @@ CNodePtr GetMatmulDwNodeFront(const std::vector<CNodePtr> &matmul_dw_nodes,
 }
 
 std::pair<int64_t, int64_t> GetMatMulReduceAxis(size_t matmul_input_shape_size, bool transpose_a1, bool transpose_b1) {
-  int64_t axis1 = matmul_input_shape_size - 1;
+  int64_t axis1 = SizeToLong(matmul_input_shape_size) - 1;
   if (transpose_a1) {
     axis1 -= 1;
   }
-  int64_t axis2 = matmul_input_shape_size - 2;
+  int64_t axis2 = SizeToLong(matmul_input_shape_size) - 2;
   if (transpose_b1) {
     axis2 += 1;
   }
@@ -107,8 +108,8 @@ CNodePtr InsertConcat(const std::vector<CNodePtr> &matmul_dw_nodes, const FuncGr
   auto axis2_value = NewValueNode(MakeValue<int64_t>(axis2));
   UpdateValueNodeAbs(&axis1_value);
   UpdateValueNodeAbs(&axis2_value);
-  matmul_dw_node_front_input_node1_input_shape[axis1] *= matmul_dw_nodes.size();
-  matmul_dw_node_front_input_node2_input_shape[axis2] *= matmul_dw_nodes.size();
+  matmul_dw_node_front_input_node1_input_shape[axis1] *= SizeToLong(matmul_dw_nodes.size());
+  matmul_dw_node_front_input_node2_input_shape[axis2] *= SizeToLong(matmul_dw_nodes.size());
   auto concat1_shape_value = std::make_shared<abstract::Shape>(matmul_dw_node_front_input_node1_input_shape);
   auto concat2_shape_value = std::make_shared<abstract::Shape>(matmul_dw_node_front_input_node2_input_shape);
   CNodePtr concat;

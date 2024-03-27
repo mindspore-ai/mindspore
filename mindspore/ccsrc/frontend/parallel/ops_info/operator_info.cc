@@ -164,7 +164,6 @@ Status OperatorInfo::CheckStrategyByVector(const Shapes &stra, const Shapes &inp
                         << shape_value << " at " << j << " cannot be divisible by strategy value " << strategy_value
                         << ", shape is " << ShapeToString(origin_shapes[i]) << ", divisor is "
                         << ShapeToString(sub_input_shape);
-
         } else {
           MS_LOG(ERROR) << name_ << ": The strategy is " << StrategyToString(stra) << ", shape " << shape_value
                         << " at " << j << " cannot be divisible by strategy value " << strategy_value << ", shape is "
@@ -413,7 +412,6 @@ Status OperatorInfo::InferAttrs() {
 
   is_dynamic_shape_ = IsDynamicShape();
   is_dynamic_rank_ = IsDynamicRank();
-
   if (is_dynamic_rank_) {
     MS_LOG(ERROR) << name_
                   << ": it does not support dynamic rank now, the inupts' shape: " << ShapesToString(inputs_shape_)

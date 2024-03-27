@@ -14,9 +14,10 @@
 # ============================================================================
 """Parameter broadcast"""
 from __future__ import absolute_import
-import numpy as np
 
 __all__ = ["parameter_broadcast"]
+
+import numpy as np
 
 
 def parameter_broadcast(net, layout, cur_rank=0, initial_rank=0):
@@ -109,15 +110,11 @@ def parameter_broadcast(net, layout, cur_rank=0, initial_rank=0):
     from mindspore.train._utils import get_parameter_redundancy, remove_param_redundancy
     from mindspore.nn.wrap.cell_wrapper import AllreduceGraph
     origin_parallel_mode = ms.get_auto_parallel_context("parallel_mode")
-    if origin_parallel_mode != "semi_auto_parallel" and origin_parallel_mode != "auto_parallel":
+    if origin_parallel_mode not in ("semi_auto_parallel", "auto_parallel"):
         return
-    rank_id = get_rank()
-    if cur_rank != rank_id:
+    if cur_rank != get_rank():
         raise ValueError("For parameter broadcast, the cur_rank: {cur_rank} is wrong.")
-    device_num = get_group_size()
-    stage_num = ms.get_auto_parallel_context("pipeline_stages")
-    check_num = initial_rank % (device_num / stage_num)
-    if check_num != 0:
+    if initial_rank % (get_group_size() / ms.get_auto_parallel_context("pipeline_stages")) != 0:
         raise ValueError("For parameter broadcast, the initial_rank: {initial_rank} is wrong.")
     param_redundancy = get_parameter_redundancy(layout, initial_rank)
     if not param_redundancy:
@@ -136,22 +133,20 @@ def parameter_broadcast(net, layout, cur_rank=0, initial_rank=0):
         return
     if not cur_rank not in single_params:
         return
-    cur_params = single_params[cur_rank]
     net_param_dict = net.parameters_dict()
     ms.set_auto_parallel_context(parallel_mode="hybrid_parallel")
     for group, params in param_redundancy_reversed.items():
-        group_name = str(group)
-        create_group(group_name, list(group))
+        create_group(str(group), list(group))
         allreduce_input = []
         for param in params:
-            if not param in net_param_dict:
+            if param not in net_param_dict:
                 raise ValueError("For parameter broadcast, the param: {param} can not be found.")
             real_param = net_param_dict[param]
-            if not param in cur_params:
+            if param not in single_params[cur_rank]:
                 real_param.set_data(Tensor(np.zeros(real_param.shape), dtype=real_param.dtype))
             allreduce_input.append(real_param)
         if not allreduce_input:
             continue
-        allreduce_graph = AllreduceGraph(allreduce_input, group_name)
+        allreduce_graph = AllreduceGraph(allreduce_input, str(group))
         allreduce_graph()
     ms.set_auto_parallel_context(parallel_mode=origin_parallel_mode)

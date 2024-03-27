@@ -461,7 +461,7 @@ Status MatMul::CheckInputLayout() {
   for (size_t i = 0; i + 1 < map_verify.size(); ++i) {
     if (map_verify[i] == map_verify[i + 1] && map_verify[i] > 0) {
       MS_LOG(ERROR) << "The device_matrix " << in_layout0.device_arrangement_origin().array() << " axis "
-                    << in_layout0.device_arrangement_origin().array().size() - 1 - map_verify[i]
+                    << in_layout0.device_arrangement_origin().array().size() - 1 - LongToSize(map_verify[i])
                     << " has been shard for more than once and not sharding the reduce_dim for matmul.";
       return FAILED;
     }
@@ -539,11 +539,13 @@ TensorLayout MatMul::InferOutputLayout() {
   }
 
   if (!transpose_b_) {
-    output_extended_tensor_map.push_back(input_layout1.tensor_map_before()[inputs_shape_[kIndex1].size() - 1]);
-    output_tensor_shape.push_back(input_layout1.tensor_shape_before().GetDimByIdx(inputs_shape_[kIndex1].size() - 1));
+    output_extended_tensor_map.push_back(input_layout1.tensor_map_before()[inputs_shape_[kIndex1].size() - kDim1]);
+    output_tensor_shape.push_back(
+      input_layout1.tensor_shape_before().GetDimByIdx(inputs_shape_[kIndex1].size() - kDim1));
   } else {
-    output_extended_tensor_map.push_back(input_layout1.tensor_map_before()[inputs_shape_[kIndex1].size() - 2]);
-    output_tensor_shape.push_back(input_layout1.tensor_shape_before().GetDimByIdx(inputs_shape_[kIndex1].size() - 2));
+    output_extended_tensor_map.push_back(input_layout1.tensor_map_before()[inputs_shape_[kIndex1].size() - kDim2]);
+    output_tensor_shape.push_back(
+      input_layout1.tensor_shape_before().GetDimByIdx(inputs_shape_[kIndex1].size() - kDim2));
   }
 
   TensorLayout output_tensor_layout;

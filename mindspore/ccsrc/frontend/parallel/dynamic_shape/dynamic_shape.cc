@@ -227,6 +227,36 @@ bool IsSemiOrAutoParallelMode() {
   return (parallel_mode == parallel::kAutoParallel || parallel_mode == parallel::kSemiAutoParallel);
 }
 
+static int64_t GetDeviceNum() {
+  int64_t device_num = 1;
+  if (parallel::ParallelContext::GetInstance()->device_num_is_set()) {
+    device_num = parallel::ParallelContext::GetInstance()->device_num();
+  } else {
+    auto ms_context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(ms_context);
+    std::string backend = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+    std::string world_group;
+    if (backend == kAscendDevice || backend == kDavinciDevice) {
+      world_group = parallel::HCCL_WORLD_GROUP;
+    } else if (backend == kGPUDevice) {
+      world_group = parallel::NCCL_WORLD_GROUP;
+    } else {
+      MS_LOG(EXCEPTION) << "Invalid communication backend: " << backend
+                        << " for semi_auto_parallel/auto_parallel mode,"
+                           " currently only support Ascend/GPU backend.";
+    }
+    uint32_t world_rank_size = 0;
+    if (!CommManager::GetInstance().GetRankSize(world_group, &world_rank_size)) {
+      MS_LOG(EXCEPTION) << "Get rank size failed";
+    }
+    device_num = UintToInt(world_rank_size);
+  }
+
+  auto pipeline_stage = parallel::ParallelContext::GetInstance()->pipeline_stage_split_num();
+  device_num = device_num / pipeline_stage;
+  return device_num;
+}
+
 // modify symbol info by dataset strategy
 // only for data sink is false
 std::vector<symshape::ops::SymbolInfoList> ParallelSymbolInfo(
@@ -245,32 +275,7 @@ std::vector<symshape::ops::SymbolInfoList> ParallelSymbolInfo(
       return parallel_symbol_infos;
     } else {
       // get device num
-      int64_t device_num = 1;
-      if (parallel::ParallelContext::GetInstance()->device_num_is_set()) {
-        device_num = parallel::ParallelContext::GetInstance()->device_num();
-      } else {
-        auto ms_context = MsContext::GetInstance();
-        MS_EXCEPTION_IF_NULL(ms_context);
-        std::string backend = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-        std::string world_group;
-        if (backend == kAscendDevice || backend == kDavinciDevice) {
-          world_group = parallel::HCCL_WORLD_GROUP;
-        } else if (backend == kGPUDevice) {
-          world_group = parallel::NCCL_WORLD_GROUP;
-        } else {
-          MS_LOG(EXCEPTION) << "Invalid communication backend: " << backend
-                            << " for semi_auto_parallel/auto_parallel mode,"
-                               " currently only support Ascend/GPU backend.";
-        }
-        uint32_t world_rank_size = 0;
-        if (!CommManager::GetInstance().GetRankSize(world_group, &world_rank_size)) {
-          MS_LOG(EXCEPTION) << "Get rank size failed";
-        }
-        device_num = UintToInt(world_rank_size);
-      }
-
-      auto pipeline_stage = parallel::ParallelContext::GetInstance()->pipeline_stage_split_num();
-      device_num = device_num / pipeline_stage;
+      int64_t device_num = GetDeviceNum();
 
       // set parallel symbol
       for (auto &symbol : parallel_symbol_infos) {

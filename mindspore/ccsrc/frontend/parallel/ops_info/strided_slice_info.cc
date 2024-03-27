@@ -168,7 +168,8 @@ void StridedSliceInfo::AdjustShrinkAxisMask() {
 }
 
 void StridedSliceInfo::ComputeFullyFetchFlag() {
-  ListSymbolPtr in_symbol = nullptr, out_symbol = nullptr;
+  ListSymbolPtr in_symbol = nullptr;
+  ListSymbolPtr out_symbol = nullptr;
 
   if (dynamic_shape_flag_) {
     MS_EXCEPTION_IF_NULL(cnode_);

@@ -23,6 +23,7 @@
 #include "mindspore/core/ops/other_ops.h"
 #include "mindspore/core/ops/array_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
+#include "mindspore/core/utils/convert_utils_base.h"
 #include "utils/hash_map.h"
 #include "frontend/operator/ops.h"
 #include "frontend/optimizer/optimizer.h"
@@ -250,7 +251,7 @@ std::pair<Status, RankList> CameCommHandler::GetDimRankList(const int64_t rank, 
   if (device_reverse_dim == -1) {
     return {SUCCESS, {rank}};
   }
-  int64_t device_dim = tensor_layout->device_arrangement().array().size() - 1 - device_reverse_dim;
+  int64_t device_dim = SizeToLong(tensor_layout->device_arrangement().array().size()) - 1 - device_reverse_dim;
   RankList rank_list;
   if (dev_matrix.GetDevicesAlongDim(LongToUlong(device_dim), &rank_list) != SUCCESS) {
     MS_LOG(ERROR) << "Get devices along dim failed";
@@ -481,8 +482,8 @@ void CameCommHandler::Process() {
     RankList comm_rank_list_along_neg_1;
     RankList comm_rank_list_along_neg_2;
     RankList comm_rank_list_along_neg_12;
-    int64_t actual_dim_of_neg_1 = shape_size - 1;
-    int64_t actual_dim_of_neg_2 = shape_size - 2;
+    int64_t actual_dim_of_neg_1 = SizeToLong(shape_size) - 1;
+    int64_t actual_dim_of_neg_2 = SizeToLong(shape_size) - 2;
     std::tie(ret_status, comm_rank_list_along_neg_1) = GetDimRankList(cur_rank, actual_dim_of_neg_1);
     if (ret_status != SUCCESS) {
       MS_LOG(ERROR) << "[CAME] shape = 2, getting rank list along negative dim -1 failed";

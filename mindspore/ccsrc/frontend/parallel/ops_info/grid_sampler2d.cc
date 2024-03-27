@@ -168,7 +168,6 @@ Status GridSampler2DInfo::InferForwardCommunication() {
   forward_op_.clear();
   std::vector<Group> group_list;
   Shape tmp_group_tensor_map = outputs_tensor_map_.at(0);
-
   if (CreateGroupByTensorMap(tmp_group_tensor_map, &group_list) != SUCCESS) {
     ReportError(name_ + ": Create group failed.");
     return FAILED;
@@ -191,7 +190,8 @@ std::shared_ptr<Strategies> GridSampler2DInfo::GenerateBatchStrategies() {
     MS_EXCEPTION(ValueError) << name_ << ": The length of inputs and outputs must be the 2 and 1.";
   }
 
-  Dimensions strategy_a, strategy_b;
+  Dimensions strategy_a;
+  Dimensions strategy_b;
   strategy_a.push_back(stage_device_size_);
   for (size_t i = 1; i < inputs_shape_[0].size(); i++) {
     strategy_a.push_back(1);

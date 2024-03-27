@@ -571,19 +571,8 @@ void FlashAttentionScoreInfo::LoadBalanceSplitAlongSeqDim(size_t input_index, Ge
       *exchange_node = gen_g->PushBack({gen_g->NewOpInst(TUPLE_GETITEM), *split_node, CreatInt64Imm(1)});
       break;
     case ops::kFlashAttentionScoreInputRealShiftIndex:
-      if (is_input_passed_[ops::kFlashAttentionScoreInputRealShiftIndex]) {
-        split_attrs = {std::make_pair(AXIS, MakeValue<int64_t>(kInputQKVSeqDimBNSD)),
-                       std::make_pair(OUTPUT_NUM, MakeValue(kLoadBalanceSplitNum))};
-        *split_node = gen_g->PushBack({gen_g->NewOpInst(SPLIT, split_attrs), gen_g->virtual_input_node()});
-        *keep_node = gen_g->PushBack({gen_g->NewOpInst(TUPLE_GETITEM), *split_node, CreatInt64Imm(0)});
-        *exchange_node = gen_g->PushBack({gen_g->NewOpInst(TUPLE_GETITEM), *split_node, CreatInt64Imm(1)});
-      } else {
-        *keep_node = gen_g->virtual_input_node();
-        *exchange_node = gen_g->virtual_input_node();
-      }
-      break;
     case ops::kFlashAttentionScoreInputDropMaskIndex:
-      if (is_input_passed_[ops::kFlashAttentionScoreInputDropMaskIndex]) {
+      if (is_input_passed_[input_index]) {
         split_attrs = {std::make_pair(AXIS, MakeValue<int64_t>(kInputQKVSeqDimBNSD)),
                        std::make_pair(OUTPUT_NUM, MakeValue(kLoadBalanceSplitNum))};
         *split_node = gen_g->PushBack({gen_g->NewOpInst(SPLIT, split_attrs), gen_g->virtual_input_node()});
