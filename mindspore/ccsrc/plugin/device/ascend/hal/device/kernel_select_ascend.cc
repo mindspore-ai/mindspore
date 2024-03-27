@@ -555,12 +555,14 @@ std::tuple<bool, std::string, ExceptionType> SelectKernelInfoWithMsg(const Kerne
                                                                      const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
   static std::vector<std::set<std::string>> op_selected_type(4);
   static std::set<std::string> kInternalKernelSelectedSet;
   transform::ErrorAclType acl_err_type = transform::ErrorAclType::kNormalOp;
   std::tuple<bool, std::string, ExceptionType> result = std::make_tuple(true, "", NoExceptionType);
   auto enable_internal = false;
-  if (common::GetEnv("MS_ENABLE_INTERNAL_KERNELS") == "on") {
+  if (context_ptr->IsEnableInferBoost()) {
     enable_internal = true;
   }
 
