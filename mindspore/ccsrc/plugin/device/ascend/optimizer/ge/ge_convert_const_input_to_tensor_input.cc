@@ -103,7 +103,7 @@ const AnfNodePtr GEConvertConstInputToTensorInput::Process(const FuncGraphPtr &f
   }
   const std::set<std::string> virtual_node_set = {kTupleGetItemOpName, kMakeTupleOpName, kDependOpName,
                                                   kPyExecuteOpName};
-  const std::set<std::string> no_need_to_convert_nodes = {kStackOpName, kStridedSliceOpName, kStridedSliceGradOpName};
+  const std::set<std::string> no_need_to_convert_nodes = {kStackOpName};
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   auto node_type = common::AnfAlgo::GetCNodeName(cnode);
