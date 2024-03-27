@@ -105,6 +105,8 @@ void AclKernelMod::PackageInput(const size_t idx, const std::string &format, Sha
   } else {
     params.dev_shape = *shape;
   }
+
+  params.dev_format = params.dev_format == kOpFormat_DEFAULT ? params.ori_format : params.dev_format;
 }
 
 void AclKernelMod::PackageOutput(const size_t idx, const ShapeVector &shape) {
