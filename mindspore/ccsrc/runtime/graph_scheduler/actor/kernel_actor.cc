@@ -110,6 +110,32 @@ void KernelActor::InitInputInfo() {
       (void)mem_info_.inputs_.emplace_back(std::make_shared<Address>());
     }
   }
+
+  if (EnableKbkSubGraphExecute()) {
+    memory_free_list_.clear();
+    for (size_t i = 0; i < real_input_num_; ++i) {
+      auto input_node_with_idx = common::AnfAlgo::GetPrevNodeOutput(kernel_, i, false);
+      MS_EXCEPTION_IF_NULL(input_node_with_idx.first);
+      if (!input_node_with_idx.first->isa<CNode>()) {
+        continue;
+      }
+
+      if (IsSkippedKernelActor(input_node_with_idx.first)) {
+        input_node_with_idx = common::AnfAlgo::GetPrevNodeOutput(input_node_with_idx.first, 0, false);
+      }
+
+      const auto &input_device_address =
+        AnfAlgo::GetMutableOutputAddr(input_node_with_idx.first, input_node_with_idx.second, false);
+      MS_EXCEPTION_IF_NULL(input_device_address);
+      input_device_tensors_[i] = input_device_address.get();
+      input_kernel_tensors_[i] = input_device_tensors_[i]->kernel_tensor().get();
+      input_kernel_tensors_for_infer_[i] = input_device_tensors_[i]->kernel_tensor();
+
+      if (!IsSomasEnable(somas_info_)) {
+        memory_free_list_.emplace_back(input_device_address.get());
+      }
+    }
+  }
 }
 
 void KernelActor::InitOutputInfo() {
@@ -960,5 +986,12 @@ void KernelActor::SendRecorderInfo(OpContext<DeviceTensor> *const context) const
                           device_contexts_[0], context);
   }
 }
+
+void KernelActor::SetInputDeviceTensor(DeviceTensor *input_device_tensor, size_t input_index) {
+  input_device_tensors_[input_index] = input_device_tensor;
+  input_kernel_tensors_[input_index] = input_device_tensor->kernel_tensor().get();
+  input_kernel_tensors_for_infer_[input_index] = input_device_tensor->kernel_tensor();
+}
+
 }  // namespace runtime
 }  // namespace mindspore
