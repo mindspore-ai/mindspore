@@ -310,6 +310,7 @@ void BindGlobalParams(py::module *m) {
   (*m).attr("MIN_SHARD_COUNT") = kMinShardCount;
   (*m).attr("MAX_SHARD_COUNT") = kMaxShardCount;
   (*m).attr("MIN_CONSUMER_COUNT") = kMinConsumerCount;
+  (*m).attr("MIN_FILE_SIZE") = kMinFileSize;
   (void)(*m).def("get_max_thread_num", &GetMaxThreadNum);
 }
 
