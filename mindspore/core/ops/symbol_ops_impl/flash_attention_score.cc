@@ -42,7 +42,7 @@ SymbolPtr FlashAttentionScoreShapeBuilder(OperationBuilder *b) {
     seq_len = query_shape->item(kIndex2);
   }
   auto shape2 = ListSymbol::Make({batch_size, head_num, seq_len, last_dim});
-  return ListSymbol::Make(SymbolPtrList{query_shape, shape2, shape2});
+  return ListSymbol::Make(SymbolPtrList{shape2, shape2, ListSymbol::Make({IntSymbol::Make(1LL)}), query_shape});
 }
 
 REG_SYMBOL_OP_BUILDER("FlashAttentionScore")
