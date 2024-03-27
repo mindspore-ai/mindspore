@@ -241,6 +241,10 @@ void SuperKernelActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const context
 void SuperKernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(graph_);
+  if (IsRunningFailed(context)) {
+    MS_LOG(INFO) << "Running failed in actor:" << GetAID().Name();
+    return;
+  }
   {
     ProfilerRecorder profiler(ProfilerModule::kRuntime, ProfilerEvent::kPreLaunch, GetAID().Name());
     if (!CopyInputData(context, graph_)) {
