@@ -55,6 +55,10 @@ void ConditionSwitchActor::Init() {
     }
     output_data_by_output_index_[from_index].emplace_back(output_data.get());
   }
+  MS_LOG(DEBUG) << "Condition switch actor:" << GetAID() << " init: branch name:" << branch_names_
+                << " branch origin ref count:" << branch_origin_ref_count_
+                << " output data branch index:" << output_data_branch_indexes_
+                << " output control branch index:" << output_control_branch_indexes_;
 }
 
 void ConditionSwitchActor::SendOutput(OpContext<DeviceTensor> *const context, size_t index) {

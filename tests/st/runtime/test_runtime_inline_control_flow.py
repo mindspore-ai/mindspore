@@ -19,7 +19,7 @@ from mindspore.nn import Cell
 import mindspore.ops.operations as P
 import numpy as np
 
-context.set_context(mode=context.GRAPH_MODE, save_graphs=True, save_graphs_path='./log/')
+context.set_context(mode=context.GRAPH_MODE, save_graphs=True, save_graphs_path='./log/', memory_optimize_level='O0')
 
 def test_single_if():
     """
@@ -439,7 +439,7 @@ def test_return_include_other_output():
     assert ret3
 
 
-def test_branch_output_include_refnode():
+def test_branch_output_include_refnode_with_dynamic_shape():
     """
     Feature: Contrtol flow inline.
     Description: Control flow if.
@@ -461,6 +461,111 @@ def test_branch_output_include_refnode():
     assert ret1[0][0]
     assert ret2[0][0]
     assert ret3[0][0]
+
+
+def test_branch_output_include_refnode_true():
+    """
+    Feature: Contrtol flow inline.
+    Description: Control flow if.
+    Expectation: AttributeError.
+    """
+
+    @jit
+    def foo(x, y):
+        if x < 3:
+            y = ops.expand_dims(y, 1)
+            y = ops.flatten(y)
+            y = y + Tensor([[6, 12], [18, 24], [30, 36]])
+        return y
+
+    ret1 = foo(Tensor(1), Tensor([[6, 12], [18, 24], [30, 36]]))
+    ret2 = foo(Tensor(1), Tensor([[6, 12], [18, 24], [30, 36]]))
+    ret3 = foo(Tensor(1), Tensor([[6, 12], [18, 24], [30, 36]]))
+    assert ret1.shape
+    assert ret2.shape
+    assert ret3.shape
+
+
+def test_branch_output_include_refnode_false():
+    """
+    Feature: Contrtol flow inline.
+    Description: Control flow if.
+    Expectation: AttributeError.
+    """
+
+    @jit
+    def foo(x, y):
+        if x > 3:
+            y = ops.expand_dims(y, 1)
+            y = ops.flatten(y)
+            y = y + Tensor([[6, 12], [18, 24], [30, 36]])
+        else:
+            z = y + Tensor([[36, 30], [24, 18], [12, 6]])
+            y = y + Tensor([[36, 30], [24, 18], [12, 36]])
+            y = z + y
+        return y * 2
+
+    ret1 = foo(Tensor(1), Tensor([[6, 12], [18, 24], [30, 36]]))
+    ret2 = foo(Tensor(1), Tensor([[6, 12], [18, 24], [30, 36]]))
+    ret3 = foo(Tensor(1), Tensor([[6, 12], [18, 24], [30, 36]]))
+    assert ret1.shape
+    assert ret2.shape
+    assert ret3.shape
+
+
+def test_branch_output_include_refnode_output_ref():
+    """
+    Feature: Contrtol flow inline.
+    Description: Control flow if.
+    Expectation: AttributeError.
+    """
+
+    @jit
+    def foo(x, y):
+        if x > 3:
+            y = ops.expand_dims(y, 1)
+            y = ops.flatten(y)
+        else:
+            z = y + Tensor([[36, 30], [24, 18], [12, 6]])
+            y = y + Tensor([[36, 30], [24, 18], [12, 36]])
+            y = z + y
+        return y * 2
+
+    ret1 = foo(Tensor(1), Tensor([[6, 12], [18, 24], [30, 36]]))
+    ret2 = foo(Tensor(1), Tensor([[6, 12], [18, 24], [30, 36]]))
+    ret3 = foo(Tensor(1), Tensor([[6, 12], [18, 24], [30, 36]]))
+    assert ret1.shape
+    assert ret2.shape
+    assert ret3.shape
+
+def test_branch_output_include_refnode_twice():
+    """
+    Feature: Contrtol flow inline.
+    Description: Control flow if.
+    Expectation: AttributeError.
+    """
+
+    @jit
+    def foo(x, y):
+        if x > 3:
+            y = ops.expand_dims(y, 1)
+            z1 = ops.flatten(y)
+            z2 = ops.reshape(y, (3, 2))
+            z3 = z2 * 2
+            z4 = z2 * 3
+            y = z1 + z2 + z3 + z4
+        else:
+            z = y + Tensor([[36, 30], [24, 18], [12, 6]])
+            y = y + Tensor([[36, 30], [24, 18], [12, 36]])
+            y = z + y
+        return y * 2
+
+    ret1 = foo(Tensor(1), Tensor([[6, 12], [18, 24], [30, 36]]))
+    ret2 = foo(Tensor(1), Tensor([[6, 12], [18, 24], [30, 36]]))
+    ret3 = foo(Tensor(1), Tensor([[6, 12], [18, 24], [30, 36]]))
+    assert ret1.shape
+    assert ret2.shape
+    assert ret3.shape
 
 
 def test_include_dynamic_shape():
@@ -486,7 +591,6 @@ def test_include_dynamic_shape():
     ret1 = foo(Tensor(1), Tensor([[6, 12, 18], [24, 30, 36], [6, 18, 36]]))
     ret2 = foo(Tensor(1), Tensor([[6, 12, 18], [24, 30, 36], [12, 18, 30], [18, 24, 36]]))
     ret3 = foo(Tensor(1), Tensor([[6, 12, 18], [24, 30, 36]]))
-    print("*********************************", ret1)
     assert ret1[0]
     assert ret2[0]
     assert ret3[0]
@@ -653,6 +757,32 @@ def test_if_in_if():
     ret1 = foo(x, x, param_a, param_b)
     ret2 = foo(x, x, param_a, param_b)
     assert ret1 == (Tensor(7, mstype.int32), Tensor(7, mstype.int32))
+    assert ret2
+
+
+def test_if_in_if_directly():
+    """
+    Feature: Contrtol flow inline.
+    Description: Inline switch node into kernel graph.
+    Expectation: Not throw exception.
+    """
+    param_a = Parameter(Tensor(5, mstype.int32), name='a')
+    param_b = Parameter(Tensor(4, mstype.int32), name='b')
+
+    @jit
+    def foo(x, y, param_a, param_b):
+        x = x + 2
+        if param_a > param_b:
+            if x > y:
+                x += 3
+            x = x + param_a
+        y = x + y
+        return y
+
+    x = Tensor(2, mstype.int32)
+    ret1 = foo(x, x, param_a, param_b)
+    ret2 = foo(x, x, param_a, param_b)
+    assert ret1
     assert ret2
 
 
