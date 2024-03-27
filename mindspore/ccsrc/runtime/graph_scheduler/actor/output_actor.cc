@@ -346,11 +346,14 @@ TensorPtr OutputActor::CreateOutputTensor(const AnfNodePtr &output_node, size_t 
     kernel_tensor->SetType(output_kernel_tensor->GetType());
     kernel_tensor->SetShape(output_kernel_tensor->GetShape());
     kernel_tensor->set_stream_id(device_tensor->stream_id());
+    // SetShape will calculate a default size by host shape, need to set real device size for special format.
+    kernel_tensor->set_size(device_tensor->GetSize());
     auto tensor_device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
     MS_EXCEPTION_IF_NULL(tensor_device_address);
-    MS_LOG(DEBUG) << "Create device tensor:" << tensor_device_address << " type:" << tensor_device_address->type_id()
+    MS_LOG(DEBUG) << "Create device tensor:" << tensor_device_address << ", size: " << kernel_tensor->size()
+                  << " type:" << tensor_device_address->type_id()
                   << " output node:" << output_node->fullname_with_scope() << " output index:" << output_index
-                  << " output position:" << output_position;
+                  << " output position:" << output_position << ", origin output device tensor: " << device_tensor;
     tensor->set_device_address(tensor_device_address);
     output_node_to_tensor_device_address_[{output_node, output_index}] = tensor_device_address;
   }
