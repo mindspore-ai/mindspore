@@ -25,11 +25,24 @@ class Layout():
     Parallel layout describes the detailed sharding information.
 
     Note:
-        It is valid only in semi auto parallel or auto parallel mode.
+        - It is valid only in semi auto parallel or auto parallel mode.
+        - The multiplication result of the `device_matrix` must be equal to the device count in a pipeline stage.
+        - When the layout function is invoked to constructs a sharding strategy, each alias name is only allowed to be
+          used once to shard a tensor.
 
     Args:
         device_matrix (tuple): Describe the shape of devices arrangement, its element type is int.
         alias_name (tuple): The alias name for each axis of device_matrix, its length shoits element type is string.
+
+    Raises:
+        TypeError: `device_matrix` is not a tuple type.
+        TypeError: `alias_name` is not a tuple type.
+        ValueError: `device_matrix` length is not equal to `alias_name` length.
+        TypeError: The element of `device_matrix` is not int type.
+        TypeError: The element of `alias_name` is not a str type.
+        ValueError: The element of `alias_name` is an empty str.
+        ValueError: The element of `alias_name` is "None".
+        ValueError: `alias_name` contains repeated element.
 
     Examples:
         >>> from mindspore import Layout
@@ -41,7 +54,7 @@ class Layout():
 
     def __init__(self, device_matrix, alias_name):
         if not isinstance(device_matrix, tuple):
-            raise TypeError(f'device_shape must be tuple type, but got:{type(device_matrix)}')
+            raise TypeError(f'device_matrix must be tuple type, but got:{type(device_matrix)}')
         if not isinstance(alias_name, tuple):
             raise TypeError(f'alias_name must be tuple type, but got:{type(alias_name)}')
         if len(device_matrix) != len(alias_name):
