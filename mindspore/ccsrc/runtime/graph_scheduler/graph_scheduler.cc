@@ -98,9 +98,12 @@ static constexpr size_t kAsyncLaunchThreadNum = 1;
 static constexpr size_t kMultiPipelineThreadNum = 3;
 
 bool GetNeedSyncStream(const GraphCompilerInfo &graph_compiler_info) {
-  static auto enable_internal_kernel = common::GetEnv("MS_ENABLE_INTERNAL_KERNELS");
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  static const bool enable_internal_kernel = ms_context->IsEnableInferBoost();
+  // static auto enable_internal_kernel = common::GetEnv("MS_ENABLE_INTERNAL_KERNELS");
   static auto enable_syn = common::GetEnv("MS_SYNC_RUN");
-  if (enable_internal_kernel == "on" && enable_syn != "on") {
+  if (enable_internal_kernel && enable_syn != "on") {
     return false;
   }
   const auto &graphs = graph_compiler_info.graphs_;
