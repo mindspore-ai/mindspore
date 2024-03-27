@@ -1,6 +1,10 @@
 less:
   description: |
     Computes the boolean value of :math:`input < other` element-wise.
+    
+    The inputs of `input` and `other` follow implicit type conversion rules to ensure consistent data types. 
+    The inputs must be both Tensors or one Tensor and one Scalar.
+    When the inputs are a Tensor and a Scalar, the Scalar can only be a constant.
 
     .. math::
         out_{i} =\begin{cases}
