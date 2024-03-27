@@ -157,6 +157,8 @@ class AdjustBrightness(ImageTensorOperation, PyTensorOperation):
         """
         Set the device for the current operator execution.
 
+        - When the device is Ascend, input shape should be limited from [4, 6] to [8192, 4096].
+
         Args:
             device_target (str, optional): The operator will be executed on this device. Currently supports
                 ``CPU`` and ``Ascend`` . Default: ``CPU`` .
@@ -267,6 +269,8 @@ class AdjustContrast(ImageTensorOperation, PyTensorOperation):
     def device(self, device_target="CPU"):
         """
         Set the device for the current operator execution.
+
+        - When the device is Ascend, input shape should be limited from [4, 6] to [8192, 4096].
 
         Args:
             device_target (str, optional): The operator will be executed on this device. Currently supports
@@ -453,6 +457,8 @@ class AdjustHue(ImageTensorOperation, PyTensorOperation):
         """
         Set the device for the current operator execution.
 
+        - When the device is Ascend, input shape should be limited from [4, 6] to [8192, 4096].
+
         Args:
             device_target (str, optional): The operator will be executed on this device. Currently supports
                 ``CPU`` and ``Ascend`` . Default: ``CPU`` .
@@ -563,6 +569,8 @@ class AdjustSaturation(ImageTensorOperation, PyTensorOperation):
     def device(self, device_target="CPU"):
         """
         Set the device for the current operator execution.
+
+        - When the device is Ascend, input shape should be limited from [4, 6] to [8192, 4096].
 
         Args:
             device_target (str, optional): The operator will be executed on this device. Currently supports
@@ -677,9 +685,12 @@ class Affine(ImageTensorOperation):
     """
     Apply Affine transformation to the input image, keeping the center of the image unchanged.
 
+    Supports Ascend hardware acceleration and can be enabled through the `.device("Ascend")` method.
+
     Args:
         degrees (float): Rotation angle in degrees between -180 and 180, clockwise direction.
-        translate (Sequence[float, float]): The horizontal and vertical translations, must be a sequence of size 2.
+        translate (Sequence[float, float]): The horizontal and vertical translations, must be a sequence of size 2
+            and value between -1 and 1.
         scale (float): Scaling factor, which must be positive.
         shear (Union[float, Sequence[float, float]]): Shear angle value in degrees between -180 to 180.
             If float is provided, shear along the x axis with this value, without shearing along the y axis;
@@ -754,6 +765,8 @@ class Affine(ImageTensorOperation):
     def device(self, device_target="CPU"):
         """
         Set the device for the current operator execution.
+
+        - When the device is Ascend, input shape should be limited from [4, 6] to [32768, 32768].
 
         Args:
             device_target (str, optional): The operator will be executed on this device. Currently supports
@@ -1213,6 +1226,8 @@ class Crop(ImageTensorOperation):
     """
     Crop the input image at a specific location.
 
+    Supports Ascend hardware acceleration and can be enabled through the `.device("Ascend")` method.
+
     Args:
         coordinates(sequence): Coordinates of the upper left corner of the cropping image. Must be a sequence of two
             values, in the form of (top, left).
@@ -1271,6 +1286,8 @@ class Crop(ImageTensorOperation):
     def device(self, device_target="CPU"):
         """
         Set the device for the current operator execution.
+
+        - When the device is Ascend, input/output shape should be limited from [4, 6] to [32768, 32768].
 
         Args:
             device_target (str, optional): The operator will be executed on this device. Currently supports
@@ -1863,6 +1880,8 @@ class GaussianBlur(ImageTensorOperation):
     r"""
     Blur input image with the specified Gaussian kernel.
 
+    Supports Ascend hardware acceleration and can be enabled through the `.device("Ascend")` method.
+
     Args:
         kernel_size (Union[int, Sequence[int, int]]): The size of the Gaussian kernel. Must be positive and odd.
             If the input type is int, the value will be used as both the width and height of the Gaussian kernel.
@@ -1931,6 +1950,9 @@ class GaussianBlur(ImageTensorOperation):
         """
         Set the device for the current operator execution.
 
+        - When the device is Ascend, the parameter `kernel_size` only supports values 1, 3, and 5.
+          input shape should be limited from [4, 6] to [8192, 4096].
+
         Args:
             device_target (str, optional): The operator will be executed on this device. Currently supports
                 ``CPU`` and ``Ascend`` . Default: ``CPU`` .
@@ -1969,6 +1991,10 @@ class GaussianBlur(ImageTensorOperation):
               <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
         """
         self.device_target = device_target
+        if device_target == "Ascend":
+            for k in self.kernel_size:
+                if k not in [1, 3, 5]:
+                    raise RuntimeError("When target is Ascend, `kernel_size` only supports values 1, 3, and 5.")
         return self
 
     def parse(self):
@@ -2108,6 +2134,8 @@ class HorizontalFlip(ImageTensorOperation):
     def device(self, device_target="CPU"):
         """
         Set the device for the current operator execution.
+
+        - When the device is Ascend, input shape should be limited from [4, 6] to [8192, 4096].
 
         Args:
             device_target (str, optional): The operator will be executed on this device. Currently supports
@@ -2646,6 +2674,10 @@ class Normalize(ImageTensorOperation):
         """
         Set the device for the current operator execution.
 
+        - When the device is CPU, input type support  `uint8`/`float32`/`float64`, input channel support 1/2/3.
+        - When the device is Ascend, input type supports  `uint8`/`float32`, input channel supports 1/3.
+          input shape should be limited from [4, 6] to [8192, 4096].
+
         Args:
             device_target (str, optional): The operator will be executed on this device. Currently supports
                 ``CPU`` and ``Ascend`` . Default: ``CPU`` .
@@ -2761,6 +2793,8 @@ class Pad(ImageTensorOperation, PyTensorOperation):
     """
     Pad the image according to padding parameters.
 
+    Supports Ascend hardware acceleration and can be enabled through the `.device("Ascend")` method.
+
     Args:
         padding (Union[int, Sequence[int, int], Sequence[int, int, int, int]]): The number of pixels
             to pad each border of the image.
@@ -2838,6 +2872,8 @@ class Pad(ImageTensorOperation, PyTensorOperation):
     def device(self, device_target="CPU"):
         """
         Set the device for the current operator execution.
+
+        - When the device is Ascend, input/output shape should be limited from [4, 6] to [32768, 32768].
 
         Args:
             device_target (str, optional): The operator will be executed on this device. Currently supports
@@ -3045,6 +3081,8 @@ class Perspective(ImageTensorOperation, PyTensorOperation):
     def device(self, device_target="CPU"):
         """
         Set the device for the current operator execution.
+
+        - When the device is Ascend, input shape should be limited from [6, 10] to [8192, 4096].
 
         Args:
             device_target (str, optional): The operator will be executed on this device. Currently supports
@@ -5584,6 +5622,8 @@ class Resize(ImageTensorOperation, PyTensorOperation):
         """
         Set the device for the current operator execution.
 
+        - When the device is Ascend, input/output shape should be limited from [4, 6] to [32768, 32768].
+
         Args:
             device_target (str, optional): The operator will be executed on this device. Currently supports
                 ``CPU`` and ``Ascend`` . Default: ``CPU`` .
@@ -5726,6 +5766,8 @@ class ResizedCrop(ImageTensorOperation):
     def device(self, device_target="CPU"):
         """
         Set the device for the current operator execution.
+
+        - When the device is Ascend, input/output shape should be limited from [4, 6] to [32768, 32768].
 
         Args:
             device_target (str, optional): The operator will be executed on this device. Currently supports
@@ -6650,6 +6692,8 @@ class VerticalFlip(ImageTensorOperation):
     def device(self, device_target="CPU"):
         """
         Set the device for the current operator execution.
+
+        - When the device is Ascend, input shape should be limited from [4, 6] to [8192, 4096].
 
         Args:
             device_target (str, optional): The operator will be executed on this device. Currently supports

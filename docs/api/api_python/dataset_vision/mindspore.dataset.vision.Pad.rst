@@ -40,6 +40,8 @@ mindspore.dataset.vision.Pad
 
         指定该变换执行的设备。
 
+        - 当执行设备是 Ascend 时，输入/输出数据的维度限制为[4, 6]和[32768, 32768]之间。
+
         参数：
             - **device_target** (str, 可选) - 算子将在指定的设备上运行。当前支持 ``CPU`` 和 ``Ascend`` 。默认值： ``CPU`` 。
 

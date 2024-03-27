@@ -127,7 +127,10 @@ class AutoAugmentPolicy(str, Enum):
                     AutoAugmentPolicy.CIFAR10: cde.AutoAugmentPolicy.DE_AUTO_AUGMENT_POLICY_CIFAR10,
                     AutoAugmentPolicy.SVHN: cde.AutoAugmentPolicy.DE_AUTO_AUGMENT_POLICY_SVHN}
 
-        return c_values.get(policy)
+        value = c_values.get(policy)
+        if value is None:
+            raise RuntimeError("Unsupported AutoAugmentPolicy, only support IMAGENET, CIFAR10, and SVHN.")
+        return value
 
 
 class Border(str, Enum):
@@ -160,7 +163,11 @@ class Border(str, Enum):
                          Border.EDGE: 'edge',
                          Border.REFLECT: 'reflect',
                          Border.SYMMETRIC: 'symmetric'}
-        return python_values.get(border_type)
+
+        value = python_values.get(border_type)
+        if value is None:
+            raise RuntimeError("Unsupported Border type, only support CONSTANT, EDGE, REFLECT and SYMMETRIC.")
+        return value
 
     @staticmethod
     def to_c_type(border_type):
@@ -172,7 +179,10 @@ class Border(str, Enum):
                     Border.REFLECT: cde.BorderType.DE_BORDER_REFLECT,
                     Border.SYMMETRIC: cde.BorderType.DE_BORDER_SYMMETRIC}
 
-        return c_values.get(border_type)
+        value = c_values.get(border_type)
+        if value is None:
+            raise RuntimeError("Unsupported Border type, only support CONSTANT, EDGE, REFLECT and SYMMETRIC.")
+        return value
 
 
 class ConvertMode(IntEnum):
@@ -250,7 +260,11 @@ class ConvertMode(IntEnum):
                     ConvertMode.COLOR_RGBA2GRAY: cde.ConvertMode.DE_COLOR_RGBA2GRAY,
                     }
 
-        return c_values.get(mode)
+        mode = c_values.get(mode)
+        if mode is None:
+            raise RuntimeError("Unsupported ConvertMode, see https://www.mindspore.cn/docs/zh-CN/master/api_python/"
+                               "dataset_vision/mindspore.dataset.vision.ConvertColor.html for more details.")
+        return mode
 
 
 class ImageBatchFormat(IntEnum):
@@ -273,7 +287,10 @@ class ImageBatchFormat(IntEnum):
         c_values = {ImageBatchFormat.NHWC: cde.ImageBatchFormat.DE_IMAGE_BATCH_FORMAT_NHWC,
                     ImageBatchFormat.NCHW: cde.ImageBatchFormat.DE_IMAGE_BATCH_FORMAT_NCHW}
 
-        return c_values.get(image_batch_format)
+        value = c_values.get(image_batch_format)
+        if value is None:
+            raise RuntimeError("Unsupported ImageBatchFormat, only support NHWC and NCHW.")
+        return value
 
 
 class ImageReadMode(IntEnum):
@@ -298,7 +315,11 @@ class ImageReadMode(IntEnum):
         c_values = {ImageReadMode.UNCHANGED: cde.ImageReadMode.DE_IMAGE_READ_MODE_UNCHANGED,
                     ImageReadMode.GRAYSCALE: cde.ImageReadMode.DE_IMAGE_READ_MODE_GRAYSCALE,
                     ImageReadMode.COLOR: cde.ImageReadMode.DE_IMAGE_READ_MODE_COLOR}
-        return c_values.get(image_read_mode)
+
+        value = c_values.get(image_read_mode)
+        if value is None:
+            raise RuntimeError("Unsupported ImageReadMode, only support UNCHANGED, GRAYSCALE and COLOR.")
+        return value
 
 
 class Inter(IntEnum):
@@ -334,7 +355,10 @@ class Inter(IntEnum):
                          Inter.LINEAR: LINEAR,
                          Inter.CUBIC: CUBIC}
 
-        return python_values.get(inter_type)
+        value = python_values.get(inter_type)
+        if value is None:
+            raise RuntimeError("Unsupported interpolation, only support NEAREST, ANTIALIAS, LINEAR and CUBIC.")
+        return value
 
     @staticmethod
     def to_c_type(inter_type):
@@ -347,7 +371,11 @@ class Inter(IntEnum):
                     Inter.AREA: cde.InterpolationMode.DE_INTER_AREA,
                     Inter.PILCUBIC: cde.InterpolationMode.DE_INTER_PILCUBIC}
 
-        return c_values.get(inter_type)
+        value = c_values.get(inter_type)
+        if value is None:
+            raise RuntimeError("Unsupported interpolation, only support NEAREST, LINEAR, CUBIC, AREA and PILCUBIC.")
+
+        return value
 
 
 class SliceMode(IntEnum):
@@ -370,7 +398,10 @@ class SliceMode(IntEnum):
         c_values = {SliceMode.PAD: cde.SliceMode.DE_SLICE_PAD,
                     SliceMode.DROP: cde.SliceMode.DE_SLICE_DROP}
 
-        return c_values.get(mode)
+        value = c_values.get(mode)
+        if value is None:
+            raise RuntimeError("Unsupported SliceMode, only support PAD and DROP.")
+        return value
 
 
 def encode_jpeg(image, quality=75):
