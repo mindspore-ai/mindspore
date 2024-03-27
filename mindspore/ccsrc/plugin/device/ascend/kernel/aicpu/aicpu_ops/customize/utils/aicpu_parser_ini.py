@@ -264,6 +264,7 @@ cust_op_lists = [
     "environget",
     "environset",
     "layernormgradgrad",
+    "pdistgrad",
     "batchnormgradgrad",
 ]
 
