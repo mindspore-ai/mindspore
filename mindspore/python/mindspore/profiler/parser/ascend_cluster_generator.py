@@ -57,6 +57,10 @@ class AscendClusterGenerator:
         """
         self.read_msprof()
 
+        if (not isinstance(self.msprof_data, np.ndarray) or self.msprof_data.shape[0] == 0
+                or not self.msprof_data.tolist()):
+            return
+
         self.step_trace_time['Computing'] = np.sum(self.msprof_data[self.msprof_data['name'] == 'Computing']['dur'])
         self.step_trace_time['comunNotOverlp'] = np.sum(
             self.msprof_data[self.msprof_data['name'] == 'Communication(Not Overlapped)']['dur'])
