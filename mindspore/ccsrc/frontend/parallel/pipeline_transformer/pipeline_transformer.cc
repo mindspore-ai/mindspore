@@ -912,6 +912,8 @@ void PipelineTransformer::RemoveMonadNode() {
     }
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
+    auto abs = cnode->abstract();
+    MS_EXCEPTION_IF_NULL(abs);
     auto stage_info = cnode->user_data<NodeStageInfo>();
     if (stage_info == nullptr) {
       continue;
@@ -920,8 +922,11 @@ void PipelineTransformer::RemoveMonadNode() {
     if (stage != stage_ && stage != -1) {
       auto node_users = node_users_map[node];
       for (auto &user_node : node_users) {
-        auto u_node = NewValueNode(kUMonad);
-        manager_->SetEdge(user_node.first, user_node.second, u_node);
+        auto monad_node = NewValueNode(kUMonad);
+        if (abs->isa<abstract::AbstractIOMonad>()) {
+          monad_node = NewValueNode(kIOMonad);
+        }
+        manager_->SetEdge(user_node.first, user_node.second, monad_node);
       }
     }
   }
@@ -1828,8 +1833,13 @@ void PipelineTransformer::RedundancyNode(const AnfNodePtr &node,
       continue;
     }
     if (IsPrimitiveCNode(cnode, prim::kPrimUpdateState)) {
-      auto u_node = NewValueNode(kUMonad);
-      manager_->SetEdge(cnode, node_user_pair.second, u_node);
+      auto abs = cnode->abstract();
+      MS_EXCEPTION_IF_NULL(abs);
+      auto monad_node = NewValueNode(kUMonad);
+      if (abs->isa<abstract::AbstractIOMonad>()) {
+        monad_node = NewValueNode(kIOMonad);
+      }
+      manager_->SetEdge(cnode, node_user_pair.second, monad_node);
       continue;
     }
     // node->make_tuple, record with a map, Unified deleted later.
