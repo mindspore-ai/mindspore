@@ -434,6 +434,15 @@ bool GraphBuilder::DoCall(const Instr &instr) {
       return false;
   }
   CallNode *call_node = static_cast<CallNode *>(seek(0));
+  if (loop_rolling_ && current_block_->is_loop_body()) {
+    const auto &vo = call_node->input(0)->GetVobj();
+    py::object func = GraphBuilder::FindPyFunc(vo);
+    if (vo && vo->GetType() != AObject::kTypeType && func != nullptr) {
+      pi_jit_should_compile(func, py::dict());
+      auto jcr = getJitCompileResults(PyFunction_GET_CODE(func.ptr()));
+      *jcr->conf = call_node->GetGraph()->Config();
+    }
+  }
   call_node->SetVobj(AObject::MakeAObject(AObject::kTypeAnyValue));
   call_node->SetLineNo(instr.line());
   call_node->set_bci(instr.bci());
@@ -1908,6 +1917,7 @@ static py::object CopyPyFunc(const py::object &o) {
   REPLACE_PY_MEMBER(new_ff->func_defaults, func->func_defaults);
   REPLACE_PY_MEMBER(new_ff->func_kwdefaults, func->func_kwdefaults);
   REPLACE_PY_MEMBER(new_ff->func_annotations, func->func_annotations);
+  REPLACE_PY_MEMBER(new_ff->func_module, func->func_module);
 
   Py_DECREF(new_name);
   Py_DECREF(new_code);
@@ -2974,6 +2984,41 @@ static void LogPrunBranch(ValueNode *cond, const Instr &instr, const GraphJitCon
   }
 }
 
+bool GraphBuilder::ProcessControlFlow(int cond, ValueNode *cond_node, const Instr &instr) {
+  if (!IsSatisfyPruneLimit(cond, graph_, cond_node)) {
+    int trace_size = graph_->GetTracedNodes().size();
+    loop_rolling_ = 1;
+    if (current_block_->is_loop_head()) {
+      if (loop_cur_bci_ == cur_bci_) {
+        graph_->GetTracedNodes().resize(trace_size);
+        graph_->StopTraceAt(cur_bci_, StopTraceReason::kStopTraceIf_Unsupported);
+        loop_rolling_ = 0;
+        return false;
+      }
+      loop_cur_bci_ = cur_bci_;
+      cur_bci_++;
+      const auto &instrs = graph_->GetCFG()->instr_pool();
+      while (true) {
+        this->graph_->SetFrame(cur_bci_, frame_);
+        MS_EXCEPTION_IF_CHECK_FAIL(static_cast<size_t>(cur_bci_) < instrs.size(), "error control flow");
+        MS_EXCEPTION_IF_CHECK_FAIL(instrs[cur_bci_]->bci() == cur_bci_, "check instruction bci");
+        if (instrs[cur_bci_]->op() == RETURN_VALUE) {
+          graph_->SetRetVal(pop());
+          break;
+        }
+        if (!DoByteCode(*instrs[cur_bci_])) {
+          break;
+        }
+      }
+    }
+    loop_rolling_ = 0;
+    LogPrunBranch(cond_node, instr, graph_->Config());
+    graph_->StopTraceAt(cur_bci_, StopTraceReason::kStopTraceIf_Unsupported);
+    return false;
+  }
+  return true;
+}
+
 bool GraphBuilder::TraceRunControl(const Instr &instr) {
   MS_EXCEPTION_IF_NULL(instr.extra_jump());
   int opcode = instr.op();
@@ -3002,9 +3047,7 @@ bool GraphBuilder::TraceRunControl(const Instr &instr) {
   }
   ValueNode *top = seek(0);
   int cond = CondIsTrue(top);
-  if (!IsSatisfyPruneLimit(cond, graph_, top)) {
-    LogPrunBranch(top, instr, graph_->Config());
-    graph_->StopTraceAt(cur_bci_, StopTraceReason::kStopTraceIf_Unsupported);
+  if (!ProcessControlFlow(cond, top, instr)) {
     return false;
   }
   switch (opcode) {
