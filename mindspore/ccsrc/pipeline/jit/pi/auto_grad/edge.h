@@ -31,32 +31,32 @@ class Edge {
  public:
   /// \brief The constructor of Edge.
   ///
-  /// \param[in] fn The called function.
+  /// \param[in] node The called function.
   ///
   /// \return The instance of Edge.
-  explicit Edge(const FunctionNodePtr &fn, size_t index) : fn_(fn), index_(index) {}
+  explicit Edge(const FunctionNodePtr &node, size_t index) : node_(node), index_(index) {}
 
   /// \brief Destructor.
   virtual ~Edge() = default;
 
-  /// \brief Get the called function.
+  /// \brief Get the backward function node.
   ///
-  /// \return The called function.
-  const FunctionNodePtr &GetFunction() const { return fn_; }
+  /// \return The backward function node.
+  const FunctionNodePtr &GetNode() const { return node_; }
 
-  /// \brief Set the called function.
+  /// \brief Set the backward function node.
   ///
-  /// \param[in] fn The called function.
-  void SetFunction(const FunctionNodePtr &fn) { fn_ = fn; }
+  /// \param[in] node The backward function node.
+  void SetNode(const FunctionNodePtr &node) { node_ = node; }
 
-  /// \brief Get the index.
+  /// \brief Get the index of the tensor as input.
   ///
-  /// \return The index.
+  /// \return The index of the tensor as input.
   size_t GetIndex() const { return index_; }
 
  private:
-  /// \brief The called function.
-  FunctionNodePtr fn_;
+  /// \brief The backward function node.
+  FunctionNodePtr node_;
   /// \brief The index.
   size_t index_;
 };
