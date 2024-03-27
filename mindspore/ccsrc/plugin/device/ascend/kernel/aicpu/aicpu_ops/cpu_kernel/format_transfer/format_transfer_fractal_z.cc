@@ -165,7 +165,11 @@ uint32_t TransFormatWithGroups(const Format &format_4d, const std::vector<int64_
                        "format from [%s] to [%s]",
                        dst_size, FormatToSerialString(args.src_format).c_str(),
                        FormatToSerialString(args.dst_format).c_str())
-  (void)memset_s(dst.get(), static_cast<size_t>(dst_size), 0, static_cast<size_t>(dst_size));
+  auto ret = memset_s(dst.get(), static_cast<size_t>(dst_size), 0, static_cast<size_t>(dst_size));
+  if (ret != EOK) {
+    KERNEL_LOG_ERROR("memset_s failed: [%d].", ret);
+    return KERNEL_STATUS_INNER_ERROR;
+  }
   for (int64_t g = 0; g < args.groups; g++) {
     for (int64_t d = 0; d < d_dim; d++) {
       for (int64_t c = 0; c < c_dim; c++) {

@@ -96,8 +96,12 @@ uint32_t SequenceStackKernel::SequenceStackTask() {
       }
       size_t cur_input_index = pos % element_num;
       size_t local_idx = pos / element_num;
-      (void)memcpy_s(output_addr + dims_behind_axis_ * pos, copy_size,
-                     inputs_addr + cur_input_index * element_index_size + dims_behind_axis_ * local_idx, copy_size);
+      auto ret =
+        memcpy_s(output_addr + dims_behind_axis_ * pos, copy_size,
+                 inputs_addr + cur_input_index * element_index_size + dims_behind_axis_ * local_idx, copy_size);
+      if (ret != EOK) {
+        AICPU_LOGE("memcpy_s failed.")
+      }
     }
   };
   ParallelFor(element_size, per_unit_size, tasks);

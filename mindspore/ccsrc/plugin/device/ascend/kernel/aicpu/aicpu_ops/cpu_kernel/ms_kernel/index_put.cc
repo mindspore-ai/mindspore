@@ -237,12 +237,19 @@ uint32_t IndexPutCpuKernel::IndexPutCompute(const CpuKernelContext &ctx) {
                               : (data_num <= kParallelDataNumMid) ? std::min(temp_core_num, 4U) : temp_core_num;
     auto sharder_index_put = [&](int64_t start, int64_t end) {
       size_t length = (end - start) * sizeof(T);
-      (void)memcpy_s(y + start, length, x1 + start, length);
+      auto ret = memcpy_s(y + start, length, x1 + start, length);
+      if (ret != EOK) {
+        KERNEL_LOG_ERROR("memcpy_s failed.");
+      }
     };
     KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_index_put),
                         "IndexPut Compute failed.");
   } else {
-    (void)memcpy_s(y, data_num * sizeof(T), x1, data_num * sizeof(T));
+    auto ret = memcpy_s(y, data_num * sizeof(T), x1, data_num * sizeof(T));
+    if (ret != EOK) {
+      KERNEL_LOG_ERROR("memcpy_s failed.");
+      return KERNEL_STATUS_INNER_ERROR;
+    }
   }
   bool flag = true;
   if (indices_value.size() == shapes_size) {

@@ -310,7 +310,10 @@ bool PSROIPoolingGradCpuKernelMod::Launch(const std::vector<KernelTensor *> &inp
 
     constexpr size_t unit_size = sizeof(float);
     auto memset_task = [&](size_t start, size_t end) {
-      (void)memset_s(output_diff + start, (end - start) * unit_size, '\0', (end - start) * unit_size);
+      auto ret = memset_s(output_diff + start, (end - start) * unit_size, '\0', (end - start) * unit_size);
+      if (ret != EOK) {
+        MS_LOG(ERROR) << "memset_s failed: " << ret;
+      }
     };
     ParallelLaunchAutoSearch(memset_task, outputs[0]->size() / unit_size, this, &parallel_search_info_);
 
@@ -331,7 +334,10 @@ bool PSROIPoolingGradCpuKernelMod::Launch(const std::vector<KernelTensor *> &inp
 
     constexpr size_t unit_size = sizeof(float16);
     auto memset_task = [&](size_t start, size_t end) {
-      (void)memset_s(output_diff + start, (end - start) * unit_size, '\0', (end - start) * unit_size);
+      auto ret = memset_s(output_diff + start, (end - start) * unit_size, '\0', (end - start) * unit_size);
+      if (ret != EOK) {
+        MS_LOG(ERROR) << "memset_s failed: " << ret;
+      }
     };
     ParallelLaunchAutoSearch(memset_task, outputs[0]->size() / unit_size, this, &parallel_search_info_);
 

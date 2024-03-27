@@ -172,23 +172,35 @@ uint32_t SparseToDenseCpuKernel::ParallelSetDefaultValue(const CpuKernelContext 
     int64_t piece = total / kCopyDataSize;
     if (piece == 0) {
       for (int64_t index = begin; index < end; index++) {
-        (void)memcpy_s(output_addr + (index * type_size), static_cast<size_t>(type_size), default_value_addr,
-                       static_cast<size_t>(type_size));
+        auto ret = memcpy_s(output_addr + (index * type_size), static_cast<size_t>(type_size), default_value_addr,
+                            static_cast<size_t>(type_size));
+        if (ret != EOK) {
+          KERNEL_LOG_ERROR("memcpy_s failed.");
+        }
       }
     } else {
       for (int64_t index = begin; index < begin + kCopyDataSize; index++) {
-        (void)memcpy_s(output_addr + (index * type_size), static_cast<size_t>(type_size), default_value_addr,
-                       static_cast<size_t>(type_size));
+        auto ret = memcpy_s(output_addr + (index * type_size), static_cast<size_t>(type_size), default_value_addr,
+                            static_cast<size_t>(type_size));
+        if (ret != EOK) {
+          KERNEL_LOG_ERROR("memcpy_s failed.");
+        }
       }
       char *temp_addr = output_addr + (begin * type_size);
       size_t data_size = static_cast<size_t>(type_size * kCopyDataSize);
       for (int64_t loop = 1; loop < piece; loop++) {
-        (void)memcpy_s(temp_addr + (loop * type_size * kCopyDataSize), data_size, temp_addr, data_size);
+        auto ret = memcpy_s(temp_addr + (loop * type_size * kCopyDataSize), data_size, temp_addr, data_size);
+        if (ret != EOK) {
+          KERNEL_LOG_ERROR("memcpy_s failed.");
+        }
       }
       char *temp_addr1 = output_addr + (begin * type_size) + (piece * type_size * kCopyDataSize);
       for (int64_t loop1 = 0; loop1 < remainder; loop1++) {
-        (void)memcpy_s(temp_addr1 + (loop1 * type_size), static_cast<size_t>(type_size), default_value_addr,
-                       static_cast<size_t>(type_size));
+        auto ret = memcpy_s(temp_addr1 + (loop1 * type_size), static_cast<size_t>(type_size), default_value_addr,
+                            static_cast<size_t>(type_size));
+        if (ret != EOK) {
+          KERNEL_LOG_ERROR("memcpy_s failed.");
+        }
       }
     }
   };
@@ -208,22 +220,38 @@ uint32_t SparseToDenseCpuKernel::SetDefaultValue(const CpuKernelContext &ctx, co
     int64_t piece = output_size / kCopyDataSize;
     if (piece == 0) {
       for (int index = 0; index < output_size; index++) {
-        (void)memcpy_s(output_addr + (index * type_size), static_cast<size_t>(type_size), default_value_addr,
-                       static_cast<size_t>(type_size));
+        auto ret = memcpy_s(output_addr + (index * type_size), static_cast<size_t>(type_size), default_value_addr,
+                            static_cast<size_t>(type_size));
+        if (ret != EOK) {
+          KERNEL_LOG_ERROR("memcpy_s failed.");
+          return KERNEL_STATUS_INNER_ERROR;
+        }
       }
     } else {
       for (int index = 0; index < kCopyDataSize; index++) {
-        (void)memcpy_s(output_addr + (index * type_size), static_cast<size_t>(type_size), default_value_addr,
-                       static_cast<size_t>(type_size));
+        auto ret = memcpy_s(output_addr + (index * type_size), static_cast<size_t>(type_size), default_value_addr,
+                            static_cast<size_t>(type_size));
+        if (ret != EOK) {
+          KERNEL_LOG_ERROR("memcpy_s failed.");
+          return KERNEL_STATUS_INNER_ERROR;
+        }
       }
       size_t data_size = static_cast<size_t>(type_size * kCopyDataSize);
       for (int loop = 1; loop < piece; loop++) {
-        (void)memcpy_s(output_addr + (loop * type_size * kCopyDataSize), data_size, output_addr, data_size);
+        auto ret = memcpy_s(output_addr + (loop * type_size * kCopyDataSize), data_size, output_addr, data_size);
+        if (ret != EOK) {
+          KERNEL_LOG_ERROR("memcpy_s failed.");
+          return KERNEL_STATUS_INNER_ERROR;
+        }
       }
       char *temp_addr = output_addr + (piece * type_size * kCopyDataSize);
       for (int loop1 = 0; loop1 < remainder; loop1++) {
-        (void)memcpy_s(temp_addr + (loop1 * type_size), static_cast<size_t>(type_size), default_value_addr,
-                       static_cast<size_t>(type_size));
+        auto ret = memcpy_s(temp_addr + (loop1 * type_size), static_cast<size_t>(type_size), default_value_addr,
+                            static_cast<size_t>(type_size));
+        if (ret != EOK) {
+          KERNEL_LOG_ERROR("memcpy_s failed.");
+          return KERNEL_STATUS_INNER_ERROR;
+        }
       }
     }
     return KERNEL_STATUS_OK;

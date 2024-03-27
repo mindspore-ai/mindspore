@@ -62,7 +62,10 @@ inline bool CompareIndices(const int64_t *a, const int64_t *b, const size_t &len
 template <typename T>
 inline void CopyIndicesAndValue(int64_t *dst_indices_addr, T *dst_values_addr, const int64_t *src_indices_addr,
                                 const T *src_values_addr, const size_t &indices_size) {
-  (void)memcpy_s(dst_indices_addr, indices_size, src_indices_addr, indices_size);
+  auto ret = memcpy_s(dst_indices_addr, indices_size, src_indices_addr, indices_size);
+  if (ret != EOK) {
+    KERNEL_LOG_ERROR("memcpy_s failed.");
+  }
   *dst_values_addr = *src_values_addr;
 }
 
