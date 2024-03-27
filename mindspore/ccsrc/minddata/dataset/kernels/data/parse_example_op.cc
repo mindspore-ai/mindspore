@@ -703,7 +703,7 @@ Status ParseSingleVarLenColumn(const parsed::Feature &feature, std::shared_ptr<T
 }
 
 Status ParseExampleOp::ParseSingleExample(const TensorRow &raw_bytes, TensorRow *parsed_row) {
-  const auto filename = raw_bytes.getPath()[0];
+  const auto filename = raw_bytes.getPath().empty() ? "" : raw_bytes.getPath()[0];
   const auto tensor_iterator = raw_bytes[0]->begin<std::string_view>();
 
   const auto example_bytes = std::string(*tensor_iterator);
