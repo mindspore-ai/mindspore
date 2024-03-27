@@ -280,7 +280,7 @@ void PyFuncCpuKernelMod::BuildFuncInfo(const PrimitivePtr &primitive, const std:
   std::vector<std::vector<int64_t>> out_shapes;
 
   GetTypeInfo(primitive, inputs, "in_types", &in_types);
-  GetTypeInfo(primitive, inputs, "out_types", &out_types);
+  GetTypeInfo(primitive, outputs, "out_types", &out_types);
 
   if (primitive->HasAttr("in_shapes")) {
     in_shapes = GetValue<std::vector<std::vector<int64_t>>>(primitive->GetAttr("in_shapes"));
