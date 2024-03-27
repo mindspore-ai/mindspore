@@ -5,7 +5,7 @@ sum_ext:
             dtype: tensor
         dim:
             dtype: tuple[int]
-            type_cast: int, list[int]
+            type_cast: int, list[int], tensor
             default: None
         keepdim:
             dtype: bool
