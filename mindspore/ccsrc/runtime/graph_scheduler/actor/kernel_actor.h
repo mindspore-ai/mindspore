@@ -46,6 +46,8 @@ using mindspore::kernel::KernelTensorPtr;
 using mindspore::session::SomasInfo;
 using mindspore::tensor::TensorPtr;
 
+class SuperKernelActor;
+
 struct InputDataInfo {
   InputDataInfo(const std::string &format, const ShapeVector &shape, size_t size, TypeId type_id)
       : format_(format), shape_(shape), size_(size), type_id_(type_id) {}
@@ -116,6 +118,11 @@ class KernelActor : public DebugAwareActor {
 
   void set_stream_send_actor(KernelActor *stream_send_actor) { stream_send_actor_ = stream_send_actor; }
 
+  void SetInputDeviceTensor(DeviceTensor *input_device_tensor, size_t input_index);
+
+  // Set the memory address for the tensors which use the somas.
+  void SetSomasMemory(OpContext<DeviceTensor> *const context) const;
+
  protected:
   void Init() override;
   void Run(OpContext<DeviceTensor> *const context) override;
@@ -145,9 +152,6 @@ class KernelActor : public DebugAwareActor {
 
   // Update input_device_tensors by input op data.
   void UpdateInputDeviceTensor(const OpData<DeviceTensor> *input_data, OpContext<DeviceTensor> *const context);
-
-  // Set the memory address for the tensors which use the somas.
-  void SetSomasMemory(OpContext<DeviceTensor> *const context) const;
 
   // The info of kernel.
   CNodePtr kernel_;
@@ -213,6 +217,7 @@ class KernelActor : public DebugAwareActor {
 #ifdef ENABLE_RPC_ACTOR
   friend class RpcNodeScheduler;
 #endif
+  friend class SuperKernelActor;
 
   // Init the device tensors and kernel launch info.
   void InitInputInfo();

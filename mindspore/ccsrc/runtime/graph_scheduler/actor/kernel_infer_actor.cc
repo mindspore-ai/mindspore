@@ -27,6 +27,7 @@ void KernelInferActor::Init() {
   if (memory_free_list_.size() > input_num) {
     memory_free_list_.erase(memory_free_list_.begin() + input_num, memory_free_list_.end());
   }
+  
 }
 
 void KernelInferActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<DeviceTensor> *const context) {

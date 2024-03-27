@@ -98,6 +98,11 @@ static constexpr size_t kAsyncLaunchThreadNum = 1;
 static constexpr size_t kMultiPipelineThreadNum = 3;
 
 bool GetNeedSyncStream(const GraphCompilerInfo &graph_compiler_info) {
+  static auto enable_internal_kernel = common::GetEnv("MS_ENABLE_INTERNAL_KERNELS");
+  static auto enable_syn = common::GetEnv("MS_SYNC_RUN");
+  if (enable_internal_kernel == "on" && enable_syn != "on") {
+    return false;
+  }
   const auto &graphs = graph_compiler_info.graphs_;
   if (graphs.empty() && graph_compiler_info.control_nodes_.size() > 1) {
     return true;
@@ -293,6 +298,17 @@ void DoDisasterRecovery(const std::string &actor_set_name) {
   }
 }
 #endif
+
+void ChangeGraphMode(const GraphCompilerInfo &graph_compiler_info) {
+  if (EnableKbkSubGraphExecute()) {
+    for (size_t i = 0; i < graph_compiler_info.graphs_.size(); ++i) {
+      const auto &graph = graph_compiler_info.graphs_[i];
+      MS_LOG(INFO) << "Enable kbk subgraph execute and set run mode for graph: " << graph->graph_id()
+                   << " to GraphMode.";
+      graph->set_run_mode(device::RunMode::kGraphMode);
+    }
+  }
+}
 }  // namespace
 
 GraphScheduler &GraphScheduler::GetInstance() noexcept {
@@ -537,6 +553,9 @@ ActorSet *GraphScheduler::Transform(const GraphCompilerInfo &graph_compiler_info
       << "#dmsg#Runtime error info:#dmsg#The number of graphs is not equal to the number of device contexts.";
   }
 
+  // Adaptive operator direct Launch mode (no message mechanism), will be deleted in the future.
+  ChangeGraphMode(graph_compiler_info);
+
   if (graph_compiler_info.strategy_ == GraphExecutionStrategy::kPipelineWithExecutionOrder) {
     execution_order_running_ = true;
     graph_compiler_info.strategy_ = GraphExecutionStrategy::kPipeline;
@@ -615,7 +634,9 @@ void GraphScheduler::SpawnMultiPipelineActor(ActorSet *const actor_set, ActorThr
   auto actor_manager = ActorMgr::GetActorMgrRef();
   MS_EXCEPTION_IF_NULL(actor_manager);
 
-  ActorDispatcher::set_enable_async_launch_kernel(EnableRuntimePipeline() && !actor_set->kernel_actors_.empty() &&
+  bool enable_runtime_pipeline = EnableRuntimePipeline();
+  ActorDispatcher::set_enable_async_launch_kernel(enable_runtime_pipeline &&
+                                                  (EnableKbkSubGraphExecute() || !actor_set->kernel_actors_.empty()) &&
                                                   default_actor_thread_num_ > kAsyncLaunchThreadNum);
   if (ActorDispatcher::enable_async_launch_kernel()) {
     thread_pool->DisableOccupiedActorThread();
@@ -638,13 +659,14 @@ void GraphScheduler::SpawnMultiPipelineActor(ActorSet *const actor_set, ActorThr
   }
 
   // If enable runtime multi pipeline, async launch kernel will be enabled.
+<<<<<<< HEAD
   ActorDispatcher::set_enable_runtime_multi_pipeline(EnableRuntimePipeline() && actor_set->has_dynamic_shape_ &&
                                                      !actor_set->kernel_actors_.empty() &&
                                                      default_actor_thread_num_ > kMultiPipelineThreadNum);
+>>>>>>> 80d1685cc13... lzy: Support run graph without kernel actor for kbyk mode
   if (ActorDispatcher::enable_runtime_multi_pipeline() && !already_spawn_kernel_async_infer_resize_actor_) {
     size_t current_actor_thread_num = thread_pool->GetActorThreadNum();
     MS_LOG(INFO) << "Enable runtime multi pipeline, default actor thread num: " << default_actor_thread_num_
-                 << ", current actor thread num: " << current_actor_thread_num;
     if (current_actor_thread_num != default_actor_thread_num_) {
       thread_pool->SetActorThreadNum(default_actor_thread_num_);
       MS_LOG(DEBUG) << "Reset actor thread number to: " << default_actor_thread_num_;
@@ -704,7 +726,7 @@ void GraphScheduler::RefreshContextAndThreadPool(ActorSet *const actor_set, Acto
              : (already_spawn_kernel_async_launch_actor_ ? kAsyncLaunchThreadNum : 0);
   };
 
-  if (!actor_set->kernel_actors_.empty()) {
+  if (EnableKbkSubGraphExecute() || !actor_set->kernel_actors_.empty()) {
     // kernel by kernel
     thread_pool->SetActorThreadNum(default_actor_thread_num_);
   } else if (actor_set->super_kernel_actors_.size() == 1 && actor_set->control_actors_ == nullptr) {
@@ -1301,7 +1323,7 @@ std::vector<KernelActorPtr> GraphScheduler::BuildKernelActor(const GraphCompiler
     const auto &graph = graph_compiler_info.graphs_[i];
     const auto &device_context = graph_compiler_info.device_contexts_[i];
     MS_EXCEPTION_IF_NULL(graph);
-    if (graph->is_graph_run_mode() || graph->is_any_type_input()) {
+    if (graph->is_graph_run_mode() || graph->is_any_type_input() || EnableKbkSubGraphExecute()) {
       continue;
     }
 
@@ -1367,7 +1389,7 @@ std::vector<SuperKernelActorPtr> GraphScheduler::BuildSuperKernelActor(const Gra
     const auto &graph = graph_compiler_info.graphs_[i];
     const auto &device_context = graph_compiler_info.device_contexts_[i];
     MS_EXCEPTION_IF_NULL(graph);
-    if ((!graph->is_graph_run_mode()) || graph->is_any_type_input()) {
+    if ((!graph->is_graph_run_mode() && !EnableKbkSubGraphExecute()) || graph->is_any_type_input()) {
       continue;
     }
 
@@ -1712,6 +1734,10 @@ void GraphScheduler::LinkDataArrowInNonSinkMode(const KernelGraphPtr &graph,
   MS_LOG(INFO) << "Get all u input of cnode in graph:" << graph->ToString() << " start.";
   GetAllCNodeUInputByGraph(graph, &cnode_to_monad_inputs);
   MS_LOG(INFO) << "Get all u input of cnode in graph:" << graph->ToString() << " end.";
+
+  if (EnableKbkSubGraphExecute()) {
+    return;
+  }
 
   auto &execution_order = graph->execution_order();
   // Foreach the execution order to link the actors.
