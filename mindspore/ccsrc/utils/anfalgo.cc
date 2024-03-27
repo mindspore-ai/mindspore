@@ -1411,11 +1411,13 @@ std::vector<CNodePtr> DelayExecNode(const std::vector<CNodePtr> &nodes, const st
 }
 }  // namespace
 
-void AnfAlgo::ReorderExecList(NotNull<std::vector<CNodePtr> *> node_list) {
+void AnfAlgo::ReorderExecList(NotNull<std::vector<CNodePtr> *> node_list, bool is_dynamic_shape) {
   std::vector<CNodePtr> result;
   std::copy(node_list->begin(), node_list->end(), std::back_inserter(result));
   result = DelayExecNode(result, kTransDataOpName, true);
-  result = DelayExecNode(result, kCastOpName, true);
+  if (!is_dynamic_shape) {
+    result = DelayExecNode(result, kCastOpName, true);
+  }
   result = DelayExecNode(result, kAdamApplyOneWithDecayOpName, false);
   result = DelayExecNode(result, kAdamApplyOneOpName, false);
   result = DelayExecNode(result, kQuantDTypeCastOpName, false);
