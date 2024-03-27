@@ -153,6 +153,9 @@ bool CollectiveManager::Initialize() {
   }
 
   if (!common::GetEnv(kSimulationLevel).empty()) {
+    MS_LOG(WARNING) << "This is simulation mode with level " << common::GetEnv(kSimulationLevel)
+                    << ". Process's RANK_ID: " << common::GetEnv("RANK_ID")
+                    << ", RANK_SIZE: " << common::GetEnv("RANK_SIZE");
     return InitializeDummyCommLib();
   }
 
