@@ -10092,9 +10092,6 @@ class FlashAttentionScore(Primitive):
             - 7: Represents the dilated scenario, not implemented yet.
             - 8: Represents the block_local scenario, not implemented yet.
 
-        enable_load_balance (bool): Enable load balance of calculation on each rank. Only take effect
-        when sequence parallel is used. Default False.
-
     Inputs:
         - **query** (Tensor[float16, bfloat16]) - The query tensor.
           Input tensor of shape :math:`(B, S1, H1)` or `(B, N1, S1, D)`.
@@ -10129,7 +10126,7 @@ class FlashAttentionScore(Primitive):
 
     @prim_attr_register
     def __init__(self, head_num=1, keep_prob=1.0, scale_value=1.0, pre_tokens=2147483647, next_tokens=2147483647,
-                 inner_precise=0, input_layout="BSH", sparse_mode=0, enable_load_balance=False):
+                 inner_precise=0, input_layout="BSH", sparse_mode=0):
         """Initialize FlashAttentionScore"""
         validator.check_value_type('head_num', head_num, [int], self.name)
         validator.check_value_type('keep_prob', keep_prob, [int, float], self.name)
@@ -10140,7 +10137,6 @@ class FlashAttentionScore(Primitive):
         validator.check_value_type('next_tokens', next_tokens, [int], self.name)
         validator.check_value_type('inner_precise', inner_precise, [int], self.name)
         validator.check_value_type('sparse_mode', sparse_mode, [int], self.name)
-        validator.check_value_type('enable_load_balance', enable_load_balance, [bool], self.name)
         valid_sparse_mode = [0, 1, 2, 3, 4]
         if sparse_mode not in valid_sparse_mode:
             raise ValueError(f"Attribute 'sparse_mode' must be one of {valid_sparse_mode}, but got {sparse_mode}")

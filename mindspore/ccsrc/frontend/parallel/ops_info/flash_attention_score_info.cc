@@ -284,15 +284,16 @@ void FlashAttentionScoreInfo::InitSplittableInputs() {
   }
   if (is_input_passed_[ops::kFlashAttentionScoreInputAttnMaskIndex]) {
     auto attn_mask_shape = inputs_shape_.at(GetStrategyRealIndex(ops::kFlashAttentionScoreInputAttnMaskIndex));
+    int64_t attn_s1_group = is_attn_mask_compressed_ ? 0 : s1_group;
     if (attn_mask_shape.size() == kSizeTwo) {
       // attn_mask_shape: (S1, S2)
-      splittable_inputs_[ops::kFlashAttentionScoreInputAttnMaskIndex] = {s1_group, -1};
+      splittable_inputs_[ops::kFlashAttentionScoreInputAttnMaskIndex] = {attn_s1_group, 0};
     } else if (attn_mask_shape.size() == kSizeFour) {
       // attn_mask_shape: (B, N1, S1, S2) or (B, 1, S1, S2)
       auto attn_mask_n1_group = attn_mask_shape[kIndex1] == 1 ? 0 : n1_group;
-      splittable_inputs_[ops::kFlashAttentionScoreInputAttnMaskIndex] = {batch_group, attn_mask_n1_group, s1_group, 1};
+      splittable_inputs_[ops::kFlashAttentionScoreInputAttnMaskIndex] = {batch_group, attn_mask_n1_group, attn_s1_group,
+                                                                         0};
     }
-    splittable_inputs_[ops::kFlashAttentionScoreInputAttnMaskIndex] = {1, 0, 0, 0};
   }
   if (is_input_passed_[ops::kFlashAttentionScoreInputPrefixIndex]) {
     splittable_inputs_[ops::kFlashAttentionScoreInputPrefixIndex] = {batch_group};
