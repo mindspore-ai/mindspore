@@ -7,7 +7,7 @@ elseif(EXISTS /usr/local/Ascend/ascend-toolkit/latest)
 else()
     set(KERNEL_OPC_PATH /usr/local/Ascend)
 endif()
-set(OPC_PATH ${KERNEL_OPC_PATH}/aarch64-linux/bin/opc)
+set(OPC_PATH ${KERNEL_OPC_PATH}/bin/opc)
 
 foreach(compute_unit ${ASCEND_COMPUTE_UNIT})
   # generate aic-${compute_unit}-ops-info.json
