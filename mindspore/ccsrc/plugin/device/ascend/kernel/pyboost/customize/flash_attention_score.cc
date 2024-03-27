@@ -77,7 +77,7 @@ void FlashAttentionScoreAscendCall(
     std::vector<int64_t> actual_seq_qlen_array = ConvertValueTupleToVector<int64_t>(actual_seq_qlen.value());
     std::vector<int64_t> actual_seq_kvlen_array = ConvertValueTupleToVector<int64_t>(actual_seq_kvlen.value());
     if (!CheckSeqList(actual_seq_qlen_array, query->shape_c()) ||
-        !CheckSeqList(actual_seq_kvlen_array, query->shape_c())) {
+        !CheckSeqList(actual_seq_kvlen_array, key->shape_c())) {
       MS_LOG(EXCEPTION)
         << "For actual_seq_qlen and actual_seq_kvlen, must be increasing array and the last number is equal to T.";
     }
