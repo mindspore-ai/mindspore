@@ -1,4 +1,12 @@
-# Copyright 2022 Huawei Technologies Co., Ltd & CPL YiQin GAO Research Group
+# Copyright 2023 @ Shenzhen Bay Laboratory &
+#                  Peking University &
+#                  Huawei Technologies Co., Ltd
+#
+# This code is a part of MindSPONGE:
+# MindSpore Simulation Package tOwards Next Generation molecular modelling.
+#
+# MindSPONGE is open-source software based on the AI-framework:
+# MindSpore (https://www.mindspore.cn/)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,8 +35,9 @@ class Evoformer(nn.Cell):
     '''evoformer'''
 
     @lazy_inline
-    def __init__(self, config, msa_act_dim, pair_act_dim, is_extra_msa, batch_size):
+    def __init__(self, config, msa_act_dim, pair_act_dim, is_extra_msa, is_training, batch_size):
         super(Evoformer, self).__init__()
+        self.is_training = is_training
         if is_extra_msa:
             self.slice_cfg = config.slice.extra_msa_stack
         else:
@@ -40,6 +49,7 @@ class Evoformer(nn.Cell):
                               msa_act_dim,
                               pair_act_dim,
                               is_extra_msa,
+                              self.is_training,
                               batch_size)
         self.pair_act = PairAct(self.config,
                                 self.slice_cfg,
@@ -47,15 +57,13 @@ class Evoformer(nn.Cell):
                                 pair_act_dim,
                                 batch_size)
 
-        if config.is_training:
+        if self.is_training:
             self.pair_act.recompute()
 
-    def construct(self, inputs):
+    def construct(self, msa_act, pair_act, msa_mask, extra_msa_norm, pair_mask, index):
         '''construct'''
-        msa_act, pair_act, msa_mask, extra_msa_norm, pair_mask, index = inputs
         msa_act = self.msa_act(msa_act, pair_act, msa_mask, index)
-        inputs = (msa_act, pair_act, msa_mask, extra_msa_norm, pair_mask, index)
-        pair_act = self.pair_act(inputs)
+        pair_act = self.pair_act(msa_act, pair_act, msa_mask, extra_msa_norm, pair_mask, index)
         msa_act = F.depend(msa_act, pair_act)
         return msa_act, pair_act
 
@@ -63,12 +71,13 @@ class Evoformer(nn.Cell):
 class MsaAct(nn.Cell):
     """MsaAct"""
 
-    def __init__(self, config, slice_cfg, msa_act_dim, pair_act_dim, is_extra_msa, batch_size):
+    def __init__(self, config, slice_cfg, msa_act_dim, pair_act_dim, is_extra_msa, is_training,
+                 batch_size):
         super(MsaAct, self).__init__()
 
         self.slice_cfg = slice_cfg
         self.config = config.evoformer
-
+        self.is_training = is_training
         self.msa_row_attention_with_pair_bias = MSARowAttentionWithPairBias(
             self.config.msa_row_attention_with_pair_bias.num_head,
             msa_act_dim,
@@ -95,14 +104,17 @@ class MsaAct(nn.Cell):
                                                batch_size,
                                                self.slice_cfg.msa_column_attention)
 
-        if config.is_training:
+        if self.is_training:
             self.msa_row_attention_with_pair_bias.recompute()
             self.attn_mod.recompute()
             self.msa_transition.recompute()
 
     def construct(self, msa_act, pair_act, msa_mask, index=None):
         '''construct'''
-        msa_act = P.Add()(msa_act, self.msa_row_attention_with_pair_bias(msa_act, msa_mask, pair_act, index))
+        msa_act = P.Add()(msa_act, self.msa_row_attention_with_pair_bias(msa_act,
+                                                                         msa_mask,
+                                                                         pair_act,
+                                                                         index))
         msa_act = P.Add()(msa_act, self.attn_mod(msa_act, msa_mask, index))
         msa_act = P.Add()(msa_act, self.msa_transition(msa_act, index))
         return msa_act
@@ -131,13 +143,14 @@ class PairAct(nn.Cell):
             batch_size,
             self.slice_cfg.triangle_attention_starting_node)
 
-        self.triangle_attention_ending_node = TriangleAttention(self.config.triangle_attention_ending_node.orientation,
-                                                                self.config.triangle_attention_ending_node.num_head,
-                                                                pair_act_dim,
-                                                                self.config.triangle_attention_ending_node.gating,
-                                                                pair_act_dim,
-                                                                batch_size,
-                                                                self.slice_cfg.triangle_attention_ending_node)
+        self.triangle_attention_ending_node = \
+            TriangleAttention(self.config.triangle_attention_ending_node.orientation,
+                              self.config.triangle_attention_ending_node.num_head,
+                              pair_act_dim,
+                              self.config.triangle_attention_ending_node.gating,
+                              pair_act_dim,
+                              batch_size,
+                              self.slice_cfg.triangle_attention_ending_node)
 
         self.pair_transition = Transition(self.config.pair_transition.num_intermediate_factor,
                                           pair_act_dim,
@@ -156,13 +169,17 @@ class PairAct(nn.Cell):
             layer_norm_dim=pair_act_dim,
             batch_size=batch_size)
 
-    def construct(self, inputs):
+    def construct(self, msa_act, pair_act, msa_mask, extra_msa_norm, pair_mask, index=None):
         '''construct'''
-        msa_act, pair_act, msa_mask, extra_msa_norm, pair_mask, index = inputs
-        pair_act = P.Add()(pair_act, self.outer_product_mean(msa_act, msa_mask, extra_msa_norm, index))
-        pair_act = P.Add()(pair_act, self.triangle_multiplication_outgoing(pair_act, pair_mask, index))
-        pair_act = P.Add()(pair_act, self.triangle_multiplication_incoming(pair_act, pair_mask, index))
-        pair_act = P.Add()(pair_act, self.triangle_attention_starting_node(pair_act, pair_mask, index))
-        pair_act = P.Add()(pair_act, self.triangle_attention_ending_node(pair_act, pair_mask, index))
+        pair_act = P.Add()(pair_act,
+                           self.outer_product_mean(msa_act, msa_mask, extra_msa_norm, index))
+        pair_act = P.Add()(pair_act,
+                           self.triangle_multiplication_outgoing(pair_act, pair_mask, index))
+        pair_act = P.Add()(pair_act,
+                           self.triangle_multiplication_incoming(pair_act, pair_mask, index))
+        pair_act = P.Add()(pair_act,
+                           self.triangle_attention_starting_node(pair_act, pair_mask, index))
+        pair_act = P.Add()(pair_act,
+                           self.triangle_attention_ending_node(pair_act, pair_mask, index))
         pair_act = P.Add()(pair_act, self.pair_transition(pair_act, index))
         return pair_act

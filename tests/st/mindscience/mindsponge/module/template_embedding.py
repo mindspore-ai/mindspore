@@ -1,4 +1,12 @@
-# Copyright 2022 Huawei Technologies Co., Ltd & CPL YiQin GAO Research Group
+# Copyright 2023 @ Shenzhen Bay Laboratory &
+#                  Peking University &
+#                  Huawei Technologies Co., Ltd
+#
+# This code is a part of MindSPONGE:
+# MindSpore Simulation Package tOwards Next Generation molecular modelling.
+#
+# MindSPONGE is open-source software based on the AI-framework:
+# MindSpore (https://www.mindspore.cn/)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,15 +23,15 @@
 '''TEMPLATE'''
 import mindspore.common.dtype as mstype
 import mindspore.nn as nn
+from mindspore import lazy_inline
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
-from mindspore import lazy_inline
 from tests.st.mindscience.mindsponge.mindsponge.cell.initializer import lecun_init
 from tests.st.mindscience.mindsponge.mindsponge.common.utils import dgram_from_positions, _memory_reduce
-from tests.st.mindscience.mindsponge.mindsponge.common.geometry import make_transform_from_reference, quat_affine, \
+from tests.st.mindscience.mindsponge.mindsponge.common.geometry import make_transform_from_reference, quat_affine,\
     invert_point
 from tests.st.mindscience.mindsponge.mindsponge.common.residue_constants import atom_order
-from tests.st.mindscience.mindsponge.mindsponge.cell import Attention, TriangleAttention, Transition, \
+from tests.st.mindscience.mindsponge.mindsponge.cell import Attention, TriangleAttention, Transition,\
     TriangleMultiplication
 
 
@@ -38,39 +46,44 @@ class TemplatePairStack(nn.Cell):
         batch_size = 0
         self.slice = config.slice.template_pair_stack
         start_node_cfg = self.config.triangle_attention_starting_node
-        self.triangle_attention_starting_node = TriangleAttention(start_node_cfg.orientation,
-                                                                  start_node_cfg.num_head,
-                                                                  start_node_cfg.key_dim,
-                                                                  start_node_cfg.gating,
-                                                                  64,
-                                                                  batch_size,
-                                                                  self.slice.triangle_attention_starting_node)
+        self.triangle_attention_starting_node = \
+            TriangleAttention(start_node_cfg.orientation,
+                              start_node_cfg.num_head,
+                              start_node_cfg.key_dim,
+                              start_node_cfg.gating,
+                              64,
+                              batch_size,
+                              self.slice.triangle_attention_starting_node)
         end_node_cfg = self.config.triangle_attention_ending_node
-        self.triangle_attention_ending_node = TriangleAttention(end_node_cfg.orientation,
-                                                                end_node_cfg.num_head,
-                                                                end_node_cfg.key_dim,
-                                                                end_node_cfg.gating,
-                                                                64,
-                                                                batch_size,
-                                                                self.slice.triangle_attention_ending_node)
-        # Hard Code
+        self.triangle_attention_ending_node = \
+            TriangleAttention(end_node_cfg.orientation,
+                              end_node_cfg.num_head,
+                              end_node_cfg.key_dim,
+                              end_node_cfg.gating,
+                              64,
+                              batch_size,
+                              self.slice.triangle_attention_ending_node)
+
         self.pair_transition = Transition(self.config.pair_transition.num_intermediate_factor,
                                           64,
                                           batch_size,
                                           self.slice.pair_transition)
 
         mul_outgoing_cfg = self.config.triangle_multiplication_outgoing
-        self.triangle_multiplication_outgoing = TriangleMultiplication(mul_outgoing_cfg.num_intermediate_channel,
-                                                                       mul_outgoing_cfg.equation,
-                                                                       layer_norm_dim=64,
-                                                                       batch_size=batch_size)
+        self.triangle_multiplication_outgoing = \
+            TriangleMultiplication(mul_outgoing_cfg.num_intermediate_channel,
+                                   mul_outgoing_cfg.equation,
+                                   layer_norm_dim=64,
+                                   batch_size=batch_size)
         mul_incoming_cfg = self.config.triangle_multiplication_incoming
-        self.triangle_multiplication_incoming = TriangleMultiplication(mul_incoming_cfg.num_intermediate_channel,
-                                                                       mul_incoming_cfg.equation,
-                                                                       layer_norm_dim=64,
-                                                                       batch_size=batch_size)
+        self.triangle_multiplication_incoming = \
+            TriangleMultiplication(mul_incoming_cfg.num_intermediate_channel,
+                                   mul_incoming_cfg.equation,
+                                   layer_norm_dim=64,
+                                   batch_size=batch_size)
 
     def construct(self, pair_act, pair_mask, index):
+        "construct"
         if not self.num_block:
             return pair_act
 
@@ -85,7 +98,7 @@ class TemplatePairStack(nn.Cell):
 class SingleTemplateEmbedding(nn.Cell):
     '''single template embedding'''
 
-    def __init__(self, config, mixed_precision):
+    def __init__(self, config, is_training, mixed_precision):
         super(SingleTemplateEmbedding, self).__init__()
         self.config = config.template
         if mixed_precision:
@@ -96,13 +109,15 @@ class SingleTemplateEmbedding(nn.Cell):
         self.min_bin = self.config.dgram_features.min_bin
         self.max_bin = self.config.dgram_features.max_bin
 
-        self.num_channels = (self.config.template_pair_stack.triangle_attention_ending_node.value_dim)
+        self.num_channels = self.config.template_pair_stack.triangle_attention_ending_node.value_dim
         self.embedding2d = nn.Dense(88, self.num_channels,
                                     weight_init=lecun_init(88, initializer_name='relu'))
-        # if is_training:
+
         template_layers = nn.CellList()
         for _ in range(self.config.template_pair_stack.num_block):
             template_pair_stack_block = TemplatePairStack(config)
+            if is_training:
+                template_pair_stack_block.recompute()
             template_layers.append(template_pair_stack_block)
         self.template_pair_stack = template_layers
 
@@ -115,37 +130,43 @@ class SingleTemplateEmbedding(nn.Cell):
         self.num_block = self.config.template_pair_stack.num_block
         self.batch_block = 4
 
-    def construct(self, inputs):
+    def construct(self, mask_2d, template_aatype, template_all_atom_masks,
+                  template_all_atom_positions, template_pseudo_beta_mask,
+                  template_pseudo_beta):
         '''construct'''
-        mask_2d, template_aatype, template_all_atom_masks, template_all_atom_positions, \
-        template_pseudo_beta_mask, template_pseudo_beta = inputs
         num_res = template_aatype[0, ...].shape[0]
         template_mask_2d_temp = P.ExpandDims()(template_pseudo_beta_mask, -1) * \
                                 P.ExpandDims()(template_pseudo_beta_mask, 1)
-        template_dgram_temp = dgram_from_positions(template_pseudo_beta, self.num_bins, self.min_bin,
+        template_dgram_temp = dgram_from_positions(template_pseudo_beta,
+                                                   self.num_bins, self.min_bin,
                                                    self.max_bin, self._type)
 
         to_concat_temp = (template_dgram_temp, P.ExpandDims()(template_mask_2d_temp, -1))
         aatype_temp = self.one_hot(template_aatype)
         aatype_temp = P.Cast()(aatype_temp, self._type)
-        to_concat_temp = to_concat_temp + (P.Tile()(P.ExpandDims()(aatype_temp, 1), (1, num_res, 1, 1)),
-                                           P.Tile()(P.ExpandDims()(aatype_temp, 2), (1, 1, num_res, 1)))
+        to_concat_temp = to_concat_temp + (P.Tile()(P.ExpandDims()(aatype_temp, 1),
+                                                    (1, num_res, 1, 1)),
+                                           P.Tile()(P.ExpandDims()(aatype_temp, 2),
+                                                    (1, 1, num_res, 1)))
 
-        rot_temp, trans_temp = make_transform_from_reference(template_all_atom_positions[:, :, self.n],
-                                                             template_all_atom_positions[:, :, self.ca],
-                                                             template_all_atom_positions[:, :, self.c])
+        rot_temp, trans_temp \
+            = make_transform_from_reference(template_all_atom_positions[:, :, self.n],
+                                            template_all_atom_positions[:, :, self.ca],
+                                            template_all_atom_positions[:, :, self.c])
 
         _, rotation_tmp, translation_tmp = quat_affine(None, trans_temp, rot_temp)
         points_tmp = [P.ExpandDims()(translation_tmp[0], -2),
                       P.ExpandDims()(translation_tmp[1], -2),
                       P.ExpandDims()(translation_tmp[2], -2)]
         affine_vec_tmp = invert_point(points_tmp, rotation_tmp, translation_tmp, extra_dims=1)
-        inv_distance_scalar_tmp = P.Rsqrt()(1e-6 + P.Square()(affine_vec_tmp[0]) + P.Square()(affine_vec_tmp[1]) + \
+        inv_distance_scalar_tmp = P.Rsqrt()(1e-6 + P.Square()(affine_vec_tmp[0]) + \
+                                            P.Square()(affine_vec_tmp[1]) +
                                             P.Square()(affine_vec_tmp[2]))
         template_mask_tmp = (template_all_atom_masks[:, :, self.n] *
                              template_all_atom_masks[:, :, self.ca] *
                              template_all_atom_masks[:, :, self.c])
-        template_mask_2d_tmp = P.ExpandDims()(template_mask_tmp, -1) * P.ExpandDims()(template_mask_tmp, 1)
+        template_mask_2d_tmp = P.ExpandDims()(template_mask_tmp, -1) * \
+            P.ExpandDims()(template_mask_tmp, 1)
 
         inv_distance_scalar_tmp = inv_distance_scalar_tmp * template_mask_2d_tmp
         unit_vector_tmp = (P.ExpandDims()(inv_distance_scalar_tmp * affine_vec_tmp[0], -1),
@@ -153,9 +174,11 @@ class SingleTemplateEmbedding(nn.Cell):
                            P.ExpandDims()(inv_distance_scalar_tmp * affine_vec_tmp[2], -1))
 
         if not self.use_template_unit_vector:
-            unit_vector_tmp = (P.ZerosLike()(unit_vector_tmp[0]), P.ZerosLike()(unit_vector_tmp[1]),
+            unit_vector_tmp = (P.ZerosLike()(unit_vector_tmp[0]),
+                               P.ZerosLike()(unit_vector_tmp[1]),
                                P.ZerosLike()(unit_vector_tmp[2]))
-        to_concat_temp = to_concat_temp + unit_vector_tmp + (P.ExpandDims()(template_mask_2d_tmp, -1),)
+        to_concat_temp = to_concat_temp + unit_vector_tmp + \
+            (P.ExpandDims()(template_mask_2d_tmp, -1),)
         act_tmp = P.Concat(-1)(to_concat_temp)
 
         act_tmp = act_tmp * P.ExpandDims()(template_mask_2d_tmp, -1)
@@ -185,15 +208,15 @@ class SingleTemplateEmbedding(nn.Cell):
 class TemplateEmbedding(nn.Cell):
     '''template embedding'''
 
-    def __init__(self, config, mixed_precision=True):
+    def __init__(self, config, is_training, mixed_precision=True):
         super(TemplateEmbedding, self).__init__()
         self.config = config.template
         if mixed_precision:
             self._type = mstype.float16
         else:
             self._type = mstype.float32
-        self.num_channels = (self.config.template_pair_stack.triangle_attention_ending_node.value_dim)
-        self.template_embedder = SingleTemplateEmbedding(config, mixed_precision)
+        self.num_channels = self.config.template_pair_stack.triangle_attention_ending_node.value_dim
+        self.template_embedder = SingleTemplateEmbedding(config, is_training, mixed_precision)
         self.template_pointwise_attention = Attention(self.config.attention.num_head,
                                                       self.config.attention.key_dim,
                                                       self.config.attention.gating,
@@ -202,32 +225,36 @@ class TemplateEmbedding(nn.Cell):
         self.slice_num = config.slice.template_embedding
 
     def compute(self, flat_query, flat_templates, input_mask):
-        embedding = self.template_pointwise_attention(flat_query, flat_templates, input_mask, index=None,
+        embedding = self.template_pointwise_attention(flat_query, flat_templates,
+                                                      input_mask, index=None,
                                                       nonbatched_bias=None)
         return embedding
 
-    def construct(self, inputs):
+    def construct(self, query_embedding, template_aatype, template_all_atom_masks,
+                  template_all_atom_positions, template_mask, template_pseudo_beta_mask,
+                  template_pseudo_beta, mask_2d):
         '''construct'''
-        query_embedding, template_aatype, template_all_atom_masks, template_all_atom_positions, \
-        template_mask, template_pseudo_beta_mask, template_pseudo_beta, mask_2d = inputs
         num_templates = template_mask.shape[0]
         num_channels = self.num_channels
         num_res = query_embedding.shape[0]
         query_num_channels = query_embedding.shape[-1]
         mask_2d = F.depend(mask_2d, query_embedding)
-        inputs = mask_2d, template_aatype, template_all_atom_masks, template_all_atom_positions, \
-                 template_pseudo_beta_mask, template_pseudo_beta
-        template_pair_representation = self.template_embedder(inputs)
+        template_pair_representation = self.template_embedder(mask_2d, template_aatype,
+                                                              template_all_atom_masks,
+                                                              template_all_atom_positions,
+                                                              template_pseudo_beta_mask,
+                                                              template_pseudo_beta)
         flat_query = P.Reshape()(query_embedding, (num_res * num_res, 1, query_num_channels))
         flat_templates = P.Reshape()(
             P.Transpose()(template_pair_representation, (1, 2, 0, 3)),
             (num_res * num_res, num_templates, num_channels))
-        template_mask_bias = P.ExpandDims()(P.ExpandDims()(P.ExpandDims()(template_mask, 0), 1), 2) - 1.0
+        template_mask_bias = P.ExpandDims()(P.ExpandDims()(P.ExpandDims()(template_mask,
+                                                                          0), 1), 2) - 1.0
         input_mask = 1e4 * template_mask_bias
         batched_inputs = (flat_query, flat_templates)
         nonbatched_inputs = (input_mask,)
         embedding = _memory_reduce(self.compute, batched_inputs, nonbatched_inputs, self.slice_num)
         embedding = P.Reshape()(embedding, (num_res, num_res, query_num_channels))
-        # No gradients if no templates.
+
         embedding = embedding * (P.ReduceSum()(template_mask) > 0.)
         return embedding
