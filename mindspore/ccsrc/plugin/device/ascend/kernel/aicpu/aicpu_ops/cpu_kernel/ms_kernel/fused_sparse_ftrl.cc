@@ -21,6 +21,7 @@
 namespace aicpu {
 namespace {
 const char *kFusedSparseFtrl = "FusedSparseFtrl";
+const double DefaultLrPower = -0.5;
 
 void ComputeFtrl(MultiThreadComputeParams *input_params, size_t start, size_t end) {
   auto var = input_params->var_;
@@ -44,7 +45,7 @@ void ComputeFtrl(MultiThreadComputeParams *input_params, size_t start, size_t en
       auto summed_grad = unique_sparse_grad.value_[k];
       auto accum_new = accum[j] + summed_grad * summed_grad;
       float y;
-      if (lr_power == -0.5) {
+      if (lr_power == DefaultLrPower) {
         y = std::sqrt(accum_new);
         linear[j] += summed_grad - (y - std::sqrt(accum[j])) / lr * var[j];
       } else {
@@ -82,15 +83,15 @@ uint32_t FusedSparseFtrlKernel::Compute(CpuKernelContext &ctx) {
   new_indices = (int *)malloc(indices_size_ * sizeof(int));
   tmp_grad = (float *)malloc(indices_size_ * var_outer_dim_size_ * sizeof(float));
   tmp_indices = (int *)malloc(indices_size_ * sizeof(int));
-  if (new_grad == NULL || new_indices == NULL || tmp_grad == NULL || tmp_indices == NULL) {
+  if (new_grad == nullptr || new_indices == nullptr || tmp_grad == nullptr || tmp_indices == nullptr) {
     free(new_grad);
     free(new_indices);
     free(tmp_grad);
     free(tmp_indices);
-    new_grad = NULL;
-    new_indices = NULL;
-    tmp_grad = NULL;
-    tmp_indices = NULL;
+    new_grad = nullptr;
+    new_indices = nullptr;
+    tmp_grad = nullptr;
+    tmp_indices = nullptr;
     return KERNEL_STATUS_INNER_ERROR;
   }
 
@@ -130,10 +131,10 @@ uint32_t FusedSparseFtrlKernel::Compute(CpuKernelContext &ctx) {
   free(new_indices);
   free(tmp_grad);
   free(tmp_indices);
-  new_grad = NULL;
-  new_indices = NULL;
-  tmp_grad = NULL;
-  tmp_indices = NULL;
+  new_grad = nullptr;
+  new_indices = nullptr;
+  tmp_grad = nullptr;
+  tmp_indices = nullptr;
   return KERNEL_STATUS_OK;
 }
 
