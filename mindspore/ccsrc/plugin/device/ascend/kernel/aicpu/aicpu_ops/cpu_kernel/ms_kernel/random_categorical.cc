@@ -123,7 +123,6 @@ uint32_t RandomCategoricalCpuKernel::Compute(CpuKernelContext &ctx) {
                        DTypeStr(logits_dtype).c_str(), DTypeStr(output_type_).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
-  // RandomCategoricalCompute(ctx);
   return KERNEL_STATUS_OK;
 }
 
