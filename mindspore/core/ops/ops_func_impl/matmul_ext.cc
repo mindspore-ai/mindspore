@@ -33,19 +33,15 @@ namespace mindspore {
 namespace ops {
 ShapeVector CheckMatMulShapes(const ShapeVector &shape1, const ShapeVector &shape2) {
   ShapeVector shape_out;
-
   if (shape1.size() == 0 || shape2.size() == 0) {
     MS_EXCEPTION(ValueError) << "For 'MatMulExt' op, inputs must be all tensors and rank >= 1";
   }
-
   if (shape2.size() >= kDim2 && shape1.back() != shape2[shape2.size() - kDim2]) {
     MS_EXCEPTION(RuntimeError) << "For 'MatMulExt' op, shape1[-1] must be equal to shape2[-2], but got "
                                << shape1.back() << " and " << shape2[shape2.size() - kDim2] << ".";
   }
-
   int len_diff = std::abs(static_cast<int>(shape1.size()) - static_cast<int>(shape2.size()));
   ShapeVector shape1_padded, shape2_padded;
-
   if (shape1.size() < shape2.size()) {
     shape1_padded = ShapeVector(len_diff, 1);
     shape1_padded.insert(shape1_padded.end(), shape1.begin(), shape1.end());
@@ -55,11 +51,7 @@ ShapeVector CheckMatMulShapes(const ShapeVector &shape1, const ShapeVector &shap
     shape2_padded.insert(shape2_padded.end(), shape2.begin(), shape2.end());
     shape1_padded = shape1;
   }
-
-  //  MS_LOG(ERROR) << "shape1_padded: " << shape1_padded << ", shape2_padded: " << shape2_padded;
-
   int max_len = std::max(static_cast<int>(shape1_padded.size()) - 2, static_cast<int>(shape2_padded.size()) - 2);
-  //    MS_LOG(ERROR) << "max_len: " << max_len;
   for (int i = 0; i < max_len; ++i) {
     size_t dim1 = i < static_cast<int>(shape1_padded.size()) - 2 ? shape1_padded[i] : 1;
     size_t dim2 = i < static_cast<int>(shape2_padded.size()) - 2 ? shape2_padded[i] : 1;
@@ -69,10 +61,19 @@ ShapeVector CheckMatMulShapes(const ShapeVector &shape1, const ShapeVector &shap
     }
     shape_out.push_back(std::max(dim1, dim2));
   }
-
-  //  MS_LOG(ERROR) << "shape_out: " << shape_out;
-
   return shape_out;
+}
+
+ShapeVector GetMatMulExtBroadcastShape(const ShapeVector &base_shape, const ShapeVector &input_shape) {
+  ShapeVector broadcast_shape = base_shape;
+  if (input_shape.size() == 1) {
+    broadcast_shape.push_back(1);
+    broadcast_shape.push_back(input_shape[0]);
+  } else {
+    broadcast_shape.push_back(input_shape[input_shape.size() - 2]);
+    broadcast_shape.push_back(input_shape[input_shape.size() - 1]);
+  }
+  return broadcast_shape;
 }
 
 ShapeVector InferShapeRem(const ShapeVector &shape_backbone, const ShapeVector &shape1, const ShapeVector &shape2,

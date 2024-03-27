@@ -35,6 +35,7 @@ class MIND_API MatMulExtFuncImpl : public OpFuncImpl {
 MIND_API ShapeVector CheckMatMulShapes(const ShapeVector &shape1, const ShapeVector &shape2);
 MIND_API ShapeVector InferShapeRem(const ShapeVector &shape_backbone, const ShapeVector &shape1,
                                    const ShapeVector &shape2, bool transpose_b);
+MIND_API ShapeVector GetMatMulExtBroadcastShape(const ShapeVector &base_shape, const ShapeVector &input_shape);
 }  // namespace ops
 }  // namespace mindspore
 
