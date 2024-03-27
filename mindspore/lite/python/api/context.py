@@ -20,6 +20,7 @@ import os
 
 from mindspore_lite._checkparam import check_isinstance, check_list_of_element
 from mindspore_lite.lib import _c_lite_wrapper
+from mindspore_lite._check_ascend import AscendEnvChecker
 
 __all__ = ['Context']
 
@@ -267,6 +268,9 @@ class Context:
         need_cpu_backup = False
         for ele in target:
             if ele.lower() == "ascend":
+                ascend_checker = AscendEnvChecker()
+                ascend_checker.check_env()
+
                 self._context.append_device_info(self.ascend)
                 need_cpu_backup = True
             elif ele.lower() == "gpu":
