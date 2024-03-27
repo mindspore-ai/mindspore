@@ -8729,7 +8729,8 @@ class TopK(Primitive):
           - GPU: float16, float32.
           - CPU: all numeric types.
 
-        - **k** (int) - The number of top elements to be computed along the last dimension, constant input is needed.
+        - **k** (Union(Tensor, int)) - The number of top elements to be computed along the last dimension.
+          If `k` is a Tensor, the supported dtype is int32 and it should be 0-D or 1-D with shape :math:`(1, )` .
 
     Outputs:
         A tuple consisting of `values` and `indexes`.

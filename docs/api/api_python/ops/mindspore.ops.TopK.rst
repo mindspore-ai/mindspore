@@ -27,7 +27,7 @@
           - GPU：float16、float32。
           - CPU：所有数值型。
 
-        - **k** (int) - 指定计算最大元素的数量，必须为常量。
+        - **k** (Union(Tensor, int)) - 指定计算最大元素的数量。若 `k` 为Tensor，其数据类型须为int32。若为Tensor，只支持零维Tensor或shape为 :math:`(1, )` 的一维Tensor。
 
     输出：
         由 `values` 和 `indices` 组成的tuple。
