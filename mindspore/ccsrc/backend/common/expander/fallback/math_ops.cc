@@ -43,16 +43,6 @@ NodePtr Expand(FallbackIRBuilder *ib, NodePtr tensor, size_t ndim) {
   return tensor;
 }
 
-ShapeVector TileSize(ShapeVector shape, ShapeVector out_shape, int ndim) {
-  ShapeVector size(ndim, 1);
-  for (size_t idx = 0; idx < std::min(shape.size(), out_shape.size()); ++idx) {
-    if (shape[idx] != out_shape[idx]) {
-      size[idx] = out_shape[idx];
-    }
-  }
-  return size;
-}
-
 ShapeVector To3D(ShapeVector shape) {
   ShapeVector ret;
 
@@ -94,33 +84,16 @@ DEF_PURE_SHAPE_CALC(g_matmul_ext_fallback_shapecalc)
     auto &weight_shape = inputs.at(kIndex1);
 
     bool is_weight_scalar = weight_shape.size() == 1;
-    size_t max_dim_count = std::max(input_shape.size(), weight_shape.size());
-    max_dim_count = std::max(max_dim_count, static_cast<size_t>(2));
-
-    ShapeVector aligned_input_shape = input_shape;
-    ShapeVector aligned_weight_shape = weight_shape;
-    for (size_t i = 0; i < max_dim_count - input_shape.size(); ++i) {
-      aligned_input_shape.insert(aligned_input_shape.begin(), 1);
-    }
-    for (size_t i = 0; i < max_dim_count - weight_shape.size(); ++i) {
-      aligned_weight_shape.insert(aligned_weight_shape.begin(), 1);
-    }
 
     ShapeVector multiplication_shape = ops::CheckMatMulShapes(input_shape, weight_shape);
+    ShapeVector broadcast_shape_input = ops::GetMatMulExtBroadcastShape(multiplication_shape, input_shape);
+    ShapeVector broadcast_shape_weight = ops::GetMatMulExtBroadcastShape(multiplication_shape, weight_shape);
     ShapeVector output_shape = ops::InferShapeRem(multiplication_shape, input_shape, weight_shape, is_weight_scalar);
-
-    ShapeVector batch_dim_input(aligned_input_shape.begin(), aligned_input_shape.end() - 2);
-    ShapeVector batch_dim_weight(aligned_weight_shape.begin(), aligned_weight_shape.end() - 2);
-    auto broadcast_shape_input = TileSize(batch_dim_input, multiplication_shape, SizeToInt(max_dim_count));
-    auto broadcast_shape_weight = TileSize(batch_dim_weight, multiplication_shape, SizeToInt(max_dim_count));
-
     ShapeVector transpose_order;
+    size_t max_dim_count = multiplication_shape.size() + 2;
+
     for (size_t i = 0; i < max_dim_count; ++i) {
       transpose_order.push_back(i);
-    }
-    if (is_weight_scalar) {
-      std::swap(transpose_order[max_dim_count - 1], transpose_order[max_dim_count - 2]);
-      std::swap(aligned_weight_shape[max_dim_count - 1], aligned_weight_shape[max_dim_count - 2]);
     }
 
     int64_t total_batch_size = 1;
@@ -128,17 +101,20 @@ DEF_PURE_SHAPE_CALC(g_matmul_ext_fallback_shapecalc)
       total_batch_size *= dim_size;
     }
 
-    ShapeVector final_input_shape = {total_batch_size, aligned_input_shape[aligned_input_shape.size() - 2],
-                                     aligned_input_shape[aligned_input_shape.size() - 1]};
-    ShapeVector final_weight_shape = {total_batch_size, aligned_weight_shape[aligned_weight_shape.size() - 2],
-                                      aligned_weight_shape[aligned_weight_shape.size() - 1]};
+    ShapeVector final_input_shape = {total_batch_size, broadcast_shape_input[broadcast_shape_input.size() - 2],
+                                     broadcast_shape_input[broadcast_shape_input.size() - 1]};
+    ShapeVector final_weight_shape = {total_batch_size, broadcast_shape_weight[broadcast_shape_weight.size() - 2],
+                                      broadcast_shape_weight[broadcast_shape_weight.size() - 1]};
 
-    return {aligned_input_shape, aligned_weight_shape, broadcast_shape_input, broadcast_shape_weight,
-            transpose_order,     final_input_shape,    final_weight_shape,    output_shape};
+    if (is_weight_scalar) {
+      std::swap(transpose_order[max_dim_count - 1], transpose_order[max_dim_count - 2]);
+      std::swap(final_weight_shape[final_weight_shape.size() - 1], final_weight_shape[final_weight_shape.size() - 2]);
+    }
+
+    return {broadcast_shape_input, broadcast_shape_weight, transpose_order,
+            final_input_shape,     final_weight_shape,     output_shape};
   })
   .SetInfer([](const ShapeArray &inputs, const HashSet<size_t> &) -> std::vector<int64_t> {
-    int64_t aligned_rank_input = -1LL;
-    int64_t aligned_rank_weight = -1LL;
     int64_t broadcast_rank_input = -1LL;
     int64_t broadcast_rank_weight = -1LL;
     int64_t transpose_order_rank = -1LL;
@@ -161,12 +137,11 @@ DEF_PURE_SHAPE_CALC(g_matmul_ext_fallback_shapecalc)
         output_shape_rank = max_dim_count;
       }
 
-      aligned_rank_input = aligned_rank_weight = broadcast_rank_input = broadcast_rank_weight = transpose_order_rank =
-        max_dim_count;
+      broadcast_rank_input = broadcast_rank_weight = transpose_order_rank = max_dim_count;
       final_input_shape_rank = final_weight_shape_rank = 3;
     }
-    return {aligned_rank_input,   aligned_rank_weight,    broadcast_rank_input,    broadcast_rank_weight,
-            transpose_order_rank, final_input_shape_rank, final_weight_shape_rank, output_shape_rank};
+    return {broadcast_rank_input,   broadcast_rank_weight,   transpose_order_rank,
+            final_input_shape_rank, final_weight_shape_rank, output_shape_rank};
   });
 
 REG_FALLBACK_BUILDER("MatMulExt").SetBody(BODYFUNC(ib) {
@@ -174,15 +149,13 @@ REG_FALLBACK_BUILDER("MatMulExt").SetBody(BODYFUNC(ib) {
   NodePtr other = ib->GetInput(kIndex1);
   if (IsDynamic(input->shape()) || IsDynamic(other->shape())) {
     auto shapes = ib->ShapeCalc(g_matmul_ext_fallback_shapecalc, {input, other});
-    input = ib->Reshape(input, shapes[0]);
-    other = ib->Reshape(other, shapes[1]);
-    input = ib->Tile(input, shapes[2]);
-    other = ib->Tile(other, shapes[3]);
-    other = ib->Transpose(other, shapes[4]);
-    input = ib->Reshape(input, shapes[5]);
-    other = ib->Reshape(other, shapes[6]);
+    input = ib->Emit("BroadcastTo", {input, shapes[0]});
+    other = ib->Emit("BroadcastTo", {other, shapes[1]});
+    other = ib->Transpose(other, shapes[2]);
+    input = ib->Reshape(input, shapes[3]);
+    other = ib->Reshape(other, shapes[4]);
     auto ret = ib->BatchMatMul(input, other);
-    ret = ib->Reshape(ret, shapes[7]);
+    ret = ib->Reshape(ret, shapes[5]);
     return {ret};
   } else {
     auto input_rank = input->shape().size();
@@ -217,8 +190,10 @@ REG_FALLBACK_BUILDER("MatMulExt").SetBody(BODYFUNC(ib) {
       ShapeVector shape2_aligned = other->shape();
       ShapeVector shape_cur1(shape1_aligned.begin(), shape1_aligned.end() - 2);
       ShapeVector shape_cur2(shape2_aligned.begin(), shape2_aligned.end() - 2);
-      input = ib->Tile(input, ib->Value(TileSize(shape_cur1, shape_backbone, ndim_aligned)));
-      other = ib->Tile(other, ib->Value(TileSize(shape_cur2, shape_backbone, ndim_aligned)));
+      const ShapeVector &broadcast_shape1 = ops::GetMatMulExtBroadcastShape(shape_backbone, shape1_orig);
+      const ShapeVector &broadcast_shape2 = ops::GetMatMulExtBroadcastShape(shape_backbone, shape2_orig);
+      input = ib->Emit("BroadcastTo", {input, ib->Value(broadcast_shape1)});
+      other = ib->Emit("BroadcastTo", {other, ib->Value(broadcast_shape2)});
       input = ib->Reshape(input, To3D(input->shape()));
       other = ib->Reshape(other, To3D(other->shape()));
       ret = ib->BatchMatMul(input, other, false, transpose_b);

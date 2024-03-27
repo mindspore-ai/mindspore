@@ -23,8 +23,7 @@
 #include "plugin/device/gpu/kernel/pyboost/auto_generate/matmul.h"
 #include "plugin/device/gpu/kernel/pyboost/auto_generate/batch_mat_mul.h"
 #include "plugin/device/gpu/kernel/pyboost/auto_generate/reshape.h"
-#include "plugin/device/gpu/kernel/pyboost/auto_generate/expand_dims.h"
-#include "plugin/device/gpu/kernel/pyboost/auto_generate/tile.h"
+#include "plugin/device/cpu/kernel/pyboost/auto_generate/broadcast_to.h"
 #include "plugin/device/gpu/kernel/pyboost/auto_generate/contiguous.h"
 #include "ops/ops_func_impl/matmul_ext.h"
 
@@ -51,17 +50,6 @@ TensorPtr Expand(TensorPtr tensor, size_t ndim, const DeviceContext *device_cont
   return tensor;
 }
 
-ValueTuplePtr TileSize(ShapeVector shape, ShapeVector out_shape, int ndim) {
-  ShapeVector size(ndim, 1);
-
-  for (size_t idx = 0; idx < std::min(shape.size(), out_shape.size()); ++idx) {
-    if (shape[idx] != out_shape[idx]) {
-      size[idx] = out_shape[idx];
-    }
-  }
-  return ShapeVectorToValueTuple(size);
-}
-
 ValueTuplePtr To3D(ShapeVector shape) {
   ShapeVector ret;
   int64_t dim0 = 1;
@@ -73,14 +61,6 @@ ValueTuplePtr To3D(ShapeVector shape) {
   ret.push_back(shape[shape.size() - 1]);
   return ShapeVectorToValueTuple(ret);
 }
-
-TensorPtr BroadcastTo(TensorPtr x, ShapeVector shape_cur, ShapeVector shape_to, int ndim_to,
-                      const DeviceContext *device_context) {
-  auto tile = CREATE_PYBOOST_OP(Tile, device_context->device_context_key_.device_name_);
-  auto size = TileSize(shape_cur, shape_to, ndim_to);
-  return tile->Call(x, size);
-}
-
 }  // namespace
 void MatMulExtGPUCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &input_tensor,
                            const TensorPtr &mat2_tensor) {
@@ -96,24 +76,19 @@ void MatMulExtGPUCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr 
   auto other_rank = other->shape().size();
 
   auto matmul = CREATE_PYBOOST_OP(MatMul, device_context->device_context_key_.device_name_);
-
   auto batch_matmul = CREATE_PYBOOST_OP(BatchMatMul, device_context->device_context_key_.device_name_);
 
   auto reshape_1 = CREATE_PYBOOST_OP(Reshape, device_context->device_context_key_.device_name_);
-
   auto reshape_2 = CREATE_PYBOOST_OP(Reshape, device_context->device_context_key_.device_name_);
-
   auto reshape_3 = CREATE_PYBOOST_OP(Reshape, device_context->device_context_key_.device_name_);
-
   auto reshape_4 = CREATE_PYBOOST_OP(Reshape, device_context->device_context_key_.device_name_);
 
   auto contiguous_1 = CREATE_PYBOOST_OP(Contiguous, device_context->device_context_key_.device_name_);
-
   auto contiguous_2 = CREATE_PYBOOST_OP(Contiguous, device_context->device_context_key_.device_name_);
-
   auto contiguous_3 = CREATE_PYBOOST_OP(Contiguous, device_context->device_context_key_.device_name_);
-
   auto contiguous_4 = CREATE_PYBOOST_OP(Contiguous, device_context->device_context_key_.device_name_);
+  auto contiguous_5 = CREATE_PYBOOST_OP(Contiguous, device_context->device_context_key_.device_name_);
+  auto contiguous_6 = CREATE_PYBOOST_OP(Contiguous, device_context->device_context_key_.device_name_);
 
   if (input_rank == kDim2 && other_rank == kDim2) {
     matmul->Call(input, other, std::make_shared<BoolImm>(false), std::make_shared<BoolImm>(false));
@@ -157,9 +132,17 @@ void MatMulExtGPUCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr 
     ShapeVector shape_cur1(shape1_aligned.begin(), shape1_aligned.end() - kDim2);
     ShapeVector shape_cur2(shape2_aligned.begin(), shape2_aligned.end() - kDim2);
 
-    input = BroadcastTo(input, shape_cur1, shape_backbone, ndim_aligned, device_context);
-    other = BroadcastTo(other, shape_cur2, shape_backbone, ndim_aligned, device_context);
+    if (shape_cur1 != shape_backbone) {
+      auto broadcast_to = CREATE_PYBOOST_OP(BroadcastTo, device_context->device_context_key_.device_name_);
+      input = contiguous_5->Call(broadcast_to->Call(
+        input, ShapeVectorToValueTuple(ops::GetMatMulExtBroadcastShape(shape_backbone, shape1_orig))));
+    }
 
+    if (shape_cur2 != shape_backbone) {
+      auto broadcast_to = CREATE_PYBOOST_OP(BroadcastTo, device_context->device_context_key_.device_name_);
+      other = contiguous_6->Call(broadcast_to->Call(
+        other, ShapeVectorToValueTuple(ops::GetMatMulExtBroadcastShape(shape_backbone, shape2_orig))));
+    }
     input = contiguous_3->Call(reshape_3->Call(input, To3D(input->shape())));
     other = contiguous_4->Call(reshape_4->Call(other, To3D(other->shape())));
 
