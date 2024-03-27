@@ -498,9 +498,6 @@ void GeDeviceContext::FinalizeDump() const {
   if (dump_parser.FileFormatIsNpy() && dump_parser.IsTensorDump()) {
     mindspore::ascend::AscendAsyncDumpManager::GetInstance().WaitForWriteFileFinished();
   }
-  if (dump_parser.FileFormatIsNpy()) {
-    Adx::AdxUnRegDumpProcessCallBack();
-  }
 }
 
 DeprecatedInterface *GeDeviceContext::GetDeprecatedInterface() {
