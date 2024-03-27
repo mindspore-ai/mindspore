@@ -23,6 +23,9 @@
 
 namespace mindspore::transform {
 namespace {
+// number of dims of format NCHW
+constexpr size_t kNumDimsNCHW = 4;
+
 inline ShapeVector GetShape(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto base_shape = node->abstract()->GetShape();
@@ -49,7 +52,7 @@ std::string GetParamStorageFormat(const ParameterPtr &param) {
 template <int input_index>
 std::optional<std::string> GetConv2DFormat(const AnfNodePtr & /* user_node */,
                                            const std::shared_ptr<GeTensorDesc> &desc) {
-  if (desc == nullptr || desc->GetOriginShape().GetDimNum() != 4) {
+  if (desc == nullptr || desc->GetOriginShape().GetDimNum() != kNumDimsNCHW) {
     return std::nullopt;
   }
   return input_index == 0 ? kOpFormat_NC1HWC0 : kOpFormat_FRAC_Z;
@@ -74,7 +77,6 @@ std::optional<std::string> GetApplyMomentumFormat(const AnfNodePtr &user_node,
 
   auto var_fmt = GetParamStorageFormat(param_var);
   auto accum_fmt = GetParamStorageFormat(param_accum);
-
   if (var_fmt.empty() || accum_fmt == var_fmt) {
     return std::nullopt;
   }
@@ -89,7 +91,7 @@ std::optional<std::string> GetBNTrainingUpdateFormat(const AnfNodePtr &user_node
   MS_EXCEPTION_IF_NULL(cnode);
 
   auto input_x = cnode->input(1);
-  if (GetShape(input_x).size() != 4) {
+  if (GetShape(input_x).size() != kNumDimsNCHW) {
     return std::nullopt;
   }
 
