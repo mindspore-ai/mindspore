@@ -5,6 +5,7 @@
  */
 
 #include "op_proto/inc/nn_pooling_ops.h"
+#include <cmath>
 #include <utility>
 #include <vector>
 #include <unordered_map>
@@ -306,46 +307,194 @@ INFER_FUNC_REG(DataFormatVecPermute, DataFormatVecPermuteInfer);
 // -------------------DataFormatVecPermute End---------------------
 
 // -------------------MaxPool3DWithArgmax---------------------
-IMPLEMT_INFERFUNC(MaxPool3DWithArgmax, MaxPool3DWithArgmaxInferShape) {
-  TensorDesc inputDesc = op.GetInputDescByName("x");
-  auto inputShape = inputDesc.GetShape().GetDims();
-  DataType inputDtype = inputDesc.GetDataType();
-  TensorDesc argmaxDesc = op.GetOutputDescByName("argmax");
-  TensorDesc outputDesc = op.GetOutputDescByName("y");
-  std::vector<int64_t> stridesList;
-  op.GetAttr("strides", stridesList);
-  std::vector<int64_t> kernelList;
-  op.GetAttr("ksize", kernelList);
-  int64_t dOut = (inputShape[1] - kernelList[2]) / stridesList[2] + 1;
-  int64_t hOut = (inputShape[3] - kernelList[3]) / stridesList[3] + 1;
-  int64_t wOut = (inputShape[4] - kernelList[4]) / stridesList[4] + 1;
-  int64_t alignedBmLine;
-  alignedBmLine = (wOut * hOut % 16 == 0) ? (wOut * hOut) : ((static_cast<int64_t>(wOut * hOut / 16) + 1) * 16);
-  std::vector<int64_t> argShapeVec;
-  argShapeVec.push_back(inputShape[0]);
-  argShapeVec.push_back(dOut);
-  argShapeVec.push_back(inputShape[2] * kernelList[2] * kernelList[3] * kernelList[4]);
-  argShapeVec.push_back(static_cast<int64_t>(alignedBmLine / 16));
-  argShapeVec.push_back(inputShape[5]);
-  Shape argmaxShape(argShapeVec);
-  argmaxDesc.SetShape(argmaxShape);
-  argmaxDesc.SetDataType(DT_UINT16);
-  (void)op.UpdateOutputDesc("argmax", argmaxDesc);
-  std::vector<int64_t> outShapeVec{inputShape[0], dOut, inputShape[2], hOut, wOut, inputShape[5]};
-  Shape outputShape(outShapeVec);
-  outputDesc.SetShape(outputShape);
-  outputDesc.SetDataType(inputDtype);
-  (void)op.UpdateOutputDesc("y", outputDesc);
+CUST_IMPLEMT_INFERFUNC(MaxPool3DWithArgmax, MaxPool3DWithArgmaxInferShape) {
+  TensorDesc input_desc = op.GetInputDescByName("x");
+  auto input_shape = input_desc.GetShape().GetDims();
+  DataType input_dtype = input_desc.GetDataType();
+  TensorDesc output_desc = op.GetOutputDescByName("y");
+  TensorDesc argmax_desc = op.GetOutputDescByName("argmax");
+
+  constexpr size_t kRank = 5;
+  if (IsUnknownRankShape(input_desc.GetShape()) || IsUnknownShape(input_desc.GetShape())) {
+    std::vector<int64_t> output_shape_vec(kRank, ge::UNKNOWN_DIM);
+    Shape output_shape(output_shape_vec);
+    output_desc.SetShape(output_shape);
+    argmax_desc.SetShape(output_shape);
+    op.UpdateOutputDesc("y", output_desc);
+    op.UpdateOutputDesc("argmax", argmax_desc);
+    return GRAPH_SUCCESS;
+  }
+
+  if (input_shape.size() != kRank) {
+    std::string err_msg = GetAttrSizeErrMsg("input_shape", ConcatString(input_shape.size()), ConcatString(kRank));
+    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op).c_str(), err_msg);
+    return GRAPH_FAILED;
+  }
+
+  std::vector<int64_t> ksize;
+  op.GetAttr("ksize", ksize);
+  std::vector<int64_t> strides;
+  op.GetAttr("strides", strides);
+  std::vector<int64_t> dilation;
+  op.GetAttr("dilation", dilation);
+  std::vector<int64_t> pads;
+  op.GetAttr("pads", pads);
+  bool ceil_mode;
+  op.GetAttr("ceil_mode", ceil_mode);
+
+  const size_t d_idx = 0;
+  const size_t h_idx = 1;
+  const size_t w_idx = 2;
+  auto input_d = input_shape[2];
+  auto input_h = input_shape[3];
+  auto input_w = input_shape[4];
+  int64_t output_d = 0;
+  int64_t output_h = 0;
+  int64_t output_w = 0;
+  int64_t factor = 2;
+  if (!ceil_mode) {
+    output_d = static_cast<int64_t>(
+      std::floor(static_cast<float>(input_d + factor * pads[d_idx] - dilation[d_idx] * (ksize[d_idx] - 1) - 1) /
+                   static_cast<float>(strides[d_idx]) +
+                 1));
+    output_h = static_cast<int64_t>(
+      std::floor(static_cast<float>(input_h + factor * pads[h_idx] - dilation[h_idx] * (ksize[h_idx] - 1) - 1) /
+                   static_cast<float>(strides[h_idx]) +
+                 1));
+    output_w = static_cast<int64_t>(
+      std::floor(static_cast<float>(input_w + factor * pads[w_idx] - dilation[w_idx] * (ksize[w_idx] - 1) - 1) /
+                   static_cast<float>(strides[w_idx]) +
+                 1));
+  } else {
+    output_d = static_cast<int64_t>(
+      std::ceil(static_cast<float>(input_d + factor * pads[d_idx] - dilation[d_idx] * (ksize[d_idx] - 1) - 1) /
+                  static_cast<float>(strides[d_idx]) +
+                1));
+    output_h = static_cast<int64_t>(
+      std::ceil(static_cast<float>(input_h + factor * pads[h_idx] - dilation[h_idx] * (ksize[h_idx] - 1) - 1) /
+                  static_cast<float>(strides[h_idx]) +
+                1));
+    output_w = static_cast<int64_t>(
+      std::ceil(static_cast<float>(input_w + factor * pads[w_idx] - dilation[w_idx] * (ksize[w_idx] - 1) - 1) /
+                  static_cast<float>(strides[w_idx]) +
+                1));
+    // The last pooling starts inside the image.
+    if ((output_d - 1) * strides[d_idx] >= input_d + pads[d_idx]) {
+      --output_d;
+    }
+    if ((output_h - 1) * strides[h_idx] >= input_h + pads[h_idx]) {
+      --output_h;
+    }
+    if ((output_w - 1) * strides[w_idx] >= input_w + pads[w_idx]) {
+      --output_w;
+    }
+  }
+
+  std::vector<int64_t> output_shape_vec{input_shape[0], input_shape[1], output_d, output_h, output_w};
+  Shape output_shape(output_shape_vec);
+  output_desc.SetDataType(input_dtype);
+  output_desc.SetShape(output_shape);
+  op.UpdateOutputDesc("y", output_desc);
+
+  std::string argmax_type;
+  op.GetAttr("argmax_type", argmax_type);
+  if (argmax_type == "int32") {
+    argmax_desc.SetDataType(DT_INT32);
+  } else if (argmax_type == "int64") {
+    argmax_desc.SetDataType(DT_INT64);
+  } else {
+    OP_LOGE(TbeGetName(op), "The 'argmax_type' must be 'int32' or 'int64', but got %s.", argmax_type);
+    return GRAPH_FAILED;
+  }
+  argmax_desc.SetShape(output_shape);
+  op.UpdateOutputDesc("argmax", argmax_desc);
+
   return GRAPH_SUCCESS;
 }
 
-IMPLEMT_VERIFIER(MaxPool3DWithArgmax, MaxPool3DWithArgmaxVerify) {
-  // verify in infer func
+CUST_IMPLEMT_VERIFIER(MaxPool3DWithArgmax, MaxPool3DWithArgmaxVerify) {
+  constexpr size_t kAttrsSize = 3;
+  std::vector<int64_t> ksize;
+  if (GRAPH_SUCCESS != op.GetAttr("ksize", ksize)) {
+    std::string err_msg = GetInputInvalidErrMsg("ksize");
+    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op).c_str(), err_msg);
+    return GRAPH_FAILED;
+  }
+
+  if (ksize.size() != kAttrsSize) {
+    std::string err_msg = GetAttrSizeErrMsg("ksize", ConcatString(ksize.size()), ConcatString(kAttrsSize));
+    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op).c_str(), err_msg);
+    return GRAPH_FAILED;
+  }
+
+  std::vector<int64_t> strides;
+  if (GRAPH_SUCCESS != op.GetAttr("strides", strides)) {
+    std::string err_msg = GetInputInvalidErrMsg("strides");
+    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op).c_str(), err_msg);
+    return GRAPH_FAILED;
+  }
+
+  if (strides.size() != kAttrsSize) {
+    std::string err_msg = GetAttrSizeErrMsg("strides", ConcatString(strides.size()), ConcatString(kAttrsSize));
+    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op).c_str(), err_msg);
+    return GRAPH_FAILED;
+  }
+
+  std::vector<int64_t> pads;
+  if (GRAPH_SUCCESS != op.GetAttr("pads", pads)) {
+    std::string err_msg = GetInputInvalidErrMsg("pads");
+    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op).c_str(), err_msg);
+    return GRAPH_FAILED;
+  }
+
+  if (pads.size() != kAttrsSize) {
+    std::string err_msg = GetAttrSizeErrMsg("pads", ConcatString(pads.size()), ConcatString(kAttrsSize));
+    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op).c_str(), err_msg);
+    return GRAPH_FAILED;
+  }
+
+  std::vector<int64_t> dilation;
+  if (GRAPH_SUCCESS != op.GetAttr("dilation", dilation)) {
+    std::string err_msg = GetInputInvalidErrMsg("dilation");
+    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op).c_str(), err_msg);
+    return GRAPH_FAILED;
+  }
+
+  if (dilation.size() != kAttrsSize) {
+    std::string err_msg = GetAttrSizeErrMsg("dilation", ConcatString(dilation.size()), ConcatString(kAttrsSize));
+    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op).c_str(), err_msg);
+    return GRAPH_FAILED;
+  }
+
+  bool ceil_mode = false;
+  if (GRAPH_SUCCESS != op.GetAttr("ceil_mode", ceil_mode)) {
+    std::string err_msg = GetInputInvalidErrMsg("ceil_mode");
+    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op).c_str(), err_msg);
+    return GRAPH_FAILED;
+  }
+
+  std::string data_format;
+  if (op.GetAttr("data_format", data_format) != GRAPH_SUCCESS) {
+    OP_LOGE(TbeGetName(op).c_str(), "get attr data_format failed.");
+    return GRAPH_FAILED;
+  }
+  if (data_format != "NCDHW") {
+    OP_LOGE(TbeGetName(op).c_str(), "Attr data_format(%s) only support NCDHW.", data_format.c_str());
+    return GRAPH_FAILED;
+  }
+
+  std::string argmax_type;
+  if (GRAPH_SUCCESS != op.GetAttr("argmax_type", argmax_type)) {
+    std::string err_msg = GetInputInvalidErrMsg("argmax_type");
+    VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op).c_str(), err_msg);
+    return GRAPH_FAILED;
+  }
+
   return GRAPH_SUCCESS;
 }
 
-INFER_FUNC_REG(MaxPool3DWithArgmax, MaxPool3DWithArgmaxInferShape);
-VERIFY_FUNC_REG(MaxPool3DWithArgmax, MaxPool3DWithArgmaxVerify);
+CUST_INFER_FUNC_REG(MaxPool3DWithArgmax, MaxPool3DWithArgmaxInferShape);
+CUST_VERIFY_FUNC_REG(MaxPool3DWithArgmax, MaxPool3DWithArgmaxVerify);
 //-------------------MaxPool3DWithArgmax---------------------
 
 //-------------------FractionalMaxPool---------------------
@@ -516,9 +665,9 @@ CUST_IMPLEMT_VERIFIER(MaxPool3DGradWithArgmax, MaxPool3DGradWithArgmaxVerify) {
     return GRAPH_FAILED;
   }
 
-  int dtype = 0;
-  if (GRAPH_SUCCESS != op.GetAttr("dtype", dtype)) {
-    std::string err_msg = GetInputInvalidErrMsg("dtype");
+  std::string argmax_type;
+  if (GRAPH_SUCCESS != op.GetAttr("argmax_type", argmax_type)) {
+    std::string err_msg = GetInputInvalidErrMsg("argmax_type");
     VECTOR_INFER_SHAPE_INNER_ERR_REPORT(TbeGetName(op).c_str(), err_msg);
     return GRAPH_FAILED;
   }
