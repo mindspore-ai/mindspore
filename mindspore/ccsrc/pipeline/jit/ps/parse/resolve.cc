@@ -509,7 +509,9 @@ py::object GetSymbolObject(const NameSpacePtr &name_space, const SymbolPtr &symb
   if (node->func_graph() == nullptr) {
     MS_LOG(INTERNAL_EXCEPTION) << "Node " << node->DebugString() << " graph is nullptr.";
   }
-  if (name_space->module() == RESOLVE_NAMESPACE_NAME_CLASS_OBJECT) {
+  if (name_space->module() == RESOLVE_NAMESPACE_NAME_ENTRY) {
+    return name_space->module_obj();
+  } else if (name_space->module() == RESOLVE_NAMESPACE_NAME_CLASS_OBJECT) {
     MS_LOG(DEBUG) << "namespace: " << py::str(name_space->namespace_obj()) << ", symbol: " << symbol;
     return name_space->namespace_obj();
   }
@@ -541,6 +543,16 @@ AnfNodePtr ResolveSymbol(const FuncGraphManagerPtr &manager, const NameSpacePtr 
     nameptr->set_module_obj(name_space->module_obj());
   }
   fallback::SetPyObjectToNode(resolved_node, obj);
+  // Update top graph debug info with user top graph's
+  if (name_space->module() == RESOLVE_NAMESPACE_NAME_ENTRY && IsValueNode<FuncGraph>(resolved_node)) {
+    auto user_top_fg = GetValueNode<FuncGraphPtr>(resolved_node);
+    MS_EXCEPTION_IF_NULL(user_top_fg);
+    auto top_fg = node->func_graph();
+    MS_EXCEPTION_IF_NULL(top_fg);
+    top_fg->set_debug_info(user_top_fg->debug_info());
+    MS_LOG(DEBUG) << "Update top graph's debug info with user's top graph. top_fg: " << top_fg->ToString()
+                  << ", user_top_fg: " << user_top_fg->ToString();
+  }
   return resolved_node;
 }
 

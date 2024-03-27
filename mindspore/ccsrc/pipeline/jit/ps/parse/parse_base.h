@@ -198,6 +198,7 @@ const char SEGMENT_NAME[] = "_pipeline_segment";
 
 // Define the Namespace name.
 const char RESOLVE_NAMESPACE_NAME_AST[] = "Ast";                   // For ast type namespace.
+const char RESOLVE_NAMESPACE_NAME_ENTRY[] = "Entry";               // For entry object namespace.
 const char RESOLVE_NAMESPACE_NAME_CLASS_OBJECT[] = "ClassObject";  // For class object itself namespace.
 const char RESOLVE_NAMESPACE_NAME_CLASS_MEMBER[] = "ClassMember";  // For class member namespace.
 const char RESOLVE_NAMESPACE_NAME_SYMBOL_STR[] = "SymbolStr";      // For symbol str namespace.

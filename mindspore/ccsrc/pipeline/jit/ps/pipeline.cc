@@ -385,7 +385,7 @@ py::object BaseRefToPyDataWithUserData(const BaseRef &value, const AbstractBaseP
     if (user_data != nullptr) {
       return user_data->obj;
     } else {
-      MS_LOG(INFO) << "user data is empty";
+      MS_LOG(DEBUG) << "user data is empty";
     }
   } else if (utils::isa<VectorRef>(value)) {
     auto vec_ref = utils::cast<VectorRef>(value);
