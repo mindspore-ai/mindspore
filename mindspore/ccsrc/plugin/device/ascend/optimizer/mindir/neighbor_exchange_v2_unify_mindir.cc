@@ -367,6 +367,9 @@ CNodePtr CreateAllToAllvNode(const FuncGraphPtr &graph, const CNodePtr &neighbor
 
   // add depend for input & alltoallv in send_empty condition
   common::AnfAlgo::SetNodeAttr(kAttrNeedDropInput, MakeValue<bool>(need_drop_input), all_to_all_v);
+  if (shapes.empty()) {
+    return all_to_all_v;
+  }
   if (all_to_all_input_num == 0) {
     auto input = neighbor_exchange_v2_or_grad->input(kNeighborExchangeV2InputIdx);
     std::vector<AnfNodePtr> depend_input = {NewValueNode(std::make_shared<Primitive>(prim::kPrimDepend->name())),
