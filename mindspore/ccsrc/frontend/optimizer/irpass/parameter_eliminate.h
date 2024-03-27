@@ -165,6 +165,7 @@ static inline std::pair<mindspore::HashSet<size_t>, mindspore::HashMap<size_t, s
   const auto &var_arg_node = fg->GetVariableArgParameter();
   const auto &kw_arg_node = fg->GetVariableKwargParameter();
   const auto &kw_only_args = fg->GetKwOnlyArgsParameters();
+  const size_t fv_position = parameters.size() - fg->fv_param_count();
   for (size_t i = 0; i < parameters.size(); i++) {
     const auto &param_i = parameters[i];
     if (unused_parameter_indexes.find(i) == unused_parameter_indexes.end()) {
@@ -187,6 +188,9 @@ static inline std::pair<mindspore::HashSet<size_t>, mindspore::HashMap<size_t, s
           fg->set_kwonlyargs_count(fg->kwonlyargs_count() - 1);
           (void)unused_parameter_indexes.erase(i);
         }
+      }
+      if (i >= fv_position) {
+        fg->set_fv_param_count(fg->fv_param_count() - 1);
       }
       MS_LOG(DEBUG) << "Erase parameter: " << param_i->DebugString() << ", index: " << i;
     }
