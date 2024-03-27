@@ -205,7 +205,45 @@ Status Tensor::CreateFromNpString(py::array arr, std::shared_ptr<Tensor> *out) {
   return Status::OK();
 }
 
-Status Tensor::CreateFromNpArray(py::array arr, std::shared_ptr<Tensor> *out) {
+Status Tensor::CreateFromNpArray(const py::array &arr, std::shared_ptr<Tensor> *out) {
+  RETURN_UNEXPECTED_IF_NULL(out);
+  DataType type = DataType::FromNpArray(arr);
+  CHECK_FAIL_RETURN_UNEXPECTED(type != DataType::DE_UNKNOWN,
+                               "Failed to create tensor from numpy array, data type is unknown.");
+
+  if (type.IsString()) {
+    return CreateFromNpString(arr, out);
+  }
+
+  std::vector<dsize_t> shape;
+  std::vector<dsize_t> strides;
+  // check if strides are contiguous
+  bool is_strided = false;
+  dsize_t count = arr.size();
+  for (dsize_t i = 0; i < arr.ndim(); i++) {
+    shape.push_back(static_cast<dsize_t>(arr.shape()[i]));
+    strides.push_back(static_cast<dsize_t>(arr.strides()[i]));
+    // in case of empty array num_items=0
+    if (count != 0 && shape.size() > i && shape[i] != 0) {
+      count /= shape[i];
+      if (strides[i] != arr.itemsize() * count) {
+        is_strided = true;
+      }
+    }
+  }
+
+  unsigned char *data = static_cast<unsigned char *>(arr.request().ptr);
+
+  if (is_strided) {
+    RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape(shape), type, out));
+    RETURN_IF_NOT_OK(CopyStridedArray((*out)->data_, data, shape, strides, (*out)->type_.SizeInBytes()));
+  } else {
+    RETURN_IF_NOT_OK(Tensor::CreateFromMemory(TensorShape(shape), type, data, out));
+  }
+  return Status::OK();
+}
+
+Status Tensor::CreateFromNpArrayNoCopy(py::array arr, std::shared_ptr<Tensor> *out) {
   RETURN_UNEXPECTED_IF_NULL(out);
   DataType type = DataType::FromNpArray(arr);
   CHECK_FAIL_RETURN_UNEXPECTED(type != DataType::DE_UNKNOWN,
