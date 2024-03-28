@@ -16,6 +16,7 @@
 #include "pipeline/jit/pi/auto_grad/function_node.h"
 #include <algorithm>
 #include <exception>
+#include <functional>
 #include <iterator>
 #include <memory>
 #include <queue>
@@ -111,14 +112,17 @@ ValuePtrList ParseInputs(const PrimitivePyPtr &prim, const py::list &inputs) {
   return ParseInputsByOpDef(prim, op_def, inputs);
 }
 
-bool FunctionNode::HasGradFunc(const py::handle &input) {
-  auto grad_fn = python_adapter::GetPyObjAttr(py::cast<py::object>(input), "grad_fn");
-  return py::isinstance<grad::FunctionNode>(grad_fn);
+bool FunctionNode::IsRequiresGradient(const py::handle &obj) {
+  if (!HasAttrReqGrad(obj)) {
+    return false;
+  }
+  auto requires_grad = obj.attr("requires_grad");
+  return py::isinstance<py::bool_>(requires_grad) && py::bool_(requires_grad);
 }
 
-bool FunctionNode::IsRequiresGradient(const py::handle &input) {
-  auto requires_grad = python_adapter::GetPyObjAttr(py::cast<py::object>(input), "requires_grad");
-  return py::isinstance<py::bool_>(requires_grad) && py::bool_(requires_grad);
+bool FunctionNode::HasGradFunc(const py::handle &obj) {
+  auto grad_fn = python_adapter::GetPyObjAttr(py::cast<py::object>(obj), "grad_fn");
+  return py::isinstance<grad::FunctionNode>(grad_fn);
 }
 
 FunctionNodePtr GetOrCreateFunctionNode(const py::object &tensor, const py::object &prim, const py::object &out,
@@ -158,7 +162,7 @@ void FunctionNode::RecordPrimitive(const py::object &prim, const py::object &out
   } else {
     auto func_node = CreateFunctionNode(out, prim, out, inputs);
     std::for_each(out.begin(), out.end(), [&out, &func_node](const auto &obj) {
-      if ((!IsStubTensor(obj) && !py::isinstance<tensor::Tensor>(obj)) || HasGradFunc(obj)) {
+      if (!HasAttrReqGrad(obj) || HasGradFunc(obj)) {
         return;
       }
       auto tensor = py::cast<py::object>(obj);
@@ -234,34 +238,49 @@ void FunctionNode::GenerateBropFunction() {
   }
 }
 
-void FunctionNode::SyncGradToPyObject() {
+void Visit(const FunctionNodePtr &node, const std::function<void(const FunctionNodePtr &)> &callback) {
   std::queue<FunctionNodePtr> nodes;
-  nodes.push(shared_from_base<FunctionNode>());
+  nodes.push(node);
   while (!nodes.empty()) {
-    auto node = nodes.front();
+    auto fn = nodes.front();
     nodes.pop();
+    callback(fn);
+    std::for_each(fn->GetNextEdges().begin(), fn->GetNextEdges().end(),
+                  [&nodes](const auto &edge) { nodes.push(edge->GetNode()); });
+  }
+}
+
+void FunctionNode::SyncGradToPyObject() {
+  auto sync_func = [](const FunctionNodePtr &node) {
     auto retains_grad = python_adapter::GetPyObjAttr(node->tensor_, "retains_grad");
-    if ((node->edges_.empty() || (py::isinstance<py::bool_>(retains_grad) && py::bool_(retains_grad))) &&
-        !node->GetGrad()[node->index_]->isa<None>()) {
+    if (node->edges_.empty() || (py::isinstance<py::bool_>(retains_grad) && py::bool_(retains_grad))) {
       auto _grad = python_adapter::GetPyObjAttr(node->tensor_, "grad");
       if (!py::isinstance<py::none>(_grad)) {
         node->AccumulateGradient(Convert::PyObjToValue(_grad), node->index_);
+      } else {
+        if (node->GetGrad()[node->index_]->isa<None>()) {
+          auto func = node->backward_func_;
+          if (func == nullptr) {
+            func = NativeBackwardFunc::GetInstance(prim::kPrimAdd);
+          }
+          node->SetGrad(func->Zeros(node->GetOutput()), node->index_);
+        }
       }
       auto value = Convert::ValueToPyObj(node->GetGrad()[node->index_]);
       auto grad = python_adapter::CallPyFn("mindspore.common.api", "_convert_python_data", value);
       py::setattr(node->tensor_, "grad", grad);
     }
-    node->SetGrad(ValuePtrList(GetGrad().size(), kNone));
-    std::for_each(node->edges_.begin(), node->edges_.end(),
-                  [&nodes](const auto &edge) { nodes.push(edge->GetNode()); });
-    node->CleanResource();
-  }
+    node->SetGrad(ValuePtrList(node->GetGrad().size(), kNone));
+  };
+  Visit(shared_from_base<FunctionNode>(), sync_func);
 }
 
 void FunctionNode::Apply(const py::object &grad) {
   UpdateDependence();
   Notify(shared_from_base<FunctionNode>(), Convert::PyObjToValue(grad));
   SyncGradToPyObject();
+  auto release_func = [](const FunctionNodePtr &node) { node->CleanResource(); };
+  Visit(shared_from_base<FunctionNode>(), release_func);
 }
 
 void FunctionNode::ApplyInner(const ValuePtr &dout) {
@@ -293,14 +312,9 @@ void FunctionNode::ApplyInner(const ValuePtr &dout) {
 }
 
 void FunctionNode::UpdateDependence() {
-  dependences_.clear();
-  dependences_.insert(shared_from_base<FunctionNode>());
-  std::queue<FunctionNodePtr> nodes;
-  nodes.push(shared_from_base<FunctionNode>());
-  is_in_reverse_chain_ = true;
-  while (!nodes.empty()) {
-    auto node = nodes.front();
-    nodes.pop();
+  auto mark_func = [](const FunctionNodePtr &node) { node->is_in_reverse_chain_ = true; };
+  Visit(shared_from_base<FunctionNode>(), mark_func);
+  auto update_func = [](const FunctionNodePtr &node) {
     for (auto iter = node->dependences_.begin(); iter != node->dependences_.end();) {
       if (!(*iter)->is_in_reverse_chain_) {
         iter = node->dependences_.erase(iter);
@@ -308,11 +322,10 @@ void FunctionNode::UpdateDependence() {
         iter++;
       }
     }
-    std::for_each(node->edges_.begin(), node->edges_.end(), [&nodes](const auto &edge) {
-      edge->GetNode()->is_in_reverse_chain_ = true;
-      nodes.push(edge->GetNode());
-    });
-  }
+  };
+  dependences_.clear();
+  dependences_.insert(shared_from_base<FunctionNode>());
+  Visit(shared_from_base<FunctionNode>(), update_func);
 }
 
 void FunctionNode::Notify(const FunctionNodePtr &node, const ValuePtr &dout) {
