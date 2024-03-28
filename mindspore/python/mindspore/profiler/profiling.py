@@ -713,7 +713,8 @@ class Profiler:
             step_list (list, optional): A list of steps that need to be analyzed. Default: ``None``.
                 By default, all steps will be analyzed.
         """
-        self._pretty_json = pretty
+        if isinstance(pretty, bool):
+            self._pretty_json = pretty
         model_iteration_dict = {}
         if step_list is not None and not isinstance(step_list, list):
             raise ProfilerParamTypeErrorException("Parameter step_list must be a list.")
