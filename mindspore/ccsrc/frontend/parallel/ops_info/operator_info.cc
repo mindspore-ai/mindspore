@@ -393,12 +393,34 @@ bool OperatorInfo::IsDynamicRank() {
   return False;
 }
 
+Status OperatorInfo::GetRepeatedNumInDevMatrixRight() {
+  bool repeated_num_right = true;
+  auto iter = attrs_.find(REPEATED_NUM_IN_DEV_MATRIX_RIGHT);
+  if (iter != attrs_.end()) {
+    MS_EXCEPTION_IF_NULL(iter->second);
+    if (iter->second->isa<BoolImm>()) {
+      repeated_num_right = iter->second->cast<BoolImmPtr>()->value();
+      MS_LOG(INFO) << name_ << ": attr " << REPEATED_NUM_IN_DEV_MATRIX_RIGHT << " will be set to "
+                   << repeated_num_right;
+    } else {
+      MS_LOG(ERROR) << name_ << ": The value of " << REPEATED_NUM_IN_DEV_MATRIX_RIGHT << " is not bool.";
+      return FAILED;
+    }
+  }
+  repeated_num_in_dev_matrix_right_ = repeated_num_right;
+  return SUCCESS;
+}
+
 Status OperatorInfo::InferAttrs() {
   if (infer_attrs_completed_) {
     return SUCCESS;
   }
 
   if (GetAttrs() != SUCCESS) {
+    return FAILED;
+  }
+
+  if (GetRepeatedNumInDevMatrixRight() != SUCCESS) {
     return FAILED;
   }
 
