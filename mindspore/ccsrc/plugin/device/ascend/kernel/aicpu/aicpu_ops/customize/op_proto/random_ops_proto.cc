@@ -236,6 +236,42 @@ CUST_IMPLEMT_INFERFUNC(LogUniformCandidateSampler, LogUniformCandidateSamplerInf
 CUST_INFER_FUNC_REG(LogUniformCandidateSampler, LogUniformCandidateSamplerInfer);
 // ----------------LogUniformCandidateSampler END-------------------
 
+// ----------------Multinomial-------------------
+IMPLEMT_COMMON_INFERFUNC(MultinomialInfer) {
+  auto logits_desc = op.GetInputDescByName("logits");
+  auto num_samples_desc = op.GetInputDescByName("num_samples");
+  auto output_desc = op.GetOutputDescByName("y");
+
+  DataType logits_dtype = logits_desc.GetDataType();
+  ge::Shape logits_shape = logits_desc.GetShape();
+  int64_t num_samples = UNKNOWN_DIM;
+
+  std::vector<std::string> input_infer_depends = {"num_samples"};
+  PREPARE_DYNAMIC_SHAPE(input_infer_depends);
+  Tensor num_samples_tensor;
+  if (op.GetInputConstData("num_samples", num_samples_tensor) == GRAPH_SUCCESS) {
+    if (MakeDimForScalarInput(num_samples_tensor, num_samples, op) != GRAPH_SUCCESS) {
+      return GRAPH_FAILED;
+    }
+  }
+
+  DataType output_dtype;
+  if (op.GetAttr("dtype", output_dtype) != GRAPH_SUCCESS) {
+    output_dtype = logits_dtype;
+  }
+  if (logits_shape.GetDims().size() == 2) {
+    output_desc.SetShape(ge::Shape({logits_shape.GetDim(0), num_samples}));
+  } else {
+    output_desc.SetShape(ge::Shape({num_samples}));
+  }
+  output_desc.SetDataType(output_dtype);
+
+  return op.UpdateOutputDesc("y", output_desc);
+}
+
+CUST_COMMON_INFER_FUNC_REG(Multinomial, MultinomialInfer);
+// ----------------Multinomial END-------------------
+
 IMPLEMT_COMMON_INFERFUNC(BatchSizeAndNumSampleInferShape) {
   auto logits_desc = op.GetInputDescByName("logits");
   auto num_samples_desc = op.GetInputDescByName("num_samples");
@@ -266,7 +302,6 @@ IMPLEMT_COMMON_INFERFUNC(BatchSizeAndNumSampleInferShape) {
   return op.UpdateOutputDesc("y", output_desc);
 }
 
-CUST_COMMON_INFER_FUNC_REG(Multinomial, BatchSizeAndNumSampleInferShape);
 CUST_COMMON_INFER_FUNC_REG(RandomCategorical, BatchSizeAndNumSampleInferShape);
 CUST_ONE_IN_ONE_OUT_INFER(RandomShuffle, x, y);
 
