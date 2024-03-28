@@ -1741,7 +1741,7 @@ def kl_div(logits, labels, reduction='mean'):
     Note:
         - Currently it does not support float64 input on `Ascend`.
         - The output aligns with the mathematical definition of Kullback-Leibler divergence
-          only when `reduction` is set to 'batchmean'.
+          only when `reduction` is set to ``'batchmean'``.
 
     Args:
         logits (Tensor): The input Tensor. The data type must be float16, float32 or float64.
@@ -3321,7 +3321,7 @@ def rrelu(input, lower=1.0 / 8, upper=1.0 / 3):
         TypeError: If `lower` is not a float or an int.
         TypeError: If `upper` is not a float or an int.
         TypeError: If `input` is not a Tensor.
-        TypeError: If `input` is not a Tensor of mindspore.float16 or mindpore.float32.
+        TypeError: If `input` is not a Tensor of mindspore.float16 or mindspore.float32.
         ValueError: If `lower` is greater than upper.
 
     Supported Platforms:
@@ -3769,6 +3769,7 @@ def smooth_l1_loss(input, target, beta=1.0, reduction='none'):
 
     Args:
         input (Tensor): Tensor of shape :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
+            Data type is float16, float32 or float64.
         target (Tensor): Ground truth data, tensor of shape :math:`(N, *)`, same shape and dtype as the `input`.
         beta (float): A parameter used to control the point where the function will change between
             L1 to L2 loss. The value should be greater than zero. Default: ``1.0`` .
@@ -4188,7 +4189,7 @@ def cosine_embedding_loss(input1, input2, target, margin=0.0, reduction="mean"):
         input2 (Tensor): Tensor of shape :math:`(N, *)`, same shape and dtype as `input1`.
         target (Tensor): Contains value 1 or -1. Suppose the shape of `input1` is
           :math:`(x_1, x_2, x_3, ..., x_R)`, then the shape of `target` must be :math:`(x_1, x_3, x_4, ..., x_R)`.
-        margin (float, optional): Should be in [-1.0, 1.0]. Default: 0.0.
+        margin (float, optional): Should be in [-1.0, 1.0]. Default: ``0.0``.
         reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
             ``'sum'`` . Default: ``'mean'`` .
 
@@ -4203,7 +4204,7 @@ def cosine_embedding_loss(input1, input2, target, margin=0.0, reduction="mean"):
     Raises:
         TypeError: If `margin` is not a float.
         ValueError: If `reduction` is not one of ``'none'``, ``'mean'``, ``'sum'``.
-        ValueError: If `margin` is not in range [-1, 1].
+        ValueError: If `margin` is not in range [-1.0, 1.0].
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -5292,7 +5293,7 @@ def hardtanh(input, min_val=-1.0, max_val=1.0):
 def huber_loss(input, target, reduction='mean', delta=1.0):
     r"""
     Calculates the error between the predicted value and the target value,
-    which has the best of both the loss of l1 and the loss of mse.
+    which has the best of both the loss of :func:`mindspore.ops.l1_loss` and the loss of :func:`mindspore.ops.mse_loss`.
 
     Assuming that the :math:`x` and :math:`y` are 1-D Tensor, length :math:`N`, the `reduction` parameter
     is set to ``'none'`` then calculate the loss of :math:`x` and :math:`y` without dimensionality reduction.
@@ -6021,8 +6022,8 @@ def multi_margin_loss(input, target, p=1, margin=1, weight=None, reduction='mean
             - ``'sum'``: the output elements will be summed.
 
     Returns:
-        Tensor. If `reduction` is ``'none'``, returns a Tensor with the same shape as `target`.
-        Otherwise, it is a scalar.
+        - **outputs** - Tensor. If `reduction` is ``'none'``, returns a Tensor with the same shape as `target`.
+          Otherwise, it is a scalar.
 
     Raises:
         TypeError: If dtype of `p` or `target` is not int.
@@ -6211,6 +6212,8 @@ def gelu(input, approximate='none'):
     .. math::
         GELU(x_i) = 0.5 * x_i * (1 + \tanh(\sqrt(2 / \pi) * (x_i + 0.044715 * x_i^3)))
 
+    For the related GELU graph, refer to `GELU <https://en.wikipedia.org/wiki/Activation_function#/media/File:Activation_gelu.png>`_ .
+
     GELU Activation Function Graph:
 
     .. image:: ../images/GELU.png
@@ -6227,7 +6230,7 @@ def gelu(input, approximate='none'):
     Raises:
         TypeError: If `input` is not a Tensor.
         TypeError: If dtype of `input` is not float16, float32 or float64.
-        ValueError: If `approximate` value is neither `none` or `tanh`.
+        ValueError: If `approximate` value is neither `none` nor `tanh`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -6601,7 +6604,7 @@ def triplet_margin_loss(anchor, positive, negative, margin=1.0, p=2, eps=1e-06, 
         Tensor. If `reduction` is ``"none"``, its shape is :math:`(N)`. Otherwise, a scalar value will be returned.
 
     Raises:
-        TypeError: If `anchor` or `positive` or 'negative' is not a Tensor.
+        TypeError: If `anchor` or `positive` or `negative` is not a Tensor.
         TypeError: If dtype of `anchor`, `positive` and `negative` is not the same.
         TypeError: If `margin` is not a float.
         TypeError: If `p` is not an int.

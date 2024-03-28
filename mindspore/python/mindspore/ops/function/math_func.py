@@ -7620,9 +7620,9 @@ def gumbel_softmax(logits, tau=1.0, hard=False, dim=-1):
     Raises:
         TypeError: If `logits` is not a Tensor.
         TypeError: If dtype of `logits` is not one of: float16, float32.
-        TypeError: If `tau` is not an float.
+        TypeError: If `tau` is not a float.
         TypeError: If `hard` is not a bool.
-        TypeError: If `dim` is not a int.
+        TypeError: If `dim` is not an int.
         ValueError: If If `tau` is not positive.
 
     Supported Platforms:
