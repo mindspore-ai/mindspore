@@ -1,4 +1,4 @@
-# Copyright 2023 Huawei Technologies Co., Ltd
+# Copyright 2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -132,7 +132,7 @@ class FakeData:
         raise StopIteration
 
 
-def test_auto_parallel_reshape_basic():
+def test_auto_parallel_rec_log_softmax():
     """
     Feature: test reshape of auto parallel
     Description: using recursive algorithm
