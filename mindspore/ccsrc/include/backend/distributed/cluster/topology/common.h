@@ -61,10 +61,10 @@ constexpr char kHostNames[] = "hostnames";
 static const int kDecimal = 10;
 
 // The timeout(second) for heartbeat from compute graph node to meta server.
-static const uint64_t kDefaultNodeTimeout = 30;
+static const uint64_t kDefaultNodeTimeout = 600;
 
 // The timeout for initializing the cluster topology.
-static const std::chrono::milliseconds kTopoInitTimeout = std::chrono::milliseconds(1000 * 60 * 10);
+static const size_t kTopoInitTimeout = 1000 * 60 * 30;
 
 // All kinds of messages sent between compute graph nodes and meta server node.
 enum class MessageName {
@@ -83,10 +83,10 @@ enum class MessageName {
 };
 
 // The retry and interval configuration used for the macro `EXECUTE_WITH_RETRY`.
-static const size_t kExecuteRetryNum = 210;
+static const size_t kExecuteRetryNum = 610;
 // The retry number of cgn and msn for reconnecting.
-static const size_t kCgnExecuteRetryNum = 60;
-static const size_t kMsnExecuteRetryNum = 210;
+static const size_t kCgnExecuteRetryNum = 610;
+static const size_t kMsnExecuteRetryNum = 610;
 static const size_t kNoRetry = 1;
 static const uint32_t kExecuteInterval = 3;
 

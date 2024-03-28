@@ -21,7 +21,15 @@
 namespace mindspore {
 namespace distributed {
 namespace rpc {
-TCPClient::TCPClient(bool enable_ssl) : RPCClientBase(enable_ssl), tcp_comm_(nullptr), received_message_(nullptr) {}
+TCPClient::TCPClient(bool enable_ssl) : RPCClientBase(enable_ssl), tcp_comm_(nullptr), received_message_(nullptr) {
+  std::string receive_timeout = common::GetEnv("MS_RECEIVE_MSG_TIMEOUT");
+  if (!receive_timeout.empty()) {
+    MS_LOG(INFO) << "MS_RECEIVE_MSG_TIMEOUT set by user: " << receive_timeout;
+    receive_time_out_ = std::stoi(receive_timeout);
+  } else {
+    receive_time_out_ = 600;
+  }
+}
 TCPClient::~TCPClient() {}
 
 bool TCPClient::Initialize() {
@@ -114,6 +122,8 @@ bool TCPClient::SendSync(std::unique_ptr<MessageBase> &&msg, size_t *const send_
 void TCPClient::SendAsync(std::unique_ptr<MessageBase> &&msg) { (void)tcp_comm_->Send(msg.release(), nullptr, false); }
 
 MessageBase *TCPClient::ReceiveSync(std::unique_ptr<MessageBase> &&msg, uint32_t timeout) {
+  std::unique_lock<std::mutex> receive_lock(receive_sync_mutex_);
+  timeout = receive_time_out_;
   bool retval = tcp_comm_->Send(msg.release(), nullptr, true);
   if (retval) {
     std::unique_lock<std::mutex> lock(mutex_);
@@ -125,6 +135,8 @@ MessageBase *TCPClient::ReceiveSync(std::unique_ptr<MessageBase> &&msg, uint32_t
       // `ReceiveSync` call will block on the received message's condition variable.
       MessageBase *message = received_message_;
       return message;
+    } else {
+      MS_LOG(WARNING) << "Failed to receive message " << msg->name;
     }
   }
   return NULL_MSG;
