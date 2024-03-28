@@ -118,8 +118,8 @@ PrimitiveCPtr MatMulFusionMapper::BMMToMM(const CNodePtr &cnode, const std::vect
   if (cnode->abstract() != nullptr) {
     reshape_node->set_abstract(cnode->abstract()->Clone());
   }
-  auto matmul = NewCNode(cnode, dst_prim, {reshape_node, x2_input}, cnode->abstract()->Clone(),
-                         cnode->fullname_with_scope() + "_matmul");
+  auto matmul =
+    NewCNode(cnode, dst_prim, {reshape_node, x2_input}, cnode->abstract()->Clone(), cnode->fullname_with_scope());
   MS_CHECK_TRUE_MSG(matmul != nullptr, nullptr, "Failed to create MatMul node");
 
   std::vector<int32_t> output_shape = {static_cast<int32_t>(shape_vector[kNumIndex0]),
