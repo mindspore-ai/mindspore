@@ -34,3 +34,6 @@ weight_quant_batch_matmul:
   returns:
     y:
       dtype: tensor
+  dispatch:
+    enable: True
+    Ascend: WeightQuantBatchMatmulV2Ascend

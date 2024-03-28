@@ -15,8 +15,9 @@
 
 import numpy as np
 import pytest
-from mindspore import Parameter, Tensor, context, dtype, GRAPH_MODE
+from mindspore import Parameter, Tensor, context, dtype, GRAPH_MODE, PYNATIVE_MODE
 from mindspore.nn import Cell
+from mindspore.common import JitConfig
 from mindspore.ops import operations as msops
 from mindspore.ops.operations._inner_ops import Quant
 from mindspore.ops.auto_generate import WeightQuantBatchMatmul, QuantBatchMatmul
@@ -180,20 +181,27 @@ class DequantBMMCell(Cell):
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-def test_weight_quant_bmm_cell_as_antiquant_1p():
+@pytest.mark.parametrize('mode', ['GE', 'KBK', 'pynative'])
+def test_weight_quant_bmm_cell_as_antiquant_1p(mode):
     """
     Feature: weight quant bmm cell for antiquant
     Description: test antiquant using weight quant bmm cell
     Expectation: accuracy in tolerance
     """
 
-    context.set_context(device_target="Ascend", mode=GRAPH_MODE)
-    weight = np.array([[100, 200], [10, 25]]).astype(np.int8)
-    activation = np.array([[0.1, 1.], [0.5, 2.4]]).astype(np.float16)
+    weight = np.array([[100, 200, 100], [10, 25, 10]]).astype(np.int8)
+    activation = np.array([[0.1, 1., 0.1], [0.5, 2.4, 0.5]]).astype(np.float16)
     scale = np.array([0.5, 0.27]).astype(np.float16)
     offset = np.array([-127, -10]).astype(np.float16)
-    expect = np.matmul(activation, NumpyQuantOps.anti_quant(weight, scale, offset))
-    wqmm_cell = AntiquantBMMCell(scale, offset)
+    expect = np.matmul(activation, NumpyQuantOps.anti_quant(np.transpose(weight), scale, offset))
+    wqmm_cell = AntiquantBMMCell(scale, offset, dtype.float16, False, True)
+    if mode == 'KBK':
+        context.set_context(device_target="Ascend", mode=GRAPH_MODE)
+        wqmm_cell.set_jit_config(JitConfig(jit_level='O0'))
+    elif mode == 'GE':
+        context.set_context(device_target="Ascend", mode=GRAPH_MODE)
+    else:
+        context.set_context(device_target="Ascend", mode=PYNATIVE_MODE)
     t_activation = Tensor(activation, dtype=dtype.float16)
     p_weight = Parameter(Tensor(weight, dtype=dtype.int8), 'weight')
     fact = wqmm_cell(t_activation, p_weight).asnumpy()
