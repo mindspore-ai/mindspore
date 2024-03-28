@@ -1257,6 +1257,7 @@ def _infer_value_for_ReduceExtand(input_x, axis, keep_dims, dtype, prim_name):
         prim_map = {
             'MeanExt': np.mean,
             'SumExt': np.sum,
+            'ProdExt': np.prod,
         }
         np_reduce_extand_func = prim_map.get(prim_name, None)
 
@@ -1370,6 +1371,11 @@ def infer_value_for_MeanExt(input_x, axis, keep_dims, dtype):
 def infer_value_for_SumExt(input_x, axis, keep_dims, dtype):
     """Infer value for SumExt op."""
     return _infer_value_for_ReduceExtand(input_x, axis, keep_dims, dtype, 'SumExt')
+
+
+def infer_value_for_ProdExt(input_x, axis, keep_dims, dtype):
+    """Infer value for ProdExt op."""
+    return _infer_value_for_ReduceExtand(input_x, axis, keep_dims, dtype, 'ProdExt')
 
 
 def infer_value_for_Diag(input_x):

@@ -43,7 +43,8 @@ from mindspore.ops.auto_generate import (minimum, maximum, mul, sin, sinc, sinh,
                                          matrix_exp, sqrt, rsqrt, square, trace, nextafter, abs, acos, acosh, angle,
                                          asin, asinh, atan, atan2, atanh, ceil, equal, erf, erfc, erfinv, exp, expm1,
                                          floor, floor_divide, floor_mod, gcd, greater, greater_equal, less, less_equal,
-                                         log, log1p, neg, not_equal, pow, round, isfinite, argmax, mean, sum_ext_op)
+                                         log, log1p, neg, not_equal, pow, round, isfinite, argmax, mean, sum_ext_op,
+                                         prod_ext_op)
 from mindspore.nn import layer
 from mindspore._checkparam import check_is_number
 from mindspore import _checkparam as validator
@@ -6672,7 +6673,7 @@ def amax(input, axis=None, keepdims=False, *, initial=None, where=None):
     return _get_cache_prim(P.ReduceMax)(keepdims)(input, axis)
 
 
-def prod(input, axis=None, keep_dims=False):
+def prod(input, axis=None, keep_dims=False, dtype=None):
     r"""
     Reduces a dimension of a tensor by multiplying all elements in the dimension, by default. And also can
     reduce a dimension of `input` along the `axis`. Determine whether the dimensions of the output and input are the
@@ -6688,6 +6689,7 @@ def prod(input, axis=None, keep_dims=False):
             dimensions. Only constant value is allowed. Assume the rank of `x` is r, and the value range is [-r,r).
         keep_dims (bool): If ``True`` , keep these reduced dimensions and the length is 1.
             If ``False`` , don't keep these dimensions. Default: ``False`` .
+        dtype (:class:`mindspore.dtype`): The desired data type of returned Tensor. Default: ``None`` .
 
     Returns:
         Tensor, has the same data type as input tensor.
@@ -6753,8 +6755,10 @@ def prod(input, axis=None, keep_dims=False):
           [2.62144e+05]
           [5.31441e+05]]]
     """
-    if axis is None:
-        axis = ()
+    if not isinstance(axis, (tuple, list, Tensor)):
+        return prod_ext_op(input, axis, keep_dims, dtype)
+    if dtype is not None:
+        input = input.astype(dtype)
     return _get_cache_prim(P.ReduceProd)(keep_dims)(input, axis)
 
 

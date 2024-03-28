@@ -102,7 +102,7 @@ def ndimension(x):
     return len(x.shape)
 
 
-def prod(input, axis=None, keep_dims=False):
+def prod(input, axis=None, keep_dims=False, dtype=None):
     """
     Reduces a dimension of a tensor by product all elements in the dimension.
 
@@ -111,6 +111,7 @@ def prod(input, axis=None, keep_dims=False):
         axis (Union[None, int, tuple(int), list(int)]): Dimensions of reduction,
             when axis is None or empty tuple, reduce all dimensions. Default: ``None``.
         keep_dims (bool): Whether to keep the reduced dimensions. Default: False.
+        dtype (:class:`mindspore.dtype`): The desired data type of returned Tensor. Default: ``None`` .
 
     Returns:
         Tensor, has the same data type as input tensor.
@@ -126,7 +127,7 @@ def prod(input, axis=None, keep_dims=False):
         >>> print(output)
         6.0
     """
-    return F.prod(input, axis, keep_dims)
+    return F.prod(input, axis, keep_dims, dtype)
 
 
 def addcdiv(input, tensor1, tensor2, value=1):
