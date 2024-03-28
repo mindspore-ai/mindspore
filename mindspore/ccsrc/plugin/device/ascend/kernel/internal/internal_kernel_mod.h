@@ -43,8 +43,6 @@ class InternalKernelMod : public KernelMod {
     MS_LOG(EXCEPTION) << "This interface is not support in internal kernel.";
   }
 
-  std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override;
-
  protected:
   virtual int Build(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
   virtual void SetInOutIdx() = 0;

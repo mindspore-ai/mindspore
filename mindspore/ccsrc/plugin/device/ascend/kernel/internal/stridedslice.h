@@ -28,6 +28,8 @@ class InternalStridedSlice : public InternalKernelMod {
   InternalStridedSlice() : InternalKernelMod("StridedSlice") {}
   ~InternalStridedSlice() = default;
 
+  std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override;
+
  protected:
   bool CheckMasks(const std::vector<KernelTensor *> &inputs);
   internal::OpParamPtr CreateOpParam(const std::vector<KernelTensor *> &inputs,
