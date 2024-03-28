@@ -117,10 +117,6 @@ int InternalKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const s
   }
   impl_->SetInputs(inputs_);
 
-  if (op_type_ == "MatMul") {
-    (void)impl_->InferShape(input_shapes, output_shapes);
-  }
-
   for (auto iter = outputsIdxMap_.begin(); iter != outputsIdxMap_.end(); iter++) {
     InternalKernelUtils::ToInternalTensor(outputs_[iter->second], outputs[iter->first]);
   }
