@@ -39,7 +39,7 @@
 #ifndef ENABLE_SECURITY
 #include "include/backend/debug/profiler/profiling.h"
 #include "backend/common/optimizer/dynamic_shape/dynamic_shape_helper.h"
-
+#include "pybind_api/gil_scoped_long_running.h"
 #include "runtime/pynative/ir_converter.h"
 
 using mindspore::profiler::ProfilerManager;
@@ -824,6 +824,7 @@ DeviceContext *OpRunner::GetDeviceContext(const std::string &device_type) {
     return cached_device_context;
   }
 
+  GilReleaseWithCheck release_gil;
   std::unique_lock<std::mutex> lock(*kDeviceContextMutex);
 
   auto device_id = MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID);
