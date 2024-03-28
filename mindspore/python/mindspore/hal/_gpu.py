@@ -14,7 +14,8 @@
 # ============================================================================
 
 """Hal gpu interfaces."""
-from mindspore._c_expression import gpu_get_device_count, gpu_get_device_name, gpu_get_device_capability, gpu_get_device_properties, gpu_get_arch_list
+from mindspore._c_expression import gpu_get_device_count, gpu_get_device_name, gpu_get_device_capability, \
+     gpu_get_device_properties, gpu_get_arch_list
 from ._base import _HalBase
 
 
