@@ -170,7 +170,7 @@ uint32_t TraceGradCpuKernel::TraceGradCompute(const CpuKernelContext &ctx) {
       if (i == j) *(grad_input + i * n + j) = *(input_x1);
     }
   for (T2 i = 0; i < m * n; i++) *(output_x + i) = *(grad_input + i);
-
+  delete[] grad_input;
   return KERNEL_STATUS_OK;
 }
 

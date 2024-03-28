@@ -149,8 +149,12 @@ uint32_t MatrixBandPartCpuKernel::BandCompute(Tensor *x, int64_t lower, int64_t 
           }
         } else {
           if (band_start < band_end) {
-            (void)memcpy_s((y_addrs + base_index + band_start), (band_end - band_start) * sizeof(T),
-                           (x_addrs + base_index + band_start), (band_end - band_start) * sizeof(T));
+            auto ret = memcpy_s((y_addrs + base_index + band_start), (band_end - band_start) * sizeof(T),
+                                (x_addrs + base_index + band_start), (band_end - band_start) * sizeof(T));
+            if (ret != EOK) {
+              KERNEL_LOG_ERROR("memcpy_s failed.");
+              return KERNEL_STATUS_INNER_ERROR;
+            }
           }
         }
       }
@@ -183,8 +187,11 @@ uint32_t MatrixBandPartCpuKernel::BandCompute(Tensor *x, int64_t lower, int64_t 
             }
           } else {
             if (band_start < band_end) {
-              (void)memcpy_s((y_addrs + base_index + band_start), (band_end - band_start) * sizeof(T),
-                             (x_addrs + base_index + band_start), (band_end - band_start) * sizeof(T));
+              auto ret = memcpy_s((y_addrs + base_index + band_start), (band_end - band_start) * sizeof(T),
+                                  (x_addrs + base_index + band_start), (band_end - band_start) * sizeof(T));
+              if (ret != EOK) {
+                KERNEL_LOG_ERROR("memcpy_s failed.");
+              }
             }
           }
         }

@@ -41,6 +41,7 @@ bool TruncatedNormalGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs
 
 int TruncatedNormalGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
                                         const std::vector<KernelTensor *> &outputs) {
+  MS_EXCEPTION_IF_NULL(inputs[0]);
   if (!IsValidShape(inputs[0]->GetShapeVector())) {
     return KRET_UNKNOWN_SHAPE;
   }

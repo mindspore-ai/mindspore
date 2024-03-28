@@ -76,8 +76,8 @@ TypePtr LowerBoundInferType(const PrimitivePtr &primitive, const std::vector<Abs
   auto dtype_attr = primitive->GetAttr("out_type");
   MS_EXCEPTION_IF_NULL(dtype_attr);
   auto out_type = dtype_attr->cast<TypePtr>();
-  auto out_type_id = out_type->type_id();
   MS_EXCEPTION_IF_NULL(out_type);
+  auto out_type_id = out_type->type_id();
   if (out_type_id != kInt32->type_id() && out_type_id != kInt64->type_id()) {
     MS_EXCEPTION(TypeError) << "For '" << primitive->name()
                             << "', 'out_type' must be int32 or int64, but got: " << out_type << ".";
