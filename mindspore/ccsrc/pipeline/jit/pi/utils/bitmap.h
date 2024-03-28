@@ -37,13 +37,13 @@ constexpr int PopCount(unsigned x) {
 #endif
 }
 
-constexpr int CountTrailingZeros(size_t x) {
+constexpr size_t CountTrailingZeros(size_t x) {
   constexpr auto bits = std::numeric_limits<size_t>::digits;
   constexpr auto limit = std::numeric_limits<unsigned>::digits;
   if (x == 0) {
     return bits;
   }
-  int c = 0;
+  size_t c = 0;
   if ((x & std::numeric_limits<unsigned>::max()) == 0) {
     c += limit;
     x >>= limit;
