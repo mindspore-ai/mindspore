@@ -208,7 +208,7 @@ static void SetNamedInstrIndex(const std::unique_ptr<Instr> &i, std::unordered_m
   if (iter != co_names->end()) {
     arg = iter->second;
   } else {
-    arg = co_names->size();
+    arg = static_cast<int>(co_names->size());
     co_names->insert({i->name(), arg});
   }
   i->set_arg(arg);
