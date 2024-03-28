@@ -309,6 +309,33 @@ def test_eager_resize_dvpp_exception():
 
 
 @pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
+def test_eager_resize_dvpp_exception_with_910A():
+    """
+    Feature: Resize op when Ascend910A
+    Description: Will prompt exception not supported
+    Expectation: With exception
+    """
+    ms.set_context(device_target="Ascend")
+
+    print("Run testcase: " + sys._getframe().f_code.co_name)
+
+    # HWC
+    img = cv2.imread(input_apple_jpg)
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    logger.info("Image.type: {}, Image.shape: {}".format(type(img), img.shape))
+
+    # run the op
+    with pytest.raises(RuntimeError):
+        _ = vision.Resize(size=(64, 32)).device("Ascend")(img)
+
+    # retry to run the op
+    with pytest.raises(RuntimeError):
+        _ = vision.Resize(size=(64, 32)).device("Ascend")(img)
+
+
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 def test_eager_normalize_dvpp():
@@ -1458,6 +1485,7 @@ if __name__ == '__main__':
     test_eager_resize_dvpp()
     test_resize_performance()
     test_eager_resize_dvpp_exception()
+    test_eager_resize_dvpp_exception_with_910A()
     test_eager_decode_dvpp()
     test_eager_decode_dvpp_exception()
     test_eager_normalize_dvpp()
