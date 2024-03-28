@@ -6526,29 +6526,35 @@ def amin(input, axis=None, keepdims=False, *, initial=None, where=None):
     reduce a dimension of `input` along specified `axis`. `keepdims` determines whether the dimensions of
     output and input are the same.
 
+    Note:
+        The `axis` with tensor type is only used for compatibility with older versions and is not recommended.
+
     Args:
         input (Tensor[Number]): The input tensor. The dtype of the tensor to be reduced is number.
             :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
         axis (Union[int, tuple(int), list(int), Tensor]): The dimensions to reduce. Default: ``None`` , reduce all
             dimensions. Only constant value is allowed. Assume the rank of `x` is r, and the value range is [-r,r).
-        keepdims (bool): If true, keep these reduced dimensions and the length is 1. If false, don't keep
+        keepdims (bool): If ``True`` , keep these reduced dimensions and the length is 1. If ``False`` , don't keep
             these dimensions. Default: ``False`` .
 
     Keyword Args:
         initial (scalar, optional): The minimum value of an output element. Must be present to allow computation
             on empty slice. Default: ``None`` .
-        where (Tensor[bool], optional): A Tensor indicating whether to replace the primitive value in `input`
-            with the value in `initial`. If True, do not replace, otherwise replace. For the index of True in `where`,
-            the corresponding value in `initial` must be assigned. Default: ``None`` , which indicates True by default.
+        where (Tensor[bool], optional): A Tensor indicating whether to replace the primitive value in `input` with the
+            value in `initial`. If ``True`` , do not replace, otherwise replace. For the index of ``True`` in `where`,
+            the corresponding value in `initial` must be assigned. Default: ``None`` , which indicates ``True`` by
+            default.
 
     Returns:
         Tensor, has the same data type as input tensor.
 
-        - If `axis` is None, and `keepdims` is False,
+        - If `axis` is ``None`` , and `keepdims` is ``False`` ,
           the output is a 0-D tensor representing the product of all elements in the input tensor.
-        - If `axis` is int, set as 1, and `keepdims` is False,
+        - If `axis` is int, set as 1, and `keepdims` is ``False`` ,
           the shape of output is :math:`(x_0, x_2, ..., x_R)`.
-        - If `axis` is tuple(int), set as (1, 2), and `keepdims` is False,
+        - If `axis` is tuple(int), set as (1, 2), and `keepdims` is ``False`` ,
+          the shape of output is :math:`(x_0, x_3, ..., x_R)`.
+        - If `axis` is 1-D Tensor, set as [1, 2], and `keepdims` is ``False`` ,
           the shape of output is :math:`(x_0, x_3, ..., x_R)`.
 
     Raises:
@@ -6630,29 +6636,35 @@ def amax(input, axis=None, keepdims=False, *, initial=None, where=None):
     reduce a dimension of `input` along specified `axis`.  `keepdims` determines whether the dimensions of
     output and input are the same.
 
+    Note:
+        The `axis` with tensor type is only used for compatibility with older versions and is not recommended.
+
     Args:
         input (Tensor[Number]): The input tensor. The dtype of the tensor to be reduced is number.
             :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
         axis (Union[int, tuple(int), list(int), Tensor]): The dimensions to reduce. Default: ``None`` , reduce all
             dimensions. Only constant value is allowed. Assume the rank of `x` is r, and the value range is [-r,r).
-        keepdims (bool): If true, keep these reduced dimensions and the length is 1. If false, don't keep these
-            dimensions. Default: ``False`` .
+        keepdims (bool): If ``True`` , keep these reduced dimensions and the length is 1. If ``False`` , don't keep
+            these dimensions. Default: ``False`` .
 
     Keyword Args:
         initial (scalar, optional): The minimum value of an output element. Must be present to allow computation
             on empty slice. Default: ``None`` .
-        where (Tensor[bool], optional): A Tensor indicating whether to replace the primitive value in `input`
-            with the value in `initial`. If True, do not replace, otherwise replace. For the index of True in `where`,
-            the corresponding value in `initial` must be assigned. Default: ``None`` , which indicates True by default.
+        where (Tensor[bool], optional): A Tensor indicating whether to replace the primitive value in `input` with the
+            value in `initial`. If ``True`` , do not replace, otherwise replace. For the index of ``True`` in `where`,
+            the corresponding value in `initial` must be assigned. Default: ``None`` , which indicates ``True`` by
+            default.
 
     Returns:
         Tensor, has the same data type as input tensor.
 
-        - If `axis` is None, and `keepdims` is False, the output is a 0-D tensor representing the product of all
-          elements in the input tensor.
-        - If `axis` is int, set as 1, and `keepdims` is False, the shape of output is :math:`(x_0, x_2, ..., x_R)`.
-        - If `axis` is tuple(int), set as (1, 2), and `keepdims` is False, the shape of output is
-          :math:`(x_0, x_3, ..., x_R)`.
+        - If `axis` is ``None`` , and `keepdims` is ``False`` , the output is a 0-D tensor representing the product of
+            all elements in the input tensor.
+        - If `axis` is int, set as 1, and `keepdims` is ``False`` , the shape of output is :math:`(x_0, x_2, ..., x_R)`.
+        - If `axis` is tuple(int), set as (1, 2), and `keepdims` is ``False`` , the shape of output is
+            :math:`(x_0, x_3, ..., x_R)`.
+        - If `axis` is 1-D Tensor, set as [1, 2], and `keepdims` is ``False`` , the shape of output is
+            :math:`(x_0, x_3, ..., x_R)`.
 
     Raises:
         TypeError: If `input` is not a Tensor.
@@ -6715,26 +6727,32 @@ def amax(input, axis=None, keepdims=False, *, initial=None, where=None):
 def mean(x, axis=None, keep_dims=False):
     r"""
     Reduces all dimension of a tensor by averaging all elements in the dimension, by default.
-    And reduce a dimension of `x` along the specified `axis`. `keep_dims`
+    And reduce a dimension of `input` along the specified `axis`. `keep_dims`
     determines whether the dimensions of the output and input are the same.
 
+    Note:
+        The `axis` with tensor type is only used for compatibility with older versions and is not recommended.
+
     Args:
-        x (Tensor[Number]): The input tensor. The dtype of the tensor to be reduced is number.
-          :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
-        axis (Union[int, tuple(int), list(int), Tensor]): The dimensions to reduce. Default: ``None`` , reduce all
-            dimensions. Only constant value is allowed. Assume the rank of `x` is r, and the value range is [-r,r).
-        keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
-                          If false, don't keep these dimensions. Default: ``False`` .
+        input (Tensor[Number]): The input tensor. The dtype of the tensor to be reduced is number.
+            :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
+        axis (Union[int, tuple(int), list(int), Tensor]): The dimensions to reduce. Default: ``None`` ,
+            reduce all dimensions. Only constant value is allowed. Assume the rank of `input` is r,
+            and the value range is [-r,r).
+        keep_dims (bool): If ``True`` , keep these reduced dimensions and the length is 1.
+            If ``False`` , don't keep these dimensions. Default: ``False`` .
 
     Returns:
         Tensor, has the same data type as input tensor.
 
-        - If `axis` is None, and `keep_dims` is False,
-          the output is a 0-D tensor representing the product of all elements in the input tensor.
-        - If `axis` is int, set as 1, and `keep_dims` is False,
-          the shape of output is :math:`(x_0, x_2, ..., x_R)`.
+        - If `axis` is ``None`` , and `keep_dims` is ``False`` ,
+            the output is a 0-D tensor representing the product of all elements in the input tensor.
+        - If `axis` is int, set as 1, and `keep_dims` is ``False`` ,
+            the shape of output is :math:`(x_0, x_2, ..., x_R)`.
         - If `axis` is tuple(int), set as (1, 2), and `keep_dims` is ``False`` ,
-          the shape of output is :math:`(x_0, x_3, ..., x_R)`.
+            the shape of output is :math:`(x_0, x_3, ..., x_R)`.
+        - If `axis` is 1-D Tensor, set as [1, 2], and `keep_dims` is ``False`` ,
+            the shape of output is :math:`(x_0, x_3, ..., x_R)`.
 
     Raises:
         TypeError: If `x` is not a Tensor.
@@ -6768,26 +6786,26 @@ def mean(x, axis=None, keep_dims=False):
         >>> output = ops.mean(x, 0, True)
         >>> print(output)
         [[[4. 4. 4. 4. 4. 4.]
-          [5. 5. 5. 5. 5. 5.]
-          [6. 6. 6. 6. 6. 6.]]]
+        [5. 5. 5. 5. 5. 5.]
+        [6. 6. 6. 6. 6. 6.]]]
         >>> # case 3: Reduces a dimension along the axis 1
         >>> output = ops.mean(x, 1, True)
         >>> print(output)
         [[[2. 2. 2. 2. 2. 2.]]
-         [[5. 5. 5. 5. 5. 5.]]
-         [[8. 8. 8. 8. 8. 8.]]]
+        [[5. 5. 5. 5. 5. 5.]]
+        [[8. 8. 8. 8. 8. 8.]]]
         >>> # case 4: Reduces a dimension along the axis 2
         >>> output = ops.mean(x, 2, True)
         >>> print(output)
         [[[ 2.]
-          [ 2.]
-          [ 2.]]
-         [[ 4.]
-          [ 5.]
-          [ 6.]]
-         [[ 6.]
-          [ 8.]
-          [10.]]]
+        [ 2.]
+        [ 2.]]
+        [[ 4.]
+        [ 5.]
+        [ 6.]]
+        [[ 6.]
+        [ 8.]
+        [10.]]]
     """
     if axis is None:
         axis = ()
@@ -6797,25 +6815,30 @@ def mean(x, axis=None, keep_dims=False):
 def prod(input, axis=None, keep_dims=False):
     r"""
     Reduces a dimension of a tensor by multiplying all elements in the dimension, by default. And also can
-    reduce a dimension of `input` along the axis. Determine whether the dimensions of the output and input are the same
-    by controlling `keep_dims`.
+    reduce a dimension of `input` along the `axis`. Determine whether the dimensions of the output and input are the
+    same by controlling `keep_dims`.
+
+    Note:
+        The `axis` with tensor type is only used for compatibility with older versions and is not recommended.
 
     Args:
         input (Tensor[Number]): The input tensor. The dtype of the tensor to be reduced is number.
-          :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
+            :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
         axis (Union[int, tuple(int), list(int), Tensor]): The dimensions to reduce. Default: ``None`` , reduce all
             dimensions. Only constant value is allowed. Assume the rank of `x` is r, and the value range is [-r,r).
-        keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
-                          If false, don't keep these dimensions. Default: ``False`` .
+        keep_dims (bool): If ``True`` , keep these reduced dimensions and the length is 1.
+            If ``False`` , don't keep these dimensions. Default: ``False`` .
 
     Returns:
         Tensor, has the same data type as input tensor.
 
-        - If `axis` is None, and `keep_dims` is False,
+        - If `axis` is ``None`` , and `keep_dims` is ``False`` ,
           the output is a 0-D tensor representing the product of all elements in the input tensor.
-        - If `axis` is int, set as 1, and `keep_dims` is False,
+        - If `axis` is int, set as 1, and `keep_dims` is ``False`` ,
           the shape of output is :math:`(input_0, input_2, ..., input_R)`.
-        - If `axis` is tuple(int), set as (1, 2), and `keep_dims` is False,
+        - If `axis` is tuple(int), set as (1, 2), and `keep_dims` is ``False`` ,
+          the shape of output is :math:`(input_0, input_3, ..., input_R)`.
+        - If `axis` is 1-D Tensor, set as [1, 2], and `keep_dims` is ``False`` ,
           the shape of output is :math:`(input_0, input_3, ..., input_R)`.
 
     Raises:
@@ -8668,31 +8691,37 @@ def _check_is_tensor(param_name, input, cls_name):
 def all(input, axis=None, keep_dims=False):
     r"""
     Reduces a dimension of `input` by the "logical AND" of all elements in the dimension, by default. And also can
-    reduce a dimension of `input` along the axis. Determine whether the dimensions of the output and input are the same
-    by controlling `keep_dims`.
+    reduce a dimension of `input` along the `axis`. Determine whether the dimensions of the output and input are the
+    same by controlling `keep_dims`.
+
+    Note:
+        The `axis` with tensor type is only used for compatibility with older versions and is not recommended.
 
     Args:
         input (Tensor): Input Tensor, has the shape :math:`(N, *)` where :math:`*` means,
             any number of additional dimensions.
-        axis (Union[int, tuple(int), list(int)], optional): The dimensions to reduce. Suppose the rank of `input` is
-            r, axis must be in the range [-rank(input), rank(input)). Default: ``None`` , all dimensions are reduced.
-        keep_dims (bool, optional): If true, keep these reduced dimensions and the length is 1.
-            If false, don't keep these dimensions. Default : ``False`` .
+        axis (Union[int, tuple(int), list(int), Tensor], optional): The dimensions to reduce.
+            Suppose the rank of `input` is r, `axis` must be in the range [-rank(input), rank(input)).
+            Default: ``None`` , all dimensions are reduced.
+        keep_dims (bool, optional): If ``True`` , keep these reduced dimensions and the length is 1.
+            If ``False`` , don't keep these dimensions. Default : ``False`` .
 
     Returns:
         Tensor, the dtype is bool.
 
-        - If `axis` is None, and `keep_dims` is ``False`` ,
+        - If `axis` is ``None`` , and `keep_dims` is ``False`` ,
           the output is a 0-D Tensor representing the "logical AND" of all elements in the input Tensor.
         - If `axis` is int, such as 2, and `keep_dims` is ``False`` ,
           the shape of output is :math:`(input_1, input_3, ..., input_R)`.
-        - If `axis` is tuple(int), such as (2, 3), and `keep_dims` is False,
+        - If `axis` is tuple(int), such as (2, 3), and `keep_dims` is ``False`` ,
+          the shape of output is :math:`(input_1, input_4, ..., input_R)`.
+        - If `axis` is 1-D Tensor, such as [2, 3], and `keep_dims` is ``False`` ,
           the shape of output is :math:`(input_1, input_4, ..., input_R)`.
 
     Raises:
         TypeError: If `keep_dims` is not a bool.
         TypeError: If `input` is not a Tensor.
-        TypeError: If `axis` is not one of the following: int, tuple or list.
+        TypeError: If `axis` is not one of the following: int, tuple, list or Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -8727,31 +8756,37 @@ def all(input, axis=None, keep_dims=False):
 def any(input, axis=None, keep_dims=False):
     r"""
     Reduces a dimension of `input` by the "logical OR" of all elements in the dimension, by default. And also can
-    reduce a dimension of `input` along the axis. Determine whether the dimensions of the output and input are the same
-    by controlling `keep_dims`.
+    reduce a dimension of `input` along the `axis`. Determine whether the dimensions of the output and input are the
+    same by controlling `keep_dims`.
+
+    Note:
+        The `axis` with tensor type is only used for compatibility with older versions and is not recommended.
 
     Args:
         input (Tensor): Input Tensor, has the shape :math:`(N, *)` where :math:`*` means,
             any number of additional dimensions.
-        axis (Union[int, tuple(int), list(int)], optional): The dimensions to reduce. Suppose the rank of `input` is r,
-            axis must be in the range [-rank(input), rank(input)). Default: ``None`` , all dimensions are reduced.
-        keep_dims (bool, optional): If true, keep these reduced dimensions and the length is 1.
-            If false, don't keep these dimensions. Default : ``False`` .
+        axis (Union[int, tuple(int), list(int), Tensor], optional): The dimensions to reduce.
+            Suppose the rank of `input` is r, `axis` must be in the range [-rank(input), rank(input)).
+            Default: ``None`` , all dimensions are reduced.
+        keep_dims (bool, optional): If ``True`` , keep these reduced dimensions and the length is 1.
+            If ``False`` , don't keep these dimensions. Default : ``False`` .
 
     Returns:
         Tensor, the dtype is bool.
 
-        - If `axis` is None, and `keep_dims` is ``False`` ,
+        - If `axis` is ``None`` , and `keep_dims` is ``False`` ,
           the output is a 0-D Tensor representing the "logical OR" of all elements in the input Tensor.
         - If `axis` is int, such as 2, and `keep_dims` is ``False`` ,
           the shape of output is :math:`(input_1, input_3, ..., input_R)`.
         - If `axis` is tuple(int), such as (2, 3), and `keep_dims` is ``False`` ,
           the shape of output is :math:`(input_1, input_4, ..., input_R)`.
+        - If `axis` is 1-D Tensor, such as [2, 3], and `keep_dims` is ``False`` ,
+          the shape of output is :math:`(input_1, input_4, ..., input_R)`.
 
     Raises:
         TypeError: If `keep_dims` is not a bool.
         TypeError: If `input` is not a Tensor.
-        TypeError: If `axis` is not one of the following: int, tuple or list.
+        TypeError: If `axis` is not one of the following: int, tuple, list or Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -10053,25 +10088,28 @@ def sum(input, dim=None, keepdim=False, *, dtype=None):
     """
     Calculate sum of Tensor elements over a given dim.
 
+    Note:
+        The `dim` with tensor type is only used for compatibility with older versions and is not recommended.
+
     Args:
         input (Tensor): The input tensor.
-        dim (Union[None, int, tuple(int), list(int)]): Dimensions along which a sum is performed.
-            If None, sum all the elements of the input tensor.
+        dim (Union[None, int, tuple(int), list(int), Tensor]): Dimensions along which a sum is performed.
+            If ``None`` , sum all the elements of the input tensor.
             If the `dim` is a tuple or list of ints, a sum is performed on all the dimensions specified in the tuple.
-            Must be in the range :math:`[-input.ndim, input.ndim)` . Default: ``None``.
+            Must be in the range :math:`[-input.ndim, input.ndim)` . Default: ``None`` .
         keepdim (bool): Whether the output tensor has dim retained or not.
-            If True, keep these reduced dimensions and the length is 1.
-            If False, don't keep these dimensions. Default: ``False``.
+            If ``True`` , keep these reduced dimensions and the length is 1.
+            If ``False`` , don't keep these dimensions. Default: ``False`` .
 
     Keyword Args:
-        dtype (:class:`mindspore.dtype`, optional): The desired data type of returned Tensor. Default: ``None``.
+        dtype (:class:`mindspore.dtype`, optional): The desired data type of returned Tensor. Default: ``None`` .
 
     Returns:
-       A Tensor, sum of elements over a given dim in `input`.
+       A Tensor, sum of elements over a given `dim` in `input`.
 
     Raises:
         TypeError: If `input` is not a Tensor.
-        TypeError: If `dim` is not an int, tulpe(int), list(int) or None.
+        TypeError: If `dim` is not an int, tulpe(int), list(int), Tensor or None.
         ValueError: If `dim` is not in the range :math:`[-input.ndim, input.ndim)` .
         TypeError: If `keepdim` is not a bool.
 

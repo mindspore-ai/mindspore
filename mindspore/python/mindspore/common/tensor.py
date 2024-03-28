@@ -3262,36 +3262,36 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         Return sum of tensor elements over a given axis.
 
         Note:
-            Numpy arguments `out`, `where`, `casting`, `order`, `subok`, `signature`, and
-            `extobj` are not supported.
+            Numpy arguments `out`, `where`, `casting`, `order`, `subok`, `signature`, and `extobj` are not supported.
+            The `axis` with tensor type is only used for compatibility with older versions and is not recommended.
 
         Args:
-            axis (Union[None, int, tuple(int), list(int)]): Axis or axes along which a sum is performed.
+            axis (Union[None, int, tuple(int), list(int), Tensor]): Axis or axes along which a sum is performed.
                 Default: ``None`` .
-                If None, sum all the elements of the input tensor.
-                If the axis is negative, it counts from the last to the first axis.
-                If the axis is a tuple or list of ints, a sum is performed on all the axes specified in the tuple
-                or list instead of a single axis or all the axes as before.
+                If ``None`` , sum all the elements of the input tensor.
+                If the `axis` is negative, it counts from the last to the first `axis`.
+                If the `axis` is a tuple or list of ints, a sum is performed on all the axes specified in the tuple
+                or list instead of a single `axis` or all the axes as before.
             dtype (:class:`mindspore.dtype`, optional): defaults to ``None`` . Overrides the dtype of the
                 output Tensor.
             keepdims (bool): If this is set to ``True`` , the axes which are reduced are left in the result as
                 dimensions with size one. With this option, the result will broadcast correctly against the input
-                array. If the default value is passed, then keepdims will not be passed through to the sum method
+                array. If the default value is passed, then `keepdims` will not be passed through to the sum method
                 of sub-classes of ndarray, however any non-default value will be. If the sub-class method does not
-                implement keepdims any exceptions will be raised. Default: ``False`` .
+                implement `keepdims` any exceptions will be raised. Default: ``False`` .
             initial (scalar): Starting value for the sum. Default: ``None`` .
 
         Returns:
-            Tensor. A tensor with the same shape as input, with the specified axis removed.
-            If the input tensor is a 0-d array, or if the axis is ``None`` , a scalar is returned.
+            Tensor. A tensor with the same shape as input, with the specified `axis` removed.
+            If the input tensor is a 0-d array, or if the `axis` is ``None`` , a scalar is returned.
 
         Raises:
-            TypeError: If input is not array_like, or `axis` is not int, tuple of ints or list of ints,
+            TypeError: If input is not array_like, or `axis` is not int, tuple of ints, list of ints or Tensor,
                 or `keepdims` is not integer, or `initial` is not scalar.
-            ValueError: If any axis is out of range or duplicate axes exist.
+            ValueError: If any `axis` is out of range or duplicate axes exist.
 
         See also:
-            - :func:`mindspore.Tensor.cumsum`: Return the cumulative sum of the elements along a given axis.
+            - :func:`mindspore.Tensor.cumsum`: Return the cumulative sum of the elements along a given `axis`.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
