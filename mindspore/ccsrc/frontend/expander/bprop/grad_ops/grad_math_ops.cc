@@ -3196,5 +3196,118 @@ REG_BPROP_BUILDER("SumExt").SetUnusedInputs({i0, i4}).SetBody(BODYFUNC(ib) {
 
   return {ib->Cast(dx, ib->GetDtype(input)), ib->OutZeros(axis), ib->OutZeros(keep_dims), ib->OutZeros(dtype)};
 });
+
+DEF_PURE_SHAPE_CALC(g_prod_ext)
+  .SetCalc([](const ShapeArray &inputs) -> ShapeArray {
+    auto input_shape = inputs.at(0);
+    auto axis = inputs.at(1);
+    if (axis.empty()) {
+      axis.resize(input_shape.size());
+      std::iota(axis.begin(), axis.end(), 0LL);
+    }
+    auto output_shape_kept_dims = ReduceShape(input_shape, axis);
+    auto tile_scaling = TupleDiv(input_shape, output_shape_kept_dims);
+    auto [pack_shape, perm] = SplitShapeIndex(input_shape, axis);
+    return {output_shape_kept_dims, tile_scaling, pack_shape, perm, InvertPermutation(perm)};
+  })
+  .SetInfer([](const ShapeArray &inputs, const HashSet<size_t> &unknown_inputs) -> std::vector<int64_t> {
+    auto input_shape = inputs.at(0);
+    if (IsDynamicRank(input_shape) || !unknown_inputs.empty()) {
+      return {-1, -1, -1, -1, -1};
+    }
+    auto size = SizeToLong(inputs.at(0).size());
+    return {size, size, 2, size, size};
+  });
+
+REG_BPROP_BUILDER("ProdExt").SetBody(BODYFUNC(ib) {
+  auto input = ib->GetInput(kIndex0);
+  auto input_dtype = ib->GetDtype(input);
+  auto input_dtype_id = ib->GetDtypeId(input);
+  if (input_dtype_id == kNumberTypeComplex64 || input_dtype_id == kNumberTypeComplex128) {
+    MS_EXCEPTION(TypeError) << "For 'ProdExt', gradient not support for complex type currently.";
+  }
+  auto axis = ib->GetInput(kIndex1);
+  auto keep_dims = ib->GetInput(kIndex2);
+  auto dtype = ib->GetInput(kIndex3);
+  auto out = ib->GetInput(kIndex4);
+  auto out_dtype = ib->GetDtype(out);
+  auto dout = ib->GetInput(kIndex5);
+  auto dx = input;
+  if (ib->GetRank(input) == 0) {
+    return {dout, ib->OutZeros(axis), ib->OutZeros(keep_dims), ib->OutZeros(dtype)};
+  }
+
+  if (axis->abstract()->BuildType()->isa<TypeNone>()) {
+    auto zero_input = ib->ZerosLike(input);
+    auto zero_mask = ib->Cast(ib->Equal(input, zero_input), kInt64);
+    auto zero_num = ib->Emit("SumExt", {zero_mask, ib->EmitValue(kNone), ib->Value(false), ib->EmitValue(kNone)});
+    auto has_no_zero = ib->Equal(zero_num, ib->Tensor(static_cast<int64_t>(0)));
+    auto has_one_more_zero = ib->Greater(zero_num, ib->Tensor(static_cast<int64_t>(1)));
+    auto has_one_zero = ib->Equal(zero_num, ib->Tensor(static_cast<int64_t>(1)));
+
+    auto all_false_branch = [&dx](const Emitter *e) -> NodePtrList { return {dx}; };
+    auto no_zero_true_branch = [&](Emitter *e) -> NodePtrList {
+      return {e->Cast(e->Mul(dout, e->Div(out, e->Cast(input, out_dtype))), input_dtype)};
+    };
+    dx = ib->Conditional(has_no_zero, no_zero_true_branch, all_false_branch);
+
+    auto one_more_zero_true_branch = [&input](Emitter *e) -> NodePtrList { return {e->ZerosLike(input)}; };
+    dx = ib->Conditional(has_one_more_zero, one_more_zero_true_branch, all_false_branch);
+
+    auto one_zero_true_branch = [&](Emitter *e) -> NodePtrList {
+      auto res = e->ShapeCalc(g_prod_ext, {input, e->Value<std::vector<int64_t>>({})}, {1});
+
+      auto grad = e->Tile(e->Reshape(dout, res[kIndex0]), res[kIndex1]);
+      auto permuted = e->Transpose(input, res[kIndex3]);
+      auto permuted_shape = e->Shape(permuted);
+      auto reshaped = e->Reshape(permuted, res[kIndex2]);
+      auto left = e->CumProd(reshaped, e->Value<int64_t>(0), true, false);
+      auto right = e->CumProd(reshaped, e->Value<int64_t>(0), true, true);
+      auto y = e->Reshape(e->Mul(left, right), permuted_shape);
+      auto out = e->Mul(e->Transpose(y, res[kIndex4]), grad);
+      return {e->Cast(e->Reshape(out, e->Shape(input)), input_dtype)};
+    };
+    dx = ib->Conditional(has_one_zero, one_zero_true_branch, all_false_branch);
+  } else {
+    auto res = ib->ShapeCalc(g_prod_ext, {input, ib->MakeTuple({axis})}, {1});
+    auto keep_dims_opt = mindspore::ops::GetScalarValue<bool>(keep_dims->BuildValue());
+    if (!keep_dims_opt.has_value()) {
+      auto true_branch = [&out, &dout](Emitter *e) -> NodePtrList { return {out, dout}; };
+      auto false_branch = [&out, &dout, &res](Emitter *e) -> NodePtrList {
+        return {e->Reshape(out, res[kIndex0]), e->Reshape(dout, res[kIndex0])};
+      };
+      auto keep_dims_true = ib->Equal(keep_dims, ib->Value<bool>(true));
+      auto cond_out = ib->Conditional(keep_dims_true, true_branch, false_branch);
+      out = ib->TupleGetItem(cond_out, kIndex0);
+      dout = ib->TupleGetItem(cond_out, kIndex1);
+    } else {
+      out = keep_dims_opt.value() ? out : ib->Reshape(out, res[kIndex0]);
+      dout = keep_dims_opt.value() ? dout : ib->Reshape(dout, res[kIndex0]);
+    }
+
+    auto zero_input = ib->ZerosLike(input);
+    auto zero_mask = ib->Cast(ib->Equal(input, zero_input), kInt64);
+    auto zero_num = ib->Emit("SumExt", {zero_mask, ib->EmitValue(kNone), ib->Value(false), ib->EmitValue(kNone)});
+    auto has_no_zero = ib->Equal(zero_num, ib->Tensor(static_cast<int64_t>(0)));
+
+    auto no_zero_true_branch = [&](Emitter *e) -> NodePtrList {
+      return {e->Cast(e->Mul(dout, e->Div(out, e->Cast(input, out_dtype))), input_dtype)};
+    };
+    auto no_zero_false_branch = [&](Emitter *e) -> NodePtrList {
+      auto grad = e->Tile(dout, res[kIndex1]);
+      auto permuted = e->Transpose(input, res[kIndex3]);
+      auto permuted_shape = e->Shape(permuted);
+      auto reshaped = e->Reshape(permuted, res[kIndex2]);
+      auto left = e->CumProd(reshaped, e->Value<int64_t>(0), true, false);
+      auto right = e->CumProd(reshaped, e->Value<int64_t>(0), true, true);
+      auto y = e->Reshape(e->Mul(left, right), permuted_shape);
+      auto out = e->Mul(e->Transpose(y, res[kIndex4]), grad);
+      return {e->Cast(e->Reshape(out, e->Shape(input)), input_dtype)};
+    };
+    dx = ib->Conditional(has_no_zero, no_zero_true_branch, no_zero_false_branch);
+  }
+
+  return {dx, ib->OutZeros(axis), ib->OutZeros(keep_dims), ib->OutZeros(dtype)};
+});
 REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop

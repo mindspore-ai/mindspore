@@ -1888,11 +1888,11 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         """
         return tensor_operator_registry.get("reverse_sequence")(self, seq_lengths, seq_dim, batch_dim)
 
-    def prod(self, axis=None, keep_dims=False):
+    def prod(self, axis=None, keep_dims=False, dtype=None):
         """
         For details, please refer to :func:`mindspore.ops.prod`.
         """
-        return tensor_operator_registry.get('prod')(self, axis, keep_dims)
+        return tensor_operator_registry.get('prod')(self, axis, keep_dims, dtype)
 
     def select(self, condition, y):
         r"""

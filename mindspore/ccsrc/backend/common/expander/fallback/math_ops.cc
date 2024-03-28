@@ -267,6 +267,42 @@ REG_FALLBACK_BUILDER("SumExt").SetBody(BODYFUNC(ib) {
   return {out};
 });
 
+REG_FALLBACK_BUILDER("ProdExt").SetBody(BODYFUNC(ib) {
+  auto input = ib->GetInput(kIndex0);
+  auto axis = ib->GetInput(kIndex1);
+  auto keep_dims = ib->GetInput(kIndex2);
+  auto dtype = ib->GetInput(kIndex3);
+
+  MS_LOG(DEBUG) << "Fallback Expander 'ProdExt' start";
+
+  if (dtype->abstract()->BuildType()->isa<TypeNone>()) {
+    auto input_type = input->dtype()->type_id();
+    if (kIntergralSet.find(input_type) != kIntergralSet.end()) {
+      input = ib->Cast(input, kInt64);
+    }
+  } else {
+    auto dtype_opt = ops::GetScalarValue<int64_t>(dtype->BuildValue());
+    if (!dtype_opt.has_value()) {
+      MS_LOG(EXCEPTION) << "For 'ProdExt', dtype must have valid value.";
+    }
+    input = ib->Cast(input, TypeIdToType(static_cast<TypeId>(dtype_opt.value())));
+  }
+
+  const auto axis_abs = axis->abstract();
+  if (axis_abs->BuildType()->isa<TypeNone>()) {
+    axis = ib->Value<std::vector<int64_t>>({});
+  } else if (axis_abs->isa<abstract::AbstractScalar>()) {
+    axis = ib->MakeTuple({axis});
+  } else if (axis_abs->isa<abstract::AbstractTensor>()) {
+    axis = ib->TensorToTuple({axis});
+  } else {
+    MS_LOG(EXCEPTION) << "For 'ProdExt', axis got an unexpected type: " << axis->abstract();
+  }
+
+  auto out = ib->Emit("ReduceProd", {input, axis, keep_dims});
+  return {out};
+});
+
 NodePtr BuilderForMaxorMin(FallbackIRBuilder *ib, const std::string &emit_op) {
   auto input = ib->GetInput(kIndex0);
   // empty axis: all dimensions will be reduced
