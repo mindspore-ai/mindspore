@@ -2,23 +2,26 @@ sum_ext:
     description: |  
         Calculate sum of Tensor elements over a given dim.
 
+        Note:
+            The `dim` with tensor type is only used for compatibility with older versions and is not recommended.
+
         Args:
             input (Tensor): The input tensor.
-            dim (Union[None, int, tuple(int), list(int)]): Dimensions along which a sum is performed.
-                If ``None``, sum all the elements of the input tensor.
+            dim (Union[None, int, tuple(int), list(int), Tensor]): Dimensions along which a sum is performed.
+                If ``None`` , sum all the elements of the input tensor.
                 If the `dim` is a tuple or list of ints, a sum is performed on all the dimensions specified in the tuple.
-                Must be in the range :math:`[-input.ndim, input.ndim)` . Default: ``None``.
-            keepdim (bool): Whether the output tensor has dim retained or not.
-                If ``True``, keep these reduced dimensions and the length is 1.
-                If ``False``, don't keep these dimensions. Default: ``False``.
-            dtype (:class:`mindspore.dtype`): The desired data type of returned Tensor. Default: ``None``.
+                Must be in the range :math:`[-input.ndim, input.ndim)` . Default: ``None`` .
+            keepdim (bool): Whether the output tensor has `dim` retained or not.
+                If ``True`` , keep these reduced dimensions and the length is 1.
+                If ``False`` , don't keep these dimensions. Default: ``False`` .
+            dtype (:class:`mindspore.dtype`): The desired data type of returned Tensor. Default: ``None`` .
 
         Returns:
-            A Tensor, sum of elements over a given dim in `input`.
+            A Tensor, sum of elements over a given `dim` in `input`.
 
         Raises:
             TypeError: If `input` is not a Tensor.
-            TypeError: If `dim` is not an int, tulpe(int), list(int) or None.
+            TypeError: If `dim` is not an int, tulpe(int), list(int), Tensor or None.
             ValueError: If `dim` is not in the range :math:`[-input.ndim, input.ndim)` .
             TypeError: If `keepdim` is not a bool.
 
