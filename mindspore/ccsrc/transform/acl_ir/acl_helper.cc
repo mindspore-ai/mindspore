@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2023-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 #include <set>
 #include <map>
 #include <unordered_map>
+#include <unordered_set>
 #include <string>
 #include "include/api/data_type.h"
 #include "include/backend/anf_runtime_algorithm.h"
@@ -136,13 +137,13 @@ void SetParameterFormat(const AnfNodePtr &node, const std::string &format, std::
 
 bool NeedNDInput(const CNodePtr &cnode, const AnfNodePtr &input_node, const std::string &new_format,
                  std::string *input_format, bool *input_special_flag) {
-  if (AclHelper::IsNopNode(cnode) && !AclHelper::CheckDefaultSupportFormat(*input_format)) {
-    *input_special_flag = true;
+  auto input_cnode = input_node->cast<CNodePtr>();
+  if (input_cnode != nullptr && common::AnfAlgo::HasNodeAttr(kAttrAclSpecialFormat, input_cnode)) {
     return true;
   }
 
-  auto input_cnode = input_node->cast<CNodePtr>();
-  if (input_cnode != nullptr && common::AnfAlgo::HasNodeAttr(kAttrAclSpecialFormat, input_cnode)) {
+  if (AclHelper::IsNopNode(cnode) && !AclHelper::CheckDefaultSupportFormat(*input_format)) {
+    *input_special_flag = true;
     return true;
   }
 
@@ -183,7 +184,7 @@ void GetInputBuildInfo(const AnfNodePtr &node, const size_t input_num, const Acl
                        const GeAdapterInfoPtr &ge_info, std::vector<std::string> *input_formats,
                        std::vector<std::string> *input_reshape_types) {
   auto input_info = acl_info.inputs();
-  static bool default_format = device::ascend::GetFormatMode(node) == "1";
+  bool default_format = device::ascend::GetFormatMode(node) == "1";
   std::vector<size_t> special_inputs;
   for (size_t i = 0; i < input_num; ++i) {
     auto kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(node, i);
@@ -228,7 +229,7 @@ void GetOutputBuildInfo(const AnfNodePtr &node, const size_t output_num, const A
                         const std::vector<std::string> &input_formats, std::vector<std::string> *output_formats) {
   // First use output func.
   auto input_num = common::AnfAlgo::GetInputTensorNum(node);
-  static bool default_format = device::ascend::GetFormatMode(node) == "1";
+  bool default_format = device::ascend::GetFormatMode(node) == "1";
   if (!default_format && acl_info.output_selector() != nullptr) {
     auto data_type = common::AnfAlgo::GetOutputInferDataType(node, 0);
     std::vector<ShapeVector> input_shapes;
@@ -257,8 +258,11 @@ void GetOutputBuildInfo(const AnfNodePtr &node, const size_t output_num, const A
   }
 }
 
-void SetOutputIdentityFlag(const AnfNodePtr &node, const std::vector<std::string> &output_formats) {
-  if (device::ascend::GetFormatMode(node) == "1" && AclHelper::NeedIdentityFlag(output_formats)) {
+void SetOutputIdentityFlag(const CNodePtr &node, const std::vector<std::string> &output_formats) {
+  std::unordered_set<std::string> matmul_ops = {kMatMulOpName, kMatMulV2OpName, kBatchMatMulOpName};
+  if ((device::ascend::GetFormatMode(node) == "1" ||
+       matmul_ops.find(AnfUtils::GetCNodeName(node)) != matmul_ops.end()) &&
+      AclHelper::NeedIdentityFlag(output_formats)) {
     common::AnfAlgo::SetNodeAttr(kAttrAclSpecialFormat, MakeValue(true), node);
   }
 }
@@ -532,7 +536,7 @@ void AclHelper::GetValidKernelBuildInfo(const AnfNodePtr &node, std::vector<std:
       } else {
         output_formats->assign(input_formats->begin(), input_formats->end());
       }
-      SetOutputIdentityFlag(node, *output_formats);
+      SetOutputIdentityFlag(cnode, *output_formats);
     }
 
     if (!special_inputs.empty()) {
@@ -545,7 +549,7 @@ void AclHelper::GetValidKernelBuildInfo(const AnfNodePtr &node, std::vector<std:
   auto acl_info = AclAdapterManager::GetInstance().GetOpInfo(op_type);
   GetInputBuildInfo(node, input_num, acl_info, info, input_formats, input_reshape_types);
   GetOutputBuildInfo(node, output_num, acl_info, *input_formats, output_formats);
-  SetOutputIdentityFlag(node, *output_formats);
+  SetOutputIdentityFlag(cnode, *output_formats);
   RefreshRefFormat(info->GetRefMappingInfo(), *input_formats, output_formats);
 }
 
