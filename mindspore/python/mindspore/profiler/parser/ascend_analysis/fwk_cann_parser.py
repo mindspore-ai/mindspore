@@ -65,9 +65,9 @@ class FwkCANNParser:
         for tid in op_data_by_tid:
             op_idx = 0
             op_data_sorted = sorted(op_data_by_tid[tid], key=lambda x: x.ts)
-            acl_sorted = sorted(acl_to_npu_by_tid[tid].items(), key=lambda x: x[0])
+            acl_sorted = sorted(acl_to_npu_by_tid.get(tid, {}).items(), key=lambda x: x[0])
             for ts, cann_event_list in acl_sorted:
-                op_idx, status = self.__find_launch_op(ts, op_data_sorted, op_idx)
+                op_idx, status = FwkCANNParser.__find_launch_op(ts, op_data_sorted, op_idx)
                 if not status:
                     continue
                 for cann_event in cann_event_list:
@@ -78,10 +78,10 @@ class FwkCANNParser:
                     trace_data += flow_list
         return trace_data
 
-    def __find_launch_op(
-            self, ts: Decimal, op_list: List[MindSporeOpEvent],
-            left: Optional[int] = None, right: Optional[int] = None
-        ) -> Tuple[int, bool]:
+    @staticmethod
+    def __find_launch_op(ts: Decimal, op_list: List[MindSporeOpEvent],
+                         left: Optional[int] = None, right: Optional[int] = None
+                         ) -> Tuple[int, bool]:
         """
         Searching the op_list in [left, right) range and find the operator
         whose start time is larger than ts and end time is less than ts.
