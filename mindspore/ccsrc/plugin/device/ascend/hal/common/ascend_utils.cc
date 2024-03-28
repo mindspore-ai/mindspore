@@ -190,7 +190,7 @@ std::string GetFormatMode(const AnfNodePtr &node) {
     MS_EXCEPTION_IF_NULL(ms_context);
     if (ms_context->ascend_soc_version() == "ascend910") {
       std::string op_type = node != nullptr && node->isa<CNode>() ? AnfUtils::GetCNodeName(node) : "";
-      std::unordered_set<std::string> matmul_ops = {kMatMulOpName, kMatMulV2OpName, kBatchMatMulOpName};
+      static std::unordered_set<std::string> matmul_ops = {kMatMulOpName, kMatMulV2OpName, kBatchMatMulOpName};
       if (ms_context->get_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK) || matmul_ops.find(op_type) != matmul_ops.end()) {
         format_mode = "0";
       }
