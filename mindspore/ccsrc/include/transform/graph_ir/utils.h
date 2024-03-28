@@ -78,7 +78,8 @@ FuncGraphPtr GetAnfGraph(uint32_t graph_id);
 
 // convert
 BACKEND_EXPORT DfGraphConvertorPtr NewConverter(const FuncGraphPtr &graph, const std::string &phase_prefix = "",
-                                                RefModeFlag ref_mode_type = RefModeFlag::kRefModeEnv);
+                                                RefModeFlag ref_mode_type = RefModeFlag::kRefModeEnv,
+                                                bool offline_convert = false);
 
 BACKEND_EXPORT void SetTraining(const DfGraphConvertorPtr &converter, bool training);
 BACKEND_EXPORT void SetExportAir(const DfGraphConvertorPtr &converter, bool export_air);

@@ -655,6 +655,9 @@ bool DfGraphConvertor::NodeInputKeepUpdate(const FuncGraphManagerPtr &manager, c
     MS_LOG(ERROR) << "Input argument manager or node is nullptr";
     return false;
   }
+  if (offline_convert_) {
+    return false;
+  }
   if (std::find(extra_variables_names_.begin(), extra_variables_names_.end(), node->fullname_with_scope()) !=
       extra_variables_names_.end()) {
     return true;
