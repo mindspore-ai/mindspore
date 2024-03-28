@@ -316,9 +316,27 @@ void PyBoostUtils::LaunchKernel(const PrimitivePtr &primitive, const DeviceConte
   const auto &workspace_device_address =
     PyBoostUtils::CreateWorkSpaceDeviceAddress(kernel_mod, device_context, primitive->name());
   const auto &workspace_kernel_tensors = PyBoostUtils::GetKernelTensorFromAddress(workspace_device_address);
-  // Do kernel launch
-  if (!kernel_mod->Launch(input_address_info.first, workspace_kernel_tensors, output_address_info.first, stream_ptr)) {
-    MS_LOG(EXCEPTION) << "Launch kernel failed, name: " << real_name;
+
+  const auto &device_name = device_context->device_context_key().device_name_;
+  if (!PyboostKernelExtraFuncFactory::GetInstance().IsEnableProfiler(device_name)) {
+    if (!kernel_mod->Launch(input_address_info.first, workspace_kernel_tensors, output_address_info.first,
+                            stream_ptr)) {
+      MS_LOG(EXCEPTION) << "Launch kernel failed, name: " << real_name;
+    }
+  } else {
+    const auto &input_kts = input_address_info.first;
+    std::vector<BaseShapePtr> input_shapes;
+    for (auto kt : input_kts) {
+      MS_EXCEPTION_IF_NULL(kt);
+      input_shapes.push_back(kt->GetShape());
+    }
+    PyboostKernelExtraFuncFactory::GetInstance().LaunchKernelWithProfiler(
+      device_name, device_context, real_name, {}, [&]() {
+        if (!kernel_mod->Launch(input_address_info.first, workspace_kernel_tensors, output_address_info.first,
+                                stream_ptr)) {
+          MS_LOG(EXCEPTION) << "Launch kernel failed, name: " << real_name;
+        }
+      });
   }
   MS_LOG(DEBUG) << real_name << " Launch end";
 }

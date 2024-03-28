@@ -216,6 +216,24 @@ class BACKEND_EXPORT PyboostKernelExtraFuncFactory {
     return iter->second->IsKernelModRegistered(op_name);
   }
 
+  bool IsEnableProfiler(const std::string &device_name) {
+    auto iter = kernel_func_map_.find(device_name);
+    if (iter == kernel_func_map_.end()) {
+      return false;
+    }
+    return iter->second->IsEnableProfiler();
+  }
+
+  void LaunchKernelWithProfiler(const std::string &device_name, const device::DeviceContext *device_context,
+                                const std::string &op_name, const std::vector<BaseShapePtr> &base_shape,
+                                const std::function<void()> &func) {
+    auto iter = kernel_func_map_.find(device_name);
+    if (iter == kernel_func_map_.end()) {
+      return;
+    }
+    iter->second->LaunchKernelWithProfiler(op_name, device_context, base_shape, func);
+  }
+
  private:
   mindspore::HashMap<std::string, PyboostKernelExtraFuncPtr> kernel_func_map_;
 };
