@@ -192,8 +192,12 @@ REG_FALLBACK_BUILDER("MatMulExt").SetBody(BODYFUNC(ib) {
       ShapeVector shape_cur2(shape2_aligned.begin(), shape2_aligned.end() - 2);
       const ShapeVector &broadcast_shape1 = ops::GetMatMulExtBroadcastShape(shape_backbone, shape1_orig);
       const ShapeVector &broadcast_shape2 = ops::GetMatMulExtBroadcastShape(shape_backbone, shape2_orig);
-      input = ib->Emit("BroadcastTo", {input, ib->Value(broadcast_shape1)});
-      other = ib->Emit("BroadcastTo", {other, ib->Value(broadcast_shape2)});
+      if (input->shape() != broadcast_shape1) {
+        input = ib->Emit("BroadcastTo", {input, ib->Value(broadcast_shape1)});
+      }
+      if (other->shape() != broadcast_shape2) {
+        other = ib->Emit("BroadcastTo", {other, ib->Value(broadcast_shape2)});
+      }
       input = ib->Reshape(input, To3D(input->shape()));
       other = ib->Reshape(other, To3D(other->shape()));
       ret = ib->BatchMatMul(input, other, false, transpose_b);
