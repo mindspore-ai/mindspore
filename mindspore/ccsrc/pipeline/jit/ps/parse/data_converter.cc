@@ -833,38 +833,12 @@ bool ConvertStubData(const py::object &obj, ValuePtr *data, bool use_signature, 
   return ConvertData(obj, data, use_signature, dtype, forbid_reuse);
 }
 
-// Get all the trainable parameters of the reusable cell.
-void GenerateTopGraphParams(const FuncGraphPtr &fg, std::vector<AnfNodePtr> *params) {
-  MS_LOG(DEBUG) << "enter GenerateTopGraphParams: " << fg->ToString();
-  auto obj_value = fg->python_obj();
-  MS_EXCEPTION_IF_NULL(obj_value);
-  auto wrapper = dyn_cast_ptr<parse::PyObjectWrapper>(obj_value);
-  MS_EXCEPTION_IF_NULL(wrapper);
-  auto obj = wrapper->obj();
-  auto trainable_parameters = py::getattr(obj, "parameters_and_names", py::none())();
-  auto top_func_graph = Parser::GetTopFuncGraph();
-  for (auto tr : trainable_parameters) {
-    auto item = py::cast<py::tuple>(tr);
-    auto value = item[1];
-    auto par_name = item[0].cast<std::string>();
-    auto parameter_name = py::getattr(value, "name", py::str(par_name)).cast<std::string>();
-    auto exist_fv = top_func_graph->GetParameterByName(parameter_name);
-    if (exist_fv) {
-      params->push_back(exist_fv);
-      MS_LOG(DEBUG) << "exist: " << parameter_name;
-    } else {
-      auto fv = top_func_graph->AddFvParameter(parameter_name, GetParameterValue(value));
-      MS_LOG(DEBUG) << "New: " << parameter_name;
-      params->push_back(fv);
-    }
-  }
-  MS_LOG(DEBUG) << "finish GenerateTopGraphParams: " << fg->ToString();
-}
-
-FuncGraphPtr MakeReusingGraph(FuncGraphPtr base_graph) {
+FuncGraphPtr MakeReusingGraph(const FuncGraphPtr &base_graph) {
   static int order = 0;
   base_graph->set_attr(FUNC_GRAPH_FLAG_CELL_LAZY_INLINE_ORDER, MakeValue(++order));
   base_graph->debug_info()->set_name("CR_" + base_graph->debug_info()->name());
+  MS_LOG(INFO) << "Lazy inline reusing graph: " << base_graph->ToString()
+               << ", args: " << base_graph->parameters().size() << ", parse order: " << order;
   return base_graph;
 }
 
@@ -881,23 +855,14 @@ FuncGraphPtr MakeCellFuncGraph(const py::object &obj, const std::string &obj_id,
   func_graph->set_flag(FUNC_GRAPH_FLAG_PROXY_GRAPH, true);
   std::vector<AnfNodePtr> new_node_inputs;
   new_node_inputs.push_back(NewValueNode(reusing_graph));
-  std::vector<AnfNodePtr> fvs;
-  GenerateTopGraphParams(func_graph, &fvs);
-  (void)new_node_inputs.insert(new_node_inputs.end(), fvs.rbegin(), fvs.rend());
-  auto params = reusing_graph->parameters();
-  auto pars_size = params.size();
-  for (size_t i = fvs.size(); i < pars_size; ++i) {
-    const auto &origin_param = params[i];
+  for (const auto &origin_param : reusing_graph->parameters()) {
     auto param = func_graph->add_parameter();
     param->set_debug_info(origin_param->debug_info());
-    std::string name = origin_param->debug_info()->name();
-    param->set_name(name);
     new_node_inputs.push_back(param);
   }
-
   AnfNodePtr out = func_graph->NewCNodeInOrder(new_node_inputs);
   func_graph->set_output(out);
-  MS_LOG(DEBUG) << "Cell: " << func_graph->ToString() << ", args: " << func_graph->parameters().size();
+  MS_LOG(INFO) << "Lazy inline cell: " << func_graph->ToString() << ", args: " << func_graph->parameters().size();
   return func_graph;
 }
 
@@ -922,17 +887,6 @@ FuncGraphPtr ProcessLazyInline(const py::object &obj, const ValuePtrList &args_v
     PyObjectWrapperPtr python_obj = std::make_shared<PyObjectWrapper>(obj, "graph python obj");
     base_graph->set_python_obj(python_obj);
     MS_LOG(DEBUG) << "Parse reusing function: " << reusing_graph->ToString();
-
-    std::vector<AnfNodePtr> fvs;
-    MS_LOG(DEBUG) << "Get Params: " << reusing_graph->ToString();
-    GenerateTopGraphParams(base_graph, &fvs);
-    for (auto &node : fvs) {
-      auto param = base_graph->InsertFrontParameter();
-      std::string name = "CR_" + node->debug_info()->name();
-      param->debug_info()->set_name(name);
-      param->set_name(name);
-    }
-    MS_LOG(DEBUG) << "Get Params: " << reusing_graph->ToString() << fvs.size();
     reusing_graph = MakeReusingGraph(base_graph);
     data_converter::CacheObjectValue(obj_key, reusing_graph);
   }

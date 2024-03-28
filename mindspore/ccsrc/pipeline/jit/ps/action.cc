@@ -532,6 +532,47 @@ bool CombineLikeGraphs(const ResourcePtr &resource) {
 }
 
 namespace {
+// Get all the trainable parameters of the reusable cell.
+void GenerateTopGraphParams(const FuncGraphPtr &fg, std::vector<AnfNodePtr> *params,
+                            const FuncGraphPtr &top_func_graph) {
+  MS_LOG(DEBUG) << "enter GenerateTopGraphParams: " << fg->ToString();
+  auto obj_value = fg->python_obj();
+  MS_EXCEPTION_IF_NULL(obj_value);
+  auto wrapper = dyn_cast_ptr<parse::PyObjectWrapper>(obj_value);
+  MS_EXCEPTION_IF_NULL(wrapper);
+  auto obj = wrapper->obj();
+  auto trainable_parameters = py::getattr(obj, "parameters_and_names", py::none())();
+  for (auto tr : trainable_parameters) {
+    auto item = py::cast<py::tuple>(tr);
+    auto value = item[1];
+    auto par_name = item[0].cast<std::string>();
+    auto parameter_name = py::getattr(value, "name", py::str(par_name)).cast<std::string>();
+    auto exist_fv = top_func_graph->GetParameterByName(parameter_name);
+    if (exist_fv) {
+      params->push_back(exist_fv);
+      MS_LOG(DEBUG) << "exist: " << parameter_name;
+    } else {
+      auto fv = top_func_graph->AddFvParameter(parameter_name, parse::GetParameterValue(value));
+      MS_LOG(DEBUG) << "New: " << parameter_name;
+      params->push_back(fv);
+    }
+  }
+  MS_LOG(DEBUG) << "finish GenerateTopGraphParams: " << fg->ToString();
+}
+
+void UpdateCellFuncGraph(const FuncGraphPtr &func_graph, const FuncGraphPtr &reusing_graph,
+                         const FuncGraphPtr &top_func_graph) {
+  std::vector<AnfNodePtr> new_node_inputs;
+  new_node_inputs.push_back(NewValueNode(reusing_graph));
+  std::vector<AnfNodePtr> fvs;
+  GenerateTopGraphParams(func_graph, &fvs, top_func_graph);
+  (void)new_node_inputs.insert(new_node_inputs.end(), fvs.rbegin(), fvs.rend());
+  auto params = func_graph->parameters();
+  (void)new_node_inputs.insert(new_node_inputs.end(), params.begin(), params.end());
+  AnfNodePtr out = func_graph->NewCNodeInOrder(new_node_inputs);
+  out->set_abstract(func_graph->output()->abstract());
+  func_graph->set_output(out);
+}
 
 void GeneralizeReusingGraph(const FuncGraphPtr &func_graph, const FuncGraphPtr &top_func_graph) {
   FuncGraphPtr fg = func_graph;
@@ -545,18 +586,15 @@ void GeneralizeReusingGraph(const FuncGraphPtr &func_graph, const FuncGraphPtr &
   auto reusing_graph = cloned_fg_iter->second;
   auto &cloned_nodes = cloner.cloned_nodes();
   auto manager = fg->manager();
-  const int pre_reusing_cell_name_len = 3;
-  for (auto &node : reusing_graph->parameters()) {
-    Parameter *param = dynamic_cast<Parameter *>(node.get());
-    MS_LOG(DEBUG) << param->ToString() << " name: " << param->name() << " debug name: " << param->debug_info()->name();
-    if (param->name().find("CR_") == std::string::npos) {
-      continue;
-    }
-    auto fv = top_func_graph->GetParameterByName(param->name().substr(pre_reusing_cell_name_len));
-    if (fv == nullptr) {
-      MS_LOG(WARNING) << reusing_graph->ToString() << " has not free variable: " << param->ToString();
-      continue;
-    }
+  std::vector<AnfNodePtr> fv_params;
+  GenerateTopGraphParams(fg, &fv_params, top_func_graph);
+  for (auto &fv : fv_params) {
+    auto param = reusing_graph->InsertFrontParameter();
+    const auto &top_param = fv->cast<ParameterPtr>();
+    std::string name = "CR_" + top_param->name();
+    param->debug_info()->set_name(name);
+    param->set_name(name);
+    param->set_abstract(top_param->abstract());
     auto &node_users = manager->node_users()[fv];
     for (auto &n : node_users) {
       auto iter = cloned_nodes.find(n.first);
@@ -565,22 +603,27 @@ void GeneralizeReusingGraph(const FuncGraphPtr &func_graph, const FuncGraphPtr &
       }
       auto repl_n = iter->second->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(repl_n);
-      repl_n->set_input(IntToSize(n.second), node);
+      repl_n->set_input(IntToSize(n.second), param);
     }
   }
+
   if (func_graph->has_attr(FUNC_GRAPH_FLAG_NO_INLINE)) {
     reusing_graph->set_flag(FUNC_GRAPH_FLAG_NO_INLINE, func_graph->has_flag(FUNC_GRAPH_FLAG_NO_INLINE));
   } else {
     reusing_graph->set_flag(FUNC_GRAPH_FLAG_NO_INLINE, true);
     reusing_graph->set_flag(FUNC_GRAPH_FLAG_CELL_REUSE, true);
   }
-  auto cnodes_index = func_graph->func_graph_cnodes_index();
-  auto tr = manager->Transact();
+
+  // Update call nodes
+  auto cnodes_index = fg->func_graph_cnodes_index();
   for (auto &cnode_index : cnodes_index) {
     MS_EXCEPTION_IF_NULL(cnode_index.first);
-    tr.SetEdge(cnode_index.first->first, cnode_index.first->second, NewValueNode(reusing_graph));
+    auto old_cnode = cnode_index.first->first->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(old_cnode);
+    auto cell_func_graph = old_cnode->func_graph();
+    MS_EXCEPTION_IF_NULL(cell_func_graph);
+    UpdateCellFuncGraph(cell_func_graph, reusing_graph, top_func_graph);
   }
-  tr.Commit();
 }
 
 void SetCalledSubGraphMixedPrecisionFlag(const FuncGraphPtr &func_graph) {
