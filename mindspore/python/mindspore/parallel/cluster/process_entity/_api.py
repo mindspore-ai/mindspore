@@ -127,9 +127,9 @@ class _ProcessManager:
 
         # Create log directory and set the permission if not exists.
         if self.log_dir and not os.path.exists(self.log_dir):
+            permissions = os.R_OK | os.W_OK | os.X_OK
+            origin_mask = os.umask(permissions << 3 | permissions)
             try:
-                permissions = os.R_OK | os.W_OK | os.X_OK
-                origin_mask = os.umask(permissions << 3 | permissions)
                 mode = permissions << 6
                 os.makedirs(self.log_dir, mode=mode, exist_ok=True)
             finally:
@@ -304,8 +304,10 @@ class _ProcessManager:
             time_out_node_log = re.findall(r"node: .* is timed out", scheduler_log)
 
             # Filter out node ids of the processes which exit abnormally.
-            node_id_splitter = lambda l: re.split(" is timed out", re.split("node: ", l)[1])[0]
-            time_out_node_ids = list(node_id_splitter(l) for l in time_out_node_log)
+            def node_id_splitter(id):
+                return re.split(" is timed out", re.split("node: ", id)[1])[0]
+            for id in time_out_node_log:
+                time_out_node_ids.append(node_id_splitter(id))
 
         # If 'time_out_node_ids' is not empty, only analyze logs of these time out nodes.
         # Unless get the error logs of all workers.
@@ -313,9 +315,11 @@ class _ProcessManager:
             os.system(f"cat {scheduler_log_path}|grep -E 'ERROR|CRITICAL|Traceback|Error' -C 5")
             logger.error(f"Time out nodes are {time_out_node_ids}")
             # Get the logs which have these timeout node ids.
-            grepper = lambda id: subprocess.getoutput(f"grep -rn 'This node {id}' {self.log_dir}"
-                                                      "|awk -F: '{print $1}'")
-            log_names = list(grepper(id) for id in time_out_node_ids)
+            def grepper(id):
+                return subprocess.getoutput(f"grep -rn 'This node {id}' {self.log_dir}"" | awk -F: '{print $1}'")
+            log_names = []
+            for id in time_out_node_ids:
+                log_names.append(grepper(id))
             for log in log_names:
                 logger.error(f"cat log {log} error info and tail log:"
                              "==========================")
