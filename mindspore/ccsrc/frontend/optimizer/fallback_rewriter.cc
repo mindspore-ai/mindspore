@@ -1785,15 +1785,15 @@ class AfterOptARewriter : public BaseRewriter {
   }
 
   AnfNodePtr ConvertPrint(const CNodePtr &cnode) const {
+    const auto &fg = cnode->func_graph();
+    MS_EXCEPTION_IF_NULL(fg);
+    if (!CheckInputsHasAnyType(cnode) && !HasPyExecuteInput(cnode)) {
+      return nullptr;
+    }
     const auto allow_fallback_runtime = (fallback::GetJitSyntaxLevel() >= kCompatible);
     if (!allow_fallback_runtime) {
       MS_LOG(WARNING) << "When using the print statement with some syntaxes that is not supported in graph mode, "
                       << "it is best to set jit_syntax_level to LAX.\n";
-      return nullptr;
-    }
-    const auto &fg = cnode->func_graph();
-    MS_EXCEPTION_IF_NULL(fg);
-    if (!CheckInputsHasAnyType(cnode) && !HasPyExecuteInput(cnode)) {
       return nullptr;
     }
     // Skip the io_monad input
