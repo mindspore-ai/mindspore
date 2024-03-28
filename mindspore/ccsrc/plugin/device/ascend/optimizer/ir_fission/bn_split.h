@@ -30,14 +30,13 @@ class BnSplit : public PatternProcessPass {
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
 
- protected:
+ private:
   bool CreateOutputsOfBNTrainingReduce(const FuncGraphPtr &graph, const CNodePtr &bn_cnode,
                                        std::vector<AnfNodePtr> *bn_training_reduce_outputs, bool is_dynamic) const;
   AnfNodePtr CreateOutputsOfBNTrainingUpdate(const FuncGraphPtr &graph, const CNodePtr &bn_cnode,
                                              const std::vector<AnfNodePtr> &bn_training_reduce_outputs,
                                              bool is_dynamic) const;
 
- private:
   AnfNodePtr SplitBatchNormForTBE(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const;
   std::vector<std::string> MustExistPrimitiveName() const override;
 };
@@ -50,13 +49,25 @@ class SyncBnSplit : public BnSplit {
   const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
 
  private:
+  bool CreateOutputsOfBNTrainingReduce(const FuncGraphPtr &graph, const CNodePtr &bn_cnode,
+                                       std::vector<AnfNodePtr> *bn_training_reduce_outputs, bool is_dynamic) const;
+  AnfNodePtr CreateOutputsOfBNTrainingUpdate(const FuncGraphPtr &graph, const CNodePtr &bn_cnode,
+                                             const std::vector<AnfNodePtr> &bn_training_reduce_outputs,
+                                             bool is_dynamic) const;
+
   AnfNodePtr SyncBNSplitForTBE(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const;
 };
 
 AnfNodePtr CreateValueNodeOfDeviceNumReciprocal(const FuncGraphPtr &graph, const CNodePtr &sync_bn_cnode);
 
 AnfNodePtr CreateAllReduceAndMul(const FuncGraphPtr &graph, const AnfNodePtr &allreduce_input,
-                                 const CNodePtr &sync_bn_cnode, const PatternProcessPass &pass, bool is_dynamic);
+                                 const CNodePtr &sync_bn_cnode, const PatternProcessPass &pass, bool is_dynamic,
+                                 int64_t fusion_id);
+
+std::vector<AnfNodePtr> CreateAllReduceAndMulForUpdate(const FuncGraphPtr &graph,
+                                                       const std::vector<AnfNodePtr> &allreduce_inputs,
+                                                       const CNodePtr &sync_bn_cnode, const PatternProcessPass &pass,
+                                                       bool is_dynamic);
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FISSION_BN_SPLIT_H_
