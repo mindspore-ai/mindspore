@@ -1842,6 +1842,9 @@ py::object TensorIndex::GetItemIndexInfo(const py::object &py_data, const py::ob
     MS_EXCEPTION_IF_NULL(abs);
     data_shape = dyn_cast<abstract::Shape>(abs->BuildShape())->shape();
 
+    if (EnableView()) {
+      data_value = value;
+    }
   } else if (py::isinstance<Tensor>(py_data)) {
     auto tensor = py_data.cast<TensorPtr>();
     MS_EXCEPTION_IF_NULL(tensor);
@@ -2167,6 +2170,9 @@ py::object TensorIndex::SetItemIndexInfo(const py::object &py_data, const py::ob
     data_shape = dyn_cast<abstract::Shape>(abs->BuildShape())->shape();
     data_type = abs->BuildType();
     MS_EXCEPTION_IF_NULL(data_type);
+    if (EnableView()) {
+      data_value = value;
+    }
   } else {
     TensorPtr data = py_data.cast<TensorPtr>();
     MS_EXCEPTION_IF_NULL(data);
