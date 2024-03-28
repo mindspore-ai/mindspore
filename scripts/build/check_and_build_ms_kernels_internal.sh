@@ -14,7 +14,7 @@
 # limitations under the License.
 # ============================================================================
 
-if [[ "$(uname)" == Linux && "$(arch)" == aarch64 ]]; then
+if [ "$(uname)" == Linux ]; then
   if [ -n "${MS_INTERNAL_KERNEL_HOME}" ]; then
     echo "Use local MS_INTERNAL_KERNEL_HOME : ${MS_INTERNAL_KERNEL_HOME}"
   else
