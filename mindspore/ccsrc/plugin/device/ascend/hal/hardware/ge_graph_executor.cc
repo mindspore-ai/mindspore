@@ -1052,12 +1052,13 @@ bool GeGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<tens
   MS_EXCEPTION_IF_NULL(graph);
   auto graph_name = GetGraphName(graph);
   MS_LOG(INFO) << "GE run graph " << graph_name << " start.";
+  profiler::CollectHostInfo("Ascend", "RunGraph", "GeRunGraph_" + graph_name, 1, 0, 0);
   if (IsEnableRefMode()) {
     if (!RunGraphRefMode(graph, inputs)) {
+      profiler::CollectHostInfo("Ascend", "RunGraph", "GeRunGraph_" + graph_name, 1, 0, 1);
       return false;
     }
   } else {
-    profiler::CollectHostInfo("Ascend", "RunGraph", "GeRunGraph_" + graph_name, 1, 0, 0);
     // copy input from device to host
     const auto &cur_inputs = graph->get_inputs();
     std::vector<tensor::TensorPtr> input_tensors;
