@@ -93,9 +93,12 @@ bool SequenceStackFwdCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *
     for (size_t pos = start; pos < end; ++pos) {
       size_t cur_input_index = pos % this->input_num_;
       size_t local_idx = pos / this->input_num_;
-      (void)memcpy_s(output_addr + dims_behind_axis * pos, single_copy_size,
-                     input_addr + cur_input_index * element_index_size + dims_behind_axis * local_idx,
-                     single_copy_size);
+      auto ret =
+        memcpy_s(output_addr + dims_behind_axis * pos, single_copy_size,
+                 input_addr + cur_input_index * element_index_size + dims_behind_axis * local_idx, single_copy_size);
+      if (ret != EOK) {
+        MS_LOG(EXCEPTION) << "memcpy_s failed: " << ret;
+      }
     }
   };
   ParallelLaunchAutoSearch(task, copy_time, this, &parallel_search_info_);
