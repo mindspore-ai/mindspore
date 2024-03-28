@@ -25,7 +25,7 @@ elu:
 
     Args:
         input_x (Tensor): The input of ELU is a Tensor of any dimension with data type of float16 or float32.
-        alpha (float, optional): The alpha value of ELU, the data type is float. Only support '1.0' currently.
+        alpha (float, optional): The alpha value of ELU, the data type is float. Only support ``1.0`` currently.
             Default: ``1.0`` .
 
     Returns:

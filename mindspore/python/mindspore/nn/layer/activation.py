@@ -573,7 +573,7 @@ class RReLU(Cell):
         TypeError: If `lower` is not a float or an int.
         TypeError: If `upper` is not a float or an int.
         TypeError: If `x` is not a Tensor.
-        TypeError: If `x` is not a Tensor of mindspore.float16 or mindpore.float32.
+        TypeError: If `x` is not a Tensor of mindspore.float16 or mindspore.float32.
         ValueError: If `lower` is greater than upper.
 
     Supported Platforms:
