@@ -19,6 +19,7 @@
 #include "utils/anf_utils.h"
 #include "backend/common/graph_kernel/core/graph_builder.h"
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore::graphkernel {
 AnfNodePtr GraphKernelExpander::CreateExpandedNode(const CNodePtr &node, const std::string &name) const {
@@ -31,6 +32,37 @@ AnfNodePtr GraphKernelExpander::CreateExpandedNode(const CNodePtr &node, const s
   MS_LOG(DEBUG) << "Expand node: " << node->fullname_with_scope()
                 << " with: " << graph_kernel_node->fullname_with_scope();
   return graph_kernel_node;
+}
+
+static const std::map<std::string, std::vector<size_t>> ops = {{"ApplyMomentum", {1}}};
+
+bool IsOuputNumInconsistent(const AnfNodePtr &node) {
+  auto prim_name = GetCNodePrimitive(node)->name();
+  if (ops.find(prim_name) != ops.end()) {
+    return true;
+  }
+  return false;
+}
+
+void ReplaceNodeWithTupleGetItem(const AnfNodePtr &node, const AnfNodePtr &newnode, const FuncGraphPtr &func_graph,
+                                 const FuncGraphManagerPtr &mng) {
+  const auto &output_indices = ops.at(GetCNodePrimitive(node)->name());
+  if (output_indices.size() == 1) {
+    auto idx = MakeValue(SizeToLong(output_indices[0]));
+    AnfNodePtrList inputs{NewValueNode(prim::kPrimTupleGetItem), newnode, NewValueNode(idx)};
+    inputs.back()->set_abstract(idx->ToAbstract());
+    auto new_out = func_graph->NewCNode(inputs);
+    auto abs = newnode->abstract();
+    if (!abs->isa<abstract::AbstractSequence>()) {
+      MS_LOG(EXCEPTION) << "The output abstract has to be an abstract sequence";
+    }
+    auto abs_seq = abs->cast<abstract::AbstractSequencePtr>();
+    auto elements = abs_seq->elements();
+    new_out->set_abstract(elements[output_indices[0]]);
+    mng->Replace(node, new_out);
+  } else {
+    MS_LOG(EXCEPTION) << "Unsupported at present";
+  }
 }
 
 bool GraphKernelExpander::DoExpand(const FuncGraphPtr &func_graph) {
@@ -60,7 +92,13 @@ bool GraphKernelExpander::DoExpand(const FuncGraphPtr &func_graph) {
       MS_LOG(DEBUG) << "Skipped node: " << node->fullname_with_scope();
       continue;
     }
-    (void)mng->Replace(node, newnode);
+    // For some ops, the output number of expander is different from the original cnode. In this case, a TupleGetItem is
+    // needed to insure that later cnodes have correct input
+    if (IsOuputNumInconsistent(node)) {
+      ReplaceNodeWithTupleGetItem(node, newnode, func_graph, mng);
+    } else {
+      mng->Replace(node, newnode);
+    }
     changed = true;
   }
   return changed;
