@@ -126,7 +126,7 @@ void ProfilingFrameworkData::RecordLaunchGETaskBegin(const CNodePtr &node) {
     return;
   }
 
-  int64_t start_ns = Utils::GetClockSyscnt();
+  int64_t start_ns = GetClockSyscnt();
   auto tid = syscall(SYS_gettid);
   kernel_launch_begin_[std::to_string(tid) + "_" + node->fullname_with_scope()] = start_ns;
 }
@@ -147,7 +147,7 @@ void ProfilingFrameworkData::RecordGETask(const CNodePtr &node) {
     return;
   }
   int64_t start_ns = iter->second;
-  int64_t end_ns = Utils::GetClockSyscnt();
+  int64_t end_ns = GetClockSyscnt();
   int64_t sequence_number = 0;
   uint64_t process_id = getpid();
   uint64_t start_thread_id = static_cast<uint64_t>(tid);
