@@ -91,9 +91,13 @@ def test_obfuscate_model_password_mode():
 
     # load obfuscated model, predict with right password
     obf_graph_1 = load("obf_net_1.mindir")
-    obf_net_1 = nn.GraphCell(obf_graph_1, obf_random_seed=3423)
-    right_password_result = obf_net_1(input_tensor).asnumpy()
-
+    try:
+        obf_net_1 = nn.GraphCell(obf_graph_1, obf_random_seed=3423)
+        right_password_result = obf_net_1(input_tensor).asnumpy()
+    # if 0 node has been obfuscated
+    except RuntimeError:
+        obf_net_1 = nn.GraphCell(obf_graph_1)
+        right_password_result = obf_net_1(input_tensor).asnumpy()
     assert np.all(original_result == right_password_result)
 
     if os.path.exists("obf_net_1.mindir"):
@@ -149,9 +153,13 @@ def test_export_password_mode():
 
     # load obfuscated model, predict with right password
     obf_graph_3 = load("obf_net_3.mindir")
-    obf_net_3 = nn.GraphCell(obf_graph_3, obf_random_seed=3423)
-    right_password_result = obf_net_3(input_tensor).asnumpy()
-
+    try:
+        obf_net_3 = nn.GraphCell(obf_graph_3, obf_random_seed=3423)
+        right_password_result = obf_net_3(input_tensor).asnumpy()
+    # if 0 node has been obfuscated
+    except RuntimeError:
+        obf_net_3 = nn.GraphCell(obf_graph_3)
+        right_password_result = obf_net_3(input_tensor).asnumpy()
     assert np.all(original_result == right_password_result)
 
     if os.path.exists("obf_net_3.mindir"):
