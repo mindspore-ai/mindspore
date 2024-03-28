@@ -40,7 +40,6 @@ ONE_IN_ONE_OUT_INFER(Tanh, x, y);
 ONE_IN_ONE_OUT_INFER(Sin, x, y);
 ONE_IN_ONE_OUT_INFER(Reciprocal, x, y);
 ONE_IN_ONE_OUT_INFER(Sign, x, y);
-CUST_ONE_IN_ONE_OUT_INFER(Sinc, x, y);
 // ----------------------------------OneInOneOutCommonInfer END-----------------------------
 
 // ----------------------------------TowInOneOutCommonInfer-----------------------------
@@ -368,6 +367,33 @@ IMPLEMT_VERIFIER(FloorDiv, FloorDivVerify) {
 TWO_IN_ONE_OUT_INFER(FloorDiv, x1, x2, y);
 VERIFY_FUNC_REG(FloorDiv, FloorDivVerify);
 // ----------------FloorDiv END------------------------
+
+// ----------------Sinc-------------------
+IMPLEMT_COMMON_INFERFUNC(SincInferShape) {
+  auto input_desc = op.GetInputDescByName("x");
+  auto output_desc = op.GetOutputDescByName("y");
+
+  auto input_dtype = input_desc.GetDataType();
+  auto input_shape = input_desc.GetShape();
+
+  std::vector<DataType> int_and_bool_types{DT_INT8,   DT_UINT8, DT_INT16,  DT_UINT16, DT_INT32,
+                                           DT_UINT32, DT_INT64, DT_UINT64, DT_BOOL};
+  auto output_dtype = input_dtype;
+  if (std::find(int_and_bool_types.begin(), int_and_bool_types.end(), input_dtype) != int_and_bool_types.end()) {
+    output_dtype = DT_FLOAT;
+  }
+
+  output_desc.SetShape(input_shape);
+  output_desc.SetDataType(output_dtype);
+
+  if (op.UpdateOutputDesc("y", output_desc) != GRAPH_SUCCESS) {
+    return GRAPH_FAILED;
+  }
+  return GRAPH_SUCCESS;
+}
+
+CUST_COMMON_INFER_FUNC_REG(Sinc, SincInferShape);
+// ----------------Sinc END-------------------
 
 // ----------------SqrtGrad Op Begin-----------------
 IMPLEMT_VERIFIER(SqrtGrad, SqrtGradVerify) {
