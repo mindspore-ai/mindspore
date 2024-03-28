@@ -1420,9 +1420,13 @@ def set_context(**kwargs):
               - enable_task_opt (bool): Enable the optimization of the number of tasks for each communication if True.
                 Default: False.
               - enable_grad_comm_opt (bool): Enable overlap between dx ops and data parallel communication ops if True.
+                Currently, do not support
+                `LazyInline <https://www.mindspore.cn/docs/en/r2.3/api_python/mindspore/mindspore.lazy_inline.html>`
                 Default: False.
               - enable_opt_shard_comm_opt (bool): Enable overlap between forward ops
-                and optimizer parallel allgather communication if True. Default: False.
+                and optimizer parallel allgather communication if True. Currently, do not support
+                `LazyInline <https://www.mindspore.cn/docs/en/r2.3/api_python/mindspore/mindspore.lazy_inline.html>`
+                Default: False.
               - compute_communicate_fusion_level (int): Enable the fusion between compute and communicate.
                 Default: ``0``.
 
