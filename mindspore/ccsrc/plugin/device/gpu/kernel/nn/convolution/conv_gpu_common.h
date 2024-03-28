@@ -330,6 +330,9 @@ static cudnnConvolutionBwdDataAlgo_t SelectBackwardDataAlgorithm(
 
   cudnnConvolutionBwdDataAlgo_t conv_algorithm = CUDNN_CONVOLUTION_BWD_DATA_ALGO_1;
   if (cudnn_data_type == CUDNN_DATA_HALF) {
+    if (cudnn_bwd_data_algos.find(algo) != cudnn_bwd_data_algos.end()) {
+      conv_algorithm = cudnn_bwd_data_algos[algo];
+    }
     return conv_algorithm;
   }
   constexpr int requested_algo_count = 1;
