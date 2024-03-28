@@ -104,20 +104,6 @@ void StubNode::SetException(const std::exception_ptr &e_ptr) {
   cond_var_.notify_all();
 }
 
-AbstractBasePtr StubNode::WaitAbstract() {
-  runtime::ProfilerStageRecorder recorder(runtime::ProfilerStage::kWaitPipeline);
-  // cppcheck-suppress unreadVariable
-  GilReleaseWithCheck gil_release;
-  std::unique_lock<std::mutex> lock(mutex_);
-  cond_var_.wait(lock, [this] { return abstract_.get() != nullptr || e_ptr_ != nullptr; });
-  if (e_ptr_ != nullptr) {
-    // Need to clear exception in the instance.
-    MsException::Instance().CheckException();
-    std::rethrow_exception(e_ptr_);
-  }
-  return abstract_;
-}
-
 ValuePtr StubNode::WaitValue() {
   runtime::ProfilerStageRecorder recorder(runtime::ProfilerStage::kWaitPipeline);
   // cppcheck-suppress unreadVariable
@@ -132,12 +118,14 @@ ValuePtr StubNode::WaitValue() {
   return value_;
 }
 
-void StubNode::WaitValueSimpleInfo() {
+void StubNode::WaitPipeline() {
   runtime::ProfilerStageRecorder recorder(runtime::ProfilerStage::kWaitPipeline);
   // cppcheck-suppress unreadVariable
   GilReleaseWithCheck gil_release;
   std::unique_lock<std::mutex> lock(mutex_);
-  cond_var_.wait(lock, [this] { return output_value_simple_info_.get() != nullptr || e_ptr_ != nullptr; });
+  cond_var_.wait(lock, [this] {
+    return abstract_.get() != nullptr || output_value_simple_info_.get() != nullptr || e_ptr_ != nullptr;
+  });
   if (e_ptr_ != nullptr) {
     // Need to clear exception in the instance.
     MsException::Instance().CheckException();
@@ -145,19 +133,12 @@ void StubNode::WaitValueSimpleInfo() {
   }
 }
 
-void StubNode::WaitPipeline() {
-  if (output_value_simple_info_ == nullptr) {
-    (void)WaitAbstract();
-  } else {
-    WaitValueSimpleInfo();
-  }
-}
-
 AbstractBasePtr StubNode::ToAbstract() {
+  WaitPipeline();
   if (output_value_simple_info_ == nullptr) {
-    return WaitAbstract();
+    MS_EXCEPTION_IF_NULL(abstract_);
+    return abstract_;
   }
-  MS_EXCEPTION_IF_NULL(output_value_simple_info_);
   return TransformValueSimpleInfoToAbstract(*output_value_simple_info_);
 }
 
@@ -255,6 +236,28 @@ bool SequenceNode::SetAbstract(const AbstractBasePtr &abs) {
     }
   }
   return StubNode::SetAbstract(abs);
+}
+
+bool SequenceNode::SetValueSimpleInfo(const mindspore::ValueSimpleInfoPtr &output_value_simple_info) {
+  MS_EXCEPTION_IF_NULL(output_value_simple_info);
+  if (!is_elements_build_.load()) {
+    for (size_t i = 0; i < output_value_simple_info->size; ++i) {
+      (void)elements_.emplace_back(
+        MakeStubNode(std::make_shared<TensorType>(output_value_simple_info->dtype_vector_[i])));
+    }
+  }
+  is_elements_build_ = true;
+  for (size_t i = 0; i < output_value_simple_info->size; ++i) {
+    auto elem_simple_info = std::make_shared<mindspore::ValueSimpleInfo>();
+    elem_simple_info->size = kIndex1;
+    (void)elem_simple_info->shape_vector_.emplace_back(output_value_simple_info->shape_vector_[i]);
+    (void)elem_simple_info->dtype_vector_.emplace_back(output_value_simple_info->dtype_vector_[i]);
+    MS_EXCEPTION_IF_NULL(elements_[i]);
+    if (!elements_[i]->SetValueSimpleInfo(elem_simple_info)) {
+      return false;
+    }
+  }
+  return StubNode::SetValueSimpleInfo(output_value_simple_info);
 }
 
 void SequenceNode::SetValue(const ValuePtr &val) {
