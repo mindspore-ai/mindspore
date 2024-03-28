@@ -115,6 +115,42 @@ Status PromptFlashAttentionInfo::GetAttrs() {
   return SUCCESS;
 }
 
+int PromptFlashAttentionInfo::GetSqueezedIndex(size_t original_index) {
+  if (original_index >= optinal_inputs_.size()) {
+    MS_LOG(WARNING) << "provided index [" << original_index << "] is out of range [" << optinal_inputs_.size() << "]";
+    return -1;
+  }
+  int id_counter = 0;
+  for (size_t index = 1; index <= original_index; index++) {
+    if (optinal_inputs_[index]) {
+      id_counter++;
+    }
+  }
+  return id_counter;
+}
+
+Status PromptFlashAttentionInfo::CheckAttenMaskStrategy(const StrategyPtr &strategy, size_t input_index) {
+  auto strategies = strategy->GetInputDim();
+  if (!optinal_inputs_[input_index]) {
+    return SUCCESS;
+  }
+  auto atten_mask_idx = GetSqueezedIndex(input_index);
+  auto atten_mask_strategy = strategies[atten_mask_idx];
+  auto query_strategy = strategies[ops::kPromptFlashAttentionInputAttnMaskIndex];
+  if (atten_mask_idx >= 0) {
+    if (atten_mask_strategy[kInputBatchDim] != query_strategy[kInputBatchDim]) {
+      MS_LOG(ERROR) << "atten_mask strategy batch dim should be same.";
+      return FAILED;
+    }
+    for (size_t index = 1; index < atten_mask_strategy.size(); index++) {
+      if (!CheckStrategy(atten_mask_strategy[index], 1, "dims except batch", "atten_mask")) {
+        return FAILED;
+      }
+    }
+  }
+  return SUCCESS;
+}
+
 Status PromptFlashAttentionInfo::CheckStrategy(const StrategyPtr &strategy) {
   if (CheckStrategyValue(strategy, inputs_shape_) != SUCCESS) {
     return FAILED;
@@ -166,6 +202,10 @@ Status PromptFlashAttentionInfo::CheckStrategy(const StrategyPtr &strategy) {
                        "padding_mask")) {
       return FAILED;
     }
+  }
+  if (CheckAttenMaskStrategy(strategy, ops::kPromptFlashAttentionInputAttnMaskIndex) != SUCCESS) {
+    MS_LOG(ERROR) << "Check strategy for atten mask failed";
+    return FAILED;
   }
   return SUCCESS;
 }
