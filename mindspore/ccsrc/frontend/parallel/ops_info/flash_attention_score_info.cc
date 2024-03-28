@@ -387,15 +387,16 @@ Status FlashAttentionScoreInfo::InitSplittableInputs() {
   }
   if (is_input_passed_[ops::kFlashAttentionScoreInputAttnMaskIndex]) {
     auto attn_mask_shape = inputs_shape_.at(GetStrategyRealIndex(ops::kFlashAttentionScoreInputAttnMaskIndex));
+    int64_t attn_s1_group = is_attn_mask_compressed_ ? 0 : s1_group;
     if (attn_mask_shape.size() == kSizeTwo) {
       // attn_mask_shape: (S1, S2)
-      splittable_inputs_[ops::kFlashAttentionScoreInputAttnMaskIndex] = {s1_group, -1};
+      splittable_inputs_[ops::kFlashAttentionScoreInputAttnMaskIndex] = {attn_s1_group, 0};
     } else if (attn_mask_shape.size() == kSizeFour) {
       // attn_mask_shape: (B, N1, S1, S2) or (B, 1, S1, S2)
       auto attn_mask_n1_group = attn_mask_shape[kIndex1] == 1 ? 0 : n1_group;
-      splittable_inputs_[ops::kFlashAttentionScoreInputAttnMaskIndex] = {batch_group, attn_mask_n1_group, s1_group, 1};
+      splittable_inputs_[ops::kFlashAttentionScoreInputAttnMaskIndex] = {batch_group, attn_mask_n1_group, attn_s1_group,
+                                                                         0};
     }
-    splittable_inputs_[ops::kFlashAttentionScoreInputAttnMaskIndex] = {1, 0, 0, 0};
   }
   if (is_input_passed_[ops::kFlashAttentionScoreInputPrefixIndex]) {
     splittable_inputs_[ops::kFlashAttentionScoreInputPrefixIndex] = {batch_group};
@@ -623,8 +624,14 @@ std::tuple<int64_t, int64_t> FlashAttentionScoreInfo::GetAttentionMaskAttrs(cons
   kv_seq_length = inputs_shape_[ops::kFlashAttentionScoreInputKeyIndex][qkv_seq_dim_];
   q_seq_length = inputs_shape_[ops::kFlashAttentionScoreInputQueryIndex][qkv_seq_dim_];
   int64_t q_len_each_split = q_seq_length / split_num;
-  int64_t new_pre_tokens =
-    (sparse_mode_ == ops::kSparseDefaultMask || sparse_mode_ == ops::kSparseBand) ? pre_tokens_ : kv_seq_length;
+  int64_t new_pre_tokens;
+  if (sparse_mode_ == ops::kSparseDefaultMask || sparse_mode_ == ops::kSparseBand) {
+    new_pre_tokens = pre_tokens_;
+  } else if (sparse_mode_ == ops::kSparseLeftUpCausal) {
+    new_pre_tokens = q_seq_length;
+  } else {
+    new_pre_tokens = kv_seq_length;
+  }
   int64_t new_next_tokens =
     (sparse_mode_ == ops::kSparseDefaultMask || sparse_mode_ == ops::kSparseBand) ? next_tokens_ : 0;
   switch (opAttrUpdateMap.at(sparse_mode_)) {
