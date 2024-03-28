@@ -27,7 +27,9 @@ mindspore.ops.cond
         当前暂不支持复数。
 
     参数：
-        - **A** (Tensor) - shape为 :math:`(*, n)` 或者 :math:`(*, m, n)` 的Tensor，其中 :math:`*` 是零个或多个batch维度。
+        - **A** (Tensor) - shape为 :math:`(*, n)` 或者 :math:`(*, m, n)` 的Tensor，其中*是零个或多个batch维度。
+          如果 p 是 Union[1, -1, inf, -inf, 'fro', 'nuc'] 之一, 函数将使用 :class:`mindspore.ops.MatrixInverse` , 因此，:math:`(*, m, n)` 
+          必须为方块矩阵并且可逆。 
         - **p** (Union[int, float, inf, -inf, 'fro', 'nuc'], 可选) - norm的模式。行为参考上表。默认值： ``None`` 。
 
     返回：

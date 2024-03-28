@@ -61,8 +61,9 @@ def cond(A, p=None):
         Currently, complex numbers are not supported.
 
     Args:
-        A (Tensor): Tensor of shape :math:`(*, n)` or :math:`(*, m, n)`
-            where :math:`*` is zero or more batch dimensions.
+        A (Tensor): Tensor of shape :math:`(*, n)` or :math:`(*, m, n)` where * is zero or more batch dimensions.
+           If `p` is one of Union[1, -1, inf, -inf, 'fro', 'nuc'], the function uses
+           :class:`mindspore.ops.MatrixInverse` , therefore, :math:`(*, m, n)` has to be square and ivertible.
         p (Union[int, float, inf, -inf, 'fro', 'nuc'], optional): norm's mode. Refer to the table above for
             behavior. Default: ``None``.
 
@@ -88,20 +89,8 @@ def cond(A, p=None):
     matrix_inverse = _get_cache_prim(P.MatrixInverse)(adjoint=False)
     if p is None:
         p = 2
-    if A.dim() >= 3:
-        shape_ori = A.shape[0:-2]
-        A_flatten = ops.flatten(A, start_dim=0, end_dim=-3)
-        out = []
-        for i in range(A_flatten.shape[0]):
-            norm_a = F.norm(A_flatten[i], p)
-            norm_inv_a = F.norm(matrix_inverse(A_flatten[i]), p)
-            cond_i = ops.fill(mstype.float32, (1, 1), norm_a * norm_inv_a)
-            out.append(cond_i)
-        out_stacked = ops.hstack(out)
-        output = ops.reshape(out_stacked, shape_ori)
-        return output
-    norm_a = F.norm(A, p)
-    norm_inv_a = F.norm(matrix_inverse(A), p)
+    norm_a = F.matrix_norm(A, p)
+    norm_inv_a = F.matrix_norm(matrix_inverse(A), p)
     return norm_a * norm_inv_a
 
 
@@ -241,6 +230,16 @@ def svd(input, full_matrices=False, compute_uv=True):
     return s
 
 
+def _check_piv_shape(x):
+    if not isinstance(x, (Tensor, Tensor_)):
+        raise TypeError("The input x must be tensor")
+    if x.shape == ():
+        raise TypeError("For pinv, the 0-D input is not supported")
+    x_shape = F.shape(x)
+    if len(x_shape) < 2:
+        raise ValueError("input x should have 2 or more dimensions, " f"but got {len(x_shape)}.")
+
+
 def pinv(x, *, atol=None, rtol=None, hermitian=False):
     r"""
     Computes the (Moore-Penrose) pseudo-inverse of a matrix.
@@ -274,6 +273,7 @@ def pinv(x, *, atol=None, rtol=None, hermitian=False):
         x (Tensor): A matrix to be calculated. Only `float32`, `float64` are supported Tensor dtypes.
             shape is :math:`(*, M, N)`, * is zero or more batch dimensions.
 
+
             - When `hermitian` is ``True``, batch dimensions are not supported temporarily.
 
     Keyword args:
@@ -301,13 +301,7 @@ def pinv(x, *, atol=None, rtol=None, hermitian=False):
         [[0.25 0.  ]
          [0.   0.2 ]]
     """
-    if not isinstance(x, (Tensor, Tensor_)):
-        raise TypeError("The input x must be tensor")
-    if x.shape == ():
-        raise TypeError("For pinv, the 0-D input is not supported")
-    x_shape = F.shape(x)
-    if len(x_shape) < 2:
-        raise ValueError("input x should have 2 or more dimensions, " f"but got {len(x_shape)}.")
+    _check_piv_shape(x)
     x_dtype = dtype_(x)
     _check_input_dtype("x", x_dtype, [mstype.float32, mstype.float64], "pinv")
     _check_attr_dtype("hermitian", hermitian, [bool], "pinv")
