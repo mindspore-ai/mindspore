@@ -92,6 +92,7 @@ bool PriorityReplayBufferPushCpuKernel::Launch(const std::vector<KernelTensor *>
 
   // Return a placeholder in case of dead code eliminate optimization.
   auto handle = GetDeviceAddress<int64_t>(outputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(handle);
   *handle = handle_;
   return true;
 }
