@@ -274,10 +274,11 @@ class Compose(CompoundOperation):
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
         >>>
         >>> # create a list of transformations to be applied to the image data
-        >>> transform = transforms.Compose([vision.RandomHorizontalFlip(0.5),
-        ...                                vision.ToTensor(),
-        ...                                vision.Normalize((0.491, 0.482, 0.447), (0.247, 0.243, 0.262), is_hwc=False),
-        ...                                vision.RandomErasing()])
+        >>> transform = transforms.Compose([
+        ...     vision.RandomHorizontalFlip(0.5),
+        ...     vision.ToTensor(),
+        ...     vision.Normalize((0.491, 0.482, 0.447), (0.247, 0.243, 0.262), is_hwc=False),
+        ...     vision.RandomErasing()])
         >>> # apply the transform to the dataset through dataset.map function
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transform, input_columns=["image"])
         >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
@@ -828,6 +829,8 @@ class RandomApply(CompoundOperation):
         >>> from mindspore.dataset.transforms import Compose
         >>>
         >>> # Use the transform in dataset pipeline mode
+        >>> seed = ds.config.get_seed()
+        >>> ds.config.set_seed(12345)
         >>> transforms_list = [vision.RandomHorizontalFlip(0.5),
         ...                    vision.Normalize((0.491, 0.482, 0.447), (0.247, 0.243, 0.262)),
         ...                    vision.RandomErasing()]
@@ -848,6 +851,7 @@ class RandomApply(CompoundOperation):
         >>> output = transforms.RandomApply(transform, prob=1.0)(data)
         >>> print(output.shape, output.dtype)
         (3, 10, 10) float32
+        >>> ds.config.set_seed(seed)
     """
 
     @check_random_transform_ops
@@ -896,6 +900,8 @@ class RandomChoice(CompoundOperation):
         >>> from mindspore.dataset.transforms import Compose
         >>>
         >>> # Use the transform in dataset pipeline mode
+        >>> seed = ds.config.get_seed()
+        >>> ds.config.set_seed(12345)
         >>> transforms_list = [vision.RandomHorizontalFlip(0.5),
         ...                    vision.Normalize((0.491, 0.482, 0.447), (0.247, 0.243, 0.262)),
         ...                    vision.RandomErasing()]
@@ -915,6 +921,7 @@ class RandomChoice(CompoundOperation):
         >>> output = transforms.RandomChoice([transforms.Fill(100)])(data)
         >>> print(output.shape, output.dtype)
         (3,) int64
+        >>> ds.config.set_seed(seed)
     """
 
     @check_random_transform_ops
@@ -963,6 +970,8 @@ class RandomOrder(PyTensorOperation):
         >>> from mindspore.dataset.transforms import Compose, Relational
         >>>
         >>> # Use the transform in dataset pipeline mode
+        >>> seed = ds.config.get_seed()
+        >>> ds.config.set_seed(12345)
         >>> transforms_list = [vision.RandomHorizontalFlip(0.5),
         ...                    vision.Normalize((0.491, 0.482, 0.447), (0.247, 0.243, 0.262)),
         ...                    vision.RandomErasing()]
@@ -982,6 +991,7 @@ class RandomOrder(PyTensorOperation):
         >>> output = transforms.RandomOrder([transforms.Mask(Relational.EQ, 100)])(data)
         >>> print(output.shape, output.dtype)
         (3,) bool
+        >>> ds.config.set_seed(seed)
     """
 
     @check_random_transform_ops

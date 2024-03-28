@@ -776,10 +776,10 @@ class ToVectors(TextTensorOperation):
         [0. 0. 0. 0. 0. 0.]
         >>>
         >>> # Use the transform in eager mode
-        >>> data = ["happy", "birthday", "to", "you"]
+        >>> data = ["happy"]
         >>> output = text.ToVectors(vectors)(data)
         >>> print(output)
-        [[0. 0. 0. 0. 0. 0.] [0. 0. 0. 0. 0. 0.] [0. 0. 0. 0. 0. 0.] [0. 0. 0. 0. 0. 0.]]
+        [0. 0. 0. 0. 0. 0.]
 
     Tutorial Examples:
         - `Illustration of text transforms
@@ -1135,8 +1135,8 @@ if platform.system().lower() != 'windows':
             ...                                    preserve_unused_token=True,
             ...                                    with_offsets=True)
             >>> numpy_slices_dataset = numpy_slices_dataset.map(
-            ...                      operations=tokenizer_op, input_columns=["text"],
-            ...                      output_columns=["token", "offsets_start", "offsets_limit"])
+            ...     operations=tokenizer_op, input_columns=["text"],
+            ...     output_columns=["token", "offsets_start", "offsets_limit"])
             >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
             ...     print(item["token"], item["offsets_start"], item["offsets_limit"])
             ['Welcome' 'To' 'BeiJing' '!'] [ 0 12 17 24] [ 7 14 24 25]
@@ -1247,9 +1247,9 @@ if platform.system().lower() != 'windows':
             ...                                   normalization_form=NormalizeForm.NONE, preserve_unused_token=True,
             ...                                   with_offsets=True)
             >>> numpy_slices_dataset = numpy_slices_dataset.map(
-            ...                      operations=tokenizer_op,
-            ...                      input_columns=["text"],
-            ...                      output_columns=["token", "offsets_start", "offsets_limit"])
+            ...     operations=tokenizer_op,
+            ...     input_columns=["text"],
+            ...     output_columns=["token", "offsets_start", "offsets_limit"])
             >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
             ...     print(item["token"], item["offsets_start"], item["offsets_limit"])
             ['床' '前' '明' '月' '光'] [ 0  3  6  9 12] [ 3  6  9 12 15]
@@ -1356,10 +1356,10 @@ if platform.system().lower() != 'windows':
             welcome to china
             >>>
             >>> # Use the transform in eager mode
-            >>> data = ["Welcome    to    China", "!!!", "ABC"]
-            >>> output = [replace_op(i) for i in data]
+            >>> data = "Welcome    to    China"
+            >>> output = replace_op(data)
             >>> print(output)
-            [array('welcome to china', dtype='<U16'), array('', dtype='<U1'), array('abc', dtype='<U3')]
+            welcome to china
 
         Tutorial Examples:
             - `Illustration of text transforms
@@ -1533,9 +1533,9 @@ if platform.system().lower() != 'windows':
             ...                                              column_names=["text"])
             >>> tokenizer_op = text.RegexTokenizer(delim_pattern, with_offsets=True)
             >>> numpy_slices_dataset = numpy_slices_dataset.map(
-            ...                      operations=tokenizer_op,
-            ...                      input_columns=["text"],
-            ...                      output_columns=["token", "offsets_start", "offsets_limit"])
+            ...     operations=tokenizer_op,
+            ...     input_columns=["text"],
+            ...     output_columns=["token", "offsets_start", "offsets_limit"])
             >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
             ...     print(item["token"], item["offsets_start"], item["offsets_limit"])
             ['Welcome' 'To' 'BeiJing!'] [ 0 13 21] [ 7 15 29]
@@ -1605,21 +1605,20 @@ if platform.system().lower() != 'windows':
             ...                                              column_names=["text"], shuffle=False)
             >>> tokenizer_op = text.UnicodeScriptTokenizer(keep_whitespace=True, with_offsets=True)
             >>> numpy_slices_dataset = numpy_slices_dataset.map(
-            ...                      operations=tokenizer_op,
-            ...                      input_columns=["text"],
-            ...                      output_columns=["token", "offsets_start", "offsets_limit"])
+            ...     operations=tokenizer_op,
+            ...     input_columns=["text"],
+            ...     output_columns=["token", "offsets_start", "offsets_limit"])
             >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
             ...     print(item["token"], item["offsets_start"], item["offsets_limit"])
             ...     break
             ['北' ' ' '京'] [0 3 4] [3 4 7]
             >>>
             >>> # Use the transform in eager mode
-            >>> data = ["北 京", "123", "欢 迎", "你"]
+            >>> data = "北 京"
             >>> unicode_script_tokenizer_op = text.UnicodeScriptTokenizer(keep_whitespace=True, with_offsets=False)
-            >>> output = [unicode_script_tokenizer_op(i) for i in data]
+            >>> output = unicode_script_tokenizer_op(data)
             >>> print(output)
-            [array(['北', ' ', '京'], dtype='<U1'), array(['123'], dtype='<U3'), array(['欢', ' ', '迎'], dtype='<U1'),
-            array(['你'], dtype='<U1')]
+            ['北' ' ' '京']
 
         Tutorial Examples:
             - `Illustration of text transforms
@@ -1676,9 +1675,9 @@ if platform.system().lower() != 'windows':
             >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=['Welcome     To   BeiJing!'], column_names=["text"])
             >>> tokenizer_op = text.WhitespaceTokenizer(with_offsets=True)
             >>> numpy_slices_dataset = numpy_slices_dataset.map(
-            ...                      operations=tokenizer_op,
-            ...                      input_columns=["text"],
-            ...                      output_columns=["token", "offsets_start", "offsets_limit"])
+            ...     operations=tokenizer_op,
+            ...     input_columns=["text"],
+            ...     output_columns=["token", "offsets_start", "offsets_limit"])
             >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
             ...     print(item["token"], item["offsets_start"], item["offsets_limit"])
             ['Welcome' 'To' 'BeiJing!'] [ 0 12 17] [ 7 14 25]
