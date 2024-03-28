@@ -34,48 +34,36 @@ static const char kDynamicLengthAttr[] = "__ms_dynamic_len__";
 static const char kMsClassAttr[] = "__ms_class__";
 
 std::string GetStopTraceReasonDesc(StopTraceReason res) {
-  switch (res) {
 #define STOP_TRACE_REASON_KIND(kind, description) \
-  case k##kind: {                                 \
+  if (res == k##kind) {                           \
     return description;                           \
   }
 #include "stop_trace_reason.def"
 #undef STOP_TRACE_REASON_KIND
-    default: {
-      MS_EXCEPTION_IF_CHECK_FAIL(false, "Undefined STOP_TRACE_REASON");
-      return "";
-    }
-  }
+  MS_EXCEPTION_IF_CHECK_FAIL(false, "Undefined STOP_TRACE_REASON");
+  return "";
 }
 
 std::string GetInlineReasonDesc(InlineReason res) {
-  switch (res) {
 #define INLINE_REASON_KIND(kind, description) \
-  case k##kind: {                             \
+  if (res == k##kind) {                       \
     return description;                       \
   }
 #include "inline_reason.def"
 #undef INLINE_REASON_KIND
-    default: {
-      MS_EXCEPTION_IF_CHECK_FAIL(false, "Undefined INLINE_REASON");
-      return "";
-    }
-  }
+  MS_EXCEPTION_IF_CHECK_FAIL(false, "Undefined INLINE_REASON");
+  return "";
 }
 
 std::string GetLoopUnrollingReasonDesc(LoopUnrollingReason res) {
-  switch (res) {
 #define LOOP_UNROLLING_REASON_KIND(kind, description) \
-  case k##kind: {                                     \
+  if (res == k##kind) {                               \
     return description;                               \
   }
 #include "loop_unrolling_reason.def"
 #undef LOOP_UNROLLING_REASON_KIND
-    default: {
-      MS_EXCEPTION_IF_CHECK_FAIL(false, "Undefined LOOP_UNROLLING_REASON");
-      return "";
-    }
-  }
+  MS_EXCEPTION_IF_CHECK_FAIL(false, "Undefined LOOP_UNROLLING_REASON");
+  return "";
 }
 
 std::string Utils::GetPyName(PyObject *obj) {
@@ -218,7 +206,6 @@ static std::pair<py::object, py::object> PackExArgs(const std::vector<py::object
       kwargs = py::reinterpret_steal<py::object>(keys);
       Py_DECREF(vals);
     }
-    break;
   } while (0);
   return {pargs, kwargs};
 }

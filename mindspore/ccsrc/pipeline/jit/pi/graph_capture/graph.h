@@ -158,7 +158,7 @@ class Graph {
   const std::shared_ptr<OptCode> &GetGuard() const { return guard_; }
   void SetGuard(const std::shared_ptr<OptCode> &guard) { guard_ = guard; }
 
-  // TODO(chaiyouheng): restore graph status at loop begin, clear trace values and operations and guards
+  // (chaiyouheng): restore graph status at loop begin, clear trace values and operations and guards
   bool RestoreLoopStatus() { return false; }
   bool IsBreakAtLoop() const;
   bool IsBreakAtLoopAfterUnrolling() const;
