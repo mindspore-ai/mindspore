@@ -73,7 +73,8 @@ REG_FUNCTOR("ShapeCalc_BroadcastGradientArgs", BroadcastGradientArgsShapeCalc);
 
 NodePtrList BpropBuilder::BroadcastGradientArgs(const NodePtr &s0, const NodePtr &s1, size_t shift) {
   auto check_shp_valid_func = [shift](size_t, const ShapeVector &shape) -> bool {
-    return !(IsDynamicRank(shape) || IsDynamic(ShapeVector{shape.begin(), shape.end() - shift}));
+    auto offset = std::min(shift, shape.size());
+    return !(IsDynamicRank(shape) || IsDynamic(ShapeVector{shape.begin(), shape.end() - offset}));
   };
 
   return ShapeCalc(std::make_shared<BroadcastGradientArgsShapeCalc>(shift), {s0, s1}, {}, check_shp_valid_func);

@@ -566,7 +566,7 @@ DEF_PURE_SHAPE_CALC(g_matmul_ext_bprop_shapecalc)
     auto input_permutation_rank = -1LL;
     auto weight_permutation_rank = -1LL;
 
-    if (!IsDynamicRank(inputs[0])) {
+    if (!IsDynamicRank(inputs[0]) && !IsDynamicRank(inputs[1])) {
       auto &input_shape = inputs.at(kIndex0);
       auto &weight_shape = inputs.at(kIndex1);
       auto &output_grad_shape = inputs.at(kIndex2);
@@ -611,7 +611,7 @@ REG_BPROP_BUILDER("MatMulExt").SetUnusedInputs({}).SetBody(BODYFUNC(ib) {
 
     dx = ib->MatMulExt(dout, w);
     dw = ib->MatMulExt(x, dout);
-    if (is_dynamic_shape && (x_origin->shape().size() == 1 || w_origin->shape().size() == 1)) {
+    if (!is_dynamic_rank && is_dynamic_shape && (x_origin->shape().size() == 1 || w_origin->shape().size() == 1)) {
       return MatMulExtBroadCastGrad(ib, x_origin, w_origin, dx, dw, 2);
     } else {
       return BinopGradCommon(ib, x_origin, w_origin, dx, dw, 2);
