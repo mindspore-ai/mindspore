@@ -138,11 +138,15 @@ class MetaServerNode : public NodeBase {
  public:
   explicit MetaServerNode(const std::string &node_id, const std::string &role, const size_t &node_num,
                           uint64_t node_timeout = kDefaultNodeTimeout)
-      : NodeBase(node_id, role),
-        total_node_num_(node_num),
-        abnormal_node_num_(0),
-        enable_monitor_(true),
-        node_timeout_(node_timeout) {}
+      : NodeBase(node_id, role), total_node_num_(node_num), abnormal_node_num_(0), enable_monitor_(true) {
+    std::string timeout_env = common::GetEnv("MS_NODE_TIMEOUT");
+    if (!timeout_env.empty()) {
+      MS_LOG(INFO) << "MS_NODE_TIMEOUT env set by user: " << timeout_env;
+      node_timeout_ = std::stoi(timeout_env);
+    } else {
+      node_timeout_ = kDefaultNodeTimeout;
+    }
+  }
   ~MetaServerNode() override;
 
   bool Initialize() override;

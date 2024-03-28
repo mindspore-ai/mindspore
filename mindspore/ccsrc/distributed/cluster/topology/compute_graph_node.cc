@@ -241,6 +241,14 @@ bool ComputeGraphNode::Unregister() {
 }
 
 bool ComputeGraphNode::Heartbeat() {
+  std::string env_topo_timeout = common::GetEnv("MS_TOPO_TIMEOUT");
+  size_t topo_timeout;
+  if (!env_topo_timeout.empty()) {
+    MS_LOG(INFO) << "MS_TOPO_TIMEOUT set by user: " << env_topo_timeout;
+    topo_timeout = std::stoi(env_topo_timeout);
+  } else {
+    topo_timeout = kTopoInitTimeout;
+  }
   try {
     MS_EXCEPTION_IF_NULL(hb_client_);
 
@@ -249,7 +257,8 @@ bool ComputeGraphNode::Heartbeat() {
     uint32_t timeout = 10;
 
     while (enable_hb_) {
-      if (topo_state_ == TopoState::kInitializing && ElapsedTime(start_time_) > kTopoInitTimeout) {
+      if (topo_state_ == TopoState::kInitializing &&
+          ElapsedTime(start_time_) > std::chrono::milliseconds(topo_timeout)) {
         MS_LOG(EXCEPTION) << "Building networking for " << role_ << " failed.";
       }
       HeartbeatMessage hb_msg;
@@ -511,9 +520,28 @@ bool ComputeGraphNode::ExchangeMetadata(const std::string &biz, const size_t &ra
 }
 
 std::vector<std::string> ComputeGraphNode::GetHostNames(const std::string &role) {
-  auto retval = RetrieveMessageFromMSN(std::to_string(static_cast<int>(MessageName::kGetHostNames)), role);
+  std::shared_ptr<std::string> retval =
+    RetrieveMessageFromMSN(std::to_string(static_cast<int>(MessageName::kGetHostNames)), role);
   if (retval != nullptr) {
-    nlohmann::json hostnames = nlohmann::json::parse(*retval);
+    MS_LOG(INFO) << "Worker gets host names " << *retval;
+    nlohmann::json hostnames;
+    size_t retry_num = 60;
+    do {
+      try {
+        if (retval != nullptr) {
+          hostnames = nlohmann::json::parse(*retval);
+        } else {
+          MS_LOG(ERROR) << "Get hostnames from sched failed, receive empty message.";
+        }
+        break;
+      } catch (const std::exception &e) {
+        MS_LOG(ERROR) << "Worker failed to parse hostname json " << e.what() << ". Retry number: " << retry_num;
+        retval = RetrieveMessageFromMSN(std::to_string(static_cast<int>(MessageName::kGetHostNames)), role);
+        retry_num--;
+        (void)sleep(kExecuteInterval);
+      }
+    } while (retry_num != 0);
+    MS_LOG(INFO) << "Successfully get hostnames from scheduler: " << hostnames.dump();
     return hostnames.at(kHostNames).get<std::vector<std::string>>();
   } else {
     return std::vector<std::string>();
