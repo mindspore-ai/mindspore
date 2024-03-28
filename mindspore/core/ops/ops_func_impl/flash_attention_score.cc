@@ -208,7 +208,7 @@ BaseShapePtr FlashAttentionScoreFuncImpl::InferShape(const PrimitivePtr &primiti
         IsFlashAttentionScoreOptionalInputNotPass(input_args[kFlashAttentionScoreInputActualSeqKVlenIndex])) {
       MS_LOG(EXCEPTION) << op_name << ": actual_seq_qlen and actual_seq_kvlen should be not none.";
     }
-    if (IsDynamicRank(query_shape) || IsDynamicRank(key_shape)) {
+    if (IsDynamicRank(query_shape)) {
       return ConstructInferShape(
         ShapeVector{abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny, kFlashAttentionScoreSoftmaxLastDim},
         query_shape);
@@ -217,7 +217,7 @@ BaseShapePtr FlashAttentionScoreFuncImpl::InferShape(const PrimitivePtr &primiti
                                query_shape);
   }
 
-  if (IsDynamicRank(query_shape) || IsDynamicRank(key_shape)) {
+  if (IsDynamicRank(query_shape)) {
     return ConstructInferShape(ShapeVector{abstract::Shape::kShapeDimAny, abstract::Shape::kShapeDimAny,
                                            abstract::Shape::kShapeDimAny, kFlashAttentionScoreSoftmaxLastDim},
                                query_shape);
@@ -251,7 +251,7 @@ BaseShapePtr FlashAttentionScoreFuncImpl::InferShape(const PrimitivePtr &primiti
 
   auto head_num_opt = GetScalarValue<int64_t>(head_num_value);
   auto q_head_num = head_num_opt.value();
-  if (IsDynamicShape(query_shape) || IsDynamicShape(key_shape)) {
+  if (IsDynamicShape(query_shape) || IsDynamic(key_shape)) {
     return ConstructInferShape(
       ShapeVector{query_shape[batch_index], q_head_num, query_shape[seq_index], kFlashAttentionScoreSoftmaxLastDim},
       query_shape);
@@ -289,7 +289,7 @@ TypePtr FlashAttentionScoreFuncImpl::InferType(const PrimitivePtr &prim,
   const std::set valid_types = {kFloat16, kBFloat16};
   auto op_name = prim->name();
   std::map<std::string, TypePtr> types;
-  // "x", "kernel_query", "kernel_key", "kernel_value", "gamma", " beta", "bias_query", "bias_key", "bias_value"
+
   (void)types.emplace("query", input_args[kFlashAttentionScoreInputQueryIndex]->GetType());
   (void)types.emplace("key", input_args[kFlashAttentionScoreInputKeyIndex]->GetType());
   (void)types.emplace("value", input_args[kFlashAttentionScoreInputValueIndex]->GetType());

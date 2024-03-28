@@ -47,7 +47,7 @@ flash_attention_score_grad:
       type_cast: list[int], tensor
     head_num:
       dtype: int
-      prim_init: True  
+      prim_init: True
     keep_prob:
       dtype: float
       default: 1.0
@@ -91,5 +91,3 @@ flash_attention_score_grad:
   dispatch:
     enable: True
     Ascend: FlashAttentionScoreGradAscend
-    CPU: FlashAttentionScoreGradCPU
-    GPU: FlashAttentionScoreGradGPU
