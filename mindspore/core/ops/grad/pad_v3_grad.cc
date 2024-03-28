@@ -21,6 +21,7 @@
 #include "mindspore/core/ops/nn_ops.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace ops {
@@ -80,6 +81,17 @@ abstract::ShapePtr PadV3GradInferShape(const PrimitivePtr &primitive, const std:
   std::vector<int64_t> paddings_val;
   for (int64_t i = 0; i < paddings_size; ++i) {
     paddings_val.push_back(int64_t(paddings_arg[LongToSize(i)]));
+  }
+
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice) {
+    // For Ascend, ge::PadV3Grad only support paddings has positive value, and this node is called when mode
+    // is not 'constant'
+    auto mode = GetValue<std::string>(primitive->GetAttr("mode"));
+    if (mode != "constant") {
+      (void)CheckAndConvertUtils::CheckPositiveVector("paddings", paddings_val, prim_name);
+    }
   }
   auto paddings_contiguous = GetValue<bool>(primitive->GetAttr("paddings_contiguous"));
   if (paddings_contiguous == false) {

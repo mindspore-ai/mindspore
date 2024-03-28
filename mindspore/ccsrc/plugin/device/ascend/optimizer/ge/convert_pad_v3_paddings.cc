@@ -48,7 +48,8 @@ bool ConvertBasePaddings::HasDynPaddings(const CNodePtr &cnode) const {
 template <typename T, TypeId type_id>
 const AnfNodePtr ConvertBasePaddings::OptimizePaddingsValue(const FuncGraphPtr &graph,
                                                             const AbstractBasePtr &ori_paddings,
-                                                            const size_t &dst_length, bool force_length8) const {
+                                                            const bool &paddings_contiguous, const size_t &dst_length,
+                                                            bool force_length8) const {
   std::vector<T> paddings_data;
   auto paddings_type = ori_paddings->GetType();
   MS_EXCEPTION_IF_NULL(paddings_type);
@@ -60,6 +61,16 @@ const AnfNodePtr ConvertBasePaddings::OptimizePaddingsValue(const FuncGraphPtr &
   } else {
     auto paddings_value = ops::GetArrayValue<T>(ori_paddings);
     paddings_data = paddings_value->ToVector();
+  }
+  if (!paddings_contiguous) {
+    auto tmp = paddings_data;
+    for (size_t i = 0; i < paddings_data.size(); i++) {
+      if (i % kStep2 == 0) {
+        paddings_data[i] = tmp[i / kStep2];
+      } else {
+        paddings_data[i] = tmp[(i + paddings_data.size()) / kStep2];
+      }
+    }
   }
   // (0, 1, 2, 3, 4, 5, 6, 7) -> (6, 7, 4, 5, 2, 3, 0, 1)
   std::reverse(paddings_data.begin(), paddings_data.end());
@@ -76,6 +87,21 @@ const AnfNodePtr ConvertBasePaddings::OptimizePaddingsValue(const FuncGraphPtr &
     for (size_t i = 0; i < kLength8 - dst_length; i++) {
       opt_paddings_data.push_back(0);
     }
+  }
+  if (!paddings_contiguous) {
+    auto opt_paddings_size = opt_paddings_data.size();
+    std::vector<T> tmp_l;
+    std::vector<T> tmp_r;
+    for (size_t i = 0; i < opt_paddings_size; i++) {
+      if (i % kStep2 == 0) {
+        tmp_l.template emplace_back(opt_paddings_data[i]);
+      } else {
+        tmp_r.template emplace_back(opt_paddings_data[i]);
+      }
+    }
+    opt_paddings_data.clear();
+    std::transform(tmp_l.begin(), tmp_l.end(), std::back_inserter(opt_paddings_data), [](const T &val) { return val; });
+    std::transform(tmp_r.begin(), tmp_r.end(), std::back_inserter(opt_paddings_data), [](const T &val) { return val; });
   }
   // Create ValueNode
   auto extend_paddings = CreateValueNodeWithKernelInfo(graph, MakeValue(opt_paddings_data));
@@ -98,6 +124,9 @@ const AnfNodePtr ConvertBasePaddings::Process(const FuncGraphPtr &graph, const A
                                "that is dynamic in node["
                             << node->fullname_with_scope() << "]";
   } else {
+    auto prim = GetCNodePrimitive(cnode);
+    MS_EXCEPTION_IF_NULL(prim);
+    auto paddings_contiguous = GetValue<bool>(prim->GetAttr("paddings_contiguous"));
     // ge::padV3 only support that the length of `paddings` is twice than the rank of `x`
     auto input_paddings = common::AnfAlgo::GetInputNode(cnode, kIndex1);
     MS_EXCEPTION_IF_NULL(input_paddings);
@@ -106,7 +135,8 @@ const AnfNodePtr ConvertBasePaddings::Process(const FuncGraphPtr &graph, const A
     auto paddings_type = paddings_abstract->GetType();
     MS_EXCEPTION_IF_NULL(paddings_type);
 
-    auto paddings_value_node = CreatePaddingsNode(graph, paddings_abstract, opt_paddings_size, input_paddings_type_id);
+    auto paddings_value_node =
+      CreatePaddingsNode(graph, paddings_abstract, paddings_contiguous, opt_paddings_size, input_paddings_type_id);
     MS_EXCEPTION_IF_NULL(paddings_value_node);
     cnode->set_input(kIndex2, paddings_value_node);
   }
