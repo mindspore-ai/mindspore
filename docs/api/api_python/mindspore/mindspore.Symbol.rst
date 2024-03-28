@@ -1,7 +1,7 @@
 mindspore.Symbol
 ================
 
-.. py:class:: mindspore.Symbol(self, max=0, min=1, divisor=1, remainder=0, unique=False, **kawgs)
+.. py:class:: mindspore.Symbol(max=0, min=1, divisor=1, remainder=0, unique=False, **kawgs)
 
     符号，用来传递张量形状的符号信息（symbolic shape）的数据结构。
 
