@@ -163,8 +163,8 @@ REG_ADPT_DESC(DecodeImage, kNameDecodeImage, ADPT_DESC(DecodeImage))
 
 // SyncResizeBilinearV2Grad
 INPUT_MAP(SyncResizeBilinearV2Grad) = {{1, INPUT_DESC(grads)}, {2, INPUT_DESC(original_image)}};
-ATTR_MAP(SyncResizeBilinearV2Grad) = {{"size", ATTR_DESC(size, AnyTraits<std::vector<int64_t>>())},
-                                      {"ori_image_size", ATTR_DESC(ori_image_size, AnyTraits<std::vector<int64_t>>())},
+INPUT_ATTR_MAP(SyncResizeBilinearV2Grad) = {{3, ATTR_DESC(size, AnyTraits<std::vector<int64_t>>())}};
+ATTR_MAP(SyncResizeBilinearV2Grad) = {{"ori_image_size", ATTR_DESC(ori_image_size, AnyTraits<std::vector<int64_t>>())},
                                       {"src_start_w", ATTR_DESC(src_start_w, AnyTraits<int64_t>())},
                                       {"dst_start_w", ATTR_DESC(dst_start_w, AnyTraits<int64_t>())},
                                       {"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())},
