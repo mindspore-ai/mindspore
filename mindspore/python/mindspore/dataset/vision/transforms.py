@@ -1350,9 +1350,9 @@ class CutMixBatch(ImageTensorOperation):
         >>> data = np.random.randint(0, 255, size=(28, 28, 3)).astype(np.uint8)
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
         >>> numpy_slices_dataset = numpy_slices_dataset.map(
-        ...                      operations=lambda img: (data, np.random.randint(0, 5, (3, 1))),
-        ...                      input_columns=["image"],
-        ...                      output_columns=["image", "label"])
+        ...     operations=lambda img: (data, np.random.randint(0, 5, (3, 1))),
+        ...     input_columns=["image"],
+        ...     output_columns=["image", "label"])
         >>> onehot_op = transforms.OneHot(num_classes=10)
         >>> numpy_slices_dataset= numpy_slices_dataset.map(operations=onehot_op, input_columns=["label"])
         >>> cutmix_batch_op = vision.CutMixBatch(ImageBatchFormat.NHWC, 1.0, 0.5)
@@ -2439,9 +2439,10 @@ class MixUp(PyTensorOperation):
         >>> # Use the transform in dataset pipeline mode
         >>> data = np.random.randint(0, 255, size=(64, 64, 3)).astype(np.uint8)
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
-        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=lambda img: (data, np.random.randint(0, 5, (3, 1))),
-        ...                                                 input_columns=["image"],
-        ...                                                 output_columns=["image", "label"])
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(
+        ...     operations=lambda img: (data, np.random.randint(0, 5, (3, 1))),
+        ...     input_columns=["image"],
+        ...     output_columns=["image", "label"])
         >>> # ont hot decode the label
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms.OneHot(10), input_columns="label")
         >>> # batch the samples
@@ -2534,9 +2535,10 @@ class MixUpBatch(ImageTensorOperation):
         >>> # Use the transform in dataset pipeline mode
         >>> data = np.random.randint(0, 255, size=(64, 64, 3)).astype(np.uint8)
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
-        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=lambda img: (data, np.random.randint(0, 5, (3, 1))),
-        ...                                                 input_columns=["image"],
-        ...                                                 output_columns=["image", "label"])
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(
+        ...     operations=lambda img: (data, np.random.randint(0, 5, (3, 1))),
+        ...     input_columns=["image"],
+        ...     output_columns=["image", "label"])
         >>> onehot_op = transforms.OneHot(num_classes=10)
         >>> numpy_slices_dataset= numpy_slices_dataset.map(operations=onehot_op,
         ...                                                input_columns=["label"])
