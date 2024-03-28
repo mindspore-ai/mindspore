@@ -38,7 +38,7 @@ from mindspore.ops.operations.math_ops import LuUnpack
 from mindspore.ops.operations.math_ops import Roll
 from mindspore.ops.operations.math_ops import Ormqr
 from mindspore.ops.operations.array_ops import MatrixSetDiagV3, Transpose
-from mindspore.ops.auto_generate import (minimum, maximum, mul, sin, sinc, sinh, cummax, real, conj, add, batch_mat_mul, cos, cosh,
+from mindspore.ops.auto_generate import (minimum, maximum, mul, sin, sinc, sinh, cummax, real, conj, add, sub, cos, cosh,
                                          matrix_exp, sqrt, rsqrt, square, trace, nextafter, abs, acos, acosh, angle,
                                          asin, asinh, atan, atan2, atanh, ceil, equal, erf, erfc, erfinv, exp, expm1,
                                          floor, floor_divide, floor_mod, gcd, greater, greater_equal, less, less_equal,
@@ -7945,7 +7945,7 @@ def bmm(input_x, mat2):
           [[3255. 3312. 3369.]]
           [[4362. 4428. 4494.]]]]
     """
-    return auto_generate.batch_mat_mul(input_x, mat2)
+    return batch_matmul_(input_x, mat2)
 
 
 def quantile(input, q, axis=None, keepdims=False):

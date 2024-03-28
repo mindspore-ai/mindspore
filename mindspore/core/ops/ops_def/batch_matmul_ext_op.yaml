@@ -8,6 +8,8 @@ batch_mat_mul_ext:
   returns:
     output:
       dtype: tensor
+  function:
+    name: bmm_ext
   dispatch:
     enable: True
     Ascend: BatchMatMulExtAscend

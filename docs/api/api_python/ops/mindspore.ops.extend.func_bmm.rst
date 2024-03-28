@@ -8,8 +8,6 @@ mindspore.ops.extend.bmm
     .. math::
         \text{output}[:, :, :] = \text{matrix}(input[:, :, :]) * \text{matrix}(mat2[:, :, :])
 
-    `input` 和 `mat2` 的维度只能为 `3`。
-
     参数：
         - **input** (Tensor) - 输入相乘的第一个Tensor。其shape为 :math:`(B, N, C)` ，其中 :math:`B` 表示批处理大小， :math:`N` 和 :math:`C` 是最后两个维度的大小。
         - **mat2** (Tensor) - 输入相乘的第二个Tensor。Tensor的shape为 :math:`(B, C, M)` 。

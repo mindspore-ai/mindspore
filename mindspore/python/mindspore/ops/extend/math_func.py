@@ -20,7 +20,7 @@ Math Operators with better performance
 """
 
 from mindspore.ops import auto_generate as P
-from mindspore.ops.auto_generate.gen_ops_def import add_ext as add, sub_ext as sub, batch_mat_mul_ext as bmm
+from mindspore.ops.auto_generate.gen_ops_def import add_ext as add, sub_ext as sub, bmm_ext as bmm
 
 
 # define Primitive global variables

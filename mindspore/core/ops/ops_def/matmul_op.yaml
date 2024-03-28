@@ -20,6 +20,8 @@ matmul:
       dtype: tensor
   class:
     name: MatMul
+  function:
+    disable: True
   dispatch:
     enable: True
     Ascend: MatMulAscend
