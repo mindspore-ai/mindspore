@@ -69,15 +69,6 @@ void DumpMemToFile(const std::string &file_path, const device::DeviceAddress &ad
  * Feature group: Dump.
  * Target device group: Ascend, GPU, CPU.
  * Runtime category: Old runtime, MindRT.
- * Description: Remove scope from operator name. The default separator is "--".
- */
-BACKEND_EXPORT std::string GetOpNameWithoutScope(const std::string &fullname_with_scope,
-                                                 const std::string &separator = "--");
-
-/*
- * Feature group: Dump.
- * Target device group: Ascend, GPU, CPU.
- * Runtime category: Old runtime, MindRT.
  * Description: Dump string content into file path. Current purpose is to save operator overflow information in json
  * file in ascend a+m dump mode.
  */
