@@ -7,8 +7,7 @@ mindspore.ops.extend.add
 
     .. math::
 
-        out_{i} = input_{i} + al
-        pha \times oher_{i}
+        out_{i} = input_{i} + alpha \times other_{i}
 
     .. note::
         - 当两个输入shape不同时，
