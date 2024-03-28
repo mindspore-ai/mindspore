@@ -122,7 +122,7 @@ DEF_PURE_SHAPE_CALC(g_matmul_ext_fallback_shapecalc)
     int64_t final_weight_shape_rank = -1LL;
     int64_t output_shape_rank = -1LL;
 
-    if (!IsDynamicRank(inputs[0])) {
+    if (!IsDynamicRank(inputs[0]) && !IsDynamicRank(inputs[1])) {
       auto &input_shape = inputs.at(kIndex0);
       auto &weight_shape = inputs.at(kIndex1);
 
