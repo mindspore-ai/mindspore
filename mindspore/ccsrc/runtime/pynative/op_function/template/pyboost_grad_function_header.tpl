@@ -21,6 +21,7 @@
 #include "runtime/pynative/op_function/pyboost_grad_functions.h"
 #include "backend/graph_compiler/vmimpl.h"
 #include "include/common/utils/python_adapter.h"
+#include "pybind_api/gil_scoped_long_running.h"
 ${include_op_header}
 
 namespace mindspore::runtime {
@@ -51,6 +52,7 @@ bool PyBoostOpExecute::IsPyBoostOpRegistered(const std::string &op_name) {
 
 void PyBoostOpExecute::Execute(OpRunnerInfo *op_runner_info, VectorRef *op_outputs) {
  #ifndef ENABLE_TEST
+  GilReleaseWithCheck release_gil;
   MS_EXCEPTION_IF_NULL(op_runner_info);
   const auto it = grad_op_func_map_.find(op_runner_info->prim->name());
   // Run op by pyboost
