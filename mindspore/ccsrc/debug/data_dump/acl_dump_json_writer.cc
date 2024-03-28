@@ -63,6 +63,9 @@ void AclDumpJsonWriter::Parse() {
     case 0:
       dump_scene_ = "normal";
       break;
+    case 3:
+      dump_scene_ = "overflow";
+      break;
     case 4:
       dump_scene_ = "lite_exception";
       break;
@@ -79,19 +82,23 @@ bool AclDumpJsonWriter::WriteToFile(uint32_t device_id, uint32_t step_id, bool i
   }
   std::string dump_path = dump_base_path_ + "/" + std::to_string(step_id);
   nlohmann::json dump;
-  if (is_init == True) {
-    dump = {{"dump_path", dump_base_path_}, {"dump_mode", dump_mode_}, {"dump_step", std::to_string(2147483647)}};
+  if (dump_scene_ == "overflow") {
+    dump = {{"dump_path", dump_path}, {"dump_debug", "on"}};
   } else {
-    dump = {{"dump_path", dump_path}, {"dump_mode", dump_mode_}};
-  }
-  if (!dump_list.empty()) {
-    dump["dump_list"] = dump_list;
-  } else {
-    dump["dump_list"] = nlohmann::json::array();
-  }
-  dump["dump_op_switch"] = "on";
-  if (dump_scene_ != "normal") {
-    dump["dump_scene"] = dump_scene_;
+    if (is_init == True) {
+      dump = {{"dump_path", dump_base_path_}, {"dump_mode", dump_mode_}, {"dump_step", std::to_string(2147483647)}};
+    } else {
+      dump = {{"dump_path", dump_path}, {"dump_mode", dump_mode_}};
+    }
+    if (!dump_list.empty()) {
+      dump["dump_list"] = dump_list;
+    } else {
+      dump["dump_list"] = nlohmann::json::array();
+    }
+    dump["dump_op_switch"] = "on";
+    if (dump_scene_ != "normal") {
+      dump["dump_scene"] = dump_scene_;
+    }
   }
   nlohmann::json whole_content = {{"dump", dump}};
   std::string json_file_str = whole_content.dump();
