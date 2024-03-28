@@ -1066,7 +1066,11 @@ REG_BPROP_BUILDER("Exp").SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto g = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
-  auto dx = ib->Mul(g, dout);
+  TypeId exp_type = ib->GetDtypeId(g);
+  if (exp_type == kNumberTypeComplex64 || exp_type == kNumberTypeComplex128) {
+    g = ib->Conj(g);
+  }
+  auto dx = ib->Mul(dout, g);
   return {dx};
 });
 
