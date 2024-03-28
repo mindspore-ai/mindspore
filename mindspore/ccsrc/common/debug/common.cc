@@ -28,6 +28,7 @@
 #include "utils/log_adapter.h"
 #include "utils/file_utils.h"
 #include "include/common/utils/utils.h"
+#include "utils/convert_utils_base.h"
 
 namespace mindspore {
 bool Common::NeedMapping(const std::string &origin_name) {
@@ -420,7 +421,7 @@ bool Common::CheckInterval() {
   if (interval < 1) {
     MS_LOG(EXCEPTION) << "Dump IR interval should be greater than 0.";
   }
-  const int check = g_id_ % interval;
+  const int check = SizeToInt(g_id_ % interval);
   if (check == 0) {
     return true;
   }

@@ -976,9 +976,10 @@ bool Parser::HandleSetAttrClassMemberForInplace(const FunctionBlockPtr &block, c
   if (!IsPrimitiveCNode(call_node, prim::kPrimGetAttr)) {
     return false;
   }
+  constexpr int recursive_level = 2;
   // call_cnode: self.attr.func
   auto call_cnode = call_node->cast<CNodePtr>();
-  MS_LOG(DEBUG) << "call cnode: " << call_cnode->DebugString(2);
+  MS_LOG(DEBUG) << "call cnode: " << call_cnode->DebugString(recursive_level);
   const auto &call_cnode_inputs = call_cnode->inputs();
   constexpr size_t attr_node_index = 1;
   constexpr size_t func_str_index = 2;
@@ -999,7 +1000,7 @@ bool Parser::HandleSetAttrClassMemberForInplace(const FunctionBlockPtr &block, c
   }
   // attr_cnode: self.attr
   auto attr_cnode = attr_node->cast<CNodePtr>();
-  MS_LOG(DEBUG) << "attr cnode: " << attr_cnode->DebugString(2);
+  MS_LOG(DEBUG) << "attr cnode: " << attr_cnode->DebugString(recursive_level);
   const auto &attr_cnode_inputs = attr_cnode->inputs();
   constexpr size_t target_index = 1;
   constexpr size_t attr_index = 2;
@@ -4334,7 +4335,6 @@ FunctionBlockPtr Parser::ParseAnnAssign(const FunctionBlockPtr &block, const py:
   py::object value_object = python_adapter::GetPyObjAttr(node, "value");
   py::object target_object = python_adapter::GetPyObjAttr(node, "target");
   AnfNodePtr value_node = ParseExprNode(block, value_object);
-
   // b: int = list_x.pop(a)
   // -->  list_x, b = list_x.pop(a) need renew the list_x.
   if (IsPopOperation(value_node)) {
