@@ -51,6 +51,7 @@
 #include "transform/acl_ir/ge_adapter_info.h"
 #include "transform/symbol/acl_compiler_symbol.h"
 #include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/acl_symbol.h"
 #include "transform/symbol/symbol_utils.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "include/backend/debug/data_dump/overflow_dumper.h"
@@ -993,6 +994,10 @@ bool GeKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<KernelT
   profiler::ascend::ProfilingFrameworkData::RecordGETask(kernel);
   // for PyNative Sync Run mode
   auto ret = PySyncRuning(stream);
+  if (!ret) {
+    MS_LOG(EXCEPTION) << "Sync run failed, detail: " << CALL_ASCEND_API(aclGetRecentErrMsg)
+                      << trace::DumpSourceLines(kernel);
+  }
   PROFILER_END(start_time, runtime::ProfilerModule::kKernel, runtime::ProfilerEvent::kKernelLaunch,
                kernel->fullname_with_scope(), false);
   return ret;
