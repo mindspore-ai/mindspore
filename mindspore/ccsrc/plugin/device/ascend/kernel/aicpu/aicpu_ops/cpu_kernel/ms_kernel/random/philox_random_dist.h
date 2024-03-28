@@ -26,34 +26,36 @@
 namespace aicpu {
 namespace random {
 template <class Distribution, typename T1, typename T2>
-void FillTaskScalarInput(Distribution dist, PhiloxRandom gen, T1 *input, T2 *output, int64_t output_size,
-                         int32_t group_size, bool *ptr_flag, int64_t start_group, int64_t limit_group) {
+void FillTaskScalarInput(CpuKernelContext &ctx, Distribution dist, PhiloxRandom gen, T1 *input, T2 *output,
+                         int64_t output_size, int32_t group_size, bool *ptr_flag, int64_t start_group,
+                         int64_t limit_group) {
   gen.Skip(static_cast<uint64_t>(start_group));
   int64_t offset = start_group * group_size;
   int64_t full_group = std::min(limit_group, output_size / group_size);
   for (int64_t index = start_group; index < full_group; index++) {
-    dist(&gen, input, output + offset, group_size, ptr_flag);
+    dist(ctx, &gen, input, output + offset, group_size, ptr_flag);
     offset += group_size;
   }
   if (full_group < limit_group) {
     int64_t remaining_size = output_size - full_group * group_size;
-    dist(&gen, input, output + offset, remaining_size, ptr_flag);
+    dist(ctx, &gen, input, output + offset, remaining_size, ptr_flag);
   }
 }
 
 template <class Distribution, typename T1, typename T2>
-void FillTaskTensorInput(Distribution dist, PhiloxRandom gen, T1 *input, T2 *output, int64_t output_size,
-                         int32_t group_size, bool *ptr_flag, int64_t start_group, int64_t limit_group) {
+void FillTaskTensorInput(CpuKernelContext &ctx, Distribution dist, PhiloxRandom gen, T1 *input, T2 *output,
+                         int64_t output_size, int32_t group_size, bool *ptr_flag, int64_t start_group,
+                         int64_t limit_group) {
   gen.Skip(static_cast<uint64_t>(start_group));
   int64_t offset = start_group * group_size;
   int64_t full_group = std::min(limit_group, output_size / group_size);
   for (int64_t index = start_group; index < full_group; index++) {
-    dist(&gen, input + offset, output + offset, group_size, ptr_flag);
+    dist(ctx, &gen, input + offset, output + offset, group_size, ptr_flag);
     offset += group_size;
   }
   if (full_group < limit_group) {
     int64_t remaining_size = output_size - full_group * group_size;
-    dist(&gen, input + offset, output + offset, remaining_size, ptr_flag);
+    dist(ctx, &gen, input + offset, output + offset, remaining_size, ptr_flag);
   }
 }
 
@@ -64,10 +66,10 @@ class PhiloxRandomDist {
       : kParallelDataNumSameShape_(parallelLimit), generator_(seed, offset) {}
 
   template <typename T1, typename T2>
-  uint32_t DistCompute(const CpuKernelContext &ctx, T1 *input, T2 *output, int64_t input_size, int64_t output_size) {
+  uint32_t DistCompute(CpuKernelContext &ctx, T1 *input, T2 *output, int64_t input_size, int64_t output_size) {
     auto group_size = Distribution::kResultElementCount;
     if (group_size <= 0) {
-      KERNEL_LOG_ERROR("group_size must greater 0,and group_size are [%ld] ", group_size);
+      CUST_KERNEL_LOG_ERROR(ctx, "group_size must greater 0,and group_size are [%ld] ", group_size);
       return static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID);
     }
     auto group_count = (output_size + group_size - 1) / group_size;
@@ -83,16 +85,16 @@ class PhiloxRandomDist {
           validAicpuNum -= kResvCpuNum;
         }
         int64_t maxCoreNum = std::max(minCoreNum, validAicpuNum);
-        auto shard = [&gen, output_size, group_size, input, output, ptr_flag](int64_t start_group,
-                                                                              int64_t limit_group) {
-          FillTaskScalarInput(Distribution(), gen, input, output, output_size, group_size, ptr_flag, start_group,
+        auto shard = [&ctx, &gen, output_size, group_size, input, output, ptr_flag](int64_t start_group,
+                                                                                    int64_t limit_group) {
+          FillTaskScalarInput(ctx, Distribution(), gen, input, output, output_size, group_size, ptr_flag, start_group,
                               limit_group);
         };
 
-        KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, group_count, group_count / maxCoreNum, shard),
-                            "PhiloxRandomDist parallelFor failed.");
+        CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, group_count, group_count / maxCoreNum, shard),
+                                 "PhiloxRandomDist parallelFor failed.");
       } else {
-        FillTaskScalarInput(Distribution(), gen, input, output, output_size, group_size, ptr_flag, 0, group_count);
+        FillTaskScalarInput(ctx, Distribution(), gen, input, output, output_size, group_size, ptr_flag, 0, group_count);
       }
     } else {
       if (output_size >= kParallelDataNumSameShape_) {
@@ -102,21 +104,21 @@ class PhiloxRandomDist {
           validAicpuNum -= kResvCpuNum;
         }
         int64_t maxCoreNum = std::max(minCoreNum, validAicpuNum);
-        auto shard = [&gen, output_size, group_size, input, output, ptr_flag](int64_t start_group,
-                                                                              int64_t limit_group) {
-          FillTaskTensorInput(Distribution(), gen, input, output, output_size, group_size, ptr_flag, start_group,
+        auto shard = [&ctx, &gen, output_size, group_size, input, output, ptr_flag](int64_t start_group,
+                                                                                    int64_t limit_group) {
+          FillTaskTensorInput(ctx, Distribution(), gen, input, output, output_size, group_size, ptr_flag, start_group,
                               limit_group);
         };
 
-        KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, group_count, group_count / maxCoreNum, shard),
-                            "PhiloxRandomDist parallelFor failed.");
+        CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, group_count, group_count / maxCoreNum, shard),
+                                 "PhiloxRandomDist parallelFor failed.");
       } else {
-        FillTaskTensorInput(Distribution(), gen, input, output, output_size, group_size, ptr_flag, 0, group_count);
+        FillTaskTensorInput(ctx, Distribution(), gen, input, output, output_size, group_size, ptr_flag, 0, group_count);
       }
     }
 
     if (invalid_flag == false) {
-      KERNEL_LOG_ERROR("input prob is invalid, must be in [0, 1]");
+      CUST_KERNEL_LOG_ERROR(ctx, "input prob is invalid, must be in [0, 1]");
       return KERNEL_STATUS_PARAM_INVALID;
     }
 

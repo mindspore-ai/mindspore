@@ -28,9 +28,9 @@ class BlackmanWindowCpuKernel : public CpuKernel {
 
  private:
   template <typename T, typename T2>
-  uint32_t BlackmanWindowCompute(const CpuKernelContext &ctx);
+  uint32_t BlackmanWindowCompute(CpuKernelContext &ctx);
   template <typename T, typename T2>
-  uint32_t BlackmanWindowCompute2(const CpuKernelContext &ctx);
+  uint32_t BlackmanWindowCompute2(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

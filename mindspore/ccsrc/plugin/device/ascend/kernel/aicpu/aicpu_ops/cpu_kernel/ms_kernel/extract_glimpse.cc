@@ -32,8 +32,9 @@ const char *kExtractGlimpse = "ExtractGlimpse";
 }  // namespace
 namespace aicpu {
 uint32_t ExtractGlimpseCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "ExtractGlimpse check input and output number failed.");
-  KERNEL_HANDLE_ERROR(ExtractGlimpseCheck(ctx), "ExtractGlimpse check params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "ExtractGlimpse check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, ExtractGlimpseCheck(ctx), "ExtractGlimpse check params failed.");
   Tensor *x = ctx.Input(0);
   Tensor *ss = ctx.Input(1);
   Tensor *offsets = ctx.Input(2);
@@ -48,7 +49,7 @@ uint32_t ExtractGlimpseCpuKernel::Compute(CpuKernelContext &ctx) {
   float *y_data = (float *)y->GetData();
   uint64_t offsets_cnt = offsets->GetTensorShape()->GetDimSize(0);
   uint64_t batch_cnt = x->GetTensorShape()->GetDimSize(0);
-  KERNEL_CHECK_FALSE(offsets_cnt == batch_cnt, KERNEL_STATUS_PARAM_INVALID, "offsets should equal to batches")
+  CUST_KERNEL_CHECK_FALSE(ctx, offsets_cnt == batch_cnt, KERNEL_STATUS_PARAM_INVALID, "offsets should equal to batches")
   int64_t image_height = x->GetTensorShape()->GetDimSize(1);
   int64_t image_width = x->GetTensorShape()->GetDimSize(2);
   int64_t channels = x->GetTensorShape()->GetDimSize(3);
@@ -94,7 +95,7 @@ uint32_t ExtractGlimpseCpuKernel::Compute(CpuKernelContext &ctx) {
               else if (noise->GetString() == "gaussian")
                 y_data[pos_y + u] = max(0.0f, dis_normal(gen));
               else {
-                KERNEL_LOG_ERROR("noise type [%s] unsupported.", noise->GetString().c_str());
+                CUST_KERNEL_LOG_ERROR(ctx, "noise type [%s] unsupported.", noise->GetString().c_str());
                 return KERNEL_STATUS_PARAM_INVALID;
               }
             }
@@ -108,8 +109,8 @@ uint32_t ExtractGlimpseCpuKernel::Compute(CpuKernelContext &ctx) {
       }
       return KERNEL_STATUS_OK;
     };
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, batch_cnt, batch_cnt / max_core, fun),
-                        "ExtractGlimpse Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, batch_cnt, batch_cnt / max_core, fun),
+                             "ExtractGlimpse Compute failed.");
   } else {
     for (uint64_t i = 0; i < batch_cnt; i++) {
       float x = offsets_data[i << 1], y = offsets_data[1 + (i << 1)];
@@ -141,7 +142,7 @@ uint32_t ExtractGlimpseCpuKernel::Compute(CpuKernelContext &ctx) {
               else if (noise->GetString() == "gaussian")
                 y_data[pos_y + u] = max(0.0f, dis_normal(gen));
               else {
-                KERNEL_LOG_ERROR("noise type [%s] unsupported.", noise->GetString().c_str());
+                CUST_KERNEL_LOG_ERROR(ctx, "noise type [%s] unsupported.", noise->GetString().c_str());
                 return KERNEL_STATUS_PARAM_INVALID;
               }
             }
@@ -172,7 +173,7 @@ uint32_t ExtractGlimpseCpuKernel::Compute(CpuKernelContext &ctx) {
                 else if (noise->GetString() == "gaussian")
                   y_data[pos_y + u] = max(0.0f, dis_normal(gen));
                 else {
-                  KERNEL_LOG_ERROR("noise type [%s] unsupported.", noise->GetString().c_str());
+                  CUST_KERNEL_LOG_ERROR(ctx, "noise type [%s] unsupported.", noise->GetString().c_str());
                   return KERNEL_STATUS_PARAM_INVALID;
                 }
               continue;
@@ -184,8 +185,8 @@ uint32_t ExtractGlimpseCpuKernel::Compute(CpuKernelContext &ctx) {
           }
           return KERNEL_STATUS_OK;
         };
-        KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, g_size, g_size / max_core, fun),
-                            "ExtractGlimpse Compute failed.");
+        CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, g_size, g_size / max_core, fun),
+                                 "ExtractGlimpse Compute failed.");
       }
     }
   }
@@ -200,21 +201,22 @@ uint32_t ExtractGlimpseCpuKernel::ExtractGlimpseCheck(CpuKernelContext &ctx) {
   AttrValue *normalized = ctx.GetAttr("normalized");
   AttrValue *uniform_noise = ctx.GetAttr("uniform_noise");
   AttrValue *noise = ctx.GetAttr("noise");
-  KERNEL_CHECK_NULLPTR(x, KERNEL_STATUS_PARAM_INVALID, "Get input 0 failed.")
-  KERNEL_CHECK_NULLPTR(ss, KERNEL_STATUS_PARAM_INVALID, "Get input 1 failed.")
-  KERNEL_CHECK_NULLPTR(offsets, KERNEL_STATUS_PARAM_INVALID, "Get input 2 failed.")
-  KERNEL_CHECK_NULLPTR(y, KERNEL_STATUS_PARAM_INVALID, "Get output 0 failed.")
-  KERNEL_CHECK_NULLPTR(centered, KERNEL_STATUS_PARAM_INVALID, "Get attribute centered failed.")
-  KERNEL_CHECK_NULLPTR(normalized, KERNEL_STATUS_PARAM_INVALID, "Get attribute normalized failed.")
-  KERNEL_CHECK_NULLPTR(uniform_noise, KERNEL_STATUS_PARAM_INVALID, "Get attribute uniform_noise failed.")
-  KERNEL_CHECK_NULLPTR(noise, KERNEL_STATUS_PARAM_INVALID, "Get attribute noise failed.")
-  KERNEL_CHECK_NULLPTR(x->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 0 data failed.")
-  KERNEL_CHECK_NULLPTR(ss->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 1 data failed.")
-  KERNEL_CHECK_NULLPTR(offsets->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 2 data failed.")
-  KERNEL_CHECK_NULLPTR(y->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output 0 data failed.")
-  KERNEL_CHECK_FALSE(x->GetDataType() == DT_FLOAT && ss->GetDataType() == DT_INT32 &&
-                       offsets->GetDataType() == DT_FLOAT && y->GetDataType() == DT_FLOAT,
-                     KERNEL_STATUS_PARAM_INVALID, "data type error.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, x, KERNEL_STATUS_PARAM_INVALID, "Get input 0 failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ss, KERNEL_STATUS_PARAM_INVALID, "Get input 1 failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, offsets, KERNEL_STATUS_PARAM_INVALID, "Get input 2 failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, y, KERNEL_STATUS_PARAM_INVALID, "Get output 0 failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, centered, KERNEL_STATUS_PARAM_INVALID, "Get attribute centered failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, normalized, KERNEL_STATUS_PARAM_INVALID, "Get attribute normalized failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, uniform_noise, KERNEL_STATUS_PARAM_INVALID, "Get attribute uniform_noise failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, noise, KERNEL_STATUS_PARAM_INVALID, "Get attribute noise failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, x->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 0 data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ss->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 1 data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, offsets->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 2 data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, y->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output 0 data failed.")
+  CUST_KERNEL_CHECK_FALSE(ctx,
+                          x->GetDataType() == DT_FLOAT && ss->GetDataType() == DT_INT32 &&
+                            offsets->GetDataType() == DT_FLOAT && y->GetDataType() == DT_FLOAT,
+                          KERNEL_STATUS_PARAM_INVALID, "data type error.")
   return KERNEL_STATUS_OK;
 }
 REGISTER_MS_CPU_KERNEL(kExtractGlimpse, ExtractGlimpseCpuKernel);

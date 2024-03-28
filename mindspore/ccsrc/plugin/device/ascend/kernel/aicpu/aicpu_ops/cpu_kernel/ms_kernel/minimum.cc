@@ -33,22 +33,23 @@ const int64_t kParallelDataNumMid = 16 * 1024;
 const int64_t kParallelDataNumSameShape = 7 * 1024;
 const int64_t kParallelDataNumSameShapeMid = 35 * 1024;
 
-#define MINIMUM_COMPUTE_CASE(DTYPE, TYPE, CTX)            \
-  case (DTYPE): {                                         \
-    uint32_t result = MinimumCompute<TYPE>(CTX);          \
-    if (result != KERNEL_STATUS_OK) {                     \
-      KERNEL_LOG_ERROR("Minimum kernel compute failed."); \
-      return result;                                      \
-    }                                                     \
-    break;                                                \
+#define MINIMUM_COMPUTE_CASE(DTYPE, TYPE, CTX)                      \
+  case (DTYPE): {                                                   \
+    uint32_t result = MinimumCompute<TYPE>(CTX);                    \
+    if (result != KERNEL_STATUS_OK) {                               \
+      CUST_KERNEL_LOG_ERROR(ctx, "Minimum kernel compute failed."); \
+      return result;                                                \
+    }                                                               \
+    break;                                                          \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t MinimumCpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "Minimum check input and output number failed.");
-  KERNEL_HANDLE_ERROR(MinimumParamCheck(ctx), "Minimum check params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "Minimum check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, MinimumParamCheck(ctx), "Minimum check params failed.");
   auto data_type = ctx.Input(0)->GetDataType();
 
   switch (data_type) {
@@ -58,7 +59,7 @@ uint32_t MinimumCpuKernel::Compute(CpuKernelContext &ctx) {
     MINIMUM_COMPUTE_CASE(DT_FLOAT, float, ctx)
     MINIMUM_COMPUTE_CASE(DT_DOUBLE, double, ctx)
     default:
-      KERNEL_LOG_ERROR("Minimum kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Minimum kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 
@@ -72,14 +73,14 @@ uint32_t MinimumCpuKernel::MinimumParamCheck(CpuKernelContext &ctx) {
   Tensor *output = ctx.Output(0);
   DataType input0_type = input_0->GetDataType();
   DataType input1_type = input_1->GetDataType();
-  KERNEL_CHECK_FALSE((input0_type == input1_type), KERNEL_STATUS_PARAM_INVALID,
-                     "The data type of input0 [%s] need be same with "
-                     "input1 [%s].",
-                     DTypeStr(input0_type).c_str(), DTypeStr(input1_type).c_str())
-  KERNEL_LOG_DEBUG(
-    "MinimumCpuKernel[%s], input0: size[%llu];"
-    "input1: size[%llu], output: size[%llu].",
-    ctx.GetOpType().c_str(), input_0->GetDataSize(), input_1->GetDataSize(), output->GetDataSize());
+  CUST_KERNEL_CHECK_FALSE(ctx, (input0_type == input1_type), KERNEL_STATUS_PARAM_INVALID,
+                          "The data type of input0 [%s] need be same with "
+                          "input1 [%s].",
+                          DTypeStr(input0_type).c_str(), DTypeStr(input1_type).c_str())
+  CUST_KERNEL_LOG_DEBUG(ctx,
+                        "MinimumCpuKernel[%s], input0: size[%llu];"
+                        "input1: size[%llu], output: size[%llu].",
+                        ctx.GetOpType().c_str(), input_0->GetDataSize(), input_1->GetDataSize(), output->GetDataSize());
   return KERNEL_STATUS_OK;
 }
 
@@ -245,7 +246,7 @@ void MinimumCpuKernel::SpecialCompute(BcastShapeType type, int64_t start, int64_
       SpecialComputeYOneElement<T>(start, end, ctx, is_float16);
       break;
     default:
-      KERNEL_LOG_WARN("Invalid type [%d]", static_cast<int32_t>(type));
+      CUST_KERNEL_LOG_WARN(ctx, "Invalid type [%d]", static_cast<int32_t>(type));
       break;
   }
 }
@@ -272,8 +273,8 @@ uint32_t MinimumCpuKernel::NoBcastCompute(CpuKernelContext &ctx) {
 
     auto sharder_minimum = [&](int64_t start, int64_t end) { SpecialCompute<T>(type, start, end, ctx); };
 
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_minimum),
-                        "Minimum Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_minimum),
+                             "Minimum Compute failed.");
   } else {
     SpecialCompute<T>(type, 0, data_num, ctx);
   }
@@ -420,8 +421,8 @@ uint32_t MinimumCpuKernel::BcastCompute(CpuKernelContext &ctx, Bcast &bcast) {
     auto sharder_minimum = [&](int64_t start, int64_t end) {
       BcastComputeMultiKernel<T>(start, end, ctx, bcast, is_float16);
     };
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_minimum),
-                        "Minimum Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_minimum),
+                             "Minimum Compute failed.");
   } else {
     BcastComputeOneKernel<T>(ctx, bcast, is_float16);
   }
@@ -441,9 +442,9 @@ uint32_t MinimumCpuKernel::MinimumCompute(CpuKernelContext &ctx) {
   if (isNeedBcast) {
     return NoBcastCompute<T>(ctx);
   } else {
-    Bcast bcast(input0_shape, input1_shape);
+    Bcast bcast(ctx, input0_shape, input1_shape);
     if (!bcast.IsValid()) {
-      KERNEL_LOG_ERROR("[%s] broadcast failed.", ctx.GetOpType().c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "[%s] broadcast failed.", ctx.GetOpType().c_str());
       return KERNEL_STATUS_PARAM_INVALID;
     }
 

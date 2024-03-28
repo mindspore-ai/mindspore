@@ -36,27 +36,28 @@ constexpr int64_t kParallelDataNums = 64 * 1024;
 namespace aicpu {
 template <typename input_t, typename segment_ids_t, typename num_segments_t>
 uint32_t UnsortedSegmentSumCpuKernel::UnsortedSegmentSumComputeTemplate(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, input_num, output_num), " node input size should be [%llu],  get [%llu]",
-                      input_num, ctx.GetInputsSize(), " node output size should be [%llu],  get [%llu]", output_num,
-                      ctx.GetOutputsSize());
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, input_num, output_num),
+                           " node input size should be [%llu],  get [%llu]", input_num, ctx.GetInputsSize(),
+                           " node output size should be [%llu],  get [%llu]", output_num, ctx.GetOutputsSize());
   if (ctx.Input(0)->GetDataType() != ctx.Output(0)->GetDataType()) {
-    KERNEL_LOG_ERROR("The data type of the input [%s] need be the same as the output [%s]",
-                     DTypeStr(ctx.Input(0)->GetDataType()).c_str(), DTypeStr(ctx.Output(0)->GetDataType()).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "The data type of the input [%s] need be the same as the output [%s]",
+                          DTypeStr(ctx.Input(0)->GetDataType()).c_str(),
+                          DTypeStr(ctx.Output(0)->GetDataType()).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   int64_t data_size = ctx.Input(0)->NumElements();
   int64_t id_size = ctx.Input(1)->NumElements();
 
   auto input_x = reinterpret_cast<input_t *>(ctx.Input(0)->GetData());
-  KERNEL_CHECK_NULLPTR(input_x, KERNEL_STATUS_PARAM_INVALID, "Get input data failed")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input_x, KERNEL_STATUS_PARAM_INVALID, "Get input data failed")
   auto output_y = reinterpret_cast<input_t *>(ctx.Output(0)->GetData());
-  KERNEL_CHECK_NULLPTR(output_y, KERNEL_STATUS_PARAM_INVALID, "Get output data failed")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, output_y, KERNEL_STATUS_PARAM_INVALID, "Get output data failed")
   auto segmentids = reinterpret_cast<segment_ids_t *>(ctx.Input(1)->GetData());
-  KERNEL_CHECK_NULLPTR(segmentids, KERNEL_STATUS_PARAM_INVALID, "Get segment_ids failed")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, segmentids, KERNEL_STATUS_PARAM_INVALID, "Get segment_ids failed")
   auto numsegments = reinterpret_cast<num_segments_t *>(ctx.Input(2)->GetData());
-  KERNEL_CHECK_NULLPTR(numsegments, KERNEL_STATUS_PARAM_INVALID, "Get num_segments failed")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, numsegments, KERNEL_STATUS_PARAM_INVALID, "Get num_segments failed")
   if (id_size <= 0) {
-    KERNEL_LOG_ERROR("segment_ids num elements should great than 0");
+    CUST_KERNEL_LOG_ERROR(ctx, "segment_ids num elements should great than 0");
     return KERNEL_STATUS_PARAM_INVALID;
   }
   int64_t reshapesize = data_size / id_size;
@@ -67,7 +68,7 @@ uint32_t UnsortedSegmentSumCpuKernel::UnsortedSegmentSumComputeTemplate(CpuKerne
     auto copy_size = std::min(output_size, static_cast<uint64_t>(INT32_MAX));
     auto ret = memset_s(output_addr, output_size, 0, copy_size);
     if (ret != EOK) {
-      KERNEL_LOG_ERROR("For 'UnsortedSegmentSum', memset_s failed, ret=%d.", ret);
+      CUST_KERNEL_LOG_ERROR(ctx, "For 'UnsortedSegmentSum', memset_s failed, ret=%d.", ret);
       return KERNEL_STATUS_INNER_ERROR;
     }
     output_size -= copy_size;
@@ -83,16 +84,16 @@ uint32_t UnsortedSegmentSumCpuKernel::UnsortedSegmentSumComputeTemplate(CpuKerne
         }
       } else {
         multi_task_success.store(false);
-        KERNEL_LOG_ERROR("segment_ids value should be [0, %d), but got %d", static_cast<int>(*numsegments),
-                         static_cast<int>(*(segmentids + i)));
+        CUST_KERNEL_LOG_ERROR(ctx, "segment_ids value should be [0, %d), but got %d", static_cast<int>(*numsegments),
+                              static_cast<int>(*(segmentids + i)));
         return KERNEL_STATUS_PARAM_INVALID;
       }
     }
     return KERNEL_STATUS_OK;
   };
   if (data_size <= kParallelDataNums) {
-    KERNEL_HANDLE_ERROR(shard_unsorted_segment_sum(0, reshapesize),
-                        "UnsortedSegmentSum fails to be executed in a single thread!");
+    CUST_KERNEL_HANDLE_ERROR(ctx, shard_unsorted_segment_sum(0, reshapesize),
+                             "UnsortedSegmentSum fails to be executed in a single thread!");
   } else {
     uint32_t min_core_num = 1;
     uint32_t max_core_num = std::max(min_core_num, aicpu::CpuKernelUtils::GetCPUNum(ctx) - 2);
@@ -101,7 +102,7 @@ uint32_t UnsortedSegmentSumCpuKernel::UnsortedSegmentSumComputeTemplate(CpuKerne
     }
     CpuKernelUtils::ParallelFor(ctx, reshapesize, reshapesize / max_core_num, shard_unsorted_segment_sum);
     if (!multi_task_success.load()) {
-      KERNEL_LOG_ERROR("CpuKernelUtils::ParallelFor failed.");
+      CUST_KERNEL_LOG_ERROR(ctx, "CpuKernelUtils::ParallelFor failed.");
       return static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID);
     }
   }
@@ -117,7 +118,8 @@ uint32_t UnsortedSegmentSumCpuKernel::DoComputeWithNumSegmentsType(CpuKernelCont
       return UnsortedSegmentSumComputeTemplate<input_t, segment_ids_t, int64_t>(ctx);
 
     default:
-      KERNEL_LOG_ERROR("UnsortedSegmentSum invalid num_segments_type type [%s]", DTypeStr(num_segments_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "UnsortedSegmentSum invalid num_segments_type type [%s]",
+                            DTypeStr(num_segments_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 }
@@ -132,7 +134,8 @@ uint32_t UnsortedSegmentSumCpuKernel::DoComputeWithSegmentIdsType(CpuKernelConte
       return DoComputeWithNumSegmentsType<input_t, int64_t>(ctx, num_segments_type);
 
     default:
-      KERNEL_LOG_ERROR("UnsortedSegmentSum invalid segment_ids_type type [%s]", DTypeStr(segment_ids_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "UnsortedSegmentSum invalid segment_ids_type type [%s]",
+                            DTypeStr(segment_ids_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 }
@@ -168,7 +171,7 @@ uint32_t UnsortedSegmentSumCpuKernel::Compute(CpuKernelContext &ctx) {
     case DT_COMPLEX128:
       return DoComputeWithSegmentIdsType<std::complex<double>>(ctx, segment_ids_type);
     default:
-      KERNEL_LOG_ERROR("UnsortedSegmentSum invalid input type [%s]", DTypeStr(input_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "UnsortedSegmentSum invalid input type [%s]", DTypeStr(input_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;

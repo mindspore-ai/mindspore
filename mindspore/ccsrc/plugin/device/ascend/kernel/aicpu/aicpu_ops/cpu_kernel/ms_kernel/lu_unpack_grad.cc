@@ -39,7 +39,8 @@ const uint32_t kInputThird = 2;
 
 namespace aicpu {
 uint32_t LuUnpackGradCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "Lu Unpack Grad check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "Lu Unpack Grad check input and output number failed.");
   // choose compute function depend on dataType
   auto input_type = static_cast<DataType>(ctx.Input(kInputThird)->GetDataType());
   switch (input_type) {
@@ -60,16 +61,15 @@ uint32_t LuUnpackGradCpuKernel::Compute(CpuKernelContext &ctx) {
     case DT_UINT8:
       return LuUnpackGradCompute<uint8_t>(ctx);
     default:
-      KERNEL_LOG_ERROR("[%s] Data type of input is not support, input data type is [%s].", ctx.GetOpType().c_str(),
-                       DTypeStr(input_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "[%s] Data type of input is not support, input data type is [%s].",
+                            ctx.GetOpType().c_str(), DTypeStr(input_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t LuUnpackGradCpuKernel::TriLU(const CpuKernelContext &ctx, Tensor *L_grad_output, Tensor *U_grad_output,
-                                      int64_t a) {
+uint32_t LuUnpackGradCpuKernel::TriLU(CpuKernelContext &ctx, Tensor *L_grad_output, Tensor *U_grad_output, int64_t a) {
   Tensor *L_grad = NULL;
   Tensor *U_grad = NULL;
   Tensor *LU_data = NULL;
@@ -134,7 +134,7 @@ uint32_t LuUnpackGradCpuKernel::TriLU(const CpuKernelContext &ctx, Tensor *L_gra
 }
 
 template <typename T>
-uint32_t LuUnpackGradCpuKernel::LuUnpackGradCompute(const CpuKernelContext &ctx) {
+uint32_t LuUnpackGradCpuKernel::LuUnpackGradCompute(CpuKernelContext &ctx) {
   Tensor *LU_data = NULL;
   Tensor *L_grad_output = NULL;
   Tensor *U_grad_output = NULL;
@@ -173,10 +173,10 @@ uint32_t LuUnpackGradCpuKernel::LuUnpackGradCompute(const CpuKernelContext &ctx)
       }
     };
     if (max_core_num == 0) {
-      KERNEL_LOG_ERROR("max_core_num could not be 0.");
+      CUST_KERNEL_LOG_ERROR(ctx, "max_core_num could not be 0.");
     }
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, matrix_num, matrix_num / max_core_num, sharder),
-                        "LuUnpackGrad Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, matrix_num, matrix_num / max_core_num, sharder),
+                             "LuUnpackGrad Compute failed.");
   }
 
   return KERNEL_STATUS_OK;

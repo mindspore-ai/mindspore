@@ -27,24 +27,24 @@ class SqrtGradCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t SqrtGradParamCheck(const CpuKernelContext &ctx);
+  uint32_t SqrtGradParamCheck(CpuKernelContext &ctx);
 
   template <typename T>
-  void SpecialCompute(int64_t start, int64_t end, T *input1, T *input2, T *output);
+  void SpecialCompute(CpuKernelContext &ctx, int64_t start, int64_t end, T *input1, T *input2, T *output);
   template <typename T>
-  void SpecialComputeComplex(int64_t start, int64_t end, T *input1, T *input2, T *output);
+  void SpecialComputeComplex(CpuKernelContext &ctx, int64_t start, int64_t end, T *input1, T *input2, T *output);
 
   template <typename T>
-  uint32_t NoBcastCompute(const CpuKernelContext &ctx);
+  uint32_t NoBcastCompute(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t NoBcastComputeComplex(const CpuKernelContext &ctx);
+  uint32_t NoBcastComputeComplex(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t SqrtGradCompute(const CpuKernelContext &ctx);
+  uint32_t SqrtGradCompute(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t SqrtGradComputeComplex(const CpuKernelContext &ctx);
+  uint32_t SqrtGradComputeComplex(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

@@ -35,37 +35,39 @@ const uint32_t kMatrixLogarithmOutputNum = 1;
 const char *KMatrixLogarithm = "MatrixLogarithm";
 constexpr int64_t kParallelDataNums = 7 * 1024;
 const int64_t kParallelDataNumMid = 16 * 1024;
-#define MATRIX_LOGARITHM_COMPUTE_CASE(DTYPE, TYPE, CTX)           \
-  case (DTYPE): {                                                 \
-    uint32_t result = MatrixLogarithmCompute<TYPE>(CTX);          \
-    if (result != KERNEL_STATUS_OK) {                             \
-      KERNEL_LOG_ERROR("MatrixLogarithm kernel compute failed."); \
-      return result;                                              \
-    }                                                             \
-    break;                                                        \
+#define MATRIX_LOGARITHM_COMPUTE_CASE(DTYPE, TYPE, CTX)                     \
+  case (DTYPE): {                                                           \
+    uint32_t result = MatrixLogarithmCompute<TYPE>(CTX);                    \
+    if (result != KERNEL_STATUS_OK) {                                       \
+      CUST_KERNEL_LOG_ERROR(ctx, "MatrixLogarithm kernel compute failed."); \
+      return result;                                                        \
+    }                                                                       \
+    break;                                                                  \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t MatrixLogarithmCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kMatrixLogarithmInputNum, kMatrixLogarithmOutputNum),
-                      "[%s] check input and output failed.", KMatrixLogarithm);
-  KERNEL_HANDLE_ERROR(MatrixLogarithmCheck(ctx), "[%s] check params failed.", KMatrixLogarithm);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kMatrixLogarithmInputNum, kMatrixLogarithmOutputNum),
+                           "[%s] check input and output failed.", KMatrixLogarithm);
+  CUST_KERNEL_HANDLE_ERROR(ctx, MatrixLogarithmCheck(ctx), "[%s] check params failed.", KMatrixLogarithm);
   DataType data_type = ctx.Input(0)->GetDataType();
   switch (data_type) {
     MATRIX_LOGARITHM_COMPUTE_CASE(DT_COMPLEX64, std::complex<float>, ctx)
     MATRIX_LOGARITHM_COMPUTE_CASE(DT_COMPLEX128, std::complex<double>, ctx)
     default:
-      KERNEL_LOG_ERROR("MatrixLogarithm kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "MatrixLogarithm kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
-uint32_t MatrixLogarithmCpuKernel::MatrixLogarithmCheck(const CpuKernelContext &ctx) {
+uint32_t MatrixLogarithmCpuKernel::MatrixLogarithmCheck(CpuKernelContext &ctx) {
   auto input_0 = ctx.Input(0);
   auto output_0 = ctx.Output(0);
-  KERNEL_CHECK_NULLPTR(input_0->GetTensorShape(), KERNEL_STATUS_PARAM_INVALID, "Get input x tensor shape failed.")
-  KERNEL_CHECK_NULLPTR(output_0->GetTensorShape(), KERNEL_STATUS_PARAM_INVALID, "Get output y tensor shape failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input_0->GetTensorShape(), KERNEL_STATUS_PARAM_INVALID,
+                            "Get input x tensor shape failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, output_0->GetTensorShape(), KERNEL_STATUS_PARAM_INVALID,
+                            "Get output y tensor shape failed.")
   std::vector<int64_t> shape_x = input_0->GetTensorShape()->GetDimSizes();
   std::vector<int64_t> shape_y = output_0->GetTensorShape()->GetDimSizes();
   size_t shape_size_x = shape_x.size();
@@ -74,17 +76,17 @@ uint32_t MatrixLogarithmCpuKernel::MatrixLogarithmCheck(const CpuKernelContext &
   int dim_x2 = shape_x[shape_size_x - 1];
   int dim_y1 = shape_y[shape_size_y - 2];
   int dim_y2 = shape_y[shape_size_y - 1];
-  KERNEL_CHECK_FALSE((shape_size_x > 1), KERNEL_STATUS_PARAM_INVALID, "Input x dimension must be at least 2.")
-  KERNEL_CHECK_FALSE((dim_x1 == dim_x2), KERNEL_STATUS_PARAM_INVALID,
-                     "Input x dimentsions must be equal, but are [%lld] and [%lld].", dim_x1, dim_x2)
-  KERNEL_CHECK_FALSE((dim_y1 == dim_y2), KERNEL_STATUS_PARAM_INVALID,
-                     "Output y dimentsions must be equal, but are [%lld] and [%lld].", dim_y1, dim_y2)
-  KERNEL_CHECK_FALSE((input_0->GetTensorShape()->GetDimSize(0) == output_0->GetTensorShape()->GetDimSize(0)),
-                     KERNEL_STATUS_PARAM_INVALID, "Input x dimentsions must be equal Output y")
+  CUST_KERNEL_CHECK_FALSE(ctx, (shape_size_x > 1), KERNEL_STATUS_PARAM_INVALID, "Input x dimension must be at least 2.")
+  CUST_KERNEL_CHECK_FALSE(ctx, (dim_x1 == dim_x2), KERNEL_STATUS_PARAM_INVALID,
+                          "Input x dimentsions must be equal, but are [%lld] and [%lld].", dim_x1, dim_x2)
+  CUST_KERNEL_CHECK_FALSE(ctx, (dim_y1 == dim_y2), KERNEL_STATUS_PARAM_INVALID,
+                          "Output y dimentsions must be equal, but are [%lld] and [%lld].", dim_y1, dim_y2)
+  CUST_KERNEL_CHECK_FALSE(ctx, (input_0->GetTensorShape()->GetDimSize(0) == output_0->GetTensorShape()->GetDimSize(0)),
+                          KERNEL_STATUS_PARAM_INVALID, "Input x dimentsions must be equal Output y")
   return KERNEL_STATUS_OK;
 }
 template <typename T>
-uint32_t MatrixLogarithmCpuKernel::MatrixLogarithmCompute(const CpuKernelContext &ctx) {
+uint32_t MatrixLogarithmCpuKernel::MatrixLogarithmCompute(CpuKernelContext &ctx) {
   auto input_x = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto output_y = reinterpret_cast<T *>(ctx.Output(0)->GetData());
   std::vector<int64_t> shape_x = ctx.Input(0)->GetTensorShape()->GetDimSizes();
@@ -132,7 +134,7 @@ uint32_t MatrixLogarithmCpuKernel::MatrixLogarithmCompute(const CpuKernelContext
         }
       };
       if (max_core_num == 0) {
-        KERNEL_LOG_ERROR("max_core_num could not be 0.");
+        CUST_KERNEL_LOG_ERROR(ctx, "max_core_num could not be 0.");
       }
       CpuKernelUtils::ParallelFor(ctx, matrix_num, matrix_num / max_core_num, shard_work);
     }

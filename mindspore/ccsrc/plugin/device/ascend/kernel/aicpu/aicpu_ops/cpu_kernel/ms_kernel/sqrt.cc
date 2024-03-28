@@ -37,7 +37,7 @@ const char *kSqrt{"Sqrt"};
 namespace aicpu {
 namespace detail {
 template <typename T>
-inline std::uint32_t ComputeSqrtKernel(const CpuKernelContext &ctx) {
+inline std::uint32_t ComputeSqrtKernel(CpuKernelContext &ctx) {
   const auto ParallelFor = aicpu::CpuKernelUtils::ParallelFor;
   auto input = static_cast<T *>(ctx.Input(0)->GetData());
   auto output = static_cast<T *>(ctx.Output(0)->GetData());
@@ -68,54 +68,55 @@ inline std::uint32_t ComputeSqrtKernel(const CpuKernelContext &ctx) {
 }
 
 template <typename T>
-inline std::uint32_t ComputeSqrt(const CpuKernelContext &ctx) {
+inline std::uint32_t ComputeSqrt(CpuKernelContext &ctx) {
   uint32_t result = ComputeSqrtKernel<T>(ctx);
   if (result != 0) {
-    KERNEL_LOG_ERROR("Sqrt compute failed.");
+    CUST_KERNEL_LOG_ERROR(ctx, "Sqrt compute failed.");
   }
   return result;
 }
 
-inline std::uint32_t SqrtExtraCheck(const CpuKernelContext &ctx) {
+inline std::uint32_t SqrtExtraCheck(CpuKernelContext &ctx) {
   if (ctx.Input(0)->GetDataType() != ctx.Output(0)->GetDataType()) {
-    KERNEL_LOG_ERROR("The data type of the input [%s] need be the same as the output [%s].",
-                     DTypeStr(ctx.Input(0)->GetDataType()).c_str(), DTypeStr(ctx.Output(0)->GetDataType()).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "The data type of the input [%s] need be the same as the output [%s].",
+                          DTypeStr(ctx.Input(0)->GetDataType()).c_str(),
+                          DTypeStr(ctx.Output(0)->GetDataType()).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (ctx.Input(0)->GetData() == nullptr) {
-    KERNEL_LOG_ERROR("Get input data failed.");
+    CUST_KERNEL_LOG_ERROR(ctx, "Get input data failed.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (ctx.Output(0)->GetData() == nullptr) {
-    KERNEL_LOG_ERROR("Get output data failed.");
+    CUST_KERNEL_LOG_ERROR(ctx, "Get output data failed.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
   std::vector<int64_t> input_dims = ctx.Input(0)->GetTensorShape()->GetDimSizes();
   std::vector<int64_t> output_dims = ctx.Output(0)->GetTensorShape()->GetDimSizes();
   if (input_dims.size() != output_dims.size()) {
-    KERNEL_LOG_ERROR(
-      "The data dim of the input size [%llu] need be the same as the output "
-      "size [%llu].",
-      input_dims.size(), output_dims.size());
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "The data dim of the input size [%llu] need be the same as the output "
+                          "size [%llu].",
+                          input_dims.size(), output_dims.size());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   for (size_t index = 0; index < input_dims.size(); index++) {
     if (input_dims[index] != output_dims[index]) {
-      KERNEL_LOG_ERROR(
-        "The data dim[%llu]=%lld of the input need be the same as the output "
-        "dim[%llu]=%lld.",
-        index, input_dims[index], index, output_dims[index]);
+      CUST_KERNEL_LOG_ERROR(ctx,
+                            "The data dim[%llu]=%lld of the input need be the same as the output "
+                            "dim[%llu]=%lld.",
+                            index, input_dims[index], index, output_dims[index]);
       return KERNEL_STATUS_PARAM_INVALID;
     }
   }
   return KERNEL_STATUS_OK;
 }
 
-std::uint32_t SqrtCheck(const CpuKernelContext &ctx, uint32_t inputs_num, uint32_t outputs_num) {
+std::uint32_t SqrtCheck(CpuKernelContext &ctx, uint32_t inputs_num, uint32_t outputs_num) {
   return NormalCheck(ctx, kSqrtInputNum, kSqrtOutputNum) ? KERNEL_STATUS_PARAM_INVALID : SqrtExtraCheck(ctx);
 }
 
-std::uint32_t SqrtCompute(const CpuKernelContext &ctx) {
+std::uint32_t SqrtCompute(CpuKernelContext &ctx) {
   DataType input_type{ctx.Input(0)->GetDataType()};
   switch (input_type) {
     case DT_FLOAT16:
@@ -129,7 +130,7 @@ std::uint32_t SqrtCompute(const CpuKernelContext &ctx) {
     case DT_COMPLEX128:
       return ComputeSqrt<std::complex<std::double_t> >(ctx);
     default:
-      KERNEL_LOG_ERROR("Unsupported input data type [%s].", DTypeStr(input_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Unsupported input data type [%s].", DTypeStr(input_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 }

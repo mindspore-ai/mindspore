@@ -18,7 +18,6 @@
 #define AICPU_KERNELS_NORMALIZED_ASIN_GRAD_H_
 
 #include "inc/ms_cpu_kernel.h"
-#include "utils/bcast.h"
 
 namespace aicpu {
 class AsinGradCpuKernel : public CpuKernel {
@@ -30,13 +29,13 @@ class AsinGradCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  static uint32_t AsinGradParamCheck(const CpuKernelContext &ctx);
+  static uint32_t AsinGradParamCheck(CpuKernelContext &ctx);
 
   template <typename T>
-  static uint32_t AsinGradComputeRealType(const CpuKernelContext &ctx);
+  static uint32_t AsinGradComputeRealType(CpuKernelContext &ctx);
 
   template <typename T>
-  static uint32_t AsinGradComputeFP16(const CpuKernelContext &ctx);
+  static uint32_t AsinGradComputeFP16(CpuKernelContext &ctx);
 
   template <typename T>
   static void SpecialCompute(int64_t start, int64_t end, const T *input1, const T *input2, T *output);

@@ -148,8 +148,10 @@ std::uint32_t SparseSliceCpuKernel::Compute(CpuKernelContext &ctx) {
   Tensor *start = ctx.Input(3);
   Tensor *size = ctx.Input(4);
 
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "sparseslice check input and output number failed.");
-  KERNEL_HANDLE_ERROR(SparseSliceParamCheck(indices, values, shape, start, size), "sparseslice check params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "sparseslice check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, SparseSliceParamCheck(ctx, indices, values, shape, start, size),
+                           "sparseslice check params failed.");
 
   const int input_dims = shape->NumElements();
   auto shape_shape = shape->GetTensorShape();
@@ -171,8 +173,8 @@ std::uint32_t SparseSliceCpuKernel::Compute(CpuKernelContext &ctx) {
   std::iota(order.begin(), order.end(), 0);
 
   SparseTensor st;
-  if (st.CreateSparseTensor(indices, values, dense_shape, order) != KERNEL_STATUS_OK) {
-    KERNEL_LOG_ERROR("Create sparse tensor failed.");
+  if (st.CreateSparseTensor(ctx, indices, values, dense_shape, order) != KERNEL_STATUS_OK) {
+    CUST_KERNEL_LOG_ERROR(ctx, "Create sparse tensor failed.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
@@ -194,7 +196,7 @@ std::uint32_t SparseSliceCpuKernel::Compute(CpuKernelContext &ctx) {
   Tensor *output_dense_shape = ctx.Output(2);
 
   DataType values_data_type = ctx.Input(1)->GetDataType();
-  KERNEL_LOG_DEBUG("%s op input[a] data type is [%s].", kSparseSlice, DTypeStr(values_data_type).c_str());
+  CUST_KERNEL_LOG_DEBUG(ctx, "%s op input[a] data type is [%s].", kSparseSlice, DTypeStr(values_data_type).c_str());
   switch (values_data_type) {
     case DT_INT64:
       Slice<int64_t>(output_indices, output_values, output_dense_shape, &st, slice_start, slice_size);
@@ -236,45 +238,46 @@ std::uint32_t SparseSliceCpuKernel::Compute(CpuKernelContext &ctx) {
       Slice<std::string>(output_indices, output_values, output_dense_shape, &st, slice_start, slice_size);
       break;
     default:
-      KERNEL_LOG_ERROR("SparseSlice kernel data type [%s] not support.", DTypeStr(values_data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "SparseSlice kernel data type [%s] not support.", DTypeStr(values_data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 
-uint32_t SparseSliceCpuKernel::SparseSliceParamCheck(Tensor *indices, Tensor *values, Tensor *shape, Tensor *start,
-                                                     Tensor *size) {
+uint32_t SparseSliceCpuKernel::SparseSliceParamCheck(CpuKernelContext &ctx, Tensor *indices, Tensor *values,
+                                                     Tensor *shape, Tensor *start, Tensor *size) {
   auto indices_shape = indices->GetTensorShape();
-  KERNEL_CHECK_FALSE((IsMatrix(indices_shape->GetDimSizes())), KERNEL_STATUS_PARAM_INVALID,
-                     "Input indeices must be a matrix.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (IsMatrix(indices_shape->GetDimSizes())), KERNEL_STATUS_PARAM_INVALID,
+                          "Input indeices must be a matrix.");
 
   auto values_shape = values->GetTensorShape();
-  KERNEL_CHECK_FALSE((IsVector(values_shape->GetDimSizes())), KERNEL_STATUS_PARAM_INVALID,
-                     "Input values must be a vector.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (IsVector(values_shape->GetDimSizes())), KERNEL_STATUS_PARAM_INVALID,
+                          "Input values must be a vector.");
 
   auto shape_shape = shape->GetTensorShape();
   std::vector<int64_t> shape_shape_vec;
   int64_t *shape_vec = static_cast<int64_t *>(shape->GetData());
   shape_shape_vec.push_back(*(shape_vec));
   shape_shape_vec.push_back(*(shape_vec + 1));
-  KERNEL_CHECK_FALSE((IsVector(shape_shape->GetDimSizes())), KERNEL_STATUS_PARAM_INVALID,
-                     " Input shape must be a vector.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (IsVector(shape_shape->GetDimSizes())), KERNEL_STATUS_PARAM_INVALID,
+                          " Input shape must be a vector.");
 
   auto start_shape = start->GetTensorShape();
-  KERNEL_CHECK_FALSE((IsVector(start_shape->GetDimSizes())), KERNEL_STATUS_PARAM_INVALID,
-                     "Input start must be a vector.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (IsVector(start_shape->GetDimSizes())), KERNEL_STATUS_PARAM_INVALID,
+                          "Input start must be a vector.");
 
   auto size_shape = size->GetTensorShape();
-  KERNEL_CHECK_FALSE((IsVector(size_shape->GetDimSizes())), KERNEL_STATUS_PARAM_INVALID, "Input size must be a vector");
+  CUST_KERNEL_CHECK_FALSE(ctx, (IsVector(size_shape->GetDimSizes())), KERNEL_STATUS_PARAM_INVALID,
+                          "Input size must be a vector");
 
   const int input_dims = shape->NumElements();
-  KERNEL_CHECK_FALSE((input_dims == start->NumElements()), KERNEL_STATUS_PARAM_INVALID,
-                     "Expected start to be a vector of length [%s]", input_dims, "but get length [%s]",
-                     start->NumElements());
+  CUST_KERNEL_CHECK_FALSE(ctx, (input_dims == start->NumElements()), KERNEL_STATUS_PARAM_INVALID,
+                          "Expected start to be a vector of length [%s]", input_dims, "but get length [%s]",
+                          start->NumElements());
 
-  KERNEL_CHECK_FALSE((input_dims == size->NumElements()), KERNEL_STATUS_PARAM_INVALID,
-                     "Expected start to be a vector of length [%s]", input_dims, "but get length [%s]",
-                     size->NumElements());
+  CUST_KERNEL_CHECK_FALSE(ctx, (input_dims == size->NumElements()), KERNEL_STATUS_PARAM_INVALID,
+                          "Expected start to be a vector of length [%s]", input_dims, "but get length [%s]",
+                          size->NumElements());
   return KERNEL_STATUS_OK;
 }
 

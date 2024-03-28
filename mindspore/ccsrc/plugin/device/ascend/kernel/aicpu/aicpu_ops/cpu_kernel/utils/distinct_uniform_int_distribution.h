@@ -19,7 +19,7 @@
 
 #include <random>
 #include <unordered_set>
-#include "mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/common/kernel_log.h"
+#include "inc/kernel_log.h"
 
 namespace aicpu {
 template <typename IntType = int>

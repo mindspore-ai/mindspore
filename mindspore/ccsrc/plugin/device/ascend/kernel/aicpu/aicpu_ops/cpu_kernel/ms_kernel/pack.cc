@@ -30,21 +30,21 @@ const uint32_t kInputNum{aicpu::kDynamicInput};
 const char *kPack = "Pack";
 // constexpr int64_t kParallelDataNums = 512 * 1024;
 
-#define PACK_COMPUTE_CASE(DTYPE, TYPE, CTX)            \
-  case (DTYPE): {                                      \
-    uint32_t result = PackCompute<TYPE>(CTX);          \
-    if (result != KERNEL_STATUS_OK) {                  \
-      KERNEL_LOG_ERROR("Pack kernel compute failed."); \
-      return result;                                   \
-    }                                                  \
-    break;                                             \
+#define PACK_COMPUTE_CASE(DTYPE, TYPE, CTX)                      \
+  case (DTYPE): {                                                \
+    uint32_t result = PackCompute<TYPE>(CTX);                    \
+    if (result != KERNEL_STATUS_OK) {                            \
+      CUST_KERNEL_LOG_ERROR(ctx, "Pack kernel compute failed."); \
+      return result;                                             \
+    }                                                            \
+    break;                                                       \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t PackCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.", kPack);
-  KERNEL_HANDLE_ERROR(PackCheck(ctx), "[%s] check params failed.", kPack);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.", kPack);
+  CUST_KERNEL_HANDLE_ERROR(ctx, PackCheck(ctx), "[%s] check params failed.", kPack);
   DataType data_type = ctx.Input(0)->GetDataType();
   switch (data_type) {
     PACK_COMPUTE_CASE(DT_BOOL, bool, ctx)
@@ -62,7 +62,7 @@ uint32_t PackCpuKernel::Compute(CpuKernelContext &ctx) {
     PACK_COMPUTE_CASE(DT_COMPLEX64, std::complex<float>, ctx)
     PACK_COMPUTE_CASE(DT_COMPLEX128, std::complex<double>, ctx)
     default:
-      KERNEL_LOG_ERROR("Pack kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Pack kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
@@ -77,7 +77,7 @@ uint32_t PackCpuKernel::PackCheck(CpuKernelContext &ctx) {
   if (axis < 0) axis += expanded_num_dims;
 
   if (axis < 0 || axis >= expanded_num_dims) {
-    KERNEL_LOG_ERROR("Pack axis error.");
+    CUST_KERNEL_LOG_ERROR(ctx, "Pack axis error.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
@@ -86,7 +86,7 @@ uint32_t PackCpuKernel::PackCheck(CpuKernelContext &ctx) {
   for (int64_t i = 1; i < input_num; i++) {
     auto input_dims = ctx.Input(i)->GetTensorShape()->GetDims();
     if (x1_dims != input_dims) {
-      KERNEL_LOG_ERROR("Pack input dims no equal.");
+      CUST_KERNEL_LOG_ERROR(ctx, "Pack input dims no equal.");
       return KERNEL_STATUS_PARAM_INVALID;
     }
   }

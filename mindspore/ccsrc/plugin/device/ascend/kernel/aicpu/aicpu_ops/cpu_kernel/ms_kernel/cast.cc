@@ -37,13 +37,13 @@ uint32_t CastTask(CpuKernelContext &ctx) {
     for (int i = 0; i < input_size; i++) {
       output_addr[i] = static_cast<S>(std::real(input_addr[i]));
     }
-    return kAicpuKernelStateSucess;
+    return KERNEL_STATUS_OK;
   } else {
     constexpr int kRank = 2;
     Eigen::TensorMap<Eigen::Tensor<T, kRank, Eigen::RowMajor>> input_map(input_addr, 1, input_size);
     const auto &input = Eigen::Tensor<T, kRank, Eigen::RowMajor>(input_map);
     Eigen::TensorMap<Eigen::Tensor<S, kRank, Eigen::RowMajor>>(output_addr, 1, input_size) = input.template cast<S>();
-    return kAicpuKernelStateSucess;
+    return KERNEL_STATUS_OK;
   }
 }
 
@@ -254,7 +254,7 @@ uint32_t CastKernel::ParseKernelParam(CpuKernelContext &ctx) {
   output_type_ = output_tensor->GetDataType();
   auto input_tensor = ctx.Input(0);
   input_type_ = input_tensor->GetDataType();
-  return kAicpuKernelStateSucess;
+  return KERNEL_STATUS_OK;
 }
 REGISTER_MS_CPU_KERNEL(kCast, CastKernel);
 }  // namespace aicpu

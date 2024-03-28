@@ -28,23 +28,23 @@ class UniqueConsecutiveCpuKernel : public CpuKernel {
 
  private:
   template <typename T1, typename T2>
-  uint32_t DoComputeNone(const CpuKernelContext &ctx);
+  uint32_t DoComputeNone(CpuKernelContext &ctx);
   template <typename T1, typename T2>
-  uint32_t DoComputeDim(const CpuKernelContext &ctx, const int32_t tmp_axis);
-  void DefaultSet(const CpuKernelContext &ctx);
+  uint32_t DoComputeDim(CpuKernelContext &ctx, const int32_t tmp_axis);
+  void DefaultSet(CpuKernelContext &ctx);
   template <typename T1>
   void OutputYSet(const std::vector<int64_t> &y_shape_, const std::vector<int64_t> &input_shape_, int32_t axis,
                   T1 *y_dataptr, const std::vector<std::vector<T1>> &out_data_);
   uint32_t ExtraParamCheck(CpuKernelContext &ctx);
   template <typename T2>
-  void SetOuputIdxandCount(const CpuKernelContext &ctx, const std::vector<int64_t> &idx_shape_,
+  void SetOuputIdxandCount(CpuKernelContext &ctx, const std::vector<int64_t> &idx_shape_,
                            const std::vector<int64_t> &count_shape_, T2 *idx_dataptr, T2 *count_dataptr);
   template <typename T2>
-  uint32_t DtypeMapNone(const CpuKernelContext &ctx, DataType x_dtype);
+  uint32_t DtypeMapNone(CpuKernelContext &ctx, DataType x_dtype);
   template <typename T2>
-  uint32_t DtypeMapDim(const CpuKernelContext &ctx, int32_t tmp_axis, DataType x_dtype);
+  uint32_t DtypeMapDim(CpuKernelContext &ctx, int32_t tmp_axis, DataType x_dtype);
 
-  uint32_t DoCompute(const CpuKernelContext &ctx);
+  uint32_t DoCompute(CpuKernelContext &ctx);
   int32_t axis_;
   bool return_idx_;
   bool return_counts_;

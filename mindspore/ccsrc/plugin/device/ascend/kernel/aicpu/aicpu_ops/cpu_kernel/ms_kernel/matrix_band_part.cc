@@ -33,64 +33,66 @@ const uint32_t kOutputNum = 1;
 const uint32_t kInputNum = 3;
 constexpr int64_t kParallelDataNums = 64 * 1024;
 
-#define BAND_COMPUTE_CASE(DTYPE, TYPE, X, LOWER, UPPER, Y, M, N, CTX)   \
-  case (DTYPE): {                                                       \
-    uint32_t result = BandCompute<TYPE>(X, LOWER, UPPER, Y, M, N, CTX); \
-    if (result != KERNEL_STATUS_OK) {                                   \
-      KERNEL_LOG_ERROR("MatrixBandPart kernel compute failed.");        \
-      return result;                                                    \
-    }                                                                   \
-    break;                                                              \
+#define BAND_COMPUTE_CASE(DTYPE, TYPE, X, LOWER, UPPER, Y, M, N, CTX)      \
+  case (DTYPE): {                                                          \
+    uint32_t result = BandCompute<TYPE>(X, LOWER, UPPER, Y, M, N, CTX);    \
+    if (result != KERNEL_STATUS_OK) {                                      \
+      CUST_KERNEL_LOG_ERROR(ctx, "MatrixBandPart kernel compute failed."); \
+      return result;                                                       \
+    }                                                                      \
+    break;                                                                 \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t MatrixBandPartCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "MatrixBandPart check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "MatrixBandPart check input and output number failed.");
   Tensor *x = ctx.Input(0);
   Tensor *num_lower = ctx.Input(1);
   Tensor *num_upper = ctx.Input(2);
   Tensor *y = ctx.Output(0);
   int32_t rank = x->GetTensorShape()->GetDims();
-  KERNEL_CHECK_FALSE((rank >= 2), KERNEL_STATUS_PARAM_INVALID, "Input must be at least 2-dim, but get dims: %d", rank);
+  CUST_KERNEL_CHECK_FALSE(ctx, (rank >= 2), KERNEL_STATUS_PARAM_INVALID,
+                          "Input must be at least 2-dim, but get dims: %d", rank);
   int64_t m = x->GetTensorShape()->GetDimSize(rank - 2);
   int64_t n = x->GetTensorShape()->GetDimSize(rank - 1);
   auto lower_shape = num_lower->GetTensorShape();
   auto upper_shape = num_upper->GetTensorShape();
-  KERNEL_CHECK_FALSE(
-    (lower_shape->GetDimSizes().empty() || (lower_shape->GetDims() == 1 && lower_shape->GetDimSize(0) == 1)),
+  CUST_KERNEL_CHECK_FALSE(
+    ctx, (lower_shape->GetDimSizes().empty() || (lower_shape->GetDims() == 1 && lower_shape->GetDimSize(0) == 1)),
     KERNEL_STATUS_PARAM_INVALID, "num_lower must be scalar or a single 1-dimension number.");
-  KERNEL_CHECK_FALSE(
-    (upper_shape->GetDimSizes().empty() || (upper_shape->GetDims() == 1 && upper_shape->GetDimSize(0) == 1)),
+  CUST_KERNEL_CHECK_FALSE(
+    ctx, (upper_shape->GetDimSizes().empty() || (upper_shape->GetDims() == 1 && upper_shape->GetDimSize(0) == 1)),
     KERNEL_STATUS_PARAM_INVALID, "num_upper must be scalar or a single 1-dimension number.");
   DataType lower_type = num_lower->GetDataType();
-  KERNEL_CHECK_FALSE((lower_type == DT_INT32 || lower_type == DT_INT64), KERNEL_STATUS_PARAM_INVALID,
-                     "Unsupported num_lower data_type[%s], "
-                     "only support DT_INT32 and DT_INT64.",
-                     DTypeStr(lower_type).c_str());
+  CUST_KERNEL_CHECK_FALSE(ctx, (lower_type == DT_INT32 || lower_type == DT_INT64), KERNEL_STATUS_PARAM_INVALID,
+                          "Unsupported num_lower data_type[%s], "
+                          "only support DT_INT32 and DT_INT64.",
+                          DTypeStr(lower_type).c_str());
   DataType upper_type = num_upper->GetDataType();
-  KERNEL_CHECK_FALSE((upper_type == DT_INT32 || upper_type == DT_INT64), KERNEL_STATUS_PARAM_INVALID,
-                     "Unsupported num_upper data_type[%s], "
-                     "only support DT_INT32 and DT_INT64.",
-                     DTypeStr(upper_type).c_str());
+  CUST_KERNEL_CHECK_FALSE(ctx, (upper_type == DT_INT32 || upper_type == DT_INT64), KERNEL_STATUS_PARAM_INVALID,
+                          "Unsupported num_upper data_type[%s], "
+                          "only support DT_INT32 and DT_INT64.",
+                          DTypeStr(upper_type).c_str());
   int32_t *lower_data = reinterpret_cast<int32_t *>(num_lower->GetData());
-  KERNEL_CHECK_NULLPTR(lower_data, KERNEL_STATUS_PARAM_INVALID, "Get num_lower data failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, lower_data, KERNEL_STATUS_PARAM_INVALID, "Get num_lower data failed.");
   int32_t *upper_data = reinterpret_cast<int32_t *>(num_upper->GetData());
-  KERNEL_CHECK_NULLPTR(upper_data, KERNEL_STATUS_PARAM_INVALID, "Get num_upper data failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, upper_data, KERNEL_STATUS_PARAM_INVALID, "Get num_upper data failed.");
   int64_t lower = *lower_data;
   int64_t upper = *upper_data;
-  KERNEL_CHECK_FALSE((lower <= m), KERNEL_STATUS_PARAM_INVALID,
-                     "num_lower must be negative or less or equal to number "
-                     "of rows [%d], got: [%d]",
-                     m, lower);
-  KERNEL_CHECK_FALSE((upper <= n), KERNEL_STATUS_PARAM_INVALID,
-                     "num_lower must be negative or less or equal to number "
-                     "of cols [%d], got: [%d]",
-                     n, upper);
+  CUST_KERNEL_CHECK_FALSE(ctx, (lower <= m), KERNEL_STATUS_PARAM_INVALID,
+                          "num_lower must be negative or less or equal to number "
+                          "of rows [%d], got: [%d]",
+                          m, lower);
+  CUST_KERNEL_CHECK_FALSE(ctx, (upper <= n), KERNEL_STATUS_PARAM_INVALID,
+                          "num_lower must be negative or less or equal to number "
+                          "of cols [%d], got: [%d]",
+                          n, upper);
   uint64_t input_size = x->GetDataSize();
   uint64_t output_size = y->GetDataSize();
-  KERNEL_CHECK_FALSE((input_size == output_size), KERNEL_STATUS_PARAM_INVALID,
-                     "Input data size[%llu] is not equal to output data size[%llu].", input_size, output_size);
+  CUST_KERNEL_CHECK_FALSE(ctx, (input_size == output_size), KERNEL_STATUS_PARAM_INVALID,
+                          "Input data size[%llu] is not equal to output data size[%llu].", input_size, output_size);
   DataType data_type = x->GetDataType();
   switch (data_type) {
     BAND_COMPUTE_CASE(DT_INT8, int8_t, x, lower, upper, y, m, n, ctx)
@@ -108,7 +110,7 @@ uint32_t MatrixBandPartCpuKernel::Compute(CpuKernelContext &ctx) {
     BAND_COMPUTE_CASE(DT_COMPLEX64, std::complex<float>, x, lower, upper, y, m, n, ctx)
     BAND_COMPUTE_CASE(DT_COMPLEX128, std::complex<double>, x, lower, upper, y, m, n, ctx)
     default:
-      KERNEL_LOG_ERROR("MatrixBandPart kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "MatrixBandPart kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 
@@ -117,11 +119,11 @@ uint32_t MatrixBandPartCpuKernel::Compute(CpuKernelContext &ctx) {
 
 template <typename T>
 uint32_t MatrixBandPartCpuKernel::BandCompute(Tensor *x, int64_t lower, int64_t upper, Tensor *y, int64_t rows,
-                                              int64_t cols, const CpuKernelContext &ctx) {
+                                              int64_t cols, CpuKernelContext &ctx) {
   T *x_addrs = reinterpret_cast<T *>(x->GetData());
-  KERNEL_CHECK_NULLPTR(x_addrs, KERNEL_STATUS_PARAM_INVALID, "Get input data failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, x_addrs, KERNEL_STATUS_PARAM_INVALID, "Get input data failed.");
   T *y_addrs = reinterpret_cast<T *>(y->GetData());
-  KERNEL_CHECK_NULLPTR(y_addrs, KERNEL_STATUS_PARAM_INVALID, "Get output data failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, y_addrs, KERNEL_STATUS_PARAM_INVALID, "Get output data failed.");
 
   T zero = static_cast<T>(0);
   int64_t data_num = x->GetDataSize() / sizeof(T);
@@ -152,7 +154,7 @@ uint32_t MatrixBandPartCpuKernel::BandCompute(Tensor *x, int64_t lower, int64_t 
             auto ret = memcpy_s((y_addrs + base_index + band_start), (band_end - band_start) * sizeof(T),
                                 (x_addrs + base_index + band_start), (band_end - band_start) * sizeof(T));
             if (ret != EOK) {
-              KERNEL_LOG_ERROR("memcpy_s failed.");
+              CUST_KERNEL_LOG_ERROR(ctx, "memcpy_s failed.");
               return KERNEL_STATUS_INNER_ERROR;
             }
           }
@@ -190,15 +192,15 @@ uint32_t MatrixBandPartCpuKernel::BandCompute(Tensor *x, int64_t lower, int64_t 
               auto ret = memcpy_s((y_addrs + base_index + band_start), (band_end - band_start) * sizeof(T),
                                   (x_addrs + base_index + band_start), (band_end - band_start) * sizeof(T));
               if (ret != EOK) {
-                KERNEL_LOG_ERROR("memcpy_s failed.");
+                CUST_KERNEL_LOG_ERROR(ctx, "memcpy_s failed.");
               }
             }
           }
         }
       }
     };
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, total_rows, total_rows / max_core_num, shard_band),
-                        "MatrixBandPart Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, total_rows, total_rows / max_core_num, shard_band),
+                             "MatrixBandPart Compute failed.");
   }
 
   return KERNEL_STATUS_OK;

@@ -28,19 +28,19 @@ class RangeSampler {
   explicit RangeSampler(int64_t range) : range_(range) {}
   virtual ~RangeSampler();
 
-  virtual int64_t Sample() const = 0;
+  virtual int64_t Sample(CpuKernelContext &ctx) const = 0;
 
   virtual float Probability(int64_t value) const = 0;
 
   void SampleBatch(bool unique, const std::vector<int64_t> &batch) const;
 
-  void SampleBatchGetExpectedCount(bool unique, int64_t seed, std::vector<int64_t> *batch,
+  void SampleBatchGetExpectedCount(CpuKernelContext &ctx, bool unique, int64_t seed, std::vector<int64_t> *batch,
                                    std::vector<float> *batch_expected_count, std::vector<int64_t> extras,
                                    std::vector<float> *extras_expected_count) const;
 
-  virtual void SampleBatchGetExpectedCountAvoid(bool unique, int64_t seed, std::vector<int64_t> *batch,
-                                                std::vector<float> *batch_expected_count, std::vector<int64_t> extras,
-                                                std::vector<float> *extras_expected_count,
+  virtual void SampleBatchGetExpectedCountAvoid(CpuKernelContext &ctx, bool unique, int64_t seed,
+                                                std::vector<int64_t> *batch, std::vector<float> *batch_expected_count,
+                                                std::vector<int64_t> extras, std::vector<float> *extras_expected_count,
                                                 std::vector<int64_t> avoided_values) const;
 
   int64_t range() { return range_; }
@@ -56,7 +56,7 @@ class UniformSampler : public RangeSampler {
 
   ~UniformSampler() override {}
 
-  int64_t Sample() const override;
+  int64_t Sample(CpuKernelContext &ctx) const override;
 
   float Probability(int64_t value) const override;
 
@@ -70,7 +70,7 @@ class LogUniformSampler : public RangeSampler {
 
   ~LogUniformSampler() override {}
 
-  int64_t Sample() const override;
+  int64_t Sample(CpuKernelContext &ctx) const override;
 
   float Probability(int64_t value) const override;
 

@@ -27,7 +27,7 @@ class RandpermCpuKernel : public CpuKernel {
 
  private:
   template <typename T>
-  uint32_t RandpermCompute(const CpuKernelContext &ctx);
+  uint32_t RandpermCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif  // AICPU_KERNELS_NORMALIZED_RANDPERM_H_

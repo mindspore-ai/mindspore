@@ -26,12 +26,13 @@ constexpr auto kDim2 = 2;
 
 uint32_t SequenceAddKernel::ParseKernelParam() {
   if (node_def_.inputs_size() != kSequenceAddInputNum) {
-    AICPU_LOGE("For 'SequenceAdd', input number must be 2, but got %d", node_def_.inputs_size());
+    CUST_AICPU_LOGE(workspace_info_, "For 'SequenceAdd', input number must be 2, but got %d", node_def_.inputs_size());
     return kAicpuKernelStateInvalid;
   }
 
   if (node_def_.outputs_size() != kSequenceAddOutputNum) {
-    AICPU_LOGE("For 'SequenceAdd', output number must be 1, but got %d", node_def_.outputs_size());
+    CUST_AICPU_LOGE(workspace_info_, "For 'SequenceAdd', output number must be 1, but got %d",
+                    node_def_.outputs_size());
     return kAicpuKernelStateInvalid;
   }
 
@@ -50,7 +51,8 @@ uint32_t SequenceAddKernel::SequenceAddTask() {
   const auto input_1_addr = reinterpret_cast<void *>(io_addrs_[kDim1]);
   auto output_addr = reinterpret_cast<void *>(io_addrs_[kDim2]);
   if (input_0_data_size_ + input_1_data_size_ > output_data_size_) {
-    AICPU_LOGE(
+    CUST_AICPU_LOGE(
+      workspace_info_,
       "For 'SequenceAdd', the size of 'input_0 + input_1': {%d + %d} is not equal to the size of output:{ % d } ",
       input_0_data_size_, input_1_data_size_, output_data_size_);
     return kAicpuKernelStateInvalid;
@@ -58,14 +60,16 @@ uint32_t SequenceAddKernel::SequenceAddTask() {
 
   auto cp_ret = memcpy_s(output_addr, output_data_size_, input_0_addr, input_0_data_size_);
   if (cp_ret != EOK) {
-    AICPU_LOGE("For 'SequenceAdd',  memcpy for input 0 error, errorno: %d, size: %d.", cp_ret, input_0_data_size_);
+    CUST_AICPU_LOGE(workspace_info_, "For 'SequenceAdd',  memcpy for input 0 error, errorno: %d, size: %d.", cp_ret,
+                    input_0_data_size_);
     return kAicpuKernelStateInvalid;
   }
 
   output_addr = reinterpret_cast<int8_t *>(output_addr) + input_0_data_size_;
   cp_ret = memcpy_s(output_addr, output_data_size_ - input_0_data_size_, input_1_addr, input_1_data_size_);
   if (cp_ret != EOK) {
-    AICPU_LOGE("For 'SequenceAdd',  memcpy for input 1 error, errorno: %d, size: %d.", cp_ret, input_1_data_size_);
+    CUST_AICPU_LOGE(workspace_info_, "For 'SequenceAdd',  memcpy for input 1 error, errorno: %d, size: %d.", cp_ret,
+                    input_1_data_size_);
     return kAicpuKernelStateInvalid;
   }
 
@@ -83,7 +87,8 @@ uint32_t SequenceAddKernel::DoCompute() {
     case aicpuops::DataType::MS_FLOAT64:
       return SequenceAddTask<double>();
     default:
-      AICPU_LOGE("SequenceAdd kernel data type [%s] not support.", static_cast<int>(input_0_data_type_));
+      CUST_AICPU_LOGE(workspace_info_, "SequenceAdd kernel data type [%s] not support.",
+                      static_cast<int>(input_0_data_type_));
       return kAicpuKernelStateInvalid;
   }
 }

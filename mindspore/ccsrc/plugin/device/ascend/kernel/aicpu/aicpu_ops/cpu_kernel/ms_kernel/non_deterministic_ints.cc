@@ -46,7 +46,7 @@ uint32_t NonDeterministicIntsCpuKernel::DoCompute(CpuKernelContext &ctx) {
   std::vector<int64_t> out_put_dims;
   for (auto i = 0; i < input_nums; i++) {
     if (*(input_data + i) <= 0) {
-      KERNEL_LOG_ERROR("Shape elements must be > 0.");
+      CUST_KERNEL_LOG_ERROR(ctx, "Shape elements must be > 0.");
       return KERNEL_STATUS_PARAM_INVALID;
     }
     out_put_dims.push_back(input_data[i]);
@@ -70,8 +70,8 @@ uint32_t NonDeterministicIntsCpuKernel::DoCompute(CpuKernelContext &ctx) {
         *(output_data + j) = u(seed);
       }
     };
-    KERNEL_HANDLE_ERROR(
-      CpuKernelUtils::ParallelFor(ctx, output_nums, output_nums / max_core_num, shard_non_deterministic_ints),
+    CUST_KERNEL_HANDLE_ERROR(
+      ctx, CpuKernelUtils::ParallelFor(ctx, output_nums, output_nums / max_core_num, shard_non_deterministic_ints),
       "NonDeterministicInts compute failed.");
   }
   output->GetTensorShape()->SetDimSizes(out_put_dims);
@@ -83,18 +83,20 @@ uint32_t NonDeterministicIntsCpuKernel::DataAndTypeCheck(CpuKernelContext &ctx) 
   Tensor *input = ctx.Input(0);
   auto input_data_nums = input->NumElements();
   auto data_type = input->GetDataType();
-  KERNEL_CHECK_FALSE((data_type == DT_INT32 || data_type == DT_INT64), KERNEL_STATUS_PARAM_INVALID,
-                     " Input type must be one of int32 or int64.");
-  KERNEL_CHECK_FALSE((input_data_nums >= kInputSizes), KERNEL_STATUS_PARAM_INVALID, "Input data elements must >= 2.");
-  KERNEL_CHECK_FALSE((input->GetTensorShape()->GetDimSizes().size() == kInputDims), KERNEL_STATUS_PARAM_INVALID,
-                     "Input tensor must be a 1-D tensor.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (data_type == DT_INT32 || data_type == DT_INT64), KERNEL_STATUS_PARAM_INVALID,
+                          " Input type must be one of int32 or int64.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (input_data_nums >= kInputSizes), KERNEL_STATUS_PARAM_INVALID,
+                          "Input data elements must >= 2.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (input->GetTensorShape()->GetDimSizes().size() == kInputDims),
+                          KERNEL_STATUS_PARAM_INVALID, "Input tensor must be a 1-D tensor.");
   return KERNEL_STATUS_OK;
 }
 
 uint32_t NonDeterministicIntsCpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check params failed.", kNonDeterministicInts);
-  KERNEL_HANDLE_ERROR(DataAndTypeCheck(ctx), " data or type check failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check params failed.",
+                           kNonDeterministicInts);
+  CUST_KERNEL_HANDLE_ERROR(ctx, DataAndTypeCheck(ctx), " data or type check failed.");
   auto output_data_type = ctx.Output(0)->GetDataType();
   auto input_data_type = ctx.Input(0)->GetDataType();
   uint32_t ret = KERNEL_STATUS_OK;
@@ -116,11 +118,12 @@ uint32_t NonDeterministicIntsCpuKernel::Compute(CpuKernelContext &ctx) {
       break;
     }
     default: {
-      KERNEL_LOG_ERROR("NonDeterministicInts kernel data type [%s] not support.", DTypeStr(output_data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "NonDeterministicInts kernel data type [%s] not support.",
+                            DTypeStr(output_data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
     }
   }
-  KERNEL_CHECK_FALSE((ret == KERNEL_STATUS_OK), ret, "Compute failed.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (ret == KERNEL_STATUS_OK), ret, "Compute failed.");
   return KERNEL_STATUS_OK;
 }
 REGISTER_MS_CPU_KERNEL(kNonDeterministicInts, NonDeterministicIntsCpuKernel);

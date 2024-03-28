@@ -30,8 +30,8 @@ class SparseTensorDenseMatMulCpuKernel : public CpuKernel {
 
  private:
   template <class SparseType, class IndicesType, class DenseType, class OutputType>
-  static uint32_t RegularCalculate(const CpuKernelContext &ctx);
-  static uint32_t SparseTensorDenseMatMulCheck(const CpuKernelContext &ctx);
+  static uint32_t RegularCalculate(CpuKernelContext &ctx);
+  static uint32_t SparseTensorDenseMatMulCheck(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

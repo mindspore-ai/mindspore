@@ -31,33 +31,33 @@ const int64_t kParallelDataNumMid = 16 * 1024;
 const int64_t kParallelDataNumSameShape = 7 * 1024;
 const int64_t kParallelDataNumSameShapeMid = 35 * 1024;
 
-#define DIV_COMPUTE_CASEINT(DTYPE, TYPE, CTX)         \
-  case (DTYPE): {                                     \
-    uint32_t result = DivComputeInt<TYPE>(CTX);       \
-    if (result != KERNEL_STATUS_OK) {                 \
-      KERNEL_LOG_ERROR("Div kernel compute failed."); \
-      return result;                                  \
-    }                                                 \
-    break;                                            \
+#define DIV_COMPUTE_CASEINT(DTYPE, TYPE, CTX)                   \
+  case (DTYPE): {                                               \
+    uint32_t result = DivComputeInt<TYPE>(CTX);                 \
+    if (result != KERNEL_STATUS_OK) {                           \
+      CUST_KERNEL_LOG_ERROR(ctx, "Div kernel compute failed."); \
+      return result;                                            \
+    }                                                           \
+    break;                                                      \
   }
 
-#define DIV_COMPUTE_CASE(DTYPE, TYPE, CTX)            \
-  case (DTYPE): {                                     \
-    uint32_t result = DivCompute<TYPE>(CTX);          \
-    if (result != KERNEL_STATUS_OK) {                 \
-      KERNEL_LOG_ERROR("Div kernel compute failed."); \
-      return result;                                  \
-    }                                                 \
-    break;                                            \
+#define DIV_COMPUTE_CASE(DTYPE, TYPE, CTX)                      \
+  case (DTYPE): {                                               \
+    uint32_t result = DivCompute<TYPE>(CTX);                    \
+    if (result != KERNEL_STATUS_OK) {                           \
+      CUST_KERNEL_LOG_ERROR(ctx, "Div kernel compute failed."); \
+      return result;                                            \
+    }                                                           \
+    break;                                                      \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t DivCpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.", kDiv);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.", kDiv);
   BCalcInfo calc_info;
-  KERNEL_HANDLE_ERROR(DivParamCheck(ctx), "Div check params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, DivParamCheck(ctx), "Div check params failed.");
   auto data_type = ctx.Input(0)->GetDataType();
   switch (data_type) {
     DIV_COMPUTE_CASEINT(DT_INT8, int8_t, ctx)
@@ -72,7 +72,7 @@ uint32_t DivCpuKernel::Compute(CpuKernelContext &ctx) {
     DIV_COMPUTE_CASE(DT_COMPLEX64, std::complex<float>, ctx)
     DIV_COMPUTE_CASE(DT_COMPLEX128, std::complex<double>, ctx)
     default:
-      KERNEL_LOG_ERROR("Div kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Div kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
@@ -83,19 +83,19 @@ uint32_t DivCpuKernel::DivParamCheck(CpuKernelContext &ctx) {
   Tensor *input_0 = ctx.Input(0);
   Tensor *input_1 = ctx.Input(1);
   Tensor *output = ctx.Output(0);
-  KERNEL_CHECK_NULLPTR(input_0->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 0 data failed.")
-  KERNEL_CHECK_NULLPTR(input_1->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 1 data failed.")
-  KERNEL_CHECK_NULLPTR(output->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output data failed")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input_0->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 0 data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input_1->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 1 data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, output->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output data failed")
   DataType input0_type = input_0->GetDataType();
   DataType input1_type = input_1->GetDataType();
-  KERNEL_CHECK_FALSE((input0_type == input1_type), KERNEL_STATUS_PARAM_INVALID,
-                     "The data type of input0 [%s] need be same with "
-                     "input1 [%s].",
-                     DTypeStr(input0_type).c_str(), DTypeStr(input1_type).c_str())
-  KERNEL_LOG_DEBUG(
-    "DivCpuKernel[%s], input0: size[%llu];"
-    "input1: size[%llu], output: size[%llu].",
-    ctx.GetOpType().c_str(), input_0->GetDataSize(), input_1->GetDataSize(), output->GetDataSize());
+  CUST_KERNEL_CHECK_FALSE(ctx, (input0_type == input1_type), KERNEL_STATUS_PARAM_INVALID,
+                          "The data type of input0 [%s] need be same with "
+                          "input1 [%s].",
+                          DTypeStr(input0_type).c_str(), DTypeStr(input1_type).c_str())
+  CUST_KERNEL_LOG_DEBUG(ctx,
+                        "DivCpuKernel[%s], input0: size[%llu];"
+                        "input1: size[%llu], output: size[%llu].",
+                        ctx.GetOpType().c_str(), input_0->GetDataSize(), input_1->GetDataSize(), output->GetDataSize());
 
   return KERNEL_STATUS_OK;
 }
@@ -106,7 +106,7 @@ uint32_t DivCpuKernel::DivParamCheck_Zero(CpuKernelContext &ctx) {
   int64_t input1_elements_nums = ctx.Input(1)->NumElements();
   for (int64_t i = 0; i < input1_elements_nums; i++) {
     if (static_cast<double>(*(input1 + i)) == 0) {
-      KERNEL_LOG_ERROR("Invalid argumengt: Division by zero.");
+      CUST_KERNEL_LOG_ERROR(ctx, "Invalid argumengt: Division by zero.");
       return KERNEL_STATUS_INNER_ERROR;
     }
   }
@@ -121,13 +121,13 @@ special compute is used in the following situations.
 4. the shapes of input1 and input2 are different
 */
 template <typename T>
-uint32_t DivCpuKernel::SpecialComputeInt(BcastShapeType type, int64_t start, int64_t end, const T *input1,
-                                         const T *input2, T *output) {
+uint32_t DivCpuKernel::SpecialComputeInt(CpuKernelContext &ctx, BcastShapeType type, int64_t start, int64_t end,
+                                         const T *input1, const T *input2, T *output) {
   switch (type) {
     case BcastShapeType::SAME_SHAPE:
       for (int64_t i = start; i < end; ++i) {
         if (*(input2 + i) == static_cast<T>(0)) {
-          KERNEL_LOG_ERROR("Invalid argumengt: Division by zero.");
+          CUST_KERNEL_LOG_ERROR(ctx, "Invalid argumengt: Division by zero.");
           return KERNEL_STATUS_INNER_ERROR;
         } else {
           *(output + i) = (*(input1 + i)) / (*(input2 + i));
@@ -137,7 +137,7 @@ uint32_t DivCpuKernel::SpecialComputeInt(BcastShapeType type, int64_t start, int
     case BcastShapeType::X_ONE_ELEMENT:
       for (int64_t i = start; i < end; ++i) {
         if (*(input2 + i) == static_cast<T>(0)) {
-          KERNEL_LOG_ERROR("Invalid argumengt: Division by zero.");
+          CUST_KERNEL_LOG_ERROR(ctx, "Invalid argumengt: Division by zero.");
           return KERNEL_STATUS_INNER_ERROR;
         } else {
           *(output + i) = (*input1) / (*(input2 + i));
@@ -147,7 +147,7 @@ uint32_t DivCpuKernel::SpecialComputeInt(BcastShapeType type, int64_t start, int
     case BcastShapeType::Y_ONE_ELEMENT:
       for (int64_t i = start; i < end; ++i) {
         if (*input2 == static_cast<T>(0)) {
-          KERNEL_LOG_ERROR("Invalid argumengt: Division by zero.");
+          CUST_KERNEL_LOG_ERROR(ctx, "Invalid argumengt: Division by zero.");
           return KERNEL_STATUS_INNER_ERROR;
         } else {
           *(output + i) = (*(input1 + i)) / (*input2);
@@ -155,15 +155,15 @@ uint32_t DivCpuKernel::SpecialComputeInt(BcastShapeType type, int64_t start, int
       }
       break;
     default:
-      KERNEL_LOG_WARN("Invalid type [%d]", static_cast<int32_t>(type));
+      CUST_KERNEL_LOG_WARN(ctx, "Invalid type [%d]", static_cast<int32_t>(type));
       break;
   }
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t DivCpuKernel::SpecialCompute(BcastShapeType type, int64_t start, int64_t end, const T *input1, const T *input2,
-                                      T *output) {
+uint32_t DivCpuKernel::SpecialCompute(CpuKernelContext &ctx, BcastShapeType type, int64_t start, int64_t end,
+                                      const T *input1, const T *input2, T *output) {
   switch (type) {
     case BcastShapeType::SAME_SHAPE:
       for (int64_t i = start; i < end; ++i) {
@@ -181,7 +181,7 @@ uint32_t DivCpuKernel::SpecialCompute(BcastShapeType type, int64_t start, int64_
       }
       break;
     default:
-      KERNEL_LOG_WARN("Invalid type [%d]", static_cast<int32_t>(type));
+      CUST_KERNEL_LOG_WARN(ctx, "Invalid type [%d]", static_cast<int32_t>(type));
       break;
   }
   return KERNEL_STATUS_OK;
@@ -207,11 +207,11 @@ uint32_t DivCpuKernel::NoBcastComputeInt(CpuKernelContext &ctx) {
     if (max_core_num > data_num) {
       max_core_num = data_num;
     }
-    auto sharder_div = [&](int64_t start, int64_t end) { SpecialComputeInt<T>(type, start, end, in0, in1, out); };
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_div),
-                        "Div Compute failed.");
+    auto sharder_div = [&](int64_t start, int64_t end) { SpecialComputeInt<T>(ctx, type, start, end, in0, in1, out); };
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_div),
+                             "Div Compute failed.");
   } else {
-    SpecialComputeInt<T>(type, 0, data_num, in0, in1, out);
+    SpecialComputeInt<T>(ctx, type, 0, data_num, in0, in1, out);
   }
   return KERNEL_STATUS_OK;
 }
@@ -236,11 +236,11 @@ uint32_t DivCpuKernel::NoBcastCompute(CpuKernelContext &ctx) {
     if (max_core_num > data_num) {
       max_core_num = data_num;
     }
-    auto sharder_div = [&](int64_t start, int64_t end) { SpecialCompute<T>(type, start, end, in0, in1, out); };
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_div),
-                        "Div Compute failed.");
+    auto sharder_div = [&](int64_t start, int64_t end) { SpecialCompute<T>(ctx, type, start, end, in0, in1, out); };
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_div),
+                             "Div Compute failed.");
   } else {
-    SpecialCompute<T>(type, 0, data_num, in0, in1, out);
+    SpecialCompute<T>(ctx, type, 0, data_num, in0, in1, out);
   }
   return KERNEL_STATUS_OK;
 }
@@ -263,7 +263,7 @@ uint32_t DivCpuKernel::BcastComputeInt(CpuKernelContext &ctx, Bcast &bcast) {
     auto sharder_divnonan = [&](int64_t start, int64_t end) {
       for (int64_t i = start; i < end; ++i) {
         if (*(in1 + bcast.GetBroadcastYIndex(i)) == static_cast<T>(0)) {
-          KERNEL_LOG_ERROR("Invalid argumengt: Division by zero.");
+          CUST_KERNEL_LOG_ERROR(ctx, "Invalid argumengt: Division by zero.");
           return KERNEL_STATUS_INNER_ERROR;
         } else {
           T mod;
@@ -278,12 +278,12 @@ uint32_t DivCpuKernel::BcastComputeInt(CpuKernelContext &ctx, Bcast &bcast) {
       }
       return KERNEL_STATUS_OK;
     };
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_divnonan),
-                        "DivNoNan Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_divnonan),
+                             "DivNoNan Compute failed.");
   } else {
     for (int64_t i = 0; i < data_num; ++i) {
       if (*(in1 + bcast.GetBroadcastYIndex(i)) == static_cast<T>(0)) {
-        KERNEL_LOG_ERROR("Invalid argumengt: Division by zero.");
+        CUST_KERNEL_LOG_ERROR(ctx, "Invalid argumengt: Division by zero.");
         return KERNEL_STATUS_INNER_ERROR;
       } else {
         T mod;
@@ -319,8 +319,8 @@ uint32_t DivCpuKernel::BcastCompute(CpuKernelContext &ctx, Bcast &bcast) {
         *(out + i) = *(in0 + bcast.GetBroadcastXIndex(i)) / *(in1 + bcast.GetBroadcastYIndex(i));
       }
     };
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_div),
-                        "Div Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_div),
+                             "Div Compute failed.");
   } else {
     for (int64_t i = 0; i < data_num; ++i) {
       *(out + i) = *(in0 + bcast.GetBroadcastXIndex(i)) / *(in1 + bcast.GetBroadcastYIndex(i));
@@ -341,19 +341,19 @@ uint32_t DivCpuKernel::DivComputeInt(CpuKernelContext &ctx) {
   if (isNeedBcast) {
     uint32_t result1 = DivParamCheck_Zero<T>(ctx);
     if (result1 != KERNEL_STATUS_OK) {
-      KERNEL_LOG_ERROR("Invalid argumengt: Division by zero.");
+      CUST_KERNEL_LOG_ERROR(ctx, "Invalid argumengt: Division by zero.");
       return result1;
     }
     return NoBcastComputeInt<T>(ctx);
   } else {
-    Bcast bcast(input0_shape, input1_shape);
+    Bcast bcast(ctx, input0_shape, input1_shape);
     if (!bcast.IsValid()) {
-      KERNEL_LOG_ERROR("[%s] broadcast failed.", ctx.GetOpType().c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "[%s] broadcast failed.", ctx.GetOpType().c_str());
       return KERNEL_STATUS_PARAM_INVALID;
     }
     uint32_t result1 = DivParamCheck_Zero<T>(ctx);
     if (result1 != KERNEL_STATUS_OK) {
-      KERNEL_LOG_ERROR("Invalid argumengt: Division by zero.");
+      CUST_KERNEL_LOG_ERROR(ctx, "Invalid argumengt: Division by zero.");
       return result1;
     }
     return BcastComputeInt<T>(ctx, bcast);
@@ -373,9 +373,9 @@ uint32_t DivCpuKernel::DivCompute(CpuKernelContext &ctx) {
   if (isNeedBcast) {
     return NoBcastCompute<T>(ctx);
   } else {
-    Bcast bcast(input0_shape, input1_shape);
+    Bcast bcast(ctx, input0_shape, input1_shape);
     if (!bcast.IsValid()) {
-      KERNEL_LOG_ERROR("[%s] broadcast failed.", ctx.GetOpType().c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "[%s] broadcast failed.", ctx.GetOpType().c_str());
       return KERNEL_STATUS_PARAM_INVALID;
     }
     return BcastCompute<T>(ctx, bcast);

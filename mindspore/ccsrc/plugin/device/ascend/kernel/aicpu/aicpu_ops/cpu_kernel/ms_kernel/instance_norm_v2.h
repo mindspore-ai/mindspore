@@ -29,15 +29,15 @@ class InstanceNormV2CpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t InstanceNormV2ParamCheck(const CpuKernelContext &ctx);
-  uint32_t InstanceNormV2ShapeCheck(const CpuKernelContext &ctx);
-  uint32_t InstanceNormV2TypeCheck(const CpuKernelContext &ctx);
-  uint32_t InstanceNormV2AttrCheck(const CpuKernelContext &ctx);
+  uint32_t InstanceNormV2ParamCheck(CpuKernelContext &ctx);
+  uint32_t InstanceNormV2ShapeCheck(CpuKernelContext &ctx);
+  uint32_t InstanceNormV2TypeCheck(CpuKernelContext &ctx);
+  uint32_t InstanceNormV2AttrCheck(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t CollectStatsKernel(const CpuKernelContext &ctx, float *_mean_, float *_var_sum);
+  uint32_t CollectStatsKernel(CpuKernelContext &ctx, float *_mean_, float *_var_sum);
 
-  uint32_t CollectLinearAndConstant(const CpuKernelContext &ctx, const typename TTypes<float>::Vec &gamma,
+  uint32_t CollectLinearAndConstant(CpuKernelContext &ctx, const typename TTypes<float>::Vec &gamma,
                                     const typename TTypes<float>::Vec &beta,
                                     const typename TTypes<float>::Vec &running_mean,
                                     const typename TTypes<float>::Vec &running_var,
@@ -45,13 +45,13 @@ class InstanceNormV2CpuKernel : public CpuKernel {
                                     const typename TTypes<float>::Vec &save_invstd, float *_alpha_, float *_beta_);
 
   template <typename T>
-  uint32_t TransformInput(const CpuKernelContext &ctx);
+  uint32_t TransformInput(CpuKernelContext &ctx);
 
   template <typename T, template <typename S> class VarTransform>
-  uint32_t UpdateStatsTemplate(const CpuKernelContext &ctx);
+  uint32_t UpdateStatsTemplate(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t DoCompute(const CpuKernelContext &ctx);
+  uint32_t DoCompute(CpuKernelContext &ctx);
 
   bool is_training_ = true;
   float momentum_ = 0.1;

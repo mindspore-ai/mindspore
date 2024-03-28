@@ -31,10 +31,10 @@ class TensorScatterUpdateCpuKernel : public CpuKernel {
 
  private:
   template <typename var_type>
-  uint32_t DTypeChoose(const CpuKernelContext &ctx);
+  uint32_t DTypeChoose(CpuKernelContext &ctx);
 
   template <typename var_type, typename indices_type>
-  uint32_t TensorScatterUpdateComputeRealKernel(const CpuKernelContext &ctx);
+  uint32_t TensorScatterUpdateComputeRealKernel(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

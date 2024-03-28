@@ -20,7 +20,7 @@
 #include "context/common/status.h"
 #include "cpu_kernel/format_transfer/format_transfer_utils.h"
 #include "cpu_kernel/format_transfer/formats_definitions.h"
-#include "mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/common/kernel_log.h"
+#include "inc/kernel_log.h"
 #include "securec/include/securec.h"
 #include "utils/kernel_util.h"
 

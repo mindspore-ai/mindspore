@@ -37,7 +37,7 @@ bool isVector(const std::shared_ptr<aicpu::TensorShape> shape) { return shape->G
 }  // namespace
 
 namespace aicpu {
-uint32_t SparseMaximumCpuKernel::NullptrAndMatVecCheck(const CpuKernelContext &ctx, DataBank &databank) {
+uint32_t SparseMaximumCpuKernel::NullptrAndMatVecCheck(CpuKernelContext &ctx, DataBank &databank) {
   databank.a_indices_t = ctx.Input(kIndex0);
   databank.a_values_t = ctx.Input(kIndex1);
   databank.a_shape_t = ctx.Input(kIndex2);
@@ -46,21 +46,22 @@ uint32_t SparseMaximumCpuKernel::NullptrAndMatVecCheck(const CpuKernelContext &c
   databank.b_shape_t = ctx.Input(kIndex5);
   databank.output_indices_t = ctx.Output(kIndex0);
   databank.output_values_t = ctx.Output(kIndex1);
-  KERNEL_CHECK_FALSE(
-    isMatrix(databank.a_indices_t->GetTensorShape()) && isMatrix(databank.b_indices_t->GetTensorShape()),
+  CUST_KERNEL_CHECK_FALSE(
+    ctx, isMatrix(databank.a_indices_t->GetTensorShape()) && isMatrix(databank.b_indices_t->GetTensorShape()),
     KERNEL_STATUS_PARAM_INVALID,
     "Inputs a_indices and b_indices should be "
     "matrices but received shapes: [%d], [%d]",
     databank.a_indices_t->GetTensorShape()->GetDims(), databank.b_indices_t->GetTensorShape()->GetDims());
-  KERNEL_CHECK_FALSE(isVector(databank.a_values_t->GetTensorShape()) && isVector(databank.b_values_t->GetTensorShape()),
-                     KERNEL_STATUS_PARAM_INVALID,
-                     "Inputs a_values and b_values should be vectors "
-                     "but received shapes: [%d] and [%d]",
-                     databank.a_values_t->GetTensorShape()->GetDims(),
-                     databank.b_values_t->GetTensorShape()->GetDims());
-  KERNEL_CHECK_FALSE(isVector(databank.a_shape_t->GetTensorShape()) && isVector(databank.b_shape_t->GetTensorShape()),
-                     KERNEL_STATUS_PARAM_INVALID, "Input shapes should be a vector but received shapes [%d] and [%d]",
-                     databank.a_shape_t->GetTensorShape()->GetDims(), databank.b_shape_t->GetTensorShape()->GetDims());
+  CUST_KERNEL_CHECK_FALSE(
+    ctx, isVector(databank.a_values_t->GetTensorShape()) && isVector(databank.b_values_t->GetTensorShape()),
+    KERNEL_STATUS_PARAM_INVALID,
+    "Inputs a_values and b_values should be vectors "
+    "but received shapes: [%d] and [%d]",
+    databank.a_values_t->GetTensorShape()->GetDims(), databank.b_values_t->GetTensorShape()->GetDims());
+  CUST_KERNEL_CHECK_FALSE(
+    ctx, isVector(databank.a_shape_t->GetTensorShape()) && isVector(databank.b_shape_t->GetTensorShape()),
+    KERNEL_STATUS_PARAM_INVALID, "Input shapes should be a vector but received shapes [%d] and [%d]",
+    databank.a_shape_t->GetTensorShape()->GetDims(), databank.b_shape_t->GetTensorShape()->GetDims());
 
   return KERNEL_STATUS_OK;
 }
@@ -131,7 +132,7 @@ void SparseMaximumCpuKernel::UnionSparseIndicesAndValues(typename TTypes<int64_t
 }
 
 template <typename T>
-uint32_t SparseMaximumCpuKernel::EigenedSparseMax(const DataBank &databank) {
+uint32_t SparseMaximumCpuKernel::EigenedSparseMax(CpuKernelContext &ctx, const DataBank &databank) {
   const int64_t a_nnz = databank.a_indices_t->GetTensorShape()->GetDimSize(0);
   const int64_t b_nnz = databank.b_indices_t->GetTensorShape()->GetDimSize(0);
   EigenTensor a_values_t(databank.a_values_t, databank.a_values_t->GetData());
@@ -150,22 +151,24 @@ uint32_t SparseMaximumCpuKernel::EigenedSparseMax(const DataBank &databank) {
   EigenTensor b_shape_t(databank.b_shape_t, databank.b_shape_t->GetData());
   const auto b_shape = b_shape_t.flat<int64_t>();
 
-  KERNEL_CHECK_FALSE(a_values.size() == a_nnz && b_values.size() == b_nnz, KERNEL_STATUS_PARAM_INVALID,
-                     "Expected [%d] and [%d] non-empty input values, got [%d] and [%d]", a_nnz, b_nnz, a_values.size(),
-                     b_values.size());
-  KERNEL_CHECK_FALSE(databank.a_shape_t->GetTensorShape()->NumElements() == num_dims, KERNEL_STATUS_PARAM_INVALID,
-                     "Second dimension of a_indices and length of "
-                     "a_shape must match, got [%d] and [%d]",
-                     databank.a_shape_t->GetTensorShape()->NumElements(), num_dims);
-  KERNEL_CHECK_FALSE(num_dims > 0, KERNEL_STATUS_PARAM_INVALID, "Tensors must not be empty");
-  KERNEL_CHECK_FALSE(
-    databank.a_shape_t->GetTensorShape()->NumElements() == databank.b_shape_t->GetTensorShape()->NumElements(),
+  CUST_KERNEL_CHECK_FALSE(ctx, a_values.size() == a_nnz && b_values.size() == b_nnz, KERNEL_STATUS_PARAM_INVALID,
+                          "Expected [%d] and [%d] non-empty input values, got [%d] and [%d]", a_nnz, b_nnz,
+                          a_values.size(), b_values.size());
+  CUST_KERNEL_CHECK_FALSE(ctx, databank.a_shape_t->GetTensorShape()->NumElements() == num_dims,
+                          KERNEL_STATUS_PARAM_INVALID,
+                          "Second dimension of a_indices and length of "
+                          "a_shape must match, got [%d] and [%d]",
+                          databank.a_shape_t->GetTensorShape()->NumElements(), num_dims);
+  CUST_KERNEL_CHECK_FALSE(ctx, num_dims > 0, KERNEL_STATUS_PARAM_INVALID, "Tensors must not be empty");
+  CUST_KERNEL_CHECK_FALSE(
+    ctx, databank.a_shape_t->GetTensorShape()->NumElements() == databank.b_shape_t->GetTensorShape()->NumElements(),
     KERNEL_STATUS_PARAM_INVALID, "Operands do not have the same ranks; got shapes: [%d] and [%d]",
     databank.a_shape_t->GetTensorShape()->NumElements(), databank.b_shape_t->GetTensorShape()->NumElements());
 
   for (int i = 0; i < num_dims; ++i) {
-    KERNEL_CHECK_FALSE(a_shape(i) == b_shape(i), KERNEL_STATUS_PARAM_INVALID,
-                       "Operands' shapes do not match: got [%d] and [%d] for dimension [%d]", a_shape(i), b_shape(i), i)
+    CUST_KERNEL_CHECK_FALSE(ctx, a_shape(i) == b_shape(i), KERNEL_STATUS_PARAM_INVALID,
+                            "Operands' shapes do not match: got [%d] and [%d] for dimension [%d]", a_shape(i),
+                            b_shape(i), i)
   }
 
   std::vector<T> a_augmented_values;
@@ -196,48 +199,48 @@ uint32_t SparseMaximumCpuKernel::EigenedSparseMax(const DataBank &databank) {
 }
 
 uint32_t SparseMaximumCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum),
-                      "SparseSparseMaximum check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "SparseSparseMaximum check input and output number failed.");
 
   DataBank databank;
-  KERNEL_HANDLE_ERROR(NullptrAndMatVecCheck(ctx, databank), "SparseSparseMaximum check params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NullptrAndMatVecCheck(ctx, databank), "SparseSparseMaximum check params failed.");
 
   DataType dt = static_cast<DataType>(databank.output_values_t->GetDataType());
   uint32_t KERNEL_STATUS;
   switch (dt) {
     case DT_INT8:
-      KERNEL_STATUS = EigenedSparseMax<int8_t>(databank);
+      KERNEL_STATUS = EigenedSparseMax<int8_t>(ctx, databank);
       break;
     case DT_UINT8:
-      KERNEL_STATUS = EigenedSparseMax<uint8_t>(databank);
+      KERNEL_STATUS = EigenedSparseMax<uint8_t>(ctx, databank);
       break;
     case DT_INT16:
-      KERNEL_STATUS = EigenedSparseMax<int16_t>(databank);
+      KERNEL_STATUS = EigenedSparseMax<int16_t>(ctx, databank);
       break;
     case DT_UINT16:
-      KERNEL_STATUS = EigenedSparseMax<uint16_t>(databank);
+      KERNEL_STATUS = EigenedSparseMax<uint16_t>(ctx, databank);
       break;
     case DT_INT32:
-      KERNEL_STATUS = EigenedSparseMax<int32_t>(databank);
+      KERNEL_STATUS = EigenedSparseMax<int32_t>(ctx, databank);
       break;
     case DT_INT64:
-      KERNEL_STATUS = EigenedSparseMax<int64_t>(databank);
+      KERNEL_STATUS = EigenedSparseMax<int64_t>(ctx, databank);
       break;
     case DT_FLOAT16:
-      KERNEL_STATUS = EigenedSparseMax<Eigen::half>(databank);
+      KERNEL_STATUS = EigenedSparseMax<Eigen::half>(ctx, databank);
       break;
     case DT_FLOAT:
-      KERNEL_STATUS = EigenedSparseMax<float>(databank);
+      KERNEL_STATUS = EigenedSparseMax<float>(ctx, databank);
       break;
     case DT_DOUBLE:
-      KERNEL_STATUS = EigenedSparseMax<double>(databank);
+      KERNEL_STATUS = EigenedSparseMax<double>(ctx, databank);
       break;
     default:
-      KERNEL_LOG_ERROR("SparseSparseMaximum can't support this data type [%d].", dt);
+      CUST_KERNEL_LOG_ERROR(ctx, "SparseSparseMaximum can't support this data type [%d].", dt);
       return KERNEL_STATUS_PARAM_INVALID;
   }
   if (KERNEL_STATUS != KERNEL_STATUS_OK) {
-    KERNEL_LOG_ERROR("SparseSparseMaximum failed.");
+    CUST_KERNEL_LOG_ERROR(ctx, "SparseSparseMaximum failed.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;

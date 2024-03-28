@@ -28,7 +28,7 @@ class EpsCpuKernel : public CpuKernel {
 
  private:
   template <typename T>
-  uint32_t EpsPartCompute(const CpuKernelContext &ctx);
+  uint32_t EpsPartCompute(CpuKernelContext &ctx);
 
   template <typename T>
   void SpecialEpsOutput(int64_t start, int64_t end, T *output_data, T value);

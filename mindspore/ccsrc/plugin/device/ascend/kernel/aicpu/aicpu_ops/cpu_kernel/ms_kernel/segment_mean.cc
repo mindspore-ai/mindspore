@@ -20,6 +20,7 @@
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
+namespace aicpu {
 namespace {
 constexpr int64_t kValueTwo = 2;
 const uint32_t kInputNum = 2;
@@ -27,14 +28,14 @@ const uint32_t kOutputNum = 1;
 const int64_t kParallelDataNum = 2 * 1024;
 const char *kSegmentMean = "SegmentMean";
 
-#define SEGMENTMEAN_COMPUTE_CASE(DTYPE, TYPE1, TYPE2, CTX)    \
-  case (DTYPE): {                                             \
-    uint32_t result = SegmentMeanCompute<TYPE1, TYPE2>(CTX);  \
-    if (result != KERNEL_STATUS_OK) {                         \
-      KERNEL_LOG_ERROR("SegmentMean kernel compute failed."); \
-      return result;                                          \
-    }                                                         \
-    break;                                                    \
+#define SEGMENTMEAN_COMPUTE_CASE(DTYPE, TYPE1, TYPE2, CTX)              \
+  case (DTYPE): {                                                       \
+    uint32_t result = SegmentMeanCompute<TYPE1, TYPE2>(CTX);            \
+    if (result != KERNEL_STATUS_OK) {                                   \
+      CUST_KERNEL_LOG_ERROR(ctx, "SegmentMean kernel compute failed."); \
+      return result;                                                    \
+    }                                                                   \
+    break;                                                              \
   }
 
 #define SEGMENTMEAN_COMPUTE_CASE_ALL(TYPE, CTX)                            \
@@ -53,16 +54,16 @@ const char *kSegmentMean = "SegmentMean";
   SEGMENTMEAN_COMPUTE_CASE(DT_DOUBLE, double, TYPE, CTX)
 
 template <typename T>
-uint32_t SegmentIdsCompute(const T *segment_ids_data_addr, const int64_t segment_ids_data_num,
+uint32_t SegmentIdsCompute(CpuKernelContext &ctx, const T *segment_ids_data_addr, const int64_t segment_ids_data_num,
                            std::vector<int64_t> *const segments) {
   if (segment_ids_data_addr[0] < 0) {
-    KERNEL_LOG_ERROR("Input[1] must be nonnegative data.");
+    CUST_KERNEL_LOG_ERROR(ctx, "Input[1] must be nonnegative data.");
     return aicpu::KERNEL_STATUS_PARAM_INVALID;
   }
   int64_t seg_tmp = 1;
   for (int64_t i = 0; i < segment_ids_data_num - 1; i++) {
     if (segment_ids_data_addr[i] > segment_ids_data_addr[i + 1]) {
-      KERNEL_LOG_ERROR("Input[1] must be an ascending ordered sequence.");
+      CUST_KERNEL_LOG_ERROR(ctx, "Input[1] must be an ascending ordered sequence.");
       return aicpu::KERNEL_STATUS_PARAM_INVALID;
     }
     if (segment_ids_data_addr[i] == segment_ids_data_addr[i + 1]) {
@@ -119,15 +120,15 @@ void InnerCompute(int64_t start, int64_t end, const int64_t &input_addr_base, T1
 }
 }  // namespace
 
-namespace aicpu {
 uint32_t SegmentMeanCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "SegmentMean check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "SegmentMean check input and output number failed.");
   Tensor *input_data = ctx.Input(0);
-  KERNEL_CHECK_NULLPTR(input_data->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input[0] failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input_data->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input[0] failed.")
   Tensor *segment_ids_data = ctx.Input(1);
-  KERNEL_CHECK_NULLPTR(segment_ids_data->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input[1] failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, segment_ids_data->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input[1] failed.")
   Tensor *output_data = ctx.Output(0);
-  KERNEL_CHECK_NULLPTR(output_data->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output[0] failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, output_data->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output[0] failed.");
   auto data_type = ctx.Input(0)->GetDataType();
   auto segment_ids_type = ctx.Input(1)->GetDataType();
   switch (segment_ids_type) {
@@ -135,7 +136,7 @@ uint32_t SegmentMeanCpuKernel::Compute(CpuKernelContext &ctx) {
       switch (data_type) {
         SEGMENTMEAN_COMPUTE_CASE_ALL(int32_t, ctx)
         default:
-          KERNEL_LOG_ERROR("Input[0] data type[%s] not supported.", DTypeStr(data_type).c_str());
+          CUST_KERNEL_LOG_ERROR(ctx, "Input[0] data type[%s] not supported.", DTypeStr(data_type).c_str());
           return KERNEL_STATUS_PARAM_INVALID;
       }
       break;
@@ -144,13 +145,13 @@ uint32_t SegmentMeanCpuKernel::Compute(CpuKernelContext &ctx) {
       switch (data_type) {
         SEGMENTMEAN_COMPUTE_CASE_ALL(int64_t, ctx)
         default:
-          KERNEL_LOG_ERROR("Input[0] data type[%s] not supported.", DTypeStr(data_type).c_str());
+          CUST_KERNEL_LOG_ERROR(ctx, "Input[0] data type[%s] not supported.", DTypeStr(data_type).c_str());
           return KERNEL_STATUS_PARAM_INVALID;
       }
       break;
     }
     default: {
-      KERNEL_LOG_ERROR("Input[1] data type[%s] not supported.", DTypeStr(segment_ids_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Input[1] data type[%s] not supported.", DTypeStr(segment_ids_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
     }
   }
@@ -158,7 +159,7 @@ uint32_t SegmentMeanCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename T1, typename T2>
-uint32_t SegmentMeanCpuKernel::SegmentMeanCompute(const CpuKernelContext &ctx) {
+uint32_t SegmentMeanCpuKernel::SegmentMeanCompute(CpuKernelContext &ctx) {
   Tensor *input_data = ctx.Input(0);
   auto input_data_addr = reinterpret_cast<T1 *>(input_data->GetData());
   int64_t input_data_num = input_data->NumElements();
@@ -177,10 +178,10 @@ uint32_t SegmentMeanCpuKernel::SegmentMeanCompute(const CpuKernelContext &ctx) {
   }
   std::vector<int64_t> segments;
   if (segment_ids_data_num != (input_data->GetTensorShape()->GetDimSize(0))) {
-    KERNEL_LOG_ERROR("The amount of data for input[1] must be equal to the first dimension of input[0].");
+    CUST_KERNEL_LOG_ERROR(ctx, "The amount of data for input[1] must be equal to the first dimension of input[0].");
     return KERNEL_STATUS_PARAM_INVALID;
   }
-  if (auto status = SegmentIdsCompute(segment_ids_data_addr, segment_ids_data_num, &segments);
+  if (auto status = SegmentIdsCompute(ctx, segment_ids_data_addr, segment_ids_data_num, &segments);
       status != KERNEL_STATUS_OK) {
     return status;
   }
@@ -208,8 +209,8 @@ uint32_t SegmentMeanCpuKernel::SegmentMeanCompute(const CpuKernelContext &ctx) {
           InnerCompute(static_cast<int64_t>(start), static_cast<int64_t>(end), input_addr_base, input_data_addr,
                        output_data_addr, segment_ids_data_addr, count, num_compare_per, count_no);
         };
-        KERNEL_HANDLE_ERROR(
-          CpuKernelUtils::ParallelFor(ctx, num_compare_per, num_compare_per / mean_core_num, shard_compute),
+        CUST_KERNEL_HANDLE_ERROR(
+          ctx, CpuKernelUtils::ParallelFor(ctx, num_compare_per, num_compare_per / mean_core_num, shard_compute),
           "SegmentMean Compute failed.");
       }
     }
@@ -231,8 +232,8 @@ uint32_t SegmentMeanCpuKernel::SegmentMeanCompute(const CpuKernelContext &ctx) {
                      count, num_compare_per, count_no);
       }
     };
-    KERNEL_HANDLE_ERROR(
-      CpuKernelUtils::ParallelFor(ctx, num_segments, num_segments / mean_core_num_seg, shard_compute_seg),
+    CUST_KERNEL_HANDLE_ERROR(
+      ctx, CpuKernelUtils::ParallelFor(ctx, num_segments, num_segments / mean_core_num_seg, shard_compute_seg),
       "SegmentMean Compute failed.");
   }
   return KERNEL_STATUS_OK;

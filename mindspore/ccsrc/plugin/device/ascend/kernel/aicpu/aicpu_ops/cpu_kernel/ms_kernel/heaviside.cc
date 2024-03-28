@@ -31,14 +31,14 @@ const int64_t kParallelDataNumMid = 16 * 1024;
 const int64_t kParallelDataNumSameShape = 7 * 1024;
 const int64_t kParallelDataNumSameShapeMid = 35 * 1024;
 
-#define HEAVISIDE_COMPUTE_CASE(DTYPE, TYPE, CTX)            \
-  case (DTYPE): {                                           \
-    uint32_t result = HeavisideCompute<TYPE>(CTX);          \
-    if (result != KERNEL_STATUS_OK) {                       \
-      KERNEL_LOG_ERROR("Heaviside kernel compute failed."); \
-      return result;                                        \
-    }                                                       \
-    break;                                                  \
+#define HEAVISIDE_COMPUTE_CASE(DTYPE, TYPE, CTX)                      \
+  case (DTYPE): {                                                     \
+    uint32_t result = HeavisideCompute<TYPE>(CTX);                    \
+    if (result != KERNEL_STATUS_OK) {                                 \
+      CUST_KERNEL_LOG_ERROR(ctx, "Heaviside kernel compute failed."); \
+      return result;                                                  \
+    }                                                                 \
+    break;                                                            \
   }
 }  // namespace
 
@@ -49,8 +49,9 @@ T heaviside(T a, T b) {
 }
 
 uint32_t HeavisideCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "Heaviside check input and output number failed.");
-  KERNEL_HANDLE_ERROR(HeavisideParamCheck(ctx), "Heaviside check params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "Heaviside check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, HeavisideParamCheck(ctx), "Heaviside check params failed.");
   auto data_type = ctx.Input(0)->GetDataType();
   switch (data_type) {
     HEAVISIDE_COMPUTE_CASE(DT_DOUBLE, double, ctx)
@@ -65,33 +66,33 @@ uint32_t HeavisideCpuKernel::Compute(CpuKernelContext &ctx) {
     HEAVISIDE_COMPUTE_CASE(DT_UINT64, uint64_t, ctx)
     HEAVISIDE_COMPUTE_CASE(DT_UINT8, uint8_t, ctx)
     default:
-      KERNEL_LOG_ERROR("Heaviside kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Heaviside kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 
   return KERNEL_STATUS_OK;
 }
 
-uint32_t HeavisideCpuKernel::HeavisideParamCheck(const CpuKernelContext &ctx) {
+uint32_t HeavisideCpuKernel::HeavisideParamCheck(CpuKernelContext &ctx) {
   Tensor *input_0 = ctx.Input(0);
   Tensor *input_1 = ctx.Input(1);
   Tensor *output = ctx.Output(0);
   DataType input0_type = input_0->GetDataType();
   DataType input1_type = input_1->GetDataType();
-  KERNEL_CHECK_FALSE((input0_type == input1_type), KERNEL_STATUS_PARAM_INVALID,
-                     "The data type of input0 [%s] need be same with "
-                     "input1 [%s].",
-                     DTypeStr(input0_type).c_str(), DTypeStr(input1_type).c_str())
-  KERNEL_LOG_DEBUG(
-    "HeavisideCpuKernel[%s], input0: size[%llu];"
-    "input1: size[%llu], output: size[%llu].",
-    ctx.GetOpType().c_str(), input_0->GetDataSize(), input_1->GetDataSize(), output->GetDataSize());
+  CUST_KERNEL_CHECK_FALSE(ctx, (input0_type == input1_type), KERNEL_STATUS_PARAM_INVALID,
+                          "The data type of input0 [%s] need be same with "
+                          "input1 [%s].",
+                          DTypeStr(input0_type).c_str(), DTypeStr(input1_type).c_str())
+  CUST_KERNEL_LOG_DEBUG(ctx,
+                        "HeavisideCpuKernel[%s], input0: size[%llu];"
+                        "input1: size[%llu], output: size[%llu].",
+                        ctx.GetOpType().c_str(), input_0->GetDataSize(), input_1->GetDataSize(), output->GetDataSize());
 
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t NoBcastComputeParallel(const CpuKernelContext &ctx, const BcastShapeType &type, T *in0, T *in1, T *out,
+uint32_t NoBcastComputeParallel(CpuKernelContext &ctx, const BcastShapeType &type, T *in0, T *in1, T *out,
                                 const int64_t &data_num) {
   uint32_t min_core_num = 1;
   uint32_t max_core_num = std::max(min_core_num, aicpu::CpuKernelUtils::GetCPUNum(ctx) - kResvCpuNum);
@@ -122,21 +123,22 @@ uint32_t NoBcastComputeParallel(const CpuKernelContext &ctx, const BcastShapeTyp
         }
         break;
       default:
-        KERNEL_LOG_ERROR("Invalid type [%d]", static_cast<int32_t>(type));
+        CUST_KERNEL_LOG_ERROR(ctx, "Invalid type [%d]", static_cast<int32_t>(type));
         break;
     }
   };
 
   if (max_core_num == 0) {
-    KERNEL_LOG_ERROR("max_core_num could not be 0");
+    CUST_KERNEL_LOG_ERROR(ctx, "max_core_num could not be 0");
   }
-  KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_heaviside),
-                      "Heaviside Compute failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_heaviside),
+                           "Heaviside Compute failed.");
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-void NoBcastComputeSingle(const BcastShapeType &type, T *in0, T *in1, T *out, const int64_t &data_num) {
+void NoBcastComputeSingle(CpuKernelContext &ctx, const BcastShapeType &type, T *in0, T *in1, T *out,
+                          const int64_t &data_num) {
   switch (type) {
     case BcastShapeType::SAME_SHAPE:
       for (int64_t i = static_cast<int64_t>(0); i < data_num; ++i) {
@@ -154,13 +156,13 @@ void NoBcastComputeSingle(const BcastShapeType &type, T *in0, T *in1, T *out, co
       }
       break;
     default:
-      KERNEL_LOG_WARN("Invalid type [%d]", static_cast<int32_t>(type));
+      CUST_KERNEL_LOG_WARN(ctx, "Invalid type [%d]", static_cast<int32_t>(type));
       break;
   }
 }
 
 template <typename T>
-uint32_t HeavisideCpuKernel::NoBcastCompute(const CpuKernelContext &ctx) {
+uint32_t HeavisideCpuKernel::NoBcastCompute(CpuKernelContext &ctx) {
   auto in0 = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto in1 = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   auto out = reinterpret_cast<T *>(ctx.Output(0)->GetData());
@@ -178,17 +180,17 @@ uint32_t HeavisideCpuKernel::NoBcastCompute(const CpuKernelContext &ctx) {
   if (data_num >= kParallelDataNumSameShape) {
     uint32_t res = NoBcastComputeParallel<T>(ctx, type, in0, in1, out, data_num);
     if (res != static_cast<uint32_t>(KERNEL_STATUS_OK)) {
-      KERNEL_LOG_ERROR("Heaviside kernel NoBcastComputeParallel failed.");
+      CUST_KERNEL_LOG_ERROR(ctx, "Heaviside kernel NoBcastComputeParallel failed.");
       return res;
     }
   } else {
-    NoBcastComputeSingle<T>(type, in0, in1, out, data_num);
+    NoBcastComputeSingle<T>(ctx, type, in0, in1, out, data_num);
   }
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t HeavisideCpuKernel::BcastCompute(const CpuKernelContext &ctx, const Bcast &bcast) {
+uint32_t HeavisideCpuKernel::BcastCompute(CpuKernelContext &ctx, const Bcast &bcast) {
   T *in0 = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   T *in1 = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   T *out = reinterpret_cast<T *>(ctx.Output(0)->GetData());
@@ -212,10 +214,11 @@ uint32_t HeavisideCpuKernel::BcastCompute(const CpuKernelContext &ctx, const Bca
     };
 
     if (max_core_num == 0) {
-      KERNEL_LOG_ERROR("max_core_num could not be 0");
+      CUST_KERNEL_LOG_ERROR(ctx, "max_core_num could not be 0");
     }
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_heaviside),
-                        "Heaviside Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx,
+                             CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_heaviside),
+                             "Heaviside Compute failed.");
   } else {
     for (int64_t i = 0; i < data_num; ++i) {
       *(out + i) = heaviside<T>(*(in0 + bcast.GetBroadcastXIndex(i)), *(in1 + bcast.GetBroadcastYIndex(i)));
@@ -225,7 +228,7 @@ uint32_t HeavisideCpuKernel::BcastCompute(const CpuKernelContext &ctx, const Bca
 }
 
 template <typename T>
-uint32_t HeavisideCpuKernel::HeavisideCompute(const CpuKernelContext &ctx) {
+uint32_t HeavisideCpuKernel::HeavisideCompute(CpuKernelContext &ctx) {
   Tensor *input0_tensor = ctx.Input(0);
   auto input0_shape = input0_tensor->GetTensorShape()->GetDimSizes();
   int64_t input0_elements_nums = input0_tensor->NumElements();
@@ -238,9 +241,9 @@ uint32_t HeavisideCpuKernel::HeavisideCompute(const CpuKernelContext &ctx) {
   if (isNeedBcast) {
     return NoBcastCompute<T>(ctx);
   } else {
-    Bcast bcast(input0_shape, input1_shape);
+    Bcast bcast(ctx, input0_shape, input1_shape);
     if (!bcast.IsValid()) {
-      KERNEL_LOG_ERROR("[%s] broadcast failed.", ctx.GetOpType().c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "[%s] broadcast failed.", ctx.GetOpType().c_str());
       return KERNEL_STATUS_PARAM_INVALID;
     }
 

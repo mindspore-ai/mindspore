@@ -26,22 +26,22 @@ const char *kDiag = "Diag";
 constexpr int64_t kParallelDataNums = 80 * 32;
 constexpr int64_t kParallelDataNumsMid = 8 * 1024;
 
-#define DIAG_COMPUTE_CASE(DTYPE, TYPE, CTX)            \
-  case (DTYPE): {                                      \
-    uint32_t result = DiagCompute<TYPE>(CTX);          \
-    if (result != KERNEL_STATUS_OK) {                  \
-      KERNEL_LOG_ERROR("Diag kernel compute failed."); \
-      return result;                                   \
-    }                                                  \
-    break;                                             \
+#define DIAG_COMPUTE_CASE(DTYPE, TYPE, CTX)                      \
+  case (DTYPE): {                                                \
+    uint32_t result = DiagCompute<TYPE>(CTX);                    \
+    if (result != KERNEL_STATUS_OK) {                            \
+      CUST_KERNEL_LOG_ERROR(ctx, "Diag kernel compute failed."); \
+      return result;                                             \
+    }                                                            \
+    break;                                                       \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t DiagCpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.", kDiag);
-  KERNEL_HANDLE_ERROR(DiagCheck(ctx), "[%s] check params failed.", kDiag);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.", kDiag);
+  CUST_KERNEL_HANDLE_ERROR(ctx, DiagCheck(ctx), "[%s] check params failed.", kDiag);
   auto data_type = ctx.Input(0)->GetDataType();
   switch (data_type) {
     DIAG_COMPUTE_CASE(DT_FLOAT16, Eigen::half, ctx)
@@ -52,7 +52,7 @@ uint32_t DiagCpuKernel::Compute(CpuKernelContext &ctx) {
     DIAG_COMPUTE_CASE(DT_COMPLEX64, std::complex<float>, ctx)
     DIAG_COMPUTE_CASE(DT_COMPLEX128, std::complex<double>, ctx)
     default:
-      KERNEL_LOG_ERROR("Diag kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Diag kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 
@@ -60,24 +60,26 @@ uint32_t DiagCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 uint32_t DiagCpuKernel::DiagCheck(CpuKernelContext &ctx) {
-  KERNEL_CHECK_NULLPTR(ctx.Input(0)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input data failed.")
-  KERNEL_CHECK_NULLPTR(ctx.Output(0)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output data failed.")
-  KERNEL_CHECK_NULLPTR(ctx.Input(0)->GetTensorShape(), KERNEL_STATUS_PARAM_INVALID, "Get input tensor shape failed.")
-  KERNEL_CHECK_NULLPTR(ctx.Output(0)->GetTensorShape(), KERNEL_STATUS_PARAM_INVALID, "Get output tensor shape failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.Input(0)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.Output(0)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.Input(0)->GetTensorShape(), KERNEL_STATUS_PARAM_INVALID,
+                            "Get input tensor shape failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.Output(0)->GetTensorShape(), KERNEL_STATUS_PARAM_INVALID,
+                            "Get output tensor shape failed.")
 
   std::vector<int64_t> shape_input = ctx.Input(0)->GetTensorShape()->GetDimSizes();
   std::vector<int64_t> shape_output = ctx.Output(0)->GetTensorShape()->GetDimSizes();
-  KERNEL_CHECK_FALSE((shape_input.size() != 0), KERNEL_STATUS_PARAM_INVALID,
-                     "Input must be at least rank 1, got [%zu].", shape_input.size())
-  KERNEL_CHECK_FALSE((shape_input.size() != shape_output.size() * 2), KERNEL_STATUS_PARAM_INVALID,
-                     "The output shape size should be twice the output shape size, "
-                     "but the input shape size is [%zu] and the output shape size is [%zu].",
-                     shape_input.size(), shape_output.size())
+  CUST_KERNEL_CHECK_FALSE(ctx, (shape_input.size() != 0), KERNEL_STATUS_PARAM_INVALID,
+                          "Input must be at least rank 1, got [%zu].", shape_input.size())
+  CUST_KERNEL_CHECK_FALSE(ctx, (shape_input.size() != shape_output.size() * 2), KERNEL_STATUS_PARAM_INVALID,
+                          "The output shape size should be twice the output shape size, "
+                          "but the input shape size is [%zu] and the output shape size is [%zu].",
+                          shape_input.size(), shape_output.size())
   for (size_t i = 0; i < shape_output.size(); ++i) {
-    KERNEL_CHECK_FALSE((shape_input[i % shape_input.size()] == shape_output[i]), KERNEL_STATUS_PARAM_INVALID,
-                       "Invalid shape: the input dimension [%zu] size [%zu] does not match "
-                       "the output dimension [%zu] size [%zu].",
-                       i % shape_input.size(), shape_input[i % shape_input.size()], i, shape_output[i])
+    CUST_KERNEL_CHECK_FALSE(ctx, (shape_input[i % shape_input.size()] == shape_output[i]), KERNEL_STATUS_PARAM_INVALID,
+                            "Invalid shape: the input dimension [%zu] size [%zu] does not match "
+                            "the output dimension [%zu] size [%zu].",
+                            i % shape_input.size(), shape_input[i % shape_input.size()], i, shape_output[i])
   }
 
   return KERNEL_STATUS_OK;
@@ -111,8 +113,8 @@ uint32_t DiagCpuKernel::DiagCompute(CpuKernelContext &ctx) {
         *(output + (1 + size) * index) = *(input + index);
       }
     };
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, size, size / max_core_num, shard_diag),
-                        "Diag Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, size, size / max_core_num, shard_diag),
+                             "Diag Compute failed.");
   }
   return KERNEL_STATUS_OK;
 }

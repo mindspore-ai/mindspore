@@ -39,11 +39,11 @@ constexpr int32_t kRank = 2;
 }  // namespace aicpu
 
 namespace aicpu {
-uint32_t SparseToDenseCpuKernel::SparseToDense(const CpuKernelContext &ctx, SparseTensor *st, const Tensor *indices,
+uint32_t SparseToDenseCpuKernel::SparseToDense(CpuKernelContext &ctx, SparseTensor *st, const Tensor *indices,
                                                Tensor *output) {
-  KERNEL_LOG_INFO("Start to execute SparseToDense");
+  CUST_KERNEL_LOG_INFO(ctx, "Start to execute SparseToDense");
   if (indices == nullptr || output == nullptr) {
-    KERNEL_LOG_ERROR("Indices or output tensor is nullptr.");
+    CUST_KERNEL_LOG_ERROR(ctx, "Indices or output tensor is nullptr.");
     return static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID);
   }
 
@@ -70,13 +70,13 @@ uint32_t SparseToDenseCpuKernel::SparseToDense(const CpuKernelContext &ctx, Spar
     case DT_DOUBLE:
       return EigenSparseToDense<double>(ctx, st, indices, output);
     default:
-      KERNEL_LOG_ERROR("Sparse to dense can't support this data type [%d].", static_cast<int32_t>(dt));
+      CUST_KERNEL_LOG_ERROR(ctx, "Sparse to dense can't support this data type [%d].", static_cast<int32_t>(dt));
       return static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID);
   }
 }
 
-KernelStatus SparseToDenseCpuKernel::ValidParam(const CpuKernelContext &ctx) {
-  KERNEL_LOG_INFO("Start to execute ValidParam");
+KernelStatus SparseToDenseCpuKernel::ValidParam(CpuKernelContext &ctx) {
+  CUST_KERNEL_LOG_INFO(ctx, "Start to execute ValidParam");
   // valid input and output nullptr
   Tensor *indices_tensor = ctx.Input(0);
   Tensor *shape_tensor = ctx.Input(1);
@@ -86,7 +86,7 @@ KernelStatus SparseToDenseCpuKernel::ValidParam(const CpuKernelContext &ctx) {
   bool validNull = ((output_tensor == nullptr) || default_value_tensor == nullptr || (sparse_values == nullptr) ||
                     (indices_tensor == nullptr) || (shape_tensor == nullptr));
   if (validNull) {
-    KERNEL_LOG_ERROR("Got input or output param is nullptr.");
+    CUST_KERNEL_LOG_ERROR(ctx, "Got input or output param is nullptr.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
@@ -98,16 +98,16 @@ KernelStatus SparseToDenseCpuKernel::ValidParam(const CpuKernelContext &ctx) {
   bool validShapeNull = ((default_value_shape == nullptr) || values_shape == nullptr || (output_shape == nullptr) ||
                          (indices_shape == nullptr));
   if (validShapeNull) {
-    KERNEL_LOG_ERROR("Got input shape is nullptr.");
+    CUST_KERNEL_LOG_ERROR(ctx, "Got input shape is nullptr.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
   // sparse_indices
   if (indices_shape->GetDims() > kRank) {
-    KERNEL_LOG_ERROR(
-      "Sparse_indices should be a scalar, vector, or matrix, got dim "
-      "size [%d].",
-      indices_shape->GetDims());
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "Sparse_indices should be a scalar, vector, or matrix, got dim "
+                          "size [%d].",
+                          indices_shape->GetDims());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   const int64_t elems_num = indices_shape->GetDims() > 0 ? indices_shape->GetDimSize(0) : 1;
@@ -115,12 +115,12 @@ KernelStatus SparseToDenseCpuKernel::ValidParam(const CpuKernelContext &ctx) {
 
   // output_shape
   if (output_shape->GetDims() != 1) {
-    KERNEL_LOG_ERROR("Output_shape should be a vector, and got dim size [%d].", output_shape->GetDims());
+    CUST_KERNEL_LOG_ERROR(ctx, "Output_shape should be a vector, and got dim size [%d].", output_shape->GetDims());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (shape_tensor->NumElements() != dims_num) {
-    KERNEL_LOG_ERROR("Output_shape has incorrect number of elements [%lld], should be [%lld]",
-                     shape_tensor->NumElements(), dims_num);
+    CUST_KERNEL_LOG_ERROR(ctx, "Output_shape has incorrect number of elements [%lld], should be [%lld]",
+                          shape_tensor->NumElements(), dims_num);
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
@@ -130,36 +130,37 @@ KernelStatus SparseToDenseCpuKernel::ValidParam(const CpuKernelContext &ctx) {
   bool validIndiceType = ((IndiceType != DT_INT32) && (IndiceType != DT_INT64));
   bool validShapeType = ((outShapeType != DT_INT32) && (outShapeType != DT_INT64));
   if (validShapeType || validIndiceType) {
-    KERNEL_LOG_ERROR(
-      "Valid indice or output shape data type failed, indiceType [%d], "
-      "shapeType [%d].",
-      static_cast<int>(IndiceType), static_cast<int>(outShapeType));
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "Valid indice or output shape data type failed, indiceType [%d], "
+                          "shapeType [%d].",
+                          static_cast<int>(IndiceType), static_cast<int>(outShapeType));
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
   // sparse_values
   int32_t values_dims_size = values_shape->GetDims();
   if ((values_dims_size != 0) && (values_dims_size != 1)) {
-    KERNEL_LOG_ERROR("Values_shape should be a scalar or a vector, got dim size [%d].", values_shape->GetDims());
+    CUST_KERNEL_LOG_ERROR(ctx, "Values_shape should be a scalar or a vector, got dim size [%d].",
+                          values_shape->GetDims());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if ((values_dims_size == 1) && (sparse_values->NumElements() != elems_num)) {
-    KERNEL_LOG_ERROR("Values_shape has incorrect number of elements [%lld], should be [%lld]",
-                     sparse_values->NumElements(), elems_num);
+    CUST_KERNEL_LOG_ERROR(ctx, "Values_shape has incorrect number of elements [%lld], should be [%lld]",
+                          sparse_values->NumElements(), elems_num);
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
   // default_value
   if (default_value_shape->GetDims() != 0 && default_value_tensor->NumElements() != 1) {
-    KERNEL_LOG_ERROR("Default_value should be a scalar, and got dim size [%d].", default_value_shape->GetDims());
+    CUST_KERNEL_LOG_ERROR(ctx, "Default_value should be a scalar, and got dim size [%d].",
+                          default_value_shape->GetDims());
     return KERNEL_STATUS_PARAM_INVALID;
   }
-  KERNEL_LOG_INFO("Execute ValidParam end.");
+  CUST_KERNEL_LOG_INFO(ctx, "Execute ValidParam end.");
   return KERNEL_STATUS_OK;
 }
 
-uint32_t SparseToDenseCpuKernel::ParallelSetDefaultValue(const CpuKernelContext &ctx,
-                                                         const Tensor *default_value_tensor,
+uint32_t SparseToDenseCpuKernel::ParallelSetDefaultValue(CpuKernelContext &ctx, const Tensor *default_value_tensor,
                                                          const Tensor *output_tensor, int64_t output_size) {
   auto type_size = GetSizeByDataType(static_cast<DataType>(output_tensor->GetDataType()));
   char *default_value_addr = reinterpret_cast<char *>(default_value_tensor->GetData());
@@ -175,7 +176,7 @@ uint32_t SparseToDenseCpuKernel::ParallelSetDefaultValue(const CpuKernelContext 
         auto ret = memcpy_s(output_addr + (index * type_size), static_cast<size_t>(type_size), default_value_addr,
                             static_cast<size_t>(type_size));
         if (ret != EOK) {
-          KERNEL_LOG_ERROR("memcpy_s failed.");
+          CUST_KERNEL_LOG_ERROR(ctx, "memcpy_s failed.");
         }
       }
     } else {
@@ -183,7 +184,7 @@ uint32_t SparseToDenseCpuKernel::ParallelSetDefaultValue(const CpuKernelContext 
         auto ret = memcpy_s(output_addr + (index * type_size), static_cast<size_t>(type_size), default_value_addr,
                             static_cast<size_t>(type_size));
         if (ret != EOK) {
-          KERNEL_LOG_ERROR("memcpy_s failed.");
+          CUST_KERNEL_LOG_ERROR(ctx, "memcpy_s failed.");
         }
       }
       char *temp_addr = output_addr + (begin * type_size);
@@ -191,7 +192,7 @@ uint32_t SparseToDenseCpuKernel::ParallelSetDefaultValue(const CpuKernelContext 
       for (int64_t loop = 1; loop < piece; loop++) {
         auto ret = memcpy_s(temp_addr + (loop * type_size * kCopyDataSize), data_size, temp_addr, data_size);
         if (ret != EOK) {
-          KERNEL_LOG_ERROR("memcpy_s failed.");
+          CUST_KERNEL_LOG_ERROR(ctx, "memcpy_s failed.");
         }
       }
       char *temp_addr1 = output_addr + (begin * type_size) + (piece * type_size * kCopyDataSize);
@@ -199,18 +200,18 @@ uint32_t SparseToDenseCpuKernel::ParallelSetDefaultValue(const CpuKernelContext 
         auto ret = memcpy_s(temp_addr1 + (loop1 * type_size), static_cast<size_t>(type_size), default_value_addr,
                             static_cast<size_t>(type_size));
         if (ret != EOK) {
-          KERNEL_LOG_ERROR("memcpy_s failed.");
+          CUST_KERNEL_LOG_ERROR(ctx, "memcpy_s failed.");
         }
       }
     }
   };
   return CpuKernelUtils::ParallelFor(ctx, output_size, output_size / max_core_num, default_value);
 }
-uint32_t SparseToDenseCpuKernel::SetDefaultValue(const CpuKernelContext &ctx, const Tensor *default_value_tensor,
+uint32_t SparseToDenseCpuKernel::SetDefaultValue(CpuKernelContext &ctx, const Tensor *default_value_tensor,
                                                  const Tensor *output_tensor, int64_t output_size) {
   auto type_size = GetSizeByDataType(static_cast<DataType>(output_tensor->GetDataType()));
   if (type_size < 1) {
-    KERNEL_LOG_ERROR("Don't support output tensor types");
+    CUST_KERNEL_LOG_ERROR(ctx, "Don't support output tensor types");
     return KERNEL_STATUS_PARAM_INVALID;
   }
   char *default_value_addr = reinterpret_cast<char *>(default_value_tensor->GetData());
@@ -223,7 +224,7 @@ uint32_t SparseToDenseCpuKernel::SetDefaultValue(const CpuKernelContext &ctx, co
         auto ret = memcpy_s(output_addr + (index * type_size), static_cast<size_t>(type_size), default_value_addr,
                             static_cast<size_t>(type_size));
         if (ret != EOK) {
-          KERNEL_LOG_ERROR("memcpy_s failed.");
+          CUST_KERNEL_LOG_ERROR(ctx, "memcpy_s failed.");
           return KERNEL_STATUS_INNER_ERROR;
         }
       }
@@ -232,7 +233,7 @@ uint32_t SparseToDenseCpuKernel::SetDefaultValue(const CpuKernelContext &ctx, co
         auto ret = memcpy_s(output_addr + (index * type_size), static_cast<size_t>(type_size), default_value_addr,
                             static_cast<size_t>(type_size));
         if (ret != EOK) {
-          KERNEL_LOG_ERROR("memcpy_s failed.");
+          CUST_KERNEL_LOG_ERROR(ctx, "memcpy_s failed.");
           return KERNEL_STATUS_INNER_ERROR;
         }
       }
@@ -240,7 +241,7 @@ uint32_t SparseToDenseCpuKernel::SetDefaultValue(const CpuKernelContext &ctx, co
       for (int loop = 1; loop < piece; loop++) {
         auto ret = memcpy_s(output_addr + (loop * type_size * kCopyDataSize), data_size, output_addr, data_size);
         if (ret != EOK) {
-          KERNEL_LOG_ERROR("memcpy_s failed.");
+          CUST_KERNEL_LOG_ERROR(ctx, "memcpy_s failed.");
           return KERNEL_STATUS_INNER_ERROR;
         }
       }
@@ -249,7 +250,7 @@ uint32_t SparseToDenseCpuKernel::SetDefaultValue(const CpuKernelContext &ctx, co
         auto ret = memcpy_s(temp_addr + (loop1 * type_size), static_cast<size_t>(type_size), default_value_addr,
                             static_cast<size_t>(type_size));
         if (ret != EOK) {
-          KERNEL_LOG_ERROR("memcpy_s failed.");
+          CUST_KERNEL_LOG_ERROR(ctx, "memcpy_s failed.");
           return KERNEL_STATUS_INNER_ERROR;
         }
       }
@@ -261,20 +262,24 @@ uint32_t SparseToDenseCpuKernel::SetDefaultValue(const CpuKernelContext &ctx, co
 }
 uint32_t SparseToDenseCpuKernel::Compute(CpuKernelContext &ctx) {
   if (ValidParam(ctx) != KERNEL_STATUS_OK) {
-    KERNEL_LOG_ERROR("Valid sparse to dense param error.");
+    CUST_KERNEL_LOG_ERROR(ctx, "Valid sparse to dense param error.");
     return static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID);
   }
   Tensor *indices_tensor = ctx.Input(kInput0);
-  KERNEL_CHECK_NULLPTR(indices_tensor, static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID), "Indices_tensor is null")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, indices_tensor, static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID),
+                            "Indices_tensor is null")
   Tensor *shape_tensor = ctx.Input(kInput1);
-  KERNEL_CHECK_NULLPTR(shape_tensor, static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID), "Shape_tensor is null")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, shape_tensor, static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID),
+                            "Shape_tensor is null")
   Tensor *sparse_values = ctx.Input(kInput2);
-  KERNEL_CHECK_NULLPTR(sparse_values, static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID), "Sparse_values is null")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, sparse_values, static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID),
+                            "Sparse_values is null")
   Tensor *default_value_tensor = ctx.Input(kInput3);
-  KERNEL_CHECK_NULLPTR(default_value_tensor, static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID),
-                       "Default_value_tensor is null")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, default_value_tensor, static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID),
+                            "Default_value_tensor is null")
   Tensor *output_tensor = ctx.Output(kOutput0);
-  KERNEL_CHECK_NULLPTR(output_tensor, static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID), "Output_tensor is null")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, output_tensor, static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID),
+                            "Output_tensor is null")
 
   auto output_shape = shape_tensor->GetTensorShape();
   std::vector<int64_t> dense_shape;
@@ -296,31 +301,31 @@ uint32_t SparseToDenseCpuKernel::Compute(CpuKernelContext &ctx) {
   std::iota(order.begin(), order.end(), 0);
 
   SparseTensor st;
-  if (st.CreateSparseTensor(indices_tensor, sparse_values, dense_shape, order) !=
+  if (st.CreateSparseTensor(ctx, indices_tensor, sparse_values, dense_shape, order) !=
       static_cast<uint32_t>(KERNEL_STATUS_OK)) {
-    KERNEL_LOG_ERROR("Create sparse tensor failed.");
+    CUST_KERNEL_LOG_ERROR(ctx, "Create sparse tensor failed.");
     return static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID);
   }
   AttrValue *validate_indices = ctx.GetAttr("validate_indices");
   if (validate_indices == nullptr) {
-    KERNEL_LOG_ERROR("Get attr:validate_indices failed.");
+    CUST_KERNEL_LOG_ERROR(ctx, "Get attr:validate_indices failed.");
     return static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID);
   }
   if (validate_indices->GetBool()) {
     if (st.IndicesValid(ctx) != static_cast<uint32_t>(KERNEL_STATUS_OK)) {
-      KERNEL_LOG_ERROR("Indices is valid.");
+      CUST_KERNEL_LOG_ERROR(ctx, "Indices is valid.");
       return static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID);
     }
   }
 
   if (SetDefaultValue(ctx, default_value_tensor, output_tensor, output_size) !=
       static_cast<uint32_t>(KERNEL_STATUS_OK)) {
-    KERNEL_LOG_ERROR("Sparse_to_dense set default value failed.");
+    CUST_KERNEL_LOG_ERROR(ctx, "Sparse_to_dense set default value failed.");
     return static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID);
   }
 
   if (SparseToDense(ctx, &st, indices_tensor, output_tensor) != static_cast<uint32_t>(KERNEL_STATUS_OK)) {
-    KERNEL_LOG_ERROR("Sparse_to_dense execute failed.");
+    CUST_KERNEL_LOG_ERROR(ctx, "Sparse_to_dense execute failed.");
     return static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID);
   }
   return static_cast<uint32_t>(KERNEL_STATUS_OK);

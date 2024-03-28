@@ -68,7 +68,7 @@ inline int EndIndex(int offset, int out_size, int in_size) {
 
 namespace aicpu {
 template <typename SCALAR_T>
-uint32_t AdaptiveAvgPool3dOutFrame(const CpuKernelContext &ctx, AdaptiveCalcArgs<SCALAR_T> args, int64_t num) {
+uint32_t AdaptiveAvgPool3dOutFrame(CpuKernelContext &ctx, AdaptiveCalcArgs<SCALAR_T> args, int64_t num) {
   auto shard_frame = [&](int64_t start, int64_t end) {
     for (auto d = start; d < end; d++) {
       // calculate average
@@ -117,28 +117,28 @@ uint32_t AdaptiveAvgPool3dOutFrame(const CpuKernelContext &ctx, AdaptiveCalcArgs
       shard_frame(i, i + 1);
     }
   } else {
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, args.size_d, 1, shard_frame),
-                        "AdaptiveAvgPool3d shard_frame Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, args.size_d, 1, shard_frame),
+                             "AdaptiveAvgPool3d shard_frame Compute failed.");
   }
   return KERNEL_STATUS_OK;
 }
 
 template <typename SCALAR_T>
-uint32_t AdaptiveAvgPool3dOutTemplate(const CpuKernelContext &ctx) {
+uint32_t AdaptiveAvgPool3dOutTemplate(CpuKernelContext &ctx) {
   Tensor &input = *(ctx.Input(kFirstInputIndex));
 
   auto input_shape_ptr = input.GetTensorShape();
   int32_t input_dims = input_shape_ptr->GetDims();
 
-  KERNEL_CHECK_FALSE((input_dims == kFourDim || input_dims == kFiveDim), KERNEL_STATUS_PARAM_INVALID,
-                     "Non-empty [4D] or [5D] (batch mode) tensor expected for input 0.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (input_dims == kFourDim || input_dims == kFiveDim), KERNEL_STATUS_PARAM_INVALID,
+                          "Non-empty [4D] or [5D] (batch mode) tensor expected for input 0.");
 
   for (int32_t i = 0; i < input_dims; i++) {
-    KERNEL_CHECK_FALSE((input_shape_ptr->GetDimSize(i) > 0), KERNEL_STATUS_PARAM_INVALID,
-                       "Adaptive_avg_pool3d: expected input to have non-empty spatial "
-                       "dimensions, "
-                       "but input 0 has sizes [%d] with dimension [%d] being empty.",
-                       input_dims, i);
+    CUST_KERNEL_CHECK_FALSE(ctx, (input_shape_ptr->GetDimSize(i) > 0), KERNEL_STATUS_PARAM_INVALID,
+                            "Adaptive_avg_pool3d: expected input to have non-empty spatial "
+                            "dimensions, "
+                            "but input 0 has sizes [%d] with dimension [%d] being empty.",
+                            input_dims, i);
   }
 
   AdaptiveCalcArgs<SCALAR_T> args;
@@ -189,8 +189,8 @@ uint32_t AdaptiveAvgPool3dOutTemplate(const CpuKernelContext &ctx) {
         shard_template(i, i + 1);
       }
     } else {
-      KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, input_dim_sizes[0], 1, shard_template),
-                          "AdaptiveAvgPool3d shard_template Compute failed.");
+      CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, input_dim_sizes[0], 1, shard_template),
+                               "AdaptiveAvgPool3d shard_template Compute failed.");
     }
   }
   return KERNEL_STATUS_OK;
@@ -198,8 +198,8 @@ uint32_t AdaptiveAvgPool3dOutTemplate(const CpuKernelContext &ctx) {
 
 uint32_t AdaptiveAvgPool3d::Compute(CpuKernelContext &ctx) {
   // check params
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output number failed.",
-                      kAdaptiveAvgPool3d);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output number failed.",
+                           kAdaptiveAvgPool3d);
 
   Tensor *input_0 = ctx.Input(kFirstInputIndex);
   auto data_type = static_cast<DataType>(input_0->GetDataType());
@@ -222,7 +222,7 @@ uint32_t AdaptiveAvgPool3d::Compute(CpuKernelContext &ctx) {
     case DT_FLOAT16:
       return AdaptiveAvgPool3dOutTemplate<Eigen::half>(ctx);
     default:
-      KERNEL_LOG_ERROR("AdaptiveAvgPool3d kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "AdaptiveAvgPool3d kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;

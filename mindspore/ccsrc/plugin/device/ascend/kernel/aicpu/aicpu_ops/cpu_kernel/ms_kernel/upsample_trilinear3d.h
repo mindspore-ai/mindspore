@@ -31,7 +31,7 @@ class UpsampleTrilinear3dCpuKernel : public CpuKernel {
   uint32_t UpsampleTrilinear3dParamCheck(CpuKernelContext &ctx);
 
   template <typename T, typename S>
-  uint32_t UpsampleTrilinear3dCompute(const CpuKernelContext &ctx);
+  uint32_t UpsampleTrilinear3dCompute(CpuKernelContext &ctx);
 
   template <typename T, typename S>
   void InnerCompute(int64_t n, const T *x_ptr, T *y_ptr);

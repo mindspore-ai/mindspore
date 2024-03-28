@@ -39,9 +39,9 @@ constexpr int64_t kTransC = 2;
 namespace aicpu {
 
 uint32_t SolveTriangularCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kSolveTriangularInputsNum, kSolveTriangularOutputsNum),
-                      "[%s] check input and output failed.", kSolveTriangular);
-  KERNEL_HANDLE_ERROR(SolveTriangularCheck(ctx), "[%s] check params failed.", kSolveTriangular);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kSolveTriangularInputsNum, kSolveTriangularOutputsNum),
+                           "[%s] check input and output failed.", kSolveTriangular);
+  CUST_KERNEL_HANDLE_ERROR(ctx, SolveTriangularCheck(ctx), "[%s] check params failed.", kSolveTriangular);
   auto a_type = ctx.Input(0)->GetDataType();
   uint32_t ret = KERNEL_STATUS_OK;
   switch (a_type) {
@@ -73,21 +73,26 @@ uint32_t SolveTriangularCpuKernel::Compute(CpuKernelContext &ctx) {
       ret = SolveTriangularCompute<std::complex<double>, std::complex<double>>(ctx);
       break;
     default:
-      KERNEL_LOG_ERROR("[%s] Data type of input is not support, input data type is [%s].", ctx.GetOpType().c_str(),
-                       DTypeStr(a_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "[%s] Data type of input is not support, input data type is [%s].",
+                            ctx.GetOpType().c_str(), DTypeStr(a_type).c_str());
       ret = KERNEL_STATUS_PARAM_INVALID;
   }
   return ret;
 }
 
 uint32_t SolveTriangularCpuKernel::SolveTriangularCheck(CpuKernelContext &ctx) {
-  KERNEL_CHECK_NULLPTR(ctx.Input(kIndexA)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 'a' data failed.")
-  KERNEL_CHECK_NULLPTR(ctx.Input(kIndexB)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 'b' data failed.")
-  KERNEL_CHECK_NULLPTR(ctx.Input(kIndexTrans)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 'trans' data failed.")
-  KERNEL_CHECK_NULLPTR(ctx.Input(kIndexLower)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 'lower' data failed.")
-  KERNEL_CHECK_NULLPTR(ctx.Input(kIndexUnitDiagonal)->GetData(), KERNEL_STATUS_PARAM_INVALID,
-                       "Get input UnitDiagonal data failed.")
-  KERNEL_CHECK_NULLPTR(ctx.Output(kIndexX)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output 'x' data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.Input(kIndexA)->GetData(), KERNEL_STATUS_PARAM_INVALID,
+                            "Get input 'a' data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.Input(kIndexB)->GetData(), KERNEL_STATUS_PARAM_INVALID,
+                            "Get input 'b' data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.Input(kIndexTrans)->GetData(), KERNEL_STATUS_PARAM_INVALID,
+                            "Get input 'trans' data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.Input(kIndexLower)->GetData(), KERNEL_STATUS_PARAM_INVALID,
+                            "Get input 'lower' data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.Input(kIndexUnitDiagonal)->GetData(), KERNEL_STATUS_PARAM_INVALID,
+                            "Get input UnitDiagonal data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.Output(kIndexX)->GetData(), KERNEL_STATUS_PARAM_INVALID,
+                            "Get output 'x' data failed.")
 
   std::vector<int64_t> a_shape = ctx.Input(kIndexA)->GetTensorShape()->GetDimSizes();
   std::vector<int64_t> b_shape = ctx.Input(kIndexB)->GetTensorShape()->GetDimSizes();
@@ -95,26 +100,29 @@ uint32_t SolveTriangularCpuKernel::SolveTriangularCheck(CpuKernelContext &ctx) {
   auto b_rank = b_shape.size();
   const size_t expected_b_dim = (b_shape.size() == a_shape.size() - 1) ? 1 : kSquareSize;
   if (a_rank < kSquareSize) {
-    KERNEL_LOG_ERROR("For [%s], dim of matrix a must greater or equal to 2, but got a at [%lld]-dimensional.",
-                     kSolveTriangular, a_rank);
+    CUST_KERNEL_LOG_ERROR(ctx, "For [%s], dim of matrix a must greater or equal to 2, but got a at [%lld]-dimensional.",
+                          kSolveTriangular, a_rank);
     return KERNEL_STATUS_INNER_ERROR;
   }
   if (a_rank != b_rank && a_rank != b_rank + 1) {
-    KERNEL_LOG_ERROR(
+    CUST_KERNEL_LOG_ERROR(
+      ctx,
       "For [%s], the dimension of `b` should be 'a.dim' or 'a.dim' - 1, which is [%lld] or [%lld], but got "
       "[%lld]-dimensions.",
       kSolveTriangular, a_rank, a_rank - 1, b_rank);
     return KERNEL_STATUS_INNER_ERROR;
   }
   if (a_shape[a_rank - 1] != a_shape[a_rank - kSquareSize]) {
-    KERNEL_LOG_ERROR(
+    CUST_KERNEL_LOG_ERROR(
+      ctx,
       "For [%s], the last two dimensions of `a` should be the same, but got shape of [%s]. Please make sure that the "
       "shape of `a` be like [..., N, N].",
       kSolveTriangular, VectorToString(a_shape));
     return KERNEL_STATUS_INNER_ERROR;
   }
   if (a_shape[a_rank - kSquareSize] != b_shape[b_rank - expected_b_dim]) {
-    KERNEL_LOG_ERROR(
+    CUST_KERNEL_LOG_ERROR(
+      ctx,
       "For [%s], the last two dimensions of `a` and `b` should be matched, but got shape of [%s] and [%s]. Please make "
       "sure that the shape of `a` and `b` be like [..., N, N] X [..., N, M] or [..., N, N ] X[..., N].",
       kSolveTriangular, VectorToString(a_shape), VectorToString(b_shape));
@@ -122,7 +130,8 @@ uint32_t SolveTriangularCpuKernel::SolveTriangularCheck(CpuKernelContext &ctx) {
   }
   if (!std::equal(a_shape.begin(), a_shape.begin() + (a_rank - kSquareSize), b_shape.begin(),
                   b_shape.begin() + (b_rank - expected_b_dim))) {
-    KERNEL_LOG_ERROR(
+    CUST_KERNEL_LOG_ERROR(
+      ctx,
       "For [%s], the batch dimensions of `a` and `b` should all be the same, but got shape of [%s] and [%s]. Please "
       "make sure that the shape of `a` and `b` be like [a, b, c, ..., N, N] X [a, b, c, ..., N, M] or [a, b, c, ..., "
       "N, N] X [a, b, c, ..., N].",
@@ -159,11 +168,11 @@ uint32_t SolveTriangularCpuKernel::SolveTriangularCompute(CpuKernelContext &ctx)
   size_t output_mat_size = b_mat_size;
 
   T_out *casted_a_addr = static_cast<T_out *>(malloc(sizeof(T_out) * a_mat_size));
-  KERNEL_CHECK_NULLPTR(casted_a_addr, KERNEL_STATUS_PARAM_INVALID,
-                       "[Solve_triangular] Malloc memory [casted_a_array] failed!")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, casted_a_addr, KERNEL_STATUS_PARAM_INVALID,
+                            "[Solve_triangular] Malloc memory [casted_a_array] failed!")
   T_out *casted_b_addr = static_cast<T_out *>(malloc(sizeof(T_out) * b_mat_size));
-  KERNEL_CHECK_NULLPTR(casted_b_addr, KERNEL_STATUS_PARAM_INVALID,
-                       "[Solve_triangular] Malloc memory [casted_b_array] failed!")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, casted_b_addr, KERNEL_STATUS_PARAM_INVALID,
+                            "[Solve_triangular] Malloc memory [casted_b_array] failed!")
 
   for (size_t i = 0; i < batch; ++i) {
     T_in *a_batch_addr = input_a_addr + i * a_mat_size;
@@ -188,7 +197,8 @@ uint32_t SolveTriangularCpuKernel::SolveTriangularCompute(CpuKernelContext &ctx)
       Eigen::Map<Eigen::Matrix<T_out, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>> a(casted_a_addr, m, m);
       solve(a.conjugate(), b, output_batch_addr, m, n, !lower, unit_diagonal);
     } else {
-      KERNEL_LOG_ERROR("For 'SolveTirangular' 'trans' must be in [0, 1, 2, 'N', 'T', 'C'], but got [%d].", trans);
+      CUST_KERNEL_LOG_ERROR(ctx, "For 'SolveTirangular' 'trans' must be in [0, 1, 2, 'N', 'T', 'C'], but got [%d].",
+                            trans);
     }
   }
 

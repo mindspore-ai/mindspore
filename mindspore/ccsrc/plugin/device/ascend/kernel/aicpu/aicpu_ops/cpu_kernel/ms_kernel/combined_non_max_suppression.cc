@@ -197,7 +197,7 @@ void CombinedNonMaxSuppressionCpuKernel::nms_perclass(
   return;
 }
 
-uint32_t CombinedNonMaxSuppressionCpuKernel::nms_perbath(const CpuKernelContext &ctx, float *boxes, float *scores,
+uint32_t CombinedNonMaxSuppressionCpuKernel::nms_perbath(CpuKernelContext &ctx, float *boxes, float *scores,
                                                          float *nmsed_boxes, float *nmsed_scores, float *nmsed_class,
                                                          int *valid_detection) {
   alloc_zeros(nmsed_boxes, num_bath * num_detection * 4);
@@ -254,136 +254,145 @@ uint32_t CombinedNonMaxSuppressionCpuKernel::nms_perbath(const CpuKernelContext 
   if (max_core_num > num_bath) {
     max_core_num = num_bath;
   }
-  KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, num_bath, num_bath / max_core_num, shard_nms),
-                      "CombinedNonMaxSuppression Compute failed in nms_perbath stage.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, num_bath, num_bath / max_core_num, shard_nms),
+                           "CombinedNonMaxSuppression Compute failed in nms_perbath stage.");
   return KERNEL_STATUS_OK;
 }
 
 uint32_t CombinedNonMaxSuppressionCpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum),
-                      "CombinedNonMaxSuppression check input and output number failed.");
-  KERNEL_HANDLE_ERROR(CombinedNonMaxSuppressionCheck(ctx), "CombinedNonMaxSuppression check params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "CombinedNonMaxSuppression check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, CombinedNonMaxSuppressionCheck(ctx), "CombinedNonMaxSuppression check params failed.");
   CombinedNonMaxSuppressionCompute(ctx);
   return KERNEL_STATUS_OK;
 }
 
-uint32_t CombinedNonMaxSuppressionCpuKernel::CombinedNonMaxSuppressionCheck(const CpuKernelContext &ctx) {
-  KERNEL_CHECK_NULLPTR(ctx.Input(0)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 0 data failed.");
-  KERNEL_CHECK_NULLPTR(ctx.Input(1)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 1 data failed.");
-  KERNEL_CHECK_NULLPTR(ctx.Input(2)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 2 data failed.");
-  KERNEL_CHECK_NULLPTR(ctx.Input(3)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 3 data failed.");
+uint32_t CombinedNonMaxSuppressionCpuKernel::CombinedNonMaxSuppressionCheck(CpuKernelContext &ctx) {
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.Input(0)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 0 data failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.Input(1)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 1 data failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.Input(2)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 2 data failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.Input(3)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 3 data failed.");
   if (ctx.Input(4) != nullptr) {
-    KERNEL_CHECK_NULLPTR(ctx.Input(4)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 4 data failed.");
+    CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.Input(4)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 4 data failed.");
   }
-  KERNEL_CHECK_NULLPTR(ctx.Input(5)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 5 data failed.");
-  KERNEL_CHECK_NULLPTR(ctx.Output(0)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output 0 data failed.");
-  KERNEL_CHECK_NULLPTR(ctx.Output(1)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output 1 data failed.");
-  KERNEL_CHECK_NULLPTR(ctx.Output(2)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output 2 data failed.");
-  KERNEL_CHECK_NULLPTR(ctx.Output(3)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output 3 data failed.");
-  KERNEL_CHECK_FALSE((ctx.Input(0)->GetDataType() == DT_FLOAT), KERNEL_STATUS_PARAM_INVALID,
-                     "The data type of input0 [%s] must be [DT_FLOAT].", DTypeStr(ctx.Input(0)->GetDataType()).c_str());
-  KERNEL_CHECK_FALSE((ctx.Input(1)->GetDataType() == DT_FLOAT), KERNEL_STATUS_PARAM_INVALID,
-                     "The data type of input1 [%s] must be [DT_FLOAT].", DTypeStr(ctx.Input(1)->GetDataType()).c_str());
-  KERNEL_CHECK_FALSE((ctx.Input(2)->GetDataType() == DT_INT32), KERNEL_STATUS_PARAM_INVALID,
-                     "The data type of input2 [%s] must be [DT_INT32].", DTypeStr(ctx.Input(2)->GetDataType()).c_str());
-  KERNEL_CHECK_FALSE((ctx.Input(3)->GetDataType() == DT_INT32), KERNEL_STATUS_PARAM_INVALID,
-                     "The data type of input3 [%s] must be [DT_INT32].", DTypeStr(ctx.Input(3)->GetDataType()).c_str());
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.Input(5)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 5 data failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.Output(0)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output 0 data failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.Output(1)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output 1 data failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.Output(2)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output 2 data failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.Output(3)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output 3 data failed.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (ctx.Input(0)->GetDataType() == DT_FLOAT), KERNEL_STATUS_PARAM_INVALID,
+                          "The data type of input0 [%s] must be [DT_FLOAT].",
+                          DTypeStr(ctx.Input(0)->GetDataType()).c_str());
+  CUST_KERNEL_CHECK_FALSE(ctx, (ctx.Input(1)->GetDataType() == DT_FLOAT), KERNEL_STATUS_PARAM_INVALID,
+                          "The data type of input1 [%s] must be [DT_FLOAT].",
+                          DTypeStr(ctx.Input(1)->GetDataType()).c_str());
+  CUST_KERNEL_CHECK_FALSE(ctx, (ctx.Input(2)->GetDataType() == DT_INT32), KERNEL_STATUS_PARAM_INVALID,
+                          "The data type of input2 [%s] must be [DT_INT32].",
+                          DTypeStr(ctx.Input(2)->GetDataType()).c_str());
+  CUST_KERNEL_CHECK_FALSE(ctx, (ctx.Input(3)->GetDataType() == DT_INT32), KERNEL_STATUS_PARAM_INVALID,
+                          "The data type of input3 [%s] must be [DT_INT32].",
+                          DTypeStr(ctx.Input(3)->GetDataType()).c_str());
   if (ctx.Input(4) != NULL) {
-    KERNEL_CHECK_FALSE((ctx.Input(4)->GetDataType() == DT_FLOAT), KERNEL_STATUS_PARAM_INVALID,
-                       "The data type of input4 [%s] must be [DT_FLOAT].",
-                       DTypeStr(ctx.Input(4)->GetDataType()).c_str());
+    CUST_KERNEL_CHECK_FALSE(ctx, (ctx.Input(4)->GetDataType() == DT_FLOAT), KERNEL_STATUS_PARAM_INVALID,
+                            "The data type of input4 [%s] must be [DT_FLOAT].",
+                            DTypeStr(ctx.Input(4)->GetDataType()).c_str());
   }
-  KERNEL_CHECK_FALSE((ctx.Input(5)->GetDataType() == DT_FLOAT), KERNEL_STATUS_PARAM_INVALID,
-                     "The data type of input5 [%s] must be [DT_FLOAT].", DTypeStr(ctx.Input(5)->GetDataType()).c_str());
-  KERNEL_CHECK_FALSE((ctx.Output(0)->GetDataType() == DT_FLOAT), KERNEL_STATUS_PARAM_INVALID,
-                     "The data type of output0 [%s] must be [DT_FLOAT].",
-                     DTypeStr(ctx.Output(0)->GetDataType()).c_str());
-  KERNEL_CHECK_FALSE((ctx.Output(1)->GetDataType() == DT_FLOAT), KERNEL_STATUS_PARAM_INVALID,
-                     "The data type of output1 [%s] must be [DT_FLOAT].",
-                     DTypeStr(ctx.Output(1)->GetDataType()).c_str());
-  KERNEL_CHECK_FALSE((ctx.Output(2)->GetDataType() == DT_FLOAT), KERNEL_STATUS_PARAM_INVALID,
-                     "The data type of output2 [%s] must be [DT_FLOAT].",
-                     DTypeStr(ctx.Output(2)->GetDataType()).c_str());
-  KERNEL_CHECK_FALSE((ctx.Output(3)->GetDataType() == DT_INT32), KERNEL_STATUS_PARAM_INVALID,
-                     "The data type of output3 [%s] must be [DT_INT32].",
-                     DTypeStr(ctx.Output(3)->GetDataType()).c_str());
+  CUST_KERNEL_CHECK_FALSE(ctx, (ctx.Input(5)->GetDataType() == DT_FLOAT), KERNEL_STATUS_PARAM_INVALID,
+                          "The data type of input5 [%s] must be [DT_FLOAT].",
+                          DTypeStr(ctx.Input(5)->GetDataType()).c_str());
+  CUST_KERNEL_CHECK_FALSE(ctx, (ctx.Output(0)->GetDataType() == DT_FLOAT), KERNEL_STATUS_PARAM_INVALID,
+                          "The data type of output0 [%s] must be [DT_FLOAT].",
+                          DTypeStr(ctx.Output(0)->GetDataType()).c_str());
+  CUST_KERNEL_CHECK_FALSE(ctx, (ctx.Output(1)->GetDataType() == DT_FLOAT), KERNEL_STATUS_PARAM_INVALID,
+                          "The data type of output1 [%s] must be [DT_FLOAT].",
+                          DTypeStr(ctx.Output(1)->GetDataType()).c_str());
+  CUST_KERNEL_CHECK_FALSE(ctx, (ctx.Output(2)->GetDataType() == DT_FLOAT), KERNEL_STATUS_PARAM_INVALID,
+                          "The data type of output2 [%s] must be [DT_FLOAT].",
+                          DTypeStr(ctx.Output(2)->GetDataType()).c_str());
+  CUST_KERNEL_CHECK_FALSE(ctx, (ctx.Output(3)->GetDataType() == DT_INT32), KERNEL_STATUS_PARAM_INVALID,
+                          "The data type of output3 [%s] must be [DT_INT32].",
+                          DTypeStr(ctx.Output(3)->GetDataType()).c_str());
   auto input0_shape = ctx.Input(0)->GetTensorShape();
   auto input1_shape = ctx.Input(1)->GetTensorShape();
   auto input2_shape = ctx.Input(2)->GetTensorShape();
   auto input3_shape = ctx.Input(3)->GetTensorShape();
   auto input5_shape = ctx.Input(5)->GetTensorShape();
-  KERNEL_CHECK_FALSE((input0_shape->GetDims() == 4), KERNEL_STATUS_PARAM_INVALID, "The input0's dims [%d] must be 4",
-                     input0_shape->GetDims());
-  KERNEL_CHECK_FALSE((input1_shape->GetDims() == 3), KERNEL_STATUS_PARAM_INVALID, "The input1's dims [%d] must be 3",
-                     input1_shape->GetDims());
-  KERNEL_CHECK_FALSE(
-    (input2_shape->GetDims() == 0 || (input2_shape->GetDims() == 1 && input2_shape->GetDimSize(0) == 1)),
+  CUST_KERNEL_CHECK_FALSE(ctx, (input0_shape->GetDims() == 4), KERNEL_STATUS_PARAM_INVALID,
+                          "The input0's dims [%d] must be 4", input0_shape->GetDims());
+  CUST_KERNEL_CHECK_FALSE(ctx, (input1_shape->GetDims() == 3), KERNEL_STATUS_PARAM_INVALID,
+                          "The input1's dims [%d] must be 3", input1_shape->GetDims());
+  CUST_KERNEL_CHECK_FALSE(
+    ctx, (input2_shape->GetDims() == 0 || (input2_shape->GetDims() == 1 && input2_shape->GetDimSize(0) == 1)),
     KERNEL_STATUS_PARAM_INVALID, "The input2's dims [%d] must be 0 or 1x1", input2_shape->GetDims());
-  KERNEL_CHECK_FALSE(
-    (input3_shape->GetDims() == 0 || (input3_shape->GetDims() == 1 && input3_shape->GetDimSize(0) == 1)),
+  CUST_KERNEL_CHECK_FALSE(
+    ctx, (input3_shape->GetDims() == 0 || (input3_shape->GetDims() == 1 && input3_shape->GetDimSize(0) == 1)),
     KERNEL_STATUS_PARAM_INVALID, "The input3's dims [%d] must be 0 or 1x1", input3_shape->GetDims());
   if (ctx.Input(4) != nullptr) {
     auto input4_shape = ctx.Input(4)->GetTensorShape();
-    KERNEL_CHECK_FALSE(
-      (input4_shape->GetDims() == 0 || (input4_shape->GetDims() == 1 && input4_shape->GetDimSize(0) == 1)),
+    CUST_KERNEL_CHECK_FALSE(
+      ctx, (input4_shape->GetDims() == 0 || (input4_shape->GetDims() == 1 && input4_shape->GetDimSize(0) == 1)),
       KERNEL_STATUS_PARAM_INVALID, "The input4's dims [%d] must be 0 or 1x1", input4_shape->GetDims());
   }
-  KERNEL_CHECK_FALSE(
-    (input5_shape->GetDims() == 0 || (input5_shape->GetDims() == 1 && input5_shape->GetDimSize(0) == 1)),
+  CUST_KERNEL_CHECK_FALSE(
+    ctx, (input5_shape->GetDims() == 0 || (input5_shape->GetDims() == 1 && input5_shape->GetDimSize(0) == 1)),
     KERNEL_STATUS_PARAM_INVALID, "The input5's dims [%d] must be 0 or 1x1", input5_shape->GetDims());
   auto output0_shape = ctx.Output(0)->GetTensorShape();
   auto output1_shape = ctx.Output(1)->GetTensorShape();
   auto output2_shape = ctx.Output(2)->GetTensorShape();
   auto output3_shape = ctx.Output(3)->GetTensorShape();
-  KERNEL_CHECK_FALSE((output0_shape->GetDims() == 3), KERNEL_STATUS_PARAM_INVALID, "The output0's dims [%d] must be 3",
-                     output0_shape->GetDims());
-  KERNEL_CHECK_FALSE((output1_shape->GetDims() == 2), KERNEL_STATUS_PARAM_INVALID, "The output1's dims [%d] must be 2",
-                     output1_shape->GetDims());
-  KERNEL_CHECK_FALSE((output2_shape->GetDims() == 2), KERNEL_STATUS_PARAM_INVALID, "The output2's dims [%d] must be 2",
-                     output2_shape->GetDims());
-  KERNEL_CHECK_FALSE((output3_shape->GetDims() == 1), KERNEL_STATUS_PARAM_INVALID, "The output3's dims [%d] must be 1",
-                     output3_shape->GetDims());
-  KERNEL_CHECK_FALSE((input0_shape->GetDimSize(0) == input1_shape->GetDimSize(0)), KERNEL_STATUS_PARAM_INVALID,
-                     "The input0's 1st dims [%d] need be same with the input1's 1st dims[%d]",
-                     input0_shape->GetDimSize(0), input1_shape->GetDimSize(0));
-  KERNEL_CHECK_FALSE((input0_shape->GetDimSize(1) == input1_shape->GetDimSize(1)), KERNEL_STATUS_PARAM_INVALID,
-                     "The input0's 2nd dims [%d] need be same with the input1's 2nd dims[%d]",
-                     input0_shape->GetDimSize(1), input1_shape->GetDimSize(1));
-  KERNEL_CHECK_FALSE((input0_shape->GetDimSize(2) == input1_shape->GetDimSize(2) || input0_shape->GetDimSize(2) == 1),
-                     KERNEL_STATUS_PARAM_INVALID,
-                     "The input0's 3th dims [%d] need be same with the input1's 3th dims [%d] or 1",
-                     input0_shape->GetDimSize(2), output1_shape->GetDimSize(2));
-  KERNEL_CHECK_FALSE((input0_shape->GetDimSize(3) == 4), KERNEL_STATUS_PARAM_INVALID,
-                     "The input0's 4th dims [%d] need be same with 4", input0_shape->GetDimSize(1));
-  KERNEL_CHECK_FALSE((output0_shape->GetDimSize(0) == output1_shape->GetDimSize(0) &&
-                      output0_shape->GetDimSize(0) == output2_shape->GetDimSize(0) &&
-                      output0_shape->GetDimSize(0) == output3_shape->GetDimSize(0)),
-                     KERNEL_STATUS_PARAM_INVALID,
-                     "The input0's 1st dims [%d], input1's 1st dims [%d],"
-                     " input2's 1st dims [%d], input3's 1st dims [%d], need be same with each other",
-                     output0_shape->GetDimSize(0), output1_shape->GetDimSize(0), output2_shape->GetDimSize(0),
-                     output3_shape->GetDimSize(0));
-  KERNEL_CHECK_FALSE((output0_shape->GetDimSize(1) == output1_shape->GetDimSize(1) &&
-                      output0_shape->GetDimSize(1) == output2_shape->GetDimSize(1)),
-                     KERNEL_STATUS_PARAM_INVALID,
-                     "The input0's 2nd dims [%d], input1's 2nd dims [%d], input2's 2nd dims [%d],"
-                     " need be same with each other",
-                     output0_shape->GetDimSize(1), output1_shape->GetDimSize(1), output2_shape->GetDimSize(1));
-  KERNEL_LOG_INFO(
-    " CombinedNonMaxSuppressionCpuKernel[%s], input0: size[%llu], "
-    " input1: size[%llu]",
-    ctx.GetOpType().c_str(), ctx.Input(0)->GetDataSize(), ctx.Input(1)->GetDataSize());
-  KERNEL_LOG_INFO(
-    " output0: size[%llu], output1: size[%llu],"
-    " output2: size[%llu], output3: size[%llu].",
-    ctx.Output(0)->GetDataSize(), ctx.Output(1)->GetDataSize(), ctx.Output(2)->GetDataSize(),
-    ctx.Output(3)->GetDataSize());
+  CUST_KERNEL_CHECK_FALSE(ctx, (output0_shape->GetDims() == 3), KERNEL_STATUS_PARAM_INVALID,
+                          "The output0's dims [%d] must be 3", output0_shape->GetDims());
+  CUST_KERNEL_CHECK_FALSE(ctx, (output1_shape->GetDims() == 2), KERNEL_STATUS_PARAM_INVALID,
+                          "The output1's dims [%d] must be 2", output1_shape->GetDims());
+  CUST_KERNEL_CHECK_FALSE(ctx, (output2_shape->GetDims() == 2), KERNEL_STATUS_PARAM_INVALID,
+                          "The output2's dims [%d] must be 2", output2_shape->GetDims());
+  CUST_KERNEL_CHECK_FALSE(ctx, (output3_shape->GetDims() == 1), KERNEL_STATUS_PARAM_INVALID,
+                          "The output3's dims [%d] must be 1", output3_shape->GetDims());
+  CUST_KERNEL_CHECK_FALSE(ctx, (input0_shape->GetDimSize(0) == input1_shape->GetDimSize(0)),
+                          KERNEL_STATUS_PARAM_INVALID,
+                          "The input0's 1st dims [%d] need be same with the input1's 1st dims[%d]",
+                          input0_shape->GetDimSize(0), input1_shape->GetDimSize(0));
+  CUST_KERNEL_CHECK_FALSE(ctx, (input0_shape->GetDimSize(1) == input1_shape->GetDimSize(1)),
+                          KERNEL_STATUS_PARAM_INVALID,
+                          "The input0's 2nd dims [%d] need be same with the input1's 2nd dims[%d]",
+                          input0_shape->GetDimSize(1), input1_shape->GetDimSize(1));
+  CUST_KERNEL_CHECK_FALSE(
+    ctx, (input0_shape->GetDimSize(2) == input1_shape->GetDimSize(2) || input0_shape->GetDimSize(2) == 1),
+    KERNEL_STATUS_PARAM_INVALID, "The input0's 3th dims [%d] need be same with the input1's 3th dims [%d] or 1",
+    input0_shape->GetDimSize(2), output1_shape->GetDimSize(2));
+  CUST_KERNEL_CHECK_FALSE(ctx, (input0_shape->GetDimSize(3) == 4), KERNEL_STATUS_PARAM_INVALID,
+                          "The input0's 4th dims [%d] need be same with 4", input0_shape->GetDimSize(1));
+  CUST_KERNEL_CHECK_FALSE(ctx,
+                          (output0_shape->GetDimSize(0) == output1_shape->GetDimSize(0) &&
+                           output0_shape->GetDimSize(0) == output2_shape->GetDimSize(0) &&
+                           output0_shape->GetDimSize(0) == output3_shape->GetDimSize(0)),
+                          KERNEL_STATUS_PARAM_INVALID,
+                          "The input0's 1st dims [%d], input1's 1st dims [%d],"
+                          " input2's 1st dims [%d], input3's 1st dims [%d], need be same with each other",
+                          output0_shape->GetDimSize(0), output1_shape->GetDimSize(0), output2_shape->GetDimSize(0),
+                          output3_shape->GetDimSize(0));
+  CUST_KERNEL_CHECK_FALSE(ctx,
+                          (output0_shape->GetDimSize(1) == output1_shape->GetDimSize(1) &&
+                           output0_shape->GetDimSize(1) == output2_shape->GetDimSize(1)),
+                          KERNEL_STATUS_PARAM_INVALID,
+                          "The input0's 2nd dims [%d], input1's 2nd dims [%d], input2's 2nd dims [%d],"
+                          " need be same with each other",
+                          output0_shape->GetDimSize(1), output1_shape->GetDimSize(1), output2_shape->GetDimSize(1));
+  CUST_KERNEL_LOG_INFO(ctx,
+                       " CombinedNonMaxSuppressionCpuKernel[%s], input0: size[%llu], "
+                       " input1: size[%llu]",
+                       ctx.GetOpType().c_str(), ctx.Input(0)->GetDataSize(), ctx.Input(1)->GetDataSize());
+  CUST_KERNEL_LOG_INFO(ctx,
+                       " output0: size[%llu], output1: size[%llu],"
+                       " output2: size[%llu], output3: size[%llu].",
+                       ctx.Output(0)->GetDataSize(), ctx.Output(1)->GetDataSize(), ctx.Output(2)->GetDataSize(),
+                       ctx.Output(3)->GetDataSize());
 
   return KERNEL_STATUS_OK;
 }
 
-uint32_t CombinedNonMaxSuppressionCpuKernel::CombinedNonMaxSuppressionCompute(const CpuKernelContext &ctx) {
+uint32_t CombinedNonMaxSuppressionCpuKernel::CombinedNonMaxSuppressionCompute(CpuKernelContext &ctx) {
   float *boxes = reinterpret_cast<float *>(ctx.Input(0)->GetData());
   float *scores = reinterpret_cast<float *>(ctx.Input(1)->GetData());
   max_output_size_per_class = *(reinterpret_cast<int *>(ctx.Input(2)->GetData()));
@@ -417,26 +426,29 @@ uint32_t CombinedNonMaxSuppressionCpuKernel::CombinedNonMaxSuppressionCompute(co
   } else {
     num_detection = max_total_size;
   }
-  KERNEL_CHECK_FALSE((output0_shape->GetDimSize(0) == num_bath), KERNEL_STATUS_PARAM_INVALID,
-                     "The output0's 1nd dims [%d] must be [%d]", output0_shape->GetDimSize(0), num_bath);
-  KERNEL_CHECK_FALSE((output1_shape->GetDimSize(0) == num_bath), KERNEL_STATUS_PARAM_INVALID,
-                     "The output0's 1nd dims [%d] must be [%d]", output1_shape->GetDimSize(0), num_bath);
-  KERNEL_CHECK_FALSE((output2_shape->GetDimSize(0) == num_bath), KERNEL_STATUS_PARAM_INVALID,
-                     "The output0's 1nd dims [%d] must be [%d]", output2_shape->GetDimSize(0), num_bath);
-  KERNEL_CHECK_FALSE((output3_shape->GetDimSize(0) == num_bath), KERNEL_STATUS_PARAM_INVALID,
-                     "The output0's 1nd dims [%d] must be [%d]", output3_shape->GetDimSize(0), num_bath);
-  KERNEL_CHECK_FALSE((max_output_size_per_class > 0), KERNEL_STATUS_PARAM_INVALID,
-                     "max_output_size_per_class [%d] must be > 0", max_output_size_per_class);
-  KERNEL_CHECK_FALSE((max_total_size > 0), KERNEL_STATUS_PARAM_INVALID, "max_total_size [%d] must be > 0",
-                     max_total_size);
-  KERNEL_CHECK_FALSE((iou_threshold >= 0 && iou_threshold <= 1), KERNEL_STATUS_PARAM_INVALID,
-                     "iou_threshold [%f] must be in [0,1]", iou_threshold);
-  KERNEL_CHECK_FALSE((static_cast<int>(output0_shape->GetDimSize(1)) == num_detection), KERNEL_STATUS_PARAM_INVALID,
-                     "The output0's 2nd dims [%d] need be same with %d", output0_shape->GetDimSize(1), num_detection);
-  KERNEL_CHECK_FALSE((static_cast<int>(output1_shape->GetDimSize(1)) == num_detection), KERNEL_STATUS_PARAM_INVALID,
-                     "The output1's 2nd dims [%d] need be same with %d", output1_shape->GetDimSize(1), num_detection);
-  KERNEL_CHECK_FALSE((static_cast<int>(output2_shape->GetDimSize(1)) == num_detection), KERNEL_STATUS_PARAM_INVALID,
-                     "The output2's 2nd dims [%d] need be same with %d", output2_shape->GetDimSize(1), num_detection);
+  CUST_KERNEL_CHECK_FALSE(ctx, (output0_shape->GetDimSize(0) == num_bath), KERNEL_STATUS_PARAM_INVALID,
+                          "The output0's 1nd dims [%d] must be [%d]", output0_shape->GetDimSize(0), num_bath);
+  CUST_KERNEL_CHECK_FALSE(ctx, (output1_shape->GetDimSize(0) == num_bath), KERNEL_STATUS_PARAM_INVALID,
+                          "The output0's 1nd dims [%d] must be [%d]", output1_shape->GetDimSize(0), num_bath);
+  CUST_KERNEL_CHECK_FALSE(ctx, (output2_shape->GetDimSize(0) == num_bath), KERNEL_STATUS_PARAM_INVALID,
+                          "The output0's 1nd dims [%d] must be [%d]", output2_shape->GetDimSize(0), num_bath);
+  CUST_KERNEL_CHECK_FALSE(ctx, (output3_shape->GetDimSize(0) == num_bath), KERNEL_STATUS_PARAM_INVALID,
+                          "The output0's 1nd dims [%d] must be [%d]", output3_shape->GetDimSize(0), num_bath);
+  CUST_KERNEL_CHECK_FALSE(ctx, (max_output_size_per_class > 0), KERNEL_STATUS_PARAM_INVALID,
+                          "max_output_size_per_class [%d] must be > 0", max_output_size_per_class);
+  CUST_KERNEL_CHECK_FALSE(ctx, (max_total_size > 0), KERNEL_STATUS_PARAM_INVALID, "max_total_size [%d] must be > 0",
+                          max_total_size);
+  CUST_KERNEL_CHECK_FALSE(ctx, (iou_threshold >= 0 && iou_threshold <= 1), KERNEL_STATUS_PARAM_INVALID,
+                          "iou_threshold [%f] must be in [0,1]", iou_threshold);
+  CUST_KERNEL_CHECK_FALSE(ctx, (static_cast<int>(output0_shape->GetDimSize(1)) == num_detection),
+                          KERNEL_STATUS_PARAM_INVALID, "The output0's 2nd dims [%d] need be same with %d",
+                          output0_shape->GetDimSize(1), num_detection);
+  CUST_KERNEL_CHECK_FALSE(ctx, (static_cast<int>(output1_shape->GetDimSize(1)) == num_detection),
+                          KERNEL_STATUS_PARAM_INVALID, "The output1's 2nd dims [%d] need be same with %d",
+                          output1_shape->GetDimSize(1), num_detection);
+  CUST_KERNEL_CHECK_FALSE(ctx, (static_cast<int>(output2_shape->GetDimSize(1)) == num_detection),
+                          KERNEL_STATUS_PARAM_INVALID, "The output2's 2nd dims [%d] need be same with %d",
+                          output2_shape->GetDimSize(1), num_detection);
   nms_perbath(ctx, boxes, scores, nmsed_boxes, nmsed_scores, nmsed_class, valid_detection);
   return KERNEL_STATUS_OK;
 }

@@ -36,6 +36,7 @@ if(EXISTS ${CMAKE_C_COMPILER} AND EXISTS ${CMAKE_CXX_COMPILER})
         ${CMAKE_CURRENT_SOURCE_DIR}/common/kernel_base.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/range_sampler.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/random_utils.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/cpu_kernel/utils/cust_op_log.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/aicpu_sharder/aicpu_async_event.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/aicpu_sharder/aicpu_context.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/aicpu_sharder/aicpu_pulse.cc

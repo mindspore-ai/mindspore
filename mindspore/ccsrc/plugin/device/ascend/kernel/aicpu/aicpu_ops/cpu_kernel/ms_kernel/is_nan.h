@@ -27,10 +27,10 @@ class IsNanCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t IsNanCheck(const CpuKernelContext &ctx) const;
+  uint32_t IsNanCheck(CpuKernelContext &ctx) const;
 
   template <typename T>
-  uint32_t IsNanCompute(const CpuKernelContext &ctx) const;
+  uint32_t IsNanCompute(CpuKernelContext &ctx) const;
 };
 }  // namespace aicpu
 #endif

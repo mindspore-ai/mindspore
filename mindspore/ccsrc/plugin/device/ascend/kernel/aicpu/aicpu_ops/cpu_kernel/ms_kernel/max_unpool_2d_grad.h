@@ -28,13 +28,13 @@ class MaxUnpool2DGradCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  static uint32_t MaxUnpool2DGradCheck(const CpuKernelContext &ctx);
+  static uint32_t MaxUnpool2DGradCheck(CpuKernelContext &ctx);
 
   template <typename T>
-  static uint32_t MaxUnpool2DGrad_COMPUTE_CASE(const CpuKernelContext &ctx, DataType indices_type);
+  static uint32_t MaxUnpool2DGrad_COMPUTE_CASE(CpuKernelContext &ctx, DataType indices_type);
 
   template <typename T, typename S>
-  static uint32_t MaxUnpool2DGradCompute(const CpuKernelContext &ctx);
+  static uint32_t MaxUnpool2DGradCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif  // AICPU_KERNELS_NORMALIZED_MAX_UNPOOL2D_GRAD_H_

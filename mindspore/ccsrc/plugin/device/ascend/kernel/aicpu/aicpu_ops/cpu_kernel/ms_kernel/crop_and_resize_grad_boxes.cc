@@ -34,45 +34,45 @@ const char *kCropAndResizeGradBoxes = "CropAndResizeGradBoxes";
 }  // namespace
 
 namespace aicpu {
-uint32_t CropAndResizeGradBoxesCpuKernel::cheakInputTypeAndGetDatas(const CpuKernelContext &ctx) {
+uint32_t CropAndResizeGradBoxesCpuKernel::cheakInputTypeAndGetDatas(CpuKernelContext &ctx) {
   Tensor *input_data0 = ctx.Input(0);
   Tensor *input_data1 = ctx.Input(1);
   Tensor *input_data2 = ctx.Input(2);
   Tensor *input_data3 = ctx.Input(3);
   Tensor *output = ctx.Output(0);
 
-  KERNEL_HANDLE_ERROR(NormalCheck(const_cast<CpuKernelContext &>(ctx), kInputNum, kOutputNum),
-                      "CropAndResizeGradBoxes check params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(const_cast<CpuKernelContext &>(ctx), kInputNum, kOutputNum),
+                           "CropAndResizeGradBoxes check params failed.");
   image_shape_ = input_data1->GetTensorShape()->GetDimSizes();
   boxes_shape_ = input_data2->GetTensorShape()->GetDimSizes();
   box_in_shape_ = input_data3->GetTensorShape()->GetDimSizes();
   grads_shape_ = input_data0->GetTensorShape()->GetDimSizes();
   output_shape_ = output->GetTensorShape()->GetDimSizes();
-  KERNEL_CHECK_FALSE((grads_shape_.size() == 4), KERNEL_STATUS_PARAM_INVALID,
-                     "Dim of input[0] must be 4, but the input[0] is %zu.", grads_shape_.size());
-  KERNEL_CHECK_FALSE((image_shape_.size() == 4), KERNEL_STATUS_PARAM_INVALID,
-                     "Dim of input[1] must be 4, but the input[1] is %zu.", image_shape_.size());
+  CUST_KERNEL_CHECK_FALSE(ctx, (grads_shape_.size() == 4), KERNEL_STATUS_PARAM_INVALID,
+                          "Dim of input[0] must be 4, but the input[0] is %zu.", grads_shape_.size());
+  CUST_KERNEL_CHECK_FALSE(ctx, (image_shape_.size() == 4), KERNEL_STATUS_PARAM_INVALID,
+                          "Dim of input[1] must be 4, but the input[1] is %zu.", image_shape_.size());
 
-  KERNEL_CHECK_FALSE((image_shape_[1] > 0 && image_shape_[2] > 0), KERNEL_STATUS_PARAM_INVALID,
-                     "the height and width of input image of "
-                     "CropAndResizeGradBoxes must be over 0.");
-  KERNEL_CHECK_FALSE((grads_shape_[1] > 0 && grads_shape_[2] > 0), KERNEL_STATUS_PARAM_INVALID,
-                     "the height and width of input grads of "
-                     "CropAndResizeGradBoxes must be over 0.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (image_shape_[1] > 0 && image_shape_[2] > 0), KERNEL_STATUS_PARAM_INVALID,
+                          "the height and width of input image of "
+                          "CropAndResizeGradBoxes must be over 0.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (grads_shape_[1] > 0 && grads_shape_[2] > 0), KERNEL_STATUS_PARAM_INVALID,
+                          "the height and width of input grads of "
+                          "CropAndResizeGradBoxes must be over 0.");
 
-  KERNEL_CHECK_FALSE((boxes_shape_.size() == 2), KERNEL_STATUS_PARAM_INVALID, "Dim of input[2] must be 2.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (boxes_shape_.size() == 2), KERNEL_STATUS_PARAM_INVALID, "Dim of input[2] must be 2.");
 
-  KERNEL_CHECK_FALSE((box_in_shape_.size() == 1), KERNEL_STATUS_PARAM_INVALID, "Dim of input[3] must be 1.");
-  KERNEL_CHECK_FALSE((output_shape_.size() == 2), KERNEL_STATUS_PARAM_INVALID, "Dim of output must be 2.");
-  KERNEL_CHECK_FALSE((grads_shape_[0] == boxes_shape_[0]), KERNEL_STATUS_PARAM_INVALID,
-                     "boxes and grads must have compatible Batch.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (box_in_shape_.size() == 1), KERNEL_STATUS_PARAM_INVALID, "Dim of input[3] must be 1.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (output_shape_.size() == 2), KERNEL_STATUS_PARAM_INVALID, "Dim of output must be 2.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (grads_shape_[0] == boxes_shape_[0]), KERNEL_STATUS_PARAM_INVALID,
+                          "boxes and grads must have compatible Batch.");
   data_type_ = input_data1->GetDataType();
   return KERNEL_STATUS_OK;
 }
 
 uint32_t CropAndResizeGradBoxesCpuKernel::Compute(CpuKernelContext &ctx) {
   uint32_t res = cheakInputTypeAndGetDatas(ctx);
-  KERNEL_CHECK_FALSE((res == KERNEL_STATUS_OK), res, "GetInputAndCheck failed.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (res == KERNEL_STATUS_OK), res, "GetInputAndCheck failed.");
 
   switch (data_type_) {
     case DT_UINT8:
@@ -103,16 +103,16 @@ uint32_t CropAndResizeGradBoxesCpuKernel::Compute(CpuKernelContext &ctx) {
       res = GradOfBoxesCompute<double>(ctx);
       break;
     default:
-      KERNEL_LOG_ERROR("CropAndResizeGradBoxes op doesn't support input tensor types: [%s]",
-                       DTypeStr(data_type_).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "CropAndResizeGradBoxes op doesn't support input tensor types: [%s]",
+                            DTypeStr(data_type_).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
-  KERNEL_CHECK_FALSE((res == KERNEL_STATUS_OK), res, "CropAndResizeGradBoxes Compute failed.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (res == KERNEL_STATUS_OK), res, "CropAndResizeGradBoxes Compute failed.");
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t CropAndResizeGradBoxesCpuKernel::GradOfBoxesCompute(const CpuKernelContext &ctx) {
+uint32_t CropAndResizeGradBoxesCpuKernel::GradOfBoxesCompute(CpuKernelContext &ctx) {
   Tensor *grads_tensor = ctx.Input(0);
   Tensor *image_tensor = ctx.Input(1);
   Tensor *boxes_tensor = ctx.Input(2);
@@ -132,7 +132,8 @@ uint32_t CropAndResizeGradBoxesCpuKernel::GradOfBoxesCompute(const CpuKernelCont
   const int crop_height = grads_shape_[1];
   const int crop_width = grads_shape_[2];
   const int crop_depth = grads_shape_[3];
-  KERNEL_CHECK_FALSE((depth == crop_depth), KERNEL_STATUS_PARAM_INVALID, "boxes and grads must have compatible Depth.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (depth == crop_depth), KERNEL_STATUS_PARAM_INVALID,
+                          "boxes and grads must have compatible Depth.");
 
   const int boxesCoordinateNum = boxes_shape_[1];
   const int num_image2 = image_height * image_width * depth;

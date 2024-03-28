@@ -72,32 +72,32 @@ constexpr std::array<double, total_n_degs> thetas_double = {2.220446049250313e-1
                                                             3.397168839976962e-04, 4.991228871115323e-02,
                                                             2.996158913811580e-01, 1.090863719290036e+00};
 
-#define MATRIX_EXP_COMPUTE_CASE(DTYPE, TYPE, CTX)           \
-  case (DTYPE): {                                           \
-    uint32_t result = MatrixExpCompute<TYPE>(CTX);          \
-    if (result != KERNEL_STATUS_OK) {                       \
-      KERNEL_LOG_ERROR("MatrixExp kernel compute failed."); \
-      return result;                                        \
-    }                                                       \
-    break;                                                  \
+#define MATRIX_EXP_COMPUTE_CASE(DTYPE, TYPE, CTX)                     \
+  case (DTYPE): {                                                     \
+    uint32_t result = MatrixExpCompute<TYPE>(CTX);                    \
+    if (result != KERNEL_STATUS_OK) {                                 \
+      CUST_KERNEL_LOG_ERROR(ctx, "MatrixExp kernel compute failed."); \
+      return result;                                                  \
+    }                                                                 \
+    break;                                                            \
   }
 
-#define MATRIX_EXP_COMPUTE_DIFF_CASE(DTYPE, TYPE, CTX)      \
-  case (DTYPE): {                                           \
-    uint32_t result = MatrixExpDiffTypeCompute<TYPE>(CTX);  \
-    if (result != KERNEL_STATUS_OK) {                       \
-      KERNEL_LOG_ERROR("MatrixExp kernel compute failed."); \
-      return result;                                        \
-    }                                                       \
-    break;                                                  \
+#define MATRIX_EXP_COMPUTE_DIFF_CASE(DTYPE, TYPE, CTX)                \
+  case (DTYPE): {                                                     \
+    uint32_t result = MatrixExpDiffTypeCompute<TYPE>(CTX);            \
+    if (result != KERNEL_STATUS_OK) {                                 \
+      CUST_KERNEL_LOG_ERROR(ctx, "MatrixExp kernel compute failed."); \
+      return result;                                                  \
+    }                                                                 \
+    break;                                                            \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t MatrixExpCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kMatrixExpInputNum, kMatrixExpOutputNum),
-                      "[%s] check input and output number failed.", kMatrixExp);
-  KERNEL_HANDLE_ERROR(MatrixExpCheck(ctx), "[%s] check params failed.", kMatrixExp);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kMatrixExpInputNum, kMatrixExpOutputNum),
+                           "[%s] check input and output number failed.", kMatrixExp);
+  CUST_KERNEL_HANDLE_ERROR(ctx, MatrixExpCheck(ctx), "[%s] check params failed.", kMatrixExp);
   auto data_type = ctx.Input(0)->GetDataType();
   switch (data_type) {
     MATRIX_EXP_COMPUTE_CASE(DT_FLOAT, float, ctx)
@@ -106,23 +106,24 @@ uint32_t MatrixExpCpuKernel::Compute(CpuKernelContext &ctx) {
     MATRIX_EXP_COMPUTE_CASE(DT_COMPLEX128, std::complex<double>, ctx)
     MATRIX_EXP_COMPUTE_DIFF_CASE(DT_FLOAT16, Eigen::half, ctx)
     default:
-      KERNEL_LOG_ERROR("MatrixExp kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "MatrixExp kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 
-uint32_t MatrixExpCpuKernel::MatrixExpCheck(const CpuKernelContext &ctx) {
+uint32_t MatrixExpCpuKernel::MatrixExpCheck(CpuKernelContext &ctx) {
   auto input_0 = ctx.Input(0);
   std::vector<int64_t> shape_x = input_0->GetTensorShape()->GetDimSizes();
   size_t shape_size_x = shape_x.size();
-  KERNEL_CHECK_FALSE((shape_size_x > 1), KERNEL_STATUS_PARAM_INVALID, "Input x must be at least rank 2, got [%zu].",
-                     shape_size_x)
-  KERNEL_CHECK_FALSE((shape_x[shape_size_x - 1] > 0), KERNEL_STATUS_PARAM_INVALID,
-                     "Input x's last dimension must be at least 1.")
-  KERNEL_CHECK_FALSE((shape_x[shape_size_x - kIndexTwo] == shape_x[shape_size_x - 1]), KERNEL_STATUS_PARAM_INVALID,
-                     "Input x's last two dimensions must be equal, but are [%lld] and [%lld].",
-                     shape_x[shape_size_x - kIndexTwo], shape_x[shape_size_x - 1])
+  CUST_KERNEL_CHECK_FALSE(ctx, (shape_size_x > 1), KERNEL_STATUS_PARAM_INVALID,
+                          "Input x must be at least rank 2, got [%zu].", shape_size_x)
+  CUST_KERNEL_CHECK_FALSE(ctx, (shape_x[shape_size_x - 1] > 0), KERNEL_STATUS_PARAM_INVALID,
+                          "Input x's last dimension must be at least 1.")
+  CUST_KERNEL_CHECK_FALSE(ctx, (shape_x[shape_size_x - kIndexTwo] == shape_x[shape_size_x - 1]),
+                          KERNEL_STATUS_PARAM_INVALID,
+                          "Input x's last two dimensions must be equal, but are [%lld] and [%lld].",
+                          shape_x[shape_size_x - kIndexTwo], shape_x[shape_size_x - 1])
   return KERNEL_STATUS_OK;
 }
 
@@ -173,7 +174,7 @@ void MatrixExpCpuKernel::MTaylorApproximant(Eigen::MatrixBase<Derived1> *A, Eige
 
 template <typename Derived1, typename Derived2>
 void MatrixExpCpuKernel::MexpImpl(Eigen::MatrixBase<Derived1> *A, Eigen::MatrixBase<Derived2> *I,
-                                  Eigen::MatrixBase<Derived1> *mexp, const CpuKernelContext &ctx) {
+                                  Eigen::MatrixBase<Derived1> *mexp, CpuKernelContext &ctx) {
   const auto norm = A->cwiseAbs().colwise().sum().maxCoeff();
   constexpr std::array<int, total_n_degs> m_vals = {1, 2, 4, 8, 12, 18};
   constexpr int cut_deg = 2;
@@ -217,7 +218,7 @@ void MatrixExpCpuKernel::MexpImpl(Eigen::MatrixBase<Derived1> *A, Eigen::MatrixB
 }
 
 template <typename T>
-uint32_t MatrixExpCpuKernel::MatrixExpCompute(const CpuKernelContext &ctx) {
+uint32_t MatrixExpCpuKernel::MatrixExpCompute(CpuKernelContext &ctx) {
   auto input_x = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto output_y = reinterpret_cast<T *>(ctx.Output(0)->GetData());
 
@@ -256,14 +257,14 @@ uint32_t MatrixExpCpuKernel::MatrixExpCompute(const CpuKernelContext &ctx) {
         }
       }
     };
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, matrix_num, matrix_num / max_core_num, shard_work),
-                        "MatrixExp Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, matrix_num, matrix_num / max_core_num, shard_work),
+                             "MatrixExp Compute failed.");
   }
   return KERNEL_STATUS_OK;
 }
 
 void MatrixExpCpuKernel::TyepChangeForFp16(int64_t i, int64_t m, Eigen::half *input_x, Eigen::half *output_y,
-                                           const CpuKernelContext &ctx) {
+                                           CpuKernelContext &ctx) {
   typedef Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MatrixXd;
   MatrixXd I(m, m);
   (void)I.setIdentity();
@@ -286,7 +287,7 @@ void MatrixExpCpuKernel::TyepChangeForFp16(int64_t i, int64_t m, Eigen::half *in
 }
 
 template <typename T>
-uint32_t MatrixExpCpuKernel::MatrixExpDiffTypeCompute(const CpuKernelContext &ctx) {
+uint32_t MatrixExpCpuKernel::MatrixExpDiffTypeCompute(CpuKernelContext &ctx) {
   T *input_x = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto output_y = reinterpret_cast<T *>(ctx.Output(0)->GetData());
 
@@ -314,8 +315,8 @@ uint32_t MatrixExpCpuKernel::MatrixExpDiffTypeCompute(const CpuKernelContext &ct
         TyepChangeForFp16(i, m, input_x, output_y, ctx);
       }
     };
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, matrix_num, matrix_num / max_core_num, shard_work),
-                        "MatrixExp Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, matrix_num, matrix_num / max_core_num, shard_work),
+                             "MatrixExp Compute failed.");
   }
   // }
   return KERNEL_STATUS_OK;

@@ -28,10 +28,10 @@ const char *kEnvironSet = "EnvironSet";
 }  // namespace
 namespace aicpu {
 uint32_t EnvironSetKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_LOG_DEBUG("Enter DoCompute.");
+  CUST_KERNEL_LOG_DEBUG(ctx, "Enter DoCompute.");
   // Parse Kernel
   auto ret = ParseKernelParam(ctx);
-  KERNEL_CHECK_FALSE(ret == KERNEL_STATUS_OK, KERNEL_STATUS_PARAM_INVALID, "Parse EnvironSet failed.");
+  CUST_KERNEL_CHECK_FALSE(ctx, ret == KERNEL_STATUS_OK, KERNEL_STATUS_PARAM_INVALID, "Parse EnvironSet failed.");
   auto &env_mgr = EnvironMgr::GetInstance();
   auto input_handle_ptr = reinterpret_cast<int64_t *>(ctx.Input(kFirstInputIndex)->GetData());
   auto input_key_ptr = reinterpret_cast<int64_t *>(ctx.Input(kSecondInputIndex)->GetData());
@@ -39,41 +39,41 @@ uint32_t EnvironSetKernel::Compute(CpuKernelContext &ctx) {
   auto output_handle_ptr = reinterpret_cast<int64_t *>(ctx.Output(kFirstOutputIndex)->GetData());
 
   auto *value_ptr = malloc(value_size_);
-  KERNEL_CHECK_NULLPTR(value_ptr, kAicpuKernelStateInvalid, "Malloc failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, value_ptr, KERNEL_STATUS_INNER_ERROR, "Malloc failed.")
   auto res = memcpy_s(value_ptr, value_size_, input_value_ptr, value_size_);
-  KERNEL_CHECK_FALSE((res == EOK), kAicpuKernelStateInvalid, "Memcpy size from input[2] to environ failed.",
-                     value_size_);
+  CUST_KERNEL_CHECK_FALSE(ctx, (res == EOK), KERNEL_STATUS_INNER_ERROR, "Memcpy size from input[2] to environ failed.",
+                          value_size_);
 
   // Set env member.
   const auto &env = env_mgr.Get(input_handle_ptr[0]);
-  KERNEL_CHECK_FALSE(env, kAicpuKernelStateInvalid, "Get handle[%d] failed.", input_handle_ptr[0]);
+  CUST_KERNEL_CHECK_FALSE(ctx, env, KERNEL_STATUS_INNER_ERROR, "Get handle[%d] failed.", input_handle_ptr[0]);
 
   auto env_value = std::make_shared<EnvironValue>(value_ptr, value_size_, attr_value_type_);
   env->Set(input_key_ptr[0], env_value);
-  KERNEL_LOG_DEBUG("EnvironSetKernel: handle[%d], key[%d], value[%d]", input_handle_ptr[0], input_key_ptr[0],
-                   (void *)&env_value);
+  CUST_KERNEL_LOG_DEBUG(ctx, "EnvironSetKernel: handle[%d], key[%d], value[%d]", input_handle_ptr[0], input_key_ptr[0],
+                        (void *)&env_value);
 
   // Set output handle
   output_handle_ptr[0] = input_handle_ptr[0];
   return KERNEL_STATUS_OK;
 }
 
-uint32_t EnvironSetKernel::ParseKernelParam(const CpuKernelContext &ctx) {
-  KERNEL_LOG_DEBUG("Enter ParseKernelParam.");
+uint32_t EnvironSetKernel::ParseKernelParam(CpuKernelContext &ctx) {
+  CUST_KERNEL_LOG_DEBUG(ctx, "Enter ParseKernelParam.");
   auto &env_mgr = EnvironMgr::GetInstance();
   if (!env_mgr.CheckEnvInput(ctx)) {
-    KERNEL_LOG_DEBUG("The input checks invalid. ");
+    CUST_KERNEL_LOG_DEBUG(ctx, "The input checks invalid. ");
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
-  if (!env_mgr.IsScalarTensor(ctx.Output(kFirstOutputIndex))) {
-    KERNEL_LOG_ERROR("The output handle is not equal of input handle.");
+  if (!env_mgr.IsScalarTensor(ctx, ctx.Output(kFirstOutputIndex))) {
+    CUST_KERNEL_LOG_ERROR(ctx, "The output handle is not equal of input handle.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
   // Get value type.
   auto value_type_ptr = ctx.GetAttr(kEnvValueTypeAttr);
-  KERNEL_CHECK_NULLPTR(value_type_ptr, KERNEL_STATUS_PARAM_INVALID, "Get attr value_type failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, value_type_ptr, KERNEL_STATUS_PARAM_INVALID, "Get attr value_type failed.");
   attr_value_type_ = value_type_ptr->GetInt();
 
   // Get value size.

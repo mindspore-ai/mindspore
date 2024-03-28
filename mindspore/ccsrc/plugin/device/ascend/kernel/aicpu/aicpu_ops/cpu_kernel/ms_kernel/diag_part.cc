@@ -23,22 +23,23 @@ const uint32_t kOutputNum = 1;
 const uint32_t kInputNum = 1;
 const char *kDiagPart = "DiagPart";
 
-#define DIAGPART_COMPUTE_CASE(DTYPE, TYPE, CTX)            \
-  case (DTYPE): {                                          \
-    uint32_t result = DiagPartCompute<TYPE>(CTX);          \
-    if (result != KERNEL_STATUS_OK) {                      \
-      KERNEL_LOG_ERROR("DiagPart kernel compute failed."); \
-      return result;                                       \
-    }                                                      \
-    break;                                                 \
+#define DIAGPART_COMPUTE_CASE(DTYPE, TYPE, CTX)                      \
+  case (DTYPE): {                                                    \
+    uint32_t result = DiagPartCompute<TYPE>(CTX);                    \
+    if (result != KERNEL_STATUS_OK) {                                \
+      CUST_KERNEL_LOG_ERROR(ctx, "DiagPart kernel compute failed."); \
+      return result;                                                 \
+    }                                                                \
+    break;                                                           \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t DiagPartCpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.", kDiagPart);
-  KERNEL_HANDLE_ERROR(DiagPartCheck(ctx), "[%s] check params failed.", kDiagPart);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.",
+                           kDiagPart);
+  CUST_KERNEL_HANDLE_ERROR(ctx, DiagPartCheck(ctx), "[%s] check params failed.", kDiagPart);
   auto data_type = ctx.Input(0)->GetDataType();
   switch (data_type) {
     DIAGPART_COMPUTE_CASE(DT_FLOAT16, Eigen::half, ctx)
@@ -49,7 +50,7 @@ uint32_t DiagPartCpuKernel::Compute(CpuKernelContext &ctx) {
     DIAGPART_COMPUTE_CASE(DT_COMPLEX64, std::complex<float>, ctx)
     DIAGPART_COMPUTE_CASE(DT_COMPLEX128, std::complex<double>, ctx)
     default:
-      KERNEL_LOG_ERROR("DiagPart kernel data type [%s] not supports.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "DiagPart kernel data type [%s] not supports.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
@@ -58,13 +59,13 @@ uint32_t DiagPartCpuKernel::Compute(CpuKernelContext &ctx) {
 uint32_t DiagPartCpuKernel::DiagPartCheck(CpuKernelContext &ctx) {
   std::vector<int64_t> shape_input = ctx.Input(0)->GetTensorShape()->GetDimSizes();
   std::vector<int64_t> shape_output = ctx.Output(0)->GetTensorShape()->GetDimSizes();
-  KERNEL_CHECK_FALSE((shape_input.size() % 2 == 0), KERNEL_STATUS_PARAM_INVALID,
-                     "The rank of the tensor should be even and positive.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (shape_input.size() % 2 == 0), KERNEL_STATUS_PARAM_INVALID,
+                          "The rank of the tensor should be even and positive.");
   for (size_t i = 0; i < shape_output.size(); i++) {
-    KERNEL_CHECK_FALSE((shape_input[i] == shape_input[i + shape_output.size()]), KERNEL_STATUS_PARAM_INVALID,
-                       "Invalid shape: the input dimension [%zu] size [%zu] does not match "
-                       "the input dimension [%zu] size [%zu].",
-                       i, shape_input[i], i + shape_output.size(), shape_input[i + shape_output.size()]);
+    CUST_KERNEL_CHECK_FALSE(ctx, (shape_input[i] == shape_input[i + shape_output.size()]), KERNEL_STATUS_PARAM_INVALID,
+                            "Invalid shape: the input dimension [%zu] size [%zu] does not match "
+                            "the input dimension [%zu] size [%zu].",
+                            i, shape_input[i], i + shape_output.size(), shape_input[i + shape_output.size()]);
   }
 
   return KERNEL_STATUS_OK;

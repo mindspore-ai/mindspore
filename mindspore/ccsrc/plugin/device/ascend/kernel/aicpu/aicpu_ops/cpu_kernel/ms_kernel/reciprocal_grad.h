@@ -27,10 +27,9 @@ class ReciprocalGradCpuKernel : public CpuKernel {
 
  private:
   template <typename T>
-  uint32_t ReciprocalGradCompute(Tensor *y, Tensor *dy, Tensor *z, uint64_t data_num, const CpuKernelContext &ctx);
+  uint32_t ReciprocalGradCompute(Tensor *y, Tensor *dy, Tensor *z, uint64_t data_num, CpuKernelContext &ctx);
   template <typename T>
-  uint32_t ReciprocalGradComputeComplex(Tensor *y, Tensor *dy, Tensor *z, uint64_t data_num,
-                                        const CpuKernelContext &ctx);
+  uint32_t ReciprocalGradComputeComplex(Tensor *y, Tensor *dy, Tensor *z, uint64_t data_num, CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

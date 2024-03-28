@@ -53,15 +53,15 @@ static uint32_t GatherGrad(const T *index, const S *grad, S *output, int64_t dim
       T j_read = index[id];
       auto max_index = static_cast<T>(output_shape[dim_size]);
       if (j_read >= max_index || j_read < -max_index) {
-        AICPU_LOGE("The value of 'dim' should be in [%d %d), but got %d", -max_index, max_index, j_read);
-        AtomicAdd<bool>(&status, true);
+        CUST_AICPU_LOGE(ctx, "The value of 'dim' should be in [%d %d), but got %d", -max_index, max_index, j_read);
+        AtomicAdd<bool>(ctx, &status, true);
         return;
       }
       if (j_read < 0) {
         j_read += max_index;
       }
 
-      int64_t signed_id = SizeToInt(id);
+      int64_t signed_id = SizeToInt(ctx, id);
       int64_t signed_j_read = static_cast<int64_t>(j_read);
       int64_t accumulate_offset = 1;
       int64_t out_accumulate_offset = 1;
@@ -74,13 +74,13 @@ static uint32_t GatherGrad(const T *index, const S *grad, S *output, int64_t dim
         out_accumulate_offset *= output_shape[real_i];
       }
 
-      AtomicAdd<S>(output + offset, grad[id]);
+      AtomicAdd<S>(ctx, output + offset, grad[id]);
     }
   };
 
   const int64_t per_unit_size = number / std::thread::hardware_concurrency();
-  KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, number, per_unit_size, shard_gather_grad),
-                      "GatherDGradV2 compute failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, number, per_unit_size, shard_gather_grad),
+                           "GatherDGradV2 compute failed.");
   if (status) {
     return KERNEL_STATUS_INNER_ERROR;
   }
@@ -96,7 +96,7 @@ uint32_t GatherDGradV2Kernel::GatherDGradV2Task(CpuKernelContext &ctx) {
 
   int64_t output_rank = static_cast<int64_t>(output_shape_.size());
   if (dim_ >= output_rank || dim_ < -output_rank) {
-    AICPU_LOGE("The value of 'dim' should be in [%d %d), but got %d", -output_rank, output_rank, dim_);
+    CUST_AICPU_LOGE(ctx, "The value of 'dim' should be in [%d %d), but got %d", -output_rank, output_rank, dim_);
     return KERNEL_STATUS_INNER_ERROR;
   }
   if (dim_ < 0) {
@@ -104,7 +104,7 @@ uint32_t GatherDGradV2Kernel::GatherDGradV2Task(CpuKernelContext &ctx) {
   }
   int64_t grad_rank = static_cast<int64_t>(grad_shape_.size());
   if (dim_ >= grad_rank) {
-    AICPU_LOGE("The value of 'dim' should be in [%d %d), but got %d", -grad_rank, grad_rank, dim_);
+    CUST_AICPU_LOGE(ctx, "The value of 'dim' should be in [%d %d), but got %d", -grad_rank, grad_rank, dim_);
     return KERNEL_STATUS_INNER_ERROR;
   }
 
@@ -113,11 +113,11 @@ uint32_t GatherDGradV2Kernel::GatherDGradV2Task(CpuKernelContext &ctx) {
     sizeof(S);
   uint8_t *data = reinterpret_cast<uint8_t *>(output);
   if (data == nullptr) {
-    AICPU_LOGE("For '%s', the output is nullptr.");
+    CUST_AICPU_LOGE(ctx, "For '%s', the output is nullptr.");
     return KERNEL_STATUS_INNER_ERROR;
   }
   if (mindspore::common::huge_memset(data, output_size, 0x0, output_size) != EOK) {
-    AICPU_LOGE("For '%s', failed to init output.", kGatherDGradV2);
+    CUST_AICPU_LOGE(ctx, "For '%s', failed to init output.", kGatherDGradV2);
     return KERNEL_STATUS_INNER_ERROR;
   }
 
@@ -125,7 +125,8 @@ uint32_t GatherDGradV2Kernel::GatherDGradV2Task(CpuKernelContext &ctx) {
 }
 
 uint32_t GatherDGradV2Kernel::ParseKernelParam(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "GatherDGradV2 check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "GatherDGradV2 check input and output number failed.");
   // ori input
   input_shape_ = ctx.Input(kDim0)->GetTensorShape()->GetDimSizes();
 
@@ -147,7 +148,7 @@ uint32_t GatherDGradV2Kernel::ParseKernelParam(CpuKernelContext &ctx) {
   }
 
   if (index_shape_ != grad_shape_) {
-    AICPU_LOGE("the shape of index and grad should be same!");
+    CUST_AICPU_LOGE(ctx, "the shape of index and grad should be same!");
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
@@ -158,7 +159,7 @@ uint32_t GatherDGradV2Kernel::ParseKernelParam(CpuKernelContext &ctx) {
     output_shape_ = std::vector<int64_t>({1});
   }
   if (output_shape_ != input_shape_) {
-    AICPU_LOGE("the shape of input and output should be same!");
+    CUST_AICPU_LOGE(ctx, "the shape of input and output should be same!");
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
@@ -200,7 +201,7 @@ uint32_t GatherDGradV2Kernel::Compute(CpuKernelContext &ctx) {
   calls[DT_INT64][DT_BFLOAT16] = std::bind(&GatherDGradV2Kernel::GatherDGradV2Task<int64_t, bfloat16>, this, _1);
 
   if (calls.find(index_type_) == calls.end()) {
-    AICPU_LOGE("GatherDGradV2 op don't support index tensor types: %s", typeid(index_type_).name());
+    CUST_AICPU_LOGE(ctx, "GatherDGradV2 op don't support index tensor types: %s", typeid(index_type_).name());
     return KERNEL_STATUS_INNER_ERROR;
   }
   return calls[index_type_][grad_type_](ctx);

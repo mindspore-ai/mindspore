@@ -34,31 +34,31 @@ const uint32_t kTWO = 2;
 constexpr int64_t kParallelDataNums = 18 * 1024;
 constexpr int64_t kParallelDataNumsMid = 32 * 1024;
 
-#define ORGQR_COMPUTE(DTYPE, TYPE, CTX)                 \
-  case (DTYPE): {                                       \
-    uint32_t result = OrgqrCompute<TYPE>(CTX);          \
-    if (result != KERNEL_STATUS_OK) {                   \
-      KERNEL_LOG_ERROR("Orgqr kernel compute failed."); \
-      return result;                                    \
-    }                                                   \
-    break;                                              \
+#define ORGQR_COMPUTE(DTYPE, TYPE, CTX)                           \
+  case (DTYPE): {                                                 \
+    uint32_t result = OrgqrCompute<TYPE>(CTX);                    \
+    if (result != KERNEL_STATUS_OK) {                             \
+      CUST_KERNEL_LOG_ERROR(ctx, "Orgqr kernel compute failed."); \
+      return result;                                              \
+    }                                                             \
+    break;                                                        \
   }
-#define ORGQR_COMPUTE_COMPLEX(DTYPE, TYPE, CTX)         \
-  case (DTYPE): {                                       \
-    uint32_t result = OrgqrComputeComplex<TYPE>(CTX);   \
-    if (result != KERNEL_STATUS_OK) {                   \
-      KERNEL_LOG_ERROR("Orgqr kernel compute failed."); \
-      return result;                                    \
-    }                                                   \
-    break;                                              \
+#define ORGQR_COMPUTE_COMPLEX(DTYPE, TYPE, CTX)                   \
+  case (DTYPE): {                                                 \
+    uint32_t result = OrgqrComputeComplex<TYPE>(CTX);             \
+    if (result != KERNEL_STATUS_OK) {                             \
+      CUST_KERNEL_LOG_ERROR(ctx, "Orgqr kernel compute failed."); \
+      return result;                                              \
+    }                                                             \
+    break;                                                        \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t OrgqrCpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "Orgqr check input and output number failed.");
-  KERNEL_HANDLE_ERROR(OrgqrCheck(ctx), "[%s] check params failed.", kOrgqr);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "Orgqr check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, OrgqrCheck(ctx), "[%s] check params failed.", kOrgqr);
   auto data_type = ctx.Input(0)->GetDataType();
   switch (data_type) {
     ORGQR_COMPUTE(DT_FLOAT, float, ctx)
@@ -66,7 +66,7 @@ uint32_t OrgqrCpuKernel::Compute(CpuKernelContext &ctx) {
     ORGQR_COMPUTE_COMPLEX(DT_COMPLEX64, std::complex<float_t>, ctx)
     ORGQR_COMPUTE_COMPLEX(DT_COMPLEX128, std::complex<double_t>, ctx)
     default:
-      KERNEL_LOG_ERROR("Orgqr kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Orgqr kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
@@ -75,24 +75,25 @@ uint32_t OrgqrCpuKernel::Compute(CpuKernelContext &ctx) {
 uint32_t OrgqrCpuKernel::OrgqrCheck(CpuKernelContext &ctx) {
   std::vector<int64_t> shape_x = ctx.Input(0)->GetTensorShape()->GetDimSizes();
   size_t shape_size = shape_x.size();
-  KERNEL_CHECK_FALSE((shape_size > 1), KERNEL_STATUS_PARAM_INVALID, "Input x must be at least rank 2.")
-  KERNEL_CHECK_FALSE((shape_x[shape_size - kTWO] > 0), KERNEL_STATUS_PARAM_INVALID,
-                     "Dimension [%zu] of input x must be at least 1, but [%zu].", shape_size - kTWO,
-                     shape_x[shape_size - kTWO])
-  KERNEL_CHECK_FALSE((shape_x[shape_size - 1] > 0), KERNEL_STATUS_PARAM_INVALID,
-                     "Dimension [%zu] of input x must be at least 1, but [%zu].", shape_size - 1,
-                     shape_x[shape_size - 1])
-  KERNEL_CHECK_FALSE((shape_x[shape_size - kTWO] >= shape_x[shape_size - 1]), KERNEL_STATUS_PARAM_INVALID,
-                     "Dimension [%zu] of input x must be bigger than dimension [%zu], when input x has rank [%zu].",
-                     shape_size - kTWO, shape_size - 1, shape_size)
+  CUST_KERNEL_CHECK_FALSE(ctx, (shape_size > 1), KERNEL_STATUS_PARAM_INVALID, "Input x must be at least rank 2.")
+  CUST_KERNEL_CHECK_FALSE(ctx, (shape_x[shape_size - kTWO] > 0), KERNEL_STATUS_PARAM_INVALID,
+                          "Dimension [%zu] of input x must be at least 1, but [%zu].", shape_size - kTWO,
+                          shape_x[shape_size - kTWO])
+  CUST_KERNEL_CHECK_FALSE(ctx, (shape_x[shape_size - 1] > 0), KERNEL_STATUS_PARAM_INVALID,
+                          "Dimension [%zu] of input x must be at least 1, but [%zu].", shape_size - 1,
+                          shape_x[shape_size - 1])
+  CUST_KERNEL_CHECK_FALSE(
+    ctx, (shape_x[shape_size - kTWO] >= shape_x[shape_size - 1]), KERNEL_STATUS_PARAM_INVALID,
+    "Dimension [%zu] of input x must be bigger than dimension [%zu], when input x has rank [%zu].", shape_size - kTWO,
+    shape_size - 1, shape_size)
   std::vector<int64_t> shape_tau = ctx.Input(1)->GetTensorShape()->GetDimSizes();
   size_t shape_tau_size = shape_tau.size();
-  KERNEL_CHECK_FALSE((shape_x[shape_size - 1] >= shape_tau[shape_tau_size - 1]), KERNEL_STATUS_PARAM_INVALID,
-                     "Dimension [%zu] of input tau must be less than [%zu], but [%zu].", shape_tau_size - 1,
-                     shape_x[shape_size - 1], shape_tau[shape_tau_size - 1])
+  CUST_KERNEL_CHECK_FALSE(ctx, (shape_x[shape_size - 1] >= shape_tau[shape_tau_size - 1]), KERNEL_STATUS_PARAM_INVALID,
+                          "Dimension [%zu] of input tau must be less than [%zu], but [%zu].", shape_tau_size - 1,
+                          shape_x[shape_size - 1], shape_tau[shape_tau_size - 1])
   if (shape_size > kTWO) {
-    KERNEL_CHECK_FALSE((shape_x[0] == shape_tau[0]), KERNEL_STATUS_PARAM_INVALID,
-                       "Dimension 0 of input tau must equal Dimension 0 of input x when input has batch")
+    CUST_KERNEL_CHECK_FALSE(ctx, (shape_x[0] == shape_tau[0]), KERNEL_STATUS_PARAM_INVALID,
+                            "Dimension 0 of input tau must equal Dimension 0 of input x when input has batch")
   }
 
   return KERNEL_STATUS_OK;
@@ -153,10 +154,10 @@ uint32_t OrgqrCpuKernel::OrgqrCompute(CpuKernelContext &ctx) {
       }
     };
     if (max_core_num == 0) {
-      KERNEL_LOG_ERROR("max_core_num could not be 0.");
+      CUST_KERNEL_LOG_ERROR(ctx, "max_core_num could not be 0.");
     }
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, matrix_num, matrix_num / max_core_num, shard_qr),
-                        "Orgqr Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, matrix_num, matrix_num / max_core_num, shard_qr),
+                             "Orgqr Compute failed.");
   }
   return KERNEL_STATUS_OK;
 }
@@ -216,10 +217,10 @@ uint32_t OrgqrCpuKernel::OrgqrComputeComplex(CpuKernelContext &ctx) {
       }
     };
     if (max_core_num == 0) {
-      KERNEL_LOG_ERROR("max_core_num could not be 0.");
+      CUST_KERNEL_LOG_ERROR(ctx, "max_core_num could not be 0.");
     }
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, matrix_num, matrix_num / max_core_num, shard_qr),
-                        "Orgqr Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, matrix_num, matrix_num / max_core_num, shard_qr),
+                             "Orgqr Compute failed.");
   }
   return KERNEL_STATUS_OK;
 }

@@ -29,21 +29,22 @@ const char *kNMSWithMask = "NMSWithMask";
 namespace aicpu {
 uint32_t NMSWithMaskCpuKernel::Compute(CpuKernelContext &ctx) {
   // check param
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "NMSWithMask check input or output is failed");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "NMSWithMask check input or output is failed");
   AttrValue *iou_threshold = ctx.GetAttr("iou_threshold");
-  KERNEL_CHECK_FALSE((iou_threshold != nullptr), KERNEL_STATUS_PARAM_INVALID, "Get attr [iou_threshold] failed.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (iou_threshold != nullptr), KERNEL_STATUS_PARAM_INVALID,
+                          "Get attr [iou_threshold] failed.");
   iou_value_ = iou_threshold->GetFloat();
 
   Tensor *input_data = ctx.Input(0);
   auto data_type = input_data->GetDataType();
-  KERNEL_CHECK_FALSE((data_type == DT_FLOAT || data_type == DT_FLOAT16), KERNEL_STATUS_PARAM_INVALID,
-                     "Input[0] data type[%s] is unsupported", DTypeStr(data_type).c_str());
+  CUST_KERNEL_CHECK_FALSE(ctx, (data_type == DT_FLOAT || data_type == DT_FLOAT16), KERNEL_STATUS_PARAM_INVALID,
+                          "Input[0] data type[%s] is unsupported", DTypeStr(data_type).c_str());
   auto input_shape = input_data->GetTensorShape()->GetDimSizes();
   num_input_ = input_shape[0];  //  Get N values in  [N, 5] data.
   box_size_ = input_shape[1];
   if (box_size_ != kColNum5 && box_size_ != kColNum8) {
-    KERNEL_LOG_INFO("NMSWithMask the col number of input[0] must be [%d] or [%d], but got [%d]!", kColNum5, kColNum8,
-                    box_size_);
+    CUST_KERNEL_LOG_INFO(ctx, "NMSWithMask the col number of input[0] must be [%d] or [%d], but got [%d]!", kColNum5,
+                         kColNum8, box_size_);
     return KERNEL_STATUS_PARAM_INVALID;
   }
   uint32_t res;
@@ -55,8 +56,8 @@ uint32_t NMSWithMaskCpuKernel::Compute(CpuKernelContext &ctx) {
       res = DoCompute<float>(ctx);
       break;
     default:
-      KERNEL_LOG_INFO("NMSWithMask input[0] only support type[DT_FLOAT16, DT_FLOAT], but got type[%s]",
-                      DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_INFO(ctx, "NMSWithMask input[0] only support type[DT_FLOAT16, DT_FLOAT], but got type[%s]",
+                           DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
       break;
   }

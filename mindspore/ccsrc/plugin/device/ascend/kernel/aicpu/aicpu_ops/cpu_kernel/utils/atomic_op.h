@@ -39,7 +39,7 @@ void AtomicAddTask(T *const address, const T val) {
 }
 
 template <typename T>
-void AtomicAdd(T *const address, const T val) {
+void AtomicAdd(CpuKernelContext &ctx, T *const address, const T val) {
   switch (sizeof(T)) {
     case sizeof(uint8_t): {
       AtomicAddTask<T, uint8_t>(address, val);
@@ -58,14 +58,14 @@ void AtomicAdd(T *const address, const T val) {
       break;
     }
     default:
-      AICPU_LOGE("Unsupported aicpu atomic add format!");
+      CUST_AICPU_LOGE(ctx, "Unsupported aicpu atomic add format!");
   }
 }
 template <>
-inline void AtomicAdd(std::complex<double> *const address, const std::complex<double> val) {
+inline void AtomicAdd(CpuKernelContext &ctx, std::complex<double> *const address, const std::complex<double> val) {
   auto double_addr = reinterpret_cast<double *>(address);
-  AtomicAdd<double>(double_addr, std::real(val));
-  AtomicAdd<double>(double_addr + 1, std::imag(val));
+  AtomicAdd<double>(ctx, double_addr, std::real(val));
+  AtomicAdd<double>(ctx, double_addr + 1, std::imag(val));
   return;
 }
 }  // namespace aicpu

@@ -26,20 +26,20 @@ const uint32_t kOutputNum = 2;
 const uint32_t kInputNum = 6;
 const char *kSparseSparseMinimum = "SparseSparseMinimum";
 
-#define SPARSE_SPARSE_MINIMUM_COMPUTE_CASE(DTYPE, TYPE, CTX)          \
-  case (DTYPE): {                                                     \
-    uint32_t result = SparseSparseMinimumCompute<TYPE>(CTX);          \
-    if (result != KERNEL_STATUS_OK) {                                 \
-      KERNEL_LOG_ERROR("SparseSparseMinimum kernel compute failed."); \
-      return result;                                                  \
-    }                                                                 \
-    break;                                                            \
+#define SPARSE_SPARSE_MINIMUM_COMPUTE_CASE(DTYPE, TYPE, CTX)                    \
+  case (DTYPE): {                                                               \
+    uint32_t result = SparseSparseMinimumCompute<TYPE>(CTX);                    \
+    if (result != KERNEL_STATUS_OK) {                                           \
+      CUST_KERNEL_LOG_ERROR(ctx, "SparseSparseMinimum kernel compute failed."); \
+      return result;                                                            \
+    }                                                                           \
+    break;                                                                      \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t SparseSparseMinimumCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "SparseSparseMinimum normal check failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "SparseSparseMinimum normal check failed.");
 
   const Tensor *x1_indices = ctx.Input(0);
   const Tensor *x1_values_t = ctx.Input(1);
@@ -50,39 +50,40 @@ uint32_t SparseSparseMinimumCpuKernel::Compute(CpuKernelContext &ctx) {
 
   auto x1_indices_shape = x1_indices->GetTensorShape();
   auto x2_indices_shape = x2_indices->GetTensorShape();
-  KERNEL_CHECK_FALSE(((x1_indices_shape->GetDims() == 2) && (x2_indices_shape->GetDims() == 2)),
-                     KERNEL_STATUS_PARAM_INVALID, "Input indices should be matrices but received dims: %d and %d.",
-                     x1_indices_shape->GetDims(), x2_indices_shape->GetDims())
+  CUST_KERNEL_CHECK_FALSE(ctx, ((x1_indices_shape->GetDims() == 2) && (x2_indices_shape->GetDims() == 2)),
+                          KERNEL_STATUS_PARAM_INVALID, "Input indices should be matrices but received dims: %d and %d.",
+                          x1_indices_shape->GetDims(), x2_indices_shape->GetDims())
   const int64_t x1_nnz = x1_indices_shape->GetDimSize(0);
   const int64_t x2_nnz = x2_indices_shape->GetDimSize(0);
 
   auto x1_values_shape = x1_values_t->GetTensorShape();
   auto x2_values_shape = x2_values_t->GetTensorShape();
-  KERNEL_CHECK_FALSE(((x1_values_shape->GetDims() == 1) && (x2_values_shape->GetDims() == 1)),
-                     KERNEL_STATUS_PARAM_INVALID, "Input values should be vectors but received dims: %d and %d.",
-                     x1_values_shape->GetDims(), x2_values_shape->GetDims())
-  KERNEL_CHECK_FALSE(((x1_values_t->NumElements() == x1_nnz) && (x2_values_t->NumElements() == x2_nnz)),
-                     KERNEL_STATUS_PARAM_INVALID,
-                     "Expected %d and %d non-empty input values, but received : %d and %d.", x1_nnz, x2_nnz,
-                     x1_values_t->NumElements(), x2_values_t->NumElements())
-  KERNEL_CHECK_FALSE((x1_values_t->GetDataType() == x2_values_t->GetDataType()), KERNEL_STATUS_PARAM_INVALID,
-                     "Data types of the input values should be the same, but "
-                     "received %d-th and %d-th data type in the DataType enum.",
-                     x1_values_t->GetDataType(), x2_values_t->GetDataType())
+  CUST_KERNEL_CHECK_FALSE(ctx, ((x1_values_shape->GetDims() == 1) && (x2_values_shape->GetDims() == 1)),
+                          KERNEL_STATUS_PARAM_INVALID, "Input values should be vectors but received dims: %d and %d.",
+                          x1_values_shape->GetDims(), x2_values_shape->GetDims())
+  CUST_KERNEL_CHECK_FALSE(ctx, ((x1_values_t->NumElements() == x1_nnz) && (x2_values_t->NumElements() == x2_nnz)),
+                          KERNEL_STATUS_PARAM_INVALID,
+                          "Expected %d and %d non-empty input values, but received : %d and %d.", x1_nnz, x2_nnz,
+                          x1_values_t->NumElements(), x2_values_t->NumElements())
+  CUST_KERNEL_CHECK_FALSE(ctx, (x1_values_t->GetDataType() == x2_values_t->GetDataType()), KERNEL_STATUS_PARAM_INVALID,
+                          "Data types of the input values should be the same, but "
+                          "received %d-th and %d-th data type in the DataType enum.",
+                          x1_values_t->GetDataType(), x2_values_t->GetDataType())
 
   auto x1_shape_shape = x1_shape->GetTensorShape();
   auto x2_shape_shape = x2_shape->GetTensorShape();
-  KERNEL_CHECK_FALSE(((x1_shape_shape->GetDims() == 1) && (x2_shape_shape->GetDims() == 1)),
-                     KERNEL_STATUS_PARAM_INVALID, "Input shapes should be vectors but received dims: %d and %d.",
-                     x1_shape_shape->GetDims(), x2_shape_shape->GetDims())
-  KERNEL_CHECK_FALSE((x1_shape_shape->GetDimSize(0) == x2_shape_shape->GetDimSize(0)), KERNEL_STATUS_PARAM_INVALID,
-                     "Operands' should have the same ranks but received: %d and %d.", x1_shape_shape->GetDimSize(0),
-                     x2_shape_shape->GetDimSize(0))
+  CUST_KERNEL_CHECK_FALSE(ctx, ((x1_shape_shape->GetDims() == 1) && (x2_shape_shape->GetDims() == 1)),
+                          KERNEL_STATUS_PARAM_INVALID, "Input shapes should be vectors but received dims: %d and %d.",
+                          x1_shape_shape->GetDims(), x2_shape_shape->GetDims())
+  CUST_KERNEL_CHECK_FALSE(ctx, (x1_shape_shape->GetDimSize(0) == x2_shape_shape->GetDimSize(0)),
+                          KERNEL_STATUS_PARAM_INVALID, "Operands' should have the same ranks but received: %d and %d.",
+                          x1_shape_shape->GetDimSize(0), x2_shape_shape->GetDimSize(0))
   auto shape_x1 = reinterpret_cast<int64_t *>(x1_shape->GetData());
   auto shape_x2 = reinterpret_cast<int64_t *>(x2_shape->GetData());
   for (int i = 0; i < x1_shape->NumElements(); ++i) {
-    KERNEL_CHECK_FALSE(shape_x1[i] == shape_x2[i], KERNEL_STATUS_PARAM_INVALID,
-                       "Operands' shapes do not match: got %d and %d for dimension %d", shape_x1[i], shape_x2[i], i)
+    CUST_KERNEL_CHECK_FALSE(ctx, shape_x1[i] == shape_x2[i], KERNEL_STATUS_PARAM_INVALID,
+                            "Operands' shapes do not match: got %d and %d for dimension %d", shape_x1[i], shape_x2[i],
+                            i)
   }
 
   auto data_type = ctx.Input(1)->GetDataType();
@@ -97,7 +98,7 @@ uint32_t SparseSparseMinimumCpuKernel::Compute(CpuKernelContext &ctx) {
     SPARSE_SPARSE_MINIMUM_COMPUTE_CASE(DT_FLOAT, float, ctx)
     SPARSE_SPARSE_MINIMUM_COMPUTE_CASE(DT_DOUBLE, double, ctx)
     default:
-      KERNEL_LOG_ERROR("SparseSparseMinimum kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "SparseSparseMinimum kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
@@ -118,7 +119,7 @@ int SparseSparseMinimumCpuKernel::cmp(const TTypes<int64_t>::ConstMatrix &x_idx,
 }
 
 template <typename T>
-uint32_t SparseSparseMinimumCpuKernel::SparseSparseMinimumCompute(const CpuKernelContext &ctx) {
+uint32_t SparseSparseMinimumCpuKernel::SparseSparseMinimumCompute(CpuKernelContext &ctx) {
   const EigenTensor x1_indices_ET(ctx.Input(0), ctx.Input(0)->GetData());
   const EigenTensor x2_indices_ET(ctx.Input(3), ctx.Input(3)->GetData());
   auto x1_indices_mat = x1_indices_ET.matrix<int64_t>();
@@ -160,7 +161,7 @@ uint32_t SparseSparseMinimumCpuKernel::SparseSparseMinimumCompute(const CpuKerne
         ++j;
         break;
       default:
-        KERNEL_LOG_ERROR("Some inner error happens in the SparseSparseMinimum computation.");
+        CUST_KERNEL_LOG_ERROR(ctx, "Some inner error happens in the SparseSparseMinimum computation.");
         return KERNEL_STATUS_INNER_ERROR;
     }
   }

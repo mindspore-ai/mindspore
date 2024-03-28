@@ -30,8 +30,8 @@ namespace aicpu {
 uint32_t StandardLaplaceCpuKernel::Compute(CpuKernelContext &ctx) {
   NormalCheck(ctx, kStandardLaplaceInputNum, kStandardLaplaceOutputNum);
   auto output_dtype = ctx.Output(0)->GetDataType();
-  KERNEL_CHECK_FALSE(output_dtype == DT_FLOAT, KERNEL_STATUS_INNER_ERROR, "Output dtype should be float, but got %s.",
-                     DTypeStr(output_dtype).c_str());
+  CUST_KERNEL_CHECK_FALSE(ctx, output_dtype == DT_FLOAT, KERNEL_STATUS_INNER_ERROR,
+                          "Output dtype should be float, but got %s.", DTypeStr(output_dtype).c_str());
   auto output_data = static_cast<float *>(ctx.Output(0)->GetData());
   auto output_size = ctx.Output(0)->GetDataSize() / sizeof(float);
   std::mt19937 rng;

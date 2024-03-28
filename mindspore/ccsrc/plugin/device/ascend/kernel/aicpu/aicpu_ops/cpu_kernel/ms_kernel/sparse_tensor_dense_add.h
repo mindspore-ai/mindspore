@@ -30,10 +30,10 @@ class SparseTensorDenseAddCpuKernel : public CpuKernel {
  protected:
   uint32_t Compute(CpuKernelContext &ctx) override;
 
-  uint32_t ValidateInputs(const CpuKernelContext &ctx);
+  uint32_t ValidateInputs(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t DoCompute(const CpuKernelContext &ctx);
+  uint32_t DoCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

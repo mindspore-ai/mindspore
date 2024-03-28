@@ -42,8 +42,8 @@ constexpr int64_t kTransC = 2;
 namespace aicpu {
 
 uint32_t SolveTriangularGradCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kSolveTriangularGradInputsNum, kSolveTriangularGradOutputsNum),
-                      "[%s] check input and output failed.", kSolveTriangularGrad);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kSolveTriangularGradInputsNum, kSolveTriangularGradOutputsNum),
+                           "[%s] check input and output failed.", kSolveTriangularGrad);
   auto a_type = ctx.Input(0)->GetDataType();
   uint32_t ret = KERNEL_STATUS_OK;
   switch (a_type) {
@@ -75,8 +75,8 @@ uint32_t SolveTriangularGradCpuKernel::Compute(CpuKernelContext &ctx) {
       ret = SolveTriangularGradCompute<std::complex<double>, std::complex<double>, std::complex<double>>(ctx);
       break;
     default:
-      KERNEL_LOG_ERROR("[%s] Data type of input is not support, input data type is [%s].", ctx.GetOpType().c_str(),
-                       DTypeStr(a_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "[%s] Data type of input is not support, input data type is [%s].",
+                            ctx.GetOpType().c_str(), DTypeStr(a_type).c_str());
       ret = KERNEL_STATUS_PARAM_INVALID;
   }
   return ret;
@@ -135,14 +135,14 @@ uint32_t SolveTriangularGradCpuKernel::SolveTriangularGradCompute(CpuKernelConte
   size_t db_mat_size = x_mat_size;
 
   T_grad *casted_a_addr = static_cast<T_grad *>(malloc(sizeof(T_grad) * a_mat_size));
-  KERNEL_CHECK_NULLPTR(casted_a_addr, KERNEL_STATUS_PARAM_INVALID,
-                       "[Solve_triangular] Malloc memory [casted_a_array] failed!")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, casted_a_addr, KERNEL_STATUS_PARAM_INVALID,
+                            "[Solve_triangular] Malloc memory [casted_a_array] failed!")
   T_grad *casted_x_addr = static_cast<T_grad *>(malloc(sizeof(T_grad) * x_mat_size));
-  KERNEL_CHECK_NULLPTR(casted_x_addr, KERNEL_STATUS_PARAM_INVALID,
-                       "[Solve_triangular] Malloc memory [casted_x_array] failed!")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, casted_x_addr, KERNEL_STATUS_PARAM_INVALID,
+                            "[Solve_triangular] Malloc memory [casted_x_array] failed!")
   T_grad *casted_dx_addr = static_cast<T_grad *>(malloc(sizeof(T_grad) * dx_mat_size));
-  KERNEL_CHECK_NULLPTR(casted_dx_addr, KERNEL_STATUS_PARAM_INVALID,
-                       "[Solve_triangular] Malloc memory [casted_dx_array] failed!")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, casted_dx_addr, KERNEL_STATUS_PARAM_INVALID,
+                            "[Solve_triangular] Malloc memory [casted_dx_array] failed!")
 
   for (size_t i = 0; i < batch; ++i) {
     T_in *a_batch_addr = input_a_addr + i * a_mat_size;

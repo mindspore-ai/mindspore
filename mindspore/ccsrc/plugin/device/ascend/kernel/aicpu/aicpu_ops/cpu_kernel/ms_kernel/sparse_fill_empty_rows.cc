@@ -46,7 +46,7 @@ bool isVector(const std::shared_ptr<aicpu::TensorShape> shape) { return shape->G
 
 namespace aicpu {
 template <typename T>
-uint32_t SparseFillEmptyRowsCpuKernel::ComputeSparseFillEmptyRows(DataBank &databank) {
+uint32_t SparseFillEmptyRowsCpuKernel::ComputeSparseFillEmptyRows(CpuKernelContext &ctx, DataBank &databank) {
   EigenTensor indices_e(databank.indices, databank.indices->GetData());
   EigenTensor values_e(databank.values, databank.values->GetData());
   EigenTensor dense_shape_e(databank.dense_shape, databank.dense_shape->GetData());
@@ -72,9 +72,9 @@ uint32_t SparseFillEmptyRowsCpuKernel::ComputeSparseFillEmptyRows(DataBank &data
   databank.reverse_index_map->GetTensorShape()->SetDimSizes({N});
 
   if (dense_rows == 0) {
-    KERNEL_CHECK_FALSE(N == 0, KERNEL_STATUS_PARAM_INVALID,
-                       "Received SparseTensor with dense_shape[0] is 0 and not "
-                       "equal to indices.shape[0]")
+    CUST_KERNEL_CHECK_FALSE(ctx, N == 0, KERNEL_STATUS_PARAM_INVALID,
+                            "Received SparseTensor with dense_shape[0] is 0 and not "
+                            "equal to indices.shape[0]")
     // Exit early, nothing more to do.
     databank.y_indices->GetTensorShape()->SetDimSizes({0, rank});
     databank.y_values->GetTensorShape()->SetDimSizes({0});
@@ -85,7 +85,7 @@ uint32_t SparseFillEmptyRowsCpuKernel::ComputeSparseFillEmptyRows(DataBank &data
   std::vector<int64_t> filled_count(dense_rows, 0);
   for (int64_t i = 0; i < N; ++i) {
     const int64_t row = indices(i, 0);
-    KERNEL_CHECK_FALSE(row >= 0 && row < dense_rows, KERNEL_STATUS_PARAM_INVALID, "indices is invalid")
+    CUST_KERNEL_CHECK_FALSE(ctx, row >= 0 && row < dense_rows, KERNEL_STATUS_PARAM_INVALID, "indices is invalid")
     ++scratch[indices(i, 0)];
   }
   for (int64_t row = 0; row < dense_rows; ++row) {
@@ -100,7 +100,7 @@ uint32_t SparseFillEmptyRowsCpuKernel::ComputeSparseFillEmptyRows(DataBank &data
   auto ret = memset_s(databank.y_indices->GetData(), scratch[dense_rows - 1] * rank * sizeof(int64_t), 0,
                       scratch[dense_rows - 1] * rank * sizeof(int64_t));
   if (ret != 0) {
-    KERNEL_LOG_ERROR("Memst failed, ret is [%d]", ret);
+    CUST_KERNEL_LOG_ERROR(ctx, "Memst failed, ret is [%d]", ret);
     return KERNEL_STATUS_INNER_ERROR;
   }
   for (int64_t i = 0; i < scratch[dense_rows - 1]; ++i) {
@@ -135,95 +135,96 @@ uint32_t SparseFillEmptyRowsCpuKernel::ComputeSparseFillEmptyRows(DataBank &data
   return KERNEL_STATUS_OK;
 }
 
-uint32_t SparseFillEmptyRowsCpuKernel::NullptrAndMatVecCheck(const CpuKernelContext &ctx, DataBank &databank) {
+uint32_t SparseFillEmptyRowsCpuKernel::NullptrAndMatVecCheck(CpuKernelContext &ctx, DataBank &databank) {
   databank.indices = ctx.Input(kIndexZero);
-  KERNEL_CHECK_NULLPTR(databank.indices, KERNEL_STATUS_PARAM_INVALID, "Get input indices failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, databank.indices, KERNEL_STATUS_PARAM_INVALID, "Get input indices failed.")
   databank.values = ctx.Input(kIndexOne);
-  KERNEL_CHECK_NULLPTR(databank.values, KERNEL_STATUS_PARAM_INVALID, "Get input values failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, databank.values, KERNEL_STATUS_PARAM_INVALID, "Get input values failed.")
   databank.dense_shape = ctx.Input(kIndexTwo);
-  KERNEL_CHECK_NULLPTR(databank.dense_shape, KERNEL_STATUS_PARAM_INVALID, "Get input dense_shape failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, databank.dense_shape, KERNEL_STATUS_PARAM_INVALID, "Get input dense_shape failed.")
   databank.default_value = ctx.Input(kIndexThree);
-  KERNEL_CHECK_NULLPTR(databank.default_value, KERNEL_STATUS_PARAM_INVALID, "Get input default_value failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, databank.default_value, KERNEL_STATUS_PARAM_INVALID, "Get input default_value failed.")
   databank.y_indices = ctx.Output(kIndexZero);
-  KERNEL_CHECK_NULLPTR(databank.y_indices, KERNEL_STATUS_PARAM_INVALID, "Get output y_indices failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, databank.y_indices, KERNEL_STATUS_PARAM_INVALID, "Get output y_indices failed.")
   databank.y_values = ctx.Output(kIndexOne);
-  KERNEL_CHECK_NULLPTR(databank.y_values, KERNEL_STATUS_PARAM_INVALID, "Get output y_values failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, databank.y_values, KERNEL_STATUS_PARAM_INVALID, "Get output y_values failed.")
   databank.empty_row_indicator = ctx.Output(kIndexTwo);
-  KERNEL_CHECK_NULLPTR(databank.empty_row_indicator, KERNEL_STATUS_PARAM_INVALID,
-                       "Get output empty_row_indicator failed.")
-  KERNEL_CHECK_NULLPTR(databank.reverse_index_map, KERNEL_STATUS_PARAM_INVALID, "Get output reverse_index_map failed.")
-  KERNEL_CHECK_FALSE(isMatrix(databank.indices->GetTensorShape()), KERNEL_STATUS_PARAM_INVALID,
-                     "Inputs indices should be matrix")
-  KERNEL_CHECK_FALSE(isVector(databank.dense_shape->GetTensorShape()), KERNEL_STATUS_PARAM_INVALID,
-                     "Inputs dense_shape should be vectors")
-  KERNEL_CHECK_FALSE(isVector(databank.values->GetTensorShape()), KERNEL_STATUS_PARAM_INVALID,
-                     "Inputs values should be vectors")
-  KERNEL_CHECK_FALSE(databank.default_value->NumElements() == 1, KERNEL_STATUS_PARAM_INVALID,
-                     "Input dafault_value should be scalar")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, databank.empty_row_indicator, KERNEL_STATUS_PARAM_INVALID,
+                            "Get output empty_row_indicator failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, databank.reverse_index_map, KERNEL_STATUS_PARAM_INVALID,
+                            "Get output reverse_index_map failed.")
+  CUST_KERNEL_CHECK_FALSE(ctx, isMatrix(databank.indices->GetTensorShape()), KERNEL_STATUS_PARAM_INVALID,
+                          "Inputs indices should be matrix")
+  CUST_KERNEL_CHECK_FALSE(ctx, isVector(databank.dense_shape->GetTensorShape()), KERNEL_STATUS_PARAM_INVALID,
+                          "Inputs dense_shape should be vectors")
+  CUST_KERNEL_CHECK_FALSE(ctx, isVector(databank.values->GetTensorShape()), KERNEL_STATUS_PARAM_INVALID,
+                          "Inputs values should be vectors")
+  CUST_KERNEL_CHECK_FALSE(ctx, databank.default_value->NumElements() == 1, KERNEL_STATUS_PARAM_INVALID,
+                          "Input dafault_value should be scalar")
   return KERNEL_STATUS_OK;
 }
 
 uint32_t SparseFillEmptyRowsCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum),
-                      "SparseFillEmptyRows check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "SparseFillEmptyRows check input and output number failed.");
   DataBank databank;
-  KERNEL_HANDLE_ERROR(NullptrAndMatVecCheck(ctx, databank), "SparseFillEmptyRows check params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NullptrAndMatVecCheck(ctx, databank), "SparseFillEmptyRows check params failed.");
   databank.reverse_index_map = ctx.Output(kIndexThree);
   DataType dt = static_cast<DataType>(databank.values->GetDataType());
 
   uint32_t KERNEL_STATUS;
   switch (dt) {
     case DT_INT8:
-      KERNEL_STATUS = ComputeSparseFillEmptyRows<int8_t>(databank);
+      KERNEL_STATUS = ComputeSparseFillEmptyRows<int8_t>(ctx, databank);
       break;
     case DT_UINT8:
-      KERNEL_STATUS = ComputeSparseFillEmptyRows<uint8_t>(databank);
+      KERNEL_STATUS = ComputeSparseFillEmptyRows<uint8_t>(ctx, databank);
       break;
     case DT_INT16:
-      KERNEL_STATUS = ComputeSparseFillEmptyRows<int16_t>(databank);
+      KERNEL_STATUS = ComputeSparseFillEmptyRows<int16_t>(ctx, databank);
       break;
     case DT_UINT16:
-      KERNEL_STATUS = ComputeSparseFillEmptyRows<uint16_t>(databank);
+      KERNEL_STATUS = ComputeSparseFillEmptyRows<uint16_t>(ctx, databank);
       break;
     case DT_INT32:
-      KERNEL_STATUS = ComputeSparseFillEmptyRows<int32_t>(databank);
+      KERNEL_STATUS = ComputeSparseFillEmptyRows<int32_t>(ctx, databank);
       break;
     case DT_UINT32:
-      KERNEL_STATUS = ComputeSparseFillEmptyRows<uint32_t>(databank);
+      KERNEL_STATUS = ComputeSparseFillEmptyRows<uint32_t>(ctx, databank);
       break;
     case DT_INT64:
-      KERNEL_STATUS = ComputeSparseFillEmptyRows<int64_t>(databank);
+      KERNEL_STATUS = ComputeSparseFillEmptyRows<int64_t>(ctx, databank);
       break;
     case DT_UINT64:
-      KERNEL_STATUS = ComputeSparseFillEmptyRows<uint64_t>(databank);
+      KERNEL_STATUS = ComputeSparseFillEmptyRows<uint64_t>(ctx, databank);
       break;
     case DT_STRING:
-      KERNEL_STATUS = ComputeSparseFillEmptyRows<std::string>(databank);
+      KERNEL_STATUS = ComputeSparseFillEmptyRows<std::string>(ctx, databank);
       break;
     case DT_FLOAT16:
-      KERNEL_STATUS = ComputeSparseFillEmptyRows<Eigen::half>(databank);
+      KERNEL_STATUS = ComputeSparseFillEmptyRows<Eigen::half>(ctx, databank);
       break;
     case DT_FLOAT:
-      KERNEL_STATUS = ComputeSparseFillEmptyRows<float>(databank);
+      KERNEL_STATUS = ComputeSparseFillEmptyRows<float>(ctx, databank);
       break;
     case DT_DOUBLE:
-      KERNEL_STATUS = ComputeSparseFillEmptyRows<double>(databank);
+      KERNEL_STATUS = ComputeSparseFillEmptyRows<double>(ctx, databank);
       break;
     case DT_BOOL:
-      KERNEL_STATUS = ComputeSparseFillEmptyRows<bool>(databank);
+      KERNEL_STATUS = ComputeSparseFillEmptyRows<bool>(ctx, databank);
       break;
     case DT_COMPLEX64:
-      KERNEL_STATUS = ComputeSparseFillEmptyRows<std::complex<float>>(databank);
+      KERNEL_STATUS = ComputeSparseFillEmptyRows<std::complex<float>>(ctx, databank);
       break;
     case DT_COMPLEX128:
-      KERNEL_STATUS = ComputeSparseFillEmptyRows<std::complex<double>>(databank);
+      KERNEL_STATUS = ComputeSparseFillEmptyRows<std::complex<double>>(ctx, databank);
       break;
     default:
-      KERNEL_LOG_ERROR("SparseFillEmptyRows can't support this data type [%s].", DTypeStr(dt).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "SparseFillEmptyRows can't support this data type [%s].", DTypeStr(dt).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   if (KERNEL_STATUS != KERNEL_STATUS_OK) {
-    KERNEL_LOG_ERROR("SparseFillEmptyRows failed.");
+    CUST_KERNEL_LOG_ERROR(ctx, "SparseFillEmptyRows failed.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;

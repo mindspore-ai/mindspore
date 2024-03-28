@@ -101,10 +101,12 @@ uint32_t PoissonKernel::Compute(CpuKernelContext &ctx) {
 uint32_t PoissonKernel::ParseKernelParam(CpuKernelContext &ctx) {
   auto seed_ptr = ctx.Input(kPoissonSeedIndex);
   auto seed2_ptr = ctx.Input(kPoissonSeed2Index);
-  KERNEL_CHECK_FALSE((seed_ptr->GetDataType() == DT_INT64), KERNEL_STATUS_PARAM_INVALID,
-                     "'seed' only support int64_t input, but got [%s].", DTypeStr(seed_ptr->GetDataType()).c_str());
-  KERNEL_CHECK_FALSE((seed2_ptr->GetDataType() == DT_INT64), KERNEL_STATUS_PARAM_INVALID,
-                     "'seed2' only support int64_t input, but got [%s].", DTypeStr(seed2_ptr->GetDataType()).c_str());
+  CUST_KERNEL_CHECK_FALSE(ctx, (seed_ptr->GetDataType() == DT_INT64), KERNEL_STATUS_PARAM_INVALID,
+                          "'seed' only support int64_t input, but got [%s].",
+                          DTypeStr(seed_ptr->GetDataType()).c_str());
+  CUST_KERNEL_CHECK_FALSE(ctx, (seed2_ptr->GetDataType() == DT_INT64), KERNEL_STATUS_PARAM_INVALID,
+                          "'seed2' only support int64_t input, but got [%s].",
+                          DTypeStr(seed2_ptr->GetDataType()).c_str());
   seed_ = reinterpret_cast<int64_t *>(seed_ptr->GetData());
   seed2_ = reinterpret_cast<int64_t *>(seed2_ptr->GetData());
 
@@ -124,14 +126,16 @@ uint32_t PoissonKernel::ParseKernelParam(CpuKernelContext &ctx) {
       shape.push_back(input0[index]);
     }
   } else {
-    KERNEL_LOG_ERROR("Input 'shape' only support int32_t and int64_t, but got [%s].", DTypeStr(shape_dt).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "Input 'shape' only support int32_t and int64_t, but got [%s].",
+                          DTypeStr(shape_dt).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
   // mean
   auto mean_tensor = ctx.Input(kPoissonMeanIndex);
-  KERNEL_CHECK_FALSE((mean_tensor->GetDataType() == DT_FLOAT), KERNEL_STATUS_PARAM_INVALID,
-                     "Input 'mean' only support float, but got [%s].", DTypeStr(mean_tensor->GetDataType()).c_str());
+  CUST_KERNEL_CHECK_FALSE(ctx, (mean_tensor->GetDataType() == DT_FLOAT), KERNEL_STATUS_PARAM_INVALID,
+                          "Input 'mean' only support float, but got [%s].",
+                          DTypeStr(mean_tensor->GetDataType()).c_str());
   mean_ = reinterpret_cast<float *>(mean_tensor->GetData());
   auto mean_tshape = mean_tensor->GetTensorShape()->GetDimSizes();
   mean_count_ = mean_tensor->NumElements();

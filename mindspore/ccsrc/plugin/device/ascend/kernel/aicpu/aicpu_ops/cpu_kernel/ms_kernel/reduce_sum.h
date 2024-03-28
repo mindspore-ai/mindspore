@@ -29,24 +29,25 @@ class ReduceSumCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t ReduceSumCheck(const CpuKernelContext &ctx) const;
+  uint32_t ReduceSumCheck(CpuKernelContext &ctx) const;
 
   template <typename T>
-  uint32_t ReduceSumCompute(const CpuKernelContext &ctx);
+  uint32_t ReduceSumCompute(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t ReduceSumOneAxes(const T *input_data, std::vector<int64_t> &input_shape, T *output_data, int64_t output_num,
-                            std::vector<int64_t> &axes, uint32_t &axes_idx);
+  uint32_t ReduceSumOneAxes(CpuKernelContext &ctx, const T *input_data, std::vector<int64_t> &input_shape,
+                            T *output_data, int64_t output_num, std::vector<int64_t> &axes, uint32_t &axes_idx);
 
   template <typename T, typename T2>
-  uint32_t ReduceSumCompute2(const CpuKernelContext &ctx);
+  uint32_t ReduceSumCompute2(CpuKernelContext &ctx);
 
   template <typename T, typename T2>
-  uint32_t ReduceSumOneAxes2(const T *input_data, int64_t input_num, std::vector<int64_t> input_shape, T *output_data,
-                             int64_t output_num, std::vector<int64_t> &axes, uint32_t &axes_idx);
+  uint32_t ReduceSumOneAxes2(CpuKernelContext &ctx, const T *input_data, int64_t input_num,
+                             std::vector<int64_t> input_shape, T *output_data, int64_t output_num,
+                             std::vector<int64_t> &axes, uint32_t &axes_idx);
 
   template <typename T1>
-  uint32_t ReduceSumDedupAxes(const CpuKernelContext &ctx);
+  uint32_t ReduceSumDedupAxes(CpuKernelContext &ctx);
 
   uint32_t ReduceSumParseAxes(std::vector<int64_t> &input_shape, std::vector<int64_t> &axes, uint32_t &axes_idx,
                               int64_t &inner, int64_t &outer, int64_t &depth) const;

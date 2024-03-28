@@ -58,7 +58,7 @@ inline double LongToDouble(int64_t v) { return static_cast<double>(v); }
 }  // namespace
 
 namespace aicpu {
-uint32_t InstanceNormV2GradCpuKernel::InstanceNormV2GradTypeCheck(const CpuKernelContext &ctx) {
+uint32_t InstanceNormV2GradCpuKernel::InstanceNormV2GradTypeCheck(CpuKernelContext &ctx) {
   auto dy_type = ctx.Input(InstanceNormV2GradInDyIndex)->GetDataType();
   auto x_type = ctx.Input(InstanceNormV2GradInXIndex)->GetDataType();
   auto gamma_type = ctx.Input(InstanceNormV2GradInGammaIndex)->GetDataType();
@@ -68,10 +68,10 @@ uint32_t InstanceNormV2GradCpuKernel::InstanceNormV2GradTypeCheck(const CpuKerne
   auto save_variance_type = ctx.Input(InstanceNormV2GradInSaveVarianceIndex)->GetDataType();
 
   if (dy_type != x_type) {
-    KERNEL_LOG_ERROR(
-      "For primitive[%s]'s input arguments dy and x should have the same "
-      "data type, but dy type is [%s], x type is [%s].",
-      kInstanceNormV2Grad, DTypeStr(dy_type).c_str(), DTypeStr(x_type).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "For primitive[%s]'s input arguments dy and x should have the same "
+                          "data type, but dy type is [%s], x type is [%s].",
+                          kInstanceNormV2Grad, DTypeStr(dy_type).c_str(), DTypeStr(x_type).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   const std::map<std::string, DataType> types = {{"gamma", gamma_type},
@@ -79,10 +79,10 @@ uint32_t InstanceNormV2GradCpuKernel::InstanceNormV2GradTypeCheck(const CpuKerne
                                                  {"variance", variance_type},
                                                  {"save_mean", save_mean_type},
                                                  {"save_variance", save_variance_type}};
-  return CheckTensorTypeSame(types, DT_FLOAT, kInstanceNormV2Grad);
+  return CheckTensorTypeSame(ctx, types, DT_FLOAT, kInstanceNormV2Grad);
 }
 
-uint32_t InstanceNormV2GradCpuKernel::InstanceNormV2GradShapeCheck(const CpuKernelContext &ctx) {
+uint32_t InstanceNormV2GradCpuKernel::InstanceNormV2GradShapeCheck(CpuKernelContext &ctx) {
   auto dy_shape_ptr = ctx.Input(InstanceNormV2GradInDyIndex)->GetTensorShape();
   auto x_shape_ptr = ctx.Input(InstanceNormV2GradInXIndex)->GetTensorShape();
   auto gamma_shape_ptr = ctx.Input(InstanceNormV2GradInGammaIndex)->GetTensorShape();
@@ -94,7 +94,7 @@ uint32_t InstanceNormV2GradCpuKernel::InstanceNormV2GradShapeCheck(const CpuKern
   auto pd_beta_shape_ptr = ctx.Output(InstanceNormV2GradOutPdBetaIndex)->GetTensorShape();
 
   auto dy_shape = dy_shape_ptr->GetDimSizes();
-  auto res = CheckTensorShapeSame({{"input x", x_shape_ptr}}, dy_shape, kInstanceNormV2Grad);
+  auto res = CheckTensorShapeSame(ctx, {{"input x", x_shape_ptr}}, dy_shape, kInstanceNormV2Grad);
   if (res != KERNEL_STATUS_OK) {
     return res;
   }
@@ -132,18 +132,18 @@ uint32_t InstanceNormV2GradCpuKernel::InstanceNormV2GradShapeCheck(const CpuKern
     batch_channels_2d_ = {dy_shape[kFormatNC1HWC0IndexN] * dy_shape[kFormatNC1HWC0IndexC1],
                           dy_shape[kFormatNC1HWC0IndexC0]};
   } else {
-    KERNEL_LOG_ERROR(
-      "For primitive[%s]'s input arguments dy and x only "
-      "support NHWC, NCHW and NC1HWC0, but get data format [%s]",
-      kInstanceNormV2Grad, FormatToSerialString(x_format).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "For primitive[%s]'s input arguments dy and x only "
+                          "support NHWC, NCHW and NC1HWC0, but get data format [%s]",
+                          kInstanceNormV2Grad, FormatToSerialString(ctx, x_format).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   constexpr int64_t image_min = 1;
   if (image_size <= image_min) {
-    KERNEL_LOG_ERROR(
-      "For primitive[%s], expected more than 1 value per instance, but get "
-      "[%ld] value per instance.",
-      kInstanceNormV2Grad, image_size);
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "For primitive[%s], expected more than 1 value per instance, but get "
+                          "[%ld] value per instance.",
+                          kInstanceNormV2Grad, image_size);
     return KERNEL_STATUS_PARAM_INVALID;
   }
   const std::map<std::string, TensorShapePtr> shapes = {{"gamma", gamma_shape_ptr},
@@ -153,10 +153,10 @@ uint32_t InstanceNormV2GradCpuKernel::InstanceNormV2GradShapeCheck(const CpuKern
                                                         {"save_variance", save_variance_shape_ptr},
                                                         {"pd_gamma", pd_gamma_shape_ptr},
                                                         {"pd_beta", pd_beta_shape_ptr}};
-  return CheckTensorShapeSame(shapes, check_shape, kInstanceNormV2Grad);
+  return CheckTensorShapeSame(ctx, shapes, check_shape, kInstanceNormV2Grad);
 }
 
-uint32_t InstanceNormV2GradCpuKernel::InstanceNormV2GradAttrCheck(const CpuKernelContext &ctx) {
+uint32_t InstanceNormV2GradCpuKernel::InstanceNormV2GradAttrCheck(CpuKernelContext &ctx) {
   constexpr float epsilon_min = 0.0;
   constexpr float epsilon_max = 1.0;
   auto epsilon_ptr = ctx.GetAttr("epsilon");
@@ -164,10 +164,10 @@ uint32_t InstanceNormV2GradCpuKernel::InstanceNormV2GradAttrCheck(const CpuKerne
     epsilon_ = epsilon_ptr->GetFloat();
   }
   if (epsilon_ < epsilon_min || epsilon_ >= epsilon_max) {
-    KERNEL_LOG_ERROR(
-      "For primitive[%s], attr epsilon value should be in [0, 1), but get "
-      "[%f].",
-      kInstanceNormV2Grad, epsilon_);
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "For primitive[%s], attr epsilon value should be in [0, 1), but get "
+                          "[%f].",
+                          kInstanceNormV2Grad, epsilon_);
     return KERNEL_STATUS_PARAM_INVALID;
   }
   auto is_training_ptr = ctx.GetAttr("is_training");
@@ -177,15 +177,15 @@ uint32_t InstanceNormV2GradCpuKernel::InstanceNormV2GradAttrCheck(const CpuKerne
   return KERNEL_STATUS_OK;
 }
 
-uint32_t InstanceNormV2GradCpuKernel::InstanceNormV2GradParamCheck(const CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(InstanceNormV2GradTypeCheck(ctx), "InstanceNormV2Grad check type failed.");
-  KERNEL_HANDLE_ERROR(InstanceNormV2GradShapeCheck(ctx), "InstanceNormV2Grad check shape failed.");
-  KERNEL_HANDLE_ERROR(InstanceNormV2GradAttrCheck(ctx), "InstanceNormV2Grad check attr failed.");
+uint32_t InstanceNormV2GradCpuKernel::InstanceNormV2GradParamCheck(CpuKernelContext &ctx) {
+  CUST_KERNEL_HANDLE_ERROR(ctx, InstanceNormV2GradTypeCheck(ctx), "InstanceNormV2Grad check type failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, InstanceNormV2GradShapeCheck(ctx), "InstanceNormV2Grad check shape failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, InstanceNormV2GradAttrCheck(ctx), "InstanceNormV2Grad check attr failed.");
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t InstanceNormV2GradCpuKernel::DoCompute(const CpuKernelContext &ctx) {
+uint32_t InstanceNormV2GradCpuKernel::DoCompute(CpuKernelContext &ctx) {
   const int64_t batch = dy_shape_4d_[kFormatNHWCIndexN];
   const int64_t channel = dy_shape_4d_[kFormatNHWCIndexC];
   const int64_t image_size = dy_shape_4d_[kFormatNHWCIndexH] * dy_shape_4d_[kFormatNHWCIndexW];
@@ -245,9 +245,9 @@ uint32_t InstanceNormV2GradCpuKernel::DoCompute(const CpuKernelContext &ctx) {
 
 uint32_t InstanceNormV2GradCpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum),
-                      "InstanceNormV2Grad check input and output number failed.");
-  KERNEL_HANDLE_ERROR(InstanceNormV2GradParamCheck(ctx), "InstanceNormV2Grad check params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "InstanceNormV2Grad check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, InstanceNormV2GradParamCheck(ctx), "InstanceNormV2Grad check params failed.");
   auto data_type = ctx.Input(0)->GetDataType();
   uint32_t result;
   switch (data_type) {
@@ -258,11 +258,11 @@ uint32_t InstanceNormV2GradCpuKernel::Compute(CpuKernelContext &ctx) {
       result = DoCompute<float>(ctx);
       break;
     default:
-      KERNEL_LOG_ERROR("InstanceNormV2Grad kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "InstanceNormV2Grad kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   if (result != KERNEL_STATUS_OK) {
-    KERNEL_LOG_ERROR("InstanceNormV2Grad kernel compute failed.");
+    CUST_KERNEL_LOG_ERROR(ctx, "InstanceNormV2Grad kernel compute failed.");
   }
   return result;
 }

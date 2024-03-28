@@ -28,6 +28,7 @@
 #include "utils/kernel_util.h"
 #include "utils/sparse_tensor.h"
 
+namespace aicpu {
 namespace {
 const char *kCropAndResize = "CropAndResize";
 const size_t kInputNum = 4;
@@ -36,9 +37,9 @@ const size_t kXDim = 4;
 const size_t kBoxesDim = 2;
 const size_t kBoxIndexDim = 1;
 
-inline int FloatToInt(float u) {
+inline int FloatToInt(CpuKernelContext &ctx, float u) {
   if (u > static_cast<float>((std::numeric_limits<int>::max)())) {
-    KERNEL_LOG_ERROR("The float value(%.16f) exceeds the maximum value of int.", u);
+    CUST_KERNEL_LOG_ERROR(ctx, "The float value(%.16f) exceeds the maximum value of int.", u);
   }
   return static_cast<int>(u);
 }
@@ -53,12 +54,12 @@ int final_width_;
 int channel_;
 
 template <typename T>
-void BilinearResize(T *input_image, float target_x, float target_y, size_t pos, int box_index, int pos_channel,
-                    float *output) {
-  const int top_y_index = FloatToInt(floorf(target_y));
-  const int bottom_y_index = FloatToInt(ceilf(target_y));
-  const int left_x_index = FloatToInt(floorf(target_x));
-  const int right_x_index = FloatToInt(ceilf(target_x));
+void BilinearResize(CpuKernelContext &ctx, T *input_image, float target_x, float target_y, size_t pos, int box_index,
+                    int pos_channel, float *output) {
+  const int top_y_index = FloatToInt(ctx, floorf(target_y));
+  const int bottom_y_index = FloatToInt(ctx, ceilf(target_y));
+  const int left_x_index = FloatToInt(ctx, floorf(target_x));
+  const int right_x_index = FloatToInt(ctx, ceilf(target_x));
 
   const float top_left = static_cast<float>(
     input_image[((box_index * input_height_ + top_y_index) * input_width_ + left_x_index) * channel_ + pos_channel]);
@@ -75,23 +76,23 @@ void BilinearResize(T *input_image, float target_x, float target_y, size_t pos, 
 }
 
 template <typename T>
-void BilinearV2Resize(T *input_image, float y1, float x1, float y2, float x2, int pos_y, int pos_x, size_t pos,
-                      int box_index, int pos_channel, float *output) {
+void BilinearV2Resize(CpuKernelContext &ctx, T *input_image, float y1, float x1, float y2, float x2, int pos_y,
+                      int pos_x, size_t pos, int box_index, int pos_channel, float *output) {
   const float HALF = 0.5;
-  int y1h = FloatToInt(y1 * input_height_);
-  int x1w = FloatToInt(x1 * input_width_);
-  int y2h = FloatToInt(y2 * input_height_);
-  int x2w = FloatToInt(x2 * input_width_);
+  int y1h = FloatToInt(ctx, y1 * input_height_);
+  int x1w = FloatToInt(ctx, x1 * input_width_);
+  int y2h = FloatToInt(ctx, y2 * input_height_);
+  int x2w = FloatToInt(ctx, x2 * input_width_);
   int w = ((x2w - x1w + 1) > 1) ? x2w - x1w + 1 : 1;
   int h = ((y2h - y1h + 1) > 1) ? y2h - y1h + 1 : 1;
 
   float y_point = (pos_y + HALF) * (h / IntToFloat(final_height_)) - HALF;
-  int top_y_index = std::min(std::max(0, FloatToInt(floorf(y_point))), h - 1);
-  int bottom_y_index = std::min(std::max(0, FloatToInt(ceilf(y_point))), h - 1);
+  int top_y_index = std::min(std::max(0, FloatToInt(ctx, floorf(y_point))), h - 1);
+  int bottom_y_index = std::min(std::max(0, FloatToInt(ctx, ceilf(y_point))), h - 1);
 
   float x_point = (pos_x + HALF) * (w / IntToFloat(final_width_)) - HALF;
-  int left_x_index = std::min(std::max(0, FloatToInt(floorf(x_point))), w - 1);
-  int right_x_index = std::min(std::max(0, FloatToInt(ceilf(x_point))), w - 1);
+  int left_x_index = std::min(std::max(0, FloatToInt(ctx, floorf(x_point))), w - 1);
+  int right_x_index = std::min(std::max(0, FloatToInt(ctx, ceilf(x_point))), w - 1);
 
   const float y_lerp = y_point - top_y_index;
   const float x_lerp = x_point - left_x_index;
@@ -116,35 +117,35 @@ void BilinearV2Resize(T *input_image, float y1, float x1, float y2, float x2, in
 }
 }  // namespace
 
-namespace aicpu {
 uint32_t CropAndResizeCpuKernel::GetInputAndCheck(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "ResizeBicubic check params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "ResizeBicubic check params failed.");
   Tensor *image = ctx.Input(0);
   Tensor *out = ctx.Output(0);
   in_shape_ = image->GetTensorShape()->GetDimSizes();
-  KERNEL_CHECK_FALSE((in_shape_.size() == kXDim), KERNEL_STATUS_PARAM_INVALID, "Dim of x must be 4, but got[%zu].",
-                     in_shape_.size());
+  CUST_KERNEL_CHECK_FALSE(ctx, (in_shape_.size() == kXDim), KERNEL_STATUS_PARAM_INVALID,
+                          "Dim of x must be 4, but got[%zu].", in_shape_.size());
   auto boxes_shape = ctx.Input(1)->GetTensorShape()->GetDimSizes();
-  KERNEL_CHECK_FALSE((boxes_shape.size() == kBoxesDim), KERNEL_STATUS_PARAM_INVALID,
-                     "Dim of boxes must be 2, but got[%zu].", boxes_shape.size());
+  CUST_KERNEL_CHECK_FALSE(ctx, (boxes_shape.size() == kBoxesDim), KERNEL_STATUS_PARAM_INVALID,
+                          "Dim of boxes must be 2, but got[%zu].", boxes_shape.size());
   auto box_index_shape = ctx.Input(2)->GetTensorShape()->GetDimSizes();
-  KERNEL_CHECK_FALSE((box_index_shape.size() == kBoxIndexDim), KERNEL_STATUS_PARAM_INVALID,
-                     "Dim of box_index must be 1, but got[%zu].", box_index_shape.size());
+  CUST_KERNEL_CHECK_FALSE(ctx, (box_index_shape.size() == kBoxIndexDim), KERNEL_STATUS_PARAM_INVALID,
+                          "Dim of box_index must be 1, but got[%zu].", box_index_shape.size());
   out_shape_ = out->GetTensorShape()->GetDimSizes();
   auto out_h = out_shape_[1];
   auto out_w = out_shape_[2];
   auto out_channel = out_shape_[3];
-  KERNEL_CHECK_FALSE(out_h > 0 && out_w > 0 && out_channel > 0, KERNEL_STATUS_PARAM_INVALID,
-                     "output dimensions and channel must be positive but got height %lld, width %lld, channel %lld.",
-                     out_h, out_w, out_channel);
+  CUST_KERNEL_CHECK_FALSE(
+    ctx, out_h > 0 && out_w > 0 && out_channel > 0, KERNEL_STATUS_PARAM_INVALID,
+    "output dimensions and channel must be positive but got height %lld, width %lld, channel %lld.", out_h, out_w,
+    out_channel);
   dtype_ = DataType(image->GetDataType());
   return KERNEL_STATUS_OK;
 }
 
 uint32_t CropAndResizeCpuKernel::Compute(CpuKernelContext &ctx) {
   uint32_t res = GetInputAndCheck(ctx);
-  KERNEL_CHECK_FALSE((res == KERNEL_STATUS_OK), res, "GetInputAndCheck failed.");
-  KERNEL_LOG_ERROR("MindSpore CropAndResize aicpu kernel.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (res == KERNEL_STATUS_OK), res, "GetInputAndCheck failed.");
+  CUST_KERNEL_LOG_ERROR(ctx, "MindSpore CropAndResize aicpu kernel.");
   if (dtype_ == DT_FLOAT16) {
     res = DoCompute<Eigen::half, float>(ctx);
   } else if (dtype_ == DT_FLOAT) {
@@ -164,15 +165,15 @@ uint32_t CropAndResizeCpuKernel::Compute(CpuKernelContext &ctx) {
   } else if (dtype_ == DT_DOUBLE) {
     res = DoCompute<double, float>(ctx);
   } else {
-    KERNEL_LOG_ERROR("ResizeBicubic doesn't support input tensor types: [%s]", DTypeStr(dtype_).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "ResizeBicubic doesn't support input tensor types: [%s]", DTypeStr(dtype_).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
-  KERNEL_CHECK_FALSE((res == KERNEL_STATUS_OK), res, "ResizeBicubic Compute failed.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (res == KERNEL_STATUS_OK), res, "ResizeBicubic Compute failed.");
   return KERNEL_STATUS_OK;
 }
 
 template <typename T1, typename T2>
-uint32_t CropAndResizeCpuKernel::DoCompute(const CpuKernelContext &ctx) {
+uint32_t CropAndResizeCpuKernel::DoCompute(CpuKernelContext &ctx) {
   Tensor *image_ori = ctx.Input(0);
   Tensor *boxes_ori = ctx.Input(1);
   Tensor *box_index_ori = ctx.Input(2);
@@ -198,14 +199,14 @@ uint32_t CropAndResizeCpuKernel::DoCompute(const CpuKernelContext &ctx) {
   auto num_boxes = out_shape_[0];
   for (int64_t b = 0; b < num_boxes; ++b) {
     auto box_idx = input_box_index[b];
-    KERNEL_CHECK_FALSE(box_idx >= 0 && box_idx < static_cast<int>(input_batch_), KERNEL_STATUS_PARAM_INVALID,
-                       "Invalid box_index[%lld] value: [%d], should be in [0, %lld]!", b, box_idx, b);
+    CUST_KERNEL_CHECK_FALSE(ctx, box_idx >= 0 && box_idx < static_cast<int>(input_batch_), KERNEL_STATUS_PARAM_INVALID,
+                            "Invalid box_index[%lld] value: [%d], should be in [0, %lld]!", b, box_idx, b);
   }
 
   auto task = [&](size_t start, size_t end) {
     const float HALF = 0.5;
     for (size_t pos = start; pos < end; pos++) {
-      int pos_temp = SizeToInt(pos);
+      int pos_temp = SizeToInt(ctx, pos);
       const int pos_channel = pos_temp % channel_;
       pos_temp = pos_temp / channel_;
       const int pos_x = pos_temp % final_width_;
@@ -240,14 +241,14 @@ uint32_t CropAndResizeCpuKernel::DoCompute(const CpuKernelContext &ctx) {
 
       if (method_ == "bilinear") {
         // Bilinear
-        BilinearResize(input_image, target_x, target_y, pos, box_index, pos_channel, output);
+        BilinearResize(ctx, input_image, target_x, target_y, pos, box_index, pos_channel, output);
       } else if (method_ == "bilinear_v2") {
-        BilinearV2Resize(input_image, y1, x1, y2, x2, pos_y, pos_x, pos, box_index, pos_channel, output);
+        BilinearV2Resize(ctx, input_image, y1, x1, y2, x2, pos_y, pos_x, pos, box_index, pos_channel, output);
         // BilinearV2
       } else {
         // Nearest Neighbour
-        const int closest_x_index = FloatToInt(roundf(target_x));
-        const int closest_y_index = FloatToInt(roundf(target_y));
+        const int closest_x_index = FloatToInt(ctx, roundf(target_x));
+        const int closest_y_index = FloatToInt(ctx, roundf(target_y));
         const float val = static_cast<float>(
           input_image[((box_index * input_height_ + closest_y_index) * input_width_ + closest_x_index) * channel_ +
                       pos_channel]);
@@ -258,8 +259,8 @@ uint32_t CropAndResizeCpuKernel::DoCompute(const CpuKernelContext &ctx) {
 
   uint32_t min_core_num = 1;
   int64_t max_core_num = std::max(min_core_num, aicpu::CpuKernelUtils::GetCPUNum(ctx) - kResvCpuNum);
-  KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, output_size, output_size / max_core_num, task),
-                      "CropAndResize compute failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, output_size, output_size / max_core_num, task),
+                           "CropAndResize compute failed.");
   return KERNEL_STATUS_OK;
 }
 

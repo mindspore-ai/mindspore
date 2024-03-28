@@ -34,7 +34,7 @@ uint32_t MulCpuKernel::Compute(CpuKernelContext &ctx) {
   Tensor *input0 = ctx.Input(kFirstInputIndex);
   Tensor *input1 = ctx.Input(kSecondInputIndex);
   if ((input0->GetDataSize() == 0) || (input1->GetDataSize() == 0)) {
-    KERNEL_LOG_INFO("[%s] Input is empty tensor.", ctx.GetOpType().c_str());
+    CUST_KERNEL_LOG_INFO(ctx, "[%s] Input is empty tensor.", ctx.GetOpType().c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   // choose compute function depend on dataType
@@ -67,33 +67,33 @@ uint32_t MulCpuKernel::Compute(CpuKernelContext &ctx) {
     case DT_COMPLEX128:
       return MulCompute<std::complex<double>>(ctx);
     default:
-      KERNEL_LOG_ERROR("[%s] Data type of input is not support, input data type is [%s].", ctx.GetOpType().c_str(),
-                       DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "[%s] Data type of input is not support, input data type is [%s].",
+                            ctx.GetOpType().c_str(), DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 }
 
 template <typename T>
-uint32_t MulCpuKernel::MulCompute(const CpuKernelContext &ctx) {
+uint32_t MulCpuKernel::MulCompute(CpuKernelContext &ctx) {
   BCalcInfo calcInfo;
   calcInfo.input_0 = ctx.Input(kFirstInputIndex);
   calcInfo.input_1 = ctx.Input(kSecondInputIndex);
   calcInfo.output = ctx.Output(kFirstOutputIndex);
-  KERNEL_CHECK_NULLPTR(calcInfo.input_0->GetData(), KERNEL_STATUS_PARAM_INVALID, "[%s] Get input 0 data failed",
-                       ctx.GetOpType().c_str())
-  KERNEL_CHECK_NULLPTR(calcInfo.input_1->GetData(), KERNEL_STATUS_PARAM_INVALID, "[%s] Get input 1 data failed",
-                       ctx.GetOpType().c_str())
-  KERNEL_CHECK_NULLPTR(calcInfo.output->GetData(), KERNEL_STATUS_PARAM_INVALID, "[%s] Get output data failed",
-                       ctx.GetOpType().c_str())
-  KERNEL_LOG_INFO(
-    "[%s] Input[0] data size is [%llu], input[1] data size is [%llu], "
-    "output data size is [%llu].",
-    ctx.GetOpType().c_str(), calcInfo.input_0->GetDataSize(), calcInfo.input_1->GetDataSize(),
-    calcInfo.output->GetDataSize());
+  CUST_KERNEL_CHECK_NULLPTR(ctx, calcInfo.input_0->GetData(), KERNEL_STATUS_PARAM_INVALID,
+                            "[%s] Get input 0 data failed", ctx.GetOpType().c_str())
+  CUST_KERNEL_CHECK_NULLPTR(ctx, calcInfo.input_1->GetData(), KERNEL_STATUS_PARAM_INVALID,
+                            "[%s] Get input 1 data failed", ctx.GetOpType().c_str())
+  CUST_KERNEL_CHECK_NULLPTR(ctx, calcInfo.output->GetData(), KERNEL_STATUS_PARAM_INVALID, "[%s] Get output data failed",
+                            ctx.GetOpType().c_str())
+  CUST_KERNEL_LOG_INFO(ctx,
+                       "[%s] Input[0] data size is [%llu], input[1] data size is [%llu], "
+                       "output data size is [%llu].",
+                       ctx.GetOpType().c_str(), calcInfo.input_0->GetDataSize(), calcInfo.input_1->GetDataSize(),
+                       calcInfo.output->GetDataSize());
   // broadcast input
-  Bcast bcast;
+  Bcast bcast(ctx);
   if (bcast.GenerateBcastInfo(calcInfo) != KERNEL_STATUS_OK) {
-    KERNEL_LOG_ERROR("[%s] Generate broadcast info failed.", ctx.GetOpType().c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "[%s] Generate broadcast info failed.", ctx.GetOpType().c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   bcast.GetBcastVec(calcInfo);
@@ -105,8 +105,8 @@ uint32_t MulCpuKernel::MulCompute(const CpuKernelContext &ctx) {
     *(value_out) = v0 * v1;
     return KERNEL_STATUS_OK;
   } else if (rank < 0 || rank > kMaxDim) {
-    KERNEL_LOG_ERROR("[%s] Rank of output should less than 9 but get [%zu].", ctx.GetOpType().c_str(),
-                     calcInfo.shape_out.size());
+    CUST_KERNEL_LOG_ERROR(ctx, "[%s] Rank of output should less than 9 but get [%zu].", ctx.GetOpType().c_str(),
+                          calcInfo.shape_out.size());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   return MulCalculateWithAlignedCheck<T>(calcInfo, rank);

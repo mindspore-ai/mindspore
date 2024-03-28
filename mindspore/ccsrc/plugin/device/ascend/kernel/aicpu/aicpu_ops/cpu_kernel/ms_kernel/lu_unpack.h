@@ -30,15 +30,14 @@ class LuUnpackCpuKernel : public CpuKernel {
 
  private:
   template <typename T_data, typename T_pivots>
-  static uint32_t LuUnpack(const CpuKernelContext &ctx, T_pivots *Lu_pivots_working_ptr, int64_t matrix_index,
-                           T_data *P_eye);
+  static uint32_t LuUnpack(CpuKernelContext &ctx, T_pivots *Lu_pivots_working_ptr, int64_t matrix_index, T_data *P_eye);
   template <typename T_data, typename T_pivots>
-  static uint32_t LuUnpackCompute(const CpuKernelContext &ctx);
+  static uint32_t LuUnpackCompute(CpuKernelContext &ctx);
   template <typename T_pivots>
-  static uint32_t DataAndTypeCheck(const CpuKernelContext &ctx);
+  static uint32_t DataAndTypeCheck(CpuKernelContext &ctx);
   std::map<int, std::map<int, std::function<uint32_t(CpuKernelContext &)>>> calls_;
   void SetMap();
-  void SetOutputShape(const CpuKernelContext &ctx);
+  void SetOutputShape(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

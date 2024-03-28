@@ -92,7 +92,7 @@ uint32_t MeshgridKernel::Compute(CpuKernelContext &ctx) {
 
 uint32_t MeshgridKernel::ParseKernelParam(CpuKernelContext &ctx) {
   auto indexing_attr = ctx.GetAttr("indexing");
-  KERNEL_CHECK_NULLPTR(indexing_attr, KERNEL_STATUS_INNER_ERROR, "Failed to get attr [indexing].");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, indexing_attr, KERNEL_STATUS_INNER_ERROR, "Failed to get attr [indexing].");
   indexing_ = indexing_attr->GetString();
 
   input_type_ = ctx.Input(0)->GetDataType();
@@ -103,12 +103,12 @@ uint32_t MeshgridKernel::ParseKernelParam(CpuKernelContext &ctx) {
     auto input_tensor = ctx.Input(n);
     auto input_shape = input_tensor->GetTensorShape()->GetDimSizes();
     if (input_shape.size() != 1) {
-      AICPU_LOGE("input tensor should be 1-D.");
+      CUST_AICPU_LOGE(ctx, "input tensor should be 1-D.");
     }
     bcast_[n] = input_shape.front();
   }
 
-  return kAicpuKernelStateSucess;
+  return KERNEL_STATUS_OK;
 }
 REGISTER_MS_CPU_KERNEL(kMeshgrid, MeshgridKernel);
 }  // namespace aicpu

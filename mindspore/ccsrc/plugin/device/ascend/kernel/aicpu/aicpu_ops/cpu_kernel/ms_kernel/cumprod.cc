@@ -27,24 +27,24 @@ const uint32_t kCumprodInputNum = 2;
 const uint32_t kCumprodOutputNum = 1;
 const int64_t paralled_data_size = 512 * 1024;
 const char *kCumprod = "Cumprod";
-#define CUMPROD_COMPUTE_CASE(DTYPE, TYPE, CTX)            \
-  case (DTYPE): {                                         \
-    uint32_t result = CumprodCompute<TYPE>(CTX);          \
-    if (result != KERNEL_STATUS_OK) {                     \
-      KERNEL_LOG_ERROR("Cumprod kernel compute failed."); \
-      return result;                                      \
-    }                                                     \
-    break;                                                \
+#define CUMPROD_COMPUTE_CASE(DTYPE, TYPE, CTX)                      \
+  case (DTYPE): {                                                   \
+    uint32_t result = CumprodCompute<TYPE>(CTX);                    \
+    if (result != KERNEL_STATUS_OK) {                               \
+      CUST_KERNEL_LOG_ERROR(ctx, "Cumprod kernel compute failed."); \
+      return result;                                                \
+    }                                                               \
+    break;                                                          \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t CumprodCpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kCumprodInputNum, kCumprodOutputNum), "[%s] check input and output failed.",
-                      kCumprod);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kCumprodInputNum, kCumprodOutputNum),
+                           "[%s] check input and output failed.", kCumprod);
   // parse params
-  KERNEL_HANDLE_ERROR(CumprodCheck(ctx), "[%s] check params failed.", kCumprod);
+  CUST_KERNEL_HANDLE_ERROR(ctx, CumprodCheck(ctx), "[%s] check params failed.", kCumprod);
   auto data_type = ctx.Input(0)->GetDataType();
   switch (data_type) {
     CUMPROD_COMPUTE_CASE(DT_FLOAT16, Eigen::half, ctx)
@@ -61,37 +61,38 @@ uint32_t CumprodCpuKernel::Compute(CpuKernelContext &ctx) {
     CUMPROD_COMPUTE_CASE(DT_COMPLEX64, std::complex<float>, ctx)
     CUMPROD_COMPUTE_CASE(DT_COMPLEX128, std::complex<double>, ctx)
     default:
-      KERNEL_LOG_ERROR("Cumprod kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Cumprod kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
-uint32_t CumprodCpuKernel::CumprodCheck(const CpuKernelContext &ctx) {
-  KERNEL_CHECK_NULLPTR(ctx.Input(0)->GetData(), KERNEL_STATUS_PARAM_INVALID, "get input failed.");
-  KERNEL_CHECK_NULLPTR(ctx.Input(0)->GetTensorShape(), KERNEL_STATUS_PARAM_INVALID, "Get input tensor shape failed.")
-  KERNEL_CHECK_NULLPTR(ctx.GetAttr("exclusive"), KERNEL_STATUS_PARAM_INVALID, "get exclusive failed.");
-  KERNEL_CHECK_NULLPTR(ctx.GetAttr("reverse"), KERNEL_STATUS_PARAM_INVALID, "get reverse failed.");
-  KERNEL_CHECK_FALSE((ctx.Input(1)->GetDataType() == DT_INT32 || ctx.Input(1)->GetDataType() == DT_INT64),
-                     KERNEL_STATUS_PARAM_INVALID,
-                     "Data type of axis is not support, axis data type is [%u], only support int32 or int64.",
-                     ctx.Input(1)->GetDataType());
-  KERNEL_CHECK_FALSE(ctx.Input(1)->NumElements() == 1, KERNEL_STATUS_PARAM_INVALID, "axis is out of shape")
+uint32_t CumprodCpuKernel::CumprodCheck(CpuKernelContext &ctx) {
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.Input(0)->GetData(), KERNEL_STATUS_PARAM_INVALID, "get input failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.Input(0)->GetTensorShape(), KERNEL_STATUS_PARAM_INVALID,
+                            "Get input tensor shape failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.GetAttr("exclusive"), KERNEL_STATUS_PARAM_INVALID, "get exclusive failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.GetAttr("reverse"), KERNEL_STATUS_PARAM_INVALID, "get reverse failed.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (ctx.Input(1)->GetDataType() == DT_INT32 || ctx.Input(1)->GetDataType() == DT_INT64),
+                          KERNEL_STATUS_PARAM_INVALID,
+                          "Data type of axis is not support, axis data type is [%u], only support int32 or int64.",
+                          ctx.Input(1)->GetDataType());
+  CUST_KERNEL_CHECK_FALSE(ctx, ctx.Input(1)->NumElements() == 1, KERNEL_STATUS_PARAM_INVALID, "axis is out of shape")
   auto axis_data = reinterpret_cast<int32_t *>(ctx.Input(1)->GetData());
   int32_t axis = *axis_data;
-  KERNEL_CHECK_FALSE((axis < ctx.Input(0)->GetTensorShape()->GetDims()), KERNEL_STATUS_PARAM_INVALID,
-                     "axis is larger than input dims - 1");
-  KERNEL_CHECK_FALSE((axis >= -ctx.Input(0)->GetTensorShape()->GetDims()), KERNEL_STATUS_PARAM_INVALID,
-                     "axis is lower than -input dims");
+  CUST_KERNEL_CHECK_FALSE(ctx, (axis < ctx.Input(0)->GetTensorShape()->GetDims()), KERNEL_STATUS_PARAM_INVALID,
+                          "axis is larger than input dims - 1");
+  CUST_KERNEL_CHECK_FALSE(ctx, (axis >= -ctx.Input(0)->GetTensorShape()->GetDims()), KERNEL_STATUS_PARAM_INVALID,
+                          "axis is lower than -input dims");
   std::vector<int64_t> shape_input = ctx.Input(0)->GetTensorShape()->GetDimSizes();
   std::vector<int64_t> shape_output = ctx.Output(0)->GetTensorShape()->GetDimSizes();
-  KERNEL_CHECK_FALSE((shape_input.size() != 0), KERNEL_STATUS_PARAM_INVALID,
-                     "Input must be at least rank 1, got [%zu].", shape_input.size())
-  KERNEL_CHECK_FALSE((shape_input.size() == shape_output.size()), KERNEL_STATUS_PARAM_INVALID,
-                     "The output shape size should be same as the output shape size")
+  CUST_KERNEL_CHECK_FALSE(ctx, (shape_input.size() != 0), KERNEL_STATUS_PARAM_INVALID,
+                          "Input must be at least rank 1, got [%zu].", shape_input.size())
+  CUST_KERNEL_CHECK_FALSE(ctx, (shape_input.size() == shape_output.size()), KERNEL_STATUS_PARAM_INVALID,
+                          "The output shape size should be same as the output shape size")
   return KERNEL_STATUS_OK;
 }
 template <typename T>
-uint32_t CumprodCpuKernel::CumprodCompute(const CpuKernelContext &ctx) {
+uint32_t CumprodCpuKernel::CumprodCompute(CpuKernelContext &ctx) {
   auto input_data = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto axis_data = reinterpret_cast<int32_t *>(ctx.Input(1)->GetData());
   int32_t axis = *axis_data;
@@ -194,10 +195,10 @@ uint32_t CumprodCpuKernel::CumprodCompute(const CpuKernelContext &ctx) {
       max_core_num = outer;
     }
     if (max_core_num == 0) {
-      KERNEL_LOG_ERROR("max_core_num could not be 0");
+      CUST_KERNEL_LOG_ERROR(ctx, "max_core_num could not be 0");
     }
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, outer, outer / max_core_num, shard_cumprod),
-                        "Cumprod Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, outer, outer / max_core_num, shard_cumprod),
+                             "Cumprod Compute failed.");
   }
   return KERNEL_STATUS_OK;
 }

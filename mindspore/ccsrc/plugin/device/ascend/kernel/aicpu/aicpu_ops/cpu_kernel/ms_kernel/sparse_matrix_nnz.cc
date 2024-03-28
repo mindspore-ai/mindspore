@@ -46,12 +46,12 @@ uint32_t SparseMatrixNNZCpuKernel::Compute(CpuKernelContext &ctx) {
       status = DoCompute<int64_t>(ctx);
       break;
     default:
-      KERNEL_LOG_ERROR("data type of batch pointers is not int32 or int64");
+      CUST_KERNEL_LOG_ERROR(ctx, "data type of batch pointers is not int32 or int64");
       status = KERNEL_STATUS_PARAM_INVALID;
   }
 
   if (status != KERNEL_STATUS_OK) {
-    KERNEL_LOG_ERROR("error in do the actual compute!");
+    CUST_KERNEL_LOG_ERROR(ctx, "error in do the actual compute!");
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
@@ -59,7 +59,7 @@ uint32_t SparseMatrixNNZCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename indiceT>
-uint32_t SparseMatrixNNZCpuKernel::DoCompute(const CpuKernelContext &ctx) {
+uint32_t SparseMatrixNNZCpuKernel::DoCompute(CpuKernelContext &ctx) {
   const indiceT batch_size = ctx.Input(1)->NumElements() - 1;
   // define some temp arrays to store the output tensor data
   std::vector<int32_t> result_nnz(batch_size);
@@ -75,7 +75,7 @@ uint32_t SparseMatrixNNZCpuKernel::DoCompute(const CpuKernelContext &ctx) {
   int32_t *output_y = static_cast<int32_t *>(ctx.Output(0)->GetData());
   std::copy(result_nnz.data(), result_nnz.data() + (int32_t)batch_size, output_y);
 
-  KERNEL_LOG_DEBUG("DoCompute end!!");
+  CUST_KERNEL_LOG_DEBUG(ctx, "DoCompute end!!");
   return KERNEL_STATUS_OK;
 }
 

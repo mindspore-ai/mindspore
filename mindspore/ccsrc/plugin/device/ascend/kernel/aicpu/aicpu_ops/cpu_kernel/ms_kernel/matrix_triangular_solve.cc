@@ -35,23 +35,23 @@ const uint32_t kInputNum = 2;
 const char *kMatrixTriangularSolve = "MatrixTriangularSolve";
 constexpr int64_t kParallelDataNums = 16 * 1024;
 
-#define MATRIXTRIANGULARSOLVE_COMPUTE_CASE(DTYPE, TYPE, CTX)            \
-  case (DTYPE): {                                                       \
-    uint32_t result = MatrixTriangularSolveCompute<TYPE>(CTX);          \
-    if (result != KERNEL_STATUS_OK) {                                   \
-      KERNEL_LOG_ERROR("MatrixTriangularSolve kernel compute failed."); \
-      return result;                                                    \
-    }                                                                   \
-    break;                                                              \
+#define MATRIXTRIANGULARSOLVE_COMPUTE_CASE(DTYPE, TYPE, CTX)                      \
+  case (DTYPE): {                                                                 \
+    uint32_t result = MatrixTriangularSolveCompute<TYPE>(CTX);                    \
+    if (result != KERNEL_STATUS_OK) {                                             \
+      CUST_KERNEL_LOG_ERROR(ctx, "MatrixTriangularSolve kernel compute failed."); \
+      return result;                                                              \
+    }                                                                             \
+    break;                                                                        \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t MatrixTriangularSolveCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum),
-                      "MatrixTriangularSolve check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "MatrixTriangularSolve check input and output number failed.");
 
-  KERNEL_HANDLE_ERROR(MatrixTriangularSolveCheck(ctx), "MatrixTriangularSolve check params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, MatrixTriangularSolveCheck(ctx), "MatrixTriangularSolve check params failed.");
   // check the data type of the inputs
   auto data_type = ctx.Input(0)->GetDataType();
   switch (data_type) {
@@ -60,23 +60,24 @@ uint32_t MatrixTriangularSolveCpuKernel::Compute(CpuKernelContext &ctx) {
     MATRIXTRIANGULARSOLVE_COMPUTE_CASE(DT_COMPLEX64, std::complex<float>, ctx)
     MATRIXTRIANGULARSOLVE_COMPUTE_CASE(DT_COMPLEX128, std::complex<double>, ctx)
     default:
-      KERNEL_LOG_ERROR("MatrixTriangularSolve kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "MatrixTriangularSolve kernel data type [%s] not support.",
+                            DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 
   return KERNEL_STATUS_OK;
 }
 
-uint32_t MatrixTriangularSolveCpuKernel::MatrixTriangularSolveCheck(const CpuKernelContext &ctx) {
+uint32_t MatrixTriangularSolveCpuKernel::MatrixTriangularSolveCheck(CpuKernelContext &ctx) {
   Tensor *in_matrix = ctx.Input(0);
   Tensor *in_rhs = ctx.Input(1);
   // check same data type constraint
   auto in_type0 = in_matrix->GetDataType();
   auto in_type1 = in_rhs->GetDataType();
-  KERNEL_CHECK_FALSE((in_type0 == in_type1), KERNEL_STATUS_PARAM_INVALID,
-                     "The data type of input1 [%s] need be same with "
-                     "input0 [%s].",
-                     DTypeStr(in_type1).c_str(), DTypeStr(in_type0).c_str())
+  CUST_KERNEL_CHECK_FALSE(ctx, (in_type0 == in_type1), KERNEL_STATUS_PARAM_INVALID,
+                          "The data type of input1 [%s] need be same with "
+                          "input0 [%s].",
+                          DTypeStr(in_type1).c_str(), DTypeStr(in_type0).c_str())
   // check the number of matrix
   auto in_shape0 = in_matrix->GetTensorShape();
   auto in_shape1 = in_rhs->GetTensorShape();
@@ -86,36 +87,36 @@ uint32_t MatrixTriangularSolveCpuKernel::MatrixTriangularSolveCheck(const CpuKer
 
   // Check the shape of two inputs
   if (dims0[0] != dims1[0]) {
-    KERNEL_LOG_ERROR("The shapes of two inputs are not matched");
+    CUST_KERNEL_LOG_ERROR(ctx, "The shapes of two inputs are not matched");
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
   // check square
   int m = dims0.size();
   if (dims0[m - 2] != dims0[m - 1] || dims0[m - 1] == 0) {
-    KERNEL_LOG_ERROR("The input0 must be one or more squares.");
+    CUST_KERNEL_LOG_ERROR(ctx, "The input0 must be one or more squares.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t MatrixTriangularSolveCpuKernel::MatrixTriangularSolveCompute(const CpuKernelContext &ctx) {
+uint32_t MatrixTriangularSolveCpuKernel::MatrixTriangularSolveCompute(CpuKernelContext &ctx) {
   Tensor *matrix_tensor = ctx.Input(0);
   Tensor *rhs_tensor = ctx.Input(1);
   Tensor *y_tensor = ctx.Output(0);
 
   auto input_matrix = reinterpret_cast<T *>(matrix_tensor->GetData());
-  KERNEL_CHECK_NULLPTR(input_matrix, KERNEL_STATUS_PARAM_INVALID, "Get input data0 failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input_matrix, KERNEL_STATUS_PARAM_INVALID, "Get input data0 failed.")
   auto input_rhs = reinterpret_cast<T *>(rhs_tensor->GetData());
-  KERNEL_CHECK_NULLPTR(input_rhs, KERNEL_STATUS_PARAM_INVALID, "Get input data1 failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input_rhs, KERNEL_STATUS_PARAM_INVALID, "Get input data1 failed.")
   auto output_y = reinterpret_cast<T *>(y_tensor->GetData());
-  KERNEL_CHECK_NULLPTR(output_y, KERNEL_STATUS_PARAM_INVALID, "Get output data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, output_y, KERNEL_STATUS_PARAM_INVALID, "Get output data failed.")
 
   AttrValue *lower_attr = ctx.GetAttr("lower");
-  KERNEL_CHECK_NULLPTR(lower_attr, KERNEL_STATUS_PARAM_INVALID, "Get attr [lower] failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, lower_attr, KERNEL_STATUS_PARAM_INVALID, "Get attr [lower] failed.");
   AttrValue *adjoint_attr = ctx.GetAttr("adjoint");
-  KERNEL_CHECK_NULLPTR(adjoint_attr, KERNEL_STATUS_PARAM_INVALID, "Get attr [adjoint] failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, adjoint_attr, KERNEL_STATUS_PARAM_INVALID, "Get attr [adjoint] failed.");
   bool lower_data = lower_attr->GetBool();
   bool adjoint_data = adjoint_attr->GetBool();
 
@@ -171,8 +172,8 @@ uint32_t MatrixTriangularSolveCpuKernel::MatrixTriangularSolveCompute(const CpuK
     if (max_core_num > matrix_num) {
       max_core_num = matrix_num;
     }
-    KERNEL_HANDLE_ERROR(
-      CpuKernelUtils::ParallelFor(ctx, matrix_num, matrix_num / max_core_num, shard_matrix_triangular_solve),
+    CUST_KERNEL_HANDLE_ERROR(
+      ctx, CpuKernelUtils::ParallelFor(ctx, matrix_num, matrix_num / max_core_num, shard_matrix_triangular_solve),
       "MatrixTriangularSolve Compute failed.");
   }
   return KERNEL_STATUS_OK;

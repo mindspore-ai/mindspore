@@ -32,21 +32,22 @@ const char *kMatrixInverse = "MatrixInverse";
 // if the data size is larger than the value, call ParallelFor() func
 constexpr int64_t kParallelDataNums = 1 * 1024;
 
-#define MATRIXINVERSE_COMPUTE_CASE(DTYPE, TYPE, CTX)            \
-  case (DTYPE): {                                               \
-    uint32_t result = MatrixInverseCompute<TYPE>(CTX);          \
-    if (result != KERNEL_STATUS_OK) {                           \
-      KERNEL_LOG_ERROR("MatrixInverse kernel compute failed."); \
-      return result;                                            \
-    }                                                           \
-    break;                                                      \
+#define MATRIXINVERSE_COMPUTE_CASE(DTYPE, TYPE, CTX)                      \
+  case (DTYPE): {                                                         \
+    uint32_t result = MatrixInverseCompute<TYPE>(CTX);                    \
+    if (result != KERNEL_STATUS_OK) {                                     \
+      CUST_KERNEL_LOG_ERROR(ctx, "MatrixInverse kernel compute failed."); \
+      return result;                                                      \
+    }                                                                     \
+    break;                                                                \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t MatrixInverseCpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "MatrixInverse check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "MatrixInverse check input and output number failed.");
   auto data_type = ctx.Input(0)->GetDataType();
   switch (data_type) {
     MATRIXINVERSE_COMPUTE_CASE(DT_FLOAT, float, ctx)
@@ -54,14 +55,14 @@ uint32_t MatrixInverseCpuKernel::Compute(CpuKernelContext &ctx) {
     MATRIXINVERSE_COMPUTE_CASE(DT_COMPLEX64, std::complex<float>, ctx)
     MATRIXINVERSE_COMPUTE_CASE(DT_COMPLEX128, std::complex<double>, ctx)
     default:
-      KERNEL_LOG_ERROR("MatrixInverse kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "MatrixInverse kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t MatrixInverseCpuKernel::MatrixInverseCompute(const CpuKernelContext &ctx) {
+uint32_t MatrixInverseCpuKernel::MatrixInverseCompute(CpuKernelContext &ctx) {
   Tensor *input = ctx.Input(0);
   T *input_ptr = reinterpret_cast<T *>(input->GetData());
   Tensor *output = ctx.Output(0);
@@ -70,8 +71,8 @@ uint32_t MatrixInverseCpuKernel::MatrixInverseCompute(const CpuKernelContext &ct
   auto shape = input->GetTensorShape();
   uint64_t data_size = input->GetDataSize();
   std::vector<int64_t> dims = shape->GetDimSizes();
-  KERNEL_CHECK_FALSE((dims.size() >= 2 && (*(dims.end() - 1) == *(dims.end() - 2))), KERNEL_STATUS_PARAM_INVALID,
-                     "Input Shape is wrong");
+  CUST_KERNEL_CHECK_FALSE(ctx, (dims.size() >= 2 && (*(dims.end() - 1) == *(dims.end() - 2))),
+                          KERNEL_STATUS_PARAM_INVALID, "Input Shape is wrong");
   auto last_dimsize = *(dims.end() - 1);
   // Output length
   auto input_num = input->NumElements();
@@ -119,8 +120,8 @@ uint32_t MatrixInverseCpuKernel::MatrixInverseCompute(const CpuKernelContext &ct
         eigen_output = lu.inverse();
       }
     };
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, matrix_num, matrix_num / max_core_num, sharedcompute),
-                        "Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(
+      ctx, CpuKernelUtils::ParallelFor(ctx, matrix_num, matrix_num / max_core_num, sharedcompute), "Compute failed.");
   }
   return KERNEL_STATUS_OK;
 }

@@ -31,12 +31,12 @@ class MaxPool3DGradWithArgmaxCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t MaxPool3DGradWithArgmaxParamCheck(const CpuKernelContext &ctx);
+  uint32_t MaxPool3DGradWithArgmaxParamCheck(CpuKernelContext &ctx);
 
   void FillListWithDimSize(const std::vector<int64_t> src_list, std::vector<int64_t> *dst_list, bool is_dilation);
 
   template <typename T, typename S>
-  uint32_t MaxPool3DGradWithArgmaxCompute(const CpuKernelContext &ctx);
+  uint32_t MaxPool3DGradWithArgmaxCompute(CpuKernelContext &ctx);
 
   template <typename T, typename S>
   void MaxPool3DGradWithArgmaxSingleCompute(T *input_x, S *input_argmax, T *output_y, int64_t iD, int64_t iH,

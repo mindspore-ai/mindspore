@@ -33,29 +33,29 @@ const float opHalf = 0.5;
 float sigma = 1.0;
 std::mutex mtx;
 
-#define COMPUTE_CASE(DTYPE, REDUCTION, TYPE, CTX)                  \
-  case (DTYPE): {                                                  \
-    KERNEL_LOG_DEBUG("Compute [%s]", DTypeStr(data_type).c_str()); \
-    uint32_t result = KERNEL_STATUS_PARAM_INVALID;                 \
-    if ((REDUCTION) == "mean") {                                   \
-      result = ComputeMean<TYPE>(CTX);                             \
-    } else if ((REDUCTION) == "sum") {                             \
-      result = ComputeSum<TYPE>(CTX);                              \
-    } else if ((REDUCTION) == "none") {                            \
-      result = ComputeNone<TYPE>(CTX);                             \
-    }                                                              \
-    if (result != KERNEL_STATUS_OK) {                              \
-      KERNEL_LOG_ERROR("SmoothL1LossV2 compute failed.");          \
-      return result;                                               \
-    }                                                              \
-    break;                                                         \
+#define COMPUTE_CASE(DTYPE, REDUCTION, TYPE, CTX)                            \
+  case (DTYPE): {                                                            \
+    CUST_KERNEL_LOG_DEBUG(ctx, "Compute [%s]", DTypeStr(data_type).c_str()); \
+    uint32_t result = KERNEL_STATUS_PARAM_INVALID;                           \
+    if ((REDUCTION) == "mean") {                                             \
+      result = ComputeMean<TYPE>(CTX);                                       \
+    } else if ((REDUCTION) == "sum") {                                       \
+      result = ComputeSum<TYPE>(CTX);                                        \
+    } else if ((REDUCTION) == "none") {                                      \
+      result = ComputeNone<TYPE>(CTX);                                       \
+    }                                                                        \
+    if (result != KERNEL_STATUS_OK) {                                        \
+      CUST_KERNEL_LOG_ERROR(ctx, "SmoothL1LossV2 compute failed.");          \
+      return result;                                                         \
+    }                                                                        \
+    break;                                                                   \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t SmoothL1LossV2CpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "Check SmoothL1LossV2 params failed.");
-  KERNEL_HANDLE_ERROR(ParamCheck(ctx), "Check SmoothL1LossV2 params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "Check SmoothL1LossV2 params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, ParamCheck(ctx), "Check SmoothL1LossV2 params failed.");
 
   auto data_type = ctx.Input(0)->GetDataType();
   switch (data_type) {
@@ -63,14 +63,14 @@ uint32_t SmoothL1LossV2CpuKernel::Compute(CpuKernelContext &ctx) {
     COMPUTE_CASE(DT_FLOAT, reduction, float, ctx)
     COMPUTE_CASE(DT_DOUBLE, reduction, double, ctx)
     default:
-      KERNEL_LOG_ERROR("SmoothL1LossV2 data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "SmoothL1LossV2 data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 
   return KERNEL_STATUS_OK;
 }
 
-uint32_t SmoothL1LossV2CpuKernel::ParamCheck(const CpuKernelContext &ctx) {
+uint32_t SmoothL1LossV2CpuKernel::ParamCheck(CpuKernelContext &ctx) {
   Tensor *input_0 = ctx.Input(0);
   Tensor *input_1 = ctx.Input(1);
   Tensor *output_0 = ctx.Output(0);
@@ -78,37 +78,39 @@ uint32_t SmoothL1LossV2CpuKernel::ParamCheck(const CpuKernelContext &ctx) {
   DataType input1_type = input_1->GetDataType();
   DataType output0_type = output_0->GetDataType();
 
-  KERNEL_CHECK_FALSE((input0_type == input1_type), KERNEL_STATUS_PARAM_INVALID,
-                     "The data type of input0 [%s] need be same with "
-                     "input1 [%s].",
-                     DTypeStr(input0_type).c_str(), DTypeStr(input1_type).c_str());
-  KERNEL_CHECK_FALSE((input0_type == output0_type), KERNEL_STATUS_PARAM_INVALID,
-                     "The data type of input0 [%s] need be same with "
-                     "output0 [%s].",
-                     DTypeStr(input0_type).c_str(), DTypeStr(output0_type).c_str());
+  CUST_KERNEL_CHECK_FALSE(ctx, (input0_type == input1_type), KERNEL_STATUS_PARAM_INVALID,
+                          "The data type of input0 [%s] need be same with "
+                          "input1 [%s].",
+                          DTypeStr(input0_type).c_str(), DTypeStr(input1_type).c_str());
+  CUST_KERNEL_CHECK_FALSE(ctx, (input0_type == output0_type), KERNEL_STATUS_PARAM_INVALID,
+                          "The data type of input0 [%s] need be same with "
+                          "output0 [%s].",
+                          DTypeStr(input0_type).c_str(), DTypeStr(output0_type).c_str());
   auto input0_shape = input_0->GetTensorShape();
   auto input1_shape = input_1->GetTensorShape();
   int32_t input0_dims = input0_shape->GetDims();
   int32_t input1_dims = input1_shape->GetDims();
-  KERNEL_CHECK_FALSE((input0_dims == input1_dims), KERNEL_STATUS_PARAM_INVALID,
-                     "the input shape dim of input0 [%d] need be same with "
-                     "input1 [%d].",
-                     input0_dims, input1_dims);
+  CUST_KERNEL_CHECK_FALSE(ctx, (input0_dims == input1_dims), KERNEL_STATUS_PARAM_INVALID,
+                          "the input shape dim of input0 [%d] need be same with "
+                          "input1 [%d].",
+                          input0_dims, input1_dims);
   for (int32_t i = 0; i < input0_dims; i++) {
-    KERNEL_CHECK_FALSE((input0_shape->GetDimSize(i) == input1_shape->GetDimSize(i)), KERNEL_STATUS_PARAM_INVALID,
-                       "the every input shape dim of input0 [%d] need be same with "
-                       "input1 [%d] where dim in [%d].",
-                       input0_shape->GetDimSize(i), input1_shape->GetDimSize(i), i);
+    CUST_KERNEL_CHECK_FALSE(ctx, (input0_shape->GetDimSize(i) == input1_shape->GetDimSize(i)),
+                            KERNEL_STATUS_PARAM_INVALID,
+                            "the every input shape dim of input0 [%d] need be same with "
+                            "input1 [%d] where dim in [%d].",
+                            input0_shape->GetDimSize(i), input1_shape->GetDimSize(i), i);
   }
-  KERNEL_LOG_DEBUG(
-    "SmoothL1LossV2CpuKernel[%s], input0: size[%llu];"
-    "input1: size[%llu], output: size[%llu].",
-    ctx.GetOpType().c_str(), input_0->GetDataSize(), input_1->GetDataSize(), output_0->GetDataSize());
+  CUST_KERNEL_LOG_DEBUG(ctx,
+                        "SmoothL1LossV2CpuKernel[%s], input0: size[%llu];"
+                        "input1: size[%llu], output: size[%llu].",
+                        ctx.GetOpType().c_str(), input_0->GetDataSize(), input_1->GetDataSize(),
+                        output_0->GetDataSize());
 
   return AttributeCheck(ctx);
 }
 
-uint32_t SmoothL1LossV2CpuKernel::AttributeCheck(const CpuKernelContext &ctx) {
+uint32_t SmoothL1LossV2CpuKernel::AttributeCheck(CpuKernelContext &ctx) {
   Tensor *input_0 = ctx.Input(0);
   Tensor *output_0 = ctx.Output(0);
   auto input0_shape = input_0->GetTensorShape();
@@ -120,36 +122,38 @@ uint32_t SmoothL1LossV2CpuKernel::AttributeCheck(const CpuKernelContext &ctx) {
   auto reduction_attr = ctx.GetAttr("reduction");
   sigma = sigma_attr == nullptr ? 1.0 : sigma_attr->GetFloat();
   reduction = reduction_attr == nullptr ? "mean" : reduction_attr->GetString();
-  KERNEL_CHECK_FALSE(sigma >= 0, KERNEL_STATUS_PARAM_INVALID,
-                     "the sigma value need to greater than or equal to 0 "
-                     "when input sigma value is [%f].",
-                     sigma);
-  KERNEL_CHECK_FALSE((reduction == "none" || reduction == "mean" || reduction == "sum"), KERNEL_STATUS_PARAM_INVALID,
-                     "the reduction value need be the member of ['none','mean','sum'] "
-                     "when input reduction value is [%s].",
-                     reduction);
+  CUST_KERNEL_CHECK_FALSE(ctx, sigma >= 0, KERNEL_STATUS_PARAM_INVALID,
+                          "the sigma value need to greater than or equal to 0 "
+                          "when input sigma value is [%f].",
+                          sigma);
+  CUST_KERNEL_CHECK_FALSE(ctx, (reduction == "none" || reduction == "mean" || reduction == "sum"),
+                          KERNEL_STATUS_PARAM_INVALID,
+                          "the reduction value need be the member of ['none','mean','sum'] "
+                          "when input reduction value is [%s].",
+                          reduction);
   if (reduction == "none") {
-    KERNEL_CHECK_FALSE((input0_dims == output0_dims), KERNEL_STATUS_PARAM_INVALID,
-                       "the input shape dim of input0 [%d] need be same with "
-                       "output0 [%d].",
-                       input0_dims, output0_dims);
+    CUST_KERNEL_CHECK_FALSE(ctx, (input0_dims == output0_dims), KERNEL_STATUS_PARAM_INVALID,
+                            "the input shape dim of input0 [%d] need be same with "
+                            "output0 [%d].",
+                            input0_dims, output0_dims);
     for (int32_t i = 0; i < input0_dims; i++) {
-      KERNEL_CHECK_FALSE((input0_shape->GetDimSize(i) == output0_shape->GetDimSize(i)), KERNEL_STATUS_PARAM_INVALID,
-                         "the every input shape dim of input0 [%d] need be same with "
-                         "output0 [%d] where dim in [%d].",
-                         input0_shape->GetDimSize(i), output0_shape->GetDimSize(i), i);
+      CUST_KERNEL_CHECK_FALSE(ctx, (input0_shape->GetDimSize(i) == output0_shape->GetDimSize(i)),
+                              KERNEL_STATUS_PARAM_INVALID,
+                              "the every input shape dim of input0 [%d] need be same with "
+                              "output0 [%d] where dim in [%d].",
+                              input0_shape->GetDimSize(i), output0_shape->GetDimSize(i), i);
     }
   } else if (reduction == "sum" || reduction == "mean") {
-    KERNEL_CHECK_FALSE((output0_dims == 0) || ((output0_dims == 1) && (output_0->NumElements() == 1)),
-                       KERNEL_STATUS_PARAM_INVALID, "the output shape dim of output0 [%d] need be [1] or a scalar.",
-                       output0_dims);
+    CUST_KERNEL_CHECK_FALSE(ctx, (output0_dims == 0) || ((output0_dims == 1) && (output_0->NumElements() == 1)),
+                            KERNEL_STATUS_PARAM_INVALID,
+                            "the output shape dim of output0 [%d] need be [1] or a scalar.", output0_dims);
   }
 
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t SmoothL1LossV2CpuKernel::ComputeMean(const CpuKernelContext &ctx) {
+uint32_t SmoothL1LossV2CpuKernel::ComputeMean(CpuKernelContext &ctx) {
   uint32_t compute_sum_res = ComputeSum<T>(ctx);
   if (compute_sum_res != KERNEL_STATUS_OK) {
     return compute_sum_res;
@@ -169,7 +173,7 @@ uint32_t SmoothL1LossV2CpuKernel::ComputeMean(const CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t SmoothL1LossV2CpuKernel::ComputeSum(const CpuKernelContext &ctx) {
+uint32_t SmoothL1LossV2CpuKernel::ComputeSum(CpuKernelContext &ctx) {
   Tensor *predict_tensor = ctx.Input(0);
   Tensor *label_tensor = ctx.Input(1);
   Tensor *loss_tensor = ctx.Output(0);
@@ -218,7 +222,7 @@ uint32_t SmoothL1LossV2CpuKernel::ComputeSum(const CpuKernelContext &ctx) {
       max_core_num = data_num;
     }
     if (max_core_num == 0) {
-      KERNEL_LOG_ERROR("max_core_num could not be 0.");
+      CUST_KERNEL_LOG_ERROR(ctx, "max_core_num could not be 0.");
     }
     auto result = CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shared_smoothl1lossv2);
     *(loss_val) = static_cast<T>(res);
@@ -227,7 +231,7 @@ uint32_t SmoothL1LossV2CpuKernel::ComputeSum(const CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t SmoothL1LossV2CpuKernel::ComputeNone(const CpuKernelContext &ctx) {
+uint32_t SmoothL1LossV2CpuKernel::ComputeNone(CpuKernelContext &ctx) {
   Tensor *predict_tensor = ctx.Input(0);
   Tensor *label_tensor = ctx.Input(1);
   Tensor *loss_tensor = ctx.Output(0);
@@ -269,7 +273,7 @@ uint32_t SmoothL1LossV2CpuKernel::ComputeNone(const CpuKernelContext &ctx) {
       max_core_num = data_num;
     }
     if (max_core_num == 0) {
-      KERNEL_LOG_ERROR("max_core_num could not be 0.");
+      CUST_KERNEL_LOG_ERROR(ctx, "max_core_num could not be 0.");
     }
     return CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shared_smoothl1lossv2);
   }

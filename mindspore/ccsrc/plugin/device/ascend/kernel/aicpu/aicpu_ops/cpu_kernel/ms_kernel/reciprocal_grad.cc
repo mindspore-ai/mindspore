@@ -35,21 +35,21 @@ constexpr int64_t kParallelComplexDataNums = 16 * 1024;
 
 namespace aicpu {
 uint32_t ReciprocalGradCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kReciprocalGradInputNum, kReciprocalGradOutputNum),
-                      "Check ReciprocalGrad params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kReciprocalGradInputNum, kReciprocalGradOutputNum),
+                           "Check ReciprocalGrad params failed.");
   Tensor *y = ctx.Input(0);
   Tensor *dy = ctx.Input(1);
   Tensor *z = ctx.Output(0);
   if (y->GetDataType() != dy->GetDataType()) {
-    KERNEL_LOG_ERROR("The data type of the input2 [%s] need be the same as the input1 [%s]",
-                     DTypeStr(dy->GetDataType()).c_str(), DTypeStr(y->GetDataType()).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "The data type of the input2 [%s] need be the same as the input1 [%s]",
+                          DTypeStr(dy->GetDataType()).c_str(), DTypeStr(y->GetDataType()).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (y->GetDataSize() != dy->GetDataSize()) {
-    KERNEL_LOG_ERROR(
-      "The data size of the input2 [%llu] need be the same as the input1 "
-      "[%llu]",
-      dy->GetDataSize(), y->GetDataSize());
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "The data size of the input2 [%llu] need be the same as the input1 "
+                          "[%llu]",
+                          dy->GetDataSize(), y->GetDataSize());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   uint64_t data_num = y->NumElements();
@@ -73,7 +73,7 @@ uint32_t ReciprocalGradCpuKernel::Compute(CpuKernelContext &ctx) {
       res = ReciprocalGradComputeComplex<std::complex<double>>(y, dy, z, data_num, ctx);
       break;
     default:
-      KERNEL_LOG_ERROR("ReciprocalGrad invalid input type [%s]", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "ReciprocalGrad invalid input type [%s]", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   if (res != KERNEL_STATUS_OK) {
@@ -84,7 +84,7 @@ uint32_t ReciprocalGradCpuKernel::Compute(CpuKernelContext &ctx) {
 
 template <typename T>
 uint32_t ReciprocalGradCpuKernel::ReciprocalGradCompute(Tensor *y, Tensor *dy, Tensor *z, uint64_t data_num,
-                                                        const CpuKernelContext &ctx) {
+                                                        CpuKernelContext &ctx) {
   auto input_y = reinterpret_cast<T *>(y->GetData());
   auto input_dy = reinterpret_cast<T *>(dy->GetData());
   auto output_z = reinterpret_cast<T *>(z->GetData());
@@ -104,22 +104,23 @@ uint32_t ReciprocalGradCpuKernel::ReciprocalGradCompute(Tensor *y, Tensor *dy, T
       }
     };
     if (max_core_num == 0) {
-      KERNEL_LOG_ERROR("max_core_num could not be 0.");
+      CUST_KERNEL_LOG_ERROR(ctx, "max_core_num could not be 0.");
     }
     uint32_t ret = CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shard_ReciprocalGrad);
     if (ret != KERNEL_STATUS_OK) {
-      KERNEL_LOG_ERROR("CpuKernelUtils::ParallelFor failed");
+      CUST_KERNEL_LOG_ERROR(ctx, "CpuKernelUtils::ParallelFor failed");
       return KERNEL_STATUS_INNER_ERROR;
     }
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shard_ReciprocalGrad),
-                        "ReciprocalGrad Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx,
+                             CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shard_ReciprocalGrad),
+                             "ReciprocalGrad Compute failed.");
   }
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
 uint32_t ReciprocalGradCpuKernel::ReciprocalGradComputeComplex(Tensor *y, Tensor *dy, Tensor *z, uint64_t data_num,
-                                                               const CpuKernelContext &ctx) {
+                                                               CpuKernelContext &ctx) {
   auto input_y = reinterpret_cast<T *>(y->GetData());
   auto input_dy = reinterpret_cast<T *>(dy->GetData());
   auto output_z = reinterpret_cast<T *>(z->GetData());
@@ -139,15 +140,16 @@ uint32_t ReciprocalGradCpuKernel::ReciprocalGradComputeComplex(Tensor *y, Tensor
       }
     };
     if (max_core_num == 0) {
-      KERNEL_LOG_ERROR("max_core_num could not be 0.");
+      CUST_KERNEL_LOG_ERROR(ctx, "max_core_num could not be 0.");
     }
     uint32_t ret = CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shard_ReciprocalGrad);
     if (ret != KERNEL_STATUS_OK) {
-      KERNEL_LOG_ERROR("CpuKernelUtils::ParallelFor failed");
+      CUST_KERNEL_LOG_ERROR(ctx, "CpuKernelUtils::ParallelFor failed");
       return KERNEL_STATUS_INNER_ERROR;
     }
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shard_ReciprocalGrad),
-                        "ReciprocalGrad Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx,
+                             CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shard_ReciprocalGrad),
+                             "ReciprocalGrad Compute failed.");
   }
   return KERNEL_STATUS_OK;
 }

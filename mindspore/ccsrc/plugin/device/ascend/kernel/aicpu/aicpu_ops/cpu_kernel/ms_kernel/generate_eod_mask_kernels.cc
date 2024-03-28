@@ -37,7 +37,8 @@ constexpr auto kNStepSizeThresh = 2;
 }  // namespace
 namespace aicpu {
 uint32_t GenerateEodMaskCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputSize, kOutputSize), "GenerateEodMaskCpu check input and output failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputSize, kOutputSize),
+                           "GenerateEodMaskCpu check input and output failed.");
   Tensor *input = ctx.Input(0);
   auto data_type_in = input->GetDataType();
   AttrValue *eod_token_value = ctx.GetAttr("eod_token_id");
@@ -88,7 +89,7 @@ uint32_t GenerateEodMaskCpuKernel::Compute(CpuKernelContext &ctx) {
     case DT_INT64:
       return ComputeKernel<int64_t, uint64_t>(ctx, n_pos, eod_token_id, n_step, circle, enable_mask_nfirst);
     default:
-      KERNEL_LOG_ERROR("GenerateEodMask kernel data type [%s] not support.", DTypeStr(data_type_in).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "GenerateEodMask kernel data type [%s] not support.", DTypeStr(data_type_in).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 }
@@ -115,8 +116,9 @@ uint32_t GenerateEodMaskCpuKernel::ComputeKernel(CpuKernelContext &ctx, const in
       std::max(static_cast<int64_t>(1), static_cast<int64_t>(aicpu::CpuKernelUtils::GetCPUNum(ctx) - 2));
     return data_size / std::min(max_core_num, data_size);
   };
-  KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, batch_size, get_per_unit_size(batch_size), shard_generate_tril),
-                      "GenerateEodMask kernel compute failed.");
+  CUST_KERNEL_HANDLE_ERROR(
+    ctx, CpuKernelUtils::ParallelFor(ctx, batch_size, get_per_unit_size(batch_size), shard_generate_tril),
+    "GenerateEodMask kernel compute failed.");
   for (uint32_t i = 0; i < n_step.size(); ++i) {
     bool condition = circle >= 1 && _compute_count != 0 && _compute_count % circle == 0;
     if (condition || _compute_count == n_step[i] || n_step[i] == -1) {
