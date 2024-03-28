@@ -36,6 +36,7 @@ class NetworkPt(torch.nn.Module):
 class RMSpropFactory():
     def __init__(self, group=True, lr_dynamic=False, if_change=False, dtype=np.float32):
         super().__init__()
+        np.random.seed(1024)
         self.lin_weight_np = np.random.randn(3, 2).astype(dtype)
         self.lin_bias_np = np.random.randn(3,).astype(dtype)
 
@@ -167,7 +168,7 @@ def allclose_nparray(data_expected, data_me, rtol, atol, equal_nan=True):
         assert np.array(data_expected).shape == np.array(data_me).shape
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -184,7 +185,7 @@ def test_rmsprop_basic(mode):
     fact.result_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -201,7 +202,7 @@ def test_rmsprop_group(mode):
     fact.result_cmp()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
