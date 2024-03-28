@@ -989,14 +989,8 @@ ValuePtr ForwardExecutor::RunOpInMs(const FrontendOpRunInfoPtr &op_run_info,
     return RunOpInMsInner(op_run_info, backend_op_run_info);
   }
   // Print the op running in JIT Fallback.
-  static const auto dump_fallback = (common::GetEnv("MS_DEV_FALLBACK_DUMP_NODE") == "1");
-  if (dump_fallback) {
-    MS_LOG(ERROR) << "NOTICE: The op is running in JIT Fallback:\n"
-                  << "primitive: " << op_run_info->op_grad_info->op_prim->ToString();
-  } else {
-    MS_LOG(INFO) << "NOTICE: The op is running in JIT Fallback:\n"
-                 << "primitive: " << op_run_info->op_grad_info->op_prim->ToString();
-  }
+  MS_LOG(ERROR) << "NOTICE: The op is running in JIT Fallback:\n"
+                << "primitive: " << op_run_info->op_grad_info->op_prim->ToString();
   return RunOpInMsInner(op_run_info, backend_op_run_info);
 }
 
