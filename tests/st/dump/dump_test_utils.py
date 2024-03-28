@@ -110,7 +110,22 @@ async_dump_dict_acl = {
         "net_name": "Net",
         "iteration": "0",
         "input_output": 0,
+        "model_name": [],
         "kernels": [],
+        "support_device": [0, 1, 2, 3, 4, 5, 6, 7],
+        "op_debug_mode": 0
+    }
+}
+
+async_dump_dict_acl_assign_ops = {
+    "common_dump_settings": {
+        "dump_mode": 1,
+        "path": "",
+        "net_name": "Net",
+        "iteration": "0",
+        "input_output": 0,
+        "model_name": "kernel_graph1_2",
+        "kernels": ["Default/Add-op0"],
         "support_device": [0, 1, 2, 3, 4, 5, 6, 7],
         "op_debug_mode": 0
     }
@@ -154,6 +169,9 @@ def generate_dump_json(dump_path, json_file_name, test_key, net_name='Net'):
         data["common_dump_settings"]["file_format"] = "npy"
     elif test_key == "test_acl_dump":
         data = async_dump_dict_acl
+        data["common_dump_settings"]["path"] = dump_path
+    elif test_key == "test_acl_dump_assign_ops":
+        data = async_dump_dict_acl_assign_ops
         data["common_dump_settings"]["path"] = dump_path
     else:
         raise ValueError(
