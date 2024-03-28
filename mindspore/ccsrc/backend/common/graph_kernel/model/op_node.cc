@@ -1278,4 +1278,14 @@ std::vector<TypeId> MatMulOp::InferType(const NodePtrList &inputs, const DAttrs 
   }
   return {inputs[0]->type};
 }
+
+void LayerNormOp::RectifyAbstract(const PrimitivePtr &prim, AbstractBasePtrList *abs_list) {
+  constexpr size_t LN_INPUT_NUM = 1;
+  if (abs_list->size() == LN_INPUT_NUM) {
+    CHECK_ATTR(prim->attrs(), "begin_norm_axis");
+    (void)abs_list->emplace_back(prim->GetAttr("begin_norm_axis")->ToAbstract());
+    CHECK_ATTR(prim->attrs(), "begin_params_axis");
+    (void)abs_list->emplace_back(prim->GetAttr("begin_params_axis")->ToAbstract());
+  }
+}
 }  // namespace mindspore::graphkernel::inner

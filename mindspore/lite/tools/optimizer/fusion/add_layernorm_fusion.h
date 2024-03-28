@@ -23,6 +23,8 @@
 #include "include/common/utils/utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/optimizer/common/multiple_pattern_process_pass.h"
+#include "tools/optimizer/common/pattern_process_pass_extends.h"
+#include "mindspore/core/ops/nn_optimizer_ops.h"
 
 namespace mindspore {
 namespace opt {
@@ -44,7 +46,7 @@ class AddLayerNormFusion : public MultiplePatternProcessPass {
 
   CNodePtr CreateAddLayerNormNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &equiv) const;
 
-  CNodePtr CreateLayerNormV3Node(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &equiv) const;
+  AnfNodePtr CreateLayerNormV3Node(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &equiv) const;
 
   const VectorRef DefineAddlayerNormPattern() const;
 
@@ -64,6 +66,36 @@ class AddLayerNormFusion : public MultiplePatternProcessPass {
   mutable VarPtr mul_b_{nullptr};
   mutable VarPtr add_3_b_{nullptr};
 };
+
+class FuseAddAndLayernorm : public opt::LitePatternProcessPass {
+ public:
+  explicit FuseAddAndLayernorm(bool multigraph = true)
+      : opt::LitePatternProcessPass("FuseAddAndLayernorm", multigraph) {
+    x1_ = std::make_shared<Var>();
+    x2_ = std::make_shared<Var>();
+    gamma_ = std::make_shared<Var>();
+    beta_ = std::make_shared<Var>();
+    begin_norm_axis_ = std::make_shared<Var>();
+    begin_params_axis_ = std::make_shared<Var>();
+    eps_ = std::make_shared<Var>();
+    layer_norm_ = std::make_shared<Var>(std::make_shared<Primitive>(prim::kPrimLayerNormV3->name()));
+  }
+  ~FuseAddAndLayernorm() override = default;
+  const BaseRef DefinePattern() const override;
+  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+
+ private:
+  VarPtr x1_;
+  VarPtr x2_;
+  VarPtr gamma_;
+  VarPtr beta_;
+  VarPtr begin_norm_axis_;
+  VarPtr begin_params_axis_;
+  VarPtr eps_;
+  CondVarPtr tuple_get_item_;
+  VarPtr layer_norm_;
+};
+
 }  // namespace opt
 }  // namespace mindspore
 

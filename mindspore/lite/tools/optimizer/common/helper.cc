@@ -289,5 +289,21 @@ AnfNodePtr Helper::SexpToNode(const BaseRef &sexp, const BaseRef &graph, Primiti
   }
   return value_node;
 }
+
+AnfNodePtr GetAnfNodeByVar(const EquivPtr &equiv, const VarPtr &var_node) {
+  MS_EXCEPTION_IF_NULL(equiv);
+  MS_EXCEPTION_IF_NULL(var_node);
+  auto iter = (*equiv).find(var_node);
+  if (iter == (*equiv).cend()) {
+    MS_LOG(INFO) << "The equiv map doesn't contain the var_node after matched.";
+    return nullptr;
+  }
+  auto res = utils::cast<AnfNodePtr>(iter->second);
+  if (res == nullptr) {
+    MS_LOG(INTERNAL_EXCEPTION) << "Cast fail! Maybe var is not a anf node";
+  }
+  return res;
+}
+
 }  // namespace opt
 }  // namespace mindspore

@@ -113,6 +113,8 @@ ParameterPtr BuildParameterNode(const FuncGraphPtr &func_graph, const tensor::Te
 ParameterPtr BuildIntValueParameterNode(const FuncGraphPtr &func_graph, const int32_t &data,
                                         const std::string &node_name, bool empty_shape = false);
 
+ValueNodePtr BuildIntVecValueNode(const FuncGraphPtr &func_graph, const std::vector<int32_t> &data);
+
 ParameterPtr BuildIntVecParameterNode(const FuncGraphPtr &func_graph, const std::vector<int32_t> &data,
                                       const std::string &node_name);
 

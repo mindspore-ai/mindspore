@@ -23,6 +23,7 @@
 #include "mindspore/core/ops/lite_ops.h"
 #include "mindspore/core/ops/math_ops.h"
 #include "mindspore/core/ops/nn_ops.h"
+#include "mindspore/core/ops/other_ops.h"
 #include "mindspore/core/ops/op_def.h"
 #include "mindspore/core/ops/sequence_ops.h"
 #include "ops/primitive_c.h"
@@ -49,7 +50,8 @@ const std::unordered_map<std::string, HashSet<size_t>> &ValueDependOpUtils::GetO
     {prim::kPrimGather->name(), {2}},
     {prim::kPrimTupleGetItem->name(), {1}},
     {prim::kPrimUnsortedSegmentSum->name(), {2}},
-    {prim::kPrimCumSum->name(), {1}}};
+    {prim::kPrimCumSum->name(), {1}},
+    {prim::kPrimStridedSliceV2->name(), {2, 3, 4}}};
   return op_idx_info_;
 }
 

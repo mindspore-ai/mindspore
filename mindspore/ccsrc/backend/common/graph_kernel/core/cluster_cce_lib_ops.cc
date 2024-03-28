@@ -49,6 +49,9 @@ bool ClusterCceLibOps::IsClusterableOp(const AnfNodePtr &node) {
   if (GkUtils::IsKeepBasicNode(node)) {
     return false;
   }
+  if (GkUtils::CceOpNotFusion(node)) {
+    return false;
+  }
   bool node_in_oplist = std::any_of(op_list_.begin(), op_list_.end(),
                                     [&node](const PrimitivePtr &prim) { return IsPrimitiveCNode(node, prim); });
   if (!node_in_oplist) {

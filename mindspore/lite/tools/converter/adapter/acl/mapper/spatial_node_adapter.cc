@@ -49,7 +49,6 @@ constexpr auto kNamewiEltwise = "Eltwise";
 const std::set<std::string> kCNodeWithMultiOutputs = {
   kBatchNormOpName,          ops::kNameFusedBatchNorm,  ops::kNameInstanceNorm, ops::kNameLayerNorm,
   ops::kNameLayerNormFusion, ops::kNameArgMaxWithValue, ops::kNameGeGluV2,      ops::kNameGroupNormSilu,
-  ops::kNameAddLayerNorm,    ops::kNameLayerNormV3,
 };
 
 const std::set<std::string> kCNodeWithDynamicInput = {kNamewiEltwise, ops::kNameConcat, ops::kNameStack,

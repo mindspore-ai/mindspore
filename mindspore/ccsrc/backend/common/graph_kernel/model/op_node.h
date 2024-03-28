@@ -396,5 +396,14 @@ class PagedAttentionOp : public OpaqueOp {
  protected:
   void RectifyAbstract(const PrimitivePtr &, AbstractBasePtrList *input_abstract_ptr) override;
 };
+
+class LayerNormOp : public OpaqueOp {
+ public:
+  explicit LayerNormOp(const std::string &op) : OpaqueOp(op) {}
+  ~LayerNormOp() = default;
+
+ protected:
+  void RectifyAbstract(const PrimitivePtr &, AbstractBasePtrList *input_abstract_ptr) override;
+};
 }  // namespace mindspore::graphkernel::inner
 #endif

@@ -19,14 +19,19 @@
 #include <memory>
 #include <vector>
 #include <string>
+#include <algorithm>
 #include "ops/nn_ops.h"
 #include "ops/fusion/activation.h"
 #include "ops/lite_ops.h"
 #include "ops/add_layernorm.h"
+#include "ops/fusion/layer_norm_fusion.h"
 #include "ops/auto_generate/gen_lite_ops.h"
 #include "include/common/utils/utils.h"
+#include "include/common/utils/anfalgo.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "nnacl/op_base.h"
+#include "tools/optimizer/graph/node_infershape.h"
 
 namespace mindspore {
 namespace opt {
@@ -155,20 +160,46 @@ CNodePtr AddLayerNormFusion::CreateAddLayerNormNode(const FuncGraphPtr &func_gra
   return add_layernorm_cnode;
 }
 
-CNodePtr AddLayerNormFusion::CreateLayerNormV3Node(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
-                                                   const EquivPtr &equiv) const {
+bool LayerNormFusionInferShape(const AnfNodePtr &layernorm_node, const AnfNodePtr &layernorm_input) {
+  auto node_prim = std::make_shared<ops::LayerNormFusion>()->GetPrim();
+  if (!IsPrimitiveCNode(layernorm_node, node_prim)) {
+    MS_LOG(WARNING) << "AddLayerNormFusion pass can only infer LayerNormFusion op, but got " << node_prim->ToString();
+    return true;
+  }
+  auto cnode = layernorm_node->cast<CNodePtr>();
+  if (cnode == nullptr) {
+    return true;
+  }
+  AbstractBasePtrList abstracts;
+  if (layernorm_input->abstract() != nullptr) {
+    abstracts.emplace_back(layernorm_input->abstract()->Clone());
+    abstracts.emplace_back(layernorm_input->abstract()->Clone());
+    abstracts.emplace_back(layernorm_input->abstract()->Clone());
+    auto new_abstract_list = std::make_shared<abstract::AbstractTuple>(abstracts);
+    layernorm_node->set_abstract(new_abstract_list->Clone());
+  }
+  NodeInferShape infer;
+  if (infer.InferShape(cnode) != RET_OK) {
+    MS_LOG(ERROR) << "layernorm_fusion infer shape failed";
+    return false;
+  }
+  return true;
+}
+
+AnfNodePtr AddLayerNormFusion::CreateLayerNormV3Node(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+                                                     const EquivPtr &equiv) const {
   MS_ASSERT(func_graph != nullptr && node != nullptr && equiv != nullptr);
-  auto lnv3_prim = std::make_shared<ops::LayerNormV3>();
-  MS_CHECK_TRUE_RET(lnv3_prim != nullptr, nullptr);
+  auto lnfusion_prim = std::make_shared<ops::LayerNormFusion>();
+  MS_CHECK_TRUE_RET(lnfusion_prim != nullptr, nullptr);
 
   auto input_dims = GetInputDims(node);
   MS_CHECK_TRUE_RET(input_dims != -1, nullptr);
   MS_LOG(INFO) << "Input dims of LayerNormV3: " << input_dims;
-  lnv3_prim->AddAttr("begin_norm_axis", api::MakeValue(input_dims - kReduceAxisNum));
-  lnv3_prim->AddAttr("begin_params_axis", api::MakeValue(input_dims - kReduceAxisNum));
+  lnfusion_prim->AddAttr("begin_norm_axis", api::MakeValue(input_dims - kReduceAxisNum));
+  lnfusion_prim->AddAttr("begin_params_axis", api::MakeValue(input_dims - kReduceAxisNum));
 
-  auto lnv3_prim_c = lnv3_prim->GetPrim();
-  MS_CHECK_TRUE_RET(lnv3_prim_c != nullptr, nullptr);
+  auto lnfusion_prim_c = lnfusion_prim->GetPrim();
+  MS_CHECK_TRUE_RET(lnfusion_prim_c != nullptr, nullptr);
 
   auto x = utils::cast<AnfNodePtr>((*equiv)[reduce_1_x_]);
   MS_CHECK_TRUE_RET(x != nullptr, nullptr);
@@ -177,37 +208,28 @@ CNodePtr AddLayerNormFusion::CreateLayerNormV3Node(const FuncGraphPtr &func_grap
   auto beta = utils::cast<AnfNodePtr>((*equiv)[add_3_b_]);
   MS_CHECK_TRUE_RET(beta != nullptr, nullptr);
 
-  auto lnv3_cnode = func_graph->NewCNode(lnv3_prim_c, {x, gamma, beta});
-  MS_CHECK_TRUE_RET(lnv3_cnode != nullptr, nullptr);
-  lnv3_cnode->set_fullname_with_scope(node->fullname_with_scope() + "_layernormv3_fusion");
-  if (node->abstract() != nullptr) {
-    lnv3_cnode->set_abstract(node->abstract()->Clone());
+  auto ln_cnode = func_graph->NewCNode(lnfusion_prim_c, {x, gamma, beta});
+  if (!LayerNormFusionInferShape(ln_cnode, node)) {
+    return node;
   }
+  MS_CHECK_TRUE_RET(ln_cnode != nullptr, nullptr);
+  ln_cnode->set_fullname_with_scope(node->fullname_with_scope() + "_layernormv3_fusion");
+  auto infer_abs = ln_cnode->abstract()->Clone();
+  MS_CHECK_TRUE_RET(infer_abs != nullptr, nullptr);
+  ln_cnode->set_abstract(infer_abs);
+  auto infer_abs_tuple = infer_abs->cast<abstract::AbstractTuplePtr>();
+  MS_CHECK_TRUE_RET(infer_abs_tuple != nullptr, nullptr);
+  // change LayerNormFusion to LayerNormV3
+  auto lnv3_new_prim = std::make_shared<ops::LayerNormV3>();
+  lnv3_new_prim->AddAttr("begin_norm_axis", api::MakeValue(input_dims - kReduceAxisNum));
+  lnv3_new_prim->AddAttr("begin_params_axis", api::MakeValue(input_dims - kReduceAxisNum));
 
-  auto add_cnode = lnv3_cnode->input(1)->cast<CNodePtr>();
-  if (!CheckPrimitiveType(add_cnode, prim::kPrimAdd) && !CheckPrimitiveType(add_cnode, prim::kPrimAddFusion)) {
-    MS_LOG(INFO) << "No add before LNV3, skip insert cast: " << add_cnode->fullname_with_scope();
-    return lnv3_cnode;
-  }
-  // Insert cast to make the dtype of Add before LayerNormV3 is fp16,
-  // otherwise, pattern (Add, LayerNormV3) will not work.
-  auto add_in1 = add_cnode->input(kInputIndex1)->cast<CNodePtr>();
-  MS_CHECK_TRUE_RET(add_in1 != nullptr, nullptr);
-  auto add_in2 = add_cnode->input(kInputIndex2)->cast<CNodePtr>();
-  MS_CHECK_TRUE_RET(add_in2 != nullptr, nullptr);
-  auto add_input1_cast =
-    NewCNodeInner(add_in1, prim::kPrimCast, {add_in1, NewValueNode(TypeIdToType(kNumberTypeFloat16))},
-                  add_in1->abstract(), add_in1->fullname_with_scope() + "_input1_cast");
-  MS_CHECK_TRUE_RET(add_input1_cast != nullptr, nullptr);
-  add_cnode->set_input(kInputIndex1, add_input1_cast);
-
-  auto add_input2_cast =
-    NewCNodeInner(add_in2, prim::kPrimCast, {add_in2, NewValueNode(TypeIdToType(kNumberTypeFloat16))},
-                  add_in2->abstract(), add_in2->fullname_with_scope() + "_input2_cast");
-  MS_CHECK_TRUE_RET(add_input2_cast != nullptr, nullptr);
-  add_cnode->set_input(kInputIndex2, add_input2_cast);
-
-  return lnv3_cnode;
+  ln_cnode->set_input(0, NewValueNode(lnv3_new_prim->GetPrim()));
+  auto prim_getitem = std::make_shared<Primitive>("TupleGetItem");
+  auto get_item_result = func_graph->NewCNode(prim_getitem, {ln_cnode, NewValueNode(static_cast<int64_t>(0))});
+  constexpr const size_t kNumZero = 0;
+  get_item_result->set_abstract(infer_abs_tuple->elements()[kNumZero]);
+  return get_item_result;
 }
 
 bool AddLayerNormFusion::Init() const {
@@ -369,7 +391,7 @@ AnfNodePtr AddLayerNormFusion::Process(const std::string &pattern_name, const mi
     return nullptr;
   }
 
-  CNodePtr cnode = nullptr;
+  AnfNodePtr cnode = nullptr;
   if (pattern_name == kAddLayerNormPattern) {
     MS_LOG(INFO) << "start create add layernorm fusion";
     cnode = CreateAddLayerNormNode(func_graph, node, equiv);
@@ -387,5 +409,63 @@ AnfNodePtr AddLayerNormFusion::Process(const std::string &pattern_name, const mi
   MS_LOG(INFO) << pattern_name << " fusion success, fusion node name: " << cnode->fullname_with_scope();
   return cnode;
 }
+
+const BaseRef FuseAddAndLayernorm::DefinePattern() const {
+  VectorRef add_layer_norm = VectorRef({layer_norm_, VectorRef({prim::kPrimAddFusion, x1_, x2_}), gamma_, beta_});
+  return add_layer_norm;
+}
+
+const AnfNodePtr FuseAddAndLayernorm::Process(const FuncGraphPtr &graph, const AnfNodePtr &node,
+                                              const EquivPtr &equiv) const {
+  MS_LOG(DEBUG) << "FuseAddAndLayernorm start processing";
+  MS_CHECK_TRUE_RET(graph != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(node != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(equiv != nullptr, nullptr);
+  auto x1 = utils::cast<AnfNodePtr>((*equiv)[x1_]);
+  auto x2 = utils::cast<AnfNodePtr>((*equiv)[x2_]);
+  auto gamma = utils::cast<AnfNodePtr>((*equiv)[gamma_]);
+  auto beta = utils::cast<AnfNodePtr>((*equiv)[beta_]);
+  MS_CHECK_TRUE_RET(x1 != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(x2 != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(gamma != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(beta != nullptr, nullptr);
+  // input 1 is add node
+  auto cnode = node->cast<CNodePtr>();
+  MS_CHECK_TRUE_RET(cnode != nullptr, nullptr);
+  auto tensor_add = cnode->input(kInputIndex1);
+  auto prim = std::make_shared<ops::AddLayerNorm>()->GetPrim();
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
+  std::vector<AnfNodePtr> inputs = {NewValueNode(prim), x1, x2, gamma, beta};
+  auto add_layernorm = graph->NewCNode(inputs);
+  MS_CHECK_TRUE_RET(add_layernorm != nullptr, nullptr);
+  auto layernorm_node = opt::GetAnfNodeByVar(equiv, layer_norm_);
+  auto layernorm_abs = layernorm_node->abstract();
+  if (!layernorm_abs->isa<abstract::AbstractTuple>()) {
+    return node;
+  }
+
+  auto layernorm_abs_tuple = utils::cast<abstract::AbstractTuplePtr>(layernorm_abs);
+  auto layer_norm_output_size = layernorm_abs_tuple->size();
+  AbstractBasePtrList abstracts;
+  std::transform(layernorm_abs_tuple->elements().begin(), layernorm_abs_tuple->elements().end(),
+                 std::back_inserter(abstracts), [](const AbstractBasePtr &abs) { return (abs->Clone()); });
+  if (layer_norm_output_size < 3) {
+    if (!LayerNormFusionInferShape(layernorm_node, tensor_add)) {
+      return node;
+    }
+  }
+  abstracts.emplace_back(tensor_add->abstract()->Clone());
+  auto new_abstract_list = std::make_shared<abstract::AbstractTuple>(abstracts);
+  add_layernorm->set_abstract(new_abstract_list);
+  FuncGraphManagerPtr manager = graph->manager();
+  auto prim_getitem = std::make_shared<Primitive>("TupleGetItem");
+  // the addde output
+  auto add_result = graph->NewCNode(prim_getitem, {add_layernorm, NewValueNode(static_cast<int64_t>(3))});
+  add_result->set_abstract(tensor_add->abstract()->Clone());
+  (void)manager->Replace(tensor_add, add_result);
+  MS_LOG(DEBUG) << "FuseAddAndLayernorm process success";
+  return add_layernorm;
+}
+
 }  // namespace opt
 }  // namespace mindspore

@@ -32,8 +32,8 @@
 #include "backend/common/graph_kernel/core/update_state_formatter.h"
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
 #include "backend/common/graph_kernel/core/graph_kernel_op_combiner.h"
-#include "backend/common/graph_kernel/core/split_reshape_and_cache.h"
 #include "backend/common/graph_kernel/core/cluster_cce_lib_ops.h"
+#include "backend/common/graph_kernel/core/graph_kernel_splitter_for_cce.h"
 
 #include "tools/graph_kernel/converter/akg/utils.h"
 #include "tools/graph_kernel/converter/callback_impl.h"
@@ -48,20 +48,25 @@
 #include "tools/graph_kernel/converter/basic_op_infer_shape.h"
 #include "tools/graph_kernel/converter/rename_fullname_with_scope.h"
 #include "tools/graph_kernel/converter/update_kernel_info.h"
+#include "tools/graph_kernel/converter/split_umonad.h"
 #include "tools/graph_kernel/converter/split_model_ascend.h"
+#include "tools/graph_kernel/converter/split_model_ascend_cce.h"
 #include "tools/graph_kernel/converter/split_model_gpu.h"
 #include "tools/graph_kernel/converter/split_model_cpu.h"
+#include "tools/graph_kernel/converter/cce_fuse_pattern.h"
+#include "tools/graph_kernel/converter/param_to_value_node.h"
 #include "utils/ms_context.h"
 
 namespace mindspore {
 namespace graphkernel {
 using opt::GraphOptimizer;
 constexpr size_t kStagePreProcess = 0;
-constexpr size_t kStageCluster = 1;
-constexpr size_t kStageHLO1 = 2;
-constexpr size_t kStageSplit = 3;
-constexpr size_t kStageBuildKernel = 4;
-constexpr size_t kStagePostProcess = 5;
+constexpr size_t kStageClusterSplitForCce = 1;
+constexpr size_t kStageCluster = 2;
+constexpr size_t kStageHLO1 = 3;
+constexpr size_t kStageSplit = 4;
+constexpr size_t kStageBuildKernel = 5;
+constexpr size_t kStagePostProcess = 6;
 
 class EmptyPass : public opt::Pass {
  public:
@@ -81,6 +86,7 @@ void GraphKernelOptimizer::Init() const {
   SPLIT_MODEL_REGISTER(kAscendDevice, inner::SplitModelAscend, device);
   SPLIT_MODEL_REGISTER(kGPUDevice, inner::SplitModelGpu);
   SPLIT_MODEL_REGISTER(kCPUDevice, inner::SplitModelCpu);
+  SPLIT_MODEL_REGISTER(inner::kAscendCCE, inner::SplitModelAscendCCE);
 }
 
 GkPassManagerPtr GraphKernelOptimizer::PreProcess() const {
@@ -97,6 +103,8 @@ GkPassManagerPtr GraphKernelOptimizer::PreProcess() const {
 
   // Convert the const parameters to const tensors
   pm->Add(std::make_shared<ParameterToTensor>(), OptLevel_1, is_cpu);
+
+  pm->Add(std::make_shared<SplitReshapeAndCacheLite>(), OptLevel_0, is_ascend);
   return pm;
 }
 
@@ -106,11 +114,6 @@ GkPassManagerPtr GraphKernelOptimizer::Cluster() const {
   // Expand complex basic kernels to composite kernels
   pm->Add(std::make_shared<GraphKernelExpanderLite>(), OptLevel_1);
 
-  pm->Add(std::make_shared<SplitReshapeAndCache>(), OptLevel_0, is_ascend);
-  if (graphkernel::GraphKernelFlags::GetInstance().enable_cce_lib) {
-    // akg cce lib ops
-    pm->Add(std::make_shared<ClusterCceLibOps>(), OptLevel_0, is_ascend);
-  }
   // Combine supported parallel ops that with common inputs
   pm->Add(std::make_shared<GraphKernelOpCombiner>(), OptLevel_3);
 
@@ -164,6 +167,15 @@ GkPassManagerPtr GraphKernelOptimizer::PostProcess() const {
   auto pm = std::make_shared<GraphKernelPassManagerLite>(kStagePostProcess, "postprocess");
   pm->Add(std::make_shared<RenameFullnameWithScope>(), OptLevel_1);
   pm->Add(std::make_shared<UpdateKernelInfo>(), OptLevel_1);
+  return pm;
+}
+
+GkPassManagerPtr ClusterAndSplitForCce() {
+  auto pm = std::make_shared<GraphKernelPassManagerLite>(kStageClusterSplitForCce, "cluster_and_split_for_cce_op");
+  pm->Add(std::make_shared<ParamToValueNode>(), OptLevel_1);
+  pm->Add(std::make_shared<AddReshapeTransposeFusion>(), OptLevel_1);
+  pm->Add(std::make_shared<ClusterCceLibOps>(), OptLevel_1);
+  pm->Add(std::make_shared<GraphKernelSplitterForCCE>(), OptLevel_1);
   return pm;
 }
 
@@ -222,6 +234,10 @@ void GraphKernelOptimizer::Run(const FuncGraphPtr &func_graph) {
 
   auto optimizer = std::make_shared<GraphOptimizer>("graph_kernel_optimizer");
   optimizer->AddPassManager(PreProcess());
+  if (graphkernel::GraphKernelFlags::GetInstance().enable_cce_lib && is_ascend) {
+    // only for ascend backend cce ops
+    optimizer->AddPassManager(ClusterAndSplitForCce());
+  }
   optimizer->AddPassManager(Cluster());
   optimizer->AddPassManager(HighLevelOpt1());
   optimizer->AddPassManager(Split());

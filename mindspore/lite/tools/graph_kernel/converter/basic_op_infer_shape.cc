@@ -292,7 +292,7 @@ bool DynOpInferShape::InferShapeRealKernel(const CNodePtr &cnode) const {
     return true;
   }
   // some op's abstract does not satisfy core/ops infer
-  if (prim_name == "StridedSlice" || prim_name == "PromptFlashAttention") {
+  if (prim_name == "StridedSlice" || prim_name == "PromptFlashAttention" || prim_name == "IncreFlashAttention") {
     return true;
   }
   static std::unordered_map<std::string, OpRectifyFunc> rectify_map{{"BatchMatMul", RectifyBatchMatMul}};

@@ -107,7 +107,7 @@ bool CanCluster(const CNodePtr &cnode, const std::string &node_name) {
 }
 
 bool GraphKernelClusterLite::IsClusterableOp(const AnfNodePtr &node) {
-  if (GkUtils::UseAkgCceLib(node)) {
+  if (GkUtils::IsAkgCceLibNode(node)) {
     // do not cluster any other node into akg cce lib subgraph.
     return false;
   }

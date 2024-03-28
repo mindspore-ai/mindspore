@@ -508,6 +508,9 @@ class Reduce(OpInfer):
 
 class Reshape(OpInfer):
     """Reshape op."""
+    def __init__(self, op_desc):
+        super().__init__(op_desc)
+        self.out_shape = []
 
     def supported_format(self):
         return ["ND,DefaultFormat,ND"]
@@ -518,21 +521,26 @@ class Reshape(OpInfer):
 
     def infer_ori_shape(self):
         shape = self.input_desc[0][ORI_SHAPE]
-        out_shape = copy_shape(self.input_desc[1][VALUE])
-        if -1 in out_shape:
-            idx = out_shape.index(-1)
+        if self.attr.get("shape") is not None:
+            self.out_shape = copy_shape(self.get_attr("shape"))
+        elif len(self.input_desc) == 2 and self.input_desc[1].get(VALUE) is not None:
+            self.out_shape = copy_shape(self.input_desc[1][VALUE])
+        else:
+            raise ValueError("Reshape Op does not support dynamic shape")
+        if -1 in self.out_shape:
+            idx = self.out_shape.index(-1)
             tmp = []
-            for _, s in enumerate(out_shape):
+            for _, s in enumerate(self.out_shape):
                 if s != -1:
                     tmp.append(s)
-            if len(tmp) + 1 != len(out_shape):
-                raise ValueError("Find multiple -1 in attr 'shape' {}".format(out_shape))
+            if len(tmp) + 1 != len(self.out_shape):
+                raise ValueError("Find multiple -1 in attr 'shape' {}".format(self.out_shape))
             tmp_sz = functools.reduce(lambda x, y: x * y, tmp, 1)
-            out_shape[idx] = functools.reduce(lambda x, y: x * y, shape, 1) // tmp_sz
-        self.output_desc[0][ORI_SHAPE] = out_shape
+            self.out_shape[idx] = functools.reduce(lambda x, y: x * y, shape, 1) // tmp_sz
+        self.output_desc[0][ORI_SHAPE] = self.out_shape
 
     def post_process(self):
-        self.input_desc[1]["ori_value"] = self.input_desc[1][VALUE]
+        self.input_desc[1]["ori_value"] = self.out_shape
         self.input_desc[1][VALUE] = self.output_desc[0][SHAPE]
 
 
@@ -660,6 +668,84 @@ class PagedAttentionMask(PagedAttention):
         return ["ND,ND,ND,ND,ND,ND,ND"]
 
 
+class Transpose(OpInfer):
+    """Transpose"""
+    def supported_format(self):
+        return ["ND,ND,ND"]
+
+    def infer_shape(self):
+        """Reshape keeps ND format, so the output shape will not be changed"""
+        self.output_desc[0][SHAPE] = self.output_desc[0][ORI_SHAPE]
+
+    def infer_ori_shape(self):
+        shape = self.input_desc[0][ORI_SHAPE]
+        perm = copy_shape(self.input_desc[1][VALUE])
+        out_shape = []
+        for p in perm:
+            out_shape.append(shape[p])
+        self.output_desc[0][ORI_SHAPE] = out_shape
+
+class StridedSliceV2(OpInfer):
+    """StridedSliceV2"""
+    def supported_format(self):
+        return ["ND,ND,ND,ND,ND"]
+
+    def infer_shape(self):
+        """StridedSliceV2 op keeps ND format"""
+        if len(self.input_desc) < 4:
+            raise ValueError(f"StridedSliceV2 must have 4 inputs, but got {len(self.input_desc)}")
+        in_shape = self.input_desc[0][SHAPE]
+        out_shape = copy_shape(in_shape)
+        begin = copy_shape(self.input_desc[1][VALUE])
+        end = copy_shape(self.input_desc[2][VALUE])
+        axes = copy_shape(self.input_desc[3][VALUE])
+        stride = copy_shape(self.input_desc[4][VALUE])
+        if not isinstance(axes, (list, tuple)):
+            begin = [begin]
+            end = [end]
+            axes = [axes]
+            stride = [stride]
+
+        for i in range(len(axes)):
+            axis = axes[i]
+            out_axis = (end[i]-begin[i])//stride[i]
+            out_shape[axis] = out_axis
+        self.output_desc[0][SHAPE] = out_shape
+
+    def supported_type(self):
+        return ["float16,float16,float16,float16,float16",
+                "float32,float32,float32,float32,float32"]
+
+class LayerNorm(OpInfer):
+    """LayerNorm"""
+    def supported_format(self):
+        return ["ND,ND,ND,ND,ND,ND"]
+
+    def infer_output_shape(self, key):
+        """infer output shape"""
+        shape = self.input_desc[0][key]
+        begin_norm_axis = self.get_attr("begin_norm_axis")
+        if begin_norm_axis == -1:
+            begin_norm_axis = len(shape)-1
+        begin_param_axis = self.get_attr("begin_params_axis")
+        if begin_param_axis == -1:
+            begin_param_axis = len(shape)-1
+        out_shape_0 = copy_shape(shape)
+        out_shape_mean_var = copy_shape(shape)
+        for ax in range(begin_norm_axis, len(shape)):
+            out_shape_0[ax] = 1
+        for ax in range(begin_norm_axis, len(shape)):
+            out_shape_mean_var[ax] = 1
+        self.output_desc[0][key] = out_shape_0
+        self.output_desc[1][key] = out_shape_mean_var
+        self.output_desc[2][key] = out_shape_mean_var
+
+    def infer_ori_shape(self):
+        self.infer_output_shape(ORI_SHAPE)
+
+    def infer_shape(self):
+        self.infer_output_shape(SHAPE)
+
 # Ge will convert dtype bool to int8, and ReLU will be expand to Greater op in expander,
 # and the dtype of Greater op is bool, which is incompatible with bool.
 # As a result akg will rise error when parsing Greater op with dtype int8.
@@ -694,16 +780,20 @@ prims = {
     "Tile": Tile,
     "Log": Elemwise,
     "Exp": Elemwise,
-    "Pow": Elemwise,
+    "Pow": ElemwiseBinary,
     "Sign": Elemwise,
     "ReLU": Elemwise,
     "Tanh": Elemwise,
+    "Erf": Elemwise,
     "ReduceMax": Reduce,
     "ReduceMin": Reduce,
     "Cast": Cast,
     "PagedAttention": PagedAttention,
     "PagedAttentionMask": PagedAttentionMask,
     "ReshapeAndCache": ReshapeAndCache,
+    "StridedSliceV2": StridedSliceV2,
+    "Transpose": Transpose,
+    "LayerNorm": LayerNorm,
 }
 
 

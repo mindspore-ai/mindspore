@@ -65,8 +65,7 @@ void SplitModelAscend::InitFusePatterns() {
 }
 
 AreaMode SplitModelAscend::GetDefaultAreaMode(const PrimOpPtr &node) const {
-  if (node != nullptr && (node->op() == "MatMul" || node->op() == "PagedAttention" ||
-                          node->op() == "PagedAttentionMask" || node->op() == "ReshapeAndCache")) {
+  if (node != nullptr && node->op() == "MatMul") {
     return AreaMode::COMPOSITE;
   }
   return AreaMode::BASIC;

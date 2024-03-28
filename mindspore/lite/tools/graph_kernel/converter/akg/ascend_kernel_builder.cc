@@ -62,7 +62,7 @@ AnfNodePtr AscendKernelBuilder::CreateCustomOp(const FuncGraphPtr &func_graph, c
   custom_prim->set_attr("output_names", MakeValue(output_names));
   custom_cnode->set_fullname_with_scope(cnode->fullname_with_scope());
   custom_cnode->set_abstract(cnode->abstract()->Clone());
-  if (GkUtils::UseAkgCceLib(cnode)) {
+  if (GkUtils::IsAkgCceLibNode(cnode)) {
     custom_cnode->AddAttr("use_akg_cce", MakeValue(true));
   }
   return custom_cnode;
