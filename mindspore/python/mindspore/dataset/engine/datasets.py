@@ -3286,6 +3286,7 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
         self.warning_ctl = None
         # cache thread (get_ident()) to worker_id mapping in Python layer
         self.python_threads_to_workers = {}
+        self.eof = None
 
     def __del__(self):
         try:
