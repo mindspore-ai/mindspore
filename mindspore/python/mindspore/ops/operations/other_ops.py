@@ -171,8 +171,8 @@ class BoundingBoxDecode(Primitive):
         ...                                          max_shape=(768, 1280), wh_ratio_clip=0.016)
         >>> output = boundingbox_decode(anchor_box, deltas)
         >>> print(output)
-        [[ 4.1953125  0.         0.         5.1953125]
-         [ 2.140625   0.         3.859375  60.59375  ]]
+        [[ 4.194528  0.         0.         5.194528]
+         [ 2.1408591   0.         3.8591409  60.598152  ]]
 
     """
 
