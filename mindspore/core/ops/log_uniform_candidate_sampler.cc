@@ -98,6 +98,6 @@ class LogUniformCandidateSamplerInfer : public abstract::OpInferBase {
 
 MIND_API_OPERATOR_IMPL(LogUniformCandidateSampler, BaseOperator);
 REGISTER_PRIMITIVE_OP_INFER_IMPL(LogUniformCandidateSampler, prim::kPrimLogUniformCandidateSampler,
-                                 LogUniformCandidateSamplerInfer, true);
+                                 LogUniformCandidateSamplerInfer, false);
 }  // namespace ops
 }  // namespace mindspore
