@@ -47,6 +47,7 @@
 #include "ops/sequence_ops.h"
 #include "ops/structure_ops.h"
 #include "ops/lite_ops.h"
+#include "ops/op_def.h"
 #include "plugin/device/ascend/hal/hardware/ascend_collective_comm_lib.h"
 #include "plugin/device/ascend/hal/hardware/ge_utils.h"
 #include "plugin/device/ascend/hal/hccl_adapter/hccl_adapter.h"
@@ -4037,28 +4038,43 @@ void DfGraphConvertor::SaveParamFormat(const CNodePtr node) {
   AnfNodePtr op = node->input(0);
   if (IsValueNode<Primitive>(op)) {
     auto prim = GetValueNode<PrimitivePtr>(op);
-    for (auto attr : prim->attrs()) {
-      if (attr.first == "format") {
-        std::string format;
-        if (attr.second->isa<Int64Imm>()) {
-          bool converted = CheckAndConvertUtils::ConvertAttrValueToString(prim->name(), "format", &attr.second);
-          if (converted) {
-            format = attr.second->ToString();
-          } else {
-            CheckAndConvertUtils::GetFormatStringVal(prim, &format);
+    std::string format;
+    auto op_def = ops::GetOpDef(prim->name());
+    if (op_def) {
+      for (size_t index = 0; index < op_def->args_.size() && index < node->size() - 1; index++) {
+        auto arg = op_def->args_[index];
+        if (arg.as_init_arg_ && (arg.arg_name_ == ops::kFormat || arg.arg_name_ == ops::kDataFormat)) {
+          auto value_ptr = node->input(index + 1)->cast<ValueNodePtr>();
+          if (value_ptr == nullptr) {
+            break;
           }
-        } else if (attr.second->isa<StringImm>()) {
-          format = attr.second->ToString();
+          auto input_value = value_ptr->value();
+          MS_EXCEPTION_IF_NULL(input_value);
+          auto format_id = GetValue<int64_t>(input_value);
+          format = FormatEnumToString(static_cast<Format>(format_id));
         }
-        if (format != "NCDHW" && format != "NHWC") {
-          break;
+      }
+    }
+    auto value_ptr = prim->GetAttr(ops::kFormat);
+    if (value_ptr) {
+      if (value_ptr->isa<Int64Imm>()) {
+        bool converted = CheckAndConvertUtils::ConvertAttrValueToString(prim->name(), "format", &value_ptr);
+        if (converted) {
+          format = value_ptr->ToString();
+        } else {
+          CheckAndConvertUtils::GetFormatStringVal(prim, &format);
         }
-        for (size_t i = 1; i < node->size(); i++) {
-          auto input = node->input(i);
-          if (input->isa<Parameter>()) {
-            param_format_[input->DebugString()] = format;
-            MS_LOG(DEBUG) << "Save Param " << input->DebugString() << " format: " << format;
-          }
+      } else if (value_ptr->isa<StringImm>()) {
+        format = value_ptr->ToString();
+      }
+    }
+
+    if (format == "NCDHW" || format == "NHWC") {
+      for (size_t i = 1; i < node->size(); i++) {
+        auto input = node->input(i);
+        if (input->isa<Parameter>()) {
+          param_format_[input->DebugString()] = format;
+          MS_LOG(DEBUG) << "Save Param " << input->DebugString() << " format: " << format;
         }
       }
     }
