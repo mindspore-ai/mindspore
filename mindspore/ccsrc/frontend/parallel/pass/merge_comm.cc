@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2023-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,11 @@ namespace mindspore {
 namespace parallel {
 namespace {
 bool IsSameTargetShape(const CNodePtr &reshape_node_a, const CNodePtr &reshape_node_b) {
+  MS_EXCEPTION_IF_CHECK_FAIL(reshape_node_a->inputs().size() == kSizeThree, "Input size of Reshape is not 3.");
+  MS_EXCEPTION_IF_CHECK_FAIL(reshape_node_b->inputs().size() == kSizeThree, "Input size of Reshape is not 3.");
+  if (!reshape_node_a->input(kIndex2)->isa<ValueNode>() || !reshape_node_b->input(kIndex2)->isa<ValueNode>()) {
+    return false;
+  }
   auto value_ptr_a = reshape_node_a->input(kIndex2)->cast<ValueNodePtr>()->value()->cast<ValueTuplePtr>()->value();
   auto value_ptr_b = reshape_node_b->input(kIndex2)->cast<ValueNodePtr>()->value()->cast<ValueTuplePtr>()->value();
   if (value_ptr_a.size() != value_ptr_b.size()) {
