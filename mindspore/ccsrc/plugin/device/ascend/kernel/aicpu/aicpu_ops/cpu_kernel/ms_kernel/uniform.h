@@ -38,10 +38,10 @@ class UniformCpuKernel : public CpuKernel {
    * @param output using to output data
    */
   template <typename T>
-  uint32_t DoCompute(const CpuKernelContext &ctx, Tensor *input, Tensor *output);
+  uint32_t DoCompute(CpuKernelContext &ctx, Tensor *input, Tensor *output);
 
   template <typename T>
-  uint32_t ParaCompute(const CpuKernelContext &ctx, int64_t input_size, T *outputData, float from, float to);
+  uint32_t ParaCompute(CpuKernelContext &ctx, int64_t input_size, T *outputData, float from, float to);
 
   template <typename T>
   void UniformCompute(float from, float to, int64_t start, int64_t end, T *outputData);

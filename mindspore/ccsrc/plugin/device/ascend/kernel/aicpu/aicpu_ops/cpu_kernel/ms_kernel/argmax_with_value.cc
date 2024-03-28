@@ -30,7 +30,7 @@ const char *kArgMaxWithValue = "ArgMaxWithValue";
 
 namespace aicpu {
 template <class T>
-uint32_t ExecArgMaxWithValue(const CpuKernelContext &ctx) {
+uint32_t ExecArgMaxWithValue(CpuKernelContext &ctx) {
   // Get Tensors
   Tensor *input_tensor = ctx.Input(kFirstInputIndex);
   Tensor *indice_tensor = ctx.Output(kFirstOutputIndex);
@@ -48,11 +48,11 @@ uint32_t ExecArgMaxWithValue(const CpuKernelContext &ctx) {
   if (dim > upper_bound_included || dim < lower_bound_included) {
     if (input_shape_size == 0) {
       if (dim != -1 && dim != 0) {
-        KERNEL_LOG_ERROR("[ArgMaxWithValue] Dimension is out of range.");
+        CUST_KERNEL_LOG_ERROR(ctx, "[ArgMaxWithValue] Dimension is out of range.");
         return KERNEL_STATUS_PARAM_INVALID;
       }
     } else {
-      KERNEL_LOG_ERROR("[ArgMaxWithValue] Dimension is out of range.");
+      CUST_KERNEL_LOG_ERROR(ctx, "[ArgMaxWithValue] Dimension is out of range.");
       return KERNEL_STATUS_PARAM_INVALID;
     }
   }
@@ -104,19 +104,20 @@ uint32_t ExecArgMaxWithValue(const CpuKernelContext &ctx) {
     }
     // log error if max_core_num is 0
     if (max_core_num == 0) {
-      KERNEL_LOG_ERROR("[ArgMaxWithValue] max_core_num is 0.");
+      CUST_KERNEL_LOG_ERROR(ctx, "[ArgMaxWithValue] max_core_num is 0.");
       return KERNEL_STATUS_PARAM_INVALID;
     }
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, num_outer, num_outer / max_core_num, argmax_wv_shard),
-                        "[ArgMaxWithValue] Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx,
+                             CpuKernelUtils::ParallelFor(ctx, num_outer, num_outer / max_core_num, argmax_wv_shard),
+                             "[ArgMaxWithValue] Compute failed.");
   }
   return KERNEL_STATUS_OK;
 }
 
 uint32_t ArgMaxWithValueCpuKernel::Compute(CpuKernelContext &ctx) {
   const std::vector<std::string> required_attrs = {"dimension"};
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kArgMaxWithValueInputNum, kArgMaxWithValueOutputNum, required_attrs),
-                      "[ArgMaxWithValue] Check input_num, output_num, required_attr failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kArgMaxWithValueInputNum, kArgMaxWithValueOutputNum, required_attrs),
+                           "[ArgMaxWithValue] Check input_num, output_num, required_attr failed.");
   auto data_type = ctx.Input(kFirstInputIndex)->GetDataType();
   switch (data_type) {
     case DT_FLOAT16:
@@ -153,7 +154,7 @@ uint32_t ArgMaxWithValueCpuKernel::Compute(CpuKernelContext &ctx) {
       return ExecArgMaxWithValue<uint64_t>(ctx);
       break;
     default:
-      KERNEL_LOG_ERROR("[ArgMaxWithValue] Data type [%s] is not supported.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "[ArgMaxWithValue] Data type [%s] is not supported.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 }

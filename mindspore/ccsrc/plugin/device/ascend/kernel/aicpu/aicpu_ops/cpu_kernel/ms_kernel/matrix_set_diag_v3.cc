@@ -32,7 +32,7 @@ const int64_t kParallelDataNum = 64 * 1024;
 }  // namespace
 
 namespace aicpu {
-uint32_t MatrixSetDiagV3CpuKernel::CheckParam(const CpuKernelContext &ctx) {
+uint32_t MatrixSetDiagV3CpuKernel::CheckParam(CpuKernelContext &ctx) {
   // check params
   Tensor *input_tensor = ctx.Input(0);
   Tensor *diagonal_tensor = ctx.Input(1);
@@ -46,16 +46,17 @@ uint32_t MatrixSetDiagV3CpuKernel::CheckParam(const CpuKernelContext &ctx) {
     align = attr_align->GetString();
   }
   // check tensor_type
-  KERNEL_CHECK_FALSE((input_dtype == diagonal_dtype), KERNEL_STATUS_PARAM_INVALID,
-                     "The data type of input_dtype [%d] need be same with "
-                     "diagonal_type [%d].",
-                     input_dtype, diagonal_dtype);
-  KERNEL_CHECK_FALSE((input_dtype == output_dtype), KERNEL_STATUS_PARAM_INVALID,
-                     "The data type of input_dtype [%d] need be same with "
-                     "output_dtype [%d].",
-                     input_dtype, output_dtype);
+  CUST_KERNEL_CHECK_FALSE(ctx, (input_dtype == diagonal_dtype), KERNEL_STATUS_PARAM_INVALID,
+                          "The data type of input_dtype [%d] need be same with "
+                          "diagonal_type [%d].",
+                          input_dtype, diagonal_dtype);
+  CUST_KERNEL_CHECK_FALSE(ctx, (input_dtype == output_dtype), KERNEL_STATUS_PARAM_INVALID,
+                          "The data type of input_dtype [%d] need be same with "
+                          "output_dtype [%d].",
+                          input_dtype, output_dtype);
   // check align
-  KERNEL_CHECK_FALSE(
+  CUST_KERNEL_CHECK_FALSE(
+    ctx,
     (align == "" || align == "RIGHT_LEFT" || align == "RIGHT_RIGHT" || align == "LEFT_LEFT" || align == "LEFT_RIGHT"),
     KERNEL_STATUS_PARAM_INVALID,
     "Attr 'align' of 'MatrixSetDiagV3' is not in: 'LEFT_RIGHT', "
@@ -64,7 +65,7 @@ uint32_t MatrixSetDiagV3CpuKernel::CheckParam(const CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t MatrixSetDiagV3CpuKernel::DoCompute(const CpuKernelContext &ctx) {
+uint32_t MatrixSetDiagV3CpuKernel::DoCompute(CpuKernelContext &ctx) {
   Tensor *input_tensor = ctx.Input(0);
   auto input_shape = input_tensor->GetTensorShape();
   int64_t input_dims = input_shape->GetDims();
@@ -86,12 +87,13 @@ uint32_t MatrixSetDiagV3CpuKernel::DoCompute(const CpuKernelContext &ctx) {
   int64_t k_lower = 0;
   int64_t k_upper = 0;
   auto k_Data = reinterpret_cast<int32_t *>(k_tensor->GetData());
-  KERNEL_CHECK_FALSE((k_len == 1 || k_len == 2), KERNEL_STATUS_PARAM_INVALID,
-                     "tensor_k dims size  must <= 2,got size [%lld].", k_len);
+  CUST_KERNEL_CHECK_FALSE(ctx, (k_len == 1 || k_len == 2), KERNEL_STATUS_PARAM_INVALID,
+                          "tensor_k dims size  must <= 2,got size [%lld].", k_len);
   k_lower = k_Data[0];
   k_upper = k_Data[0];
   if (k_len == 2) k_upper = k_Data[1];
-  KERNEL_CHECK_FALSE((k_lower <= k_upper), KERNEL_STATUS_PARAM_INVALID, " k[0] must not be larger than k[1] .");
+  CUST_KERNEL_CHECK_FALSE(ctx, (k_lower <= k_upper), KERNEL_STATUS_PARAM_INVALID,
+                          " k[0] must not be larger than k[1] .");
 
   std::string align = "RIGHT_LEFT";
   AttrValue *attr_align = ctx.GetAttr("align");
@@ -106,22 +108,23 @@ uint32_t MatrixSetDiagV3CpuKernel::DoCompute(const CpuKernelContext &ctx) {
   int64_t max_diag_len = std::min(input_rows + std::min(k_upper, zero), input_cloumns + std::min(-k_lower, zero));
 
   for (int64_t i = 0; i < input_dims - 2; ++i) {
-    KERNEL_CHECK_FALSE((input_shape->GetDimSize(i) == diagonal_shape->GetDimSize(i)), KERNEL_STATUS_PARAM_INVALID,
-                       "diagonal_shape has incorrect value of elements[%lld] got %lld, should "
-                       "be %lld",
-                       i, diagonal_shape->GetDimSize(i), input_shape->GetDimSize(i));
+    CUST_KERNEL_CHECK_FALSE(ctx, (input_shape->GetDimSize(i) == diagonal_shape->GetDimSize(i)),
+                            KERNEL_STATUS_PARAM_INVALID,
+                            "diagonal_shape has incorrect value of elements[%lld] got %lld, should "
+                            "be %lld",
+                            i, diagonal_shape->GetDimSize(i), input_shape->GetDimSize(i));
   }
 
   if (k_upper != k_lower) {
-    KERNEL_CHECK_FALSE((diagonal_rows == (k_upper - k_lower + 1)), KERNEL_STATUS_PARAM_INVALID,
-                       "diagonal_shape has incorrect value of elements[%lld] got %lld, should "
-                       "be %lld",
-                       diagonal_dims - 2, diagonal_rows, (k_upper - k_lower + 1));
+    CUST_KERNEL_CHECK_FALSE(ctx, (diagonal_rows == (k_upper - k_lower + 1)), KERNEL_STATUS_PARAM_INVALID,
+                            "diagonal_shape has incorrect value of elements[%lld] got %lld, should "
+                            "be %lld",
+                            diagonal_dims - 2, diagonal_rows, (k_upper - k_lower + 1));
   }
-  KERNEL_CHECK_FALSE((max_diag_len == diagonal_cloumns), KERNEL_STATUS_PARAM_INVALID,
-                     "diagonal_shape has incorrect value of elements[%lld] got "
-                     "%lld, should be %lld",
-                     diagonal_dims - 1, diagonal_cloumns, max_diag_len);
+  CUST_KERNEL_CHECK_FALSE(ctx, (max_diag_len == diagonal_cloumns), KERNEL_STATUS_PARAM_INVALID,
+                          "diagonal_shape has incorrect value of elements[%lld] got "
+                          "%lld, should be %lld",
+                          diagonal_dims - 1, diagonal_cloumns, max_diag_len);
 
   // Fill the output diagonal.64K前单核计算，64K后所有核计算
   uint64_t input_size = input_tensor->GetDataSize();
@@ -208,9 +211,9 @@ uint32_t MatrixSetDiagV3CpuKernel::DoCompute(const CpuKernelContext &ctx) {
 
 uint32_t MatrixSetDiagV3CpuKernel::Compute(CpuKernelContext &ctx) {
   Tensor *input_tensor = ctx.Input(0);
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "check input and output number failed.");
-  KERNEL_CHECK_FALSE((CheckParam(ctx) == KERNEL_STATUS_OK), KERNEL_STATUS_PARAM_INVALID,
-                     "The params in MatrixSetDiagV3 is error, CheckParam failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "check input and output number failed.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (CheckParam(ctx) == KERNEL_STATUS_OK), KERNEL_STATUS_PARAM_INVALID,
+                          "The params in MatrixSetDiagV3 is error, CheckParam failed.");
   uint32_t ret = KERNEL_STATUS_OK;
   DataType dt = static_cast<DataType>(input_tensor->GetDataType());
   switch (dt) {
@@ -254,7 +257,7 @@ uint32_t MatrixSetDiagV3CpuKernel::Compute(CpuKernelContext &ctx) {
       ret = DoCompute<std::complex<std::float_t>>(ctx);
       break;
     default:
-      KERNEL_LOG_ERROR("Unsupported input data type[%s]", DTypeStr(dt).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Unsupported input data type[%s]", DTypeStr(dt).c_str());
       ret = KERNEL_STATUS_PARAM_INVALID;
       break;
   }

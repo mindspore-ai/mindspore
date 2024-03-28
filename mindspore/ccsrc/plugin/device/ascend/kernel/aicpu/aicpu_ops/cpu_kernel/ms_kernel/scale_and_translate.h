@@ -33,10 +33,10 @@ class ScaleAndTranslateCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  static uint32_t ScaleAndTranslateCheck(const CpuKernelContext &ctx);
+  static uint32_t ScaleAndTranslateCheck(CpuKernelContext &ctx);
 
   template <typename T>
-  static uint32_t ScaleAndTranslateCompute(const CpuKernelContext &ctx);
+  static uint32_t ScaleAndTranslateCompute(CpuKernelContext &ctx);
 };
 
 class ScaleAndTranslateGradCpuKernel : public CpuKernel {
@@ -48,10 +48,10 @@ class ScaleAndTranslateGradCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  static uint32_t ScaleAndTranslateGradCheck(const CpuKernelContext &ctx);
+  static uint32_t ScaleAndTranslateGradCheck(CpuKernelContext &ctx);
 
   template <typename T>
-  static uint32_t ScaleAndTranslateGradCompute(const CpuKernelContext &ctx);
+  static uint32_t ScaleAndTranslateGradCompute(CpuKernelContext &ctx);
 };
 
 struct Spans {
@@ -65,7 +65,7 @@ struct Spans {
 
 template <typename T>
 struct GatherSpans {
-  uint32_t operator()(const aicpu::CpuKernelContext &context, int row_span_size,
+  uint32_t operator()(aicpu::CpuKernelContext &context, int row_span_size,
                       Eigen::TensorMap<Eigen::Tensor<int32_t, 1>> row_starts,
                       Eigen::TensorMap<Eigen::Tensor<float, 1>> row_weights, int col_span_size,
                       Eigen::TensorMap<Eigen::Tensor<int32_t, 1>> col_starts,

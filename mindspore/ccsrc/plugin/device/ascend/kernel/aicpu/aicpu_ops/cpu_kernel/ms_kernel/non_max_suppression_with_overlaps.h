@@ -29,7 +29,7 @@ class NonMaxSuppressionWithOverlapsCpuKernel : public CpuKernel {
  private:
   uint32_t GetInputAndCheck(CpuKernelContext &ctx);
   template <typename T, typename T_threshold>
-  uint32_t DoNonMaxSuppressionWithOverlapsOp();
+  uint32_t DoNonMaxSuppressionWithOverlapsOp(CpuKernelContext &ctx);
 
   const Tensor *overlaps_ = nullptr;
   Tensor *scores_ = nullptr;

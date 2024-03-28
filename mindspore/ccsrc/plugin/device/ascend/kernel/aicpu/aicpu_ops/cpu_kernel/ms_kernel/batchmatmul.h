@@ -28,7 +28,7 @@ class BatchMatMulCpuKernel : public CpuKernel {
 
  private:
   template <typename T>
-  uint32_t DoCompute(const CpuKernelContext &ctx);
+  uint32_t DoCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

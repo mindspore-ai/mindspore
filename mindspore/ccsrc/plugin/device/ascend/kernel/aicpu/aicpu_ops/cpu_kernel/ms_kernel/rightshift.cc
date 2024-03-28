@@ -30,22 +30,23 @@ const int64_t kParallelDataNumMid = 16 * 1024;
 const int64_t kParallelDataNumSameShape = 7 * 1024;
 const int64_t kParallelDataNumSameShapeMid = 35 * 1024;
 
-#define RIGHTSHIFT_COMPUTE_CASE(DTYPE, TYPE, CTX)            \
-  case (DTYPE): {                                            \
-    uint32_t result = RightShiftCompute<TYPE>(CTX);          \
-    if (result != KERNEL_STATUS_OK) {                        \
-      KERNEL_LOG_ERROR("RightShift kernel compute failed."); \
-      return result;                                         \
-    }                                                        \
-    break;                                                   \
+#define RIGHTSHIFT_COMPUTE_CASE(DTYPE, TYPE, CTX)                      \
+  case (DTYPE): {                                                      \
+    uint32_t result = RightShiftCompute<TYPE>(CTX);                    \
+    if (result != KERNEL_STATUS_OK) {                                  \
+      CUST_KERNEL_LOG_ERROR(ctx, "RightShift kernel compute failed."); \
+      return result;                                                   \
+    }                                                                  \
+    break;                                                             \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t RightShiftCpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "RightShift check input and output number failed.");
-  KERNEL_HANDLE_ERROR(RightShiftParamCheck(ctx), "RightShift check params or bcast failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "RightShift check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, RightShiftParamCheck(ctx), "RightShift check params or bcast failed.");
   auto data_type = ctx.Input(0)->GetDataType();
   switch (data_type) {
     RIGHTSHIFT_COMPUTE_CASE(DT_INT8, int8_t, ctx)
@@ -57,29 +58,29 @@ uint32_t RightShiftCpuKernel::Compute(CpuKernelContext &ctx) {
     RIGHTSHIFT_COMPUTE_CASE(DT_UINT32, uint32_t, ctx)
     RIGHTSHIFT_COMPUTE_CASE(DT_UINT64, uint64_t, ctx)
     default:
-      KERNEL_LOG_ERROR("RightShift kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "RightShift kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return static_cast<uint32_t>(KERNEL_STATUS_PARAM_INVALID);
   }
 
   return static_cast<uint32_t>(KERNEL_STATUS_OK);
 }
 
-uint32_t RightShiftCpuKernel::RightShiftParamCheck(const CpuKernelContext &ctx) {
+uint32_t RightShiftCpuKernel::RightShiftParamCheck(CpuKernelContext &ctx) {
   Tensor *input_0 = ctx.Input(0);
   Tensor *input_1 = ctx.Input(1);
   Tensor *output = ctx.Output(0);
-  KERNEL_CHECK_NULLPTR(input_0->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 0 data failed.");
-  KERNEL_CHECK_NULLPTR(input_1->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 1 data failed.");
-  KERNEL_CHECK_NULLPTR(output->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output data failed");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input_0->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 0 data failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input_1->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 1 data failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, output->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output data failed");
   DataType input0_type = input_0->GetDataType();
   DataType input1_type = input_1->GetDataType();
-  KERNEL_CHECK_FALSE((input0_type == input1_type), KERNEL_STATUS_PARAM_INVALID,
-                     "The data type of input1 [%d] need be same with input0 [%d].", static_cast<int32_t>(input0_type),
-                     static_cast<int32_t>(input1_type))
-  KERNEL_LOG_INFO(
-    "RightShiftCpuKernel[%s], input0: size[%llu];"
-    "input1: size[%llu], output: size[%llu].",
-    ctx.GetOpType().c_str(), input_0->GetDataSize(), input_1->GetDataSize(), output->GetDataSize());
+  CUST_KERNEL_CHECK_FALSE(ctx, (input0_type == input1_type), KERNEL_STATUS_PARAM_INVALID,
+                          "The data type of input1 [%d] need be same with input0 [%d].",
+                          static_cast<int32_t>(input0_type), static_cast<int32_t>(input1_type))
+  CUST_KERNEL_LOG_INFO(ctx,
+                       "RightShiftCpuKernel[%s], input0: size[%llu];"
+                       "input1: size[%llu], output: size[%llu].",
+                       ctx.GetOpType().c_str(), input_0->GetDataSize(), input_1->GetDataSize(), output->GetDataSize());
 
   return static_cast<uint32_t>(KERNEL_STATUS_OK);
 }
@@ -90,8 +91,8 @@ uint32_t RightShiftCpuKernel::RightShiftParamCheck(const CpuKernelContext &ctx) 
 // 3. input2 is a 1D tensor with only one element or input2 is scalar
 // 4. the shapes of input1 and input2 are different
 template <typename T>
-void RightShiftCpuKernel::SpecialCompute(BcastShapeType type, int64_t start, int64_t end, const T *input1,
-                                         const T *input2, T *output) {
+void RightShiftCpuKernel::SpecialCompute(CpuKernelContext &ctx, BcastShapeType type, int64_t start, int64_t end,
+                                         const T *input1, const T *input2, T *output) {
   switch (type) {
     case BcastShapeType::SAME_SHAPE:
       for (int64_t i = start; i < end; ++i) {
@@ -109,13 +110,13 @@ void RightShiftCpuKernel::SpecialCompute(BcastShapeType type, int64_t start, int
       }
       break;
     default:
-      KERNEL_LOG_WARN("Invalid type [%d]", static_cast<int32_t>(type));
+      CUST_KERNEL_LOG_WARN(ctx, "Invalid type [%d]", static_cast<int32_t>(type));
       break;
   }
 }
 
 template <typename T>
-uint32_t RightShiftCpuKernel::NoBcastCompute(const CpuKernelContext &ctx) {
+uint32_t RightShiftCpuKernel::NoBcastCompute(CpuKernelContext &ctx) {
   auto in0 = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto in1 = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   auto out = reinterpret_cast<T *>(ctx.Output(0)->GetData());
@@ -147,24 +148,24 @@ uint32_t RightShiftCpuKernel::NoBcastCompute(const CpuKernelContext &ctx) {
       max_core_num = data_num;
     }
 
-    auto sharder_less = [this, &type, &in0, &in1_clamped, &out](int64_t start, int64_t end) {
-      SpecialCompute<T>(type, start, end, in0, in1_clamped, out);
+    auto sharder_less = [this, &ctx, &type, &in0, &in1_clamped, &out](int64_t start, int64_t end) {
+      SpecialCompute<T>(ctx, type, start, end, in0, in1_clamped, out);
     };
     if (max_core_num == 0) {
-      KERNEL_LOG_ERROR("max_core_num could not be 0.");
+      CUST_KERNEL_LOG_ERROR(ctx, "max_core_num could not be 0.");
     }
     uint32_t flag = CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_less);
     delete[] in1_clamped;
-    KERNEL_HANDLE_ERROR(flag, "RightShift Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, flag, "RightShift Compute failed.");
   } else {
-    SpecialCompute<T>(type, 0, data_num, in0, in1_clamped, out);
+    SpecialCompute<T>(ctx, type, 0, data_num, in0, in1_clamped, out);
     delete[] in1_clamped;
   }
   return static_cast<uint32_t>(KERNEL_STATUS_OK);
 }
 
 template <typename T>
-uint32_t RightShiftCpuKernel::BcastCompute(const CpuKernelContext &ctx, const Bcast &bcast) {
+uint32_t RightShiftCpuKernel::BcastCompute(CpuKernelContext &ctx, const Bcast &bcast) {
   auto in0 = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto in1 = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   auto out = reinterpret_cast<T *>(ctx.Output(0)->GetData());
@@ -198,11 +199,11 @@ uint32_t RightShiftCpuKernel::BcastCompute(const CpuKernelContext &ctx, const Bc
       }
     };
     if (max_core_num == 0) {
-      KERNEL_LOG_ERROR("max_core_num could not be 0.");
+      CUST_KERNEL_LOG_ERROR(ctx, "max_core_num could not be 0.");
     }
     uint32_t flag = CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_less);
     delete[] in1_clamped;
-    KERNEL_HANDLE_ERROR(flag, "RightShift Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, flag, "RightShift Compute failed.");
   } else {
     for (int64_t i = 0; i < data_num; ++i) {
       *(out + i) = *(in0 + bcast.GetBroadcastXIndex(i)) >> *(in1_clamped + bcast.GetBroadcastYIndex(i));
@@ -213,7 +214,7 @@ uint32_t RightShiftCpuKernel::BcastCompute(const CpuKernelContext &ctx, const Bc
 }
 
 template <typename T>
-uint32_t RightShiftCpuKernel::RightShiftCompute(const CpuKernelContext &ctx) {
+uint32_t RightShiftCpuKernel::RightShiftCompute(CpuKernelContext &ctx) {
   Tensor *input0_tensor = ctx.Input(0);
   auto input0_shape = input0_tensor->GetTensorShape()->GetDimSizes();
   int64_t input0_elements_nums = input0_tensor->NumElements();
@@ -226,9 +227,9 @@ uint32_t RightShiftCpuKernel::RightShiftCompute(const CpuKernelContext &ctx) {
   if (isNeedBcast) {
     return NoBcastCompute<T>(ctx);
   } else {
-    Bcast bcast(input0_shape, input1_shape);
+    Bcast bcast(ctx, input0_shape, input1_shape);
     if (!bcast.IsValid()) {
-      KERNEL_LOG_ERROR("[%s] broadcast failed.", ctx.GetOpType().c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "[%s] broadcast failed.", ctx.GetOpType().c_str());
       return KERNEL_STATUS_PARAM_INVALID;
     }
     return BcastCompute<T>(ctx, bcast);

@@ -50,7 +50,8 @@ class NormalDistribution<Generator, Eigen::half> {
   static constexpr int32_t kResultElementCount = Generator::kResultElementCount;
   using ResultType = Array<Eigen::half, kResultElementCount>;
 
-  void operator()(Generator *gen, const Eigen::half *input, Eigen::half *output, const int64_t &size, bool *ptr_flag) {
+  void operator()(CpuKernelContext &, Generator *gen, const Eigen::half *input, Eigen::half *output,
+                  const int64_t &size, bool *ptr_flag) {
     (void)input;
     (void)ptr_flag;
 
@@ -80,7 +81,8 @@ class NormalDistribution<Generator, float> {
   static constexpr int32_t kResultElementCount = Generator::kResultElementCount;
   using ResultType = Array<float, kResultElementCount>;
 
-  void operator()(Generator *gen, const float *input, float *output, const int64_t &size, bool *ptr_flag) {
+  void operator()(CpuKernelContext &, Generator *gen, const float *input, float *output, const int64_t &size,
+                  bool *ptr_flag) {
     (void)input;
     (void)ptr_flag;
 
@@ -110,7 +112,8 @@ class NormalDistribution<Generator, double> {
   static constexpr int32_t kResultElementCount = Generator::kResultElementCount / 2;
   using ResultType = Array<double, kResultElementCount>;
 
-  void operator()(Generator *gen, const double *input, double *output, const int64_t &size, bool *ptr_flag) {
+  void operator()(CpuKernelContext &, Generator *gen, const double *input, double *output, const int64_t &size,
+                  bool *ptr_flag) {
     (void)input;
     (void)ptr_flag;
 
@@ -159,8 +162,8 @@ class BernoulliTensorDistribution<Generator, UnrealOutputType, Eigen::half> {
   static constexpr int32_t kResultElementCount = Generator::kResultElementCount;
   using ResultType = Array<Eigen::half, kResultElementCount>;
 
-  void operator()(Generator *gen, const Eigen::half *input, UnrealOutputType *output, const int64_t &size,
-                  bool *ptr_flag) {
+  void operator()(CpuKernelContext &ctx, Generator *gen, const Eigen::half *input, UnrealOutputType *output,
+                  const int64_t &size, bool *ptr_flag) {
     const float epsilon = 1.0e-7f;
     const Eigen::half prob_up_limit = static_cast<Eigen::half>(1.0);
     const Eigen::half prob_down_limit = static_cast<Eigen::half>(0.0);
@@ -168,7 +171,7 @@ class BernoulliTensorDistribution<Generator, UnrealOutputType, Eigen::half> {
     float f[2];
     int count = 0;
     for (int32_t i = 0; i < kResultElementCount; i += 2) {
-      f[0] = Uint32ToFloat(sample[i]);
+      f[0] = Uint32ToFloat(ctx, sample[i]);
       if (f[0] < epsilon) {
         f[0] = epsilon;
       }
@@ -181,7 +184,7 @@ class BernoulliTensorDistribution<Generator, UnrealOutputType, Eigen::half> {
       if (count == size) {
         return;
       }
-      f[1] = Uint32ToFloat(sample[i + 1]);
+      f[1] = Uint32ToFloat(ctx, sample[i + 1]);
       if (f[1] < epsilon) {
         f[1] = epsilon;
       }
@@ -205,7 +208,8 @@ class BernoulliTensorDistribution<Generator, UnrealOutputType, float> {
   static constexpr int32_t kResultElementCount = Generator::kResultElementCount;
   using ResultType = Array<float, kResultElementCount>;
 
-  void operator()(Generator *gen, const float *input, UnrealOutputType *output, const int64_t &size, bool *ptr_flag) {
+  void operator()(CpuKernelContext &ctx, Generator *gen, const float *input, UnrealOutputType *output,
+                  const int64_t &size, bool *ptr_flag) {
     const float epsilon = 1.0e-7f;
     const float prob_up_limit = 1.0;
     const float prob_down_limit = 0.0;
@@ -213,7 +217,7 @@ class BernoulliTensorDistribution<Generator, UnrealOutputType, float> {
     float f[2];
     int count = 0;
     for (int32_t i = 0; i < kResultElementCount; i += 2) {
-      f[0] = Uint32ToFloat(sample[i]);
+      f[0] = Uint32ToFloat(ctx, sample[i]);
       if (f[0] < epsilon) {
         f[0] = epsilon;
       }
@@ -226,7 +230,7 @@ class BernoulliTensorDistribution<Generator, UnrealOutputType, float> {
       if (count == size) {
         return;
       }
-      f[1] = Uint32ToFloat(sample[i + 1]);
+      f[1] = Uint32ToFloat(ctx, sample[i + 1]);
       if (f[1] < epsilon) {
         f[1] = epsilon;
       }
@@ -250,7 +254,8 @@ class BernoulliTensorDistribution<Generator, UnrealOutputType, double> {
   static constexpr int32_t kResultElementCount = Generator::kResultElementCount / 2;
   using ResultType = Array<double, kResultElementCount>;
 
-  void operator()(Generator *gen, const double *input, UnrealOutputType *output, const int64_t &size, bool *ptr_flag) {
+  void operator()(CpuKernelContext &ctx, Generator *gen, const double *input, UnrealOutputType *output,
+                  const int64_t &size, bool *ptr_flag) {
     const double epsilon = 1.0e-7f;
     const double prob_up_limit = 1.0;
     const double prob_down_limit = 0.0;
@@ -260,7 +265,7 @@ class BernoulliTensorDistribution<Generator, UnrealOutputType, double> {
     for (int32_t i = 0; i < kResultElementCount; i += 2) {
       const int i2 = 2 * i;
       // For the double type, the algorithm requires four inputs and produces two outputs
-      f[0] = Uint64ToDouble(sample[i2], sample[i2 + 1]);
+      f[0] = Uint64ToDouble(ctx, sample[i2], sample[i2 + 1]);
       if (f[0] < epsilon) {
         f[0] = epsilon;
       }
@@ -273,7 +278,7 @@ class BernoulliTensorDistribution<Generator, UnrealOutputType, double> {
       if (count == size) {
         return;
       }
-      f[1] = Uint64ToDouble(sample[i2 + 2], sample[i2 + 3]);
+      f[1] = Uint64ToDouble(ctx, sample[i2 + 2], sample[i2 + 3]);
       if (f[1] < epsilon) {
         f[1] = epsilon;
       }
@@ -314,8 +319,8 @@ class BernoulliScalarDistribution<Generator, UnrealOutputType, Eigen::half> {
   static constexpr int32_t kResultElementCount = Generator::kResultElementCount;
   using ResultType = Array<Eigen::half, kResultElementCount>;
 
-  void operator()(Generator *gen, const Eigen::half *input, UnrealOutputType *output, const int64_t &size,
-                  bool *ptr_flag) {
+  void operator()(CpuKernelContext &ctx, Generator *gen, const Eigen::half *input, UnrealOutputType *output,
+                  const int64_t &size, bool *ptr_flag) {
     const float epsilon = 1.0e-7f;
     const Eigen::half prob_up_limit = static_cast<Eigen::half>(1.0);
     const Eigen::half prob_down_limit = static_cast<Eigen::half>(0.0);
@@ -323,7 +328,7 @@ class BernoulliScalarDistribution<Generator, UnrealOutputType, Eigen::half> {
     float f[2];
     int count = 0;
     for (int32_t i = 0; i < kResultElementCount; i += 2) {
-      f[0] = Uint32ToFloat(sample[i]);
+      f[0] = Uint32ToFloat(ctx, sample[i]);
       if (f[0] < epsilon) {
         f[0] = epsilon;
       }
@@ -336,7 +341,7 @@ class BernoulliScalarDistribution<Generator, UnrealOutputType, Eigen::half> {
       if (count == size) {
         return;
       }
-      f[1] = Uint32ToFloat(sample[i + 1]);
+      f[1] = Uint32ToFloat(ctx, sample[i + 1]);
       if (f[1] < epsilon) {
         f[1] = epsilon;
       }
@@ -356,7 +361,8 @@ class BernoulliScalarDistribution<Generator, UnrealOutputType, float> {
   static constexpr int32_t kResultElementCount = Generator::kResultElementCount;
   using ResultType = Array<float, kResultElementCount>;
 
-  void operator()(Generator *gen, const float *input, UnrealOutputType *output, const int64_t &size, bool *ptr_flag) {
+  void operator()(CpuKernelContext &ctx, Generator *gen, const float *input, UnrealOutputType *output,
+                  const int64_t &size, bool *ptr_flag) {
     const float epsilon = 1.0e-7f;
     const float prob_up_limit = 1.0;
     const float prob_down_limit = 0.0;
@@ -364,7 +370,7 @@ class BernoulliScalarDistribution<Generator, UnrealOutputType, float> {
     float f[2];
     int count = 0;
     for (int32_t i = 0; i < kResultElementCount; i += 2) {
-      f[0] = Uint32ToFloat(sample[i]);
+      f[0] = Uint32ToFloat(ctx, sample[i]);
       if (f[0] < epsilon) {
         f[0] = epsilon;
       }
@@ -377,7 +383,7 @@ class BernoulliScalarDistribution<Generator, UnrealOutputType, float> {
       if (count == size) {
         return;
       }
-      f[1] = Uint32ToFloat(sample[i + 1]);
+      f[1] = Uint32ToFloat(ctx, sample[i + 1]);
       if (f[1] < epsilon) {
         f[1] = epsilon;
       }
@@ -397,7 +403,8 @@ class BernoulliScalarDistribution<Generator, UnrealOutputType, double> {
   static constexpr int32_t kResultElementCount = Generator::kResultElementCount / 2;
   using ResultType = Array<double, kResultElementCount>;
 
-  void operator()(Generator *gen, const double *input, UnrealOutputType *output, const int64_t &size, bool *ptr_flag) {
+  void operator()(CpuKernelContext &ctx, Generator *gen, const double *input, UnrealOutputType *output,
+                  const int64_t &size, bool *ptr_flag) {
     const double epsilon = 1.0e-7f;
     const double prob_up_limit = 1.0;
     const double prob_down_limit = 0.0;
@@ -407,7 +414,7 @@ class BernoulliScalarDistribution<Generator, UnrealOutputType, double> {
     for (int32_t i = 0; i < kResultElementCount; i += 2) {
       const int i2 = 2 * i;
       // For the double type, the algorithm requires four inputs and produces two outputs
-      f[0] = Uint64ToDouble(sample[i2], sample[i2 + 1]);
+      f[0] = Uint64ToDouble(ctx, sample[i2], sample[i2 + 1]);
       if (f[0] < epsilon) {
         f[0] = epsilon;
       }
@@ -420,7 +427,7 @@ class BernoulliScalarDistribution<Generator, UnrealOutputType, double> {
       if (count == size) {
         return;
       }
-      f[1] = Uint64ToDouble(sample[i2 + 2], sample[i2 + 3]);
+      f[1] = Uint64ToDouble(ctx, sample[i2 + 2], sample[i2 + 3]);
       if (f[1] < epsilon) {
         f[1] = epsilon;
       }
@@ -448,7 +455,8 @@ class UniformDistribution<Generator, Eigen::half> {
   static constexpr int32_t kResultElementCount = Generator::kResultElementCount;
   using ResultType = Array<Eigen::half, kResultElementCount>;
 
-  void operator()(Generator *gen, Eigen::half *input, Eigen::half *output, const int64_t &size, bool *ptr_flag) {
+  void operator()(CpuKernelContext &ctx, Generator *gen, Eigen::half *input, Eigen::half *output, const int64_t &size,
+                  bool *ptr_flag) {
     (void)input;
     (void)ptr_flag;
 
@@ -457,13 +465,13 @@ class UniformDistribution<Generator, Eigen::half> {
     const int two = 2;
     int count = 0;
     for (int32_t i = 0; i < kResultElementCount; i += two) {
-      f[0] = Uint32ToFloat(sample[i]);
+      f[0] = Uint32ToFloat(ctx, sample[i]);
       output[i] = static_cast<Eigen::half>(f[0]);
       count++;
       if (count == size) {
         return;
       }
-      f[1] = Uint32ToFloat(sample[i + 1]);
+      f[1] = Uint32ToFloat(ctx, sample[i + 1]);
       output[i + 1] = static_cast<Eigen::half>(f[1]);
       count++;
       if (count == size) {
@@ -480,7 +488,8 @@ class UniformDistribution<Generator, float> {
   static constexpr int32_t kResultElementCount = Generator::kResultElementCount;
   using ResultType = Array<float, kResultElementCount>;
 
-  void operator()(Generator *gen, float *input, float *output, const int64_t &size, bool *ptr_flag) {
+  void operator()(CpuKernelContext &ctx, Generator *gen, float *input, float *output, const int64_t &size,
+                  bool *ptr_flag) {
     (void)input;
     (void)ptr_flag;
 
@@ -489,13 +498,13 @@ class UniformDistribution<Generator, float> {
     const int two = 2;
     int count = 0;
     for (int32_t i = 0; i < kResultElementCount; i += two) {
-      f[0] = Uint32ToFloat(sample[i]);
+      f[0] = Uint32ToFloat(ctx, sample[i]);
       output[i] = f[0];
       count++;
       if (count == size) {
         return;
       }
-      f[1] = Uint32ToFloat(sample[i + 1]);
+      f[1] = Uint32ToFloat(ctx, sample[i + 1]);
       output[i + 1] = f[1];
       count++;
       if (count == size) {
@@ -512,7 +521,8 @@ class UniformDistribution<Generator, double> {
   static constexpr int32_t kResultElementCount = Generator::kResultElementCount / 2;
   using ResultType = Array<double, kResultElementCount>;
 
-  void operator()(Generator *gen, double *input, double *output, const int64_t &size, bool *ptr_flag) {
+  void operator()(CpuKernelContext &ctx, Generator *gen, double *input, double *output, const int64_t &size,
+                  bool *ptr_flag) {
     (void)input;
     (void)ptr_flag;
 
@@ -524,13 +534,13 @@ class UniformDistribution<Generator, double> {
     for (int32_t i = 0; i < kResultElementCount; i += two) {
       const int i2 = 2 * i;
       // For the double type, the algorithm requires four inputs and produces two outputs
-      f[0] = Uint64ToDouble(sample[i2], sample[i2 + 1]);
+      f[0] = Uint64ToDouble(ctx, sample[i2], sample[i2 + 1]);
       output[i] = f[0];
       count++;
       if (count == size) {
         return;
       }
-      f[1] = Uint64ToDouble(sample[i2 + two], sample[i2 + three]);
+      f[1] = Uint64ToDouble(ctx, sample[i2 + two], sample[i2 + three]);
       output[i + 1] = f[1];
       count++;
       if (count == size) {

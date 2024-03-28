@@ -450,10 +450,10 @@ uint32_t DropOutGenMaskKernel::ParseKernelParam() {
     keep_prob_ = *reinterpret_cast<float *>(io_addrs_[1]);
   }
   if ((keep_prob_ < 0.0f) || (keep_prob_ > 1.0f)) {
-    AICPU_LOGE("The prob must be in [0,1] range, got prob info %f.", keep_prob_);
+    CUST_AICPU_LOGE(workspace_info_, "The prob must be in [0,1] range, got prob info %f.", keep_prob_);
     return kAicpuKernelStateInvalid;
   }
-  AICPU_LOGI("DropoutGenMask mask count and pro: %lu %f", count_, keep_prob_);
+  CUST_AICPU_LOGI(workspace_info_, "DropoutGenMask mask count and pro: %lu %f", count_, keep_prob_);
   return kAicpuKernelStateSucess;
 }
 }  // namespace aicpu

@@ -99,22 +99,23 @@ static inline void ComputeSourceIndexAndLambda(int64_t *input_index0, int64_t *i
 }
 
 uint32_t UpsampleTrilinear3dCpuKernel::UpsampleTrilinear3dParamCheck(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check params failed.", kUpsampleTrilinear3d);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check params failed.",
+                           kUpsampleTrilinear3d);
   auto x_dims = ctx.Input(0)->GetTensorShape()->GetDims();
-  KERNEL_CHECK_FALSE(x_dims == kDims5, KERNEL_STATUS_PARAM_INVALID,
-                     "For UpsampleTrilinear3d input x should has 5 "
-                     "dims. but got %d dim(s).",
-                     x_dims);
+  CUST_KERNEL_CHECK_FALSE(ctx, x_dims == kDims5, KERNEL_STATUS_PARAM_INVALID,
+                          "For UpsampleTrilinear3d input x should has 5 "
+                          "dims. but got %d dim(s).",
+                          x_dims);
   auto align_corners_ptr = ctx.GetAttr("align_corners");
   if (align_corners_ptr) {
     align_corners = align_corners_ptr->GetBool();
   }
   auto none_list_ptr = ctx.GetAttr("none_list");
-  KERNEL_CHECK_NULLPTR(none_list_ptr, KERNEL_STATUS_PARAM_INVALID, "[%s] get attr 'none_list' failed.",
-                       ctx.GetOpType().c_str());
+  CUST_KERNEL_CHECK_NULLPTR(ctx, none_list_ptr, KERNEL_STATUS_PARAM_INVALID, "[%s] get attr 'none_list' failed.",
+                            ctx.GetOpType().c_str());
   none_list = none_list_ptr->GetListInt();
-  KERNEL_CHECK_FALSE(none_list.size() == 1, KERNEL_STATUS_PARAM_INVALID,
-                     "For 'UpsampleTrilinear3D', only one of output_size or scales should be specified.");
+  CUST_KERNEL_CHECK_FALSE(ctx, none_list.size() == 1, KERNEL_STATUS_PARAM_INVALID,
+                          "For 'UpsampleTrilinear3D', only one of output_size or scales should be specified.");
   return KERNEL_STATUS_OK;
 }
 
@@ -136,14 +137,14 @@ uint32_t UpsampleTrilinear3dCpuKernel::Compute(CpuKernelContext &ctx) {
       res = UpsampleTrilinear3dCompute<double, double>(ctx);
       break;
     default:
-      KERNEL_LOG_ERROR(
-        "For UpsampleTrilinear3d, input datatype support [float16, float32, "
-        "float64], but get invalid input type [%s].",
-        DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx,
+                            "For UpsampleTrilinear3d, input datatype support [float16, float32, "
+                            "float64], but get invalid input type [%s].",
+                            DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   if (res != KERNEL_STATUS_OK) {
-    KERNEL_LOG_ERROR("Failed launching UpsampleTrilinear3d.");
+    CUST_KERNEL_LOG_ERROR(ctx, "Failed launching UpsampleTrilinear3d.");
     return KERNEL_STATUS_INNER_ERROR;
   }
   return KERNEL_STATUS_OK;
@@ -205,7 +206,7 @@ void UpsampleTrilinear3dCpuKernel::InnerCompute(int64_t n, const T *x_ptr, T *y_
 }
 
 template <typename T, typename S>
-uint32_t UpsampleTrilinear3dCpuKernel::UpsampleTrilinear3dCompute(const CpuKernelContext &ctx) {
+uint32_t UpsampleTrilinear3dCpuKernel::UpsampleTrilinear3dCompute(CpuKernelContext &ctx) {
   // fetch scales
   scales = std::vector<float>{0, 0, 0};
   if (none_list[kIndex0] != static_cast<int64_t>(kIndex2)) {
@@ -235,7 +236,8 @@ uint32_t UpsampleTrilinear3dCpuKernel::UpsampleTrilinear3dCompute(const CpuKerne
   const int64_t SIZE_BOUNDARY = 100000;
   if (channels <= 0 || output_depth <= 0 || output_height <= 0 || output_width <= 0 || output_depth > SIZE_BOUNDARY ||
       output_height > SIZE_BOUNDARY || output_width > SIZE_BOUNDARY) {
-    KERNEL_LOG_ERROR(
+    CUST_KERNEL_LOG_ERROR(
+      ctx,
       "For UpsampleTrilinear3d, output shape can not less than zero or greater than 100000, but get output "
       "shape = (%lld, %lld, %lld, %lld, %lld). ",
       output_shape[kIndex0], output_shape[kIndex1], output_shape[kIndex2], output_shape[kIndex3],
@@ -249,8 +251,8 @@ uint32_t UpsampleTrilinear3dCpuKernel::UpsampleTrilinear3dCompute(const CpuKerne
   if (input_depth == output_depth && input_height == output_height && input_width == output_width) {
     auto cpret = memcpy_s(y_ptr, static_cast<size_t>(channels * input_slice_size * static_cast<int64_t>(sizeof(T))),
                           x_ptr, static_cast<size_t>(channels * input_slice_size * static_cast<int64_t>(sizeof(T))));
-    KERNEL_CHECK_FALSE((cpret == EOK), KERNEL_STATUS_INNER_ERROR,
-                       "For UpsampleTrilinear3d, memcpy_s to output failed.");
+    CUST_KERNEL_CHECK_FALSE(ctx, (cpret == EOK), KERNEL_STATUS_INNER_ERROR,
+                            "For UpsampleTrilinear3d, memcpy_s to output failed.");
     return KERNEL_STATUS_OK;
   }
 
@@ -271,7 +273,8 @@ uint32_t UpsampleTrilinear3dCpuKernel::UpsampleTrilinear3dCompute(const CpuKerne
     per_unit_size = std::max(per_unit_size, 1L);
     per_unit_size = std::min(channels, per_unit_size);
   }
-  KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, channels, per_unit_size, loop3d), "loop3d Compute failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, channels, per_unit_size, loop3d),
+                           "loop3d Compute failed.");
   return KERNEL_STATUS_OK;
 }
 

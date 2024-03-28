@@ -30,13 +30,13 @@ class SincCpuKernel : public CpuKernel {
 
  private:
   template <typename T>
-  uint32_t SincTypeSameCompute(const CpuKernelContext &ctx);
+  uint32_t SincTypeSameCompute(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t SincTypeChangeCompute(const CpuKernelContext &ctx);
+  uint32_t SincTypeChangeCompute(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t SincBoolCompute(const CpuKernelContext &ctx);
+  uint32_t SincBoolCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

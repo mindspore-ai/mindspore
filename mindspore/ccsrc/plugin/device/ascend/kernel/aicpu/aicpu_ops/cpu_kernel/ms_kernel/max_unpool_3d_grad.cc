@@ -29,21 +29,21 @@ const uint32_t kOutputNum = 1;
 constexpr int64_t kParallelDataNums = 1024;
 const char *kMaxUnpool3DGrad = "MaxUnpool3DGrad";
 
-#define SWITCH_PARALLEL(SHARD, end_num, ctx)                                 \
-  if (end_num <= kParallelDataNums) {                                        \
-    for (size_t i = 0; i < size_t(end_num); i++) {                           \
-      SHARD(i, i + 1);                                                       \
-    }                                                                        \
-  } else {                                                                   \
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, end_num, 1, SHARD), \
-                        "MaxUnpool3DGrad #SHARD Compute failed.");           \
+#define SWITCH_PARALLEL(SHARD, end_num, ctx)                                           \
+  if (end_num <= kParallelDataNums) {                                                  \
+    for (size_t i = 0; i < size_t(end_num); i++) {                                     \
+      SHARD(i, i + 1);                                                                 \
+    }                                                                                  \
+  } else {                                                                             \
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, end_num, 1, SHARD), \
+                             "MaxUnpool3DGrad #SHARD Compute failed.");                \
   }
 
 }  // namespace
 
 namespace aicpu {
 template <typename DATA_T>
-uint32_t MaxUnpool3DGradCpuKernel::MaxUnpool3DGrad_COMPUTE_CASE(const CpuKernelContext &ctx, DataType indices_type) {
+uint32_t MaxUnpool3DGradCpuKernel::MaxUnpool3DGrad_COMPUTE_CASE(CpuKernelContext &ctx, DataType indices_type) {
   // Compute by indices_type
   switch (indices_type) {
     case DT_INT32:
@@ -51,15 +51,17 @@ uint32_t MaxUnpool3DGradCpuKernel::MaxUnpool3DGrad_COMPUTE_CASE(const CpuKernelC
     case DT_INT64:
       return MaxUnpool3DGradCompute<DATA_T, int64_t>(ctx);
     default:
-      KERNEL_LOG_ERROR("indices_type [%s] must be in [{DT_INT32, DT_INT64}].", DTypeStr(indices_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "indices_type [%s] must be in [{DT_INT32, DT_INT64}].",
+                            DTypeStr(indices_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 }
 
 uint32_t MaxUnpool3DGradCpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "MaxUnpool3DGrad check input and output number failed.");
-  KERNEL_HANDLE_ERROR(MaxUnpool3DGradCheck(ctx), "MaxUnpool3DGrad check params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "MaxUnpool3DGrad check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, MaxUnpool3DGradCheck(ctx), "MaxUnpool3DGrad check params failed.");
   auto data_type = ctx.Input(0)->GetDataType();
   auto indices_type = ctx.Input(2)->GetDataType();
   switch (data_type) {
@@ -86,45 +88,45 @@ uint32_t MaxUnpool3DGradCpuKernel::Compute(CpuKernelContext &ctx) {
     case DT_DOUBLE:
       return MaxUnpool3DGrad_COMPUTE_CASE<double>(ctx, indices_type);
     default:
-      KERNEL_LOG_ERROR("MaxUnpool3DGrad kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "MaxUnpool3DGrad kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 
   return KERNEL_STATUS_OK;
 }
 
-uint32_t MaxUnpool3DGradCpuKernel::MaxUnpool3DGradCheck(const CpuKernelContext &ctx) {
+uint32_t MaxUnpool3DGradCpuKernel::MaxUnpool3DGradCheck(CpuKernelContext &ctx) {
   DataType input0Type = ctx.Input(0)->GetDataType();
   DataType input1Type = ctx.Input(1)->GetDataType();
   DataType outputType = ctx.Output(0)->GetDataType();
-  KERNEL_CHECK_FALSE((input0Type == input1Type), KERNEL_STATUS_PARAM_INVALID,
-                     "The data type of input1Type [%d] need be same with "
-                     "input0 [%d].",
-                     input1Type, input0Type)
+  CUST_KERNEL_CHECK_FALSE(ctx, (input0Type == input1Type), KERNEL_STATUS_PARAM_INVALID,
+                          "The data type of input1Type [%d] need be same with "
+                          "input0 [%d].",
+                          input1Type, input0Type)
 
-  KERNEL_CHECK_FALSE((input0Type == outputType), KERNEL_STATUS_PARAM_INVALID,
-                     "The data type of output [%d] need be same with "
-                     "input0 [%d].",
-                     outputType, input0Type)
+  CUST_KERNEL_CHECK_FALSE(ctx, (input0Type == outputType), KERNEL_STATUS_PARAM_INVALID,
+                          "The data type of output [%d] need be same with "
+                          "input0 [%d].",
+                          outputType, input0Type)
   auto Input0_size = ctx.Input(0)->GetTensorShape()->GetDimSizes();
   auto Input2_size = ctx.Input(2)->GetTensorShape()->GetDimSizes();
 
-  KERNEL_CHECK_FALSE((Input0_size == Input2_size), KERNEL_STATUS_PARAM_INVALID,
-                     "The data size of x [%d] need be same with "
-                     "input argmax [%d].",
-                     Input0_size, Input2_size)
+  CUST_KERNEL_CHECK_FALSE(ctx, (Input0_size == Input2_size), KERNEL_STATUS_PARAM_INVALID,
+                          "The data size of x [%d] need be same with "
+                          "input argmax [%d].",
+                          Input0_size, Input2_size)
 
-  KERNEL_LOG_INFO(
-    "MaxUnpool3DGradCpuKernel[%s], input0: size[%llu];"
-    "input1: size[%llu], input2: size[%llu], output: size[%llu].",
-    ctx.GetOpType().c_str(), ctx.Input(0)->GetDataSize(), ctx.Input(1)->GetDataSize(), ctx.Input(2)->GetDataSize(),
-    ctx.Output(0)->GetDataSize());
+  CUST_KERNEL_LOG_INFO(ctx,
+                       "MaxUnpool3DGradCpuKernel[%s], input0: size[%llu];"
+                       "input1: size[%llu], input2: size[%llu], output: size[%llu].",
+                       ctx.GetOpType().c_str(), ctx.Input(0)->GetDataSize(), ctx.Input(1)->GetDataSize(),
+                       ctx.Input(2)->GetDataSize(), ctx.Output(0)->GetDataSize());
 
   return KERNEL_STATUS_OK;
 }
 
 template <typename DATA_T, typename INDICES_T>
-uint32_t MaxUnpool3DGradCpuKernel::MaxUnpool3DGradCompute(const CpuKernelContext &ctx) {
+uint32_t MaxUnpool3DGradCpuKernel::MaxUnpool3DGradCompute(CpuKernelContext &ctx) {
   Tensor *grads = ctx.Input(1);
   Tensor *indices = ctx.Input(2);
   Tensor *output = ctx.Output(0);
@@ -177,12 +179,12 @@ uint32_t MaxUnpool3DGradCpuKernel::MaxUnpool3DGradCompute(const CpuKernelContext
                 maxp = ind_p_k[t * iwidth * iheight * numChannels + i * iwidth * numChannels + j * numChannels + k];
                 if (maxp < 0 || maxp >= owidth * oheight * odepth) {
                   error = true;
-                  KERNEL_LOG_ERROR(
-                    "MaxUnpool3DGrad:  output_size D_out * H_out * W_out "
-                    "should be bigger than argmax, now D_out is [%ld], H_out "
-                    "is [%ld], and W_out is [%ld], but one of the values in "
-                    "argmax is [%ld].",
-                    odepth, oheight, owidth, maxp);
+                  CUST_KERNEL_LOG_ERROR(ctx,
+                                        "MaxUnpool3DGrad:  output_size D_out * H_out * W_out "
+                                        "should be bigger than argmax, now D_out is [%ld], H_out "
+                                        "is [%ld], and W_out is [%ld], but one of the values in "
+                                        "argmax is [%ld].",
+                                        odepth, oheight, owidth, maxp);
                 } else {
                   output_p_k[t * iwidth * iheight * numChannels + i * iwidth * numChannels + j * numChannels + k] =
                     grads_p_k[maxp * numChannels + k];
@@ -235,12 +237,12 @@ uint32_t MaxUnpool3DGradCpuKernel::MaxUnpool3DGradCompute(const CpuKernelContext
                 maxp = ind_p_k[t * iheight * iwidth + i * iwidth + j];
                 if (maxp < 0 || maxp >= owidth * oheight * odepth) {
                   error = true;
-                  KERNEL_LOG_ERROR(
-                    "MaxUnpool3DGrad:  output_size D_out * H_out * W_out "
-                    "should be bigger than argmax, now D_out is [%ld], H_out "
-                    "is [%ld], and W_out is [%ld], but one of the values in "
-                    "argmax is [%ld].",
-                    odepth, oheight, owidth, maxp);
+                  CUST_KERNEL_LOG_ERROR(ctx,
+                                        "MaxUnpool3DGrad:  output_size D_out * H_out * W_out "
+                                        "should be bigger than argmax, now D_out is [%ld], H_out "
+                                        "is [%ld], and W_out is [%ld], but one of the values in "
+                                        "argmax is [%ld].",
+                                        odepth, oheight, owidth, maxp);
                 } else {
                   output_p_k[t * iheight * iwidth + i * iwidth + j] = grads_p_k[maxp];
                 }

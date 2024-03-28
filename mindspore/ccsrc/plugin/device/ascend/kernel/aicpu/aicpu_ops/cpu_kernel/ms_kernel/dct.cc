@@ -53,8 +53,8 @@ const char *kDCT = "DCT";
 namespace aicpu {
 uint32_t DCTCpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.", kDCT);
-  KERNEL_HANDLE_ERROR(DCTCheck(ctx), "[%s] check params failed.", kDCT);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.", kDCT);
+  CUST_KERNEL_HANDLE_ERROR(ctx, DCTCheck(ctx), "[%s] check params failed.", kDCT);
 
   Tensor *input = ctx.Input(0);
   auto x_shape_ptr = input->GetTensorShape();
@@ -62,19 +62,19 @@ uint32_t DCTCpuKernel::Compute(CpuKernelContext &ctx) {
   std::vector<int64_t> x_shape = x_shape_ptr->GetDimSizes();
   // get attr values
   AttrValue *attr2 = ctx.GetAttr("n");
-  KERNEL_CHECK_NULLPTR(attr2, KERNEL_STATUS_PARAM_INVALID, "Get param[n] failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, attr2, KERNEL_STATUS_PARAM_INVALID, "Get param[n] failed.")
   uint64_t n = attr2->GetInt();
   AttrValue *attr3 = ctx.GetAttr("axis");
-  KERNEL_CHECK_NULLPTR(attr3, KERNEL_STATUS_PARAM_INVALID, "Get param[axis] failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, attr3, KERNEL_STATUS_PARAM_INVALID, "Get param[axis] failed.")
   uint64_t axis = attr3->GetInt();
   AttrValue *attr4 = ctx.GetAttr("norm");
-  KERNEL_CHECK_NULLPTR(attr4, KERNEL_STATUS_PARAM_INVALID, "Get param[norm] failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, attr4, KERNEL_STATUS_PARAM_INVALID, "Get param[norm] failed.")
   uint64_t norm_type = attr4->GetInt();
   AttrValue *attr5 = ctx.GetAttr("forward");
-  KERNEL_CHECK_NULLPTR(attr5, KERNEL_STATUS_PARAM_INVALID, "Get param[forward] failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, attr5, KERNEL_STATUS_PARAM_INVALID, "Get param[forward] failed.")
   bool forward = attr5->GetBool();
   AttrValue *attr6 = ctx.GetAttr("grad");
-  KERNEL_CHECK_NULLPTR(attr6, KERNEL_STATUS_PARAM_INVALID, "Get param[grad] failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, attr6, KERNEL_STATUS_PARAM_INVALID, "Get param[grad] failed.")
   bool grad = attr6->GetBool();
 
   auto input_type = ctx.Input(0)->GetDataType();
@@ -115,17 +115,19 @@ uint32_t DCTCpuKernel::Compute(CpuKernelContext &ctx) {
   } else if (input_type == DT_BOOL) {
     DCT_SWITCH_DIM_CALCULATE(bool, float, float, x_rank)
   } else {
-    KERNEL_LOG_ERROR("DCT kernel data type [%s] not support.", DTypeStr(input_type).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "DCT kernel data type [%s] not support.", DTypeStr(input_type).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 
 uint32_t DCTCpuKernel::DCTCheck(CpuKernelContext &ctx) {
-  KERNEL_CHECK_NULLPTR(ctx.Input(0)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input data failed.")
-  KERNEL_CHECK_NULLPTR(ctx.Output(0)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output data failed.")
-  KERNEL_CHECK_NULLPTR(ctx.Input(0)->GetTensorShape(), KERNEL_STATUS_PARAM_INVALID, "Get input tensor shape failed.")
-  KERNEL_CHECK_NULLPTR(ctx.Output(0)->GetTensorShape(), KERNEL_STATUS_PARAM_INVALID, "Get output tensor shape failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.Input(0)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.Output(0)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.Input(0)->GetTensorShape(), KERNEL_STATUS_PARAM_INVALID,
+                            "Get input tensor shape failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.Output(0)->GetTensorShape(), KERNEL_STATUS_PARAM_INVALID,
+                            "Get output tensor shape failed.")
 
   return KERNEL_STATUS_OK;
 }

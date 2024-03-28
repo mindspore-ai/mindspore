@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <functional>
 #include <memory.h>
+#include <securec.h>
 #include "Eigen/Core"
 #include "unsupported/Eigen/CXX11/Tensor"
 
@@ -35,7 +36,8 @@ constexpr auto ngram_step_size = 2;
 }  // namespace
 namespace aicpu {
 uint32_t NoRepeatNGramCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputSize, kOutputSize), "NoRepeatNGramCpu check input and output failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputSize, kOutputSize),
+                           "NoRepeatNGramCpu check input and output failed.");
   Tensor *input = ctx.Input(1);
   auto data_type_in = input->GetDataType();
   AttrValue *ngram_size_ptr = ctx.GetAttr("ngram_size");
@@ -48,7 +50,7 @@ uint32_t NoRepeatNGramCpuKernel::Compute(CpuKernelContext &ctx) {
     case DT_DOUBLE:
       return ComputeKernel<double>(ctx, ngram_size);
     default:
-      KERNEL_LOG_ERROR("NoRepeatNGramCpu kernel data type [%s] not support.", DTypeStr(data_type_in).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "NoRepeatNGramCpu kernel data type [%s] not support.", DTypeStr(data_type_in).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 }
@@ -76,7 +78,7 @@ uint32_t NoRepeatNGramCpuKernel::ComputeKernel(CpuKernelContext &ctx, const int6
   int copy_size = batch_size * beam_width * vocab_size * sizeof(T);
   auto ret = memcpy_s(log_probs, copy_size, log_probs_origin, copy_size);
   if (ret != EOK) {
-    KERNEL_LOG_ERROR("For 'NoRepeatNGram', memcpy_s failed, ret=%d.", ret);
+    CUST_KERNEL_LOG_ERROR(ctx, "For 'NoRepeatNGram', memcpy_s failed, ret=%d.", ret);
     return KERNEL_STATUS_INNER_ERROR;
   }
 

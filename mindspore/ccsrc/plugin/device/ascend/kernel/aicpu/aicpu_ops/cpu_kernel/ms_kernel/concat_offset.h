@@ -28,7 +28,7 @@ class ConcatOffsetKernel : public CpuKernel {
 
  private:
   uint32_t ParseKernelParam(CpuKernelContext &ctx);
-  bool CheckParams();
+  bool CheckParams(CpuKernelContext &ctx);
 
   std::vector<std::vector<int64_t>> input_shapes_;
   std::vector<int64_t> output_shape_;

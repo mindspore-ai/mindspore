@@ -107,30 +107,33 @@ inline void ComputeSourceIndexAndLambda(int64_t *const input_index0, int64_t *co
  * @return status code
  */
 template <typename T>
-static uint32_t CheckPositiveVectorWithSpecifiedSize(const std::vector<T> &args_value, const std::string &args_name,
-                                                     size_t args_size, const std::string &op_name) {
-  KERNEL_CHECK_FALSE((args_value.size() == args_size), KERNEL_STATUS_PARAM_INVALID,
-                     "For [%s], [%s] should have %d "
-                     "positive number but only get %d number.",
-                     op_name.c_str(), args_name.c_str(), args_size, args_value.size());
+static uint32_t CheckPositiveVectorWithSpecifiedSize(CpuKernelContext &ctx, const std::vector<T> &args_value,
+                                                     const std::string &args_name, size_t args_size,
+                                                     const std::string &op_name) {
+  CUST_KERNEL_CHECK_FALSE(ctx, (args_value.size() == args_size), KERNEL_STATUS_PARAM_INVALID,
+                          "For [%s], [%s] should have %d "
+                          "positive number but only get %d number.",
+                          op_name.c_str(), args_name.c_str(), args_size, args_value.size());
   bool all_positive = true;
   for (auto const &num : args_value) {
     all_positive = (all_positive & (num > T(0)));
   }
   std::string args_str = VectorToString(args_value);
-  KERNEL_CHECK_FALSE(all_positive, KERNEL_STATUS_PARAM_INVALID,
-                     "For [%s], [%s] should have %d "
-                     "positive number. but get %s = (%s).",
-                     op_name.c_str(), args_name.c_str(), args_size, args_name.c_str(), args_str.c_str());
+  CUST_KERNEL_CHECK_FALSE(ctx, all_positive, KERNEL_STATUS_PARAM_INVALID,
+                          "For [%s], [%s] should have %d "
+                          "positive number. but get %s = (%s).",
+                          op_name.c_str(), args_name.c_str(), args_size, args_name.c_str(), args_str.c_str());
   return KERNEL_STATUS_OK;
 }
 
 uint32_t UpsampleTrilinear3dGradCpuKernel::UpsampleTrilinear3dGradParamCheck(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check params failed.", kUpsampleTrilinear3dGrad);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check params failed.",
+                           kUpsampleTrilinear3dGrad);
   auto grad_output_shape = ctx.Input(kIndex0)->GetTensorShape()->GetDimSizes();
   auto grad_input_shape = ctx.Output(kIndex0)->GetTensorShape()->GetDimSizes();
-  KERNEL_HANDLE_ERROR(
-    CheckPositiveVectorWithSpecifiedSize(grad_output_shape, "grad_output shape", kDims5, kUpsampleTrilinear3dGrad),
+  CUST_KERNEL_HANDLE_ERROR(
+    ctx,
+    CheckPositiveVectorWithSpecifiedSize(ctx, grad_output_shape, "grad_output shape", kDims5, kUpsampleTrilinear3dGrad),
     "[%s] check grad_output shape failed.", kUpsampleTrilinear3dGrad);
 
   auto align_corners_ptr = ctx.GetAttr("align_corners");
@@ -138,11 +141,11 @@ uint32_t UpsampleTrilinear3dGradCpuKernel::UpsampleTrilinear3dGradParamCheck(Cpu
     align_corners = align_corners_ptr->GetBool();
   }
   auto none_list_ptr = ctx.GetAttr("none_list");
-  KERNEL_CHECK_NULLPTR(none_list_ptr, KERNEL_STATUS_PARAM_INVALID, "[%s] get attr 'none_list' failed.",
-                       ctx.GetOpType().c_str());
+  CUST_KERNEL_CHECK_NULLPTR(ctx, none_list_ptr, KERNEL_STATUS_PARAM_INVALID, "[%s] get attr 'none_list' failed.",
+                            ctx.GetOpType().c_str());
   none_list = none_list_ptr->GetListInt();
-  KERNEL_CHECK_FALSE(none_list.size() == 1, KERNEL_STATUS_PARAM_INVALID,
-                     "For 'UpsampleNearest3DGrad', only one of output_size or scales should be specified.");
+  CUST_KERNEL_CHECK_FALSE(ctx, none_list.size() == 1, KERNEL_STATUS_PARAM_INVALID,
+                          "For 'UpsampleNearest3DGrad', only one of output_size or scales should be specified.");
 
   return KERNEL_STATUS_OK;
 }
@@ -164,14 +167,14 @@ uint32_t UpsampleTrilinear3dGradCpuKernel::Compute(CpuKernelContext &ctx) {
       res = UpsampleTrilinear3dGradCompute<double, double>(ctx);
       break;
     default:
-      KERNEL_LOG_ERROR(
-        "For UpsampleTrilinear3dGrad, input datatype support [float16, "
-        "float32, float64], but get invalid input type [%s].",
-        DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx,
+                            "For UpsampleTrilinear3dGrad, input datatype support [float16, "
+                            "float32, float64], but get invalid input type [%s].",
+                            DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   if (res != KERNEL_STATUS_OK) {
-    KERNEL_LOG_ERROR("Failed launching UpsampleTrilinear3dGrad.");
+    CUST_KERNEL_LOG_ERROR(ctx, "Failed launching UpsampleTrilinear3dGrad.");
     return KERNEL_STATUS_INNER_ERROR;
   }
   return KERNEL_STATUS_OK;
@@ -188,7 +191,7 @@ void UpsampleTrilinear3dGradCpuKernel::ComputeWeightsAndIndices(
 
 template <typename S>
 void UpsampleTrilinear3dGradCpuKernel::ComputeHelper(
-  const CpuKernelContext &ctx, std::vector<UpsampleTrilinear3dGradCpuKernel::WeightsAndIndices<S>> &helper, S scale,
+  CpuKernelContext &ctx, std::vector<UpsampleTrilinear3dGradCpuKernel::WeightsAndIndices<S>> &helper, S scale,
   int64_t input_size, int64_t output_size, int64_t stride) {
   for (int64_t out_idx = 0; out_idx < output_size; ++out_idx) {
     (void)ComputeWeightsAndIndices<S>(helper[out_idx], scale, out_idx, input_size, output_size, stride);
@@ -196,7 +199,7 @@ void UpsampleTrilinear3dGradCpuKernel::ComputeHelper(
 }
 
 template <typename T, typename S, typename R>
-uint32_t UpsampleTrilinear3dGradCpuKernel::RealCompute(const CpuKernelContext &ctx, T *const grad_output_ptr,
+uint32_t UpsampleTrilinear3dGradCpuKernel::RealCompute(CpuKernelContext &ctx, T *const grad_output_ptr,
                                                        R *const grad_input_ptr) {
   const S depth_scale = AreaPixelComputeScale<S>(input_depth, output_depth, align_corners, scales[kIndex0]);
   const S height_scale = AreaPixelComputeScale<S>(input_height, output_height, align_corners, scales[kIndex1]);
@@ -257,11 +260,12 @@ uint32_t UpsampleTrilinear3dGradCpuKernel::RealCompute(const CpuKernelContext &c
     }
   };
   auto block_size = FetchBlockSize(ctx, channels, output_slice_size);
-  KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, channels, block_size, loop3d), "loop3d Compute failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, channels, block_size, loop3d),
+                           "loop3d Compute failed.");
   return KERNEL_STATUS_OK;
 }
 
-int64_t UpsampleTrilinear3dGradCpuKernel::FetchBlockSize(const CpuKernelContext &ctx, const int64_t parallel_num,
+int64_t UpsampleTrilinear3dGradCpuKernel::FetchBlockSize(CpuKernelContext &ctx, const int64_t parallel_num,
                                                          const int64_t cost) {
   int64_t block_size{parallel_num};
   int64_t total_cost = cost * parallel_num;
@@ -279,7 +283,7 @@ int64_t UpsampleTrilinear3dGradCpuKernel::FetchBlockSize(const CpuKernelContext 
 }
 
 template <typename T, typename S>
-uint32_t UpsampleTrilinear3dGradCpuKernel::UpsampleTrilinear3dGradCompute(const CpuKernelContext &ctx) {
+uint32_t UpsampleTrilinear3dGradCpuKernel::UpsampleTrilinear3dGradCompute(CpuKernelContext &ctx) {
   Tensor *grad_output_ = ctx.Input(kIndex0);
   Tensor *grad_input_ = ctx.Output(kIndex0);
 
@@ -309,7 +313,8 @@ uint32_t UpsampleTrilinear3dGradCpuKernel::UpsampleTrilinear3dGradCompute(const 
   const int64_t SIZE_BOUNDARY = 100000;
   if (channels <= 0 || output_depth <= 0 || output_height <= 0 || output_width <= 0 || output_depth > SIZE_BOUNDARY ||
       output_height > SIZE_BOUNDARY || output_width > SIZE_BOUNDARY) {
-    KERNEL_LOG_ERROR(
+    CUST_KERNEL_LOG_ERROR(
+      ctx,
       "For UpsampleTrilinear3dGrad, output shape can not less than zero or greater than 100000, but get output "
       "shape = (%lld, %lld, %lld, %lld, %lld). ",
       output_shape_[kIndex0], output_shape_[kIndex1], output_shape_[kIndex2], output_shape_[kIndex3],
@@ -318,7 +323,8 @@ uint32_t UpsampleTrilinear3dGradCpuKernel::UpsampleTrilinear3dGradCompute(const 
   }
   if (input_depth <= 0 || input_height <= 0 || input_width <= 0 || input_depth > SIZE_BOUNDARY ||
       input_height > SIZE_BOUNDARY || input_width > SIZE_BOUNDARY) {
-    KERNEL_LOG_ERROR(
+    CUST_KERNEL_LOG_ERROR(
+      ctx,
       "For UpsampleTrilinear3dGrad, input shape can not less than zero or greater than 100000, but get input "
       "shape = (%lld, %lld, %lld, %lld, %lld). ",
       input_shape_[kIndex0], input_shape_[kIndex1], input_shape_[kIndex2], input_shape_[kIndex3],
@@ -343,8 +349,8 @@ uint32_t UpsampleTrilinear3dGradCpuKernel::UpsampleTrilinear3dGradCompute(const 
   } else {
     size_t y_size = total * sizeof(T);
     int ret = memset_s(grad_input_ptr, y_size, 0, y_size);
-    KERNEL_CHECK_FALSE(ret == EOK, KERNEL_STATUS_INNER_ERROR,
-                       "For 'UpsampleTrilinear3DGrad', memset_s error. Error no: %d.", ret);
+    CUST_KERNEL_CHECK_FALSE(ctx, ret == EOK, KERNEL_STATUS_INNER_ERROR,
+                            "For 'UpsampleTrilinear3DGrad', memset_s error. Error no: %d.", ret);
     paralle_ret = RealCompute<T, S, T>(ctx, grad_output_ptr, grad_input_ptr);
   }
   if (paralle_ret != KERNEL_STATUS_OK) {
@@ -359,8 +365,8 @@ uint32_t UpsampleTrilinear3dGradCpuKernel::UpsampleTrilinear3dGradCompute(const 
     };
     int64_t max_core_num = std::max(1L, aicpu::CpuKernelUtils::GetCPUNum(ctx) - 2L);
     int64_t block_size = total / max_core_num;
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, total, block_size, memcpy_fp16),
-                        "memcpy_fp16 Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, total, block_size, memcpy_fp16),
+                             "memcpy_fp16 Compute failed.");
   }
   return KERNEL_STATUS_OK;
 }

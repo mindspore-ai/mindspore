@@ -32,10 +32,10 @@ class LayerNormGradGradCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  static uint32_t LayerNormGradGradCheck(const CpuKernelContext &ctx);
+  static uint32_t LayerNormGradGradCheck(CpuKernelContext &ctx);
 
   template <typename T>
-  static uint32_t LayerNormGradGradCompute(const CpuKernelContext &ctx, size_t ParallelDataNums);
+  static uint32_t LayerNormGradGradCompute(CpuKernelContext &ctx, size_t ParallelDataNums);
 };
 }  // namespace aicpu
 

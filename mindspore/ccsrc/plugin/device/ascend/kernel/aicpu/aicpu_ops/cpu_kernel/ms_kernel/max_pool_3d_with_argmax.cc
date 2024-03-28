@@ -32,14 +32,14 @@ const uint32_t kOutputNum = 2;
 const uint32_t kInputNum = 1;
 const char *kMaxPool3DWithArgmax = "MaxPool3DWithArgmax";
 
-#define MAX_POOL3D_WITH_ARGMAX_COMPUTE_CASE(DTYPE, INTYPE, OUTTYPE, CTX) \
-  case (DTYPE): {                                                        \
-    uint32_t result = MaxPool3DWithArgmaxCompute<INTYPE, OUTTYPE>(CTX);  \
-    if (result != KERNEL_STATUS_OK) {                                    \
-      KERNEL_LOG_ERROR("MaxPool3DWithArgmax kernel compute failed.");    \
-      return result;                                                     \
-    }                                                                    \
-    break;                                                               \
+#define MAX_POOL3D_WITH_ARGMAX_COMPUTE_CASE(DTYPE, INTYPE, OUTTYPE, CTX)        \
+  case (DTYPE): {                                                               \
+    uint32_t result = MaxPool3DWithArgmaxCompute<INTYPE, OUTTYPE>(CTX);         \
+    if (result != KERNEL_STATUS_OK) {                                           \
+      CUST_KERNEL_LOG_ERROR(ctx, "MaxPool3DWithArgmax kernel compute failed."); \
+      return result;                                                            \
+    }                                                                           \
+    break;                                                                      \
   }
 }  // namespace
 
@@ -47,15 +47,15 @@ namespace aicpu {
 uint32_t MaxPool3DWithArgmaxCpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
   std::vector<std::string> attr_names = {"ksize", "strides", "pads"};
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum, attr_names),
-                      "MaxPool3DWithArgmax check input and output number failed.");
-  KERNEL_HANDLE_ERROR(MaxPool3DWithArgmaxParamCheck(ctx), "MaxPool3DWithArgmax check params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum, attr_names),
+                           "MaxPool3DWithArgmax check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, MaxPool3DWithArgmaxParamCheck(ctx), "MaxPool3DWithArgmax check params failed.");
   auto in_data_type = ctx.Input(0)->GetDataType();
   auto out_data_type = ctx.Output(1)->GetDataType();
   std::string argmax_type =
     (ctx.GetAttr("argmax_type") == nullptr) ? "bitmask" : ctx.GetAttr("argmax_type")->GetString();
   if (argmax_type == "bitmask") {
-    KERNEL_LOG_ERROR("Bitmask is not supported now.");
+    CUST_KERNEL_LOG_ERROR(ctx, "Bitmask is not supported now.");
     return KERNEL_STATUS_PARAM_INVALID;
   } else {
     if (out_data_type == DT_INT32) {
@@ -72,8 +72,8 @@ uint32_t MaxPool3DWithArgmaxCpuKernel::Compute(CpuKernelContext &ctx) {
         MAX_POOL3D_WITH_ARGMAX_COMPUTE_CASE(DT_FLOAT, float, int32_t, ctx)
         MAX_POOL3D_WITH_ARGMAX_COMPUTE_CASE(DT_DOUBLE, double, int32_t, ctx)
         default:
-          KERNEL_LOG_ERROR("MaxPool3DWithArgmax kernel input data type [%s] not support.",
-                           DTypeStr(in_data_type).c_str());
+          CUST_KERNEL_LOG_ERROR(ctx, "MaxPool3DWithArgmax kernel input data type [%s] not support.",
+                                DTypeStr(in_data_type).c_str());
           return KERNEL_STATUS_PARAM_INVALID;
       }
     } else if (out_data_type == DT_INT64) {
@@ -90,15 +90,15 @@ uint32_t MaxPool3DWithArgmaxCpuKernel::Compute(CpuKernelContext &ctx) {
         MAX_POOL3D_WITH_ARGMAX_COMPUTE_CASE(DT_FLOAT, float, int64_t, ctx)
         MAX_POOL3D_WITH_ARGMAX_COMPUTE_CASE(DT_DOUBLE, double, int64_t, ctx)
         default:
-          KERNEL_LOG_ERROR("MaxPool3DWithArgmax kernel input data type [%s] not support.",
-                           DTypeStr(in_data_type).c_str());
+          CUST_KERNEL_LOG_ERROR(ctx, "MaxPool3DWithArgmax kernel input data type [%s] not support.",
+                                DTypeStr(in_data_type).c_str());
           return KERNEL_STATUS_PARAM_INVALID;
       }
     } else {
-      KERNEL_LOG_ERROR(
-        "MaxPool3DWithArgmax kernel output_argmax data type [%s] not "
-        "support.",
-        DTypeStr(out_data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx,
+                            "MaxPool3DWithArgmax kernel output_argmax data type [%s] not "
+                            "support.",
+                            DTypeStr(out_data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
     }
 
@@ -106,51 +106,51 @@ uint32_t MaxPool3DWithArgmaxCpuKernel::Compute(CpuKernelContext &ctx) {
   }
 }
 
-uint32_t MaxPool3DWithArgmaxCpuKernel::MaxPool3DWithArgmaxParamCheck(const CpuKernelContext &ctx) {
+uint32_t MaxPool3DWithArgmaxCpuKernel::MaxPool3DWithArgmaxParamCheck(CpuKernelContext &ctx) {
   auto input_info = ctx.Input(0);
   auto output_y_info = ctx.Output(0);
   auto output_argmax_info = ctx.Output(1);
   DataType input_type = input_info->GetDataType();
   DataType output_y_type = output_y_info->GetDataType();
-  KERNEL_CHECK_FALSE((input_type == output_y_type), KERNEL_STATUS_PARAM_INVALID,
-                     "The data type of input x [%s] need be same with "
-                     "output y [%s].",
-                     DTypeStr(input_type).c_str(), DTypeStr(output_y_type).c_str())
+  CUST_KERNEL_CHECK_FALSE(ctx, (input_type == output_y_type), KERNEL_STATUS_PARAM_INVALID,
+                          "The data type of input x [%s] need be same with "
+                          "output y [%s].",
+                          DTypeStr(input_type).c_str(), DTypeStr(output_y_type).c_str())
   DataType output_argmax_type = output_argmax_info->GetDataType();
-  KERNEL_CHECK_FALSE((output_argmax_type == DT_INT32) || (output_argmax_type == DT_INT64), KERNEL_STATUS_PARAM_INVALID,
-                     "The data type of output argmax:[%s] should be a int32 or int64. ",
-                     DTypeStr(output_argmax_type).c_str())
+  CUST_KERNEL_CHECK_FALSE(
+    ctx, (output_argmax_type == DT_INT32) || (output_argmax_type == DT_INT64), KERNEL_STATUS_PARAM_INVALID,
+    "The data type of output argmax:[%s] should be a int32 or int64. ", DTypeStr(output_argmax_type).c_str())
 
   constexpr size_t kSize = 5;
-  KERNEL_CHECK_FALSE(input_info->GetTensorShape()->GetDimSizes().size() == kSize, KERNEL_STATUS_PARAM_INVALID,
-                     "The dim of input:[%d] should be 5.", input_info->GetTensorShape()->GetDimSizes().size())
+  CUST_KERNEL_CHECK_FALSE(ctx, input_info->GetTensorShape()->GetDimSizes().size() == kSize, KERNEL_STATUS_PARAM_INVALID,
+                          "The dim of input:[%d] should be 5.", input_info->GetTensorShape()->GetDimSizes().size())
 
   const size_t DIM_SIZE1 = 1;
   const size_t DIM_SIZE3 = 3;
   const size_t DIM_SIZE5 = 5;
   AttrValue *attr_ksize = ctx.GetAttr("ksize");
   std::vector<int64_t> ksizeList = attr_ksize->GetListInt();
-  KERNEL_CHECK_FALSE(ksizeList.size() == DIM_SIZE1 || ksizeList.size() == DIM_SIZE3, KERNEL_STATUS_PARAM_INVALID,
-                     "The size of ksize:[%d] should be 1 or 3.", ksizeList.size())
+  CUST_KERNEL_CHECK_FALSE(ctx, ksizeList.size() == DIM_SIZE1 || ksizeList.size() == DIM_SIZE3,
+                          KERNEL_STATUS_PARAM_INVALID, "The size of ksize:[%d] should be 1 or 3.", ksizeList.size())
   AttrValue *attr_strides = ctx.GetAttr("strides");
   std::vector<int64_t> stridesList = attr_strides->GetListInt();
-  KERNEL_CHECK_FALSE(stridesList.size() == DIM_SIZE1 || stridesList.size() == DIM_SIZE3, KERNEL_STATUS_PARAM_INVALID,
-                     "The size of strides:[%d] should be 1 or 3.", stridesList.size())
+  CUST_KERNEL_CHECK_FALSE(ctx, stridesList.size() == DIM_SIZE1 || stridesList.size() == DIM_SIZE3,
+                          KERNEL_STATUS_PARAM_INVALID, "The size of strides:[%d] should be 1 or 3.", stridesList.size())
   AttrValue *attr_pads = ctx.GetAttr("pads");
   std::vector<int64_t> padsList = attr_pads->GetListInt();
-  KERNEL_CHECK_FALSE(padsList.size() == DIM_SIZE1 || padsList.size() == DIM_SIZE3, KERNEL_STATUS_PARAM_INVALID,
-                     "The size of pads:[%d] should be 1 or 3.", padsList.size())
+  CUST_KERNEL_CHECK_FALSE(ctx, padsList.size() == DIM_SIZE1 || padsList.size() == DIM_SIZE3,
+                          KERNEL_STATUS_PARAM_INVALID, "The size of pads:[%d] should be 1 or 3.", padsList.size())
   AttrValue *attr_dilation = ctx.GetAttr("dilation");
   std::vector<int64_t> initList = {1, 1, 1, 1, 1};
   std::vector<int64_t> dilationList = (attr_dilation == nullptr) ? initList : attr_dilation->GetListInt();
-  KERNEL_CHECK_FALSE(
-    dilationList.size() == DIM_SIZE1 || dilationList.size() == DIM_SIZE3 || dilationList.size() == DIM_SIZE5,
+  CUST_KERNEL_CHECK_FALSE(
+    ctx, dilationList.size() == DIM_SIZE1 || dilationList.size() == DIM_SIZE3 || dilationList.size() == DIM_SIZE5,
     KERNEL_STATUS_PARAM_INVALID, "The size of dilation:[%d] should be 1, 3 or 5.", dilationList.size())
-  KERNEL_LOG_DEBUG(
-    "MaxPool3sWithArgmaxCpuKernel[%s], input x: size[%llu];"
-    "output y: size[%llu], output argmax: size[%llu].",
-    ctx.GetOpType().c_str(), input_info->GetDataSize(), output_y_info->GetDataSize(),
-    output_argmax_info->GetDataSize());
+  CUST_KERNEL_LOG_DEBUG(ctx,
+                        "MaxPool3sWithArgmaxCpuKernel[%s], input x: size[%llu];"
+                        "output y: size[%llu], output argmax: size[%llu].",
+                        ctx.GetOpType().c_str(), input_info->GetDataSize(), output_y_info->GetDataSize(),
+                        output_argmax_info->GetDataSize());
 
   return KERNEL_STATUS_OK;
 }
@@ -238,7 +238,7 @@ void MaxPool3DWithArgmaxCpuKernel::FillListWithDimSize(const std::vector<int64_t
 }
 
 template <typename T, typename S>
-uint32_t MaxPool3DWithArgmaxCpuKernel::MaxPool3DWithArgmaxCompute(const CpuKernelContext &ctx) {
+uint32_t MaxPool3DWithArgmaxCpuKernel::MaxPool3DWithArgmaxCompute(CpuKernelContext &ctx) {
   auto input_info = ctx.Input(0);
   auto output_y_info = ctx.Output(0);
   auto output_argmax_info = ctx.Output(1);
@@ -285,8 +285,8 @@ uint32_t MaxPool3DWithArgmaxCpuKernel::MaxPool3DWithArgmaxCompute(const CpuKerne
   const int64_t d_width = dilationTempList[2];
   const int64_t d_height = dilationTempList[1];
   const int64_t d_depth = dilationTempList[0];
-  KERNEL_CHECK_FALSE(k_width / 2 >= p_width && k_height / 2 >= p_height && k_depth / 2 >= p_depth,
-                     KERNEL_STATUS_PARAM_INVALID, "pads should be smaller than or equal to half of kernel size.");
+  CUST_KERNEL_CHECK_FALSE(ctx, k_width / 2 >= p_width && k_height / 2 >= p_height && k_depth / 2 >= p_depth,
+                          KERNEL_STATUS_PARAM_INVALID, "pads should be smaller than or equal to half of kernel size.");
 
   int64_t data_num = ctx.Input(0)->NumElements();
   const int64_t batch = in_batch * in_channel;
@@ -312,10 +312,11 @@ uint32_t MaxPool3DWithArgmaxCpuKernel::MaxPool3DWithArgmaxCompute(const CpuKerne
     };
 
     if (max_core_num == 0) {
-      KERNEL_LOG_ERROR("max_core_num could not be 0.");
+      CUST_KERNEL_LOG_ERROR(ctx, "max_core_num could not be 0.");
     }
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, batch, batch / max_core_num, sharder_max_pool3d_with_argmax),
-                        "MaxPool3DWithArgmax Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(
+      ctx, CpuKernelUtils::ParallelFor(ctx, batch, batch / max_core_num, sharder_max_pool3d_with_argmax),
+      "MaxPool3DWithArgmax Compute failed.");
 
   } else {
     for (int64_t i = 0; i < batch; i++) {

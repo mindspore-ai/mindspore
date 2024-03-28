@@ -56,7 +56,7 @@ T elewise_lcm(T a, T b) {
   return std::abs(a / gcd_tmp * b);
 }
 
-uint32_t LcmIOTypeCheck(const CpuKernelContext &ctx, int32_t *dual_types) {
+uint32_t LcmIOTypeCheck(CpuKernelContext &ctx, int32_t *dual_types) {
   Tensor *x1 = ctx.Input(kFirstInputIndex);
   Tensor *x2 = ctx.Input(kSecondInputIndex);
   Tensor *y = ctx.Output(kFirstOutputIndex);
@@ -64,10 +64,10 @@ uint32_t LcmIOTypeCheck(const CpuKernelContext &ctx, int32_t *dual_types) {
   auto x1_type = x1->GetDataType();
   auto x2_type = x2->GetDataType();
   auto y_type = y->GetDataType();
-  KERNEL_CHECK_FALSE(supported_types.count(x1_type) != 0, KERNEL_STATUS_PARAM_INVALID,
-                     "[Lcm] input x1 data type [%s] is not supported.", DTypeStr(x1_type).c_str());
-  KERNEL_CHECK_FALSE(supported_types.count(x2_type) != 0, KERNEL_STATUS_PARAM_INVALID,
-                     "[Lcm] input x2 data type [%s] is not supported.", DTypeStr(x2_type).c_str());
+  CUST_KERNEL_CHECK_FALSE(ctx, supported_types.count(x1_type) != 0, KERNEL_STATUS_PARAM_INVALID,
+                          "[Lcm] input x1 data type [%s] is not supported.", DTypeStr(x1_type).c_str());
+  CUST_KERNEL_CHECK_FALSE(ctx, supported_types.count(x2_type) != 0, KERNEL_STATUS_PARAM_INVALID,
+                          "[Lcm] input x2 data type [%s] is not supported.", DTypeStr(x2_type).c_str());
   int32_t x1_is_i32 = static_cast<int32_t>(x1_type == DT_INT32) << 1;
   int32_t x2_is_i32 = static_cast<int32_t>(x2_type == DT_INT32);
   int32_t _dual_types = x1_is_i32 | x2_is_i32;
@@ -75,25 +75,24 @@ uint32_t LcmIOTypeCheck(const CpuKernelContext &ctx, int32_t *dual_types) {
     case kInput_64_64:
     case kInput_64_32:
     case kInput_32_64:
-      KERNEL_CHECK_FALSE(y_type == DT_INT64, KERNEL_STATUS_PARAM_INVALID,
-                         "[Lcm] output y data type [%s] is not supported.", DTypeStr(y_type).c_str());
+      CUST_KERNEL_CHECK_FALSE(ctx, y_type == DT_INT64, KERNEL_STATUS_PARAM_INVALID,
+                              "[Lcm] output y data type [%s] is not supported.", DTypeStr(y_type).c_str());
       *dual_types = _dual_types;
       break;
     case kInput_32_32:
-      KERNEL_CHECK_FALSE(y_type == DT_INT32, KERNEL_STATUS_PARAM_INVALID,
-                         "[Lcm] output y data type [%s] is not supported.", DTypeStr(y_type).c_str());
+      CUST_KERNEL_CHECK_FALSE(ctx, y_type == DT_INT32, KERNEL_STATUS_PARAM_INVALID,
+                              "[Lcm] output y data type [%s] is not supported.", DTypeStr(y_type).c_str());
       *dual_types = _dual_types;
       break;
     default:
-      KERNEL_LOG_ERROR("[Lcm] input data type tuple is not supported.");
+      CUST_KERNEL_LOG_ERROR(ctx, "[Lcm] input data type tuple is not supported.");
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 
 template <class T1, class T2, class T3>
-uint32_t LcmElewiseCompute(const CpuKernelContext &ctx, const T1 *x1_ptr, const T2 *x2_ptr, T3 *y_ptr,
-                           const Bcast &bcast) {
+uint32_t LcmElewiseCompute(CpuKernelContext &ctx, const T1 *x1_ptr, const T2 *x2_ptr, T3 *y_ptr, const Bcast &bcast) {
   int64_t data_num = ctx.Output(kFirstOutputIndex)->NumElements();
   auto lcm_shard = [&](int64_t start, int64_t end) {
     for (int64_t i = start; i < end; ++i) {
@@ -112,12 +111,12 @@ uint32_t LcmElewiseCompute(const CpuKernelContext &ctx, const T1 *x1_ptr, const 
       max_core_num = data_num;
     }
     if (max_core_num == 0) {
-      KERNEL_LOG_ERROR("[Lcm] max_core_num is 0, please check the cpu num.");
+      CUST_KERNEL_LOG_ERROR(ctx, "[Lcm] max_core_num is 0, please check the cpu num.");
       return KERNEL_STATUS_PARAM_INVALID;
     }
     uint32_t ret = CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, lcm_shard);
     if (ret != KERNEL_STATUS_OK) {
-      KERNEL_LOG_ERROR("[Lcm] Lcm Compute failed.");
+      CUST_KERNEL_LOG_ERROR(ctx, "[Lcm] Lcm Compute failed.");
       return ret;
     }
   } else {
@@ -128,7 +127,7 @@ uint32_t LcmElewiseCompute(const CpuKernelContext &ctx, const T1 *x1_ptr, const 
 }
 
 template <class T1, class T2, class T3>
-uint32_t LcmCompute(const CpuKernelContext &ctx) {
+uint32_t LcmCompute(CpuKernelContext &ctx) {
   Tensor *x1 = ctx.Input(kFirstInputIndex);
   Tensor *x2 = ctx.Input(kSecondInputIndex);
   Tensor *y = ctx.Output(kFirstOutputIndex);
@@ -137,20 +136,21 @@ uint32_t LcmCompute(const CpuKernelContext &ctx) {
   T3 *y_ptr = reinterpret_cast<T3 *>(y->GetData());
   auto x1_shape = x1->GetTensorShape()->GetDimSizes();
   auto x2_shape = x2->GetTensorShape()->GetDimSizes();
-  Bcast bcast(x1_shape, x2_shape);
+  Bcast bcast(ctx, x1_shape, x2_shape);
   if (bcast.IsValid()) {
     return LcmElewiseCompute<T1, T2, T3>(ctx, x1_ptr, x2_ptr, y_ptr, bcast);
   } else {
-    KERNEL_LOG_ERROR("[Lcm] broadcast failed.");
+    CUST_KERNEL_LOG_ERROR(ctx, "[Lcm] broadcast failed.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
 }
 
 uint32_t LcmCpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kLcmInputNum, kLcmOutputNum), "[Lcm] check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kLcmInputNum, kLcmOutputNum),
+                           "[Lcm] check input and output number failed.");
   int32_t dual_types = static_cast<int32_t>(-1);
-  KERNEL_HANDLE_ERROR(LcmIOTypeCheck(ctx, &dual_types), "[Lcm] check data type failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, LcmIOTypeCheck(ctx, &dual_types), "[Lcm] check data type failed.");
   switch (dual_types) {
     case kInput_64_64:
       return LcmCompute<int64_t, int64_t, int64_t>(ctx);
@@ -165,7 +165,7 @@ uint32_t LcmCpuKernel::Compute(CpuKernelContext &ctx) {
       return LcmCompute<int32_t, int32_t, int32_t>(ctx);
       break;
     default:
-      KERNEL_LOG_ERROR("[Lcm] input data type tuple is not supported.");
+      CUST_KERNEL_LOG_ERROR(ctx, "[Lcm] input data type tuple is not supported.");
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;

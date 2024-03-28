@@ -29,12 +29,12 @@ const char *const kPadding = "Padding";
 namespace aicpu {
 namespace {
 template <typename T>
-KernelStatus PaddingTask(const CpuKernelContext &ctx, int64_t &pad_dim_size, int64_t &val_size, int64_t &out_size,
+KernelStatus PaddingTask(CpuKernelContext &ctx, int64_t &pad_dim_size, int64_t &val_size, int64_t &out_size,
                          size_t &type_size) {
   T *input = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   T *output = reinterpret_cast<T *>(ctx.Output(0)->GetData());
   auto ret = memset_s(output, out_size * type_size, 0x00, out_size * type_size);
-  KERNEL_CHECK_FALSE(ret == EOK, KERNEL_STATUS_INNER_ERROR, "memset failed.");
+  CUST_KERNEL_CHECK_FALSE(ctx, ret == EOK, KERNEL_STATUS_INNER_ERROR, "memset failed.");
   auto shardCopy = [&](int64_t start, int64_t end) {
     for (int64_t i = start; i < end; ++i) {
       output[i * pad_dim_size] = input[i];
@@ -46,9 +46,8 @@ KernelStatus PaddingTask(const CpuKernelContext &ctx, int64_t &pad_dim_size, int
 }  // namespace
 
 uint32_t PaddingKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(ParseKernelParam(ctx), "%s check failed", ctx.GetOpType().c_str());
-  std::map<DataType, std::function<uint32_t(const CpuKernelContext &, int64_t &, int64_t &, int64_t &, size_t &)>>
-    calls;
+  CUST_KERNEL_HANDLE_ERROR(ctx, ParseKernelParam(ctx), "%s check failed", ctx.GetOpType().c_str());
+  std::map<DataType, std::function<uint32_t(CpuKernelContext &, int64_t &, int64_t &, int64_t &, size_t &)>> calls;
 
   calls[DT_INT8] = PaddingTask<int8_t>;
   calls[DT_INT16] = PaddingTask<int16_t>;
@@ -69,7 +68,7 @@ uint32_t PaddingKernel::Compute(CpuKernelContext &ctx) {
 
 uint32_t PaddingKernel::ParseKernelParam(CpuKernelContext &ctx) {
   auto pad_dim_size_attr = ctx.GetAttr("pad_dim_size");
-  KERNEL_CHECK_NULLPTR(pad_dim_size_attr, KERNEL_STATUS_INNER_ERROR, "Failed to get attr 'pad_dim_size'.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, pad_dim_size_attr, KERNEL_STATUS_INNER_ERROR, "Failed to get attr 'pad_dim_size'.");
   pad_dim_size_ = pad_dim_size_attr->GetInt();
   auto x = ctx.Input(0);
   auto x_shape = x->GetTensorShape()->GetDimSizes();
@@ -77,15 +76,15 @@ uint32_t PaddingKernel::ParseKernelParam(CpuKernelContext &ctx) {
   x_type_ = x->GetDataType();
 
   if (pad_dim_size_ < 1) {
-    AICPU_LOGE("attr pad_dim_size must be positive, got value %d", pad_dim_size_);
+    CUST_AICPU_LOGE(ctx, "attr pad_dim_size must be positive, got value %d", pad_dim_size_);
     return KERNEL_STATUS_INNER_ERROR;
   }
   if (x_shape.size() < 2) {
-    AICPU_LOGE("The rank of the x tensor should be at least 2, got value %d", x_shape.size());
+    CUST_AICPU_LOGE(ctx, "The rank of the x tensor should be at least 2, got value %d", x_shape.size());
     return KERNEL_STATUS_INNER_ERROR;
   }
   if (x_shape.back() != 1) {
-    AICPU_LOGE("The last dim of x tensor must be 1, got value %d.", x_shape.back());
+    CUST_AICPU_LOGE(ctx, "The last dim of x tensor must be 1, got value %d.", x_shape.back());
     return KERNEL_STATUS_INNER_ERROR;
   }
 

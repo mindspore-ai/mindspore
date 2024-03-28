@@ -35,15 +35,16 @@ const int64_t kParallelDataNumSameShapeMid = 35 * 1024;
 }  // namespace
 
 namespace aicpu {
-uint32_t MaskedFillMaskCheck(const CpuKernelContext &ctx) {
+uint32_t MaskedFillMaskCheck(CpuKernelContext &ctx) {
   Tensor *mask = ctx.Input(kSecondInputIndex);
   DataType mask_type = mask->GetDataType();
-  KERNEL_CHECK_FALSE(mask_type == DT_BOOL, KERNEL_STATUS_PARAM_INVALID, "[MaskedFill] mask type must be bool.");
+  CUST_KERNEL_CHECK_FALSE(ctx, mask_type == DT_BOOL, KERNEL_STATUS_PARAM_INVALID,
+                          "[MaskedFill] mask type must be bool.");
   return KERNEL_STATUS_OK;
 }
 
 template <class T>
-uint32_t GetValueFromVariousTypesMaskedFill(const CpuKernelContext &ctx, T &value) {
+uint32_t GetValueFromVariousTypesMaskedFill(CpuKernelContext &ctx, T &value) {
   Tensor *value_tensor = ctx.Input(kThirdInputIndex);
   auto value_type = value_tensor->GetDataType();
   auto value_ptr = value_tensor->GetData();
@@ -93,7 +94,7 @@ uint32_t GetValueFromVariousTypesMaskedFill(const CpuKernelContext &ctx, T &valu
       raw_complex_value = static_cast<std::complex<double>>(reinterpret_cast<std::complex<double> *>(value_ptr)[0]);
       break;
     default:
-      KERNEL_LOG_ERROR("MaskedFill Invalid value type [%s]", DTypeStr(value_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "MaskedFill Invalid value type [%s]", DTypeStr(value_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   if constexpr ((std::is_same_v<T, std::complex<float>>) || (std::is_same_v<T, std::complex<double>>)) {
@@ -101,7 +102,7 @@ uint32_t GetValueFromVariousTypesMaskedFill(const CpuKernelContext &ctx, T &valu
   } else {
     if (raw_value > static_cast<double>(std::numeric_limits<T>::max()) ||
         raw_value < static_cast<double>(std::numeric_limits<T>::lowest())) {
-      KERNEL_LOG_ERROR("[MaskedFill] value out of [%s] range [%f]", DTypeStr(value_type).c_str(), raw_value);
+      CUST_KERNEL_LOG_ERROR(ctx, "[MaskedFill] value out of [%s] range [%f]", DTypeStr(value_type).c_str(), raw_value);
       return KERNEL_STATUS_PARAM_INVALID;
     }
     value = static_cast<T>(raw_value);
@@ -114,9 +115,10 @@ uint32_t NoBcastCompute(CpuKernelContext &ctx) {
   auto x_ptr = reinterpret_cast<T *>(ctx.Input(kFirstInputIndex)->GetData());
   auto mask_ptr = reinterpret_cast<bool *>(ctx.Input(kSecondInputIndex)->GetData());
   T value = static_cast<T>(0);
-  KERNEL_CHECK_FALSE(GetValueFromVariousTypesMaskedFill<T>(ctx, value) == KERNEL_STATUS_OK, KERNEL_STATUS_PARAM_INVALID,
-                     "[MaskedFill] value cannot be safely converted to target "
-                     "type without overflow.");
+  CUST_KERNEL_CHECK_FALSE(ctx, GetValueFromVariousTypesMaskedFill<T>(ctx, value) == KERNEL_STATUS_OK,
+                          KERNEL_STATUS_PARAM_INVALID,
+                          "[MaskedFill] value cannot be safely converted to target "
+                          "type without overflow.");
   auto y_ptr = reinterpret_cast<T *>(ctx.Output(kFirstOutputIndex)->GetData());
 
   int64_t x_data_num = ctx.Input(kFirstInputIndex)->NumElements();
@@ -150,7 +152,7 @@ uint32_t NoBcastCompute(CpuKernelContext &ctx) {
         }
         break;
       default:
-        KERNEL_LOG_WARN("Invalid type [%d]", static_cast<int32_t>(type));
+        CUST_KERNEL_LOG_WARN(ctx, "Invalid type [%d]", static_cast<int32_t>(type));
         break;
     }
   };
@@ -165,11 +167,12 @@ uint32_t NoBcastCompute(CpuKernelContext &ctx) {
       max_core_num = data_num;
     }
     if (max_core_num == 0) {
-      KERNEL_LOG_ERROR("max_core_num is 0");
+      CUST_KERNEL_LOG_ERROR(ctx, "max_core_num is 0");
       return KERNEL_STATUS_PARAM_INVALID;
     }
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shard_masked_fill),
-                        "MaskedFill Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx,
+                             CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shard_masked_fill),
+                             "MaskedFill Compute failed.");
   } else {
     shard_masked_fill(0, data_num);
   }
@@ -181,9 +184,10 @@ uint32_t BcastCompute(CpuKernelContext &ctx, const Bcast &bcast) {
   auto x_ptr = reinterpret_cast<T *>(ctx.Input(kFirstInputIndex)->GetData());
   auto mask_ptr = reinterpret_cast<bool *>(ctx.Input(kSecondInputIndex)->GetData());
   T value = static_cast<T>(0);
-  KERNEL_CHECK_FALSE(GetValueFromVariousTypesMaskedFill<T>(ctx, value) == KERNEL_STATUS_OK, KERNEL_STATUS_PARAM_INVALID,
-                     "[MaskedFill] value cannot be safely converted to target "
-                     "type without overflow.");
+  CUST_KERNEL_CHECK_FALSE(ctx, GetValueFromVariousTypesMaskedFill<T>(ctx, value) == KERNEL_STATUS_OK,
+                          KERNEL_STATUS_PARAM_INVALID,
+                          "[MaskedFill] value cannot be safely converted to target "
+                          "type without overflow.");
   auto y_ptr = reinterpret_cast<T *>(ctx.Output(kFirstOutputIndex)->GetData());
   int64_t data_num = ctx.Output(kFirstOutputIndex)->NumElements();
   auto shard_masked_fill = [&](int64_t start, int64_t end) {
@@ -201,11 +205,12 @@ uint32_t BcastCompute(CpuKernelContext &ctx, const Bcast &bcast) {
       max_core_num = data_num;
     }
     if (max_core_num == 0) {
-      KERNEL_LOG_ERROR("max_core_num is 0");
+      CUST_KERNEL_LOG_ERROR(ctx, "max_core_num is 0");
       return KERNEL_STATUS_PARAM_INVALID;
     }
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shard_masked_fill),
-                        "MaskedFill Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx,
+                             CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, shard_masked_fill),
+                             "MaskedFill Compute failed.");
   } else {
     shard_masked_fill(0, data_num);
   }
@@ -227,9 +232,9 @@ uint32_t MaskedFillCompute(CpuKernelContext &ctx) {
   if (isNeedBcast) {
     return NoBcastCompute<T>(ctx);
   } else {
-    Bcast bcast(x_shape, mask_shape);
+    Bcast bcast(ctx, x_shape, mask_shape);
     if (!bcast.IsValid()) {
-      KERNEL_LOG_ERROR("[%s] broadcast failed.", ctx.GetOpType().c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "[%s] broadcast failed.", ctx.GetOpType().c_str());
       return KERNEL_STATUS_PARAM_INVALID;
     }
     return BcastCompute<T>(ctx, bcast);
@@ -238,9 +243,9 @@ uint32_t MaskedFillCompute(CpuKernelContext &ctx) {
 }
 
 uint32_t MaskedFillCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kMaskedFillInputNum, kMaskedFillOutputNum),
-                      "MaskedFill check input and output number failed.");
-  KERNEL_HANDLE_ERROR(MaskedFillMaskCheck(ctx), "MaskedFillMaskCheck failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kMaskedFillInputNum, kMaskedFillOutputNum),
+                           "MaskedFill check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, MaskedFillMaskCheck(ctx), "MaskedFillMaskCheck failed.");
   auto data_type = ctx.Input(kFirstInputIndex)->GetDataType();
   switch (data_type) {
     case DT_BOOL:
@@ -272,7 +277,7 @@ uint32_t MaskedFillCpuKernel::Compute(CpuKernelContext &ctx) {
     case DT_COMPLEX128:
       return MaskedFillCompute<std::complex<double>>(ctx);
     default:
-      KERNEL_LOG_ERROR("MaskedFill kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "MaskedFill kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;

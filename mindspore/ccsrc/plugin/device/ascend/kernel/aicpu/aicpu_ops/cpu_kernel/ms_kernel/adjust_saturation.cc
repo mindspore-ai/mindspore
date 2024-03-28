@@ -147,8 +147,7 @@ inline Rgb<Eigen::half> ScalarAdjustSaturation(Rgb<Eigen::half> image, std::floa
                           static_cast<Eigen::half>(out.b)};
 }
 
-inline std::uint32_t ParallelForAdjustSaturation(const CpuKernelContext &ctx, std::int64_t total,
-                                                 std::int64_t per_unit_size,
+inline std::uint32_t ParallelForAdjustSaturation(CpuKernelContext &ctx, std::int64_t total, std::int64_t per_unit_size,
                                                  const std::function<void(std::int64_t, std::int64_t)> &work) {
   if (total > kAdjustSaturationParallelNum)
     return aicpu::CpuKernelUtils::ParallelFor(ctx, total, per_unit_size, work);
@@ -158,7 +157,7 @@ inline std::uint32_t ParallelForAdjustSaturation(const CpuKernelContext &ctx, st
 }
 
 template <typename T>
-inline std::uint32_t ComputeAdjustSaturationKernel(const CpuKernelContext &ctx) {
+inline std::uint32_t ComputeAdjustSaturationKernel(CpuKernelContext &ctx) {
   auto input{static_cast<Rgb<T> *>(ctx.Input(0)->GetData())};
   auto saturation_factor{static_cast<std::float_t *>(ctx.Input(1)->GetData())};
   auto output{static_cast<Rgb<T> *>(ctx.Output(0)->GetData())};
@@ -172,47 +171,47 @@ inline std::uint32_t ComputeAdjustSaturationKernel(const CpuKernelContext &ctx) 
 }
 
 template <typename T>
-inline std::uint32_t ComputeAdjustSaturation(const CpuKernelContext &ctx) {
+inline std::uint32_t ComputeAdjustSaturation(CpuKernelContext &ctx) {
   std::uint32_t result{ComputeAdjustSaturationKernel<T>(ctx)};
   if (result != KERNEL_STATUS_OK) {
-    KERNEL_LOG_ERROR("AdjustSaturation compute failed.");
+    CUST_KERNEL_LOG_ERROR(ctx, "AdjustSaturation compute failed.");
   }
   return result;
 }
 
-inline std::uint32_t ExtraCheckAdjustSaturation(const CpuKernelContext &ctx) {
+inline std::uint32_t ExtraCheckAdjustSaturation(CpuKernelContext &ctx) {
   if (ctx.Input(0)->GetDataType() != ctx.Output(0)->GetDataType()) {
-    KERNEL_LOG_ERROR("The data type of the input [%s] need be the same as the output [%s].",
-                     DTypeStr(ctx.Input(0)->GetDataType()).c_str(), DTypeStr(ctx.Output(0)->GetDataType()).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "The data type of the input [%s] need be the same as the output [%s].",
+                          DTypeStr(ctx.Input(0)->GetDataType()).c_str(),
+                          DTypeStr(ctx.Output(0)->GetDataType()).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (ctx.Input(0)->GetDataSize() != ctx.Output(0)->GetDataSize()) {
-    KERNEL_LOG_ERROR(
-      "The data size of the input [%llu] need be the same as the output "
-      "[%llu].",
-      ctx.Input(0)->GetDataSize(), ctx.Output(0)->GetDataSize());
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "The data size of the input [%llu] need be the same as the output "
+                          "[%llu].",
+                          ctx.Input(0)->GetDataSize(), ctx.Output(0)->GetDataSize());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (ctx.Input(1)->GetDataType() != aicpu::DataType::DT_FLOAT) {
-    KERNEL_LOG_ERROR("The data type of the input [%s] need be [%s].", DTypeStr(ctx.Input(1)->GetDataType()).c_str(),
-                     DTypeStr(aicpu::DataType::DT_FLOAT).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "The data type of the input [%s] need be [%s].",
+                          DTypeStr(ctx.Input(1)->GetDataType()).c_str(), DTypeStr(aicpu::DataType::DT_FLOAT).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (ctx.Input(1)->GetDataSize() != 4) {
-    KERNEL_LOG_ERROR("The data size of the input [%llu] need be [%llu].", ctx.Input(1)->GetDataSize(), 4);
+    CUST_KERNEL_LOG_ERROR(ctx, "The data size of the input [%llu] need be [%llu].", ctx.Input(1)->GetDataSize(), 4);
     return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 
-inline std::uint32_t CheckAdjustSaturation(const CpuKernelContext &ctx, std::uint32_t inputs_num,
-                                           std::uint32_t outputs_num) {
+inline std::uint32_t CheckAdjustSaturation(CpuKernelContext &ctx, std::uint32_t inputs_num, std::uint32_t outputs_num) {
   return NormalCheck(const_cast<CpuKernelContext &>(ctx), kAdjustSaturationInputNum, kAdjustSaturationOutputNum)
            ? KERNEL_STATUS_PARAM_INVALID
            : ExtraCheckAdjustSaturation(ctx);
 }
 
-inline std::uint32_t ComputeAdjustSaturation(const CpuKernelContext &ctx) {
+inline std::uint32_t ComputeAdjustSaturation(CpuKernelContext &ctx) {
   DataType input_type{ctx.Input(0)->GetDataType()};
   switch (input_type) {
     case DT_FLOAT16:
@@ -220,7 +219,7 @@ inline std::uint32_t ComputeAdjustSaturation(const CpuKernelContext &ctx) {
     case DT_FLOAT:
       return ComputeAdjustSaturation<std::float_t>(ctx);
     default:
-      KERNEL_LOG_ERROR("Unsupported input data type [%s].", DTypeStr(input_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Unsupported input data type [%s].", DTypeStr(input_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 }

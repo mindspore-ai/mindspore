@@ -36,8 +36,9 @@ const int64_t kParallelDataNumSameShapeMid = 128 * 1024;
 
 namespace aicpu {
 uint32_t MatrixSolveCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "MatrixSolve check input and output number failed.");
-  KERNEL_HANDLE_ERROR(MatrixSolveDataAndTypeCheck(ctx), "MatrixSolve check input and output params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "MatrixSolve check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, MatrixSolveDataAndTypeCheck(ctx), "MatrixSolve check input and output params failed.");
   auto data_type = ctx.Input(0)->GetDataType();
   switch (data_type) {
     case DT_FLOAT:
@@ -49,25 +50,25 @@ uint32_t MatrixSolveCpuKernel::Compute(CpuKernelContext &ctx) {
     case DT_COMPLEX128:
       return MatrixSolveCompute<std::complex<double>>(ctx);
     default:
-      KERNEL_LOG_ERROR("MatrixSolve kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "MatrixSolve kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 
-uint32_t MatrixSolveCpuKernel::MatrixSolveDataAndTypeCheck(const CpuKernelContext &ctx) {
+uint32_t MatrixSolveCpuKernel::MatrixSolveDataAndTypeCheck(CpuKernelContext &ctx) {
   DataType matrix_type = ctx.Input(0)->GetDataType();
   DataType rhs_type = ctx.Input(1)->GetDataType();
-  KERNEL_CHECK_FALSE((matrix_type == rhs_type), KERNEL_STATUS_PARAM_INVALID,
-                     "The data type of input0 [%s] need be same with "
-                     "input1 [%s].",
-                     DTypeStr(matrix_type).c_str(), DTypeStr(rhs_type).c_str())
+  CUST_KERNEL_CHECK_FALSE(ctx, (matrix_type == rhs_type), KERNEL_STATUS_PARAM_INVALID,
+                          "The data type of input0 [%s] need be same with "
+                          "input1 [%s].",
+                          DTypeStr(matrix_type).c_str(), DTypeStr(rhs_type).c_str())
 
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t MatrixSolveCpuKernel::MatrixSolveCompute(const CpuKernelContext &ctx) {
+uint32_t MatrixSolveCpuKernel::MatrixSolveCompute(CpuKernelContext &ctx) {
   auto input0_tensor = ctx.Input(0);
   auto input0_tensor_shape = input0_tensor->GetTensorShape();
   auto input1_tensor = ctx.Input(1);
@@ -80,11 +81,11 @@ uint32_t MatrixSolveCpuKernel::MatrixSolveCompute(const CpuKernelContext &ctx) {
   int64_t m = input0_shape[input0_dims - 1];
   int64_t size_mm = m * m;
 
-  KERNEL_CHECK_FALSE((input0_shape[input0_dims - 1] == input0_shape[input0_dims - 2]), KERNEL_STATUS_PARAM_INVALID,
-                     "Input[matrix] must be a square matrix")
-  KERNEL_CHECK_FALSE((input1_dims >= 2), KERNEL_STATUS_PARAM_INVALID, "Input[rhs] must be a matrix")
-  KERNEL_CHECK_FALSE(
-    (input0_tensor_shape->GetDimSize(input0_dims - 1) == input1_tensor_shape->GetDimSize(input1_dims - 2)),
+  CUST_KERNEL_CHECK_FALSE(ctx, (input0_shape[input0_dims - 1] == input0_shape[input0_dims - 2]),
+                          KERNEL_STATUS_PARAM_INVALID, "Input[matrix] must be a square matrix")
+  CUST_KERNEL_CHECK_FALSE(ctx, (input1_dims >= 2), KERNEL_STATUS_PARAM_INVALID, "Input[rhs] must be a matrix")
+  CUST_KERNEL_CHECK_FALSE(
+    ctx, (input0_tensor_shape->GetDimSize(input0_dims - 1) == input1_tensor_shape->GetDimSize(input1_dims - 2)),
     KERNEL_STATUS_PARAM_INVALID, "Input matrix and rhs are incompatible")
 
   typedef Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MartixXd;
@@ -123,13 +124,15 @@ uint32_t MatrixSolveCpuKernel::MatrixSolveCompute(const CpuKernelContext &ctx) {
           }
           using RealScalar = typename Eigen::NumTraits<T>::Real;
           RealScalar pivot = lu_decomposition.matrixLU().diagonal().cwiseAbs().minCoeff();
-          KERNEL_CHECK_FALSE((pivot > RealScalar(0)), KERNEL_STATUS_PARAM_INVALID, "Input matrix is not invertible");
+          CUST_KERNEL_CHECK_FALSE(ctx, (pivot > RealScalar(0)), KERNEL_STATUS_PARAM_INVALID,
+                                  "Input matrix is not invertible");
           output.noalias() = lu_decomposition.solve(input1);
         }
         return KERNEL_STATUS_OK;
       };
-      KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, matrix_num, matrix_num / max_core_num, sharder_matrix_solve),
-                          "Matrix Solve Compute failed");
+      CUST_KERNEL_HANDLE_ERROR(
+        ctx, CpuKernelUtils::ParallelFor(ctx, matrix_num, matrix_num / max_core_num, sharder_matrix_solve),
+        "Matrix Solve Compute failed");
 
     } else {
       for (size_t i = 0; i < matrix_num; i++) {
@@ -147,7 +150,8 @@ uint32_t MatrixSolveCpuKernel::MatrixSolveCompute(const CpuKernelContext &ctx) {
         }
         using RealScalar = typename Eigen::NumTraits<T>::Real;
         RealScalar pivot = lu_decomposition.matrixLU().diagonal().cwiseAbs().minCoeff();
-        KERNEL_CHECK_FALSE((pivot > RealScalar(0)), KERNEL_STATUS_PARAM_INVALID, "Input matrix is not invertible");
+        CUST_KERNEL_CHECK_FALSE(ctx, (pivot > RealScalar(0)), KERNEL_STATUS_PARAM_INVALID,
+                                "Input matrix is not invertible");
 
         output.noalias() = lu_decomposition.solve(input1);
       }

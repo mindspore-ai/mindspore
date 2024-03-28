@@ -94,20 +94,21 @@ static inline size_t NearestIndex(const size_t &output_index, const size_t &inpu
 }
 
 uint32_t UpsampleNearest3dCpuKernel::UpsampleNearest3dParamCheck(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check params failed.", kUpsampleNearest3d);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check params failed.",
+                           kUpsampleNearest3d);
   Tensor *x_ptr = ctx.Input(0);
   auto x_dims = x_ptr->GetTensorShape()->GetDims();
-  KERNEL_CHECK_FALSE(x_dims == kDims5, KERNEL_STATUS_PARAM_INVALID,
-                     "Upsample with NHWC format supports tensors with 5 "
-                     "dims. but got %d dim(s).",
-                     x_dims);
+  CUST_KERNEL_CHECK_FALSE(ctx, x_dims == kDims5, KERNEL_STATUS_PARAM_INVALID,
+                          "Upsample with NHWC format supports tensors with 5 "
+                          "dims. but got %d dim(s).",
+                          x_dims);
 
   auto none_list_ptr = ctx.GetAttr("none_list");
-  KERNEL_CHECK_NULLPTR(none_list_ptr, KERNEL_STATUS_PARAM_INVALID, "[%s] get attr 'none_list' failed.",
-                       ctx.GetOpType().c_str());
+  CUST_KERNEL_CHECK_NULLPTR(ctx, none_list_ptr, KERNEL_STATUS_PARAM_INVALID, "[%s] get attr 'none_list' failed.",
+                            ctx.GetOpType().c_str());
   none_list = none_list_ptr->GetListInt();
-  KERNEL_CHECK_FALSE(none_list.size() == 1, KERNEL_STATUS_PARAM_INVALID,
-                     "For 'UpsampleNearest3D', only one of output_size or scales should be specified.");
+  CUST_KERNEL_CHECK_FALSE(ctx, none_list.size() == 1, KERNEL_STATUS_PARAM_INVALID,
+                          "For 'UpsampleNearest3D', only one of output_size or scales should be specified.");
 
   return KERNEL_STATUS_OK;
 }
@@ -133,18 +134,18 @@ uint32_t UpsampleNearest3dCpuKernel::Compute(CpuKernelContext &ctx) {
       res = UpsampleNearest3dCompute<double>(ctx);
       break;
     default:
-      KERNEL_LOG_ERROR("UpsampleNearest3d invalid input type [%s].", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "UpsampleNearest3d invalid input type [%s].", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   if (res != KERNEL_STATUS_OK) {
-    KERNEL_LOG_ERROR("Failed launching UpsampleNearest3d.");
+    CUST_KERNEL_LOG_ERROR(ctx, "Failed launching UpsampleNearest3d.");
     return KERNEL_STATUS_INNER_ERROR;
   }
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t UpsampleNearest3dCpuKernel::UpsampleNearest3dCompute(const CpuKernelContext &ctx) {
+uint32_t UpsampleNearest3dCpuKernel::UpsampleNearest3dCompute(CpuKernelContext &ctx) {
   Tensor *input_x = ctx.Input(0);
   Tensor *output_y = ctx.Output(0);
   std::vector<int64_t> x_shape_ = input_x->GetTensorShape()->GetDimSizes();
@@ -173,9 +174,9 @@ uint32_t UpsampleNearest3dCpuKernel::UpsampleNearest3dCompute(const CpuKernelCon
   size_t y_size = output_y->GetDataSize();
   if (input_depth == output_depth && input_height == output_height && input_width == output_width) {
     auto ret = memcpy_s(y_ptr, y_size, x_ptr, channels * input_depth * input_height * input_width * sizeof(T));
-    KERNEL_CHECK_FALSE((ret == EOK), KERNEL_STATUS_INNER_ERROR,
-                       "UpsampleNearest3D memcpy failed, dst len is %zu, src size is %zu.", y_size,
-                       channels * input_depth * input_height * input_width * sizeof(T));
+    CUST_KERNEL_CHECK_FALSE(ctx, (ret == EOK), KERNEL_STATUS_INNER_ERROR,
+                            "UpsampleNearest3D memcpy failed, dst len is %zu, src size is %zu.", y_size,
+                            channels * input_depth * input_height * input_width * sizeof(T));
     return KERNEL_STATUS_OK;
   }
   auto loop3d = [&](size_t begin, size_t end) {
@@ -198,8 +199,8 @@ uint32_t UpsampleNearest3dCpuKernel::UpsampleNearest3dCompute(const CpuKernelCon
   std::int64_t total{output_y->NumElements()};
   std::uint32_t cores{aicpu::CpuKernelUtils::GetCPUNum(ctx)};
   std::int64_t per_unit_size{total / std::min(std::max(1L, cores - 2L), total)};
-  KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, output_y->NumElements(), per_unit_size, loop3d),
-                      "loop3d Compute failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, output_y->NumElements(), per_unit_size, loop3d),
+                           "loop3d Compute failed.");
   return KERNEL_STATUS_OK;
 }
 

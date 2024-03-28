@@ -28,23 +28,23 @@ const char *kLogUniformCandidateSampler = "LogUniformCandidateSampler";
 
 uint32_t CandidateSamplerKernel::ParseKernelParam(CpuKernelContext &ctx) {
   auto num_true_attr = ctx.GetAttr("num_true");
-  KERNEL_CHECK_NULLPTR(num_true_attr, KERNEL_STATUS_PARAM_INVALID, "Failed to get attr 'num_true'.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, num_true_attr, KERNEL_STATUS_PARAM_INVALID, "Failed to get attr 'num_true'.");
   num_true_ = num_true_attr->GetInt();
 
   auto num_sampled_attr = ctx.GetAttr("num_sampled");
-  KERNEL_CHECK_NULLPTR(num_sampled_attr, KERNEL_STATUS_PARAM_INVALID, "Failed to get attr 'num_sampled'.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, num_sampled_attr, KERNEL_STATUS_PARAM_INVALID, "Failed to get attr 'num_sampled'.");
   num_sampled_ = num_sampled_attr->GetInt();
 
   auto unique_attr = ctx.GetAttr("unique");
-  KERNEL_CHECK_NULLPTR(unique_attr, KERNEL_STATUS_PARAM_INVALID, "Failed to get attr 'unique'.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, unique_attr, KERNEL_STATUS_PARAM_INVALID, "Failed to get attr 'unique'.");
   unique_ = unique_attr->GetBool();
 
   auto range_max_attr = ctx.GetAttr("range_max");
-  KERNEL_CHECK_NULLPTR(range_max_attr, KERNEL_STATUS_PARAM_INVALID, "Failed to get attr 'range_max'.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, range_max_attr, KERNEL_STATUS_PARAM_INVALID, "Failed to get attr 'range_max'.");
   range_max_ = range_max_attr->GetInt();
 
   auto seed_attr = ctx.GetAttr("seed");
-  KERNEL_CHECK_NULLPTR(seed_attr, KERNEL_STATUS_PARAM_INVALID, "Failed to get attr 'seed'.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, seed_attr, KERNEL_STATUS_PARAM_INVALID, "Failed to get attr 'seed'.");
   seed_ = seed_attr->GetInt();
 
   // input0: true_classes
@@ -53,20 +53,20 @@ uint32_t CandidateSamplerKernel::ParseKernelParam(CpuKernelContext &ctx) {
   x_shape_ = x_tensor->GetTensorShape()->GetDimSizes();
 
   if (x_shape_.size() != 2) {
-    AICPU_LOGE("true_classes must be a matrix");
+    CUST_AICPU_LOGE(ctx, "true_classes must be a matrix");
     return KERNEL_STATUS_INNER_ERROR;
   }
   if (x_shape_[1] != num_true_) {
-    AICPU_LOGE(
-      "true_classes must have "
-      "num_true columns, expected: ",
-      x_shape_[1], " was: ", num_true_);
+    CUST_AICPU_LOGE(ctx,
+                    "true_classes must have "
+                    "num_true columns, expected: ",
+                    x_shape_[1], " was: ", num_true_);
     return KERNEL_STATUS_INNER_ERROR;
   }
 
   batch_size_ = x_shape_.front();
   if (x_dtype_ != DT_INT64 && x_dtype_ != DT_INT32) {
-    AICPU_LOGE("invalid type of x_dtype_: %d", x_dtype_);
+    CUST_AICPU_LOGE(ctx, "invalid type of x_dtype_: %d", x_dtype_);
     return KERNEL_STATUS_INNER_ERROR;
   }
 
@@ -74,7 +74,7 @@ uint32_t CandidateSamplerKernel::ParseKernelParam(CpuKernelContext &ctx) {
   auto true_expected_count_tensor = ctx.Output(1);
   true_expected_count_dtype_ = true_expected_count_tensor->GetDataType();
   if (true_expected_count_dtype_ != DT_FLOAT) {
-    AICPU_LOGE("invalid type of true_expected_count_dtype_: %d", true_expected_count_dtype_);
+    CUST_AICPU_LOGE(ctx, "invalid type of true_expected_count_dtype_: %d", true_expected_count_dtype_);
     return KERNEL_STATUS_INNER_ERROR;
   }
   return KERNEL_STATUS_OK;
@@ -104,18 +104,18 @@ uint32_t CandidateSamplerKernel::DoCompute(CpuKernelContext &ctx) {
   } else if (op_type == kLogUniformCandidateSampler) {
     set_sampler(new LogUniformSampler(range_max_));
   } else {
-    KERNEL_LOG_ERROR(
-      "CandidateSampler kernel only support op_type 'UniformSampler' and 'LogUniformSampler', but got %s.",
+    CUST_KERNEL_LOG_ERROR(
+      ctx, "CandidateSampler kernel only support op_type 'UniformSampler' and 'LogUniformSampler', but got %s.",
       op_type.c_str());
     return KERNEL_STATUS_INNER_ERROR;
   }
   if (unique_ && num_sampled_ > sampler_->range()) {
-    AICPU_LOGE("For AICPU ops ", kernel_name_, ", the sampler's range is too small.");
+    CUST_AICPU_LOGE(ctx, "For AICPU ops ", kernel_name_, ", the sampler's range is too small.");
     return KERNEL_STATUS_INNER_ERROR;
   }
 
-  sampler_->SampleBatchGetExpectedCount(unique_, rng_seed, &sampled_candidate, &sampled_expected_count, true_candidate,
-                                        &true_expected_count);
+  sampler_->SampleBatchGetExpectedCount(ctx, unique_, rng_seed, &sampled_candidate, &sampled_expected_count,
+                                        true_candidate, &true_expected_count);
 
   std::transform(sampled_candidate.begin(), sampled_candidate.end(), sampled_candidate_raw.begin(),
                  [&](int64_t x) { return static_cast<T>(x); });
@@ -129,7 +129,7 @@ uint32_t CandidateSamplerKernel::DoCompute(CpuKernelContext &ctx) {
     memcpy_s(reinterpret_cast<void *>(ctx.Output(2)->GetData()), num_sampled_ * sizeof(float),
              reinterpret_cast<void *>(&sampled_expected_count.front()), sampled_expected_count.size() * sizeof(float));
   if (ret1 != EOK || ret2 != EOK || ret3 != EOK) {
-    KERNEL_LOG_ERROR("For 'CandidateSampler', memcpy_s failed.");
+    CUST_KERNEL_LOG_ERROR(ctx, "For 'CandidateSampler', memcpy_s failed.");
     return KERNEL_STATUS_INNER_ERROR;
   }
   return KERNEL_STATUS_OK;
@@ -147,7 +147,7 @@ uint32_t CandidateSamplerKernel::Compute(CpuKernelContext &ctx) {
       break;
     }
     default: {
-      AICPU_LOGE("CandidateSampler op doesn't support input tensor types.");
+      CUST_AICPU_LOGE(ctx, "CandidateSampler op doesn't support input tensor types.");
       return KERNEL_STATUS_INNER_ERROR;
     }
   }

@@ -45,33 +45,33 @@ class SparseDenseCwiseOpKernel : public CpuKernel {
  protected:
   uint32_t Compute(CpuKernelContext &ctx) override = 0;
 
-  static uint32_t CheckParams(const CpuKernelContext &ctx);
+  static uint32_t CheckParams(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t SparseDenseCwiseOpSpecialCompute(BcastShapeType type, const CpuKernelContext &ctx);
+  uint32_t SparseDenseCwiseOpSpecialCompute(BcastShapeType type, CpuKernelContext &ctx);
   template <typename T>
-  uint32_t SparseDenseCwiseOpSpecialComputeComplex(BcastShapeType type, const CpuKernelContext &ctx);
+  uint32_t SparseDenseCwiseOpSpecialComputeComplex(BcastShapeType type, CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t ComputeOp(const CpuKernelContext &ctx);
+  uint32_t ComputeOp(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t ComputeOpComplex(const CpuKernelContext &ctx);
+  uint32_t ComputeOpComplex(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t SparseDenseCwiseOpNoBcastCompute(const CpuKernelContext &ctx);
+  uint32_t SparseDenseCwiseOpNoBcastCompute(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t SparseDenseCwiseOpNoBcastComputeComplex(const CpuKernelContext &ctx);
+  uint32_t SparseDenseCwiseOpNoBcastComputeComplex(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t SparseDenseCwiseOpBcastCompute(const CpuKernelContext &ctx);
+  uint32_t SparseDenseCwiseOpBcastCompute(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t SparseDenseCwiseOpBcastComputeComplex(const CpuKernelContext &ctx);
+  uint32_t SparseDenseCwiseOpBcastComputeComplex(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t SparseDenseCwiseOpCompute(const CpuKernelContext &ctx);
+  uint32_t SparseDenseCwiseOpCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

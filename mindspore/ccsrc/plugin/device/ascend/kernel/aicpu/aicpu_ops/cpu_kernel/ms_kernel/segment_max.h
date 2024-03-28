@@ -29,7 +29,7 @@ class SegmentMaxCpuKernel : public CpuKernel {
 
  private:
   template <typename T1, typename T2>
-  static uint32_t SegmentMaxCompute(const CpuKernelContext &ctx);
+  static uint32_t SegmentMaxCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

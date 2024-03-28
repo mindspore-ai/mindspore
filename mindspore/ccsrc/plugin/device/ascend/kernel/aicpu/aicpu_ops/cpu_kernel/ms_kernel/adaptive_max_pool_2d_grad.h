@@ -27,7 +27,7 @@ class AdaptiveMaxPool2dGrad : public CpuKernel {
 
  private:
   template <typename SCALAR_T>
-  uint32_t DoCompute(const CpuKernelContext &ctx, DataType indices_type);
+  uint32_t DoCompute(CpuKernelContext &ctx, DataType indices_type);
 };
 }  // namespace aicpu
 #endif  // AICPU_KERNELS_NORMALIZED_ADAPTIVE_MAX_POOL2D_GRAD_H

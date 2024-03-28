@@ -23,6 +23,7 @@
 #include "context/inc/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
+namespace aicpu {
 namespace {
 constexpr uint32_t kOutputNum = 1;
 constexpr uint32_t kInputNum = 2;
@@ -30,25 +31,25 @@ constexpr uint64_t _8k = 8 * 1024;
 constexpr uint64_t _2k = 2 * 1024;
 const char *kSegmentMin = "SegmentMin";
 
-#define SEGMENT_MIN_COMPUTE_CASE(DTYPE, TYPE, CTX, STYPE)                                                  \
-  case (DTYPE): {                                                                                          \
-    uint32_t res;                                                                                          \
-    switch (STYPE) {                                                                                       \
-      case DT_INT32:                                                                                       \
-        res = SegmentMinCompute<TYPE, int32_t>(CTX);                                                       \
-        break;                                                                                             \
-      case DT_INT64:                                                                                       \
-        res = SegmentMinCompute<TYPE, int64_t>(CTX);                                                       \
-        break;                                                                                             \
-      default:                                                                                             \
-        KERNEL_LOG_ERROR("SegmentMin kernel segment_ids type [%s] not support.", DTypeStr(STYPE).c_str()); \
-        return KERNEL_STATUS_PARAM_INVALID;                                                                \
-    }                                                                                                      \
-    if (res != KERNEL_STATUS_OK) {                                                                         \
-      KERNEL_LOG_ERROR("SegmentMin kernel compute failed.");                                               \
-      return res;                                                                                          \
-    }                                                                                                      \
-    break;                                                                                                 \
+#define SEGMENT_MIN_COMPUTE_CASE(DTYPE, TYPE, CTX, STYPE)                                                            \
+  case (DTYPE): {                                                                                                    \
+    uint32_t res;                                                                                                    \
+    switch (STYPE) {                                                                                                 \
+      case DT_INT32:                                                                                                 \
+        res = SegmentMinCompute<TYPE, int32_t>(CTX);                                                                 \
+        break;                                                                                                       \
+      case DT_INT64:                                                                                                 \
+        res = SegmentMinCompute<TYPE, int64_t>(CTX);                                                                 \
+        break;                                                                                                       \
+      default:                                                                                                       \
+        CUST_KERNEL_LOG_ERROR(ctx, "SegmentMin kernel segment_ids type [%s] not support.", DTypeStr(STYPE).c_str()); \
+        return KERNEL_STATUS_PARAM_INVALID;                                                                          \
+    }                                                                                                                \
+    if (res != KERNEL_STATUS_OK) {                                                                                   \
+      CUST_KERNEL_LOG_ERROR(ctx, "SegmentMin kernel compute failed.");                                               \
+      return res;                                                                                                    \
+    }                                                                                                                \
+    break;                                                                                                           \
   }
 
 template <typename T1, typename T2>
@@ -68,10 +69,10 @@ void InnerCompute(const uint64_t start_len, const uint64_t end_len, const uint64
   }
 }
 }  // namespace
-namespace aicpu {
 uint32_t SegmentMinCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "SegmentMin check input and output number failed.");
-  KERNEL_HANDLE_ERROR(SegmentMinCheck(ctx), "SegmentMin check params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "SegmentMin check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, SegmentMinCheck(ctx), "SegmentMin check params failed.");
   auto type_data = ctx.Input(0)->GetDataType();
   auto type_seg = ctx.Input(1)->GetDataType();
   switch (type_data) {
@@ -87,14 +88,14 @@ uint32_t SegmentMinCpuKernel::Compute(CpuKernelContext &ctx) {
     SEGMENT_MIN_COMPUTE_CASE(DT_FLOAT, float, ctx, type_seg)
     SEGMENT_MIN_COMPUTE_CASE(DT_DOUBLE, double, ctx, type_seg)
     default:
-      KERNEL_LOG_ERROR("SegmentMin kernel data type [%s] not support.", DTypeStr(type_data).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "SegmentMin kernel data type [%s] not support.", DTypeStr(type_data).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 
 template <typename T>
-uint32_t SegmentMinCpuKernel::OutputInit(const CpuKernelContext &ctx, const uint64_t output_len, T *const output_data) {
+uint32_t SegmentMinCpuKernel::OutputInit(CpuKernelContext &ctx, const uint64_t output_len, T *const output_data) {
   // 输出初始化为0
   if (output_len <= _8k) {
     for (uint64_t i = 0; i < output_len; i++) output_data[i] = static_cast<T>(0);
@@ -108,13 +109,13 @@ uint32_t SegmentMinCpuKernel::OutputInit(const CpuKernelContext &ctx, const uint
   auto init = [&](size_t start, size_t end) {
     for (auto i = start; i < end; i++) output_data[i] = static_cast<T>(0);
   };
-  KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, output_len, output_len / max_core, init),
-                      "Initialize value of output failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, output_len, output_len / max_core, init),
+                           "Initialize value of output failed.");
   return KERNEL_STATUS_OK;
 }
 
 template <class T1, class T2>
-uint32_t SegmentMinCpuKernel::SegmentMinCompute(const CpuKernelContext &ctx) {
+uint32_t SegmentMinCpuKernel::SegmentMinCompute(CpuKernelContext &ctx) {
   auto data = ctx.Input(0);  // tensor*
   auto segment_ids = ctx.Input(1);
   auto output = ctx.Output(0);
@@ -156,8 +157,8 @@ uint32_t SegmentMinCpuKernel::SegmentMinCompute(const CpuKernelContext &ctx) {
         InnerCompute(0, len2, st, ed, len2, data_data, output_data, output_start);
       }
     };
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, nums_len, nums_len / max_core, mt_for_nums),
-                        "SegmentMin Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, nums_len, nums_len / max_core, mt_for_nums),
+                             "SegmentMin Compute failed.");
   } else {
     for (uint64_t i = 0; i < nums_len; ++i) {
       uint64_t st = ranges[i].first;
@@ -172,35 +173,37 @@ uint32_t SegmentMinCpuKernel::SegmentMinCompute(const CpuKernelContext &ctx) {
         auto mt_for_len2 = [&](size_t start_len, size_t end_len) {
           InnerCompute(start_len, end_len, st, ed, len2, data_data, output_data, output_start);
         };
-        KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, len2, len2 / max_core, mt_for_len2),
-                            "SegmentMin Compute failed.");
+        CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, len2, len2 / max_core, mt_for_len2),
+                                 "SegmentMin Compute failed.");
       }
     }
   }
   return KERNEL_STATUS_OK;
 }
-uint32_t SegmentMinCpuKernel::SegmentMinCheck(const CpuKernelContext &ctx) {
+uint32_t SegmentMinCpuKernel::SegmentMinCheck(CpuKernelContext &ctx) {
   // inspect the input & output pointer
-  KERNEL_CHECK_NULLPTR(ctx.Input(0), KERNEL_STATUS_PARAM_INVALID, "Get input 0 failed.")
-  KERNEL_CHECK_NULLPTR(ctx.Input(1), KERNEL_STATUS_PARAM_INVALID, "Get input 1 failed.")
-  KERNEL_CHECK_NULLPTR(ctx.Output(0), KERNEL_STATUS_PARAM_INVALID, "Get output failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.Input(0), KERNEL_STATUS_PARAM_INVALID, "Get input 0 failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.Input(1), KERNEL_STATUS_PARAM_INVALID, "Get input 1 failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.Output(0), KERNEL_STATUS_PARAM_INVALID, "Get output failed.")
   // inspect data in input & output
-  KERNEL_CHECK_NULLPTR(ctx.Input(0)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 0 data failed.")
-  KERNEL_CHECK_NULLPTR(ctx.Input(1)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 1 data failed.")
-  KERNEL_CHECK_NULLPTR(ctx.Output(0)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output 0 data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.Input(0)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 0 data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.Input(1)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input 1 data failed.")
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ctx.Output(0)->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output 0 data failed.")
   // regular test
-  KERNEL_CHECK_FALSE(CheckType(ctx.Input(1)), KERNEL_STATUS_PARAM_INVALID,
-                     "The data type of segment_ids should be DT_INT32 or DT_INT64.")
-  KERNEL_CHECK_FALSE(CheckDim(ctx.Input(1)), KERNEL_STATUS_PARAM_INVALID, "The dimension of segment_ids should be 1.")
-  KERNEL_CHECK_FALSE(CheckSorted(ctx.Input(1)), KERNEL_STATUS_PARAM_INVALID,
-                     "segment_ids should be ascending and no negative number in it.")
-  KERNEL_CHECK_FALSE(CheckLength(ctx.Input(1), ctx.Input(0)), KERNEL_STATUS_PARAM_INVALID,
-                     "The length of segment_ids should be equal to the length "
-                     "of the first dimension of the data")
-  KERNEL_LOG_DEBUG(
-    "SegmentMinCpuKernel[%s], input0: size[%llu];"
-    "input1: size[%llu], output: size[%llu].",
-    ctx.GetOpType().c_str(), ctx.Input(0)->GetDataSize(), ctx.Input(1)->GetDataSize(), ctx.Output(0)->GetDataSize());
+  CUST_KERNEL_CHECK_FALSE(ctx, CheckType(ctx.Input(1)), KERNEL_STATUS_PARAM_INVALID,
+                          "The data type of segment_ids should be DT_INT32 or DT_INT64.")
+  CUST_KERNEL_CHECK_FALSE(ctx, CheckDim(ctx.Input(1)), KERNEL_STATUS_PARAM_INVALID,
+                          "The dimension of segment_ids should be 1.")
+  CUST_KERNEL_CHECK_FALSE(ctx, CheckSorted(ctx.Input(1)), KERNEL_STATUS_PARAM_INVALID,
+                          "segment_ids should be ascending and no negative number in it.")
+  CUST_KERNEL_CHECK_FALSE(ctx, CheckLength(ctx.Input(1), ctx.Input(0)), KERNEL_STATUS_PARAM_INVALID,
+                          "The length of segment_ids should be equal to the length "
+                          "of the first dimension of the data")
+  CUST_KERNEL_LOG_DEBUG(ctx,
+                        "SegmentMinCpuKernel[%s], input0: size[%llu];"
+                        "input1: size[%llu], output: size[%llu].",
+                        ctx.GetOpType().c_str(), ctx.Input(0)->GetDataSize(), ctx.Input(1)->GetDataSize(),
+                        ctx.Output(0)->GetDataSize());
   return KERNEL_STATUS_OK;
 }
 bool SegmentMinCpuKernel::CheckType(Tensor *t) {

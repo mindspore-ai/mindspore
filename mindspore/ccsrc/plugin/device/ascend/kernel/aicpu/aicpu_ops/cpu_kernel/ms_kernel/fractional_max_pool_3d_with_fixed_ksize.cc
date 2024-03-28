@@ -40,25 +40,25 @@ namespace aicpu {
 uint32_t FractionalMaxPool3DWithFixedKsizeCpuKernel::GetInputAndCheck(CpuKernelContext &ctx) {
   Tensor *input = ctx.Input(0);
   Tensor *random_samples = ctx.Input(1);
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum),
-                      "FractionalMaxPool3DWithFixedKsize check params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "FractionalMaxPool3DWithFixedKsize check params failed.");
   AttrValue *output_shape = ctx.GetAttr("output_shape");
-  KERNEL_CHECK_NULLPTR(output_shape, KERNEL_STATUS_PARAM_INVALID, "[%s] get attr:output_shape failed.",
-                       kFractionalMaxPool3DWithFixedKsize);
+  CUST_KERNEL_CHECK_NULLPTR(ctx, output_shape, KERNEL_STATUS_PARAM_INVALID, "[%s] get attr:output_shape failed.",
+                            kFractionalMaxPool3DWithFixedKsize);
   output_size = output_shape->GetListInt();
-  KERNEL_CHECK_FALSE(output_size.size() == 1 || output_size.size() == Num3, KERNEL_STATUS_PARAM_INVALID,
-                     "FractionalMaxPool3DWithFixedKsize: output_size must be equal to 1 or 3.");
+  CUST_KERNEL_CHECK_FALSE(ctx, output_size.size() == 1 || output_size.size() == Num3, KERNEL_STATUS_PARAM_INVALID,
+                          "FractionalMaxPool3DWithFixedKsize: output_size must be equal to 1 or 3.");
   if (output_size.size() == 1) {
     for (int64_t i = 0; i < Num3; i++) {
       output_size[i] = output_size[0];
     }
   }
   AttrValue *ksize = ctx.GetAttr("ksize");
-  KERNEL_CHECK_NULLPTR(ksize, KERNEL_STATUS_PARAM_INVALID, "[%s] get attr:ksize failed.",
-                       kFractionalMaxPool3DWithFixedKsize);
+  CUST_KERNEL_CHECK_NULLPTR(ctx, ksize, KERNEL_STATUS_PARAM_INVALID, "[%s] get attr:ksize failed.",
+                            kFractionalMaxPool3DWithFixedKsize);
   kernel_size = ksize->GetListInt();
-  KERNEL_CHECK_FALSE(kernel_size.size() == 1 || kernel_size.size() == Num3, KERNEL_STATUS_PARAM_INVALID,
-                     "FractionalMaxPool3DWithFixedKsize: kernel_size must be equal to 1 or 3.");
+  CUST_KERNEL_CHECK_FALSE(ctx, kernel_size.size() == 1 || kernel_size.size() == Num3, KERNEL_STATUS_PARAM_INVALID,
+                          "FractionalMaxPool3DWithFixedKsize: kernel_size must be equal to 1 or 3.");
   if (kernel_size.size() == 1) {
     for (int64_t i = 0; i < Num3; i++) {
       kernel_size[i] = kernel_size[0];
@@ -68,13 +68,13 @@ uint32_t FractionalMaxPool3DWithFixedKsizeCpuKernel::GetInputAndCheck(CpuKernelC
   input_shape = input->GetTensorShape()->GetDimSizes();
   int64_t input_dims = input_shape.size();
   for (int64_t i = 0; i < input_dims; i++) {
-    KERNEL_CHECK_FALSE((input->GetTensorShape()->GetDimSize(i) > 0), KERNEL_STATUS_PARAM_INVALID,
-                       "FractionalMaxPool3DWithFixedKsize: expected input to have non-empty spatial dimensions, "
-                       "but input has sizes [%d] with dimension [%d] being empty.",
-                       input_dims, i);
+    CUST_KERNEL_CHECK_FALSE(ctx, (input->GetTensorShape()->GetDimSize(i) > 0), KERNEL_STATUS_PARAM_INVALID,
+                            "FractionalMaxPool3DWithFixedKsize: expected input to have non-empty spatial dimensions, "
+                            "but input has sizes [%d] with dimension [%d] being empty.",
+                            input_dims, i);
   }
-  KERNEL_CHECK_FALSE((input_dims == Num4 || input_dims == Num5), KERNEL_STATUS_PARAM_INVALID,
-                     "Non-empty [4D] or [5D] (batch mode) tensor expected for input.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (input_dims == Num4 || input_dims == Num5), KERNEL_STATUS_PARAM_INVALID,
+                          "Non-empty [4D] or [5D] (batch mode) tensor expected for input.");
 
   return KERNEL_STATUS_OK;
 }
@@ -164,23 +164,23 @@ uint32_t FractionalMaxPool3DWithFixedKsizeCpuKernel::FractionalMaxPool3DWithFixe
       inputW = input_shape[Num2];
     }
   }
-  KERNEL_CHECK_FALSE((outputT + kernelsizeT - 1 < inputT), KERNEL_STATUS_PARAM_INVALID,
-                     "FractionalMaxPool3DWithFixedKsize out(): pool time [%d],"
-                     "too large relative to input time [%d].",
-                     kernelsizeT, inputT);
-  KERNEL_CHECK_FALSE((outputH + kernelsizeH - 1 < inputH), KERNEL_STATUS_PARAM_INVALID,
-                     "FractionalMaxPool3DWithFixedKsize out(): pool height [%d],"
-                     "too large relative to input height [%d].",
-                     kernelsizeH, inputH);
-  KERNEL_CHECK_FALSE((outputW + kernelsizeW - 1 < inputW), KERNEL_STATUS_PARAM_INVALID,
-                     "FractionalMaxPool3DWithFixedKsize out(): pool width [%d],"
-                     "too large relative to input width [%d].",
-                     kernelsizeW, inputW);
-  KERNEL_CHECK_FALSE((random_samples_dims == Num3), KERNEL_STATUS_PARAM_INVALID,
-                     "FractionalMaxPool3DWithFixedKsize: random_samples' size must be equal to 3.");
-  KERNEL_CHECK_FALSE((random_samples_shape[Num2] == Num3), KERNEL_STATUS_PARAM_INVALID,
-                     "FractionalMaxPool3DWithFixedKsize: The third dim of random_samples must be 3, but got [%d].",
-                     random_samples_shape[Num2]);
+  CUST_KERNEL_CHECK_FALSE(ctx, (outputT + kernelsizeT - 1 < inputT), KERNEL_STATUS_PARAM_INVALID,
+                          "FractionalMaxPool3DWithFixedKsize out(): pool time [%d],"
+                          "too large relative to input time [%d].",
+                          kernelsizeT, inputT);
+  CUST_KERNEL_CHECK_FALSE(ctx, (outputH + kernelsizeH - 1 < inputH), KERNEL_STATUS_PARAM_INVALID,
+                          "FractionalMaxPool3DWithFixedKsize out(): pool height [%d],"
+                          "too large relative to input height [%d].",
+                          kernelsizeH, inputH);
+  CUST_KERNEL_CHECK_FALSE(ctx, (outputW + kernelsizeW - 1 < inputW), KERNEL_STATUS_PARAM_INVALID,
+                          "FractionalMaxPool3DWithFixedKsize out(): pool width [%d],"
+                          "too large relative to input width [%d].",
+                          kernelsizeW, inputW);
+  CUST_KERNEL_CHECK_FALSE(ctx, (random_samples_dims == Num3), KERNEL_STATUS_PARAM_INVALID,
+                          "FractionalMaxPool3DWithFixedKsize: random_samples' size must be equal to 3.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (random_samples_shape[Num2] == Num3), KERNEL_STATUS_PARAM_INVALID,
+                          "FractionalMaxPool3DWithFixedKsize: The third dim of random_samples must be 3, but got [%d].",
+                          random_samples_shape[Num2]);
   if (input_dims == Num4) {
     uint32_t min_core_num = 1;
     uint32_t max_core_num = std::max(min_core_num, aicpu::CpuKernelUtils::GetCPUNum(ctx));
@@ -188,7 +188,7 @@ uint32_t FractionalMaxPool3DWithFixedKsizeCpuKernel::FractionalMaxPool3DWithFixe
       max_core_num = inputC;
     }
     if (max_core_num == 0) {
-      KERNEL_LOG_ERROR("max_core_num should not be 0.");
+      CUST_KERNEL_LOG_ERROR(ctx, "max_core_num should not be 0.");
     }
     CpuKernelUtils::ParallelFor(ctx, inputC, inputC / max_core_num, [&](int64_t start, int64_t end) {
       for (auto plane = start; plane < end; ++plane) {
@@ -224,12 +224,12 @@ uint32_t FractionalMaxPool3DWithFixedKsizeCpuKernel::FractionalMaxPool3DWithFixe
               for (t2 = inputTStart; t2 < inputTStart + kernelsizeT; ++t2) {
                 for (h2 = inputHStart; h2 < inputHStart + kernelsizeH; ++h2) {
                   for (w2 = inputWStart; w2 < inputWStart + kernelsizeW; ++w2) {
-                    KERNEL_CHECK_FALSE(t2 >= 0 && t2 < inputT, KERNEL_STATUS_PARAM_INVALID,
-                                       "FractionalMaxPool3DWithFixedKsize index T value is illegal.");
-                    KERNEL_CHECK_FALSE(h2 >= 0 && h2 < inputH, KERNEL_STATUS_PARAM_INVALID,
-                                       "FractionalMaxPool3DWithFixedKsize index H value is illegal.");
-                    KERNEL_CHECK_FALSE(w2 >= 0 && w2 < inputW, KERNEL_STATUS_PARAM_INVALID,
-                                       "FractionalMaxPool3DWithFixedKsize index W value is illegal.");
+                    CUST_KERNEL_CHECK_FALSE(ctx, t2 >= 0 && t2 < inputT, KERNEL_STATUS_PARAM_INVALID,
+                                            "FractionalMaxPool3DWithFixedKsize index T value is illegal.");
+                    CUST_KERNEL_CHECK_FALSE(ctx, h2 >= 0 && h2 < inputH, KERNEL_STATUS_PARAM_INVALID,
+                                            "FractionalMaxPool3DWithFixedKsize index H value is illegal.");
+                    CUST_KERNEL_CHECK_FALSE(ctx, w2 >= 0 && w2 < inputW, KERNEL_STATUS_PARAM_INVALID,
+                                            "FractionalMaxPool3DWithFixedKsize index W value is illegal.");
                     argmax_t planeIndex = t2 * inputH * inputW + h2 * inputW + w2;
                     scalar_t val = inputForPlane[planeIndex];
                     if (val > maxVal || std::isnan(static_cast<double>(val))) {
@@ -255,7 +255,7 @@ uint32_t FractionalMaxPool3DWithFixedKsizeCpuKernel::FractionalMaxPool3DWithFixe
       max_core_num = inputN;
     }
     if (max_core_num == 0) {
-      KERNEL_LOG_ERROR("max_core_num should not be 0.");
+      CUST_KERNEL_LOG_ERROR(ctx, "max_core_num should not be 0.");
     }
     CpuKernelUtils::ParallelFor(ctx, inputN, inputN / max_core_num, [&](int64_t start, int64_t end) {
       for (auto batch = start; batch < end; ++batch) {
@@ -296,12 +296,12 @@ uint32_t FractionalMaxPool3DWithFixedKsizeCpuKernel::FractionalMaxPool3DWithFixe
                 for (t2 = inputTStart; t2 < inputTStart + kernelsizeT; ++t2) {
                   for (h2 = inputHStart; h2 < inputHStart + kernelsizeH; ++h2) {
                     for (w2 = inputWStart; w2 < inputWStart + kernelsizeW; ++w2) {
-                      KERNEL_CHECK_FALSE(t2 >= 0 && t2 < inputT, KERNEL_STATUS_PARAM_INVALID,
-                                         "FractionalMaxPool3DWithFixedKsize index T value is illegal.");
-                      KERNEL_CHECK_FALSE(h2 >= 0 && h2 < inputH, KERNEL_STATUS_PARAM_INVALID,
-                                         "FractionalMaxPool3DWithFixedKsize index H value is illegal.");
-                      KERNEL_CHECK_FALSE(w2 >= 0 && w2 < inputW, KERNEL_STATUS_PARAM_INVALID,
-                                         "FractionalMaxPool3DWithFixedKsize index W value is illegal.");
+                      CUST_KERNEL_CHECK_FALSE(ctx, t2 >= 0 && t2 < inputT, KERNEL_STATUS_PARAM_INVALID,
+                                              "FractionalMaxPool3DWithFixedKsize index T value is illegal.");
+                      CUST_KERNEL_CHECK_FALSE(ctx, h2 >= 0 && h2 < inputH, KERNEL_STATUS_PARAM_INVALID,
+                                              "FractionalMaxPool3DWithFixedKsize index H value is illegal.");
+                      CUST_KERNEL_CHECK_FALSE(ctx, w2 >= 0 && w2 < inputW, KERNEL_STATUS_PARAM_INVALID,
+                                              "FractionalMaxPool3DWithFixedKsize index W value is illegal.");
                       argmax_t planeIndex = t2 * inputH * inputW + h2 * inputW + w2;
                       scalar_t val = inputForPlane[planeIndex];
                       if (val > maxVal || std::isnan(static_cast<double>(val))) {
@@ -333,7 +333,7 @@ uint32_t FractionalMaxPool3DWithFixedKsizeCpuKernel::DoComputeWithArgmaxType(Cpu
     case DT_INT64:
       return FractionalMaxPool3DWithFixedKsizeOutCpuTemplate<scalar_t, random_sample_t, int64_t>(ctx);
     default:
-      KERNEL_LOG_ERROR("argmax_type [%s] must be in [{DT_INT32, DT_INT64}].", DTypeStr(argmax_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "argmax_type [%s] must be in [{DT_INT32, DT_INT64}].", DTypeStr(argmax_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 }
@@ -350,14 +350,14 @@ uint32_t FractionalMaxPool3DWithFixedKsizeCpuKernel::DoComputeWithRandomSamplesT
     case DT_DOUBLE:
       return DoComputeWithArgmaxType<scalar_t, double>(ctx, argmax_type);
     default:
-      KERNEL_LOG_ERROR("random_samples_type [%s] must be in [{DT_FLOAT16, DT_FLOAT, DT_DOUBLE}].",
-                       DTypeStr(random_samples_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "random_samples_type [%s] must be in [{DT_FLOAT16, DT_FLOAT, DT_DOUBLE}].",
+                            DTypeStr(random_samples_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 }
 
 uint32_t FractionalMaxPool3DWithFixedKsizeCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(GetInputAndCheck(ctx), "FractionalMaxPool3DWithFixedKsize check params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, GetInputAndCheck(ctx), "FractionalMaxPool3DWithFixedKsize check params failed.");
   auto data_type = ctx.Input(0)->GetDataType();
   auto random_samples_type = ctx.Input(1)->GetDataType();
   switch (data_type) {
@@ -372,8 +372,8 @@ uint32_t FractionalMaxPool3DWithFixedKsizeCpuKernel::Compute(CpuKernelContext &c
     case DT_INT64:
       return DoComputeWithRandomSamplesType<int64_t>(ctx, random_samples_type);
     default:
-      KERNEL_LOG_ERROR("FractionalMaxPool3DWithFixedKsize kernel data type [%s] not support.",
-                       DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "FractionalMaxPool3DWithFixedKsize kernel data type [%s] not support.",
+                            DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 

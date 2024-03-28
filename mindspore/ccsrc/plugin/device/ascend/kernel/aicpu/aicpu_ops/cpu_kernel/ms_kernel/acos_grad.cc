@@ -35,8 +35,9 @@ uint32_t max_core_num = 1;
 namespace aicpu {
 uint32_t AcosGradCpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "AcosGrad check input and output number failed.");
-  KERNEL_HANDLE_ERROR(AcosGradParamCheck(ctx), "AcosGrad check params failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "AcosGrad check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, AcosGradParamCheck(ctx), "AcosGrad check params failed.");
   auto data_type = ctx.Input(0)->GetDataType();
   data_num = ctx.Output(0)->NumElements();
   if (data_num >= kParallelDataNum) {
@@ -57,28 +58,29 @@ uint32_t AcosGradCpuKernel::Compute(CpuKernelContext &ctx) {
     case DT_DOUBLE:
       return AcosGradComputeRealType<double>(ctx);
     default:
-      KERNEL_LOG_ERROR("AcosGrad kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "AcosGrad kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 
   return KERNEL_STATUS_OK;
 }
 
-uint32_t AcosGradCpuKernel::AcosGradParamCheck(const CpuKernelContext &ctx) {
+uint32_t AcosGradCpuKernel::AcosGradParamCheck(CpuKernelContext &ctx) {
   // the non null of input_0, input_1, output has been verified in NormalCheck
   Tensor *input_y = ctx.Input(0);
   Tensor *input_dy = ctx.Input(1);
   Tensor *output = ctx.Output(0);
   DataType input_y_type = input_y->GetDataType();
   DataType input_dy_type = input_dy->GetDataType();
-  KERNEL_CHECK_FALSE((input_y_type == input_dy_type), KERNEL_STATUS_PARAM_INVALID,
-                     "The data type of y [%s] need be same with "
-                     "dy [%s].",
-                     DTypeStr(input_y_type).c_str(), DTypeStr(input_dy_type).c_str())
-  KERNEL_LOG_DEBUG(
-    "AcosGradCpuKernel[%s], y: size[%llu];"
-    "dy: size[%llu], z: size[%llu].",
-    ctx.GetOpType().c_str(), input_y->GetDataSize(), input_dy->GetDataSize(), output->GetDataSize());
+  CUST_KERNEL_CHECK_FALSE(ctx, (input_y_type == input_dy_type), KERNEL_STATUS_PARAM_INVALID,
+                          "The data type of y [%s] need be same with "
+                          "dy [%s].",
+                          DTypeStr(input_y_type).c_str(), DTypeStr(input_dy_type).c_str())
+  CUST_KERNEL_LOG_DEBUG(ctx,
+                        "AcosGradCpuKernel[%s], y: size[%llu];"
+                        "dy: size[%llu], z: size[%llu].",
+                        ctx.GetOpType().c_str(), input_y->GetDataSize(), input_dy->GetDataSize(),
+                        output->GetDataSize());
   return KERNEL_STATUS_OK;
 }
 
@@ -104,7 +106,7 @@ void AcosGradCpuKernel::SpecialCompute(int64_t start, int64_t end, const T *inpu
 }
 
 template <typename T>
-uint32_t AcosGradCpuKernel::AcosGradComputeRealType(const CpuKernelContext &ctx) {
+uint32_t AcosGradCpuKernel::AcosGradComputeRealType(CpuKernelContext &ctx) {
   auto in0 = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto in1 = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   auto out = reinterpret_cast<T *>(ctx.Output(0)->GetData());
@@ -112,10 +114,11 @@ uint32_t AcosGradCpuKernel::AcosGradComputeRealType(const CpuKernelContext &ctx)
   if (data_num >= kParallelDataNum) {
     auto sharder_acos_grad = [&](int64_t start, int64_t end) { SpecialCompute<T>(start, end, in0, in1, out); };
     if (max_core_num == 0) {
-      KERNEL_LOG_ERROR("max core num could not be 0");
+      CUST_KERNEL_LOG_ERROR(ctx, "max core num could not be 0");
     }
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_acos_grad),
-                        "AcosGrad Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx,
+                             CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_acos_grad),
+                             "AcosGrad Compute failed.");
   } else {
     SpecialCompute<T>(0, data_num, in0, in1, out);
   }
@@ -146,17 +149,18 @@ void AcosGradCpuKernel::SpecialComputeFP16(int64_t start, int64_t end, const T *
 }
 
 template <typename T>
-uint32_t AcosGradCpuKernel::AcosGradComputeFP16(const CpuKernelContext &ctx) {
+uint32_t AcosGradCpuKernel::AcosGradComputeFP16(CpuKernelContext &ctx) {
   auto in0 = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   auto in1 = reinterpret_cast<T *>(ctx.Input(1)->GetData());
   auto out = reinterpret_cast<T *>(ctx.Output(0)->GetData());
   if (data_num >= kParallelDataNum) {
     auto sharder_acos_grad = [&](int64_t start, int64_t end) { SpecialComputeFP16<T>(start, end, in0, in1, out); };
     if (max_core_num == 0) {
-      KERNEL_LOG_ERROR("max core num could not be 0");
+      CUST_KERNEL_LOG_ERROR(ctx, "max core num could not be 0");
     }
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_acos_grad),
-                        "AcosGrad Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx,
+                             CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, sharder_acos_grad),
+                             "AcosGrad Compute failed.");
   } else {
     SpecialComputeFP16<T>(0, data_num, in0, in1, out);
   }

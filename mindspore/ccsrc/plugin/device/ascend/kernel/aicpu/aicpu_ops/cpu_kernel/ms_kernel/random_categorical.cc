@@ -35,7 +35,7 @@ constexpr size_t kNumSamplesIdx = 1;
 
 namespace aicpu {
 template <typename T, typename S>
-uint32_t RandomCategoricalCpuKernel::RandomCategoricalCompute(const CpuKernelContext &ctx) {
+uint32_t RandomCategoricalCpuKernel::RandomCategoricalCompute(CpuKernelContext &ctx) {
   auto logits_data = ctx.Input(0)->GetData();
   Eigen::TensorMap<Eigen::Tensor<T, 2, Eigen::RowMajor>> input_map(static_cast<T *>(logits_data), batch_size_,
                                                                    num_classes_);
@@ -98,14 +98,14 @@ uint32_t RandomCategoricalCpuKernel::Compute(CpuKernelContext &ctx) {
 
   auto logits = ctx.Input(0);
   auto logits_shape_ = logits->GetTensorShape()->GetDimSizes();
-  KERNEL_CHECK_FALSE(logits_shape_.size() == 2, KERNEL_STATUS_INNER_ERROR, "Logits must be 2D tensor, but got dim[%u].",
-                     logits_shape_.size());
+  CUST_KERNEL_CHECK_FALSE(ctx, logits_shape_.size() == 2, KERNEL_STATUS_INNER_ERROR,
+                          "Logits must be 2D tensor, but got dim[%u].", logits_shape_.size());
   batch_size_ = logits_shape_[0];
   num_classes_ = logits_shape_[1];
   logits_type_ = logits->GetDataType();
   num_sample_type_ = ctx.Input(1)->GetDataType();
-  KERNEL_CHECK_FALSE(num_sample_type_ == DT_INT32 || num_sample_type_ == DT_INT64, KERNEL_STATUS_INNER_ERROR,
-                     "num_samples only supports int32_t and int64_t.");
+  CUST_KERNEL_CHECK_FALSE(ctx, num_sample_type_ == DT_INT32 || num_sample_type_ == DT_INT64, KERNEL_STATUS_INNER_ERROR,
+                          "num_samples only supports int32_t and int64_t.");
   auto logits_dtype = logits->GetDataType();
 
   switch (logits_dtype + (output_type_ << sizeof(DataType))) {
@@ -119,8 +119,8 @@ uint32_t RandomCategoricalCpuKernel::Compute(CpuKernelContext &ctx) {
     RANDOM_CATEGORICAL_COMPUTE_CASE(DT_FLOAT, float, DT_INT64, int64_t)
     RANDOM_CATEGORICAL_COMPUTE_CASE(DT_DOUBLE, double, DT_INT64, int64_t)
     default:
-      KERNEL_LOG_ERROR("RandomCategorical kernel data type input: [%s], output: [%s] not support.",
-                       DTypeStr(logits_dtype).c_str(), DTypeStr(output_type_).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "RandomCategorical kernel data type input: [%s], output: [%s] not support.",
+                            DTypeStr(logits_dtype).c_str(), DTypeStr(output_type_).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;

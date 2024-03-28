@@ -28,7 +28,7 @@ class SparseMatrixNNZCpuKernel : public CpuKernel {
  private:
   // do the actual compute
   template <typename indiceT>
-  uint32_t DoCompute(const CpuKernelContext &ctx);
+  uint32_t DoCompute(CpuKernelContext &ctx);
 };
 
 }  // namespace aicpu

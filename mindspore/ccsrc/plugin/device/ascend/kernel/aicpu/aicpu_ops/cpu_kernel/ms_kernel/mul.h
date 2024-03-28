@@ -37,7 +37,7 @@ class MulCpuKernel : public CpuKernel {
    * @return status if success
    */
   template <typename T>
-  uint32_t MulCompute(const CpuKernelContext &ctx);
+  uint32_t MulCompute(CpuKernelContext &ctx);
 
   /**
    * @brief Check if input&output addr is aligned

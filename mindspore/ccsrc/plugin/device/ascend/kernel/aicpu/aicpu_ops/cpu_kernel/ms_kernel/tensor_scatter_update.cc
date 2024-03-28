@@ -31,7 +31,8 @@ const char *kTensorScatterUpdate = "TensorScatterUpdate";
 
 namespace aicpu {
 uint32_t TensorScatterUpdateCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "Check TensorScatterUpdate Input and Output failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "Check TensorScatterUpdate Input and Output failed.");
 
   Tensor *input_var = ctx.Input(0);
   Tensor *input_indices = ctx.Input(1);
@@ -42,15 +43,15 @@ uint32_t TensorScatterUpdateCpuKernel::Compute(CpuKernelContext &ctx) {
   auto shape_updates = input_updates->GetTensorShape();
 
   if (shape_var->GetDims() < 1) {
-    KERNEL_LOG_ERROR("[%s] Tensor input_var's rank less than 1.", ctx.GetOpType().c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "[%s] Tensor input_var's rank less than 1.", ctx.GetOpType().c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (shape_indices->GetDims() < 2) {
-    KERNEL_LOG_ERROR("[%s] Tensor input_indices's rank less than 2.", ctx.GetOpType().c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "[%s] Tensor input_indices's rank less than 2.", ctx.GetOpType().c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (shape_updates->GetDims() < 1) {
-    KERNEL_LOG_ERROR("[%s] Tensor input_updates's rank less than 1.", ctx.GetOpType().c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "[%s] Tensor input_updates's rank less than 1.", ctx.GetOpType().c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
@@ -58,7 +59,7 @@ uint32_t TensorScatterUpdateCpuKernel::Compute(CpuKernelContext &ctx) {
   auto index_depth = shape_indices->GetDimSize(index_size);
 
   if (index_depth > shape_var->GetDims()) {
-    KERNEL_LOG_ERROR("[%s] Tensor input_var&input_indices ranks mismatch.", ctx.GetOpType().c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "[%s] Tensor input_var&input_indices ranks mismatch.", ctx.GetOpType().c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
@@ -72,13 +73,15 @@ uint32_t TensorScatterUpdateCpuKernel::Compute(CpuKernelContext &ctx) {
   }
 
   if (batch_shape != shape_updates->GetDimSizes()) {
-    KERNEL_LOG_ERROR("[%s] Tensor indices's & updates' and var's shape are dismatch .", ctx.GetOpType().c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "[%s] Tensor indices's & updates' and var's shape are dismatch .",
+                          ctx.GetOpType().c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
   for (int64_t i = 0; i < index_size; i++) {
     if (shape_indices->GetDimSize(i) != shape_updates->GetDimSize(i)) {
-      KERNEL_LOG_ERROR("[%s], Tensor indices and updates should have the same batch number.", ctx.GetOpType().c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "[%s], Tensor indices and updates should have the same batch number.",
+                            ctx.GetOpType().c_str());
       return KERNEL_STATUS_PARAM_INVALID;
     }
   }
@@ -87,7 +90,8 @@ uint32_t TensorScatterUpdateCpuKernel::Compute(CpuKernelContext &ctx) {
   auto data_type_indices = input_indices->GetDataType();
 
   if (data_type_indices != DT_INT32 && data_type_indices != DT_INT64) {
-    KERNEL_LOG_ERROR("TensorScatterUpdate kernel data type [%s] not support.", DTypeStr(data_type_indices).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "TensorScatterUpdate kernel data type [%s] not support.",
+                          DTypeStr(data_type_indices).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
@@ -121,7 +125,8 @@ uint32_t TensorScatterUpdateCpuKernel::Compute(CpuKernelContext &ctx) {
     case DT_COMPLEX128:
       return DTypeChoose<std::complex<double>>(ctx);
     default:
-      KERNEL_LOG_ERROR("TensorScatterUpdate kernel data type [%s] not support.", DTypeStr(data_type_var).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "TensorScatterUpdate kernel data type [%s] not support.",
+                            DTypeStr(data_type_var).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 
@@ -129,7 +134,7 @@ uint32_t TensorScatterUpdateCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename var_type>
-uint32_t TensorScatterUpdateCpuKernel::DTypeChoose(const CpuKernelContext &ctx) {
+uint32_t TensorScatterUpdateCpuKernel::DTypeChoose(CpuKernelContext &ctx) {
   auto indices_type = static_cast<DataType>(ctx.Input(1)->GetDataType());
   switch (indices_type) {
     case DT_INT32:
@@ -137,14 +142,14 @@ uint32_t TensorScatterUpdateCpuKernel::DTypeChoose(const CpuKernelContext &ctx) 
     case DT_INT64:
       return TensorScatterUpdateComputeRealKernel<var_type, int64_t>(ctx);
     default:
-      KERNEL_LOG_ERROR("[%s] Data type of input is not supported, input data type is [%s].", ctx.GetOpType().c_str(),
-                       DTypeStr(indices_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "[%s] Data type of input is not supported, input data type is [%s].",
+                            ctx.GetOpType().c_str(), DTypeStr(indices_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 }
 
 template <typename var_type, typename indices_type>
-uint32_t TensorScatterUpdateCpuKernel::TensorScatterUpdateComputeRealKernel(const CpuKernelContext &ctx) {
+uint32_t TensorScatterUpdateCpuKernel::TensorScatterUpdateComputeRealKernel(CpuKernelContext &ctx) {
   int64_t n_slices = 1;
   int64_t slice_size = 1;
 
@@ -157,7 +162,7 @@ uint32_t TensorScatterUpdateCpuKernel::TensorScatterUpdateComputeRealKernel(cons
   auto dims_shape = ctx.Input(0)->GetTensorShape()->GetDims();
   for (int64_t i = 0; i < dims_shape - indices_nd; i++) {
     if (ctx.Input(2)->GetTensorShape()->GetDimSize(i + shape_indices->GetDims() - 1) != shape_var[i + indices_nd]) {
-      KERNEL_LOG_ERROR("[%s] shape_indices and shape_updates mismatch.", ctx.GetOpType().c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "[%s] shape_indices and shape_updates mismatch.", ctx.GetOpType().c_str());
       return KERNEL_STATUS_PARAM_INVALID;
     }
   }
@@ -193,7 +198,7 @@ uint32_t TensorScatterUpdateCpuKernel::TensorScatterUpdateComputeRealKernel(cons
       int64_t idx = Indices_data[i * indices_nd + j];
 
       if (idx < 0 || idx >= output_shape[j]) {
-        KERNEL_LOG_ERROR("The indices[%d] is so big or small", idx);
+        CUST_KERNEL_LOG_ERROR(ctx, "The indices[%d] is so big or small", idx);
         return KERNEL_STATUS_PARAM_INVALID;
       }
 

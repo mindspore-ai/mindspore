@@ -29,8 +29,7 @@ class DataFormatVecPermute : public CpuKernel {
  private:
   template <typename T>
   uint32_t DataFormatVecPermuteCompute(const int32_t dim, const std::string &src_format_str,
-                                       const std::string &dst_format_str, Tensor *x, Tensor *y,
-                                       const CpuKernelContext &ctx);
+                                       const std::string &dst_format_str, Tensor *x, Tensor *y, CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

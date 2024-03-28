@@ -32,10 +32,10 @@ class BroadcastToCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t BroadcastToParamCheck(const CpuKernelContext &ctx);
+  uint32_t BroadcastToParamCheck(CpuKernelContext &ctx);
 
   template <typename T1, typename T2>
-  uint32_t BcastCompute(const CpuKernelContext &ctx);
+  uint32_t BcastCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif  // AICPU_KERNELS_NORMALIZED_BROADCAST_TO_H_

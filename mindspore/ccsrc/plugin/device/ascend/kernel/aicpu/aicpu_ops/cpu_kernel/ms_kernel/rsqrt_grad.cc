@@ -36,7 +36,7 @@ uint32_t RsqrtGradCpuKernel::Compute(CpuKernelContext &ctx) {
   Tensor *input_0 = ctx.Input(kFirstInputIndex);
   Tensor *input_1 = ctx.Input(kSecondInputIndex);
   if ((input_0->GetDataSize() == 0) || (input_1->GetDataSize() == 0)) {
-    KERNEL_LOG_INFO("[%s] Input is empty tensor.", ctx.GetOpType().c_str());
+    CUST_KERNEL_LOG_INFO(ctx, "[%s] Input is empty tensor.", ctx.GetOpType().c_str());
     return KERNEL_STATUS_OK;
   }
   // choose compute function depend on dataType
@@ -57,14 +57,14 @@ uint32_t RsqrtGradCpuKernel::Compute(CpuKernelContext &ctx) {
     case DT_COMPLEX64:
       return RsqrtGradComputeComplex<std::complex<float>>(ctx);
     default:
-      KERNEL_LOG_ERROR("[%s] Data type of input is not support, input data type is [%s].", ctx.GetOpType().c_str(),
-                       aicpu::DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "[%s] Data type of input is not support, input data type is [%s].",
+                            ctx.GetOpType().c_str(), aicpu::DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 }
 
 template <typename T>
-uint32_t RsqrtGradCpuKernel::RsqrtGradComputeFP16(const CpuKernelContext &ctx) {
+uint32_t RsqrtGradCpuKernel::RsqrtGradComputeFP16(CpuKernelContext &ctx) {
   Tensor *y = ctx.Input(0);
   Tensor *dy = ctx.Input(1);
   Tensor *z = ctx.Output(0);
@@ -94,17 +94,17 @@ uint32_t RsqrtGradCpuKernel::RsqrtGradComputeFP16(const CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t RsqrtGradCpuKernel::RsqrtGradCompute(const CpuKernelContext &ctx) {
+uint32_t RsqrtGradCpuKernel::RsqrtGradCompute(CpuKernelContext &ctx) {
   Tensor *y = ctx.Input(0);
   Tensor *dy = ctx.Input(1);
   Tensor *z = ctx.Output(0);
 
-  KERNEL_CHECK_NULLPTR(z->GetData(), KERNEL_STATUS_PARAM_INVALID, "[%s] Get output data failed",
-                       ctx.GetOpType().c_str())
-  KERNEL_LOG_INFO(
-    "[%s] Input[0] data size is [%llu], input[1] data size is [%llu], output "
-    "data size is [%llu].",
-    ctx.GetOpType().c_str(), y->GetDataSize(), dy->GetDataSize(), z->GetDataSize());
+  CUST_KERNEL_CHECK_NULLPTR(ctx, z->GetData(), KERNEL_STATUS_PARAM_INVALID, "[%s] Get output data failed",
+                            ctx.GetOpType().c_str())
+  CUST_KERNEL_LOG_INFO(ctx,
+                       "[%s] Input[0] data size is [%llu], input[1] data size is [%llu], output "
+                       "data size is [%llu].",
+                       ctx.GetOpType().c_str(), y->GetDataSize(), dy->GetDataSize(), z->GetDataSize());
   auto y_ptr = reinterpret_cast<T *>(y->GetData());
   auto dy_ptr = reinterpret_cast<T *>(dy->GetData());
   auto z_ptr = reinterpret_cast<T *>(z->GetData());
@@ -127,17 +127,17 @@ uint32_t RsqrtGradCpuKernel::RsqrtGradCompute(const CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t RsqrtGradCpuKernel::RsqrtGradComputeComplex(const CpuKernelContext &ctx) {
+uint32_t RsqrtGradCpuKernel::RsqrtGradComputeComplex(CpuKernelContext &ctx) {
   Tensor *y = ctx.Input(0);
   Tensor *dy = ctx.Input(1);
   Tensor *z = ctx.Output(0);
 
-  KERNEL_CHECK_NULLPTR(z->GetData(), KERNEL_STATUS_PARAM_INVALID, "[%s] Get output data failed",
-                       ctx.GetOpType().c_str())
-  KERNEL_LOG_INFO(
-    "[%s] Input[0] data size is [%llu], input[1] data size is [%llu], output "
-    "data size is [%llu].",
-    ctx.GetOpType().c_str(), y->GetDataSize(), dy->GetDataSize(), z->GetDataSize());
+  CUST_KERNEL_CHECK_NULLPTR(ctx, z->GetData(), KERNEL_STATUS_PARAM_INVALID, "[%s] Get output data failed",
+                            ctx.GetOpType().c_str())
+  CUST_KERNEL_LOG_INFO(ctx,
+                       "[%s] Input[0] data size is [%llu], input[1] data size is [%llu], output "
+                       "data size is [%llu].",
+                       ctx.GetOpType().c_str(), y->GetDataSize(), dy->GetDataSize(), z->GetDataSize());
   auto y_ptr = reinterpret_cast<T *>(y->GetData());
   auto dy_ptr = reinterpret_cast<T *>(dy->GetData());
   auto z_ptr = reinterpret_cast<T *>(z->GetData());

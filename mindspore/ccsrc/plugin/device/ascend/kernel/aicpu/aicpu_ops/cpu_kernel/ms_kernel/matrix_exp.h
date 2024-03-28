@@ -28,7 +28,7 @@ class MatrixExpCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t MatrixExpCheck(const CpuKernelContext &ctx);
+  uint32_t MatrixExpCheck(CpuKernelContext &ctx);
 
   template <typename Derived1, typename Derived2, typename Derived3>
   void MTaylorApproximant(Eigen::MatrixBase<Derived1> *A, Eigen::MatrixBase<Derived2> *I, int order,
@@ -36,16 +36,15 @@ class MatrixExpCpuKernel : public CpuKernel {
 
   template <typename Derived1, typename Derived2>
   void MexpImpl(Eigen::MatrixBase<Derived1> *A, Eigen::MatrixBase<Derived2> *I, Eigen::MatrixBase<Derived1> *mexp,
-                const CpuKernelContext &ctx);
+                CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t MatrixExpCompute(const CpuKernelContext &ctx);
+  uint32_t MatrixExpCompute(CpuKernelContext &ctx);
 
-  void TyepChangeForFp16(int64_t i, int64_t m, Eigen::half *input_x, Eigen::half *output_y,
-                         const CpuKernelContext &ctx);
+  void TyepChangeForFp16(int64_t i, int64_t m, Eigen::half *input_x, Eigen::half *output_y, CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t MatrixExpDiffTypeCompute(const CpuKernelContext &ctx);
+  uint32_t MatrixExpDiffTypeCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

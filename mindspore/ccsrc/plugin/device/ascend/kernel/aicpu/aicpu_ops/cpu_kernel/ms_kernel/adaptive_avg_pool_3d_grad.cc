@@ -65,7 +65,7 @@ inline int EndIndex(int offset, int out_size, int in_size) {
 
 namespace aicpu {
 template <typename SCALAR_T>
-uint32_t AdaptiveAvgPool3dGradOutFrame(const CpuKernelContext &ctx, AdaptiveCalcArgs<SCALAR_T> args, int64_t num) {
+uint32_t AdaptiveAvgPool3dGradOutFrame(CpuKernelContext &ctx, AdaptiveCalcArgs<SCALAR_T> args, int64_t num) {
   auto shard_frame = [&](int64_t start, int64_t end) {
     for (auto d = start; d < end; d++) {
       double *grad_input_p_d = args.input_data + d * args.in_size_t * args.in_size_w * args.in_size_h;
@@ -108,31 +108,31 @@ uint32_t AdaptiveAvgPool3dGradOutFrame(const CpuKernelContext &ctx, AdaptiveCalc
       shard_frame(i, i + 1);
     }
   } else {
-    KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, args.size_d, 1, shard_frame),
-                        "AdaptiveAvgPool3dGrad shard_frame Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, args.size_d, 1, shard_frame),
+                             "AdaptiveAvgPool3dGrad shard_frame Compute failed.");
   }
   return KERNEL_STATUS_OK;
 }
 
 template <typename SCALAR_T>
-uint32_t AdaptiveAvgPool3dGradOutTemplate(const CpuKernelContext &ctx) {
+uint32_t AdaptiveAvgPool3dGradOutTemplate(CpuKernelContext &ctx) {
   Tensor &orig_input_shape = *(ctx.Input(kSecondInputIndex));
 
   auto orig_input_shape_shape = orig_input_shape.GetTensorShape();
-  KERNEL_CHECK_FALSE(orig_input_shape_shape->GetDims() == 1, KERNEL_STATUS_PARAM_INVALID,
-                     "Non-empty [1D] tensor expected for orig_input_shape.");
+  CUST_KERNEL_CHECK_FALSE(ctx, orig_input_shape_shape->GetDims() == 1, KERNEL_STATUS_PARAM_INVALID,
+                          "Non-empty [1D] tensor expected for orig_input_shape.");
 
   int32_t orig_input_shape_dims = orig_input_shape_shape->GetDimSize(0);
 
-  KERNEL_CHECK_FALSE((orig_input_shape_dims == kFourDim || orig_input_shape_dims == kFiveDim),
-                     KERNEL_STATUS_PARAM_INVALID, "Non-empty [4D] or [5D] tensor expected for orig_input.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (orig_input_shape_dims == kFourDim || orig_input_shape_dims == kFiveDim),
+                          KERNEL_STATUS_PARAM_INVALID, "Non-empty [4D] or [5D] tensor expected for orig_input.");
 
   auto orig_input_shape_data = static_cast<int32_t *>(orig_input_shape.GetData());
 
   for (int32_t i = 0; i < orig_input_shape_dims; i++) {
-    KERNEL_CHECK_FALSE((orig_input_shape_data[i] > 0), KERNEL_STATUS_PARAM_INVALID,
-                       "AdaptiveAvgPool3dGrad: expected orig_input to have "
-                       "non-empty spatial dimensions");
+    CUST_KERNEL_CHECK_FALSE(ctx, (orig_input_shape_data[i] > 0), KERNEL_STATUS_PARAM_INVALID,
+                            "AdaptiveAvgPool3dGrad: expected orig_input to have "
+                            "non-empty spatial dimensions");
   }
 
   /**
@@ -143,8 +143,9 @@ uint32_t AdaptiveAvgPool3dGradOutTemplate(const CpuKernelContext &ctx) {
   auto grad_output_shape_ptr = grad_output.GetTensorShape();
   int32_t grad_output_dims = grad_output_shape_ptr->GetDims();
 
-  KERNEL_CHECK_FALSE((grad_output_dims == kFourDim || grad_output_dims == kFiveDim), KERNEL_STATUS_PARAM_INVALID,
-                     "Non-empty [4D] or [5D] (batch mode) tensor expected for input 0.");
+  CUST_KERNEL_CHECK_FALSE(ctx, (grad_output_dims == kFourDim || grad_output_dims == kFiveDim),
+                          KERNEL_STATUS_PARAM_INVALID,
+                          "Non-empty [4D] or [5D] (batch mode) tensor expected for input 0.");
 
   AdaptiveCalcArgs<SCALAR_T> args;
   args.size_d = orig_input_shape_data[orig_input_shape_dims - kFourDim];
@@ -187,8 +188,8 @@ uint32_t AdaptiveAvgPool3dGradOutTemplate(const CpuKernelContext &ctx) {
         shard_template(i, i + 1);
       }
     } else {
-      KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, orig_input_shape_data[0], 1, shard_template),
-                          "AdaptiveAvgPool3dGrad shard_template Compute failed.");
+      CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, orig_input_shape_data[0], 1, shard_template),
+                               "AdaptiveAvgPool3dGrad shard_template Compute failed.");
     }
   }
   for (int64_t i = 0; i < output_num; i++) {
@@ -200,8 +201,8 @@ uint32_t AdaptiveAvgPool3dGradOutTemplate(const CpuKernelContext &ctx) {
 
 uint32_t AdaptiveAvgPool3dGrad::Compute(CpuKernelContext &ctx) {
   // check params
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output number failed.",
-                      kAdaptiveAvgPool3dGrad);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output number failed.",
+                           kAdaptiveAvgPool3dGrad);
 
   Tensor *input_0 = ctx.Input(kFirstInputIndex);
   auto data_type = static_cast<DataType>(input_0->GetDataType());
@@ -224,7 +225,8 @@ uint32_t AdaptiveAvgPool3dGrad::Compute(CpuKernelContext &ctx) {
     case DT_FLOAT16:
       return AdaptiveAvgPool3dGradOutTemplate<Eigen::half>(ctx);
     default:
-      KERNEL_LOG_ERROR("AdaptiveAvgPool3dGrad kernel data type [%s] not support.", DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "AdaptiveAvgPool3dGrad kernel data type [%s] not support.",
+                            DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;

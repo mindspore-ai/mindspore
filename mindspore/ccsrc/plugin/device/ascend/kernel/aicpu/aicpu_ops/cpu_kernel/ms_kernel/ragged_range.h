@@ -31,7 +31,7 @@ class RaggedRange : public CpuKernel {
   template <typename T, typename TSPLITS>
   uint32_t RaggedRangeCompute(const uint32_t nrows, Tensor *starts, Tensor *limits, Tensor *deltas,
                               bool broadcast_starts, bool broadcast_limits, bool broadcast_deltas,
-                              Tensor *rt_nested_splits, Tensor *rt_dense_values, const CpuKernelContext &ctx);
+                              Tensor *rt_nested_splits, Tensor *rt_dense_values, CpuKernelContext &ctx);
 
   template <typename T, typename TSPLITS>
   TSPLITS RangeSize(T start, T limit, T delta);

@@ -29,7 +29,7 @@ class BucketizeCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
   template <typename T>
-  static uint32_t BucketizeCompute(const CpuKernelContext &ctx);
+  static uint32_t BucketizeCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

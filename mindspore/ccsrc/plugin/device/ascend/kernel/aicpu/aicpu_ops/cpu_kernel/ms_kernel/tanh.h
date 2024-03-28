@@ -28,7 +28,7 @@ class TanhCpuKernel : public CpuKernel {
 
  private:
   template <typename T>
-  uint32_t TanhCompute(const CpuKernelContext &ctx);
+  uint32_t TanhCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

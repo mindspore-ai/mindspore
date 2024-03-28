@@ -79,7 +79,7 @@ class SDBBExt2CpuKernel : public CpuKernel {
 
   random::PhiloxRandom generator_;
 
-  float RandFloat();
+  float RandFloat(CpuKernelContext &ctx);
   uint32_t Uniform(uint32_t n);
 
   uint64_t New64();
@@ -94,7 +94,7 @@ class SDBBExt2CpuKernel : public CpuKernel {
   bool GenerateRandomCrop(int original_width, int original_height, float min_relative_crop_area,
                           float max_relative_crop_area, float aspect_ratio, Rectangle *crop_rect);
 
-  uint32_t SDBBExt2Check(const CpuKernelContext &ctx);
+  uint32_t SDBBExt2Check(CpuKernelContext &ctx);
 
   template <typename T>
   uint32_t SDBBExt2Compute(CpuKernelContext &ctx);

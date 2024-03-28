@@ -27,10 +27,10 @@ class ZerosLikeCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t ZerosLikeCheck(const CpuKernelContext &ctx) const;
+  uint32_t ZerosLikeCheck(CpuKernelContext &ctx) const;
 
   template <typename T>
-  uint32_t ZerosLikePartCompute(const CpuKernelContext &ctx);
+  uint32_t ZerosLikePartCompute(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

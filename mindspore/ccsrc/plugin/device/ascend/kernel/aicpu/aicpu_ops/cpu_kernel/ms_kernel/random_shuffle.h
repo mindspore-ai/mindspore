@@ -31,7 +31,7 @@ class RandomShuffleCpuKernel : public CpuKernel {
 
  private:
   template <typename T>
-  uint32_t RandomShuffleCompute(const CpuKernelContext &ctx, Tensor *output);
+  uint32_t RandomShuffleCompute(CpuKernelContext &ctx, Tensor *output);
 };
 }  // namespace aicpu
 #endif  // AICPU_KERNELS_NORMALIZED_RANDOM_SHUFFLE_H_

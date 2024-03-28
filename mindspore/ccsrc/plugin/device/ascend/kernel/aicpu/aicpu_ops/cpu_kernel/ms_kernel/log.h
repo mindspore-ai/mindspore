@@ -26,15 +26,15 @@ class LogCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t LogCheck(const CpuKernelContext &ctx);
+  uint32_t LogCheck(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t LogCompute(const CpuKernelContext &ctx);
+  uint32_t LogCompute(CpuKernelContext &ctx);
 
-  uint32_t LogCompute2(const CpuKernelContext &ctx);
+  uint32_t LogCompute2(CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t LogCompute3(const CpuKernelContext &ctx);
+  uint32_t LogCompute3(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

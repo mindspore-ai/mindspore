@@ -35,10 +35,11 @@ const int kDim2 = 2;
 namespace aicpu {
 uint32_t BiasAddGradCpuKernel::Compute(CpuKernelContext &ctx) {
   // check params
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "BiasAddGrad check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "BiasAddGrad check input and output number failed.");
   Tensor *input = ctx.Input(kFirstInputIndex);
   if (input->GetDataSize() == 0) {
-    KERNEL_LOG_INFO("[%s] Input is empty tensor.", ctx.GetOpType().c_str());
+    CUST_KERNEL_LOG_INFO(ctx, "[%s] Input is empty tensor.", ctx.GetOpType().c_str());
     return KERNEL_STATUS_OK;
   }
   // choose compute function depend on dataType
@@ -71,25 +72,25 @@ uint32_t BiasAddGradCpuKernel::Compute(CpuKernelContext &ctx) {
     case DT_COMPLEX128:
       return BiasAddGradCompute<std::complex<std::double_t>>(ctx);
     default:
-      KERNEL_LOG_ERROR("[%s] Data type of input is not support, input data type is [%s].", ctx.GetOpType().c_str(),
-                       DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "[%s] Data type of input is not support, input data type is [%s].",
+                            ctx.GetOpType().c_str(), DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 }
 
 template <typename T>
-uint32_t BiasAddGradCpuKernel::BiasAddGradCompute(const CpuKernelContext &ctx) {
+uint32_t BiasAddGradCpuKernel::BiasAddGradCompute(CpuKernelContext &ctx) {
   Tensor *input = ctx.Input(kFirstInputIndex);
   Tensor *output = ctx.Output(kFirstOutputIndex);
 
-  KERNEL_LOG_DEBUG(
-    "[DEBUG] [%s] Input data NumElements is [%llu]"
-    "output data NumElements is [%llu].",
-    ctx.GetOpType().c_str(), input->NumElements(), output->NumElements());
-  KERNEL_LOG_DEBUG(
-    "[DEBUG] [%s] Input data size is [%llu]"
-    "output data size is [%llu].",
-    ctx.GetOpType().c_str(), input->GetDataSize(), output->GetDataSize());
+  CUST_KERNEL_LOG_DEBUG(ctx,
+                        "[DEBUG] [%s] Input data NumElements is [%llu]"
+                        "output data NumElements is [%llu].",
+                        ctx.GetOpType().c_str(), input->NumElements(), output->NumElements());
+  CUST_KERNEL_LOG_DEBUG(ctx,
+                        "[DEBUG] [%s] Input data size is [%llu]"
+                        "output data size is [%llu].",
+                        ctx.GetOpType().c_str(), input->GetDataSize(), output->GetDataSize());
 
   auto input_shape = input->GetTensorShape();
   auto dims = input_shape->GetDimSizes();  // size: 4(NHWC/NCHW)
@@ -98,12 +99,12 @@ uint32_t BiasAddGradCpuKernel::BiasAddGradCompute(const CpuKernelContext &ctx) {
 
   // check input's dim
   if (input_shape->GetDims() < kDim2) {
-    KERNEL_LOG_ERROR("Input's dim should be at least 2, but got [%d]", input_shape->GetDims());
+    CUST_KERNEL_LOG_ERROR(ctx, "Input's dim should be at least 2, but got [%d]", input_shape->GetDims());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   // check input's format
   if (input_shape->GetDims() != kDim2 && str_format != "NHWC" && str_format != "NCHW") {
-    KERNEL_LOG_ERROR("Input's data format is invalid.");
+    CUST_KERNEL_LOG_ERROR(ctx, "Input's data format is invalid.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
   auto input_x = reinterpret_cast<T *>(input->GetData());
@@ -115,7 +116,7 @@ uint32_t BiasAddGradCpuKernel::BiasAddGradCompute(const CpuKernelContext &ctx) {
 
     constexpr uint32_t min_core_num = 1;
     uint32_t max_core_num = std::max(min_core_num, aicpu::CpuKernelUtils::GetCPUNum(ctx));
-    KERNEL_LOG_DEBUG("[DEBUG] Cores Num: [%lld].", max_core_num);
+    CUST_KERNEL_LOG_DEBUG(ctx, "[DEBUG] Cores Num: [%lld].", max_core_num);
     const size_t data_num = (size_t)input->NumElements();
 
     size_t step = 0;
@@ -138,11 +139,11 @@ uint32_t BiasAddGradCpuKernel::BiasAddGradCompute(const CpuKernelContext &ctx) {
 
     if (str_format == "NHWC") {
       step = dims[3];
-      KERNEL_LOG_DEBUG("[DEBUG] data's format: NHWC");
+      CUST_KERNEL_LOG_DEBUG(ctx, "[DEBUG] data's format: NHWC");
     } else if (str_format == "NCHW") {
       step = dims[1];
       length = dims[2] * dims[3];
-      KERNEL_LOG_DEBUG("[DEBUG] data's format: NCHW");
+      CUST_KERNEL_LOG_DEBUG(ctx, "[DEBUG] data's format: NCHW");
     }
 
     // run
@@ -184,7 +185,7 @@ uint32_t BiasAddGradCpuKernel::BiasAddGradCompute(const CpuKernelContext &ctx) {
       }
     }
   } catch (...) {
-    KERNEL_LOG_ERROR("Compute Failed.");
+    CUST_KERNEL_LOG_ERROR(ctx, "Compute Failed.");
     return KERNEL_STATUS_INNER_ERROR;
   }
   return KERNEL_STATUS_OK;

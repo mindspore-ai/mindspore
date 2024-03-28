@@ -63,34 +63,34 @@ void KlDivLossGradOp(const Eigen::Map<Eigen::Array<T, Eigen::Dynamic, 1> > &targ
   return;
 }
 
-std::uint32_t KlDivLossGradExtraCheck(const CpuKernelContext &ctx) {
+std::uint32_t KlDivLossGradExtraCheck(CpuKernelContext &ctx) {
   Tensor *grad = ctx.Input(0);
   Tensor *input = ctx.Input(1);
   Tensor *target = ctx.Input(2);
   Tensor *output = ctx.Output(0);
   if (grad->GetDataSize() == 0) {
-    KERNEL_LOG_ERROR("[%s] grad is empty tensor.", ctx.GetOpType().c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "[%s] grad is empty tensor.", ctx.GetOpType().c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (input->GetDataSize() == 0) {
-    KERNEL_LOG_ERROR("[%s] input is empty tensor.", ctx.GetOpType().c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "[%s] input is empty tensor.", ctx.GetOpType().c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (target->GetDataSize() == 0) {
-    KERNEL_LOG_ERROR("[%s] target is empty tensor.", ctx.GetOpType().c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "[%s] target is empty tensor.", ctx.GetOpType().c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (output->GetDataSize() == 0) {
-    KERNEL_LOG_ERROR("[%s] output is empty tensor.", ctx.GetOpType().c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "[%s] output is empty tensor.", ctx.GetOpType().c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if ((input->GetDataType() != grad->GetDataType()) || (target->GetDataType() != grad->GetDataType()) ||
       (output->GetDataType() != grad->GetDataType())) {
-    KERNEL_LOG_ERROR(
-      "The data type of the grad [%s], input [%s], target [%s], output y "
-      "[%s] must be the same type.",
-      DTypeStr(grad->GetDataType()).c_str(), DTypeStr(input->GetDataType()).c_str(),
-      DTypeStr(target->GetDataType()).c_str(), DTypeStr(output->GetDataType()).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "The data type of the grad [%s], input [%s], target [%s], output y "
+                          "[%s] must be the same type.",
+                          DTypeStr(grad->GetDataType()).c_str(), DTypeStr(input->GetDataType()).c_str(),
+                          DTypeStr(target->GetDataType()).c_str(), DTypeStr(output->GetDataType()).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   std::vector<int64_t> grad_dims = ctx.Input(kGradIndex)->GetTensorShape()->GetDimSizes();
@@ -99,31 +99,31 @@ std::uint32_t KlDivLossGradExtraCheck(const CpuKernelContext &ctx) {
   std::vector<int64_t> output_dims = ctx.Output(0)->GetTensorShape()->GetDimSizes();
   std::string reduction = ctx.GetAttr(AttrReduction)->GetString();
   if (output_dims != input_dims) {
-    KERNEL_LOG_ERROR(
-      "The data shape of the output need be the same as the input. output "
-      "shape [%s], input shape [%s]",
-      VectorToString(output_dims).c_str(), VectorToString(input_dims).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "The data shape of the output need be the same as the input. output "
+                          "shape [%s], input shape [%s]",
+                          VectorToString(output_dims).c_str(), VectorToString(input_dims).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (target_dims != input_dims) {
-    KERNEL_LOG_ERROR(
-      "The data shape of the target need be the same as the input. target "
-      "shape [%s], input shape [%s]",
-      VectorToString(target_dims).c_str(), VectorToString(input_dims).c_str());
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "The data shape of the target need be the same as the input. target "
+                          "shape [%s], input shape [%s]",
+                          VectorToString(target_dims).c_str(), VectorToString(input_dims).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (reduction == "mean" || reduction == "sum" || reduction == "batchmean") {
     if (ctx.Input(0)->NumElements() != 1) {
-      KERNEL_LOG_ERROR("The data num of the grad [%llu] must be 1", ctx.Input(0)->NumElements());
+      CUST_KERNEL_LOG_ERROR(ctx, "The data num of the grad [%llu] must be 1", ctx.Input(0)->NumElements());
       return KERNEL_STATUS_PARAM_INVALID;
     }
   } else if (reduction == "none") {
     if (input_dims != grad_dims) {
-      KERNEL_LOG_ERROR(
-        "The data shape of the grad need be the same as the input. grad "
-        "shape "
-        "[%s], input shape [%s]",
-        VectorToString(grad_dims).c_str(), VectorToString(input_dims).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx,
+                            "The data shape of the grad need be the same as the input. grad "
+                            "shape "
+                            "[%s], input shape [%s]",
+                            VectorToString(grad_dims).c_str(), VectorToString(input_dims).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
     }
   }
@@ -147,14 +147,14 @@ uint32_t KlDivLossGradCpuKernel::Compute(CpuKernelContext &ctx) {
     case DT_DOUBLE:
       return KlDivLossGradCompute<double>(ctx);
     default:
-      KERNEL_LOG_ERROR("[%s] Data type of input is not support, input data type is [%s].", ctx.GetOpType().c_str(),
-                       DTypeStr(data_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "[%s] Data type of input is not support, input data type is [%s].",
+                            ctx.GetOpType().c_str(), DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
 }
 
 template <typename T>
-uint32_t KlDivLossGradCpuKernel::KlDivLossGradCompute(const CpuKernelContext &ctx) {
+uint32_t KlDivLossGradCpuKernel::KlDivLossGradCompute(CpuKernelContext &ctx) {
   int64_t grad_total = ctx.Input(0)->NumElements();
   int64_t input_total = ctx.Input(1)->NumElements();
   int64_t target_total = ctx.Input(2)->NumElements();
@@ -181,7 +181,7 @@ uint32_t KlDivLossGradCpuKernel::KlDivLossGradCompute(const CpuKernelContext &ct
     reduction = ctx.GetAttr(AttrReduction)->GetString();
   }
   if (cores == 0) {
-    KERNEL_LOG_ERROR("KlDivLossGrad compute failed.");
+    CUST_KERNEL_LOG_ERROR(ctx, "KlDivLossGrad compute failed.");
     return KERNEL_STATUS_INNER_ERROR;
   }
   if (parallel_flag) {
@@ -209,7 +209,8 @@ uint32_t KlDivLossGradCpuKernel::KlDivLossGradCompute(const CpuKernelContext &ct
         array_output = array_output / T(input_dims[0]);
       }
     };
-    KERNEL_HANDLE_ERROR(ParallelFor(ctx, total, per_unit_size, shard_kldivlossgrad), "KlDivLossGrad Compute failed.");
+    CUST_KERNEL_HANDLE_ERROR(ctx, ParallelFor(ctx, total, per_unit_size, shard_kldivlossgrad),
+                             "KlDivLossGrad Compute failed.");
   } else {
     Eigen::Map<Eigen::Array<T, Eigen::Dynamic, 1> > array_grad(grad, grad_total, 1);
     Eigen::Map<Eigen::Array<T, Eigen::Dynamic, 1> > array_input(input, input_total, 1);

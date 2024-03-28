@@ -29,37 +29,37 @@ const char *kLu = "Lu";
 constexpr int64_t kParallelDataNums = 32 * 1024;
 constexpr int64_t kParallelDataNumsMid = 256 * 1024;
 
-#define LU_COMPUTE_CASE(IN_DTYPE, IN_TYPE, OUT_DTYPE, CTX)                                                 \
-  case (IN_DTYPE): {                                                                                       \
-    switch (OUT_DTYPE) {                                                                                   \
-      case (DT_INT32): {                                                                                   \
-        uint32_t result = LuCompute<IN_TYPE, int32_t>(CTX);                                                \
-        if (result != KERNEL_STATUS_OK) {                                                                  \
-          KERNEL_LOG_ERROR("Lu kernel compute failed.");                                                   \
-          return result;                                                                                   \
-        }                                                                                                  \
-        break;                                                                                             \
-      }                                                                                                    \
-      case (DT_INT64): {                                                                                   \
-        uint32_t result = LuCompute<IN_TYPE, int64_t>(CTX);                                                \
-        if (result != KERNEL_STATUS_OK) {                                                                  \
-          KERNEL_LOG_ERROR("Lu kernel compute failed.");                                                   \
-          return result;                                                                                   \
-        }                                                                                                  \
-        break;                                                                                             \
-      }                                                                                                    \
-      default:                                                                                             \
-        KERNEL_LOG_ERROR("Lu kernel output p data type [%s] not support.", DTypeStr(output_type).c_str()); \
-        return KERNEL_STATUS_PARAM_INVALID;                                                                \
-    }                                                                                                      \
-    break;                                                                                                 \
+#define LU_COMPUTE_CASE(IN_DTYPE, IN_TYPE, OUT_DTYPE, CTX)                                                           \
+  case (IN_DTYPE): {                                                                                                 \
+    switch (OUT_DTYPE) {                                                                                             \
+      case (DT_INT32): {                                                                                             \
+        uint32_t result = LuCompute<IN_TYPE, int32_t>(CTX);                                                          \
+        if (result != KERNEL_STATUS_OK) {                                                                            \
+          CUST_KERNEL_LOG_ERROR(ctx, "Lu kernel compute failed.");                                                   \
+          return result;                                                                                             \
+        }                                                                                                            \
+        break;                                                                                                       \
+      }                                                                                                              \
+      case (DT_INT64): {                                                                                             \
+        uint32_t result = LuCompute<IN_TYPE, int64_t>(CTX);                                                          \
+        if (result != KERNEL_STATUS_OK) {                                                                            \
+          CUST_KERNEL_LOG_ERROR(ctx, "Lu kernel compute failed.");                                                   \
+          return result;                                                                                             \
+        }                                                                                                            \
+        break;                                                                                                       \
+      }                                                                                                              \
+      default:                                                                                                       \
+        CUST_KERNEL_LOG_ERROR(ctx, "Lu kernel output p data type [%s] not support.", DTypeStr(output_type).c_str()); \
+        return KERNEL_STATUS_PARAM_INVALID;                                                                          \
+    }                                                                                                                \
+    break;                                                                                                           \
   }
 }  // namespace
 
 namespace aicpu {
 uint32_t LuCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.", kLu);
-  KERNEL_HANDLE_ERROR(LuCheck(ctx), "[%s] check params failed.", kLu);
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum), "[%s] check input and output failed.", kLu);
+  CUST_KERNEL_HANDLE_ERROR(ctx, LuCheck(ctx), "[%s] check params failed.", kLu);
   DataType input_type = ctx.Input(0)->GetDataType();
   DataType output_type = ctx.Output(1)->GetDataType();
   switch (input_type) {
@@ -68,34 +68,35 @@ uint32_t LuCpuKernel::Compute(CpuKernelContext &ctx) {
     LU_COMPUTE_CASE(DT_COMPLEX64, std::complex<float>, output_type, ctx)
     LU_COMPUTE_CASE(DT_COMPLEX128, std::complex<double>, output_type, ctx)
     default:
-      KERNEL_LOG_ERROR("Lu kernel input data type [%s] not support.", DTypeStr(input_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "Lu kernel input data type [%s] not support.", DTypeStr(input_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 
-uint32_t LuCpuKernel::LuCheck(const CpuKernelContext &ctx) {
+uint32_t LuCpuKernel::LuCheck(CpuKernelContext &ctx) {
   auto input_0 = ctx.Input(0);
   auto output_0 = ctx.Output(0);
   auto output_1 = ctx.Output(1);
-  KERNEL_CHECK_NULLPTR(input_0->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input data failed.");
-  KERNEL_CHECK_NULLPTR(output_0->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output 0 data failed");
-  KERNEL_CHECK_NULLPTR(output_1->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output 1 data failed");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input_0->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get input data failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, output_0->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output 0 data failed");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, output_1->GetData(), KERNEL_STATUS_PARAM_INVALID, "Get output 1 data failed");
 
-  KERNEL_CHECK_NULLPTR(input_0->GetTensorShape(), KERNEL_STATUS_PARAM_INVALID, "Get input tensor shape failed.");
+  CUST_KERNEL_CHECK_NULLPTR(ctx, input_0->GetTensorShape(), KERNEL_STATUS_PARAM_INVALID,
+                            "Get input tensor shape failed.");
   std::vector<int64_t> shape_x = input_0->GetTensorShape()->GetDimSizes();
   size_t shape_size = shape_x.size();
-  KERNEL_CHECK_FALSE((shape_size > 1), KERNEL_STATUS_PARAM_INVALID, "Input must be at least rank 2, got [%zu].",
-                     shape_x.size());
-  KERNEL_CHECK_FALSE((shape_x[shape_size - 2] == shape_x[shape_size - 1]), KERNEL_STATUS_PARAM_INVALID,
-                     "Dimensions must be equal, but are [%zu] and [%zu].", shape_x[shape_size - 2],
-                     shape_x[shape_size - 1]);
+  CUST_KERNEL_CHECK_FALSE(ctx, (shape_size > 1), KERNEL_STATUS_PARAM_INVALID,
+                          "Input must be at least rank 2, got [%zu].", shape_x.size());
+  CUST_KERNEL_CHECK_FALSE(ctx, (shape_x[shape_size - 2] == shape_x[shape_size - 1]), KERNEL_STATUS_PARAM_INVALID,
+                          "Dimensions must be equal, but are [%zu] and [%zu].", shape_x[shape_size - 2],
+                          shape_x[shape_size - 1]);
 
   return KERNEL_STATUS_OK;
 }
 
 template <typename Scalar, typename Tidx>
-uint32_t LuCpuKernel::LuCompute(const CpuKernelContext &ctx) {
+uint32_t LuCpuKernel::LuCompute(CpuKernelContext &ctx) {
   auto input_x = reinterpret_cast<Scalar *>(ctx.Input(0)->GetData());
   auto output_lu = reinterpret_cast<Scalar *>(ctx.Output(0)->GetData());
   auto output_p = reinterpret_cast<Tidx *>(ctx.Output(1)->GetData());
@@ -123,7 +124,8 @@ uint32_t LuCpuKernel::LuCompute(const CpuKernelContext &ctx) {
         Eigen::PermutationMatrix<-1, -1, Tidx> permutation = lu.permutationP().transpose();
         martix_p = permutation.indices();
         RealScalar min_abs_pivot = martix_lu.diagonal().cwiseAbs().minCoeff();
-        KERNEL_CHECK_FALSE((min_abs_pivot > RealScalar(0)), KERNEL_STATUS_PARAM_INVALID, "Input is not invertible.");
+        CUST_KERNEL_CHECK_FALSE(ctx, (min_abs_pivot > RealScalar(0)), KERNEL_STATUS_PARAM_INVALID,
+                                "Input is not invertible.");
       }
     } else {
       uint32_t min_core_num = 1;
@@ -145,12 +147,13 @@ uint32_t LuCpuKernel::LuCompute(const CpuKernelContext &ctx) {
           Eigen::PermutationMatrix<-1, -1, Tidx> permutation = lu.permutationP().transpose();
           martix_p = permutation.indices();
           RealScalar min_abs_pivot = martix_lu.diagonal().cwiseAbs().minCoeff();
-          KERNEL_CHECK_FALSE((min_abs_pivot > RealScalar(0)), KERNEL_STATUS_PARAM_INVALID, "Input is not invertible.");
+          CUST_KERNEL_CHECK_FALSE(ctx, (min_abs_pivot > RealScalar(0)), KERNEL_STATUS_PARAM_INVALID,
+                                  "Input is not invertible.");
         }
         return KERNEL_STATUS_OK;
       };
-      KERNEL_HANDLE_ERROR(CpuKernelUtils::ParallelFor(ctx, martix_num, martix_num / max_core_num, shard_lu),
-                          "Lu Compute failed.");
+      CUST_KERNEL_HANDLE_ERROR(ctx, CpuKernelUtils::ParallelFor(ctx, martix_num, martix_num / max_core_num, shard_lu),
+                               "Lu Compute failed.");
     }
   }
 

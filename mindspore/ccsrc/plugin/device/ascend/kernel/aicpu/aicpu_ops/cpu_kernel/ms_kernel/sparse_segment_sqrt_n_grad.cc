@@ -27,8 +27,8 @@ const char *SparseSegmentSqrtNGrad = "SparseSegmentSqrtNGrad";
 
 namespace aicpu {
 uint32_t SparseSegmentSqrtNGradCpuKernel::Compute(CpuKernelContext &ctx) {
-  KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum),
-                      "SparseSegmentSqrtNGrad check input and output number failed.");
+  CUST_KERNEL_HANDLE_ERROR(ctx, NormalCheck(ctx, kInputNum, kOutputNum),
+                           "SparseSegmentSqrtNGrad check input and output number failed.");
   Tensor *inputx = ctx.Input(0);
   Tensor *input_indices = ctx.Input(1);
   Tensor *input_segment_ids = ctx.Input(2);
@@ -40,11 +40,11 @@ uint32_t SparseSegmentSqrtNGradCpuKernel::Compute(CpuKernelContext &ctx) {
   auto data_type3 = input_output_dim->GetDataType();
 
   if (data_type0 != DT_FLOAT && data_type0 != DT_DOUBLE && data_type0 != DT_FLOAT16) {
-    KERNEL_LOG_ERROR("SparseSegmentSqrtNGrad kernel data type [%u] not support.");
+    CUST_KERNEL_LOG_ERROR(ctx, "SparseSegmentSqrtNGrad kernel data type [%u] not support.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (data_type1 != data_type2 || data_type1 != data_type3 || data_type1 != DT_INT32) {
-    KERNEL_LOG_ERROR("SparseSegmentSqrtNGrad kernel data type [%u] not support.", data_type1);
+    CUST_KERNEL_LOG_ERROR(ctx, "SparseSegmentSqrtNGrad kernel data type [%u] not support.", data_type1);
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
@@ -52,11 +52,11 @@ uint32_t SparseSegmentSqrtNGradCpuKernel::Compute(CpuKernelContext &ctx) {
   auto shape1 = input_indices->GetTensorShape();
   auto shape2 = input_segment_ids->GetTensorShape();
   if (shape0->GetDims() < 1) {
-    KERNEL_LOG_ERROR("[%s] Tensor input0's rank less than 1.", ctx.GetOpType().c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "[%s] Tensor input0's rank less than 1.", ctx.GetOpType().c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (shape1->NumElements() != shape2->NumElements()) {
-    KERNEL_LOG_ERROR("[%s] Tensor input1&input2's ranks mismatch.", ctx.GetOpType().c_str());
+    CUST_KERNEL_LOG_ERROR(ctx, "[%s] Tensor input1&input2's ranks mismatch.", ctx.GetOpType().c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (data_type0 == DT_FLOAT) {
@@ -70,7 +70,7 @@ uint32_t SparseSegmentSqrtNGradCpuKernel::Compute(CpuKernelContext &ctx) {
 }
 
 template <typename T>
-uint32_t SparseSegmentSqrtNGradCpuKernel::ComputeKernel(const CpuKernelContext &ctx) {
+uint32_t SparseSegmentSqrtNGradCpuKernel::ComputeKernel(CpuKernelContext &ctx) {
   size_t n = ctx.Input(0)->GetTensorShape()->NumElements() / ctx.Input(0)->GetTensorShape()->GetDimSize(0);
   size_t m = ctx.Input(2)->GetTensorShape()->NumElements();
   int l = ctx.Output(0)->GetTensorShape()->GetDimSize(0);
@@ -90,18 +90,18 @@ uint32_t SparseSegmentSqrtNGradCpuKernel::ComputeKernel(const CpuKernelContext &
 
   for (size_t i = 1; i < m; i++) {
     if (segment_ids_addr[i] < segment_ids_addr[i - 1]) {
-      KERNEL_LOG_ERROR("Segment_ids should be sorted.");
+      CUST_KERNEL_LOG_ERROR(ctx, "Segment_ids should be sorted.");
       return KERNEL_STATUS_PARAM_INVALID;
     }
   }
 
   for (size_t i = 0; i < m; i++) {
     if (indices_addr[i] >= k) {
-      KERNEL_LOG_ERROR("Indices out of range.");
+      CUST_KERNEL_LOG_ERROR(ctx, "Indices out of range.");
       return KERNEL_STATUS_PARAM_INVALID;
     }
     if (segment_ids_addr[i] >= k) {
-      KERNEL_LOG_ERROR("Segment_ids out of range.");
+      CUST_KERNEL_LOG_ERROR(ctx, "Segment_ids out of range.");
       return KERNEL_STATUS_PARAM_INVALID;
     }
   }

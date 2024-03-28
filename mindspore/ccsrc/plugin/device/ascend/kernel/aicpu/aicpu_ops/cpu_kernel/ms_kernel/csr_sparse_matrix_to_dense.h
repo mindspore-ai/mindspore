@@ -28,7 +28,7 @@ class CSRSparseMatrixToDenseCpuKernel : public CpuKernel {
 
  private:
   template <typename indiceT, typename valueT>
-  uint32_t DoCompute(const CpuKernelContext &ctx);
+  uint32_t DoCompute(CpuKernelContext &ctx);
 };
 
 }  // namespace aicpu

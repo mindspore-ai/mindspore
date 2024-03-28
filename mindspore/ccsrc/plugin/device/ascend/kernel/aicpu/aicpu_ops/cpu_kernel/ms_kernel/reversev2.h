@@ -30,10 +30,10 @@ class ReverseV2CpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
-  uint32_t ComputeDiffType(DataType data_type, const CpuKernelContext &ctx);
+  uint32_t ComputeDiffType(DataType data_type, CpuKernelContext &ctx);
 
   template <typename T>
-  uint32_t ComputeReverseV2(const CpuKernelContext &ctx);
+  uint32_t ComputeReverseV2(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

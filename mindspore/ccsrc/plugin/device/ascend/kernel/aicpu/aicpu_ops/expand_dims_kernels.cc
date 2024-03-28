@@ -30,7 +30,7 @@ namespace dataset {
 uint32_t ExpandDimsKernel::DoCompute() {
   size_t type_size = GetDataTypeSize(matrix_info_.matrix_type);
   if (type_size < 1) {
-    AICPU_LOGE("don't support input tensor types");
+    CUST_AICPU_LOGE(workspace_info_, "don't support input tensor types");
     return kAicpuKernelStateFailed;
   }
   int ret = memcpy_s(reinterpret_cast<void *>(io_addrs_[1]), input_size_ * type_size,
@@ -43,7 +43,7 @@ uint32_t ExpandDimsKernel::DoCompute() {
 }
 
 uint32_t ExpandDimsKernel::ParseKernelParam() {
-  AICPU_LOGI("aicpu ExpandDimsKernel");
+  CUST_AICPU_LOGI(workspace_info_, "aicpu ExpandDimsKernel");
 
   aicpuops::Tensor input_tensor = node_def_.inputs(0);
   aicpuops::TensorShape input_shape = input_tensor.tensor_shape();

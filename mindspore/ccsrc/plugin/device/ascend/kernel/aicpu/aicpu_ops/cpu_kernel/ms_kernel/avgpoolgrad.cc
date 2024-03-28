@@ -35,11 +35,11 @@ constexpr int64_t kParallelNum_16K = 16 * 1024;
 
 namespace aicpu {
 
-uint32_t GetBroadcastSize(const int index, const int in_size, const int ksize, const int stride, const int pad_size,
-                          int *bindex, int *bsize) {
+uint32_t GetBroadcastSize(CpuKernelContext &ctx, const int index, const int in_size, const int ksize, const int stride,
+                          const int pad_size, int *bindex, int *bsize) {
   // Cannot have index beyond the input size.
   if (index * stride > in_size) {
-    KERNEL_LOG_ERROR("index * stride must be less than or equal to input size");
+    CUST_KERNEL_LOG_ERROR(ctx, "index * stride must be less than or equal to input size");
     return KERNEL_STATUS_PARAM_INVALID;
   }
   *bindex = index * stride;
@@ -59,9 +59,10 @@ uint32_t GetBroadcastSize(const int index, const int in_size, const int ksize, c
   return KERNEL_STATUS_OK;
 }
 
-uint32_t GetOutputSize(int64_t input_size, int64_t kernel_size, int64_t stride, const std::string &padding,
-                       int64_t *output_size, int64_t *padding_before, int64_t *padding_after) {
-  KERNEL_CHECK_FALSE(stride > 0, KERNEL_STATUS_PARAM_INVALID, "[AvgPoolGrad] Stride must be positive.");
+uint32_t GetOutputSize(CpuKernelContext &ctx, int64_t input_size, int64_t kernel_size, int64_t stride,
+                       const std::string &padding, int64_t *output_size, int64_t *padding_before,
+                       int64_t *padding_after) {
+  CUST_KERNEL_CHECK_FALSE(ctx, stride > 0, KERNEL_STATUS_PARAM_INVALID, "[AvgPoolGrad] Stride must be positive.");
   std::string same("SAME");
   std::string valid("VALID");
   if (valid == padding) {
@@ -75,42 +76,43 @@ uint32_t GetOutputSize(int64_t input_size, int64_t kernel_size, int64_t stride, 
     *padding_before = padding_need / 2;
     *padding_after = padding_need - *padding_before;
   } else {
-    KERNEL_LOG_ERROR("[AvgPoolGrad] Padding is invalid.");
+    CUST_KERNEL_LOG_ERROR(ctx, "[AvgPoolGrad] Padding is invalid.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (*output_size < 0) {
-    KERNEL_LOG_ERROR("[AvgPoolGrad] Computed output size is negative.");
+    CUST_KERNEL_LOG_ERROR(ctx, "[AvgPoolGrad] Computed output size is negative.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
 }
 
-uint32_t CheckAvgPoolGrad(const CpuKernelContext &ctx) {
+uint32_t CheckAvgPoolGrad(CpuKernelContext &ctx) {
   // Check whether input or output is nullptr
   Tensor *tensor_in_shape = ctx.Input(0);
   Tensor *out_backprop = ctx.Input(1);
   const std::vector<std::string> attr = {"ksize", "strides", "padding"};
 
-  KERNEL_CHECK_FALSE(NormalCheck(const_cast<CpuKernelContext &>(ctx), kAvgPoolGradInputNum, kAvgPoolGradOutputNum,
-                                 attr) == KERNEL_STATUS_OK,
-                     KERNEL_STATUS_PARAM_INVALID, "[AvgPoolGrad] NormalCheck input and output failed.");
+  CUST_KERNEL_CHECK_FALSE(ctx,
+                          NormalCheck(const_cast<CpuKernelContext &>(ctx), kAvgPoolGradInputNum, kAvgPoolGradOutputNum,
+                                      attr) == KERNEL_STATUS_OK,
+                          KERNEL_STATUS_PARAM_INVALID, "[AvgPoolGrad] NormalCheck input and output failed.");
 
   // For avgpooling, tensor_in_shape should have 1 dimension, and 4 elements.
-  KERNEL_CHECK_FALSE(tensor_in_shape->GetTensorShape()->GetDims() == 1 && tensor_in_shape->NumElements() == 4,
-                     KERNEL_STATUS_PARAM_INVALID,
-                     "[AvgPoolGrad] origin_tensor_shape must be 1-dimensional and 4 "
-                     "elements");
+  CUST_KERNEL_CHECK_FALSE(ctx, tensor_in_shape->GetTensorShape()->GetDims() == 1 && tensor_in_shape->NumElements() == 4,
+                          KERNEL_STATUS_PARAM_INVALID,
+                          "[AvgPoolGrad] origin_tensor_shape must be 1-dimensional and 4 "
+                          "elements");
 
   // For avgpooling, input_grad should have 4 dimensions.
-  KERNEL_CHECK_FALSE(out_backprop->GetTensorShape()->GetDims() == 4, KERNEL_STATUS_PARAM_INVALID,
-                     "[AvgPoolGrad] input_grad must be 4-dimensional");
+  CUST_KERNEL_CHECK_FALSE(ctx, out_backprop->GetTensorShape()->GetDims() == 4, KERNEL_STATUS_PARAM_INVALID,
+                          "[AvgPoolGrad] input_grad must be 4-dimensional");
 
   // Check tensor_in_shape is int32 or not
   DataType tensor_in_shape_type = tensor_in_shape->GetDataType();
   if (tensor_in_shape_type != DT_INT32) {
-    KERNEL_LOG_ERROR(
-      "[AvgPoolGrad] Please make sure that type of orig_input_shape"
-      "satisfied: int32_t");
+    CUST_KERNEL_LOG_ERROR(ctx,
+                          "[AvgPoolGrad] Please make sure that type of orig_input_shape"
+                          "satisfied: int32_t");
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
@@ -118,7 +120,7 @@ uint32_t CheckAvgPoolGrad(const CpuKernelContext &ctx) {
   AttrValue *attr_ksize = ctx.GetAttr("ksize");
   std::vector<int64_t> ksize = attr_ksize->GetListInt();
   if (ksize.size() != 4) {
-    KERNEL_LOG_ERROR("[AvgPoolGrad] Size of ksize must be 4.");
+    CUST_KERNEL_LOG_ERROR(ctx, "[AvgPoolGrad] Size of ksize must be 4.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
@@ -126,7 +128,7 @@ uint32_t CheckAvgPoolGrad(const CpuKernelContext &ctx) {
   AttrValue *attr_strides = ctx.GetAttr("strides");
   std::vector<int64_t> strides = attr_strides->GetListInt();
   if (strides.size() != 4) {
-    KERNEL_LOG_ERROR("[AvgPoolGrad] Size of strides must be 4.");
+    CUST_KERNEL_LOG_ERROR(ctx, "[AvgPoolGrad] Size of strides must be 4.");
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
@@ -142,20 +144,20 @@ uint32_t CheckAvgPoolGrad(const CpuKernelContext &ctx) {
     data_format = attr_data_format->GetString();
     bool data_format_cond = (data_format_NCHW == data_format) || (data_format_NHWC == data_format);
     if (!data_format_cond) {
-      KERNEL_LOG_ERROR(
-        "[AvgPoolGrad] Parameter data_format must be one of the following: "
-        "NCHW, "
-        "NHWC.");
+      CUST_KERNEL_LOG_ERROR(ctx,
+                            "[AvgPoolGrad] Parameter data_format must be one of the following: "
+                            "NCHW, "
+                            "NHWC.");
       return KERNEL_STATUS_PARAM_INVALID;
     }
   }
 
-  KERNEL_LOG_DEBUG("[AvgPoolGrad] Parameters check pass.");
+  CUST_KERNEL_LOG_DEBUG(ctx, "[AvgPoolGrad] Parameters check pass.");
   return KERNEL_STATUS_OK;
 }
 
 template <class T>
-uint32_t ComputeAvgPoolGradImpl(const CpuKernelContext &ctx) {
+uint32_t ComputeAvgPoolGradImpl(CpuKernelContext &ctx) {
   Tensor *tensor_in_shape = ctx.Input(0);
   EigenTensor tensor_in_shape_eigen_tensor(tensor_in_shape, tensor_in_shape->GetData());
   Tensor *out_backprop = ctx.Input(1);
@@ -240,15 +242,17 @@ uint32_t ComputeAvgPoolGradImpl(const CpuKernelContext &ctx) {
   int64_t padding_rows_after;
   int64_t padding_cols_after;
 
-  KERNEL_CHECK_FALSE(depth_window == 1, KERNEL_STATUS_PARAM_INVALID,
-                     "Non-spatial pooling is not"
-                     "yet supported. Volunteers? :)");
-  KERNEL_CHECK_FALSE(GetOutputSize(in_rows, window_rows, row_stride, ctx.GetAttr("padding")->GetString(), &out_height,
-                                   &pad_rows, &padding_rows_after) == KERNEL_STATUS_OK,
-                     KERNEL_STATUS_PARAM_INVALID, "[AvgPoolingGrad] Getoutputsize error.")
-  KERNEL_CHECK_FALSE(GetOutputSize(in_cols, window_cols, col_stride, ctx.GetAttr("padding")->GetString(), &out_width,
-                                   &pad_cols, &padding_cols_after) == KERNEL_STATUS_OK,
-                     KERNEL_STATUS_PARAM_INVALID, "[AvgPoolingGrad] Getoutputsize error.")
+  CUST_KERNEL_CHECK_FALSE(ctx, depth_window == 1, KERNEL_STATUS_PARAM_INVALID,
+                          "Non-spatial pooling is not"
+                          "yet supported. Volunteers? :)");
+  CUST_KERNEL_CHECK_FALSE(ctx,
+                          GetOutputSize(ctx, in_rows, window_rows, row_stride, ctx.GetAttr("padding")->GetString(),
+                                        &out_height, &pad_rows, &padding_rows_after) == KERNEL_STATUS_OK,
+                          KERNEL_STATUS_PARAM_INVALID, "[AvgPoolingGrad] Getoutputsize error.")
+  CUST_KERNEL_CHECK_FALSE(ctx,
+                          GetOutputSize(ctx, in_cols, window_cols, col_stride, ctx.GetAttr("padding")->GetString(),
+                                        &out_width, &pad_cols, &padding_cols_after) == KERNEL_STATUS_OK,
+                          KERNEL_STATUS_PARAM_INVALID, "[AvgPoolingGrad] Getoutputsize error.")
 
   auto out_backprop_ptr = out_backprop_eigen_tensor.flat<T>().data();
   auto input_backprop_ptr = output_eigen_tensor.flat<T>().data();
@@ -301,15 +305,17 @@ uint32_t ComputeAvgPoolGradImpl(const CpuKernelContext &ctx) {
       for (int64_t r = 0; r < out_backprop_rows; ++r) {
         int rindex;
         int rsize;
-        KERNEL_CHECK_FALSE(
-          GetBroadcastSize(r, in_rows, window_rows, row_stride, pad_rows, &rindex, &rsize) == KERNEL_STATUS_OK,
+        CUST_KERNEL_CHECK_FALSE(
+          ctx,
+          GetBroadcastSize(ctx, r, in_rows, window_rows, row_stride, pad_rows, &rindex, &rsize) == KERNEL_STATUS_OK,
           KERNEL_STATUS_INNER_ERROR, "[AvgPoolGrad] An error happened during calculation.")
 
         for (int64_t c = 0; c < out_backprop_cols; ++c) {
           int cindex;
           int csize;
-          KERNEL_CHECK_FALSE(
-            GetBroadcastSize(c, in_cols, window_cols, col_stride, pad_cols, &cindex, &csize) == KERNEL_STATUS_OK,
+          CUST_KERNEL_CHECK_FALSE(
+            ctx,
+            GetBroadcastSize(ctx, c, in_cols, window_cols, col_stride, pad_cols, &cindex, &csize) == KERNEL_STATUS_OK,
             KERNEL_STATUS_INNER_ERROR, "[AvgPoolGrad] An error happened during calculation.")
 
           T divide_coeff(1.0 / (rsize * csize));
@@ -335,7 +341,7 @@ uint32_t ComputeAvgPoolGradImpl(const CpuKernelContext &ctx) {
   int64_t total_elements = out_backprop_batch * in_cols * in_rows * out_backprop_depth;
 
   if (data_format_NCHW == data_format) {
-    KERNEL_LOG_INFO("[AvgPoolGrad] Calling new shard NCHW");
+    CUST_KERNEL_LOG_INFO(ctx, "[AvgPoolGrad] Calling new shard NCHW");
     int64_t total_images = out_backprop_batch * out_backprop_depth;
     if (total_elements <= kParallelNum_7K) {
       shard_NCHW(0, total_images);
@@ -353,7 +359,7 @@ uint32_t ComputeAvgPoolGradImpl(const CpuKernelContext &ctx) {
       return CpuKernelUtils::ParallelFor(ctx, total_images, total_images / max_core_num, shard_NCHW);
     }
   } else {
-    KERNEL_LOG_INFO("[AvgPoolGrad] Calling shard NHWC");
+    CUST_KERNEL_LOG_INFO(ctx, "[AvgPoolGrad] Calling shard NHWC");
     if (total_elements <= kParallelNum_7K) {
       shard_NHWC(0, out_backprop_batch);
       return KERNEL_STATUS_OK;
@@ -374,7 +380,8 @@ uint32_t ComputeAvgPoolGradImpl(const CpuKernelContext &ctx) {
 
 uint32_t AvgPoolGradCpuKernel::Compute(CpuKernelContext &ctx) {
   uint32_t check_status = CheckAvgPoolGrad(ctx);
-  KERNEL_CHECK_FALSE(check_status == KERNEL_STATUS_OK, KERNEL_STATUS_PARAM_INVALID, "[AvgPoolGrad] check failure.");
+  CUST_KERNEL_CHECK_FALSE(ctx, check_status == KERNEL_STATUS_OK, KERNEL_STATUS_PARAM_INVALID,
+                          "[AvgPoolGrad] check failure.");
   DataType input_type = ctx.Input(kSecondInputIndex)->GetDataType();
   switch (input_type) {
     case DT_FLOAT16:
@@ -384,7 +391,8 @@ uint32_t AvgPoolGradCpuKernel::Compute(CpuKernelContext &ctx) {
     case DT_DOUBLE:
       return ComputeAvgPoolGradImpl<double>(ctx);
     default:
-      KERNEL_LOG_ERROR("[AvgPoolGrad] The data type of input_grad is not supported.", DTypeStr(input_type).c_str());
+      CUST_KERNEL_LOG_ERROR(ctx, "[AvgPoolGrad] The data type of input_grad is not supported.",
+                            DTypeStr(input_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
   return KERNEL_STATUS_OK;
