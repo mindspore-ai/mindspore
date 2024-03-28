@@ -20,22 +20,6 @@
 
 namespace mindspore {
 namespace expander {
-namespace {
-TypePtr GetRealType(const TypePtr &type) {
-  MS_EXCEPTION_IF_NULL(type);
-  if (type->isa<Tuple>()) {
-    return GetRealType(type->cast<TuplePtr>()->elements()[0]);
-  }
-  if (type->isa<List>()) {
-    return GetRealType(type->cast<ListPtr>()->elements()[0]);
-  }
-  if (type->isa<TensorType>()) {
-    return type->cast<TensorTypePtr>()->element();
-  }
-  return type;
-}
-}  // namespace
-
 Node::Node(Emitter *emitter) : emitter_(emitter) { MS_EXCEPTION_IF_NULL(emitter); }
 
 InputType Node::input_type() { MS_EXCEPTION(NotImplementedError) << "Base node not implement input_type() method"; }
@@ -85,8 +69,12 @@ std::vector<std::vector<int64_t>> Node::shapes() {
 
 TypePtr Node::dtype() {
   if (type_ == nullptr) {
-    type_ = GetRealType(GetType());
+    type_ = GetType();
     MS_EXCEPTION_IF_NULL(type_);
+    if (type_->isa<TensorType>()) {
+      type_ = type_->cast<TensorTypePtr>()->element();
+      MS_EXCEPTION_IF_NULL(type_);
+    }
   }
   return type_;
 }
