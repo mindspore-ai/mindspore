@@ -1592,12 +1592,12 @@ def get_apply_adagrad_da_vmap_rule(prim, axis_size):
         l2 = _bdim_at_front(l2, l2_dim, axis_size)
         global_step = _bdim_at_front(global_step, global_step_dim, axis_size)
 
-        var, gradient_accumulator, gradient_squared_accumulator = batch_prim(var, gradient_accumulator,
-                                                                             gradient_squared_accumulator, grad, lr, l1,
-                                                                             l2,
-                                                                             global_step,
-                                                                             u_monad)  # High dimensional operator;
-        return (var, 0), (gradient_accumulator, 0), (gradient_squared_accumulator, 0)
+        var = batch_prim(var, gradient_accumulator,
+                         gradient_squared_accumulator, grad, lr, l1,
+                         l2,
+                         global_step,
+                         u_monad)  # High dimensional operator;
+        return (var, 0)
 
     return vmap_rule
 
