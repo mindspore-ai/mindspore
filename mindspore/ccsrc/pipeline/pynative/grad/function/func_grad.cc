@@ -255,6 +255,7 @@ ValuePtrList GraphRoot::BuildFlattenSensGradient(const ValuePtrList &sens_gradie
 }
 
 FuncGrad::FuncGrad(const ValuePtrList &input_param_values, size_t op_num_in_bprop_graph, bool grad_by_value) {
+  MS_LOG(DEBUG) << "Start FuncGrad, input size: " << input_param_values.size();
   for (size_t i = 0; i < input_param_values.size(); ++i) {
     const auto &input_param_value = input_param_values[i];
     auto func_node = std::make_shared<BackwardNode>("input" + std::to_string(i));
