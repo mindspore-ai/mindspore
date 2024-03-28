@@ -35,15 +35,15 @@ bool ContainSparseTensor(const abstract::AbstractBasePtr &abs) {
   return false;
 }
 
-bool IsTuple(const AnfNodePtr &param) {
-  return param->abstract() != nullptr && param->abstract()->isa<abstract::AbstractTuple>();
+bool IsSequence(const AnfNodePtr &param) {
+  return param->abstract() != nullptr && param->abstract()->isa<abstract::AbstractSequence>();
 }
 
 bool IsSequenceExpandable(const AbstractBasePtr &abs) {
   if (abs == nullptr) {
     return false;
   }
-  auto abs_seq = abs->cast<abstract::AbstractTuplePtr>();
+  auto abs_seq = abs->cast<abstract::AbstractSequencePtr>();
   if (abs_seq == nullptr) {
     return false;
   }
@@ -55,6 +55,10 @@ bool IsSequenceExpandable(const AbstractBasePtr &abs) {
   if (abs_seq->dynamic_len()) {
     return false;
   }
+  // If arg is a empty tuple or list, should not expand it.
+  if (abs_seq->empty()) {
+    return false;
+  }
   // Not expand node which is arg of dynamic len parameter.
   return !abs_seq->dyn_len_arg();
 }
@@ -64,19 +68,19 @@ bool ParamContainSparseTensor(const AnfNodePtr &param) {
   return param->abstract() != nullptr && ContainSparseTensor(param->abstract());
 }
 
-bool FuncGraphHasTupleInput(const FuncGraphPtr &fg) {
-  return std::any_of(fg->parameters().cbegin(), fg->parameters().cend(), IsTuple);
+bool FuncGraphHasSequenceInput(const FuncGraphPtr &fg) {
+  return std::any_of(fg->parameters().cbegin(), fg->parameters().cend(), IsSequence);
 }
 
-bool FuncGraphHasConstantTupleInput(const FuncGraphPtr &fg) {
+bool FuncGraphHasConstantSequenceInput(const FuncGraphPtr &fg) {
   return std::any_of(fg->parameters().cbegin(), fg->parameters().cend(),
                      [](const AnfNodePtr &param) { return IsSequenceExpandable(param->abstract()); });
 }
 
-std::vector<AnfNodePtr> TransformTupleArgument(const FuncGraphPtr &fg, const AnfNodePtr &node,
-                                               const abstract::AbstractTuplePtr &abs) {
+std::vector<AnfNodePtr> TransformSequenceArgument(const FuncGraphPtr &fg, const AnfNodePtr &node,
+                                                  const abstract::AbstractSequencePtr &abs) {
   auto &elements = abs->elements();
-  std::vector<AnfNodePtr> tuple_node_expanded;
+  std::vector<AnfNodePtr> sequence_node_expanded;
   for (size_t i = 0; i < elements.size(); i++) {
     auto idx = NewValueNode(SizeToLong(i));
     auto abstract_scalar = std::make_shared<abstract::AbstractScalar>(std::make_shared<Int64Imm>(SizeToLong(i)));
@@ -84,13 +88,13 @@ std::vector<AnfNodePtr> TransformTupleArgument(const FuncGraphPtr &fg, const Anf
     auto elem_node = fg->NewCNode({NewValueNode(prim::kPrimTupleGetItem), node, idx});
     elem_node->set_abstract(elements[i]);
     if (IsSequenceExpandable(elements[i])) {
-      auto nodes = TransformTupleArgument(fg, elem_node, elements[i]->cast<abstract::AbstractTuplePtr>());
-      (void)tuple_node_expanded.insert(tuple_node_expanded.cend(), nodes.cbegin(), nodes.cend());
+      auto nodes = TransformSequenceArgument(fg, elem_node, elements[i]->cast<abstract::AbstractSequencePtr>());
+      (void)sequence_node_expanded.insert(sequence_node_expanded.cend(), nodes.cbegin(), nodes.cend());
     } else {
-      tuple_node_expanded.push_back(elem_node);
+      sequence_node_expanded.push_back(elem_node);
     }
   }
-  return tuple_node_expanded;
+  return sequence_node_expanded;
 }
 }  // namespace opt
 }  // namespace mindspore
