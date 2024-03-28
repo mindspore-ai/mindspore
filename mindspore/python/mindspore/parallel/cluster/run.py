@@ -15,7 +15,7 @@
 """Entrypoint of ms_run"""
 import ast
 from argparse import REMAINDER, ArgumentParser
-from .process_entity import  _ProcessManager
+from .process_entity import _ProcessManager
 
 def get_args():
     """
