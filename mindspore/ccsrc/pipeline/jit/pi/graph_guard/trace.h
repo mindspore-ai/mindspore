@@ -247,6 +247,9 @@ class OpTrace : public Trace {
   virtual void JudgeInplaceAddConstPass();
   virtual void JudgeIsConstPass();
   virtual void JudgeBoundMethodPass();
+  virtual void JudgeSubScrRandPass();
+  virtual void JudgeDTypeTensorAttrPass();
+  virtual void JudgeRelaxGuardFuncPass();
 
  protected:
   int opcode_;
