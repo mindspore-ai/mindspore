@@ -17,6 +17,7 @@ Generate aclnn kernelmod or call func by input name in ops.yaml
 """
 import argparse
 import os
+import stat
 import re
 import pathlib
 import logging
@@ -66,7 +67,9 @@ class {kernelmod_name} : public AclnnKernelMod {{
 """
     temp_file = kernelmod_h_path + "_tmp.h"
     old_file = kernelmod_h_path + ".h"
-    with open(temp_file, 'w') as h_file:
+    flags = os.O_WRONLY | os.O_CREAT
+    mode = stat.S_IWUSR | stat.S_IRUSR
+    with os.fdopen(os.open(temp_file, flags, mode), 'w') as h_file:
         h_file.write(gen_utils.cc_license_str + h_head + h_body)
     gen_utils.check_change_and_replace_file(old_file, temp_file)
 
@@ -155,7 +158,9 @@ MS_ACLNN_KERNEL_FACTORY_REG({class_name}, {kernelmod_name});
     """
     temp_file = kernelmod_cc_path + "_tmp.cc"
     old_file = kernelmod_cc_path + ".cc"
-    with open(temp_file, 'w') as cc_file:
+    flags = os.O_WRONLY | os.O_CREAT
+    mode = stat.S_IWUSR | stat.S_IRUSR
+    with os.fdopen(os.open(temp_file, flags, mode), 'w') as cc_file:
         cc_file.write(gen_utils.cc_license_str + cc_head + workspace_info + launch + update_shape + reg)
     gen_utils.check_change_and_replace_file(old_file, temp_file)
 
@@ -257,6 +262,5 @@ if __name__ == "__main__":
             raise ValueError("Please provide op name to generate aclnn kernelmod.")
         is_need_update_shape = options.need_update_shape
         main(name, is_need_update_shape)
-    # pylint: disable=broad-except
-    except Exception as e:
+    except Exception as e: # pylint: disable=W0703
         logging.exception("Generate aclnn kernelmod failed, err info: %s", e)
