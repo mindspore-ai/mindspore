@@ -53,12 +53,7 @@ int InternalReshape::Resize(const std::vector<KernelTensor *> &inputs, const std
 }
 
 std::vector<size_t> InternalReshape::GetLaunchIgnoredInputAddressIdx() const {
-  static const std::map<std::string, std::vector<size_t>> launch_ignored_input_addr_idx = {{kReshapeOpName, {kIndex1}}};
-  if (launch_ignored_input_addr_idx.count(kernel_name_) > kDim0) {
-    return launch_ignored_input_addr_idx.at(kernel_name_);
-  } else {
-    return {};
-  }
+  return {kIndex1};
 }
 
 bool InternalReshape::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
