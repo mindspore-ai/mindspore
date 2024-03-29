@@ -37,7 +37,7 @@ from mindspore.ops.operations.math_ops import LuUnpack
 from mindspore.ops.operations.math_ops import Roll
 from mindspore.ops.operations.math_ops import Ormqr
 from mindspore.ops.operations.array_ops import MatrixSetDiagV3, Transpose
-from mindspore.ops.auto_generate import (minimum, maximum, mul, sin, sinc, sinh, cummax, real, conj, add, cos, cosh,
+from mindspore.ops.auto_generate import (minimum, maximum, mul, sin, sinc, sinh, cummax, real, conj, add, sub, cos, cosh,
                                          matrix_exp, sqrt, rsqrt, square, trace, nextafter, abs, acos, acosh, angle,
                                          asin, asinh, atan, atan2, atanh, ceil, equal, erf, erfc, erfinv, exp, expm1,
                                          floor, floor_divide, floor_mod, gcd, greater, greater_equal, less, less_equal,
@@ -653,52 +653,6 @@ def permute(input, axis):
           [ 9. 12.]]]
     """
     return transpose_(input, axis)
-
-
-def sub(input, other):
-    r"""
-    Subtracts the second input tensor from the first input tensor element-wise.
-
-    .. math::
-
-        out_{i} = input_{i} - other_{i}
-
-    Note:
-        - When the two inputs have different shapes, they must be able to broadcast to a common shape.
-        - The two inputs can not be bool type at the same time,
-          [True, Tensor(True, bool\_), Tensor(np.array([True]), bool\_)] are all considered bool type.
-        - The two inputs comply with the implicit type conversion rules to make the data types
-          consistent.
-
-    Args:
-        input (Union[Tensor, number.Number, bool]): The first input is a number.Number or
-            a bool or a tensor whose data type is
-            `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
-            `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
-        other (Union[Tensor, number.Number, bool]): The second input, when the first input is a Tensor,
-            the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool.
-
-    Returns:
-        Tensor, the shape is the same as the one after broadcasting,
-        and the data type is the one with higher precision or higher digits among the two inputs.
-
-    Raises:
-        TypeError: If `input` and `other` are not number.Number or bool or Tensor.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input = Tensor(np.array([1, 2, 3]), mindspore.int32)
-        >>> other = Tensor(np.array([4, 5, 6]), mindspore.int32)
-        >>> output = ops.sub(input, other)
-        >>> print(output)
-        [-3 -3 -3]
-    """
-    return tensor_sub(input, other)
 
 
 def subtract(input, other, *, alpha=1):
