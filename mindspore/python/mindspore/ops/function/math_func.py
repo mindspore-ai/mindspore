@@ -3904,7 +3904,7 @@ def ormqr(input, tau, other, left=True, transpose=False):
         TypeError: If dtype of `input` or `tau` or `other` is not one of: float64, float32, complex64, complex128.
         ValueError: If the dimension of `input` or `other` is less than 2D.
         ValueError: If rank(`input`) - rank(`tau`) != 1.
-        ValueError: If tau.shape[:-2] != input.shape[:-2]
+        ValueError: If tau.shape[:-1] != input.shape[:-2]
         ValueError: If other.shape[:-2] != input.shape[:-2]
         ValueError: If left == true, other.shape[-2] < tau.shape[-1].
         ValueError: If left == true, other.shape[-2] != input.shape[-2].
