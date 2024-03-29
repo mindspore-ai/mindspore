@@ -48,9 +48,11 @@ class SendInfer : public abstract::OpInferBase {
     MS_EXCEPTION_IF_NULL(shape_element);
 
     // Add shape attr for kbk mode.
-    auto shape = MakeValue(x->GetShapeVector());
-    MS_EXCEPTION_IF_NULL(shape);
-    primitive->set_attr("shape", shape);
+    if (primitive->GetAttr("shape") == nullptr) {
+      auto shape = MakeValue(x->GetShapeVector());
+      MS_EXCEPTION_IF_NULL(shape);
+      primitive->set_attr("shape", shape);
+    }
     return shape_element;
   }
 
