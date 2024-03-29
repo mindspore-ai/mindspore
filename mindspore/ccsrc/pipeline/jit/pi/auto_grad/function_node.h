@@ -62,19 +62,26 @@ class FunctionNode : public FunctionContext {
   /// \brief Release all resource.
   void CleanResource();
 
-  /// \brief Determine whether the python object has attribute `grad_fn`.
+  /// \brief Determine whether the python object has attribute `requires_grad`.
   ///
-  /// \param[in] input The python object.
+  /// \param[in] obj The python object.
   ///
-  /// \return The result whether the python object has attribute `grad_fn`.
-  static bool HasGradFunc(const py::handle &input);
+  /// \return The result of the python object's attribute `requires_grad`.
+  static bool HasAttrReqGrad(const py::handle &obj) { return py::hasattr(obj, "requires_grad"); }
 
   /// \brief Determine whether the python object has attribute `requires_grad`, and the value is True.
   ///
-  /// \param[in] input The python object.
+  /// \param[in] obj The python object.
   ///
   /// \return The result of the python object's attribute `requires_grad`.
-  static bool IsRequiresGradient(const py::handle &input);
+  static bool IsRequiresGradient(const py::handle &obj);
+
+  /// \brief Determine whether the python object has attribute `grad_fn`.
+  ///
+  /// \param[in] obj The python object.
+  ///
+  /// \return The result whether the python object has attribute `grad_fn`.
+  static bool HasGradFunc(const py::handle &obj);
 
   /// \brief Create a new function node.
   ///
