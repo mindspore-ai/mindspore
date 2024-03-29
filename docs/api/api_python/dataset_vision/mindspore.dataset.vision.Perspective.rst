@@ -27,6 +27,8 @@ mindspore.dataset.vision.Perspective
 
         指定该变换执行的设备。
 
+        - 当执行设备是 Ascend 时，输入数据的维度限制为[6, 10]和[8192, 4096]之间。
+
         - 当执行设备是 CPU 时，输入数据支持 `uint8` 、 `float32` 或者 `float64` 类型。
         - 当执行设备是 Ascend 时，输入数据支持 `uint8` 或者 `float32` 类型。
 
