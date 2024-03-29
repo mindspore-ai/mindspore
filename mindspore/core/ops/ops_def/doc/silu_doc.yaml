@@ -12,6 +12,11 @@ silu:
 
             \text{sigma}(x_i) = \frac{1}{1 + \exp(-x_i)},
 
+        SiLU Function Graph:
+
+        .. image:: ../images/SiLU.png
+            :align: center
+
         Args:
             input (Tensor): `input` is :math:`x` in the preceding formula. Input with the data type
                 float16 or float32.
