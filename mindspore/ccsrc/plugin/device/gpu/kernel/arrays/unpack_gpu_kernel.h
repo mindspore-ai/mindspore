@@ -71,11 +71,6 @@ class UnpackFwdGpuKernelMod : public NativeGpuKernelMod {
     if (axis_ < 0) {
       axis_ += SizeToInt(input_shape.size());
     }
-    // To do:
-    // origin_data_format_ = GetValue<std::string>(primitive_->GetAttr("operator_origin_format"));
-    // auto input_format = FormatEnumToString(inputs[0]->format());
-    // axis_ = AxisTransform(origin_data_format_, input_format, axis_);
-
     output_num_ = LongToSize(GetValue<int64_t>(primitive_->GetAttr("num")));
     outputs_host_ = std::make_unique<T *[]>(output_num_);
     ResetResource();
