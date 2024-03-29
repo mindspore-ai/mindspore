@@ -72,6 +72,11 @@ FuncGraphPtr ParsePythonCode(const py::object &obj, const std::string &python_mo
   FuncGraphPtr func_graph = parser->ParseFuncGraph();
   if (func_graph == nullptr) {
     MS_LOG(ERROR) << "Parse python code failed, errcode = " << parser->errcode();
+    py::object node = ast->GetAstNode();
+    const auto &location = parser->GetLocation(node);
+    py::str desc = python_adapter::CallPyModFn(ast->module(), PYTHON_MOD_GET_OBJECT_DESCRIPTION, ast->function(),
+                                               location->file_name(), location->line());
+    MS_LOG(ERROR) << "\nlocation:" << desc.cast<std::string>();
     return nullptr;
   }
 
@@ -163,6 +168,7 @@ void Parser::InitParserEnvironment(const py::object &obj) {
 void Parser::CleanParserResource() {
   Parser::top_func_graph_ = FuncGraphWeakPtr();
   ScopeManager::GetInstance().ClearScope();
+  parse::CleanParameterNameCache();
 }
 
 void Parser::CheckFuncReturn(const FuncGraphManagerPtr &manager, const FuncGraphPtr &fn) {

@@ -965,7 +965,7 @@ void GraphExecutorPy::CleanCompileRes(const ResourcePtr &resource) {
   (void)profiler::CollectHostInfo(kCompiler, kPipelineClean, kPipelineClean, 0, 0, 1);
   ProcessStatus::GetInstance().RecordEnd();
   CompileCacheContext::GetInstance().Clear();
-  parse::CleanParameterNameCache();
+  parse::Parser::CleanParserResource();
   MS_LOG(INFO) << "Clean compile resource end";
 }
 
