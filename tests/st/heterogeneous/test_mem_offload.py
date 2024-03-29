@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -47,7 +47,6 @@ class LeNet(nn.Cell):
         self.fc2 = nn.Dense(120, 84, weight_init="normal", bias_init="zeros")
         self.fc3 = nn.Dense(84, 10, weight_init="normal", bias_init="zeros")
 
-
     def construct(self, input_x):
         output = self.conv1(input_x)
         output = self.relu(output)
@@ -67,14 +66,16 @@ class LeNet(nn.Cell):
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@pytest.mark.env_single
 def test_resnet():
     '''
-    Feature: MemScheduler
-    Description: Test MemScheduler
+    Feature: Mem offload
+    Description: Test mem offload
     Expectation: Run resnet success
     '''
-    os.environ['ENABLE_MEM_SCHEDULER'] = '1'
+    os.environ['GRAPH_OP_RUN'] = '1'
+    context.set_context(memory_offload='ON')
+    context.set_context(max_device_memory='0.2GB')
     num_classes = 10
     epoch = 8
     batch_size = 1
@@ -96,20 +97,22 @@ def test_resnet():
         loss = train_network(data, label)
         losses.append(loss)
     assert losses[-1].asnumpy() < 1
-    os.environ['ENABLE_MEM_SCHEDULER'] = '0'
+    os.environ['GRAPH_OP_RUN'] = '0'
 
 
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@pytest.mark.env_single
 def test_lenet():
     '''
-    Feature: MemScheduler
-    Description: Test MemScheduler
+    Feature: Mem offload
+    Description: Test mem offload
     Expectation: Run lenet success
     '''
-    os.environ['ENABLE_MEM_SCHEDULER'] = '1'
+    os.environ['GRAPH_OP_RUN'] = '1'
+    context.set_context(memory_offload='ON')
+    context.set_context(max_device_memory='0.1GB')
     data = Tensor(np.ones([32, 1, 32, 32]).astype(np.float32) * 0.01)
     label = Tensor(np.ones([32]).astype(np.int32))
     net = LeNet()
@@ -124,20 +127,22 @@ def test_lenet():
     res = train_network(data, label)
     diff = res.asnumpy()[0] - 2.3025851
     assert np.all(diff < 1.e-6)
-    os.environ['ENABLE_MEM_SCHEDULER'] = '0'
+    os.environ['GRAPH_OP_RUN'] = '0'
 
 
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@pytest.mark.env_single
 def test_lenet_manual_offload():
     '''
-    Feature: MemScheduler
+    Feature: Mem offload
     Description: Test set offload strategy
     Expectation: Run lenet success
     '''
-    os.environ['ENABLE_MEM_SCHEDULER'] = '1'
+    os.environ['GRAPH_OP_RUN'] = '1'
+    context.set_context(memory_offload='ON')
+    context.set_context(max_device_memory='0.1GB')
     data = Tensor(np.ones([32, 1, 32, 32]).astype(np.float32) * 0.01)
     label = Tensor(np.ones([32]).astype(np.int32))
     net = LeNet()
@@ -153,11 +158,13 @@ def test_lenet_manual_offload():
     res = train_network(data, label)
     diff = res.asnumpy()[0] - 2.3025851
     assert np.all(diff < 1.e-6)
-    os.environ['ENABLE_MEM_SCHEDULER'] = '0'
+    os.environ['GRAPH_OP_RUN'] = '0'
 
 
 @pytest.mark.level1
-@pytest.mark.env_onecard
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_single
 def test_1024_batch_size_resnet():
     """
     Feature: Memory offload
@@ -172,6 +179,7 @@ def test_1024_batch_size_resnet():
     if not os.path.isdir(default_offload_path):
         os.mkdir(default_offload_path)
     context.set_context(memory_offload='ON')
+    context.set_context(max_device_memory='30GB')
     net = resnet50(batch_size, num_classes)
     lr = 0.1
     momentum = 0.9
