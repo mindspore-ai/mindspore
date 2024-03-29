@@ -67,10 +67,7 @@ REG_BPROP_BUILDER("SolveTriangular").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) 
       auto fill_value = ib->Tensor(0, grad_a->dtype());
       auto fill = ib->Emit("FillV2", {ib->Value<ShapeVector>(ShapeVector(1, row_size)), fill_value});
       grad_a =
-        ib->MatrixSetDiagV3(grad_a, fill,
-                            ib->Emit("Zeros", {ib->Value<ShapeVector>(ShapeVector({2})),
-                                               ib->Value<int64_t>(static_cast<int64_t>(TypeId::kNumberTypeInt32))}),
-                            MakeValue("RIGHT_LEFT"));
+        ib->MatrixSetDiagV3(grad_a, fill, ib->Fill(int64_t(0), {2}, TypeId::kNumberTypeInt32), MakeValue("RIGHT_LEFT"));
     }
     return {grad_a, grad_b, ib->OutZeros(trans), ib->OutZeros(lower), ib->OutZeros(unit_diagonal)};
   } else {
