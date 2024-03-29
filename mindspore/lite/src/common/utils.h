@@ -177,7 +177,6 @@ std::string MapToStrJoin(const std::map<K, V> &options, const std::string &kv_se
     } else {
       first_dim = false;
     }
-    oss << x;
   }
   return oss.str();
 }
