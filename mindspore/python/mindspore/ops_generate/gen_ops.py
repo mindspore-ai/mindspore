@@ -818,6 +818,7 @@ from mindspore.ops.auto_generate.gen_arg_dtype_cast import type_it
 from mindspore.ops.auto_generate.gen_arg_handler import *
 from mindspore._c_expression import OpDtype
 from mindspore.common._stub_tensor import _convert_stub
+from mindspore.common.tensor import Tensor
 """
 
 
@@ -918,6 +919,7 @@ def generate_op_arg_default_value(yaml_data):
     Generate python default value.
     """
     default_py_header = f"""\"\"\"Operator labels and args default value.\"\"\"
+from mindspore.common.tensor import Tensor
 from mindspore.common import dtype as mstype\n\n"""
 
     gen_default_py = default_py_header + f"""op_args_default_value = {{"""

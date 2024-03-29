@@ -17,12 +17,16 @@ apply_came_part4:
             dtype: float
         sum_r:
             dtype: tensor
+            default: None
         sum_u_r:
             dtype: tensor
+            default: Tensor([0])
         sum_u_c:
             dtype: tensor
+            default: Tensor([0])
         sum_u_rc:
             dtype: tensor
+            default: Tensor([0])
         global_shape:
             dtype: tuple[int]
             default: None
