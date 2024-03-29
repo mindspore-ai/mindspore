@@ -52,7 +52,5 @@ def _scalar_bitwise_xor_tensor(x, y):
 
 @bitwise_xor.register_default()
 def default_bitwsie_xor(x, y):
-    """
-    Default function for bitwise_xor.
-   """
+    """Default function for bitwise_xor."""
     return x ^ y

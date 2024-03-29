@@ -24,7 +24,6 @@ import mindspore.common._monad as monad
 from mindspore.common.sparse_tensor import RowTensorInner
 from mindspore.ops.composite.base import _append, _insert, _pop, _list_clear, _reverse, \
     _extend, _dict_setitem, _dict_clear, _haskey, _update, _fromkeys
-from mindspore.ops.composite import multitype_ops
 from mindspore.ops.operations._sequence_ops import TensorToTuple
 from mindspore.ops_generate.gen_ops_inner_prim import ListToTuple, TupleToList
 
@@ -36,7 +35,7 @@ from ...ops import operations as P
 from ...ops import composite
 from ...ops.operations import array_ops
 from ...ops.composite import MultitypeFuncGraph, env_get, hyper_add, \
-    zeros_like, ones_like, repeat_elements
+    zeros_like, ones_like, repeat_elements, multitype_ops
 from ...ops.composite.multitype_ops import _constexpr_utils as const_utils
 from ...ops.composite.multitype_ops import _compile_utils as compile_utils
 from ...ops.operations.math_ops import Median

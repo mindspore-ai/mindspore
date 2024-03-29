@@ -75,7 +75,5 @@ def _negative_cootensor(x):
 
 @negative.register_default()
 def default_negative(x):
-    """
-    Default function for negative.
-   """
+    """Default function for negative."""
     return -x

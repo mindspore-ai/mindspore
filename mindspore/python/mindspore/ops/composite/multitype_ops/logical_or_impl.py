@@ -57,7 +57,5 @@ def _logical_or_tensor(x, y):
 
 @logical_or.register_default()
 def default_logical_or(x, y):
-    """
-    Default function for logical or.
-   """
+    """Default function for logical or."""
     return x or y

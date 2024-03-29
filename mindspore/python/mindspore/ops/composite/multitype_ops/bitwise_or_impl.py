@@ -52,7 +52,5 @@ def _scalar_bitwise_or_tensor(x, y):
 
 @bitwise_or.register_default()
 def default_bitwsie_or(x, y):
-    """
-    Default function for bitwise_or.
-   """
+    """Default function for bitwise_or."""
     return x | y

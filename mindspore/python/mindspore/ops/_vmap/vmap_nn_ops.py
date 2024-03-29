@@ -2105,7 +2105,7 @@ def get_logit_vmap_rule(prim, axis_size):
 
     def vmap_rule(x_bdim, alpha_bdim):
         x_data, x_dim = x_bdim
-        alpha_data, alpha_dim = alpha_bdim
+        alpha_data, _ = alpha_bdim
         out = F.celu(x_data, alpha_data)
         return out, x_dim
 
