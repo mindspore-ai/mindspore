@@ -31,7 +31,31 @@ NPU_ASD_ENABLE = 'NPU_ASD_ENABLE'
 
 class ASDBase:
     """
-    ASD Base Class.
+    ASDBase is the base class of operator with accuracy-sensitive detection feature in python.
+
+    Args:
+        op (Primitive): Original operator requiring accuracy-sensitive detection feature.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> from mindspore.ops.silent_check import ASDBase
+        >>> from mindspore.ops import LayerNorm as OriginLayerNorm
+        >>> class LayerNormASD(ASDBase):
+        ...     def __init__(self, *args, **kwargs):
+        ...         super().__init__(OriginLayerNorm, *args, **kwargs)
+        ...         # init parameters for accuracy-sensitive detection by calling the base class method generate_params()
+        ...         self.pre_val, self.min_val, self.max_val, self.cnt = self.generate_params()
+        ...
+        ...     def __call__(self, input_x, gamma, beta):
+        ...         if self.enable_check:
+        ...             # execute accuracy-sensitive detection by calling the check_op of base class
+        ...             input_x = self.check_op(
+        ...                 input_x, self.pre_val, self.min_val, self.max_val, self.cnt, None)
+        ...             self.cnt += 1
+        ...         # return the result of original operator
+        ...         return self.op(input_x, gamma, beta)
     """
     _index = 0
     __ms_class__ = True
@@ -64,7 +88,21 @@ class ASDBase:
 
     def generate_params(self):
         """
-        Generate check params.
+        Generate support params for accuracy-sensitive detection.
+
+        Returns:
+            tuple consisting of four elements.
+            The derived class initializes the parameters required for accuracy-sensitive detection by calling
+            this function.
+
+        Examples:
+            >>> from mindspore.ops.silent_check import ASDBase
+            >>> from mindspore.ops import LayerNorm as OriginLayerNorm
+            >>> class LayerNormASD(ASDBase):
+            ...     def __init__(self, *args, **kwargs):
+            ...         super().__init__(OriginLayerNorm, *args, **kwargs)
+            ...         # init parameters for accuracy-sensitive detection by calling the base class function
+            ...         self.pre_val, self.min_val, self.max_val, self.cnt = self.generate_params()
         """
         pre_val = Parameter(Tensor(0, mstype.float32),
                             name=f"{self._suffix}_pre_val_{self._index}",
