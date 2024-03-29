@@ -37,11 +37,18 @@ auto RunAscendApi(Function f, const char *file, int line, const char *call_f, co
   return f();
 }
 
+template <typename Function>
+bool HasAscendApi(Function f) {
+  return f != nullptr;
+}
+
 namespace mindspore {
 namespace transform {
 
 #define CALL_ASCEND_API(func_name, ...) \
   RunAscendApi(mindspore::transform::func_name##_, FILE_NAME, __LINE__, __FUNCTION__, #func_name, ##__VA_ARGS__)
+
+#define HAS_ASCEND_API(func_name) HasAscendApi(mindspore::transform::func_name##_)
 
 std::string GetAscendPath();
 void *GetLibHandler(const std::string &lib_path);

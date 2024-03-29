@@ -15,6 +15,7 @@
  */
 #ifndef MINDSPORE_CCSRC_TRANSFORM_SYMBOL_ACL_TDT_SYMBOL_H_
 #define MINDSPORE_CCSRC_TRANSFORM_SYMBOL_ACL_TDT_SYMBOL_H_
+#include <cstddef>
 #include <string>
 #include "acl/acl_tdt.h"
 #include "utils/dlopen_macro.h"
@@ -40,6 +41,7 @@ ORIGIN_METHOD(acltdtGetDataTypeFromItem, aclDataType, const acltdtDataItem *)
 ORIGIN_METHOD(acltdtGetDimNumFromItem, size_t, const acltdtDataItem *)
 ORIGIN_METHOD(acltdtGetDimsFromItem, aclError, const acltdtDataItem *, int64_t *, size_t)
 ORIGIN_METHOD(acltdtGetTensorTypeFromItem, acltdtTensorType, const acltdtDataItem *)
+ORIGIN_METHOD(acltdtGetSliceInfoFromItem, aclError, const acltdtDataItem *, size_t *, size_t *)
 ORIGIN_METHOD(acltdtQueryChannelSize, aclError, const acltdtChannelHandle *, size_t *)
 ORIGIN_METHOD(acltdtReceiveTensor, aclError, const acltdtChannelHandle *, acltdtDataset *, int32_t)
 ORIGIN_METHOD(acltdtSendTensor, aclError, const acltdtChannelHandle *, const acltdtDataset *, int32_t)
@@ -62,6 +64,7 @@ extern acltdtGetDataTypeFromItemFunObj acltdtGetDataTypeFromItem_;
 extern acltdtGetDimNumFromItemFunObj acltdtGetDimNumFromItem_;
 extern acltdtGetDimsFromItemFunObj acltdtGetDimsFromItem_;
 extern acltdtGetTensorTypeFromItemFunObj acltdtGetTensorTypeFromItem_;
+extern acltdtGetSliceInfoFromItemFunObj acltdtGetSliceInfoFromItem_;
 extern acltdtQueryChannelSizeFunObj acltdtQueryChannelSize_;
 extern acltdtReceiveTensorFunObj acltdtReceiveTensor_;
 extern acltdtSendTensorFunObj acltdtSendTensor_;

@@ -24,9 +24,6 @@
 #include <mutex>
 #include <utility>
 #include <condition_variable>
-#include "acl/acl_tdt.h"
-#include "ir/tensor.h"
-#include "plugin/device/ascend/hal/device/tensorprint_utils.h"
 #include "plugin/device/ascend/hal/device/mbuf_receive_manager.h"
 
 namespace mindspore::device::ascend {
@@ -55,7 +52,7 @@ class TensorDumpUtils {
   TensorDumpUtils() = default;
   TensorDumpUtils(const TensorDumpUtils &) = delete;
   TensorDumpUtils &operator=(const TensorDumpUtils &) = delete;
-  void AsyncSaveDatasetToNpyFile(acltdtDataset *acl_dataset);
+  void AsyncSaveDatasetToNpyFile(const ScopeAclTdtDataset &dataset);
 
  private:
   std::string TensorNameToArrayName(const std::string &tensor_name);
