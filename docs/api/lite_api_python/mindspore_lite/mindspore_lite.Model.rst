@@ -130,6 +130,6 @@ mindspore_lite.Model
             - **RuntimeError** - `weights` 是list，但是两层list中的元素不是Tensor。
             - **RuntimeError** - 权重更新失败。
 
-        样例教程：
+        教程样例：
             - `动态权重更新
               <https://www.mindspore.cn/lite/docs/zh-CN/r2.3/use/cloud_infer/runtime_python.html#%E5%8A%A8%E6%80%81%E6%9D%83%E9%87%8D%E6%9B%B4%E6%96%B0>`_

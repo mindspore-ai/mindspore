@@ -13,8 +13,8 @@ mindspore.parameter_broadcast
         - **layout** (Dict) - 参数排布字典。 来自 :func:`mindspore.nn.Cell.parameter_layout_dict` 或
           从文件中读取(如: 通过 :func:`mindspore.set_auto_parallel_context` 接口的 `strategy_ckpt_config`
           参数保存的"strategy.ckpt"文件)。key为参数名， value为该参数的layout。
-        - **cur_rank** (int, 可选) - 当前卡的rank id。默认值: ``0``。
-        - **initial_rank** (int， 可选) - 当前流水线并行stage起始rank id。默认值: ``0``。
+        - **cur_rank** (int，可选) - 当前卡的rank id。默认值: ``0``。
+        - **initial_rank** (int，可选) - 当前流水线并行stage起始rank id。默认值: ``0``。
 
     异常:
         - **ValueError** - `cur_rank` 不是当前卡的rank_id。
