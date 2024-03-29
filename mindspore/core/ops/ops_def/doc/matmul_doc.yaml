@@ -1,49 +1,48 @@
 matmul:
-    description: |
-
-        Multiplies matrix `a` and matrix `b`.
+  description: |
+    Multiplies matrix `a` and matrix `b`.
     
-        .. math::
-        
-        (Output)_{i j}=\sum_{k=1}^{p} a_{i k} b_{k j}=a_{i 1} b_{1 j}+a_{i 2} b_{2 j}+\cdots+a_{i p} b_{p j}, p\in N
+    .. math::
     
-        where the :math:`i,j` indicates the output of the i-th row and j-th column element.
+    Output_{i j}=\sum_{k=1}^{p} a_{i k} b_{k j}=a_{i 1} b_{1 j}+a_{i 2} b_{2 j}+\cdots+a_{i p} b_{p j}, p\in N
     
-        Note:
-            - If :math:`N * M` cannot be divided by 16, the performance will be poor in ascend environment.
-            - The dtype of inputs must be same.
-            - On Ascend, float64 doesn't be supported.
+    where the :math:`i,j` indicates the output of the i-th row and j-th column element.
     
-        Args:
-            transpose_a (bool): If ``True`` , `a` is transposed before multiplication. Default: ``False`` .
-            transpose_b (bool): If ``True`` , `b` is transposed before multiplication. Default: ``False`` .
+    Note:
+        - If :math:`N * M` cannot be divided by 16, the performance will be poor in ascend environment.
+        - The dtype of inputs must be same.
+        - On Ascend, float64 doesn't be supported.
     
-        Inputs:
-            - **a** (Tensor) - The first tensor to be multiplied. The shape of the tensor is :math:`(N, C)`. If
-                  `transpose_a` is ``True`` , its shape must be :math:`(C, N)` after transpose.
-            - **b** (Tensor) - The second tensor to be multiplied. The shape of the tensor is :math:`(C, M)`. If
-                  `transpose_b` is ``True`` , its shape must be :math:`(M, C)` after transpose.
+    Args:
+        transpose_a (bool): If ``True`` , `a` is transposed before multiplication. Default: ``False`` .
+        transpose_b (bool): If ``True`` , `b` is transposed before multiplication. Default: ``False`` .
     
-        Outputs:
-            Tensor, the shape of the output tensor is :math:`(N, M)`.
+    Inputs:
+        - **a** (Tensor) - The first tensor to be multiplied. The shape of the tensor is :math:`(N, C)`. If
+              `transpose_a` is ``True`` , its shape must be :math:`(C, N)` after transpose.
+        - **b** (Tensor) - The second tensor to be multiplied. The shape of the tensor is :math:`(C, M)`. If
+              `transpose_b` is ``True`` , its shape must be :math:`(M, C)` after transpose.
     
-        Raises:
-            TypeError: If `transpose_a` or `transpose_b` is not a bool.
-            TypeError: If the dtype of `a` and the dtype of `b` are not the same.
-            ValueError: If the column of matrix dimensions of `a` is not equal to
-                the row of matrix dimensions of `b`.
-            ValueError: If length of shape of `a` or `b` is not equal to 2.
+    Outputs:
+        Tensor, the shape of the output tensor is :math:`(N, M)`.
     
-        Supported Platforms:
-            ``Ascend`` ``GPU`` ``CPU``
+    Raises:
+        TypeError: If `transpose_a` or `transpose_b` is not a bool.
+        TypeError: If the dtype of `a` and the dtype of `b` are not the same.
+        ValueError: If the column of matrix dimensions of `a` is not equal to
+            the row of matrix dimensions of `b`.
+        ValueError: If length of shape of `a` or `b` is not equal to 2.
     
-        Examples:
-            >>> import mindspore
-            >>> import numpy as np
-            >>> from mindspore import Tensor, ops
-            >>> a = Tensor(np.ones(shape=[1, 3]), mindspore.float32)
-            >>> b = Tensor(np.ones(shape=[3, 4]), mindspore.float32)
-            >>> matmul = ops.MatMul()
-            >>> output = matmul(a, b)
-            >>> print(output)
-            [[3. 3. 3. 3.]]
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> a = Tensor(np.ones(shape=[1, 3]), mindspore.float32)
+        >>> b = Tensor(np.ones(shape=[3, 4]), mindspore.float32)
+        >>> matmul = ops.MatMul()
+        >>> output = matmul(a, b)
+        >>> print(output)
+        [[3. 3. 3. 3.]]

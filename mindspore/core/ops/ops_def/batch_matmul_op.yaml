@@ -18,6 +18,8 @@ batch_mat_mul:
   returns:
     output:
       dtype: tensor
+  function:
+    disable: True
   dispatch:
     enable: True
     Ascend: BatchMatMulAscend

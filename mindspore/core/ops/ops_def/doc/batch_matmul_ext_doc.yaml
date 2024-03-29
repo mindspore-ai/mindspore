@@ -1,42 +1,31 @@
 batch_matmul_ext:
   description: |
-    
-    Performs batch matrix-matrix multiplication of two three-dimensional tensors. The function is designed to behave like `torch.bmm`, which means it takes two tensors `a` and `b`, each containing a batch of matrices, and produces a batch of matrix products.
-    
-    Each matrix in the batch of the first tensor is multiplied with the corresponding matrix in the batch of the second tensor. This operation is efficiently performed in parallel across the batch.
-    
-    The tensors must be of shape `(b, n, m)` and `(b, m, p)`, respectively, where:
-    - `b` is the batch size (same for both tensors),
-    - `n` is the number of rows in matrices of the first tensor,
-    - `m` is the number of columns in matrices of the first tensor and the number of rows in matrices of the second tensor,
-    - `p` is the number of columns in matrices of the second tensor.
-    
+    Performs batch matrix-matrix multiplication of two three-dimensional tensors.
+
     .. math::
-    
-    (Output)_{b, i, j}=\sum_{k=1}^{m} input_{b, i, k} mat2_{b, k, j}
+        Output_{b, i, j}=\sum_{k=1}^{m} input_{b, i, k} mat2_{b, k, j}
 
     Args:
-      - **input** (Tensor) - The first batch of matrices to be multiplied. Must be a three-dimensional tensor.
-      - **mat2** (Tensor) - The second batch of matrices to be multiplied. Must be a three-dimensional tensor.
-  
+        input (Tensor): The first batch of matrices to be multiplied. Must be a three-dimensional tensor.
+        mat2 (Tensor): The second batch of matrices to be multiplied. Must be a three-dimensional tensor.
+
     Outputs:
-      Tensor, the output tensor of shape `(b, n, p)`, where each matrix is the product of the corresponding matrices in the input batches.
-  
+        Tensor, the output tensor of shape `(b, n, p)`, where each matrix is the product of the corresponding matrices in the input batches.
+
     Raises:
-      TypeError: If the inputs are not three-dimensional tensors.
-      ValueError: If the sizes of the middle dimensions of the inputs do not match, or if the batch sizes of the inputs do not match.
-  
+        TypeError: If the inputs are not three-dimensional tensors.
+        ValueError: If the sizes of the middle dimensions of the inputs do not match, or if the batch sizes of the inputs do not match.
+
     Supported Platforms:
-      ``Ascend`` ``GPU`` ``CPU``
-  
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
-      ```python
-      import mindspore
-      import numpy as np
-      from mindspore import Tensor
-      from mindspore.ops.extend import bmm
-      a = Tensor(np.ones(shape=[2, 3, 4]), mindspore.float32)
-      b = Tensor(np.ones(shape=[2, 4, 5]), mindspore.float32)
-      output = bmm(a, b)
-      print(output.shape)  # Expected output shape: (2, 3, 5)
-      ```
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> from mindspore.ops.extend import bmm
+        >>> a = Tensor(np.ones(shape=[2, 3, 4]), mindspore.float32)
+        >>> b = Tensor(np.ones(shape=[2, 4, 5]), mindspore.float32)
+        >>> output = bmm(a, b)
+        >>> print(output.shape)
+        (2, 3, 5)
