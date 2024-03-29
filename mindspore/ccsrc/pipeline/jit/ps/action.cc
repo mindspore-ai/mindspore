@@ -549,7 +549,7 @@ void GenerateTopGraphParams(const FuncGraphPtr &fg, std::vector<AnfNodePtr> *par
     auto exist_fv = top_func_graph->GetParameterByName(parameter_name);
     if (exist_fv) {
       params->push_back(exist_fv);
-      MS_LOG(DEBUG) << "exist: " << parameter_name;
+      MS_LOG(DEBUG) << "Exist: " << parameter_name;
     } else {
       auto fv = top_func_graph->AddFvParameter(parameter_name, parse::GetParameterValue(value));
       MS_LOG(DEBUG) << "New: " << parameter_name;
@@ -589,7 +589,7 @@ void GeneralizeReusingGraph(const FuncGraphPtr &func_graph, const FuncGraphPtr &
   for (auto &fv : fv_params) {
     auto param = reusing_graph->InsertFrontParameter();
     const auto &top_param = fv->cast<ParameterPtr>();
-    std::string name = "l_" + top_param->name();
+    std::string name = "RU_" + top_param->name();
     param->debug_info()->set_name(name);
     param->set_name(name);
     param->set_abstract(top_param->abstract());
