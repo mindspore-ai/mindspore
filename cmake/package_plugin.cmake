@@ -120,12 +120,15 @@ if(ENABLE_AKG AND CMAKE_SYSTEM_NAME MATCHES "Linux")
     endif()
 endif()
 
-if(DEFINED ENV{MS_INTERNAL_KERNEL_HOME})
-    install(
-        DIRECTORY ${CMAKE_SOURCE_DIR}/ms_kernels_internal
-        DESTINATION ${INSTALL_PLUGIN_DIR}/ascend
-        COMPONENT mindspore
-    )
+if(ENABLE_D)
+    if(DEFINED ENV{MS_INTERNAL_KERNEL_HOME})
+        set(_MS_INTERNAL_KERNEL_HOME $ENV{MS_INTERNAL_KERNEL_HOME})
+        install(
+            DIRECTORY ${_MS_INTERNAL_KERNEL_HOME}
+            DESTINATION ${INSTALL_PLUGIN_DIR}/ascend
+            COMPONENT mindspore
+        )
+    endif()
 endif()
 
 if(ENABLE_SYM_FILE)
