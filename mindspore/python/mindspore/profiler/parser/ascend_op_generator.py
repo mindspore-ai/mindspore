@@ -35,6 +35,7 @@ class AscendOPGenerator:
         self.aicpu_detail = None
         self.framework_raw = None
         self.output_timeline_data = None
+        self.has_statistic_file = True
 
         self.op_detail_dt = np.dtype(
             [('full_op_name', object), ('task_duration', float), ('execution_frequency', int), ('task_type', object)])
@@ -61,12 +62,15 @@ class AscendOPGenerator:
 
         # aicore intermediation type
         self.op_type = self._parse_op_type(self.op_statistic)
+        if not self.op_type.size:
+            self.has_statistic_file = False
 
         # aicpu_intermediation
         self.aicpu_detail = self._parse_aicpu_detail(self.op_summary)
 
         # framwork_raw
-        self.framework_raw = self._parse_framework_raw(self.op_summary)
+        if self.has_statistic_file:
+            self.framework_raw = self._parse_framework_raw(self.op_summary)
 
         self.output_timeline_data = self.op_summary[self.op_summary['Task Type'] == 'AI_CORE'][
             ['Op Name', 'Stream ID', 'Task Start Time', 'Task Duration']]
@@ -84,7 +88,7 @@ class AscendOPGenerator:
             output_timeline_data_path : output_timeline_data.txt path
         """
         # aicore intermediation detail
-        if self.op_detail.shape[0] != 0:
+        if self.op_detail.size and self.op_detail.shape[0] != 0:
             try:
                 with os.fdopen(os.open(aicore_intermediate_detail_path,
                                        os.O_WRONLY | os.O_CREAT | os.O_TRUNC, stat.S_IWUSR | stat.S_IRUSR),
@@ -99,7 +103,7 @@ class AscendOPGenerator:
                 os.chmod(aicore_intermediate_detail_path, stat.S_IREAD | stat.S_IWRITE)
 
         # aicore intermediation type
-        if self.op_type.shape[0] != 0:
+        if self.op_type.size and self.op_type.shape[0] != 0:
             try:
                 with os.fdopen(os.open(aicore_intermediate_type_path,
                                        os.O_WRONLY | os.O_CREAT | os.O_TRUNC, stat.S_IWUSR | stat.S_IRUSR),
@@ -114,7 +118,7 @@ class AscendOPGenerator:
                 os.chmod(aicore_intermediate_type_path, stat.S_IREAD | stat.S_IWRITE)
 
         # aicpu_intermediation
-        if self.aicpu_detail.shape[0] != 0:
+        if self.aicpu_detail.size and self.aicpu_detail.shape[0] != 0:
             try:
                 with os.fdopen(os.open(aicpu_intermediate_detail_path,
                                        os.O_WRONLY | os.O_CREAT | os.O_TRUNC, stat.S_IWUSR | stat.S_IRUSR),
@@ -129,7 +133,7 @@ class AscendOPGenerator:
                 os.chmod(aicpu_intermediate_detail_path, stat.S_IREAD | stat.S_IWRITE)
 
         # framwork_raw
-        if self.framework_raw.shape[0] != 0:
+        if self.framework_raw.size and self.framework_raw.shape[0] != 0:
             try:
                 with os.fdopen(os.open(framework_raw_path,
                                        os.O_WRONLY | os.O_CREAT | os.O_TRUNC, stat.S_IWUSR | stat.S_IRUSR),
@@ -144,7 +148,7 @@ class AscendOPGenerator:
                 os.chmod(framework_raw_path, stat.S_IREAD | stat.S_IWRITE)
 
         # output_timeline_data
-        if self.output_timeline_data.shape[0] != 0 and output_timeline_data_path:
+        if self.output_timeline_data.size and self.output_timeline_data.shape[0] != 0 and output_timeline_data_path:
             try:
                 with os.fdopen(os.open(output_timeline_data_path,
                                        os.O_WRONLY | os.O_CREAT | os.O_TRUNC, stat.S_IWUSR | stat.S_IRUSR),
@@ -186,7 +190,8 @@ class AscendOPGenerator:
         Args:
             op_statistic(DataFrame): op statistic data.
         """
-
+        if not op_statistic.size:
+            return None
         groups, _, inverse, _ = np.unique(op_statistic['Op Type'], return_index=True, return_inverse=True,
                                           return_counts=True)
 

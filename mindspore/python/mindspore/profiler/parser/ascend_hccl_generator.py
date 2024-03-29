@@ -208,8 +208,8 @@ class AscendHCCLGenerator:
                 name = row.get('name')
                 pid = row.get('pid')
                 tid = row.get('tid')
-                ts = row.get('ts')
-                dur = row.get('dur')
+                ts = float(row.get('ts'))
+                dur = float(row.get('dur'))
                 te = ts + dur
                 ph = row.get('ph')
                 task_type = row.get('args', {}).get('task type', '')
