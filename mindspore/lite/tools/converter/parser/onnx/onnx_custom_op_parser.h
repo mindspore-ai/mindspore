@@ -69,14 +69,6 @@ class OnnxRandomUniformLikeParser : public OnnxNodeParser {
 
   PrimitiveCPtr Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
 };
-
-class OnnxBlendFaceBgPartOneParser : public OnnxNodeParser {
- public:
-  OnnxBlendFaceBgPartOneParser() : OnnxNodeParser("BlendFaceBgPartOne") {}
-  ~OnnxBlendFaceBgPartOneParser() override = default;
-
-  PrimitiveCPtr Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
-};
 }  // namespace lite
 }  // namespace mindspore
 

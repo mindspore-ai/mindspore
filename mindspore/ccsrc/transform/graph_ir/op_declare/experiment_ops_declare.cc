@@ -26,11 +26,4 @@ ATTR_MAP(GeGluV2) = {{"dim", ATTR_DESC(dim, AnyTraits<int64_t>())},
                      {"activate_left", ATTR_DESC(activate_left, AnyTraits<bool>())}};
 OUTPUT_MAP(GeGluV2) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(gelu)}};
 REG_ADPT_DESC(GeGluV2, "GeGluV2", ADPT_DESC(GeGluV2))
-
-// BlendFaceBgPartOne
-INPUT_MAP(BlendFaceBgPartOne) = {{1, INPUT_DESC(face_img)}, {2, INPUT_DESC(face_rect)}, {3, INPUT_DESC(face_mask)},
-                                 {4, INPUT_DESC(acc_face)}, {5, INPUT_DESC(acc_mask)},  {6, INPUT_DESC(max_mask)}};
-ATTR_MAP(BlendFaceBgPartOne) = EMPTY_ATTR_MAP;
-OUTPUT_MAP(BlendFaceBgPartOne) = {{0, OUTPUT_DESC(acc_face)}, {1, OUTPUT_DESC(acc_mask)}, {2, OUTPUT_DESC(max_mask)}};
-REG_ADPT_DESC(BlendFaceBgPartOne, kNameBlendFaceBgPartOne, ADPT_DESC(BlendFaceBgPartOne))
 }  // namespace mindspore::transform
