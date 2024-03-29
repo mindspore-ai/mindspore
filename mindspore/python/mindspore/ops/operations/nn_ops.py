@@ -2491,6 +2491,9 @@ class MultiMarginLoss(Primitive):
         self.reduction = validator.check_string(reduction, ['none', 'sum', 'mean'], 'reduction', self.name)
         self.init_prim_io_names(inputs=['x', 'target', 'weight'], outputs=['y'])
 
+    def __call__(self, x, target, weight=None):
+        return super().__call__(x, target, weight)
+
 
 class SoftMarginLoss(Primitive):
     r"""

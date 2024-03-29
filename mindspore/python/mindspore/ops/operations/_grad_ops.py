@@ -2470,6 +2470,9 @@ class MultiMarginLossGrad(Primitive):
         self.reduction = validator.check_string(reduction, ['none', 'sum', 'mean'], 'reduction', self.name)
         self.init_prim_io_names(inputs=['y_grad', 'x', 'target', 'weight'], outputs=['x_grad'])
 
+    def __call__(self, y_grad, x, target, weight=None):
+        return super().__call__(y_grad, x, target, weight)
+
 
 class UpsampleTrilinear3DGrad(Primitive):
     r"""
