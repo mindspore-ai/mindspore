@@ -235,7 +235,7 @@ class InlinerBase : public AnfVisitor {
     MS_EXCEPTION_IF_NULL(mng);
     ReplaceParams(mng, args, fg);
     auto out_node = fg->output();
-    const auto update_debug_info = MsContext::GetInstance()->get_param<int>(MS_CTX_JIT_DEBUG_LEVEL) == kJitDebug ||
+    const auto update_debug_info = MsContext::GetInstance()->get_param<int>(MS_CTX_DEBUG_LEVEL) == kLevelDebug ||
                                    MsContext::GetInstance()->GetSaveGraphsLevel() > 0;
     mng->MoveAllCNodeDropGraph(fg, node->func_graph(), node, inputs[0]->scope(), update_debug_info);
     return out_node;
