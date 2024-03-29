@@ -104,8 +104,10 @@ class Symbol:
         if not isinstance(unique, bool):
             raise TypeError(f"For 'Symbol', the argument 'unique' must be bool, but got {type(unique)}")
 
+    # pylint: disable=missing-docstring
     def to_dict(self):
-        """Convert the symbolic info to dictionary."""
+        # Convert the symbolic info to dictionary.
+        # This method is not necessary to show in public api document, use comment instead of docstring.
         res = {}
         if self.max > self.min:
             res["max"] = self.max
