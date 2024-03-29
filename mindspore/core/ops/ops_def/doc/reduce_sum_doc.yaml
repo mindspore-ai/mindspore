@@ -24,13 +24,13 @@ reduce_sum:
         Outputs:
             Tensor, has the same dtype as the `x`.
 
-            - If `axis is ``()`` , `keep_dims` is ``False`` , and `skip_mode` is ``False`` ,
+            - If `axis` is ``()`` , `keep_dims` is ``False`` , and `skip_mode` is ``False`` ,
               the output is a 0-D tensor representing the sum of all elements in the input tensor.
-            - If `axis is ``()`` , and `skip_mode` is ``True`` ,
+            - If `axis` is ``()`` , and `skip_mode` is ``True`` ,
               the ReduceSum operation is not performed, output tensor is equal to the input tensor.
-            - If `axis is int, set as 2, and `keep_dims` is ``False`` ,
+            - If `axis` is int, set as 2, and `keep_dims` is ``False`` ,
               the shape of output is :math:`(x_1, x_3, ..., x_R)`.
-            - If `axis is tuple(int) or list(int), set as (2, 3), and `keep_dims` is ``False`` ,
+            - If `axis` is tuple(int) or list(int), set as (2, 3), and `keep_dims` is ``False`` ,
               the shape of output is :math:`(x_1, x_4, ..., x_R)`.
             - If `axis` is 1-D Tensor, set as [2, 3], and `keep_dims` is ``False`` ,
               the shape of output is :math:`(x_1, x_4, ..., x_R)`.

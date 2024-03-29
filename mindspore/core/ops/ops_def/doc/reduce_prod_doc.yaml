@@ -14,7 +14,7 @@ reduce_prod:
         Inputs:
             - **x** (Tensor[Number]) - The input tensor.
             - **axis** (Union[int, tuple(int), list(int), Tensor]) - The dimensions to reduce. Default: ``()`` ,
-            reduce all dimensions. Only constant value is allowed. Must be in the range [-r, r).
+              reduce all dimensions. Only constant value is allowed. Must be in the range [-r, r).
 
         Outputs:
             Tensor, has the same dtype as the `x`.

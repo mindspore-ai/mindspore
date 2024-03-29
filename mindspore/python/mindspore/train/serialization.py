@@ -1207,7 +1207,7 @@ def load_checkpoint_async(ckpt_file_name, net=None, strict_load=False, filter_pr
             matches the custom condition will be removed. Default: ``None`` .
 
     Returns:
-        A custom inner class, calling its `result` method yields the :func:`load_checkpoint` result.
+        A custom inner class, calling its `result` method yields the :func:`mindspore.load_checkpoint` result.
 
     Raises:
         ValueError: Checkpoint file's format is incorrect.
