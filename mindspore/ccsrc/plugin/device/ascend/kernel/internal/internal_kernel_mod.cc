@@ -48,7 +48,10 @@ int InternalKernelMod::Build(const std::vector<KernelTensor *> &inputs, const st
     info.output_dtype_.emplace_back(InternalKernelUtils::ToInternalDType(outputs[iter->first]->dtype_id()));
     info.output_format_.emplace_back(InternalKernelUtils::ToInternalFormat(outputs[iter->first]->format()));
   }
-  impl_->Init(info);
+  if (!impl_->Init(info)) {
+    MS_LOG(ERROR) << "Internal Op '" << kernel_name_ << "' is initialized FAILED.";
+    return 1;
+  }
   for (auto iter = inputsIdxMap_.begin(); iter != inputsIdxMap_.end(); iter++) {
     InternalKernelUtils::ToInternalTensor(inputs_[iter->second], inputs[iter->first]);
   }

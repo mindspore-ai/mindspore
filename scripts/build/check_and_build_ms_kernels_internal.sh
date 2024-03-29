@@ -18,14 +18,15 @@ if [[ "$(uname)" == Linux && "$(arch)" == aarch64 ]]; then
   if [ -n "${MS_INTERNAL_KERNEL_HOME}" ]; then
     echo "Use local MS_INTERNAL_KERNEL_HOME : ${MS_INTERNAL_KERNEL_HOME}"
   else
-    lib_file=${BASEPATH}/ms_kernels_internal.tar.gz
+    file_path=${BASEPATH}/mindspore/ccsrc/plugin/device/ascend/kernel/internal/prebuild
+    lib_file=${file_path}/ms_kernels_internal.tar.gz
     if [ -f "${lib_file}" ]; then
       file_lines=`cat "${lib_file}" | wc -l`
       if [ ${file_lines} -ne 3 ]; then
-        tar -zxf ${lib_file} -C ${BASEPATH}
+        tar -zxf ${lib_file} -C ${file_path}
         if [ $? -eq 0 ]; then
           echo "Unzip ms_kernel_internal.tar.gz SUCCESS!"
-          export MS_INTERNAL_KERNEL_HOME="${BASEPATH}/ms_kernels_internal"
+          export MS_INTERNAL_KERNEL_HOME="${file_path}/ms_kernels_internal"
           echo "MS_INTERNAL_KERNEL_HOME = ${MS_INTERNAL_KERNEL_HOME}"
         else
           echo "[WARNING] Unzip ms_kernel_internal.tar.gz FAILED!"
