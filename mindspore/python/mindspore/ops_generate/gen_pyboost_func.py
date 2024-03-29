@@ -206,6 +206,7 @@ def generate_pyboost_op_source_code(work_path, op_proto, template_paths, convert
             call_impl = view_tpl.replace(op_name=op_proto.class_name,
                                          call_args=converter.call_args,
                                          call_tensors=call_args_tensor,
+                                         return_values=converter.call_func_outputs,
                                          input=converter.call_args[0])
             customize_include = "#include \"mindspore/core/ops/view/{}_strides_calc.h\"".format(proto_operator_name)
         else:

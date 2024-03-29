@@ -24,4 +24,4 @@
     MS_LOG_EXCEPTION << "View unsupported:" << primitive_->name() <<" or input ERROR";
   }
   MS_LOG(DEBUG) << "View ${op_name} Call end";
-  return output(0);
+  return ${return_values};
