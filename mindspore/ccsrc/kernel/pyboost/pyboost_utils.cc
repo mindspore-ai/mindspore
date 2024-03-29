@@ -142,6 +142,14 @@ DeviceSyncPtr PyBoostUtils::ContiguousByDeviceAddress(const DeviceSyncPtr &devic
 }
 
 void PyBoostUtils::CreateOutputTensor(const DeviceContext *device_context, const tensor::TensorPtr &input,
+                                      const TensorStorageInfoPtrList &storage_info_list,
+                                      std::vector<tensor::TensorPtr> *outputs) {
+  for (auto &storage_info : storage_info_list) {
+    CreateOutputTensor(device_context, input, storage_info, outputs);
+  }
+}
+
+void PyBoostUtils::CreateOutputTensor(const DeviceContext *device_context, const tensor::TensorPtr &input,
                                       const TensorStorageInfoPtr &storage_info,
                                       std::vector<tensor::TensorPtr> *outputs) {
   MS_EXCEPTION_IF_NULL(input);

@@ -4,7 +4,7 @@
     auto op = get_op();
     // Create device address for input tensors
     PyBoostUtils::PrepareOpInputs(device_context_, op->stream_id(), ${call_tensors});
-    PyBoostUtils::CreateOutputTensor(device_context_, ${input}, storage_info_list[0], &outputs_);
+    PyBoostUtils::CreateOutputTensor(device_context_, ${input}, storage_info_list, &outputs_);
 
     // Async
     PyBoostUtils::DispatchRun(
@@ -22,9 +22,10 @@
     if (grad_func_ != nullptr) {
       GenerateAbstract(${call_args});
     }
-    output_abs_ = output(0)->ToAbstract();
+    // Stub tensor need output abstract
+    ${set_output_abs}
   } else {
     MS_LOG_EXCEPTION << "View unsupported:" << primitive_->name() <<" or input ERROR";
   }
   MS_LOG(DEBUG) << "View ${op_name} Call end";
-  return output(0);
+  return ${return_values};

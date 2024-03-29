@@ -113,10 +113,20 @@ class BACKEND_EXPORT OpRunner : public std::enable_shared_from_this<OpRunner> {
     }
     return ConvertAbstract(t.value());
   }
-
   template <typename... T>
   void GenerateAbstract(T &... args) {
     (input_abs_.emplace_back(ConvertAbstract(args)), ...);
+  }
+
+  // For view op used
+  void SetOutputAbstract() { output_abs_ = ConvertAbstract(output(kIndex0)); }
+  void SetOutputTupleAbstract() {
+    AbstractBasePtrList abs_list;
+    for (const auto &output : outputs_) {
+      const auto &abs = ConvertAbstract(output);
+      (void)abs_list.emplace_back(abs);
+    }
+    output_abs_ = std::make_shared<abstract::AbstractTuple>(abs_list);
   }
 
   // Member function for Infer and creating output tensors.
