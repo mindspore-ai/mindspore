@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import numpy as np
-import pytest
 
 import mindspore as ms
 from mindspore import context, Tensor, Parameter
@@ -86,7 +85,6 @@ def test_anti_quant_2D():
     assert validator.check_parameter_shape("scale", [512])
     assert validator.check_parameter_shape("offset", [512])
 
-@pytest.mark.skip(reason="random failure")
 def test_anti_quant_3D():
     """
     Feature: test quant ops
