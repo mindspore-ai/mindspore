@@ -1418,14 +1418,13 @@ void AutoGrad(PyFrameObject *f, PyObject *ret) {
     return;
   }
   // gradient info check
-  if (!IsStubTensor(ret) && !py::isinstance<tensor::Tensor>(ret) && !py::isinstance<py::tuple>(ret)) {
+  if (!grad::FunctionNode::HasAttrReqGrad(ret) && !py::isinstance<py::tuple>(ret)) {
     return;
   }
   MS_EXCEPTION_IF_CHECK_FAIL(f->f_code->co_kwonlyargcount == 0, "Must not have kw only args.");
   auto inputs = CollectGradientArguments(*f);
-  if (!std::any_of(inputs.begin(), inputs.end(), [](const auto &input) {
-        return grad::FunctionNode::HasGradFunc(input) || grad::FunctionNode::IsRequiresGradient(input);
-      })) {
+  if (!std::any_of(inputs.begin(), inputs.end(),
+                   [](const auto &input) { return grad::FunctionNode::IsRequiresGradient(input); })) {
     return;
   }
   grad::FunctionNode::RecordPrimitive(py::cast<py::object>(f->f_localsplus[0]), py::cast<py::object>(ret), inputs);
