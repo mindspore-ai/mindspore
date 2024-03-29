@@ -89,6 +89,8 @@ class DynamicShapeCSRToCOONet(nn.Cell):
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_2d_csr_to_coo():
     """
@@ -105,6 +107,8 @@ def test_2d_csr_to_coo():
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_3d_csr_to_coo():
     """
@@ -121,6 +125,8 @@ def test_3d_csr_to_coo():
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_3d_csr_to_coo_fp64():
     """
@@ -137,6 +143,8 @@ def test_3d_csr_to_coo_fp64():
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_dynamic_shape_csr_to_coo():
     """
@@ -153,5 +161,6 @@ def test_dynamic_shape_csr_to_coo():
     net = DynamicShapeCSRToCOONet()
     outputs = net(Tensor(shape, dtype=mstype.int32), x_batch_pointers, indptr, indices,
                   Tensor(values, dtype=mstype.float32))
-    coo_indices = np.array([[0, 1], [0, 2], [1, 3], [1, 4], [1, 5], [1, 6], [2, 7], [2, 8], [2, 9]])
+    coo_indices = np.array([[0, 1], [0, 2], [1, 3], [1, 4],
+                            [1, 5], [1, 6], [2, 7], [2, 8], [2, 9]])
     compare_res(outputs, (coo_indices, values, np.array(shape)))

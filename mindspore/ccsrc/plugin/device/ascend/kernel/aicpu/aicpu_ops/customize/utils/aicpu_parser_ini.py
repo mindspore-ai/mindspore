@@ -67,6 +67,7 @@ cust_op_lists = [
     "cropandresize",
     "cropandresizegradimage",
     "cropandresizegradboxes",
+    "csrsparsematrixtosparsetensor",
     "cumprod",
     "cumulativelogsumexp",
     "dataformatvecpermute",
