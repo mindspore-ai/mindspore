@@ -342,8 +342,9 @@ endif()
 
 if(ENABLE_D)
     if(DEFINED ENV{MS_INTERNAL_KERNEL_HOME})
+        set(_MS_INTERNAL_KERNEL_HOME $ENV{MS_INTERNAL_KERNEL_HOME})
         install(
-            DIRECTORY ${CMAKE_SOURCE_DIR}/ms_kernels_internal
+            DIRECTORY ${_MS_INTERNAL_KERNEL_HOME}
             DESTINATION ${INSTALL_PLUGIN_DIR}/ascend
             COMPONENT mindspore
         )
