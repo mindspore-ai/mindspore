@@ -220,6 +220,16 @@ Text Processing
 
     mindspore.ops.NoRepeatNGram
 
+Accuracy-Sensitive Detection
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. mscnplatwarnautosummary::
+    :toctree: ops
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.ops.silent_check.ASDBase
+
 Mathematical Operators
 ------------------------
 
