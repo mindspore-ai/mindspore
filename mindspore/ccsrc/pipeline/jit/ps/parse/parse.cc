@@ -86,6 +86,11 @@ FuncGraphPtr ParsePythonCode(const py::object &obj, const std::string &python_mo
     func_graph->set_flag(FUNC_GRAPH_FLAG_NO_INLINE, py::cast<bool>(no_inline_value));
   }
 
+  auto cell_reuse_value = py::getattr(obj, FUNC_GRAPH_FLAG_CELL_REUSE, py::none());
+  if (cell_reuse_value != py::none()) {
+    func_graph->set_flag(FUNC_GRAPH_FLAG_CELL_REUSE, py::cast<bool>(cell_reuse_value));
+  }
+
   MS_LOG(DEBUG) << "Finish Parsing " << py::str(obj);
   return func_graph;
 }
