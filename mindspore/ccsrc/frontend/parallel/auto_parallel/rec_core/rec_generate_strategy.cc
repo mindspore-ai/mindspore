@@ -452,13 +452,22 @@ std::vector<int64_t> FindAxisProperty(const std::shared_ptr<OperatorInfo> &op) {
   string axis_name = AXIS;
   auto input_value = op->input_value();
   auto op_name = op->name();
-  std::optional<std::vector<int64_t>> axis_opt = GetArrayValueFromInputs<int64_t>(input_value, op_name, axis_name);
-  std::vector<int64_t> axis_val = axis_opt.value();
-
-  if (axis_opt.has_value()) {
-    axis_list.swap(axis_val);
-  } else {
-    axis_list.push_back(-1);
+  if (input_value[input_value.size() - 1]->isa<ValueSequence>()) {  // Softmax axis is a tuple
+    std::optional<std::vector<int64_t>> axis_opt = GetArrayValueFromInputs<int64_t>(input_value, op_name, axis_name);
+    std::vector<int64_t> axis_val = axis_opt.value();
+    if (axis_opt.has_value()) {
+      axis_list.swap(axis_val);
+    } else {
+      axis_list.push_back(-1);
+    }
+  } else {  // LogSoftmax axis is a scaler
+    std::optional<int64_t> axis_opt = GetScalarValueFromInputs<int64_t>(input_value, op_name, axis_name);
+    int64_t axis_val = axis_opt.value();
+    if (axis_opt.has_value()) {
+      axis_list.push_back(axis_val);
+    } else {
+      axis_list.push_back(-1);
+    }
   }
 
   return axis_list;
