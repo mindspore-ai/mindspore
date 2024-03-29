@@ -178,6 +178,9 @@ NodePtr Emitter::Reshape(const NodePtr &node, const NodePtr &shape) {
   }
 
   auto node_shape = node->shape();
+  if (IsDynamicRank(node_shape)) {
+    return Emit(kReshapeOpName, {node, shape});
+  }
   if (dst_shape.size() != node_shape.size()) {
     return Emit(kReshapeOpName, {node, shape});
   }

@@ -409,7 +409,8 @@ REG_BPROP_BUILDER("TopK").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   auto indices = ib->TupleGetItem(out, kIndex1);
   auto dout0 = ib->TupleGetItem(dout, kIndex0);
   auto in_shape = ib->GetShape(input_x);
-  if (IsDynamic(in_shape)) {
+  auto indices_shape = ib->GetShape(indices);
+  if (IsDynamic(in_shape) || IsDynamic(indices_shape)) {
     auto re0 = ib->ShapeCalc(g_topk_1, {indices})[0];
     NodePtr ind_2d = ib->Reshape(indices, re0);
     auto res = ib->ShapeCalc(g_topk_2, {input_x, ind_2d});
