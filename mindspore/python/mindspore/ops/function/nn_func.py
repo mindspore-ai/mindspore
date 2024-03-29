@@ -2630,7 +2630,7 @@ def softmin(x, axis=-1, *, dtype=None):
             `dtype`, before execution, and dtype of returned Tensor will also be `dtype`. Default: ``None`` .
 
     Returns:
-        Tensor, with the same type and shape as the logits.
+        Tensor, with the same type and shape as `x`.
 
     Raises:
         TypeError: If `axis` is not an int or a tuple.
@@ -2682,10 +2682,10 @@ def softshrink(x, lambd=0.5):
         Tensor, has the same shape and data type as `x`.
 
     Raises:
-        TypeError: If lambd is not a float.
-        TypeError: If input_x is not a Tensor.
-        TypeError: If dtype of input_x is neither float16 nor float32.
-        ValueError: If lambd is less than 0.
+        TypeError: If `lambd` is not a float.
+        TypeError: If `x` is not a Tensor.
+        TypeError: If dtype of `x` is neither float16 nor float32.
+        ValueError: If `lambd` is less than 0.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2787,13 +2787,14 @@ def selu(input_x):
         :align: center
 
     Args:
-        input_x (Tensor): Tensor of any dimension, the data type is float16 or float32.
+        input_x (Tensor): Tensor of any dimension,
+            the data type is int8, int32, float16, float32, or float64 (CPU, GPU only).
 
     Returns:
         Tensor, with the same type and shape as the `input_x`.
 
     Raises:
-        TypeError: If dtype of `input_x` is neither float16 nor float32.
+        TypeError: If dtype of `input_x` is not int8, int32, float16, float32, or float64.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -6228,7 +6229,7 @@ def gelu(input, approximate='none'):
 
     Raises:
         TypeError: If `input` is not a Tensor.
-        TypeError: If dtype of `input` is not float16, float32 or float64.
+        TypeError: If dtype of `input` is not bfloat16, float16, float32 or float64.
         ValueError: If `approximate` value is neither `none` nor `tanh`.
 
     Supported Platforms:
