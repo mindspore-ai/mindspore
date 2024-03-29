@@ -171,8 +171,34 @@ CUST_IMPLEMT_INFERFUNC(Gamma, GammaInfer) {
     return GRAPH_PARAM_INVALID;
   }
 
+  Tensor alpha_data;
+  ge::Shape alpha_shape;
+  if (op.GetInputConstData("alpha", alpha_data) != GRAPH_SUCCESS) {
+    OP_LOGI(TbeGetName(op).c_str(), "Get const value failed of [alpha]");
+    auto alpha_desc = op.GetInputDesc("alpha");
+    alpha_shape = alpha_desc.GetShape();
+  } else {
+    alpha_shape = alpha_data.GetTensorDesc().GetShape();
+  }
+
+  Tensor beta_data;
+  ge::Shape beta_shape;
+  if (op.GetInputConstData("beta", beta_data) != GRAPH_SUCCESS) {
+    OP_LOGI(TbeGetName(op).c_str(), "Get const value failed of [beta]");
+    auto beta_desc = op.GetInputDesc("beta");
+    beta_shape = beta_desc.GetShape();
+  } else {
+    beta_shape = beta_data.GetTensorDesc().GetShape();
+  }
+  std::string op_name = TbeGetName(op);
+  ge::Shape broadcast_shape;
+  ge::Shape output_shape;
+  InferBroadcastshapeForStatic(alpha_shape, beta_shape, output_shape);
+  InferBroadcastshapeForStatic(Shape(shape_dims), broadcast_shape, broadcast_shape);
+  OP_LOGI(op_name.c_str(), "infer output_shape: %s", to_string(output_shape).c_str());
+
   auto output_desc = op.GetOutputDesc("output");
-  output_desc.SetShape(Shape(shape_dims));
+  output_desc.SetShape(output_shape);
   output_desc.SetDataType(DT_FLOAT);
   op.UpdateOutputDesc("output", output_desc);
   return GRAPH_SUCCESS;
