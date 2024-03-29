@@ -14,39 +14,69 @@
  * limitations under the License.
  */
 #include "mindspore/core/symbolic_shape/operation_builder.h"
+#include "mindspore/core/ops/ops_func_impl/flash_attention_score.h"
+#include "ops/op_enum.h"
 
 namespace mindspore {
 namespace symshape {
 namespace ops {
+using mindspore::ops::FASInputLayoutMode;
+
 constexpr int64_t kFASLastDim = 8;
 SymbolPtr FlashAttentionScoreShapeBuilder(OperationBuilder *b) {
-  SymbolPtr batch_size;
-  SymbolPtr seq_len;
-  SymbolPtr head_num = b->GetAttr("head_num");
-  SymbolPtr last_dim = IntSymbol::Make(kFASLastDim);
-
-  auto query_shape = b->GetInputShape(kIndex0)->as_sptr<ListSymbol>();
+  auto query_shape = b->GetInputShape(mindspore::ops::kFlashAttentionScoreInputQueryIndex)->as_sptr<ListSymbol>();
   MS_EXCEPTION_IF_NULL(query_shape);
   if (!query_shape->HasData()) {
     // does not support dynamic rank.
     return nullptr;
   }
-  auto input_layout = b->GetAttr("input_layout");
+  auto MakeOutShape = [&query_shape](size_t batch_index, size_t seq_index, const SymbolPtr &head_num) {
+    SymbolPtr shape;
+    auto batch = query_shape->item(batch_index);
+    auto seq = query_shape->item(seq_index);
+    if (head_num != nullptr) {
+      shape = ListSymbol::Make(SymbolPtrList{batch, head_num, seq, IntSymbol::Make(kFASLastDim)});
+    } else {
+      shape = ListSymbol::Make(SymbolPtrList{batch, seq, IntSymbol::Make(kFASLastDim)});
+    }
+    return ListSymbol::Make(SymbolPtrList{shape, shape, ListSymbol::Make({IntSymbol::Make(1LL)}), query_shape});
+  };
+
+  // For TND layout, the output softmax shape is 3D. otherwise, the output shape is 4D.
+  auto input_layout = b->GetInputValue(mindspore::ops::kFlashAttentionScoreInputLayoutIndex)->as_sptr<IntSymbol>();
   MS_EXCEPTION_IF_NULL(input_layout);
-  auto layout = input_layout->as<StrSymbol>()->value();
-  if (layout == "BSH") {
-    batch_size = query_shape->item(kIndex0);
-    seq_len = query_shape->item(kIndex1);
-  } else {
-    batch_size = query_shape->item(kIndex0);
-    seq_len = query_shape->item(kIndex2);
+  if (!input_layout->HasData()) {
+    return nullptr;
   }
-  auto shape2 = ListSymbol::Make({batch_size, head_num, seq_len, last_dim});
-  return ListSymbol::Make(SymbolPtrList{query_shape, shape2, shape2});
+  SymbolPtr head_num = nullptr;
+  if (input_layout->value() != FASInputLayoutMode::TND) {
+    head_num = b->GetInputValue(mindspore::ops::kFlashAttentionScoreInputHeadNumIndex);
+  }
+  switch (static_cast<FASInputLayoutMode>(input_layout->value())) {
+    case FASInputLayoutMode::TND:
+      return MakeOutShape(kIndex0, kIndex1, nullptr);
+    case FASInputLayoutMode::SBH:
+      return MakeOutShape(kIndex1, kIndex0, head_num);
+    case FASInputLayoutMode::BNSD:
+      return MakeOutShape(kIndex0, kIndex2, head_num);
+    case FASInputLayoutMode::BSND:
+    case FASInputLayoutMode::BSH:
+      return MakeOutShape(kIndex0, kIndex1, head_num);
+    default:
+      break;
+  }
+  MS_LOG(EXCEPTION) << "FlashAttentionScore support input layout: BSH, BNSD, SBH, BSND, TND.";
+  return nullptr;
 }
 
 REG_SYMBOL_OP_BUILDER("FlashAttentionScore")
-  .SetShapeDepend({DependOn::kShape})
+  .SetShapeDepend([](const PrimitivePtr &) {
+    std::vector<DependOn> depends(mindspore::ops::kFlashAttentionScoreInputsNum, DependOn::kNone);
+    depends[mindspore::ops::kFlashAttentionScoreInputQueryIndex] = DependOn::kShape;
+    depends[mindspore::ops::kFlashAttentionScoreInputLayoutIndex] = DependOn::kValue;
+    depends[mindspore::ops::kFlashAttentionScoreInputHeadNumIndex] = DependOn::kValue;
+    return depends;
+  })
   .SetShapeFunc(FlashAttentionScoreShapeBuilder);
 }  // namespace ops
 }  // namespace symshape
