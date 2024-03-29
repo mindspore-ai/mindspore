@@ -87,7 +87,7 @@ void IncreFlashAttentionInfo::SetOptinalInputs() {
   Shape atten_mask_strategy_map(atten_mask_rank_, 0);
   Shape padding_mask_tensor_map(padding_mask_rank_, -1);
   Shape padding_mask_strategy_map(padding_mask_rank_, 0);
-  if (atten_mask_rank_ >= kRank3) {
+  if (optinal_inputs_[ops::kIncreFlashAttentionInputAttnMaskIndex]) {
     atten_mask_tensor_map[kInputBatchDim] = 1;
     atten_mask_strategy_map[kInputBatchDim] = 1;
   }
