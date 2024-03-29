@@ -31,10 +31,10 @@ class ConvertBasePaddings : public PatternProcessPass {
 
   bool HasDynPaddings(const CNodePtr &) const;
   template <typename T, TypeId type_id>
-  const AnfNodePtr OptimizePaddingsValue(const FuncGraphPtr &, const AbstractBasePtr &, const size_t &,
+  const AnfNodePtr OptimizePaddingsValue(const FuncGraphPtr &, const AbstractBasePtr &, const bool &, const size_t &,
                                          bool force_length8) const;
-  virtual const AnfNodePtr CreatePaddingsNode(const FuncGraphPtr &, const AbstractBasePtr &, const size_t &,
-                                              const TypeId &) const {
+  virtual const AnfNodePtr CreatePaddingsNode(const FuncGraphPtr &, const AbstractBasePtr &, const bool &,
+                                              const size_t &, const TypeId &) const {
     return nullptr;
   }
   virtual bool ExpandInputXDims(const FuncGraphPtr &, const CNodePtr &) const { return false; }
@@ -50,13 +50,14 @@ class ConvertPadV3Paddings : public ConvertBasePaddings {
 
  private:
   const AnfNodePtr CreatePaddingsNode(const FuncGraphPtr &graph, const AbstractBasePtr &ori_paddings,
-                                      const size_t &dst_length, const TypeId &type_id) const override {
+                                      const bool &paddings_contiguous, const size_t &dst_length,
+                                      const TypeId &type_id) const override {
     if (type_id == kNumberTypeInt32) {
-      return ConvertBasePaddings::OptimizePaddingsValue<int32_t, kNumberTypeInt32>(graph, ori_paddings, dst_length,
-                                                                                   false);
+      return ConvertBasePaddings::OptimizePaddingsValue<int32_t, kNumberTypeInt32>(
+        graph, ori_paddings, paddings_contiguous, dst_length, false);
     }
-    return ConvertBasePaddings::OptimizePaddingsValue<int64_t, kNumberTypeInt64>(graph, ori_paddings, dst_length,
-                                                                                 false);
+    return ConvertBasePaddings::OptimizePaddingsValue<int64_t, kNumberTypeInt64>(
+      graph, ori_paddings, paddings_contiguous, dst_length, false);
   }
   bool ExpandInputXDims(const FuncGraphPtr &, const CNodePtr &) const override { return false; }
   void ReduceOutputDims(const FuncGraphPtr &, const CNodePtr &) const override {}
@@ -71,12 +72,14 @@ class ConvertPadV3GradPaddings : public ConvertBasePaddings {
 
  private:
   const AnfNodePtr CreatePaddingsNode(const FuncGraphPtr &graph, const AbstractBasePtr &ori_paddings,
-                                      const size_t &dst_length, const TypeId &type_id) const override {
+                                      const bool &paddings_contiguous, const size_t &dst_length,
+                                      const TypeId &type_id) const override {
     if (type_id == kNumberTypeInt32) {
-      return ConvertBasePaddings::OptimizePaddingsValue<int32_t, kNumberTypeInt32>(graph, ori_paddings, dst_length,
-                                                                                   true);
+      return ConvertBasePaddings::OptimizePaddingsValue<int32_t, kNumberTypeInt32>(
+        graph, ori_paddings, paddings_contiguous, dst_length, true);
     }
-    return ConvertBasePaddings::OptimizePaddingsValue<int64_t, kNumberTypeInt64>(graph, ori_paddings, dst_length, true);
+    return ConvertBasePaddings::OptimizePaddingsValue<int64_t, kNumberTypeInt64>(graph, ori_paddings,
+                                                                                 paddings_contiguous, dst_length, true);
   }
   bool ExpandInputXDims(const FuncGraphPtr &, const CNodePtr &) const override;
   void ReduceOutputDims(const FuncGraphPtr &, const CNodePtr &) const override;

@@ -132,6 +132,15 @@ abstract::ShapePtr PaddingNoTensor(abstract::BaseShapePtr paddings_shape_ptr, co
   return std::make_shared<abstract::Shape>(out_shape);
 }
 
+void CheckAscendInputXDim(const size_t &x_dim, const std::string &prim_name) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice && x_dim > kDim5) {
+    MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the dimension of 'x' must be no more than " << kDim5
+                             << " while running in Ascend.";
+  }
+}
+
 abstract::ShapePtr PadV3InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   constexpr int64_t kEdgeMaxDims = 5;
   constexpr int64_t kOtherMinDims = 3;
@@ -147,6 +156,7 @@ abstract::ShapePtr PadV3InferShape(const PrimitivePtr &primitive, const std::vec
   if (dim_size == 0) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the dimension of 'x' must bigger than 0.";
   }
+  CheckAscendInputXDim(dim_size, prim_name);
   if (input_shape_ptr->IsDynamic()) {
     return std::make_shared<abstract::Shape>(std::vector<int64_t>(dim_size, abstract::Shape::kShapeDimAny));
   }
