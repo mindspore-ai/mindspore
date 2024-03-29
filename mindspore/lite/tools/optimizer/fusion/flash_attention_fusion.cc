@@ -2104,7 +2104,7 @@ CNodePtr FlashAttentionFusion::CreateFlashAttentionNodeForSDPreMul(const std::st
       MS_CHECK_TRUE_RET(shape_node != nullptr, nullptr);
       output_reshape->set_input(kNumIndex2, shape_node);
     } else {
-      MS_LOG(WARNING) << "Dynamic shape is not supported. Can not fusion FA.";
+      MS_LOG(INFO) << "Dynamic shape is not supported. Can not fusion FA.";
       return nullptr;
     }
   } else {
@@ -2125,8 +2125,7 @@ CNodePtr FlashAttentionFusion::CreateFlashAttentionNodeForSDPreMul(const std::st
       CreatePromptFlashAttentionCnodeForBNSD(func_graph, node, q_trans_BNSD, k_trans_BNDS, v_trans_BNSD, nullptr,
                                              num_head, next_tokens, scale_value, num_head, high_performance);
   }
-  MS_CHECK_TRUE_MSG(fa_node != nullptr, nullptr,
-                    "The shape does not pass the verification, or the fa_node is nullptr. Can not fusion FA.");
+  MS_CHECK_TRUE_RET(fa_node != nullptr, nullptr);
   std::vector<int32_t> new_perm = {kNumIndex0, kNumIndex2, kNumIndex1, kNumIndex3};
   auto perm_node = BuildIntVecParameterNode(func_graph, new_perm, k_trans_BNDS->fullname_with_scope() + "_new_perm");
   MS_CHECK_TRUE_RET(perm_node != nullptr, nullptr);
