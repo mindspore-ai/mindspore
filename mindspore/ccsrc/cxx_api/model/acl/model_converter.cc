@@ -74,29 +74,6 @@ transform::TensorOrderMap GetParams(const FuncGraphPtr &anf_graph) {
   }
   return res;
 }
-
-bool CreateSessionAndGraphRunner() {
-  std::shared_ptr<ge::Session> sess = transform::GetGeSession();
-  if (sess == nullptr) {
-    transform::SessionOptions options;
-    options["ge.trainFlag"] = "0";
-    options["ge.enablePrintOpPass"] = "0";
-    sess = transform::NewSession(options);
-    transform::SetGeSession(sess);
-  }
-
-  transform::GraphRunnerOptions options;
-  options.sess_ptr = sess;
-  auto graph_runner = transform::NewGraphRunner(options);
-  if (graph_runner == nullptr) {
-    MS_LOG(ERROR) << "Create new graph runner failed";
-    return false;
-  } else {
-    transform::SetGraphRunner(graph_runner);
-  }
-
-  return true;
-}
 }  // namespace
 
 transform::DfGraphPtr ModelConverter::ConvertFuncGraphToAIR(const FuncGraphPtr &anf_graph) const {
@@ -104,9 +81,7 @@ transform::DfGraphPtr ModelConverter::ConvertFuncGraphToAIR(const FuncGraphPtr &
 #ifndef BUILD_LITE
   opt::ReduceOptimization(anf_graph);
 #endif
-  auto converter = transform::NewConverter(anf_graph, "", transform::RefModeFlag::kRefModeNone);
-  std::string net_id = "0";
-  std::string checkpoint_name = "save." + net_id;
+  auto converter = transform::NewConverter(anf_graph, "", transform::RefModeFlag::kRefModeNone, true);
   std::string compute_graph_name = anf_graph->ToString();
   auto option = options_.lock();
   if (option != nullptr && !option->GetDumpModelName().empty()) {
@@ -115,45 +90,7 @@ transform::DfGraphPtr ModelConverter::ConvertFuncGraphToAIR(const FuncGraphPtr &
   transform::SetTraining(converter, false);
 
   transform::BuildGraph(compute_graph_name, converter, GetParams(anf_graph));
-
-  transform::GenerateCheckpointGraph(converter);
-  auto err_code = transform::ErrCode(converter);
-  if (err_code != 0) {
-    transform::ClearGraph();
-    MS_LOG(ERROR) << "Convert df graph failed, err:" << err_code;
-    return nullptr;
-  }
-  (void)transform::AddGraph(anf_graph->ToString(), transform::GetComputeGraph(converter));
-  if (!IsEnableRefMode()) {
-    std::string init_graph = "init_subgraph." + net_id;
-    (void)transform::AddGraph(init_graph, transform::GetInitGraph(converter));
-  }
-  (void)transform::AddGraph(BROADCAST_GRAPH_NAME, transform::GetBroadcastGraph(converter));
-
-  transform::Status ret = transform::AddGraph(checkpoint_name, transform::GetSaveCheckpointGraph(converter));
-  if (ret == transform::Status::SUCCESS) {
-    transform::SetAnfGraph(checkpoint_name, anf_graph);
-  }
-
-  (void)setenv("GE_TRAIN", "0", 1);
-
-  if (!CreateSessionAndGraphRunner()) {
-    MS_LOG(ERROR) << "Create GE Session or GraphRunner failed.";
-    return nullptr;
-  }
-
-  auto wrap_ptr = transform::GetGraphByName(anf_graph->ToString());
-  if (wrap_ptr == nullptr) {
-    MS_LOG(ERROR) << "Get graph form DfGraphManager failed!";
-    return nullptr;
-  }
-  transform::DfGraphPtr &ge_graph = wrap_ptr->graph_ptr_;
-  if (ge_graph == nullptr) {
-    MS_LOG(ERROR) << "The export graph is null";
-    return nullptr;
-  }
-
-  return ge_graph;
+  return transform::GetComputeGraph(converter);
 }
 
 Buffer ModelConverter::BuildAirModel(const transform::DfGraphPtr &graph,
