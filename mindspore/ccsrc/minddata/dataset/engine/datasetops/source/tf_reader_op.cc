@@ -904,7 +904,7 @@ Status TFReaderOp::CreateSchema(const std::string &tf_record_file, std::vector<s
     const dataengine::Feature::KindCase kind_case = feature.kind_case();
     switch (kind_case) {
       case dataengine::Feature::KindCase::kBytesList:
-        column_type = "string";
+        column_type = "uint8";
         break;
 
       case dataengine::Feature::KindCase::kFloatList:

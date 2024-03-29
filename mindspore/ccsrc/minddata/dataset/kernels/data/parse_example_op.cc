@@ -579,6 +579,30 @@ inline Status ReportUnexpectedDataShape(const StringPiece &feature_name) {
                            " defined in schema does not match the shape actually load.");
 }
 
+Status CreateUint8TensorFromString(const std::vector<std::string> &bytes_list, std::shared_ptr<Tensor> *column_tensor,
+                                   const TensorShape &column_shape, const std::string &column_name) {
+  dsize_t total_size =
+    std::accumulate(bytes_list.begin(), bytes_list.end(), 0,
+                    [](dsize_t size, const std::string &str) { return size + static_cast<dsize_t>(str.size()); });
+  TensorShape output_shape = column_shape;
+  if (!column_shape.known()) {
+    output_shape = TensorShape({total_size});
+  } else {
+    CHECK_FAIL_RETURN_UNEXPECTED(
+      output_shape.NumOfElements() == total_size,
+      "Column shape of " + column_name + " defined in schema does not match the shape actually load.");
+  }
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(output_shape, DataType(DataType::DE_UINT8), column_tensor));
+  ptrdiff_t offset = 0;
+  for (const auto &str : bytes_list) {
+    int ret_code = memcpy_s((*column_tensor)->GetMutableBuffer() + offset, (*column_tensor)->SizeInBytes() - offset,
+                            common::SafeCStr(str), str.size());
+    CHECK_FAIL_RETURN_UNEXPECTED(ret_code == EOK, "Failed to copy string into Tensor.");
+    offset += static_cast<ptrdiff_t>(str.size());
+  }
+  return Status::OK();
+}
+
 Status ParseExampleOp::Compute(const TensorRow &input, TensorRow *output) {
   IO_CHECK_VECTOR(input, output);
   if (parallel_parse_) {
@@ -621,13 +645,17 @@ Status ParseSingleKnownShapeColumn(const parsed::Feature &feature, std::shared_p
       if (!feature.ParseBytesList(&bytes_list)) {
         return ReportUnexpectedParseFailure(feature_name);
       }
-      if (bytes_list.size() != num_elements) {
-        return ReportUnexpectedDataShape(feature_name);
+      if (column_descriptor.Type().value() == DataType::DE_STRING) {
+        if (bytes_list.size() != num_elements) {
+          return ReportUnexpectedDataShape(feature_name);
+        }
+        RETURN_IF_NOT_OK(Tensor::CreateFromVector(bytes_list, TensorShape{static_cast<dsize_t>(num_elements)},
+                                                  DataType(DataType::DE_STRING), column_tensor));
+      } else {
+        // load string or bytes as uint8 tensor
+        RETURN_IF_NOT_OK(
+          CreateUint8TensorFromString(bytes_list, column_tensor, column_descriptor.Shape(), std::string(feature_name)));
       }
-      auto dtype = column_descriptor.Type().value() == DataType::DE_UINT8 ? DataType(DataType::DE_BYTES)
-                                                                          : DataType(DataType::DE_STRING);
-      RETURN_IF_NOT_OK(
-        Tensor::CreateFromVector(bytes_list, TensorShape{static_cast<dsize_t>(num_elements)}, dtype, column_tensor));
       break;
     }
     default:
@@ -691,9 +719,14 @@ Status ParseSingleVarLenColumn(const parsed::Feature &feature, std::shared_ptr<T
       break;
     }
     case DataType::DE_STRING: {
-      auto dtype = column_descriptor.Type().value() == DataType::DE_UINT8 ? DataType(DataType::DE_BYTES)
-                                                                          : DataType(DataType::DE_STRING);
-      RETURN_IF_NOT_OK(Tensor::CreateFromVector(bytes_list, column_shape, dtype, column_tensor));
+      if (column_descriptor.Type().value() == DataType::DE_STRING) {
+        RETURN_IF_NOT_OK(
+          Tensor::CreateFromVector(bytes_list, column_shape, DataType(DataType::DE_STRING), column_tensor));
+      } else {
+        // load string or bytes as uint8 tensor
+        RETURN_IF_NOT_OK(CreateUint8TensorFromString(bytes_list, column_tensor, TensorShape::CreateUnknownRankShape(),
+                                                     std::string(feature_name)));
+      }
       break;
     }
     default:
@@ -776,13 +809,11 @@ Status ParseExampleOp::ParseSingleExample(const TensorRow &raw_bytes, TensorRow 
         "The data type loaded from the example does not match the predefined type in schema, the actual type: " +
         example_dtype.ToString() + ", but the predefined type: " + column_descriptor.Type().ToString();
       if (!example_dtype.IsString()) {
-        MS_LOG(WARNING) << msg << ". This will cause a type cast.";
+        MS_LOG(INFO) << msg << ". This will cause a type cast.";
         type_cast_flag = true;
-      } else {
-        // if the dtype defined in schema is uint8, it means this column is bytes
-        if (column_descriptor.Type().value() != DataType::DE_UINT8) {
-          RETURN_STATUS_UNEXPECTED(msg);
-        }
+      } else if (column_descriptor.Type().value() != DataType::DE_UINT8) {
+        // allow to read data of type string or bytes into an uint8 tensor
+        RETURN_STATUS_UNEXPECTED(msg);
       }
     }
 
@@ -800,6 +831,14 @@ Status ParseExampleOp::ParseSingleExample(const TensorRow &raw_bytes, TensorRow 
     }
     file_paths.push_back(filename);
   }
+
+  for (int32_t column_index = 0; column_index < data_schema_.NumColumns(); ++column_index) {
+    if (!feature_already_seen[column_index]) {
+      RETURN_STATUS_UNEXPECTED("Feature name: " + data_schema_.Column(column_index).Name() +
+                               " is required in schema but could not be found in tfrecord file.");
+    }
+  }
+
   parsed_row->setPath(file_paths);
   return Status::OK();
 }
@@ -942,7 +981,7 @@ Status FillAndCopyVarLenString(const std::vector<std::vector<VarLenTensorBuffer>
       element_size = static_cast<dsize_t>(string_length);
     } else {
       CHECK_FAIL_RETURN_UNEXPECTED(string_length == element_size,
-                                   "Could not batch string tensors with different shapes.");
+                                   "Could not batch string or bytes tensors with different shapes.");
     }
     const auto &minibatch_string = minibatch_row[column_index].string_tensor;
     string_buffer.insert(string_buffer.end(), minibatch_string.begin(), minibatch_string.end());
@@ -955,9 +994,33 @@ Status FillAndCopyVarLenString(const std::vector<std::vector<VarLenTensorBuffer>
     shape = {batch_size};
   }
   const auto column_shape = TensorShape(shape);
-  auto dtype = column_descriptor.Type().value() == DataType::DE_UINT8 ? DataType(DataType::DE_BYTES)
-                                                                      : DataType(DataType::DE_STRING);
-  RETURN_IF_NOT_OK(Tensor::CreateFromVector(string_buffer, column_shape, dtype, column_tensor));
+  if (column_descriptor.Type().value() == DataType::DE_STRING) {
+    RETURN_IF_NOT_OK(
+      Tensor::CreateFromVector(string_buffer, column_shape, DataType(DataType::DE_STRING), column_tensor));
+  } else {
+    RETURN_IF_NOT_OK(CreateUint8TensorFromString(string_buffer, column_tensor, column_shape, column_descriptor.Name()));
+  }
+  return Status::OK();
+}
+
+Status MergeDenseVarLenMiniBatches(const std::vector<std::vector<VarLenTensorBuffer>> &varlen_dense_buffers,
+                                   TensorRow *parsed_row, int32_t column_index, const DataSchema &data_schema,
+                                   dsize_t batch_size) {
+  const ColDescriptor &column_descriptor = data_schema.Column(column_index);
+  if (column_descriptor.HasShape()) {
+    return Status::OK();
+  }
+  std::shared_ptr<Tensor> column_tensor;
+  if (!varlen_dense_buffers[0][column_index].numeric_tensor.empty()) {
+    const TensorShape column_shape =
+      varlen_dense_buffers[0][column_index].numeric_tensor[0]->shape().InsertDim(0, batch_size);
+    RETURN_IF_NOT_OK(Tensor::CreateEmpty(column_shape, column_descriptor.Type(), &column_tensor));
+    RETURN_IF_NOT_OK(FillAndCopyVarLenTensor(varlen_dense_buffers, &column_tensor, column_index));
+  } else {
+    RETURN_IF_NOT_OK(
+      FillAndCopyVarLenString(varlen_dense_buffers, &column_tensor, column_index, column_descriptor, batch_size));
+  }
+  (*parsed_row)[column_index] = column_tensor;
   return Status::OK();
 }
 
@@ -990,6 +1053,10 @@ Status ParseExampleOp::ParallelParseExample(const TensorRow &raw_bytes, TensorRo
         std::shared_ptr<Tensor> column_tensor;
         RETURN_IF_NOT_OK(Tensor::CreateEmpty(column_shape, type, &column_tensor));
         parsed_row->emplace_back(std::move(column_tensor));
+        if (column_descriptor.Type().value() == DataType::DE_UINT8) {
+          string_column_map[column_index] =
+            std::vector<std::string>(batch_size * column_descriptor.Shape().NumOfElements());
+        }
       } else {
         parsed_row->emplace_back(std::make_shared<Tensor>(TensorShape({}), DataType(DataType::DE_UNKNOWN)));
         string_column_map[column_index] =
@@ -1038,37 +1105,27 @@ Status ParseExampleOp::ParallelParseExample(const TensorRow &raw_bytes, TensorRo
     const ColDescriptor &column_descriptor = data_schema_.Column(column_index);
     auto column_shape = column_descriptor.Shape().InsertDim(0, batch_size);
     std::shared_ptr<Tensor> string_tensor;
-    auto dtype = column_descriptor.Type().value() == DataType::DE_UINT8 ? DataType(DataType::DE_BYTES)
-                                                                        : DataType(DataType::DE_STRING);
-    RETURN_IF_NOT_OK(Tensor::CreateFromVector(string_column->second, column_shape, dtype, &string_tensor));
+    if (column_descriptor.Type().value() == DataType::DE_STRING) {
+      RETURN_IF_NOT_OK(
+        Tensor::CreateFromVector(string_column->second, column_shape, DataType(DataType::DE_STRING), &string_tensor));
+    } else {
+      // load string or bytes as uint8 tensor
+      RETURN_IF_NOT_OK(
+        CreateUint8TensorFromString(string_column->second, &string_tensor, column_shape, column_descriptor.Name()));
+      type_cast_flag[column_index] = false;
+    }
     (*parsed_row)[column_index] = string_tensor;
   }
-
-  auto MergeDenseVarLenMiniBatches = [&](int32_t column_index) {
-    const ColDescriptor &column_descriptor = data_schema_.Column(column_index);
-    if (column_descriptor.HasShape()) {
-      return Status::OK();
-    }
-    std::shared_ptr<Tensor> column_tensor;
-    if (!column_descriptor.Type().IsString()) {
-      const TensorShape column_shape =
-        varlen_dense_buffers[0][column_index].numeric_tensor[0]->shape().InsertDim(0, batch_size);
-      RETURN_IF_NOT_OK(Tensor::CreateEmpty(column_shape, column_descriptor.Type(), &column_tensor));
-      RETURN_IF_NOT_OK(FillAndCopyVarLenTensor(varlen_dense_buffers, &column_tensor, column_index));
-    } else {
-      RETURN_IF_NOT_OK(
-        FillAndCopyVarLenString(varlen_dense_buffers, &column_tensor, column_index, column_descriptor, batch_size));
-    }
-    (*parsed_row)[column_index] = column_tensor;
-    return Status::OK();
-  };
 
   for (int32_t column_index = 0; column_index < data_schema_.NumColumns(); ++column_index) {
     if (type_cast_flag[column_index]) {
       const ColDescriptor &column_descriptor = data_schema_.Column(column_index);
-      RETURN_IF_NOT_OK(TypeCast((*parsed_row)[column_index], &(*parsed_row)[column_index], column_descriptor.Type()));
+      std::shared_ptr<Tensor> cast_out;
+      RETURN_IF_NOT_OK(TypeCast((*parsed_row)[column_index], &cast_out, column_descriptor.Type()));
+      (*parsed_row)[column_index] = cast_out;
     } else if (varlen_column[column_index]) {
-      RETURN_IF_NOT_OK(MergeDenseVarLenMiniBatches(column_index));
+      RETURN_IF_NOT_OK(
+        MergeDenseVarLenMiniBatches(varlen_dense_buffers, parsed_row, column_index, data_schema_, batch_size));
     }
   }
   return Status::OK();
@@ -1084,13 +1141,13 @@ Status ParseSerializedKnownShapeColumn(const parsed::Feature &feature, TensorRow
     const std::string msg =
       "The data type loaded from the example does not match the predefined type in schema, the actual type: " +
       example_dtype.ToString() + ", but the predefined type: " + column_descriptor.Type().ToString();
-    if (!example_dtype.IsString() && example_dtype == column_tensor->type()) {
-      MS_LOG(WARNING) << msg << ". This will cause a type cast.";
-    } else {
-      // if the dtype defined in schema is uint8, it means this column is bytes
-      if (!example_dtype.IsString() || column_descriptor.Type().value() != DataType::DE_UINT8) {
-        RETURN_STATUS_UNEXPECTED(msg);
-      }
+    if (example_dtype == column_tensor->type()) {
+      // if the actual data type is the same as the pre-allocated tensor,
+      // we can first read it into the tensor, then cast to the type specified by the schema
+      MS_LOG(INFO) << msg << ". This will cause a type cast.";
+    } else if (!example_dtype.IsString() || column_descriptor.Type().value() != DataType::DE_UINT8) {
+      // allow to read data of type string or bytes into an uint8 tensor
+      RETURN_STATUS_UNEXPECTED(msg);
     }
   }
 
@@ -1137,6 +1194,39 @@ Status ParseSerializedKnownShapeColumn(const parsed::Feature &feature, TensorRow
   return Status::OK();
 }
 
+Status PushStringToBuffer(const std::vector<std::string> &bytes_list, VarLenTensorBuffer *varlen_tensor_buffer,
+                          const ColDescriptor &column_descriptor) {
+  if (column_descriptor.Type().value() == DataType::DE_STRING) {
+    // check that each sample contains the same number of strings
+    if (varlen_tensor_buffer->string_length != 0) {
+      CHECK_FAIL_RETURN_UNEXPECTED(varlen_tensor_buffer->string_length == bytes_list.size(),
+                                   "Could not batch string Tensors with different shapes.");
+    } else {
+      if (column_descriptor.Rank() != 0) {
+        varlen_tensor_buffer->string_length = bytes_list.size();
+      } else {
+        varlen_tensor_buffer->string_length = 0;
+      }
+    }
+    for (auto &bytes : bytes_list) {
+      varlen_tensor_buffer->string_tensor.emplace_back(bytes);
+    }
+  } else if (column_descriptor.Type().value() == DataType::DE_UINT8) {
+    size_t total_size = 0;
+    for (auto &bytes : bytes_list) {
+      total_size += bytes.size();
+      varlen_tensor_buffer->string_tensor.emplace_back(bytes);
+    }
+    if (varlen_tensor_buffer->string_length != 0) {
+      CHECK_FAIL_RETURN_UNEXPECTED(varlen_tensor_buffer->string_length == total_size,
+                                   "Could not batch bytes Tensors with different shapes.");
+    } else {
+      varlen_tensor_buffer->string_length = total_size;
+    }
+  }
+  return Status::OK();
+}
+
 Status ParseSerializedVarLenColumn(const parsed::Feature &feature, VarLenTensorBuffer *varlen_tensor_buffer,
                                    const StringPiece &feature_name, const ColDescriptor &column_descriptor,
                                    const DataType &example_dtype) {
@@ -1146,9 +1236,10 @@ Status ParseSerializedVarLenColumn(const parsed::Feature &feature, VarLenTensorB
       "The data type loaded from the example does not match the predefined type in schema, the actual type: " +
       example_dtype.ToString() + ", but the predefined type: " + column_descriptor.Type().ToString();
     if (!example_dtype.IsString()) {
-      MS_LOG(WARNING) << msg << ". This will cause a type cast.";
+      MS_LOG(INFO) << msg << ". This will cause a type cast.";
       type_cast_flag = true;
-    } else {
+    } else if (column_descriptor.Type().value() != DataType::DE_UINT8) {
+      // allow to read data of type string or bytes into an uint8 tensor
       RETURN_STATUS_UNEXPECTED(msg);
     }
   }
@@ -1218,19 +1309,7 @@ Status ParseSerializedVarLenColumn(const parsed::Feature &feature, VarLenTensorB
       break;
     }
     case DataType::DE_STRING: {
-      if (varlen_tensor_buffer->string_length != 0) {
-        CHECK_FAIL_RETURN_UNEXPECTED(varlen_tensor_buffer->string_length == bytes_list.size(),
-                                     "Could not batch string Tensors with different shapes.");
-      } else {
-        if (column_descriptor.Rank() != 0) {
-          varlen_tensor_buffer->string_length = bytes_list.size();
-        } else {
-          varlen_tensor_buffer->string_length = 0;
-        }
-      }
-      for (auto &bytes : bytes_list) {
-        varlen_tensor_buffer->string_tensor.emplace_back(bytes);
-      }
+      RETURN_IF_NOT_OK(PushStringToBuffer(bytes_list, varlen_tensor_buffer, column_descriptor));
       break;
     }
     default:
@@ -1284,6 +1363,13 @@ Status ParseExampleOp::ParseSerializedExample(const std::string &example_bytes, 
                                                    column_descriptor, example_dtype));
     }
   }
+
+  for (int32_t column_index = 0; column_index < data_schema_.NumColumns(); ++column_index) {
+    if (!feature_already_seen[column_index]) {
+      RETURN_STATUS_UNEXPECTED("Feature name: " + data_schema_.Column(column_index).Name() +
+                               " is required in schema but could not be found in tfrecord file.");
+    }
+  }
   return Status::OK();
 }
 
@@ -1313,7 +1399,7 @@ Status ParseExampleOp::ConstructColumnMap(const std::string &example_bytes) {
         const dataengine::Feature &feature = it->second;
         switch (feature.kind_case()) {
           case dataengine::Feature::KindCase::kBytesList:
-            column_type = "string";
+            column_type = "uint8";
             break;
           case dataengine::Feature::KindCase::kFloatList:
             column_type = "float32";

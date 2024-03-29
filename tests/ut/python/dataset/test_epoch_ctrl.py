@@ -96,7 +96,7 @@ def test_decode_op():
         i = 0
         for item1, item2 in itertools.zip_longest(iter1, iter2):
             actual = item1["image"]
-            expected = cv2.imdecode(np.fromstring(item2["image"], dtype=np.uint8), cv2.IMREAD_COLOR)
+            expected = cv2.imdecode(item2["image"], cv2.IMREAD_COLOR)
             expected = cv2.cvtColor(expected, cv2.COLOR_BGR2RGB)
             assert actual.shape == expected.shape
             diff = actual - expected
