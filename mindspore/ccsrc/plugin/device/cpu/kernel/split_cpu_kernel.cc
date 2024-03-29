@@ -32,7 +32,7 @@ using complex128 = std::complex<double>;
 
 bool SplitCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   axis_ = inputs[kIndex1]->GetValueWithCheck<int64_t>();
-  output_num_ = inputs[kIndex2]->GetValueWithCheck<int64_t>();
+  output_num_ = IntToSize(inputs[kIndex2]->GetValueWithCheck<int64_t>());
   if (output_num_ == 0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'output_num' must be positive int, but got 0.";
   }
