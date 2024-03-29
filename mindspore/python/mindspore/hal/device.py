@@ -209,7 +209,10 @@ def device_count(device_target=None):
         >>> device_target = ms.context.get_context("device_target")
         >>> print(ms.hal.device_count(device_target))
     """
-    return hal_instances[device_target].device_count()
+    hal_instance = hal_instances.get(device_target)
+    if hal_instance is None:
+        raise RuntimeError(f"device_target {device_target} not exist.")
+    return hal_instance.device_count()
 
 
 @_check_device_id
@@ -238,7 +241,10 @@ def get_device_capability(device_id, device_target=None):
         >>> device_target = ms.context.get_context("device_target")
         >>> print(ms.hal.get_device_capability(0, device_target))
     """
-    return hal_instances[device_target].get_device_capability(device_id)
+    hal_instance = hal_instances.get(device_target)
+    if hal_instance is None:
+        raise RuntimeError(f"device_target {device_target} not exist.")
+    return hal_instance.get_device_capability(device_id)
 
 
 @_check_device_id
@@ -290,7 +296,10 @@ def get_device_properties(device_id, device_target=None):
         >>> device_target = ms.context.get_context("device_target")
         >>> print(ms.hal.get_device_properties(0, device_target))
     """
-    return hal_instances[device_target].get_device_properties(device_id)
+    hal_instance = hal_instances.get(device_target)
+    if hal_instance is None:
+        raise RuntimeError(f"device_target {device_target} not exist.")
+    return hal_instance.get_device_properties(device_id)
 
 
 @_check_device_id
@@ -315,7 +324,10 @@ def get_device_name(device_id, device_target=None):
         >>> device_target = ms.context.get_context("device_target")
         >>> print(ms.hal.get_device_name(0, device_target))
     """
-    return hal_instances[device_target].get_device_name(device_id)
+    hal_instance = hal_instances.get(device_target)
+    if hal_instance is None:
+        raise RuntimeError(f"device_target {device_target} not exist.")
+    return hal_instance.get_device_name(device_id)
 
 
 @_check_inputs_validation
@@ -338,4 +350,7 @@ def get_arch_list(device_target=None):
         >>> device_target = ms.context.get_context("device_target")
         >>> print(ms.hal.get_arch_list(device_target))
     """
-    return hal_instances[device_target].get_arch_list()
+    hal_instance = hal_instances.get(device_target)
+    if hal_instance is None:
+        raise RuntimeError(f"device_target {device_target} not exist.")
+    return hal_instance.get_arch_list()
