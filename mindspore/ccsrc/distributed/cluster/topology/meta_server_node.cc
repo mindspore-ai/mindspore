@@ -200,7 +200,8 @@ MessageBase *const MetaServerNode::ProcessRegister(MessageBase *const message) {
     (void)time(&(node_info->last_update));
     nodes_[node_id] = node_info;
     MS_LOG(WARNING) << "The new node: " << node_id << "(role: " << role << ")"
-                    << ", rank id: " << rank_id << " is registered successfully.";
+                    << ", rank id: " << rank_id << ", hostname: " << node_info->host_name
+                    << " is registered successfully.";
     (void)TransitionToInitialized();
 
     RegistrationRespMessage reg_resp_msg;
@@ -263,6 +264,7 @@ MessageBase *const MetaServerNode::ProcessUnregister(MessageBase *const message)
   auto response = CreateMessage(meta_server_addr_.GetUrl(), MessageName::kSuccess,
                                 std::to_string(static_cast<int>(MessageName::kSuccess)));
   MS_EXCEPTION_IF_NULL(response);
+  MS_LOG(WARNING) << "The node: " << node_id << " have unregiser.";
   return response.release();
 }
 
@@ -354,6 +356,7 @@ MessageBase *const MetaServerNode::ProcessDeleteMetadata(MessageBase *const mess
 }
 
 MessageBase *const MetaServerNode::ProcessGetHostNames(MessageBase *const message) {
+  std::unique_lock<std::shared_mutex> lock(nodes_mutex_);
   MS_ERROR_IF_NULL_W_RET_VAL(message, rpc::NULL_MSG);
   // Convert result to the message.
   nlohmann::json hostnames = nlohmann::json::array();
@@ -366,10 +369,8 @@ MessageBase *const MetaServerNode::ProcessGetHostNames(MessageBase *const messag
     result = MessageName::kValidMetadata;
 
     auto node_role = message->body;
-
     // Collect all the hostnames from nodes info.
     std::vector<std::string> tmp_hostnames(nodes_.size(), "");
-    std::shared_lock<std::shared_mutex> lock(nodes_mutex_);
 
     // The hostnames must are sorted strictly by the rank id.
     for (auto iter = nodes_.begin(); iter != nodes_.end(); ++iter) {
@@ -395,12 +396,25 @@ MessageBase *const MetaServerNode::ProcessGetHostNames(MessageBase *const messag
   }
 
   retval[kHostNames] = hostnames;
+  try {
+    MS_LOG(INFO) << "Host names are " << retval.dump();
+  } catch (const std::exception &e) {
+    MS_LOG(ERROR) << "Failed to dump host names json " << e.what();
+  }
   auto response = CreateMessage(meta_server_addr_.GetUrl(), result, retval.dump());
   MS_EXCEPTION_IF_NULL(response);
   return response.release();
 }
 
 void MetaServerNode::UpdateTopoState() {
+  std::string env_topo_timeout = common::GetEnv("MS_TOPO_TIMEOUT");
+  size_t topo_timeout;
+  if (!env_topo_timeout.empty()) {
+    MS_LOG(INFO) << "MS_TOPO_TIMEOUT set by user: " << env_topo_timeout;
+    topo_timeout = std::stoi(env_topo_timeout);
+  } else {
+    topo_timeout = kTopoInitTimeout;
+  }
   try {
     while (enable_monitor_) {
       nodes_mutex_.lock();
@@ -408,7 +422,7 @@ void MetaServerNode::UpdateTopoState() {
       // Update the state of topology.
       if (topo_state_ == TopoState::kInitializing) {
         // Set the state of topo to `kFailed` if the topology is still in process of initializtion but timed out.
-        if (ElapsedTime(start_time_) > kTopoInitTimeout) {
+        if (ElapsedTime(start_time_) > std::chrono::milliseconds(topo_timeout)) {
           if (recovery::IsEnableRecovery()) {
             MS_LOG(ERROR) << "Start Scheduler node timeout.";
             topo_state_ = TopoState::kFailed;
@@ -607,6 +621,7 @@ void MetaServerNode::ReassignNodeRank() {
       const std::shared_ptr<NodeInfo> &node_info = n.second;
       const std::string &role = node_info->role;
       (void)metadata_.insert(std::make_pair(role + node_info->node_id, std::to_string(node_info->rank_id)));
+      MS_LOG(INFO) << "Add metadata key " << role + node_info->node_id << " value " << node_info->rank_id;
     }
     return;
   }

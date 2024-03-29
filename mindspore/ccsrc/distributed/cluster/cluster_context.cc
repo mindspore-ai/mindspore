@@ -173,15 +173,21 @@ bool ClusterContext::BuildCluster() {
   if (node_id_.length() == 0) {
     node_id_ = ps::core::CommUtil::GenerateUUID();
   }
+
   // Init the node according to the process role.
   size_t retry_num;
+  std::string cluster_retry_num = common::GetEnv("MS_CLUSTER_RETRY_NUM");
+  if (!cluster_retry_num.empty()) {
+    MS_LOG(WARNING) << "CLUSTER_RETRY_NUM set by user " << cluster_retry_num;
+    retry_num = std::stoi(cluster_retry_num);
+  } else {
+    retry_num = topology::kExecuteRetryNum;
+  }
   if (node_role_ == kEnvRoleOfScheduler) {
     auto node_num = node_num_each_role_[kEnvRoleOfWorker] + node_num_each_role_[kEnvRoleOfServer];
     node_base_ = std::make_shared<topology::MetaServerNode>(node_id_, node_role_, node_num);
-    retry_num = topology::kMsnExecuteRetryNum;
   } else {
     node_base_ = std::make_shared<topology::ComputeGraphNode>(node_id_, node_role_);
-    retry_num = topology::kCgnExecuteRetryNum;
   }
   MS_EXCEPTION_IF_NULL(node_base_);
   RETURN_IF_FALSE_WITH_LOG(node_base_->Initialize(), "Failed to initialize the node.");
