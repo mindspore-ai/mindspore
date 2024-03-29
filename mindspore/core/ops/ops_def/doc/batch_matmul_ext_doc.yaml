@@ -3,18 +3,19 @@ batch_matmul_ext:
     Performs batch matrix-matrix multiplication of two three-dimensional tensors.
 
     .. math::
-        Output_{b, i, j}=\sum_{k=1}^{m} input_{b, i, k} mat2_{b, k, j}
+        \text{output}[b, i, j] = \text{input}[b, i, k] @ \text{mat2}[b, k, j]
 
     Args:
         input (Tensor): The first batch of matrices to be multiplied. Must be a three-dimensional tensor.
         mat2 (Tensor): The second batch of matrices to be multiplied. Must be a three-dimensional tensor.
 
-    Outputs:
+    Returns:
         Tensor, the output tensor of shape `(b, n, p)`, where each matrix is the product of the corresponding matrices in the input batches.
 
     Raises:
-        TypeError: If the inputs are not three-dimensional tensors.
-        ValueError: If the sizes of the middle dimensions of the inputs do not match, or if the batch sizes of the inputs do not match.
+        TypeError: If `input` or `mat2` is not three-dimensional tensors.
+        ValueError: If the length of the third dimension of `input` is not equal to the length of the second dimension of `mat2`.
+        ValueError: If the batch size of the inputs do not match.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
