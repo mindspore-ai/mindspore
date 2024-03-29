@@ -2,6 +2,61 @@
 
 [View English](./RELEASE.md)
 
+## MindSpore 2.2.13 Release Notes
+
+### 主要特性及增强
+
+#### Parallel
+
+- [Stable] 将流水线并行的send/recv算子通信组改为world_group，避免创建冗余通信组，降低通信所需内存。
+- [Stable] 优化编译缓存，减少加载缓存时图转换过程，提升使用编译缓存性能。
+- [Beta] 流水并行支持Interleave调度，优化micro batch开不大情况下的模型性能。
+
+#### Profiler
+
+- [Beta] 动态启停profiling，用户可以根据训练情况实时采集profiling数据，减少采集数据量。
+- [Beta] Profiling通信算子耗时矩阵，用户通过分析通信算子耗时矩阵，找出集群通信性能瓶颈。
+
+#### Dump
+
+- [Beta] Dump保存的统计信息记录MD5值，用户可以通过MD5值确定张量值的微小差异。
+- [Beta] Dump支持bfloat16数据类型，支撑用户定位bfloat16类型的算子精度问题。
+
+### 问题修复
+
+- [#I962EV] 修复了在CPU、GPU 环境上，使用cond接口输入为4d、5d、6d、7d、8d 时，正向报错的问题。
+- [#I96E5R] 修复Ascend平台PyNative场景下Mul算子输入为NCHW时报错的问题。
+- [#I96I5D] 修复动态shape场景下，Scalar类型计算时输入类型错误的问题。
+- [#I99QAB] 修复了部分场景下asnumpy接口无法正确识别BFloat16类型Tensor的问题。
+- [#I9ADZS] 修复了故障恢复训练场景中，由于dataset恢复效率低导致网络训练出现数据超时的问题。
+- [#I8Y9JT] 修复了nn.SGD优化器在loss_scale 较大，weight_decay 较小的部分特定场景下由于优化器执行顺序错误导致的部分网络训练不收敛的问题。
+
+### 贡献者
+
+感谢以下人员做出的贡献:
+
+fary86, wanghenchang, haozhang, mengyuanli, emmmmtang, luoyang, zhupuxu, zhangyongxian, liuluobin, LLLRT, TuDouNi, hujiahui8, wangtongyu6, ligan, zhuguodong, yanghaoran, YingtongHu, liyejun, zjun, 徐永飞, chuht, 张树仁, 徐安越, DeshiChen, shenyaxin, liujunzhu, shunyuanhan, yuchaojie, yao_yf, 没有窗户的小巷, yeyunpeng2020, weiyang, KevinYi, hedongdong, zhouyaqiang0, Margaret_wangrui, zhanghaibo, moran, huangziling, 朱家兴, GuoZhibin, 李良灿, jiaxueyu, gaoyong10, Greatpan, 宦晓玲, melody, 俞涵, jiangshanfeng, XinDu, ling, caifubi, zhangyinxia, gengdongjie, Erpim, XianglongZeng, zhangminli, fengyixing, 冯一航, 黄勇, panzhihui, 胡彬, linqingke, wangshaocong
+
+欢迎以任何形式对项目提供贡献！
+
+## MindSpore Lite 2.2.13 Release Notes
+
+### 主要特性及增强
+
+- [Demo] LLAMA2-13B 支持 PagedAttention。
+
+### 问题修复
+
+- [I96PJC] 通过Mindspore Lite Python API加载ms格式的CLIP模型报错。
+
+### 贡献者
+
+感谢以下人员做出的贡献:
+
+wangtongyu6, zhuguodong, 徐永飞, 徐安越, yeyunpeng2020, moran, XinDu, gengdongjie
+
+欢迎以任何形式对项目提供贡献！
+
 ## MindSpore 2.2.12 Release Notes
 
 ### 主要特性及增强
