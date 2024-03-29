@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2023-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -101,7 +101,6 @@ class AclnnKernelMod : public KernelMod {
 
     constexpr size_t kBoostGeneratorSize = 5;
     if constexpr (std::tuple_size_v<std::tuple<Args...>> == kBoostGeneratorSize) {
-      constexpr size_t kHashIdIndex = 3;
       hash_id_ = std::get<kHashIdIndex>(args);
     }
   }
@@ -116,7 +115,6 @@ class AclnnKernelMod : public KernelMod {
 
     constexpr size_t kBoostGeneratorSize = 5;
     if constexpr (std::tuple_size_v<std::tuple<Args...>> == kBoostGeneratorSize) {
-      constexpr size_t kHashIdIndex = 3;
       hash_id_ = std::get<kHashIdIndex>(args);
       if (cache_hash_.count(hash_id_) != 0) {
         return;
@@ -173,6 +171,9 @@ class AclnnKernelMod : public KernelMod {
   std::string op_type_;
   uint64_t hash_id_{0};
   std::unordered_set<uint64_t> cache_hash_;
+
+  static constexpr size_t kWsSizeIndex = 0;
+  static constexpr size_t kHashIdIndex = 3;
 };
 
 using AclnnKernelModPtr = std::shared_ptr<AclnnKernelMod>;

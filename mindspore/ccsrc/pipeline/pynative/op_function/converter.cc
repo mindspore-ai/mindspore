@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -250,6 +250,14 @@ FP32ImmPtr Converter::ToFloat(const py::list &python_args, size_t i) {
   }
   PyNativeAlgo::PyParser::PrintTypeCastError(op_def_, python_args, i);
   return nullptr;
+}
+
+std::optional<FP32ImmPtr> Converter::ToFloatOptional(const py::list &python_args, size_t i) {
+  const py::object &obj = python_args[i];
+  if (py::isinstance<py::none>(obj)) {
+    return std::nullopt;
+  }
+  return std::make_optional(ToFloat(python_args, i));
 }
 
 template <typename T>

@@ -1,0 +1,23 @@
+#EmbeddingDensebackward
+embedding_dense_backward:
+    args:
+        grad:
+            dtype: tensor
+        indices:
+            dtype: tensor
+        num_weights:
+            dtype: int
+        padding_idx:
+            dtype: int
+            default: None
+        scale_grad_by_freq:
+            dtype: bool
+            default: False
+    returns:
+        output:
+            dtype: tensor
+    function:
+        disable: True
+    dispatch:
+        enable: True
+        Ascend: EmbeddingDenseBackwardAscend

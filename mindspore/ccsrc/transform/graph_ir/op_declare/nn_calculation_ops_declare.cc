@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -308,4 +308,13 @@ ATTR_MAP(Conv2DTranspose) = {
   {"offset", ATTR_DESC(offset_x, AnyTraits<int64_t>())}};
 OUTPUT_MAP(Conv2DTranspose) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Conv2DTransposeV2, kNameConv2DTransposeV2, ADPT_DESC(Conv2DTranspose))
+
+// EmbeddingDenseBackward
+INPUT_MAP(EmbeddingDenseGrad) = {{kIndex1, INPUT_DESC(grad)}, {kIndex2, INPUT_DESC(indices)}};
+INPUT_ATTR_MAP(EmbeddingDenseGrad) = {{kIndex3, ATTR_DESC(num_weights, AnyTraits<int64_t>())},
+                                      {kIndex4, ATTR_DESC(padding_idx, AnyTraits<int64_t>())},
+                                      {kIndex5, ATTR_DESC(scale_grad_by_freq, AnyTraits<bool>())}};
+ATTR_MAP(EmbeddingDenseGrad) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(EmbeddingDenseGrad) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(EmbeddingDenseBackward, ops::kNameEmbeddingDenseBackward, ADPT_DESC(EmbeddingDenseGrad))
 }  // namespace mindspore::transform
