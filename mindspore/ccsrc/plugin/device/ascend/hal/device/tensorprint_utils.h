@@ -17,50 +17,10 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_HAL_DEVICE_TENSORPRINT_UTILS_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_HAL_DEVICE_TENSORPRINT_UTILS_H_
 
-#include <map>
 #include <string>
-#include <thread>
-#include <functional>
-#include "acl/acl_tdt.h"
+#include "plugin/device/ascend/hal/device/mbuf_receive_manager.h"
 
 namespace mindspore::device::ascend {
-class TensorPrint {
- public:
-  explicit TensorPrint(const std::string &path, const acltdtChannelHandle *acl_handle)
-      : print_file_path_(path), acl_handle_(acl_handle) {}
-  ~TensorPrint() = default;
-  void operator()();
-
- private:
-  std::string print_file_path_;
-  const acltdtChannelHandle *acl_handle_;
-};
-
-enum class ChannelType {
-  kMbuf = 0,
-  kTDT,
-};
-
-class AclHandle {
- public:
-  static AclHandle &GetInstance();
-  ChannelType GetChannelType() { return channel_type_; }
-  acltdtChannelHandle *Get() { return acl_handle_; }
-  bool CreateChannel(uint32_t deviceId, std::string name, size_t capacity = 16);
-
-  ~AclHandle() = default;
-  AclHandle(const AclHandle &) = delete;
-  AclHandle &operator=(const AclHandle &) = delete;
-
- private:
-  AclHandle() = default;
-
-  acltdtChannelHandle *acl_handle_{nullptr};
-  ChannelType channel_type_{ChannelType::kMbuf};
-};
-
-using PrintThreadCrt = std::function<std::thread(std::string &, acltdtChannelHandle *)>;
-void CreateTensorPrintThread(const PrintThreadCrt &ctr);
-void DestroyTensorPrintThread();
+void PrintReceiveData(const ScopeAclTdtDataset &dataset, const string &print_file_path);
 }  // namespace mindspore::device::ascend
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_HAL_DEVICE_TENSORPRINT_UTILS_H_

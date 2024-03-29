@@ -19,10 +19,8 @@
 
 #include <vector>
 #include <string>
-#include <functional>
 #include <utility>
-#include "acl/acl_tdt.h"
-#include "ir/tensor.h"
+#include "plugin/device/ascend/hal/device/mbuf_receive_manager.h"
 
 namespace mindspore::device::ascend {
 const std::vector<std::pair<string, string>> summary_mappings{{"ms_tensor_summary", "TensorSummary"},
@@ -30,7 +28,7 @@ const std::vector<std::pair<string, string>> summary_mappings{{"ms_tensor_summar
                                                               {"ms_scalar_summary", "ScalarSummary"},
                                                               {"ms_histogram_summary", "HistogramSummary"}};
 
-void SummaryReceiveData(acltdtDataset *acl_dataset, const string &channel_name);
+void SummaryReceiveData(const ScopeAclTdtDataset &dataset, const string &channel_name);
 };  // namespace mindspore::device::ascend
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_HAL_DEVICE_TENSORSUMMARY_UTILS_H_

@@ -31,10 +31,7 @@ def print_(*input_x):
         In pynative mode, please use python print function.
         In Ascend platform with graph mode, the bool, int and float would be converted into Tensor to print, and
         str remains unchanged.
-        This function is used for debugging. When too much data is printed at the same time,
-        in order not to affect the main process, the framework may discard some data. If you need to record the
-        data completely, you are recommended to use the `Summary` function, and can check
-        `Summary <https://www.mindspore.cn/mindinsight/docs/en/master/summary_record.html>`_.
+        This function is used for debugging.
 
     Args:
         input_x (Union[Tensor, bool, int, float, str, tuple, list]): The inputs of print_.
