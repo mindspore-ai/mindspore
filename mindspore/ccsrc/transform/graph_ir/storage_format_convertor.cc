@@ -48,6 +48,10 @@ std::vector<std::pair<AnfNodePtr, int>> GetOutputNodesSkipVirtualNode(const Func
     auto queue_front = anf_queue.front();
     anf_queue.pop();
     std::string op_name = common::AnfAlgo::GetCNodeName(queue_front.first);
+    if (op_name == "Partial") {
+      // subgraph boundary not support trans from NC1HWC0 to ND in GE
+      return {};
+    }
     if (AnfUtils::IsRealKernel(queue_front.first) && op_name != kCastOpName && op_name != kTensorMoveOpName) {
       res.push_back(queue_front);
       continue;
