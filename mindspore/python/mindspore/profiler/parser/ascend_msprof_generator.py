@@ -80,7 +80,9 @@ class AscendMsprofDataGenerator:
 
         self.steptrace = self.steptrace[self.steptrace['Model ID'] != self._mindspore_model_id]
 
-        return self.op_summary, self.op_statistic, self.steptrace, self.steptrace_model
+        result = (self.op_summary, self.op_statistic, self.steptrace, self.steptrace_model)
+
+        return result
 
     def _read_op_summary(self):
         """read op summary to memory"""

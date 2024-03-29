@@ -74,35 +74,6 @@ def _get_summary_tensor_data():
         return data
 
 
-def _sync_summary_data(step):
-    """
-    In the GE process, the summary receiving process is asynchronous.
-    When the record function is called, some data may not be received and
-    needs to be synchronized.
-    """
-    if context.get_context('device_target') != "Ascend":
-        return
-
-    step_end_flag = Tensor([1], dtype=mstype.float32)
-    image_step_end_flag = Tensor([[[[1]]]], dtype=mstype.float32)
-    name = "_step_end_flag_" + str(step)
-    tags = ("[:Tensor]", "[:Scalar]", "[:Image]", "[:Histogram]")
-    _run_op(_get_cache_prim(debug_ops.TensorSummary)(), "TensorSummary", (name, step_end_flag))
-    _run_op(_get_cache_prim(debug_ops.ScalarSummary)(), "ScalarSummary", (name, step_end_flag))
-    _run_op(_get_cache_prim(debug_ops.HistogramSummary)(), "HistogramSummary", (name, step_end_flag))
-    _run_op(_get_cache_prim(debug_ops.ImageSummary)(), "ImageSummary", (name, image_step_end_flag))
-    global SUMMARY_TENSOR_CACHE
-    for tag in tags:
-        item_name = name + tag
-        while item_name not in SUMMARY_TENSOR_CACHE:
-            time.sleep(0.004)
-
-    with _summary_lock:
-        for tag in tags:
-            item_name = name + tag
-            SUMMARY_TENSOR_CACHE.pop(item_name, None)
-
-
 def _record_summary_tensor_data():
     """Record summary tensor data."""
     summary_list = list()
@@ -240,6 +211,7 @@ class SummaryRecord:
         self._num_process = num_process
         self.raise_exception = raise_exception
         self._export_options = export_options
+        self._op_finished_init = False
 
         try:
             self._initialize()
@@ -373,6 +345,39 @@ class SummaryRecord:
                              f', expect value is one of [tensor, scalar, image, histogram, train_lineage, '
                              f'eval_lineage, dataset_graph, custom_lineage_data, graph, landscape]')
 
+    def _sync_summary_data(self, step):
+        """
+        In the GE process, the summary receiving process is asynchronous.
+        When the record function is called, some data may not be received and
+        needs to be synchronized.
+        """
+        if context.get_context('device_target') != "Ascend":
+            return
+        if self._op_finished_init is False:
+            _ = Cell()
+            self._op_finished_init = True
+
+        step_end_flag = Tensor([1], dtype=mstype.float32)
+        image_step_end_flag = Tensor([[[[1]]]], dtype=mstype.float32)
+        _ = Cell()
+        name = "_step_end_flag_" + str(step)
+        tags = ("[:Tensor]", "[:Scalar]", "[:Image]", "[:Histogram]")
+        _run_op(_get_cache_prim(debug_ops.TensorSummary)(), "TensorSummary", (name, step_end_flag))
+        _run_op(_get_cache_prim(debug_ops.ScalarSummary)(), "ScalarSummary", (name, step_end_flag))
+        _run_op(_get_cache_prim(debug_ops.HistogramSummary)(), "HistogramSummary", (name, step_end_flag))
+        _run_op(_get_cache_prim(debug_ops.ImageSummary)(), "ImageSummary", (name, image_step_end_flag))
+        global SUMMARY_TENSOR_CACHE
+        for tag in tags:
+            item_name = name + tag
+            while item_name not in SUMMARY_TENSOR_CACHE:
+                time.sleep(0.004)
+
+        with _summary_lock:
+            for tag in tags:
+                item_name = name + tag
+                SUMMARY_TENSOR_CACHE.pop(item_name, None)
+
+
     def record(self, step, train_network=None, plugin_filter=None):
         r"""
         Record the summary.
@@ -478,7 +483,7 @@ class SummaryRecord:
 
     def _add_summary_tensor_data(self, step_index=-1):
         """Add summary tensor data."""
-        _sync_summary_data(step_index)
+        self._sync_summary_data(step_index)
         _record_summary_tensor_data()
         summary_data = _get_summary_tensor_data()
         if not summary_data:

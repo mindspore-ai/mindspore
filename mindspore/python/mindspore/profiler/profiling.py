@@ -314,9 +314,7 @@ def _ascend_graph_msprof_analyse(mindstudio_profiler_output):
     res = ([], [], [], [])
     try:
         msprof_analyser = AscendMsprofDataGenerator(mindstudio_profiler_output)
-        df_op_summary, df_op_statistic, df_step_trace, df_step_trace_model = msprof_analyser.parse()
-        res = (df_op_summary, df_op_statistic, df_step_trace, df_step_trace_model)
-
+        res = msprof_analyser.parse()
         return res
 
     except ProfilerException as err:
