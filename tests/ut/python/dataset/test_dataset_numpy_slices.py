@@ -92,10 +92,9 @@ def test_numpy_slices_list_append():
     logger.info("Test reading data of image list.")
 
     DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
-    SCHEMA_FILE = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
     resize_height, resize_width = 2, 2
 
-    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_FILE)
+    data1 = ds.TFRecordDataset(DATA_DIR)
     resize_op = vision.Resize((resize_height, resize_width))
     data1 = data1.map(
         operations=[vision.Decode(), resize_op], input_columns=["image"])

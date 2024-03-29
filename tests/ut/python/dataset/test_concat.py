@@ -395,12 +395,9 @@ def test_concat_15():
     data_dir = "../data/dataset/testPK/data"
     data_dir2 = [
         "../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
-    schema_file = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
     data1 = ds.ImageFolderDataset(data_dir)
-    data2 = ds.TFRecordDataset(data_dir2, schema=schema_file, columns_list=["image"])
-    data1 = data1.map(operations=F.Decode(), input_columns=["image"])
-    data2 = data2.map(operations=F.Decode(), input_columns=["image"])
+    data2 = ds.TFRecordDataset(data_dir2, columns_list=["image"])
 
     data1 = data1.project(["image"])
     data3 = data1 + data2

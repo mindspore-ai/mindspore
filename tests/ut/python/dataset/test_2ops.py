@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import pytest
 
 import mindspore.dataset as ds
 from mindspore import log as logger
@@ -91,7 +90,6 @@ def test_2ops_repeat_batch():
     save_and_check_dict(data1, filename, generate_golden=GENERATE_GOLDEN)
 
 
-@pytest.mark.skip(reason="type cast wrong")
 def test_2ops_batch_repeat():
     """
     Feature: 2ops (shuffle, repeat, batch)
@@ -112,7 +110,6 @@ def test_2ops_batch_repeat():
     save_and_check_dict(data1, filename, generate_golden=GENERATE_GOLDEN)
 
 
-@pytest.mark.skip(reason="type cast wrong")
 def test_2ops_batch_shuffle():
     """
     Feature: 2ops (shuffle, repeat, batch)
