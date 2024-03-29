@@ -37,30 +37,31 @@ def _convert_to_list(strategy, rank_id=None):
             dev_mat = list(layout.dev_matrix[0].dim)
             tensor_map = list(layout.tensor_map[0].dim)
             param_split_shape = list(layout.param_split_shape[0].dim)
-            field_size = int(layout.field)
-            shard_stride = int(layout.opt_weight_shard_step)
-            shard_size = int(layout.opt_weight_shard_size)
             pipeline_stage = 0
             origin_param_name = param_name
             if "-" in param_name:
                 pipeline_stage, origin_param_name = param_name.split("-")
             if origin_param_name not in train_map:
-                train_map[origin_param_name] = [dev_mat, tensor_map, param_split_shape, field_size, shard_stride,
-                                                shard_size, [int(pipeline_stage)]]
+                train_map[origin_param_name] = [dev_mat, tensor_map, param_split_shape, int(layout.field),
+                                                int(layout.opt_weight_shard_step), int(layout.opt_weight_shard_size),
+                                                [int(pipeline_stage)]]
             else:
-                update_pipeline_stage_list = train_map.get(origin_param_name)[6] + [int(pipeline_stage),]
+                update_pipeline_stage_list = train_map.get(origin_param_name)[6] + [int(pipeline_stage)]
                 if rank_id is not None:
                     stage_device_num = np.prod(dev_mat)
-                    stage_id = rank_id // stage_device_num
-                    if (stage_id == 0 and pipeline_stage == 0) or (stage_id > 0 and pipeline_stage > 0):
-                        train_map[origin_param_name] = [dev_mat, tensor_map, param_split_shape, field_size,
-                                                        shard_stride, shard_size, update_pipeline_stage_list]
+                    is_device0_and_pipeline0 = ((rank_id // stage_device_num) == 0) and (pipeline_stage == 0)
+                    not_device0_nor_pipeline0 = ((rank_id // stage_device_num) > 0) and (pipeline_stage > 0)
+                    if is_device0_and_pipeline0 or not_device0_nor_pipeline0:
+                        train_map[origin_param_name] = [dev_mat, tensor_map, param_split_shape,
+                                                        int(layout.field), int(layout.opt_weight_shard_step),
+                                                        int(layout.opt_weight_shard_size), update_pipeline_stage_list]
                     else:
                         train_map.get(origin_param_name)[6] = update_pipeline_stage_list
                 else:
                     if np.all(pipeline_stage <= np.array(update_pipeline_stage_list)):
-                        train_map[origin_param_name] = [dev_mat, tensor_map, param_split_shape, field_size,
-                                                        shard_stride, shard_size, update_pipeline_stage_list]
+                        train_map[origin_param_name] = [dev_mat, tensor_map, param_split_shape,
+                                                        int(layout.field), int(layout.opt_weight_shard_step),
+                                                        int(layout.opt_weight_shard_size), update_pipeline_stage_list]
                     else:
                         train_map.get(origin_param_name)[6] = update_pipeline_stage_list
         except BaseException as e:

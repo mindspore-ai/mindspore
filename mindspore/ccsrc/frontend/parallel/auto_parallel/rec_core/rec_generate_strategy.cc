@@ -1089,9 +1089,9 @@ Dimensions PrepareReshape(std::vector<int64_t> from_shape, std::vector<int64_t> 
   // Assign remaining strategy
   while (from_idx < from_shape.size() && to_idx < to_shape.size()) {
     if (from_shape[from_idx] > to_shape[to_idx]) {
-      size_t d = std::gcd(from_strat[from_idx], to_shape[to_idx]);
-      to_strat[to_idx] *= SizeToLong(d);
-      from_strat[from_idx] /= SizeToLong(d);
+      int64_t d = std::gcd(from_strat[from_idx], to_shape[to_idx]);
+      to_strat[to_idx] *= d;
+      from_strat[from_idx] /= d;
       from_shape[from_idx] /= to_shape[to_idx];
       to_idx++;
     } else if (from_shape[from_idx] < to_shape[to_idx]) {
