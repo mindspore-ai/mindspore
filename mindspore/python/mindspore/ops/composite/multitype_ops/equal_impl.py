@@ -331,7 +331,5 @@ def _string_equal_number(x, y):
 
 @equal.register_default()
 def default_equal(x, y):
-    """
-    Default function for equal.
-   """
+    """Default function for equal."""
     return x == y

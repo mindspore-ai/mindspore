@@ -396,7 +396,5 @@ def _map_tensor_getitem(map_tensor, key_tensor):
 
 @getitem.register_default()
 def default_getitem(x, y):
-    """
-    Default function for getitem.
-    """
+    """Default function for getitem."""
     return x[y]

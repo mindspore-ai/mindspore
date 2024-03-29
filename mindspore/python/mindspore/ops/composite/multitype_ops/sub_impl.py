@@ -112,7 +112,5 @@ def _cootensor_sub_tensor(x, y):
 
 @sub.register_default()
 def default_sub(x, y):
-    """
-    Default function for sub.
-   """
+    """Default function for sub."""
     return x - y
