@@ -113,7 +113,7 @@ void CPUE2eDump::DumpInputImpl(const CNodePtr &node, const std::string &dump_pat
     GetDumpIntShape(input, index, NOT_NULL(&int_shapes));
     auto type = common::AnfAlgo::GetOutputInferDataType(input, index);
     std::string op_type = common::AnfAlgo::GetCNodeName(node);
-    std::string op_name = *kernel_name;
+    std::string op_name = GetOpNameWithoutScope(*kernel_name);
     uint64_t timestamp = Common::GetTimeStamp();
     const uint32_t kTaskId = 0;
     const uint32_t kStreamId = 0;
@@ -138,7 +138,7 @@ void CPUE2eDump::DumpOutputImpl(const CNodePtr &node, const std::string &dump_pa
     GetDumpIntShape(node, j, NOT_NULL(&int_shapes));
     auto type = common::AnfAlgo::GetOutputInferDataType(node, j);
     std::string op_type = common::AnfAlgo::GetCNodeName(node);
-    std::string op_name = *kernel_name;
+    std::string op_name = GetOpNameWithoutScope(*kernel_name);
     const uint32_t kTaskId = 0;
     const uint32_t kStreamId = 0;
     uint64_t timestamp = Common::GetTimeStamp();
