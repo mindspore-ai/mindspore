@@ -167,6 +167,10 @@ void HcclKernel::CalLoopSize() {
   if (kernel_name_ == kReduceScatterOpName && fusion >= 1) {
     loop_size_ = hccl_kernel_output_shape_list_.size();
   }
+  if (kernel_name_ == kAllToAllvOpName) {
+    loop_size_ = hccl_kernel_output_shape_list_.size();
+  }
+  MS_LOG(INFO) << "Get Hccl Kernel: " << kernel_name_ << ", output size: " << loop_size_;
 }
 
 bool HcclKernel::CalcTypeShapeAndCount(const std::vector<KernelTensor *> &inputs,
