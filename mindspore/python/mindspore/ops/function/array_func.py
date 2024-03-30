@@ -4454,7 +4454,7 @@ def col2im(input_x, output_size, kernel_size, dilation, padding_value, stride):
     Combines an array of sliding local blocks into a large containing tensor.
 
     Args:
-        input_x (Tensor): 4D tensor with data type float16 or float.
+        input_x (Tensor): 4D tensor with data type float16 or float32.
         output_size (Tensor): 1D tensor with 2 elements of data type int.
         kernel_size (Union[int, tuple[int], list[int]]): The size of the kernel, should be two int
             for height and width. If type is int, it means that height equal with width. Must be specified.

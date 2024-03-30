@@ -1527,7 +1527,7 @@ def cov(input, *, correction=1, fweights=None, aweights=None):
             Default: ``None`` .
 
     Returns:
-        Tensor, The covariance matrix Tensor of `input`.
+        Tensor, the covariance matrix Tensor of `input`.
 
     Raises:
         ValueError: If the dimensions of input is greater than 2.
@@ -4720,7 +4720,7 @@ def addmv(input, mat, vec, *, beta=1, alpha=1):
 
     Raises:
         TypeError: If `mat`, `vec`, `input` is not a Tensor.
-        TypeError: If inputs `mat`, 'vec' are not the same dtype.
+        TypeError: If inputs `mat`, `vec` are not the same dtype.
         ValueError: If `mat` is not a 2-D Tensor.
         ValueError: If `vec` is not a 1-D Tensor.
 
@@ -4921,7 +4921,7 @@ def cdist(x1, x2, p=2.0):
         ValueError: If dimension of `x1` is not the same as `x2`.
         ValueError: If dimension of `x1` or `x2` is neither 2 nor 3.
         ValueError: If the batch shape of `x1` is not the same as the shape of `x2`.
-        ValueError: If the number of columns of `x1` is not the same as the number of `x2`.
+        ValueError: If the number of columns of `x1` is not the same as that of `x2`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -6089,8 +6089,8 @@ def combinations(input, r=2, with_replacement=False):
     r"""
     Returns all r-length subsequences of input Tensor.
 
-    When `with_replacement` is set to `False`, it works similar to Python's
-    `itertools.combinations`, and when `with_replacement` is set to `True`,
+    When `with_replacement` is set to ``False``, it works similar to Python's
+    `itertools.combinations`, and when `with_replacement` is set to ``True``,
     it behaves like `itertools.combinations_with_replacement`.
 
     Args:
@@ -7807,15 +7807,15 @@ def matmul(input, other):
 
     Args:
         input (Tensor): Input tensor, scalar not allowed.
-          The last dimension of `input` must be the same size as the second last dimension of `other`.
-          And the shape of input and other could be broadcast.
+            The last dimension of `input` must be the same size as the second last dimension of `other`.
+            And the shape of input and other could be broadcast.
         other (Tensor): Input tensor, scalar not allowed.
-          The last dimension of `input` must be the same size as the second last dimension of `other`.
-          And the shape of input and other could be broadcast.
+            The last dimension of `input` must be the same size as the second last dimension of `other`.
+            And the shape of input and other could be broadcast.
 
     Returns:
         Tensor or scalar, the matrix product of the inputs. This is a scalar only
-        when both `input`, `other` are 1-d vectors.
+            when both `input`, `other` are 1-d vectors.
 
     Raises:
         TypeError: If the dtype of `input` and the dtype of `other` are not the same.

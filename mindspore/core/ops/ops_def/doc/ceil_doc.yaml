@@ -13,7 +13,7 @@ ceil:
                 - GPU/CPU: float16, float32, float64.
 
         Returns:
-            Tensor, has the same shape as `x`.
+            Tensor, has the same shape as `input`.
 
         Raises:
             TypeError: If `input` is not a Tensor.
