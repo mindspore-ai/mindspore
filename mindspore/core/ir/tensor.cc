@@ -681,6 +681,7 @@ Tensor::Tensor(const Tensor &tensor)
       device_sync_(tensor.device_sync_),
       need_release_device_mem_(tensor.need_release_device_mem_),
       cache_enable_(tensor.cache_enable_),
+      need_pipeline_sync_(tensor.need_pipeline_sync_),
       base_shape_ptr_(tensor.base_shape_ptr_),
       cache_tensor_ptr_(tensor.cache_tensor_ptr_),
       hashmap_tensor_ptr_(tensor.hashmap_tensor_ptr_),
@@ -707,6 +708,7 @@ Tensor::Tensor(const Tensor &tensor, TypeId data_type)
       device_sync_(tensor.device_sync_),
       need_release_device_mem_(tensor.need_release_device_mem_),
       cache_enable_(tensor.cache_enable_),
+      need_pipeline_sync_(tensor.need_pipeline_sync_),
       base_shape_ptr_(tensor.base_shape_ptr_),
       cache_tensor_ptr_(tensor.cache_tensor_ptr_),
       hashmap_tensor_ptr_(tensor.hashmap_tensor_ptr_),
@@ -735,6 +737,7 @@ Tensor &Tensor::operator=(const Tensor &tensor) {
   device_sync_ = tensor.device_sync_;
   need_release_device_mem_ = tensor.need_release_device_mem_;
   cache_enable_ = tensor.cache_enable_;
+  need_pipeline_sync_ = tensor.need_pipeline_sync_;
   base_shape_ptr_ = tensor.base_shape_ptr_;
   cache_tensor_ptr_ = tensor.cache_tensor_ptr_;
   hashmap_tensor_ptr_ = tensor.hashmap_tensor_ptr_;
@@ -885,7 +888,7 @@ bool Tensor::ValueEqual(const Tensor &tensor) const {
 }
 
 void Tensor::ExecuteLazyTask() const {
-  if (lazy_callback_ != nullptr) {
+  if (lazy_callback_ != nullptr && need_pipeline_sync_) {
     lazy_callback_();
   }
 
@@ -969,6 +972,7 @@ Tensor &Tensor::AssignValue(const Tensor &tensor) {
     address_future_ = nullptr;
     device_sync_ = tensor.device_address();
     need_release_device_mem_ = tensor.need_release_device_mem_;
+    need_pipeline_sync_ = tensor.need_pipeline_sync_;
     is_forward_output_ = tensor.is_forward_output_;
     MS_EXCEPTION_IF_NULL(data_);
     if (data_->is_sub_data()) {

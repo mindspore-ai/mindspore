@@ -814,6 +814,8 @@ class MS_CORE_API Tensor : public MetaTensor {
 
   const int64_t storage_offset() const;
 
+  void set_need_pipeline_sync(bool need_pipeline_sync) { need_pipeline_sync_ = need_pipeline_sync; }
+
  private:
   void ExecuteLazyTask() const;
 
@@ -834,6 +836,7 @@ class MS_CORE_API Tensor : public MetaTensor {
   // Release device address of graph output tensor or not.
   bool need_release_device_mem_{false};
   bool cache_enable_{false};
+  bool need_pipeline_sync_{false};
   // Tensor base shape which contain dynamic shape info.
   BaseShapePtr base_shape_ptr_{nullptr};
   std::shared_ptr<Tensor> cache_tensor_ptr_{nullptr};
