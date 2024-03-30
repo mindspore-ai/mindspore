@@ -123,6 +123,7 @@ cust_op_lists = [
     "igammagrada",
     "im2col",
     "indexfill",
+    "indexput",
     "irfft",
     "irfftgrad",
     "isinf",
