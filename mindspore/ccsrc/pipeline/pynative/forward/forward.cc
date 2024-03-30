@@ -83,6 +83,7 @@ ValuePtr CopyTensorValueWithNewId(const ValuePtr &v) {
     auto tensor = v->cast<tensor::TensorPtr>();
     // This constructor will make a tensor with the new id
     auto new_tensor = std::make_shared<tensor::Tensor>(tensor->data_type(), tensor->shape(), tensor->data_ptr());
+    new_tensor->set_need_pipeline_sync(true);
     new_tensor->set_device_address(tensor->device_address());
     new_tensor->set_sync_status(tensor->sync_status());
     return new_tensor;
@@ -213,6 +214,7 @@ void CreateOutputTensor(const AbstractBasePtr &abstract, std::vector<tensor::Ten
                         std::vector<DeviceAddressPromisePtr> *device_sync_promises) {
   auto create_tensor = [&outputs, &device_sync_promises](const TypePtr &type, const ShapeVector &shape_vector) {
     auto output_tensor = std::make_shared<tensor::Tensor>(type->type_id(), shape_vector);
+    output_tensor->set_need_pipeline_sync(true);
     (void)outputs->emplace_back(output_tensor);
     MS_LOG(DEBUG) << "Create output tensor " << output_tensor->ToString();
 
@@ -1066,6 +1068,7 @@ void ForwardExecutor::CreateViewOutputTensor(const FrontendOpRunInfoPtr &op_run_
   MS_EXCEPTION_IF_NULL(input_tensor);
   MS_EXCEPTION_IF_NULL(storage_info);
   auto output_tensor = std::make_shared<tensor::Tensor>(input_tensor->data_type(), storage_info->shape);
+  output_tensor->set_need_pipeline_sync(true);
   output_tensor->set_contiguous_callback([this](const DeviceSyncPtr &device_address) -> DeviceSyncPtr {
     return TensorContiguousCallback(device_address, device_address->GetTensorStorageInfo());
   });
