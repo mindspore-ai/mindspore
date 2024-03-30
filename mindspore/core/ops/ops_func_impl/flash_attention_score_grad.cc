@@ -125,7 +125,7 @@ void CheckFlashAttentionScoreGradAttnMaskShape(const AbstractBasePtr &attn_mask,
                                                int64_t sparse_mode, int64_t batch_size, int64_t q_head_num,
                                                int64_t q_seq_len, int64_t kv_seq_len) {
   const std::vector<int64_t> need_compress_attn_mask_mode = {kFAGSparseLeftUpCausal, kFAGSparseRightDownCausal,
-                                                             kFAGSparseBand, kFAGSparsePrefix};
+                                                             kFAGSparseBand};
   if (std::find(need_compress_attn_mask_mode.begin(), need_compress_attn_mask_mode.end(), sparse_mode) !=
       need_compress_attn_mask_mode.end()) {
     CheckFlashAttentionScoreGradInputShape(
@@ -140,10 +140,25 @@ void CheckFlashAttentionScoreGradAttnMaskShape(const AbstractBasePtr &attn_mask,
   }
 }
 
-void CheckFlashAttentionScoreGradPrefixShape(const AbstractBasePtr &prefix, const std::string &op_name,
-                                             int64_t sparse_mode, int64_t batch_size) {
+void CheckFlashAttentionScoreGradPrefix(const AbstractBasePtr &prefix, const std::string &op_name, int64_t sparse_mode,
+                                        int64_t batch_size) {
   if (sparse_mode == kFAGSparsePrefix) {
-    CheckFlashAttentionScoreGradInputShape(prefix, ShapeVector{batch_size}, op_name, "prefix");
+    auto prefix_type = prefix->GetType();
+    MS_EXCEPTION_IF_NULL(prefix_type);
+    if (!prefix_type->isa<Tuple>()) {
+      MS_LOG(EXCEPTION) << "For [" << op_name << "], prefix type should be TupleType.";
+    }
+    auto prefix_tuple = prefix_type->cast<TuplePtr>();
+    MS_EXCEPTION_IF_NULL(prefix_tuple);
+    if (prefix_tuple->elements().size() != LongToSize(batch_size)) {
+      MS_LOG(EXCEPTION) << "For [" << op_name << "], prefix list size should be equal to " << batch_size << ", but got "
+                        << prefix_tuple->elements().size();
+    }
+    for (const auto &element : prefix_tuple->elements()) {
+      if (element->type_id() != kNumberTypeInt64) {
+        MS_LOG(EXCEPTION) << "For [" << op_name << "], prefix element type should be int64.";
+      }
+    }
   } else {
     if (!IsFlashAttentionScoreGradOptionalInputNotPass(prefix)) {
       MS_LOG(EXCEPTION) << op_name << ": 'prefix' must be None if sparse_mode is not " << kFAGSparsePrefix;
@@ -283,7 +298,7 @@ BaseShapePtr FlashAttentionScoreGradFuncImpl::InferShape(const PrimitivePtr &pri
       auto sparse_mode = sparse_mode_opt.value();
       CheckFlashAttentionScoreGradAttnMaskShape(input_args[kFASGradInputAttnMaskIndex], op_name, sparse_mode,
                                                 batch_size, q_head_num, q_seq_len, kv_seq_len);
-      CheckFlashAttentionScoreGradPrefixShape(input_args[kFASGradInputPrefixIndex], op_name, sparse_mode, batch_size);
+      CheckFlashAttentionScoreGradPrefix(input_args[kFASGradInputPrefixIndex], op_name, sparse_mode, batch_size);
     }
 
     CheckFlashAttentionScoreGradInputShape(input_args[kFASGradInputSoftmaxMaxIndex],
@@ -329,19 +344,6 @@ TypePtr FlashAttentionScoreGradFuncImpl::InferType(const PrimitivePtr &prim,
   }
   if (!IsFlashAttentionScoreGradOptionalInputNotPass(input_args[kFASGradInputSoftmaxOutIndex])) {
     (void)types1.emplace("softmax_out", input_args[kFASGradInputSoftmaxOutIndex]->GetType());
-  }
-  if (!IsFlashAttentionScoreGradOptionalInputNotPass(input_args[kFASGradInputPrefixIndex])) {
-    auto prefix_type = input_args[kFASGradInputPrefixIndex]->GetType();
-    if (!prefix_type->isa<Tuple>()) {
-      MS_LOG(EXCEPTION) << "For [" << op_name << "], prefix type should be TupleType.";
-    }
-    auto prefix_tuple = prefix_type->cast<TuplePtr>();
-    MS_EXCEPTION_IF_NULL(prefix_tuple);
-    for (const auto &element : prefix_tuple->elements()) {
-      if (element->type_id() != kNumberTypeInt64) {
-        MS_LOG(EXCEPTION) << "For [" << op_name << "], prefix element type should be int64.";
-      }
-    }
   }
   (void)types1.emplace("dy", input_args[kFASGradInputDyIndex]->GetType());
   auto type = CheckAndConvertUtils::CheckTensorTypeSame(types1, {kFloat16, kBFloat16}, op_name);
