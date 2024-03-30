@@ -45,9 +45,8 @@ Status KVCacheMgrInfo::CheckStrategy(const StrategyPtr &strategy) { return SUCCE
 Status KVCacheMgrInfo::InferDevMatrixShape() {
   Strategies stra = strategy_->GetInputDim();
   Dimensions past_stgy_dim = stra.at(0);
-  int64_t dp, mp;
-  dp = past_stgy_dim[0];
-  mp = past_stgy_dim[1];
+  int64_t dp = past_stgy_dim[0];
+  int64_t mp = past_stgy_dim[1];
   dev_matrix_shape_.push_back(dp);
   dev_matrix_shape_.push_back(mp);
   dev_matrix_shape_.push_back(1);
