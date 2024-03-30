@@ -34,7 +34,8 @@ int ScaleDynamicFP16Coder::Prepare(CoderContext *const context) {
 
   scale_param_ = reinterpret_cast<ScaleParameter *>(parameter_);
   MS_CHECK_PTR(scale_param_);
-  MS_CHECK_RET_CODE(memset_s(&scale_struct_, sizeof(scale_struct_), 0, sizeof(scale_struct_)) == EOK, "memset_s fail.");
+  MS_CHECK_TRUE_MSG(memset_s(&scale_struct_, sizeof(scale_struct_), 0, sizeof(scale_struct_)) == EOK, RET_ERROR,
+                    "memset_s fail.");
   scale_struct_.base_.param_ = parameter_;
   if (input_tensors_.size() < DIMENSION_2D || input_tensors_.size() > DIMENSION_3D) {
     MS_LOG(ERROR) << "inputs to Scale operator should be 2 or 3, but " << input_tensors_.size() << " is given.";
