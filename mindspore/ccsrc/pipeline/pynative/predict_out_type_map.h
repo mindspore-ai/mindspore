@@ -298,7 +298,8 @@ inline static PredictOutTypeMap out_type_prediction = {{"ActsULQ", kTupleTensor4
                                                        {"SplitTensor", kTypeAny},
                                                        {"SplitWithSize", kTypeAny},
                                                        {"SilentCheck", kTupleTensor5},
-                                                       {"MatmulQkv", kTupleTensor3}};
+                                                       {"MatmulQkv", kTupleTensor3},
+                                                       {"MatmulFfn", kTupleTensor2}};
 
 TypePtr PredictOutTypeByName(const std::string &op_name);
 
