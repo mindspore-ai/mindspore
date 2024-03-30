@@ -22,7 +22,7 @@ import mindspore.context as context
 from mindspore.ops import operations as P
 
 
-def test_to_tensor_api(dtype):
+def to_tensor_api(dtype):
     """
     Feature: test to tensor API.
     Description: test to API for dtype tensor conversion.
@@ -45,27 +45,27 @@ def test_to_tensor_api_modes():
     Expectation: the input and output shape should be same. output dtype should be same as op arg.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    test_to_tensor_api(ms.bool_)
-    test_to_tensor_api(ms.float16)
-    test_to_tensor_api(ms.float32)
-    test_to_tensor_api(ms.float64)
-    test_to_tensor_api(ms.int8)
-    test_to_tensor_api(ms.uint8)
-    test_to_tensor_api(ms.int16)
-    test_to_tensor_api(ms.uint16)
-    test_to_tensor_api(ms.int32)
-    test_to_tensor_api(ms.int64)
+    to_tensor_api(ms.bool_)
+    to_tensor_api(ms.float16)
+    to_tensor_api(ms.float32)
+    to_tensor_api(ms.float64)
+    to_tensor_api(ms.int8)
+    to_tensor_api(ms.uint8)
+    to_tensor_api(ms.int16)
+    to_tensor_api(ms.uint16)
+    to_tensor_api(ms.int32)
+    to_tensor_api(ms.int64)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
-    test_to_tensor_api(ms.bool_)
-    test_to_tensor_api(ms.float16)
-    test_to_tensor_api(ms.float32)
-    test_to_tensor_api(ms.float64)
-    test_to_tensor_api(ms.int8)
-    test_to_tensor_api(ms.uint8)
-    test_to_tensor_api(ms.int16)
-    test_to_tensor_api(ms.uint16)
-    test_to_tensor_api(ms.int32)
-    test_to_tensor_api(ms.int64)
+    to_tensor_api(ms.bool_)
+    to_tensor_api(ms.float16)
+    to_tensor_api(ms.float32)
+    to_tensor_api(ms.float64)
+    to_tensor_api(ms.int8)
+    to_tensor_api(ms.uint8)
+    to_tensor_api(ms.int16)
+    to_tensor_api(ms.uint16)
+    to_tensor_api(ms.int32)
+    to_tensor_api(ms.int64)
 
 
 if __name__ == '__main__':

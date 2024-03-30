@@ -166,7 +166,7 @@ def test_biasadd_vmap():
     assert np.allclose(output.asnumpy(), expect_out)
 
 
-def test_bias_add_forward_functional(nptype):
+def bias_add_forward_functional(nptype):
     """
     Feature: test bias_add forward for given input dtype.
     Description: test inputs for given input dtype.
@@ -189,9 +189,9 @@ def test_bias_add_forward_float32_functional():
     Expectation: the result match with expected result.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    test_bias_add_forward_functional(np.float32)
+    bias_add_forward_functional(np.float32)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
-    test_bias_add_forward_functional(np.float32)
+    bias_add_forward_functional(np.float32)
 
 
 def run_bias_add(dtype):

@@ -20,7 +20,7 @@ from mindspore import Tensor
 from mindspore.ops import functional as F
 
 
-def test_batch_norm_forward_functional(nptype):
+def batch_norm_forward_functional(nptype):
     """
     Feature: test batch_norm forward for given input dtype.
     Description: test inputs for given input dtype.
@@ -47,6 +47,6 @@ def test_batch_norm_forward_float32_functional():
     Expectation: the result match with expected result.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    test_batch_norm_forward_functional(np.float32)
+    batch_norm_forward_functional(np.float32)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
-    test_batch_norm_forward_functional(np.float32)
+    batch_norm_forward_functional(np.float32)
