@@ -18,7 +18,7 @@ import sys
 import numpy as np
 import mindspore as ms
 import mindspore.nn as nn
-from mindspore import Tensor, Parameter, context
+from mindspore import Tensor, Parameter, context, build_searched_strategy
 from mindspore.common.api import _cell_graph_executor
 from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.ops import operations as P
@@ -102,8 +102,10 @@ def came_loss():
 
 def came_parallel():
     "test came optimizer shard with two cards with loss decrease"
+    strategy_file_path = "./strategy_stage1.ckpt"
     ms.set_auto_parallel_context(parallel_mode=ms.ParallelMode.SEMI_AUTO_PARALLEL)
     ms.set_auto_parallel_context(enable_parallel_optimizer=True)
+    ms.set_auto_parallel_context(strategy_ckpt_config={"save_file": strategy_file_path})
     ms.set_auto_parallel_context(parallel_optimizer_config={"parallel_optimizer_threshold": 1})
     context.set_context(device_id=int(os.getenv('DEVICE_ID')))
     init()
@@ -128,3 +130,9 @@ def came_parallel():
     assert optimizer.exp_avg_sq[1].shape == (10,)
     loss_values = np.array(parallel_callback.loss_list)
     assert abs(loss_values[-1]) < abs(loss_values[0])
+    strategy = build_searched_strategy(strategy_file_path)
+    matched_count = 0
+    for key, _ in strategy.items():
+        if 'avg' in key:
+            matched_count += 1
+    assert matched_count == 7

@@ -213,8 +213,11 @@ void ExtractBackwardNodes(const std::vector<CNodePtr> &origin_nodes_topological,
       continue;
     }
     auto pre_cnode = RealInputNode(matmul_cnode, 1)->cast<CNodePtr>();
-    auto pre_cnode_forward_comm_unique_id =
-      GetValue<std::string>(pre_cnode->GetPrimalAttr(kPrimalAttrForwardCommNodeUniqueId));
+    std::string pre_cnode_forward_comm_unique_id = "";
+    if (pre_cnode->HasPrimalAttr(kPrimalAttrForwardCommNodeUniqueId)) {
+      pre_cnode_forward_comm_unique_id =
+        GetValue<std::string>(pre_cnode->GetPrimalAttr(kPrimalAttrForwardCommNodeUniqueId));
+    }
     if (std::find(forward_comm_node_unique_id_list.begin(), forward_comm_node_unique_id_list.end(),
                   pre_cnode_forward_comm_unique_id) != forward_comm_node_unique_id_list.end()) {
       (*backward_comm_node_list).push_back(pre_cnode);

@@ -354,6 +354,22 @@ void HandleSymbolicKeyInstance(const FuncGraphPtr &root, const std::vector<AnfNo
   }
 }
 
+bool IsStrategySaved(const AnfNodePtr &parameter_node) {
+  MS_EXCEPTION_IF_NULL(parameter_node);
+  auto cloned_parameter = parameter_node->cast<ParameterPtr>();
+  MS_EXCEPTION_IF_NULL(cloned_parameter);
+
+  // find the clone parameter
+  if (!cloned_parameter->has_default()) {
+    return false;
+  }
+  auto param_value = cloned_parameter->param_info();
+  if (param_value == nullptr) {
+    return false;
+  }
+  return param_value->strategy_ckpt_saved();
+}
+
 bool ParameterIsCloned(const AnfNodePtr &parameter_node) {
   MS_EXCEPTION_IF_NULL(parameter_node);
   auto cloned_parameter = parameter_node->cast<ParameterPtr>();
@@ -1390,6 +1406,16 @@ void HandleMirrorInAdaSum(
   }
 }
 
+void SetParamInfoSaveStrategy(ParameterPtr row_col_param) {
+  if (!row_col_param) {
+    return;
+  }
+  auto param_info = row_col_param->param_info();
+  if (param_info) {
+    param_info->set_strategy_ckpt_saved(true);
+  }
+}
+
 void HandleCameAndAdaFactorOpt(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_nodes,
                                const FuncGraphManagerPtr &manager) {
   MS_LOG(INFO) << "Adafactor or Came optimizer process start";
@@ -1477,7 +1503,7 @@ void HandleCameAndAdaFactorOpt(const FuncGraphPtr &root, const std::vector<AnfNo
         new_tensor_layout.set_opt_shard_group(tensor_layout->opt_shard_group());
         new_tensor_layout.set_opt_shard_slice_shape(opt_shard_slice_shape);
       }
-
+      SetParamInfoSaveStrategy(row_col_param);
       auto cloned_abstract = row_col_node->abstract()->Clone();
       MS_EXCEPTION_IF_NULL(cloned_abstract);
       std::shared_ptr<abstract::BaseShape> parallel_shape = std::make_shared<abstract::Shape>(opt_shard_slice_shape);
