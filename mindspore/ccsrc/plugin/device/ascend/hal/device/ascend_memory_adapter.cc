@@ -207,6 +207,8 @@ void AscendMemAdapter::ResetDynamicMemory() {
 }
 
 std::string AscendMemAdapter::DevMemStatistics() const {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
   std::ostringstream oss;
   oss << "\nDevice HBM memory size: " << device_hbm_total_size_ / kMBToByte << "M";
   oss << "\nMindSpore Used memory size: " << ms_used_hbm_size_ / kMBToByte << "M";
@@ -216,6 +218,8 @@ std::string AscendMemAdapter::DevMemStatistics() const {
   if (IsMemoryPoolRecycle()) {
     size_t max_actual = std::max(actual_peak_memory_, (ms_used_hbm_size_ - static_mem_offset_));
     oss << "\nActual peak memory usage: " << max_actual / kMBToByte << "M";
+  } else if (context->IsKByKExecutorMode()) {
+    oss << "\nActual peak memory usage: " << actual_peak_memory_ / kMBToByte << "M";
   }
   oss << "\nDynamic memory size of this graph: " << cur_dynamic_mem_offset_ / kMBToByte << "M";
   oss << std::endl;

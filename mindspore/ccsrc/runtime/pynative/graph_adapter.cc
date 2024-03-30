@@ -24,6 +24,7 @@
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/parallel_context.h"
 #include "include/backend/anf_runtime_algorithm.h"
+#include "include/backend/mem_reuse/mem_tracker.h"
 #include "runtime/graph_scheduler/device_tensor_store.h"
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "runtime/graph_scheduler/actor/actor_common.h"
@@ -115,10 +116,14 @@ bool CopyTensorData(const tensor::TensorPtr &tensor, const device::DeviceAddress
   MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
   device::DynamicMemAllocatorDebugInfo::SetDebugInfo(node->fullname_with_scope(), device::AllocatorType::kConstantValue,
                                                      0);
-  if ((device_address->GetPtr() == nullptr) &&
-      (!device_context->device_res_manager_->AllocateMemory(device_address.get()))) {
-    MS_LOG(ERROR) << "Allocate memory failed, allocate size " << device_address->GetSize();
-    return false;
+  if (device_address->GetPtr() == nullptr) {
+    device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, "CopyTensorData", "", "");
+    device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddMemInfo, "CopyTensorData", device::tracker::MemType::kOther,
+                                                   device_address->GetSize(), device_address->kernel_tensor().get());
+    if (!device_context->device_res_manager_->AllocateMemory(device_address.get())) {
+      MS_LOG(ERROR) << "Allocate memory failed, allocate size " << device_address->GetSize();
+      return false;
+    }
   }
 
   // Copy data from host tensor to device.

@@ -34,6 +34,7 @@
 #include "runtime/pynative/op_compiler.h"
 #include "runtime/graph_scheduler/actor/actor_common.h"
 #include "kernel/framework_utils.h"
+#include "include/backend/mem_reuse/mem_tracker.h"
 #ifndef ENABLE_SECURITY
 #include "include/backend/debug/profiler/profiling.h"
 #include "backend/common/optimizer/dynamic_shape/dynamic_shape_helper.h"
@@ -274,9 +275,13 @@ bool MallocForKernelInput(const std::shared_ptr<OpRuntimeInfo> &runtime_info,
                     << " has flag ignore device address, so skip malloc device address";
       continue;
     }
-    if (input_address->GetPtr() == nullptr &&
-        !device_context->device_res_manager_->AllocateMemory(input_address.get())) {
-      return false;
+    if (input_address->GetPtr() == nullptr) {
+      device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, "PyNative", "", "");
+      device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddMemInfo, "PyNative", device::tracker::MemType::kPyNativeOutput,
+                                                     input_address->GetSize(), input_address->kernel_tensor().get());
+      if (!device_context->device_res_manager_->AllocateMemory(input_address.get())) {
+        return false;
+      }
     }
   }
   return true;
@@ -314,10 +319,14 @@ bool MallocForKernelOutput(const std::shared_ptr<OpRuntimeInfo> &runtime_info, c
       }
       device_address->SetSize(kernel_out_size_list[i]);
     }
-    if (device_address->GetPtr() == nullptr &&
-        !device_context->device_res_manager_->AllocateMemory(device_address.get())) {
-      MS_LOG(ERROR) << "Allocate output memory failed, node:" << node->fullname_with_scope();
-      return false;
+    if (device_address->GetPtr() == nullptr) {
+      device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, "PyNative", "", "");
+      device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddMemInfo, "PyNative", device::tracker::MemType::kPyNativeOutput,
+                                                     device_address->GetSize(), device_address->kernel_tensor().get());
+      if (!device_context->device_res_manager_->AllocateMemory(device_address.get())) {
+        MS_LOG(ERROR) << "Allocate output memory failed, node:" << node->fullname_with_scope();
+        return false;
+      }
     }
   }
   return true;

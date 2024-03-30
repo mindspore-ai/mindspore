@@ -19,6 +19,7 @@
 #include "utils/log_adapter.h"
 #include "include/backend/distributed/recovery/recovery_context.h"
 #include "include/backend/distributed/collective/collective_manager.h"
+#include "include/backend/mem_reuse/mem_tracker.h"
 
 namespace mindspore {
 namespace runtime {
@@ -363,6 +364,7 @@ void OutputActor::UpdateOutputDeviceAddress() {
   // need be set new device ptr, to avoid that the device ptr context of host tensor be rewritten in the next
   // step or next loop. But the graph output nodes corresponding to device tensor store need to be skipped, because
   // they are fixed addresses and persistent.
+  device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, GetAID().Name(), "", "");
   for (size_t i = 0; i < output_nodes_.size(); ++i) {
     auto &output_node = output_nodes_[i].first;
     if (i >= output_device_tensors_.size()) {
@@ -405,6 +407,9 @@ void OutputActor::UpdateOutputDeviceAddress() {
     // If the output node whose output address ptr can't be changed, then alloc the new device memory and copy the data:
     if (IsOutputAddressPersisted(device_tensor, output_nodes_[i])) {
       device::DynamicMemAllocatorDebugInfo::SetDebugInfo(GetAID().Name(), device::AllocatorType::kOther);
+      device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddMemInfo, GetAID().Name(), device::tracker::MemType::kOther,
+                                                     tensor_device_address->GetSize(),
+                                                     tensor_device_address->kernel_tensor().get());
       if (!device_context->device_res_manager_->AllocateMemory(tensor_device_address.get())) {
         MS_LOG(EXCEPTION) << "Device(id:" << device_context->device_context_key().device_id_
                           << ") memory isn't enough and alloc failed in output actor, kernel name: "

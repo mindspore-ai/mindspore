@@ -44,6 +44,7 @@
 #include "plugin/device/ascend/hal/hardware/ge_graph_optimization.h"
 #include "plugin/device/ascend/hal/device/ascend_device_synchronizer.h"
 #include "include/backend/debug/profiler/profiling.h"
+#include "include/backend/mem_reuse/mem_tracker.h"
 #include "ge/ge_graph_compile_summary.h"
 #include "kernel/kernel_build_info.h"
 #include "op_proto/inc/array_ops.h"
@@ -529,6 +530,20 @@ class ContextReset {
  private:
   DeviceContext *device_context_;
 };
+
+void UpdateTracker(const std::string &task_name, const std::string &node_name, const std::string &graph_str,
+                   size_t size, void *device_ptr, device::tracker::MemType mem_type) {
+  device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, task_name, node_name, graph_str);
+  device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddCompileTimeMemInfo, task_name, size, device_ptr, mem_type);
+}
+
+void UpdateFMTracker(size_t feature_memory_size, const std::string &graph_name) {
+  device::tracker::CALL_MEMORY_TRACKER(AllocMemBlock, 0, feature_memory_size, "Ascend", 0);
+  device::tracker::CALL_MEMORY_TRACKER(FreeMemBlock, 0);
+  device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, "RunGeGraph", "", graph_name);
+  device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddCompileTimeMemInfo, "RunGeGraph", feature_memory_size, 0,
+                                                 device::tracker::MemType::kGeFeatureMemory);
+}
 }  // namespace
 
 void GeGraphExecutor::AllocInputHostMemory(const KernelGraphPtr &kernel_graph) const {
@@ -618,6 +633,7 @@ void GeGraphExecutor::AllocConstMemory(const transform::RunOptions &options, con
     MS_LOG(WARNING) << "Need Profile Memory, alloc type: ConstMemory, size: " << memory_size
                     << ", graph: " << graph->ToString() << ", device address addr: " << memory;
   }
+  UpdateTracker("AllocConstMemory", "", graph->ToString(), memory_size, memory, device::tracker::MemType::kGeConst);
   auto graph_runner = transform::GetGraphRunner();
   MS_EXCEPTION_IF_NULL(graph_runner);
   auto ret = graph_runner->SetConstMemory(options, memory, memory_size);
@@ -678,9 +694,6 @@ void GeGraphExecutor::AllocParameterMemory(const KernelGraphPtr &kernel_graph, s
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id);
   MS_EXCEPTION_IF_NULL(runtime_instance);
   runtime_instance->AssignStaticMemoryInput(*kernel_graph.get());
-  for (auto &child_graph : kernel_graph->child_graph_order()) {
-    AllocParameterMemory(child_graph.lock(), memo);
-  }
 }
 
 void GeGraphExecutor::BuildInputDataGeTensor(const KernelGraphPtr &kernel_graph) {
@@ -826,6 +839,10 @@ DeviceAddressPtr GeGraphExecutor::CreateOutputDeviceAddress(const KernelGraphPtr
     MS_LOG(WARNING) << "Need Profile Memory, alloc type: ValueNodeOutput, size:" << tensor_size
                     << ", graph: " << kernel_graph->ToString() << ", node: " << output_node->fullname_with_scope()
                     << ", device address addr: " << mem;
+  }
+  if (!need_not_alloc) {
+    UpdateTracker("ValueNodeOutput", output_node->fullname_with_scope(), kernel_graph->ToString(), tensor_size, mem,
+                  device::tracker::MemType::kConstantValue);
   }
 
   const auto kernel_tensor = AnfAlgo::CreateOutputKernelTensorWithDeviceInfo(
@@ -1222,6 +1239,7 @@ size_t GeGraphExecutor::GetGraphFeatureMemory(const FuncGraphPtr &graph) const {
   auto feature_memory_size = iter->second;
   auto total_memory_size = max_static_memory_size + feature_memory_size;
   AscendMemAdapter::GetInstance().UpdateActualPeakMemory(total_memory_size);
+  UpdateFMTracker(feature_memory_size, graph_name);
   return feature_memory_size;
 }
 int64_t GeGraphExecutor::CurGraphSinkSize(std::string graph_name) {
@@ -1272,6 +1290,7 @@ bool GeGraphExecutor::RunGraphRefMode(const FuncGraphPtr &graph, const std::vect
     size_t total_memory_size = max_static_memory_size + feature_memory_size;
     size_t max_hbm_memory_size = static_cast<size_t>(AscendMemAdapter::GetInstance().GetMsUsedHbmSize());
     AscendMemAdapter::GetInstance().UpdateActualPeakMemory(total_memory_size);
+    UpdateFMTracker(feature_memory_size, graph_name);
     if (common::IsNeedMemoryStatistic()) {
       MS_LOG(WARNING) << "Now Memory Status, graph: " << graph_name
                       << ", max_static_memory_size: " << max_static_memory_size
@@ -1458,6 +1477,8 @@ std::vector<GeTensor> GeGraphExecutor::GenerateInputGeTensor(const KernelGraphPt
                         << ", graph: " << kernel_graph->ToString() << ", node: " << input_node->fullname_with_scope()
                         << ", device address addr: " << memory;
       }
+      UpdateTracker("UnusedInput", input_node->fullname_with_scope(), kernel_graph->ToString(), memory_size, memory,
+                    device::tracker::MemType::kOther);
     }
     if (kv.second >= ge_inputs.size()) {
       MS_LOG(EXCEPTION) << input_node->DebugString() << ", index: " << kv.second << " is greater than "

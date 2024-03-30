@@ -309,6 +309,8 @@ class DeviceAddress : public mindspore::DeviceSync {
     return GetDevicePtr() != nullptr;
   }
 
+  virtual bool IsNotNeedAlloc() const { return IsPtrValid() || TEST_FLAG(flag(), device::kDeviceAddressFlagNotUsed); }
+
   using SyncUserDataHandler = void (*)(DeviceAddress *const device_address);
   // Return the valid device ptr.
   virtual void *GetValidPtr(size_t) {

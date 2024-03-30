@@ -184,9 +184,11 @@ void AscendDeviceAddress::SyncMemory(void *dst, const void *src, uint64_t size, 
     if (!ret) {
       MS_LOG(EXCEPTION) << "Sync stream error!";
     }
-    auto ret_rt_memcpy = CALL_ASCEND_API(aclrtMemcpy, dst, size, src, size, kind);
-    if (ret_rt_memcpy != ACL_ERROR_NONE) {
-      MS_EXCEPTION(DeviceProcessError) << "aclrtMemcpy failed";
+    if (!common::IsNeedProfileMemory()) {
+      auto ret_rt_memcpy = CALL_ASCEND_API(aclrtMemcpy, dst, size, src, size, kind);
+      if (ret_rt_memcpy != ACL_ERROR_NONE) {
+        MS_EXCEPTION(DeviceProcessError) << "aclrtMemcpy failed";
+      }
     }
   } else {
     if (tensor_data == nullptr) {
