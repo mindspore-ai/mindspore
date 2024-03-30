@@ -788,6 +788,7 @@ def set_auto_parallel_context(**kwargs):
                \                 auto_parallel_search_mode
                \                 comm_fusion
                \                 strategy_ckpt_config
+               \                 group_ckpt_save_file
     ===========================  ===========================
 
     Args:
@@ -811,15 +812,16 @@ def set_auto_parallel_context(**kwargs):
 
                      - auto_parallel: Achieving parallelism automatically.
         search_mode (str): There are three kinds of shard strategy search modes: ``"recursive_programming"`` ,
-                     ``"dynamic_programming"`` and ``"sharding_propagation"`` . Default: ``"recursive_programming"`` .
+                     ``"sharding_propagation"`` and ``"dynamic_programming"``(Not recommended).
+                     Default: ``"recursive_programming"`` .
 
                      - recursive_programming: Recursive programming search mode. In order to obtain optimal performance,
                        it is recommended that users set the batch size to be greater than or equal to the product of
                        the number of devices and the number of multi-copy parallelism.
 
-                     - dynamic_programming: Dynamic programming search mode.
-
                      - sharding_propagation: Propagate shardings from configured ops to non-configured ops.
+
+                     - dynamic_programming: Dynamic programming search mode.
         auto_parallel_search_mode (str): This is the old version of 'search_mode'. Here, remaining this attribute is
                      for forward compatibility, and this attribute will be deleted in a future MindSpore version.
         parameter_broadcast (bool): Whether to broadcast parameters before training. Before training, in order to have
@@ -923,6 +925,7 @@ def set_auto_parallel_context(**kwargs):
 
                         - only_trainable_params (bool): Only save/load the strategy information for trainable parameter.
                           Default: ``True`` .
+        group_ckpt_save_file (str): The path to save parallel group checkpoint.
 
     Raises:
         ValueError: If input key is not attribute in auto parallel context.
@@ -934,8 +937,8 @@ def set_auto_parallel_context(**kwargs):
         >>> ms.set_auto_parallel_context(gradients_mean=True)
         >>> ms.set_auto_parallel_context(gradient_fp32_sync=False)
         >>> ms.set_auto_parallel_context(parallel_mode="auto_parallel")
-        >>> ms.set_auto_parallel_context(search_mode="dynamic_programming")
-        >>> ms.set_auto_parallel_context(auto_parallel_search_mode="dynamic_programming")
+        >>> ms.set_auto_parallel_context(search_mode="recursive_programming")
+        >>> ms.set_auto_parallel_context(auto_parallel_search_mode="recursive_programming")
         >>> ms.set_auto_parallel_context(parameter_broadcast=False)
         >>> ms.set_auto_parallel_context(strategy_ckpt_load_file="./strategy_stage1.ckpt")
         >>> ms.set_auto_parallel_context(strategy_ckpt_save_file="./strategy_stage1.ckpt")
