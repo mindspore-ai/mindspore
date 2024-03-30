@@ -999,8 +999,8 @@ class Tile(Primitive):
     def __call__(self, input, dims):
         return _convert_stub(pyboost_tile(self, [input, dims]))
 
+    # pylint: disable=missing-docstring
     def check_elim(self, *args):
-        """check for elimination."""
         base_tensor, dims = args
         if not isinstance(base_tensor, Tensor):
             raise TypeError(f"For '{self.name}', the type of 'input' must be Tensor, "
