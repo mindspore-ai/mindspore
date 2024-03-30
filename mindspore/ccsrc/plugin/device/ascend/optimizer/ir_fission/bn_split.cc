@@ -171,9 +171,10 @@ bool SyncBnSplit::CreateOutputsOfBNTrainingReduce(const FuncGraphPtr &graph, con
     return false;
   }
 
-  auto format_input = NewValueNode(static_cast<int64_t>(kNCHWFormat));
-  auto constant_abs = std::make_shared<abstract::AbstractScalar>(std::make_shared<Int64Imm>(kNCHWFormat));
-  format_input->set_abstract(constant_abs);
+  auto kernel_graph = graph->cast<KernelGraphPtr>();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  auto value = MakeValue<int64_t>(static_cast<int64_t>(kNCHWFormat));
+  ValueNodePtr format_input = kernel_graph->NewValueNode(value->ToAbstract(), value);
   std::vector<AnfNodePtr> bn_training_reduce_inputs = {
     NewValueNode(std::make_shared<Primitive>(kBNTrainingReduceOpName)), bn_cnode->input(kIndex1), format_input};
 
@@ -212,9 +213,10 @@ AnfNodePtr SyncBnSplit::CreateOutputsOfBNTrainingUpdate(const FuncGraphPtr &grap
   }
 
   // the inputs of BNTrainingUpdate are from the outputs of BNTrainingReduce and the inputs of BN
-  auto format_input = NewValueNode(static_cast<int64_t>(kNCHWFormat));
-  auto constant_abs = std::make_shared<abstract::AbstractScalar>(std::make_shared<Int64Imm>(kNCHWFormat));
-  format_input->set_abstract(constant_abs);
+  auto kernel_graph = graph->cast<KernelGraphPtr>();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  auto value = MakeValue<int64_t>(static_cast<int64_t>(kNCHWFormat));
+  ValueNodePtr format_input = kernel_graph->NewValueNode(value->ToAbstract(), value);
   std::vector<AnfNodePtr> bn_training_update_inputs = {
     NewValueNode(std::make_shared<Primitive>(kBNTrainingUpdateOpName))};
   bn_training_update_inputs.push_back(bn_cnode->input(kIndex1));
