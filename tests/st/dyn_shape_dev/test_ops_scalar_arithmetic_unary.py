@@ -20,7 +20,16 @@ from mindspore import ops
 import mindspore.ops.operations.manually_defined as F
 from tests.st.utils import test_utils
 
-@pytest.mark.level1
+
+def setup_module():
+    context.set_context(grad_for_scalar=True)
+
+
+def teardown_module():
+    context.set_context(grad_for_scalar=False)
+
+
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -54,7 +63,7 @@ def test_scalar_bool_mutable(mode):
         assert np.allclose(mutable_grad_output, expect_grad_out)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -83,12 +92,14 @@ def test_scalar_uadd_mutable(mode):
         mutable_output = scalar_uadd_forward_func(ms.mutable(input_x))
         assert np.allclose(mutable_output, expect_out)
     if mode == ms.GRAPH_MODE:
-        expect_grad_out = 0
+        setup_module()
+        expect_grad_out = 1
         mutable_grad_output = scalar_uadd_backward_func(ms.mutable(input_x))
+        teardown_module()
         assert np.allclose(mutable_grad_output, expect_grad_out)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -117,12 +128,14 @@ def test_scalar_usub_mutable(mode):
         mutable_output = scalar_usub_forward_func(ms.mutable(input_x))
         assert np.allclose(mutable_output, expect_out)
     if mode == ms.GRAPH_MODE:
-        expect_grad_out = 0
+        setup_module()
+        expect_grad_out = -1
         mutable_grad_output = scalar_usub_backward_func(ms.mutable(input_x))
+        teardown_module()
         assert np.allclose(mutable_grad_output, expect_grad_out)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -151,6 +164,8 @@ def test_scalar_log_mutable(mode):
         mutable_output = scalar_log_forward_func(ms.mutable(input_x))
         assert np.allclose(mutable_output, expect_out)
     if mode == ms.GRAPH_MODE:
-        expect_grad_out = 0
+        setup_module()
+        expect_grad_out = 0.333333343267
         mutable_grad_output = scalar_log_backward_func(ms.mutable(input_x))
+        teardown_module()
         assert np.allclose(mutable_grad_output, expect_grad_out)
