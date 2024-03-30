@@ -210,72 +210,6 @@ std::string InlineControlFlowScheduler::GetBranchNameByConditionGatherActor(Kern
   return GetValue<std::string>(tuple_name->value()[branch_index]);
 }
 
-void InlineControlFlowScheduler::FixRefCountByKernelGraphRefMap(ConditionSwitchActor *const condition_switch_actor,
-                                                                const KernelGraphPtr &kernel_graph) {
-  const auto &inline_sub_graph_kernels = kernel_graph->inline_sub_graph_kernels();
-  size_t output_num = AnfAlgo::GetOutputTensorNum(condition_switch_actor->kernel());
-  for (const auto &ref_pair : kernel_graph->GetRefMap()) {
-    const auto &output_pair = ref_pair.first;
-    const auto &origin_pair = ref_pair.second;
-    MS_LOG(DEBUG) << "output node:" << output_pair.first->fullname_with_scope()
-                  << " origin node:" << origin_pair.first->fullname_with_scope();
-    const auto &recursive_origin_pair = kernel_graph->GetRefNodeRecursive(output_pair);
-    // If the input node of ref node pair is a condition switch node , the ref count of corresponding switch node input
-    // should add 1.
-    if (recursive_origin_pair.first == condition_switch_actor->kernel() && output_pair.first != nullptr) {
-      MS_LOG(DEBUG) << "Condition switch node is an input of ref node:" << output_pair.first->fullname_with_scope();
-      if (inline_sub_graph_kernels.find(output_pair.first) == inline_sub_graph_kernels.end()) {
-        MS_LOG(EXCEPTION) << "Failed to get inline subgraph name by ref node:"
-                          << output_pair.first->fullname_with_scope();
-      }
-      // Get the branch index for ref output.
-      const auto &current_branch_name = inline_sub_graph_kernels.at(output_pair.first);
-      const auto &iter = std::find(condition_switch_actor->branch_names_.begin(),
-                                   condition_switch_actor->branch_names_.end(), current_branch_name);
-      if (iter == condition_switch_actor->branch_names_.end()) {
-        MS_LOG(EXCEPTION) << "Invalid branch name:" << current_branch_name
-                          << " total branch name:" << condition_switch_actor->branch_names_
-                          << " for actor:" << condition_switch_actor->GetAID();
-      }
-      size_t branch_index = LongToSize(iter - condition_switch_actor->branch_names_.begin());
-      if (recursive_origin_pair.second >= output_num || branch_index >= condition_switch_actor->branch_names_.size()) {
-        MS_LOG(EXCEPTION) << "Invalid output index:" << recursive_origin_pair.second << " total:" << output_num
-                          << " and branch index:" << branch_index
-                          << " total:" << condition_switch_actor->branch_names_.size()
-                          << " for actor:" << condition_switch_actor->GetAID();
-      }
-      // The ref count of the corresponding branch add 1.
-      condition_switch_actor->branch_origin_ref_count_[branch_index][recursive_origin_pair.second]++;
-      MS_LOG(DEBUG) << "Add ref count for current branch:" << current_branch_name << " branch index:" << branch_index
-                    << " output index:" << recursive_origin_pair.second
-                    << " of actor:" << condition_switch_actor->GetAID();
-    }
-  }
-}
-
-void InlineControlFlowScheduler::FixRefCountByConditionSwitchActor(ConditionSwitchActor *const condition_switch_actor,
-                                                                   const KernelGraphPtr &kernel_graph) {
-  MS_EXCEPTION_IF_NULL(condition_switch_actor);
-  // Collect all the output ref count of condition switch actor.
-  std::vector<size_t> total_ref_count;
-  size_t output_num = AnfAlgo::GetOutputTensorNum(condition_switch_actor->kernel());
-  for (size_t i = 0; i < output_num; ++i) {
-    const auto &device_address = AnfAlgo::GetMutableOutputAddr(condition_switch_actor->kernel(), i, false);
-    MS_EXCEPTION_IF_NULL(device_address);
-    total_ref_count.emplace_back(device_address->original_ref_count());
-    MS_LOG(DEBUG) << "For actor:" << condition_switch_actor->GetAID() << " output device address:" << device_address
-                  << " output index:" << i << " ref_count:" << total_ref_count.back();
-  }
-
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(condition_switch_actor->kernel());
-  // Input num should same as the output num and the condition of switch node.
-  if (input_num != output_num + 1) {
-    MS_LOG(EXCEPTION) << "Invalid input num:" << input_num << " and output num:" << output_num
-                      << " for actor:" << condition_switch_actor->GetAID();
-  }
-  FixRefCountByKernelGraphRefMap(condition_switch_actor, kernel_graph);
-}
-
 void InlineControlFlowScheduler::InitOutputDataBranchInfoForConditionSwitchActor(
   ConditionSwitchActor *const condition_switch_actor, const KernelGraphPtr &kernel_graph) {
   const auto &inline_sub_graph_kernels = kernel_graph->inline_sub_graph_kernels();
@@ -335,8 +269,8 @@ void InlineControlFlowScheduler::InitOutputDataBranchInfoForConditionSwitchActor
                         << " total:" << condition_switch_actor->branch_names_.size()
                         << " for actor:" << condition_switch_actor->GetAID();
     }
-    condition_switch_actor->branch_origin_ref_count_[branch_index][data_arrow->from_output_index_]++;
     condition_switch_actor->output_data_branch_indexes_[i] = branch_index;
+    condition_switch_actor->branch_origin_ref_count_[branch_index][data_arrow->from_output_index_]++;
   }
 }
 
@@ -435,102 +369,151 @@ void InlineControlFlowScheduler::HandleConditionSwitchActor(const KernelActorPtr
   condition_switch_actor->branch_origin_ref_count_ =
     std::vector<std::vector<size_t>>(tuple_name->size(), vector<size_t>(output_num, 0));
 
-  FixRefCountByConditionSwitchActor(condition_switch_actor, kernel_graph);
   InitOutputBranchInfoForConditionSwitchActor(condition_switch_actor, kernel_graph);
 }
 
-void InlineControlFlowScheduler::FixRefCountByKernelGraphRefMap(ConditionGatherActor *const condition_gather_actor,
-                                                                const KernelGraphPtr &kernel_graph) {
-  // If the input node of ref node pair is a condition gather node , the ref count of corresponding gather node input
-  // should add 1.
-  for (const auto &ref_pair : kernel_graph->GetRefMap()) {
-    const auto &output_pair = ref_pair.first;
-    const auto &origin_pair = ref_pair.second;
-    MS_LOG(DEBUG) << "output node:" << output_pair.first->fullname_with_scope()
-                  << " origin node:" << origin_pair.first->fullname_with_scope();
-    const auto &recursive_origin_pair = kernel_graph->GetRefNodeRecursive(output_pair);
-    if (recursive_origin_pair.first == condition_gather_actor->kernel() && output_pair.first != nullptr) {
-      MS_LOG(DEBUG) << "Condition gather node output index:" << recursive_origin_pair.second
-                    << " is an input of ref node:" << output_pair.first->fullname_with_scope()
-                    << " to index:" << output_pair.second
-                    << " need update ref count for actor:" << condition_gather_actor->GetAID();
-      for (size_t i = recursive_origin_pair.second; i < common::AnfAlgo::GetInputNum(condition_gather_actor->kernel());
-           i += condition_gather_actor->branch_output_num_) {
-        const auto &device_address = AnfAlgo::GetPrevNodeMutableOutputAddr(condition_gather_actor->kernel(), i);
-        MS_EXCEPTION_IF_NULL(device_address);
-        MS_LOG(DEBUG) << "For actor::" << condition_gather_actor->GetAID() << " input device address:" << device_address
-                      << " input index:" << i << " ref_count:" << device_address->original_ref_count();
-        if (device_address->original_ref_count() == SIZE_MAX) {
-          continue;
-        }
-        size_t pre_origin_ref_count = device_address->original_ref_count();
-        device_address->set_original_ref_count(device_address->original_ref_count() + 1);
-        device_address->ResetRefCount();
-        MS_LOG(DEBUG) << "For actor::" << condition_gather_actor->GetAID() << " input device address:" << device_address
-                      << " input index:" << i << " fix ref count from:" << pre_origin_ref_count
-                      << " to:" << device_address->original_ref_count();
-      }
+void InlineControlFlowScheduler::AddRefCountForConditionSwitchActor(ConditionSwitchActor *const switch_actor,
+                                                                    const std::string &branch_name, size_t output_index,
+                                                                    size_t ref_count) {
+  const auto &iter = std::find(switch_actor->branch_names_.begin(), switch_actor->branch_names_.end(), branch_name);
+  if (iter == switch_actor->branch_names_.end()) {
+    MS_LOG(EXCEPTION) << "Failed to get branch name:" << branch_name << " total:" << switch_actor->branch_names_
+                      << " in actor:" << switch_actor->GetAID();
+  }
+  size_t index = LongToSize(iter - switch_actor->branch_names_.begin());
+  if (index >= switch_actor->branch_origin_ref_count_.size()) {
+    MS_LOG(EXCEPTION) << " Invalid index:" << index
+                      << " for branch origin ref count:" << switch_actor->branch_origin_ref_count_
+                      << " for actor:" << switch_actor->GetAID();
+  }
+  if (output_index >= switch_actor->branch_origin_ref_count_[index].size()) {
+    MS_LOG(EXCEPTION) << " Invalid output index:" << output_index << " branch index:" << index
+                      << " for branch origin ref count:" << switch_actor->branch_origin_ref_count_
+                      << " for actor:" << switch_actor->GetAID();
+  }
+  MS_LOG(DEBUG) << "Add ref count:" << ref_count << " for branch index:" << index << " index:" << output_index
+                << " origin ref count:" << switch_actor->branch_origin_ref_count_
+                << " for actor:" << switch_actor->GetAID();
+  switch_actor->branch_origin_ref_count_[index][output_index] += ref_count;
+}
+
+void InlineControlFlowScheduler::FixRefCountForRefNode(const KernelWithIndex &input_with_index, size_t ref_count,
+                                                       const std::string &branch_name,
+                                                       const KernelGraph *const kernel_graph) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  MS_EXCEPTION_IF_NULL(input_with_index.first);
+  auto new_branch_name = branch_name;
+  if (common::AnfAlgo::CheckPrimitiveType(input_with_index.first, prim::kPrimConditionSwitch)) {
+    MS_LOG(DEBUG) << "Check switch node:" << input_with_index.first->DebugString()
+                  << " index:" << input_with_index.second << " ref count:" << ref_count
+                  << " branch name:" << branch_name;
+    const auto &actor = FetchActor(input_with_index.first->fullname_with_scope());
+    MS_EXCEPTION_IF_NULL(actor);
+    const auto &switch_actor = dynamic_cast<ConditionSwitchActor *>(actor);
+    MS_EXCEPTION_IF_NULL(switch_actor);
+    AddRefCountForConditionSwitchActor(switch_actor, branch_name, input_with_index.second, ref_count);
+    const auto &iter = kernel_graph->inline_sub_graph_kernels().find(input_with_index.first);
+    new_branch_name =
+      (iter == kernel_graph->inline_sub_graph_kernels().end() ? kernel_graph->ToString() : iter->second);
+    MS_LOG(DEBUG) << "Switch branch name from:" << branch_name << " to:" << new_branch_name
+                  << " by switch node:" << input_with_index.first->fullname_with_scope()
+                  << " in kernel graph:" << kernel_graph->ToString() << " ref count:" << ref_count;
+  } else if (common::AnfAlgo::CheckPrimitiveType(input_with_index.first, prim::kPrimConditionGather)) {
+    const auto &actor = FetchActor(input_with_index.first->fullname_with_scope());
+    MS_EXCEPTION_IF_NULL(actor);
+    const auto &gather_actor = dynamic_cast<ConditionGatherActor *>(actor);
+    MS_EXCEPTION_IF_NULL(gather_actor);
+    const auto &gather_cnode = input_with_index.first->cast<CNodePtr>();
+    size_t input_num = common::AnfAlgo::GetInputNum(gather_cnode);
+    if (input_num == 0 || input_num != gather_actor->branch_names_.size() * gather_actor->branch_output_num_) {
+      MS_LOG(EXCEPTION) << "Invalid input num:" << input_num
+                        << " branch output num:" << gather_actor->branch_output_num_
+                        << " branch num:" << gather_actor->branch_names_.size()
+                        << " for node:" << gather_cnode->fullname_with_scope();
     }
+    for (size_t i = input_with_index.second; i < input_num; i = i + gather_actor->branch_output_num_) {
+      FixRefCountForInputNode(common::AnfAlgo::VisitKernelWithReturnType(gather_cnode->input(i + 1), 0), ref_count,
+                              gather_actor->branch_names_[i / gather_actor->branch_output_num_]);
+    }
+    return;
+  }
+
+  const auto &ref_value = kernel_graph->GetRefCorrespondOutput(input_with_index);
+  if (ref_value.first != nullptr && kernel_graph->IsInRefOutputMap(ref_value)) {
+    MS_LOG(DEBUG) << "Check input node:" << ref_value.first->fullname_with_scope() << " index:" << ref_value.second
+                  << " output node:" << input_with_index.first->fullname_with_scope()
+                  << " index:" << input_with_index.second;
+    FixRefCountForRefNode(ref_value, ref_count, new_branch_name, kernel_graph);
   }
 }
 
-void InlineControlFlowScheduler::FixRefCountByConditionGatherActor(ConditionGatherActor *const condition_gather_actor,
-                                                                   size_t input_index, size_t ref_count) {
-  MS_EXCEPTION_IF_NULL(condition_gather_actor);
-  MS_EXCEPTION_IF_NULL(condition_gather_actor->kernel());
-  size_t input_num = common::AnfAlgo::GetInputNum(condition_gather_actor->kernel());
-  if (input_num == 0 || input_num % condition_gather_actor->branch_output_num_ != 0) {
-    MS_LOG(EXCEPTION) << "Invalid input num:" << input_num
-                      << " branch output num:" << condition_gather_actor->branch_output_num_
-                      << " for actor:" << condition_gather_actor->GetAID();
+void InlineControlFlowScheduler::FixRefCountForInputNode(const KernelWithIndex &input_with_index, size_t ref_count,
+                                                         const std::string &branch_name) {
+  const auto &node = input_with_index.first;
+  MS_EXCEPTION_IF_NULL(node);
+  const auto &device_address = AnfAlgo::GetMutableOutputAddr(node, input_with_index.second, false);
+  MS_EXCEPTION_IF_NULL(device_address);
+  if (ref_count == SIZE_MAX) {
+    MS_LOG(DEBUG) << "set ref count to max for device address:" << device_address;
+    device_address->set_original_ref_count(ref_count);
+  } else {
+    MS_LOG(DEBUG) << "set ref count from:" << device_address->original_ref_count()
+                  << " to:" << device_address->original_ref_count() + ref_count
+                  << " for device address:" << device_address;
+    device_address->set_original_ref_count(device_address->original_ref_count() + ref_count);
   }
-  for (size_t i = input_index; i < input_num; i = i + condition_gather_actor->branch_output_num_) {
-    const auto &device_address = AnfAlgo::GetPrevNodeMutableOutputAddr(condition_gather_actor->kernel(), i, false);
-    MS_EXCEPTION_IF_NULL(device_address);
-    MS_LOG(DEBUG) << "For actor::" << condition_gather_actor->GetAID() << " input device address:" << device_address
-                  << " input index:" << i << " ref_count:" << device_address->original_ref_count();
-    if (device_address->original_ref_count() == SIZE_MAX) {
-      continue;
+  device_address->ResetRefCount();
+  if (node->isa<CNode>()) {
+    const auto &cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    const auto &graph = cnode->func_graph();
+    if (graph != nullptr && graph->isa<KernelGraph>()) {
+      const auto &kernel_graph = dynamic_cast<KernelGraph *>(graph.get());
+      MS_EXCEPTION_IF_NULL(kernel_graph);
+      if (kernel_graph->IsInRefOutputMap(input_with_index)) {
+        FixRefCountForRefNode(input_with_index, ref_count, branch_name, kernel_graph);
+        return;
+      }
     }
-    size_t pre_origin_ref_count = device_address->original_ref_count();
-    // The real ref count is the relative position of this branch output.
-    if (ref_count == SIZE_MAX) {
-      device_address->set_original_ref_count(ref_count);
-    } else {
-      device_address->set_original_ref_count(device_address->original_ref_count() + ref_count);
+  }
+
+  if (common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimConditionGather)) {
+    const auto &gather_cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(gather_cnode);
+    const auto &actor = FetchActor(gather_cnode->fullname_with_scope());
+    MS_EXCEPTION_IF_NULL(actor);
+    const auto &gather_actor = dynamic_cast<ConditionGatherActor *>(actor);
+    MS_EXCEPTION_IF_NULL(gather_actor);
+    size_t input_num = common::AnfAlgo::GetInputNum(gather_cnode);
+    if (input_num == 0 || input_num != gather_actor->branch_names_.size() * gather_actor->branch_output_num_) {
+      MS_LOG(EXCEPTION) << "Invalid input num:" << input_num
+                        << " branch output num:" << gather_actor->branch_output_num_
+                        << " branch num:" << gather_actor->branch_names_.size()
+                        << " for node:" << gather_cnode->fullname_with_scope();
     }
-    device_address->ResetRefCount();
-    MS_LOG(DEBUG) << "For actor:" << condition_gather_actor->GetAID() << " input device address:" << device_address
-                  << " input index:" << i << " fix ref count from:" << pre_origin_ref_count
-                  << " to:" << device_address->original_ref_count();
-    const auto &input_with_index =
-      common::AnfAlgo::VisitKernelWithReturnType(condition_gather_actor->kernel()->input(i + 1), 0);
-    if (common::AnfAlgo::CheckPrimitiveType(input_with_index.first, prim::kPrimConditionGather)) {
-      const auto &actor = FetchActor(input_with_index.first->fullname_with_scope());
-      MS_EXCEPTION_IF_NULL(actor);
-      MS_LOG(DEBUG) << "Condition gather actor:" << condition_gather_actor->GetAID() << " input index:" << i
-                    << " input node:" << input_with_index.first->DebugString()
-                    << " with index:" << input_with_index.second << " actor:" << actor->GetAID()
-                    << " need add ref count:" << ref_count;
-      FixRefCountByConditionGatherActor(dynamic_cast<ConditionGatherActor *>(actor), input_with_index.second,
-                                        ref_count);
+    for (size_t i = input_with_index.second; i < input_num; i = i + gather_actor->branch_output_num_) {
+      FixRefCountForInputNode(common::AnfAlgo::VisitKernelWithReturnType(gather_cnode->input(i + 1), 0), ref_count,
+                              gather_actor->branch_names_[i / gather_actor->branch_output_num_]);
     }
   }
 }
 
 void InlineControlFlowScheduler::FixRefCountByConditionGatherActor(ConditionGatherActor *const condition_gather_actor,
                                                                    const KernelGraphPtr &kernel_graph) {
-  std::vector<size_t> total_ref_count;
+  std::vector<size_t> need_add_ref_count;
   size_t output_num = AnfAlgo::GetOutputTensorNum(condition_gather_actor->kernel());
   for (size_t i = 0; i < output_num; ++i) {
     const auto &device_address = AnfAlgo::GetMutableOutputAddr(condition_gather_actor->kernel(), i, false);
     MS_EXCEPTION_IF_NULL(device_address);
-    total_ref_count.emplace_back(device_address->original_ref_count());
+    need_add_ref_count.emplace_back(
+      device_address->original_ref_count() == SIZE_MAX ? SIZE_MAX : device_address->original_ref_count() - 1);
     MS_LOG(DEBUG) << "For actor:" << condition_gather_actor->GetAID() << " output device address:" << device_address
-                  << " output index:" << i << " ref_count:" << total_ref_count.back();
+                  << " output index:" << i << " ref_count:" << device_address->original_ref_count()
+                  << " need add:" << need_add_ref_count.back();
   }
   size_t input_num = common::AnfAlgo::GetInputNum(condition_gather_actor->kernel());
-  if (input_num == 0 || input_num % condition_gather_actor->branch_output_num_ != 0) {
+  if (input_num == 0 ||
+      input_num != condition_gather_actor->branch_output_num_ * condition_gather_actor->branch_names_.size()) {
     MS_LOG(EXCEPTION) << "Invalid input num:" << input_num
                       << " branch output num:" << condition_gather_actor->branch_output_num_
                       << " for actor:" << condition_gather_actor->GetAID();
@@ -543,34 +526,15 @@ void InlineControlFlowScheduler::FixRefCountByConditionGatherActor(ConditionGath
     if (device_address->original_ref_count() == SIZE_MAX) {
       continue;
     }
-    size_t pre_origin_ref_count = device_address->original_ref_count();
-    // The real ref count is the relative position of this branch output.
-    if (total_ref_count[i % condition_gather_actor->branch_output_num_] == SIZE_MAX) {
-      device_address->set_original_ref_count(SIZE_MAX);
-    } else {
-      device_address->set_original_ref_count(device_address->original_ref_count() +
-                                             total_ref_count[i % condition_gather_actor->branch_output_num_] - 1);
-    }
-    device_address->ResetRefCount();
-    MS_LOG(DEBUG) << "For actor::" << condition_gather_actor->GetAID() << " input device address:" << device_address
-                  << " input index:" << i << " fix ref count from:" << pre_origin_ref_count
-                  << " to:" << device_address->original_ref_count();
     const auto &input_with_index =
       common::AnfAlgo::VisitKernelWithReturnType(condition_gather_actor->kernel()->input(i + 1), 0);
-    if (common::AnfAlgo::CheckPrimitiveType(input_with_index.first, prim::kPrimConditionGather)) {
-      const auto &actor = FetchActor(input_with_index.first->fullname_with_scope());
-      MS_EXCEPTION_IF_NULL(actor);
-      FixRefCountByConditionGatherActor(dynamic_cast<ConditionGatherActor *>(actor), input_with_index.second,
-                                        total_ref_count[i % condition_gather_actor->branch_output_num_] == SIZE_MAX
-                                          ? SIZE_MAX
-                                          : total_ref_count[i % condition_gather_actor->branch_output_num_] - 1);
-      MS_LOG(DEBUG) << "Condition gather actor:" << condition_gather_actor->GetAID() << " input index:" << i
-                    << " input node:" << input_with_index.first->DebugString()
-                    << " with index:" << input_with_index.second << " actor:" << actor->GetAID()
-                    << " need add ref count:" << total_ref_count[i % condition_gather_actor->branch_output_num_] - 1;
-    }
+    FixRefCountForInputNode(input_with_index, need_add_ref_count[i % condition_gather_actor->branch_output_num_],
+                            condition_gather_actor->branch_names_[i / condition_gather_actor->branch_output_num_]);
+    MS_LOG(DEBUG) << "Condition gather actor:" << condition_gather_actor->GetAID() << " input index:" << i
+                  << " input node:" << input_with_index.first->DebugString()
+                  << " with index:" << input_with_index.second
+                  << " need add ref count:" << need_add_ref_count[i % condition_gather_actor->branch_output_num_];
   }
-  FixRefCountByKernelGraphRefMap(condition_gather_actor, kernel_graph);
 }
 
 void InlineControlFlowScheduler::InitInputDataBranchInfoForConditionGatherActor(
@@ -678,36 +642,40 @@ void InlineControlFlowScheduler::InitInputBranchInfoForConditionGatherActor(
 void InlineControlFlowScheduler::HandleConditionGatherActor(const KernelActorPtr &kernel_actor) {
   const auto &condition_gather_actor = dynamic_cast<ConditionGatherActor *>(kernel_actor.get());
   MS_EXCEPTION_IF_NULL(condition_gather_actor);
-  MS_EXCEPTION_IF_NULL(condition_gather_actor->kernel());
-  const auto &graph = condition_gather_actor->kernel()->func_graph();
+  const auto &gather_node = condition_gather_actor->kernel();
+  MS_EXCEPTION_IF_NULL(gather_node);
+  const auto &graph = gather_node->func_graph();
   if (graph == nullptr || !graph->isa<KernelGraph>()) {
     MS_LOG(EXCEPTION) << "Failed to get kernel graph by actor:" << condition_gather_actor->GetAID();
   }
   const auto &kernel_graph = graph->cast<KernelGraphPtr>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  const auto &gather_to_switch_iter = kernel_graph->condition_gather_to_switch().find(condition_gather_actor->kernel());
-  if (gather_to_switch_iter == kernel_graph->condition_gather_to_switch().end()) {
-    MS_LOG(EXCEPTION) << "Failed to get switch node by gather node:"
-                      << condition_gather_actor->kernel()->fullname_with_scope();
+  const auto &gather_switch_map = kernel_graph->condition_gather_to_switch();
+  const auto &gather_switch_iter = gather_switch_map.find(gather_node);
+  if (gather_switch_iter == gather_switch_map.end()) {
+    MS_LOG(EXCEPTION) << "Failed to get switch node by gather node:" << gather_node->fullname_with_scope();
   }
-  MS_EXCEPTION_IF_NULL(gather_to_switch_iter->second);
-  const auto &actor = FetchActor(gather_to_switch_iter->second->fullname_with_scope());
+  if (gather_switch_iter->second == nullptr) {
+    MS_LOG(EXCEPTION) << "Failed to get switch node by gather node:" << gather_node->fullname_with_scope()
+                      << " in kernel graph:" << kernel_graph->ToString();
+  }
+  const auto &actor = FetchActor(gather_switch_iter->second->fullname_with_scope());
   MS_EXCEPTION_IF_NULL(actor);
   const auto &condition_switch_actor = dynamic_cast<ConditionSwitchActor *>(actor);
   MS_EXCEPTION_IF_NULL(condition_switch_actor);
   condition_switch_actor->gather_aid_ = const_cast<AID *>(&condition_gather_actor->GetAID());
 
-  if (!condition_gather_actor->kernel()->HasAttr(kAttrBranchOutputNum)) {
+  if (!gather_node->HasAttr(kAttrBranchOutputNum)) {
     MS_LOG(EXCEPTION) << "Failed to get branch output num by actor:" << condition_gather_actor->GetAID();
   }
-  const auto &output_value = condition_gather_actor->kernel()->GetAttr(kAttrBranchOutputNum);
+  const auto &output_value = gather_node->GetAttr(kAttrBranchOutputNum);
   MS_EXCEPTION_IF_NULL(output_value);
   condition_gather_actor->branch_output_num_ = GetValue<size_t>(output_value);
 
-  if (!condition_gather_actor->kernel()->HasAttr(kAttrBranchGraphName)) {
+  if (!gather_node->HasAttr(kAttrBranchGraphName)) {
     MS_LOG(EXCEPTION) << "Failed to get inline graph name by actor:" << condition_gather_actor->GetAID();
   }
-  const auto &branch_graph_names = condition_gather_actor->kernel()->GetAttr(kAttrBranchGraphName);
+  const auto &branch_graph_names = gather_node->GetAttr(kAttrBranchGraphName);
   MS_EXCEPTION_IF_NULL(branch_graph_names);
   MS_LOG(DEBUG) << "Branch graph name:" << branch_graph_names->ToString()
                 << " for actor:" << condition_gather_actor->GetAID();
@@ -726,19 +694,10 @@ void InlineControlFlowScheduler::HandleConditionGatherActor(const KernelActorPtr
   InitInputBranchInfoForConditionGatherActor(condition_gather_actor, kernel_graph);
 }
 
-void InlineControlFlowScheduler::Link(ActorSet *actor_set, const GraphCompilerInfo &graph_compiler_info) {
+void InlineControlFlowScheduler::LinkControlArrowForNoInputOrOutputActor(
+  ActorSet *actor_set, const mindspore::HashMap<std::string, AbstractActor *> &branch_name_to_switch_actor,
+  const mindspore::HashMap<std::string, AbstractActor *> &branch_name_to_gather_actor) {
   MS_EXCEPTION_IF_NULL(actor_set);
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  mindspore::HashMap<std::string, AbstractActor *> branch_name_to_switch_actor;
-  mindspore::HashMap<std::string, AbstractActor *> branch_name_to_gather_actor;
-  if (context_ptr->get_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL) != kOptimizeO0) {
-    for (const auto &graph : graph_compiler_info.graphs_) {
-      MS_EXCEPTION_IF_NULL(graph);
-      GetBranchNameToCondtionActor(graph, &branch_name_to_switch_actor, &branch_name_to_gather_actor);
-      LinkControlArrowByExecutionOrder(graph, graph_compiler_info, branch_name_to_gather_actor);
-    }
-  }
   for (const auto &kernel_actor : actor_set->kernel_actors_) {
     MS_EXCEPTION_IF_NULL(kernel_actor);
     if ((kernel_actor->input_datas_num_ == 0) && (kernel_actor->input_controls_num_ == 0) &&
@@ -755,20 +714,94 @@ void InlineControlFlowScheduler::Link(ActorSet *actor_set, const GraphCompilerIn
     if (kernel_actor->output_data_arrows_.size() == 0 && kernel_actor->output_control_arrows_.size() == 0 &&
         IsInlineKernelActor(kernel_actor)) {
       const auto &branch_name = GetBranchNameByKernelActor(kernel_actor.get());
-      if (branch_name_to_gather_actor.find(branch_name) == branch_name_to_gather_actor.end()) {
+      const auto &iter = branch_name_to_gather_actor.find(branch_name);
+      if (iter == branch_name_to_gather_actor.end()) {
         MS_LOG(EXCEPTION) << "Failed to get condition gather actor by branch name:" << branch_name;
       }
       MS_LOG(DEBUG) << "Inline control flow scheduler add control flow from kernel actor:" << kernel_actor->GetAID()
-                    << " to gather actor:" << branch_name_to_gather_actor[branch_name]->GetAID();
-      SchedulerHelper::AddControlArrow(kernel_actor.get(), branch_name_to_gather_actor[branch_name]);
+                    << " to gather actor:" << iter->second->GetAID();
+      SchedulerHelper::AddControlArrow(kernel_actor.get(), iter->second);
     }
   }
+}
+
+void InlineControlFlowScheduler::Link(ActorSet *actor_set, const GraphCompilerInfo &graph_compiler_info) {
+  MS_EXCEPTION_IF_NULL(actor_set);
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  mindspore::HashMap<std::string, AbstractActor *> branch_name_to_switch_actor;
+  mindspore::HashMap<std::string, AbstractActor *> branch_name_to_gather_actor;
+  if (context_ptr->get_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL) != kOptimizeO0) {
+    for (const auto &graph : graph_compiler_info.graphs_) {
+      MS_EXCEPTION_IF_NULL(graph);
+      GetBranchNameToCondtionActor(graph, &branch_name_to_switch_actor, &branch_name_to_gather_actor);
+      LinkControlArrowByExecutionOrder(graph, graph_compiler_info, branch_name_to_gather_actor);
+    }
+  }
+  LinkControlArrowForNoInputOrOutputActor(actor_set, branch_name_to_switch_actor, branch_name_to_gather_actor);
   for (const auto &kernel_actor : actor_set->kernel_actors_) {
     if (kernel_actor->type() == KernelTransformType::kConditionSwitchActor) {
       HandleConditionSwitchActor(kernel_actor);
     } else if (kernel_actor->type() == KernelTransformType::kConditionGatherActor) {
       HandleConditionGatherActor(kernel_actor);
     }
+  }
+  for (const auto &kernel_graph : graph_compiler_info.graphs_) {
+    MS_EXCEPTION_IF_NULL(kernel_graph);
+    if (kernel_graph->inline_sub_graph_kernels().empty()) {
+      continue;
+    }
+    for (const auto &ref_pair : kernel_graph->GetRefMap()) {
+      const auto &output_pair = ref_pair.first;
+      const auto &input_pair = ref_pair.second;
+      MS_EXCEPTION_IF_NULL(output_pair.first);
+      MS_EXCEPTION_IF_NULL(input_pair.first);
+      MS_LOG(DEBUG) << "output node:" << output_pair.first->fullname_with_scope()
+                    << " input node:" << input_pair.first->fullname_with_scope();
+      const auto &actor = FetchActor(output_pair.first->fullname_with_scope());
+      if (actor == nullptr) {
+        MS_LOG(EXCEPTION) << "Failed to get actor by ref node:" << output_pair.first->fullname_with_scope()
+                          << " index:" << output_pair.second
+                          << " origin node:" << input_pair.first->fullname_with_scope()
+                          << " index:" << input_pair.second << " in graph:" << kernel_graph->ToString();
+      }
+      size_t ref_count = 1;
+      std::for_each(actor->output_data_arrows().begin(), actor->output_data_arrows().end(),
+                    [&ref_count, &output_pair](const auto &data_arrow) {
+                      MS_EXCEPTION_IF_NULL(data_arrow);
+                      if (IntToSize(data_arrow->from_output_index_) == output_pair.second) {
+                        ++ref_count;
+                      }
+                    });
+      FixRefCountRecursively(output_pair, input_pair, kernel_graph, ref_count);
+    }
+  }
+}
+
+void InlineControlFlowScheduler::FixRefCountRecursively(const KernelWithIndex &output_pair,
+                                                        const KernelWithIndex &input_pair,
+                                                        const KernelGraphPtr &kernel_graph, size_t ref_count) {
+  MS_EXCEPTION_IF_NULL(output_pair.first);
+  MS_EXCEPTION_IF_NULL(input_pair.first);
+  if (common::AnfAlgo::CheckPrimitiveType(input_pair.first, prim::kPrimConditionGather)) {
+    return;
+  }
+  if (common::AnfAlgo::CheckPrimitiveType(input_pair.first, prim::kPrimConditionSwitch)) {
+    const auto &iter = kernel_graph->inline_sub_graph_kernels().find(output_pair.first);
+    if (iter == kernel_graph->inline_sub_graph_kernels().end()) {
+      MS_LOG(EXCEPTION) << "Invalid ref node pair, input node:" << input_pair.first->fullname_with_scope()
+                        << " index:" << input_pair.second << " output node:" << output_pair.first->fullname_with_scope()
+                        << " index:" << output_pair.second << " in kernel graph:" << kernel_graph->ToString();
+    }
+    const auto &branch_name = iter->second;
+    const auto &actor = FetchActor(input_pair.first->fullname_with_scope());
+    MS_EXCEPTION_IF_NULL(actor);
+    const auto &switch_actor = dynamic_cast<ConditionSwitchActor *>(actor);
+    MS_EXCEPTION_IF_NULL(switch_actor);
+    AddRefCountForConditionSwitchActor(switch_actor, branch_name, input_pair.second, ref_count);
+  }
+  if (kernel_graph->IsInRefOutputMap(input_pair)) {
+    FixRefCountRecursively(input_pair, kernel_graph->GetRefCorrespondOutput(input_pair), kernel_graph, ref_count);
   }
 }
 }  // namespace runtime

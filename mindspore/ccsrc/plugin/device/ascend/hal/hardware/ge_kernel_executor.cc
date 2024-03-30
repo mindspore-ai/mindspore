@@ -288,7 +288,7 @@ CNodePtr GetCondSwitchNode(const KernelGraphPtr &graph, const std::map<AnfNodePt
   SelectKernelInfo(graph, cond_switch_node);
   auto kernel_info = dynamic_cast<device::KernelInfo *>(cond_switch_node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
-  for (size_t input_index = 1; input_index < common::AnfAlgo::GetInputTensorNum(cond_switch_node); ++input_index) {
+  for (size_t input_index = 1; input_index < common::AnfAlgo::GetInputNum(cond_switch_node); ++input_index) {
     kernel_info->AddRefMap(input_index - 1, input_index);
   }
   return cond_switch_node;
@@ -398,6 +398,7 @@ void InlineSwitchGraph(const KernelGraphPtr &graph, std::set<KernelGraphPtr> *co
     CollectInputByBranchCNode(true_branch_cnode, false_branch_cnode, &branch_input);
     std::map<AnfNodePtr, AnfNodePtr> branch_tuple_getitem;
     auto cond_switch_node = GetCondSwitchNode(graph, branch_input, cond, &branch_tuple_getitem);
+    MS_EXCEPTION_IF_NULL(cond_switch_node);
     auto true_branch_node = GetBranchNode(graph, true_branch_cnode, branch_tuple_getitem);
     auto false_branch_node = GetBranchNode(graph, false_branch_cnode, branch_tuple_getitem);
     auto cond_gather_node =
@@ -651,6 +652,20 @@ void FlattenConditionNodeInput(const KernelGraphPtr &graph) {
   }
 #endif
   for (auto &kernel : graph->execution_order()) {
+    if (IsPrimitiveCNode(kernel, prim::kPrimConditionSwitch)) {
+      for (size_t i = 2; i < kernel->size(); ++i) {
+        const auto &input = kernel->input(i);
+        MS_EXCEPTION_IF_NULL(input);
+        if ((!input->isa<Parameter>()) || HasAbstractMonad(input) || common::AnfAlgo::HasAbstractRef(input)) {
+          continue;
+        }
+        std::vector<AnfNodePtr> tensor_move_inputs = {
+          NewValueNode(std::make_shared<Primitive>(prim::kPrimTensorMove->name())), input};
+        auto tensor_move = graph->NewCNode(tensor_move_inputs);
+        tensor_move->set_abstract(input->abstract()->Clone());
+        kernel->set_input(i, tensor_move);
+      }
+    }
     if (!IsPrimitiveCNode(kernel, prim::kPrimConditionGather)) {
       continue;
     }
@@ -660,6 +675,7 @@ void FlattenConditionNodeInput(const KernelGraphPtr &graph) {
     if (iter == graph->condition_gather_to_switch().end()) {
       MS_LOG(EXCEPTION) << "Failed to get condition switch node for gather:" << kernel->DebugString();
     }
+    MS_EXCEPTION_IF_NULL(iter->second);
     const auto &inline_iter = graph->inline_sub_graph_kernels().find(kernel);
     if (inline_iter != graph->inline_sub_graph_kernels().end()) {
       graph->AddInlineSubgraphKernel(new_kernel, inline_iter->second);
@@ -671,7 +687,8 @@ void FlattenConditionNodeInput(const KernelGraphPtr &graph) {
     MS_LOG(INFO) << "Add new condition gather node:" << new_kernel->fullname_with_scope()
                  << " to replace node:" << kernel->fullname_with_scope() << " branch name:"
                  << (kernel->HasAttr(kAttrBranchGraphName) ? new_kernel->GetAttr(kAttrBranchGraphName)->ToString()
-                                                           : " null");
+                                                           : " null")
+                 << " for switch node:" << iter->second->fullname_with_scope() << " in graph:" << graph->ToString();
   }
   graph->SetExecOrderByDefault();
 

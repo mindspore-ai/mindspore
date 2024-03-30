@@ -808,7 +808,9 @@ bool KernelActor::LaunchKernel(OpContext<DeviceTensor> *const) {
       MS_LOG(DEBUG) << "Skipped launch kernel: " << kernel_->fullname_with_scope();
       return true;
     } else {
-      MS_LOG(ERROR) << "Input address and output address are not equal of skipped launch actor: " << GetAID().Name();
+      MS_LOG(ERROR) << "Input address:" << input_device_tensors_[0]->GetPtr()
+                    << " and output address:" << output_device_tensors_[0]->GetPtr()
+                    << " are not equal of skipped launch actor: " << GetAID().Name();
       return false;
     }
   }
