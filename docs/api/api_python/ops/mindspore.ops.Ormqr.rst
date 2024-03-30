@@ -28,7 +28,7 @@ mindspore.ops.Ormqr
         - **TypeError** - 如果 `x` ， `tau` 和 `other` 的dtype不是float64、float32、complex64或者complex128。
         - **ValueError** - 如果 `x` 或 `other` 的维度小于2D。
         - **ValueError** - rank(`x`) - rank(`tau`) != 1。
-        - **ValueError** - tau.shape[:-2] != x.shape[:-2]。
+        - **ValueError** - tau.shape[:-1] != x.shape[:-2]。
         - **ValueError** - other.shape[:-2] != x.shape[:-2]。
         - **ValueError** - 当 `left` 为True时，other.shape[-2] < tau.shape[-1]。
         - **ValueError** - 当 `left` 为True时，other.shape[-2] != x.shape[-2]。
