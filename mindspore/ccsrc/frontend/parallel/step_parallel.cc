@@ -180,6 +180,7 @@ void ForwardCommunication(OperatorVector forward_op, const CNodePtr &node) {
 static CNodePtr InsertMakeTuple(const AnfNodePtr &prev, uint64_t num, const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(prev);
   MS_EXCEPTION_IF_NULL(func_graph);
+  ScopeGuard scope_guard(prev->scope());
   std::vector<AnfNodePtr> make_tuple_inputs;
   make_tuple_inputs.push_back(NewValueNode(prim::kPrimMakeTuple));
   for (uint64_t i = 0; i < num; i++) {
