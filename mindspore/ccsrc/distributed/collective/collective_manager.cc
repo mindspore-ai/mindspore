@@ -152,15 +152,14 @@ bool CollectiveManager::Initialize() {
     return true;
   }
 
-  if (!common::GetEnv(kSimulationLevel).empty()) {
+  need_host_collective_ = common::UseHostCollective();
+  std::string device_type = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  if (!common::GetEnv(kSimulationLevel).empty() && device_type != kAscendDevice) {
     MS_LOG(WARNING) << "This is simulation mode with level " << common::GetEnv(kSimulationLevel)
                     << ". Process's RANK_ID: " << common::GetEnv("RANK_ID")
                     << ", RANK_SIZE: " << common::GetEnv("RANK_SIZE");
     return InitializeDummyCommLib();
   }
-
-  need_host_collective_ = common::UseHostCollective();
-  std::string device_type = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   // need_host_collective_ means using rank_table to initialize collective communication, which is only supported by
   // Ascend. On other types of devices, exception should be thrown.
   if (device_type != kAscendDevice && !need_host_collective_) {
@@ -192,6 +191,10 @@ bool CollectiveManager::Initialize() {
                              "Failed to create group " + group_name);
   }
 
+  if (!common::GetEnv(kSimulationLevel).empty()) {
+    string group_name = "dummy_group_name";
+    RETURN_IF_FALSE_WITH_LOG(CreateCommunicationGroup(group_name, {0}), "Failed to create group " + group_name);
+  }
   MS_LOG(INFO) << "End initializing collective communication for backend: " << device_type;
   inited_ = true;
   finalized_ = false;
@@ -254,7 +257,24 @@ bool CollectiveManager::CreateCommunicationGroup(const std::string &group_name,
   }
   group_map_[group_name] = group_ranks;
   MS_EXCEPTION_IF_NULL(device_comm_lib_instance_);
-  if (!need_host_collective_ || !common::GetEnv(kSimulationLevel).empty()) {
+  std::string device_type = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  if (!common::GetEnv(kSimulationLevel).empty()) {
+    RETURN_IF_FALSE_WITH_LOG(device_comm_lib_instance_->CreateDeviceCommunicationGroup(group_name, group_ranks),
+                             "Failed to create device communication group " + group_name);
+    if (device_type == kAscendDevice) {
+      CommunicationGroupPtr group = device_comm_lib_instance_->GetGroup(group_name);
+      size_t root_info_size = 0;
+      void *root_info = group->GenerateRootInfo(&root_info_size);
+      MS_EXCEPTION_IF_NULL(device_ctx_);
+      device_ctx_->Initialize();
+      auto ret = group->Initialize(root_info);
+      if (!ret) {
+        MS_LOG(ERROR) << "Failed to create comm group on device side for " << group_name;
+      }
+    }
+    return true;
+  }
+  if (!need_host_collective_) {
     RETURN_IF_FALSE_WITH_LOG(device_comm_lib_instance_->CreateDeviceCommunicationGroup(group_name, group_ranks),
                              "Failed to create device communication group " + group_name);
     return true;

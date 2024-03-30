@@ -48,6 +48,7 @@
 #include "ops/structure_ops.h"
 #include "ops/lite_ops.h"
 #include "plugin/device/ascend/hal/hardware/ascend_collective_comm_lib.h"
+#include "plugin/device/ascend/hal/hardware/dummy_ascend_collective_comm_lib.h"
 #include "plugin/device/ascend/hal/hardware/ge_utils.h"
 #include "plugin/device/ascend/hal/hccl_adapter/hccl_adapter.h"
 #include "transform/graph_ir/op_adapter.h"
@@ -3783,8 +3784,14 @@ void DfGraphConvertor::AddCommAttrForHcclNode(const CNodePtr &node, const Operat
   }
   std::string group = common::AnfAlgo::GetNodeAttr<std::string>(node, kAttrGroup);
   (void)converted_op->SetAttr("group", group);
-
 #ifdef ENABLE_D
+  if (!common::GetEnv(kSimulationLevel).empty()) {
+    auto hccl_inner_comm_name = device::DummyAscendCollectiveCommLib::GetInstance().HcclInnerCommName(group);
+    MS_LOG(INFO) << "Set comm handle and comm group name of the hccl node: " << node->fullname_with_scope()
+                 << "comm name:" << hccl_inner_comm_name;
+    (void)converted_op->SetAttr("group", hccl_inner_comm_name);
+    return;
+  }
   if (common::GetEnv(kSimulationLevel).empty() && !common::IsNeedProfileMemory()) {
     if (common::UseHostCollective() && !hccl::HcclAdapter::GetInstance().UseHcclCM()) {
       // For HcclCommInitRootInfo manner, set 'group' and 'comm' attrs. 'group' attr value should be hccl's inner comm
