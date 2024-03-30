@@ -421,7 +421,7 @@ class TraceGraphReusing : public TraceInfo {
   TraceGraphReusing() : TraceInfo(nullptr) {}
   explicit TraceGraphReusing(const DebugInfoPtr &info) : TraceInfo(info) {}
   ~TraceGraphReusing() override = default;
-  MS_DECLARE_TRACE_NAME_SYMBOL("CellReusing", "CR_");
+  MS_DECLARE_TRACE_NAME_SYMBOL("GraphReusing", "RU_");
   TraceInfoPtr clone() override { return std::make_shared<TraceGraphReusing>(*this); }
 };
 
