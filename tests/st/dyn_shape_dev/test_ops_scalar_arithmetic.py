@@ -21,7 +21,13 @@ import mindspore.ops.operations.manually_defined as F
 from tests.st.utils import test_utils
 
 
-context.set_context(grad_for_scalar=True)
+def setup_module():
+    context.set_context(grad_for_scalar=True)
+
+
+def teardown_module():
+    context.set_context(grad_for_scalar=False)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
@@ -58,9 +64,10 @@ def test_scalar_add(mode):
     if mode == ms.GRAPH_MODE:
         # In Pynative Mode, scalar op will be computed with __call__ function, leading to constant folding. Thus, there
         # is no backward procedure in this case.
-        context.set_context(grad_for_scalar=True)
+        setup_module()
         expect_grad_out = (1, 1)
         mutable_grad_output = scalar_add_backward_func(ms.mutable(input_x), ms.mutable(input_y))
+        teardown_module()
         assert np.allclose(mutable_grad_output, expect_grad_out)
 
 
@@ -96,9 +103,10 @@ def test_scalar_sub(mode):
         mutable_output = scalar_sub_forward_func(ms.mutable(input_x), ms.mutable(input_y))
         assert np.allclose(mutable_output, expect_out)
     if mode == ms.GRAPH_MODE:
-        context.set_context(grad_for_scalar=True)
+        setup_module()
         expect_grad_out = (1, -1)
         mutable_grad_output = scalar_sub_backward_func(ms.mutable(input_x), ms.mutable(input_y))
+        teardown_module()
         assert np.allclose(mutable_grad_output, expect_grad_out)
 
 
@@ -133,9 +141,10 @@ def test_scalar_mul(mode):
         mutable_output = scalar_mul_forward_func(ms.mutable(input_x), ms.mutable(input_y))
         assert np.allclose(mutable_output, expect_out)
     if mode == ms.GRAPH_MODE:
-        context.set_context(grad_for_scalar=True)
+        setup_module()
         expect_grad_out = (4, 3)
         mutable_grad_output = scalar_mul_backward_func(ms.mutable(input_x), ms.mutable(input_y))
+        teardown_module()
         assert np.allclose(mutable_grad_output, expect_grad_out)
 
 
@@ -170,9 +179,10 @@ def test_scalar_div(mode):
         mutable_output = scalar_div_forward_func(ms.mutable(input_x), ms.mutable(input_y))
         assert np.allclose(mutable_output, expect_out)
     if mode == ms.GRAPH_MODE:
-        context.set_context(grad_for_scalar=True)
+        setup_module()
         expect_grad_out = (0.25, -0.1875)
         mutable_grad_output = scalar_div_backward_func(ms.mutable(input_x), ms.mutable(input_y))
+        teardown_module()
         assert np.allclose(mutable_grad_output, expect_grad_out)
 
 
@@ -207,8 +217,10 @@ def test_scalar_mod(mode):
         mutable_output = scalar_mod_forward_func(ms.mutable(input_x), ms.mutable(input_y))
         assert np.allclose(mutable_output, expect_out)
     if mode == ms.GRAPH_MODE:
+        setup_module()
         expect_grad_out = (1, 0)
         mutable_grad_output = scalar_mod_backward_func(ms.mutable(input_x), ms.mutable(input_y))
+        teardown_module()
         assert np.allclose(mutable_grad_output, expect_grad_out)
 
 
@@ -243,9 +255,10 @@ def test_scalar_floordiv(mode):
         mutable_output = scalar_floordiv_forward_func(ms.mutable(input_x), ms.mutable(input_y))
         assert np.allclose(mutable_output, expect_out)
     if mode == ms.GRAPH_MODE:
-        context.set_context(grad_for_scalar=True)
+        setup_module()
         expect_grad_out = (0, 0)
         mutable_grad_output = scalar_floordiv_backward_func(ms.mutable(input_x), ms.mutable(input_y))
+        teardown_module()
         assert np.allclose(mutable_grad_output, expect_grad_out)
 
 
@@ -280,9 +293,10 @@ def test_scalar_eq(mode):
         mutable_output = scalar_eq_forward_func(ms.mutable(input_x), ms.mutable(input_y))
         assert np.allclose(mutable_output, expect_out)
     if mode == ms.GRAPH_MODE:
-        context.set_context(grad_for_scalar=True)
+        setup_module()
         expect_grad_out = (0, 0)
         mutable_grad_output = scalar_eq_backward_func(ms.mutable(input_x), ms.mutable(input_y))
+        teardown_module()
         assert np.allclose(mutable_grad_output, expect_grad_out)
 
 
@@ -317,9 +331,10 @@ def test_scalar_ge(mode):
         mutable_output = scalar_ge_forward_func(ms.mutable(input_x), ms.mutable(input_y))
         assert np.allclose(mutable_output, expect_out)
     if mode == ms.GRAPH_MODE:
-        context.set_context(grad_for_scalar=True)
+        setup_module()
         expect_grad_out = (0, 0)
         mutable_grad_output = scalar_ge_backward_func(ms.mutable(input_x), ms.mutable(input_y))
+        teardown_module()
         assert np.allclose(mutable_grad_output, expect_grad_out)
 
 
@@ -354,9 +369,10 @@ def test_scalar_gt(mode):
         mutable_output = scalar_gt_forward_func(ms.mutable(input_x), ms.mutable(input_y))
         assert np.allclose(mutable_output, expect_out)
     if mode == ms.GRAPH_MODE:
-        context.set_context(grad_for_scalar=True)
+        setup_module()
         expect_grad_out = (0, 0)
         mutable_grad_output = scalar_gt_backward_func(ms.mutable(input_x), ms.mutable(input_y))
+        teardown_module()
         assert np.allclose(mutable_grad_output, expect_grad_out)
 
 
@@ -391,9 +407,10 @@ def test_scalar_le(mode):
         mutable_output = scalar_le_forward_func(ms.mutable(input_x), ms.mutable(input_y))
         assert np.allclose(mutable_output, expect_out)
     if mode == ms.GRAPH_MODE:
-        context.set_context(grad_for_scalar=True)
+        setup_module()
         expect_grad_out = (0, 0)
         mutable_grad_output = scalar_le_backward_func(ms.mutable(input_x), ms.mutable(input_y))
+        teardown_module()
         assert np.allclose(mutable_grad_output, expect_grad_out)
 
 
@@ -428,9 +445,10 @@ def test_scalar_lt(mode):
         mutable_output = scalar_lt_forward_func(ms.mutable(input_x), ms.mutable(input_y))
         assert np.allclose(mutable_output, expect_out)
     if mode == ms.GRAPH_MODE:
-        context.set_context(grad_for_scalar=True)
+        setup_module()
         expect_grad_out = (0, 0)
         mutable_grad_output = scalar_lt_backward_func(ms.mutable(input_x), ms.mutable(input_y))
+        teardown_module()
         assert np.allclose(mutable_grad_output, expect_grad_out)
 
 @pytest.mark.level0
@@ -464,7 +482,8 @@ def test_scalar_pow(mode):
         mutable_output = scalar_pow_forward_func(ms.mutable(input_x), ms.mutable(input_y))
         assert np.allclose(mutable_output, expect_out)
     if mode == ms.GRAPH_MODE:
-        context.set_context(grad_for_scalar=True)
+        setup_module()
         expect_grad_out = (108, 88.9875946044)
         mutable_grad_output = scalar_pow_backward_func(ms.mutable(input_x), ms.mutable(input_y))
+        teardown_module()
         assert np.allclose(mutable_grad_output, expect_grad_out)
