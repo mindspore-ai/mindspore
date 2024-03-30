@@ -11,7 +11,7 @@ flash_attention_score:
     B -- Batch size
     S1 -- Sequence length of query.
     S2 -- Sequence length of key and value.
-    N1 -- Num heads of query.
+    N1 -- Num heads of query. Max value 256.
     N2 -- Num heads of key and value, and N2 must be a factor of N1.
     D -- Head size.  The value ranges is a multiple of 16, with the max value of 512.
     H1 -- Hidden size of query, which equals to N1 * D.
@@ -46,7 +46,7 @@ flash_attention_score:
               optimized attn_mask matrix (2048*2048) is required..
             - 5: Represents the prefix scenario, that is, on the basis of rightDownCasual, a matrix with length S1 and
               width N is added to the left side. The value of N is obtained by the new input prefix, and the N value of
-              each Batch axis is different. Not implemented yet.
+              each Batch axis is different.
             - 6: Represents the global scenario, not implemented yet.
             - 7: Represents the dilated scenario, not implemented yet.
             - 8: Represents the block_local scenario, not implemented yet.
@@ -62,15 +62,7 @@ flash_attention_score:
           is greater than 1024 and the mask of the lower triangle is used, enter only the inverse 1024 lines of
           the lower triangle for memory optimization. Input tensor of shape :math: `(B, N1, S1, S2)`,
           `(1, N1, S1, S2)`, `(B, N1, 1024, S2)`, `(1, N1, 1024, S2)`.
-          The real_shift and shape formats are related when input_layout is `TND`.
-          In the `(B, N1, 1024, S2)` and `(1, N1, 1024, S2) formats, sparse_mode must be 2. actual_seq_qlen and
-          actual_seq_kvlen must be same. Max value of both actual_seq_qlen and actual_seq_klen must be larger than 1024.
-
-          - (B, N1, S1, S2): If actual_seq_qlen is [x1, x2, x3] and actual_seq_kvlen is [y1, y2, y3], the sum of
-              real_shift elements must be equal to ((x1 * y1 + (x2 - x1) * (y2 - y1) + (x3 - x2) * (y3 - y2))) * N1.
-          - (1, N1, S1, S2): Similar to the previous format. The sum of real_shift elements must be equal to
-              (y1 + (y2 - y1) + (y3 - y2)) * N1.
-
+          The shape of `real_shift` should be `(B, N1, 1024, S2)` and `(1, N1, 1024, S2)` when input_layout is `TND`.
         - **drop_mask** (Union[Tensor[uint8], None]) - The dropout mask tensor.
           Input tensor of shape :math:`(B, N1, S1, S2 // 8) or None`.
         - **padding_mask** (None) - Reserved parameter. Not implemented yet.
