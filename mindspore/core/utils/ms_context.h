@@ -50,9 +50,9 @@ enum JitSyntaxLevel : int {
   kLax,         // JIT Fallback fully enabled.
 };
 
-enum JitDebugLevel : int {
-  kJitRelease,  // Used for deployment scenarios, compile performance will be better.
-  kJitDebug,    // For debugging scenarios, compile performance will decrease.
+enum DebugLevel : int {
+  kLevelRelease,  // Used for deployment scenarios, compile performance will be better.
+  kLevelDebug,    // For debugging scenarios, compile performance will decrease.
 };
 
 enum class CellReuseLevel { kNoCellReuse, kNoInline, kLazyInline };
@@ -137,7 +137,7 @@ enum MsCtxParam : unsigned {
   MS_CTX_SAVE_GRAPHS_FLAG,
   MS_CTX_JIT_SYNTAX_LEVEL,
   MS_CTX_COMPUTE_COMMUNICATE_FUSION_LEVEL,
-  MS_CTX_JIT_DEBUG_LEVEL,
+  MS_CTX_DEBUG_LEVEL,
   MS_CTX_TYPE_INT_END,
 
   // parameter of type uint32

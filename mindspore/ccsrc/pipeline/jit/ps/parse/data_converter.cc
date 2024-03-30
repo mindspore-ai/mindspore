@@ -909,7 +909,7 @@ FuncGraphPtr ConvertToFuncGraph(const py::object &obj, const ValuePtrList &args_
     if (!func_graph->dropped()) {
       bool has_forbid_reuse_attr = py::hasattr(obj, PYTHON_FUNCTION_FORBID_REUSE);
       if (forbid_reuse || has_forbid_reuse_attr ||
-          MsContext::GetInstance()->get_param<int>(MS_CTX_JIT_DEBUG_LEVEL) == kJitDebug) {
+          MsContext::GetInstance()->get_param<int>(MS_CTX_DEBUG_LEVEL) == kLevelDebug) {
         return BasicClone(func_graph);
       }
       return func_graph;
