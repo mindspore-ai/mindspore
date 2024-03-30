@@ -193,8 +193,8 @@ CUST_IMPLEMT_INFERFUNC(Gamma, GammaInfer) {
   std::string op_name = TbeGetName(op);
   ge::Shape broadcast_shape;
   ge::Shape output_shape;
-  InferBroadcastshapeForStatic(alpha_shape, beta_shape, output_shape);
-  InferBroadcastshapeForStatic(Shape(shape_dims), broadcast_shape, broadcast_shape);
+  InferBroadcastshapeForStatic(alpha_shape, beta_shape, broadcast_shape);
+  InferBroadcastshapeForStatic(Shape(shape_dims), broadcast_shape, output_shape);
   OP_LOGI(op_name.c_str(), "infer output_shape: %s", to_string(output_shape).c_str());
 
   auto output_desc = op.GetOutputDesc("output");
