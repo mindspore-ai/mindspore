@@ -98,7 +98,7 @@ __attribute__((unused)) static size_t GetClusterTimeout() {
   size_t time_out_sec = kDefaultClusterTimeOut;
   if (!time_out_str.empty()) {
     try {
-      int sec = std::atoi(time_out_str.c_str());
+      int sec = std::stoi(time_out_str);
       time_out_sec = sec < 0 ? SIZE_MAX : sec;
     } catch (const std::exception &e) {
       MS_LOG(EXCEPTION) << "Environmental variable 'MS_CLUSTER_TIMEOUT' " << time_out_str
