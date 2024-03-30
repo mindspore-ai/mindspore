@@ -378,41 +378,31 @@ bool IsParameterObject(const py::object &obj) {
   return py::hasattr(obj, "__parameter__") && py::isinstance<tensor::MetaTensor>(obj);
 }
 
-std::pair<bool, bool> ContainsParameter(const py::object &obj) {
-  // The output is {has_parameter, all_parameter_sequence}.
-  if (IsParameterObject(obj)) {
-    return {true, false};
-  }
-  if (py::hasattr(obj, "__parameter_tuple__")) {
-    return {true, true};
+bool ContainsParameter(const py::object &obj) {
+  if (IsParameterObject(obj) || py::hasattr(obj, "__parameter_tuple__")) {
+    return true;
   }
   if ((py::isinstance<py::tuple>(obj) || py::isinstance<py::list>(obj)) && py::len(obj) != 0) {
     // NamedTuple
     if (py::hasattr(obj, "_fields")) {
-      return {false, false};
+      return false;
     }
     auto tuple = obj.cast<py::tuple>();
-    bool has_parameter = false;
-    bool all_parameter_sequence = true;
     for (size_t i = 0; i < tuple.size(); ++i) {
-      if (!IsParameterObject(tuple[i])) {
-        all_parameter_sequence = false;
-      }
-      if (ContainsParameter(tuple[i]).first) {
-        has_parameter = true;
+      if (ContainsParameter(tuple[i])) {
+        return true;
       }
     }
-    return {has_parameter, all_parameter_sequence};
   } else if (py::isinstance<py::dict>(obj)) {
     auto dict = obj.cast<py::dict>();
     for (auto item : dict) {
       auto item_value = py::cast<py::object>(item.second);
-      if (ContainsParameter(item_value).first) {
-        return {true, false};
+      if (ContainsParameter(item_value)) {
+        return true;
       }
     }
   }
-  return {false, false};
+  return false;
 }
 }  // namespace
 
@@ -421,8 +411,7 @@ bool ResolveObjectToNode(const AnfNodePtr &origin_node, const py::object &obj, A
   MS_EXCEPTION_IF_NULL(origin_node);
   auto func_graph = origin_node->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
-  auto [contains_param, all_parameter_sequence] = ContainsParameter(obj);
-  if (!contains_param) {
+  if (!ContainsParameter(obj)) {
     auto output = ConvertObjectToNode(origin_node, obj, func_graph, is_element_obj);
     if (output == nullptr) {
       return false;
@@ -441,14 +430,13 @@ bool ResolveObjectToNode(const AnfNodePtr &origin_node, const py::object &obj, A
     return true;
   }
   if (py::isinstance<py::tuple>(obj) || py::isinstance<py::list>(obj) || py::hasattr(obj, "__parameter_tuple__")) {
+    bool all_parameter_sequence = true;
     std::vector<AnfNodePtr> args;
-    if (py::isinstance<py::list>(obj) && !all_parameter_sequence) {
-      args.push_back(NewValueNode(prim::kPrimMakeList));
-    } else {
-      args.push_back(NewValueNode(prim::kPrimMakeTuple));
-    }
     auto tuple = obj.cast<py::tuple>();
     for (size_t i = 0; i < tuple.size(); ++i) {
+      if (!IsParameterObject(tuple[i])) {
+        all_parameter_sequence = false;
+      }
       AnfNodePtr out = nullptr;
       bool success = ResolveObjectToNode(origin_node, tuple[i], &out, true);
       if (!success) {
@@ -456,6 +444,13 @@ bool ResolveObjectToNode(const AnfNodePtr &origin_node, const py::object &obj, A
         return false;
       }
       args.push_back(out);
+    }
+    // Convert [param1, param2, ..., paramN] to tuple.
+    bool need_convert_to_tuple = !is_element_obj && all_parameter_sequence && py::isinstance<py::list>(obj);
+    if (py::isinstance<py::tuple>(obj) || py::hasattr(obj, "__parameter_tuple__") || need_convert_to_tuple) {
+      (void)args.insert(args.begin(), NewValueNode(prim::kPrimMakeTuple));
+    } else {
+      (void)args.insert(args.begin(), NewValueNode(prim::kPrimMakeList));
     }
     // The ParameterTuple/tuple/list will not be added in order list,
     // since we don't want to deal with its RefTensor elements during auto_monad procedure.
