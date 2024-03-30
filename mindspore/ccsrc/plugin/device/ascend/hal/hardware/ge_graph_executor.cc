@@ -558,8 +558,9 @@ void GeGraphExecutor::AllocInputHostMemory(const KernelGraphPtr &kernel_graph) c
       tensor_size = std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
     }
 
-    auto device_address_ptr =
-      std::make_shared<GeHostAddress>(nullptr, tensor_size, kOpFormat_DEFAULT, output_type_id, kAscendDevice, 0);
+    auto device_id = device_context_->device_context_key().device_id_;
+    auto device_address_ptr = std::make_shared<GeHostAddress>(nullptr, tensor_size, kOpFormat_DEFAULT, output_type_id,
+                                                              kAscendDevice, device_id);
     device_address_ptr->set_is_ptr_persisted(false);
     AnfAlgo::SetOutputAddr(device_address_ptr, 0, input_node.get());
   }
@@ -582,8 +583,9 @@ void GeGraphExecutor::AllocOutputHostMemory(const KernelGraphPtr &kernel_graph) 
     auto i = output_with_index.second;
     TypeId output_type_id = common::AnfAlgo::GetOutputInferDataType(output_node, i);
 
+    auto device_id = device_context_->device_context_key().device_id_;
     const auto kernel_tensor = AnfAlgo::CreateOutputKernelTensorWithDeviceInfo(
-      output_with_index, nullptr, 0, kOpFormat_DEFAULT, output_type_id, {}, kAscendDevice, 0);
+      output_with_index, nullptr, 0, kOpFormat_DEFAULT, output_type_id, {}, kAscendDevice, device_id);
 
     auto output_device_addr = std::make_shared<GeHostAddress>(kernel_tensor);
     AnfAlgo::SetOutputAddr(output_device_addr, i, output_node.get());
