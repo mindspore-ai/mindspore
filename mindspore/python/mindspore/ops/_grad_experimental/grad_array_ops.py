@@ -703,14 +703,14 @@ def get_bprop_embedding_lookup(self):
             raise RuntimeError("Now, EmbeddingLookup op's grad don't support Dynamic Sense!")
         new_indices = sub_op(indices, offset)
         indices_size = size_op(new_indices)
+        x_shp_tail = x_shp[1:]
         if indices_size > 0:
             # Reshape the 'new_indices'
             new_indices_shape_changed = (indices_size,)
             new_indices = reshape_op(new_indices, new_indices_shape_changed)
+            actual_dout_shape_changed = new_indices_shape_changed + x_shp_tail
         else:
-            new_indices_shape_changed = ()
-        x_shp_tail = x_shp[1:]
-        actual_dout_shape_changed = new_indices_shape_changed + x_shp_tail
+            actual_dout_shape_changed = x_shp_tail
         # Reshape the 'actual_dout' on device
         actual_dout = reshape_op(dout, actual_dout_shape_changed)
         return RowTensorInner(new_indices, actual_dout, x_shp), zeros_like(indices), zeros_like(offset)
