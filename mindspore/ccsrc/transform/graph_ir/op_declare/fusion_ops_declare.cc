@@ -124,8 +124,7 @@ REG_ADPT_DESC(FlashAttentionScoreGrad, kNameFlashAttentionScoreGrad, ADPT_DESC(F
 
 // MatmulReduceScatter
 INPUT_MAP(MatmulReduceScatter) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}, {3, INPUT_DESC(bias)}};
-ATTR_MAP(MatmulReduceScatter) = {{"group", ATTR_DESC(group, AnyTraits<std::string>())},
-                                 {"reduce_op", ATTR_DESC(reduce_op, AnyTraits<std::string>())},
+ATTR_MAP(MatmulReduceScatter) = {{"reduce_op", ATTR_DESC(reduce_op, AnyTraits<std::string>())},
                                  {"is_trans_a", ATTR_DESC(is_trans_a, AnyTraits<bool>())},
                                  {"is_trans_b", ATTR_DESC(is_trans_b, AnyTraits<bool>())},
                                  {"comm_turn", ATTR_DESC(comm_turn, AnyTraits<int64_t>())}};
@@ -134,8 +133,7 @@ REG_ADPT_DESC(MatmulReduceScatter, kNameMatmulReduceScatter, ADPT_DESC(MatmulRed
 
 // AllGatherMatmul
 INPUT_MAP(AllGatherMatmul) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}, {3, INPUT_DESC(bias)}};
-ATTR_MAP(AllGatherMatmul) = {{"group", ATTR_DESC(group, AnyTraits<std::string>())},
-                             {"is_trans_a", ATTR_DESC(is_trans_a, AnyTraits<bool>())},
+ATTR_MAP(AllGatherMatmul) = {{"is_trans_a", ATTR_DESC(is_trans_a, AnyTraits<bool>())},
                              {"is_trans_b", ATTR_DESC(is_trans_b, AnyTraits<bool>())},
                              {"gather_index", ATTR_DESC(gather_index, AnyTraits<int64_t>())},
                              {"comm_turn", ATTR_DESC(comm_turn, AnyTraits<int64_t>())}};
