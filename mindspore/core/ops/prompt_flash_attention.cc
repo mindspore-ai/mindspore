@@ -114,7 +114,7 @@ void CheckOptinalInputShape(const PrimitivePtr &primitive, const std::vector<Abs
   auto op_name = primitive->name();
   auto sparse_mode = GetValue<int64_t>(primitive->GetAttr("sparse_mode"));
   if (sparse_mode != SPARSE_MODE_0 && sparse_mode != SPARSE_MODE_2 && sparse_mode != SPARSE_MODE_3) {
-    MS_LOG(EXCEPTION) << "For primitive[" << op_name << "], sparse_mode must be 0 or 2 but got" << sparse_mode;
+    MS_LOG(EXCEPTION) << "For primitive[" << op_name << "], sparse_mode must be 0, 2 or 3 but got " << sparse_mode;
   }
   std::vector<ShapeVector> expect_mask_shapes = {
     {q_s, kv_s}, {1, q_s, kv_s}, {b, q_s, kv_s}, {b, 1, q_s, kv_s}, {1, 1, q_s, kv_s}};
