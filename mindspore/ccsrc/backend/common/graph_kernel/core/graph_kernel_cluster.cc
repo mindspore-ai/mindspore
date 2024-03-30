@@ -309,7 +309,13 @@ void GraphKernelCluster::DumpToFile() {
     MS_LOG(INFO) << "Failed to CreateNotExistDirs: ./" << kGraphKernelDumpPath;
     return;
   }
-  std::string filepath = dir_path.value() + "/" + "graph_kernel_cluster.txt";
+  std::string filepath_tmp = dir_path.value() + "/" + "graph_kernel_cluster.txt";
+  auto real_filepath = FileUtils::GetRealPath(filepath_tmp.c_str());
+  if (!real_filepath.has_value()) {
+    MS_LOG(EXCEPTION) << "Failed to get real path: " << filepath_tmp;
+    return;
+  }
+  auto filepath = real_filepath.value();
   ChangeFileMode(filepath, S_IWUSR);
   std::ofstream fout(filepath, std::ios::app);
   if (!fout.is_open()) {
