@@ -264,13 +264,13 @@ REG_ADPT_DESC(SiluGrad, prim::kPrimSiLUGrad->name(), ADPT_DESC(SiluGrad))
 
 // GLU
 INPUT_MAP(GLU) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(GLU) = {{"dim", ATTR_DESC(dim, AnyTraits<int>())}};
+ATTR_MAP(GLU) = {{"axis", ATTR_DESC(dim, AnyTraits<int64_t>())}};
 OUTPUT_MAP(GLU) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(GLU, prim::kPrimGLU->name(), ADPT_DESC(GLU))
 
 // GLUGrad
 INPUT_MAP(GLUGrad) = {{1, INPUT_DESC(y_grad)}, {2, INPUT_DESC(x)}};
-ATTR_MAP(GLUGrad) = {{"dim", ATTR_DESC(dim, AnyTraits<int>())}};
+ATTR_MAP(GLUGrad) = {{"axis", ATTR_DESC(dim, AnyTraits<int64_t>())}};
 OUTPUT_MAP(GLUGrad) = {{0, OUTPUT_DESC(x_grad)}};
 REG_ADPT_DESC(GLUGrad, prim::kPrimGluGrad->name(), ADPT_DESC(GLUGrad))
 }  // namespace mindspore::transform
