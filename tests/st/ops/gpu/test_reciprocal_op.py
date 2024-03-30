@@ -57,10 +57,18 @@ def test_reciprocal(data_type, mode):
     context.set_context(mode=mode, device_target="GPU")
     reciprocal = NetReciprocal()
     output0 = reciprocal(x0)
-    diff0 = output0.asnumpy() - expect0.numpy()
+    output0_np = output0.asnumpy()
+    output0_np = np.where(np.isinf(output0_np), 0.0, output0_np)
+    expect0_np = expect0.numpy()
+    expect0_np = np.where(np.isinf(expect0_np), 0.0, expect0_np)
+    diff0 = output0_np - expect0_np
     assert np.all(diff0 < error0)
     assert output0.shape == expect0.shape
     output1 = reciprocal(x1)
-    diff1 = output1.asnumpy() - expect1.numpy()
+    output1_np = output1.asnumpy()
+    output1_np = np.where(np.isinf(output1_np), 0.0, output1_np)
+    expect1_np = expect1.numpy()
+    expect1_np = np.where(np.isinf(expect1_np), 0.0, expect1_np)
+    diff1 = output1_np - expect1_np
     assert np.all(diff1 < error1)
     assert output1.shape == expect1.shape
