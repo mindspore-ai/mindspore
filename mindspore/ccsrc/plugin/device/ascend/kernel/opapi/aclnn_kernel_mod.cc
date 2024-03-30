@@ -41,38 +41,5 @@ bool AclnnKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std
   MS_EXCEPTION_IF_NULL(stream_ptr);
   return true;
 }
-
-void AclnnKernelMod::RunOp(void *stream_ptr, const std::vector<KernelTensor *> &workspace) {
-  if (workspace_size_list_.empty()) {
-    RUN_OP_API_ASYNC(op_type_, nullptr, 0, executor_, stream_ptr, release_func_);
-  } else {
-    if (workspace.empty()) {
-      MS_LOG(EXCEPTION) << "Failed to allocate workspace tensor!";
-    }
-    auto workspace_tensor = workspace[0];
-    if (workspace_tensor->size() != workspace_size_list_[0]) {
-      MS_LOG(EXCEPTION) << "Please check 'GetWorkSpaceInfo' and 'Launch' func. Expected workspace size is"
-                        << workspace_size_list_[0] << ", but get " << workspace_tensor->size();
-    }
-    RUN_OP_API_ASYNC(op_type_, workspace_tensor->device_ptr(), workspace_size_list_[0], executor_, stream_ptr,
-                     release_func_);
-  }
-}
-
-void AclnnKernelMod::RunOpSync(void *stream_ptr, const std::vector<KernelTensor *> &workspace) {
-  if (workspace_size_list_.empty()) {
-    RUN_OP_API_SYNC(op_type_, nullptr, 0, executor_, stream_ptr);
-  } else {
-    if (workspace.empty()) {
-      MS_LOG(EXCEPTION) << "Failed to allocate workspace tensor!";
-    }
-    const auto &workspace_tensor = workspace[0];
-    if (workspace_tensor->size() != workspace_size_list_[0]) {
-      MS_LOG(EXCEPTION) << "Please check 'GetWorkSpaceInfo' and 'Launch' func. Expected workspace size is"
-                        << workspace_size_list_[0] << ", but get " << workspace_tensor->size();
-    }
-    RUN_OP_API_SYNC(op_type_, workspace_tensor->device_ptr(), workspace_size_list_[0], executor_, stream_ptr);
-  }
-}
 }  // namespace kernel
 }  // namespace mindspore

@@ -35,9 +35,6 @@ class ReduceAclnnKernelMod : public AclnnKernelMod {
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
               const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
 
- private:
-  DEFINE_GET_WORKSPACE_FOR_RESIZE()
-
  protected:
   std::vector<int64_t> dims_{};
   bool keep_dim_{false};
@@ -46,11 +43,17 @@ class ReduceAclnnKernelMod : public AclnnKernelMod {
 class ReduceAllAclnnKernelMod : public ReduceAclnnKernelMod {
  public:
   ReduceAllAclnnKernelMod() : ReduceAclnnKernelMod("aclnnAll") {}
+
+ private:
+  DEFINE_GET_WORKSPACE_FOR_RESIZE()
 };
 
 class ReduceAnyAclnnKernelMod : public ReduceAclnnKernelMod {
  public:
   ReduceAnyAclnnKernelMod() : ReduceAclnnKernelMod("aclnnAny") {}
+
+ private:
+  DEFINE_GET_WORKSPACE_FOR_RESIZE()
 };
 
 class ReduceMathAclnnKernelMod : public ReduceAclnnKernelMod {
@@ -74,6 +77,7 @@ class ReduceSumAclnnKernelMod : public ReduceMathAclnnKernelMod {
               const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
 
  private:
+  DEFINE_GET_WORKSPACE_FOR_RESIZE()
   TypeId dtype_;
   bool need_skip_execute_{false};
 };
@@ -81,6 +85,9 @@ class ReduceSumAclnnKernelMod : public ReduceMathAclnnKernelMod {
 class ReduceMeanAclnnKernelMod : public ReduceMathAclnnKernelMod {
  public:
   ReduceMeanAclnnKernelMod() : ReduceMathAclnnKernelMod("aclnnMean") {}
+
+ private:
+  DEFINE_GET_WORKSPACE_FOR_RESIZE()
 };
 }  // namespace kernel
 }  // namespace mindspore
