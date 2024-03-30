@@ -192,9 +192,8 @@ def run_twice_with_different_networks(file_name_first, file_name_second, cache_p
         data_first = f_first.read()
     assert "Check the consistency of dependency files hash failed. Execute all the compilation actions." in data_first
 
-    for i in range(8):
-        ge_cache = cache_path + "/rank_" + str(i) + "/ge_cache"
-        shutil.rmtree(ge_cache)
+    ge_cache = cache_path + "/rank_0/ge_cache"
+    shutil.rmtree(ge_cache)
 
     # Second run with compile cache
     cmd_second = f"GLOG_v=2 python " + file_name_second + " '" + cache_path + "' > " + log_file_name_second + " 2>&1"
@@ -399,7 +398,7 @@ def test_compile_cache_net_with_control_flow():
                                 "control_net_second.txt")
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
