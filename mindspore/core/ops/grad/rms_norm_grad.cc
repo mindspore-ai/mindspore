@@ -43,12 +43,12 @@ constexpr int64_t kRmsNormGradInputNum = 4;
 
 BaseShapePtr RmsNormGradInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto x = input_args[1]->BuildShape();
+  auto x = input_args[1]->GetShape();
   MS_EXCEPTION_IF_NULL(x);
   auto x_shape_ptr = x->cast<abstract::ShapePtr>();
   MS_EXCEPTION_IF_NULL(x_shape_ptr);
 
-  auto gamma = input_args[3]->BuildShape();
+  auto gamma = input_args[3]->GetShape();
   MS_EXCEPTION_IF_NULL(gamma);
   auto gamma_shape_ptr = gamma->cast<abstract::ShapePtr>();
   MS_EXCEPTION_IF_NULL(x_shape_ptr);
