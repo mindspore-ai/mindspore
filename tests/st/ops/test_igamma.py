@@ -42,6 +42,24 @@ def test_igamma_functional_api_modes(mode):
     np.testing.assert_array_almost_equal(output.asnumpy(), expected, decimal=4)
 
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_igamma_functional_api_compile(mode):
+    """
+    Feature: Test igamma functional api.
+    Description: Test igamma functional api for Graph and PyNative modes with scalar input.
+    Expectation: Network compile succeed.
+    """
+    context.set_context(mode=mode)
+    a = Tensor(np.random.uniform(0, 15, (3,)), mstype.float64)
+    x = Tensor(np.random.uniform(0, 15, (1,)), mstype.float64)
+    F.igamma(a, x).asnumpy()
+
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
