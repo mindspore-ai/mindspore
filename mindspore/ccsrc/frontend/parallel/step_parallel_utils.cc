@@ -873,6 +873,7 @@ AnfNodePtr CreateFP16Cast(const CNodePtr &node, const AnfNodePtr &pre_node, cons
   type_node->set_abstract(compute_node_type->ToAbstract());
   auto new_node = node->func_graph()->NewCNode({NewValueNode(prim), pre_node, type_node});
   new_node->set_abstract(node->abstract());
+  new_node->set_scope(node->scope());
   new_node->set_in_forward_flag(true);
   return new_node;
 }
