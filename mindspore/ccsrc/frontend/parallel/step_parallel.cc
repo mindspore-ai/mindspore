@@ -2312,7 +2312,7 @@ static void CheckpointStrategy(const std::vector<AnfNodePtr> &all_nodes, const F
     auto cloned_parameter = cloned_parameter_node->cast<ParameterPtr>();
     MS_EXCEPTION_IF_NULL(cloned_parameter);
 
-    if (!ParameterIsCloned(cloned_parameter_node)) {
+    if (!ParameterIsCloned(cloned_parameter_node) && !IsStrategySaved(cloned_parameter_node)) {
       continue;
     }
     std::string cloned_param_name = cloned_parameter_node->cast<ParameterPtr>()->name();
