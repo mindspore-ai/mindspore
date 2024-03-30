@@ -337,7 +337,7 @@ REG_ADPT_DESC(RaggedRange, prim::kPrimRaggedRange->name(), ADPT_DESC(RaggedRange
 
 // Imag
 INPUT_MAP(Imag) = {{1, INPUT_DESC(input)}};
-ATTR_MAP(Imag) = EMPTY_ATTR_MAP;
+ATTR_MAP(Imag) = {{"Tout", ATTR_DESC(Tout, AnyTraits<GEType>())}};
 OUTPUT_MAP(Imag) = {{0, OUTPUT_DESC(output)}};
 REG_ADPT_DESC(Imag, prim::kPrimImag->name(), ADPT_DESC(Imag));
 

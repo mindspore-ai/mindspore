@@ -57,6 +57,7 @@ AddAttrToNodeImplRegistry::AddAttrToNodeImplRegistry() {
   Register(prim::kPrimHShrink->name(), HShrinkModifyLambd);
   Register(prim::kPrimHShrinkGrad->name(), HShrinkModifyLambd);
   Register(prim::kPrimExtractVolumePatches->name(), ExtractVolumePatchesFormatTranspose);
+  Register(prim::kPrimImag->name(), ImagFusionProcess);
 }
 
 AddAttrToNodeImplRegistry &AddAttrToNodeImplRegistry::GetInstance() {
