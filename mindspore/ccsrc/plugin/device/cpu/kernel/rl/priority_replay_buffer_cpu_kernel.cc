@@ -70,6 +70,7 @@ bool PriorityReplayBufferCreateCpuKernel::Launch(const std::vector<KernelTensor 
                                                  const std::vector<KernelTensor *> &,
                                                  const std::vector<KernelTensor *> &outputs) {
   auto handle = GetDeviceAddress<int64_t>(outputs, 0);
+  MS_EXCEPTION_IF_NULL(handle);
   *handle = handle_;
   return true;
 }
