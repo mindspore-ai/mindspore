@@ -118,7 +118,10 @@ bool AscendCollectiveCommLib::Initialize(uint32_t global_rank, uint32_t global_r
   MS_EXCEPTION_IF_NULL(device_context->GetDeprecatedInterface());
   (void)device_context->GetDeprecatedInterface()->OpenTsd(ms_context);
   try {
-    if (!common::UseHostCollective()) {
+    if (!common::GetEnv(kSimulationLevel).empty()) {
+      std::string rank_id_str = std::to_string(0);
+      (void)hccl::HcclAdapter::GetInstance().InitHccl(local_rank_id, rank_id_str);
+    } else if (!common::UseHostCollective()) {
       // Use rank table to launch distribtued job.
       MS_LOG(WARNING)
         << "Launch Ascend distributed job in RankTable manner. This manner will be deprecated in later version of "

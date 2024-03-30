@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import pytest
 import os
 import numpy as np
 import mindspore.nn as nn
@@ -193,7 +194,10 @@ def test_simulation_graph():
     context.reset_auto_parallel_context()
     os.environ["MS_SIMULATION_LEVEL"] = ""
 
-
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_run_graph():
     """
     Feature: simulation level.
@@ -215,6 +219,10 @@ def test_run_graph():
     context.reset_auto_parallel_context()
     os.environ["MS_SIMULATION_LEVEL"] = ""
 
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_run_graph_kbk():
     """
     Feature: simulation level.
