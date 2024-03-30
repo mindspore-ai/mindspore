@@ -20,8 +20,9 @@ mindspore.set_auto_parallel_context
     parallel_mode                parameter_broadcast
     all_reduce_fusion_config     strategy_ckpt_load_file
     enable_parallel_optimizer    strategy_ckpt_save_file
-    parallel_optimizer_config    dataset_strategy
-    enable_alltoall              pipeline_stages
+    parallel_optimizer_config    full_batch
+    enable_alltoall              dataset_strategy
+               \                 pipeline_stages
                \                 pipeline_result_broadcast
                \                 auto_parallel_search_mode
                \                 comm_fusion
@@ -34,6 +35,7 @@ mindspore.set_auto_parallel_context
         - **global_rank** (int) - 表示全局RANK的ID，必须在[0,4095]范围中。默认值： ``0`` 。
         - **gradients_mean** (bool) - 表示是否在梯度的 AllReduce后执行平均算子。stand_alone不支持gradients_mean。默认值： ``False`` 。
         - **gradient_fp32_sync** (bool) - 在FP32中运行梯度的 AllReduce。stand_alone、data_parallel和hybrid_parallel不支持gradient_fp32_sync。默认值： ``True`` 。
+        - **loss_repeated_mean** (bool) - 表示在重复计算时，是否向后执行均值操作符。默认值： ``True`` 。
         - **parallel_mode** (str) - 有五种并行模式，分别是 ``stand_alone`` 、 ``data_parallel`` 、 ``hybrid_parallel`` 、 ``semi_auto_parallel`` 和 ``auto_parallel`` 。默认值： ``stand_alone`` 。
 
           - stand_alone：单卡模式。
