@@ -29,7 +29,7 @@ from mindspore.common import dtype as mstype
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
-from mindspore.ops.primitive import constexpr, _primexpr
+from mindspore.ops.primitive import _primexpr
 from mindspore.ops.operations._inner_ops import TileSize
 from mindspore.ops.auto_generate import Cummin, BatchMatMul, ArgMaxExt
 from mindspore.ops import auto_generate
@@ -91,7 +91,6 @@ import mindspore.ops.function as F
 from mindspore.ops.operations._sequence_ops import TupleToTensor
 
 
-@constexpr
 def _make_tensor(val, dtype):
     """Returns the tensor with value `val` and dtype `dtype`."""
     return Tensor(val, dtype)
@@ -4152,7 +4151,6 @@ def logaddexp2(input, other):
     return y
 
 
-@_primexpr
 def _check_and_canonicalize_axes(axes, ndim):
     """Check whether the types and values of input axes are valid."""
     return validator.check_and_canonicalize_axes(axes, ndim)
@@ -5194,7 +5192,6 @@ def bessel_k1e(x):
     return bessel_k1e_(x)
 
 
-@constexpr
 def _check_input_dtype(param_name, input_dtype, allow_dtypes, cls_name):
     validator.check_type_name(param_name, input_dtype, allow_dtypes, cls_name)
 
@@ -5312,7 +5309,6 @@ def frac(x):
 #####################################
 
 
-@_primexpr
 def _create_cummin_perm(axis, x_shape):
     """Insure axis is in [-len(x_shape),len(s_shape)-1]"""
 
@@ -5655,7 +5651,6 @@ def dstack(inputs):
     return _get_cache_prim(P.Concat)(2)(trans_inputs)
 
 
-@_primexpr
 def _check_is_int(arg_value, arg_name, cls_name):
     validator.check_is_int(arg_value, arg_name, cls_name)
 
@@ -6364,7 +6359,6 @@ def hann_window(window_length, periodic=True, *, dtype=None):
     return Tensor(w[:-1]) if periodic else Tensor(w)
 
 
-@constexpr
 def _type_convert(force, obj):
     """
     Convert type of `obj` to `force`.
@@ -6792,7 +6786,6 @@ def _moveaxis(x, source, destination):
     return ops.transpose(x, perm)
 
 
-@_primexpr
 def _check_axis(axis, ord, ndim):
     """axis check"""
     if axis is None:
@@ -6810,7 +6803,6 @@ def _check_axis(axis, ord, ndim):
     return axis, False
 
 
-@_primexpr
 def _check_ord(ord, axis):
     if len(axis) == 1:
         if isinstance(ord, str):
@@ -6830,7 +6822,6 @@ def _check_dtype(d1, d2):
     raise ValueError('the dtype is not supported.')
 
 
-@_primexpr
 def _check_last_dim_shape_eq(a, b):
     if a.shape[-1] != b.shape[-1]:
         raise ValueError('shapes are not aligned')
@@ -7065,7 +7056,6 @@ def norm(A, ord=None, dim=None, keepdim=False, *, dtype=None):
     return None
 
 
-@_primexpr
 def _check_vector_norm_axis(axis, ndim):
     """vector_norm axis check"""
     if (not isinstance(axis, int)) and (not isinstance(axis, tuple)) and (axis is not None):
@@ -7086,7 +7076,6 @@ def _check_vector_norm_axis(axis, ndim):
     return tuple_dim
 
 
-@_primexpr
 def _check_vector_norm_ord(ord):
     """vector_norm ord check"""
     if ord not in [0, 2, float('inf'), -float('inf')] and not isinstance(ord, (int, float)):
@@ -7200,7 +7189,6 @@ def vector_norm(x, ord=2, axis=None, keepdims=False, *, dtype=None):
     return ret
 
 
-@_primexpr
 def _check_matrix_norm_axis(axis, ndim):
     """matrix_norm axis check"""
     if not isinstance(axis, tuple):
@@ -7216,7 +7204,6 @@ def _check_matrix_norm_axis(axis, ndim):
     return row_axis, col_axis
 
 
-@_primexpr
 def _check_matrix_norm_ord(ord):
     """matrix_norm ord check"""
     if ord not in [2, -2, 1, -1, float('inf'), float('-inf'), 'fro', 'nuc']:
@@ -7453,17 +7440,14 @@ def renorm(input, p, axis, maxnorm):
     return renorm_(input)
 
 
-@constexpr
 def _check_attr_dtype(param_name, input_dtype, allow_dtypes, cls_name):
     validator.check_value_type(param_name, input_dtype, allow_dtypes, cls_name)
 
 
-@_primexpr
 def _check_positive_float(arg_value, arg_name, cls_name):
     validator.check_positive_float(arg_value, arg_name, cls_name)
 
 
-@_primexpr
 def _check_int_range(arg_value, lower_limit, upper_limit, arg_name=None, prim_name=None):
     validator.check_int_range(arg_value, lower_limit,
                               upper_limit, validator.INC_LEFT, arg_name, prim_name)
@@ -7723,19 +7707,16 @@ def _check_same_type(dtype1, dtype2):
     return dtype1 == dtype2
 
 
-@constexpr
 def _max(*args):
     """Returns the maximum value."""
     return max(*args)
 
 
-@constexpr
 def _min(*args):
     """Returns the minimum value."""
     return min(*args)
 
 
-@_primexpr
 def _infer_shape_rem(shape1, shape2, ndim1, ndim2, transpose_b):
     """Infers the shape of the last two dimensions after performing matmul."""
     shape_rem = []
@@ -7757,7 +7738,6 @@ def _check_value(items, max_size, msg_prefix, shape1, shape2):
                              f"shape2 {shape2}.")
 
 
-@_primexpr
 def _check_matmul_shapes(shape1, shape2, prim_name=None):
     """Checks shape1 and shape2 are valid to perform matmul, and returns output shape after broadcasting."""
     msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
@@ -7773,13 +7753,11 @@ def _check_matmul_shapes(shape1, shape2, prim_name=None):
     return tuple(shape_out)
 
 
-@_primexpr
 def _check_need_broadcast(shape1, shape2):
     """Returns True if broadcast is necessary for batchmatmul."""
     return shape1[:-2] != shape2[:-2]
 
 
-@_primexpr
 def _expand(x, ndim):
     """Expand x to ndim from axis, which can be 0 or -1."""
     while rank_(x) < ndim:
@@ -8776,7 +8754,6 @@ def _tuple_setitem(tup, idx, value):
     return tuple(tup)
 
 
-@_primexpr
 def _check_dim_in_range(dim, ndim):
     def _check(dim, ndim):
         if not isinstance(dim, int):
@@ -9720,7 +9697,6 @@ def imag(input):
     return imag_(input)
 
 
-@_primexpr
 def _check_repeat_in_axis(axis, x_ndim, prim_name):
     """check repeat dim in axis"""
     if isinstance(axis, (list, tuple)):
@@ -10669,7 +10645,6 @@ def ifftn(input, s=None, dim=None, norm=None):  # pylint: disable=redefined-oute
                                       ifftninput.dim_permute, ifftninput.out_sizes)
 
 
-@_primexpr
 def _check_validate_axis(axis, name):
     def _check(axis):
         if isinstance(axis, (tuple, list)):
@@ -10681,7 +10656,6 @@ def _check_validate_axis(axis, name):
     return axis
 
 
-@constexpr
 def _check_validate_keepdims(keep_dims, name):
     keep_dims = validator.check_value_type('keep_dims', keep_dims, [bool], name)
     return keep_dims
@@ -10760,7 +10734,6 @@ def count_nonzero(x, axis=(), keep_dims=False, dtype=mstype.int32):
     return nonzero_num
 
 
-@_primexpr
 def _int_to_tuple_conv(axes):
     """
     Converts ints to tuples in input axes, expected by most validation checks.
@@ -10771,7 +10744,6 @@ def _int_to_tuple_conv(axes):
     return axes
 
 
-@_primexpr
 def _check_axes(axes, prim_name=None):
     """
     Check for validity and type of axes passed to function.
@@ -10791,7 +10763,6 @@ def _check_axes(axes, prim_name=None):
     return axes
 
 
-@constexpr
 def _typecheck_input(x1_type, x2_type, prim_name=None):
     """
     Check input tensor types to be valid and confirm they are the same type.
@@ -10804,7 +10775,6 @@ def _typecheck_input(x1_type, x2_type, prim_name=None):
                         f"and x2_type: {x2_type}.")
 
 
-@_primexpr
 def _axes_int_check(x1_shape, x2_shape, axes, prim_name=None):
     """
     Convert from single int axes to 2d tuple if required
@@ -10833,7 +10803,6 @@ def _axes_int_check(x1_shape, x2_shape, axes, prim_name=None):
     return axes
 
 
-@_primexpr
 def _validate_axes(x1_shape, x2_shape, axes, prim_name=None):
     """
     Checks for axes having the correct length according to input, for any value in axis
@@ -10886,7 +10855,6 @@ def _validate_axes(x1_shape, x2_shape, axes, prim_name=None):
     _check(invalid_a, invalid_b, x1_shape, x2_shape, axes)
 
 
-@_primexpr
 def _calc_new_shape(shape, axes, position=0):
     """
     Calculate transpose and reshape parameters for input transformations,
@@ -11036,7 +11004,6 @@ def vecdot(x, y, *, axis=-1):
     return result
 
 
-@_primexpr
 def _check_invalid_input(x1_shape, x2_shape, prim_name=None):
     msg_prefix = f"For \\\'{prim_name}\\\', the" if prim_name else "The"
     if len(x1_shape) < 2 or len(x2_shape) < 2:
@@ -11045,7 +11012,6 @@ def _check_invalid_input(x1_shape, x2_shape, prim_name=None):
                          f" and \\\'len(x2_shape)\\\': ({len(x2_shape)}).")
 
 
-@constexpr
 def _typecheck_input_dot(x1_type, x2_type, prim_name=None):
     """
     Check input tensor types to be valid and confirm they are the same type for dot and batch dot ops.
@@ -11058,7 +11024,6 @@ def _typecheck_input_dot(x1_type, x2_type, prim_name=None):
                         f"x1_type: {x1_type} and x2_type: {x2_type}.")
 
 
-@_primexpr
 def _get_transpose_shape(x2_shape):
     x2_shape_range = tuple(range(len(x2_shape)))
     x2_shape_transpose = x2_shape_range[-2:-1] + x2_shape_range[:-2] + x2_shape_range[-1:]
@@ -11155,7 +11120,6 @@ def dot(input, other):
     return matmul_op(input, other)
 
 
-@_primexpr
 def _get_batch_size(x1_shape, x2_shape, prim_name=None):
     """
     Get batch sizes from two inputs
@@ -11171,7 +11135,6 @@ def _get_batch_size(x1_shape, x2_shape, prim_name=None):
     return x1_shape[0], x2_shape[0]
 
 
-@constexpr
 def _typecheck_input_batch_dot(x1_type, x2_type, prim_name=None):
     """
     Check input tensor types to be valid and confirm they are the same type for batch dot ops.
@@ -11184,7 +11147,6 @@ def _typecheck_input_batch_dot(x1_type, x2_type, prim_name=None):
                         f"x2_type: {x2_type}.")
 
 
-@_primexpr
 def _check_axes_for_batch_dot(x1_shape, x2_shape, axes, prim_name=None):
     """
     Check whether axes are valid and cast axes from tuple to list
@@ -11244,7 +11206,6 @@ def _check_axes_for_batch_dot(x1_shape, x2_shape, axes, prim_name=None):
     return axes
 
 
-@_primexpr
 def _calc_new_shape_batchdot(shape, axes, position=0):
     """
     Calculate transpose and reshape parameters for input transformations,
@@ -11268,7 +11229,6 @@ def _calc_new_shape_batchdot(shape, axes, position=0):
     return new_shape, transpose_perm, free_dims
 
 
-@_primexpr
 def _check_batch_size(x1_batch_size, x2_batch_size, prim_name=None):
     """
     Check whether batch size of two inputs are the same
@@ -11279,7 +11239,6 @@ def _check_batch_size(x1_batch_size, x2_batch_size, prim_name=None):
                          f"'x1_batch_size': {x1_batch_size} and 'x2_batch_size': {x2_batch_size}.")
 
 
-@_primexpr
 def _get_output_shape(batch_size, x1_ret, x2_ret):
     """
     Compute output shape for batch dot

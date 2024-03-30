@@ -20,7 +20,6 @@ from math import pi, log
 from mindspore import context
 from mindspore import log as logger
 import mindspore.ops as ops
-from mindspore.ops.primitive import constexpr, _primexpr
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops.operations import nn_ops as NN_OPS
@@ -94,10 +93,10 @@ check_positive_int_const = validator.check_positive_int
 check_positive_int_sequence_const = validator.check_positive_int_sequence
 check_positive_float_const = validator.check_positive_float
 check_positive_float_sequence_const = validator.check_positive_float_sequence
-check_bool_const = constexpr(validator.check_bool)
+check_bool_const = validator.check_bool
 check_int_const = validator.check_is_int
 check_non_negative_float_const = validator.check_non_negative_float
-check_string_const = constexpr(validator.check_string)
+check_string_const = validator.check_string
 
 
 def adaptive_avg_pool2d(input, output_size):
@@ -265,7 +264,6 @@ def adaptive_avg_pool3d(input, output_size):
     return adaptive_avg_pool3d_(input)
 
 
-@constexpr
 def _check_avgpool_1d_type_and_int(kernel_size, stride, ceil_mode, count_include_pad):
     """Checks the type of avgpool1d input"""
     validator.check_value_type('kernel_size', kernel_size, [int], 'avg_pool1d')
@@ -276,7 +274,6 @@ def _check_avgpool_1d_type_and_int(kernel_size, stride, ceil_mode, count_include
     validator.check_int(stride, 1, validator.GE, "stride", 'avg_pool1d')
 
 
-@constexpr
 def check_non_negative_int(arg_value, arg_name=None, prim_name=None):
     """Check argument is non-negative integer, which mean arg_value >= 0."""
     validator.check_non_negative_int(arg_value, arg_name, prim_name)
@@ -366,7 +363,6 @@ def avg_pool1d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
     return input_x
 
 
-@_primexpr
 def _check_avgpool_2d_kernel_size(kernel_size):
     """check and calculate the avgpool2d kernel_size"""
     if isinstance(kernel_size, int):
@@ -383,7 +379,6 @@ def _check_avgpool_2d_kernel_size(kernel_size):
     return kernel_size
 
 
-@_primexpr
 def _check_avgpool_2d_stride(stride):
     """check and calculate the avgpool2d stride"""
     if isinstance(stride, int):
@@ -400,7 +395,6 @@ def _check_avgpool_2d_stride(stride):
     return stride
 
 
-@_primexpr
 def _check_avgpool_2d_padding(padding):
     """check and calculate the avgpool2d padding"""
     if isinstance(padding, int):
@@ -417,7 +411,6 @@ def _check_avgpool_2d_padding(padding):
     return padding
 
 
-@_primexpr
 def _check_avg_pool2d_type_and_value(ceil_mode, count_include_pad, divisor_override):
     """check the type of avgpool2d input"""
     validator.check_value_type('ceil_mode', ceil_mode, bool, 'avg_pool2d')
@@ -509,7 +502,6 @@ def avg_pool2d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
     return input_x
 
 
-@constexpr
 def _check_avg_pool3d_padding(padding):
     """Check the padding value in avg_pool3d op."""
     if isinstance(padding, int):
@@ -602,13 +594,11 @@ def avg_pool3d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
     return avg_pool_op(input_x)
 
 
-@constexpr
 def is_ascend_backend():
     """Check if the Ascend is used"""
     return context.get_context('device_target') == 'Ascend'
 
 
-@_primexpr
 def _check_adaptive_max_pool1d_output_size(output_size):
     """Check the output_size value in adaptive_max_pool1d op."""
     validator.check_int(output_size, 1, validator.GE, "output_size", 'adaptive_max_pool1d')
@@ -693,7 +683,6 @@ def adaptive_max_pool1d(input, output_size):
     return input
 
 
-@constexpr
 def _check_adaptive_max_pool2d(return_indices):
     """check the type of return_indices"""
     validator.check_value_type("return_indices", return_indices, bool, "adaptive_max_pool2d")
@@ -1471,7 +1460,6 @@ def dropout3d(input, p=0.5, training=True):
     return out
 
 
-@_primexpr
 def _check_float_range_inc_neither(arg_value, lower_limit, upper_limit, arg_name=None, prim_name=None):
     """
     Method for checking whether input value is in float range inc neither.
@@ -1846,7 +1834,6 @@ def hardshrink(x, lambd=0.5):
     return hshrink_op(x)
 
 
-@constexpr
 def _check_axis_in_range(axis, ndim):
     """Checks axes are with the bounds of ndim"""
     if not isinstance(axis, int):
@@ -1856,7 +1843,6 @@ def _check_axis_in_range(axis, ndim):
     return axis % ndim
 
 
-@constexpr
 def _check_axis_valid(axes, ndim):
     """
     Checks axes are valid given ndim, and returns axes that can be passed
@@ -1882,7 +1868,6 @@ def _get_flip_end(ndim, shape, axes):
     return tuple([-shape[i] - 1 if i in axes else shape[i] + 1 for i in range(ndim)])
 
 
-@constexpr
 def _get_flip_strides(ndim, axes):
     """Calculate the strides of flip"""
     return tuple([-1 if i in axes else 1 for i in range(ndim)])
@@ -2080,7 +2065,6 @@ def _is_dim_unknown(shape):
     return isinstance(shape, tuple) and -2 in shape
 
 
-@_primexpr
 def _interploate_make_tuple(rank, value):
     s = tuple_to_tensor_((rank,), mstype.int32)
     v = Tensor(value)
@@ -2089,7 +2073,6 @@ def _interploate_make_tuple(rank, value):
     return out
 
 
-@_primexpr
 def _interpolate_scale_factor_convert_size(shape, scale_factor):
     x = tuple_to_tensor_(shape[2:], mstype.int64)
     y = tuple_to_tensor_(scale_factor, mstype.float32)
@@ -2912,7 +2895,6 @@ def _check_dense_add_bias_shape(input_shape, output_shape, bias_shape):
         raise ValueError(f"For dense, the bias shape {bias_shape} does not match the input shape {input_shape}.")
 
 
-@_primexpr
 def check_dense_inputs_same_shape(input1_shape, input2_shape, prim_name=None):
     """check bidense input Tensors' shape"""
     msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
@@ -3145,7 +3127,6 @@ def pdist(input, p=2.0):
     return pdist_(input)
 
 
-@_primexpr
 def _check_pad_inputs(padding):
     """check the input of pad"""
     if len(padding) % 2 != 0:
@@ -4062,13 +4043,11 @@ def mish(x):
     return mish_(x)
 
 
-@_primexpr
 def _check_value_type(arg_name, arg_value, valid_types, prim_name=None):
     """Checks whether a value is instance of some types."""
     return validator.check_value_type(arg_name, arg_value, valid_types, prim_name)
 
 
-@constexpr(check=False)
 def _check_is_tensor(param_name, input_data, cls_name):
     """Internal function, used to check whether the input data is Tensor."""
     if input_data is not None and not isinstance(ops.typeof(input_data), mstype.TensorType):
@@ -4076,7 +4055,6 @@ def _check_is_tensor(param_name, input_data, cls_name):
                         f"but got '{ops.typeof(input_data)}'")
 
 
-@constexpr
 def _check_number_gt_value(arg_name, arg_value, value, cls_name):
     """Internal function, used to judge whether arg_value is greater than or equal to value."""
     return validator.check_number(arg_name, arg_value, value, validator.GT, cls_name)
@@ -4174,7 +4152,6 @@ def margin_ranking_loss(input1, input2, target, margin=0.0, reduction='mean'):
     return _get_loss(x, reduction, "margin_ranking_loss")
 
 
-@_primexpr
 def _check_reduced_shape_valid(ori_shape, reduced_shape, axis, cls_name, arg_name1, arg_name2):
     """Internal function, used to check whether the reduced shape meets the requirements."""
     validator.check_reduce_shape(ori_shape, reduced_shape, axis, cls_name, arg_name1, arg_name2)
@@ -4436,7 +4413,6 @@ def grid_sample(input, grid, mode='bilinear', padding_mode='zeros', align_corner
     return _grid_sampler_3d(input, grid)
 
 
-@constexpr
 def _check_ctc_loss_inputs(blank, reduction, zero_infinity, prim_name):
     validator.check_value_type("blank", blank, [int], prim_name)
     validator.check_value_type('reduction', reduction, [str], prim_name)
@@ -4625,7 +4601,6 @@ def gaussian_nll_loss(x, target, var, full=False, eps=1e-6, reduction='mean'):
     return loss
 
 
-@_primexpr
 def _check_hinge_embedding_loss_type(inputs_dtype, targets_dtype, inputs, targets, margin, reduction):
     """Check hinge embedding loss type."""
     if not isinstance(margin, (float, int)):
@@ -5374,7 +5349,6 @@ def huber_loss(input, target, reduction='mean', delta=1.0):
     return _get_loss(loss, reduction, "huber_loss")
 
 
-@_primexpr
 def _check_adaptive_avg_pool1d_output_size(output_size):
     """Check the output_size value in adaptive_avg_pool1d op."""
     validator.check_int(output_size, 1, validator.GE, "output_size", 'adaptive_avg_pool1d')
@@ -5810,12 +5784,10 @@ def conv3d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
     return output
 
 
-@_primexpr
 def _check_positive_int(arg_value, arg_name=None, prim_name=None):
     validator.check_positive_int(arg_value, arg_name=arg_name, prim_name=prim_name)
 
 
-@_primexpr
 def _check_pxiel_shuffle_valid(num, factor):
     if num % factor ** 2 != 0:
         raise ValueError("For 'pixel_shuffle', the length of third to last dimension is not divisible"
@@ -5885,7 +5857,6 @@ def pixel_shuffle(input, upscale_factor):
     return input
 
 
-@_primexpr
 def _check_pxiel_unshuffle_valid(num1, num2, factor):
     if num1 % factor != 0 or num2 % factor != 0:
         raise ValueError("For 'pixel_unshuffle', the length of second to last 2 dimension should be divisible "
@@ -6724,7 +6695,6 @@ def _scaled_dot_product_attention(query, key, value, attn_mask, dropout_p, is_ca
     return (output, attn)
 
 
-@_primexpr
 def _check_qkv_shape(query_ndim, key_ndim, value_ndim):
     """Check the expected shape for `query, `key`, `value` and returns whether the input is batched."""
     # Shape check.
@@ -6747,7 +6717,6 @@ def _check_qkv_shape(query_ndim, key_ndim, value_ndim):
     return is_batched
 
 
-@_primexpr
 def _check_kpm_shape(query_ndim, kmp_ndim):
     """check key_padding_mask shape"""
     if query_ndim == 3:
@@ -6761,7 +6730,6 @@ def _check_kpm_shape(query_ndim, kmp_ndim):
                              f"but got `key_padding_mask` with {kmp_ndim}D.")
 
 
-@_primexpr
 def _check_attn_mask_shape(query_ndim, query_shape, key_shape, attn_mask_ndim,
                            attn_mask_shape, num_heads):
     """

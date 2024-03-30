@@ -29,7 +29,7 @@ from mindspore.ops.operations.sparse_ops import (
 )
 from mindspore import ops
 from mindspore.common import dtype as mstype
-from mindspore.ops.primitive import constexpr, Primitive
+from mindspore.ops.primitive import Primitive
 from mindspore.ops.operations.array_ops import GatherNd, Coalesce
 from mindspore.ops.operations import _csr_ops
 from mindspore.ops import functional as F
@@ -46,19 +46,16 @@ coalesce_op = Coalesce()
 csr_sparse_matrix_to_dense = CSRSparseMatrixToDense()
 
 
-@constexpr
 def print_info(info):
     """Print given error info"""
     print(info)
 
 
-@constexpr
 def _make_tensor(data):
     """Make Tensor"""
     return Tensor(data)
 
 
-@constexpr
 def _make_tensor_with_dtype(data, dtype):
     """Make Tensor with specific datatype"""
     return Tensor(data, dtype=dtype)
@@ -565,7 +562,6 @@ row_tensor_get_dense_shape = Primitive('RowTensorGetDenseShape')
 row_tensor_add = Primitive('RowTensorAdd')
 
 
-@constexpr
 def _calc_out_shape(sp_input, concat_dim):
     "calculating the COOTensor output shape in coo_concat"
     if isinstance(sp_input[0], tuple):
@@ -580,7 +576,6 @@ def _calc_out_shape(sp_input, concat_dim):
     return tuple(out_shape_list)
 
 
-@constexpr
 def _set_coo_concat_input(sp_input):
     "split COOTensor to normal tensor"
     if len(sp_input) < 2:
