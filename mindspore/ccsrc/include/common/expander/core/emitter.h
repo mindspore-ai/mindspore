@@ -250,6 +250,10 @@ class COMMON_EXPORT Emitter {
   }
   virtual NodePtr SparseSoftmaxCrossEntropyWithLogits(const NodePtrList &inputs, const DAttr &attrs, const NodePtr &out,
                                                       const NodePtr &dout, bool is_graph_mode);
+
+  // By comparing x with itself, test whether x is NaN
+  inline NodePtr IsNanFunc(const NodePtr &x) { return NotEqual(x, x); }
+
   /// \brief Emit a value node
   template <typename T>
   NodePtr Value(const T &value) {

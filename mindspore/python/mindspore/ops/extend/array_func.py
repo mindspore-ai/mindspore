@@ -22,6 +22,7 @@ Array Operators
 from mindspore.ops.operations.array_ops import ArgMaxWithValue, ArgMinWithValue
 from mindspore.ops._primitive_cache import _get_cache_prim
 from mindspore.ops.auto_generate.gen_ops_prim import gather_d_op
+from mindspore.ops.auto_generate.gen_ops_def import max_, min_
 
 # define Primitive global variables
 
@@ -75,25 +76,32 @@ def gather(input, dim, index):
     return gather_d_op(input, dim, index)
 
 
-def max(input, dim, keepdim=False):
+def max(input, dim=None, keepdim=False):
     """
-    Calculates the maximum value along with the given axis for the input tensor.
+    Calculates the maximum value along with the given dimension for the input tensor.
 
     Args:
         input (Tensor): The input tensor, can be any dimension. Complex tensor is not supported for now.
-        dim (int): The dimension to reduce.
-        keepdim (bool): Whether to reduce dimension, if true, the output will keep same dimension with the input,
-            the output will reduce dimension if false. Default: ``False`` .
+        dim (int, optional): The dimension to reduce. Default: ``None`` .
+        keepdim (bool, optional): Whether to reduce dimension, if true, the output will keep same dimension
+            with the input, the output will reduce dimension if false. Default: ``False`` .
 
     Returns:
-        tuple (Tensor), tuple of 2 tensors, containing the maximum value of the input tensor and the corresponding
-        index.
+        Tensor if `dim` is ``None`` , the maximum value of input tensor, with the shape :math:`()` , and same dtype as
+        `input`.
 
-        - values (Tensor) - The maximum value of input tensor, with same dtype as `input`. If `keepdim`
-          is true, the shape of output tensors is :math:`(input_1, input_2, ..., input_{axis-1}, 1, input_{axis+1},
-          ..., input_N)` . Otherwise, the shape is :math:`(input_1, input_2, ..., input_{axis-1}, input_{axis+1},
-          ..., input_N)` .
-        - index (Tensor) - The index for the maximum value of the input tensor, with the same shape as `values`.
+        tuple (Tensor) if `dim` is not ``None`` , tuple of 2 tensors, containing the maximum value of the input tensor
+        along the given dimension `dim` and the corresponding index:
+
+        - **values (Tensor)** - The maximum value of input tensor along the given dimension `dim`, with same dtype as
+          `input`. If `keepdim` is ``True`` , the shape of output tensors is :math:`(input_1, input_2, ...,
+          input_{axis-1}, 1, input_{axis+1}, ..., input_N)` . Otherwise, the shape is :math:`(input_1, input_2, ...,
+          input_{axis-1}, input_{axis+1}, ..., input_N)` .
+        - **index (Tensor)** - The index for the maximum value of the input tensor along the given dimension `dim`, with
+          the same shape as `values`.
+
+    Raises:
+        ValueError: If `dim` is ``None`` and `keepdim` is not ``False`` .
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -108,30 +116,41 @@ def max(input, dim, keepdim=False):
         >>> print(output, index)
         [[3.2 0.4 0.4 2.9 4. ]] [[1 1 0 1 1]]
     """
+    if dim is None:
+        if keepdim is not False:
+            raise ValueError(f"For 'max', the `keepdim` must be False when the `dim` is None, but got {keepdim}")
+        return max_(input)
     argmax_with_value_op = _get_cache_prim(ArgMaxWithValue)(dim, keepdim)
     indices, values = argmax_with_value_op(input)
     return values, indices
 
 
-def min(input, dim, keepdim=False):
+def min(input, dim=None, keepdim=False):
     """
-    Calculates the minimum value along with the given axis for the input tensor.
+    Calculates the minimum value along with the given dimension for the input tensor.
 
     Args:
         input (Tensor): The input tensor, can be any dimension. Complex tensor is not supported for now.
-        dim (int): The dimension to reduce.
-        keepdim (bool): Whether to reduce dimension, if true, the output will keep same dimension with the input,
-            the output will reduce dimension if false. Default: ``False`` .
+        dim (int, optional): The dimension to reduce. Default: ``None`` .
+        keepdim (bool, optional): Whether to reduce dimension, if true, the output will keep same dimension
+            with the input, the output will reduce dimension if false. Default: ``False`` .
 
     Returns:
-        tuple (Tensor), tuple of 2 tensors, containing the minimum value of the input tensor and the corresponding
-        index.
+        Tensor if `dim` is ``None`` , the minimum value of input tensor, with the shape :math:`()` , and same dtype as
+        `input`.
 
-        - values (Tensor) - The minimum value of input tensor, with same dtype as `input`. If `keepdim`
-          is true, the shape of output tensors is :math:`(input_1, input_2, ..., input_{axis-1}, 1, input_{axis+1},
-          ..., input_N)` . Otherwise, the shape is :math:`(input_1, input_2, ..., input_{axis-1}, input_{axis+1},
-          ..., input_N)` .
-        - index (Tensor) - The index for the minimum value of the input tensor, with same shape as `values`.
+        tuple (Tensor) if `dim` is not ``None`` , tuple of 2 tensors, containing the minimum value of the input tensor
+        along the given dimension `dim` and the corresponding index:
+
+        - **values (Tensor)** - The minimum value of input tensor along the given dimension `dim`, with same dtype as
+          `input`. If `keepdim` is ``True`` , the shape of output tensors is :math:`(input_1, input_2, ...,
+          input_{axis-1}, 1, input_{axis+1}, ..., input_N)` . Otherwise, the shape is :math:`(input_1, input_2, ...,
+          input_{axis-1}, input_{axis+1}, ..., input_N)` .
+        - **index (Tensor)** - The index for the minimum value of the input tensor along the given dimension `dim`,
+          with the same shape as `values`.
+
+    Raises:
+        ValueError: If `dim` is ``None`` and `keepdim` is not ``False`` .
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -145,6 +164,10 @@ def min(input, dim, keepdim=False):
         >>> print(output, index)
         [0.0] [0]
     """
+    if dim is None:
+        if keepdim is not False:
+            raise ValueError(f"For 'min', the `keepdim` must be False when the `dim` is None, but got {keepdim}")
+        return min_(input)
     argmin_with_value_op = _get_cache_prim(ArgMinWithValue)(dim, keepdim)
     indices, values = argmin_with_value_op(input)
     return values, indices

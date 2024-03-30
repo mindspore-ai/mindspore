@@ -1278,6 +1278,24 @@ def _infer_value_for_ReduceExtand(input_x, axis, keep_dims, dtype, prim_name):
     return value
 
 
+def _infer_value_for_MaxMin(input_x, prim_name):
+    """Infer value for Max/Min op."""
+    value = None
+    if input_x is not None:
+        prim_map = {
+            'Max': np.max,
+            'Min': np.min,
+        }
+        np_reduce_func = prim_map.get(prim_name, None)
+
+        if np_reduce_func is not None:
+            value = input_x.asnumpy()
+            value = np_reduce_func(value, None, keepdims=False)
+            value = np.array(value)
+            value = Tensor(value)
+    return value
+
+
 def infer_value_for_Cast(x, dst_type_enum):
     """Infer value for Cast op."""
     if x is None:
@@ -1308,10 +1326,19 @@ def infer_value_for_ReduceMax(input_x, axis, keep_dims):
     """Infer value for ReduceMax op."""
     return _infer_value_for_Reduce(input_x, axis, keep_dims, 'ReduceMax')
 
+def infer_value_for_Max(input_x):
+    """Infer value for Max op."""
+    return _infer_value_for_MaxMin(input_x, 'Max')
+
 
 def infer_value_for_ReduceMin(input_x, axis, keep_dims):
     """Infer value for ReduceMin op."""
     return _infer_value_for_Reduce(input_x, axis, keep_dims, 'ReduceMin')
+
+
+def infer_value_for_Min(input_x):
+    """Infer value for Max op."""
+    return _infer_value_for_MaxMin(input_x, 'Min')
 
 
 def infer_value_for_ReduceProd(input_x, axis, keep_dims):

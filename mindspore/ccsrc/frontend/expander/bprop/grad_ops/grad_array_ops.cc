@@ -73,6 +73,22 @@ std::vector<int64_t> TileShape(const std::vector<int64_t> &dims, const std::vect
 
   return res;
 }
+
+inline NodePtr MinOrMaxOpGetMask(BpropBuilder *ib, const NodePtr &x, const NodePtr &out) {
+  auto out_is_nan = ib->IsNanFunc(out);
+  auto input_is_nan = [&x](Emitter *e) -> NodePtrList { return {e->IsNanFunc(x)}; };
+  auto input_equal_out = [&x, &out](Emitter *e) -> NodePtrList { return {e->Equal(x, out)}; };
+  return ib->Conditional(out_is_nan, input_is_nan, input_equal_out);
+}
+
+NodePtr MinOrMaxOpGrad(BpropBuilder *ib, const NodePtr &x, const NodePtr &out, const NodePtr &dout) {
+  auto mask = MinOrMaxOpGetMask(ib, x, out);
+  auto x_zeros = ib->ZerosLike(x);
+  auto mask_sum = ib->Emit("SumExt", {mask, ib->EmitValue(kNone), ib->Value(false), ib->EmitValue(kNone)});
+  auto grad_div_mask_sum = ib->Div(dout, ib->Cast(mask_sum, ib->GetDtype(dout)));
+  auto dx = ib->Emit("MaskedFill", {x_zeros, mask, grad_div_mask_sum});
+  return {dx};
+}
 }  // namespace
 
 DEF_PURE_SHAPE_CALC(g_gather_drop_negative)
@@ -2270,5 +2286,16 @@ REG_BPROP_BUILDER("TransShape").SetUnusedInputs({i1, i2}).SetBody(BODYFUNC(ib) {
   auto dx = ib->Emit("TransShape", {dout, ib->Shape(x)});
   return {dx, ib->OutZeros(shape)};
 });
+
+REG_BPROP_BUILDER("Max").SetBody(BODYFUNC(ib) {
+  auto dx = MinOrMaxOpGrad(ib, ib->GetInput(kIndex0), ib->GetInput(kIndex1), ib->GetInput(kIndex2));
+  return {dx};
+});
+
+REG_BPROP_BUILDER("Min").SetBody(BODYFUNC(ib) {
+  auto dx = MinOrMaxOpGrad(ib, ib->GetInput(kIndex0), ib->GetInput(kIndex1), ib->GetInput(kIndex2));
+  return {dx};
+});
+
 REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop

@@ -1,4 +1,4 @@
-# Copyright 2023 Huawei Technologies Co., Ltd
+# Copyright 2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,100 +16,84 @@ import pytest
 import numpy as np
 from mindspore import Tensor, context
 from mindspore.ops.extend import min as min_
-import mindspore.common.dtype as mstype
 from mindspore import ops
+from mindspore.common import dtype as mstype
 
 from tests.st.utils.test_utils import to_cell_obj, compare
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
 
-def np_backward_func(np_input, axis, keep_dims, out_tuple, dout_tuple):
-    value = out_tuple[0]
-    dvalue = dout_tuple[0]
-    if not keep_dims:
-        value = np.expand_dims(value, axis)
-        dvalue = np.expand_dims(dvalue, axis)
-    return dvalue * np.equal(np_input, value)
+
+def np_backward_func(x, out, dout):
+    mask = np.not_equal(x, x) if np.isnan(out) else np.equal(x, out)
+    dx = np.zeros_like(x)
+    filled_value = np.divide(dout, np.sum(mask))
+    dx[np.where(mask)] = filled_value
+    return dx
 
 
-def argmin_with_value_argmax_case(op_func, np_func):
-    x_np = np.array([[1, 20, 5], [67, 8, 9], [24, 15, 130]], np.float32)
+def min_max_case(op_func, np_func, data_dtype=np.float32, has_nan=False, save_graphs=False):
+    np_dtype = data_dtype
+    is_bfloat16 = data_dtype == "bfloat16"
+    if is_bfloat16:
+        np_dtype = np.float32
+    x_np = np.array([[3, 20, 5], [67, 8, 130], [3, 15, 130]], np_dtype)
+    if has_nan:
+        x_np = np.array([[3, 20, np.nan, 5], [67, 8, np.nan, 130], [3, np.nan, 15, 130]], np_dtype)
     x = Tensor(x_np)
+    if is_bfloat16:
+        x = Tensor(x_np, mstype.bfloat16)
     net = to_cell_obj(op_func)
-    axis = 1
-    keepdims = False
-    input_args = (x, axis, keepdims)
+    input_args = (x,)
     # forward:
+    if save_graphs:
+        context.set_context(save_graphs=True, save_graphs_path="graph_forward")
     output = net(*input_args)
-    expect = np_func(x_np, axis, keepdims)
+    expect = np_func(x_np)
+    if is_bfloat16:
+        output = output.float()
     compare(output, expect)
+    if not data_dtype in [np.float16, np.float32, np.float64, "bfloat16"]:
+        return
     # backward:
+    if save_graphs:
+        context.set_context(save_graphs=True, save_graphs_path="graph_backward")
     output_grad = ops.grad(net)(*input_args)
-    expect_grad = np_backward_func(x, axis, keepdims, expect,
-                                   (np.ones_like(expect[0]), np.ones_like(expect[1])))
+    if is_bfloat16:
+        output_grad = output_grad.float()
+    expect_grad = np_backward_func(x_np, expect, np.ones_like(expect))
     assert np.allclose(output_grad.asnumpy(), expect_grad)
 
 
-def argmin_with_value_argmax_case_vmap(op_func):
+def min_max_case_vmap(op_func):
     def func_vmap_case(x):
-        return op_func(x, -1, False)
+        return op_func(x)
 
     x_batched = np.array([[5., 3., 4.], [2., 4., 3.], [3., 1., 4.]], dtype=np.float32)
     output_vmap = ops.vmap(func_vmap_case, in_axes=0)(Tensor(x_batched))
-    index_batched = []
     value_batched = []
     for x in x_batched:
-        index, value = func_vmap_case(Tensor(x))
-        index_batched.append(index.asnumpy())
+        value = func_vmap_case(Tensor(x))
         value_batched.append(value.asnumpy())
-    expect = (np.stack(index_batched), np.stack(value_batched))
+    expect = np.stack(value_batched)
     compare(output_vmap, expect)
 
 
-def argmin_with_value_argmax_case_dyn(op_func, np_func, dyn_rank=False):
-    axis = 1
-    keepdims = False
-
-    def func_dyn_case(x):
-        return op_func(x, axis, keepdims)
-
-    net = to_cell_obj(func_dyn_case)
-    t1_np = np.array([[1, 20], [67, 8]], dtype=np.float32)
-    if dyn_rank:
-        net.set_inputs(Tensor(shape=None, dtype=mstype.float32))
-        t2_np = np.array([[[1, 20, 5], [67, 8, 9]],
-                          [[130, 24, 15], [16, 64, 32]]], dtype=np.float32)
-    else:
-        net.set_inputs(Tensor(shape=[None, None], dtype=mstype.float32))
-        t2_np = np.array([[1, 20, 5], [67, 8, 9], [130, 24, 15]], dtype=np.float32)
-    inputs = [t1_np, t2_np]
-    for input_np in inputs:
-        input_t = Tensor(input_np)
-        # forward:
-        output = net(input_t)
-        expect = np_func(input_np, axis, keepdims)
-        compare(output, expect)
-        # backward:
-        output_grad = ops.grad(net)(input_t)
-        expect_grad = np_backward_func(input_np, axis, keepdims, expect,
-                                       (np.ones_like(expect[0]), np.ones_like(expect[1])))
-        assert np.allclose(output_grad.asnumpy(), expect_grad)
+def min_max_case_all_dyn(op_func, mode, data_dtype=np.float32):
+    is_bfloat16 = data_dtype == "bfloat16"
+    if is_bfloat16:
+        data_dtype = mstype.bfloat16
+    t1 = Tensor(np.array([[1, 20], [67, 8]], dtype=data_dtype))
+    input_case1 = [t1]
+    t2 = Tensor(np.array([[[1, 20, 5], [67, 8, 9]], [[130, 24, 15], [16, 64, 32]]], dtype=data_dtype))
+    input_case2 = [t2]
+    grad = True
+    if not data_dtype in [np.float16, np.float32, np.float64, "bfloat16"]:
+        grad = False
+    TEST_OP(op_func, [input_case1, input_case2], mode=mode, grad=grad)
 
 
-def argmin_with_value_argmax_case_all_dyn(op_func, mode):
-    t1 = Tensor(np.array([[1, 20], [67, 8]], dtype=np.float32))
-    input_case1 = [t1, -1]
-    t2 = Tensor(np.array([[[1, 20, 5], [67, 8, 9]], [[130, 24, 15], [16, 64, 32]]], dtype=np.float32))
-    input_case2 = [t2, 0]
-    TEST_OP(op_func, [input_case1, input_case2], mode=mode)
-
-
-def np_argmin_with_value(input_x, axis, keepdims):
-    value = np.min(input_x, axis)
-    index = np.argmin(input_x, axis).astype(np.int32)
-    if keepdims:
-        value = np.expand_dims(value, axis)
-        index = np.expand_dims(index, axis)
-    return value, index
+def np_min(input_x):
+    return np.min(input_x)
 
 
 @pytest.mark.level1
@@ -118,14 +102,29 @@ def np_argmin_with_value(input_x, axis, keepdims):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
-def test_argmin_with_value(mode):
+@pytest.mark.parametrize('data_dtype', [np.float32])
+def test_min(mode, data_dtype):
     """
-    Feature: Test argmin_with_value op.
-    Description: Test argmin_with_value.
+    Feature: Test min op.
+    Description: Test min.
     Expectation: the result match with expected result.
     """
     context.set_context(mode=mode)
-    argmin_with_value_argmax_case(min_, np_argmin_with_value)
+    min_max_case(min_, np_min, data_dtype=data_dtype)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_min_nan(mode):
+    """
+    Feature: Test min op.
+    Description: Test min.
+    Expectation: the result match with expected result.
+    """
+    context.set_context(mode=mode)
+    min_max_case(min_, np_min, has_nan=True)
 
 
 @pytest.mark.level1
@@ -134,14 +133,28 @@ def test_argmin_with_value(mode):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
-def test_argmin_with_value_vmap(mode):
+def test_min_vmap(mode):
     """
-    Feature: Test argmin_with_value op.
-    Description: Test argmin_with_value vmap.
+    Feature: Test min op.
+    Description: Test min vmap.
     Expectation: the result match with expected result.
     """
     context.set_context(mode=mode)
-    argmin_with_value_argmax_case_vmap(min_)
+    min_max_case_vmap(min_)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+@pytest.mark.parametrize('data_dtype', [np.float32])
+def test_min_all_dynamic(mode, data_dtype):
+    """
+    Feature: Test min op.
+    Description: Test min with input is dynamic.
+    Expectation: the result match with expected result.
+    """
+    min_max_case_all_dyn(min_, mode, data_dtype=data_dtype)
 
 
 @pytest.mark.level1
@@ -150,40 +163,31 @@ def test_argmin_with_value_vmap(mode):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
-def test_argmin_with_value_dyn(mode):
+@pytest.mark.parametrize('data_dtype', [np.float32])
+def test_min_tensor(mode, data_dtype):
     """
-    Feature: Test argmin_with_value op.
-    Description: Test argmin_with_value dynamic shape.
+    Feature: Test min op.
+    Description: Test min.
     Expectation: the result match with expected result.
     """
     context.set_context(mode=mode)
-    argmin_with_value_argmax_case_dyn(min_, np_argmin_with_value)
+    x_np = np.array([[3, 20, 5], [67, 8, 130], [3, 15, 130]], data_dtype)
+    x = Tensor(x_np)
+    output = x.min()
+    expect = np_min(x_np)
+    compare(output, expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
-def test_argmin_with_value_dyn_rank(mode):
+@pytest.mark.parametrize('mode', [context.PYNATIVE_MODE])
+@pytest.mark.parametrize('data_dtype', ["bfloat16"])
+def test_min_control_flow(mode, data_dtype):
     """
-    Feature: Test argmin_with_value op.
-    Description: Test argmin_with_value dynamic rank.
+    Feature: Test min op.
+    Description: Test min and control flow under pynative grad.
     Expectation: the result match with expected result.
     """
     context.set_context(mode=mode)
-    argmin_with_value_argmax_case_dyn(min_, np_argmin_with_value, True)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
-def test_argmin_with_value_all_dynamic(mode):
-    """
-    Feature: Test argmin_with_value op.
-    Description: Test argmin_with_value with both input and axis are dynamic.
-    Expectation: the result match with expected result.
-    """
-    argmin_with_value_argmax_case_all_dyn(min_, mode)
+    min_max_case(min_, np_min, data_dtype=data_dtype)

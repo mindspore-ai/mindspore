@@ -1,0 +1,14 @@
+#operator max
+max:
+  args:
+    input:
+      dtype: tensor
+  returns:
+    out:
+      dtype: tensor
+  function:
+    name: max_
+  dispatch:
+    enable: True
+    CPU: MaxCPU
+    GPU: MaxGPU
