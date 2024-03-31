@@ -263,4 +263,8 @@ IMPLEMT_COMMON_INFERFUNC(TraceInferShape) {
 COMMON_INFER_FUNC_REG(Trace, TraceInferShape);
 VERIFY_FUNC_REG(Trace, TraceVerify);
 // ---------------------Trace END----------------------
+
+// ----------------IndexPut-------------------
+ONE_IN_ONE_OUT_INFER(IndexPut, x1, y);
+// ----------------IndexPut END-------------------
 }  // namespace ge
