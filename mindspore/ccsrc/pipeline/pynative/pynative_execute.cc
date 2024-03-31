@@ -76,6 +76,18 @@ T PyNativeExecutorTry(const std::function<T(const Args &...)> &method, const Arg
     return res;
   }
 }
+
+// Tensor may be used before the execution of the asynchronous task.
+void SetCallbackForInputTensor(const std::vector<ValuePtr> &input_values) {
+  for (auto &input : input_values) {
+    MS_EXCEPTION_IF_NULL(input);
+    if (input->isa<tensor::Tensor>()) {
+      auto tensor = input->cast<tensor::TensorPtr>();
+      MS_EXCEPTION_IF_NULL(tensor);
+      tensor->set_need_pipeline_sync(true);
+    }
+  }
+}
 }  // namespace
 
 void PyNativeExecutor::StoreAsyncStatus(const FrontendOpRunInfoPtr &op_run_info) const {
@@ -89,6 +101,7 @@ void PyNativeExecutor::StoreAsyncStatus(const FrontendOpRunInfoPtr &op_run_info)
 py::object PyNativeExecutor::RunOpStub(const py::args &args) const {
   runtime::ProfilerStageRecorder recorder(runtime::ProfilerStage::kRunOp);
   FrontendOpRunInfoPtr op_run_info = forward_executor()->GenerateOpRunInfo(args, true);
+  SetCallbackForInputTensor(op_run_info->op_grad_info->input_value);
 
   StoreAsyncStatus(op_run_info);
   const auto &op_name = op_run_info->base_op_run_info.op_name;
@@ -116,6 +129,7 @@ py::object PyNativeExecutor::RunOpStub(const py::args &args) const {
 py::object PyNativeExecutor::RunSliceOpStub(const std::vector<ValuePtr> &input_values,
                                             const std::vector<SliceOpInfoPtr> &slice_op_infos) const {
   runtime::ProfilerStageRecorder recorder(runtime::ProfilerStage::kRunOp);
+  SetCallbackForInputTensor(input_values);
   auto requires_grad = grad_executor()->RequiresGrad();
   if (!forward_executor()->EnablePipeline("")) {
     forward_executor()->WaitForwardTask();
