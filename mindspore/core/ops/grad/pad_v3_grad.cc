@@ -26,6 +26,22 @@
 namespace mindspore {
 namespace ops {
 namespace {
+void PaddingsValueCheck(const PrimitivePtr &primitive, const ShapeVector &x_shape,
+                        const std::vector<int64_t> &paddings_val, const std::string &prim_name) {
+  const int64_t max_x_dim = 5;
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice) {
+    (void)CheckAndConvertUtils::CheckInteger("x_dim", SizeToLong(x_shape.size()), kLessThan, max_x_dim, prim_name);
+    // For Ascend, ge::PadV3Grad only support paddings has positive value, and this node is called when mode
+    // is not 'constant'
+    auto mode = GetValue<std::string>(primitive->GetAttr("mode"));
+    if (mode != "constant") {
+      (void)CheckAndConvertUtils::CheckPositiveVector("paddings", paddings_val, prim_name);
+    }
+  }
+}
+
 abstract::ShapePtr PadV3GradInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   constexpr size_t kTwo = 2;
   constexpr size_t kThree = 3;
@@ -82,19 +98,9 @@ abstract::ShapePtr PadV3GradInferShape(const PrimitivePtr &primitive, const std:
   for (int64_t i = 0; i < paddings_size; ++i) {
     paddings_val.push_back(int64_t(paddings_arg[LongToSize(i)]));
   }
-
-  auto context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context);
-  if (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice) {
-    // For Ascend, ge::PadV3Grad only support paddings has positive value, and this node is called when mode
-    // is not 'constant'
-    auto mode = GetValue<std::string>(primitive->GetAttr("mode"));
-    if (mode != "constant") {
-      (void)CheckAndConvertUtils::CheckPositiveVector("paddings", paddings_val, prim_name);
-    }
-  }
+  PaddingsValueCheck(primitive, x_shape, paddings_val, prim_name);
   auto paddings_contiguous = GetValue<bool>(primitive->GetAttr("paddings_contiguous"));
-  if (paddings_contiguous == false) {
+  if (!paddings_contiguous) {
     std::vector<int64_t> tmp = paddings_val;
     for (int64_t i = 0; i < paddings_size; ++i) {
       if (i % SizeToLong(kTwo) == 0) {

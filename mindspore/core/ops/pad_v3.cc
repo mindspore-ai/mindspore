@@ -87,6 +87,24 @@ void PaddingsSizeCheck(const PrimitivePtr &primitive, const int64_t paddings_siz
     }
   }
 }
+
+void PaddingsValueCheck(const std::string &prim_name, const std::vector<int64_t> &x_shape,
+                        const std::vector<int64_t> &paddings_arg) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice) {
+    (void)CheckAndConvertUtils::CheckPositiveVector("paddings", paddings_arg, prim_name);
+  }
+  auto x_shape_reverse = x_shape;
+  std::reverse_copy(x_shape.begin(), x_shape.end(), x_shape_reverse.begin());
+  for (size_t i = 0; i < paddings_arg.size(); i++) {
+    if (paddings_arg[i] < 0) {
+      (void)CheckAndConvertUtils::CheckInteger("paddings_value", paddings_arg[i], CompareEnum::kGreaterEqual,
+                                               -x_shape_reverse[i / nTwo], prim_name);
+    }
+  }
+}
+
 void ReflectModeCheck(const std::string &prim_name, const int64_t paddings_size, std::vector<int64_t> x_shape,
                       std::vector<int64_t> paddings_arg, const int64_t size) {
   constexpr int64_t kReflectMaxDims = 4;
@@ -120,6 +138,9 @@ void ReflectModeCheck(const std::string &prim_name, const int64_t paddings_size,
 
 abstract::ShapePtr PaddingNoTensor(abstract::BaseShapePtr paddings_shape_ptr, const std::vector<int64_t> &x_shape) {
   auto paddings_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(paddings_shape_ptr)[kShape];
+  (void)CheckAndConvertUtils::CheckInteger("paddings_dim", SizeToLong(paddings_shape.size()), kEqual, kDim1, "PadV3");
+  (void)CheckAndConvertUtils::CheckInteger("paddings_length", paddings_shape[kIndex0], kLessEqual,
+                                           SizeToLong(x_shape.size() * nTwo), "PadV3");
   size_t pad_dim = 0;
   if (paddings_shape.size() >= 1) {
     pad_dim = paddings_shape[0] / nTwo;
@@ -196,6 +217,8 @@ abstract::ShapePtr PadV3InferShape(const PrimitivePtr &primitive, const std::vec
   }
 
   PaddingsSizeCheck(primitive, paddings_size, size);
+  // Checker: whether paddings_value + x_shape_value < 0 or not
+  PaddingsValueCheck(prim_name, x_shape, paddings_arg);
   for (int64_t i = 0; i < paddings_size; ++i) {
     paddings_val.push_back(int64_t(paddings_arg[LongToSize(i)]));
   }
@@ -240,9 +263,8 @@ TypePtr PadV3InferType(const PrimitivePtr &prim, const std::vector<AbstractBaseP
     auto paddings_value = input_args[kInputIndex1]->GetValue();
     MS_EXCEPTION_IF_NULL(paddings_value);
     if (paddings_value->isa<ValueAny>() || paddings_value->isa<None>()) {
-      MS_LOG(WARNING)
-        << "For now, while running in Ascend, the input [paddings] of " << prim->name()
-        << " is required to be constant, make sure that paddings is a list or tensor with const_arg=True.";
+      MS_EXCEPTION(ValueError) << "For now, while running in Ascend, the input [paddings] of " << prim->name()
+                               << " is required to be constant, make sure that paddings is a list";
     }
   }
   std::map<std::string, TypePtr> args = {{"x", input_args[0]->GetType()}};

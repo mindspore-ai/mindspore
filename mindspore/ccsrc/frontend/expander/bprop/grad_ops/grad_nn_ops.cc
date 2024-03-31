@@ -25,6 +25,7 @@
 #include "ops/nn_optimizer_op_name.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
+#include "utils/ms_context.h"
 
 namespace mindspore::expander::bprop {
 namespace {
@@ -2123,10 +2124,29 @@ REG_BPROP_BUILDER("PadV3").SetUnusedInputs({i0, i1, i3}).SetBody(BODYFUNC(ib) {
   if (mode == "constant") {
     MS_EXCEPTION_IF_NULL(paddings);
     auto pad_value = GetIntList(paddings);
-    (void)std::transform(pad_value.begin(), pad_value.end(), pad_value.begin(), [](const int64_t &c) { return -c; });
-    auto constant_values = ib->GetInput(kIndex2);
-    dx = ib->Emit("PadV3", {dout, ib->Tensor(pad_value), ib->ZerosLike(constant_values)},
-                  {{"mode", ib->GetAttr("mode")}, {"paddings_contiguous", ib->GetAttr("paddings_contiguous")}});
+    auto context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(context);
+    if (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice) {
+      (void)CheckAndConvertUtils::CheckPositiveVector("paddings", pad_value, "PadV3Grad");
+      auto x = ib->GetInput(kIndex0);
+      auto x_shape = ib->GetShape(x);
+      std::vector<std::vector<int64_t>> ordered_paddings(x_shape.size(), {0, 0});
+      const size_t step_2 = 2;
+      for (size_t i = 0; i < pad_value.size(); i += step_2) {
+        std::vector<int64_t> split_paddings = {pad_value[i], pad_value[i + 1]};
+        ordered_paddings[x_shape.size() - (i / step_2) - 1] = split_paddings;
+      }
+      std::vector<int64_t> begin;
+      for (const auto &item : ordered_paddings) {
+        begin.emplace_back(item[0]);
+      }
+      dx = ib->Slice(dout, ib->EmitValue(MakeValue(begin)), ib->EmitValue(MakeValue(x_shape)));
+    } else {
+      (void)std::transform(pad_value.begin(), pad_value.end(), pad_value.begin(), [](const int64_t &c) { return -c; });
+      auto constant_values = ib->GetInput(kIndex2);
+      dx = ib->Emit("PadV3", {dout, ib->Tensor(pad_value), ib->ZerosLike(constant_values)},
+                    {{"mode", ib->GetAttr("mode")}, {"paddings_contiguous", ib->GetAttr("paddings_contiguous")}});
+    }
   } else {
     dx = ib->Emit("PadV3Grad", {dout, paddings},
                   {{"mode", ib->GetAttr("mode")}, {"paddings_contiguous", ib->GetAttr("paddings_contiguous")}});
