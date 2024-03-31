@@ -611,7 +611,7 @@ REG_BPROP_BUILDER("MatMulExt").SetUnusedInputs({}).SetBody(BODYFUNC(ib) {
 
     dx = ib->MatMulExt(dout, w);
     dw = ib->MatMulExt(x, dout);
-    if (!is_dynamic_rank && is_dynamic_shape && (x_origin->shape().size() == 1 || w_origin->shape().size() == 1)) {
+    if (!is_dynamic_rank && is_dynamic_shape && (x_origin->shape().size() <= 2 || w_origin->shape().size() <= 2)) {
       return MatMulExtBroadCastGrad(ib, x_origin, w_origin, dx, dw, 2);
     } else {
       return BinopGradCommon(ib, x_origin, w_origin, dx, dw, 2);
