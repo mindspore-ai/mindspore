@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2023-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,6 +89,7 @@ TypePtr GetJitAnnotationTypeFromComment(const AnfNodePtr &node,
                                         const FormatedVariableTypeFunc &format_type_func = FormatedVariableTypeFunc());
 bool GetJitAnnotationSideEffectFromComment(const AnfNodePtr &node);
 bool ContainsSequenceAnyType(const AbstractBasePtr &abs);
+bool SequenceAllElementsIsScalar(const AbstractBasePtr &abs);
 std::string ConvertRealStrToUnicodeStr(const std::string &target, size_t index);
 std::string GetPyObjectPtrStr(const py::object &obj);
 

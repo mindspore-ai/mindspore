@@ -1,4 +1,4 @@
-# Copyright 2023 Huawei Technologies Co., Ltd
+# Copyright 2023-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,11 +19,8 @@ from mindspore import Tensor, jit, context
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@pytest.mark.skip(reason="No support yet.")
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_fallback_list_tuple_asnumpy():
     """
@@ -51,3 +48,45 @@ def test_fallback_list_tuple_asnumpy():
     assert (out[1][1] == Tensor([2, 3])).all()
     assert (out[1][2] == np.array([5, 6])).all()
     assert (out[1][3] == np.array([2, 3])).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_fallback_runtime_list():
+    """
+    Feature: JIT Fallback
+    Description: Test list() in fallback runtime
+    Expectation: No exception
+    """
+
+    @jit
+    def foo(x):
+        res = (x.asnumpy(),)
+        return list(res)
+
+    x = Tensor(np.arange(0, 6).reshape(2, 3))
+    out = foo(x)
+    assert (out == x.asnumpy()).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_fallback_runtime_tuple():
+    """
+    Feature: JIT Fallback
+    Description: Test tuple() in fallback runtime
+    Expectation: No exception
+    """
+
+    @jit
+    def foo(x, y):
+        res = [x.asnumpy()]
+        res.append(y)
+        return tuple(res)
+
+    x = Tensor(np.arange(0, 6).reshape(2, 3))
+    out = foo(x, 3)
+    assert (out[0] == x.asnumpy()).all()
+    assert out[1] == 3

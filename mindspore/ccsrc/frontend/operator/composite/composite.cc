@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2023 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2131,6 +2131,110 @@ FuncGraphPtr Next::GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) {
   }
   const std::string module = "mindspore._extends.parse.standard_method";
   const std::string func_name = input_abs->isa<abstract::AbstractDictionary>() ? "dict_next" : "ms_next";
+  py::function fn = python_adapter::GetPyFn(module, func_name);
+  auto prim_func = parse::ParsePythonCode(fn);
+  auto ret = fg->NewCNode({NewValueNode(prim_func), input});
+  fg->set_output(ret);
+  return fg;
+}
+
+FuncGraphPtr TupleFunc::GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) {
+  if (args_abs_list.size() > 1) {
+    MS_LOG(EXCEPTION) << "For 'TupleFunc', the number of input should be 0 or 1, but got " << args_abs_list.size();
+  }
+  auto fg = std::make_shared<FuncGraph>();
+  fg->set_flag(FUNC_GRAPH_FLAG_CORE, true);
+  if (args_abs_list.size() == 0) {
+    auto ret = fg->NewCNode({NewValueNode(prim::kPrimMakeTuple)});
+    fg->set_output(ret);
+    return fg;
+  }
+
+  auto input_abs = args_abs_list[0];
+  MS_EXCEPTION_IF_NULL(input_abs);
+  auto input = fg->add_parameter();
+  if (fallback::ContainsSequenceAnyType(input_abs)) {
+    AnfNodePtrList local_key_inputs = {NewValueNode(prim::kPrimMakeTuple)};
+    AnfNodePtrList local_value_inputs = {NewValueNode(prim::kPrimMakeTuple)};
+    std::stringstream script_buffer;
+    script_buffer << "tuple(";
+    const std::string data_str = "__data__";
+    script_buffer << data_str << ")";
+    (void)local_key_inputs.emplace_back(NewValueNode(data_str));
+    (void)local_value_inputs.emplace_back(input);
+    const auto &script = script_buffer.str();
+    auto local_key_node = fg->NewCNode(local_key_inputs);
+    auto local_value_node = fg->NewCNode(local_value_inputs);
+    auto local_dict_node = fg->NewCNode({NewValueNode(prim::kPrimMakeDict), local_key_node, local_value_node});
+    auto ret = fallback::CreatePyInterpretCNode(fg, script, py::dict(), local_dict_node);
+    fg->set_output(ret);
+    return fg;
+  } else if (input_abs->isa<abstract::AbstractTuple>()) {
+    fg->set_output(input);
+    return fg;
+  } else if (input_abs->isa<abstract::AbstractList>()) {
+    // list to tuple
+    if (fallback::SequenceAllElementsIsScalar(input_abs)) {
+      auto prim = std::make_shared<Primitive>("ListToTuple");
+      auto list_to_tuple = fg->NewCNode({NewValueNode(prim), input});
+      fg->set_output(list_to_tuple);
+      return fg;
+    }
+  }
+  const std::string module = "mindspore._extends.parse.standard_method";
+  const std::string func_name = "tuple_func";
+  py::function fn = python_adapter::GetPyFn(module, func_name);
+  auto prim_func = parse::ParsePythonCode(fn);
+  auto ret = fg->NewCNode({NewValueNode(prim_func), input});
+  fg->set_output(ret);
+  return fg;
+}
+
+FuncGraphPtr ListFunc::GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) {
+  if (args_abs_list.size() > 1) {
+    MS_LOG(EXCEPTION) << "For 'ListFunc', the number of input should be 0 or 1, but got " << args_abs_list.size();
+  }
+  auto fg = std::make_shared<FuncGraph>();
+  fg->set_flag(FUNC_GRAPH_FLAG_CORE, true);
+  if (args_abs_list.size() == 0) {
+    auto ret = fg->NewCNode({NewValueNode(prim::kPrimMakeList)});
+    fg->set_output(ret);
+    return fg;
+  }
+
+  auto input_abs = args_abs_list[0];
+  MS_EXCEPTION_IF_NULL(input_abs);
+  auto input = fg->add_parameter();
+  if (fallback::ContainsSequenceAnyType(input_abs)) {
+    AnfNodePtrList local_key_inputs = {NewValueNode(prim::kPrimMakeTuple)};
+    AnfNodePtrList local_value_inputs = {NewValueNode(prim::kPrimMakeTuple)};
+    std::stringstream script_buffer;
+    script_buffer << "list(";
+    const std::string data_str = "__data__";
+    script_buffer << data_str << ")";
+    (void)local_key_inputs.emplace_back(NewValueNode(data_str));
+    (void)local_value_inputs.emplace_back(input);
+    const auto &script = script_buffer.str();
+    auto local_key_node = fg->NewCNode(local_key_inputs);
+    auto local_value_node = fg->NewCNode(local_value_inputs);
+    auto local_dict_node = fg->NewCNode({NewValueNode(prim::kPrimMakeDict), local_key_node, local_value_node});
+    auto ret = fallback::CreatePyInterpretCNode(fg, script, py::dict(), local_dict_node);
+    fg->set_output(ret);
+    return fg;
+  } else if (input_abs->isa<abstract::AbstractList>()) {
+    fg->set_output(input);
+    return fg;
+  } else if (input_abs->isa<abstract::AbstractTuple>()) {
+    // tuple to list
+    if (fallback::SequenceAllElementsIsScalar(input_abs)) {
+      auto prim = std::make_shared<Primitive>("TupleToList");
+      auto tuple_to_list = fg->NewCNode({NewValueNode(prim), input});
+      fg->set_output(tuple_to_list);
+      return fg;
+    }
+  }
+  const std::string module = "mindspore._extends.parse.standard_method";
+  const std::string func_name = "list_func";
   py::function fn = python_adapter::GetPyFn(module, func_name);
   auto prim_func = parse::ParsePythonCode(fn);
   auto ret = fg->NewCNode({NewValueNode(prim_func), input});

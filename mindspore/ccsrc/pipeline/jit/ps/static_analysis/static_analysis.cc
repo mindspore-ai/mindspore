@@ -45,6 +45,7 @@
 #include "pipeline/jit/ps/static_analysis/async_eval_result.h"
 #include "frontend/operator/ops_front_infer_function.h"
 #include "ops/op_def.h"
+#include "frontend/operator/composite/composite.h"
 
 namespace mindspore {
 namespace abstract {
@@ -297,18 +298,18 @@ EvalResultPtr ConvertToPyInterpretCall(const CNodePtr &cnode, const AnfNodeConfi
 }
 
 EvalResultPtr ParsePyObjToFunc(const py::object &py_fn, const CNodePtr &cnode, const AnfNodeConfigPtr &conf) {
-  FuncGraphPtr list_func_fg = nullptr;
+  FuncGraphPtr func_fg = nullptr;
   {
     MS_LOG_TRY_CATCH_SCOPE;
-    list_func_fg = parse::ParsePythonCode(py_fn);
+    func_fg = parse::ParsePythonCode(py_fn);
   }
-  if (list_func_fg != nullptr) {
+  if (func_fg != nullptr) {
     auto fg = cnode->func_graph();
     MS_EXCEPTION_IF_NULL(fg);
-    list_func_fg->set_manager(fg->manager());
+    func_fg->set_manager(fg->manager());
 
     std::vector<AnfNodePtr> new_cnode_inputs;
-    (void)new_cnode_inputs.emplace_back(NewValueNode(list_func_fg));
+    (void)new_cnode_inputs.emplace_back(NewValueNode(func_fg));
     for (std::size_t i = 1; i < cnode->size(); ++i) {
       (void)new_cnode_inputs.emplace_back(cnode->input(i));
     }
@@ -739,20 +740,30 @@ EvalResultPtr AnalysisEngine::ConvertClassTypeToFunc(const CNodePtr &cnode, cons
   auto class_val = dyn_cast_ptr<parse::ClassType>(val);
   MS_EXCEPTION_IF_NULL(class_val);
   const auto &class_name = class_val->name();
-  auto class_obj = class_val->obj();
-  py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
-  auto py_fn =
-    python_adapter::CallPyModFn(mod, parse::PYTHON_MOD_CONVERT_CLASS_TO_FUNCTION, py::str(class_name), class_obj);
-  if (py::isinstance<py::none>(py_fn)) {
-    return ConvertToPyInterpretCall(cnode, conf);
-  }
-  auto list_func_fg = parse::ParsePythonCode(py_fn);
-  MS_EXCEPTION_IF_NULL(list_func_fg);
+  std::vector<AnfNodePtr> new_cnode_inputs;
   auto fg = cnode->func_graph();
   MS_EXCEPTION_IF_NULL(fg);
-  list_func_fg->set_manager(fg->manager());
-  std::vector<AnfNodePtr> new_cnode_inputs;
-  (void)new_cnode_inputs.emplace_back(NewValueNode(list_func_fg));
+
+  std::map<std::string, ValueNodePtr> list_or_tuple_func_map = {
+    {"class 'list'", NewValueNode(std::make_shared<prim::ListFunc>("list_func"))},
+    {"class 'tuple'", NewValueNode(std::make_shared<prim::TupleFunc>("tuple_func"))}};
+  auto iter = list_or_tuple_func_map.find(class_name);
+  if (iter != list_or_tuple_func_map.end()) {
+    (void)new_cnode_inputs.emplace_back(iter->second);
+  } else {
+    auto class_obj = class_val->obj();
+    py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
+    auto py_fn =
+      python_adapter::CallPyModFn(mod, parse::PYTHON_MOD_CONVERT_CLASS_TO_FUNCTION, py::str(class_name), class_obj);
+    if (py::isinstance<py::none>(py_fn)) {
+      return ConvertToPyInterpretCall(cnode, conf);
+    }
+    auto func_fg = parse::ParsePythonCode(py_fn);
+    MS_EXCEPTION_IF_NULL(func_fg);
+    func_fg->set_manager(fg->manager());
+    (void)new_cnode_inputs.emplace_back(NewValueNode(func_fg));
+  }
+
   for (std::size_t i = 1; i < cnode->size(); ++i) {
     (void)new_cnode_inputs.emplace_back(cnode->input(i));
   }
