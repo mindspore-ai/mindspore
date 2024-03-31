@@ -817,6 +817,19 @@ std::pair<std::vector<AnfNodePtr>, std::vector<AnfNodePtr>> PipelineTransformer:
   return std::make_pair(sends, recvs);
 }
 
+void PipelineTransformer::FillParameterStage(const CNodePtr &node, std::set<int64_t> *const parameter_stage) {
+  auto stage_info = node->user_data<NodeStageInfo>();
+  if (stage_info != nullptr && stage_info->stage() != -1) {
+    (void)(parameter_stage->insert(stage_info->stage()));
+  } else {
+    auto graph = node->func_graph();
+    MS_EXCEPTION_IF_NULL(graph);
+    if (graph != root_ && graph != main_graph_ && graph != shared_cell_ && graph->stage() != -1) {
+      (void)(parameter_stage->insert(graph->stage()));
+    }
+  }
+}
+
 bool PipelineTransformer::GetStageByArgument(const CNodePtr &node, size_t index,
                                              const std::vector<AnfNodePtr> &parameters,
                                              const NodeUsersMap &node_users_map,
@@ -829,7 +842,8 @@ bool PipelineTransformer::GetStageByArgument(const CNodePtr &node, size_t index,
   }
   const auto &input = node->input(0);
   if (!IsValueNode<FuncGraph>(input)) {
-    return false;
+    FillParameterStage(node, parameter_stage);
+    return true;
   }
   if (GetValueNode<FuncGraphPtr>(input) != shared_cell_) {
     return false;
@@ -838,23 +852,16 @@ bool PipelineTransformer::GetStageByArgument(const CNodePtr &node, size_t index,
   const auto &param = parameters.at(pos);
   MS_EXCEPTION_IF_NULL(param);
   auto loads = GetLoadNodeByParam(param);
-  const auto &iter = node_users_map.find(loads.back());
-  if (iter == node_users_map.end()) {
-    return true;
-  }
-  const auto &users = (*iter).second;
-  for (auto &user : users) {
-    auto user_cnode = user.first->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(user_cnode);
-    auto stage_info = user_cnode->user_data<NodeStageInfo>();
-    if (stage_info != nullptr && stage_info->stage() != -1) {
-      (void)((*parameter_stage).insert(stage_info->stage()));
-    } else {
-      auto graph = user_cnode->func_graph();
-      MS_EXCEPTION_IF_NULL(graph);
-      if (graph != root_ && graph != main_graph_ && graph != shared_cell_ && graph->stage() != -1) {
-        (void)((*parameter_stage).insert(graph->stage()));
-      }
+  for (auto &load : loads) {
+    const auto &iter = node_users_map.find(load);
+    if (iter == node_users_map.end()) {
+      continue;
+    }
+    const auto &users = (*iter).second;
+    for (auto &user : users) {
+      auto user_cnode = user.first->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(user_cnode);
+      FillParameterStage(user_cnode, parameter_stage);
     }
   }
   return true;
@@ -875,18 +882,7 @@ void PipelineTransformer::ParameterColoring() {
         if (GetStageByArgument(user_cnode, load_user.second, share_cell_parameters, node_users_map, &parameter_stage)) {
           continue;
         }
-        auto stage_info = user_cnode->user_data<NodeStageInfo>();
-        if (stage_info != nullptr && stage_info->stage() != -1) {
-          (void)parameter_stage.insert(stage_info->stage());
-          continue;
-        } else {
-          auto graph = user_cnode->func_graph();
-          MS_EXCEPTION_IF_NULL(graph);
-          if (graph != root_ && graph != main_graph_ && graph != shared_cell_ && graph->stage() != -1) {
-            (void)parameter_stage.insert(graph->stage());
-            continue;
-          }
-        }
+        FillParameterStage(user_cnode, &parameter_stage);
       }
     }
     auto param_info = parameter->cast<ParameterPtr>()->param_info();
