@@ -757,7 +757,8 @@ static void StepReplaceOp(OperatorVector replace_op, const CNodePtr &node) {
   MS_LOG(INFO) << "Insert ReplaceOp success for " << distribute_operator->name();
 }
 
-static void StepReplaceGraph(const ReplaceGraphPtr &replace_graph, const CNodePtr &node) {
+static void StepReplaceGraph(const ReplaceGraphPtr &replace_graph, const CNodePtr &node,
+                             const OperatorInfoPtr &op_info) {
   MS_EXCEPTION_IF_NULL(replace_graph);
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(replace_graph->second);
@@ -785,6 +786,7 @@ static void StepReplaceGraph(const ReplaceGraphPtr &replace_graph, const CNodePt
       appear_count = 1;
     }
     auto replace_input_cnode = replace_input.first->cast<CNodePtr>();
+    replace_input_cnode->set_user_data<OperatorInfo>(op_info);
     size_t inputs_size = replace_input_cnode->inputs().size();
     while (IntToSize(appear_count) < inputs_size && replace_input_cnode->input(appear_count)->func_graph() != nullptr) {
       ++appear_count;
@@ -2241,7 +2243,7 @@ static void StepReplace(const std::vector<AnfNodePtr> &all_nodes) {
       }
       if (replace_graph) {
         MS_LOG(INFO) << "StepReplaceGraph " << cnode->ToString();
-        StepReplaceGraph(replace_graph, cnode);
+        StepReplaceGraph(replace_graph, cnode, distribute_operator);
       }
     }
   }
@@ -3113,14 +3115,20 @@ static void ParallelPartProcess(const std::vector<AnfNodePtr> &all_nodes, const 
     pipeline_processor->GraphPartition(all_nodes);
     pipeline_processor->ElimGraphStage();
     pipeline_processor->ModifyParameterList();
-    pipeline_processor->HandleSendParam();
-    MarkForwardCNode(root);
   }
 
   // save strategy as checkpoint for multi-train
   auto all_nodes_after_pp = TopoSort(root->get_return(), SuccDeeperSimple);
   if (StrategyCheckpoint::GetInstance().SaveCheckPointOn()) {
     CheckpointStrategy(all_nodes_after_pp, root);
+  }
+  auto comm_group = FindCommonMirrorGroup(root);
+  StrategyCheckpoint::GetInstance().set_common_mirror_group(comm_group);
+  HandleGlobalNormScale(root, manager);
+  MoveMicroMirrorOutCallFunc(root);
+  if (pipeline_stages > 1 && is_pp_interleave) {
+    pipeline_processor->HandleSendParam();
+    MarkForwardCNode(root);
   }
   return;
 }
@@ -3206,10 +3214,6 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
 
   MicroBatchPostProcess(root, all_nodes);
 
-  auto comm_group = FindCommonMirrorGroup(root);
-  StrategyCheckpoint::GetInstance().set_common_mirror_group(comm_group);
-  HandleGlobalNormScale(root, manager);
-  MoveMicroMirrorOutCallFunc(root);
   DumpGraph(root, std::string(STEP_PARALLEL_END));
 
   // step parallel only run once

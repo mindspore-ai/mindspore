@@ -1094,7 +1094,7 @@ void PipelinePostProcess::HandleSendParam() {
                            [](int elem) { return MakeValue(int64_t(elem)); });
       auto value = std::make_shared<ValueList>(element);
       prim->set_attr(SHAPE, value);
-      manager_->SetEdge(cnode->input(1), 1, share_node);
+      manager_->SetEdge(cnode, 1, share_node);
       break;
     }
   }
