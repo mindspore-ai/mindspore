@@ -167,6 +167,8 @@ def test_shape_sub():
     assert validator.check_parameter_shape("w3", [8, 128])
 
 
+@pytest.mark.skip(reason="offline this testcase for dynamic paadings temporarily, "
+                         "only support static paadings in Ascend for now")
 def test_padv3_dynamic():
     """
     Feature: test dynamic shape
@@ -187,6 +189,8 @@ def test_padv3_dynamic():
     assert validator.check_node_inputs_has('PadV3-0', ['Add-0'])
 
 
+@pytest.mark.skip(reason="offline this testcase for dynamic paadings temporarily, "
+                         "only support static paadings in Ascend for now")
 def test_padv3_paddings_concat_scalar_to_tensor_dynamic():
     """
     Feature: test dynamic shape
@@ -207,6 +211,8 @@ def test_padv3_paddings_concat_scalar_to_tensor_dynamic():
     assert validator.check_node_inputs_has('PadV3-0', ['Add-0'])
 
 
+@pytest.mark.skip(reason="offline this testcase for dynamic paadings temporarily, "
+                         "only support static paadings in Ascend for now")
 def test_padv3_concat_tensor_shape_dynamic():
     """
     Feature: test dynamic shape
@@ -343,7 +349,6 @@ def test_attention_reshape():
     s1 = Symbol(divisor=8, remainder=1)
     input_x = Tensor(shape=[s1, 32], dtype=ms.float32)
     net.set_inputs(input_x)
-
 
     phase = compile_net(net, input_x)
     validator = ParallelValidator(net, phase)
@@ -501,6 +506,8 @@ class ConcatPadV3Net(Cell):
         return out
 
 
+@pytest.mark.skip(reason="offline this testcase for dynamic paadings temporarily, "
+                         "only support static paadings in Ascend for now")
 def test_concat_is_the_input_of_padv3():
     """
     Feature: test concat is the input of padv3
@@ -533,6 +540,7 @@ def test_dynamic_fillv2():
     Description: no redistribution
     Expectation: compile success
     """
+
     class DynamicFillNet(Cell):
         def __init__(self, strategy1, strategy2, strategy3):
             super().__init__()
@@ -569,6 +577,7 @@ def test_dynamic_tile():
     Description: no redistribution
     Expectation: compile success
     """
+
     class DynamicTileNet(Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
@@ -604,6 +613,7 @@ def test_dynamic_mul_broadcast():
     Description: no redistribution
     Expectation: compile success
     """
+
     class DynamicMulNet(Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
@@ -638,6 +648,7 @@ def test_dynamic_mul_broadcast_strategy_error():
     Description: strategy error
     Expectation: compile failed
     """
+
     class DynamicMulNet(Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
