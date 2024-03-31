@@ -847,10 +847,12 @@ void SessionBasic::GetOpInputTensors(const CNodePtr &cnode,
       }
     } else if (real_input->isa<Parameter>()) {
       auto tensor = GetParameterOutputTensor(real_input, parameter_index, graph_inputs);
+      MS_EXCEPTION_IF_NULL(tensor);
       input_value = tensor;
       input_info->input_types.emplace_back(tensor->is_parameter() ? InputType::kParameter : InputType::kInput);
     } else if (real_input->isa<CNode>()) {
       auto tensor = GetCNodeOutputTensor(kernel_with_index, op_output);
+      MS_EXCEPTION_IF_NULL(tensor);
       input_value = tensor;
       if (common::AnfAlgo::IsBpropCutOpExecInBackend(real_input)) {
         CheckInputTensorShape(tensor, cnode, i - 1);

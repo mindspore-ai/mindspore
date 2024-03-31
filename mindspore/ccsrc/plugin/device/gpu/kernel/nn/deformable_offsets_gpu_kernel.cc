@@ -147,7 +147,7 @@ bool DeformableOffsetsGpuKernelMod::LaunchKernel(const std::vector<KernelTensor 
                                                  const std::vector<KernelTensor *> &workspace,
                                                  const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   int32_t *position_addr = GetDeviceAddress<int32_t>(workspace, 0);
-  const size_t num = output_h_ * output_w_;
+  const size_t num = static_cast<size_t>(output_h_) * static_cast<size_t>(output_w_);
   cudaError_t status = cudaErrorNotReady;
   status = GenPositionGrid(kernel_size_[kKernelSizeHIndex], kernel_size_[kKernelSizeWIndex], strides_[h_axis_],
                            strides_[w_axis_], dilations_[h_axis_], dilations_[w_axis_], pads_[kLeftPadIndex],

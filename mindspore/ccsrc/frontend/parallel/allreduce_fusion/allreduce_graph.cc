@@ -38,6 +38,7 @@ Status AllreduceGraph::AddNode(const CNodePtr &node, const AnfNodePtr &para) {
     arnode = std::make_shared<AllreduceNode>(AllreduceNode());
   }
 
+  MS_EXCEPTION_IF_NULL(arnode);
   if (arnode->Init(node) != SUCCESS) {
     MS_LOG(ERROR) << "AllreduceNode Init failed";
     return FAILED;

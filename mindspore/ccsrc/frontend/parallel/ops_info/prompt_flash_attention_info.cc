@@ -135,6 +135,10 @@ Status PromptFlashAttentionInfo::CheckAttenMaskStrategy(const StrategyPtr &strat
     return SUCCESS;
   }
   auto atten_mask_idx = GetSqueezedIndex(input_index);
+  if (atten_mask_idx < 0) {
+    MS_LOG(ERROR) << "Unexpected attention mask index: " << atten_mask_idx;
+    return FAILED;
+  }
   auto atten_mask_strategy = strategies[atten_mask_idx];
   auto query_strategy = strategies[ops::kPromptFlashAttentionInputAttnMaskIndex];
   if (atten_mask_idx >= 0) {
