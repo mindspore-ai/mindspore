@@ -2,6 +2,29 @@
 
 [查看中文](./RELEASE_CN.md)
 
+## MindSpore 2.2.13 Release Notes
+
+### API Change
+
+Add timeout environment variables in dynamic networking scenarios:
+
+- `MS_TOPO_TIMEOUT`: Cluster networking phase timeout time in seconds.
+- `MS_CLUSTER_RETRY_NUM`: Number of node's retrying registration during cluster networking phase.
+- `MS_NODE_TIMEOUT`: Node heartbeat timeout in seconds.
+- `MS_RECEIVE_MSG_TIMEOUT`: Node timeout for receiving messages in seconds.
+
+### Bug Fixes
+
+- [#I9CR96] Fix the issue of insufficient timeout time causing failure for dynamic networking startup in large-scale clusters.
+
+### Contributors
+
+Thanks goes to these wonderful people:
+
+ZPaC, limingqi107, lizhenyu, jiangshanfeng
+
+Contributions of any kind are welcome!
+
 ## MindSpore 2.2.12 Release Notes
 
 ### Major Features and Improvements
