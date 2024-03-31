@@ -3925,6 +3925,8 @@ bool DfGraphConvertor::CheckCNode(const std::string &name, const CNodePtr node) 
       {prim::kPrimReceive->name(), &DfGraphConvertor::ConvertHcclNode},
       {prim::kPrimAllToAllv->name(), &DfGraphConvertor::ConvertAllToAllv},
       {prim::kPrimUniformReal->name(), &DfGraphConvertor::ConvertUniformReal},
+      {prim::kPrimMatmulReduceScatter->name(), &DfGraphConvertor::ConvertHcclNode},
+      {prim::kPrimAllGatherMatmul->name(), &DfGraphConvertor::ConvertHcclNode},
     };
 
   if (const auto it = auxiliary_node_converters.find(name); it != auxiliary_node_converters.cend()) {
