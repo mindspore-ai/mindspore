@@ -111,6 +111,7 @@ void SetDeviceAddress(const AnfNodePtr &input_node, const tensor::TensorPtr &inp
   if (tensor_address == nullptr) {
     input_tensor->set_device_address(node_address);
     input_tensor->set_sync_status(kNeedSyncHostToDeviceImmediately);
+    input_tensor->set_need_pipeline_sync(true);
     node_address->set_from_persistent_mem(input_tensor->is_parameter());
     node_address->SetNodeIndex(input_node, 0);
   }
