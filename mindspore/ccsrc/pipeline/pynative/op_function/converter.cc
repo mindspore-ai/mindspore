@@ -38,7 +38,7 @@ BoolImmPtr ConvertBool(const py::object &obj) {
 }
 
 Int64ImmPtr ConvertInt(const py::object &obj) {
-  if (!py::isinstance<py::int_>(obj)) {
+  if (py::isinstance<py::bool_>(obj) || !py::isinstance<py::int_>(obj)) {
     return nullptr;
   }
   return PyCast<int64_t, Int64Imm>(obj);
