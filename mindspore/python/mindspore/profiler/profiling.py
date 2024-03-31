@@ -1320,15 +1320,14 @@ class Profiler:
             ascend_ms_path = f"rank-{self._rank_id}_{timestamp}_ascend_ms"
         else:
             ascend_ms_path = f"{socket.gethostname()}--{os.getpid()}_{timestamp}_ascend_ms"
-        if self._ascend_ms_path is None:
-            self._ascend_ms_path = os.path.join(self._output_path, ascend_ms_path)
+        ascend_ms_path = os.path.join(self._output_path, ascend_ms_path)
 
         dev_id = self._rank_id if self._device_target == DeviceTarget.ASCEND.value else self._dev_id
-        ascend_profiler_output_path = os.path.join(self._ascend_ms_path, 'ASCEND_PROFILER_OUTPUT')
+        ascend_profiler_output_path = os.path.join(ascend_ms_path, 'ASCEND_PROFILER_OUTPUT')
         os.makedirs(ascend_profiler_output_path, exist_ok=True)
 
         source_profiler_info_path = os.path.join(self._output_path, f"profiler_info_{dev_id}.json")
-        target_profiler_info_path = os.path.join(self._ascend_ms_path, f"profiler_info_{dev_id}.json")
+        target_profiler_info_path = os.path.join(ascend_ms_path, f"profiler_info_{dev_id}.json")
         shutil.copy(source_profiler_info_path, target_profiler_info_path)
 
         source_timeline_path = os.path.join(self._output_path, f"ascend_timeline_display_{dev_id}.json")
@@ -1452,11 +1451,6 @@ class Profiler:
             return
         logger.info("Profiling: job id is %s ", job_id)
 
-        if offline_path:
-            time_stamp = time.strftime("%Y%m%d%H%M%S", time.localtime(time.time()))
-            ascend_ms = f"rank-{self._rank_id}" if self._rank_id else f"{socket.gethostname()}--{os.getpid()}"
-            self._ascend_ms_path = os.path.join(self._output_path, f"{ascend_ms}_{time_stamp}_ascend_ms")
-
         self._check_output_path(output_path=self._output_path)
         source_path = os.path.join(self._output_path, job_id)
         self._minddata_analyse(source_path)
@@ -1577,6 +1571,7 @@ class Profiler:
             self.stop()
         else:
             logger.info("No need to stop profiler because profiler has been stopped.")
+
         if not self._op_time:
             return
         try:
@@ -1830,14 +1825,7 @@ class Profiler:
             output_path = kwargs.pop("output_path")
             self._output_path = validate_and_normalize_path(output_path)
 
-        time_stamp = time.strftime("%Y%m%d%H%M%S", time.localtime(time.time()))
-        if self._rank_id:
-            ascend_ms_path = f"rank-{self._rank_id}_{time_stamp}_ascend_ms"
-        else:
-            ascend_ms_path = f"{socket.gethostname()}--{os.getpid()}_{time_stamp}_ascend_ms"
-
         self._output_path = os.path.join(self._output_path, "profiler")
-        self._ascend_ms_path = os.path.join(self._output_path, ascend_ms_path)
         if not os.path.exists(self._output_path):
             os.makedirs(self._output_path, exist_ok=True)
             os.chmod(self._output_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
@@ -1848,10 +1836,6 @@ class Profiler:
         if not os.path.exists(self._framework_path):
             os.makedirs(self._framework_path, exist_ok=True)
             os.chmod(self._framework_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
-
-        if not os.path.exists(self._ascend_ms_path):
-            os.makedirs(self._ascend_ms_path, exist_ok=True)
-            os.chmod(self._ascend_ms_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
 
     def _parser_kwargs(self, kwargs):
         """Parse kwargs vale."""
