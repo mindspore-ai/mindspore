@@ -33,6 +33,7 @@
 #include "runtime/pynative/op_runner.h"
 #include "runtime/pynative/op_executor.h"
 #include "pybind_api/gil_scoped_long_running.h"
+#include "include/backend/mem_reuse/mem_tracker.h"
 #ifdef ENABLE_DEBUGGER
 #include "include/backend/debug/debugger/debugger.h"
 #include "include/backend/debug/data_dump/dump_json_parser.h"
@@ -905,6 +906,9 @@ void DeviceAddressUtils::MallocForInput(const DeviceContext *device_context, con
   }
 
   auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(device_sync);
+  device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, "PyNative", "", "");
+  device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddMemInfo, "PyNative", device::tracker::MemType::kPyNativeInput,
+                                                 device_address->GetSize(), device_address->kernel_tensor().get());
   if (!device_context->device_res_manager_->AllocateMemory(device_address.get())) {
     MS_LOG(EXCEPTION) << "Allocate memory failed";
   }
@@ -1148,6 +1152,9 @@ void DeviceAddressUtils::MallocForOutputs(const DeviceContext *device_context,
       // ref output
       continue;
     }
+    device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, "PyNative", "", "");
+    device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddMemInfo, "PyNative", device::tracker::MemType::kPyNativeOutput,
+                                                   device_address->GetSize(), device_address->kernel_tensor().get());
     if (!device_context->device_res_manager_->AllocateMemory(device_address.get())) {
       MS_LOG(EXCEPTION) << "Allocate memory failed";
     }

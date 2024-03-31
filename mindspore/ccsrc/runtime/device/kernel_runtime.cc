@@ -32,6 +32,7 @@
 #include "runtime/pynative/op_runtime_info.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "include/backend/debug/data_dump/dump_json_parser.h"
+#include "include/backend/mem_reuse/mem_tracker.h"
 #include "frontend/operator/ops.h"
 #include "ir/value.h"
 #include "utils/ms_context.h"
@@ -672,9 +673,15 @@ void KernelRuntime::GetDeviceAddress(const AnfNodePtr &item,
     (*device_address)->set_host_shape(trans::GetRuntimePaddingShape(item, index));
     MS_LOG(INFO) << "Assign Static Memory for Input node, size:" << tensor_size
                  << " node:" << item->fullname_with_scope() << " debug:" << item->DebugString() << " index: " << index;
-    if (!graph.has_flag(kFlagEnableZeroCopyInGraph) &&
-        mem_manager_->MallocMem(kStaticMem, tensor_size, *device_address, graph.graph_id()) == nullptr) {
-      MS_LOG(EXCEPTION) << "Cannot alloc address when flag is: " << kStaticMem << ", tensor size is: " << tensor_size;
+    if (!graph.has_flag(kFlagEnableZeroCopyInGraph)) {
+      auto ret_ptr = mem_manager_->MallocMem(kStaticMem, tensor_size, *device_address, graph.graph_id());
+      if (ret_ptr == nullptr) {
+        MS_LOG(EXCEPTION) << "Cannot alloc address when flag is: " << kStaticMem << ", tensor size is: " << tensor_size;
+      }
+      device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, "AllocStaticMemory", item->fullname_with_scope(),
+                                                     graph.ToString());
+      device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddCompileTimeMemInfo, "AllocStaticMemory", tensor_size, ret_ptr,
+                                                     device::tracker::MemType::kWeight);
     }
   }
 }

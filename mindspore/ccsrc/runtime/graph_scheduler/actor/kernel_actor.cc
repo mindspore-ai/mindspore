@@ -21,6 +21,7 @@
 #include "runtime/graph_scheduler/actor/debug_actor.h"
 #include "mindrt/include/async/async.h"
 #include "utils/log_adapter.h"
+#include "include/backend/mem_reuse/mem_tracker.h"
 #include "include/backend/distributed/recovery/recovery_context.h"
 #include "include/backend/distributed/collective/collective_manager.h"
 #include "backend/common/optimizer/dynamic_shape/dynamic_shape_helper.h"
@@ -213,7 +214,17 @@ void KernelActor::InitWorkspaceInfo() {
 
 void KernelActor::Run(OpContext<DeviceTensor> *const context) {
   try {
+    MS_EXCEPTION_IF_NULL(kernel_);
+    MS_EXCEPTION_IF_NULL(kernel_->func_graph());
+    device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, GetAID().Name(), kernel_->fullname_with_scope(),
+                                                   kernel_->func_graph()->ToString());
     FetchInputDeviceTensor(context);
+    for (auto &device_addr : input_device_tensors_) {
+      if (device_addr == nullptr || !device_addr->IsPtrValid()) {
+        continue;
+      }
+      device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(UseMemBlock, GetAID().Name(), device_addr->GetPtr());
+    }
 
     if (ActorDispatcher::enable_runtime_multi_pipeline()) {
       RunWithMultiPipeline(context);
@@ -352,7 +363,12 @@ void KernelActor::SetSomasMemory(OpContext<DeviceTensor> *const context) const {
       }
       MS_LOG(DEBUG) << "Set ptr:" << device_ptr << " to device address:" << output_device_tensors_[i]
                     << " in actor:" << GetAID();
+      device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(
+        AddMemInfo, GetAID().Name(), device::tracker::MemType::kInSideSomas, output_device_tensors_[i]->GetSize(),
+        output_device_tensors_[i]->kernel_tensor().get());
       output_device_tensors_[i]->set_ptr(device_ptr);
+      device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(BindDevicePtr, output_device_tensors_[i]->kernel_tensor().get(),
+                                                     device_ptr);
     }
   }
 
@@ -363,7 +379,12 @@ void KernelActor::SetSomasMemory(OpContext<DeviceTensor> *const context) const {
       auto device_ptr = GetSomasDevicePtr(somas_workspace[i].first);
       // In this scenario, the Init function can ensure that the pointer of the relevant operation is not nullptr.
       // In order to perform performance, the pointer validity is not checked here.
+      device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(
+        AddMemInfo, GetAID().Name(), device::tracker::MemType::kInSideSomas, workspace_device_tensors_[i]->GetSize(),
+        workspace_device_tensors_[i]->kernel_tensor().get());
       workspace_device_tensors_[i]->set_ptr(device_ptr);
+      device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(BindDevicePtr, workspace_device_tensors_[i]->kernel_tensor().get(),
+                                                     device_ptr);
     }
   }
 }
@@ -540,11 +561,16 @@ void KernelActor::CopyInputDeviceTensor(const OpData<DeviceTensor> *input_data,
 
   device::DynamicMemAllocatorDebugInfo::SetDebugInfo(GetAID().Name(), device::AllocatorType::kKernelOutput,
                                                      input_data_index);
-  if ((new_device_tensor->GetPtr() == nullptr) &&
-      (!device_contexts_[0]->device_res_manager_->AllocateMemory(new_device_tensor.get()))) {
-    SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(strategy_, *context, *(device_contexts_[0]), GetAID().Name(),
-                                                new_device_tensor->GetSize());
+  if (new_device_tensor->GetPtr() == nullptr) {
+    device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddMemInfo, GetAID().Name(), device::tracker::MemType::kOther,
+                                                   new_device_tensor->GetSize(),
+                                                   new_device_tensor->kernel_tensor().get());
+    if (!device_contexts_[0]->device_res_manager_->AllocateMemory(new_device_tensor.get())) {
+      SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(strategy_, *context, *(device_contexts_[0]), GetAID().Name(),
+                                                  new_device_tensor->GetSize());
+    }
   }
+
   MS_LOG(INFO) << GetAID().Name() << " the input position:" << input_data_index
                << " copy from device address:" << input_data->data_ << " ptr:" << input_data->data_->GetPtr()
                << ", type:" << input_data->data_->GetDeviceType() << ", format:" << input_data->data_->format()

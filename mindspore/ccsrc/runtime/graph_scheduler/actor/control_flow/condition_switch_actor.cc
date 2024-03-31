@@ -112,6 +112,9 @@ void ConditionSwitchActor::Run(OpContext<DeviceTensor> *const context) {
     MS_EXCEPTION_IF_NULL(input_device_tensors_[0]);
     MS_EXCEPTION_IF_NULL(input_device_tensors_[0]->kernel_tensor());
     bool index = input_device_tensors_[0]->kernel_tensor()->GetValueWithCheck<bool>();
+    if (common::IsNeedProfileMemory()) {
+      index = true;
+    }
     MS_LOG(DEBUG) << "Index:" << index << " for actor:" << GetAID();
     if (index >= branch_names_.size()) {
       std::string error_info = "Invalid index:" + std::to_string(index) +

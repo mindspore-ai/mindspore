@@ -29,6 +29,8 @@
 #include "graph/types.h"
 #include "transform/symbol/acl_rt_symbol.h"
 #include "transform/symbol/symbol_utils.h"
+#include "include/backend/mem_reuse/mem_tracker.h"
+#include "graph/def_types.h"
 
 namespace mindspore {
 namespace device {
@@ -120,6 +122,7 @@ bool GeDeviceResManager::AllocateMemory(DeviceAddress *const &address) const {
 
   address->set_ptr(device_ptr);
   address->set_from_mem_pool(true);
+  device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(BindDevicePtr, address->kernel_tensor().get(), device_ptr);
   return true;
 }
 

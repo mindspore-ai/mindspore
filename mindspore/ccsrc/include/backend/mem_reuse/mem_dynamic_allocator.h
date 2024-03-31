@@ -101,6 +101,7 @@ class BACKEND_EXPORT DynamicMemPoolBestFit {
   size_t TotalIdleMemStatistics() const;
   size_t TotalEagerFreeMemStatistics() const;
   size_t UsedMemPeakStatistics() const;
+  size_t ActualPeakStatistics() const;
 
   // Display the brief state information of memory block and memory buf.
   void DumpDynamicMemPoolStateInfo();
@@ -115,19 +116,19 @@ class BACKEND_EXPORT DynamicMemPoolBestFit {
   // Set mem pool block size
   virtual void SetMemPoolBlockSize(size_t available_device_mem_size);
   virtual size_t GetMaxUsedMemSize() const { return 0; }
+  virtual std::string GetMemoryPoolType() const { return "Other"; }
 #ifdef WITH_BACKEND
 
  protected:
 #endif
   const MemStatusManagerPtr &common_mem() const { return common_mem_; }
   const MemStatusManagerPtr &persistent_mem() const { return persistent_mem_; }
-  void *GetMinUsedMemoryAddr() const;
+  void *GetMinUsingMemoryAddr() const;
   // The real size by memory alloc aligned.
   virtual size_t AlignMemorySize(size_t size) const;
   // Calculate memory block required alloc size when adding the memory block.
   virtual size_t CalMemBlockAllocSize(size_t size, bool from_persistent_mem, bool need_recycle = false);
   std::set<DeviceMemPtr> mem_bufs_;
-
   // The related interface of device memory eager free.
   virtual const bool IsEnableEagerFree() const { return false; }
   virtual const bool SyncAllStreams() { return false; }
@@ -253,6 +254,9 @@ class DynamicMemBlock {
   ~DynamicMemBlock() { block_all_mem_buf_map_.clear(); }
   const DeviceMemPtr &device_addr() const { return device_addr_base_; }
   size_t size() const { return mem_block_size_; }
+  void update_border_addr(DeviceMemPtr left_addr, DeviceMemPtr right_addr);
+  size_t get_actual_peak();
+
 #ifdef WITH_BACKEND
 
  private:
@@ -263,6 +267,11 @@ class DynamicMemBlock {
   DeviceAddrMapMemBuf block_all_mem_buf_map_;
 
   DeviceMemPtr device_addr_base_{nullptr};
+
+  // Max addr
+  DeviceMemPtr max_addr_ = nullptr;
+  // Min addr
+  DeviceMemPtr min_addr_ = nullptr;
 
   size_t mem_block_size_{0};
   const uint32_t stream_id_;
@@ -286,6 +295,7 @@ struct MemStatusManager {
 
   void AddMemBlock(const DynamicMemBlockPtr &mem_block, uint32_t stream_id);
   void DoAddMemBlock(const DynamicMemBlockPtr &mem_block, std::vector<DynamicMemBlockPtr> *mem_block_list);
+  size_t CalActualPeak();
 
   SizeMapMemBuf &GetIdleMemBufMap(uint32_t stream_id) { return GetOrCreateSizeMapMemBuf(&idle_mem_bufs_, stream_id); }
 
@@ -320,6 +330,7 @@ struct MemStatusManager {
   DeviceState mps_;
 
   std::vector<DynamicMemBlockPtr> mem_block_list_;
+  std::vector<DynamicMemBlockPtr> mem_block_insertion_order_;
   std::map<uint32_t, std::vector<DynamicMemBlockPtr>> mem_blocks_;
 
   std::map<uint32_t, SizeMapMemBuf> idle_mem_bufs_;

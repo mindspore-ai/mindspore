@@ -153,8 +153,8 @@ bool IsValidFuncGraph(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *ch
     MS_LOG(DEBUG) << "Invalid input node for funcgraph:" << func_graph->ToString();
     return false;
   }
-
   // Check output.
+  MS_LOG(INFO) << "Enable Switch Inline";
   AnfNodePtr return_node = func_graph->get_return();
   MS_EXCEPTION_IF_NULL(return_node);
   std::vector<AnfNodePtr> all_nodes = TopoSort(return_node);
