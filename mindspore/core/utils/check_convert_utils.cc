@@ -406,6 +406,20 @@ bool CheckElementAbstractUnSupport(const AbstractBasePtr abs) {
     return false;
   }
   if (abs->isa<abstract::AbstractSequence>() && !abs->isa<abstract::AbstractSparseTensor>()) {
+    abstract::AbstractSequencePtr seq = abs->cast<abstract::AbstractSequencePtr>();
+    if (seq->dynamic_len()) {
+      auto elem = seq->dynamic_len_element_abs();
+      if (elem->BuildType()->type_id() == kNumberTypeInt64) {
+        return false;
+      }
+    } else {
+      auto elements = seq->elements();
+      if (elements.empty() || std::all_of(elements.cbegin(), elements.cend(), [](const AbstractBasePtr &elem) {
+            return elem->BuildType()->type_id() == kNumberTypeInt64;
+          })) {
+        return false;
+      }
+    }
     return true;
   }
   if (abs->isa<abstract::AbstractDictionary>()) {

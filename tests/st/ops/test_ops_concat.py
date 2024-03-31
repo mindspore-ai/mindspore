@@ -19,7 +19,7 @@ import numpy as np
 import pytest
 
 import mindspore as ms
-from mindspore import ops, nn, Tensor
+from mindspore import ops, nn, Tensor, context, mutable
 import mindspore.ops.functional as F
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
 from tests.st.utils import test_utils
@@ -312,6 +312,7 @@ def test_concat_with_input_complex64(mode):
     Description: Test Concat with input of complex64 type.
     Expectation: Expect correct shape result.
     """
+
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -329,3 +330,36 @@ def test_concat_with_input_complex64(mode):
     out = net(input_x1, input_x2)
     expect_out = np.array([[0, 1], [2, 1], [3, 2], [2, 5]]).astype(np.complex64)
     assert np.allclose(out.asnumpy(), expect_out)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+def test_concat_with_dyn_len_sequence_input():
+    """
+    Feature: Dynamic shape.
+    Description: Test Concat with dyn len sequence input.
+    Expectation: No Exception raised.
+    """
+    class Grad(nn.Cell):
+        def __init__(self, net):
+            super().__init__()
+            self.net = net
+            self.gn = ops.GradOperation()(net)
+
+        def construct(self, x):
+            g = self.gn(x)
+            return g
+
+    class Net(nn.Cell):
+        def construct(self, x):
+            y = ops.concat(x)
+            return y
+
+    context.set_context(mode=context.GRAPH_MODE)
+    net = Net()
+    x = (Tensor([1]), Tensor([2]), Tensor([3]))
+    y = mutable(x, dynamic_len=True)
+    grad_net = Grad(net)
+    grad = grad_net(y)
+    print(grad)
