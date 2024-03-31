@@ -23,6 +23,7 @@
 #include "mindspore/core/ops/op_utils.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/backend/anf_runtime_algorithm.h"
+#include "mindspore/core/ops/array_op_name.h"
 
 namespace mindspore {
 namespace opt {
@@ -43,6 +44,21 @@ bool ConvertBasePaddings::HasDynPaddings(const CNodePtr &cnode) const {
   }
   auto paddings_array_value = ops::GetArrayValue<int64_t>(paddings_value);
   return !paddings_array_value.has_value();
+}
+
+const CNodePtr ConvertBasePaddings::CreateReshapeNode(const FuncGraphPtr &graph, const AnfNodePtr &input_node,
+                                                      const ShapeVector &shape) const {
+  auto prim = std::make_shared<Primitive>(kReshapeOpName);
+  MS_EXCEPTION_IF_NULL(prim);
+  auto shape_value_node = CreateValueNodeWithKernelInfo(graph, MakeValue(shape));
+  MS_EXCEPTION_IF_NULL(shape_value_node);
+  AnfNodePtrList reshape_inputs = {NewValueNode(prim), input_node, shape_value_node};
+  auto reshape_node = NewCNode(reshape_inputs, graph);
+  MS_EXCEPTION_IF_NULL(reshape_node);
+  auto abs = InferAbstract(prim, {input_node, shape_value_node});
+  MS_EXCEPTION_IF_NULL(abs);
+  reshape_node->set_abstract(abs);
+  return reshape_node;
 }
 
 template <typename T, TypeId type_id>
@@ -162,7 +178,7 @@ bool ConvertPadV3GradPaddings::ExpandInputXDims(const FuncGraphPtr &graph, const
   // Replace the x with Reshape
   auto input_x_node = common::AnfAlgo::GetInputNode(node, kIndex0);
   MS_EXCEPTION_IF_NULL(input_x_node);
-  auto reshape_node = mindspore::common::CreateReshapeNode(graph, input_x_node, new_shape);
+  auto reshape_node = CreateReshapeNode(graph, input_x_node, new_shape);
   MS_EXCEPTION_IF_NULL(reshape_node);
   node->set_input(kIndex1, reshape_node);
   return true;
@@ -170,7 +186,7 @@ bool ConvertPadV3GradPaddings::ExpandInputXDims(const FuncGraphPtr &graph, const
 
 void ConvertPadV3GradPaddings::ReduceOutputDims(const FuncGraphPtr &graph, const CNodePtr &node) const {
   auto output_shape = common::AnfAlgo::GetOutputInferShape(node, kIndex0);
-  auto reshape_node = mindspore::common::CreateReshapeNode(graph, node, output_shape);
+  auto reshape_node = CreateReshapeNode(graph, node, output_shape);
   MS_EXCEPTION_IF_NULL(reshape_node);
   auto manager = graph->manager();
   MS_EXCEPTION_IF_NULL(manager);

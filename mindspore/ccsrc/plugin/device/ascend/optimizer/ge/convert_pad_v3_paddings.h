@@ -30,6 +30,7 @@ class ConvertBasePaddings : public PatternProcessPass {
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 
   bool HasDynPaddings(const CNodePtr &) const;
+  const CNodePtr CreateReshapeNode(const FuncGraphPtr &, const AnfNodePtr &, const ShapeVector &) const;
   template <typename T, TypeId type_id>
   const AnfNodePtr OptimizePaddingsValue(const FuncGraphPtr &, const AbstractBasePtr &, const bool &, const size_t &,
                                          bool force_length8) const;
