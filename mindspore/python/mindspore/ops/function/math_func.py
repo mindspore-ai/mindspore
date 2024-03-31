@@ -5370,6 +5370,8 @@ def cummin(input, axis):
         >>> print(output[1])
         [0 1 1 1 4 4]
     """
+    if isinstance(axis, bool):
+        raise TypeError(f"For 'cummin', the date type of 'axis' must be Int, but got {axis}.")
     cummin_op = _get_cache_prim(Cummin)(axis=0)
     if axis == 0:
         out1, out2 = cummin_op(input)
