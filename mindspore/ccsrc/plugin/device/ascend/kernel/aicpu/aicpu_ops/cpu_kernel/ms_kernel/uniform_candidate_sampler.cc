@@ -23,7 +23,7 @@
 namespace aicpu {
 namespace {
 const char *kUniformCandidateSampler = "UniformCandidateSampler";
-const char *kLogUniformCandidateSampler = "LogUniformCandidateSampler";
+const char *kLogUniformCandidateSampler = "CustLogUniformCandidateSampler";
 }  // namespace
 
 uint32_t CandidateSamplerKernel::ParseKernelParam(CpuKernelContext &ctx) {
