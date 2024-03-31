@@ -13,8 +13,6 @@ batch_mat_mul:
       dtype: bool
       default: False
       prim_init: True
-  args_signature:
-    dtype_group: (x, y)
   returns:
     output:
       dtype: tensor

@@ -5,8 +5,6 @@ matmul_ext:
       dtype: tensor
     mat2:
       dtype: tensor
-  args_signature:
-    dtype_group: (input, mat2)
   returns:
     output:
       dtype: tensor
