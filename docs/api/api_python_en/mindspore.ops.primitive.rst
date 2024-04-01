@@ -223,7 +223,7 @@ Text Processing
 Accuracy-Sensitive Detection
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. mscnplatwarnautosummary::
+.. msplatwarnautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst
