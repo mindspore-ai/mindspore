@@ -2,6 +2,29 @@
 
 [View English](./RELEASE.md)
 
+## MindSpore 2.2.13 Release Notes
+
+### API变更
+
+增加动态组网场景下各类超时时间环境变量配置：
+
+- `MS_TOPO_TIMEOUT`： 集群组网阶段超时时间，单位：秒。
+- `MS_CLUSTER_RETRY_NUM`：集群组网阶段节点重试注册次数。
+- `MS_NODE_TIMEOUT`：节点心跳超时时间，单位：秒。
+- `MS_RECEIVE_MSG_TIMEOUT`：节点接收消息超时时间，单位：秒。
+
+### 问题修复
+
+- [#I9CR96] 修复在大规模集群下，动态组网启动方式的超时时间不足导致集群启动失败的问题。
+
+### 贡献者
+
+感谢以下人员做出的贡献:
+
+ZPaC, limingqi107, lizhenyu, jiangshanfeng
+
+欢迎以任何形式对项目提供贡献！
+
 ## MindSpore 2.2.12 Release Notes
 
 ### 主要特性及增强
