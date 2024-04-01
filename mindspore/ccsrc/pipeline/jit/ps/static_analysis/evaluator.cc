@@ -737,6 +737,17 @@ EvalResultPtr Evaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args
   return eval_result;
 }
 
+EvalResultPtr Evaluator::EvalUndeterminedArgs(const AbstractBasePtrList &args_abs_list) {
+  auto is_undetermined = std::any_of(args_abs_list.begin(), args_abs_list.end(), [](auto &arg) -> bool {
+    return arg->BuildType()->type_id() == kObjectTypeUndeterminedType;
+  });
+  if (is_undetermined) {
+    MS_LOG(DEBUG) << "Eval " << identifier_ << " return undetermined abstract result";
+    return std::make_shared<EvalResult>(std::make_shared<AbstractUndetermined>(), std::make_shared<AttrValueMap>());
+  }
+  return nullptr;
+}
+
 EvalResultPtr TrivialPrimEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
                                         const AnfNodeConfigPtr &) {
   AbstractBasePtrList args_abs_list = EvaluateArguments(args_conf_list);

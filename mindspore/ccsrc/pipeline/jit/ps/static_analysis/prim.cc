@@ -1226,6 +1226,14 @@ PrimitiveFunctionEvaluator::PrimitiveFunctionEvaluator(const PrimitivePtr &prim_
   op_def_ = mindspore::ops::GetOpDef(prim_func->name());
 }
 
+bool HasAbstractUndetermined(const AbstractBasePtr &abs) {
+  if (abs->isa<AbstractSequence>()) {
+    auto abs_seq = abs->cast<abstract::AbstractSequencePtr>();
+    return std::any_of(abs_seq->elements().cbegin(), abs_seq->elements().cend(), HasAbstractUndetermined);
+  }
+  return abs->isa<AbstractUndetermined>();
+}
+
 void PrimitiveFunctionEvaluator::CheckArgsSizeAndType(const AbstractBasePtrList &abs_args) {
   auto op_args = op_def_->args_;
   // Ignore monad.
@@ -1243,6 +1251,9 @@ void PrimitiveFunctionEvaluator::CheckArgsSizeAndType(const AbstractBasePtrList 
 
   // Check inputs type.
   for (size_t i = 0; i < op_args.size(); i++) {
+    if (HasAbstractUndetermined(real_abs_args[i])) {
+      continue;
+    }
     if (!ValidateArgOptional(real_abs_args[i], op_args[i]) &&
         !ops::ValidateArgsType(real_abs_args[i], op_args[i].arg_dtype_)) {
       std::vector<std::string> op_type_list;
@@ -2470,7 +2481,14 @@ std::vector<AnfNodePtr> GeneratePrimitiveDefaultArgs(const std::string &op_name,
                                                      const std::vector<AnfNodePtr> &args_list,
                                                      const std::vector<ops::OpInputArg> &op_args, bool check_init) {
   size_t args_size = args_list.size();
-  std::vector<AnfNodePtr> nodes(args_list);
+  std::vector<AnfNodePtr> nodes;
+  for (const auto &input : args_list) {
+    if (HasAbstractMonad(input) || (IsPrimitiveCNode(input, prim::kPrimUpdateState) || IsValueNode<UMonad>(input) ||
+                                    IsValueNode<IOMonad>(input))) {
+      continue;
+    }
+    (void)nodes.emplace_back(input);
+  }
   if (args_size < op_args.size()) {
     for (size_t i = args_size; i < op_args.size(); i++) {
       auto default_arg = parse::GetArgDefaultValue(op_name, op_args[i].arg_name_);
@@ -2494,6 +2512,7 @@ std::vector<AnfNodePtr> GeneratePrimitiveDefaultArgs(const std::string &op_name,
 bool ValidateAndConvertArgsType(const std::string &op_name, const std::vector<ops::OpInputArg> &op_args,
                                 const AbstractBasePtrList &abs_list, const FuncGraphPtr &fg,
                                 std::vector<AnfNodePtr> *nodes) {
+  bool exist_undetermined_arg = false;
   for (size_t i = 0; i < op_args.size(); i++) {
     auto op_arg = op_args[i];
     auto abs_arg = abs_list[i];
@@ -2501,6 +2520,9 @@ bool ValidateAndConvertArgsType(const std::string &op_name, const std::vector<op
       MS_EXCEPTION(TypeError) << "For Primitive[" << op_name
                               << "], only positional arguments as inputs are supported, but got "
                               << abs_arg->ToString();
+    }
+    if (HasAbstractUndetermined(abs_arg)) {
+      exist_undetermined_arg = true;
     }
     if (ValidateArgOptional(abs_arg, op_arg) || ops::ValidateArgsType(abs_arg, op_arg.arg_dtype_)) {
       continue;
@@ -2517,7 +2539,7 @@ bool ValidateAndConvertArgsType(const std::string &op_name, const std::vector<op
         break;
       }
     }
-    if (!match) {
+    if (!match && !exist_undetermined_arg) {
       return false;
     }
   }
@@ -4288,6 +4310,10 @@ class CondEvaluator : public TransitionPrimEvaluator {
   MS_DECLARE_PARENT(CondEvaluator, TransitionPrimEvaluator);
   EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_abs_list, const ConfigPtr &,
                          const AnfNodeConfigPtr &out_conf) override {
+    auto res_abstract = EvalUndeterminedArgs(args_abs_list);
+    if (res_abstract != nullptr) {
+      return res_abstract;
+    }
     MS_EXCEPTION_IF_NULL(out_conf);
     MS_EXCEPTION_IF_NULL(out_conf->node());
     auto cnode = out_conf->node()->cast<CNodePtr>();
