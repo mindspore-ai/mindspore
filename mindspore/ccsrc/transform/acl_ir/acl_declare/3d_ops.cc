@@ -22,6 +22,10 @@ REGISTER_ACL_OP(Conv3D).set_is_3d_ops().set_extra_supported_datatype({ge::DT_FLO
 
 REGISTER_ACL_OP(Conv3DTranspose).set_is_3d_ops().set_extra_supported_datatype({ge::DT_FLOAT});
 
+REGISTER_ACL_OP(Conv3DBackpropInput).set_run_mode(false);
+
+REGISTER_ACL_OP(Conv3DBackpropFilter).set_run_mode(false);
+
 REGISTER_ACL_OP(GridSampler3D).set_is_3d_ops();
 
 REGISTER_ACL_OP(AvgPool3D).set_is_3d_ops();
