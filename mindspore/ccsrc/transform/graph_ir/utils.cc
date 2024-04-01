@@ -325,10 +325,16 @@ GraphRunnerPtr NewGraphRunner(const GraphRunnerOptions &options) {
 
 void SetGraphRunner(const GraphRunnerPtr &runner) { DfGraphManager::GetInstance().SetGraphRunner(runner); }
 void ClearGraph() { DfGraphManager::GetInstance().ClearGraph(); }
-Status AddGraph(const std::string &name, const DfGraphPtr &graph, const OptionMap &options, const bool &is_cloud) {
+
+Status AddGraph(const std::string &name, const DfGraphPtr &graph, const OptionMap &options, const bool &is_cloud,
+                const bool &need_aoe) {
   auto ret = DfGraphManager::GetInstance().AddGraph(name, graph, options, is_cloud);
   if (ret != Status::SUCCESS) {
     return ret;
+  }
+  if (need_aoe) {
+    transform::AddOptimizeGraph(name);
+    transform::DfGraphManager::GetInstance().AoeGeGraph();
   }
   auto graph_runner = transform::GetGraphRunner();
   if (graph_runner == nullptr) {

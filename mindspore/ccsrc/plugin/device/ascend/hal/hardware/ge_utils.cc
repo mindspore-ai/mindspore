@@ -217,7 +217,6 @@ bool AddFakeGraph(const FuncGraphPtr &anf_graph) {
       transform::SetAnfGraph(checkpoint_name, anf_graph);
     }
   }
-  transform::AddOptimizeGraph(graph_name);
   return true;
 }
 
@@ -225,6 +224,7 @@ bool AddDFGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap &
   MS_EXCEPTION_IF_NULL(anf_graph);
   auto converter = transform::NewConverter(anf_graph, GetPhasePrefix());
   bool is_cloud = true;
+  bool need_aoe = false;
   if (export_air) {
     MS_LOG(INFO) << "Set DfGraphConvertor training : false";
     transform::SetTraining(converter, false);
@@ -240,7 +240,9 @@ bool AddDFGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap &
     MS_LOG(ERROR) << "Convert df graph failed, err:" << err_code;
     return false;
   }
-
+  if (MsContext::GetInstance()->EnableAoeOnline()) {
+    need_aoe = true;
+  }
   auto graph_name = GetGraphName(anf_graph);
   std::string init_graph = "init_subgraph." + graph_name;
   std::string checkpoint_name = "save." + graph_name;
@@ -248,7 +250,7 @@ bool AddDFGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap &
   GetComputeGraphReuseOptions(anf_graph, &options);
   UpdateTopoOrderOptions(graph_name, &options);
   MS_LOG(INFO) << "Set options of compute graph: " << graph_name << " to " << MapToString(options);
-  (void)transform::AddGraph(graph_name, transform::GetComputeGraph(converter), options, is_cloud);
+  (void)transform::AddGraph(graph_name, transform::GetComputeGraph(converter), options, is_cloud, need_aoe);
   if (IsEnableRefMode()) {
     (void)transform::AddGraph(init_graph, converter->GetInitGraph());
   } else {
@@ -263,7 +265,6 @@ bool AddDFGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap &
     }
   }
 
-  transform::AddOptimizeGraph(graph_name);
   return true;
 }
 }  // namespace ascend
