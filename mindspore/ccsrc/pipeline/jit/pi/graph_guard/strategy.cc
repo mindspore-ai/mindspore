@@ -49,7 +49,7 @@ OptStrategy::ExecKind OptStrategy::MakeExecStrategyByPerf(OptPerfPtr graph_perf,
 OptStrategy::ExecKind OptStrategy::MakeExecStrategyByComplex(PyCodeObject *co, int threshold) {
   // currently just use instruction count to judge whether to use graph build
   // later it need cost model to make judgement here
-  if (co != nullptr && static_cast<int>(PyBytes_GET_SIZE(co->co_code) / sizeof(_Py_CODEUNIT)) < threshold) {
+  if (co != nullptr && SizeToInt(PyBytes_GET_SIZE(co->co_code) / sizeof(_Py_CODEUNIT)) < threshold) {
     return ExecKind::kExecPyNative;
   } else {
     return ExecKind::kExecGraph;
@@ -124,9 +124,9 @@ void OptStrategy::MakeGCStrategy(OptCodeHubPtr hub, int limit_size, int limit_co
         std::string phase = item->GetPhase();
         if (phase.size() > 0) {
           FuncGraphPtr ms_func_graph = graph_executor->GetFuncGraph(phase);
-          int node_count = static_cast<int>(ms_func_graph->nodes().size());
+          int node_count = SizeToInt(ms_func_graph->nodes().size());
           for (auto fg : ms_func_graph->func_graphs_used_total()) {
-            node_count += static_cast<int>(fg->nodes().size());
+            node_count += SizeToInt(fg->nodes().size());
           }
           if (limit_size > node_count) {
             limit_size -= node_count;

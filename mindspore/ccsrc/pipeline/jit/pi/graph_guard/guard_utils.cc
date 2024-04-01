@@ -137,8 +137,8 @@ class ItemData {
     if (tp_ == ItemType::PyNull) {
       return "(null)";
     } else {
-      return std::string("(type:") + std::to_string(static_cast<int>(tp_)) +
-             ",specialize:" + std::to_string(specialized_) + ",recurse:" + std::to_string(recurseDepth_) + ")";
+      return std::string("(type:") + std::to_string(SizeToInt(tp_)) + ",specialize:" + std::to_string(specialized_) +
+             ",recurse:" + std::to_string(recurseDepth_) + ")";
     }
   }
 

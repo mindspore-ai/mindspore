@@ -18,6 +18,7 @@
 
 #include <vector>
 #include "pipeline/jit/pi/utils/bitmap.h"
+#include "utils/convert_utils_base.h"
 
 namespace mindspore {
 namespace pijit {

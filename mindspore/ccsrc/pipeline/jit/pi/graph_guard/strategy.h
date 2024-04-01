@@ -21,6 +21,7 @@
 #include "pipeline/jit/pi/graph_guard/perf.h"
 #include "pipeline/jit/pi/graph_guard/cache.h"
 #include "mindapi/base/shape_vector.h"
+#include "utils/convert_utils_base.h"
 
 using PyObjectArray = std::vector<PyObject *>;
 
