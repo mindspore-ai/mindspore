@@ -85,10 +85,28 @@ static bool IsRepeatWithoutSideEffect(ValueNode *v, bool repeat_attr_item_access
   return false;
 }
 
+namespace {
+/**
+ * mindspore func_graph assume these unsupported value is constant, so it same as global.
+ * avoid parameter unsupported error by global
+ */
+bool ValidateGraphParameters(ValueNode *node) {
+  static const std::set<AObject::Type> unsupported_parameter = {
+    AObject::kTypeAnyValue,  AObject::kTypeFunction,      AObject::kTypeBoundMethod,
+    AObject::kTypePrimitive, AObject::kTypeMetaFuncGraph, AObject::kTypeCell,
+  };
+  AObject *info = node->GetVobj();
+  if (info == nullptr) {
+    return false;
+  }
+  return unsupported_parameter.find(info->GetType()) == unsupported_parameter.end();
+}
+}  // namespace
+
 bool GraphAnalyzer::ProduceInterpretValue(ValueNode *v) {
   bool repeat_op = graph_->Config().GetBoolConfig(GraphJitConfig::kEnableOptimizeForAttrItem);
-  auto &locals = GetCaptureInfo().escaped_locals;
-  auto &values = GetCaptureInfo().captured_locals.values;
+  auto &locals = GetCaptureInfo().interpret_.values;
+  auto &values = GetCaptureInfo().captured_.values;
   for (auto i : v->getInputs()) {
     if (IsNonLocalValue(i) || locals.find(i) != locals.end()) {
       continue;
@@ -177,8 +195,8 @@ bool GraphAnalyzer::AddToCaptured(ValueNode *v) {
     GetCaptureInfo().has_grad_ |= f->TestMsFlag(AObject::kMsFlagGradFunc);
   }
 
-  auto &locals = GetCaptureInfo().escaped_locals;          // interpret values
-  auto &values = GetCaptureInfo().captured_locals.values;  // graph produced values
+  auto &locals = GetCaptureInfo().interpret_.values;  // interpret values
+  auto &values = GetCaptureInfo().captured_.values;   // graph produced values
   for (auto i : v->getInputs()) {
     bool produced_in_graph = values.find(i) != values.end() || IsNonLocalValue(i);
     MS_EXCEPTION_IF_CHECK_FAIL(produced_in_graph || locals.find(i) != locals.end(),
@@ -198,16 +216,16 @@ bool GraphAnalyzer::AddToCaptured(ValueNode *v) {
     }
   }
 
-  GetCaptureInfo().captured_locals.values.insert(v);
-  GetCaptureInfo().captured_locals.order.push_back(v);
+  GetCaptureInfo().captured_.values.insert(v);
+  GetCaptureInfo().captured_.operations.push_back(v);
   return true;
 }
 
 void GraphAnalyzer::AddToEscaped(ValueNode *v) {
-  MS_EXCEPTION_IF_CHECK_FAIL(GetCaptureInfo().escaped_locals.find(v) == GetCaptureInfo().escaped_locals.end(),
+  MS_EXCEPTION_IF_CHECK_FAIL(GetCaptureInfo().interpret_.values.find(v) == GetCaptureInfo().interpret_.values.end(),
                              "duplicate escaped values");
-  GetCaptureInfo().escaped_locals.insert(v);
-  GetCaptureInfo().ordered_escaped_locals.push_back(v);
+  GetCaptureInfo().interpret_.values.insert(v);
+  GetCaptureInfo().interpret_.operations.push_back(v);
 }
 
 extern TracePtr GetTrace(ValueNode *node, bool strict, bool print, int depth, int max_depth);
@@ -254,7 +272,7 @@ bool GraphAnalyzer::TryToCapture(AbstractNode *n) {
   if (v->GetOpcode() == STORE_ATTR || v->GetOpcode() == STORE_DEREF) {
     return false;
   }
-  if (!GetCaptureInfo().captured_locals.values.empty() && CheckSideEffectedFunc(v)) {
+  if (!GetCaptureInfo().captured_.values.empty() && CheckSideEffectedFunc(v)) {
     return false;
   }
   if (ProduceInterpretValue(v)) {
@@ -320,11 +338,11 @@ bool GraphAnalyzer::AnalyzeRecursive(Graph *g) {
   return true;
 }
 
-void GraphAnalyzer::CollectInputs() {
-  auto &locals = GetCaptureInfo().escaped_locals;
-  auto &values = GetCaptureInfo().captured_locals.values;
-  auto &inputs = GetCaptureInfo().captured_locals.inputs;
-  for (ValueNode *i : GetCaptureInfo().captured_locals.order) {
+void GraphAnalyzer::CollectCapturedInputs() {
+  auto &locals = GetCaptureInfo().interpret_.values;
+  auto &values = GetCaptureInfo().captured_.values;
+  mindspore::CompactSet<ValueNode *> inputs;
+  for (ValueNode *i : GetCaptureInfo().captured_.operations) {
     for (auto input : i->getInputs()) {
       if (values.find(input) != values.end() || IsNonLocalValue(input)) {
         continue;
@@ -333,6 +351,7 @@ void GraphAnalyzer::CollectInputs() {
       inputs.insert(input);
     }
   }
+  GetCaptureInfo().captured_.inputs = {inputs.begin(), inputs.end()};
 }
 
 void GraphAnalyzer::UseDefAnalyze() {
@@ -352,7 +371,7 @@ void GraphAnalyzer::UseDefAnalyze() {
 
 void GraphAnalyzer::Analyze() {
   const FrameStates &enter_frame = graph_->GetFrame(0);
-  GetCaptureInfo().escaped_locals.insert(enter_frame.GetLocals().begin(), enter_frame.GetLocals().end());
+  GetCaptureInfo().interpret_.values.insert(enter_frame.GetLocals().begin(), enter_frame.GetLocals().end());
   AnalyzeRecursive(graph_);
   if (!HasTensorOperation()) {
     CleanCapturedValue();
@@ -361,11 +380,12 @@ void GraphAnalyzer::Analyze() {
   if (graph_->GetStopTraceBci() != -1) {
     graph_->GetSideEffect()->CleanSideEffects(graph_->GetStopTraceBci());
   }
-  CollectInputs();
+  CollectCapturedAndInterpret();
+  CollectGraphInputs();
 
   need_interpret_ = true;
 
-  if (graph_->GetStopTraceBci() != -1 || !GetCaptureInfo().ordered_escaped_locals.empty()) {
+  if (graph_->GetStopTraceBci() != -1 || !GetCaptureInfo().interpret_.operations.empty()) {
     return;
   }
   bool support_ret = graph_->GetRetVal()->GetVobj() && graph_->GetRetVal()->GetVobj()->IsMindSporeSupportedType();
@@ -397,7 +417,10 @@ std::vector<ValueNode *> GraphAnalyzer::GetAliveLocals(Graph *g) {
     GRAPH_JIT_LOG_F("UD analyze: enter GetAliveLocals bci %d", bci);
   }
   std::vector<ValueNode *> outputs = g->CollectAliveNode(bci);
-  std::set<ValueNode *> uniques(outputs.begin(), outputs.end());
+  mindspore::CompactSet<ValueNode *> uniques;
+  for (auto output : outputs) {
+    uniques.insert(output);
+  }
   outputs.assign(uniques.begin(), uniques.end());
   return outputs;
 }
@@ -422,7 +445,7 @@ bool GraphAnalyzer::AnalyzeAliveLocals(std::vector<ValueNode *> aliveNodes) {
     if (supported_type) {
       continue;
     }
-    auto capturedLocals = info_.captured_locals.order;
+    auto capturedLocals = info_.captured_.operations;
     if (std::find(capturedLocals.begin(), capturedLocals.end(), node) == capturedLocals.end()) {
       continue;
     }
@@ -444,9 +467,9 @@ bool GraphAnalyzer::AnalyzeAliveLocals(std::vector<ValueNode *> aliveNodes) {
     this->graph_->StopTraceAt(new_break_point, StopTraceReason::kStopTraceDataDependsOnGraphOut);
 
     // re-collect captured info
-    ClearCapturedInfo();
+    info_.clear();
     const FrameStates &enter_frame = graph_->GetFrame(0);
-    GetCaptureInfo().escaped_locals.insert(enter_frame.GetLocals().begin(), enter_frame.GetLocals().end());
+    GetCaptureInfo().interpret_.values.insert(enter_frame.GetLocals().begin(), enter_frame.GetLocals().end());
     (void)AnalyzeRecursive(graph_);
     break;
   }
@@ -469,7 +492,7 @@ static bool SkipSpecialFuncOrPrimitive(const py::object &callable) {
 
 bool GraphAnalyzer::HasTensorOperation() const {
   bool has_tensor_cal = false;
-  for (auto i : info_.captured_locals.values) {
+  for (auto i : info_.captured_.values) {
     AObject *value = i->GetVobj();
     int op = i->GetOpcode();
     if (Utils::IsCallOp(op)) {
@@ -488,73 +511,190 @@ bool GraphAnalyzer::HasTensorOperation() const {
   return has_tensor_cal;
 }
 
-void GraphAnalyzer::ClearCapturedInfo() {
-  info_.escaped_locals.clear();
-  info_.ordered_escaped_locals.clear();
-  info_.captured_locals.inputs.clear();
-  info_.captured_locals.values.clear();
-  info_.captured_locals.order.clear();
+void GraphAnalyzer::CapturedInfo::Info::clear() {
+  values.clear();
+  inputs.clear();
+  operations.clear();
+  outputs.clear();
+}
+
+void GraphAnalyzer::CapturedInfo::GraphInputs::clear() {
+  args.clear();
+  globals.clear();
+  vargs = nullptr;
+  kwargs = nullptr;
+}
+
+void GraphAnalyzer::CapturedInfo::clear() {
+  captured_.clear();
+  interpret_.clear();
+  graph_inputs_.clear();
+}
+
+std::string GraphAnalyzer::CapturedInfo::Info::ToString() {
+  std::stringstream s;
+  s << "values: ";
+  for (auto i : values) {
+    s << i->ToString() << "\n";
+  }
+  s << "inputs: \n";
+  for (auto i : inputs) {
+    s << i->ToString() << "\n";
+  }
+  s << "operations: \n";
+  for (auto i : operations) {
+    s << i->ToString() << "\n";
+  }
+  s << "outputs: \n";
+  for (auto i : outputs) {
+    s << i->ToString() << "\n";
+  }
+  return s.str();
+}
+
+std::string GraphAnalyzer::CapturedInfo::GraphInputs::ToString() {
+  std::stringstream s;
+  s << "globals: ";
+  for (auto i : globals) {
+    s << i->ToString() << "\n";
+  }
+  s << "args: \n";
+  for (auto i : args) {
+    s << i->ToString() << "\n";
+  }
+  s << "vargs: ";
+  if (vargs != nullptr) {
+    s << vargs->ToString();
+  }
+  s << "\n";
+  s << "kwargs: ";
+  if (kwargs != nullptr) {
+    s << kwargs->ToString();
+  }
+  s << "\n";
+  return s.str();
+}
+
+std::string GraphAnalyzer::CapturedInfo::ToString() {
+  std::stringstream s;
+  s << "1. captured_ info: \n";
+  s << captured_.ToString();
+  s << "2. interpret_ info: \n";
+  s << interpret_.ToString();
+  s << "3. graph_inputs_: \n";
+  s << graph_inputs_.ToString();
+  s << "4. has_grad_: " << has_grad_ << "\n";
+  return s.str();
 }
 
 void GraphAnalyzer::CleanCapturedValue() {
-  auto &locals = info_.escaped_locals;
-  for (auto i : info_.captured_locals.order) {
+  auto &locals = info_.interpret_.values;
+  for (auto i : info_.captured_.operations) {
     if (locals.find(i) == locals.end()) {
       locals.insert(i);
-      info_.ordered_escaped_locals.emplace_back(i);
+      info_.interpret_.operations.emplace_back(i);
     }
   }
-  info_.captured_locals.values.clear();
-  info_.captured_locals.order.clear();
+  info_.captured_.values.clear();
+  info_.captured_.operations.clear();
 }
 
-/**
- * mindspore func_graph assume these unsupported value is constant, so it same as global.
- * avoid parameter unsupported error by global
- */
-bool ValidateGraphParameters(ValueNode *node) {
-  static const std::set<AObject::Type> unsupported_parameter = {
-    AObject::kTypeAnyValue,  AObject::kTypeFunction,      AObject::kTypeBoundMethod,
-    AObject::kTypePrimitive, AObject::kTypeMetaFuncGraph, AObject::kTypeCell,
-  };
-  AObject *info = node->GetVobj();
-  if (info == nullptr) {
-    return false;
+static std::vector<ValueNode *> CollectGraphOutputs(const mindspore::CompactSet<ValueNode *> &interpret,
+                                                    const std::vector<ValueNode *> &alive) {
+  std::vector<ValueNode *> outputs;
+  for (auto i : alive) {
+    if (interpret.find(i) == interpret.end() && !IsNonLocalValue(i)) {
+      outputs.push_back(i);
+    }
   }
-  return unsupported_parameter.find(info->GetType()) == unsupported_parameter.end();
+  return outputs;
 }
 
-void MindGraphAnalyzer::CollectInputs() {
-  auto &inputs = GetCaptureInfo().captured_locals.inputs;
+void GraphAnalyzer::CollectCapturedAndInterpret() {
+  CollectCapturedInputs();
+  int break_bci = graph_->GetStopTraceBci();
+  std::vector<ValueNode *> alive_nodes;
+  if (break_bci != -1) {
+    alive_nodes = graph_->CollectAliveNode(break_bci, &alive_locals_);
+  } else {
+    alive_nodes = {graph_->GetRetVal()};
+  }
+
+  GetCaptureInfo().captured_.outputs = CollectGraphOutputs(GetCaptureInfo().interpret_.values, alive_nodes);
+  GetCaptureInfo().interpret_.inputs = graph_->GetFrame(0).GetLocals();
+  GetCaptureInfo().interpret_.outputs = std::move(alive_nodes);
+  auto vec = graph_->GetSideEffect()->CollectSideEffectAliveNodes();
+  GetCaptureInfo().interpret_.outputs.insert(GetCaptureInfo().interpret_.outputs.end(), vec.begin(), vec.end());
+}
+
+void GraphAnalyzer::CollectGraphInputs() {
+  PyCodeObject *co_ = graph_->GetCodeObj();
+  auto &interpret_ = GetCaptureInfo().interpret_;
+  auto &captured_ = GetCaptureInfo().captured_;
+  auto &graph_inputs = GetCaptureInfo().graph_inputs_;
+
+  // NOTE: if *vargs is cell variable, it is not parameter node
+  MS_EXCEPTION_IF_CHECK_FAIL(co_->co_nlocals == static_cast<int>(interpret_.inputs.size()),
+                             "interpret inputs must be same as locals");
+
+  ValueNode *vargs = nullptr;
+  ValueNode *kwargs = nullptr;
+  int arg_index = co_->co_argcount + co_->co_kwonlyargcount;
+  if ((co_->co_flags & CO_VARARGS) && interpret_.inputs[arg_index] != &ValueNode::kUnboundLocal) {
+    vargs = interpret_.inputs[arg_index];
+  }
+  arg_index += (IntToSize(co_->co_flags) & CO_VARARGS) != 0;
+  if ((IntToSize(co_->co_flags) & CO_VARKEYWORDS) && interpret_.inputs[arg_index] != &ValueNode::kUnboundLocal) {
+    kwargs = interpret_.inputs[arg_index];
+  }
+
+  // Identify parameters and global variables
+  for (auto input : captured_.inputs) {
+    if (input == graph_inputs.vargs) {
+      graph_inputs.vargs = vargs;
+    } else if (input == graph_inputs.kwargs) {
+      graph_inputs.kwargs = kwargs;
+    } else if (ValidateGraphParameters(input)) {
+      graph_inputs.args.push_back(input);
+    } else {
+      graph_inputs.globals.push_back(input);
+    }
+  }
+
+  size_t inputs_count = captured_.inputs.size();
+  captured_.inputs = graph_inputs.args;
+  if (graph_inputs.vargs != nullptr) {
+    captured_.inputs.push_back(graph_inputs.vargs);
+  }
+  if (graph_inputs.kwargs != nullptr) {
+    captured_.inputs.push_back(graph_inputs.kwargs);
+  }
+  captured_.inputs.insert(captured_.inputs.end(), graph_inputs.globals.begin(), graph_inputs.globals.end());
+  MS_EXCEPTION_IF_CHECK_FAIL(inputs_count == captured_.inputs.size(), "error parameters");
+}
+
+void MindGraphAnalyzer::CollectCapturedInputs() {
+  auto &inputs = GetCaptureInfo().captured_.inputs;
   const FrameStates &enter_frame = graph_->GetFrame(0);
   PyCodeObject *co = graph_->GetCodeObj();
   int argc = co->co_argcount + co->co_kwonlyargcount;
   argc += SizeToInt(co->co_flags & CO_VARARGS) ? 1 : 0;
   argc += SizeToInt(co->co_flags & CO_VARKEYWORDS) ? 1 : 0;
   for (Py_ssize_t m = 0; m < argc; ++m) {
-    auto local = enter_frame.Local(m);
-    if (local != &ValueNode::kUnboundLocal) {
-      inputs.insert(enter_frame.Local(m));
-    } else {
-      const Py_ssize_t ncells = PyTuple_GET_SIZE(co->co_cellvars);
-      for (Py_ssize_t i = 0; co->co_cell2arg && i < ncells; ++i) {
-        Py_ssize_t argi = co->co_cell2arg[i];
-        if (argi != CO_CELL_NOT_AN_ARG) {
-          auto cell = enter_frame.Closure(i)->GetValue();
-          inputs.insert(cell);
-        }
-      }
+    const auto &local = enter_frame.Local(m);
+    if (local == &ValueNode::kUnboundLocal) {
+      continue;
     }
+    inputs.push_back(local);
   }
 }
 
 void MindGraphAnalyzer::Analyze() {
   auto origin_stop_bci = graph_->GetStopTraceBci();
   UseDefAnalyze();
-  CollectInputs();
 
   const FrameStates &enter_frame = graph_->GetFrame(0);
-  GetCaptureInfo().escaped_locals.insert(enter_frame.GetLocals().begin(), enter_frame.GetLocals().end());
+  GetCaptureInfo().interpret_.values.insert(enter_frame.GetLocals().begin(), enter_frame.GetLocals().end());
 
   auto mind_graph_builder = std::static_pointer_cast<MindGraphBuilder>(graph_builder_);
   MS_EXCEPTION_IF_NULL(mind_graph_builder);
@@ -562,7 +702,7 @@ void MindGraphAnalyzer::Analyze() {
   if (func_graph_builder->graph() == nullptr) {
     // Graph build failed, add all nodes to ordered_escaped_locals.
     MS_LOG(DEBUG) << "Failed to build graph";
-    GetCaptureInfo().ordered_escaped_locals.clear();
+    GetCaptureInfo().interpret_.operations.clear();
     for (const auto &traced_node : graph_->GetTracedNodes()) {
       if (origin_stop_bci != -1 && traced_node->bci() >= origin_stop_bci) {
         break;
@@ -571,14 +711,15 @@ void MindGraphAnalyzer::Analyze() {
     }
     graph_->StopTraceAt(origin_stop_bci, StopTraceReason::kStopTraceDataDependsOnGraphOut);
     need_interpret_ = true;
-    GetCaptureInfo().captured_locals.order.clear();
-    GetCaptureInfo().captured_locals.values.clear();
-    GetCaptureInfo().captured_locals.inputs.clear();
+    GetCaptureInfo().captured_.clear();
+    CollectCapturedAndInterpret();
     return;
   }
+  CollectCapturedAndInterpret();
+  CollectGraphInputs();
 
   need_interpret_ = true;
-  if (graph_->GetStopTraceBci() != -1 || !GetCaptureInfo().ordered_escaped_locals.empty()) {
+  if (graph_->GetStopTraceBci() != -1 || !GetCaptureInfo().interpret_.operations.empty()) {
     return;
   }
   bool support_ret = graph_->GetRetVal()->GetVobj() && graph_->GetRetVal()->GetVobj()->IsMindSporeSupportedType();
@@ -601,13 +742,13 @@ bool MindGraphAnalyzer::AnalyzeAliveLocals(std::vector<ValueNode *> aliveNodes) 
       MS_LOG(DEBUG) << "Skip non local value used as graph return.";
       continue;
     }
-    auto capturedLocals = info_.captured_locals.order;
+    auto capturedLocals = info_.captured_.operations;
     if (std::find(capturedLocals.begin(), capturedLocals.end(), node) == capturedLocals.end()) {
       continue;
     }
     AObject *o = node->GetVobj();
     auto out_py_obj = o->GetPyObject();
-    if (func_graph_builder->AddOutput(out_py_obj, false)) {
+    if (func_graph_builder->AddOutput(out_py_obj, true)) {
       MS_LOG(DEBUG) << "Add output success.";
       continue;
     }
@@ -635,19 +776,22 @@ void MindGraphAnalyzer::UpdateCapturedOrder() {
   const auto &traced_nodes = graph_->GetTracedNodes();
   auto stop_bci = graph_->GetStopTraceBci();
   if (stop_bci == -1) {
-    GetCaptureInfo().captured_locals.order = traced_nodes;
+    GetCaptureInfo().captured_.operations = traced_nodes;
   } else {
-    GetCaptureInfo().captured_locals.order.clear();
+    GetCaptureInfo().captured_.operations.clear();
     for (const auto &traced_node : traced_nodes) {
       if (traced_node->bci() >= stop_bci) {
         break;
       }
-      GetCaptureInfo().captured_locals.order.push_back(traced_node);
+      GetCaptureInfo().captured_.operations.push_back(traced_node);
     }
   }
-  const auto &captured_local_order = GetCaptureInfo().captured_locals.order;
-  std::set<ValueNode *> new_capture_local_values(captured_local_order.begin(), captured_local_order.end());
-  GetCaptureInfo().captured_locals.values = new_capture_local_values;
+  const auto &captured_local_order = GetCaptureInfo().captured_.operations;
+  mindspore::CompactSet<ValueNode *> new_capture_local_values;
+  for (auto val : captured_local_order) {
+    new_capture_local_values.insert(val);
+  }
+  GetCaptureInfo().captured_.values = new_capture_local_values;
 }
 
 void MindGraphAnalyzer::UseDefAnalyze() {

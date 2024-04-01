@@ -69,9 +69,10 @@ class FuncGraphBuilder {
   /// \brief Add an output node to the graph.
   ///
   /// \param[in] output_obj The output python object.
+  /// \param[in] is_top_graph Indicate whether the graph to add output is top graph.
   ///
   /// \return Return true if the output object can be used as the output of the graph.
-  bool AddOutput(const py::object &output_obj, bool add_repeat = true);
+  bool AddOutput(const py::object &output_obj, bool is_top_graph = true);
 
   /// \brief Remove an output node of the graph.
   ///

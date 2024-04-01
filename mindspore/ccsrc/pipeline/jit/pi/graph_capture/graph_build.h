@@ -309,7 +309,7 @@ class MindGraphBuilder : public GraphBuilder {
   void FGAddInputs(const std::vector<py::object> &args);
   py::object FGAddNode(CallNode *call_node, const py::object &callable_info, const std::vector<py::object> &args,
                        StopTraceReason *stop_reason);
-  void FGAddOutput();
+  void FGAddOutput(bool is_top_graph);
   StopTraceReason BuildSubGraph(CallNode *call_node, int depth, const py::object &func,
                                 const GraphBuilderPtr &subgraph) override;
   py::object ResolveCallable(CallNode *call_node, StopTraceReason *stop_reason) override;
