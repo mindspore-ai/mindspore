@@ -1,4 +1,4 @@
-ClampTensor:
+clamp_tensor:
     description: |
         Clamps tensor values between the specified minimum value and maximum value.
 
@@ -26,7 +26,7 @@ ClampTensor:
               max (Tensor, optional): The maximum value. Default: ``None`` .
 
         Returns:
-              Union(Tensor), a clipped Tensor.
+              Tensor, a clipped Tensor.
               The data type and shape are the same as input.
 
         Raises:
@@ -41,12 +41,13 @@ ClampTensor:
         Examples:
             >>> # case 1: the data type of input is Tensor
             >>> import mindspore
-            >>> from mindspore import Tensor, ops
+            >>> from mindspore import Tensor
+            >>> from mindspore.ops.auto_generate import clamp_tensor
             >>> import numpy as np
             >>> min_value = Tensor(5, mindspore.float32)
             >>> max_value = Tensor(20, mindspore.float32)
             >>> input = Tensor(np.array([[1., 25., 5., 7.], [4., 11., 6., 21.]]), mindspore.float32)
-            >>> output = ops.clamp(input, min_value, max_value)
+            >>> output = clamp_tensor(input, min_value, max_value)
             >>> print(output)
             [[ 5. 20.  5.  7.]
             [ 5. 11.  6. 20.]]
