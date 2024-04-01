@@ -34,7 +34,9 @@ class ASDBase:
     ASDBase is the base class of operator with accuracy-sensitive detection feature in python.
 
     Args:
-        op (Primitive): Original operator requiring accuracy-sensitive detection feature.
+        cls (Primitive): Original operator requiring accuracy-sensitive detection feature.
+        args (tuple):  A variable parameter tuple to the original operator.
+        kwargs (dict): A variable parameter dictionary passed the original operator.
 
     Supported Platforms:
         ``Ascend``
