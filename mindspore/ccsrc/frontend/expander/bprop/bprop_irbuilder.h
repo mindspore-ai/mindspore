@@ -126,27 +126,7 @@ class IrBuilder : public BpropBuilder {
       : BpropBuilder(name, infer), func_graph_(func_graph) {}
   NodePtr EmitOp(const PrimitivePtr &prim, const NodePtrList &inputs) override;
   NodePtr EmitValue(const ValuePtr &value) override;
-  using BlockFunc = std::function<NodePtrList(Emitter *)>;
-  /// \brief Generate a conditional block.
-  ///
-  /// \param[in] cond condition node, it should be a tensor of Bool.
-  /// \param[in] true_case  the true branch.
-  /// \param[in] false_case the false branch.
-  /// \return node of tuple or single value, which is depends on the output list of two branches.
-  /// \note The overloaded operators (like a+b) should not be used for captured variables in the true_case/false_case
-  /// functions, use the function argument `Emitter` instead, like `emitter->Add(a, b)`. The output list of two branches
-  /// should match the join rules of control flow.
   NodePtr Conditional(const NodePtr &cond, const BlockFunc &true_case, const BlockFunc &false_case) override;
-
-  /// \brief Generate a while-loop block.
-  ///
-  /// \param[in] cond condition node, it should be a tensor of Bool.
-  /// \param[in] body  the loop body.
-  /// \param[in] init_list the initial variables that would be modified in body.
-  /// \return node of tuple or single value, which is depends on the init_list.
-  /// \note The overloaded operators (like `a+b`) should not be used for captured variables in the body function, use
-  /// the function argument `Emitter` instead, like `emitter->Add(a, b)`. The length and node order of the output list
-  /// of the body function should match init_list.
   NodePtr While(const NodePtr &cond, const BlockFunc &body, const NodePtrList &init_list) override;
   const FuncGraphPtr &func_graph() { return func_graph_; }
 
