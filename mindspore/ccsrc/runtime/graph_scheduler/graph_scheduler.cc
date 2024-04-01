@@ -954,7 +954,6 @@ ActorSetPtr GraphScheduler::Build(const GraphCompilerInfo &graph_compiler_info) 
   MS_EXCEPTION_IF_NULL(rpc_node_scheduler_);
   actor_set->rpc_actors_ = rpc_node_scheduler_->Build(actor_set.get());
 #endif
-  actor_set->InitCallbackCounter();
   return actor_set;
 }
 
@@ -1284,6 +1283,30 @@ std::vector<CustomActorPtr> GraphScheduler::BuildCustomActor(const GraphCompiler
   return custom_actors;
 }
 
+namespace {
+void ProcessStreamSendRecvEventPair(
+  mindspore::HashMap<uint32_t, std::pair<KernelActorPtr, KernelActorPtr>> *send_recv_nodes, const CNodePtr &kernel,
+  const KernelActorPtr &kernel_actor, bool is_send_node) {
+  auto primitive = common::AnfAlgo::GetCNodePrimitive(kernel);
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto record_event_stream_pair_attr = primitive->GetAttr(kAttrRecordWaitEventStreamPairId);
+  if (record_event_stream_pair_attr != nullptr) {
+    auto event_pair_id = GetValue<uint32_t>(record_event_stream_pair_attr);
+    MS_LOG(DEBUG) << "Process event pair id : " << event_pair_id << ".";
+    auto &send_recv_actor = (*send_recv_nodes)[event_pair_id];
+    if (is_send_node) {
+      MS_EXCEPTION_IF_CHECK_FAIL(send_recv_actor.first == nullptr, "Stream send pair id is already set.");
+      send_recv_actor.first = kernel_actor;
+    } else {
+      MS_EXCEPTION_IF_CHECK_FAIL(send_recv_actor.second == nullptr, "Stream recv pair id is already set.");
+      send_recv_actor.second = kernel_actor;
+    }
+  } else {
+    MS_LOG(INFO) << "Stream send/recv kernel : " << kernel->DebugString() << " has no event stream pair id.";
+  }
+}
+}  // namespace
+
 std::vector<KernelActorPtr> GraphScheduler::BuildKernelActor(const GraphCompilerInfo &graph_compiler_info) {
   std::vector<KernelActorPtr> kernel_actors;
 
@@ -1303,6 +1326,8 @@ std::vector<KernelActorPtr> GraphScheduler::BuildKernelActor(const GraphCompiler
       strategy = (is_single_op_graph ? strategy : GraphExecutionStrategy::kPipeline);
     }
 
+    // Stream recv node need task id on stream from send node. Here pass stream send actor to stream recv actor.
+    mindspore::HashMap<uint32_t, std::pair<KernelActorPtr, KernelActorPtr>> send_recv_nodes;
     for (auto &kernel : execution_order) {
       MS_EXCEPTION_IF_NULL(kernel);
       if (IsKernelActor(kernel, graph_compiler_info.strategy_) && (!IsSkippedKernelActor(kernel))) {
@@ -1328,9 +1353,21 @@ std::vector<KernelActorPtr> GraphScheduler::BuildKernelActor(const GraphCompiler
         kernel_actor->inputs_continuous_memory_ =
           common::AnfAlgo::IsCommunicationOp(kernel) && (common::AnfAlgo::GetInputTensorNum(kernel) > 1);
 
+        if (IsPrimitiveCNode(kernel, prim::kPrimStreamSend)) {
+          ProcessStreamSendRecvEventPair(&send_recv_nodes, kernel, kernel_actor, true);
+        } else if (IsPrimitiveCNode(kernel, prim::kPrimStreamRecv)) {
+          ProcessStreamSendRecvEventPair(&send_recv_nodes, kernel, kernel_actor, false);
+        }
+
         InsertActor(kernel_actor.get());
         (void)kernel_actors.emplace_back(kernel_actor);
       }
+    }
+    for (auto &[event_pair_id, send_recv_actor] : send_recv_nodes) {
+      auto [send_actor, recv_actor] = send_recv_actor;
+      MS_LOG(DEBUG) << "Stream send/recv pair : " << event_pair_id << ", send_actor : " << send_actor
+                    << ", recv_actor : " << recv_actor << ".";
+      recv_actor->set_stream_send_actor(send_actor.get());
     }
   }
   return kernel_actors;

@@ -36,7 +36,7 @@ AscendEvent::AscendEvent(uint32_t flag) {
     MS_LOG(ERROR) << "aclrtCreateEventWithFlag failed, ret:" << ret;
     event_ = nullptr;
   }
-  MS_LOG(DEBUG) << "Create ascend event success, flat : " << flag << ".";
+  MS_LOG(DEBUG) << "Create ascend event success, flag : " << flag << ".";
 }
 
 AscendTimeEvent::AscendTimeEvent() {

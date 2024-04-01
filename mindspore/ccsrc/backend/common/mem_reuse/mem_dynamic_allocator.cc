@@ -15,7 +15,9 @@
  */
 
 #include "include/backend/mem_reuse/mem_dynamic_allocator.h"
+
 #include "include/backend/mem_reuse/mem_tracker.h"
+
 #include <algorithm>
 #include <numeric>
 #include <ostream>
@@ -104,7 +106,7 @@ DeviceMemPtr DynamicMemPoolBestFit::AllocTensorMem(size_t size, bool from_persis
   }
 
   if (device_addr == nullptr) {
-    MS_LOG(WARNING) << "Malloc failed and try to wait events to release more memory.";
+    MS_LOG(WARNING) << "Alloc tensor mem failed and try to wait events to release more memory.";
     // Since address may be duplicate, use set.
     std::set<DynamicMemBufPtr> carry_event_addresses;
     for (const auto &stream_pair_address : stream_pair_addresses_) {
@@ -572,10 +574,11 @@ void DynamicMemPoolBestFit::FreeTensorMemInner(const DeviceMemPtr &device_addr) 
 bool DynamicMemPoolBestFit::PreCombineMemBuf(const DynamicMemBufPtr &mem_buf, const MemStatusManagerPtr &mem_mng) {
   auto device_addr = mem_buf->device_addr_;
   if (mem_buf->status_ == DynamicMemBufStatus::kMemBufUsed && !mem_buf->IsEventNotUsed()) {
-    MS_LOG(DEBUG) << "Combine mem buf exit since mem buf is used by event, device_addr : " << device_addr << ".";
     mem_buf->status_ = DynamicMemBufStatus::kMemBufUsedByEvent;
     mem_mng->mps_.total_used_mem_size_ -= mem_buf->size_;
     mem_mng->mps_.total_used_by_event_mem_size_ += mem_buf->size_;
+    MS_LOG(DEBUG) << "Combine mem buf exit since mem buf is used by event, device_addr : " << device_addr
+                  << ", used by event mem size : " << mem_mng->mps_.total_used_by_event_mem_size_ << ".";
     return false;
   }
 
@@ -621,6 +624,8 @@ void DynamicMemPoolBestFit::CombineMemBuf(const DynamicMemBlockPtr &mem_block,
                         << " is less than the size of membuf : " << mem_buf->size_ << ".";
     }
     mem_mng->mps_.total_used_by_event_mem_size_ -= mem_buf->size_;
+    MS_LOG(DEBUG) << "Combime mem buf for addr : " << mem_buf->device_addr_
+                  << ", used by event mem size : " << mem_mng->mps_.total_used_by_event_mem_size_ << ".";
   } else if (origin_status == DynamicMemBufStatus::kMemBufIdle) {
     if (mem_mng->mps_.total_idle_mem_size_ < mem_buf->size_) {
       DumpDynamicMemPoolDebugInfo();
@@ -865,7 +870,8 @@ void DynamicMemPoolBestFit::DumpDynamicMemPoolStateInfo() {
           total_used_size_list[static_cast<int>(mb->second->allocator_type_)] += mb->second->size_;
         }
       }
-      buf << ", block[" << i << "] block size:" << mem_mng->mem_block_list_[i]->mem_block_size_ / kMBToByte
+      buf << ", block[" << i << "] stream id:" << mem_mng->mem_block_list_[i]->stream_id_
+          << "block size:" << mem_mng->mem_block_list_[i]->mem_block_size_ / kMBToByte
           << "M idle size:" << (mem_mng->mem_block_list_[i]->mem_block_size_ - mem_block_used_size) / kMBToByte << "M";
     }
 
@@ -917,7 +923,8 @@ void DynamicMemPoolBestFit::DumpDynamicMemPoolDebugInfo() {
         MS_EXCEPTION_IF_NULL(mem_buf);
         total_idle_mem_in_mem_mng += mem_buf->size_;
         MS_LOG(INFO) << " Idle mem_buf info: size[" << mem_buf->size_ << "] address[" << mem_buf->device_addr_
-                     << "] status[" << kBufStatusString.at(mem_buf->status_) << "].";
+                     << "] status[" << kBufStatusString.at(mem_buf->status_) << "] stream id[" << mem_buf->stream_id_
+                     << "].";
       }
     }
     // Dump all the eager free memory buf info.
@@ -937,7 +944,8 @@ void DynamicMemPoolBestFit::DumpDynamicMemPoolDebugInfo() {
         MS_EXCEPTION_IF_NULL(mem_buf);
         total_eager_free_mem_in_mem_mng += mem_buf->size_;
         MS_LOG(INFO) << " Eager free mem_buf info: size[" << mem_buf->size_ << "] address[" << mem_buf->device_addr_
-                     << "] status[" << kBufStatusString.at(mem_buf->status_) << "].";
+                     << "] status[" << kBufStatusString.at(mem_buf->status_) << "] stream id[" << mem_buf->stream_id_
+                     << "].";
       }
     }
     // Dump the memory statistical info.
@@ -1249,7 +1257,7 @@ const DeviceState MemStatusManager::DumpMemBlockDebugInfo(const std::string &mem
     auto mem_buf_map = (*iter)->block_all_mem_buf_map_;
     MS_LOG(WARNING) << " MemBlock info: number[" << iter - mem_block_list_.begin() << "] mem_buf_counts["
                     << mem_buf_map.size() << "] base_address[" << (*iter)->device_addr() << "] block_size["
-                    << (*iter)->size() << "].";
+                    << (*iter)->size() << "] stream id[" << (*iter)->stream_id_ << "].";
     for (auto iter_mem_buf = mem_buf_map.begin(); iter_mem_buf != mem_buf_map.end(); ++iter_mem_buf) {
       auto mem_buf = iter_mem_buf->second;
       MS_EXCEPTION_IF_NULL(mem_buf);
@@ -1267,7 +1275,8 @@ const DeviceState MemStatusManager::DumpMemBlockDebugInfo(const std::string &mem
       MS_LOG(INFO) << "  MemBuf info: address[" << mem_buf->device_addr_ << "] size[" << mem_buf->size_ << "] status["
                    << kBufStatusString.at(mem_buf->status_) << "] name["
                    << (mem_buf->allocator_name_.empty() ? "Unknown" : mem_buf->allocator_name_) << "] type["
-                   << kAllocatorTypeString.at(mem_buf->allocator_type_) << "].";
+                   << kAllocatorTypeString.at(mem_buf->allocator_type_) << "] stream id[" << mem_buf->stream_id_
+                   << "].";
     }
   }
   return device_state;

@@ -262,7 +262,7 @@ CNodePtr AclStreamAssign::CreateSendApplyKernel(const NotNull<KernelGraphPtr> &g
   auto send_node_ptr = graph_ptr->NewCNode({send_apply});
   MS_EXCEPTION_IF_NULL(send_node_ptr);
   common::AnfAlgo::SetNodeAttr(kAttrEventId, MakeValue(event_id), send_node_ptr);
-  common::AnfAlgo::SetNodeAttr(kAttrRecrodEventStreamPair, MakeValue(event_generate_id), send_node_ptr);
+  common::AnfAlgo::SetNodeAttr(kAttrRecordWaitEventStreamPairId, MakeValue(event_generate_id), send_node_ptr);
   AnfAlgo::SetStreamId(stream_id, send_node_ptr.get());
   return send_node_ptr;
 }
@@ -278,7 +278,7 @@ CNodePtr AclStreamAssign::CreateRecvApplyKernel(const NotNull<KernelGraphPtr> &g
   MS_EXCEPTION_IF_NULL(recv_node_ptr);
   common::AnfAlgo::SetNodeAttr(kAttrEventId, MakeValue(event_id), recv_node_ptr);
   common::AnfAlgo::SetNodeAttr(kAttrRecordEventStream, MakeValue(record_stream_id), recv_node_ptr);
-  common::AnfAlgo::SetNodeAttr(kAttrRecrodEventStreamPair, MakeValue(event_generate_id), recv_node_ptr);
+  common::AnfAlgo::SetNodeAttr(kAttrRecordWaitEventStreamPairId, MakeValue(event_generate_id), recv_node_ptr);
   AnfAlgo::SetStreamId(stream_id, recv_node_ptr.get());
   return recv_node_ptr;
 }

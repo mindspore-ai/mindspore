@@ -300,9 +300,7 @@ bool AscendStreamMng::SyncExceptStreamsInList(const std::set<aclrtStream> &excep
   return res;
 }
 
-size_t AscendStreamMng::QueryStreamSize() const {
-  return std::count_if(streams_.begin(), streams_.end(), [](void *stream) { return stream != nullptr; });
-}
+size_t AscendStreamMng::QueryStreamSize() const { return streams_.size(); }
 
 bool AscendStreamMng::QueryStream(size_t stream_id) {
   if (stream_id >= streams_.size()) {
