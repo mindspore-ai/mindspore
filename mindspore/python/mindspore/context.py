@@ -815,7 +815,7 @@ def set_auto_parallel_context(**kwargs):
 
                      - auto_parallel: Achieving parallelism automatically.
         search_mode (str): There are three kinds of shard strategy search modes: ``"recursive_programming"`` ,
-                     ``"sharding_propagation"`` and ``"dynamic_programming"``(Not recommended).
+                     ``"sharding_propagation"`` and ``"dynamic_programming"`` (Not recommended).
                      Default: ``"recursive_programming"`` .
 
                      - recursive_programming: Recursive programming search mode. In order to obtain optimal performance,
@@ -1473,7 +1473,7 @@ def set_context(**kwargs):
               affected and not optimal. Cannot be used for MindIR load and export due to some syntax that may not be
               able to be exported.
 
-        debug_level (int): Set config for debugging. Default value: `RELEASE``.
+        debug_level (int): Set config for debugging. Default value: ``RELEASE``.
 
             - ``RELEASE``: Used for normally running, and some debug information will be discard to get a better
               compiling performance.
