@@ -9977,6 +9977,7 @@ class PromptFlashAttention(Primitive):
                                         "deq_scale2", "quant_scale2", "quant_offset2"],
                                 outputs=["attention_out"])
 
+
 class IncreFlashAttention(Primitive):
     r"""
     The interface for fully inference.
@@ -10195,8 +10196,21 @@ class MatmulQkv(Primitive):
     r"""
     Fuse three matmul ops for q k v attention into one
     """
+
     @prim_attr_register
     def __init__(self):
         """Initialize"""
         self.init_prim_io_names(inputs=['hidden_states', 'weight_q', 'weight_k', 'weight_v'],
                                 outputs=["output_q", "output_k", "output_v"])
+
+
+class MatmulFfn(Primitive):
+    r"""
+    Fuse two matmul ops for feed forward into one
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize"""
+        self.init_prim_io_names(inputs=['hidden_states', 'weight_gate', 'weight_up'],
+                                outputs=["output_gate", "output_up"])
