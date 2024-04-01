@@ -6690,7 +6690,7 @@ def mean(x, axis=None, keep_dims=False):
         The `axis` with tensor type is only used for compatibility with older versions and is not recommended.
 
     Args:
-        input (Tensor[Number]): The input tensor. The dtype of the tensor to be reduced is number.
+        x (Tensor[Number]): The input tensor. The dtype of the tensor to be reduced is number.
             :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
         axis (Union[int, tuple(int), list(int), Tensor]): The dimensions to reduce. Default: ``None`` ,
             reduce all dimensions. Only constant value is allowed. Assume the rank of `input` is r,

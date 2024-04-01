@@ -1,4 +1,4 @@
-mindspore.sync_pipeline_shared_parameters.rst
+mindspore.sync_pipeline_shared_parameters
 ================================================
 
 .. py:function:: mindspore.sync_pipeline_shared_parameters(net)
