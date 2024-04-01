@@ -1393,7 +1393,7 @@ def test_eager_gaussian_blur_dvpp_exception():
     img = np.ones([30, 60, 3], dtype=np.uint8)
     with pytest.raises(RuntimeError) as error_info:
         img = vision.GaussianBlur(9, 9).device("Ascend")(img)
-    assert "the value of gaussian kernel only supports [1, 3, 5]" in str(error_info.value)
+    assert "`kernel_size` only supports values 1, 3, and 5" in str(error_info.value)
 
 
 @pytest.mark.level0
@@ -1450,11 +1450,11 @@ def test_eager_affine_dvpp_exception():
         img = vision.Affine(degrees=15, translate=[0.2, 0.2], scale=1.1, shear=[1, 1]).device("Ascend")(img)
     assert "The input tensor is not of shape [H,W], [H,W,C] or [N,H,W,C]." in str(error_info.value)
 
-    # the input is out of [4, 6] to [32768, 4096]
+    # the input is out of [4, 6] to [32768, 32768]
     img = np.ones([4, 5, 3], dtype=np.uint8)
     with pytest.raises(RuntimeError) as error_info:
         img = vision.Affine(degrees=15, translate=[0.2, 0.2], scale=1.1, shear=[1, 1]).device("Ascend")(img)
-    assert "the input shape should be from [4, 6] to [32768, 4096]" in str(error_info.value)
+    assert "the input shape should be from [4, 6] to [32768, 32768]" in str(error_info.value)
 
     # the input kernel is invalid
     img = np.ones([30, 60, 3], dtype=np.uint8)
