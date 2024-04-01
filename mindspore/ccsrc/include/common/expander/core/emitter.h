@@ -369,8 +369,9 @@ COMMON_EXPORT NodePtr operator-(const NodePtr &node);
 class COMMON_EXPORT CtrlFlowBlock {
  public:
   using BlockFunc = std::function<NodePtrList(Emitter *)>;
-  explicit CtrlFlowBlock(Emitter *emitter, const FuncGraphPtr &func_graph)
-      : emitter_(emitter), func_graph_(func_graph) {
+  using EmitterCreator = std::function<EmitterPtr(const FuncGraphPtr &, const ExpanderInferPtr &)>;
+  CtrlFlowBlock(Emitter *emitter, const FuncGraphPtr &func_graph, const EmitterCreator &ec = nullptr)
+      : emitter_(emitter), func_graph_(func_graph), emitter_creator_(ec) {
     MS_EXCEPTION_IF_NULL(emitter);
     MS_EXCEPTION_IF_NULL(func_graph);
   }
@@ -380,13 +381,14 @@ class COMMON_EXPORT CtrlFlowBlock {
   NodePtr While(const NodePtr &cond, const BlockFunc &while_body_func, const NodePtrList &init_list);
 
  protected:
+  EmitterPtr CreateInnerEmitter(const FuncGraphPtr &fg, const ExpanderInferPtr &infer) const;
   NodePtr BuildSubgraph(const BlockFunc &func);
-
   NodePtrList BuildSubgraphOfPartial(const BlockFunc &func);
 
-  size_t output_num_{0};
   Emitter *emitter_;
   FuncGraphPtr func_graph_;
+  EmitterCreator emitter_creator_;
+  size_t output_num_{0};
   abstract::AbstractBasePtr out_abstract_{nullptr};
 
   class CppInferWithPartial : public CppInfer {
@@ -403,9 +405,6 @@ class COMMON_EXPORT IrEmitter : public Emitter {
     MS_EXCEPTION_IF_NULL(infer);
   }
   NodePtr EmitValue(const ValuePtr &value) override;
-  using BlockFunc = std::function<NodePtrList(Emitter *)>;
-  NodePtr Conditional(const NodePtr &cond, const BlockFunc &true_case, const BlockFunc &false_case) override;
-  NodePtr While(const NodePtr &cond, const BlockFunc &body, const NodePtrList &init_list) override;
   FuncGraphPtr func_graph() { return func_graph_; }
 
  protected:
