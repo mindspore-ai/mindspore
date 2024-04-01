@@ -811,6 +811,7 @@ void ControlNodeScheduler::ClearActorData(const ControlActorSet *control_actor_s
     MS_EXCEPTION_IF_NULL(gather_actor);
     gather_actor->memory_free_lists_ = std::queue<std::vector<DeviceTensor *>>();
     gather_actor->created_device_tensors_.clear();
+    gather_actor->created_new_graphs_.clear();
     gather_actor->created_new_nodes_.clear();
   }
 
@@ -828,6 +829,7 @@ void ControlNodeScheduler::ClearActorData(const ControlActorSet *control_actor_s
     MS_EXCEPTION_IF_NULL(exit_actor);
     exit_actor->memory_free_lists_ = std::queue<std::vector<DeviceTensor *>>();
     exit_actor->created_device_tensors_.clear();
+    exit_actor->created_new_graphs_.clear();
     exit_actor->created_new_nodes_.clear();
   }
 }
