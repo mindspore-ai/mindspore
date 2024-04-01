@@ -22,6 +22,7 @@
 #include <string>
 #include "pipeline/jit/pi/graph_compiler/pi_ir/ir_mutator.h"
 #include "pipeline/jit/pi/graph_compiler/pi_ir/ir_visitor.h"
+#include "utils/convert_utils_base.h"
 
 namespace mindspore {
 namespace pijit {

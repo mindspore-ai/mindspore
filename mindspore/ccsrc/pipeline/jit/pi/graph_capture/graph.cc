@@ -98,7 +98,7 @@ bool Graph::IsBreakAtLoop() const {
   const auto &instr = this->cfg_->instr_pool();
   // find the last backward edge overlapping this break point
   int res = break_bci;
-  for (int i = break_bci; i < static_cast<int>(instr.size()); ++i) {
+  for (int i = break_bci; i < SizeToInt(instr.size()); ++i) {
     MS_EXCEPTION_IF_CHECK_FAIL(i == instr[i]->bci(), "!!!");
     if (instr[i]->extra_jump() != nullptr) {
       res = std::min(instr[i]->extra_jump()->bci(), res);
