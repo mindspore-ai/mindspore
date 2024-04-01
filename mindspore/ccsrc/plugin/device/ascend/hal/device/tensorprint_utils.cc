@@ -16,12 +16,14 @@
 #include "plugin/device/ascend/hal/device/tensorprint_utils.h"
 #include <fstream>
 #include <iostream>
+#include <memory>
 #include <string>
 #include "pybind11/pybind11.h"
 #include "ir/tensor.h"
 #include "utils/file_utils.h"
 #include "utils/log_adapter.h"
 #include "proto/print.pb.h"
+#include "utils/ms_context.h"
 
 namespace py = pybind11;
 
@@ -40,11 +42,43 @@ void OutputReceiveData2StdOut(const ScopeAclTdtDataset &dataset) {
     }
   }
 }
+}  // namespace
 
-void OutputReceiveData2PbFile(const ScopeAclTdtDataset &dataset, const std::string &print_file_path) {
+TensorPrintUtils &TensorPrintUtils::GetInstance() {
+  static TensorPrintUtils instance;
+  return instance;
+}
+
+TensorPrintUtils::TensorPrintUtils() {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  print_file_path_ = ms_context->get_param<std::string>(MS_CTX_PRINT_FILE_PATH);
+  if (print_file_path_.empty()) {
+    return;
+  }
+  ChangeFileMode(print_file_path_, S_IWUSR);
+  pb_file_stream_ =
+    std::make_shared<std::fstream>(print_file_path_, std::ios::out | std::ios::trunc | std::ios::binary);
+}
+
+TensorPrintUtils::~TensorPrintUtils() {
+  if (pb_file_stream_ != nullptr) {
+    pb_file_stream_->close();
+    ChangeFileMode(print_file_path_, S_IRUSR);
+  }
+}
+
+void TensorPrintUtils::PrintReceiveData(const ScopeAclTdtDataset &dataset) {
+  if (pb_file_stream_ == nullptr) {
+    OutputReceiveData2StdOut(dataset);
+  } else {
+    // output data to file in protobuf binary format
+    OutputReceiveData2PbFile(dataset);
+  }
+}
+
+void TensorPrintUtils::OutputReceiveData2PbFile(const ScopeAclTdtDataset &dataset) {
   prntpb::Print print;
-  ChangeFileMode(print_file_path, S_IWUSR);
-  std::fstream output(print_file_path, std::ios::out | std::ios::trunc | std::ios::binary);
 
   for (auto data_elem : dataset.GetDataItems()) {
     prntpb::Print_Value *value = print.add_value();
@@ -60,25 +94,13 @@ void OutputReceiveData2PbFile(const ScopeAclTdtDataset &dataset, const std::stri
       tensor->add_dims(static_cast< ::google::protobuf::int64>(dim));
     }
 
-    tensor->set_tensor_type(tensor_ptr->type_name());
+    tensor->set_tensor_type(tensor_ptr->Dtype()->ToString());
     tensor->set_tensor_content(tensor_ptr->data_c(), tensor_ptr->data().nbytes());
   }
 
-  if (!print.SerializeToOstream(&output)) {
-    MS_LOG(ERROR) << "Save print file:" << print_file_path << " fail.";
+  if (!print.SerializeToOstream(pb_file_stream_.get())) {
+    MS_LOG(ERROR) << "Save print file:" << print_file_path_ << " fail.";
   }
   print.Clear();
-  output.close();
-  ChangeFileMode(print_file_path, S_IRUSR);
-}
-}  // namespace
-
-void PrintReceiveData(const ScopeAclTdtDataset &dataset, const string &print_file_path) {
-  if (print_file_path.empty()) {
-    OutputReceiveData2StdOut(dataset);
-  } else {
-    // output data to file in protobuf binary format
-    OutputReceiveData2PbFile(dataset, print_file_path);
-  }
 }
 }  // namespace mindspore::device::ascend
