@@ -44,17 +44,18 @@ bool AscendCommunicationGroup::Initialize(void *root_info) {
     initialized_ = true;
     return true;
   }
-
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
   (void)CALL_ASCEND_API(aclrtSetDevice, device_id);
   unique_id_ = *(static_cast<HcclRootInfo *>(root_info));
-  uint32_t group_rank = GetGroupRank(global_rank_);
+  uint32_t group_rank;
   auto group_size = size_;
   if (!common::GetEnv(kSimulationLevel).empty()) {
     group_size = 1;
     group_rank = 0;
+  } else {
+    group_rank = GetGroupRank(global_rank_);
   }
   if (HcclCommInitRootInfo(static_cast<uint32_t>(group_size), &unique_id_, static_cast<uint32_t>(group_rank), &comm_) !=
       static_cast<int32_t>(HCCL_SUCCESS)) {
@@ -99,13 +100,13 @@ bool AscendCommunicationGroup::Finalize() {
 
 void *AscendCommunicationGroup::GenerateRootInfo(size_t *root_info_size) {
   *root_info_size = sizeof(unique_id_);
-  uint32_t group_rank = GetGroupRank(global_rank_);
   if (!common::GetEnv(kSimulationLevel).empty() && !hccl::HcclAdapter::GetInstance().UseHcclCM()) {
     if (HcclGetRootInfo(&unique_id_) != static_cast<int32_t>(HCCL_SUCCESS)) {
       return nullptr;
     }
     return &unique_id_;
   }
+  uint32_t group_rank = GetGroupRank(global_rank_);
   if (group_rank == 0) {
     if (hccl::HcclAdapter::GetInstance().UseHcclCM()) {
       // If using hccl CM envs to launch distributed job, no need to call HcclGetRootInfo.
