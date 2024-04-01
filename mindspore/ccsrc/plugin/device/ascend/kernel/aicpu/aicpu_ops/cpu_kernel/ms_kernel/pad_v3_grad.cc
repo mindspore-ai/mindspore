@@ -277,6 +277,11 @@ uint32_t PadV3GradCpuKernel::PadV3GradCompute(CpuKernelContext &ctx) {
   const std::vector<int64_t> input_shape = ctx.Input(0)->GetTensorShape()->GetDimSizes();
   std::vector<int64_t> output_shape = ctx.Output(0)->GetTensorShape()->GetDimSizes();
 
+  // For GE graph, the output rank will be decreased if the last dim is 1, so the rank between output and input would be
+  // different, which causing accuracy error.
+  for (size_t i = 0; i < input_shape.size() - output_shape.size(); i++) {
+    output_shape.emplace_back(1);
+  }
   T *input = reinterpret_cast<T *>(ctx.Input(0)->GetData());
   T *output = reinterpret_cast<T *>(ctx.Output(0)->GetData());
 
