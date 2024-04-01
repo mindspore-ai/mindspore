@@ -40,7 +40,8 @@ class GraphParameterBuilder {
  public:
   static std::string Key(int, ValueNode *n);
 
-  void Init(const std::vector<ValueNode *> &graph_inputs, ValueNode *vargs, ValueNode *kwargs);
+  void Init(const std::vector<ValueNode *> &args, const std::vector<ValueNode *> &globals, ValueNode *vargs,
+            ValueNode *kwargs);
   void Build(const std::unordered_map<ValueNode *, int> &locals);
 
   std::vector<ValueNode *> args_;
@@ -1075,32 +1076,21 @@ void CodeBreakGenerator::MakeReturn(CodeGenerator *code_gen) const {
   code_gen->NewInstr(RETURN_VALUE);
 }
 
-static std::vector<ValueNode *> CollectGraphOutputs(const std::set<ValueNode *> &interpret,
-                                                    const std::vector<ValueNode *> &alive) {
-  std::vector<ValueNode *> outputs;
-  for (auto i : alive) {
-    if (interpret.find(i) == interpret.end() && !IsNonLocalValue(i)) {
-      outputs.push_back(i);
-    }
-  }
-  std::set<ValueNode *> uniques(outputs.begin(), outputs.end());
-  outputs.assign(uniques.begin(), uniques.end());
-  return outputs;
-}
-
-void CodeBreakGenerator::Init(const Graph *graph, const GraphAnalyzer::CapturedInfo *info) {
+void CodeBreakGenerator::Init(const Graph *graph, const GraphAnalyzer &analyzer) {
+  alive_locals_ = analyzer.alive_locals();
   break_bci_ = graph->GetStopTraceBci();
   cfg_ = graph->GetCFG().get();
-  std::vector<ValueNode *> alive_nodes = graph->CollectAliveNode(break_bci_, &alive_locals_);
-
-  interpret_.inputs = graph->GetFrame(0).GetLocals();
-  interpret_.outputs = std::move(alive_nodes);
-  interpret_.operations = info->ordered_escaped_locals;
-  auto vec = graph->GetSideEffect()->CollectSideEffectAliveNodes();
-  interpret_.outputs.insert(interpret_.outputs.end(), vec.begin(), vec.end());
-  captured_.inputs = std::vector<ValueNode *>(info->captured_locals.inputs.begin(), info->captured_locals.inputs.end());
-  captured_.outputs = CollectGraphOutputs(info->escaped_locals, interpret_.outputs);
-  captured_.operations = info->captured_locals.order;
+  const GraphAnalyzer::CapturedInfo &info = analyzer.GetCaptureInfo();
+  interpret_.inputs = info.interpret_.inputs;
+  interpret_.outputs = info.interpret_.outputs;
+  interpret_.operations = info.interpret_.operations;
+  captured_.inputs = info.captured_.inputs;
+  captured_.outputs = info.captured_.outputs;
+  captured_.operations = info.captured_.operations;
+  graph_inputs_info_.args = info.graph_inputs_.args;
+  graph_inputs_info_.vargs = info.graph_inputs_.vargs;
+  graph_inputs_info_.kwargs = info.graph_inputs_.kwargs;
+  graph_inputs_info_.globals = info.graph_inputs_.globals;
 }
 
 const CFG *CodeBreakGenerator::GetCFG() const { return cfg_; }
@@ -1111,18 +1101,8 @@ void CodeBreakGenerator::BuildGraphParameters(const std::unordered_map<ValueNode
   MS_EXCEPTION_IF_CHECK_FAIL(co_->co_nlocals == SizeToInt(interpret_.inputs.size()),
                              "interpret inputs must be same as locals");
 
-  ValueNode *vargs = nullptr;
-  ValueNode *kwargs = nullptr;
-  int arg_index = co_->co_argcount + co_->co_kwonlyargcount;
-  if ((co_->co_flags & CO_VARARGS) && interpret_.inputs[arg_index] != &ValueNode::kUnboundLocal) {
-    vargs = interpret_.inputs[arg_index];
-  }
-  arg_index += (IntToSize(co_->co_flags) & CO_VARARGS) != 0;
-  if ((IntToSize(co_->co_flags) & CO_VARKEYWORDS) && interpret_.inputs[arg_index] != &ValueNode::kUnboundLocal) {
-    kwargs = interpret_.inputs[arg_index];
-  }
-
-  builder->Init(captured_.inputs, vargs, kwargs);
+  builder->Init(graph_inputs_info_.args, graph_inputs_info_.globals, graph_inputs_info_.vargs,
+                graph_inputs_info_.kwargs);
   builder->Build(locals);
 
   size_t inputs_count = captured_.inputs.size();
@@ -1146,21 +1126,12 @@ std::string GraphParameterBuilder::Key(int index, ValueNode *n) {
   return s.str();
 }
 
-void GraphParameterBuilder::Init(const std::vector<ValueNode *> &graph_inputs, ValueNode *vargs, ValueNode *kwargs) {
-  // Identify parameters and global variables
-  vargs_ = nullptr;
-  kwargs_ = nullptr;
-  for (auto param : graph_inputs) {
-    if (param == vargs) {
-      vargs_ = vargs;
-    } else if (param == kwargs) {
-      kwargs_ = kwargs;
-    } else if (ValidateGraphParameters(param)) {
-      args_.push_back(param);
-    } else {
-      globals_.push_back(param);
-    }
-  }
+void GraphParameterBuilder::Init(const std::vector<ValueNode *> &args, const std::vector<ValueNode *> &globals,
+                                 ValueNode *vargs, ValueNode *kwargs) {
+  args_ = args;
+  globals_ = globals;
+  vargs_ = vargs;
+  kwargs_ = kwargs;
 }
 
 void GraphParameterBuilder::Build(const std::unordered_map<ValueNode *, int> &locals) {
@@ -1396,9 +1367,8 @@ static bool FindBlock(int start_bci, const CFG *cfg, int *end_bci, int *stack_ef
 
 py::object MakeCodeFromCodeGen(const GraphBuilderPtr &builder, const GraphAnalyzerPtr &analyzer, PyObject *globals) {
   auto graph = builder->GetGraph();
-  GraphAnalyzer::CapturedInfo info = analyzer->GetCaptureInfo();
   auto cg = CodeBreakGenerator::Creator(builder, graph->GetCodeObj());
-  cg->Init(graph, &info);
+  cg->Init(graph, *analyzer);
   cg->SetGlobals(py::cast<py::dict>(globals));
   py::object code = cg->MakeCode(!analyzer->NeedInterpret(), graph);
   return code;

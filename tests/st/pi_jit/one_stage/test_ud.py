@@ -204,3 +204,27 @@ def test_break_with_control_flow_2():
     assert len(ret) == 2
     assert np.all(ret[0] == np.array([6, 5]))
     assert np.all(ret[1].asnumpy() == np.array([2, 3, 4]))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_break_with_same_value():
+    """
+    Feature: One stage basic operation.
+    Description: Test one stage basic operation.
+    Expectation: No exception.
+    """
+    @jit(mode="PIJit", jit_config=cfg)
+    def out(x):
+        a, b, c, d = x
+        return type(a), type(b), type(c), type(d)
+
+    context.set_context(mode=context.PYNATIVE_MODE)
+    ret = out((1, 1, 1, 2))
+    assert isinstance(ret, tuple)
+    assert len(ret) == 4
+    assert ret[0] == int
+    assert ret[1] == int
+    assert ret[2] == int
+    assert ret[3] == int
