@@ -79,6 +79,7 @@ class ParamInfo {
     this->be_cloned_index_.push_back(index);
     clone->init_in_server_ = this->init_in_server_;
     clone->requires_aggr_ = this->requires_aggr_;
+    clone->strategy_ckpt_saved_ = this->strategy_ckpt_saved_;
     clone->param_strategy_ = this->param_strategy_;
     clone->ClearParameter();
     return clone;
@@ -97,6 +98,9 @@ class ParamInfo {
 
   const std::vector<int64_t> &parameter_shape() const { return parameter_shape_; }
   void set_parameter_shape(const std::vector<int64_t> &tensor_shape) { parameter_shape_ = tensor_shape; }
+
+  void set_strategy_ckpt_saved(bool strategy_ckpt_saved) { strategy_ckpt_saved_ = strategy_ckpt_saved; }
+  bool strategy_ckpt_saved() const { return strategy_ckpt_saved_; }
 
   bool use_persistent_storage() const { return use_persistent_storage_; }
   void set_use_persistent_storage(bool use_persistent_storage) { use_persistent_storage_ = use_persistent_storage; }
@@ -125,6 +129,7 @@ class ParamInfo {
   bool init_in_server_{false};
   bool layerwise_parallel_{false};
   bool be_cloned_{false};
+  bool strategy_ckpt_saved_{false};
   bool cloned_{false};
   std::vector<int32_t> be_cloned_index_;
   int32_t cloned_index_{0};

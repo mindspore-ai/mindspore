@@ -69,6 +69,7 @@ void HandleMirrorInAdaSum(
   const FuncGraphPtr &root,
   std::unordered_map<std::string, std::shared_ptr<TensorLayout>> *adasum_param_tensor_layout_map);
 bool ParameterIsCloned(const AnfNodePtr &parameter_node);
+bool IsStrategySaved(const AnfNodePtr &parameter_node);
 py::object GetPyParameterObj(const ParamInfoPtr &param_info, const std::string &obj);
 bool IsFullySplitParameter(const ParameterPtr &param_ptr, size_t allow_repeat_num = 1);
 std::shared_ptr<TensorLayout> CreateParameterLayout(const AnfNodePtr &node);
