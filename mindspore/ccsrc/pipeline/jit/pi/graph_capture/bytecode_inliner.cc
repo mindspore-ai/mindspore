@@ -110,7 +110,7 @@ void BytecodeInliner::Rebuild(CodeGenerator *cg) {
 
     // reset bci
     int last_op = cg->GetCode().co_code.back()->op();
-    new_bci = static_cast<int>(cg->GetCode().co_code.size()) - 1 - (last_op == POP_TOP || last_op == STORE_FAST);
+    new_bci = SizeToInt(cg->GetCode().co_code.size()) - 1 - (last_op == POP_TOP || last_op == STORE_FAST);
     node->set_bci(new_bci);
 
     // reset frame status
@@ -162,7 +162,7 @@ void BytecodeInliner::Rebuild() {
   if (last_frame_ != nullptr) {
     MS_EXCEPTION_IF_CHECK_FAIL(new_frames_.find(cg.GetCode().co_code.size()) == new_frames_.end(),
                                "duplicate frame status");
-    new_break_bci_ = static_cast<int>(cg.GetCode().co_code.size());
+    new_break_bci_ = SizeToInt(cg.GetCode().co_code.size());
     new_frames_[new_break_bci_] = std::move(last_frame_);
   }
 
@@ -385,7 +385,7 @@ void BytecodeInliner::InitCFG() {
     if (iter != blocks.end()) {
       back = iter->first;
     } else {
-      back = static_cast<int>(list.size());
+      back = SizeToInt(list.size());
     }
     cur->set_begin_ci(head);
     cur->set_end_ci(back);

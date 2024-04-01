@@ -195,7 +195,7 @@ AbstractObjectBase::Type AbstractObjectBase::GetPyType(PyTypeObject *tp) {
   /**
    * sub-class int, float, list, tuple, str, is mindspore unsupported
    */
-  switch ((unsigned)(tp->tp_flags) & (unsigned)fast_type_mask) {
+  switch (tp->tp_flags & fast_type_mask) {
     case Py_TPFLAGS_LONG_SUBCLASS:
     case Py_TPFLAGS_LIST_SUBCLASS:
     case Py_TPFLAGS_TUPLE_SUBCLASS:
@@ -296,21 +296,21 @@ AObject *AbstractObjectBase::MakeFunction(const std::vector<AObject *> &args, co
   py::object f_handle = py::reinterpret_steal<py::object>(PyFunction_NewWithQualName(code, globals.ptr(), qualname));
   PyFunctionObject *func = reinterpret_cast<PyFunctionObject *>(f_handle.ptr());
   MS_EXCEPTION_IF_CHECK_FAIL(func, "MAKE_FUNCTION failed");
-  if ((unsigned)oparg & 0x08) {
+  if (IntToSize(oparg) & 0x08) {
     func->func_closure = (*iter--).inc_ref().ptr();
     Py_ssize_t nfrees = PyTuple_GET_SIZE(reinterpret_cast<PyCodeObject *>(code)->co_freevars);
     bool is_valid = func->func_closure && nfrees == PyTuple_GET_SIZE(func->func_closure);
     MS_EXCEPTION_IF_CHECK_FAIL(is_valid, "must be has python objects, and it is tuple of cell objects");
   }
-  if ((unsigned)oparg & 0x04) {
+  if (IntToSize(oparg) & 0x04) {
     func->func_annotations = (*iter--).inc_ref().ptr();
     MS_EXCEPTION_IF_CHECK_FAIL(func->func_annotations, "must be has python objects, and it is const key map");
   }
-  if ((unsigned)oparg & 0x02) {
+  if (IntToSize(oparg) & 0x02) {
     func->func_kwdefaults = (*iter--).inc_ref().ptr();
     MS_EXCEPTION_IF_CHECK_FAIL(func->func_kwdefaults, "must be has python objects, and it is const key map");
   }
-  if ((unsigned)oparg & 0x01) {
+  if (IntToSize(oparg) & 0x01) {
     func->func_defaults = (*iter--).inc_ref().ptr();
     MS_EXCEPTION_IF_CHECK_FAIL(func->func_defaults, "must be has python objects, and it is const tuple");
   }
@@ -394,7 +394,7 @@ AObject *AbstractObjectBase::BuildOperations(const std::vector<AObject *> &input
       res = MakeAObject(kTypeDict);
       keys = inputs.back()->GetPyObject().ptr();
       err = static_cast<Py_ssize_t>(inputs.size() - 1) != PyTuple_GET_SIZE(keys);
-      for (Py_ssize_t i = (unsigned)(inputs.size() - 2); !err && i >= 0; --i) {
+      for (Py_ssize_t i = IntToSize(inputs.size() - 2); !err && i >= 0; --i) {
         err = !static_cast<AbstractDict *>(res)->MapAdd(Convert(PyTuple_GET_ITEM(keys, i)), inputs[i]);
       }
       break;

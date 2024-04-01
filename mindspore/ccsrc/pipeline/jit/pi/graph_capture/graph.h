@@ -27,6 +27,7 @@
 #include "pipeline/jit/pi/utils/allocator.h"
 #include "pipeline/jit/pi/graph_guard/trace.h"
 #include "pipeline/jit/pi/graph_capture/side_effect.h"
+#include "utils/convert_utils_base.h"
 
 namespace mindspore {
 namespace pijit {
