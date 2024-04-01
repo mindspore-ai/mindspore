@@ -446,3 +446,50 @@ def test_handle_mutable_kwargs_args_2():
     jit(net.construct, mode="PIJit", jit_config=cfg)
     ret = net(1, 10, 100, s=1000)
     assert ret == 12
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_use_free_variable():
+    """
+    Feature: One stage basic operation.
+    Description: Test one stage basic operation.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def construct(self, x):
+            mod = 2
+            return any(i % mod == 0 for i in x)
+
+    context.set_context(mode=context.PYNATIVE_MODE)
+    net = Net()
+    jit(net.construct, mode="PIJit", jit_config={"loop_unrolling": True, "compile_by_trace": True})
+    input1 = (1, 2, 3, 4)
+    assert net(input1)
+    input2 = (1, 1, 1, 1, 1)
+    assert not net(input2)
+
+
+@pytest.mark.skip(reason="When disable loop_unrolling, check guard failed.")
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_use_free_variable_2():
+    """
+    Feature: One stage basic operation.
+    Description: Test one stage basic operation.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def construct(self, x):
+            mod = 2
+            return any(i % mod == 0 for i in x)
+
+    context.set_context(mode=context.PYNATIVE_MODE)
+    net = Net()
+    jit(net.construct, mode="PIJit", jit_config={"compile_by_trace": True})
+    input1 = (1, 2, 3, 4)
+    assert net(input1)
+    input2 = (1, 1, 1, 1, 1)
+    assert not net(input2)
