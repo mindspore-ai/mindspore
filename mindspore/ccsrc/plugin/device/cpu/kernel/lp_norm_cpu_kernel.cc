@@ -139,6 +139,7 @@ bool LpNormCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> 
   auto template_one = static_cast<T>(1);
   auto template_zero = static_cast<T>(0);
   if (is_scalar_input_) {
+    MS_EXCEPTION_IF_NULL(output);
     *output = is_p_zero_ ? template_one : std::abs(input[0]);
     return true;
   }
