@@ -40,6 +40,7 @@ constexpr int64_t kNum2 = 2;
 constexpr int64_t kNum3 = 3;
 constexpr int64_t kNum4 = 4;
 constexpr int64_t kNum5 = 5;
+constexpr auto kStep2 = 2;
 
 const std::vector<std::string> mode_list = {"constant", "reflect", "edge", "circular"};
 using float16 = Eigen::half;
@@ -506,7 +507,7 @@ uint32_t PadV3CpuKernel::DoCompute(CpuKernelContext &ctx) {
     ConstantModeCompute<T>(ctx, constant_values);
   } else if (mode == "reflect") {
     std::reverse(paddings.begin(), paddings.end());
-    for (size_t i = 1; i < paddings.size(); i += 2) {
+    for (size_t i = 1; i < paddings.size(); i += kStep2) {
       std::swap(paddings[i - 1], paddings[i]);
     }
     auto shard_padv3_reflcet = [&](int64_t start, int64_t end) {
@@ -527,7 +528,7 @@ uint32_t PadV3CpuKernel::DoCompute(CpuKernelContext &ctx) {
     }
   } else if (mode == "edge") {
     std::reverse(paddings.begin(), paddings.end());
-    for (size_t i = 1; i < paddings.size(); i += 2) {
+    for (size_t i = 1; i < paddings.size(); i += kStep2) {
       std::swap(paddings[i - 1], paddings[i]);
     }
     auto shard_padv3_edge = [&](int64_t start, int64_t end) {
@@ -548,7 +549,7 @@ uint32_t PadV3CpuKernel::DoCompute(CpuKernelContext &ctx) {
     }
   } else if (mode == "circular") {
     std::reverse(paddings.begin(), paddings.end());
-    for (size_t i = 1; i < paddings.size(); i += 2) {
+    for (size_t i = 1; i < paddings.size(); i += kStep2) {
       std::swap(paddings[i - 1], paddings[i]);
     }
     auto shard_padv3_reflcet = [&](int64_t start, int64_t end) {
@@ -611,10 +612,11 @@ uint32_t PadV3CpuKernel::GetPaddingsAndSetOutputShape(CpuKernelContext &ctx) {
     paddings[i] = static_cast<int64_t>(paddings_ptr[i]);
   }
   // find redundancy index in paddings.
-  auto redundancy_paddings_num = paddings_num - 2;
-  for (int64_t i = 2; i <= paddings_num - 2; i += 2) {
+  const int64_t remaining_paddings_num = 2;
+  auto redundancy_paddings_num = paddings_num - remaining_paddings_num;
+  for (int64_t i = remaining_paddings_num; i <= paddings_num - remaining_paddings_num; i += kStep2) {
     if (std::any_of(paddings.begin(), paddings.begin() + i, [](const int64_t &val) { return val != 0; })) {
-      redundancy_paddings_num = i - 2;
+      redundancy_paddings_num = i - remaining_paddings_num;
       break;
     }
   }
