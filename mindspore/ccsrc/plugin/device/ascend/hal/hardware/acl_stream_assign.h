@@ -57,7 +57,7 @@ class AclStreamAssign {
   AclStreamAssign(const AclStreamAssign &) = delete;
   AclStreamAssign &operator=(const AclStreamAssign &) = delete;
 
-  void AssignStream(const NotNull<KernelGraphPtr> &kernel_graph) const;
+  void AssignStream(const NotNull<KernelGraphPtr> &kernel_graph);
 
  private:
   AclStreamAssign() = default;
@@ -66,38 +66,39 @@ class AclStreamAssign {
   void GenKernelIoExecInfoMap(const NotNull<KernelGraphPtr> &kernel_graph,
                               mindspore::HashMap<CNodePtr, NodeIoExecInfoPtr> *kernel_io_exec_info_map) const;
 
-  void UpdateEventsToExecutionOrder(
-    const NotNull<KernelGraphPtr> &kernel_graph,
-    const mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> &send_after_node,
-    const mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> &recv_before_node) const;
+  void UpdateEventsToExecutionOrder(const NotNull<KernelGraphPtr> &kernel_graph,
+                                    const mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> &send_after_node,
+                                    const mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> &recv_before_node);
 
   void GenEventsForParallelOp(const NotNull<KernelGraphPtr> &kernel_graph,
                               mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> *kernel_send,
-                              mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> *kernel_recv) const;
+                              mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> *kernel_recv);
 
-  void InsertEventForNonTaskSink(const NotNull<KernelGraphPtr> &kernel_graph) const;
+  void InsertEventForNonTaskSink(const NotNull<KernelGraphPtr> &kernel_graph);
 
   void InsertEventsForInputs(const NotNull<KernelGraphPtr> &kernel_graph, const CNodePtr &kernel,
                              const NodeIoExecInfoPtr &io_exec_info,
                              mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> *kernel_send,
-                             mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> *kernel_recv) const;
+                             mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> *kernel_recv);
 
   void InsertEventsForOutputs(const NotNull<KernelGraphPtr> &kernel_graph, const CNodePtr &kernel,
                               const NodeIoExecInfoPtr &io_exec_info,
                               mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> *kernel_send,
-                              mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> *kernel_recv) const;
+                              mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> *kernel_recv);
 
   void InsertEvents(const NotNull<KernelGraphPtr> &kernel_graph, const CNodePtr &parallel_cnode,
                     const AnfNodePtr &node_before_send,
                     mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> *kernel_send,
                     mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> *kernel_recv,
-                    const AnfNodePtr &node_after_recv) const;
+                    const AnfNodePtr &node_after_recv);
 
   CNodePtr CreateSendApplyKernel(const NotNull<KernelGraphPtr> &graph_ptr, uint32_t event_id, uint32_t stream_id,
-                                 uint32_t event_generate_id) const;
-
+                                 uint32_t event_generate_id);
   CNodePtr CreateRecvApplyKernel(const NotNull<KernelGraphPtr> &graph_ptr, uint32_t event_id, uint32_t record_stream_id,
-                                 uint32_t stream_id, uint32_t event_generate_id) const;
+                                 uint32_t stream_id, uint32_t event_generate_id);
+  void AddBoundarySendRecvKernel(const NotNull<KernelGraphPtr> &kernel_graph, uint32_t record_stream_id,
+                                 uint32_t wait_stream_id, std::vector<CNodePtr> *exec_order);
+  std::atomic<uint32_t> event_generate_id_ = 0;
 };
 }  // namespace ascend
 }  // namespace device
