@@ -242,9 +242,6 @@ void GeDeviceResManager::CreateSessionAndGraphRunner() {
 
   transform::GraphRunnerOptions options;
   options.sess_ptr = sess;
-  if (ms_context->EnableAoeOnline()) {
-    transform::DfGraphManager::GetInstance().AoeGeGraph();
-  }
   auto graph_runner = transform::NewGraphRunner(options);
   transform::SetGraphRunner(graph_runner);
 }
