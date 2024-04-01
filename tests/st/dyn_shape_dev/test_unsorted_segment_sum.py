@@ -59,7 +59,7 @@ def test_unsorted_segment_forward(mode):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
-def test_assign_backward(mode):
+def test_unsorted_segment_backward(mode):
     """
     Feature: assign ops.
     Description: test auto grad of ops assign.

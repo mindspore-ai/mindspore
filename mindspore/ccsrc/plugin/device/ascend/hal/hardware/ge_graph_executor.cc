@@ -1464,6 +1464,14 @@ std::vector<GeTensor> GeGraphExecutor::GenerateInputGeTensor(const KernelGraphPt
     MS_EXCEPTION_IF_NULL(input_node);
     auto output_addr = AnfAlgo::GetMutableOutputAddr(input_node, 0, false);
     MS_EXCEPTION_IF_NULL(output_addr);
+    bool is_dynamic_shape = kernel_graph->is_dynamic_shape();
+    if (is_dynamic_shape) {
+      auto ge_tensor_desc = transform::TransformUtil::GetGeTensorDesc(output_addr->kernel_tensor()->GetShapeVector(),
+                                                                      output_addr->type_id(), output_addr->format());
+      MS_EXCEPTION_IF_NULL(ge_tensor_desc);
+      ge_tensor_desc->SetPlacement(::ge::kPlacementDevice);
+      (void)ge_inputs[kv.second].SetTensorDesc(*ge_tensor_desc);
+    }
     if (output_addr->GetMutablePtr() == nullptr) {
       // alloc static memory for unused inputs
       // error in ge when set nullptr into ge tensor
