@@ -48,6 +48,7 @@ constexpr int64_t kInput3Dim = 5;
 constexpr int64_t k2Num = 2;
 constexpr int64_t k3Num = 3;
 constexpr int64_t k4Num = 4;
+constexpr auto kStep2 = 2;
 
 const std::vector<std::string> mode_list = {"reflect", "edge", "circular"};
 using float16 = Eigen::half;
@@ -155,10 +156,11 @@ uint32_t PadV3GradCpuKernel::PadV3ReadPaddingsAndSetOutputShape(CpuKernelContext
     }
   }
   // Find redundancy index in paddings
-  auto redundancy_paddings_num = num_elem - 2;
-  for (int64_t i = 2; i <= num_elem - 2; i += 2) {
+  const int64_t remaining_paddings_num = 2;
+  auto redundancy_paddings_num = num_elem - remaining_paddings_num;
+  for (int64_t i = remaining_paddings_num; i <= num_elem - remaining_paddings_num; i += kStep2) {
     if (std::any_of(paddings.begin(), paddings.begin() + i, [](const int64_t &val) { return val != 0; })) {
-      redundancy_paddings_num = i - 2;
+      redundancy_paddings_num = i - remaining_paddings_num;
       break;
     }
   }
@@ -166,7 +168,7 @@ uint32_t PadV3GradCpuKernel::PadV3ReadPaddingsAndSetOutputShape(CpuKernelContext
 
   // (0, 0, 0, 0, 1, 2, 3, 4) -> (3, 4, 1, 2, 0, 0, 0, 0)
   std::reverse(paddings.begin(), paddings.end());
-  for (size_t i = 1; i < paddings.size(); i += 2) {
+  for (size_t i = 1; i < paddings.size(); i += kStep2) {
     std::swap(paddings[i - 1], paddings[i]);
   }
 
