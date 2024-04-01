@@ -79,18 +79,18 @@ REG_BPROP_BUILDER("ClampTensor").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
 
   if (!min_type_none && !max_type_none) {
     auto is_in_Interval = ib->LogicalAnd(ib->GreaterEqual(x, min), ib->LessEqual(x, max));
-    auto is_lt_min = ib->LogicalAnd(ib->LessEqual(x, min), ib->LessEqual(min, max));
-    auto is_gt_max = ib->LogicalOr(ib->GreaterEqual(x, max), ib->LessEqual(max, min));
+    auto is_lt_min = ib->LogicalAnd(ib->Less(x, min), ib->Less(min, max));
+    auto is_gt_max = ib->LogicalOr(ib->Greater(x, max), ib->Less(max, min));
     return {ib->Select(is_in_Interval, dout, zero), ib->Select(is_lt_min, dout, zero),
             ib->Select(is_gt_max, dout, zero)};
   }
   if (!min_type_none) {
-    return {ib->Select(ib->GreaterEqual(x, min), dout, zero), ib->Select(ib->LessEqual(x, min), dout, zero),
+    return {ib->Select(ib->GreaterEqual(x, min), dout, zero), ib->Select(ib->Less(x, min), dout, zero),
             ib->OutZeros(max)};
   }
   if (!max_type_none) {
     return {ib->Select(ib->LessEqual(x, max), dout, zero), ib->OutZeros(min),
-            ib->Select(ib->GreaterEqual(x, max), dout, zero)};
+            ib->Select(ib->Greater(x, max), dout, zero)};
   }
   return {dout, ib->OutZeros(min), ib->OutZeros(max)};
 });
