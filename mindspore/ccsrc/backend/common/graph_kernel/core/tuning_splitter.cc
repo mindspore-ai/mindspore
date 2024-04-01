@@ -15,13 +15,19 @@
  */
 #include "backend/common/graph_kernel/core/tuning_splitter.h"
 #include <fstream>
+#include "utils/file_utils.h"
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
 
 namespace mindspore::graphkernel {
 bool TuningSplitSchemer::ReadCache(const std::string &filename, nlohmann::json *result) const {
-  std::ifstream json_reader(filename);
+  auto real_filename = FileUtils::GetRealPath(filename.c_str());
+  if (!real_filename.has_value()) {
+    MS_LOG(ERROR) << "Failed to get real path: " << filename;
+    return false;
+  }
+  std::ifstream json_reader(real_filename.value());
   if (!json_reader.is_open()) {
-    MS_LOG(ERROR) << "Read json file(" << filename << ") error.";
+    MS_LOG(ERROR) << "Read json file(" << real_filename.value() << ") error.";
     return false;
   }
   json_reader >> (*result);

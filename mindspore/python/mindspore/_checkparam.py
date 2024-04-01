@@ -1216,9 +1216,10 @@ def _check_symbol(dyn_input, net_input, index, symbolic_shape_data):
         # the value of symbols with same "id" should be equal.
         if "id" in sym:
             sym_id = sym["id"]
-            if "unique_id_value" not in symbolic_shape_data:
-                symbolic_shape_data["unique_id_value"] = {}
-            unique_id_value = symbolic_shape_data["unique_id_value"]
+            k_idval = "unique_id_value_map"
+            if k_idval not in symbolic_shape_data:
+                symbolic_shape_data[k_idval] = {}
+            unique_id_value = symbolic_shape_data[k_idval]
             if sym_id not in unique_id_value:
                 unique_id_value[sym_id] = actual_shape[i]
             elif unique_id_value[sym_id] != actual_shape[i]:
