@@ -20,6 +20,7 @@
 
 #include "plugin/device/ascend/kernel/internal/internal_kernel_utils.h"
 #include "param/add_param.h"
+#include "param/sub_param.h"
 
 namespace mindspore {
 namespace kernel {
@@ -71,11 +72,21 @@ class InternalSub : public ElewiseBinary {
   ~InternalSub() = default;
 
  protected:
-  void SetComputeType(internal::OpParamPtr param_ptr) override {
+  void SetComputeType(internal::OpParamPtr param_ptr) override {}
+  internal::OpParamPtr CreateOpParam(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs) override {
+    auto param_ptr = std::make_shared<internal::SubParam>();
     param_ptr->opId = internal::OpId::Sub;
     internal::ElewiseParam op_param;
     op_param.elewiseType = internal::ElewiseParam::ELEWISE_SUB;
     param_ptr->specificParam = op_param;
+
+    param_ptr->input1_dtype_ = InternalKernelUtils::ToInternalDType(inputs[kIndex0]->dtype_id());
+    param_ptr->input2_dtype_ = InternalKernelUtils::ToInternalDType(inputs[kIndex1]->dtype_id());
+    param_ptr->input1_dims_ = internal::VecToSVec<int64_t>(inputs[kIndex0]->GetShapeVector());
+    param_ptr->input2_dims_ = internal::VecToSVec<int64_t>(inputs[kIndex1]->GetShapeVector());
+    
+    return std::static_pointer_cast<internal::OpParam>(param_ptr);
   }
 };
 
