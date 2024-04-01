@@ -3091,7 +3091,9 @@ StopTraceReason GraphBuilder::TraceRun() {
       break;
     }
   }
-  EliminateCellAccess(this->graph_);
+  if (!trace_flag()) {
+    EliminateCellAccess(this->graph_);
+  }
   return graph_->GetStopTraceReason();
 }
 
