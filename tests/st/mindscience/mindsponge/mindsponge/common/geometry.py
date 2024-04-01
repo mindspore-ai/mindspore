@@ -289,7 +289,7 @@ def make_transform_from_reference(point_a, point_b, point_c):
 def rots_from_tensor(rots, use_numpy=False):
     """
     Amortize and split the 3*3 rotation matrix corresponding to the last two axes of input Tensor
-    to obtain each component of the rotation matrix, inverse of 'rots_to_tensor'.
+      to obtain each component of the rotation matrix, inverse of 'rots_to_tensor'.
     """
     if use_numpy:
         rots = np.reshape(rots, rots.shape[:-2] + (9,))
@@ -301,11 +301,25 @@ def rots_from_tensor(rots, use_numpy=False):
     return rotation
 
 
-def quat_affine(quaternion, translation, rotation=None, unstack_inputs=False, use_numpy=False):
+def rots_to_tensor(rots, use_numpy=False):
+    """
+    Translate rots represented by vectors to tensor, inverse of 'rots_from_tensor'.
+    """
+    if len(rots) != 9:
+        raise ValueError()
+    if use_numpy:
+        rots = np.stack(rots, axis=-1)
+        rots = np.reshape(rots, rots.shape[:-1] + (3, 3))
+    else:
+        rots = mnp.stack(rots, axis=-1)
+        rots = mnp.reshape(rots, rots.shape[:-1] + (3, 3))
+    return rots
+
+
+def quat_affine(quaternion, translation, rotation=None, normalize=True, unstack_inputs=False, use_numpy=False):
     """
     Create quat affine representations based on rots and trans.
     """
-    normalize = True
     if unstack_inputs:
         if rotation is not None:
             rotation = rots_from_tensor(rotation, use_numpy)
@@ -316,7 +330,6 @@ def quat_affine(quaternion, translation, rotation=None, unstack_inputs=False, us
     if rotation is None:
         rotation = quat_to_rot(quaternion)
     return quaternion, rotation, translation
-
 
 
 def quat_to_rot(normalized_quat, use_numpy=False):
@@ -368,15 +381,13 @@ def rots_expand_dims(rots, axis):
     return rots
 
 
-def invert_point(transformed_point, rotation, translation, extra_dims=0):
+def invert_point(transformed_point, rotation, translation, extra_dims=0, stack=False, use_numpy=False):
     r"""
     The inverse transformation of a rigid body group transformation with respect to a point coordinate,
     that is, the inverse transformation of apply to point Make rotational translation changes on coordinates
     with the transpose of the rotation
     matrix :math:`(xx, xy, xz, yx, yy, yz, zx, zy, zz)` and the translation vector :math:`(x, y, z)` translation.
     """
-    stack = False
-    use_numpy = False
     if stack:
         rotation = rots_from_tensor(rotation, use_numpy)
         translation = vecs_from_tensor(translation)
@@ -416,6 +427,17 @@ def quaternion_to_tensor(quaternion, translation):
     translation = (P.ExpandDims()(translation[0], -1), P.ExpandDims()(translation[1], -1),
                    P.ExpandDims()(translation[2], -1),)
     return mnp.concatenate((quaternion,) + translation, axis=-1)
+
+
+def quaternion_from_tensor(tensor, normalize=False):
+    r"""
+    Take the input 'tensor' :math:`[(xx, xy, xz, yx, yy, yz, zz)]` to get the new
+    'quaternion', 'rotation', 'translation'.
+    """
+    quaternion, tx, ty, tz = mnp.split(tensor, [4, 5, 6], axis=-1)
+    translation = (P.Squeeze()(tx), P.Squeeze()(ty), P.Squeeze()(tz))
+    return quat_affine(quaternion, translation, normalize=normalize)
+
 
 def apply_to_point(rotation, translation, point, extra_dims=0):
     r"""
