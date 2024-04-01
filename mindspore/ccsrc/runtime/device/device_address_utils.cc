@@ -1146,8 +1146,7 @@ device::DeviceAddressPtr DeviceAddressUtils::CreateWorkspaceAddress(const Device
 }
 
 void DeviceAddressUtils::ConvertContiguousTensorSync(const tensor::TensorPtr &tensor) {
-  MS_EXCEPTION_IF_NULL(tensor);
-  if (tensor->storage_info() == nullptr) {
+  if (tensor == nullptr || tensor->storage_info() == nullptr) {
     return;
   }
 
