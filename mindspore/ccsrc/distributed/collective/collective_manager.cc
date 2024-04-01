@@ -154,8 +154,21 @@ bool CollectiveManager::Initialize() {
 
   need_host_collective_ = common::UseHostCollective();
   std::string device_type = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-  if (!common::GetEnv(kSimulationLevel).empty() && device_type != kAscendDevice) {
-    return InitializeDummyCommLib();
+  if (!common::GetEnv(kSimulationLevel).empty()) {
+    MS_LOG(WARNING) << "This is simulation mode with level " << common::GetEnv(kSimulationLevel)
+                    << ". Process's RANK_ID: " << common::GetEnv("RANK_ID")
+                    << ", RANK_SIZE: " << common::GetEnv("RANK_SIZE");
+    if (device_type != kAscendDevice) {
+      return InitializeDummyCommLib();
+    }
+    RETURN_IF_FALSE_WITH_LOG(InitDeviceCommLib(), "Failed to initialize device communication library.");
+    comm_lib_instance_ = device_comm_lib_instance_;
+    string group_name = "dummy_group_name";
+    RETURN_IF_FALSE_WITH_LOG(CreateCommunicationGroup(group_name, {0}), "Failed to create group " + group_name);
+    inited_ = true;
+    finalized_ = false;
+    need_reinit_ = false;
+    return true;
   }
   // need_host_collective_ means using rank_table to initialize collective communication, which is only supported by
   // Ascend. On other types of devices, exception should be thrown.
@@ -188,10 +201,6 @@ bool CollectiveManager::Initialize() {
                              "Failed to create group " + group_name);
   }
 
-  if (!common::GetEnv(kSimulationLevel).empty()) {
-    string group_name = "dummy_group_name";
-    RETURN_IF_FALSE_WITH_LOG(CreateCommunicationGroup(group_name, {0}), "Failed to create group " + group_name);
-  }
   MS_LOG(INFO) << "End initializing collective communication for backend: " << device_type;
   inited_ = true;
   finalized_ = false;
@@ -260,6 +269,7 @@ bool CollectiveManager::CreateCommunicationGroup(const std::string &group_name,
                              "Failed to create device communication group " + group_name);
     if (device_type == kAscendDevice) {
       CommunicationGroupPtr group = device_comm_lib_instance_->GetGroup(group_name);
+      host_comm_lib_instance_ = device_comm_lib_instance_;
       size_t root_info_size = 0;
       void *root_info = group->GenerateRootInfo(&root_info_size);
       MS_EXCEPTION_IF_NULL(device_ctx_);
