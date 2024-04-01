@@ -782,8 +782,9 @@ def set_auto_parallel_context(**kwargs):
     parallel_mode                parameter_broadcast
     all_reduce_fusion_config     strategy_ckpt_load_file
     enable_parallel_optimizer    strategy_ckpt_save_file
-    parallel_optimizer_config    dataset_strategy
-    enable_alltoall              pipeline_stages
+    parallel_optimizer_config    full_batch
+    enable_alltoall              dataset_strategy
+               \                 pipeline_stages
                \                 pipeline_result_broadcast
                \                 auto_parallel_search_mode
                \                 comm_fusion
@@ -798,6 +799,8 @@ def set_auto_parallel_context(**kwargs):
                      "stand_alone" do not support gradients_mean. Default: ``False`` .
         gradient_fp32_sync (bool): Run allreduce of gradients in fp32. "stand_alone", "data_parallel"
                      and "hybrid_parallel" do not support gradient_fp32_sync. Default: ``True`` .
+        loss_repeated_mean (bool) - Indicates whether the mean operator is executed backwards when the
+                     calculation is repeated. Default: ``True`` .
         parallel_mode (str): There are five kinds of parallel modes, ``"stand_alone"`` , ``"data_parallel"`` ,
                      ``"hybrid_parallel"`` , ``"semi_auto_parallel"`` and ``"auto_parallel"`` . Note the pynative mode
                      only supports the ``"stand_alone"`` and ``"data_parallel"`` mode. Default: ``"stand_alone"`` .
