@@ -225,7 +225,12 @@ class ConstantPad1d(_ConstantPadNd):
             If a 2-tuple, uses (padding_0, padding_1) to pad. If the input is `x`, the size of last
             dimension of output is :math:`padding\_0 + x.shape[-1] + padding\_1`. The remaining dimensions
             of the output are consistent with those of the input.
+            Only support non-negative value while running in Ascend.
         value (Union[int, float]): Padding value.
+
+    Inputs:
+        - **x** (Tensor) - shape is :math:`(N, *)`, where :math:`*` means, any number of additional dimensions.
+          It is not supported that the size of dimensions is greater than 5 while running on Ascend.
 
     Returns:
         Tensor, the tensor after padding.
@@ -235,6 +240,8 @@ class ConstantPad1d(_ConstantPadNd):
         TypeError: If `value` is not int or float.
         ValueError: If the length of `padding` with tuple type is not equal to 2.
         ValueError: If the output shape after padding is not positive.
+        ValueError: If the rank of 'x' is more than 5 while running in Ascend.
+        ValueError: If `padding` contains negative value while running in Ascend.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -303,7 +310,12 @@ class ConstantPad2d(_ConstantPadNd):
             If the input is `x`, the size of last dimension of output is :math:`padding\_0 + x.shape[-1] + padding\_1`.
             The size of penultimate dimension of output is :math:`padding\_2 + x.shape[-2] + padding\_3`.
             The remaining dimensions of the output are consistent with those of the input.
+            Only support non-negative value while running in Ascend.
         value (Union[int, float]): Padding value.
+
+    Inputs:
+        - **x** (Tensor) - shape is :math:`(N, *)`, where :math:`*` means, any number of additional dimensions.
+          It is not supported that the size of dimensions is greater than 5 while running on Ascend.
 
     Returns:
         Tensor, the tensor after padding.
@@ -313,6 +325,8 @@ class ConstantPad2d(_ConstantPadNd):
         TypeError: If `value` is not int or float.
         ValueError: If the length of `padding` is more than 4 or not a multiple of 2.
         ValueError: If the output shape after padding is not positive.
+        ValueError: If the rank of 'x' is more than 5 while running in Ascend.
+        ValueError: If `padding` contains negative value while running in Ascend.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -356,7 +370,12 @@ class ConstantPad3d(_ConstantPadNd):
             The size of penultimate dimension of output is :math:`padding\_2 + x.shape[-2] + padding\_3`.
             The size of 3rd to last dimension of output is :math:`padding\_4 + x.shape[-3] + padding\_5`.
             The remaining dimensions of the output are consistent with those of the input.
+            Only support non-negative value while running in Ascend.
         value (Union[int, float]): Padding value.
+
+    Inputs:
+        - **x** (Tensor) - shape is :math:`(N, *)`, where :math:`*` means, any number of additional dimensions.
+          It is not supported that the size of dimensions is greater than 5 while running on Ascend.
 
     Returns:
         Tensor, the tensor after padding.
@@ -366,6 +385,8 @@ class ConstantPad3d(_ConstantPadNd):
         TypeError: If `value` is not int or float.
         ValueError: If the length of `padding` is more than 6 or not a multiple of 2.
         ValueError: If the output shape after padding is not positive.
+        ValueError: If the rank of 'x' is more than 5 while running in Ascend.
+        ValueError: If `padding` contains negative value while running in Ascend.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -607,6 +628,7 @@ class ZeroPad2d(_ConstantPadNd):
             If the input is `x`, the size of last dimension of output is :math:`padding\_0 + x.shape[-1] + padding\_1`.
             The size of penultimate dimension of output is :math:`padding\_2 + x.shape[-2] + padding\_3`.
             The remaining dimensions of the output are consistent with those of the input.
+            Only support non-negative value while running in Ascend.
 
     Returns:
         Tensor, the tensor after padding.
@@ -615,6 +637,8 @@ class ZeroPad2d(_ConstantPadNd):
         TypeError: If `padding` is not a tuple or int.
         ValueError: If the length of `padding` is more than 4 or not a multiple of 2.
         ValueError: If the output shape after padding is not positive.
+        ValueError: If the rank of 'x' is more than 5 while running in Ascend.
+        ValueError: If `padding` contains negative value while running in Ascend.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

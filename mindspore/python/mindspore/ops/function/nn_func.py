@@ -3165,8 +3165,10 @@ def pad(input_x, padding, mode='constant', value=None):
     Pads the input tensor according to the padding.
 
     Args:
-        input_x (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of additional dimensions.
-        padding (Union[tuple[int], list[int], Tensor]): Filling position of pad.
+        input_x (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of additional dimensions
+            which is required to be no more than 5 in Ascend.
+        padding (Union[tuple[int], list[int], Tensor]): Filling position of pad where the negative value is not
+            supported while running in Ascend.
             :math:`\left\lfloor\frac{\text{len(padding)}}{2}\right\rfloor` dimensions
             of `input_x` will be padded.
 
@@ -3216,6 +3218,8 @@ def pad(input_x, padding, mode='constant', value=None):
         ValueError: If length of `padding` is not even.
         ValueError: If length of `padding` is greater than 6.
         ValueError: If `mode` is not ``'constant'`` and `value` not ``None``.
+        ValueError: If rank of `input_x` is more than 5 while running in Ascend.
+        ValueError: If `paddings` contains negative value while running in Ascend.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
