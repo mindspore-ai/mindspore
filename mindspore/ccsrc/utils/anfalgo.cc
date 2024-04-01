@@ -2623,5 +2623,47 @@ bool AnfAlgo::HasIncorporateCallNode(const CNodePtr &cnode) {
   }
   return false;
 }
+
+bool AnfAlgo::IsDynamicGraph(const FuncGraphPtr &func_graph) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  std::vector<AnfNodePtr> node_list = TopoSort(func_graph->get_return(), SuccDeeperSimple);
+  AnfNodePtr dynamic_node = nullptr;
+  AnfNodePtr pyexecute_node = nullptr;
+  for (const auto &node : node_list) {
+    if (node->abstract() == nullptr) {
+      MS_LOG(INFO) << "Null abstract of node: " << node->DebugString();
+      continue;
+    }
+    if (node->abstract() != nullptr) {
+      auto shape = node->abstract()->GetShape();
+      // Dynamic shape tensor.
+      if (shape->isa<abstract::TensorShape>() && IsDynamic(shape->GetShapeVector())) {
+        dynamic_node = node;
+        break;
+      }
+      // Dynamic len sequence.
+      if (node->abstract()->isa<abstract::AbstractSequence>() &&
+          node->abstract()->cast<abstract::AbstractSequencePtr>()->dynamic_len()) {
+        dynamic_node = node;
+        break;
+      }
+      // PyExecute node exist
+      if (IsPrimitiveCNode(node, prim::kPrimPyExecute)) {
+        pyexecute_node = node;
+      }
+    }
+  }
+  if (dynamic_node != nullptr) {
+    MS_LOG(INFO) << "Func graph:" << func_graph->ToString()
+                 << " is dynamic shape graph, because find dynamic shape node:" << dynamic_node->DebugString()
+                 << ", abstract: " << dynamic_node->abstract()->ToString();
+    return true;
+  }
+  if (pyexecute_node != nullptr) {
+    MS_LOG(INFO) << "Func graph:" << func_graph->ToString() << " has pyexecute node:" << pyexecute_node->DebugString();
+    return true;
+  }
+  return false;
+}
 }  // namespace common
 }  // namespace mindspore
