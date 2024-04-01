@@ -459,6 +459,13 @@ class Model:
         if self._backbone_is_train != is_train:
             network.set_train(is_train)
             self._backbone_is_train = is_train
+            # Training, but exclude dataset getnext
+            if self._train_network is not None:
+                self._train_network.set_grad(is_train)
+        # Mode train and eval are the same net, net will be set_grad in _build_train_network.
+        # But mode just do predict or eval.
+        if not is_train:
+            network.set_grad(False)
         return network
 
     def _warmup_dataset(self, epoch, train_dataset, sink_size=-1):
