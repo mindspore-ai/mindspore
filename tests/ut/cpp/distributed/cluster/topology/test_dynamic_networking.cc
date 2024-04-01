@@ -38,6 +38,10 @@ class TestDynamicNetworking : public UT::Common {
 /// Description: start some compute graph nodes and meta server node and send a register message.
 /// Expectation: these register messages are received by meta server node successfully.
 TEST_F(TestDynamicNetworking, NodeRegister) {
+  common::SetEnv("MS_NODE_TIMEOUT", "30");
+  common::SetEnv("MS_TOPO_TIMEOUT", std::to_string(1000 * 60 * 10).c_str());
+  common::SetEnv("MS_RECEIVE_MSG_TIMEOUT", "5");
+  common::SetEnv("MS_CLUSTER_RETRY_NUM", "210");
   std::string server_host = "127.0.0.1";
   std::string server_port = "8090";
   common::SetEnv(kEnvMetaServerHost, server_host.c_str());
@@ -87,6 +91,10 @@ TEST_F(TestDynamicNetworking, NodeRegister) {
 /// Description: send a special kind of message to msn and register the corresponding message handler.
 /// Expectation: the registered handler received the sent message successfully.
 TEST_F(TestDynamicNetworking, AddMessageHandler) {
+  common::SetEnv("MS_NODE_TIMEOUT", "30");
+  common::SetEnv("MS_TOPO_TIMEOUT", std::to_string(1000 * 60 * 10).c_str());
+  common::SetEnv("MS_RECEIVE_MSG_TIMEOUT", "5");
+  common::SetEnv("MS_CLUSTER_RETRY_NUM", "210");
   std::string server_host = "127.0.0.1";
   std::string server_port = "8090";
   common::SetEnv(kEnvMetaServerHost, server_host.c_str());
@@ -138,6 +146,10 @@ TEST_F(TestDynamicNetworking, AddMessageHandler) {
 /// Description: send a retrieve request to msn.
 /// Expectation: get message from msn successfully.
 TEST_F(TestDynamicNetworking, RetrieveMessageFromMSN) {
+  common::SetEnv("MS_NODE_TIMEOUT", "30");
+  common::SetEnv("MS_TOPO_TIMEOUT", std::to_string(1000 * 60 * 10).c_str());
+  common::SetEnv("MS_RECEIVE_MSG_TIMEOUT", "5");
+  common::SetEnv("MS_CLUSTER_RETRY_NUM", "210");
   std::string server_host = "127.0.0.1";
   std::string server_port = "8090";
   common::SetEnv(kEnvMetaServerHost, server_host.c_str());
@@ -185,6 +197,10 @@ TEST_F(TestDynamicNetworking, RetrieveMessageFromMSN) {
 /// Description: construct a cluster and restart the meta server node under recovery mode.
 /// Expectation: the meta server node is restarted successfully and all the metadata is restored.
 TEST_F(TestDynamicNetworking, MetaServerNodeRecovery) {
+  common::SetEnv("MS_NODE_TIMEOUT", "30");
+  common::SetEnv("MS_TOPO_TIMEOUT", std::to_string(1000 * 60 * 10).c_str());
+  common::SetEnv("MS_RECEIVE_MSG_TIMEOUT", "5");
+  common::SetEnv("MS_CLUSTER_RETRY_NUM", "210");
   // Prepare the environment.
   std::string local_file = "recovery.dat";
   char *dir = getcwd(nullptr, 0);
@@ -267,6 +283,9 @@ TEST_F(TestDynamicNetworking, MetaServerNodeRecovery) {
 /// compute graph node.
 /// Expectation: the number of alive compute graph node is equal to two.
 TEST_F(TestDynamicNetworking, HeartbeatTimeout) {
+  common::SetEnv("MS_TOPO_TIMEOUT", std::to_string(1000 * 60 * 10).c_str());
+  common::SetEnv("MS_RECEIVE_MSG_TIMEOUT", "5");
+  common::SetEnv("MS_CLUSTER_RETRY_NUM", "210");
   // Start the meta server node in the parent process.
   std::string server_host = "127.0.0.1";
   std::string server_port = "8090";
@@ -277,6 +296,7 @@ TEST_F(TestDynamicNetworking, HeartbeatTimeout) {
 
   size_t total_node_num = 2;
   uint64_t timeout = 4;
+  common::SetEnv("MS_NODE_TIMEOUT", std::to_string(timeout).c_str());
   MetaServerNode msn("meta_server_node", "scheduler", total_node_num, timeout);
   ASSERT_TRUE(msn.Initialize());
 
@@ -327,6 +347,10 @@ TEST_F(TestDynamicNetworking, HeartbeatTimeout) {
 /// Description: first start the compute graph node and then start the meta server node.
 /// Expectation: the cluster topology is constructed successfully.
 TEST_F(TestDynamicNetworking, ReconnectToMetaServerDuringReg) {
+  common::SetEnv("MS_NODE_TIMEOUT", "30");
+  common::SetEnv("MS_TOPO_TIMEOUT", std::to_string(1000 * 60 * 10).c_str());
+  common::SetEnv("MS_RECEIVE_MSG_TIMEOUT", "5");
+  common::SetEnv("MS_CLUSTER_RETRY_NUM", "210");
   // Init the environment variables.
   std::string server_host = "127.0.0.1";
   std::string server_port = "8090";
@@ -388,6 +412,10 @@ TEST_F(TestDynamicNetworking, ReconnectToMetaServerDuringReg) {
 /// cluster is initialized successfully.
 /// Expectation: the cluster topology is shutdown finally.
 TEST_F(TestDynamicNetworking, ReconnectToMetaServerDuringUnreg) {
+  common::SetEnv("MS_NODE_TIMEOUT", "30");
+  common::SetEnv("MS_TOPO_TIMEOUT", std::to_string(1000 * 60 * 10).c_str());
+  common::SetEnv("MS_RECEIVE_MSG_TIMEOUT", "5");
+  common::SetEnv("MS_CLUSTER_RETRY_NUM", "210");
   // Init the environment variables.
   std::string local_file = "recovery.dat";
   char *dir = getcwd(nullptr, 0);
@@ -471,6 +499,10 @@ TEST_F(TestDynamicNetworking, ReconnectToMetaServerDuringUnreg) {
 /// Description: build a cluster and call the gethostname of compute graph node.
 /// Expectation: the hostnames of specified compute graph node are returned.
 TEST_F(TestDynamicNetworking, GetHostNames) {
+  common::SetEnv("MS_NODE_TIMEOUT", "30");
+  common::SetEnv("MS_TOPO_TIMEOUT", std::to_string(1000 * 60 * 10).c_str());
+  common::SetEnv("MS_RECEIVE_MSG_TIMEOUT", "5");
+  common::SetEnv("MS_CLUSTER_RETRY_NUM", "210");
   std::string server_host = "127.0.0.1";
   std::string server_port = "8090";
   common::SetEnv(kEnvMetaServerHost, server_host.c_str());

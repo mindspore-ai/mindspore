@@ -4,56 +4,24 @@
 
 ## MindSpore 2.2.13 Release Notes
 
-### Major Features and Improvements
+### API Change
 
-#### Parallel
+Add timeout environment variables in dynamic networking scenarios:
 
-- [Stable] Changed the communication group of the send/receive operator to the world group in the parallel pipeline to avoid creating redundant communication groups and reduce the memory required for communication.
-- [Stable] Optimize the compilation cache to reduce the graph conversion process of the loading cache and improve the compilation cache performance.
-- [Beta] Pipeline parallel supports Interleave. Optimize the performance when mciro batch is small.
+- `MS_TOPO_TIMEOUT`: Cluster networking phase timeout time in seconds.
+- `MS_CLUSTER_RETRY_NUM`: Number of node's retrying registration during cluster networking phase.
+- `MS_NODE_TIMEOUT`: Node heartbeat timeout in seconds.
+- `MS_RECEIVE_MSG_TIMEOUT`: Node timeout for receiving messages in seconds.
 
-#### Profiler
+### Bug Fixes
 
-- [Beta] Dynamically start and stop profiling. Users can collect profiling data in real time according to the training situation, reducing the amount of data collected.
-- [Beta] Profiling the communication operator time-consuming matrix. Users can find cluster communication performance bottlenecks by analyzing the communication operator time-consuming matrix.
-
-#### Dump
-
-- [Beta] The statistical information saved by Dump records MD5 values, and users can determine small differences in tensor values through MD5 values.
-- [Beta] Dump supports the float16 data type and supports users to locate float16 type operator accuracy issues.
-
-#### Bug Fixes
-
-- [#I962EV] Fixed issue on CPU and GPU environment with cond input dimension of 4d, 5d, 6d, 7d and 8d.
-- [#I96E5R] Fixed the issue in the PyNative that the input of the Mul operator is NCHW format on the Ascend platform.
-- [#I96I5D] Fixed the issue of incorrect input type when calculating Scalar type in dynamic shape scenario.
-- [#I99QAB] Fixed the issue where asnumpy cannot correctly identify the BFloat16 tensor in some scenarios.
-- [#I9ADZS] Fixed the data timeout issue in network training due to inefficient dataset recovery in the fault recovery scenario.
-- [#I8Y9JT] Fixed the issue that some network training does not converge due to the incorrect execution sequence of the optimizer in some specific scenarios where the nn.SGD optimizer has a large loss_scale and a small weight_decay.
+- [#I9CR96] Fix the issue of insufficient timeout time causing failure for dynamic networking startup in large-scale clusters.
 
 ### Contributors
 
 Thanks goes to these wonderful people:
 
-fary86, wanghenchang, haozhang, mengyuanli, emmmmtang, luoyang, zhupuxu, zhangyongxian, liuluobin, LLLRT, TuDouNi, hujiahui8, wangtongyu6, ligan, zhuguodong, yanghaoran, YingtongHu, liyejun, zjun, 徐永飞, chuht, 张树仁, 徐安越, DeshiChen, shenyaxin, liujunzhu, shunyuanhan, yuchaojie, yao_yf, 没有窗户的小巷, yeyunpeng2020, weiyang, KevinYi, hedongdong, zhouyaqiang0, Margaret_wangrui, zhanghaibo, moran, huangziling, 朱家兴, GuoZhibin, 李良灿, jiaxueyu, gaoyong10, Greatpan, 宦晓玲, melody, 俞涵, jiangshanfeng, XinDu, ling, caifubi, zhangyinxia, gengdongjie, Erpim, XianglongZeng, zhangminli, fengyixing, 冯一航, 黄勇, panzhihui, 胡彬, linqingke, wangshaocong
-
-Contributions of any kind are welcome!
-
-## MindSpore Lite 2.2.13 Release Notes
-
-### Major Features and Improvements
-
-- [Demo] Support PagedAttention in LLAMA2-13B.
-
-#### Bug Fixes
-
-- [I96PJC] An error is reported when the CLIP model in MS format is loaded through the MindSpore Lite Python API.
-
-### Contributors
-
-Thanks goes to these wonderful people:
-
-wangtongyu6, zhuguodong, 徐永飞, 徐安越, yeyunpeng2020, moran, XinDu, gengdongjie.
+ZPaC, limingqi107, lizhenyu, jiangshanfeng
 
 Contributions of any kind are welcome!
 

@@ -63,7 +63,7 @@ class BACKEND_EXPORT TCPClient : public RPCClientBase {
 
   // Retrieve a message from tcp server specified by the input message.
   // Returns nullptr after timeout.
-  MessageBase *ReceiveSync(std::unique_ptr<MessageBase> &&msg, uint32_t timeout = 30) override;
+  MessageBase *ReceiveSync(std::unique_ptr<MessageBase> &&msg, uint32_t timeout = 120) override;
 
   // Force the data in the send buffer to be sent out.
   bool Flush(const std::string &dst_url) override;
@@ -77,10 +77,12 @@ class BACKEND_EXPORT TCPClient : public RPCClientBase {
   // The mutex and condition variable used to synchronize the write and read of the received message returned by calling
   // the `ReceiveSync` method.
   std::mutex mutex_;
+  std::mutex receive_sync_mutex_;
   std::condition_variable wait_msg_cond_;
 
   // The received message from the meta server by calling the method `ReceiveSync`.
   MessageBase *received_message_;
+  size_t receive_time_out_;
 
   DISABLE_COPY_AND_ASSIGN(TCPClient);
 };
