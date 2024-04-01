@@ -105,12 +105,12 @@ class BACKEND_EXPORT MemoryManager {
     }
     return memory_pool_->WaitEvent(task_id_on_stream, memory_stream_id);
   }
-  bool WaitEvents() {
+  bool WaitAllEvents() {
     if (memory_pool_ == nullptr) {
       MS_LOG(WARNING) << "memory_pool_ is nullptr.";
       return false;
     }
-    return memory_pool_->WaitEvents();
+    return memory_pool_->WaitAllEvents();
   }
 
  protected:
