@@ -480,10 +480,9 @@ void ControlActor::SendOutput(OpContext<DeviceTensor> *const context) {
   }
 }
 namespace {
-CNodePtr CreateRealMakeTuple(const std::vector<DeviceTensor *> &addr_list) {
+CNodePtr CreateRealMakeTuple(const std::vector<DeviceTensor *> &addr_list, const FuncGraphPtr &func_graph) {
   std::vector<AnfNodePtr> inputs{NewValueNode(prim::kPrimRealMakeTuple)};
-  FuncGraphPtr func_graph = nullptr;
-  auto new_cnode = std::make_shared<CNode>(inputs, func_graph);
+  auto new_cnode = func_graph->NewCNode(inputs);
   std::vector<std::string> formats;
   MS_EXCEPTION_IF_NULL(new_cnode);
   std::vector<abstract::AbstractBasePtr> abs_list;
@@ -593,8 +592,8 @@ void ControlActor::MergeDeviceAddress(OpContext<DeviceTensor> *const context,
   auto tuple_shape = std::make_shared<abstract::TupleShape>(shape_list);
   TypePtrList type_list(addr_list.size(), addr_list[0]->kernel_tensor()->GetType());
   auto tuple_type = std::make_shared<Tuple>(type_list);
-  MS_LOG(WARNING) << "Create kernel tensor by shape:" << tuple_shape->ToString() << " type:" << tuple_type->ToString()
-                  << " in device address:" << addr_list[0];
+  MS_LOG(DEBUG) << "Create kernel tensor by shape:" << tuple_shape->ToString() << " type:" << tuple_type->ToString()
+                << " in device address:" << addr_list[0];
   const auto &kernel_tensor = std::make_shared<kernel::KernelTensor>(
     tuple_shape, tuple_type, nullptr, nullptr, total_size, addr_list[0]->format(), addr_list[0]->type_id(), total_shape,
     device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
@@ -610,8 +609,10 @@ void ControlActor::MergeDeviceAddress(OpContext<DeviceTensor> *const context,
   MS_EXCEPTION_IF_NULL(new_device_tensor->GetMutablePtr());
 
   // Create a new real maketuple node for new device address.
-  auto new_cnode = CreateRealMakeTuple(addr_list);
+  FuncGraphPtr fg = std::make_shared<FuncGraph>();
+  auto new_cnode = CreateRealMakeTuple(addr_list, fg);
   AnfAlgo::SetOutputAddr(new_device_tensor, 0, new_cnode.get());
+  created_new_graphs_.emplace_back(fg);
   created_new_nodes_.emplace_back(new_cnode);
   new_device_tensor->SetNodeIndex(new_cnode, 0);
   new_device_tensor->set_from_persistent_mem(addr_list[0]->from_persistent_mem());
