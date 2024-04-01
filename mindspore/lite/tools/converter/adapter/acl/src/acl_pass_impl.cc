@@ -636,8 +636,7 @@ STATUS AclPassImpl::PreProcGraph(const FuncGraphPtr &func_graph) {
       MS_CHECK_TRUE_MSG(lite::RunOptimizerPass(func_graph, {kCustomOpGeGluV2Fusion}), lite::RET_ERROR,
                         "GeGluV2 op pass failed.");
     }
-    if (find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "All") != plugin_custom_ops.end() ||
-        find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "GroupNormSilu") != plugin_custom_ops.end()) {
+    if (find(plugin_custom_ops.begin(), plugin_custom_ops.end(), "GroupNormSilu") != plugin_custom_ops.end()) {
       MS_LOG(INFO) << "using GroupNormSilu";
       MS_CHECK_TRUE_MSG(lite::RunOptimizerPass(func_graph, {kCustomOpGroupNormSiluFusion}), lite::RET_ERROR,
                         "GroupNormSilu op pass failed.");
