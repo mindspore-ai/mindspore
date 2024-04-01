@@ -36,6 +36,9 @@ class MaskedSelectAclnnKernelMod : public AclnnKernelMod {
 
  protected:
   std::vector<ShapeVector> outputs_shape_;
+
+ private:
+  DEFINE_GET_WORKSPACE_FOR_RESIZE()
 };
 }  // namespace kernel
 }  // namespace mindspore
