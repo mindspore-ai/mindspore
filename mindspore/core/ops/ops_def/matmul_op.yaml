@@ -13,8 +13,6 @@ matmul:
       dtype: bool
       default: False
       prim_init: True
-  args_signature:
-    dtype_group: (input, mat2)
   returns:
     output:
       dtype: tensor
