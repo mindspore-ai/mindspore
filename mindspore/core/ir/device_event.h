@@ -24,9 +24,12 @@ namespace mindspore {
 class DeviceEvent {
  public:
   virtual ~DeviceEvent() = default;
+  virtual bool IsReady() const = 0;
   virtual void WaitEvent() = 0;
+  virtual bool WaitEvent(uint32_t stream_id) = 0;
   virtual void WaitEventWithoutReset() = 0;
   virtual void RecordEvent() = 0;
+  virtual void RecordEvent(uint32_t stream_id) = 0;
   virtual bool NeedWait() = 0;
   virtual void SyncEvent() = 0;
   virtual bool QueryEvent() = 0;

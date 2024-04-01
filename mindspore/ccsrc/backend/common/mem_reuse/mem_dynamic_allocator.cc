@@ -16,11 +16,11 @@
 
 #include "include/backend/mem_reuse/mem_dynamic_allocator.h"
 #include "include/backend/mem_reuse/mem_tracker.h"
-#include <string>
 #include <algorithm>
 #include <numeric>
 #include <ostream>
 #include <utility>
+#include <string>
 #include "include/common/utils/utils.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_context.h"
@@ -53,6 +53,7 @@ static const std::map<AllocatorType, std::string> kAllocatorTypeString = {
 DynamicMemPoolBestFit::~DynamicMemPoolBestFit() {
   persistent_mem_->Clear();
   common_mem_->Clear();
+  stream_pair_addresses_.clear();
 }
 
 void DynamicMemBlock::update_border_addr(DeviceMemPtr left_addr, DeviceMemPtr right_addr) {
@@ -100,6 +101,24 @@ DeviceMemPtr DynamicMemPoolBestFit::AllocTensorMem(size_t size, bool from_persis
   if (device_addr == nullptr) {
     device_addr = AddMemBlockAndMemBuf(align_size, from_persistent_mem, need_recycle, stream_id);
   }
+
+  if (device_addr == nullptr) {
+    MS_LOG(WARNING) << "Malloc failed and try to wait events to release more memory.";
+    // Since address may be duplicate, use set.
+    std::set<DynamicMemBufPtr> carry_event_addresses;
+    for (const auto &stream_pair_address : stream_pair_addresses_) {
+      for (const auto &address : stream_pair_address.second) {
+        (void)carry_event_addresses.emplace(address);
+      }
+    }
+    for (auto &address : carry_event_addresses) {
+      if (address->WaitEvents() && address->can_free_by_wait_) {
+        FreeTensorMemInner(address->device_addr_, false);
+      }
+    }
+    device_addr = FindAvailableMemBuf(align_size, from_persistent_mem, stream_id);
+  }
+
   // Alloc memory failed and dump the info.
   if (!device_addr) {
     DumpDynamicMemPoolStateInfo();
@@ -162,7 +181,7 @@ std::vector<DeviceMemPtr> DynamicMemPoolBestFit::AllocContinuousTensorMem(const 
   DynamicMemBufPtr continuous_mem_buf;
   auto buf_addr = device_addr;
   for (size_t i : size_list) {
-    continuous_mem_buf = std::make_shared<DynamicMemBuf>(buf_addr, DynamicMemBufStatus::kMemBufUsed, i,
+    continuous_mem_buf = std::make_shared<DynamicMemBuf>(buf_addr, DynamicMemBufStatus::kMemBufUsed, i, stream_id,
                                                          DynamicMemAllocatorDebugInfo::GetDebugInfo().name_,
                                                          DynamicMemAllocatorDebugInfo::GetDebugInfo().type_);
     MS_EXCEPTION_IF_NULL(continuous_mem_buf);
@@ -382,7 +401,7 @@ DeviceMemPtr DynamicMemPoolBestFit::CreateMemBlockAndMemBuf(size_t size, bool fr
   auto mem_mng = from_persistent_mem ? persistent_mem_ : common_mem_;
   mem_mng->AddMemBlock(mem_block, stream_id);
   // Add new memory buf.
-  auto mem_buf = std::make_shared<DynamicMemBuf>(mem_block->device_addr(), mem_buf_status, mem_block->size(),
+  auto mem_buf = std::make_shared<DynamicMemBuf>(mem_block->device_addr(), mem_buf_status, mem_block->size(), stream_id,
                                                  DynamicMemAllocatorDebugInfo::GetDebugInfo().name_,
                                                  DynamicMemAllocatorDebugInfo::GetDebugInfo().type_);
   // Add map of new memory buf in the block
@@ -446,7 +465,12 @@ const size_t DynamicMemPoolBestFit::FreeIdleMemsByEagerFree() {
       for (auto &[size, mem_buf] : idle_mem_buf.second) {
         free_size += size;
         real_free_size += FreeDeviceMemByEagerFree(mem_buf->device_addr_, size);
-        CombineMemBuf(mem_buf->device_addr_, DynamicMemBufStatus::kMemBufIdle, DynamicMemBufStatus::kMemBufEagerFree);
+        auto [mem_block, iter, mem_mng] = FindByStrictAddr(mem_buf->device_addr_);
+        if (CanCombineMemBuf(mem_buf, mem_block, DynamicMemBufStatus::kMemBufIdle,
+                             DynamicMemBufStatus::kMemBufEagerFree, true)) {
+          CombineMemBuf(mem_block, iter, mem_mng, DynamicMemBufStatus::kMemBufIdle,
+                        DynamicMemBufStatus::kMemBufEagerFree);
+        }
       }
     }
     mem_mng->idle_mem_bufs_.clear();
@@ -479,7 +503,7 @@ void DynamicMemPoolBestFit::SplitMemBuf(size_t size, const DynamicMemBufPtr &mem
   size_t newbuf_size = mem_buf->size_ - size;
   mem_buf->size_ = size;
   DeviceMemPtr newbuf_addr = AddressOffset(mem_buf->device_addr_, size);
-  auto new_mem_buf = std::make_shared<DynamicMemBuf>(newbuf_addr, mem_buf->status_, newbuf_size);
+  auto new_mem_buf = std::make_shared<DynamicMemBuf>(newbuf_addr, mem_buf->status_, newbuf_size, stream_id);
   // Add map of new memory buf in the block
   (void)mem_block->block_all_mem_buf_map_.emplace(newbuf_addr, new_mem_buf);
   if (new_mem_buf->status_ == DynamicMemBufStatus::kMemBufIdle) {
@@ -508,17 +532,21 @@ DynamicMemBlockPtr DynamicMemPoolBestFit::FindMemBlock(const DeviceMemPtr &devic
   return nullptr;
 }
 
-void DynamicMemPoolBestFit::FreeTensorMem(const DeviceMemPtr &device_addr) {
+void DynamicMemPoolBestFit::FreeTensorMem(const DeviceMemPtr &device_addr, bool from_free_tensor_mem) {
 #ifdef __APPLE__
   std::lock_guard<SpinLock> spin_lock(spin_lock_);
 #else
   std::lock_guard<std::mutex> locker(mutex_);
 #endif
-  FreeTensorMemInner(device_addr);
+  FreeTensorMemInner(device_addr, from_free_tensor_mem);
 }
 
-void DynamicMemPoolBestFit::FreeTensorMemInner(const DeviceMemPtr &device_addr) {
-  CombineMemBuf(device_addr, DynamicMemBufStatus::kMemBufUsed, DynamicMemBufStatus::kMemBufIdle);
+void DynamicMemPoolBestFit::FreeTensorMemInner(const DeviceMemPtr &device_addr, bool from_free_tensor_mem) {
+  auto [mem_block, iter, mem_mng] = FindByStrictAddr(device_addr);
+  if (mem_block != nullptr && CanCombineMemBuf(iter->second, mem_block, DynamicMemBufStatus::kMemBufUsed,
+                                               DynamicMemBufStatus::kMemBufIdle, from_free_tensor_mem)) {
+    CombineMemBuf(mem_block, iter, mem_mng, DynamicMemBufStatus::kMemBufUsed, DynamicMemBufStatus::kMemBufIdle);
+  }
 
   if (IsMemoryPoolRecycle()) {
     (void)mem_bufs_.erase(device_addr);
@@ -530,29 +558,53 @@ void DynamicMemPoolBestFit::FreeTensorMemInner(const DeviceMemPtr &device_addr) 
                 << "B, total idle mem:" << (TotalMemStatistics() - TotalUsedMemStatistics()) << "B.";
 }
 
-void DynamicMemPoolBestFit::CombineMemBuf(const DeviceMemPtr &device_addr, DynamicMemBufStatus origin_status,
-                                          DynamicMemBufStatus target_status) {
-  MS_EXCEPTION_IF_NULL(device_addr);
-  auto [mem_block, iter, mem_mng] = FindByStrictAddr(device_addr);
+bool DynamicMemPoolBestFit::CanCombineMemBuf(const DynamicMemBufPtr &mem_buf, const DynamicMemBlockPtr &mem_block,
+                                             DynamicMemBufStatus origin_status, DynamicMemBufStatus target_status,
+                                             bool from_free_tensor_mem) {
+  MS_EXCEPTION_IF_NULL(mem_buf);
+  auto device_addr = mem_buf->device_addr_;
   if (mem_block == nullptr) {
     // Maybe destroy the memory pool first, then destroy the address, so this is normal case.
     MS_LOG(DEBUG) << "Can't find the mem_block of the device address[" << device_addr << "].";
-    return;
+    return false;
   }
-  MS_EXCEPTION_IF_NULL(mem_mng);
-  auto &mem_buf = iter->second;
-  MS_EXCEPTION_IF_NULL(mem_buf);
+  if (from_free_tensor_mem) {
+    if (origin_status == DynamicMemBufStatus::kMemBufUsed && !mem_buf->IsEventNotUsed()) {
+      MS_LOG(DEBUG) << "CombineMemBuf exit as mem buf can not be release, device_addr : " << device_addr << ".";
+      mem_buf->can_free_by_wait_ = true;
+      return false;
+    }
+  } else {
+    if (origin_status == DynamicMemBufStatus::kMemBufUsed && !mem_buf->can_free_by_wait_) {
+      MS_LOG(DEBUG) << "CombineMemBuf exit as mem buf can not be freed, device_addr : " << device_addr << ".";
+      return false;
+    }
+  }
+  if (target_status == DynamicMemBufStatus::kMemBufIdle) {
+    mem_buf->can_free_by_wait_ = false;
+  }
+  return true;
+}
 
+void DynamicMemPoolBestFit::CombineMemBuf(const DynamicMemBlockPtr &mem_block,
+                                          const DeviceAddrMapMemBuf::iterator &iter, const MemStatusManagerPtr &mem_mng,
+                                          DynamicMemBufStatus origin_status, DynamicMemBufStatus target_status) {
+  const auto &mem_buf = iter->second;
+  MS_LOG(DEBUG) << "CombineMemBuf release mem buf, device_addr : " << mem_buf->device_addr_
+                << ", mem buf size() : " << mem_buf->stream_task_id_on_stream_events_.size()
+                << ", size : " << mem_buf->stream_task_id_on_stream_events_.size() << ".";
   if (common::IsNeedProfileMemory()) {
     MS_LOG(WARNING) << "Need Profile Memory, Memory pool free, total mem: " << TotalMemStatistics()
                     << ", peak mem: " << UsedMemPeakStatistics() << ", in use mem: " << TotalUsedMemStatistics()
                     << ", device address addr: " << mem_buf->device_addr_ << ", size: " << mem_buf->size_;
   }
-  device::tracker::CALL_MEMORY_TRACKER(FreeMemBlock, device_addr);
+  device::tracker::CALL_MEMORY_TRACKER(FreeMemBlock, mem_buf->device_addr_);
 
   if (mem_buf->status_ != origin_status) {
     DumpDynamicMemPoolDebugInfo();
-    MS_LOG(EXCEPTION) << "Find the mem_buf is not used, mem_buf_address[" << mem_buf->device_addr_ << "].";
+    MS_LOG(EXCEPTION) << "Find the mem_buf status : " << mem_buf->status_
+                      << " is not equal to origin status : " << origin_status << ", mem_buf_address["
+                      << mem_buf->device_addr_ << "].";
   }
   mem_buf->status_ = target_status;
   if (origin_status == DynamicMemBufStatus::kMemBufUsed) {
@@ -713,17 +765,17 @@ void DynamicMemPoolBestFit::KeepTensorMemByAddr(const DeviceMemPtr &device_addr,
     mem_buf->size_ = split_left_size;
     (void)mem_mng->AddIdleMemBuf(mem_buf, mem_block->stream_id_);
 
-    auto used_mem_buf = std::make_shared<DynamicMemBuf>(device_addr, DynamicMemBufStatus::kMemBufUsed, size,
-                                                        DynamicMemAllocatorDebugInfo::GetDebugInfo().name_,
-                                                        DynamicMemAllocatorDebugInfo::GetDebugInfo().type_);
+    auto used_mem_buf = std::make_shared<DynamicMemBuf>(
+      device_addr, DynamicMemBufStatus::kMemBufUsed, size, mem_block->stream_id_,
+      DynamicMemAllocatorDebugInfo::GetDebugInfo().name_, DynamicMemAllocatorDebugInfo::GetDebugInfo().type_);
     (void)mem_block->block_all_mem_buf_map_.emplace(device_addr, used_mem_buf);
   }
 
   // Split the right membuf.
   if (split_right_szie > 0) {
     DeviceMemPtr right_buf_addr = AddressOffset(device_addr, size);
-    auto right_mem_buf =
-      std::make_shared<DynamicMemBuf>(right_buf_addr, DynamicMemBufStatus::kMemBufIdle, split_right_szie);
+    auto right_mem_buf = std::make_shared<DynamicMemBuf>(right_buf_addr, DynamicMemBufStatus::kMemBufIdle,
+                                                         split_right_szie, mem_block->stream_id_);
     (void)mem_block->block_all_mem_buf_map_.emplace(right_buf_addr, right_mem_buf);
     (void)mem_mng->AddIdleMemBuf(right_mem_buf, mem_block->stream_id_);
   }
@@ -943,6 +995,113 @@ void DynamicMemPoolBestFit::DumpDynamicMemPoolDebugInfo() {
   MS_LOG(WARNING) << "Finish dump dynamic memory pool debug info.";
 }
 
+// Element in vector : memory_stream_id, address
+bool DynamicMemPoolBestFit::RecordEvent(int64_t task_id_on_stream, uint32_t user_stream_id,
+                                        const std::vector<std::pair<uint32_t, DeviceMemPtr>> &memory_stream_addresses,
+                                        const DeviceEventPtr &event) {
+  MS_LOG(DEBUG) << "Record event, task_id_on_stream : " << task_id_on_stream << ", user_stream_id : " << user_stream_id
+                << ", memory_stream_addresses size : " << memory_stream_addresses.size() << ", event : " << event.get()
+                << ".";
+#ifdef __APPLE__
+  std::lock_guard<SpinLock> spin_lock(spin_lock_);
+#else
+  std::lock_guard<std::mutex> locker(mutex_);
+#endif
+  for (auto &[memory_stream_id, address] : memory_stream_addresses) {
+    MS_LOG(DEBUG) << "Record event for address : " << address << ".";
+    auto &&mem_buf_tuple = FindByStrictAddr(address);
+    auto mem_block = std::get<0>(mem_buf_tuple);
+    MS_EXCEPTION_IF_NULL(mem_block);
+    auto mem_buf = (std::get<1>(mem_buf_tuple))->second;
+    mem_buf->RecordEvent(task_id_on_stream, user_stream_id, event);
+    (void)stream_pair_addresses_[std::make_pair(user_stream_id, memory_stream_id)].emplace(mem_buf);
+  }
+  return true;
+}
+
+bool DynamicMemPoolBestFit::WaitEvent(int64_t task_id_on_stream, uint32_t user_stream_id, uint32_t memory_stream_id) {
+  MS_LOG(DEBUG) << "Release events, task_id_on_stream : " << task_id_on_stream
+                << ", user_stream_id : " << user_stream_id << ", memory_stream_id : " << memory_stream_id << ".";
+#ifdef __APPLE__
+  std::lock_guard<SpinLock> spin_lock(spin_lock_);
+#else
+  std::lock_guard<std::mutex> locker(mutex_);
+#endif
+  auto key = std::make_pair(user_stream_id, memory_stream_id);
+  auto iter = stream_pair_addresses_.find(key);
+  if (iter == stream_pair_addresses_.end()) {
+    return false;
+  }
+
+  auto addresses = iter->second;
+  MS_LOG(DEBUG) << "Bounded addresses size : " << iter->second.size();
+  for (const auto &address : addresses) {
+    address->WaitEvent(task_id_on_stream, user_stream_id);
+    if (address->IsEventNotUsed() && address->can_free_by_wait_) {
+      iter->second.erase(address);
+      MS_LOG(DEBUG) << "Address : " << address->device_addr_ << " can release, and status is : " << address->status_;
+      FreeTensorMemInner(address->device_addr_, false);
+    }
+  }
+  MS_LOG(DEBUG) << "After release, bounded addresses size : " << iter->second.size();
+  return true;
+}
+
+// WaitEvent is called before sync stream, so performance may not be the issue.
+bool DynamicMemPoolBestFit::WaitEvent(int64_t task_id_on_stream, uint32_t memory_stream_id) {
+  MS_LOG(DEBUG) << "Release events, task_id_on_stream : " << task_id_on_stream
+                << ", memory_stream_id : " << memory_stream_id << ".";
+#ifdef __APPLE__
+  std::lock_guard<SpinLock> spin_lock(spin_lock_);
+#else
+  std::lock_guard<std::mutex> locker(mutex_);
+#endif
+  for (auto &stream_pair_addresses : stream_pair_addresses_) {
+    const auto &[user_stream, memory_stream] = stream_pair_addresses.first;
+    if (memory_stream != memory_stream_id) {
+      continue;
+    }
+    auto addresses = stream_pair_addresses.second;
+    MS_LOG(DEBUG) << "Bounded addresses size : " << stream_pair_addresses.second.size();
+    for (const auto &address : addresses) {
+      address->WaitEvent(task_id_on_stream, user_stream);
+      if (address->IsEventNotUsed() && address->can_free_by_wait_) {
+        stream_pair_addresses.second.erase(address);
+        MS_LOG(DEBUG) << "Address : " << address->device_addr_ << " can release, and status is : " << address->status_;
+        FreeTensorMemInner(address->device_addr_, false);
+      }
+    }
+    MS_LOG(DEBUG) << "After release, bounded addresses size : " << stream_pair_addresses.second.size();
+  }
+
+  return true;
+}
+
+bool DynamicMemPoolBestFit::WaitEvents() {
+#ifdef __APPLE__
+  std::lock_guard<SpinLock> spin_lock(spin_lock_);
+#else
+  std::lock_guard<std::mutex> locker(mutex_);
+#endif
+  MS_LOG(DEBUG) << "Wait events, stream_pair_addresses_ size : " << stream_pair_addresses_.size();
+  for (auto &stream_pair_addresses : stream_pair_addresses_) {
+    auto addresses = stream_pair_addresses.second;
+    MS_LOG(DEBUG) << "addresses size : " << addresses.size();
+    for (const auto &address : addresses) {
+      if (!address->WaitEvents()) {
+        continue;
+      }
+      stream_pair_addresses.second.erase(address);
+      if (address->can_free_by_wait_) {
+        FreeTensorMemInner(address->device_addr_, false);
+      }
+    }
+  }
+
+  stream_pair_addresses_.clear();
+  return true;
+}
+
 // The statistics information.
 size_t DynamicMemPoolBestFit::TotalMemStatistics() const {
   return common_mem_->mps_.total_mem_size_ + persistent_mem_->mps_.total_mem_size_;
@@ -977,6 +1136,74 @@ size_t MemStatusManager::CalActualPeak() {
     }
   }
   return actual_peak;
+}
+
+bool DynamicMemBuf::RecordEvent(int64_t task_id_on_stream, uint32_t user_stream_id, const DeviceEventPtr &event) {
+  MS_LOG(DEBUG) << "Record event, task_id_on_stream : " << task_id_on_stream << ", user_stream_id : " << user_stream_id
+                << ", event : " << event.get() << ", can_free_by_wait_ : " << can_free_by_wait_
+                << ", status_ : " << status_ << ", memory stream id : " << stream_id_
+                << " for address : " << device_addr_ << ".";
+  auto &task_id_on_stream_event = stream_task_id_on_stream_events_[user_stream_id];
+  task_id_on_stream_event.emplace_back(task_id_on_stream, event);
+  return true;
+}
+
+bool DynamicMemBuf::WaitEvent(uint32_t task_id_on_stream, uint32_t user_stream_id) {
+  MS_LOG(DEBUG) << "Release events for addr : " << device_addr_ << ", task_id_on_stream : " << task_id_on_stream
+                << ", user_stream_id : " << user_stream_id << ".";
+  auto iter = stream_task_id_on_stream_events_.find(user_stream_id);
+  if (iter == stream_task_id_on_stream_events_.end()) {
+    MS_LOG(DEBUG) << "No need to release, size : " << stream_task_id_on_stream_events_.size();
+    return false;
+  }
+
+  auto &task_id_on_stream_event = stream_task_id_on_stream_events_[user_stream_id];
+  // Pop all element in list that not bigger than task_id_on_stream.
+  while (!task_id_on_stream_event.empty() && task_id_on_stream_event.front().first <= task_id_on_stream) {
+    task_id_on_stream_event.pop_front();
+  }
+  if (task_id_on_stream_event.empty()) {
+    stream_task_id_on_stream_events_.erase(user_stream_id);
+  }
+  return true;
+}
+
+bool DynamicMemBuf::IsEventNotUsed() { return stream_task_id_on_stream_events_.empty(); }
+
+bool DynamicMemBuf::WaitEvents() {
+  MS_LOG(DEBUG) << "Wait events for address : " << device_addr_
+                << ", stream_task_id_on_stream_events_ size : " << stream_task_id_on_stream_events_.size() << ".";
+  if (stream_task_id_on_stream_events_.empty()) {
+    return true;
+  }
+
+  auto iter = stream_task_id_on_stream_events_.begin();
+  while (iter != stream_task_id_on_stream_events_.end()) {
+    auto &task_id_on_stream_event = iter->second;
+    MS_LOG(DEBUG) << "Start to wait user_stream_id : " << iter->first << " on stream_id_ : " << stream_id_
+                  << ", size : " << task_id_on_stream_event.size();
+    // Traverse task_id_on_stream - event list and release resource, here may be slow.
+    auto it = task_id_on_stream_event.begin();
+    while (it != task_id_on_stream_event.end()) {
+      auto &event = it->second;
+      if (event->QueryEvent()) {
+        auto to_delete = it;
+        it++;
+        task_id_on_stream_event.erase(to_delete);
+      } else {
+        it++;
+      }
+    }
+    if (task_id_on_stream_event.empty()) {
+      auto to_delete = iter;
+      iter++;
+      stream_task_id_on_stream_events_.erase(to_delete);
+    } else {
+      iter++;
+    }
+  }
+
+  return stream_task_id_on_stream_events_.empty();
 }
 
 void MemStatusManager::AddMemBlock(const DynamicMemBlockPtr &mem_block, uint32_t stream_id) {

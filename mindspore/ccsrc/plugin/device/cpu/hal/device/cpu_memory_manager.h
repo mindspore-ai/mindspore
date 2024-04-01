@@ -34,7 +34,7 @@ class BACKEND_EXPORT CPUMemoryManager : public MemoryManager {
   CPUMemoryManager() = default;
   virtual ~CPUMemoryManager();
 
-  void Initialize() override {}
+  void Initialize() override { memory_pool_ = &(CPUMemoryPool::GetInstance()); }
   void Finalize() override { CPUMemoryPool::GetInstance().ReleaseDeviceRes(); }
   void ResetDynamicMemory() override;
 

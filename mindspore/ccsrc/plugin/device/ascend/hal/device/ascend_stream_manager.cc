@@ -109,9 +109,6 @@ void AscendStreamMng::CreateStream(size_t *stream_id, int32_t priority) {
 void AscendStreamMng::RegCallback(aclrtStream stream) {
   MS_LOG(INFO) << "Register callback thread, stream : " << stream << ".";
   (void)callback_cached_streams_.emplace_back(stream);
-  if (callback_cached_streams_.size() > 1 && !is_enable_callback_) {
-    is_enable_callback_ = true;
-  }
   if (!is_enable_callback_) {
     return;
   }
@@ -300,6 +297,10 @@ bool AscendStreamMng::SyncExceptStreamsInList(const std::set<aclrtStream> &excep
   return res;
 }
 
+size_t AscendStreamMng::QueryStreamSize() const {
+  return std::count_if(streams_.begin(), streams_.end(), [](void *stream) { return stream != nullptr; });
+}
+
 bool AscendStreamMng::QueryStream(size_t stream_id) {
   if (stream_id >= streams_.size()) {
     MS_LOG(EXCEPTION) << "Stream for stream id[" << stream_id << "] has not been created.";
@@ -325,6 +326,16 @@ size_t AscendStreamMng::GetStreamId(void *stream_ptr) {
   }
 
   return LongToSize(std::distance(streams_.begin(), iter));
+}
+
+std::vector<uint32_t> AscendStreamMng::GetStreamIds() const {
+  std::vector<uint32_t> stream_ids;
+  for (size_t i = 0; i < streams_.size(); i++) {
+    if (streams_[i] != nullptr) {
+      (void)stream_ids.emplace_back(static_cast<uint32_t>(i));
+    }
+  }
+  return stream_ids;
 }
 }  // namespace ascend
 }  // namespace device

@@ -907,6 +907,12 @@ bool GPUDeviceResManager::CreateStreamWithPriority(size_t *stream_id, int32_t pr
   return GPUDeviceManager::GetInstance().CreateStreamWithPriority(stream_id, priority);
 }
 
+size_t GPUDeviceResManager::QueryStreamSize() const { return GPUDeviceManager::GetInstance().QueryStreamSize(); }
+
+std::vector<uint32_t> GPUDeviceResManager::GetStreamIds() const {
+  return GPUDeviceManager::GetInstance().GetStreamIds();
+}
+
 bool GPUDeviceResManager::single_op_multi_stream_enable() const {
   return GPUDeviceManager::GetInstance().single_op_multi_stream_enable();
 }

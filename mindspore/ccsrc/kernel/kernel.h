@@ -273,6 +273,9 @@ struct KernelDeviceInfo {
 
   // The stream index in all stream array managed by Framework, starting from 0.
   uint32_t stream_id_{0};
+
+  // The launch index on stream managed by framework.
+  std::shared_ptr<int64_t> task_id_on_stream_{nullptr};
 };
 
 // Used to encapsulate host-side related data structures in KernelTensor.
@@ -582,6 +585,14 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   // Set logical stream id.
   void set_stream_id(uint32_t stream_id) { device_info_->stream_id_ = stream_id; }
 
+  // Get task id on stream.
+  std::shared_ptr<int64_t> task_id_on_stream() const { return device_info_->task_id_on_stream_; }
+
+  // Set task id on stream.
+  void set_task_id_on_stream(const std::shared_ptr<int64_t> &task_id_on_stream) {
+    device_info_->task_id_on_stream_ = task_id_on_stream;
+  }
+
   // Get user data maintained by the KernelTensor.
   const UserDataPtr &user_data() const { return user_data_; }
 
@@ -758,6 +769,10 @@ class BACKEND_EXPORT KernelMod {
   int32_t task_id() const { return task_id_; }
   bool use_kernel_tensor() const { return use_kernel_tensor_; }
   void set_use_kernel_tensor(bool use_kernel_tensor) { use_kernel_tensor_ = use_kernel_tensor; }
+
+  uint32_t record_stream_id() const { return record_stream_id_; }
+  void set_record_stream_id(uint32_t record_stream_id) { record_stream_id_ = record_stream_id; }
+
   virtual bool Finalize() { return true; }
 
  protected:
@@ -778,6 +793,7 @@ class BACKEND_EXPORT KernelMod {
 
   int32_t task_id_ = -1;
   bool use_kernel_tensor_{false};
+  uint32_t record_stream_id_{0};
 };
 using KernelModPtr = std::shared_ptr<KernelMod>;
 

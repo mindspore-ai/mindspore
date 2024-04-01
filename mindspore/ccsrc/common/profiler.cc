@@ -81,6 +81,7 @@ static const std::map<ProfilerEvent, std::string> kProfilerEventString = {
   {ProfilerEvent::kMemoryFree, "MemoryFree"},
   {ProfilerEvent::kCopyData, "CopyData"},
   {ProfilerEvent::kStreamSync, "StreamSync"},
+  {ProfilerEvent::kProcessMultiStream, "ProcessMultiStream"},
   {ProfilerEvent::kWaitKernelsInferFinish, "WaitKernelsInferFinish"},
   {ProfilerEvent::kWaitKernelsResizeFinish, "WaitKernelsResizeFinish"},
   {ProfilerEvent::kWaitKernelsLaunchFinish, "WaitKernelsLaunchFinish"},

@@ -54,6 +54,8 @@ class GPUDeviceResManager : public DeviceResManager {
 
   bool CreateStream(size_t *stream_id) const override;
   bool CreateStreamWithPriority(size_t *stream_id, int32_t priority) const override;
+  size_t QueryStreamSize() const override;
+  std::vector<uint32_t> GetStreamIds() const override;
   void *GetStream(size_t stream_id) const;
   bool DestroyStream(size_t stream_id) const override;
   void SetCurrentStreamId(size_t stream_id) override;
