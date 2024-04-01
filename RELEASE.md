@@ -2,6 +2,58 @@
 
 [查看中文](./RELEASE_CN.md)
 
+## MindSpore 2.2.14 Release Notes
+
+### Major Features and Improvements
+
+#### Parallel
+
+- [STABLE] Changed the communication group of the send/receive operator to the world group in the parallel pipeline to avoid creating redundant communication groups and reduce the memory required for communication.
+- [STABLE] Optimize the compilation cache to reduce the graph conversion process of the loading cache and improve the compilation cache performance.
+- [BETA] Pipeline parallel supports Interleave. Optimize the performance when mciro batch is small.
+- [BETA] Optimize checkpoint transformation speed when using pipeline parallel, support single stage transform.
+
+#### Profiler
+
+- [BETA] Dynamically start and stop profiling. Users can collect profiling data in real time according to the training situation, reducing the amount of data collected.
+- [BETA] Profiling the communication operator time-consuming matrix. Users can find cluster communication performance bottlenecks by analyzing the communication operator time-consuming matrix.
+
+#### Dump
+
+- [BETA] The statistical information saved by Dump records MD5 values, and users can determine small differences in tensor values through MD5 values.
+- [BETA] Dump supports the float16 data type and supports users to locate float16 type operator accuracy issues.
+
+### Bug Fixes
+
+- [#I962EV] Fixed issue on CPU and GPU environment with cond input dimension of 4d, 5d, 6d, 7d and 8d.
+- [#I96E5R] Fixed the issue in the PyNative that the input of the Mul operator is NCHW format on the Ascend platform.
+- [#I96I5D] Fixed the issue of incorrect input type when calculating Scalar type in dynamic shape scenario.
+- [#I99QAB] Fixed the issue where asnumpy cannot correctly identify the bfloat16 tensor in some scenarios.
+- [#I9ADZS] Fixed the data timeout issue in network training due to inefficient dataset recovery in the fault recovery scenario.
+- [#I8Y9JT] Fixed the issue that some network training does not converge due to the incorrect execution sequence of the optimizer in some specific scenarios where the nn.SGD optimizer has a large loss_scale and a small weight_decay.
+
+### Contributors
+
+Thanks goes to these wonderful people:
+
+fary86, wanghenchang, haozhang, mengyuanli, emmmmtang, luoyang, zhupuxu, zhangyongxian, liuluobin, LLLRT, TuDouNi, hujiahui8, wangtongyu6, ligan, zhuguodong, yanghaoran, YingtongHu, liyejun, zjun, 徐永飞, chuht, 张树仁, 徐安越, DeshiChen, shenyaxin, liujunzhu, shunyuanhan, yuchaojie, yao_yf, 没有窗户的小巷, yeyunpeng2020, weiyang, KevinYi, hedongdong, zhouyaqiang0, Margaret_wangrui, zhanghaibo, moran, huangziling, 朱家兴, GuoZhibin, 李良灿, jiaxueyu, gaoyong10, Greatpan, 宦晓玲, melody, 俞涵, jiangshanfeng, XinDu, ling, caifubi, zhangyinxia, gengdongjie, Erpim, XianglongZeng, zhangminli, fengyixing, 冯一航, 黄勇, panzhihui, 胡彬, linqingke, wangshaocong
+
+Contributions of any kind are welcome!
+
+## MindSpore Lite 2.2.14 Release Notes
+
+### Bug Fixes
+
+- [I96PJC] An error is reported when the CLIP model in MS format is loaded through the MindSpore Lite Python API.
+
+### Contributors
+
+Thanks goes to these wonderful people:
+
+wangtongyu6, zhuguodong, 徐永飞, 徐安越, yeyunpeng2020, moran, XinDu, gengdongjie.
+
+Contributions of any kind are welcome!
+
 ## MindSpore 2.2.13 Release Notes
 
 ### API Change
@@ -29,8 +81,8 @@ Contributions of any kind are welcome!
 
 ### Major Features and Improvements
 
-- [Stable] Optimize scnarios where network parameters are initialized by fp32, and optimizer parallel mode is on, reducing the amount of Cast operator.
-- [Stable] Add detection and processing capabilities to silent fault detection. Silent faults may lead to error during training procedures, this helps users to prevent or lower the cost of fault location, which caused by silent faults.
+- [STABLE] Optimize scenarios where network parameters are initialized by fp32, and optimizer parallel mode is on, reducing the amount of Cast operator.
+- [STABLE] Add detection and processing capabilities to silent data corruption. Silent data corruptions may lead to error during training procedures, this helps users to prevent or lower the cost of fault location, which caused by silent data corruptions.
 
 ### Bug Fixes
 
@@ -52,7 +104,7 @@ Contributions of any kind are welcome!
 
 #### scipy
 
-- [Stable] Add new API mindspore.scipy.optimize.linear_sum_assignment in scipy module to solve the linear sum assignment problem. It can find the least-cost assignment based on a given cost matrix.
+- [STABLE] Add new API mindspore.scipy.optimize.linear_sum_assignment in scipy module to solve the linear sum assignment problem. It can find the least-cost assignment based on a given cost matrix.
 
 ### Bug Fixes
 
