@@ -221,8 +221,8 @@ mindspore.set_context
             - **recompute_comm_overlap** (bool): 为 ``True`` 时表示开启反向重计算和通信掩盖。默认值： ``False`` 。
             - **matmul_grad_comm_overlap** (bool): 为 ``True`` 时表示开启反向Matmul和通信掩盖。默认值： ``False`` 。
             - **enable_task_opt** (bool): 为 ``True`` 时表示开启通信算子task数量优化。默认值： ``False`` 。
-            - **enable_grad_comm_opt** (bool): 为 ``True`` 时表示开启梯度dx计算与数据并行梯度通信的掩盖，暂时不支持`LazyInline <https://www.mindspore.cn/docs/zh-CN/r2.3/api_python/mindspore/mindspore.lazy_inline.html>`_ 功能下开启。默认值： ``False`` 。
-            - **enable_opt_shard_comm_opt** (bool): 为 ``True`` 时表示开启正向计算与优化器并行的AllGather通信的掩盖，暂时不支持`LazyInline <https://www.mindspore.cn/docs/zh-CN/r2.3/api_python/mindspore/mindspore.lazy_inline.html>`_ 功能下开启。默认值： ``False`` 。
+            - **enable_grad_comm_opt** (bool): 为 ``True`` 时表示开启梯度dx计算与数据并行梯度通信的掩盖，暂时不支持 `LazyInline <https://www.mindspore.cn/docs/zh-CN/r2.3/api_python/mindspore/mindspore.lazy_inline.html>`_ 功能下开启。默认值： ``False`` 。
+            - **enable_opt_shard_comm_opt** (bool): 为 ``True`` 时表示开启正向计算与优化器并行的AllGather通信的掩盖，暂时不支持 `LazyInline <https://www.mindspore.cn/docs/zh-CN/r2.3/api_python/mindspore/mindspore.lazy_inline.html>`_ 功能下开启。默认值： ``False`` 。
             - **enable_concat_eliminate_opt** (bool): 为 ``True`` 时表示开启Concat消除优化，当前在开启细粒度双副本优化时有收益。默认值： ``False`` 。
             - **enable_begin_end_inline_opt** (bool): 为 ``True`` 时表示开启首尾micro_batch子图的内联，用于半自动并行子图模式，流水线并行场景，一般需要和其它通信计算掩盖优化一起使用。默认值： ``False`` 。
             - **compute_communicate_fusion_level** (int): 控制通算融合的级别。默认值：``0``。
@@ -242,7 +242,7 @@ mindspore.set_context
           - ``STRICT`` : 仅支持基础语法，且执行性能最佳。可用于MindIR导入导出。
           - ``LAX`` : 最大程度地兼容Python所有语法。执行性能可能会受影响，不是最佳。由于存在可能无法导出的语法，不能用于MindIR导入导出。
 
-        - **debug_level** (int) - 设置调试过程的配置。其值必须为 ``RELEASE`` 或 `` DEBUG`` 。默认值： ``RELEASE`` 。
+        - **debug_level** (int) - 设置调试过程的配置。其值必须为 ``RELEASE`` 或 ``DEBUG`` 。默认值： ``RELEASE`` 。
 
           - ``RELEASE`` : 正常场景下使用，一些调试信息会被丢弃以获取一个较好的编译性能。
           - ``DEBUG`` : 当错误发生时，用来调试，在编译过程中，更多的调试信息会被记录下来。
