@@ -132,6 +132,7 @@ def test_step_lr(mode):
     for i in range(5):
         current_lr = sched_net()
         assert np.allclose(current_lr[0].asnumpy(), expect_list[i])
+    ms.set_context(jit_syntax_level=ms.LAX)
 
 
 @pytest.mark.level1
@@ -164,6 +165,7 @@ def test_linear_lr(mode):
     for i in range(6):
         current_lr = sched_net()
         assert np.allclose(current_lr[0].asnumpy(), expect_list[i])
+    ms.set_context(jit_syntax_level=ms.LAX)
 
 
 @pytest.mark.level1
@@ -196,6 +198,7 @@ def test_exponential_lr(mode):
     for i in range(5):
         current_lr = sched_net()
         assert np.allclose(current_lr[0].asnumpy(), expect_list[i])
+    ms.set_context(jit_syntax_level=ms.LAX)
 
 
 @pytest.mark.level1
@@ -228,6 +231,7 @@ def test_polynomial_lr(mode):
     for i in range(6):
         current_lr = sched_net()
         assert np.allclose(current_lr[0].asnumpy(), expect_list[i])
+    ms.set_context(jit_syntax_level=ms.LAX)
 
 
 @pytest.mark.level0
@@ -270,6 +274,7 @@ def test_lambdalr_scheduler(mode):
     for i in range(6):
         current_lr = sched_net()
         assert np.allclose([float(lr) for lr in current_lr], expect_list[i])
+    ms.set_context(jit_syntax_level=ms.LAX)
 
 
 @pytest.mark.level1
@@ -304,6 +309,8 @@ def test_multiplicative_lr(mode):
         current_lr = sched_net()
         assert np.allclose(current_lr[0].asnumpy(), expect_list[i])
 
+    ms.set_context(jit_syntax_level=ms.LAX)
+
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_cpu
@@ -333,6 +340,7 @@ def test_multistep_lr(mode):
     for i in range(5):
         current_lr = sched_net()
         assert np.allclose(current_lr[0].asnumpy(), expect_list[i])
+    ms.set_context(jit_syntax_level=ms.LAX)
 
 
 @pytest.mark.level1
@@ -365,6 +373,7 @@ def test_constant_lr(mode):
     for i in range(5):
         current_lr = sched_net()
         assert np.allclose(current_lr[0].asnumpy(), expect_list[i])
+    ms.set_context(jit_syntax_level=ms.LAX)
 
 
 @pytest.mark.level1
@@ -397,6 +406,7 @@ def test_cyclic_lr(mode):
     for i in range(5):
         current_lr = sched_net()
         assert np.allclose(current_lr[0].asnumpy(), expect_list[i])
+    ms.set_context(jit_syntax_level=ms.LAX)
 
 
 @pytest.mark.level1
@@ -431,7 +441,8 @@ def test_cosine_annealing_warm_restarts(mode):
     for epoch in range(4):
         for i in range(iters):
             current_lr = sched_net(epoch + i / iters)
-            assert np.allclose(current_lr[0].asnumpy(), expect_list[epoch*iters+i])
+            assert np.allclose(current_lr[0].asnumpy(), expect_list[epoch * iters + i])
+    ms.set_context(jit_syntax_level=ms.LAX)
 
 
 @pytest.mark.level1
@@ -464,3 +475,4 @@ def test_cosine_annealing_lr(mode):
     for i in range(6):
         current_lr = sched_net()
         assert np.allclose(current_lr[0].asnumpy(), expect_list[i], 1e-6, 1e-6)
+    ms.set_context(jit_syntax_level=ms.LAX)
