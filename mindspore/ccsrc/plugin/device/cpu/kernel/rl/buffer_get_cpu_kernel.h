@@ -79,6 +79,8 @@ class BufferGetCpuKernelMod : public NativeCpuKernelMod {
       for (size_t i = start; i < end; i++) {
         auto buffer_addr = GetDeviceAddress<unsigned char>(inputs, i);
         auto item_addr = GetDeviceAddress<unsigned char>(outputs, i);
+        MS_EXCEPTION_IF_NULL(buffer_addr);
+        MS_EXCEPTION_IF_NULL(item_addr);
         size_t one_exp_len = output_size_list_[i];
         size_t dist_len = one_exp_len;
         if (memcpy_s(item_addr, one_exp_len, buffer_addr + IntToSize(index) * one_exp_len, dist_len) != EOK) {

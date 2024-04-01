@@ -101,6 +101,8 @@ class BufferCPUSampleKernelMod : public NativeCpuKernelMod {
         for (size_t i = 0; i < element_nums_; i++) {
           auto buffer_addr = GetDeviceAddress<unsigned char>(inputs, i);
           auto output_addr = GetDeviceAddress<unsigned char>(outputs, i);
+          MS_EXCEPTION_IF_NULL(buffer_addr);
+          MS_EXCEPTION_IF_NULL(output_addr);
           auto one_exp_len = exp_element_list[i];
           size_t dist_len = one_exp_len;
           if (memcpy_s(output_addr + j * one_exp_len, one_exp_len, buffer_addr + index * one_exp_len, dist_len) !=
