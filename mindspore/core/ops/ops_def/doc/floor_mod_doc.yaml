@@ -34,7 +34,7 @@ floor_mod:
         and the data type is the one with higher precision of the two inputs.
 
     Raises:
-        TypeError: If neither `x` nor `y` is a Tensor or number.Number.
+        TypeError: If neither `x` nor `y` is a Tensor, number.Number, or bool.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

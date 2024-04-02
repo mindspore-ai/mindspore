@@ -12,7 +12,7 @@ mindspore.ops.logical_or
     当输入是一个Tensor和一个bool时，bool对象只能是一个常量。
 
     .. math::
-        out_{i} = x_{i} \vee y_{i}
+        out_{i} = input_{i} \\vee other_{i}
 
     .. note::
         logical_or支持广播。
