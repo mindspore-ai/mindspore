@@ -750,16 +750,16 @@ def div(input, other, *, rounding_mode=None):
     r"""
     Divides the first input tensor by the second input tensor in floating-point type element-wise.
 
+    .. math::
+
+        out_{i} = input_{i} / other_{i}
+
     Note:
         - When the two inputs have different shapes, they must be able to broadcast to a common shape.
         - The two inputs can not be bool type at the same time,
           [True, Tensor(True, bool\_), Tensor(np.array([True]), bool\_)] are all considered bool type.
         - The two inputs comply with the implicit type conversion rules to make the data types
           consistent.
-
-    .. math::
-
-        out_{i} = input_{i} / other_{i}
 
     Args:
         input (Union[Tensor, Number, bool]): The first input is a number or
@@ -1189,7 +1189,7 @@ def logical_or(input, other):
 
     .. math::
 
-        out_{i} = x_{i} \\vee y_{i}
+        out_{i} = input_{i} \\vee other_{i}
 
     Note:
         logical_or supports broadcasting.
@@ -4875,7 +4875,7 @@ def lcm(input, other):
 
     Raises:
         TypeError: If data type `input` or `other` is not int32 or int64.
-        ValueError: If shape of two inputs are not broadcastable.
+        ValueError: If shapes of two inputs are not broadcastable.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -5672,7 +5672,7 @@ def diff(x, n=1, axis=-1, prepend=None, append=None):
 
     Note:
         Zero-shaped Tensor is not supported, a value error is raised if
-        an empty Tensor is encountered. Any dimension of a Tensor is 0 is considered
+        an empty Tensor is encountered. Any dimension of a Tensor is 0, which is considered
         an empty Tensor. Tensor with shape of :math:`(0,)`, :math:`(1, 2, 0, 4)` are all
         empty Tensor.
 
@@ -9644,7 +9644,7 @@ def logical_xor(input, other):
 
     .. math::
 
-        out_{i} = x_{i} \oplus y_{i}
+        out_{i} = input_{i} \oplus other_{i}
 
     Args:
         input (Tensor): The first input is a tensor whose data type can be implicitly converted to bool.
