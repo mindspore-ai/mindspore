@@ -25,7 +25,7 @@ bool EliminateMaketupleGetitem::Run(const FuncGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
   bool changed = false;
   auto manager = graph->manager();
-  auto node_users_map = manager->node_users();
+  const auto &node_users_map = manager->node_users();
   std::vector<AnfNodePtr> node_list = TopoSort(graph->get_return());
   for (const auto &node : node_list) {
     MS_EXCEPTION_IF_NULL(node);
@@ -33,7 +33,7 @@ bool EliminateMaketupleGetitem::Run(const FuncGraphPtr &graph) {
       continue;
     }
     auto make_tuple_cnode = node->cast<CNodePtr>();
-    for (const auto &node_pair : node_users_map[make_tuple_cnode]) {
+    for (const auto &node_pair : node_users_map.at(make_tuple_cnode)) {
       if (!IsPrimitiveCNode(node_pair.first, prim::kPrimTupleGetItem)) {
         continue;
       }

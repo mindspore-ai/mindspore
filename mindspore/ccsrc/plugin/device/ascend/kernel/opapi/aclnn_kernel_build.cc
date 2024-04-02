@@ -23,6 +23,7 @@
 #include "plugin/factory/ms_factory.h"
 #include "kernel/framework_utils.h"
 #include "ops/op_def.h"
+#include "utils/trace_base.h"
 
 namespace mindspore {
 namespace kernel {
@@ -42,7 +43,7 @@ KernelModPtr AclnnOpBuild(const AnfNodePtr &anf_node) {
   if (!std::static_pointer_cast<KernelMod>(kernel_ptr)
          ->Init(common::AnfAlgo::GetCNodePrimitive(anf_node), input_kernel_tensors, output_kernel_tensors)) {
     MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#Initialize aclnn kernel op["
-                      << anf_node->fullname_with_scope() << "] failed.";
+                      << anf_node->fullname_with_scope() << "] failed." << trace::DumpSourceLines(anf_node);
   }
 
   auto cnode = anf_node->cast<CNodePtr>();

@@ -65,11 +65,11 @@ const AnfNodePtr RemoveTensorToScalarOrTupleOps::Process(const FuncGraphPtr &gra
   MS_EXCEPTION_IF_NULL(tensor_converter);
   auto x = tensor_converter->input(kIndex1);
   MS_EXCEPTION_IF_NULL(x);
-  auto node_users = manager->node_users();
+  const auto &node_users = manager->node_users();
   if (node_users.find(tensor_converter) == node_users.end()) {
     return nullptr;
   }
-  auto &child_node_users = node_users[tensor_converter];
+  auto &child_node_users = node_users.at(tensor_converter);
   for (auto &child_node_user : child_node_users) {
     auto child_node = child_node_user.first->cast<CNodePtr>();
     manager->SetEdge(child_node, GetInputNodeIndex(tensor_converter, child_node) + kSizeOne, x);
