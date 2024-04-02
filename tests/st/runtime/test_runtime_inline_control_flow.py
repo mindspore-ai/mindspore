@@ -839,15 +839,18 @@ def test_lazy_inline():
         def __init__(self, net):
             super(GradNet, self).__init__()
             self.grad_net = Grad(net)
+            self.a = Parameter(Tensor(np.ones((8)).astype(np.float32)))
+            self.b = Parameter(Tensor(np.ones((8)).astype(np.float32)))
 
         def construct(self, x, y):
             out = self.grad_net(x)
             if y > 3:
-                out = out * 2
-            return out
+                return out * 2, self.a
+            return out, self.b
 
     x = Tensor(np.ones((8, 8)).astype(np.float32))
     y = Tensor(6)
     net = Net()
     grad_net = GradNet(net)
+    grad_net(x, y)
     grad_net(x, y)

@@ -401,6 +401,7 @@ std::vector<ExitActorPtr> ControlNodeScheduler::BuildExitActor(const GraphCompil
     }
 
     std::vector<bool> is_need_copy_device_tensors;
+    std::vector<bool> is_need_dynamic_checks;
     std::vector<bool> is_dynamic_shapes;
     std::vector<KernelWithIndex> formal_parameters;
     std::vector<const DeviceContext *> device_contexts;
@@ -416,6 +417,8 @@ std::vector<ExitActorPtr> ControlNodeScheduler::BuildExitActor(const GraphCompil
       MS_EXCEPTION_IF_NULL(backend_node);
       (void)is_need_copy_device_tensors.emplace_back(
         is_need_copy_device_tensor(backend_node, node_with_context.second.first.second));
+      (void)is_need_dynamic_checks.emplace_back(
+        common::AnfAlgo::CheckPrimitiveType(backend_node, prim::kPrimConditionGather));
       auto is_dynamic_shape =
         common::AnfAlgo::IsDynamicShape(backend_node) || common::AnfAlgo::IsDynamicSequence(backend_node);
       (void)is_dynamic_shapes.emplace_back(is_dynamic_shape);
@@ -426,6 +429,7 @@ std::vector<ExitActorPtr> ControlNodeScheduler::BuildExitActor(const GraphCompil
     const auto &exit_actor = std::make_shared<ExitActor>(actor_name, memory_manager_aid_, formal_parameters, nullptr);
     MS_EXCEPTION_IF_NULL(exit_actor);
     exit_actor->is_need_copy_device_tensors_.swap(is_need_copy_device_tensors);
+    exit_actor->is_need_dynamic_checks_.swap(is_need_dynamic_checks);
     exit_actor->is_dynamic_shapes_.swap(is_dynamic_shapes);
     exit_actor->device_contexts_.swap(device_contexts);
     (void)exit_actors.emplace_back(exit_actor);
