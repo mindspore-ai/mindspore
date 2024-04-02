@@ -401,7 +401,6 @@ def test_case_07():
     file_name_auto += os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     file_name_auto += '_auto'
     d1 = ds.TFRecordDataset(TFRECORD_FILES, shuffle=False)
-    d1 = d1.project("image/class/label")
     tf_data = []
     for x in d1.create_dict_iterator(num_epochs=1, output_numpy=True):
         tf_data.append(x)

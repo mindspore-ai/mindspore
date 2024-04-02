@@ -225,7 +225,6 @@ def test_batch_10():
     save_and_check_dict(data1, filename, generate_golden=GENERATE_GOLDEN)
 
 
-@pytest.mark.skip(reason="type cast wrong")
 def test_batch_11():
     """
     Feature: Batch op

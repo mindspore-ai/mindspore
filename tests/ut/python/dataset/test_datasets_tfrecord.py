@@ -190,7 +190,8 @@ def test_tfrecord_multi_files():
 
 
 @pytest.mark.parametrize("do_batch", (True, False))
-def test_tfrecord_with_full_schema(do_batch):
+@pytest.mark.parametrize("load_type", ("uint8", "string"))
+def test_tfrecord_with_full_schema(do_batch, load_type):
     """
     Feature: TFRecordDataset
     Description: Test TFRecordDataset with full schema containing all the feature name, type and shape
@@ -200,7 +201,7 @@ def test_tfrecord_with_full_schema(do_batch):
     schema.add_column("col_1d", de_type=mstype.int64, shape=[2])
     schema.add_column("col_2d", de_type=mstype.int64, shape=[2, 2])
     schema.add_column("col_3d", de_type=mstype.int64, shape=[2, 2, 2])
-    schema.add_column("col_binary", de_type=mstype.string, shape=[1])
+    schema.add_column("col_binary", de_type=load_type, shape=[1])
     schema.add_column("col_float", de_type=mstype.float32, shape=[1])
     schema.add_column("col_sint16", de_type=mstype.int64, shape=[1])
     schema.add_column("col_sint32", de_type=mstype.int64, shape=[1])
@@ -217,7 +218,11 @@ def test_tfrecord_with_full_schema(do_batch):
     assert dataset.get_col_names() == ["col_1d", "col_2d", "col_3d",
                                        "col_binary", "col_float",
                                        "col_sint16", "col_sint32", "col_sint64", "col_sint8"]
-    assert dataset.output_types() == [np.int64, np.int64, np.int64, np.str_, np.float32, np.int64, np.int64, np.int64,
+    if load_type == "string":
+        np_type = np.str_
+    else:
+        np_type = np.uint8
+    assert dataset.output_types() == [np.int64, np.int64, np.int64, np_type, np.float32, np.int64, np.int64, np.int64,
                                       np.int64]
     if do_batch:
         expected_shape = [[2, 2], [2, 2, 2], [2, 2, 2, 2], [2, 1], [2, 1], [2, 1], [2, 1], [2, 1], [2, 1]]
@@ -227,7 +232,8 @@ def test_tfrecord_with_full_schema(do_batch):
 
 
 @pytest.mark.parametrize("do_batch", (True, False))
-def test_tfrecord_with_unknown_shape_schema(do_batch):
+@pytest.mark.parametrize("load_type", ("uint8", "string"))
+def test_tfrecord_with_unknown_shape_schema(do_batch, load_type):
     """
     Feature: TFRecordDataset
     Description: Test TFRecordDataset with schema missing feature shape
@@ -237,7 +243,7 @@ def test_tfrecord_with_unknown_shape_schema(do_batch):
     schema.add_column("col_1d", de_type=mstype.int64)
     schema.add_column("col_2d", de_type=mstype.int64)
     schema.add_column("col_3d", de_type=mstype.int64)
-    schema.add_column("col_binary", de_type=mstype.string)
+    schema.add_column("col_binary", de_type=load_type)
     schema.add_column("col_float", de_type=mstype.float32)
     schema.add_column("col_sint16", de_type=mstype.int64)
     schema.add_column("col_sint32", de_type=mstype.int64)
@@ -254,7 +260,11 @@ def test_tfrecord_with_unknown_shape_schema(do_batch):
     assert dataset.get_col_names() == ["col_1d", "col_2d", "col_3d",
                                        "col_binary", "col_float",
                                        "col_sint16", "col_sint32", "col_sint64", "col_sint8"]
-    assert dataset.output_types() == [np.int64, np.int64, np.int64, np.str_, np.float32, np.int64, np.int64, np.int64,
+    if load_type == "string":
+        np_type = np.str_
+    else:
+        np_type = np.uint8
+    assert dataset.output_types() == [np.int64, np.int64, np.int64, np_type, np.float32, np.int64, np.int64, np.int64,
                                       np.int64]
     if do_batch:
         expected_shape = [[2, 2], [2, 4], [2, 8], [2, 1], [2, 1], [2, 1], [2, 1], [2, 1], [2, 1]]
@@ -348,7 +358,7 @@ def test_tfrecord_with_column_list(do_batch):
     assert dataset.get_col_names() == ["col_1d", "col_2d", "col_3d",
                                        "col_binary", "col_float",
                                        "col_sint16", "col_sint32", "col_sint64", "col_sint8"]
-    assert dataset.output_types() == [np.int64, np.int64, np.int64, np.str_, np.float32, np.int64, np.int64, np.int64,
+    assert dataset.output_types() == [np.int64, np.int64, np.int64, np.uint8, np.float32, np.int64, np.int64, np.int64,
                                       np.int64]
     if do_batch:
         expected_shape = [[2, 2], [2, 4], [2, 8], [2, 1], [2, 1], [2, 1], [2, 1], [2, 1], [2, 1]]
@@ -375,7 +385,7 @@ def test_tfrecord_without_schema_and_column_list(do_batch):
     assert dataset.get_col_names() == ["col_1d", "col_2d", "col_3d",
                                        "col_binary", "col_float",
                                        "col_sint16", "col_sint32", "col_sint64", "col_sint8"]
-    assert dataset.output_types() == [np.int64, np.int64, np.int64, np.str_, np.float32, np.int64, np.int64, np.int64,
+    assert dataset.output_types() == [np.int64, np.int64, np.int64, np.uint8, np.float32, np.int64, np.int64, np.int64,
                                       np.int64]
     if do_batch:
         expected_shape = [[2, 2], [2, 4], [2, 8], [2, 1], [2, 1], [2, 1], [2, 1], [2, 1], [2, 1]]
@@ -385,7 +395,8 @@ def test_tfrecord_without_schema_and_column_list(do_batch):
 
 
 @pytest.mark.parametrize("do_batch", (True, False))
-def test_tfrecord_with_both_schema_and_column_list(do_batch):
+@pytest.mark.parametrize("load_type", ("uint8", "string"))
+def test_tfrecord_with_both_schema_and_column_list(do_batch, load_type):
     """
     Feature: TFRecordDataset
     Description: Test TFRecordDataset with both schema and column list
@@ -395,7 +406,7 @@ def test_tfrecord_with_both_schema_and_column_list(do_batch):
     schema.add_column("col_1d", de_type=mstype.int64, shape=[2])
     schema.add_column("col_2d", de_type=mstype.int64, shape=[4])
     schema.add_column("col_3d", de_type=mstype.int64, shape=[8])
-    schema.add_column("col_binary", de_type=mstype.string, shape=[1])
+    schema.add_column("col_binary", de_type=load_type, shape=[1])
     schema.add_column("col_float", de_type=mstype.float32, shape=[1])
     schema.add_column("col_sint16", de_type=mstype.int64, shape=[1])
     schema.add_column("col_sint32", de_type=mstype.int64, shape=[1])
@@ -413,7 +424,11 @@ def test_tfrecord_with_both_schema_and_column_list(do_batch):
         count += 1
     assert dataset.get_dataset_size() == count
     assert dataset.get_col_names() == ["col_sint8", "col_binary", "col_2d", "col_float", "col_3d"]
-    assert dataset.output_types() == [np.int64, np.str_, np.int64, np.float32, np.int64]
+    if load_type == "string":
+        np_type = np.str_
+    else:
+        np_type = np.uint8
+    assert dataset.output_types() == [np.int64, np_type, np.int64, np.float32, np.int64]
     if do_batch:
         expected_shape = [[2, 1], [2, 1], [2, 4], [2, 1], [2, 8]]
     else:
@@ -433,7 +448,7 @@ def test_tfrecord_result_equal_with_schema_and_column_list(do_batch):
     schema.add_column('col_1d', de_type=mstype.int64, shape=[2])
     schema.add_column('col_2d', de_type=mstype.int64, shape=[4])
     schema.add_column('col_3d', de_type=mstype.int64, shape=[8])
-    schema.add_column('col_binary', de_type=mstype.string, shape=[1])
+    schema.add_column('col_binary', de_type=mstype.uint8, shape=[1])
     schema.add_column('col_float', de_type=mstype.float32, shape=[1])
     schema.add_column('col_sint16', de_type=mstype.int64, shape=[1])
     schema.add_column('col_sint32', de_type=mstype.int64, shape=[1])
@@ -1229,7 +1244,8 @@ def test_tf_wrong_schema():
     assert "Column shape of image defined in schema does not match the shape actually load" in str(e.value)
 
 
-def test_tfrecord_invalid_columns():
+@pytest.mark.parametrize("do_batch", (True, False))
+def test_tfrecord_invalid_columns(do_batch):
     """
     Feature: TFRecordDataset
     Description: Test TFRecordDataset with invalid columns
@@ -1238,9 +1254,29 @@ def test_tfrecord_invalid_columns():
     logger.info("test_tfrecord_invalid_columns")
     invalid_columns_list = ["not_exist"]
     data = ds.TFRecordDataset(FILES, columns_list=invalid_columns_list)
+    if do_batch:
+        data = data.batch(2)
     with pytest.raises(RuntimeError) as info:
         _ = data.create_dict_iterator(num_epochs=1, output_numpy=True).__next__()
     assert "Invalid columns_list, tfrecord file failed to find column name: not_exist" in str(info.value)
+
+
+@pytest.mark.parametrize("do_batch", (True, False))
+def test_tfrecord_with_invalid_column_in_schema(do_batch):
+    """
+    Feature: TFRecordDataset
+    Description: Test TFRecordDataset with schema which has invalid column name
+    Expectation: RuntimeError is raised as expected
+    """
+    schema = ds.Schema()
+    schema.add_column("col_1d", de_type=mstype.int64, shape=[2])
+    schema.add_column("not_exist", de_type=mstype.float32, shape=[2, 2])
+    data = ds.TFRecordDataset(FILES, schema=schema)
+    if do_batch:
+        data = data.batch(2)
+    with pytest.raises(RuntimeError) as info:
+        _ = next(data.create_dict_iterator(num_epochs=1, output_numpy=True))
+    assert "Feature name: not_exist is required in schema but could not be found in tfrecord file." in str(info.value)
 
 
 def test_tfrecord_exception():
@@ -1311,13 +1347,13 @@ if __name__ == '__main__':
     test_tfrecord_no_schema()
     test_tfrecord_read_files()
     test_tfrecord_multi_files()
-    test_tfrecord_with_full_schema(True)
-    test_tfrecord_with_unknown_shape_schema(True)
+    test_tfrecord_with_full_schema(True, "string")
+    test_tfrecord_with_unknown_shape_schema(True, "string")
     test_tfrecord_with_wrong_shape_schema(True)
     test_tfrecord_with_wrong_type_schema(True)
     test_tfrecord_with_column_list(True)
     test_tfrecord_without_schema_and_column_list(True)
-    test_tfrecord_with_both_schema_and_column_list(True)
+    test_tfrecord_with_both_schema_and_column_list(True, "string")
     test_tfrecord_result_equal_with_schema_and_column_list(True)
     test_tfrecord_shuffle()
     test_tfrecord_shard()
@@ -1340,5 +1376,6 @@ if __name__ == '__main__':
     test_tfrecord_compression_invalid_inputs()
     test_tfrecord_invalid_files()
     test_tf_wrong_schema()
-    test_tfrecord_invalid_columns()
+    test_tfrecord_invalid_columns(True)
+    test_tfrecord_with_invalid_column_in_schema(True)
     test_tfrecord_exception()
