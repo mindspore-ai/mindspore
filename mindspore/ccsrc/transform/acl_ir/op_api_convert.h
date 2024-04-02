@@ -198,7 +198,7 @@ class OpApiTensorConverter : public AttrHelper<OpApiTensorConverter> {
   inline aclDataType GetDataType(const ValuePtr &value) { return AclConverter::ConvertType(value->type()->type_id()); }
 };
 
-inline aclTensor *ConvertType(mindspore::kernel::KernelTensor *tensor) {
+inline aclTensor *ConvertType(const mindspore::kernel::KernelTensor *tensor) {
   static const auto aclCreateTensor = GET_OP_API_FUNC(aclCreateTensor);
   if (aclCreateTensor == nullptr) {
     return nullptr;
@@ -248,6 +248,10 @@ inline aclTensor *ConvertType(mindspore::kernel::KernelTensor *tensor) {
   }
 
   return acl_tensor;
+}
+
+inline aclTensor *ConvertType(mindspore::kernel::KernelTensor *tensor) {
+  return ConvertType(reinterpret_cast<const mindspore::kernel::KernelTensor *>(tensor));
 }
 
 inline aclTensor *ConvertType(std::pair<mindspore::kernel::KernelTensor *, bool> tensor_and_trans) {

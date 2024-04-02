@@ -31,6 +31,7 @@ void GatherDGradAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inpu
                                          const std::vector<KernelTensor *> &outputs) {
   auto dim = transform::ConvertKernelTensor<int64_t>(inputs[kIndex1]);
   GetWorkspaceForResize(inputs[kIndex0], dim, inputs[kIndex2], inputs[kIndex3], outputs[kIndex0]);
+  SetWorkspaceForInplaceZero(outputs[kIndex0]);
 }
 
 bool GatherDGradAscend::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
@@ -38,10 +39,13 @@ bool GatherDGradAscend::Launch(const std::vector<KernelTensor *> &inputs, const 
   MS_EXCEPTION_IF_NULL(stream_ptr);
   auto dim = transform::ConvertKernelTensor<int64_t>(inputs[kIndex1]);
 
-  const std::string inplace_zero_str("aclnnInplaceZero");
-  auto [ws_size, executor_handle, release_function] = GEN_EXECUTOR(inplace_zero_str, outputs[kIndex0]);
-  MS_EXCEPTION_IF_CHECK_FAIL(ws_size == 0, "the workspace of aclnnInplaceZero is not zero!");
-  RUN_OP_API_ASYNC(inplace_zero_str, nullptr, 0, executor_handle, stream_ptr, release_function);
+  void *ws_addr = zero_ws_size_ != 0 ? workspace.back()->device_ptr() : nullptr;
+  transform::aclOpExecutor *executor;
+  std::function<void()> release_func;
+  std::tie(std::ignore, executor, release_func, std::ignore, std::ignore) =
+    GEN_EXECUTOR_BOOST(inplace_zero_str_, zero_hash_id_, outputs[kIndex0]);
+  RUN_OP_API_ASYNC(inplace_zero_str_, ws_addr, zero_ws_size_, executor, stream_ptr, release_func);
+
   ParseGenExecutor(
     GEN_EXECUTOR_BOOST(op_type_, hash_id_, outputs[kIndex0], dim, inputs[kIndex2], inputs[kIndex3], outputs[kIndex0]));
   RunOp(stream_ptr, workspace);
