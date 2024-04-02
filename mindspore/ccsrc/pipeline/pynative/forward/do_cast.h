@@ -21,6 +21,7 @@
 #include <string>
 #include <memory>
 #include <utility>
+#include <map>
 #include "pipeline/pynative/forward/cast_base.h"
 
 namespace mindspore {
@@ -44,7 +45,7 @@ class CastOperation : public CastBaseOperation {
   ValuePtr DoAutoCast(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &v,
                       const std::pair<TypeId, bool> &dst_type, const std::string &op_name, size_t index) const;
   void DoSignatureCast(const FrontendOpRunInfoPtr &op_run_info,
-                       const mindspore::HashMap<SignatureEnumDType, std::pair<TypeId, bool>> &dst_type,
+                       const std::map<SignatureEnumDType, std::pair<TypeId, bool>> &dst_type,
                        const std::vector<SignatureEnumDType> &dtypes) const;
   void SetImplicitCast(const FrontendOpRunInfoPtr &op_run_info);
 };

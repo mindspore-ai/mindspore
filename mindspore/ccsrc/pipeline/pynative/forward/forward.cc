@@ -64,8 +64,8 @@ ValuePtr ShallowCopyValue(const FrontendOpRunInfoPtr &op_run_info, const ValuePt
   MS_EXCEPTION_IF_NULL(new_shape);
   if (value->isa<mindspore::tensor::BaseTensor>()) {
     auto tensor_value = value->cast<mindspore::tensor::BaseTensorPtr>();
-    return std::make_shared<mindspore::tensor::Tensor>(tensor_value->data_type(), new_shape->shape(),
-                                                       tensor_value->data_c(), tensor_value->Size());
+    return std::make_shared<mindspore::tensor::BaseTensor>(tensor_value->data_type(), new_shape->shape(),
+                                                           tensor_value->data_c(), tensor_value->Size());
   } else if (value->isa<ValueTuple>()) {
     std::vector<ValuePtr> values;
     auto value_tuple = value->cast<ValueTuplePtr>();
@@ -82,7 +82,7 @@ ValuePtr CopyTensorValueWithNewId(const ValuePtr &v) {
   if (v->isa<tensor::BaseTensor>()) {
     auto tensor = v->cast<tensor::BaseTensorPtr>();
     // This constructor will make a tensor with the new id
-    auto new_tensor = std::make_shared<tensor::Tensor>(tensor->data_type(), tensor->shape(), tensor->data_ptr());
+    auto new_tensor = std::make_shared<tensor::BaseTensor>(tensor->data_type(), tensor->shape(), tensor->data_ptr());
     new_tensor->set_need_pipeline_sync(true);
     new_tensor->set_device_address(tensor->device_address());
     new_tensor->set_sync_status(tensor->sync_status());

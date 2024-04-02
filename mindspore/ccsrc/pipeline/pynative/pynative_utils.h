@@ -101,7 +101,7 @@ struct Common {
       }
       if (items[i]->template isa<tensor::BaseTensor>() && is_print_tensor_data) {
         auto tensor = items[i]->template cast<tensor::BaseTensorPtr>();
-        auto grad = std::make_shared<tensor::Tensor>(*tensor);
+        auto grad = std::make_shared<tensor::BaseTensor>(*tensor);
         grad->data_sync();
         buf << i << "th: "
             << "ptr " << items[i].get() << ", " << grad->ToStringRepr() << ", ";

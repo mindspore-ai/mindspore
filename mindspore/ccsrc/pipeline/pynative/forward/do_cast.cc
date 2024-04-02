@@ -94,7 +94,7 @@ ValuePtr CastOperation::DoAutoCast(const FrontendOpRunInfoPtr &op_run_info, cons
   if (op_run_info->source_type[index] != ops::OP_DTYPE::DT_BEGIN && v->isa<tensor::BaseTensor>()) {
     MS_LOG(DEBUG) << "Source value: " << v->ToString();
     dst_value = TensorToDstDtypeValue(v, dst_type.first);
-    MS_LOG(DEBUG) << "Cast to value: " << dst_value->ToString() << "without dispatching cast op";
+    MS_LOG(DEBUG) << "Cast to value: " << dst_value->ToString() << " without dispatching cast op";
     return dst_value;
   }
   // When step 1 does not work, creating a cast op to get destination data type value.
@@ -179,7 +179,7 @@ ValuePtr CastOperation::DoParamMixPrecisionCastTuple(const FrontendOpRunInfoPtr 
 }
 
 void CastOperation::DoSignatureCast(const FrontendOpRunInfoPtr &op_run_info,
-                                    const mindspore::HashMap<SignatureEnumDType, std::pair<TypeId, bool>> &dst_type,
+                                    const std::map<SignatureEnumDType, std::pair<TypeId, bool>> &dst_type,
                                     const std::vector<SignatureEnumDType> &dtypes) const {
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(op_run_info->op_grad_info->op_prim);
@@ -216,7 +216,7 @@ void CastOperation::DoSignatureCast(const FrontendOpRunInfoPtr &op_run_info,
     // Implicit cast
     bool is_same_type = false;
     if (arg_type_id != kTypeUnknown) {
-      is_same_type = (prim::type_map.find(arg_type_id) == prim::type_map.end() || arg_type_id == it->second.first);
+      is_same_type = (arg_type_id == it->second.first);
     }
     if (sig == SignatureEnumRW::kRWWrite && arg_type_id != kTypeUnknown && !is_same_type) {
       prim::RaiseExceptionForConvertRefDtype(op_run_info->op_grad_info->op_prim, TypeIdToMsTypeStr(arg_type_id),
@@ -232,8 +232,9 @@ void CastOperation::DoSignatureCast(const FrontendOpRunInfoPtr &op_run_info,
                               << "th input " << signature[i].name << " can not be implicitly converted. "
                               << "Its type is " << type_str << ". Only support Tensor or Scalar.";
     }
-    MS_LOG(DEBUG) << "Implicit cast for " << op_run_info->base_op_run_info.op_name << " " << i
-                  << "th input, and to type " << TypeIdToType(it->second.first)->ToString();
+    MS_LOG(DEBUG) << "Implicit cast for " << op_run_info->base_op_run_info.op_name << " " << i << "th input, from type "
+                  << (v->type() == nullptr ? v->ToString() : v->type()->ToString()) << " to type "
+                  << TypeIdToType(it->second.first)->ToString();
     input_args[i] = DoAutoCast(op_run_info, v, it->second, op_run_info->base_op_run_info.op_name, i);
   }
 }
@@ -281,6 +282,33 @@ void CastOperation::SetTensorMixPrecisionCast(const FrontendOpRunInfoPtr &op_run
   }
 }
 
+namespace {
+std::pair<std::vector<TypeId>, std::vector<bool>> GetTypeInfo(const FrontendOpRunInfoPtr &op_run_info) {
+  MS_EXCEPTION_IF_NULL(op_run_info);
+  std::vector<TypeId> args_type_id;
+  std::vector<bool> args_has_tensor;
+  args_type_id.resize(op_run_info->input_size);
+  args_has_tensor.resize(op_run_info->input_size, false);
+
+  const auto &input_value = op_run_info->op_grad_info->input_value;
+  for (size_t i = 0; i < op_run_info->input_size; ++i) {
+    if (input_value[i]->isa<tensor::BaseTensor>()) {
+      args_type_id[i] = input_value[i]->cast<tensor::BaseTensorPtr>()->data_type();
+      if (op_run_info->source_type[i] == ops::OP_DTYPE::DT_BEGIN) {
+        args_has_tensor[i] = true;
+      }
+    } else if (input_value[i]->isa<Scalar>()) {
+      const auto type = input_value[i]->cast<ScalarPtr>()->type();
+      MS_EXCEPTION_IF_NULL(type);
+      args_type_id[i] = type->type_id();
+    } else {
+      args_type_id[i] = kTypeUnknown;
+    }
+  }
+  return {args_type_id, args_has_tensor};
+}
+}  // namespace
+
 void CastOperation::SetImplicitCast(const FrontendOpRunInfoPtr &op_run_info) {
   MS_EXCEPTION_IF_NULL(op_run_info);
   const auto &prim = op_run_info->op_grad_info->op_prim;
@@ -290,7 +318,7 @@ void CastOperation::SetImplicitCast(const FrontendOpRunInfoPtr &op_run_info) {
     std::vector<SignatureEnumDType> dtypes;
     bool has_dtype_sig = GetSignatureType(op_run_info->signatures, &dtypes);
     if (!has_dtype_sig) {
-      PrimSignature sig_value{has_dtype_sig, {}, {}};
+      PrimSignature sig_value{has_dtype_sig, {}};
       implicit_cast_map_[prim->name()] = sig_value;
       return;
     }
@@ -307,12 +335,11 @@ void CastOperation::SetImplicitCast(const FrontendOpRunInfoPtr &op_run_info) {
                                << op_run_info->none_init_inputs_num << " does not match the requires "
                                << "signature size " << sig_size;
     }
-    mindspore::HashMap<SignatureEnumDType, std::vector<size_t>> type_indexes;
-    mindspore::HashMap<SignatureEnumDType, std::pair<TypeId, bool>> dst_type;
-    GetTypeIndex(dtypes, &type_indexes);
-    GetDstType(op_run_info, type_indexes, &dst_type);
+
+    auto [args_type_id, args_has_tensor] = GetTypeInfo(op_run_info);
+    auto dst_type = GetSignatureTypeMap(dtypes, args_type_id, args_has_tensor);
     DoSignatureCast(op_run_info, dst_type, dtypes);
-    PrimSignature sig_value{has_dtype_sig, dtypes, type_indexes};
+    PrimSignature sig_value{has_dtype_sig, dtypes};
     implicit_cast_map_[prim->name()] = sig_value;
   } else {
     if (!it->second.has_dtype_sig) {
@@ -320,8 +347,8 @@ void CastOperation::SetImplicitCast(const FrontendOpRunInfoPtr &op_run_info) {
       return;
     }
     MS_LOG(DEBUG) << "Do signature for " << op_run_info->base_op_run_info.op_name << " with cache";
-    mindspore::HashMap<SignatureEnumDType, std::pair<TypeId, bool>> dst_type;
-    GetDstType(op_run_info, it->second.type_indexes, &dst_type);
+    auto [args_type_id, args_has_tensor] = GetTypeInfo(op_run_info);
+    auto dst_type = GetSignatureTypeMap(it->second.dtypes, args_type_id, args_has_tensor);
     DoSignatureCast(op_run_info, dst_type, it->second.dtypes);
   }
 }
