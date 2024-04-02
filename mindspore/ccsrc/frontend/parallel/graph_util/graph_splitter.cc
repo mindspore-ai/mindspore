@@ -537,7 +537,7 @@ std::map<AnfNodePtr, AnfNodePtrSet> FilterDependencyToTargetNode(const FuncGraph
         (void)depend_matrix[node].insert(depend_matrix[input].begin(), depend_matrix[input].end());
       }
       // If input itself is in target nodes set, insert it as well.
-      if (target_nodes.count(input) != 0) {
+      if (target_nodes.contains(input)) {
         (void)depend_matrix[node].insert(input);
       }
     }
@@ -551,14 +551,14 @@ AnfNodePtrSet UpdateDependedSet(const AnfNodePtr &new_node, const AnfNodePtrSet 
   bool is_independent = true;
   for (const auto &stored_node : old_depended_set) {
     // If 'new_node' is already depended on by 'stored_node', no need to add 'new_node'.
-    if (node_dependency.count(stored_node) != 0 && node_dependency.at(stored_node).count(new_node) != 0) {
+    if (node_dependency.count(stored_node) != 0 && node_dependency.at(stored_node).contains(new_node)) {
       MS_LOG(DEBUG) << "Old node " << stored_node->fullname_with_scope() << " depends on "
                     << new_node->fullname_with_scope() << ". Do not update.";
       is_independent = false;
       break;
     }
     // If 'new_node' depends on 'stored_node', replace 'stored_node' with 'new_node' to keep minimal dependency.
-    if (node_dependency.count(new_node) != 0 && node_dependency.at(new_node).count(stored_node) != 0) {
+    if (node_dependency.count(new_node) != 0 && node_dependency.at(new_node).contains(stored_node)) {
       MS_LOG(DEBUG) << "Replace old node " << stored_node->fullname_with_scope() << " with new node "
                     << new_node->fullname_with_scope();
       (void)updated.erase(stored_node);
@@ -2147,7 +2147,7 @@ void GraphSplitter::AddSendRecvDependency(const InterProcessOpEdgesInfo &in_degr
     AnfNodePtrSet depended_nodes;
     for (const auto &send_src_node : send_src_nodes) {
       // Get minimum send src nodes set which have dependencies with RpcRecv node.
-      if (node_dependency.count(recv_dst_node) != 0 && node_dependency.at(recv_dst_node).count(send_src_node) != 0) {
+      if (node_dependency.count(recv_dst_node) != 0 && node_dependency.at(recv_dst_node).contains(send_src_node)) {
         depended_nodes = UpdateDependedSet(send_src_node, depended_nodes, node_dependency);
       }
     }
