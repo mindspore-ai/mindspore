@@ -19,6 +19,9 @@ namespace mindspore {
 namespace opt {
 bool MultiMatmulsFusion::Run(const FuncGraphPtr &graph) {
   bool changed = false;
+  if (common::GetEnv("ENABLE_MATMUL_FUSION") != "on") {
+    return changed;
+  }
   auto mng = graph->manager();
   MS_EXCEPTION_IF_NULL(mng);
   const auto &node_users_map = mng->node_users();
