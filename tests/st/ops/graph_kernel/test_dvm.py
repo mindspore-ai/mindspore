@@ -82,7 +82,7 @@ def fuse(shape1, shape2, dtype):
     assert np.allclose(expect[2].asnumpy(), output[2].asnumpy(), 0, 0)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("shape1, shape2", [((32, 1024), (32, 1024)), ((44, 1, 47, 1), (1, 34, 1, 91))])
