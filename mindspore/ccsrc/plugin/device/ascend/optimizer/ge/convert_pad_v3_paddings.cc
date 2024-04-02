@@ -37,6 +37,9 @@ bool ConvertBasePaddings::HasDynPaddings(const CNodePtr &cnode) const {
   MS_EXCEPTION_IF_NULL(paddings_abstract);
   auto paddings_value = paddings_abstract->GetValue();
   MS_EXCEPTION_IF_NULL(paddings_value);
+  if (paddings_value->isa<ValueAny>() || paddings_value->isa<None>()) {
+    return true;
+  }
   auto input_paddings_type_id = common::AnfAlgo::GetPrevNodeOutputInferDataType(cnode, kIndex1);
   if (input_paddings_type_id == kNumberTypeInt32) {
     auto paddings_array_value = ops::GetArrayValue<int32_t>(paddings_value);
