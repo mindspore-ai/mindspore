@@ -16,10 +16,10 @@ batch_mat_mul:
     
         Inputs:
             - **x** (Tensor) - The first tensor to be multiplied. The shape of the tensor is :math:`(*B, N, C)`,
-                  where :math:`*B` represents the batch size which can be multidimensional, :math:`N` and :math:`C` are the
-                  size of the last two dimensions. If `transpose_a` is ``True`` , its shape must be :math:`(*B, C, N)`.
+              where :math:`*B` represents the batch size which can be multidimensional, :math:`N` and :math:`C` are the
+              size of the last two dimensions. If `transpose_a` is ``True`` , its shape must be :math:`(*B, C, N)`.
             - **y** (Tensor) - The second tensor to be multiplied. The shape of the tensor is :math:`(*B, C, M)`. If
-                  `transpose_b` is ``True`` , its shape must be :math:`(*B, M, C)`.
+              `transpose_b` is ``True`` , its shape must be :math:`(*B, M, C)`.
     
         Outputs:
             Tensor, the shape of the output tensor is :math:`(*B, N, M)`.

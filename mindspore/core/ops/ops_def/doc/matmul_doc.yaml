@@ -19,9 +19,9 @@ matmul:
     
     Inputs:
         - **a** (Tensor) - The first tensor to be multiplied. The shape of the tensor is :math:`(N, C)`. If
-              `transpose_a` is ``True`` , its shape must be :math:`(C, N)` after transpose.
+          `transpose_a` is ``True`` , its shape must be :math:`(C, N)` after transpose.
         - **b** (Tensor) - The second tensor to be multiplied. The shape of the tensor is :math:`(C, M)`. If
-              `transpose_b` is ``True`` , its shape must be :math:`(M, C)` after transpose.
+          `transpose_b` is ``True`` , its shape must be :math:`(M, C)` after transpose.
     
     Outputs:
         Tensor, the shape of the output tensor is :math:`(N, M)`.
