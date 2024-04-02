@@ -245,15 +245,31 @@ AnfNodePtr ConvertObjectToNode(const AnfNodePtr &origin_node, const py::object &
                                bool is_element_obj) {
   // When the cell is set recomputed, it should not use old scope from cache.
   MS_EXCEPTION_IF_NULL(origin_node);
+  auto origin_cnode = dyn_cast<CNode>(origin_node);
+  MS_EXCEPTION_IF_NULL(origin_cnode);
+  bool is_resolve = IsPrimitiveCNode(origin_node, prim::kPrimResolve);
   auto scope = origin_node->scope();
   bool has_recompute_scope =
     (scope != nullptr && scope->name().compare(0, strlen(kAttrRecompute), kAttrRecompute) == 0);
   ValuePtr convert_result = nullptr;
-  bool converted =
-    ConvertData(obj, &convert_result, python_adapter::UseSignatureInResolve(), nullptr, has_recompute_scope);
-  if (!converted) {
-    MS_LOG(ERROR) << "Convert data failed";
-    return nullptr;
+  constexpr auto resolve_with_args_inputs_size = 4;
+  if (is_resolve && origin_cnode->size() == resolve_with_args_inputs_size) {  // (resolve, namespace, symbol, arguments)
+    constexpr auto args_input_pos = 3;
+    auto args_node = origin_cnode->input(args_input_pos);
+    auto args_value = GetValueNode<ValueTuplePtr>(args_node);
+    MS_EXCEPTION_IF_NULL(args_value);
+    parse::DataConverter data_converter(args_value->value(), python_adapter::UseSignatureInResolve());
+    convert_result = data_converter.ConvertData(obj);
+    if (convert_result == nullptr) {
+      MS_LOG(INTERNAL_EXCEPTION) << "Convert error with Python object: " << std::string(py::str(obj));
+    }
+  } else {  // (resolve/getattr, namespace, symbol, optional[getattr])
+    bool converted =
+      ConvertData(obj, &convert_result, python_adapter::UseSignatureInResolve(), nullptr, has_recompute_scope);
+    if (!converted) {
+      MS_LOG(ERROR) << "Convert data failed";
+      return nullptr;
+    }
   }
 
   // If obj is an element, do not convert InterpretedObj.

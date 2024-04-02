@@ -415,7 +415,7 @@ void UpdateTopGraphDebugInfo(const FuncGraphPtr &func_graph, const py::object &i
   func_graph->debug_info()->set_name(function_name);
 }
 
-void BuildTopGraph(const FuncGraphPtr &func_graph, const py::object &input) {
+void BuildTopGraph(const FuncGraphPtr &func_graph, const py::object &input, const ValuePtrList &args) {
   // Make Resolve for user top graph 'input'.
   auto function_name = GetFunctionName(input);
   parse::NameSpacePtr name_space =
@@ -424,7 +424,9 @@ void BuildTopGraph(const FuncGraphPtr &func_graph, const py::object &input) {
   MS_LOG(DEBUG) << "name_space: " << name_space->ToString() << ", symbol: " << symbol->ToString();
   ValueNodePtr module_node = NewValueNode(name_space);
   ValueNodePtr symbol_node = NewValueNode(symbol);
-  auto resolve_node = func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimResolve), module_node, symbol_node});
+  ValueNodePtr args_node = NewValueNode<ValuePtrList>(args);
+  auto resolve_node =
+    func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimResolve), module_node, symbol_node, args_node});
   // Call user top graph in top graph.
   AnfNodePtrList inputs = {resolve_node};
   std::copy(func_graph->parameters().cbegin(), func_graph->parameters().cend(), std::back_inserter(inputs));
@@ -461,7 +463,7 @@ bool BootstrapAction(const ResourcePtr &resource) {
   for (size_t i = 0; i < resource->arguments().size(); ++i) {
     top_graph->add_parameter()->set_is_top_graph_param(true);
   }
-  BuildTopGraph(top_graph, input);
+  BuildTopGraph(top_graph, input, resource->arguments());
   // Set the top graph.
   parse::Parser::UpdateTopFuncGraph(top_graph);
   resource->set_func_graph(top_graph);
@@ -487,13 +489,10 @@ bool ParseAction(const ResourcePtr &resource) {
   python_adapter::set_python_env_flag(true);
   python_adapter::SetPythonPath(dir);
 
-  ValuePtrList args_value_list;
-  (void)std::transform(resource->args_abs().begin(), resource->args_abs().end(), std::back_inserter(args_value_list),
-                       [](const AbstractBasePtr &abs) { return abs->BuildValue(); });
-  parse::DataConverter data_converter(args_value_list, true);
+  parse::DataConverter data_converter(resource->arguments(), true);
   auto converted_ret = data_converter.ConvertData(input);
   if (converted_ret == nullptr) {
-    MS_LOG(INTERNAL_EXCEPTION) << "Attribute convert error with type:" << std::string(py::str(input));
+    MS_LOG(INTERNAL_EXCEPTION) << "Attribute convert error with type: " << std::string(py::str(input));
   }
 
   auto top_graph = converted_ret->cast<FuncGraphPtr>();
