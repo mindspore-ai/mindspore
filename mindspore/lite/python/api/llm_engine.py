@@ -15,6 +15,8 @@
 """
 LLMEngin interface
 """
+__all__ = ['LLMReq', 'LLMEngineStatus', 'LLMRole', 'LLMEngine', 'LLMStatusCode', 'LLMException']
+
 import os
 import sys
 import threading
@@ -25,7 +27,6 @@ from mindspore_lite.tensor import Tensor
 from mindspore_lite.lib._c_lite_wrapper import LLMEngine_, LLMReq_, LLMRole_, StatusCode, LLMClusterInfo_
 from mindspore_lite.model import set_env
 
-__all__ = ['LLMReq', 'LLMEngineStatus', 'LLMRole', 'LLMEngine', 'LLMStatusCode', 'LLMException']
 
 
 class LLMReq:
