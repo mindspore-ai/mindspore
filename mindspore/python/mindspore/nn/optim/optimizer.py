@@ -96,7 +96,7 @@ class Optimizer(Cell):
 
             - LearningRateSchedule: Learning rate is dynamic. During training, the optimizer calls the instance of
               `LearningRateSchedule
-              <https://www.mindspore.cn/docs/en/r2.3/api_python/mindspore.nn.html#learningrateschedule-class>`_
+              <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.nn.html#learningrateschedule-class>`_
               with step as the input to get the learning rate
               of current step.
 
@@ -774,7 +774,7 @@ class Optimizer(Cell):
         Examples:
             >>> from mindspore import nn
             >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+            >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> conv_params = list(filter(lambda x: 'conv' in x.name, net.trainable_params()))
             >>> no_conv_params = list(filter(lambda x: 'conv' not in x.name, net.trainable_params()))

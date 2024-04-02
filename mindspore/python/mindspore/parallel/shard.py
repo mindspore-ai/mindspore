@@ -328,7 +328,7 @@ def shard(fn, in_strategy, out_strategy=None, parameter_plan=None, device="Ascen
 
     Tutorial Examples:
         - `Functional Operator Sharding
-          <https://www.mindspore.cn/tutorials/experts/en/master/parallel/pynative_shard_function_parallel.html>`_
+          <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/pynative_shard_function_parallel.html>`_
     """
     if not isinstance(fn, (ms.nn.Cell)):
         logger.warning("'fn' is not a mindspore.nn.Cell, and its definition cannot involve Parameter; "

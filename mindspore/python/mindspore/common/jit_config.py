@@ -40,7 +40,7 @@ class JitConfig:
             The value must be ``"STRICT"`` , ``"LAX"`` or ``""`` . Default to an empty string, which means that this
             JitConfig configuration will be ignored and the jit_syntax_level of ms.context will be used.
             For more details about ms.context, refer to
-            `set_context <https://www.mindspore.cn/docs/en/master/api_python/mindspore/mindspore.set_context.html>`_ .
+            `set_context <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore/mindspore.set_context.html>`_ .
             Default: ``""`` .
 
             - ``"STRICT"``: Only basic syntax is supported, and execution performance is optimal. Can be used for MindIR
@@ -64,7 +64,7 @@ class JitConfig:
         >>> jitconfig = JitConfig(jit_level="O1")
         >>>
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>>
         >>> net.set_jit_config(jitconfig)

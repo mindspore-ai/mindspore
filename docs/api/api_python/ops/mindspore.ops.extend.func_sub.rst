@@ -18,12 +18,12 @@ mindspore.ops.extend.sub
     参数：
         - **input** (Union[Tensor, number.Number, bool]) - 第一个输入是一个 number.Number、
           一个 bool 或一个数据类型为
-          `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ 或
-          `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ 的Tensor。
+          `number <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.html#mindspore.dtype>`_ 或
+          `bool_ <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.html#mindspore.dtype>`_ 的Tensor。
         - **other** (Union[Tensor, number.Number, bool]) - 第二个输入，是一个 number.Number、
           一个 bool 或一个数据类型为
-          `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ 或
-          `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ 的Tensor。
+          `number <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.html#mindspore.dtype>`_ 或
+          `bool_ <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.html#mindspore.dtype>`_ 的Tensor。
         - **alpha** (number.Number) - 应用于 `other` 的缩放因子，默认值为1。
 
     返回：
