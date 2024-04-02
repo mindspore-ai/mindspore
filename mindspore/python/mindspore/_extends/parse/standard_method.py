@@ -20,12 +20,12 @@ from __future__ import absolute_import
 from mindspore import Tensor, CSRTensor, COOTensor
 from mindspore import dtype as mstype
 from mindspore._c_expression import Tensor as Tensor_
+from mindspore.common import mutable
 import mindspore.common._monad as monad
 from mindspore.common.sparse_tensor import RowTensorInner
 from mindspore.ops.composite.base import _append, _insert, _pop, _list_clear, _reverse, \
     _extend, _dict_setitem, _dict_clear, _haskey, _update, _fromkeys
 from mindspore.ops.operations._sequence_ops import TensorToTuple
-from mindspore.ops_generate.gen_ops_inner_prim import ListToTuple, TupleToList
 
 from ... import _checkparam as validator
 from ..._checkparam import check_is_number, check_reshape_shp, check_axis_in_range, \
@@ -2421,46 +2421,35 @@ def float_func(*data):
     return cast_to_float(data)
 
 
-def list_func(*data):
+def list_func(data):
     """Implementation of `list`."""
-    data_len = len(data)
-    if data_len >= 2:
-        const_utils.raise_type_error("list() requires 0 or 1 arguments.")
-    if data_len == 0:
-        return F.make_list()
-    data = data[0]
-    if isinstance(data, list):
-        return data
-    if isinstance(data, tuple):
-        return TupleToList()(data)
     if isinstance(data, (CSRTensor, COOTensor, RowTensorInner)):
-        const_utils.raise_type_error(
+        raise TypeError(
             "list() does not support single sparse tensor input.")
     if isinstance(data, dict):
         data = data.keys()
-    ret = F.make_list()
+    if isinstance(data, (tuple, list)) and F.is_sequence_shape_unknown(data):
+        ret = mutable([], True)
+        if F.is_dynamic_sequence_element_unknown(data):
+            return ret
+    else:
+        ret = F.make_list()
     for i in data:
         ret = ret + F.make_list(i)
     return ret
 
-
-def tuple_func(*data):
+def tuple_func(data):
     """Implementation of `tuple`."""
-    data_len = len(data)
-    if data_len >= 2:
-        raise TypeError("tuple() requires 0 or 1 arguments.")
-    if data_len == 0:
-        return F.make_tuple()
-    data = data[0]
-    if isinstance(data, tuple):
-        return data
-    if isinstance(data, list):
-        return ListToTuple()(data)
     if isinstance(data, (CSRTensor, COOTensor, RowTensorInner)):
         raise TypeError("tuple() does not support single sparse tensor input.")
     if isinstance(data, dict):
         data = data.keys()
-    ret = F.make_tuple()
+    if isinstance(data, (tuple, list)) and F.is_sequence_shape_unknown(data):
+        ret = mutable((), True)
+        if F.is_dynamic_sequence_element_unknown(data):
+            return ret
+    else:
+        ret = F.make_tuple()
     for i in data:
         ret = ret + F.make_tuple(i)
     return ret

@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2023 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -170,6 +170,13 @@ void RegCompositeOpsGroup(const py::module *m) {
 
   // Reg Next
   (void)py::class_<Next, MetaFuncGraph, std::shared_ptr<Next>>(*m, "Next_").def(py::init<std::string &>());
+
+  // Reg TupleFunc
+  (void)py::class_<TupleFunc, MetaFuncGraph, std::shared_ptr<TupleFunc>>(*m, "TupleFunc_")
+    .def(py::init<std::string &>());
+
+  // Reg ListFunc
+  (void)py::class_<ListFunc, MetaFuncGraph, std::shared_ptr<ListFunc>>(*m, "ListFunc_").def(py::init<std::string &>());
 
   // Reg VmapGeneralPreprocess
   (void)py::class_<VmapGeneralPreprocess, MetaFuncGraph, std::shared_ptr<VmapGeneralPreprocess>>(
