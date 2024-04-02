@@ -274,8 +274,8 @@ std::string Tracebackes::DumpSummary() const {
 int Tracebackes::FindMaxNameLength(const std::list<Tracebacke> &tbs) const {
   int max_length = 15;
   for (const auto &tb : tbs) {
-    int len1 = static_cast<int>(tb.func_name_.length());
-    int len2 = static_cast<int>(tb.changed_func_.length());
+    int len1 = SizeToInt(tb.func_name_.length());
+    int len2 = SizeToInt(tb.changed_func_.length());
     max_length = std::max(max_length, std::max(len1, len2)) + 2;
   }
   max_length = std::min(max_length, 35);
@@ -601,7 +601,7 @@ static void CollectTraceBack(JitCompileResults *c, PyCodeObject *code, bool is_g
   }
   std::string name = Utils::GetPyName(c->origin_frame_->f_code->co_name);
   std::string changed_name = Utils::GetPyName(code->co_name);
-  int code_size = static_cast<int>((PyBytes_GET_SIZE(code->co_code)) / sizeof(_Py_CODEUNIT));
+  int code_size = SizeToInt((PyBytes_GET_SIZE(code->co_code)) / sizeof(_Py_CODEUNIT));
   c->tbs->PushTbs({name, changed_name, code_size, is_graph_mode});
 }
 
@@ -692,7 +692,7 @@ void AddGuardForParam(const PyFrameObject *f, OptGuardPtr guard, bool detach) {
 void AddGuardForGlobals(const PyFrameObject *f, OptGuardPtr guard, bool detach) {
   PyCodeObject *co = f->f_code;
   const _Py_CODEUNIT *bytecodes = reinterpret_cast<_Py_CODEUNIT *>(PyBytes_AsString(co->co_code));
-  int size = (PyBytes_GET_SIZE(co->co_code)) / static_cast<int>(sizeof(_Py_CODEUNIT));
+  int size = (PyBytes_GET_SIZE(co->co_code)) / SizeToInt(sizeof(_Py_CODEUNIT));
   unsigned int exarg = 0;
   for (int bci = 0; bci < size; ++bci) {
     int opcode = _Py_OPCODE(bytecodes[bci]);

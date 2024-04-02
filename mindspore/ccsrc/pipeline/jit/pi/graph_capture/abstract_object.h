@@ -22,6 +22,7 @@
 #include <vector>
 #include "pybind11/pybind11.h"
 #include "pipeline/jit/pi/utils/mempool.h"
+#include "utils/convert_utils_base.h"
 
 namespace py = pybind11;
 namespace mindspore {

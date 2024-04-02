@@ -529,8 +529,8 @@ void MindGraphAnalyzer::CollectInputs() {
   const FrameStates &enter_frame = graph_->GetFrame(0);
   PyCodeObject *co = graph_->GetCodeObj();
   int argc = co->co_argcount + co->co_kwonlyargcount;
-  argc += static_cast<int>(co->co_flags & CO_VARARGS) ? 1 : 0;
-  argc += static_cast<int>(co->co_flags & CO_VARKEYWORDS) ? 1 : 0;
+  argc += SizeToInt(co->co_flags & CO_VARARGS) ? 1 : 0;
+  argc += SizeToInt(co->co_flags & CO_VARKEYWORDS) ? 1 : 0;
   for (Py_ssize_t m = 0; m < argc; ++m) {
     auto local = enter_frame.Local(m);
     if (local != &ValueNode::kUnboundLocal) {

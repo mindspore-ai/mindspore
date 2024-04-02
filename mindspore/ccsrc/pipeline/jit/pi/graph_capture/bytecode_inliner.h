@@ -21,6 +21,7 @@
 #include <memory>
 #include "pipeline/jit/pi/graph_capture/cfg.h"
 #include "pipeline/jit/pi/graph_capture/code_generator.h"
+#include "utils/convert_utils_base.h"
 
 namespace mindspore {
 namespace pijit {

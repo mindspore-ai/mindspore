@@ -468,7 +468,7 @@ bool GraphBuilder::DoReturn(const Instr &instr) {
   }
   const auto &inputs = graph_->GetGeneratorResult()->getInputs();
   std::for_each(inputs.begin(), inputs.end(), [this](ValueNode *i) { this->push(i); });
-  DoBuildOp({BUILD_TUPLE, static_cast<int>(inputs.size())});
+  DoBuildOp({BUILD_TUPLE, SizeToInt(inputs.size())});
   ValueNode *new_node = pop();
   graph_->SetGeneratorResult(new_node);
   graph_->SetRetVal(new_node);
@@ -871,14 +871,14 @@ bool GraphBuilder::DoSetItem(ValueNode *map, ValueNode *key, ValueNode *val) {
     inputs[index] = val;
 
     std::for_each(inputs.begin(), inputs.end(), [this](ValueNode *i) { this->push(i); });
-    DoBuildOp({BUILD_LIST, static_cast<int>(inputs.size())});
+    DoBuildOp({BUILD_LIST, SizeToInt(inputs.size())});
   } else if (map->GetOpcode() == BUILD_MAP) {
     std::vector<ValueNode *> inputs = map->getInputs();
     inputs.push_back(key);
     inputs.push_back(val);
 
     std::for_each(inputs.begin(), inputs.end(), [this](ValueNode *i) { this->push(i); });
-    DoBuildOp({BUILD_MAP, static_cast<int>(inputs.size() / 2)});
+    DoBuildOp({BUILD_MAP, SizeToInt(inputs.size() / 2)});
   } else {
     return false;
   }
@@ -1015,7 +1015,7 @@ bool GraphBuilder::DoListToTuple(const Instr &instr) {
   ValueNode *list = pop();
   if (list->GetOpcode() == BUILD_LIST) {
     std::for_each(list->getInputs().begin(), list->getInputs().end(), [this](ValueNode *i) { this->push(i); });
-    return DoBuildOp({BUILD_TUPLE, static_cast<int>(list->getInputs().size())});
+    return DoBuildOp({BUILD_TUPLE, SizeToInt(list->getInputs().size())});
   }
   AObject *vo = list->GetVobj();
   if (vo && vo->GetType() == AObject::kTypeList) {
@@ -1479,7 +1479,7 @@ void GraphBuilder::CollectInlineInfo(CallNode *node, int depth) {
   int code_size = 0;
   if (sub_graph != nullptr && sub_graph->GetCodeObj() != nullptr) {
     inline_name = py::str(reinterpret_cast<PyObject *>(sub_graph->GetCodeObj())).cast<std::string>();
-    code_size = static_cast<int>((PyBytes_GET_SIZE(sub_graph->GetCodeObj()->co_code)) / sizeof(_Py_CODEUNIT));
+    code_size = SizeToInt((PyBytes_GET_SIZE(sub_graph->GetCodeObj()->co_code)) / sizeof(_Py_CODEUNIT));
   }
   std::string func_name = graph_->GetCodeName();
   std::string root_name = root_->GetGraph()->GetCodeName();
@@ -2335,7 +2335,7 @@ bool GraphBuilder::PackKwParams(const py::object &func, std::vector<ValueNode *>
   const int k_cnt = PyTuple_GET_SIZE(keys_info->GetPyObject().ptr());
   // kwnames must be string
   MS_ASSERT(static_cast<AbstractTuple *>(keys_info)->GetElementType() == AObject::kTypeString);
-  MS_EXCEPTION_IF_CHECK_FAIL(static_cast<int>(params->size()) > k_cnt, "check param");
+  MS_EXCEPTION_IF_CHECK_FAIL(SizeToInt(params->size()) > k_cnt, "check param");
 
   int kw_2_p_cnt = 0;
 
