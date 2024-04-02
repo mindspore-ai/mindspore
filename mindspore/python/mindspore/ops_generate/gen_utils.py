@@ -129,9 +129,8 @@ def merge_files_to_one_file(file_paths, merged_file_path):
         with open(file_path, 'r') as file:
             merged_content += file.read()
             merged_content += '\n'
-    one_file = open(merged_file_path, 'w')
-    one_file.write(merged_content)
-    one_file.close()
+    with open(merged_file_path, 'w') as file:
+        file.write(merged_content)
 
 
 def merge_files(origin_dir, merged_file_path, file_format):
