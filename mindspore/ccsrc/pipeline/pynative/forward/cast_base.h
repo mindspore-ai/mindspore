@@ -35,13 +35,6 @@ class CastBaseOperation {
 
  protected:
   PrimitivePtr GetPrimByTypeId(const TypeId &type_id) const;
-  ValuePtr GetDstTypeValue(const TypeId &type_id) const;
-  void GetTypeIndex(const std::vector<SignatureEnumDType> &dtypes,
-                    mindspore::HashMap<SignatureEnumDType, std::vector<size_t>> *type_indexes) const;
-  void GetDstType(const FrontendOpRunInfoPtr &op_run_info,
-                  const mindspore::HashMap<SignatureEnumDType, std::vector<size_t>> &type_indexes,
-                  mindspore::HashMap<SignatureEnumDType, std::pair<TypeId, bool>> *dst_type) const;
-  TypeId JudgeMaxType(TypeId max_type, bool has_scalar_float32, bool has_scalar_int64, bool has_tensor_int8) const;
   const std::string &TypeIdToMsTypeStr(const TypeId &type_id) const;
   bool GetSignatureType(const std::vector<Signature> &signatures, std::vector<SignatureEnumDType> *dtypes) const;
   // Modify tensor data type, when op input source dtype is not tensor without dispatch cast op.
@@ -50,7 +43,6 @@ class CastBaseOperation {
 
   mutable mindspore::HashMap<TypeId, PrimitivePtr> type_prim_cache_;
   mutable ImplicitCastCache implicit_cast_map_;
-  static constexpr int64_t kLowerPriority = 10;
 };
 }  // namespace pynative
 }  // namespace mindspore

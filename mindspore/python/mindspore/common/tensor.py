@@ -1262,7 +1262,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             ...     z = x * y
             ...     z.register_hook(hook_fn)
             ...     z = z * y
-            ...    return z
+            ...     return z
             ...
             >>> ms_grad = ms.grad(hook_test, grad_position=(0,1))
             >>> output = ms_grad(Tensor(1, ms.float32), Tensor(2, ms.float32))
