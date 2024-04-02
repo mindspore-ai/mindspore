@@ -167,8 +167,8 @@ def test_shape_sub():
     assert validator.check_parameter_shape("w3", [8, 128])
 
 
-@pytest.mark.skip(reason="offline this testcase for dynamic paadings temporarily, "
-                         "only support static paadings in Ascend for now")
+@pytest.mark.skip(reason="offline this testcase for dynamic paddings temporarily, "
+                         "only support static paddings in Ascend for now")
 def test_padv3_dynamic():
     """
     Feature: test dynamic shape
@@ -189,8 +189,8 @@ def test_padv3_dynamic():
     assert validator.check_node_inputs_has('PadV3-0', ['Add-0'])
 
 
-@pytest.mark.skip(reason="offline this testcase for dynamic paadings temporarily, "
-                         "only support static paadings in Ascend for now")
+@pytest.mark.skip(reason="offline this testcase for dynamic paddings temporarily, "
+                         "only support static paddings in Ascend for now")
 def test_padv3_paddings_concat_scalar_to_tensor_dynamic():
     """
     Feature: test dynamic shape
@@ -211,8 +211,8 @@ def test_padv3_paddings_concat_scalar_to_tensor_dynamic():
     assert validator.check_node_inputs_has('PadV3-0', ['Add-0'])
 
 
-@pytest.mark.skip(reason="offline this testcase for dynamic paadings temporarily, "
-                         "only support static paadings in Ascend for now")
+@pytest.mark.skip(reason="offline this testcase for dynamic paddings temporarily, "
+                         "only support static paddings in Ascend for now")
 def test_padv3_concat_tensor_shape_dynamic():
     """
     Feature: test dynamic shape
@@ -506,8 +506,8 @@ class ConcatPadV3Net(Cell):
         return out
 
 
-@pytest.mark.skip(reason="offline this testcase for dynamic paadings temporarily, "
-                         "only support static paadings in Ascend for now")
+@pytest.mark.skip(reason="offline this testcase for dynamic paddings temporarily, "
+                         "only support static paddings in Ascend for now")
 def test_concat_is_the_input_of_padv3():
     """
     Feature: test concat is the input of padv3
