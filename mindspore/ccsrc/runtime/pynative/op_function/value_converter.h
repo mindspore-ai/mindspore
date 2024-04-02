@@ -21,6 +21,7 @@
 #include "ir/tensor.h"
 #include "ir/value.h"
 #include "include/backend/visible.h"
+#include "runtime/pynative/op_runner.h"
 
 namespace mindspore::runtime {
 class BACKEND_EXPORT ValueConverter {
@@ -60,6 +61,16 @@ class BACKEND_EXPORT ValueConverter {
   static std::optional<StringImmPtr> ToStringOptional(const ValuePtrList &inputs, size_t i);
   static std::optional<TypePtr> ToDtypeOptional(const ValuePtrList &inputs, size_t i);
   static std::optional<ValueTuplePtr> ToValueTupleOptional(const ValuePtrList &inputs, size_t i);
+
+  static tensor::TensorPtr ContiguousTensorValue(OpRunnerInfo *op_runner_info, const tensor::TensorPtr &tensor);
+  static ValueTuplePtr ContiguousTensorValue(OpRunnerInfo *op_runner_info, const ValueTuplePtr &tuple);
+  template <typename T>
+  static std::optional<T> ContiguousTensorValue(OpRunnerInfo *op_runner_info, const std::optional<T> &val) {
+    if (!val.has_value()) {
+      return val;
+    }
+    return std::make_optional<T>(ContiguousTensorValue(op_runner_info, val.value()));
+  }
 };
 }  // namespace mindspore::runtime
 #endif  // MINDSPORE_MINDSPORE_CCSRC_RUNTIME_PYNATIVE_OP_FUNCTION_VALUE_CONVERTER_H_
