@@ -15,7 +15,9 @@
 """
 functions for cross framework model infer result accuracy compare and summary
 """
+import os
 import os.path
+import stat
 import csv
 
 import numpy as np
@@ -398,7 +400,9 @@ class CrossFrameworkAccSummary:
             contents_to_write.append(tmp_dict)
 
         fieldnames = ['layer_name'] + error_names
-        with open(csv_file, 'w', encoding='utf-8') as f:
+        flags = os.O_WRONLY
+        mode = stat.S_IWUSR | stat.S_IRUSR
+        with os.fdopen(os.open(csv_file, flags, mode), 'w') as f:
             writer = csv.DictWriter(f, fieldnames=fieldnames)
             writer.writeheader()
             writer.writerows(contents_to_write)

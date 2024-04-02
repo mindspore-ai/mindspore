@@ -17,6 +17,7 @@ common functions
 """
 import logging
 import os
+import stat
 from typing import Dict, Tuple
 import importlib
 
@@ -183,7 +184,9 @@ class CommonFunc:
             for val in shape:
                 shape_str = shape_str.join(f'{val} ')
             dim = len(shape)
-            with open(save_path, 'w', encoding='utf-8') as fi:
+            flags = os.O_WRONLY
+            mode = stat.S_IWUSR | stat.S_IRUSR
+            with os.fdopen(os.open(save_path, flags, mode), 'w') as fi:
                 fi.write(f'{key} {dim} {shape_str}\n')
                 np.savetxt(fi, value.flatten(), newline=' ')
 
