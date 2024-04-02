@@ -3845,10 +3845,11 @@ class ResolveEvaluator : public TransitionPrimEvaluator {
   MS_DECLARE_PARENT(ResolveEvaluator, TransitionPrimEvaluator);
   EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_abs_list,
                          const ConfigPtr &in_conf0, const AnfNodeConfigPtr &out_conf) override {
-    constexpr auto resolve_args_size = 2;
+    constexpr auto resolve_args_size = 2;       // (namespace, symbol)
+    constexpr auto resolve_with_args_size = 3;  // (namespace, symbol, arguments)
     // Inputs: namespace, symbol
-    if (args_abs_list.size() != resolve_args_size) {
-      MS_LOG(EXCEPTION) << "Expected args_abs_list size = 2, but has size: " << args_abs_list.size();
+    if (args_abs_list.size() != resolve_args_size && args_abs_list.size() != resolve_with_args_size) {
+      MS_LOG(EXCEPTION) << "Expected args_abs_list size is 2 or 3, but has size: " << args_abs_list.size();
     }
     EvalResultPtr res = nullptr;
     if (bound_node() != nullptr) {
