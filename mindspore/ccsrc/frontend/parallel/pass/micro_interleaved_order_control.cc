@@ -26,6 +26,7 @@
 #include "mindspore/core/ops/framework_ops.h"
 #include "include/common/utils/utils.h"
 #include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/step_parallel_utils.h"
 #include "frontend/parallel/pass/pass_utils.h"
@@ -252,6 +253,9 @@ CNodePtr GetInputBorderNode(const CNodePtr &node) {
       if (IsPrimitiveCNode(queue_end->input(i))) {
         auto queue_end_input_cnode = queue_end->input(i)->cast<CNodePtr>();
         if (queue_end_input_cnode->HasAttr("fine_grained_interleaved_border")) {
+          if (IsPrimitiveCNode(queue_end_input_cnode, prim::kPrimStridedSliceGrad)) {
+            return queue_end_input_cnode;
+          }
           return queue_end;
         }
         anf_queue.push(queue_end->input(i)->cast<CNodePtr>());
