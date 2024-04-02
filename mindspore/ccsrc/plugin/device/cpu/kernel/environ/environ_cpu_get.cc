@@ -60,7 +60,9 @@ int EnvironGetCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
 bool EnvironGetCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &,
                                     const std::vector<KernelTensor *> &outputs) {
   auto input_handle = GetDeviceAddress<int64_t>(inputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(input_handle);
   auto input_key = GetDeviceAddress<int64_t>(inputs, kIndex1);
+  MS_EXCEPTION_IF_NULL(input_key);
   auto input_default_value = GetDeviceAddress<void>(inputs, kIndex2);
   auto output_value = GetDeviceAddress<int64_t>(outputs, kIndex0);
 
