@@ -26,7 +26,7 @@ namespace mindspore {
 namespace opt {
 class GLUFusion : public LitePatternProcessPass {
  public:
-  explicit GLUFusion(const std::string &name = "glu_fusion", bool multigraph = true)
+  explicit GLUFusion(const std::string &name = "GLUFusion", bool multigraph = true)
       : LitePatternProcessPass(name, multigraph) {}
 
   ~GLUFusion() override = default;
