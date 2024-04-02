@@ -26,7 +26,7 @@ class ReshapeFrontendFuncImpl : public OpFrontendFuncImpl {
     if (input_args.size() != 2) {
       return nullptr;
     }
-    if (!IsValueKnown(input_args[1]->BuildValue())) {
+    if (!IsValueKnown(input_args[1]->GetValue())) {
       return nullptr;
     }
     return InferValueCallback::GetInstance().CallPyInferValue("Reshape", input_args);

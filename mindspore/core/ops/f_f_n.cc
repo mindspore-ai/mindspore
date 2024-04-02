@@ -97,11 +97,11 @@ class FFNInfer : public abstract::OpInferBase {
                           const std::vector<AbstractBasePtr> &input_args) const override {
     MS_EXCEPTION_IF_NULL(primitive);
     CheckInputsNum(primitive, input_args);
-    auto x_shape = input_args[kInputIndexX]->BuildShape();
+    auto x_shape = input_args[kInputIndexX]->GetShape();
     auto real_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape)[kShape];
-    auto w1_shape = input_args[kInputIndexW1]->BuildShape();
+    auto w1_shape = input_args[kInputIndexW1]->GetShape();
     auto real_w1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(w1_shape)[kShape];
-    auto w2_shape = input_args[kInputIndexW2]->BuildShape();
+    auto w2_shape = input_args[kInputIndexW2]->GetShape();
     auto real_w2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(w2_shape)[kShape];
 
     constexpr int64_t x_mini_rank_size = 2;
@@ -144,14 +144,14 @@ class FFNInfer : public abstract::OpInferBase {
 
     // optional expert_tokens
     if (input_args.size() > kInputIndexExpert && !input_args[kInputIndexExpert]->isa<abstract::AbstractNone>()) {
-      auto expert_shape = input_args[kInputIndexExpert]->BuildShape();
+      auto expert_shape = input_args[kInputIndexExpert]->GetShape();
       auto real_expert_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(expert_shape)[kShape];
       (void)CheckAndConvertUtils::CheckInteger("expert_tokens shape rank", SizeToLong(real_expert_shape.size()), kEqual,
                                                kExpertShapeRank, primitive->name());
     }
     // optional bias1
     if (input_args.size() > kInputIndexBias1 && !input_args[kInputIndexBias1]->isa<abstract::AbstractNone>()) {
-      auto bias1_shape = input_args[kInputIndexBias1]->BuildShape();
+      auto bias1_shape = input_args[kInputIndexBias1]->GetShape();
       auto real_bias1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(bias1_shape)[kShape];
       (void)CheckAndConvertUtils::CheckInteger("bias1 shape rank", SizeToLong(real_bias1_shape.size()), kEqual,
                                                bias_rank_size, primitive->name());
@@ -160,7 +160,7 @@ class FFNInfer : public abstract::OpInferBase {
     }
     // optional bias2
     if (input_args.size() > kInputIndexBias2 && !input_args[kInputIndexBias2]->isa<abstract::AbstractNone>()) {
-      auto bias2_shape = input_args[kInputIndexBias2]->BuildShape();
+      auto bias2_shape = input_args[kInputIndexBias2]->GetShape();
       auto real_bias2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(bias2_shape)[kShape];
       (void)CheckAndConvertUtils::CheckInteger("bias2 shape rank", SizeToLong(real_bias2_shape.size()), kEqual,
                                                bias_rank_size, primitive->name());
