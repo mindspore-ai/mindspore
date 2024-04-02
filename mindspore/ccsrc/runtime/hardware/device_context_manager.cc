@@ -190,7 +190,7 @@ bool PluginLoader::LoadDynamicLib(const std::string &plugin_file, std::map<std::
   err_msg_str = GetDlErrorMsg();
 #endif
   if (handle == nullptr) {
-    MS_LOG(WARNING) << "Load dynamic library: " << so_name << " failed. " << err_msg_str;
+    MS_LOG(INFO) << "Load dynamic library: " << so_name << " failed. " << err_msg_str;
     *err_msg << "Load dynamic library: " << so_name << " failed. " << err_msg_str << std::endl;
     return false;
   }
@@ -361,7 +361,7 @@ void DeviceContextManager::LoadPlugin() {
     if (plugin_name == kGpuPluginName) {
       std::string cuda_home = common::GetEnv(kCudaHomeEnv);
       if (cuda_home.empty()) {
-        MS_LOG(WARNING) << "Please set env CUDA_HOME to path of cuda, if you want to enable gpu backend.";
+        MS_LOG(INFO) << "Please set env CUDA_HOME to path of cuda, if you want to enable gpu backend.";
         continue;
       } else if (SelectGpuPlugin(cuda_home, file_names)) {
         break;
