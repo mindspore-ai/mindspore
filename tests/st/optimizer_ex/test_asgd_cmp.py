@@ -183,6 +183,7 @@ def test_asgd_basic(mode):
     mindspore.set_context(mode=mode, jit_syntax_level=mindspore.STRICT)
     fact = ASGDFactory(False, False)
     fact.result_cmp()
+    mindspore.set_context(jit_syntax_level=mindspore.LAX)
 
 
 @pytest.mark.level0
@@ -200,6 +201,7 @@ def test_asgd_group(mode):
     mindspore.set_context(mode=mode, jit_syntax_level=mindspore.STRICT)
     fact = ASGDFactory(True, False)
     fact.result_cmp()
+    mindspore.set_context(jit_syntax_level=mindspore.LAX)
 
 
 @pytest.mark.level0
@@ -217,6 +219,7 @@ def test_asgd_lr_dynamic(mode):
     mindspore.set_context(mode=mode, jit_syntax_level=mindspore.STRICT)
     fact = ASGDFactory(False, True)
     fact.result_cmp()
+    mindspore.set_context(jit_syntax_level=mindspore.LAX)
 
 
 @pytest.mark.level0
@@ -234,6 +237,7 @@ def test_asgd_group_lr_dynamic(mode):
     mindspore.set_context(mode=mode, jit_syntax_level=mindspore.STRICT)
     fact = ASGDFactory(True, True)
     fact.result_cmp()
+    mindspore.set_context(jit_syntax_level=mindspore.LAX)
 
 
 @pytest.mark.level0
@@ -251,3 +255,4 @@ def test_asgd_group_lr_dynamic_change_param(mode):
     mindspore.set_context(mode=mode, jit_syntax_level=mindspore.STRICT)
     fact = ASGDFactory(True, True, True)
     fact.result_cmp()
+    mindspore.set_context(jit_syntax_level=mindspore.LAX)

@@ -97,7 +97,6 @@ class AdagradFactory():
         output = model(data)
         return output.detach().numpy()
 
-
     def forward_mindspore_impl(self):
         lin_weight = Tensor(self.lin_weight_np.copy())
         lin_bias = Tensor(self.lin_bias_np.copy())
@@ -185,6 +184,7 @@ def test_adagrad_basic(mode):
     mindspore.set_context(mode=mode, jit_syntax_level=mindspore.STRICT)
     fact = AdagradFactory(False, False)
     fact.result_cmp()
+    mindspore.set_context(jit_syntax_level=mindspore.LAX)
 
 
 @pytest.mark.level0
@@ -202,6 +202,7 @@ def test_adagrad_group(mode):
     mindspore.set_context(mode=mode, jit_syntax_level=mindspore.STRICT)
     fact = AdagradFactory(True, False)
     fact.result_cmp()
+    mindspore.set_context(jit_syntax_level=mindspore.LAX)
 
 
 @pytest.mark.level0
@@ -219,6 +220,7 @@ def test_adagrad_lr_dynamic(mode):
     mindspore.set_context(mode=mode, jit_syntax_level=mindspore.STRICT)
     fact = AdagradFactory(False, True)
     fact.result_cmp()
+    mindspore.set_context(jit_syntax_level=mindspore.LAX)
 
 
 @pytest.mark.level0
@@ -237,6 +239,7 @@ def test_adagrad_group_lr_dynamic(mode):
     mindspore.set_context(mode=mode, jit_syntax_level=mindspore.STRICT)
     fact = AdagradFactory(True, True)
     fact.result_cmp()
+    mindspore.set_context(jit_syntax_level=mindspore.LAX)
 
 
 @pytest.mark.level0
@@ -254,3 +257,4 @@ def test_adagrad_group_lr_dynamic_change_param(mode):
     mindspore.set_context(mode=mode, jit_syntax_level=mindspore.STRICT)
     fact = AdagradFactory(True, True, True)
     fact.result_cmp()
+    mindspore.set_context(jit_syntax_level=mindspore.LAX)

@@ -124,6 +124,7 @@ def test_nadam_basic(mode):
     loss_expect = [[0.13339028, 0.36740243, 0.23856533],
                    [0.16680497, 0.43695334, 0.27498221]]
     allclose_nparray(loss_expect, out, 0.005, 0.005)
+    mindspore.set_context(jit_syntax_level=mindspore.LAX)
 
 
 @pytest.mark.level0
@@ -144,6 +145,7 @@ def test_nadam_group(mode):
     loss_expect = [[0.13080920, 0.36778748, 0.23818031],
                    [0.16380896, 0.43776551, 0.27417004]]
     allclose_nparray(loss_expect, out, 0.005, 0.005)
+    mindspore.set_context(jit_syntax_level=mindspore.LAX)
 
 
 @pytest.mark.level0
@@ -164,6 +166,7 @@ def test_nadam_lr_dynamic(mode):
     loss_expect = [[0.13339028, 0.36740243, 0.23856533],
                    [0.16680497, 0.43695334, 0.27498221]]
     allclose_nparray(loss_expect, out, 0.005, 0.005)
+    mindspore.set_context(jit_syntax_level=mindspore.LAX)
 
 
 @pytest.mark.level0
@@ -184,6 +187,7 @@ def test_nadam_group_lr_dynamic(mode):
     loss_expect = [[0.13083911, 0.36782959, 0.23813818],
                    [0.16383886, 0.43780762, 0.27412793]]
     allclose_nparray(loss_expect, out, 0.005, 0.005)
+    mindspore.set_context(jit_syntax_level=mindspore.LAX)
 
 
 @pytest.mark.level0
@@ -204,3 +208,4 @@ def test_nadam_group_lr_dynamic_change_param(mode):
     loss_expect = [[0.13080920, 0.36778748, 0.23818031],
                    [0.16380896, 0.43776551, 0.27417004]]
     allclose_nparray(loss_expect, out, 0.005, 0.005)
+    mindspore.set_context(jit_syntax_level=mindspore.LAX)

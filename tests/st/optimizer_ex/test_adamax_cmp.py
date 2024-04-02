@@ -96,7 +96,6 @@ class AdamaxFactory():
         output = model(data)
         return output.detach().numpy()
 
-
     def forward_mindspore_impl(self):
         lin_weight = Tensor(self.lin_weight_np.copy())
         lin_bias = Tensor(self.lin_bias_np.copy())
@@ -138,6 +137,7 @@ class AdamaxFactory():
                 if if_change:
                     optimizer.param_groups[1]["alpha"] = 0.77
                     optimizer.param_groups[1]["lambd"] = 0.003
+
         train(self.epochs, self.steps, self.lr_dynamic, self.if_change)
         output = model(data)
         return output.asnumpy()
@@ -183,6 +183,7 @@ def test_adamax_basic(mode):
     mindspore.set_context(mode=mode, jit_syntax_level=mindspore.STRICT)
     fact = AdamaxFactory(False, False)
     fact.result_cmp()
+    mindspore.set_context(jit_syntax_level=mindspore.LAX)
 
 
 @pytest.mark.level0
@@ -200,6 +201,7 @@ def test_adamax_group(mode):
     mindspore.set_context(mode=mode, jit_syntax_level=mindspore.STRICT)
     fact = AdamaxFactory(True, False)
     fact.result_cmp()
+    mindspore.set_context(jit_syntax_level=mindspore.LAX)
 
 
 @pytest.mark.level0
@@ -217,6 +219,7 @@ def test_adamax_lr_dynamic(mode):
     mindspore.set_context(mode=mode, jit_syntax_level=mindspore.STRICT)
     fact = AdamaxFactory(False, True)
     fact.result_cmp()
+    mindspore.set_context(jit_syntax_level=mindspore.LAX)
 
 
 @pytest.mark.level0
@@ -234,6 +237,7 @@ def test_adamax_group_lr_dynamic(mode):
     mindspore.set_context(mode=mode, jit_syntax_level=mindspore.STRICT)
     fact = AdamaxFactory(True, True)
     fact.result_cmp()
+    mindspore.set_context(jit_syntax_level=mindspore.LAX)
 
 
 @pytest.mark.level0
@@ -251,3 +255,4 @@ def test_adamax_group_lr_dynamic_change_param(mode):
     mindspore.set_context(mode=mode, jit_syntax_level=mindspore.STRICT)
     fact = AdamaxFactory(True, True, True)
     fact.result_cmp()
+    mindspore.set_context(jit_syntax_level=mindspore.LAX)
