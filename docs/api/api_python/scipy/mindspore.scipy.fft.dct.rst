@@ -24,7 +24,7 @@ mindspore.scipy.fft.dct
     返回：
         Tensor， `x` 进行离散傅里叶变换的结果，变换结果的数据类型为float32/64， `axis` 轴大小为 `n`，其余轴大小与 `x` 相同。
 
-    异常:
+    异常：
         - **TypeError** - 如果 `x` 不是Tensor。
         - **TypeError** - 如果 `axis` 或 `n` 不是int类型。
         - **ValueError** - 如果 `axis` 的值超出： :math:`[-x.ndim, x.ndim)` 范围。

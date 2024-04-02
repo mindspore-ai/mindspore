@@ -16,7 +16,7 @@ mindspore.parameter_broadcast
         - **cur_rank** (int，可选) - 当前卡的rank id。默认值: ``0``。
         - **initial_rank** (int，可选) - 当前流水线并行stage起始rank id。默认值: ``0``。
 
-    异常:
+    异常：
         - **ValueError** - `cur_rank` 不是当前卡的rank_id。
         - **ValueError** - `initial_rank` 不是当前pipeline_stage起始的rank_id。
         - **ValueError** - `layout` 中的参数名在 :func:`mindspore.nn.Cell.parameters_dict` 中找不到。
