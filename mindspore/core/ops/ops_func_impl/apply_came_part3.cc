@@ -69,20 +69,20 @@ std::vector<int64_t> CheckInputsShapePart3(const string &op_name, const std::vec
   int64_t m = abstract::Shape::kShapeDimAny;
   int64_t n = abstract::Shape::kShapeDimAny;
   size_t expect_rank = 2;
-  auto u_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto u_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
   if (!IsDynamicRank(u_shape)) {
     CheckAndConvertUtils::CheckInteger("rank of u", u_shape.size(), kEqual, expect_rank, op_name);
     m = u_shape[u_shape.size() - 1];
     n = u_shape[u_shape.size() - 2];
   }
-  auto m_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto m_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
   if (!IsDynamicRank(m_shape)) {
     CheckAndConvertUtils::CheckInteger("rank of m", m_shape.size(), kEqual, expect_rank, op_name);
     m = CheckInputDimPart3(m_shape[m_shape.size() - 1], m, "last dim of m", op_name);
     n = CheckInputDimPart3(m_shape[m_shape.size() - 2], n, "last but onedim of m", op_name);
   }
   auto sum_square_u_shape =
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->BuildShape())[kShape];
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->GetShape())[kShape];
   if (!IsDynamicRank(sum_square_u_shape)) {
     CheckAndConvertUtils::CheckInteger("rank of sum_square_u", sum_square_u_shape.size(), kEqual, 1, op_name);
   }

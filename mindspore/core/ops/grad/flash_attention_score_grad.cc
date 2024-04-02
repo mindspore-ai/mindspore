@@ -84,7 +84,7 @@ void CheckFlashAttentionScoreGradInputShape(const AbstractBasePtr &input, const 
   if (IsFlashAttentionScoreGradOptionalInputNotPass(input) && optional) {
     return;
   }
-  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input->BuildShape())[kShape];
+  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input->GetShape())[kShape];
   if (input_shape != expect_shape) {
     MS_LOG(EXCEPTION) << op_name << ": The shape of input `" << input_name << "' must be " << expect_shape
                       << ", but got shape is " << input_shape;
@@ -99,7 +99,7 @@ void CheckFlashAttentionScoreGradInputShape(const AbstractBasePtr &input,
   if (IsFlashAttentionScoreGradOptionalInputNotPass(input) && optional) {
     return;
   }
-  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input->BuildShape())[kShape];
+  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input->GetShape())[kShape];
   if (std::all_of(expect_shape_list.begin(), expect_shape_list.end(),
                   [&input_shape](const ShapeVector &expect_shape) { return input_shape != expect_shape; })) {
     MS_LOG(EXCEPTION) << op_name << ": The shape of input `" << input_name << "' must be one of " << expect_shape_list
@@ -156,9 +156,9 @@ abstract::TupleShapePtr FlashAttentionScoreGradInferShape(const PrimitivePtr &pr
   int64_t kv_seq_len;
   int64_t kv_head_num;
   auto query_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(
-    input_args[kFlashAttentionScoreGradInputQueryIndex]->BuildShape())[kShape];
+    input_args[kFlashAttentionScoreGradInputQueryIndex]->GetShape())[kShape];
   auto key_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(
-    input_args[kFlashAttentionScoreGradInputKeyIndex]->BuildShape())[kShape];
+    input_args[kFlashAttentionScoreGradInputKeyIndex]->GetShape())[kShape];
   ShapeVector expect_kv_shape;
   if (input_layout == kInputFlashAttentionScoreGradLayoutBSH) {
     if (query_shape.size() != kInputFlashAttentionScoreGradQueryBSHRank) {
@@ -233,10 +233,10 @@ abstract::TupleShapePtr FlashAttentionScoreGradInferShape(const PrimitivePtr &pr
   output_shape_ptr_list[kFlashAttentionScoreGradOutputDqIndex] = std::make_shared<abstract::Shape>(query_shape);
   output_shape_ptr_list[kFlashAttentionScoreGradOutputDkIndex] = std::make_shared<abstract::Shape>(key_shape);
   auto value_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(
-    input_args[kFlashAttentionScoreGradInputValueIndex]->BuildShape())[kShape];
+    input_args[kFlashAttentionScoreGradInputValueIndex]->GetShape())[kShape];
   output_shape_ptr_list[kFlashAttentionScoreGradOutputDvIndex] = std::make_shared<abstract::Shape>(value_shape);
   auto pse_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(
-    input_args[kFlashAttentionScoreGradInputPseShiftIndex]->BuildShape())[kShape];
+    input_args[kFlashAttentionScoreGradInputPseShiftIndex]->GetShape())[kShape];
   output_shape_ptr_list[kFlashAttentionScoreGradOutputDpseIndex] = std::make_shared<abstract::Shape>(pse_shape);
   return std::make_shared<abstract::TupleShape>(output_shape_ptr_list);
 }

@@ -30,8 +30,8 @@ BaseShapePtr LayerNormExtFuncImpl::InferShape(const PrimitivePtr &primitive,
   auto op_name = primitive->name();
   constexpr int64_t input_num = 5;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, op_name);
-  auto input_shape_ptr = input_args[kInputIndex0]->BuildShape();
-  auto norm_shape = GetValue<std::vector<int64_t>>(input_args[kInputIndex1]->BuildValue());
+  auto input_shape_ptr = input_args[kInputIndex0]->GetShape();
+  auto norm_shape = GetValue<std::vector<int64_t>>(input_args[kInputIndex1]->GetValue());
   const auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_shape_ptr)[kShape];
   const auto norm_dim = norm_shape.size();
   const auto input_dim = input_shape.size();

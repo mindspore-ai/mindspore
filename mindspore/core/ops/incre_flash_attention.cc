@@ -60,7 +60,7 @@ bool IsOptionalInputNone(const AbstractBasePtr &input) {
 void CheckInputsShape(const AbstractBasePtr &input, const std::vector<ShapeValueDType> &expect_shape,
                       const std::string &op_name, const std::string &input_name, bool optional = false) {
   MS_EXCEPTION_IF_NULL(input);
-  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input->BuildShape())[kShape];
+  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input->GetShape())[kShape];
   if (optional && input_shape.empty()) {
     return;
   }
@@ -114,7 +114,7 @@ bool CheckIsFrontend(const std::vector<AbstractBasePtr> &input_args) {
 std::vector<int64_t> ObtainCorrShape(const std::vector<AbstractBasePtr> &input_args, size_t index) {
   std::vector<int64_t> out_shape;
   if (CheckIsFrontend(input_args)) {
-    out_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[index]->BuildShape())[kShape];
+    out_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[index]->GetShape())[kShape];
   } else {
     AbstractBasePtrList elements = input_args;
     out_shape = elements[index]->GetShape()->GetShapeVector();
@@ -144,7 +144,7 @@ std::vector<int64_t> GetIFADynInputShape(const PrimitivePtr &primitive, const st
 
   // if dyn rank
   auto ele_first = kv_elements[0]->cast<abstract::AbstractTensorPtr>();
-  std::vector<int64_t> ele_first_sp = CheckAndConvertUtils::ConvertShapePtrToShapeMap(ele_first->BuildShape())[kShape];
+  std::vector<int64_t> ele_first_sp = CheckAndConvertUtils::ConvertShapePtrToShapeMap(ele_first->GetShape())[kShape];
   if (IsDynamicRank(ele_first_sp)) {
     if (input_layout == "BSH") {
       return std::vector(kInputQueryBSHRank, abstract::Shape::kShapeDimAny);
@@ -155,7 +155,7 @@ std::vector<int64_t> GetIFADynInputShape(const PrimitivePtr &primitive, const st
 
   if (kv_elements.size() == 1) {  // [B S H]
     auto element0 = kv_elements[0]->cast<abstract::AbstractTensorPtr>();
-    std::vector<int64_t> element0_sp = CheckAndConvertUtils::ConvertShapePtrToShapeMap(element0->BuildShape())[kShape];
+    std::vector<int64_t> element0_sp = CheckAndConvertUtils::ConvertShapePtrToShapeMap(element0->GetShape())[kShape];
     CheckShapeSizeRight(primitive, element0_sp.size());
     return element0_sp;
   }
@@ -164,13 +164,13 @@ std::vector<int64_t> GetIFADynInputShape(const PrimitivePtr &primitive, const st
                             << "', the key or value's list length must be B. But got:" << kv_elements.size();
   }
   std::vector<int64_t> element_first_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(
-    kv_elements[0]->cast<abstract::AbstractTensorPtr>()->BuildShape())[kShape];
+    kv_elements[0]->cast<abstract::AbstractTensorPtr>()->GetShape())[kShape];
   CheckShapeSizeRight(primitive, element_first_shape.size());
 
   std::vector<int64_t> element_each_shape;
   for (size_t i = 0; i < kv_elements.size(); ++i) {
     auto element_each = kv_elements[i]->cast<abstract::AbstractTensorPtr>();
-    element_each_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(element_each->BuildShape())[kShape];
+    element_each_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(element_each->GetShape())[kShape];
     if (element_each_shape != element_first_shape) {
       MS_LOG(EXCEPTION) << prim_name << ": each element of key or value should be the same shape";
     }
@@ -184,7 +184,7 @@ void CheckPaddingAttenMaskShape(const PrimitivePtr &primitive, const std::vector
   auto op_name = primitive->name();
   if (!IsOptionalInputNone(input_args[kIncreFlashAttentionInputPseShiftIndex])) {
     std::vector<int64_t> pse_shift_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(
-      input_args[kIncreFlashAttentionInputPseShiftIndex]->BuildShape())[kShape];
+      input_args[kIncreFlashAttentionInputPseShiftIndex]->GetShape())[kShape];
     size_t len_pa = pse_shift_shape.size();
     if (len_pa > 0 && !pse_shift_shape.empty() && !IsDynamicShape(pse_shift_shape)) {
       if ((pse_shift_shape[0] != B && pse_shift_shape[0] != 1) || pse_shift_shape[len_pa - 1] != S) {
@@ -198,7 +198,7 @@ void CheckPaddingAttenMaskShape(const PrimitivePtr &primitive, const std::vector
   if (!IsOptionalInputNone(input_args[kIncreFlashAttentionInputAttnMaskIndex]) &&
       IsOptionalInputNone(input_args[kIncreFlashAttentionInputBlockTable])) {
     std::vector<int64_t> atten_mask_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(
-      input_args[kIncreFlashAttentionInputAttnMaskIndex]->BuildShape())[kShape];
+      input_args[kIncreFlashAttentionInputAttnMaskIndex]->GetShape())[kShape];
     size_t len_pa = atten_mask_shape.size();
     if (len_pa > 0 && !atten_mask_shape.empty() && !IsDynamicShape(atten_mask_shape)) {
       if (atten_mask_shape[0] != B || atten_mask_shape[len_pa - 1] != S) {
@@ -223,7 +223,7 @@ void CheckActualSeqLengthsShapeValue(const PrimitivePtr &primitive, const std::v
     return;
   }
   std::vector<int64_t> asl_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(
-    input_args[kIncreFlashAttentionInputActualSeqLengths]->BuildShape())[kShape];
+    input_args[kIncreFlashAttentionInputActualSeqLengths]->GetShape())[kShape];
   if (IsDynamic(asl_shape)) {
     return;
   }

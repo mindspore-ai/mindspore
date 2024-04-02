@@ -104,7 +104,7 @@ void DynamicRNNShapeCheck(const PrimitivePtr &primitive, const std::vector<Abstr
   }
   if (input_args.size() > kDynRnnIdx4) {
     int64_t batch_size = x_shape[kDynRnnIdx1];
-    auto h_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDynRnnIdx4]->BuildShape())[kShape];
+    auto h_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kDynRnnIdx4]->GetShape())[kShape];
     const int64_t num_one = 1;
     (void)CheckAndConvertUtils::CheckInteger("h_shape", SizeToLong(h_shape.size()), kEqual, kDynamicRnnShapeH, op_name);
     (void)CheckAndConvertUtils::CheckInteger("h_shape[0]", h_shape[kDynRnnIdx0], kEqual, num_one, op_name);

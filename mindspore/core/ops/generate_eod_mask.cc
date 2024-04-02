@@ -63,7 +63,7 @@ class MIND_API AGGenerateEodMaskInfer : public abstract::OpInferBase {
       MS_EXCEPTION_IF_NULL(item);
     }
     const int64_t no_repeat_kShapeSize = 2;
-    auto inputs_ids_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
+    auto inputs_ids_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShape());
     auto inputs_ids_shape = inputs_ids_shape_map[kShape];
 
     if (IsDynamicRank(inputs_ids_shape)) {
@@ -77,7 +77,7 @@ class MIND_API AGGenerateEodMaskInfer : public abstract::OpInferBase {
 
     std::vector<BaseShapePtr> shapes_list = {};
     (void)shapes_list.emplace_back(std::make_shared<abstract::Shape>(inputs_ids_shape));
-    return input_args[0]->BuildShape();
+    return input_args[0]->GetShape();
   }
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {

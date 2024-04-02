@@ -36,7 +36,7 @@ AbstractBasePtr InferImplReturn(const AnalysisEnginePtr &, const PrimitivePtr &,
 
 void CheckTensorCondValid(const AbstractBasePtr &cond) {
   // Tensor condition must be one element or dynamic shape.
-  auto base_shape = cond->BuildShape();
+  auto base_shape = cond->GetShape();
   MS_EXCEPTION_IF_NULL(base_shape);
   ShapeVector cond_shape = base_shape->cast<ShapePtr>()->shape();
   if (cond_shape.empty()) {

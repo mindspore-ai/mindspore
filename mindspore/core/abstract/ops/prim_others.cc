@@ -280,7 +280,7 @@ AbstractBasePtr InferImplIsTensorBoolCond(const AnalysisEnginePtr &, const Primi
     MS_EXCEPTION(TypeError) << "The input of " << op_name << " should be a tensor but got " << abs->ToString();
   }
 
-  auto build_shape = abs->cast<AbstractTensorPtr>()->BuildShape();
+  auto build_shape = abs->cast<AbstractTensorPtr>()->GetShape();
   MS_EXCEPTION_IF_NULL(build_shape);
   if (build_shape->IsDimUnknown()) {
     return std::make_shared<AbstractScalar>(std::make_shared<BoolImm>(true), kBool);

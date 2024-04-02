@@ -51,7 +51,7 @@ BaseShapePtr Conv2DExtFuncImpl::InferShape(const PrimitivePtr &primitive,
   }
 
   auto expande_dim_if_need = [input_args](const size_t &idx, const std::string &input_name) -> std::vector<int64_t> {
-    auto value = input_args[idx]->BuildValue();
+    auto value = input_args[idx]->GetValue();
     auto vec = GetValue<std::vector<int64_t>>(value);
 
     if (vec.empty()) {
