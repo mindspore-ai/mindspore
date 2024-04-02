@@ -724,17 +724,18 @@ using OutputInputRefMap = std::map<size_t, size_t>;
 
 using HashTableExportData = std::vector<std::shared_ptr<std::vector<char>>>;
 
-static inline uint64_t GetCurrentUSec() {
+static inline double GetCurrentUSec() {
   auto time_now = std::chrono::system_clock::now();
   auto tv_usec = std::chrono::duration_cast<std::chrono::microseconds>(time_now.time_since_epoch()).count();
-  return static_cast<uint64_t>(tv_usec);
+  return static_cast<double>(tv_usec);
 }
 
-#define PROF_START(stage) uint64_t start_usec_##stage = mindspore::GetCurrentUSec()
-#define PROF_END(stage)                                                                                     \
-  do {                                                                                                      \
-    uint64_t end_usec_##stage = mindspore::GetCurrentUSec();                                                \
-    MS_LOG(INFO) << "[PROF]" << #stage << " costs " << (end_usec_##stage - start_usec_##stage) << " usec."; \
+#define PROF_START(stage) double start_usec_##stage = mindspore::GetCurrentUSec()
+#define PROF_END(stage)                                                                           \
+  do {                                                                                            \
+    double end_usec_##stage = mindspore::GetCurrentUSec();                                        \
+    MS_LOG(INFO) << "[PROF]" << #stage << " costs "                                               \
+                 << (end_usec_##stage - start_usec_##stage) / kBasicTimeTransferUnit << " msec."; \
   } while (0)
 
 #define PROF_MULTI_DEFINE(stage)       \
