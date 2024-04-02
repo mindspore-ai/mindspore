@@ -53,7 +53,7 @@ bool ContiguousGpuKernel::LaunchContiguous(TypeId input_type_id, const kernel::K
                                            const kernel::KernelTensorPtr &strides_addr, void *stream_ptr) {
   const auto &iter = func_list_.find(std::make_pair(input_type_id, output_type_id));
   if (iter == func_list_.end()) {
-    MS_LOG(EXCEPTION) << "type_id:" << input_type_id << " is invalid";
+    MS_LOG(EXCEPTION) << "type:" << TypeIdToString(input_type_id) << " is invalid";
   }
   int64_t type_size = GetDataTypeSize(input_type_id) / GetDataTypeSize(output_type_id);
 
