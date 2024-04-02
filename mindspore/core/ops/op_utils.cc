@@ -637,8 +637,9 @@ AbstractBasePtr TensorToSequenceInfer(const PrimitivePtr &primitive, const std::
     abs->CheckAndConvertToDynamicLenSequence();
     return abs;
   }
-
-  if (!x_shape.empty()) {
+  if (x_shape.empty()) {
+    abs_list.push_back(std::make_shared<abstract::AbstractScalar>(kValueAny, element_type));
+  } else {
     for (int64_t i = 0; i < x_shape[0]; i++) {
       abs_list.push_back(std::make_shared<abstract::AbstractScalar>(kValueAny, element_type));
     }
@@ -646,6 +647,7 @@ AbstractBasePtr TensorToSequenceInfer(const PrimitivePtr &primitive, const std::
   auto abs = std::make_shared<T>(abs_list);
   return abs;
 }
+
 void CheckDynamicLengthSequenceSetItem(const std::string &op_name, const abstract::AbstractSequencePtr &queue,
                                        const AbstractBasePtr &target) {
   auto element_abs = queue->dynamic_len_element_abs();
