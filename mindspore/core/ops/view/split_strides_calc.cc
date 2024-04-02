@@ -63,7 +63,7 @@ TensorStorageInfoPtrList SplitCalc(const PrimitivePtr &prim, const std::vector<V
   const auto wrap_axis = DynamicDimWrap(axis, ndim);
   SplitInputsCheck(prim, output_num, wrap_axis, old_shape);
 
-  size_t splits_section_size = LongToSize(old_shape[wrap_axis] / output_num);
+  int64_t splits_section_size = old_shape[wrap_axis] / output_num;
 
   std::vector<TensorStorageInfoPtr> storage_info_list;
 
@@ -72,7 +72,7 @@ TensorStorageInfoPtrList SplitCalc(const PrimitivePtr &prim, const std::vector<V
   auto new_strides = old_strides;
 
   for (int64_t idx = 0; idx < output_num; idx++) {
-    size_t new_storage_offset = old_storage_offset + idx * splits_section_size * new_strides[wrap_axis];
+    size_t new_storage_offset = old_storage_offset + LongToSize(idx * splits_section_size * new_strides[wrap_axis]);
 
     auto new_storage_info =
       std::make_shared<TensorStorageInfo>(new_shape, new_strides, new_storage_offset, old_tensor_info->ori_shape,
