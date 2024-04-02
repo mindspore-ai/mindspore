@@ -251,7 +251,7 @@ inline aclTensor *ConvertType(const mindspore::kernel::KernelTensor *tensor) {
 }
 
 inline aclTensor *ConvertType(mindspore::kernel::KernelTensor *tensor) {
-  return ConvertType(static_cast<const mindspore::kernel::KernelTensor *>(tensor));
+  return ConvertType(reinterpret_cast<const mindspore::kernel::KernelTensor *>(tensor));
 }
 
 inline aclTensor *ConvertType(std::pair<mindspore::kernel::KernelTensor *, bool> tensor_and_trans) {
