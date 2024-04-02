@@ -1,4 +1,4 @@
-FROM nvidia/cuda:11.6.2-cudnn8-devel-ubuntu18.04
+FROM nvidia/cuda:11.1.1-cudnn8-devel-ubuntu18.04
 
 MAINTAINER MindSpore Authors
 
@@ -89,5 +89,8 @@ RUN cd /tmp \
     && rm -rf /tmp/openmpi-4.0.3 \
     && rm -f /tmp/openmpi-4.0.3.tar.gz
 
-# Install frequently used python packages
-RUN pip install --no-cache-dir decorator pandas scikit-learn pyyaml
+# Install MindSpore cuda-11.1, MindInsight, Serving whl package
+RUN pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/2.2.13/MindSpore/unified/x86_64/mindspore-2.2.13-cp37-cp37m-linux_x86_64.whl \
+    && pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/2.2.10/MindInsight/any/mindinsight-2.2.10-py3-none-any.whl \
+    && pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/2.2.0/Serving/x86_64/mindspore_serving-2.0.2-cp37-cp37m-linux_x86_64.whl \
+    pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/2.2.10/MindSpore/lite/release/linux/x86_64/cloud_fusion/python37/mindspore_lite-2.2.10-cp37-cp37m-linux_x86_64.whl
