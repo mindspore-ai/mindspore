@@ -69,7 +69,7 @@ BACKEND_EXPORT GraphRunnerPtr NewGraphRunner(const GraphRunnerOptions &options);
 BACKEND_EXPORT void SetGraphRunner(const GraphRunnerPtr &runner);
 BACKEND_EXPORT void ClearGraph();
 BACKEND_EXPORT Status AddGraph(const std::string &name, const DfGraphPtr &graph, const OptionMap &options = {},
-                               const bool &is_cloud = false);
+                               const bool &is_cloud = false, const bool &need_aoe = false);
 BACKEND_EXPORT void SetAnfGraph(const std::string &name, const AnfGraphPtr &anf_graph_ptr);
 BACKEND_EXPORT DfGraphWrapperPtr GetGraphByName(const std::string &name);
 BACKEND_EXPORT void AddOptimizeGraph(const std::string &name);
