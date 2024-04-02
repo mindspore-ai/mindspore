@@ -71,6 +71,10 @@ class InterleavedScheduler : public PipelineScheduler {
 
  private:
   void WarmUpPhaseReorder();
+  void LastForwardMicroReorder();
+  void EndPhaseReorder();
+  AbstractBasePtr GenerateTupleAbstract(const std::vector<AnfNodePtr> &nodes);
+  void OptimizerShardCommReorder();
   void ParameterReorder(const std::vector<BorderPair> &sorted_fwd_begin, const std::vector<BorderPair> &sorted_bwd_end);
   void GetBackwardBorderNode(const CNodePtr &cnode);
   std::vector<BorderPair> SortBetweenMicro(const std::vector<Border> &borders, bool is_backward);
@@ -82,6 +86,9 @@ class InterleavedScheduler : public PipelineScheduler {
   std::vector<Border> bwd_cell_;
   std::vector<Border> fwd_params_;
   std::vector<Border> bwd_params_;
+  int64_t bias_ = 0;
+  int64_t offset_ = 0;
+  bool is_even_stage_ = true;
 };
 bool SortFuncInsideMicro(const Border &b_i, const Border &b_j);
 CNodePtr GetCellByReceive(const AnfNodePtr &node, const FuncGraphManagerPtr &manager);
