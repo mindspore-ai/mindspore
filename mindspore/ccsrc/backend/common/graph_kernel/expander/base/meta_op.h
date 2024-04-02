@@ -40,7 +40,6 @@ enum class MetaOp : int {
   LogicalNot,
   LogicalOr,
   MatMul,
-  MatMulExt,
   Mul,
   Neg,
   Reciprocal,
@@ -84,7 +83,6 @@ inline static std::string MetaOpStr[static_cast<int>(MetaOp::MetaOpNum)] = {
   "LogicalNot",        // MetaOp::LogicalNot
   "LogicalOr",         // MetaOp::LogicalOr
   "MatMul",            // MetaOp::MatMul
-  "MatMulExt",         // MetaOp::MatMulExt
   "Mul",               // MetaOp::Mul
   "Neg",               // MetaOp::Neg
   "Reciprocal",        // MetaOp::Reciprocal
