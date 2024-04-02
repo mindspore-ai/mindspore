@@ -42,6 +42,7 @@ from mindspore.ops.operations.nn_ops import TripletMarginLoss
 from mindspore.ops.operations._sequence_ops import TupleToTensor, TensorToTuple, ListToTensor
 from mindspore.common.api import _function_forbid_reuse
 from mindspore.ops.auto_generate import log_softmax, prelu, celu, relu, fast_gelu, silu, elu, sigmoid, relu6
+from mindspore.ops.auto_generate.gen_ops_prim import GroupNorm
 from mindspore.ops.auto_generate.gen_ops_prim import embedding_op
 
 abs_ = P.Abs()
@@ -5453,6 +5454,61 @@ def adaptive_avg_pool1d(input, output_size):
     return input
 
 
+def group_norm(input, num_groups, weight=None, bias=None, eps=1e-5):
+    r"""Group Normalization over a mini-batch of inputs.
+
+    Group Normalization is widely used in recurrent neural networks. It applies
+    normalization on a mini-batch of inputs for each single training case as described
+    in the paper `Group Normalization <https://arxiv.org/pdf/1803.08494.pdf>`_. Group Normalization
+    divides the channels into groups and computes within each group the mean and variance for normalization,
+    and it performs very stable over a wide range of batch size. :math:`\gamma` and :math:`\beta` are trainable scale
+    and shift.
+    It can be described using the following formula:
+
+    .. math::
+        y = \frac{x - \mathrm{E}[x]}{\sqrt{\mathrm{Var}[x] + \epsilon}} * \gamma + \beta
+
+    where :math:`\gamma` is `weight`, :math:`\beta` is `bias`, :math:`\epsilon` is `eps`.
+
+    Args:
+        input (Tensor) : The input feature with shape :math:`(N, C, *)` where :math:`*` means, any number of
+            additional dimensions.
+        num_groups (int): The number of groups to be divided along the channel dimension.
+        weight (Tensor, optional): The shape :math:`(C,)`, Default: ``None``, has the same data type with `input`.
+        bias (Tensor, optional): The shape :math:`(C,)`, Default: ``None``, has the same data type with `input`.
+        eps (float, optional): A value added to the denominator for numerical stability. Default: ``1e-5`` .
+
+    Returns:
+        Tensor, the normalized and scaled offset tensor, has the same shape and data type as the `input`.
+
+    Raises:
+        TypeError: If `num_groups` is not an int.
+        TypeError: If `eps` is not a float.
+        ValueError: If `num_groups` is less than 1.
+        ValueError: If `C` (the second parameter of dimensions of `input`) is not divided by `num_groups`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore as ms
+        >>> import numpy as np
+        >>> from mindspore.ops import group_norm
+        >>> x = ms.Tensor(np.ones([1, 2, 4, 4], np.float32))
+        >>> output = group_norm(x, 2)
+        >>> print(output)
+        [[[[0. 0. 0. 0.]
+           [0. 0. 0. 0.]
+           [0. 0. 0. 0.]
+           [0. 0. 0. 0.]]
+          [[0. 0. 0. 0.]
+           [0. 0. 0. 0.]
+           [0. 0. 0. 0.]
+           [0. 0. 0. 0.]]]]
+    """
+    group_norm_op = GroupNorm()
+    return group_norm_op(input, num_groups, weight, bias, eps)[0]
+
 def batch_norm(input_x, running_mean, running_var, weight, bias, training=False, momentum=0.1, eps=1e-5):
     r"""
     Batch Normalization for input data and updated parameters.
@@ -7334,6 +7390,7 @@ __all__ = [
     'msort',
     'triplet_margin_loss',
     'channel_shuffle',
-    'hardsigmoid'
+    'hardsigmoid',
+    'group_norm'
 ]
 __all__.sort()

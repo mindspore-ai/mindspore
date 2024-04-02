@@ -99,6 +99,25 @@ OUTPUT_MAP(LogSoftmaxV2) = {{0, OUTPUT_DESC(logsoftmax)}};
 REG_ADPT_DESC(LogSoftmax, prim::kPrimLogSoftmax->name(), ADPT_DESC(LogSoftmaxV2))
 REG_ADPT_DESC(LogSoftmaxV2, kLogSoftmaxV2OpName, ADPT_DESC(LogSoftmaxV2))
 
+// GroupNorm
+INPUT_MAP(GroupNorm) = {{1, INPUT_DESC(x)}, {3, INPUT_DESC(gamma)}, {4, INPUT_DESC(beta)}};
+ATTR_MAP(GroupNorm) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(GroupNorm) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(mean)}, {2, OUTPUT_DESC(variance)}};
+INPUT_ATTR_MAP(GroupNorm) = {{kIndex2, ATTR_DESC(num_groups, AnyTraits<int64_t>())},
+                             {kIndex5, ATTR_DESC(eps, AnyTraits<float>())}};
+REG_ADPT_DESC(GroupNorm, prim::kPrimGroupNorm->name(), ADPT_DESC(GroupNorm))
+
+// GroupNormGrad
+INPUT_MAP(GroupNormGrad) = {
+  {1, INPUT_DESC(dy)}, {2, INPUT_DESC(x)}, {3, INPUT_DESC(mean)}, {4, INPUT_DESC(rstd)}, {5, INPUT_DESC(gamma)}};
+ATTR_MAP(GroupNormGrad) = {{"data_format", ATTR_DESC(data_format, AnyTraits<string>())}};
+OUTPUT_MAP(GroupNormGrad) = {{0, OUTPUT_DESC(dx)}, {1, OUTPUT_DESC(dgamma)}, {2, OUTPUT_DESC(dbeta)}};
+INPUT_ATTR_MAP(GroupNormGrad) = {{kIndex6, ATTR_DESC(num_groups, AnyTraits<int64_t>())},
+                                 {kIndex7, ATTR_DESC(dx_is_require, AnyTraits<bool>())},
+                                 {kIndex8, ATTR_DESC(dgamma_is_require, AnyTraits<bool>())},
+                                 {kIndex9, ATTR_DESC(dbeta_is_require, AnyTraits<bool>())}};
+REG_ADPT_DESC(GroupNormGrad, prim::kPrimGroupNormGrad->name(), ADPT_DESC(GroupNormGrad))
+
 // LayerNorm
 INPUT_MAP(LayerNorm) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(gamma)}, {3, INPUT_DESC(beta)}};
 ATTR_MAP(LayerNorm) = EMPTY_ATTR_MAP;

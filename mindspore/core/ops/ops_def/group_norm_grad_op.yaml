@@ -1,0 +1,36 @@
+#operator group_norm_grad
+group_norm_grad:
+  args:
+    dy:
+      dtype: tensor
+    x:
+      dtype: tensor
+    mean:
+      dtype: tensor
+    rstd:
+      dtype: tensor
+    gamma_opt:
+      dtype: tensor
+    num_groups:
+      dtype: int
+    dx_is_require:
+      dtype: bool
+      default: True
+    dgamma_is_require:
+      dtype: bool
+      default: True
+    dbeta_is_require:
+      dtype: bool
+      default: True
+  returns:
+    pd_x:
+      dtype: tensor
+    pd_gamma:
+      dtype: tensor
+    pd_beta:
+      dtype: tensor
+  function:
+    disable: True
+  dispatch:
+    enable: True
+    Ascend: GroupNormGradAscend

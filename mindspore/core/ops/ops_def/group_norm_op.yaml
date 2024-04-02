@@ -1,0 +1,33 @@
+#operator group_norm
+group_norm:
+  args:
+    input:
+      dtype: tensor
+    num_groups:
+      dtype: int
+    weight:
+      dtype: tensor
+      default: None
+    bias:
+      dtype: tensor
+      default: None
+    eps:
+      dtype: float
+      default: 1e-5
+  args_signature:
+    dtype_group: (input, weight, bias)
+  returns:
+    out:
+      dtype: tensor
+    meanOut:
+      dtype: tensor
+    rstdOut:
+      dtype: tensor
+  class:
+    name: GroupNorm
+  function:
+    disable: True
+  dispatch:
+    enable: True
+    Ascend: GroupNormAscend
+    CPU: GroupNormCPU

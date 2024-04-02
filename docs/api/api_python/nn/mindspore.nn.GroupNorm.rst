@@ -24,7 +24,7 @@ mindspore.nn.GroupNorm
         - **dtype** (:class:`mindspore.dtype`) - Parameters的dtype。默认值： ``mstype.float32`` 。
 
     输入：
-        - **x** (Tensor) - shape为 :math:`(N, C, H, W)` 的特征输入。
+        - **x** (Tensor) - shape为 :math:`(N, C, *)` 的特征输入，其中 :math:`*` 表示任意的附加维度。
 
     输出：
         Tensor，标准化和缩放的偏移Tensor，具有与 `x` 相同的shape和数据类型。

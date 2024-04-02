@@ -696,6 +696,30 @@ REG_BPROP_BUILDER("MaxPoolWithArgmaxV2").SetBody(BODYFUNC(ib) {
   return {dx};
 });
 
+REG_BPROP_BUILDER("GroupNorm").SetUnusedInputs({i4}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto num_groups = ib->GetInput(kIndex1);
+  auto gamma = ib->GetInput(kIndex2);
+  auto beta = ib->GetInput(kIndex3);
+  auto epsilon = ib->GetInput(kIndex4);
+  auto out = ib->GetInput(kIndex5);
+  auto dout = ib->GetInput(kIndex6);
+
+  auto result =
+    ib->Emit("GroupNormGrad",
+             {ib->TupleGetItem(dout, 0), x, ib->TupleGetItem(out, 1), ib->TupleGetItem(out, 2), gamma, num_groups,
+              ib->Value<bool>(x->need_compute_grad_out()), ib->Value<bool>(gamma->need_compute_grad_out()),
+              ib->Value<bool>(beta->need_compute_grad_out())},
+             {{"data_format", MakeValue("NCHW")}});
+
+  auto d_x = ib->TupleGetItem(result, 0);
+  auto d_gamma = ib->TupleGetItem(result, 1);
+  auto d_beta = ib->TupleGetItem(result, 2);
+  auto grad_group = ib->OutZeros(num_groups);
+  auto grad_epsilon = ib->OutZeros(epsilon);
+  return {d_x, grad_group, d_gamma, d_beta, grad_epsilon};
+});
+
 REG_BPROP_BUILDER("LayerNorm").SetUnusedInputs({i2, i5}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto gamma = ib->GetInput(kIndex1);
