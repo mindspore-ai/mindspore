@@ -24,7 +24,9 @@
 #include "utils/ms_context.h"
 #include "include/transform/graph_ir/types.h"
 #include "plugin/device/ascend/hal/hardware/ascend_collective_comm_lib.h"
+#ifdef ENABLE_INTERNAL_KERNELS
 #include "plugin/device/ascend/hal/hardware/lowlatency_collective_comm_lib.h"
+#endif
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "runtime/device/kernel_runtime_manager.h"
 
