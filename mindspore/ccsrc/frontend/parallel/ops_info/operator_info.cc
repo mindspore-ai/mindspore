@@ -959,12 +959,12 @@ Status OperatorInfo::CreateGroupForOptShard(TensorLayout *tensor_layout, std::ve
     MS_LOG(INFO) << name_ << ": The dev size is 1, no need to create group.";
     return SUCCESS;
   }
+  int64_t repeated_size = SizeToLong(group_devices.size());
   int64_t optimizer_weight_shard_size = ParallelContext::GetInstance()->optimizer_weight_shard_size();
   MS_EXCEPTION_IF_ZERO("optimizer_weight_shard_size", optimizer_weight_shard_size);
-  if (optimizer_weight_shard_size != -1) {
+  if (optimizer_weight_shard_size != -1 && repeated_size > optimizer_weight_shard_size) {
     // not fully use opt shard
     int64_t index = std::find(group_devices.begin(), group_devices.end(), rank) - group_devices.begin();
-    int64_t repeated_size = SizeToLong(group_devices.size());
     if (repeated_size % optimizer_weight_shard_size != 0 || repeated_size < optimizer_weight_shard_size) {
       MS_LOG(WARNING) << "Parallel optimizer:"
                       << " optimizer_weight_shard_size " << optimizer_weight_shard_size
