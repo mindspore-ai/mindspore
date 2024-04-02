@@ -138,6 +138,7 @@ class GPU_EXPORT GPUProfiler : public Profiler {
   std::string ProfileDataPath() const { return profile_data_path_; }
   bool IsInitialized() { return is_init_; }
   void RecordFrameWorkInfo(const CNodePtr &kernel);
+  void RecordFrameWorkInfo(const std::string &op_name, const std::vector<BaseShapePtr> &input_shapes);
   CurKernelInputInfo cur_kernel_input_info_;
   CurKernelInfo cur_kernel_info_;
   std::vector<CurKernelInfo> all_kernel_info_;

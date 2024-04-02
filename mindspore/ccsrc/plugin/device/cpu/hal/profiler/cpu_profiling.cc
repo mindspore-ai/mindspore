@@ -132,6 +132,27 @@ void CPUProfiler::RecordFrameWorkInfo(const CNodePtr &kernel) {
   all_kernel_info_.push_back(cur_kernel_info);
 }
 
+void CPUProfiler::RecordFrameWorkInfo(const std::string &op_name, const std::vector<BaseShapePtr> &input_shapes) {
+  CurKernelInputInfo cur_kernel_input_info;
+  CurKernelInfo cur_kernel_info;
+  auto begin_iter = op_name.rfind('/') + 1;
+  auto end_iter = op_name.rfind('-');
+  if (begin_iter != std::string::npos && end_iter != std::string::npos && begin_iter < end_iter) {
+    cur_kernel_info.op_type = op_name.substr(begin_iter, end_iter - begin_iter);
+    cur_kernel_info.op_name = op_name.substr(begin_iter, op_name.length() - begin_iter);
+  }
+  size_t input_size = input_shapes.size();
+  for (size_t i = 0; i < input_size; ++i) {
+    if (input_shapes[i] != nullptr) {
+      cur_kernel_input_info.input_id = i;
+      cur_kernel_input_info.shape = input_shapes[i]->DumpText();
+      cur_kernel_info.cur_kernel_all_inputs_info.push_back(cur_kernel_input_info);
+    }
+  }
+  std::lock_guard<std::mutex> locker(kernel_mutex_);
+  all_kernel_info_.push_back(cur_kernel_info);
+}
+
 void CPUProfiler::OpDataProducerEndParallel(const std::string op_name) {
   auto stop_timestamp = GetHostMonoTimeStamp();
   float op_time_elapsed = SetRuntimeEnd(op_name, stop_timestamp);

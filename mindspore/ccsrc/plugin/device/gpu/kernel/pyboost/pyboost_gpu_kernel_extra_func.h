@@ -22,6 +22,7 @@
 #include <utility>
 #include <vector>
 #include "kernel/kernel.h"
+#include "runtime/hardware/device_context.h"
 #include "kernel/pyboost/pyboost_kernel_extra_func.h"
 
 namespace mindspore {
@@ -30,6 +31,10 @@ namespace pyboost {
 class BACKEND_EXPORT PyboostGPUKernelExtraFunc : public PyboostKernelExtraFunc {
  public:
   bool IsKernelModRegistered(const std::string &op_name) override;
+  bool IsEnableProfiler() override;
+  void LaunchKernelWithProfiler(const std::string &op_name, const device::DeviceContext *device_context,
+                                const std::vector<BaseShapePtr> &base_shape,
+                                const std::function<void()> &func) override;
 };
 }  // namespace pyboost
 }  // namespace kernel
