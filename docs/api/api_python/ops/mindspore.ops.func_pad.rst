@@ -6,8 +6,8 @@ mindspore.ops.pad
     根据参数 `padding` 对输入进行填充。
 
     参数：
-        - **input_x** (Tensor) - 输入Tensor，shape为 :math:`(N, *)`， :math:`*` 代表任意附加维度。
-        - **padding** (Union[tuple[int], list[int], Tensor]) - pad的填充位置。
+        - **input_x** (Tensor) - 输入Tensor，shape为 :math:`(N, *)`， :math:`*` 代表任意附加维度。在Ascend后端运行时，不支持该维度大于5的情况。
+        - **padding** (Union[tuple[int], list[int], Tensor]) - pad的填充位置。在Ascend后端运行时，不支持 `padding` 包含负值情况。
           :math:`\left\lfloor\frac{\text{len(padding)}}{2}\right\rfloor` 维度的 `input_x` 将会被填充。可根据以下示例以此类推：
 
           - 示例：若只需要填充输入tensor的最后一个维度，则 `padding` 的填充方式为 :math:`(\text{padding_left}, \text{padding_right})`;
@@ -32,3 +32,5 @@ mindspore.ops.pad
         - **ValueError** - `padding` 的长度不为偶数。
         - **ValueError** - `padding` 的长度大于6。
         - **ValueError** - `mode` 不为 ``'constant'`` 并且 `value` 不为 ``None`` 。
+        - **ValueError** - 在Ascend后端运行时，`input_x` 的维度大于5。
+        - **ValueError** - 在Ascend后端运行时，`padding` 中包含负值。
