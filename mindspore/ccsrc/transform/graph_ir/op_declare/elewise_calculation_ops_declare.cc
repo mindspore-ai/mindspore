@@ -309,11 +309,7 @@ INPUT_ATTR_MAP(ArgMaxV2) = {{kIndex3, ATTR_DESC(dtype, AnyTraits<GEType>())}};
 ATTR_MAP(ArgMaxV2) = {{"output_type", ATTR_DESC(dtype, AnyTraits<GEType>())}};
 OUTPUT_MAP(ArgMaxV2) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ArgMaxV2, kNameArgMaxV2, ADPT_DESC(ArgMaxV2))
-#ifdef BUILD_LITE
 REG_ADPT_DESC(ArgMax, kNameArgmax, ADPT_DESC(ArgMaxV2));
-#else
-REG_ADPT_DESC(ArgMax, kNameArgmax, CUST_ADPT_DESC(ArgMax));
-#endif
 
 // ArgMaxWithValue
 INPUT_MAP(ArgMaxWithValue) = {{1, INPUT_DESC(x)}};

@@ -127,20 +127,19 @@ target_link_libraries(mindspore_ascend PRIVATE mindspore_backend mindspore_core 
 target_link_libraries(mindspore_ascend PRIVATE mindspore_shared_lib)
 target_link_libraries(mindspore_ascend PRIVATE proto_input mindspore::protobuf)
 target_link_libraries(mindspore_ascend PRIVATE securec d_collective)
-target_link_libraries(mindspore_ascend PRIVATE lowlatency_collective)
 target_link_libraries(mindspore_ascend PRIVATE mindspore::ssl mindspore::crypto)
 set_target_properties(mindspore_ascend PROPERTIES INSTALL_RPATH
         ${ORIGIN_PATH}:${ORIGIN_PATH}/ascend:${ORIGIN_PATH}/../:${MS_KERNELS_INTERNAL_LIB_PATH}:${ASCEND_RPATH})
-
-set_target_properties(lowlatency_collective PROPERTIES INSTALL_RPATH 
-                    ${ORIGIN_PATH}/ms_kernels_internal/lccl/lib)
 
 if(DVM_LIB)
     target_link_libraries(mindspore_ascend PRIVATE ${DVM_LIB})
 endif()
 
 if(DEFINED ENV{MS_INTERNAL_KERNEL_HOME})
+    target_link_libraries(mindspore_ascend PRIVATE lowlatency_collective)
     target_link_libraries(mindspore_ascend PRIVATE ms_kernels_internal)
+    set_target_properties(lowlatency_collective PROPERTIES INSTALL_RPATH
+                    ${ORIGIN_PATH}/ms_kernels_internal/lccl/lib)
 endif()
 
 if(ENABLE_DEBUGGER)
