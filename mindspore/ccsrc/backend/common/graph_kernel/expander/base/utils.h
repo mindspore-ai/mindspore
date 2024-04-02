@@ -13,28 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#ifndef MINDSPORE_CCSRC_BACKEND_COMMON_GRAPH_KERNEL_EXPANDER_BASE_UTILS_H_
+#define MINDSPORE_CCSRC_BACKEND_COMMON_GRAPH_KERNEL_EXPANDER_BASE_UTILS_H_
+
+#include <vector>
+#include <string>
 #include "backend/common/graph_kernel/expander/base/ir_builder.h"
-#include "backend/common/graph_kernel/expander/base/utils.h"
 
 namespace mindspore::graphkernel::expander {
-REG_EXPANDER_FUNC("Identity").SetBody(BODYFUNC(ib) {
-  const auto &input_x = ib->input(0);
-  auto result = ib->Reshape(input_x, ib->Tensor(input_x->GetShape()));
-  return {result};
-});
+bool CheckAllFormatsSame(const DefaultIrBuilder *ib);
 
-REG_EXPANDER_FUNC("ZerosLike").SetBody(BODYFUNC(ib) {
-  const auto &input_x = ib->input(kIndex0);
-  auto shape = ib->Value(input_x->GetShape());
-  auto const_zero = ib->Tensor(0, input_x->GetDtype());
-  auto result = ib->BroadcastTo(const_zero, shape);
-  return {result};
-});
-
-REG_EXPANDER_FUNC("FillV2").SetBody(BODYFUNC(ib) {
-  const auto &shape = ib->input(kIndex0);
-  const auto &val = ib->input(kIndex1);
-  auto result = ib->BroadcastTo(val, shape);
-  return {result};
-});
+bool CheckAttrs(const DefaultIrBuilder *ib, const std::vector<std::string> &attrs);
+bool CheckSupportFormat(const DefaultIrBuilder *ib, const std::vector<std::vector<std::string>> &formats_list);
+ShapeVector ExpandDimsInferShape(const ShapeVector &shape, const std::vector<int64_t> &axis);
+std::vector<int64_t> GetAxisList(const ValuePtr &value);
 }  // namespace mindspore::graphkernel::expander
+#endif  // MINDSPORE_CCSRC_BACKEND_COMMON_GRAPH_KERNEL_EXPANDER_BASE_UTILS_H_
