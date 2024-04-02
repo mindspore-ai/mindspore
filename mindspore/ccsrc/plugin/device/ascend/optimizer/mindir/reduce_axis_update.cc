@@ -95,7 +95,7 @@ bool ReduceAxisUpdate::IsAxisEmpty(const ValueNodePtr &axis_node) const {
 
 bool ReduceAxisUpdate::IsAxisNone(const AnfNodePtr &cnode, const ValueNodePtr &axis_node) const {
   static std::set<std::string> op_name_support_none = {prim::kPrimMeanExt->name(), prim::kPrimSumExt->name(),
-                                                       prim::kPrimProdExt->name()};
+                                                       prim::kPrimProdExt->name(), prim::kPrimReduceAll->name()};
   auto cnode_name = common::AnfAlgo::GetCNodeName(cnode);
   if (op_name_support_none.find(cnode_name) == op_name_support_none.end()) {
     return false;

@@ -1,12 +1,12 @@
 #operator reduce_all
 reduce_all:
   args:
-    x:
+    input:
       dtype: tensor
     axis:
       dtype: tuple[int]
       type_cast: int, list[int], tensor
-      default: ()
+      default: None
     keep_dims:
       dtype: bool
       default: False
@@ -15,4 +15,7 @@ reduce_all:
     output:
       dtype: tensor
   function:
-    disable: True
+    name: all
+  dispatch:
+    enable: True
+    Ascend: ReduceAllAscend
