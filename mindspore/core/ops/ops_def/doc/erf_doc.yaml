@@ -18,7 +18,7 @@ erf:
 
     Raises:
         TypeError: If `input` is not a Tensor.
-        TypeError: If dtype of `input` is neither float16 float32 or float64.
+        TypeError: If dtype of `input` is not float16, float32 or float64.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

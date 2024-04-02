@@ -3,7 +3,7 @@ log1p:
         Returns the natural logarithm of one plus the input tensor element-wise.
 
         .. math::
-            out_i = {log_e}(input_i + 1)
+            out_i = \{log_e}(input_i + 1)
 
         Args:
             input (Tensor): The input tensor. The value must be greater than -1.

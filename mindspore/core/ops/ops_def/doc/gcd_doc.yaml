@@ -17,7 +17,7 @@ gcd:
 
         Raises:
             TypeError: If data type `input` or `other` is not int32 or int64.
-            ValueError: If shape of two inputs are not broadcastable.
+            ValueError: If shapes of two inputs are not broadcastable.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
