@@ -18,11 +18,12 @@
 Array Operators
 
 """
-
+from mindspore.common import Tensor
 from mindspore.ops.operations.array_ops import ArgMaxWithValue, ArgMinWithValue
 from mindspore.ops._primitive_cache import _get_cache_prim
 from mindspore.ops.auto_generate.gen_ops_prim import gather_d_op
 from mindspore.ops.auto_generate.gen_ops_def import max_, min_
+from ..auto_generate import OneHotExt
 
 # define Primitive global variables
 
@@ -172,4 +173,45 @@ def min(input, dim=None, keepdim=False):
     indices, values = argmin_with_value_op(input)
     return values, indices
 
-__all__ = ['gather', 'max', 'min']
+def one_hot(tensor, num_classes):
+    r"""
+    Computes a one-hot tensor.
+
+    The locations represented by tensor in `tensor` take value `1`, while all
+    other locations take value `0`.
+
+    Args:
+        tensor (Tensor): A tensor of indices. Tensor of shape :math:`(X_0, \ldots, X_n)`.
+            Data type must be int32 or int64.
+        num_classes (Union[int, Tensor]): A scalar defining the depth of the one-hot dimension.
+
+    Returns:
+        Tensor, one-hot tensor.
+
+    Raises:
+        TypeError: If `num_classes` is not an int.
+        TypeError: If dtype of `tensor` is not int32 or int64.
+        ValueError: If `num_classes` is less than 0.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> import mindspore.ops as ops
+        >>> from mindspore import Tensor
+        >>> tensor = Tensor(np.array([0, 1, 2]), mindspore.int32)
+        >>> num_classes = 3
+        >>> output = ops.extend.one_hot(tensor, num_classes)
+        >>> print(output)
+        [[1. 0. 0.]
+        [0. 1. 0.]
+        [0. 0. 1.]]
+    """
+    on_value = Tensor(1, dtype=tensor.dtype)
+    off_value = Tensor(0, dtype=tensor.dtype)
+    onehot = _get_cache_prim(OneHotExt)(-1)
+    return onehot(tensor, num_classes, on_value, off_value)
+
+__all__ = ['gather', 'max', 'min', 'one_hot']

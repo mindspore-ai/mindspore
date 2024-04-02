@@ -1,0 +1,23 @@
+#operator one_hot_ext
+one_hot_ext:
+    args:
+        tensor:
+            dtype: tensor
+        num_classes:
+            dtype: int
+            type_cast: tensor
+        on_value:
+            dtype: tensor
+        off_value:
+            dtype: tensor
+        axis:
+            dtype: int
+            default: -1
+            prim_init: True
+    returns:
+        output:
+            dtype: tensor
+    function:
+        disable: True
+    dispatch:
+        enable: True
