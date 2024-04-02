@@ -269,7 +269,11 @@ void ReduceCpuKernelFunc<T>::HandleInputAxis() {
 template <typename T>
 int ReduceCpuKernelFunc<T>::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &) {
   input_shape_ = inputs[kIndex0]->GetDeviceShapeVector();
-  axis_ = inputs[kIndex1]->GetValueWithCheck<std::vector<int64_t>>();
+  if (inputs[kIndex1]->GetType()->isa<TypeNone>()) {
+    axis_ = std::vector<int64_t>{};
+  } else {
+    axis_ = inputs[kIndex1]->GetValueWithCheck<std::vector<int64_t>>();
+  }
   if (kernel_name_ == kReduceSum) {
     skip_mode_ = inputs[kIndex3]->GetValueWithCheck<bool>();
   }
@@ -497,8 +501,16 @@ using SpecializeReduceFuncCreator = std::function<std::shared_ptr<CpuKernelFunc>
     .AddOutputAttr(MS_T),                             \
     SpecializeReduceFunc<T>
 
+#define REDUCE_AXIS_OPT_CPU_REG(MS_T, MS_S, T)        \
+  KernelAttr()                                        \
+    .AddInputAttr(MS_T)                               \
+    .AddOptionalInputAttr(kObjectTypeTuple, MS_S)     \
+    .AddInputAttr(kObjectTypeNumber, kNumberTypeBool) \
+    .AddOutputAttr(MS_T),                             \
+    SpecializeReduceFunc<T>
+
 static std::vector<std::pair<KernelAttr, SpecializeReduceFuncCreator>> kernel_all_any_list = {
-  {REDUCE_CPU_REG(kNumberTypeBool, kNumberTypeInt64, bool)}};
+  {REDUCE_AXIS_OPT_CPU_REG(kNumberTypeBool, kNumberTypeInt64, bool)}};
 
 static std::vector<std::pair<KernelAttr, SpecializeReduceFuncCreator>> kernel_max_min_list = {
   {REDUCE_CPU_REG(kNumberTypeFloat32, kNumberTypeInt64, float)},

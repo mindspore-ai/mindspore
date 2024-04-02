@@ -44,7 +44,7 @@ from mindspore.ops.auto_generate import (minimum, maximum, mul, sin, sinc, sinh,
                                          asin, asinh, atan, atan2, atanh, ceil, equal, erf, erfc, erfinv, exp, expm1,
                                          floor, floor_divide, floor_mod, gcd, greater, greater_equal, less, less_equal,
                                          log, log1p, neg, not_equal, pow, round, isfinite, argmax, mean, sum_ext_op,
-                                         prod_ext_op)
+                                         prod_ext_op, all)
 from mindspore.nn import layer
 from mindspore._checkparam import check_is_number
 from mindspore import _checkparam as validator
@@ -8521,70 +8521,6 @@ def _check_is_tensor(param_name, input, cls_name):
     if not isinstance(input, Tensor):
         raise TypeError(f"For {cls_name}, {param_name} must be a Tensor, but got {type(input)}.")
 
-
-def all(input, axis=None, keep_dims=False):
-    r"""
-    Reduces a dimension of `input` by the "logical AND" of all elements in the dimension, by default. And also can
-    reduce a dimension of `input` along the `axis`. Determine whether the dimensions of the output and input are the
-    same by controlling `keep_dims`.
-
-    Note:
-        The `axis` with tensor type is only used for compatibility with older versions and is not recommended.
-
-    Args:
-        input (Tensor): Input Tensor, has the shape :math:`(N, *)` where :math:`*` means,
-            any number of additional dimensions.
-        axis (Union[int, tuple(int), list(int), Tensor], optional): The dimensions to reduce.
-            Suppose the rank of `input` is r, `axis` must be in the range [-rank(input), rank(input)).
-            Default: ``None`` , all dimensions are reduced.
-        keep_dims (bool, optional): If ``True`` , keep these reduced dimensions and the length is 1.
-            If ``False`` , don't keep these dimensions. Default : ``False`` .
-
-    Returns:
-        Tensor, the dtype is bool.
-
-        - If `axis` is ``None`` , and `keep_dims` is ``False`` ,
-          the output is a 0-D Tensor representing the "logical AND" of all elements in the input Tensor.
-        - If `axis` is int, such as 2, and `keep_dims` is ``False`` ,
-          the shape of output is :math:`(input_1, input_3, ..., input_R)`.
-        - If `axis` is tuple(int), such as (2, 3), and `keep_dims` is ``False`` ,
-          the shape of output is :math:`(input_1, input_4, ..., input_R)`.
-        - If `axis` is 1-D Tensor, such as [2, 3], and `keep_dims` is ``False`` ,
-          the shape of output is :math:`(input_1, input_4, ..., input_R)`.
-
-    Raises:
-        TypeError: If `keep_dims` is not a bool.
-        TypeError: If `input` is not a Tensor.
-        TypeError: If `axis` is not one of the following: int, tuple, list or Tensor.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.array([[True, False], [True, True]]))
-        >>> # case 1: Reduces a dimension by the "logicalAND" of all elements in the dimension.
-        >>> output = ops.all(x, keep_dims=True)
-        >>> print(output)
-        [[False]]
-        >>> print(output.shape)
-        (1, 1)
-        >>> # case 2: Reduces a dimension along axis 0.
-        >>> output = ops.all(x, axis=0)
-        >>> print(output)
-        [ True False]
-        >>> # case 3: Reduces a dimension along axis 1.
-        >>> output = ops.all(x, axis=1)
-        >>> print(output)
-        [False True]
-    """
-    _check_is_tensor("input", input, "all")
-    if axis is None:
-        axis = ()
-    if input.dtype != mstype.bool_:
-        input = cast_(input, mstype.bool_)
-    return _get_cache_prim(P.ReduceAll)(keep_dims)(input, axis)
 
 
 def any(input, axis=None, keep_dims=False):
