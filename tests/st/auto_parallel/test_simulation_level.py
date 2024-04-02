@@ -24,7 +24,6 @@ from mindspore.communication.management import init, create_group, destroy_group
 
 os.environ["MS_SIMULATION_LEVEL"] = "0"
 context.set_context(mode=context.GRAPH_MODE)
-init()
 
 
 class DenseNet(nn.Cell):
@@ -45,6 +44,38 @@ input_ = Tensor(np.ones([32, 128]).astype(np.float32) * 0.01)
 label_ = Tensor(np.zeros([32, 128]).astype(np.float32))
 
 
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_run_graph_kbk():
+    """
+    Feature: simulation level.
+    Description: run graph when set simulation level 1.
+    Expectation: no exception.
+    """
+    os.environ["MS_SIMULATION_LEVEL"] = "1"
+    os.environ["RANK_SIZE"] = "32"
+    os.environ["RANK_ID"] = "1"
+    os.environ["GRAPH_OP_RUN"] = "1"
+    os.environ["OMPI_COMMAND"] = "1"
+    os.environ["PMIX_RANK"] = "1"
+    init()
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    net = DenseNet()
+    net.fc1.matmul.shard(((4, 1), (8, 1)))
+    optimizer = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
+    loss_fn = nn.SoftmaxCrossEntropyWithLogits()
+    net = WithLossCell(net, loss_fn)
+    train_net = TrainOneStepCell(net, optimizer)
+    train_net.set_train()
+    train_net(input_, label_)
+    context.reset_auto_parallel_context()
+    os.environ["GRAPH_OP_RUN"] = ""
+    os.environ["MS_SIMULATION_LEVEL"] = ""
+
+
+init()
 def test_get_group_size_default():
     """
     Feature: simulation level.
@@ -217,33 +248,4 @@ def test_run_graph():
     train_net.set_train()
     train_net(input_, label_)
     context.reset_auto_parallel_context()
-    os.environ["MS_SIMULATION_LEVEL"] = ""
-
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_run_graph_kbk():
-    """
-    Feature: simulation level.
-    Description: run graph when set simulation level 1.
-    Expectation: no exception.
-    """
-    os.environ["MS_SIMULATION_LEVEL"] = "1"
-    os.environ["RANK_SIZE"] = "32"
-    os.environ["RANK_ID"] = "1"
-    os.environ["GRAPH_OP_RUN"] = "1"
-    os.environ["OMPI_COMMAND"] = "1"
-    os.environ["PMIX_RANK"] = "1"
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
-    net = DenseNet()
-    net.fc1.matmul.shard(((4, 1), (8, 1)))
-    optimizer = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
-    loss_fn = nn.SoftmaxCrossEntropyWithLogits()
-    net = WithLossCell(net, loss_fn)
-    train_net = TrainOneStepCell(net, optimizer)
-    train_net.set_train()
-    train_net(input_, label_)
-    context.reset_auto_parallel_context()
-    os.environ["GRAPH_OP_RUN"] = ""
     os.environ["MS_SIMULATION_LEVEL"] = ""
