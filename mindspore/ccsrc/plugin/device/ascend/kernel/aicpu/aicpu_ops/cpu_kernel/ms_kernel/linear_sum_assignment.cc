@@ -58,7 +58,7 @@ inline bool CheckValue(const T *const cost, uint64_t nr, uint64_t nc) {
 
 #define LINEAR_SUM_ASSIGNMENT_COMPUTE_CASE(DTYPE, TYPE, CTX)                    \
   case (DTYPE): {                                                               \
-    ret = LinearSumAssignmentCompute<TYPE>(CTX);                                \
+    uint32_t ret = LinearSumAssignmentCompute<TYPE>(CTX);                       \
     if (ret != KERNEL_STATUS_OK) {                                              \
       CUST_KERNEL_LOG_ERROR(CTX, "LinearSumAssignment kernel compute failed."); \
       return ret;                                                               \
@@ -98,7 +98,7 @@ uint32_t LinearSumAssignmentCpuKernel::Compute(CpuKernelContext &ctx) {
       DTypeStr(col_ind_data_type).c_str());
     return KERNEL_STATUS_PARAM_INVALID;
   }
-  uint32_t ret;
+
   switch (matrix_data_type) {
     LINEAR_SUM_ASSIGNMENT_COMPUTE_CASE_ALL(ctx)
     default:
@@ -106,7 +106,7 @@ uint32_t LinearSumAssignmentCpuKernel::Compute(CpuKernelContext &ctx) {
                             DTypeStr(matrix_data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;
   }
-  return ret;
+  return KERNEL_STATUS_OK;
 }
 
 template <typename T>
