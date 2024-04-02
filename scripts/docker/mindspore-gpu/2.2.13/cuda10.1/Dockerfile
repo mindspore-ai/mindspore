@@ -1,4 +1,4 @@
-FROM nvidia/cuda:11.6.2-cudnn8-devel-ubuntu18.04
+FROM nvidia/cuda:10.1-cudnn7-devel-ubuntu18.04
 
 MAINTAINER MindSpore Authors
 
@@ -9,8 +9,14 @@ ENV CUDA_PATH /usr/local/cuda
 ENV PATH ${PYTHON_ROOT_PATH}/bin:${OMPI_ROOT_PATH}/bin:${CUDA_PATH}/bin:/usr/local/bin:$PATH
 ENV LD_LIBRARY_PATH ${OMPI_ROOT_PATH}/lib:${CUDA_PATH}/lib64:$LD_LIBRARY_PATH
 
-# install basic tools
-RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
+# Update nvidia GPG key and install base tools
+RUN rm /etc/apt/sources.list.d/cuda.list && \
+    apt-key del 7fa2af80 && \
+    DEBIAN_FRONTEND=noninteractive apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends wget && \
+    wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/cuda-keyring_1.0-1_all.deb && \
+    dpkg -i cuda-keyring_1.0-1_all.deb && \
+    DEBIAN_FRONTEND=noninteractive apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt install -y \
     vim \
     wget \
@@ -89,5 +95,7 @@ RUN cd /tmp \
     && rm -rf /tmp/openmpi-4.0.3 \
     && rm -f /tmp/openmpi-4.0.3.tar.gz
 
-# Install frequently used python packages
-RUN pip install --no-cache-dir decorator pandas scikit-learn pyyaml
+# Install MindSpore cuda-10.1, MindInsight, Serving whl package
+RUN pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/2.2.0/MindSpore/unified/x86_64/mindspore-2.2.0-cp37-cp37m-linux_x86_64.whl \
+    && pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/2.2.0/MindInsight/any/mindinsight-2.2.0-py3-none-any.whl \
+    && pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/2.2.0/Serving/x86_64/mindspore_serving-2.0.2-cp37-cp37m-linux_x86_64.whl
