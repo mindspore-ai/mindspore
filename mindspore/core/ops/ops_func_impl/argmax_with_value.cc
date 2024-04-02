@@ -151,7 +151,7 @@ ShapeArray ArgMaxWithValueFuncImpl::InferShape(const PrimitivePtr &primitive, co
 TypePtr ArgMaxWithValueFuncImpl::InferType(const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args) const {
   TypePtr input_x_type = input_args[0]->GetType();
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_x_type, common_valid_types, primitive->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_x_type, common_valid_types_with_bool, primitive->name());
   return std::make_shared<Tuple>(TypePtrList{std::make_shared<TensorType>(kInt64), input_args[0]->GetType()});
 }
 
@@ -162,7 +162,5 @@ TypePtrList ArgMaxWithValueFuncImpl::InferType(const PrimitivePtr &primitive, co
   TypePtrList type_ptr_list{kInt64, input_x_type};
   return type_ptr_list;
 }
-
-REGISTER_SIMPLE_INFER(kNameArgMaxWithValue, ArgMaxWithValueFuncImpl)
 }  // namespace ops
 }  // namespace mindspore

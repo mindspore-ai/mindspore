@@ -547,23 +547,76 @@ NodePtr MinOrMaxGrad(BpropBuilder *ib, const NodePtr &x, const NodePtr &axis, co
   return indicators / num_selected * grad;
 }
 
+inline NodePtr TensorScatterElementsZeroDim(Emitter *ib, const NodePtr &input, const ValuePtr &dim,
+                                            const NodePtr &index, const NodePtr &src,
+                                            const std::string &reduce_string) {
+  // TensorScatterElements op: ZeroDim need to expand to OneDim
+  auto input_expand = ib->ExpandDims(input, -1);
+  auto index_expand = ib->ExpandDims(index, -1);
+  auto src_expand = ib->ExpandDims(src, -1);
+  auto out = ib->Emit("TensorScatterElements", {input_expand, index_expand, src_expand},
+                      {{"reduction", MakeValue<string>(reduce_string)}, {"axis", dim}});
+  // recover OneDim To ZeroDim
+  return ib->Squeeze(out, MakeValue(ShapeVector{0}));
+}
+
+inline NodePtr TensorScatterElements(Emitter *ib, const NodePtr &input, const ValuePtr &dim, const NodePtr &index,
+                                     const NodePtr &src, const std::string &reduce_string) {
+  return ib->Emit("TensorScatterElements", {input, index, src},
+                  {{"reduction", MakeValue<string>(reduce_string)}, {"axis", dim}});
+}
+
+NodePtr Scatter_(BpropBuilder *ib, const NodePtr &input, const NodePtr &dim, const NodePtr &index, const NodePtr &src,
+                 const std::string &reduce_string) {
+  auto dim_val = dim->BuildValue();
+  if (!ops::IsValueKnown(dim_val)) {
+    MS_EXCEPTION(ValueError) << "For `TensorScatterElements` op, the `axis` must currently be a constant!";
+  }
+  auto input_shape = ib->GetShape(input);
+  if (input_shape.size() == 0) {
+    return TensorScatterElementsZeroDim(ib, input, dim_val, index, src, reduce_string);
+  } else if (IsDynamicRank(input_shape)) {
+    auto rank = ib->Emit("Rank", {input});
+    auto is_zero_dim_cond = ib->Emit("scalar_eq", {rank, ib->Value<int64_t>(0)});
+    auto scatter_zero_dim_impl = [&input, &dim_val, &index, &src, &reduce_string](Emitter *e) -> NodePtrList {
+      return {TensorScatterElementsZeroDim(e, input, dim_val, index, src, reduce_string)};
+    };
+    auto scatter_impl = [&input, &dim_val, &index, &src, &reduce_string](Emitter *e) -> NodePtrList {
+      return {TensorScatterElements(e, input, dim_val, index, src, reduce_string)};
+    };
+    return ib->Conditional(is_zero_dim_cond, scatter_zero_dim_impl, scatter_impl);
+  }
+  return TensorScatterElements(ib, input, dim_val, index, src, reduce_string);
+}
+
 NodePtr ArgminOrArgmaxGrad(BpropBuilder *ib, const NodePtr &x, const NodePtr &axis, const NodePtr &keep_dims,
                            const NodePtr &out, const NodePtr &dout, const bool is_max) {
   auto keep_dims_value = keep_dims->BuildValue();
-  if (!ops::IsValueKnown(keep_dims_value)) {
-    MS_LOG_EXCEPTION
-      << "For bprop of `ArgminWithValue` or `ArgMaxWithValue` op, keep_dims must currently be a constant";
-  }
   NodePtr dout_value = ib->TupleGetItem(dout, 1);
   NodePtr indices = ib->TupleGetItem(out, 0);
-  auto keep_dims_bool = GetValue<bool>(keep_dims_value);
-  if (!keep_dims_bool) {
-    indices = ib->Emit("ExpandDims", {indices, axis});
-    dout_value = ib->Emit("ExpandDims", {dout_value, axis});
+  auto input_shape = ib->GetShape(x);
+  if (ops::IsValueKnown(keep_dims_value) && !IsDynamicRank(input_shape)) {
+    auto is_zero_dim = input_shape.size() == 0;
+    auto keep_dims_bool = GetValue<bool>(keep_dims_value);
+    indices = (keep_dims_bool || is_zero_dim) ? indices : ib->Emit("ExpandDims", {indices, axis});
+    dout_value = (keep_dims_bool || is_zero_dim) ? dout_value : ib->Emit("ExpandDims", {dout_value, axis});
+  } else {
+    auto rank = ib->Emit("Rank", {x});
+    auto rank_is_zero = ib->Emit("scalar_eq", {rank, ib->Value<int64_t>(0)});
+    auto cond = ib->LogicalOr(ib->ScalarToTensor(keep_dims, kBool), ib->ScalarToTensor(rank_is_zero, kBool));
+    auto indices_expand = [&indices, &axis](Emitter *e) -> NodePtrList {
+      return {e->Emit("ExpandDims", {indices, axis})};
+    };
+    auto indices_ori = [&indices](Emitter *e) -> NodePtrList { return {indices}; };
+    indices = ib->Conditional(cond, indices_ori, indices_expand);
+    auto dout_expand = [&dout_value, &axis](Emitter *e) -> NodePtrList {
+      return {e->Emit("ExpandDims", {dout_value, axis})};
+    };
+    auto dout_ori = [&dout_value](Emitter *e) -> NodePtrList { return {dout_value}; };
+    dout_value = ib->Conditional(cond, dout_ori, dout_expand);
   }
   NodePtr dx_zeros = ib->ZerosLike(x);
-  constexpr int reduce_value = 0;
-  auto dx = ib->Emit("Scatter", {dx_zeros, axis, indices, dout_value, ib->Value<int64_t>(reduce_value)});
+  auto dx = Scatter_(ib, dx_zeros, axis, indices, dout_value, "none");
   return dx;
 }
 
