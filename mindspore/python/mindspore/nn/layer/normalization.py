@@ -130,6 +130,12 @@ class _BatchNorm(Cell):
         self.assign_sub_var = P.AssignSub().shard(data_parallel_strategy)
 
     def construct(self, x):
+        x_shape = self.shape(x)
+        reshaped_x = x
+        if len(x_shape) == 2:
+            reshaped_x = self.reshape(x, (x_shape[0], x_shape[1], 1, 1))
+        elif len(x_shape) == 3:
+            reshaped_x = self.reshape(x, (x_shape[0], x_shape[1], x_shape[2], 1))
         if self.use_batch_statistics is None:
             if self.training:
                 return self.bn_train(x,
@@ -138,11 +144,14 @@ class _BatchNorm(Cell):
                                      self.moving_mean,
                                      self.moving_variance)[0]
             if not self.training:
-                return self.bn_infer(x,
-                                     self.gamma,
-                                     self.beta,
-                                     self.moving_mean,
-                                     self.moving_variance)[0]
+                bn_out = self.bn_infer(reshaped_x,
+                                       self.gamma,
+                                       self.beta,
+                                       self.moving_mean,
+                                       self.moving_variance)[0]
+                if len(x_shape) < 4:
+                    bn_out = self.reshape(bn_out, x_shape)
+                return bn_out
 
         if self.use_batch_statistics:
             return self.bn_train(x,
@@ -151,11 +160,14 @@ class _BatchNorm(Cell):
                                  self.moving_mean,
                                  self.moving_variance)[0]
 
-        return self.bn_infer(x,
-                             self.gamma,
-                             self.beta,
-                             self.moving_mean,
-                             self.moving_variance)[0]
+        bn_out = self.bn_infer(reshaped_x,
+                               self.gamma,
+                               self.beta,
+                               self.moving_mean,
+                               self.moving_variance)[0]
+        if len(x_shape) < 4:
+            bn_out = self.reshape(bn_out, x_shape)
+        return bn_out
 
     def extend_repr(self):
         return 'num_features={}, eps={}, momentum={}, gamma={}, beta={}, moving_mean={}, moving_variance={}'.format(
