@@ -77,8 +77,7 @@ void CheckFlashAttentionScoreInputShape(const AbstractBasePtr &input, const std:
 void CheckFlashAttentionScoreAttnMaskShape(const AbstractBasePtr &attn_mask, const std::string &op_name,
                                            int64_t sparse_mode, int64_t batch_size, int64_t q_head_num,
                                            int64_t q_seq_len, int64_t kv_seq_len) {
-  const std::vector<int64_t> need_compress_attn_mask_mode = {kSparseLeftUpCausal, kSparseRightDownCausal, kSparseBand,
-                                                             kSparsePrefix};
+  const std::vector<int64_t> need_compress_attn_mask_mode = {kSparseLeftUpCausal, kSparseRightDownCausal, kSparseBand};
   if (std::find(need_compress_attn_mask_mode.begin(), need_compress_attn_mask_mode.end(), sparse_mode) !=
       need_compress_attn_mask_mode.end()) {
     CheckFlashAttentionScoreInputShape(
@@ -94,10 +93,25 @@ void CheckFlashAttentionScoreAttnMaskShape(const AbstractBasePtr &attn_mask, con
   }
 }
 
-void CheckFlashAttentionScorePrefixShape(const AbstractBasePtr &prefix, const std::string &op_name, int64_t sparse_mode,
-                                         int64_t batch_size) {
+void CheckFlashAttentionScorePrefix(const AbstractBasePtr &prefix, const std::string &op_name, int64_t sparse_mode,
+                                    int64_t batch_size) {
   if (sparse_mode == kSparsePrefix) {
-    CheckFlashAttentionScoreInputShape(prefix, ShapeVector{batch_size}, op_name, "prefix");
+    auto prefix_type = prefix->GetType();
+    MS_EXCEPTION_IF_NULL(prefix_type);
+    if (!prefix_type->isa<Tuple>()) {
+      MS_LOG(EXCEPTION) << "For [" << op_name << "], prefix type should be TupleType.";
+    }
+    auto prefix_tuple = prefix_type->cast<TuplePtr>();
+    MS_EXCEPTION_IF_NULL(prefix_tuple);
+    if (prefix_tuple->elements().size() != LongToSize(batch_size)) {
+      MS_LOG(EXCEPTION) << "For [" << op_name << "], prefix list size should be equal to " << batch_size << ", but got "
+                        << prefix_tuple->elements().size();
+    }
+    for (const auto &element : prefix_tuple->elements()) {
+      if (element->type_id() != kNumberTypeInt64) {
+        MS_LOG(EXCEPTION) << "For [" << op_name << "], prefix element type should be int64.";
+      }
+    }
   } else {
     if (!IsFlashAttentionScoreOptionalInputNotPass(prefix)) {
       MS_LOG(EXCEPTION) << op_name << ": 'prefix' must be None if sparse_mode is not " << kSparsePrefix;
@@ -276,8 +290,7 @@ BaseShapePtr FlashAttentionScoreFuncImpl::InferShape(const PrimitivePtr &primiti
     auto sparse_mode = sparse_mode_opt.value();
     CheckFlashAttentionScoreAttnMaskShape(input_args[kFlashAttentionScoreInputAttnMaskIndex], op_name, sparse_mode,
                                           batch_size, q_head_num, q_seq_len, kv_seq_len);
-    CheckFlashAttentionScorePrefixShape(input_args[kFlashAttentionScoreInputPrefixIndex], op_name, sparse_mode,
-                                        batch_size);
+    CheckFlashAttentionScorePrefix(input_args[kFlashAttentionScoreInputPrefixIndex], op_name, sparse_mode, batch_size);
   }
 
   return ConstructInferShape(ShapeVector{batch_size, q_head_num, q_seq_len, kFlashAttentionScoreSoftmaxLastDim},
@@ -303,19 +316,6 @@ TypePtr FlashAttentionScoreFuncImpl::InferType(const PrimitivePtr &prim,
   if (!IsFlashAttentionScoreOptionalInputNotPass(input_args[kFlashAttentionScoreInputAttnMaskIndex])) {
     auto attn_mask_type = input_args[kFlashAttentionScoreInputAttnMaskIndex]->GetType();
     CheckAndConvertUtils::CheckTensorTypeValid("attn_mask", attn_mask_type, {kUInt8, kBool, kFloat16}, op_name);
-  }
-  if (!IsFlashAttentionScoreOptionalInputNotPass(input_args[kFlashAttentionScoreInputPrefixIndex])) {
-    auto prefix_type = input_args[kFlashAttentionScoreInputPrefixIndex]->GetType();
-    if (!prefix_type->isa<Tuple>()) {
-      MS_LOG(EXCEPTION) << "For [" << op_name << "], prefix type should be TupleType.";
-    }
-    auto prefix_tuple = prefix_type->cast<TuplePtr>();
-    MS_EXCEPTION_IF_NULL(prefix_tuple);
-    for (const auto &element : prefix_tuple->elements()) {
-      if (element->type_id() != kNumberTypeInt64) {
-        MS_LOG(EXCEPTION) << "For [" << op_name << "], prefix element type should be int64.";
-      }
-    }
   }
 
   auto keep_prob_value_ptr = input_args[kFlashAttentionScoreInputKeepProbIndex]->GetValue();
