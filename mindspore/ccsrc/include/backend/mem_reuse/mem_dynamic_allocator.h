@@ -43,7 +43,7 @@
 namespace mindspore {
 namespace device {
 // The status of memory buf.
-enum class DynamicMemBufStatus : int { kMemBufIdle, kMemBufUsed, kMemBufEagerFree };
+enum class DynamicMemBufStatus : int { kMemBufIdle, kMemBufUsed, kMemBufEagerFree, kMemBufUsedByEvent };
 // Memory allocator type is used to record the memory classification statistics information.
 enum class AllocatorType : int { kWeight, kConstantValue, kKernelOutput, kGraphOutput, kOther };
 constexpr int kAllocatorTypeNum = 5;
@@ -88,7 +88,7 @@ class BACKEND_EXPORT DynamicMemPoolBestFit {
   std::vector<DeviceMemPtr> AllocContinuousTensorMem(const std::vector<size_t> &size_list,
                                                      uint32_t stream_id = kDefaultStreamIndex);
   // The main program entry of memory free.
-  void FreeTensorMem(const DeviceMemPtr &device_addr, bool from_free_tensor_mem = true);
+  void FreeTensorMem(const DeviceMemPtr &device_addr);
   // The main program entry of part memorys free and part memorys keep.
   void FreePartTensorMems(const std::vector<DeviceMemPtr> &free_addrs, const std::vector<DeviceMemPtr> &keep_addrs,
                           const std::vector<size_t> &keep_addr_sizes);
@@ -130,7 +130,7 @@ class BACKEND_EXPORT DynamicMemPoolBestFit {
                    const DeviceEventPtr &event);
   bool WaitEvent(int64_t task_id_on_stream, uint32_t user_stream_id, uint32_t memory_stream_id);
   bool WaitEvent(int64_t task_id_on_stream, uint32_t memory_stream_id);
-  bool WaitEvents();
+  bool WaitAllEvents();
 #ifdef WITH_BACKEND
 
  protected:
@@ -180,10 +180,10 @@ class BACKEND_EXPORT DynamicMemPoolBestFit {
   static bool CmpMemBlock(const DeviceMemPtr &device_addr, const DynamicMemBlockPtr &mem_block);
 
   // Free memory inner with no lock, the caller need lock.
-  void FreeTensorMemInner(const DeviceMemPtr &device_addr, bool from_free_tensor_mem = true);
-  bool CanCombineMemBuf(const DynamicMemBufPtr &mem_buf, const DynamicMemBlockPtr &mem_block,
-                        DynamicMemBufStatus origin_status, DynamicMemBufStatus target_status,
-                        bool from_free_tensor_mem = true);
+  void FreeTensorMemInner(const DeviceMemPtr &device_addr);
+  // Pre combine mem buf, return false when mem buf can not combine.
+  bool PreCombineMemBuf(const DynamicMemBufPtr &mem_buf, const DynamicMemBlockPtr &mem_block,
+                        DynamicMemBufStatus target_status);
   // Combine the memory buf when memory free, to avoid the memory fragmentation.
   void CombineMemBuf(const DynamicMemBlockPtr &mem_block, const DeviceAddrMapMemBuf::iterator &iter,
                      const MemStatusManagerPtr &mem_mng, DynamicMemBufStatus origin_status,
@@ -257,6 +257,7 @@ class DynamicMemAllocatorDebugInfo {
   static thread_local AllocatorDebugInfo debug_info_;
 };
 
+using TaskIdOnStreamEvent = std::pair<int64_t, DeviceEventPtr>;
 struct DynamicMemBuf {
   DynamicMemBuf(DeviceMemPtr addr, DynamicMemBufStatus status, size_t size, uint32_t stream_id)
       : device_addr_(addr), status_(status), size_(size), stream_id_(stream_id) {}
@@ -268,6 +269,8 @@ struct DynamicMemBuf {
         stream_id_(stream_id),
         allocator_name_(allocator_name),
         allocator_type_{allocator_type} {}
+  DynamicMemBuf(const DynamicMemBuf &) = delete;
+  DynamicMemBuf &operator=(const DynamicMemBuf &) = delete;
 
   // Record event on mem buf.
   bool RecordEvent(int64_t task_id_on_stream, uint32_t user_stream_id, const DeviceEventPtr &event);
@@ -279,9 +282,7 @@ struct DynamicMemBuf {
   bool IsEventNotUsed();
 
   // Wait all events that bound on mem buf.
-  bool WaitEvents();
-
-  void set_can_free_by_wait(bool can_free_by_wait) { can_free_by_wait_ = can_free_by_wait; }
+  bool WaitAllEvents();
 
   DeviceMemPtr device_addr_;
   DynamicMemBufStatus status_;
@@ -294,10 +295,7 @@ struct DynamicMemBuf {
   AllocatorType allocator_type_{AllocatorType::kOther};
 
   // Parameter: user_stream_id, list of <task_id_on_stream, event>.
-  std::unordered_map<uint32_t, std::list<std::pair<int64_t, DeviceEventPtr>>> stream_task_id_on_stream_events_;
-
-  // can_free_by_wait_ indicates if mem buf has been freed, if can_free_by_wait_ is true, mem buf can be freed by wait.
-  bool can_free_by_wait_{false};
+  std::shared_ptr<std::unordered_map<uint32_t, std::shared_ptr<std::list<TaskIdOnStreamEvent>>>> events_{nullptr};
 };
 
 class DynamicMemBlock {
