@@ -154,6 +154,43 @@ def _to_full_shapes(shapes, device_num):
     return new_shapes
 
 
+def _origin_shapes(shapes):
+    """resume origin shape after full shape."""
+    if _need_to_full():
+        device_num = _get_device_num() // _get_pipeline_stages()
+    else:
+        return shapes
+    new_shapes = []
+    dataset_strategy = ()
+    if context.get_auto_parallel_context("dataset_strategy") not in ("data_parallel", "full_batch"):
+        dataset_strategy = context.get_auto_parallel_context("dataset_strategy")
+    if dataset_strategy:
+        if len(shapes) != len(dataset_strategy):
+            raise ValueError("The input shapes size {} is not equal to "
+                             "dataset strategy size {}".format(len(shapes), len(dataset_strategy)))
+        for index, shape in enumerate(shapes):
+            if len(shape) != len(dataset_strategy[index]):
+                raise ValueError("The input shapes item size {} is not equal to "
+                                 "dataset strategy item size {}".format(len(shape), len(dataset_strategy[index])))
+            new_shape = []
+            for i, item in enumerate(shape):
+                if item > 0:
+                    new_shape += (item // dataset_strategy[index][i],)  # static shape
+                else:
+                    new_shape += (item,)  # dynamic shape
+            new_shapes.append(new_shape)
+        return new_shapes
+    for shape in shapes:
+        shape_v = []
+        for i, item in enumerate(shape):
+            if i == 0 and item > 0:
+                shape_v += (item // device_num,)  # only for static shape
+            else:
+                shape_v += (item,)
+        new_shapes.append(shape_v)
+    return new_shapes
+
+
 def _to_full_tensor(elem, global_device_num, global_rank, scaling_sens=None):
     """Convert numpy to tensor, expanding batch dimension according to device_num, adapt to feed the data
        from host solution.

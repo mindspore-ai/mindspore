@@ -27,7 +27,8 @@ from mindspore.dataset.engine import offload
 from mindspore import context, nn
 from mindspore.train._utils import _exec_datagraph, _get_types_and_shapes, _construct_tensor_list
 from mindspore.parallel._utils import _get_device_num, _get_global_rank, _need_to_full, \
-    _to_full_shapes, _get_pipeline_stages, _change_symbols_for_parallel
+    _to_full_shapes, _get_pipeline_stages, _change_symbols_for_parallel, _is_in_auto_parallel_mode, \
+    _origin_shapes
 from mindspore.parallel._ps_context import _is_role_sched
 from mindspore.ops import operations as P
 from mindspore.common.auto_dynamic_shape import _auto_dynamic_shape
@@ -134,7 +135,10 @@ def _generate_network_with_dataset(network, dataset_helper, queue_name):
         return _generate_dataset_sink_mode_net(network, new_shapes, dataset_types, queue_name)
 
     if network.get_inputs() and None not in network.get_inputs():
-        _check_inputs(network.get_inputs(), dataset_shapes, dataset_types)
+        if _is_in_auto_parallel_mode():
+            _check_inputs(network.get_inputs(), _origin_shapes(dataset_shapes), dataset_types)
+        else:
+            _check_inputs(network.get_inputs(), dataset_shapes, dataset_types)
     elif context.get_context("mode") == context.PYNATIVE_MODE:
         dataset_shapes = tuple([(-2,)] * len(dataset_shapes))
     network = _generate_dataset_sink_mode_net(
