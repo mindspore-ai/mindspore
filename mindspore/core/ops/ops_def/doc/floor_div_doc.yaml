@@ -29,7 +29,7 @@ floor_div:
         and the data type is the one with higher precision or higher digits among the two inputs.
 
     Raises:
-        TypeError: If `input` nor `other` is a Tensor, number.Number or bool.
+        TypeError: If `input` and `other` are not the following: Tensor, number.Number or bool.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
