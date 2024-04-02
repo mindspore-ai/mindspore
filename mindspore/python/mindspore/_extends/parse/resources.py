@@ -28,12 +28,12 @@ from mindspore.ops.composite import multitype_ops
 from mindspore._c_expression import security
 from . import standard_method as M
 from . import trope as T
-from .namespace import CellNamespace
+from .namespace import ModuleNamespace
 
 # namespace define
-functional_ns = CellNamespace('mindspore.ops.functional')
-composite_ns = CellNamespace('mindspore.ops.composite')
-trope_ns = CellNamespace('mindspore._extends.parse.trope')
+functional_ns = ModuleNamespace('mindspore.ops.functional')
+composite_ns = ModuleNamespace('mindspore.ops.composite')
+trope_ns = ModuleNamespace('mindspore._extends.parse.trope')
 
 SYMBOL_UNDEFINE = 0xFF      # Undefined var and function
 

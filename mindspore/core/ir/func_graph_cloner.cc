@@ -389,36 +389,39 @@ ParameterPtr Cloner::AddParameter(const FuncGraphPtr &func_graph, const AnfNodeP
 }
 
 namespace {
-void FilterMonadInput(const AnfNodeWeakPtrList &old_inputs, AnfNodeWeakPtrList *new_inputs,
+bool FilterMonadInput(const AnfNodeWeakPtrList &old_inputs, AnfNodeWeakPtrList *new_inputs,
                       AnfNodePtr *possible_u_monad, AnfNodePtr *possible_io_monad) {
   AnfNodePtr local_u_monad = nullptr;
   AnfNodePtr local_io_monad = nullptr;
-  (void)std::copy_if(old_inputs.cbegin(), old_inputs.cend(), std::back_inserter(*new_inputs),
-                     [&local_u_monad, &local_io_monad](const auto &weak_input) -> bool {
-                       auto input = weak_input.lock();
-                       MS_EXCEPTION_IF_NULL(input);
-                       if (HasAbstractUMonad(input)) {
-                         if (local_u_monad != nullptr) {
-                           MS_LOG(INTERNAL_EXCEPTION)
-                             << "Cannot have multiple U Monad in one call, first: " << local_u_monad->ToString()
-                             << ", second: " << input->ToString();
-                         }
-                         local_u_monad = input;
-                         return false;
-                       }
-                       if (HasAbstractIOMonad(input)) {
-                         if (local_io_monad != nullptr) {
-                           MS_LOG(INTERNAL_EXCEPTION)
-                             << "Cannot have multiple IO Monad in one call, first: " << local_io_monad->ToString()
-                             << ", second: " << input->ToString();
-                         }
-                         local_io_monad = input;
-                         return false;
-                       }
-                       return true;
-                     });
+  for (const auto &weak_input : old_inputs) {
+    auto input = weak_input.lock();
+    MS_EXCEPTION_IF_NULL(input);
+    // Should be only one U Monad input.
+    if (HasAbstractUMonad(input)) {
+      if (local_u_monad != nullptr) {
+        MS_LOG(ERROR) << "Cannot have multiple U Monad in one call, first: " << local_u_monad->ToString()
+                      << ", second: " << input->ToString();
+        return false;
+      }
+      local_u_monad = input;
+      continue;
+    }
+    // Should be only one IO Monad input.
+    if (HasAbstractIOMonad(input)) {
+      if (local_io_monad != nullptr) {
+        MS_LOG(ERROR) << "Cannot have multiple IO Monad in one call, first: " << local_io_monad->ToString()
+                      << ", second: " << input->ToString();
+        return false;
+      }
+      local_io_monad = input;
+      continue;
+    }
+    // Collect all non-monad inputs.
+    (void)new_inputs->emplace_back(weak_input);
+  }
   *possible_u_monad = local_u_monad;
   *possible_io_monad = local_io_monad;
+  return true;
 }
 
 // After lift, func_graph will not refer any free variable, so DummyContext is proper.
@@ -435,6 +438,25 @@ AnfNodePtr BuildPrimitiveValueNode(const PrimitivePtr &primitive) {
   auto abstract = std::make_shared<abstract::PrimitiveAbstractClosure>(primitive, new_node);
   new_node->set_abstract(abstract);
   return new_node;
+}
+
+void PresetPartialAbstractClosure(const CNodePtr &cnode, const FuncGraphPtr &func_graph,
+                                  const AnfNodeWeakPtrList &weak_inputs, bool preset_abstract) {
+  if (!preset_abstract) {
+    return;
+  }
+  constexpr auto ignore_partial_fg_count = 2;
+  AbstractBasePtrList args_abs_list;
+  (void)std::for_each(weak_inputs.cbegin() + ignore_partial_fg_count, weak_inputs.cend(),
+                      [&args_abs_list](const AnfNodeWeakPtr &weak_node) {
+                        auto node = weak_node.lock();
+                        MS_EXCEPTION_IF_NULL(node);
+                        (void)args_abs_list.emplace_back(node->abstract());
+                      });
+  MS_EXCEPTION_IF_NULL(func_graph->ToAbstract());
+  auto abs = std::make_shared<abstract::PartialAbstractClosure>(
+    func_graph->ToAbstract()->cast<abstract::AbstractFuncAtomPtr>(), args_abs_list, cnode);
+  cnode->set_abstract(abs);
 }
 }  // namespace
 
@@ -504,20 +526,7 @@ CNodePtr Cloner::SetPartialEdges(const FuncGraphPtr &func_graph, const CNodePtr 
                   std::back_inserter(new_inputs));
   auto new_cnode = func_graph->NewCNodeWeak(std::move(new_inputs));
   MS_EXCEPTION_IF_NULL(new_cnode);
-
-  if (preset_abstract()) {
-    AbstractBasePtrList args_abs_list;
-    (void)std::for_each(new_cnode->weak_inputs().cbegin() + ignore_partial_fg_count, new_cnode->weak_inputs().cend(),
-                        [&args_abs_list](const AnfNodeWeakPtr &weak_node) {
-                          auto node = weak_node.lock();
-                          MS_EXCEPTION_IF_NULL(node);
-                          (void)args_abs_list.emplace_back(node->abstract());
-                        });
-    MS_EXCEPTION_IF_NULL(graph->ToAbstract());
-    auto abs = std::make_shared<abstract::PartialAbstractClosure>(
-      graph->ToAbstract()->cast<abstract::AbstractFuncAtomPtr>(), args_abs_list, new_cnode);
-    new_cnode->set_abstract(abs);
-  }
+  PresetPartialAbstractClosure(new_cnode, graph, new_cnode->weak_inputs(), preset_abstract());
 
   MS_LOG(DEBUG) << "Rebuild partial CNode, old_node: " << cnode->DebugString()
                 << ", partial_cnode: " << partial_cnode->DebugString() << ", new_node: " << new_cnode->DebugString()
@@ -643,8 +652,15 @@ void Cloner::AddInputs(const FuncGraphPtr &func_graph_user, const FuncGraphPtr &
   AnfNodePtr param_io_monad;
   AnfNodeWeakPtrList inputs;
   AnfNodeWeakPtrList add_params;
-  FilterMonadInput(cnode->weak_inputs(), &inputs, &input_u_monad, &input_io_monad);
-  FilterMonadInput(params, &add_params, &param_u_monad, &param_io_monad);
+  if (!FilterMonadInput(cnode->weak_inputs(), &inputs, &input_u_monad, &input_io_monad)) {
+    constexpr auto recursive_level = 2;
+    MS_LOG(INTERNAL_EXCEPTION) << "Cannot have multiple U Monad or multiple IO Monad in one CNode, cnode: "
+                               << cnode->DebugString(recursive_level);
+  }
+  if (!FilterMonadInput(params, &add_params, &param_u_monad, &param_io_monad)) {
+    MS_LOG(INTERNAL_EXCEPTION) << "Cannot have multiple U Monad or multiple IO Monad in Parameters list, func_graph: "
+                               << func_graph->ToString();
+  }
 
   // Append new inputs from free variable.
   constexpr auto caller_first_arg_index = 2;
@@ -682,20 +698,7 @@ void Cloner::AddInputs(const FuncGraphPtr &func_graph_user, const FuncGraphPtr &
 
   cnode->set_weak_inputs(inputs);
   OrderParameters(func_graph, inputs, caller_first_arg_index);
-
-  if (preset_abstract()) {
-    AbstractBasePtrList args_abs_list;
-    (void)std::for_each(inputs.begin() + caller_first_arg_index, inputs.end(),
-                        [&args_abs_list](const AnfNodeWeakPtr &weak_node) {
-                          auto node = weak_node.lock();
-                          MS_EXCEPTION_IF_NULL(node);
-                          (void)args_abs_list.emplace_back(node->abstract());
-                        });
-    MS_EXCEPTION_IF_NULL(func_graph->ToAbstract());
-    auto abs = std::make_shared<abstract::PartialAbstractClosure>(
-      func_graph->ToAbstract()->cast<abstract::AbstractFuncAtomPtr>(), args_abs_list, cnode);
-    cnode->set_abstract(abs);
-  }
+  PresetPartialAbstractClosure(cnode, func_graph, inputs, preset_abstract());
   MS_LOG(DEBUG) << "Create new partial CNode: " << cnode->DebugString();
 }
 

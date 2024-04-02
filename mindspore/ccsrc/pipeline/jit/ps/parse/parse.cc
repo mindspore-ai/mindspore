@@ -168,6 +168,10 @@ void Parser::InitParserEnvironment(const py::object &obj) {
   Parser::top_func_graph_ = FuncGraphWeakPtr();
   ScopeManager::GetInstance().ClearScope();
   (void)python_adapter::CallPyFn(PYTHON_MOD_PARSE_MODULE, PYTHON_PARSE_GENERATE_SCOPE, obj);
+  // CellList need convert to FuncGraph in Parse, add flag for input from top graph.
+  if (py::hasattr(obj, PYTHON_CELL_AS_LIST)) {
+    py::setattr(obj, PYTHON_CELL_LIST_FROM_TOP, py::bool_(true));
+  }
 }
 
 void Parser::CleanParserResource() {

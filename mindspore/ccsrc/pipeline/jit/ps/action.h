@@ -29,6 +29,7 @@ namespace mindspore {
 namespace pipeline {
 using ActionItem = std::pair<std::string, std::function<bool(ResourcePtr)>>;
 
+bool BootstrapAction(const ResourcePtr &resource);
 bool ParseAction(const ResourcePtr &resource);
 bool SymbolResolveAction(const ResourcePtr &resource);
 bool AutoMonadAction(const ResourcePtr &resource);
