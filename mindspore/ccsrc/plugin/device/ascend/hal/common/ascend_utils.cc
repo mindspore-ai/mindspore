@@ -122,6 +122,11 @@ bool ErrorManagerAdapter::Init() {
 }
 
 std::string ErrorManagerAdapter::GetErrorMessage(bool add_title) {
+  int32_t device_id;
+  if (CALL_ASCEND_API(aclrtGetDevice, &device_id) != ACL_SUCCESS) {
+    MS_LOG(INFO) << "The device is not set yet, no need to fetch error from device.";
+    return "";
+  }
   const char *message = CALL_ASCEND_API(aclGetRecentErrMsg);
   const string error_message = message == nullptr ? "" : message;
   if (error_message.empty() || error_message.find(kUnknowErrorString) != string::npos) {
