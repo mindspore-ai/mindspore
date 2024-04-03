@@ -3102,7 +3102,19 @@ REG_BPROP_BUILDER("MeanExt").SetUnusedInputs({i0, i4}).SetBody(BODYFUNC(ib) {
   if (axis_type->isa<TypeNone>()) {
     axis = ib->Value<std::vector<int64_t>>({});
   }
-  auto grad = SumGrad(ib, input, axis, dout, GetValue<bool>(keep_dims->BuildValue()));
+
+  NodePtr grad;
+  auto keep_dims_opt = mindspore::ops::GetScalarValue<bool>(keep_dims->BuildValue());
+  if (!keep_dims_opt.has_value()) {
+    auto true_branch = [&](Emitter *e) -> NodePtrList { return {SumGrad(e, input, axis, dout, true)}; };
+    auto false_branch = [&](Emitter *e) -> NodePtrList { return {SumGrad(e, input, axis, dout, false)}; };
+    auto keep_dims_true = ib->Equal(keep_dims, ib->Value<bool>(true));
+    grad = ib->Conditional(keep_dims_true, true_branch, false_branch);
+  } else {
+    grad = SumGrad(ib, input, axis, dout, keep_dims_opt.value());
+  }
+  grad = ib->Cast(grad, ib->GetDtype(input));
+
   NodePtr div_shape_node;
   if (IsDynamic(ib->GetShape(input)) || IsDynamic(ib->GetShape(out))) {
     auto shape_out_sz = ib->DynSize(out, kFloat32);
@@ -3116,7 +3128,7 @@ REG_BPROP_BUILDER("MeanExt").SetUnusedInputs({i0, i4}).SetBody(BODYFUNC(ib) {
     auto div_shape = ib->GetSize(input) / shape_out_sz;
     div_shape_node = ib->Tensor(div_shape, ib->GetDtype(grad));
   }
-  auto dx = ib->Cast(ib->RealDiv(grad, div_shape_node), ib->GetDtype(input));
+  auto dx = ib->Div(grad, div_shape_node);
   return {dx, ib->OutZeros(axis), ib->OutZeros(keep_dims), ib->OutZeros(dtype)};
 });
 
@@ -3132,8 +3144,19 @@ REG_BPROP_BUILDER("SumExt").SetUnusedInputs({i0, i4}).SetBody(BODYFUNC(ib) {
   if (axis_type->isa<TypeNone>()) {
     axis = ib->Value<std::vector<int64_t>>({});
   }
-  auto dx = ib->Cast(SumGrad(ib, input, axis, dout, GetValue<bool>(keep_dims->BuildValue())), ib->GetDtype(input));
-  return {dx, ib->OutZeros(axis), ib->OutZeros(keep_dims), ib->OutZeros(dtype)};
+
+  NodePtr dx;
+  auto keep_dims_opt = mindspore::ops::GetScalarValue<bool>(keep_dims->BuildValue());
+  if (!keep_dims_opt.has_value()) {
+    auto true_branch = [&](Emitter *e) -> NodePtrList { return {SumGrad(e, input, axis, dout, true)}; };
+    auto false_branch = [&](Emitter *e) -> NodePtrList { return {SumGrad(e, input, axis, dout, false)}; };
+    auto keep_dims_true = ib->Equal(keep_dims, ib->Value<bool>(true));
+    dx = ib->Conditional(keep_dims_true, true_branch, false_branch);
+  } else {
+    dx = SumGrad(ib, input, axis, dout, keep_dims_opt.value());
+  }
+
+  return {ib->Cast(dx, ib->GetDtype(input)), ib->OutZeros(axis), ib->OutZeros(keep_dims), ib->OutZeros(dtype)};
 });
 REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop

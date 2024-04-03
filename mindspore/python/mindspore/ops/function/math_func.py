@@ -42,7 +42,7 @@ from mindspore.ops.auto_generate import (minimum, maximum, mul, sin, sinc, sinh,
                                          matrix_exp, sqrt, rsqrt, square, trace, nextafter, abs, acos, acosh, angle,
                                          asin, asinh, atan, atan2, atanh, ceil, equal, erf, erfc, erfinv, exp, expm1,
                                          floor, floor_divide, floor_mod, gcd, greater, greater_equal, less, less_equal,
-                                         log, log1p, neg, not_equal, pow, round, isfinite, argmax, mean, sum_ext)
+                                         log, log1p, neg, not_equal, pow, round, isfinite, argmax, mean, sum_ext_op)
 from mindspore.nn import layer
 from mindspore._checkparam import check_is_number
 from mindspore import _checkparam as validator
@@ -9930,7 +9930,7 @@ def sum(input, dim=None, keepdim=False, *, dtype=None):
          [48.]
          [54.]]]
     """
-    return sum_ext(input, dim, keepdim, dtype)
+    return sum_ext_op(input, dim, keepdim, dtype)
 
 
 def tanhshrink(input):

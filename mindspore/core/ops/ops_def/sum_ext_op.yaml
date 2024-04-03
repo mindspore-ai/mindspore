@@ -22,3 +22,5 @@ sum_ext:
         Ascend: SumExtAscend
         CPU: SumExtCPU
         GPU: SumExtGPU
+    function:
+        disable: True
