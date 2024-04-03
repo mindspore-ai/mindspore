@@ -133,8 +133,10 @@ DEF_PURE_SHAPE_CALC(g_dense_shapecalc)
       reshape_w_shape[0] = 1;
       return {reshape_x_shape, reshape_w_shape, reshape_ret_shape};
     }
-    if (x_shape.size() != 1) {
-      reshape_ret_shape = x_shape;
+    reshape_ret_shape = x_shape;
+    if (w_shape.size() == 1) {
+      reshape_ret_shape.erase(reshape_ret_shape.end() - 1);
+    } else {
       reshape_ret_shape.back() = -1;
     }
     return {reshape_x_shape, reshape_w_shape, reshape_ret_shape};
@@ -142,9 +144,13 @@ DEF_PURE_SHAPE_CALC(g_dense_shapecalc)
   .SetInfer([](const ShapeArray &inputs, const HashSet<size_t> &) -> std::vector<int64_t> {
     constexpr const int64_t kRank2 = 2;
     int64_t ret_size = -1LL;
-    if (!IsDynamicRank(inputs[0])) {
+    if (!IsDynamicRank(inputs[0]) && !IsDynamicRank(inputs[1])) {
       if (inputs[0].size() == 1) {
-        ret_size = 0;
+        if (inputs[1].size() == 1) {
+          ret_size = 0;
+        } else {
+          ret_size = 1;
+        }
       } else {
         ret_size = inputs[0].size();
       }
@@ -157,15 +163,11 @@ REG_FALLBACK_BUILDER("Dense").SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto w = ib->GetInput(kIndex1);
   NodePtrList reshape_shapes;
-  auto has_bias = ib->GetAttr<bool>("has_bias");
   auto x_shape = x->shape();
   auto w_shape = w->shape();
   bool is_empty_tensor = x_shape.size() == 1 && w_shape.size() == 1 && x_shape[0] == 0 && w_shape[0] == 0;
   if (is_empty_tensor) {
-    if (has_bias) {
-      return {ib->GetInput(kIndex2)};
-    }
-    return {ib->Tensor(0, x->dtype())};
+    return {ib->GetInput(kIndex2)};
   }
   bool is_dynamic_rank = IsDynamicRank(x_shape) || IsDynamicRank(w_shape);
   bool need_reshape = (is_dynamic_rank || x_shape.size() != kRank2 || w_shape.size() != kRank2);
@@ -176,8 +178,9 @@ REG_FALLBACK_BUILDER("Dense").SetBody(BODYFUNC(ib) {
   }
   auto ret = ib->MatMul(x, w, false, true);
   ret = ib->Cast(ret, x->dtype());
-  if (has_bias) {
-    auto b = ib->GetInput(kIndex2);
+  auto b = ib->GetInput(kIndex2);
+  auto b_value = b->BuildValue();
+  if (!b_value->isa<None>()) {
     ret = ib->Add(ret, b);
   }
   if (need_reshape) {

@@ -30,7 +30,7 @@ from mindspore.ops.primitive import Primitive
 from mindspore.ops.primitive import PrimitiveWithInfer
 from mindspore.ops.primitive import PrimitiveWithCheck
 from mindspore.ops.primitive import prim_attr_register
-from ..auto_generate import (CeLU, Flatten, LogSoftmax, ReLU, ReLU6,
+from ..auto_generate import (CeLU, Flatten, LogSoftmax, ReLU, ReLU6, Dense,
                              Elu, Sigmoid, Softmax, HSwish, HSigmoid, AvgPool, BiasAdd,
                              NLLLoss, OneHot, GeLU, FastGeLU, PReLU,
                              GridSampler3D, GridSampler2D, LayerNorm, HShrink, AdamWeightDecay, Dropout,
@@ -9792,54 +9792,6 @@ class MaxPoolWithArgmaxV2(Primitive):
         self.add_prim_attr("pads", self.pads)
         self.add_prim_attr("dilation", self.dilation)
         self.add_prim_attr("ceil_mode", self.ceil_mode)
-
-
-class Dense(Primitive):
-    r"""
-    The dense connected fusion operator.
-
-    Applies dense connected operator for the input. The implement of the operation is as:
-
-    .. math::
-        output = x @ w ^ T + b,
-
-    where :math:`x` is the input tensor, :math:`w` is a weight matrix with the same data type as the :math:`x` ,
-    and :math:`b` is a bias vector with the same data type as the :math:`x` (only if `b` is not ``None``).
-
-    Inputs:
-        - **x** (Tensor) - The shape must meet the following requirement: :math:`len(x.shape)>0`.
-        - **w** (Tensor) - The shape must meet the following requirements:
-          If :math:`len(x.shape)>1`, :math:`len(w.shape)=2`. If :math:`len(x.shape)=1`, :math:`len(w.shape)=1`.
-          :math:`w.shape[-1]=x.shape[-1]`.
-        - **b** (Union[Tensor, None]) - If `b` is not ``None``, the shape must meet the following requirements:
-          If :math:`len(x.shape)>1`, :math:`len(b.shape)=0` or :math:`len(b.shape)=1` .
-          If :math:`len(b.shape)=1`, :math:`b.shape[0]=w.shape[0]`.
-          If :math:`len(x.shape)=1`, :math:`len(b.shape)=0`.
-
-    Outputs:
-        If :math:`len(x.shape)>1`, Tensor of shape :math:`(*x.shape[:-1], w.shape[0])`.
-        If :math:`len(x.shape)=1`, Tensor of shape :math:`()`.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.random.random((4, 5, 6, 7)).astype(np.float32))
-        >>> weight = Tensor(np.random.random((6, 7)).astype(np.float32))
-        >>> bias = Tensor(np.random.random((6,)).astype(np.float32))
-        >>> dense = ops.Dense()
-        >>> output = dense(x, weight, bias)
-        >>> print(output.shape)
-        (4, 5, 6, 6)
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize Dense."""
-        self.init_prim_io_names(inputs=['x', 'w', 'b'], outputs=["output"])
-        self.add_prim_attr("has_bias", True)
 
 
 class WKV(Primitive):

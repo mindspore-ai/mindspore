@@ -307,15 +307,50 @@ REG_BPROP_BUILDER("BiasAdd").SetUnusedInputs({i0, i1, i3}).SetBody(BODYFUNC(ib) 
 
 DEF_PURE_SHAPE_CALC(g_dense_shapecalc0)
   .SetCalc([](const ShapeArray &inputs) -> ShapeArray {
-    auto &b_shape = inputs.at(kIndex0);
-    ShapeVector ret_shape;
-    if (b_shape.size() > 0) {
-      ret_shape.push_back(0);
+    auto &x_shape = inputs.at(kIndex0);
+    auto &w_shape = inputs.at(kIndex1);
+    auto &b_shape = inputs.at(kIndex2);
+    auto &dout_shape = inputs.at(kIndex3);
+    ShapeVector x_2d_shape = {-1, x_shape.back()};
+    ShapeVector w_2d_shape = {-1, w_shape.back()};
+    ShapeVector dout_2d_shape;
+    if (dout_shape.size() == 0) {
+      dout_2d_shape = {1, 1};
+    } else if (w_shape.size() == 1) {
+      dout_2d_shape = {-1, 1};
+    } else {
+      dout_2d_shape = {-1, dout_shape.back()};
     }
-    return {ret_shape};
+    ShapeVector b_reduce_shape;
+    if (b_shape.size() > 0) {
+      b_reduce_shape.push_back(0);
+    }
+
+    return {x_2d_shape, w_2d_shape, dout_2d_shape, b_reduce_shape, x_shape, w_shape};
   })
   .SetInfer([](const ShapeArray &inputs, const HashSet<size_t> &) -> std::vector<int64_t> {
-    return {IsDynamicRank(inputs[0]) ? -1LL : static_cast<int64_t>(inputs[0].size())};
+    auto &x_shape = inputs[0];
+    auto &w_shape = inputs[1];
+    auto &b_shape = inputs[2];
+    auto &dout_shape = inputs[3];
+
+    auto b_reduce_rank = -1LL;
+    if (!IsDynamicRank(b_shape)) {
+      if (b_shape.size() > 0) {
+        b_reduce_rank = 1;
+      } else {
+        b_reduce_rank = 0;
+      }
+    }
+
+    return {
+      IsDynamicRank(x_shape) ? -1LL : 2LL,
+      IsDynamicRank(w_shape) ? -1LL : 2LL,
+      IsDynamicRank(dout_shape) ? -1LL : 2LL,
+      b_reduce_rank,
+      IsDynamicRank(x_shape) ? -1LL : static_cast<int64_t>(x_shape.size()),
+      IsDynamicRank(w_shape) ? -1LL : static_cast<int64_t>(w_shape.size()),
+    };
   });
 
 REG_BPROP_BUILDER("Dense").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
@@ -326,69 +361,38 @@ REG_BPROP_BUILDER("Dense").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
   auto dtype = ib->GetDtype(x);
   bool is_complex = (*dtype) == (*kComplex64) || (*dtype) == (*kComplex128);
   NodePtr dx, dw, db;
-  auto dout_shp = dout->shape();
-  if (dout_shp.size() == 0) {
-    db = b->need_compute_grad_out() ? dout : ib->OutZeros(b);
-    if (is_complex) {
-      dout = ib->Emit("Conj", {dout});
-    }
-    if (w->need_compute_grad_out()) {
-      dw = ib->Mul(dout, x);
-      if (is_complex) {
-        dw = ib->Emit("Conj", {dw});
-      }
-    } else {
-      dw = ib->OutZeros(w);
-    }
+  NodePtrList ret_shape = ib->ShapeCalc(g_dense_shapecalc0, {x, w, b, dout});
 
-    if (x->need_compute_grad_out()) {
-      dx = ib->Mul(dout, w);
-      if (is_complex) {
-        dx = ib->Emit("Conj", {dx});
-      }
-    } else {
-      dx = ib->OutZeros(x);
-    }
-    return {dx, dw, db};
-  }
-  ShapeVector dout_2d_shape = {-1, dout_shp.back()};
-  ShapeVector x_shape = dout_shp;
-  if (w->shape().back() == -2) {
-    x_shape.back() = -1;
-  } else {
-    x_shape.back() = w->shape().back();
-  }
+  auto x_2d_shape = ret_shape[kIndex0];
+  auto w_2d_shape = ret_shape[kIndex1];
+  auto dout_2d_shape = ret_shape[kIndex2];
+  auto b_reduce_shape = ret_shape[kIndex3];
+  auto x_shape = ret_shape[kIndex4];
+  auto w_shape = ret_shape[kIndex5];
+
   dout = ib->Reshape(dout, dout_2d_shape);
-  NodePtrList ret_shape = ib->ShapeCalc(g_dense_shapecalc0, {b});
-  db = b->need_compute_grad_out() ? ib->ReduceSum(dout, ret_shape[kIndex0]) : ib->OutZeros(b);
+  db = b->need_compute_grad_out() ? ib->ReduceSum(dout, b_reduce_shape) : ib->OutZeros(b);
   if (is_complex) {
     dout = ib->Emit("Conj", {dout});
   }
   if (x->need_compute_grad_out()) {
+    w = ib->Reshape(w, w_2d_shape);
     dx = ib->MatMul(dout, w, false, false);
     if (is_complex) {
       dx = ib->Emit("Conj", {dx});
     }
-    if (x_shape.size() != 2) {
-      dx = ib->Reshape(dx, x_shape);
-    }
+    dx = ib->Reshape(dx, x_shape);
   } else {
     dx = ib->OutZeros(x);
   }
 
   if (w->need_compute_grad_out()) {
-    if (x_shape.size() != 2) {
-      int64_t first_dim = 1;
-      for (size_t i = 0; i < x_shape.size() - 1; ++i) {
-        first_dim *= x_shape[i];
-      }
-      ShapeVector x_2d_shape = {first_dim, x_shape.back()};
-      x = ib->Reshape(x, x_2d_shape);
-    }
+    x = ib->Reshape(x, x_2d_shape);
     dw = ib->MatMul(dout, x, true, false);
     if (is_complex) {
       dw = ib->Emit("Conj", {dw});
     }
+    dw = ib->Reshape(dw, w_shape);
   } else {
     dw = ib->OutZeros(w);
   }
