@@ -584,7 +584,8 @@ NodePtr CtrlFlowBlock::While(const NodePtr &cond, const BlockFunc &while_body_fu
   MS_EXCEPTION_IF_NULL(cond_cnode);
 
   cond_cnode->set_func_graph(while_fg);
-  auto while_fg_emitter = std::make_unique<IrEmitter>(while_fg, std::make_shared<CppInferWithPartial>());
+  auto while_fg_emitter = CreateInnerEmitter(while_fg, std::make_shared<CppInferWithPartial>());
+  MS_EXCEPTION_IF_NULL(while_fg_emitter);
   AnfNodePtrList main_while_fg_inputs = {NewValueNode(while_fg)};
   std::map<AnfNodePtr, ParameterPtr> param_map;
   auto replace_by_param = [&main_while_fg_inputs, &param_map, &while_fg](const AnfNodePtr &inp) {
@@ -652,7 +653,7 @@ NodePtr CtrlFlowBlock::While(const NodePtr &cond, const BlockFunc &while_body_fu
   auto tb = while_fg_emitter->Emit("Partial", body_with_inputs);
   auto fb = while_fg_emitter->Emit("Partial", empty_body_fg_with_inputs);
   auto s = while_fg_emitter->Emit("Switch", {cond, tb, fb});
-  auto cnode = while_fg_emitter->func_graph()->NewCNode({s->get()});
+  auto cnode = while_fg->NewCNode({s->get()});
   cnode->set_abstract(out_abstract_);
   while_fg->set_output(cnode);
 
@@ -661,11 +662,16 @@ NodePtr CtrlFlowBlock::While(const NodePtr &cond, const BlockFunc &while_body_fu
   return emitter_->NewIrNode(main_cnode);
 }
 
+EmitterPtr CtrlFlowBlock::CreateInnerEmitter(const FuncGraphPtr &fg, const ExpanderInferPtr &infer) const {
+  return emitter_creator_ ? emitter_creator_(fg, infer) : std::make_shared<IrEmitter>(fg, infer);
+}
+
 NodePtr CtrlFlowBlock::BuildSubgraph(const BlockFunc &func) {
   auto fg = std::make_shared<FuncGraph>();
   MS_EXCEPTION_IF_NULL(fg);
   fg->set_indirect(std::make_shared<bool>(true));
-  auto e = std::make_unique<IrEmitter>(fg, emitter_->infer());
+  auto e = CreateInnerEmitter(fg, emitter_->infer());
+  MS_EXCEPTION_IF_NULL(e);
   auto outputs = func(e.get());
   if (outputs.empty()) {
     MS_LOG(EXCEPTION) << "The block function should not return empty list.";
@@ -694,7 +700,8 @@ NodePtrList CtrlFlowBlock::BuildSubgraphOfPartial(const BlockFunc &func) {
   auto fg = std::make_shared<FuncGraph>();
   MS_EXCEPTION_IF_NULL(fg);
   fg->set_indirect(std::make_shared<bool>(true));
-  auto sub_emitter = std::make_unique<IrEmitter>(fg, emitter_->infer());
+  auto sub_emitter = CreateInnerEmitter(fg, emitter_->infer());
+  MS_EXCEPTION_IF_NULL(sub_emitter);
   auto output = func(sub_emitter.get());
   if (output.empty()) {
     MS_LOG(EXCEPTION) << "The block function should not return empty list.";
@@ -771,16 +778,6 @@ NodePtr IrEmitter::EmitValue(const ValuePtr &value) {
   auto node = NewIrNode(NewValueNode(value));
   infer_->Infer(node);
   return node;
-}
-
-NodePtr IrEmitter::Conditional(const NodePtr &cond, const BlockFunc &true_case, const BlockFunc &false_case) {
-  CtrlFlowBlock cfb(this, this->func_graph_);
-  return cfb.IfThenElse(cond, true_case, false_case);
-}
-
-NodePtr IrEmitter::While(const NodePtr &cond, const BlockFunc &body, const NodePtrList &init_list) {
-  CtrlFlowBlock cfb(this, this->func_graph_);
-  return cfb.While(cond, body, init_list);
 }
 
 NodePtr operator+(const NodePtr &lhs, const NodePtr &rhs) { return lhs->emitter()->Add(lhs, rhs); }

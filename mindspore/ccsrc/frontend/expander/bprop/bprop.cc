@@ -117,6 +117,26 @@ class PynativeIRBuilder : public IrBuilder {
     return output_nodes;
   }
 
+  NodePtr Conditional(const NodePtr &cond, const BlockFunc &true_case, const BlockFunc &false_case) override {
+    has_ctrl_flow_ = true;
+    CtrlFlowBlock cfb(this, this->func_graph(),
+                      [this](const FuncGraphPtr &fg, const ExpanderInferPtr &infer) -> EmitterPtr {
+                        return std::make_shared<PynativeIRBuilder>(this->prim_, fg, infer, this->users_, this->dout_);
+                      });
+    this->func_graph()->set_flag(kFlagIsControlFlow, true);
+    return cfb.IfThenElse(cond, true_case, false_case);
+  }
+
+  NodePtr While(const NodePtr &cond, const BlockFunc &body, const NodePtrList &init_list) override {
+    has_ctrl_flow_ = true;
+    CtrlFlowBlock cfb(this, this->func_graph(),
+                      [this](const FuncGraphPtr &fg, const ExpanderInferPtr &infer) -> EmitterPtr {
+                        return std::make_shared<PynativeIRBuilder>(this->prim_, fg, infer, this->users_, this->dout_);
+                      });
+    this->func_graph()->set_flag(kFlagIsControlFlow, true);
+    return cfb.While(cond, body, init_list);
+  }
+
  protected:
   NodePtr EmitGetItemValue(const NodePtrList &inputs) {
     if (inputs[0]->input_type() != InputType::kConstant) {
@@ -197,6 +217,7 @@ class PynativeIRBuilder : public IrBuilder {
   AnfNodePtr dout_;
   bool need_infer_{true};
   PrimitivePtr prim_;
+  bool has_ctrl_flow_{false};
 };
 
 class PynativeIRBuilderWithCache : public PynativeIRBuilder {
@@ -274,16 +295,6 @@ class PynativeIRBuilderWithCache : public PynativeIRBuilder {
     return output_nodes;
   }
 
-  NodePtr Conditional(const NodePtr &cond, const BlockFunc &true_case, const BlockFunc &false_case) override {
-    has_ctrl_flow_ = true;
-    return PynativeIRBuilder::Conditional(cond, true_case, false_case);
-  }
-
-  NodePtr While(const NodePtr &cond, const BlockFunc &body, const NodePtrList &init_list) override {
-    has_ctrl_flow_ = true;
-    return PynativeIRBuilder::While(cond, body, init_list);
-  }
-
  protected:
   NodePtr EmitOp(const PrimitivePtr &prim, const NodePtrList &inputs) override {
     auto node = PynativeIRBuilder::EmitOp(prim, inputs);
@@ -329,7 +340,6 @@ class PynativeIRBuilderWithCache : public PynativeIRBuilder {
   }
 
   bool need_record_nodes_{false};
-  bool has_ctrl_flow_{false};
   std::vector<std::pair<NodePtr, NodePtrList>> bprop_nodes_;
 };
 
