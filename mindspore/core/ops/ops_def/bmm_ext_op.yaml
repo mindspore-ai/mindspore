@@ -1,5 +1,5 @@
-#operator batch_matmul
-batch_mat_mul_ext:
+#operator bmm_ext
+bmm_ext:
   args:
     input:
       dtype: tensor
@@ -8,8 +8,8 @@ batch_mat_mul_ext:
   returns:
     output:
       dtype: tensor
-  function:
-    name: bmm_ext
+  class:
+    name: BatchMatMulExt
   dispatch:
     enable: True
     Ascend: BatchMatMulExtAscend

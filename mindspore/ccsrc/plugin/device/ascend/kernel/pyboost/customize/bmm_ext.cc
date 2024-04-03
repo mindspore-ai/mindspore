@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "plugin/device/ascend/kernel/pyboost/customize/batch_mat_mul_ext.h"
+#include "plugin/device/ascend/kernel/pyboost/customize/bmm_ext.h"
 #include <memory>
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 #include "kernel/pyboost/op_register.h"
