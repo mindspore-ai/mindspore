@@ -592,7 +592,12 @@ REG_BPROP_BUILDER("MatMulExt").SetUnusedInputs({}).SetBody(BODYFUNC(ib) {
   auto w_origin = ib->GetInput(kIndex1);
   auto y_origin = ib->GetInput(kIndex2);
   auto dout_origin = ib->GetInput(kIndex3);
-
+  auto x_origin_shape = x_origin->shape();
+  bool is_empty_tensor =
+    std::any_of(x_origin_shape.begin(), x_origin_shape.end(), [](const auto &element) { return element == 0; });
+  if (is_empty_tensor) {
+    return {x_origin, x_origin};
+  }
   auto x = x_origin;
   auto w = w_origin;
   auto dout = dout_origin;
