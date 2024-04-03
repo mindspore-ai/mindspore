@@ -29,8 +29,6 @@
 #include "kernel/common_utils.h"
 #include "include/errorcode.h"
 
-bool SaveOM(const void *model, size_t length, const std::string &file_path);
-
 namespace mindspore::kernel {
 namespace acl {
 class CustomAscendKernelMod : public kernel::KernelMod {
