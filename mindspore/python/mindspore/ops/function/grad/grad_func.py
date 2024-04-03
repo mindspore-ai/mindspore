@@ -22,7 +22,6 @@ from mindspore.common import Tensor
 from mindspore.common import dtype as mstype
 from mindspore.nn.cell import Cell
 from mindspore.nn.grad.cell_grad import _LinearizeInner
-from mindspore.ops.primitive import constexpr, _primexpr
 from mindspore.ops.function.array_func import ones, expand_dims, size, reshape, broadcast_to, transpose, zeros
 from mindspore.ops.composite import _Vmap, _Grad, _TaylorOperation, GradOperation
 from mindspore.ops import operations as P
@@ -33,25 +32,21 @@ dtype = P.DType()
 oneslike = P.OnesLike()
 
 
-@constexpr
 def _check_has_aux_type(inputs):
     if not isinstance(inputs, bool):
         raise TypeError("The 'has_aux' must be bool type.")
 
 
-@constexpr
 def _raise_type_error():
     raise TypeError("The inputs type must be a Tensor, tuple or list of Tensors.")
 
 
-@constexpr
 def _check_duplicate_grad_position(grad_position):
     """Check if `grad_position` has duplicate positions when `grad_position` has more than one numbers."""
     if len(set(grad_position)) != len(grad_position):
         raise ValueError("There are duplicate positions in `grad_position`, please check it")
 
 
-@constexpr
 def _convert_grad_position_type(grad_position):
     """Check and convert the type and size of grad position index."""
     if isinstance(grad_position, tuple):
@@ -74,7 +69,6 @@ def _convert_grad_position_type(grad_position):
     return grad_position
 
 
-@constexpr
 def _check_grad_position(grad_position, args_num):
     """Check and convert grad position index."""
     grad_position = _convert_grad_position_type(grad_position)
@@ -84,7 +78,6 @@ def _check_grad_position(grad_position, args_num):
     return grad_position
 
 
-@constexpr
 def _get_grad_op(get_by_list, get_by_position, has_aux, get_value=False, return_ids=False):
     return _Grad(get_by_list=get_by_list, get_by_position=get_by_position, has_aux=has_aux, get_value=get_value,
                  return_ids=return_ids)
@@ -539,7 +532,6 @@ def _trans_derivative_inputs(primals_item):
     return primals_item
 
 
-@constexpr
 def _check_derivative_order(order):
     """check input order of derivative"""
     if not isinstance(order, int):
@@ -650,7 +642,6 @@ _grad_single = GradOperation(sens_param=True)
 _grad_all = GradOperation(sens_param=True, get_all=True)
 
 
-@constexpr
 def _check_jvp_input_v_len(inputs_len, v_len):
     if inputs_len != v_len:
         raise ValueError(f'v has invalid length: should be {inputs_len}, but got {v_len}')
@@ -975,7 +966,6 @@ def vjp(fn, *inputs, weights=None, has_aux=False):
     return res, wrap_container
 
 
-@_primexpr
 def _jac_generate_target_dimension(x):
     """For given length = len(x), this method generates target dimension tuple (1, 2, 3,..., length, 0)."""
     dim = ()

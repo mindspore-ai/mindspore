@@ -24,7 +24,6 @@ import numpy as np
 import mindspore as ms
 import mindspore.common.dtype as mstype
 from mindspore.ops import operations as P
-from mindspore.ops.primitive import constexpr
 from mindspore.ops.primitive import _primexpr
 import mindspore.ops as ops
 from mindspore.ops.operations._inner_ops import DynamicBroadcastTo
@@ -121,7 +120,6 @@ unsorted_segment_sum_ = P.UnsortedSegmentSum()
 zeros_like_ = P.ZerosLike()
 
 
-@_primexpr
 def get_x_shape(x_shape):
     if ops.is_sequence_shape_unknown(x_shape):
         return (-2,)
@@ -133,12 +131,11 @@ def get_x_shape(x_shape):
     return (s,)
 
 
-@constexpr
 def _check_attr_dtype(param_name, input_dtype, allow_dtypes, cls_name):
     validator.check_value_type(param_name, input_dtype, allow_dtypes, cls_name)
 
 
-check_flatten_order_const = constexpr(validator.check_flatten_order)
+check_flatten_order_const = validator.check_flatten_order
 
 
 ##############################
@@ -568,7 +565,6 @@ def padding(x, pad_dim_size=8):
     return padding_(x)
 
 
-@constexpr
 def _check_axis_type(axis, type_int=True, type_tuple=True, type_list=True, ops_name="ops"):
     """Check axis argument type."""
     if type_int and isinstance(axis, int):
@@ -1435,7 +1431,6 @@ def flatten(input, order='C', *, start_dim=1, end_dim=-1):
     return reshape_(input, new_shape)
 
 
-@constexpr
 def _check_select_type_match(scalar, tensor_type, scalar_name, tensor_name):
     if isinstance(scalar, int) and tensor_type != mstype.int32:
         raise TypeError(f"For functional operator[select], the input[{scalar_name}] is int, "
@@ -1445,13 +1440,11 @@ def _check_select_type_match(scalar, tensor_type, scalar_name, tensor_name):
                         f"then the input[{tensor_name}] must be a Tensor of float32.")
 
 
-@_primexpr
 def _check_select_shape_match(input_shape, cond_shape, tensor_name):
     if input_shape != cond_shape:
         raise ValueError(f"For functional operator[select], the cond shape must be same as {tensor_name} shape.")
 
 
-@constexpr
 def _check_select_type(is_cond_tensor, is_x_scalar, is_y_scalar, is_x_tensor, is_y_tensor):
     if not is_cond_tensor:
         raise TypeError(f"For functional operator[select], the input[cond] must be a Tensor.")
@@ -1463,13 +1456,11 @@ def _check_select_type(is_cond_tensor, is_x_scalar, is_y_scalar, is_x_tensor, is
                         f"then the input[x] must be a Tensor.")
 
 
-@constexpr
 def _check_select_shape_same(cond_shape, x_shape, y_shape):
     """Check if input of select has same shape."""
     return cond_shape == x_shape and x_shape == y_shape and cond_shape == y_shape
 
 
-@constexpr
 def get_max_value(x, y, z):
     """Get the maximum value of x, y and z."""
     if x >= y and x >= z:
@@ -1479,7 +1470,6 @@ def get_max_value(x, y, z):
     return z
 
 
-@constexpr
 def _calc_broadcast_shape(cond_shape, x_shape, y_shape):
     """Calculate broadcast shape for select"""
     converted_shape = []
@@ -4021,7 +4011,6 @@ def index_fill(x, axis, index, value):
     return index_fill_(x, axis, index, value)
 
 
-@constexpr
 def _check_check_axis_in_range(axis, ndim):
     """Checks axes are with the bounds of ndim"""
     axis = validator.check_axis_in_range(axis, ndim)
@@ -4760,7 +4749,6 @@ def _canonicalize_axis(axis, ndim):
     raise ValueError(f"duplicate axis in {axis}.")
 
 
-@_primexpr
 def _list_comprehensions(obj, item=None, return_tuple=False):
     """
     Generates a new list or tuple by list comprehension.
@@ -4790,7 +4778,6 @@ def _list_comprehensions(obj, item=None, return_tuple=False):
     return res
 
 
-@_primexpr
 def _tuple_setitem(tup, idx, value):
     """
     Returns a tuple with specified `idx` set to `value`.
@@ -5404,7 +5391,6 @@ def expand(input_x, size):
     return expand_op(input_x, size)
 
 
-@_primexpr
 def _check_fold_param(param, param_name):
     """Check the parameters of fold op."""
     validator.check_value_type(param_name, param, [int, list, tuple], 'fold')
@@ -5490,7 +5476,6 @@ def fold(input, output_size, kernel_size, dilation=1, padding=0, stride=1):
     return fold_op(input, output_size)
 
 
-@_primexpr
 def _check_unfold_params(param, param_name, param_size):
     """Check the parameters of unfold op."""
     validator.check_value_type(param_name, param, [int, tuple, list], 'unfold')
@@ -5588,7 +5573,6 @@ def unfold(input, kernel_size, dilation=1, padding=0, stride=1):
     return out
 
 
-@_primexpr
 def _check_diagonal_axes(dim1, dim2, x_ndim):
     """Check the parameters of unfold op."""
     axes = validator.check_axis_valid((dim1, dim2), x_ndim)
@@ -5601,7 +5585,6 @@ def _check_is_tensor(param_name, input, cls_name):
         raise TypeError(f"For {cls_name}, {param_name} must be a Tensor, but got {type(input)}.")
 
 
-@_primexpr
 def _check_diagonal_scatter_shape(diag_shape, src_shape):
     if diag_shape != src_shape:
         raise ValueError(f"For diagonal_scatter, the shape of src should equal to the shape of input diagonal,"
@@ -5919,7 +5902,6 @@ def hstack(tensors):
     return _concat(tuple_of_tensor)
 
 
-@constexpr
 def _check_axis_valid(axis, ndim):
     """
     Checks axis are valid given ndim, and returns axis that can be passed
@@ -5934,7 +5916,6 @@ def _check_axis_valid(axis, ndim):
     return (_check_check_axis_in_range(axis, ndim),)
 
 
-@constexpr
 def _get_moved_perm(ndim, source, destination):
     """
     Helper function for movedim, returns permutation after moving axis
@@ -6032,7 +6013,6 @@ def moveaxis(x, source, destination):
     return movedim(x, source, destination)
 
 
-@_primexpr
 def _check_swapaxes_axis(axes, ndim):
     return validator.check_swapaxes_axis(axes, ndim)
 
@@ -6119,32 +6099,27 @@ def swapdims(input, dim0, dim1):
     return ops.swapaxes(input, dim0, dim1)
 
 
-@constexpr
 def _check_is_int(arg_value, arg_name, op_name):
     arg_value = validator.check_is_int(arg_value, arg_name, op_name)
     return arg_value
 
 
-@_primexpr
 def _check_positive_int(arg_value, arg_name, op_name):
     arg_value = validator.check_int_range(arg_value, 0, 2147483647, validator.INC_RIGHT, arg_name, op_name)
     return arg_value
 
 
-@constexpr
 def _check_axis_range(arg_value, limit, arg_name, op_name):
     arg_value = validator.check_int_range(arg_value, -limit, limit, validator.INC_LEFT, arg_name, op_name)
     return arg_value
 
 
-@_primexpr
 def _cal_repeat_dims(x_rank, rep, expand_axis):
     rep_dims = [1] * (x_rank + 1)
     rep_dims[expand_axis] = rep
     return tuple(rep_dims)
 
 
-@_primexpr
 def _cal_reshape(x_shape, rep, axis):
     x_reshape = list(x_shape)
     x_reshape[axis] *= rep

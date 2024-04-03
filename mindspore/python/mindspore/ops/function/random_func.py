@@ -20,7 +20,7 @@ import numpy as np
 from mindspore import context
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
-from mindspore.ops.primitive import constexpr, _primexpr
+from mindspore.ops.primitive import constexpr
 from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
 from mindspore.common import dtype as mstype
 from mindspore.common.seed import _get_graph_seed
@@ -36,6 +36,7 @@ real_div_ = P.RealDiv()
 reshape_ = P.Reshape()
 shape_ = P.Shape()
 top_k_ = P.TopK()
+
 
 @constexpr
 def _set_prim_op_user_data(prim, key, value):
@@ -623,7 +624,6 @@ def choice_with_mask(input_x, count=256, seed=None):
     return output
 
 
-@constexpr
 def is_cpu_backend():
     """Check if the CPU is used"""
     return context.get_context('device_target') == 'CPU'
@@ -819,7 +819,6 @@ def gamma(shape, alpha, beta, seed=None):
     return value
 
 
-@_primexpr
 def _generate_shapes(shape):
     """Generate shapes for randn and rand."""
     if not shape:
