@@ -180,6 +180,13 @@ def compile_net(net, symbol_mode=0):
 
         net.set_inputs(input_x)
         loss.set_inputs(None, label)
+    elif symbol_mode == 2:
+        s1 = Symbol(divisor=1)
+        input_x = Tensor(shape=[s1, s1], dtype=ms.float32)
+        label = Tensor(shape=[8, s1], dtype=ms.float32)
+
+        net.set_inputs(input_x)
+        loss.set_inputs(None, label)
 
     model = Model(net, loss, optimizer=opt)
 
@@ -230,7 +237,7 @@ def test_neg_data_parallel_data_sink_set_dataset_strategy_static_shape():
     strategy1 = ((8, 1), (1,))
     strategy2 = ((8, 1),)
     net = Net(_w1, strategy1, strategy2)
-    compile_net(net, symbol_mode=2)
+    compile_net(net, symbol_mode=3)
 
 
 def test_neg_data_parallel_data_sink_set_dataset_strategy_symbol_and_none():
@@ -247,3 +254,19 @@ def test_neg_data_parallel_data_sink_set_dataset_strategy_symbol_and_none():
     strategy2 = ((8, 1),)
     net = Net(_w1, strategy1, strategy2)
     compile_net(net, symbol_mode=1)
+
+
+def test_check_inputs_for_symbol():
+    '''
+    Feature: data sink
+    Description: dynamic shape
+    Expectation: compile success
+    '''
+    s = ((8, 1), (8, 1))
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0,
+                                      dataset_strategy=s)
+    context.set_context(save_graphs=True)
+    strategy1 = ((8, 1), (1,))
+    strategy2 = ((8, 1),)
+    net = Net(_w1, strategy1, strategy2)
+    compile_net(net, symbol_mode=2)
