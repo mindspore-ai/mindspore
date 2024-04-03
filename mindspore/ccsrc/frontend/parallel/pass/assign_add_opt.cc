@@ -76,6 +76,22 @@ void UpdateValueNodeAbs(ValueNodePtr *axis) {
   value_node->set_abstract(value_abs);
 }
 
+bool GetMatMulTransposeValue(const CNodePtr &matmul_node, const std::string &attr_name) {
+  auto mat_prim = GetCNodePrimitive(matmul_node);
+  auto prim_name = mat_prim->name();
+  auto &inputs = matmul_node->inputs();
+  auto idx = ops::GetInputIndexByName(prim_name, attr_name);
+  std::vector<ValuePtr> input_value;
+  for (size_t index = 1; index < inputs.size(); ++index) {
+    if (inputs[index]->isa<ValueNode>() || inputs[index]->isa<tensor::Tensor>()) {
+      (void)input_value.emplace_back(GetValueNode(inputs[index]));
+      continue;
+    }
+    (void)input_value.emplace_back(nullptr);
+  }
+  return GetScalarValueFromInputs<bool>(input_value, idx).value();
+}
+
 CNodePtr InsertConcat(const std::vector<CNodePtr> &matmul_dw_nodes, const FuncGraphPtr &graph, size_t para_index,
                       const std::vector<AnfNodePtr> &concat_inputs,
                       const std::unordered_map<CNodePtr, CNodePtr> &backward_matmul_dx_dw_map) {
@@ -89,9 +105,8 @@ CNodePtr InsertConcat(const std::vector<CNodePtr> &matmul_dw_nodes, const FuncGr
   maketuple->set_abstract(std::make_shared<abstract::AbstractTuple>(maketuple_abs_inputs));
   // set abstract and attr
   auto matmul_dw_node_front = GetMatmulDwNodeFront(matmul_dw_nodes, backward_matmul_dx_dw_map);
-  auto mat_prim = GetCNodePrimitive(matmul_dw_node_front);
-  auto transpose_a1 = GetValue<bool>(mat_prim->GetAttr(TRANSPOSE_A));
-  auto transpose_b1 = GetValue<bool>(mat_prim->GetAttr(TRANSPOSE_B));
+  auto transpose_a1 = GetMatMulTransposeValue(matmul_dw_node_front, TRANSPOSE_A);
+  auto transpose_b1 = GetMatMulTransposeValue(matmul_dw_node_front, TRANSPOSE_B);
   auto matmul_dw_node_front_input_node1_abstract = matmul_dw_node_front->input(1)->abstract();
   auto matmul_dw_node_front_input_node2_abstract = matmul_dw_node_front->input(kIndex2)->abstract();
   MS_EXCEPTION_IF_NULL(matmul_dw_node_front_input_node1_abstract);
@@ -153,12 +168,19 @@ void MergeMultiMatmulAssignAdd(const FuncGraphManagerPtr &manager, const FuncGra
     [para_index, para_index_sum](CNodePtr anf_node) { return anf_node->input(para_index_sum - para_index); });
   auto concat =
     InsertConcat(matmul_dw_nodes, each_graph, para_index_sum - para_index, concat_inputs, backward_matmul_dx_dw_map);
-  std::vector<AnfNodePtr> merged_matmul_inputs{NewValueNode(prim::kPrimMatMul), concat1, concat};
+  auto transpose_a1 = GetMatMulTransposeValue(matmul_dw_node_front, TRANSPOSE_A);
+  auto transpose_b1 = GetMatMulTransposeValue(matmul_dw_node_front, TRANSPOSE_B);
+  std::vector<AnfNodePtr> merged_matmul_inputs{NewValueNode(prim::kPrimMatMul), concat1, concat,
+                                               NewValueNode(MakeValue(transpose_a1)),
+                                               NewValueNode(MakeValue(transpose_b1))};
   if (para_index == kIndex2) {
-    merged_matmul_inputs = {NewValueNode(prim::kPrimMatMul), concat, concat1};
+    merged_matmul_inputs = {NewValueNode(prim::kPrimMatMul), concat, concat1, NewValueNode(MakeValue(transpose_a1)),
+                            NewValueNode(MakeValue(transpose_b1))};
   }
   auto merged_matmul = each_graph->NewCNode(merged_matmul_inputs);
   merged_matmul->set_abstract(matmul_dw_node_front->abstract()->Clone());
+  merged_matmul->input(kIndex3)->set_abstract(matmul_dw_node_front->input(kIndex3)->abstract()->Clone());
+  merged_matmul->input(kIndex4)->set_abstract(matmul_dw_node_front->input(kIndex4)->abstract()->Clone());
   auto merged_matmul_prim = GetCNodePrimitive(merged_matmul);
   auto mat_prim = GetCNodePrimitive(matmul_dw_node_front);
   (void)merged_matmul_prim->SetAttrs(mat_prim->attrs());
@@ -204,12 +226,10 @@ bool IsSameMatMul(const std::vector<CNodePtr> &matmul_dw_nodes) {
   auto matmul_dw_nodes_front = matmul_dw_nodes.front();
   return std::all_of(matmul_dw_nodes.begin(), matmul_dw_nodes.end(),
                      [&matmul_dw_nodes_front](const CNodePtr &matmul_dw_node) {
-                       auto mat1_prim = GetCNodePrimitive(matmul_dw_nodes_front);
-                       auto mat2_prim = GetCNodePrimitive(matmul_dw_node);
-                       auto transpose_a1 = GetValue<bool>(mat1_prim->GetAttr(TRANSPOSE_A));
-                       auto transpose_a2 = GetValue<bool>(mat2_prim->GetAttr(TRANSPOSE_A));
-                       auto transpose_b1 = GetValue<bool>(mat1_prim->GetAttr(TRANSPOSE_B));
-                       auto transpose_b2 = GetValue<bool>(mat2_prim->GetAttr(TRANSPOSE_B));
+                       auto transpose_a1 = GetMatMulTransposeValue(matmul_dw_nodes_front, TRANSPOSE_A);
+                       auto transpose_a2 = GetMatMulTransposeValue(matmul_dw_node, TRANSPOSE_A);
+                       auto transpose_b1 = GetMatMulTransposeValue(matmul_dw_nodes_front, TRANSPOSE_B);
+                       auto transpose_b2 = GetMatMulTransposeValue(matmul_dw_node, TRANSPOSE_B);
                        if (!(matmul_dw_nodes_front->HasAttr(kAttrCastDw) == matmul_dw_node->HasAttr(kAttrCastDw))) {
                          return false;
                        }
