@@ -619,6 +619,18 @@ class BACKEND_EXPORT KernelTensor : public AbstractBase {
   void set_tensor_storage_info(const TensorStorageInfoPtr &storage_info) { tensor_storage_info_ = storage_info; }
 
  private:
+  // This is a deprecated function in base class.
+  BaseShapePtr BuildShape() const override {
+    MS_LOG(EXCEPTION) << "Call deprecated function: BuildShape, Please use GetShape instead of BuildShape in "
+                         "operators' infer functions in the `core/ops` directory.";
+  }
+
+  // This is a deprecated function in base class
+  TypePtr BuildType() const override {
+    MS_LOG(EXCEPTION) << "Call deprecated function: BuildType, Please use GetType instead of BuildType in "
+                         "operators' infer functions in the `core/ops` directory.";
+  }
+
   // Set the element data type to KernelTensor for Sequence type(Tuple or List).
   void SetSequenceDType(const TypePtr &element_type);
 
