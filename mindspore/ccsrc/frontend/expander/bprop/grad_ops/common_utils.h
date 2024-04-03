@@ -87,7 +87,7 @@ std::vector<int64_t> RegenerateOutputShape(const std::vector<int64_t> &x_shp, co
 std::vector<int64_t> InvertPermutation(const std::vector<int64_t> &perm);
 std::vector<int64_t> GetTransposition(int64_t axis, int64_t rank);
 
-NodePtr SumGrad(BpropBuilder *ib, const NodePtr &x, const NodePtr &axis, const NodePtr &dout, bool keep_dims = false,
+NodePtr SumGrad(Emitter *ib, const NodePtr &x, const NodePtr &axis, const NodePtr &dout, bool keep_dims = false,
                 bool skip_mode = false);
 NodePtr MinOrMaxGrad(BpropBuilder *ib, const NodePtr &x, const NodePtr &axis, const NodePtr &keep_dims,
                      const NodePtr &out, const NodePtr &dout);
