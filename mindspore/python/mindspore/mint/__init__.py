@@ -99,7 +99,7 @@ from mindspore.ops.functional import erfinv
 # 36
 
 # 37
-
+from mindspore.ops.function.array_func import nonzero
 # 38
 
 # 39
@@ -317,7 +317,7 @@ __all__ = [
     # 36
 
     # 37
-
+    'nonzero',
     # 38
 
     # 39
