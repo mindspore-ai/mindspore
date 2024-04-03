@@ -1,4 +1,4 @@
-batch_matmul_ext:
+bmm_ext:
   description: |
     Performs batch matrix-matrix multiplication of two three-dimensional tensors.
 

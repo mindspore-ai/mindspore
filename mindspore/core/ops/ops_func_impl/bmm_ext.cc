@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "ops/ops_func_impl/batch_mat_mul_ext.h"
+#include "ops/ops_func_impl/bmm_ext.h"
 #include <algorithm>
 #include <set>
 #include <map>
