@@ -25,10 +25,10 @@ import math
 def setup_function():
     context.set_auto_parallel_context(dataset_strategy="full_batch")
 
-def generate_inputs(bs=1, heads=40, head_dim=128, block_size=16, max_seq=2048):
-    query = Parameter(Tensor(np.ones([bs, heads, head_dim]), dtype=ms.float16), "query")
-    key_cache = Parameter(Tensor(np.ones([max_seq, block_size, heads, head_dim]), dtype=ms.float16), "key_cache")
-    value_cache = Parameter(Tensor(np.ones([max_seq, block_size, heads, head_dim]), dtype=ms.float16), "value_cache")
+def generate_inputs(bs=1, seq_len=1, heads=40, head_dims=128, block_size=16, max_seq=2048):
+    query = Parameter(Tensor(np.ones([bs, seq_len, heads*head_dims]), dtype=ms.float16), "query")
+    key_cache = Parameter(Tensor(np.ones([max_seq, block_size, heads, head_dims]), dtype=ms.float16), "key_cache")
+    value_cache = Parameter(Tensor(np.ones([max_seq, block_size, heads, head_dims]), dtype=ms.float16), "value_cache")
     block_tables = Parameter(Tensor(np.ones([bs, max_seq]), dtype=ms.int32), "block_tables")
     context_lens = Parameter(Tensor(np.ones([max_seq]), dtype=ms.int32), "context_lens")
     return query, key_cache, value_cache, block_tables, context_lens
@@ -44,7 +44,7 @@ class PagedAttentionNet(Cell):
         if strategy is not None:
             self.paged_attention.shard(strategy)
         elif mp is not None:
-            strategy = ((1, mp, 1), (1, 1, mp, 1), (1, 1, mp, 1), (1, 1), (1,))
+            strategy = ((1, 1, mp), (1, 1, mp, 1), (1, 1, mp, 1), (1, 1), (1,))
             self.paged_attention.shard(strategy)
 
     def construct(self, query, key_cache, value_cache, block_tables, context_lens):
@@ -61,13 +61,13 @@ def test_paged_attention_semi_auto_parallel():
     mp = 8
     net = PagedAttentionNet(mp)
 
-    bs, heads, head_dim, blk_size, max_seq = 1, 40, 128, 16, 2048
-    net_inputs = generate_inputs(bs, heads, head_dim, blk_size, max_seq)
+    bs, seq_len, heads, head_dim, blk_size, max_seq = 1, 1, 40, 128, 16, 2048
+    net_inputs = generate_inputs(bs, seq_len, heads, head_dim, blk_size, max_seq)
     net.set_inputs(*net_inputs)
 
     phase = compile_net(net, *net_inputs)
     validator = ParallelValidator(net, phase)
-    assert validator.check_parameter_shape('query', [bs, heads // mp, head_dim])
+    assert validator.check_parameter_shape('query', [bs, seq_len, heads * head_dim // mp])
     assert validator.check_parameter_shape('key_cache', [max_seq, blk_size, heads // mp, head_dim])
     assert validator.check_parameter_shape('value_cache', [max_seq, blk_size, heads // mp, head_dim])
     assert validator.check_parameter_shape('block_tables', [bs, max_seq])
@@ -85,8 +85,8 @@ def test_paged_attention_standalone():
     context.set_auto_parallel_context(parallel_mode="stand_alone")
     net = PagedAttentionNet()
 
-    bs, heads, head_dim, blk_size, max_seq = 1, 40, 128, 16, 2048
-    net_inputs = generate_inputs(bs, heads, head_dim, blk_size, max_seq)
+    bs, seq_len, heads, head_dim, blk_size, max_seq = 1, 1, 40, 128, 16, 2048
+    net_inputs = generate_inputs(bs, seq_len, heads, head_dim, blk_size, max_seq)
     net.set_inputs(*net_inputs)
     compile_net(net, *net_inputs)
 
@@ -109,8 +109,8 @@ def test_paged_attention_strategy_error():
     for strategy in strategies:
         net = PagedAttentionNet(strategy=strategy)
         with pytest.raises(RuntimeError):
-            bs, heads, head_dim, blk_size, max_seq = 1, 40, 128, 16, 2048
-            net_inputs = generate_inputs(bs, heads, head_dim, blk_size, max_seq)
+            bs, seq_len, heads, head_dim, blk_size, max_seq = 1, 1, 40, 128, 16, 2048
+            net_inputs = generate_inputs(bs, seq_len, heads, head_dim, blk_size, max_seq)
             net.set_inputs(*net_inputs)
             compile_net(net, *net_inputs)
     context.reset_auto_parallel_context()
