@@ -34,6 +34,7 @@ ORIGIN_METHOD(aclopSetAttrListInt, aclError, aclopAttr *, const char *, int, con
 ORIGIN_METHOD(aclopSetAttrListListInt, aclError, aclopAttr *, const char *, int, const int *, const int64_t *const[])
 ORIGIN_METHOD(aclopSetAttrListString, aclError, aclopAttr *, const char *, int, const char **)
 ORIGIN_METHOD(aclopSetAttrString, aclError, aclopAttr *, const char *, const char *)
+ORIGIN_METHOD(aclopSetModelDir, aclError, const char *)
 
 extern aclopCreateAttrFunObj aclopCreateAttr_;
 extern aclopSetAttrBoolFunObj aclopSetAttrBool_;
@@ -47,6 +48,7 @@ extern aclopSetAttrListIntFunObj aclopSetAttrListInt_;
 extern aclopSetAttrListListIntFunObj aclopSetAttrListListInt_;
 extern aclopSetAttrListStringFunObj aclopSetAttrListString_;
 extern aclopSetAttrStringFunObj aclopSetAttrString_;
+extern aclopSetModelDirFunObj aclopSetModelDir_;
 
 void LoadAclOpApiSymbol(const std::string &ascend_path);
 }  // namespace transform

@@ -18,6 +18,7 @@
 
 #include <algorithm>
 #include <memory>
+#include "transform/symbol/acl_op_symbol.h"
 #include "transform/symbol/acl_rt_symbol.h"
 #include "transform/symbol/symbol_utils.h"
 
@@ -90,6 +91,7 @@ std::shared_ptr<ResourceManager> ResourceManager::GetInstance() {
     ResourceManager *temp = new ResourceManager();
     ptr_.reset(temp);
   }
+  mindspore::transform::LoadAscendApiSymbols();
   return ptr_;
 }
 
@@ -126,7 +128,7 @@ APP_ERROR ResourceManager::InitResource(ResourceInfo &resourceInfo) {
   }
   std::string singleOpPath = resourceInfo.singleOpFolderPath;
   if (!singleOpPath.empty()) {
-    ret = aclopSetModelDir(singleOpPath.c_str());  // Set operator model directory for application
+    ret = CALL_ASCEND_API(aclopSetModelDir, singleOpPath.c_str());  // Set operator model directory for application
     if (ret != APP_ERR_OK) {
       MS_LOG(ERROR) << "Failed to aclopSetModelDir, ret = " << ret << ".";
       return ret;
