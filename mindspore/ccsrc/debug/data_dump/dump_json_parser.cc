@@ -301,7 +301,14 @@ bool DumpJsonParser::DumpEnabledForIter() const {
 bool DumpJsonParser::DumpToFile(const std::string &filename, const void *data, size_t len, const ShapeVector &shape,
                                 TypeId type) {
   if (filename.empty() || data == nullptr || len == 0) {
-    MS_LOG(ERROR) << "Incorrect parameter.";
+    MS_LOG(INFO) << "Incorrect parameter.";
+    if (filename.empty()) {
+      MS_LOG(WARNING) << "File name is empty.";
+    } else if (data == nullptr) {
+      MS_LOG(WARNING) << "The data address is nullptr for file: " << filename;
+    } else {
+      MS_LOG(INFO) << "The data length is 0, skip dump. File name is: " << filename;
+    }
     return false;
   }
   std::string npy_suffix = ".npy";
