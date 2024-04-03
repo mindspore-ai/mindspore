@@ -166,6 +166,11 @@ REG_FALLBACK_BUILDER("MatMulExt").SetBody(BODYFUNC(ib) {
     }
     const ShapeVector &shape1_orig = input->shape();
     const ShapeVector &shape2_orig = other->shape();
+    bool is_empty_tensor =
+      std::any_of(shape1_orig.begin(), shape1_orig.end(), [](const auto &element) { return element == 0; });
+    if (is_empty_tensor) {
+      return {ib->Tensor(0, input->dtype())};
+    }
     bool transpose_b = other_rank == 1;
     ShapeVector shape_backbone = ops::CheckMatMulShapes(shape1_orig, shape2_orig);
     ShapeVector shape_out = ops::InferShapeRem(shape_backbone, shape1_orig, shape2_orig, transpose_b);
