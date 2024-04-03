@@ -26,13 +26,14 @@ class TensorPrintUtils {
  public:
   static TensorPrintUtils &GetInstance();
 
-  TensorPrintUtils();
   ~TensorPrintUtils();
   TensorPrintUtils(const TensorPrintUtils &) = delete;
   TensorPrintUtils &operator=(const TensorPrintUtils &) = delete;
   void PrintReceiveData(const ScopeAclTdtDataset &dataset);
 
  private:
+  // singleton instance, make constructor private
+  TensorPrintUtils();
   void OutputReceiveData2PbFile(const ScopeAclTdtDataset &dataset);
 
   std::string print_file_path_;
