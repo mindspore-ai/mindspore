@@ -3101,6 +3101,11 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
   // save strategy as checkpoint for multi-train
   CheckpointStrategy(all_nodes, root);
 
+  if (MergeEntireShapeForDynamic(root) != Status::SUCCESS) {
+    MS_LOG(ERROR) << "Merge entire shape for dynamic shape failed.";
+    return false;
+  }
+
   // ForwardCommunication BackwardCommunication TensorRedistribution
   ParallelCommunication(root, all_nodes, manager);
 
