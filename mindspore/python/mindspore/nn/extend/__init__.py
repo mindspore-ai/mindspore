@@ -18,5 +18,6 @@ nn Extend.
 from __future__ import absolute_import
 
 from mindspore.nn.extend.embedding import Embedding
+from mindspore.nn.extend.basic import Linear
 
-__all__ = ['Embedding']
+__all__ = ['Embedding', 'Linear']

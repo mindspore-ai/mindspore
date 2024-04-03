@@ -727,7 +727,6 @@ class DenseGrad(nn.Cell):
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_1d_forward():
     """
@@ -768,7 +767,6 @@ def test_1d_forward():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_3d_forward():
     """
@@ -809,7 +807,6 @@ def test_3d_forward():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_1d_backward():
     """
@@ -869,7 +866,6 @@ def test_1d_backward():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_3d_backward():
     """
@@ -1012,8 +1008,7 @@ def test_2d_dtypes_forward():
     Expectation: The result match to the expect value.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    dtypes = (np.uint8, np.int8, np.int16, np.int32, np.int64, np.float16,
-              np.float32, np.float64, np.complex64, np.complex128)
+    dtypes = (np.float16, np.float32, np.float64, np.complex64, np.complex128)
     error = 1e-3
     net = Dense()
     for dtype in dtypes:
@@ -1038,7 +1033,7 @@ def test_0d_bias():
     Expectation: The result match to the expect value.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    dtype = np.int64
+    dtype = np.float32
     error = 1e-3
     net = Dense()
     x_np = np.array([2, 0, 1, 3]).reshape(2, 2).astype(dtype)

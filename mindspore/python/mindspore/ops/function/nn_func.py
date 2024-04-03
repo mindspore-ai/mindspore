@@ -41,7 +41,7 @@ from mindspore.ops.operations.nn_ops import ChannelShuffle
 from mindspore.ops.operations.nn_ops import TripletMarginLoss
 from mindspore.ops.operations._sequence_ops import TupleToTensor, TensorToTuple, ListToTensor
 from mindspore.common.api import _function_forbid_reuse
-from mindspore.ops.auto_generate import log_softmax, prelu, celu, relu, fast_gelu, silu, elu, sigmoid, relu6
+from mindspore.ops.auto_generate import log_softmax, dense, prelu, celu, relu, fast_gelu, silu, elu, sigmoid, relu6
 from mindspore.ops.auto_generate.gen_ops_prim import GroupNorm
 from mindspore.ops.auto_generate.gen_ops_prim import embedding_op
 
@@ -2856,59 +2856,6 @@ def logsigmoid(x):
     output = sigmoid_(x)
     ret = log_(output)
     return ret
-
-
-def dense(input, weight, bias=None):
-    r"""
-    Applies the dense connected operation to the `input`. The dense function is defined as:
-
-    .. math::
-        output = input * weight^{T} + bias
-
-    .. warning::
-        This is an experimental API that is subject to change or deletion.
-
-    Args:
-        input (Tensor): Input Tensor of shape :math:`(*, in\_channels)`,
-            where :math:`*` means any number of additional dimensions.
-        weight (Tensor): The weight applied to the input.
-            The shape is :math:`(out\_channels, in\_channels)` or :math:`(in\_channels)`.
-        bias (Tensor, optional): Additive biases to the output.
-            The shape is :math:`(out\_channels)` or :math:`()`. Defaults: ``None``, the `bias` is 0.
-
-    Returns:
-        Output whose shape is determined by the shape of the input and the weight.
-
-    Raises:
-        TypeError: If `input` is not Tensor.
-        TypeError: If `weight` is not Tensor.
-        TypeError: If `bias` is not Tensor.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU``  ``CPU``
-
-    Examples:
-        >>> import numpy as np
-        >>> import mindspore
-        >>> from mindspore import Tensor, ops
-        >>> input = Tensor([[-1., 1., 2.], [-3., -3., 1.]], mindspore.float32)
-        >>> weight = Tensor([[-2., -2., -2.], [0., -1., 0.]], mindspore.float32)
-        >>> bias = Tensor([0., 1.], mindspore.float32)
-        >>> output = ops.dense(input, weight, bias)
-        >>> print(output)
-        [[-4.  0.]
-         [10.  4.]]
-    """
-    _check_is_tensor("input", input, "dense")
-    _check_is_tensor("weight", weight, "dense")
-    _check_is_tensor("bias", bias, "dense")
-    weight = ops.t(weight)
-    input = ops.matmul(input, weight)
-    input_shape = input.shape
-    if bias is not None:
-        input = input + bias
-        _check_dense_add_bias_shape(input_shape, input.shape, bias.shape)
-    return input
 
 
 def _check_dense_add_bias_shape(input_shape, output_shape, bias_shape):
