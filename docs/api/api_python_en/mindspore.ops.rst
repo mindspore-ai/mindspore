@@ -445,25 +445,6 @@ Spectral Functions
     mindspore.ops.hann_window
     mindspore.ops.kaiser_window
 
-Fast Fourier Transform Functions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. msplatwarnautosummary::
-    :toctree: ops
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.ops.fft
-    mindspore.ops.fft2
-    mindspore.ops.fftn
-    mindspore.ops.fftshift
-    mindspore.ops.rfft
-    mindspore.ops.ifft
-    mindspore.ops.ifft2
-    mindspore.ops.ifftn
-    mindspore.ops.ifftshift
-    mindspore.ops.irfft
-
 Tensor Operation Functions
 --------------------------
 
