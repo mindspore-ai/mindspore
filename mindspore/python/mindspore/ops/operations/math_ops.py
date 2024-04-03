@@ -5463,7 +5463,7 @@ class Ormqr(Primitive):
         TypeError: If dtype of `x` or `tau` or `other` is not one of: float64, float32, complex64, complex128.
         ValueError: If `x` or `other` is less than 2D.
         ValueError: If rank(x) - rank(tau) != 1.
-        ValueError: If tau.shape[:-2] != x.shape[:-2]
+        ValueError: If tau.shape[:-1] != x.shape[:-2]
         ValueError: If other.shape[:-2] != x.shape[:-2]
         ValueError: If left == True, other.shape[-2] < tau.shape[-1].
         ValueError: If left == True, other.shape[-2] != x.shape[-2].
