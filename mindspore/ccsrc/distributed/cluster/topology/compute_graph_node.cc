@@ -245,7 +245,7 @@ bool ComputeGraphNode::Heartbeat() {
   size_t topo_timeout;
   if (!env_topo_timeout.empty()) {
     MS_LOG(INFO) << "MS_TOPO_TIMEOUT set by user: " << env_topo_timeout;
-    topo_timeout = std::stoi(env_topo_timeout);
+    topo_timeout = std::stoi(env_topo_timeout) * 1000;
   } else {
     topo_timeout = kTopoInitTimeout;
   }
