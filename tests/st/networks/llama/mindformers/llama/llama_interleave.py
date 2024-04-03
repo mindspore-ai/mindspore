@@ -528,7 +528,7 @@ class LLamaDecodeLayerInterleave(nn.Cell):
                 self.feed_forward.w1.activation.silu.recompute()
             self.attention_norm.cast.recompute()
             self.ffn_norm.cast.recompute()
-
+        self.attention_norm.norm.add_prim_attr("recompute_comm_op", True)
         concat_stra1 = []
         concat_stra2 = []
         self.interleave1_inputs = nn.CellList()
