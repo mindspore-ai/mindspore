@@ -508,6 +508,26 @@ def convert_value_type(op_proto: OpProto) -> str:
     return parser_func_str
 
 
+def contiguous_tensor_value(op_proto: OpProto) -> str:
+    """
+    Generate parser func
+    :param op_proto:
+    :return: str
+    """
+    # Do nothing in view op
+    if op_proto.is_view:
+        return ''
+    contiguous_template = CppTemplate(
+        "$arg_name = ValueConverter::ContiguousTensorValue(op_runner_info, $arg_name);\n")
+    contiguous_func_str = ''
+    need_contiguous_dtype = {'tensor', 'tuple[tensor]'}
+    for arg in op_proto.op_args:
+        if arg.arg_dtype not in need_contiguous_dtype:
+            continue
+        contiguous_func_str += contiguous_template.replace(arg_name=arg.arg_name)
+    return contiguous_func_str
+
+
 def generate_pyboost_grad_functions(work_path, yaml_data):
     """
     Generate pyboostgrad  functions file from yaml.
@@ -526,6 +546,7 @@ def generate_pyboost_grad_functions(work_path, yaml_data):
         op_name_str = op_proto.class_name
         op_args_str = [op_arg.arg_name for op_arg in op_proto.op_args]
         convert_value_type_str = convert_value_type(op_proto)
+        convert_value_type_str += contiguous_tensor_value(op_proto)
 
         call_args_str = []
         for op_arg in op_proto.op_args:
