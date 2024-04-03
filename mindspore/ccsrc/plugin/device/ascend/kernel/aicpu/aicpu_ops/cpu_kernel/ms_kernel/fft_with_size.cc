@@ -25,13 +25,13 @@
 #define FFTWITHSIZE_CALCULATE_TYPE(type1, type2, dim, real, rinverse) \
   return FFTWithSizeCompute<type1, type2, dim, real, rinverse>(ctx, onesided, inverse, normalized, checked_signal_size);
 
-#define FFTWITHSIZE_SWITCH_DIM_CALCULATE(type1, type2, real, rinverse) \
-  if (signal_ndim == 1) {                                              \
-    FFTWITHSIZE_CALCULATE_TYPE(type1, type2, 1, real, rinverse)        \
-  } else if (signal_ndim == 2) {                                       \
-    FFTWITHSIZE_CALCULATE_TYPE(type1, type2, 2, real, rinverse)        \
-  } else {                                                             \
-    FFTWITHSIZE_CALCULATE_TYPE(type1, type2, 3, real, rinverse)        \
+#define FFTWITHSIZE_SWITCH_DIM_CALCULATE(type1, type2, real, rinverse, signal_ndim) \
+  if (signal_ndim == 1) {                                                           \
+    FFTWITHSIZE_CALCULATE_TYPE(type1, type2, 1, real, rinverse)                     \
+  } else if (signal_ndim == 2) {                                                    \
+    FFTWITHSIZE_CALCULATE_TYPE(type1, type2, 2, real, rinverse)                     \
+  } else {                                                                          \
+    FFTWITHSIZE_CALCULATE_TYPE(type1, type2, 3, real, rinverse)                     \
   }
 
 namespace {
@@ -80,55 +80,45 @@ uint32_t FFTWithSizeCpuKernel::Compute(CpuKernelContext &ctx) {
   auto input_type = ctx.Input(0)->GetDataType();
   auto output_type = ctx.Output(0)->GetDataType();
   switch (input_type) {
+    case DT_DOUBLE:
+      FFTWITHSIZE_SWITCH_DIM_CALCULATE(double, std::complex<double>, true, false, signal_ndim);  // rfft
+      break;
+    case DT_FLOAT:
+      FFTWITHSIZE_SWITCH_DIM_CALCULATE(float, std::complex<float>, true, false, signal_ndim);  // rfft
+      break;
+    case DT_UINT8:
+      FFTWITHSIZE_SWITCH_DIM_CALCULATE(uint8_t, std::complex<float>, true, false, signal_ndim);  // rfft
+      break;
+    case DT_INT8:
+      FFTWITHSIZE_SWITCH_DIM_CALCULATE(int8_t, std::complex<float>, true, false, signal_ndim);  // rfft
+      break;
+    case DT_INT16:
+      FFTWITHSIZE_SWITCH_DIM_CALCULATE(int16_t, std::complex<float>, true, false, signal_ndim);  // rfft
+      break;
+    case DT_INT32:
+      FFTWITHSIZE_SWITCH_DIM_CALCULATE(int32_t, std::complex<float>, true, false, signal_ndim);  // rfft
+      break;
+    case DT_INT64:
+      FFTWITHSIZE_SWITCH_DIM_CALCULATE(int64_t, std::complex<float>, true, false, signal_ndim);  // rfft
+      break;
+    case DT_BOOL:
+      FFTWITHSIZE_SWITCH_DIM_CALCULATE(bool, std::complex<float>, true, false, signal_ndim);  // rfft
+      break;
     case DT_COMPLEX128:
       if (output_type == DT_COMPLEX128) {
-        FFTWITHSIZE_SWITCH_DIM_CALCULATE(std::complex<double>, std::complex<double>, false,
-                                         false);  // fft ifft
+        FFTWITHSIZE_SWITCH_DIM_CALCULATE(std::complex<double>, std::complex<double>, false, false,
+                                         signal_ndim);  // fft ifft
       } else {
-        FFTWITHSIZE_SWITCH_DIM_CALCULATE(std::complex<double>, double, true,
-                                         true);  // irfft
+        FFTWITHSIZE_SWITCH_DIM_CALCULATE(std::complex<double>, double, true, true, signal_ndim);  // irfft
       }
       break;
     case DT_COMPLEX64:
       if (output_type == DT_COMPLEX64) {
-        FFTWITHSIZE_SWITCH_DIM_CALCULATE(std::complex<float>, std::complex<float>, false,
-                                         false);  // fft ifft
+        FFTWITHSIZE_SWITCH_DIM_CALCULATE(std::complex<float>, std::complex<float>, false, false,
+                                         signal_ndim);  // fft ifft
       } else {
-        FFTWITHSIZE_SWITCH_DIM_CALCULATE(std::complex<float>, float, true,
-                                         true);  // irfft
+        FFTWITHSIZE_SWITCH_DIM_CALCULATE(std::complex<float>, float, true, true, signal_ndim);  // irfft
       }
-      break;
-    case DT_DOUBLE:
-      FFTWITHSIZE_SWITCH_DIM_CALCULATE(double, std::complex<double>, true,
-                                       false);  // rfft
-      break;
-    case DT_FLOAT:
-      FFTWITHSIZE_SWITCH_DIM_CALCULATE(float, std::complex<float>, true,
-                                       false);  // rfft
-      break;
-    case DT_UINT8:
-      FFTWITHSIZE_SWITCH_DIM_CALCULATE(uint8_t, std::complex<float>, true,
-                                       false);  // rfft
-      break;
-    case DT_INT8:
-      FFTWITHSIZE_SWITCH_DIM_CALCULATE(int8_t, std::complex<float>, true,
-                                       false);  // rfft
-      break;
-    case DT_INT16:
-      FFTWITHSIZE_SWITCH_DIM_CALCULATE(int16_t, std::complex<float>, true,
-                                       false);  // rfft
-      break;
-    case DT_INT32:
-      FFTWITHSIZE_SWITCH_DIM_CALCULATE(int32_t, std::complex<float>, true,
-                                       false);  // rfft
-      break;
-    case DT_INT64:
-      FFTWITHSIZE_SWITCH_DIM_CALCULATE(int64_t, std::complex<float>, true,
-                                       false);  // rfft
-      break;
-    case DT_BOOL:
-      FFTWITHSIZE_SWITCH_DIM_CALCULATE(bool, std::complex<float>, true,
-                                       false);  // rfft
       break;
     default:
       CUST_KERNEL_LOG_ERROR(ctx, "FFTWithSize kernel data type [%s] not support.", DTypeStr(input_type).c_str());
