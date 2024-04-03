@@ -289,10 +289,9 @@ bool AscendDeprecatedInterface::OpenTsd(const std::shared_ptr<MsContext> &ms_con
   ms_context_ptr->increase_param<uint32_t>(MS_CTX_TSD_REF);
 
   if (!ms_context_ptr->get_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS)) {
-    std::string print_file_path = ms_context_ptr->get_param<std::string>(MS_CTX_PRINT_FILE_PATH);
-    MbufDataHandlerManager::GetInstance().AddHandler(
-      std::make_unique<MbufDataHandler>(std::bind(PrintReceiveData, std::placeholders::_1, print_file_path), device_id,
-                                        kChannelNameNpuLog, kPrintOpName));
+    MbufDataHandlerManager::GetInstance().AddHandler(std::make_unique<MbufDataHandler>(
+      std::bind(&TensorPrintUtils::PrintReceiveData, &TensorPrintUtils::GetInstance(), std::placeholders::_1),
+      device_id, kChannelNameNpuLog, kPrintOpName));
   }
 
   if (ms_context_ptr->backend_policy() == "ge") {

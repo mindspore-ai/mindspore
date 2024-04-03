@@ -17,10 +17,27 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_HAL_DEVICE_TENSORPRINT_UTILS_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_HAL_DEVICE_TENSORPRINT_UTILS_H_
 
+#include <memory>
 #include <string>
 #include "plugin/device/ascend/hal/device/mbuf_receive_manager.h"
 
 namespace mindspore::device::ascend {
-void PrintReceiveData(const ScopeAclTdtDataset &dataset, const string &print_file_path);
+class TensorPrintUtils {
+ public:
+  static TensorPrintUtils &GetInstance();
+
+  TensorPrintUtils();
+  ~TensorPrintUtils();
+  TensorPrintUtils(const TensorPrintUtils &) = delete;
+  TensorPrintUtils &operator=(const TensorPrintUtils &) = delete;
+  void PrintReceiveData(const ScopeAclTdtDataset &dataset);
+
+ private:
+  void OutputReceiveData2PbFile(const ScopeAclTdtDataset &dataset);
+
+  std::string print_file_path_;
+  // stream of output file in protobuf binary format
+  std::shared_ptr<std::fstream> pb_file_stream_{nullptr};
+};
 }  // namespace mindspore::device::ascend
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_HAL_DEVICE_TENSORPRINT_UTILS_H_
