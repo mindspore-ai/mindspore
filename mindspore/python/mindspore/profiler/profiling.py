@@ -447,6 +447,9 @@ class Profiler:
     DISABLE_STATUS = "off"
 
     def __init__(self, **kwargs):
+        if os.getenv("PROFILING_MODE"):
+            raise RuntimeError("Profiling is already enabled by env.")
+
         self._dev_id = None
         self._cpu_profiler = None
         self._gpu_profiler = None
