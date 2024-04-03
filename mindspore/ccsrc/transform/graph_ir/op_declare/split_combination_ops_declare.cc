@@ -25,14 +25,14 @@ INPUT_ATTR_MAP(SplitD) = {{2, ATTR_DESC(split_dim, AnyTraits<int64_t>())},
                           {3, ATTR_DESC(num_split, AnyTraits<int64_t>())}};
 ATTR_MAP(SplitD) = EMPTY_ATTR_MAP;
 DYN_OUTPUT_MAP(SplitD) = {{0, DYN_OUTPUT_DESC(y)}};
-REG_ADPT_DESC(Split, kNameSplit, ADPT_DESC(SplitD))
+REG_ADPT_DESC(SplitD, kSplitDOpName, ADPT_DESC(SplitD))
 
 // Split
-INPUT_MAP(Split) = {{1, INPUT_DESC(split_dim)}, {2, INPUT_DESC(x)}};
-ATTR_INPUT_MAP(Split) = {{"axis", "split_dim"}};
-ATTR_MAP(Split) = {{"output_num", ATTR_DESC(num_split, AnyTraits<int64_t>())}};
+INPUT_MAP(Split) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(split_dim)}};
+INPUT_ATTR_MAP(Split) = {{3, ATTR_DESC(num_split, AnyTraits<int64_t>())}};
+ATTR_MAP(Split) = EMPTY_ATTR_MAP;
 DYN_OUTPUT_MAP(Split) = {{0, DYN_OUTPUT_DESC(y)}};
-REG_ADPT_DESC(SplitD, kSplitDOpName, ADPT_DESC(Split))
+REG_ADPT_DESC(Split, kNameSplit, ADPT_DESC(Split))
 
 // Pack
 INPUT_MAP(Pack) = EMPTY_INPUT_MAP;
