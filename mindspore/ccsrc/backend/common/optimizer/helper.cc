@@ -15,6 +15,7 @@
  */
 
 #include "include/backend/optimizer/helper.h"
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <utility>
@@ -22,6 +23,7 @@
 #include <map>
 #include <set>
 #include <deque>
+#include <vector>
 #include "kernel/kernel_build_info.h"
 #include "mindspore/core/ops/sequence_ops.h"
 #include "mindspore/core/ops/nn_ops.h"
@@ -1434,6 +1436,21 @@ static bool IsNotSequenceOfTensor(const abstract::AbstractBasePtr &abs) {
   return true;
 }
 
+std::vector<int64_t> GenPrintAttrDynInputSizes(const CNodePtr &cnode) {
+  int64_t num_inputs = 0;
+  std::vector<AnfNodePtr> node_inputs = cnode->inputs();
+  for (size_t node_inputs_index = 1; node_inputs_index < node_inputs.size(); ++node_inputs_index) {
+    auto &input = node_inputs[node_inputs_index];
+    MS_EXCEPTION_IF_NULL(input);
+    if (IsValueNode<UMonad>(input) || IsValueNode<IOMonad>(input) || HasAbstractMonad(input)) {
+      continue;
+    }
+    num_inputs++;
+  }
+  // the first input of print is a placeholder
+  return std::vector<int64_t>{-1, num_inputs - 1, -1};
+}
+
 AnfNodePtr ConvertMakeTupleInputToPlantInputs(const FuncGraphPtr &graph, const CNodePtr &cnode_ptr) {
   MS_EXCEPTION_IF_NULL(cnode_ptr);
   MS_EXCEPTION_IF_NULL(graph);
@@ -1458,7 +1475,7 @@ AnfNodePtr ConvertMakeTupleInputToPlantInputs(const FuncGraphPtr &graph, const C
     MS_EXCEPTION_IF_NULL(input_node);
     bool output_is_tuple = common::AnfAlgo::IsTupleOutput(input_node);
     if (output_is_tuple && cnode_is_print) {
-      (void)dyn_input_sizes.emplace_back(SplitTupleInputs(graph, input_node, &plant_inputs));
+      continue;
     } else if (output_is_tuple) {
       int64_t dyn_input_size;
       if (IsNotSequenceOfTensor(input_node->abstract())) {
@@ -1485,6 +1502,9 @@ AnfNodePtr ConvertMakeTupleInputToPlantInputs(const FuncGraphPtr &graph, const C
     new_cnode->set_scope(cnode_ptr->scope());
     new_cnode->set_primal_attrs(cnode_ptr->primal_attrs());
     new_cnode->set_attrs(cnode_ptr->attrs());
+    if (cnode_is_print) {
+      dyn_input_sizes = GenPrintAttrDynInputSizes(new_cnode);
+    }
     common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(dyn_input_sizes), new_cnode);
     auto kernel_graph = graph->cast<KernelGraphPtr>();
     if (kernel_graph != nullptr) {
