@@ -109,6 +109,9 @@ void AscendStreamMng::CreateStream(size_t *stream_id, int32_t priority) {
 void AscendStreamMng::RegCallback(aclrtStream stream) {
   MS_LOG(INFO) << "Register callback thread, stream : " << stream << ".";
   (void)callback_cached_streams_.emplace_back(stream);
+  if (callback_cached_streams_.size() > 1 && !is_enable_callback_) {
+    is_enable_callback_ = true;
+  }
   if (!is_enable_callback_) {
     return;
   }
