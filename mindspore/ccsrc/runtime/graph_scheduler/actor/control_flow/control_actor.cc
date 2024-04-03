@@ -104,8 +104,13 @@ void ControlActor::IncreaseDynamicRefCount(const OpRealParameterWithBranchID &op
 size_t ControlActor::FetchNodePosition(const KernelWithIndex &node) const {
   const auto &iter = find(formal_parameters_.begin(), formal_parameters_.end(), node);
   if (iter == formal_parameters_.end()) {
+    for (const auto &formal_parameter : formal_parameters_) {
+      MS_LOG(WARNING) << "Actor:" << GetAID() << " formal parameter:"
+                      << (formal_parameter.first != nullptr ? formal_parameter.first->DebugString() : "")
+                      << " index:" << formal_parameter.second << " node ptr:" << formal_parameter.first;
+    }
     MS_LOG(EXCEPTION) << "Invalid formal parameter:" << (node.first != nullptr ? node.first->DebugString() : "")
-                      << " index:" << node.second << " for actor:" << GetAID();
+                      << " node ptr:" << node.first << " index:" << node.second << " for actor:" << GetAID();
   }
   return iter - formal_parameters_.begin();
 }
