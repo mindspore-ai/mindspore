@@ -862,7 +862,8 @@ class LLMEngine:
         if not self.inited_:
             raise RuntimeError(f"LLMEngine is not inited or init failed")
         check_isinstance("llm_req", llm_req, LLMReq)
-        self.engine_.complete_request(llm_req.llm_request_)
+        status = self.engine_.complete_request(llm_req.llm_request_)
+        return LLMEngineStatus(status)
 
     def finalize(self):
         """
