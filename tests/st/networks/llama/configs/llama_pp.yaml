@@ -104,6 +104,8 @@ context:
   save_graphs_path: "./graph"
   device_id: 0
   runtime_num_threads: 1
+  ascend_config:
+    parallel_speed_up_json_path: "/home/workspace/mindspore_config/parallel_speed_up.json"
 
 # model config
 model:

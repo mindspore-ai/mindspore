@@ -6,5 +6,6 @@
   "enable_opt_shard_comm_opt": false,
   "enable_concat_eliminate_opt": false,
   "enable_begin_end_inline_opt": false,
+  "recompute_allgather_overlap_fagrad": false,
   "compute_communicate_fusion_level": 0
 }
