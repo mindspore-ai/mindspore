@@ -256,6 +256,25 @@ void ExitActor::MergeDynamiclenDeviceAddress(OpContext<DeviceTensor> *const cont
   }
 }
 
+bool ExitActor::IsNeedCopyDeviceAddress(DeviceTensor *const input_device_tensor, size_t index) {
+  if ((input_device_tensor == nullptr) || (!is_need_copy_device_tensors_[index])) {
+    return false;
+  }
+
+  if (is_need_dynamic_checks_[index]) {
+    if (input_device_tensor->dynamic_ref_count() != INT32_MAX) {
+      return false;
+    }
+    const auto &node = input_device_tensor->GetNodeIndex().first;
+    if (node != nullptr && (!node->isa<CNode>())) {
+      MS_LOG(DEBUG) << "Input device address:" << input_device_tensor << " ptr:" << input_device_tensor->GetPtr()
+                    << " for node:" << node->DebugString() << " is not need replace ptr for actor:" << GetAID();
+      return false;
+    }
+  }
+  return true;
+}
+
 void ExitActor::CopyDeviceAddress(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   // If node is not empty, it is the exit of funcgraph, no need to create device address.
@@ -264,7 +283,8 @@ void ExitActor::CopyDeviceAddress(OpContext<DeviceTensor> *const context) {
   }
   if (input_device_tensors_.size() != is_need_copy_device_tensors_.size() ||
       input_device_tensors_.size() != is_dynamic_shapes_.size() ||
-      input_device_tensors_.size() != device_contexts_.size()) {
+      input_device_tensors_.size() != device_contexts_.size() ||
+      input_device_tensors_.size() != is_need_dynamic_checks_.size()) {
     std::string error_info = "Invalid input device tensor size:" + std::to_string(input_device_tensors_.size()) +
                              " need tensor size:" + std::to_string(is_need_copy_device_tensors_.size()) +
                              " need dynamic shape size:" + std::to_string(is_dynamic_shapes_.size()) +
@@ -277,10 +297,11 @@ void ExitActor::CopyDeviceAddress(OpContext<DeviceTensor> *const context) {
   mindspore::HashMap<DeviceTensor *, DeviceTensor *> device_tensor_map;
   for (size_t i = 0; i < input_device_tensors_.size(); ++i) {
     auto &input_device_tensor = input_device_tensors_[i];
-    if ((input_device_tensor == nullptr) || (!is_need_copy_device_tensors_[i])) {
+    if (!IsNeedCopyDeviceAddress(input_device_tensor, i)) {
       (void)new_device_tensors.emplace_back(input_device_tensor);
       continue;
     }
+
     auto iter = device_tensor_map.find(input_device_tensor);
     if (iter != device_tensor_map.end()) {
       (void)new_device_tensors.emplace_back(iter->second);
