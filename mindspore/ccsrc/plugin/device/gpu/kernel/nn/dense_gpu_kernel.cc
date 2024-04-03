@@ -20,7 +20,6 @@
 #include <utility>
 #include <memory>
 #include "ops/nn_op_name.h"
-#include "ops/dense.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 #include "plugin/device/gpu/kernel/math/matmul/matmul_wrapper.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cast_impl.cuh"
@@ -233,7 +232,5 @@ std::vector<KernelAttr> DenseGpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, Dense,
-                                 []() { return std::make_shared<DenseGpuKernelMod>(kDenseOpName); });
 }  // namespace kernel
 }  // namespace mindspore

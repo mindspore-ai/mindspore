@@ -14,8 +14,8 @@ mindspore.ops.Dense
 
     输入：
         - **x** (Tensor) - 输入Tensor。shape必须满足： :math:`len(x.shape)>0` 。
-        - **w** (Tensor) - 权重Tensor。shape必须满足： 若 :math:`len(x.shape)>1` ，则 :math:`len(w.shape)=2` 。若 :math:`len(x.shape)=1` ，则 :math:`len(w.shape)=1` 。 :math:`w.shape[-1]=x.shape[-1]` 。
-        - **b** (Union[Tensor, None]) - 偏置Tensor。当 `b` 不为 ``None`` 时，shape必须满足： 若 :math:`len(x.shape)>1` ，则 :math:`len(b.shape)=0` 或 :math:`len(b.shape)=1` 。若 :math:`len(b.shape)=1` ， 则 :math:`b.shape[0]=w.shape[0]` 。若 :math:`len(x.shape)=1` ，则 :math:`len(b.shape)=0` 。
+        - **w** (Tensor) - 权重Tensor。秩为1或2。shape必须满足： :math:`w.shape[-1]=x.shape[-1]` 。
+        - **b** (Union[Tensor, None]) - 偏置Tensor。当 `b` 不为 ``None`` 时，秩为0或1。shape必须满足： 若 :math:`len(w.shape)==1` ，则 :math:`len(b.shape)=0` 。若 :math:`len(w.shape)==2` ，则 :math:`len(b.shape)=1` ，且 :math:`b.shape[0]=w.shape[0]` 。
 
     输出：
-        若 :math:`len(x.shape)>1` ，则输出shape为 :math:`(*x.shape[:-1], w.shape[0])` 的Tensor。若 :math:`len(x.shape)=1` ，则输出shape为 :math:`()` 的Tensor。
+        若 :math:`len(w.shape)=2` ，则输出shape为 :math:`(*x.shape[:-1], w.shape[0])` 的Tensor。若 :math:`len(w.shape)=1` ，则输出shape为 :math:`(*x.shape[:-1])` 的Tensor。

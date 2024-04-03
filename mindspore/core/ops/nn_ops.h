@@ -100,7 +100,6 @@ GVAR_DEF(PrimitivePtr, kPrimRmsNormGrad, std::make_shared<Primitive>("RmsNormGra
 
 GVAR_DEF(PrimitivePtr, kPrimWKV, std::make_shared<Primitive>("WKV"));
 GVAR_DEF(PrimitivePtr, kPrimWKVGrad, std::make_shared<Primitive>("WKVGrad"));
-GVAR_DEF(PrimitivePtr, kPrimDense, std::make_shared<Primitive>("Dense"));
 GVAR_DEF(PrimitivePtr, kPrimDenseGrad, std::make_shared<Primitive>("DenseGrad"));
 GVAR_DEF(PrimitivePtr, kPrimEmbeddingLookup, std::make_shared<Primitive>("EmbeddingLookup"));
 GVAR_DEF(PrimitivePtr, kPrimEmbeddingLookupCommGrad, std::make_shared<Primitive>("EmbeddingLookupCommGrad"));

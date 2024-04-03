@@ -1,0 +1,40 @@
+dense:
+  description: |
+    Applies the dense connected operation to the `input`. The dense function is defined as:
+
+    .. math::
+        output = input * weight^{T} + bias
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
+    Args:
+        input (Tensor): Input Tensor of shape :math:`(*, in\_channels)`,
+            where :math:`*` means any number of additional dimensions.
+        weight (Tensor): The weight applied to the input.
+            The shape is :math:`(out\_channels, in\_channels)` or :math:`(in\_channels)`.
+        bias (Tensor, optional): Additive biases to the output.
+            The shape is :math:`(out\_channels)` or :math:`()`. Defaults: ``None``, the `bias` is 0.
+
+    Returns:
+        Output whose shape is determined by the shape of the input and the weight.
+
+    Raises:
+        TypeError: If `input` is not Tensor.
+        TypeError: If `weight` is not Tensor.
+        TypeError: If `bias` is not Tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``  ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
+        >>> input = Tensor([[-1., 1., 2.], [-3., -3., 1.]], mindspore.float32)
+        >>> weight = Tensor([[-2., -2., -2.], [0., -1., 0.]], mindspore.float32)
+        >>> bias = Tensor([0., 1.], mindspore.float32)
+        >>> output = ops.dense(input, weight, bias)
+        >>> print(output)
+        [[-4.  0.]
+         [10.  4.]]
