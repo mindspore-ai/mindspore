@@ -269,7 +269,8 @@ class SccFinder {
   // Store each layer of visit stack.
   struct SccVisitInfo {
     FuncGraphPtr graph{nullptr};
-    size_t visit_index{0};
+    const FuncGraphCounterMap *func_graphs_used_ptr{nullptr};
+    FuncGraphCounterMap::const_iterator visit_iter;
   };
 
   // Tarjan algorithm. Search SCCs from the given graph.
@@ -290,12 +291,14 @@ class SccFinder {
     visit_stack.push(std::move(info));
     while (!visit_stack.empty()) {
       auto &current_info = visit_stack.top();
+      if (current_info.func_graphs_used_ptr == nullptr) {
+        current_info.func_graphs_used_ptr = &current_info.graph->func_graphs_used();
+        current_info.visit_iter = current_info.func_graphs_used_ptr->cbegin();
+      }
       // If there's not visited used func graph, continue visiting the left used.
-      if (current_info.visit_index < current_info.graph->func_graphs_used().size()) {
-        auto iter = current_info.graph->func_graphs_used().begin();
-        std::advance(iter, current_info.visit_index);
-        ++current_info.visit_index;
-        auto used_graph = iter->first;
+      if (current_info.visit_iter != current_info.func_graphs_used_ptr->cend()) {
+        auto used_graph = current_info.visit_iter->first;
+        ++current_info.visit_iter;
         if (used_graph->seen_ != seen) {
           // First visit, push it.
           MS_LOG(DEBUG) << "Push graph: " << used_graph->ToString();
