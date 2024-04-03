@@ -41,6 +41,11 @@ CNodePtr GetCellByReceive(const AnfNodePtr &node, const FuncGraphManagerPtr &man
     user = users.front().first;
   }
   auto fg_cnode = users.front().first->cast<CNodePtr>();
+  auto cnode = node->cast<CNodePtr>();
+  if (cnode->HasPrimalAttr(ORDER)) {
+    auto order = cnode->GetPrimalAttr(ORDER);
+    fg_cnode->AddPrimalAttr(ORDER, order);
+  }
   return fg_cnode;
 }
 
@@ -55,6 +60,10 @@ CNodePtr GetCellBySend(const AnfNodePtr &node) {
     fg_node = fg_node->cast<CNodePtr>()->input(1);
   }
   auto fg_cnode = fg_node->cast<CNodePtr>();
+  if (cnode->HasPrimalAttr(ORDER)) {
+    auto order = cnode->GetPrimalAttr(ORDER);
+    fg_cnode->AddPrimalAttr(ORDER, order);
+  }
   return fg_cnode;
 }
 
@@ -154,6 +163,8 @@ bool SortFuncInsideMicro(const Border &b_i, const Border &b_j) {
   auto node_j = b_j.border;
   auto order_i = node_i->GetPrimalAttr(ORDER);
   auto order_j = node_j->GetPrimalAttr(ORDER);
+  MS_EXCEPTION_IF_NULL(order_i);
+  MS_EXCEPTION_IF_NULL(order_j);
   return (GetValue<int64_t>(order_i) < GetValue<int64_t>(order_j));
 }
 
