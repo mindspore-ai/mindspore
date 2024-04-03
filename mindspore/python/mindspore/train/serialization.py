@@ -633,11 +633,12 @@ def _convert_cell_to_param_list(save_obj, integrated_save, append_dict, choice_f
             param_data.append(str(param_tensor.dtype))
             param_data.append(value.key)
         else:
-            param_data = Tensor(value.data)
+            param_data = value.data
 
             # in automatic model parallel scenario, some parameters were split to all the devices,
             # which should be combined before saving
             if key in parameter_layout_dict:
+                param_data = Tensor(value.data)
                 param_data = _get_merged_param_data(save_obj, parameter_layout_dict, key, param_data,
                                                     integrated_save)
 
