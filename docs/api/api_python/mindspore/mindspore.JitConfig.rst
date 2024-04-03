@@ -1,16 +1,16 @@
 mindspore.JitConfig
 ====================
 
-.. py:class:: mindspore.JitConfig(jit_level="O1", exc_mode="auto", jit_syntax_level="", debug_level="RELEASE", **kwargs)
+.. py:class:: mindspore.JitConfig(jit_level="", exc_mode="auto", jit_syntax_level="", debug_level="RELEASE", **kwargs)
 
     编译时所使用的JitConfig配置项。
 
     参数：
-        - **jit_level** (str, 可选) - 用于控制编译优化等级，支持["O0", "O1", "O2"]。默认值： ``"O1"`` 。
+        - **jit_level** (str, 可选) - 用于控制编译优化等级，支持["O0", "O1", "O2"]。默认值： ``""`` ，框架自动选择执行方式。
 
-          - ``"O0"``: 除必要影响功能的优化外，其他优化均关闭。
-          - ``"O1"``: 使能常用优化，推荐设置O1级别。
-          - ``"O2"``: 开启一些实验等级的优化。
+          - ``"O0"``: 除必要影响功能的优化外，其他优化均关闭，使用逐算子执行的执行方式。
+          - ``"O1"``: 使能常用优化和自动算子融合优化，使用逐算子执行的执行方式。
+          - ``"O2"``: 开启极致性能优化，使用下沉的执行方式。
 
         - **exc_mode** (str, 可选) - 用于控制模型的执行方式，目前仅支持 ``"auto"``。默认值： ``"auto"`` 。
 

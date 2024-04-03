@@ -21,11 +21,13 @@ class JitConfig:
 
     Args:
         jit_level (str, optional): Used to control the compilation optimization level.
-            Supports ["O0", "O1", "O2"]. Default: ``"O1"`` .
+            Supports ["O0", "O1", "O2"]. Default: ``""`` , The framework automatically selects the execution method.
 
-            - ``"O0"``: Except for optimizations that may affect functionality, all other optimizations are turned off.
-            - ``"O1"``: Using commonly used optimizations, recommended to set the O1 level.
-            - ``"O2"``: Activate some experimental level optimizations.
+            - ``"O0"``: Except for optimizations that may affect functionality, all other optimizations are turned off,
+              adopt KernelByKernel execution mode.
+            - ``"O1"``: Using commonly used optimizations and automatic operator fusion optimizations,
+              adopt KernelByKernel execution mode.
+            - ``"O2"``: Ultimate performance optimization, adopt Sink execution mode.
 
         exc_mode (str, optional): Control the execution mode of the model.
             Supports ["auto", "sink", "no_sink"]. Default: ``"auto"`` .
@@ -69,8 +71,8 @@ class JitConfig:
         >>>
         >>> net.set_jit_config(jitconfig)
     """
-    def __init__(self, jit_level="O1", exc_mode="auto", jit_syntax_level="", debug_level="RELEASE", **kwargs):
-        if jit_level not in ["O0", "O1", "O2"]:
+    def __init__(self, jit_level="", exc_mode="auto", jit_syntax_level="", debug_level="RELEASE", **kwargs):
+        if jit_level not in ["", "O0", "O1", "O2"]:
             raise ValueError("For 'jit_level' must be one of ['O0', 'O1', 'O2'].")
         if exc_mode not in ['auto', 'sink', 'no_sink']:
             raise ValueError("For 'exc_mode' must be one of '['auto', 'sink', 'no_sink']'.")
