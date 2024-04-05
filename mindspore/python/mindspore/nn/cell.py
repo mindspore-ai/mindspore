@@ -309,10 +309,23 @@ class Cell(Cell_):
 
     @property
     def pipeline_stage(self):
+        """
+        `pipeline_stage` represents the pipeline stage of current Cell.
+        """
         return self._pipeline_stage
 
     @pipeline_stage.setter
     def pipeline_stage(self, value):
+        """
+        Set the `pipeline_stage` of a Cell.
+
+        Args:
+            value (int): The pipeline stage of a parameter.
+
+        Raises:
+            TypeError: If `value` is not int type or is a bool type.
+            ValueError: If `value` is not a positive integer.
+        """
         if not isinstance(value, int) or isinstance(value, bool):
             raise TypeError("For 'Cell', the property 'pipeline_stage' "
                             "must be int type, but got type : {}".format(type(value)))
@@ -2348,16 +2361,13 @@ class Cell(Cell_):
                                  "the key kwargs must be 'mp_comm_recompute', "
                                  "'parallel_optimizer_comm_recompute', 'recompute_slice_activation'" % key)
 
+    @deprecated("2.3", "infer_param_pipeline_stage")
     def infer_param_pipeline_stage(self):
         """
         Infer pipeline stages of all parameters in the cell.
 
         Note:
-            - If a parameter does not belong to any cell which has been set pipeline_stage,
-              the parameter should use add_pipeline_stage to add it's pipeline_stage information.
-            - If a parameter P has been used by two operators in different stages "stageA" and "stageB",
-              the parameter P should use P.add_pipeline_stage(stageA) and P.add_pipeline_stage(stageB)
-              to add it's stage information before using infer_param_pipeline_stage.
+            - The interface is deprecated from version 2.3 and will be removed in a future version.
 
         Returns:
             The params belong to current stage in pipeline parallel.
