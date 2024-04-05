@@ -31,6 +31,7 @@ aclopSetAttrListIntFunObj aclopSetAttrListInt_ = nullptr;
 aclopSetAttrListListIntFunObj aclopSetAttrListListInt_ = nullptr;
 aclopSetAttrListStringFunObj aclopSetAttrListString_ = nullptr;
 aclopSetAttrStringFunObj aclopSetAttrString_ = nullptr;
+aclopSetModelDirFunObj aclopSetModelDir_ = nullptr;
 
 void LoadAclOpApiSymbol(const std::string &ascend_path) {
   std::string ascendcl_plugin_path = ascend_path + "lib64/libascendcl.so";
@@ -51,6 +52,7 @@ void LoadAclOpApiSymbol(const std::string &ascend_path) {
   aclopSetAttrListListInt_ = DlsymAscendFuncObj(aclopSetAttrListListInt, handler);
   aclopSetAttrListString_ = DlsymAscendFuncObj(aclopSetAttrListString, handler);
   aclopSetAttrString_ = DlsymAscendFuncObj(aclopSetAttrString, handler);
+  aclopSetModelDir_ = DlsymAscendFuncObj(aclopSetModelDir, handler);
   MS_LOG(INFO) << "Load ascend op api success!";
 }
 
