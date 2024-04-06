@@ -39,7 +39,7 @@ class TestDynamicNetworking : public UT::Common {
 /// Expectation: these register messages are received by meta server node successfully.
 TEST_F(TestDynamicNetworking, NodeRegister) {
   common::SetEnv("MS_NODE_TIMEOUT", "30");
-  common::SetEnv("MS_TOPO_TIMEOUT", std::to_string(1000 * 60 * 10).c_str());
+  common::SetEnv("MS_TOPO_TIMEOUT", std::to_string(60 * 10).c_str());
   common::SetEnv("MS_RECEIVE_MSG_TIMEOUT", "5");
   common::SetEnv("MS_CLUSTER_RETRY_NUM", "210");
   std::string server_host = "127.0.0.1";
@@ -92,7 +92,7 @@ TEST_F(TestDynamicNetworking, NodeRegister) {
 /// Expectation: the registered handler received the sent message successfully.
 TEST_F(TestDynamicNetworking, AddMessageHandler) {
   common::SetEnv("MS_NODE_TIMEOUT", "30");
-  common::SetEnv("MS_TOPO_TIMEOUT", std::to_string(1000 * 60 * 10).c_str());
+  common::SetEnv("MS_TOPO_TIMEOUT", std::to_string(60 * 10).c_str());
   common::SetEnv("MS_RECEIVE_MSG_TIMEOUT", "5");
   common::SetEnv("MS_CLUSTER_RETRY_NUM", "210");
   std::string server_host = "127.0.0.1";
@@ -147,7 +147,7 @@ TEST_F(TestDynamicNetworking, AddMessageHandler) {
 /// Expectation: get message from msn successfully.
 TEST_F(TestDynamicNetworking, RetrieveMessageFromMSN) {
   common::SetEnv("MS_NODE_TIMEOUT", "30");
-  common::SetEnv("MS_TOPO_TIMEOUT", std::to_string(1000 * 60 * 10).c_str());
+  common::SetEnv("MS_TOPO_TIMEOUT", std::to_string(60 * 10).c_str());
   common::SetEnv("MS_RECEIVE_MSG_TIMEOUT", "5");
   common::SetEnv("MS_CLUSTER_RETRY_NUM", "210");
   std::string server_host = "127.0.0.1";
@@ -198,7 +198,7 @@ TEST_F(TestDynamicNetworking, RetrieveMessageFromMSN) {
 /// Expectation: the meta server node is restarted successfully and all the metadata is restored.
 TEST_F(TestDynamicNetworking, MetaServerNodeRecovery) {
   common::SetEnv("MS_NODE_TIMEOUT", "30");
-  common::SetEnv("MS_TOPO_TIMEOUT", std::to_string(1000 * 60 * 10).c_str());
+  common::SetEnv("MS_TOPO_TIMEOUT", std::to_string(60 * 10).c_str());
   common::SetEnv("MS_RECEIVE_MSG_TIMEOUT", "5");
   common::SetEnv("MS_CLUSTER_RETRY_NUM", "210");
   // Prepare the environment.
@@ -283,7 +283,7 @@ TEST_F(TestDynamicNetworking, MetaServerNodeRecovery) {
 /// compute graph node.
 /// Expectation: the number of alive compute graph node is equal to two.
 TEST_F(TestDynamicNetworking, HeartbeatTimeout) {
-  common::SetEnv("MS_TOPO_TIMEOUT", std::to_string(1000 * 60 * 10).c_str());
+  common::SetEnv("MS_TOPO_TIMEOUT", std::to_string(60 * 10).c_str());
   common::SetEnv("MS_RECEIVE_MSG_TIMEOUT", "5");
   common::SetEnv("MS_CLUSTER_RETRY_NUM", "210");
   // Start the meta server node in the parent process.
@@ -348,7 +348,7 @@ TEST_F(TestDynamicNetworking, HeartbeatTimeout) {
 /// Expectation: the cluster topology is constructed successfully.
 TEST_F(TestDynamicNetworking, ReconnectToMetaServerDuringReg) {
   common::SetEnv("MS_NODE_TIMEOUT", "30");
-  common::SetEnv("MS_TOPO_TIMEOUT", std::to_string(1000 * 60 * 10).c_str());
+  common::SetEnv("MS_TOPO_TIMEOUT", std::to_string(60 * 10).c_str());
   common::SetEnv("MS_RECEIVE_MSG_TIMEOUT", "5");
   common::SetEnv("MS_CLUSTER_RETRY_NUM", "210");
   // Init the environment variables.
@@ -413,7 +413,7 @@ TEST_F(TestDynamicNetworking, ReconnectToMetaServerDuringReg) {
 /// Expectation: the cluster topology is shutdown finally.
 TEST_F(TestDynamicNetworking, ReconnectToMetaServerDuringUnreg) {
   common::SetEnv("MS_NODE_TIMEOUT", "30");
-  common::SetEnv("MS_TOPO_TIMEOUT", std::to_string(1000 * 60 * 10).c_str());
+  common::SetEnv("MS_TOPO_TIMEOUT", std::to_string(60 * 10).c_str());
   common::SetEnv("MS_RECEIVE_MSG_TIMEOUT", "5");
   common::SetEnv("MS_CLUSTER_RETRY_NUM", "210");
   // Init the environment variables.
@@ -500,7 +500,7 @@ TEST_F(TestDynamicNetworking, ReconnectToMetaServerDuringUnreg) {
 /// Expectation: the hostnames of specified compute graph node are returned.
 TEST_F(TestDynamicNetworking, GetHostNames) {
   common::SetEnv("MS_NODE_TIMEOUT", "30");
-  common::SetEnv("MS_TOPO_TIMEOUT", std::to_string(1000 * 60 * 10).c_str());
+  common::SetEnv("MS_TOPO_TIMEOUT", std::to_string(60 * 10).c_str());
   common::SetEnv("MS_RECEIVE_MSG_TIMEOUT", "5");
   common::SetEnv("MS_CLUSTER_RETRY_NUM", "210");
   std::string server_host = "127.0.0.1";
