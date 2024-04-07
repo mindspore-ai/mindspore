@@ -33,5 +33,7 @@ REGISTER_ACL_OP(SpaceToDepth).set_run_mode(false);
 REGISTER_ACL_OP(HistogramFixedWidth).set_extra_supported_datatype({ge::DT_DOUBLE});
 
 REGISTER_ACL_OP(ResizeBilinearV2Grad).set_extra_supported_datatype({ge::DT_FLOAT16});
+
+REGISTER_ACL_OP(ROIAlignGrad).set_extra_supported_datatype({ge::DT_FLOAT16});
 }  // namespace transform
 }  // namespace mindspore
