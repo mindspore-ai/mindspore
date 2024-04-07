@@ -207,10 +207,10 @@ def _insert_cast_for_operators(stree, dtype, force_cast, *, white_list=None, bla
         if _operator_need_cast(node, force_cast, white_list, black_list):
             _insert_cast_for_operator(node, dtype)
         elif node.get_node_type() == ms.rewrite.NodeType.Tree:
-            force_cast = force_cast or _net_need_cast(node, force_cast, white_list, black_list)
+            force_cast_ = force_cast or _net_need_cast(node, force_cast, white_list, black_list)
             if not _precision_set_by_user(node.get_instance()):
                 subtree = node.get_sub_tree()
-                _insert_cast_for_operators(subtree, dtype, force_cast, white_list=white_list, black_list=black_list)
+                _insert_cast_for_operators(subtree, dtype, force_cast_, white_list=white_list, black_list=black_list)
 
 
 def _need_removed_cast_pair(node, dtype):

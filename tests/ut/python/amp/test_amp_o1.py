@@ -170,3 +170,31 @@ def test_net_with_class_function():
     ms.rewrite.common.namespace._ms_cells_to_subtree = False # pylint:disable=protected-access
     y1 = new_net(x)
     assert np.allclose(y.asnumpy(), y1.asnumpy(), 0.001, 0.001)
+
+class CellAndOps(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.relu = nn.Dense(1, 1)
+        self.abs = ops.Abs()
+
+    def construct(self, x):
+        x = self.relu(x)
+        x = self.abs(x)
+        return x
+
+def test_cell_and_ops():
+    """
+    Feature: Test amp o1.
+    Description: Network with cells and ops.
+    Expectation: Success.
+    """
+    network = CellAndOps()
+    # enable parse mindspore cells
+    ms.rewrite.common.namespace._ms_cells_to_subtree = True # pylint:disable=protected-access
+    stree = ms.rewrite.SymbolTree.create(network)
+    amp._insert_cast_for_operators(stree, ms.float16, False, white_list=amp.AMP_WHITE_LIST) # pylint:disable=protected-access
+    amp._remove_duplicated_cast(stree, ms.float16) # pylint:disable=protected-access
+    codes = stree.get_code()
+    # amp_cast should not exist in `class CellAndOpsOpt(CellAndOps, nn.Cell)`
+    assert codes.count("x = amp_cast(x, mindspore.float16)") == 0, codes
+    assert codes.count("x = amp_cast(x, mindspore.float32)") == 4, codes
