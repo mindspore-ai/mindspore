@@ -445,6 +445,7 @@ bool ConfigFileParser::SetParamByConfigfile(const std::shared_ptr<mindspore::Con
       MS_LOG(INFO) << "op_attr: " << op_attr_str;
       auto op_attr = mindspore::lite::SplitStringToVector(op_attr_str, ":");
       if (op_attr.size() != kNumSize3) {
+        MS_LOG(ERROR) << "Only support ops:attr:value, but get " << op_attr_str;
         return false;
       }
       auto op_type = op_attr[kNumIndex0];
