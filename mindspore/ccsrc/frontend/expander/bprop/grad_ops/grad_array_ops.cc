@@ -83,7 +83,7 @@ inline NodePtr MinOrMaxOpGetMask(BpropBuilder *ib, const NodePtr &x, const NodeP
 
 NodePtr MinOrMaxOpGrad(BpropBuilder *ib, const NodePtr &x, const NodePtr &out, const NodePtr &dout) {
   auto mask = MinOrMaxOpGetMask(ib, x, out);
-  auto x_zeros = ib->ZerosLike(x);
+  auto x_zeros = ib->Zeros(x);
   auto mask_sum = ib->Emit("SumExt", {mask, ib->EmitValue(kNone), ib->Value(false), ib->EmitValue(kNone)});
   auto grad_div_mask_sum = ib->Div(dout, ib->Cast(mask_sum, ib->GetDtype(dout)));
   auto dx = ib->Emit("MaskedFill", {x_zeros, mask, grad_div_mask_sum});

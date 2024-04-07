@@ -250,6 +250,15 @@ class COMMON_EXPORT Emitter {
   // By comparing x with itself, test whether x is NaN
   inline NodePtr IsNanFunc(const NodePtr &x) { return NotEqual(x, x); }
 
+  NodePtr Zeros(const NodePtr &x) {
+    auto x_shape = x->shape();
+    if (!x_shape.empty() && !IsDynamicRank(x_shape)) {
+      // There are currently some problems under 0d that need to be fixed later.
+      return Emit("Zeros", {Shape(x), Value<int64_t>(x->dtype()->type_id())});
+    }
+    return ZerosLike(x);
+  }
+
   /// \brief Emit a value node
   template <typename T>
   NodePtr Value(const T &value) {
