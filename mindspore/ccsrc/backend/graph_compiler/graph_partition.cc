@@ -766,6 +766,17 @@ bool IsNeedInline(const CNodePtr &cnode) {
     if (get_from_code->HasPrimalAttr(kAttrNeedInline)) {
       cnode->AddPrimalAttr(kAttrNeedInline, MakeValue(true));
       cnode->AddPrimalAttr(kAttrNotCut, MakeValue(true));
+      auto idx = common::AnfAlgo::GetTupleGetItemOutIndex(tuple_get_node);
+      auto call_graph = GetValueNode<FuncGraphPtr>(get_from_node->cast<CNodePtr>()->input(0));
+      MS_EXCEPTION_IF_NULL(call_graph);
+      auto graph_out = call_graph->output();
+      MS_EXCEPTION_IF_NULL(graph_out);
+      auto partial = graph_out->cast<CNodePtr>()->input(idx + 1);
+      MS_EXCEPTION_IF_NULL(partial);
+      MS_EXCEPTION_IF_CHECK_FAIL(IsPrimitiveCNode(partial, prim::kPrimPartial),
+                                 "Partial node is expected, bug get" + partial->ToString());
+      auto partial_graph = GetValueNode<FuncGraphPtr>(partial->cast<CNodePtr>()->input(1));
+      partial_graph->set_flag(FUNC_GRAPH_FLAG_CELL_REUSE, true);
       return true;
     }
     return false;
