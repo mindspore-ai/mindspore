@@ -77,6 +77,7 @@ class BACKEND_EXPORT OpRunner : public std::enable_shared_from_this<OpRunner> {
   // For view op used
   void SetOutputAbstract() { output_abs_ = AbstractConvertFunc::ConvertAbstract(output(kIndex0)); }
 
+  // For view op used
   void SetOutputTupleAbstract() {
     AbstractBasePtrList abs_list;
     for (const auto &output : outputs_) {

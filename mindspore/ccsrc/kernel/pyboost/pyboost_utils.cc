@@ -43,7 +43,7 @@ void CreateTensor(const TypePtr &type, const ShapeVector &shape_vector, const Ab
   MS_LOG(DEBUG) << "Create output tensor " << output_tensor->ToString();
 }
 
-void CreateTensor(const TypePtr &type, const ShapeVector &shape_vector, std::vector<tensor::TensorPtr> *outputs) {
+void CreateTensor(const TypePtr &type, const ShapeVector &shape_vector, std::vector<tensor::BaseTensorPtr> *outputs) {
   auto output_tensor = std::make_shared<tensor::Tensor>(type->type_id(), shape_vector);
   (void)outputs->emplace_back(output_tensor);
   MS_LOG(DEBUG) << "Create output tensor " << output_tensor->ToString();
@@ -123,7 +123,7 @@ tensor::BaseTensorPtr PyBoostUtils::ScalarToTensor(const ScalarPtr &scalar) {
 }
 
 void PyBoostUtils::CreateOutputTensor(const ValueSimpleInfoPtr &output_value_simple_info,
-                                      std::vector<tensor::TensorPtr> *outputs) {
+                                      std::vector<tensor::BaseTensorPtr> *outputs) {
   runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative,
                                      runtime::ProfilerEvent::kPyBoostCreateOutputTensor,
                                      runtime::ProfilerRecorder::kNoName, false);
