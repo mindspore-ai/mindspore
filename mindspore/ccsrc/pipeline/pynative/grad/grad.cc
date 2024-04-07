@@ -1961,7 +1961,12 @@ void GradExecutor::RecordForwardGraph(const FrontendOpRunInfoPtr &op_run_info) c
     }
     const auto &cnode = ConstructForwardGraph(op_run_info);
     MS_EXCEPTION_IF_NULL(cnode);
-    cnode->set_abstract(op_run_info->base_op_run_info.abstract);
+    // By simple infer, abstract is nullptr
+    if (op_run_info->base_op_run_info.abstract == nullptr) {
+      cnode->set_abstract(PyNativeAlgo::Common::SetAbstractValueToAnyValue(op_run_info->real_out->ToAbstract()));
+    } else {
+      cnode->set_abstract(op_run_info->base_op_run_info.abstract);
+    }
     SaveOutputNodeMap(op_run_info->out_value_id, op_run_info, cnode);
   }
 }
