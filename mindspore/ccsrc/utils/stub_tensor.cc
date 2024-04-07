@@ -152,24 +152,22 @@ py::object TensorNode::GetShape() {
   abstract::ShapePtr shape{nullptr};
   ShapeVector shape_vector;
   if (output_value_simple_info_ == nullptr) {
+    MS_EXCEPTION_IF_NULL(abstract_);
     auto base = abstract_->BuildShape();
     shape = base->cast<abstract::ShapePtr>();
     if (shape && !shape->IsDynamic()) {
       shape_vector = shape->shape();
+    } else {
+      auto val = WaitValue();
+      auto tensor = val->cast<tensor::TensorPtr>();
+      MS_EXCEPTION_IF_NULL(tensor);
+      shape_vector = tensor->shape();
     }
   } else {
     if (output_value_simple_info_->size != kIndex1) {
       MS_LOG(EXCEPTION) << "Simple infer size " << output_value_simple_info_->size << " is not equal to 1";
     }
     shape_vector = output_value_simple_info_->shape_vector_[kIndex0];
-  }
-  if (!mindspore::IsDynamic(shape_vector)) {
-    shape_vector = shape->shape();
-  } else {
-    auto val = WaitValue();
-    auto tensor = val->cast<tensor::TensorPtr>();
-    MS_EXCEPTION_IF_NULL(tensor);
-    shape_vector = tensor->shape();
   }
   auto ret = py::tuple(shape_vector.size());
   for (size_t i = 0; i < shape_vector.size(); ++i) {
@@ -182,6 +180,7 @@ py::object TensorNode::GetDtype() {
   WaitPipeline();
   TypePtr base = nullptr;
   if (output_value_simple_info_ == nullptr) {
+    MS_EXCEPTION_IF_NULL(abstract_);
     base = abstract_->BuildType();
     if (base->isa<TensorType>()) {
       base = base->cast<TensorTypePtr>()->element();
