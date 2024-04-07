@@ -29,7 +29,7 @@ from mindspore.parallel._parallel_serialization import _rank_list_for_transform_
 
 
 __all__ = ["merge_pipeline_strategys", "rank_list_for_transform", "transform_checkpoint_by_rank",
-           "transform_checkpoints"]
+           "transform_checkpoints", "load_segmented_checkpoints"]
 
 
 def merge_pipeline_strategys(src_strategy_dirs, dst_strategy_file):
@@ -404,19 +404,18 @@ def transform_checkpoints(src_checkpoints_dir, dst_checkpoints_dir, ckpt_prefix,
                          format(os.path.dirname(dst_strategy_file)))
     src_layout_map = _extract_layout_map(src_strategy_file)
     dst_layout_map = _extract_layout_map(dst_strategy_file)
-    pipeline_stage_set = set()
-    for _, layout in src_layout_map.items():
-        pipeline_stage_set.update(layout[6])
-    if len(pipeline_stage_set) > 1 or set(dst_layout_map.keys()).issubset(src_layout_map):
-        _transform_checkpoints(src_checkpoints_dir, dst_checkpoints_dir, ckpt_prefix,
-                               src_strategy_file, dst_strategy_file)
-    else:
+    pipeline_stage_num = _extract_pipeline_stage_num(src_strategy_file)
+    if src_layout_map and dst_layout_map and pipeline_stage_num == 1 \
+        and not set(dst_layout_map.keys()).issubset(src_layout_map.keys()):
         dst_stage_num = _extract_pipeline_stage_num(dst_strategy_file)
         if dst_stage_num > 1:
             raise NotImplementedError("When using unmerged src strategy, dst strategy doesn't \
                                        support strategy with pipeline parallel.")
         _transform_checkpoint_by_stage(src_checkpoints_dir, dst_checkpoints_dir, ckpt_prefix,
                                        src_strategy_file, dst_strategy_file)
+    else:
+        _transform_checkpoints(src_checkpoints_dir, dst_checkpoints_dir, ckpt_prefix,
+                               src_strategy_file, dst_strategy_file)
 
 
 def load_segmented_checkpoints(ckpt_file_dir, net=None, strict_load=False, filter_prefix=None,
@@ -432,7 +431,7 @@ def load_segmented_checkpoints(ckpt_file_dir, net=None, strict_load=False, filte
           And using either of those two args will override `choice_func` at the same time.
 
     Args:
-        ckpt_file_name (str): Checkpoint file name.
+        ckpt_file_dir (str): Checkpoint file directory.
         net (Cell): The network where the parameters will be loaded. Default: ``None`` .
         strict_load (bool): Whether to strict load the parameter into net. If ``False`` , it will load parameter
                             into net when parameter name's suffix in checkpoint file is the same as the
@@ -463,33 +462,6 @@ def load_segmented_checkpoints(ckpt_file_dir, net=None, strict_load=False, filte
         ValueError: Checkpoint file's format is incorrect.
         ValueError: Parameter's dict is None after load checkpoint file.
         TypeError: The type of `specify_prefix` or `filter_prefix` is incorrect.
-
-    Examples:
-        >>> import mindspore as ms
-        >>>
-        >>> ckpt_file_dir = "./checkpoint/"
-        >>> param_dict = ms.load_segmented_checkpoints(ckpt_file_dir,
-        ...                                 choice_func=lambda x: x.startswith("conv") and not x.startswith("conv1"))
-        >>> print(param_dict["conv2.weight"])
-        Parameter (name=conv2.weight, shape=(16, 6, 5, 5), dtype=Float32, requires_grad=True)
-        >>> def func(param_name):
-        ...     whether_load = False
-        ...     if param_name.startswith("conv"):
-        ...         whether_load = True
-        ...     if param_name.startswith("conv1"):
-        ...         whether_load = False
-        ...     return whether_load
-        >>> param_dict1 = ms.load_segmented_checkpoints(ckpt_file_dir, choice_func=func)
-        >>> print(param_dict1["conv2.weight"])
-        Parameter (name=conv2.weight, shape=(16, 6, 5, 5), dtype=Float32, requires_grad=True)
-        >>> def func(param_name):
-        ...     whether_load = False
-        ...     if param_name.startswith("conv1"):
-        ...         whether_load = True
-        ...     return whether_load
-        >>> param_dict2 = ms.load_segmented_checkpoints(ckpt_file_dir, choice_func=func)
-        >>> print(param_dict2)
-        {'conv1.weight': Parameter (name=conv1.weight, shape=(6, 1, 5, 5), dtype=Float32, requires_grad=True)}
 
     Tutorial Examples:
         - `Saving and Loading the Model - Saving and Loading the Model Weight
