@@ -1,11 +1,11 @@
 #operator dense
 dense:
   args:
-    x:
+    input:
       dtype: tensor
-    w:
+    weight:
       dtype: tensor
-    b:
+    bias:
       dtype: tensor
       default: None
   returns:
