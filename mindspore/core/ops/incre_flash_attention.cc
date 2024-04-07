@@ -54,7 +54,7 @@ ShapeValueDType GetDimension(const std::vector<ShapeValueDType> &dimensions, con
 
 bool IsOptionalInputNone(const AbstractBasePtr &input) {
   MS_EXCEPTION_IF_NULL(input);
-  return input->BuildType()->type_id() == kMetaTypeNone;
+  return input->GetType()->type_id() == kMetaTypeNone;
 }
 
 void CheckInputsShape(const AbstractBasePtr &input, const std::vector<ShapeValueDType> &expect_shape,
@@ -339,39 +339,39 @@ void CheckQuantParamType(const PrimitivePtr &prim, const std::vector<AbstractBas
   std::map<std::string, TypePtr> dequant_types;
   const std::set<TypePtr> dequant_valid_types = {kUInt64};
   if (!IsOptionalInputNone(input_args[kIncreFlashAttentionInputDequantScale1])) {
-    (void)dequant_types.emplace("dequant_scale1", input_args[kIncreFlashAttentionInputDequantScale1]->BuildType());
+    (void)dequant_types.emplace("dequant_scale1", input_args[kIncreFlashAttentionInputDequantScale1]->GetType());
     (void)CheckAndConvertUtils::CheckTensorTypeSame(dequant_types, dequant_valid_types, op_name);
   }
   if (!IsOptionalInputNone(input_args[kIncreFlashAttentionInputDequantScale2])) {
-    (void)dequant_types.emplace("dequant_scale2", input_args[kIncreFlashAttentionInputDequantScale2]->BuildType());
+    (void)dequant_types.emplace("dequant_scale2", input_args[kIncreFlashAttentionInputDequantScale2]->GetType());
     (void)CheckAndConvertUtils::CheckTensorTypeSame(dequant_types, dequant_valid_types, op_name);
   }
   std::map<std::string, TypePtr> quant_types;
   const std::set<TypePtr> quant_valid_types = {kFloat};
   if (!IsOptionalInputNone(input_args[kIncreFlashAttentionInputQuantScale1])) {
-    (void)quant_types.emplace("quant_scale1", input_args[kIncreFlashAttentionInputQuantScale1]->BuildType());
+    (void)quant_types.emplace("quant_scale1", input_args[kIncreFlashAttentionInputQuantScale1]->GetType());
     (void)CheckAndConvertUtils::CheckTensorTypeSame(quant_types, quant_valid_types, op_name);
   }
   if (!IsOptionalInputNone(input_args[kIncreFlashAttentionInputQuantScale2])) {
-    (void)quant_types.emplace("quant_scale2", input_args[kIncreFlashAttentionInputQuantScale2]->BuildType());
+    (void)quant_types.emplace("quant_scale2", input_args[kIncreFlashAttentionInputQuantScale2]->GetType());
     (void)CheckAndConvertUtils::CheckTensorTypeSame(quant_types, quant_valid_types, op_name);
   }
   if (!IsOptionalInputNone(input_args[kIncreFlashAttentionInputQuantOffset2])) {
-    (void)quant_types.emplace("quant_offset2", input_args[kIncreFlashAttentionInputQuantOffset2]->BuildType());
+    (void)quant_types.emplace("quant_offset2", input_args[kIncreFlashAttentionInputQuantOffset2]->GetType());
     (void)CheckAndConvertUtils::CheckTensorTypeSame(quant_types, quant_valid_types, op_name);
   }
   if (!IsOptionalInputNone(input_args[kIncreFlashAttentionInputAntiquantScale])) {
-    (void)quant_types.emplace("antiquant_scale", input_args[kIncreFlashAttentionInputAntiquantScale]->BuildType());
+    (void)quant_types.emplace("antiquant_scale", input_args[kIncreFlashAttentionInputAntiquantScale]->GetType());
     (void)CheckAndConvertUtils::CheckTensorTypeSame(quant_types, quant_valid_types, op_name);
   }
   if (!IsOptionalInputNone(input_args[kIncreFlashAttentionInputAntiquantOffset])) {
-    (void)quant_types.emplace("antiquant_offset", input_args[kIncreFlashAttentionInputAntiquantOffset]->BuildType());
+    (void)quant_types.emplace("antiquant_offset", input_args[kIncreFlashAttentionInputAntiquantOffset]->GetType());
     (void)CheckAndConvertUtils::CheckTensorTypeSame(quant_types, quant_valid_types, op_name);
   }
   std::map<std::string, TypePtr> block_table_types;
   const std::set<TypePtr> block_valid_types = {kInt32};
   if (!IsOptionalInputNone(input_args[kIncreFlashAttentionInputBlockTable])) {
-    (void)block_table_types.emplace("block_table", input_args[kIncreFlashAttentionInputBlockTable]->BuildType());
+    (void)block_table_types.emplace("block_table", input_args[kIncreFlashAttentionInputBlockTable]->GetType());
     (void)CheckAndConvertUtils::CheckTensorTypeSame(block_table_types, block_valid_types, op_name);
   }
 }
@@ -383,13 +383,13 @@ TypePtr IncreFlashAttentionInferType(const PrimitivePtr &prim, const std::vector
     std::map<std::string, TypePtr> pse_shift_types;
     const std::set<TypePtr> pse_shift_valid_types = {kFloat16, kBFloat16};
     if (!IsOptionalInputNone(input_args[kIncreFlashAttentionInputPseShiftIndex])) {
-      (void)pse_shift_types.emplace("pse_shift", input_args[kIncreFlashAttentionInputPseShiftIndex]->BuildType());
+      (void)pse_shift_types.emplace("pse_shift", input_args[kIncreFlashAttentionInputPseShiftIndex]->GetType());
       (void)CheckAndConvertUtils::CheckTensorTypeSame(pse_shift_types, pse_shift_valid_types, op_name);
     }
     std::map<std::string, TypePtr> atten_mask_types;
     const std::set<TypePtr> atten_mask_valid_types = {kFloat16, kBool};
     if (!IsOptionalInputNone(input_args[kIncreFlashAttentionInputAttnMaskIndex])) {
-      (void)atten_mask_types.emplace("attn_mask", input_args[kIncreFlashAttentionInputAttnMaskIndex]->BuildType());
+      (void)atten_mask_types.emplace("attn_mask", input_args[kIncreFlashAttentionInputAttnMaskIndex]->GetType());
       (void)CheckAndConvertUtils::CheckTensorTypeSame(atten_mask_types, atten_mask_valid_types, op_name);
     }
     auto asl_type = input_args[kIncreFlashAttentionInputActualSeqLengths]->GetType();
@@ -398,8 +398,7 @@ TypePtr IncreFlashAttentionInferType(const PrimitivePtr &prim, const std::vector
       std::map<std::string, TypePtr> asl_types;
       const std::set<TypePtr> acl_valid_types = {kInt64};
       if (!IsOptionalInputNone(input_args[kIncreFlashAttentionInputActualSeqLengths])) {
-        (void)asl_types.emplace("actual_seq_lengths",
-                                input_args[kIncreFlashAttentionInputActualSeqLengths]->BuildType());
+        (void)asl_types.emplace("actual_seq_lengths", input_args[kIncreFlashAttentionInputActualSeqLengths]->GetType());
         (void)CheckAndConvertUtils::CheckTensorTypeSame(asl_types, acl_valid_types, op_name);
       }
     }
@@ -410,7 +409,7 @@ TypePtr IncreFlashAttentionInferType(const PrimitivePtr &prim, const std::vector
   const std::set<TypePtr> q_valid_types = {kFloat16, kBFloat16};
   const std::set<TypePtr> kv_valid_types = {kFloat16, kBFloat16, kInt8};
   TypePtr type;
-  (void)q_types.emplace("query", input_args[kIncreFlashAttentionInputQueryIndex]->BuildType());
+  (void)q_types.emplace("query", input_args[kIncreFlashAttentionInputQueryIndex]->GetType());
   if (CheckIsFrontend(input_args)) {
     AbstractBasePtrList elements =
       input_args[kIncreFlashAttentionInputKeyIndex]->cast<abstract::AbstractSequencePtr>()->elements();
@@ -446,10 +445,28 @@ class MIND_API AGIncreFlashAttentionInfer : public abstract::OpInferBase {
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
     return IncreFlashAttentionInferType(primitive, input_args);
   }
+
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) const override {
+    auto op_name = primitive->name();
+    AbstractBasePtr key_arg = input_args[kIncreFlashAttentionInputKeyIndex];
+    AbstractBasePtr value_arg = input_args[kIncreFlashAttentionInputValueIndex];
+    size_t valid_seq_length = 1;
+    if (!(key_arg->isa<abstract::AbstractSequence>() &&
+          key_arg->cast<abstract::AbstractSequencePtr>()->elements().size() == valid_seq_length &&
+          key_arg->cast<abstract::AbstractSequencePtr>()->elements()[0]->isa<abstract::AbstractTensor>())) {
+      MS_LOG(EXCEPTION) << op_name << ": parameter key should be a sequence containing exactly 1 tensor. ";
+    }
+
+    if (!(value_arg->isa<abstract::AbstractSequence>() &&
+          value_arg->cast<abstract::AbstractSequencePtr>()->elements().size() == valid_seq_length &&
+          value_arg->cast<abstract::AbstractSequencePtr>()->elements()[0]->isa<abstract::AbstractTensor>())) {
+      MS_LOG(EXCEPTION) << op_name << ": parameter value should be a sequence containing exactly 1 tensor. ";
+    }
+
     return IncreFlashAttentionInfer(engine, primitive, input_args);
   }
+
   std::set<int64_t> GetValueDependArgIndices() const { return {4}; }  // 4: pos of valuedepend
 };
 
