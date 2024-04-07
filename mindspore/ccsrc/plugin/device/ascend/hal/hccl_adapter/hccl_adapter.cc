@@ -176,7 +176,8 @@ HcclMode HcclAdapter::GetCurrentHcclMode() const {
 
 void HcclAdapter::CheckExcutionMode() const {
   auto hccl_mode = GetCurrentHcclMode();
-  if (hccl_mode != hccl_mode_ && (!common::UseHostCollective() || UseHcclCM())) {
+  if (hccl_mode != hccl_mode_ && (!common::UseHostCollective() || UseHcclCM()) &&
+      common::GetEnv(kSimulationLevel).empty()) {
     MS_LOG(EXCEPTION) << "HCCL is initialized in " << GetHcclModeString(hccl_mode_) << " but current execution mode is "
                       << GetHcclModeString(hccl_mode)
                       << ". Please set the execution mode before HCCL init(), and then do not change it in the "
