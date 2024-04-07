@@ -358,7 +358,8 @@ class AscendMsprofDataGenerator:
                     new_row = tuple(['0' if d == 'N/A' else d for d in new_row])
                     op_statistic.append(new_row)
             break
-
+        if not op_statistic:
+            return
         op_statistic_dt = np.dtype(self.op_statistic_type)
         self.op_statistic = np.array(op_statistic, dtype=op_statistic_dt)
         self.op_statistic['Total Time'] *= 1e-3
