@@ -385,7 +385,12 @@ class Cell(Cell_):
             params_list = self.__dict__['_params_list']
             if name in params_list:
                 return params_list[name]
-        raise AttributeError("The '{}' object has no attribute '{}'.".format(type(self).__name__, name))
+        raise AttributeError("The '{}' object has no attribute '{}' "
+                             "or in JIT strict mode, the attributes is not defined in __init__, "
+                             "cannot get the attributes. You can defined the attributes in __init__ "
+                             "or use os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2' "
+                             "to enable the JIT lax mode to support the current syntax."
+                             .format(type(self).__name__, name))
 
     def __del__(self):
         if isinstance(cells_compile_cache, dict):
