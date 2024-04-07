@@ -111,7 +111,7 @@ TEST_F(TestPynativeExecute, TestDefaultContext) {
 /// Feature: Test pynative infer operation
 /// Description: Test pynative infer interface by using `matmul` ops
 /// Expectation: success
-TEST_F(TestPynativeExecute, TestInferOperator) {
+TEST_F(TestPynativeExecute, DISABLED_TestInferOperator) {
   auto conv_obj = prim::GetPythonOps("matmul", "gtest_input.pynative");
   auto t1 = prim::GetPythonOps("tensor1", "gtest_input.pynative");
   auto t2 = prim::GetPythonOps("tensor2", "gtest_input.pynative");

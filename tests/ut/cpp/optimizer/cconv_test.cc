@@ -60,15 +60,11 @@ class TestCconv : public UT::Common {
 
   virtual void SetUp();
 
-  virtual void TearDown();
-
  public:
   UT::PyFuncGraphFetcher getPyFun;
 };
 
 void TestCconv::SetUp() {}
-
-void TestCconv::TearDown() {}
 
 TEST_F(TestCconv, TestStraight) {
   FuncGraphPtr func_graph = getPyFun.CallAndParseRet("get_test_cconv_fn", "test_straight");

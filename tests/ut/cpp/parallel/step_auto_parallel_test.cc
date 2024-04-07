@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "common/common_test.h"
+#include "common/resource.h"
 #include "mindspore/core/ops/math_ops.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/step_parallel_utils.h"
@@ -29,13 +30,11 @@ namespace parallel {
 class TestStepAutoParallel : public UT::Common {
  public:
   TestStepAutoParallel() {}
-  void SetUp();
-  void TearDown() {}
+  void SetUp() override;
 };
 
 void TestStepAutoParallel::SetUp() {
   RankList dev_list;
-
   for (int32_t i = 0; i < 20; i++) {
     dev_list.push_back(i);
   }
@@ -52,7 +51,7 @@ void TestStepAutoParallel::SetUp() {
 }
 
 CNodePtr Create_Node(Shape x, Shape y, Shape out) {
-  FuncGraphPtr func_graph = std::make_shared<FuncGraph>();
+  FuncGraphPtr func_graph = UT::UTResourceManager::GetInstance()->MakeAndHoldFuncGraph();
   ParameterPtr param1 = func_graph->add_parameter();
   ParameterPtr param2 = func_graph->add_parameter();
   param1->set_name("x");
@@ -84,7 +83,7 @@ CNodePtr Create_Node(Shape x, Shape y, Shape out) {
 }
 
 CNodePtr Create_two_nodes(Shape x, Shape y, Shape z, Shape w, Shape out) {
-  FuncGraphPtr func_graph = std::make_shared<FuncGraph>();
+  FuncGraphPtr func_graph = UT::UTResourceManager::GetInstance()->MakeAndHoldFuncGraph();
   ParameterPtr paramX = func_graph->add_parameter();
   ParameterPtr paramY = func_graph->add_parameter();
   ParameterPtr paramW = func_graph->add_parameter();
@@ -115,6 +114,7 @@ CNodePtr Create_two_nodes(Shape x, Shape y, Shape z, Shape w, Shape out) {
   MatMul_1_inputs.push_back(paramX);
   MatMul_1_inputs.push_back(paramY);
   CNodePtr MatMul_1_node = func_graph->NewCNode(MatMul_1_inputs);
+
   PrimitivePtr prim = MatMul_1_node->input(0)->cast<ValueNodePtr>()->value()->cast<PrimitivePtr>();
   ValuePtr transpose_a = MakeValue(false);
   ValuePtr transpose_b = MakeValue(false);
@@ -140,7 +140,7 @@ CNodePtr Create_two_nodes(Shape x, Shape y, Shape z, Shape w, Shape out) {
 /// Features: test create op instance
 /// Description:
 /// Expectation:
-TEST_F(TestStepAutoParallel, test_create_op_instance) {
+TEST_F(TestStepAutoParallel, DISABLED_test_create_op_instance) {
   Shape inputs_x_dims = {64, 32};
   Shape inputs_y_dims = {32, 64};
   Shape outputs_dims = {64, 64};

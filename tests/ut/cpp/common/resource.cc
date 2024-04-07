@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,34 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "common/common_test.h"
-#include "utils/log_adapter.h"
 #include "resource.h"
-
-#ifdef __cplusplus
-#if __cplusplus
-extern "C" {
-#endif
-#endif
+#include <mutex>
 
 namespace UT {
+std::shared_ptr<UTResourceManager> UTResourceManager::inst_resource_manager_ = nullptr;
 
-void Common::SetUpTestCase() {}
-
-void Common::TearDownTestCase() {}
-
-void Common::SetUp() {}
-
-void Common::TearDown() {
-  const char *suite_name = testing::UnitTest::GetInstance()->current_test_suite()->name();
-  const char *test_name = testing::UnitTest::GetInstance()->current_test_info()->name();
-  UT::UTResourceManager::GetInstance()->DropFuncGraph(UTKeyInfo{suite_name, test_name});
+std::shared_ptr<UTResourceManager> UTResourceManager::GetInstance() {
+  static std::once_flag init_flag_ = {};
+  std::call_once(init_flag_, [&]() {
+    if (inst_resource_manager_ == nullptr) {
+      inst_resource_manager_ = std::make_shared<UTResourceManager>();
+    }
+  });
+  MS_EXCEPTION_IF_NULL(inst_resource_manager_);
+  return inst_resource_manager_;
 }
-
 }  // namespace UT
-
-#ifdef __cplusplus
-#if __cplusplus
-}
-#endif
-#endif
