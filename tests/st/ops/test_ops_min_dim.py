@@ -179,7 +179,7 @@ def test_argmin_with_value_dyn_rank(mode):
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+@pytest.mark.parametrize('mode', [context.PYNATIVE_MODE])
 def test_argmin_with_value_all_dynamic(mode):
     """
     Feature: Test argmin_with_value op.

@@ -83,16 +83,17 @@ def max(input, dim=None, keepdim=False):
 
     Args:
         input (Tensor): The input tensor, can be any dimension. Complex tensor is not supported for now.
-        dim (int, optional): The dimension to reduce. Default: ``None`` .
+        dim (int, optional): The dimension to reduce. When assigning a value to the `dim` parameter, please
+            assign the int type, and it does not support assignment to ``None`` . Default: ``None`` .
         keepdim (bool, optional): Whether to reduce dimension, if true, the output will keep same dimension
             with the input, the output will reduce dimension if false. Default: ``False`` .
 
     Returns:
-        Tensor if `dim` is ``None`` , the maximum value of input tensor, with the shape :math:`()` , and same dtype as
-        `input`.
+        Tensor if `dim` is the default value ``None`` , the maximum value of input tensor, with the shape :math:`()` ,
+        and same dtype as `input`.
 
-        tuple (Tensor) if `dim` is not ``None`` , tuple of 2 tensors, containing the maximum value of the input tensor
-        along the given dimension `dim` and the corresponding index:
+        tuple (Tensor) if `dim` is not the default value ``None`` , tuple of 2 tensors, containing the maximum
+        value of the input tensor along the given dimension `dim` and the corresponding index:
 
         - **values (Tensor)** - The maximum value of input tensor along the given dimension `dim`, with same dtype as
           `input`. If `keepdim` is ``True`` , the shape of output tensors is :math:`(input_1, input_2, ...,
@@ -102,7 +103,7 @@ def max(input, dim=None, keepdim=False):
           the same shape as `values`.
 
     Raises:
-        ValueError: If `dim` is ``None`` and `keepdim` is not ``False`` .
+        ValueError: If `dim` is the default value ``None`` and `keepdim` is not ``False`` .
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -132,16 +133,17 @@ def min(input, dim=None, keepdim=False):
 
     Args:
         input (Tensor): The input tensor, can be any dimension. Complex tensor is not supported for now.
-        dim (int, optional): The dimension to reduce. Default: ``None`` .
+        dim (int, optional): The dimension to reduce. When assigning a value to the `dim` parameter, please
+            assign the int type, and it does not support assignment to ``None`` . Default: ``None`` .
         keepdim (bool, optional): Whether to reduce dimension, if true, the output will keep same dimension
             with the input, the output will reduce dimension if false. Default: ``False`` .
 
     Returns:
-        Tensor if `dim` is ``None`` , the minimum value of input tensor, with the shape :math:`()` , and same dtype as
-        `input`.
+        Tensor if `dim` is the default value ``None`` , the minimum value of input tensor, with the shape :math:`()` ,
+        and same dtype as `input`.
 
-        tuple (Tensor) if `dim` is not ``None`` , tuple of 2 tensors, containing the minimum value of the input tensor
-        along the given dimension `dim` and the corresponding index:
+        tuple (Tensor) if `dim` is not the default value ``None`` , tuple of 2 tensors, containing the minimum value
+        of the input tensor along the given dimension `dim` and the corresponding index:
 
         - **values (Tensor)** - The minimum value of input tensor along the given dimension `dim`, with same dtype as
           `input`. If `keepdim` is ``True`` , the shape of output tensors is :math:`(input_1, input_2, ...,
@@ -151,7 +153,7 @@ def min(input, dim=None, keepdim=False):
           with the same shape as `values`.
 
     Raises:
-        ValueError: If `dim` is ``None`` and `keepdim` is not ``False`` .
+        ValueError: If `dim` is the default value ``None`` and `keepdim` is not ``False`` .
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
