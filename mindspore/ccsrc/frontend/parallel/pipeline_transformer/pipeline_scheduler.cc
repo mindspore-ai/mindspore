@@ -536,24 +536,15 @@ void InterleavedScheduler::Reorder() {
       continue;
     }
     if (stage_ != stage_num_ - 1 || sorted_fwd_end[i].first.chunk != chunk_num_ - 1) {
-      if (stage_ != stage_num_ - 1 || sorted_fwd_begin[i + 1].second.chunk != chunk_num_ - 1) {
-        auto prior = sorted_bwd_cell[i - bias_].second;
-        auto last = sorted_fwd_begin[i + 1].first;
-        ControlOrder(prior, last);
-        auto prior1 = sorted_fwd_begin[i + 1].second;
-        auto last1 = sorted_fwd_end[i].first;
-        ControlOrder(prior1, last1);
-        auto prior2 = sorted_fwd_end[i].second;
-        auto last2 = sorted_fwd_cell[i + 1].first;
-        ControlOrder(prior2, last2);
-      } else {
-        auto prior = sorted_bwd_cell[i - bias_].second;
-        auto last = sorted_fwd_end[i].first;
-        ControlOrder(prior, last);
-        auto prior1 = sorted_fwd_end[i].second;
-        auto last1 = sorted_fwd_cell[i + 1].first;
-        ControlOrder(prior1, last1);
-      }
+      auto prior = sorted_bwd_cell[i - bias_].second;
+      auto last = sorted_fwd_begin[i + 1].first;
+      ControlOrder(prior, last);
+      auto prior1 = sorted_fwd_begin[i + 1].second;
+      auto last1 = sorted_fwd_end[i].first;
+      ControlOrder(prior1, last1);
+      auto prior2 = sorted_fwd_end[i].second;
+      auto last2 = sorted_fwd_cell[i + 1].first;
+      ControlOrder(prior2, last2);
     }
     if (stage_ != stage_num_ - 1 || sorted_bwd_begin[i - bias_ + 1].second.chunk != chunk_num_ - 1) {
       auto prior = sorted_bwd_begin[i - bias_ + 1].second;
