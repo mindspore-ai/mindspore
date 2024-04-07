@@ -22,6 +22,7 @@
 #include "include/common/pybind_api/api_register.h"
 #include "pipeline/pynative/forward/forward_task.h"
 #include "pipeline/pynative/pynative_utils.h"
+#include "runtime/device/multi_stream_controller.h"
 
 namespace mindspore {
 namespace hal {
@@ -66,12 +67,16 @@ void EventPy::DispatchRecordEventTask(const StreamPyPtr &stream) {
   EventCnt::IncreaseUnrecordedCnt(event_);
 
   // Record event async.
-  pynative::DispatchOp(std::make_shared<pynative::PassthroughFrontendTask>([stream, event = event_]() {
-    auto record_fn = [stream, event]() {
+  pynative::DispatchOp(std::make_shared<pynative::PassthroughFrontendTask>([this, stream, event = event_]() {
+    auto record_fn = [this, stream, event]() {
+      device::MultiStreamController::GetInstance()->Refresh(stream->device_ctx());
+      task_id_on_stream_ =
+        device::MultiStreamController::GetInstance()->LaunchTaskIdOnStream(stream->device_ctx(), record_stream_id_);
       auto stream_ptr = stream->stream();
-      MS_LOG(DEBUG) << "RecordEvent stream_ptr:" << stream_ptr << ", event:" << event;
       event->set_record_stream(stream_ptr);
       event->RecordEvent();
+      MS_LOG(DEBUG) << "RecordEvent record_stream_id:" << record_stream_id_ << ", event:" << event << ", stream_ptr"
+                    << stream_ptr << ", task_id_on_stream:" << task_id_on_stream_;
       EventCnt::DecreaseUnrecordedCnt(event);
     };
     if (!runtime::OpExecutor::NeedSync()) {
@@ -87,8 +92,10 @@ void EventPy::Record(const StreamPyPtr &stream) {
   MS_EXCEPTION_IF_NULL(stream);
   if (!is_created_) {
     CreateEvent(stream);
+    device_ctx_ = stream->device_ctx();
   }
   if (event_ != nullptr) {
+    record_stream_id_ = stream->stream_id();
     // event_ is nullptr in cpu
     DispatchRecordEventTask(stream);
   }
@@ -96,12 +103,16 @@ void EventPy::Record(const StreamPyPtr &stream) {
 
 void EventPy::DispatchWaitEventTask(const StreamPyPtr &stream) {
   // Wait event async.
-  pynative::DispatchOp(std::make_shared<pynative::PassthroughFrontendTask>([stream, event = event_]() {
-    auto wait_fn = [stream, event]() {
+  pynative::DispatchOp(std::make_shared<pynative::PassthroughFrontendTask>([this, stream, event = event_]() {
+    auto wait_fn = [this, stream, event]() {
       auto stream_ptr = stream->stream();
       MS_LOG(DEBUG) << "WaitEvent stream_ptr:" << stream_ptr << ", event:" << event;
       event->set_wait_stream(stream_ptr);
       event->WaitEventWithoutReset();
+
+      // Release cross stream memory event, mark record_stream_id is use stream id, wait stream id is memory stream id.
+      (void)device::MultiStreamController::GetInstance()->WaitEvent(stream->device_ctx(), task_id_on_stream_,
+                                                                    record_stream_id_, stream->stream_id());
     };
     if (!runtime::OpExecutor::NeedSync()) {
       runtime::OpExecutor::GetInstance().PushSimpleOpRunTask(std::make_shared<runtime::PassthroughDeviceTask>(wait_fn));
@@ -140,6 +151,9 @@ void EventPy::Synchronize() {
 
   runtime::OpExecutor::GetInstance().WaitAll();
   event_->SyncEvent();
+  MS_EXCEPTION_IF_NULL(device_ctx_);
+  // Clear cross stream memory event which task id less than task_id_on_stream.
+  (void)device::MultiStreamController::GetInstance()->SyncEvent(device_ctx_, task_id_on_stream_, record_stream_id_);
 }
 
 float EventPy::ElapsedTime(const EventPyPtr &other_event) {
