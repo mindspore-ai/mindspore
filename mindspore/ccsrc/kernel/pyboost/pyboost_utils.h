@@ -75,7 +75,7 @@ class BACKEND_EXPORT PyBoostUtils {
                                  const TensorStorageInfoPtrList &storage_info_list,
                                  std::vector<tensor::BaseTensorPtr> *outputs);
   static void CreateOutputTensor(const ValueSimpleInfoPtr &output_value_simple_info,
-                                 std::vector<tensor::TensorPtr> *outputs);
+                                 std::vector<tensor::BaseTensorPtr> *outputs);
 
   // Create input device address without kernel tensor
   template <typename... Args>
@@ -126,12 +126,6 @@ class BACKEND_EXPORT PyBoostUtils {
   static void GetKernelTensor(const DeviceContext *device_context, size_t stream_id, size_t index,
                               std::vector<kernel::KernelTensor *> *kernel_tensor_list,
                               device::DeviceAddressPtrList *device_address_list, const BaseTensorPtr &tensor) {
-    GetKernelTensor(device_context, stream_id, nullptr, index, kernel_tensor_list, device_address_list, tensor);
-  }
-
-  static void GetKernelTensor(const DeviceContext *device_context, size_t stream_id, size_t index,
-                              std::vector<kernel::KernelTensor *> *kernel_tensor_list,
-                              device::DeviceAddressPtrList *device_address_list, const TensorPtr &tensor) {
     GetKernelTensor(device_context, stream_id, nullptr, index, kernel_tensor_list, device_address_list, tensor);
   }
 
