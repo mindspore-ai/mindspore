@@ -705,7 +705,7 @@ def _context():
                  auto_parallel_search_mode=str, search_mode=str, parameter_broadcast=bool, strategy_ckpt_load_file=str,
                  strategy_ckpt_save_file=str, full_batch=bool, enable_parallel_optimizer=bool, enable_alltoall=bool,
                  all_reduce_fusion_config=list, pipeline_stages=int, pipeline_segments=int,
-                 parallel_optimizer_config=dict,
+                 pipeline_config=dict, parallel_optimizer_config=dict,
                  comm_fusion=dict, strategy_ckpt_config=dict)
 def set_auto_parallel_context(**kwargs):
     r"""
@@ -732,7 +732,7 @@ def set_auto_parallel_context(**kwargs):
     enable_parallel_optimizer    strategy_ckpt_save_file
     parallel_optimizer_config    dataset_strategy
     enable_alltoall              pipeline_stages
-               \                 auto_parallel_search_mode
+    pipeline_config              auto_parallel_search_mode
                \                 comm_fusion
                \                 strategy_ckpt_config
     ===========================  ===========================
@@ -801,6 +801,12 @@ def set_auto_parallel_context(**kwargs):
                         distributed alone in the pipeline. The total devices will be divided into 'pipeline_stags'
                         stages.
                         Default: ``1`` .
+        pipeline_config (dict): A dict contains the keys and values for setting the pipeline parallelism configuration.
+                        It supports the following keys:
+
+                        - pipeline_interleave(bool): Indicates whether to enable the interleaved execution mode.
+                        - pipeline_scheduler(str): Indicates the scheduling mode for pipeline parallelism. Only support
+                          ``gpipe/1f1b``.
         parallel_optimizer_config (dict): A dict contains the keys and values for setting the parallel optimizer
                         configure. The configure provides more detailed behavior control about parallel training
                         when parallel optimizer is enabled. The configure will be effective when we use
