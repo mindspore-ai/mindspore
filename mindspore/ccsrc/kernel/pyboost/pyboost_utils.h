@@ -85,6 +85,12 @@ class BACKEND_EXPORT PyBoostUtils {
                            const AddressInfoPair &input_address_info, const AddressInfoPair &output_address_info,
                            size_t stream_id = kDefaultStreamIndex);
 
+  static void GetKernelTensor(const DeviceContext *device_context, size_t stream_id, size_t index,
+                              std::vector<kernel::KernelTensor *> *kernel_tensor_list,
+                              device::DeviceAddressPtrList *device_address_list, const TensorPtr &tensor) {
+    GetKernelTensor(device_context, stream_id, nullptr, index, kernel_tensor_list, device_address_list, tensor);
+  }
+
   static void GetKernelTensor(const DeviceContext *device_context, size_t stream_id,
                               const abstract::AbstractBasePtr &input_abs, size_t index,
                               std::vector<kernel::KernelTensor *> *kernel_tensor_list,

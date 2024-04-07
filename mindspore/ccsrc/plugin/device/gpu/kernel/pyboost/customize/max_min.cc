@@ -48,8 +48,7 @@ void MinOrMaxGPUCall(const std::shared_ptr<OpRunner> &op, const TensorPtr &input
         PyBoostUtils::GetAddressInfo(device_context, op->stream_id(), input_abs, input_tensor, axis, keep_dims);
       const auto &output_address_info =
         PyBoostUtils::GetAddressInfo(device_context, op->stream_id(), {op->output_abs()}, outputs);
-      auto stream = device::gpu::GPUDeviceManager::GetInstance().GetStream(op->stream_id());
-      PyBoostUtils::LaunchKernel(primitive, device_context, input_address_info, output_address_info, stream);
+      PyBoostUtils::LaunchKernel(primitive, device_context, input_address_info, output_address_info, op->stream_id());
 
       static auto sync = MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE);
       if (sync && !device_context->device_res_manager_->SyncAllStreams()) {
