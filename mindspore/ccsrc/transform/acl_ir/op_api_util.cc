@@ -16,11 +16,13 @@
 #include "transform/acl_ir/op_api_util.h"
 #include <dlfcn.h>
 #include <unordered_map>
+#include <unordered_set>
 #include "acl/error_codes/rt_error_codes.h"
 #include "transform/acl_ir/acl_helper.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/utils.h"
+#include "ops/math_op_name.h"
 #include "utils/ms_context.h"
 #include "transform/symbol/acl_base_symbol.h"
 #include "transform/symbol/acl_compiler_symbol.h"
@@ -109,10 +111,12 @@ void OpApiUtil::GetValidKernelBuildInfo(const AnfNodePtr &node, std::vector<std:
   output_reshape_types->assign(output_num, "");
 
   std::vector<size_t> special_inputs;
+  std::unordered_set<std::string> matmul_ops = {kMatMulOpName, kMatMulV2OpName, kBatchMatMulOpName};
   for (size_t i = 0; i < input_num; ++i) {
     auto kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(node, i);
     std::string input_format = AnfAlgo::GetOutputFormat(kernel_with_index.first, kernel_with_index.second);
-    if (!AclHelper::CheckDefaultSupportFormat(input_format)) {
+    if (!AclHelper::CheckDefaultSupportFormat(input_format) &&
+        matmul_ops.find(AnfUtils::GetCNodeName(kernel_with_index.first)) == matmul_ops.end()) {
       (void)special_inputs.emplace_back(i);
     }
   }
