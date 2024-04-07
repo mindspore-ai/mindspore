@@ -47,7 +47,7 @@ BaseShapePtr ConstantPadNdFuncImpl::InferShape(const PrimitivePtr &primitive,
   }
   // padding is dynamic
   ShapeVector out_shape;
-  auto paddings_opt = GetArrayValue<int64_t>(input_args[kInputIndex1]->GetValue());
+  auto paddings_opt = GetArrayValue<int64_t>(input_args[kInputIndex1]);
   if (!paddings_opt.has_value()) {
     out_shape.resize(x_rank, abstract::Shape::kShapeDimAny);
     return std::make_shared<abstract::Shape>(std::move(out_shape));
@@ -63,17 +63,17 @@ BaseShapePtr ConstantPadNdFuncImpl::InferShape(const PrimitivePtr &primitive,
   }
   auto l_diff = x_rank - (paddings.size() / 2);
   for (size_t i = 0; i < l_diff; ++i) {
-    out_shape.emplace_back(x_shape[i]);
+    (void)out_shape.emplace_back(x_shape[i]);
   }
   for (size_t i = 0; i < paddings.size() / 2; ++i) {
     auto pad_idx = paddings.size() - ((i + 1) * 2);
     if (paddings.IsValueUnknown(pad_idx) || paddings.IsValueUnknown(pad_idx + 1) ||
         x_shape[l_diff + i] == abstract::Shape::kShapeDimAny) {
-      out_shape.emplace_back(abstract::Shape::kShapeDimAny);
+      (void)out_shape.emplace_back(abstract::Shape::kShapeDimAny);
     } else {
       auto new_dim = x_shape[l_diff + i] + paddings[pad_idx] + paddings[pad_idx + 1];
       (void)CheckAndConvertUtils::CheckInteger("output size", new_dim, kGreaterThan, 0, primitive->name());
-      out_shape.emplace_back(new_dim);
+      (void)out_shape.emplace_back(new_dim);
     }
   }
   return std::make_shared<abstract::Shape>(out_shape);
