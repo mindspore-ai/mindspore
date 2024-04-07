@@ -37,16 +37,20 @@ class GroupNormSiluFusion : public MultiplePatternProcessPass {
   AnfNodePtr Process(const std::string &, const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 
  private:
-  CNodePtr ReshapeCNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const;
+  CNodePtr ReshapeCNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const string &node_name) const;
 
   CNodePtr CreateGroupNormSiluNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const AnfNodePtr &conv,
-                                   const AnfNodePtr &gamma_3D, const AnfNodePtr &beta_3D, int64_t num_groups) const;
+                                   const CNodePtr &mul, const CNodePtr &add, int64_t num_groups,
+                                   bool activate_silu) const;
 
   CNodePtr CreateGroupNormSiluNodeForSD15(const std::string &pattern_name, const FuncGraphPtr &func_graph,
                                           const AnfNodePtr &node, const EquivPtr &equiv) const;
 
   CNodePtr CreateGroupNormSiluNodeForSDWithCast(const std::string &pattern_name, const FuncGraphPtr &func_graph,
                                                 const AnfNodePtr &node, const EquivPtr &equiv) const;
+
+  CNodePtr CreateGroupNormSiluNodeForSDWithoutSilu(const std::string &pattern_name, const FuncGraphPtr &func_graph,
+                                                   const AnfNodePtr &node, const EquivPtr &equiv) const;
 
   /*
    * --------------------------------------------------
@@ -77,6 +81,18 @@ class GroupNormSiluFusion : public MultiplePatternProcessPass {
    * --------------------------------------------------
    */
   const VectorRef DefineGroupNormSiluPatternForSDWithCast() const;
+
+  /*
+   * --------------------------------------------------
+   *  Pattern WithoutSilu:                            |
+   *                            reshape               |
+   *                            instanceNormalization |
+   *                            reshape               |
+   *                            mul                   |
+   *                            add                   |
+   * --------------------------------------------------
+   */
+  const VectorRef DefineGroupNormSiluPatternForSDWithoutSilu() const;
 };
 }  // namespace opt
 }  // namespace mindspore
