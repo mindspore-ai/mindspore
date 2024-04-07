@@ -787,7 +787,17 @@ class Parameter(Tensor_):
         return new_param
 
     @_LogActionOnce(logger=logger, key='add_pipeline_stage')
+    @deprecated("2.3", "add_pipeline_stage")
     def add_pipeline_stage(self, stage):
+        """
+        Add a pipeline stage to the parameter.
+
+        Args:
+            stage(int): The pipeline stage to be added.
+
+        Raise:
+            TypeError: If `stage` is not a positive number or not int type.
+        """
         logger.warning(f"This interface may be deleted in the future.")
         if not isinstance(stage, int) or stage < 0:
             raise TypeError("`stage` must be a positive number of int type")
