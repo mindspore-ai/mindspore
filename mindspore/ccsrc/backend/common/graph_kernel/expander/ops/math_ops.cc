@@ -35,6 +35,19 @@ REG_EXPANDER_FUNC("AddN").SetBody(BODYFUNC(ib) {
   return {result};
 });
 
+REG_EXPANDER_FUNC("AssignAdd").SetBody(BODYFUNC(ib) {
+  if (!CheckAllFormatsSame(ib)) {
+    return {};
+  }
+  auto param = ib->input(0);
+  auto x = ib->input(1);
+  if (x->GetDtype() != param->GetDtype()) {
+    return {};
+  }
+  auto result = ib->Assign(param, ib->Add(param, x));
+  return {result};
+});
+
 REG_EXPANDER_FUNC("EqualCount").SetBody(BODYFUNC(ib) {
   // Check inputs
   auto it = std::find_if(std::begin(ib->inputs()), std::end(ib->inputs()), [](const NodePtr &input) {
