@@ -1,12 +1,14 @@
 mindspore.ops.silent_check.ASDBase
 ==================================
 
-.. py:class:: mindspore.ops.silent_check.ASDBase(op)
+.. py:class:: mindspore.ops.silent_check.ASDBase(cls, *args, **kwargs)
 
     ASDBase 是 Python 中具有精度敏感检测特性的算子的基类。
 
     参数：
-        - **op** (Primitive) - 需要增加精度敏感检测特性的原始算子。
+        - **cls** (Primitive) - 需要增加精度敏感检测特性的原始算子。
+        - **args** (tuple) - 传递给原始运算符的可变参数元组。
+        - **kwargs** (dict) - 传递给原始运算符的可变参数字典。
 
     .. py:method:: generate_params()
 
