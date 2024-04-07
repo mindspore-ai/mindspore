@@ -61,9 +61,8 @@ void DumpFusionActors(const std::vector<FusionActorPtr> &actors, std::ofstream &
 void DumpControlActors(const ControlActorSetPtr &control_actor_set, std::ofstream &ofs);
 void DumpCustomActors(const std::vector<CustomActorPtr> &actors, std::ofstream &ofs);
 void DumpSwapActors(const std::vector<std::vector<MemSwapActorPtr>> &actors, std::ofstream &ofs);
-
-using ActorInfoMap =
-  mindspore::HashMap<AbstractActor *, std::tuple<size_t, std::vector<BaseShapePtr>, std::vector<TypePtr>>>;
+using DeviceAddressPtr = device::DeviceAddressPtr;
+using ActorInfoMap = mindspore::HashMap<AbstractActor *, std::tuple<size_t, std::vector<DeviceAddressPtr>>>;
 std::vector<AbstractActor *> TopoSortForActor(AbstractActor *root);
 void DumpActorInfo(AbstractActor *actor, size_t index, ActorInfoMap *actor_info, std::ofstream &ofs);
 }  // namespace runtime

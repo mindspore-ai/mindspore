@@ -104,12 +104,29 @@ void ControlActor::IncreaseDynamicRefCount(const OpRealParameterWithBranchID &op
 size_t ControlActor::FetchNodePosition(const KernelWithIndex &node) const {
   const auto &iter = find(formal_parameters_.begin(), formal_parameters_.end(), node);
   if (iter == formal_parameters_.end()) {
+    const auto &get_item_iter =
+      std::find_if(formal_parameters_.begin(), formal_parameters_.end(), [&node](const KernelWithIndex &pair) {
+        return pair.first != nullptr && common::AnfAlgo::CheckPrimitiveType(pair.first, prim::kPrimTupleGetItem) &&
+               common::AnfAlgo::GetTupleGetItemRealInput(pair.first->cast<CNodePtr>()) == node.first &&
+               common::AnfAlgo::GetTupleGetItemOutIndex(pair.first->cast<CNodePtr>()) == node.second;
+      });
+    if (get_item_iter != formal_parameters_.end()) {
+      MS_LOG(INFO) << "Input node:" << node.first->DebugString() << " fullname:" << node.first->fullname_with_scope()
+                   << " node ptr:" << node.first << " index:" << node.second
+                   << " match the tuple get item node:" << get_item_iter->first->DebugString()
+                   << " fullname:" << get_item_iter->first->fullname_with_scope()
+                   << " node ptr:" << get_item_iter->first << " index:" << get_item_iter->second;
+      return get_item_iter - formal_parameters_.begin();
+    }
     for (const auto &formal_parameter : formal_parameters_) {
       MS_LOG(WARNING) << "Actor:" << GetAID() << " formal parameter:"
                       << (formal_parameter.first != nullptr ? formal_parameter.first->DebugString() : "")
+                      << " full name:"
+                      << (formal_parameter.first != nullptr ? formal_parameter.first->fullname_with_scope() : "")
                       << " index:" << formal_parameter.second << " node ptr:" << formal_parameter.first;
     }
     MS_LOG(EXCEPTION) << "Invalid formal parameter:" << (node.first != nullptr ? node.first->DebugString() : "")
+                      << " full name:" << (node.first != nullptr ? node.first->fullname_with_scope() : "")
                       << " node ptr:" << node.first << " index:" << node.second << " for actor:" << GetAID();
   }
   return iter - formal_parameters_.begin();

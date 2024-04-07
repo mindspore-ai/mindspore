@@ -559,7 +559,6 @@ ActorSet *GraphScheduler::Transform(const GraphCompilerInfo &graph_compiler_info
   (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageLink, 1, 0, 0);
   Link(actor_set.get(), graph_compiler_info);
   (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageLink, 1, 0, 1);
-  inline_control_flow_scheduler_.Link(actor_set.get(), graph_compiler_info);
   DumpActor(actor_set.get(), graph_compiler_info);
   if (graph_compiler_info.strategy_ == GraphExecutionStrategy::kPipeline) {
     SchedulerHelper::CheckActorValid(actor_set.get());
@@ -1139,6 +1138,12 @@ void GraphScheduler::Link(ActorSet *actor_set, const GraphCompilerInfo &graph_co
   MS_EXCEPTION_IF_NULL(rpc_node_scheduler_);
   rpc_node_scheduler_->Link(actor_set);
 #endif
+  inline_control_flow_scheduler_.Link(
+    actor_set, graph_compiler_info,
+    execution_order_running_ || std::find_if(group_name_to_communication_nodes.begin(),
+                                             group_name_to_communication_nodes.end(), [](const auto &pair) {
+                                               return !pair.second.first.empty();
+                                             }) != group_name_to_communication_nodes.end());
 }
 
 void GraphScheduler::Optimize(const ActorSetPtr &actor_set) const {

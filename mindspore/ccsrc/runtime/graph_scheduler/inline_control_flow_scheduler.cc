@@ -725,16 +725,17 @@ void InlineControlFlowScheduler::LinkControlArrowForNoInputOrOutputActor(
   }
 }
 
-void InlineControlFlowScheduler::Link(ActorSet *actor_set, const GraphCompilerInfo &graph_compiler_info) {
+void InlineControlFlowScheduler::Link(ActorSet *actor_set, const GraphCompilerInfo &graph_compiler_info,
+                                      bool execution_order_running) {
   MS_EXCEPTION_IF_NULL(actor_set);
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   mindspore::HashMap<std::string, AbstractActor *> branch_name_to_switch_actor;
   mindspore::HashMap<std::string, AbstractActor *> branch_name_to_gather_actor;
-  if (context_ptr->get_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL) != kOptimizeO0) {
-    for (const auto &graph : graph_compiler_info.graphs_) {
-      MS_EXCEPTION_IF_NULL(graph);
-      GetBranchNameToCondtionActor(graph, &branch_name_to_switch_actor, &branch_name_to_gather_actor);
+  for (const auto &graph : graph_compiler_info.graphs_) {
+    MS_EXCEPTION_IF_NULL(graph);
+    GetBranchNameToCondtionActor(graph, &branch_name_to_switch_actor, &branch_name_to_gather_actor);
+    if (execution_order_running) {
       LinkControlArrowByExecutionOrder(graph, graph_compiler_info, branch_name_to_gather_actor);
     }
   }
