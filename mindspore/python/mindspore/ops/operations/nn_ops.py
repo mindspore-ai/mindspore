@@ -9056,6 +9056,10 @@ class Pdist(Primitive):
 
     Refer to :func:`mindspore.ops.pdist` for more details.
 
+    Note:
+        The Pdist operator involves the power operation, in the float16 input scenario, it is easy to
+        produce inf/nan results due to numerical overflow, so it is recommended to use float32 input.
+
     Args:
         p (float, optional): The order of norm distance, :math:`p∈[0, ∞)`. Default: ``2.0`` .
 
