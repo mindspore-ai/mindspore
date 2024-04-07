@@ -75,7 +75,6 @@ def test_run_graph_kbk():
     os.environ["MS_SIMULATION_LEVEL"] = ""
 
 
-init()
 def test_get_group_size_default():
     """
     Feature: simulation level.
@@ -83,6 +82,7 @@ def test_get_group_size_default():
     Expectation: return default 1.
     """
     os.environ["MS_SIMULATION_LEVEL"] = "0"
+    init()
     ret = get_group_size()
     assert ret == 1
     os.environ["MS_SIMULATION_LEVEL"] = ""
@@ -96,6 +96,7 @@ def test_get_group_size_env():
     """
     os.environ["MS_SIMULATION_LEVEL"] = "0"
     os.environ["RANK_SIZE"] = "8"
+    init()
     ret = get_group_size()
     assert ret == 8
     os.environ["MS_SIMULATION_LEVEL"] = ""
@@ -108,6 +109,7 @@ def test_get_rank_id_default():
     Expectation: return default 0.
     """
     os.environ["MS_SIMULATION_LEVEL"] = "0"
+    init()
     ret = get_rank()
     assert ret == 0
     os.environ["MS_SIMULATION_LEVEL"] = ""
@@ -121,6 +123,7 @@ def test_get_rank_id_env():
     """
     os.environ["MS_SIMULATION_LEVEL"] = "0"
     os.environ["RANK_ID"] = "7"
+    init()
     ret = get_rank()
     assert ret == 7
     os.environ["MS_SIMULATION_LEVEL"] = ""
@@ -135,6 +138,7 @@ def test_get_local_rank_id():
     os.environ["MS_SIMULATION_LEVEL"] = "0"
     os.environ["RANK_SIZE"] = "32"
     os.environ["RANK_ID"] = "9"
+    init()
     ret = get_local_rank()
     assert ret == 1
     os.environ["MS_SIMULATION_LEVEL"] = ""
@@ -149,6 +153,7 @@ def test_create_group():
     os.environ["MS_SIMULATION_LEVEL"] = "0"
     os.environ["RANK_SIZE"] = "32"
     os.environ["RANK_ID"] = "7"
+    init()
     group = "g-01234567"
     rank_ids = [i for i in range(8)]
     create_group(group, rank_ids)
@@ -168,6 +173,7 @@ def test_destroy_group():
     os.environ["MS_SIMULATION_LEVEL"] = "0"
     os.environ["RANK_SIZE"] = "32"
     os.environ["RANK_ID"] = "7"
+    init()
     group = "g8-01234567"
     rank_ids = [i for i in range(8)]
     create_group(group, rank_ids)
@@ -184,6 +190,7 @@ def test_get_world_rank_from_group_rank():
     os.environ["MS_SIMULATION_LEVEL"] = "0"
     os.environ["RANK_SIZE"] = "32"
     os.environ["RANK_ID"] = "9"
+    init()
     group = "g-to-w-8+01234567"
     rank_ids = [i + 8 for i in range(8)]
     create_group(group, rank_ids)
@@ -201,6 +208,7 @@ def test_get_group_rank_from_world_rank():
     os.environ["MS_SIMULATION_LEVEL"] = "0"
     os.environ["RANK_SIZE"] = "32"
     os.environ["RANK_ID"] = "9"
+    init()
     group = "w-to-g-8+01234567"
     rank_ids = [i + 8 for i in range(8)]
     create_group(group, rank_ids)
@@ -218,6 +226,7 @@ def test_simulation_graph():
     os.environ["MS_SIMULATION_LEVEL"] = "0"
     os.environ["RANK_SIZE"] = "32"
     os.environ["RANK_ID"] = "1"
+    init()
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     net = DenseNet()
     net.fc1.matmul.shard(((4, 1), (8, 1)))
@@ -238,6 +247,7 @@ def test_run_graph():
     os.environ["MS_SIMULATION_LEVEL"] = "1"
     os.environ["RANK_SIZE"] = "32"
     os.environ["RANK_ID"] = "1"
+    init()
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     net = DenseNet()
     net.fc1.matmul.shard(((4, 1), (8, 1)))

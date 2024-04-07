@@ -1421,7 +1421,7 @@ void SetRunMode(const ResourcePtr &resource) {
          "Please unset either of them and rerun the task.";
   }
   if ((!is_task_sink || IsDynamicGraph(resource->func_graph())) && mode == kGraphMode && enable_hccl &&
-      (!common::UseHostCollective() || using_cm)) {
+      (!common::UseHostCollective() || using_cm) && common::GetEnv(kSimulationLevel).empty()) {
     MS_LOG(INTERNAL_EXCEPTION) << "Current execution mode is 'kernelbykernel', reason: " << kbk_reason
                                << ", but you're launching job using 'ranktable', which "
                                   "does not support 'kernelbykernel' mode.\n Please refer to link: "
