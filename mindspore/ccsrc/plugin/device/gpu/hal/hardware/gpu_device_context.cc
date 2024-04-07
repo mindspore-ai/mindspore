@@ -70,6 +70,7 @@
 #include "plugin/device/gpu/hal/device/gpu_device_synchronizer.h"
 #include "include/common/profiler.h"
 #include "ops/ascend_op_name.h"
+#include "runtime/device/device_address_utils.h"
 #include "runtime/pipeline/task/kernel_task.h"
 
 namespace mindspore {
@@ -1016,11 +1017,9 @@ bool GPUKernelExecutor::ExecuteKernelTask(const runtime::KernelTaskType &task_ty
   auto task = GetTaskByTaskType(task_type, task_context);
   MS_EXCEPTION_IF_NULL(task);
 
-  // 需要补充PROFILER_END
-  // PROFILER_END(start_time, runtime::ProfilerModule::kKernel, runtime::ProfilerEvent::kKernelLaunch,
-  // kernel->fullname_with_scope(), false);
+  uint64_t start_time = 0;
+  PROFILER_START(start_time);
   auto lock = LockLaunchKernel(stream);
-
   auto ret = task->RunWithRet();
   if (!ret) {
     MS_LOG(EXCEPTION) << "Exec task failed, task_type:" << task_type;
@@ -1033,6 +1032,11 @@ bool GPUKernelExecutor::ExecuteKernelTask(const runtime::KernelTaskType &task_ty
       ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE) && !res_manager_->SyncAllStreams()) {
     return false;
   }
+
+  runtime::DeviceAddressUtils::ProcessCrossStreamAddress("Contiguous", device_context_, stream_id, input_addr_list,
+                                                         output_addr_list);
+  PROFILER_END(start_time, runtime::ProfilerModule::kKernel, runtime::ProfilerEvent::kKernelLaunch, "Contiguous",
+               false);
 
   return true;
 }

@@ -114,6 +114,17 @@ bool MultiStreamController::WaitEvent(const DeviceContext *device_context, int64
   return mem_manager->WaitEvent(task_id_on_stream, user_stream_id, memory_stream_id);
 }
 
+bool MultiStreamController::WaitEvent(const DeviceContext *device_context, int64_t task_id_on_stream,
+                                      uint32_t user_stream_id) {
+  auto mem_manager = device_context->device_res_manager_->mem_manager();
+  if (mem_manager == nullptr) {
+    MS_LOG(WARNING) << "mem_manager_ is nullptr.";
+    return false;
+  }
+
+  return mem_manager->WaitEvent(task_id_on_stream, user_stream_id);
+}
+
 bool MultiStreamController::DispatchRecordWaitEvent(const DeviceContext *device_context, uint32_t user_stream_id,
                                                     uint32_t memory_stream_id) {
   if (event_pools_.count(device_context) == 0) {

@@ -450,8 +450,8 @@ void ForwardExecutor::CreateViewOpOutputs(const FrontendOpRunInfoPtr &op_run_inf
   CreateInputAddressForViewOp(view_input_tensor, op_run_info);
 
   for (size_t i = 0; i < storage_infos.size(); i++) {
-    MS_LOG(INFO) << "View op " << op_run_info->base_op_run_info.op_name << ", i:" << i
-                 << ", storage_info:" << storage_infos[i]->ToString();
+    MS_LOG(DEBUG) << "View op " << op_run_info->base_op_run_info.op_name << ", i:" << i
+                  << ", storage_info:" << storage_infos[i]->ToString();
     CreateViewOutputTensor(op_run_info, view_input_tensor, storage_infos[i], task_type);
   }
 

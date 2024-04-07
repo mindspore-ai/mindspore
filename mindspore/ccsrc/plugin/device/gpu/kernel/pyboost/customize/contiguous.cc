@@ -28,8 +28,7 @@ tensor::TensorPtr ContiguousGPUCustomize(const std::shared_ptr<OpRunner> &op, co
     return output_tensor;
   }
 
-  auto stream = op->device_context()->device_res_manager_->GetStream(op->stream_id());
-  return CopyCustomizeCall(op, input_tensor, stream);
+  return CopyCustomizeCall(op, input_tensor);
 }
 }  // namespace pyboost
 }  // namespace kernel

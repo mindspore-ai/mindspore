@@ -80,7 +80,7 @@ class BACKEND_EXPORT PyBoostUtils {
 
   static void LaunchKernel(const PrimitivePtr &primitive, const device::DeviceContext *device_context,
                            const AddressInfoPair &input_address_info, const AddressInfoPair &output_address_info,
-                           void *stream_ptr = nullptr);
+                           size_t stream_id = kDefaultStreamIndex);
 
   static void GetKernelTensor(const DeviceContext *device_context, size_t stream_id,
                               const abstract::AbstractBasePtr &input_abs, size_t index,

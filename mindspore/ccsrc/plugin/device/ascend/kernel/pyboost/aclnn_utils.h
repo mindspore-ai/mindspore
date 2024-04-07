@@ -43,6 +43,8 @@
       if (!device::ascend::AscendStreamMng::GetInstance().SyncAllStreams()) {                                       \
         MS_LOG(EXCEPTION) << "SyncStream failed for op " << aclnn_name;                                             \
       }                                                                                                             \
+    } else {                                                                                                        \
+      runtime::DeviceAddressUtils::ProcessCrossStreamAddress(aclnn_name, device_context, stream_id, __VA_ARGS__);   \
     }                                                                                                               \
   } while (false)
 
