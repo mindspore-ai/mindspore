@@ -36,7 +36,7 @@ class Linear(Cell):
     Applies linear connected layer for the input. This layer implements the operation as:
 
     .. math::
-        \text{outputs} = \text{X} * \text{kernel} + \text{bias},
+        \text{outputs} = X * kernel + bias
 
     where :math:`X` is the input tensors, :math:`\text{kernel}` is a weight matrix with the same
     data type as the :math:`X` created by the layer, and :math:`\text{bias}` is a bias vector
