@@ -206,19 +206,19 @@ class BatchNorm1d(_BatchNorm):
             Default: ``True`` .
         gamma_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the :math:`\gamma` weight.
             The values of str refer to the function `mindspore.common.initializer
-            <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_
+            <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.common.initializer.html>`_
             including ``'zeros'`` , ``'ones'`` , etc. Default: ``'ones'`` .
         beta_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the :math:`\beta` weight.
             The values of str refer to the function `mindspore.common.initializer
-            <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_
+            <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.common.initializer.html>`_
             including ``'zeros'`` , ``'ones'``, etc. Default: ``'zeros'`` .
         moving_mean_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the moving mean.
             The values of str refer to the function `mindspore.common.initializer
-            <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_
+            <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.common.initializer.html>`_
             including ``'zeros'`` , ``'ones'`` , etc. Default: ``'zeros'`` .
         moving_var_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the moving variance.
             The values of str refer to the function `mindspore.common.initializer
-            <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_
+            <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.common.initializer.html>`_
             including ``'zeros'`` , ``'ones'`` , etc. Default: ``'ones'`` .
         use_batch_statistics (bool): If ``true`` , use the mean value and variance value of current batch data. If
             ``false`` , use the mean value and variance value of specified value. If ``None`` , the training process
@@ -302,19 +302,19 @@ class BatchNorm2d(_BatchNorm):
             Default: ``True`` .
         gamma_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the :math:`\gamma` weight.
             The values of str refer to the function `mindspore.common.initializer
-            <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_
+            <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.common.initializer.html>`_
             including ``'zeros'`` , ``'ones'`` , etc. Default: ``'ones'`` .
         beta_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the :math:`\beta` weight.
             The values of str refer to the function `mindspore.common.initializer
-            <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_
+            <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.common.initializer.html>`_
             including ``'zeros'`` , ``'ones'`` , etc. Default: ``'zeros'`` .
         moving_mean_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the moving mean.
             The values of str refer to the function `mindspore.common.initializer
-            <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_
+            <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.common.initializer.html>`_
             including ``'zeros'`` , ``'ones'`` , etc. Default: ``'zeros'`` .
         moving_var_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the moving variance.
             The values of str refer to the function `mindspore.common.initializer
-            <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_
+            <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.common.initializer.html>`_
             including ``'zeros'`` , ``'ones'`` , etc. Default: ``'ones'`` .
         use_batch_statistics (bool): Default: ``None`` .
 
@@ -391,19 +391,19 @@ class BatchNorm3d(Cell):
         affine (bool): A bool value. When set to ``True`` , gamma and beta can be learned. Default: ``True`` .
         gamma_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the gamma weight.
             The values of str refer to the function `mindspore.common.initializer
-            <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_
+            <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.common.initializer.html>`_
             including ``'zeros'`` , ``'ones'`` , etc. Default: ``'ones'`` .
         beta_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the beta weight.
             The values of str refer to the function `mindspore.common.initializer
-            <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_
+            <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.common.initializer.html>`_
             including ``'zeros'`` , ``'ones'`` , etc. Default: ``'zeros'`` .
         moving_mean_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the moving mean.
             The values of str refer to the function `mindspore.common.initializer
-            <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_
+            <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.common.initializer.html>`_
             including ``'zeros'`` , ``'ones'`` , etc. Default: ``'zeros'`` .
         moving_var_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the moving variance.
             The values of str refer to the function `mindspore.common.initializer
-            <https://www.mindspore.cn/docs/en/master/api_python/mindspore.common.initializer.html>`_
+            <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.common.initializer.html>`_
             including ``'zeros'`` , ``'ones'`` , etc. Default: ``'ones'`` .
         use_batch_statistics (bool): If true, use the mean value and variance value of current batch data. If
             ``false``, use the mean value and variance value of specified value. If ``None`` , the training process
@@ -558,14 +558,14 @@ class SyncBatchNorm(_BatchNorm):
 
             For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
             Please see the `Ascend tutorial
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/rank_table.html>`_
+            <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/rank_table.html>`_
             for more details.
 
             For the GPU devices, users need to prepare the host file and mpi, please see the `mpirun Startup
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/mpirun.html>`_ .
+            <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/mpirun.html>`_ .
 
             For the CPU device, users need to write a dynamic cluster startup script, please see the `Dynamic Cluster
-            Startup <https://www.mindspore.cn/tutorials/experts/en/master/parallel/dynamic_cluster.html>`_ .
+            Startup <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/dynamic_cluster.html>`_ .
 
             This example should be run with multiple devices.
 

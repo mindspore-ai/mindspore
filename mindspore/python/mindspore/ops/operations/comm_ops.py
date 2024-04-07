@@ -53,14 +53,14 @@ class ReduceOp:
 
             For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
             Please see the `rank table Startup
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/rank_table.html>`_
+            <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/rank_table.html>`_
             for more details.
 
             For the GPU devices, users need to prepare the host file and mpi, please see the `mpirun Startup
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/mpirun.html>`_ .
+            <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/mpirun.html>`_ .
 
             For the CPU device, users need to write a dynamic cluster startup script, please see the `Dynamic Cluster
-            Startup <https://www.mindspore.cn/tutorials/experts/en/master/parallel/dynamic_cluster.html>`_ .
+            Startup <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/dynamic_cluster.html>`_ .
 
             This example should be run with multiple devices.
 
@@ -144,14 +144,14 @@ class AllReduce(Primitive):
 
             For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
             Please see the `rank table Startup
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/rank_table.html>`_
+            <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/rank_table.html>`_
             for more details.
 
             For the GPU devices, users need to prepare the host file and mpi, please see the `mpirun Startup
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/mpirun.html>`_ .
+            <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/mpirun.html>`_ .
 
             For the CPU device, users need to write a dynamic cluster startup script, please see the `Dynamic Cluster
-            Startup <https://www.mindspore.cn/tutorials/experts/en/master/parallel/dynamic_cluster.html>`_ .
+            Startup <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/dynamic_cluster.html>`_ .
 
             This example should be run with 2 devices.
 
@@ -180,7 +180,7 @@ class AllReduce(Primitive):
 
     Tutorial Examples:
         - `Distributed Set Communication Primitives - AllReduce
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/ops/communicate_ops.html#allreduce>`_
+          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/ops/communicate_ops.html#allreduce>`_
 
     """
 
@@ -233,14 +233,14 @@ class AllGather(PrimitiveWithInfer):
 
             For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
             Please see the `rank table Startup
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/rank_table.html>`_
+            <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/rank_table.html>`_
             for more details.
 
             For the GPU devices, users need to prepare the host file and mpi, please see the `mpirun Startup
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/mpirun.html>`_ .
+            <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/mpirun.html>`_ .
 
             For the CPU device, users need to write a dynamic cluster startup script, please see the `Dynamic Cluster
-            Startup <https://www.mindspore.cn/tutorials/experts/en/master/parallel/dynamic_cluster.html>`_ .
+            Startup <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/dynamic_cluster.html>`_ .
 
             This example should be run with 2 devices.
 
@@ -272,7 +272,7 @@ class AllGather(PrimitiveWithInfer):
 
     Tutorial Examples:
         - `Distributed Set Communication Primitives - AllGather
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/ops/communicate_ops.html#allgather>`_
+          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/ops/communicate_ops.html#allgather>`_
 
     """
 
@@ -458,14 +458,14 @@ class ReduceScatter(Primitive):
 
             For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
             Please see the `rank table Startup
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/rank_table.html>`_
+            <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/rank_table.html>`_
             for more details.
 
             For the GPU devices, users need to prepare the host file and mpi, please see the `mpirun Startup
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/mpirun.html>`_ .
+            <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/mpirun.html>`_ .
 
             For the CPU device, users need to write a dynamic cluster startup script, please see the `Dynamic Cluster
-            Startup <https://www.mindspore.cn/tutorials/experts/en/master/parallel/dynamic_cluster.html>`_ .
+            Startup <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/dynamic_cluster.html>`_ .
 
             This example should be run with 2 devices.
 
@@ -498,7 +498,7 @@ class ReduceScatter(Primitive):
 
     Tutorial Examples:
         - `Distributed Set Communication Primitives - ReduceScatter
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/ops/communicate_ops.html#reducescatter>`_
+          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/ops/communicate_ops.html#reducescatter>`_
 
     """
 
@@ -600,14 +600,14 @@ class Broadcast(PrimitiveWithInfer):
 
             For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
             Please see the `rank table Startup
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/rank_table.html>`_
+            <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/rank_table.html>`_
             for more details.
 
             For the GPU devices, users need to prepare the host file and mpi, please see the `mpirun Startup
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/mpirun.html>`_ .
+            <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/mpirun.html>`_ .
 
             For the CPU device, users need to write a dynamic cluster startup script, please see the `Dynamic Cluster
-            Startup <https://www.mindspore.cn/tutorials/experts/en/master/parallel/dynamic_cluster.html>`_ .
+            Startup <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/dynamic_cluster.html>`_ .
 
             This example should be run with multiple devices.
 
@@ -638,7 +638,7 @@ class Broadcast(PrimitiveWithInfer):
 
     Tutorial Examples:
         - `Distributed Set Communication Primitives - Broadcast
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/ops/communicate_ops.html#broadcast>`_
+          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/ops/communicate_ops.html#broadcast>`_
 
     """
 
@@ -718,11 +718,11 @@ class NeighborExchange(Primitive):
         The user needs to preset
         communication environment variables before running the following example, please check the details on the
         official website of `MindSpore \
-        <https://www.mindspore.cn/docs/en/master/api_python/mindspore.ops.primitive.html#communication-operator>`_.
+        <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/mindspore.ops.primitive.html#communication-operator>`_.
 
         This operator requires a full-mesh network topology, each device has the same vlan id, and the ip & mask are
         in the same subnet, please check the `details \
-        <https://www.mindspore.cn/docs/en/master/api_python/samples/ops/communicate_ops.html#notes>`_.
+        <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/ops/communicate_ops.html#notes>`_.
 
     Args:
         send_rank_ids (list(int)): Ranks which the data is sent to.
@@ -771,7 +771,7 @@ class NeighborExchange(Primitive):
 
     Tutorial Examples:
         - `Distributed Set Communication Primitives - NeighborExchange
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/ops/communicate_ops.html#neighborexchange>`_
+          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/ops/communicate_ops.html#neighborexchange>`_
 
     """
 
@@ -804,7 +804,7 @@ class AlltoAll(PrimitiveWithInfer):
     Note:
         This operator requires a full-mesh network topology, each device has the same vlan id, and the ip & mask are
         in the same subnet, please check the `details \
-        <https://www.mindspore.cn/docs/en/master/api_python/samples/ops/communicate_ops.html#notes>`_.
+        <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/ops/communicate_ops.html#notes>`_.
 
     Args:
         split_count (int): On each process, divide blocks into split_count number.
@@ -835,14 +835,14 @@ class AlltoAll(PrimitiveWithInfer):
 
             For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
             Please see the `rank table Startup
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/rank_table.html>`_
+            <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/rank_table.html>`_
             for more details.
 
             For the GPU devices, users need to prepare the host file and mpi, please see the `mpirun Startup
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/mpirun.html>`_ .
+            <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/mpirun.html>`_ .
 
             For the CPU device, users need to write a dynamic cluster startup script, please see the `Dynamic Cluster
-            Startup <https://www.mindspore.cn/tutorials/experts/en/master/parallel/dynamic_cluster.html>`_ .
+            Startup <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/dynamic_cluster.html>`_ .
 
             This example should be run with 8 devices.
 
@@ -873,7 +873,7 @@ class AlltoAll(PrimitiveWithInfer):
 
     Tutorial Examples:
         - `Distributed Set Communication Primitives - AlltoAll
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/ops/communicate_ops.html#alltoall>`_
+          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/ops/communicate_ops.html#alltoall>`_
 
     """
 
@@ -921,7 +921,7 @@ class NeighborExchangeV2(Primitive):
     Note:
         This operator requires a full-mesh network topology, each device has the same vlan id, and the ip & mask are
         in the same subnet, please check the `details \
-        <https://www.mindspore.cn/docs/en/master/api_python/samples/ops/communicate_ops.html#notes>`_.
+        <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/ops/communicate_ops.html#notes>`_.
 
     Args:
         send_rank_ids (list(int)): Ranks which the data is sent to. 8 rank_ids represents 8 directions, if one
@@ -959,14 +959,14 @@ class NeighborExchangeV2(Primitive):
 
             For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
             Please see the `rank table Startup
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/rank_table.html>`_
+            <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/rank_table.html>`_
             for more details.
 
             For the GPU devices, users need to prepare the host file and mpi, please see the `mpirun Startup
-            <https://www.mindspore.cn/tutorials/experts/en/master/parallel/mpirun.html>`_ .
+            <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/mpirun.html>`_ .
 
             For the CPU device, users need to write a dynamic cluster startup script, please see the `Dynamic Cluster
-            Startup <https://www.mindspore.cn/tutorials/experts/en/master/parallel/dynamic_cluster.html>`_ .
+            Startup <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/dynamic_cluster.html>`_ .
 
             This example should be run with 2 devices.
 
@@ -1017,7 +1017,7 @@ class NeighborExchangeV2(Primitive):
 
     Tutorial Examples:
         - `Distributed Set Communication Primitives - NeighborExchangeV2
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/ops/communicate_ops.html#neighborexchangev2>`_
+          <https://www.mindspore.cn/docs/en/r2.3.q1/api_python/samples/ops/communicate_ops.html#neighborexchangev2>`_
 
     """
 

@@ -56,3 +56,7 @@ https://ms-release.obs.cn-north-4.myhuaweicloud.com/2.1.0/MindSpore/lite/release
 https://github.com/git-lfs/git-lfs/releases/download/v3.1.2/
 https://www.mindspore.cn/lite/en
 https://mindspore.cn/search/en?inputValue=Index%20values
+
+https://mindspore.cn*/r2.3.q1/*
+https://www.mindspore.cn*/r2.3.q1/*
+http://sox.sourceforge.net/sox.html

@@ -548,7 +548,7 @@ class PrimitiveWithCheck(Primitive):
     the shape and type. Method infer_value() can also be defined (such as PrimitiveWithInfer) for constant propagation.
 
     More on how to customize a Op, please refer to `Custom Operators
-    <https://www.mindspore.cn/tutorials/experts/en/master/operation/op_custom.html>`_.
+    <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/operation/op_custom.html>`_.
 
     Args:
         name (str): Name of the current Primitive.
@@ -642,7 +642,7 @@ class PrimitiveWithInfer(Primitive):
     logic of the shape and type. The infer_value() is used for constant propagation.
 
     More on how to customize a Op, please refer to `Custom Operators
-    <https://www.mindspore.cn/tutorials/experts/en/master/operation/op_custom.html>`_.
+    <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/operation/op_custom.html>`_.
 
     Args:
         name (str): Name of the current Primitive.

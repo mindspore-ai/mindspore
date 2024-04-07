@@ -84,7 +84,7 @@ def parameter_broadcast(net, layout, cur_rank=0, initial_rank=0):
         >>> net.matmul2.shard(((1, 8), (8, 1)))
         >>> net.relu2.shard(((8, 1),))
         >>> # Create the dataset taking MNIST as an example. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
+        >>> # https://gitee.com/mindspore/docs/blob/r2.3.q1/docs/mindspore/code/mnist.py
         >>> dataset = create_dataset()
         >>> optim = nn.SGD(net.trainable_params(), 1e-2)
         >>> loss = nn.CrossEntropyLoss()

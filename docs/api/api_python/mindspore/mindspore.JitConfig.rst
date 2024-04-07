@@ -20,7 +20,7 @@ mindspore.JitConfig
 
         - **jit_syntax_level** (str, 可选) - 设置JIT语法支持级别，其值必须为 ``"STRICT"``, ``"LAX"`` 或 ``""`` 。
           默认是空字符串，表示忽略该项JitConfig配置，将使用ms.context的jit_syntax_level，ms.context请参考
-          `set_context <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.set_context.html>`_ 。
+          `set_context <https://www.mindspore.cn/docs/zh-CN/r2.3.q1/api_python/mindspore/mindspore.set_context.html>`_ 。
           默认值： ``""`` 。
 		  
           - ``"STRICT"``: 仅支持基础语法，且执行性能最佳。可用于MindIR导入导出。

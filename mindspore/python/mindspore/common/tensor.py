@@ -83,11 +83,11 @@ def tensor(input_data=None, dtype=None, shape=None, init=None, internal=False, c
     based on the `dtype` argument.
 
     Please refer to `Creating and Using Tensor
-    <https://www.mindspore.cn/docs/en/master/note/static_graph_syntax_support.html#mindspore-user-defined-data-types>`_ .
+    <https://www.mindspore.cn/docs/en/r2.3.q1/note/static_graph_syntax_support.html#mindspore-user-defined-data-types>`_ .
 
     The difference between it and the Tensor class is that it adds
     `Annotation
-    <https://www.mindspore.cn/docs/en/master/design/dynamic_graph_and_static_graph.html?#annotation-type>`_
+    <https://www.mindspore.cn/docs/en/r2.3.q1/design/dynamic_graph_and_static_graph.html?#annotation-type>`_
     which can prevent the generation of AnyType compared to the Tensor class.
 
     The arguments and return values are the same as the Tensor class. Also see: :class:`mindspore.Tensor`.
@@ -2720,7 +2720,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             opt_shard_group(str): Optimizer shard group which is used in auto or semi auto parallel mode
                 to get one shard of a parameter's slice. For more information about optimizer parallel, please refer to:
                 `Optimizer Parallel
-                <https://www.mindspore.cn/tutorials/experts/en/master/parallel/optimizer_parallel.html>`_.
+                <https://www.mindspore.cn/tutorials/experts/en/r2.3.q1/parallel/optimizer_parallel.html>`_.
                 Default: ``None``.
 
         Returns:
