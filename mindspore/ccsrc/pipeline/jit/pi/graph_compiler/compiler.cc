@@ -17,6 +17,7 @@
 #include "pipeline/jit/pi/graph_compiler/compiler.h"
 #include <memory>
 #include <string>
+#include "include/common/debug/anf_ir_dump.h"
 #include "include/common/utils/convert_utils_py.h"
 #include "ir/func_graph.h"
 #include "pipeline/jit/pi/graph_compiler/func_graph_builder.h"
@@ -250,6 +251,9 @@ CallableGraph MindCompiler::Compile(const FuncGraphPtr &func_graph, const py::tu
   py::tuple new_arg = EliminateStubTensor(args);
   new_arg = EliminateSelf(new_arg, compile_info.co_name_);
   MarkArgmentMutable(new_arg);
+  if (MsContext::GetInstance()->get_param<int>(MS_CTX_SAVE_GRAPHS_FLAG)) {
+    DumpIR("graph_before_compile.ir", func_graph);
+  }
   (void)graph_executor->CompileInner(func_graph, new_arg, kwargs, phase, true, true);
 
   return callable;

@@ -413,7 +413,7 @@ py::object FuncGraphBuilder::AddMultiNode(const std::string &name, const std::ve
   return AddNode(fn, inputs_obj);
 }
 
-bool FuncGraphBuilder::AddOutput(const py::object &output_obj, bool add_repeat) {
+bool FuncGraphBuilder::AddOutput(const py::object &output_obj, bool is_top_graph) {
   auto iter = py_obj_to_node_.find(output_obj.ptr());
   if (iter == py_obj_to_node_.end()) {
     MS_LOG(INFO) << "The output python object " << py::str(output_obj) << " should have been added to the graph.";
@@ -422,14 +422,11 @@ bool FuncGraphBuilder::AddOutput(const py::object &output_obj, bool add_repeat) 
   auto node = iter->second;
   MS_EXCEPTION_IF_NULL(node);
   auto abs = node->abstract();
-  if (!add_repeat && !CheckGraphOutput(abs)) {
+  // Only top graph has restriction on return value type.
+  if (is_top_graph && !CheckGraphOutput(abs)) {
     MS_LOG(INFO) << "The output python object " << py::str(output_obj)
                  << " should not be the graph output, abstract: " << (abs == nullptr ? "null" : abs->ToString());
     return false;
-  }
-  if (!add_repeat && std::find(output_nodes_.begin(), output_nodes_.end(), node) != output_nodes_.end()) {
-    MS_LOG(INFO) << "Output node " << node->DebugString() << " has already been set as output.";
-    return true;
   }
   (void)output_nodes_.emplace_back(node);
   return true;

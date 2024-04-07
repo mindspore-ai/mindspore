@@ -43,6 +43,13 @@ struct NodeSet {
   std::vector<ValueNode *> operations;
 };
 
+struct GraphInputInfo {
+  std::vector<ValueNode *> args;
+  std::vector<ValueNode *> globals;
+  ValueNode *vargs = nullptr;
+  ValueNode *kwargs = nullptr;
+};
+
 class CodeGenerator {
  public:
   struct Code {
@@ -194,7 +201,7 @@ class CodeBreakGenerator {
   const py::dict &GetGlobals() const { return globals_; }
 
   // (chaiyouheng): collect nodes inputs and outputs at graph analyze
-  void Init(const Graph *, const GraphAnalyzer::CapturedInfo *);
+  void Init(const Graph *, const GraphAnalyzer &);
 
   virtual py::object MakeCode(bool make_graph, Graph *graph);
   const CFG *GetCFG() const;
@@ -252,6 +259,8 @@ class CodeBreakGenerator {
 
   // followed interpret execute node
   NodeSet captured_;
+
+  GraphInputInfo graph_inputs_info_;
 
   // break bci alive locals
   std::vector<int> alive_locals_;

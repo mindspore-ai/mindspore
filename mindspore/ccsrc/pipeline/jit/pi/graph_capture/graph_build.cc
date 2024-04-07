@@ -2116,7 +2116,7 @@ StopTraceReason MindGraphBuilder::BuildSubGraph(CallNode *call_node, int depth, 
       call_node->SetVobj(sub_ret->GetVobj());
     } else {
       sg->FGBuilder()->SetGraphName(GetFuncGraphName(func, sg));
-      sg->FGAddOutput();
+      sg->FGAddOutput(false);
       if (sg->FGBuilder()->graph() == nullptr) {
         MS_LOG(ERROR) << "subgraph trace null";
         return StopTraceReason::kTrace_Fail;
@@ -3326,12 +3326,12 @@ void MindGraphBuilder::FGAddInputs(const std::vector<py::object> &args) {
   }
 }
 
-void MindGraphBuilder::FGAddOutput() {
+void MindGraphBuilder::FGAddOutput(bool is_top_graph) {
   if (auto ret = GetGraph()->GetRetVal()) {
     MS_LOG(INFO) << ret->GetVobj()->ToString();
     auto out = ret->GetVobj()->GetPyObject();
     MS_LOG(INFO) << "try add output: " << py::str(out) << " addr:" << out.ptr();
-    if (FGBuilder()->AddOutput(out)) {
+    if (FGBuilder()->AddOutput(out, is_top_graph)) {
       MS_LOG(INFO) << "add output succuss";
     } else {
       MS_LOG(INFO) << "add output fail";
