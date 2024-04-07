@@ -23,7 +23,7 @@ template <typename Function, typename... Args>
 auto RunAscendApi(Function f, const char *file, int line, const char *call_f, const char *func_name, Args... args) {
   MS_LOG(DEBUG) << "Call ascend api <" << func_name << "> in <" << call_f << "> at " << file << ":" << line;
   if (f == nullptr) {
-    MS_LOG(EXCEPTION) << func_name << " is null.";
+    MS_LOG(EXCEPTION) << func_name << " is null in progress " << getpid();
   }
   return f(args...);
 }
@@ -32,7 +32,7 @@ template <typename Function>
 auto RunAscendApi(Function f, const char *file, int line, const char *call_f, const char *func_name) {
   MS_LOG(DEBUG) << "Call ascend api <" << func_name << "> in <" << call_f << "> at " << file << ":" << line;
   if (f == nullptr) {
-    MS_LOG(EXCEPTION) << func_name << " is null.";
+    MS_LOG(EXCEPTION) << func_name << " is null in progress " << getpid();
   }
   return f();
 }
