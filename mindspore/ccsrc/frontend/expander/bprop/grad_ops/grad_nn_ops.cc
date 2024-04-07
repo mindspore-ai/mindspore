@@ -2170,6 +2170,26 @@ REG_BPROP_BUILDER("SparseSoftmaxCrossEntropyWithLogitsV2").SetUnusedInputs({i1})
   return {grad, ib->OutZeros(labels)};
 });
 
+REG_BPROP_BUILDER("ConstantPadNd").SetUnusedInputs({i0, i1, i3}).SetBody(BODYFUNC(ib) {
+  auto paddings = ib->GetInput(kIndex1);
+  bool has_constant_values = ib->GetInputs().size() == kDim5;
+  auto dout = has_constant_values ? ib->GetInput(kIndex4) : ib->GetInput(kIndex3);
+  NodePtr dx;
+
+  MS_EXCEPTION_IF_NULL(paddings);
+  auto pad_value = GetIntList(paddings);
+  (void)std::transform(pad_value.begin(), pad_value.end(), pad_value.begin(), [](const int64_t &c) { return -c; });
+  auto constant_values = ib->GetInput(kIndex2);
+  dx = ib->Emit("ConstantPadNd", {dout, ib->TensorToTuple(ib->Tensor(pad_value)), ib->ZerosLike(constant_values)});
+
+  if (has_constant_values) {
+    auto constant_values = ib->GetInput(kIndex2);
+    return {dx, ib->OutZeros(paddings), ib->OutZeros(constant_values)};
+  } else {
+    return {dx, ib->OutZeros(paddings)};
+  }
+});
+
 REG_BPROP_BUILDER("PadV3").SetUnusedInputs({i0, i1, i3}).SetBody(BODYFUNC(ib) {
   auto paddings = ib->GetInput(kIndex1);
   bool has_constant_values = ib->GetInputs().size() == kDim5;

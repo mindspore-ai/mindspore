@@ -1,0 +1,18 @@
+#operator constant_pad_nd
+constant_pad_nd:
+  args:
+    input:
+      dtype: tensor
+    padding:
+      dtype:  tuple[int]
+      type_cast: list[int], tensor
+    value:
+      dtype: number
+      defualt: 0.0
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True
+  dispatch:
+    enable: True
