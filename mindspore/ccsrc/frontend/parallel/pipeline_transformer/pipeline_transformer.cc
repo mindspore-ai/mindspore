@@ -409,6 +409,7 @@ void PipelineTransformer::LabelMicroBatch() {
   MS_EXCEPTION_IF_NULL(virtual_dataset_);
   auto node_user_map = manager_->node_users();
   auto node_users = node_user_map[virtual_dataset_];
+  auto stage_num = g_device_manager->stage_num();
   for (auto &node_user : node_users) {
     if (IsPrimitiveCNode(node_user.first, prim::kPrimTupleGetItem)) {
       auto data_users = manager_->node_users()[node_user.first];
@@ -418,6 +419,10 @@ void PipelineTransformer::LabelMicroBatch() {
         data_users = node_user_map[node_first];
       }
       auto micro_size = int64_t(MicroSize(data_users));
+      if (is_train_ && micro_size < stage_num) {
+        MS_LOG(EXCEPTION) << "The size of micro_batch must be greater than or equal to stage_num. But got the size of "
+                          << "micro_batch is " << micro_size << " and the stage_num is " << stage_num;
+      }
       micro_size_ = micro_size;
       auto batch_axis = GetBatchAxisForInput(data_users);
       MS_LOG(INFO) << "For the "
