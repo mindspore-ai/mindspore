@@ -2,13 +2,146 @@
 
 [View English](./RELEASE.md)
 
+## MindSpore 2.3.0-rc1 Release Notes
+
+### 主要特性及增强
+
+#### DataSet
+
+- [STABLE] MindRecord模块增加完整性校验、加解密功能，以此保护用户数据的完整性与安全性。
+- [STABLE] MindRecord接口变更：废弃FileWriter.open_and_set_header接口，因为其功能已内置到FilterWriter类，若使用旧版本代码将报错，删除此调用即可；FileWriter增加写入数据类型校验，以确保Schema定义的数据类型与真实数据类型匹配；Mindrecord组件下所有类方法去除返回值，若处理出错以异常方式提示用户。
+- [STABLE] 为以下数据增强增加Ascend处理后端支持：ResizedCrop、HorizontalFlip、VerticalFlip、Perspective、Crop、Pad、GaussianBlur、Affine。
+- [STABLE] 优化了模型迁移场景中数据迁移部分的指南，提供更多与第三方库框架对比的例子。
+- [STABLE] 优化了TFRecordDataset在多数据列场景下解析效率，提升解析性能 20%。
+
+#### PIJIT
+
+- [BETA] PIJit通过对Python字节码进行分析&调整、执行流进行图捕获&图优化，支持的Python代码做静态图方式执行，不支持的进行子图切分以动态图方式执行，自动地做到动静统一。用户可以通过@jit(mode="PIJit", jit_config={options:value})对函数进行装饰来开启PIJit。
+
+#### Inference
+
+- [BETA] 大模型推理升级训推一体架构，实现脚本、分布式策略和运行时的统一，典型大模型训练到推理部署周期下降到天级，通过融合大算子降低推理时延，有效提升网络吞吐量。
+
+#### AutoParallel
+
+- [STABLE] 新增msrun启动方式，支持单指令拉起分布式任务。
+- [STABLE] 添加RankTable启动方式即将废弃的提示。
+- [STABLE] 图模式下消除冗余常量，提升编译性能和内存开销。
+- [STABLE] 子图场景优化器并行首个子图inline，使得流水并行下的一些计算和通信掩盖可以进行。
+- [STABLE] 通信信息导出，编译期间导出模型通信信息（通信域、通信量），输入给集群作为通信调度的依据。
+- [STABLE] 流水线并行推理优化，去除共享权重在stage间转发，提升执行性能；支持流水线并行推理结果自动广播，提升自回归推理易用性。
+- [STABLE] 算子级并行切分支持配置MatMul/Add/LayerNorm/GeLU/BiasAdd算子的切分时的设备排布与张量排布的映射关系。
+- [STABLE] 支持数据并行维度的梯度通信与反向计算互相掩盖功能。
+- [STABLE] 单卡模拟编译，用于模拟多卡分布式训练中某张卡的编译流程，辅助分析前后端各编译流程和内存占用。
+- [STABLE] ops.Tril算子支持切分，从而降低对单个device的内存与性能需求。
+- [BETA] 支持通信算子和计算算子融合，掩盖通信开销，提升网络性能。
+- [BETA] 故障恢复时，checkpoint加载与编译并行从而减少故障恢复时间。
+
+#### Runtime
+
+- [BETA] 支持O0/O1/O2多级编译，提升静态图调试调优能力。
+
+#### FrontEnd
+
+- [STABLE] 框架新增对bfloat16数据类型的支持，创建Tensor时可以指定dtype=mindspore.bfloat16。
+- [STABLE] 完善rewrite组件的语法支持能力，新增支持对类变量、函数、控制流等语法的解析。
+- [STABLE] 新增context配置项：debug_level，用户可以使用mindspore.set_context(debug_level=mindspore.DEBUG)来获取更多调试信息。
+
+#### Profiler
+
+- [BETA] 动态启停profiling，用户可以根据训练情况实时采集profiling 数据，减少采集数据量。
+- [BETA] Profiling通信算子耗时矩阵，用户通过分析通信算子耗时矩阵，找出集群通信性能瓶颈。
+- [BETA] 提高昇腾环境解析Profiling数据的性能。
+- [BETA] 支持离线解析Profiling生成的数据，用户可以先采集数据，然后根据需要再解析数据。
+- [BETA] 支持采集HBM、PCIe、l2_cache性能数据，丰富性能分析指标。
+
+#### Dump
+
+- [BETA] Dump保存的统计信息记录MD5值，用户可以通过MD5值确定张量值的微小差异。
+- [BETA] Dump支持bfloat16数据类型，支撑用户定位bfloat16类型的算子精度问题。
+
+#### PyNative
+
+- [STABLE] 重构动态图下单算子调用流程，优化前端算子下发粒度，提升动态图性能。
+
+#### Ascend
+
+- [BETA] 支持用户设置CANN的options配置项，配置项分为global和session二类，用户可以通过mindspore.set_context(ascend_config={"ge_options": {"global": {"global_option": "option_value"}, "session": {"session_option": "option_value"}}})进行配置。
+
+#### API Change
+
+- 新增 mindspore.hal接口，开放流、事件以及设备管理能力。
+- 新增 mindspore.multiprocessing 接口，提供了创建多进程的能力。
+
+#### 算子
+
+- [BETA] mindspore.ops.TopK当前支持第二个输入k为Int32类型的张量。
+
+#### Bug fixes
+
+- [#I92H93] 修复了昇腾平台下使用Print算子打印字符串对象时，Print算子报错Launch kernel failed的问题。
+- [#I8S6LY] 修复了昇腾平台图模式动态shape流程下，变长输入算子（如 AddN、Concat）报错RuntimeError: Attribute dyn_input_sizes of Default/AddN-op1 is [const vector]{}, of which size is less than 0的问题。
+- [#I9ADZS] 修复了故障恢复训练场景中，由于dataset恢复效率低导致网络训练出现数据超时的问题。
+
+### 贡献者
+
+感谢以下人员做出的贡献:
+
+AlanCheng511，AlanCheng712，bantao，Bingliang，BJ-WANG，Bokai Li，Brian-K，caifubi，cao1zhg，CaoWenbin，ccsszz，chaiyouheng，changzherui，chenfei_mindspore，chengbin，chengfeng27，chengxb7532，chenjianping，chenkang，chenweifeng，Chong，chuht，chujinjin，Cynthia叶，dairenjie，DavidFFFan，DeshiChen，douzhixing，emmmmtang，Erpim，fangzhou0329，fary86，fengxun，fengyixing，fuhouyu，gaoshuanglong，gaoyong10，GaoZhenlong，gengdongjie，gent1e，Greatpan，GTT，guoqi，guoxiaokang1，GuoZhibin，guozhijian，hangq，hanhuifeng，haozhang，hedongdong，hejianheng，Henry Shi，heyingjiao，HighCloud，Hongxing，huandong1，huangbingjian，HuangLe02，huangxinjing，huangziling，hujiahui8，huoxinyou，jiangchenglin3，jianghui58，jiangshanfeng，jiaorui，jiaxueyu，JichenZhao，jijiarong，jjfeing，JoeyLin，JuiceZ，jxl，kairui_kou，kate，KevinYi，kisnwang，lanzhineng，liangchenghui，LiangZhibo，lianliguang，lichen，ligan，lihao，limingqi107，ling，linqingke，liruyu，liubuyu，liuchao，liuchengji，liujunzhu，liuluobin，liutongtong9，liuzhuoran2333，liyan2022，liyejun，LLLRT，looop5，luochao60，luojianing，luoyang，LV，machenggui，maning202007，Margaret_wangrui，MaZhiming，mengyuanli，MooYeh，moran，Mrtutu，NaCN，nomindcarry，panshaowu，panzhihui，PingqiLi，qinzheng，qiuzhongya，Rice，shaojunsong，Shawny，shenwei41，shenyaxin，shunyuanhan，silver，Songyuanwei，tangdezhi_123，tanghuikang，tan-wei-cheng，TingWang，TronZhang，TuDouNi，VectorSL，WANG Cong，wang_ziqi，wanghenchang，wangpingan，wangshaocong，wangtongyu6，weiyang，WinXPQAQ，wtcheng，wudawei，wujiangming，wujueying，wuweikang，wwwbby，XianglongZeng，xiaosh，xiaotianci，xiaoxin_zhang，xiaoxiongzhu，xiaoyao，XinDu，xingzhongfan，yanghaoran，yangluhang，yangruoqi713，yangzhenzhang，yangzishuo，yanjiaming，Yanzhi_YI，yao_yf，yefeng，yeyunpeng2020，yide12，YijieChen，YingLai Lin，YingtongHu，youshu，yuchaojie，YuJianfeng，zangqx，zby，zhaiyukun，zhangdanyang，zhanghaibo，zhanghanLeo，zhangminli，zhangqinghua，zhangyanhui，zhangyifan，zhangyinxia，zhangyongxian，ZhangZGC，zhanzhan，zhaoting，zhengyafei，zhengzuohe，ZhihaoLi，zhouyaqiang0，zhuguodong，zhumingming，zhupuxu，zichun_ye，zjun，zlq2020，ZPaC，zuochuanyong，zyli2020，陈宇，代宇鑫，狄新凯，范吉斌，冯一航，胡彬，宦晓玲，黄勇，康伟，李良灿，李林杰，刘崇鸣，刘力力，刘勇琪，吕浩宇，没有窗户的小巷，王禹程，吴蕴溥，熊攀，徐安越，徐永飞，许哲纶，俞涵，张峻源，张树仁，张王泽，张栩浩，郑裔，周莉莉，周先琪，朱家兴，邹文祥
+
+欢迎以任何形式对项目提供贡献！
+
+## MindSpore 2.2.13 Release Notes
+
+### API变更
+
+增加动态组网场景下各类超时时间环境变量配置：
+
+- `MS_TOPO_TIMEOUT`： 集群组网阶段超时时间，单位：秒。
+- `MS_CLUSTER_RETRY_NUM`：集群组网阶段节点重试注册次数。
+- `MS_NODE_TIMEOUT`：节点心跳超时时间，单位：秒。
+- `MS_RECEIVE_MSG_TIMEOUT`：节点接收消息超时时间，单位：秒。
+
+### 问题修复
+
+- [#I9CR96] 修复在大规模集群下，动态组网启动方式的超时时间不足导致集群启动失败的问题。
+
+### 贡献者
+
+感谢以下人员做出的贡献:
+
+ZPaC, limingqi107, lizhenyu, jiangshanfeng
+
+欢迎以任何形式对项目提供贡献！
+
+## MindSpore 2.2.12 Release Notes
+
+### 主要特性及增强
+
+- [STABLE] 针对网络参数以fp32初始化以及开启优化器并行的场景，降低Cast算子数目。
+- [STABLE] 增加对静默故障的检测和处理能力；静默故障会导致训练过程异常，该特性帮助用户避免或大幅降低因静默故障导致的集群停机巡检进行故障定位带来的损失。
+
+### 问题修复
+
+- [#I97D1L] 修复 ReduceLROnPlateau、LRScheduler、CosineAnnealingWarmRestarts动态学习率相关接口样例错误。
+- [#I970HV] 修复多卡之间的allgather/reducescatter不保序问题。
+- [#I99JPI] 修复checkpoint在模糊匹配场景下加载类型为bfloat16 parameter的 bug。
+
+### 贡献者
+
+感谢以下人员做出的贡献:
+
+yao_yf, YijieChen, 冯一航, yuchaojie, 李良灿, YuJianfeng, huangxinjing, GuoZhibin, looop5
+
+欢迎以任何形式对项目提供贡献！
+
 ## MindSpore 2.2.11 Release Notes
 
 ### 主要特性及增强
 
 #### scipy
 
-- [Stable] 新增scipy模块API mindspore.scipy.optimize.linear_sum_assignment，用于解决线性和分配问题，它可以基于一个给定的成本矩阵，找到一个成本最低的分配方案。
+- [STABLE] 新增scipy模块API mindspore.scipy.optimize.linear_sum_assignment，用于解决线性和分配问题，它可以基于一个给定的成本矩阵，找到一个成本最低的分配方案。
 
 ### 问题修复
 
@@ -146,8 +279,8 @@ zhanghaibo, wangsiyuan, yefeng, wangshaocong, chenjianping
 
 #### Ascend
 
-- [STABLE] 支持用户可配置算子高精度/高性能模式，用户可以通过`context.set_context(ascend_config={"op_precision_mode": "/path/to/op_precision_config_file"})`对部分TBE算子配置高精度/高性能模式。
-- [BETA] 支持用户可配置fp16进fp32出的算子，用户可以通过`context.set_context(ascend_config={"precision_mode": "force_fp32"})`对TBE Cube算子配置fp16进fp32出。
+- [STABLE] 支持用户可配置算子高精度/高性能模式，用户可以通过`mindspore.set_context(ascend_config={"op_precision_mode": "/path/to/op_precision_config_file"})`对部分TBE算子配置高精度/高性能模式。
+- [BETA] 支持用户可配置fp16进fp32出的算子，用户可以通过`mindspore.set_context(ascend_config={"precision_mode": "force_fp32"})`对TBE Cube算子配置fp16进fp32出。
 - [BETA] 去除jit level "O3"与GE流程强绑定，用户在执行GE流程时无需再设置`jit_level="O3"`。
 
 #### Parallel
