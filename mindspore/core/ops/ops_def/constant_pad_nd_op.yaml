@@ -8,7 +8,7 @@ constant_pad_nd:
       type_cast: list[int], tensor
     value:
       dtype: number
-      defualt: 0.0
+      default: 0.0
   returns:
     output:
       dtype: tensor

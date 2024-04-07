@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_CONSTANT_PAD_ND_H_
-#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_CONSTANT_PAD_ND_H_
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_CONVOLUTION_GRAD_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_CONVOLUTION_GRAD_H_
 
+#include <memory>
 #include <vector>
-#include <set>
+#include "mindapi/base/types.h"
 #include "ops/ops_func_impl/op_func_impl.h"
-#include "ops/op_name.h"
 
 namespace mindspore {
 namespace ops {
-class MIND_API ConstantPadNdFuncImpl : public OpFuncImpl {
+class MIND_API ConvolutionGradFuncImpl : public OpFuncImpl {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
@@ -32,4 +32,4 @@ class MIND_API ConstantPadNdFuncImpl : public OpFuncImpl {
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_CONSTANT_PAD_ND_H_
+#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_CONVOLUTION_GRAD_H_
