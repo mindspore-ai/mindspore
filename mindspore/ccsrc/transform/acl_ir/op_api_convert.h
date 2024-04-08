@@ -61,7 +61,7 @@ using _aclDestroyFloatArray = int (*)(const aclFloatArray *array);
 using _aclDestroyBoolArray = int (*)(const aclBoolArray *array);
 using _aclDestroyTensorList = int (*)(const aclTensorList *array);
 
-extern HashMap<void *, std::string> opapi_lib_handle;
+extern std::vector<std::pair<void *, std::string>> opapi_lib_handle;
 extern void LoadOpApiLib();
 
 // Get op api func.

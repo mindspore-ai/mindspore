@@ -96,7 +96,7 @@ def create_np_inputs(cache, update, valid_seq_len):
     return cache.asnumpy(), update.asnumpy(), valid_seq_len.asnumpy()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
 def test_decoder_k_v_cache_net():
