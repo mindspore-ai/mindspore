@@ -15,58 +15,46 @@
  */
 
 #include "plugin/device/ascend/optimizer/ge/convert_data_depend_to_control_depend.h"
-
+#include <vector>
+#include <memory>
 #include "ops/framework_ops.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace opt {
-const BaseRef ConvertDataDependToControlDepend::DefinePattern() const {
-  VarPtr x1 = std::make_shared<Var>();
-  VarPtr x2 = std::make_shared<Var>();
-  VectorRef send_node({prim::kPrimSend, x1});
-  return VectorRef({prim::kPrimDepend, send_node, x2});
+namespace {
+const auto kDataToControl = "data_to_control";
 }
 
 const AnfNodePtr ConvertDataDependToControlDepend::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                                            const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(node);
-
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  MS_LOG(INFO) << "Process node: " << node->fullname_with_scope()
-               << ", input node: " << cnode->input(1)->fullname_with_scope();
-  auto manager = func_graph->manager();
-  if (func_graph->manager() == nullptr) {
-    std::vector<FuncGraphPtr> graphs{func_graph};
-    FuncGraphManagerPtr new_manager = std::make_shared<FuncGraphManager>(graphs);
-    new_manager->AddFuncGraph(func_graph);
+  PrimitiveSet data_to_control_set = {prim::kPrimSend};
+  if (!IsOneOfPrimitiveCNode(cnode, data_to_control_set)) {
+    return nullptr;
   }
-  auto node_users = manager->node_users()[node];
-  for (auto node_user : node_users) {
-    if (AnfUtils::IsRealCNodeKernel(node_user.first)) {
-      MS_LOG(DEBUG) << "Node: " << node->fullname_with_scope() << " is used by real kernel "
-                    << node_user.first->fullname_with_scope();
-      return nullptr;
-    }
+  if (common::AnfAlgo::HasNodeAttr(kDataToControl, cnode)) {
+    return nullptr;
   }
-
+  MS_LOG(DEBUG) << "Process node: " << node->fullname_with_scope();
   auto tensor = std::make_shared<tensor::Tensor>(0.0);
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
   ValueNodePtr value_node = kernel_graph->NewValueNode(tensor->ToAbstract(), tensor);
   kernel_graph->AddValueNodeToGraph(value_node);
 
-  std::vector<AnfNodePtr> depend_input = {NewValueNode(std::make_shared<Primitive>(kDependOpName)), value_node,
-                                          cnode->input(1)};
+  std::vector<AnfNodePtr> depend_input = {NewValueNode(std::make_shared<Primitive>(kDependOpName)), value_node, cnode};
   auto depend_node = NewCNode(depend_input, func_graph);
   MS_EXCEPTION_IF_NULL(depend_node);
   depend_node->set_scope(node->scope());
-  MS_LOG(INFO) << "Replace depend: " << node->fullname_with_scope()
-               << " by new node: " << depend_node->fullname_with_scope();
   depend_node->set_abstract(value_node->abstract());
+  MS_LOG(INFO) << "Create new depend: " << depend_node->fullname_with_scope()
+               << " for node: " << cnode->fullname_with_scope();
+  common::AnfAlgo::SetNodeAttr(kDataToControl, MakeValue(true), cnode);
   return depend_node;
 }
 }  // namespace opt
