@@ -18,12 +18,14 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <fstream>
 #include "utils/dlopen_macro.h"
 #include "acl/error_codes/rt_error_codes.h"
 #include "transform/symbol/acl_base_symbol.h"
 #include "transform/symbol/acl_rt_symbol.h"
 #include "transform/symbol/acl_symbol.h"
 #include "transform/symbol/symbol_utils.h"
+#include "include/common/debug/common.h"
 
 namespace mindspore {
 namespace device {
@@ -169,13 +171,35 @@ void *callback_thread_func(void *data) {
   return data;
 }
 
+namespace {
+void GenerateAclInitJson(const string &json_file_path) {
+  nlohmann::json acl_init_json;
+  // generate err_msg_mode
+  acl_init_json["err_msg_mode"] = "1";
+
+  // write to file
+  std::string json_file_str = acl_init_json.dump();
+  std::ofstream json_file(json_file_path);
+  json_file << json_file_str;
+  json_file.close();
+  MS_LOG(INFO) << "Generate aclInit json to file : " << json_file_path;
+}
+}  // namespace
+
 void InitializeAcl() {
   std::lock_guard<std::mutex> lock(g_acl_init_mutex);
   if (g_acl_initialized) {
     return;
   }
 
-  auto ret_init = CALL_ASCEND_API(aclInit, nullptr);
+  std::string file_name = "./aclinit.json";
+  auto realpath = Common::CreatePrefixPath(file_name);
+  if (!realpath.has_value()) {
+    MS_LOG(EXCEPTION) << "Failed to get real path: [" << file_name << "] in generate aclInit json file path.";
+  }
+  GenerateAclInitJson(realpath.value());
+
+  auto ret_init = CALL_ASCEND_API(aclInit, realpath.value().c_str());
   if (ret_init != ACL_ERROR_NONE) {
     if (ret_init == ACL_ERROR_REPEAT_INITIALIZE) {
       MS_LOG(EXCEPTION) << "Can't call aclInit multiple times within the same process. "
