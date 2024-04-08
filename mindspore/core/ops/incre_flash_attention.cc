@@ -427,7 +427,7 @@ TypePtr IncreFlashAttentionInferType(const PrimitivePtr &prim, const std::vector
 AbstractBasePtr IncreFlashAttentionInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  CheckAndConvertUtils::CheckInputArgs(input_args, kLessEqual, kIncreFlashAttentionInputsNum, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kIncreFlashAttentionInputsNum, primitive->name());
   auto infer_shape = IncreFlashAttentionInferShape(primitive, input_args);
   auto infer_type = IncreFlashAttentionInferType(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
