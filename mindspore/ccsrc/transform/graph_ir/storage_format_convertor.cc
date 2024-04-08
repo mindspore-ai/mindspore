@@ -33,6 +33,23 @@
 
 namespace mindspore::transform {
 namespace {
+bool IsUsedBySwitchOp(const AnfNodePtr &node, const NodeUsersMap &node_users) {
+  if (common::AnfAlgo::GetCNodeName(node) != prim::kPrimPartial->name()) {
+    return false;
+  }
+
+  auto iter = node_users.find(node);
+  if (iter != node_users.end()) {
+    for (const auto &partial_user : iter->second) {
+      if (common::AnfAlgo::GetCNodeName(partial_user.first) == prim::kPrimSwitch->name()) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
 std::vector<std::pair<AnfNodePtr, int>> GetOutputNodesSkipVirtualNode(const FuncGraphManagerPtr &manager,
                                                                       const AnfNodePtr &node) {
   std::vector<std::pair<AnfNodePtr, int>> res;
@@ -47,11 +64,11 @@ std::vector<std::pair<AnfNodePtr, int>> GetOutputNodesSkipVirtualNode(const Func
   while (!anf_queue.empty()) {
     auto queue_front = anf_queue.front();
     anf_queue.pop();
-    std::string op_name = common::AnfAlgo::GetCNodeName(queue_front.first);
-    if (op_name == "Partial") {
-      // subgraph boundary not support trans from NC1HWC0 to ND in GE
+    // NOTE fix: do not support trans from NC1HWC0 to ND between parameter and Switch-op
+    if (IsUsedBySwitchOp(queue_front.first, node_users_map)) {
       return {};
     }
+    std::string op_name = common::AnfAlgo::GetCNodeName(queue_front.first);
     if (AnfUtils::IsRealKernel(queue_front.first) && op_name != kCastOpName && op_name != kTensorMoveOpName) {
       res.push_back(queue_front);
       continue;
