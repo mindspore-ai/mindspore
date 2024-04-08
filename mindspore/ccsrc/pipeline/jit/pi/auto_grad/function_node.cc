@@ -244,9 +244,9 @@ void Visit(const FunctionNodePtr &node, const std::function<void(const FunctionN
   while (!nodes.empty()) {
     auto fn = nodes.front();
     nodes.pop();
-    callback(fn);
     std::for_each(fn->GetNextEdges().begin(), fn->GetNextEdges().end(),
                   [&nodes](const auto &edge) { nodes.push(edge->GetNode()); });
+    callback(fn);
   }
 }
 
@@ -317,6 +317,15 @@ void FunctionNode::UpdateDependence() {
   auto update_func = [](const FunctionNodePtr &node) {
     for (auto iter = node->dependences_.begin(); iter != node->dependences_.end();) {
       if (!(*iter)->is_in_reverse_chain_) {
+        std::queue<FunctionNodePtr> nodes;
+        nodes.push((*iter));
+        while (!nodes.empty()) {
+          auto fn = nodes.front();
+          nodes.pop();
+          std::for_each((*iter)->dependences_.begin(), (*iter)->dependences_.end(),
+                        [&nodes](const auto &n) { nodes.push(n); });
+          fn->CleanResource();
+        }
         iter = node->dependences_.erase(iter);
       } else {
         iter++;
