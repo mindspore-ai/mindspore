@@ -16,59 +16,48 @@
 #include <vector>
 #include "extendrt/delegate/ascend_native/ascend_native_matmul_kernel.h"
 #include "extendrt/delegate/ascend_native/ascend_native_kernel_registry.h"
-#include "extendrt/delegate/ascend_native/ascend_native_impl/gemm.h"
+#include "extendrt/delegate/ascend_native/ascend_native_impl/ai_core/matmul.h"
 #include "ops/fusion/mat_mul_fusion.h"
-
+#include "extendrt/delegate/ascend_native/ascend_native_impl/tiling.h"
+#include "ascend_native_impl/gemm.h"
 namespace mindspore::kernel {
 using mindspore::ops::kNameMatMulFusion;
 
 int AscendNativeMatmulKernel::InferShape() {
   if (in_tensors_[0] != nullptr && in_tensors_[1] != nullptr) {
+    bool is_bmm = (in_tensors_[0]->shape().size() == C3NUM);
     std::vector<int> shape;
-    shape.push_back(in_tensors_[0]->shape()[0]);
-    shape.push_back(in_tensors_[1]->shape()[1]);
+    if (is_bmm) shape.push_back(in_tensors_[0]->shape()[0]);
+    shape.push_back(m_);
+    shape.push_back(n_);
     out_tensors_[0]->set_shape(shape);
   }
   return kSuccess;
 }
 
-int AscendNativeMatmulKernel::Prepare() { return kSuccess; }
-
-int AscendNativeMatmulKernel::Run() {
-  MS_LOG(INFO) << "AscendNativeMatmulKernel::Execute";
-  const std::vector<InferTensor *> &in_tensors = this->in_tensors();
-  const std::vector<InferTensor *> &out_tensors = this->out_tensors();
-
+int AscendNativeMatmulKernel::Prepare() {
   auto primitive = AsOps<ops::MatMulFusion>();
   if (primitive == nullptr) {
     MS_LOG(ERROR) << "convert to primitive matmul failed for " << get_name();
     return kLiteError;
   }
-  bool transpose_a = primitive->get_transpose_a();
-  bool transpose_b = primitive->get_transpose_b();
-  auto shape_a = in_tensors.at(FIRST_INPUT)->shape();
-  auto shape_b = in_tensors.at(SECOND_INPUT)->shape();
-  if (shape_a.size() != shape_b.size() || shape_a.size() < 2) {
-    std::cout << "AscendNativeBatchMatMulKernel::Execute Error -- tensors have different dims or too short\n";
-    return kLiteInputTensorError;
-  }
-  size_t tiles = 1;
-  for (size_t i = 0; i < shape_a.size() - 2; i++) {
-    if (shape_a.at(i) != shape_b.at(i)) {
-      std::cout << "AscendNativeBatchMatMulKernel::Execute Error -- tensors have different shapes\n";
-      return kLiteInputTensorError;
-    }
-    tiles *= shape_a.at(i);
-  }
-  auto zeroth_mm_dim = shape_a.size() - 2;
-  auto m = static_cast<size_t>(shape_a.at(zeroth_mm_dim));
-  auto k = static_cast<size_t>(shape_a.at(zeroth_mm_dim + 1));
-  auto n = static_cast<size_t>(shape_b.at(zeroth_mm_dim + 1));
+  transpose_a_ = primitive->get_transpose_a();
+  transpose_b_ = primitive->get_transpose_b();
 
-  ascend_native::BGemmFp16(const_cast<void *>(get_stream()), transpose_a, transpose_b, m, n, k, 1.0f,
-                           in_tensors[0]->device_data(), k, in_tensors[1]->device_data(), n, 0.0f,
-                           out_tensors[0]->device_data(), n, tiles, 1);
+  auto zeroth_mm_dim = in_tensors_[0]->shape().size() - 2;
+  m_ = (transpose_a_) ? in_tensors_[0]->shape()[zeroth_mm_dim + C1NUM] : in_tensors_[0]->shape()[zeroth_mm_dim];
+  k_ = (transpose_a_) ? in_tensors_[0]->shape()[zeroth_mm_dim] : in_tensors_[0]->shape()[zeroth_mm_dim + C1NUM];
+  n_ = (transpose_b_) ? in_tensors_[C1NUM]->shape()[zeroth_mm_dim] : in_tensors_[C1NUM]->shape()[zeroth_mm_dim + C1NUM];
+  return kSuccess;
+}
 
+int AscendNativeMatmulKernel::Run() {
+  bool is_bias = (in_tensors_.size() == C3NUM);
+  ascend_native::Gemm gemm;
+  auto bias = is_bias ? in_tensors_.at(C2NUM) : nullptr;
+  gemm.init(extra_h_.bmm_num_, m_, n_, k_, const_cast<void *>(stream_), in_tensors_[0]->device_data(),
+            in_tensors_[C1NUM]->device_data(), out_tensors_[0]->device_data(), transpose_a_, transpose_b_, bias);
+  gemm.compute(get_sys_workspace(), SYS_WS_RESERVED, const_cast<void *>(stream_));
   return kSuccess;
 }
 

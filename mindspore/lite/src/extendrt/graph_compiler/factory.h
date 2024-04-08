@@ -22,10 +22,11 @@
 #include "extendrt/graph_compiler/type.h"
 #include "include/api/context.h"
 #include "infer/graph_compiler.h"
+#include "src/common/config_infos.h"
 
 namespace mindspore {
 using GraphCompilerRegFunc =
-  std::function<std::shared_ptr<infer::abstract::GraphCompiler>(const std::shared_ptr<Context> &)>;
+  std::function<std::shared_ptr<infer::abstract::GraphCompiler>(const std::shared_ptr<Context> &, const ConfigInfos &)>;
 
 class GraphCompilerRegistry {
  public:
@@ -37,7 +38,8 @@ class GraphCompilerRegistry {
   void RegCompiler(const mindspore::GraphCompilerType &graph_compiler_type, const GraphCompilerRegFunc &creator);
 
   std::shared_ptr<infer::abstract::GraphCompiler> GetCompiler(const mindspore::GraphCompilerType &type,
-                                                              const std::shared_ptr<Context> &context);
+                                                              const std::shared_ptr<Context> &context,
+                                                              const ConfigInfos &config_infos);
 
  private:
   mindspore::HashMap<mindspore::GraphCompilerType, GraphCompilerRegFunc> graph_compiler_map_;

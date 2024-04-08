@@ -13,12 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_ASCEND_NATIVE_ASCEND_NATIVE_IMPL_ENCODER_UTILS_H_
-#define MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_ASCEND_NATIVE_ASCEND_NATIVE_IMPL_ENCODER_UTILS_H_
+
+#include "extendrt/delegate/ascend_native/ascend_native_impl/tiling_if.h"
+#include "extendrt/delegate/ascend_native/ascend_native_impl/tiling.h"
+#include <stdio.h>
+#include <sstream>
 namespace mindspore::ascend_native {
-void AttentionSoftmaxFp16(void *output, void *input, int num_of_tiles, int tile_size, int *batches, int *batch_offsets,
-                          int heads, bool incr, void *q);
-template <typename T>
-void QueryGather(void *input, void *output, int32_t *batches, size_t B, size_t D, int num_of_elements, void *q);
+void buildMMExtra(mindspore::ascend_native::MMExtra *e, uint32_t bmm_num, uint32_t lda, uint32_t ldb, uint32_t ldc) {
+  e->bmm_num_ = bmm_num;
+  e->lda_ = lda;
+  e->ldb_ = ldb;
+  e->ldc_ = ldc;
+}
+
+int buildTiling(int blockDim, int M, int N, int K, bool transposeA, bool transposeB, bool isBias, void *tilingPtr,
+                int size) {
+  return buildTiling(blockDim, M, N, K, transposeA, transposeB, isBias, tilingPtr);
+}
+
+int tiling_size() { return tilingSize(); }
 }  // namespace mindspore::ascend_native
-#endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_ASCEND_NATIVE_ASCEND_NATIVE_IMPL_ENCODER_UTILS_H_

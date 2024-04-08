@@ -28,8 +28,9 @@ class AscendNativeStubKernel : public AscendNativeBaseKernel {
   //  AscendNativeStubKernel() = delete;
 
   AscendNativeStubKernel(const std::vector<InferTensor *> &inputs, const std::vector<InferTensor *> &outputs,
-                         InferPrimitive prim, const InferContext *ctx, const void *stream, std::string name)
-      : AscendNativeBaseKernel(inputs, outputs, prim, ctx, stream, name) {}
+                         InferPrimitive prim, const InferContext *ctx, const void *stream, std::string name,
+                         const void *acl_ctx)
+      : AscendNativeBaseKernel(inputs, outputs, prim, ctx, stream, name, acl_ctx) {}
 
   int Prepare() override;
 

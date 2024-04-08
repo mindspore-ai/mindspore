@@ -62,7 +62,6 @@ void DefaultGraphCompiler::InitCompileOption(const FuncGraphPtr &graph) {
 }
 
 void DefaultGraphCompiler::ReplaceNodes(const std::shared_ptr<FuncGraph> &graph) {
-  const ConfigInfos config_infos;
   auto &device_contexts = context_->MutableDeviceInfo();
   if (device_contexts.empty()) {
     MS_LOG(ERROR) << "No context found";
@@ -70,7 +69,7 @@ void DefaultGraphCompiler::ReplaceNodes(const std::shared_ptr<FuncGraph> &graph)
   auto device_type = device_contexts.at(0)->GetDeviceType();
   auto provider = device_contexts.at(0)->GetProvider();
   auto delegate =
-    DelegateRegistry<ExtendDelegate *>::GetInstance().GetDelegate(device_type, provider, context_, config_infos);
+    DelegateRegistry<ExtendDelegate *>::GetInstance().GetDelegate(device_type, provider, context_, config_infos_);
   if (delegate != nullptr) {
     delegate->ReplaceNodes(graph);
   }
@@ -426,9 +425,9 @@ std::vector<InferTensor *> DefaultGraphCompiler::CreateTensors(const std::vector
   return tensors;
 }
 
-static std::shared_ptr<infer::abstract::GraphCompiler> DefaultGraphCompilerCreator(
-  const std::shared_ptr<Context> &ctx) {
-  auto graph_compiler = std::make_shared<DefaultGraphCompiler>(ctx);
+static std::shared_ptr<infer::abstract::GraphCompiler> DefaultGraphCompilerCreator(const std::shared_ptr<Context> &ctx,
+                                                                                   const ConfigInfos &config_infos) {
+  auto graph_compiler = std::make_shared<DefaultGraphCompiler>(ctx, config_infos);
   return graph_compiler;
 }
 REG_GRAPH_COMPILER(kDefaultCompiler, DefaultGraphCompilerCreator);

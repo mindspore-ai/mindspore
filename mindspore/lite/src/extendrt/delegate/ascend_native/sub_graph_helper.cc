@@ -22,6 +22,7 @@
 #include "ops/tuple_get_item.h"
 #include "ops/make_tuple.h"
 #include "extendrt/delegate/ascend_native/ops/ascend_native_composite.h"
+#include "extendrt/delegate/ops/copy.h"
 
 namespace mindspore {
 AnSubGraph::AnSubGraph(int index) : index_{index} { func_graph_ = std::make_shared<FuncGraph>(); }
@@ -81,9 +82,10 @@ void AnSubGraph::FixGroup(SubGraphHelperPtr helper) {
     } else {
       CNodePtr cin;
       auto prim = GetCNodePrimitive(input);
-      bool is_copy = (prim != nullptr) && (prim->name() == ops::kNameCopy);
+      bool is_copy = (prim != nullptr) && (prim->name() == ops::kNameAscendNativeCopy);
       if ((input->isa<CNode>() && !is_copy) || is_ginput) {
-        auto connect_node = helper->CreateGetItemAndCopyUnique(input, 0, cin, ops::Copy::CopyFormatType::HOST_DEVICE);
+        auto connect_node =
+          helper->CreateGetItemAndCopyUnique(input, 0, cin, ops::AscendNativeCopy::CopyFormatType::HOST_DEVICE);
         cnode_->set_input(i, connect_node);
       }
     }
@@ -306,8 +308,8 @@ int SubGraphHelper::GetOutputId(int group, const CNodePtr &input) const {
   return subg->GetOutputId(input);
 }
 
-CNodePtr SubGraphHelper::CreateCopyNode(const AnfNodePtr &input, ops::Copy::CopyFormatType type) {
-  auto copy_prim = std::make_shared<ops::Copy>();
+CNodePtr SubGraphHelper::CreateCopyNode(const AnfNodePtr &input, ops::AscendNativeCopy::CopyFormatType type) {
+  auto copy_prim = std::make_shared<ops::AscendNativeCopy>();
   if (copy_prim == nullptr) {
     MS_LOG(ERROR) << "NewValueNode is nullptr";
     return nullptr;
@@ -356,7 +358,7 @@ void SubGraphHelper::SetOutputsAndAbstract(const AnfNodePtrList &nodes) {
 }
 
 AnfNodePtr SubGraphHelper::CreateGetItemAndCopyUnique(const AnfNodePtr &node, int id, const CNodePtr &cinput,
-                                                      ops::Copy::CopyFormatType type) {
+                                                      ops::AscendNativeCopy::CopyFormatType type) {
   auto pair = std::make_pair(id, node);
   auto connect_node = node;
   if (connection_map_.find(pair) != connection_map_.end()) {
@@ -370,7 +372,7 @@ AnfNodePtr SubGraphHelper::CreateGetItemAndCopyUnique(const AnfNodePtr &node, in
       }
       connect_node = get_item;
     }
-    if (type != ops::Copy::CopyFormatType::NONE) {
+    if (type != ops::AscendNativeCopy::CopyFormatType::NONE) {
       auto copy_node = CreateCopyNode(connect_node, type);
       if (copy_node == nullptr) {
         MS_LOG(ERROR) << "could not create copy_node";
@@ -411,9 +413,9 @@ void SubGraphHelper::FixAllNodes(const AnfNodePtrList &nodes) {
         if (input->isa<CNode>()) {
           auto cinput = input->cast<CNodePtr>();
           int in_group = FindSubGraph(input);
-          ops::Copy::CopyFormatType oper = ops::Copy::CopyFormatType::NONE;
+          ops::AscendNativeCopy::CopyFormatType oper = ops::AscendNativeCopy::CopyFormatType::NONE;
           if (cnode_group < 0) {
-            oper = ops::Copy::CopyFormatType::DEVICE_HOST;
+            oper = ops::AscendNativeCopy::CopyFormatType::DEVICE_HOST;
           }
           if ((in_group >= 0) && (in_group != cnode_group)) {
             auto in_cnode = GetCNode(in_group);
@@ -485,18 +487,18 @@ void SubGraphHelper::DrawGraph(const FuncGraphPtr &graph, std::ostream &out, boo
       std::string node_name = prim->name();
       int idx;
       std::string color;
-      if (node_name == ops::kNameCopy) {
+      if (node_name == ops::kNameAscendNativeCopy) {
         auto value = prim->GetAttr(ops::kCopyFormat);
         if (value == nullptr) {
           MS_LOG(ERROR) << "value returned null";
           return;
         }
-        auto type = static_cast<ops::Copy::CopyFormatType>(GetValue<int64_t>(value));
+        auto type = static_cast<ops::AscendNativeCopy::CopyFormatType>(GetValue<int64_t>(value));
         switch (type) {
-          case ops::Copy::CopyFormatType::DEVICE_HOST:
+          case ops::AscendNativeCopy::CopyFormatType::DEVICE_HOST:
             color = "red";
             break;
-          case ops::Copy::CopyFormatType::HOST_DEVICE:
+          case ops::AscendNativeCopy::CopyFormatType::HOST_DEVICE:
             color = "green";
             break;
           default:

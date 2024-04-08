@@ -27,8 +27,9 @@ namespace mindspore::kernel {
 template <class T>
 AscendNativeBaseKernel *GetAscendNativeKernelOp(const std::vector<InferTensor *> &inputs,
                                                 const std::vector<InferTensor *> &outputs, InferPrimitive prim,
-                                                const InferContext *ctx, const void *stream, std::string name) {
-  auto *op = new (std::nothrow) T(inputs, outputs, prim, ctx, stream, name);
+                                                const InferContext *ctx, const void *stream, std::string name,
+                                                const void *acl_ctx) {
+  auto *op = new (std::nothrow) T(inputs, outputs, prim, ctx, stream, name, acl_ctx);
   if (op == nullptr) {
     MS_LOG(WARNING) << "Ascend op is nullptr.";
     return nullptr;
@@ -37,7 +38,8 @@ AscendNativeBaseKernel *GetAscendNativeKernelOp(const std::vector<InferTensor *>
 }
 typedef AscendNativeBaseKernel *(*AscendNativeKernelOp)(const std::vector<InferTensor *> &inputs,
                                                         const std::vector<InferTensor *> &outputs, InferPrimitive prim,
-                                                        const InferContext *ctx, const void *stream, std::string name);
+                                                        const InferContext *ctx, const void *stream, std::string name,
+                                                        const void *acl_ctx);
 
 #define REGISTER_ASCEND_NATIVE_CREATOR(KEY, ASCEND_NATIVE_KERNEL_OP) \
   REGISTER_CLASS_CREATOR(std::string, KEY, AscendNativeKernelOp, GetAscendNativeKernelOp<ASCEND_NATIVE_KERNEL_OP>);

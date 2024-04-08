@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,25 +14,38 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_EXTENDRT_KERNEL_ASCEND_NATIVE_GATHER_KERNEL_H_
-#define MINDSPORE_LITE_SRC_EXTENDRT_KERNEL_ASCEND_NATIVE_GATHER_KERNEL_H_
+#ifndef MINDSPORE_LITE_SRC_EXTENDRT_KERNEL_ASCEND_NATIVE_VSL_KERNEL_H_
+#define MINDSPORE_LITE_SRC_EXTENDRT_KERNEL_ASCEND_NATIVE_VSL_KERNEL_H_
 
 #include <string>
+#include <iostream>
 #include <vector>
 #include <memory>
 #include "extendrt/delegate/ascend_native/ascend_native_base_kernel.h"
 #include "extendrt/utils/func_graph_utils.h"
 
 namespace mindspore::kernel {
-class AscendNativeGatherKernel : public AscendNativeBaseKernel {
+class AscendNativeVslKernel : public AscendNativeBaseKernel {
  public:
-  AscendNativeGatherKernel(const std::vector<InferTensor *> &inputs, const std::vector<InferTensor *> &outputs,
-                           InferPrimitive prim, const InferContext *ctx, const void *stream, std::string name)
-      : AscendNativeBaseKernel(inputs, outputs, prim, ctx, stream, name) {}
-  int InferShape() override;
+  AscendNativeVslKernel(const std::vector<InferTensor *> &inputs, const std::vector<InferTensor *> &outputs,
+                        InferPrimitive prim, const InferContext *ctx, const void *stream, std::string name,
+                        const void *acl_ctx_)
+      : AscendNativeBaseKernel(inputs, outputs, prim, ctx, stream, name, acl_ctx_) {}
+  virtual ~AscendNativeVslKernel() {}
+
   int Prepare() override;
+
   int Run() override;
+
+  int InferShape() override;
+
   int ReSize() override;
+
+ private:
+  int batch_size_{0};
+  int seq_{0};
+  int32_t *tmp0;
+  int32_t *tmp1;
 };
 }  // namespace mindspore::kernel
-#endif  // MINDSPORE_LITE_SRC_EXTENDRT_KERNEL_ASCEND_NATIVE_GATHER_KERNEL_H_
+#endif  // MINDSPORE_LITE_SRC_EXTENDRT_KERNEL_ASCEND_NATIVE_VSL_KERNEL_H_

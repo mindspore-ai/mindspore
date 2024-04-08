@@ -17,11 +17,10 @@
 #define MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_ASCEND_NATIVE_DELEGATE_ALLOCATOR_H_
 
 #include "include/api/allocator.h"
-
 namespace mindspore {
 class DelegateAllocator : public Allocator {
  public:
-  explicit DelegateAllocator(void *stream) : stream_(stream) {}
+  explicit DelegateAllocator(void *stream, void *acl_ctx) : stream_(stream), acl_ctx_(acl_ctx) {}
   void *Malloc(size_t size) override;
   void Free(void *ptr) override;
   int RefCount(void *ptr) override { return 0; };
@@ -31,6 +30,7 @@ class DelegateAllocator : public Allocator {
 
  private:
   void *stream_{nullptr};
+  void *acl_ctx_{nullptr};
 };
 
 }  // namespace mindspore

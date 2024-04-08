@@ -9,14 +9,17 @@
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either convolutionress or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_ASCEND_NATIVE_ASCEND_NATIVE_IMPL_LESS_H_
-#define MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_ASCEND_NATIVE_ASCEND_NATIVE_IMPL_LESS_H_
+
+#ifndef MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_ASCEND_NATIVE_ASCEND_NATIVE_IMPL_HCCL_ADAPTER_H_
+#define MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_ASCEND_NATIVE_ASCEND_NATIVE_IMPL_HCCL_ADAPTER_H_
+#include <iostream>
+
 namespace mindspore::ascend_native {
-void LessFp32(void *x1, void *x2, void *y, uint64_t elem_num, void *q);
-void LessFp16(void *x1, void *x2, void *y, uint64_t elem_num, void *q);
-}  // namespace mindspore::ascend_native
-#endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_ASCEND_NATIVE_ASCEND_NATIVE_IMPL_LESS_H_
+
+int HcclAllReduceSumFP32(void *send_buf, void *recv_buf, uint64_t count, void *stream);
+}
+#endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_ASCEND_NATIVE_ASCEND_NATIVE_IMPL_HCCL_ADAPTER_H_

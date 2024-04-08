@@ -85,6 +85,8 @@ bool MultiHeadAttentionFusion::Init() const {
   MS_CHECK_TRUE_RET(v_transpose_ != nullptr, false);
   k_transpose_ = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTranspose), "k_transpose");
   MS_CHECK_TRUE_RET(k_transpose_ != nullptr, false);
+  is_reshape_ = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReshape), "k_reshape");
+  MS_CHECK_TRUE_RET(is_reshape_ != nullptr, false);
   dense_ = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMatMulFusion), "dense");
   MS_CHECK_TRUE_RET(dense_ != nullptr, false);
   return true;
@@ -111,17 +113,17 @@ VectorRef DefineMask(const BaseRef &mask_input) {
 
 STATUS GetIntParameterData(const ParameterPtr &param_ptr, std::vector<int> *result) {
   if (param_ptr == nullptr || !param_ptr->has_default()) {
-    MS_LOG(DEBUG) << "param not have default";
+    MS_LOG(ERROR) << "param not have default";
     return RET_ERROR;
   }
   auto default_param = param_ptr->default_param();
   if (default_param == nullptr || !utils::isa<tensor::TensorPtr>(default_param)) {
-    MS_LOG(DEBUG) << "tensor_info is not tensor::TensorPtr";
+    MS_LOG(ERROR) << "tensor_info is not tensor::TensorPtr";
     return RET_ERROR;
   }
   auto default_param_ptr = utils::cast<tensor::TensorPtr>(default_param);
   if (default_param_ptr->data_type() != kNumberTypeInt32 && default_param_ptr->data_type() != kNumberTypeInt) {
-    MS_LOG(DEBUG) << "default param is not int";
+    MS_LOG(ERROR) << "default param is not int";
     return RET_ERROR;
   }
   auto ptr = reinterpret_cast<int *>(default_param_ptr->data_c());
@@ -151,6 +153,12 @@ STATUS GetAxis(const BaseRef &n, std::vector<int> *axes) {
   return lite::RET_ERROR;
 }
 }  // namespace
+VectorRef MultiHeadAttentionFusion::DefineEmbeddingV(const BaseRef &input, const BaseRef &weight, const BaseRef &bias,
+                                                     const BaseRef &axis) const {
+  auto dense = VectorRef({dense_, input, weight, bias});
+  auto reshape = VectorRef({is_reshape_, dense, axis});
+  return reshape;
+}
 
 VectorRef MultiHeadAttentionFusion::DefineEmbedding(const BaseRef &input, const BaseRef &weight, const BaseRef &bias,
                                                     const BaseRef &axis, const BaseRef &transpose_var, bool test_div,
@@ -499,15 +507,18 @@ VectorRef MultiHeadAttentionFusion::DefineMPPatternSwin(bool flag) const {
   return matmul3;
 }
 
-VectorRef MultiHeadAttentionFusion::DefinePatternPangu(bool alpha, bool distributed) const {
+VectorRef MultiHeadAttentionFusion::DefinePatternPangu(bool alpha, bool distributed, bool transpose_qv) const {
   bool k_div = (alpha) ? true : false;
   auto q_transpose = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTranspose));
   MS_CHECK_TRUE_RET(q_transpose != nullptr, {});
-  auto q_embedding = DefineEmbedding(input_q_, weight_q_, bias_q_, reshape_axis_, q_transpose, true);
+  auto q_embedding = (transpose_qv)
+                       ? DefineEmbedding(input_q_, weight_q_, bias_q_, reshape_axis_, q_transpose, true)
+                       : DefineEmbedding(input_q_, weight_q_, bias_q_, reshape_axis_, q_transpose, true, false);
   MS_CHECK_TRUE_RET(!q_embedding.empty(), {});
   auto k_embedding = DefineEmbedding(input_k_, weight_k_, bias_k_, reshape_k_, k_transpose_, k_div);
   MS_CHECK_TRUE_RET(!k_embedding.empty(), {});
-  auto v_embedding = DefineEmbedding(input_v_, weight_v_, bias_v_, reshape_axis_, v_transpose_);
+  auto v_embedding = (transpose_qv) ? DefineEmbedding(input_v_, weight_v_, bias_v_, reshape_axis_, v_transpose_)
+                                    : DefineEmbeddingV(input_v_, weight_v_, bias_v_, reshape_axis_);
   MS_CHECK_TRUE_RET(!v_embedding.empty(), {});
   auto is_matmul1 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMatMulFusion), "is_matmul1");
   MS_CHECK_TRUE_RET(is_matmul1 != nullptr, {});
@@ -543,7 +554,8 @@ VectorRef MultiHeadAttentionFusion::DefinePatternPangu(bool alpha, bool distribu
   MS_CHECK_TRUE_RET(is_reshape6 != nullptr, {});
   auto var_reshpae = std::make_shared<Var>("var_reshpae");
   MS_CHECK_TRUE_RET(var_reshpae != nullptr, {});
-  auto reshape6 = VectorRef({is_reshape6, transpose, var_reshpae});
+  auto reshape6 =
+    (!transpose_qv) ? VectorRef({is_reshape6, matmul2, var_reshpae}) : VectorRef({is_reshape6, transpose, var_reshpae});
   auto is_matmul3 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMatMulFusion), "is_matmul3");
   MS_CHECK_TRUE_RET(is_matmul3 != nullptr, {});
   auto matmul3 = VectorRef({is_matmul3, reshape6, weight_o_});
@@ -575,6 +587,22 @@ STATUS TransposeMatrix(std::shared_ptr<tensor::Tensor> src, std::shared_ptr<tens
   auto dst_ptr = reinterpret_cast<T *>(dst->data_c());
   for (int r = 0; r < rows; ++r) {
     for (int c = 0; c < cols; ++c) {
+      auto val = src_ptr[r * cols + c];
+      dst_ptr[c * rows + r] = val;
+    }
+  }
+  return RET_OK;
+}
+template <typename T>
+STATUS TransposeMatrixWP(std::shared_ptr<tensor::Tensor> src, std::shared_ptr<tensor::Tensor> dst) {
+  MS_CHECK_TRUE_RET(src->shape().size() == C2NUM, RET_ERROR);
+  MS_CHECK_TRUE_RET(dst->shape().size() == C2NUM, RET_ERROR);
+  int rows = src->shape().at(0);
+  int cols = src->shape().at(1);
+  auto src_ptr = reinterpret_cast<T *>(src->data_c());
+  auto dst_ptr = reinterpret_cast<T *>(dst->data_c());
+  for (int r = 0; r < rows; r++) {
+    for (int c = 0; c < cols; c++) {
       auto val = src_ptr[r * cols + c];
       dst_ptr[c * rows + r] = val;
     }
@@ -709,9 +737,10 @@ std::unordered_map<std::string, VectorRef> MultiHeadAttentionFusion::DefinePatte
   }
   patterns[kMPAWithMaskPatternName] = DefineMPWithMaskPattern();
   patterns[kMPAPatternName] = DefineMPWithMaskPattern(false);
-  patterns[kPatternNameSigmaUsePast] = DefinePatternPangu(false, false);
+  patterns[kPatternNameSigmaUsePast] = DefinePatternPangu(false, false, true);
   patterns[kPatternNameSigmaDistributedUsePastMB] = DefinePatternPangu(false, true);
   patterns[kPatternNameAlphaDistributedUsePast] = DefinePatternPangu(true);
+  patterns[kPatternNameSigmaDistributedUsePastMBT] = DefinePatternPangu(false, true, true);
   patterns[kMPAWithMaskPatternNamePA] = DefineMPWithMaskPatternPA();
   patterns[kMPAPatternNamePA] = DefineMPWithMaskPatternPA(false);
   patterns[kMPAWithMaskPatternNameT5] = DefineMPWithMaskPatternT5();
@@ -744,9 +773,9 @@ bool MultiHeadAttentionFusion::CheckPattern(const EquivPtr &equiv, int *head_num
     MS_LOG(ERROR) << "cannot find head_num or head_size";
     return false;
   }
-  std::vector<int> out2(out.end() - C2NUM, out.end());
-  *head_num = out2.at(0);
-  *head_size = out2.at(C1NUM);
+
+  *head_num = out[out.size() - C2NUM];
+  *head_size = out[out.size() - C1NUM];
   scale_ = (scale_ == 0.0f) ? 1.0f / sqrtf(*head_size * 1.0f) : scale_;
   return true;
 }
@@ -767,6 +796,11 @@ AnfNodePtr MultiHeadAttentionFusion::Process(const std::string &pattern_name, co
     t5_x_ = true;
     scale_ = 1.0f;
   }
+  if (pattern_name == kPatternNameSigmaDistributedUsePastMB || pattern_name == kPatternNameSigmaDistributedUsePastMBT ||
+      pattern_name == kPatternNameAlphaDistributedUsePast)
+    distributed_ = true;
+  if (pattern_name == kPatternNameSigmaDistributedUsePastMB || pattern_name == kPatternNameAlphaDistributedUsePast)
+    not_transpose_ = true;
   return CreateMaskedMultiHeadAttentionNode(func_graph, equiv, node, mask);
 }
 
@@ -814,10 +848,6 @@ STATUS MultiHeadAttentionFusion::AdjustOtherGetItems(const FuncGraphPtr &func_gr
   }
   auto transpose_users = manager->node_users()[node];
   auto user_node = transpose_users.front();
-  if (!CheckPrimitiveType(user_node.first, prim::kPrimTranspose)) {
-    MS_LOG(ERROR) << " missing transpose node for branch " << index << std::endl;
-    return RET_ERROR;
-  }
   // connect get item to it
   transpose_users = manager->node_users()[user_node.first];
   auto get_item = CreateOutputGetItem(func_graph, attention, index);
@@ -957,10 +987,34 @@ tup MultiHeadAttentionFusion::GetAttentionNodeWeights(const EquivPtr &equiv, std
   return make_tuple(weight_o, weight_q_tensor, weight_k_tensor, weight_v_tensor);
 }
 
-std::vector<AnfNodePtr> MultiHeadAttentionFusion::GetNewNodeInputs(const EquivPtr &equiv, ParameterPtr q_weight_param,
+std::vector<AnfNodePtr> MultiHeadAttentionFusion::GetNewNodeInputs(const FuncGraphPtr &func_graph,
+                                                                   const EquivPtr &equiv, ParameterPtr q_weight_param,
                                                                    ParameterPtr c_weight_param, AnfNodePtr weight_o,
                                                                    ParameterPtr c_bias_param, AnfNodePtr bias_o,
                                                                    bool mask, bool cross) const {
+  ParameterPtr weight_o_param;
+  if (!distributed_) {
+    std::shared_ptr<tensor::Tensor> weight_o_tensor = GetTensorInfo(weight_o);
+    auto base_data_type = weight_o_tensor->data_type();
+    if (base_data_type != kNumberTypeFloat16) {
+      MS_LOG(ERROR) << "data_type of weight_o_tensor not Float16";
+      return {};
+    }
+    auto transposed_matrix = std::make_shared<tensor::Tensor>(base_data_type, weight_o_tensor->shape());
+    MS_CHECK_TRUE_RET(base_data_type == kNumberTypeFloat16, {});
+    auto status = TransposeMatrixWP<float16>(weight_o_tensor, transposed_matrix);
+    if (status != lite::RET_OK) {
+      MS_LOG(ERROR) << "TransposeMatrix failed.";
+      return {};
+    }
+    MS_CHECK_TRUE_RET(status == RET_OK, {});
+    weight_o_param = func_graph->add_parameter();
+    MS_CHECK_TRUE_RET(weight_o_param != nullptr, {});
+    if (lite::InitParameterFromTensorInfo(weight_o_param, transposed_matrix) != lite::RET_OK) {
+      MS_LOG(ERROR) << "Init parameter from tensor info failed.";
+      return {};
+    }
+  }
   auto input_q = utils::cast<AnfNodePtr>((*equiv)[input_q_]);
   auto input_k = utils::cast<AnfNodePtr>((*equiv)[input_k_]);
   auto input_v = utils::cast<AnfNodePtr>((*equiv)[input_v_]);
@@ -978,16 +1032,27 @@ std::vector<AnfNodePtr> MultiHeadAttentionFusion::GetNewNodeInputs(const EquivPt
       new_node_inputs.insert(new_node_inputs.end(), {value_node, input_q, input_k, input_v, q_weight_param,
                                                      c_weight_param, weight_o, position_bias});
     } else {
-      new_node_inputs.insert(new_node_inputs.end(), {value_node, input_q, input_k, input_v, q_weight_param,
-                                                     c_weight_param, weight_o, c_bias_param, bias_o});
+      new_node_inputs.insert(new_node_inputs.end(),
+                             {value_node, input_q, input_k, input_v, q_weight_param, c_weight_param});
+      if (distributed_) {
+        new_node_inputs.insert(new_node_inputs.end(), weight_o);
+      } else {
+        new_node_inputs.insert(new_node_inputs.end(), weight_o_param);
+      }
+      new_node_inputs.insert(new_node_inputs.end(), {c_bias_param, bias_o});
     }
   } else {
     if (t5_x_) {
       new_node_inputs.insert(new_node_inputs.end(),
                              {value_node, input_q, input_k, input_v, c_weight_param, weight_o, position_bias});
     } else {
-      new_node_inputs.insert(new_node_inputs.end(),
-                             {value_node, input_q, input_k, input_v, c_weight_param, weight_o, c_bias_param, bias_o});
+      new_node_inputs.insert(new_node_inputs.end(), {value_node, input_q, input_k, input_v, c_weight_param});
+      if (distributed_) {
+        new_node_inputs.insert(new_node_inputs.end(), weight_o);
+      } else {
+        new_node_inputs.insert(new_node_inputs.end(), weight_o_param);
+      }
+      new_node_inputs.insert(new_node_inputs.end(), {c_bias_param, bias_o});
     }
   }
   if (mask) {
@@ -1006,7 +1071,7 @@ CNodePtr MultiHeadAttentionFusion::CreateMaskedMultiHeadAttentionNode(const Func
   std::vector<AnfNodePtr> redundant;
   auto [weight_o, weight_q_tensor, weight_k_tensor, weight_v_tensor] = GetAttentionNodeWeights(equiv, &redundant);
   AnfNodePtr bias_q, bias_o;
-  ParameterPtr c_bias_param;
+  ParameterPtr c_bias_param, weight_o_param;
   std::shared_ptr<tensor::Tensor> c_bias, bias_q_tensor;
   if (!t5_x_) {
     bias_q = utils::cast<AnfNodePtr>((*equiv)[bias_q_]);
@@ -1029,7 +1094,7 @@ CNodePtr MultiHeadAttentionFusion::CreateMaskedMultiHeadAttentionNode(const Func
   }
   AnfNodePtr vnode, knode;
   knode = utils::cast<AnfNodePtr>((*equiv)[k_transpose_]);
-  auto it_vnode = (*equiv).find(v_transpose_);
+  auto it_vnode = (not_transpose_) ? (*equiv).find(is_reshape_) : (*equiv).find(v_transpose_);
   if (it_vnode != (*equiv).end() && !t5_x_) vnode = utils::cast<AnfNodePtr>(it_vnode->second);
   if (!cross && !t5_x_) {
     redundant.push_back(bias_q);
@@ -1060,7 +1125,7 @@ CNodePtr MultiHeadAttentionFusion::CreateMaskedMultiHeadAttentionNode(const Func
     }
   }
   std::vector<AnfNodePtr> new_node_inputs =
-    GetNewNodeInputs(equiv, q_weight_param, c_weight_param, weight_o, c_bias_param, bias_o, mask, cross);
+    GetNewNodeInputs(func_graph, equiv, q_weight_param, c_weight_param, weight_o, c_bias_param, bias_o, mask, cross);
   auto new_node = func_graph->NewCNode(new_node_inputs);
   MS_CHECK_TRUE_RET(new_node != nullptr, nullptr);
   if (vnode) {

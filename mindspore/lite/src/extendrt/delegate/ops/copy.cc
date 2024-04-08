@@ -29,11 +29,11 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_OPERATOR_IMPL(Copy, BaseOperator);
+MIND_API_OPERATOR_IMPL(AscendNativeCopy, BaseOperator);
 
-void Copy::set_copy_format(CopyFormatType format) { this->AddAttr(kCopyFormat, api::MakeValue(format)); }
+void AscendNativeCopy::set_copy_format(CopyFormatType format) { this->AddAttr(kCopyFormat, api::MakeValue(format)); }
 
-int Copy::get_copy_format() const {
+int AscendNativeCopy::get_copy_format() const {
   auto value_ptr = GetAttr(kCopyFormat);
   return static_cast<int>(GetValue<int64_t>(value_ptr));
 }
@@ -57,10 +57,10 @@ TypePtr CopyInfer::InferType(const PrimitivePtr &primitive, const std::vector<Ab
   auto oper = static_cast<int>(GetValue<int64_t>(format_ptr));
   TypePtr in_type = input_args[kInputIndex0]->GetType();
   TypePtr res = in_type;
-  if ((in_type == kFloat32) && (oper == Copy::CopyFormatType::HOST_DEVICE)) {
+  if ((in_type == kFloat32) && (oper == AscendNativeCopy::CopyFormatType::HOST_DEVICE)) {
     res = kFloat16;
   }
-  if ((in_type == kFloat16) && (oper == Copy::CopyFormatType::DEVICE_HOST)) {
+  if ((in_type == kFloat16) && (oper == AscendNativeCopy::CopyFormatType::DEVICE_HOST)) {
     res = kFloat32;
   }
   return res;
@@ -78,7 +78,7 @@ AbstractBasePtr CopyInfer::InferShapeAndType(const abstract::AnalysisEnginePtr &
   return abstract::MakeAbstract(shape, type);
 }
 
-GVAR_DEF(PrimitivePtr, kPrimCopy, std::make_shared<Primitive>(kNameCopy));
-REGISTER_PRIMITIVE_OP_INFER_IMPL(Copy, kPrimCopy, CopyInfer, false);
+GVAR_DEF(PrimitivePtr, kPrimCopy, std::make_shared<Primitive>(kNameAscendNativeCopy));
+REGISTER_PRIMITIVE_OP_INFER_IMPL(AscendNativeCopy, kPrimCopy, CopyInfer, false);
 }  // namespace ops
 }  // namespace mindspore

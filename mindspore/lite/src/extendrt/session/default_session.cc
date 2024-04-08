@@ -35,7 +35,7 @@ Status DefaultInferSession::Init(const std::shared_ptr<Context> &context, const 
   MS_LOG(DEBUG) << "Init default session begin";
 
   // init compiler and runtime according to context
-  compiler_ = GraphCompilerRegistry::GetInstance().GetCompiler(kDefaultCompiler, context);
+  compiler_ = GraphCompilerRegistry::GetInstance().GetCompiler(kDefaultCompiler, context, config_info);
   if (compiler_ == nullptr) {
     MS_LOG(ERROR) << "Get Compiler is nullptr";
     return kLiteNullptr;
