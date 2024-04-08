@@ -12,12 +12,16 @@ mindspore.ops.erf
     参数：
         - **input** (Tensor) - 高斯误差函数的输入Tensor。上述公式中的 :math:`x` 。支持数据类型：
 
-          - Ascend： float16、float32。
+          - Ascend： float16、float32、int64、bool。
           - GPU/CPU： float16、float32、float64。
 
     返回：
-        Tensor，具有与 `input` 相同的数据类型和shape。
+        Tensor。当输入为 int64、bool 时，返回值类型为float32。
+        否则，返回值类型与输入类型相同。
 
     异常：
         - **TypeError** - `input` 不是Tensor。
-        - **TypeError** - `input` 的数据类型既不是float16、float32也不是float64。
+        - **TypeError** - `input` 的数据类型不是如下类型：
+
+          - Ascend： float16、float32、int64、bool。
+          - GPU/CPU： float16、float32、float64。
