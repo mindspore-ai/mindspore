@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
+import pytest
 
 import mindspore.context as context
 import mindspore.nn as nn
@@ -71,3 +72,21 @@ def test_conv2d_backprop_input():
                          [-3, -2, 0, -14, 3, 16]]]]).astype(np.float32)
     print(output)
     assert (output.asnumpy() == expect).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+def test_conv2dtranspose_stride_wrong_h():
+    """
+    Feature: Test conv2dTranspose with wrong stride.
+    Description: The wrong stride will result in a memory throwing error.
+    Expectation: Assert result compare with expect value.
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    input_np = np.random.randn(32, 3, 224, 224).astype(np.float32)
+    stride = 225
+    net = nn.Conv2dTranspose(in_channels=3, out_channels=64, kernel_size=7, stride=stride)
+    with pytest.raises((RuntimeError, ValueError)) as e:
+        net(Tensor(input_np))
+        assert "memory" in str(e.value)
