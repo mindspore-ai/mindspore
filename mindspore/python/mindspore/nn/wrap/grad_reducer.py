@@ -76,9 +76,6 @@ def _init_allreduce_operators(length, split_indices, group=GlobalComm.WORLD_COMM
     for i in range(length):
         op = AllReduce('sum', group)
         op_fusion_id = fusion[i]
-        # When running in ge and enabled all_reduce_fusion_config, hccl will check the allreduce' fusion id to be -1
-        if context.get_context("enable_ge") and context.get_auto_parallel_context("all_reduce_fusion_config"):
-            op_fusion_id = -1
         op.add_prim_attr('fusion', op_fusion_id)
         op.add_prim_attr('index', index[i])
         op_list = op_list + (op,)
