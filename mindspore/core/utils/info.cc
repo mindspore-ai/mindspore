@@ -124,18 +124,19 @@ bool Location::operator<(const Location &other) const {
   return line_ < other.line();
 }
 
-int64_t DebugInfo::get_id() const {
+size_t DebugInfo::get_id() const {
   // cppcheck-suppress variableScope
-  static int64_t current_id = 1;
+  static size_t current_id = 0;
   if (id_ == 0) {
-    id_ = current_id++;
+    id_ = ++current_id;
   }
   return id_;
 }
 
-int64_t DebugInfo::unique_id_through_copy() const {
+size_t DebugInfo::unique_id_through_copy() const {
   auto info = trace_info();
-  auto final_unique_id = through_copy_unique_id_ == -1 ? unique_id_ : through_copy_unique_id_;
+  auto final_unique_id =
+    through_copy_unique_id_ == std::numeric_limits<size_t>::max() ? unique_id_ : through_copy_unique_id_;
   if (info != nullptr) {
     if (info->isa<TraceCopy>() && info->debug_info() != nullptr) {
       final_unique_id = info->debug_info()->unique_id_through_copy();
@@ -293,7 +294,7 @@ std::string NodeDebugInfo::debug_name() {
   if (!name_.empty()) {
     return name_;
   }
-  std::string prefix = "";
+  std::string prefix = "Unbound_";
   if (node_.lock() != nullptr) {
     std::ostringstream oss;
     oss << node_.lock()->type_name() << "_";
