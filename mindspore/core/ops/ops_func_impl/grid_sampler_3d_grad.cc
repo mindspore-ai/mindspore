@@ -73,16 +73,18 @@ BaseShapePtr GridSampler3DGradFuncImpl::InferShape(const PrimitivePtr &primitive
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', 'grid' must be a 5-D tensor, but got a "
                              << std::to_string(grid_shape.size()) << "-D tensor.";
   }
-  if (input_x_shape[kInputIndex0] != grid_shape[kInputIndex0]) {
-    MS_EXCEPTION(ValueError)
-      << "For '" << primitive->name()
-      << "', the first dimension of 'grid' and 'input_x' must be equal. But got the shape of 'grid': "
-      << input_args[kInputIndex2]->GetShape()->ToString()
-      << ", the shape of 'input_x': " << input_args[kInputIndex1]->GetShape()->ToString() << ".";
-  }
-  if (grid_shape[kInputIndex4] != SizeToLong(kInputIndex3)) {
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the last dimension of 'grid' must be 3, but got "
-                             << std::to_string(grid_shape[kInputIndex4]) << ".";
+  if (!IsDynamic(input_x_shape) && !IsDynamic(grid_shape)) {
+    if (input_x_shape[kInputIndex0] != grid_shape[kInputIndex0]) {
+      MS_EXCEPTION(ValueError)
+        << "For '" << primitive->name()
+        << "', the first dimension of 'grid' and 'input_x' must be equal. But got the shape of 'grid': "
+        << input_args[kInputIndex2]->GetShape()->ToString()
+        << ", the shape of 'input_x': " << input_args[kInputIndex1]->GetShape()->ToString() << ".";
+    }
+    if (grid_shape[kInputIndex4] != SizeToLong(kInputIndex3)) {
+      MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the last dimension of 'grid' must be 3, but got "
+                               << std::to_string(grid_shape[kInputIndex4]) << ".";
+    }
   }
   std::vector<int64_t> out_shape = {input_x_shape[kInputIndex0], input_x_shape[kInputIndex1], grid_shape[kInputIndex1],
                                     grid_shape[kInputIndex2], grid_shape[kInputIndex3]};

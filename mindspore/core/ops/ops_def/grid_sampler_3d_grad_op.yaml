@@ -30,3 +30,6 @@ grid_sampler_3d_grad:
         name: GridSampler3DGrad
     function:
         disable: True
+    dispatch:
+        enable: True
+        Ascend: GridSampler3DGradAscend

@@ -62,13 +62,16 @@ BaseShapePtr GridSampler2DFuncImpl::InferShape(const PrimitivePtr &primitive,
     MS_EXCEPTION(ValueError) << "Grid must be a 4-dimensional tensor, but got " << std::to_string(grid_shape.size())
                              << "-dimensional tensor.";
   }
-  if (input_x_shape[0] != grid_shape[0]) {
-    MS_EXCEPTION(ValueError) << "The shape of grid is " << input_args[1]->GetShape()->ToString()
-                             << " , but the shape of input_x is " << input_args[0]->GetShape()->ToString()
-                             << " . The first dimension of grid and input_x must be equal.";
-  }
-  if (grid_shape[label3] != num2) {
-    MS_EXCEPTION(ValueError) << "The forth dimension of grid must be 2, but got " << std::to_string(grid_shape[label3]);
+  if (!IsDynamic(input_x_shape) && !IsDynamic(grid_shape)) {
+    if (input_x_shape[0] != grid_shape[0]) {
+      MS_EXCEPTION(ValueError) << "The shape of grid is " << input_args[1]->GetShape()->ToString()
+                               << " , but the shape of input_x is " << input_args[0]->GetShape()->ToString()
+                               << " . The first dimension of grid and input_x must be equal.";
+    }
+    if (grid_shape[label3] != num2) {
+      MS_EXCEPTION(ValueError) << "The forth dimension of grid must be 2, but got "
+                               << std::to_string(grid_shape[label3]);
+    }
   }
   std::vector<int64_t> output_shape = {input_x_shape[0], input_x_shape[1], grid_shape[1], grid_shape[2]};
   return std::make_shared<abstract::TensorShape>(output_shape);
