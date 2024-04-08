@@ -23,6 +23,7 @@
 #include <string>
 #include "pipeline/jit/pi/graph_capture/graph.h"
 #include "pipeline/jit/pi/graph_build/func_graph_builder.h"
+#include "pipeline/jit/pi/graph_capture/special_func_infer.h"
 #include "utils/convert_utils_base.h"
 
 namespace mindspore {
@@ -283,14 +284,7 @@ class GraphBuilder {
   bool NotImplementBytecode(const Instr &instr);
   static const std::unordered_map<int, bool (GraphBuilder::*)(const Instr &)> bytecode_meth_map_;
 
-  // check the function is special function that mindspore support and not inline,
-  // the return values or type can be infer
-  // set key for handler
-  bool IsFuncInWhiteList(const py::object &f, std::string *special_func_key, bool bInferPrimitive);
-
-  // infer the return value of special function and generate subgraph, or clear subgraph
-  // return true if special function has subgraph
-  virtual bool HandleFuncInWhiteList(const std::string &key, CallNode *n);
+  bool HandleSideEffectOfFuncInWhiteList(CallNode *call_node, InferFunc);
 };
 
 class MindGraphBuilder : public GraphBuilder {
@@ -328,8 +322,6 @@ class MindGraphBuilder : public GraphBuilder {
 
  private:
   std::vector<py::object> GetNewArgs(CallNode *call_node, AObject *vobj = nullptr);
-  bool IsFuncInWhiteList(const py::object &f, std::string *special_func_key);
-  bool HandleFuncInWhiteList(const std::string &key, CallNode *n) override;
   bool AllConstantArgs(const std::vector<py::object> &args, const py::object &callable_info, CallNode *call_node);
 
  private:
