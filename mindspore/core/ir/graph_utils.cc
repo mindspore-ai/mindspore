@@ -20,6 +20,8 @@
 
 #include <algorithm>
 #include <deque>
+#include <memory>
+#include <set>
 #include <utility>
 
 #include "ir/anf.h"
@@ -31,28 +33,76 @@
 #include "include/common/utils/utils.h"
 
 namespace mindspore {
+namespace {
 // Dump the circle from the strike node `next`.
 static size_t DumpSortingCircleList(const std::deque<AnfNodePtr> &todo, const AnfNodePtr &next, SeenNum seen) {
   size_t pos = 0;
   auto circle_node_it = std::find(todo.begin(), todo.end(), next);
-  for (; circle_node_it != todo.end(); circle_node_it++) {
+  for (; circle_node_it != todo.end(); ++circle_node_it) {
     auto circle_node = *circle_node_it;
     if (circle_node->seen_ == seen) {
       MS_LOG(ERROR) << "#" << pos << ": " << circle_node->DebugString();
-      pos++;
+      ++pos;
     }
   }
   return pos;
 }
 
-AnfNodePtrList TopoSort(const AnfNodePtr &root, const SuccFunc &succ, const IncludeFunc &include) {
-  constexpr auto kVecReserve = 64;
-  constexpr auto kRecursiveLevel = 2;
+static DumpIRPrividerFunction dump_ir_privider{nullptr};
+DumpIRPrividerFunction DumpIRPrivider() { return dump_ir_privider; }
+
+static DumpIRStorageFunction dump_ir_storage{nullptr};
+DumpIRStorageFunction DumpIRStorage() { return dump_ir_storage; }
+
+// DumpIR for all func graphs in the circle, and print circle indicators in the IR file.
+void DumpSortingCircleIr(const std::deque<AnfNodePtr> &todo, const AnfNodePtr &next, SeenNum seen) {
+  if (DumpIRPrivider() == nullptr || DumpIRStorage() == nullptr) {
+    MS_LOG(DEBUG) << "DumpIR privider is null";
+    return;
+  }
+  std::set<FuncGraphPtr> func_graph_set;
+  size_t pos = 0;
+  auto circle_node_it = std::find(todo.begin(), todo.end(), next);
+  for (; circle_node_it != todo.end(); ++circle_node_it) {
+    auto circle_node = *circle_node_it;
+    if (circle_node->seen_ == seen) {
+      if (circle_node->func_graph() != nullptr && func_graph_set.count(circle_node->func_graph()) == 0) {
+        (void)func_graph_set.emplace(circle_node->func_graph());
+      }
+      circle_node->set_user_data<size_t>(kTopoSortCircle, std::make_shared<size_t>(pos));
+      ++pos;
+    }
+  }
+  if (func_graph_set.empty()) {
+    MS_LOG(ERROR) << "At least one func graph if there's a TopoSort circle.";
+    return;
+  }
+  std::ostringstream graph_buffer;
+  graph_buffer << "# ===========================================================================\n"
+               << "# Graph cycle exists during TopoSort.\n"
+               << "# Total graphs: " << func_graph_set.size() << "\n#\n"
+               << "# You can search ------------------------> " << (pos - 1) << ",\n"
+               << "# to locate the node who leads to the circle.\n"
+               << "# ===========================================================================\n\n";
+  for (const auto &graph : func_graph_set) {
+    DumpIRPrivider()(graph_buffer, graph, false, 0, true);
+  }
+  DumpIRStorage()("TOPO_SORT_CIRCLE_GRAPHS_" + std::to_string(func_graph_set.size()) + ".ir", graph_buffer.str(), "");
+}
+}  // namespace
+
+void SetDumpIRPrivider(const DumpIRPrividerFunction &func) { dump_ir_privider = func; }
+
+void SetDumpIRStorage(const DumpIRStorageFunction &func) { dump_ir_storage = func; }
+
+AnfNodePtrList TopoSort(const AnfNodePtr &root, const SuccFunc &succ, const IncludeFunc &include,
+                        bool exclude_circle_node) {
   AnfNodePtrList res;
   if (root == nullptr) {
     return res;
   }
-  res.reserve(kVecReserve);
+  constexpr auto vector_reserve_size = 64;
+  res.reserve(vector_reserve_size);
   auto seen = NewSeenGeneration();
   std::deque<AnfNodePtr> todo;
   (void)todo.emplace_back(root);
@@ -86,11 +136,17 @@ AnfNodePtrList TopoSort(const AnfNodePtr &root, const SuccFunc &succ, const Incl
         if (fg != nullptr && fg->return_node() == next) {
           continue;
         }
+        constexpr auto recursive_level = 2;
+        if (exclude_circle_node) {
+          MS_LOG(INFO) << "Graph cycle exists, exclude circle strike node: " << next->DebugString(recursive_level);
+          continue;
+        }
         // To dump all nodes in a circle.
-        MS_LOG(ERROR) << "Graph cycle exists. Circle is: ";
+        MS_LOG(ERROR) << "Graph cycle exists, strike node: " << next->DebugString(recursive_level) << "\nCircle is: ";
         auto circle_len = DumpSortingCircleList(todo, next, seen);
+        DumpSortingCircleIr(todo, next, seen);
         MS_LOG(INTERNAL_EXCEPTION) << "Graph cycle exists, size: " << circle_len
-                                   << ", strike node: " << next->DebugString(kRecursiveLevel);
+                                   << ", strike node: " << next->DebugString(recursive_level);
       }
     } else if (incl > EXCLUDE) {  // Not NOFOLLOW or EXCLUDE
       MS_LOG(INTERNAL_EXCEPTION) << "The result of include(node) must be one of: \"follow\", \"nofollow\", \"exclude\"";
@@ -100,8 +156,9 @@ AnfNodePtrList TopoSort(const AnfNodePtr &root, const SuccFunc &succ, const Incl
 }
 
 // @deprecated
-// To use 'AnfNodePtrList TopoSort(const AnfNodePtr &, const SuccFunc &, const IncludeFunc &)' instead.
-AnfNodePtrList TopoSort(const AnfNodePtr &root, const DeprecatedSuccFunc &deprecated_succ, const IncludeFunc &include) {
+// To use 'AnfNodePtrList TopoSort(const AnfNodePtr &, const SuccFunc &, const IncludeFunc &, bool)' instead.
+AnfNodePtrList TopoSort(const AnfNodePtr &root, const DeprecatedSuccFunc &deprecated_succ, const IncludeFunc &include,
+                        bool exclude_circle_node) {
   SuccFunc compatible_adapter_succ = [&deprecated_succ](const AnfNodePtr &node) -> AnfNodeWeakPtrList {
     auto nodes = deprecated_succ(node);
     AnfNodeWeakPtrList weak_nodes;
@@ -110,7 +167,7 @@ AnfNodePtrList TopoSort(const AnfNodePtr &root, const DeprecatedSuccFunc &deprec
                    [](const AnfNodePtr &node) -> AnfNodeWeakPtr { return AnfNodeWeakPtr(node); });
     return weak_nodes;
   };
-  return TopoSort(root, compatible_adapter_succ, include);
+  return TopoSort(root, compatible_adapter_succ, include, exclude_circle_node);
 }
 
 // Search all CNode in root's graph only.
