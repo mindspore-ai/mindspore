@@ -1047,7 +1047,7 @@ static PyObject *RichCompare(PyObject *left, PyObject *right, int oparg) {
 }
 
 static bool support_infer_primitive(PyObject *obj) {
-  if (py::isinstance<mindspore::PrimitivePyAdapter>(obj)) {
+  if (py::isinstance<mindspore::PrimitivePyAdapter>(obj) || py::isinstance<mindspore::PrimitiveFunctionAdapter>(obj)) {
     auto inst = mindspore::pijit::InferEngine::GetInstance();
     return inst->SupportInfer(obj);
   } else {
