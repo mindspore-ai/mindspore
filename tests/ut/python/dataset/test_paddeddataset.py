@@ -597,6 +597,37 @@ def test_celeba_padded():
     assert count == 4
 
 
+def test_imagefolder_padded_debug_mode():
+    """
+    Feature: PaddedDataset
+    Description: When dataset is empty, iterate over the data when num_epochs is not 1 in debug mode
+    Expectation: Output is equal to the expected output
+    """
+    debug_mode_original = ds.config.get_debug_mode()
+    ds.config.set_debug_mode(True)
+    data_dir = "../data/dataset/testPK/data"
+    data = ds.ImageFolderDataset(data_dir)
+
+    data1 = [{'image': np.zeros(1, np.uint8), 'label': np.array(0, np.int32)},
+             {'image': np.zeros(2, np.uint8), 'label': np.array(1, np.int32)},
+             {'image': np.zeros(3, np.uint8), 'label': np.array(0, np.int32)},
+             {'image': np.zeros(4, np.uint8), 'label': np.array(1, np.int32)},
+             {'image': np.zeros(5, np.uint8), 'label': np.array(0, np.int32)},
+             {'image': np.zeros(6, np.uint8), 'label': np.array(1, np.int32)}]
+
+    data2 = ds.PaddedDataset(data1)
+    data3 = data + data2
+    testsampler = ds.DistributedSampler(num_shards=51, shard_id=50, shuffle=False, num_samples=None)
+    data3.use_sampler(testsampler)
+    assert sum([1 for _ in data3]) == 0
+    verify_list = []
+
+    for ele in data3.create_dict_iterator(num_epochs=2, output_numpy=True):
+        verify_list.append(len(ele['image']))
+    assert not verify_list
+    ds.config.set_debug_mode(debug_mode_original)
+
+
 if __name__ == '__main__':
     test_TFRecord_Padded()
     test_GeneratorDataSet_Padded()
@@ -608,3 +639,4 @@ if __name__ == '__main__':
     test_imagefolder_padded()
     test_more_shard_padded()
     test_Mindrecord_Padded(add_and_remove_cv_file)
+    test_imagefolder_padded_debug_mode()
