@@ -26,11 +26,11 @@ from mindspore.parallel._utils import _is_in_auto_parallel_mode
 from mindspore.parallel._parallel_serialization import _rank_list_for_transform_parallel_checkpoint, \
     _transform_parallel_checkpoint, _get_device_num_from_strategy, _make_dir, \
     _extract_layout_map, _extract_src_dst_layout_map, _parameter_not_in_local_stage, _extract_pipeline_stage_num, \
-    _merge_protobuf_strategy, _merge_json_strategy
+    _merge_protobuf_strategy, _merge_json_strategy, _extract_src_dst_layout_map_by_src
 
 
 __all__ = ["merge_pipeline_strategys", "rank_list_for_transform", "transform_checkpoint_by_rank",
-           "transform_checkpoints", "sync_pipeline_shared_parameters"]
+           "transform_checkpoints", "sync_pipeline_shared_parameters", "load_segmented_checkpoints"]
 
 
 def merge_pipeline_strategys(src_strategy_dirs, dst_strategy_file):
@@ -225,49 +225,63 @@ def transform_checkpoint_by_rank(rank_id, checkpoint_files_map, save_checkpoint_
     ms.save_checkpoint(transform_param_list, save_checkpoint_file_name)
 
 
-def transform_checkpoints(src_checkpoints_dir, dst_checkpoints_dir, ckpt_prefix, src_strategy_file=None,
-                          dst_strategy_file=None):
-    """
-    Transform distributed checkpoint from source sharding strategy to destination sharding strategy for a rank.
-    For more details about converting distributed Checkpoint, please refer to
-    `Model Transformation <https://www.mindspore.cn/tutorials/experts/en/master/parallel/model_transformation.html>`_.
+def _transform_checkpoint_by_stage(src_checkpoints_dir, dst_checkpoints_dir, ckpt_prefix, src_strategy_file,
+                                   dst_strategy_file=None):
+    """Transform checkpoint for stage in src_strategy_file"""
+    param_total_dict = defaultdict(dict)
+    param_attr_dict = defaultdict(dict)
+    param_type_dict = defaultdict(dict)
+    src_strategy_list, dst_strategy_list, stage_id = _extract_src_dst_layout_map_by_src(src_strategy_file, \
+                                                                                             dst_strategy_file)
+    src_stage_device_num = np.prod(src_strategy_list.get(list(src_strategy_list.keys())[0])[0]) if src_strategy_list \
+                                                                                                   is not None else 1
+    dst_stage_device_num = np.prod(dst_strategy_list.get(list(dst_strategy_list.keys())[0])[0]) if dst_strategy_list \
+                                                                                                   is not None else 1
+    origin_dst_strategy_list = _extract_layout_map(dst_strategy_file)
+    origin_src_strategy_list = _extract_layout_map(src_strategy_file)
+    checkpoint_files_map = {}
+    src_rank_id_start = stage_id * src_stage_device_num
+    for local_rank in range(src_stage_device_num):
+        rank_id = src_rank_id_start + local_rank
+        checkpoint_file_name = os.path.join(src_checkpoints_dir, "rank_{}".format(rank_id), "*.ckpt")
+        rank_ckpts = glob.glob(checkpoint_file_name)
+        rank_ckpts.sort()
+        for checkpoint_file in rank_ckpts:
+            if not os.path.isfile(checkpoint_file):
+                ms.log.warning("{} is not a checkpoint file.".format(checkpoint_file))
+                continue
+            checkpoint_files_map[rank_id] = checkpoint_file
+    for rank, local_file in checkpoint_files_map.items():
+        if not os.path.exists(local_file):
+            raise ValueError("Checkpoint file {} in rank {} not exits: ".format(local_file, rank))
+    for rank, file_name in checkpoint_files_map.items():
+        ckpt_dict = ms.load_checkpoint(file_name)
+        for param_name, param in ckpt_dict.items():
+            # cut the parameter not in the pipeline stage.
+            if _parameter_not_in_local_stage(param_name, origin_src_strategy_list, src_strategy_list) \
+                    and _parameter_not_in_local_stage(param_name, origin_dst_strategy_list, dst_strategy_list):
+                continue
+            src_rank = rank % src_stage_device_num
+            param_type_dict[param_name][src_rank] = str(param.data.dtype)
+            if param.data.dtype == mstype.bfloat16:
+                param.set_dtype(mstype.float32)
+            param_total_dict[param_name][src_rank] = param.data.asnumpy()
+            param_attr_dict[param_name][src_rank] = (param.requires_grad, param.layerwise_parallel)
+    for local_rank_id in range(dst_stage_device_num):
+        transform_param_list = _transform_parallel_checkpoint(local_rank_id, param_total_dict,
+                                                              param_attr_dict, src_strategy_list, dst_strategy_list,
+                                                              param_type_dict)
+        save_checkpoint_file = "{}{}_part{}.ckpt".format(ckpt_prefix, local_rank_id, stage_id)
+        save_checkpoint_file_dir = os.path.join(dst_checkpoints_dir, "rank_{}".format(local_rank_id))
+        if not os.path.exists(save_checkpoint_file_dir):
+            _make_dir(save_checkpoint_file_dir, "path")
+        save_checkpoint_file_name = os.path.join(save_checkpoint_file_dir, save_checkpoint_file)
+        ms.save_checkpoint(transform_param_list, save_checkpoint_file_name)
 
-    Note:
-        The `src_checkpoints_dir` directory structure should be organized like "src_checkpoints_dir/rank_0/a.ckpt", the
-        rank number should be set to a subdirectory and the checkpoint file is stored in this subdirectory. If multiple
-        files exist in a rank directory, the last file in the lexicgraphic order would be selected.
 
-    Args:
-        src_checkpoints_dir (str): The source checkpoints directory.
-        dst_checkpoints_dir (str): The destination checkpoints directory to save the converted checkpoints.
-        ckpt_prefix (str): The destination checkpoint name prefix.
-        src_strategy_file (str): Name of source sharding strategy file which saved by
-                                 'mindspore.set_auto_parallel_context(strategy_ckpt_save_file)'.
-                                 when the `src_strategy_file` is ``None``, it means that the source sharding strategy is
-                                 without any sharing for each parameter. Default: ``None``.
-        dst_strategy_file (str): Name of destination sharding strategy file which saved by
-                                 'mindspore.set_auto_parallel_context(strategy_ckpt_save_file)'.
-                                 when the `dst_strategy_file` is ``None``,
-                                 it means that the destination sharding strategy
-                                 is without any sharing for each parameter. Default: ``None``.
-
-    Raises:
-        ValueError: `src_strategy_file` or `dst_strategy_file` is incorrect.
-        NotADirectoryError: `src_checkpoints_dir` or `dst_checkpoints_dir` is not a directory.
-        ValueError: The checkpoint file is missing in `src_checkpoints_dir`.
-        TypeError: `src_strategy_file` or `dst_strategy_file` is not a string.
-
-    Examples:
-        >>> import mindspore as ms
-        >>> ms.transform_checkpoints(src_checkpoints_dir, dst_checkpoints_dir, "dst_checkpoint",
-        ...                       "./src_strategy.ckpt", "./dst_strategy.ckpt")
-
-    """
-    if not os.path.isdir(src_checkpoints_dir):
-        raise NotADirectoryError("src_checkpoints_dir {} is not a directory.".format(src_checkpoints_dir))
-    _make_dir(dst_checkpoints_dir, "path")
-    if not isinstance(ckpt_prefix, str):
-        raise TypeError("The ckpt_prefix should be a str.")
+def _transform_checkpoints(src_checkpoints_dir, dst_checkpoints_dir, ckpt_prefix, src_strategy_file=None,
+                           dst_strategy_file=None):
+    """Transform checkpoints for all stages in src_strategy_file"""
     checkpoints_rank_dir_list = os.path.join(src_checkpoints_dir, "rank_[0-9]*")
     all_checkpoint_files_map = {}
     for checkpoint_dir in glob.glob(checkpoints_rank_dir_list):
@@ -340,6 +354,72 @@ def transform_checkpoints(src_checkpoints_dir, dst_checkpoints_dir, ckpt_prefix,
             ms.save_checkpoint(transform_param_list, save_checkpoint_file_name)
             del param_total_dict_copy
         del param_total_dict
+
+
+def transform_checkpoints(src_checkpoints_dir, dst_checkpoints_dir, ckpt_prefix, src_strategy_file=None,
+                          dst_strategy_file=None):
+    """
+    Transform distributed checkpoint from source sharding strategy to destination sharding strategy for a rank.
+    For more details about converting distributed Checkpoint, please refer to
+    `Model Transformation <https://www.mindspore.cn/tutorials/experts/en/r2.2/parallel/model_transformation.html>`_.
+
+    Note:
+        The `src_checkpoints_dir` directory structure should be organized like "src_checkpoints_dir/rank_0/a.ckpt", the
+        rank number should be set to a subdirectory and the checkpoint file is stored in this subdirectory. If multiple
+        files exist in a rank directory, the last file in the lexicgraphic order would be selected.
+
+    Args:
+        src_checkpoints_dir (str): The source checkpoints directory.
+        dst_checkpoints_dir (str): The destination checkpoints directory to save the converted checkpoints.
+        ckpt_prefix (str): The destination checkpoint name prefix.
+        src_strategy_file (str): Name of source sharding strategy file which saved by
+                                 'mindspore.set_auto_parallel_context(strategy_ckpt_save_file)'.
+                                 when the 'src_strategy_file' is None, it means that the source sharding strategy is
+                                 without any sharing for each parameter. Default:None.
+        dst_strategy_file (str): Name of destination sharding strategy file which saved by
+                                 'mindspore.set_auto_parallel_context(strategy_ckpt_save_file)'.
+                                 when the 'dst_strategy_file' is None, it means that the destination sharding strategy
+                                 is without any sharing for each parameter. Default:None.
+
+    Raises:
+        ValueError: `src_strategy_file` or `dst_strategy_file` is incorrect.
+        NotADirectoryError: `src_checkpoints_dir` or `dst_checkpoints_dir` is not a directory.
+        ValueError: The checkpoint file is missing in `src_checkpoints_dir`.
+        TypeError: `src_strategy_file` or `dst_strategy_file` is not a string.
+
+    Examples:
+        >>> import mindspore as ms
+        >>> ms.transform_checkpoints(src_checkpoints_dir, dst_checkpoints_dir, "dst_checkpoint",
+        ...                       "./src_strategy.ckpt", "./dst_strategy.ckpt")
+
+    """
+    if not os.path.isdir(src_checkpoints_dir):
+        raise NotADirectoryError("src_checkpoints_dir {} is not a directory.".format(src_checkpoints_dir))
+    _make_dir(dst_checkpoints_dir, "path")
+    if not isinstance(ckpt_prefix, str):
+        raise TypeError("The ckpt_prefix should be a str.")
+    if src_strategy_file and os.path.dirname(src_strategy_file) and not os.path.exists(
+            os.path.dirname(src_strategy_file)):
+        raise ValueError("The director of src_strategy_file: {} is not exists.".
+                         format(os.path.dirname(src_strategy_file)))
+    if dst_strategy_file and os.path.dirname(dst_strategy_file) and not os.path.exists(
+            os.path.dirname(dst_strategy_file)):
+        raise ValueError("The director of dst_strategy_file: {} is not exists.".
+                         format(os.path.dirname(dst_strategy_file)))
+    src_layout_map = _extract_layout_map(src_strategy_file)
+    dst_layout_map = _extract_layout_map(dst_strategy_file)
+    pipeline_stage_num = _extract_pipeline_stage_num(src_strategy_file)
+    if src_layout_map and dst_layout_map and pipeline_stage_num == 1 \
+        and not set(dst_layout_map.keys()).issubset(src_layout_map.keys()):
+        dst_stage_num = _extract_pipeline_stage_num(dst_strategy_file)
+        if dst_stage_num > 1:
+            raise NotImplementedError("When using unmerged src strategy, dst strategy doesn't \
+                                       support strategy with pipeline parallel.")
+        _transform_checkpoint_by_stage(src_checkpoints_dir, dst_checkpoints_dir, ckpt_prefix,
+                                       src_strategy_file, dst_strategy_file)
+    else:
+        _transform_checkpoints(src_checkpoints_dir, dst_checkpoints_dir, ckpt_prefix,
+                               src_strategy_file, dst_strategy_file)
 
 
 def _sync_params(name, param, layout):
@@ -460,3 +540,66 @@ def sync_pipeline_shared_parameters(net):
 
     # restore parallel context
     ms.context.set_auto_parallel_context(parallel_mode=parallel_mode, full_batch=full_batch)
+
+
+def load_segmented_checkpoints(ckpt_file_dir, net=None, strict_load=False, filter_prefix=None,
+                               dec_key=None, dec_mode="AES-GCM", specify_prefix=None, choice_func=None):
+    """
+    Load checkpoint info from a directory.
+
+    Note:
+        - `specify_prefix` and `filter_prefix` do not affect each other.
+        - If none of the parameters are loaded from checkpoint file, it will throw ValueError.
+        - `specify_prefix` and `filter_prefix` are in the process of being deprecated,
+          `choice_func` is recommended instead.
+          And using either of those two args will override `choice_func` at the same time.
+
+    Args:
+        ckpt_file_dir (str): Checkpoint file directory.
+        net (Cell): The network where the parameters will be loaded. Default: ``None`` .
+        strict_load (bool): Whether to strict load the parameter into net. If ``False`` , it will load parameter
+                            into net when parameter name's suffix in checkpoint file is the same as the
+                            parameter in the network. When the types are inconsistent perform type conversion
+                            on the parameters of the same type, such as float32 to float16. Default: ``False`` .
+        filter_prefix (Union[str, list[str], tuple[str]]): Deprecated(see `choice_func`). Parameters starting with the
+            filter_prefix will not be loaded. Default: ``None`` .
+        dec_key (Union[None, bytes]): Byte type key used for decryption. If the value is ``None`` , the decryption
+                                      is not required. Default: ``None`` .
+        dec_mode (str): This parameter is valid only when dec_key is not set to ``None`` . Specifies the decryption
+                        mode, currently supports ``"AES-GCM"`` and ``"AES-CBC"`` and ``"SM4-CBC"`` .
+                        Default: ``"AES-GCM"`` .
+        specify_prefix (Union[str, list[str], tuple[str]]): Deprecated(see `choice_func`). Parameters starting with the
+            specify_prefix will be loaded. Default: ``None`` .
+        choice_func (Union[None, function]) : Input value of the function is a Parameter name of type string,
+            and the return value is a bool. If returns ``True`` , the Parameter
+            that matches the custom condition will be loaded. If returns ``False`` , the Parameter that
+            matches the custom condition will be removed. Default: ``None`` .
+
+    Returns:
+        Dict, key is parameter name, value is a Parameter or string. When the `append_dict` parameter of
+        :func:`mindspore.save_checkpoint` and the `append_info` parameter of :class:`mindspore.train.CheckpointConfig`
+        are used to save the checkpoint, `append_dict` and `append_info` are dict types, and their value are string,
+        then the return value obtained by loading checkpoint is string, and in other cases the return value is
+        Parameter.
+
+    Raises:
+        ValueError: Checkpoint file's format is incorrect.
+        ValueError: Parameter's dict is None after load checkpoint file.
+        TypeError: The type of `specify_prefix` or `filter_prefix` is incorrect.
+
+    Tutorial Examples:
+        - `Saving and Loading the Model - Saving and Loading the Model Weight
+          <https://mindspore.cn/tutorials/en/r2.3/beginner/save_load.html#saving-and-loading-the-model-weight>`_
+    """
+    if not isinstance(ckpt_file_dir, str):
+        raise TypeError("The ckpt_file_dir should be a str.")
+    if not os.path.isdir(ckpt_file_dir):
+        raise ValueError("The dst_strategy_file: {} doesn't exist. Or it's not a directory".
+                         format(ckpt_file_dir))
+    checkpoint_file_name = os.path.join(ckpt_file_dir, "*.ckpt")
+    rank_ckpts = glob.glob(checkpoint_file_name)
+    parameter_dict = {}
+    for checkpoint_file in rank_ckpts:
+        parameter_dict.update(ms.load_checkpoint(checkpoint_file, net, strict_load, filter_prefix, dec_key,
+                                                 dec_mode, specify_prefix, choice_func))
+    return parameter_dict
