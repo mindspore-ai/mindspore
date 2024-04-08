@@ -19,5 +19,6 @@ from __future__ import absolute_import
 
 from mindspore.nn.extend.embedding import Embedding
 from mindspore.nn.extend.basic import Linear
+from mindspore.nn.extend.pooling import MaxPool2dExt
 
-__all__ = ['Embedding', 'Linear']
+__all__ = ['Embedding', 'Linear', 'MaxPool2dExt']

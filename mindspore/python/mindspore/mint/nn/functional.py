@@ -13,9 +13,10 @@
 # limitations under the License.
 # ============================================================================
 """mint nn functional."""
-
+from __future__ import absolute_import
+from mindspore.ops.extend import max_pool2d_ext as max_pool2d
 from mindspore.ops.functional import (
     conv_transpose2d
 )
 
-__all__ = ['conv_transpose2d']
+__all__ = ['conv_transpose2d', 'max_pool2d']
